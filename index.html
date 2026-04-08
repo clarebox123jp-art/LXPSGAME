@@ -695,7 +695,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #adventure-overlay{
   display:none;position:absolute;inset:0;
   background:url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80.png") center/cover no-repeat;
-  z-index:510;flex-direction:row;align-items:stretch;overflow:hidden;
+  z-index:510;flex-direction:row;align-items:stretch;overflow:hidden;height:100%;
 }
 #adventure-overlay::before{
   content:'';position:absolute;inset:0;
@@ -762,7 +762,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   position:relative;z-index:2;flex:1;
   display:flex;flex-direction:column;
   align-items:flex-start;justify-content:flex-start;
-  padding:70px 48px 20px 24px;
+  padding:24px 48px 130px 24px;
+  overflow-y:auto;
 }
 #adv-info-window{
   background:rgba(6,8,18,0.9);
@@ -773,10 +774,10 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   box-shadow:0 0 60px rgba(0,0,0,0.65),0 0 30px rgba(212,168,67,0.1);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   display:flex;flex-direction:column;gap:10px;
-  overflow-y:auto;max-height:860px;
+  overflow-y:visible;
 }
 #adv-info-img{
-  width:100%;height:100px;border-radius:14px;
+  width:100%;height:64px;border-radius:14px;
   border:2px solid rgba(212,168,67,0.2);
   background:linear-gradient(135deg,#111420,#0a0d16);
   display:flex;align-items:center;justify-content:center;
@@ -796,7 +797,9 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .adv-difficulty-stars{font-size:40px;letter-spacing:5px;line-height:1;}
 /* ─── 底部功能選單 ─── */
 #adv-bottom-nav{
-  display:flex;gap:10px;width:100%;margin-top:12px;
+  position:absolute;bottom:0;left:0;right:0;z-index:5;
+  display:flex;gap:8px;padding:10px 20px 14px;
+  background:linear-gradient(to top,rgba(0,0,10,0.92) 80%,rgba(0,0,10,0));
 }
 .adv-nav-btn{
   flex:1;padding:16px 0;border-radius:14px;cursor:pointer;
@@ -804,7 +807,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   font-size:24px;font-weight:700;letter-spacing:1px;
   border:2.5px solid;transition:all 0.18s;position:relative;
-  min-height:110px;
+  min-height:90px;
 }
 .adv-nav-btn.locked-nav{
   background:rgba(30,30,40,0.7);border-color:rgba(80,80,100,0.4);
@@ -2780,7 +2783,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.07.31</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.07.37</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -2819,35 +2822,36 @@ body {
         </div>
         <button id="adv-start-game-btn" onclick="startAdventureGame('maokong')">🎒 開始整隊！</button>
 
-        <!-- ★ 底部功能選單 -->
-        <div id="adv-bottom-nav">
-          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('召喚')">
-            <span class="adv-nav-icon">🔮</span>
-            <span class="adv-nav-label">召喚</span>
-            <span class="adv-nav-lock">🔒</span>
-          </button>
-          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('英雄')">
-            <span class="adv-nav-icon">⚔️</span>
-            <span class="adv-nav-label">英雄</span>
-            <span class="adv-nav-lock">🔒</span>
-          </button>
-          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('背包')">
-            <span class="adv-nav-icon">🎒</span>
-            <span class="adv-nav-label">背包</span>
-            <span class="adv-nav-lock">🔒</span>
-          </button>
-          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('獎章')">
-            <span class="adv-nav-icon">🏅</span>
-            <span class="adv-nav-label">獎章</span>
-            <span class="adv-nav-lock">🔒</span>
-          </button>
-          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('設定')">
-            <span class="adv-nav-icon">⚙️</span>
-            <span class="adv-nav-label">設定</span>
-            <span class="adv-nav-lock">🔒</span>
-          </button>
-        </div>
       </div>
+    </div>
+
+    <!-- ★ 底部功能選單：固定在冒險overlay底部 -->
+    <div id="adv-bottom-nav">
+      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('召喚')">
+        <span class="adv-nav-icon">🔮</span>
+        <span class="adv-nav-label">召喚</span>
+        <span class="adv-nav-lock">🔒</span>
+      </button>
+      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('英雄')">
+        <span class="adv-nav-icon">⚔️</span>
+        <span class="adv-nav-label">英雄</span>
+        <span class="adv-nav-lock">🔒</span>
+      </button>
+      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('背包')">
+        <span class="adv-nav-icon">🎒</span>
+        <span class="adv-nav-label">背包</span>
+        <span class="adv-nav-lock">🔒</span>
+      </button>
+      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('獎章')">
+        <span class="adv-nav-icon">🏅</span>
+        <span class="adv-nav-label">獎章</span>
+        <span class="adv-nav-lock">🔒</span>
+      </button>
+      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('設定')">
+        <span class="adv-nav-icon">⚙️</span>
+        <span class="adv-nav-label">設定</span>
+        <span class="adv-nav-lock">🔒</span>
+      </button>
     </div>
   </div>
   <div id="equip-overlay">
