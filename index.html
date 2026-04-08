@@ -2366,17 +2366,19 @@ body {
 #adv-quiz-box{
   background:linear-gradient(160deg,#0a0c1a,#060810);
   border:2.5px solid rgba(74,158,255,0.5);border-radius:20px;
-  padding:32px 40px 28px;max-width:1000px;width:92%;
+  padding:24px 28px 20px;max-width:1000px;width:96%;
+  max-height:96vh;overflow-y:auto;
   box-shadow:0 0 60px rgba(74,158,255,0.25);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  box-sizing:border-box;
 }
 #adv-quiz-header{
   display:flex;justify-content:space-between;align-items:center;
   margin-bottom:18px;
 }
-#adv-quiz-label{font-size:20px;color:#4a9eff;letter-spacing:3px;font-weight:700;}
+#adv-quiz-label{font-size:28px;color:#4a9eff;letter-spacing:3px;font-weight:700;}
 #adv-quiz-timer{
-  font-size:28px;font-weight:900;color:#ffe050;letter-spacing:2px;
+  font-size:38px;font-weight:900;color:#ffe050;letter-spacing:2px;
   background:rgba(255,200,50,0.1);border:1.5px solid rgba(255,200,50,0.4);
   border-radius:8px;padding:4px 16px;
   transition:color 0.3s;
@@ -2384,18 +2386,18 @@ body {
 #adv-quiz-timer.urgent{color:#ff4444;animation:timerPulse 0.5s ease-in-out infinite;}
 @keyframes timerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 #adv-quiz-question{
-  font-size:28px;color:#f0ead8;line-height:1.75;font-weight:500;
-  margin-bottom:22px;letter-spacing:0.5px;
+  font-size:42px;color:#f0ead8;line-height:1.6;font-weight:600;
+  margin-bottom:20px;letter-spacing:0.5px;
 }
 #adv-quiz-options{
-  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;
 }
 .aqo-btn{
-  padding:14px 20px;font-size:24px;font-weight:700;text-align:left;
+  padding:16px 18px;font-size:38px;font-weight:700;text-align:left;
   background:rgba(20,25,45,0.9);border:2px solid rgba(74,158,255,0.35);
   color:#c8d8ff;border-radius:12px;cursor:pointer;letter-spacing:1px;
   transition:all 0.18s;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-  display:flex;align-items:center;gap:12px;
+  display:flex;align-items:center;gap:10px;line-height:1.4;
 }
 .aqo-btn:hover:not(:disabled){background:rgba(74,158,255,0.15);border-color:#4a9eff;color:#fff;}
 .aqo-btn.correct{background:rgba(62,200,122,0.2);border-color:#3ec87a;color:#7df0a8;pointer-events:none;}
@@ -2577,7 +2579,7 @@ body {
   background:linear-gradient(135deg,rgba(30,5,0,0.97),rgba(15,3,0,0.98));
   border:2.5px solid rgba(255,120,0,0.75);
   border-radius:18px 18px 18px 4px;
-  padding:18px 26px;max-width:600px;
+  padding:8px 14px;max-width:40vw;
   box-shadow:0 0 30px rgba(255,80,0,0.45),0 4px 20px rgba(0,0,0,0.8);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   position:relative;
@@ -2591,7 +2593,7 @@ body {
   font-size:24px;font-weight:900;color:#ff9944;letter-spacing:2px;margin-bottom:8px;
 }
 #adv-boss-react-text{
-  font-size:36px;color:#ffe8cc;line-height:1.5;font-weight:500;
+  font-size:17px;color:#ffe8cc;line-height:1.5;font-weight:500;
 }
 /* 答對版：藍色邊框（Boss 生氣） */
 #adv-boss-react.correct-react #adv-boss-react-bubble{
@@ -2625,6 +2627,8 @@ body {
 <audio id="bgm-win"         preload="auto" src="https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/Win.mp3"></audio>
 <audio id="bgm-adv-march" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E5%86%92%E9%9A%AA%E5%B0%8F%E9%9A%8A%E5%87%BA%E7%99%BC.m4a" loop></audio>
 <audio id="bgm-adv-scene" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a" loop></audio>
+<audio id="sfx-quiz-correct" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D%E9%9F%B3%E6%95%88.mp3"></audio>
+<audio id="sfx-quiz-wrong"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
@@ -3073,8 +3077,8 @@ body {
     </div>
   </div>
   <!-- Boss 登場對白 -->
-  <div id="adv-boss-intro">
-    <div id="adv-boss-intro-box">
+  <div id="adv-boss-intro" onclick="advNextBossLine()" style="cursor:pointer;">
+    <div id="adv-boss-intro-box" onclick="advNextBossLine();">
       <div id="adv-boss-intro-name">🐱 九尾空貓怪</div>
       <div id="adv-boss-intro-text"></div>
       <div id="adv-boss-intro-next" onclick="advNextBossLine()">▶▶</div>
@@ -3121,6 +3125,21 @@ body {
       </div>
     </div>
   </div>
+  <!-- 英雄加入演出 overlay -->
+  <div id="adv-hero-meet-overlay" style="display:none;position:absolute;inset:0;z-index:650;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:rgba(0,0,0,0.92);">
+    <div id="adv-hmeet-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.35);z-index:0;"></div>
+    <div style="position:relative;z-index:1;width:100%;max-width:700px;padding:20px 16px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div id="adv-hmeet-msg" style="font-size:28px;font-weight:800;color:#ffe066;text-align:center;line-height:1.6;padding:16px 20px;background:rgba(0,0,0,0.6);border-radius:14px;border:2px solid #ffe066;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+      <div id="adv-hmeet-portrait" style="width:260px;height:320px;background-size:contain;background-position:center top;background-repeat:no-repeat;border-radius:16px;border:3px solid #ffcc44;box-shadow:0 0 40px rgba(255,200,50,0.5);"></div>
+      <div id="adv-hmeet-name" style="font-size:52px;font-weight:900;color:#ffcc44;text-shadow:0 0 20px rgba(255,200,50,0.8);font-family:'Noto Serif TC','M PLUS Rounded 1c',sans-serif;"></div>
+      <div id="adv-hmeet-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;font-size:22px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+      <div id="adv-hmeet-skills" style="width:100%;display:flex;flex-direction:column;gap:8px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+      <div id="adv-hmeet-trait" style="width:100%;padding:12px 16px;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.4);border-radius:10px;font-size:22px;color:#cc88ff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+      <div id="adv-hmeet-greeting" style="font-size:30px;font-weight:700;color:#fff;text-align:center;line-height:1.6;padding:16px 20px;background:rgba(255,200,50,0.12);border-radius:14px;border:1px solid rgba(255,200,50,0.3);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-style:italic;"></div>
+      <button onclick="advHeroMeetDone()" style="padding:16px 56px;font-size:30px;font-weight:800;background:linear-gradient(135deg,#ffcc44,#ff8800);color:#000;border:none;border-radius:12px;cursor:pointer;letter-spacing:3px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;margin-top:8px;">繼續冒險！→</button>
+    </div>
+  </div>
+
   <!-- 解鎖英雄 -->
   <div id="adv-unlock-overlay">
     <div id="adv-unlock-box">
@@ -3140,6 +3159,7 @@ body {
       <div id="adv-result-stats"></div>
       <div id="adv-result-btns">
         <button class="adv-result-play-again" onclick="advPlayAgain()">🔄 再玩一次</button>
+        <button id="adv-result-win-next" class="adv-result-play-again" onclick="advStartWinSequence()" style="background:linear-gradient(135deg,rgba(255,200,50,0.2),rgba(200,120,0,0.2));border-color:#ffcc44;color:#ffcc44;display:none;">🌟 前往茶園</button>
         <button class="adv-result-back-title" onclick="advBackToTitle()">🏠 回到首頁</button>
       </div>
     </div>
@@ -16643,6 +16663,8 @@ function advShowBossIntro() {
 }
 
 function advNextBossLine() {
+  const introEl = document.getElementById('adv-boss-intro');
+  if(!introEl || !introEl.classList.contains('show')) return;
   _advBossIntroIdx++;
   if (_advBossIntroIdx < _advBossIntroLines.length) {
     document.getElementById('adv-boss-intro-text').textContent = _advBossIntroLines[_advBossIntroIdx];
@@ -16828,6 +16850,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     const _mult = (typeof ADV_DIFF_MULT!=='undefined' && ADV_DIFF_MULT[_diffKey]) || 1.0;
     _advStats.totalQuizScore += Math.round(_baseScore * _mult);
     try { beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); } catch(e) {}
+    // ★ 答對專用音效
+    try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.9;_csfx.play().catch(()=>{});} }catch(e){}
     setTimeout(()=>{ try{ advShowBossReact('correct'); }catch(e){} }, 300);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
     setTimeout(() => {
@@ -16838,6 +16862,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     }, 3200);
   } else {
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
+    // ★ 答錯專用音效
+    try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
     setTimeout(()=>{ try{ advShowBossReact('wrong'); }catch(e){} }, 200);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
     setTimeout(() => {
@@ -16995,24 +17021,57 @@ function advApplyReward(id) {
   try {
     if (id === 'fullheal_min') {
       const h = G.p1.filter(x=>x.curHp>0).sort((a,b)=>a.curHp-b.curHp)[0];
-      if(h){ h.curHp=h.hp; renderCard(h); bannerFX(h,'💖滿血！','#ff88cc',900); log(`[獎勵] ${h.name} 恢復滿血！`); }
+      if(h){ const _prev=h.curHp; h.curHp=h.hp; renderCard(h);
+        showPopup(h,`+${h.hp-_prev}`,'heal'); healParticles(h);
+        bannerFX(h,'💖 滿血！','#ff88cc',900);
+        playSfx('sfx-heal',0.9); ringFX(h,'#ff88cc',700);
+        log(`[獎勵] ${h.name} 恢復滿血！`); }
     } else if (id === 'revive') {
       const dead = G.p1.filter(x=>x.curHp===0);
-      if(dead.length){ const h=dead[Math.floor(Math.random()*dead.length)]; doRevive(h,1.0); bannerFX(h,'💫復活！','#ffcc44',900); log(`[獎勵] ${h.name} 完全復活！`); }
+      if(dead.length){ const h=dead[Math.floor(Math.random()*dead.length)]; doRevive(h,1.0);
+        healParticles(h); ringFX(h,'#ffcc44',700);
+        bannerFX(h,'💫 奇蹟復活！','#ffcc44',900);
+        playSfx('sfx-revive',0.9);
+        log(`[獎勵] ${h.name} 完全復活！`); }
     } else if (id === 'full_energy') {
-      G.energy.p1=10; updateUI(); log('[獎勵] 能量全滿！');
+      G.energy.p1=10; updateUI();
+      G.p1.filter(h=>h.curHp>0).forEach(h=>{ showPopup(h,'+E','energy'); ringFX(h,'#4a9eff',500); });
+      playSfx('sfx-powerup',0.85); flashScreen('rgba(74,158,255,0.4)',300);
+      log('[獎勵] 能量全滿！');
     } else if (id === 'cleanse') {
-      G.p1.forEach(h=>{ if(h.curHp>0){ clearBadStatus(h); renderCard(h); } }); log('[獎勵] 全體狀態清除！');
+      G.p1.forEach(h=>{ if(h.curHp>0){ clearBadStatus(h); renderCard(h);
+        ringFX(h,'#ffffaa',600); bannerFX(h,'✨淨化！','#ffffaa',800); } });
+      flashScreen('rgba(255,255,150,0.4)',350); playSfx('sfx-passive',0.85);
+      log('[獎勵] 全體狀態清除！');
     } else if (id === 'stun_enemy') {
       const foes=G.p2.filter(x=>x.curHp>0);
-      if(foes.length){ const t=foes[Math.floor(Math.random()*foes.length)]; addStatus(t,'stun',1); bannerFX(t,'🌀靜止！','#cc88ff',900); log(`[獎勵] ${t.name} 被封印1回合！`); }
+      if(foes.length){ const t=foes[Math.floor(Math.random()*foes.length)]; addStatus(t,'stun',1);
+        showPopup(t,'🌀暈眩','dmg'); flashCard(t,'rgba(180,80,255,0.7)',400);
+        bannerFX(t,'🌀 靜止封印！','#cc88ff',900); playSfx('sfx-cantmove',0.85);
+        log(`[獎勵] ${t.name} 被封印1回合！`); }
     } else if (id === 'heal_50') {
-      G.p1.forEach(h=>{ if(h.curHp>0){ h.curHp=Math.min(h.hp,h.curHp+Math.floor(h.hp*0.5)); renderCard(h); } }); log('[獎勵] 全體回復50%HP！');
-    } else if (id === 'dmg_one') {
+      G.p1.forEach(h=>{ if(h.curHp>0){
+        const _hAmt=Math.floor(h.hp*0.5); h.curHp=Math.min(h.hp,h.curHp+_hAmt); renderCard(h);
+        showPopup(h,`+${_hAmt}`,'heal'); healParticles(h); ringFX(h,'#55ee88',600); } });
+      playSfx('sfx-heal',0.85); flashScreen('rgba(85,238,136,0.3)',300);
+      log('[獎勵] 全體回復50%HP！');
+        } else if (id === 'dmg_one') {
       const foes=G.p2.filter(x=>x.curHp>0);
-      if(foes.length){ const t=foes[Math.floor(Math.random()*foes.length)]; const dmg=Math.floor(t.hp*0.2); doDmg(t,dmg,{ignoreBuffs:true,isSkill:true}); log(`[獎勵] ${t.name} 受到20%HP傷害！`); }
-    } else if (id === 'dmg_all') {
-      G.p2.filter(x=>x.curHp>0).forEach(t=>{ const dmg=Math.floor(t.hp*0.2); doDmg(t,dmg,{ignoreBuffs:true,isSkill:true}); }); log('[獎勵] 全體敵人受到20%HP傷害！');
+      if(foes.length){ const t=foes[Math.floor(Math.random()*foes.length)];
+        const dmg=Math.floor(t.hp*0.2);
+        flashCard(t,'rgba(100,200,80,0.85)',400);
+        doDmg(t,dmg,{ignoreBuffs:true,isSkill:true});
+        playSfx('sfx-explode',0.75); bannerFX(t,'🌿 竹筍突刺！','#88ff44',900);
+        log(`[獎勵] ${t.name} 受到${dmg}傷害！`); }
+        } else if (id === 'dmg_all') {
+      G.p2.filter(x=>x.curHp>0).forEach(t=>{
+        const dmg=Math.floor(t.hp*0.2);
+        flashCard(t,'rgba(255,80,30,0.85)',400);
+        doDmg(t,dmg,{ignoreBuffs:true,isSkill:true});
+        bannerFX(t,'🔥 焰尾橫掃！','#ff6633',900);
+      });
+      flashScreen('rgba(255,80,30,0.4)',350); playSfx('sfx-explode',0.9);
+      log('[獎勵] 焰尾橫掃！全體敵人受傷！');
     } else if (id === 'instant_burst') {
       // 選擇1名存活隊友立即發動極限爆發
       _advBurstRewardUsed = true;
@@ -17222,8 +17281,18 @@ function advShowBattleResult(win) {
   `;
   document.getElementById('adv-result-overlay').classList.add('show');
 
+  // ★ 勝利時播放勝利BGM
+  if(win){
+    try{ bgmStop(); bgmPlay('bgm-win'); }catch(e){}
+  }
+
+  // 勝利時顯示「前往茶園」按鈕
+  const _winNextBtn = document.getElementById('adv-result-win-next');
+  if(_winNextBtn) _winNextBtn.style.display = win ? '' : 'none';
+
   if(win) {
-    setTimeout(()=>advShowUnlockHero(), 1500);
+    // 不再立即顯示舊的解鎖overlay，改由新序列處理
+    // setTimeout(()=>advShowUnlockHero(), 1500);
   }
 }
 
@@ -17266,6 +17335,114 @@ function advShowUnlockHero() {
 function advCloseUnlock() {
   document.getElementById('adv-unlock-overlay').classList.remove('show');
 }
+
+// ════════════════════════════════
+//  勝利序列：茶園過場 → 英雄加入演出
+// ════════════════════════════════
+const ADV_HERO_GREETINGS = {"劍士": "「我的劍，願為保護貓空的茶香而揮！」", "刺客": "「從暗處出手是我的風格。好，我就跟你們走！」", "光法師": "「聖光將照耀這片土地，讓我們一起前進吧！」", "冰法師": "「冷靜沉著是我的信條，你們看起來值得信賴。」", "火法師": "「嘿！熱血沸騰的旅程，我最喜歡了！算我一份！」", "雷法師": "「轟！我的雷光將劈碎一切阻礙！同行吧！」", "暗法師": "「黑暗中自有我保護你們，不必擔心。」", "祭司": "「以神明的恩典，我將守護你們的生命。」", "聖騎士": "「榮譽與勇氣是我的鎧甲，願為你們而戰！」", "武鬥家": "「好身手！算你們夠格讓我出手相助！」", "武士": "「以武士之名，我的刀將斬斷邪惡！」", "大力士": "「呼！跟我走，保證沒有搬不動的石頭！」", "守衛": "「保護夥伴是我的使命，交給我！」", "神射手": "「我的箭矢，永遠射向真正的敵人。同行吧！」", "吟遊詩人": "「讓我用歌聲，為你們的旅途增添色彩！」", "煉金術師": "「有趣，有趣！我的道具或許能幫上大忙！」", "凡人": "「就算只是凡人，也能做出非凡的事情！」", "占星師": "「星辰指引著我，你們就是我命中注定的隊友。」", "舞者": "「優雅與力量共存，這就是我的舞蹈！」", "木靈使": "「大地的生命，將為你們的旅途增添力量！」", "時空法師": "「時間與空間在我掌握中，跟我走沒錯的！」", "陰陽師": "「陰陽交錯間，我看清了你們的真心。好，算我一份！」", "學者": "「知識就是力量！讓我的學識為你們開路！」", "機械師": "「齒輪轉動，勝利就在眼前！讓我加入你們的冒險！」", "神偷": "「嘿嘿，我拿走的，都是敵人的好東西！歡迎合作！」", "軍師": "「兵法早已算定，你們的勝利盡在掌握。」", "吸血鬼": "「黑夜是我的舞台…既然如此，就讓我同行吧。」", "幼兒園小孩": "「嗚嗚…不要欺負我！我也會打人的！」", "動物學家": "「每一種生命都值得尊重，我和我的夥伴一起加入！」", "小力": "「汪！汪汪！（搖尾巴）」", "流浪者": "「到處流浪也挺無聊的，帶我一起去冒險吧！」"};
+
+function advStartWinSequence() {
+  // 隱藏結算畫面
+  document.getElementById('adv-result-overlay').classList.remove('show');
+  bgmStop();
+  try{ bgmPlay('bgm-adv-scene'); }catch(e){}
+
+  // 淡入茶園場景 + 加入訊息
+  const ov = document.getElementById('adv-hero-meet-overlay');
+  if(!ov) { advShowUnlockHero(); return; }
+
+  // 設定茶園背景
+  const bgEl = document.getElementById('adv-hmeet-bg');
+  if(bgEl) bgEl.style.backgroundImage = 'url("https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92.png")';
+
+  // 顯示加入訊息
+  const msgEl = document.getElementById('adv-hmeet-msg');
+  if(msgEl) msgEl.textContent = '✨ 實力堅強的你，獲得了一名來自異世界的英雄的認同，他主動加入成為夥伴！';
+
+  // 選取要加入的英雄
+  const unlocked = advGetUnlockedHeroes();
+  const available = ADV_UNLOCKABLE_HEROES.filter(n =>
+    !unlocked.includes(n) &&
+    !['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'].includes(n)
+  );
+  const heroName = available.length
+    ? available[Math.floor(Math.random() * available.length)]
+    : (ADV_UNLOCKABLE_HEROES[Math.floor(Math.random() * ADV_UNLOCKABLE_HEROES.length)]);
+
+  // 儲存解鎖
+  if(available.length) advSaveUnlockedHero(heroName);
+
+  // 填入英雄資料
+  const hData = (typeof HERO_DB !== 'undefined') ? HERO_DB[heroName] : null;
+  const hImg  = (typeof HERO_IMGS !== 'undefined') ? (HERO_IMGS[heroName] || '') : '';
+  const hAv   = (typeof AVATARS !== 'undefined') ? (AVATARS[heroName] || '⚔') : '⚔';
+  const hTrait= (typeof HERO_TRAITS !== 'undefined') ? (HERO_TRAITS[heroName] || null) : null;
+
+  // 名字
+  const nameEl = document.getElementById('adv-hmeet-name');
+  if(nameEl) nameEl.textContent = hAv + ' ' + heroName;
+
+  // 插畫
+  const portEl = document.getElementById('adv-hmeet-portrait');
+  if(portEl) {
+    if(hImg) { portEl.style.backgroundImage = 'url("' + hImg + '")'; portEl.style.display = ''; }
+    else portEl.style.display = 'none';
+  }
+
+  // 能力值
+  const statsEl = document.getElementById('adv-hmeet-stats');
+  if(statsEl && hData) {
+    statsEl.innerHTML = [
+      `<div style="background:rgba(255,255,255,0.07);padding:8px 12px;border-radius:8px;"><span style="color:#aaa">❤ HP</span> <b style="color:#fff;font-size:26px">${hData.hp}</b></div>`,
+      `<div style="background:rgba(255,255,255,0.07);padding:8px 12px;border-radius:8px;"><span style="color:#aaa">⚔ 攻擊</span> <b style="color:#ff8888;font-size:26px">${hData.atk}</b></div>`,
+      `<div style="background:rgba(255,255,255,0.07);padding:8px 12px;border-radius:8px;"><span style="color:#aaa">✨ 特技</span> <b style="color:#cc88ff;font-size:26px">${hData.sp}</b></div>`,
+      `<div style="background:rgba(255,255,255,0.07);padding:8px 12px;border-radius:8px;"><span style="color:#aaa">💨 速度</span> <b style="color:#44ddff;font-size:26px">${hData.spd}</b></div>`,
+    ].join('');
+  }
+
+  // 技能
+  const skillsEl = document.getElementById('adv-hmeet-skills');
+  if(skillsEl && hData) {
+    const mkSkill = (sk, label) => sk ? `
+      <div style="background:rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">
+        <div style="font-size:22px;color:#ffcc44;font-weight:700;">${label}：${sk.n} <span style="color:#aaa;font-size:18px">（${sk.c}能量）</span></div>
+        <div style="font-size:20px;color:#ccc;margin-top:4px;">${sk.fd || sk.d}</div>
+      </div>` : '';
+    skillsEl.innerHTML = mkSkill(hData.s1, '技能1') + mkSkill(hData.s2, '技能2');
+  }
+
+  // 天賦
+  const traitEl = document.getElementById('adv-hmeet-trait');
+  if(traitEl) {
+    if(hTrait) {
+      traitEl.innerHTML = `<span style="color:#cc88ff;font-weight:700;">🌟 天賦：${hTrait.desc||hTrait.fd||''}</span>`;
+      traitEl.style.display = '';
+    } else {
+      traitEl.style.display = 'none';
+    }
+  }
+
+  // 打招呼
+  const greetEl = document.getElementById('adv-hmeet-greeting');
+  const greetLine = ADV_HERO_GREETINGS[heroName] || '「你們的實力讓我刮目相看，讓我加入你們的行列吧！」';
+  if(greetEl) greetEl.textContent = greetLine;
+
+  // 顯示
+  ov.style.display = 'flex';
+  playSfx('sfx-revive', 1.0);
+  setTimeout(()=>{ flashScreen('rgba(255,200,50,0.5)', 400); }, 200);
+}
+
+function advHeroMeetDone() {
+  const ov = document.getElementById('adv-hero-meet-overlay');
+  if(ov) ov.style.display = 'none';
+  bgmStop();
+  // ★ 回到關卡選擇時播放茶園BGM
+  try{ bgmPlay('bgm-adv-scene'); }catch(e){}
+  // 回到選關卡頁面（openAdventureOverlay 重新顯示關卡選擇）
+  try{ openAdventureOverlay(); }catch(e){ exitAdventureMode(); }
+}
+
 
 // ══ 九尾空貓怪答題反應台詞 ══
 const BOSS_REACT_CORRECT = [
@@ -17318,8 +17495,9 @@ function advShowBossReact(type) {
   const line = lines[Math.floor(Math.random() * lines.length)];
 
   // 定位：在問答視窗上方，稍微偏左
-  el.style.left  = '120px';
-  el.style.bottom = '380px';
+  el.style.left  = '16px';
+  el.style.right  = 'auto';
+  el.style.bottom = '320px';
 
   textEl.textContent = line;
   el.className = 'show ' + (type==='correct' ? 'correct-react' : type==='timeout' ? 'wrong-react' : 'wrong-react');
@@ -17336,7 +17514,7 @@ function advShowBossReact(type) {
   _bossReactTimer = setTimeout(() => {
     el.style.animation = 'bossReactOut 0.4s ease-out forwards';
     setTimeout(() => { el.className = ''; el.style.animation = ''; }, 420);
-  }, 2500);
+  }, 1500);
 }
 
 // ── 冒險模式 Boss 特寫視窗（獨立彈窗）
