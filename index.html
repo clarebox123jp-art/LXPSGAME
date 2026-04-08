@@ -2259,9 +2259,9 @@ body {
 .adv-confirm-btn:hover{background:var(--green);color:#000;}
 /* 確認提示橫幅 */
 #adv-confirm-banner{
-  position:absolute;top:420px;left:0;right:160px;z-index:3;
+  position:static;margin-top:12px;z-index:3;
   text-align:center;padding:12px 0;
-  font-size:48px;color:#88ffcc;letter-spacing:3px;font-weight:700;
+  font-size:12px;color:#88ffcc;letter-spacing:3px;font-weight:700;
   text-shadow:0 0 12px rgba(100,255,180,0.7);
   pointer-events:none;
 }
@@ -3059,11 +3059,11 @@ body {
     </div>
     <!-- 選擇視窗（上半部） -->
     <div id="adv-choice-panel"></div>
-    <div id="adv-confirm-banner"></div>
     <!-- 對話框（下方固定） -->
     <div id="adv-dialog-box" onclick="advNextDialog()" style="cursor:pointer;">
       <div id="adv-dialog-speaker"></div>
       <div id="adv-dialog-text"></div>
+      <div id="adv-confirm-banner" style="font-size:12px;color:#aaffaa;margin-top:6px;padding:0;letter-spacing:1px;min-height:0;line-height:1.3;"></div>
       <div id="adv-dialog-next">▶▶</div>
     </div>
     <div id="adv-treasure-popup">
@@ -7940,8 +7940,12 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='祭司'){
     [...G[side]].forEach(t=>{
-      if(t.curHp===0) doRevive(t,1,true);
-      else doHeal(t,Math.floor(spv*1.5),{actor:h,isHeal:true});
+      if(t.curHp===0){
+        doRevive(t,1,true);
+        t.acted=true; // ★ 本回合復活，不立即再行動
+      } else {
+        doHeal(t,Math.floor(spv*1.5),{actor:h,isHeal:true});
+      }
       clearBadStatus(t); addBuff(t,'statusImmune',2);
     });
   }
@@ -8380,10 +8384,16 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       for(let _bi=0;_bi<_badCount;_bi++){
         addBuff(t,_goodBuffs[Math.floor(Math.random()*_goodBuffs.length)],2);
       }
-      if(t.curHp===0){ doRevive(t,0.3); }
+      if(t.curHp===0){
+        doRevive(t,0.3);
+        t.acted=true; // ★ 復活的隊友本回合已行動，避免立即再行動造成狀態混亂
+      }
       bannerFX(t,'BUG修復！','#55ffcc',1000); renderCard(t);
     });
     flashScreen('rgba(60,255,200,1)',400); zoneFlash(side,'rgba(60,255,200,0.3)',700);
+    updateUI();
+    _pSetTimeout(()=>{ _burstFinish(h,_interrupted); }, 800); // ★ 明確結束爆發
+    return; // ★ 必須 return，防止再次呼叫 startTurn
   }
   if(name==='弦樂團員'){
     log(`[${h.name}] 流浪者之歌！特技40%全體3~5次！`);
@@ -8395,11 +8405,11 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       if(_hi2>=_hits2){
         // 完成攻擊後治療+復活
         G[side].forEach(t=>{
-          if(t.curHp===0){ doRevive(t,0); }
-          doHeal(t,spv,{actor:h,isHeal:true});
+          if(t.curHp===0){ doRevive(t,0.25); t.acted=true; } // ★ 復活後本回合已行動
+          else doHeal(t,spv,{actor:h,isHeal:true});
           bannerFX(t,'流浪者之歌！','#cc88ff',900);
         });
-        updateUI(); if(checkWin())return; startTurn(); return;
+        updateUI(); if(checkWin())return; _pSetTimeout(()=>_burstFinish(h,_interrupted),400); return;
       }
       const _alive2=G[opp].filter(x=>x.curHp>0);
       if(!_alive2.length){ updateUI(); if(checkWin())return; startTurn(); return; }
@@ -16164,7 +16174,7 @@ const ADV_SCENES = {
       ],
       choiceType: 'subject',
       choiceTitle: '📚 九尾空貓怪想知道你最擅長哪一科？',
-      choices: ['國語文','英文','數學','自然','社會','音樂','美術'],
+      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識'],
     },
     {
       key:'teagarden',
@@ -16547,7 +16557,10 @@ function advSkipCutscene() {
   // 隨機給所有未領到的法寶
   for (let i = 0; i < 3; i++) {
     if (!_advTreasures[i]) {
-      _advTreasures[i] = ADV_TREASURES[Math.floor(Math.random() * ADV_TREASURES.length)];
+      // 隨機不重複
+const _usedTids = new Set(_advTreasures.filter(Boolean).map(x=>x.id));
+const _remaining = ADV_TREASURES.filter(x=>!_usedTids.has(x.id));
+_advTreasures[i] = (_remaining.length ? _remaining : ADV_TREASURES)[Math.floor(Math.random()*(_remaining.length||ADV_TREASURES.length))];
     }
   }
   advUpdateTreasureBar();
@@ -16904,7 +16917,11 @@ function advUseTreasure(slotIdx) {
   const t = _advTreasures[slotIdx];
   if (!t) return;
   _advTreasures[slotIdx] = null;
-  advUpdateTreasureBar();
+  advUpdateBattleTreasureBar();  // ★ 修復：更新 quiz 內的法寶欄
+  advUpdateTreasureBar();        // 同步更新過場法寶欄
+  log(`🔮 使用法寶：${t.name}！`);
+  bannerFX(null, t.icon+' '+t.name+'！', '#ffee88', 900);
+  playSfx('sfx-passive', 0.9);
   advApplyTreasure(t.id);
 }
 function advUseTreasureFromCutscene(slotIdx) {
@@ -17221,7 +17238,11 @@ function advRestartBattle() {
   G.energy={p1:2,p2:2};
   // 重置法寶（從過場備份取回，未實作備份則隨機三個）
   _advTreasures = [null,null,null];
-  for(let i=0;i<3;i++) _advTreasures[i]=ADV_TREASURES[Math.floor(Math.random()*ADV_TREASURES.length)];
+  // ★ 隨機不重複分配3個法寶
+(function(){
+  const pool = ADV_TREASURES.slice().sort(()=>Math.random()-0.5);
+  for(let i=0;i<3;i++) _advTreasures[i] = pool[i % pool.length];
+})();
   advUpdateTreasureBar();
   // 重置接關
   _advContinueCount=0;
@@ -17363,7 +17384,8 @@ function advStartWinSequence() {
   const unlocked = advGetUnlockedHeroes();
   const available = ADV_UNLOCKABLE_HEROES.filter(n =>
     !unlocked.includes(n) &&
-    !['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'].includes(n)
+    !['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家',
+      '幼兒園小孩','小力'].includes(n)  // ★ 這兩位保留給特別關卡
   );
   const heroName = available.length
     ? available[Math.floor(Math.random() * available.length)]
