@@ -2783,7 +2783,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.07.37</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.07.44</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -13822,6 +13822,36 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='筍之刺'){
     if(t){ doDmg(t, a.sp, {actor:a,isSkill:true}); if(Math.random()<0.5) addStatus(t,'para',1); }
   }
+  // ★ 筍之守護：AI使用 - 友方全體+20護盾
+  else if(n==='筍之守護'){
+    G[a.side].forEach(ally=>{
+      if(ally.curHp>0){
+        const ex=ally.buffs.find(b=>b.type==='bigshield');
+        if(ex){ ex._hp=(ex._hp||0)+20; } else { ally.buffs.push({type:'bigshield',dur:99,_hp:20}); }
+        renderCard(ally);
+      }
+    });
+    log(`[${a.name}] 筍之守護！友方全體+20護盾！`);
+  }
+  // ★ 一壺包種茶：AI使用 - 解除不利+治療
+  else if(n==='一壺包種茶'){
+    G[a.side].forEach(ally=>{ if(ally.curHp>=0) clearBadStatus(ally); });
+    const wk=G[a.side].filter(x=>x.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0];
+    if(wk){ doHeal(wk,a.sp,{actor:a,isHeal:true}); }
+    G[a.side].forEach(ally=>renderCard(ally));
+  }
+  // ★ 睡覺功：AI使用 - 解除不利狀態+恢復10%HP（自我）
+  else if(n==='睡覺功'){
+    clearBadStatus(a);
+    a.curHp=Math.min(a.hp, a.curHp+Math.floor(a.hp*0.1));
+    renderCard(a);
+    log(`[${a.name}] 睡覺功！解除不利狀態+恢復HP！`);
+  }
+  // ★ 運球：AI使用 - 友方全體普攻×2
+  else if(n==='運球'){
+    G[a.side].filter(h=>h.curHp>0).forEach(h=>addBuff(h,'dribble',2));
+    log(`[${a.name}] 運球！友方全體普攻×2！`);
+  }
   else { if(t) doDmg(t,spv(a),{actor:a}); }
 
   a.acted=true; updateUI(); _pSetTimeout(startTurn,500);
@@ -14757,7 +14787,8 @@ let _menuPlaylist=[];
 let _menuPlayMode=false;
 function bgmStop(){
   ['bgm-win','bgm-lose',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
-   'bgm-adv-march','bgm-adv-scene','bgm-boss-02','adventure-bgm'].forEach(id=>{
+   'bgm-adv-march','bgm-adv-scene','bgm-boss-02','adventure-bgm',
+   'sfx-quiz-correct','sfx-quiz-wrong'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.onended=null;el.pause();el.currentTime=0;}
   });
@@ -14765,6 +14796,22 @@ function bgmStop(){
   _battlePlayMode=false;
   _menuPlayMode=false;
 }
+// ★ 手機/iPad：切換 App 時自動暫停音樂，回來恢復
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){
+    // 切到後台：暫停所有 audio
+    document.querySelectorAll('audio').forEach(function(el){
+      if(!el.paused){ el._wasPlayingBefore=true; el.pause(); }
+      else{ el._wasPlayingBefore=false; }
+    });
+  } else {
+    // 回到前台：恢復之前播放的 audio
+    document.querySelectorAll('audio').forEach(function(el){
+      if(el._wasPlayingBefore){ el.play().catch(function(){}); el._wasPlayingBefore=false; }
+    });
+  }
+});
+
 function _bgmBattleNext(){
   if(!_battlePlayMode) return;
   if(_battlePlaylist.length===0){
@@ -15953,9 +16000,28 @@ const ADV_STAGES = {
   }
 };
 
+function _requestFullscreenAll(){
+  // 支援各平台全螢幕：標準、webkit（iOS/Safari）、moz（Firefox）、ms（舊Edge）
+  const el = document.documentElement;
+  const fn = el.requestFullscreen
+           || el.webkitRequestFullscreen
+           || el.webkitEnterFullscreen
+           || el.mozRequestFullScreen
+           || el.msRequestFullscreen;
+  if(fn){
+    try{ fn.call(el, {navigationUI:'hide'}); }catch(e){
+      try{ fn.call(el); }catch(e2){}
+    }
+  }
+  // iOS Safari（iPhone/iPad）不支援標準 Fullscreen API，改用 standalone 提示
+  // 無法強制全螢幕，但不報錯
+}
+
 function openAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
+  // ★ 進入冒險時自動全螢幕（手機/iPad/桌機）
+  _requestFullscreenAll();
   ov.style.display = 'flex';
   ov.style.animation = 'advOverlayFadeIn 0.5s ease-out';
   // ① 先停掉首頁 BGM
@@ -15985,10 +16051,12 @@ function closeAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
   ov.style.display = 'none';
-  // ① 停掉冒險 BGM
-  const bgm = document.getElementById('adventure-bgm');
-  if(bgm){ bgm.pause(); bgm.currentTime = 0; }
-  // ② 恢復首頁音樂
+  // ★ 停止所有播放中的音樂和音效（含手機端）
+  bgmStop();
+  document.querySelectorAll('audio').forEach(function(el){
+    try{ el.pause(); el.currentTime=0; }catch(e){}
+  });
+  // 恢復首頁音樂
   if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-menu', 500);
 }
 
