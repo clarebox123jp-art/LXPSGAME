@@ -714,7 +714,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* ── 左側關卡清單 ── */
 #adv-left-panel{
   position:relative;z-index:2;
-  width:40%;display:flex;flex-direction:column;
+  width:33%;display:flex;flex-direction:column;
   align-items:flex-start;justify-content:center;
   padding:80px 32px 40px 56px;gap:16px;
 }
@@ -762,14 +762,14 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   position:relative;z-index:2;flex:1;
   display:flex;flex-direction:column;
   align-items:flex-start;justify-content:flex-start;
-  padding:24px 48px 130px 24px;
+  padding:24px 24px 90px 8px;
   overflow-y:auto;
 }
 #adv-info-window{
   background:rgba(6,8,18,0.9);
   border:2px solid rgba(212,168,67,0.4);
   border-radius:22px;padding:20px 32px;
-  width:100%;max-width:800px;
+  width:100%;max-width:960px;
   backdrop-filter:blur(10px);
   box-shadow:0 0 60px rgba(0,0,0,0.65),0 0 30px rgba(212,168,67,0.1);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
@@ -798,24 +798,24 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* ─── 底部功能選單 ─── */
 #adv-bottom-nav{
   position:absolute;bottom:0;left:0;right:0;z-index:5;
-  display:flex;gap:8px;padding:10px 20px 14px;
-  background:linear-gradient(to top,rgba(0,0,10,0.92) 80%,rgba(0,0,10,0));
+  display:flex;gap:8px;padding:6px 16px 8px;
+  background:linear-gradient(to top,rgba(0,0,10,0.96) 80%,rgba(0,0,10,0));
 }
 .adv-nav-btn{
-  flex:1;padding:16px 0;border-radius:14px;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  flex:1;padding:10px 8px;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   font-size:24px;font-weight:700;letter-spacing:1px;
   border:2.5px solid;transition:all 0.18s;position:relative;
-  min-height:90px;
+  min-height:0;height:56px;
 }
 .adv-nav-btn.locked-nav{
   background:rgba(30,30,40,0.7);border-color:rgba(80,80,100,0.4);
   color:#556;cursor:default;
 }
-.adv-nav-icon{font-size:36px;line-height:1;}
-.adv-nav-label{font-size:22px;color:#778;letter-spacing:1px;}
-.adv-nav-lock{position:absolute;top:6px;right:8px;font-size:16px;opacity:0.5;}
+.adv-nav-icon{font-size:38px;line-height:1;flex-shrink:0;}
+.adv-nav-label{font-size:55px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
+.adv-nav-lock{position:absolute;top:4px;right:6px;font-size:14px;opacity:0.5;}
 /* 各按鈕顏色（鎖定時半透明）*/
 .adv-nav-btn:nth-child(1){border-color:rgba(180,80,255,0.25);}  /* 召喚 - 紫 */
 .adv-nav-btn:nth-child(2){border-color:rgba(255,100,80,0.25);}  /* 英雄 - 紅 */
@@ -2783,7 +2783,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.07.44</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.07.49</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
