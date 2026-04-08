@@ -2580,7 +2580,7 @@ body {
   background:linear-gradient(135deg,rgba(30,5,0,0.97),rgba(15,3,0,0.98));
   border:2.5px solid rgba(255,120,0,0.75);
   border-radius:18px 18px 18px 4px;
-  padding:8px 14px;max-width:60vw;
+  padding:8px 14px;max-width:92%;
   box-shadow:0 0 30px rgba(255,80,0,0.45),0 4px 20px rgba(0,0,0,0.8);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   position:relative;
@@ -13477,21 +13477,32 @@ function _realAiAct(a){
       }
     }
     // 1b. 使用治療物品
+    // ★ 冒險模式BOSS：不使用復活/回滿血物品，直接賣掉
+    const _isAdvBoss = typeof _adventureMode !== 'undefined' && _adventureMode && a.side === 'p2';
     const reviveItems = inv.filter(it=>it&&it.type==='revive');
     const healItems   = inv.filter(it=>it&&it.type==='heal').sort((x,y)=>(y.hp||0)-(x.hp||0));
-    if(healNeeded.curHp===0 && reviveItems.length){
+    if(!_isAdvBoss && healNeeded.curHp===0 && reviveItems.length){
       const ri=reviveItems[0];
       log('['+a.name+'] AI復活道具 ['+ri.n+'] → ['+healNeeded.name+']！');
       if(ri.full) doRevive(healNeeded,1,true); else doRevive(healNeeded,0.5);
       _aiRemoveInv(a.side,ri.uid);
       a.acted=true; updateUI(); _pSetTimeout(startTurn,500); return;
     }
-    if(healItems.length && healNeeded.curHp>0){
+    if(!_isAdvBoss && healItems.length && healNeeded.curHp>0){
       const hi=healItems[0];
       log('['+a.name+'] AI治療道具 ['+hi.n+'] → ['+healNeeded.name+']！');
       applyItemOnTarget(hi,a,healNeeded);
       _aiRemoveInv(a.side,hi.uid);
       a.acted=true; updateUI(); _pSetTimeout(startTurn,500); return;
+    }
+    // 冒險BOSS：復活/治療物品直接賣掉換能量
+    if(_isAdvBoss){
+      const sellItems = [...reviveItems, ...healItems];
+      sellItems.forEach(it=>{
+        G.energy.p2 = Math.min(10, G.energy.p2 + (it.sell||2));
+        _aiRemoveInv('p2', it.uid);
+        log('[BOSS] 冒險模式：賣掉無用道具 ['+it.n+'] +能量');
+      });
     }
   }
 
@@ -17184,21 +17195,36 @@ function _advTriggerBurstFor(h) {
       G.energy.p1 = Math.min(10, G.energy.p1 + 5);
       log(`[極限爆發獎勵] ${h.name} 無爆發技，能量+5`);
       updateUI();
+      // 直接推進回合
+      advOnQuizSkip();
       return;
     }
-    // 重置爆發冷卻（允許再次使用）
+    // ★ 插隊發動免費爆發：設為可爆發狀態後呼叫完整 execBurst
     h._burstUsed = false;
-    // 設定足夠能量後直接觸發爆發
-    const origEnergy = G.energy.p1;
-    G.energy.p1 = 10;
-    log(`[獎勵] 💥 ${h.name} 發動極限爆發！`);
-    bannerFX(h, '💥 極限爆發！', '#ff9944', 1200);
-    flashScreen('rgba(255,150,0,1)', 400);
+    h.acted = false;
+    const _savedEnergy = G.energy[h.side];
+    G.energy[h.side] = 10; // 暫時設滿讓 _canBurst 通過
+    log(`[獎勵] 💥 ${h.name} 插隊發動免費極限爆發！`);
+    // ★ 關鍵：設定插隊目標，爆發後回到原本行動角色
+    const _prevInterrupt = G.interruptTarget;
+    G.interruptTarget = G.activeChar || null;
+    G.activeChar = h;
+    // 呼叫完整 execBurst（含特寫動畫、技能名稱大字、音效）
     _pSetTimeout(() => {
-      try { _runBurst(h); } catch(e) { console.error('[advBurst]',e); }
-      G.energy.p1 = origEnergy; // 爆發後還原能量（不消耗玩家能量）
-    }, 500);
-  } catch(e) { console.error('[advTriggerBurst]', e); }
+      try {
+        execBurst(h.side, h.pos);
+        // 爆發後恢復能量（不消耗玩家原有能量）
+        _pSetTimeout(() => {
+          if(G.energy[h.side] < _savedEnergy) G.energy[h.side] = _savedEnergy;
+          updateUI();
+        }, 2000);
+      } catch(e) {
+        console.error('[advTriggerBurst]', e);
+        G.energy[h.side] = _savedEnergy;
+        advOnQuizSkip();
+      }
+    }, 400);
+  } catch(e) { console.error('[advTriggerBurst outer]', e); advOnQuizSkip(); }
 }
 
 // ════════════════════════════════
@@ -17527,20 +17553,21 @@ function advShowBossReact(type) {
   else                         lines = BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
-  // ★ 定位：在 Boss 卡牌正上方
+  // ★ 定位：在問題視窗正上方居中
   try {
-    const boss = G && G.p2 ? G.p2.find(h=>h.name==='九尾空貓怪') : null;
-    const bossCardEl = boss ? document.getElementById(`card-p2-${boss.pos}`) : null;
-    if (bossCardEl) {
-      const rect = bossCardEl.getBoundingClientRect();
+    const quizBox = document.getElementById('adv-quiz-box');
+    if (quizBox) {
+      const qRect = quizBox.getBoundingClientRect();
       const gcRect = document.getElementById('gc').getBoundingClientRect();
-      el.style.left  = (rect.left - gcRect.left + rect.width/2 - 120) + 'px';
-      el.style.top   = (rect.top  - gcRect.top  - 10) + 'px';
+      el.style.left   = (qRect.left - gcRect.left) + 'px';
+      el.style.width  = qRect.width + 'px';
+      el.style.top    = (qRect.top - gcRect.top - 8) + 'px';
+      el.style.transform = 'translateY(-100%)';
       el.style.bottom = 'auto';
+      el.style.right  = 'auto';
     } else {
-      // fallback
-      el.style.left = '50%'; el.style.transform = 'translateX(-50%)';
-      el.style.top = '8px'; el.style.bottom = 'auto';
+      el.style.left='50%'; el.style.transform='translate(-50%,-100%)';
+      el.style.top='45%'; el.style.bottom='auto';
     }
   } catch(e) {
     el.style.left='16px'; el.style.top='8px'; el.style.bottom='auto';
