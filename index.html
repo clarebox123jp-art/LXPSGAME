@@ -2624,6 +2624,7 @@ body {
 <audio id="bgm-battle-05" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%88%B0%E9%AC%A505.m4a"></audio>
 <audio id="bgm-win"         preload="auto" src="https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/Win.mp3"></audio>
 <audio id="bgm-adv-march" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E5%86%92%E9%9A%AA%E5%B0%8F%E9%9A%8A%E5%87%BA%E7%99%BC.m4a" loop></audio>
+<audio id="bgm-adv-scene" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a" loop></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
@@ -13225,6 +13226,37 @@ function _realAiAct(a){
     return;
   }
 
+  // ★ 九尾空貓怪 HP≤50%：強制爆發一次（憤怒模式）
+  if(typeof _adventureMode !== 'undefined' && _adventureMode &&
+     a.name === '九尾空貓怪' && a.side === 'p2' &&
+     a.curHp <= a.hp * 0.5 && !_advBossRageBurstUsed &&
+     typeof BURST_DB !== 'undefined' && BURST_DB[a.name]){
+    _advBossRageBurstUsed = true;
+    // 顯示憤怒對話氣泡
+    const rageLines = [
+      '喵——！！你們敢讓本貓流血……絕對不原諒！！',
+      '本貓還沒認真呢！看本貓的真正實力——焰尾九連擊！！',
+      '哈哈哈！你以為傷了本貓就贏了？現在才是開始喵！！',
+      '竟然……可惡！本貓要認真了，你們全都要後悔喵！！',
+    ];
+    const rageLine = rageLines[Math.floor(Math.random()*rageLines.length)];
+    bannerFX(a, '😾 憤怒覺醒！', '#ff2200', 1500);
+    flashScreen('rgba(255,0,0,0.6)', 600);
+    playSfx('sfx-burst', 1.0);
+    // 顯示 Boss 反應氣泡（憤怒色）
+    try{
+      const bubble = document.createElement('div');
+      bubble.className = 'adv-boss-react';
+      bubble.style.cssText = 'background:rgba(200,0,0,0.92);border-color:#ff4400;color:#fff;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9000;padding:18px 28px;border-radius:16px;font-size:28px;font-weight:800;max-width:70vw;text-align:center;border:3px solid #ff4400;pointer-events:none';
+      bubble.textContent = '😾 ' + rageLine;
+      document.body.appendChild(bubble);
+      setTimeout(()=>{ if(bubble.parentNode) bubble.remove(); }, 2800);
+    }catch(e){}
+    log(`😾 [${a.name}] 憤怒覺醒！強制發動極限爆發！`);
+    _pSetTimeout(()=>{ execBurst(a.side, a.pos); }, 1200);
+    return;
+  }
+
   const _canUseItems = !hasStatus(a,'nosell') && !fieldHas('noshop');
   const inv = _canUseItems ? ((a.side==='p2'?G.inv2:G.inv)||[]) : [];
   const canSeal = fieldHas('sealall')||hasStatus(a,'seal');
@@ -13664,6 +13696,30 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='道具複製'){addBuff(a,'alchemist',99);log('['+a.name+'] 道具複製！啟動！');}
   else if(n==='賢者之石'){const full_target=al;if(full_target){if(full_target.curHp===0)doRevive(full_target,1,true);else doHeal(full_target,full_target.hp,{actor:a,isHeal:true});addBuff(full_target,'deathimmune',9999);log('['+a.name+'] 賢者之石！['+full_target.name+'] 完全恢復！免疫倒下！');} a.s2used=true;}
   else if(n==='忠犬守護'){ a.buffs=a.buffs.filter(b=>b.type!=='_inuGuard'); addBuff(a,'_inuGuard',1); a._inuGuardActive=true; log('['+a.name+'] 忠犬守護！本回合代替隊友承受50%傷害！'); bannerFX(a,'忠犬守護！','#ffaacc',900); }
+  else if(n==='連續貓爪功'){
+    // ★ 多段攻擊：4~6次隨機命中存活目標
+    const _ccOpp = a.side==='p1'?'p2':'p1';
+    const _ccFoes = ()=>G[_ccOpp].filter(h=>h.curHp>0);
+    const _ccHits = 4 + Math.floor(Math.random()*3);
+    let _ccI = 0;
+    log(`🐱 [${a.name}] 連續貓爪功！連續攻擊 ${_ccHits} 次！`);
+    function _doCatClaw(){
+      const fs=_ccFoes();
+      if(_ccI >= _ccHits || !fs.length || checkWin()){
+        a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return;
+      }
+      const tgt=fs[Math.floor(Math.random()*fs.length)];
+      doDmg(tgt, a.atk, {actor:a, isSkill:true});
+      renderCard(tgt);
+      _ccI++;
+      _pSetTimeout(_doCatClaw, 280);
+    }
+    _doCatClaw();
+    return; // 非同步，由 _doCatClaw 末尾結束
+  }
+  else if(n==='筍之刺'){
+    if(t){ doDmg(t, a.sp, {actor:a,isSkill:true}); if(Math.random()<0.5) addStatus(t,'para',1); }
+  }
   else { if(t) doDmg(t,spv(a),{actor:a}); }
 
   a.acted=true; updateUI(); _pSetTimeout(startTurn,500);
@@ -14599,7 +14655,7 @@ let _menuPlaylist=[];
 let _menuPlayMode=false;
 function bgmStop(){
   ['bgm-win','bgm-lose',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
-   'bgm-adv-march','bgm-boss-02','adventure-bgm'].forEach(id=>{
+   'bgm-adv-march','bgm-adv-scene','bgm-boss-02','adventure-bgm'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.onended=null;el.pause();el.currentTime=0;}
   });
@@ -15948,9 +16004,9 @@ function startAdventureGame(stage){
   if(advBgm){ try{ advBgm.pause(); advBgm.currentTime=0; }catch(e){} }
   const mainOverlay = document.getElementById('overlay');
   if(mainOverlay) mainOverlay.style.display = 'none';
-  // 播放出發BGM
+  // 播放過場專用BGM（河堤/步道/茶園場景）
   bgmStop();
-  bgmPlay('bgm-adv-march');
+  bgmPlay('bgm-adv-scene');
   // 重置遊戲狀態
   fieldCards=[];
   updateFieldFX();
@@ -16107,43 +16163,121 @@ const ADV_SCENES = {
 };
 
 // ADV_BOSS_INTRO_LINES 改為動態產生（依年級/科目/難度）
-const ADV_GRADE_FOCUS = {
-  '低年級':  {
-    '沒自信': '今天考的是簡單的日常詞彙、10以內加減法，還有基本生活常識。輕輕鬆鬆就好喵！',
-    '普通':   '今天考的是國字注音、20以內加減，以及動植物與季節知識。難度普通，加油喵！',
-    '我很會': '今天考基礎造詞、100以內算術，和環境生態概念。有自信就別讓本貓失望喵！',
+// ── 各科目 × 年級 考題重點說明 ──
+const ADV_SUBJECT_FOCUS = {
+  '國語文': {
+    '低年級': { '沒自信':'注音符號、基礎筆畫和簡單字義', '普通':'國字書寫、詞彙辨識', '我很會':'造詞、句型與短文理解' },
+    '中年級': { '沒自信':'常見詞語和字義辨析', '普通':'成語運用、修辭辨識', '我很會':'閱讀理解、段落大意' },
+    '高年級': { '沒自信':'成語應用、字形辨識', '普通':'文言文入門、修辭技巧', '我很會':'深度修辭與邏輯推理' },
+    '國中':   { '沒自信':'基礎文言文和句型', '普通':'古詩詞鑑賞與文化內涵', '我很會':'文學分析與深層隱喻' },
   },
-  '中年級': {
-    '沒自信': '今天考常見詞語、乘法口訣，還有台灣地理基礎。不難，別緊張喵！',
-    '普通':   '今天考成語基礎、四則運算，以及台灣縣市與文化知識。標準難度喵！',
-    '我很會': '今天考閱讀理解、多步驟計算和歷史人物。說我很會就拿出來看看喵！',
+  '英文': {
+    '低年級': { '沒自信':'基礎單字（動物、顏色、數字）', '普通':'簡單句型和日常問答', '我很會':'常用動詞與生活情境' },
+    '中年級': { '沒自信':'常用動詞和形容詞', '普通':'地點介系詞和基礎問答', '我很會':'時態基礎和比較級' },
+    '高年級': { '沒自信':'過去式和進行式基礎', '普通':'比較級、連詞和閱讀', '我很會':'時態綜合和複雜句構' },
+    '國中':   { '沒自信':'關係代名詞和被動語態', '普通':'完成式和複雜句型', '我很會':'高階文法與文化詞彙' },
   },
-  '高年級': {
-    '沒自信': '今天考常見成語、分數小數基礎，以及台灣歷史概要。本貓稍微手下留情喵！',
-    '普通':   '今天考文言文入門、比例分數，還有台灣自然與地理。正常發揮吧喵！',
-    '我很會': '今天考修辭作文、複雜四則運算和社會科學應用。哼，本貓可不會客氣喵！',
+  '數學': {
+    '低年級': { '沒自信':'10以內加減法和數數', '普通':'20到100以內加減和長度', '我很會':'100以內算術和時間認識' },
+    '中年級': { '沒自信':'乘法口訣和三位數加減', '普通':'四則運算、分數和小數初步', '我很會':'多步驟計算、面積和時間換算' },
+    '高年級': { '沒自信':'分數小數基礎和比例', '普通':'比與比值、圓面積和百分率', '我很會':'複雜四則、體積和質數合數' },
+    '國中':   { '沒自信':'負數和一元一次方程', '普通':'代數函數和幾何基礎', '我很會':'幾何代數綜合和機率' },
   },
-  '國中': {
-    '沒自信': '今天考基礎文言文、一元一次方程，和地球科學概念。放輕鬆嘛喵～',
-    '普通':   '今天考古詩詞鑑賞、代數函數，以及歷史朝代與事件。思路清晰才能過關喵！',
-    '我很會': '今天考文學分析、幾何代數綜合，加上跨學科應用推理。國中的你應付得來嗎喵？',
+  '社會': {
+    '低年級': { '沒自信':'家庭生活和學校規範', '普通':'社區環境和地圖符號', '我很會':'基本行政概念和地方節慶' },
+    '中年級': { '沒自信':'台灣地理基礎和縣市', '普通':'台灣縣市文化和地方產業', '我很會':'台灣歷史和行政區劃' },
+    '高年級': { '沒自信':'台灣開發史概要', '普通':'區域發展與環境保護', '我很會':'公民參與和城鄉差距' },
+    '國中':   { '沒自信':'地形水文和歷史概述', '普通':'清領日治歷史和法律基礎', '我很會':'全球關懷和跨學科社會議題' },
+  },
+  '自然': {
+    '低年級': { '沒自信':'感官觀察和生物辨識', '普通':'動植物特徵和天氣認識', '我很會':'生活中的科學和生態概念' },
+    '中年級': { '沒自信':'昆蟲生長和水的型態', '普通':'力與運動、植物構造和導體', '我很會':'生態平衡和物質特性' },
+    '高年級': { '沒自信':'植物生理和力矩基礎', '普通':'微生物、地質變遷和星星觀察', '我很會':'生態平衡、槓桿原理和化學反應' },
+    '國中':   { '沒自信':'牛頓定律和能量基礎', '普通':'遺傳基因和化學反應速率', '我很會':'跨科學系統思考和地球科學' },
+  },
+  '美術': {
+    '低年級': { '沒自信':'色彩辨識和基本形狀', '普通':'感官聯想和簡單手作', '我很會':'色彩搭配和對稱概念' },
+    '中年級': { '沒自信':'冷暖色和版畫製作', '普通':'空間前後和互補色', '我很會':'地方工藝和色彩學應用' },
+    '高年級': { '沒自信':'透視法和明度彩度', '普通':'藝術家風格和構圖原則', '我很會':'當代藝術概念和色彩體系' },
+    '國中':   { '沒自信':'美術史基礎和媒材認識', '普通':'東西方美術比較和美學原理', '我很會':'社會評論藝術和數位美學' },
+  },
+  '音樂': {
+    '低年級': { '沒自信':'聲音辨識和強弱快慢', '普通':'穩定拍律和樂器模仿', '我很會':'節奏感和樂器辨識' },
+    '中年級': { '沒自信':'基本樂理和音符節奏', '普通':'常見樂器分類和基礎民謠', '我很會':'聽力辨識和樂理應用' },
+    '高年級': { '沒自信':'曲式結構和國樂器', '普通':'在地音樂文化和音樂表現', '我很會':'西洋音樂史和樂曲分析' },
+    '國中':   { '沒自信':'西洋音樂史基礎', '普通':'藝術歌曲和當代音樂科技', '我很會':'音樂流派和社會議題結合' },
+  },
+  '表演藝術': {
+    '低年級': { '沒自信':'肢體模仿和聲音表情', '普通':'動物聯想和基礎指令', '我很會':'想像力表演和無實物練習' },
+    '中年級': { '沒自信':'角色塑造和劇場禮儀', '普通':'道具應用和基礎感官記憶', '我很會':'感官記憶和表演技巧' },
+    '高年級': { '沒自信':'劇本基礎和舞台方位', '普通':'服裝設計和角色功能', '我很會':'集體即興和當代劇場形式' },
+    '國中':   { '沒自信':'戲劇理論基礎', '普通':'沉浸式劇場和表演倫理', '我很會':'文化評論和跨領域表演' },
+  },
+  '健康與體育': {
+    '低年級': { '沒自信':'基礎身體部位和衛生習慣', '普通':'基本移動技能和安全守則', '我很會':'運動技能和健康生活' },
+    '中年級': { '沒自信':'基礎球類規則和飲食分類', '普通':'用藥安全和運動傷害預防', '我很會':'六大類食物和健康飲食' },
+    '高年級': { '沒自信':'青春期發育和壓力管理', '普通':'五大體適能和藥物濫用預防', '我很會':'環境衛生和健康管理' },
+    '國中':   { '沒自信':'急救基礎和消費者健康', '普通':'CPR/AED和傳染病防治', '我很會':'運動力學和長期健康計畫' },
+  },
+  '資訊科技': {
+    '低年級': { '沒自信':'科技產品辨識和資訊禮儀', '普通':'滑鼠鍵盤操作和基礎應用', '我很會':'電腦基本概念和網路安全' },
+    '中年級': { '沒自信':'網路搜尋和文書編輯基礎', '普通':'數位繪圖和硬體設備認識', '我很會':'資訊安全和數位公民素養' },
+    '高年級': { '沒自信':'程式邏輯基礎（判斷迴圈）', '普通':'個資保護和假訊息辨識', '我很會':'演算法基礎和雲端協作' },
+    '國中':   { '沒自信':'演算法分析基礎', '普通':'AI基礎和大數據概念', '我很會':'資訊法規和資安技術' },
+  },
+  '本土語': {
+    '低年級': { '沒自信':'生活基本詞彙和日常問候', '普通':'動物和人稱詞彙', '我很會':'常見句型和聽力認讀' },
+    '中年級': { '沒自信':'常用短句和地方特色語詞', '普通':'動作描述和日常對話', '我很會':'地名由來和複雜句型' },
+    '高年級': { '沒自信':'成語俗諺和生活應用', '普通':'地名典故和文化詞彙', '我很會':'修辭與文學感和社會變遷用語' },
+    '國中':   { '沒自信':'典故深度和語音辨析', '普通':'文學感和社會用語', '我很會':'高階語音辨析和文化底蘊' },
+  },
+  '生活常識': {
+    '低年級': { '沒自信':'安全守則和基本生活習慣', '普通':'環境設施認識和禮貌規範', '我很會':'急救電話和基礎防災' },
+    '中年級': { '沒自信':'交通標誌和物品保存', '普通':'基礎防災和在地應變', '我很會':'急救知識和消費者概念' },
+    '高年級': { '沒自信':'用電安全和個資保護', '普通':'消費者權益和簡易急救', '我很會':'社會責任和法律概念' },
+    '國中':   { '沒自信':'法律基礎和勞動常識', '普通':'資訊安全和金融理財', '我很會':'社會議題和公民素養' },
   },
 };
 
-// 動態生成開場台詞（在 advShowBossIntro 呼叫前執行）
+// 動態生成開場台詞（依年級、科目、難度精準說明考題方向）
 function getAdvBossIntroLines(){
   const gradeMap = {'小學低年級':'低年級','小學中年級':'中年級','小學高年級':'高年級','國中':'國中'};
   const diffMap  = {'沒自信（輕鬆模式）':'沒自信','普通（標準模式）':'普通','我很會（挑戰模式）':'我很會',
                     '沒自信':'沒自信','普通':'普通','我很會':'我很會'};
   const grade = gradeMap[_advPlayerGrade] || '中年級';
   const diff  = diffMap[_advPlayerDifficulty] || '普通';
-  const subj  = _advPlayerSubject || '各科';
-  const focusLine = (ADV_GRADE_FOCUS[grade] && ADV_GRADE_FOCUS[grade][diff])
-    || '今天考的題目難度適中，好好作答喵！';
+  const subj  = _advPlayerSubject || '綜合';
+  const isMix = (!subj || subj === '綜合' || subj === '各科');
 
+  // 取得考題重點說明
+  let focusLine;
+  if(!isMix && ADV_SUBJECT_FOCUS[subj] && ADV_SUBJECT_FOCUS[subj][grade] && ADV_SUBJECT_FOCUS[subj][grade][diff]){
+    const topic = ADV_SUBJECT_FOCUS[subj][grade][diff];
+    const diffTail = diff==='沒自信' ? '本貓手下留情一點喵！' : diff==='我很會' ? '哼，別讓本貓失望喵！' : '標準難度，好好發揮喵！';
+    focusLine = `今天【${subj}】的考題重點是：${topic}。${diffTail}`;
+  } else {
+    // 綜合模式：依年級+難度說明
+    const mixFocus = {
+      '低年級': { '沒自信':'各科基礎，日常詞彙、簡單加減和生活常識都可能出現喵！',
+                  '普通':   '國字注音、基礎算術和動植物知識，難度適中喵！',
+                  '我很會': '跨科綜合，造詞、算術和生態知識都要會喵！' },
+      '中年級': { '沒自信':'各科入門題，成語、乘法和地理基礎都可能考喵！',
+                  '普通':   '跨科綜合：成語、四則運算、台灣文化都會考到喵！',
+                  '我很會': '閱讀、多步驟計算和歷史人物，都要搞清楚喵！' },
+      '高年級': { '沒自信':'各科基礎：成語、分數和歷史概要喵！',
+                  '普通':   '文言文、比例分數、自然與地理都考喵！',
+                  '我很會': '修辭、複雜四則、社會科學，全部都要會喵！' },
+      '國中':   { '沒自信':'文言文、方程式和地球科學基礎喵！',
+                  '普通':   '詩詞、代數、歷史朝代，跨科綜合考喵！',
+                  '我很會': '文學分析、幾何代數、跨學科推理，最難等級喵！' },
+    };
+    focusLine = (mixFocus[grade] && mixFocus[grade][diff]) || '今天的題目難度適中，好好作答喵！';
+  }
+
+  const subjDisplay = isMix ? '綜合各科' : subj;
   return [
     `喵喵喵～${grade}的小英雄來了！本貓最喜歡考倒你們的樣子了～`,
-    `聽說你選的是【${subj}】，難度是【${diff}】……${focusLine}`,
+    `聽說你選的是【${subjDisplay}】，難度是【${diff}】……${focusLine}`,
     `好！就讓九尾空貓怪這位大天才來見識一下你的實力——答題開始喵！`,
   ];
 }
@@ -16167,6 +16301,8 @@ let _advContinueCount = 0; // 已接關次數
 const ADV_MAX_CONTINUES = 2;
 let _advBossIntroIdx = 0;
 let _advBossIntroShown = false;
+let _advBossIntroActive = false; // true=對白播放中，startTurn 需等待
+let _advBossRageBurstUsed = false; // 九尾HP≤50% 憤怒爆發已使用
 // 戰績統計
 let _advStats = {
   rounds: 0,
@@ -16196,6 +16332,8 @@ function advStartCutscene(stage) {
   _advPlayerSubject = '';
   _advPlayerDifficulty = '';
   _advBossIntroShown = false;
+  _advBossIntroActive = false;
+  _advBossRageBurstUsed = false;
   _advContinueCount = 0;
   _advUsedQuestionIds = new Set();
   _advSessionQuestions = [];
@@ -16466,17 +16604,25 @@ function advStartBattle(){
       setTimeout(function(){ bsOv.classList.remove('show'); }, 3200);
     }
   })();
-  _pSetTimeout(startTurn, 800);
+  // ★ 若 Boss 開場對白啟動，startTurn 由 advCloseBossIntro 觸發
+  //    若跳過對白（已顯示過），直接啟動
+  if(!_advBossIntroActive){
+    _pSetTimeout(startTurn, 800);
+  }
 }
 
 // ════════════════════════════════
 //  題庫準備
 // ════════════════════════════════
 function advPrepareSessionQuestions() {
+  // ★ 修復：將題目同步存入 _advSessionQuestions（advPickQuestion 讀取此變數）
   const pool = advGetQuizPool(_advPlayerGrade, _advPlayerSubject, _advPlayerDifficulty);
-  _advQuestionPool = pool.length ? pool : ADV_QUIZ_DB.slice().sort(()=>Math.random()-0.5);
-  _advQuestionIndex = 0;
-  log(`[題庫] 共 ${_advQuestionPool.length} 題可用（科目:${_advPlayerSubject||'綜合'} 難度:${_advPlayerDifficulty}）`);
+  const finalPool = pool.length ? pool : ADV_QUIZ_DB.slice().sort(()=>Math.random()-0.5);
+  _advSessionQuestions = finalPool;   // ← advPickQuestion 實際讀取的變數
+  _advQuestionPool     = finalPool;   // ← 備份
+  _advQuestionIndex    = 0;
+  _advUsedQuestionIds  = new Set();   // 重置已用題目
+  log(`[題庫] 共 ${_advSessionQuestions.length} 題可用（科目:${_advPlayerSubject||'綜合'} 難度:${_advPlayerDifficulty}）`);
 }
 
 
@@ -16489,6 +16635,7 @@ let _advBossIntroLines = [];
 function advShowBossIntro() {
   _advBossIntroIdx = 0;
   _advBossIntroShown = true;
+  _advBossIntroActive = true;  // ★ 戰鬥暫停，等對白結束
   _advBossIntroLines = getAdvBossIntroLines();
   const box = document.getElementById('adv-boss-intro');
   document.getElementById('adv-boss-intro-text').textContent = _advBossIntroLines[0];
@@ -16506,7 +16653,11 @@ function advNextBossLine() {
 
 function advCloseBossIntro() {
   document.getElementById('adv-boss-intro').classList.remove('show');
-  // 戰鬥已在外部啟動，對白結束後直接放行
+  // ★ 對白結束 → 解除暫停，正式開始第一回合
+  if(_advBossIntroActive){
+    _advBossIntroActive = false;
+    _pSetTimeout(startTurn, 400);
+  }
 }
 
 // ════════════════════════════════
