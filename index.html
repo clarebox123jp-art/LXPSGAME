@@ -794,6 +794,32 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .adv-info-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
 .adv-info-label{font-size:28px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
 .adv-difficulty-stars{font-size:40px;letter-spacing:5px;line-height:1;}
+/* ─── 底部功能選單 ─── */
+#adv-bottom-nav{
+  display:flex;gap:10px;width:100%;margin-top:12px;
+}
+.adv-nav-btn{
+  flex:1;padding:16px 0;border-radius:14px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  font-size:24px;font-weight:700;letter-spacing:1px;
+  border:2.5px solid;transition:all 0.18s;position:relative;
+  min-height:110px;
+}
+.adv-nav-btn.locked-nav{
+  background:rgba(30,30,40,0.7);border-color:rgba(80,80,100,0.4);
+  color:#556;cursor:default;
+}
+.adv-nav-icon{font-size:36px;line-height:1;}
+.adv-nav-label{font-size:22px;color:#778;letter-spacing:1px;}
+.adv-nav-lock{position:absolute;top:6px;right:8px;font-size:16px;opacity:0.5;}
+/* 各按鈕顏色（鎖定時半透明）*/
+.adv-nav-btn:nth-child(1){border-color:rgba(180,80,255,0.25);}  /* 召喚 - 紫 */
+.adv-nav-btn:nth-child(2){border-color:rgba(255,100,80,0.25);}  /* 英雄 - 紅 */
+.adv-nav-btn:nth-child(3){border-color:rgba(80,200,255,0.25);}  /* 背包 - 藍 */
+.adv-nav-btn:nth-child(4){border-color:rgba(255,200,50,0.25);}  /* 獎章 - 金 */
+.adv-nav-btn:nth-child(5){border-color:rgba(100,220,100,0.25);} /* 設定 - 綠 */
+
 .adv-domain-tags{display:flex;gap:8px;flex-wrap:wrap;}
 .adv-domain-tag{
   font-size:26px;font-weight:700;padding:5px 16px;border-radius:20px;
@@ -2781,16 +2807,44 @@ body {
             <span style="color:#f0c060">★★★</span><span style="color:#333">☆☆</span>
           </span>
         </div>
-        <div class="adv-info-row">
-          <span class="adv-info-label">📚 學習領域</span>
-          <div class="adv-domain-tags" id="adv-tags">
-            <span class="adv-domain-tag social">🌍 社會領域</span>
-            <span class="adv-domain-tag nature">🔬 自然科學</span>
-            <span class="adv-domain-tag math">🔢 數學領域</span>
-            <span class="adv-domain-tag lang">📖 語文領域</span>
-          </div>
+        <div class="adv-info-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <span class="adv-info-label">🎯 任務目標</span>
+          <div id="adv-objectives" style="display:flex;flex-direction:column;gap:6px;width:100%;"></div>
+        </div>
+        <div class="adv-info-row" style="flex-direction:column;align-items:flex-start;gap:8px;margin-top:2px;">
+          <span class="adv-info-label">🎁 獎勵</span>
+          <div id="adv-rewards-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
         <button id="adv-start-game-btn" onclick="startAdventureGame('maokong')">🎒 開始整隊！</button>
+
+        <!-- ★ 底部功能選單 -->
+        <div id="adv-bottom-nav">
+          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('召喚')">
+            <span class="adv-nav-icon">🔮</span>
+            <span class="adv-nav-label">召喚</span>
+            <span class="adv-nav-lock">🔒</span>
+          </button>
+          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('英雄')">
+            <span class="adv-nav-icon">⚔️</span>
+            <span class="adv-nav-label">英雄</span>
+            <span class="adv-nav-lock">🔒</span>
+          </button>
+          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('背包')">
+            <span class="adv-nav-icon">🎒</span>
+            <span class="adv-nav-label">背包</span>
+            <span class="adv-nav-lock">🔒</span>
+          </button>
+          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('獎章')">
+            <span class="adv-nav-icon">🏅</span>
+            <span class="adv-nav-label">獎章</span>
+            <span class="adv-nav-lock">🔒</span>
+          </button>
+          <button class="adv-nav-btn locked-nav" onclick="advNavLocked('設定')">
+            <span class="adv-nav-icon">⚙️</span>
+            <span class="adv-nav-label">設定</span>
+            <span class="adv-nav-lock">🔒</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -15872,8 +15926,18 @@ const ADV_STAGES = {
   maokong: {
     name: '木柵貓空大冒險',
     emoji: '🌳🐼🚠🍵',
-    desc: '從臺北市文山區出發，沿途探索木柵動物園、貓空纜車、指南宮，完成各種充滿挑戰的知識闖關任務！考驗你對自然生態、地理文化的認識，還有靈活的數學與語文應用能力。你準備好了嗎？',
+    desc: '九尾空貓怪竄入貓空山區，以邪術封住了景美溪的靈氣，讓動物園的生靈驚慌失措，茶農們束手無策！身為英雄的你，必須帶領隊伍穿越河堤步道、深入指南宮古道，以知識為武器，一路闖關到貓空山頂，揭開謎底、擊敗魔物，還給貓空一片寧靜。',
     stars: 3,
+    objectives: [
+      '🗺 完成景美溪河堤、樟湖步道、貓空茶園三幕場景',
+      '📚 通過九尾空貓怪的知識問答考驗',
+      '⚔ 在 BOSS 戰中擊敗九尾空貓怪',
+    ],
+    rewards: [
+      {icon:'⭐', text:'英雄成長經驗值'},
+      {icon:'📖', text:'技能升級書 ×1'},
+      {icon:'🦸', text:'獲得隨機新英雄'},
+    ],
     tags: [
       {cls:'social', text:'🌍 社會領域'},
       {cls:'nature', text:'🔬 自然科學'},
@@ -15898,6 +15962,19 @@ function openAdventureOverlay(){
   selectAdvStage('maokong', firstBtn);
 }
 
+function advNavLocked(name){
+  // 顯示提示：尚未開放
+  const _tip = document.createElement('div');
+  _tip.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+    'background:rgba(20,20,30,0.95);border:2px solid rgba(255,200,50,0.5);border-radius:14px;' +
+    'padding:20px 40px;font-size:36px;font-weight:800;color:#ffcc44;z-index:9999;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;pointer-events:none;' +
+    'box-shadow:0 0 40px rgba(0,0,0,0.8);';
+  _tip.textContent = '🔒 ' + name + ' 尚未開放，敬請期待！';
+  document.body.appendChild(_tip);
+  setTimeout(()=>{ _tip.style.opacity='0'; _tip.style.transition='opacity 0.4s';
+    setTimeout(()=>{ if(_tip.parentNode) _tip.remove(); }, 400); }, 1800);
+}
 function closeAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
@@ -15925,7 +16002,21 @@ function selectAdvStage(key, btnEl){
   const emptyStars  = '☆'.repeat(5 - data.stars);
   document.getElementById('adv-stars').innerHTML =
     `<span style="color:#f0c060">${filledStars}</span><span style="color:#333">${emptyStars}</span>`;
-  // 學習領域標籤
+  // 任務目標
+  const objEl = document.getElementById('adv-objectives');
+  if(objEl && data.objectives){
+    objEl.innerHTML = data.objectives.map(o=>
+      `<div style="font-size:24px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
+    ).join('');
+  }
+  // 獎勵
+  const rwEl = document.getElementById('adv-rewards-list');
+  if(rwEl && data.rewards){
+    rwEl.innerHTML = data.rewards.map(r=>
+      `<div style="display:flex;align-items:center;gap:8px;font-size:26px;color:#ffe066;padding:8px 16px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.25);border-radius:10px;">${r.icon} <span style="color:#f0e8c8;">${r.text}</span></div>`
+    ).join('');
+  }
+  // 學習領域（保留隱藏備用）
   const tagsEl = document.getElementById('adv-tags');
   tagsEl.innerHTML = data.tags.map(t =>
     `<span class="adv-domain-tag ${t.cls}">${t.text}</span>`
