@@ -2227,14 +2227,15 @@ body {
 .adv-choice-box{
   background:rgba(8,10,22,0.88);backdrop-filter:blur(12px);
   border:2px solid rgba(255,220,80,0.35);border-radius:18px;
-  padding:28px 36px;max-width:820px;width:90%;
+  padding:20px 28px;max-width:860px;width:94%;
+  max-height:72vh;overflow-y:auto;
   box-shadow:0 0 60px rgba(0,0,0,0.8);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .adv-choice-title{
-  font-size:52px;font-weight:900;color:#ffe050;letter-spacing:3px;
-  margin-bottom:18px;text-shadow:0 0 16px rgba(255,200,0,0.5);text-align:center;
+  font-size:38px;font-weight:900;color:#ffe050;letter-spacing:2px;
+  margin-bottom:14px;text-shadow:0 0 16px rgba(255,200,0,0.5);text-align:center;
 }
 .adv-choice-grid{
   display:flex;flex-wrap:wrap;gap:12px;justify-content:center;
@@ -2579,7 +2580,7 @@ body {
   background:linear-gradient(135deg,rgba(30,5,0,0.97),rgba(15,3,0,0.98));
   border:2.5px solid rgba(255,120,0,0.75);
   border-radius:18px 18px 18px 4px;
-  padding:8px 14px;max-width:40vw;
+  padding:8px 14px;max-width:60vw;
   box-shadow:0 0 30px rgba(255,80,0,0.45),0 4px 20px rgba(0,0,0,0.8);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   position:relative;
@@ -16441,21 +16442,19 @@ function advShowChoicePanel(stage, sceneIdx) {
     const btn = document.createElement('button');
     btn.className = 'adv-choice-btn';
     btn.textContent = c;
+    // ★ 點一下即選取並立即確認，不需額外確認按鈕
     btn.onclick = () => {
       box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      advOnChoiceSelected(scene.choiceType, c, box, stage, sceneIdx);
+      _advTempChoice = c;
+      playSfx('sfx-confirm2', 0.85);
+      // 選取動畫後確認
+      setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
     };
     grid.appendChild(btn);
   });
   box.appendChild(grid);
-
-  const confirmBtn = document.createElement('button');
-  confirmBtn.className = 'adv-confirm-btn';
-  confirmBtn.id = 'adv-choice-confirm';
-  confirmBtn.textContent = '✔ 確認';
-  confirmBtn.onclick = () => { advConfirmChoice(stage, sceneIdx); };
-  box.appendChild(confirmBtn);
+  // ★ 不再生成額外確認按鈕（避免12科目時按鈕超出畫面）
 
   panel.innerHTML = '';
   panel.appendChild(box);
@@ -16920,7 +16919,19 @@ function advUseTreasure(slotIdx) {
   advUpdateBattleTreasureBar();  // ★ 修復：更新 quiz 內的法寶欄
   advUpdateTreasureBar();        // 同步更新過場法寶欄
   log(`🔮 使用法寶：${t.name}！`);
-  bannerFX(null, t.icon+' '+t.name+'！', '#ffee88', 900);
+  // ★ 法寶使用視覺反饋（不依賴hero卡牌位置）
+  try {
+    const _treasureFx = document.createElement('div');
+    _treasureFx.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'font-size:56px;font-weight:900;color:#ffee88;z-index:9100;pointer-events:none;' +
+      'text-shadow:0 0 30px rgba(255,220,50,0.9);animation:burstNameShake 0.12s ease-in-out 3;' +
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+    _treasureFx.textContent = t.icon + ' ' + t.name + '！';
+    document.body.appendChild(_treasureFx);
+    setTimeout(()=>{ _treasureFx.style.opacity='0'; _treasureFx.style.transition='opacity 0.4s';
+      setTimeout(()=>{ if(_treasureFx.parentNode) _treasureFx.remove(); }, 400); }, 800);
+  } catch(e){}
+  flashScreen('rgba(255,200,50,0.4)', 300);
   playSfx('sfx-passive', 0.9);
   advApplyTreasure(t.id);
 }
@@ -16936,7 +16947,7 @@ function advApplyTreasure(id) {
 
   if (id === 'crystal') {
     // 選項減少：隨機去掉1個錯誤選項
-    const wrong = btns.filter(b => b.dataset.isCorrect !== '1');
+    const wrong = btns.filter(b => b.dataset.isCorrect !== '1' && b.style.visibility !== 'hidden');
     const toHide = wrong.sort(()=>Math.random()-0.5).slice(0,1);
     toHide.forEach(b => { b.style.visibility='hidden'; b.disabled=true; });
   } else if (id === 'stardust') {
@@ -16983,7 +16994,7 @@ function advApplyTreasure(id) {
     clearInterval(_advQuizTimer);
     btns.forEach(b => {
       b.disabled = true;
-      if (b.dataset.letter === q.answer) b.classList.add('correct');
+      if (b.dataset.isCorrect === '1') b.classList.add('correct'); // ★ 用isCorrect，不受洗牌影響
     });
     _advStats.correctCount++;
     _advStats.totalAnswerTime += 5; // 視同5秒答對
@@ -17516,10 +17527,24 @@ function advShowBossReact(type) {
   else                         lines = BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
-  // 定位：在問答視窗上方，稍微偏左
-  el.style.left  = '16px';
-  el.style.right  = 'auto';
-  el.style.bottom = '320px';
+  // ★ 定位：在 Boss 卡牌正上方
+  try {
+    const boss = G && G.p2 ? G.p2.find(h=>h.name==='九尾空貓怪') : null;
+    const bossCardEl = boss ? document.getElementById(`card-p2-${boss.pos}`) : null;
+    if (bossCardEl) {
+      const rect = bossCardEl.getBoundingClientRect();
+      const gcRect = document.getElementById('gc').getBoundingClientRect();
+      el.style.left  = (rect.left - gcRect.left + rect.width/2 - 120) + 'px';
+      el.style.top   = (rect.top  - gcRect.top  - 10) + 'px';
+      el.style.bottom = 'auto';
+    } else {
+      // fallback
+      el.style.left = '50%'; el.style.transform = 'translateX(-50%)';
+      el.style.top = '8px'; el.style.bottom = 'auto';
+    }
+  } catch(e) {
+    el.style.left='16px'; el.style.top='8px'; el.style.bottom='auto';
+  }
 
   textEl.textContent = line;
   el.className = 'show ' + (type==='correct' ? 'correct-react' : type==='timeout' ? 'wrong-react' : 'wrong-react');
