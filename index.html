@@ -3,7 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDTsWozvDMoJyDhPmiYi1QZ31rlyy7fxZc",
+    authDomain: "lxpsgame.firebaseapp.com",
+    projectId: "lxpsgame",
+    storageBucket: "lxpsgame.firebasestorage.app",
+    messagingSenderId: "887017862215",
+    appId: "1:887017862215:web:7f6248ec2e5684cf63ed62"
+  };
+
+  const _fbApp  = initializeApp(firebaseConfig);
+  const _fbAuth = getAuth(_fbApp);
+  const _fbDb   = getFirestore(_fbApp);
+  const _fbProvider = new GoogleAuthProvider();
+
+  // 暴露給全域
+  window._fbSignIn = async function() {
+    try {
+      const result = await signInWithPopup(_fbAuth, _fbProvider);
+      // onAuthStateChanged 會自動觸發
+    } catch(e) {
+      console.error('Google 登入失敗', e);
+      alert('登入失敗，請確認已在 Firebase 設定授權網域。');
+    }
+  };
+
+  window._fbSignOut = async function() {
+    await signOut(_fbAuth);
+  };
+
+  // 雲端儲存
+  window._fbSave = async function(uid, data) {
+    try {
+      await setDoc(doc(_fbDb, 'players', uid), data);
+      return true;
+    } catch(e) { console.error('雲端儲存失敗', e); return false; }
+  };
+
+  // 雲端讀取
+  window._fbLoad = async function(uid) {
+    try {
+      const snap = await getDoc(doc(_fbDb, 'players', uid));
+      return snap.exists() ? snap.data() : null;
+    } catch(e) { console.error('雲端讀取失敗', e); return null; }
+  };
+
+  // 登入狀態變化
+  onAuthStateChanged(_fbAuth, async (user) => {
+    if(user) {
+      window._fbUser = user;
+      // 更新 UI
+      const av = document.getElementById('google-avatar');
+      const nm = document.getElementById('google-name');
+      const btnWrap = document.getElementById('google-login-btn-wrap');
+      const userInfo = document.getElementById('google-user-info');
+      if(av) av.src = user.photoURL || '';
+      if(nm) nm.textContent = user.displayName || '';
+      if(btnWrap) btnWrap.style.display = 'none';
+      if(userInfo) userInfo.style.display = 'flex';
+      // 讀取雲端進度
+      if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
+      console.log('✅ 已登入:', user.displayName);
+    } else {
+      window._fbUser = null;
+      const btnWrap = document.getElementById('google-login-btn-wrap');
+      const userInfo = document.getElementById('google-user-info');
+      if(btnWrap) btnWrap.style.display = '';
+      if(userInfo) userInfo.style.display = 'none';
+    }
+  });
+</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
@@ -2852,26 +2929,19 @@ body {
 <!-- Google 登入區塊 -->
 <div id="google-login-bar" style="position:absolute;top:12px;left:16px;z-index:20;display:flex;align-items:center;gap:12px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
   <div id="google-login-btn-wrap">
-    <div id="g_id_onload"
-         data-client_id="YOUR_GOOGLE_CLIENT_ID"
-         data-callback="onGoogleSignIn"
-         data-auto_select="true"
-         data-cancel_on_tap_outside="false"
-         data-context="signin">
-    </div>
-    <div class="g_id_signin"
-         data-type="standard"
-         data-shape="pill"
-         data-theme="filled_black"
-         data-text="sign_in_with"
-         data-size="medium"
-         data-logo_alignment="left">
-    </div>
+    <button onclick="window._fbSignIn && window._fbSignIn()"
+      style="display:flex;align-items:center;gap:10px;padding:8px 20px;
+      background:rgba(255,255,255,0.95);border:none;border-radius:24px;
+      cursor:pointer;font-size:18px;font-weight:600;color:#333;
+      box-shadow:0 2px 12px rgba(0,0,0,0.4);">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:22px;height:22px;"/>
+      使用 Google 登入
+    </button>
   </div>
   <div id="google-user-info" style="display:none;align-items:center;gap:10px;">
     <img id="google-avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(212,168,67,0.6);" />
     <span id="google-name" style="color:#ffe8a0;font-size:20px;font-weight:700;"></span>
-    <button onclick="gSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
+    <button onclick="window._fbSignOut && window._fbSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
   </div>
 </div>
 <div style="position:absolute; bottom:25px; left:50%; transform:translateX(-50%); z-index:10; width:100%; pointer-events:none; text-align:center; font-family:'M PLUS Rounded 1c', sans-serif;">
@@ -2885,7 +2955,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.20.02</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.20.55</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -18224,27 +18294,67 @@ function advBackToTitle() {
 // ══════════════════════════════════════════════
 let _gUserId = null; // Google 用戶 ID (for namespaced localStorage)
 
-function onGoogleSignIn(resp) {
-  try {
-    // Decode JWT credential
-    const payload = JSON.parse(atob(resp.credential.split('.')[1]));
-    _gUserId = payload.sub;
-    document.getElementById('google-avatar').src = payload.picture || '';
-    document.getElementById('google-name').textContent = payload.name || '';
-    document.getElementById('google-login-btn-wrap').style.display = 'none';
-    document.getElementById('google-user-info').style.display = 'flex';
-    // Load saved progress
-    gameSaveLoad('load');
-    log('✅ 已登入：' + payload.name);
-  } catch(e) { console.error('Google SignIn error', e); }
+async function doGoogleSignIn() {
+  if(!window._fbSignIn){ alert('Firebase 尚未載入，請重新整理頁面。'); return; }
+  const user = await window._fbSignIn();
+  if(user) log('✅ 已登入：' + user.displayName);
 }
 
-function gSignOut() {
-  google.accounts.id.disableAutoSelect();
+async function gSignOut() {
+  if(window._fbSignOut) await window._fbSignOut();
   _gUserId = null;
-  document.getElementById('google-login-btn-wrap').style.display = '';
-  document.getElementById('google-user-info').style.display = 'none';
   log('已登出 Google 帳號');
+}
+
+// 雲端儲存
+async function gameCloudSave() {
+  if(!window._gUserId || !window._fbSave) { gameCloudSave(); return; }
+  try {
+    const data = {
+      unlockedHeroes: advGetUnlockedHeroes(),
+      heroLevels: _heroLevels,
+      heroExp: _heroExp,
+      heroStatPoints: _heroStatPoints,
+      heroStatInvested: _heroStatInvested,
+      heroSkillLevels: _heroSkillLevels,
+      skillBookCount: _skillBookCount,
+      medals: _playerMedals,
+      settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
+      savedAt: Date.now()
+    };
+    // 同時存本地
+    localStorage.setItem('lxps_' + _gUserId + '_progress', JSON.stringify(data));
+    // 存雲端
+    const ok = await window._fbSave(_gUserId, data);
+    if(ok) log('☁️ 雲端存檔成功！');
+  } catch(e) { console.error('gameCloudSave error', e); gameCloudSave(); }
+}
+
+// 雲端讀取
+async function gameCloudLoad() {
+  if(!window._gUserId) return;
+  try {
+    // 優先讀雲端
+    let data = null;
+    if(window._fbLoad){
+      data = await window._fbLoad(_gUserId);
+    }
+    // 若雲端無資料，讀本地
+    if(!data){
+      const raw = localStorage.getItem('lxps_' + _gUserId + '_progress');
+      if(raw) data = JSON.parse(raw);
+    }
+    if(!data) return;
+    if(data.unlockedHeroes) localStorage.setItem('adv_unlocked_heroes', JSON.stringify(data.unlockedHeroes));
+    if(data.heroLevels)      _heroLevels      = data.heroLevels;
+    if(data.heroExp)         _heroExp         = data.heroExp;
+    if(data.heroStatPoints)  _heroStatPoints  = data.heroStatPoints;
+    if(data.heroStatInvested)_heroStatInvested= data.heroStatInvested;
+    if(data.heroSkillLevels) _heroSkillLevels = data.heroSkillLevels;
+    if(typeof data.skillBookCount !== 'undefined') _skillBookCount = data.skillBookCount;
+    if(data.medals)          _playerMedals    = data.medals;
+    log('☁️ 雲端資料已載入！');
+  } catch(e) { console.error('gameCloudLoad error', e); }
 }
 
 function _saveKey(key) {
@@ -18252,39 +18362,74 @@ function _saveKey(key) {
 }
 
 // ── 讀取 / 儲存 遊戲進度 ──
+function _applyLoadedData(data) {
+  if(!data) return;
+  if(data.unlockedHeroes) localStorage.setItem('adv_unlocked_heroes', JSON.stringify(data.unlockedHeroes));
+  if(data.heroLevels)      _heroLevels = data.heroLevels;
+  if(data.heroExp)         _heroExp = data.heroExp;
+  if(data.heroStatPoints)  _heroStatPoints = data.heroStatPoints;
+  if(data.heroStatInvested)_heroStatInvested = data.heroStatInvested;
+  if(data.heroSkillLevels) _heroSkillLevels = data.heroSkillLevels;
+  if(typeof data.skillBookCount !== 'undefined') _skillBookCount = data.skillBookCount;
+  if(data.medals)          _playerMedals = data.medals;
+}
+
+function _buildSaveData() {
+  return {
+    unlockedHeroes: advGetUnlockedHeroes(),
+    heroLevels:      _heroLevels,
+    heroExp:         _heroExp,
+    heroStatPoints:  _heroStatPoints,
+    heroStatInvested:_heroStatInvested,
+    heroSkillLevels: _heroSkillLevels,
+    skillBookCount:  _skillBookCount,
+    medals:          _playerMedals,
+    settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
+    savedAt: Date.now()
+  };
+}
+
 function gameSaveLoad(action) {
   try {
     if(action === 'save') {
-      const data = {
-        unlockedHeroes: advGetUnlockedHeroes(),
-        heroLevels: _heroLevels,
-        heroExp: _heroExp,
-        heroStatPoints: _heroStatPoints,
-        heroStatInvested: _heroStatInvested,
-        heroSkillLevels: _heroSkillLevels,
-        skillBookCount: _skillBookCount,
-        medals: _playerMedals,
-        settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
-        savedAt: Date.now()
-      };
+      const data = _buildSaveData();
+      // ① 本地備份
       localStorage.setItem(_saveKey('progress'), JSON.stringify(data));
+      // ② 雲端同步（非同步，不阻塞遊戲）
+      if(window._fbUser && window._fbSave) {
+        window._fbSave(window._fbUser.uid, data).then(ok => {
+          if(ok) log('☁️ 雲端已同步');
+        });
+      }
       log('💾 遊戲進度已儲存');
     } else {
+      // 先從本地讀
       const raw = localStorage.getItem(_saveKey('progress'));
-      if(!raw) return;
-      const data = JSON.parse(raw);
-      if(data.unlockedHeroes) localStorage.setItem('adv_unlocked_heroes', JSON.stringify(data.unlockedHeroes));
-      if(data.heroLevels) _heroLevels = data.heroLevels;
-      if(data.heroExp) _heroExp = data.heroExp;
-      if(data.heroStatPoints) _heroStatPoints = data.heroStatPoints;
-      if(data.heroStatInvested) _heroStatInvested = data.heroStatInvested;
-      if(data.heroSkillLevels) _heroSkillLevels = data.heroSkillLevels;
-      if(typeof data.skillBookCount !== 'undefined') _skillBookCount = data.skillBookCount;
-      if(data.medals) _playerMedals = data.medals;
-      log('📂 遊戲進度已讀取');
+      if(raw) _applyLoadedData(JSON.parse(raw));
+      log('📂 遊戲進度已讀取（本地）');
     }
   } catch(e) { console.error('gameSaveLoad error', e); }
 }
+
+// 雲端讀取（登入後呼叫）
+window.gameCloudLoad = async function(uid) {
+  try {
+    const data = await window._fbLoad(uid);
+    if(data) {
+      _applyLoadedData(data);
+      // 同步回本地
+      localStorage.setItem('lxps_' + uid + '_progress', JSON.stringify(data));
+      log('☁️ 雲端進度已載入（' + new Date(data.savedAt).toLocaleString('zh-TW') + '）');
+      // 顯示歡迎訊息
+      setTimeout(()=>{
+        const nm = document.getElementById('google-name');
+        if(nm) bannerFX && bannerFX(null, '歡迎回來！進度已從雲端同步 ✅', '#44ff88', 2500);
+      }, 1000);
+    } else {
+      log('☁️ 雲端無記錄，使用本地進度');
+    }
+  } catch(e) { console.error('gameCloudLoad error', e); }
+};
 
 // ── 英雄養成資料 ──
 let _heroLevels = {};       // {heroName: level}
@@ -18333,7 +18478,7 @@ function grantBattleExp(win, stats) {
   const books = 1 + (score > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
   _skillBookCount += books;
   log(`📖 獲得技能升級書 ×${books}（共${_skillBookCount}本）`);
-  gameSaveLoad('save');
+  gameCloudSave();
   // 通知英雄頁面紅點
   _setNavDot('英雄', true);
 }
@@ -18541,7 +18686,7 @@ function investStat(name, stat) {
   if((_heroStatInvested[name][stat]||0) >= 50) return;
   _heroStatPoints[name]--;
   _heroStatInvested[name][stat] = (_heroStatInvested[name][stat]||0) + 1;
-  gameSaveLoad('save');
+  gameCloudSave();
   // Re-render
   _renderHeroDetail(name, document.getElementById('hero-detail-content'));
 }
@@ -18554,7 +18699,7 @@ function upgradeSkill(name, slot) {
   _heroSkillLevels[name][slot] = (_heroSkillLevels[name][slot]||0) + 1;
   const lv = _heroSkillLevels[name][slot];
   log(`📖 技能升級！${name} ${slot} → +${lv} (效果+${lv*10}%)`);
-  gameSaveLoad('save');
+  gameCloudSave();
   document.getElementById('hero-page-book-count').textContent = _skillBookCount;
   _renderHeroDetail(name, document.getElementById('hero-detail-content'));
 }
