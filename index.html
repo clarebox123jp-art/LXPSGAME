@@ -802,7 +802,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   padding:80px 20px 40px 40px;gap:16px;
 }
 .adv-list-title{
-  font-size:96px;font-weight:700;color:#ffe8a0;
+  font-size:28px;font-weight:700;color:#ffe8a0;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;line-height:1.75;
   text-shadow:0 2px 0 rgba(0,0,0,0.9),0 0 20px rgba(255,200,80,0.35);
@@ -892,6 +892,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   100%{opacity:0;transform:translate(-50%,-50%) scale(0.95);}
 }
 @keyframes upgradeArrowBounce{from{transform:translateX(-50%) translateY(0);}to{transform:translateX(-50%) translateY(-8px);}}
+.hpick-arena-card:hover{transform:scale(1.07)!important;border-color:rgba(212,168,67,0.9)!important;}
 @keyframes navDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.4);}}
 .adv-nav-btn{
   flex:1;padding:10px 8px;border-radius:12px;cursor:pointer;
@@ -1253,7 +1254,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .equip-skip-btn:hover{border-color:#888;color:#aaa}
 /* HERO PICK OVERLAY - CIRCULAR */
 #hero-pick-overlay{
-  display:none;position:absolute;inset:0;
+  display:none;position:absolute;inset:0;z-index:520;
   background:url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png") center/cover no-repeat;
   z-index:110;flex-direction:column;overflow:hidden;
 }
@@ -1271,17 +1272,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   text-shadow:0 0 20px rgba(255,255,255,0.6),0 2px 0 rgba(0,0,0,0.9);
 }
-#hero-pick-body{flex:1;display:flex;flex-direction:row;overflow:visible;min-height:0;position:relative;}
-#hero-pick-arena{position:relative;flex-shrink:0;width:1060px;overflow:visible;}
+#hero-pick-body{flex:1;display:flex;flex-direction:row;overflow:hidden;min-height:0;position:relative;}
+#hero-pick-arena{position:relative;flex:1;min-width:600px;overflow-y:auto;overflow-x:hidden;}
 .hpick-orbit{
   position:absolute;top:50%;left:50%;
   border:1px solid rgba(255,255,255,0.05);border-radius:50%;
   transform:translate(-50%,-50%);pointer-events:none;
 }
 /* 冒險模式英雄格狀選擇 */
-#hero-pick-arena-inner{ overflow-y:auto!important; max-height:80vh; }
-.hpick-grid-item:hover{ transform:scale(1.06)!important; border-color:rgba(212,168,67,0.9)!important; }
-.hpick-grid-item.picked{ transform:scale(1.03); }
+.hpick-adv-node:hover{ transform:scale(1.06)!important; border-color:rgba(212,168,67,0.9)!important; }
+.hpick-adv-node.picked{ transform:scale(1.03); }
 .hpick-node{
   position:absolute;width:120px;height:120px;border-radius:50%;
   /* 水晶球底層漸層 */
@@ -1547,7 +1547,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .cat-atk .skcat-header{background:rgba(180,20,30,0.3);color:#ff8888}
 .cat-heal .skcat-header{background:rgba(20,140,55,0.3);color:#88ffaa}
 .cat-tank .skcat-header{background:rgba(20,80,180,0.3);color:#88aaff}
-.skcat-list{display:flex;flex-direction:column;gap:1px;padding:5px}
+.skcat-list{grid-template-columns:repeat(4,1fr);display:grid;gap:1px;padding:5px}
 .sk-pick-btn{
   width:100%;text-align:left;padding:6px 9px;
   background:transparent;border:1px solid transparent;border-radius:5px;
@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.22.04</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.23.13</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4653,7 +4653,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧',
 };
 const HERO_IMGS = {
   '光法師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%85%89%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
@@ -4739,17 +4739,33 @@ const HERO_DB = {
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:3,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態，再用特技+攻擊+速度造成傷害，攻擊完狀態復原',fd:'先幫自己隨機附加一個有利狀態，再用特技值+攻擊值+速度值的總和對1名對手造成傷害，攻擊完畢後立即移除該有利狀態。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人嘲諷並使其失明2回合',fd:'強迫1名敵人進入「挑釁」狀態並使其「失明」，持續2回合。'}},
   // ══ 冒險闖關 BOSS 角色 ══
-'九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,
+'九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
   s2:{n:'睡覺功',c:5,d:'解除自身所有不利狀態並恢復10%HP',fd:'解除自己身上所有不利狀態，並恢復最大HP的10%（約50HP）。'}
 },
-'綠竹筍小妖':{hp:180,atk:9,sp:10,spd:5,
+'綠竹筍小妖':{hp:180,atk:9,sp:10,spd:5,exp:20,
   s1:{n:'筍之守護',c:3,d:'友方全體各獲得20護盾',fd:'使友方全體各獲得可抵擋20傷害的護盾。'},
   s2:{n:'筍之刺',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'用特技值對1名對手造成傷害，有50%機率使其「麻痺」無法行動1回合。'}
 },
-'茶葉精靈':{hp:150,atk:7,sp:17,spd:10,
+'茶葉精靈':{hp:150,atk:7,sp:17,spd:10,exp:18,
   s1:{n:'一壺鐵觀音',c:3,d:'依特技恢復友方全體HP',fd:'用特技值恢復友方全體HP。'},
   s2:{n:'一壺包種茶',c:3,d:'解除友方全體不利狀態，再恢復HP最少的隊友',fd:'解除友方全體所有不利狀態，並用特技值恢復HP最少的友方HP（可復活）。'}
+},
+'偷摘花的頑皮妖精':{hp:42,atk:10,sp:17,spd:13,exp:8,
+  s1:{n:'花粉噴射',c:2,d:'特技傷害1名對手並使其失明1回合',fd:'用特技值對1名對手造成傷害，有70%機率使其「失明」，行動成功率減半，持續1回合。'},
+  s2:{n:'魅惑之舞',c:3,d:'使1名對手下回合攻擊己方隊友',fd:'使1名對手下回合強制普通攻擊自己的隊友。'}
+},
+'偷鳥蛋的鳥人哈維':{hp:40,atk:10,sp:13,spd:16,exp:8,
+  s1:{n:'俯衝攻擊',c:2,d:'攻擊+速度×0.3對1名對手造成傷害',fd:'用（攻擊+速度×0.3）對1名對手造成傷害。'},
+  s2:{n:'搶奪',c:3,d:'奪取1名對手的道具或有利狀態',fd:'奪取1名對手手中1張道具卡，若無道具則奪取有利狀態。'}
+},
+'偷竹筍的哥布林':{hp:45,atk:10,sp:9,spd:8,exp:7,
+  s1:{n:'亂棒猛打',c:2,d:'對1名對手連打2次',fd:'用攻擊值對1名對手連續造成2次傷害。'},
+  s2:{n:'硬皮防禦',c:3,d:'獲得減輕20傷害的護盾',fd:'使自己獲得可抵擋20點傷害的護盾，持續至護盾耗盡。'}
+},
+'偷喝茶的史萊姆':{hp:30,atk:5,sp:14,spd:3,exp:5,
+  s1:{n:'黏液噴濺',c:2,d:'特技50%傷害全體對手並緩速',fd:'用特技的50%對全體存活的對手造成傷害，並使所有目標「緩速」1回合。'},
+  s2:{n:'分裂增殖',c:4,d:'恢復自身HP30%（限用1次）',fd:'使自己恢復最大HP的30%。本場戰鬥限用一次。',once:true}
 },
 };
 
@@ -5032,6 +5048,39 @@ function getHeroImgStyle(name){
   return 'background-size:'+pos[0]+';background-position:'+pos[1];
 }
 // ====== 極限爆發技能 DB ======
+// ★ 英雄角色簡介
+const HERO_BIO = {
+  '劍士':      { role:'異世界劍聖學徒', trait:'沉默寡言，行動派', hobby:'每日練劍，收集廢棄鎧甲' },
+  '祭司':      { role:'聖光神殿見習祭司', trait:'溫柔細心，重視生命', hobby:'製作草藥，照顧傷者' },
+  '聖騎士':    { role:'王國聖騎士團副隊長', trait:'正直不阿，責任感強', hobby:'研讀騎士法典，護送旅人' },
+  '火法師':    { role:'紅塔魔法學院火焰系助教', trait:'熱情衝動，競爭心強', hobby:'開發新魔法，挑戰強敵' },
+  '冰法師':    { role:'冰河神殿術士', trait:'冷靜理性，觀察敏銳', hobby:'研究氣象魔法，獨自遠足' },
+  '雷法師':    { role:'雷暴峽谷守護者', trait:'活潑好動，反應快速', hobby:'追逐暴風雨，調整魔法迴路' },
+  '光法師':    { role:'日輪聖域的光明使者', trait:'開朗樂觀，鼓舞人心', hobby:'傳播光明，教導初學者' },
+  '暗法師':    { role:'暗影議會特使', trait:'謀略深遠，城府頗深', hobby:'研究禁忌魔法，收集秘密情報' },
+  '神射手':    { role:'荒野獵人公會精英', trait:'獨立自主，精準果斷', hobby:'追蹤野獸足跡，改良弓箭' },
+  '吟遊詩人':  { role:'異世界知名旅行歌手', trait:'浪漫多情，富有感染力', hobby:'創作新曲，遊歷各地記錄故事' },
+  '煉金術師':  { role:'皇家煉金研究所所長', hobby:'調配藥劑，改造機械零件', trait:'好奇心旺盛，鑽研不懈' },
+  '武鬥家':    { role:'拳聖流派傳人', trait:'豪爽直接，敢作敢為', hobby:'鍛鍊體能，尋訪武術高手' },
+  '占星師':    { role:'星象觀測台台長', trait:'深思熟慮，洞悉未來', hobby:'觀測星象，解讀命運密碼' },
+  '大力士':    { role:'競技場常勝冠軍', trait:'樂天知命，力大無比', hobby:'舉重比賽，保護弱小' },
+  '木靈使':    { role:'古森林精靈守護者', trait:'溫和寧靜，親近自然', hobby:'與植物對話，培育稀有藥草' },
+  '機械師':    { role:'蒸汽城邦首席工程師', trait:'邏輯清晰，創意無限', hobby:'拆解機械，設計新型裝置' },
+  '動物學家':  { role:'力行小學自然老師', trait:'熱愛動物，充滿好奇心', hobby:'野外觀察，拍攝動物生態' },
+  '陰陽師':    { role:'東方靈術師', trait:'謹慎沉穩，敬天畏地', hobby:'抄寫符咒，研究陰陽五行' },
+  '吸血鬼':    { role:'古老血族末裔', trait:'優雅神秘，略顯孤傲', hobby:'收集古典藝術品，夜間散步' },
+  '時空法師':  { role:'時空裂隙研究者', trait:'哲學思辨，超然物外', hobby:'記錄時間線異常，下棋' },
+  '籃球隊員':  { role:'力行小學籃球隊隊長', trait:'積極主動，重視團隊', hobby:'練習三分球，研究戰術' },
+  '直笛團員':  { role:'力行小學直笛合奏團首席', trait:'認真細膩，追求完美', hobby:'練習新曲目，整理樂譜' },
+  '田徑隊員':  { role:'力行小學田徑隊短跑選手', trait:'不服輸，自律嚴格', hobby:'晨跑訓練，記錄個人紀錄' },
+  '幼兒園小孩':{ role:'力行小學附設幼兒園小朋友', trait:'天真無邪，充滿想像力', hobby:'畫畫，玩積木' },
+  '電腦繪圖師':{ role:'力行小學美術社社長', trait:'富有創意，觀察力強', hobby:'數位繪圖，設計遊戲角色' },
+  '程式設計師':{ role:'力行小學資訊社創辦人', trait:'邏輯思維強，解決問題快', hobby:'寫程式，玩Minecraft' },
+  '弦樂團員':  { role:'力行小學弦樂團小提琴手', trait:'敏感細膩，富有藝術氣息', hobby:'練習協奏曲，欣賞音樂會' },
+  '小劇團員':  { role:'力行小學戲劇社主角', trait:'表現力強，樂於分享', hobby:'排練話劇，模仿各種角色' },
+  '小力':      { role:'力行小學愛狗人士', trait:'善良溫暖，重視友情', hobby:'遛狗，照顧流浪動物' },
+};
+
 const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
   '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的150%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
@@ -6428,20 +6477,20 @@ function _showEnemyPreview(name){ window._showEnemyPreview(name); }
 
 function _buildHeroPickNodes(){
   const arena = document.getElementById('hero-pick-arena-inner') || document.getElementById('hero-pick-arena');
-  arena.querySelectorAll('.hpick-node,.hpick-orbit,.hpick-center-btn,.hpick-adv-grid').forEach(el=>el.remove());
+  arena.querySelectorAll('.hpick-node,.hpick-orbit,.hpick-center-btn,.hpick-adv-grid,.hpick-adv-node,.hpick-arena-grid,.hpick-arena-card').forEach(el=>el.remove());
 
   // ★ 冒險模式：格狀排列（從左上開始，只顯示已解鎖英雄）
   if(window._isAdventurePickMode === true){
     const grid = document.createElement('div');
     grid.className = 'hpick-adv-grid';
-    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;justify-content:flex-start;align-content:flex-start;overflow-y:auto;max-height:640px;';
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;justify-content:flex-start;align-content:flex-start;overflow-y:auto;max-height:600px;width:100%;';
     _heroPickPool.forEach((name, idx) => {
       const av = (typeof AVATARS!=='undefined'&&AVATARS[name])||'🗡️';
       const img = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])||'';
       const node = document.createElement('div');
-      node.className = 'hpick-node hpick-adv-node';
+      node.className = 'hpick-adv-node';
       node.id = `hpick-${idx}`;
-      node.style.cssText = 'position:relative;width:128px;cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(212,168,67,0.4);background:rgba(15,15,28,0.9);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;';
+      node.style.cssText = 'position:relative;width:128px;cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(212,168,67,0.4);background:rgba(15,15,28,0.9);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;display:block;';
       node.innerHTML = img
         ? `<img src="${img}" style="width:100%;height:100px;object-fit:cover;display:block;"/>
            <div style="font-size:17px;text-align:center;padding:6px 4px;color:#ffe8a0;font-weight:700;">${name}</div>`
@@ -6462,38 +6511,45 @@ function _buildHeroPickNodes(){
     return;
   }
 
-  // ★ 鬥技場模式：環狀排列
-  const innerR=185, outerR=350;
-  const rings=[
-    {r:innerR, indices:[0,1,2,3]},
-    {r:outerR, indices:[4,5,6,7,8,9,10,11]}
-  ];
-  rings.forEach(ring=>{
-    const orbit=document.createElement('div');
-    orbit.className='hpick-orbit';
-    const d=ring.r*2;
-    orbit.style.cssText=`width:${d}px;height:${d}px`;
-    arena.appendChild(orbit);
-  });
-  const cx=530, cy=460;
-  _heroPickPool.forEach((name,idx)=>{
-    const ring = idx<4 ? rings[0] : rings[1];
-    const ringIdx = idx<4 ? idx : idx-4;
-    const total = ring.indices.length;
-    const angle = (ringIdx/total)*Math.PI*2 - Math.PI/2;
-    const x = cx + ring.r*Math.cos(angle);
-    const y = cy + ring.r*Math.sin(angle);
-    const av = AVATARS[name]||'🗡️';
+  // ★ 鬥技場模式：橫列網格排列（5個一排，靠左靠上）
+  const arenaGrid = document.createElement('div');
+  arenaGrid.className = 'hpick-arena-grid';
+  arenaGrid.style.cssText = [
+    'display:flex;flex-wrap:wrap;gap:16px;',
+    'padding:16px 12px;align-content:flex-start;',
+    'justify-content:flex-start;width:100%;'
+  ].join('');
+  _heroPickPool.forEach((name, idx) => {
+    const av = (typeof AVATARS!=='undefined' && AVATARS[name]) || '🗡️';
+    const img = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[name]) || '';
     const node = document.createElement('div');
-    node.className='hpick-node';
-    node.id=`hpick-${idx}`;
-    node.style.left=x+'px';
-    node.style.top=y+'px';
-    node.innerHTML=`<div class="hn-av">${av}</div><div class="hn-name">${name}</div>`;
-    node.onclick=()=>focusHero(idx, name);
-    if(_heroPickSelected.includes(name)) node.classList.add('picked');
-    arena.appendChild(node);
+    node.className = 'hpick-arena-card';
+    node.id = `hpick-${idx}`;
+    node.style.cssText = [
+      'width:155px;cursor:pointer;border-radius:14px;overflow:hidden;',
+      'border:2.5px solid rgba(212,168,67,0.4);',
+      'background:rgba(10,12,25,0.92);',
+      'transition:transform 0.15s,border-color 0.15s;',
+      'flex-shrink:0;'
+    ].join('');
+    node.innerHTML = img
+      ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;"/>
+         <div style="font-size:20px;text-align:center;padding:7px 4px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name}</div>`
+      : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:58px;">${av}</div>
+         <div style="font-size:20px;text-align:center;padding:7px 4px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name}</div>`;
+    if(_heroPickSelected.includes(name)){
+      node.style.borderColor='rgba(100,220,100,0.9)';
+      node.style.background='rgba(15,50,15,0.92)';
+      const badge=document.createElement('div');
+      badge.style.cssText='position:absolute;top:5px;right:5px;background:#44cc44;color:#fff;font-size:15px;font-weight:900;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;';
+      badge.textContent=_heroPickSelected.indexOf(name)+1;
+      node.style.position='relative';
+      node.appendChild(badge);
+    }
+    node.onclick=()=>focusHero(idx,name);
+    arenaGrid.appendChild(node);
   });
+  arena.appendChild(arenaGrid);
   // 中心「尋找新英雄」星星按鈕
   const starBtn = document.createElement('div');
   starBtn.className='hpick-center-btn';
@@ -14278,6 +14334,11 @@ function checkWin(){
 }
 // 慢動作 → 大標題 → 結算的完整流程
 function _showResultWithDrama(win){
+  // ★ 小怪戰鬥結束
+  if(_advMiniBattleActive){
+    advFinishMiniBattle(win);
+    return;
+  }
   // 冒險模式：失敗時先嘗試接關
   if(typeof _adventureMode !== 'undefined' && _adventureMode && !win){
     if(typeof advCheckContinue === 'function' && advCheckContinue()) return;
@@ -16663,7 +16724,7 @@ function hideSkillDetailPopup(){
 let _adventureMode = false;
 let _adventureStage = null;
 // BOSS 角色名單：永遠排除在選角色池之外
-const BOSS_NAMES = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+const BOSS_NAMES = ['九尾空貓怪','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
 // 冒險模式允許出場的英雄名單
 const ADV_HERO_POOL = {
   maokong: ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家']
@@ -17170,9 +17231,11 @@ function advGiveTreasure(slotIdx) {
 
 function advCloseTreasurePopup() {
   document.getElementById('adv-treasure-popup').classList.remove('show');
-  // 下一個場景（300ms後）
+  const nextIdx = _advSceneIdx + 1;
+  const scenes = ADV_SCENES[_adventureStage] || [];
+  // ★ 每場景後穿插一場小怪戰鬥（最後一場景也有，before BOSS）
   setTimeout(() => {
-    advLoadScene(_adventureStage, _advSceneIdx + 1);
+    advStartMiniBattle(nextIdx);
   }, 300);
 }
 
@@ -18564,31 +18627,36 @@ function grantBattleExp(win, stats) {
   if(!win) return;
   const heroes = advGetUnlockedHeroes();
   if(!heroes.length) return;
-  const base = 100;
-  // 積分加成：答對率+效率，最多200%
+  // ★ 依擊敗魔物的個別EXP值計算基礎經驗
+  let baseExp = 0;
+  if(G && G.p2) {
+    G.p2.forEach(h => {
+      const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
+      baseExp += (hd && hd.exp) ? hd.exp : 10;
+    });
+  }
+  if(baseExp === 0) baseExp = 93; // 預設BOSS場（55+20+18）
+  // 積分加成比率：最多200%
   const correct = stats && stats.correctCount ? stats.correctCount : 0;
-  const rounds  = stats && stats.rounds       ? stats.rounds       : 1;
+  const rounds  = stats && stats.rounds ? stats.rounds : 1;
   const score   = stats && stats.totalQuizScore ? stats.totalQuizScore : 0;
-  const ratio   = Math.min(2.0,
-    1.0
-    + correct * 0.08             // 每答對1題+8%
-    + Math.max(0, 20-rounds)*0.02 // 回合效率
-    + score * 0.0005             // 答題分數
+  const ratio = Math.min(2.0,
+    1.0 + correct*0.08 + Math.max(0,20-rounds)*0.02 + score*0.0005
   );
-  const totalExp = Math.round(base * ratio);
-  // 本次出戰的英雄多給 50% 加成
+  const totalExp = Math.round(baseExp * ratio);
+  // 出戰英雄×1.5，其他英雄×0.5
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
   heroes.forEach(name => {
-    const bonus = battleHeroes.includes(name) ? 1.5 : 1.0;
-    addHeroExp(name, Math.round(totalExp * bonus));
+    const mul = battleHeroes.includes(name) ? 1.5 : 0.5;
+    addHeroExp(name, Math.round(totalExp * mul));
   });
-  bannerFX(null, `⭐ 英雄獲得 ${totalExp} 經驗值！`, '#ffe066', 1500);
-  // 加入技能升級書
+  const battleExp = Math.round(totalExp * 1.5);
+  bannerFX(null, `⭐ 出戰英雄 +${battleExp} EXP（加成${Math.round(ratio*100)}%）`, '#ffe066', 2000);
+  // 技能升級書
   const books = 1 + (score > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
   _skillBookCount += books;
-  log(`📖 獲得技能升級書 ×${books}（共${_skillBookCount}本）`);
+  log(`📖 獲得技能升級書×${books}（共${_skillBookCount}本）`);
   gameCloudSave();
-  // 通知英雄頁面紅點
   _setNavDot('英雄', true);
 }
 
@@ -18785,7 +18853,7 @@ function closeHeroDetail() {
 
 function _renderHeroDetail(name, box) {
   const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[name] : null;
-  if(!hd) { box.innerHTML = '<div style="color:#888;font-size:28px;text-align:center;padding:40px;">英雄資料未收錄</div>'; return; }
+  if(!hd) { box.innerHTML = '<div style="color:#888;font-size:32px;text-align:center;padding:60px;">英雄資料未收錄</div>'; return; }
   const img = typeof HERO_IMGS !== 'undefined' ? (HERO_IMGS[name]||'') : '';
   const av  = typeof AVATARS !== 'undefined' ? (AVATARS[name]||'⚔') : '⚔';
   // 更新左側立繪
@@ -18803,72 +18871,161 @@ function _renderHeroDetail(name, box) {
   const sk1Lv = (_heroSkillLevels[name]||{}).s1 || 0;
   const sk2Lv = (_heroSkillLevels[name]||{}).s2 || 0;
   const burst = typeof BURST_DB !== 'undefined' ? BURST_DB[name] : null;
+  const trait = typeof HERO_TRAIT !== 'undefined' ? HERO_TRAIT[name] : null;
+  const traitLv = _heroTraitLevel[name] || 0;
+  const bio   = typeof HERO_BIO !== 'undefined' ? HERO_BIO[name] : null;
+
+  // 計算治療力和控場力
+  const HEAL_SK = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復','神之賜福',
+    '慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療','復活術','天籟之音','流浪者之歌','一壺鐵觀音']);
+  const CTRL_SK = new Set(['虛弱咒','禁書封鎖','狂亂之歌','炫目神光','強勢對決','群體挑釁','不熟練習曲',
+    '餘音繞樑','小星星變奏曲','泰山壓頂','運球']);
+  let healScore = 0, ctrlScore = 0;
+  [hd.s1, hd.s2].forEach(sk => {
+    if(!sk) return;
+    if(HEAL_SK.has(sk.n)) healScore += 4;
+    if(CTRL_SK.has(sk.n)) ctrlScore += 4;
+  });
+  if(burst && HEAL_SK.has(burst.n)) healScore += 3;
+  if(burst && CTRL_SK.has(burst.n)) ctrlScore += 3;
+  if(trait && (HEAL_SK.has(trait.desc||'') || (trait.desc||'').includes('治癒') || (trait.desc||'').includes('恢復'))) healScore += 3;
+  if(trait && ((trait.desc||'').includes('緩速')||(trait.desc||'').includes('暈眩')||(trait.desc||'').includes('睡眠')||(trait.desc||'').includes('封印'))) ctrlScore += 3;
+  healScore = Math.min(10, healScore);
+  ctrlScore = Math.min(10, ctrlScore);
+
+  // 六維數值（最大值正規化）
+  const maxStat = 80;
+  const dims = [
+    {label:'HP',    val: Math.min(10, Math.round((hd.hp + (inv.hp||0)) / maxStat * 10))},
+    {label:'攻擊',  val: Math.min(10, Math.round((hd.atk + (inv.atk||0)) / 20 * 10))},
+    {label:'特技',  val: Math.min(10, Math.round((hd.sp + (inv.sp||0)) / 20 * 10))},
+    {label:'速度',  val: Math.min(10, Math.round((hd.spd + (inv.spd||0)) / 15 * 10))},
+    {label:'治療',  val: healScore},
+    {label:'控場',  val: ctrlScore},
+  ];
+
+  // SVG 六邊形雷達圖
+  function makeRadar(dims, size) {
+    const cx = size/2, cy = size/2, R = size*0.38;
+    const n = dims.length;
+    const labelR = R + size*0.13;
+    function pt(i, r) {
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    }
+    let gridLines = '';
+    for(let g = 2; g <= 10; g += 2) {
+      const pts = Array.from({length:n}, (_,i) => pt(i, R * g/10)).map(p=>p.join(',')).join(' ');
+      gridLines += `<polygon points="${pts}" fill="none" stroke="rgba(100,150,200,0.25)" stroke-width="1"/>`;
+    }
+    let axes = '';
+    for(let i=0;i<n;i++){
+      const [x,y] = pt(i,R);
+      axes += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(100,150,200,0.35)" stroke-width="1"/>`;
+    }
+    const dataPts = dims.map((d,i) => pt(i, R * d.val/10)).map(p=>p.join(',')).join(' ');
+    let labels = '';
+    for(let i=0;i<n;i++){
+      const [x,y] = pt(i, labelR);
+      const anchor = x < cx-4 ? 'end' : x > cx+4 ? 'start' : 'middle';
+      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.07}" fill="#ffe8a0" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif">${dims[i].label}</text>`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      ${gridLines}${axes}
+      <polygon points="${dataPts}" fill="rgba(74,158,255,0.3)" stroke="#4a9eff" stroke-width="2"/>
+      ${labels}
+    </svg>`;
+  }
 
   box.innerHTML = `
-    <div>
-      <div style="font-size:44px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}</div>
-        <div style="font-size:22px;color:#88aaff;margin-bottom:12px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;font-size:18px;"> MAX</span>':''}</div>
-        ${lv < 50 ? `<div style="font-size:17px;color:#778;margin-bottom:6px;">EXP: ${exp} / ${expNeed}
-          <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:4px;">
-            <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
-          </div></div>` : '<div style="font-size:17px;color:#ffcc44;margin-bottom:6px;">✨ 已達最高等級</div>'}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;">
-          ${['hp','atk','sp','spd'].map(stat => {
-            const base = hd[stat] || 0; const bonus = inv[stat]||0;
-            const icon = {hp:'❤️',atk:'⚔️',sp:'✨',spd:'💨'}[stat];
-            const label = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
-            return `<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:20px;">${icon} ${label}</span>
-              <span style="font-size:22px;font-weight:700;color:#ffe8a0;">${base+bonus}${bonus>0?`<span style="font-size:15px;color:#44ff88;"> +${bonus}</span>`:''}
-              </span>
-              ${freeP>0&&bonus<50?`<button onclick="investStat('${name}','${stat}')" style="padding:2px 10px;font-size:16px;background:rgba(100,200,100,0.2);border:1px solid #44ff88;color:#44ff88;border-radius:6px;cursor:pointer;">+1</button>`:''}
-            </div>`;
-          }).join('')}
+    <!-- 返回圖鑑按鈕 -->
+    <button onclick="closeHeroDetail()" style="position:sticky;top:0;z-index:10;margin-bottom:16px;
+      padding:10px 28px;font-size:26px;font-weight:800;
+      background:rgba(40,30,0,0.85);border:2px solid rgba(212,168,67,0.6);
+      color:#ffe8a0;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回圖鑑</button>
+
+    <!-- 名稱與等級 -->
+    <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}</div>
+    <div style="font-size:32px;color:#88aaff;margin-bottom:10px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
+    ${lv < 50 ? `<div style="font-size:24px;color:#778;margin-bottom:8px;">EXP: ${exp} / ${expNeed}
+      <div style="height:8px;background:rgba(100,100,150,0.3);border-radius:5px;margin-top:4px;">
+        <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:5px;"></div>
+      </div></div>` : '<div style="font-size:24px;color:#ffcc44;margin-bottom:8px;">✨ 已達最高等級</div>'}
+
+    <!-- 屬性格 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      ${['hp','atk','sp','spd'].map(stat => {
+        const base = hd[stat]||0; const bonus = inv[stat]||0;
+        const icon = {hp:'❤️',atk:'⚔️',sp:'✨',spd:'💨'}[stat];
+        const lbl = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
+        return `<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:28px;">${icon} ${lbl}</span>
+          <span style="font-size:34px;font-weight:700;color:#ffe8a0;">${base+bonus}${bonus>0?`<span style="font-size:20px;color:#44ff88;"> +${bonus}</span>`:''}
+          </span>
+          ${freeP>0&&bonus<50?`<button onclick="investStat('${name}','${stat}')" style="padding:4px 14px;font-size:22px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;">+1</button>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+    ${freeP>0?`<div style="font-size:28px;color:#44ff88;margin-bottom:12px;font-weight:700;">💎 可用素質點數：${freeP}</div>`:''}
+
+    <!-- 技能區 -->
+    <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;margin-bottom:14px;">
+      <div style="font-size:30px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">🎯 技能</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+      ${['s1','s2'].map((slot,si) => {
+        const sk = hd[slot]; if(!sk) return '';
+        const skLv = si===0 ? sk1Lv : sk2Lv;
+        const maxed = skLv >= 9;
+        const fd = sk.fd || sk.d;
+        return `<div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,255,255,0.12);">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-size:28px;font-weight:800;color:#ffe8a0;">${sk.n}</span>
+            <span style="font-size:22px;color:#4a9eff;">🔷${sk.c}</span>
+            ${sk.p?'<span style="font-size:20px;color:#aaa;background:rgba(100,100,100,0.3);border-radius:6px;padding:2px 8px;">[被動]</span>':''}
+            ${skLv>0?`<span style="font-size:20px;color:#ffcc44;background:rgba(255,200,0,0.15);border-radius:6px;padding:2px 10px;">+${skLv} 效果+${skLv*10}%</span>`:''}
+            ${maxed?`<span style="font-size:20px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
+            ${!maxed && _skillBookCount>0 ? `<button onclick="upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
+          </div>
+          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${fd}</div>
+        </div>`;
+      }).join('')}
+      ${trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+          <span style="font-size:22px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 12px;font-weight:700;">✦ 天賦</span>
+          <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${trait.icon||''}  ${name}的天賦</span>
+          ${traitLv>0?`<span style="font-size:20px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 10px;">效果+${traitLv*20}% (${traitLv}/5)</span>`:''}
         </div>
-        ${freeP>0?`<div style="font-size:22px;color:#44ff88;margin-bottom:8px;">💎 可用素質點數：<b>${freeP}</b></div>`:''}
+        <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+        <div style="font-size:20px;color:#555;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
+      </div>` : ''}
+      ${burst ? `<div style="background:rgba(255,100,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,120,50,0.35);">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+          <span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>
+          <span style="font-size:28px;font-weight:800;color:#ff9966;">${burst.n}</span>
+        </div>
+        <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${burst.fd||burst.d}</div>
+      </div>` : ''}
       </div>
     </div>
-    <!-- 技能區 -->
-    <div style="margin-top:18px;border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;">
-      <div style="font-size:24px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">🎯 技能</div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        ${['s1','s2'].map((slot,si) => {
-          const sk = hd[slot]; if(!sk) return '';
-          const skLv = si===0 ? sk1Lv : sk2Lv;
-          const maxed = skLv >= 9;
-          return `<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,255,255,0.1);">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-              <span style="font-size:22px;font-weight:700;color:#ffe8a0;">${sk.n}</span>
-              <span style="font-size:18px;color:#4a9eff;">🔷${sk.c}</span>
-              ${skLv>0?`<span style="font-size:17px;color:#ffcc44;background:rgba(255,200,0,0.15);border-radius:6px;padding:2px 8px;">+${skLv} (效果+${skLv*10}%)</span>`:''}
-              ${maxed?`<span style="font-size:16px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
-              ${!maxed && _skillBookCount>0 ? `<button onclick="upgradeSkill('${name}','${slot}')" style="padding:3px 12px;font-size:17px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:7px;cursor:pointer;">📖 升級</button>` : ''}
-            </div>
-            <div style="font-size:18px;color:#c8d0e0;margin-top:4px;">${sk.d}</div>
-          </div>`;
-        }).join('')}
-        <!-- ★ 天賦升級顯示 -->
-      ${(()=>{
-        const _tl = _heroTraitLevel[name] || 0;
-        const _trait = typeof HERO_TRAITS!=='undefined' ? HERO_TRAITS[name] : null;
-        if(!_trait) return '';
-        return `<div style="background:rgba(255,200,50,0.06);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,200,50,0.25);margin-top:4px;">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span style="font-size:18px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:2px 10px;font-weight:700;">✦ 天賦</span>
-            <span style="font-size:20px;font-weight:700;color:#ffe8a0;">${_trait.name||''}</span>
-            ${_tl>0?`<span style="font-size:16px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">效果 +${_tl*20}%（里程碑 ${_tl}/5）</span>`:''}
-          </div>
-          <div style="font-size:17px;color:#c8d0e0;margin-top:4px;">${_trait.desc||''}</div>
-          <div style="font-size:15px;color:#666;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l > (getHeroLevel(name)||1)) || 'MAX'}</div>
-        </div>`;
-      })()}
-      ${burst ? `<div style="background:rgba(255,100,50,0.06);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,120,50,0.3);">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:18px;background:rgba(255,100,50,0.2);color:#ff8844;border-radius:6px;padding:2px 10px;font-weight:700;">⚡ 極限爆發</span>
-            <span style="font-size:22px;font-weight:700;color:#ff9966;">${burst.n}</span>
-          </div>
-          <div style="font-size:18px;color:#c8d0e0;margin-top:4px;">${burst.d}</div>
-        </div>` : ''}
+
+    <!-- 底部：簡介 + 雷達圖 -->
+    <div style="display:flex;gap:20px;margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;flex-wrap:wrap;">
+      <!-- 左：角色簡介 -->
+      <div style="flex:1;min-width:220px;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px 20px;border:1px solid rgba(255,255,255,0.1);">
+        <div style="font-size:26px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">📖 角色簡介</div>
+        ${bio ? `
+          <div style="font-size:22px;color:#88aaff;margin-bottom:6px;">🌐 <b>異世界身分</b></div>
+          <div style="font-size:22px;color:#e0e0e0;margin-bottom:12px;line-height:1.5;">${bio.role||'—'}</div>
+          <div style="font-size:22px;color:#88ff88;margin-bottom:6px;">💡 <b>人格特質</b></div>
+          <div style="font-size:22px;color:#e0e0e0;margin-bottom:12px;line-height:1.5;">${bio.trait||'—'}</div>
+          <div style="font-size:22px;color:#ffaa44;margin-bottom:6px;">🎯 <b>興趣愛好</b></div>
+          <div style="font-size:22px;color:#e0e0e0;line-height:1.5;">${bio.hobby||'—'}</div>
+        ` : '<div style="font-size:22px;color:#555;">資料待補充</div>'}
+      </div>
+      <!-- 右：雷達圖 -->
+      <div style="flex:0 0 280px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.1);">
+        <div style="font-size:26px;font-weight:700;color:#ffe8a0;margin-bottom:8px;">📊 能力向度</div>
+        ${makeRadar(dims, 260)}
       </div>
     </div>`;
 }
@@ -18948,6 +19105,137 @@ function loginGateSkip() {
   const modal = document.getElementById('login-gate-modal');
   if(modal) modal.style.display = 'none';
   openAdventureOverlay();
+}
+
+
+// ══════════════════════════════════════════════
+//  冒險小怪戰鬥系統
+// ══════════════════════════════════════════════
+const MINI_MONSTERS = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
+const MINI_MONSTER_ELEM = {
+  '偷摘花的頑皮妖精': 'dark',
+  '偷鳥蛋的鳥人哈維': 'wind',
+  '偷竹筍的哥布林':   'earth',
+  '偷喝茶的史萊姆':   'water',
+};
+// 各場景小怪開場白（幽默生動）
+const MINI_BATTLE_INTROS = {
+  river: [
+    '💦「哇哈哈！河堤就是我的地盤！你們這些臭小孩，先跑過我們這關再說！」—— 頑皮妖精叉腰攔路',
+    '🌊 突然，河邊草叢傳來一陣窸窸窣窣……幾隻小妖精竄出來，一臉壞笑地擋住去路！',
+    '🐦「嘿嘿！這條河是我家後院！想過去？先交過路費！」—— 鳥人哈維展開雙翼，氣勢洶洶',
+  ],
+  trail: [
+    '🎋「竹筍是我的！樟樹也是我的！整條步道都是我的！！」—— 哥布林蹦出來，抱著一顆大竹筍不放',
+    '🍃「哼～想走這條步道？先答應我不告訴茶農阿伯！」—— 偷喝茶的史萊姆黏在路中間，一臉賴皮',
+    '🌿 清晨的步道突然熱鬧起來！幾隻小妖搶先一步攔住去路，搖著屁股：「打得過我們再說！」',
+  ],
+  teagarden: [
+    '🍵「這茶喝得正爽，你們來搞什麼？！」—— 史萊姆從茶壺裡探出頭，滿嘴茶葉',
+    '🌸「茶園的花是我的！誰都不准摘！喂喂喂！你們想做什麼？！」—— 頑皮妖精護著花叢大喊',
+    '☁️「哈哈哈！茶山就是咱的地盤！先打一架，再談其他的！」—— 一群小妖從茶叢後躍出！',
+  ],
+};
+
+let _advMiniBattleActive = false;
+let _advMiniBattleNextScene = 0;
+let _advBossTeamSaved = null; // 儲存BOSS陣容，小怪戰後恢復
+
+function advStartMiniBattle(nextSceneIdx) {
+  _advMiniBattleActive = true;
+  _advMiniBattleNextScene = nextSceneIdx;
+
+  // 儲存BOSS陣容
+  _advBossTeamSaved = G.p2 ? G.p2.map(h=>({...h})) : null;
+
+  // 隨機組成4隻小怪（可重複）
+  const mobs = Array.from({length:4}, () =>
+    MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
+  );
+
+  // 設置小怪陣容
+  G.p2 = mobs.map((name, i) => {
+    const h = newHero(name, 'p2', i);
+    h.element = MINI_MONSTER_ELEM[name] || 'wind';
+    if(typeof applyElemBonus === 'function') applyElemBonus(h);
+    return h;
+  });
+  G.inv2 = [null, null, null];
+  G._resultShown = false;
+  _gamePaused = false;
+
+  // 顯示小怪開場對話框
+  const sceneKey = ADV_SCENES[_adventureStage][_advSceneIdx]?.key || 'river';
+  const intros = MINI_BATTLE_INTROS[sceneKey] || MINI_BATTLE_INTROS.river;
+  const intro = intros[Math.floor(Math.random() * intros.length)];
+
+  // 顯示旁白
+  const speaker = document.getElementById('adv-dialog-speaker');
+  const text = document.getElementById('adv-dialog-text');
+  const dialog = document.getElementById('adv-dialog-box');
+  if(speaker) speaker.textContent = '⚔️ 遭遇！';
+  if(text) text.textContent = intro;
+  if(dialog) dialog.style.display = 'block';
+
+  // 2.5秒後進入戰鬥
+  setTimeout(() => {
+    if(dialog) dialog.style.display = 'none';
+    // 隱藏過場overlay，顯示戰場
+    const cutsceneOv = document.getElementById('adv-cutscene-overlay');
+    if(cutsceneOv) cutsceneOv.style.display = 'none';
+    // 播放小怪戰鬥BGM（使用普通戰鬥曲）
+    try{ bgmStop(); const ids=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
+      bgmPlay(ids[Math.floor(Math.random()*ids.length)]); }catch(e){}
+    // 重置能量
+    G.energy = {p1:2, p2:2};
+    // 開始戰鬥
+    updateUI(); renderField(true); renderItems();
+    if(typeof markAdventureBossCards==='function') markAdventureBossCards();
+    flashScreen('rgba(255,180,50,0.7)', 400);
+    setTimeout(()=>{ try{ startTurn(); }catch(e){ console.error(e); } }, 500);
+  }, 2500);
+}
+
+function advFinishMiniBattle(win) {
+  _advMiniBattleActive = false;
+
+  if(win) {
+    // 給予小怪EXP
+    const heroes = advGetUnlockedHeroes();
+    if(heroes.length) {
+      let baseExp = 0;
+      G.p2.forEach(h => {
+        const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
+        baseExp += (hd && hd.exp) ? hd.exp : 7;
+      });
+      const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
+      heroes.forEach(name => {
+        addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : Math.round(baseExp*0.5));
+      });
+      bannerFX(null, `🎉 小怪擊敗！出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
+      gameCloudSave();
+    }
+  }
+
+  // 恢復BOSS陣容
+  if(_advBossTeamSaved) {
+    G.p2 = _advBossTeamSaved;
+    _advBossTeamSaved = null;
+    // 重新套用元素加成
+    G.p2.forEach(h => { if(typeof applyElemBonus==='function') applyElemBonus(h); });
+  }
+
+  G._resultShown = false;
+  G.energy = {p1:2, p2:2};
+
+  // 回到過場，繼續下一幕
+  const cutsceneOv = document.getElementById('adv-cutscene-overlay');
+  if(cutsceneOv) cutsceneOv.style.display = 'flex';
+  try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+
+  setTimeout(() => {
+    advLoadScene(_adventureStage, _advMiniBattleNextScene);
+  }, 600);
 }
 
 window._advSystemReady = true;
