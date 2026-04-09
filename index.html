@@ -194,7 +194,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   position:fixed;z-index:9999;
   background:linear-gradient(160deg,#1a1d2e 0%,#0d0f1a 100%);
   border:3px solid var(--gold);border-radius:18px;
-  padding:16px 20px 18px;max-width:480px;min-width:280px;
+  padding:16px 20px 18px;max-width:min(480px,90vw);min-width:min(280px,90vw);
+  max-height:85vh;overflow-y:auto;
   box-shadow:0 0 48px rgba(212,168,67,0.55),0 8px 40px rgba(0,0,0,0.9);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   pointer-events:auto;animation:sdpIn 0.15s ease-out;
@@ -2855,7 +2856,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.27</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.40</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -15074,25 +15075,31 @@ document.addEventListener('keydown',_tryMenuBgm);
 
 // ★ 開發密技按鍵（測試用）
 document.addEventListener('keydown', function(e){
-  // F9：直接戰鬥勝利（僅戰鬥中有效）
+  // F9：直接戰鬥勝利
   if(e.key === 'F9'){
     e.preventDefault();
-    if(typeof G === 'undefined' || !G.p1 || !G.p2) return;
-    if(!G.p1.length && !G.p2.length) return;
-    // 必須在戰鬥中才有效
-    const inBattle = document.getElementById('gc') && 
-      (document.getElementById('gc').classList.contains('adv-battle') || 
-       typeof _gamePaused !== 'undefined');
-    if(!G.p2.some(h=>h.curHp>0)) return; // 已結束
-    log('🔑 [F9密技] 強制勝利！');
-    flashScreen('rgba(255,220,50,1)', 500);
-    // 讓所有敵方倒下
-    G.p2.forEach(h=>{ h.curHp=0; try{ renderCard(h); }catch(e){} });
-    // 停止計時器
-    try{ clearTurnTimer(); }catch(e){}
-    try{ clearInterval(_advQuizTimer); }catch(e){}
-    // 推進結算
-    _pSetTimeout(()=>{ try{ _showResultWithDrama(true); }catch(e){ try{ checkWin(); }catch(e2){} } }, 300);
+    try{
+      if(typeof G==='undefined'||!G.p1||!G.p2||!G.p1.length||!G.p2.length){
+        console.log('[F9] 目前不在戰鬥中'); return;
+      }
+      console.log('[F9] 強制勝利觸發！');
+      // 清除所有暫態
+      try{ clearTurnTimer(); }catch(x){}
+      try{ clearInterval(_advQuizTimer); }catch(x){}
+      try{ _advQuizActive=false; _advQuizPhase='idle'; }catch(x){}
+      try{ document.getElementById('adv-quiz-overlay').classList.remove('show'); }catch(x){}
+      try{ G.pendingTarget=null; pendingCb=null; }catch(x){}
+      try{ _gamePaused=false; }catch(x){}
+      // 讓所有敵方倒下
+      G.p2.forEach(h=>{ h.curHp=0; try{renderCard(h);}catch(x){} });
+      G._resultShown = false; // 重置結算旗標
+      updateUI();
+      flashScreen('rgba(255,220,50,1)', 400);
+      // 用原生 setTimeout 避免 _pSetTimeout 暫停問題
+      setTimeout(function(){
+        try{ _showResultWithDrama(true); }catch(x){ console.error('[F9]',x); }
+      }, 400);
+    }catch(err){ console.error('[F9 error]',err); }
     return;
   }
 
@@ -15113,6 +15120,8 @@ document.addEventListener('keydown', function(e){
       try{ clearInterval(_advQuizTimer); _advQuizPhase='idle'; _advQuizActive=false; }catch(e){}
       try{ document.getElementById('adv-quiz-overlay').classList.remove('show'); }catch(e){}
       try{ G.pendingTarget=null; pendingCb=null; }catch(e){}
+      try{ _gamePaused=false; }catch(e){}
+      try{ G._resultShown=false; }catch(e){}
       // 還原快照
       G.p1 = snap.p1; G.p2 = snap.p2;
       G.energy = snap.energy;
@@ -15122,7 +15131,8 @@ document.addEventListener('keydown', function(e){
       G._resultShown = false;
       updateUI(); renderField(); renderItems();
       log(`[F8] 已回溯至第 ${G.round} 回合開始`);
-      _pSetTimeout(startTurn, 400);
+      try{ _gamePaused=false; }catch(x){}
+      setTimeout(function(){ try{startTurn();}catch(x){console.error(x);} }, 400);
     }catch(err){ console.error('[F8 cheat]', err); }
     return;
   }
@@ -16345,30 +16355,42 @@ function showSkillDetailPopup(btn){
   // 著色技能說明
   document.getElementById('sdp-desc').innerHTML = colorizeSkillDesc(desc);
   pop.style.display = 'block';
-  // 定位：優先顯示在按鈕旁邊，避免超出畫面
-  const gc = document.getElementById('gc');
-  const gcRect = gc ? gc.getBoundingClientRect() : {left:0,top:0,width:window.innerWidth,height:window.innerHeight};
-  const scale = gcRect.width / 1920;
-  const btnRect = btn.getBoundingClientRect();
-  let left = btnRect.right + 8;
-  let top = btnRect.top - 8;
-  // popup 尺寸限制：手機上縮小，確保不超出畫面
-  const _isMobile = window.innerWidth < 900 || gcRect.width < 800;
-  const _maxW = _isMobile ? Math.min(320, window.innerWidth - 20) : 460;
-  pop.style.maxWidth = _maxW + 'px';
-  pop.style.minWidth = _isMobile ? '220px' : '280px';
-  pop.style.fontSize = _isMobile ? '80%' : (scale * 100) + '%';
-  const popW = _isMobile ? _maxW : Math.min(460 * scale, window.innerWidth - 20);
-  const popH = _isMobile ? 200 : 300 * scale;
-  // 限制在視窗內（用 window 邊界，手機/平板有效）
-  const _margin = 8;
-  if(left + popW > window.innerWidth - _margin) left = btnRect.left - popW - 8;
-  if(left < _margin) left = _margin;
-  if(left + popW > window.innerWidth - _margin) left = window.innerWidth - popW - _margin;
-  if(top + popH > window.innerHeight - _margin) top = window.innerHeight - popH - _margin;
-  if(top < _margin) top = _margin;
-  pop.style.left = left + 'px';
-  pop.style.top = top + 'px';
+  // ★ 定位：先顯示再取真實尺寸，確保不超出畫面任何邊界
+  requestAnimationFrame(() => {
+    const _margin = 10;
+    const btnRect = btn.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+    const _popW = popRect.width || 300;
+    const _popH = popRect.height || 200;
+    const _vw = window.innerWidth;
+    const _vh = window.innerHeight;
+
+    // 預設：按鈕右側
+    let left = btnRect.right + 8;
+    let top = btnRect.top;
+
+    // 右側放不下 → 改到按鈕左側
+    if(left + _popW > _vw - _margin){
+      left = btnRect.left - _popW - 8;
+    }
+    // 左側也放不下 → 螢幕左緣對齊
+    if(left < _margin){ left = _margin; }
+    // 還是放不下（極窄螢幕）→ 置中
+    if(left + _popW > _vw - _margin){
+      left = Math.max(_margin, (_vw - _popW) / 2);
+    }
+
+    // 垂直：對齊按鈕頂端
+    // 下方超出 → 往上移
+    if(top + _popH > _vh - _margin){
+      top = _vh - _popH - _margin;
+    }
+    // 上方超出 → 貼頂
+    if(top < _margin){ top = _margin; }
+
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  });
   // 點擊外部關閉
   setTimeout(()=>{
     document.addEventListener('click', _sdpOutsideClick, {once:true, capture:true});
