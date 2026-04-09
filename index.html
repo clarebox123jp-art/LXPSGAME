@@ -2971,7 +2971,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.23.57</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.07</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -18993,7 +18993,7 @@ function _renderHeroDetail(name, box) {
   function makeRadar(dims, size) {
     const cx = size/2, cy = size/2, R = size*0.38;
     const n = dims.length;
-    const labelR = R + size*0.13;
+    const labelR = R + size*0.09; // ★ 標籤貼緊頂點
     function pt(i, r) {
       const a = (i / n) * Math.PI * 2 - Math.PI / 2;
       return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
@@ -19065,22 +19065,21 @@ function _renderHeroDetail(name, box) {
       }).join('')}
       ${freeP>0?`<div style="grid-column:1/-1;font-size:22px;color:#44ff88;font-weight:700;padding:4px 0;">💎 素質點數：${freeP}</div>`:''}
       </div>
-      <!-- 右：雷達圖 -->
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
-        <div style="font-size:20px;font-weight:700;color:#ffe8a0;margin-bottom:4px;">📊 能力向度</div>
+      <!-- 右：雷達圖（無標題）-->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         ${makeRadar(dims, 320)}
       </div>
     </div>
 
-    <!-- 天賦（緊貼能力值下方，寬度50%）-->
-    ${trait ? `<div style="max-width:50%;background:rgba(255,200,50,0.07);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,200,50,0.3);margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-        <span style="font-size:18px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:2px 8px;font-weight:700;">✦ 天賦</span>
-        <span style="font-size:19px;font-weight:700;color:#ffe8a0;">${trait.icon||''} ${name}的天賦</span>
-        ${traitLv>0?`<span style="font-size:16px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:1px 6px;">+${traitLv*20}%</span>`:''}
+    <!-- 天賦（緊貼stats下方，同技能字體尺寸）-->
+    ${trait ? `<div style="max-width:52%;background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+        <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 10px;font-weight:700;">✦ 天賦</span>
+        <span style="font-size:28px;font-weight:800;color:#ffe8a0;">${trait.icon||''} ${name}的天賦</span>
+        ${traitLv>0?`<span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">效果+${traitLv*20}%</span>`:''}
       </div>
-      <div style="font-size:19px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
-      <div style="font-size:16px;color:#555;margin-top:2px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
+      <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+      <div style="font-size:18px;color:#555;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
     </div>` : ''}
     <!-- 技能區 -->
     <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;margin-bottom:14px;">
