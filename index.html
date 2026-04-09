@@ -1267,6 +1267,10 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   border:1px solid rgba(255,255,255,0.05);border-radius:50%;
   transform:translate(-50%,-50%);pointer-events:none;
 }
+/* 冒險模式英雄格狀選擇 */
+#hero-pick-arena-inner{ overflow-y:auto!important; max-height:80vh; }
+.hpick-grid-item:hover{ transform:scale(1.06)!important; border-color:rgba(212,168,67,0.9)!important; }
+.hpick-grid-item.picked{ transform:scale(1.03); }
 .hpick-node{
   position:absolute;width:120px;height:120px;border-radius:50%;
   /* 水晶球底層漸層 */
@@ -2955,7 +2959,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.02</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.14</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6184,13 +6188,10 @@ function showHeroPickOverlay(){
 // ── 冒險模式：限定英雄池、換背景、換標語
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
-    const unlockedPool = ADV_HERO_POOL[_adventureStage] || [];
-    // 全部非 BOSS 角色：已解鎖的排前面，其餘隨機填滿至 12 格
-    const allNonBoss = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
-    const lockedPool = allNonBoss.filter(n => !unlockedPool.includes(n))
-                                 .sort(() => Math.random() - 0.5)
-                                 .slice(0, 12 - unlockedPool.length);
-    _heroPickPool = [...unlockedPool, ...lockedPool];
+    // ★ 冒險模式：只顯示已解鎖英雄（初始4名 + 解鎖的）
+    const basePool = ADV_HERO_POOL[_adventureStage] || [];
+    const unlockedExtra = advGetUnlockedHeroes().filter(n => !basePool.includes(n) && !BOSS_NAMES.includes(n));
+    _heroPickPool = [...basePool, ...unlockedExtra];
     _heroPickSelected = [];
 
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
@@ -6241,6 +6242,8 @@ function showHeroPickOverlay(){
   // 正常模式：還原背景與標語
   hpo.style.backgroundImage = 'url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png")';
   document.getElementById('fate-text').textContent = '與你命運交織的夥伴';
+  // ★ 鬥技場模式：強制重置冒險旗標
+  _adventureMode = false; _adventureStage = null;
   _heroPickSelected = [];
   _heroSeenPool = new Set(); // 每次開新遊戲重置循環
   const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
@@ -6893,8 +6896,9 @@ function toggleHeroPick(idx, name){ focusHero(idx,name); } // legacy compat
 function confirmHeroPick(){
   if(_heroPickSelected.length < 4) return;
   document.getElementById('hero-pick-overlay').style.display = 'none';
-  // ── 冒險模式：p2 固定為 BOSS 陣容，elem 選擇改背景
-  if(window._advSystemReady && _adventureMode && _adventureStage){
+  // ── 冒險模式：p2 固定為 BOSS 陣容（必須同時有 _adventureStage 且 overlay 是由冒險模式觸發）
+  const _isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
+  if(_isAdvMode){
     document.getElementById('hero-pick-overlay').style.display = 'none';
     G.p1 = _heroPickSelected.map((n,i)=>newHero(n,'p1',i));
     // BOSS 陣容固定，元素已預設
