@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.01.18</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.14</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6309,6 +6309,12 @@ let _heroPickSelected = [];
 let _heroPickPool = [];
 
 function showHeroPickOverlay(){
+  // ★★ 第一件事：強制 overlay 不透明，不依賴任何 CSS 或圖片載入
+  const hpo = document.getElementById('hero-pick-overlay');
+  if(hpo){
+    hpo.style.display = 'flex';
+    hpo.style.background = '#080a18'; // 先設純色，再設背景圖
+  }
   // ★ 角色選擇專屬BGM（不重播）
   try{ if(typeof bgmPlay==='function' && _curBgm!=='bgm-menu-02'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
 // ── 冒險模式：限定英雄池、換背景、換標語
@@ -6322,8 +6328,7 @@ function showHeroPickOverlay(){
     _heroPickSelected = [];
 
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
-    hpo.style.backgroundColor = '#080a18';
-    hpo.style.backgroundImage = 'url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png")';
+    hpo.style.background = '#080a18 url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png")';
 
     // BOSS 預覽
     const bossTeam = ADV_BOSS_TEAMS[_adventureStage] || [];
@@ -6509,7 +6514,8 @@ function _buildHeroPickNodes(){
   arena.querySelectorAll('.hpick-node,.hpick-orbit,.hpick-center-btn,.hpick-adv-grid,.hpick-adv-node,.hpick-arena-grid,.hpick-arena-card').forEach(el=>el.remove());
 
   // ★ 冒險模式：格狀排列（從左上開始，只顯示已解鎖英雄）
-  if(window._isAdventurePickMode === true){
+  // ★ 直接用 _adventureMode 判斷，不再依賴可能 race-condition 的旗標
+  if(_adventureMode && _adventureStage && window._advSystemReady){
     const grid = document.createElement('div');
     grid.className = 'hpick-adv-grid';
     grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;justify-content:flex-start;align-content:flex-start;overflow-y:auto;max-height:600px;width:100%;';
@@ -16861,7 +16867,7 @@ function startAdventureGame(stage){
   _adventureMode = true;
   _adventureStage = stage;
   _advMiniBattleActive = false; // ★ 確保不殘留小怪戰旗標
-  window._isAdventurePickMode = false; // 先清，showHeroPickOverlay再設
+  window._isAdventurePickMode = true;  // ★ 冒險模式提前設好，不再等showHeroPickOverlay
   // 關閉英雄圖鑑（若開著）
   try{
     const hpo=document.getElementById('hero-page-overlay');
