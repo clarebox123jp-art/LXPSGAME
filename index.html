@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.31</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.36</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -19024,33 +19024,59 @@ function _renderHeroDetail(name, box) {
   const traitLv = _heroTraitLevel[name] || 0;
   const bio   = typeof HERO_BIO !== 'undefined' ? HERO_BIO[name] : null;
 
-  // 計算治療力和控場力
-  const HEAL_SK = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復','神之賜福',
-    '慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療','復活術','天籟之音','流浪者之歌','一壺鐵觀音']);
-  const CTRL_SK = new Set(['虛弱咒','禁書封鎖','狂亂之歌','炫目神光','強勢對決','群體挑釁','不熟練習曲',
-    '餘音繞樑','小星星變奏曲','泰山壓頂','運球']);
+  // 計算治療力和控場力（智慧版）
+  // 檢測描述中是否含有不利狀態關鍵字 → 控場
+  const _CTRL_KW = ['緩速','暈眩','睡眠','封印','麻痺','失明','中毒','混亂','嘲諷','挑釁',
+    '禁錮','石化','燃燒','凍結','詛咒','弱化','虛弱','恐懼','禁止','催眠','失去','不能行動',
+    '被動:','強迫','強制','禁止','沉默'];
+  // 檢測描述中是否含有治療關鍵字 → 治療
+  const _HEAL_KW = ['恢復','治癒','治療','復活','再生','治癒','療癒','補血'];
+
+  function _skillHeal(sk) {
+    if(!sk) return 0;
+    const d = (sk.fd || sk.d || '').replace(/HP/g,'hp');
+    // 機率性技能（含%機率/機率/有X%）→ 比例計算
+    const pMatch = d.match(/(\d+)%機率|有(\d+)%|(\d+)成機率/);
+    const prob = pMatch ? (parseInt(pMatch[1]||pMatch[2]||pMatch[3])/100) : 1.0;
+    if(_HEAL_KW.some(k=>d.includes(k))) return prob;
+    return 0;
+  }
+  function _skillCtrl(sk) {
+    if(!sk) return 0;
+    const d = (sk.fd || sk.d || '');
+    const pMatch = d.match(/(\d+)%機率|有(\d+)%|(\d+)成機率/);
+    const prob = pMatch ? (parseInt(pMatch[1]||pMatch[2]||pMatch[3])/100) : 1.0;
+    if(_CTRL_KW.some(k=>d.includes(k))) return prob;
+    return 0;
+  }
+
   let healScore = 0, ctrlScore = 0;
   [hd.s1, hd.s2].forEach(sk => {
-    if(!sk) return;
-    if(HEAL_SK.has(sk.n)) healScore += 4;
-    if(CTRL_SK.has(sk.n)) ctrlScore += 4;
+    healScore += _skillHeal(sk) * 3.5;
+    ctrlScore += _skillCtrl(sk) * 3.5;
   });
-  if(burst && HEAL_SK.has(burst.n)) healScore += 3;
-  if(burst && CTRL_SK.has(burst.n)) ctrlScore += 3;
-  if(trait && (HEAL_SK.has(trait.desc||'') || (trait.desc||'').includes('治癒') || (trait.desc||'').includes('恢復'))) healScore += 3;
-  if(trait && ((trait.desc||'').includes('緩速')||(trait.desc||'').includes('暈眩')||(trait.desc||'').includes('睡眠')||(trait.desc||'').includes('封印'))) ctrlScore += 3;
-  healScore = Math.min(10, healScore);
-  ctrlScore = Math.min(10, ctrlScore);
+  if(burst){
+    healScore += _skillHeal(burst) * 3.0;
+    ctrlScore += _skillCtrl(burst) * 3.0;
+  }
+  if(trait){
+    const td = trait.fd || trait.desc || '';
+    if(_HEAL_KW.some(k=>td.includes(k))) healScore += 2.5;
+    if(_CTRL_KW.some(k=>td.includes(k))) ctrlScore += 2.5;
+  }
+  healScore = Math.min(10, Math.round(healScore));
+  ctrlScore = Math.min(10, Math.round(ctrlScore));
 
-  // 六維數值（最大值正規化）
+  // 六維數值（最大值正規化，最低顯示1）
   const maxStat = 80;
+  function _dimVal(raw) { return Math.max(1, Math.min(10, Math.round(raw))); }
   const dims = [
-    {label:'體',  val: Math.min(10, Math.round((hd.hp + (inv.hp||0)) / maxStat * 10))},
-    {label:'攻',  val: Math.min(10, Math.round((hd.atk + (inv.atk||0)) / 20 * 10))},
-    {label:'特',  val: Math.min(10, Math.round((hd.sp + (inv.sp||0)) / 20 * 10))},
-    {label:'速',  val: Math.min(10, Math.round((hd.spd + (inv.spd||0)) / 15 * 10))},
-    {label:'治',  val: healScore},
-    {label:'控',  val: ctrlScore},
+    {label:'體',  val: _dimVal((hd.hp  + (inv.hp ||0)) / maxStat * 10)},
+    {label:'攻',  val: _dimVal((hd.atk + (inv.atk||0)) / 20     * 10)},
+    {label:'特',  val: _dimVal((hd.sp  + (inv.sp ||0)) / 20     * 10)},
+    {label:'速',  val: _dimVal((hd.spd + (inv.spd||0)) / 15     * 10)},
+    {label:'治',  val: Math.max(1, healScore)},
+    {label:'控',  val: Math.max(1, ctrlScore)},
   ];
 
   // SVG 六邊形雷達圖
