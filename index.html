@@ -2240,7 +2240,7 @@ body {
 #adv-skip-btn:hover{border-color:#ccc;color:#fff;}
 #adv-skip-btn:hover{border-color:#fff;color:#fff;}
 .adv-treasure-slot{
-  width:140px;height:140px;border-radius:22px;
+  width:140px;height:160px;border-radius:22px;
   background:rgba(20,15,0,0.7);border:2px solid rgba(255,220,80,0.4);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   font-size:60px;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(4px);
@@ -2248,7 +2248,7 @@ body {
 }
 .adv-treasure-slot.filled{border-color:rgba(255,220,80,0.9);background:rgba(50,35,0,0.8);}
 .adv-treasure-slot.filled:hover{transform:scale(1.1);box-shadow:0 0 18px rgba(255,200,0,0.6);}
-.adv-treasure-slot .ts-label{font-size:11px;color:#ffcc44;margin-top:1px;letter-spacing:0px;text-align:center;line-height:1.1;}
+.adv-treasure-slot .ts-label{font-size:22px;color:#ffcc44;margin-top:4px;letter-spacing:0px;text-align:center;line-height:1.2;font-weight:700;}
 /* 中央選擇視窗 */
 #adv-choice-panel{
   position:absolute;top:40px;left:0;right:160px;z-index:3;
@@ -2454,23 +2454,23 @@ body {
 
 /* 答對獎勵視窗 */
 #adv-reward-overlay{
-  display:none;position:absolute;inset:0;z-index:612;
-  background:rgba(0,0,0,0.85);align-items:center;justify-content:center;
-  flex-direction:column;gap:20px;
+  display:none;position:absolute;top:0;left:0;right:0;z-index:612;
+  background:none;align-items:flex-start;justify-content:center;
+  flex-direction:column;gap:12px;padding-top:0;
 }
 #adv-reward-overlay.show{display:flex;}
 #adv-reward-box{
-  background:linear-gradient(160deg,#080d20,#04080e);
-  border:2.5px solid rgba(62,200,122,0.6);border-radius:20px;
-  padding:32px 44px;max-width:900px;width:90%;text-align:center;
-  box-shadow:0 0 50px rgba(62,200,122,0.25);
+  background:linear-gradient(160deg,rgba(8,13,32,0.97),rgba(4,8,14,0.97));
+  border:2.5px solid rgba(62,200,122,0.6);border-radius:0 0 20px 20px;
+  padding:20px 44px 24px;max-width:100%;width:100%;text-align:center;
+  box-shadow:0 8px 40px rgba(62,200,122,0.2);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
-#adv-reward-title{font-size:32px;font-weight:900;color:#7df0a8;letter-spacing:4px;margin-bottom:8px;}
-#adv-reward-subtitle{font-size:22px;color:#aaa;letter-spacing:2px;margin-bottom:24px;}
+#adv-reward-title{font-size:48px;font-weight:900;color:#7df0a8;letter-spacing:4px;margin-bottom:6px;}
+#adv-reward-subtitle{font-size:33px;color:#aaa;letter-spacing:2px;margin-bottom:16px;}
 #adv-reward-choices{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
 .adv-reward-btn{
-  padding:18px 28px;font-size:24px;font-weight:700;
+  padding:22px 32px;font-size:36px;font-weight:700;
   background:rgba(20,50,30,0.85);border:2px solid rgba(62,200,122,0.5);
   color:#88ffcc;border-radius:14px;cursor:pointer;letter-spacing:1px;
   transition:all 0.2s;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
@@ -2609,8 +2609,8 @@ body {
 #adv-boss-react-bubble{
   background:linear-gradient(135deg,rgba(30,5,0,0.97),rgba(15,3,0,0.98));
   border:2.5px solid rgba(255,120,0,0.75);
-  border-radius:18px 18px 18px 4px;
-  padding:8px 14px;max-width:92%;
+  border-radius:18px;
+  padding:16px 24px;max-width:100%;width:100%;
   box-shadow:0 0 30px rgba(255,80,0,0.45),0 4px 20px rgba(0,0,0,0.8);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   position:relative;
@@ -2784,7 +2784,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.08.49</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.09.11</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -8819,7 +8819,7 @@ function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
   const existing = document.getElementById('burst-equip-ov'); if(existing) existing.remove();
   const ov = document.createElement('div');
   ov.id = 'burst-equip-ov';
-  ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,0.88);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:Share Tech Mono,monospace;';
+  ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,12,0.94);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;overflow-y:auto;';
   const eqDataForTitle = EQUIP_DB.find(e=>e.n===eq.n);
   const _petImg = eqDataForTitle&&eqDataForTitle.petImg ? eqDataForTitle.petImg : '';
   const _petName = eqDataForTitle&&eqDataForTitle.pet ? eqDataForTitle.pet : eq.n;
@@ -8829,15 +8829,15 @@ function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
   title.innerHTML=`
     <div style="font-size:22px;color:#ffcc00;letter-spacing:3px">🦁 召喚寵物 (${idx+1}/${equips.length})</div>
     <div style="display:flex;align-items:center;gap:20px;background:rgba(212,168,67,0.08);border:1.5px solid rgba(212,168,67,0.3);border-radius:14px;padding:14px 22px;width:100%;">
-      <div style="width:110px;height:110px;border:2px solid rgba(212,168,67,0.4);border-radius:12px;background:rgba(20,20,30,0.8);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+      <div style="width:220px;height:220px;border:2px solid rgba(212,168,67,0.4);border-radius:12px;background:rgba(20,20,30,0.8);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
         ${_petImg
           ? `<img src="${_petImg}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.parentNode.innerHTML='${eq.icon||'🐾'}'"/>`
           : `<span style="font-size:52px">${eq.icon||'🐾'}</span>`}
       </div>
       <div style="flex:1;text-align:left;">
-        <div style="font-size:30px;font-weight:700;color:var(--gold,#d4a843);margin-bottom:5px;">${_petName}</div>
-        <div style="font-size:18px;color:#aaa;line-height:1.6;font-style:italic;margin-bottom:6px;">${_petDesc}</div>
-        <div style="font-size:22px;color:#f0c060;font-weight:500;">${eq.icon||''} ${eq.d}</div>
+        <div style="font-size:48px;font-weight:700;color:var(--gold,#d4a843);margin-bottom:8px;">${_petName}</div>
+        <div style="font-size:30px;color:#aaa;line-height:1.6;font-style:italic;margin-bottom:10px;">${_petDesc}</div>
+        <div style="font-size:34px;color:#f0c060;font-weight:500;">${eq.icon||''} ${eq.d}</div>
       </div>
     </div>`;
   const btnRow = document.createElement('div');
@@ -8845,8 +8845,8 @@ function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
   allies.forEach(hero=>{
     const btn = document.createElement('button');
     const hasEquip = !!hero.equip;
-    btn.style.cssText=`background:rgba(20,25,45,0.95);border:2px solid #4a9eff44;border-radius:10px;padding:12px 20px;color:#fff;font-family:Share Tech Mono,monospace;cursor:pointer;min-width:160px;text-align:center;transition:0.15s`;
-    btn.innerHTML=`<div style="font-size:32px">${hero.av}</div><div style="font-size:28px;font-weight:500;color:#88ddff">${hero.name}</div><div style="font-size:16px;color:${hasEquip?'#ffaa44':'#888'}">${hasEquip?'替換：'+hero.equip.n:'攜帶寵物'}</div>`;
+    btn.style.cssText=`background:rgba(20,25,45,0.95);border:2px solid #4a9eff44;border-radius:14px;padding:16px 28px;color:#fff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;cursor:pointer;min-width:200px;text-align:center;transition:0.15s`;
+    btn.innerHTML=`<div style="font-size:52px">${hero.av}</div><div style="font-size:36px;font-weight:700;color:#88ddff">${hero.name}</div><div style="font-size:26px;color:${hasEquip?'#ffaa44':'#aaa'}">${hasEquip?'替換：'+hero.equip.n:'攜帶寵物'}</div>`;
     btn.onmouseenter=()=>btn.style.borderColor='#4a9eff';
     btn.onmouseleave=()=>btn.style.borderColor='#4a9eff44';
     btn.onclick=()=>{
@@ -8864,7 +8864,7 @@ function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
     btnRow.appendChild(btn);
   });
   const skipBtn = document.createElement('button');
-  skipBtn.style.cssText='padding:8px 24px;background:transparent;border:1px solid #555;color:#888;cursor:pointer;font-family:Share Tech Mono,monospace;border-radius:6px;margin-top:4px';
+  skipBtn.style.cssText='padding:14px 40px;background:transparent;border:2px solid #555;color:#888;cursor:pointer;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;border-radius:10px;margin-top:8px;font-size:28px;';
   skipBtn.textContent='跳過這件';
   skipBtn.onclick=()=>{ ov.remove(); _pSetTimeout(()=>_showBurstEquipSequence(equips, idx+1, caster, side, _interrupted), 100); };
   ov.appendChild(title);
@@ -16697,7 +16697,7 @@ function advUpdateTreasureBar() {
     if (t) {
       slot.classList.add('filled');
       iconEl.textContent = t.icon;
-      labelEl.textContent = t.name.slice(0,4);
+      labelEl.textContent = t.name;
     } else {
       slot.classList.remove('filled');
       iconEl.textContent = '—';
@@ -17113,7 +17113,43 @@ function advUseTreasure(slotIdx) {
   advApplyTreasure(t.id);
 }
 function advUseTreasureFromCutscene(slotIdx) {
-  // 過場中不使用法寶
+  // ★ 點擊法寶：顯示詳細說明彈窗
+  const t = _advTreasures[slotIdx];
+  if(!t) return;
+  // 移除舊彈窗
+  const old = document.getElementById('_ts_popup');
+  if(old) old.remove();
+  const pop = document.createElement('div');
+  pop.id = '_ts_popup';
+  pop.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'z-index:9800;background:linear-gradient(160deg,#1a1200,#0e0800);',
+    'border:2.5px solid rgba(255,200,50,0.7);border-radius:18px;',
+    'padding:28px 36px;max-width:80vw;min-width:300px;text-align:center;',
+    'box-shadow:0 0 60px rgba(255,180,0,0.3);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:advChoiceIn 0.3s cubic-bezier(0.34,1.56,0.64,1);'
+  ].join('');
+  pop.innerHTML = `
+    <div style="font-size:72px;margin-bottom:10px;">${t.icon}</div>
+    <div style="font-size:38px;font-weight:900;color:#ffe066;margin-bottom:12px;letter-spacing:2px;">${t.name}</div>
+    <div style="font-size:28px;color:#d4d0c4;line-height:1.7;margin-bottom:20px;">${t.desc}</div>
+    <div style="font-size:22px;color:#aa9955;font-style:italic;">⚔ 答題時使用才能生效</div>
+    <button onclick="document.getElementById('_ts_popup').remove()"
+      style="margin-top:18px;padding:12px 40px;font-size:28px;font-weight:700;
+      background:linear-gradient(135deg,rgba(100,60,0,0.9),rgba(180,100,0,0.8));
+      border:2px solid rgba(255,200,50,0.6);border-radius:10px;
+      color:#ffe066;cursor:pointer;font-family:inherit;letter-spacing:2px;">
+      了解了！
+    </button>
+  `;
+  document.body.appendChild(pop);
+  // 點彈窗外也關閉
+  setTimeout(()=>{
+    document.addEventListener('click', function _closeTs(e){
+      if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener('click',_closeTs); }
+    });
+  }, 100);
 }
 
 function advApplyTreasure(id) {
@@ -17719,25 +17755,14 @@ function advShowBossReact(type) {
   else                         lines = BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
-  // ★ 定位：在問題視窗正上方居中
-  try {
-    const quizBox = document.getElementById('adv-quiz-box');
-    if (quizBox) {
-      const qRect = quizBox.getBoundingClientRect();
-      const gcRect = document.getElementById('gc').getBoundingClientRect();
-      el.style.left   = (qRect.left - gcRect.left) + 'px';
-      el.style.width  = qRect.width + 'px';
-      el.style.top    = (qRect.top - gcRect.top - 8) + 'px';
-      el.style.transform = 'translateY(-100%)';
-      el.style.bottom = 'auto';
-      el.style.right  = 'auto';
-    } else {
-      el.style.left='50%'; el.style.transform='translate(-50%,-100%)';
-      el.style.top='45%'; el.style.bottom='auto';
-    }
-  } catch(e) {
-    el.style.left='16px'; el.style.top='8px'; el.style.bottom='auto';
-  }
+  // ★ 定位：正中間浮現
+  el.style.left    = '50%';
+  el.style.top     = '50%';
+  el.style.transform = 'translate(-50%,-50%)';
+  el.style.bottom  = 'auto';
+  el.style.right   = 'auto';
+  el.style.width   = '80%';
+  el.style.maxWidth = '900px';
 
   textEl.textContent = line;
   el.className = 'show ' + (type==='correct' ? 'correct-react' : type==='timeout' ? 'wrong-react' : 'wrong-react');
