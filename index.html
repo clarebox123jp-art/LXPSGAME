@@ -2054,6 +2054,60 @@ body {
   html, body { width: 100vw; height: 100vh; }
 }
 
+/* ══ iPad / 平板 RWD：依畫面比例縮放彈出視窗 ══ */
+@media screen and (max-width: 1180px) {
+  /* 答題視窗 */
+  #adv-quiz-box { padding:14px 16px; }
+  #adv-quiz-question { font-size:30px; }
+  .aqo-btn { font-size:26px; padding:12px 12px; }
+  #adv-quiz-timer { font-size:28px; }
+  #adv-quiz-label { font-size:20px; }
+
+  /* 場景對話視窗 */
+  #adv-dialog-text { font-size:28px; }
+  #adv-dialog-speaker { font-size:26px; }
+
+  /* 選擇視窗（年級/科目/難度）*/
+  .adv-choice-title { font-size:28px; margin-bottom:10px; }
+  .adv-choice-btn { font-size:26px; padding:10px 18px; }
+  .adv-choice-box { padding:14px 16px; max-height:85vh; }
+
+  /* 答題獎勵視窗 */
+  #adv-reward-overlay { width:50%; }
+  #adv-reward-title { font-size:26px; }
+  #adv-reward-subtitle { font-size:18px; margin-bottom:8px; }
+  .adv-reward-btn { font-size:22px; padding:10px 12px; }
+  #adv-reward-keep-btn { font-size:24px; padding:10px 0; }
+  #adv-reward-box { padding:12px 16px; }
+
+  /* Boss反應對話 */
+  #adv-boss-react-text { font-size:30px; }
+
+  /* 法寶 */
+  .adv-treasure-slot { width:100px; height:120px; font-size:44px; }
+  .ts-label { font-size:16px; }
+
+  /* 過場選擇視窗右邊留法寶空間 */
+  #adv-choice-panel { right:120px; }
+}
+
+@media screen and (max-width: 820px) {
+  /* 手機直式 / 小iPad */
+  #adv-quiz-question { font-size:24px; }
+  .aqo-btn { font-size:22px; padding:10px 8px; }
+  .adv-choice-btn { font-size:22px; padding:8px 14px; }
+  .adv-choice-title { font-size:24px; }
+  #adv-reward-overlay { width:64%; }
+  #adv-reward-title { font-size:22px; }
+  .adv-reward-btn { font-size:18px; }
+  #adv-reward-keep-btn { font-size:20px; }
+  #adv-boss-react-text { font-size:26px; }
+  .adv-treasure-slot { width:80px; height:96px; font-size:36px; }
+  .ts-label { font-size:14px; }
+  #adv-choice-panel { right:100px; }
+}
+
+
 
 @keyframes tobLabelFloat{
   0%,100%{transform:translateX(-50%) translateY(0px);opacity:1}
@@ -2456,11 +2510,11 @@ body {
 
 /* 答對獎勵視窗 */
 #adv-reward-overlay{
-  display:none;position:absolute;top:0;right:0;bottom:0;
-  width:42%;z-index:612;
+  display:none;position:absolute;top:0;right:0;
+  width:42%;height:auto;max-height:100%;z-index:612;
   background:none;
-  align-items:flex-end;justify-content:flex-end;
-  flex-direction:column;gap:0;pointer-events:none;align-items:flex-end;
+  align-items:flex-end;justify-content:flex-start;
+  flex-direction:column;gap:0;pointer-events:none;
 }
 #adv-reward-overlay.show{display:flex;}
 #adv-reward-box{
@@ -2470,7 +2524,7 @@ body {
   box-shadow:-6px 0 40px rgba(62,200,122,0.15);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
   pointer-events:all;
-  max-height:55vh;overflow-y:auto;
+  max-height:calc(100vh - 60px);overflow-y:auto;
   display:flex;flex-direction:column;gap:10px;
 }
 #adv-reward-title{font-size:36px;font-weight:900;color:#7df0a8;letter-spacing:3px;margin-bottom:4px;}
@@ -2796,7 +2850,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.10.27</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.15.52</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -8438,15 +8492,51 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       flashScreen('rgba(255,100,200,1)',450);
       zoneFlash(opp,'rgba(255,80,180,0.4)',700);
     }
-    // 抽3張物品卡
-    for(let _di=0;_di<3;_di++){
+    // ★ 抽3張物品卡，正確處理背包滿和裝備卡情況
+    const _drawn3=[];
+    let _tries3=0;
+    while(_drawn3.length<3 && _tries3<20){
+      _tries3++;
       const _nc=drawItem();
-      if(_nc.type!=='equip'){
-        const _ei=G.inv.findIndex(s=>s===null);
-        if(_ei>=0){ G.inv[_ei]=_nc; log(`📦 萬物創生額外抽到：${_nc.n}`); }
+      if(_nc.type==='equip'){
+        // 裝備卡：放回牌堆
+        if(G.deck) G.deck.unshift(_nc); else buildDeck();
+      } else {
+        _drawn3.push(_nc);
       }
     }
-    renderItems();
+    let _cardIdx3=0;
+    function _addNextCard3(){
+      if(_cardIdx3>=_drawn3.length){
+        updateUI(); renderItems();
+        if(checkWin()) return;
+        _burstFinish(h, _interrupted);
+        return;
+      }
+      const _nc=_drawn3[_cardIdx3]; _cardIdx3++;
+      const _ei=G.inv.findIndex(s=>s===null);
+      if(_ei>=0){
+        G.inv[_ei]=_nc;
+        bannerFX(h, `📦 ${_nc.n}`, '#ff88cc', 700);
+        log(`[萬物創生] 獲得：${_nc.n}`);
+        renderItems();
+        _pSetTimeout(_addNextCard3, 350);
+      } else {
+        // 背包滿：賣出售價最低的卡換能量，再放入新卡
+        let _minIdx=0;
+        G.inv.forEach((it,i)=>{ if(it && G.inv[_minIdx] && (it.sell||0)<(G.inv[_minIdx].sell||0)) _minIdx=i; });
+        const _sold=G.inv[_minIdx];
+        G.energy[side]=Math.min(10,G.energy[side]+(_sold?(_sold.sell||1):1));
+        if(_sold) log(`[萬物創生] 背包滿，賣出${_sold.n}換能量`);
+        G.inv[_minIdx]=_nc;
+        bannerFX(h, `📦 ${_nc.n}`, '#ff88cc', 700);
+        log(`[萬物創生] 獲得：${_nc.n}`);
+        renderItems(); updateUI();
+        _pSetTimeout(_addNextCard3, 350);
+      }
+    }
+    _pSetTimeout(_addNextCard3, 600);
+    return; // ★ 非同步：由 _addNextCard3 最後呼叫 _burstFinish
   }
   if(name==='程式設計師'){
     log(`[${h.name}] BUG修復！不利狀態轉有利狀態，復活全體！`);
