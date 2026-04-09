@@ -1257,7 +1257,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   display:none;position:absolute;inset:0;z-index:520;
   background-color:#080a18;
   background:url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png") center/cover no-repeat;
-  z-index:110;flex-direction:column;overflow:hidden;
+  z-index:530;flex-direction:column;overflow:hidden;
 }
 #hero-pick-topbar{
   flex-shrink:0;padding:16px 36px 10px;display:flex;flex-direction:column;align-items:flex-start;
@@ -1458,7 +1458,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* SKILL REPLACE OVERLAY */
 #skill-replace-overlay{
   display:none;position:absolute;inset:0;background:rgba(6,7,12,0.98);
-  z-index:115;flex-direction:column;align-items:stretch;overflow:hidden;
+  z-index:545;flex-direction:column;align-items:stretch;overflow:hidden;
 }
 #sro-header{
   flex-shrink:0;padding:10px 28px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1800,7 +1800,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* Element pick overlay */
 #elem-pick-overlay{
   display:none;position:absolute;inset:0;
-  background:url("https://github.com/clarebox123jp-art/-/raw/main/%E5%85%83%E7%B4%A0%E9%81%B8%E6%93%87%E8%83%8C%E6%99%AF.png") center/cover no-repeat;z-index:120;
+  background:url("https://github.com/clarebox123jp-art/-/raw/main/%E5%85%83%E7%B4%A0%E9%81%B8%E6%93%87%E8%83%8C%E6%99%AF.png") center/cover no-repeat;z-index:540;
   flex-direction:column;align-items:stretch;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
 }
@@ -2971,7 +2971,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.07</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.10</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
