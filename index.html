@@ -720,7 +720,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   padding:80px 20px 40px 40px;gap:16px;
 }
 .adv-list-title{
-  font-size:52px;font-weight:700;color:#ffe8a0;
+  font-size:48	px;font-weight:700;color:#ffe8a0;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;line-height:1.75;
   text-shadow:0 2px 0 rgba(0,0,0,0.9),0 0 20px rgba(255,200,80,0.35);
@@ -729,7 +729,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 .adv-stage-btn{
   width:100%;padding:14px 20px;
-  font-size:34px;font-weight:700;
+  font-size:42px;font-weight:700;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;cursor:pointer;border-radius:14px;
   border:2px solid rgba(212,168,67,0.5);
@@ -791,11 +791,11 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   letter-spacing:4px;text-shadow:0 0 24px rgba(212,168,67,0.45);
 }
 .adv-info-desc{
-  font-size:28px;color:#d4d0c4;line-height:1.75;font-weight:500;
+  font-size:32px;color:#d4d0c4;line-height:1.75;font-weight:500;
   border-left:3px solid rgba(212,168,67,0.45);padding-left:16px;
 }
 .adv-info-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.adv-info-label{font-size:28px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
+.adv-info-label{font-size:30px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
 .adv-difficulty-stars{font-size:40px;letter-spacing:5px;line-height:1;}
 /* ─── 底部功能選單 ─── */
 #adv-bottom-nav{
@@ -816,7 +816,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   color:#556;cursor:default;
 }
 .adv-nav-icon{font-size:38px;line-height:1;flex-shrink:0;}
-.adv-nav-label{font-size:55px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
+.adv-nav-label{font-size:50px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
 .adv-nav-lock{position:absolute;top:4px;right:6px;font-size:14px;opacity:0.5;}
 /* 各按鈕顏色（鎖定時半透明）*/
 .adv-nav-btn:nth-child(1){border-color:rgba(180,80,255,0.25);}  /* 召喚 - 紫 */
@@ -16298,14 +16298,14 @@ function selectAdvStage(key, btnEl){
   const objEl = document.getElementById('adv-objectives');
   if(objEl && data.objectives){
     objEl.innerHTML = data.objectives.map(o=>
-      `<div style="font-size:24px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
+      `<div style="font-size:28px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
     ).join('');
   }
   // 獎勵
   const rwEl = document.getElementById('adv-rewards-list');
   if(rwEl && data.rewards){
     rwEl.innerHTML = data.rewards.map(r=>
-      `<div style="display:flex;align-items:center;gap:8px;font-size:26px;color:#ffe066;padding:8px 16px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.25);border-radius:10px;">${r.icon} <span style="color:#f0e8c8;">${r.text}</span></div>`
+      `<div style="display:flex;align-items:center;gap:8px;font-size:28px;color:#ffe066;padding:8px 16px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.25);border-radius:10px;">${r.icon} <span style="color:#f0e8c8;">${r.text}</span></div>`
     ).join('');
   }
   // 學習領域（保留隱藏備用）
