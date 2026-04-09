@@ -2454,33 +2454,40 @@ body {
 
 /* 答對獎勵視窗 */
 #adv-reward-overlay{
-  display:none;position:absolute;top:0;left:0;right:0;z-index:612;
-  background:none;align-items:flex-start;justify-content:center;
-  flex-direction:column;gap:12px;padding-top:0;
+  display:none;position:absolute;top:0;right:0;bottom:0;
+  width:42%;z-index:612;
+  background:none;
+  align-items:flex-end;justify-content:flex-end;
+  flex-direction:column;gap:0;pointer-events:none;
 }
 #adv-reward-overlay.show{display:flex;}
 #adv-reward-box{
   background:linear-gradient(160deg,rgba(8,13,32,0.97),rgba(4,8,14,0.97));
-  border:2.5px solid rgba(62,200,122,0.6);border-radius:0 0 20px 20px;
-  padding:20px 44px 24px;max-width:100%;width:100%;text-align:center;
-  box-shadow:0 8px 40px rgba(62,200,122,0.2);
+  border:2.5px solid rgba(62,200,122,0.6);border-radius:14px 0 0 14px;
+  padding:16px 24px 16px;width:100%;text-align:center;
+  box-shadow:-6px 0 40px rgba(62,200,122,0.15);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:all;
+  max-height:55vh;overflow-y:auto;
+  display:flex;flex-direction:column;gap:10px;
 }
-#adv-reward-title{font-size:48px;font-weight:900;color:#7df0a8;letter-spacing:4px;margin-bottom:6px;}
-#adv-reward-subtitle{font-size:33px;color:#aaa;letter-spacing:2px;margin-bottom:16px;}
-#adv-reward-choices{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+#adv-reward-title{font-size:36px;font-weight:900;color:#7df0a8;letter-spacing:3px;margin-bottom:4px;}
+#adv-reward-subtitle{font-size:24px;color:#aaa;letter-spacing:1px;margin-bottom:10px;}
+#adv-reward-choices{display:flex;gap:10px;justify-content:center;flex-direction:column;align-items:stretch;}
 .adv-reward-btn{
-  padding:22px 32px;font-size:36px;font-weight:700;
+  padding:14px 18px;font-size:28px;font-weight:700;
   background:rgba(20,50,30,0.85);border:2px solid rgba(62,200,122,0.5);
-  color:#88ffcc;border-radius:14px;cursor:pointer;letter-spacing:1px;
+  color:#88ffcc;border-radius:12px;cursor:pointer;letter-spacing:1px;
   transition:all 0.2s;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-  max-width:380px;line-height:1.5;text-align:center;
+  width:100%;line-height:1.5;text-align:left;
 }
 .adv-reward-btn:hover{background:rgba(62,200,122,0.2);border-color:#3ec87a;color:#fff;transform:scale(1.03);}
 #adv-reward-keep-btn{
-  padding:12px 36px;font-size:22px;font-weight:700;
-  background:transparent;border:1.5px solid #555;color:#888;
-  cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;
+  padding:10px 24px;font-size:22px;font-weight:700;
+  background:rgba(0,0,0,0.7);border:1.5px solid #555;color:#888;
+  cursor:pointer;border-radius:10px 0 0 0;letter-spacing:1px;
+  align-self:flex-end;pointer-events:all;margin-top:auto;
+  transition:all 0.2s;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
 }
 #adv-reward-keep-btn:hover{border-color:#aaa;color:#ccc;}
@@ -2784,7 +2791,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.09.11</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.09.21</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
