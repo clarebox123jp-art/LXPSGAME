@@ -2251,27 +2251,29 @@ body {
 .adv-treasure-slot .ts-label{font-size:22px;color:#ffcc44;margin-top:4px;letter-spacing:0px;text-align:center;line-height:1.2;font-weight:700;}
 /* 中央選擇視窗 */
 #adv-choice-panel{
-  position:absolute;top:40px;left:0;right:160px;z-index:3;
-  display:flex;align-items:flex-start;justify-content:center;padding-top:20px;
+  position:absolute;inset:0;z-index:3;
+  display:flex;align-items:center;justify-content:center;
+  padding:12px;
+  background:rgba(0,0,8,0.6);
 }
 .adv-choice-box{
-  background:rgba(8,10,22,0.88);backdrop-filter:blur(12px);
-  border:2px solid rgba(255,220,80,0.35);border-radius:18px;
-  padding:20px 28px;max-width:860px;width:94%;
-  max-height:72vh;overflow-y:auto;
-  box-shadow:0 0 60px rgba(0,0,0,0.8);
+  background:rgba(8,10,22,0.95);backdrop-filter:blur(12px);
+  border:2px solid rgba(255,220,80,0.5);border-radius:18px;
+  padding:18px 20px;max-width:95vw;width:auto;
+  max-height:92vh;overflow:hidden;
+  box-shadow:0 0 60px rgba(0,0,0,0.9);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .adv-choice-title{
-  font-size:38px;font-weight:900;color:#ffe050;letter-spacing:2px;
-  margin-bottom:14px;text-shadow:0 0 16px rgba(255,200,0,0.5);text-align:center;
+  font-size:44px;font-weight:900;color:#ffe050;letter-spacing:2px;
+  margin-bottom:12px;text-shadow:0 0 16px rgba(255,200,0,0.5);text-align:center;
 }
 .adv-choice-grid{
-  display:flex;flex-wrap:wrap;gap:12px;justify-content:center;
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start;
 }
 .adv-choice-btn{
-  padding:18px 36px;font-size:42px;font-weight:700;
+  padding:14px 24px;font-size:38px;font-weight:700;
   background:rgba(30,25,50,0.85);border:2px solid rgba(155,109,255,0.5);
   color:#cc99ff;border-radius:12px;cursor:pointer;letter-spacing:2px;
   transition:all 0.2s;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
@@ -2458,7 +2460,7 @@ body {
   width:42%;z-index:612;
   background:none;
   align-items:flex-end;justify-content:flex-end;
-  flex-direction:column;gap:0;pointer-events:none;
+  flex-direction:column;gap:0;pointer-events:none;align-items:flex-end;
 }
 #adv-reward-overlay.show{display:flex;}
 #adv-reward-box{
@@ -2483,10 +2485,10 @@ body {
 }
 .adv-reward-btn:hover{background:rgba(62,200,122,0.2);border-color:#3ec87a;color:#fff;transform:scale(1.03);}
 #adv-reward-keep-btn{
-  padding:10px 24px;font-size:22px;font-weight:700;
-  background:rgba(0,0,0,0.7);border:1.5px solid #555;color:#888;
-  cursor:pointer;border-radius:10px 0 0 0;letter-spacing:1px;
-  align-self:flex-end;pointer-events:all;margin-top:auto;
+  padding:14px 0;font-size:33px;font-weight:700;
+  background:rgba(10,10,20,0.8);border:1.5px solid #666;color:#aaa;
+  cursor:pointer;border-radius:0 0 12px 12px;letter-spacing:2px;
+  width:100%;margin-top:10px;pointer-events:all;
   transition:all 0.2s;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
 }
@@ -2604,7 +2606,7 @@ body {
   pointer-events:none;
   animation:bossReactIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
-#adv-boss-react.show{display:flex;flex-direction:column;align-items:flex-start;}
+#adv-boss-react.show{display:flex;flex-direction:column;align-items:stretch;}
 @keyframes bossReactIn{
   from{opacity:0;transform:scale(0.6) translateY(20px)}
   to{opacity:1;transform:scale(1) translateY(0)}
@@ -2615,10 +2617,13 @@ body {
 }
 #adv-boss-react-bubble{
   background:linear-gradient(135deg,rgba(30,5,0,0.97),rgba(15,3,0,0.98));
-  border:2.5px solid rgba(255,120,0,0.75);
-  border-radius:18px;
-  padding:16px 24px;max-width:100%;width:100%;
-  box-shadow:0 0 30px rgba(255,80,0,0.45),0 4px 20px rgba(0,0,0,0.8);
+  border:0 0 3px 3px solid rgba(255,120,0,0.75);
+  border-radius:0 0 18px 18px;
+  border-bottom:3px solid rgba(255,120,0,0.75);
+  border-left:3px solid rgba(255,120,0,0.75);
+  border-right:3px solid rgba(255,120,0,0.75);
+  padding:18px 28px;max-width:100%;width:100%;
+  box-shadow:0 6px 30px rgba(255,80,0,0.45),0 4px 20px rgba(0,0,0,0.8);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   position:relative;
 }
@@ -2631,7 +2636,7 @@ body {
   font-size:24px;font-weight:900;color:#ff9944;letter-spacing:2px;margin-bottom:8px;
 }
 #adv-boss-react-text{
-  font-size:17px;color:#ffe8cc;line-height:1.5;font-weight:500;
+  font-size:42px;color:#ffe8cc;line-height:1.4;font-weight:700;
 }
 /* 答對版：藍色邊框（Boss 生氣） */
 #adv-boss-react.correct-react #adv-boss-react-bubble{
@@ -2791,7 +2796,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.09.21</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.10.20</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3179,8 +3184,8 @@ body {
       <div id="adv-reward-title">🎉 答對了！選擇獎勵</div>
       <div id="adv-reward-subtitle">選擇一項獎勵施放到戰場上</div>
       <div id="adv-reward-choices"></div>
+      <button id="adv-reward-keep-btn" onclick="advKeepReward()">📦 保留至下次</button>
     </div>
-    <button id="adv-reward-keep-btn" onclick="advKeepReward()">📦 保留至下次</button>
   </div>
   <!-- 接關視窗 -->
   <div id="adv-continue-overlay">
@@ -4489,17 +4494,17 @@ const HERO_DB = {
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
   '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:5,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'重置戰鬥至第1回合（限用）',fd:'使時間回到第一回合剛開始的狀態。(限用一次)'}},
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
-  '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:5,d:'友方全體普攻變2次（2回合）',fd:'使友方全體獲得「運球」狀態2回合，普通攻擊變為2次攻擊。'}},
-  '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方獲得持續恢復狀態5回合',fd:'使全體友方獲得「持續恢復」狀態5回合，每回合恢復12HP。'}},
+  '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
+  '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:4,d:'使全體友方獲得持續恢復狀態5回合',fd:'使全體友方獲得「持續恢復」狀態5回合，每回合恢復12HP。'}},
   '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:3,d:'攻擊1名敵人並強化下一位行動的友方',fd:'用攻擊的150%對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%。'}},
   '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害，並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率醒來。'}},
-  '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:4,d:'使全體對手有利狀態失效，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:4,d:'使友方全體有利狀態效果+50%並獲得20護盾',fd:'使友方全體的有利狀態效果提高50%並各獲得可抵擋20傷害的護盾。'}},
-  '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:5,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態並免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，並使其免疫不利狀態2回合。'}},
-  '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:5,d:'特技30%傷害敵方全體3~5次',fd:'用特技的30%對敵方全體造成3~5次傷害。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
-  '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:3,d:'先獲得隨機有利狀態，再用特技+攻擊+速度對1名對手造成傷害',fd:'先幫自己隨機附加一個有利狀態，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人嘲諷並使其失明2回合',fd:'強迫1名敵人進入「挑釁」狀態並使其「失明」，持續2回合。'}},
+  '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:4,d:'使友方全體有利狀態效果+50%並獲得20護盾',fd:'使友方全體的有利狀態效果提高50%並各獲得可抵擋20傷害的護盾。'}},
+  '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態並免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，並使其免疫不利狀態2回合。'}},
+  '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:4,d:'特技30%傷害敵方全體3~5次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~5次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
+  '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態，再用特技+攻擊+速度造成傷害，攻擊完狀態復原',fd:'先幫自己隨機附加一個有利狀態，再用特技值+攻擊值+速度值的總和對1名對手造成傷害，攻擊完畢後立即移除該有利狀態。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人嘲諷並使其失明2回合',fd:'強迫1名敵人進入「挑釁」狀態並使其「失明」，持續2回合。'}},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,
-  s1:{n:'連續貓爪功',c:5,d:'依攻擊對隨機目標造成4~6次傷害',fd:'用攻擊值對隨機存活的對手造成4到6次傷害，每次各自結算暴擊與傷害。'},
+  s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
   s2:{n:'睡覺功',c:5,d:'解除自身所有不利狀態並恢復10%HP',fd:'解除自己身上所有不利狀態，並恢復最大HP的10%（約50HP）。'}
 },
 '綠竹筍小妖':{hp:180,atk:9,sp:10,spd:5,
@@ -11150,6 +11155,9 @@ function execSkill(a, sk, cost, stype){
       // 傷害 = 特技 + 攻擊 + 速度
       const _totalDmg=Math.max(1,(a.sp||0)+(a.atk||0)+(a.spd||0));
       doDmg(t,_totalDmg,{actor:a,isSkill:true});
+      // ★ 攻擊完狀態復原
+      a.buffs=a.buffs.filter(b=>b.type!==_randBuff);
+      renderCard(a);
       endAction(a,cost);
     });
   }
@@ -11268,7 +11276,7 @@ function execSkill(a, sk, cost, stype){
   }
   // ====== 冒險模式 BOSS 技能 ======
   else if(n==='連續貓爪功'){
-    const hitCount = 4 + Math.floor(Math.random()*3); // 4~6次
+    const hitCount = 2 + Math.floor(Math.random()*2); // 2~3次
     let opp = a.side==='p1'?'p2':'p1';
     let liveFoes = ()=>G[opp].filter(h=>h.curHp>0);
     if(!liveFoes().length){ endAction(a,cost); return; }
@@ -13810,7 +13818,7 @@ function aiUseSkill(a,sk,cost,pref){
     // ★ 多段攻擊：4~6次隨機命中存活目標
     const _ccOpp = a.side==='p1'?'p2':'p1';
     const _ccFoes = ()=>G[_ccOpp].filter(h=>h.curHp>0);
-    const _ccHits = 4 + Math.floor(Math.random()*3);
+    const _ccHits = 2 + Math.floor(Math.random()*2);
     let _ccI = 0;
     log(`🐱 [${a.name}] 連續貓爪功！連續攻擊 ${_ccHits} 次！`);
     function _doCatClaw(){
@@ -17762,14 +17770,14 @@ function advShowBossReact(type) {
   else                         lines = BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
-  // ★ 定位：正中間浮現
-  el.style.left    = '50%';
-  el.style.top     = '50%';
-  el.style.transform = 'translate(-50%,-50%)';
+  // ★ 定位：畫面最上方，全寬橫條
+  el.style.left    = '0';
+  el.style.top     = '0';
+  el.style.right   = '0';
+  el.style.width   = '100%';
+  el.style.maxWidth = '100%';
+  el.style.transform = 'none';
   el.style.bottom  = 'auto';
-  el.style.right   = 'auto';
-  el.style.width   = '80%';
-  el.style.maxWidth = '900px';
 
   textEl.textContent = line;
   el.className = 'show ' + (type==='correct' ? 'correct-react' : type==='timeout' ? 'wrong-react' : 'wrong-react');
