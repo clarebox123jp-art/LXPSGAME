@@ -1397,6 +1397,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .srh-stat-sp{border-color:#ffe06677;background:rgba(255,220,60,0.1)} .srh-stat-sp b{color:#ffdd55}
 .srh-stat-spd{border-color:#44ff8877;background:rgba(50,220,100,0.1)} .srh-stat-spd b{color:#55ee88}
 .srh-current-label{font-size:20px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;margin-top:5px}
+@keyframes srh-breathe-blue{0%,100%{box-shadow:0 0 0 2px #4a9eff,0 0 10px #4a9eff44;}50%{box-shadow:0 0 0 3px #4a9eff,0 0 28px #4a9effaa;}}
+@keyframes srh-breathe-gold{0%,100%{box-shadow:0 0 0 2px #ffcc44,0 0 10px #ffcc4444;}50%{box-shadow:0 0 0 3px #ffcc44,0 0 28px #ffcc44aa;}}
 .srh-skill-box{
   background:var(--panel2);border:1.5px solid var(--border);border-radius:7px;
   padding:7px 10px;margin-bottom:5px;cursor:pointer;
@@ -2856,7 +2858,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.18.43</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.19.27</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5858,33 +5860,60 @@ function confirmElemPick(){
 }
 
 function autoRecommendElem(){
-  // 根據英雄特性自動推薦最合適的屬性
-  const HEAL_SK=['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌'];
-  const TANK_SK=['挺身守護','嘲諷','聖殿領域','金鐘罩','懲戒之盾','漩渦反擊','強勢對決'];
+  // ★ 優化後的推薦規則
+  // 治療技能（含爆發）
+  const HEAL_NAMES = new Set([
+    '救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復','神之賜福','慈悲之雨',
+    '黃昏詩歌','迷心醫術','治療之光','全體治療','復活術',
+    '天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶','雙小提琴協奏曲','BUG修復'
+  ]);
+  // BOSS 屬性剋制（貓空主boss是fire）
+  const bossBossElem = (G && G.p2 && G.p2.find(h=>h.name==='九尾空貓怪')) ? 'fire' : null;
+  // 剋制fire的是water
+  const COUNTER_MAP = {fire:'water',water:'wind',wind:'earth',earth:'thunder',thunder:'fire',
+                       light:'dark',dark:'light',grass:'fire',ice:'grass'};
+  const bossCounter = bossBossElem ? (COUNTER_MAP[bossBossElem]||'water') : 'water';
+
   const usedElems = new Set();
 
+  function countHealSkills(h){
+    let cnt = 0;
+    if(HEAL_NAMES.has(h.s1.n)) cnt++;
+    if(HEAL_NAMES.has(h.s2.n)) cnt++;
+    if(typeof BURST_DB!=='undefined' && BURST_DB[h.name] && HEAL_NAMES.has(BURST_DB[h.name].n)) cnt++;
+    return cnt;
+  }
+
   function pickBestElem(h, preferred){
-    // 優先選preferred中未被使用的
-    for(const key of preferred){
-      if(!usedElems.has(key)) return key;
-    }
-    // 否則選任何未使用的
-    for(const key of Object.keys(ELEMENT_DB)){
-      if(!usedElems.has(key)) return key;
-    }
+    for(const key of preferred) if(!usedElems.has(key)) return key;
+    for(const key of Object.keys(ELEMENT_DB)) if(!usedElems.has(key)) return key;
     return preferred[0];
   }
 
-  _epHeroes.forEach((h, i)=>{
-    const isHealer = HEAL_SK.some(n=>h.s1.n===n||h.s2.n===n) || h.sp > 16;
-    const isTank   = TANK_SK.some(n=>h.s1.n===n||h.s2.n===n) || h.hp >= 55;
-    const isAtk    = !isHealer && !isTank && h.atk >= 10;
+  // 計算全隊特性
+  const maxAtk = Math.max(..._epHeroes.map(h=>h.atk));
+  const maxHp  = Math.max(..._epHeroes.map(h=>h.hp));
+  const maxEnergyCost = Math.max(..._epHeroes.map(h=>(h.s1.c||0)+(h.s2.c||0)));
+  const minSp  = Math.min(..._epHeroes.map(h=>h.sp));
 
+  _epHeroes.forEach((h, i)=>{
+    const healCnt = countHealSkills(h);
+    const energyCost = (h.s1.c||0)+(h.s2.c||0);
     let preferred;
-    if(isHealer)      preferred = ['grass','light','water'];      // 草/光/水：治療
-    else if(isTank)   preferred = ['earth','dark','water'];       // 土/暗/水：防禦
-    else if(isAtk)    preferred = ['fire','dark','wind'];         // 火/暗/風：攻擊
-    else              preferred = ['wind','light','grass'];       // 其餘通用
+
+    if(healCnt >= 2){
+      preferred = ['grass','water','light']; // 草優先：治療角色
+    } else if(h.atk === maxAtk){
+      preferred = ['fire','wind','thunder']; // 火優先：攻擊最高
+    } else if(h.hp === maxHp){
+      preferred = ['earth','dark','water'];  // 地優先：HP最高
+    } else if(energyCost === maxEnergyCost){
+      preferred = ['dark','wind','earth'];   // 暗次推薦：能量消耗最高
+    } else if(h.sp === minSp){
+      preferred = ['earth','fire','wind'];   // 特技最低：不推薦光屬性
+    } else {
+      preferred = [bossCounter,'water','wind']; // 其他：剋制BOSS屬性
+    }
 
     const key = pickBestElem(h, preferred);
     usedElems.add(key);
@@ -6779,6 +6808,8 @@ function confirmHeroPick(){
 
   // AI英雄各自從替換技能列表隨機挑選一招較有利的技能來替換，且不與場上任何技能重複
   (function aiSkillReplace(){
+    // ★ 冒險/鬥技場模式：AI陣營不替換技能
+    if(!window._advSystemReady || typeof _adventureMode === 'undefined') return;
     // 收集場上所有技能名稱（p1+p2）避免重複
     const allUsed = new Set();
     [...G.p1,...G.p2].forEach(h=>{ allUsed.add(h.s1.n); allUsed.add(h.s2.n); });
@@ -6827,29 +6858,22 @@ function confirmHeroPick(){
 
 // ====== NEW SKILLS DB ======
 const NEW_SKILLS_DB = [
-  // ── 被動 ──
-  {n:'慈悲之雨',    c:4, p:true,  once:false, d:'(被動)全隊受傷時立刻恢復HP',fd:'(被動)受到傷害後觸發，使全體友方受到傷害時立刻恢復50%失去的HP。'},
-  {n:'完美助攻',    c:3, p:true,  once:false, d:'(被動)友方攻擊後使目標禁動',fd:'(被動)友方對1名對手造成傷害時觸發，使該目標1回合內不能行動和反擊。'},
-  {n:'懲戒之盾',    c:4, p:true,  once:false, d:'(被動)受傷時減傷並反彈2倍',fd:'(被動)受到傷害時觸發，先用特技的50%減輕自己受到的傷害，再使1名對手受到此傷害的2倍。'},
-  {n:'漩渦反擊',    c:4, p:true,  once:false, d:'(被動)受傷時迴避並反擊',fd:'(被動)受到傷害時觸發，迴避傷害並依特技或攻擊較高的數值來反擊對手。'},
-  {n:'迷心醫術',    c:3, p:true,  once:false, d:'(被動)將敵方治療轉給我方',fd:'(被動)對手使用治療技能或物品時觸發，可轉為對施展此技能的友軍使用。'},
-  {n:'黃昏詩歌',    c:3, p:true,  once:false, d:'(被動)友方受傷時治癒並解除狀態',fd:'(被動)友方1人受到傷害時觸發，立即用特技恢復其HP並解除不利狀態。'},
-  {n:'零度空間',    c:4, p:true,  once:false, d:'(被動)友方受傷時冰凍反擊',fd:'(被動)友方受到傷害時觸發，用特技反擊對手，並使其冰凍不能動1回合。'},
-  // ── 主動 ──
-  {n:'虛弱咒',      c:3, p:false, once:false, d:'降低1名對手全能力',fd:'依特技使1名對手全能力降低2回合。'},
-  {n:'增強術',      c:3, p:false, once:false, d:'提升1名友方全能力',fd:'依特技使1名友方全能力提升2回合。'},
-  {n:'能力轉換',    c:3, p:false, once:true,  d:'HP-5換取能力提升（限用）',fd:'減少自己最大HP值5，轉換為自己最高的能力。(限用一次)'},
-  {n:'元素增幅',    c:4, p:false, once:true,  d:'全狀態免疫並提升屬性傷害（限用）',fd:'使自己的全異常抵抗力變為100%，再讓相剋的增減傷+2。(限用一次)'},
-  {n:'強勢對決',    c:3, p:false, once:false, d:'強制全體對手攻擊自己',fd:'1回合內強制使所有對手只能攻擊施展者，可觸發懲戒之盾(最多1次)。'},
-  {n:'狂亂之歌',    c:5, p:false, once:false, d:'使較弱對手攻擊自己友軍',fd:'使目前HP低於施展者的對手1回合內只能普通攻擊其友軍且傷害+3。'},
-  {n:'炫目神光',    c:5, p:false, once:false, d:'傷害2名對手並使其失明',fd:'用特技的90%傷害2名對手並使其行動成功率減半1回合。'},
-  {n:'禁書封鎖',    c:3, p:false, once:false, d:'封印1名對手技能和物品',fd:'使1名對手技能和物品卡被封印1回合，若刻意解除此狀態則使被解除者HP-10。'},
-  // ── 新增技能 ──
-  {n:'強奪',        c:2, p:false, once:false, d:'奪取對手增益或寵物',fd:'奪取1名對手身上的有利狀態，若無有利狀態則可奪取寵物。'},
-  {n:'呼叫援軍',    c:5, p:false, once:true,  d:'替換1名我方角色（限用）',fd:'開啟未登場的角色選單，指定己方一名角色替換成新角色。(整場戰鬥限用一次，可以再行動1次)'},
-  {n:'持續恢復',    c:3, p:false, once:false, d:'使1名友方持續恢復HP',fd:'使1名友方每回合+12HP，持續5回合。'},
-  {n:'劇毒',        c:3, p:false, once:false, d:'使1名對手持續損失HP',fd:'使1名對手每回合-12HP，持續5回合。'},
-  {n:'復活術',      c:2, p:false, once:false, d:'使1名倒下的友方以25%HP復活',fd:'選擇1名已倒下的友方角色，使其以最大HP的25%復活並立刻可行動。'},
+  // ── 顯示於替換技能列表的10個技能 ──
+  {n:'治療之光',    c:3, p:false, once:false, d:'恢復1名友方40%HP',fd:'選擇1名友方，恢復其最大HP的40%。'},
+  {n:'全體治療',    c:5, p:false, once:false, d:'全體友方HP恢復20%，其中一名額外恢復10%',fd:'所有友方HP恢復最大HP的20%，其中HP最低的一名額外再恢復10%。'},
+  {n:'復活術',      c:3, p:false, once:false, d:'以30%HP復活1名友方',fd:'選擇1名已倒下的友方角色，使其以最大HP的30%復活並立刻可行動。'},
+  {n:'充能',        c:1, p:false, once:false, d:'能量+6，但本回合無法再行動',fd:'立即獲得6點能量，但施展後本回合自己不能再行動。'},
+  {n:'護盾術',      c:3, p:false, once:false, d:'1名友方獲得減輕30點傷害的護盾',fd:'使1名友方獲得可抵擋30點傷害的護盾。'},
+  {n:'群體挑釁',    c:4, p:false, once:false, d:'強制所有對手1回合只能攻擊自己，自身減傷30%',fd:'1回合內強制使所有對手只能普通攻擊施展者，同時讓自己受到的傷害減少30%。'},
+  {n:'虛弱咒',      c:3, p:false, once:false, d:'使1名對手攻擊、特技、速度降低30%（2回合）',fd:'使1名對手的攻擊、特技、速度全部降低30%，持續2回合。'},
+  {n:'增強術',      c:3, p:false, once:false, d:'使1名友方攻擊、特技、速度提升30%（2回合）',fd:'使1名友方的攻擊、特技、速度全部提升30%，持續2回合。'},
+  {n:'強奪',        c:2, p:false, once:false, d:'奪取1名對手的有利狀態，若無則奪裝備',fd:'奪取1名對手身上的有利狀態，若無有利狀態則可奪取其裝備。'},
+  {n:'戰場交易',    c:3, p:false, once:false, d:'丟出2張物品卡重抽2張',fd:'將手中2張物品卡丟回牌池，重新抽取2張新卡，此時可販賣所抽到的卡。'},
+  // ── 隱藏技能（保留供未來新角色使用）──
+  // {n:'慈悲之雨',...},{n:'完美助攻',...},{n:'懲戒之盾',...},{n:'漩渦反擊',...},
+  // {n:'迷心醫術',...},{n:'黃昏詩歌',...},{n:'零度空間',...},{n:'能力轉換',...},
+  // {n:'元素增幅',...},{n:'強勢對決',...},{n:'狂亂之歌',...},{n:'炫目神光',...},
+  // {n:'禁書封鎖',...},{n:'呼叫援軍',...},{n:'持續恢復',...},{n:'劇毒',...},
 ];
 
 // ====== SKILL REPLACE UI ======
@@ -6859,19 +6883,10 @@ let _pickerFocusPos = null;    // which hero card the picker is operating on
 
 // Skill categories — correct and complete
 const SK_CATS = {
-  atk: {
-    label:'⚔ 攻擊・弱化', color:'cat-atk',
-    skills:['虛弱咒','狂亂之歌','炫目神光','禁書封鎖',
-            '能力轉換','劇毒']
-  },
-  heal: {
-    label:'💚 治療・強化', color:'cat-heal',
-    skills:['增強術','元素增幅','黃昏詩歌','迷心醫術','持續恢復',
-            '呼叫援軍','強奪','強勢對決','完美助攻','復活術']
-  },
-  tank: {
-    label:'🛡 減傷・反擊', color:'cat-tank',
-    skills:['慈悲之雨','懲戒之盾','漩渦反擊','零度空間']
+  all: {
+    label:'⚡ 替換技能', color:'cat-all',
+    skills:['治療之光','全體治療','復活術','充能','護盾術',
+            '群體挑釁','虛弱咒','增強術','強奪','戰場交易']
   },
 };
 
@@ -6989,7 +7004,26 @@ function buildSrhBlock(h){
       ? `<button class="srh-cancel-btn" onclick="event.stopPropagation();clearSlotAssign(${h.pos})"
           title="取消替換，恢復原技能">↩ 取消替換</button>`
       : '';
-    return `<div class="srh-skill-box${isRep?' slot-replaced':''}"
+    // ★ 建議替換分析
+    const _HEAL_NS = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復',
+      '神之賜福','慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療','復活術',
+      '天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶','雙小提琴協奏曲','BUG修復']);
+    const _CTRL_NS = new Set(['虛弱咒','禁書封鎖','狂亂之歌','劇毒','炫目神光','強勢對決',
+      '群體挑釁','增強術','能力轉換','元素增幅']);
+    // 計算英雄目前治療技能數（含爆發）
+    let _healCnt = 0;
+    if(_HEAL_NS.has(h.s1.n)) _healCnt++;
+    if(_HEAL_NS.has(h.s2.n)) _healCnt++;
+    if(typeof BURST_DB!=='undefined'&&BURST_DB[h.name]&&_HEAL_NS.has(BURST_DB[h.name].n)) _healCnt++;
+    const _needsHeal = _healCnt < 2 && !isRep;
+    const _isCtrl = _CTRL_NS.has(sk.n) && !isRep;
+    const _isHealReplace = _needsHeal && !_HEAL_NS.has(sk.n) && !sk.p && !isRep;
+    // 藍光：控制/弱化技能建議被替換  黃光：應放治療技能
+    const _glowStyle = _isCtrl && _needsHeal ? 'box-shadow:0 0 0 2px #4a9eff,0 0 16px #4a9eff88;animation:srh-breathe-blue 1.8s ease-in-out infinite;' 
+                     : '';
+    const _suggestTag = _isCtrl && _needsHeal
+      ? `<span style="font-size:16px;color:#4a9eff;font-weight:800;letter-spacing:1px;margin-left:8px;">💡建議替換</span>` : '';
+    return `<div class="srh-skill-box${isRep?' slot-replaced':''}" style="${_glowStyle}"
         id="srhbox-${slot}-${h.pos}"
         onclick="onClickSkillBox(${h.pos},'${slot}')"
         title="${_selectedPickSkill ? '點擊以套用【'+_selectedPickSkill+'】' : '先在下方選擇候選技能'}">
@@ -7054,9 +7088,8 @@ function buildSkillPicker(){
         <span class="sk-pick-desc">${sk.d}</span>
       </button>`;
     }).join('');
-    return `<div class="skcat-section ${cat.color}">
-      <div class="skcat-header">${cat.label}</div>
-      <div class="skcat-list">${itemsHTML}</div>
+    return `<div class="skcat-section ${cat.color}" style="padding:0;">
+      <div class="skcat-list" style="gap:8px;">${itemsHTML}</div>
     </div>`;
   }).join('');
 }
