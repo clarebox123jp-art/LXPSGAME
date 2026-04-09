@@ -60,6 +60,7 @@
   onAuthStateChanged(_fbAuth, async (user) => {
     if(user) {
       window._fbUser = user;
+      window._gUserId = user.uid; // ★ 確保 _gUserId 同步
       // 更新 UI
       const av = document.getElementById('google-avatar');
       const nm = document.getElementById('google-name');
@@ -69,6 +70,9 @@
       if(nm) nm.textContent = user.displayName || '';
       if(btnWrap) btnWrap.style.display = 'none';
       if(userInfo) userInfo.style.display = 'flex';
+      // ★ 關閉登入選擇視窗（若還開著）
+      const lgModal = document.getElementById('login-gate-modal');
+      if(lgModal) lgModal.style.display = 'none';
       // 讀取雲端進度
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
@@ -887,6 +891,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   80%{opacity:1;transform:translate(-50%,-50%) scale(1);}
   100%{opacity:0;transform:translate(-50%,-50%) scale(0.95);}
 }
+@keyframes upgradeArrowBounce{from{transform:translateX(-50%) translateY(0);}to{transform:translateX(-50%) translateY(-8px);}}
 @keyframes navDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.4);}}
 .adv-nav-btn{
   flex:1;padding:10px 8px;border-radius:12px;cursor:pointer;
@@ -1266,7 +1271,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   text-shadow:0 0 20px rgba(255,255,255,0.6),0 2px 0 rgba(0,0,0,0.9);
 }
-#hero-pick-body{flex:1;display:flex;flex-direction:row;overflow:hidden;min-height:0;position:relative;}
+#hero-pick-body{flex:1;display:flex;flex-direction:row;overflow:visible;min-height:0;position:relative;}
 #hero-pick-arena{position:relative;flex-shrink:0;width:1060px;overflow:visible;}
 .hpick-orbit{
   position:absolute;top:50%;left:50%;
@@ -1527,8 +1532,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 #sro-picker-title{font-size:36px;color:var(--muted);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;flex-shrink:0}
 #sro-picker-body{
-  flex:1;overflow-y:auto;
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
+  overflow:visible;
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;
   align-items:start;padding-bottom:8px;
 }
 .skcat-section{border-radius:8px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column}
@@ -2965,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.28</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.49</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3046,8 +3051,10 @@ body {
       <button onclick="closeHeroPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(40,30,0,0.8);border:2px solid rgba(212,168,67,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;">← 返回</button>
       <div style="font-size:36px;font-weight:900;color:var(--gold2,#f0c060);">⚔️ 英雄圖鑑</div>
       <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:22px;color:#ffe8a0;">📖 技能升級書</div>
-        <div id="hero-page-book-count" style="font-size:32px;font-weight:900;color:#ffe066;background:rgba(255,200,50,0.15);border:2px solid rgba(255,200,50,0.4);border-radius:10px;padding:4px 16px;min-width:50px;text-align:center;">0</div>
+        <button onclick="highlightUpgradableHeroes()" id="hero-book-btn" style="display:flex;align-items:center;gap:10px;padding:8px 18px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:12px;cursor:pointer;font-family:inherit;">
+          <span style="font-size:22px;color:#ffe8a0;">📖 技能升級書</span>
+          <span id="hero-page-book-count" style="font-size:32px;font-weight:900;color:#ffe066;min-width:32px;text-align:center;">0</span>
+        </button>
       </div>
     </div>
     <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;"></div>
@@ -3055,9 +3062,15 @@ body {
 
   <!-- ★ 英雄詳細/養成視窗 -->
   <div id="hero-detail-overlay" style="display:none;position:absolute;inset:0;z-index:710;
-    background:rgba(0,0,0,0.85);align-items:center;justify-content:center;backdrop-filter:blur(8px);">
-    <div id="hero-detail-box" style="background:linear-gradient(160deg,#12172a,#080c1a);border:2.5px solid rgba(212,168,67,0.5);border-radius:22px;padding:24px 32px;max-width:820px;width:94%;max-height:90vh;overflow-y:auto;position:relative;">
-      <button onclick="closeHeroDetail()" style="position:absolute;top:14px;right:18px;font-size:28px;background:none;border:none;color:#888;cursor:pointer;font-weight:700;">✕</button>
+    background:linear-gradient(160deg,#080c1a,#040608);flex-direction:row;overflow:hidden;">
+    <!-- 左側：英雄立繪 -->
+    <div id="hero-detail-img-side" style="width:42%;position:relative;flex-shrink:0;overflow:hidden;background:rgba(0,0,0,0.3);">
+      <img id="hero-detail-full-img" style="width:100%;height:100%;object-fit:cover;object-position:top;" src="" onerror="this.style.display='none'"/>
+      <div id="hero-detail-av-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:120px;"></div>
+    </div>
+    <!-- 右側：英雄資料 -->
+    <div id="hero-detail-box" style="flex:1;overflow-y:auto;padding:24px 28px;position:relative;">
+      <button onclick="closeHeroDetail()" style="position:absolute;top:14px;right:18px;font-size:32px;background:rgba(0,0,0,0.5);border:none;color:#888;cursor:pointer;font-weight:700;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">✕</button>
       <div id="hero-detail-content"></div>
     </div>
   </div>
@@ -6970,8 +6983,8 @@ function confirmHeroPick(){
 
   // AI英雄各自從替換技能列表隨機挑選一招較有利的技能來替換，且不與場上任何技能重複
   (function aiSkillReplace(){
-    // ★ 冒險/鬥技場模式：AI陣營不替換技能
-    if(!window._advSystemReady || typeof _adventureMode === 'undefined') return;
+    // ★ 永遠不讓 AI 替換技能（玩家才能替換）
+    return;
     // 收集場上所有技能名稱（p1+p2）避免重複
     const allUsed = new Set();
     [...G.p1,...G.p2].forEach(h=>{ allUsed.add(h.s1.n); allUsed.add(h.s2.n); });
@@ -15107,9 +15120,19 @@ function bgmPlay(id){
   if(!el) return;
   el.volume=_bgmMuted?0:BGM_VOLUME;
   el.currentTime=0;
-  // ★ 非戰鬥BGM自動循環
   el.loop=true;
-  el.play().catch(()=>{});
+  // ★ iOS/iPad: 需要 user gesture 才能播音頻，失敗時排隊等下次觸碰
+  const p = el.play();
+  if(p && p.catch) p.catch(()=>{
+    // 等待下一次使用者互動再播
+    const _retryBgm = ()=>{
+      el.play().catch(()=>{});
+      document.removeEventListener('touchstart', _retryBgm);
+      document.removeEventListener('click', _retryBgm);
+    };
+    document.addEventListener('touchstart', _retryBgm, {once:true});
+    document.addEventListener('click', _retryBgm, {once:true});
+  });
 }
 const BATTLE_BGM_LIST=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04','bgm-battle-05'];
 const MENU_BGM_LIST=['bgm-menu-01','bgm-menu-02'];
@@ -18608,6 +18631,42 @@ function _setNavDot(label, show) {
 // ══════════════════════════════════════════════
 //  英雄頁面
 // ══════════════════════════════════════════════
+function highlightUpgradableHeroes() {
+  if(_skillBookCount <= 0) return;
+  // 找出可升級技能的英雄（已解鎖，有 s1/s2 技能等級 < 9）
+  const unlocked = advGetUnlockedHeroes();
+  const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
+  const all = [...new Set([...unlocked, ...advPool])];
+  const upgradable = all.filter(name => {
+    const sl = _heroSkillLevels[name] || {};
+    return (sl.s1 || 0) < 9 || (sl.s2 || 0) < 9;
+  });
+  // 在對應卡片上加黃色閃爍箭頭
+  document.querySelectorAll('.hero-grid-card').forEach(card => {
+    const existing = card.querySelector('.upgrade-arrow');
+    if(existing) existing.remove();
+  });
+  upgradable.forEach(name => {
+    const cards = document.querySelectorAll('.hero-grid-card');
+    cards.forEach(card => {
+      const nm = card.querySelector('.hn-label');
+      if(nm && nm.textContent.trim() === name) {
+        const arrow = document.createElement('div');
+        arrow.className = 'upgrade-arrow';
+        arrow.style.cssText = 'position:absolute;bottom:36px;left:50%;transform:translateX(-50%);' +
+          'font-size:28px;animation:upgradeArrowBounce 0.6s ease-in-out infinite alternate;' +
+          'z-index:10;pointer-events:none;';
+        arrow.textContent = '⬆';
+        card.appendChild(arrow);
+        setTimeout(()=>{ if(arrow.parentNode) arrow.remove(); }, 4000);
+      }
+    });
+  });
+  if(upgradable.length === 0) {
+    try{ bannerFX(null,'所有技能已達最高等級！','#ffcc44',1500); }catch(e){}
+  }
+}
+
 function openHeroPage() {
   const ov = document.getElementById('hero-page-overlay');
   if(!ov) return;
@@ -18691,9 +18750,16 @@ function closeHeroDetail() {
 
 function _renderHeroDetail(name, box) {
   const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[name] : null;
-  if(!hd) { box.innerHTML = '<div style="color:#888;font-size:24px;text-align:center;padding:40px;">英雄資料未收錄</div>'; return; }
+  if(!hd) { box.innerHTML = '<div style="color:#888;font-size:28px;text-align:center;padding:40px;">英雄資料未收錄</div>'; return; }
   const img = typeof HERO_IMGS !== 'undefined' ? (HERO_IMGS[name]||'') : '';
   const av  = typeof AVATARS !== 'undefined' ? (AVATARS[name]||'⚔') : '⚔';
+  // 更新左側立繪
+  const imgEl = document.getElementById('hero-detail-full-img');
+  const avEl  = document.getElementById('hero-detail-av-fallback');
+  if(imgEl && avEl){
+    if(img){ imgEl.src=img; imgEl.style.display=''; avEl.style.display='none'; }
+    else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; }
+  }
   const lv  = getHeroLevel(name);
   const exp = getHeroExp(name);
   const expNeed = lv < 50 ? _expForLevel(lv) : 0;
@@ -18704,11 +18770,8 @@ function _renderHeroDetail(name, box) {
   const burst = typeof BURST_DB !== 'undefined' ? BURST_DB[name] : null;
 
   box.innerHTML = `
-    <div style="display:flex;gap:20px;flex-wrap:wrap;">
-      ${img ? `<img src="${img}" style="width:200px;height:200px;object-fit:cover;border-radius:14px;border:2px solid rgba(212,168,67,0.4);flex-shrink:0;"/>` :
-               `<div style="width:200px;height:200px;border-radius:14px;background:rgba(20,20,30,0.8);display:flex;align-items:center;justify-content:center;font-size:80px;flex-shrink:0;">${av}</div>`}
-      <div style="flex:1;min-width:220px;">
-        <div style="font-size:40px;font-weight:900;color:var(--gold2,#f0c060);">${name}</div>
+    <div>
+      <div style="font-size:44px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}</div>
         <div style="font-size:22px;color:#88aaff;margin-bottom:12px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;font-size:18px;"> MAX</span>':''}</div>
         ${lv < 50 ? `<div style="font-size:17px;color:#778;margin-bottom:6px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:4px;">
@@ -18779,10 +18842,13 @@ function investStat(name, stat) {
   if(!(_heroStatPoints[name] > 0)) return;
   if(!_heroStatInvested[name]) _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
   if((_heroStatInvested[name][stat]||0) >= 50) return;
+  const label = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
+  if(!confirm(`⚠ 確定要將 1 點素質投資到【${name}】的${label}嗎？
+
+此操作無法反悔，請慎重決定。`)) return;
   _heroStatPoints[name]--;
   _heroStatInvested[name][stat] = (_heroStatInvested[name][stat]||0) + 1;
   gameCloudSave();
-  // Re-render
   _renderHeroDetail(name, document.getElementById('hero-detail-content'));
 }
 
@@ -18790,12 +18856,19 @@ function upgradeSkill(name, slot) {
   if(_skillBookCount <= 0) return;
   if(!_heroSkillLevels[name]) _heroSkillLevels[name] = {s1:0, s2:0};
   if((_heroSkillLevels[name][slot]||0) >= 9) { alert('技能已達最高等級！'); return; }
+  const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[name] : null;
+  const sk = hd ? hd[slot] : null;
+  const skName = sk ? sk.n : slot;
+  const nextLv = (_heroSkillLevels[name][slot]||0) + 1;
+  if(!confirm(`⚠ 確定要使用 1 本技能升級書提升【${name}】的技能【${skName}】嗎？
+
+升級後效果 +${nextLv*10}%（此操作無法反悔，請慎重決定）`)) return;
   _skillBookCount--;
-  _heroSkillLevels[name][slot] = (_heroSkillLevels[name][slot]||0) + 1;
-  const lv = _heroSkillLevels[name][slot];
-  log(`📖 技能升級！${name} ${slot} → +${lv} (效果+${lv*10}%)`);
+  _heroSkillLevels[name][slot] = nextLv;
+  log(`📖 技能升級！${name} ${slot} → +${nextLv} (效果+${nextLv*10}%)`);
   gameCloudSave();
-  document.getElementById('hero-page-book-count').textContent = _skillBookCount;
+  const bookEl = document.getElementById('hero-page-book-count');
+  if(bookEl) bookEl.textContent = _skillBookCount;
   _renderHeroDetail(name, document.getElementById('hero-detail-content'));
 }
 
@@ -18813,6 +18886,8 @@ function closeHeroPage() {
 function showLoginGate() {
   // 已登入 → 直接進冒險
   if(window._gUserId) { openAdventureOverlay(); return; }
+  // Firebase 未載入 → 直接進（訪客）
+  if(!window._fbSignIn) { openAdventureOverlay(); return; }
   const modal = document.getElementById('login-gate-modal');
   if(modal) modal.style.display = 'flex';
 }
