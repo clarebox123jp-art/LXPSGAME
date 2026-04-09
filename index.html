@@ -2230,9 +2230,9 @@ body {
 }
 /* 略過按鈕：移至對話框內，由 CSS 控制顯示 */
 #adv-skip-btn{
-  position:absolute;right:200px;top:50%;transform:translateY(-50%);
-  padding:12px 28px;font-size:26px;font-weight:700;
-  background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.2);
+  position:absolute;top:8px;right:180px;z-index:10;
+  padding:10px 24px;font-size:26px;font-weight:700;
+  background:rgba(0,0,0,0.72);border:1.5px solid rgba(255,255,255,0.2);
   color:#999;border-radius:14px;cursor:pointer;letter-spacing:2px;
   transition:all 0.2s;backdrop-filter:blur(4px);z-index:4;
   writing-mode:horizontal-tb;
@@ -2251,10 +2251,10 @@ body {
 .adv-treasure-slot .ts-label{font-size:22px;color:#ffcc44;margin-top:4px;letter-spacing:0px;text-align:center;line-height:1.2;font-weight:700;}
 /* 中央選擇視窗 */
 #adv-choice-panel{
-  position:absolute;inset:0;z-index:3;
-  display:flex;align-items:center;justify-content:center;
-  padding:12px;
-  background:rgba(0,0,8,0.6);
+  position:absolute;top:0;left:0;right:160px;bottom:0;z-index:3;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:8px 12px;padding-top:16px;
+  background:rgba(0,0,8,0.55);
 }
 .adv-choice-box{
   background:rgba(8,10,22,0.95);backdrop-filter:blur(12px);
@@ -2796,7 +2796,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.10.20</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.10.27</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
