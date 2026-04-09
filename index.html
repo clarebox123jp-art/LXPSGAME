@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.23.31</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.23.44</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5580,6 +5580,28 @@ function initGame(){
   // ★ 返回正常戰鬥練習模式時，重置冒險模式旗標
   if(typeof _adventureMode !== 'undefined'){ _adventureMode = false; _adventureStage = null; }
   if(typeof exitAdventureMode === 'function'){ exitAdventureMode(); }
+  // ★ 清除所有可能殘留的戰鬥/冒險狀態
+  if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = false;
+  if(typeof _isAdventurePickMode !== 'undefined') window._isAdventurePickMode = false;
+  try{
+    // 關閉所有overlay，確保乾淨狀態
+    ['elem-pick-overlay','skill-replace-overlay','adv-cutscene-overlay',
+     'hero-pick-overlay','adv-result-overlay','adv-hero-meet-overlay',
+     'battle-start-overlay'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.style.display='none'; el.classList && el.classList.remove('show'); }
+    });
+    // 移除戰鬥class
+    const gc=document.getElementById('gc');
+    if(gc){ gc.classList.remove('adv-battle'); }
+    // 停止所有BGM
+    bgmStop();
+    ['bgm-adv-scene','bgm-battle-01','bgm-battle-02','bgm-battle-03',
+     'bgm-battle-04','bgm-battle-05','bgm-boss-02'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ try{el.pause();el.currentTime=0;}catch(e){} }
+    });
+  }catch(e){}
   // 切換回首頁音樂（無論從結果畫面或首頁按鈕進入）
   if(typeof bgmFadeTo==='function') bgmFadeTo('bgm-menu',500);
   document.getElementById('overlay').style.display='none';
@@ -16811,6 +16833,8 @@ function startAdventureGame(stage){
   try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
   _adventureStage = stage;
+  _advMiniBattleActive = false; // ★ 確保不殘留小怪戰旗標
+  window._isAdventurePickMode = false; // 先清，showHeroPickOverlay再設
   const advOv = document.getElementById('adventure-overlay');
   if(advOv){ advOv.style.display='none'; advOv.classList.remove('show'); }
   const advBgm = document.getElementById('adventure-bgm');
@@ -18985,10 +19009,12 @@ function _renderHeroDetail(name, box) {
     }
     const dataPts = dims.map((d,i) => pt(i, R * d.val/10)).map(p=>p.join(',')).join(' ');
     let labels = '';
+    const _dimColors=['#ff6666','#ff9966','#cc88ff','#44aaff','#44ffaa','#ffdd44'];
     for(let i=0;i<n;i++){
       const [x,y] = pt(i, labelR);
       const anchor = x < cx-4 ? 'end' : x > cx+4 ? 'start' : 'middle';
-      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.07}" fill="#ffe8a0" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif">${dims[i].label}</text>`;
+      const col = _dimColors[i]||'#ffe8a0';
+      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.065}" fill="${col}" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif">${dims[i].label}</text>`;
     }
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       ${gridLines}${axes}
@@ -19004,13 +19030,23 @@ function _renderHeroDetail(name, box) {
       background:rgba(40,30,0,0.85);border:2px solid rgba(212,168,67,0.6);
       color:#ffe8a0;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回圖鑑</button>
 
-    <!-- 名稱與等級 -->
-    <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}</div>
-    <div style="font-size:32px;color:#88aaff;margin-bottom:10px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
-    ${lv < 50 ? `<div style="font-size:24px;color:#778;margin-bottom:8px;">EXP: ${exp} / ${expNeed}
-      <div style="height:8px;background:rgba(100,100,150,0.3);border-radius:5px;margin-top:4px;">
-        <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:5px;"></div>
-      </div></div>` : '<div style="font-size:24px;color:#ffcc44;margin-bottom:8px;">✨ 已達最高等級</div>'}
+    <!-- 名稱 + 角色簡介（並排）-->
+    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="flex:0 0 auto;">
+        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}</div>
+        <div style="font-size:32px;color:#88aaff;margin-bottom:6px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
+        ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
+          <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
+            <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
+          </div></div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
+      </div>
+      ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
+        <div style="font-size:20px;color:#c8d8f0;line-height:1.7;">
+          ${name}是${bio.role||''}，${bio.trait||''}的個性讓人印象深刻。平時最喜歡${bio.hobby||''}。
+        </div>
+        ${bio.quote?`<div style="font-size:19px;color:#ffcc44;margin-top:8px;padding:6px 12px;background:rgba(255,200,50,0.08);border-left:3px solid #ffcc44;border-radius:0 6px 6px 0;font-style:italic;">💬 ${bio.quote}</div>`:''}
+      </div>` : ''}
+    </div>
 
     <!-- 屬性格 + 雷達圖（左右並排）-->
     <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;">
@@ -19035,6 +19071,16 @@ function _renderHeroDetail(name, box) {
       </div>
     </div>
 
+    <!-- 天賦（在四項能力下方）-->
+    ${trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:10px;padding:12px 16px;border:1px solid rgba(255,200,50,0.3);margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+        <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:2px 10px;font-weight:700;">✦ 天賦</span>
+        <span style="font-size:22px;font-weight:700;color:#ffe8a0;">${trait.icon||''} ${name}的天賦</span>
+        ${traitLv>0?`<span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">+${traitLv*20}% (${traitLv}/5)</span>`:''}
+      </div>
+      <div style="font-size:22px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+      <div style="font-size:18px;color:#555;margin-top:3px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
+    </div>` : ''}
     <!-- 技能區 -->
     <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;margin-bottom:14px;">
       <div style="font-size:30px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">🎯 技能</div>
@@ -19056,15 +19102,7 @@ function _renderHeroDetail(name, box) {
           <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${fd}</div>
         </div>`;
       }).join('')}
-      ${trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
-          <span style="font-size:22px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 12px;font-weight:700;">✦ 天賦</span>
-          <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${trait.icon||''}  ${name}的天賦</span>
-          ${traitLv>0?`<span style="font-size:20px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 10px;">效果+${traitLv*20}% (${traitLv}/5)</span>`:''}
-        </div>
-        <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
-        <div style="font-size:20px;color:#555;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
-      </div>` : ''}
+<!-- trait moved to below stats -->
       ${burst ? `<div style="background:rgba(255,100,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,120,50,0.35);">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
           <span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>
@@ -19075,19 +19113,7 @@ function _renderHeroDetail(name, box) {
       </div>
     </div>
 
-    <!-- 底部：簡介 + 雷達圖 -->
-    <div style="display:flex;gap:20px;margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;flex-wrap:wrap;">
-      <!-- 角色簡介（整合段落） -->
-      <div style="flex:1;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px 20px;border:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:24px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">📖 角色簡介</div>
-        ${bio ? `
-          <div style="font-size:22px;color:#c8d8f0;line-height:1.8;">
-            ${name}是${bio.role||''}，${bio.trait||''}的個性讓人印象深刻。
-            平時最喜歡${bio.hobby||''}，有時間就會投入其中。
-          </div>
-          ${bio.quote?`<div style="font-size:22px;color:#ffcc44;margin-top:12px;padding:8px 14px;background:rgba(255,200,50,0.08);border-left:3px solid #ffcc44;border-radius:0 8px 8px 0;font-style:italic;">💬 口頭禪：${bio.quote}</div>`:''}
-        ` : '<div style="font-size:22px;color:#555;">資料待補充</div>'}
-      </div>
+    <!-- bio moved to top -->
     </div>`;
 }
 
