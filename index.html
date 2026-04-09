@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.38</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.44</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4738,7 +4738,7 @@ const HERO_DB = {
   '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:4,d:'使友方全體有利狀態效果+50%持續2回合，並獲得20護盾',fd:'使友方全體的有利狀態效果提高50%持續2回合，並各獲得可抵擋20傷害的護盾。'}},
   '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態並免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，並使其免疫不利狀態2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:3,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
-  '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態，再用特技+攻擊+速度造成傷害，攻擊完狀態復原',fd:'先幫自己隨機附加一個有利狀態，再用特技值+攻擊值+速度值的總和對1名對手造成傷害，攻擊完畢後立即移除該有利狀態。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人嘲諷並使其失明2回合',fd:'強迫1名敵人進入「挑釁」狀態並使其「失明」，持續2回合。'}},
+  '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'}},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -11593,12 +11593,16 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='舞台聚光燈'){
     setPending('enemy',t=>{
-      log(`[${a.name}] 舞台聚光燈！強迫 [${t.name}] 嘲諷並失明2回合！`);
+      log(`[${a.name}] 舞台聚光燈！強迫 [${t.name}] 只能攻擊 [${a.name}]，並使其失明2回合！`);
       playSkillFX('舞台聚光燈',a,[t]);
-      G.taunted={attacker:t,target:a};
-      addBuff(a,'taunt',2);
+      // ★ 強迫 t 被挑釁：只能攻擊施展者 a
+      t.status = t.status.filter(s=>s.type!=='taunt');
+      t.status.push({type:'taunt', dur:2, _tauntTarget:a}); // 被挑釁，攻擊目標鎖定為 a
+      G.taunted = {attacker:t, target:a}; // 同步全域挑釁狀態
+      // ★ 使 t 失明2回合
       addStatus(t,'forecast',2);
-      bannerFX(t,'聚光燈！','#ffee44',900);
+      bannerFX(t,'💡 聚光燈！被挑釁+失明！','#ffee44',1200);
+      ringFX(a,'#ffee44',600);
       endAction(a,cost);
     });
   }
