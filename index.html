@@ -2955,7 +2955,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.20.55</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.02</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -18307,54 +18307,108 @@ async function gSignOut() {
 }
 
 // 雲端儲存
-async function gameCloudSave() {
-  if(!window._gUserId || !window._fbSave) { gameCloudSave(); return; }
-  try {
-    const data = {
-      unlockedHeroes: advGetUnlockedHeroes(),
-      heroLevels: _heroLevels,
-      heroExp: _heroExp,
-      heroStatPoints: _heroStatPoints,
-      heroStatInvested: _heroStatInvested,
-      heroSkillLevels: _heroSkillLevels,
-      skillBookCount: _skillBookCount,
-      medals: _playerMedals,
-      settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
-      savedAt: Date.now()
-    };
-    // 同時存本地
-    localStorage.setItem('lxps_' + _gUserId + '_progress', JSON.stringify(data));
-    // 存雲端
-    const ok = await window._fbSave(_gUserId, data);
-    if(ok) log('☁️ 雲端存檔成功！');
-  } catch(e) { console.error('gameCloudSave error', e); gameCloudSave(); }
+// ★ 版本號：每次大改遊戲內容結構時 +1
+const SAVE_DATA_VERSION = 1;
+
+// 只儲存「玩家行為產生的數字資料」，遊戲內容從程式碼讀最新版
+function _buildSafeData() {
+  return {
+    v: SAVE_DATA_VERSION,           // 版本號
+    savedAt: Date.now(),
+    // ── 玩家行為資料 ──
+    unlockedHeroes: advGetUnlockedHeroes(),  // 只存名字
+    heroLevels:      _heroLevels,            // {name: 數字}
+    heroExp:         _heroExp,               // {name: 數字}
+    heroStatPoints:  _heroStatPoints,        // {name: 剩餘點數}
+    heroStatInvested:_heroStatInvested,      // {name: {hp,atk,sp,spd} 純數字加成}
+    heroSkillLevels: _heroSkillLevels,       // {name: {s1,s2} +n 的等級數字}
+    skillBookCount:  _skillBookCount,        // 數字
+    medals:          _playerMedals,          // 獎章清單
+    settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted }
+    // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
+  };
 }
 
-// 雲端讀取
-async function gameCloudLoad() {
-  if(!window._gUserId) return;
-  try {
-    // 優先讀雲端
-    let data = null;
-    if(window._fbLoad){
-      data = await window._fbLoad(_gUserId);
+function _applySafeData(raw) {
+  if(!raw) return;
+  const data = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+  // 版本相容性處理
+  if(data.v && data.v > SAVE_DATA_VERSION) {
+    console.warn('[存檔] 版本較新，部分資料可能不相容，已安全略過');
+  }
+  // 只套用純數字/清單，不套用遊戲內容資料
+  if(Array.isArray(data.unlockedHeroes)) {
+    localStorage.setItem('adv_unlocked_heroes', JSON.stringify(data.unlockedHeroes));
+  }
+  if(data.heroLevels && typeof data.heroLevels === 'object')
+    _heroLevels = data.heroLevels;
+  if(data.heroExp && typeof data.heroExp === 'object')
+    _heroExp = data.heroExp;
+  if(data.heroStatPoints && typeof data.heroStatPoints === 'object')
+    _heroStatPoints = data.heroStatPoints;
+  if(data.heroStatInvested && typeof data.heroStatInvested === 'object')
+    _heroStatInvested = data.heroStatInvested;
+  if(data.heroSkillLevels && typeof data.heroSkillLevels === 'object') {
+    // ★ 只保留目前英雄DB中存在的英雄的技能升級資料，刪除已不存在的
+    const validNames = typeof HERO_DB !== 'undefined' ? new Set(Object.keys(HERO_DB)) : null;
+    if(validNames) {
+      const cleaned = {};
+      Object.keys(data.heroSkillLevels).forEach(name => {
+        if(validNames.has(name)) cleaned[name] = data.heroSkillLevels[name];
+      });
+      _heroSkillLevels = cleaned;
+    } else {
+      _heroSkillLevels = data.heroSkillLevels;
     }
-    // 若雲端無資料，讀本地
-    if(!data){
+  }
+  if(typeof data.skillBookCount === 'number') _skillBookCount = data.skillBookCount;
+  if(Array.isArray(data.medals)) _playerMedals = data.medals;
+  if(data.settings) {
+    if(typeof data.settings.bgmMuted === 'boolean') _bgmMuted = data.settings.bgmMuted;
+    if(typeof data.settings.sfxMuted === 'boolean') _sfxMuted = data.settings.sfxMuted;
+  }
+}
+
+async function gameCloudSave() {
+  const data = _buildSafeData();
+  // ① 本地備份（無論是否登入）
+  const localKey = window._gUserId ? 'lxps_' + _gUserId + '_progress' : 'lxps_guest_progress';
+  localStorage.setItem(localKey, JSON.stringify(data));
+  // ② 雲端同步（非同步，不阻塞遊戲）
+  if(window._gUserId && window._fbSave) {
+    try {
+      await window._fbSave(window._gUserId, data);
+      log('☁️ 雲端已同步');
+    } catch(e) { console.error('[雲端存檔失敗]', e); }
+  }
+}
+
+async function gameCloudLoad() {
+  if(!window._gUserId) {
+    // 訪客模式：只讀本地
+    const raw = localStorage.getItem('lxps_guest_progress');
+    if(raw) { _applySafeData(raw); log('📂 本地進度已載入'); }
+    return;
+  }
+  try {
+    let data = null;
+    // ① 優先讀雲端
+    if(window._fbLoad) data = await window._fbLoad(window._gUserId);
+    // ② 若雲端無資料，讀本地
+    if(!data) {
       const raw = localStorage.getItem('lxps_' + _gUserId + '_progress');
       if(raw) data = JSON.parse(raw);
     }
-    if(!data) return;
-    if(data.unlockedHeroes) localStorage.setItem('adv_unlocked_heroes', JSON.stringify(data.unlockedHeroes));
-    if(data.heroLevels)      _heroLevels      = data.heroLevels;
-    if(data.heroExp)         _heroExp         = data.heroExp;
-    if(data.heroStatPoints)  _heroStatPoints  = data.heroStatPoints;
-    if(data.heroStatInvested)_heroStatInvested= data.heroStatInvested;
-    if(data.heroSkillLevels) _heroSkillLevels = data.heroSkillLevels;
-    if(typeof data.skillBookCount !== 'undefined') _skillBookCount = data.skillBookCount;
-    if(data.medals)          _playerMedals    = data.medals;
-    log('☁️ 雲端資料已載入！');
-  } catch(e) { console.error('gameCloudLoad error', e); }
+    if(!data) { log('☁️ 尚無存檔記錄，以全新狀態開始'); return; }
+    _applySafeData(data);
+    // 同步回本地
+    localStorage.setItem('lxps_' + _gUserId + '_progress', JSON.stringify(data));
+    const saved = data.savedAt ? new Date(data.savedAt).toLocaleString('zh-TW') : '';
+    log('☁️ 進度已載入' + (saved ? '（' + saved + '）' : ''));
+    setTimeout(()=>{
+      try{ bannerFX(null, '☁️ 雲端進度已同步！', '#44ff88', 2000); }catch(e){}
+    }, 1500);
+  } catch(e) { console.error('[gameCloudLoad error]', e); }
 }
 
 function _saveKey(key) {
@@ -18362,54 +18416,7 @@ function _saveKey(key) {
 }
 
 // ── 讀取 / 儲存 遊戲進度 ──
-function _applyLoadedData(data) {
-  if(!data) return;
-  if(data.unlockedHeroes) localStorage.setItem('adv_unlocked_heroes', JSON.stringify(data.unlockedHeroes));
-  if(data.heroLevels)      _heroLevels = data.heroLevels;
-  if(data.heroExp)         _heroExp = data.heroExp;
-  if(data.heroStatPoints)  _heroStatPoints = data.heroStatPoints;
-  if(data.heroStatInvested)_heroStatInvested = data.heroStatInvested;
-  if(data.heroSkillLevels) _heroSkillLevels = data.heroSkillLevels;
-  if(typeof data.skillBookCount !== 'undefined') _skillBookCount = data.skillBookCount;
-  if(data.medals)          _playerMedals = data.medals;
-}
-
-function _buildSaveData() {
-  return {
-    unlockedHeroes: advGetUnlockedHeroes(),
-    heroLevels:      _heroLevels,
-    heroExp:         _heroExp,
-    heroStatPoints:  _heroStatPoints,
-    heroStatInvested:_heroStatInvested,
-    heroSkillLevels: _heroSkillLevels,
-    skillBookCount:  _skillBookCount,
-    medals:          _playerMedals,
-    settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
-    savedAt: Date.now()
-  };
-}
-
-function gameSaveLoad(action) {
-  try {
-    if(action === 'save') {
-      const data = _buildSaveData();
-      // ① 本地備份
-      localStorage.setItem(_saveKey('progress'), JSON.stringify(data));
-      // ② 雲端同步（非同步，不阻塞遊戲）
-      if(window._fbUser && window._fbSave) {
-        window._fbSave(window._fbUser.uid, data).then(ok => {
-          if(ok) log('☁️ 雲端已同步');
-        });
-      }
-      log('💾 遊戲進度已儲存');
-    } else {
-      // 先從本地讀
-      const raw = localStorage.getItem(_saveKey('progress'));
-      if(raw) _applyLoadedData(JSON.parse(raw));
-      log('📂 遊戲進度已讀取（本地）');
-    }
-  } catch(e) { console.error('gameSaveLoad error', e); }
-}
+// (已整合至 gameCloudSave/gameCloudLoad)
 
 // 雲端讀取（登入後呼叫）
 window.gameCloudLoad = async function(uid) {
