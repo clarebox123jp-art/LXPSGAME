@@ -2510,8 +2510,8 @@ body {
 
 /* 答對獎勵視窗 */
 #adv-reward-overlay{
-  display:none;position:absolute;top:0;right:0;
-  width:42%;height:auto;max-height:100%;z-index:612;
+  display:none;position:absolute;top:36%;right:0;
+  width:44%;height:auto;max-height:64%;z-index:612;
   background:none;
   align-items:flex-end;justify-content:flex-start;
   flex-direction:column;gap:0;pointer-events:none;
@@ -2850,7 +2850,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.15.52</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.02</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4549,12 +4549,12 @@ const HERO_DB = {
   '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:5,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'重置戰鬥至第1回合（限用）',fd:'使時間回到第一回合剛開始的狀態。(限用一次)'}},
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
-  '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:4,d:'使全體友方獲得持續恢復狀態5回合',fd:'使全體友方獲得「持續恢復」狀態5回合，每回合恢復12HP。'}},
+  '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
   '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:3,d:'攻擊1名敵人並強化下一位行動的友方',fd:'用攻擊的150%對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%。'}},
   '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害，並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率醒來。'}},
-  '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:4,d:'使友方全體有利狀態效果+50%並獲得20護盾',fd:'使友方全體的有利狀態效果提高50%並各獲得可抵擋20傷害的護盾。'}},
+  '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:4,d:'使友方全體有利狀態效果+50%持續2回合，並獲得20護盾',fd:'使友方全體的有利狀態效果提高50%持續2回合，並各獲得可抵擋20傷害的護盾。'}},
   '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態並免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，並使其免疫不利狀態2回合。'}},
-  '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:4,d:'特技30%傷害敵方全體3~5次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~5次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
+  '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:3,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態，再用特技+攻擊+速度造成傷害，攻擊完狀態復原',fd:'先幫自己隨機附加一個有利狀態，再用特技值+攻擊值+速度值的總和對1名對手造成傷害，攻擊完畢後立即移除該有利狀態。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人嘲諷並使其失明2回合',fd:'強迫1名敵人進入「挑釁」狀態並使其「失明」，持續2回合。'}},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,
@@ -4883,7 +4883,7 @@ const BURST_DB = {
  '陰陽師':   {n:'四聖降臨',    d:'傷害全體4次，附加強力不利狀態',fd:'依特技50%使敵方全體受到4次傷害，每次有70%機率隨機附加1個強力不利狀態。'},
   '小力':     {n:'夾尾皺眉',    d:'全體對手無法使用造成傷害的技能或物品（2回合）',fd:'使全體對手陷入「憐惜校犬」狀態2回合，無法使用任何會造成傷害的技能或物品。此狀態不會被免疫或解除。'},
   '籃球隊員': {n:'絕殺灌籃',    d:'400%傷害1名對手，全隊速度提升2回合',fd:'對1名對手造成特技400%傷害，並使友方全體速度提升50%共2回合。'},
-  '直笛團員': {n:'天籟之音', d:'特技150%恢復全體隊友，並附加可抵擋20傷害的護盾',fd:'用特技的150%恢復全體友方HP，並使全體友方獲得可以抵擋20傷害的護盾。'},
+  '直笛團員': {n:'天籟之音', d:'特技150%恢復全體隊友（可復活），並附加20護盾',fd:'用特技的150%恢復全體友方HP（可復活），並使全體友方獲得可以抵擋20傷害的護盾。'},
   '田徑隊員': {n:'極速閃燃', d:'獲得7能量、傷害加倍並立即再次行動',fd:'立即獲得7能量、本輪下次造成的傷害提升100%，並立即可再次行動1次。'},
   '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP50%傷害全體，攻擊和特技-50%直到醒來',fd:'睡眠狀態時才能發動。對全體敵人造成HP50%傷害，此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低50%，直到施展者從睡眠中醒來。'},
   '電腦繪圖師':{n:'萬物創生', d:'特技500%傷害全體平均分攤（必中），再抽3張物品卡',fd:'用特技的600%傷害讓敵方全體平均分攤，此傷害無視有利狀態且必中。再抽出額外3張物品卡。'},
@@ -5501,6 +5501,8 @@ function showElemPickForHero(pos, heroes, cb){
   _epHeroes=heroes; _epCb=cb; _epAssigned={}; _epApplied={};
   window._epConfirmedKeys={};
   _epActivePos=0;
+  // ★ 元素選擇專屬BGM
+  try{ if(typeof bgmPlay==='function'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
   document.getElementById('elem-pick-overlay').style.display='flex';
   _epBuildRing();
   _epRenderHeroes();
@@ -6021,6 +6023,8 @@ let _heroPickSelected = [];
 let _heroPickPool = [];
 
 function showHeroPickOverlay(){
+  // ★ 角色選擇專屬BGM
+  try{ if(typeof bgmPlay==='function'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
 // ── 冒險模式：限定英雄池、換背景、換標語
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
@@ -6947,6 +6951,8 @@ function autoRecommendSkills(){
 }
 
 function showSkillReplaceOverlay(){
+  // ★ 技能替換專屬BGM
+  try{ if(typeof bgmPlay==='function'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
   _skillReplaceMap = {};
   _selectedPickSkill = null;
   _pickerFocusPos = null;
@@ -8417,11 +8423,14 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(name==='直笛團員'){
     const _tlAllies=G[side].filter(t=>t.curHp>0);
     log(`[${h.name}] 天籟之音！全體隊友恢復HP並獲得護盾！`);
-    _tlAllies.forEach(t=>{
+    // ★ 天籟之音：治療全體（含復活），護盾20
+    G[side].forEach(t=>{
+      if(t.curHp===0){ doRevive(t,0.01); } // 復活（以最低HP復活，再由doHeal補滿）
       doHeal(t,Math.floor(spv*1.5),{actor:h,isHeal:true});
       t.buffs=t.buffs.filter(b=>b.type!=='bigshield');
-      addBuff(t,'bigshield',3);
+      t.buffs.push({type:'bigshield',dur:99,_hp:20});
       bannerFX(t,'天籟之音！','#cc55ff',1000);
+      renderCard(t);
     });
     zoneFlash(side,'rgba(200,100,255,0.3)',700);
     flashScreen('rgba(200,100,255,1)',350);
@@ -8560,24 +8569,24 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return; // ★ 必須 return，防止再次呼叫 startTurn
   }
   if(name==='弦樂團員'){
-    log(`[${h.name}] 流浪者之歌！特技40%全體3~5次！`);
+    log(`[${h.name}] 流浪者之歌！特技50%全體4~5次！無視有利狀態，必中！`);
     playSfx('sfx-burst',0.85); playSfx('sfx-fantasy',0.7);
     const _foes6=G[opp].filter(x=>x.curHp>0);
-    const _hits2=3+Math.floor(Math.random()*3);
+    const _hits2=4+Math.floor(Math.random()*2); // 4~5次
     let _hi2=0;
     function _doWander(){
       if(_hi2>=_hits2){
-        // 完成攻擊後治療+復活
+        // 完成攻擊後治療+復活（全體含倒下）
         G[side].forEach(t=>{
-          if(t.curHp===0){ doRevive(t,0.25); t.acted=true; } // ★ 復活後本回合已行動
-          else doHeal(t,spv,{actor:h,isHeal:true});
+          if(t.curHp===0){ doRevive(t,0.25); t.acted=true; }
+          doHeal(t,Math.floor(spv*0.6),{actor:h,isHeal:true});
           bannerFX(t,'流浪者之歌！','#cc88ff',900);
         });
         updateUI(); if(checkWin())return; _pSetTimeout(()=>_burstFinish(h,_interrupted),400); return;
       }
       const _alive2=G[opp].filter(x=>x.curHp>0);
       if(!_alive2.length){ updateUI(); if(checkWin())return; startTurn(); return; }
-      _alive2.forEach(t=>doDmg(t,Math.floor(spv*0.4),{actor:h,isSkill:true,isAoe:true,ignoreBuffs:true,piercing:true}));
+      _alive2.forEach(t=>doDmg(t,Math.floor(spv*0.5),{actor:h,isSkill:true,isAoe:true,ignoreBuffs:true,piercing:true,ignoreEvasion:true,noHidden:true}));
       _hi2++;
       _pSetTimeout(_doWander,250);
     }
@@ -11182,10 +11191,12 @@ function execSkill(a, sk, cost, stype){
     log(`[${a.name}] 色彩噴濺！友方全體有利狀態+50%並獲得護盾！`);
     playSkillFX('色彩噴濺',a,_allies2);
     _allies2.forEach(h=>{
-      h._colorBoost=true; // 標記：有利狀態效果+50%（在相關判斷處讀取）
-      h.buffs=h.buffs.filter(b=>b.type!=='bigshield');
+      h._colorBoost=true;
+      h._colorBoostTurns=2; // ★ 2回合後自動解除
+      h.buffs=h.buffs.filter(b=>b.type!=='bigshield'&&b.type!=='_colorBoostMark');
       h.buffs.push({type:'bigshield',dur:2,_hp:20});
-      bannerFX(h,'色彩噴濺！','#ff88cc',900);
+      h.buffs.push({type:'_colorBoostMark',dur:2}); // 用buff計時，到期清除_colorBoost
+      bannerFX(h,'色彩噴濺！+50%狀態效果2回合！','#ff88cc',900);
       renderCard(h);
     });
     endAction(a,cost);
@@ -11209,7 +11220,7 @@ function execSkill(a, sk, cost, stype){
     const _foes3=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     log(`[${a.name}] 小星星變奏曲！`);
     playSkillFX('小星星變奏曲',a,_foes3);
-    const _hits=3+Math.floor(Math.random()*3); // 3~5次
+    const _hits=3+Math.floor(Math.random()*2); // 3~4次
     let _hitIdx=0;
     function _doStar(){
       if(_hitIdx>=_hits){ endAction(a,cost); return; }
@@ -11431,11 +11442,14 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='一壺包種茶'){
     log(`🍵 [${a.name}] 一壺包種茶！解除不利狀態並恢復友方！`);
-    G[a.side].forEach(ally=>{ if(ally.curHp>=0) clearBadStatus(ally); });
-    const weakest = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0];
-    if(weakest){
-      doHeal(weakest, a.sp, {actor:a, isHeal:true});
-      bannerFX(weakest, '包種茶！狀態解除！', '#ccffcc', 900);
+    G[a.side].forEach(ally=>{ clearBadStatus(ally); }); // 包含倒下的
+    // 恢復HP最低的存活友方（可復活）
+    const _chaTarget = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0]
+                    || G[a.side].find(x=>x.curHp===0);
+    if(_chaTarget){
+      if(_chaTarget.curHp===0){ doRevive(_chaTarget, 0.5); }
+      doHeal(_chaTarget, a.sp, {actor:a, isHeal:true});
+      bannerFX(_chaTarget, '包種茶！解除+恢復！', '#ccffcc', 900);
     }
     G[a.side].forEach(ally=>renderCard(ally));
     endAction(a, cost);
@@ -12013,14 +12027,21 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   // ── 直笛團員：餘音繞樑 ──
   else if(n==='餘音繞樑'){
-    log(`[${a.name}] 餘音繞樑！全體友方獲得持續恢復5回合！`);
+    log(`[${a.name}] 餘音繞樑！全體友方持續恢復5回合，全體對手中毒5回合！`);
     const _rrAllies=G[a.side].filter(h=>h.curHp>0);
+    const _rrFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     playSkillFX('持續恢復',a,_rrAllies);
     _rrAllies.forEach(h=>{
       h.buffs=h.buffs.filter(b=>b.type!=='hpRegen');
       addBuff(h,'hpRegen',5);
       h._hpRegenAmt=12;
-      bannerFX(h,'持續恢復','#44ee77',800);
+      bannerFX(h,'餘音繞樑！持續恢復！','#44ee77',800);
+      renderCard(h);
+    });
+    _rrFoes.forEach(h=>{
+      addStatus(h,'poison',5);
+      h._poisonAmt=Math.max(1,Math.floor(h.hp*0.08));
+      bannerFX(h,'🎵中毒！','#88ff44',800);
       renderCard(h);
     });
     endAction(a,cost);
@@ -13955,7 +13976,7 @@ function aiUseSkill(a,sk,cost,pref){
   }
   // ★ 運球：AI使用 - 友方全體普攻×2
   else if(n==='運球'){
-    G[a.side].filter(h=>h.curHp>0).forEach(h=>addBuff(h,'dribble',2));
+    G[a.side].filter(h=>h.curHp>0).forEach(h=>addBuff(h,'dribble',1));
     log(`[${a.name}] 運球！友方全體普攻×2！`);
   }
   else { if(t) doDmg(t,spv(a),{actor:a}); }
@@ -14883,6 +14904,8 @@ function bgmPlay(id){
   if(!el) return;
   el.volume=_bgmMuted?0:BGM_VOLUME;
   el.currentTime=0;
+  // ★ 非戰鬥BGM自動循環
+  el.loop=true;
   el.play().catch(()=>{});
 }
 const BATTLE_BGM_LIST=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04','bgm-battle-05'];
@@ -16130,9 +16153,9 @@ function openAdventureOverlay(){
   if(!ov) return;
   ov.style.display = 'flex';
   ov.style.animation = 'advOverlayFadeIn 0.5s ease-out';
-  // ① 先停掉首頁 BGM 並播放冒險 BGM（音樂優先）
+  // ① 先停掉首頁 BGM 並播放關卡選單 BGM（音樂優先）
   bgmStop();
-  bgmPlay('adventure-bgm');
+  bgmPlay('bgm-menu-01'); // ★ 關卡選單專屬BGM（遊戲開始音樂1）
   // ② 延遲請求全螢幕，避免 visibilitychange 中斷音樂
   setTimeout(function(){ _requestFullscreenAll(); }, 300);
   // ③ 預設顯示第一關資訊
@@ -16173,15 +16196,15 @@ function selectAdvStage(key, btnEl){
   // 取得關卡資料
   const data = ADV_STAGES[key];
   if(!data) return;
-  // 更新右側面板內容
-  document.getElementById('adv-info-name').textContent = data.name;
-  document.getElementById('adv-info-img').textContent = data.emoji;
-  document.getElementById('adv-info-desc').textContent = data.desc;
+  // 更新右側面板內容（加入null保護，避免遊戲進行中呼叫時崩潰）
+  const _inName=document.getElementById('adv-info-name'); if(_inName) _inName.textContent=data.name;
+  const _inImg=document.getElementById('adv-info-img'); if(_inImg) _inImg.textContent=data.emoji;
+  const _inDesc=document.getElementById('adv-info-desc'); if(_inDesc) _inDesc.textContent=data.desc;
   // 難易度星星
   const filledStars = '★'.repeat(data.stars);
   const emptyStars  = '☆'.repeat(5 - data.stars);
-  document.getElementById('adv-stars').innerHTML =
-    `<span style="color:#f0c060">${filledStars}</span><span style="color:#333">${emptyStars}</span>`;
+  const _inStars=document.getElementById('adv-stars');
+  if(_inStars) _inStars.innerHTML=`<span style="color:#f0c060">${filledStars}</span><span style="color:#333">${emptyStars}</span>`;
   // 任務目標
   const objEl = document.getElementById('adv-objectives');
   if(objEl && data.objectives){
@@ -16309,6 +16332,9 @@ function startAdventureGame(stage){
     alert('冒險系統尚未就緒，請重新整理頁面後再試。');
     return;
   }
+  // ★ 開始整隊音效
+  try{ playSfx('sfx-confirm2', 1.0); }catch(e){}
+  try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
   _adventureStage = stage;
   const advOv = document.getElementById('adventure-overlay');
@@ -17344,7 +17370,7 @@ function advShowReward() {
   pool.forEach(r => {
     const btn = document.createElement('button');
     btn.className = 'adv-reward-btn';
-    btn.innerHTML = `${r.icon} ${r.name}<br><span style="font-size:18px;color:#aaa;">${r.desc}</span>`;
+    btn.innerHTML = `${r.icon} ${r.name}<br><span style="font-size:36px;color:#ffffff;font-weight:500;">${r.desc}</span>`;
     btn.onclick = () => advApplyReward(r.id);
     choicesDiv.appendChild(btn);
   });
