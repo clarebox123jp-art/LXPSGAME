@@ -719,7 +719,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   padding:80px 20px 40px 40px;gap:16px;
 }
 .adv-list-title{
-  font-size:52px;font-weight:700;color:#ffe8a0;
+  font-size:48px;font-weight:700;color:#ffe8a0;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;line-height:1.75;
   text-shadow:0 2px 0 rgba(0,0,0,0.9),0 0 20px rgba(255,200,80,0.35);
@@ -728,7 +728,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 .adv-stage-btn{
   width:100%;padding:14px 20px;
-  font-size:34px;font-weight:700;
+  font-size:40px;font-weight:700;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;cursor:pointer;border-radius:14px;
   border:2px solid rgba(212,168,67,0.5);
@@ -790,11 +790,11 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   letter-spacing:4px;text-shadow:0 0 24px rgba(212,168,67,0.45);
 }
 .adv-info-desc{
-  font-size:28px;color:#d4d0c4;line-height:1.75;font-weight:500;
+  font-size:32px;color:#d4d0c4;line-height:1.75;font-weight:500;
   border-left:3px solid rgba(212,168,67,0.45);padding-left:16px;
 }
 .adv-info-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.adv-info-label{font-size:28px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
+.adv-info-label{font-size:30px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
 .adv-difficulty-stars{font-size:40px;letter-spacing:5px;line-height:1;}
 /* ─── 底部功能選單 ─── */
 #adv-bottom-nav{
@@ -815,7 +815,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   color:#556;cursor:default;
 }
 .adv-nav-icon{font-size:38px;line-height:1;flex-shrink:0;}
-.adv-nav-label{font-size:55px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
+.adv-nav-label{font-size:50px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
 .adv-nav-lock{position:absolute;top:4px;right:6px;font-size:14px;opacity:0.5;}
 /* 各按鈕顏色（鎖定時半透明）*/
 .adv-nav-btn:nth-child(1){border-color:rgba(180,80,255,0.25);}  /* 召喚 - 紫 */
@@ -2284,7 +2284,7 @@ body {
 }
 /* 略過按鈕：移至對話框內，由 CSS 控制顯示 */
 #adv-skip-btn{
-  position:absolute;top:8px;right:180px;z-index:10;
+  position:absolute;bottom:80px;right:10px;z-index:10;
   padding:10px 24px;font-size:26px;font-weight:700;
   background:rgba(0,0,0,0.72);border:1.5px solid rgba(255,255,255,0.2);
   color:#999;border-radius:14px;cursor:pointer;letter-spacing:2px;
@@ -2308,7 +2308,12 @@ body {
   position:absolute;top:0;left:0;right:160px;bottom:0;z-index:3;
   display:flex;align-items:flex-start;justify-content:center;
   padding:8px 12px;padding-top:16px;
+  background:transparent; /* ★ 無內容時不顯示遮罩 */
+  pointer-events:none; /* 空時不攔截點擊 */
+}
+#adv-choice-panel:not(:empty){
   background:rgba(0,0,8,0.55);
+  pointer-events:all;
 }
 .adv-choice-box{
   background:rgba(8,10,22,0.95);backdrop-filter:blur(12px);
@@ -2850,7 +2855,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.02</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.13</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5501,8 +5506,8 @@ function showElemPickForHero(pos, heroes, cb){
   _epHeroes=heroes; _epCb=cb; _epAssigned={}; _epApplied={};
   window._epConfirmedKeys={};
   _epActivePos=0;
-  // ★ 元素選擇專屬BGM
-  try{ if(typeof bgmPlay==='function'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
+  // ★ 元素選擇專屬BGM（不重播）
+  try{ if(typeof bgmPlay==='function' && _curBgm!=='bgm-menu-02'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
   document.getElementById('elem-pick-overlay').style.display='flex';
   _epBuildRing();
   _epRenderHeroes();
@@ -6023,8 +6028,8 @@ let _heroPickSelected = [];
 let _heroPickPool = [];
 
 function showHeroPickOverlay(){
-  // ★ 角色選擇專屬BGM
-  try{ if(typeof bgmPlay==='function'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
+  // ★ 角色選擇專屬BGM（不重播）
+  try{ if(typeof bgmPlay==='function' && _curBgm!=='bgm-menu-02'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
 // ── 冒險模式：限定英雄池、換背景、換標語
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
@@ -6951,8 +6956,8 @@ function autoRecommendSkills(){
 }
 
 function showSkillReplaceOverlay(){
-  // ★ 技能替換專屬BGM
-  try{ if(typeof bgmPlay==='function'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
+  // ★ 技能替換專屬BGM（不重播）
+  try{ if(typeof bgmPlay==='function' && _curBgm!=='bgm-menu-02'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
   _skillReplaceMap = {};
   _selectedPickSkill = null;
   _pickerFocusPos = null;
@@ -16168,7 +16173,7 @@ function advNavLocked(name){
   const _tip = document.createElement('div');
   _tip.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
     'background:rgba(20,20,30,0.95);border:2px solid rgba(255,200,50,0.5);border-radius:14px;' +
-    'padding:20px 40px;font-size:36px;font-weight:800;color:#ffcc44;z-index:9999;' +
+    'padding:20px 40px;font-size:30px;font-weight:800;color:#ffcc44;z-index:9999;' +
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;pointer-events:none;' +
     'box-shadow:0 0 40px rgba(0,0,0,0.8);';
   _tip.textContent = '🔒 ' + name + ' 尚未開放，敬請期待！';
@@ -16209,7 +16214,7 @@ function selectAdvStage(key, btnEl){
   const objEl = document.getElementById('adv-objectives');
   if(objEl && data.objectives){
     objEl.innerHTML = data.objectives.map(o=>
-      `<div style="font-size:24px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
+      `<div style="font-size:28px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
     ).join('');
   }
   // 獎勵
@@ -16682,6 +16687,8 @@ function advStartCutscene(stage) {
 
   const ov = document.getElementById('adv-cutscene-overlay');
   ov.style.display = 'flex';
+  // ★ 過場（河堤/步道/茶園）專屬BGM
+  try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
   advLoadScene(stage, 0);
 }
 
