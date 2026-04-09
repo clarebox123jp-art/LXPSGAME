@@ -1533,8 +1533,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #sro-picker-title{font-size:36px;color:var(--muted);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;flex-shrink:0}
 #sro-picker-body{
   overflow:visible;
-  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;
-  align-items:start;padding-bottom:8px;
+  display:flex;flex-direction:column;gap:6px;
+  align-items:stretch;padding-bottom:8px;
 }
 .skcat-section{border-radius:8px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column}
 .skcat-section.cat-atk{border-color:#cc223388;background:rgba(160,20,30,0.07)}
@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.44</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.55</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3186,7 +3186,8 @@ body {
       </div>
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
-        <button onclick="randomTeamPick()" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
+        <button onclick="_refreshHeroPool();playSfx('sfx-hero',0.6);" style="flex-shrink:0;padding:10px 24px;font-size:22px;font-weight:700;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:radial-gradient(circle,rgba(40,30,80,0.95),rgba(20,15,50,0.98));border:2px solid rgba(200,170,255,0.5);border-radius:12px;color:#cc99ff;cursor:pointer;margin-right:8px;">✦ 尋找新英雄</button>
+        <button onclick="randomTeamPick();_previewEnemyTeam();" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-right:10px;flex-shrink:0;">
           <span style="font-size:36px">🚩</span>
           <span style="font-size:32px;font-weight:500;color:var(--gold);letter-spacing:2px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">隊伍編成</span>
@@ -6590,7 +6591,8 @@ function _buildHeroPickNodes(){
   starBtn.onmouseover=()=>{ starBtn.style.boxShadow='0 0 30px rgba(155,109,255,0.7),0 0 60px rgba(155,109,255,0.3)'; starBtn.style.borderColor='rgba(200,170,255,0.9)'; };
   starBtn.onmouseout=()=>{ starBtn.style.boxShadow='0 0 20px rgba(155,109,255,0.4),0 0 40px rgba(155,109,255,0.15)'; starBtn.style.borderColor='rgba(200,170,255,0.5)'; };
   starBtn.onclick=()=>_refreshHeroPool();
-  arena.appendChild(starBtn);
+  // ★ 不再把星星按鈕放在arena裡，改為放在底部bar左邊（由HTML提供）
+  // arena.appendChild(starBtn);  // 停用
 }
 
 // 記錄已出現過的英雄（跨刷新循環）
@@ -7179,6 +7181,12 @@ const SK_CATS = {
             '群體挑釁','虛弱咒','增強術','強奪','戰場交易']
   },
 };
+// 技能顏色分類（用於邊框）
+const SK_COLOR_MAP = {
+  '治療之光':'heal','全體治療':'heal','復活術':'heal',
+  '充能':'other','護盾術':'tank','群體挑釁':'tank',
+  '虛弱咒':'other','增強術':'other','強奪':'other','戰場交易':'other',
+};
 
 function autoRecommendSkills(){
   const HEAL_SK  = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','迷心醫術']);
@@ -7362,24 +7370,40 @@ function buildSkillPicker(){
   const assignedNames = new Set(
     Object.values(_skillReplaceMap).filter(r=>r).map(r=>r.skill.n)
   );
+  // 顏色對應
+  const _colMap = typeof SK_COLOR_MAP !== 'undefined' ? SK_COLOR_MAP : {};
+  const _borderCol = {
+    heal: 'rgba(80,220,120,0.7)',
+    tank: 'rgba(80,160,255,0.7)',
+    other:'rgba(255,200,50,0.6)',
+  };
+  const _bgCol = {
+    heal: 'rgba(40,120,60,0.15)',
+    tank: 'rgba(40,80,180,0.15)',
+    other:'rgba(120,80,0,0.15)',
+  };
   pickerEl.innerHTML = Object.entries(SK_CATS).map(([catKey, cat])=>{
     const catSkills = NEW_SKILLS_DB.filter(sk=>cat.skills.includes(sk.n));
     const itemsHTML = catSkills.map(sk=>{
       const isAssigned = assignedNames.has(sk.n);
       const isSelected = sk.n === _selectedPickSkill;
-      let cls = 'sk-pick-btn';
-      if(isSelected) cls += ' selected';
-      else if(isAssigned) cls += ' assigned';
-      return `<button class="${cls}" id="skpick-${sk.n.replace(/[\s\u4e00-\u9fff\uff00-\uffef]/g, c=>c.codePointAt(0).toString(36))}" onclick="onPickSkill('${sk.n}')">
-        <span class="sk-pick-name">${sk.n}</span>
-        <span class="sk-pick-cost">🔷${sk.c}</span>
-        ${sk.p?'<span class="sk-pick-passive">[被動]</span>':''}
+      const colType = _colMap[sk.n] || 'other';
+      const bdrCol = isSelected ? '#ffcc44' : isAssigned ? '#888' : _borderCol[colType];
+      const bgCol  = isSelected ? 'rgba(255,200,0,0.18)' : isAssigned ? 'rgba(80,80,80,0.2)' : _bgCol[colType];
+      return `<button class="sk-pick-btn${isSelected?' selected':''}${isAssigned?' assigned':''}"
+        id="skpick-${sk.n.replace(/[\s\u4e00-\u9fff\uff00-\uffef]/g, c=>c.codePointAt(0).toString(36))}"
+        onclick="onPickSkill('${sk.n}')"
+        style="border:2px solid ${bdrCol};background:${bgCol};border-radius:10px;padding:10px 14px;
+               display:flex;align-items:center;gap:10px;flex-wrap:nowrap;white-space:nowrap;
+               cursor:pointer;font-family:inherit;transition:0.15s;width:100%;">
+        <span class="sk-pick-name" style="font-size:22px;font-weight:700;color:#ffe8a0;flex-shrink:0;">${sk.n}</span>
+        <span class="sk-pick-cost" style="font-size:18px;color:#4a9eff;flex-shrink:0;">🔷${sk.c}</span>
         ${_sdpBtn(sk,'🔷'+sk.c+(sk.p?' [被動]':''))}
-        <span class="sk-pick-desc">${sk.d}</span>
+        <span class="sk-pick-desc" style="font-size:18px;color:#aab;flex:1;overflow:hidden;text-overflow:ellipsis;">${sk.d}</span>
       </button>`;
     }).join('');
     return `<div class="skcat-section ${cat.color}" style="padding:0;">
-      <div class="skcat-list" style="gap:8px;">${itemsHTML}</div>
+      <div class="skcat-list" style="gap:8px;display:flex;flex-direction:column;">${itemsHTML}</div>
     </div>`;
   }).join('');
 }
@@ -18918,7 +18942,7 @@ function _buildHeroGrid() {
       background:${isUnlocked?'rgba(20,20,35,0.9)':'rgba(10,10,18,0.7)'};
       position:relative;transition:transform 0.15s;">
       ${isUnlocked && img
-        ? `<img src="${img}" style="width:100%;height:auto;display:block;background:#111;"/>`
+        ? `<img src="${img}" style="width:100%;height:280px;object-fit:cover;object-position:top center;display:block;background:#111;"/>`
         : `<div style="width:100%;height:260px;background:rgba(20,20,30,0.8);display:flex;align-items:center;justify-content:center;font-size:100px;${isUnlocked?'':'filter:grayscale(1)opacity(0.5);'}">${av}</div>`
       }
       <div style="padding:12px 14px 14px;">
@@ -18959,12 +18983,14 @@ function openHeroDetail(name) {
 function heroDetailPrev() {
   if(!_heroDetailList.length) return;
   _heroDetailIdx = (_heroDetailIdx - 1 + _heroDetailList.length) % _heroDetailList.length;
+  try{ playSfx('sfx-card', 0.7); }catch(e){}
   _renderHeroDetail(_heroDetailList[_heroDetailIdx], document.getElementById('hero-detail-content'));
 }
 
 function heroDetailNext() {
   if(!_heroDetailList.length) return;
   _heroDetailIdx = (_heroDetailIdx + 1) % _heroDetailList.length;
+  try{ playSfx('sfx-card', 0.7); }catch(e){}
   _renderHeroDetail(_heroDetailList[_heroDetailIdx], document.getElementById('hero-detail-content'));
 }
 function closeHeroDetail() {
