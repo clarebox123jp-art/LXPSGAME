@@ -719,7 +719,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   padding:80px 20px 40px 40px;gap:16px;
 }
 .adv-list-title{
-  font-size:48px;font-weight:700;color:#ffe8a0;
+  font-size:52px;font-weight:700;color:#ffe8a0;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;line-height:1.75;
   text-shadow:0 2px 0 rgba(0,0,0,0.9),0 0 20px rgba(255,200,80,0.35);
@@ -728,7 +728,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 .adv-stage-btn{
   width:100%;padding:14px 20px;
-  font-size:40px;font-weight:700;
+  font-size:34px;font-weight:700;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;cursor:pointer;border-radius:14px;
   border:2px solid rgba(212,168,67,0.5);
@@ -790,11 +790,11 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   letter-spacing:4px;text-shadow:0 0 24px rgba(212,168,67,0.45);
 }
 .adv-info-desc{
-  font-size:32px;color:#d4d0c4;line-height:1.75;font-weight:500;
+  font-size:28px;color:#d4d0c4;line-height:1.75;font-weight:500;
   border-left:3px solid rgba(212,168,67,0.45);padding-left:16px;
 }
 .adv-info-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.adv-info-label{font-size:30px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
+.adv-info-label{font-size:28px;color:var(--muted);letter-spacing:2px;flex-shrink:0;}
 .adv-difficulty-stars{font-size:40px;letter-spacing:5px;line-height:1;}
 /* ─── 底部功能選單 ─── */
 #adv-bottom-nav{
@@ -815,7 +815,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   color:#556;cursor:default;
 }
 .adv-nav-icon{font-size:38px;line-height:1;flex-shrink:0;}
-.adv-nav-label{font-size:50px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
+.adv-nav-label{font-size:55px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
 .adv-nav-lock{position:absolute;top:4px;right:6px;font-size:14px;opacity:0.5;}
 /* 各按鈕顏色（鎖定時半透明）*/
 .adv-nav-btn:nth-child(1){border-color:rgba(180,80,255,0.25);}  /* 召喚 - 紫 */
@@ -2855,7 +2855,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.13</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.17.27</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -12826,6 +12826,8 @@ function showActivePassiveUI(hero, sk, cost, triggerDesc, onUse, onSkip){
 // ====== TURN ENGINE ======
 function startTurn(){
   if(checkWin()) return;
+  // ★ 每回合開始儲存快照（F8密技）
+  try{ _saveCheatSnapshot(); }catch(e){}
 // ══ 冒險模式 BOSS 天賦 ══
   if(_adventureMode){
     // 統計回合數
@@ -15070,6 +15072,78 @@ function _tryMenuBgm(){
 document.addEventListener('click',_tryMenuBgm);
 document.addEventListener('keydown',_tryMenuBgm);
 
+// ★ 開發密技按鍵（測試用）
+document.addEventListener('keydown', function(e){
+  // F9：直接戰鬥勝利（僅戰鬥中有效）
+  if(e.key === 'F9'){
+    e.preventDefault();
+    if(typeof G === 'undefined' || !G.p1 || !G.p2) return;
+    if(!G.p1.length && !G.p2.length) return;
+    // 必須在戰鬥中才有效
+    const inBattle = document.getElementById('gc') && 
+      (document.getElementById('gc').classList.contains('adv-battle') || 
+       typeof _gamePaused !== 'undefined');
+    if(!G.p2.some(h=>h.curHp>0)) return; // 已結束
+    log('🔑 [F9密技] 強制勝利！');
+    flashScreen('rgba(255,220,50,1)', 500);
+    // 讓所有敵方倒下
+    G.p2.forEach(h=>{ h.curHp=0; try{ renderCard(h); }catch(e){} });
+    // 停止計時器
+    try{ clearTurnTimer(); }catch(e){}
+    try{ clearInterval(_advQuizTimer); }catch(e){}
+    // 推進結算
+    _pSetTimeout(()=>{ try{ _showResultWithDrama(true); }catch(e){ try{ checkWin(); }catch(e2){} } }, 300);
+    return;
+  }
+
+  // F8：回到上一回合快照
+  if(e.key === 'F8'){
+    e.preventDefault();
+    if(!window._cheatPrevState){
+      log('🔑 [F8密技] 沒有可以回溯的快照。');
+      flashScreen('rgba(255,50,50,0.5)', 300);
+      return;
+    }
+    log('🔑 [F8密技] 回到上一回合！');
+    flashScreen('rgba(100,180,255,0.7)', 500);
+    try{
+      const snap = window._cheatPrevState;
+      // 清除計時器和暫態
+      try{ clearTurnTimer(); }catch(e){}
+      try{ clearInterval(_advQuizTimer); _advQuizPhase='idle'; _advQuizActive=false; }catch(e){}
+      try{ document.getElementById('adv-quiz-overlay').classList.remove('show'); }catch(e){}
+      try{ G.pendingTarget=null; pendingCb=null; }catch(e){}
+      // 還原快照
+      G.p1 = snap.p1; G.p2 = snap.p2;
+      G.energy = snap.energy;
+      G.round = snap.round;
+      G.inv = snap.inv; G.inv2 = snap.inv2;
+      G.fieldCards = snap.fieldCards || [];
+      G._resultShown = false;
+      updateUI(); renderField(); renderItems();
+      log(`[F8] 已回溯至第 ${G.round} 回合開始`);
+      _pSetTimeout(startTurn, 400);
+    }catch(err){ console.error('[F8 cheat]', err); }
+    return;
+  }
+});
+
+// 每回合開始時儲存快照（F8密技用）
+function _saveCheatSnapshot(){
+  if(typeof G === 'undefined' || !G.p1) return;
+  try{
+    window._cheatPrevState = {
+      p1: JSON.parse(JSON.stringify(G.p1)),
+      p2: JSON.parse(JSON.stringify(G.p2)),
+      energy: {...G.energy},
+      round: G.round||1,
+      inv: JSON.parse(JSON.stringify(G.inv||[])),
+      inv2: JSON.parse(JSON.stringify(G.inv2||[])),
+      fieldCards: JSON.parse(JSON.stringify(G.fieldCards||[])),
+    };
+  }catch(e){}
+}
+
 // ====== CONTROL BAR ======
 function ctrlToggleBgm(){
   _bgmMuted=!_bgmMuted;
@@ -16173,7 +16247,7 @@ function advNavLocked(name){
   const _tip = document.createElement('div');
   _tip.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
     'background:rgba(20,20,30,0.95);border:2px solid rgba(255,200,50,0.5);border-radius:14px;' +
-    'padding:20px 40px;font-size:30px;font-weight:800;color:#ffcc44;z-index:9999;' +
+    'padding:20px 40px;font-size:36px;font-weight:800;color:#ffcc44;z-index:9999;' +
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;pointer-events:none;' +
     'box-shadow:0 0 40px rgba(0,0,0,0.8);';
   _tip.textContent = '🔒 ' + name + ' 尚未開放，敬請期待！';
@@ -16214,7 +16288,7 @@ function selectAdvStage(key, btnEl){
   const objEl = document.getElementById('adv-objectives');
   if(objEl && data.objectives){
     objEl.innerHTML = data.objectives.map(o=>
-      `<div style="font-size:28px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
+      `<div style="font-size:24px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
     ).join('');
   }
   // 獎勵
