@@ -881,6 +881,12 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   display:flex;gap:8px;padding:6px 16px 8px;
   background:linear-gradient(to top,rgba(0,0,10,0.96) 80%,rgba(0,0,10,0));
 }
+@keyframes traitUpAnim{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(0.7);}
+  15%{opacity:1;transform:translate(-50%,-50%) scale(1.1);}
+  80%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(0.95);}
+}
 @keyframes navDotPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.4);}}
 .adv-nav-btn{
   flex:1;padding:10px 8px;border-radius:12px;cursor:pointer;
@@ -2959,10 +2965,41 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.14</div>
-<button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.21.28</div>
+<button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
+  <!-- ★ 登入選擇彈窗 -->
+  <div id="login-gate-modal" style="display:none;position:fixed;inset:0;z-index:9999;
+    background:rgba(0,0,8,0.88);align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+    <div style="background:linear-gradient(160deg,#12172a,#080c1a);border:2.5px solid rgba(212,168,67,0.5);
+      border-radius:22px;padding:36px 40px;max-width:540px;width:92%;text-align:center;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;box-shadow:0 0 80px rgba(0,0,0,0.9);">
+      <div style="font-size:48px;margin-bottom:8px;">🎮</div>
+      <div style="font-size:34px;font-weight:900;color:#ffe8a0;margin-bottom:8px;">繼續上次的冒險？</div>
+      <div style="font-size:22px;color:#aaa;margin-bottom:28px;line-height:1.6;">
+        使用 Google 登入可以自動儲存你的<br>英雄、等級、技能升級書等所有進度。
+      </div>
+      <button onclick="loginGateGoogle()" style="
+        display:flex;align-items:center;justify-content:center;gap:12px;
+        width:100%;padding:16px 0;font-size:26px;font-weight:700;
+        background:rgba(255,255,255,0.95);border:none;border-radius:14px;cursor:pointer;
+        color:#333;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:28px;height:28px;"/>
+        使用 Google 登入並繼續冒險
+      </button>
+      <button onclick="loginGateSkip()" style="
+        width:100%;padding:14px 0;font-size:22px;font-weight:600;
+        background:rgba(40,40,60,0.8);border:1.5px solid rgba(100,100,150,0.4);
+        border-radius:14px;cursor:pointer;color:#888;">
+        不登入 Google，直接體驗遊戲
+      </button>
+      <div style="font-size:18px;color:#ff4444;margin-top:12px;font-weight:600;">
+        ⚠ 不登入則不會保留任何遊戲存檔喔！
+      </div>
+    </div>
+  </div>
+
   <!-- ══ 冒險闖關 關卡選擇頁面 ══ -->
   <div id="adventure-overlay">
     <audio id="adventure-bgm" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%95%85%E4%BA%8B%E9%96%8B%E7%AB%AF.m4a" loop preload="auto"></audio>
@@ -18327,7 +18364,8 @@ function _buildSafeData() {
     heroStatInvested:_heroStatInvested,      // {name: {hp,atk,sp,spd} 純數字加成}
     heroSkillLevels: _heroSkillLevels,       // {name: {s1,s2} +n 的等級數字}
     skillBookCount:  _skillBookCount,        // 數字
-    medals:          _playerMedals,          // 獎章清單
+    medals:          _playerMedals,
+    heroTraitLevel:  _heroTraitLevel,          // 獎章清單
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted }
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
@@ -18367,6 +18405,7 @@ function _applySafeData(raw) {
   }
   if(typeof data.skillBookCount === 'number') _skillBookCount = data.skillBookCount;
   if(Array.isArray(data.medals)) _playerMedals = data.medals;
+  if(data.heroTraitLevel && typeof data.heroTraitLevel === 'object') _heroTraitLevel = data.heroTraitLevel;
   if(data.settings) {
     if(typeof data.settings.bgmMuted === 'boolean') _bgmMuted = data.settings.bgmMuted;
     if(typeof data.settings.sfxMuted === 'boolean') _sfxMuted = data.settings.sfxMuted;
@@ -18449,6 +18488,7 @@ let _heroStatPoints = {};   // {heroName: freePoints}
 let _heroStatInvested = {}; // {heroName: {hp,atk,sp,spd}}
 let _heroSkillLevels = {};  // {heroName: {s1:n, s2:n}}  n=0~9 (+0~+9)
 let _skillBookCount = 0;    // 技能升級書數量
+let _heroTraitLevel = {};   // {heroName: 天賦升級次數(0~5)}
 let _playerMedals = [];     // 獎章清單
 
 // 等級所需累積經驗值 (等差數列 100,150,200... lv1=100 lv2=150...)
@@ -18507,6 +18547,35 @@ function addHeroExp(name, exp) {
       if(!_heroStatPoints[name]) _heroStatPoints[name] = 0;
       _heroStatPoints[name]++;
       log(`🌟 [${name}] 升級！LV${_heroLevels[name]}！獲得1點素質點數！`);
+      // ★ 里程碑升級：天賦技能強化
+      const _lv = _heroLevels[name];
+      if([10,20,30,40,50].includes(_lv)){
+        if(!_heroTraitLevel[name]) _heroTraitLevel[name] = 0;
+        _heroTraitLevel[name]++;
+        const _tl = _heroTraitLevel[name];
+        log(`✨ [${name}] 天賦強化！Lv${_lv} 里程碑 → 天賦效果 +${_tl*20}%！`);
+        // 動態升級演示訊息
+        setTimeout(()=>{
+          try{
+            flashScreen('rgba(255,220,50,0.6)', 600);
+            const _fx = document.createElement('div');
+            _fx.style.cssText = [
+              'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+              'z-index:9990;text-align:center;pointer-events:none;',
+              'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+              'animation:traitUpAnim 3s ease-out forwards;'
+            ].join('');
+            _fx.innerHTML = `
+              <div style="font-size:26px;color:#ffcc44;margin-bottom:6px;">🎉 天賦強化！</div>
+              <div style="font-size:42px;font-weight:900;color:#fff;text-shadow:0 0 30px #ffcc44;">${name}</div>
+              <div style="font-size:30px;color:#ffee88;margin-top:8px;">Lv.${_lv} 里程碑達成！</div>
+              <div style="font-size:24px;color:#aaffcc;margin-top:6px;">天賦效果 +${_tl*20}%（累計+${_tl*20}%）</div>
+            `;
+            document.body.appendChild(_fx);
+            setTimeout(()=>{ _fx.style.opacity='0'; _fx.style.transition='opacity 0.5s'; setTimeout(()=>_fx.remove(),500); }, 2800);
+          }catch(e){}
+        }, 500);
+      }
     } else break;
   }
 }
@@ -18680,7 +18749,22 @@ function _renderHeroDetail(name, box) {
             <div style="font-size:18px;color:#c8d0e0;margin-top:4px;">${sk.d}</div>
           </div>`;
         }).join('')}
-        ${burst ? `<div style="background:rgba(255,100,50,0.06);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,120,50,0.3);">
+        <!-- ★ 天賦升級顯示 -->
+      ${(()=>{
+        const _tl = _heroTraitLevel[name] || 0;
+        const _trait = typeof HERO_TRAITS!=='undefined' ? HERO_TRAITS[name] : null;
+        if(!_trait) return '';
+        return `<div style="background:rgba(255,200,50,0.06);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,200,50,0.25);margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-size:18px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:2px 10px;font-weight:700;">✦ 天賦</span>
+            <span style="font-size:20px;font-weight:700;color:#ffe8a0;">${_trait.name||''}</span>
+            ${_tl>0?`<span style="font-size:16px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">效果 +${_tl*20}%（里程碑 ${_tl}/5）</span>`:''}
+          </div>
+          <div style="font-size:17px;color:#c8d0e0;margin-top:4px;">${_trait.desc||''}</div>
+          <div style="font-size:15px;color:#666;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l > (getHeroLevel(name)||1)) || 'MAX'}</div>
+        </div>`;
+      })()}
+      ${burst ? `<div style="background:rgba(255,100,50,0.06);border-radius:10px;padding:10px 14px;border:1px solid rgba(255,120,50,0.3);">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="font-size:18px;background:rgba(255,100,50,0.2);color:#ff8844;border-radius:6px;padding:2px 10px;font-weight:700;">⚡ 極限爆發</span>
             <span style="font-size:22px;font-weight:700;color:#ff9966;">${burst.n}</span>
@@ -18722,6 +18806,40 @@ function closeHeroPage() {
   _buildHeroGrid();
   document.getElementById('hero-page-book-count').textContent = _skillBookCount;
 }
+
+// ══════════════════════════════════════════════
+//  登入選擇視窗
+// ══════════════════════════════════════════════
+function showLoginGate() {
+  // 已登入 → 直接進冒險
+  if(window._gUserId) { openAdventureOverlay(); return; }
+  const modal = document.getElementById('login-gate-modal');
+  if(modal) modal.style.display = 'flex';
+}
+
+async function loginGateGoogle() {
+  const modal = document.getElementById('login-gate-modal');
+  if(modal) modal.style.display = 'none';
+  if(window._fbSignIn) {
+    const user = await window._fbSignIn();
+    if(user) {
+      await gameCloudLoad();
+      openAdventureOverlay();
+    } else {
+      // 登入取消，再顯示選擇
+      showLoginGate();
+    }
+  } else {
+    alert('Firebase 尚未載入，請重新整理頁面。');
+  }
+}
+
+function loginGateSkip() {
+  const modal = document.getElementById('login-gate-modal');
+  if(modal) modal.style.display = 'none';
+  openAdventureOverlay();
+}
+
 window._advSystemReady = true;
 </script>
 </body>
