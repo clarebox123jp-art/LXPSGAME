@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.23.13</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.23.21</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -11879,6 +11879,65 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('炫目神光',a,targets2);
     endAction(a,cost);
   }
+  // ── 花瓣飛刀（全體敵人，依特技）──
+  if(name==='花瓣飛刀'){
+    const foes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    log(`[${a.name}] 花瓣飛刀！對全體敵人造成傷害！`);
+    foes.forEach(t=>{ doDmg(t, spv(a), {actor:a}); });
+    playSkillFX('花瓣飛刀',a,foes);
+    flashScreen('rgba(255,100,200,0.35)',300);
+    endAction(a,cost);
+  }
+  // ── 催眠之歌（使1名對手睡眠3回合）──
+  if(name==='催眠之歌'){
+    setPending('enemy', t=>{
+      log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`);
+      t.status = t.status.filter(s=>s.type!=='sleep');
+      t.status.push({type:'sleep', dur:3});
+      bannerFX(t,'💤 睡眠！','#bb99ff',1000);
+      playSkillFX('催眠之歌',a,[t]);
+      endAction(a,cost);
+    },'催眠之歌');
+  }
+  // ── 渾身一擊（攻擊200%，暴擊率+50%）──
+  if(name==='渾身一擊'){
+    setPending('enemy', t=>{
+      log(`[${a.name}] 渾身一擊！[${t.name}]！`);
+      const baseDmg = Math.floor(a.atk * 2);
+      // 暴擊率+50%：臨時提升
+      const origCrit = a._tempCritBonus || 0;
+      a._tempCritBonus = (origCrit + 50);
+      doDmg(t, baseDmg, {actor:a, forceCritRate: 0.5 + (origCrit/100)});
+      a._tempCritBonus = origCrit;
+      playSkillFX('渾身一擊',a,[t]);
+      flashScreen('rgba(255,150,50,0.4)',300);
+      endAction(a,cost);
+    },'渾身一擊');
+  }
+  // ── 舔舔治療（依特技恢復1名友方HP）──
+  if(name==='舔舔治療'){
+    const _sideAllies = G[a.side].filter(h=>h.curHp>0);
+    if(_sideAllies.length===1){
+      // 只有自己
+      const _healed = Math.floor(spv(a));
+      a.curHp = Math.min(a.hp, a.curHp + _healed);
+      log(`[${a.name}] 舔舔治療！自身+${_healed}HP！`);
+      bannerFX(a,`+${_healed} 舔舔治療！`,'#44ffcc',800);
+      renderCard(a);
+      playSkillFX('舔舔治療',a,[a]);
+      endAction(a,cost);
+    } else {
+      setPending('self_or_ally', t=>{
+        const _healed = Math.floor(spv(a));
+        t.curHp = Math.min(t.hp, t.curHp + _healed);
+        log(`[${a.name}] 舔舔治療！[${t.name}]+${_healed}HP！`);
+        bannerFX(t,`+${_healed} 舔舔治療！`,'#44ffcc',800);
+        renderCard(t);
+        playSkillFX('舔舔治療',a,[t]);
+        endAction(a,cost);
+      },'舔舔治療');
+    }
+  }
 
   // ── 歷史的教訓：每位對手消除1個有利狀態，無狀態則造成特技傷害 ──
   else if(n==='歷史的教訓'){
@@ -19145,54 +19204,86 @@ function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
 
-  // 儲存BOSS陣容
-  _advBossTeamSaved = G.p2 ? G.p2.map(h=>({...h})) : null;
+  // 儲存BOSS陣容（深拷貝）
+  _advBossTeamSaved = G.p2 ? JSON.parse(JSON.stringify(G.p2)) : null;
 
-  // 隨機組成4隻小怪（可重複）
-  const mobs = Array.from({length:4}, () =>
-    MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
-  );
-
-  // 設置小怪陣容
-  G.p2 = mobs.map((name, i) => {
-    const h = newHero(name, 'p2', i);
-    h.element = MINI_MONSTER_ELEM[name] || 'wind';
-    if(typeof applyElemBonus === 'function') applyElemBonus(h);
-    return h;
-  });
-  G.inv2 = [null, null, null];
-  G._resultShown = false;
-  _gamePaused = false;
-
-  // 顯示小怪開場對話框
-  const sceneKey = ADV_SCENES[_adventureStage][_advSceneIdx]?.key || 'river';
+  // 先顯示開場白（在過場畫面內）
+  const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
+    ? ADV_SCENES[_adventureStage][_advSceneIdx].key : 'river';
   const intros = MINI_BATTLE_INTROS[sceneKey] || MINI_BATTLE_INTROS.river;
   const intro = intros[Math.floor(Math.random() * intros.length)];
 
-  // 顯示旁白
   const speaker = document.getElementById('adv-dialog-speaker');
-  const text = document.getElementById('adv-dialog-text');
-  const dialog = document.getElementById('adv-dialog-box');
-  if(speaker) speaker.textContent = '⚔️ 遭遇！';
-  if(text) text.textContent = intro;
-  if(dialog) dialog.style.display = 'block';
+  const text    = document.getElementById('adv-dialog-text');
+  const dialog  = document.getElementById('adv-dialog-box');
+  if(speaker) speaker.textContent = '⚔️ 小怪出現！';
+  if(text)    text.textContent    = intro;
+  if(dialog)  dialog.style.display = 'block';
+  try{ beep(350,'square',0.12,0.15); setTimeout(()=>beep(450,'square',0.1,0.1),200); }catch(e){}
 
-  // 2.5秒後進入戰鬥
+  // 2.5秒後進入小怪戰鬥
   setTimeout(() => {
     if(dialog) dialog.style.display = 'none';
-    // 隱藏過場overlay，顯示戰場
+
+    // ── 隨機組成4隻小怪（可重複）
+    const mobs = Array.from({length:4}, () =>
+      MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
+    );
+    G.p2 = mobs.map((name, i) => {
+      const h = newHero(name, 'p2', i);
+      h.element = MINI_MONSTER_ELEM[name] || 'wind';
+      if(typeof applyElemBonus === 'function') applyElemBonus(h);
+      return h;
+    });
+
+    // ── 重置戰鬥狀態（同 advStartBattle）
+    G.inv2   = [null, null, null];
+    G.energy = {p1:2, p2:2};
+    G._resultShown  = false;
+    G.pendingTarget = null;
+    G.selMove = null; G.selItem = null;
+    G.taunted = null; G.waitFor = null;
+    if(typeof fieldCards !== 'undefined') fieldCards = [];
+    if(typeof updateFieldFX === 'function') updateFieldFX();
+    _gamePaused = false;
+
+    // ── 隱藏過場、顯示戰場
     const cutsceneOv = document.getElementById('adv-cutscene-overlay');
     if(cutsceneOv) cutsceneOv.style.display = 'none';
-    // 播放小怪戰鬥BGM（使用普通戰鬥曲）
-    try{ bgmStop(); const ids=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
-      bgmPlay(ids[Math.floor(Math.random()*ids.length)]); }catch(e){}
-    // 重置能量
-    G.energy = {p1:2, p2:2};
-    // 開始戰鬥
-    updateUI(); renderField(true); renderItems();
-    if(typeof markAdventureBossCards==='function') markAdventureBossCards();
-    flashScreen('rgba(255,180,50,0.7)', 400);
-    setTimeout(()=>{ try{ startTurn(); }catch(e){ console.error(e); } }, 500);
+    const gc = document.getElementById('gc');
+    if(gc) gc.classList.add('adv-battle');
+
+    // ── BGM：先停再播戰鬥曲（loop=true 要先 pause 再設 src）
+    try{
+      bgmStop();
+      // 確保 bgm-adv-scene 停掉
+      const sceneEl = document.getElementById('bgm-adv-scene');
+      if(sceneEl){ sceneEl.pause(); sceneEl.currentTime=0; }
+      const btIds=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
+      const btId  = btIds[Math.floor(Math.random()*btIds.length)];
+      bgmPlay(btId);
+    }catch(e){}
+
+    // ── 重建牌組（小怪戰用同一牌組）
+    try{ buildDeck(); }catch(e){}
+
+    // ── 渲染戰場
+    try{ renderField(true); }catch(e){ console.error('[mini-renderField]',e); }
+    try{ renderItems(); updateUI(); }catch(e){}
+    log('═══ 小怪戰鬥開始 ═══');
+
+    // ── 開場動畫
+    flashScreen('rgba(255,150,50,0.6)', 400);
+    const bsOv = document.getElementById('battle-start-overlay');
+    const bsTxt = document.querySelector('.bs-text');
+    if(bsOv && bsTxt){
+      bsTxt.textContent = '⚔️ 小怪出現！';
+      bsOv.classList.add('show');
+      try{ sndGong(); }catch(e){}
+      setTimeout(()=>{ bsOv.classList.remove('show'); bsTxt.textContent='戰鬥開始!'; }, 2000);
+    }
+
+    setTimeout(()=>{ try{ startTurn(); }catch(e){ console.error('[mini-startTurn]',e); } }, 500);
   }, 2500);
 }
 
@@ -19217,25 +19308,41 @@ function advFinishMiniBattle(win) {
     }
   }
 
-  // 恢復BOSS陣容
+  // 移除戰鬥 class
+  const gc2 = document.getElementById('gc');
+  if(gc2) gc2.classList.remove('adv-battle');
+
+  // 恢復BOSS陣容（深拷貝還原）
   if(_advBossTeamSaved) {
-    G.p2 = _advBossTeamSaved;
+    G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));
     _advBossTeamSaved = null;
-    // 重新套用元素加成
-    G.p2.forEach(h => { if(typeof applyElemBonus==='function') applyElemBonus(h); });
+    G.p2.forEach(h => { try{ applyElemBonus(h); }catch(e){} });
   }
 
   G._resultShown = false;
   G.energy = {p1:2, p2:2};
+  G.pendingTarget = null;
+  G.selMove = null; G.selItem = null;
+  if(typeof fieldCards!=='undefined') fieldCards=[];
+  if(typeof updateFieldFX==='function') updateFieldFX();
+
+  // 停止所有戰鬥音樂，恢復過場音樂
+  try{
+    bgmStop();
+    ['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04','bgm-battle-05'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.pause(); el.currentTime=0; }
+    });
+    bgmPlay('bgm-adv-scene');
+  }catch(e){}
 
   // 回到過場，繼續下一幕
-  const cutsceneOv = document.getElementById('adv-cutscene-overlay');
-  if(cutsceneOv) cutsceneOv.style.display = 'flex';
-  try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+  const cutsceneOv2 = document.getElementById('adv-cutscene-overlay');
+  if(cutsceneOv2) cutsceneOv2.style.display = 'flex';
 
   setTimeout(() => {
     advLoadScene(_adventureStage, _advMiniBattleNextScene);
-  }, 600);
+  }, 800);
 }
 
 window._advSystemReady = true;
