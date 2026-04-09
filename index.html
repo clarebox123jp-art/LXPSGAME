@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.00.55</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.01.10</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6319,6 +6319,7 @@ function showHeroPickOverlay(){
     _heroPickSelected = [];
 
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
+    hpo.style.backgroundColor = '#080a18';
     hpo.style.backgroundImage = 'url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png")';
 
     // BOSS 預覽
@@ -6374,7 +6375,7 @@ function showHeroPickOverlay(){
   const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
   // 初始12個也優先選未見過的（第一次全都未見，直接隨機）
   const shuffled = [...allNames].sort(()=>Math.random()-0.5);
-  _heroPickPool = shuffled.slice(0, 12);
+  _heroPickPool = shuffled.slice(0, 20);
   // 記錄初始出現的英雄
   _heroPickPool.forEach(n=>_heroSeenPool.add(n));
   // 初始 pool：小力 50% 機率換掉
@@ -6964,31 +6965,24 @@ function randomTeamPick(){
     return;
   }
 
-  // ── 正常模式（原邏輯，排除 BOSS）
+  // ── 正常模式：只重新隨機玩家隊伍，對手隊伍不變
   const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
-  const keep = [..._heroPickSelected];
-  const need = 4 - keep.length;
-  if(need > 0){
-    const available = allNames.filter(n=>!keep.includes(n)).sort(()=>Math.random()-0.5);
-    const fill = available.slice(0, need);
-    fill.forEach(name=>{
-      keep.push(name);
-      if(!_heroPickPool.includes(name)){
-        const replIdx = _heroPickPool.findIndex(n=>!keep.includes(n)||n===name);
-        if(replIdx>=0) _heroPickPool[replIdx]=name;
-      }
-    });
-  }
-  _heroPickSelected = [];
-  document.querySelectorAll('.hpick-node').forEach(n=>n.classList.remove('picked'));
-  keep.forEach(name=>{
+  // 完全重抽4名不重複的英雄
+  const newTeam = allNames.sort(()=>Math.random()-0.5).slice(0,4);
+  // 若新英雄不在現有池裡，擴充池（確保可以被選到）
+  newTeam.forEach(name=>{
     if(!_heroPickPool.includes(name)){
-      const replIdx = _heroPickPool.findIndex(n=>!keep.includes(n));
+      // 替換掉一個沒被選中的位置
+      const replIdx = _heroPickPool.findIndex(n=>!newTeam.includes(n));
       if(replIdx>=0) _heroPickPool[replIdx]=name;
+      else _heroPickPool.push(name);
     }
   });
+  // 重建節點
+  _heroPickSelected = [];
   _buildHeroPickNodes();
-  keep.forEach(name=>{
+  // 自動選中新隊伍
+  newTeam.forEach(name=>{
     _heroPickSelected.push(name);
     const idx = _heroPickPool.indexOf(name);
     if(idx>=0) document.getElementById('hpick-'+idx)?.classList.add('picked');
@@ -18938,15 +18932,16 @@ function _buildHeroGrid() {
     const expPct = lv >= 50 ? 100 : Math.min(100, Math.round(exp/expNeed*100));
     return `<div class="hero-grid-card" onclick="openHeroDetail('${name}')" data-heroname="${name}"
       style="width:320px;cursor:pointer;border-radius:16px;overflow:hidden;
-      border:2px solid ${isUnlocked?'rgba(212,168,67,0.5)':'rgba(80,80,100,0.3)'};
-      background:${isUnlocked?'rgba(20,20,35,0.9)':'rgba(10,10,18,0.7)'};
+      border:2px solid ${isUnlocked?'rgba(212,168,67,0.5)':'rgba(60,60,60,0.4)'};
+      background:${isUnlocked?'rgba(20,20,35,0.9)':'#0a0a0a'};
+      ${!isUnlocked?'filter:grayscale(1) contrast(0.8);':''}
       position:relative;transition:transform 0.15s;">
       ${isUnlocked && img
         ? `<img src="${img}" style="width:100%;height:280px;object-fit:cover;object-position:top center;display:block;background:#111;"/>`
-        : `<div style="width:100%;height:260px;background:rgba(20,20,30,0.8);display:flex;align-items:center;justify-content:center;font-size:100px;${isUnlocked?'':'filter:grayscale(1)opacity(0.5);'}">${av}</div>`
+        : `<div style="width:100%;height:260px;background:${isUnlocked?'rgba(20,20,30,0.8)':'#111'};display:flex;align-items:center;justify-content:center;font-size:100px;${isUnlocked?'':'filter:grayscale(1) brightness(0.4) contrast(1.2);'}">${av}</div>`
       }
       <div style="padding:12px 14px 14px;">
-        <div style="font-size:36px;font-weight:700;color:${isUnlocked?'#ffe8a0':'#556'};margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <div style="font-size:36px;font-weight:700;color:${isUnlocked?'#ffe8a0':'#666'};margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           ${isUnlocked ? name : '???'}
         </div>
         ${isUnlocked ? `
