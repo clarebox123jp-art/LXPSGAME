@@ -781,7 +781,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   width:100%;height:64px;border-radius:14px;
   border:2px solid rgba(212,168,67,0.2);
   background:linear-gradient(135deg,#111420,#0a0d16);
-  display:flex;align-items:center;justify-content:center;
+  display:flex;align-items:center;justify-content:flex-start;
   font-size:72px;letter-spacing:12px;overflow:hidden;
   color:#fff;
 }
@@ -2784,7 +2784,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.08.24</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260409.08.49</div>
 <button id="adventure-btn" onclick="openAdventureOverlay()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -14799,13 +14799,15 @@ function bgmStop(){
 }
 // ★ 手機/iPad：切換 App 時自動暫停音樂，回來恢復
 document.addEventListener('visibilitychange', function(){
-  if(document.hidden){
-    // 切到後台：暫停所有 audio
+  // ★ 全螢幕切換時也會觸發 visibilitychange，需排除
+  const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement);
+  if(document.hidden && !isFullscreen){
+    // 真正切到後台（非全螢幕切換）：暫停所有 audio
     document.querySelectorAll('audio').forEach(function(el){
       if(!el.paused){ el._wasPlayingBefore=true; el.pause(); }
       else{ el._wasPlayingBefore=false; }
     });
-  } else {
+  } else if(!document.hidden){
     // 回到前台：恢復之前播放的 audio
     document.querySelectorAll('audio').forEach(function(el){
       if(el._wasPlayingBefore){ el.play().catch(function(){}); el._wasPlayingBefore=false; }
@@ -16021,15 +16023,13 @@ function _requestFullscreenAll(){
 function openAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
-  // ★ 進入冒險時自動全螢幕（手機/iPad/桌機）
-  _requestFullscreenAll();
   ov.style.display = 'flex';
   ov.style.animation = 'advOverlayFadeIn 0.5s ease-out';
-  // ① 先停掉首頁 BGM
+  // ① 先停掉首頁 BGM 並播放冒險 BGM（音樂優先）
   bgmStop();
-  // ② 播放冒險 BGM
-  bgmStop();
-  bgmPlay('adventure-bgm'); // 正式進入 _curBgm 系統，音樂開關才能控制
+  bgmPlay('adventure-bgm');
+  // ② 延遲請求全螢幕，避免 visibilitychange 中斷音樂
+  setTimeout(function(){ _requestFullscreenAll(); }, 300);
   // ③ 預設顯示第一關資訊
   const firstBtn = document.querySelector('#adv-left-panel .adv-stage-btn:not(.locked)');
   selectAdvStage('maokong', firstBtn);
