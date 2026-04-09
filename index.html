@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.22</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.31</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6510,8 +6510,8 @@ function _buildHeroPickNodes(){
   arena.querySelectorAll('.hpick-node,.hpick-orbit,.hpick-center-btn,.hpick-adv-grid,.hpick-adv-node,.hpick-arena-grid,.hpick-arena-card').forEach(el=>el.remove());
 
   // ★ 冒險模式：格狀排列（從左上開始，只顯示已解鎖英雄）
-  // ★ 直接用 _adventureMode 判斷，不再依賴可能 race-condition 的旗標
-  if(_adventureMode && _adventureStage && window._advSystemReady){
+  // ★ window._isAdventurePickMode 是 window 全域，script1/script2 都可存取
+  if(window._isAdventurePickMode === true){
     const grid = document.createElement('div');
     grid.className = 'hpick-adv-grid';
     grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;justify-content:flex-start;align-content:flex-start;overflow-y:auto;max-height:600px;width:100%;';
