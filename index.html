@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.14</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.22</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6309,13 +6309,7 @@ let _heroPickSelected = [];
 let _heroPickPool = [];
 
 function showHeroPickOverlay(){
-  // ★★ 第一件事：強制 overlay 不透明，不依賴任何 CSS 或圖片載入
-  const hpo = document.getElementById('hero-pick-overlay');
-  if(hpo){
-    hpo.style.display = 'flex';
-    hpo.style.background = '#080a18'; // 先設純色，再設背景圖
-  }
-  // ★ 角色選擇專屬BGM（不重播）
+  // ★★ 角色選擇專屬BGM（不重播）
   try{ if(typeof bgmPlay==='function' && _curBgm!=='bgm-menu-02'){ bgmStop(); bgmPlay('bgm-menu-02'); } }catch(e){}
 // ── 冒險模式：限定英雄池、換背景、換標語
   const hpo = document.getElementById('hero-pick-overlay');
@@ -6362,6 +6356,7 @@ function showHeroPickOverlay(){
     document.getElementById('hpick-focus').style.display = 'none';
     document.getElementById('hero-pick-count').textContent = '請選擇 4 名英雄加入冒險者小隊（已選 0 / 4）';
     document.getElementById('hero-pick-confirm').disabled = true;
+    hpo.style.background = '#080a18';
     hpo.style.display = 'flex';
     // 點擊空白關閉預覽（同正常模式）
     hpo.onclick = function(e){
@@ -6404,7 +6399,8 @@ function showHeroPickOverlay(){
   document.getElementById('hpick-focus').style.display='none';
   document.getElementById('hero-pick-count').textContent='請選擇 4 名英雄出戰（已選 0 / 4）';
   document.getElementById('hero-pick-confirm').disabled=true;
-  document.getElementById('hero-pick-overlay').style.display='flex';
+  const hpoEl = document.getElementById('hero-pick-overlay');
+  if(hpoEl){ hpoEl.style.background = '#080a18'; hpoEl.style.display = 'flex'; }
   // 點擊空白處（非按鍵、非節點、非面板）關閉預覽
   const _hpo = document.getElementById('hero-pick-overlay');
   _hpo.onclick = function(e){
@@ -6817,8 +6813,8 @@ function focusHero(idx, name){
   const focus = document.getElementById('hpick-focus');
   if(emptyEl) emptyEl.style.display='none';
   // 確保 hero-pick-overlay 可見（從elem-pick點badge時overlay可能已被隱藏）
-  const hpo = document.getElementById('hero-pick-overlay');
-  if(hpo && hpo.style.display==='none') hpo.style.display='flex';
+  const hpo3 = document.getElementById('hero-pick-overlay');
+  if(hpo3 && hpo3.style.display==='none') hpo3.style.display='flex';
   // 若其他 overlay 擋在前面才隱藏（不影響正常選英雄流程）
   ['elem-pick-overlay','skill-replace-overlay'].forEach(function(id){
     var ov=document.getElementById(id); if(ov&&ov.style.display==='flex') ov.style.display='none';
