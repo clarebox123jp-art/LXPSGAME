@@ -2816,6 +2816,17 @@ body {
   border-top-color:rgba(255,200,50,0.8);
 }
 #adv-boss-react.wrong-react #adv-boss-react-text{color:#fff5cc;}
+
+/* 英雄圖鑑排序按鈕 */
+.hpsort-btn{
+  padding:7px 16px;font-size:20px;font-weight:700;
+  background:rgba(30,30,50,0.8);border:1.5px solid rgba(212,168,67,0.35);
+  color:#aaa;border-radius:8px;cursor:pointer;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  transition:all 0.15s;letter-spacing:1px;white-space:nowrap;
+}
+.hpsort-btn:hover{border-color:rgba(212,168,67,0.7);color:#ffe8a0;}
+.hpsort-btn.active{background:rgba(212,168,67,0.18);border-color:rgba(212,168,67,0.8);color:#ffe066;}
 </style>
 </head>
 <body>
@@ -2974,7 +2985,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.16.19</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.16.56</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3060,9 +3071,44 @@ body {
           <span id="hero-page-book-count" style="font-size:28px;font-weight:900;color:#ffe066;min-width:28px;text-align:center;">0</span>
         </button>
       </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="openMonsterPage()" style="padding:10px 20px;font-size:24px;font-weight:700;
+          background:rgba(180,40,40,0.2);border:1.5px solid rgba(220,80,80,0.5);
+          color:#ff9999;border-radius:10px;cursor:pointer;
+          font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">
+          👹 魔物圖鑑
+        </button>
+      </div>
+    </div>
+    <!-- ★ 排序篩選列 -->
+    <div id="hero-sort-bar" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 24px;border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(8,10,20,0.8);align-items:center;">
+      <span style="font-size:22px;color:#aaa;margin-right:4px;">排列：</span>
+      <button class="hpsort-btn active" data-sort="lv" data-asc="0" onclick="heroSortClick(this)">LV ↓</button>
+      <button class="hpsort-btn" data-sort="hp" data-asc="0" onclick="heroSortClick(this)">HP ↓</button>
+      <button class="hpsort-btn" data-sort="atk" data-asc="0" onclick="heroSortClick(this)">攻擊 ↓</button>
+      <button class="hpsort-btn" data-sort="sp" data-asc="0" onclick="heroSortClick(this)">特技 ↓</button>
+      <button class="hpsort-btn" data-sort="spd" data-asc="0" onclick="heroSortClick(this)">速度 ↓</button>
+      <span style="font-size:22px;color:#aaa;margin-left:8px;margin-right:4px;">篩選：</span>
+      <button class="hpsort-btn hpfilter-btn active" data-filter="all" onclick="heroFilterClick(this)">全部</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="dmg" onclick="heroFilterClick(this)">⚔ 傷害</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="heal" onclick="heroFilterClick(this)">💚 治療</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="ctrl" onclick="heroFilterClick(this)">🛡 控場/坦克</button>
+    </div>
+    <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;justify-content:flex-start;"></div>
+
+  <!-- ★ 魔物圖鑑 -->
+  <div id="monster-page-overlay" style="display:none;position:absolute;inset:0;z-index:720;
+    background:linear-gradient(160deg,#100a0a,#0a0608);flex-direction:column;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:2px solid rgba(200,60,60,0.3);">
+      <button onclick="closeMonsterPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(60,30,30,0.8);border:1.5px solid rgba(200,80,80,0.4);color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回</button>
+      <div style="font-size:36px;font-weight:900;color:#ff8888;">👹 魔物圖鑑</div>
       <div style="width:120px;"></div>
     </div>
-    <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;"></div>
+    <div id="monster-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;">
+      <!-- injected by JS -->
+    </div>
+  </div>
   </div>
 
   <!-- ★ 英雄詳細/養成視窗 -->
@@ -6767,49 +6813,60 @@ const HERO_LORE = {
 
 // ====== 天賦 DB ======
 const HERO_TRAIT = {
-  '劍士':    { name:'劍影再現', icon:'⚔️',  desc:'普攻後有機率再行動',fd:'普通攻擊時有30%機率再行動1次' },
-  '祭司':    { name:'聖癒之光', icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
-  '聖騎士':  { name:'神盾格擋', icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
-  '火法師':  { name:'焚盡增益', icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
-  '冰法師':  { name:'冰封緩步', icon:'❄️',  desc:'普攻後有機率使目標緩速',fd:'普通攻擊時有60%機率使目標緩速1回合，速度下降50%' },
-  '雷法師':  { name:'連鎖雷鳴', icon:'⚡',  desc:'普攻後有機率傷害全體敵人',fd:'普通攻擊時有60%機率對全體敵人造成等量傷害' },
-  '光法師':  { name:'耀眼奪目', icon:'☀️',  desc:'普攻後有機率使目標失明',fd:'普通攻擊時有60%機率使目標失明1回合，行動成功率-50%' },
-  '暗法師':  { name:'封印黑幕', icon:'🌑',  desc:'普攻後有機率封印目標技能',fd:'普通攻擊時有60%機率使目標封印1回合，無法使用技能' },
-  '神射手':  { name:'陷阱佈局', icon:'🏹',  desc:'普攻後有機率設陷阱免疫普攻',fd:'普通攻擊時有60%機率放置陷阱1回合，使自己無法受到普通攻擊' },
-  '神偷':    { name:'虛空攫取', icon:'🗡️',  desc:'普攻後有機率奪取目標寵物或增益',fd:'普通攻擊時有50%機率奪取目標身上的寵物或有利狀態' },
-  '刺客':    { name:'淬毒之刺', icon:'👁️',  desc:'普攻後有機率使目標中毒',fd:'普通攻擊時有60%機率使目標中毒2回合，每回合HP-10%' },
-  '守衛':    { name:'鐵壁分攤', icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
-  '吟遊詩人':  { name:'歌聲回春', icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
-  '舞者':    { name:'魅惑虛弱', icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
-  '煉金術師':{ name:'精煉強化', icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
-  '警長':    { name:'延遲制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
-  '武鬥家':  { name:'鋼鐵意志', icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
-  '軍師':    { name:'疑陣惑敵', icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
-  '占星師':  { name:'星力充能', icon:'🌟',  desc:'自己行動時有機率補充能量',fd:'輪到自己的行動時有60%機率補充1能量' },
-  '大力士':  { name:'怒火中燒', icon:'💪',  desc:'受不利狀態時有機率轉化怒火',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
-  '凡人':    { name:'隨機應變', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
-  '木靈使':  { name:'林息淨化', icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
-  '機械師':  { name:'觸電反擊', icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
-  '動物學家':{ name:'萬獸同心', icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
-  '武士':    { name:'武魂反擊', icon:'🗾',  desc:'受傷時有機率反擊',fd:'受到傷害時有40%機率用攻擊的50%進行反擊' },
-  '陰陽師':  { name:'式神代身', icon:'☯️',  desc:'受技能傷害時有機率由式神代替',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
-  '吸血鬼':  { name:'吸血再生', icon:'🦇',  desc:'造成傷害時吸收為HP',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
-  '學者':    { name:'奪取能量', icon:'📚',  desc:'普攻後有機率奪取對手能量',fd:'普通攻擊時有60%機率奪取對手1能量' },
-  '時空法師':{ name:'時間封印', icon:'⏳',  desc:'普攻後有機率封鎖目標治療和增益',fd:'普通攻擊時有60%使目標1回合內無法獲得任何治療和有利狀態' },
-  '小力':    { name:'忠犬守護', icon:'🐕',  desc:'隊友受傷時有機率幫恢復HP',fd:'隊友受到傷害時有35%立即用特技幫他恢復HP。' },
-  '籃球隊員':{ name:'空中接力', icon:'🏀',  desc:'友方普攻時50%暴擊+50%傷害',fd:'友方進行普通攻擊時有50%機率觸發暴擊，傷害提升50%。' },
-  '直笛團員':{ name:'魔音惑心', icon:'🎵',  desc:'普攻時50%機率使目標狂亂1回合',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
-  '田徑隊員':{ name:'疾風先行', icon:'🏃',  desc:'行動時60%使未行動友方提前到下一個',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。' },
-  '幼兒園小孩':{ name:'童言震懾', icon:'👶', desc:'存活時對手全體攻擊和特技降低20%（最多5回合）',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
-  '電腦繪圖師':{ name:'護盾上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
-  '程式設計師':{ name:'系統加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
-  '弦樂團員':  { name:'弦音守護', icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
-  '小劇團員':  { name:'傷化喜劇', icon:'🎭', desc:'受傷時20%機率轉為治療',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。' },
+  '劍士':    { name:'連斬', icon:'⚔️',  desc:'普攻後有機率再行動',fd:'普通攻擊時有30%機率再行動1次' },
+  '祭司':    { name:'聖癒', icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
+  '聖騎士':  { name:'聖盾', icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
+  '火法師':  { name:'焚滅', icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
+  '冰法師':  { name:'冰縛', icon:'❄️',  desc:'普攻後有機率使目標緩速',fd:'普通攻擊時有60%機率使目標緩速1回合，速度下降50%' },
+  '雷法師':  { name:'雷鏈', icon:'⚡',  desc:'普攻後有機率傷害全體敵人',fd:'普通攻擊時有60%機率對全體敵人造成等量傷害' },
+  '光法師':  { name:'目眩', icon:'☀️',  desc:'普攻後有機率使目標失明',fd:'普通攻擊時有60%機率使目標失明1回合，行動成功率-50%' },
+  '暗法師':  { name:'封魔', icon:'🌑',  desc:'普攻後有機率封印目標技能',fd:'普通攻擊時有60%機率使目標封印1回合，無法使用技能' },
+  '神射手':  { name:'伏擊', icon:'🏹',  desc:'普攻後有機率設陷阱免疫普攻',fd:'普通攻擊時有60%機率放置陷阱1回合，使自己無法受到普通攻擊' },
+  '神偷':    { name:'順手', icon:'🗡️',  desc:'普攻後有機率奪取目標寵物或增益',fd:'普通攻擊時有50%機率奪取目標身上的寵物或有利狀態' },
+  '刺客':    { name:'劇毒', icon:'👁️',  desc:'普攻後有機率使目標中毒',fd:'普通攻擊時有60%機率使目標中毒2回合，每回合HP-10%' },
+  '守衛':    { name:'庇護', icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
+  '吟遊詩人':  { name:'頌歌', icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
+  '舞者':    { name:'魅惑', icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
+  '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
+  '警長':    { name:'制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
+  '武鬥家':  { name:'死鬥', icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
+  '軍師':    { name:'惑敵', icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
+  '占星師':  { name:'星語', icon:'🌟',  desc:'自己行動時有機率補充能量',fd:'輪到自己的行動時有60%機率補充1能量' },
+  '大力士':  { name:'怒炎', icon:'💪',  desc:'受不利狀態時有機率轉化怒火',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
+  '凡人':    { name:'節省', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
+  '木靈使':  { name:'淨化', icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
+  '機械師':  { name:'觸電', icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
+  '動物學家':{ name:'獸盟', icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
+  '武士':    { name:'反斬', icon:'🗾',  desc:'受傷時有機率反擊',fd:'受到傷害時有40%機率用攻擊的50%進行反擊' },
+  '陰陽師':  { name:'替身', icon:'☯️',  desc:'受技能傷害時有機率由式神代替',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
+  '吸血鬼':  { name:'噬血', icon:'🦇',  desc:'造成傷害時吸收為HP',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
+  '學者':    { name:'奪能', icon:'📚',  desc:'普攻後有機率奪取對手能量',fd:'普通攻擊時有60%機率奪取對手1能量' },
+  '時空法師':{ name:'時封', icon:'⏳',  desc:'普攻後有機率封鎖目標治療和增益',fd:'普通攻擊時有60%使目標1回合內無法獲得任何治療和有利狀態' },
+  '小力':    { name:'關心', icon:'🐕',  desc:'隊友受傷時有機率幫恢復HP',fd:'隊友受到傷害時有35%立即用特技幫他恢復HP。' },
+  '籃球隊員':{ name:'接力', icon:'🏀',  desc:'友方普攻時50%暴擊+50%傷害',fd:'友方進行普通攻擊時有50%機率觸發暴擊，傷害提升50%。' },
+  '直笛團員':{ name:'妙音', icon:'🎵',  desc:'普攻時50%機率使目標狂亂1回合',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
+  '田徑隊員':{ name:'疾走', icon:'🏃',  desc:'行動時60%使未行動友方提前到下一個',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。' },
+  '幼兒園小孩':{ name:'賣萌', icon:'👶', desc:'存活時對手全體攻擊和特技降低20%（最多5回合）',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
+  '電腦繪圖師':{ name:'上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
+  '程式設計師':{ name:'加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
+  '弦樂團員':  { name:'弦護', icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
+  '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。' },
   // ── BOSS ──
-  '九尾空貓怪': { name:'奪財充能',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
-  '綠竹筍小妖': { name:'韌竹護甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
-  '茶葉精靈':   { name:'茶香療癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
+  '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
+  '綠竹筍小妖': { name:'竹甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
+  '茶葉精靈':   { name:'茶癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
 };
+
+const MONSTER_LORE = {
+  '九尾空貓怪': '來自異世界的九尾貓妖，被貓空百年茶香吸引而踏入人間，喜歡搶奪他人的寶物，施展邪術封住了景美溪靈氣，是這次冒險的最終首領。',
+  '綠竹筍小妖': '守護貓空竹林的土地小精靈，以竹根編織護盾保衛家園，雖然個性憨厚，卻在九尾空貓怪的蠱惑下成為守門將。',
+  '茶葉精靈': '凝聚百年茶氣而生的茶山精靈，能以茶香癒合傷口，是九尾空貓怪的得力助手，掌管著貓空茶園的靈氣。',
+  '偷摘花的頑皮妖精': '住在景美溪河堤草叢裡的惡作劇精靈，最愛偷摘路邊的野花野草，見到陌生人就跳出來搗亂，笑聲響徹整條步道。',
+  '偷鳥蛋的鳥人哈維': '流竄在樟湖步道樹梢間的鳥翼盜賊，以偷竊鳥巢中的蛋為樂，行動敏捷如風，是步道上最難纏的小麻煩。',
+  '偷竹筍的哥布林': '躲在貓空竹林深處的貪吃哥布林，把新鮮竹筍視為人間美味，每天偷挖農家竹筍，氣得茶農阿伯跳腳。',
+  '偷喝茶的史萊姆': '在貓空茶園水溝邊游蕩的茶色史萊姆，因為吸收了太多茶葉精華而呈現翠綠色，最愛偷喝剛泡好的熱茶。',
+};
+
 
 let _focusedHeroIdx = -1;
 let _focusedHeroName = '';
@@ -6847,7 +6904,7 @@ function focusHero(idx, name){
         box-shadow:0 0 14px rgba(255,180,0,0.3);">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-size:26px;font-weight:500;color:#ffcc44;letter-spacing:3px;white-space:nowrap;">✦ 天賦 ${_sdpBtn({n:'天賦 '+(tr.name||''),d:tr.desc,fd:tr.fd||tr.desc},'',true)}</span>
-          <span style="font-size:27px;font-weight:500;color:#fff8d0;line-height:1.6;">${tr.icon} <b style="color:#ffe066;">${tr.name||''}</b> ${tr.desc}</span>
+          <span style="font-size:27px;font-weight:500;color:#fff8d0;line-height:1.6;">${tr.icon} <b style="color:#ffe066;font-size:30px;letter-spacing:3px;">${tr.name||''}</b><span style="color:#aaa;margin-left:6px;font-size:22px;">${tr.desc}</span></span>
         </div>
       </div>`;
   })();
@@ -18924,6 +18981,54 @@ function closeHeroPage() {
   if(ov) ov.style.display = 'none';
 }
 
+// ★ 排序/篩選狀態
+let _heroSortKey = 'lv';
+let _heroSortAsc = false; // false=遞減
+let _heroFilterKey = 'all';
+
+// 技能分類判斷
+function _heroSkillType(name) {
+  const b = HERO_DB[name];
+  if(!b) return 'other';
+  const HEAL_SK = ['治療之光','全體治療','復活術','神之賜福','一壺鐵觀音','一壺包種茶','邏輯優化',
+    '餘音繞樑','雙小提琴協奏曲','救贖神光','治癒之風','天堂樂章','賢者之石','持續恢復'];
+  const CTRL_SK = ['挺身守護','仁王挺立','群體挑釁','筍之守護','筍之刺','舞台聚光燈','變臉戲法',
+    '虛弱咒','狂亂之歌','炫目神光','禁書封鎖','護盾術','強奪','睡覺功'];
+  const skills = [b.s1.n, b.s2.n];
+  const HEAL_ROLES = ['祭司','聖騎士','吟遊詩人','木靈使','煉金術師','茶葉精靈','直笛團員','弦樂團員'];
+  const TANK_ROLES = ['守衛','武鬥家','大力士','小力','幼兒園小孩'];
+  if(HEAL_ROLES.includes(name) || skills.some(s=>HEAL_SK.includes(s))) return 'heal';
+  if(TANK_ROLES.includes(name) || skills.some(s=>CTRL_SK.includes(s))) return 'ctrl';
+  return 'dmg';
+}
+
+function heroSortClick(btn) {
+  const key = btn.dataset.sort;
+  if(_heroSortKey === key) {
+    _heroSortAsc = !_heroSortAsc;
+    btn.textContent = ['LV','HP','攻擊','特技','速度'][['lv','hp','atk','sp','spd'].indexOf(key)] + (_heroSortAsc?' ↑':' ↓');
+  } else {
+    _heroSortKey = key;
+    _heroSortAsc = false;
+    document.querySelectorAll('.hpsort-btn:not(.hpfilter-btn)').forEach(b=>{
+      b.classList.remove('active');
+      const k = b.dataset.sort;
+      const label = ['LV','HP','攻擊','特技','速度'][['lv','hp','atk','sp','spd'].indexOf(k)];
+      if(label) b.textContent = label + ' ↓';
+    });
+    btn.classList.add('active');
+    btn.textContent = (['LV','HP','攻擊','特技','速度'][['lv','hp','atk','sp','spd'].indexOf(key)]) + ' ↓';
+  }
+  _buildHeroGrid();
+}
+
+function heroFilterClick(btn) {
+  _heroFilterKey = btn.dataset.filter;
+  document.querySelectorAll('.hpfilter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _buildHeroGrid();
+}
+
 function _buildHeroGrid() {
   const grid = document.getElementById('hero-page-grid');
   if(!grid) return;
@@ -18934,15 +19039,28 @@ function _buildHeroGrid() {
   const allKnown = [...new Set([...unlocked, ...advPool, ...ALL_HEROES])].filter(n=>!BOSS_SET.has(n));
   const unlockedSet = new Set([...unlocked, ...advPool]);
 
-  // ★ 排序：已解鎖依等級↓ → EXP↓，未解鎖排後
-  allKnown.sort((a,b)=>{
+  // ★ 篩選
+  let filtered = allKnown;
+  if(_heroFilterKey !== 'all') {
+    filtered = allKnown.filter(n => {
+      if(!unlockedSet.has(n)) return false; // 未解鎖不顯示在篩選中
+      return _heroSkillType(n) === _heroFilterKey;
+    });
+    // 保留已篩選英雄，加上未解鎖在後面
+    const locked = allKnown.filter(n=>!unlockedSet.has(n));
+    filtered = [...filtered, ...locked];
+  }
+  // ★ 排序
+  filtered.sort((a,b)=>{
     const ua = unlockedSet.has(a), ub = unlockedSet.has(b);
     if(ua && !ub) return -1; if(!ua && ub) return 1;
     if(!ua && !ub) return 0;
-    const lvDiff = (getHeroLevel(b)||1) - (getHeroLevel(a)||1);
-    if(lvDiff !== 0) return lvDiff;
-    return (getHeroExp(b)||0) - (getHeroExp(a)||0);
+    let va, vb;
+    if(_heroSortKey==='lv'){ va=getHeroLevel(a)||1; vb=getHeroLevel(b)||1; }
+    else { const hdb=HERO_DB; va=(hdb[a]&&hdb[a][_heroSortKey])||0; vb=(hdb[b]&&hdb[b][_heroSortKey])||0; }
+    return _heroSortAsc ? va-vb : vb-va;
   });
+  allKnown = filtered;
 
   grid.innerHTML = allKnown.map(name => {
     const isUnlocked = unlockedSet.has(name);
@@ -18963,7 +19081,7 @@ function _buildHeroGrid() {
         : `<div style="width:100%;height:260px;background:${isUnlocked?'rgba(20,20,30,0.8)':'#111'};display:flex;align-items:center;justify-content:center;font-size:100px;${isUnlocked?'':'filter:grayscale(1) brightness(0.4) contrast(1.2);'}">${av}</div>`
       }
       <div style="padding:12px 14px 14px;">
-        <div style="font-size:36px;font-weight:700;color:${isUnlocked?'#ffe8a0':'#666'};margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <div style="font-size:54px;font-weight:700;color:${isUnlocked?'#ffe8a0':'#666'};margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           ${isUnlocked ? name : '???'}
         </div>
         ${isUnlocked ? `
@@ -19498,6 +19616,80 @@ function advFinishMiniBattle(win) {
     advLoadScene(_adventureStage, _advMiniBattleNextScene);
   }, 800);
 }
+
+function openMonsterPage() {
+  const ov = document.getElementById('monster-page-overlay');
+  if(!ov) return;
+  ov.style.display = 'flex';
+  _buildMonsterPage();
+}
+
+function closeMonsterPage() {
+  const ov = document.getElementById('monster-page-overlay');
+  if(ov) ov.style.display = 'none';
+}
+
+function _buildMonsterPage() {
+  const el = document.getElementById('monster-page-content');
+  if(!el) return;
+
+  const BOSS_LIST = ['九尾空貓怪'];
+  const ELITE_LIST = ['綠竹筍小妖', '茶葉精靈'];
+  const MOB_LIST = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
+
+  const MONSTER_AVTR = {
+    '九尾空貓怪': '🐱', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
+    '偷摘花的頑皮妖精': '🌸', '偷鳥蛋的鳥人哈維': '🐦', '偷竹筍的哥布林': '🌿', '偷喝茶的史萊姆': '🫖',
+  };
+
+  function makeCard(name, tier) {
+    const b = HERO_DB[name];
+    const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+    const av = MONSTER_AVTR[name] || '👾';
+    const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
+    const tierColor = tier==='boss' ? '#ff6644' : tier==='elite' ? '#ffaa44' : '#88cc88';
+    const borderColor = tier==='boss' ? 'rgba(255,100,50,0.7)' : tier==='elite' ? 'rgba(255,160,50,0.5)' : 'rgba(100,200,100,0.35)';
+    const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
+    return `<div style="width:300px;border-radius:16px;overflow:hidden;border:2px solid ${borderColor};
+      background:rgba(20,10,10,0.92);cursor:pointer;transition:transform 0.15s;"
+      onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'"
+      onclick="openMonsterDetail('${name}')">
+      ${img
+        ? `<img src="${img}" style="width:100%;height:260px;object-fit:cover;object-position:top center;display:block;"/>`
+        : `<div style="width:100%;height:200px;background:rgba(40,15,15,0.8);display:flex;align-items:center;justify-content:center;font-size:80px;">${av}</div>`}
+      <div style="padding:12px 14px 14px;">
+        <div style="font-size:22px;color:${tierColor};font-weight:700;margin-bottom:4px;letter-spacing:1px;">
+          ${tier==='boss'?'👑 終極BOSS':tier==='elite'?'⚡ 精英小怪':'🌿 路邊小怪'}
+        </div>
+        <div style="font-size:54px;font-weight:700;color:#ffccaa;margin-bottom:6px;">${name}</div>
+        ${b ? `<div style="font-size:20px;color:#aaa;margin-bottom:8px;">HP ${b.hp} ｜ 攻 ${b.atk} ｜ 特 ${b.sp} ｜ 速 ${b.spd}</div>` : ''}
+        <div style="font-size:22px;color:#ccbbaa;line-height:1.6;">${lore}</div>
+      </div>
+    </div>`;
+  }
+
+  function makeSection(title, list, tier) {
+    if(!list.length) return '';
+    return `<div style="margin-bottom:32px;">
+      <div style="font-size:32px;font-weight:900;color:#ff8888;margin-bottom:14px;border-bottom:2px solid rgba(255,100,100,0.3);padding-bottom:8px;">${title}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;">${list.map(n=>makeCard(n,tier)).join('')}</div>
+    </div>`;
+  }
+
+  el.innerHTML =
+    makeSection('👑 BOSS', BOSS_LIST, 'boss') +
+    makeSection('⚡ 精英小怪', ELITE_LIST, 'elite') +
+    makeSection('🌿 路邊小怪', MOB_LIST, 'mob');
+}
+
+function openMonsterDetail(name) {
+  // 暫時用提示顯示詳細資料（未來可擴展）
+  const b = HERO_DB[name];
+  const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
+  if(!b) return;
+  alert(`【${name}】\n\nHP:${b.hp} 攻擊:${b.atk} 特技:${b.sp} 速度:${b.spd}\n技能1：${b.s1.n} - ${b.s1.d}\n技能2：${b.s2.n} - ${b.s2.d}\n\n${lore}`);
+}
+
 
 window._advSystemReady = true;
 </script>
