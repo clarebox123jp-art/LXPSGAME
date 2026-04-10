@@ -2827,6 +2827,9 @@ body {
 }
 .hpsort-btn:hover{border-color:rgba(212,168,67,0.7);color:#ffe8a0;}
 .hpsort-btn.active{background:rgba(212,168,67,0.18);border-color:rgba(212,168,67,0.8);color:#ffe066;}
+
+#adv-mini-result{display:none;}
+#adv-mini-result.show{display:flex;}
 </style>
 </head>
 <body>
@@ -2986,7 +2989,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.19.20</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.19.36</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3268,12 +3271,11 @@ body {
     <button onclick="goBackToHeroPick()"
       style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="sro-header">
-      <h2>▸ 替換技能（隊伍缺治療、攻擊或防禦的技能時）</h2>
-      <p>從下方選單找技能 → 點卡片「換S1」或「換S2」套用<br>被動技能無法替換，每人最多替換1個</p>
+      <h2>▸ 替換技能</h2>
     </div>
     <div id="sro-cards"><!-- hero blocks injected by JS --></div>
     <div id="sro-picker">
-      <div id="sro-picker-title">▸ 候選技能（點選後指定套用位置）</div>
+      <div id="sro-picker-title">▸ 候選技能（點選後指定替換技能位置）</div>
       <div id="sro-picker-body"><!-- 3-column skill categories injected by JS --></div>
     </div>
     <div id="sro-footer">
@@ -4839,16 +4841,16 @@ const HERO_DB = {
   s2:{n:'魅惑之舞',c:3,d:'使1名對手下回合攻擊己方隊友',fd:'使1名對手下回合強制普通攻擊自己的隊友。'}
 },
 '偷鳥蛋的鳥人哈維':{hp:40,atk:10,sp:13,spd:16,exp:8,
-  s1:{n:'俯衝攻擊',c:2,d:'攻擊+速度×0.3對1名對手造成傷害',fd:'用（攻擊+速度×0.3）對1名對手造成傷害。'},
-  s2:{n:'搶奪',c:3,d:'奪取1名對手的道具或有利狀態',fd:'奪取1名對手手中1張道具卡，若無道具則奪取有利狀態。'}
+  s1:{n:'催眠之歌',c:2,d:'使1名對手睡眠3回合',fd:'唱出魔法催眠曲，使1名對手陷入「睡眠」狀態3回合，無法行動。'},
+  s2:{n:'催眠之歌',c:2,d:'使1名對手睡眠3回合',fd:'唱出魔法催眠曲，使1名對手陷入「睡眠」狀態3回合，無法行動。'}
 },
 '偷竹筍的哥布林':{hp:45,atk:10,sp:9,spd:8,exp:7,
-  s1:{n:'亂棒猛打',c:2,d:'對1名對手連打2次',fd:'用攻擊值對1名對手連續造成2次傷害。'},
-  s2:{n:'硬皮防禦',c:3,d:'獲得減輕20傷害的護盾',fd:'使自己獲得可抵擋20點傷害的護盾，持續至護盾耗盡。'}
+  s1:{n:'渾身一擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'傾盡全力重擊1名對手，造成攻擊值200%的傷害，且本技能爆擊率額外提升50%。'},
+  s2:{n:'渾身一擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'傾盡全力重擊1名對手，造成攻擊值200%的傷害，且本技能爆擊率額外提升50%。'}
 },
 '偷喝茶的史萊姆':{hp:30,atk:5,sp:14,spd:3,exp:5,
-  s1:{n:'黏液噴濺',c:2,d:'特技50%傷害全體對手並緩速',fd:'用特技的50%對全體存活的對手造成傷害，並使所有目標「緩速」1回合。'},
-  s2:{n:'分裂增殖',c:4,d:'恢復自身HP30%（限用1次）',fd:'使自己恢復最大HP的30%。本場戰鬥限用一次。',once:true}
+  s1:{n:'舔舔治療',c:1,d:'依特技恢復1名友方HP',fd:'用溫熱的茶汁舔癒1名友方，恢復等同特技值的HP。'},
+  s2:{n:'舔舔治療',c:1,d:'依特技恢復1名友方HP',fd:'用溫熱的茶汁舔癒1名友方，恢復等同特技值的HP。'}
 },
 };
 
@@ -12698,6 +12700,46 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     renderCard(a);
     endAction(a,cost);
   }
+  else if(n==='花瓣飛刀'){
+    const _tgts = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    _tgts.forEach(t=>{ doDmg(t, spv(a)); });
+    log(`[${a.name}] 花瓣飛刀！對全體敵人造成 ${spv(a)} 傷害`);
+    updateUI(); renderItems();
+    if(checkWin()) return;
+    endAction(a, cost);
+  }
+  else if(n==='催眠之歌'){
+    setPending('enemy', t=>{
+      addBuff(t,'sleep',3);
+      log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`);
+      bannerFX(t,'睡眠！','#aaaaff',900);
+      renderCard(t); updateUI();
+      if(checkWin()) return;
+      endAction(a, cost);
+    });
+  }
+  else if(n==='渾身一擊'){
+    setPending('enemy', t=>{
+      const _isCrit = Math.random() < 0.5;
+      const _dmg = Math.floor(atv(a) * 2 * (_isCrit ? 1.5 : 1));
+      doDmg(t, _dmg);
+      if(_isCrit){ bannerFX(a,'爆擊！','#ffcc44',800); log(`[${a.name}] 渾身一擊！爆擊！造成 ${_dmg} 傷害`); }
+      else log(`[${a.name}] 渾身一擊！造成 ${_dmg} 傷害`);
+      updateUI(); renderItems();
+      if(checkWin()) return;
+      endAction(a, cost);
+    });
+  }
+  else if(n==='舔舔治療'){
+    setPending('ally', t=>{
+      const _heal = spv(a);
+      t.curHp = Math.min(t.hp, t.curHp + _heal);
+      showPopup(t, `+${_heal}`, '#44ff88');
+      log(`[${a.name}] 舔舔治療！[${t.name}] 恢復 ${_heal} HP`);
+      renderCard(t); updateUI();
+      endAction(a, cost);
+    });
+  }
   else { log(`技能 ${n} 未識別`); clearSel(); }
 }
 
@@ -14636,7 +14678,14 @@ function checkWin(){
       _showResultWithDrama(true); return true;
     }
   }
-  if(G.p2.every(h=>h.curHp<=0)){ _showResultWithDrama(true); return true; }
+  if(G.p2.every(h=>h.curHp<=0)){
+    // ★ 小怪全滅：強制確保 _advMiniBattleActive 狀態正確
+    if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
+      advFinishMiniBattle(true);
+      return true;
+    }
+    _showResultWithDrama(true); return true;
+  }
   return false;
 }
 // 慢動作 → 大標題 → 結算的完整流程
@@ -19732,7 +19781,15 @@ function advFinishMiniBattle(win) {
       heroes.forEach(name => {
         addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : Math.round(baseExp*0.5));
       });
-      bannerFX(null, `⚔️ 小怪擊敗！繼續冒險... 出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
+      // ★ 顯示小怪結算畫面
+      const _expEl = document.getElementById('adv-mini-result');
+      if(_expEl){
+        document.getElementById('adv-mini-result-exp').textContent = `+${Math.round(baseExp*1.5)} EXP`;
+        _expEl.classList.add('show');
+        setTimeout(()=>{ _expEl.classList.remove('show'); }, 2500);
+      } else {
+        bannerFX(null, `⚔️ 小怪擊敗！繼續冒險... 出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
+      }
       gameCloudSave();
     }
   }
@@ -19960,5 +20017,19 @@ function openMonsterDetail(name) {
 
 window._advSystemReady = true;
 </script>
+
+  <!-- ★ 小怪結算彈窗 -->
+  <div id="adv-mini-result" style="display:none;position:absolute;inset:0;z-index:650;
+    align-items:center;justify-content:center;background:rgba(0,0,0,0.6);
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
+    <div style="background:linear-gradient(135deg,rgba(10,20,40,0.97),rgba(5,15,30,0.99));
+      border:2.5px solid rgba(100,220,100,0.6);border-radius:20px;padding:36px 52px;
+      text-align:center;box-shadow:0 0 40px rgba(50,200,80,0.3);">
+      <div style="font-size:52px;margin-bottom:8px;">⚔️</div>
+      <div style="font-size:40px;font-weight:900;color:#44ff88;margin-bottom:12px;">小怪擊敗！</div>
+      <div style="font-size:34px;color:#ffe8a0;font-weight:700;" id="adv-mini-result-exp"></div>
+      <div style="font-size:24px;color:#aaa;margin-top:10px;">繼續冒險中...</div>
+    </div>
+  </div>
 </body>
 </html>
