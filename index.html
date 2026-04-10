@@ -2989,7 +2989,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.20.03</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.20.26</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -10094,7 +10094,7 @@ function doDmg(target, rawDmg, opts={}){
   }
    
   // 武鬥家 金鐘罩 reflect（被動：受傷時直接觸發，不需buff）
-  if(target.name==='武鬥家' && old>0 && target.curHp<old && a && a!==target && !opts.isRebound && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
+  if(target.name==='武鬥家' && old>0 && target.curHp<old && a && a!==target && a.side!==target.side && !opts.isRebound && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
     const reflected=Math.max(0,dmg-target.sp);
     if(reflected>0){
       const _doKinjako=()=>{
@@ -10216,7 +10216,7 @@ function doDmg(target, rawDmg, opts={}){
   }
 
   // 迴避反擊：被攻擊時 50% 閃躲並反擊（SP×50% 傷害），常駐被動不消耗能量（可再行動）
-  if(a && old>0 && dmg>0 && !opts.isPassiveAssist && !opts.passiveEvasion){
+  if(a && a.side!==target.side && old>0 && dmg>0 && !opts.isPassiveAssist && !opts.passiveEvasion){
     if((target.s1.n==='迴避反擊'||target.s2.n==='迴避反擊') && target.curHp>0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
       const _doEvade=()=>{
         if(Math.random()<0.5){
@@ -10312,7 +10312,7 @@ function doDmg(target, rawDmg, opts={}){
   }
 
   // ── 鑑往知來（被動）: ally takes dmg → counter sp×2, can act again ──
-if(a && old>0 && target.curHp<old && target.curHp>0 && !opts.isKanWang){
+if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !opts.isKanWang){
     for(const h of G[target.side]){
       if(h.curHp<=0) continue;
       if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
@@ -10426,7 +10426,7 @@ if(a && old>0 && target.curHp<old && target.curHp>0 && !opts.isKanWang){
     }
   }
   // ── 以牙還牙（被動）: 受到傷害時觸發，詢問是否反彈等量傷害 ──
-  if(old>0 && target.curHp<old && dmg>0 && !opts.isRebound && !opts.isKanWang && !opts.isPunishReflect){
+  if(old>0 && target.curHp<old && dmg>0 && a && a.side!==target.side && !opts.isRebound && !opts.isKanWang && !opts.isPunishReflect){
     const _fanSkCheck = (target.s1.n==='以牙還牙'||target.s2.n==='以牙還牙');
     if(_fanSkCheck && target.curHp>0){
       const _fanSk = target.s1.n==='以牙還牙'?target.s1:target.s2;
