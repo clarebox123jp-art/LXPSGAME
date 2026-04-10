@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.07.36</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.08.52</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -16877,6 +16877,9 @@ function startAdventureGame(stage){
   if(advBgm){ try{ advBgm.pause(); advBgm.currentTime=0; }catch(e){} }
   const mainOverlay = document.getElementById('overlay');
   if(mainOverlay) mainOverlay.style.display = 'none';
+  // ★ 關鍵修復：移除戰場 class，確保選角畫面不被戰鬥UI覆蓋
+  const _gcFix = document.getElementById('gc');
+  if(_gcFix){ _gcFix.classList.remove('adv-battle'); }
   // ★ BGM: hero pick時播選角音樂，過場才換成adv-scene
   // (bgm-adv-scene由advStartCutscene負責播放)
   bgmStop();
