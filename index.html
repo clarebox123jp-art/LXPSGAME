@@ -2989,7 +2989,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.20.26</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.21.30</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4841,20 +4841,20 @@ const HERO_DB = {
   s2:{n:'一壺包種茶',c:3,d:'解除友方全體不利狀態，再恢復HP最少的隊友',fd:'解除友方全體所有不利狀態，並用特技值恢復HP最少的友方HP（可復活）。'}
 },
 '偷摘花的頑皮妖精':{hp:42,atk:10,sp:17,spd:13,exp:8,
-  s1:{n:'花粉噴射',c:2,d:'特技傷害1名對手並使其失明1回合',fd:'用特技值對1名對手造成傷害，有70%機率使其「失明」，行動成功率減半，持續1回合。'},
-  s2:{n:'魅惑之舞',c:3,d:'使1名對手下回合攻擊己方隊友',fd:'使1名對手下回合強制普通攻擊自己的隊友。'}
+  s1:{n:'花瓣飛刀',c:3,d:'依特技對全體敵人造成傷害',fd:'向全體存活的敵人擲出花瓣飛刀，每人受到等同特技值的傷害。'},
+  s2:{n:'花粉迷眼',c:2,d:'使1名對手失明1回合，行動成功率減半',fd:'吹出一陣花粉，使1名對手陷入「失明」狀態1回合，行動成功率大幅降低。'}
 },
 '偷鳥蛋的鳥人哈維':{hp:40,atk:10,sp:13,spd:16,exp:8,
   s1:{n:'催眠之歌',c:2,d:'使1名對手睡眠3回合',fd:'唱出魔法催眠曲，使1名對手陷入「睡眠」狀態3回合，無法行動。'},
-  s2:{n:'催眠之歌',c:2,d:'使1名對手睡眠3回合',fd:'唱出魔法催眠曲，使1名對手陷入「睡眠」狀態3回合，無法行動。'}
+  s2:{n:'俯衝搶奪',c:2,d:'攻擊+速度×0.2傷害1名對手，並奪取1張物品卡',fd:'俯衝衝擊1名對手造成（攻擊+速度×0.2）的傷害，若對手有物品卡則順手奪走1張。'}
 },
 '偷竹筍的哥布林':{hp:45,atk:10,sp:9,spd:8,exp:7,
   s1:{n:'渾身一擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'傾盡全力重擊1名對手，造成攻擊值200%的傷害，且本技能爆擊率額外提升50%。'},
-  s2:{n:'渾身一擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'傾盡全力重擊1名對手，造成攻擊值200%的傷害，且本技能爆擊率額外提升50%。'}
+  s2:{n:'土坑陷阱',c:2,d:'使1名對手下回合最後行動',fd:'快速在腳下挖個土坑，使1名對手陷入「緩速」並在下回合最後才能行動。'}
 },
 '偷喝茶的史萊姆':{hp:30,atk:5,sp:14,spd:3,exp:5,
   s1:{n:'舔舔治療',c:1,d:'依特技恢復1名友方HP',fd:'用溫熱的茶汁舔癒1名友方，恢復等同特技值的HP。'},
-  s2:{n:'舔舔治療',c:1,d:'依特技恢復1名友方HP',fd:'用溫熱的茶汁舔癒1名友方，恢復等同特技值的HP。'}
+  s2:{n:'黏液噴濺',c:2,d:'使全體對手緩速1回合，速度-50%',fd:'噴出一大灘黏稠茶色黏液，使全體存活對手陷入「緩速」狀態1回合，速度大幅降低。'}
 },
 };
 
@@ -12226,6 +12226,28 @@ function execSkill(a, sk, cost, stype){
   }
 
   // ── 亂槍射擊：3~5次隨機攻擊 ──
+  else if(n==='定時炸彈'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 定時炸彈 → [${t.name}]！下回合爆炸！`);
+      playSkillFX('死亡宣告',a,[t]);
+      t.status=t.status.filter(s=>s.type!=='deathmark');
+      t.status.push({type:'deathmark',dur:1,_bomb:true,_bombOwner:a,_bombDmg:30,_bombSplash:0.5});
+      bannerFX(t,'💣定時炸彈','#ffaa00',900);
+      renderCard(t);
+      endAction(a,cost);
+    });
+  }
+  else if(n==='劇毒'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 劇毒 → [${t.name}]！5回合每回合-12HP！`);
+      t.status=t.status.filter(s=>s.type!=='poison');
+      addStatus(t,'poison',5);
+      t._poisonAmt=12;
+      renderCard(t);
+      playSkillFX('劇毒',a,[t]);
+      endAction(a,cost);
+    });
+  }
   else if(n==='亂槍射擊'){
     const shotCount=Math.floor(Math.random()*3)+3;
     log(`[${a.name}] 亂槍射擊！${shotCount}次！`);
@@ -12343,39 +12365,6 @@ function execSkill(a, sk, cost, stype){
   }
 
   // ── 劇毒：-12HP/回合，持續5回合 ──
-  else if(n==='劇毒'){
-    setPending('enemy',t=>{
-      log(`[${a.name}] 劇毒 → [${t.name}]！5回合每回合-12HP！`);
-      t.status=t.status.filter(s=>s.type!=='poison');
-      addStatus(t,'poison',5);
-      t._poisonAmt=12;
-      renderCard(t);
-      playSkillFX('劇毒',a,[t]);
-      endAction(a,cost);
-    });
-  }
-
-  // ====== 新角色技能 ======
-
-  // ── 木靈使：自然恩賜 ──
-  // ── 木靈使：神之賜福 ──
-  else if(n==='神之賜福'){
-    setPending('self_or_ally',t=>{
-      log(`[${a.name}] 神之賜福 → [${t.name}]！`);
-      playSkillFX('神之賜福',a,[t]);
-      if(hasBuff(t,'divineBlessing')){
-        t.curHp=t.hp; renderCard(t); showPopup(t,'神恢復！','heal');
-      } else {
-        t._baseHp=t._baseHp||t.hp;
-        t.hp+=10; t.curHp=t.hp;
-        addBuff(t,'divineBlessing',999);
-        renderCard(t); showPopup(t,'神之賜福','heal');
-      }
-      endAction(a,cost);
-    });
-  }
-
-  // ── 木靈使：獻祭的餘暉（被動，由doDmg hook觸發）──
   else if(n==='獻祭的餘暉'){
     log(`[${a.name}] 獻祭的餘暉（被動待機）！`);
     playSkillFX('獻祭的餘暉',a,[]);
@@ -12383,33 +12372,6 @@ function execSkill(a, sk, cost, stype){
   }
 
   // ── 機械師：定時炸彈 ──
-  else if(n==='定時炸彈'){
-    setPending('enemy',t=>{
-      log(`[${a.name}] 定時炸彈 → [${t.name}]！下回合爆炸！`);
-      playSkillFX('死亡宣告',a,[t]);
-      // deathmark-like: explode next round
-      t.status=t.status.filter(s=>s.type!=='deathmark'); t.status.push({type:'deathmark',dur:1,_bomb:true,_bombOwner:a,_bombDmg:30,_bombSplash:0.5});
-      bannerFX(t,'💣定時炸彈','#ffaa00',900);
-      renderCard(t);
-      endAction(a,cost);
-    });
-  }
-
-  // ── 機械師：亂槍射擊 ──
-  else if(n==='亂槍射擊'){
-    log(`[${a.name}] 亂槍射擊！`);
-    const _gunFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
-    if(!_gunFoes.length){ endAction(a,cost); return; }
-    playSkillFX('亂槍射擊',a,_gunFoes);
-    const sc=Math.floor(Math.random()*3)+3;
-    for(let i=0;i<sc;i++){
-      const tt=_gunFoes[Math.floor(Math.random()*_gunFoes.length)];
-      if(tt&&tt.curHp>0) doDmg(tt,a.atk,{actor:a});
-    }
-    endAction(a,cost);
-  }
-
-  // ── 動物學家：動物召喚（S1）──
   else if(n==='動物召喚'){
     const _opp3=a.side==='p1'?'p2':'p1';
     const _foes3=G[_opp3].filter(h=>h.curHp>0).sort((x,y)=>x.curHp-y.curHp);
@@ -12521,26 +12483,6 @@ function execSkill(a, sk, cost, stype){
   }
 
   // ── 學者：歷史的教訓 ──
-  else if(n==='歷史的教訓'){
-    const _htFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
-    log(`[${a.name}] 歷史的教訓！`);
-    playSkillFX('歷史的教訓',a,_htFoes);
-    _htFoes.forEach(h=>{
-      if(h.buffs.length>0){
-        const idx=Math.floor(Math.random()*h.buffs.length);
-        const rem=h.buffs.splice(idx,1)[0];
-        renderCard(h);
-        bannerFX(h,'狀態消除','#88aaff',800);
-        log(`[${h.name}] 消除有利狀態 [${buffName(rem.type)}]！`);
-      } else {
-        doDmg(h,spv(a),{actor:a,isSkill:true});
-        log(`[${h.name}] 無狀態，受到特技傷害 ${spv(a)}！`);
-      }
-    });
-    endAction(a,cost);
-  }
-
-  // ── 時空法師：時間暫停 ──
   else if(n==='時間暫停'){
     log(`[${a.name}] 時間暫停！敵方全體下回合無法行動！`);
     const _pauseFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
@@ -12714,9 +12656,9 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   else if(n==='催眠之歌'){
     setPending('enemy', t=>{
-      addBuff(t,'sleep',3);
+      addStatus(t,'sleep',3);  // ★ 修正：使用 addStatus 而非 addBuff
       log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`);
-      bannerFX(t,'睡眠！','#aaaaff',900);
+      bannerFX(t,'催眠！💤','#aaaaff',900);
       renderCard(t); updateUI();
       if(checkWin()) return;
       endAction(a, cost);
@@ -12743,6 +12685,60 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
       renderCard(t); updateUI();
       endAction(a, cost);
     });
+  }
+  else if(n==='充能'){
+    G.energy[a.side] = Math.min(10, (G.energy[a.side]||0) + 6);
+    a.acted = true;
+    log(`[${a.name}] 充能！能量 +6，本回合無法再行動`);
+    bannerFX(a,'充能！+6','#4a9eff',900);
+    updateUI(); renderItems();
+    endAction(a, cost);
+  }
+  else if(n==='花粉迷眼'){
+    setPending('enemy', t=>{
+      addStatus(t,'blind',1);
+      log(`[${a.name}] 花粉迷眼！[${t.name}] 失明1回合！`);
+      bannerFX(t,'花粉迷眼！','#ffddaa',800);
+      renderCard(t); updateUI();
+      if(checkWin()) return;
+      endAction(a, cost);
+    });
+  }
+  else if(n==='俯衝搶奪'){
+    setPending('enemy', t=>{
+      const _dmg = Math.floor(atv(a) + (a.spd||0)*0.2);
+      doDmg(t, _dmg);
+      log(`[${a.name}] 俯衝搶奪！造成 ${_dmg} 傷害`);
+      // 奪取物品卡
+      const oppInv = t.side==='p1' ? G.inv : G.inv2;
+      if(oppInv){
+        const slot = oppInv.findIndex(x=>x!==null);
+        if(slot!==-1){ log(`💨 [${a.name}] 順手奪走了 [${t.name}] 的【${oppInv[slot].n}】！`); oppInv[slot]=null; renderItems(); }
+      }
+      updateUI();
+      if(checkWin()) return;
+      endAction(a, cost);
+    });
+  }
+  else if(n==='土坑陷阱'){
+    setPending('enemy', t=>{
+      addStatus(t,'slow',1);
+      log(`[${a.name}] 土坑陷阱！[${t.name}] 緩速1回合！`);
+      bannerFX(t,'陷入土坑！','#ccaa66',800);
+      renderCard(t); updateUI();
+      if(checkWin()) return;
+      endAction(a, cost);
+    });
+  }
+  else if(n==='黏液噴濺'){
+    const _tgts = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    _tgts.forEach(t=>{ addStatus(t,'slow',1); });
+    log(`[${a.name}] 黏液噴濺！全體對手緩速1回合！`);
+    bannerFX(a,'黏液！','#aaffaa',800);
+    _tgts.forEach(t=>renderCard(t));
+    updateUI();
+    if(checkWin()) return;
+    endAction(a, cost);
   }
   else { log(`技能 ${n} 未識別`); clearSel(); }
 }
@@ -19869,25 +19865,35 @@ function advFinishMiniBattle(win) {
     if(bsOv) bsOv.classList.remove('show');
   }catch(e){}
 
-  // 停止戰鬥音樂，播放勝利音樂後恢復過場音樂
+  // ★ 勝利BGM
   try{
     bgmStop();
     ['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04','bgm-battle-05'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){ el.pause(); el.currentTime=0; }
+      const el=document.getElementById(id); if(el){ el.pause(); el.currentTime=0; }
     });
-    // ★ 播放勝利BGM，3秒後切換到過場音樂
     bgmPlay('bgm-win');
-    setTimeout(()=>{ bgmStop(); bgmPlay('bgm-adv-scene'); }, 3000);
   }catch(e){}
 
-  // 回到過場，繼續下一幕
-  const cutsceneOv2 = document.getElementById('adv-cutscene-overlay');
-  if(cutsceneOv2) cutsceneOv2.style.display = 'flex';
+  // ★ 順序化流程：① 結算畫面2秒 → ② 顯示過場 → ③ 載入場景 → ④ 播放對白
+  const _miniResultEl2 = document.getElementById('adv-mini-result');
+  const _RESULT_DUR = 2200; // 結算畫面持續時間
 
-  setTimeout(() => {
-    advLoadScene(_adventureStage, _advMiniBattleNextScene);
-  }, 800);
+  setTimeout(()=>{
+    // 隱藏結算畫面
+    if(_miniResultEl2) _miniResultEl2.classList.remove('show');
+    // 切換到過場音樂
+    try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+    // 清除所有阻擋元素
+    const _bossDetailPop3 = document.getElementById('adv-boss-detail-pop');
+    if(_bossDetailPop3) _bossDetailPop3.remove();
+    // 顯示過場畫面
+    const cutsceneOv2 = document.getElementById('adv-cutscene-overlay');
+    if(cutsceneOv2) cutsceneOv2.style.display = 'flex';
+    // 500ms後載入下一場景（讓過場畫面淡入）
+    setTimeout(()=>{
+      advLoadScene(_adventureStage, _advMiniBattleNextScene);
+    }, 500);
+  }, _RESULT_DUR);
 }
 
 function openMonsterPage() {
