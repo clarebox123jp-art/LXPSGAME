@@ -1528,15 +1528,14 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 
 /* BOTTOM: 3-column skill picker */
 #sro-picker{
-  flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px 16px 0;gap:6px;min-height:0;
-  max-height:calc(100vh - 420px);padding-bottom:90px;
+  flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px 16px 0 16px;gap:6px;min-height:0;
 }
 #sro-picker-title{font-size:28px;color:#ffffff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;flex-shrink:0}
 #sro-picker-body{
   overflow-y:auto;
   overflow-x:hidden;
   display:flex;flex-direction:column;gap:6px;
-  align-items:stretch;padding-bottom:8px;
+  align-items:stretch;padding-bottom:80px;
   flex:1;min-height:0;
 }
 .skcat-list{flex-wrap:wrap !important;flex-direction:row !important;}
@@ -1588,7 +1587,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 
 /* Footer */
 #sro-footer{
-  position:absolute;bottom:0;left:0;right:0;
+  position:absolute;bottom:0;left:0;right:0;z-index:5;
   display:flex;gap:16px;justify-content:center;
   padding:8px 28px;border-top:1px solid var(--border);background:rgba(10,8,22,0.9);
 }
@@ -2990,7 +2989,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.19.53</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.20.03</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -19200,15 +19199,49 @@ let _heroFilterKey = 'all';
 function _heroSkillType(name) {
   const b = HERO_DB[name];
   if(!b) return 'other';
-  const HEAL_SK = ['治療之光','全體治療','復活術','神之賜福','一壺鐵觀音','一壺包種茶','邏輯優化',
-    '餘音繞樑','雙小提琴協奏曲','救贖神光','治癒之風','天堂樂章','賢者之石','持續恢復'];
-  const CTRL_SK = ['挺身守護','仁王挺立','群體挑釁','筍之守護','筍之刺','舞台聚光燈','變臉戲法',
-    '虛弱咒','狂亂之歌','炫目神光','禁書封鎖','護盾術','強奪','睡覺功'];
   const skills = [b.s1.n, b.s2.n];
-  const HEAL_ROLES = ['祭司','聖騎士','吟遊詩人','木靈使','煉金術師','茶葉精靈','直笛團員','弦樂團員'];
-  const TANK_ROLES = ['守衛','武鬥家','大力士','小力','幼兒園小孩'];
-  if(HEAL_ROLES.includes(name) || skills.some(s=>HEAL_SK.includes(s))) return 'heal';
-  if(TANK_ROLES.includes(name) || skills.some(s=>CTRL_SK.includes(s))) return 'ctrl';
+
+  // ── 治療優先判斷 ──
+  const HEAL_ROLES = ['祭司','聖騎士','木靈使','煉金術師','弦樂團員','吟遊詩人'];
+  const HEAL_SK = new Set(['神之賜福','救贖神光','治癒之風','天堂樂章','賢者之石','持續恢復',
+    '一壺鐵觀音','一壺包種茶','雙小提琴協奏曲','治療之光','全體治療','復活術',
+    '神聖鎚擊','聖殿領域']);
+  if(HEAL_ROLES.includes(name)) return 'heal';
+  if(skills.some(s=>HEAL_SK.has(s))) return 'heal';
+
+  // ── 控場技能：所有造成不利狀態或限制行動的技能 ──
+  const CTRL_SK = new Set([
+    // 純控制（主效果是控制，非傷害）：禁動/睡眠/昏迷/封印
+    '時間暫停','搖籃曲','泰山壓頂','黑暗封印','死亡宣告','催眠之歌',
+    // 純減弱（無直接傷害）：失明/封印/命中降低/攻擊降低/行動限制
+    '極限閃光','急速閃躲','大聲啼哭','物品查封','警示鳴槍','群體挑釁',
+    // 操控/挑釁
+    '天羅地網','魅惑之舞','舞台聚光燈',
+    // 附帶持續負面效果（毒/中毒為主效果之一）
+    '不熟練習曲','餘音繞樑',
+    // 消除有利狀態
+    '識破全局','圖層隱藏','歷史的教訓',
+    // 反制
+    '以牙還牙',
+    // 敵方減益（治療減半/受傷增加 — 非直接傷害）
+    '朱雀召喚','青龍召喚',
+    // 坦克技能
+    '挺身守護','仁王挺立','金鐘罩','不動如山','忠犬守護','筍之守護','筍之刺'
+    // 排除：火焰球/地獄之火/冰凍之矛/暴風雪/麻痺落雷/潛行暗殺/定時炸彈/刀背擊
+    // 以上雖附帶負面狀態，但主效果是傷害，歸為傷害類
+  ]);
+
+  const ctrlCount = skills.filter(s=>CTRL_SK.has(s)).length;
+
+  // 有兩招以上控場技能 → 控場優先
+  if(ctrlCount >= 2) return 'ctrl';
+
+  // 角色身份為控場/坦克（即使只有一招控場技能）
+  const CTRL_ROLES = ['守衛','武鬥家','大力士','小力','幼兒園小孩',
+    '時空法師','冰法師','神射手','舞者','警長','陰陽師','電腦繪圖師','直笛團員','小劇團員'];
+  if(CTRL_ROLES.includes(name)) return 'ctrl';
+
+  // 有一招控場技能的純輸出角色仍判為dmg
   return 'dmg';
 }
 
