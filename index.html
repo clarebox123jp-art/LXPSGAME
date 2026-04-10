@@ -2843,6 +2843,7 @@ body {
 <audio id="bgm-adv-scene" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a" loop></audio>
 <audio id="sfx-quiz-correct" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="sfx-quiz-wrong"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
+<audio id="bgm-boss-01" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a" loop></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
@@ -2985,7 +2986,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.17.39</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.18.42</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3200,6 +3201,9 @@ body {
   <div id="hero-pick-overlay">
     <!-- Animated starfield background -->
     <canvas id="star-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
+    <!-- ★ 鬥技返回按鈕 -->
+    <button id="hero-pick-back-btn" onclick="goBackFromHeroPick()"
+      style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="hero-pick-topbar" style="position:relative;z-index:1">
       <h2>▸ 英雄召集中</h2>
       <p id="hero-pick-count">請選擇 4 名英雄出戰（已選 0 / 4）</p>
@@ -3247,6 +3251,9 @@ body {
     </div>
   </div>
   <div id="skill-replace-overlay">
+    <!-- ★ 替換技能返回按鈕 -->
+    <button onclick="goBackToHeroPick()"
+      style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="sro-header">
       <h2>▸ 替換技能（隊伍缺治療、攻擊或防禦的技能時）</h2>
       <p>從下方選單找技能 → 點卡片「換S1」或「換S2」套用<br>被動技能無法替換，每人最多替換1個</p>
@@ -3268,6 +3275,9 @@ body {
   <!-- ====== ELEMENT PICK OVERLAY ====== -->
   <div id="elem-pick-overlay">
     <canvas id="aurora-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.55;"></canvas>
+    <!-- ★ 元素選擇返回按鈕 -->
+    <button onclick="goBackFromElemPick()"
+      style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="ep-topbar" style="position:relative;z-index:1;flex-direction:column;gap:6px;align-items:stretch">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <h2>▸ 選擇元素屬性</h2>
@@ -4751,6 +4761,8 @@ const HERO_IMGS = {
   '茶葉精靈':   'https://github.com/clarebox123jp-art/-/raw/main/%E8%8C%B6%E8%91%89%E7%B2%BE%E9%9D%88.png',
   '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png',
   '偷鳥蛋的鳥人哈維': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E9%B3%A5%E8%9B%8B%E7%9A%84%E9%B3%A5%E4%BA%BA%E5%93%88%E7%B6%AD.png',
+  '偷竹筍的哥布林': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%81%B7%E7%AB%B9%E7%AD%8D%E7%9A%84%E5%93%A5%E5%B8%83%E6%9E%97.png',
+  '偷喝茶的史萊姆': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%84%9B%E5%96%9D%E8%8C%B6%E7%9A%84%E5%8F%B2%E8%90%8A%E5%A7%86.png',
   '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png'
 };
 const HERO_DB = {
@@ -6364,6 +6376,9 @@ function showHeroPickOverlay(){
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
     window._isAdventurePickMode = true; // ★ 標記冒險選角模式
+    // ★ 冒險模式隱藏鬥技返回按鈕
+    const _hpBackBtn = document.getElementById('hero-pick-back-btn');
+    if(_hpBackBtn) _hpBackBtn.style.display = 'none';
     // ★ 冒險模式：只顯示已解鎖英雄（初始4名 + 解鎖的）
     const basePool = ADV_HERO_POOL[_adventureStage] || [];
     const unlockedExtra = advGetUnlockedHeroes().filter(n => !basePool.includes(n) && !BOSS_NAMES.includes(n));
@@ -6420,7 +6435,10 @@ function showHeroPickOverlay(){
   hpo.style.background = '#080a18 url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png") center/cover no-repeat';
   document.getElementById('fate-text').textContent = '與你命運交織的夥伴';
   // ★ 鬥技場模式：強制重置冒險旗標
-  _adventureMode = false; _adventureStage = null;
+  _adventureMode = false;
+  // ★ 鬥技模式顯示返回按鈕
+  const _hpBackBtn2 = document.getElementById('hero-pick-back-btn');
+  if(_hpBackBtn2) _hpBackBtn2.style.display = ''; _adventureStage = null;
   window._isAdventurePickMode = false; // ★ 清除冒險選角模式
   _heroPickSelected = [];
   _heroSeenPool = new Set(); // 每次開新遊戲重置循環
@@ -7581,6 +7599,31 @@ function playBattleStartSfx(){
     }, dur/steps);
   }, 3000);
 }
+
+// ★ 鬥技：選角頁返回首頁
+function goBackFromHeroPick(){
+  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
+  const hpo = document.getElementById('hero-pick-overlay');
+  if(hpo) hpo.style.display = 'none';
+  const mainOv = document.getElementById('overlay');
+  if(mainOv) mainOv.style.display = 'flex';
+  // 重置選角狀態
+  if(typeof _heroPickSelected !== 'undefined') _heroPickSelected = [];
+  if(typeof bgmPlay === 'function'){ bgmStop(); bgmPlay('bgm-menu-01'); }
+}
+
+// ★ 鬥技：元素選擇返回選角頁
+function goBackFromElemPick(){
+  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
+  const epOv = document.getElementById('elem-pick-overlay');
+  if(epOv) epOv.style.display = 'none';
+  const hpo = document.getElementById('hero-pick-overlay');
+  if(hpo) hpo.style.display = 'flex';
+  // 重置元素選擇
+  if(typeof _elemPickSelected !== 'undefined') _elemPickSelected = [null,null,null,null];
+  if(typeof _elemPickHeroIdx !== 'undefined') _elemPickHeroIdx = 0;
+}
+
 function goBackToHeroPick(){
   // 關閉所有可能開著的 overlay
   ['skill-replace-overlay','elem-pick-overlay'].forEach(id=>{
@@ -15418,7 +15461,7 @@ let _menuPlaylist=[];
 let _menuPlayMode=false;
 function bgmStop(){
   ['bgm-win','bgm-lose',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
-   'bgm-adv-march','bgm-adv-scene','bgm-boss-02','adventure-bgm',
+   'bgm-adv-march','bgm-adv-scene','bgm-boss-01','bgm-boss-02','adventure-bgm',
    'sfx-quiz-correct','sfx-quiz-wrong'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.onended=null;el.pause();el.currentTime=0;}
@@ -17504,9 +17547,9 @@ function advFinishCutscene() {
 function advStartBattle(){
   try{ bgmStop(); }catch(e){}
   try{
-    // ★ 冒險BOSS戰BGM輪播：曲結束後自動播下一首
-    const _bossBgmList = ['bgm-boss-02','bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04','bgm-battle-05'];
-    let _advBgmIndex = Math.floor(Math.random() * _bossBgmList.length);
+    // ★ BOSS戰專屬BGM（九尾空貓怪主題曲，loop=true 自動重複）
+    const _bossBgmList = ['bgm-boss-01'];
+    let _advBgmIndex = 0;
     function _playAdvBossBgm(){
       bgmStop();
       const id = _bossBgmList[_advBgmIndex % _bossBgmList.length];
@@ -19217,7 +19260,7 @@ function _renderHeroDetail(name, box) {
   function makeRadar(dims, size) {
     const cx = size/2, cy = size/2, R = size*0.38;
     const n = dims.length;
-    const labelR = R + size*0.09; // ★ 標籤貼緊頂點
+    const labelR = R + size*0.04; // ★ 標籤貼緊頂點
     function pt(i, r) {
       const a = (i / n) * Math.PI * 2 - Math.PI / 2;
       return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
@@ -19239,7 +19282,7 @@ function _renderHeroDetail(name, box) {
       const [x,y] = pt(i, labelR);
       const anchor = x < cx-4 ? 'end' : x > cx+4 ? 'start' : 'middle';
       const col = _dimColors[i]||'#ffe8a0';
-      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.065}" fill="${col}" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif">${dims[i].label}</text>`;
+      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.078}" fill="${col}" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif">${dims[i].label}</text>`;
     }
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       ${gridLines}${axes}
@@ -19302,7 +19345,7 @@ function _renderHeroDetail(name, box) {
         ${trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
             <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 10px;font-weight:700;">✦ 天賦</span>
-            <span style="font-size:28px;font-weight:800;color:#ffe8a0;">${trait.icon||''} ${name}的天賦</span>
+            <span style="font-size:28px;font-weight:800;color:#ffe066;">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||name+'的天賦'}</span></span>
             ${traitLv>0?`<span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">+${traitLv*20}%</span>`:''}
           </div>
           <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
@@ -19509,6 +19552,12 @@ function advStartMiniBattle(nextSceneIdx) {
     _gamePaused = false;
 
     // ── 隱藏過場、顯示戰場
+    // ★ 清除所有可能遮擋戰場的 overlay（確保點擊能到達卡牌）
+    ['adv-boss-detail-overlay','adv-boss-intro','adv-quiz-overlay',
+     'adv-reward-overlay','adv-result-overlay'].forEach(id=>{
+      const _el=document.getElementById(id);
+      if(_el){ _el.classList.remove('show'); _el.style.display=''; }
+    });
     const cutsceneOv = document.getElementById('adv-cutscene-overlay');
     if(cutsceneOv) cutsceneOv.style.display = 'none';
     const gc = document.getElementById('gc');
@@ -19544,7 +19593,17 @@ function advStartMiniBattle(nextSceneIdx) {
       setTimeout(()=>{ bsOv.classList.remove('show'); bsTxt.textContent='戰鬥開始!'; }, 2000);
     }
 
-    setTimeout(()=>{ try{ startTurn(); }catch(e){ console.error('[mini-startTurn]',e); } }, 500);
+    setTimeout(()=>{
+      try{ startTurn(); }catch(e){ console.error('[mini-startTurn]',e); }
+    }, 500);
+    // ★ 防呆：每1秒自動檢查小怪是否全滅
+    const _miniCheckInterval = setInterval(()=>{
+      if(!_advMiniBattleActive){ clearInterval(_miniCheckInterval); return; }
+      if(G.p2 && G.p2.every(h=>h.curHp<=0)){
+        clearInterval(_miniCheckInterval);
+        _showResultWithDrama(true);
+      }
+    }, 1000);
   }, 2500);
 }
 
@@ -19683,58 +19742,107 @@ function _buildMonsterPage() {
 
 function openMonsterDetail(name) {
   const b = HERO_DB[name];
-  const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
   if(!b) return;
-  const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
-  const av = {'九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃',
-    '偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🐦','偷竹筍的哥布林':'🌿','偷喝茶的史萊姆':'🫖'}[name]||'👾';
+  const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
   const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
+  const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[name]) || null;
+  const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+  const AVTR = {'九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃',
+    '偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🐦','偷竹筍的哥布林':'🌿','偷喝茶的史萊姆':'🫖'};
+  const av = AVTR[name]||'👾';
 
-  // Reuse hero-detail-overlay structure
+  // Build dims for radar (same as hero detail)
+  function _clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+  const dims = [
+    {label:'體', val:_clamp(Math.round(b.hp/12),1,10)},
+    {label:'攻', val:_clamp(Math.round(b.atk/2),1,10)},
+    {label:'特', val:_clamp(Math.round(b.sp/2),1,10)},
+    {label:'速', val:_clamp(Math.round(b.spd/3),1,10)},
+    {label:'治', val: (b.s1&&['治療','恢復','復活'].some(k=>b.s1.n.includes(k)))||
+                     (b.s2&&['治療','恢復','復活'].some(k=>b.s2.n.includes(k)))?7:1},
+    {label:'控', val: (b.s1&&['守護','挺立','護盾','嘲諷','封印'].some(k=>b.s1.n.includes(k)))||
+                     (b.s2&&['守護','挺立','護盾','嘲諷','封印'].some(k=>b.s2.n.includes(k)))?7:1},
+  ];
+
+  // Tier label
+  const BOSS_LIST=['九尾空貓怪'];
+  const ELITE_LIST=['綠竹筍小妖','茶葉精靈'];
+  const tierLabel = BOSS_LIST.includes(name)?'👑 終極BOSS':ELITE_LIST.includes(name)?'⚡ 精英小怪':'🌿 路邊小怪';
+  const tierColor = BOSS_LIST.includes(name)?'#ff6644':ELITE_LIST.includes(name)?'#ffaa44':'#88cc88';
+
+  // Use hero-detail-overlay (same structure as hero detail)
   const ov = document.getElementById('hero-detail-overlay');
   const box = document.getElementById('hero-detail-content');
-  if(!ov || !box) return;
+  if(!ov||!box) return;
 
-  // Set image side
   const imgEl = document.getElementById('hero-detail-full-img');
   const avEl  = document.getElementById('hero-detail-av-fallback');
-  if(imgEl && avEl){
+  if(imgEl&&avEl){
     if(img){ imgEl.src=img; imgEl.style.display='block'; avEl.style.display='none'; }
-    else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; }
+    else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; avEl.style.fontSize='96px'; }
   }
 
-  // Build content
-  const trHtml = trait ? `<div style="margin:8px 0;padding:9px 14px;border-radius:9px;
-    background:linear-gradient(135deg,rgba(255,80,0,0.15),rgba(255,140,0,0.08));
-    border:2px solid rgba(255,120,0,0.55);">
-    <span style="font-size:26px;color:#ff9944;">✦ 天賦</span>
-    <span style="font-size:30px;font-weight:800;color:#ffcc44;margin-left:8px;">${trait.name||''}</span>
-    <span style="font-size:22px;color:#ffd8aa;margin-left:8px;">${trait.desc}</span>
-    </div>` : '';
+  const trHtml = trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+      <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 10px;font-weight:700;">✦ 天賦</span>
+      <span style="font-size:28px;font-weight:800;color:#ffe066;">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||''}</span></span>
+    </div>
+    <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+  </div>` : '';
+
+  const makeR = (typeof makeRadar==='function') ? makeRadar : (d,s)=>'';
 
   box.innerHTML = `
-    <div style="font-size:52px;font-weight:900;color:#ff8844;margin-bottom:8px;">${name}</div>
-    <div style="font-size:22px;color:#ffaa66;margin-bottom:14px;line-height:1.6;">${lore}</div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-      <span style="font-size:24px;color:#88ddff;background:rgba(0,100,200,0.15);padding:6px 14px;border-radius:8px;">HP ${b.hp}</span>
-      <span style="font-size:24px;color:#ff8888;background:rgba(200,50,50,0.15);padding:6px 14px;border-radius:8px;">攻 ${b.atk}</span>
-      <span style="font-size:24px;color:#cc88ff;background:rgba(150,50,200,0.15);padding:6px 14px;border-radius:8px;">特 ${b.sp}</span>
-      <span style="font-size:24px;color:#88ff88;background:rgba(50,180,50,0.15);padding:6px 14px;border-radius:8px;">速 ${b.spd}</span>
+    <div style="position:sticky;top:0;z-index:10;margin-bottom:16px;display:flex;gap:10px;">
+      <button onclick="closeHeroDetail();openMonsterPage();" style="padding:10px 24px;font-size:26px;font-weight:800;
+        background:rgba(40,10,10,0.85);border:2px solid rgba(220,80,80,0.6);
+        color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回魔物圖鑑</button>
     </div>
-    ${trHtml}
-    <div style="background:rgba(30,10,10,0.6);border-radius:10px;padding:12px 16px;margin-top:8px;">
-      <div style="font-size:26px;font-weight:700;color:#ffcc44;margin-bottom:8px;">技能</div>
-      <div style="font-size:24px;color:#ffe8cc;margin-bottom:6px;">【${b.s1.n}】🔷${b.s1.c} ${b.s1.d}</div>
-      <div style="font-size:24px;color:#ffe8cc;">【${b.s2.n}】🔷${b.s2.c} ${b.s2.d}</div>
+    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:${tierColor};margin-bottom:4px;">${tierLabel}</div>
+        <div style="font-size:56px;font-weight:900;color:#ff8844;margin-bottom:8px;">${name}</div>
+        <div style="font-size:22px;color:#ccaa88;line-height:1.6;">${lore}</div>
+      </div>
     </div>
-    <button onclick="closeHeroDetail()" style="margin-top:20px;padding:12px 40px;font-size:28px;
-      font-weight:700;background:rgba(60,30,30,0.8);border:1.5px solid rgba(200,80,80,0.5);
-      color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回魔物圖鑑</button>
+    <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;">
+      <div style="flex:1;max-width:52%;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          ${[['hp','❤️','HP',b.hp],['atk','⚔️','攻擊',b.atk],['sp','✨','特技',b.sp],['spd','💨','速度',b.spd]].map(([s,ic,lb,v])=>
+            `<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:22px;">${ic} ${lb}</span>
+              <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${v}</span>
+            </div>`
+          ).join('')}
+        </div>
+        ${trHtml}
+      </div>
+      <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;">
+        ${makeR(dims,320)}
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;margin-bottom:14px;">
+      <div style="font-size:30px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">🎯 技能</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${[b.s1,b.s2].filter(Boolean).map(sk=>`
+        <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,255,255,0.12);">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-size:28px;font-weight:800;color:#ffe8a0;">${sk.n}</span>
+            <span style="font-size:22px;color:#4a9eff;">🔷${sk.c}</span>
+            ${sk.p?'<span style="font-size:20px;color:#aaa;background:rgba(100,100,100,0.3);border-radius:6px;padding:2px 8px;">[被動]</span>':''}
+          </div>
+          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${sk.fd||sk.d}</div>
+        </div>`).join('')}
+        ${burst ? `<div style="background:rgba(255,100,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,120,50,0.35);">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>
+            <span style="font-size:28px;font-weight:800;color:#ff9966;">${burst.n}</span>
+          </div>
+          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${burst.fd||burst.d}</div>
+        </div>` : ''}
+      </div>
+    </div>
   `;
-  // Override back button to return to monster page
-  const backBtn = document.getElementById('hero-detail-back');
-  if(backBtn){ backBtn.onclick = ()=>{ closeHeroDetail(); openMonsterPage(); }; }
-
   ov.style.display = 'flex';
 }
 
