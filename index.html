@@ -2971,7 +2971,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.10.06</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.13.10</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6323,7 +6323,7 @@ function showHeroPickOverlay(){
     _heroPickSelected = [];
 
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
-    hpo.style.background = '#080a18 url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png")';
+    hpo.style.background = '#080a18 url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png") center/cover no-repeat';
 
     // BOSS 預覽
     const bossTeam = ADV_BOSS_TEAMS[_adventureStage] || [];
@@ -6607,12 +6607,16 @@ if(typeof _heroSeenPool === 'undefined') window._heroSeenPool = new Set();
 // ── 冒險模式：對 _heroPickPool 中未解鎖的節點套用鎖定樣式
 function _applyAdvLocks(){
   if(!_adventureMode || !_adventureStage) return;
-  const unlockedSet = new Set(ADV_HERO_POOL[_adventureStage] || []);
+  // ★ 修復：使用 _heroPickPool（已含解鎖英雄）作為可選集合
+  const unlockedSet = new Set(_heroPickPool);
   _heroPickPool.forEach((name, idx)=>{
     if(unlockedSet.has(name)){
-      // 解鎖角色：確保移除鎖定樣式
+      // 解鎖角色：確保移除鎖定樣式，並恢復 onclick
       const node = document.getElementById(`hpick-${idx}`);
-      if(node) node.classList.remove('adv-locked');
+      if(node){
+        node.classList.remove('adv-locked');
+        if(!node.onclick) node.onclick = () => focusHero(idx, name);
+      }
       return;
     }
     const node = document.getElementById(`hpick-${idx}`);
@@ -19456,6 +19460,16 @@ function advFinishMiniBattle(win) {
   G.selMove = null; G.selItem = null;
   if(typeof fieldCards!=='undefined') fieldCards=[];
   if(typeof updateFieldFX==='function') updateFieldFX();
+
+  // ★ 清除所有可能殘留的戰鬥/答題 overlay
+  try{
+    ['adv-reward-overlay','adv-quiz-overlay','adv-result-overlay','adv-boss-intro'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.classList.remove('show'); el.style.display=''; }
+    });
+    const bsOv=document.getElementById('battle-start-overlay');
+    if(bsOv) bsOv.classList.remove('show');
+  }catch(e){}
 
   // 停止所有戰鬥音樂，恢復過場音樂
   try{
