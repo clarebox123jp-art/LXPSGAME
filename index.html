@@ -1529,12 +1529,15 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* BOTTOM: 3-column skill picker */
 #sro-picker{
   flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px 16px 0;gap:6px;min-height:0;
+  max-height:calc(100vh - 420px);
 }
 #sro-picker-title{font-size:36px;color:var(--muted);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;flex-shrink:0}
 #sro-picker-body{
-  overflow:visible;
+  overflow-y:auto;
+  overflow-x:hidden;
   display:flex;flex-direction:column;gap:6px;
   align-items:stretch;padding-bottom:8px;
+  flex:1;min-height:0;
 }
 .skcat-list{flex-wrap:wrap !important;flex-direction:row !important;}
 .skcat-section{border-radius:8px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column}
@@ -2971,7 +2974,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.15.20</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.15.33</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
