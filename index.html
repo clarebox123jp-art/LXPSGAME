@@ -2985,7 +2985,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.16.56</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.17.39</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3066,19 +3066,18 @@ body {
       <button onclick="closeHeroPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(40,30,0,0.8);border:2px solid rgba(212,168,67,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;">← 返回</button>
       <div style="display:flex;align-items:center;gap:16px;">
         <div style="font-size:36px;font-weight:900;color:var(--gold2,#f0c060);">⚔️ 英雄圖鑑</div>
+        <button onclick="openMonsterPage()" style="padding:8px 18px;font-size:22px;font-weight:700;
+          background:rgba(180,40,40,0.2);border:1.5px solid rgba(220,80,80,0.5);
+          color:#ff9999;border-radius:10px;cursor:pointer;
+          font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;white-space:nowrap;">
+          👹 魔物圖鑑
+        </button>
         <button onclick="highlightUpgradableHeroes()" id="hero-book-btn" style="display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:10px;cursor:pointer;font-family:inherit;">
           <span style="font-size:20px;color:#ffe8a0;">📖</span>
           <span id="hero-page-book-count" style="font-size:28px;font-weight:900;color:#ffe066;min-width:28px;text-align:center;">0</span>
         </button>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button onclick="openMonsterPage()" style="padding:10px 20px;font-size:24px;font-weight:700;
-          background:rgba(180,40,40,0.2);border:1.5px solid rgba(220,80,80,0.5);
-          color:#ff9999;border-radius:10px;cursor:pointer;
-          font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">
-          👹 魔物圖鑑
-        </button>
-      </div>
+      <div style="width:120px;"></div>
     </div>
     <!-- ★ 排序篩選列 -->
     <div id="hero-sort-bar" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 24px;border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(8,10,20,0.8);align-items:center;">
@@ -19036,7 +19035,7 @@ function _buildHeroGrid() {
   const ALL_HEROES = typeof HERO_DB !== 'undefined' ? Object.keys(HERO_DB) : [];
   const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
   const BOSS_SET = new Set(['九尾空貓怪','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆']);
-  const allKnown = [...new Set([...unlocked, ...advPool, ...ALL_HEROES])].filter(n=>!BOSS_SET.has(n));
+  let allKnown = [...new Set([...unlocked, ...advPool, ...ALL_HEROES])].filter(n=>!BOSS_SET.has(n));
   const unlockedSet = new Set([...unlocked, ...advPool]);
 
   // ★ 篩選
@@ -19683,11 +19682,60 @@ function _buildMonsterPage() {
 }
 
 function openMonsterDetail(name) {
-  // 暫時用提示顯示詳細資料（未來可擴展）
   const b = HERO_DB[name];
   const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
   if(!b) return;
-  alert(`【${name}】\n\nHP:${b.hp} 攻擊:${b.atk} 特技:${b.sp} 速度:${b.spd}\n技能1：${b.s1.n} - ${b.s1.d}\n技能2：${b.s2.n} - ${b.s2.d}\n\n${lore}`);
+  const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+  const av = {'九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃',
+    '偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🐦','偷竹筍的哥布林':'🌿','偷喝茶的史萊姆':'🫖'}[name]||'👾';
+  const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
+
+  // Reuse hero-detail-overlay structure
+  const ov = document.getElementById('hero-detail-overlay');
+  const box = document.getElementById('hero-detail-content');
+  if(!ov || !box) return;
+
+  // Set image side
+  const imgEl = document.getElementById('hero-detail-full-img');
+  const avEl  = document.getElementById('hero-detail-av-fallback');
+  if(imgEl && avEl){
+    if(img){ imgEl.src=img; imgEl.style.display='block'; avEl.style.display='none'; }
+    else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; }
+  }
+
+  // Build content
+  const trHtml = trait ? `<div style="margin:8px 0;padding:9px 14px;border-radius:9px;
+    background:linear-gradient(135deg,rgba(255,80,0,0.15),rgba(255,140,0,0.08));
+    border:2px solid rgba(255,120,0,0.55);">
+    <span style="font-size:26px;color:#ff9944;">✦ 天賦</span>
+    <span style="font-size:30px;font-weight:800;color:#ffcc44;margin-left:8px;">${trait.name||''}</span>
+    <span style="font-size:22px;color:#ffd8aa;margin-left:8px;">${trait.desc}</span>
+    </div>` : '';
+
+  box.innerHTML = `
+    <div style="font-size:52px;font-weight:900;color:#ff8844;margin-bottom:8px;">${name}</div>
+    <div style="font-size:22px;color:#ffaa66;margin-bottom:14px;line-height:1.6;">${lore}</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+      <span style="font-size:24px;color:#88ddff;background:rgba(0,100,200,0.15);padding:6px 14px;border-radius:8px;">HP ${b.hp}</span>
+      <span style="font-size:24px;color:#ff8888;background:rgba(200,50,50,0.15);padding:6px 14px;border-radius:8px;">攻 ${b.atk}</span>
+      <span style="font-size:24px;color:#cc88ff;background:rgba(150,50,200,0.15);padding:6px 14px;border-radius:8px;">特 ${b.sp}</span>
+      <span style="font-size:24px;color:#88ff88;background:rgba(50,180,50,0.15);padding:6px 14px;border-radius:8px;">速 ${b.spd}</span>
+    </div>
+    ${trHtml}
+    <div style="background:rgba(30,10,10,0.6);border-radius:10px;padding:12px 16px;margin-top:8px;">
+      <div style="font-size:26px;font-weight:700;color:#ffcc44;margin-bottom:8px;">技能</div>
+      <div style="font-size:24px;color:#ffe8cc;margin-bottom:6px;">【${b.s1.n}】🔷${b.s1.c} ${b.s1.d}</div>
+      <div style="font-size:24px;color:#ffe8cc;">【${b.s2.n}】🔷${b.s2.c} ${b.s2.d}</div>
+    </div>
+    <button onclick="closeHeroDetail()" style="margin-top:20px;padding:12px 40px;font-size:28px;
+      font-weight:700;background:rgba(60,30,30,0.8);border:1.5px solid rgba(200,80,80,0.5);
+      color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回魔物圖鑑</button>
+  `;
+  // Override back button to return to monster page
+  const backBtn = document.getElementById('hero-detail-back');
+  if(backBtn){ backBtn.onclick = ()=>{ closeHeroDetail(); openMonsterPage(); }; }
+
+  ov.style.display = 'flex';
 }
 
 
