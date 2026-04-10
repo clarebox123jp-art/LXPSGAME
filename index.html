@@ -1536,6 +1536,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   display:flex;flex-direction:column;gap:6px;
   align-items:stretch;padding-bottom:8px;
 }
+.skcat-list{flex-wrap:wrap !important;flex-direction:row !important;}
 .skcat-section{border-radius:8px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column}
 .skcat-section.cat-atk{border-color:#cc223388;background:rgba(160,20,30,0.07)}
 .skcat-section.cat-heal{border-color:#1e9e4a88;background:rgba(15,130,55,0.07)}
@@ -2970,7 +2971,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.09.37</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.10.06</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6356,7 +6357,7 @@ function showHeroPickOverlay(){
     document.getElementById('hpick-focus').style.display = 'none';
     document.getElementById('hero-pick-count').textContent = '請選擇 4 名英雄加入冒險者小隊（已選 0 / 4）';
     document.getElementById('hero-pick-confirm').disabled = true;
-    hpo.style.background = '#080a18';
+    // ★ 不重置background，保留上方已設定的操場背景
     hpo.style.display = 'flex';
     // 點擊空白關閉預覽（同正常模式）
     hpo.onclick = function(e){
@@ -6368,7 +6369,7 @@ function showHeroPickOverlay(){
     return;
   }
   // 正常模式：還原背景與標語
-  hpo.style.backgroundImage = 'url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png")';
+  hpo.style.background = '#080a18 url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png") center/cover no-repeat';
   document.getElementById('fate-text').textContent = '與你命運交織的夥伴';
   // ★ 鬥技場模式：強制重置冒險旗標
   _adventureMode = false; _adventureStage = null;
@@ -7393,8 +7394,8 @@ function buildSkillPicker(){
         id="skpick-${sk.n.replace(/[\s\u4e00-\u9fff\uff00-\uffef]/g, c=>c.codePointAt(0).toString(36))}"
         onclick="onPickSkill('${sk.n}')"
         style="border:2px solid ${bdrCol};background:${bgCol};border-radius:10px;padding:10px 14px;
-               display:flex;align-items:center;gap:10px;flex-wrap:nowrap;white-space:nowrap;
-               cursor:pointer;font-family:inherit;transition:0.15s;width:100%;">
+               display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;
+               cursor:pointer;font-family:inherit;transition:0.15s;width:calc(25% - 6px);min-width:0;box-sizing:border-box;">
         <span class="sk-pick-name" style="font-size:22px;font-weight:700;color:#ffe8a0;flex-shrink:0;">${sk.n}</span>
         <span class="sk-pick-cost" style="font-size:18px;color:#4a9eff;flex-shrink:0;">🔷${sk.c}</span>
         ${_sdpBtn(sk,'🔷'+sk.c+(sk.p?' [被動]':''))}
