@@ -2970,7 +2970,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.08.52</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.09.37</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6351,7 +6351,7 @@ function showHeroPickOverlay(){
     _applyAdvLocks(); // ← 取代原本的手動 forEach 鎖定邏輯
 
     // 標記尚未解鎖角色：灰化＋名稱改為「尚未解鎖」＋不可點
-    const unlockedSet = new Set(unlockedPool);
+    const unlockedSet = new Set(_heroPickPool); // ★ 修復：unlockedPool → _heroPickPool
     updatePickedBadges();
     document.getElementById('hpick-focus').style.display = 'none';
     document.getElementById('hero-pick-count').textContent = '請選擇 4 名英雄加入冒險者小隊（已選 0 / 4）';
@@ -6753,48 +6753,48 @@ const HERO_LORE = {
 
 // ====== 天賦 DB ======
 const HERO_TRAIT = {
-  '劍士':    { icon:'⚔️',  desc:'普攻後有機率再行動',fd:'普通攻擊時有30%機率再行動1次' },
-  '祭司':    { icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
-  '聖騎士':  { icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
-  '火法師':  { icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
-  '冰法師':  { icon:'❄️',  desc:'普攻後有機率使目標緩速',fd:'普通攻擊時有60%機率使目標緩速1回合，速度下降50%' },
-  '雷法師':  { icon:'⚡',  desc:'普攻後有機率傷害全體敵人',fd:'普通攻擊時有60%機率對全體敵人造成等量傷害' },
-  '光法師':  { icon:'☀️',  desc:'普攻後有機率使目標失明',fd:'普通攻擊時有60%機率使目標失明1回合，行動成功率-50%' },
-  '暗法師':  { icon:'🌑',  desc:'普攻後有機率封印目標技能',fd:'普通攻擊時有60%機率使目標封印1回合，無法使用技能' },
-  '神射手':  { icon:'🏹',  desc:'普攻後有機率設陷阱免疫普攻',fd:'普通攻擊時有60%機率放置陷阱1回合，使自己無法受到普通攻擊' },
-  '神偷':    { icon:'🗡️',  desc:'普攻後有機率奪取目標寵物或增益',fd:'普通攻擊時有50%機率奪取目標身上的寵物或有利狀態' },
-  '刺客':    { icon:'👁️',  desc:'普攻後有機率使目標中毒',fd:'普通攻擊時有60%機率使目標中毒2回合，每回合HP-10%' },
-  '守衛':    { icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
-  '吟遊詩人':  { icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
-  '舞者':    { icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
-  '煉金術師':{ icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
-  '警長':    { icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
-  '武鬥家':  { icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
-  '軍師':    { icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
-  '占星師':  { icon:'🌟',  desc:'自己行動時有機率補充能量',fd:'輪到自己的行動時有60%機率補充1能量' },
-  '大力士':  { icon:'💪',  desc:'受不利狀態時有機率轉化怒火',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
-  '凡人':    { icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
-  '木靈使':  { icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
-  '機械師':  { icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
-  '動物學家':{ icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
-  '武士':    { icon:'🗾',  desc:'受傷時有機率反擊',fd:'受到傷害時有40%機率用攻擊的50%進行反擊' },
-  '陰陽師':  { icon:'☯️',  desc:'受技能傷害時有機率由式神代替',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
-  '吸血鬼':  { icon:'🦇',  desc:'造成傷害時吸收為HP',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
-  '學者':    { icon:'📚',  desc:'普攻後有機率奪取對手能量',fd:'普通攻擊時有60%機率奪取對手1能量' },
-  '時空法師':{ icon:'⏳',  desc:'普攻後有機率封鎖目標治療和增益',fd:'普通攻擊時有60%使目標1回合內無法獲得任何治療和有利狀態' },
-  '小力':    { icon:'🐕',  desc:'隊友受傷時有機率幫恢復HP',fd:'隊友受到傷害時有35%立即用特技幫他恢復HP。' },
-  '籃球隊員':{ icon:'🏀',  desc:'友方普攻時50%暴擊+50%傷害',fd:'友方進行普通攻擊時有50%機率觸發暴擊，傷害提升50%。' },
-  '直笛團員':{ icon:'🎵',  desc:'普攻時50%機率使目標狂亂1回合',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
-  '田徑隊員':{ icon:'🏃',  desc:'行動時60%使未行動友方提前到下一個',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。' },
-  '幼兒園小孩':{ icon:'👶', desc:'存活時對手全體攻擊和特技降低20%（最多5回合）',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
-  '電腦繪圖師':{ icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
-  '程式設計師':{ icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
-  '弦樂團員':  { icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
-  '小劇團員':  { icon:'🎭', desc:'受傷時20%機率轉為治療',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。' },
+  '劍士':    { name:'劍影再現', icon:'⚔️',  desc:'普攻後有機率再行動',fd:'普通攻擊時有30%機率再行動1次' },
+  '祭司':    { name:'聖癒之光', icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
+  '聖騎士':  { name:'神盾格擋', icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
+  '火法師':  { name:'焚盡增益', icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
+  '冰法師':  { name:'冰封緩步', icon:'❄️',  desc:'普攻後有機率使目標緩速',fd:'普通攻擊時有60%機率使目標緩速1回合，速度下降50%' },
+  '雷法師':  { name:'連鎖雷鳴', icon:'⚡',  desc:'普攻後有機率傷害全體敵人',fd:'普通攻擊時有60%機率對全體敵人造成等量傷害' },
+  '光法師':  { name:'耀眼奪目', icon:'☀️',  desc:'普攻後有機率使目標失明',fd:'普通攻擊時有60%機率使目標失明1回合，行動成功率-50%' },
+  '暗法師':  { name:'封印黑幕', icon:'🌑',  desc:'普攻後有機率封印目標技能',fd:'普通攻擊時有60%機率使目標封印1回合，無法使用技能' },
+  '神射手':  { name:'陷阱佈局', icon:'🏹',  desc:'普攻後有機率設陷阱免疫普攻',fd:'普通攻擊時有60%機率放置陷阱1回合，使自己無法受到普通攻擊' },
+  '神偷':    { name:'虛空攫取', icon:'🗡️',  desc:'普攻後有機率奪取目標寵物或增益',fd:'普通攻擊時有50%機率奪取目標身上的寵物或有利狀態' },
+  '刺客':    { name:'淬毒之刺', icon:'👁️',  desc:'普攻後有機率使目標中毒',fd:'普通攻擊時有60%機率使目標中毒2回合，每回合HP-10%' },
+  '守衛':    { name:'鐵壁分攤', icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
+  '吟遊詩人':  { name:'歌聲回春', icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
+  '舞者':    { name:'魅惑虛弱', icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
+  '煉金術師':{ name:'精煉強化', icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
+  '警長':    { name:'延遲制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
+  '武鬥家':  { name:'鋼鐵意志', icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
+  '軍師':    { name:'疑陣惑敵', icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
+  '占星師':  { name:'星力充能', icon:'🌟',  desc:'自己行動時有機率補充能量',fd:'輪到自己的行動時有60%機率補充1能量' },
+  '大力士':  { name:'怒火中燒', icon:'💪',  desc:'受不利狀態時有機率轉化怒火',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
+  '凡人':    { name:'隨機應變', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
+  '木靈使':  { name:'林息淨化', icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
+  '機械師':  { name:'觸電反擊', icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
+  '動物學家':{ name:'萬獸同心', icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
+  '武士':    { name:'武魂反擊', icon:'🗾',  desc:'受傷時有機率反擊',fd:'受到傷害時有40%機率用攻擊的50%進行反擊' },
+  '陰陽師':  { name:'式神代身', icon:'☯️',  desc:'受技能傷害時有機率由式神代替',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
+  '吸血鬼':  { name:'吸血再生', icon:'🦇',  desc:'造成傷害時吸收為HP',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
+  '學者':    { name:'奪取能量', icon:'📚',  desc:'普攻後有機率奪取對手能量',fd:'普通攻擊時有60%機率奪取對手1能量' },
+  '時空法師':{ name:'時間封印', icon:'⏳',  desc:'普攻後有機率封鎖目標治療和增益',fd:'普通攻擊時有60%使目標1回合內無法獲得任何治療和有利狀態' },
+  '小力':    { name:'忠犬守護', icon:'🐕',  desc:'隊友受傷時有機率幫恢復HP',fd:'隊友受到傷害時有35%立即用特技幫他恢復HP。' },
+  '籃球隊員':{ name:'空中接力', icon:'🏀',  desc:'友方普攻時50%暴擊+50%傷害',fd:'友方進行普通攻擊時有50%機率觸發暴擊，傷害提升50%。' },
+  '直笛團員':{ name:'魔音惑心', icon:'🎵',  desc:'普攻時50%機率使目標狂亂1回合',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
+  '田徑隊員':{ name:'疾風先行', icon:'🏃',  desc:'行動時60%使未行動友方提前到下一個',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。' },
+  '幼兒園小孩':{ name:'童言震懾', icon:'👶', desc:'存活時對手全體攻擊和特技降低20%（最多5回合）',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
+  '電腦繪圖師':{ name:'護盾上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
+  '程式設計師':{ name:'系統加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
+  '弦樂團員':  { name:'弦音守護', icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
+  '小劇團員':  { name:'傷化喜劇', icon:'🎭', desc:'受傷時20%機率轉為治療',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。' },
   // ── BOSS ──
-  '九尾空貓怪': { icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
-  '綠竹筍小妖': { icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
-  '茶葉精靈':   { icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
+  '九尾空貓怪': { name:'奪財充能',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
+  '綠竹筍小妖': { name:'韌竹護甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
+  '茶葉精靈':   { name:'茶香療癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
 };
 
 let _focusedHeroIdx = -1;
@@ -6832,8 +6832,8 @@ function focusHero(idx, name){
         border:2px solid rgba(255,200,30,0.65);
         box-shadow:0 0 14px rgba(255,180,0,0.3);">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:26px;font-weight:500;color:#ffcc44;letter-spacing:3px;white-space:nowrap;">✦ 天賦 ${_sdpBtn({n:'天賦',d:tr.desc,fd:tr.fd||tr.desc},'',true)}</span>
-          <span style="font-size:27px;font-weight:500;color:#fff8d0;line-height:1.6;">${tr.icon} ${tr.desc}</span>
+          <span style="font-size:26px;font-weight:500;color:#ffcc44;letter-spacing:3px;white-space:nowrap;">✦ 天賦 ${_sdpBtn({n:'天賦 '+(tr.name||''),d:tr.desc,fd:tr.fd||tr.desc},'',true)}</span>
+          <span style="font-size:27px;font-weight:500;color:#fff8d0;line-height:1.6;">${tr.icon} <b style="color:#ffe066;">${tr.name||''}</b> ${tr.desc}</span>
         </div>
       </div>`;
   })();
@@ -7352,7 +7352,7 @@ function buildSrhBlock(h){
       if(!tr) return '';
       return `<div class="srh-current-label" style="color:#ffcc44;letter-spacing:1px">S0 天賦</div>
       <div style="background:rgba(255,200,30,0.08);border:1.5px solid rgba(255,200,30,0.4);border-radius:6px;padding:6px 9px;margin-bottom:4px;display:flex;align-items:center;gap:6px">
-        <span style="font-size:20px;font-weight:500;color:#ffcc44;flex:1">${tr.icon} ${tr.desc}</span>
+        <span style="font-size:20px;font-weight:500;color:#ffcc44;flex:1">${tr.icon} <b>${tr.name||''}</b> ${tr.desc}</span>
         ${_sdpBtn({n:'天賦',d:tr.desc,fd:tr.fd||tr.desc},'')}
       </div>`;
     })()}
