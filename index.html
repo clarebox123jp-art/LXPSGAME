@@ -2989,7 +2989,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.21.30</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.21.38</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3075,6 +3075,13 @@ body {
           color:#ff9999;border-radius:10px;cursor:pointer;
           font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;white-space:nowrap;">
           👹 魔物圖鑑
+        </button>
+        <button id="hero-expbook-btn" onclick="useHeroExpBook()" style="display:flex;align-items:center;gap:6px;
+          padding:8px 16px;font-size:22px;font-weight:700;
+          background:rgba(50,150,50,0.2);border:1.5px solid rgba(80,200,80,0.5);
+          color:#88ff88;border-radius:10px;cursor:pointer;font-family:inherit;">
+          <span style="font-size:20px;">📗</span>
+          <span id="hero-expbook-count" style="font-size:24px;font-weight:900;color:#88ff88;min-width:20px;text-align:center;">0</span>
         </button>
         <button onclick="highlightUpgradableHeroes()" id="hero-book-btn" style="display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:10px;cursor:pointer;font-family:inherit;">
           <span style="font-size:20px;color:#ffe8a0;">📖</span>
@@ -18551,6 +18558,10 @@ function advCloseUnlock() {
 const ADV_HERO_GREETINGS = {"劍士": "「我的劍，願為保護貓空的茶香而揮！」", "刺客": "「從暗處出手是我的風格。好，我就跟你們走！」", "光法師": "「聖光將照耀這片土地，讓我們一起前進吧！」", "冰法師": "「冷靜沉著是我的信條，你們看起來值得信賴。」", "火法師": "「嘿！熱血沸騰的旅程，我最喜歡了！算我一份！」", "雷法師": "「轟！我的雷光將劈碎一切阻礙！同行吧！」", "暗法師": "「黑暗中自有我保護你們，不必擔心。」", "祭司": "「以神明的恩典，我將守護你們的生命。」", "聖騎士": "「榮譽與勇氣是我的鎧甲，願為你們而戰！」", "武鬥家": "「好身手！算你們夠格讓我出手相助！」", "武士": "「以武士之名，我的刀將斬斷邪惡！」", "大力士": "「呼！跟我走，保證沒有搬不動的石頭！」", "守衛": "「保護夥伴是我的使命，交給我！」", "神射手": "「我的箭矢，永遠射向真正的敵人。同行吧！」", "吟遊詩人": "「讓我用歌聲，為你們的旅途增添色彩！」", "煉金術師": "「有趣，有趣！我的道具或許能幫上大忙！」", "凡人": "「就算只是凡人，也能做出非凡的事情！」", "占星師": "「星辰指引著我，你們就是我命中注定的隊友。」", "舞者": "「優雅與力量共存，這就是我的舞蹈！」", "木靈使": "「大地的生命，將為你們的旅途增添力量！」", "時空法師": "「時間與空間在我掌握中，跟我走沒錯的！」", "陰陽師": "「陰陽交錯間，我看清了你們的真心。好，算我一份！」", "學者": "「知識就是力量！讓我的學識為你們開路！」", "機械師": "「齒輪轉動，勝利就在眼前！讓我加入你們的冒險！」", "神偷": "「嘿嘿，我拿走的，都是敵人的好東西！歡迎合作！」", "軍師": "「兵法早已算定，你們的勝利盡在掌握。」", "吸血鬼": "「黑夜是我的舞台…既然如此，就讓我同行吧。」", "幼兒園小孩": "「嗚嗚…不要欺負我！我也會打人的！」", "動物學家": "「每一種生命都值得尊重，我和我的夥伴一起加入！」", "小力": "「汪！汪汪！（搖尾巴）」", "流浪者": "「到處流浪也挺無聊的，帶我一起去冒險吧！」"};
 
 function advStartWinSequence() {
+  // ★ 給予英雄經驗值之書 ×2
+  _heroExpBookCount = (_heroExpBookCount||0) + 2;
+  gameCloudSave();
+  _setNavDot('英雄', true);
   // 隱藏結算畫面
   document.getElementById('adv-result-overlay').classList.remove('show');
   bgmStop();
@@ -18884,6 +18895,7 @@ function _buildSafeData() {
     heroStatInvested:_heroStatInvested,      // {name: {hp,atk,sp,spd} 純數字加成}
     heroSkillLevels: _heroSkillLevels,       // {name: {s1,s2} +n 的等級數字}
     skillBookCount:  _skillBookCount,        // 數字
+    heroExpBookCount: _heroExpBookCount,      // 英雄經驗值之書
     medals:          _playerMedals,
     heroTraitLevel:  _heroTraitLevel,          // 獎章清單
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted }
@@ -18924,6 +18936,7 @@ function _applySafeData(raw) {
     }
   }
   if(typeof data.skillBookCount === 'number') _skillBookCount = data.skillBookCount;
+  if(typeof data.heroExpBookCount === 'number') _heroExpBookCount = data.heroExpBookCount;
   if(Array.isArray(data.medals)) _playerMedals = data.medals;
   if(data.heroTraitLevel && typeof data.heroTraitLevel === 'object') _heroTraitLevel = data.heroTraitLevel;
   if(data.settings) {
@@ -19008,6 +19021,7 @@ let _heroStatPoints = {};   // {heroName: freePoints}
 let _heroStatInvested = {}; // {heroName: {hp,atk,sp,spd}}
 let _heroSkillLevels = {};  // {heroName: {s1:n, s2:n}}  n=0~9 (+0~+9)
 let _skillBookCount = 0;    // 技能升級書數量
+let _heroExpBookCount = 0;  // 英雄經驗值之書數量
 let _heroTraitLevel = {};   // {heroName: 天賦升級次數(0~5)}
 let _playerMedals = [];     // 獎章清單
 
@@ -19177,6 +19191,10 @@ function openHeroPage() {
   _setNavDot('英雄', false);
   // Update book count
   document.getElementById('hero-page-book-count').textContent = _skillBookCount;
+  const _expBookEl = document.getElementById('hero-expbook-count');
+  if(_expBookEl) _expBookEl.textContent = _heroExpBookCount||0;
+  const _expBtnEl = document.getElementById('hero-expbook-btn');
+  if(_expBtnEl) _expBtnEl.style.display = (_heroExpBookCount>0) ? '' : 'none';
   // Build grid
   _buildHeroGrid();
 }
@@ -20066,6 +20084,69 @@ function openMonsterDetail(name) {
     </div>
   `;
   ov.style.display = 'flex';
+}
+
+
+// ★ 英雄經驗值之書：選擇英雄注入50EXP
+function useHeroExpBook() {
+  if((_heroExpBookCount||0) <= 0){ alert('目前沒有英雄經驗值之書。'); return; }
+  const unlocked = advGetUnlockedHeroes();
+  if(!unlocked.length){ alert('目前沒有已解鎖的英雄。'); return; }
+
+  // 建立選擇彈窗
+  const existing = document.getElementById('hero-expbook-popup');
+  if(existing) existing.remove();
+
+  const pop = document.createElement('div');
+  pop.id = 'hero-expbook-popup';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:linear-gradient(135deg,#0d1a0d,#0a150a);border:2px solid rgba(80,200,80,0.6);border-radius:20px;padding:28px 36px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;';
+
+  box.innerHTML = `
+    <div style="font-size:32px;font-weight:900;color:#88ff88;margin-bottom:6px;">📗 英雄經驗值之書</div>
+    <div style="font-size:22px;color:#aaa;margin-bottom:18px;">使用1本可為選定英雄注入 <b style="color:#ffcc44;">50 EXP</b>（剩餘：${_heroExpBookCount}本）</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+      ${unlocked.map(name=>{
+        const lv = getHeroLevel(name)||1;
+        const av = (typeof AVATARS!=='undefined'&&AVATARS[name])||'⚔️';
+        const img = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])||'';
+        return `<button onclick="applyHeroExpBook('${name}')"
+          style="width:130px;background:rgba(20,40,20,0.9);border:1.5px solid rgba(80,200,80,0.4);border-radius:12px;
+          overflow:hidden;cursor:pointer;padding:0;transition:transform 0.1s;"
+          onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          ${img?`<img src="${img}" style="width:100%;height:90px;object-fit:cover;object-position:top;">`
+               :`<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:36px;">${av}</div>`}
+          <div style="padding:6px 4px;font-size:18px;font-weight:700;color:#ffe8a0;">${name}</div>
+          <div style="font-size:16px;color:#88aaff;padding-bottom:6px;">Lv.${lv}</div>
+        </button>`;
+      }).join('')}
+    </div>
+    <button onclick="document.getElementById('hero-expbook-popup').remove()"
+      style="padding:10px 32px;font-size:24px;background:rgba(60,60,60,0.8);border:1.5px solid #555;
+      color:#aaa;border-radius:10px;cursor:pointer;font-family:inherit;">取消</button>
+  `;
+  pop.appendChild(box);
+  document.body.appendChild(pop);
+}
+
+function applyHeroExpBook(name) {
+  if((_heroExpBookCount||0) <= 0) return;
+  _heroExpBookCount = Math.max(0, _heroExpBookCount - 1);
+  addHeroExp(name, 50);
+  gameCloudSave();
+  // Update UI
+  const countEl = document.getElementById('hero-expbook-count');
+  if(countEl) countEl.textContent = _heroExpBookCount;
+  const btnEl = document.getElementById('hero-expbook-btn');
+  if(btnEl) btnEl.style.display = _heroExpBookCount > 0 ? '' : 'none';
+  // Show result
+  const pop = document.getElementById('hero-expbook-popup');
+  if(pop) pop.remove();
+  // Rebuild grid with updated exp
+  if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
+  bannerFX(null, `📗 ${name} 獲得 +50 EXP！`, '#88ff88', 1800);
 }
 
 
