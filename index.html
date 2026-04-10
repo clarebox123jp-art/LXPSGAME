@@ -2974,7 +2974,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.15.33</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.16.19</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6423,8 +6423,14 @@ function showHeroPickOverlay(){
 // 計算對手預覽陣容（與 confirmHeroPick 相同邏輯）並渲染到 ep-slot
 let _previewEnemyNames = [];
 function _previewEnemyTeam(){
-  const allNames=Object.keys(HERO_DB).filter(n=>!BOSS_NAMES.includes(n));
-  const p2pool=[..._heroPickPool,...allNames.filter(n=>!_heroPickPool.includes(n))].sort(()=>Math.random()-0.5);
+  // ★ 鬥技模式：敵方只從普通英雄中選，嚴格排除所有BOSS角色
+  const _advBossAll = typeof ADV_BOSS_TEAMS !== 'undefined'
+    ? Object.values(ADV_BOSS_TEAMS).flat().map(b=>b.name)
+    : [];
+  const _excludeAll = new Set([...BOSS_NAMES, ..._advBossAll]);
+  const allNames = Object.keys(HERO_DB).filter(n => !_excludeAll.has(n));
+  // ★ 不用 _heroPickPool（可能含冒險英雄），直接用全體普通英雄隨機
+  const p2pool = [...allNames].sort(()=>Math.random()-0.5);
   const HEAL=['祭司','聖騎士','吟遊詩人','木靈使','煉金術師','直笛團員','弦樂團員'];
   const ATK=['火法師','雷法師','暗法師','神射手','刺客','劍士','大力士','機械師','吸血鬼','小劇團員'];
   const TANK=['守衛','武鬥家','大力士','小力'];
@@ -6518,18 +6524,18 @@ function _buildHeroPickNodes(){
   if(window._isAdventurePickMode === true){
     const grid = document.createElement('div');
     grid.className = 'hpick-adv-grid';
-    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;padding:12px 16px;justify-content:flex-start;align-content:flex-start;overflow-y:auto;max-height:600px;width:100%;';
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:16px;padding:16px 12px;justify-content:flex-start;align-content:flex-start;width:100%;';
     _heroPickPool.forEach((name, idx) => {
       const av = (typeof AVATARS!=='undefined'&&AVATARS[name])||'🗡️';
       const img = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])||'';
       const node = document.createElement('div');
       node.className = 'hpick-adv-node';
       node.id = `hpick-${idx}`;
-      node.style.cssText = 'position:relative;width:128px;cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(212,168,67,0.4);background:rgba(15,15,28,0.9);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;display:block;';
+      node.style.cssText = 'position:relative;width:155px;cursor:pointer;border-radius:14px;overflow:hidden;border:2.5px solid rgba(212,168,67,0.4);background:rgba(10,12,25,0.92);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;';
       node.innerHTML = img
-        ? `<img src="${img}" style="width:100%;height:100px;object-fit:cover;display:block;"/>
-           <div style="font-size:17px;text-align:center;padding:6px 4px;color:#ffe8a0;font-weight:700;">${name}</div>`
-        : `<div style="width:100%;height:100px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>
+        ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;"/>
+           <div style="font-size:20px;text-align:center;padding:7px 4px;color:#ffe8a0;font-weight:700;">${name}</div>`
+        : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>
            <div style="font-size:17px;text-align:center;padding:6px 4px;color:#ffe8a0;font-weight:700;">${name}</div>`;
       node.onclick = () => focusHero(idx, name);
       if(_heroPickSelected.includes(name)){
