@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -99,13 +99,14 @@
   --hp-green:#3ec87a; --energy:#4a9eff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;background:#000}
+html,html,body{width:100%;height:100%;overflow:hidden;background:#000;margin:0;padding:0;touch-action:none;}
+#_gc_wrapper{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;}
 body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #gc{
-  position:fixed;top:0;left:0;display:flex;
+  position:absolute;top:0;left:0;display:flex;
   width:1920px;height:1080px;
   background:var(--bg);border:none;overflow:hidden;
-  transform-origin:top left;isolation:isolate;overflow:hidden;
+  transform-origin:top left;isolation:isolate;
 }
 
 /* FIELD */
@@ -2830,6 +2831,15 @@ body {
 
 #adv-mini-result{display:none;}
 #adv-mini-result.show{display:flex;}
+
+/* ★ 手機/平板縮放樣式 */
+@media screen and (max-width: 1919px), screen and (max-height: 1079px) {
+  #gc { transform-origin: top left; }
+}
+/* iOS safe area */
+@supports (padding: env(safe-area-inset-top)) {
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+}
 </style>
 </head>
 <body>
@@ -2896,7 +2906,7 @@ body {
 <audio id="sfx-action-confirm" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E7%A2%BA%E5%AE%9A%E8%A1%8C%E5%8B%95.mp3"></audio>
 <audio id="sfx-rapidfire-gun" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E9%80%A3%E7%BA%8C%E5%B0%84%E6%93%8A.mp3"></audio>
 <audio id="sfx-basketball"    preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E4%B8%89%E5%88%86%E5%B0%84%E7%B1%83.mp3"></audio>
-<div id="gc">
+<div id="_gc_wrapper"><div id="gc">
   <div id="fade-overlay"></div>
   <div id="battle-start-overlay"><div class="bs-text">戰鬥開始!</div></div>
   <div id="field-announce"><span class="fa-icon" id="fa-icon"></span><span class="fa-name" id="fa-name"></span><span class="fa-desc" id="fa-desc"></span></div>
@@ -2924,16 +2934,16 @@ body {
     <div id="action-panel" style="display:none">
       <div id="actor-info"></div>
       <div style="display:flex;gap:6px;align-items:stretch">
-        <button id="b-atk" class="abtn" onclick="selMove('atk')" style="flex:1"><b style="font-size:35px;margin-bottom:0">👊 普通攻擊 <span class="csk-detail-btn" data-skname="普通攻擊" data-skmeta="⚔" data-skdesc="對1名對手造成等同「攻擊」值的傷害。" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="width:28px;height:28px;line-height:28px;font-size:18px;border-radius:50%;vertical-align:middle;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;">?</span></b></button>
-        <button id="b-auto-battle" class="abtn" onclick="toggleAutoBattle()" style="border-color:#9b6dff33;color:#9b6dff;display:none;flex:1"><b style="font-size:24px;margin-bottom:0">🤖 自動戰鬥 OFF</b><span class="csk-detail-btn" data-skname="自動戰鬥" data-skmeta="🤖" data-skdesc="開啟後由AI代替你行動，AI會自動選擇最佳技能和目標。" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="width:16px;height:16px;line-height:16px;font-size:10px;vertical-align:middle;margin-left:4px">?</span></button>
+        <button id="b-atk" class="abtn" onclick="playSfx('sfx-sel',0.5);selMove('atk')" style="flex:1"><b style="font-size:35px;margin-bottom:0">👊 普通攻擊 <span class="csk-detail-btn" data-skname="普通攻擊" data-skmeta="⚔" data-skdesc="對1名對手造成等同「攻擊」值的傷害。" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="width:28px;height:28px;line-height:28px;font-size:18px;border-radius:50%;vertical-align:middle;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;">?</span></b></button>
+        <button id="b-auto-battle" class="abtn" onclick="playSfx('sfx-confirm',0.5);toggleAutoBattle()" style="border-color:#9b6dff33;color:#9b6dff;display:none;flex:1"><b style="font-size:24px;margin-bottom:0">🤖 自動戰鬥 OFF</b><span class="csk-detail-btn" data-skname="自動戰鬥" data-skmeta="🤖" data-skdesc="開啟後由AI代替你行動，AI會自動選擇最佳技能和目標。" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="width:16px;height:16px;line-height:16px;font-size:10px;vertical-align:middle;margin-left:4px">?</span></button>
       </div>
       <div style="display:flex;gap:6px;align-items:stretch;margin:3px 0">
-        <button id="b-rest" class="abtn" onclick="doRest()" style="flex:1;min-width:0;margin:0;border-color:#2a7a40 !important;background:rgba(15,55,25,0.5) !important;"><b style="font-size:35px;margin-bottom:0;color:#7ab8ff">☕ 休息 <span class="csk-detail-btn" data-skname="休息" data-skmeta="💤" data-skdesc="結束行動並恢復 1能量 + 最大HP的10%。" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="width:28px;height:28px;line-height:28px;font-size:18px;border-radius:50%;vertical-align:middle;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;">?</span></b></button>
-        <button id="b-surrender" class="abtn" onclick="_advRestartOrSurrender()" style="flex:1;min-width:0;margin:0;border-color:#ff443388;color:#ff6655;font-size:28px;font-weight:700;padding:6px 0;" id="b-restart-adv">🔄 重新開始</button>
+        <button id="b-rest" class="abtn" onclick="playSfx('sfx-gentle',0.5);doRest()" style="flex:1;min-width:0;margin:0;border-color:#2a7a40 !important;background:rgba(15,55,25,0.5) !important;"><b style="font-size:35px;margin-bottom:0;color:#7ab8ff">☕ 休息 <span class="csk-detail-btn" data-skname="休息" data-skmeta="💤" data-skdesc="結束行動並恢復 1能量 + 最大HP的10%。" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="width:28px;height:28px;line-height:28px;font-size:18px;border-radius:50%;vertical-align:middle;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;">?</span></b></button>
+        <button id="b-surrender" class="abtn" onclick="playSfx('sfx-cancel',0.5);_advRestartOrSurrender()" style="flex:1;min-width:0;margin:0;border-color:#ff443388;color:#ff6655;font-size:28px;font-weight:700;padding:6px 0;" id="b-restart-adv">🔄 重新開始</button>
       </div>
       <div id="turn-timer" style="display:none;text-align:center;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-size:16px;color:var(--muted);margin-top:4px;padding:3px 0;border-top:1px solid var(--border)">⏱ <span id="timer-count">30</span>秒後AI代管</div>
-      <button id="b-s1" class="abtn" onclick="requestAction('s1',this)"></button>
-      <button id="b-s2" class="abtn" onclick="requestAction('s2',this)"></button>
+      <button id="b-s1" class="abtn" onclick="playSfx('sfx-sel',0.5);requestAction('s1',this)"></button>
+      <button id="b-s2" class="abtn" onclick="playSfx('sfx-sel',0.5);requestAction('s2',this)"></button>
     </div>
     <div id="item-panel">
       <h4>▸ 🎒包包裡的物品 🍎💣🦮</h4>
@@ -2943,9 +2953,9 @@ body {
         <div class="islot" id="slot-2">— 空 —</div>
       </div>
       <div id="item-ops">
-        <button id="iop-use-btn"   class="iop-btn" style="background:#27ae60"            onclick="prepItemUse()">▶ 使用</button>
-        <button id="iop-equip-btn" class="iop-btn" style="background:#2255cc;display:none" onclick="prepEquipUse()">🐾 攜帶寵物</button>
-        <button class="iop-btn" style="background:#8e44ad" onclick="doSell()">◆ 賣出</button>
+        <button id="iop-use-btn"   class="iop-btn" style="background:#27ae60"            onclick="playSfx('sfx-equip',0.5);prepItemUse()">▶ 使用</button>
+        <button id="iop-equip-btn" class="iop-btn" style="background:#2255cc;display:none" onclick="playSfx('sfx-equip',0.5);prepEquipUse()">🐾 攜帶寵物</button>
+        <button class="iop-btn" style="background:#8e44ad" onclick="playSfx('sfx-coin',0.6);doSell()">◆ 賣出</button>
       </div>
     </div>
     <div id="bfield-panel" style="display:none">
@@ -2963,7 +2973,7 @@ body {
 <!-- Google 登入區塊 -->
 <div id="google-login-bar" style="position:absolute;top:12px;left:16px;z-index:20;display:flex;align-items:center;gap:12px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
   <div id="google-login-btn-wrap">
-    <button onclick="window._fbSignIn && window._fbSignIn()"
+    <button onclick="playSfx('sfx-confirm',0.5);window._fbSignIn && window._fbSignIn()"
       style="display:flex;align-items:center;gap:10px;padding:8px 20px;
       background:rgba(255,255,255,0.95);border:none;border-radius:24px;
       cursor:pointer;font-size:18px;font-weight:600;color:#333;
@@ -2975,7 +2985,7 @@ body {
   <div id="google-user-info" style="display:none;align-items:center;gap:10px;">
     <img id="google-avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(212,168,67,0.6);" />
     <span id="google-name" style="color:#ffe8a0;font-size:20px;font-weight:700;"></span>
-    <button onclick="window._fbSignOut && window._fbSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
+    <button onclick="playSfx('sfx-cancel',0.5);window._fbSignOut && window._fbSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
   </div>
 </div>
 <div style="position:absolute; bottom:25px; left:50%; transform:translateX(-50%); z-index:10; width:100%; pointer-events:none; text-align:center; font-family:'M PLUS Rounded 1c', sans-serif;">
@@ -2989,8 +2999,8 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.22.00</div>
-<button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.23.48</div>
+<button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
   <!-- ★ 登入選擇彈窗 -->
@@ -3004,7 +3014,7 @@ body {
       <div style="font-size:22px;color:#aaa;margin-bottom:28px;line-height:1.6;">
         使用 Google 登入可以自動儲存你的<br>英雄、等級、技能升級書等所有進度。
       </div>
-      <button onclick="loginGateGoogle()" style="
+      <button onclick="playSfx('sfx-confirm',0.5);loginGateGoogle()" style="
         display:flex;align-items:center;justify-content:center;gap:12px;
         width:100%;padding:16px 0;font-size:26px;font-weight:700;
         background:rgba(255,255,255,0.95);border:none;border-radius:14px;cursor:pointer;
@@ -3012,7 +3022,7 @@ body {
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:28px;height:28px;"/>
         使用 Google 登入並繼續冒險
       </button>
-      <button onclick="loginGateSkip()" style="
+      <button onclick="playSfx('sfx-gentle',0.4);loginGateSkip()" style="
         width:100%;padding:14px 0;font-size:22px;font-weight:600;
         background:rgba(40,40,60,0.8);border:1.5px solid rgba(100,100,150,0.4);
         border-radius:14px;cursor:pointer;color:#888;">
@@ -3027,7 +3037,7 @@ body {
   <!-- ══ 冒險闖關 關卡選擇頁面 ══ -->
   <div id="adventure-overlay">
     <audio id="adventure-bgm" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%95%85%E4%BA%8B%E9%96%8B%E7%AB%AF.m4a" loop preload="auto"></audio>
-    <button id="adv-back-btn" onclick="closeAdventureOverlay()">← 返回首頁</button>
+    <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
 
     <!-- 左側：關卡清單 -->
     <div id="adv-left-panel">
@@ -3057,7 +3067,7 @@ body {
           <span class="adv-info-label">🎁 獎勵</span>
           <div id="adv-rewards-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
-        <button id="adv-start-game-btn" onclick="startAdventureGame('maokong')">🎒 開始整隊！</button>
+        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame('maokong')">🎒 開始整隊！</button>
 
       </div>
     </div>
@@ -3067,23 +3077,23 @@ body {
     background:linear-gradient(160deg,#0a0d1a,#060810);flex-direction:column;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:2px solid rgba(212,168,67,0.3);">
-      <button onclick="closeHeroPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(40,30,0,0.8);border:2px solid rgba(212,168,67,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;">← 返回</button>
+      <button onclick="playSfx('sfx-cancel',0.4);closeHeroPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(40,30,0,0.8);border:2px solid rgba(212,168,67,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;">← 返回</button>
       <div style="display:flex;align-items:center;gap:16px;">
         <div style="font-size:36px;font-weight:900;color:var(--gold2,#f0c060);">⚔️ 英雄圖鑑</div>
-        <button onclick="openMonsterPage()" style="padding:8px 18px;font-size:22px;font-weight:700;
+        <button onclick="playSfx('sfx-gentle',0.5);openMonsterPage()" style="padding:8px 18px;font-size:22px;font-weight:700;
           background:rgba(180,40,40,0.2);border:1.5px solid rgba(220,80,80,0.5);
           color:#ff9999;border-radius:10px;cursor:pointer;
           font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;white-space:nowrap;">
           👹 魔物圖鑑
         </button>
-        <button id="hero-expbook-btn" onclick="useHeroExpBook()" style="display:flex;align-items:center;gap:6px;
+        <button id="hero-expbook-btn" onclick="playSfx('sfx-recharge',0.6);useHeroExpBook()" style="display:flex;align-items:center;gap:6px;
           padding:8px 16px;font-size:22px;font-weight:700;
           background:rgba(50,150,50,0.2);border:1.5px solid rgba(80,200,80,0.5);
           color:#88ff88;border-radius:10px;cursor:pointer;font-family:inherit;">
           <span style="font-size:20px;">📗</span>
           <span id="hero-expbook-count" style="font-size:24px;font-weight:900;color:#88ff88;min-width:20px;text-align:center;">0</span>
         </button>
-        <button onclick="highlightUpgradableHeroes()" id="hero-book-btn" style="display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:10px;cursor:pointer;font-family:inherit;">
+        <button onclick="playSfx('sfx-sel',0.5);highlightUpgradableHeroes()" id="hero-book-btn" style="display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:10px;cursor:pointer;font-family:inherit;">
           <span style="font-size:20px;color:#ffe8a0;">📖</span>
           <span id="hero-page-book-count" style="font-size:28px;font-weight:900;color:#ffe066;min-width:28px;text-align:center;">0</span>
         </button>
@@ -3093,16 +3103,16 @@ body {
     <!-- ★ 排序篩選列 -->
     <div id="hero-sort-bar" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 24px;border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(8,10,20,0.8);align-items:center;">
       <span style="font-size:22px;color:#aaa;margin-right:4px;">排列：</span>
-      <button class="hpsort-btn active" data-sort="lv" data-asc="0" onclick="heroSortClick(this)">LV ↓</button>
-      <button class="hpsort-btn" data-sort="hp" data-asc="0" onclick="heroSortClick(this)">HP ↓</button>
-      <button class="hpsort-btn" data-sort="atk" data-asc="0" onclick="heroSortClick(this)">攻擊 ↓</button>
-      <button class="hpsort-btn" data-sort="sp" data-asc="0" onclick="heroSortClick(this)">特技 ↓</button>
-      <button class="hpsort-btn" data-sort="spd" data-asc="0" onclick="heroSortClick(this)">速度 ↓</button>
+      <button class="hpsort-btn active" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);heroSortClick(this)">LV ↓</button>
+      <button class="hpsort-btn" data-sort="hp" data-asc="0" onclick="playSfx('sfx-sel',0.4);heroSortClick(this)">HP ↓</button>
+      <button class="hpsort-btn" data-sort="atk" data-asc="0" onclick="playSfx('sfx-sel',0.4);heroSortClick(this)">攻擊 ↓</button>
+      <button class="hpsort-btn" data-sort="sp" data-asc="0" onclick="playSfx('sfx-sel',0.4);heroSortClick(this)">特技 ↓</button>
+      <button class="hpsort-btn" data-sort="spd" data-asc="0" onclick="playSfx('sfx-sel',0.4);heroSortClick(this)">速度 ↓</button>
       <span style="font-size:22px;color:#aaa;margin-left:8px;margin-right:4px;">篩選：</span>
-      <button class="hpsort-btn hpfilter-btn active" data-filter="all" onclick="heroFilterClick(this)">全部</button>
-      <button class="hpsort-btn hpfilter-btn" data-filter="dmg" onclick="heroFilterClick(this)">⚔ 傷害</button>
-      <button class="hpsort-btn hpfilter-btn" data-filter="heal" onclick="heroFilterClick(this)">💚 治療</button>
-      <button class="hpsort-btn hpfilter-btn" data-filter="ctrl" onclick="heroFilterClick(this)">🛡 控場/坦克</button>
+      <button class="hpsort-btn hpfilter-btn active" data-filter="all" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">全部</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="dmg" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">⚔ 傷害</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">💚 治療</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="ctrl" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">🛡 控場/坦克</button>
     </div>
     <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;justify-content:flex-start;"></div>
 
@@ -3111,7 +3121,7 @@ body {
     background:linear-gradient(160deg,#100a0a,#0a0608);flex-direction:column;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:2px solid rgba(200,60,60,0.3);">
-      <button onclick="closeMonsterPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(60,30,30,0.8);border:1.5px solid rgba(200,80,80,0.4);color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回</button>
+      <button onclick="playSfx('sfx-cancel',0.4);closeMonsterPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(60,30,30,0.8);border:1.5px solid rgba(200,80,80,0.4);color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回</button>
       <div style="font-size:36px;font-weight:900;color:#ff8888;">👹 魔物圖鑑</div>
       <div style="width:120px;"></div>
     </div>
@@ -3131,33 +3141,33 @@ body {
     </div>
     <!-- 右側：英雄資料 -->
     <div id="hero-detail-box" style="flex:1;overflow-y:auto;padding:24px 28px;position:relative;">
-      <button onclick="closeHeroDetail()" style="position:absolute;top:14px;right:18px;font-size:32px;background:rgba(0,0,0,0.5);border:none;color:#888;cursor:pointer;font-weight:700;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">✕</button>
+      <button onclick="playSfx('sfx-cancel',0.4);closeHeroDetail()" style="position:absolute;top:14px;right:18px;font-size:32px;background:rgba(0,0,0,0.5);border:none;color:#888;cursor:pointer;font-weight:700;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">✕</button>
       <div id="hero-detail-content"></div>
     </div>
   </div>
 
     <!-- ★ 底部功能選單：固定在冒險overlay底部 -->
     <div id="adv-bottom-nav">
-      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('召喚')">
+      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('召喚')">
         <span class="adv-nav-icon">🔮</span>
         <span class="adv-nav-label">召喚</span>
         <span class="adv-nav-lock">🔒</span>
       </button>
-      <button class="adv-nav-btn" onclick="openHeroPage()">
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openHeroPage()">
         <span class="adv-nav-icon">⚔️</span>
         <span class="adv-nav-label">英雄圖鑑</span>
       </button>
-      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('背包')">
+      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('背包')">
         <span class="adv-nav-icon">🎒</span>
         <span class="adv-nav-label">背包</span>
         <span class="adv-nav-lock">🔒</span>
       </button>
-      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('獎章')">
+      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('獎章')">
         <span class="adv-nav-icon">🏅</span>
         <span class="adv-nav-label">獎章</span>
         <span class="adv-nav-lock">🔒</span>
       </button>
-      <button class="adv-nav-btn locked-nav" onclick="advNavLocked('設定')">
+      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('設定')">
         <span class="adv-nav-icon">⚙️</span>
         <span class="adv-nav-label">設定</span>
         <span class="adv-nav-lock">🔒</span>
@@ -3175,7 +3185,7 @@ body {
     <h2 id="equip-title">▸ 獲得寵物</h2>
     <p id="equip-desc"></p>
     <div id="equip-hero-grid"></div>
-    <button class="equip-skip-btn" onclick="doEquipSkip()">↩ 不攜帶此寵物</button>
+    <button class="equip-skip-btn" onclick="playSfx('sfx-cancel',0.4);doEquipSkip()">↩ 不攜帶此寵物</button>
   </div>
   <div id="discard-overlay">
     <h2>▸ 新回合抽卡</h2>
@@ -3189,16 +3199,16 @@ body {
       <div style="font-size:36px;font-weight:800;color:#ffffff;margin-bottom:10px">確認投降？</div>
       <div style="font-size:24px;color:#aaa;margin-bottom:32px;line-height:1.7">投降後將直接結束戰鬥<br>並判定為戰鬥失敗。</div>
       <div style="display:flex;gap:16px;justify-content:center">
-        <button onclick="doSurrender()" style="padding:12px 36px;font-size:26px;font-weight:700;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#cc2233,#881122);border:2px solid #ff4444;color:#fff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">確定投降</button>
-        <button onclick="cancelSurrender()" style="padding:12px 36px;font-size:26px;font-weight:700;border-radius:10px;cursor:pointer;background:rgba(50,50,60,0.9);border:2px solid #555;color:#ccc;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">繼續戰鬥</button>
+        <button onclick="playSfx('sfx-cancel',0.5);doSurrender()" style="padding:12px 36px;font-size:26px;font-weight:700;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#cc2233,#881122);border:2px solid #ff4444;color:#fff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">確定投降</button>
+        <button onclick="playSfx('sfx-gentle',0.4);cancelSurrender()" style="padding:12px 36px;font-size:26px;font-weight:700;border-radius:10px;cursor:pointer;background:rgba(50,50,60,0.9);border:2px solid #555;color:#ccc;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">繼續戰鬥</button>
       </div>
     </div>
   </div>
   <div id="result-overlay">
     <div class="result-txt" id="result-txt"></div>
     <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center">
-      <button onclick="initGame()" style="padding:14px 44px;font-size:28px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,200,120,0.15),rgba(30,120,60,0.2));border:2px solid var(--green);color:var(--green);cursor:pointer;letter-spacing:3px;border-radius:8px;transition:0.15s;font-weight:500" onmouseover="this.style.background='var(--green)';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,200,120,0.15),rgba(30,120,60,0.2))';this.style.color='var(--green)'">⚔ 新的一戰</button>
-      <button onclick="ctrlQuit()" style="padding:14px 44px;font-size:28px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(180,30,30,0.15),rgba(100,10,10,0.2));border:2px solid #cc3333;color:#ff6655;cursor:pointer;letter-spacing:3px;border-radius:8px;transition:0.15s;font-weight:500" onmouseover="this.style.background='#cc3333';this.style.color='#fff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(180,30,30,0.15),rgba(100,10,10,0.2))';this.style.color='#ff6655'">✕ 遊戲結束</button>
+      <button onclick="playSfx('sfx-battle-start',0.7);initGame()" style="padding:14px 44px;font-size:28px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,200,120,0.15),rgba(30,120,60,0.2));border:2px solid var(--green);color:var(--green);cursor:pointer;letter-spacing:3px;border-radius:8px;transition:0.15s;font-weight:500" onmouseover="this.style.background='var(--green)';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,200,120,0.15),rgba(30,120,60,0.2))';this.style.color='var(--green)'">⚔ 新的一戰</button>
+      <button onclick="playSfx('sfx-cancel',0.5);ctrlQuit()" style="padding:14px 44px;font-size:28px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(180,30,30,0.15),rgba(100,10,10,0.2));border:2px solid #cc3333;color:#ff6655;cursor:pointer;letter-spacing:3px;border-radius:8px;transition:0.15s;font-weight:500" onmouseover="this.style.background='#cc3333';this.style.color='#fff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(180,30,30,0.15),rgba(100,10,10,0.2))';this.style.color='#ff6655'">✕ 遊戲結束</button>
     </div>
     <a href="https://forms.gle/YCqLrohJeLqSyaXQA" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:18px;padding:13px 36px;font-size:24px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:500;letter-spacing:2px;background:linear-gradient(135deg,rgba(155,109,255,0.15),rgba(100,60,200,0.2));border:2px solid #9b6dff;color:#cc99ff;border-radius:8px;text-decoration:none;transition:all 0.2s;cursor:pointer;" onmouseover="this.style.background='#9b6dff';this.style.color='#fff';this.style.boxShadow='0 0 24px rgba(155,109,255,0.6)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(155,109,255,0.15),rgba(100,60,200,0.2))';this.style.color='#cc99ff';this.style.boxShadow=''">📋 協助填寫問卷並回報錯誤，讓遊戲更完善</a>
     <div id="battle-stats-bar"></div>
@@ -3206,13 +3216,13 @@ body {
   <div id="dice-overlay">
     <div class="dice-face" id="dice-face">🎲</div>
     <div class="dice-result" id="dice-result"></div>
-    <button onclick="closeDice()" style="padding:8px 24px;background:transparent;border:1px solid var(--muted);color:var(--muted);cursor:pointer;font-family:Share Tech Mono,monospace">繼續</button>
+    <button onclick="playSfx('sfx-cancel',0.4);closeDice()" style="padding:8px 24px;background:transparent;border:1px solid var(--muted);color:var(--muted);cursor:pointer;font-family:Share Tech Mono,monospace">繼續</button>
   </div>
   <div id="hero-pick-overlay">
     <!-- Animated starfield background -->
     <canvas id="star-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
     <!-- ★ 鬥技返回按鈕 -->
-    <button id="hero-pick-back-btn" onclick="goBackFromHeroPick()"
+    <button id="hero-pick-back-btn" onclick="playSfx('sfx-cancel',0.5);goBackFromHeroPick()"
       style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="hero-pick-topbar" style="position:relative;z-index:1;padding-left:130px;">
       <h2>▸ 英雄召集中</h2>
@@ -3223,18 +3233,18 @@ body {
         <div id="hpick-sort-bar" style="display:flex;flex-direction:column;gap:4px;padding:6px 8px 4px;flex-shrink:0;z-index:2;position:relative;">
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
             <span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">排列：</span>
-            <button class="hpsort-btn hpick-sort-btn active" data-sort="default" data-asc="0" onclick="hpickSortClick(this)">預設</button>
-            <button class="hpsort-btn hpick-sort-btn" data-sort="hp" data-asc="0" onclick="hpickSortClick(this)">HP ↓</button>
-            <button class="hpsort-btn hpick-sort-btn" data-sort="atk" data-asc="0" onclick="hpickSortClick(this)">攻擊 ↓</button>
-            <button class="hpsort-btn hpick-sort-btn" data-sort="sp" data-asc="0" onclick="hpickSortClick(this)">特技 ↓</button>
-            <button class="hpsort-btn hpick-sort-btn" data-sort="spd" data-asc="0" onclick="hpickSortClick(this)">速度 ↓</button>
+            <button class="hpsort-btn hpick-sort-btn active" data-sort="default" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">預設</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="hp" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">HP ↓</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="atk" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">攻擊 ↓</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="sp" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">特技 ↓</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="spd" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">速度 ↓</button>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
             <span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">篩選：</span>
-            <button class="hpsort-btn hpick-filter-btn active" data-filter="all" onclick="hpickFilterClick(this)">全部</button>
-            <button class="hpsort-btn hpick-filter-btn" data-filter="dmg" onclick="hpickFilterClick(this)">⚔ 傷害</button>
-            <button class="hpsort-btn hpick-filter-btn" data-filter="heal" onclick="hpickFilterClick(this)">💚 治療</button>
-            <button class="hpsort-btn hpick-filter-btn" data-filter="ctrl" onclick="hpickFilterClick(this)">🛡 控場</button>
+            <button class="hpsort-btn hpick-filter-btn active" data-filter="all" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">全部</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="dmg" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">⚔ 傷害</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">💚 治療</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="ctrl" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">🛡 控場</button>
           </div>
         </div>
         <div id="fate-text" style="position:relative;z-index:2;text-align:center;width:100%;padding:6px 0 8px;flex-shrink:0">與你命運交織的夥伴</div>
@@ -3267,7 +3277,7 @@ body {
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
         <button id="hero-pick-find-btn" onclick="_refreshHeroPool();playSfx('sfx-hero',0.6);" style="flex-shrink:0;width:80px;height:80px;font-size:28px;font-weight:900;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:radial-gradient(circle,#ffe066,#ffaa00);border:3px solid #ffcc00;border-radius:50%;color:#3a2800;cursor:pointer;margin-right:8px;box-shadow:0 0 18px rgba(255,180,0,0.5);line-height:1;display:flex;align-items:center;justify-content:center;" title="尋找新英雄">🔄</button>
-        <button onclick="randomTeamPick();_previewEnemyTeam();" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
+        <button onclick="playSfx('sfx-deal',0.6);randomTeamPick();_previewEnemyTeam();" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-right:10px;flex-shrink:0;">
           <span style="font-size:36px">🚩</span>
           <span style="font-size:32px;font-weight:500;color:var(--gold);letter-spacing:2px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">隊伍編成</span>
@@ -3279,7 +3289,7 @@ body {
   </div>
   <div id="skill-replace-overlay">
     <!-- ★ 替換技能返回按鈕 -->
-    <button onclick="goBackToHeroPick()"
+    <button onclick="playSfx('sfx-cancel',0.5);goBackToHeroPick()"
       style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="sro-header">
       <h2>▸ 替換技能</h2>
@@ -3290,10 +3300,10 @@ body {
       <div id="sro-picker-body"><!-- 3-column skill categories injected by JS --></div>
     </div>
     <div id="sro-footer">
-      <button onclick="goBackToHeroPick()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:transparent;border:1px solid #555;color:#888;cursor:pointer;letter-spacing:2px;border-radius:6px;">↩ 重新編組隊員</button>
-      <button onclick="autoRecommendSkills()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(90deg,rgba(80,40,160,0.4),rgba(40,80,200,0.4));border:2px solid #9b6dff;color:#cc99ff;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.background='#9b6dff';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(90deg,rgba(80,40,160,0.4),rgba(40,80,200,0.4))';this.style.color='#cc99ff'">✦ 自動推薦替換技能</button>
-      <button id="skill-replace-confirm" onclick="confirmSkillReplace()">▶ 確認技能，開始戰鬥</button>
-<button id="skill-replace-confirm-adv" onclick="confirmSkillReplace()" style="display:none;padding:11px 38px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;background:transparent;border:2px solid var(--purple);color:var(--purple);cursor:pointer;letter-spacing:3px;transition:0.2s;border-radius:6px;" onmouseover="this.style.background='var(--purple)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--purple)'">🗺 整裝完畢，冒險出發</button>
+      <button onclick="playSfx('sfx-cancel',0.5);goBackToHeroPick()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:transparent;border:1px solid #555;color:#888;cursor:pointer;letter-spacing:2px;border-radius:6px;">↩ 重新編組隊員</button>
+      <button onclick="playSfx('sfx-fantasy',0.5);autoRecommendSkills()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(90deg,rgba(80,40,160,0.4),rgba(40,80,200,0.4));border:2px solid #9b6dff;color:#cc99ff;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.background='#9b6dff';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(90deg,rgba(80,40,160,0.4),rgba(40,80,200,0.4))';this.style.color='#cc99ff'">✦ 自動推薦替換技能</button>
+      <button id="skill-replace-confirm" onclick="playSfx('sfx-confirm2',0.7);confirmSkillReplace()">▶ 確認技能，開始戰鬥</button>
+<button id="skill-replace-confirm-adv" onclick="playSfx('sfx-confirm2',0.7);confirmSkillReplace()" style="display:none;padding:11px 38px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;background:transparent;border:2px solid var(--purple);color:var(--purple);cursor:pointer;letter-spacing:3px;transition:0.2s;border-radius:6px;" onmouseover="this.style.background='var(--purple)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--purple)'">🗺 整裝完畢，冒險出發</button>
     </div>
   </div>
 
@@ -3302,7 +3312,7 @@ body {
   <div id="elem-pick-overlay">
     <canvas id="aurora-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.55;"></canvas>
     <!-- ★ 元素選擇返回按鈕 -->
-    <button onclick="goBackFromElemPick()"
+    <button onclick="playSfx('sfx-cancel',0.5);goBackFromElemPick()"
       style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="ep-topbar" style="position:relative;z-index:1;flex-direction:column;gap:6px;align-items:stretch;padding-left:130px;">
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3319,7 +3329,7 @@ body {
         <div id="ep-ring-area">
           <div id="ep-ring-wrap">
             <div id="ep-center-hint" style="display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:5;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-size:38px;font-weight:500;color:rgba(255,220,60,1);text-shadow:0 0 28px rgba(255,200,40,0.9),0 0 60px rgba(255,160,0,0.5),2px 2px 4px rgba(0,0,0,0.75),0px 0px 12px rgba(0,0,0,0.75),-2px -2px 4px rgba(0,0,0,0.75),2px -2px 4px rgba(0,0,0,0.75),-2px 2px 4px rgba(0,0,0,0.75);letter-spacing:3px;line-height:1.6;white-space:nowrap;"></div>
-            <button id="ep-confirm-btn" onclick="confirmElemPick()">✔ 確認選擇</button>
+            <button id="ep-confirm-btn" onclick="playSfx('sfx-confirm2',0.7);confirmElemPick()">✔ 確認選擇</button>
           </div>
         </div>
         <button id="ep-finish-btn" style="display:none">▶ 全部選完，進入技能配置</button>
@@ -3329,9 +3339,9 @@ body {
     </div>
     <!-- 底部按鈕列 -->
     <div style="flex-shrink:0;display:flex;gap:24px;justify-content:center;padding:10px 28px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(10,8,22,0.9);">
-      <button onclick="goBackToHeroPick()" style="padding:12px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:transparent;border:1px solid #555;color:#888;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.borderColor='#aaa';this.style.color='#ccc'" onmouseout="this.style.borderColor='#555';this.style.color='#888'">↩ 重新編組隊員</button>
-      <button onclick="autoRecommendElem()" style="padding:12px 36px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(90deg,rgba(80,40,160,0.5),rgba(40,80,200,0.5));border:2px solid #9b6dff;color:#cc99ff;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.background='#9b6dff';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(90deg,rgba(80,40,160,0.5),rgba(40,80,200,0.5))';this.style.color='#cc99ff'">✦ 自動推薦元素屬性</button>
-      <button id="ep-finish-btn-bar" onclick="finishElemPick()" disabled style="padding:15px 30px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:500;background:linear-gradient(90deg,#0a3020,#0e4030);border:2px solid var(--green);color:var(--green);cursor:pointer;border-radius:10px;letter-spacing:4px;transition:0.2s;opacity:0.3;" onmouseover="if(!this.disabled){this.style.background='var(--green)';this.style.color='#000'}" onmouseout="this.style.background='linear-gradient(90deg,#0a3020,#0e4030)';this.style.color='var(--green)'">▶ 全員屬性加護完成，進入技能配置</button>
+      <button onclick="playSfx('sfx-cancel',0.5);goBackToHeroPick()" style="padding:12px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:transparent;border:1px solid #555;color:#888;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.borderColor='#aaa';this.style.color='#ccc'" onmouseout="this.style.borderColor='#555';this.style.color='#888'">↩ 重新編組隊員</button>
+      <button onclick="playSfx('sfx-fantasy',0.5);autoRecommendElem()" style="padding:12px 36px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(90deg,rgba(80,40,160,0.5),rgba(40,80,200,0.5));border:2px solid #9b6dff;color:#cc99ff;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.background='#9b6dff';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(90deg,rgba(80,40,160,0.5),rgba(40,80,200,0.5))';this.style.color='#cc99ff'">✦ 自動推薦元素屬性</button>
+      <button id="ep-finish-btn-bar" onclick="playSfx('sfx-confirm2',0.7);finishElemPick()" disabled style="padding:15px 30px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:500;background:linear-gradient(90deg,#0a3020,#0e4030);border:2px solid var(--green);color:var(--green);cursor:pointer;border-radius:10px;letter-spacing:4px;transition:0.2s;opacity:0.3;" onmouseover="if(!this.disabled){this.style.background='var(--green)';this.style.color='#000'}" onmouseout="this.style.background='linear-gradient(90deg,#0a3020,#0e4030)';this.style.color='var(--green)'">▶ 全員屬性加護完成，進入技能配置</button>
     </div>
   </div>
 
@@ -3422,18 +3432,18 @@ body {
 
   <!-- ====== CONTROL BAR ====== -->
   <div id="ctrl-bar">
-    <button class="ctrl-btn" id="ctrl-fs"      onclick="ctrlFullscreen()"  >⛶<span class="ctrl-tip">全螢幕</span></button>
+    <button class="ctrl-btn" id="ctrl-fs"      onclick="playSfx('sfx-gentle',0.4);ctrlFullscreen()"  >⛶<span class="ctrl-tip">全螢幕</span></button>
     <div class="ctrl-divider"></div>
-    <button class="ctrl-btn" id="ctrl-bgm"     onclick="ctrlToggleBgm()"   >🎵<span class="ctrl-tip">音樂 開/關</span></button>
+    <button class="ctrl-btn" id="ctrl-bgm"     onclick="playSfx('sfx-gentle',0.4);ctrlToggleBgm()"   >🎵<span class="ctrl-tip">音樂 開/關</span></button>
     <button class="ctrl-btn" id="ctrl-sfx"     onclick="ctrlToggleSfx()"   >🔊<span class="ctrl-tip">音效 開/關</span></button>
     <div class="ctrl-divider"></div>
-    <button class="ctrl-btn" id="ctrl-pause" onclick="ctrlTogglePause()">⏸<span class="ctrl-tip">暫停遊戲</span></button>
-    <button class="ctrl-btn" id="ctrl-restart" onclick="ctrlRestart()"     >🔄<span class="ctrl-tip">重新開始</span></button>
-    <button class="ctrl-btn" id="ctrl-leave-battle" onclick="ctrlLeaveBattle()"
+    <button class="ctrl-btn" id="ctrl-pause" onclick="playSfx('sfx-gentle',0.4);ctrlTogglePause()">⏸<span class="ctrl-tip">暫停遊戲</span></button>
+    <button class="ctrl-btn" id="ctrl-restart" onclick="playSfx('sfx-confirm',0.5);ctrlRestart()"     >🔄<span class="ctrl-tip">重新開始</span></button>
+    <button class="ctrl-btn" id="ctrl-leave-battle" onclick="playSfx('sfx-cancel',0.5);ctrlLeaveBattle()"
       style="display:none;background:rgba(160,30,30,0.3);border-color:rgba(220,80,80,0.55);color:#ff9999;">
       🚪<span class="ctrl-tip">離開戰場</span></button>
     <div class="ctrl-divider" id="ctrl-leave-divider" style="display:none;"></div>
-    <button class="ctrl-btn danger" id="ctrl-quit" onclick="ctrlQuit()"    >✕<span class="ctrl-tip">結束遊戲</span></button>
+    <button class="ctrl-btn danger" id="ctrl-quit" onclick="playSfx('sfx-cancel',0.5);ctrlQuit()"    >✕<span class="ctrl-tip">結束遊戲</span></button>
   </div>
 
   <!-- ====== PAUSE OVERLAY ====== -->
@@ -3441,7 +3451,7 @@ body {
     <div style="font-size:88px;animation:pauseCup 2s ease-in-out infinite">☕</div>
     <div class="pause-title" style="animation:pauseFlicker 1.2s ease-in-out infinite">⏸ 遊戲暫停</div>
     <div class="pause-sub">點擊下方按鈕或再按⏸繼續</div>
-    <button class="pause-resume-btn" onclick="ctrlTogglePause()">▶ 繼續遊戲</button>
+    <button class="pause-resume-btn" onclick="playSfx('sfx-gentle',0.4);ctrlTogglePause()">▶ 繼續遊戲</button>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -3450,7 +3460,7 @@ body {
   <div id="adv-cutscene-overlay">
     <div id="adv-scene-bg"></div>
     <!-- 跳過按鈕：法寶欄左側 -->
-    <button id="adv-skip-btn" onclick="advSkipCutscene()">⏭ 跳過演出</button>
+    <button id="adv-skip-btn" onclick="playSfx('sfx-cancel',0.4);advSkipCutscene()">⏭ 跳過演出</button>
     <!-- 法寶欄：右側固定 -->
     <div id="adv-treasure-bar">
       <span style="font-size:32px;color:#ffcc44;letter-spacing:2px;font-weight:900;writing-mode:vertical-rl;margin-bottom:10px;text-shadow:0 0 10px rgba(255,200,0,0.6);">法寶</span>
@@ -3473,7 +3483,7 @@ body {
         <div class="atp-icon" id="atp-icon"></div>
         <div class="atp-name" id="atp-name"></div>
         <div class="atp-desc" id="atp-desc"></div>
-        <button class="atp-ok-btn" onclick="advCloseTreasurePopup()">收下法寶！</button>
+        <button class="atp-ok-btn" onclick="playSfx('sfx-confirm2',0.7);advCloseTreasurePopup()">收下法寶！</button>
       </div>
     </div>
   </div>
@@ -3484,7 +3494,7 @@ body {
       <div id="adv-boss-intro-text"></div>
       <div id="adv-boss-intro-next" onclick="advNextBossLine()">▶▶</div>
     </div>
-    <button id="adv-boss-intro-skip" onclick="advCloseBossIntro()">跳過 ⏭</button>
+    <button id="adv-boss-intro-skip" onclick="playSfx('sfx-confirm',0.5);advCloseBossIntro()">跳過 ⏭</button>
   </div>
   <!-- Boss 答題反應氣泡 -->
   <div id="adv-boss-react">
@@ -3511,7 +3521,7 @@ body {
       <div id="adv-reward-title">🎉 答對了！選擇獎勵</div>
       <div id="adv-reward-subtitle">選擇一項獎勵施放到戰場上</div>
       <div id="adv-reward-choices"></div>
-      <button id="adv-reward-keep-btn" onclick="advKeepReward()">📦 保留至下次</button>
+      <button id="adv-reward-keep-btn" onclick="playSfx('sfx-powerup',0.6);advKeepReward()">📦 保留至下次</button>
     </div>
   </div>
   <!-- 接關視窗 -->
@@ -3521,8 +3531,8 @@ body {
       <div id="adv-continue-msg">是否要消耗一次接關機會？<br>接關後隊伍以全血量復活，Boss維持現狀。</div>
       <div id="adv-continue-count"></div>
       <div id="adv-continue-btns">
-        <button class="adv-continue-yes" onclick="advDoContinue()">💪 接關繼續！</button>
-        <button class="adv-continue-no" onclick="advGiveUp()">🏳 放棄</button>
+        <button class="adv-continue-yes" onclick="playSfx('sfx-confirm',0.6);advDoContinue()">💪 接關繼續！</button>
+        <button class="adv-continue-no" onclick="playSfx('sfx-cancel',0.5);advGiveUp()">🏳 放棄</button>
       </div>
     </div>
   </div>
@@ -3537,7 +3547,7 @@ body {
       <div id="adv-hmeet-skills" style="width:100%;display:flex;flex-direction:column;gap:8px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
       <div id="adv-hmeet-trait" style="width:100%;padding:12px 16px;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.4);border-radius:10px;font-size:22px;color:#cc88ff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
       <div id="adv-hmeet-greeting" style="font-size:30px;font-weight:700;color:#fff;text-align:center;line-height:1.6;padding:16px 20px;background:rgba(255,200,50,0.12);border-radius:14px;border:1px solid rgba(255,200,50,0.3);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-style:italic;"></div>
-      <button onclick="advHeroMeetDone()" style="padding:16px 56px;font-size:30px;font-weight:800;background:linear-gradient(135deg,#ffcc44,#ff8800);color:#000;border:none;border-radius:12px;cursor:pointer;letter-spacing:3px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;margin-top:8px;">繼續冒險！→</button>
+      <button onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="padding:16px 56px;font-size:30px;font-weight:800;background:linear-gradient(135deg,#ffcc44,#ff8800);color:#000;border:none;border-radius:12px;cursor:pointer;letter-spacing:3px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;margin-top:8px;">繼續冒險！→</button>
     </div>
   </div>
 
@@ -3548,7 +3558,7 @@ body {
       <div id="adv-unlock-hero-av"></div>
       <div id="adv-unlock-hero-name"></div>
       <div id="adv-unlock-desc"></div>
-      <button id="adv-unlock-ok" onclick="advCloseUnlock()">加入冒險者行列！</button>
+      <button id="adv-unlock-ok" onclick="playSfx('sfx-hero',0.6);advCloseUnlock()">加入冒險者行列！</button>
     </div>
   </div>
   <!-- 戰績結算 -->
@@ -3559,9 +3569,9 @@ body {
       <div id="adv-result-score"></div>
       <div id="adv-result-stats"></div>
       <div id="adv-result-btns">
-        <button class="adv-result-play-again" onclick="advPlayAgain()">🔄 再玩一次</button>
-        <button id="adv-result-win-next" class="adv-result-play-again" onclick="advStartWinSequence()" style="background:linear-gradient(135deg,rgba(255,200,50,0.2),rgba(200,120,0,0.2));border-color:#ffcc44;color:#ffcc44;display:none;">🌟 前往茶園</button>
-        <button class="adv-result-back-title" onclick="advBackToTitle()">🏠 回到首頁</button>
+        <button class="adv-result-play-again" onclick="playSfx('sfx-confirm',0.5);advPlayAgain()">🔄 再玩一次</button>
+        <button id="adv-result-win-next" class="adv-result-play-again" onclick="playSfx('sfx-goddess',0.7);advStartWinSequence()" style="background:linear-gradient(135deg,rgba(255,200,50,0.2),rgba(200,120,0,0.2));border-color:#ffcc44;color:#ffcc44;display:none;">🌟 前往茶園</button>
+        <button class="adv-result-back-title" onclick="playSfx('sfx-cancel',0.5);advBackToTitle()">🏠 回到首頁</button>
       </div>
     </div>
   </div>
@@ -12986,7 +12996,7 @@ function clickItem(it){
   renderItems();
   document.getElementById('item-ops').style.display='flex';
   // Visually disable sell btn if hero already sold this battle
-  const _sb=document.querySelector('#item-ops .iop-btn[onclick="doSell()"]');
+  const _sb=document.querySelector('#item-ops .iop-btn[onclick*="doSell()"]');
   if(_sb){ const _hk3=a?a.side+'-'+a.pos:''; const _s3=G.sellUsed&&G.sellUsed.has(_hk3); _sb.disabled=_s3; _sb.style.opacity=_s3?'0.35':'1'; }
   // 裝備卡：顯示「裝備」和「賣出」；能量寶石：只顯示「賣出」；其他：顯示「使用」
   if(it.type==='equip'){
@@ -16473,7 +16483,7 @@ document.addEventListener('click', function(e){
   if(t.matches('.srh-cancel-btn')){ sndCancel(); return; }
   if(t.matches('#iop-use-btn')){ sndClick(); return; }
   if(t.matches('#iop-equip-btn')){ sndClick(); return; }
-  if(t.matches('.iop-btn[onclick="doSell()"],.iop-btn[style*="8e44ad"]')){ sndSell(); return; }
+  if(t.matches('.iop-btn[onclick*="doSell()"],.iop-btn[style*="8e44ad"]')){ sndSell(); return; }
   if(t.matches('.ibox,.ibox *')){ sndItemClick(); return; }
   if(t.matches('.abtn:not(:disabled),.abtn:not(:disabled) *')){ sndTab(); return; }
   if(t.matches('.equip-hero-btn,.equip-hero-btn *')){ sndClick(); return; }
@@ -18112,7 +18122,7 @@ function advUseTreasureFromCutscene(slotIdx) {
     <div style="font-size:38px;font-weight:900;color:#ffe066;margin-bottom:12px;letter-spacing:2px;">${t.name}</div>
     <div style="font-size:28px;color:#d4d0c4;line-height:1.7;margin-bottom:20px;">${t.desc}</div>
     <div style="font-size:22px;color:#aa9955;font-style:italic;">⚔ 答題時使用才能生效</div>
-    <button onclick="document.getElementById('_ts_popup').remove()"
+    <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('_ts_popup').remove()"
       style="margin-top:18px;padding:12px 40px;font-size:28px;font-weight:700;
       background:linear-gradient(135deg,rgba(100,60,0,0.9),rgba(180,100,0,0.8));
       border:2px solid rgba(255,200,50,0.6);border-radius:10px;
@@ -18882,7 +18892,7 @@ function advShowBossDetail(name){
     </div>` : ''}
 
     <!-- 關閉按鈕 -->
-    <button onclick="document.getElementById('adv-boss-detail-pop')&&document.getElementById('adv-boss-detail-pop').remove()"
+    <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('adv-boss-detail-pop')&&document.getElementById('adv-boss-detail-pop').remove()"
       style="width:100%;padding:14px;font-size:28px;font-weight:700;letter-spacing:4px;
              background:rgba(232,64,64,0.12);border:2px solid #e84040;color:#ff8888;
              border-radius:10px;cursor:pointer;font-family:inherit;transition:all 0.15s;"
@@ -19105,7 +19115,7 @@ function grantBattleExp(win, stats) {
   // 出戰英雄×1.5，其他英雄×0.5
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
   heroes.forEach(name => {
-    const mul = battleHeroes.includes(name) ? 1.5 : 0.5;
+    const mul = battleHeroes.includes(name) ? 1.5 : 0; // ★ 未出戰=0
     addHeroExp(name, Math.round(totalExp * mul));
   });
   const battleExp = Math.round(totalExp * 1.5);
@@ -19554,13 +19564,13 @@ function _renderHeroDetail(name, box) {
   box.innerHTML = `
     <!-- 返回圖鑑按鈕 -->
     <div style="position:sticky;top:0;z-index:10;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
-      <button onclick="closeHeroDetail()" style="padding:10px 24px;font-size:26px;font-weight:800;
+      <button onclick="playSfx('sfx-cancel',0.4);closeHeroDetail()" style="padding:10px 24px;font-size:26px;font-weight:800;
         background:rgba(40,30,0,0.85);border:2px solid rgba(212,168,67,0.6);
         color:#ffe8a0;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回圖鑑</button>
-      <button onclick="heroDetailPrev()" style="padding:10px 20px;font-size:26px;font-weight:800;
+      <button onclick="playSfx('sfx-sel',0.4);heroDetailPrev()" style="padding:10px 20px;font-size:26px;font-weight:800;
         background:rgba(30,30,60,0.85);border:2px solid rgba(100,150,255,0.5);
         color:#88aaff;border-radius:10px;cursor:pointer;font-family:inherit;">◀ 上一位</button>
-      <button onclick="heroDetailNext()" style="padding:10px 20px;font-size:26px;font-weight:800;
+      <button onclick="playSfx('sfx-sel',0.4);heroDetailNext()" style="padding:10px 20px;font-size:26px;font-weight:800;
         background:rgba(30,30,60,0.85);border:2px solid rgba(100,150,255,0.5);
         color:#88aaff;border-radius:10px;cursor:pointer;font-family:inherit;">下一位 ▶</button>
     </div>
@@ -19596,7 +19606,7 @@ function _renderHeroDetail(name, box) {
             <span style="font-size:22px;">${icon} ${lbl}</span>
             <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${base+bonus}${bonus>0?`<span style="font-size:16px;color:#44ff88;"> +${bonus}</span>`:''}
             </span>
-            ${freeP>0&&bonus<50?`<button onclick="investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
+            ${freeP>0&&bonus<50?`<button onclick="playSfx('sfx-statup',0.6);investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
           </div>`;
         }).join('')}
         ${freeP>0?`<div style="grid-column:1/-1;font-size:22px;color:#44ff88;font-weight:700;padding:2px 0;">💎 素質點數：${freeP}</div>`:''}
@@ -19633,7 +19643,7 @@ function _renderHeroDetail(name, box) {
             ${sk.p?'<span style="font-size:20px;color:#aaa;background:rgba(100,100,100,0.3);border-radius:6px;padding:2px 8px;">[被動]</span>':''}
             ${skLv>0?`<span style="font-size:20px;color:#ffcc44;background:rgba(255,200,0,0.15);border-radius:6px;padding:2px 10px;">+${skLv} 效果+${skLv*10}%</span>`:''}
             ${maxed?`<span style="font-size:20px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
-            ${!maxed && _skillBookCount>0 ? `<button onclick="upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
+            ${!maxed && _skillBookCount>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
           </div>
           <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${fd}</div>
         </div>`;
@@ -19884,7 +19894,7 @@ function advFinishMiniBattle(win) {
       });
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
       heroes.forEach(name => {
-        addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : Math.round(baseExp*0.5));
+        addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : 0); // ★ 未出戰=0
       });
       // ★ 顯示小怪結算畫面
       const _expEl = document.getElementById('adv-mini-result');
@@ -20079,7 +20089,7 @@ function openMonsterDetail(name) {
 
   box.innerHTML = `
     <div style="position:sticky;top:0;z-index:10;margin-bottom:16px;display:flex;gap:10px;">
-      <button onclick="closeHeroDetail();openMonsterPage();" style="padding:10px 24px;font-size:26px;font-weight:800;
+      <button onclick="playSfx('sfx-cancel',0.4);closeHeroDetail();openMonsterPage();" style="padding:10px 24px;font-size:26px;font-weight:800;
         background:rgba(40,10,10,0.85);border:2px solid rgba(220,80,80,0.6);
         color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回魔物圖鑑</button>
     </div>
@@ -20157,7 +20167,7 @@ function useHeroExpBook() {
         const lv = getHeroLevel(name)||1;
         const av = (typeof AVATARS!=='undefined'&&AVATARS[name])||'⚔️';
         const img = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])||'';
-        return `<button onclick="applyHeroExpBook('${name}')"
+        return `<button onclick="playSfx('sfx-powerup',0.7);applyHeroExpBook('${name}')"
           style="width:130px;background:rgba(20,40,20,0.9);border:1.5px solid rgba(80,200,80,0.4);border-radius:12px;
           overflow:hidden;cursor:pointer;padding:0;transition:transform 0.1s;"
           onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
@@ -20168,7 +20178,7 @@ function useHeroExpBook() {
         </button>`;
       }).join('')}
     </div>
-    <button onclick="document.getElementById('hero-expbook-popup').remove()"
+    <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('hero-expbook-popup').remove()"
       style="padding:10px 32px;font-size:24px;background:rgba(60,60,60,0.8);border:1.5px solid #555;
       color:#aaa;border-radius:10px;cursor:pointer;font-family:inherit;">取消</button>
   `;
@@ -20234,5 +20244,54 @@ window._advSystemReady = true;
       <div style="font-size:24px;color:#aaa;margin-top:10px;">繼續冒險中...</div>
     </div>
   </div>
+</div><!-- gc_wrapper -->
+
+<script>
+// ★★★ 手機/平板動態縮放引擎 ★★★
+(function(){
+  const GW = 1920, GH = 1080;
+
+  function scaleGame(){
+    const gc = document.getElementById('gc');
+    if(!gc) return;
+
+    const vw = window.innerWidth  || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+
+    // 計算等比縮放比例（填滿畫面不裁切）
+    const scaleX = vw / GW;
+    const scaleY = vh / GH;
+    const scale  = Math.min(scaleX, scaleY);
+
+    // 置中偏移
+    const offsetX = Math.max(0, Math.floor((vw - GW * scale) / 2));
+    const offsetY = Math.max(0, Math.floor((vh - GH * scale) / 2));
+
+    gc.style.transform       = 'scale(' + scale + ')';
+    gc.style.transformOrigin = 'top left';
+    gc.style.left            = offsetX + 'px';
+    gc.style.top             = offsetY + 'px';
+
+    // 同步 wrapper 背景
+    const wrapper = document.getElementById('_gc_wrapper');
+    if(wrapper){
+      wrapper.style.width  = vw + 'px';
+      wrapper.style.height = vh + 'px';
+    }
+  }
+
+  // 立即執行、resize、orientationchange 時重算
+  scaleGame();
+  window.addEventListener('resize',            scaleGame, {passive:true});
+  window.addEventListener('orientationchange', function(){ setTimeout(scaleGame, 150); }, {passive:true});
+  // iOS Safari 地址欄顯示/隱藏時也要重算
+  if('visualViewport' in window){
+    window.visualViewport.addEventListener('resize', scaleGame, {passive:true});
+  }
+  // 儲存到全域供外部呼叫
+  window.scaleGame = scaleGame;
+})();
+</script>
+
 </body>
 </html>
