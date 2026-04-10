@@ -1529,9 +1529,9 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* BOTTOM: 3-column skill picker */
 #sro-picker{
   flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px 16px 0;gap:6px;min-height:0;
-  max-height:calc(100vh - 420px);
+  max-height:calc(100vh - 420px);padding-bottom:90px;
 }
-#sro-picker-title{font-size:36px;color:var(--muted);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;flex-shrink:0}
+#sro-picker-title{font-size:28px;color:#ffffff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;flex-shrink:0}
 #sro-picker-body{
   overflow-y:auto;
   overflow-x:hidden;
@@ -1588,7 +1588,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 
 /* Footer */
 #sro-footer{
-  flex-shrink:0;display:flex;gap:16px;justify-content:center;
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;gap:16px;justify-content:center;
   padding:8px 28px;border-top:1px solid var(--border);background:rgba(10,8,22,0.9);
 }
 #skill-replace-confirm{
@@ -2989,7 +2990,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.19.36</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.19.53</div>
 <button id="adventure-btn" onclick="showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3213,18 +3214,22 @@ body {
     </div>
     <div id="hero-pick-body" style="position:relative;z-index:1;flex-direction:row;">
       <div id="hero-pick-arena" style="display:flex;flex-direction:column;align-items:center;">
-        <div id="hpick-sort-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 8px 4px;align-items:center;flex-shrink:0;z-index:2;position:relative;">
-          <span style="font-size:18px;color:#aaa;margin-right:2px;">排列：</span>
-          <button class="hpsort-btn hpick-sort-btn active" data-sort="default" data-asc="0" onclick="hpickSortClick(this)">預設</button>
-          <button class="hpsort-btn hpick-sort-btn" data-sort="hp" data-asc="0" onclick="hpickSortClick(this)">HP ↓</button>
-          <button class="hpsort-btn hpick-sort-btn" data-sort="atk" data-asc="0" onclick="hpickSortClick(this)">攻擊 ↓</button>
-          <button class="hpsort-btn hpick-sort-btn" data-sort="sp" data-asc="0" onclick="hpickSortClick(this)">特技 ↓</button>
-          <button class="hpsort-btn hpick-sort-btn" data-sort="spd" data-asc="0" onclick="hpickSortClick(this)">速度 ↓</button>
-          <span style="font-size:18px;color:#aaa;margin-left:6px;margin-right:2px;">篩選：</span>
-          <button class="hpsort-btn hpick-filter-btn active" data-filter="all" onclick="hpickFilterClick(this)">全部</button>
-          <button class="hpsort-btn hpick-filter-btn" data-filter="dmg" onclick="hpickFilterClick(this)">⚔ 傷害</button>
-          <button class="hpsort-btn hpick-filter-btn" data-filter="heal" onclick="hpickFilterClick(this)">💚 治療</button>
-          <button class="hpsort-btn hpick-filter-btn" data-filter="ctrl" onclick="hpickFilterClick(this)">🛡 控場</button>
+        <div id="hpick-sort-bar" style="display:flex;flex-direction:column;gap:4px;padding:6px 8px 4px;flex-shrink:0;z-index:2;position:relative;">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">排列：</span>
+            <button class="hpsort-btn hpick-sort-btn active" data-sort="default" data-asc="0" onclick="hpickSortClick(this)">預設</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="hp" data-asc="0" onclick="hpickSortClick(this)">HP ↓</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="atk" data-asc="0" onclick="hpickSortClick(this)">攻擊 ↓</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="sp" data-asc="0" onclick="hpickSortClick(this)">特技 ↓</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="spd" data-asc="0" onclick="hpickSortClick(this)">速度 ↓</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
+            <span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">篩選：</span>
+            <button class="hpsort-btn hpick-filter-btn active" data-filter="all" onclick="hpickFilterClick(this)">全部</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="dmg" onclick="hpickFilterClick(this)">⚔ 傷害</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="heal" onclick="hpickFilterClick(this)">💚 治療</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="ctrl" onclick="hpickFilterClick(this)">🛡 控場</button>
+          </div>
         </div>
         <div id="fate-text" style="position:relative;z-index:2;text-align:center;width:100%;padding:6px 0 8px;flex-shrink:0">與你命運交織的夥伴</div>
         <div id="hero-pick-arena-inner" style="position:relative;flex:1;width:100%;"></div>
@@ -3255,7 +3260,7 @@ body {
       </div>
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
-        <button id="hero-pick-find-btn" onclick="_refreshHeroPool();playSfx('sfx-hero',0.6);" style="flex-shrink:0;padding:10px 24px;font-size:22px;font-weight:700;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:radial-gradient(circle,rgba(40,30,80,0.95),rgba(20,15,50,0.98));border:2px solid rgba(200,170,255,0.5);border-radius:12px;color:#cc99ff;cursor:pointer;margin-right:8px;">✦ 尋找新英雄</button>
+        <button id="hero-pick-find-btn" onclick="_refreshHeroPool();playSfx('sfx-hero',0.6);" style="flex-shrink:0;width:80px;height:80px;font-size:28px;font-weight:900;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:radial-gradient(circle,#ffe066,#ffaa00);border:3px solid #ffcc00;border-radius:50%;color:#3a2800;cursor:pointer;margin-right:8px;box-shadow:0 0 18px rgba(255,180,0,0.5);line-height:1;display:flex;align-items:center;justify-content:center;" title="尋找新英雄">🔄</button>
         <button onclick="randomTeamPick();_previewEnemyTeam();" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-right:10px;flex-shrink:0;">
           <span style="font-size:36px">🚩</span>
@@ -3275,7 +3280,7 @@ body {
     </div>
     <div id="sro-cards"><!-- hero blocks injected by JS --></div>
     <div id="sro-picker">
-      <div id="sro-picker-title">▸ 候選技能（點選後指定替換技能位置）</div>
+      <div id="sro-picker-title">候選技能（點選後，在上方英雄技能欄位指定替換技能位置，被動技能無法被替換）</div>
       <div id="sro-picker-body"><!-- 3-column skill categories injected by JS --></div>
     </div>
     <div id="sro-footer">
@@ -6468,7 +6473,7 @@ function showHeroPickOverlay(){
   const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
   // 初始12個也優先選未見過的（第一次全都未見，直接隨機）
   const shuffled = [...allNames].sort(()=>Math.random()-0.5);
-  _heroPickPool = shuffled.slice(0, 20);
+  _heroPickPool = shuffled.slice(0, 10);
   // 記錄初始出現的英雄
   _heroPickPool.forEach(n=>_heroSeenPool.add(n));
   // 初始 pool：小力 50% 機率換掉
@@ -17511,6 +17516,11 @@ function advLoadScene(stage, idx) {
     bg.classList.add('visible');
   }, 400);
 
+  // ★ 清除所有可能阻擋的元素
+  const _bossDetailPop2 = document.getElementById('adv-boss-detail-pop');
+  if(_bossDetailPop2) _bossDetailPop2.remove();
+  const _miniResultEl = document.getElementById('adv-mini-result');
+  if(_miniResultEl) _miniResultEl.classList.remove('show');
   // 隱藏對話框和選擇視窗，等2秒後顯示
   const dialog = document.getElementById('adv-dialog-box');
   dialog.classList.remove('show');
@@ -19716,6 +19726,9 @@ function advStartMiniBattle(nextSceneIdx) {
       const _el=document.getElementById(id);
       if(_el){ _el.classList.remove('show'); _el.style.display=''; }
     });
+    // ★ 清除動態建立的 boss-detail 彈窗（z-index:9900 會遮蓋整個戰場）
+    const _bossDetailPop = document.getElementById('adv-boss-detail-pop');
+    if(_bossDetailPop) _bossDetailPop.remove();
     const cutsceneOv = document.getElementById('adv-cutscene-overlay');
     if(cutsceneOv) cutsceneOv.style.display = 'none';
     const gc = document.getElementById('gc');
@@ -19823,14 +19836,16 @@ function advFinishMiniBattle(win) {
     if(bsOv) bsOv.classList.remove('show');
   }catch(e){}
 
-  // 停止所有戰鬥音樂，恢復過場音樂
+  // 停止戰鬥音樂，播放勝利音樂後恢復過場音樂
   try{
     bgmStop();
     ['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04','bgm-battle-05'].forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.pause(); el.currentTime=0; }
     });
-    bgmPlay('bgm-adv-scene');
+    // ★ 播放勝利BGM，3秒後切換到過場音樂
+    bgmPlay('bgm-win');
+    setTimeout(()=>{ bgmStop(); bgmPlay('bgm-adv-scene'); }, 3000);
   }catch(e){}
 
   // 回到過場，繼續下一幕
