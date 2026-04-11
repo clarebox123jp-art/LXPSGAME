@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.01.12</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.01.39</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -10213,6 +10213,8 @@ function doDmg(target, rawDmg, opts={}){
   }
   // warhorn buff on attacker
   let dmg=rawDmg;
+  // ★ 技能升級倍率（只對 isSkill:true 的傷害有效）
+  if(opts.isSkill && _activeSkLvMult > 1.0) dmg = Math.round(dmg * _activeSkLvMult);
   if(a&&hasBuff(a,'dmgup')&&!opts.isHeal) dmg+=Math.floor(a.sp*0.5);
   // 極速閃燃：下次傷害×2（使用後移除）
   if(a&&hasBuff(a,'_sprintBurst')&&!opts.isHeal){
@@ -10826,6 +10828,8 @@ function doHeal(target, rawAmt, opts={}){
   if(target && hasStatus(target,'healReduced')){ rawAmt=Math.ceil(rawAmt*0.5); }
   const a=G.activeChar||opts.actor;
   let amt=rawAmt;
+  // ★ 技能升級倍率（只對 isHeal:true 有效）
+  if(opts.isHeal && _activeSkLvMult > 1.0) amt = Math.round(amt * _activeSkLvMult);
   if(a&&hasBuff(a,'dmgup')&&opts.isHeal) amt+=Math.floor(a.sp*0.5);
   // 接力傳遞：治療+50%（使用後移除）
   if(a&&hasBuff(a,'_relay')&&opts.isHeal){
@@ -11548,6 +11552,9 @@ function _showCharmPicker(dancer, victim, cost){
 
 function execSkill(a, sk, cost, stype){
   const n=sk.n;
+  // ★ 設定目前技能升級等級倍率
+  _activeSkLv = (_heroSkillLevels&&_heroSkillLevels[a.name]&&stype) ? ((_heroSkillLevels[a.name][stype])||0) : 0;
+  _activeSkLvMult = 1.0 + _activeSkLv * 0.10;
   a._actionLabel = n+'！';
   G.lastSkill={...sk,actor:a};
   showActionLabel(a, (sk.p?'⚙ ':'')+n, sk.p?'#ffaa44':'#66ddff');
@@ -12051,7 +12058,8 @@ function execSkill(a, sk, cost, stype){
       // ★ 每清除1個不利狀態恢復20%HP
       if(_badCount > 0){
         const _healPct = _badCount * 0.20;
-        const _healAmt = Math.max(1, Math.floor(_target.hp * _healPct));
+        const _healAmtBase = Math.max(1, Math.floor(_target.hp * _healPct));
+        const _healAmt = Math.round(_healAmtBase * _activeSkLvMult);
         doHeal(_target, _healAmt, {actor:a, isHeal:true});
         log(`[${a.name}] 邏輯優化！清除 [${_target.name}] ${_badCount}個不利狀態，恢復${_healAmt}HP，免疫2回合！`);
       } else {
@@ -12951,8 +12959,9 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   else if(n==='催眠之歌'){
     setPending('enemy', t=>{
-      addStatus(t,'sleep',3);  // ★ 修正：使用 addStatus 而非 addBuff
-      log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`);
+      const _slpDur = _skLvDur(3, 2);
+      addStatus(t,'sleep',_slpDur);
+      log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠${_slpDur}回合！`);
       bannerFX(t,'催眠！💤','#aaaaff',900);
       renderCard(t); updateUI();
       if(checkWin()) return;
@@ -13050,9 +13059,10 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   // ══ 護盾術：單體30點護盾 ══
   else if(n==='護盾術'){
     setPending('ally', t=>{
+      const _sBase = Math.round(30 * _activeSkLvMult);
       const _existing = t.buffs.find(b=>b.type==='bigshield');
-      if(_existing){ _existing._hp = (_existing._hp||0) + 30; }
-      else { t.buffs.push({type:'bigshield', dur:99, _hp:30}); }
+      if(_existing){ _existing._hp = (_existing._hp||0) + _sBase; }
+      else { t.buffs.push({type:'bigshield', dur:99, _hp:_sBase}); }
       renderCard(t);
       playSkillFX('護盾術', a, [t]);
       bannerFX(t, '🛡️護盾+30！', '#88ccff', 900);
@@ -13229,6 +13239,8 @@ function autoUseItem(item, actor, cb){
 }
 
 function endAction(a, cost, noFinish=false){
+  // ★ 重置技能升級倍率
+  _activeSkLvMult = 1.0; _activeSkLv = 0;
   try {
   clearTurnTimer();
   // ── 連招疲勞追蹤（按英雄個別記錄）──
@@ -20397,21 +20409,29 @@ function _backpackOpenSkillSelect(heroName, callback){
   const s1lv=(levels.s1||0), s2lv=(levels.s2||0);
   box.innerHTML=`
     <div style="font-size:28px;font-weight:900;color:#ffcc44;margin-bottom:20px;">選擇要升級的技能</div>
-    <div style="display:flex;gap:16px;justify-content:center;">
+    <div style="display:flex;gap:16px;align-items:flex-start;">
       ${[{slot:'s1',sk:hd.s1,lv:s1lv},{slot:'s2',sk:hd.s2,lv:s2lv}].map(({slot,sk,lv})=>sk?`
-        <button onclick="document.getElementById('bag-skill-select').remove(); _backpackSkillCb('${heroName}','${slot}')"
-          id="bag-sk-${slot}" style="flex:1;padding:16px 20px;background:rgba(40,30,0,0.8);
-          border:2px solid rgba(255,180,50,${lv>=9?'0.25':'0.7'});color:${lv>=9?'#555':'#ffe066'};
-          border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;
-          ${lv>=9?'pointer-events:none;':''}">
-          <div style="font-size:20px;color:#aaa;">技能${slot==='s1'?'1':'2'}</div>
-          <div style="font-size:26px;font-weight:900;margin:4px 0;">${sk.n}</div>
-          <div style="font-size:18px;color:#aaa;">${sk.d}</div>
-          <div style="font-size:18px;color:${lv>=9?'#888':'#ffcc44'};margin-top:6px;">Lv.${lv} → Lv.${Math.min(9,lv+1)}${lv>=9?' (MAX)':''}</div>
-        </button>`:'').join('')}
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+          <button onclick="document.getElementById('bag-skill-select').remove(); _backpackSkillCb('${heroName}','${slot}')"
+            style="width:100%;padding:14px 16px;background:rgba(40,30,0,0.8);
+            border:2px solid rgba(255,180,50,${lv>=9?'0.25':'0.7'});color:${lv>=9?'#555':'#ffe066'};
+            border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;${lv>=9?'pointer-events:none;':''}">
+            <div style="font-size:18px;color:#aaa;">技能${slot==='s1'?'1':'2'}</div>
+            <div style="font-size:24px;font-weight:900;margin:4px 0;">${sk.n}</div>
+            <div style="font-size:16px;color:#aaa;line-height:1.4;">${sk.d}</div>
+            <div style="font-size:18px;color:${lv>=9?'#888':'#44ff88'};margin-top:8px;font-weight:800;">
+              ${lv>=9?'已達 MAX ✓':'▶ 升到 Lv.'+(lv+1)+' (效果 +'+(lv+1)*10+'%)'}
+            </div>
+          </button>
+          <div style="background:rgba(8,10,22,0.92);border:1px solid rgba(255,180,50,0.2);
+            border-radius:10px;padding:8px 4px;max-height:240px;overflow-y:auto;font-size:15px;">
+            <div style="font-size:14px;color:#888;text-align:center;padding:2px 0 4px;">── 升級效果一覽 ──</div>
+            ${buildSkillLvTable(sk.n, lv)}
+          </div>
+        </div>`:'').join('')}
     </div>
     <button onclick="document.getElementById('bag-skill-select').remove()"
-      style="margin-top:20px;padding:10px 32px;font-size:20px;background:rgba(60,10,10,0.3);
+      style="margin-top:16px;padding:10px 32px;font-size:20px;background:rgba(60,10,10,0.3);
       border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;">取消</button>`;
   ov.appendChild(box);
   document.body.appendChild(ov);
@@ -20762,6 +20782,167 @@ function _applyPresetTeam(slotIdx){
 }
 
 function _closePresetOv(id){ var el=document.getElementById(id); if(el) el.remove(); }
+
+
+// ═══════════════════════════════════════════════════════════
+// ★ 技能升級等級系統
+// ═══════════════════════════════════════════════════════════
+
+// 目前正在執行技能的等級倍率（execSkill 開始時設定，endAction 重置）
+let _activeSkLvMult = 1.0;
+let _activeSkLv = 0;
+
+// 取得技能升級倍率：每級 +10%
+function _skLvBoost(heroName, slot) {
+  if(!heroName || !slot || !_heroSkillLevels) return 1.0;
+  const lv = (_heroSkillLevels[heroName]||{})[slot] || 0;
+  return 1.0 + lv * 0.10;
+}
+
+// 取得技能升級後的持續回合數（基礎 + 每 perLv 級+1回合）
+function _skLvDur(baseDur, perLv=2) {
+  return baseDur + Math.floor(_activeSkLv / perLv);
+}
+
+// 技能升級說明定義（用於升級預覽表）
+const SKILL_UPGRADE_DEF = {
+  // ── 傷害類：每級傷害+10% ──
+  '迅雷連斬': { cat:'dmg',    label:'技能傷害' },
+  '冰凍之矛': { cat:'dmg',    label:'技能傷害' },
+  '麻痺落雷': { cat:'dmg',    label:'技能傷害' },
+  '火焰球':   { cat:'dmg',    label:'技能傷害' },
+  '降龍伏虎拳':{ cat:'dmg',   label:'技能傷害' },
+  '潛行暗殺': { cat:'dmg',    label:'技能傷害' },
+  '日月同輝': { cat:'dmg',    label:'技能傷害' },
+  '暴風雪':   { cat:'dmg',    label:'技能傷害' },
+  '連鎖閃電': { cat:'dmg',    label:'技能傷害' },
+  '炫目神光': { cat:'dmg',    label:'技能傷害' },
+  '召喚蝙蝠群':{ cat:'dmg',   label:'技能傷害' },
+  '亂槍射擊': { cat:'dmg',    label:'技能傷害' },
+  '花瓣飛刀': { cat:'dmg',    label:'技能傷害' },
+  '渾身一擊': { cat:'dmg',    label:'技能傷害' },
+  '接力傳遞': { cat:'dmg',    label:'技能傷害' },
+  '小星星變奏曲':{ cat:'dmg', label:'技能傷害' },
+  '俯衝搶奪': { cat:'dmg',    label:'技能傷害' },
+  '三分投射': { cat:'dmg',    label:'技能傷害' },
+  '大聲啼哭': { cat:'dmg',    label:'技能傷害' },
+  '圖層隱藏': { cat:'dmg',    label:'技能傷害' },
+  '刀背擊':   { cat:'dmg',    label:'技能傷害' },
+  '泰山壓頂': { cat:'dmg',    label:'技能傷害' },
+  '朱雀召喚': { cat:'dmg',    label:'技能傷害' },
+  '青龍召喚': { cat:'dmg',    label:'技能傷害' },
+  '變臉戲法': { cat:'dmg',    label:'技能傷害' },
+  '舞台聚光燈':{ cat:'dmg',   label:'技能傷害（＋控制）' },
+  // ── 治療類：每級治療+10% ──
+  '救贖神光': { cat:'heal',   label:'治療量' },
+  '神聖鎚擊': { cat:'heal',   label:'治療量' },
+  '治癒之風': { cat:'heal',   label:'治療量' },
+  '天堂樂章': { cat:'heal',   label:'治療量' },
+  '全體治療': { cat:'heal',   label:'治療量' },
+  '賢者之石': { cat:'heal',   label:'治療量' },
+  '持續恢復': { cat:'heal',   label:'治療量' },
+  '神之賜福': { cat:'heal',   label:'治療量' },
+  '慈悲之雨': { cat:'heal',   label:'治療量' },
+  '黃昏詩歌': { cat:'heal',   label:'治療量' },
+  '獻祭的餘暉':{ cat:'heal',  label:'治療量' },
+  '雙小提琴協奏曲':{ cat:'heal',label:'治療量' },
+  '餘音繞樑': { cat:'heal',   label:'治療量' },
+  '舔舔治療': { cat:'heal',   label:'治療量' },
+  '治療之光': { cat:'heal',   label:'治療量' },
+  '復活術':   { cat:'heal',   label:'復活HP量' },
+  // ── 護盾類：每級護盾+10% ──
+  '護盾術':   { cat:'shield', base:30,  label:'護盾值' },
+  '筍之守護': { cat:'shield', base:20,  label:'護盾值' },
+  '邏輯優化': { cat:'mixed',  label:'治療量（每個狀態）' },
+  '色彩噴濺': { cat:'shield', base:20,  label:'護盾值' },
+  // ── 控制類：每2級+1回合 ──
+  '催眠之歌': { cat:'dur', base:3, perLv:2, label:'睡眠回合' },
+  '搖籃曲':   { cat:'dur', base:2, perLv:3, label:'睡眠回合' },
+  '黑暗封印': { cat:'dur', base:1, perLv:3, label:'封印回合' },
+  '時間暫停': { cat:'dur', base:1, perLv:3, label:'禁動回合' },
+  '花粉迷眼': { cat:'dur', base:1, perLv:3, label:'失明回合' },
+  '土坑陷阱': { cat:'dur', base:1, perLv:3, label:'緩速回合' },
+  '黏液噴濺': { cat:'dur', base:1, perLv:3, label:'緩速回合' },
+  '地獄之火': { cat:'dur', base:2, perLv:3, label:'燃燒回合' },
+  '極限閃光': { cat:'dur', base:2, perLv:2, label:'閃光回合' },
+  '魅惑之舞': { cat:'dur', base:1, perLv:4, label:'操控次數' },
+  // ── 百分比類：每2級+5% ──
+  '虛弱咒':   { cat:'pct_debuff', base:30, perLv:2, step:5, label:'能力降低幅度' },
+  '增強術':   { cat:'pct_buff',   base:30, perLv:2, step:5, label:'能力提升幅度' },
+  '群體挑釁': { cat:'pct_buff',   base:30, perLv:3, step:5, label:'自身減傷幅度' },
+  '忠犬守護': { cat:'pct_buff',   base:50, perLv:2, step:5, label:'傷害轉移比率' },
+  // ── 能量類 ──
+  '充能':     { cat:'energy', base:6, perLv:2, label:'補充能量' },
+  '命運塔羅牌':{ cat:'special', label:'Lv.0~3=抽1張，Lv.4~6=抽2張，Lv.7~9=抽3張' },
+  '道具複製': { cat:'pct_buff', base:70, perLv:2, step:5, label:'物品保留機率(%)' },
+  '靈魂收割': { cat:'threshold', base:10, perLv:2, step:5, label:'處決HP門檻' },
+  // ── 死亡宣告縮短計時 ──
+  '死亡宣告': { cat:'dur_dec', base:2, perLv:3, label:'倒數回合（越低越快）' },
+};
+
+// 建立技能升級效果一覽表 HTML
+function buildSkillLvTable(skillName, currentLv) {
+  const def = SKILL_UPGRADE_DEF[skillName];
+  if(!def) {
+    // 未定義：顯示通用 +10%/級
+    let rows = '';
+    for(let lv=0; lv<=9; lv++){
+      const pct = (lv*10);
+      const isNow = lv === currentLv;
+      const isNext = lv === currentLv+1;
+      rows += `<tr style="background:${isNext?'rgba(80,200,80,0.18)':isNow?'rgba(100,150,255,0.12)':'transparent'};${isNext?'font-weight:900;':''}">
+        <td style="padding:4px 10px;color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:18px;">
+          ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
+        </td>
+        <td style="padding:4px 10px;color:${isNext?'#ffe066':'#ddd'};font-size:18px;">
+          技能效果 ×${(1+pct/100).toFixed(1)} ${pct===0?'（基礎）':'+'+pct+'%'}
+        </td>
+      </tr>`;
+    }
+    return `<div style="font-size:17px;color:#888;margin-bottom:8px;">このスキルの効果は毎レベル+10%増加します</div>
+      <table style="width:100%;border-collapse:collapse;">${rows}</table>`;
+  }
+  
+  const cat = def.cat;
+  let rows = '';
+  for(let lv=0; lv<=9; lv++){
+    const isNow = lv === currentLv;
+    const isNext = lv === currentLv+1;
+    let effectText = '';
+    if(cat==='dmg'||cat==='heal'||cat==='mixed'){
+      effectText = def.label+' ×'+(1+lv*0.1).toFixed(1)+(lv===0?' (基礎)':' (+'+lv*10+'%)');
+    } else if(cat==='shield'){
+      const v = Math.round((def.base||30)*(1+lv*0.1));
+      effectText = def.label+' '+v+'點'+(lv===0?' (基礎)':'');
+    } else if(cat==='dur'){
+      const d = (def.base||2)+Math.floor(lv/(def.perLv||2));
+      effectText = def.label+' '+d+'回合';
+    } else if(cat==='dur_dec'){
+      const d = Math.max(1,(def.base||2)-Math.floor(lv/(def.perLv||3)));
+      effectText = def.label+' '+d+'回合';
+    } else if(cat==='pct_buff'||cat==='pct_debuff'){
+      const pct = (def.base||30)+Math.floor(lv/(def.perLv||2))*(def.step||5);
+      effectText = def.label+' '+(cat==='pct_debuff'?'-':'+')+pct+'%';
+    } else if(cat==='energy'){
+      const e = (def.base||6)+Math.floor(lv/(def.perLv||2));
+      effectText = def.label+' +'+e;
+    } else if(cat==='threshold'){
+      const t = (def.base||10)+Math.floor(lv/(def.perLv||2))*(def.step||5);
+      effectText = def.label+' '+t+'HP以下';
+    } else {
+      effectText = def.label;
+    }
+    rows += `<tr style="background:${isNext?'rgba(80,200,80,0.18)':isNow?'rgba(100,150,255,0.12)':'transparent'};">
+      <td style="padding:4px 10px;color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:17px;white-space:nowrap;">
+        ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
+      </td>
+      <td style="padding:4px 10px;color:${isNext?'#ffe066':'#ddd'};font-size:17px;font-weight:${isNext?'900':'400'};">
+        ${effectText}
+      </td>
+    </tr>`;
+  }
+  return `<table style="width:100%;border-collapse:collapse;">${rows}</table>`;
+}
 
 function closeHeroPage() {
   const ov = document.getElementById('hero-page-overlay');
