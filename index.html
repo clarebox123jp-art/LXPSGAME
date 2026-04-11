@@ -1538,6 +1538,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   display:flex;flex-direction:column;gap:6px;
   align-items:stretch;padding-bottom:80px;
   flex:1;min-height:0;
+  font-size:150%;
 }
 .skcat-list{flex-wrap:wrap !important;flex-direction:row !important;}
 .skcat-section{border-radius:8px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column}
@@ -2999,7 +3000,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.08.56</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.09.46</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3276,7 +3277,10 @@ body {
       </div>
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
-        <button id="hero-pick-find-btn" onclick="_refreshHeroPool();playSfx('sfx-hero',0.6);" style="flex-shrink:0;width:80px;height:80px;font-size:28px;font-weight:900;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:radial-gradient(circle,#ffe066,#ffaa00);border:3px solid #ffcc00;border-radius:50%;color:#3a2800;cursor:pointer;margin-right:8px;box-shadow:0 0 18px rgba(255,180,0,0.5);line-height:1;display:flex;align-items:center;justify-content:center;" title="尋找新英雄">🔄</button>
+        <button id="hero-pick-find-btn" onclick="_refreshHeroPool();playSfx('sfx-hero',0.6);" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 20px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:900;background:rgba(255,220,50,0.15);border:3px solid #ffe066;border-radius:14px;color:#ffe066;cursor:pointer;margin-right:8px;box-shadow:0 0 16px rgba(255,220,50,0.25);">
+          <span style="font-size:42px;line-height:1;">🔄</span>
+          <span style="font-size:26px;letter-spacing:1px;">尋找新英雄</span>
+        </button>
         <button onclick="playSfx('sfx-deal',0.6);randomTeamPick();_previewEnemyTeam();" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-right:10px;flex-shrink:0;">
           <span style="font-size:36px">🚩</span>
@@ -7610,7 +7614,7 @@ function buildSkillPicker(){
         <span class="sk-pick-name" style="font-size:22px;font-weight:700;color:#ffe8a0;flex-shrink:0;">${sk.n}</span>
         <span class="sk-pick-cost" style="font-size:18px;color:#4a9eff;flex-shrink:0;">🔷${sk.c}</span>
         ${_sdpBtn(sk,'🔷'+sk.c+(sk.p?' [被動]':''))}
-        <span class="sk-pick-desc" style="font-size:18px;color:#aab;flex:1;overflow:hidden;text-overflow:ellipsis;">${sk.d}</span>
+        <span class="sk-pick-desc" style="font-size:18px;color:#aab;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sk.d}</span>
       </button>`;
     }).join('');
     return `<div class="skcat-section ${cat.color}" style="padding:0;">
@@ -9661,9 +9665,10 @@ function equipSlotHTML(h){
 // ====== CARD CLICK ======
 function onCard(h, _evt){
   const a=G.activeChar; if(!a) return;
+  // ★ 先阻止事件穿透，再判斷是否有待選目標
+  if(_evt){ _evt.stopPropagation(); _evt._handledByOnCard = true; }
   const pt=G.pendingTarget;
   if(!pt) return;
-  if(_evt) _evt._handledByOnCard = true;
 
   // Validate target
   let valid=false;
@@ -12905,6 +12910,7 @@ function autoUseItem(item, actor, cb){
 }
 
 function endAction(a, cost, noFinish=false){
+  try {
   clearTurnTimer();
   // ── 連招疲勞追蹤（按英雄個別記錄）──
   const _hk = a.side+'-'+a.pos;
@@ -12982,9 +12988,8 @@ function endAction(a, cost, noFinish=false){
     _pSetTimeout(function(){ if(checkWin()) return; startTurn(); }, 500);
   }
   // p1 手動模式的 noFinish：action-panel 已在上方顯示，等待玩家操作，不需額外處理
+  } catch(_eaErr){ console.error("[endAction防護]",_eaErr); _pSetTimeout(startTurn,500); }
 }
-
-// ====== ITEM USAGE ======
 function clickItem(it){
   const a=G.activeChar;
   if(!a||a.side!=='p1'||a.acted) return;
@@ -14120,14 +14125,16 @@ function aiAct(a){
      G.p1.some(h=>h.curHp>0) &&
      typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
     _advQuizResolveCb = ()=>{ _realAiAct(a); };
-    try{ advShowQuiz(); }catch(e){ _realAiAct(a); }
-    return;
+      try{ advShowQuiz(); }catch(e){ _realAiAct(a); }
+      return;
+    }
+    _realAiAct(a);
   }
-  _realAiAct(a);
-}
+
 function _realAiAct(a){
   // ★ 防護：若 a 無效直接跳過回合
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
+  try {
   const opp_side = a.side==='p1'?'p2':'p1';
   const enemies = G[opp_side].filter(h=>h.curHp>0);
   const allies  = G[a.side].filter(h=>h.curHp>0);
@@ -14452,8 +14459,8 @@ function _realAiAct(a){
   const restHeal=Math.ceil(a.hp*0.1);
   doHeal(a,restHeal,{actor:a,isHeal:true});
   a.acted=true; updateUI(); _pSetTimeout(startTurn,500);
+  } catch(_raErr) { console.error("[AI卡死防護]",_raErr); a.acted=true; _pSetTimeout(startTurn,400); }
 }
-
 function aiUseSkill(a,sk,cost,pref){
   G.lastSkill={...sk,actor:a};
   const _opp=a.side==='p1'?'p2':'p1';
@@ -18592,6 +18599,9 @@ function advShowUnlockHero() {
 
 function advCloseUnlock() {
   document.getElementById('adv-unlock-overlay').classList.remove('show');
+  // ★ 清除冒險寵物
+  if(typeof G !== 'undefined' && G) { G.pets = []; G.inv2 && (G.inv2 = G.inv2.fill(null)); }
+  window._advPlayerPetsSaved = null;
   // ★ 返回關卡選擇頁（校園）
   exitAdventureMode();
   bgmStop();
@@ -19782,6 +19792,9 @@ function advStartMiniBattle(nextSceneIdx) {
 
   // 儲存BOSS陣容（深拷貝）
   _advBossTeamSaved = G.p2 ? JSON.parse(JSON.stringify(G.p2)) : null;
+  // ★ 儲存玩家寵物（小怪戰後保留）
+  if(typeof _advPlayerPetsSaved === 'undefined') window._advPlayerPetsSaved = null;
+  _advPlayerPetsSaved = G.pets ? JSON.parse(JSON.stringify(G.pets)) : [];
 
   // 先顯示開場白（在過場畫面內）
   const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
@@ -19854,6 +19867,13 @@ function advStartMiniBattle(nextSceneIdx) {
 
     // ── 渲染戰場
     try{ renderField(true); }catch(e){ console.error('[mini-renderField]',e); }
+    // ★ 強制確保 p2 mini monster cards 的 onclick 正確指向 onCard（非 advShowBossDetail）
+    try{
+      G.p2.forEach(h=>{
+        const el = document.getElementById('card-p2-'+h.pos);
+        if(el) el.onclick = (e)=>onCard(h,e);
+      });
+    }catch(e){}
     try{ renderItems(); updateUI(); }catch(e){}
     log('═══ 小怪戰鬥開始 ═══');
 
@@ -19899,13 +19919,17 @@ function advFinishMiniBattle(win) {
         addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : 0); // ★ 未出戰=0
       });
       // ★ 顯示小怪結算畫面
+      // 先清除開場動畫
+      const _bsOvR = document.getElementById('battle-start-overlay');
+      if(_bsOvR) _bsOvR.classList.remove('show');
       const _expEl = document.getElementById('adv-mini-result');
       if(_expEl){
-        document.getElementById('adv-mini-result-exp').textContent = `+${Math.round(baseExp*1.5)} EXP`;
+        const _expInfoEl = document.getElementById('adv-mini-result-exp');
+        if(_expInfoEl) _expInfoEl.textContent = `+${Math.round(baseExp*1.5)} EXP`;
         _expEl.classList.add('show');
-        setTimeout(()=>{ _expEl.classList.remove('show'); }, 2500);
+        // 2.5秒後自動關閉（由下方 _RESULT_DUR 的 setTimeout 統一控制）
       } else {
-        bannerFX(null, `⚔️ 小怪擊敗！繼續冒險... 出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
+        bannerFX(null, `⚔️ 小怪擊敗！出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
       }
       gameCloudSave();
     }
@@ -19920,6 +19944,12 @@ function advFinishMiniBattle(win) {
   if(_advBossTeamSaved) {
     G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));
     _advBossTeamSaved = null;
+    // ★ 恢復玩家寵物（加上小怪戰中獲得的新寵物）
+    if(window._advPlayerPetsSaved){
+      const _newPets = G.pets ? G.pets.filter(p=>p && !_advPlayerPetsSaved.find(op=>op&&op.n===p.n)) : [];
+      G.pets = [..._advPlayerPetsSaved, ..._newPets];
+      _advPlayerPetsSaved = null;
+    }
     G.p2.forEach(h => { try{ applyElemBonus(h); }catch(e){} });
   }
 
