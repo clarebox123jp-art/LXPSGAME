@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.23.23</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.00.42</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3429,6 +3429,10 @@ body {
           <span style="font-size:42px;line-height:1;">🔄</span>
           <span style="font-size:26px;letter-spacing:1px;">尋找新英雄</span>
         </button>
+        <button onclick="playSfx('sfx-sel',0.6);openPresetTeamPanel()" style="flex-shrink:0;padding:10px 20px;font-size:22px;font-weight:700;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(100,60,200,0.25),rgba(60,30,150,0.2));border:2px solid rgba(180,120,255,0.7);color:#cc99ff;border-radius:12px;cursor:pointer;letter-spacing:1px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <span style="font-size:36px;">📋</span>
+          <span>常用預設陣容</span>
+        </button>
         <button onclick="playSfx('sfx-deal',0.6);randomTeamPick();_previewEnemyTeam();" style="flex-shrink:0;padding:10px 24px;font-size:24px;font-weight:500;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7));border:2px solid rgba(155,109,255,0.6);color:#cc99ff;cursor:pointer;border-radius:10px;letter-spacing:2px;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='rgba(155,109,255,0.3)';this.style.borderColor='#cc99ff'" onmouseout="this.style.background='linear-gradient(135deg,rgba(60,40,120,0.7),rgba(40,20,80,0.7))';this.style.borderColor='rgba(155,109,255,0.6)'">🎲 隨機<br>編成隊伍</button>
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;margin-right:10px;flex-shrink:0;">
           <span style="font-size:36px">🚩</span>
@@ -3453,6 +3457,7 @@ body {
     </div>
     <div id="sro-footer">
       <button onclick="playSfx('sfx-cancel',0.5);goBackToHeroPick()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:transparent;border:1px solid #555;color:#888;cursor:pointer;letter-spacing:2px;border-radius:6px;">↩ 重新編組隊員</button>
+      <button onclick="playSfx('sfx-powerup',0.6);openSavePresetPanel()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(90deg,rgba(100,60,200,0.25),rgba(60,30,150,0.2));border:2px solid rgba(180,120,255,0.7);color:#cc99ff;border-radius:10px;cursor:pointer;letter-spacing:1px;white-space:nowrap;">💾 儲存為預設陣容</button>
       <button onclick="playSfx('sfx-fantasy',0.5);autoRecommendSkills()" style="padding:11px 28px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(90deg,rgba(80,40,160,0.4),rgba(40,80,200,0.4));border:2px solid #9b6dff;color:#cc99ff;cursor:pointer;letter-spacing:2px;border-radius:6px;transition:0.15s;" onmouseover="this.style.background='#9b6dff';this.style.color='#000'" onmouseout="this.style.background='linear-gradient(90deg,rgba(80,40,160,0.4),rgba(40,80,200,0.4))';this.style.color='#cc99ff'">✦ 自動推薦替換技能</button>
       <button id="skill-replace-confirm" onclick="playSfx('sfx-confirm2',0.7);confirmSkillReplace()">▶ 確認技能，開始戰鬥</button>
 <button id="skill-replace-confirm-adv" onclick="playSfx('sfx-confirm2',0.7);confirmSkillReplace()" style="display:none;padding:11px 38px;font-size:32px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;background:transparent;border:2px solid var(--purple);color:var(--purple);cursor:pointer;letter-spacing:3px;transition:0.2s;border-radius:6px;" onmouseover="this.style.background='var(--purple)';this.style.color='#000'" onmouseout="this.style.background='transparent';this.style.color='var(--purple)'">🗺 整裝完畢，冒險出發</button>
@@ -19644,6 +19649,7 @@ function _buildSafeData() {
     heroTraitLevel:  _heroTraitLevel,
     knowledgeCoins:  _knowledgeCoins,        // 知識幣
     playerBackpack:  _playerBackpack,        // 背包
+    presetTeams:     _presetTeams,            // 常用預設陣容
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted }
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
@@ -19688,6 +19694,7 @@ function _applySafeData(raw) {
   // ★ 知識幣 & 背包
   if(typeof data.knowledgeCoins === 'number') _knowledgeCoins = data.knowledgeCoins;
   if(data.playerBackpack && typeof data.playerBackpack === 'object') _playerBackpack = data.playerBackpack;
+  if(Array.isArray(data.presetTeams)) _presetTeams = data.presetTeams;
   // ★ 舊版相容：將舊 _heroExpBookCount/_skillBookCount 遷移到背包
   if((_heroExpBookCount||0) > 0 && !_playerBackpack.hero_exp_book){
     _playerBackpack.hero_exp_book = Math.min(99, _heroExpBookCount);
@@ -19795,6 +19802,13 @@ let _heroTraitLevel = {};   // {heroName: 天
 // ★ 知識幣 & 背包 系統
 // ────────────────────────────────────
 let _knowledgeCoins = 0;   // 知識幣
+// ─────────────────────────────────────
+// ★ 常用預設陣容（5個槽位）
+// ─────────────────────────────────────
+// 每個槽位：{ name:'自訂名稱', heroes:['h1','h2','h3','h4'],
+//             elements:['elem1','elem2','elem3','elem4'],
+//             skills:[{slot:'s1'|'s2'|null, skillName:str|null}, ...] }
+let _presetTeams = [null, null, null, null, null];
 // 背包物品 {id: count}，每種上限99
 let _playerBackpack = {};
 
@@ -20393,6 +20407,311 @@ function _showBurstStarTip(el, msg){
   // 1.5秒後自動消失
   setTimeout(()=>{ if(tip.parentNode) tip.remove(); }, 1500);
 }
+
+
+// ═══════════════════════════════════════════════════════════════
+// ★ 常用預設陣容 系統
+// ═══════════════════════════════════════════════════════════════
+
+// 取得英雄頭像 URL（用於預設陣容顯示）
+function _presetHeroImgUrl(name){
+  return (typeof HERO_IMGS!=='undefined' && HERO_IMGS[name]) ? HERO_IMGS[name] : '';
+}
+
+// 取得元素顯示圖示
+function _presetElemLabel(elem){
+  if(!elem) return '';
+  return (typeof elemIcon==='function') ? elemIcon(elem) : elem;
+}
+
+// ────────────────────────────────────
+// 1. 從技能替換頁面「儲存為預設陣容」
+// ────────────────────────────────────
+function openSavePresetPanel(){
+  const existing = document.getElementById('preset-save-panel');
+  if(existing){ existing.remove(); return; }
+  const ov = document.createElement('div');
+  ov.id = 'preset-save-panel';
+  ov.style.cssText = [
+    'position:fixed;inset:0;z-index:9500;',
+    'background:rgba(0,0,0,0.88);',
+    'display:flex;align-items:center;justify-content:center;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+
+  const box = document.createElement('div');
+  box.style.cssText = [
+    'background:linear-gradient(160deg,#0d0a1e,#08061a);',
+    'border:2.5px solid rgba(180,120,255,0.7);border-radius:20px;',
+    'padding:28px 36px;max-width:820px;width:94%;',
+    'box-shadow:0 0 50px rgba(150,80,255,0.35);'
+  ].join('');
+
+  // 收集目前陣容資訊
+  const _curHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
+  const _curElems  = G.p1 ? G.p1.map(h=>h.element||'') : [];
+  const _curSkills = G.p1 ? G.p1.map(h=>{
+    const rep = _skillReplaceMap ? _skillReplaceMap[h.pos] : null;
+    return rep ? { slot: rep.slot, skillName: rep.skill ? rep.skill.n : null } : { slot: null, skillName: null };
+  }) : [];
+
+  let html = '<div style="font-size:30px;font-weight:900;color:#cc99ff;margin-bottom:18px;text-align:center;">💾 選擇要儲存的欄位</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:10px;">';
+
+  for(let i=0; i<5; i++){
+    const pt = _presetTeams[i];
+    const slotName = pt ? (pt.name||`陣容${i+1}`) : `（空）`;
+    const slotHeroes = pt ? pt.heroes.join('・') : '尚未儲存';
+    const isEmpty = !pt;
+    html += `<div onclick="_saveToPresetSlot(${i},${JSON.stringify(_curHeroes)},${JSON.stringify(_curElems)},${JSON.stringify(_curSkills)})"
+      style="display:flex;align-items:center;gap:14px;padding:12px 18px;cursor:pointer;
+        background:${isEmpty?'rgba(20,15,40,0.8)':'rgba(40,25,80,0.8)'};
+        border:1.5px solid ${isEmpty?'rgba(150,100,255,0.3)':'rgba(200,150,255,0.6)'};
+        border-radius:12px;transition:border-color 0.15s;"
+      onmouseover="this.style.borderColor='rgba(200,150,255,0.9)'"
+      onmouseout="this.style.borderColor='${isEmpty?'rgba(150,100,255,0.3)':'rgba(200,150,255,0.6)'}'">
+      <div style="font-size:22px;font-weight:900;color:#aa88ff;min-width:60px;">欄位${i+1}</div>
+      <div style="flex:1;">
+        <div style="font-size:22px;font-weight:800;color:${isEmpty?'#666':'#ddd'};">${slotName}</div>
+        <div style="font-size:17px;color:${isEmpty?'#444':'#aaa'};margin-top:2px;">${slotHeroes}</div>
+      </div>
+      ${!isEmpty?'<div style="font-size:18px;color:#ff9966;font-weight:700;">覆蓋</div>':'<div style="font-size:18px;color:#88aa66;">新增</div>'}
+    </div>`;
+  }
+  html += '</div>';
+  html += "<div style='text-align:center;margin-top:18px;'><button onclick=\"_closePresetOv('preset-save-panel')\" style='padding:10px 32px;font-size:22px;background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;'>✕ 取消</button></div>";
+
+  box.innerHTML = html;
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+}
+
+function _saveToPresetSlot(slotIdx, heroes, elems, skills){
+  const ov = document.getElementById('preset-save-panel');
+  if(ov) ov.remove();
+
+  // 輸入名稱
+  const nameOv = document.createElement('div');
+  nameOv.id = 'preset-name-input';
+  nameOv.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  const existing = _presetTeams[slotIdx];
+  const defaultName = existing ? (existing.name||`陣容${slotIdx+1}`) : `陣容${slotIdx+1}`;
+
+  nameOv.innerHTML = `
+    <div style="background:linear-gradient(160deg,#0d0a1e,#08061a);border:2.5px solid rgba(180,120,255,0.7);border-radius:20px;padding:32px 40px;max-width:520px;width:90%;text-align:center;box-shadow:0 0 50px rgba(150,80,255,0.35);">
+      <div style="font-size:28px;font-weight:900;color:#cc99ff;margin-bottom:12px;">✏️ 輸入陣容名稱</div>
+      <div style="font-size:18px;color:#888;margin-bottom:14px;">最多10個字元（中英文皆可）</div>
+      <input id="preset-name-field" maxlength="10" placeholder="${defaultName}"
+        style="width:100%;padding:10px 16px;font-size:26px;font-weight:700;
+          background:rgba(20,15,40,0.9);border:2px solid rgba(180,120,255,0.6);
+          color:#ddc0ff;border-radius:10px;font-family:inherit;box-sizing:border-box;
+          text-align:center;outline:none;" value="${defaultName}">
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
+        <button onclick="_confirmSavePreset(${slotIdx},'${heroes.join(',')}','${elems.join(',')}',${JSON.stringify(skills)})"
+          style="padding:12px 40px;font-size:24px;font-weight:800;
+            background:rgba(100,60,200,0.35);border:2px solid #cc99ff;color:#cc99ff;
+            border-radius:10px;cursor:pointer;font-family:inherit;">✔ 確定儲存</button>
+        <button onclick="var _pni=document.getElementById('preset-name-input');if(_pni)_pni.remove();"
+          style="padding:12px 28px;font-size:22px;background:rgba(60,10,10,0.3);border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 取消</button>
+      </div>
+    </div>`;
+  document.body.appendChild(nameOv);
+  setTimeout(()=>{ const f=document.getElementById('preset-name-field'); if(f){ f.focus(); f.select(); } }, 100);
+}
+
+function _confirmSavePreset(slotIdx, heroesStr, elemsStr, skills){
+  const nameField = document.getElementById('preset-name-field');
+  const name = nameField ? (nameField.value.trim().slice(0,10)||`陣容${slotIdx+1}`) : `陣容${slotIdx+1}`;
+  const heroes = heroesStr.split(',').filter(Boolean);
+  const elems  = elemsStr.split(',');
+  const nameOv = document.getElementById('preset-name-input');
+  if(nameOv) nameOv.remove();
+
+  _presetTeams[slotIdx] = { name, heroes, elements: elems, skills };
+  gameCloudSave();
+  _showInGameToast(`✅ 陣容「${name}」已儲存到欄位${slotIdx+1}！`, '#cc99ff', 2500);
+  try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+}
+
+// ────────────────────────────────────
+// 2. 從英雄選擇頁面開啟「常用預設陣容」
+// ────────────────────────────────────
+function openPresetTeamPanel(){
+  const existing = document.getElementById('preset-team-panel');
+  if(existing){ existing.remove(); return; }
+
+  const hasAny = _presetTeams.some(p=>p!==null);
+
+  const ov = document.createElement('div');
+  ov.id = 'preset-team-panel';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:flex-start;flex-direction:column;padding:24px;overflow-y:auto;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:linear-gradient(160deg,#0d0a1e,#08061a);border:2.5px solid rgba(180,120,255,0.7);border-radius:20px;padding:28px 32px;max-width:980px;width:100%;box-shadow:0 0 50px rgba(150,80,255,0.35);';
+
+  let html = '<div style="font-size:32px;font-weight:900;color:#cc99ff;margin-bottom:6px;text-align:center;">📋 常用預設陣容</div>';
+  if(!hasAny){
+    html += '<div style="font-size:22px;color:#666;text-align:center;padding:24px;">（尚無儲存的預設陣容。請先在技能替換頁面儲存一組！）</div>';
+  } else {
+    html += '<div style="display:flex;flex-direction:column;gap:14px;margin-top:12px;">';
+    for(let i=0; i<5; i++){
+      const pt = _presetTeams[i];
+      if(!pt){ 
+        html += `<div style="padding:12px 18px;background:rgba(20,15,30,0.5);border:1.5px dashed rgba(100,80,150,0.3);border-radius:12px;color:#444;font-size:20px;text-align:center;">欄位${i+1}（空）</div>`;
+        continue;
+      }
+      const slotName = pt.name || `陣容${i+1}`;
+      html += `<div onclick="_applyPresetTeam(${i})" style="cursor:pointer;padding:14px 18px;background:rgba(40,25,80,0.7);border:2px solid rgba(180,120,255,0.5);border-radius:14px;transition:border-color 0.15s;"
+        onmouseover="this.style.borderColor='rgba(220,160,255,0.9)'" onmouseout="this.style.borderColor='rgba(180,120,255,0.5)'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:24px;font-weight:900;color:#cc99ff;">欄位${i+1}：${slotName}</div>
+          <button onclick="event.stopPropagation();_deletePresetSlot(${i})" style="padding:4px 14px;font-size:17px;background:rgba(60,10,10,0.4);border:1.5px solid #e84040;color:#e84040;border-radius:7px;cursor:pointer;font-family:inherit;">🗑 刪除</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          ${pt.heroes.map((name,hi)=>{
+            const imgUrl = _presetHeroImgUrl(name);
+            const elem = pt.elements[hi]||'';
+            const sk = pt.skills[hi]||{};
+            const skLabel = sk.skillName ? `🔄${sk.slot?sk.slot.toUpperCase():''}: ${sk.skillName}` : '（不替換）';
+            const _oPos = (typeof getHeroObjPos==='function') ? getHeroObjPos(name) : 'center 20%';
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:200px;">
+              <div style="width:200px;height:160px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(200,150,255,0.4);background:#0a0818;position:relative;flex-shrink:0;">
+                ${imgUrl?`<div style="width:100%;height:100%;background:url('${imgUrl}') ${_oPos}/cover;"></div>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;">${(typeof AVATARS!=='undefined'&&AVATARS[name])||'⚔'}</div>`}
+              </div>
+              <div style="font-size:19px;font-weight:800;color:#ddd;">${name}</div>
+              <div style="font-size:17px;color:#88aaff;">${elem?_presetElemLabel(elem):''}</div>
+              <div style="font-size:15px;color:#cc99ff;text-align:center;max-width:200px;word-break:break-all;">${skLabel}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:10px;text-align:right;">
+          <span style="font-size:18px;color:#88cc88;font-weight:700;">▶ 點擊套用此陣容</span>
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  html += "<div style='text-align:center;margin-top:18px;'><button onclick=\"_closePresetOv('preset-team-panel')\" style='padding:10px 32px;font-size:22px;background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;'>✕ 關閉</button></div>";
+
+  box.innerHTML = html;
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+}
+
+function _deletePresetSlot(slotIdx){
+  _presetTeams[slotIdx] = null;
+  gameCloudSave();
+  _showInGameToast(`🗑 欄位${slotIdx+1} 已刪除`, '#ff8888', 1500);
+  // 重新開啟面板
+  const ov = document.getElementById('preset-team-panel');
+  if(ov) ov.remove();
+  openPresetTeamPanel();
+}
+
+function _applyPresetTeam(slotIdx){
+  const pt = _presetTeams[slotIdx];
+  if(!pt){ _showInGameToast('此欄位沒有儲存的陣容', '#ff8844', 1500); return; }
+  const ov = document.getElementById('preset-team-panel');
+  if(ov) ov.remove();
+
+  // 關閉英雄選擇頁
+  const hpo = document.getElementById('hero-pick-overlay');
+  if(hpo) hpo.style.display='none';
+
+  // 建立 G.p1
+  const isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
+  G.p1 = pt.heroes.map((name, i)=>{
+    const h = newHero(name, 'p1', i);
+    // 套用元素
+    if(pt.elements[i]){
+      h.element = pt.elements[i];
+      if(typeof applyElemBonus==='function') applyElemBonus(h);
+    }
+    return h;
+  });
+
+  // 套用技能替換
+  G.p1.forEach((h, i)=>{
+    const sk = pt.skills[i];
+    if(sk && sk.slot && sk.skillName){
+      // 從 NEW_SKILLS_DB 找技能資料
+      const skillData = (typeof NEW_SKILLS_DB!=='undefined') ? NEW_SKILLS_DB.find(s=>s.n===sk.skillName) : null;
+      if(skillData){
+        h[sk.slot] = {...skillData};
+        log(`[${h.name}] 預設陣容技能替換：${sk.slot.toUpperCase()} → ${sk.skillName}`);
+      }
+    }
+  });
+
+  // 建立 p2（冒險模式固定；鬥技隨機）
+  if(isAdvMode){
+    document.getElementById('skill-replace-confirm').style.display = 'none';
+    document.getElementById('skill-replace-confirm-adv').style.display = '';
+    const bossTeam = ADV_BOSS_TEAMS[_adventureStage];
+    G.p2 = bossTeam.map((b,i)=>{
+      const h = newHero(b.name,'p2',i);
+      h.element = b.element;
+      if(typeof applyElemBonus==='function') applyElemBonus(h);
+      return h;
+    });
+    _showInGameToast(`✅ 套用陣容「${pt.name||'預設陣容'}」！`, '#cc99ff', 2000);
+    // 直接進過場演出（跳過元素選擇和技能替換）
+    fadeTransition(()=>{
+      try{ advStartCutscene(_adventureStage); }catch(e){ console.error(e); advStartBattle(); }
+    }, 400);
+  } else {
+    // 鬥技模式：建立隨機 p2
+    const allHeroes = typeof HERO_DB!=='undefined' ? Object.keys(HERO_DB).filter(n=>!['九尾空貓怪','綠竹筍小妖','茶葉精靈'].includes(n)) : [];
+    const p1names = pt.heroes;
+    const pool = allHeroes.filter(n=>!p1names.includes(n));
+    const shuffled = pool.sort(()=>Math.random()-0.5).slice(0,4);
+    G.p2 = shuffled.map((name,i)=>{
+      const h = newHero(name,'p2',i);
+      // 隨機元素
+      const elems = ['fire','water','earth','wind','light','dark'];
+      h.element = elems[Math.floor(Math.random()*elems.length)];
+      if(typeof applyElemBonus==='function') applyElemBonus(h);
+      return h;
+    });
+    _showInGameToast(`✅ 套用陣容「${pt.name||'預設陣容'}」！`, '#cc99ff', 2000);
+    // 直接開始戰鬥（跳過技能替換處理，直接進入戰場初始化）
+    fadeTransition(()=>{
+      const _skipSro = document.getElementById('skill-replace-overlay');
+      if(_skipSro) _skipSro.style.display = 'none';
+      // 初始化物品牌組
+      var _initInv=[null,null,null];
+      for(var _si=0;_si<3;_si++){
+        var _drawn=drawItem(); var _tries=0;
+        while(_drawn.type==='equip'&&_tries<10){ _drawn=drawItem(); _tries++; }
+        if(_drawn.type!=='equip') _initInv[_si]=_drawn;
+      }
+      G.inv=_initInv;
+      var _initInv2=[null,null,null];
+      for(var _si2=0;_si2<3;_si2++){
+        var _drawn2=drawItem(); var _tries2=0;
+        while(_drawn2.type==='equip'&&_tries2<10){ _drawn2=drawItem(); _tries2++; }
+        if(_drawn2.type!=='equip') _initInv2[_si2]=_drawn2;
+      }
+      G.inv2=_initInv2;
+      G.p1.concat(G.p2).forEach(h=>{ h._initState={hp:h.hp,atk:h.atk,sp:h.sp,spd:h.spd}; });
+      if(typeof bgmFadeTo==='function') try{ bgmFadeTo('bgm-battle',800); }catch(e){}
+      try{ playBattleStartSfx(); }catch(e){}
+      try{ renderField(true); }catch(e){}
+      try{ renderItems(); updateUI(); }catch(e){}
+      if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(true);
+      (function(){ var bsOv=document.getElementById('battle-start-overlay');
+        var bsTxt=document.querySelector('.bs-text');
+        if(bsOv&&bsTxt){ bsOv.classList.add('show'); sndGong();
+          flashScreen('rgba(255,200,30,1)',400);
+          setTimeout(function(){ bsOv.classList.remove('show'); }, 3200); }
+      })();
+      log('═══ 戰鬥開始（預設陣容）═══');
+      _pSetTimeout(startTurn, 600);
+    }, 400);
+  }
+}
+
+function _closePresetOv(id){ var el=document.getElementById(id); if(el) el.remove(); }
 
 function closeHeroPage() {
   const ov = document.getElementById('hero-page-overlay');
