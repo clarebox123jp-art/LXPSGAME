@@ -3006,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.20.41</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.20.58</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4874,7 +4874,7 @@ const HERO_DB = {
   s2:{n:'花粉迷眼',c:2,d:'使1名對手失明1回合，行動成功率減半',fd:'吹出一陣花粉，使1名對手陷入「失明」狀態1回合，行動成功率大幅降低。'}
 },
 '偷鳥蛋的鳥人哈維':{hp:40,atk:10,sp:13,spd:16,exp:8,
-  s1:{n:'催眠之歌',c:2,d:'使1名對手睡眠3回合',fd:'唱出魔法催眠曲，使1名對手陷入「睡眠」狀態3回合，無法行動。'},
+  s1:{n:'催眠之歌',c:2,d:'使1名對手睡眠3回合（受傷50%提早醒）',fd:'唱出魔法催眠曲，使1名對手陷入「睡眠」狀態3回合，無法行動。受到攻擊時有50%機率提早甦醒。免疫狀態或控制免疫的對象不受影響。'},
   s2:{n:'俯衝搶奪',c:2,d:'攻擊+速度×0.2傷害1名對手，並奪取1張物品卡',fd:'俯衝衝擊1名對手造成（攻擊+速度×0.2）的傷害，若對手有物品卡則順手奪走1張。'}
 },
 '偷竹筍的哥布林':{hp:45,atk:10,sp:9,spd:8,exp:7,
@@ -12213,14 +12213,15 @@ function execSkill(a, sk, cost, stype){
     flashScreen('rgba(255,100,200,0.35)',300);
     endAction(a,cost);
   }
-  // ── 催眠之歌（使1名對手睡眠3回合）──
+  // ── 催眠之歌（使1名對手睡眠3回合，受傷有50%提早醒）──
   else if(n==='催眠之歌'){
     setPending('enemy', t=>{
-      log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`);
-      t.status = t.status.filter(s=>s.type!=='sleep');
-      t.status.push({type:'sleep', dur:3});
-      bannerFX(t,'💤 睡眠！','#bb99ff',1000);
+      addStatus(t,'sleep',3);
+      renderCard(t); updateUI();
+      log(`[${a.name}] 催眠之歌！[${t.name}] 進入睡眠3回合！`);
+      bannerFX(t,'💤 睡眠3回合！','#bb99ff',1000);
       playSkillFX('催眠之歌',a,[t]);
+      if(checkWin()) return;
       endAction(a,cost);
     },'催眠之歌');
   }
@@ -14665,6 +14666,9 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='黑暗封印'){enemies.filter(h=>h.curHp>0).forEach(h=>{if(Math.random()<0.7)addStatus(h,'seal',1);});}
   else if(n==='死亡宣告'){if(t)addStatus(t,'deathmark',1);}
   else if(n==='仁王挺立'){addBuff(a,'nioGuard',1);a._nioGuardActive=true;log('['+a.name+'] 仁王挺立！代替所有隊友承受傷害，減傷75%！');}
+  else if(n==='催眠之歌'){
+    if(t){ addStatus(t,'sleep',3); renderCard(t); log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`); bannerFX(t,'💤 睡眠3回合！','#bb99ff',900); }
+  }
   else if(n==='嘲諷'){if(t){G.taunted={attacker:t,target:a};addBuff(a,'taunt',1);}}
   else if(n==='急速閃躲'){addBuff(a,'evasion',2);}
   else if(n==='挺身守護'){const gAl=allies.find(h=>h!==a&&h.curHp>0);if(gAl){addBuff(a,'guard',1);G.guardFor=gAl;}}
