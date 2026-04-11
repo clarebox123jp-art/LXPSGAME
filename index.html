@@ -2671,7 +2671,7 @@ body {
 }
 #adv-result-title{font-size:52px;font-weight:900;color:#ffe050;letter-spacing:6px;margin-bottom:8px;}
 #adv-result-grade{
-  font-size:100px;font-weight:900;margin-bottom:16px;
+  font-size:96px;font-weight:900;margin-bottom:0;
   text-shadow:0 0 30px currentColor;
 }
 .adv-result-grade-S{color:#ffe050;}
@@ -3006,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.11.02</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.11.10</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3575,13 +3575,15 @@ body {
   <div id="adv-result-overlay">
     <div id="adv-result-box">
       <div id="adv-result-title">⚔ 戰鬥結束</div>
-      <div id="adv-result-grade"></div>
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:4px 0 0;">
+        <span style="font-size:20px;color:#aabbcc;font-weight:700;letter-spacing:2px;align-self:flex-end;margin-bottom:12px;">戰鬥表現評價</span>
+        <div id="adv-result-grade"></div>
+      </div>
       <div id="adv-result-score"></div>
       <div id="adv-result-stats"></div>
       <div id="adv-result-btns">
-        <button class="adv-result-play-again" onclick="playSfx('sfx-confirm',0.5);advPlayAgain()">🔄 再玩一次</button>
-        <button id="adv-result-win-next" class="adv-result-play-again" onclick="playSfx('sfx-goddess',0.7);advStartWinSequence()" style="background:linear-gradient(135deg,rgba(255,200,50,0.2),rgba(200,120,0,0.2));border-color:#ffcc44;color:#ffcc44;display:none;">🌟 前往茶園</button>
-        <button class="adv-result-back-title" onclick="playSfx('sfx-cancel',0.5);advBackToTitle()">🏠 回到首頁</button>
+        <button class="adv-result-play-again" onclick="playSfx('sfx-confirm',0.5);advPlayAgain()">🔄 重新打一次</button>
+        <button id="adv-result-win-next" class="adv-result-play-again" onclick="playSfx('sfx-goddess',0.7);advStartWinSequence()" style="background:linear-gradient(135deg,rgba(255,200,50,0.2),rgba(200,120,0,0.2));border-color:#ffcc44;color:#ffcc44;display:none;">✅ 確認</button>
       </div>
     </div>
   </div>
@@ -18293,6 +18295,10 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     const _diffKey = (_advPlayerDifficulty==='沒自信（輕鬆模式）'||_advPlayerDifficulty==='沒自信') ? '沒自信'
                    : (_advPlayerDifficulty==='我很會（挑戰模式）'||_advPlayerDifficulty==='我很會') ? '我很會' : '普通';
     const _mult = (typeof ADV_DIFF_MULT!=='undefined' && ADV_DIFF_MULT[_diffKey]) || 1.0;
+    // ★ 確保 totalQuizScore 是數字（防止 undefined + number = NaN）
+    if(typeof _advStats.totalQuizScore !== 'number' || isNaN(_advStats.totalQuizScore)){
+      _advStats.totalQuizScore = 0;
+    }
     _advStats.totalQuizScore += Math.round(_baseScore * _mult);
     try { beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); } catch(e) {}
     // ★ 答對專用音效
@@ -18743,7 +18749,7 @@ function advRestartBattle() {
   advUpdateTreasureBar();
   // 重置接關
   _advContinueCount=0;
-  _advStats={rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now()};
+  _advStats={rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0};
   _advPendingReward=null;
   // 關閉所有冒險overlay
   ['adv-quiz-overlay','adv-reward-overlay','adv-continue-overlay','adv-result-overlay']
@@ -18767,7 +18773,7 @@ function advShowBattleResult(win) {
   const conts = stats.continueCount;
 
   // 計分公式（題目難度越高、答對分數越多）
-  const quizScore = stats.totalQuizScore || 0;
+  const quizScore = (isNaN(stats.totalQuizScore) || !stats.totalQuizScore) ? 0 : Math.round(stats.totalQuizScore);
   let score = 0;
   if(win) score += 1000;
   score += quizScore;                              // 依難度累積的答題分
