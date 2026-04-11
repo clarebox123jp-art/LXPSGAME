@@ -3006,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.20.58</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.21.18</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3813,6 +3813,7 @@ function ensureFxLayer(){
   document.getElementById('gc').appendChild(FX_LAYER);
 }
 function cardRect(h){
+  if(!h||h.side===undefined||h.pos===undefined) return null;
   var el=document.getElementById('card-'+h.side+'-'+h.pos);
   if(!el)return null;
   var gcEl=document.getElementById('gc');
@@ -8339,8 +8340,9 @@ function _showBurstCinematic(h, bd){
 
   const imgPanel=document.createElement('div');
   imgPanel.id='burst-img-panel';
+  const _isBossPanel = h.side === 'p2';
   imgPanel.style.cssText=[
-    'position:absolute;right:0;top:0;width:600px;height:100%;',
+    'position:absolute;'+ (_isBossPanel ? 'left:0;' : 'right:0;') +'top:0;width:600px;height:100%;',
     'z-index:460;pointer-events:none;',
     'opacity:0;transition:opacity 0.35s ease-out;',
     'overflow:hidden;'
@@ -8359,19 +8361,48 @@ function _showBurstCinematic(h, bd){
     imgPanel.appendChild(imgDiv);
     // 左側漸層遮罩（融入戰場畫面）
     const grad=document.createElement('div');
-    grad.style.cssText='position:absolute;inset:0;background:linear-gradient(to right,rgba(8,9,13,1) 0%,rgba(8,9,13,0.6) 15%,rgba(8,9,13,0) 45%);pointer-events:none;';
+    const _gradDir = (typeof _isBossPanel !== 'undefined' && _isBossPanel) ? 'to left' : 'to right';
+    const _gradBg = (typeof _isBossPanel !== 'undefined' && _isBossPanel) 
+      ? 'linear-gradient(to left,rgba(30,5,5,1) 0%,rgba(30,5,5,0.6) 15%,rgba(30,5,5,0) 45%)'
+      : 'linear-gradient(to right,rgba(8,9,13,1) 0%,rgba(8,9,13,0.6) 15%,rgba(8,9,13,0) 45%)';
+    grad.style.cssText='position:absolute;inset:0;background:'+_gradBg+';pointer-events:none;';
     imgPanel.appendChild(grad);
     // 底部漸層
     const gradB=document.createElement('div');
     gradB.style.cssText='position:absolute;inset:0;background:linear-gradient(to top,rgba(8,9,13,0.8) 0%,transparent 30%);pointer-events:none;';
     imgPanel.appendChild(gradB);
   } else {
-    // 無圖時用大emoji
-    imgPanel.style.cssText+='display:flex;align-items:center;justify-content:center;font-size:280px;';
-    imgPanel.textContent=h.av||'⚔';
+    // 無圖時用大emoji（BOSS用右/左對齊）
+    const _emojiSize = h.side==='p2' ? '200px' : '280px';
+    const _emojiAlign = h.side==='p2' ? 'flex-start' : 'flex-end';
+    imgPanel.style.cssText+='display:flex;align-items:center;justify-content:'+_emojiAlign+';font-size:'+_emojiSize+';padding:20px;';
+    // BOSS特效：紅色光暈背景
+    if(h.side==='p2'){
+      imgPanel.style.background='radial-gradient(ellipse at 30% 50%,rgba(200,30,0,0.25) 0%,transparent 70%)';
+    }
+    imgPanel.textContent=h.av||'😾';
   }
 
   gc.appendChild(imgPanel);
+  // ★ 集中效果線 GIF
+  const speedLines = document.createElement('div');
+  speedLines.id = 'burst-speed-lines';
+  speedLines.style.cssText = [
+    'position:absolute;inset:0;z-index:462;pointer-events:none;',
+    'background-image:url("' + 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%86%E4%B8%AD%E6%95%88%E6%9E%9C%E7%B7%9A.gif' + '");',
+    'background-size:cover;background-position:center;',
+    'background-repeat:no-repeat;',
+    'opacity:0;transition:opacity 0.15s ease-in;'
+  ].join('');
+  gc.appendChild(speedLines);
+  void speedLines.offsetWidth;
+  speedLines.style.opacity = '0.75';
+  // 0.6秒後淡出效果線
+  setTimeout(()=>{
+    speedLines.style.opacity = '0';
+    speedLines.style.transition = 'opacity 0.4s ease-out';
+    setTimeout(()=>{ if(speedLines.parentNode) speedLines.remove(); }, 500);
+  }, 700);
   // 強制reflow再淡入
   void imgPanel.offsetWidth;
   imgPanel.style.opacity='1';
@@ -8390,10 +8421,21 @@ function _showBurstCinematic(h, bd){
   const cin=document.createElement('div');
   cin.id='burst-cinematic';
   cin.style.cssText='position:absolute;inset:0;z-index:465;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;';
+  // ★ BOSS burst：全螢幕紅色暗影演出
+  if(h.side==='p2'){
+    cin.style.background='radial-gradient(ellipse at center,rgba(80,0,0,0.4) 0%,rgba(0,0,0,0.7) 70%)';
+  }
 
   const nameEl=document.createElement('div');
   nameEl.style.cssText='font-size:120px;font-weight:800;color:#ffee00;letter-spacing:6px;text-align:center;animation:burstNameShake 0.12s ease-in-out infinite,burstNameGlow 0.6s ease-in-out infinite alternate;font-family:"Noto Serif TC","Times New Roman","明朝",serif;text-shadow:0 0 40px rgba(255,220,0,1),0 0 80px rgba(255,150,0,0.9),0 0 120px rgba(255,100,0,0.6),4px 4px 0 rgba(0,0,0,0.9);';
-  nameEl.textContent='⚡ '+bd.n;
+  // ★ BOSS burst：紅色系名稱
+  if(h.side==='p2'){
+    nameEl.style.color='#ff4422';
+    nameEl.style.textShadow='0 0 40px rgba(255,60,0,0.9),0 0 80px rgba(255,0,0,0.5)';
+    nameEl.textContent='😾 '+bd.n;
+  } else {
+    nameEl.textContent='⚡ '+bd.n;
+  }
 
   cin.appendChild(nameEl);
   gc.appendChild(cin);
@@ -13631,7 +13673,8 @@ function startTurn(){
           const stolen = oppInv[slot];
           oppInv[slot] = null;
           const sellVal = stolen.sell||1;
-          log(`🐱 [九尾空貓怪] 天賦：奪取 [${opp}] 的【${stolen.n}】並賣出！獲得 ${sellVal} 金幣！`);
+          G.energy[side] = Math.min(10, (G.energy[side]||0) + sellVal);
+          log(`🐱 [九尾空貓怪] 天賦：奪取 [${opp}] 的【${stolen.n}】並賣出！獲得 ${sellVal} 能量🔷！`);
           bannerFX(boss,'奪取物品！','#ff8800',900);
           renderItems();
         }
@@ -14278,6 +14321,9 @@ function _realAiAct(a){
       setTimeout(()=>{ if(bubble.parentNode) bubble.remove(); }, 2800);
     }catch(e){}
     log(`😾 [${a.name}] 憤怒覺醒！強制發動極限爆發！`);
+    // ★ 強制給滿能量確保 _canBurst 通過（rage burst 無視能量限制）
+    G.energy[a.side] = 10;
+    a._burstUsed = false; // 確保可以爆發
     _pSetTimeout(()=>{ execBurst(a.side, a.pos); }, 1200);
     return;
   }
@@ -17292,6 +17338,7 @@ function startAdventureGame(stage){
     G.pets = [];
     G.inv2 = [null, null, null];
     G._resultShown = false;
+    G.round = 1;  // ★ BOSS戰從第1回合開始
     G.pendingTarget = null;
     G.selMove = null;
   }
@@ -19509,7 +19556,17 @@ window.gameCloudLoad = async function(uid) {
       // 顯示歡迎訊息
       setTimeout(()=>{
         const nm = document.getElementById('google-name');
-        if(nm) bannerFX && bannerFX(null, '歡迎回來！進度已從雲端同步 ✅', '#44ff88', 2500);
+        // ★ 雲端同步提示（不用 bannerFX 避免 null 崩潰）
+        try{
+          const _toast=document.createElement('div');
+          _toast.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;'+
+            'background:rgba(30,80,50,0.95);border:1.5px solid #44ff88;color:#aaffcc;'+
+            'font-size:20px;padding:10px 24px;border-radius:10px;pointer-events:none;';
+          _toast.textContent='☁️ 歡迎回來！進度已從雲端同步 ✅';
+          document.body.appendChild(_toast);
+          setTimeout(()=>{ _toast.style.opacity='0'; _toast.style.transition='opacity 0.5s';
+            setTimeout(()=>{ if(_toast.parentNode)_toast.remove(); },600); }, 2000);
+        }catch(e){}
       }, 1000);
     } else {
       log('☁️ 雲端無記錄，使用本地進度');
@@ -20084,13 +20141,50 @@ function investStat(name, stat) {
   if(!_heroStatInvested[name]) _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
   if((_heroStatInvested[name][stat]||0) >= 50) return;
   const label = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
-  if(!confirm(`⚠ 確定要將 1 點素質投資到【${name}】的${label}嗎？
-
-此操作無法反悔，請慎重決定。`)) return;
-  _heroStatPoints[name]--;
-  _heroStatInvested[name][stat] = (_heroStatInvested[name][stat]||0) + 1;
-  gameCloudSave();
-  _renderHeroDetail(name, document.getElementById('hero-detail-content'));
+  const icon  = {hp:'❤',atk:'⚔',sp:'✨',spd:'💨'}[stat];
+  // ★ 遊戲內確認視窗（取代瀏覽器 confirm）
+  const _old = document.getElementById('invest-confirm-box');
+  if(_old) _old.remove();
+  const box = document.createElement('div');
+  box.id = 'invest-confirm-box';
+  box.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'background:linear-gradient(160deg,rgba(12,10,28,0.99),rgba(6,5,15,0.99));',
+    'border:2.5px solid rgba(180,140,255,0.8);border-radius:20px;',
+    'padding:32px 44px;z-index:9500;text-align:center;min-width:360px;max-width:520px;',
+    'box-shadow:0 0 50px rgba(150,100,255,0.4);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  box.innerHTML = `
+    <div style="font-size:48px;margin-bottom:10px;">${icon}</div>
+    <div style="font-size:26px;font-weight:900;color:#cc99ff;margin-bottom:8px;">投資素質點數</div>
+    <div style="font-size:22px;color:#eee;margin-bottom:6px;">
+      確定要將 <span style="color:#ffcc44;font-weight:800;">1 點</span> 素質投資到<br>
+      <span style="color:#88ddff;font-weight:800;">【${name}】</span> 的 <span style="color:#${stat==='hp'?'ff8888':stat==='atk'?'ffaa44':stat==='sp'?'cc88ff':'44ddff'};font-weight:800;">${label}</span> 嗎？
+    </div>
+    <div style="font-size:17px;color:#ff8888;margin-bottom:22px;margin-top:6px;">⚠ 此操作無法反悔，請慎重決定</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button id="_invest_yes" style="padding:12px 40px;font-size:22px;font-weight:800;
+        background:rgba(120,80,255,0.3);border:2px solid #aa77ff;color:#cc99ff;
+        border-radius:10px;cursor:pointer;font-family:inherit;transition:0.15s;"
+        onmouseover="this.style.background='rgba(150,100,255,0.5)'"
+        onmouseout="this.style.background='rgba(120,80,255,0.3)'">✔ 確定</button>
+      <button id="_invest_no"  style="padding:12px 32px;font-size:22px;font-weight:800;
+        background:rgba(60,10,10,0.3);border:2px solid #e84040;color:#e84040;
+        border-radius:10px;cursor:pointer;font-family:inherit;transition:0.15s;"
+        onmouseover="this.style.background='rgba(232,64,64,0.25)'"
+        onmouseout="this.style.background='rgba(60,10,10,0.3)'">✕ 取消</button>
+    </div>`;
+  document.body.appendChild(box);
+  document.getElementById('_invest_yes').onclick = () => {
+    box.remove();
+    _heroStatPoints[name]--;
+    _heroStatInvested[name][stat] = (_heroStatInvested[name][stat]||0) + 1;
+    gameCloudSave();
+    _renderHeroDetail(name, document.getElementById('hero-detail-content'));
+    try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+  };
+  document.getElementById('_invest_no').onclick = () => box.remove();
 }
 
 function upgradeSkill(name, slot) {
@@ -20101,16 +20195,53 @@ function upgradeSkill(name, slot) {
   const sk = hd ? hd[slot] : null;
   const skName = sk ? sk.n : slot;
   const nextLv = (_heroSkillLevels[name][slot]||0) + 1;
-  if(!confirm(`⚠ 確定要使用 1 本技能升級書提升【${name}】的技能【${skName}】嗎？
-
-升級後效果 +${nextLv*10}%（此操作無法反悔，請慎重決定）`)) return;
-  _skillBookCount--;
-  _heroSkillLevels[name][slot] = nextLv;
-  log(`📖 技能升級！${name} ${slot} → +${nextLv} (效果+${nextLv*10}%)`);
-  gameCloudSave();
-  const bookEl = document.getElementById('hero-page-book-count');
-  if(bookEl) bookEl.textContent = _skillBookCount;
-  _renderHeroDetail(name, document.getElementById('hero-detail-content'));
+  // ★ 遊戲內確認視窗
+  const _oldU2 = document.getElementById('upgrade-confirm-box');
+  if(_oldU2) _oldU2.remove();
+  const boxU2 = document.createElement('div');
+  boxU2.id = 'upgrade-confirm-box';
+  boxU2.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'background:linear-gradient(160deg,rgba(8,15,28,0.99),rgba(4,8,18,0.99));',
+    'border:2.5px solid rgba(100,180,255,0.8);border-radius:20px;padding:32px 44px;',
+    'z-index:9500;text-align:center;min-width:360px;max-width:520px;',
+    'box-shadow:0 0 50px rgba(60,140,255,0.4);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  boxU2.innerHTML = `
+    <div style="font-size:48px;margin-bottom:10px;">📖</div>
+    <div style="font-size:26px;font-weight:900;color:#88ccff;margin-bottom:8px;">技能升級確認</div>
+    <div style="font-size:22px;color:#eee;margin-bottom:6px;">
+      使用 <span style="color:#ffcc44;font-weight:800;">1 本</span> 技能升級書<br>
+      提升 <span style="color:#88ddff;font-weight:800;">【${name}】</span> 的技能<br>
+      <span style="color:#aaddff;font-weight:800;">【${skName}】</span> → 效果 +<span style="color:#44ff88;font-weight:800;">${nextLv*10}%</span>
+    </div>
+    <div style="font-size:17px;color:#ff8888;margin-bottom:22px;margin-top:6px;">⚠ 此操作無法反悔，請慎重決定</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button id="_upg_yes2" style="padding:12px 40px;font-size:22px;font-weight:800;
+        background:rgba(50,120,255,0.3);border:2px solid #4499ff;color:#88ccff;
+        border-radius:10px;cursor:pointer;font-family:inherit;"
+        onmouseover="this.style.background='rgba(80,150,255,0.5)'"
+        onmouseout="this.style.background='rgba(50,120,255,0.3)'">✔ 確定升級</button>
+      <button id="_upg_no2"  style="padding:12px 32px;font-size:22px;font-weight:800;
+        background:rgba(60,10,10,0.3);border:2px solid #e84040;color:#e84040;
+        border-radius:10px;cursor:pointer;font-family:inherit;"
+        onmouseover="this.style.background='rgba(232,64,64,0.25)'"
+        onmouseout="this.style.background='rgba(60,10,10,0.3)'">✕ 取消</button>
+    </div>`;
+  document.body.appendChild(boxU2);
+  document.getElementById('_upg_yes2').onclick = () => {
+    boxU2.remove();
+    _skillBookCount--;
+    _heroSkillLevels[name][slot] = nextLv;
+    log(`📖 技能升級！${name} ${slot} → +${nextLv} (效果+${nextLv*10}%)`);
+    gameCloudSave();
+    const bookEl2 = document.getElementById('hero-page-book-count');
+    if(bookEl2) bookEl2.textContent = _skillBookCount;
+    _renderHeroDetail(name, document.getElementById('hero-detail-content'));
+    try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+  };
+  document.getElementById('_upg_no2').onclick = () => boxU2.remove();
 }
 
 // 結束冒險時自動讀取圖鑑
@@ -20246,6 +20377,7 @@ function advStartMiniBattle(nextSceneIdx) {
     // ── 重置戰鬥狀態（同 advStartBattle）
     G.inv2   = [null, null, null];
     G.energy = {p1:2, p2:2};
+    G.round  = 1;  // ★ 每場小怪戰從第1回合開始
     G._resultShown  = false;
     G.pendingTarget = null;
     G.selMove = null; G.selItem = null;
