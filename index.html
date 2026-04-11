@@ -3000,7 +3000,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.01</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.13</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -14119,6 +14119,15 @@ function _aiRemoveInv(side, uid){
 }
 
 function aiAct(a){
+  // ★ 防護：a 無效或已死亡
+  if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
+  // ★ 冒險模式答題中：等待答題結束後再行動（防止BOSS搶先）
+  if(typeof _adventureMode !== 'undefined' && _adventureMode &&
+     typeof _advQuizPhase !== 'undefined' && (_advQuizPhase === 'asking' || _advQuizPhase === 'answered')){
+    // 答題進行中，稍後重試
+    _pSetTimeout(()=>{ _realAiAct(a); }, 300);
+    return;
+  }
   // ★ 冒險模式：九尾空貓怪行動前先出題
   if(typeof _adventureMode !== 'undefined' && _adventureMode &&
      a && a.name === '九尾空貓怪' && a.side === 'p2' && a.curHp > 0 &&
@@ -17179,6 +17188,22 @@ function startAdventureGame(stage){
   try{ playSfx('sfx-confirm2', 1.0); }catch(e){}
   try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
+  // ★ 防止與鬥技場衝突：重設 G 的冒險無關狀態
+  if(typeof G !== 'undefined' && G){
+    G.pets = [];
+    G.inv2 = [null, null, null];
+    G._resultShown = false;
+    G.pendingTarget = null;
+    G.selMove = null;
+  }
+  // 清除殘留的 adv overlay 和 battle class
+  const _gc0 = document.getElementById('gc');
+  if(_gc0) _gc0.classList.remove('adv-battle');
+  ['adv-cutscene-overlay','adv-result-overlay','adv-boss-intro',
+   'adv-quiz-overlay','adv-continue-overlay'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.classList.remove('show');el.style.display='';}
+  });
   _adventureStage = stage;
   _advMiniBattleActive = false; // ★ 確保不殘留小怪戰旗標
   window._isAdventurePickMode = true;  // ★ 冒險模式提前設好，不再等showHeroPickOverlay
@@ -17244,8 +17269,30 @@ function markAdventureBossCards(){
 function exitAdventureMode(){
   _adventureMode = false;
   _adventureStage = null;
+  _advMiniBattleActive = false;
+  _advQuizPhase = 'idle';
+  _advQuizActive = false;
+  _advBossIntroActive = false;
+  if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer) {
+    clearInterval(_advQuizTimer); _advQuizTimer = null;
+  }
+  // 清除所有冒險相關 overlay
+  ['adv-cutscene-overlay','adv-result-overlay','adv-unlock-overlay',
+   'adv-continue-overlay','adv-boss-intro','adv-quiz-overlay',
+   'adv-reward-overlay','adv-hero-meet-overlay','adv-mini-result',
+   'adv-repick-popup'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){ el.classList.remove('show'); el.style.display=''; }
+  });
+  const _bdp = document.getElementById('adv-boss-detail-pop');
+  if(_bdp) _bdp.remove();
   const gc = document.getElementById('gc');
-  if(gc) gc.classList.remove('adv-battle');
+  if(gc){ gc.classList.remove('adv-battle'); gc.style.filter=''; }
+  // 清除所有 battle class 和 overlay 殘留
+  const bsOv = document.getElementById('battle-start-overlay');
+  if(bsOv) bsOv.classList.remove('show');
+  // 停止所有 adv BGM
+  try{ bgmStop(); }catch(e){}
 }
 
 // ════════════════════════════════════════════════════════════
@@ -17530,6 +17577,7 @@ function advStartCutscene(stage) {
   _advBossIntroActive = false;
   _advBossRageBurstUsed = false;
   _advContinueCount = 0;
+  if(typeof _advQuizRound !== 'undefined') _advQuizRound = 0;
   _advUsedQuestionIds = new Set();
   _advSessionQuestions = [];
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0};
@@ -17544,6 +17592,11 @@ function advStartCutscene(stage) {
 }
 
 function advLoadScene(stage, idx) {
+  if(!stage || !ADV_SCENES || !ADV_SCENES[stage]){
+    console.error('[advLoadScene] 無效 stage:', stage);
+    try{ advFinishCutscene(); }catch(e){}
+    return;
+  }
   const scenes = ADV_SCENES[stage];
   if(!scenes || idx >= scenes.length) { advFinishCutscene(); return; }
   _advSceneIdx = idx;
@@ -17573,10 +17626,20 @@ function advLoadScene(stage, idx) {
 }
 
 function advShowDialog(stage, sceneIdx) {
+  if(!stage || !ADV_SCENES[stage] || !ADV_SCENES[stage][sceneIdx]) return;
   const scene = ADV_SCENES[stage][sceneIdx];
+  if(!scene || !scene.dialogs) return;
   const dialog = document.getElementById('adv-dialog-box');
-  document.getElementById('adv-dialog-speaker').textContent = scene.speaker;
-  document.getElementById('adv-dialog-text').textContent = scene.dialogs[_advDialogIdx];
+  if(!dialog) return;
+  const _spkEl = document.getElementById('adv-dialog-speaker');
+  const _txtEl = document.getElementById('adv-dialog-text');
+  if(_spkEl) _spkEl.textContent = scene.speaker || '';
+  // 越界保護：若 _advDialogIdx 超出 dialogs 範圍，直接跳到選擇畫面
+  if(_advDialogIdx >= scene.dialogs.length){
+    advShowChoicePanel(stage, sceneIdx);
+    return;
+  }
+  if(_txtEl) _txtEl.textContent = scene.dialogs[_advDialogIdx] || '';
   dialog.classList.add('show');
 }
 
@@ -17584,10 +17647,17 @@ function advNextDialog(e) {
   // 若點到略過按鈕，不推進
   if(e && e.target && e.target.id === 'adv-skip-btn') return;
   // 若選擇視窗或法寶彈窗開著，不推進對話
-  if(document.getElementById('adv-choice-panel').children.length > 0) return;
-  if(document.getElementById('adv-treasure-popup').classList.contains('show')) return;
+  const _cpEl = document.getElementById('adv-choice-panel');
+  if(_cpEl && _cpEl.children.length > 0) return;
+  const _tpEl = document.getElementById('adv-treasure-popup');
+  if(_tpEl && _tpEl.classList.contains('show')) return;
+  // ★ 若 quiz overlay 開著，不推進對話
+  const _qoEl = document.getElementById('adv-quiz-overlay');
+  if(_qoEl && _qoEl.classList.contains('show')) return;
   const stage = _adventureStage;
+  if(!stage || !ADV_SCENES[stage] || !ADV_SCENES[stage][_advSceneIdx]) return;
   const scene = ADV_SCENES[stage][_advSceneIdx];
+  if(!scene || !scene.dialogs) return;
   _advDialogIdx++;
   if (_advDialogIdx < scene.dialogs.length) {
     document.getElementById('adv-dialog-text').textContent = scene.dialogs[_advDialogIdx];
@@ -17740,6 +17810,7 @@ _advTreasures[i] = (_remaining.length ? _remaining : ADV_TREASURES)[Math.floor(M
 }
 
 function advFinishCutscene() {
+  if(!_adventureMode){ exitAdventureMode(); return; }
   // 淡出過場
   const ov = document.getElementById('adv-cutscene-overlay');
   const bg = document.getElementById('adv-scene-bg');
@@ -17755,6 +17826,15 @@ function advFinishCutscene() {
 
 // ── 正式啟動戰鬥（過場演出結束後呼叫）
 function advStartBattle(){
+  // ★ 確保冒險模式旗標正確
+  _adventureMode = true;
+  _advMiniBattleActive = false;
+  // 清除小怪戰殘留狀態
+  if(typeof G !== 'undefined' && G){
+    G._resultShown = false;
+    G.pendingTarget = null;
+    if(typeof pendingCb !== 'undefined') pendingCb = null;
+  }
   try{ bgmStop(); }catch(e){}
   try{
     // ★ BOSS戰專屬BGM（九尾空貓怪主題曲，loop=true 自動重複）
@@ -19930,6 +20010,11 @@ function advStartMiniBattle(nextSceneIdx) {
 
 function advFinishMiniBattle(win) {
   _advMiniBattleActive = false;
+  // ★ 停止計時器、清除 pending 狀態
+  try{ clearTurnTimer(); }catch(e){}
+  if(typeof pendingCb !== 'undefined') pendingCb = null;
+  if(typeof G !== 'undefined' && G) G.pendingTarget = null;
+  _gamePaused = false;
 
   if(win) {
     // 給予小怪EXP
