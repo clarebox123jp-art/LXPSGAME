@@ -3006,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.11.00</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.11.02</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -17364,6 +17364,7 @@ function exitAdventureMode(){
   _adventureStage = null;
   _advMiniBattleActive = false;
   _advQuizPhase = 'idle';
+  window._advMiniResultPending = null;
   _advQuizActive = false;
   _advBossIntroActive = false;
   if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer) {
@@ -20203,49 +20204,85 @@ function advFinishMiniBattle(win) {
     bgmPlay('bgm-win');
   }catch(e){}
 
-  // ★ 順序化流程：① 結算畫面2秒 → ② 顯示過場 → ③ 載入場景 → ④ 播放對白
+  // ★ 流程：顯示小怪專屬結算視窗 → 玩家按確認 → 過場 → 載入下一場景
   const _miniResultEl2 = document.getElementById('adv-mini-result');
-  const _RESULT_DUR = 2200; // 結算畫面持續時間
+  const _savedBossTeam    = _advBossTeamSaved;
+  const _savedPlayerPets  = window._advPlayerPetsSaved;
 
-  // 儲存 boss team reference for delayed restore
-  const _savedBossTeam = _advBossTeamSaved;
-  const _savedPlayerPets = window._advPlayerPetsSaved;
+  // 更新出戰英雄名稱
+  const _heroNamesEl = document.getElementById('adv-mini-result-heroes');
+  if(_heroNamesEl && G.p1)
+    _heroNamesEl.textContent = '出戰英雄：' + G.p1.map(h=>h.name).join(' ・ ');
 
-  setTimeout(()=>{
-    // ★ 恢復BOSS陣容（延遲到結算畫面結束後）
-    if(_savedBossTeam) {
-      G.p2 = JSON.parse(JSON.stringify(_savedBossTeam));
-      _advBossTeamSaved = null;
-      if(_savedPlayerPets){
-        const _newPets = G.pets ? G.pets.filter(p=>p && !_savedPlayerPets.find(op=>op&&op.n===p.n)) : [];
-        G.pets = [..._savedPlayerPets, ..._newPets];
-        window._advPlayerPetsSaved = null;
-      }
-      G.p2.forEach(h => { try{ applyElemBonus(h); }catch(e){} });
+  // 儲存待確認流程參數（供按鈕回呼使用）
+  window._advMiniResultPending = {
+    savedBossTeam:   _savedBossTeam,
+    savedPlayerPets: _savedPlayerPets,
+    nextScene:       _advMiniBattleNextScene,
+    stage:           _adventureStage
+  };
+
+  // 顯示結算視窗（等玩家按確認）
+  if(_miniResultEl2){
+    _miniResultEl2.classList.add('show');
+    const _btn = document.getElementById('adv-mini-result-btn');
+    if(_btn){
+      _btn.onmouseover = ()=>{ _btn.style.opacity='0.8'; _btn.style.transform='scale(1.06)'; };
+      _btn.onmouseout  = ()=>{ _btn.style.opacity='1';   _btn.style.transform=''; };
     }
-    // ★ 移除戰鬥class並恢復p2卡片可見性
-    if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(false);
-    const _gc2d = document.getElementById('gc');
-    if(_gc2d) _gc2d.classList.remove('adv-battle');
-    const _pf2d = document.getElementById('p2-field');
-    if(_pf2d) _pf2d.style.visibility = '';
-    // 隱藏結算畫面
-    if(_miniResultEl2) _miniResultEl2.classList.remove('show');
-    // 切換到過場音樂
-    try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
-    // 清除所有阻擋元素
-    const _bossDetailPop3 = document.getElementById('adv-boss-detail-pop');
-    if(_bossDetailPop3) _bossDetailPop3.remove();
-    // 顯示過場畫面
-    const cutsceneOv2 = document.getElementById('adv-cutscene-overlay');
-    if(cutsceneOv2) cutsceneOv2.style.display = 'flex';
-    // 500ms後載入下一場景（讓過場畫面淡入）
-    setTimeout(()=>{
-      advLoadScene(_adventureStage, _advMiniBattleNextScene);
-    }, 500);
-  }, _RESULT_DUR);
+  } else {
+    // 保險備用：元素不存在時自動繼續
+    setTimeout(advMiniResultConfirm, 2000);
+  }
 }
 
+// ★ 小怪戰勝利確認：玩家按下「繼續冒險」後執行
+function advMiniResultConfirm(){
+  const _miniResultEl = document.getElementById('adv-mini-result');
+  if(_miniResultEl) _miniResultEl.classList.remove('show');
+
+  const p = window._advMiniResultPending || {};
+  window._advMiniResultPending = null;
+
+  // 恢復BOSS陣容（深拷貝）
+  if(p.savedBossTeam){
+    G.p2 = JSON.parse(JSON.stringify(p.savedBossTeam));
+    _advBossTeamSaved = null;
+    if(p.savedPlayerPets){
+      const _newPets = G.pets
+        ? G.pets.filter(pt=>pt && !p.savedPlayerPets.find(op=>op&&op.n===pt.n))
+        : [];
+      G.pets = [...p.savedPlayerPets, ..._newPets];
+      window._advPlayerPetsSaved = null;
+    }
+    G.p2.forEach(h=>{ try{ applyElemBonus(h); }catch(e){} });
+  }
+
+  // 移除戰鬥class並恢復欄位可見性
+  if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(false);
+  const _gcD = document.getElementById('gc');
+  if(_gcD) _gcD.classList.remove('adv-battle');
+  const _pf2 = document.getElementById('p2-field');
+  if(_pf2) _pf2.style.visibility = '';
+
+  // 切換到過場BGM
+  try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+
+  // 清除殘留元素
+  const _bdp = document.getElementById('adv-boss-detail-pop');
+  if(_bdp) _bdp.remove();
+
+  // 顯示過場畫面
+  const _csOv = document.getElementById('adv-cutscene-overlay');
+  if(_csOv) _csOv.style.display = 'flex';
+
+  // 500ms後載入下一場景（讓過場淡入）
+  setTimeout(()=>{
+    const _stage = p.stage || _adventureStage;
+    const _nextIdx = (p.nextScene !== undefined) ? p.nextScene : _advMiniBattleNextScene;
+    advLoadScene(_stage, _nextIdx);
+  }, 500);
+}
 function openMonsterPage() {
   const ov = document.getElementById('monster-page-overlay');
   if(!ov) return;
