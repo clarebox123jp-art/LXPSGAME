@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.00.56</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.01.06</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3159,15 +3159,15 @@ body {
     <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
       padding:14px 28px;border-bottom:2px solid rgba(255,180,50,0.4);
       background:linear-gradient(to right,rgba(40,20,0,0.85),rgba(20,10,0,0.85));gap:24px;">
-      <div style="font-size:80px;font-weight:900;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 20px rgba(255,180,0,0.5);">
+      <div style="font-size:60px;font-weight:900;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 20px rgba(255,180,0,0.5);">
         🛒 不可思議超商
       </div>
-      <div id="shop-coins-display" style="font-size:56px;font-weight:800;color:#ffee88;
+      <div id="shop-coins-display" style="font-size:42px;font-weight:800;color:#ffee88;
         background:rgba(255,180,0,0.15);border:1.5px solid rgba(255,180,50,0.5);
         padding:7px 18px;border-radius:10px;">
         💰 <span id="shop-coins-val">0</span> 知識幣
       </div>
-      <button onclick="closeShopOverlay()" style="padding:9px 22px;font-size:48px;font-weight:700;
+      <button onclick="closeShopOverlay()" style="padding:9px 22px;font-size:36px;font-weight:700;
         background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;
         border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>
     </div>
@@ -3175,14 +3175,14 @@ body {
     <div style="position:relative;z-index:1;display:flex;height:calc(100% - 90px);gap:0;">
       <!-- 左側：商品列表 -->
       <div style="flex:1;padding:20px 24px;overflow-y:auto;border-right:1.5px solid rgba(255,180,50,0.25);">
-        <div style="font-size:56px;font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
+        <div style="font-size:42px;font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
         <div id="shop-products-list"></div>
         <!-- 分隔線：可賣出的物品 -->
         <div id="shop-sell-section" style="margin-top:24px;"></div>
       </div>
       <!-- 右側：玩家背包 -->
       <div style="width:440px;padding:20px 20px;overflow-y:auto;background:rgba(0,0,0,0.2);">
-        <div style="font-size:56px;font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
+        <div style="font-size:42px;font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
         <div id="shop-bag-panel"></div>
       </div>
     </div>
@@ -20072,20 +20072,20 @@ function _renderShopProducts(){
     div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:12px;'+
       'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;';
     div.innerHTML = `
-      <div style="font-size:104px;flex-shrink:0;">${prod.icon}</div>
+      <div style="font-size:78px;flex-shrink:0;">${prod.icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:52px;font-weight:900;color:#ffcc44;">${prod.name}</div>
-        <div style="font-size:38px;color:#ccc;margin-top:3px;line-height:1.5;">${prod.desc}</div>
-        <div style="font-size:42px;color:#ffdd88;margin-top:6px;">庫存：${prod.stock} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span></div>
+        <div style="font-size:39px;font-weight:900;color:#ffcc44;">${prod.name}</div>
+        <div style="font-size:28px;color:#ccc;margin-top:3px;line-height:1.5;">${prod.desc}</div>
+        <div style="font-size:32px;color:#ffdd88;margin-top:6px;">庫存：${prod.stock} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <button onclick="shopAdjQty('${prod.id}',-1)" style="width:36px;height:36px;font-size:48px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:8px;cursor:pointer;">−</button>
-          <span id="shop-qty-${prod.id}" style="font-size:52px;font-weight:800;color:#fff;min-width:32px;text-align:center;">${qty}</span>
-          <button onclick="shopAdjQty('${prod.id}',+1)" style="width:36px;height:36px;font-size:48px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;">＋</button>
+          <button onclick="shopAdjQty('${prod.id}',-1)" style="width:36px;height:36px;font-size:36px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:8px;cursor:pointer;">−</button>
+          <span id="shop-qty-${prod.id}" style="font-size:39px;font-weight:800;color:#fff;min-width:32px;text-align:center;">${qty}</span>
+          <button onclick="shopAdjQty('${prod.id}',+1)" style="width:36px;height:36px;font-size:36px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;">＋</button>
         </div>
-        <div style="font-size:40px;color:${canAfford?'#ffe066':'#888'};">合計：${total.toLocaleString()} 💰</div>
-        <button onclick="shopBuyItem('${prod.id}')" style="padding:10px 22px;font-size:44px;font-weight:800;
+        <div style="font-size:30px;color:${canAfford?'#ffe066':'#888'};">合計：${total.toLocaleString()} 💰</div>
+        <button onclick="shopBuyItem('${prod.id}')" style="padding:10px 22px;font-size:33px;font-weight:800;
           background:${canAfford?'rgba(50,160,50,0.35)':'rgba(40,40,40,0.3)'};
           border:2px solid ${canAfford?'#44ff88':'#555'};
           color:${canAfford?'#44ff88':'#666'};
@@ -20100,7 +20100,7 @@ function _renderShopProducts(){
   if(!sellSec) return;
   const sellable = SHOP_SELL_ITEMS.filter(si => backpackGet(si.id) > 0);
   if(!sellable.length){ sellSec.innerHTML=''; return; }
-  sellSec.innerHTML = '<div style="font-size:48px;font-weight:900;color:#ffaa44;margin-bottom:12px;border-top:1.5px solid rgba(255,150,50,0.3);padding-top:16px;">💱 賣出收藏品</div>';
+  sellSec.innerHTML = '<div style="font-size:36px;font-weight:900;color:#ffaa44;margin-bottom:12px;border-top:1.5px solid rgba(255,150,50,0.3);padding-top:16px;">💱 賣出收藏品</div>';
   sellable.forEach(si => {
     const have = backpackGet(si.id);
     const def = BACKPACK_ITEM_DEF[si.id]||{};
@@ -20108,15 +20108,15 @@ function _renderShopProducts(){
     div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:14px 20px;margin-bottom:10px;'+
       'background:rgba(40,20,0,0.7);border:1.5px solid rgba(255,150,50,0.3);border-radius:12px;';
     div.innerHTML = `
-      <div style="font-size:88px;">${def.icon||si.icon}</div>
+      <div style="font-size:66px;">${def.icon||si.icon}</div>
       <div style="flex:1;">
-        <div style="font-size:48px;font-weight:900;color:#ffbb44;">${si.name}</div>
-        <div style="font-size:36px;color:#aaa;">持有：${have} 個 &nbsp;|&nbsp; 賣價：<span style="color:#ffe066;font-weight:800;">${si.sellPrice.toLocaleString()} 💰</span>/個</div>
+        <div style="font-size:36px;font-weight:900;color:#ffbb44;">${si.name}</div>
+        <div style="font-size:27px;color:#aaa;">持有：${have} 個 &nbsp;|&nbsp; 賣價：<span style="color:#ffe066;font-weight:800;">${si.sellPrice.toLocaleString()} 💰</span>/個</div>
       </div>
-      <button onclick="shopSellItem('${si.id}',1)" style="padding:10px 22px;font-size:44px;font-weight:800;
+      <button onclick="shopSellItem('${si.id}',1)" style="padding:10px 22px;font-size:33px;font-weight:800;
         background:rgba(180,100,0,0.35);border:2px solid #ffaa44;color:#ffaa44;
         border-radius:10px;cursor:pointer;font-family:inherit;">💱 賣出1個</button>
-      <button onclick="shopSellItem('${si.id}',${have})" style="padding:10px 22px;font-size:44px;font-weight:800;
+      <button onclick="shopSellItem('${si.id}',${have})" style="padding:10px 22px;font-size:33px;font-weight:800;
         background:rgba(180,60,0,0.35);border:2px solid #ff6622;color:#ff8844;
         border-radius:10px;cursor:pointer;font-family:inherit;">全部賣出</button>`;
     sellSec.appendChild(div);
@@ -20241,7 +20241,7 @@ function useBackpackItem(id){
       _setNavDot('英雄', true);
       _showInGameToast(`📗 [${name}] 獲得 50 EXP！`, '#88ff88', 2000);
       _renderBackpackMain();
-    }, false); // false = 全英雄可選
+    }, true); // ★ 只限已收錄英雄// false = 全英雄可選
 
   } else if(id==='skill_upgrade_book'){
     _backpackOpenHeroSelect('📖 技能升級書', '選擇要升級技能的英雄', name=>{
@@ -20298,7 +20298,15 @@ function _backpackOpenHeroSelect(title, subtitle, callback, onlyUnlocked){
   const existing = document.getElementById('bag-hero-select');
   if(existing) existing.remove();
   const unlocked = advGetUnlockedHeroes();
-  const heroList = onlyUnlocked ? unlocked
+  const heroList = onlyUnlocked
+    ? (()=>{
+        // ★ 已收錄英雄 = 力行校園預設英雄（ADV_HERO_POOL） + 解鎖抽到的英雄
+        const _basePool = (typeof ADV_HERO_POOL!=='undefined')
+          ? Object.values(ADV_HERO_POOL).flat()
+          : [];
+        const _all = [...new Set([..._basePool, ...unlocked])];
+        return _all.filter(n=> typeof HERO_DB!=='undefined' && HERO_DB[n]);
+      })()
     : (typeof HERO_DB!=='undefined'?Object.keys(HERO_DB):[]);
 
   const ov = document.createElement('div');
