@@ -3006,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.20.01</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.20.41</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -17720,6 +17720,7 @@ function advLoadScene(stage, idx) {
   // 隱藏對話框和選擇視窗，等2秒後顯示
   const dialog = document.getElementById('adv-dialog-box');
   dialog.classList.remove('show');
+  dialog.style.display = ''; // ★ 清除 mini battle 留下的 inline style
   document.getElementById('adv-choice-panel').innerHTML = '';
   document.getElementById('adv-confirm-banner').textContent = '';
 
@@ -17755,12 +17756,16 @@ function advShowDialog(stage, sceneIdx) {
     return;
   }
   if(_txtEl) _txtEl.textContent = scene.dialogs[_advDialogIdx] || '';
+  // ★ 清除 inline style（advStartMiniBattle 可能設過 style.display='none'）
+  dialog.style.display = '';
   dialog.classList.add('show');
 }
 
 function advNextDialog(e) {
   // 若點到略過按鈕，不推進
   if(e && e.target && (e.target.id === 'adv-skip-btn' || e.target.closest('#adv-skip-btn'))) return;
+  // ★ 小怪戰鬥中：對話框只是顯示開場白，不觸發劇情推進
+  if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive) return;
   // 若選擇視窗或法寶彈窗開著，不推進對話
   const _cpEl = document.getElementById('adv-choice-panel');
   if(_cpEl && _cpEl.children.length > 0) return;
@@ -17898,7 +17903,9 @@ function advUpdateBattleTreasureBar() {
     const btn = document.createElement('button');
     btn.className = 'aqt-btn';
     btn.innerHTML = `${t.icon} ${t.name}`;
-    btn.onclick = () => advUseTreasure(i);
+    btn.title = t.desc;
+    // ★ 點擊先顯示確認視窗，再執行
+    btn.onclick = () => advConfirmTreasureUse(i);
     bar.appendChild(btn);
   });
   if (!_advTreasures.some(t=>t)) {
@@ -17906,18 +17913,147 @@ function advUpdateBattleTreasureBar() {
   }
 }
 
+// ★ 法寶確認視窗
+function advConfirmTreasureUse(slotIdx) {
+  if (!_advQuizActive || _advQuizPhase !== 'asking') return;
+  const t = _advTreasures[slotIdx];
+  if (!t) return;
+  // 移除舊的確認視窗
+  const old = document.getElementById('adv-treasure-confirm');
+  if (old) old.remove();
+  // 建立確認視窗
+  const box = document.createElement('div');
+  box.id = 'adv-treasure-confirm';
+  box.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'background:linear-gradient(135deg,rgba(12,8,30,0.98),rgba(6,4,18,0.99));',
+    'border:2.5px solid rgba(255,200,50,0.8);border-radius:18px;padding:30px 40px;',
+    'z-index:9200;text-align:center;min-width:340px;max-width:500px;',
+    'box-shadow:0 0 40px rgba(255,180,0,0.4);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  box.innerHTML = `
+    <div style="font-size:52px;margin-bottom:8px;">${t.icon}</div>
+    <div style="font-size:30px;font-weight:900;color:#ffcc44;margin-bottom:10px;">${t.name}</div>
+    <div style="font-size:22px;color:#ddeeff;margin-bottom:24px;line-height:1.5;">${t.desc}</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="advUseTreasure(${slotIdx});document.getElementById('adv-treasure-confirm').remove();"
+        style="padding:12px 32px;font-size:22px;font-weight:800;background:rgba(50,180,80,0.3);
+          border:2px solid #3ec87a;color:#3ec87a;border-radius:10px;cursor:pointer;
+          font-family:inherit;">✔ 使用</button>
+      <button onclick="document.getElementById('adv-treasure-confirm').remove();"
+        style="padding:12px 32px;font-size:22px;font-weight:800;background:rgba(60,10,10,0.3);
+          border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;
+          font-family:inherit;">✕ 取消</button>
+    </div>`;
+  document.body.appendChild(box);
+  playSfx('sfx-sel', 0.5);
+}
+
 function advSkipCutscene() {
-  // 快速填入預設值
-  if (!_advPlayerGrade) _advPlayerGrade = '小學中年級';
-  if (!_advPlayerSubject) _advPlayerSubject = '社會';
-  if (!_advPlayerDifficulty) _advPlayerDifficulty = '普通';
+  // ★ 快速跳過：用一個緊湊視窗詢問三個問題，讓玩家選完後才進BOSS戰
+  // 如果三個問題都已有答案（可能玩家已點過某些選項），直接結束
+  if (_advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
+    _advSkipGiveTreasures();
+    return;
+  }
+  // 彈出快速選擇視窗
+  const old = document.getElementById('adv-skip-select-box');
+  if (old) old.remove();
+  const box = document.createElement('div');
+  box.id = 'adv-skip-select-box';
+  box.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'background:linear-gradient(135deg,rgba(10,8,30,0.98),rgba(5,4,18,0.99));',
+    'border:2.5px solid rgba(120,90,255,0.8);border-radius:20px;padding:28px 36px;',
+    'z-index:9300;min-width:420px;max-width:600px;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'box-shadow:0 0 50px rgba(100,60,255,0.4);'
+  ].join('');
+
+  const gradeOpts = ['低年級','中年級','高年級','國中'];
+  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識'];
+  const diffOpts  = ['沒自信','普通','我很會'];
+
+  function mkRow(label, opts, key) {
+    const row = document.createElement('div');
+    row.style.cssText = 'margin-bottom:16px;';
+    row.innerHTML = `<div style="font-size:20px;color:#aabbcc;margin-bottom:6px;font-weight:700;">${label}</div>`;
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+    opts.forEach(o => {
+      const b = document.createElement('button');
+      b.textContent = o;
+      b.dataset.val = o;
+      b.dataset.key = key;
+      b.style.cssText = 'padding:6px 14px;font-size:17px;font-weight:700;border-radius:8px;cursor:pointer;' +
+        'background:rgba(80,60,180,0.25);border:1.5px solid rgba(120,90,255,0.5);color:#ccbbff;font-family:inherit;transition:0.15s;';
+      b.onclick = () => {
+        grid.querySelectorAll('button').forEach(x => {
+          x.style.background = 'rgba(80,60,180,0.25)';
+          x.style.borderColor = 'rgba(120,90,255,0.5)';
+          x.style.color = '#ccbbff';
+        });
+        b.style.background = 'rgba(120,90,255,0.5)';
+        b.style.borderColor = '#aa88ff';
+        b.style.color = '#fff';
+        if (key==='grade') _advPlayerGrade = o;
+        else if (key==='subject') _advPlayerSubject = o;
+        else if (key==='diff') _advPlayerDifficulty = o;
+        // 更新確認按鈕狀態
+        const confirmBtn = document.getElementById('adv-skip-confirm-btn');
+        if (confirmBtn && _advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
+          confirmBtn.disabled = false;
+          confirmBtn.style.opacity = '1';
+        }
+      };
+      // 若已有選擇，預先選取
+      if ((key==='grade' && _advPlayerGrade===o) ||
+          (key==='subject' && _advPlayerSubject===o) ||
+          (key==='diff' && _advPlayerDifficulty===o)) {
+        b.style.background = 'rgba(120,90,255,0.5)';
+        b.style.borderColor = '#aa88ff';
+        b.style.color = '#fff';
+      }
+      grid.appendChild(b);
+    });
+    row.appendChild(grid);
+    return row;
+  }
+
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:26px;font-weight:900;color:#ffcc44;text-align:center;margin-bottom:20px;';
+  title.textContent = '⏭ 跳過演出 — 先選好設定';
+  box.appendChild(title);
+  box.appendChild(mkRow('📚 年級', gradeOpts, 'grade'));
+  box.appendChild(mkRow('📖 科目', subjOpts, 'subject'));
+  box.appendChild(mkRow('⭐ 難度', diffOpts, 'diff'));
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.id = 'adv-skip-confirm-btn';
+  const _allReady = _advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty;
+  confirmBtn.disabled = !_allReady;
+  confirmBtn.style.cssText = 'width:100%;padding:14px;font-size:24px;font-weight:900;margin-top:12px;' +
+    'background:rgba(50,180,80,0.3);border:2px solid #3ec87a;color:#3ec87a;border-radius:12px;cursor:pointer;' +
+    'font-family:inherit;opacity:' + (_allReady?'1':'0.4') + ';transition:0.2s;';
+  confirmBtn.textContent = '✔ 確認，進入Boss戰';
+  confirmBtn.onclick = () => {
+    box.remove();
+    _advSkipGiveTreasures();
+  };
+  box.appendChild(confirmBtn);
+  document.body.appendChild(box);
+  playSfx('sfx-sel', 0.5);
+}
+
+function _advSkipGiveTreasures() {
   // 隨機給所有未領到的法寶
   for (let i = 0; i < 3; i++) {
     if (!_advTreasures[i]) {
-      // 隨機不重複
-const _usedTids = new Set(_advTreasures.filter(Boolean).map(x=>x.id));
-const _remaining = ADV_TREASURES.filter(x=>!_usedTids.has(x.id));
-_advTreasures[i] = (_remaining.length ? _remaining : ADV_TREASURES)[Math.floor(Math.random()*(_remaining.length||ADV_TREASURES.length))];
+      const _usedTids = new Set(_advTreasures.filter(Boolean).map(x=>x.id));
+      const _remaining = ADV_TREASURES.filter(x=>!_usedTids.has(x.id));
+      _advTreasures[i] = (_remaining.length ? _remaining : ADV_TREASURES)[
+        Math.floor(Math.random()*(_remaining.length||ADV_TREASURES.length))];
     }
   }
   advUpdateTreasureBar();
@@ -18071,6 +18207,12 @@ function advCloseBossIntro() {
 //  問答系統
 // ════════════════════════════════
 function advShowQuiz() {
+  // ★ 確保法寶確認視窗已關閉
+  const _tcConf = document.getElementById('adv-treasure-confirm');
+  if(_tcConf) _tcConf.remove();
+  // ★ 確保法寶確認視窗已關閉
+  const _tcEl = document.getElementById('adv-treasure-confirm');
+  if(_tcEl) _tcEl.remove();
   if (!_adventureMode || _advQuizPhase !== 'idle') return;
   let q = advPickQuestion();
   if (!q) {
@@ -18312,6 +18454,19 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       advShowReward();
     }, 3200);
   } else {
+    // ★ 幸運流星沙：答錯可再試一次
+    if (q && q._extraChance) {
+      delete q._extraChance;
+      // 把剛選錯的選項禁用
+      const _btnsAll = Array.from(document.querySelectorAll('.aqo-btn'));
+      _btnsAll.forEach(b => {
+        if (b.dataset.value === value) { b.classList.add('wrong'); b.disabled = true; }
+      });
+      const _lbl = document.getElementById('adv-quiz-label');
+      if(_lbl) _lbl.textContent = '⭐ 答錯了！幸運流星沙效果：還有一次機會！';
+      try { beep(300,'sine',0.08,0.12); } catch(e) {}
+      return; // 讓玩家繼續作答，不結束
+    }
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
     // ★ 答錯專用音效
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
@@ -18431,20 +18586,24 @@ function advApplyTreasure(id) {
     const label = document.getElementById('adv-quiz-label');
     if(label) label.textContent = '⭐ 幸運流星沙：答錯可再答一次！';
   } else if (id === 'scroll') {
-    // 詳細提示
+    // ★ 古老提示卷：標示正確答案的選項文字顏色，並在下方顯示「答案是X」
     btns.forEach(b => {
-      const letter = b.dataset.letter;
-      const idx = letters.indexOf(letter);
-      if (q.options[idx] && q.hint) {
-        const hint = document.createElement('div');
-        hint.style.cssText='font-size:16px;color:#ffcc44;margin-top:4px;line-height:1.4;';
-        hint.textContent = letter===q.answer ? `💡 ${q.hint}` : '';
-        b.appendChild(hint);
+      if (b.dataset.isCorrect === '1') {
+        b.style.border = '2.5px solid #44ff88';
+        b.style.color  = '#44ff88';
+        b.style.boxShadow = '0 0 12px rgba(68,255,136,0.4)';
+        const tag = document.createElement('span');
+        tag.style.cssText = 'font-size:15px;margin-left:6px;color:#44ff88;';
+        tag.textContent = '✔';
+        b.appendChild(tag);
       }
     });
     const hintDiv = document.createElement('div');
-    hintDiv.style.cssText='font-size:20px;color:#ffcc44;margin-top:8px;text-align:center;';
-    hintDiv.textContent = `💡 提示：${q.hint}`;
+    hintDiv.id = 'adv-scroll-hint';
+    hintDiv.style.cssText = 'font-size:21px;color:#aaffcc;margin-top:10px;text-align:center;padding:8px;background:rgba(0,80,40,0.3);border-radius:8px;';
+    hintDiv.innerHTML = q.hint
+      ? `📜 提示：${q.hint}`
+      : `📜 正確答案已標綠色，仔細看看！`;
     document.getElementById('adv-quiz-box').appendChild(hintDiv);
   } else if (id === 'leaf') {
     // 換題
@@ -18465,14 +18624,21 @@ function advApplyTreasure(id) {
       setTimeout(() => advShowQuiz(), 200);
     }
   } else if (id === 'light') {
-    // 直接給答案
+    // ★ 直接揭曉正確答案
     clearInterval(_advQuizTimer);
     btns.forEach(b => {
       b.disabled = true;
-      if (b.dataset.isCorrect === '1') b.classList.add('correct'); // ★ 用isCorrect，不受洗牌影響
+      if (b.dataset.isCorrect === '1') b.classList.add('correct');
     });
     _advStats.correctCount++;
     _advStats.totalAnswerTime += 5; // 視同5秒答對
+    // ★ 計算得分（與 advSubmitAnswer 相同邏輯）
+    const _qGradeL = (q && q.grade) || '中年級';
+    const _baseSL = (typeof ADV_GRADE_SCORE!=='undefined' && ADV_GRADE_SCORE[_qGradeL]) || 35;
+    const _diffKL = (_advPlayerDifficulty==='沒自信'||_advPlayerDifficulty==='沒自信（輕鬆模式）') ? '沒自信'
+                  : (_advPlayerDifficulty==='我很會'||_advPlayerDifficulty==='我很會（挑戰模式）') ? '我很會' : '普通';
+    const _multL = (typeof ADV_DIFF_MULT!=='undefined' && ADV_DIFF_MULT[_diffKL]) || 1.0;
+    _advStats.totalQuizScore += Math.round(_baseSL * _multL);
     setTimeout(() => {
       document.getElementById('adv-quiz-overlay').classList.remove('show');
       _advQuizPhase = 'idle';
@@ -20041,12 +20207,24 @@ function advStartMiniBattle(nextSceneIdx) {
   const dialog  = document.getElementById('adv-dialog-box');
   if(speaker) speaker.textContent = '⚔️ 小怪出現！';
   if(text)    text.textContent    = intro;
-  if(dialog)  dialog.style.display = 'block';
+  // ★ 小怪開場白：暫時替換 onclick 以防止觸發 advNextDialog
+  if(dialog){
+    dialog.style.display = 'block';
+    dialog._origOnclick = dialog.onclick;
+    dialog.onclick = null;  // 開場白不需點擊推進
+  }
   try{ beep(350,'square',0.12,0.15); setTimeout(()=>beep(450,'square',0.1,0.1),200); }catch(e){}
 
   // 2.5秒後進入小怪戰鬥
   setTimeout(() => {
-    if(dialog) dialog.style.display = 'none';
+    if(dialog){
+      dialog.style.display = 'none';
+      // ★ 還原 onclick
+      if(dialog._origOnclick !== undefined){
+        dialog.onclick = dialog._origOnclick;
+        delete dialog._origOnclick;
+      }
+    }
 
     // ── 隨機組成4隻小怪（可重複）
     const mobs = Array.from({length:4}, () =>
