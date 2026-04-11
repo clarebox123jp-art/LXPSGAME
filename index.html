@@ -3000,7 +3000,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.13</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.30</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3475,7 +3475,7 @@ body {
     <!-- 選擇視窗（上半部） -->
     <div id="adv-choice-panel"></div>
     <!-- 對話框（下方固定） -->
-    <div id="adv-dialog-box" onclick="advNextDialog()" style="cursor:pointer;">
+    <div id="adv-dialog-box" onclick="advNextDialog(event)" style="cursor:pointer;">
       <div id="adv-dialog-speaker"></div>
       <div id="adv-dialog-text"></div>
       <div id="adv-confirm-banner" style="font-size:12px;color:#aaffaa;margin-top:6px;padding:0;letter-spacing:1px;min-height:0;line-height:1.3;"></div>
@@ -9688,6 +9688,26 @@ function onCard(h, _evt){
 
 let pendingCb=null;
 function setPending(type, cb){
+  // ★ AI 端（p2）總是自動選目標，不等玩家點擊
+  const _pendingActor = G && G.activeChar;
+  if(_pendingActor && _pendingActor.side === 'p2'){
+    const _opp = 'p1';
+    let _autoT = null;
+    if(type==='enemy'||type==='any_e'){
+      const _foes=G[_opp]?G[_opp].filter(h=>h.curHp>0):[];
+      _autoT=_foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='ally'||type==='self_or_ally'){
+      const _al=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp>0):[];
+      _autoT=_al.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='ally_dead'||type==='ally_or_dead'){
+      const _dead=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp===0):[];
+      _autoT=_dead[0]||null;
+    } else if(type==='any'){
+      const _all=(G.p1||[]).concat(G.p2||[]).filter(h=>h.curHp>0);
+      _autoT=_all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    }
+    if(_autoT){ setTimeout(()=>{ try{ cb(_autoT); }catch(e){ console.error('[AI setPending]',e); } }, 300); return; }
+  }
   // 自動戰鬥時自動選目標
   if(_autoBattle){
     const a=G.activeChar;
@@ -17592,6 +17612,11 @@ function advStartCutscene(stage) {
 }
 
 function advLoadScene(stage, idx) {
+  // ★ 確保過場畫面可見
+  const _csOvLoad = document.getElementById('adv-cutscene-overlay');
+  if(_csOvLoad && _csOvLoad.style.display !== 'flex'){
+    _csOvLoad.style.display = 'flex';
+  }
   if(!stage || !ADV_SCENES || !ADV_SCENES[stage]){
     console.error('[advLoadScene] 無效 stage:', stage);
     try{ advFinishCutscene(); }catch(e){}
@@ -17622,7 +17647,21 @@ function advLoadScene(stage, idx) {
   document.getElementById('adv-choice-panel').innerHTML = '';
   document.getElementById('adv-confirm-banner').textContent = '';
 
-  setTimeout(() => { advShowDialog(stage, idx); }, 2000);
+  // ★ 確保對話框可以接收點擊
+  // 清除所有殘留狀態
+  try{
+    if(typeof G!=='undefined'&&G){ G.pendingTarget=null; G.selMove=null; }
+    if(typeof pendingCb!=='undefined') pendingCb=null;
+    if(typeof clearTurnTimer==='function') clearTurnTimer();
+  }catch(e){}
+  setTimeout(() => {
+    // ★ 確認 cutscene overlay 已顯示再呼叫 advShowDialog
+    const _csOv = document.getElementById('adv-cutscene-overlay');
+    if(!_csOv || (_csOv.style.display === 'none' && !_csOv.classList.contains('show'))){
+      _csOv && (_csOv.style.display = 'flex');
+    }
+    advShowDialog(stage, idx);
+  }, 2000);
 }
 
 function advShowDialog(stage, sceneIdx) {
@@ -17645,7 +17684,7 @@ function advShowDialog(stage, sceneIdx) {
 
 function advNextDialog(e) {
   // 若點到略過按鈕，不推進
-  if(e && e.target && e.target.id === 'adv-skip-btn') return;
+  if(e && e.target && (e.target.id === 'adv-skip-btn' || e.target.closest('#adv-skip-btn'))) return;
   // 若選擇視窗或法寶彈窗開著，不推進對話
   const _cpEl = document.getElementById('adv-choice-panel');
   if(_cpEl && _cpEl.children.length > 0) return;
@@ -17854,6 +17893,11 @@ function advStartBattle(){
     }
     _playAdvBossBgm();
   }catch(e){}
+  // ★ BOSS戰前玩家HP全滿
+  if(typeof G !== 'undefined' && G && G.p1){
+    G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
+    try{ G.p1.forEach(h=>renderCard(h)); }catch(e){}
+  }
   const gc = document.getElementById('gc');
   if(gc) gc.classList.add('adv-battle');
   try{ playBattleStartSfx(); }catch(e){}
@@ -18029,15 +18073,19 @@ function advPickQuestion() {
     if (subPool.length > 0) pool = [...subPool, ...pool.filter(q => q.subject !== subj)];
   }
   if (pool.length === 0) {
-    // ★ 題目全部出過一輪：讓玩家重新選題目方向
+    // ★ 題目全部出過一輪：重置後繼續出題
     _advQuizRound++;
     _advUsedQuestionIds.clear();
-    _advQuizResolveCb && (() => {
+    // 僅在 BOSS 戰中（有 _advQuizResolveCb 且非小怪戰）才顯示重選視窗
+    if(_advQuizResolveCb && !_advMiniBattleActive){
       const _savedCb = _advQuizResolveCb;
       _advQuizResolveCb = null;
       advShowRePickSubject(_savedCb);
-    })();
-    return null; // 暫不出題，等玩家重選
+      return null;
+    }
+    // 小怪戰或其他情況：靜默重置，重新從題庫出題
+    pool = _advSessionQuestions.length ? _advSessionQuestions : ADV_QUIZ_DB;
+    if(!pool.length) return null;
   }
   // 隨機選一題（避免順序感）
   return pool[Math.floor(Math.random() * Math.min(pool.length, 3))] || null;
@@ -19924,6 +19972,8 @@ function advStartMiniBattle(nextSceneIdx) {
     const mobs = Array.from({length:4}, () =>
       MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
     );
+    // ★ 玩家隊伍HP全滿
+    if(G.p1) G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
     G.p2 = mobs.map((name, i) => {
       const h = newHero(name, 'p2', i);
       h.element = MINI_MONSTER_ELEM[name] || 'wind';
@@ -19973,6 +20023,8 @@ function advStartMiniBattle(nextSceneIdx) {
 
     // ── 渲染戰場
     try{ renderField(true); }catch(e){ console.error('[mini-renderField]',e); }
+    // ★ 更新玩家HP顯示
+    try{ if(G.p1) G.p1.forEach(h=>renderCard(h)); }catch(e){}
     // ★ 強制確保 p2 mini monster cards 的 onclick 正確指向 onCard（非 advShowBossDetail）
     try{
       G.p2.forEach(h=>{
