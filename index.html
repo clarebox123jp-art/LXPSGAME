@@ -2832,6 +2832,12 @@ body {
 
 #adv-mini-result{display:none;}
 #adv-mini-result.show{display:flex;}
+@keyframes bounceIn{
+  0%{transform:scale(0.5);opacity:0;}
+  60%{transform:scale(1.1);}
+  80%{transform:scale(0.95);}
+  100%{transform:scale(1);opacity:1;}
+}
 
 /* ★ 手機/平板縮放樣式 */
 @media screen and (max-width: 1919px), screen and (max-height: 1079px) {
@@ -3000,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.36</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.11.00</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -9665,10 +9671,10 @@ function equipSlotHTML(h){
 // ====== CARD CLICK ======
 function onCard(h, _evt){
   const a=G.activeChar; if(!a) return;
-  // ★ 先阻止事件穿透，再判斷是否有待選目標
-  if(_evt){ _evt.stopPropagation(); _evt._handledByOnCard = true; }
   const pt=G.pendingTarget;
-  if(!pt) return;
+  if(!pt) return;  // 無待選目標：讓事件繼續（允許爆發面板等其他處理器執行）
+  // ★ 有待選目標：阻止事件穿透（防止同時開啟爆發面板等）
+  if(_evt){ _evt.stopPropagation(); _evt._handledByOnCard = true; }
 
   // Validate target
   let valid=false;
@@ -12803,14 +12809,73 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     if(checkWin()) return;
     endAction(a, cost);
   }
-  else {
-    console.error('[execSkill] 未識別技能:', JSON.stringify(n));
-    log(`⚠️ 技能 「${n}」 未識別（技能長度:${n.length}），跳過本次行動`);
-    clearSel();
-    // ★ 防止卡死：強制結束回合
-    if(a && typeof endAction === 'function') {
-      try{ endAction(a, 0); }catch(e){ _pSetTimeout(startTurn, 400); }
+  // ══ 治療之光：單體治療40% ══
+  else if(n==='治療之光'){
+    setPending('ally', t=>{
+      const _hlAmt = Math.floor(t.hp * 0.4);
+      doHeal(t, _hlAmt, {actor:a, isHeal:true});
+      playSkillFX('治療之光', a, [t]);
+      bannerFX(t, '💚治療之光！', '#66ff88', 900);
+      log(`[${a.name}] 治療之光！[${t.name}] 恢復 ${_hlAmt} HP！`);
+      if(checkWin()) return;
+      endAction(a, cost);
+    });
+  }
+  // ══ 護盾術：單體30點護盾 ══
+  else if(n==='護盾術'){
+    setPending('ally', t=>{
+      const _existing = t.buffs.find(b=>b.type==='bigshield');
+      if(_existing){ _existing._hp = (_existing._hp||0) + 30; }
+      else { t.buffs.push({type:'bigshield', dur:99, _hp:30}); }
+      renderCard(t);
+      playSkillFX('護盾術', a, [t]);
+      bannerFX(t, '🛡️護盾+30！', '#88ccff', 900);
+      log(`[${a.name}] 護盾術！[${t.name}] 獲得30點護盾！`);
+      endAction(a, cost);
+    });
+  }
+  // ══ 群體挑釁：強制敵方1回合只能攻擊自己，自身減傷30% ══
+  else if(n==='群體挑釁'){
+    const _enemies = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    _enemies.forEach(e=>{ addStatus(e,'taunt',1); e._tauntTarget = a; });
+    addBuff(a,'halfDmg',1);
+    playSkillFX('群體挑釁', a, [a, ..._enemies]);
+    bannerFX(a, '⚔️ 群體挑釁！', '#ff8844', 900);
+    flashScreen('rgba(255,120,50,0.35)', 300);
+    log(`[${a.name}] 群體挑釁！所有敵方1回合只能攻擊${a.name}，${a.name}減傷30%！`);
+    endAction(a, cost);
+  }
+  // ══ 戰場交易：丟出2張物品卡重抽2張 ══
+  else if(n==='戰場交易'){
+    const _inv = G.inv || [];
+    const _cards = _inv.map((it,i)=>({it,i})).filter(x=>x.it&&x.it.type!=='equip');
+    if(_cards.length < 2){
+      log(`[${a.name}] 戰場交易：物品卡不足2張！`);
+      clearSel(); return;
     }
+    // 丟出前2張物品卡
+    const _discard = _cards.slice(0,2);
+    _discard.forEach(({i})=>{ G.inv[i]=null; });
+    // 重抽2張
+    if(typeof buildDeck==='function') buildDeck();
+    let _drawn = 0;
+    for(let _di=0; _di<G.inv.length && _drawn<2; _di++){
+      if(G.inv[_di]===null && G.deck && G.deck.length){
+        G.inv[_di] = G.deck.shift();
+        _drawn++;
+      }
+    }
+    renderItems();
+    playSkillFX('戰場交易', a, []);
+    bannerFX(a, '🃏 戰場交易！', '#88ddff', 900);
+    log(`[${a.name}] 戰場交易！丟出${_discard.length}張卡，重抽${_drawn}張！`);
+    endAction(a, cost);
+  }
+  else {
+    // 技能未識別：只記錄log，保持原本行動選擇（不強制結束回合）
+    console.error('[execSkill] 未識別技能:', JSON.stringify(n), '長度:', n ? n.length : 0);
+    log(`技能 ${n} 未識別`);
+    clearSel();
   }
 }
 
@@ -20096,7 +20161,7 @@ function advFinishMiniBattle(win) {
       const _expEl = document.getElementById('adv-mini-result');
       if(_expEl){
         const _expInfoEl = document.getElementById('adv-mini-result-exp');
-        if(_expInfoEl) _expInfoEl.textContent = `+${Math.round(baseExp*1.5)} EXP`;
+        if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${Math.round(baseExp*1.5)}`;
         _expEl.classList.add('show');
         // 2.5秒後自動關閉（由下方 _RESULT_DUR 的 setTimeout 統一控制）
       } else {
@@ -20480,15 +20545,24 @@ window._advSystemReady = true;
 
   <!-- ★ 小怪結算彈窗 -->
   <div id="adv-mini-result" style="display:none;position:absolute;inset:0;z-index:650;
-    align-items:center;justify-content:center;background:rgba(0,0,0,0.6);
+    align-items:center;justify-content:center;background:rgba(0,0,0,0.75);
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
-    <div style="background:linear-gradient(135deg,rgba(10,20,40,0.97),rgba(5,15,30,0.99));
-      border:2.5px solid rgba(100,220,100,0.6);border-radius:20px;padding:36px 52px;
-      text-align:center;box-shadow:0 0 40px rgba(50,200,80,0.3);">
-      <div style="font-size:52px;margin-bottom:8px;">⚔️</div>
-      <div style="font-size:40px;font-weight:900;color:#44ff88;margin-bottom:12px;">小怪擊敗！</div>
-      <div style="font-size:34px;color:#ffe8a0;font-weight:700;" id="adv-mini-result-exp"></div>
-      <div style="font-size:24px;color:#aaa;margin-top:10px;">繼續冒險中...</div>
+    <div style="background:linear-gradient(135deg,rgba(5,20,10,0.98),rgba(2,12,5,0.99));
+      border:3px solid rgba(80,220,100,0.8);border-radius:24px;padding:44px 64px;
+      text-align:center;box-shadow:0 0 60px rgba(50,220,80,0.5),0 0 20px rgba(50,220,80,0.3);
+      min-width:480px;">
+      <div style="font-size:64px;margin-bottom:12px;animation:bounceIn 0.5s ease-out;">⚔️</div>
+      <div style="font-size:48px;font-weight:900;color:#44ff88;margin-bottom:16px;
+        text-shadow:0 0 20px rgba(68,255,136,0.6);letter-spacing:2px;">小怪全滅！</div>
+      <div style="font-size:28px;color:#ffe8a0;font-weight:700;margin-bottom:8px;" id="adv-mini-result-exp"></div>
+      <div style="font-size:22px;color:#88ffaa;margin-bottom:28px;" id="adv-mini-result-heroes"></div>
+      <button onclick="playSfx('sfx-confirm2',0.7);advMiniResultConfirm()" id="adv-mini-result-btn"
+        style="padding:16px 56px;font-size:30px;font-weight:900;letter-spacing:3px;
+        background:linear-gradient(135deg,rgba(50,180,80,0.35),rgba(30,120,50,0.35));
+        border:2.5px solid #44ff88;color:#44ff88;border-radius:14px;cursor:pointer;
+        font-family:inherit;box-shadow:0 0 20px rgba(68,255,136,0.3);transition:all 0.2s;">
+        ✔ 繼續冒險
+      </button>
     </div>
   </div>
 </div><!-- gc_wrapper -->
