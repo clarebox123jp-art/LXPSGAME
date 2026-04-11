@@ -2312,6 +2312,33 @@ body {
   50%{filter:drop-shadow(0 0 18px rgba(212,168,67,0.9));}
 }
 .tob-slot.tob-active{animation:tobActivePulse 1.4s ease-in-out infinite;}
+/* ★ 極限爆發星星指示器 */
+.burst-star-bar{
+  position:absolute;top:2px;left:3px;
+  display:flex;gap:2px;z-index:5;
+  pointer-events:auto;cursor:pointer;
+}
+.burst-star{
+  font-size:15px;line-height:1;
+  transition:filter 0.2s,transform 0.15s;
+  user-select:none;
+}
+.burst-star-on{
+  filter:drop-shadow(0 0 3px rgba(255,220,0,0.5));
+  color:#ffe060;
+}
+.burst-star-on.burst-star-ready{
+  animation:burstStarGlow 0.8s ease-in-out infinite alternate;
+}
+@keyframes burstStarGlow{
+  0%{filter:drop-shadow(0 0 3px rgba(255,220,0,0.7));}
+  100%{filter:drop-shadow(0 0 9px rgba(255,240,0,1)) brightness(1.4);}
+}
+.burst-star-off{
+  filter:grayscale(1) brightness(0.2);
+  color:#333;
+}
+
 /* ══ 冒險模式戰鬥背景 ══ */
 /* 全螢幕戰鬥背景 div */
 #adv-battle-bg{
@@ -3036,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.22.48</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.23.23</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4966,10 +4993,10 @@ const HERO_DB = {
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
   '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
-  '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:3,d:'攻擊1名敵人並強化下一位行動的友方',fd:'用攻擊的150%對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%。'}},
+  '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:4,d:'攻擊+速度×150%傷害1名敵人，下一位行動友方傷害/治療+50%',fd:'以（攻擊＋速度×1.5）對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%（持續1回合）。'}},
   '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害，並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率醒來。'}},
-  '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:4,d:'使友方全體有利狀態效果+50%持續2回合，並獲得20護盾',fd:'使友方全體的有利狀態效果提高50%持續2回合，並各獲得可抵擋20傷害的護盾。'}},
-  '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態並免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，並使其免疫不利狀態2回合。'}},
+  '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:5,d:'友方全體獲得隨機有利狀態+50%效果（2回合）及20護盾',fd:'使友方全體各獲得1個隨機有利狀態（效果+50%，持續2回合），並各獲得可抵擋20傷害的護盾。'}},
+  '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:3,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'}},
   // ══ 冒險闖關 BOSS 角色 ══
@@ -8096,6 +8123,22 @@ function renderCard(h){
       ${h.element?`<span class="card-elem-sm">${elemIcon(h.element)}</span>`:''}
     </div>
     ${(()=>{
+      // ★ 極限爆發星星指示器：只對有爆發技能的英雄顯示
+      if(typeof BURST_DB==='undefined'||!BURST_DB[h.name]) return '';
+      const _used = h._burstUsed||0;
+      const _remain = 2 - _used;
+      const _ready = _burstReady(h.side);
+      const _star = (i)=>{
+        if(i < _remain){
+          const _cls = _ready ? 'burst-star burst-star-on burst-star-ready' : 'burst-star burst-star-on';
+          return `<span class="${_cls}">⭐</span>`;
+        }
+        return '<span class="burst-star burst-star-off">★</span>';
+      };
+      const _tip = `剩餘極限爆發次數：${_remain}/2`;
+      return `<div class="burst-star-bar" onclick="event.stopPropagation();_showBurstStarTip(this,'${_tip}')">`+_star(0)+_star(1)+'</div>';
+    })()}
+    ${(()=>{
       if(h.side!==G.activeChar?.side&&G.activeChar?.curHp>0){
         const mod=getElemDmgMod(G.activeChar,h);
         if(mod>0) return '<div class="elem-adv-tag">▲被剋屬性弱點</div>';
@@ -8380,7 +8423,7 @@ function _burstReady(side){
   return G.energy[side]>=10;
 }
 function _canBurst(h){
-  if(!h||h.curHp<=0||h.acted||h._burstUsed||!_burstReady(h.side)||!BURST_DB[h.name]) return false;
+  if(!h||h.curHp<=0||h.acted||(h._burstUsed||0)>=2||!_burstReady(h.side)||!BURST_DB[h.name]) return false;
   // 幼兒園小孩：夢境時光只在睡眠中才能發動
   if(h.name==='幼兒園小孩' && !hasStatus(h,'sleep')) return false;
   return true;
@@ -8781,7 +8824,7 @@ function execBurst(side, pos){
   if(!bd) return;
   // 消耗全部能量
   G.energy[side]=0;
-  h._burstUsed=true;
+  h._burstUsed = (h._burstUsed||0) + 1;  // ★ 最多2次
   h.acted=true;
   // 保存被插隊的角色（如果有），爆發後要恢復其行動權
   const _interrupted = G.interruptTarget || null;
@@ -9755,7 +9798,7 @@ function _mimicBurst(side, pos, targetName){
   if(!bd) return;
   h._mimicUsed = true;      // 標記本場已用過臨摹大師
   h._mimicInProgress = false;
-  h._burstUsed = true;      // 確保極限爆發也標記用過
+  h._burstUsed = Math.min(2, (h._burstUsed||0) + 1); // 確保極限爆發計數
   h.acted = true;
   G.passiveInterruptUsed=false;
   G.interruptTarget=null;
@@ -11970,15 +12013,21 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='色彩噴濺'){
     const _allies2=G[a.side].filter(h=>h.curHp>0);
-    log(`[${a.name}] 色彩噴濺！友方全體有利狀態+50%並獲得護盾！`);
+    // ★ 隨機有利狀態池（效果+50%持續2回合）
+    const _colorBuffPool=['evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','immune'];
+    log(`[${a.name}] 色彩噴濺！友方全體獲得隨機有利狀態+護盾！`);
     playSkillFX('色彩噴濺',a,_allies2);
     _allies2.forEach(h=>{
-      h._colorBoost=true;
-      h._colorBoostTurns=2; // ★ 2回合後自動解除
-      h.buffs=h.buffs.filter(b=>b.type!=='bigshield'&&b.type!=='_colorBoostMark');
+      // 隨機1個有利狀態（2回合）
+      const _pick = _colorBuffPool[Math.floor(Math.random()*_colorBuffPool.length)];
+      h.buffs=h.buffs.filter(b=>b.type!==_pick&&b.type!=='bigshield'&&b.type!=='_colorBoostMark');
+      addBuff(h, _pick, 2);
+      // ★ 護盾20傷害
       h.buffs.push({type:'bigshield',dur:2,_hp:20});
-      h.buffs.push({type:'_colorBoostMark',dur:2}); // 用buff計時，到期清除_colorBoost
-      bannerFX(h,'色彩噴濺！+50%狀態效果2回合！','#ff88cc',900);
+      // ★ 標記+50%效果持續2回合
+      h._colorBoost=true;
+      h.buffs.push({type:'_colorBoostMark',dur:2});
+      bannerFX(h,`色彩噴濺！${buffName(_pick)}+50% ×2回合！`,'#ff88cc',900);
       renderCard(h);
     });
     endAction(a,cost);
@@ -11987,13 +12036,24 @@ function execSkill(a, sk, cost, stype){
   else if(n==='邏輯優化'){
     setPending('self_or_ally',t=>{
       const _target=t||a;
-      log(`[${a.name}] 邏輯優化！清除 [${_target.name}] 所有不利狀態並免疫2回合！`);
+      // 計算清除前的不利狀態數量
+      const _badCount = _target.status.filter(s=>BAD_STATUS.includes(s.type)).length;
+      if(_target.curHp===0){ doRevive(_target,0); }
       playSkillFX('邏輯優化',a,[_target]);
-      if(_target.curHp===0){ doRevive(_target,0); } // 可倒下使用
       clearBadStatus(_target);
       addBuff(_target,'statusImmune',2);
       addBuff(_target,'ctrlImmune',2);
-      bannerFX(_target,'邏輯優化！','#55ffcc',1000);
+      // ★ 每清除1個不利狀態恢復20%HP
+      if(_badCount > 0){
+        const _healPct = _badCount * 0.20;
+        const _healAmt = Math.max(1, Math.floor(_target.hp * _healPct));
+        doHeal(_target, _healAmt, {actor:a, isHeal:true});
+        log(`[${a.name}] 邏輯優化！清除 [${_target.name}] ${_badCount}個不利狀態，恢復${_healAmt}HP，免疫2回合！`);
+      } else {
+        log(`[${a.name}] 邏輯優化！[${_target.name}] 無不利狀態，免疫2回合！`);
+      }
+      bannerFX(_target,'邏輯優化！🔄','#55ffcc',1000);
+      renderCard(_target);
       endAction(a,cost);
     });
   }
@@ -12839,8 +12899,9 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     setPending('enemy',t=>{
       log(`[${a.name}] 接力傳遞！攻擊 [${t.name}] 並強化下一位友方！`);
       playSkillFX('接力傳遞',a,[t]);
-      const _atkDmg=Math.floor(a.atk*1.5);
+      const _atkDmg=Math.floor(a.atk + (a.spd||0)*1.5);
       doDmg(t,_atkDmg,{actor:a,isSkill:true});
+      log(`[${a.name}] 接力傳遞！傷害=${_atkDmg}（攻擊${a.atk}+速度×1.5=${Math.floor((a.spd||0)*1.5)}）`);
       // 找下一位未行動的友方（按速度排序）
       const _sortFn2=fieldHas('reverse')?(x,y)=>x.spd-y.spd:(x,y)=>y.spd-x.spd;
       const _nextAlly=G[a.side].filter(h=>h.curHp>0&&h!==a&&!h.acted).sort(_sortFn2)[0];
@@ -14438,7 +14499,7 @@ function _realAiAct(a){
     log(`😾 [${a.name}] 憤怒覺醒！強制發動極限爆發！`);
     // ★ 強制給滿能量確保 _canBurst 通過（rage burst 無視能量限制）
     G.energy[a.side] = 10;
-    a._burstUsed = false; // 確保可以爆發
+    a._burstUsed = Math.max(0, (a._burstUsed||0) - 1); // ★ 強制允許一次爆發
     _pSetTimeout(()=>{ execBurst(a.side, a.pos); }, 1200);
     return;
   }
@@ -20308,6 +20369,31 @@ function _showInGameToast(msg, color, dur=2000){
     setTimeout(()=>{ if(t.parentNode)t.remove(); },450); }, dur);
 }
 
+
+// ★ 爆發星星點擊提示
+function _showBurstStarTip(el, msg){
+  const old = document.getElementById('burst-star-tip');
+  if(old){ old.remove(); return; }
+  const tip = document.createElement('div');
+  tip.id = 'burst-star-tip';
+  tip.style.cssText = [
+    'position:fixed;z-index:9999;padding:8px 16px;',
+    'background:rgba(10,10,25,0.97);border:1.5px solid rgba(255,220,0,0.7);',
+    'color:#ffe066;font-size:19px;font-weight:700;border-radius:9px;',
+    'pointer-events:none;white-space:nowrap;',
+    'box-shadow:0 0 14px rgba(255,200,0,0.3);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  tip.textContent = '⭐ ' + msg;
+  document.body.appendChild(tip);
+  // 定位在元素附近
+  const r = el.getBoundingClientRect();
+  tip.style.left = Math.min(r.left, window.innerWidth - 240) + 'px';
+  tip.style.top  = (r.bottom + 6) + 'px';
+  // 1.5秒後自動消失
+  setTimeout(()=>{ if(tip.parentNode) tip.remove(); }, 1500);
+}
+
 function closeHeroPage() {
   const ov = document.getElementById('hero-page-overlay');
   if(ov) ov.style.display = 'none';
@@ -20737,7 +20823,7 @@ function investStat(name, stat) {
 }
 
 function upgradeSkill(name, slot) {
-  if(_skillBookCount <= 0) return;
+  if(backpackGet('skill_upgrade_book') <= 0){ _showInGameToast('背包中沒有技能升級書！', '#ff8844', 2000); return; }
   if(!_heroSkillLevels[name]) _heroSkillLevels[name] = {s1:0, s2:0};
   if((_heroSkillLevels[name][slot]||0) >= 9) { alert('技能已達最高等級！'); return; }
   const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[name] : null;
