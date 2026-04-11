@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.00.42</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.00.48</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -15974,7 +15974,7 @@ let _battlePlayMode=false;
 let _menuPlaylist=[];
 let _menuPlayMode=false;
 function bgmStop(){
-  ['bgm-win','bgm-lose',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
+  ['bgm-win','bgm-lose','bgm-shop',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
    'bgm-adv-march','bgm-adv-scene','bgm-boss-01','bgm-boss-02','adventure-bgm',
    'sfx-quiz-correct','sfx-quiz-wrong'].forEach(id=>{
     const el=document.getElementById(id);
@@ -20053,8 +20053,11 @@ function openShopOverlay(){
 function closeShopOverlay(){
   const ov = document.getElementById('shop-overlay');
   if(ov) ov.style.display='none';
-  // 恢復冒險頁面BGM
-  try{ bgmFadeTo('bgm-menu-01', 400); }catch(e){}
+  // ★ 恢復正確BGM（冒險模式用場景音樂，其他用選單音樂）
+  try{
+    const _toId = (typeof _adventureMode !== 'undefined' && _adventureMode) ? 'bgm-adv-scene' : 'bgm-menu-01';
+    bgmFadeTo(_toId, 400);
+  }catch(e){}
 }
 
 function _renderShopProducts(){
@@ -20868,6 +20871,8 @@ function _buildHeroGrid() {
 }
 
 let _heroDetailList = []; // 當前圖鑑順序（翻頁用）
+let _monsterDetailList = []; // ★ 魔物圖鑑翻頁清單
+let _monsterDetailIdx  = 0;
 let _heroDetailIdx  = 0;
 
 function openHeroDetail(name) {
@@ -21636,11 +21641,33 @@ function _buildMonsterPage() {
     makeSection('👑 BOSS', BOSS_LIST, 'boss') +
     makeSection('⚡ 精英小怪', ELITE_LIST, 'elite') +
     makeSection('🌿 路邊小怪', MOB_LIST, 'mob');
+  // ★ 設定魔物翻頁清單
+  _monsterDetailList = [...BOSS_LIST, ...ELITE_LIST, ...MOB_LIST];
+}
+
+
+function monsterDetailPrev() {
+  if(!_monsterDetailList.length) return;
+  _monsterDetailIdx = (_monsterDetailIdx - 1 + _monsterDetailList.length) % _monsterDetailList.length;
+  try{ playSfx('sfx-card', 0.7); }catch(e){}
+  openMonsterDetail(_monsterDetailList[_monsterDetailIdx]);
+}
+
+function monsterDetailNext() {
+  if(!_monsterDetailList.length) return;
+  _monsterDetailIdx = (_monsterDetailIdx + 1) % _monsterDetailList.length;
+  try{ playSfx('sfx-card', 0.7); }catch(e){}
+  openMonsterDetail(_monsterDetailList[_monsterDetailIdx]);
 }
 
 function openMonsterDetail(name) {
   const b = HERO_DB[name];
   if(!b) return;
+  // ★ 設定目前翻頁索引
+  if(_monsterDetailList.length > 0){
+    const _idx = _monsterDetailList.indexOf(name);
+    if(_idx >= 0) _monsterDetailIdx = _idx;
+  }
   const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
   const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
   const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[name]) || null;
@@ -21691,10 +21718,16 @@ function openMonsterDetail(name) {
   const makeR = (typeof makeRadar==='function') ? makeRadar : (d,s)=>'';
 
   box.innerHTML = `
-    <div style="position:sticky;top:0;z-index:10;margin-bottom:16px;display:flex;gap:10px;">
+    <div style="position:sticky;top:0;z-index:10;margin-bottom:16px;display:flex;gap:10px;align-items:center;">
       <button onclick="playSfx('sfx-cancel',0.4);closeHeroDetail();openMonsterPage();" style="padding:10px 24px;font-size:26px;font-weight:800;
         background:rgba(40,10,10,0.85);border:2px solid rgba(220,80,80,0.6);
         color:#ff9999;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回魔物圖鑑</button>
+      <button onclick="playSfx('sfx-sel',0.4);monsterDetailPrev()" style="padding:10px 20px;font-size:26px;font-weight:800;
+        background:rgba(30,30,60,0.85);border:2px solid rgba(100,150,255,0.5);
+        color:#88aaff;border-radius:10px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;white-space:nowrap;">◀ 上一隻</button>
+      <button onclick="playSfx('sfx-sel',0.4);monsterDetailNext()" style="padding:10px 20px;font-size:26px;font-weight:800;
+        background:rgba(30,30,60,0.85);border:2px solid rgba(100,150,255,0.5);
+        color:#88aaff;border-radius:10px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;white-space:nowrap;">下一隻 ▶</button>
     </div>
     <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
       <div>
