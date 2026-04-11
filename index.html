@@ -3006,7 +3006,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.11.10</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.20.01</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -12205,7 +12205,7 @@ function execSkill(a, sk, cost, stype){
     endAction(a,cost);
   }
   // ── 花瓣飛刀（全體敵人，依特技）──
-  if(name==='花瓣飛刀'){
+  else if(n==='花瓣飛刀'){
     const foes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     log(`[${a.name}] 花瓣飛刀！對全體敵人造成傷害！`);
     foes.forEach(t=>{ doDmg(t, spv(a), {actor:a}); });
@@ -12214,7 +12214,7 @@ function execSkill(a, sk, cost, stype){
     endAction(a,cost);
   }
   // ── 催眠之歌（使1名對手睡眠3回合）──
-  if(name==='催眠之歌'){
+  else if(n==='催眠之歌'){
     setPending('enemy', t=>{
       log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`);
       t.status = t.status.filter(s=>s.type!=='sleep');
@@ -12225,7 +12225,7 @@ function execSkill(a, sk, cost, stype){
     },'催眠之歌');
   }
   // ── 渾身一擊（攻擊200%，暴擊率+50%）──
-  if(name==='渾身一擊'){
+  else if(n==='渾身一擊'){
     setPending('enemy', t=>{
       log(`[${a.name}] 渾身一擊！[${t.name}]！`);
       const baseDmg = Math.floor(a.atk * 2);
@@ -12240,7 +12240,7 @@ function execSkill(a, sk, cost, stype){
     },'渾身一擊');
   }
   // ── 舔舔治療（依特技恢復1名友方HP）──
-  if(name==='舔舔治療'){
+  else if(n==='舔舔治療'){
     const _sideAllies = G[a.side].filter(h=>h.curHp>0);
     if(_sideAllies.length===1){
       // 只有自己
