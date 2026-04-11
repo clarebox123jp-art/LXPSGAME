@@ -2313,9 +2313,38 @@ body {
 }
 .tob-slot.tob-active{animation:tobActivePulse 1.4s ease-in-out infinite;}
 /* ══ 冒險模式戰鬥背景 ══ */
+/* 全螢幕戰鬥背景 div */
+#adv-battle-bg{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  opacity:0;transition:opacity 0.6s ease-in;
+}
+#adv-battle-bg.visible{ opacity:1; }
+#adv-battle-bg.bg-river{
+  background-image:url("https://github.com/clarebox123jp-art/-/raw/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png");
+}
+#adv-battle-bg.bg-trail{
+  background-image:url("https://github.com/clarebox123jp-art/-/raw/main/%E6%A8%9F%E6%B9%96%E6%AD%A5%E9%81%93.png");
+}
+#adv-battle-bg.bg-teagarden{
+  background-image:url("https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92.png");
+}
+#adv-battle-bg.bg-boss{
+  background-image:url("https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png");
+}
+/* 背景暗化遮罩 */
+#adv-battle-bg::after{
+  content:'';position:absolute;inset:0;
+  background:rgba(0,0,0,0.40);pointer-events:none;
+}
+/* 冒險模式：zone 半透明讓背景透出 */
+#gc.adv-battle #z1{
+  background:rgba(0,5,40,0.60) !important;
+  border-top:2px solid rgba(60,80,200,0.4);
+}
 #gc.adv-battle #z2{
-  background:url("https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png") center/cover no-repeat !important;
-  border-bottom:2px solid #994400;
+  background:rgba(40,5,0,0.60) !important;
+  border-bottom:2px solid rgba(200,80,0,0.5);
 }
 /* z2 的 brow：左右小怪靠邊、中央BOSS居中 */
 #gc.adv-battle #z2 .brow{
@@ -2914,6 +2943,7 @@ body {
 <audio id="sfx-rapidfire-gun" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E9%80%A3%E7%BA%8C%E5%B0%84%E6%93%8A.mp3"></audio>
 <audio id="sfx-basketball"    preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E4%B8%89%E5%88%86%E5%B0%84%E7%B1%83.mp3"></audio>
 <div id="_gc_wrapper"><div id="gc">
+  <div id="adv-battle-bg"></div>
   <div id="fade-overlay"></div>
   <div id="battle-start-overlay"><div class="bs-text">戰鬥開始!</div></div>
   <div id="field-announce"><span class="fa-icon" id="fa-icon"></span><span class="fa-name" id="fa-name"></span><span class="fa-desc" id="fa-desc"></span></div>
@@ -3006,7 +3036,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.21.18</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.22.26</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3043,7 +3073,8 @@ body {
 
   <!-- ══ 冒險闖關 關卡選擇頁面 ══ -->
   <div id="adventure-overlay">
-    <audio id="adventure-bgm" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%95%85%E4%BA%8B%E9%96%8B%E7%AB%AF.m4a" loop preload="auto"></audio>
+    <audio id="adventure-bgm" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%95%85%E4%BA%8B%E9%96%8B%E7%AB%AF.m4a" loop preload="auto">
+    <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
 
     <!-- 左側：關卡清單 -->
@@ -3052,6 +3083,25 @@ body {
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
       <div class="adv-stage-btn locked">🚗 台灣環島歷險記<br><span style="font-size:36px;letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
       <div class="adv-stage-btn locked">✈ 環遊世界遠征傳說<br><span style="font-size:36px;letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
+    <!-- ★ 商店 & 背包 按鈕 -->
+    <div id="adv-coins-bar" style="font-size:20px;font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
+      background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,50,0.3);border-radius:8px;text-align:center;">
+      💰 知識幣：<span id="adv-coins-val">0</span>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button onclick="playSfx('sfx-sel',0.6);openShopOverlay()" style="flex:1;padding:14px 8px;font-size:24px;font-weight:800;
+        background:linear-gradient(135deg,rgba(255,180,50,0.2),rgba(200,120,0,0.15));
+        border:2px solid rgba(255,180,50,0.7);color:#ffcc44;border-radius:12px;cursor:pointer;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">
+        🛒 不可思議超商
+      </button>
+      <button onclick="playSfx('sfx-sel',0.6);openBackpackOverlay()" style="flex:1;padding:14px 8px;font-size:24px;font-weight:800;
+        background:linear-gradient(135deg,rgba(100,180,255,0.2),rgba(50,100,200,0.15));
+        border:2px solid rgba(100,180,255,0.7);color:#88ccff;border-radius:12px;cursor:pointer;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">
+        🎒 背包
+      </button>
+    </div>
     </div>
 
     <!-- 右側：關卡簡介視窗 -->
@@ -3079,6 +3129,77 @@ body {
       </div>
     </div>
 
+
+  <!-- ★ 不可思議超商 -->
+  <div id="shop-overlay" style="display:none;position:absolute;inset:0;z-index:750;
+    background:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86.png') center/cover no-repeat;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
+    <!-- 半透明深色遮罩 -->
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);z-index:0;"></div>
+    <!-- 頂部標題列 -->
+    <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;
+      padding:16px 28px;border-bottom:2px solid rgba(255,180,50,0.4);
+      background:linear-gradient(to right,rgba(40,20,0,0.85),rgba(20,10,0,0.85));">
+      <div style="font-size:44px;font-weight:900;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 20px rgba(255,180,0,0.5);">
+        🛒 不可思議超商
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div id="shop-coins-display" style="font-size:32px;font-weight:800;color:#ffee88;
+          background:rgba(255,180,0,0.15);border:1.5px solid rgba(255,180,50,0.5);
+          padding:8px 20px;border-radius:10px;">
+          💰 <span id="shop-coins-val">0</span> 知識幣
+        </div>
+        <button onclick="closeShopOverlay()" style="padding:10px 24px;font-size:26px;font-weight:700;
+          background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;
+          border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>
+      </div>
+    </div>
+    <!-- 主體：左=商品 右=背包 -->
+    <div style="position:relative;z-index:1;display:flex;height:calc(100% - 90px);gap:0;">
+      <!-- 左側：商品列表 -->
+      <div style="flex:1;padding:20px 24px;overflow-y:auto;border-right:1.5px solid rgba(255,180,50,0.25);">
+        <div style="font-size:28px;font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
+        <div id="shop-products-list"></div>
+        <!-- 分隔線：可賣出的物品 -->
+        <div id="shop-sell-section" style="margin-top:24px;"></div>
+      </div>
+      <!-- 右側：玩家背包 -->
+      <div style="width:440px;padding:20px 20px;overflow-y:auto;background:rgba(0,0,0,0.2);">
+        <div style="font-size:28px;font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
+        <div id="shop-bag-panel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ★ 背包頁面 -->
+  <div id="backpack-overlay" style="display:none;position:absolute;inset:0;z-index:750;
+    background:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%83%8C%E5%8C%85.png') center/cover no-repeat;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.50);z-index:0;"></div>
+    <!-- 頂部標題列 -->
+    <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;
+      padding:16px 28px;border-bottom:2px solid rgba(100,180,255,0.4);
+      background:linear-gradient(to right,rgba(0,10,40,0.85),rgba(0,5,20,0.85));">
+      <div style="font-size:44px;font-weight:900;color:#88ccff;letter-spacing:3px;text-shadow:0 0 20px rgba(80,160,255,0.5);">
+        🎒 背包
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div id="bag-coins-display" style="font-size:32px;font-weight:800;color:#ffee88;
+          background:rgba(255,180,0,0.15);border:1.5px solid rgba(255,180,50,0.5);
+          padding:8px 20px;border-radius:10px;">
+          💰 <span id="bag-coins-val">0</span> 知識幣
+        </div>
+        <button onclick="closeBackpackOverlay()" style="padding:10px 24px;font-size:26px;font-weight:700;
+          background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;
+          border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>
+      </div>
+    </div>
+    <!-- 背包格子 -->
+    <div style="position:relative;z-index:1;padding:24px 32px;overflow-y:auto;height:calc(100% - 90px);">
+      <div id="backpack-grid" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+  </div>
+
   <!-- ★ 英雄頁面 -->
   <div id="hero-page-overlay" style="display:none;position:absolute;inset:0;z-index:700;
     background:linear-gradient(160deg,#0a0d1a,#060810);flex-direction:column;
@@ -3093,17 +3214,24 @@ body {
           font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;white-space:nowrap;">
           👹 魔物圖鑑
         </button>
-        <button id="hero-expbook-btn" onclick="playSfx('sfx-recharge',0.6);useHeroExpBook()" style="display:flex;align-items:center;gap:6px;
+        <button id="hero-expbook-btn" onclick="playSfx('sfx-recharge',0.6);useHeroExpBook()" style="display:none;flex;align-items:center;gap:6px;
           padding:8px 16px;font-size:22px;font-weight:700;
           background:rgba(50,150,50,0.2);border:1.5px solid rgba(80,200,80,0.5);
           color:#88ff88;border-radius:10px;cursor:pointer;font-family:inherit;">
           <span style="font-size:20px;">📗</span>
           <span id="hero-expbook-count" style="font-size:24px;font-weight:900;color:#88ff88;min-width:20px;text-align:center;">0</span>
         </button>
-        <button onclick="playSfx('sfx-sel',0.5);highlightUpgradableHeroes()" id="hero-book-btn" style="display:flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:10px;cursor:pointer;font-family:inherit;">
+        <button onclick="playSfx('sfx-sel',0.5);highlightUpgradableHeroes()" id="hero-book-btn" style="display:none;flex;align-items:center;gap:8px;padding:6px 16px;background:rgba(255,200,50,0.12);border:2px solid rgba(255,200,50,0.5);border-radius:10px;cursor:pointer;font-family:inherit;">
           <span style="font-size:20px;color:#ffe8a0;">📖</span>
           <span id="hero-page-book-count" style="font-size:28px;font-weight:900;color:#ffe066;min-width:28px;text-align:center;">0</span>
         </button>
+        <!-- ★ 知識幣 & 背包快捷入口 -->
+        <div id="hero-page-coins" style="display:flex;align-items:center;gap:10px;padding:6px 16px;
+          background:rgba(255,180,0,0.12);border:1.5px solid rgba(255,180,50,0.4);border-radius:10px;cursor:pointer;"
+          onclick="playSfx('sfx-sel',0.5);openBackpackOverlay()" title="點擊開啟背包">
+          💰 <span id="hero-page-coins-val" style="font-size:24px;font-weight:900;color:#ffee88;">0</span> 知識幣
+          &nbsp;🎒
+        </div>
       </div>
       <div style="width:120px;"></div>
     </div>
@@ -17138,6 +17266,9 @@ function openAdventureOverlay(){
   if(!ov) return;
   ov.style.display = 'flex';
   ov.style.animation = 'advOverlayFadeIn 0.5s ease-out';
+  // ★ 更新知識幣顯示
+  const _acv = document.getElementById('adv-coins-val');
+  if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
   // ① 先停掉首頁 BGM 並播放關卡選單 BGM（音樂優先）
   bgmStop();
   bgmPlay('bgm-menu-01'); // ★ 關卡選單專屬BGM（遊戲開始音樂1）
@@ -17418,6 +17549,9 @@ function exitAdventureMode(){
   _advMiniBattleActive = false;
   _advQuizPhase = 'idle';
   window._advMiniResultPending = null;
+  // ★ 清除戰鬥背景
+  const _xbg = document.getElementById('adv-battle-bg');
+  if(_xbg){ _xbg.classList.remove('visible'); setTimeout(()=>{ _xbg.className=''; }, 700); }
   _advQuizActive = false;
   _advBossIntroActive = false;
   if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer) {
@@ -18161,6 +18295,8 @@ function advStartBattle(){
     G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
     try{ G.p1.forEach(h=>renderCard(h)); }catch(e){}
   }
+  // ★ 設定BOSS全螢幕戰鬥背景
+  (function(){ const _bb=document.getElementById('adv-battle-bg'); if(_bb){ _bb.className=''; _bb.classList.add('bg-boss'); void _bb.offsetWidth; _bb.classList.add('visible'); } })();
   const gc = document.getElementById('gc');
   if(gc) gc.classList.add('adv-battle');
   try{ playBattleStartSfx(); }catch(e){}
@@ -19014,7 +19150,7 @@ function advShowBattleResult(win) {
       const _g = (document.getElementById('adv-result-grade')||{}).textContent||'';
       const _bExp = _g.includes('S')?100:_g.includes('A')?70:_g.includes('B')?50:30;
       const _rewardEl = document.getElementById('adv-result-reward');
-      if(_rewardEl) _rewardEl.innerHTML = '📗 英雄經驗值之書 &times;2&nbsp;&nbsp;📖 技能升級書 &times;1&nbsp;&nbsp;⭐ 出戰英雄 +'+_bExp+' EXP';
+      if(_rewardEl) _rewardEl.innerHTML = '📗 英雄經驗值之書 &times;2 ➜ 背包&nbsp;&nbsp;📖 技能升級書 &times;1 ➜ 背包&nbsp;&nbsp;⭐ 出戰英雄 +'+_bExp+' EXP';
     }, 300);
   }
   const gradeEl = document.getElementById('adv-result-grade');
@@ -19101,18 +19237,28 @@ function advCloseUnlock() {
 const ADV_HERO_GREETINGS = {"劍士": "「我的劍，願為保護貓空的茶香而揮！」", "刺客": "「從暗處出手是我的風格。好，我就跟你們走！」", "光法師": "「聖光將照耀這片土地，讓我們一起前進吧！」", "冰法師": "「冷靜沉著是我的信條，你們看起來值得信賴。」", "火法師": "「嘿！熱血沸騰的旅程，我最喜歡了！算我一份！」", "雷法師": "「轟！我的雷光將劈碎一切阻礙！同行吧！」", "暗法師": "「黑暗中自有我保護你們，不必擔心。」", "祭司": "「以神明的恩典，我將守護你們的生命。」", "聖騎士": "「榮譽與勇氣是我的鎧甲，願為你們而戰！」", "武鬥家": "「好身手！算你們夠格讓我出手相助！」", "武士": "「以武士之名，我的刀將斬斷邪惡！」", "大力士": "「呼！跟我走，保證沒有搬不動的石頭！」", "守衛": "「保護夥伴是我的使命，交給我！」", "神射手": "「我的箭矢，永遠射向真正的敵人。同行吧！」", "吟遊詩人": "「讓我用歌聲，為你們的旅途增添色彩！」", "煉金術師": "「有趣，有趣！我的道具或許能幫上大忙！」", "凡人": "「就算只是凡人，也能做出非凡的事情！」", "占星師": "「星辰指引著我，你們就是我命中注定的隊友。」", "舞者": "「優雅與力量共存，這就是我的舞蹈！」", "木靈使": "「大地的生命，將為你們的旅途增添力量！」", "時空法師": "「時間與空間在我掌握中，跟我走沒錯的！」", "陰陽師": "「陰陽交錯間，我看清了你們的真心。好，算我一份！」", "學者": "「知識就是力量！讓我的學識為你們開路！」", "機械師": "「齒輪轉動，勝利就在眼前！讓我加入你們的冒險！」", "神偷": "「嘿嘿，我拿走的，都是敵人的好東西！歡迎合作！」", "軍師": "「兵法早已算定，你們的勝利盡在掌握。」", "吸血鬼": "「黑夜是我的舞台…既然如此，就讓我同行吧。」", "幼兒園小孩": "「嗚嗚…不要欺負我！我也會打人的！」", "動物學家": "「每一種生命都值得尊重，我和我的夥伴一起加入！」", "小力": "「汪！汪汪！（搖尾巴）」", "流浪者": "「到處流浪也挺無聊的，帶我一起去冒險吧！」"};
 
 function advStartWinSequence() {
-  // ★ 給予英雄經驗值之書 ×2 + 技能升級書 ×1
-  _heroExpBookCount = (_heroExpBookCount||0) + 2;
-  _skillBookCount = (_skillBookCount||0) + 1;
+  // ★ 書放進背包
+  backpackAdd('hero_exp_book', 2);
+  backpackAdd('skill_upgrade_book', 1);
   // ★ 依積分給予出戰英雄額外EXP（S=100, A=70, B=50, C=30）
   const _winScore = parseInt((document.getElementById('adv-result-score')||{}).textContent||'0') || 0;
   const _winGrade = (document.getElementById('adv-result-grade')||{}).textContent||'';
   const _bonusExpMap = {'S':100, 'A':70, 'B':50, 'C':30};
   const _bonusExp = Object.entries(_bonusExpMap).reduce((v,[g,e])=>_winGrade.includes(g)?e:v, 30);
   if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, _bonusExp); });
+  // ★ 知識幣：BOSS戰EXP × 20%（以_advStats計）
+  const _bossTotalExp = (_advStats && _advStats.rounds ? (_advStats.rounds * 10) : 0) + _bonusExp;
+  const _bossCoins = Math.round(_bossTotalExp * 0.2);
+  if(_bossCoins > 0) addKnowledgeCoins(_bossCoins);
+  // ★ 九尾空貓怪 20% 機率掉落骨董茶杯
+  if(Math.random() < 0.20){
+    backpackAdd('antique_teacup', 1);
+    log('🍵 [九尾空貓怪] 掉落了【骨董茶杯】！已放入背包。');
+    _showInGameToast('🍵 獲得骨董茶杯！前往超商可賣出換取1000知識幣', '#ffcc44', 3000);
+  }
   gameCloudSave();
   _setNavDot('英雄', true);
-  log(`🏆 勝利獎勵：英雄經驗值之書×2、技能升級書×1、出戰英雄+${_bonusExp}EXP`);
+  log(`🏆 勝利獎勵：英雄經驗值之書×2、技能升級書×1、出戰英雄+${_bonusExp}EXP、+${_bossCoins}知識幣`);
   // 隱藏結算畫面
   document.getElementById('adv-result-overlay').classList.remove('show');
   bgmStop();
@@ -19430,7 +19576,7 @@ async function gSignOut() {
 
 // 雲端儲存
 // ★ 版本號：每次大改遊戲內容結構時 +1
-const SAVE_DATA_VERSION = 1;
+const SAVE_DATA_VERSION = 2; // v2: 知識幣+背包系統
 
 // 只儲存「玩家行為產生的數字資料」，遊戲內容從程式碼讀最新版
 function _buildSafeData() {
@@ -19444,10 +19590,12 @@ function _buildSafeData() {
     heroStatPoints:  _heroStatPoints,        // {name: 剩餘點數}
     heroStatInvested:_heroStatInvested,      // {name: {hp,atk,sp,spd} 純數字加成}
     heroSkillLevels: _heroSkillLevels,       // {name: {s1,s2} +n 的等級數字}
-    skillBookCount:  _skillBookCount,        // 數字
-    heroExpBookCount: _heroExpBookCount,      // 英雄經驗值之書
+    skillBookCount:  _skillBookCount,        // 舊版相容
+    heroExpBookCount: _heroExpBookCount,      // 舊版相容
     medals:          _playerMedals,
-    heroTraitLevel:  _heroTraitLevel,          // 獎章清單
+    heroTraitLevel:  _heroTraitLevel,
+    knowledgeCoins:  _knowledgeCoins,        // 知識幣
+    playerBackpack:  _playerBackpack,        // 背包
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted }
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
@@ -19489,6 +19637,18 @@ function _applySafeData(raw) {
   if(typeof data.heroExpBookCount === 'number') _heroExpBookCount = data.heroExpBookCount;
   if(Array.isArray(data.medals)) _playerMedals = data.medals;
   if(data.heroTraitLevel && typeof data.heroTraitLevel === 'object') _heroTraitLevel = data.heroTraitLevel;
+  // ★ 知識幣 & 背包
+  if(typeof data.knowledgeCoins === 'number') _knowledgeCoins = data.knowledgeCoins;
+  if(data.playerBackpack && typeof data.playerBackpack === 'object') _playerBackpack = data.playerBackpack;
+  // ★ 舊版相容：將舊 _heroExpBookCount/_skillBookCount 遷移到背包
+  if((_heroExpBookCount||0) > 0 && !_playerBackpack.hero_exp_book){
+    _playerBackpack.hero_exp_book = Math.min(99, _heroExpBookCount);
+    _heroExpBookCount = 0;
+  }
+  if((_skillBookCount||0) > 0 && !_playerBackpack.skill_upgrade_book){
+    _playerBackpack.skill_upgrade_book = Math.min(99, _skillBookCount);
+    _skillBookCount = 0;
+  }
   if(data.settings) {
     if(typeof data.settings.bgmMuted === 'boolean') _bgmMuted = data.settings.bgmMuted;
     if(typeof data.settings.sfxMuted === 'boolean') _sfxMuted = data.settings.sfxMuted;
@@ -19580,9 +19740,57 @@ let _heroExp = {};          // {heroName: exp}
 let _heroStatPoints = {};   // {heroName: freePoints}
 let _heroStatInvested = {}; // {heroName: {hp,atk,sp,spd}}
 let _heroSkillLevels = {};  // {heroName: {s1:n, s2:n}}  n=0~9 (+0~+9)
-let _skillBookCount = 0;    // 技能升級書數量
-let _heroExpBookCount = 0;  // 英雄經驗值之書數量
-let _heroTraitLevel = {};   // {heroName: 天賦升級次數(0~5)}
+let _skillBookCount = 0;    // 技能升級書數量（舊：現已移至背包）
+let _heroExpBookCount = 0;  // 英雄經驗值之書數量（舊：現已移至背包）
+let _heroTraitLevel = {};   // {heroName: 天
+// ────────────────────────────────────
+// ★ 知識幣 & 背包 系統
+// ────────────────────────────────────
+let _knowledgeCoins = 0;   // 知識幣
+// 背包物品 {id: count}，每種上限99
+let _playerBackpack = {};
+
+// 背包物品定義
+const BACKPACK_ITEM_DEF = {
+  'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）' },
+  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能（+10%效果）', type:'use', useLabel:'使用（選擇英雄）' },
+  'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）' },
+  'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
+  'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
+};
+
+// 商店商品定義
+const SHOP_PRODUCTS = [
+  { id:'stat_reset_book',  name:'能力素質重置之書', icon:'📕',
+    desc:'使用後可以使1名英雄所有投資的素質點數退還，重置到最初狀態，可重新分配點數。',
+    price:500, stock:'∞' },
+  { id:'skill_reset_book', name:'技能等級重置之書', icon:'📘',
+    desc:'使用後可以使1名英雄所有投資的技能等級還原成1級，重置到最初狀態，可重新升級技能。',
+    price:500, stock:'∞' },
+];
+// 可販賣品（在商店賣掉換知識幣）
+const SHOP_SELL_ITEMS = [
+  { id:'antique_teacup', name:'骨董茶杯', icon:'🍵', sellPrice:1000 },
+];
+
+// 背包工具函式
+function backpackGet(id){ return (_playerBackpack[id]||0); }
+function backpackAdd(id, n=1){
+  const cur = _playerBackpack[id]||0;
+  _playerBackpack[id] = Math.min(99, cur+n);
+  return _playerBackpack[id] - cur; // 實際新增數
+}
+function backpackRemove(id, n=1){
+  const cur = _playerBackpack[id]||0;
+  const actual = Math.min(cur, n);
+  _playerBackpack[id] = cur - actual;
+  if(_playerBackpack[id]===0) delete _playerBackpack[id];
+  return actual;
+}
+function addKnowledgeCoins(n){
+  _knowledgeCoins = (_knowledgeCoins||0) + Math.round(n);
+  gameCloudSave();
+}
 let _playerMedals = [];     // 獎章清單
 
 // 等級所需累積經驗值 (等差數列 100,150,200... lv1=100 lv2=150...)
@@ -19708,7 +19916,7 @@ function _setNavDot(label, show) {
 //  英雄頁面
 // ══════════════════════════════════════════════
 function highlightUpgradableHeroes() {
-  if(_skillBookCount <= 0) return;
+  if(backpackGet('skill_upgrade_book') <= 0) return;
   // 找出可升級技能的英雄（已解鎖，有 s1/s2 技能等級 < 9）
   const unlocked = advGetUnlockedHeroes();
   const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
@@ -19750,13 +19958,367 @@ function openHeroPage() {
   // Clear red dot
   _setNavDot('英雄', false);
   // Update book count
-  document.getElementById('hero-page-book-count').textContent = _skillBookCount;
+  document.getElementById('hero-page-book-count').textContent = backpackGet('skill_upgrade_book');
   const _expBookEl = document.getElementById('hero-expbook-count');
   if(_expBookEl) _expBookEl.textContent = _heroExpBookCount||0;
   const _expBtnEl = document.getElementById('hero-expbook-btn');
-  if(_expBtnEl) _expBtnEl.style.display = (_heroExpBookCount>0) ? '' : 'none';
+  if(_expBtnEl) _expBtnEl.style.display = 'none'; // 書現在在背包裡
+  // 更新知識幣顯示
+  const _hpCoinsEl = document.getElementById('hero-page-coins-val');
+  if(_hpCoinsEl) _hpCoinsEl.textContent = (_knowledgeCoins||0).toLocaleString();
   // Build grid
   _buildHeroGrid();
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// ★ 不可思議超商 系統
+// ════════════════════════════════════════════════════════════════
+
+function openShopOverlay(){
+  // 更新商品列表和背包顯示
+  _renderShopProducts();
+  _renderShopBagPanel();
+  // 顯示知識幣
+  const cv = document.getElementById('shop-coins-val');
+  if(cv) cv.textContent = (_knowledgeCoins||0).toLocaleString();
+  const ov = document.getElementById('shop-overlay');
+  if(ov) ov.style.display='block';
+  // 播放商店BGM
+  try{ bgmFadeTo('bgm-shop', 400); }catch(e){ try{ bgmPlay('bgm-shop'); }catch(e2){} }
+}
+
+function closeShopOverlay(){
+  const ov = document.getElementById('shop-overlay');
+  if(ov) ov.style.display='none';
+  // 恢復冒險頁面BGM
+  try{ bgmFadeTo('bgm-menu-01', 400); }catch(e){}
+}
+
+function _renderShopProducts(){
+  const list = document.getElementById('shop-products-list');
+  if(!list) return;
+  list.innerHTML = '';
+  SHOP_PRODUCTS.forEach(prod => {
+    const qty = (window['_shopQty_'+prod.id]||1);
+    const total = prod.price * qty;
+    const canAfford = (_knowledgeCoins||0) >= total;
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:12px;'+
+      'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;';
+    div.innerHTML = `
+      <div style="font-size:52px;flex-shrink:0;">${prod.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:26px;font-weight:900;color:#ffcc44;">${prod.name}</div>
+        <div style="font-size:19px;color:#ccc;margin-top:3px;line-height:1.5;">${prod.desc}</div>
+        <div style="font-size:21px;color:#ffdd88;margin-top:6px;">庫存：${prod.stock} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="shopAdjQty('${prod.id}',-1)" style="width:36px;height:36px;font-size:24px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:8px;cursor:pointer;">−</button>
+          <span id="shop-qty-${prod.id}" style="font-size:26px;font-weight:800;color:#fff;min-width:32px;text-align:center;">${qty}</span>
+          <button onclick="shopAdjQty('${prod.id}',+1)" style="width:36px;height:36px;font-size:24px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;">＋</button>
+        </div>
+        <div style="font-size:20px;color:${canAfford?'#ffe066':'#888'};">合計：${total.toLocaleString()} 💰</div>
+        <button onclick="shopBuyItem('${prod.id}')" style="padding:10px 22px;font-size:22px;font-weight:800;
+          background:${canAfford?'rgba(50,160,50,0.35)':'rgba(40,40,40,0.3)'};
+          border:2px solid ${canAfford?'#44ff88':'#555'};
+          color:${canAfford?'#44ff88':'#666'};
+          border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;
+          ${canAfford?'':'pointer-events:none;'}">💰 購買</button>
+      </div>`;
+    list.appendChild(div);
+  });
+
+  // 可賣出的物品
+  const sellSec = document.getElementById('shop-sell-section');
+  if(!sellSec) return;
+  const sellable = SHOP_SELL_ITEMS.filter(si => backpackGet(si.id) > 0);
+  if(!sellable.length){ sellSec.innerHTML=''; return; }
+  sellSec.innerHTML = '<div style="font-size:24px;font-weight:900;color:#ffaa44;margin-bottom:12px;border-top:1.5px solid rgba(255,150,50,0.3);padding-top:16px;">💱 賣出收藏品</div>';
+  sellable.forEach(si => {
+    const have = backpackGet(si.id);
+    const def = BACKPACK_ITEM_DEF[si.id]||{};
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:14px 20px;margin-bottom:10px;'+
+      'background:rgba(40,20,0,0.7);border:1.5px solid rgba(255,150,50,0.3);border-radius:12px;';
+    div.innerHTML = `
+      <div style="font-size:44px;">${def.icon||si.icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:24px;font-weight:900;color:#ffbb44;">${si.name}</div>
+        <div style="font-size:18px;color:#aaa;">持有：${have} 個 &nbsp;|&nbsp; 賣價：<span style="color:#ffe066;font-weight:800;">${si.sellPrice.toLocaleString()} 💰</span>/個</div>
+      </div>
+      <button onclick="shopSellItem('${si.id}',1)" style="padding:10px 22px;font-size:22px;font-weight:800;
+        background:rgba(180,100,0,0.35);border:2px solid #ffaa44;color:#ffaa44;
+        border-radius:10px;cursor:pointer;font-family:inherit;">💱 賣出1個</button>
+      <button onclick="shopSellItem('${si.id}',${have})" style="padding:10px 22px;font-size:22px;font-weight:800;
+        background:rgba(180,60,0,0.35);border:2px solid #ff6622;color:#ff8844;
+        border-radius:10px;cursor:pointer;font-family:inherit;">全部賣出</button>`;
+    sellSec.appendChild(div);
+  });
+}
+
+function _renderShopBagPanel(){
+  const panel = document.getElementById('shop-bag-panel');
+  if(!panel) return;
+  _renderBackpackInto(panel, false); // false=不顯示使用按鈕
+}
+
+function shopAdjQty(id, delta){
+  window['_shopQty_'+id] = Math.max(1, Math.min(99, (window['_shopQty_'+id]||1)+delta));
+  const el = document.getElementById('shop-qty-'+id);
+  if(el) el.textContent = window['_shopQty_'+id];
+  _renderShopProducts(); // 重新渲染（更新合計和按鈕狀態）
+}
+
+function shopBuyItem(id){
+  const prod = SHOP_PRODUCTS.find(p=>p.id===id);
+  if(!prod) return;
+  const qty = window['_shopQty_'+id]||1;
+  const total = prod.price * qty;
+  if((_knowledgeCoins||0) < total){
+    _showInGameToast('💰 知識幣不足！', '#ff6644', 2000); return;
+  }
+  const canAdd = 99 - backpackGet(id);
+  if(canAdd < qty){
+    _showInGameToast(`🎒 背包已滿！（${prod.name} 最多持有99個）`, '#ff8844', 2500); return;
+  }
+  _knowledgeCoins = Math.max(0, (_knowledgeCoins||0) - total);
+  backpackAdd(id, qty);
+  gameCloudSave();
+  _showInGameToast(`✅ 購買 ${prod.name} ×${qty}！支出 ${total.toLocaleString()} 知識幣`, '#44ff88', 2500);
+  try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+  openShopOverlay(); // 重整畫面
+}
+
+function shopSellItem(id, qty){
+  const def = BACKPACK_ITEM_DEF[id]||{};
+  const have = backpackGet(id);
+  const actual = Math.min(have, qty);
+  if(actual<=0){ _showInGameToast('背包中沒有這個物品', '#ff8844', 1500); return; }
+  const coins = (def.sellPrice||0) * actual;
+  backpackRemove(id, actual);
+  _knowledgeCoins = (_knowledgeCoins||0) + coins;
+  gameCloudSave();
+  _showInGameToast(`💰 賣出 ${def.name} ×${actual}，獲得 ${coins.toLocaleString()} 知識幣！`, '#ffcc44', 2500);
+  try{ playSfx('sfx-sell', 0.7); }catch(e){ try{ playSfx('sfx-recharge', 0.7); }catch(e2){} }
+  openShopOverlay();
+}
+
+// ════════════════════════════════════════════════════════════════
+// ★ 背包系統
+// ════════════════════════════════════════════════════════════════
+
+function openBackpackOverlay(){
+  const cv = document.getElementById('bag-coins-val');
+  if(cv) cv.textContent = (_knowledgeCoins||0).toLocaleString();
+  _renderBackpackMain();
+  const ov = document.getElementById('backpack-overlay');
+  if(ov) ov.style.display='block';
+}
+
+function closeBackpackOverlay(){
+  const ov = document.getElementById('backpack-overlay');
+  if(ov) ov.style.display='none';
+}
+
+function _renderBackpackMain(){
+  const grid = document.getElementById('backpack-grid');
+  if(!grid) return;
+  _renderBackpackInto(grid, true); // true=顯示使用按鈕
+}
+
+function _renderBackpackInto(container, showUse){
+  container.innerHTML='';
+  const ids = Object.keys(BACKPACK_ITEM_DEF);
+  const hasAny = ids.some(id => backpackGet(id)>0);
+  if(!hasAny){
+    container.innerHTML='<div style="font-size:22px;color:#666;text-align:center;padding:30px;">（背包是空的）</div>';
+    return;
+  }
+  ids.forEach(id => {
+    const cnt = backpackGet(id);
+    if(cnt<=0) return;
+    const def = BACKPACK_ITEM_DEF[id];
+    const isSellOnly = def.type==='sell_only';
+    const row = document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;'+
+      'background:rgba(15,20,40,0.75);border:1.5px solid rgba(100,150,255,0.25);border-radius:12px;';
+    row.innerHTML=`
+      <div style="font-size:42px;flex-shrink:0;">${def.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:22px;font-weight:900;color:#ddeeff;">${def.name}</div>
+        <div style="font-size:17px;color:#aaa;margin-top:2px;line-height:1.4;">${def.desc.split('\\n').join('<br>')}</div>
+      </div>
+      <div style="font-size:24px;font-weight:900;color:#ffee88;min-width:36px;text-align:center;">×${cnt}</div>
+      ${showUse && !isSellOnly
+        ? `<button onclick="useBackpackItem('${id}')" style="padding:8px 18px;font-size:20px;font-weight:800;
+            background:rgba(50,120,220,0.35);border:2px solid #4499ff;color:#88ccff;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">${def.useLabel}</button>`
+        : isSellOnly
+          ? `<div style="font-size:17px;color:#ffaa44;text-align:center;white-space:nowrap;">🛒 超商賣出<br><span style='color:#ffe066;font-weight:800;'>${(def.sellPrice||0).toLocaleString()} 💰</span></div>`
+          : ''
+      }`;
+    container.appendChild(row);
+  });
+}
+
+function useBackpackItem(id){
+  const def = BACKPACK_ITEM_DEF[id];
+  if(!def || def.type==='sell_only') return;
+  if(backpackGet(id)<=0){ _showInGameToast('背包中沒有這個物品', '#ff8844', 1500); return; }
+
+  if(id==='hero_exp_book'){
+    _backpackOpenHeroSelect('📗 英雄經驗值之書', '選擇要增加EXP的英雄（+50 EXP）', name=>{
+      backpackRemove('hero_exp_book');
+      addHeroExp(name, 50);
+      gameCloudSave();
+      _setNavDot('英雄', true);
+      _showInGameToast(`📗 [${name}] 獲得 50 EXP！`, '#88ff88', 2000);
+      _renderBackpackMain();
+    }, false); // false = 全英雄可選
+
+  } else if(id==='skill_upgrade_book'){
+    _backpackOpenHeroSelect('📖 技能升級書', '選擇要升級技能的英雄', name=>{
+      _backpackOpenSkillSelect(name, slot=>{
+        const cur = (_heroSkillLevels[name]&&_heroSkillLevels[name][slot])||0;
+        if(cur>=9){ _showInGameToast('此技能已達最高等級（9級）！', '#ff8844', 2000); return; }
+        backpackRemove('skill_upgrade_book');
+        if(!_heroSkillLevels[name]) _heroSkillLevels[name]={s1:0,s2:0};
+        _heroSkillLevels[name][slot] = cur+1;
+        gameCloudSave();
+        log(`📖 技能升級！${name} ${slot} → Lv.${cur+1} (+${(cur+1)*10}%)`);
+        _showInGameToast(`📖 [${name}] 技能升級成功！效果 +${(cur+1)*10}%`, '#ffe066', 2500);
+        _renderBackpackMain();
+        _setNavDot('英雄', true);
+      });
+    }, true); // true = 只已解鎖英雄
+
+  } else if(id==='stat_reset_book'){
+    _backpackOpenHeroSelect('📕 能力素質重置之書', '選擇要重置素質的英雄', name=>{
+      const invested = _heroStatInvested[name];
+      if(!invested || Object.values(invested).every(v=>v===0)){
+        _showInGameToast(`[${name}] 沒有投資任何素質點數。`, '#ff8844', 2000); return;
+      }
+      const total = Object.values(invested).reduce((a,b)=>a+b,0);
+      backpackRemove('stat_reset_book');
+      _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
+      _heroStatPoints[name] = (_heroStatPoints[name]||0) + total;
+      gameCloudSave();
+      _setNavDot('英雄', true);
+      _showInGameToast(`📕 [${name}] 素質點數重置！退還 ${total} 點`, '#ffaa88', 2500);
+      _renderBackpackMain();
+    }, true);
+
+  } else if(id==='skill_reset_book'){
+    _backpackOpenHeroSelect('📘 技能等級重置之書', '選擇要重置技能等級的英雄', name=>{
+      const levels = _heroSkillLevels[name];
+      if(!levels||(levels.s1||0)+(levels.s2||0)===0){
+        _showInGameToast(`[${name}] 沒有升級任何技能。`, '#ff8844', 2000); return;
+      }
+      const refund = (levels.s1||0)+(levels.s2||0);
+      backpackRemove('skill_reset_book');
+      _heroSkillLevels[name] = {s1:0, s2:0};
+      backpackAdd('skill_upgrade_book', refund); // 退還技能升級書（最多99）
+      gameCloudSave();
+      _setNavDot('英雄', true);
+      _showInGameToast(`📘 [${name}] 技能等級重置！退還 ${refund} 本技能升級書`, '#88aaff', 2500);
+      _renderBackpackMain();
+    }, true);
+  }
+}
+
+// 英雄選擇彈窗 (背包用)
+function _backpackOpenHeroSelect(title, subtitle, callback, onlyUnlocked){
+  const existing = document.getElementById('bag-hero-select');
+  if(existing) existing.remove();
+  const unlocked = advGetUnlockedHeroes();
+  const heroList = onlyUnlocked ? unlocked
+    : (typeof HERO_DB!=='undefined'?Object.keys(HERO_DB):[]);
+
+  const ov = document.createElement('div');
+  ov.id='bag-hero-select';
+  ov.style.cssText='position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,0.88);'+
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;'+
+    'padding:24px;overflow-y:auto;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+
+  const box = document.createElement('div');
+  box.style.cssText='background:linear-gradient(160deg,#0a0d1a,#060810);border:2.5px solid rgba(100,150,255,0.6);'+
+    'border-radius:20px;padding:28px 36px;max-width:920px;width:100%;';
+  box.innerHTML=`
+    <div style="font-size:32px;font-weight:900;color:#88ccff;margin-bottom:6px;">${title}</div>
+    <div style="font-size:20px;color:#aaa;margin-bottom:20px;">${subtitle}</div>
+    <div id="bag-hero-grid" style="display:flex;flex-wrap:wrap;gap:12px;max-height:55vh;overflow-y:auto;"></div>
+    <button onclick="document.getElementById('bag-hero-select').remove()"
+      style="margin-top:20px;padding:10px 32px;font-size:22px;background:rgba(60,10,10,0.3);
+      border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 取消</button>`;
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+
+  const grid = document.getElementById('bag-hero-grid');
+  heroList.forEach(name=>{
+    const hd = typeof HERO_DB!=='undefined'?HERO_DB[name]:null;
+    const av = (typeof AVATARS!=='undefined'?AVATARS[name]:null)||'⚔';
+    const btn = document.createElement('button');
+    btn.style.cssText='padding:12px 16px;background:rgba(20,25,50,0.9);border:1.5px solid rgba(100,150,255,0.35);'+
+      'color:#fff;border-radius:12px;cursor:pointer;text-align:center;min-width:120px;font-family:inherit;';
+    btn.innerHTML=`<div style="font-size:36px;">${av}</div><div style="font-size:18px;font-weight:700;color:#88ccff;">${name}</div>`;
+    btn.onmouseenter=()=>btn.style.borderColor='#4499ff';
+    btn.onmouseleave=()=>btn.style.borderColor='rgba(100,150,255,0.35)';
+    btn.onclick=()=>{ ov.remove(); callback(name); };
+    grid.appendChild(btn);
+  });
+}
+
+// 技能選擇彈窗
+function _backpackOpenSkillSelect(heroName, callback){
+  const hd = typeof HERO_DB!=='undefined'?HERO_DB[heroName]:null;
+  if(!hd) return;
+  const ov = document.createElement('div');
+  ov.id='bag-skill-select';
+  ov.style.cssText='position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,0.88);'+
+    'display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  const box=document.createElement('div');
+  box.style.cssText='background:linear-gradient(160deg,#0a0d1a,#060810);border:2.5px solid rgba(255,200,50,0.6);'+
+    'border-radius:20px;padding:28px 40px;max-width:600px;width:90%;text-align:center;';
+  const levels = (_heroSkillLevels[heroName])||{};
+  const s1lv=(levels.s1||0), s2lv=(levels.s2||0);
+  box.innerHTML=`
+    <div style="font-size:28px;font-weight:900;color:#ffcc44;margin-bottom:20px;">選擇要升級的技能</div>
+    <div style="display:flex;gap:16px;justify-content:center;">
+      ${[{slot:'s1',sk:hd.s1,lv:s1lv},{slot:'s2',sk:hd.s2,lv:s2lv}].map(({slot,sk,lv})=>sk?`
+        <button onclick="document.getElementById('bag-skill-select').remove(); _backpackSkillCb('${heroName}','${slot}')"
+          id="bag-sk-${slot}" style="flex:1;padding:16px 20px;background:rgba(40,30,0,0.8);
+          border:2px solid rgba(255,180,50,${lv>=9?'0.25':'0.7'});color:${lv>=9?'#555':'#ffe066'};
+          border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;
+          ${lv>=9?'pointer-events:none;':''}">
+          <div style="font-size:20px;color:#aaa;">技能${slot==='s1'?'1':'2'}</div>
+          <div style="font-size:26px;font-weight:900;margin:4px 0;">${sk.n}</div>
+          <div style="font-size:18px;color:#aaa;">${sk.d}</div>
+          <div style="font-size:18px;color:${lv>=9?'#888':'#ffcc44'};margin-top:6px;">Lv.${lv} → Lv.${Math.min(9,lv+1)}${lv>=9?' (MAX)':''}</div>
+        </button>`:'').join('')}
+    </div>
+    <button onclick="document.getElementById('bag-skill-select').remove()"
+      style="margin-top:20px;padding:10px 32px;font-size:20px;background:rgba(60,10,10,0.3);
+      border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;">取消</button>`;
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  // Store callback for slot selection
+  window._backpackSkillCb = (hname, slot)=>{ callback(slot); };
+}
+
+// 遊戲內 Toast 提示
+function _showInGameToast(msg, color, dur=2000){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;
+    background:rgba(10,15,30,0.95);border:1.5px solid ${color};color:${color};
+    font-size:22px;font-weight:700;padding:12px 28px;border-radius:12px;pointer-events:none;
+    font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;max-width:600px;
+    box-shadow:0 0 20px ${color}44;`;
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity 0.4s';
+    setTimeout(()=>{ if(t.parentNode)t.remove(); },450); }, dur);
 }
 
 function closeHeroPage() {
@@ -20116,7 +20678,7 @@ function _renderHeroDetail(name, box) {
             ${sk.p?'<span style="font-size:20px;color:#aaa;background:rgba(100,100,100,0.3);border-radius:6px;padding:2px 8px;">[被動]</span>':''}
             ${skLv>0?`<span style="font-size:20px;color:#ffcc44;background:rgba(255,200,0,0.15);border-radius:6px;padding:2px 10px;">+${skLv} 效果+${skLv*10}%</span>`:''}
             ${maxed?`<span style="font-size:20px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
-            ${!maxed && _skillBookCount>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
+            ${!maxed && backpackGet('skill_upgrade_book')>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
           </div>
           <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${fd}</div>
         </div>`;
@@ -20232,13 +20794,15 @@ function upgradeSkill(name, slot) {
   document.body.appendChild(boxU2);
   document.getElementById('_upg_yes2').onclick = () => {
     boxU2.remove();
-    _skillBookCount--;
+    backpackRemove('skill_upgrade_book', 1);
     _heroSkillLevels[name][slot] = nextLv;
     log(`📖 技能升級！${name} ${slot} → +${nextLv} (效果+${nextLv*10}%)`);
     gameCloudSave();
     const bookEl2 = document.getElementById('hero-page-book-count');
-    if(bookEl2) bookEl2.textContent = _skillBookCount;
+    if(bookEl2) bookEl2.textContent = backpackGet('skill_upgrade_book');
     _renderHeroDetail(name, document.getElementById('hero-detail-content'));
+    const _hpC2 = document.getElementById('hero-page-coins-val');
+    if(_hpC2) _hpC2.textContent = (_knowledgeCoins||0).toLocaleString();
     try{ playSfx('sfx-powerup', 0.7); }catch(e){}
   };
   document.getElementById('_upg_no2').onclick = () => boxU2.remove();
@@ -20399,6 +20963,15 @@ function advStartMiniBattle(nextSceneIdx) {
     const cutsceneOv = document.getElementById('adv-cutscene-overlay');
     if(cutsceneOv) cutsceneOv.style.display = 'none';
     const gc = document.getElementById('gc');
+    // ★ 設定全螢幕戰鬥背景
+    const _advBgEl = document.getElementById('adv-battle-bg');
+    const _bgClassMap = {river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden'};
+    if(_advBgEl){
+      _advBgEl.className = ''; // 清除舊 class
+      _advBgEl.classList.add(_bgClassMap[sceneKey] || 'bg-river');
+      void _advBgEl.offsetWidth; // reflow
+      _advBgEl.classList.add('visible');
+    }
     if(gc) gc.classList.add('adv-battle');
 
     // ── BGM：先停再播戰鬥曲（loop=true 要先 pause 再設 src）
@@ -20482,7 +21055,9 @@ function advFinishMiniBattle(win) {
       const _expEl = document.getElementById('adv-mini-result');
       if(_expEl){
         const _expInfoEl = document.getElementById('adv-mini-result-exp');
-        if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${Math.round(baseExp*1.5)}`;
+        const _miniCoins = Math.round(baseExp*1.5 * 0.20);
+        if(_miniCoins > 0) addKnowledgeCoins(_miniCoins);
+        if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${Math.round(baseExp*1.5)}　💰+${_miniCoins}知識幣`;
         _expEl.classList.add('show');
         // 2.5秒後自動關閉（由下方 _RESULT_DUR 的 setTimeout 統一控制）
       } else {
@@ -20582,6 +21157,8 @@ function advMiniResultConfirm(){
   if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(false);
   const _gcD = document.getElementById('gc');
   if(_gcD) _gcD.classList.remove('adv-battle');
+  // ★ 清除戰鬥背景
+  (function(){ const _rb=document.getElementById('adv-battle-bg'); if(_rb){ _rb.classList.remove('visible'); setTimeout(()=>{ _rb.className=''; },700); } })();
   const _pf2 = document.getElementById('p2-field');
   if(_pf2) _pf2.style.visibility = '';
 
