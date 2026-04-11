@@ -2999,7 +2999,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260410.23.48</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.08.56</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -8242,7 +8242,7 @@ function skillCost(s, actor, displayOnly=false){
   // 魔水晶戒指：只在實際執行時才擲骰，UI顯示時不計入
   if(!displayOnly && actor){
     const aeq=getEquip(actor);
-    if(aeq && aeq.skillCostSave && Math.random()<Math.min(0.95,0.75*getCraftsmanBonus(h.side))) c=Math.max(1,c-1);
+    if(aeq && aeq.skillCostSave && Math.random()<Math.min(0.95,0.75*getCraftsmanBonus(actor.side))) c=Math.max(1,c-1);
   }
   return c;
 }
@@ -14126,6 +14126,8 @@ function aiAct(a){
   _realAiAct(a);
 }
 function _realAiAct(a){
+  // ★ 防護：若 a 無效直接跳過回合
+  if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
   const opp_side = a.side==='p1'?'p2':'p1';
   const enemies = G[opp_side].filter(h=>h.curHp>0);
   const allies  = G[a.side].filter(h=>h.curHp>0);
@@ -17030,20 +17032,20 @@ function selectAdvStage(key, btnEl){
   // 任務目標
   const objEl = document.getElementById('adv-objectives');
   if(objEl && data.objectives){
-    objEl.innerHTML = data.objectives.map(o=>
+    if(objEl && data.objectives) objEl.innerHTML = data.objectives.map(o=>
       `<div style="font-size:28px;color:#c8d4f0;padding:6px 12px;background:rgba(255,255,255,0.05);border-radius:8px;border-left:3px solid rgba(212,168,67,0.5);">${o}</div>`
     ).join('');
   }
   // 獎勵
   const rwEl = document.getElementById('adv-rewards-list');
   if(rwEl && data.rewards){
-    rwEl.innerHTML = data.rewards.map(r=>
+    if(rwEl && data.rewards) rwEl.innerHTML = data.rewards.map(r=>
       `<div style="display:flex;align-items:center;gap:8px;font-size:28px;color:#ffe066;padding:8px 16px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.25);border-radius:10px;">${r.icon} <span style="color:#f0e8c8;">${r.text}</span></div>`
     ).join('');
   }
   // 學習領域（保留隱藏備用）
   const tagsEl = document.getElementById('adv-tags');
-  tagsEl.innerHTML = data.tags.map(t =>
+  if(tagsEl && data.tags) tagsEl.innerHTML = data.tags.map(t =>
     `<span class="adv-domain-tag ${t.cls}">${t.text}</span>`
   ).join('');
 }
@@ -19054,7 +19056,7 @@ window.gameCloudLoad = async function(uid) {
   try {
     const data = await window._fbLoad(uid);
     if(data) {
-      _applyLoadedData(data);
+      _applySafeData(data);
       // 同步回本地
       localStorage.setItem('lxps_' + uid + '_progress', JSON.stringify(data));
       log('☁️ 雲端進度已載入（' + new Date(data.savedAt).toLocaleString('zh-TW') + '）');
