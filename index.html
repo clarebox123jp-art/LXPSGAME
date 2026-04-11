@@ -3000,7 +3000,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.30</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260411.10.36</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -12803,7 +12803,15 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     if(checkWin()) return;
     endAction(a, cost);
   }
-  else { log(`技能 ${n} 未識別`); clearSel(); }
+  else {
+    console.error('[execSkill] 未識別技能:', JSON.stringify(n));
+    log(`⚠️ 技能 「${n}」 未識別（技能長度:${n.length}），跳過本次行動`);
+    clearSel();
+    // ★ 防止卡死：強制結束回合
+    if(a && typeof endAction === 'function') {
+      try{ endAction(a, 0); }catch(e){ _pSetTimeout(startTurn, 400); }
+    }
+  }
 }
 
 function showTarotCardChoice(card, actor, cb){
@@ -20098,23 +20106,11 @@ function advFinishMiniBattle(win) {
     }
   }
 
-  // 移除戰鬥 class
-  if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(false);
-  const gc2 = document.getElementById('gc');
-  if(gc2) gc2.classList.remove('adv-battle');
-
-  // 恢復BOSS陣容（深拷貝還原）
-  if(_advBossTeamSaved) {
-    G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));
-    _advBossTeamSaved = null;
-    // ★ 恢復玩家寵物（加上小怪戰中獲得的新寵物）
-    if(window._advPlayerPetsSaved){
-      const _newPets = G.pets ? G.pets.filter(p=>p && !_advPlayerPetsSaved.find(op=>op&&op.n===p.n)) : [];
-      G.pets = [..._advPlayerPetsSaved, ..._newPets];
-      _advPlayerPetsSaved = null;
-    }
-    G.p2.forEach(h => { try{ applyElemBonus(h); }catch(e){} });
-  }
+  // ★ 先把小怪卡片隱藏（避免顯示恢復後的BOSS隊伍）
+  try{
+    const _pf2 = document.getElementById('p2-field');
+    if(_pf2) _pf2.style.visibility = 'hidden';
+  }catch(e){}
 
   G._resultShown = false;
   G.energy = {p1:2, p2:2};
@@ -20146,7 +20142,28 @@ function advFinishMiniBattle(win) {
   const _miniResultEl2 = document.getElementById('adv-mini-result');
   const _RESULT_DUR = 2200; // 結算畫面持續時間
 
+  // 儲存 boss team reference for delayed restore
+  const _savedBossTeam = _advBossTeamSaved;
+  const _savedPlayerPets = window._advPlayerPetsSaved;
+
   setTimeout(()=>{
+    // ★ 恢復BOSS陣容（延遲到結算畫面結束後）
+    if(_savedBossTeam) {
+      G.p2 = JSON.parse(JSON.stringify(_savedBossTeam));
+      _advBossTeamSaved = null;
+      if(_savedPlayerPets){
+        const _newPets = G.pets ? G.pets.filter(p=>p && !_savedPlayerPets.find(op=>op&&op.n===p.n)) : [];
+        G.pets = [..._savedPlayerPets, ..._newPets];
+        window._advPlayerPetsSaved = null;
+      }
+      G.p2.forEach(h => { try{ applyElemBonus(h); }catch(e){} });
+    }
+    // ★ 移除戰鬥class並恢復p2卡片可見性
+    if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(false);
+    const _gc2d = document.getElementById('gc');
+    if(_gc2d) _gc2d.classList.remove('adv-battle');
+    const _pf2d = document.getElementById('p2-field');
+    if(_pf2d) _pf2d.style.visibility = '';
     // 隱藏結算畫面
     if(_miniResultEl2) _miniResultEl2.classList.remove('show');
     // 切換到過場音樂
