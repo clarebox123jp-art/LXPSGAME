@@ -278,8 +278,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   position:fixed;z-index:9999;
   background:linear-gradient(160deg,#1a1d2e 0%,#0d0f1a 100%);
   border:3px solid var(--gold);border-radius:18px;
-  padding:16px 20px 18px;max-width:min(480px,90vw);min-width:min(280px,90vw);
-  max-height:85vh;overflow-y:auto;
+  padding:20px 24px 22px;max-width:min(580px,92vw);min-width:min(320px,92vw);
+  max-height:88vh;overflow-y:auto;
   box-shadow:0 0 48px rgba(212,168,67,0.55),0 8px 40px rgba(0,0,0,0.9);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   pointer-events:auto;animation:sdpIn 0.15s ease-out;
@@ -290,16 +290,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   display:flex;align-items:baseline;gap:10px;margin-bottom:10px;padding-right:30px;flex-wrap:wrap;
 }
 #skill-detail-popup .sdp-name{
-  font-size:28px;font-weight:700;color:var(--gold2);letter-spacing:1px;
+  font-size:42px;font-weight:700;color:var(--gold2);letter-spacing:1px;
 }
 #skill-detail-popup .sdp-meta{
-  font-size:22px;color:#4a9eff;font-weight:700;white-space:nowrap;
+  font-size:33px;color:#4a9eff;font-weight:700;white-space:nowrap;
 }
 #skill-detail-popup .sdp-desc{
-  font-size:22px;color:#f0ead8;line-height:1.6;font-weight:500;
+  font-size:33px;color:#f0ead8;line-height:1.6;font-weight:500;
 }
 #skill-detail-popup .sdp-close{
-  position:absolute;top:12px;right:16px;font-size:28px;color:#888;cursor:pointer;
+  position:absolute;top:12px;right:16px;font-size:42px;color:#888;cursor:pointer;
   font-weight:500;line-height:1;transition:color 0.15s;
 }
 #skill-detail-popup .sdp-close:hover{color:#fff;}
@@ -756,15 +756,15 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   background:rgba(0,0,0,0.72);pointer-events:auto;
 }
 #_tut-box{
-  position:fixed;z-index:9900;max-width:420px;min-width:280px;
+  position:fixed;z-index:9900;max-width:560px;min-width:320px;
   background:linear-gradient(160deg,rgba(8,14,35,0.98),rgba(4,8,22,0.98));
   border:2.5px solid rgba(100,180,255,0.85);border-radius:18px;
-  padding:22px 26px 18px;box-shadow:0 0 40px rgba(60,140,255,0.5);
+  padding:28px 32px 22px;box-shadow:0 0 40px rgba(60,140,255,0.5);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;pointer-events:auto;
 }
-#_tut-box ._tut-step{font-size:14px;color:#6699cc;margin-bottom:4px;letter-spacing:1px;}
-#_tut-box ._tut-title{font-size:28px;font-weight:900;color:#88ccff;margin-bottom:10px;}
-#_tut-box ._tut-desc{font-size:18px;color:#ffffff;line-height:1.7;margin-bottom:16px;}
+#_tut-box ._tut-step{font-size:22px;color:#6699cc;margin-bottom:6px;letter-spacing:1px;}
+#_tut-box ._tut-title{font-size:48px;font-weight:900;color:#88ccff;margin-bottom:14px;}
+#_tut-box ._tut-desc{font-size:34px;color:#ffffff;line-height:1.7;margin-bottom:20px;}
 #_tut-box ._tut-arrow{
   position:absolute;width:0;height:0;
 }
@@ -776,12 +776,12 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 #_tut-nav{display:flex;gap:10px;justify-content:flex-end;align-items:center;}
 ._tut-next-btn{
-  padding:9px 28px;font-size:18px;font-weight:800;cursor:pointer;
+  padding:12px 36px;font-size:28px;font-weight:800;cursor:pointer;
   background:rgba(50,120,255,0.3);border:2px solid #4499ff;
   color:#88ccff;border-radius:10px;font-family:inherit;
 }
 ._tut-skip-btn{
-  padding:9px 18px;font-size:16px;cursor:pointer;
+  padding:12px 24px;font-size:24px;cursor:pointer;
   background:transparent;border:1.5px solid rgba(255,100,100,0.5);
   color:#ff9999;border-radius:8px;font-family:inherit;
 }
@@ -13915,6 +13915,8 @@ function showActivePassiveUI(hero, sk, cost, triggerDesc, onUse, onSkip){
 
 // ====== TURN ENGINE ======
 function startTurn(){
+  // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
+  if(window._advMiniResultShowing) return;
   if(checkWin()) return;
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
@@ -14519,6 +14521,8 @@ function _aiRemoveInv(side, uid){
 }
 
 function aiAct(a){
+  // ★ 小怪結算視窗顯示中：封鎖 AI 行動，防止 Boss 戰背景推進
+  if(window._advMiniResultShowing) return;
   // ★ 防護：a 無效或已死亡
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
   // ★ 冒險模式答題中：等待答題結束後再行動（防止BOSS搶先）
@@ -17429,6 +17433,10 @@ function closeAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
   ov.style.display = 'none';
+  // ★ 完整清除冒險模式狀態（戰鬥 class、overlay 殘留、BGM 等）
+  try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(e){}
+  // ★ 同時重置守門旗標（以防殘留）
+  window._advMiniResultShowing = false;
   // ★ 停止所有播放中的音樂和音效（含手機端）
   bgmStop();
   document.querySelectorAll('audio').forEach(function(el){
@@ -17515,13 +17523,13 @@ function showSkillDetailPopup(btn){
   // 著色技能說明
   document.getElementById('sdp-desc').innerHTML = colorizeSkillDesc(desc);
   pop.style.display = 'block';
-  // ★ 定位：先顯示再取真實尺寸，確保不超出畫面任何邊界
+  // ★ 定位：先顯示再取真實尺寸，確保不超出畫面任何邊界（含縮放補償）
   requestAnimationFrame(() => {
-    const _margin = 10;
+    const _margin = 12;
     const btnRect = btn.getBoundingClientRect();
     const popRect = pop.getBoundingClientRect();
-    const _popW = popRect.width || 300;
-    const _popH = popRect.height || 200;
+    const _popW = popRect.width || 400;
+    const _popH = popRect.height || 240;
     const _vw = window.innerWidth;
     const _vh = window.innerHeight;
 
@@ -17540,8 +17548,7 @@ function showSkillDetailPopup(btn){
       left = Math.max(_margin, (_vw - _popW) / 2);
     }
 
-    // 垂直：對齊按鈕頂端
-    // 下方超出 → 往上移
+    // 垂直：對齊按鈕頂端，下方超出 → 往上移
     if(top + _popH > _vh - _margin){
       top = _vh - _popH - _margin;
     }
@@ -19977,23 +19984,24 @@ let _tutorialContext = 'arena'; // 'arena' | 'mini'
 let _tutorialHighlighted = null; // 目前高亮元素
 
 const TUTORIAL_STEPS = [
-  { target:'row2',         side:'top',   title:'🎯 勝利目標',
+  { target:'row2',           side:'top',          title:'🎯 勝利目標',
     desc:'將對手場上所有英雄的HP清零！點擊下方行動按鈕來對英雄造成傷害，全部倒下就獲勝！' },
-  { target:'turn-order-bar', side:'top', title:'⚡ 行動順序',
+  { target:'turn-order-bar', side:'right-screen', title:'⚡ 行動順序',
     desc:'這裡顯示本回合的行動順序！速度越高越靠前。亮框的英雄是目前輪到行動的角色。' },
-  { target:'b-atk',       side:'right',  title:'⚔️ 普通攻擊',
+  { target:'b-atk',          side:'panel-left',   title:'⚔️ 普通攻擊',
     desc:'點「普通攻擊」後，再點對手的英雄卡片，就能發動攻擊！免費使用，每回合一次。' },
-  { target:'e1-bar',      side:'right',  title:'🔷 能量系統',
+  { target:'e1-bar',         side:'panel-left',   title:'🔷 能量系統',
     desc:'每回合行動結束後，玩家會獲得能量。 技能和爆發都需要消耗🔷能量，要好好分配！' },
-  { target:'b-s1',        side:'right',  title:'✨ 特技技能',
+  { target:'b-s1',           side:'panel-left',   title:'✨ 特技技能',
     desc:'每位英雄有2個特技（S1、S2）。消耗能量後點技能按鈕，再選目標即可發動強力效果！' },
-  { target:null,           side:'center', title:'💥 極限爆發',
-    desc:'能量集滿10顆🔷時，英雄卡片上會亮起「⚡爆發」按鈕！ 這是最強的大絕招，威力毀滅性！' },
-  { target:'igrid',       side:'right',  title:'🎒 物品背包',
+  { target:null,             side:'right-screen', title:'💥 極限爆發',
+    desc:'能量集滿10顆🔷時，英雄卡片上會亮起「⚡爆發」按鈕！ 這是最強的大絕招，威力毀滅性！',
+    burstMock: true },
+  { target:'igrid',          side:'panel-left',   title:'🎒 物品背包',
     desc:'右側物品欄有3格。從牌堆抽到的卡片會出現在這裡。 點卡片查看效果，再選「使用」「裝備」或「賣出換能量」！' },
-  { target:'b-auto-battle', side:'right',title:'🤖 自動戰鬥',
+  { target:'b-auto-battle',  side:'panel-left',   title:'🤖 自動戰鬥',
     desc:'不想手動操作？點此開啟AI自動戰鬥！AI會幫你選最佳行動，隨時可以手動關閉恢復操作。' },
-  { target:null,           side:'center', title:'🎉 準備好了！',
+  { target:null,             side:'center',       title:'🎉 準備好了！',
     desc:'你已瞭解戰鬥的基本操作！  隨時可以點右側的「❓ 教學指引」按鈕重看說明。 祝你戰鬥順利，小英雄！' },
 ];
 
@@ -20048,6 +20056,38 @@ function _checkShowTutorial(ctx) {
 function _startBattleTutorial() {
   const pm = document.getElementById('_tut-prompt');
   if(pm) pm.remove();
+
+  // ★ 強制顯示我方操作面板，確保教學可高亮所有按鈕
+  try{
+    const ap = document.getElementById('action-panel');
+    if(ap) ap.style.display = 'block';
+
+    // 還原按鈕顯示（防止被 hidePassiveBtns 隱藏）
+    ['b-atk','b-s1','b-s2'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.style.display = '';
+    });
+
+    // 用第一位存活的我方英雄填充技能按鈕文字
+    if(typeof G !== 'undefined' && G.p1 && G.p1.length){
+      const hero = G.p1.find(h => h.curHp > 0) || G.p1[0];
+      if(hero){
+        const s1b = document.getElementById('b-s1');
+        const s2b = document.getElementById('b-s2');
+        if(s1b && hero.s1){
+          s1b.innerHTML = `<b style="font-size:22px">${hero.s1.n}</b><span style="color:#4a9eff;font-size:20px">🔷${hero.s1.c}</span>`;
+        }
+        if(s2b && hero.s2){
+          s2b.innerHTML = `<b style="font-size:22px">${hero.s2.n}</b><span style="color:#4a9eff;font-size:20px">🔷${hero.s2.c}</span>`;
+        }
+      }
+    }
+
+    // 顯示自動戰鬥按鈕（冒險模式才有）
+    const ab = document.getElementById('b-auto-battle');
+    if(ab) ab.style.display = '';
+  }catch(e){}
+
   _tutorialStep = 0;
   _showTutorialStep(0);
 }
@@ -20077,6 +20117,9 @@ function _showTutorialStep(idx) {
   // 移除舊步驟視窗
   const oldBox = document.getElementById('_tut-box');
   if(oldBox) oldBox.remove();
+  // 清除上一步的爆發模擬
+  const oldBurstMock = document.getElementById('_tut-burst-mock-style');
+  if(oldBurstMock) oldBurstMock.remove();
 
   if(idx >= TUTORIAL_STEPS.length) {
     _closeTutorial();
@@ -20084,6 +20127,24 @@ function _showTutorialStep(idx) {
   }
   const step = TUTORIAL_STEPS[idx];
   _tutorialStep = idx;
+
+  // ★ 爆發星星模擬：介紹極限爆發時讓我方英雄星星全亮
+  if(step.burstMock){
+    const mockSt = document.createElement('style');
+    mockSt.id = '_tut-burst-mock-style';
+    mockSt.textContent = `
+      #z1 .burst-star-off {
+        color: #ffcc00 !important;
+        animation: burstStarGlow 0.8s ease-in-out infinite alternate !important;
+        text-shadow: 0 0 10px #ffaa00, 0 0 20px rgba(255,170,0,0.7) !important;
+        display: inline-block !important;
+      }
+      #z1 .burst-star-on {
+        animation: burstStarGlow 0.8s ease-in-out infinite alternate !important;
+      }
+    `;
+    document.head.appendChild(mockSt);
+  }
 
   // 高亮目標元素
   let targetRect = null;
@@ -20093,6 +20154,26 @@ function _showTutorialStep(idx) {
       el.classList.add('_tut-highlight');
       _tutorialHighlighted = el;
       targetRect = el.getBoundingClientRect();
+    }
+  }
+
+  // ★ 更新遮罩 clip-path：挖空高亮區域讓它原色顯示
+  const dim = document.getElementById('_tut-dim');
+  if(dim){
+    if(targetRect){
+      const pad = 8;
+      const x1 = Math.max(0, targetRect.left - pad);
+      const y1 = Math.max(0, targetRect.top  - pad);
+      const x2 = Math.min(window.innerWidth,  targetRect.right  + pad);
+      const y2 = Math.min(window.innerHeight, targetRect.bottom + pad);
+      const vw = window.innerWidth, vh = window.innerHeight;
+      dim.style.clipPath =
+        `polygon(0 0, ${vw}px 0, ${vw}px ${vh}px, 0 ${vh}px, 0 0, ` +
+        `${x1}px ${y1}px, ${x1}px ${y2}px, ${x2}px ${y2}px, ${x2}px ${y1}px, ${x1}px ${y1}px)`;
+      dim.style.background = 'rgba(0,0,0,0.78)';
+    } else {
+      dim.style.clipPath = '';
+      dim.style.background = 'rgba(0,0,0,0.72)';
     }
   }
 
@@ -20108,31 +20189,48 @@ function _showTutorialStep(idx) {
       <button class="_tut-skip-btn" onclick="closeTutorial()">✕ 關閉教學</button>
       ${idx+1 < TUTORIAL_STEPS.length
         ? `<button class="_tut-next-btn" onclick="_showTutorialStep(${idx+1})">下一步 ▶</button>`
-        : `<button class="_tut-next-btn" onclick="closeTutorial()" style="background:rgba(40,160,80,0.3);border-color:#44ff88;color:#88ffcc;">✔ 開始戰鬥！</button>`
+        : `<button class="_tut-next-btn" onclick="_tutInterClose_and_start()" style="background:rgba(200,120,0,0.3);border-color:#ffcc44;color:#ffe066;">⚔️ 實戰練習！</button>`
       }
     </div>`;
 
   document.body.appendChild(box);
 
-  // 定位視窗：盡量靠近目標
+  // ★ 定位視窗
   requestAnimationFrame(() => {
     const bw = box.offsetWidth, bh = box.offsetHeight;
     const vw = window.innerWidth, vh = window.innerHeight;
     let left, top;
+    const margin = 16;
 
     if(!targetRect || step.side === 'center') {
       // 居中
       left = (vw - bw) / 2;
       top  = (vh - bh) / 2;
+
     } else if(step.side === 'top') {
-      left = Math.max(8, Math.min(vw-bw-8, targetRect.left + targetRect.width/2 - bw/2));
-      top  = Math.max(8, targetRect.bottom + 16);
-      if(top + bh > vh - 8) top = Math.max(8, targetRect.top - bh - 16);
+      // 目標區上方/下方：水平置中於目標
+      left = Math.max(margin, Math.min(vw - bw - margin, targetRect.left + targetRect.width/2 - bw/2));
+      top  = Math.max(margin, targetRect.bottom + 16);
+      if(top + bh > vh - margin) top = Math.max(margin, targetRect.top - bh - 16);
+
+    } else if(step.side === 'panel-left') {
+      // ★ 右側面板按鈕：說明視窗固定在左半側，垂直置中
+      left = margin;
+      top  = Math.max(margin, Math.min(vh - bh - margin, targetRect.top + targetRect.height/2 - bh/2));
+
+    } else if(step.side === 'right-screen') {
+      // ★ 行動順序條/爆發：說明視窗固定在右半側（避開左側卡牌區）
+      left = Math.max(vw * 0.5, vw - bw - margin);
+      top  = targetRect
+        ? Math.max(margin, Math.min(vh - bh - margin, targetRect.bottom + 16))
+        : (vh - bh) / 2;
+      if(top + bh > vh - margin) top = Math.max(margin, (vh - bh) / 2);
+
     } else {
-      // right / left → 放在右側
-      left = Math.min(vw - bw - 8, targetRect.right + 16);
-      if(left + bw > vw - 8) left = Math.max(8, targetRect.left - bw - 16);
-      top  = Math.max(8, Math.min(vh - bh - 8, targetRect.top + targetRect.height/2 - bh/2));
+      // 其他（靠近目標右側）
+      left = Math.min(vw - bw - margin, targetRect.right + 16);
+      if(left + bw > vw - margin) left = Math.max(margin, targetRect.left - bw - 16);
+      top  = Math.max(margin, Math.min(vh - bh - margin, targetRect.top + targetRect.height/2 - bh/2));
     }
     box.style.left = left + 'px';
     box.style.top  = top  + 'px';
@@ -20148,7 +20246,10 @@ function closeTutorial() {
   const box = document.getElementById('_tut-box');
   if(box) box.remove();
   const dim = document.getElementById('_tut-dim');
-  if(dim) dim.remove();
+  if(dim){ dim.style.clipPath = ''; dim.remove(); }
+  // ★ 清除爆發星星模擬
+  const burstMock = document.getElementById('_tut-burst-mock-style');
+  if(burstMock) burstMock.remove();
   // 標記完成
   if(_tutorialContext === 'mini') _tutorialMiniDone = true;
   else _tutorialDone = true;
@@ -20168,6 +20269,426 @@ function openTutorial() {
   document.body.appendChild(dim);
   _tutorialStep = 0;
   _showTutorialStep(0);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ★★ 實戰引導教學 (Interactive Tutorial)
+// ══════════════════════════════════════════════════════════════════════
+let _tutInterPhase = 'idle';
+let _tutInterHero  = null;
+let _tutInterPollId = null;
+let _tutInterPrevEnergy = 0;
+let _tutInterGcHandler = null;
+
+// ── 進入實戰教學（關閉說明教學後呼叫）──
+function _tutInterClose_and_start() {
+  closeTutorial();           // 清除說明教學、啟動戰鬥
+  _startInteractiveTutorial();
+}
+
+function _startInteractiveTutorial() {
+  _tutInterInjectCSS();
+  _tutInterPhase = 'wait_atk_turn';
+  if(_tutInterPollId) clearInterval(_tutInterPollId);
+  _tutInterPollId = setInterval(_tutInterPoll, 250);
+}
+
+// ── CSS注入（只注一次）──
+function _tutInterInjectCSS() {
+  if(document.getElementById('_ti-css')) return;
+  const st = document.createElement('style');
+  st.id = '_ti-css';
+  st.textContent = `
+    ._ti-arrow-wrap {
+      position:fixed; z-index:9952; pointer-events:none;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    ._ti-arrow-wrap .ti-bounce {
+      font-size:56px; line-height:1;
+      animation:_tiArrowBounce 0.5s ease-in-out infinite alternate;
+      filter:drop-shadow(0 0 14px rgba(255,220,50,1));
+    }
+    @keyframes _tiArrowBounce {
+      from { transform:translateY(0); }
+      to   { transform:translateY(-18px); }
+    }
+    ._ti-msg-bar {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+      z-index:9953; pointer-events:auto;
+      background:linear-gradient(160deg,rgba(5,15,35,0.97),rgba(3,8,20,0.98));
+      border:2.5px solid #ffcc44; border-radius:16px; padding:16px 30px 14px;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+      max-width:min(720px,90vw); text-align:center;
+      box-shadow:0 0 40px rgba(255,200,0,0.45);
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+    }
+    ._ti-msg-bar .ti-title { font-size:32px; font-weight:900; color:#ffcc44; }
+    ._ti-msg-bar .ti-text  { font-size:26px; color:#fff; line-height:1.5; }
+    ._ti-msg-bar .ti-skip  { font-size:20px; color:#888; cursor:pointer;
+      padding:4px 16px; border:1px solid #444; border-radius:8px;
+      background:transparent; font-family:inherit; }
+    ._ti-msg-bar .ti-skip:hover { color:#aaa; border-color:#666; }
+    @keyframes _tiPraiseIn {
+      from { opacity:0; transform:translate(-50%,-50%) scale(0.7); }
+      to   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    }
+    ._ti-praise {
+      position:fixed; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      z-index:9960; pointer-events:none;
+      background:linear-gradient(135deg,rgba(8,45,18,0.97),rgba(4,28,10,0.98));
+      border:3px solid #44ff88; border-radius:22px; padding:30px 52px;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif; text-align:center;
+      box-shadow:0 0 80px rgba(50,220,80,0.6);
+      animation:_tiPraiseIn 0.45s cubic-bezier(0.22,1,0.36,1);
+    }
+    ._ti-praise .ti-p-icon  { font-size:68px; }
+    ._ti-praise .ti-p-title { font-size:48px; font-weight:900; color:#44ff88; margin:8px 0; }
+    ._ti-praise .ti-p-sub   { font-size:26px; color:#aaffcc; }
+    ._ti-final {
+      position:fixed; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      z-index:9960; pointer-events:auto;
+      background:linear-gradient(135deg,rgba(8,30,50,0.98),rgba(4,18,35,0.99));
+      border:3px solid #ffcc44; border-radius:24px; padding:36px 60px;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif; text-align:center;
+      box-shadow:0 0 100px rgba(255,200,0,0.5);
+      animation:_tiPraiseIn 0.5s cubic-bezier(0.22,1,0.36,1);
+    }
+    ._ti-final .tf-icon  { font-size:80px; }
+    ._ti-final .tf-title { font-size:52px; font-weight:900; color:#ffcc44; margin:10px 0 8px; }
+    ._ti-final .tf-sub   { font-size:28px; color:#ffe8a0; line-height:1.6; margin-bottom:20px; }
+    ._ti-final .tf-btn   {
+      padding:16px 56px; font-size:32px; font-weight:900; cursor:pointer;
+      background:linear-gradient(135deg,rgba(50,180,80,0.9),rgba(30,120,50,0.9));
+      border:3px solid #44ff88; color:#fff; border-radius:16px;
+      font-family:inherit; box-shadow:0 0 24px rgba(0,255,100,0.4);
+      letter-spacing:2px;
+    }
+  `;
+  document.head.appendChild(st);
+}
+
+// ── 箭頭 & 訊息 helpers ──
+function _tutInterShowArrow(el) {
+  _tutInterClearArrow();
+  if(!el) return;
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const wrap = document.createElement('div');
+  wrap.id = '_ti-arrow-el';
+  wrap.className = '_ti-arrow-wrap';
+  wrap.innerHTML = '<div class="ti-bounce">👇</div>';
+  wrap.style.left = (cx - 32) + 'px';
+  wrap.style.top  = Math.max(4, rect.top - 76) + 'px';
+  document.body.appendChild(wrap);
+}
+function _tutInterClearArrow() {
+  const el = document.getElementById('_ti-arrow-el'); if(el) el.remove();
+}
+function _tutInterShowMsg(title, text, skipCb) {
+  _tutInterClearMsg();
+  const d = document.createElement('div');
+  d.id = '_ti-msg-bar'; d.className = '_ti-msg-bar';
+  d.innerHTML = `<div class="ti-title">${title}</div><div class="ti-text">${text}</div>
+    <button class="ti-skip" onclick="(${skipCb || '_tutInterSkip'})()">跳過教學</button>`;
+  document.body.appendChild(d);
+}
+function _tutInterClearMsg() {
+  const el = document.getElementById('_ti-msg-bar'); if(el) el.remove();
+}
+function _tutInterClearAll() {
+  _tutInterClearArrow(); _tutInterClearMsg();
+  if(_tutInterGcHandler) {
+    const gc = document.getElementById('gc');
+    if(gc) gc.removeEventListener('click', _tutInterGcHandler, true);
+    _tutInterGcHandler = null;
+  }
+  // 清除高亮
+  document.querySelectorAll('._tut-highlight').forEach(el => {
+    el.classList.remove('_tut-highlight');
+  });
+}
+function _tutInterSkip() {
+  if(_tutInterPollId){ clearInterval(_tutInterPollId); _tutInterPollId = null; }
+  _tutInterClearAll();
+  _tutInterPhase = 'idle';
+  const el = document.getElementById('_ti-arrow-el');  if(el) el.remove();
+  const el2 = document.getElementById('_ti-praise-el'); if(el2) el2.remove();
+}
+
+// ── 讚美演出 ──
+function _tutInterPraise(icon, title, sub, onDone) {
+  _tutInterClearAll();
+  const d = document.createElement('div');
+  d.id = '_ti-praise-el'; d.className = '_ti-praise';
+  d.innerHTML = `<div class="ti-p-icon">${icon}</div>
+    <div class="ti-p-title">${title}</div>
+    <div class="ti-p-sub">${sub}</div>`;
+  document.body.appendChild(d);
+  setTimeout(() => {
+    d.style.transition = 'opacity 0.4s';
+    d.style.opacity = '0';
+    setTimeout(() => { d.remove(); if(onDone) onDone(); }, 400);
+  }, 1800);
+}
+
+// ── 主輪詢 ──
+function _tutInterPoll() {
+  if(_tutInterPhase === 'idle') { clearInterval(_tutInterPollId); _tutInterPollId = null; return; }
+  try {
+    if(typeof G === 'undefined' || !G || !G.p1) return;
+
+    // ── 等待我方行動回合 ──
+    if(_tutInterPhase === 'wait_atk_turn' || _tutInterPhase === 'wait_skill_turn') {
+      const hero = G.activeChar;
+      if(hero && hero.side === 'p1' && !hero.acted && hero.curHp > 0
+         && !G.pendingTarget && typeof pendingCb !== 'undefined' && !pendingCb) {
+        clearInterval(_tutInterPollId); _tutInterPollId = null;
+        _tutInterHero = hero;
+        if(_tutInterPhase === 'wait_atk_turn') _tutInterStartAtkPhase();
+        else _tutInterStartSellOrSkillPhase();
+      }
+    }
+
+    // ── 等待攻擊完成（英雄已行動） ──
+    else if(_tutInterPhase === 'atk_target') {
+      const hero = _tutInterHero;
+      if(!hero || hero.acted || G.activeChar !== hero) {
+        _tutInterPhase = 'atk_praise';
+        _tutInterClearAll();
+        _tutInterPraise('⚔️', '攻擊成功！', '你讓敵方受到了傷害！繼續加油！', () => {
+          _tutInterPhase = 'wait_skill_turn';
+          if(_tutInterPollId) clearInterval(_tutInterPollId);
+          _tutInterPollId = setInterval(_tutInterPoll, 250);
+        });
+      }
+    }
+
+    // ── 等待賣出物品（能量增加） ──
+    else if(_tutInterPhase === 'sell_wait') {
+      const curE = G.energy ? (G.energy.p1 || 0) : 0;
+      if(curE > _tutInterPrevEnergy) {
+        clearInterval(_tutInterPollId); _tutInterPollId = null;
+        _tutInterClearAll();
+        _tutInterPhase = 'skill_btn';
+        setTimeout(_tutInterShowSkillHint, 600);
+        return;
+      }
+      // 如果物品操作列已開啟，把箭頭移到賣出按鈕
+      const opsEl = document.getElementById('item-ops');
+      if(opsEl && opsEl.style.display !== 'none') {
+        const sellBtn = opsEl.querySelector('.iop-btn[onclick*="doSell"]') ||
+                        opsEl.querySelector('.iop-btn:last-child');
+        if(sellBtn && sellBtn.offsetParent) {
+          _tutInterClearArrow();
+          _tutInterShowArrow(sellBtn);
+        }
+      }
+    }
+
+    // ── 等待技能目標選擇後完成 ──
+    else if(_tutInterPhase === 'skill_target') {
+      const hero = _tutInterHero;
+      if(!hero || hero.acted || G.activeChar !== hero) {
+        clearInterval(_tutInterPollId); _tutInterPollId = null;
+        _tutInterPhase = 'final';
+        _tutInterClearAll();
+        setTimeout(_tutInterFinal, 300);
+      }
+    }
+
+  } catch(e) {}
+}
+
+// ── 攻擊引導 ──
+function _tutInterStartAtkPhase() {
+  _tutInterPhase = 'atk_btn';
+  // 確保操作面板可見
+  const ap = document.getElementById('action-panel');
+  if(ap) ap.style.display = 'block';
+  const atkBtn = document.getElementById('b-atk');
+  if(!atkBtn) { _tutInterPhase = 'idle'; return; }
+
+  _tutInterShowArrow(atkBtn);
+  _tutInterShowMsg('⚔️ 現在輪到你！', '點擊「普通攻擊」按鈕發動攻擊！');
+
+  const onAtkClick = () => {
+    atkBtn.removeEventListener('click', onAtkClick);
+    _tutInterClearAll();
+    _tutInterPhase = 'atk_wait_target';
+    setTimeout(_tutInterShowAtkTarget, 300);
+  };
+  atkBtn.addEventListener('click', onAtkClick);
+}
+
+function _tutInterShowAtkTarget() {
+  // 找最弱的敵方目標（HP最少）
+  const enemies = (G.p2 || []).filter(h => h.curHp > 0);
+  if(!enemies.length) { _tutInterPhase = 'idle'; return; }
+  const target = enemies.slice().sort((a, b) => a.curHp - b.curHp)[0];
+  const cardEl = document.getElementById(`card-${target.side}-${target.pos}`);
+
+  if(cardEl) cardEl.classList.add('_tut-highlight');
+  _tutInterShowArrow(cardEl || null);
+  _tutInterShowMsg('🎯 選擇攻擊目標！', '點擊箭頭所指的敵方角色，對他發動攻擊！');
+
+  _tutInterPhase = 'atk_target';
+
+  // 捕獲點擊，偵測是否點到目標卡牌
+  _tutInterGcHandler = (e) => {
+    if(!cardEl) return;
+    const rect = cardEl.getBoundingClientRect();
+    if(e.clientX >= rect.left - 10 && e.clientX <= rect.right + 10 &&
+       e.clientY >= rect.top  - 10 && e.clientY <= rect.bottom + 10) {
+      cardEl.classList.remove('_tut-highlight');
+      _tutInterClearAll();
+      if(_tutInterGcHandler) {
+        const gc = document.getElementById('gc');
+        if(gc) gc.removeEventListener('click', _tutInterGcHandler, true);
+        _tutInterGcHandler = null;
+      }
+      // 輪詢會偵測 hero.acted 變成 true
+    }
+  };
+  const gc = document.getElementById('gc');
+  if(gc) gc.addEventListener('click', _tutInterGcHandler, true);
+
+  if(_tutInterPollId) clearInterval(_tutInterPollId);
+  _tutInterPollId = setInterval(_tutInterPoll, 250);
+}
+
+// ── 賣出 + 技能引導 ──
+function _tutInterStartSellOrSkillPhase() {
+  const hero = _tutInterHero;
+  if(!hero) { _tutInterFinal(); return; }
+
+  const skillCost = (hero.s1 && !hero.s1.p) ? (hero.s1.c || 2) : 99;
+  const energy    = G.energy ? (G.energy.p1 || 0) : 0;
+  const itemIdx   = G.inv ? G.inv.findIndex(it => it !== null) : -1;
+
+  if(itemIdx !== -1 && energy < skillCost) {
+    // 需要先賣物品
+    _tutInterPrevEnergy = energy;
+    _tutInterPhase = 'sell_wait';
+    const slotEl = document.getElementById(`slot-${itemIdx}`);
+    _tutInterShowArrow(slotEl);
+    _tutInterShowMsg('💰 賣掉物品卡獲得能量！',
+      '點擊物品卡，再點「◆ 賣出」按鈕，獲得能量準備使用技能！');
+    if(_tutInterPollId) clearInterval(_tutInterPollId);
+    _tutInterPollId = setInterval(_tutInterPoll, 250);
+  } else {
+    _tutInterPhase = 'skill_btn';
+    _tutInterShowSkillHint();
+  }
+}
+
+function _tutInterShowSkillHint() {
+  const hero = _tutInterHero;
+  if(!hero) { _tutInterFinal(); return; }
+
+  const ap = document.getElementById('action-panel');
+  if(ap) ap.style.display = 'block';
+
+  const energy = G.energy ? (G.energy.p1 || 0) : 0;
+  let skillBtn = null, skillData = null;
+
+  if(hero.s1 && !hero.s1.p && (hero.s1.c || 0) <= energy) {
+    skillBtn = document.getElementById('b-s1');
+    skillData = hero.s1;
+  } else if(hero.s2 && !hero.s2.p && (hero.s2.c || 0) <= energy) {
+    skillBtn = document.getElementById('b-s2');
+    skillData = hero.s2;
+  }
+
+  if(!skillBtn || !skillData) { _tutInterFinal(); return; }
+
+  _tutInterShowArrow(skillBtn);
+  _tutInterShowMsg('✨ 使用技能！',
+    `點擊「${skillData.n}」發動技能！消耗 ${skillData.c} 🔷 能量`);
+
+  _tutInterPhase = 'skill_btn';
+  const onSkillClick = () => {
+    skillBtn.removeEventListener('click', onSkillClick);
+    _tutInterClearAll();
+    setTimeout(() => _tutInterAfterSkillClick(hero, skillData), 300);
+  };
+  skillBtn.addEventListener('click', onSkillClick);
+}
+
+function _tutInterAfterSkillClick(hero, skillData) {
+  // 判斷技能是否需要選目標（pendingCb 或 G.pendingTarget）
+  const needsTarget = (typeof pendingCb !== 'undefined' && pendingCb) ||
+                      (G.pendingTarget !== null && G.pendingTarget !== undefined);
+
+  if(!needsTarget) {
+    // 技能直接執行（群體技能等），輪詢等待行動結束
+    _tutInterPhase = 'skill_target';
+    if(_tutInterPollId) clearInterval(_tutInterPollId);
+    _tutInterPollId = setInterval(_tutInterPoll, 250);
+    return;
+  }
+
+  // 判斷技能攻擊還是治療
+  const isHeal = skillData.d && /治療|恢復|復活|回血|HP/.test(skillData.d);
+  const pool = isHeal ? (G.p1 || []) : (G.p2 || []);
+  const targets = pool.filter(h => h.curHp > 0);
+  if(!targets.length) { _tutInterPhase = 'skill_target'; return; }
+
+  const target = targets.slice().sort((a, b) => a.curHp - b.curHp)[0];
+  const cardEl = document.getElementById(`card-${target.side}-${target.pos}`);
+
+  if(cardEl) cardEl.classList.add('_tut-highlight');
+  _tutInterShowArrow(cardEl);
+  _tutInterShowMsg('🎯 選擇技能目標！',
+    `點擊箭頭所指的角色，對其發動「${skillData.n}」！`);
+
+  _tutInterPhase = 'skill_target';
+
+  _tutInterGcHandler = (e) => {
+    if(!cardEl) return;
+    const rect = cardEl.getBoundingClientRect();
+    if(e.clientX >= rect.left - 10 && e.clientX <= rect.right + 10 &&
+       e.clientY >= rect.top  - 10 && e.clientY <= rect.bottom + 10) {
+      cardEl.classList.remove('_tut-highlight');
+      _tutInterClearAll();
+      if(_tutInterGcHandler) {
+        const gc2 = document.getElementById('gc');
+        if(gc2) gc2.removeEventListener('click', _tutInterGcHandler, true);
+        _tutInterGcHandler = null;
+      }
+    }
+  };
+  const gc = document.getElementById('gc');
+  if(gc) gc.addEventListener('click', _tutInterGcHandler, true);
+
+  if(_tutInterPollId) clearInterval(_tutInterPollId);
+  _tutInterPollId = setInterval(_tutInterPoll, 250);
+}
+
+// ── 最終恭喜 ──
+function _tutInterFinal() {
+  _tutInterPhase = 'idle';
+  if(_tutInterPollId){ clearInterval(_tutInterPollId); _tutInterPollId = null; }
+  _tutInterClearAll();
+  try{ gameCloudSave(); }catch(e){}
+
+  const d = document.createElement('div');
+  d.id = '_ti-final-el'; d.className = '_ti-final';
+  d.innerHTML = `
+    <div class="tf-icon">🏆</div>
+    <div class="tf-title">教學完成！</div>
+    <div class="tf-sub">
+      你已掌握了戰鬥的基本操作！<br>
+      ⚔️ 普通攻擊 &nbsp;💰 賣物品換能量 &nbsp;✨ 使用技能<br>
+      隨時可以點右側「❓ 教學指引」重看說明。<br>
+      祝你戰鬥順利，小英雄！🎉
+    </div>
+    <button class="tf-btn"
+      onclick="document.getElementById('_ti-final-el').remove(); playSfx('sfx-confirm2',0.7);">
+      🎮 繼續戰鬥！
+    </button>`;
+  document.body.appendChild(d);
 }
 
 
@@ -20215,11 +20736,16 @@ function _showLevelUpSequence(levelUps, onDone) {
   const ov = document.createElement('div');
   ov.id = '_levelup-ov';
   ov.style.cssText = [
-    'position:fixed;inset:0;z-index:9800;display:flex;flex-direction:column;',
+    'position:fixed;top:0;right:0;bottom:0;z-index:9800;',
+    'display:flex;flex-direction:column;',
     'align-items:center;justify-content:center;',
-    'background:radial-gradient(circle at center,rgba(255,200,0,0.25),rgba(0,0,0,0.75));',
+    'width:min(420px,40vw);',
+    'background:linear-gradient(160deg,rgba(20,10,0,0.96),rgba(10,5,0,0.97));',
+    'border-left:3px solid rgba(255,200,0,0.5);',
+    'box-shadow:-8px 0 40px rgba(255,180,0,0.25);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
-    'animation:_luFadeIn 0.5s ease-out;'
+    'animation:_luSlideIn 0.4s cubic-bezier(0.22,1,0.36,1);',
+    'padding:24px 20px;',
   ].join('');
 
   // 注入 keyframes
@@ -20228,15 +20754,16 @@ function _showLevelUpSequence(levelUps, onDone) {
     st.id = '_lu-style';
     st.textContent = `
       @keyframes _luFadeIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
-      @keyframes _luFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+      @keyframes _luSlideIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+      @keyframes _luFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
       @keyframes _luGlow{0%,100%{text-shadow:0 0 20px #ffcc44,0 0 40px #ff8800}50%{text-shadow:0 0 40px #ffee44,0 0 80px #ffaa00,0 0 120px #fff}}
       @keyframes _luParticle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}}
-      ._lu-img{width:320px;height:320px;object-fit:cover;border-radius:50%;border:6px solid #ffcc44;
-        box-shadow:0 0 40px rgba(255,200,0,0.8);animation:_luFloat 2s ease-in-out infinite;}
-      ._lu-title{font-size:52px;font-weight:900;color:#ffe066;margin:18px 0 8px;animation:_luGlow 1.5s ease-in-out infinite;}
-      ._lu-name{font-size:38px;font-weight:800;color:#fff;margin-bottom:6px;}
-      ._lu-lv{font-size:56px;font-weight:900;color:#44ff88;text-shadow:0 0 20px #00ff88;}
-      ._lu-pt{font-size:24px;color:#aaffcc;margin-top:6px;}
+      ._lu-img{width:180px;height:180px;object-fit:cover;border-radius:50%;border:4px solid #ffcc44;
+        box-shadow:0 0 30px rgba(255,200,0,0.7);animation:_luFloat 2s ease-in-out infinite;}
+      ._lu-title{font-size:36px;font-weight:900;color:#ffe066;margin:12px 0 6px;animation:_luGlow 1.5s ease-in-out infinite;text-align:center;}
+      ._lu-name{font-size:28px;font-weight:800;color:#fff;margin-bottom:4px;text-align:center;}
+      ._lu-lv{font-size:44px;font-weight:900;color:#44ff88;text-shadow:0 0 20px #00ff88;text-align:center;}
+      ._lu-pt{font-size:20px;color:#aaffcc;margin-top:4px;text-align:center;}
     `;
     document.head.appendChild(st);
   }
@@ -20259,11 +20786,10 @@ function _showLevelUpSequence(levelUps, onDone) {
 
   ov.innerHTML = `
     <div style="position:relative;text-align:center;">
-      ${particlesHTML}
       ${imgUrl ? `<img class="_lu-img" src="${imgUrl}" alt="${item.name}">` :
-        `<div style="width:320px;height:320px;border-radius:50%;border:6px solid #ffcc44;
+        `<div style="width:180px;height:180px;border-radius:50%;border:4px solid #ffcc44;
           background:rgba(255,200,0,0.2);display:flex;align-items:center;justify-content:center;
-          font-size:120px;box-shadow:0 0 40px rgba(255,200,0,0.8);animation:_luFloat 2s ease-in-out infinite;">
+          font-size:80px;box-shadow:0 0 30px rgba(255,200,0,0.7);animation:_luFloat 2s ease-in-out infinite;">
           ${(typeof AVATARS!=='undefined'&&AVATARS[item.name])||'⭐'}
         </div>`}
     </div>
@@ -20274,9 +20800,9 @@ function _showLevelUpSequence(levelUps, onDone) {
     <button onclick="(function(){
       const _ov=document.getElementById('_levelup-ov');
       if(_ov){_ov.style.opacity='0';_ov.style.transition='opacity 0.3s';setTimeout(()=>{_ov.remove();_showLevelUpSequence(${JSON.stringify(rest)},_luDone_${item.name.replace(/[^a-zA-Z0-9]/g,'_')});},300);}
-    })()" style="margin-top:28px;padding:16px 56px;font-size:34px;font-weight:900;
+    })()" style="margin-top:20px;padding:12px 40px;font-size:26px;font-weight:900;
       background:linear-gradient(135deg,rgba(80,180,80,0.9),rgba(40,120,40,0.9));
-      border:3px solid #44ff88;color:#fff;border-radius:16px;cursor:pointer;
+      border:3px solid #44ff88;color:#fff;border-radius:14px;cursor:pointer;
       font-family:inherit;box-shadow:0 0 20px rgba(0,255,100,0.4);">
       ✔ 確認
     </button>`;
@@ -20286,7 +20812,7 @@ function _showLevelUpSequence(levelUps, onDone) {
     _showLevelUpSequence(rest, onDone);
   };
 
-  flashScreen('rgba(255,220,50,0.5)', 400);
+  flashScreen('rgba(255,220,50,0.3)', 400);
   document.body.appendChild(ov);
 }
 
@@ -22174,6 +22700,12 @@ function advStartMiniBattle(nextSceneIdx) {
 
 function advFinishMiniBattle(win) {
   _advMiniBattleActive = false;
+  // ★ 清除答題回呼，防止小怪戰結束後誤觸「題目出完」重選視窗
+  if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+  // ★★ 設定結算守門旗標：阻止所有 startTurn / aiAct 在背景推進 Boss 戰
+  window._advMiniResultShowing = true;
+  // ★★ 清除 _pendingTimers 佇列，避免已排隊的 startTurn 解除暫停後觸發
+  if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0;
   // ★ 小怪戰結束時，關閉自動戰鬥（Boss戰重新手動選擇）
   if(typeof _autoBattle !== 'undefined' && _autoBattle){
     _autoBattle = false;
@@ -22306,6 +22838,8 @@ function advFinishMiniBattle(win) {
 function advMiniResultConfirm(){
   const _miniResultEl = document.getElementById('adv-mini-result');
   if(_miniResultEl){ _miniResultEl.classList.remove('show'); _miniResultEl.style.display = 'none'; }
+  // ★★ 解除結算守門旗標（此後 startTurn / aiAct 可正常運作）
+  window._advMiniResultShowing = false;
 
   const p = window._advMiniResultPending || {};
   window._advMiniResultPending = null;
@@ -22345,9 +22879,17 @@ function advMiniResultConfirm(){
   // 顯示過場畫面
   const _csOv = document.getElementById('adv-cutscene-overlay');
   if(_csOv) _csOv.style.display = 'flex';
+  // ★ 立即清除場景旗標與選擇面板殘留，防止 ▶▶ 被攔截卡死
+  if(typeof _advSceneChoiceDone !== 'undefined') _advSceneChoiceDone = false;
+  if(typeof _advDialogIdx !== 'undefined') _advDialogIdx = 0;
+  const _cpClear = document.getElementById('adv-choice-panel');
+  if(_cpClear) _cpClear.innerHTML = '';
 
   // 500ms後載入下一場景（讓過場淡入）
   setTimeout(()=>{
+    // ★ 重置場景旗標，防止進入下一場景時 ▶▶ 被 _advSceneChoiceDone 攔截導致劇情卡死
+    if(typeof _advSceneChoiceDone !== 'undefined') _advSceneChoiceDone = false;
+    if(typeof _advDialogIdx !== 'undefined') _advDialogIdx = 0;
     const _stage = p.stage || _adventureStage;
     const _nextIdx = (p.nextScene !== undefined) ? p.nextScene : _advMiniBattleNextScene;
     advLoadScene(_stage, _nextIdx);
