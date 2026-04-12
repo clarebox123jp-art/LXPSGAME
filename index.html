@@ -756,15 +756,15 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   background:rgba(0,0,0,0.72);pointer-events:auto;
 }
 #_tut-box{
-  position:fixed;z-index:9900;max-width:560px;min-width:320px;
+  position:fixed;z-index:9900;max-width:420px;min-width:240px;
   background:linear-gradient(160deg,rgba(8,14,35,0.98),rgba(4,8,22,0.98));
-  border:2.5px solid rgba(100,180,255,0.85);border-radius:18px;
-  padding:28px 32px 22px;box-shadow:0 0 40px rgba(60,140,255,0.5);
+  border:2px solid rgba(100,180,255,0.85);border-radius:14px;
+  padding:21px 24px 16px;box-shadow:0 0 30px rgba(60,140,255,0.5);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;pointer-events:auto;
 }
-#_tut-box ._tut-step{font-size:22px;color:#6699cc;margin-bottom:6px;letter-spacing:1px;}
-#_tut-box ._tut-title{font-size:48px;font-weight:900;color:#88ccff;margin-bottom:14px;}
-#_tut-box ._tut-desc{font-size:34px;color:#ffffff;line-height:1.7;margin-bottom:20px;}
+#_tut-box ._tut-step{font-size:16px;color:#6699cc;margin-bottom:5px;letter-spacing:1px;}
+#_tut-box ._tut-title{font-size:36px;font-weight:900;color:#88ccff;margin-bottom:10px;}
+#_tut-box ._tut-desc{font-size:25px;color:#ffffff;line-height:1.6;margin-bottom:15px;}
 #_tut-box ._tut-arrow{
   position:absolute;width:0;height:0;
 }
@@ -776,14 +776,14 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 #_tut-nav{display:flex;gap:10px;justify-content:flex-end;align-items:center;}
 ._tut-next-btn{
-  padding:12px 36px;font-size:28px;font-weight:800;cursor:pointer;
+  padding:9px 27px;font-size:21px;font-weight:800;cursor:pointer;
   background:rgba(50,120,255,0.3);border:2px solid #4499ff;
-  color:#88ccff;border-radius:10px;font-family:inherit;
+  color:#88ccff;border-radius:8px;font-family:inherit;
 }
 ._tut-skip-btn{
-  padding:12px 24px;font-size:24px;cursor:pointer;
+  padding:9px 18px;font-size:18px;cursor:pointer;
   background:transparent;border:1.5px solid rgba(255,100,100,0.5);
-  color:#ff9999;border-radius:8px;font-family:inherit;
+  color:#ff9999;border-radius:7px;font-family:inherit;
 }
 @keyframes _tutPulse{0%,100%{box-shadow:0 0 0 4px rgba(255,200,0,0.35),0 0 20px rgba(255,200,0,0.7);}
   50%{box-shadow:0 0 0 8px rgba(255,200,0,0.2),0 0 40px rgba(255,200,0,0.9);}}
@@ -3071,16 +3071,9 @@ body {
         <button class="iop-btn" style="background:#8e44ad" onclick="playSfx('sfx-coin',0.6);doSell()">◆ 賣出</button>
       </div>
     </div>
-    <!-- ★ 教學指引按鈕 -->
-    <div id="tutorial-btn-wrap" style="display:none;margin-top:6px;">
-      <button id="tutorial-btn" onclick="openTutorial()"
-        style="width:100%;padding:8px 0;font-size:20px;font-weight:800;cursor:pointer;
-          background:rgba(30,40,80,0.85);border:2px solid rgba(100,160,255,0.6);
-          color:#88bbff;border-radius:8px;font-family:inherit;letter-spacing:1px;
-          box-shadow:0 0 10px rgba(60,130,255,0.3);">
-        ❓ 教學指引
-      </button>
-    </div>
+    <!-- ★ 教學指引懸浮按鈕（左下角固定） -->
+    <!-- 由 ctrlBattleToggle 控制顯示 -->
+    <div id="tutorial-btn-wrap" style="display:none;"></div>
     <div id="bfield-panel" style="display:none">
       <h4 style="font-size:20px;letter-spacing:2px;color:var(--muted);margin-bottom:6px">▸ BATTLEFIELD CARDS</h4>
       <div class="bcard-list" id="bcard-list"><div style="color:#444;font-size:14px">— 無 —</div></div>
@@ -3443,6 +3436,7 @@ body {
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;">
             <span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">排列：</span>
             <button class="hpsort-btn hpick-sort-btn active" data-sort="default" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">預設</button>
+            <button class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">LV ↓</button>
             <button class="hpsort-btn hpick-sort-btn" data-sort="hp" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">HP ↓</button>
             <button class="hpsort-btn hpick-sort-btn" data-sort="atk" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">攻擊 ↓</button>
             <button class="hpsort-btn hpick-sort-btn" data-sort="sp" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)">特技 ↓</button>
@@ -3505,7 +3499,7 @@ body {
   </div>
   <div id="skill-replace-overlay">
     <!-- ★ 替換技能返回按鈕 -->
-    <button onclick="playSfx('sfx-cancel',0.5);goBackToHeroPick()"
+    <button onclick="playSfx('sfx-cancel',0.5);goBackToElemPick()"
       style="position:absolute;top:10px;left:10px;z-index:10;padding:6px 18px;font-size:22px;font-weight:700;background:rgba(20,20,40,0.85);border:1.5px solid rgba(150,150,200,0.4);color:#aabbff;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">← 返回</button>
     <div id="sro-header">
       <h2>▸ 替換技能</h2>
@@ -6651,9 +6645,12 @@ function showHeroPickOverlay(){
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
     window._isAdventurePickMode = true; // ★ 標記冒險選角模式
-    // ★ 冒險模式隱藏特定按鈕
+    // ★ 冒險模式隱藏特定按鈕（保留返回按鈕）
     const _hpBackBtn = document.getElementById('hero-pick-back-btn');
-    if(_hpBackBtn) _hpBackBtn.style.display = 'none';
+    if(_hpBackBtn){
+      _hpBackBtn.style.display = '';
+      _hpBackBtn.textContent = '← 返回關卡選擇';
+    }
     const _findBtn = document.getElementById('hero-pick-find-btn');
     if(_findBtn) _findBtn.style.display = 'none';
     // ★ 冒險模式：只顯示已解鎖英雄（初始4名 + 解鎖的）
@@ -6871,7 +6868,7 @@ let _hpickFilterKey = 'all';
 
 function hpickSortClick(btn){
   const key = btn.dataset.sort;
-  const labels = {default:'預設',hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'};
+  const labels = {default:'預設',lv:'LV',hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'};
   if(_hpickSortKey === key){
     _hpickSortAsc = !_hpickSortAsc;
     btn.textContent = (labels[key]||key) + (_hpickSortAsc?' ↑':' ↓');
@@ -6909,8 +6906,14 @@ function _rebuildPickNodes(){
   // Sort
   if(_hpickSortKey !== 'default'){
     pool.sort((a,b)=>{
-      const ha=HERO_DB[a], hb=HERO_DB[b];
-      const va=(ha&&ha[_hpickSortKey])||0, vb=(hb&&hb[_hpickSortKey])||0;
+      let va, vb;
+      if(_hpickSortKey === 'lv'){
+        va = (typeof getHeroLevel==='function') ? getHeroLevel(a) : 1;
+        vb = (typeof getHeroLevel==='function') ? getHeroLevel(b) : 1;
+      } else {
+        const ha=HERO_DB[a], hb=HERO_DB[b];
+        va=(ha&&ha[_hpickSortKey])||0; vb=(hb&&hb[_hpickSortKey])||0;
+      }
       return _hpickSortAsc ? va-vb : vb-va;
     });
   }
@@ -6935,15 +6938,16 @@ function _buildHeroPickNodes(){
     _heroPickPool.forEach((name, idx) => {
       const av = (typeof AVATARS!=='undefined'&&AVATARS[name])||'🗡️';
       const img = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])||'';
+      const lv = (typeof getHeroLevel==='function') ? getHeroLevel(name) : 1;
       const node = document.createElement('div');
       node.className = 'hpick-adv-node';
       node.id = `hpick-${idx}`;
       node.style.cssText = 'position:relative;width:155px;cursor:pointer;border-radius:14px;overflow:hidden;border:2.5px solid rgba(212,168,67,0.4);background:rgba(10,12,25,0.92);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;';
       node.innerHTML = img
         ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-           <div style="font-size:20px;text-align:center;padding:7px 4px;color:#ffe8a0;font-weight:700;">${name}</div>`
+           <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:15px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`
         : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>
-           <div style="font-size:17px;text-align:center;padding:6px 4px;color:#ffe8a0;font-weight:700;">${name}</div>`;
+           <div style="font-size:16px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`;
       node.onclick = () => focusHero(idx, name);
       if(_heroPickSelected.includes(name)){
         node.style.borderColor='rgba(100,220,100,0.9)';
@@ -6970,6 +6974,7 @@ function _buildHeroPickNodes(){
   _heroPickPool.forEach((name, idx) => {
     const av = (typeof AVATARS!=='undefined' && AVATARS[name]) || '🗡️';
     const img = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[name]) || '';
+    const lv = (typeof getHeroLevel==='function') ? getHeroLevel(name) : 1;
     const node = document.createElement('div');
     node.className = 'hpick-arena-card';
     node.id = `hpick-${idx}`;
@@ -6982,9 +6987,9 @@ function _buildHeroPickNodes(){
     ].join('');
     node.innerHTML = img
       ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-         <div style="font-size:20px;text-align:center;padding:7px 4px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name}</div>`
+         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`
       : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:58px;">${av}</div>
-         <div style="font-size:20px;text-align:center;padding:7px 4px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name}</div>`;
+         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`;
     if(_heroPickSelected.includes(name)){
       node.style.borderColor='rgba(100,220,100,0.9)';
       node.style.background='rgba(15,50,15,0.92)';
@@ -7370,13 +7375,16 @@ function randomTeamPick(){
 
   // ── 冒險模式：只從解鎖英雄池隨機
   if(_adventureMode && _adventureStage){
-    const unlockedPool = (ADV_HERO_POOL[_adventureStage] || []).slice();
-    // 保留已選的解鎖英雄，補滿剩餘名額
-    const keep = _heroPickSelected.filter(n => unlockedPool.includes(n));
+    // ★ 合併初始池 + 已解鎖英雄（排除魔物），確保所有英雄都有機會被選入
+    const basePool = (ADV_HERO_POOL[_adventureStage] || []).slice();
+    const unlocked = (typeof advGetUnlockedHeroes==='function') ? advGetUnlockedHeroes() : [];
+    const fullPool = [...new Set([...basePool, ...unlocked])].filter(n => !BOSS_NAMES.includes(n));
+    // 保留已選的英雄，補滿剩餘名額
+    const keep = _heroPickSelected.filter(n => fullPool.includes(n));
     const need = 4 - keep.length;
     if(need > 0){
-      const available = unlockedPool.filter(n => !keep.includes(n))
-                                    .sort(() => Math.random() - 0.5);
+      const available = fullPool.filter(n => !keep.includes(n))
+                                .sort(() => Math.random() - 0.5);
       available.slice(0, need).forEach(n => keep.push(n));
     }
     // 重建選擇狀態
@@ -7946,19 +7954,24 @@ function playBattleStartSfx(){
 
 // ★ 鬥技：選角頁返回首頁
 function goBackFromHeroPick(){
-  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
   const hpo = document.getElementById('hero-pick-overlay');
   if(hpo) hpo.style.display = 'none';
-  const mainOv = document.getElementById('overlay');
-  if(mainOv) mainOv.style.display = 'flex';
   // 重置選角狀態
   if(typeof _heroPickSelected !== 'undefined') _heroPickSelected = [];
-  if(typeof bgmPlay === 'function'){ bgmStop(); bgmPlay('bgm-menu-01'); }
+  if(typeof _isAdventurePickMode !== 'undefined') window._isAdventurePickMode = false;
+  if(typeof _adventureMode !== 'undefined' && _adventureMode){
+    // 冒險模式：返回關卡選擇
+    if(typeof openAdventureOverlay === 'function') openAdventureOverlay();
+  } else {
+    // 鬥技場模式：返回主選單
+    const mainOv = document.getElementById('overlay');
+    if(mainOv) mainOv.style.display = 'flex';
+    if(typeof bgmPlay === 'function'){ bgmStop(); bgmPlay('bgm-menu-01'); }
+  }
 }
 
-// ★ 鬥技：元素選擇返回選角頁
+// ★ 元素選擇返回選角頁（冒險/鬥技場都適用）
 function goBackFromElemPick(){
-  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
   const epOv = document.getElementById('elem-pick-overlay');
   if(epOv) epOv.style.display = 'none';
   const hpo = document.getElementById('hero-pick-overlay');
@@ -7986,7 +7999,125 @@ function goBackToHeroPick(){
   _skillReplaceMap={}; _selectedPickSkill=null; _pickerFocusPos=null;
   showHeroPickOverlay();
 }
+
+// ★ 技能替換頂部「← 返回」→ 只返回元素選擇，不重置整個狀態
+function goBackToElemPick(){
+  const sro = document.getElementById('skill-replace-overlay');
+  if(sro) sro.style.display = 'none';
+  const epOv = document.getElementById('elem-pick-overlay');
+  if(epOv) epOv.style.display = 'flex';
+  // 重置 skill-replace 相關狀態，但保留 elem-pick 狀態
+  _skillReplaceMap = {};
+  _selectedPickSkill = null;
+  _pickerFocusPos = null;
+}
+// ★ 計算隊伍治療技能總數（含已替換的）
+function _countTeamHealSkills() {
+  const _HEAL_NS = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石',
+    '持續恢復','神之賜福','慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療',
+    '復活術','天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶',
+    '雙小提琴協奏曲','BUG修復','蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌']);
+  let count = 0;
+  G.p1.forEach(h => {
+    const rep = _skillReplaceMap[h.pos];
+    const s1 = (rep && rep.slot === 's1') ? rep.skill : h.s1;
+    const s2 = (rep && rep.slot === 's2') ? rep.skill : h.s2;
+    if(_HEAL_NS.has(s1.n)) count++;
+    if(_HEAL_NS.has(s2.n)) count++;
+  });
+  return count;
+}
+
+// ★ 治療技能不足警告彈窗
+function _showHealWarning(onContinue) {
+  // 取得池中的治療技能
+  const _HEAL_NS = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石',
+    '持續恢復','神之賜福','慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療',
+    '復活術','天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶',
+    '雙小提琴協奏曲','BUG修復','蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌']);
+  const allUsedNames = new Set();
+  G.p1.forEach(h=>{
+    const rep = _skillReplaceMap[h.pos];
+    allUsedNames.add((rep&&rep.slot==='s1')?rep.skill.n:h.s1.n);
+    allUsedNames.add((rep&&rep.slot==='s2')?rep.skill.n:h.s2.n);
+  });
+  const healSkillsAvail = (typeof NEW_SKILLS_DB!=='undefined')
+    ? NEW_SKILLS_DB.filter(sk => _HEAL_NS.has(sk.n) && !allUsedNames.has(sk.n))
+    : [];
+
+  const pop = document.createElement('div');
+  pop.id = '_heal-warn-pop';
+  pop.style.cssText = 'position:absolute;inset:0;z-index:2000;background:rgba(0,0,0,0.86);' +
+    'display:flex;align-items:center;justify-content:center;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  const healList = healSkillsAvail.length
+    ? healSkillsAvail.map(sk => `
+        <button onclick="playSfx('sfx-sel',0.5);
+          document.getElementById('_heal-warn-pop').remove();
+          onPickSkill('${sk.n}');
+          document.getElementById('sro-picker-body').scrollIntoView({behavior:'smooth'});"
+          style="width:100%;text-align:left;background:rgba(40,120,60,0.2);
+            border:2px solid rgba(80,220,120,0.6);border-radius:10px;padding:12px 18px;
+            cursor:pointer;font-family:inherit;transition:0.15s;color:#fff;margin-bottom:8px;"
+          onmouseover="this.style.background='rgba(50,160,80,0.35)'"
+          onmouseout="this.style.background='rgba(40,120,60,0.2)'">
+          <span style="font-size:24px;font-weight:700;color:#88ffaa;">${sk.n}</span>
+          <span style="font-size:20px;color:#4a9eff;margin:0 8px;">🔷${sk.c}</span>
+          <span style="font-size:20px;color:#ccc;">${sk.d}</span>
+        </button>`).join('')
+    : '<div style="color:#aaa;font-size:22px;padding:8px;">目前池中暫無可用治療技能</div>';
+
+  pop.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(40,15,5,0.98),rgba(25,8,3,0.99));
+      border:3px solid rgba(255,160,50,0.8);border-radius:20px;padding:36px 48px;
+      max-width:780px;width:90%;max-height:85vh;overflow-y:auto;
+      box-shadow:0 0 80px rgba(255,140,0,0.4);text-align:center;">
+      <div style="font-size:64px;margin-bottom:10px;">⚠️</div>
+      <div style="font-size:38px;font-weight:900;color:#ffaa44;margin-bottom:10px;">治療技能不足！</div>
+      <div style="font-size:26px;color:#ffe8a0;line-height:1.6;margin-bottom:24px;">
+        隊伍目前的 8 個技能中，直接恢復 HP 的技能少於 2 個。<br>
+        <span style="color:#ff9944;">沒有足夠治療可能在長線戰鬥中苦戰！</span><br>
+        建議從下方擇一治療技能替換掉較少用到的技能。
+      </div>
+      ${healSkillsAvail.length ? `
+      <div style="font-size:24px;color:#88ffaa;font-weight:700;margin-bottom:12px;text-align:left;">
+        📋 可選擇的治療技能（點擊選取，再到英雄卡片上套用）：
+      </div>
+      <div style="text-align:left;margin-bottom:24px;">${healList}</div>
+      ` : `<div style="margin-bottom:24px;">${healList}</div>`}
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        ${healSkillsAvail.length ? `
+        <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('_heal-warn-pop').remove();"
+          style="padding:14px 36px;font-size:26px;font-weight:800;cursor:pointer;
+            background:rgba(50,130,80,0.3);border:2px solid #44ff88;color:#44ff88;
+            border-radius:12px;font-family:inherit;">
+          ← 返回選擇技能
+        </button>` : ''}
+        <button onclick="playSfx('sfx-confirm',0.5);document.getElementById('_heal-warn-pop').remove();(${onContinue.toString()})();"
+          style="padding:14px 36px;font-size:26px;font-weight:800;cursor:pointer;
+            background:rgba(80,50,20,0.3);border:2px solid #ffaa44;color:#ffaa44;
+            border-radius:12px;font-family:inherit;">
+          ⚔️ 了解，繼續開始
+        </button>
+      </div>
+    </div>`;
+
+  const sro = document.getElementById('skill-replace-overlay');
+  if(sro) sro.appendChild(pop);
+  else document.body.appendChild(pop);
+}
+
 function confirmSkillReplace(){
+  // ★ 先檢查治療技能數量
+  const healCount = _countTeamHealSkills();
+  if(healCount < 2) {
+    _showHealWarning(() => { _doConfirmSkillReplace(); });
+    return;
+  }
+  _doConfirmSkillReplace();
+}
+
+function _doConfirmSkillReplace(){
   playSfx('sfx-confirm2',0.9);
   // Apply all replacements
   G.p1.forEach(h=>{
@@ -8085,7 +8216,14 @@ function confirmSkillReplace(){
         renderCard(h);
       }
     });
-    _pSetTimeout(startTurn, G.p1.length * 200 + G.p2.length * 200 + 600);
+    _pSetTimeout(()=>{
+      // ★ 鬥技場初次戰鬥教學
+      if(!_adventureMode && !_tutorialDone) {
+        _checkShowTutorial('arena');
+      } else {
+        startTurn();
+      }
+    }, G.p1.length * 200 + G.p2.length * 200 + 600);
   }, 400);
 }
 
@@ -15231,6 +15369,9 @@ function showResult(win){
     var _ov = document.getElementById(id);
     if(_ov){ _ov.style.display='none'; if(_ov.remove && id!=='discard-overlay'&&id!=='equip-overlay'&&id!=='dice-overlay') _ov.remove(); }
   });
+  // ★ 冒險 overlay 只隱藏，不移除（元素要保留給下次使用）
+  const _hmOv = document.getElementById('adv-hero-meet-overlay');
+  if(_hmOv) _hmOv.style.display = 'none';
   // 取消待處理的捨棄/裝備回調，避免戰後再次觸發
   if(typeof _discardCb !== 'undefined') _discardCb = null;
   if(typeof _equipCb !== 'undefined') _equipCb = null;
@@ -16454,9 +16595,12 @@ function ctrlLeaveBattle(){
   // Hide gc, show main overlay
   const gc=document.getElementById('gc');
   if(gc) gc.classList.remove('adv-battle');
-  ['adv-cutscene-overlay','adv-result-overlay','hero-pick-overlay','elem-pick-overlay'].forEach(id=>{
+  // adv-result-overlay 是 class-based，只清除 inline style；其他 inline-style overlays 設 none
+  ['adv-cutscene-overlay','hero-pick-overlay','elem-pick-overlay'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.style.display='none';
   });
+  const _advResOv = document.getElementById('adv-result-overlay');
+  if(_advResOv){ _advResOv.classList.remove('show'); _advResOv.style.display=''; }
   const mainOv=document.getElementById('overlay');
   if(mainOv) mainOv.style.display='flex';
   bgmStop(); bgmPlay('bgm-menu-01');
@@ -16468,6 +16612,32 @@ function ctrlBattleToggle(show){
   const div=document.getElementById('ctrl-leave-divider');
   if(btn) btn.style.display=show?'':'none';
   if(div) div.style.display=show?'':'none';
+  // ★ 教學指引懸浮按鈕：戰鬥時顯示在左下角
+  let floatBtn = document.getElementById('_tut-float-btn');
+  if(show){
+    if(!floatBtn){
+      floatBtn = document.createElement('div');
+      floatBtn.id = '_tut-float-btn';
+      floatBtn.style.cssText = [
+        'position:fixed;bottom:18px;left:18px;z-index:9800;',
+        'pointer-events:auto;'
+      ].join('');
+      floatBtn.innerHTML = `<button onclick="try{playSfx('sfx-sel',0.5);}catch(e){}openTutorial()"
+        style="padding:10px 22px;font-size:22px;font-weight:800;cursor:pointer;
+          background:rgba(15,25,60,0.92);border:2px solid rgba(100,160,255,0.7);
+          color:#88bbff;border-radius:10px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+          letter-spacing:1px;box-shadow:0 0 12px rgba(60,130,255,0.35);
+          transition:0.15s;"
+        onmouseover="this.style.background='rgba(30,60,150,0.95)';this.style.borderColor='#88ccff'"
+        onmouseout="this.style.background='rgba(15,25,60,0.92)';this.style.borderColor='rgba(100,160,255,0.7)'">
+        ❓ 戰鬥教學
+      </button>`;
+      document.body.appendChild(floatBtn);
+    }
+    floatBtn.style.display = '';
+  } else {
+    if(floatBtn) floatBtn.style.display = 'none';
+  }
 }
 function ctrlQuit(){
   if(!confirm('確定要結束遊戲嗎？')) return;
@@ -17713,13 +17883,17 @@ function exitAdventureMode(){
   if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer) {
     clearInterval(_advQuizTimer); _advQuizTimer = null;
   }
-  // 清除所有冒險相關 overlay
-  ['adv-cutscene-overlay','adv-result-overlay','adv-unlock-overlay',
-   'adv-continue-overlay','adv-boss-intro','adv-quiz-overlay',
-   'adv-reward-overlay','adv-hero-meet-overlay','adv-mini-result',
+  // ★ class-based overlays（用 .show class 控制顯示）：清除 class + 清除 inline style
+  ['adv-result-overlay','adv-unlock-overlay','adv-continue-overlay',
+   'adv-boss-intro','adv-quiz-overlay','adv-reward-overlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){ el.classList.remove('show'); el.style.display = ''; }
+  });
+  // ★ inline-style overlays（用 style.display 控制顯示）：強制隱藏
+  ['adv-cutscene-overlay','adv-hero-meet-overlay','adv-mini-result',
    'adv-repick-popup'].forEach(id => {
     const el = document.getElementById(id);
-    if(el){ el.classList.remove('show'); el.style.display=''; }
+    if(el){ el.classList.remove('show'); el.style.display = 'none'; }
   });
   const _bdp = document.getElementById('adv-boss-detail-pop');
   if(_bdp) _bdp.remove();
@@ -19984,7 +20158,7 @@ let _tutorialContext = 'arena'; // 'arena' | 'mini'
 let _tutorialHighlighted = null; // 目前高亮元素
 
 const TUTORIAL_STEPS = [
-  { target:'row2',           side:'top',          title:'🎯 勝利目標',
+  { target:'row2',           side:'right-screen', title:'🎯 勝利目標',
     desc:'將對手場上所有英雄的HP清零！點擊下方行動按鈕來對英雄造成傷害，全部倒下就獲勝！' },
   { target:'turn-order-bar', side:'right-screen', title:'⚡ 行動順序',
     desc:'這裡顯示本回合的行動順序！速度越高越靠前。亮框的英雄是目前輪到行動的角色。' },
@@ -19997,12 +20171,12 @@ const TUTORIAL_STEPS = [
   { target:null,             side:'right-screen', title:'💥 極限爆發',
     desc:'能量集滿10顆🔷時，英雄卡片上會亮起「⚡爆發」按鈕！ 這是最強的大絕招，威力毀滅性！',
     burstMock: true },
-  { target:'igrid',          side:'panel-left',   title:'🎒 物品背包',
-    desc:'右側物品欄有3格。從牌堆抽到的卡片會出現在這裡。 點卡片查看效果，再選「使用」「裝備」或「賣出換能量」！' },
+  { target:'igrid',          side:'above-right',  title:'🎒 物品背包',
+    desc:'右側物品欄有3格。從牌堆抽到的卡片會出現在這裡。 點卡片查看效果，再選「使用」「攜帶」或「賣出換能量」！' },
   { target:'b-auto-battle',  side:'panel-left',   title:'🤖 自動戰鬥',
     desc:'不想手動操作？點此開啟AI自動戰鬥！AI會幫你選最佳行動，隨時可以手動關閉恢復操作。' },
   { target:null,             side:'center',       title:'🎉 準備好了！',
-    desc:'你已瞭解戰鬥的基本操作！  隨時可以點右側的「❓ 教學指引」按鈕重看說明。 祝你戰鬥順利，小英雄！' },
+    desc:'你已瞭解戰鬥的基本操作！  隨時可以點左下角的「❓ 教學指引」按鈕重看說明。 祝你戰鬥順利，小英雄！' },
 ];
 
 function _checkShowTutorial(ctx) {
@@ -20226,6 +20400,12 @@ function _showTutorialStep(idx) {
         : (vh - bh) / 2;
       if(top + bh > vh - margin) top = Math.max(margin, (vh - bh) / 2);
 
+    } else if(step.side === 'above-right') {
+      // ★ 目標上方靠右：用於右側面板物品區，視窗在目標正上方，不遮卡片售價
+      left = Math.max(margin, Math.min(vw - bw - margin, targetRect.right - bw));
+      top  = Math.max(margin, targetRect.top - bh - 16);
+      if(top < margin) top = Math.min(vh - bh - margin, targetRect.bottom + 16);
+
     } else {
       // 其他（靠近目標右側）
       left = Math.min(vw - bw - margin, targetRect.right + 16);
@@ -20386,12 +20566,18 @@ function _tutInterShowArrow(el) {
 function _tutInterClearArrow() {
   const el = document.getElementById('_ti-arrow-el'); if(el) el.remove();
 }
-function _tutInterShowMsg(title, text, skipCb) {
+function _tutInterShowMsg(title, text, skipCb, pos) {
   _tutInterClearMsg();
   const d = document.createElement('div');
   d.id = '_ti-msg-bar'; d.className = '_ti-msg-bar';
   d.innerHTML = `<div class="ti-title">${title}</div><div class="ti-text">${text}</div>
     <button class="ti-skip" onclick="(${skipCb || '_tutInterSkip'})()">跳過教學</button>`;
+  // ★ pos='left'：靠左定位，避免遮住右側物品欄售價
+  if(pos === 'left'){
+    d.style.left = '16px';
+    d.style.transform = 'none';
+    d.style.maxWidth = 'min(600px,52vw)';
+  }
   document.body.appendChild(d);
 }
 function _tutInterClearMsg() {
@@ -20574,7 +20760,7 @@ function _tutInterStartSellOrSkillPhase() {
     const slotEl = document.getElementById(`slot-${itemIdx}`);
     _tutInterShowArrow(slotEl);
     _tutInterShowMsg('💰 賣掉物品卡獲得能量！',
-      '點擊物品卡，再點「◆ 賣出」按鈕，獲得能量準備使用技能！');
+      '點擊物品卡，再點「◆ 賣出」按鈕，獲得能量準備使用技能！', null, 'left');
     if(_tutInterPollId) clearInterval(_tutInterPollId);
     _tutInterPollId = setInterval(_tutInterPoll, 250);
   } else {
@@ -20681,7 +20867,7 @@ function _tutInterFinal() {
     <div class="tf-sub">
       你已掌握了戰鬥的基本操作！<br>
       ⚔️ 普通攻擊 &nbsp;💰 賣物品換能量 &nbsp;✨ 使用技能<br>
-      隨時可以點右側「❓ 教學指引」重看說明。<br>
+      隨時可以點左下角「❓ 教學指引」重看說明。<br>
       祝你戰鬥順利，小英雄！🎉
     </div>
     <button class="tf-btn"
@@ -22782,7 +22968,7 @@ function advFinishMiniBattle(win) {
   if(typeof fieldCards!=='undefined') fieldCards=[];
   if(typeof updateFieldFX==='function') updateFieldFX();
 
-  // ★ 清除所有可能殘留的戰鬥/答題 overlay
+  // ★ 清除所有可能殘留的戰鬥/答題 overlay（class-based，不可設 inline display:none）
   try{
     ['adv-reward-overlay','adv-quiz-overlay','adv-result-overlay','adv-boss-intro'].forEach(id=>{
       const el=document.getElementById(id);
