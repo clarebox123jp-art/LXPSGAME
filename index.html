@@ -749,6 +749,45 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   transform:scale(1.04);
 }
 #start-btn:hover::before{transform:translateX(100%)}
+
+/* ═══ 戰鬥教學系統 ═══ */
+#_tut-dim{
+  position:fixed;inset:0;z-index:9850;
+  background:rgba(0,0,0,0.72);pointer-events:auto;
+}
+#_tut-box{
+  position:fixed;z-index:9900;max-width:420px;min-width:280px;
+  background:linear-gradient(160deg,rgba(8,14,35,0.98),rgba(4,8,22,0.98));
+  border:2.5px solid rgba(100,180,255,0.85);border-radius:18px;
+  padding:22px 26px 18px;box-shadow:0 0 40px rgba(60,140,255,0.5);
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;pointer-events:auto;
+}
+#_tut-box ._tut-step{font-size:14px;color:#6699cc;margin-bottom:4px;letter-spacing:1px;}
+#_tut-box ._tut-title{font-size:28px;font-weight:900;color:#88ccff;margin-bottom:10px;}
+#_tut-box ._tut-desc{font-size:18px;color:#ffffff;line-height:1.7;margin-bottom:16px;}
+#_tut-box ._tut-arrow{
+  position:absolute;width:0;height:0;
+}
+._tut-highlight{
+  position:relative;z-index:9860!important;
+  outline:3px solid #ffcc44!important;
+  box-shadow:0 0 0 4px rgba(255,200,0,0.35),0 0 20px rgba(255,200,0,0.7)!important;
+  border-radius:6px;
+}
+#_tut-nav{display:flex;gap:10px;justify-content:flex-end;align-items:center;}
+._tut-next-btn{
+  padding:9px 28px;font-size:18px;font-weight:800;cursor:pointer;
+  background:rgba(50,120,255,0.3);border:2px solid #4499ff;
+  color:#88ccff;border-radius:10px;font-family:inherit;
+}
+._tut-skip-btn{
+  padding:9px 18px;font-size:16px;cursor:pointer;
+  background:transparent;border:1.5px solid rgba(255,100,100,0.5);
+  color:#ff9999;border-radius:8px;font-family:inherit;
+}
+@keyframes _tutPulse{0%,100%{box-shadow:0 0 0 4px rgba(255,200,0,0.35),0 0 20px rgba(255,200,0,0.7);}
+  50%{box-shadow:0 0 0 8px rgba(255,200,0,0.2),0 0 40px rgba(255,200,0,0.9);}}
+._tut-highlight{animation:_tutPulse 1.8s ease-in-out infinite;}
 /* ── 展開冒險故事按鈕 ── */
 @keyframes advBtnGlow{
   0%,100%{box-shadow:0 0 14px rgba(60,160,255,0.5),0 0 30px rgba(0,100,200,0.2),inset 0 1px 0 rgba(100,200,255,0.2);}
@@ -3032,6 +3071,16 @@ body {
         <button class="iop-btn" style="background:#8e44ad" onclick="playSfx('sfx-coin',0.6);doSell()">◆ 賣出</button>
       </div>
     </div>
+    <!-- ★ 教學指引按鈕 -->
+    <div id="tutorial-btn-wrap" style="display:none;margin-top:6px;">
+      <button id="tutorial-btn" onclick="openTutorial()"
+        style="width:100%;padding:8px 0;font-size:20px;font-weight:800;cursor:pointer;
+          background:rgba(30,40,80,0.85);border:2px solid rgba(100,160,255,0.6);
+          color:#88bbff;border-radius:8px;font-family:inherit;letter-spacing:1px;
+          box-shadow:0 0 10px rgba(60,130,255,0.3);">
+        ❓ 教學指引
+      </button>
+    </div>
     <div id="bfield-panel" style="display:none">
       <h4 style="font-size:20px;letter-spacing:2px;color:var(--muted);margin-bottom:6px">▸ BATTLEFIELD CARDS</h4>
       <div class="bcard-list" id="bcard-list"><div style="color:#444;font-size:14px">— 無 —</div></div>
@@ -3073,7 +3122,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.57</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.17.20</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -8056,7 +8105,14 @@ function confirmSkillReplace(){
         renderCard(h);
       }
     });
-    _pSetTimeout(startTurn, G.p1.length * 200 + G.p2.length * 200 + 600);
+    _pSetTimeout(()=>{
+      // ★ 第一次鬥技場戰鬥 → 教學提示
+      if(!_tutorialDone && !_adventureMode){
+        _checkShowTutorial('arena');
+      } else {
+        startTurn();
+      }
+    }, G.p1.length * 200 + G.p2.length * 200 + 600);
   }, 400);
 }
 
@@ -11594,6 +11650,8 @@ function showActivePassiveUI(hero, sk, cost, triggerDesc, onUse, onSkip){
 // ====== TURN ENGINE ======
 function startTurn(){
   if(checkWin()) return;
+  // ★ 教學進行中：暫停行動
+  if(typeof _tutorialActive !== 'undefined' && _tutorialActive) return;
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
 // ══ 冒險模式 BOSS 天賦 ══
@@ -14145,6 +14203,9 @@ function ctrlBattleToggle(show){
   const div=document.getElementById('ctrl-leave-divider');
   if(btn) btn.style.display=show?'':'none';
   if(div) div.style.display=show?'':'none';
+  // ★ 教學按鈕：戰鬥中顯示
+  const _tb=document.getElementById('tutorial-btn-wrap');
+  if(_tb) _tb.style.display=show?'block':'none';
 }
 function ctrlQuit(){
   if(!confirm('確定要結束遊戲嗎？')) return;
@@ -17647,6 +17708,211 @@ function addKnowledgeCoins(n){
   _syncCoinsDisplay();
 }
 
+// ═══════════════════════════════════════════
+// ★ 戰鬥教學系統
+// ═══════════════════════════════════════════
+let _tutorialDone = false;      // 鬥技場教學完成
+let _tutorialMiniDone = false;  // 小怪教學完成
+let _tutorialActive = false;    // 教學進行中
+let _tutorialStep = 0;
+let _tutorialContext = 'arena'; // 'arena' | 'mini'
+let _tutorialHighlighted = null; // 目前高亮元素
+
+const TUTORIAL_STEPS = [
+  { target:'row2',         side:'top',   title:'🎯 勝利目標',
+    desc:'將對手場上所有英雄的HP清零！點擊下方行動按鈕來對英雄造成傷害，全部倒下就獲勝！' },
+  { target:'turn-order-bar', side:'top', title:'⚡ 行動順序',
+    desc:'這裡顯示本回合的行動順序！速度越高越靠前。亮框的英雄是目前輪到行動的角色。' },
+  { target:'b-atk',       side:'right',  title:'⚔️ 普通攻擊',
+    desc:'點「普通攻擊」後，再點對手的英雄卡片，就能發動攻擊！免費使用，每回合一次。' },
+  { target:'e1-bar',      side:'right',  title:'🔷 能量系統',
+    desc:'每回合行動結束後，玩家會獲得能量。 技能和爆發都需要消耗🔷能量，要好好分配！' },
+  { target:'b-s1',        side:'right',  title:'✨ 特技技能',
+    desc:'每位英雄有2個特技（S1、S2）。消耗能量後點技能按鈕，再選目標即可發動強力效果！' },
+  { target:null,           side:'center', title:'💥 極限爆發',
+    desc:'能量集滿10顆🔷時，英雄卡片上會亮起「⚡爆發」按鈕！ 這是最強的大絕招，威力毀滅性！' },
+  { target:'igrid',       side:'right',  title:'🎒 物品背包',
+    desc:'右側物品欄有3格。從牌堆抽到的卡片會出現在這裡。 點卡片查看效果，再選「使用」「裝備」或「賣出換能量」！' },
+  { target:'b-auto-battle', side:'right',title:'🤖 自動戰鬥',
+    desc:'不想手動操作？點此開啟AI自動戰鬥！AI會幫你選最佳行動，隨時可以手動關閉恢復操作。' },
+  { target:null,           side:'center', title:'🎉 準備好了！',
+    desc:'你已瞭解戰鬥的基本操作！  隨時可以點右側的「❓ 教學指引」按鈕重看說明。 祝你戰鬥順利，小英雄！' },
+];
+
+function _checkShowTutorial(ctx) {
+  const done = ctx === 'mini' ? _tutorialMiniDone : _tutorialDone;
+  if(done) return;
+  _tutorialContext = ctx;
+  // 暫停戰鬥
+  _tutorialActive = true;
+  try{ if(typeof _gamePaused !== 'undefined') _gamePaused = true; }catch(e){}
+
+  // 顯示「是否需要教學？」提示
+  const pm = document.createElement('div');
+  pm.id = '_tut-prompt';
+  pm.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'z-index:9900;background:linear-gradient(160deg,rgba(8,14,35,0.99),rgba(4,8,22,0.99));',
+    'border:2.5px solid rgba(100,180,255,0.85);border-radius:20px;',
+    'padding:32px 40px;text-align:center;max-width:480px;',
+    'box-shadow:0 0 60px rgba(60,140,255,0.5);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+  ].join('');
+  const ctxLabel = ctx === 'mini' ? '小怪戰鬥' : '鬥技場戰鬥';
+  pm.innerHTML = `
+    <div style="font-size:60px;margin-bottom:12px;">📖</div>
+    <div style="font-size:28px;font-weight:900;color:#88ccff;margin-bottom:10px;">第一次${ctxLabel}！</div>
+    <div style="font-size:20px;color:#ffffff;line-height:1.7;margin-bottom:24px;">
+      需要戰鬥教學指引嗎？<br>
+      <span style="font-size:16px;color:#aabbcc;">（可隨時從「❓ 教學指引」重新開啟）</span>
+    </div>
+    <div style="display:flex;gap:16px;justify-content:center;">
+      <button onclick="_startBattleTutorial()"
+        style="padding:14px 36px;font-size:22px;font-weight:800;cursor:pointer;
+          background:rgba(50,120,255,0.3);border:2px solid #4499ff;
+          color:#88ccff;border-radius:12px;font-family:inherit;">
+        📖 需要教學
+      </button>
+      <button onclick="_skipTutorial()"
+        style="padding:14px 36px;font-size:22px;font-weight:800;cursor:pointer;
+          background:rgba(60,10,10,0.3);border:2px solid #e84040;
+          color:#e84040;border-radius:12px;font-family:inherit;">
+        ✕ 直接開始
+      </button>
+    </div>`;
+  const dim = document.createElement('div');
+  dim.id = '_tut-dim';
+  dim.onclick = null; // 不可關閉
+  document.body.appendChild(dim);
+  document.body.appendChild(pm);
+}
+
+function _startBattleTutorial() {
+  const pm = document.getElementById('_tut-prompt');
+  if(pm) pm.remove();
+  _tutorialStep = 0;
+  _showTutorialStep(0);
+}
+
+function _skipTutorial() {
+  const pm = document.getElementById('_tut-prompt');
+  if(pm) pm.remove();
+  const dim = document.getElementById('_tut-dim');
+  if(dim) dim.remove();
+  _tutorialActive = false;
+  try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(e){}
+  // 標記完成
+  if(_tutorialContext === 'mini') _tutorialMiniDone = true;
+  else _tutorialDone = true;
+  try{ gameCloudSave(); }catch(e){}
+  // 繼續戰鬥
+  try{ startTurn(); }catch(e){}
+}
+
+function _showTutorialStep(idx) {
+  // 清除前一步高亮
+  if(_tutorialHighlighted) {
+    _tutorialHighlighted.classList.remove('_tut-highlight');
+    _tutorialHighlighted.style.zIndex = '';
+    _tutorialHighlighted = null;
+  }
+  // 移除舊步驟視窗
+  const oldBox = document.getElementById('_tut-box');
+  if(oldBox) oldBox.remove();
+
+  if(idx >= TUTORIAL_STEPS.length) {
+    _closeTutorial();
+    return;
+  }
+  const step = TUTORIAL_STEPS[idx];
+  _tutorialStep = idx;
+
+  // 高亮目標元素
+  let targetRect = null;
+  if(step.target) {
+    const el = document.getElementById(step.target);
+    if(el) {
+      el.classList.add('_tut-highlight');
+      _tutorialHighlighted = el;
+      targetRect = el.getBoundingClientRect();
+    }
+  }
+
+  // 建立說明視窗
+  const box = document.createElement('div');
+  box.id = '_tut-box';
+  const progress = `${idx+1} / ${TUTORIAL_STEPS.length}`;
+  box.innerHTML = `
+    <div class="_tut-step">📚 教學 ${progress}</div>
+    <div class="_tut-title">${step.title}</div>
+    <div class="_tut-desc">${step.desc}</div>
+    <div id="_tut-nav">
+      <button class="_tut-skip-btn" onclick="closeTutorial()">✕ 關閉教學</button>
+      ${idx+1 < TUTORIAL_STEPS.length
+        ? `<button class="_tut-next-btn" onclick="_showTutorialStep(${idx+1})">下一步 ▶</button>`
+        : `<button class="_tut-next-btn" onclick="closeTutorial()" style="background:rgba(40,160,80,0.3);border-color:#44ff88;color:#88ffcc;">✔ 開始戰鬥！</button>`
+      }
+    </div>`;
+
+  document.body.appendChild(box);
+
+  // 定位視窗：盡量靠近目標
+  requestAnimationFrame(() => {
+    const bw = box.offsetWidth, bh = box.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let left, top;
+
+    if(!targetRect || step.side === 'center') {
+      // 居中
+      left = (vw - bw) / 2;
+      top  = (vh - bh) / 2;
+    } else if(step.side === 'top') {
+      left = Math.max(8, Math.min(vw-bw-8, targetRect.left + targetRect.width/2 - bw/2));
+      top  = Math.max(8, targetRect.bottom + 16);
+      if(top + bh > vh - 8) top = Math.max(8, targetRect.top - bh - 16);
+    } else {
+      // right / left → 放在右側
+      left = Math.min(vw - bw - 8, targetRect.right + 16);
+      if(left + bw > vw - 8) left = Math.max(8, targetRect.left - bw - 16);
+      top  = Math.max(8, Math.min(vh - bh - 8, targetRect.top + targetRect.height/2 - bh/2));
+    }
+    box.style.left = left + 'px';
+    box.style.top  = top  + 'px';
+  });
+}
+
+function closeTutorial() {
+  // 清除高亮
+  if(_tutorialHighlighted) {
+    _tutorialHighlighted.classList.remove('_tut-highlight');
+    _tutorialHighlighted = null;
+  }
+  const box = document.getElementById('_tut-box');
+  if(box) box.remove();
+  const dim = document.getElementById('_tut-dim');
+  if(dim) dim.remove();
+  // 標記完成
+  if(_tutorialContext === 'mini') _tutorialMiniDone = true;
+  else _tutorialDone = true;
+  _tutorialActive = false;
+  // 恢復戰鬥
+  try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(e){}
+  try{ gameCloudSave(); }catch(e){}
+  try{ startTurn(); }catch(e){}
+}
+
+function openTutorial() {
+  // 玩家主動點「❓教學指引」
+  _tutorialActive = true;
+  try{ if(typeof _gamePaused !== 'undefined') _gamePaused = true; }catch(e){}
+  const dim = document.createElement('div');
+  dim.id = '_tut-dim';
+  document.body.appendChild(dim);
+  _tutorialStep = 0;
+  _showTutorialStep(0);
+}
+
+
 function _syncCoinsDisplay(){
   const _val = (_knowledgeCoins||0).toLocaleString();
   const _acv = document.getElementById('adv-coins-val');
@@ -18498,17 +18764,20 @@ function _saveToPresetSlot(slotIdx, heroes, elems, skills){
   const existing = _presetTeams[slotIdx];
   const defaultName = existing ? (existing.name||`陣容${slotIdx+1}`) : `陣容${slotIdx+1}`;
 
+  // ★ 修正：將資料存在 DOM 元素上，避免 JSON.stringify 雙引號破壞 onclick 屬性
+  nameOv._confirmData = { slotIdx, heroes, elems, skills };
+
   nameOv.innerHTML = `
     <div style="background:linear-gradient(160deg,#0d0a1e,#08061a);border:2.5px solid rgba(180,120,255,0.7);border-radius:20px;padding:32px 40px;max-width:520px;width:90%;text-align:center;box-shadow:0 0 50px rgba(150,80,255,0.35);">
       <div style="font-size:28px;font-weight:900;color:#cc99ff;margin-bottom:12px;">✏️ 輸入陣容名稱</div>
-      <div style="font-size:18px;color:#888;margin-bottom:14px;">最多10個字元（中英文皆可）</div>
+      <div style="font-size:18px;color:#aaa;margin-bottom:14px;">最多10個字元（中英文皆可）</div>
       <input id="preset-name-field" maxlength="10" placeholder="${defaultName}"
         style="width:100%;padding:10px 16px;font-size:26px;font-weight:700;
           background:rgba(20,15,40,0.9);border:2px solid rgba(180,120,255,0.6);
           color:#ddc0ff;border-radius:10px;font-family:inherit;box-sizing:border-box;
           text-align:center;outline:none;" value="${defaultName}">
       <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
-        <button onclick="_confirmSavePreset(${slotIdx},'${heroes.join(',')}','${elems.join(',')}',${JSON.stringify(skills)})"
+        <button onclick="_doConfirmPresetSave()"
           style="padding:12px 40px;font-size:24px;font-weight:800;
             background:rgba(100,60,200,0.35);border:2px solid #cc99ff;color:#cc99ff;
             border-radius:10px;cursor:pointer;font-family:inherit;">✔ 確定儲存</button>
@@ -18520,11 +18789,20 @@ function _saveToPresetSlot(slotIdx, heroes, elems, skills){
   setTimeout(()=>{ const f=document.getElementById('preset-name-field'); if(f){ f.focus(); f.select(); } }, 100);
 }
 
+// ★ 確定儲存：從 DOM 讀取資料（避免 onclick 屬性中 JSON 雙引號問題）
+function _doConfirmPresetSave(){
+  const nameOv = document.getElementById('preset-name-input');
+  if(!nameOv || !nameOv._confirmData){ return; }
+  const { slotIdx, heroes, elems, skills } = nameOv._confirmData;
+  _confirmSavePreset(slotIdx, heroes.join(','), elems.join(','), skills);
+}
+
 function _confirmSavePreset(slotIdx, heroesStr, elemsStr, skills){
   const nameField = document.getElementById('preset-name-field');
   const name = nameField ? (nameField.value.trim().slice(0,10)||`陣容${slotIdx+1}`) : `陣容${slotIdx+1}`;
-  const heroes = heroesStr.split(',').filter(Boolean);
-  const elems  = elemsStr.split(',');
+  // heroesStr/elemsStr 可能是 array（從 _doConfirmPresetSave 傳來）或 string（舊格式）
+  const heroes = Array.isArray(heroesStr) ? heroesStr : heroesStr.split(',').filter(Boolean);
+  const elems  = Array.isArray(elemsStr)  ? elemsStr  : elemsStr.split(',');
   const nameOv = document.getElementById('preset-name-input');
   if(nameOv) nameOv.remove();
 
@@ -19614,7 +19892,14 @@ function advStartMiniBattle(nextSceneIdx) {
     }
 
     setTimeout(()=>{
-      try{ startTurn(); }catch(e){ console.error('[mini-startTurn]',e); }
+      try{
+        // ★ 第一次小怪戰鬥 → 教學提示
+        if(!_tutorialMiniDone){
+          _checkShowTutorial('mini');
+        } else {
+          startTurn();
+        }
+      }catch(e){ console.error('[mini-startTurn]',e); }
     }, 500);
     // ★ 防呆：每1秒自動檢查小怪是否全滅
     const _miniCheckInterval = setInterval(()=>{
