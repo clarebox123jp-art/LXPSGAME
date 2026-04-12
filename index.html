@@ -3122,7 +3122,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.17.48</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.17.53</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5027,7 +5027,7 @@ const HERO_IMGS = {
 };
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合'}},
-  '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'特技150%治癒1名友方（可復活）並淨化+免疫1回合',fd:'用特技的150%使任意1名友方恢復HP並解除不利狀態(可復活)，同時附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'用特技使全體友方恢復HP並解除不利狀態（可復活）',fd:'用特技使全體友方恢復HP並解除所有不利狀態（可復活倒下的隊友）'}},
+  '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活）',fd:'用特技125%使任意1名友方恢復HP並解除不利狀態(可復活)'},s2:{n:'治癒之風',c:5,d:'治癒全隊，免疫不利狀態1回合',fd:'用特技的80%使全體友方恢復HP並免疫不利狀態1回合'}},
   '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵/治癒1友各20%HP',fd:'使1名對手受到HP20%的傷害，同時恢復1名友方20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
   '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'傷害1名對手＋追加10必中',fd:'用特技傷害1名對手，並追加無視其有利狀態的10點傷害'},s2:{n:'地獄之火',c:4,d:'全體對手燃燒（每回合-10HP，2回合）',fd:'使全體對手在行動前後各減少一次5HP(無視其有利狀態)，持續2回合'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
@@ -5038,7 +5038,7 @@ const HERO_DB = {
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
   '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:2,d:'(被動)代替友方承受傷害，可再行動',fd:'(被動)單體友方受傷前觸發，守衛代替其承受傷害，並用特技的200%減輕傷害。(可以再行動1次)',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
-  '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'特技75%恢復全隊HP，復活1名友方，全體+20護盾',fd:'以特技的75%恢復全體友方HP並復活1名友方，同時使全體友方獲得20護盾值'}},
+  '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:4,d:'治癒全隊並復活1人',fd:'以特技的75%恢復全體友方的HP並復活1名友方'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
   '警長':  {hp:60,atk:12,sp:1,spd:17,  s1:{n:'物品查封',c:3,d:'封鎖全體對手物品卡',fd:'使全體對手1回合內無法使用和販賣物品卡'},s2:{n:'警示鳴槍',c:2,d:'(被動)對手行動前有機率使其跳過',fd:'(被動)對手行動前觸發，有60%機率使該對手直接放棄這回合行動',p:true}},
   '煉金術師':{hp:61,atk:10,sp:10,spd:9, s1:{n:'道具複製',c:2,d:'(被動)使用物品時消耗2能量，有機率保留',fd:'(被動)使用物品卡時可選擇發動，消耗2能量後使用物品效果，再以70%機率保留該卡片不消耗',p:true},s2:{n:'賢者之石',c:3,d:'完全治癒（可復活）並免疫1次倒下（限用）',fd:'使任意1名友方完全恢復HP(可復活)，並免疫1次倒下。(持續至戰鬥結束，限用一次)',once:true}},
@@ -5061,7 +5061,7 @@ const HERO_DB = {
   '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:4,d:'攻擊+速度×150%傷害1名敵人，下一位行動友方傷害/治療+50%',fd:'以（攻擊＋速度×1.5）對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%（持續1回合）。'}},
   '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害，並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率醒來。'}},
   '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:5,d:'友方全體獲得隨機有利狀態+50%效果（2回合）及20護盾',fd:'使友方全體各獲得1個隨機有利狀態（效果+50%，持續2回合），並各獲得可抵擋20傷害的護盾。'}},
-  '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:3,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
+  '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:3,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'}},
   // ══ 冒險闖關 BOSS 角色 ══
@@ -5409,7 +5409,7 @@ const HERO_BIO = {
 
 const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
-  '祭司':     {n:'璀璨聖光',    d:'特技200%治癒全隊（可復活），解除不利狀態+免疫2回合',fd:'用特技的200%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
+  '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的150%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
   '聖騎士':   {n:'最終殿堂',    d:'全隊無敵1回合並恢復40%HP',fd:'使友方全體免疫所有傷害和不利狀態1回合，同時恢復40%HP。'},
   '火法師':   {n:'烈焰爆發',    d:'傷害全體並燃燒，無視有利狀態',fd:'用特技的150%傷害全體對手，目標陷入燃燒狀態2回合（行動前後各-5HP），此傷害無視有利狀態。'},
   '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
@@ -5440,7 +5440,7 @@ const BURST_DB = {
  '陰陽師':   {n:'四聖降臨',    d:'傷害全體4次，附加強力不利狀態',fd:'依特技50%使敵方全體受到4次傷害，每次有70%機率隨機附加1個強力不利狀態。'},
   '小力':     {n:'夾尾皺眉',    d:'全體對手無法使用造成傷害的技能或物品（2回合）',fd:'使全體對手陷入「憐惜校犬」狀態2回合，無法使用任何會造成傷害的技能或物品。此狀態不會被免疫或解除。'},
   '籃球隊員': {n:'絕殺灌籃',    d:'400%傷害1名對手，全隊速度提升2回合',fd:'對1名對手造成特技400%傷害，並使友方全體速度提升50%共2回合。'},
-  '直笛團員': {n:'天籟之音', d:'特技150%傷害全體敵人並使其狂亂1回合，解除我方全體不利狀態',fd:'用特技的150%對敵方全體造成傷害，並使其陷入狂亂1回合；同時解除我方全體所有不利狀態。'},
+  '直笛團員': {n:'天籟之音', d:'特技150%恢復全體隊友（可復活），並附加20護盾',fd:'用特技的150%恢復全體友方HP（可復活），並使全體友方獲得可以抵擋20傷害的護盾。'},
   '田徑隊員': {n:'極速閃燃', d:'獲得7能量、傷害加倍並立即再次行動',fd:'立即獲得7能量、本輪下次造成的傷害提升100%，並立即可再次行動1次。'},
   '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP50%傷害全體，攻擊和特技-50%直到醒來',fd:'睡眠狀態時才能發動。對全體敵人造成HP50%傷害，此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低50%，直到施展者從睡眠中醒來。'},
   '電腦繪圖師':{n:'萬物創生', d:'特技500%傷害全體平均分攤（必中），再抽3張物品卡',fd:'用特技的600%傷害讓敵方全體平均分攤，此傷害無視有利狀態且必中。再抽出額外3張物品卡。'},
@@ -5490,7 +5490,7 @@ function _immovablePrompt(h, statusType, dur){
     +'<div style="background:linear-gradient(160deg,#1a1d2e,#0e1018);border:2px solid #aaaaaa;border-radius:14px;padding:24px 36px;min-width:360px;text-align:center;box-shadow:0 0 30px rgba(170,170,170,0.3)">'
     +'<div style="font-size:26px;font-weight:500;color:#aaaaaa;margin-bottom:8px">['+h.name+'] 不動如山</div>'
     +'<div style="font-size:16px;color:#888;margin-bottom:10px">即將受到：<span style="color:#ff8888;font-weight:bold">'+statusName(statusType)+'</span></div>'
-    +'<div style="font-size:14px;color:#ffffff;line-height:1.6">發動後免疫此次不利狀態<br>並立即可再行動一次</div>'
+    +'<div style="font-size:14px;color:#cccccc;line-height:1.6">發動後免疫此次不利狀態<br>並立即可再行動一次</div>'
     +'<div style="font-size:13px;color:'+(canUse?'#4a9eff':'#e84040')+';margin-top:8px">消耗能量：🔷'+cost+' （剩餘：'+G.energy[h.side]+'）</div>'
     +'</div>'
     +'<div style="display:flex;gap:16px">'
@@ -5890,7 +5890,7 @@ function renderBfield(){
   const el=document.getElementById('bcard-list');
   if(el){
     if(!fieldCards.length) el.innerHTML='<div style="color:#444;font-size:11px">— 無 —</div>';
-    else el.innerHTML=fieldCards.map(f=>`<div class="bcard-item"><b>${f.n}</b> <span style="color:var(--muted);float:right">⏳${f.dur}回</span><span style="display:block;font-size:14px;font-weight:500;color:#ffffff;margin-top:3px;line-height:1.5">${f.d}</span></div>`).join('');
+    else el.innerHTML=fieldCards.map(f=>`<div class="bcard-item"><b>${f.n}</b> <span style="color:var(--muted);float:right">⏳${f.dur}回</span><span style="display:block;font-size:14px;font-weight:500;color:#cccccc;margin-top:3px;line-height:1.5">${f.d}</span></div>`).join('');
   }
   // updateFieldFX will be called after it is defined below
   if(typeof updateFieldFX==='function') updateFieldFX();
@@ -6651,16 +6651,9 @@ function showHeroPickOverlay(){
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
     window._isAdventurePickMode = true; // ★ 標記冒險選角模式
-    // ★ 冒險模式：顯示 LV 排序按鈕
-    const _lvSortBtn = document.getElementById('hpick-sort-lv-btn');
-    if(_lvSortBtn) _lvSortBtn.style.display = '';
-    // ★ 冒險模式：使用冒險專屬返回按鈕（回到冒險關卡選擇頁）
+    // ★ 冒險模式隱藏特定按鈕
     const _hpBackBtn = document.getElementById('hero-pick-back-btn');
-    if(_hpBackBtn){
-      _hpBackBtn.style.display = '';
-      _hpBackBtn.innerHTML = '← 返回';
-      _hpBackBtn.onclick = function(){ playSfx('sfx-cancel',0.5); goBackFromAdvHeroPick(); };
-    }
+    if(_hpBackBtn) _hpBackBtn.style.display = 'none';
     const _findBtn = document.getElementById('hero-pick-find-btn');
     if(_findBtn) _findBtn.style.display = 'none';
     // ★ 冒險模式：只顯示已解鎖英雄（初始4名 + 解鎖的）
@@ -6786,7 +6779,7 @@ function _previewEnemyTeam(){
   const allNames = Object.keys(HERO_DB).filter(n => !_excludeAll.has(n));
   // ★ 不用 _heroPickPool（可能含冒險英雄），直接用全體普通英雄隨機
   const p2pool = [...allNames].sort(()=>Math.random()-0.5);
-  const HEAL=['祭司','聖騎士','吟遊詩人','木靈使','煉金術師','弦樂團員'];
+  const HEAL=['祭司','聖騎士','吟遊詩人','木靈使','煉金術師','直笛團員','弦樂團員'];
   const ATK=['火法師','雷法師','暗法師','神射手','刺客','劍士','大力士','機械師','吸血鬼','小劇團員'];
   const TANK=['守衛','武鬥家','大力士','小力'];
   // 確保至少一名治療、一名攻擊、一名坦克
@@ -6878,7 +6871,7 @@ let _hpickFilterKey = 'all';
 
 function hpickSortClick(btn){
   const key = btn.dataset.sort;
-  const labels = {default:'預設',hp:'HP',atk:'攻擊',sp:'特技',spd:'速度',lv:'LV'};
+  const labels = {default:'預設',hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'};
   if(_hpickSortKey === key){
     _hpickSortAsc = !_hpickSortAsc;
     btn.textContent = (labels[key]||key) + (_hpickSortAsc?' ↑':' ↓');
@@ -6914,14 +6907,7 @@ function _rebuildPickNodes(){
     });
   }
   // Sort
-  if(_hpickSortKey === 'lv'){
-    // ★ 依英雄等級排序（需讀 _heroLevels）
-    pool.sort((a,b)=>{
-      const la=(typeof _heroLevels!=='undefined'&&_heroLevels[a])||1;
-      const lb=(typeof _heroLevels!=='undefined'&&_heroLevels[b])||1;
-      return _hpickSortAsc ? la-lb : lb-la;
-    });
-  } else if(_hpickSortKey !== 'default'){
+  if(_hpickSortKey !== 'default'){
     pool.sort((a,b)=>{
       const ha=HERO_DB[a], hb=HERO_DB[b];
       const va=(ha&&ha[_hpickSortKey])||0, vb=(hb&&hb[_hpickSortKey])||0;
@@ -7189,7 +7175,7 @@ const HERO_LORE = {
 // ====== 天賦 DB ======
 const HERO_TRAIT = {
   '劍士':    { name:'連斬', icon:'⚔️',  desc:'普攻後有機率再行動',fd:'普通攻擊時有30%機率再行動1次' },
-  '祭司':    { name:'聖癒', icon:'✨',  desc:'普攻後有60%機率用特技治癒HP最低隊友',fd:'普通攻擊時有60%機率用特技為HP最低的隊友恢復HP' },
+  '祭司':    { name:'聖癒', icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
   '聖騎士':  { name:'聖盾', icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
   '火法師':  { name:'焚滅', icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
   '冰法師':  { name:'冰縛', icon:'❄️',  desc:'普攻後有機率使目標緩速',fd:'普通攻擊時有60%機率使目標緩速1回合，速度下降50%' },
@@ -7200,7 +7186,7 @@ const HERO_TRAIT = {
   '神偷':    { name:'順手', icon:'🗡️',  desc:'普攻後有機率奪取目標寵物或增益',fd:'普通攻擊時有50%機率奪取目標身上的寵物或有利狀態' },
   '刺客':    { name:'劇毒', icon:'👁️',  desc:'普攻後有機率使目標中毒',fd:'普通攻擊時有60%機率使目標中毒2回合，每回合HP-10%' },
   '守衛':    { name:'庇護', icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
-  '吟遊詩人':  { name:'頌歌', icon:'🪕',  desc:'普攻後有60%機率用特技50%恢復全隊HP',fd:'普通攻擊時有60%機率用特技的50%恢復友方全體的HP' },
+  '吟遊詩人':  { name:'頌歌', icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
   '舞者':    { name:'魅惑', icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
   '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
   '警長':    { name:'制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
@@ -7382,15 +7368,17 @@ function dismissFocus(){
 function randomTeamPick(){
   playSfx('sfx-hero',0.7);
 
-  // ── 冒險模式：從解鎖英雄池 + 已收錄英雄全部隨機
+  // ── 冒險模式：只從解鎖英雄池隨機
   if(_adventureMode && _adventureStage){
-    // ★ 基礎英雄池（本關卡可用）+ 玩家已解鎖的英雄
-    const basePool = ADV_HERO_POOL[_adventureStage] || [];
-    const unlockedHeroes = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
-    const unlockedPool = [...new Set([...basePool, ...unlockedHeroes])];
-    // 完全重新隨機4名
-    const keep = unlockedPool.slice().sort(() => Math.random() - 0.5).slice(0, 4);
-    const need = 0; // 直接取4名，不保留原選
+    const unlockedPool = (ADV_HERO_POOL[_adventureStage] || []).slice();
+    // 保留已選的解鎖英雄，補滿剩餘名額
+    const keep = _heroPickSelected.filter(n => unlockedPool.includes(n));
+    const need = 4 - keep.length;
+    if(need > 0){
+      const available = unlockedPool.filter(n => !keep.includes(n))
+                                    .sort(() => Math.random() - 0.5);
+      available.slice(0, need).forEach(n => keep.push(n));
+    }
     // 重建選擇狀態
     _heroPickSelected = [];
     _buildHeroPickNodes(); // 格狀重建
@@ -7958,53 +7946,45 @@ function playBattleStartSfx(){
 
 // ★ 鬥技：選角頁返回首頁
 function goBackFromHeroPick(){
-  // 鬥技場：返回主選單
+  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
   const hpo = document.getElementById('hero-pick-overlay');
   if(hpo) hpo.style.display = 'none';
   const mainOv = document.getElementById('overlay');
   if(mainOv) mainOv.style.display = 'flex';
+  // 重置選角狀態
   if(typeof _heroPickSelected !== 'undefined') _heroPickSelected = [];
   if(typeof bgmPlay === 'function'){ bgmStop(); bgmPlay('bgm-menu-01'); }
 }
 
-function goBackFromAdvHeroPick(){
-  // 冒險模式：返回冒險關卡選擇頁
-  const hpo = document.getElementById('hero-pick-overlay');
-  if(hpo) hpo.style.display = 'none';
-  if(typeof _heroPickSelected !== 'undefined') _heroPickSelected = [];
-  if(typeof _adventureMode !== 'undefined') _adventureMode = false;
-  if(typeof _adventureStage !== 'undefined') _adventureStage = null;
-  const advOv = document.getElementById('adventure-overlay');
-  if(advOv) advOv.style.display = 'flex';
-  try{ bgmStop(); bgmPlay('bgm-menu-01'); }catch(e){}
-}
-
 // ★ 鬥技：元素選擇返回選角頁
 function goBackFromElemPick(){
-  // 鬥技場 & 冒險模式：都回到選角頁
+  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
   const epOv = document.getElementById('elem-pick-overlay');
   if(epOv) epOv.style.display = 'none';
   const hpo = document.getElementById('hero-pick-overlay');
   if(hpo) hpo.style.display = 'flex';
+  // 重置元素選擇
   if(typeof _elemPickSelected !== 'undefined') _elemPickSelected = [null,null,null,null];
   if(typeof _elemPickHeroIdx !== 'undefined') _elemPickHeroIdx = 0;
 }
 
 function goBackToHeroPick(){
-  // ★ 替換技能返回：回到元素選擇頁（上一步），不直接跳回選角頁
-  const sro = document.getElementById('skill-replace-overlay');
-  if(sro) sro.style.display = 'none';
-  // 重置 skill-replace 狀態（保留元素選擇結果）
+  // 關閉所有可能開著的 overlay
+  ['skill-replace-overlay','elem-pick-overlay'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  // 重置遊戲狀態
+  G.p1=[]; G.p2=[];
+  _heroPickSelected=[];
+  _elemPickSelected=[null,null,null,null];
+  // 重置排序篩選狀態
+  if(typeof _hpickSortKey!=='undefined'){ _hpickSortKey='default'; _hpickSortAsc=false; _hpickFilterKey='all'; }
+  // 重置 elem-pick 內部狀態，避免舊資料殘留卡死
+  _epHeroes=[]; _epCb=null; _epAssigned={}; _epApplied={}; _epActivePos=0;
+  // 重置 skill-replace 狀態
   _skillReplaceMap={}; _selectedPickSkill=null; _pickerFocusPos=null;
-  // 重新顯示元素選擇頁（保留已選的元素）
-  const epOv = document.getElementById('elem-pick-overlay');
-  if(epOv) epOv.style.display = 'flex';
-  // 若元素選擇頁未初始化，重新啟動
-  if(!_epHeroes || _epHeroes.length === 0){
-    // 跳回選角頁
-    if(epOv) epOv.style.display = 'none';
-    showHeroPickOverlay();
-  }
+  showHeroPickOverlay();
 }
 function confirmSkillReplace(){
   playSfx('sfx-confirm2',0.9);
@@ -8105,14 +8085,7 @@ function confirmSkillReplace(){
         renderCard(h);
       }
     });
-    _pSetTimeout(()=>{
-      // ★ 第一次鬥技場戰鬥 → 教學提示
-      if(!_tutorialDone && !_adventureMode){
-        _checkShowTutorial('arena');
-      } else {
-        startTurn();
-      }
-    }, G.p1.length * 200 + G.p2.length * 200 + 600);
+    _pSetTimeout(startTurn, G.p1.length * 200 + G.p2.length * 200 + 600);
   }, 400);
 }
 
@@ -8182,15 +8155,6 @@ function renderField(entranceMode){
     G.p2.forEach(h=>renderCard(h));
   }
 }
-
-// ★ 卡片裝備顯示 HTML（card-equip-ext 區域）
-function equipExtHTML(h){
-  if(!h || !h.equip) return '';
-  const eq = (typeof getEquip === 'function') ? getEquip(h) : null;
-  if(!eq) return '';
-  return '<span style="font-size:11px;color:#d4a843;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;padding:1px 3px;">⚙'+eq.n+'</span>';
-}
-
 function renderCard(h){
   const el=document.getElementById(`card-${h.side}-${h.pos}`);
   if(!el) return;
@@ -8447,8 +8411,8 @@ function updateUI(){
       ? `<span style="color:#888;text-decoration:line-through">🔷${_s2base}</span> <span style="color:#ff4444;font-weight:700">🔴${c2}↑</span>`
       : `🔷${c2}`;
     const _s1meta=`🔷${c1}${a.s1.p?' [被動]':''}`, _s2meta=`🔷${c2}${a.s2.p?' [被動]':''}`;
-    s1b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s1.n} ${_s1costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s1.n}" data-skmeta="${_s1meta}" data-skdesc="${(a.s1.fd||a.s1.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#ffffff;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s1.d||''}</span>`;
-    s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${(a.s2.fd||a.s2.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#ffffff;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
+    s1b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s1.n} ${_s1costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s1.n}" data-skmeta="${_s1meta}" data-skdesc="${(a.s1.fd||a.s1.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s1.d||''}</span>`;
+    s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${(a.s2.fd||a.s2.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
     const s1IsPassive = !!(a.s1.p);
     const s2IsPassive = !!(a.s2.p);
     const isSealed = hasStatus(a,'seal') || fieldHas('sealall');
@@ -8864,16 +8828,6 @@ const BURST_GIF_DB = {
     sfx:[['sfx-burst',1.0],['sfx-fantasy',0.9]],
     tint:'rgba(220,180,255,0.18)'
   },
-  '謝幕掌聲': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E8%AC%9D%E5%B9%95%E6%8E%8C%E8%81%B2.gif',
-    sfx:[['sfx-burst',0.85],['sfx-powerup',0.8]],
-    tint:'rgba(255,220,50,0.15)'
-  },
-  '絕殺灌籃': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%B5%95%E6%AE%BA%E7%81%8C%E7%B1%83.gif',
-    sfx:[['sfx-basketball',0.95],['sfx-explode',0.6]],
-    tint:'rgba(255,120,0,0.15)'
-  },
 };
 
 // ── 顯示爆發GIF全螢幕特效 ──
@@ -8989,12 +8943,13 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='祭司'){
     [...G[side]].forEach(t=>{
-      if(t.curHp===0){ doRevive(t,0.01); }
-      doHeal(t,Math.floor(spv*2.0),{actor:h,isHeal:true}); // ★ 璀璨聖光 200%
-      clearBadStatus(t);
-      addBuff(t,'statusImmune',2);
-      addBuff(t,'ctrlImmune',2);
-      bannerFX(t,'璀璨聖光！','#ffe066',800);
+      if(t.curHp===0){
+        doRevive(t,1,true);
+        t.acted=true; // ★ 本回合復活，不立即再行動
+      } else {
+        doHeal(t,Math.floor(spv*1.5),{actor:h,isHeal:true});
+      }
+      clearBadStatus(t); addBuff(t,'statusImmune',2);
     });
   }
   if(name==='聖騎士'){
@@ -9335,25 +9290,2347 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return;
   }
   if(name==='直笛團員'){
-    const _opp_side = side==='p1'?'p2':'p1';
-    const _tl_foes = G[_opp_side].filter(t=>t.curHp>0);
-    const _tl_allies = G[side].filter(t=>t.curHp>0);
-    const _tlDmg = Math.floor(spv*1.5*_activeSkLvMult);
-    log(`[${h.name}] 天籟之音！對全體敵人造成${_tlDmg}傷害並使其狂亂，解除我方不利狀態！`);
-    playSkillFX && playSkillFX('天籟之音',h,_tl_foes);
-    // 傷害全體敵人 + 狂亂1回合
-    const _tlDurBase = _skLvDur(1,3);
-    _tl_foes.forEach(t=>{
-      doDmg(t,_tlDmg,{actor:h,isSkill:true,isAoe:true});
+    const _tlAllies=G[side].filter(t=>t.curHp>0);
+    log(`[${h.name}] 天籟之音！全體隊友恢復HP並獲得護盾！`);
+    // ★ 天籟之音：治療全體（含復活），護盾20
+    G[side].forEach(t=>{
+      if(t.curHp===0){ doRevive(t,0.01); } // 復活（以最低HP復活，再由doHeal補滿）
+      doHeal(t,Math.floor(spv*1.5),{actor:h,isHeal:true});
+      t.buffs=t.buffs.filter(b=>b.type!=='bigshield');
+      t.buffs.push({type:'bigshield',dur:99,_hp:20});
+      bannerFX(t,'天籟之音！','#cc55ff',1000);
+      renderCard(t);
+    });
+    zoneFlash(side,'rgba(200,100,255,0.3)',700);
+    flashScreen('rgba(200,100,255,1)',350);
+    playSfx('sfx-heal',0.85);
+    // ★ 正確收尾：更新UI → 檢查勝負 → 繼續下一回合
+    _burstFinish(h, _interrupted);
+    return;
+  }
+  if(name==='田徑隊員'){
+    // 獲得7能量、傷害加倍、立即再次行動
+    G.energy[side]=Math.min(10,G.energy[side]+7);
+    showPopup(h,'+7E','energy');
+    sndEnergy();
+    // 傷害加倍（下次攻擊）
+    h.buffs=h.buffs.filter(b=>b.type!=='_sprintBurst');
+    h.buffs.push({type:'_sprintBurst',dur:1});
+    bannerFX(h,'極速閃燃！能量+7！傷害×2！','#44ffcc',1200);
+    flashScreen('rgba(60,255,200,1)',350);
+    zoneFlash(side,'rgba(60,255,200,0.3)',600);
+    playSfx('sfx-statup',0.85);
+    log(`[${h.name}] 極速閃燃！獲得7能量、下次傷害加倍、立即再行動！`);
+    // 立即再次行動
+    h._burstUsed=true; h.acted=false;
+    updateUI();
+    if(checkWin()) return;
+    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
+      _interrupted.acted=true;
+      log(`[${_interrupted.name}] 被極限爆發插隊，跳過本次行動。`);
+    }
+    G.activeChar=h;
+    _pSetTimeout(()=>{
+      if(h.curHp>0){
+        if(h.side==='p1'){ updateUI(); document.getElementById('action-panel').style.display='block'; }
+        else { aiAct(h); }
+      }
+    },500);
+    return;
+  }
+  if(name==='幼兒園小孩'){
+    if(!hasStatus(h,'sleep')){ bannerFX(h,'必須在睡眠中！','#ff4444',1000); updateUI(); if(checkWin())return; startTurn(); return; }
+    const _foes4=G[opp].filter(x=>x.curHp>0);
+    log(`[${h.name}] 夢境時光！對全體敵人造成HP50%傷害！`);
+    playSfx('sfx-burst',0.85); flashScreen('rgba(180,220,255,1)',500);
+    _foes4.forEach(t=>{
+      const _dmg=Math.max(1,Math.floor(t.curHp*0.5));
+      doDmg(t,_dmg,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true,isAoe:true});
       if(t.curHp>0){
-        addStatus(t,'berserk',_tlDurBase);
-        bannerFX(t,'狂亂！','#ff44cc',800);
+        const _o2a=t.atk, _o2s=t.sp;
+        t.status=t.status.filter(s=>s.type!=='_dreamDebuff');
+        t.status.push({type:'_dreamDebuff',dur:99,_origAtk:_o2a,_origSp:_o2s,_owner:h});
+        t.atk=Math.max(1,Math.floor(t.atk*0.5));
+        t.sp=Math.max(0,Math.floor(t.sp*0.5));
+        bannerFX(t,'夢境弱化！','#aaddff',900); renderCard(t);
       }
     });
-    // 解除我方全體不利狀態
-    _tl_allies.forEach(t=>{ clearBadStatus(t); bannerFX(t,'淨化！','#aaffcc',700); });
-    bannerFX(h,'天籟之音！','#ff88ee',1000);
-    flashScreen('rgba(255,100,200,0.4)',300);
+    zoneFlash(opp,'rgba(150,200,255,0.4)',700);
+  }
+  if(name==='電腦繪圖師'){
+    log(`[${h.name}] 萬物創生！特技500%傷害平均分攤！`);
+    playSfx('sfx-burst',0.9); playSfx('sfx-explode',0.8);
+    const _foes5=G[opp].filter(x=>x.curHp>0);
+    if(_foes5.length){
+      const _totalDmg=Math.floor(spv*5.0);
+      const _each=Math.max(1,Math.floor(_totalDmg/_foes5.length));
+      _foes5.forEach(t=>{ doDmg(t,_each,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true}); });
+      bannerFX(h,'萬物創生！','#ff88cc',1200);
+      flashScreen('rgba(255,100,200,1)',450);
+      zoneFlash(opp,'rgba(255,80,180,0.4)',700);
+    }
+    // ★ 抽3張物品卡，正確處理背包滿和裝備卡情況
+    const _drawn3=[];
+    let _tries3=0;
+    while(_drawn3.length<3 && _tries3<20){
+      _tries3++;
+      const _nc=drawItem();
+      if(_nc.type==='equip'){
+        // 裝備卡：放回牌堆
+        if(G.deck) G.deck.unshift(_nc); else buildDeck();
+      } else {
+        _drawn3.push(_nc);
+      }
+    }
+    let _cardIdx3=0;
+    function _addNextCard3(){
+      if(_cardIdx3>=_drawn3.length){
+        updateUI(); renderItems();
+        if(checkWin()) return;
+        _burstFinish(h, _interrupted);
+        return;
+      }
+      const _nc=_drawn3[_cardIdx3]; _cardIdx3++;
+      const _ei=G.inv.findIndex(s=>s===null);
+      if(_ei>=0){
+        G.inv[_ei]=_nc;
+        bannerFX(h, `📦 ${_nc.n}`, '#ff88cc', 700);
+        log(`[萬物創生] 獲得：${_nc.n}`);
+        renderItems();
+        _pSetTimeout(_addNextCard3, 350);
+      } else {
+        // 背包滿：賣出售價最低的卡換能量，再放入新卡
+        let _minIdx=0;
+        G.inv.forEach((it,i)=>{ if(it && G.inv[_minIdx] && (it.sell||0)<(G.inv[_minIdx].sell||0)) _minIdx=i; });
+        const _sold=G.inv[_minIdx];
+        G.energy[side]=Math.min(10,G.energy[side]+(_sold?(_sold.sell||1):1));
+        if(_sold) log(`[萬物創生] 背包滿，賣出${_sold.n}換能量`);
+        G.inv[_minIdx]=_nc;
+        bannerFX(h, `📦 ${_nc.n}`, '#ff88cc', 700);
+        log(`[萬物創生] 獲得：${_nc.n}`);
+        renderItems(); updateUI();
+        _pSetTimeout(_addNextCard3, 350);
+      }
+    }
+    _pSetTimeout(_addNextCard3, 600);
+    return; // ★ 非同步：由 _addNextCard3 最後呼叫 _burstFinish
+  }
+  if(name==='程式設計師'){
+    log(`[${h.name}] BUG修復！不利狀態轉有利狀態，復活全體！`);
+    playSfx('sfx-heal',0.9); playSfx('sfx-powerup',0.7);
+    const _goodBuffs=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune'];
+    G[side].forEach(t=>{
+      const _badCount=t.status.filter(s=>BAD_STATUS.includes(s.type)).length;
+      clearBadStatus(t);
+      for(let _bi=0;_bi<_badCount;_bi++){
+        addBuff(t,_goodBuffs[Math.floor(Math.random()*_goodBuffs.length)],2);
+      }
+      if(t.curHp===0){
+        doRevive(t,0.3);
+        t.acted=true; // ★ 復活的隊友本回合已行動，避免立即再行動造成狀態混亂
+      }
+      bannerFX(t,'BUG修復！','#55ffcc',1000); renderCard(t);
+    });
+    flashScreen('rgba(60,255,200,1)',400); zoneFlash(side,'rgba(60,255,200,0.3)',700);
+    updateUI();
+    _pSetTimeout(()=>{ _burstFinish(h,_interrupted); }, 800); // ★ 明確結束爆發
+    return; // ★ 必須 return，防止再次呼叫 startTurn
+  }
+  if(name==='弦樂團員'){
+    log(`[${h.name}] 流浪者之歌！特技50%全體4~5次！無視有利狀態，必中！`);
+    playSfx('sfx-burst',0.85); playSfx('sfx-fantasy',0.7);
+    const _foes6=G[opp].filter(x=>x.curHp>0);
+    const _hits2=4+Math.floor(Math.random()*2); // 4~5次
+    let _hi2=0;
+    function _doWander(){
+      if(_hi2>=_hits2){
+        // 完成攻擊後治療+復活（全體含倒下）
+        G[side].forEach(t=>{
+          if(t.curHp===0){ doRevive(t,0.25); t.acted=true; }
+          doHeal(t,Math.floor(spv*0.6),{actor:h,isHeal:true});
+          bannerFX(t,'流浪者之歌！','#cc88ff',900);
+        });
+        updateUI(); if(checkWin())return; _pSetTimeout(()=>_burstFinish(h,_interrupted),400); return;
+      }
+      const _alive2=G[opp].filter(x=>x.curHp>0);
+      if(!_alive2.length){ updateUI(); if(checkWin())return; startTurn(); return; }
+      _alive2.forEach(t=>doDmg(t,Math.floor(spv*0.5),{actor:h,isSkill:true,isAoe:true,ignoreBuffs:true,piercing:true,ignoreEvasion:true,noHidden:true}));
+      _hi2++;
+      _pSetTimeout(_doWander,250);
+    }
+    _doWander(); return;
+  }
+  if(name==='小劇團員'){
+    log(`[${h.name}] 謝幕掌聲！`);
+    playSfx('sfx-burst',0.85);
+    const _deadCount=G[opp].filter(x=>x.curHp<=0).length;
+    const _energyGain=Math.min(10,Math.max(3,_deadCount*3));
+    G.energy[side]=Math.min(10,G.energy[side]+_energyGain);
+    showPopup(h,'+'+_energyGain+'E','energy');
+    bannerFX(h,'謝幕掌聲！能量+'+_energyGain,'#ffcc44',1000);
+    log(`🎭 謝幕掌聲！倒下${_deadCount}人，獲得${_energyGain}能量！`);
+    const _curEnergy=G.energy[side];
+    const _boost=Math.max(1,_curEnergy);
+    G[side].forEach(t=>{
+      if(t.curHp>0){
+        t._curtainCallAtk=(t._curtainCallAtk||0)+_boost;
+        t._curtainCallSp=(t._curtainCallSp||0)+_boost;
+        t.atk+=_boost; t.sp+=_boost;
+        bannerFX(t,'謝幕強化+'+_boost,'#ffcc44',900); renderCard(t);
+      }
+    });
+    flashScreen('rgba(255,200,0,1)',400); zoneFlash(side,'rgba(255,180,0,0.35)',700);
+    updateUI();
+    if(checkWin()) return;
+    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){ _interrupted.acted=true; }
+    _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },600);
+    return;
+  }
+  // 九尾空貓怪：焰尾九連擊
+  if(burstName==='焰尾九連擊'){
+    const _opp = side==='p1'?'p2':'p1';
+    let _remainHits = 9;
+    function _catNine(target){
+      if(_remainHits<=0 || checkWin()){ 
+        // 全部結束後附加地獄之火
+        G[_opp].forEach(foe=>{
+          if(foe.curHp>0){ addStatus(foe,'hellfire',2); bannerFX(foe,'地獄之火！','#ff4400',700); }
+        });
+        updateUI(); _burstFinish(h,_interrupted); return; 
+      }
+      if(!target || target.curHp<=0){
+        // 轉移：選 HP 最少的存活對手
+        const nextFoes = G[_opp].filter(x=>x.curHp>0);
+        if(!nextFoes.length){ _remainHits=0; _catNine(null); return; }
+        target = nextFoes.sort((a,b)=>a.curHp-b.curHp)[0];
+      }
+      const hitDmg = Math.floor(spv(h)*0.5);
+      doDmg(target, hitDmg, {actor:h, isSkill:true, ignoreBuffs:false});
+      _remainHits--;
+      renderCard(target);
+      if(target.curHp<=0 && _remainHits>0){
+        // 目標倒下，轉移剩餘次數
+        const nextFoes2 = G[_opp].filter(x=>x.curHp>0);
+        if(!nextFoes2.length){ _remainHits=0; _catNine(null); return; }
+        const nextT = nextFoes2.sort((a,b)=>a.curHp-b.curHp)[0];
+        bannerFX(h,'轉移！','#ff8800',600);
+        _pSetTimeout(()=>_catNine(nextT), 300);
+      } else {
+        _pSetTimeout(()=>_catNine(target), 300);
+      }
+    }
+    const startFoes = G[_opp].filter(x=>x.curHp>0);
+    if(!startFoes.length){ _burstFinish(h,_interrupted); return; }
+    // p1 需選擇目標，p2 自動選最低HP
+    if(side==='p1' && startFoes.length>1){
+      log('⚡ 焰尾九連擊：請選擇初始目標！');
+      setPending('enemy', t=>{ G.pendingTarget=null; pendingCb=null; _catNine(t); });
+    } else {
+      _catNine(startFoes.sort((a,b)=>a.curHp-b.curHp)[0]);
+    }
+    return;
+  }
+  updateUI();
+  if(checkWin()) return;
+  // 清除殘留狀態後再推進回合
+  G.passiveInterruptUsed=false;
+  G.interruptTarget=null;
+  G.pendingTarget=null; pendingCb=null;
+  // 被插隊打斷的角色標記為本回合已行動（避免重複行動導致無限循環）
+  if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
+    _interrupted.acted=true;
+    log(`[${_interrupted.name}] 被極限爆發插隊，跳過本次行動。`);
+  }
+  _pSetTimeout(()=>{
+    if(checkWin()) return;
+    startTurn();
+  },600);
+}
+// 爆發技能選目標後的收尾函式
+function _burstFinish(h, _interrupted){
+  updateUI();
+  if(checkWin()) return;
+  G.passiveInterruptUsed=false;
+  G.interruptTarget=null;
+  G.pendingTarget=null; pendingCb=null;
+  if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
+    _interrupted.acted=true;
+    log(`[${_interrupted.name}] 被極限爆發插隊，跳過本次行動。`);
+  }
+  _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },600);
+}
+function _showPassivePrompt(opts){
+  // opts: { hero, skillName, color, cost, desc, onUse, onSkip }
+  const existing=document.getElementById('passive-prompt');
+  if(existing){ clearTimeout(existing._timer); existing.remove(); }
+
+  const canUse = G.energy[opts.hero.side] >= opts.cost;
+  const color = opts.color || '#aaaaaa';
+
+  const ov = document.createElement('div');
+  ov.id = 'passive-prompt';
+  // 無遮罩：只有視窗本體，戰場全程可見
+  ov.style.cssText = [
+    'position:absolute;z-index:9800;',
+    'left:50%;bottom:80px;',
+    'transform:translateX(-50%);',
+    'display:flex;flex-direction:column;align-items:center;gap:10px;',
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;',
+    'pointer-events:auto;',
+  ].join('');
+
+  // 倒數計時條
+  const countdown = document.createElement('div');
+  countdown.id = 'passive-prompt-countdown';
+  countdown.style.cssText = [
+    'width:340px;height:6px;border-radius:3px;overflow:hidden;',
+    'background:rgba(255,255,255,0.12);',
+  ].join('');
+  const countBar = document.createElement('div');
+  countBar.style.cssText = [
+    'height:100%;width:100%;',
+    'background:'+color+';',
+    'transition:width linear;',
+    'border-radius:3px;',
+  ].join('');
+  countdown.appendChild(countBar);
+
+  // 視窗主體
+  const box = document.createElement('div');
+  box.style.cssText = [
+    'background:linear-gradient(160deg,#10131e,#080c14);',
+    'border:2px solid '+color+';',
+    'border-radius:16px;padding:18px 28px 16px;',
+    'min-width:340px;max-width:480px;text-align:center;',
+    'animation:passivePromptGlow 1s ease-in-out infinite;',
+    '--pglow:'+color+';',
+  ].join('');
+
+  // 注入呼吸動畫CSS（只注一次）
+  if(!document.getElementById('passive-prompt-style')){
+    const st = document.createElement('style');
+    st.id = 'passive-prompt-style';
+    st.textContent = `
+      @keyframes passivePromptGlow {
+        0%,100%{ box-shadow:0 0 12px var(--pglow,#aaa)44, 0 0 28px var(--pglow,#aaa)22; }
+        50%    { box-shadow:0 0 28px var(--pglow,#aaa)cc, 0 0 55px var(--pglow,#aaa)66, 0 0 80px var(--pglow,#aaa)22; }
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  box.innerHTML = `
+    <div style="font-size:17px;color:${color};letter-spacing:3px;margin-bottom:6px;font-weight:700;">⚡ 被動技能觸發</div>
+    <div style="font-size:26px;font-weight:700;color:#ffffff;margin-bottom:6px;">[${opts.hero.name}] ${opts.skillName}</div>
+    <div style="font-size:18px;color:#dddddd;line-height:1.7;margin-bottom:8px;">${opts.desc}</div>
+    <div style="font-size:15px;color:${canUse?'#4a9eff':'#e84040'};">消耗能量：🔷${opts.cost}（剩餘：${G.energy[opts.hero.side]}）</div>
+    <div id="passive-prompt-timer" style="font-size:13px;color:#888;margin-top:4px;">10 秒後自動放棄</div>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;">
+      <button id="passive-use-btn2"
+        style="padding:11px 36px;font-size:19px;font-weight:700;border-radius:8px;cursor:pointer;
+               background:${color}22;border:2px solid ${color};color:${color};
+               font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:2px;
+               transition:0.15s;${canUse?'':'opacity:0.35;cursor:not-allowed;'}">
+        ⚡ 發動
+      </button>
+      <button id="passive-skip-btn2"
+        style="padding:11px 24px;font-size:17px;border-radius:8px;cursor:pointer;
+               background:transparent;border:1px solid #555;color:#888;
+               font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">
+        ↩ 放棄
+      </button>
+    </div>`;
+
+  ov.appendChild(countdown);
+  ov.appendChild(box);
+  document.getElementById('gc').appendChild(ov);
+
+  // 10秒倒數
+  let _remain = 10;
+  const timerLabel = box.querySelector('#passive-prompt-timer');
+  // 啟動進度條動畫（transition:width 10s）
+  requestAnimationFrame(()=>{
+    countBar.style.transition = 'width 10s linear';
+    countBar.style.width = '0%';
+  });
+  const _tick = setInterval(()=>{
+    _remain--;
+    if(timerLabel) timerLabel.textContent = _remain + ' 秒後自動放棄';
+    if(_remain <= 0){
+      clearInterval(_tick);
+      ov.remove();
+      if(opts.onSkip) opts.onSkip();
+    }
+  }, 1000);
+  ov._timer = _tick;
+
+  // 按鈕事件
+  box.querySelector('#passive-use-btn2').onclick = function(){
+    if(!canUse) return;
+    clearInterval(_tick);
+    ov.remove();
+    if(opts.onUse) opts.onUse();
+  };
+  box.querySelector('#passive-skip-btn2').onclick = function(){
+    clearInterval(_tick);
+    ov.remove();
+    if(opts.onSkip) opts.onSkip();
+  };
+}
+
+// 舊函式保留作為橋接（以牙還牙仍用此呼叫）
+function _showFanPrompt(hero, attacker, cost, mode, dmgAmt, statusObj){
+  const desc = mode==='dmg'
+    ? `反彈 <span style="color:#ffcc44;font-weight:700">${dmgAmt}</span> 傷害給 [${attacker.name}]`
+    : `將 [${statusName(statusObj.type)}] 反彈給 [${attacker.name}]`;
+  _showPassivePrompt({
+    hero, skillName:'以牙還牙', color:'#aaaaaa', cost,
+    desc,
+    onUse(){
+      G.energy[hero.side] -= cost;
+      sfxPassive(hero,0.7);
+      if(mode==='dmg'){
+        log(`[${hero.name}] 以牙還牙！[${attacker.name}] 受到 ${dmgAmt} 傷害！`);
+        doDmg(attacker,dmgAmt,{actor:hero,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
+      } else {
+        log(`[${hero.name}] 以牙還牙！反彈 [${statusName(statusObj.type)}] 給 [${attacker.name}]！`);
+        addStatus(attacker,statusObj.type,statusObj.dur);
+      }
+      updateUI();
+    },
+    onSkip(){ /* 什麼都不做 */ }
+  });
+}
+function _showBurstMimicPicker(h, side, opp){
+  const existing=document.getElementById('burst-mimic-ov'); if(existing) existing.remove();
+  const allHeroes=[...G.p1,...G.p2].filter(x=>x.curHp>0&&x!==h&&BURST_DB[x.name]);
+  if(!allHeroes.length){ updateUI(); _pSetTimeout(()=>startTurn(),300); return; }
+  const ov=document.createElement('div');
+  ov.id='burst-mimic-ov';
+  ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+  const casterSide=h.side, casterPos=h.pos;
+
+  const title=document.createElement('div');
+  title.style.cssText='font-size:36px;font-weight:700;color:#ffcc00;letter-spacing:4px;text-shadow:0 0 20px rgba(255,200,0,0.8)';
+  title.textContent='🎭 臨摹大師 — 選擇要模仿的爆發技能';
+
+  const listDiv=document.createElement('div');
+  listDiv.style.cssText='display:flex;flex-direction:column;gap:12px;max-height:65vh;overflow-y:auto;padding:4px 16px;min-width:700px;max-width:900px';
+
+  allHeroes.forEach(hero=>{
+    const bd=BURST_DB[hero.name];
+    const tc=hero.side==='p1'?'#4a9eff':'#e84040';
+    const btn=document.createElement('button');
+    btn.style.cssText=`background:rgba(20,20,40,0.95);border:2px solid ${tc}44;border-radius:12px;padding:16px 24px;color:#fff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;cursor:pointer;text-align:left;width:100%;transition:0.15s`;
+    btn.innerHTML=`
+      <div style="font-size:30px;font-weight:700;color:${tc};margin-bottom:6px">${hero.av} ${hero.name} → <span style="color:#ffcc00">⚡ ${bd.n}</span></div>
+      <div style="font-size:22px;color:#cccccc;line-height:1.5">${bd.d}</div>`;
+    btn.onmouseenter=()=>{ btn.style.borderColor=tc; btn.style.background='rgba(40,40,70,0.98)'; };
+    btn.onmouseleave=()=>{ btn.style.borderColor=tc+'44'; btn.style.background='rgba(20,20,40,0.95)'; };
+    btn.onclick=()=>{
+      // 點選後顯示說明確認視窗
+      _showBurstMimicConfirm(ov, hero, bd, tc, casterSide, casterPos);
+    };
+    listDiv.appendChild(btn);
+  });
+
+  const cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='padding:12px 36px;background:transparent;border:1px solid #555;color:#888;cursor:pointer;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;border-radius:8px;font-size:24px';
+  cancelBtn.textContent='✕ 取消';
+  cancelBtn.onclick=()=>{
+    ov.remove();
+    // 取消時：回合已扣能量和acted，直接推進
+    updateUI();
+    _pSetTimeout(()=>startTurn(), 200);
+  };
+  ov.appendChild(title);
+  ov.appendChild(listDiv);
+  ov.appendChild(cancelBtn);
+  document.getElementById('gc').appendChild(ov);
+}
+
+function _showBurstMimicConfirm(pickerOv, hero, bd, tc, casterSide, casterPos){
+  const existingC=document.getElementById('burst-mimic-confirm'); if(existingC) existingC.remove();
+  const confirmOv=document.createElement('div');
+  confirmOv.id='burst-mimic-confirm';
+  confirmOv.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,0.88);z-index:510;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  const box=document.createElement('div');
+  box.style.cssText=`background:linear-gradient(160deg,#1a1d2e,#0f1118);border:2px solid ${tc};border-radius:18px;padding:36px 48px;max-width:860px;text-align:center;box-shadow:0 0 60px ${tc}44;`;
+  box.innerHTML=`
+    <div style="font-size:28px;color:#aaa;letter-spacing:2px;margin-bottom:10px">🎭 確認模仿</div>
+    <div style="font-size:38px;font-weight:700;color:${tc};margin-bottom:8px">${hero.av} ${hero.name}</div>
+    <div style="font-size:44px;font-weight:700;color:#ffcc00;margin-bottom:16px;text-shadow:0 0 20px rgba(255,200,0,0.6)">⚡ ${bd.n}</div>
+    <div style="font-size:26px;color:#ffffff;line-height:1.7;margin-bottom:24px;background:rgba(255,255,255,0.05);border-radius:10px;padding:16px 20px">${bd.fd||bd.d}</div>
+    <div style="display:flex;gap:16px;justify-content:center;">
+      <button id="mimic-confirm-yes" style="padding:16px 56px;font-size:30px;font-weight:700;background:linear-gradient(135deg,#ff6600,#ff9900);border:none;border-radius:10px;color:#fff;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:2px;box-shadow:0 0 20px rgba(255,120,0,0.5);transition:0.15s">⚡ 確認發動</button>
+      <button id="mimic-confirm-no"  style="padding:16px 40px;font-size:28px;background:transparent;border:2px solid #555;border-radius:10px;color:#888;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;transition:0.15s">← 返回選擇</button>
+    </div>`;
+  confirmOv.appendChild(box);
+  document.getElementById('gc').appendChild(confirmOv);
+
+  document.getElementById('mimic-confirm-yes').onclick=function(){
+    confirmOv.remove();
+    const pov=document.getElementById('burst-mimic-ov'); if(pov) pov.remove();
+    _mimicBurst(casterSide, casterPos, hero.name);
+  };
+  document.getElementById('mimic-confirm-no').onclick=function(){
+    confirmOv.remove();
+  };
+}
+function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
+  if(idx >= equips.length){
+    // 全部完成，推進回合
+    updateUI(); renderItems();
+    if(checkWin()) return;
+    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
+      _interrupted.acted=true;
+      log(`[${_interrupted.name}] 被極限爆發插隊，跳過本次行動。`);
+    }
+    _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },400);
+    return;
+  }
+  const eq = equips[idx];
+  const allies = G[side].filter(h=>h.curHp>0);
+  // 建立裝備選擇 overlay
+  const existing = document.getElementById('burst-equip-ov'); if(existing) existing.remove();
+  const ov = document.createElement('div');
+  ov.id = 'burst-equip-ov';
+  ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,12,0.94);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;overflow-y:auto;';
+  const eqDataForTitle = EQUIP_DB.find(e=>e.n===eq.n);
+  const _petImg = eqDataForTitle&&eqDataForTitle.petImg ? eqDataForTitle.petImg : '';
+  const _petName = eqDataForTitle&&eqDataForTitle.pet ? eqDataForTitle.pet : eq.n;
+  const _petDesc = eqDataForTitle&&eqDataForTitle.petDesc ? eqDataForTitle.petDesc : '';
+  const title = document.createElement('div');
+  title.style.cssText='display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;max-width:700px;';
+  title.innerHTML=`
+    <div style="font-size:22px;color:#ffcc00;letter-spacing:3px">🦁 召喚寵物 (${idx+1}/${equips.length})</div>
+    <div style="display:flex;align-items:center;gap:20px;background:rgba(212,168,67,0.08);border:1.5px solid rgba(212,168,67,0.3);border-radius:14px;padding:14px 22px;width:100%;">
+      <div style="width:220px;height:220px;border:2px solid rgba(212,168,67,0.4);border-radius:12px;background:rgba(20,20,30,0.8);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+        ${_petImg
+          ? `<img src="${_petImg}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.parentNode.innerHTML='${eq.icon||'🐾'}'"/>`
+          : `<span style="font-size:52px">${eq.icon||'🐾'}</span>`}
+      </div>
+      <div style="flex:1;text-align:left;">
+        <div style="font-size:48px;font-weight:700;color:var(--gold,#d4a843);margin-bottom:8px;">${_petName}</div>
+        <div style="font-size:30px;color:#aaa;line-height:1.6;font-style:italic;margin-bottom:10px;">${_petDesc}</div>
+        <div style="font-size:34px;color:#f0c060;font-weight:500;">${eq.icon||''} ${eq.d}</div>
+      </div>
+    </div>`;
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText='display:flex;gap:12px;flex-wrap:wrap;justify-content:center;';
+  allies.forEach(hero=>{
+    const btn = document.createElement('button');
+    const hasEquip = !!hero.equip;
+    btn.style.cssText=`background:rgba(20,25,45,0.95);border:2px solid #4a9eff44;border-radius:14px;padding:16px 28px;color:#fff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;cursor:pointer;min-width:200px;text-align:center;transition:0.15s`;
+    btn.innerHTML=`<div style="font-size:52px">${hero.av}</div><div style="font-size:36px;font-weight:700;color:#88ddff">${hero.name}</div><div style="font-size:26px;color:${hasEquip?'#ffaa44':'#aaa'}">${hasEquip?'替換：'+hero.equip.n:'攜帶寵物'}</div>`;
+    btn.onmouseenter=()=>btn.style.borderColor='#4a9eff';
+    btn.onmouseleave=()=>btn.style.borderColor='#4a9eff44';
+    btn.onclick=()=>{
+      ov.remove();
+      // 若已有裝備先卸除
+      if(hero.equip){ const old=getEquip(hero); if(old&&old.onRemove) old.onRemove(hero); }
+      hero.equip={...eq,uid:Math.random(),type:'equip'};
+      const eqData=EQUIP_DB.find(e=>e.n===eq.n);
+      if(eqData&&eqData.onEquip) eqData.onEquip(hero);
+      renderCard(hero);
+      log(`[${hero.name}] 攜帶了 ${eq.icon||''} ${eq.n}！`);
+      bannerFX(hero,'攜帶！'+eq.n,'#d4a843',700);
+      _pSetTimeout(()=>_showBurstEquipSequence(equips, idx+1, caster, side, _interrupted), 300);
+    };
+    btnRow.appendChild(btn);
+  });
+  const skipBtn = document.createElement('button');
+  skipBtn.style.cssText='padding:14px 40px;background:transparent;border:2px solid #555;color:#888;cursor:pointer;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;border-radius:10px;margin-top:8px;font-size:28px;';
+  skipBtn.textContent='跳過這件';
+  skipBtn.onclick=()=>{ ov.remove(); _pSetTimeout(()=>_showBurstEquipSequence(equips, idx+1, caster, side, _interrupted), 100); };
+  ov.appendChild(title);
+  ov.appendChild(btnRow);
+  ov.appendChild(skipBtn);
+  document.getElementById('gc').appendChild(ov);
+  playSfx('sfx-equip',.7);
+}
+function _mimicBurst(side, pos, targetName){
+  const h=G[side][pos];
+  if(!h) return;
+  // BUG修復：防止重複觸發
+  if(h._mimicUsed){ log(`[${h.name}] 臨摹大師本場已使用過！`); return; }
+  if(h.acted && !h._mimicInProgress){ log(`[${h.name}] 本回合已行動！`); return; }
+  const bd=BURST_DB[targetName];
+  if(!bd) return;
+  h._mimicUsed = true;      // 標記本場已用過臨摹大師
+  h._mimicInProgress = false;
+  h._burstUsed = Math.min(2, (h._burstUsed||0) + 1); // 確保極限爆發計數
+  h.acted = true;
+  G.passiveInterruptUsed=false;
+  G.interruptTarget=null;
+  G.pendingTarget=null; pendingCb=null;
+  log(`[${h.name}] 臨摹大師！模仿 [${targetName}] 的爆發技能 ${bd.n}！`);
+  flashScreen('rgba(200,200,255,1)',400);
+  _pSetTimeout(()=>_runBurst(h, bd, side, null, targetName), 200);
+}
+
+function renderItems(){
+  // 我方回合：顯示物品欄，隱藏對手回合提示
+  const _itemPanel = document.getElementById('item-panel');
+  const _enemyNotice = document.getElementById('enemy-turn-notice');
+  const _isP2Turn = G.activeChar && G.activeChar.side === 'p2';
+  if(_itemPanel) _itemPanel.style.display = _isP2Turn ? 'none' : '';
+  if(_enemyNotice) _enemyNotice.style.display = _isP2Turn ? 'block' : 'none';
+
+  for(let i=0;i<3;i++){
+    const slot=document.getElementById(`slot-${i}`);
+    const it=G.inv[i];
+    slot.innerHTML='';
+    if(it){
+      const box=document.createElement('div');
+      box.className=`ibox itype-${it.type} ${G.selItem?.uid===it.uid?'sel':''}`;
+      box.innerHTML=`<b>${it.n}</b><i>賣${it.sell}🔷 | ${it.d}</i>`;
+      box.onclick=()=>clickItem(it);
+      slot.appendChild(box);
+    } else { slot.innerText='— 空 —'; }
+  }
+}
+
+
+function showEquipDetailPopup(btn, equipName){
+  document.querySelectorAll('.equip-detail-popup').forEach(p=>p.remove());
+  const eq=EQUIP_DB.find(e=>e.n===equipName);
+  if(!eq) return;
+  const pop=document.createElement('div');
+  pop.className='equip-detail-popup skill-popup';
+  pop.style.cssText='position:fixed;z-index:9999;max-width:360px;pointer-events:auto;';
+  pop.innerHTML=`
+    <div style="font-size:26px;font-weight:700;color:var(--gold);margin-bottom:8px">${eq.icon||'⚙'} ${eq.n}</div>
+    ${eq.pet?`<div style="font-size:22px;color:#88ddff;margin-bottom:6px">🐾 寵物：${eq.pet}</div>`:''}
+    ${eq.petDesc?`<div style="font-size:20px;color:#aaa;margin-bottom:10px;line-height:1.6">${eq.petDesc}</div>`:''}
+    <div style="font-size:20px;color:#fff;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px">${eq.d}</div>
+  `;
+  document.body.appendChild(pop);
+  const r=btn.getBoundingClientRect();
+  pop.style.left=Math.min(r.left, window.innerWidth-370)+'px';
+  pop.style.top=(r.bottom+6)+'px';
+  setTimeout(()=>{ document.addEventListener('click',()=>pop.remove(),{once:true}); },50);
+}
+const _EQUIP_SHORT={'台灣黑熊':'攻擊+3','台灣獼猴':'特技+3','石虎':'速度+3','喜鵲':'機率不會倒下','櫻花鉤吻鮭':'治療上升','五色鳥':'機率省能量','綠蠵龜':'減速減受傷','台灣藍鵲':'機率反彈傷害','鱟':'HP持續恢復','梅花鹿':'額外補充能量','白頭翁':'機率免疫狀態','黑冠麻鷺':'抵抗1次倒下'};
+function equipExtHTML(h){
+  if(!h.equip) return '<span class="equip-slot-empty">— 無寵物 —</span>';
+  const eq=EQUIP_DB.find(e=>e.n===h.equip.n);
+  const icon=eq?eq.svg:h.equip.icon||'⚙';
+  const shortDesc=_EQUIP_SHORT[h.equip.n]||'';
+  return `<div class="equip-badge" style="flex-wrap:nowrap;align-items:center;gap:4px;"><span class="eq-icon" style="flex-shrink:0">${icon}</span><span class="eq-name" style="white-space:nowrap;font-size:20px">${h.equip.n}</span>${shortDesc?`<span style="color:#aaa;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">｜${shortDesc}</span>`:''}  </div>`;
+}
+function equipSlotHTML(h){
+  if(!h.equip) return '<span class="equip-slot-empty">— 無寵物 —</span>';
+  const eq = EQUIP_DB.find(e=>e.n===h.equip.n);
+  const icon = eq ? eq.svg : h.equip.icon||'⚙';
+  const desc = eq ? eq.d : '';
+  const petName = eq && eq.pet ? eq.pet : '';
+  const petDesc = eq && eq.petDesc ? eq.petDesc : '';
+  const petInfo = petName ? `<div style="font-size:18px;color:#88ddff;margin-top:4px">🐾 ${petName}｜${petDesc}</div>` : '';
+  const qBtn = (desc||petDesc) ? `<span class="csk-detail-btn" onclick="event.stopPropagation();showEquipDetailPopup(this,'${h.equip.n}')" style="width:24px;height:24px;line-height:24px;font-size:14px;border-radius:50%;vertical-align:middle;margin-left:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">?</span>` : '';
+  return `<div class="equip-badge" style="align-items:center"><span class="eq-icon">${icon}</span><span class="eq-name">${h.equip.n}</span>${qBtn}</div>${desc?`<div class="equip-effect">${desc}</div>`:''}${petInfo}`;
+}
+
+// ====== CARD CLICK ======
+function onCard(h, _evt){
+  const a=G.activeChar; if(!a) return;
+  const pt=G.pendingTarget;
+  if(!pt) return;  // 無待選目標：讓事件繼續（允許爆發面板等其他處理器執行）
+  // ★ 有待選目標：阻止事件穿透（防止同時開啟爆發面板等）
+  if(_evt){ _evt.stopPropagation(); _evt._handledByOnCard = true; }
+
+  // Validate target
+  let valid=false;
+  if(pt==='enemy' && h.side!==a.side && h.curHp>0) valid=true;
+  if(pt==='enemy_any' && h.side!==a.side) valid=true; // for 死亡宣告 on alive
+  if(pt==='ally' && h.side===a.side && h.curHp>0) valid=true;
+  if(pt==='ally_dead' && h.side===a.side && h.curHp===0) valid=true;
+  if(pt==='any' && h.curHp>0) valid=true;
+  if(pt==='any_e' && h.side!==a.side && h.curHp>0) valid=true; // taunt target
+  if(pt==='ally_or_dead' && h.side===a.side) valid=true;
+  if(pt==='self_or_ally' && h.side===a.side && h.curHp>0) valid=true;
+
+  if(!valid){ log('❌ 無效目標，請重新選擇'); return; }
+
+  execPending(h);
+}
+
+let pendingCb=null;
+function setPending(type, cb){
+  // ★ AI 端（p2）總是自動選目標，不等玩家點擊
+  const _pendingActor = G && G.activeChar;
+  if(_pendingActor && _pendingActor.side === 'p2'){
+    const _opp = 'p1';
+    let _autoT = null;
+    if(type==='enemy'||type==='any_e'){
+      const _foes=G[_opp]?G[_opp].filter(h=>h.curHp>0):[];
+      _autoT=_foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='ally'||type==='self_or_ally'){
+      const _al=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp>0):[];
+      _autoT=_al.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='ally_dead'||type==='ally_or_dead'){
+      const _dead=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp===0):[];
+      _autoT=_dead[0]||null;
+    } else if(type==='any'){
+      const _all=(G.p1||[]).concat(G.p2||[]).filter(h=>h.curHp>0);
+      _autoT=_all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    }
+    if(_autoT){ setTimeout(()=>{ try{ cb(_autoT); }catch(e){ console.error('[AI setPending]',e); } }, 300); return; }
+  }
+  // 自動戰鬥時自動選目標
+  if(_autoBattle){
+    const a=G.activeChar;
+    if(!a) return;
+    const opp=a.side==='p1'?'p2':'p1';
+    let autoTarget=null;
+    if(type==='enemy'||type==='any_e'){
+      const foes=G[opp].filter(h=>h.curHp>0);
+      autoTarget=foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='ally'||type==='self_or_ally'){
+      const al=G[a.side].filter(h=>h.curHp>0);
+      autoTarget=al.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='ally_dead'||type==='ally_or_dead'){
+      const dead=G[a.side].filter(h=>h.curHp===0);
+      autoTarget=dead[0]||G[a.side].filter(h=>h.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    } else if(type==='any'){
+      const all=G.p1.concat(G.p2).filter(h=>h.curHp>0);
+      autoTarget=all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
+    }
+    if(autoTarget && cb){ cb(autoTarget); return; }
+    // 找不到目標就直接結束行動
+    if(a && !a.acted){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); }
+    return;
+  }
+  G.pendingTarget=type; pendingCb=cb;
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
+  const a=G.activeChar;
+  G.p1.concat(G.p2).forEach(h=>{
+    let ok=false;
+    if(type==='enemy'&&h.side!==a.side&&h.curHp>0) ok=true;
+    if(type==='ally'&&h.side===a.side&&h.curHp>0) ok=true;
+    if(type==='ally_dead'&&h.side===a.side&&h.curHp===0) ok=true;
+    if(type==='any'&&h.curHp>0) ok=true;
+    if(type==='any_e'&&h.side!==a.side&&h.curHp>0) ok=true;
+    if(type==='ally_or_dead'&&h.side===a.side) ok=true;
+    if(type==='self_or_ally'&&h.side===a.side&&h.curHp>0) ok=true;
+    if(ok){
+      const el=document.getElementById(`card-${h.side}-${h.pos}`);
+      if(el) el.classList.add(h.side===a.side?'ally-targetable':'targetable');
+    }
+  });
+}
+function execPending(h){
+  G.pendingTarget=null;
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
+  if(pendingCb) { const cb=pendingCb; pendingCb=null; cb(h); }
+}
+
+// ====== DAMAGE / HEAL ======
+function doDmg(target, rawDmg, opts={}){
+  // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
+  const a=G.activeChar||opts.actor;
+
+  // ── 強力隱身（小力）：絕對免疫，無視一切傷害來源 ──
+  // 必須在所有判斷之前，包括 ignoreBuffs、AoE、必中等
+  if(hasBuff(target,'inuInvisible')){
+    showPopup(target,'🐕免疫','miss');
+    log(`🐕 [${target.name}] 強力隱身，完全免疫傷害！`);
+    return 0;
+  }
+
+  // ── 速度命中/迴避：速度差影響命中率（每1點速度+1%命中/迴避）──
+  if(!opts.ignoreEvasion && !opts.piercing && a && target && !opts.isSkill){
+    // 普通攻擊才受速度命中影響
+    const spdDiff = (a.spd||0) - (target.spd||0);
+    if(spdDiff < 0){
+      // 攻擊者速度低於目標：有迴避機率
+      const evadeChance = Math.min(0.6, Math.abs(spdDiff) * 0.01);
+      if(Math.random() < evadeChance){
+        showPopup(target,'MISS','miss'); log(`[${target.name}] 以速度迴避了攻擊！`); return 0;
+      }
+    }
+  }
+  // spdAvoid: 70% miss if attacker is slower
+  if(!opts.ignoreEvasion && hasBuff(target,'spdAvoid')){
+    const _sa=G.activeChar||opts.actor;
+    if(_sa&&_sa.spd<target.spd&&Math.random()<0.7){
+      showShieldVFX(target,'evade');showPopup(target,'MISS','miss');
+      log(`[${target.name}] 急速閃躲迴避！`);return 0;
+    }
+  }
+  // Evasion check
+  if(!opts.ignoreEvasion && hasBuff(target,'evasion')){
+    showShieldVFX(target,'evade'); showPopup(target,'MISS','miss'); log(`[${target.name}] 迴避了攻擊！`); return 0;
+  }
+  // 神射手天賦：trapShield - 只擋普通攻擊（非技能傷害）
+  if(!opts.ignoreEvasion && !opts.isSkill && hasBuff(target,'trapShield')){
+    target.buffs=target.buffs.filter(b=>b.type!=='trapShield');
+    showShieldVFX(target,'evade'); showPopup(target,'陷阱！','miss');
+    log(`🏹 [神射手] 天賦：陷阱觸發！普通攻擊被阻擋！`);
+    bannerFX(target,'陷阱觸發','#cc8800',900);
+    renderCard(target); return 0;
+  }
+  // ── 爆發：神樹恩澤（不倒）→HP最低1 ──
+  if(hasStatus(target,'burstUndying') && !opts.ignoreBuffs){
+    rawDmg=Math.min(rawDmg, Math.max(0, target.curHp-1));
+  }
+  // ── immune buff：免疫所有傷害（聖殿領域/最終殿堂等）──
+  if(!opts.ignoreBuffs && hasBuff(target,'immune')){
+    showShieldVFX(target,'immune'); showPopup(target,'免疫','miss');
+    log(`[${target.name}] 免疫狀態，傷害無效！`); return 0;
+  }
+  // ── 爆發：負荷超載→累積傷害，但目標仍正常受傷 ──
+  if(a && a.side!==target.side && !opts.isRebound && !opts.noGuard){
+    const _overloader=G[target.side].find(x=>x._burstOverloadActive>0);
+    if(_overloader){
+      _overloader._burstOverload=(_overloader._burstOverload||0)+rawDmg;
+      log(`⚙️ 負荷超載累積 [${_overloader.name}] +${rawDmg}（total:${_overloader._burstOverload}）`);
+      // 不 return，讓傷害繼續往下正常執行
+    }
+  }
+  // ── 爆發：警長正義制裁反彈（攻擊者身上有狀態時，傷害100%反彈給自己）──
+  if(a && a.side!==target.side && a._burstReflect && !opts.isRebound && !opts.ignoreBuffs){
+    log(`[${a.name}] 正義制裁！傷害100%反彈給自己！`);
+    doDmg(a,rawDmg,{actor:target,noGuard:true,ignoreEvasion:true,isRebound:true});
+  }
+  // Shield
+  if(hasBuff(target,'shield')&&!opts.ignoreBuffs){
+    target.buffs=target.buffs.filter(b=>b.type!=='shield');
+    showShieldVFX(target,'block'); showPopup(target,'🛡','miss'); log(`[${target.name}] 護盾抵擋了傷害！`); renderCard(target); return 0;
+  }
+    // Hidden：只擋單體攻擊，不擋全體技能/物品
+  if(hasBuff(target,'hidden')&&!opts.piercing&&!opts.noHidden&&!opts.isAoe){
+    // 普通攻擊有25%機率看穿隱身
+    if(!opts.isSkill && Math.random()<0.25){
+      target.buffs=target.buffs.filter(b=>b.type!=='hidden');
+      log(`👁️ [${target.name}] 隱身被看穿！`);
+      bannerFX(target,'隱身解除！','#cc88ff',800);
+      // 繼續往下執行，讓傷害正常觸發
+    } else {
+      showPopup(target,'MISS','miss'); log(`[${target.name}] 隱身中無法被選為目標！`); return 0;
+    }
+  }
+    // 守衛 挺身守護 intercept (if not piercing)
+  if(!opts.piercing && !opts.noGuard){
+    // ── 仁王挺立：代替所有隊友受傷，且減傷75% ──
+    if(!opts.isNioGuard){
+      const nio_guard=G[target.side].find(h=>h!==target&&h.curHp>0&&hasBuff(h,'nioGuard'));
+      if(nio_guard){
+        playSfx('sfx-guard',0.75);
+        log(`[${nio_guard.name}] 仁王挺立！代替 [${target.name}] 承受傷害，減傷75%！`);
+        const nioReduced=Math.max(1,Math.ceil(rawDmg*0.25));
+        showShieldVFX(nio_guard,'block');
+        bannerFX(nio_guard,'仁王！','#ff8800',900);
+        return doDmg(nio_guard, nioReduced, {...opts, noGuard:true, isNioGuard:true});
+      }
+    }
+    // 優先檢查 G.guardFor（新邏輯：不依賴buff）
+    if(G.guardFor===target && G.guardHero && G.guardHero!==target && G.guardHero.curHp>0){
+      const ally_guard=G.guardHero;
+      playSfx('sfx-guard',0.7); log(`[${ally_guard.name}] 挺身守護代替 [${target.name}] 承受傷害！`);
+      const _gspv=Math.floor((ally_guard.sp||0)*(1+(ally_guard.sp||0)*0.01));
+      let reduced=Math.max(1,Math.ceil(rawDmg-_gspv*2));
+      // 守護後清除（一次性）
+      G.guardFor=null; G.guardHero=null;
+      ally_guard.acted=false;
+      return doDmg(ally_guard, reduced, {...opts, noGuard:true});
+    }
+    // 相容舊 buff 系統
+    const ally_guard=G[target.side].find(h=>h!==target&&h.curHp>0&&hasBuff(h,'guard'));
+    if(ally_guard){
+      playSfx('sfx-guard',0.7); log(`[${ally_guard.name}] 挺身守護代替 [${target.name}] 承受傷害！`);
+      const _gspv=Math.floor((ally_guard.sp||0)*(1+(ally_guard.sp||0)*0.01));
+      let reduced=Math.max(1,Math.ceil(rawDmg-_gspv*2));
+      ally_guard.buffs=ally_guard.buffs.filter(b=>b.type!=='guard');
+      ally_guard.acted=false; return doDmg(ally_guard, reduced, {...opts, noGuard:true});
+    }
+    // 小力天賦：忠犬守護 — 1回合內將隊友受傷50%轉移到自己，HP至少保留1
+    
+    if(!opts.noInuGuard){
+      const inuHero = G[target.side].find(h=>h!==target&&h.curHp>1&&h._inuGuardActive&&!hasStatus(h,'confused'));
+      if(inuHero){
+        const transfer=Math.max(1,Math.ceil(rawDmg*0.5));
+        rawDmg=Math.max(0,rawDmg-transfer);
+        log(`🐕 [小力] 忠犬守護！替 [${target.name}] 吸收 ${transfer} 傷害！`);
+        // 直接扣血並保底1，不走完整doDmg流程（避免遞迴/卡死）
+        const before = inuHero.curHp;
+        inuHero.curHp = Math.max(1, inuHero.curHp - transfer);
+        const actualTransfer = before - inuHero.curHp;
+        if(actualTransfer>0){
+          showPopup(inuHero, actualTransfer, 'dmg');
+          shake(inuHero);
+          bannerFX(inuHero,'吸收！','#ffaacc',700);
+          renderCard(inuHero);
+        }
+        // 若小力HP降至1，解除守護狀態（此技能HP為1時無法使用，也不繼續守護）
+        if(inuHero.curHp<=1){
+          inuHero._inuGuardActive=false;
+          inuHero.buffs=inuHero.buffs.filter(b=>b.type!=='_inuGuard');
+          bannerFX(inuHero,'守護力竭！','#ff8888',900);
+          log(`🐕 [小力] HP降至1，忠犬守護解除！`);
+        }
+      }
+    }
+    // 守衛天賦：無論是否有guard buff，只要存活就分攤30%傷害
+    if(!opts.isTraitShare){
+      const guard_hero=G[target.side].find(h=>h!==target&&h.curHp>0&&h.name==='守衛'&&!hasStatus(h,'confused'));
+      if(guard_hero){
+        const share=Math.max(1,Math.ceil(rawDmg*0.3));
+        rawDmg=Math.max(1,rawDmg-share);
+        log(`🗡️ [守衛] 天賦：鐵壁分攤！替 [${target.name}] 承受 ${share} 傷害！`);
+        playSfx('sfx-guard',0.6);
+        doDmg(guard_hero, share, {...opts, noGuard:true, isTraitShare:true});
+      }
+    }
+  }
+  // 小劇團員天賦：受傷時20%機率轉為治療
+  if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused') && Math.random()<0.2){
+    doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
+    showPopup(target,'🎭轉化！','energy');
+    bannerFX(target,'轉化治療！','#ff88aa',900);
+    log(`🎭 [小劇團員] 天賦：傷害轉化！${rawDmg}傷害轉為治療！`);
+    return 0;
+  }
+  // 動物學家天賦：動物守護減傷（每隻寵物-10%，最高40%）
+  if(target.name==='動物學家' && target._zoologistDmgReduce>0 && !opts.ignoreBuffs){
+    rawDmg=Math.max(1,Math.ceil(rawDmg*(1-target._zoologistDmgReduce)));
+    showPopup(target,'🦁-'+Math.round(target._zoologistDmgReduce*100)+'%','miss');
+  }
+  // halfDmg (聖殿領域)
+  if(hasBuff(target,'halfDmg')){ rawDmg=Math.ceil(rawDmg/2); showShieldVFX(target,'halfDmg'); }
+  // dmgVuln (青龍召喚：受傷+50%)
+  if(hasStatus(target,'dmgVuln')){ rawDmg=Math.ceil(rawDmg*1.5); }
+  // 綠竹筍小妖天賦：受到傷害時50%機率減少40%
+  if(_adventureMode && target.name==='綠竹筍小妖' && !hasStatus(target,'confused') && rawDmg>0 && Math.random()<0.5){
+    rawDmg = Math.max(1, Math.floor(rawDmg * 0.6));
+    showPopup(target, '韌竹-40%', 'miss');
+    log(`🎋 [綠竹筍小妖] 天賦：韌竹護甲！傷害減少40%！`);
+  }
+  // 土屬性：受傷-2
+  { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
+  // 聖騎士天賦：40%格擋，減少50%受傷
+  if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<0.6){
+    rawDmg=Math.max(1,Math.ceil(rawDmg*0.5));
+    showShieldVFX(target,'block');
+    log(`🛡️ [聖騎士] 天賦：神聖格擋！傷害減半！`);
+    bannerFX(target,'格擋！','#88ccff',900);
+  }
+  // 守衛天賦：代替隊友受傷時，額外分攤30%給自己（隊友少受30%）
+  // （在ally_guard intercept段已處理，此處標記供opts使用）
+  // bigshield (-20傷害護盾)
+  // 午睡護盾 (_napShield)：累積吸收，耗盡或受擊40%機率醒來
+  if(hasBuff(target,'_napShield') && rawDmg>0){
+    const _ns=target.buffs.find(b=>b.type==='_napShield');
+    if(_ns){
+      const _abs2=Math.min(_ns._hp||0,rawDmg);
+      _ns._hp-=_abs2; rawDmg-=_abs2;
+      if(_abs2>0){ showShieldVFX(target,'block'); showPopup(target,'💤-'+_abs2,'miss'); }
+      if(_ns._hp<=0){
+        target.buffs=target.buffs.filter(b=>b.type!=='_napShield');
+        log(`💤 [${target.name}] 午睡護盾破碎！`);
+      }
+      // 受到攻擊 40% 醒來
+      if(target._napMode && Math.random()<0.4){
+        clearStatus(target,['sleep']); target._napMode=false;
+        target.buffs=target.buffs.filter(b=>b.type!=='_napShield');
+        bannerFX(target,'驚醒！','#aaddff',800);
+        log(`💤 [${target.name}] 受到攻擊驚醒！`);
+        // 清除夢境弱化
+        G.p1.concat(G.p2).forEach(e=>{
+          const _ds2=e.status.find(s=>s.type==='_dreamDebuff'&&s._owner===target);
+          if(_ds2){ e.atk=_ds2._origAtk; e.sp=_ds2._origSp; e.status=e.status.filter(s=>s!==_ds2); renderCard(e); }
+        });
+      }
+      if(rawDmg===0) return 0;
+    }
+  }
+  // bigshield — 累積吸收護盾，耗盡後消失
+  if(hasBuff(target,'bigshield')&&!opts.ignoreBuffs){
+    const _bsBuff=target.buffs.find(b=>b.type==='bigshield');
+    if(_bsBuff){
+      if(_bsBuff._hp===undefined) _bsBuff._hp=20;
+      const _absorbed=Math.min(_bsBuff._hp, rawDmg);
+      _bsBuff._hp-=_absorbed;
+      rawDmg-=_absorbed;
+      if(_absorbed>0){
+        showShieldVFX(target,'block');
+        showPopup(target,'🛡-'+_absorbed,'miss');
+      }
+      if(_bsBuff._hp<=0){
+        target.buffs=target.buffs.filter(b=>b.type!=='bigshield');
+        log(`[${target.name}] 護盾破碎！`);
+        bannerFX(target,'護盾破碎！','#88aaff',700);
+        playSfx('sfx-defense',0.8);
+      } else {
+        log(`[${target.name}] 護盾吸收${_absorbed}傷害，剩餘：${_bsBuff._hp}`);
+      }
+      if(rawDmg===0) return 0;
+    }
+  }
+  // warhorn buff on attacker
+  let dmg=rawDmg;
+  // ★ 技能升級倍率（只對 isSkill:true 的傷害有效）
+  if(opts.isSkill && _activeSkLvMult > 1.0) dmg = Math.round(dmg * _activeSkLvMult);
+  if(a&&hasBuff(a,'dmgup')&&!opts.isHeal) dmg+=Math.floor(a.sp*0.5);
+  // 極速閃燃：下次傷害×2（使用後移除）
+  if(a&&hasBuff(a,'_sprintBurst')&&!opts.isHeal){
+    dmg=dmg*2;
+    a.buffs=a.buffs.filter(b=>b.type!=='_sprintBurst');
+    log(`🏃 極速閃燃！[${a.name}] 傷害×2！`);
+    bannerFX(a,'傷害×2！','#44ffcc',700);
+  }
+  // 接力傳遞：傷害+50%（使用後移除）
+  if(a&&hasBuff(a,'_relay')&&!opts.isHeal){
+    dmg=Math.ceil(dmg*1.5);
+    a.buffs=a.buffs.filter(b=>b.type!=='_relay');
+    log(`🏃 接力傳遞觸發！[${a.name}] 傷害×1.5！`);
+  }
+  // dice field — 50% chance +50%, 50% chance -50%
+  if(fieldHas('dice')){
+    if(Math.random()<0.5){ dmg=Math.ceil(dmg*1.5); showDiceMsg('占卜水晶','威力+50%'); }
+    else { dmg=Math.ceil(dmg*0.5); showDiceMsg('占卜水晶','威力-50%'); }
+  }
+  // chaos field (damage -> heal, heal -> dmg handled in doHeal)
+  if(fieldHas('chaos')&&!opts.isChaos) { doHeal(target,dmg,{isChaos:true}); return 0; }
+  // warhorn field
+  if(fieldHas('warhorn')&&!opts.noWarhorn) dmg+=3;
+  // minDmg field
+  if(fieldHas('minDmg')) dmg=Math.max(3,dmg);
+
+  // ── 元素相剋傷害加成
+  const _elemMod=getElemDmgMod(a,target);
+  if(_elemMod!==0){ dmg=Math.max(0,dmg+_elemMod); if(_elemMod>0){ log(`⚡元素相剋！傷害+${_elemMod}`); showPopup(target,'▲+'+_elemMod,'elem-adv'); } else { log(`⚡元素劣勢！傷害${_elemMod}`); showPopup(target,'▼'+_elemMod,'elem-dis'); } }
+  dmg=Math.max(0,dmg);
+  const _mercyRainActive=hasBuff(target,'mercyRain') && dmg>0;
+  // ── 裝備效果：鋼鐵鎧甲
+  const teq=getEquip(target);
+  const _cb=getCraftsmanBonus(target.side);
+  if(teq && teq.dmgReduce && dmg>0) dmg=Math.max(1,dmg-teq.dmgReduce*_cb);
+  if(teq && teq.dmgReducePct && dmg>0) dmg=Math.max(1,Math.floor(dmg*(1-teq.dmgReducePct*_cb)));
+  // ── 裝備效果：鏡盾 30% 反彈
+  if(teq && teq.reflect && dmg>0 && !opts.noReflect && Math.random()<Math.min(0.95,teq.reflect*_cb) && a){
+    log(`[${target.name}] 台灣藍鵲反擊 ${dmg} 傷害！`);
+    playSfx('sfx-reflect',0.7);
+    showPopup(target,'↩台灣藍鵲','miss');
+    doDmg(a, dmg, {noGuard:true,ignoreBuffs:true,isChaos:true,noEquip:true,noReflect:true});
+    return 0;
+  }
+  // ── 裝備效果：幸運吊飾 30% 死裡逃生
+  if(teq && teq.onDmg && !opts.noEquip) dmg=teq.onDmg(target,dmg);
+  const old=target.curHp;
+  target.curHp=Math.max(0,target.curHp-dmg);
+  // 統計
+  if(dmg>0){
+    if(a && a.side !== target.side) statTrack(a,'dmg',dmg);
+    statTrack(target,'hitsReceived',1);
+  }
+  // 需求3：爆擊判斷（15%機率，傷害×1.8）
+  let _isCrit=false;
+  if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random()<0.15){
+    const _critExtra=Math.floor(dmg*0.3);
+    dmg+=_critExtra;
+    target.curHp=Math.max(0,target.curHp-_critExtra); // 補扣額外爆擊傷害
+    _isCrit=true;
+  }
+  if(_isCrit){
+    showPopup(target,dmg,'dmg-crit');
+    // 畫面震動2下 + 爆擊音效
+    _screenShake2();
+    playSfx('sfx-crit',1.0);
+  } else {
+    showPopup(target,dmg,'dmg');
+  }
+  sndAtk();
+  /// ── 爆發：鮮血契約→嗜血（傷害100%吸血＋低血增傷）──
+  if(a && a.curHp>0 && dmg>0 && a.side!==target.side && hasStatus(a,'burstVamp') && !opts.isRebound){
+    // 100% 吸血
+    const vAmt=dmg;
+    doHeal(a,vAmt,{actor:a,noDice:true,isHeal:true});
+    log(`🦇 嗜血！[${a.name}] 吸收 ${vAmt}HP！`);
+  }
+  // Red flash on damaged card — 整張卡紅色光暈
+  (function(tgt){
+    var _el=document.getElementById('card-'+tgt.side+'-'+tgt.pos);
+    if(_el){
+      var _f=document.createElement('div');
+      _f.className='card-dmg-flash';
+      _el.appendChild(_f); // 附到 .card 本體，不是 card-inner
+      setTimeout(function(){if(_f.parentNode)_f.remove();},700);
+    }
+  })(target);
+  if(old>0 && target.curHp>0 && target.curHp<old) shake(target); // alive && took damage
+  // Sleep: 50% chance to break early when hit
+  if(dmg>0 && old>0 && target.curHp>0 && hasStatus(target,'sleep') && Math.random()<0.5){
+    clearStatus(target,['sleep']); log(`[${target.name}] 受到傷害，提早從睡眠中甦醒！`); renderCard(target);
+  }
+  // 武鬥家天賦：受到致命傷害時25%不倒下，HP恢復20%
+  if(target.curHp===0 && target.name==='武鬥家' && !hasStatus(target,'confused') && Math.random()<0.3){
+    const reviveHp=Math.max(1,Math.floor(target.hp*0.2));
+    target.curHp=reviveHp;
+    log(`👊 [武鬥家] 天賦：鋼鐵意志！致命傷害中倖存！HP恢復${reviveHp}！`);
+    bannerFX(target,'鋼鐵意志！','#ffaa00',1000);
+    flashScreen('rgba(255,150,0,1)',300);
+    playSfx('sfx-powerup',0.8);
+    renderCard(target);
+  }
+  // death immune
+  if(target.curHp===0 && hasBuff(target,'deathimmune')){
+    target.curHp=1;
+    target.buffs=target.buffs.filter(b=>b.type!=='deathimmune');
+    log(`[${target.name}] 倒下免疫觸發！剩1HP！`);
+  }
+  if(target.curHp===0 && target.equip){
+    const _puppet=getEquip(target);
+    if(_puppet && _puppet.deathShield){
+      target.curHp=1;
+      const _dscb=getCraftsmanBonus(target.side);
+      if(_dscb>=2 && !target._deathShieldUsedOnce){
+        // 動物學家加成：第一次不消失，下次才消失
+        target._deathShieldUsedOnce=true;
+        log(`[${target.name}] 黑冠麻鷺出動！免疫致命傷害！（動物學家加護：還有1次）`);
+        bannerFX(target,'黑冠麻鷺×2！','#ffcc88',1200);
+      } else {
+        log(`[${target.name}] 黑冠麻鷺出動！免疫致命傷害！寵物消失！`);
+        bannerFX(target,'黑冠麻鷺！','#ffcc88',1000);
+        const _puppetData=EQUIP_DB.find(e=>e.n===target.equip.n);
+        if(_puppetData) G.deck.unshift({..._puppetData,uid:Math.random(),type:'equip'});
+        target.equip=null;
+        target._deathShieldUsedOnce=false;
+      }
+      renderCard(target);
+      return 1;
+    }
+  }
+  if(target.curHp===0){
+    log(`💀 [${target.name}] 倒下！`);
+    // 清除所有狀態與增益
+    target.status=[];
+    target.buffs=[];
+    if(hasBuff(target,'divineBlessing')){
+      if(target._baseHp){ target.hp=target._baseHp; delete target._baseHp; }
+      else target.hp=Math.max(1,target.hp-15);
+      log(`[${target.name}] 神之賜福消失，HP上限復原至 ${target.hp}。`);
+    }
+    playSfx('sfx-ko',0.85);
+    const _dEl=document.getElementById('card-'+target.side+'-'+target.pos);
+    if(_dEl){
+      _dEl.classList.remove('dead-anim');
+      void _dEl.offsetWidth;
+      _dEl.classList.add('dead-anim');
+    }
+  }
+  renderCard(target);
+  // ── 慈悲之雨：受傷後恢復50%失去的HP ──
+  if(_mercyRainActive && target.curHp>0){
+    const _mrHeal=Math.ceil(dmg*0.5);
+    doHeal(target,_mrHeal,{actor:target,noDice:true,noWarhorn:true});
+    log(`💧 慈悲之雨：[${target.name}] 恢復 ${_mrHeal} HP！`);
+  }
+   
+  // 武鬥家 金鐘罩 reflect（被動：受傷時直接觸發，不需buff）
+  if(target.name==='武鬥家' && old>0 && target.curHp<old && a && a!==target && a.side!==target.side && !opts.isRebound && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
+    const reflected=Math.max(0,dmg-target.sp);
+    if(reflected>0){
+      const _doKinjako=()=>{
+        log(`👊 [${target.name}] 金鐘罩！自動反彈 ${reflected} 傷害！`);
+        bannerFX(target,'金鐘罩！','#ffaa00',800);
+        playSfx('sfx-reflect',0.7);
+        doDmg(a,reflected,{noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
+      };
+      if(target.side==='p2'||_autoBattle){ _doKinjako(); }
+      else {
+        _showPassivePrompt({
+          hero:target, skillName:'金鐘罩', color:'#ffaa00', cost:0,
+          desc:`用特技減傷後，反彈 <span style="color:#ff9966">${reflected}</span> 傷害給攻擊者`,
+          onUse(){ _doKinjako(); },
+          onSkip(){}
+        });
+      }
+    }
+  }
+  // 占星師 轉禍為福（新版）：友方全體1回合內受到傷害時獲得2能量，每人限1次
+  if(hasBuff(target,'misfortune2') && old>0 && target.curHp<old){
+    target.buffs=target.buffs.filter(b=>b.type!=='misfortune2');
+    G.energy[target.side]=Math.min(10,G.energy[target.side]+2);
+    showPopup(target,'+2E','energy'); sndEnergy();
+    sfxPassive(target,0.6); log(`[${target.name}] 轉禍為福！能量+2！`);
+  }
+
+  // ── 被動技能觸發群（doDmg 後鉤子）──
+
+  // 同歸於盡：自己被擊倒時，攻擊者也倒下
+  if(target.curHp===0 && old>0 && a && a!==target && a.curHp>0){
+    if(target.s1.n==='同歸於盡'||target.s2.n==='同歸於盡'){
+      sfxPassive(target,0.75); log(`[${target.name}] 同歸於盡！[${a.name}] 也一同倒下！`);
+      a.curHp=0; renderCard(a); log(`💀 [${a.name}] 倒下！`);
+      // checkWin 由 startTurn 統一呼叫，不在此重複呼叫避免提前結束
+    }
+  }
+
+  // 天使守護：友方任意一人受致命傷時，留 1HP（在 deathimmune 之後才觸發，避免雙重保護衝突）
+  if(target.curHp===0 && old>0){
+    for(const h of G[target.side]){
+      if(h.curHp<=0||h===target) continue;
+      const angel_sk=(h.s1.n==='天使守護'?h.s1:h.s2.n==='天使守護'?h.s2:null);
+      if(angel_sk && G.energy[h.side]>=angel_sk.c){
+        G.energy[h.side]-=angel_sk.c;
+        target.curHp=1; renderCard(target);
+        sfxPassive(h,0.7); log(`[${h.name}] 天使守護！[${target.name}] 以1HP存活！`);
+        bannerFX(target,'天使守護','#ffe066',900);
+        h.acted=false; // 可再行動
+        break;
+      }
+    }
+  }
+
+  // 緊急治療：友方受到傷害後，持有者用 SP×50% 恢復該友方 HP（可再行動）
+  if(old>0 && target.curHp<old && target.curHp>0){
+    for(const h of G[target.side]){
+      if(h.curHp<=0||h===target) continue;
+      if(h.s1.n==='緊急治療'||h.s2.n==='緊急治療'){
+        const sk_em=h.s1.n==='緊急治療'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_em.c){
+          G.energy[h.side]-=sk_em.c;
+          const healAmt=Math.floor(h.sp*0.5);
+          doHeal(target,healAmt,{actor:h,isHeal:true,noWarhorn:true});
+          sfxPassive(h,0.65); log(`[${h.name}] 緊急治療！恢復 [${target.name}] ${healAmt}HP！`);
+          h.acted=false;
+        }
+        break;
+      }
+    }
+  }
+
+  // 黃昏詩歌：友方受傷時，持有者立即用 SP 治療並解除不利狀態（消耗能量）
+  if(old>0 && target.curHp<old && target.curHp>0){
+    for(const h of G[target.side]){
+      if(h.curHp<=0||h===target) continue;
+      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
+      if(h.s1.n==='黃昏詩歌'||h.s2.n==='黃昏詩歌'){
+        const sk_tw=h.s1.n==='黃昏詩歌'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_tw.c){
+          const _doTwilight=()=>{
+            G.energy[h.side]-=sk_tw.c;
+            doHeal(target,h.sp,{actor:h,isHeal:true,noWarhorn:true});
+            clearBadStatus(target);
+            sfxPassive(h,0.65); log(`[${h.name}] 黃昏詩歌！治療 [${target.name}] 並解除不利狀態！`);
+          };
+          if(h.side==='p2'||_autoBattle){ _doTwilight(); }
+          else {
+            _showPassivePrompt({
+              hero:h, skillName:'黃昏詩歌', color:'#ffcc88', cost:sk_tw.c,
+              desc:`治療 [${target.name}] <span style="color:#55ee88">${h.sp}</span> HP 並解除所有不利狀態`,
+              onUse(){ _doTwilight(); },
+              onSkip(){}
+            });
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // 協同攻擊：友方造成傷害時，持有者追加 ATK×50% 傷害（可再行動）
+  // 只在攻擊者是友方（不是持有者自己）時觸發
+  if(a && old>0 && dmg>0 && target.curHp>=0 && !opts.isPassiveAssist){
+    for(const h of G[a.side]){
+      if(h.curHp<=0||h===a) continue;
+      if(h.s1.n==='協同攻擊'||h.s2.n==='協同攻擊'){
+        const sk_co=h.s1.n==='協同攻擊'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_co.c && target.curHp>0){
+          G.energy[h.side]-=sk_co.c;
+          const bonusDmg=Math.max(1,Math.floor(h.atk*0.5));
+          sfxPassive(h,0.6); log(`[${h.name}] 協同攻擊！追加 ${bonusDmg} 傷害！`);
+          doDmg(target,bonusDmg,{actor:h,isPassiveAssist:true,noGuard:true});
+          h.acted=false;
+        }
+        break;
+      }
+    }
+  }
+
+  // 迴避反擊：被攻擊時 50% 閃躲並反擊（SP×50% 傷害），常駐被動不消耗能量（可再行動）
+  if(a && a.side!==target.side && old>0 && dmg>0 && !opts.isPassiveAssist && !opts.passiveEvasion){
+    if((target.s1.n==='迴避反擊'||target.s2.n==='迴避反擊') && target.curHp>0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
+      const _doEvade=()=>{
+        if(Math.random()<0.5){
+          doHeal(target,dmg,{actor:target,noDice:true,noWarhorn:true});
+          const cntDmg=Math.floor(target.sp*0.5);
+          sfxPassive(target,0.65); log(`[${target.name}] 迴避反擊成功！反擊 ${cntDmg} 傷害！`);
+          doDmg(a,cntDmg,{actor:target,passiveEvasion:true,noGuard:true});
+          target.acted=false;
+        } else { log(`[${target.name}] 迴避反擊失敗。`); }
+      };
+      if(target.side==='p2'||_autoBattle){ _doEvade(); }
+      else {
+        _showPassivePrompt({
+          hero:target, skillName:'迴避反擊', color:'#55ddff', cost:0,
+          desc:`50%機率閃躲 <span style="color:#ffcc44">${dmg}</span> 傷害並反擊 <span style="color:#ff9966">${Math.floor(target.sp*0.5)}</span> 傷害`,
+          onUse(){ _doEvade(); },
+          onSkip(){}
+        });
+      }
+    }
+  }
+
+  // ── 慈悲之雨（被動）: triggers when taking dmg ──
+  if(old>0 && target.curHp<old && target.curHp>0){
+    for(const h of G[target.side]){
+      if(h.curHp<=0) continue;
+      if(h.s1.n==='慈悲之雨'||h.s2.n==='慈悲之雨'){
+        const sk_cr=h.s1.n==='慈悲之雨'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_cr.c && !hasBuff(h,'mercyRain')){
+          G.energy[h.side]-=sk_cr.c;
+          G[h.side].filter(x=>x.curHp>0).forEach(x=>addBuff(x,'mercyRain',1));
+          log(`[${h.name}] 慈悲之雨！全體友方本回合受傷後恢復50%HP！`);
+          ringFX(h,'#88ffcc',600);
+        }
+        break;
+      }
+    }
+  }
+
+  // ── 懲戒之盾（被動）: reduce dmg by sp, reflect 2x ──
+  if(a && old>0 && dmg>0 && target.curHp>=0 && !opts.isPunishReflect){
+    if((target.s1.n==='懲戒之盾'||target.s2.n==='懲戒之盾') && target.curHp>=0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
+      const sk_ps=target.s1.n==='懲戒之盾'?target.s1:target.s2;
+      if(G.energy[target.side]>=sk_ps.c){
+        const saved=Math.min(dmg,Math.floor(target.sp*0.5));
+        const reflect=Math.max(1,(dmg-saved)*2);
+        const _doPunish=()=>{
+          G.energy[target.side]-=sk_ps.c;
+          if(saved>0) doHeal(target,saved,{actor:target,noDice:true,noWarhorn:true});
+          if(reflect>0 && a.curHp>0){
+            log(`[${target.name}] 懲戒之盾！減輕${saved}傷，反彈${reflect}給 [${a.name}]！`);
+            doDmg(a,reflect,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isPunishReflect:true});
+            ringFX(target,'#ffaa44',500); sndGuard();
+          }
+        };
+        if(target.side==='p2'||_autoBattle){ _doPunish(); }
+        else {
+          _showPassivePrompt({
+            hero:target, skillName:'懲戒之盾', color:'#ffaa44', cost:sk_ps.c,
+            desc:`減輕 <span style="color:#66ddff">${saved}</span> 傷害，並反彈 <span style="color:#ff9966">${reflect}</span> 給攻擊者`,
+            onUse(){ _doPunish(); },
+            onSkip(){}
+          });
+        }
+      }
+    }
+  }
+
+  // ── 漩渦反擊（被動）: dodge + counter ──
+  if(a && old>0 && dmg>0 && !opts.isSwirlCounter){
+    if((target.s1.n==='漩渦反擊'||target.s2.n==='漩渦反擊') && target.curHp>0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
+      const sk_sw=target.s1.n==='漩渦反擊'?target.s1:target.s2;
+      if(G.energy[target.side]>=sk_sw.c){
+        const ctrDmg=Math.max(target.sp,target.atk);
+        const _doSwirl=()=>{
+          G.energy[target.side]-=sk_sw.c;
+          target.curHp=Math.min(target.hp,target.curHp+dmg);
+          log(`[${target.name}] 漩渦反擊！迴避並反擊 ${ctrDmg}！`);
+          if(a.curHp>0) doDmg(a,ctrDmg,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isSwirlCounter:true});
+          renderCard(target); bannerFX(target,'漩渦反擊','#55ddff',900); sndDodge();
+        };
+        if(target.side==='p2'||_autoBattle){ _doSwirl(); }
+        else {
+          _showPassivePrompt({
+            hero:target, skillName:'漩渦反擊', color:'#55ddff', cost:sk_sw.c,
+            desc:`完全閃躲傷害，並反擊 <span style="color:#ff9966">${ctrDmg}</span> 傷害`,
+            onUse(){ _doSwirl(); },
+            onSkip(){}
+          });
+        }
+      }
+    }
+  }
+
+  // ── 鑑往知來（被動）: ally takes dmg → counter sp×2, can act again ──
+if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !opts.isKanWang){
+    for(const h of G[target.side]){
+      if(h.curHp<=0) continue;
+      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
+      if(h.s1.n==='鑑往知來'||h.s2.n==='鑑往知來'){
+        const _kwCost=2;
+        if(G.energy[h.side]>=_kwCost && a.curHp>0){
+          const _kwSpv=Math.floor((h.sp||0)*(1+(h.sp||0)*0.01));
+          const ctr2=_kwSpv*2;
+          const _doKan=()=>{
+            G.energy[h.side]-=_kwCost;
+            log(`[${h.name}] 鑑往知來！反擊 ${ctr2}！`);
+            doDmg(a,ctr2,{actor:h,noGuard:true,ignoreEvasion:true,noHidden:true,isKanWang:true});
+            bannerFX(h,'鑑往知來','#ff9944',800); sndRetaliate();
+            h.acted=false;
+          };
+          if(h.side==='p2'||_autoBattle){ _doKan(); }
+          else {
+            _showPassivePrompt({
+              hero:h, skillName:'鑑往知來', color:'#ff9944', cost:_kwCost,
+              desc:`友方 [${target.name}] 受傷，以特技×2 反擊 <span style="color:#ff9966">${ctr2}</span> 傷害，並可再行動`,
+              onUse(){ _doKan(); },
+              onSkip(){}
+            });
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // ── 零度空間（被動）: ally takes dmg → counter sp + freeze ──
+  if(a && old>0 && target.curHp<old && target.curHp>0 && !opts.isZeroZone){
+    for(const h of G[target.side]){
+      if(h.curHp<=0) continue;
+      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
+      if(h.s1.n==='零度空間'||h.s2.n==='零度空間'){
+        const sk_zz=h.s1.n==='零度空間'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_zz.c && a.curHp>0){
+          const _doZero=()=>{
+            G.energy[h.side]-=sk_zz.c;
+            log(`[${h.name}] 零度空間！反擊並冰凍 [${a.name}]！`);
+            doDmg(a,h.sp,{actor:h,noGuard:true,isZeroZone:true});
+            if(a.curHp>0) addStatus(a,'freeze',1);
+            iceParticles(h); bannerFX(h,'零度空間','#a8eeff',800); sndIceLance();
+          };
+          if(h.side==='p2'||_autoBattle){ _doZero(); }
+          else {
+            _showPassivePrompt({
+              hero:h, skillName:'零度空間', color:'#a8eeff', cost:sk_zz.c,
+              desc:`反擊 <span style="color:#ff9966">${h.sp}</span> 傷害並使 [${a.name}] 冰凍1回合`,
+              onUse(){ _doZero(); },
+              onSkip(){}
+            });
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // ── 完美助攻（被動）: ally deals dmg → target stun ──
+  if(a && old>0 && dmg>0 && target.curHp>0 && a.side!==target.side && !opts.isPerfectAssist){
+    for(const h of G[a.side]){
+      if(h.curHp<=0||h===a) continue;
+      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
+      if(h.s1.n==='完美助攻'||h.s2.n==='完美助攻'){
+        const sk_pa=h.s1.n==='完美助攻'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_pa.c){
+          const _doPA=()=>{
+            G.energy[h.side]-=sk_pa.c;
+            addStatus(target,'stun',1); addStatus(target,'noatk',1);
+            log(`[${h.name}] 完美助攻！[${target.name}] 被封鎖1回合！`);
+            bannerFX(target,'完美助攻','#ffcc44',800);
+          };
+          if(h.side==='p2'||_autoBattle){ _doPA(); }
+          else {
+            _showPassivePrompt({
+              hero:h, skillName:'完美助攻', color:'#ffcc44', cost:sk_pa.c,
+              desc:`使 [${target.name}] 暈眩並封印攻擊1回合`,
+              onUse(){ _doPA(); },
+              onSkip(){}
+            });
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // ── 獻祭的餘暉（被動）: on death → deal same to enemy, share last HP ──
+  if(target.curHp===0 && old>0){
+    if(target.s1.n==='獻祭的餘暉'||target.s2.n==='獻祭的餘暉'){
+      const atk_side2=a?a.side:null;
+      if(atk_side2 && atk_side2!==target.side){
+        // 對對手造成相同傷害
+        const foes3=G[atk_side2].filter(h=>h.curHp>0);
+        if(foes3.length){
+          const st=foes3[Math.floor(Math.random()*foes3.length)];
+          log(`[${target.name}] 獻祭的餘暉！對 [${st.name}] 造成 ${dmg} 傷害！`);
+          doDmg(st,dmg,{actor:target,noGuard:true,ignoreBuffs:true});
+        }
+        // 分享受傷前的HP（即 old）給HP最少的存活隊友
+        const fr3=G[target.side].filter(h=>h.curHp>0);
+        if(fr3.length){
+          const shTgt=fr3.sort((x,y)=>x.curHp-y.curHp)[0];
+          doHeal(shTgt,old,{actor:target,noDice:true,isHeal:true});
+          log(`[${target.name}] 遺留 ${old}HP 給 [${shTgt.name}]！`);
+        }
+        bannerFX(target,'獻祭的餘暉','#ffaa55',1000); sndDeathMark();
+      }
+    }
+  }
+  // ── 以牙還牙（被動）: 受到傷害時觸發，詢問是否反彈等量傷害 ──
+  if(old>0 && target.curHp<old && dmg>0 && a && a.side!==target.side && !opts.isRebound && !opts.isKanWang && !opts.isPunishReflect){
+    const _fanSkCheck = (target.s1.n==='以牙還牙'||target.s2.n==='以牙還牙');
+    if(_fanSkCheck && target.curHp>0){
+      const _fanSk = target.s1.n==='以牙還牙'?target.s1:target.s2;
+      const _fanCost = skillCost(_fanSk,target,true);
+      if(G.energy[target.side]>=_fanCost && a && a.curHp>0){
+        if(target.side==='p2' || (target.side==='p1' && _autoBattle)){
+          // AI自動發動
+          G.energy[target.side]-=_fanCost;
+          sfxPassive(target,0.7);
+          log(`[${target.name}] 以牙還牙！[${a.name}] 受到 ${dmg} 傷害！`);
+          doDmg(a,dmg,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
+        } else {
+          // 玩家詢問
+          _showFanPrompt(target, a, _fanCost, 'dmg', dmg, null);
+        }
+      }
+    }
+  }
+  // ── 小力天賦：隊友受傷時35%立即用特技恢復HP ──
+  if(target && target.curHp>0 && dmg>0 && !opts.noInuTrait){
+    const inuAllies = G[target.side].filter(h=>h!==target&&h.curHp>0&&h.name==='小力'&&!hasStatus(h,'confused'));
+    inuAllies.forEach(inu=>{
+      if(Math.random()<0.35){
+        const healAmt=Math.max(1,Math.floor(inu.sp*(1+inu.sp*0.01)));
+        doHeal(target,healAmt,{actor:inu,isHeal:true,noDice:true});
+        log(`🐕 [小力] 天賦觸發！替 [${target.name}] 恢復 ${healAmt}HP！`);
+        bannerFX(target,'小力守護！','#ffaacc',800);
+      }
+    });
+  }
+  // ── 吸血鬼天賦：造成傷害時回復50%傷害量HP ──
+  if(a && a.name==='吸血鬼' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side && a.curHp>0 && !opts.isRebound){
+    const vamp=Math.ceil(dmg*0.5);
+    doHeal(a,vamp,{actor:a,noDice:true,noWarhorn:true,isHeal:true});
+    log(`🦇 [吸血鬼] 天賦：嗜血！吸收 ${vamp} HP！`);
+  }
+
+  // ── 機械師天賦：受到傷害時20%觸電反擊 ──
+  if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<0.2){
+    addStatus(a,'para',1);
+    log(`⚙️ [機械師] 天賦：觸電反擊！[${a.name}] 麻痺1回合！`);
+    bannerFX(target,'觸電反擊！','#aaff00',900);
+    sndLightning();
+  }
+
+  // ── 武士天賦：受到傷害時40%用攻擊的50%反擊
+  // ── 武士：迴避反擊（被動）：被攻擊時100%閃躲並反擊ATK×150% ──
+  if(target.name==='武士' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && !opts.isRebound){
+    const hasEvadeCounter=(target.s1.n==='迴避反擊'||target.s2.n==='迴避反擊');
+    if(hasEvadeCounter){
+      const sk_ec=target.s1.n==='迴避反擊'?target.s1:target.s2;
+      const ec_cost=skillCost(sk_ec,target,true);
+      if(G.energy[target.side]>=ec_cost){
+        G.energy[target.side]-=ec_cost;
+        // 100%閃躲：恢復被扣的HP
+        const restored=old-target.curHp;
+        target.curHp=old;
+        renderCard(target);
+        // 反擊ATK×150%
+        const ctr=Math.max(1,Math.floor(target.atk*1.5));
+        log(`🗾 [武士] 迴避反擊！閃躲並反擊 [${a.name}] ${ctr} 傷害！（消耗 ${ec_cost} 能量）`);
+        bannerFX(target,'迴避反擊！','#ffe066',900);
+        playSfx('sfx-sword',0.8);
+        doDmg(a,ctr,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
+        return 0;
+      } else {
+        log(`🗾 [武士] 迴避反擊：能量不足（需 ${ec_cost}，剩 ${G.energy[target.side]}），無法觸發！`);
+      }
+    } else {
+      // 舊的40%反擊邏輯
+      const ctr2=Math.max(1,Math.floor(target.atk*0.5));
+      if(Math.random()<0.4){
+        log(`🗾 [武士] 天賦：武士反擊！對 [${a.name}] 造成 ${ctr2} 傷害！`);
+        bannerFX(target,'武士反擊！','#ff9944',900);
+        doDmg(a,ctr2,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
+      }
+    }
+  }
+
+  // ── 陰陽師天賦：受到技能傷害時60%由式神代替承受 ──
+  if(target.name==='陰陽師' && !hasStatus(target,'confused') && opts.isSkill && old>0 && target.curHp<old && Math.random()<0.6 && !opts.isRebound){
+    // 式神承受：恢復被扣除的HP（視為式神吸收了傷害）
+    const restored=old-target.curHp;
+    target.curHp=old;
+    renderCard(target);
+    log(`☯️ [陰陽師] 天賦：式神擋傷！式神代替承受 ${restored} 傷害！`);
+    bannerFX(target,'式神擋傷！','#cc88ff',900);
+    showPopup(target,'式神！','miss');
+    return 0;
+  }
+
+  return dmg;
+}
+function doHeal(target, rawAmt, opts={}){
+  // ── 迷心醫術（被動）: if enemy heals → redirect to our ally ──
+  if(!opts.isMirrored && !opts.isChaos){
+    const healer=opts.actor;
+    const healer_side=healer?healer.side:target.side;
+    const opp_side=healer_side==='p1'?'p2':'p1';
+    for(const h of G[opp_side]){
+      if(h.curHp<=0) continue;
+      if(h.s1.n==='迷心醫術'||h.s2.n==='迷心醫術'){
+        const sk_mm=h.s1.n==='迷心醫術'?h.s1:h.s2;
+        if(G.energy[h.side]>=sk_mm.c){
+          G.energy[h.side]-=sk_mm.c;
+          // Redirect the heal to a random ally of 迷心醫術 holder
+          const newTarget=G[opp_side].filter(x=>x.curHp>0)[0];
+          if(newTarget){
+            log(`[${h.name}] 迷心醫術！治療 [${target.name}] 被轉為治療 [${newTarget.name}]！`);
+            doHeal(newTarget,rawAmt,{...opts,isMirrored:true});
+            return 0;
+          }
+        }
+        break;
+      }
+    }
+  }
+  if(fieldHas('noheal')&&!opts.isChaos){ log(`🚫 受詛咒的神像：無法恢復HP！`); return 0; }
+  if(target && hasStatus(target,'noheal_curse')&&!opts.isChaos){ log(`🚫 不治詛咒：[${target.name}] 無法恢復HP！`); return 0; }
+  // healReduced (朱雀召喚：治療量減半)
+  if(target && hasStatus(target,'healReduced')){ rawAmt=Math.ceil(rawAmt*0.5); }
+  const a=G.activeChar||opts.actor;
+  let amt=rawAmt;
+  // ★ 技能升級倍率（只對 isHeal:true 有效）
+  if(opts.isHeal && _activeSkLvMult > 1.0) amt = Math.round(amt * _activeSkLvMult);
+  if(a&&hasBuff(a,'dmgup')&&opts.isHeal) amt+=Math.floor(a.sp*0.5);
+  // 接力傳遞：治療+50%（使用後移除）
+  if(a&&hasBuff(a,'_relay')&&opts.isHeal){
+    amt=Math.ceil(amt*1.5);
+    a.buffs=a.buffs.filter(b=>b.type!=='_relay');
+    log(`🏃 接力傳遞觸發！[${a.name}] 治療×1.5！`);
+  }
+  if(fieldHas('dice')&&!opts.noDice){
+    if(Math.random()<0.5){ amt=Math.ceil(amt*1.5); showDiceMsg('占卜水晶','治療+50%'); }
+    else { amt=Math.ceil(amt*0.5); showDiceMsg('占卜水晶','治療-50%'); }
+  }
+  if(fieldHas('chaos')&&!opts.isChaos){ doDmg(target,amt,{isChaos:true}); return 0; }
+  if(fieldHas('warhorn')&&!opts.noWarhorn) amt+=3;
+  // ── 嗜血：低血增傷（血量越低增傷越高，最高+100%）──
+  if(a && hasStatus(a,'burstVamp') && a.hp>0 && !opts.isRebound){
+    const _missingPct = Math.max(0, 1 - a.curHp/a.hp); // 0~1，血量越低越大
+    const _vampBonus = Math.floor(dmg * _missingPct);   // 最高+100%傷害
+    if(_vampBonus>0){
+      dmg += _vampBonus;
+      showPopup(a,'嗜血+'+_vampBonus,'elem-adv');
+    }
+  }
+  // 祭司長袍：治療效果+40%（寵物專家加倍）
+  const aeq=a?getEquip(a):null;
+  if(aeq && aeq.healBonus && opts.isHeal){
+    const cb=getCraftsmanBonus(a.side);
+    amt=Math.ceil(amt*(1+aeq.healBonus*cb));
+  }
+  // 草屬性：恢復+2
+  const _tge=getElemData(target&&target.element);
+  if(_tge&&_tge.bonus_healflat) amt+=_tge.bonus_healflat;
+  amt=Math.max(0,Math.ceil(amt));
+  const old=target.curHp;
+  target.curHp=Math.min(target.hp,target.curHp+amt);
+  const actual=target.curHp-old;
+  if(actual>0){
+    showPopup(target,'+'+actual,'heal'); sndHeal(); playSfx('sfx-heal',0.6);
+    // 統計：只記錄對友方（同陣營）的治療
+    const _healer=G&&(G.activeChar||opts.actor);
+    if(_healer && _healer.side === target.side) statTrack(_healer,'heal',actual);
+  }
+  renderCard(target);
+  return actual;
+}
+function _reviveFX(h){
+  const gc=document.getElementById('gc');
+  if(!gc) return;
+  const el=document.getElementById('card-'+h.side+'-'+h.pos);
+  if(!el) return;
+  const gcR=gc.getBoundingClientRect();
+  const eR=el.getBoundingClientRect();
+  const sc=gcR.width/1920;
+  const cx=(eR.left-gcR.left)/sc + eR.width/sc/2;
+  const cy=(eR.top-gcR.top)/sc + eR.height/sc/2;
+  const cw=eR.width/sc;
+  const ch=eR.height/sc;
+
+  // 1. 光柱
+  const pillar=document.createElement('div');
+  pillar.style.cssText=`position:absolute;left:${cx}px;top:${cy-ch*0.8}px;width:${cw*0.55}px;height:${ch*2.2}px;transform:translateX(-50%);background:linear-gradient(to top,rgba(255,255,200,0) 0%,rgba(255,255,180,0.55) 30%,rgba(255,255,255,0.75) 55%,rgba(200,255,220,0.5) 75%,rgba(255,255,200,0) 100%);pointer-events:none;z-index:55;filter:blur(8px);animation:revivePillar 1.6s ease-out forwards;`;
+  gc.appendChild(pillar);
+  setTimeout(()=>{ if(pillar.parentNode) pillar.remove(); },1800);
+
+  // 2. 光環三圈擴散
+  for(let i=0;i<3;i++){
+    const ring=document.createElement('div');
+    const delay=i*220;
+    ring.style.cssText=`position:absolute;left:${cx}px;top:${cy}px;width:${cw*0.65}px;height:${cw*0.65}px;border-radius:50%;transform:translate(-50%,-50%) scale(0.2);border:3px solid rgba(180,255,200,0.9);box-shadow:0 0 18px rgba(100,255,160,0.7),inset 0 0 12px rgba(200,255,220,0.3);pointer-events:none;z-index:56;animation:reviveRing 1.2s ${delay}ms ease-out forwards;`;
+    gc.appendChild(ring);
+    setTimeout(()=>{ if(ring.parentNode) ring.remove(); },1300+delay);
+  }
+
+  // 3. 卡牌白光閃現
+  flashCard(h,'rgba(220,255,230,0.85)',400);
+
+  // 4. 羽毛飄落
+  const SYMS=['🪶','✦','❋','✿','❄'];
+  const COLS=['#e0ffec','#b8f5cc','#ffffff','#ccffdd','#aaffcc','#ffffcc'];
+  for(let i=0;i<8;i++){
+    const f=document.createElement('div');
+    const sx=cx+(Math.random()-0.5)*cw*0.9;
+    const sy=cy-ch*0.5-Math.random()*60;
+    const ex=sx+(Math.random()-0.5)*55;
+    const ey=cy+ch*0.45+Math.random()*30;
+    const rot=Math.random()*360;
+    const sz=16+Math.random()*18;
+    const col=COLS[Math.floor(Math.random()*COLS.length)];
+    const dly=Math.random()*550;
+    f.textContent=SYMS[Math.floor(Math.random()*SYMS.length)];
+    f.style.cssText=`position:absolute;left:${sx}px;top:${sy}px;font-size:${sz}px;color:${col};text-shadow:0 0 10px ${col},0 0 20px rgba(180,255,200,0.8);pointer-events:none;z-index:57;transform:translate(-50%,-50%);opacity:0;`;
+    gc.appendChild(f);
+    const dur=850+Math.random()*350;
+    f.animate([
+      {opacity:0,transform:`translate(-50%,-50%) rotate(${rot}deg) scale(0.4)`},
+      {opacity:1,transform:`translate(-50%,-50%) rotate(${rot+70}deg) scale(1.1)`,offset:0.2},
+      {opacity:0.7,transform:`translate(calc(-50% + ${(ex-sx)*0.6}px),calc(-50% + ${(ey-sy)*0.6}px)) rotate(${rot+150}deg) scale(0.9)`,offset:0.7},
+      {opacity:0,transform:`translate(calc(-50% + ${ex-sx}px),calc(-50% + ${ey-sy}px)) rotate(${rot+240}deg) scale(0.5)`}
+    ],{duration:dur,delay:dly,easing:'cubic-bezier(0.2,0.8,0.3,1)',fill:'forwards'})
+    .finished.then(()=>{ if(f.parentNode) f.remove(); });
+  }
+}
+function doRevive(target, pct=0.5, full=false){
+  if(target.curHp>0){ return false; }
+  // 小力：強力隱身到期後回去休息，無法被復活
+  if(target._inuRetired){ log(`🐕 [${target.name}] 在休息中，無法被復活！`); bannerFX(target,'在休息中...','#ffaacc',800); return false; }
+  // 時空法師爆發：無法被復活
+  if(target._burstNoRevive>0){ log(`⏳ [${target.name}] 時間壓縮：無法被復活！`); bannerFX(target,'無法復活！','#cc44ff',800); return false; }
+  // 不治詛咒：復活時HP只有1
+  const reviveHp = hasStatus(target,'noheal_curse') ? 1 : (full ? target.hp : Math.max(1,Math.floor(target.hp*pct)));
+  target.curHp=reviveHp;
+  target.acted=false;
+  target.status=[]; // 清除所有不利狀態
+  target.buffs=target.buffs.filter(b=>b.type==='deathimmune'); // 只保留「死亡免疫」buff，其餘清除
+  showPopup(target,'復活','heal'); sndHeal(); playSfx('sfx-revive',0.9);
+  renderCard(target);
+  // 復活特效：光環 + 光柱 + 羽毛
+  _reviveFX(target);
+  // 崛起鬥志（被動）：被復活時提升全屬性5，只能發動一次
+  if((target.s1.n==='崛起鬥志'||target.s2.n==='崛起鬥志') && !target._risingSpiritUsed && !hasStatus(target,'confused')){
+    target._risingSpiritUsed=true;
+    target.hp+=5; target.atk+=5; target.sp+=5; target.spd+=5;
+    target.curHp=Math.min(target.curHp+5, target.hp);
+    log(`🗾 [${target.name}] 崛起鬥志！全屬性+5！`);
+    bannerFX(target,'崛起鬥志！','#ffe066',1000);
+    renderCard(target);
+  }
+  return true;
+}
+
+// ====== POPUPS ======
+// 每張卡最近一次傷害popup出現時間，用於需求2的時間間隔
+const _lastPopupTime={};
+function showPopup(h, val, type){
+  const el=document.getElementById('card-'+h.side+'-'+h.pos);
+  if(!el) return;
+  const gc=document.getElementById('gc');
+  if(!gc) return;
+  const gcR=gc.getBoundingClientRect();
+  const eR=el.getBoundingClientRect();
+  const scale=gcR.width/1920;
+  let x=(eR.left-gcR.left)/scale + eR.width/scale/2;
+  let y=(eR.top-gcR.top)/scale + eR.height/scale*(type==='heal'?0.72:0.22);
+  // 需求1：屬性加成數字偏移到右邊
+  if(type==='elem-adv'||type==='elem-dis'){
+    x += 120; // 偏移到基礎傷害右邊
+    y += 20;  // 稍微往下避免重疊
+  }
+  // 需求2：同一張卡連續傷害加0.5秒延遲
+  const cardKey=h.side+'-'+h.pos;
+  const now=Date.now();
+  let delay=0;
+  if(type==='dmg' && _lastPopupTime[cardKey] && (now-_lastPopupTime[cardKey])<600){
+    delay=500;
+  }
+  if(type==='dmg') _lastPopupTime[cardKey]=now+delay;
+  const p=document.createElement('div');
+  p.className='popup '+type;
+  p.textContent=val;
+  p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;opacity:0;transition:opacity 0.05s;';
+  gc.appendChild(p);
+  setTimeout(function(){
+    p.style.opacity='1';
+    p.style.transition='';
+  }, delay);
+  setTimeout(function(){if(p.parentNode)p.remove();},2100+delay);
+}
+function _screenShake2(){
+  const gc=document.getElementById('gc');
+  if(!gc) return;
+  // 取得當前scaleToViewport設的transform作為基底
+  const baseTransform=gc.style.transform||'';
+  gc.style.transition='transform 0.08s';
+  gc.style.transform=baseTransform+' translate(-6px,-4px) rotate(-0.4deg)';
+  setTimeout(()=>{ gc.style.transform=baseTransform+' translate(6px,4px) rotate(0.4deg)'; },80);
+  setTimeout(()=>{ gc.style.transform=baseTransform+' translate(-4px,2px) rotate(0.2deg)'; },160);
+  setTimeout(()=>{ gc.style.transform=baseTransform+' translate(4px,-2px) rotate(-0.2deg)'; },240);
+  setTimeout(()=>{
+    gc.style.transition='';
+    // 恢復正確的縮放（不能直接清空，要呼叫scaleToViewport）
+    if(typeof scaleToViewport==='function') scaleToViewport();
+  },320);
+}
+function shake(target){
+  if(target){
+    if(!target || target.curHp<=0) return;
+    const el=document.getElementById(`card-${target.side}-${target.pos}`);
+    if(el){
+      // 套在card-inner上：它沒有transition干擾
+      const inner=el.querySelector('.card-inner')||el;
+      inner.classList.remove('card-hit');
+      void inner.offsetWidth;
+      inner.classList.add('card-hit');
+      setTimeout(()=>{ inner.classList.remove('card-hit'); },520);
+      // 星星炸開特效
+      _hitStarBurst(el);
+      return;
+    }
+  }
+}
+function _hitStarBurst(cardEl){
+  const gc=document.getElementById('gc');
+  if(!gc||!cardEl) return;
+  const gcR=gc.getBoundingClientRect();
+  const eR=cardEl.getBoundingClientRect();
+  const scale=gcR.width/1920;
+  const cx=(eR.left-gcR.left)/scale + eR.width/scale/2;
+  const cy=(eR.top-gcR.top)/scale + eR.height/scale/2;
+  const stars=['★','✦','✸','✺','⭐','💥','✵'];
+  const colors=['#ffee44','#ff9922','#ff4488','#44ffcc','#ff6644','#88ddff','#ffffff'];
+  const count=10;
+  for(let i=0;i<count;i++){
+    const angle=(i/count)*Math.PI*2 + Math.random()*0.4;
+    const dist=80+Math.random()*100;
+    const star=document.createElement('div');
+    star.textContent=stars[Math.floor(Math.random()*stars.length)];
+    const sz=18+Math.random()*22;
+    const col=colors[Math.floor(Math.random()*colors.length)];
+    star.style.cssText=`position:absolute;left:${cx}px;top:${cy}px;font-size:${sz}px;color:${col};pointer-events:none;z-index:80;transform:translate(-50%,-50%);text-shadow:0 0 8px ${col},0 0 16px rgba(255,255,255,0.6);transition:none;`;
+    gc.appendChild(star);
+    const tx=Math.cos(angle)*dist;
+    const ty=Math.sin(angle)*dist;
+    // 動畫：向外炸開再淡出
+    star.animate([
+      {transform:`translate(-50%,-50%) scale(0.3)`,opacity:1},
+      {transform:`translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px)) scale(1.2)`,opacity:0.9,offset:0.4},
+      {transform:`translate(calc(-50% + ${tx*1.3}px),calc(-50% + ${ty*1.3}px)) scale(0.6)`,opacity:0}
+    ],{duration:480+Math.random()*150,easing:'cubic-bezier(0.2,0.8,0.4,1)',fill:'forwards'})
+    .finished.then(()=>{ if(star.parentNode) star.remove(); });
+  }
+}
+
+// ====== DICE OVERLAY ======
+let diceResolveCb=null;
+function showDiceMsg(title,desc){
+  // non-blocking inline log
+  log(`🎲 ${title} → ${desc}`);
+}
+function closeDice(){document.getElementById('dice-overlay').style.display='none';if(diceResolveCb){const cb=diceResolveCb;diceResolveCb=null;cb();}}
+
+// ====== MOVE SELECTION ======
+// ====== 行動確認系統 ======
+let _pendingActionType = null;
+
+function requestAction(type, btnEl){
+  const a=G.activeChar; if(!a||a.acted) return;
+  // 如果已有確認欄且是同一個按鈕→取消
+  if(_pendingActionType===type){
+    clearSel(); return;
+  }
+  // 清除之前的確認欄和選中狀態
+  const existing=document.getElementById('action-confirm-bar');
+  if(existing) existing.remove();
+  document.querySelectorAll('.abtn').forEach(b=>b.classList.remove('sel'));
+
+  // 驗證（提前）
+  if(type==='s1'||type==='s2'){
+    const sk=type==='s1'?a.s1:a.s2;
+    if(sk.p){ log(`⚙ [${sk.n}] 是被動技能`); return; }
+    const cost=skillCost(sk,a,true);
+    if(G.energy[a.side]<cost){ log('能量不足！'); return; }
+    if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
+    if(hasStatus(a,'seal')){ log(`[${a.name}] 被封印，無法使用技能！`); return; }
+    // 憐惜校犬：無法使用造成傷害的技能（攻擊型技能判斷）
+    if(hasStatus(a,'_inuPity')){
+      const _dmgSkills=['迅雷連斬','刀背擊','火焰球','地獄之火','冰凍之矛','暴風雪','連鎖閃電','麻痺落雷','日月同輝','死亡宣告','黑暗封印','瞄準射擊','天羅地網','潛行暗殺','泰山壓頂','朱雀召喚','青龍召喚','靈魂收割','召喚蝙蝠群','定時炸彈','亂槍射擊','降龍伏虎拳','三分投射','小星星變奏曲'];
+      if(_dmgSkills.includes(n)){ log(`🐕 [${a.name}] 被「憐惜校犬」影響，無法使用造成傷害的技能！`); bannerFX(a,'憐惜校犬！','#ffaacc',800); clearSel(); return; }
+    }
+    if(sk.once&&a.s2used){ log('此技能只能使用一次！'); return; }
+  }
+
+  _pendingActionType = type;
+  // 按鈕發光
+  btnEl.classList.add('sel');
+
+  // 取得按鈕名稱
+  let actionName = '此行動';
+  if(type==='atk') actionName='普通攻擊';
+  else if(type==='rest') actionName='休息';
+  else if(type==='s1') actionName=a.s1.n;
+  else if(type==='s2') actionName=a.s2.n;
+
+  // 建立確認欄
+  const bar=document.createElement('div');
+  bar.id='action-confirm-bar';
+  bar.style.cssText='display:flex;gap:8px;margin-top:6px;animation:confirmBarIn 0.18s ease-out;';
+  bar.innerHTML=`
+    <button onclick="confirmAction()" style="flex:1;padding:10px 0;font-size:24px;font-weight:700;background:linear-gradient(135deg,rgba(50,180,80,0.25),rgba(30,120,50,0.2));border:2px solid #3ec87a;color:#3ec87a;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:2px;transition:0.15s;" onmouseover="this.style.background='rgba(62,200,122,0.35)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(50,180,80,0.25),rgba(30,120,50,0.2))'">✔ 確認</button>
+    <button onclick="clearSel();updateUI();" style="flex:1;padding:10px 0;font-size:24px;font-weight:700;background:rgba(60,10,10,0.3);border:2px solid #e84040;color:#e84040;border-radius:8px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:2px;transition:0.15s;" onmouseover="this.style.background='rgba(232,64,64,0.25)'" onmouseout="this.style.background='rgba(60,10,10,0.3)'">✕ 取消</button>`;
+
+  // 插入到按鈕後面（action-panel內）
+  const panel=document.getElementById('action-panel');
+  const btns=[document.getElementById('b-atk'),document.getElementById('b-rest'),document.getElementById('b-s1'),document.getElementById('b-s2')];
+  // 找到被點的按鈕，在它後面插入確認欄
+  if(btnEl.parentNode===panel){ panel.insertBefore(bar, btnEl.nextSibling); }
+  else { panel.appendChild(bar); }
+}
+
+function confirmAction(){
+  const type=_pendingActionType;
+  if(!type) return;
+  const existing=document.getElementById('action-confirm-bar'); if(existing) existing.remove();
+  _pendingActionType=null;
+  playSfx('sfx-action-confirm', 0.85);
+  if(type==='rest'){ doRest(); }
+  else { selMove(type); }
+}
+
+function selMove(type){
+  const a=G.activeChar; if(!a||a.acted) return;
+  const _cv=document.getElementById('charm-ov'); if(_cv) _cv.remove();
+  if(G.pendingTarget||(G.selMove&&G.selMove._type===type)){clearSel();updateUI();return;}
+  clearSel();
+  if(type==='atk'){
+    G.selMove={n:'攻擊',c:0,_type:'atk'};
+    document.getElementById('b-atk').classList.add('sel');
+    setPending('enemy',t=>{
+      execAtk(a,t,a.atk);
+      
+        endAction(a,0);
+      
+    });
+  } else {
+    const sk=type==='s1'?a.s1:a.s2;
+    // 被動技能不可手動使用
+    if(sk.p){ log(`⚙ [${sk.n}] 是被動技能，條件達成時才會觸發`); return; }
+    // 統一用 displayOnly=true 計算 cost（不含魔水晶戒指隨機折扣）作為判斷與扣除基準
+    const cost=skillCost(sk,a,true);
+    if(G.energy[a.side]<cost){ log('能量不足！'); return; }
+    if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
+    if(hasStatus(a,'seal')){ log(`[${a.name}] 被封印，無法使用技能！`); return; }
+    if(sk.once&&a.s2used){ log('此技能只能使用一次！'); return; }
+    G.selMove=sk;
+    document.getElementById(type==='s1'?'b-s1':'b-s2').classList.add('sel');
+    execSkill(a,sk,cost,type);
+  }
+}
+function clearSel(){
+  clearTurnTimer();
+  document.querySelectorAll('.abtn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.ibox').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
+  G.selMove=null; G.selItem=null; G.pendingTarget=null; pendingCb=null;
+  document.getElementById('item-ops').style.display='none';
+  // 重置裝備/使用按鈕狀態
+  const useBtn=document.getElementById('iop-use-btn');   if(useBtn)  useBtn.style.display='';
+  const eqBtn =document.getElementById('iop-equip-btn'); if(eqBtn)   eqBtn.style.display='none';
+  hidePassiveBtns();
+  restoreActionBtns();
+  // 移除確認欄
+  const _ac=document.getElementById('action-confirm-bar'); if(_ac) _ac.remove();
+  _pendingActionType=null;
+}
+
+function execAtk(actor, target, dmg, opts={}){
+  log(`[${actor.name}] 普通攻擊 [${target.name}]`);
+  showActionLabel(actor, '⚔ 普通攻擊', '#ffcc44');
+  actor._actionLabel = '⚔ 普通攻擊！';
+  G.lastSkill=null;
+  showActionLabel(actor, '⚔ 普通攻擊！');
+    // ── 普通攻擊視覺特效 ──
+  (function(){
+    ensureFxLayer();
+    var rc_a=cardRect(actor), rc_t=cardRect(target);
+    // 刀劍/拳擊/射擊 依職業類型
+    var weaponFx={
+      '劍士':function(){playSfx('sfx-sword',0.7);if(rc_a&&rc_t)beamFX(actor,target,'#ffd700',180);setTimeout(function(){if(rc_t){flashCard(target,'rgba(255,200,50,0.6)',120);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#ffcc55',size:5,spread:35,duration:350});}},100);},
+      '刺客': function(){playSfx('sfx-sword',0.6);if(rc_t){flashCard(target,'rgba(180,50,200,0.5)',150);spawnParticles(rc_t.x,rc_t.y,{count:7,color:'#cc44ff',size:4,spread:30,duration:300});}},
+      '守衛': function(){playSfx('sfx-sword',0.65);if(rc_a&&rc_t)beamFX(actor,target,'#4a9eff',160);if(rc_t)flashCard(target,'rgba(60,130,255,0.5)',150);},
+      '武鬥家':function(){playSfx('sfx-punch',0.75);if(rc_t){flashCard(target,'rgba(255,140,0,0.65)',180);spawnParticles(rc_t.x,rc_t.y,{count:10,color:'#ff8800',size:6,spread:40,duration:400});}},
+      '大力士':function(){playSfx('sfx-punch',0.8);if(rc_t){flashCard(target,'rgba(200,100,0,0.75)',200);spawnParticles(rc_t.x,rc_t.y,{count:14,color:'#cc6600',size:8,spread:50,duration:450});flashScreen('rgba(150,80,0,1)',100);}},
+      '神射手':function(){playSfx('sfx-shoot',0.6);if(rc_a&&rc_t)beamFX(actor,target,'#ffffff',120);if(rc_t){flashCard(target,'rgba(255,255,255,0.5)',100);spawnParticles(rc_t.x,rc_t.y,{count:5,color:'#ffffff',size:3,spread:25,duration:250});}},
+      '警長':  function(){playSfx('sfx-shoot',0.65);playSfx('sfx-gunshot',0.7);if(rc_t){flashCard(target,'rgba(255,240,0,0.5)',120);spawnParticles(rc_t.x,rc_t.y,{count:6,color:'#ffdd00',size:4,spread:30,duration:300});}flashScreen('rgba(255,220,0,1)',60);},
+      '機械師':function(){playSfx('sfx-shoot',0.6);playSfx('sfx-gunshot',0.75);if(rc_t){flashCard(target,'rgba(180,180,180,0.5)',120);spawnParticles(rc_t.x,rc_t.y,{count:6,color:'#aaaaaa',size:4,spread:30,duration:300});}flashScreen('rgba(200,200,200,1)',50);},
+      '神偷':  function(){playSfx('sfx-sword',0.55);if(rc_a&&rc_t)beamFX(actor,target,'#cc88ff',150);},
+      '火法師':function(){sndFireball();if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:10,color:'#ff6600',size:6,spread:40,duration:350,rise:true,gravity:-0.4});flashCard(target,'rgba(255,80,0,0.5)',150);}},
+      '冰法師':function(){sndIceLance();if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#a8eeff',size:5,spread:35,duration:400});flashCard(target,'rgba(100,220,255,0.45)',180);}},
+      '雷法師':function(){sndLightning();if(rc_a&&rc_t)lightningFX(actor,target,'#aaff00',250);if(rc_t)flashCard(target,'rgba(150,255,50,0.5)',150);},
+      '光法師':function(){sndFlash();if(rc_t){flashCard(target,'rgba(255,255,200,0.65)',150);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#ffffaa',size:4,spread:35,duration:350});}},
+      '暗法師':function(){sndDarkSeal();if(rc_t){flashCard(target,'rgba(80,0,100,0.6)',180);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#9944cc',size:5,spread:35,duration:380});}},
+      '祭司':  function(){playSfx('sfx-sword',0.5);if(rc_t){flashCard(target,'rgba(255,240,100,0.35)',150);spawnParticles(rc_t.x,rc_t.y,{count:5,color:'#ffee88',size:3,spread:25,duration:300});}},
+      '聖騎士':function(){playSfx('sfx-sword',0.65);if(rc_a&&rc_t)beamFX(actor,target,'#ffe066',160);if(rc_t){flashCard(target,'rgba(255,220,80,0.5)',150);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#ffe066',size:5,spread:35,duration:350});}},
+      '吟遊詩人':function(){playSfx('sfx-sword',0.45);if(rc_t){flashCard(target,'rgba(255,100,200,0.35)',150);spawnParticles(rc_t.x,rc_t.y,{count:6,color:'#ff88cc',size:4,spread:30,duration:300});}},
+      '舞者':  function(){playSfx('sfx-sword',0.5);if(rc_a&&rc_t)beamFX(actor,target,'#ff55cc',140);if(rc_t){flashCard(target,'rgba(255,80,180,0.4)',130);}},
+      '煉金術師':function(){playSfx('sfx-sword',0.55);if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:7,color:'#55ffcc',size:4,spread:30,duration:300});}},
+      '軍師':  function(){playSfx('sfx-sword',0.5);if(rc_a&&rc_t)beamFX(actor,target,'#66ccff',150);},
+      '占星師':function(){playSfx('sfx-fantasy',0.55);if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#cc99ff',size:4,spread:35,duration:350});}},
+      '凡人':  function(){playSfx('sfx-sword',0.55);if(rc_t){flashCard(target,'rgba(200,200,200,0.4)',120);}},
+    };
+    var fx=weaponFx[actor.name];
+    if(fx) fx();
+    else { playSfx('sfx-normalatk',0.7); if(rc_t){flashCard(target,'rgba(255,255,255,0.35)',120);} }
+    // ── 元素命中特效 ──
+    if(actor.element && rc_t){
+      var elemColors={'fire':'#ff6600','water':'#4488ff','grass':'#44ee44','ice':'#a8eeff','thunder':'#aaff00','light':'#ffffaa','dark':'#9944cc','wind':'#aaffcc','earth':'#cc8844'};
+      var ec=elemColors[actor.element];
+      if(ec) setTimeout(function(){spawnParticles(rc_t.x,rc_t.y,{count:6,color:ec,size:4,spread:28,duration:350,rise:true,gravity:-0.2});},150);
+    }
+  })();
+  // 運球狀態：普攻變2次
+  let _dribbleExtra = false;
+  if(hasBuff(actor,'dribble') && !opts?._dribble2nd){
+    _dribbleExtra = true;
+  }
+  // 籃球隊員天賦：友方普攻時50%暴擊+50%傷害
+  let _finalDmg = dmg;
+  const _bballLeader = actor.side ? G[actor.side].find(h=>h.curHp>0&&h.name==='籃球隊員'&&h!==actor) : null;
+  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<0.5){
+    _finalDmg = Math.floor(_finalDmg * 1.5);
+    showPopup(actor,'🏀暴擊！','energy');
+    bannerFX(actor,'暴擊！','#ff8800',600);
+    log(`🏀 [籃球隊員] 天賦：隊友暴擊！[${actor.name}] 傷害×1.5！`);
+  }
+  doDmg(target, _finalDmg, {actor, ignoreBuffs: !!(actor._burstMirror)});
+  // 運球第二擊
+  if(_dribbleExtra && target.curHp>0){
+    _pSetTimeout(()=>{
+      if(actor.curHp>0 && target.curHp>0){
+        log(`🏀 [運球] ${actor.name} 二連擊！`);
+        execAtk(actor, target, actor.atk, {_dribble2nd:true});
+      }
+    }, 300);
+  }
+  // ====== 天賦觸發 ======
+  if(actor.curHp<=0) return;
+  // 疑惑狀態：特質失效
+  if(hasStatus(actor,'confused')) return;
+  const name=actor.name;
+  // 天賦觸發標籤 helper（在 bannerFX 之外再加卡牌標籤）
+  function _traitLabel(text){ showActionLabel(actor, '✦ '+text+'！'); }
+  // 劍士：30%再行動1次
+  if(name==='劍士' && Math.random()<0.3){
+    log(`⚔️ [劍士] 天賦：連擊！再行動1次！`);
+    _traitLabel('連擊');
+    bannerFX(actor,'連擊！','#ffcc44',900);
+    actor._traitReAct = true; // 告知 endAction 不要設 acted=true
+    _pSetTimeout(()=>{
+      if(actor.curHp>0){
+        actor.acted=false;
+        updateUI();
+        if(actor.side==='p1'){ document.getElementById('action-panel').style.display='block'; }
+        else { aiAct(actor); }
+      }
+    }, 400);
+    return;
+  }
+
+  // 祭司：60%恢復HP最低隊友25%HP
+  if(name==='祭司' && Math.random()<0.6 && target.curHp>0){
+    const allies=G[actor.side].filter(h=>h.curHp>0);
+    if(allies.length){
+      const lowest=allies.sort((a,b)=>a.curHp/a.hp - b.curHp/b.hp)[0];
+      const healAmt=Math.max(1,Math.floor(lowest.hp*0.25));
+      doHeal(lowest,healAmt,{actor,isHeal:true,noDice:true});
+      log(`✨ [祭司] 天賦：聖光庇護！恢復 [${lowest.name}] ${healAmt}HP！`);
+      showActionLabel(actor,'✨ 聖光庇護 天賦');
+      bannerFX(lowest,'聖光庇護','#ffe066',900);
+    }
+  }
+
+  // 火法師：60%消除目標有利狀態
+  if(name==='火法師' && Math.random()<0.6 && target.curHp>0){
+    if(target.buffs.length>0){
+      clearGoodBuffs(target);
+      log(`🔥 [火法師] 天賦：業火焚燒！消除 [${target.name}] 有利狀態！`);
+      showActionLabel(actor,'🔥 業火焚燒 天賦');
+      bannerFX(target,'業火焚燒','#ff6600',900);
+    }
+  }
+
+  // 冰法師：60%緩速1回合（速度-50%）
+  if(name==='冰法師' && Math.random()<0.6 && target.curHp>0){
+    if(!hasStatus(target,'traitSlow')){
+      const orig=target.spd;
+      target.spd=Math.max(1,Math.floor(target.spd*0.5));
+      target.status=target.status.filter(s=>s.type!=='traitSlow'); target.status.push({type:'traitSlow',dur:1,_origSpd:orig});
+      log(`❄️ [冰法師] 天賦：寒冰凝滯！[${target.name}] 速度-50%！`);
+      showActionLabel(actor,'❄ 寒冰凝滯 天賦');
+      bannerFX(target,'速度-50%','#a8eeff',900);
+      renderCard(target);
+    }
+  }
+
+  // 雷法師：60%對全體敵人造成等量傷害
+  if(name==='雷法師' && Math.random()<0.6 && target.curHp>0){
+    const foes=G[actor.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0&&h!==target);
+    if(foes.length){
+      log(`⚡ [雷法師] 天賦：連鎖電弧！對全體敵人造成 ${dmg} 傷害！`);
+      foes.forEach(f=>{ doDmg(f,dmg,{actor,noGuard:true}); });
+      showActionLabel(actor,'⚡ 連鎖電弧 天賦');
+      bannerFX(actor,'連鎖電弧','#aaff00',900);
+    }
+  }
+
+  // 光法師：60%失明1回合
+  if(name==='光法師' && Math.random()<0.6 && target.curHp>0){
+    addStatus(target,'forecast',1);
+    log(`☀️ [光法師] 天賦：炫目閃光！[${target.name}] 失明1回合！`);
+    showActionLabel(actor,'☀ 炫目閃光 天賦');
+    bannerFX(target,'失明','#ffffaa',900);
+  }
+
+  // 暗法師：60%封印1回合
+  if(name==='暗法師' && Math.random()<0.6 && target.curHp>0){
+    addStatus(target,'seal',1);
+    log(`🌑 [暗法師] 天賦：黑暗咒縛！[${target.name}] 封印1回合！`);
+    showActionLabel(actor,'🌑 黑暗咒縛 天賦');
+    bannerFX(target,'封印','#cc44ff',900);
+  }
+
+  // 神射手：60%放置陷阱1回合（自己無法被普通攻擊）
+  if(name==='神射手' && Math.random()<0.6){
+    addBuff(actor,'trapShield',1);
+    log(`🏹 [神射手] 天賦：佈下陷阱！1回合內無法被普通攻擊！`);
+    showActionLabel(actor,'🏹 佈下陷阱 天賦');
+    bannerFX(actor,'陷阱佈置','#cc8800',900);
+  }
+
+  // 神偷：50%奪取裝備或有利狀態
+  if(name==='神偷' && Math.random()<0.5 && target.curHp>0){
+    // 優先奪有利狀態，否則奪裝備
+    const stolenBuff = target.buffs && target.buffs.length ? target.buffs.splice(Math.floor(Math.random()*target.buffs.length),1)[0] : null;
+    if(stolenBuff){
+      actor.buffs.push({...stolenBuff, dur:Math.max(stolenBuff.dur,1)});
+      log(`🗡️ [神偷] 天賦：掠奪！奪取 [${target.name}] 的狀態 [${buffName(stolenBuff.type)||stolenBuff.type}]！`);
+      showActionLabel(actor,'🗡️ 狀態掠奪 天賦');
+      bannerFX(actor,'狀態掠奪！','#ffcc00',900);
+      renderCard(target); renderCard(actor);
+    } else if(target.equip){
+      const oldEq=target.equip;
+      const eqData=EQUIP_DB.find(e=>e.n===oldEq.n);
+      if(eqData&&eqData.onRemove) eqData.onRemove(target);
+      target.equip=null;
+      if(actor.equip){ const prevEq=EQUIP_DB.find(e=>e.n===actor.equip.n); if(prevEq&&prevEq.onRemove)prevEq.onRemove(actor); }
+      actor.equip={n:oldEq.n};
+      if(eqData&&eqData.onEquip) eqData.onEquip(actor);
+      log(`🗡️ [神偷] 天賦：掠奪！奪取 [${target.name}] 的寵物 [${oldEq.n}]！`);
+      showActionLabel(actor,'🗡️ 寵物掠奪 天賦');
+      bannerFX(actor,'寵物掠奪！','#ffcc00',900);
+      renderCard(target); renderCard(actor);
+    }
+  }
+
+  // 刺客：60%中毒2回合
+  if(name==='刺客' && Math.random()<0.6 && target.curHp>0){
+    addStatus(target,'poison',2);
+    target._poisonAmt=Math.max(1,Math.floor(target.hp*0.1));
+    log(`👁️ [刺客] 天賦：淬毒之刃！[${target.name}] 中毒2回合！`);
+    showActionLabel(actor,'👁️ 淬毒之刃 天賦');
+    bannerFX(target,'中毒','#88ff22',900);
+  }
+
+  // 吟遊詩人：60%恢復友方全體10%HP
+  if(name==='吟遊詩人' && Math.random()<0.6){
+    const allies=G[actor.side].filter(h=>h.curHp>0);
+    allies.forEach(h=>{ doHeal(h,Math.max(1,Math.floor(h.hp*0.1)),{actor,isHeal:true,noDice:true}); });
+    log(`🪕 [吟遊詩人] 天賦：鼓舞樂章！友方全體恢復10%HP！`);
+    showActionLabel(actor,'🪕 鼓舞樂章 天賦');
+    bannerFX(actor,'鼓舞樂章','#ff88cc',900);
+  }
+
+  // 舞者：60%虛弱1回合（攻擊和特技-50%）
+  if(name==='舞者' && Math.random()<0.6 && target.curHp>0){
+    if(!hasStatus(target,'traitWeak')){
+      const origAtk=target.atk, origSp=target.sp;
+      target.atk=Math.max(1,Math.floor(target.atk*0.5));
+      target.sp=Math.max(1,Math.floor(target.sp*0.5));
+      target.status=target.status.filter(s=>s.type!=='traitWeak'); target.status.push({type:'traitWeak',dur:1,_origAtk:origAtk,_origSp:origSp});
+      log(`💃 [舞者] 天賦：魅惑舞步！[${target.name}] 攻擊和特技-50%！`);
+      showActionLabel(actor,'💃 魅惑舞步 天賦');
+      bannerFX(target,'虛弱','#ff55cc',900);
+      renderCard(target);
+    }
+  }
+
+  // 警長：60%目標行動退到最後
+  if(name==='警長' && Math.random()<0.6 && target.curHp>0){
+    addStatus(target,'spddown',1);
+    // 擊退行動順序：設為極低spd讓本回合排最後
+    if(!target._pushBackSpd){ target._pushBackSpd=target.spd; }
+    target.spd=-9999;
+    log(`🔫 [警長] 天賦：擊退 [${target.name}] 的行動順序！`);
+    log(`🔫 [警長] 天賦：威懾震懾！[${target.name}] 行動順序退到最後！`);
+    showActionLabel(actor,'🔫 威懾震懾 天賦');
+    bannerFX(target,'退到最後','#ffcc44',900);
+  }
+
+  // 軍師：60%疑惑1回合（天賦失效）
+  if(name==='軍師' && Math.random()<0.6 && target.curHp>0){
+    addStatus(target,'confused',1);
+    log(`📜 [軍師] 天賦：迷惑戰術！[${target.name}] 疑惑1回合，天賦失效！`);
+    showActionLabel(actor,'📜 迷惑戰術 天賦');
+    bannerFX(target,'疑惑','#88aaff',900);
+  }
+
+  // 學者：60%奪取對手1能量
+  if(name==='學者' && Math.random()<0.6 && target.curHp>0){
+    const oppSide=actor.side==='p1'?'p2':'p1';
+    if(G.energy[oppSide]>0){
+      G.energy[oppSide]=Math.max(0,G.energy[oppSide]-1);
+      G.energy[actor.side]=Math.min(10,G.energy[actor.side]+1);
+      log(`📚 [學者] 天賦：知識竊取！奪取對手1能量！`);
+      showActionLabel(actor,'📚 奪取能量 天賦');
+      bannerFX(actor,'奪取能量！','#88aaff',900);
+      showPopup(actor,'+1E','energy');
+    }
+  }
+
+  // 時空法師：60%使目標1回合內無法獲得治療和有利狀態
+  if(name==='時空法師' && Math.random()<0.6 && target.curHp>0){
+    addStatus(target,'noheal_curse',1);
+    addStatus(target,'nosell',1);
+    log(`⏳ [時空法師] 天賦：時間封印！[${target.name}] 1回合無法獲得治療和有利狀態！`);
+    showActionLabel(actor,'⏳ 時間封印 天賦');
+    bannerFX(target,'時間封印','#aaddff',900);
+  }
+
+  // 吸血鬼：造成傷害時恢復50%傷害量HP（在 doDmg 回傳後處理）
+  // ── 注意：吸血鬼特質在 doDmg hook 中處理（見下方），此處不重複
+
+  // 直笛團員：普攻時50%使目標狂亂1回合
+  if(name==='直笛團員' && Math.random()<0.5 && target.curHp>0){
+    addStatus(target,'berserk',1);
+    _traitLabel('魔笛狂亂');
+    log(`🎵 [直笛團員] 天賦：魔笛旋律！[${target.name}] 陷入狂亂1回合！`);
+    bannerFX(target,'狂亂！','#ff55cc',900);
+  }
+  // 田徑隊員：行動時60%使未行動友方提前到下一個
+  if(name==='田徑隊員' && Math.random()<0.6){
+    const _sortFn3=fieldHas('reverse')?(x,y)=>x.spd-y.spd:(x,y)=>y.spd-x.spd;
+    const _nextAlly2=G[actor.side].filter(h=>h.curHp>0&&h!==actor&&!h.acted).sort(_sortFn3)[0];
+    if(_nextAlly2){
+      // 提前行動：臨時大幅提升速度排序（加1000確保排在最前）
+      _nextAlly2._sprintNext=true;
+      _nextAlly2._origSpdTmp=_nextAlly2.spd;
+      _nextAlly2.spd+=1000;
+      _traitLabel('接力！');
+      bannerFX(_nextAlly2,'接力！立即行動！','#44ffcc',900);
+      log(`🏃 [田徑隊員] 天賦！[${_nextAlly2.name}] 接力提前行動！`);
+      // 下次 startTurn 後還原速度（用 setTimeout 在本回合結束後執行）
+      _pSetTimeout(()=>{
+        if(_nextAlly2._sprintNext){
+          _nextAlly2.spd=_nextAlly2._origSpdTmp||_nextAlly2.spd-1000;
+          delete _nextAlly2._sprintNext; delete _nextAlly2._origSpdTmp;
+          renderCard(_nextAlly2);
+        }
+      }, 1200);
+    }
+  }
+  updateUI();
+}
+
+
+function _showCharmPicker(dancer, victim, cost){
+  var ov=document.getElementById('charm-ov');
+  if(ov) ov.remove();
+  ov=document.createElement('div');
+  ov.id='charm-ov';
+  ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,0.86);z-index:310;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:Share Tech Mono,monospace;';
+  var sk1Disabled=victim.s1.p;
+  var sk2Disabled=victim.s2.p;
+  var ek1=G.energy[victim.side]<skillCost(victim.s1,victim,true);
+  var ek2=G.energy[victim.side]<skillCost(victim.s2,victim,true);
+  // Classify skills: heal/buff type → applied to dancer's allies; attack → to dancer's enemies
+  var healSkillSet=new Set(['救贖神光','治癒之風','神聖鎚擊','聖殿領域','天堂樂章','熱情之舞',
+    '挺身守護','道具複製','賢者之石','金鐘罩','急速閃躲','隱身療傷',
+    '不動如山','以牙還牙','轉禍為福','增強術','能力轉換','元素增幅',
+    '兵貫神速之計','極限閃光']);
+  function isHealSkill(sk){ return healSkillSet.has(sk.n); }
+  ov.innerHTML='<div style="font-size:20px;color:#ff77dd;letter-spacing:4px">💃 魅惑之舞</div>'
+   +'<div style="font-size:16px;color:#fff">操控 '+victim.av+' '+victim.name+' 使用：</div>'
+   +'<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:860px">'
+   +'<button id="cm0" style="background:rgba(20,20,40,0.9);border:2px solid #ff55cc;border-radius:10px;padding:14px 18px;cursor:pointer;color:#fff;font-family:Share Tech Mono,monospace;min-width:200px;text-align:left"><div style="font-size:18px;font-weight:500;color:#ff88ee;margin-bottom:4px">普通攻擊</div><div style="font-size:12px;color:#aaa">ATK '+victim.atk+' → 攻擊施展者的敵人</div></button>'
+   +'<button id="cm1" style="background:rgba(20,20,40,0.9);border:2px solid #ff55cc;border-radius:10px;padding:14px 18px;cursor:pointer;color:#fff;font-family:Share Tech Mono,monospace;min-width:200px;text-align:left;'+(sk1Disabled||ek1?'opacity:0.4;pointer-events:none':'')+'">'
+   +'<div style="font-size:18px;font-weight:500;color:#ff88ee;margin-bottom:4px">'+victim.s1.n+' '+(isHealSkill(victim.s1)?'💚':'⚔')+'</div>'
+   +'<div style="font-size:12px;color:#aaa">🔷'+victim.s1.c+' — '+(isHealSkill(victim.s1)?'作用於我方':'作用於敵方')+'</div></button>'
+   +'<button id="cm2" style="background:rgba(20,20,40,0.9);border:2px solid #ff55cc;border-radius:10px;padding:14px 18px;cursor:pointer;color:#fff;font-family:Share Tech Mono,monospace;min-width:200px;text-align:left;'+(sk2Disabled||ek2?'opacity:0.4;pointer-events:none':'')+'">'
+   +'<div style="font-size:18px;font-weight:500;color:#ff88ee;margin-bottom:4px">'+victim.s2.n+' '+(isHealSkill(victim.s2)?'💚':'⚔')+'</div>'
+   +'<div style="font-size:12px;color:#aaa">🔷'+victim.s2.c+' — '+(isHealSkill(victim.s2)?'作用於我方':'作用於敵方')+'</div></button>'
+   +'</div><div style="font-size:12px;color:#888">⚔ = 攻擊/控制技能作用於施展者的敵方 | 💚 = 治療/支援技能作用於我方</div>';
+  document.getElementById('gc').appendChild(ov);
+  function doClose(){ var o=document.getElementById('charm-ov'); if(o)o.remove(); }
+  var myEnemies=G[dancer.side==='p1'?'p2':'p1'].filter(function(h){return h.curHp>0;});
+  var myAllies=G[dancer.side].filter(function(h){return h.curHp>0;});
+  function execCharm(sk, isSelf){
+    // isSelf=true: heal/buff skill → apply to dancer's allies
+    // isSelf=false: attack skill → apply to dancer's enemies
+    if(isSelf){
+      var t=myAllies.length?myAllies[Math.floor(Math.random()*myAllies.length)]:null;
+      if(!t){ log('['+victim.name+'] 魅惑失敗：無我方目標'); endAction(dancer,cost); return; }
+      log('['+victim.name+'] 受魅惑，對 ['+t.name+'] 使用支援技能 ['+sk.n+']！');
+      G.energy[victim.side]=Math.max(0,G.energy[victim.side]-skillCost(sk,victim,true));
+      doHeal(t, victim.sp, {actor:victim, isHeal:true});
+      endAction(dancer,cost);
+    } else {
+      var foe=myEnemies.length?myEnemies[Math.floor(Math.random()*myEnemies.length)]:null;
+      if(!foe){ log('['+victim.name+'] 魅惑失敗：無敵方目標'); endAction(dancer,cost); return; }
+      log('['+victim.name+'] 受魅惑，對 ['+foe.name+'] 使用攻擊技能 ['+sk.n+']！');
+      G.energy[victim.side]=Math.max(0,G.energy[victim.side]-skillCost(sk,victim,true));
+      doDmg(foe, victim.sp, {actor:victim});
+      endAction(dancer,cost);
+    }
+  }
+  document.getElementById('cm0').onclick=function(){
+    doClose();
+    var foe=myEnemies.length?myEnemies[Math.floor(Math.random()*myEnemies.length)]:null;
+    if(foe){ log('['+victim.name+'] 受魅惑普攻 ['+foe.name+']！'); doDmg(foe,victim.atk,{actor:victim}); }
+    endAction(dancer,cost);
+  };
+  document.getElementById('cm1').onclick=function(){
+    if(sk1Disabled||ek1) return;
+    doClose();
+    execCharm(victim.s1, isHealSkill(victim.s1));
+  };
+  document.getElementById('cm2').onclick=function(){
+    if(sk2Disabled||ek2) return;
+    doClose();
+    execCharm(victim.s2, isHealSkill(victim.s2));
+  };
+}
+
+function execSkill(a, sk, cost, stype){
+  const n=sk.n;
+  // ★ 設定目前技能升級等級倍率
+  _activeSkLv = (_heroSkillLevels&&_heroSkillLevels[a.name]&&stype) ? ((_heroSkillLevels[a.name][stype])||0) : 0;
+  _activeSkLvMult = 1.0 + _activeSkLv * 0.10;
+  a._actionLabel = n+'！';
+  G.lastSkill={...sk,actor:a};
+  showActionLabel(a, (sk.p?'⚙ ':'')+n, sk.p?'#ffaa44':'#66ddff');
+  // ── 特技加成：每1點特技提升1%技能威力 ──
+  // spv(a) 回傳加成後的特技值供技能計算使用
+  function spv(actor){ return Math.floor((actor.sp||0) * (1 + (actor.sp||0)*0.01)); }
+   
+  // ====== 劍士 ======
+  if(n==='迅雷連斬'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 迅雷連斬！`);
+      playSkillFX('迅雷連斬',a,[t]);
+      doDmg(t,a.atk,{actor:a,isSkill:true});
+      setTimeout(()=>{if(t.curHp>0) doDmg(t,a.atk,{actor:a,isSkill:true}); updateUI();},300);
+      endAction(a,cost);
+    });
   } else if(n==='刀背擊'){
     setPending('enemy',t=>{
       log(`[${a.name}] 刀背擊 [${t.name}]！`);
@@ -9368,24 +11645,18 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     setPending('ally_or_dead',t=>{
       log(`[${a.name}] 救贖神光！`);
       playSkillFX('救贖神光',a,[t]);
-      if(t.curHp===0){ doRevive(t,0.01); doHeal(t,Math.floor(spv(a)*1.5*_activeSkLvMult),{actor:a,isHeal:true}); log(`復活並治癒 [${t.name}]`); }
-      else { doHeal(t,Math.floor(spv(a)*1.5*_activeSkLvMult),{actor:a,isHeal:true}); }
-      clearBadStatus(t);
-      addBuff(t,'statusImmune',_skLvDur(1,3));
-      addBuff(t,'ctrlImmune',_skLvDur(1,3));
-      bannerFX(t,'淨化+免疫！','#ffe066',900);
+      if(t.curHp===0){ doRevive(t,0.5); log(`復活 [${t.name}]`); }
+      else { doHeal(t,Math.floor(spv(a)*1.25),{actor:a,isHeal:true}); }
+      clearBadStatus(t); // removes all bad statuses including deathmark
       endAction(a,cost);
     });
   } else if(n==='治癒之風'){
-    log(`[${a.name}] 治癒之風！全體友方治療並淨化！`);
-    const _zcfAll=G[a.side].filter(h=>h.curHp>=0);
-    const _zcfAlive=G[a.side].filter(h=>h.curHp>0);
-    playSkillFX('治癒之風',a,_zcfAlive);
-    _zcfAll.forEach(t=>{
-      if(t.curHp===0){ doRevive(t,0.01); }
-      doHeal(t,Math.floor(spv(a)*1.0*_activeSkLvMult),{actor:a,isHeal:true});
-      clearBadStatus(t);
-      bannerFX(t,'淨化！','#aaffcc',700);
+    log(`[${a.name}] 治癒之風！全體友方治療！`);
+    const targets=G[a.side].filter(h=>h.curHp>0);
+    playSkillFX('治癒之風',a,targets);
+    targets.forEach(t=>{
+      doHeal(t,Math.floor(spv(a)*0.8),{actor:a,isHeal:true});
+      addBuff(t,'statusImmune',1);
     });
     endAction(a,cost);
   }
@@ -9638,17 +11909,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     sleepAllFoes.forEach(h=>{ if(Math.random()<0.6) addStatus(h,'sleep',2); });
     endAction(a,cost);
   } else if(n==='天堂樂章'){
-    log(`[${a.name}] 天堂樂章！全體友方治療+護盾！`);
+    log(`[${a.name}] 天堂樂章！全體友方治療！`);
     const alive=G[a.side].filter(h=>h.curHp>0);
     playSkillFX('天堂樂章',a,alive);
-    alive.forEach(h=>{
-      doHeal(h,Math.floor(spv(a)*0.75*_activeSkLvMult),{actor:a,isHeal:true});
-      const _shieldVal=Math.round(20*_activeSkLvMult);
-      const _bs=h.buffs.find(b=>b.type==='bigshield');
-      if(_bs) _bs._hp=(_bs._hp||0)+_shieldVal;
-      else h.buffs.push({type:'bigshield',dur:99,_hp:_shieldVal});
-      bannerFX(h,'護盾+'+_shieldVal,'#88ccff',700);
-    });
+    alive.forEach(h=>doHeal(h,Math.floor(spv(a)*0.75),{actor:a,isHeal:true}));
     const dead=G[a.side].filter(h=>h.curHp===0);
     if(dead.length){
       bannerFX(a,'選擇復活對象','#88ffcc',800);
@@ -10556,11 +12820,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
 
   // ── 吸血鬼：靈魂收割 ──
   else if(n==='靈魂收割'){
-    const _reapThreshold = 10 + (_activeSkLv||0); // ★ 每升1級+1HP門檻
-    const _reapTargets=G[a.side==='p1'?'p2':'p1'].concat(G[a.side]).filter(h=>h.curHp>0&&h.curHp<_reapThreshold);
-    if(!_reapTargets.length){ log(`[${a.name}] 靈魂收割：無符合目標（HP<${_reapThreshold}）！`); clearSel(); return; }
+    const _reapTargets=G[a.side==='p1'?'p2':'p1'].concat(G[a.side]).filter(h=>h.curHp>0&&h.curHp<10);
+    if(!_reapTargets.length){ log(`[${a.name}] 靈魂收割：無符合目標（HP<10）！`); clearSel(); return; }
     setPending('any',t=>{
-      if(t.curHp<=0||t.curHp>=_reapThreshold){ log(`目標不符合（需HP未滿${_reapThreshold}）！`); clearSel(); return; }
+      if(t.curHp<=0||t.curHp>=10){ log('目標不符合（需HP未滿10）！'); clearSel(); return; }
       log(`[${a.name}] 靈魂收割！[${t.name}] 強制倒下！`);
       playSkillFX('死亡宣告',a,[t]);
       const stolen=t.curHp;
@@ -11082,11 +13345,6 @@ function endAction(a, cost, noFinish=false){
     // 普通攻擊或休息：重置疲勞
     G.comboFatigue=0;
     G.lastSkillName=null;
-    // ★ 玩家普攻後天賦（_playerAtkFlag 由 b-atk onclick 設定，doRest 不設）
-    if(typeof _playerAtkFlag !== 'undefined' && _playerAtkFlag && a && a.side==='p1'){
-      _playerAtkFlag = false;
-      try{ _doAfterAtkTraits(a, G.pendingTarget||null); }catch(e){}
-    }
   }
   // 凡人天賦：使用技能時40%不消耗能量
   if(a.name==='凡人' && cost>0 && !hasStatus(a,'confused') && Math.random()<0.4){
@@ -11123,1439 +13381,6 @@ function endAction(a, cost, noFinish=false){
   // p1 手動模式的 noFinish：action-panel 已在上方顯示，等待玩家操作，不需額外處理
   } catch(_eaErr){ console.error("[endAction防護]",_eaErr); _pSetTimeout(startTurn,500); }
 }
-
-// ════════════════════════════════════════════════════════
-// ★ 核心戰鬥函式（從 2026-04-12T032559 工作版本還原）★
-// ════════════════════════════════════════════════════════
-function renderItems(){
-  // 我方回合：顯示物品欄，隱藏對手回合提示
-  const _itemPanel = document.getElementById('item-panel');
-  const _enemyNotice = document.getElementById('enemy-turn-notice');
-  const _isP2Turn = G.activeChar && G.activeChar.side === 'p2';
-  if(_itemPanel) _itemPanel.style.display = _isP2Turn ? 'none' : '';
-  if(_enemyNotice) _enemyNotice.style.display = _isP2Turn ? 'block' : 'none';
-
-  for(let i=0;i<3;i++){
-    const slot=document.getElementById(`slot-${i}`);
-    const it=G.inv[i];
-    slot.innerHTML='';
-    if(it){
-      const box=document.createElement('div');
-      box.className=`ibox itype-${it.type} ${G.selItem?.uid===it.uid?'sel':''}`;
-      box.innerHTML=`<b>${it.n}</b><i>賣${it.sell}🔷 | ${it.d}</i>`;
-      box.onclick=()=>clickItem(it);
-      slot.appendChild(box);
-    } else { slot.innerText='— 空 —'; }
-  }
-}
-
-function onCard(h, _evt){
-  const a=G.activeChar; if(!a) return;
-  const pt=G.pendingTarget;
-  if(!pt) return;  // 無待選目標：讓事件繼續（允許爆發面板等其他處理器執行）
-  // ★ 有待選目標：阻止事件穿透（防止同時開啟爆發面板等）
-  if(_evt){ _evt.stopPropagation(); _evt._handledByOnCard = true; }
-
-  // Validate target
-  let valid=false;
-  if(pt==='enemy' && h.side!==a.side && h.curHp>0) valid=true;
-  if(pt==='enemy_any' && h.side!==a.side) valid=true; // for 死亡宣告 on alive
-  if(pt==='ally' && h.side===a.side && h.curHp>0) valid=true;
-  if(pt==='ally_dead' && h.side===a.side && h.curHp===0) valid=true;
-  if(pt==='any' && h.curHp>0) valid=true;
-  if(pt==='any_e' && h.side!==a.side && h.curHp>0) valid=true; // taunt target
-  if(pt==='ally_or_dead' && h.side===a.side) valid=true;
-  if(pt==='self_or_ally' && h.side===a.side && h.curHp>0) valid=true;
-
-  if(!valid){ log('❌ 無效目標，請重新選擇'); return; }
-
-  execPending(h);
-}
-
-function setPending(type, cb){
-  // ★ AI 端（p2）總是自動選目標，不等玩家點擊
-  const _pendingActor = G && G.activeChar;
-  if(_pendingActor && _pendingActor.side === 'p2'){
-    const _opp = 'p1';
-    let _autoT = null;
-    if(type==='enemy'||type==='any_e'){
-      const _foes=G[_opp]?G[_opp].filter(h=>h.curHp>0):[];
-      _autoT=_foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    } else if(type==='ally'||type==='self_or_ally'){
-      const _al=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp>0):[];
-      _autoT=_al.sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    } else if(type==='ally_dead'||type==='ally_or_dead'){
-      const _dead=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp===0):[];
-      _autoT=_dead[0]||null;
-    } else if(type==='any'){
-      const _all=(G.p1||[]).concat(G.p2||[]).filter(h=>h.curHp>0);
-      _autoT=_all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    }
-    if(_autoT){ setTimeout(()=>{ try{ cb(_autoT); }catch(e){ console.error('[AI setPending]',e); } }, 300); return; }
-  }
-  // 自動戰鬥時自動選目標
-  if(_autoBattle){
-    const a=G.activeChar;
-    if(!a) return;
-    const opp=a.side==='p1'?'p2':'p1';
-    let autoTarget=null;
-    if(type==='enemy'||type==='any_e'){
-      const foes=G[opp].filter(h=>h.curHp>0);
-      autoTarget=foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    } else if(type==='ally'||type==='self_or_ally'){
-      const al=G[a.side].filter(h=>h.curHp>0);
-      autoTarget=al.sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    } else if(type==='ally_dead'||type==='ally_or_dead'){
-      const dead=G[a.side].filter(h=>h.curHp===0);
-      autoTarget=dead[0]||G[a.side].filter(h=>h.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    } else if(type==='any'){
-      const all=G.p1.concat(G.p2).filter(h=>h.curHp>0);
-      autoTarget=all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
-    }
-    if(autoTarget && cb){ cb(autoTarget); return; }
-    // 找不到目標就直接結束行動
-    if(a && !a.acted){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); }
-    return;
-  }
-  G.pendingTarget=type; pendingCb=cb;
-  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
-  const a=G.activeChar;
-  G.p1.concat(G.p2).forEach(h=>{
-    let ok=false;
-    if(type==='enemy'&&h.side!==a.side&&h.curHp>0) ok=true;
-    if(type==='ally'&&h.side===a.side&&h.curHp>0) ok=true;
-    if(type==='ally_dead'&&h.side===a.side&&h.curHp===0) ok=true;
-    if(type==='any'&&h.curHp>0) ok=true;
-    if(type==='any_e'&&h.side!==a.side&&h.curHp>0) ok=true;
-    if(type==='ally_or_dead'&&h.side===a.side) ok=true;
-    if(type==='self_or_ally'&&h.side===a.side&&h.curHp>0) ok=true;
-    if(ok){
-      const el=document.getElementById(`card-${h.side}-${h.pos}`);
-      if(el) el.classList.add(h.side===a.side?'ally-targetable':'targetable');
-    }
-  });
-}
-
-function execPending(h){
-  G.pendingTarget=null;
-  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
-  if(pendingCb) { const cb=pendingCb; pendingCb=null; cb(h); }
-}
-
-function doDmg(target, rawDmg, opts={}){
-  // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
-  const a=G.activeChar||opts.actor;
-
-  // ── 強力隱身（小力）：絕對免疫，無視一切傷害來源 ──
-  // 必須在所有判斷之前，包括 ignoreBuffs、AoE、必中等
-  if(hasBuff(target,'inuInvisible')){
-    showPopup(target,'🐕免疫','miss');
-    log(`🐕 [${target.name}] 強力隱身，完全免疫傷害！`);
-    return 0;
-  }
-
-  // ── 速度命中/迴避：速度差影響命中率（每1點速度+1%命中/迴避）──
-  if(!opts.ignoreEvasion && !opts.piercing && a && target && !opts.isSkill){
-    // 普通攻擊才受速度命中影響
-    const spdDiff = (a.spd||0) - (target.spd||0);
-    if(spdDiff < 0){
-      // 攻擊者速度低於目標：有迴避機率
-      const evadeChance = Math.min(0.6, Math.abs(spdDiff) * 0.01);
-      if(Math.random() < evadeChance){
-        showPopup(target,'MISS','miss'); log(`[${target.name}] 以速度迴避了攻擊！`); return 0;
-      }
-    }
-  }
-  // spdAvoid: 70% miss if attacker is slower
-  if(!opts.ignoreEvasion && hasBuff(target,'spdAvoid')){
-    const _sa=G.activeChar||opts.actor;
-    if(_sa&&_sa.spd<target.spd&&Math.random()<0.7){
-      showShieldVFX(target,'evade');showPopup(target,'MISS','miss');
-      log(`[${target.name}] 急速閃躲迴避！`);return 0;
-    }
-  }
-  // Evasion check
-  if(!opts.ignoreEvasion && hasBuff(target,'evasion')){
-    showShieldVFX(target,'evade'); showPopup(target,'MISS','miss'); log(`[${target.name}] 迴避了攻擊！`); return 0;
-  }
-  // 神射手天賦：trapShield - 只擋普通攻擊（非技能傷害）
-  if(!opts.ignoreEvasion && !opts.isSkill && hasBuff(target,'trapShield')){
-    target.buffs=target.buffs.filter(b=>b.type!=='trapShield');
-    showShieldVFX(target,'evade'); showPopup(target,'陷阱！','miss');
-    log(`🏹 [神射手] 天賦：陷阱觸發！普通攻擊被阻擋！`);
-    bannerFX(target,'陷阱觸發','#cc8800',900);
-    renderCard(target); return 0;
-  }
-  // ── 爆發：神樹恩澤（不倒）→HP最低1 ──
-  if(hasStatus(target,'burstUndying') && !opts.ignoreBuffs){
-    rawDmg=Math.min(rawDmg, Math.max(0, target.curHp-1));
-  }
-  // ── immune buff：免疫所有傷害（聖殿領域/最終殿堂等）──
-  if(!opts.ignoreBuffs && hasBuff(target,'immune')){
-    showShieldVFX(target,'immune'); showPopup(target,'免疫','miss');
-    log(`[${target.name}] 免疫狀態，傷害無效！`); return 0;
-  }
-  // ── 爆發：負荷超載→累積傷害，但目標仍正常受傷 ──
-  if(a && a.side!==target.side && !opts.isRebound && !opts.noGuard){
-    const _overloader=G[target.side].find(x=>x._burstOverloadActive>0);
-    if(_overloader){
-      _overloader._burstOverload=(_overloader._burstOverload||0)+rawDmg;
-      log(`⚙️ 負荷超載累積 [${_overloader.name}] +${rawDmg}（total:${_overloader._burstOverload}）`);
-      // 不 return，讓傷害繼續往下正常執行
-    }
-  }
-  // ── 爆發：警長正義制裁反彈（攻擊者身上有狀態時，傷害100%反彈給自己）──
-  if(a && a.side!==target.side && a._burstReflect && !opts.isRebound && !opts.ignoreBuffs){
-    log(`[${a.name}] 正義制裁！傷害100%反彈給自己！`);
-    doDmg(a,rawDmg,{actor:target,noGuard:true,ignoreEvasion:true,isRebound:true});
-  }
-  // Shield
-  if(hasBuff(target,'shield')&&!opts.ignoreBuffs){
-    target.buffs=target.buffs.filter(b=>b.type!=='shield');
-    showShieldVFX(target,'block'); showPopup(target,'🛡','miss'); log(`[${target.name}] 護盾抵擋了傷害！`); renderCard(target); return 0;
-  }
-    // Hidden：只擋單體攻擊，不擋全體技能/物品
-  if(hasBuff(target,'hidden')&&!opts.piercing&&!opts.noHidden&&!opts.isAoe){
-    // 普通攻擊有25%機率看穿隱身
-    if(!opts.isSkill && Math.random()<0.25){
-      target.buffs=target.buffs.filter(b=>b.type!=='hidden');
-      log(`👁️ [${target.name}] 隱身被看穿！`);
-      bannerFX(target,'隱身解除！','#cc88ff',800);
-      // 繼續往下執行，讓傷害正常觸發
-    } else {
-      showPopup(target,'MISS','miss'); log(`[${target.name}] 隱身中無法被選為目標！`); return 0;
-    }
-  }
-    // 守衛 挺身守護 intercept (if not piercing)
-  if(!opts.piercing && !opts.noGuard){
-    // ── 仁王挺立：代替所有隊友受傷，且減傷75% ──
-    if(!opts.isNioGuard){
-      const nio_guard=G[target.side].find(h=>h!==target&&h.curHp>0&&hasBuff(h,'nioGuard'));
-      if(nio_guard){
-        playSfx('sfx-guard',0.75);
-        log(`[${nio_guard.name}] 仁王挺立！代替 [${target.name}] 承受傷害，減傷75%！`);
-        const nioReduced=Math.max(1,Math.ceil(rawDmg*0.25));
-        showShieldVFX(nio_guard,'block');
-        bannerFX(nio_guard,'仁王！','#ff8800',900);
-        return doDmg(nio_guard, nioReduced, {...opts, noGuard:true, isNioGuard:true});
-      }
-    }
-    // 優先檢查 G.guardFor（新邏輯：不依賴buff）
-    if(G.guardFor===target && G.guardHero && G.guardHero!==target && G.guardHero.curHp>0){
-      const ally_guard=G.guardHero;
-      playSfx('sfx-guard',0.7); log(`[${ally_guard.name}] 挺身守護代替 [${target.name}] 承受傷害！`);
-      const _gspv=Math.floor((ally_guard.sp||0)*(1+(ally_guard.sp||0)*0.01));
-      let reduced=Math.max(1,Math.ceil(rawDmg-_gspv*2));
-      // 守護後清除（一次性）
-      G.guardFor=null; G.guardHero=null;
-      ally_guard.acted=false;
-      return doDmg(ally_guard, reduced, {...opts, noGuard:true});
-    }
-    // 相容舊 buff 系統
-    const ally_guard=G[target.side].find(h=>h!==target&&h.curHp>0&&hasBuff(h,'guard'));
-    if(ally_guard){
-      playSfx('sfx-guard',0.7); log(`[${ally_guard.name}] 挺身守護代替 [${target.name}] 承受傷害！`);
-      const _gspv=Math.floor((ally_guard.sp||0)*(1+(ally_guard.sp||0)*0.01));
-      let reduced=Math.max(1,Math.ceil(rawDmg-_gspv*2));
-      ally_guard.buffs=ally_guard.buffs.filter(b=>b.type!=='guard');
-      ally_guard.acted=false; return doDmg(ally_guard, reduced, {...opts, noGuard:true});
-    }
-    // 小力天賦：忠犬守護 — 1回合內將隊友受傷50%轉移到自己，HP至少保留1
-    
-    if(!opts.noInuGuard){
-      const inuHero = G[target.side].find(h=>h!==target&&h.curHp>1&&h._inuGuardActive&&!hasStatus(h,'confused'));
-      if(inuHero){
-        const transfer=Math.max(1,Math.ceil(rawDmg*0.5));
-        rawDmg=Math.max(0,rawDmg-transfer);
-        log(`🐕 [小力] 忠犬守護！替 [${target.name}] 吸收 ${transfer} 傷害！`);
-        // 直接扣血並保底1，不走完整doDmg流程（避免遞迴/卡死）
-        const before = inuHero.curHp;
-        inuHero.curHp = Math.max(1, inuHero.curHp - transfer);
-        const actualTransfer = before - inuHero.curHp;
-        if(actualTransfer>0){
-          showPopup(inuHero, actualTransfer, 'dmg');
-          shake(inuHero);
-          bannerFX(inuHero,'吸收！','#ffaacc',700);
-          renderCard(inuHero);
-        }
-        // 若小力HP降至1，解除守護狀態（此技能HP為1時無法使用，也不繼續守護）
-        if(inuHero.curHp<=1){
-          inuHero._inuGuardActive=false;
-          inuHero.buffs=inuHero.buffs.filter(b=>b.type!=='_inuGuard');
-          bannerFX(inuHero,'守護力竭！','#ff8888',900);
-          log(`🐕 [小力] HP降至1，忠犬守護解除！`);
-        }
-      }
-    }
-    // 守衛天賦：無論是否有guard buff，只要存活就分攤30%傷害
-    if(!opts.isTraitShare){
-      const guard_hero=G[target.side].find(h=>h!==target&&h.curHp>0&&h.name==='守衛'&&!hasStatus(h,'confused'));
-      if(guard_hero){
-        const share=Math.max(1,Math.ceil(rawDmg*0.3));
-        rawDmg=Math.max(1,rawDmg-share);
-        log(`🗡️ [守衛] 天賦：鐵壁分攤！替 [${target.name}] 承受 ${share} 傷害！`);
-        playSfx('sfx-guard',0.6);
-        doDmg(guard_hero, share, {...opts, noGuard:true, isTraitShare:true});
-      }
-    }
-  }
-  // 小劇團員天賦：受傷時20%機率轉為治療
-  if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused') && Math.random()<0.2){
-    doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
-    showPopup(target,'🎭轉化！','energy');
-    bannerFX(target,'轉化治療！','#ff88aa',900);
-    log(`🎭 [小劇團員] 天賦：傷害轉化！${rawDmg}傷害轉為治療！`);
-    return 0;
-  }
-  // 動物學家天賦：動物守護減傷（每隻寵物-10%，最高40%）
-  if(target.name==='動物學家' && target._zoologistDmgReduce>0 && !opts.ignoreBuffs){
-    rawDmg=Math.max(1,Math.ceil(rawDmg*(1-target._zoologistDmgReduce)));
-    showPopup(target,'🦁-'+Math.round(target._zoologistDmgReduce*100)+'%','miss');
-  }
-  // halfDmg (聖殿領域)
-  if(hasBuff(target,'halfDmg')){ rawDmg=Math.ceil(rawDmg/2); showShieldVFX(target,'halfDmg'); }
-  // dmgVuln (青龍召喚：受傷+50%)
-  if(hasStatus(target,'dmgVuln')){ rawDmg=Math.ceil(rawDmg*1.5); }
-  // 綠竹筍小妖天賦：受到傷害時50%機率減少40%
-  if(_adventureMode && target.name==='綠竹筍小妖' && !hasStatus(target,'confused') && rawDmg>0 && Math.random()<0.5){
-    rawDmg = Math.max(1, Math.floor(rawDmg * 0.6));
-    showPopup(target, '韌竹-40%', 'miss');
-    log(`🎋 [綠竹筍小妖] 天賦：韌竹護甲！傷害減少40%！`);
-  }
-  // 土屬性：受傷-2
-  { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
-  // 聖騎士天賦：40%格擋，減少50%受傷
-  if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<0.6){
-    rawDmg=Math.max(1,Math.ceil(rawDmg*0.5));
-    showShieldVFX(target,'block');
-    log(`🛡️ [聖騎士] 天賦：神聖格擋！傷害減半！`);
-    bannerFX(target,'格擋！','#88ccff',900);
-  }
-  // 守衛天賦：代替隊友受傷時，額外分攤30%給自己（隊友少受30%）
-  // （在ally_guard intercept段已處理，此處標記供opts使用）
-  // bigshield (-20傷害護盾)
-  // 午睡護盾 (_napShield)：累積吸收，耗盡或受擊40%機率醒來
-  if(hasBuff(target,'_napShield') && rawDmg>0){
-    const _ns=target.buffs.find(b=>b.type==='_napShield');
-    if(_ns){
-      const _abs2=Math.min(_ns._hp||0,rawDmg);
-      _ns._hp-=_abs2; rawDmg-=_abs2;
-      if(_abs2>0){ showShieldVFX(target,'block'); showPopup(target,'💤-'+_abs2,'miss'); }
-      if(_ns._hp<=0){
-        target.buffs=target.buffs.filter(b=>b.type!=='_napShield');
-        log(`💤 [${target.name}] 午睡護盾破碎！`);
-      }
-      // 受到攻擊 40% 醒來
-      if(target._napMode && Math.random()<0.4){
-        clearStatus(target,['sleep']); target._napMode=false;
-        target.buffs=target.buffs.filter(b=>b.type!=='_napShield');
-        bannerFX(target,'驚醒！','#aaddff',800);
-        log(`💤 [${target.name}] 受到攻擊驚醒！`);
-        // 清除夢境弱化
-        G.p1.concat(G.p2).forEach(e=>{
-          const _ds2=e.status.find(s=>s.type==='_dreamDebuff'&&s._owner===target);
-          if(_ds2){ e.atk=_ds2._origAtk; e.sp=_ds2._origSp; e.status=e.status.filter(s=>s!==_ds2); renderCard(e); }
-        });
-      }
-      if(rawDmg===0) return 0;
-    }
-  }
-  // bigshield — 累積吸收護盾，耗盡後消失
-  if(hasBuff(target,'bigshield')&&!opts.ignoreBuffs){
-    const _bsBuff=target.buffs.find(b=>b.type==='bigshield');
-    if(_bsBuff){
-      if(_bsBuff._hp===undefined) _bsBuff._hp=20;
-      const _absorbed=Math.min(_bsBuff._hp, rawDmg);
-      _bsBuff._hp-=_absorbed;
-      rawDmg-=_absorbed;
-      if(_absorbed>0){
-        showShieldVFX(target,'block');
-        showPopup(target,'🛡-'+_absorbed,'miss');
-      }
-      if(_bsBuff._hp<=0){
-        target.buffs=target.buffs.filter(b=>b.type!=='bigshield');
-        log(`[${target.name}] 護盾破碎！`);
-        bannerFX(target,'護盾破碎！','#88aaff',700);
-        playSfx('sfx-defense',0.8);
-      } else {
-        log(`[${target.name}] 護盾吸收${_absorbed}傷害，剩餘：${_bsBuff._hp}`);
-      }
-      if(rawDmg===0) return 0;
-    }
-  }
-  // warhorn buff on attacker
-  let dmg=rawDmg;
-  // ★ 技能升級倍率（只對 isSkill:true 的傷害有效）
-  if(opts.isSkill && _activeSkLvMult > 1.0) dmg = Math.round(dmg * _activeSkLvMult);
-  if(a&&hasBuff(a,'dmgup')&&!opts.isHeal) dmg+=Math.floor(a.sp*0.5);
-  // 極速閃燃：下次傷害×2（使用後移除）
-  if(a&&hasBuff(a,'_sprintBurst')&&!opts.isHeal){
-    dmg=dmg*2;
-    a.buffs=a.buffs.filter(b=>b.type!=='_sprintBurst');
-    log(`🏃 極速閃燃！[${a.name}] 傷害×2！`);
-    bannerFX(a,'傷害×2！','#44ffcc',700);
-  }
-  // 接力傳遞：傷害+50%（使用後移除）
-  if(a&&hasBuff(a,'_relay')&&!opts.isHeal){
-    dmg=Math.ceil(dmg*1.5);
-    a.buffs=a.buffs.filter(b=>b.type!=='_relay');
-    log(`🏃 接力傳遞觸發！[${a.name}] 傷害×1.5！`);
-  }
-  // dice field — 50% chance +50%, 50% chance -50%
-  if(fieldHas('dice')){
-    if(Math.random()<0.5){ dmg=Math.ceil(dmg*1.5); showDiceMsg('占卜水晶','威力+50%'); }
-    else { dmg=Math.ceil(dmg*0.5); showDiceMsg('占卜水晶','威力-50%'); }
-  }
-  // chaos field (damage -> heal, heal -> dmg handled in doHeal)
-  if(fieldHas('chaos')&&!opts.isChaos) { doHeal(target,dmg,{isChaos:true}); return 0; }
-  // warhorn field
-  if(fieldHas('warhorn')&&!opts.noWarhorn) dmg+=3;
-  // minDmg field
-  if(fieldHas('minDmg')) dmg=Math.max(3,dmg);
-
-  // ── 元素相剋傷害加成
-  const _elemMod=getElemDmgMod(a,target);
-  if(_elemMod!==0){ dmg=Math.max(0,dmg+_elemMod); if(_elemMod>0){ log(`⚡元素相剋！傷害+${_elemMod}`); showPopup(target,'▲+'+_elemMod,'elem-adv'); } else { log(`⚡元素劣勢！傷害${_elemMod}`); showPopup(target,'▼'+_elemMod,'elem-dis'); } }
-  dmg=Math.max(0,dmg);
-  const _mercyRainActive=hasBuff(target,'mercyRain') && dmg>0;
-  // ── 裝備效果：鋼鐵鎧甲
-  const teq=getEquip(target);
-  const _cb=getCraftsmanBonus(target.side);
-  if(teq && teq.dmgReduce && dmg>0) dmg=Math.max(1,dmg-teq.dmgReduce*_cb);
-  if(teq && teq.dmgReducePct && dmg>0) dmg=Math.max(1,Math.floor(dmg*(1-teq.dmgReducePct*_cb)));
-  // ── 裝備效果：鏡盾 30% 反彈
-  if(teq && teq.reflect && dmg>0 && !opts.noReflect && Math.random()<Math.min(0.95,teq.reflect*_cb) && a){
-    log(`[${target.name}] 台灣藍鵲反擊 ${dmg} 傷害！`);
-    playSfx('sfx-reflect',0.7);
-    showPopup(target,'↩台灣藍鵲','miss');
-    doDmg(a, dmg, {noGuard:true,ignoreBuffs:true,isChaos:true,noEquip:true,noReflect:true});
-    return 0;
-  }
-  // ── 裝備效果：幸運吊飾 30% 死裡逃生
-  if(teq && teq.onDmg && !opts.noEquip) dmg=teq.onDmg(target,dmg);
-  const old=target.curHp;
-  target.curHp=Math.max(0,target.curHp-dmg);
-  // 統計
-  if(dmg>0){
-    if(a && a.side !== target.side) statTrack(a,'dmg',dmg);
-    statTrack(target,'hitsReceived',1);
-  }
-  // 需求3：爆擊判斷（15%機率，傷害×1.8）
-  let _isCrit=false;
-  if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random()<0.15){
-    const _critExtra=Math.floor(dmg*0.3);
-    dmg+=_critExtra;
-    target.curHp=Math.max(0,target.curHp-_critExtra); // 補扣額外爆擊傷害
-    _isCrit=true;
-  }
-  if(_isCrit){
-    showPopup(target,dmg,'dmg-crit');
-    // 畫面震動2下 + 爆擊音效
-    _screenShake2();
-    playSfx('sfx-crit',1.0);
-  } else {
-    showPopup(target,dmg,'dmg');
-  }
-  sndAtk();
-  /// ── 爆發：鮮血契約→嗜血（傷害100%吸血＋低血增傷）──
-  if(a && a.curHp>0 && dmg>0 && a.side!==target.side && hasStatus(a,'burstVamp') && !opts.isRebound){
-    // 100% 吸血
-    const vAmt=dmg;
-    doHeal(a,vAmt,{actor:a,noDice:true,isHeal:true});
-    log(`🦇 嗜血！[${a.name}] 吸收 ${vAmt}HP！`);
-  }
-  // Red flash on damaged card — 整張卡紅色光暈
-  (function(tgt){
-    var _el=document.getElementById('card-'+tgt.side+'-'+tgt.pos);
-    if(_el){
-      var _f=document.createElement('div');
-      _f.className='card-dmg-flash';
-      _el.appendChild(_f); // 附到 .card 本體，不是 card-inner
-      setTimeout(function(){if(_f.parentNode)_f.remove();},700);
-    }
-  })(target);
-  if(old>0 && target.curHp>0 && target.curHp<old) shake(target); // alive && took damage
-  // Sleep: 50% chance to break early when hit
-  if(dmg>0 && old>0 && target.curHp>0 && hasStatus(target,'sleep') && Math.random()<0.5){
-    clearStatus(target,['sleep']); log(`[${target.name}] 受到傷害，提早從睡眠中甦醒！`); renderCard(target);
-  }
-  // 武鬥家天賦：受到致命傷害時25%不倒下，HP恢復20%
-  if(target.curHp===0 && target.name==='武鬥家' && !hasStatus(target,'confused') && Math.random()<0.3){
-    const reviveHp=Math.max(1,Math.floor(target.hp*0.2));
-    target.curHp=reviveHp;
-    log(`👊 [武鬥家] 天賦：鋼鐵意志！致命傷害中倖存！HP恢復${reviveHp}！`);
-    bannerFX(target,'鋼鐵意志！','#ffaa00',1000);
-    flashScreen('rgba(255,150,0,1)',300);
-    playSfx('sfx-powerup',0.8);
-    renderCard(target);
-  }
-  // death immune
-  if(target.curHp===0 && hasBuff(target,'deathimmune')){
-    target.curHp=1;
-    target.buffs=target.buffs.filter(b=>b.type!=='deathimmune');
-    log(`[${target.name}] 倒下免疫觸發！剩1HP！`);
-  }
-  if(target.curHp===0 && target.equip){
-    const _puppet=getEquip(target);
-    if(_puppet && _puppet.deathShield){
-      target.curHp=1;
-      const _dscb=getCraftsmanBonus(target.side);
-      if(_dscb>=2 && !target._deathShieldUsedOnce){
-        // 動物學家加成：第一次不消失，下次才消失
-        target._deathShieldUsedOnce=true;
-        log(`[${target.name}] 黑冠麻鷺出動！免疫致命傷害！（動物學家加護：還有1次）`);
-        bannerFX(target,'黑冠麻鷺×2！','#ffcc88',1200);
-      } else {
-        log(`[${target.name}] 黑冠麻鷺出動！免疫致命傷害！寵物消失！`);
-        bannerFX(target,'黑冠麻鷺！','#ffcc88',1000);
-        const _puppetData=EQUIP_DB.find(e=>e.n===target.equip.n);
-        if(_puppetData) G.deck.unshift({..._puppetData,uid:Math.random(),type:'equip'});
-        target.equip=null;
-        target._deathShieldUsedOnce=false;
-      }
-      renderCard(target);
-      return 1;
-    }
-  }
-  if(target.curHp===0){
-    log(`💀 [${target.name}] 倒下！`);
-    // 清除所有狀態與增益
-    target.status=[];
-    target.buffs=[];
-    if(hasBuff(target,'divineBlessing')){
-      if(target._baseHp){ target.hp=target._baseHp; delete target._baseHp; }
-      else target.hp=Math.max(1,target.hp-15);
-      log(`[${target.name}] 神之賜福消失，HP上限復原至 ${target.hp}。`);
-    }
-    playSfx('sfx-ko',0.85);
-    const _dEl=document.getElementById('card-'+target.side+'-'+target.pos);
-    if(_dEl){
-      _dEl.classList.remove('dead-anim');
-      void _dEl.offsetWidth;
-      _dEl.classList.add('dead-anim');
-    }
-  }
-  renderCard(target);
-  // ── 慈悲之雨：受傷後恢復50%失去的HP ──
-  if(_mercyRainActive && target.curHp>0){
-    const _mrHeal=Math.ceil(dmg*0.5);
-    doHeal(target,_mrHeal,{actor:target,noDice:true,noWarhorn:true});
-    log(`💧 慈悲之雨：[${target.name}] 恢復 ${_mrHeal} HP！`);
-  }
-   
-  // 武鬥家 金鐘罩 reflect（被動：受傷時直接觸發，不需buff）
-  if(target.name==='武鬥家' && old>0 && target.curHp<old && a && a!==target && a.side!==target.side && !opts.isRebound && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
-    const reflected=Math.max(0,dmg-target.sp);
-    if(reflected>0){
-      const _doKinjako=()=>{
-        log(`👊 [${target.name}] 金鐘罩！自動反彈 ${reflected} 傷害！`);
-        bannerFX(target,'金鐘罩！','#ffaa00',800);
-        playSfx('sfx-reflect',0.7);
-        doDmg(a,reflected,{noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
-      };
-      if(target.side==='p2'||_autoBattle){ _doKinjako(); }
-      else {
-        _showPassivePrompt({
-          hero:target, skillName:'金鐘罩', color:'#ffaa00', cost:0,
-          desc:`用特技減傷後，反彈 <span style="color:#ff9966">${reflected}</span> 傷害給攻擊者`,
-          onUse(){ _doKinjako(); },
-          onSkip(){}
-        });
-      }
-    }
-  }
-  // 占星師 轉禍為福（新版）：友方全體1回合內受到傷害時獲得2能量，每人限1次
-  if(hasBuff(target,'misfortune2') && old>0 && target.curHp<old){
-    target.buffs=target.buffs.filter(b=>b.type!=='misfortune2');
-    G.energy[target.side]=Math.min(10,G.energy[target.side]+2);
-    showPopup(target,'+2E','energy'); sndEnergy();
-    sfxPassive(target,0.6); log(`[${target.name}] 轉禍為福！能量+2！`);
-  }
-
-  // ── 被動技能觸發群（doDmg 後鉤子）──
-
-  // 同歸於盡：自己被擊倒時，攻擊者也倒下
-  if(target.curHp===0 && old>0 && a && a!==target && a.curHp>0){
-    if(target.s1.n==='同歸於盡'||target.s2.n==='同歸於盡'){
-      sfxPassive(target,0.75); log(`[${target.name}] 同歸於盡！[${a.name}] 也一同倒下！`);
-      a.curHp=0; renderCard(a); log(`💀 [${a.name}] 倒下！`);
-      // checkWin 由 startTurn 統一呼叫，不在此重複呼叫避免提前結束
-    }
-  }
-
-  // 天使守護：友方任意一人受致命傷時，留 1HP（在 deathimmune 之後才觸發，避免雙重保護衝突）
-  if(target.curHp===0 && old>0){
-    for(const h of G[target.side]){
-      if(h.curHp<=0||h===target) continue;
-      const angel_sk=(h.s1.n==='天使守護'?h.s1:h.s2.n==='天使守護'?h.s2:null);
-      if(angel_sk && G.energy[h.side]>=angel_sk.c){
-        G.energy[h.side]-=angel_sk.c;
-        target.curHp=1; renderCard(target);
-        sfxPassive(h,0.7); log(`[${h.name}] 天使守護！[${target.name}] 以1HP存活！`);
-        bannerFX(target,'天使守護','#ffe066',900);
-        h.acted=false; // 可再行動
-        break;
-      }
-    }
-  }
-
-  // 緊急治療：友方受到傷害後，持有者用 SP×50% 恢復該友方 HP（可再行動）
-  if(old>0 && target.curHp<old && target.curHp>0){
-    for(const h of G[target.side]){
-      if(h.curHp<=0||h===target) continue;
-      if(h.s1.n==='緊急治療'||h.s2.n==='緊急治療'){
-        const sk_em=h.s1.n==='緊急治療'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_em.c){
-          G.energy[h.side]-=sk_em.c;
-          const healAmt=Math.floor(h.sp*0.5);
-          doHeal(target,healAmt,{actor:h,isHeal:true,noWarhorn:true});
-          sfxPassive(h,0.65); log(`[${h.name}] 緊急治療！恢復 [${target.name}] ${healAmt}HP！`);
-          h.acted=false;
-        }
-        break;
-      }
-    }
-  }
-
-  // 黃昏詩歌：友方受傷時，持有者立即用 SP 治療並解除不利狀態（消耗能量）
-  if(old>0 && target.curHp<old && target.curHp>0){
-    for(const h of G[target.side]){
-      if(h.curHp<=0||h===target) continue;
-      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
-      if(h.s1.n==='黃昏詩歌'||h.s2.n==='黃昏詩歌'){
-        const sk_tw=h.s1.n==='黃昏詩歌'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_tw.c){
-          const _doTwilight=()=>{
-            G.energy[h.side]-=sk_tw.c;
-            doHeal(target,h.sp,{actor:h,isHeal:true,noWarhorn:true});
-            clearBadStatus(target);
-            sfxPassive(h,0.65); log(`[${h.name}] 黃昏詩歌！治療 [${target.name}] 並解除不利狀態！`);
-          };
-          if(h.side==='p2'||_autoBattle){ _doTwilight(); }
-          else {
-            _showPassivePrompt({
-              hero:h, skillName:'黃昏詩歌', color:'#ffcc88', cost:sk_tw.c,
-              desc:`治療 [${target.name}] <span style="color:#55ee88">${h.sp}</span> HP 並解除所有不利狀態`,
-              onUse(){ _doTwilight(); },
-              onSkip(){}
-            });
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  // 協同攻擊：友方造成傷害時，持有者追加 ATK×50% 傷害（可再行動）
-  // 只在攻擊者是友方（不是持有者自己）時觸發
-  if(a && old>0 && dmg>0 && target.curHp>=0 && !opts.isPassiveAssist){
-    for(const h of G[a.side]){
-      if(h.curHp<=0||h===a) continue;
-      if(h.s1.n==='協同攻擊'||h.s2.n==='協同攻擊'){
-        const sk_co=h.s1.n==='協同攻擊'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_co.c && target.curHp>0){
-          G.energy[h.side]-=sk_co.c;
-          const bonusDmg=Math.max(1,Math.floor(h.atk*0.5));
-          sfxPassive(h,0.6); log(`[${h.name}] 協同攻擊！追加 ${bonusDmg} 傷害！`);
-          doDmg(target,bonusDmg,{actor:h,isPassiveAssist:true,noGuard:true});
-          h.acted=false;
-        }
-        break;
-      }
-    }
-  }
-
-  // 迴避反擊：被攻擊時 50% 閃躲並反擊（SP×50% 傷害），常駐被動不消耗能量（可再行動）
-  if(a && a.side!==target.side && old>0 && dmg>0 && !opts.isPassiveAssist && !opts.passiveEvasion){
-    if((target.s1.n==='迴避反擊'||target.s2.n==='迴避反擊') && target.curHp>0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
-      const _doEvade=()=>{
-        if(Math.random()<0.5){
-          doHeal(target,dmg,{actor:target,noDice:true,noWarhorn:true});
-          const cntDmg=Math.floor(target.sp*0.5);
-          sfxPassive(target,0.65); log(`[${target.name}] 迴避反擊成功！反擊 ${cntDmg} 傷害！`);
-          doDmg(a,cntDmg,{actor:target,passiveEvasion:true,noGuard:true});
-          target.acted=false;
-        } else { log(`[${target.name}] 迴避反擊失敗。`); }
-      };
-      if(target.side==='p2'||_autoBattle){ _doEvade(); }
-      else {
-        _showPassivePrompt({
-          hero:target, skillName:'迴避反擊', color:'#55ddff', cost:0,
-          desc:`50%機率閃躲 <span style="color:#ffcc44">${dmg}</span> 傷害並反擊 <span style="color:#ff9966">${Math.floor(target.sp*0.5)}</span> 傷害`,
-          onUse(){ _doEvade(); },
-          onSkip(){}
-        });
-      }
-    }
-  }
-
-  // ── 慈悲之雨（被動）: triggers when taking dmg ──
-  if(old>0 && target.curHp<old && target.curHp>0){
-    for(const h of G[target.side]){
-      if(h.curHp<=0) continue;
-      if(h.s1.n==='慈悲之雨'||h.s2.n==='慈悲之雨'){
-        const sk_cr=h.s1.n==='慈悲之雨'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_cr.c && !hasBuff(h,'mercyRain')){
-          G.energy[h.side]-=sk_cr.c;
-          G[h.side].filter(x=>x.curHp>0).forEach(x=>addBuff(x,'mercyRain',1));
-          log(`[${h.name}] 慈悲之雨！全體友方本回合受傷後恢復50%HP！`);
-          ringFX(h,'#88ffcc',600);
-        }
-        break;
-      }
-    }
-  }
-
-  // ── 懲戒之盾（被動）: reduce dmg by sp, reflect 2x ──
-  if(a && old>0 && dmg>0 && target.curHp>=0 && !opts.isPunishReflect){
-    if((target.s1.n==='懲戒之盾'||target.s2.n==='懲戒之盾') && target.curHp>=0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
-      const sk_ps=target.s1.n==='懲戒之盾'?target.s1:target.s2;
-      if(G.energy[target.side]>=sk_ps.c){
-        const saved=Math.min(dmg,Math.floor(target.sp*0.5));
-        const reflect=Math.max(1,(dmg-saved)*2);
-        const _doPunish=()=>{
-          G.energy[target.side]-=sk_ps.c;
-          if(saved>0) doHeal(target,saved,{actor:target,noDice:true,noWarhorn:true});
-          if(reflect>0 && a.curHp>0){
-            log(`[${target.name}] 懲戒之盾！減輕${saved}傷，反彈${reflect}給 [${a.name}]！`);
-            doDmg(a,reflect,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isPunishReflect:true});
-            ringFX(target,'#ffaa44',500); sndGuard();
-          }
-        };
-        if(target.side==='p2'||_autoBattle){ _doPunish(); }
-        else {
-          _showPassivePrompt({
-            hero:target, skillName:'懲戒之盾', color:'#ffaa44', cost:sk_ps.c,
-            desc:`減輕 <span style="color:#66ddff">${saved}</span> 傷害，並反彈 <span style="color:#ff9966">${reflect}</span> 給攻擊者`,
-            onUse(){ _doPunish(); },
-            onSkip(){}
-          });
-        }
-      }
-    }
-  }
-
-  // ── 漩渦反擊（被動）: dodge + counter ──
-  if(a && old>0 && dmg>0 && !opts.isSwirlCounter){
-    if((target.s1.n==='漩渦反擊'||target.s2.n==='漩渦反擊') && target.curHp>0 && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
-      const sk_sw=target.s1.n==='漩渦反擊'?target.s1:target.s2;
-      if(G.energy[target.side]>=sk_sw.c){
-        const ctrDmg=Math.max(target.sp,target.atk);
-        const _doSwirl=()=>{
-          G.energy[target.side]-=sk_sw.c;
-          target.curHp=Math.min(target.hp,target.curHp+dmg);
-          log(`[${target.name}] 漩渦反擊！迴避並反擊 ${ctrDmg}！`);
-          if(a.curHp>0) doDmg(a,ctrDmg,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isSwirlCounter:true});
-          renderCard(target); bannerFX(target,'漩渦反擊','#55ddff',900); sndDodge();
-        };
-        if(target.side==='p2'||_autoBattle){ _doSwirl(); }
-        else {
-          _showPassivePrompt({
-            hero:target, skillName:'漩渦反擊', color:'#55ddff', cost:sk_sw.c,
-            desc:`完全閃躲傷害，並反擊 <span style="color:#ff9966">${ctrDmg}</span> 傷害`,
-            onUse(){ _doSwirl(); },
-            onSkip(){}
-          });
-        }
-      }
-    }
-  }
-
-  // ── 鑑往知來（被動）: ally takes dmg → counter sp×2, can act again ──
-if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !opts.isKanWang){
-    for(const h of G[target.side]){
-      if(h.curHp<=0) continue;
-      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
-      if(h.s1.n==='鑑往知來'||h.s2.n==='鑑往知來'){
-        const _kwCost=2;
-        if(G.energy[h.side]>=_kwCost && a.curHp>0){
-          const _kwSpv=Math.floor((h.sp||0)*(1+(h.sp||0)*0.01));
-          const ctr2=_kwSpv*2;
-          const _doKan=()=>{
-            G.energy[h.side]-=_kwCost;
-            log(`[${h.name}] 鑑往知來！反擊 ${ctr2}！`);
-            doDmg(a,ctr2,{actor:h,noGuard:true,ignoreEvasion:true,noHidden:true,isKanWang:true});
-            bannerFX(h,'鑑往知來','#ff9944',800); sndRetaliate();
-            h.acted=false;
-          };
-          if(h.side==='p2'||_autoBattle){ _doKan(); }
-          else {
-            _showPassivePrompt({
-              hero:h, skillName:'鑑往知來', color:'#ff9944', cost:_kwCost,
-              desc:`友方 [${target.name}] 受傷，以特技×2 反擊 <span style="color:#ff9966">${ctr2}</span> 傷害，並可再行動`,
-              onUse(){ _doKan(); },
-              onSkip(){}
-            });
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  // ── 零度空間（被動）: ally takes dmg → counter sp + freeze ──
-  if(a && old>0 && target.curHp<old && target.curHp>0 && !opts.isZeroZone){
-    for(const h of G[target.side]){
-      if(h.curHp<=0) continue;
-      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
-      if(h.s1.n==='零度空間'||h.s2.n==='零度空間'){
-        const sk_zz=h.s1.n==='零度空間'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_zz.c && a.curHp>0){
-          const _doZero=()=>{
-            G.energy[h.side]-=sk_zz.c;
-            log(`[${h.name}] 零度空間！反擊並冰凍 [${a.name}]！`);
-            doDmg(a,h.sp,{actor:h,noGuard:true,isZeroZone:true});
-            if(a.curHp>0) addStatus(a,'freeze',1);
-            iceParticles(h); bannerFX(h,'零度空間','#a8eeff',800); sndIceLance();
-          };
-          if(h.side==='p2'||_autoBattle){ _doZero(); }
-          else {
-            _showPassivePrompt({
-              hero:h, skillName:'零度空間', color:'#a8eeff', cost:sk_zz.c,
-              desc:`反擊 <span style="color:#ff9966">${h.sp}</span> 傷害並使 [${a.name}] 冰凍1回合`,
-              onUse(){ _doZero(); },
-              onSkip(){}
-            });
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  // ── 完美助攻（被動）: ally deals dmg → target stun ──
-  if(a && old>0 && dmg>0 && target.curHp>0 && a.side!==target.side && !opts.isPerfectAssist){
-    for(const h of G[a.side]){
-      if(h.curHp<=0||h===a) continue;
-      if(['stun','freeze','sleep','para','trap'].some(t=>hasStatus(h,t))) continue;
-      if(h.s1.n==='完美助攻'||h.s2.n==='完美助攻'){
-        const sk_pa=h.s1.n==='完美助攻'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_pa.c){
-          const _doPA=()=>{
-            G.energy[h.side]-=sk_pa.c;
-            addStatus(target,'stun',1); addStatus(target,'noatk',1);
-            log(`[${h.name}] 完美助攻！[${target.name}] 被封鎖1回合！`);
-            bannerFX(target,'完美助攻','#ffcc44',800);
-          };
-          if(h.side==='p2'||_autoBattle){ _doPA(); }
-          else {
-            _showPassivePrompt({
-              hero:h, skillName:'完美助攻', color:'#ffcc44', cost:sk_pa.c,
-              desc:`使 [${target.name}] 暈眩並封印攻擊1回合`,
-              onUse(){ _doPA(); },
-              onSkip(){}
-            });
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  // ── 獻祭的餘暉（被動）: on death → deal same to enemy, share last HP ──
-  if(target.curHp===0 && old>0){
-    if(target.s1.n==='獻祭的餘暉'||target.s2.n==='獻祭的餘暉'){
-      const atk_side2=a?a.side:null;
-      if(atk_side2 && atk_side2!==target.side){
-        // 對對手造成相同傷害
-        const foes3=G[atk_side2].filter(h=>h.curHp>0);
-        if(foes3.length){
-          const st=foes3[Math.floor(Math.random()*foes3.length)];
-          log(`[${target.name}] 獻祭的餘暉！對 [${st.name}] 造成 ${dmg} 傷害！`);
-          doDmg(st,dmg,{actor:target,noGuard:true,ignoreBuffs:true});
-        }
-        // 分享受傷前的HP（即 old）給HP最少的存活隊友
-        const fr3=G[target.side].filter(h=>h.curHp>0);
-        if(fr3.length){
-          const shTgt=fr3.sort((x,y)=>x.curHp-y.curHp)[0];
-          doHeal(shTgt,old,{actor:target,noDice:true,isHeal:true});
-          log(`[${target.name}] 遺留 ${old}HP 給 [${shTgt.name}]！`);
-        }
-        bannerFX(target,'獻祭的餘暉','#ffaa55',1000); sndDeathMark();
-      }
-    }
-  }
-  // ── 以牙還牙（被動）: 受到傷害時觸發，詢問是否反彈等量傷害 ──
-  if(old>0 && target.curHp<old && dmg>0 && a && a.side!==target.side && !opts.isRebound && !opts.isKanWang && !opts.isPunishReflect){
-    const _fanSkCheck = (target.s1.n==='以牙還牙'||target.s2.n==='以牙還牙');
-    if(_fanSkCheck && target.curHp>0){
-      const _fanSk = target.s1.n==='以牙還牙'?target.s1:target.s2;
-      const _fanCost = skillCost(_fanSk,target,true);
-      if(G.energy[target.side]>=_fanCost && a && a.curHp>0){
-        if(target.side==='p2' || (target.side==='p1' && _autoBattle)){
-          // AI自動發動
-          G.energy[target.side]-=_fanCost;
-          sfxPassive(target,0.7);
-          log(`[${target.name}] 以牙還牙！[${a.name}] 受到 ${dmg} 傷害！`);
-          doDmg(a,dmg,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
-        } else {
-          // 玩家詢問
-          _showFanPrompt(target, a, _fanCost, 'dmg', dmg, null);
-        }
-      }
-    }
-  }
-  // ── 小力天賦：隊友受傷時35%立即用特技恢復HP ──
-  if(target && target.curHp>0 && dmg>0 && !opts.noInuTrait){
-    const inuAllies = G[target.side].filter(h=>h!==target&&h.curHp>0&&h.name==='小力'&&!hasStatus(h,'confused'));
-    inuAllies.forEach(inu=>{
-      if(Math.random()<0.35){
-        const healAmt=Math.max(1,Math.floor(inu.sp*(1+inu.sp*0.01)));
-        doHeal(target,healAmt,{actor:inu,isHeal:true,noDice:true});
-        log(`🐕 [小力] 天賦觸發！替 [${target.name}] 恢復 ${healAmt}HP！`);
-        bannerFX(target,'小力守護！','#ffaacc',800);
-      }
-    });
-  }
-  // ── 吸血鬼天賦：造成傷害時回復50%傷害量HP ──
-  if(a && a.name==='吸血鬼' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side && a.curHp>0 && !opts.isRebound){
-    const vamp=Math.ceil(dmg*0.5);
-    doHeal(a,vamp,{actor:a,noDice:true,noWarhorn:true,isHeal:true});
-    log(`🦇 [吸血鬼] 天賦：嗜血！吸收 ${vamp} HP！`);
-  }
-
-  // ── 機械師天賦：受到傷害時20%觸電反擊 ──
-  if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<0.2){
-    addStatus(a,'para',1);
-    log(`⚙️ [機械師] 天賦：觸電反擊！[${a.name}] 麻痺1回合！`);
-    bannerFX(target,'觸電反擊！','#aaff00',900);
-    sndLightning();
-  }
-
-  // ── 武士天賦：受到傷害時40%用攻擊的50%反擊
-  // ── 武士：迴避反擊（被動）：被攻擊時100%閃躲並反擊ATK×150% ──
-  if(target.name==='武士' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && !opts.isRebound){
-    const hasEvadeCounter=(target.s1.n==='迴避反擊'||target.s2.n==='迴避反擊');
-    if(hasEvadeCounter){
-      const sk_ec=target.s1.n==='迴避反擊'?target.s1:target.s2;
-      const ec_cost=skillCost(sk_ec,target,true);
-      if(G.energy[target.side]>=ec_cost){
-        G.energy[target.side]-=ec_cost;
-        // 100%閃躲：恢復被扣的HP
-        const restored=old-target.curHp;
-        target.curHp=old;
-        renderCard(target);
-        // 反擊ATK×150%
-        const ctr=Math.max(1,Math.floor(target.atk*1.5));
-        log(`🗾 [武士] 迴避反擊！閃躲並反擊 [${a.name}] ${ctr} 傷害！（消耗 ${ec_cost} 能量）`);
-        bannerFX(target,'迴避反擊！','#ffe066',900);
-        playSfx('sfx-sword',0.8);
-        doDmg(a,ctr,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
-        return 0;
-      } else {
-        log(`🗾 [武士] 迴避反擊：能量不足（需 ${ec_cost}，剩 ${G.energy[target.side]}），無法觸發！`);
-      }
-    } else {
-      // 舊的40%反擊邏輯
-      const ctr2=Math.max(1,Math.floor(target.atk*0.5));
-      if(Math.random()<0.4){
-        log(`🗾 [武士] 天賦：武士反擊！對 [${a.name}] 造成 ${ctr2} 傷害！`);
-        bannerFX(target,'武士反擊！','#ff9944',900);
-        doDmg(a,ctr2,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
-      }
-    }
-  }
-
-  // ── 陰陽師天賦：受到技能傷害時60%由式神代替承受 ──
-  if(target.name==='陰陽師' && !hasStatus(target,'confused') && opts.isSkill && old>0 && target.curHp<old && Math.random()<0.6 && !opts.isRebound){
-    // 式神承受：恢復被扣除的HP（視為式神吸收了傷害）
-    const restored=old-target.curHp;
-    target.curHp=old;
-    renderCard(target);
-    log(`☯️ [陰陽師] 天賦：式神擋傷！式神代替承受 ${restored} 傷害！`);
-    bannerFX(target,'式神擋傷！','#cc88ff',900);
-    showPopup(target,'式神！','miss');
-    return 0;
-  }
-
-  return dmg;
-}
-
-function doHeal(target, rawAmt, opts={}){
-  // ── 迷心醫術（被動）: if enemy heals → redirect to our ally ──
-  if(!opts.isMirrored && !opts.isChaos){
-    const healer=opts.actor;
-    const healer_side=healer?healer.side:target.side;
-    const opp_side=healer_side==='p1'?'p2':'p1';
-    for(const h of G[opp_side]){
-      if(h.curHp<=0) continue;
-      if(h.s1.n==='迷心醫術'||h.s2.n==='迷心醫術'){
-        const sk_mm=h.s1.n==='迷心醫術'?h.s1:h.s2;
-        if(G.energy[h.side]>=sk_mm.c){
-          G.energy[h.side]-=sk_mm.c;
-          // Redirect the heal to a random ally of 迷心醫術 holder
-          const newTarget=G[opp_side].filter(x=>x.curHp>0)[0];
-          if(newTarget){
-            log(`[${h.name}] 迷心醫術！治療 [${target.name}] 被轉為治療 [${newTarget.name}]！`);
-            doHeal(newTarget,rawAmt,{...opts,isMirrored:true});
-            return 0;
-          }
-        }
-        break;
-      }
-    }
-  }
-  if(fieldHas('noheal')&&!opts.isChaos){ log(`🚫 受詛咒的神像：無法恢復HP！`); return 0; }
-  if(target && hasStatus(target,'noheal_curse')&&!opts.isChaos){ log(`🚫 不治詛咒：[${target.name}] 無法恢復HP！`); return 0; }
-  // healReduced (朱雀召喚：治療量減半)
-  if(target && hasStatus(target,'healReduced')){ rawAmt=Math.ceil(rawAmt*0.5); }
-  const a=G.activeChar||opts.actor;
-  let amt=rawAmt;
-  // ★ 技能升級倍率（只對 isHeal:true 有效）
-  if(opts.isHeal && _activeSkLvMult > 1.0) amt = Math.round(amt * _activeSkLvMult);
-  if(a&&hasBuff(a,'dmgup')&&opts.isHeal) amt+=Math.floor(a.sp*0.5);
-  // 接力傳遞：治療+50%（使用後移除）
-  if(a&&hasBuff(a,'_relay')&&opts.isHeal){
-    amt=Math.ceil(amt*1.5);
-    a.buffs=a.buffs.filter(b=>b.type!=='_relay');
-    log(`🏃 接力傳遞觸發！[${a.name}] 治療×1.5！`);
-  }
-  if(fieldHas('dice')&&!opts.noDice){
-    if(Math.random()<0.5){ amt=Math.ceil(amt*1.5); showDiceMsg('占卜水晶','治療+50%'); }
-    else { amt=Math.ceil(amt*0.5); showDiceMsg('占卜水晶','治療-50%'); }
-  }
-  if(fieldHas('chaos')&&!opts.isChaos){ doDmg(target,amt,{isChaos:true}); return 0; }
-  if(fieldHas('warhorn')&&!opts.noWarhorn) amt+=3;
-  // ── 嗜血：低血增傷（血量越低增傷越高，最高+100%）──
-  if(a && hasStatus(a,'burstVamp') && a.hp>0 && !opts.isRebound){
-    const _missingPct = Math.max(0, 1 - a.curHp/a.hp); // 0~1，血量越低越大
-    const _vampBonus = Math.floor(dmg * _missingPct);   // 最高+100%傷害
-    if(_vampBonus>0){
-      dmg += _vampBonus;
-      showPopup(a,'嗜血+'+_vampBonus,'elem-adv');
-    }
-  }
-  // 祭司長袍：治療效果+40%（寵物專家加倍）
-  const aeq=a?getEquip(a):null;
-  if(aeq && aeq.healBonus && opts.isHeal){
-    const cb=getCraftsmanBonus(a.side);
-    amt=Math.ceil(amt*(1+aeq.healBonus*cb));
-  }
-  // 草屬性：恢復+2
-  const _tge=getElemData(target&&target.element);
-  if(_tge&&_tge.bonus_healflat) amt+=_tge.bonus_healflat;
-  amt=Math.max(0,Math.ceil(amt));
-  const old=target.curHp;
-  target.curHp=Math.min(target.hp,target.curHp+amt);
-  const actual=target.curHp-old;
-  if(actual>0){
-    showPopup(target,'+'+actual,'heal'); sndHeal(); playSfx('sfx-heal',0.6);
-    // 統計：只記錄對友方（同陣營）的治療
-    const _healer=G&&(G.activeChar||opts.actor);
-    if(_healer && _healer.side === target.side) statTrack(_healer,'heal',actual);
-  }
-  renderCard(target);
-  return actual;
-}
-
-function selMove(type){
-  const a=G.activeChar; if(!a||a.acted) return;
-  const _cv=document.getElementById('charm-ov'); if(_cv) _cv.remove();
-  if(G.pendingTarget||(G.selMove&&G.selMove._type===type)){clearSel();updateUI();return;}
-  clearSel();
-  if(type==='atk'){
-    G.selMove={n:'攻擊',c:0,_type:'atk'};
-    document.getElementById('b-atk').classList.add('sel');
-    setPending('enemy',t=>{
-      execAtk(a,t,a.atk);
-      
-        endAction(a,0);
-      
-    });
-  } else {
-    const sk=type==='s1'?a.s1:a.s2;
-    // 被動技能不可手動使用
-    if(sk.p){ log(`⚙ [${sk.n}] 是被動技能，條件達成時才會觸發`); return; }
-    // 統一用 displayOnly=true 計算 cost（不含魔水晶戒指隨機折扣）作為判斷與扣除基準
-    const cost=skillCost(sk,a,true);
-    if(G.energy[a.side]<cost){ log('能量不足！'); return; }
-    if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
-    if(hasStatus(a,'seal')){ log(`[${a.name}] 被封印，無法使用技能！`); return; }
-    if(sk.once&&a.s2used){ log('此技能只能使用一次！'); return; }
-    G.selMove=sk;
-    document.getElementById(type==='s1'?'b-s1':'b-s2').classList.add('sel');
-    execSkill(a,sk,cost,type);
-  }
-}
-
-function execAtk(actor, target, dmg, opts={}){
-  log(`[${actor.name}] 普通攻擊 [${target.name}]`);
-  showActionLabel(actor, '⚔ 普通攻擊', '#ffcc44');
-  actor._actionLabel = '⚔ 普通攻擊！';
-  G.lastSkill=null;
-  showActionLabel(actor, '⚔ 普通攻擊！');
-    // ── 普通攻擊視覺特效 ──
-  (function(){
-    ensureFxLayer();
-    var rc_a=cardRect(actor), rc_t=cardRect(target);
-    // 刀劍/拳擊/射擊 依職業類型
-    var weaponFx={
-      '劍士':function(){playSfx('sfx-sword',0.7);if(rc_a&&rc_t)beamFX(actor,target,'#ffd700',180);setTimeout(function(){if(rc_t){flashCard(target,'rgba(255,200,50,0.6)',120);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#ffcc55',size:5,spread:35,duration:350});}},100);},
-      '刺客': function(){playSfx('sfx-sword',0.6);if(rc_t){flashCard(target,'rgba(180,50,200,0.5)',150);spawnParticles(rc_t.x,rc_t.y,{count:7,color:'#cc44ff',size:4,spread:30,duration:300});}},
-      '守衛': function(){playSfx('sfx-sword',0.65);if(rc_a&&rc_t)beamFX(actor,target,'#4a9eff',160);if(rc_t)flashCard(target,'rgba(60,130,255,0.5)',150);},
-      '武鬥家':function(){playSfx('sfx-punch',0.75);if(rc_t){flashCard(target,'rgba(255,140,0,0.65)',180);spawnParticles(rc_t.x,rc_t.y,{count:10,color:'#ff8800',size:6,spread:40,duration:400});}},
-      '大力士':function(){playSfx('sfx-punch',0.8);if(rc_t){flashCard(target,'rgba(200,100,0,0.75)',200);spawnParticles(rc_t.x,rc_t.y,{count:14,color:'#cc6600',size:8,spread:50,duration:450});flashScreen('rgba(150,80,0,1)',100);}},
-      '神射手':function(){playSfx('sfx-shoot',0.6);if(rc_a&&rc_t)beamFX(actor,target,'#ffffff',120);if(rc_t){flashCard(target,'rgba(255,255,255,0.5)',100);spawnParticles(rc_t.x,rc_t.y,{count:5,color:'#ffffff',size:3,spread:25,duration:250});}},
-      '警長':  function(){playSfx('sfx-shoot',0.65);playSfx('sfx-gunshot',0.7);if(rc_t){flashCard(target,'rgba(255,240,0,0.5)',120);spawnParticles(rc_t.x,rc_t.y,{count:6,color:'#ffdd00',size:4,spread:30,duration:300});}flashScreen('rgba(255,220,0,1)',60);},
-      '機械師':function(){playSfx('sfx-shoot',0.6);playSfx('sfx-gunshot',0.75);if(rc_t){flashCard(target,'rgba(180,180,180,0.5)',120);spawnParticles(rc_t.x,rc_t.y,{count:6,color:'#aaaaaa',size:4,spread:30,duration:300});}flashScreen('rgba(200,200,200,1)',50);},
-      '神偷':  function(){playSfx('sfx-sword',0.55);if(rc_a&&rc_t)beamFX(actor,target,'#cc88ff',150);},
-      '火法師':function(){sndFireball();if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:10,color:'#ff6600',size:6,spread:40,duration:350,rise:true,gravity:-0.4});flashCard(target,'rgba(255,80,0,0.5)',150);}},
-      '冰法師':function(){sndIceLance();if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#a8eeff',size:5,spread:35,duration:400});flashCard(target,'rgba(100,220,255,0.45)',180);}},
-      '雷法師':function(){sndLightning();if(rc_a&&rc_t)lightningFX(actor,target,'#aaff00',250);if(rc_t)flashCard(target,'rgba(150,255,50,0.5)',150);},
-      '光法師':function(){sndFlash();if(rc_t){flashCard(target,'rgba(255,255,200,0.65)',150);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#ffffaa',size:4,spread:35,duration:350});}},
-      '暗法師':function(){sndDarkSeal();if(rc_t){flashCard(target,'rgba(80,0,100,0.6)',180);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#9944cc',size:5,spread:35,duration:380});}},
-      '祭司':  function(){playSfx('sfx-sword',0.5);if(rc_t){flashCard(target,'rgba(255,240,100,0.35)',150);spawnParticles(rc_t.x,rc_t.y,{count:5,color:'#ffee88',size:3,spread:25,duration:300});}},
-      '聖騎士':function(){playSfx('sfx-sword',0.65);if(rc_a&&rc_t)beamFX(actor,target,'#ffe066',160);if(rc_t){flashCard(target,'rgba(255,220,80,0.5)',150);spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#ffe066',size:5,spread:35,duration:350});}},
-      '吟遊詩人':function(){playSfx('sfx-sword',0.45);if(rc_t){flashCard(target,'rgba(255,100,200,0.35)',150);spawnParticles(rc_t.x,rc_t.y,{count:6,color:'#ff88cc',size:4,spread:30,duration:300});}},
-      '舞者':  function(){playSfx('sfx-sword',0.5);if(rc_a&&rc_t)beamFX(actor,target,'#ff55cc',140);if(rc_t){flashCard(target,'rgba(255,80,180,0.4)',130);}},
-      '煉金術師':function(){playSfx('sfx-sword',0.55);if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:7,color:'#55ffcc',size:4,spread:30,duration:300});}},
-      '軍師':  function(){playSfx('sfx-sword',0.5);if(rc_a&&rc_t)beamFX(actor,target,'#66ccff',150);},
-      '占星師':function(){playSfx('sfx-fantasy',0.55);if(rc_t){spawnParticles(rc_t.x,rc_t.y,{count:8,color:'#cc99ff',size:4,spread:35,duration:350});}},
-      '凡人':  function(){playSfx('sfx-sword',0.55);if(rc_t){flashCard(target,'rgba(200,200,200,0.4)',120);}},
-    };
-    var fx=weaponFx[actor.name];
-    if(fx) fx();
-    else { playSfx('sfx-normalatk',0.7); if(rc_t){flashCard(target,'rgba(255,255,255,0.35)',120);} }
-    // ── 元素命中特效 ──
-    if(actor.element && rc_t){
-      var elemColors={'fire':'#ff6600','water':'#4488ff','grass':'#44ee44','ice':'#a8eeff','thunder':'#aaff00','light':'#ffffaa','dark':'#9944cc','wind':'#aaffcc','earth':'#cc8844'};
-      var ec=elemColors[actor.element];
-      if(ec) setTimeout(function(){spawnParticles(rc_t.x,rc_t.y,{count:6,color:ec,size:4,spread:28,duration:350,rise:true,gravity:-0.2});},150);
-    }
-  })();
-  // 運球狀態：普攻變2次
-  let _dribbleExtra = false;
-  if(hasBuff(actor,'dribble') && !opts?._dribble2nd){
-    _dribbleExtra = true;
-  }
-  // 籃球隊員天賦：友方普攻時50%暴擊+50%傷害
-  let _finalDmg = dmg;
-  const _bballLeader = actor.side ? G[actor.side].find(h=>h.curHp>0&&h.name==='籃球隊員'&&h!==actor) : null;
-  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<0.5){
-    _finalDmg = Math.floor(_finalDmg * 1.5);
-    showPopup(actor,'🏀暴擊！','energy');
-    bannerFX(actor,'暴擊！','#ff8800',600);
-    log(`🏀 [籃球隊員] 天賦：隊友暴擊！[${actor.name}] 傷害×1.5！`);
-  }
-  doDmg(target, _finalDmg, {actor, ignoreBuffs: !!(actor._burstMirror)});
-  // 運球第二擊
-  if(_dribbleExtra && target.curHp>0){
-    _pSetTimeout(()=>{
-      if(actor.curHp>0 && target.curHp>0){
-        log(`🏀 [運球] ${actor.name} 二連擊！`);
-        execAtk(actor, target, actor.atk, {_dribble2nd:true});
-      }
-    }, 300);
-  }
-  // ====== 天賦觸發 ======
-  if(actor.curHp<=0) return;
-  // 疑惑狀態：特質失效
-  if(hasStatus(actor,'confused')) return;
-  const name=actor.name;
-  // 天賦觸發標籤 helper（在 bannerFX 之外再加卡牌標籤）
-  function _traitLabel(text){ showActionLabel(actor, '✦ '+text+'！'); }
-  // 劍士：30%再行動1次
-  if(name==='劍士' && Math.random()<0.3){
-    log(`⚔️ [劍士] 天賦：連擊！再行動1次！`);
-    _traitLabel('連擊');
-    bannerFX(actor,'連擊！','#ffcc44',900);
-    actor._traitReAct = true; // 告知 endAction 不要設 acted=true
-    _pSetTimeout(()=>{
-      if(actor.curHp>0){
-        actor.acted=false;
-        updateUI();
-        if(actor.side==='p1'){ document.getElementById('action-panel').style.display='block'; }
-        else { aiAct(actor); }
-      }
-    }, 400);
-    return;
-  }
-
-  // 祭司：60%恢復HP最低隊友25%HP
-  if(name==='祭司' && Math.random()<0.6 && target.curHp>0){
-    const allies=G[actor.side].filter(h=>h.curHp>0);
-    if(allies.length){
-      const lowest=allies.sort((a,b)=>a.curHp/a.hp - b.curHp/b.hp)[0];
-      const healAmt=Math.max(1,Math.floor(lowest.hp*0.25));
-      doHeal(lowest,healAmt,{actor,isHeal:true,noDice:true});
-      log(`✨ [祭司] 天賦：聖光庇護！恢復 [${lowest.name}] ${healAmt}HP！`);
-      showActionLabel(actor,'✨ 聖光庇護 天賦');
-      bannerFX(lowest,'聖光庇護','#ffe066',900);
-    }
-  }
-
-  // 火法師：60%消除目標有利狀態
-  if(name==='火法師' && Math.random()<0.6 && target.curHp>0){
-    if(target.buffs.length>0){
-      clearGoodBuffs(target);
-      log(`🔥 [火法師] 天賦：業火焚燒！消除 [${target.name}] 有利狀態！`);
-      showActionLabel(actor,'🔥 業火焚燒 天賦');
-      bannerFX(target,'業火焚燒','#ff6600',900);
-    }
-  }
-
-  // 冰法師：60%緩速1回合（速度-50%）
-  if(name==='冰法師' && Math.random()<0.6 && target.curHp>0){
-    if(!hasStatus(target,'traitSlow')){
-      const orig=target.spd;
-      target.spd=Math.max(1,Math.floor(target.spd*0.5));
-      target.status=target.status.filter(s=>s.type!=='traitSlow'); target.status.push({type:'traitSlow',dur:1,_origSpd:orig});
-      log(`❄️ [冰法師] 天賦：寒冰凝滯！[${target.name}] 速度-50%！`);
-      showActionLabel(actor,'❄ 寒冰凝滯 天賦');
-      bannerFX(target,'速度-50%','#a8eeff',900);
-      renderCard(target);
-    }
-  }
-
-  // 雷法師：60%對全體敵人造成等量傷害
-  if(name==='雷法師' && Math.random()<0.6 && target.curHp>0){
-    const foes=G[actor.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0&&h!==target);
-    if(foes.length){
-      log(`⚡ [雷法師] 天賦：連鎖電弧！對全體敵人造成 ${dmg} 傷害！`);
-      foes.forEach(f=>{ doDmg(f,dmg,{actor,noGuard:true}); });
-      showActionLabel(actor,'⚡ 連鎖電弧 天賦');
-      bannerFX(actor,'連鎖電弧','#aaff00',900);
-    }
-  }
-
-  // 光法師：60%失明1回合
-  if(name==='光法師' && Math.random()<0.6 && target.curHp>0){
-    addStatus(target,'forecast',1);
-    log(`☀️ [光法師] 天賦：炫目閃光！[${target.name}] 失明1回合！`);
-    showActionLabel(actor,'☀ 炫目閃光 天賦');
-    bannerFX(target,'失明','#ffffaa',900);
-  }
-
-  // 暗法師：60%封印1回合
-  if(name==='暗法師' && Math.random()<0.6 && target.curHp>0){
-    addStatus(target,'seal',1);
-    log(`🌑 [暗法師] 天賦：黑暗咒縛！[${target.name}] 封印1回合！`);
-    showActionLabel(actor,'🌑 黑暗咒縛 天賦');
-    bannerFX(target,'封印','#cc44ff',900);
-  }
-
-  // 神射手：60%放置陷阱1回合（自己無法被普通攻擊）
-  if(name==='神射手' && Math.random()<0.6){
-    addBuff(actor,'trapShield',1);
-    log(`🏹 [神射手] 天賦：佈下陷阱！1回合內無法被普通攻擊！`);
-    showActionLabel(actor,'🏹 佈下陷阱 天賦');
-    bannerFX(actor,'陷阱佈置','#cc8800',900);
-  }
-
-  // 神偷：50%奪取裝備或有利狀態
-  if(name==='神偷' && Math.random()<0.5 && target.curHp>0){
-    // 優先奪有利狀態，否則奪裝備
-    const stolenBuff = target.buffs && target.buffs.length ? target.buffs.splice(Math.floor(Math.random()*target.buffs.length),1)[0] : null;
-    if(stolenBuff){
-      actor.buffs.push({...stolenBuff, dur:Math.max(stolenBuff.dur,1)});
-      log(`🗡️ [神偷] 天賦：掠奪！奪取 [${target.name}] 的狀態 [${buffName(stolenBuff.type)||stolenBuff.type}]！`);
-      showActionLabel(actor,'🗡️ 狀態掠奪 天賦');
-      bannerFX(actor,'狀態掠奪！','#ffcc00',900);
-      renderCard(target); renderCard(actor);
-    } else if(target.equip){
-      const oldEq=target.equip;
-      const eqData=EQUIP_DB.find(e=>e.n===oldEq.n);
-      if(eqData&&eqData.onRemove) eqData.onRemove(target);
-      target.equip=null;
-      if(actor.equip){ const prevEq=EQUIP_DB.find(e=>e.n===actor.equip.n); if(prevEq&&prevEq.onRemove)prevEq.onRemove(actor); }
-      actor.equip={n:oldEq.n};
-      if(eqData&&eqData.onEquip) eqData.onEquip(actor);
-      log(`🗡️ [神偷] 天賦：掠奪！奪取 [${target.name}] 的寵物 [${oldEq.n}]！`);
-      showActionLabel(actor,'🗡️ 寵物掠奪 天賦');
-      bannerFX(actor,'寵物掠奪！','#ffcc00',900);
-      renderCard(target); renderCard(actor);
-    }
-  }
-
-  // 刺客：60%中毒2回合
-  if(name==='刺客' && Math.random()<0.6 && target.curHp>0){
-    addStatus(target,'poison',2);
-    target._poisonAmt=Math.max(1,Math.floor(target.hp*0.1));
-    log(`👁️ [刺客] 天賦：淬毒之刃！[${target.name}] 中毒2回合！`);
-    showActionLabel(actor,'👁️ 淬毒之刃 天賦');
-    bannerFX(target,'中毒','#88ff22',900);
-  }
-
-  // 吟遊詩人：60%恢復友方全體10%HP
-  if(name==='吟遊詩人' && Math.random()<0.6){
-    const allies=G[actor.side].filter(h=>h.curHp>0);
-    allies.forEach(h=>{ doHeal(h,Math.max(1,Math.floor(h.hp*0.1)),{actor,isHeal:true,noDice:true}); });
-    log(`🪕 [吟遊詩人] 天賦：鼓舞樂章！友方全體恢復10%HP！`);
-    showActionLabel(actor,'🪕 鼓舞樂章 天賦');
-    bannerFX(actor,'鼓舞樂章','#ff88cc',900);
-  }
-
-  // 舞者：60%虛弱1回合（攻擊和特技-50%）
-  if(name==='舞者' && Math.random()<0.6 && target.curHp>0){
-    if(!hasStatus(target,'traitWeak')){
-      const origAtk=target.atk, origSp=target.sp;
-      target.atk=Math.max(1,Math.floor(target.atk*0.5));
-      target.sp=Math.max(1,Math.floor(target.sp*0.5));
-      target.status=target.status.filter(s=>s.type!=='traitWeak'); target.status.push({type:'traitWeak',dur:1,_origAtk:origAtk,_origSp:origSp});
-      log(`💃 [舞者] 天賦：魅惑舞步！[${target.name}] 攻擊和特技-50%！`);
-      showActionLabel(actor,'💃 魅惑舞步 天賦');
-      bannerFX(target,'虛弱','#ff55cc',900);
-      renderCard(target);
-    }
-  }
-
-  // 警長：60%目標行動退到最後
-  if(name==='警長' && Math.random()<0.6 && target.curHp>0){
-    addStatus(target,'spddown',1);
-    // 擊退行動順序：設為極低spd讓本回合排最後
-    if(!target._pushBackSpd){ target._pushBackSpd=target.spd; }
-    target.spd=-9999;
-    log(`🔫 [警長] 天賦：擊退 [${target.name}] 的行動順序！`);
-    log(`🔫 [警長] 天賦：威懾震懾！[${target.name}] 行動順序退到最後！`);
-    showActionLabel(actor,'🔫 威懾震懾 天賦');
-    bannerFX(target,'退到最後','#ffcc44',900);
-  }
-
-  // 軍師：60%疑惑1回合（天賦失效）
-  if(name==='軍師' && Math.random()<0.6 && target.curHp>0){
-    addStatus(target,'confused',1);
-    log(`📜 [軍師] 天賦：迷惑戰術！[${target.name}] 疑惑1回合，天賦失效！`);
-    showActionLabel(actor,'📜 迷惑戰術 天賦');
-    bannerFX(target,'疑惑','#88aaff',900);
-  }
-
-  // 學者：60%奪取對手1能量
-  if(name==='學者' && Math.random()<0.6 && target.curHp>0){
-    const oppSide=actor.side==='p1'?'p2':'p1';
-    if(G.energy[oppSide]>0){
-      G.energy[oppSide]=Math.max(0,G.energy[oppSide]-1);
-      G.energy[actor.side]=Math.min(10,G.energy[actor.side]+1);
-      log(`📚 [學者] 天賦：知識竊取！奪取對手1能量！`);
-      showActionLabel(actor,'📚 奪取能量 天賦');
-      bannerFX(actor,'奪取能量！','#88aaff',900);
-      showPopup(actor,'+1E','energy');
-    }
-  }
-
-  // 時空法師：60%使目標1回合內無法獲得治療和有利狀態
-  if(name==='時空法師' && Math.random()<0.6 && target.curHp>0){
-    addStatus(target,'noheal_curse',1);
-    addStatus(target,'nosell',1);
-    log(`⏳ [時空法師] 天賦：時間封印！[${target.name}] 1回合無法獲得治療和有利狀態！`);
-    showActionLabel(actor,'⏳ 時間封印 天賦');
-    bannerFX(target,'時間封印','#aaddff',900);
-  }
-
-  // 吸血鬼：造成傷害時恢復50%傷害量HP（在 doDmg 回傳後處理）
-  // ── 注意：吸血鬼特質在 doDmg hook 中處理（見下方），此處不重複
-
-  // 直笛團員：普攻時50%使目標狂亂1回合
-  if(name==='直笛團員' && Math.random()<0.5 && target.curHp>0){
-    addStatus(target,'berserk',1);
-    _traitLabel('魔笛狂亂');
-    log(`🎵 [直笛團員] 天賦：魔笛旋律！[${target.name}] 陷入狂亂1回合！`);
-    bannerFX(target,'狂亂！','#ff55cc',900);
-  }
-  // 田徑隊員：行動時60%使未行動友方提前到下一個
-  if(name==='田徑隊員' && Math.random()<0.6){
-    const _sortFn3=fieldHas('reverse')?(x,y)=>x.spd-y.spd:(x,y)=>y.spd-x.spd;
-    const _nextAlly2=G[actor.side].filter(h=>h.curHp>0&&h!==actor&&!h.acted).sort(_sortFn3)[0];
-    if(_nextAlly2){
-      // 提前行動：臨時大幅提升速度排序（加1000確保排在最前）
-      _nextAlly2._sprintNext=true;
-      _nextAlly2._origSpdTmp=_nextAlly2.spd;
-      _nextAlly2.spd+=1000;
-      _traitLabel('接力！');
-      bannerFX(_nextAlly2,'接力！立即行動！','#44ffcc',900);
-      log(`🏃 [田徑隊員] 天賦！[${_nextAlly2.name}] 接力提前行動！`);
-      // 下次 startTurn 後還原速度（用 setTimeout 在本回合結束後執行）
-      _pSetTimeout(()=>{
-        if(_nextAlly2._sprintNext){
-          _nextAlly2.spd=_nextAlly2._origSpdTmp||_nextAlly2.spd-1000;
-          delete _nextAlly2._sprintNext; delete _nextAlly2._origSpdTmp;
-          renderCard(_nextAlly2);
-        }
-      }, 1200);
-    }
-  }
-  updateUI();
-}
-
-
-
-// ════════════════════════════════════════════════════════
-
-// ★ 補充還原的工具函式
-function clearSel(){
-  clearTurnTimer();
-  document.querySelectorAll('.abtn').forEach(b=>b.classList.remove('sel'));
-  document.querySelectorAll('.ibox').forEach(b=>b.classList.remove('sel'));
-  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
-  G.selMove=null; G.selItem=null; G.pendingTarget=null; pendingCb=null;
-  document.getElementById('item-ops').style.display='none';
-  // 重置裝備/使用按鈕狀態
-  const useBtn=document.getElementById('iop-use-btn');   if(useBtn)  useBtn.style.display='';
-  const eqBtn =document.getElementById('iop-equip-btn'); if(eqBtn)   eqBtn.style.display='none';
-  hidePassiveBtns();
-  restoreActionBtns();
-  // 移除確認欄
-  const _ac=document.getElementById('action-confirm-bar'); if(_ac) _ac.remove();
-  _pendingActionType=null;
-}
-
-function showPopup(h, val, type){
-  const el=document.getElementById('card-'+h.side+'-'+h.pos);
-  if(!el) return;
-  const gc=document.getElementById('gc');
-  if(!gc) return;
-  const gcR=gc.getBoundingClientRect();
-  const eR=el.getBoundingClientRect();
-  const scale=gcR.width/1920;
-  let x=(eR.left-gcR.left)/scale + eR.width/scale/2;
-  let y=(eR.top-gcR.top)/scale + eR.height/scale*(type==='heal'?0.72:0.22);
-  // 需求1：屬性加成數字偏移到右邊
-  if(type==='elem-adv'||type==='elem-dis'){
-    x += 120; // 偏移到基礎傷害右邊
-    y += 20;  // 稍微往下避免重疊
-  }
-  // 需求2：同一張卡連續傷害加0.5秒延遲
-  const cardKey=h.side+'-'+h.pos;
-  const now=Date.now();
-  let delay=0;
-  if(type==='dmg' && _lastPopupTime[cardKey] && (now-_lastPopupTime[cardKey])<600){
-    delay=500;
-  }
-  if(type==='dmg') _lastPopupTime[cardKey]=now+delay;
-  const p=document.createElement('div');
-  p.className='popup '+type;
-  p.textContent=val;
-  p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;opacity:0;transition:opacity 0.05s;';
-  gc.appendChild(p);
-  setTimeout(function(){
-    p.style.opacity='1';
-    p.style.transition='';
-  }, delay);
-  setTimeout(function(){if(p.parentNode)p.remove();},2100+delay);
-}
-
-function shake(target){
-  if(target){
-    if(!target || target.curHp<=0) return;
-    const el=document.getElementById(`card-${target.side}-${target.pos}`);
-    if(el){
-      // 套在card-inner上：它沒有transition干擾
-      const inner=el.querySelector('.card-inner')||el;
-      inner.classList.remove('card-hit');
-      void inner.offsetWidth;
-      inner.classList.add('card-hit');
-      setTimeout(()=>{ inner.classList.remove('card-hit'); },520);
-      // 星星炸開特效
-      _hitStarBurst(el);
-      return;
-    }
-  }
-}
-
-function showDiceMsg(title,desc){
-  // non-blocking inline log
-  log(`🎲 ${title} → ${desc}`);
-}
-
 function clickItem(it){
   const a=G.activeChar;
   if(!a||a.side!=='p1'||a.acted) return;
@@ -13083,8 +13908,6 @@ function showActivePassiveUI(hero, sk, cost, triggerDesc, onUse, onSkip){
 // ====== TURN ENGINE ======
 function startTurn(){
   if(checkWin()) return;
-  // ★ 教學進行中：暫停行動
-  if(typeof _tutorialActive !== 'undefined' && _tutorialActive) return;
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
 // ══ 冒險模式 BOSS 天賦 ══
@@ -13843,7 +14666,6 @@ function _realAiAct(a){
     if(['盜取','急速閃躲','物品查封','識破全局','兵貫神速之計','命運塔羅牌',
         '轉禍為福','道具複製','邏輯優化','色彩噴濺','動物守護','接力傳遞',
         '起跑衝刺','午睡時間','餘音繞樑','動物守護','崛起鬥志','迴避反擊'].includes(n)) return -1;
-    if(n==='天籟之音') return Math.floor(a.sp*1.5); // ★ 天籟之音：全體傷害
     return a.sp;
   }
 
@@ -14029,8 +14851,6 @@ function _realAiAct(a){
     log('['+a.name+'] AI普攻 ['+atkTarget.name+']');
     showActionLabel(a, '⚔ 普通攻擊！');
     doDmg(atkTarget,a.atk,{actor:a});
-    // ★ 普攻後天賦
-    try{ _doAfterAtkTraits(a, atkTarget); }catch(e){}
     G.lastSkill=null;
     a.acted=true; updateUI(); _pSetTimeout(startTurn,500); return;
   }
@@ -15636,9 +16456,6 @@ function ctrlBattleToggle(show){
   const div=document.getElementById('ctrl-leave-divider');
   if(btn) btn.style.display=show?'':'none';
   if(div) div.style.display=show?'':'none';
-  // ★ 教學按鈕：戰鬥中顯示
-  const _tb=document.getElementById('tutorial-btn-wrap');
-  if(_tb) _tb.style.display=show?'block':'none';
 }
 function ctrlQuit(){
   if(!confirm('確定要結束遊戲嗎？')) return;
@@ -16251,7 +17068,7 @@ function showAutoBattleConfirm(){
   ov.innerHTML = `
     <div style="background:linear-gradient(160deg,#1a1d2e,#0e1018);border:2px solid #9b6dff;border-radius:14px;padding:28px 40px;min-width:420px;text-align:center;box-shadow:0 0 40px rgba(155,109,255,0.3)">
       <div style="font-size:26px;font-weight:500;color:#cc99ff;margin-bottom:12px">🤖 AI自動戰鬥中</div>
-      <div style="font-size:20px;color:#ddd;line-height:1.7">是否取消AI代理自動戰鬥？<br><span style="font-size:16px;color:#ffaa44">按下確認後，下一次我方行動時恢復玩家操作</span></div>
+      <div style="font-size:20px;color:#ddd;line-height:1.7">是否取消AI代理自動戰鬥？<br><span style="font-size:16px;color:#888">按下確認後，下一次我方行動時恢復玩家操作</span></div>
     </div>
     <div style="display:flex;gap:16px">
       <button id="auto-confirm-yes" style="padding:14px 44px;font-size:20px;font-family:Share Tech Mono,monospace;background:linear-gradient(135deg,#1a0a30,#2a1050);border:2px solid #9b6dff;color:#cc99ff;border-radius:8px;cursor:pointer;letter-spacing:2px;font-weight:bold;">✔ 確認取消</button>
