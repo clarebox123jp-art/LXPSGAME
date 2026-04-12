@@ -1678,7 +1678,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   transition:0.15s;display:block;width:100%;
 }
 .ehb-peek-btn:hover{background:rgba(110,80,220,0.4);border-color:#aa88ff;color:#fff}
-#gc.adv-battle #b-auto-battle{display:none!important}
+/* b-auto-battle 在冒險模式由JS控制顯示 */
 #ctrl-bar{
   position:fixed;top:16px;right:16px;z-index:9999;
   display:flex;align-items:center;gap:10px;
@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.15.05</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.15.19</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3075,7 +3075,7 @@ body {
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;box-shadow:0 0 80px rgba(0,0,0,0.9);">
       <div style="font-size:48px;margin-bottom:8px;">🎮</div>
       <div style="font-size:34px;font-weight:900;color:#ffe8a0;margin-bottom:8px;">繼續上次的冒險？</div>
-      <div style="font-size:22px;color:#aaa;margin-bottom:28px;line-height:1.6;">
+      <div style="font-size:22px;color:#ffaa44;margin-bottom:28px;line-height:1.6;">
         使用 Google 登入可以自動儲存你的<br>英雄、等級、技能升級書等所有進度。
       </div>
       <button onclick="playSfx('sfx-confirm',0.5);loginGateGoogle()" style="
@@ -3347,7 +3347,7 @@ body {
     <div style="background:linear-gradient(160deg,#1a1d2e,#0e1018);border:2px solid #666;border-radius:18px;padding:40px 48px 36px;text-align:center;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;box-shadow:0 0 60px rgba(0,0,0,0.9);">
       <div style="font-size:64px;margin-bottom:10px">🏳</div>
       <div style="font-size:36px;font-weight:800;color:#ffffff;margin-bottom:10px">確認投降？</div>
-      <div style="font-size:24px;color:#aaa;margin-bottom:32px;line-height:1.7">投降後將直接結束戰鬥<br>並判定為戰鬥失敗。</div>
+      <div style="font-size:24px;color:#ffaa44;margin-bottom:32px;line-height:1.7">投降後將直接結束戰鬥<br>並判定為戰鬥失敗。</div>
       <div style="display:flex;gap:16px;justify-content:center">
         <button onclick="playSfx('sfx-cancel',0.5);doSurrender()" style="padding:12px 36px;font-size:26px;font-weight:700;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,#cc2233,#881122);border:2px solid #ff4444;color:#fff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">確定投降</button>
         <button onclick="playSfx('sfx-gentle',0.4);cancelSurrender()" style="padding:12px 36px;font-size:26px;font-weight:700;border-radius:10px;cursor:pointer;background:rgba(50,50,60,0.9);border:2px solid #555;color:#ccc;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">繼續戰鬥</button>
@@ -5431,7 +5431,7 @@ function _immovablePrompt(h, statusType, dur){
     +'<div style="background:linear-gradient(160deg,#1a1d2e,#0e1018);border:2px solid #aaaaaa;border-radius:14px;padding:24px 36px;min-width:360px;text-align:center;box-shadow:0 0 30px rgba(170,170,170,0.3)">'
     +'<div style="font-size:26px;font-weight:500;color:#aaaaaa;margin-bottom:8px">['+h.name+'] 不動如山</div>'
     +'<div style="font-size:16px;color:#888;margin-bottom:10px">即將受到：<span style="color:#ff8888;font-weight:bold">'+statusName(statusType)+'</span></div>'
-    +'<div style="font-size:14px;color:#cccccc;line-height:1.6">發動後免疫此次不利狀態<br>並立即可再行動一次</div>'
+    +'<div style="font-size:14px;color:#ffffff;line-height:1.6">發動後免疫此次不利狀態<br>並立即可再行動一次</div>'
     +'<div style="font-size:13px;color:'+(canUse?'#4a9eff':'#e84040')+';margin-top:8px">消耗能量：🔷'+cost+' （剩餘：'+G.energy[h.side]+'）</div>'
     +'</div>'
     +'<div style="display:flex;gap:16px">'
@@ -5831,7 +5831,7 @@ function renderBfield(){
   const el=document.getElementById('bcard-list');
   if(el){
     if(!fieldCards.length) el.innerHTML='<div style="color:#444;font-size:11px">— 無 —</div>';
-    else el.innerHTML=fieldCards.map(f=>`<div class="bcard-item"><b>${f.n}</b> <span style="color:var(--muted);float:right">⏳${f.dur}回</span><span style="display:block;font-size:14px;font-weight:500;color:#cccccc;margin-top:3px;line-height:1.5">${f.d}</span></div>`).join('');
+    else el.innerHTML=fieldCards.map(f=>`<div class="bcard-item"><b>${f.n}</b> <span style="color:var(--muted);float:right">⏳${f.dur}回</span><span style="display:block;font-size:14px;font-weight:500;color:#ffffff;margin-top:3px;line-height:1.5">${f.d}</span></div>`).join('');
   }
   // updateFieldFX will be called after it is defined below
   if(typeof updateFieldFX==='function') updateFieldFX();
@@ -8359,8 +8359,8 @@ function updateUI(){
       ? `<span style="color:#888;text-decoration:line-through">🔷${_s2base}</span> <span style="color:#ff4444;font-weight:700">🔴${c2}↑</span>`
       : `🔷${c2}`;
     const _s1meta=`🔷${c1}${a.s1.p?' [被動]':''}`, _s2meta=`🔷${c2}${a.s2.p?' [被動]':''}`;
-    s1b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s1.n} ${_s1costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s1.n}" data-skmeta="${_s1meta}" data-skdesc="${(a.s1.fd||a.s1.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s1.d||''}</span>`;
-    s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${(a.s2.fd||a.s2.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
+    s1b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s1.n} ${_s1costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s1.n}" data-skmeta="${_s1meta}" data-skdesc="${(a.s1.fd||a.s1.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#ffffff;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s1.d||''}</span>`;
+    s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${(a.s2.fd||a.s2.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span></b><span style="font-size:22px;color:#ffffff;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
     const s1IsPassive = !!(a.s1.p);
     const s2IsPassive = !!(a.s2.p);
     const isSealed = hasStatus(a,'seal') || fieldHas('sealall');
@@ -14725,7 +14725,7 @@ function showAutoBattleConfirm(){
   ov.innerHTML = `
     <div style="background:linear-gradient(160deg,#1a1d2e,#0e1018);border:2px solid #9b6dff;border-radius:14px;padding:28px 40px;min-width:420px;text-align:center;box-shadow:0 0 40px rgba(155,109,255,0.3)">
       <div style="font-size:26px;font-weight:500;color:#cc99ff;margin-bottom:12px">🤖 AI自動戰鬥中</div>
-      <div style="font-size:20px;color:#ddd;line-height:1.7">是否取消AI代理自動戰鬥？<br><span style="font-size:16px;color:#888">按下確認後，下一次我方行動時恢復玩家操作</span></div>
+      <div style="font-size:20px;color:#ddd;line-height:1.7">是否取消AI代理自動戰鬥？<br><span style="font-size:16px;color:#ffaa44">按下確認後，下一次我方行動時恢復玩家操作</span></div>
     </div>
     <div style="display:flex;gap:16px">
       <button id="auto-confirm-yes" style="padding:14px 44px;font-size:20px;font-family:Share Tech Mono,monospace;background:linear-gradient(135deg,#1a0a30,#2a1050);border:2px solid #9b6dff;color:#cc99ff;border-radius:8px;cursor:pointer;letter-spacing:2px;font-weight:bold;">✔ 確認取消</button>
@@ -17272,7 +17272,7 @@ function advShowBossDetail(name){
     </div>
 
     <!-- 簡介 -->
-    ${lore ? `<div style="font-size:26px;color:#ccbbaa;line-height:1.7;font-style:italic;margin-bottom:16px;padding:14px 18px;background:rgba(255,200,100,0.06);border-left:3px solid rgba(255,180,80,0.5);border-radius:0 10px 10px 0;">${lore}</div>` : ''}
+    ${lore ? `<div style="font-size:26px;color:#ffffff;line-height:1.7;font-style:italic;margin-bottom:16px;padding:14px 18px;background:rgba(255,200,100,0.06);border-left:3px solid rgba(255,180,80,0.5);border-radius:0 10px 10px 0;">${lore}</div>` : ''}
 
     <!-- 天賦 -->
     ${trait ? `<div style="margin-bottom:14px;padding:14px 18px;border-radius:10px;background:rgba(255,200,30,0.08);border:2px solid rgba(255,200,30,0.45);">
@@ -18000,7 +18000,7 @@ function _renderBackpackInto(container, showUse){
       <div style="font-size:84px;flex-shrink:0;">${def.icon}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:44px;font-weight:900;color:#ddeeff;">${def.name}</div>
-        <div style="font-size:34px;color:#aaa;margin-top:2px;line-height:1.4;">${def.desc.split('\\n').join('<br>')}</div>
+        <div style="font-size:34px;color:#ffffff;margin-top:2px;line-height:1.4;">${def.desc.split('\\n').join('<br>')}</div>
       </div>
       <div style="font-size:48px;font-weight:900;color:#ffee88;min-width:36px;text-align:center;">×${cnt}</div>
       ${showUse && !isSellOnly
@@ -18154,7 +18154,7 @@ function _backpackOpenSkillSelect(heroName, callback){
             border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;${lv>=9?'pointer-events:none;':''}">
             <div style="font-size:18px;color:#aaa;">技能${slot==='s1'?'1':'2'}</div>
             <div style="font-size:24px;font-weight:900;margin:4px 0;">${sk.n}</div>
-            <div style="font-size:16px;color:#aaa;line-height:1.4;">${sk.d}</div>
+            <div style="font-size:16px;color:#ffffff;line-height:1.4;">${sk.d}</div>
             <div style="font-size:18px;color:${lv>=9?'#888':'#44ff88'};margin-top:8px;font-weight:800;">
               ${lv>=9?'已達 MAX ✓':'▶ 升到 Lv.'+(lv+1)+' (效果 +'+(lv+1)*10+'%)'}
             </div>
@@ -19053,7 +19053,7 @@ function _renderHeroDetail(name, box) {
             <span style="font-size:28px;font-weight:800;color:#ffe066;">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||name+'的天賦'}</span></span>
             ${traitLv>0?`<span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">+${traitLv*20}%</span>`:''}
           </div>
-          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${trait.fd||trait.desc||''}</div>
           <div style="font-size:18px;color:#555;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
         </div>` : ''}
       </div>
@@ -19080,7 +19080,7 @@ function _renderHeroDetail(name, box) {
             ${maxed?`<span style="font-size:20px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
             ${!maxed && backpackGet('skill_upgrade_book')>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
           </div>
-          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${fd}</div>
+          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${fd}</div>
         </div>`;
       }).join('')}
 <!-- trait moved to below stats -->
@@ -19089,7 +19089,7 @@ function _renderHeroDetail(name, box) {
           <span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>
           <span style="font-size:28px;font-weight:800;color:#ff9966;">${burst.n}</span>
         </div>
-        <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${burst.fd||burst.d}</div>
+        <div style="font-size:24px;color:#ffffff;line-height:1.5;">${burst.fd||burst.d}</div>
       </div>` : ''}
       </div>
     </div>
@@ -19299,6 +19299,10 @@ let _advBossTeamSaved = null; // 儲存BOSS陣容，小怪戰後恢復
 function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
+  // ★ 小怪戰：若玩家之前沒開自動戰鬥，先關閉；小怪戰支援AI自動戰鬥
+  if(typeof _autoBattle !== 'undefined' && _autoBattle){
+    // 保持開啟狀態（玩家可能希望自動）
+  }
 
   // 儲存BOSS陣容（深拷貝）
   _advBossTeamSaved = G.p2 ? JSON.parse(JSON.stringify(G.p2)) : null;
@@ -19440,6 +19444,16 @@ function advStartMiniBattle(nextSceneIdx) {
 
 function advFinishMiniBattle(win) {
   _advMiniBattleActive = false;
+  // ★ 小怪戰結束時，關閉自動戰鬥（Boss戰重新手動選擇）
+  if(typeof _autoBattle !== 'undefined' && _autoBattle){
+    _autoBattle = false;
+    const _ab = document.getElementById('b-auto-battle');
+    if(_ab){
+      _ab.innerHTML = '<b>🤖 自動戰鬥 OFF</b><span>開啟後由AI代替你行動</span>';
+      _ab.style.borderColor='#9b6dff33';
+      _ab.style.background='';
+    }
+  }
   // ★ 立即封鎖 checkWin 重觸（防止 startTurn 排程殘留造成 Boss 結算提前出現）
   if(typeof G !== 'undefined' && G) G._resultShown = true;
   // ★ 立即還原 BOSS 陣容（讓 checkWin 看到活著的 Boss，不誤判勝利）
@@ -19646,7 +19660,7 @@ function _buildMonsterPage() {
         </div>
         <div style="font-size:54px;font-weight:700;color:#ffccaa;margin-bottom:6px;">${name}</div>
         ${b ? `<div style="font-size:20px;color:#aaa;margin-bottom:8px;">HP ${b.hp} ｜ 攻 ${b.atk} ｜ 特 ${b.sp} ｜ 速 ${b.spd}</div>` : ''}
-        <div style="font-size:22px;color:#ccbbaa;line-height:1.6;margin-bottom:8px;">${lore}</div>
+        <div style="font-size:22px;color:#ffffff;line-height:1.6;margin-bottom:8px;">${lore}</div>
         ${b ? `<div style="font-size:20px;color:#88cc88;margin-top:4px;">⭐ 基本經驗值：${b.exp||'—'}</div>` : ''}
       </div>
     </div>`;
@@ -19735,7 +19749,7 @@ function openMonsterDetail(name) {
       <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 10px;font-weight:700;">✦ 天賦</span>
       <span style="font-size:28px;font-weight:800;color:#ffe066;">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||''}</span></span>
     </div>
-    <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+    <div style="font-size:24px;color:#ffffff;line-height:1.5;">${trait.fd||trait.desc||''}</div>
   </div>` : '';
 
   const makeR = (typeof makeRadar==='function') ? makeRadar : (d,s)=>'';
@@ -19785,14 +19799,14 @@ function openMonsterDetail(name) {
             <span style="font-size:22px;color:#4a9eff;">🔷${sk.c}</span>
             ${sk.p?'<span style="font-size:20px;color:#aaa;background:rgba(100,100,100,0.3);border-radius:6px;padding:2px 8px;">[被動]</span>':''}
           </div>
-          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${sk.fd||sk.d}</div>
+          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${sk.fd||sk.d}</div>
         </div>`).join('')}
         ${burst ? `<div style="background:rgba(255,100,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,120,50,0.35);">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
             <span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>
             <span style="font-size:28px;font-weight:800;color:#ff9966;">${burst.n}</span>
           </div>
-          <div style="font-size:24px;color:#c8d0e0;line-height:1.5;">${burst.fd||burst.d}</div>
+          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${burst.fd||burst.d}</div>
         </div>` : ''}
       </div>
     </div>
@@ -19820,7 +19834,7 @@ function useHeroExpBook() {
 
   box.innerHTML = `
     <div style="font-size:32px;font-weight:900;color:#88ff88;margin-bottom:6px;">📗 英雄經驗值之書</div>
-    <div style="font-size:22px;color:#aaa;margin-bottom:18px;">使用1本可為選定英雄注入 <b style="color:#ffcc44;">50 EXP</b>（剩餘：${_heroExpBookCount}本）</div>
+    <div style="font-size:22px;color:#ffffff;margin-bottom:18px;">使用1本可為選定英雄注入 <b style="color:#ffcc44;">50 EXP</b>（剩餘：${_heroExpBookCount}本）</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
       ${unlocked.map(name=>{
         const lv = getHeroLevel(name)||1;
