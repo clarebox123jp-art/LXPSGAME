@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+            <button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -2969,6 +2970,10 @@ body {
 <audio id="sfx-action-confirm" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E7%A2%BA%E5%AE%9A%E8%A1%8C%E5%8B%95.mp3"></audio>
 <audio id="sfx-rapidfire-gun" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E9%80%A3%E7%BA%8C%E5%B0%84%E6%93%8A.mp3"></audio>
 <audio id="sfx-basketball"    preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E4%B8%89%E5%88%86%E5%B0%84%E7%B1%83.mp3"></audio>
+<audio id="sfx-sell-item"    preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B3%A3%E5%87%BA.mp3"></audio>
+<audio id="sfx-kansatsu-flip" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%96%E9%91%91%E7%BF%BB%E9%A0%81.mp3"></audio>
+<audio id="sfx-adv-start"     preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%96%8B%E5%A7%8B%E6%95%B4%E8%A3%9D.mp3"></audio>
+<audio id="sfx-level-up"      preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B3%A3%E5%87%BA.mp3"></audio>
 <div id="_gc_wrapper"><div id="gc">
   <div id="adv-battle-bg"></div>
   <div id="fade-overlay"></div>
@@ -3063,7 +3068,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.12</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.48</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6592,6 +6597,9 @@ function showHeroPickOverlay(){
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
     window._isAdventurePickMode = true; // ★ 標記冒險選角模式
+    // ★ 冒險模式：顯示 LV 排序按鈕
+    const _lvSortBtn = document.getElementById('hpick-sort-lv-btn');
+    if(_lvSortBtn) _lvSortBtn.style.display = '';
     // ★ 冒險模式：使用冒險專屬返回按鈕（回到冒險關卡選擇頁）
     const _hpBackBtn = document.getElementById('hero-pick-back-btn');
     if(_hpBackBtn){
@@ -6816,7 +6824,7 @@ let _hpickFilterKey = 'all';
 
 function hpickSortClick(btn){
   const key = btn.dataset.sort;
-  const labels = {default:'預設',hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'};
+  const labels = {default:'預設',hp:'HP',atk:'攻擊',sp:'特技',spd:'速度',lv:'LV'};
   if(_hpickSortKey === key){
     _hpickSortAsc = !_hpickSortAsc;
     btn.textContent = (labels[key]||key) + (_hpickSortAsc?' ↑':' ↓');
@@ -6852,7 +6860,14 @@ function _rebuildPickNodes(){
     });
   }
   // Sort
-  if(_hpickSortKey !== 'default'){
+  if(_hpickSortKey === 'lv'){
+    // ★ 依英雄等級排序（需讀 _heroLevels）
+    pool.sort((a,b)=>{
+      const la=(typeof _heroLevels!=='undefined'&&_heroLevels[a])||1;
+      const lb=(typeof _heroLevels!=='undefined'&&_heroLevels[b])||1;
+      return _hpickSortAsc ? la-lb : lb-la;
+    });
+  } else if(_hpickSortKey !== 'default'){
     pool.sort((a,b)=>{
       const ha=HERO_DB[a], hb=HERO_DB[b];
       const va=(ha&&ha[_hpickSortKey])||0, vb=(hb&&hb[_hpickSortKey])||0;
@@ -15254,8 +15269,24 @@ function startAdventureGame(stage){
     alert('冒險系統尚未就緒，請重新整理頁面後再試。');
     return;
   }
-  // ★ 開始整隊音效
-  try{ playSfx('sfx-confirm2', 1.0); }catch(e){}
+  // ★ 開始整裝音效（播放後5秒淡出）
+  try{
+    const _advStartSfx = document.getElementById('sfx-adv-start');
+    if(_advStartSfx){
+      _advStartSfx.currentTime = 0;
+      _advStartSfx.volume = 1.0;
+      _advStartSfx.play().catch(()=>{});
+      // 5秒後淡出
+      setTimeout(()=>{
+        let _vol = _advStartSfx.volume;
+        const _fade = setInterval(()=>{
+          _vol = Math.max(0, _vol - 0.05);
+          _advStartSfx.volume = _vol;
+          if(_vol <= 0){ clearInterval(_fade); _advStartSfx.pause(); }
+        }, 100);
+      }, 5000);
+    } else { playSfx('sfx-confirm2', 1.0); }
+  }catch(e){}
   try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
   // ★ 防止與鬥技場衝突：重設 G 的冒險無關狀態
@@ -17161,8 +17192,15 @@ function advHeroMeetDone() {
   try{ grantBattleExp(true, _advStats); }catch(e){}
   // ★ 英雄頁面紅點
   try{ _setNavDot('英雄', true); }catch(e){}
-  // ★ 回到選關卡頁面（bgm 由 openAdventureOverlay 負責播放 bgm-menu-01）
-  try{ openAdventureOverlay(); }catch(e){ exitAdventureMode(); }
+  // ★ 若有角色升級，先演出升級畫面
+  const _bossLUs = (typeof window !== 'undefined' && window._lastBossLevelUps) || [];
+  window._lastBossLevelUps = [];
+  const _goAdv = () => { try{ openAdventureOverlay(); }catch(e){ exitAdventureMode(); } };
+  if(_bossLUs.length){
+    setTimeout(() => _showLevelUpSequence(_bossLUs, _goAdv), 400);
+  } else {
+    _goAdv();
+  }
 }
 
 
@@ -17601,18 +17639,128 @@ function backpackRemove(id, n=1){
 function addKnowledgeCoins(n){
   _knowledgeCoins = (_knowledgeCoins||0) + Math.round(n);
   gameCloudSave();
+  _syncCoinsDisplay();
+}
+
+function _syncCoinsDisplay(){
+  const _val = (_knowledgeCoins||0).toLocaleString();
+  const _acv = document.getElementById('adv-coins-val');
+  if(_acv) _acv.textContent = _val;
+  const _scv = document.getElementById('shop-coins-val');
+  if(_scv) _scv.textContent = _val;
+  const _hcv = document.getElementById('hero-page-coins-val');
+  if(_hcv) _hcv.textContent = _val;
 }
 let _playerMedals = [];     // 獎章清單
 
 // 等級所需累積經驗值 (等差數列 100,150,200... lv1=100 lv2=150...)
 function _expForLevel(lv) {
-  // 升到 lv 所需總經驗值 = Σ(100 + 50*(i-1)) for i=1..lv
-  // = 100*lv + 50*lv*(lv-1)/2
-  return 100 * lv + 25 * lv * (lv - 1);
+  // ★ 等比級數 ×1.1，基礎100：每升一級需 round(100×1.1^(i-1))
+  let total = 0;
+  for(let i = 1; i <= lv; i++){
+    total += Math.round(100 * Math.pow(1.1, i - 1));
+  }
+  return total;
 }
 
 function getHeroLevel(name) { return _heroLevels[name] || 1; }
 function getHeroExp(name)   { return _heroExp[name] || 0; }
+
+// ★ 升級慶祝演出
+function _showLevelUpSequence(levelUps, onDone) {
+  if(!levelUps || !levelUps.length){ onDone(); return; }
+  const item = levelUps[0];
+  const rest = levelUps.slice(1);
+
+  // 取角色圖片
+  const imgUrl = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[item.name]) || '';
+
+  // 播放音效
+  try{
+    const _lu = document.getElementById('sfx-level-up');
+    if(_lu){ _lu.currentTime=0; _lu.volume=0.9; _lu.play().catch(()=>{}); }
+    else{ beep(660,'sine',0.1,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); setTimeout(()=>beep(1100,'sine',0.15,0.15),320); }
+  }catch(e){}
+
+  // 建立 overlay
+  const ov = document.createElement('div');
+  ov.id = '_levelup-ov';
+  ov.style.cssText = [
+    'position:fixed;inset:0;z-index:9800;display:flex;flex-direction:column;',
+    'align-items:center;justify-content:center;',
+    'background:radial-gradient(circle at center,rgba(255,200,0,0.25),rgba(0,0,0,0.75));',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:_luFadeIn 0.5s ease-out;'
+  ].join('');
+
+  // 注入 keyframes
+  if(!document.getElementById('_lu-style')){
+    const st = document.createElement('style');
+    st.id = '_lu-style';
+    st.textContent = `
+      @keyframes _luFadeIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+      @keyframes _luFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+      @keyframes _luGlow{0%,100%{text-shadow:0 0 20px #ffcc44,0 0 40px #ff8800}50%{text-shadow:0 0 40px #ffee44,0 0 80px #ffaa00,0 0 120px #fff}}
+      @keyframes _luParticle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}}
+      ._lu-img{width:320px;height:320px;object-fit:cover;border-radius:50%;border:6px solid #ffcc44;
+        box-shadow:0 0 40px rgba(255,200,0,0.8);animation:_luFloat 2s ease-in-out infinite;}
+      ._lu-title{font-size:52px;font-weight:900;color:#ffe066;margin:18px 0 8px;animation:_luGlow 1.5s ease-in-out infinite;}
+      ._lu-name{font-size:38px;font-weight:800;color:#fff;margin-bottom:6px;}
+      ._lu-lv{font-size:56px;font-weight:900;color:#44ff88;text-shadow:0 0 20px #00ff88;}
+      ._lu-pt{font-size:24px;color:#aaffcc;margin-top:6px;}
+    `;
+    document.head.appendChild(st);
+  }
+
+  // 生成粒子
+  let particlesHTML = '';
+  for(let p=0; p<20; p++){
+    const angle = (p/20)*Math.PI*2;
+    const dist = 120 + Math.random()*120;
+    const px = Math.round(Math.cos(angle)*dist)+'px';
+    const py = Math.round(Math.sin(angle)*dist)+'px';
+    const colors = ['#ffcc44','#ff8800','#44ff88','#88ccff','#ff88cc'];
+    const col = colors[p%colors.length];
+    const size = 8+Math.random()*12;
+    const dur = 0.8+Math.random()*0.8;
+    const delay = Math.random()*0.4;
+    particlesHTML += `<div style="position:absolute;width:${size}px;height:${size}px;background:${col};border-radius:50%;
+      --px:${px};--py:${py};animation:_luParticle ${dur}s ${delay}s ease-out forwards;top:50%;left:50%;margin:-${size/2}px 0 0 -${size/2}px;"></div>`;
+  }
+
+  ov.innerHTML = `
+    <div style="position:relative;text-align:center;">
+      ${particlesHTML}
+      ${imgUrl ? `<img class="_lu-img" src="${imgUrl}" alt="${item.name}">` :
+        `<div style="width:320px;height:320px;border-radius:50%;border:6px solid #ffcc44;
+          background:rgba(255,200,0,0.2);display:flex;align-items:center;justify-content:center;
+          font-size:120px;box-shadow:0 0 40px rgba(255,200,0,0.8);animation:_luFloat 2s ease-in-out infinite;">
+          ${(typeof AVATARS!=='undefined'&&AVATARS[item.name])||'⭐'}
+        </div>`}
+    </div>
+    <div class="_lu-title">🎉 升 級 ！</div>
+    <div class="_lu-name">${item.name}</div>
+    <div class="_lu-lv">Lv. ${item.lv}</div>
+    <div class="_lu-pt">✨ 獲得 1 點素質點數！</div>
+    <button onclick="(function(){
+      const _ov=document.getElementById('_levelup-ov');
+      if(_ov){_ov.style.opacity='0';_ov.style.transition='opacity 0.3s';setTimeout(()=>{_ov.remove();_showLevelUpSequence(${JSON.stringify(rest)},_luDone_${item.name.replace(/[^a-zA-Z0-9]/g,'_')});},300);}
+    })()" style="margin-top:28px;padding:16px 56px;font-size:34px;font-weight:900;
+      background:linear-gradient(135deg,rgba(80,180,80,0.9),rgba(40,120,40,0.9));
+      border:3px solid #44ff88;color:#fff;border-radius:16px;cursor:pointer;
+      font-family:inherit;box-shadow:0 0 20px rgba(0,255,100,0.4);">
+      ✔ 確認
+    </button>`;
+
+  // 存回呼以便按鈕使用
+  window[`_luDone_${item.name.replace(/[^a-zA-Z0-9]/g,'_')}`] = function(){
+    _showLevelUpSequence(rest, onDone);
+  };
+
+  flashScreen('rgba(255,220,50,0.5)', 400);
+  document.body.appendChild(ov);
+}
+
 
 // 戰鬥結束後給予英雄經驗值
 function grantBattleExp(win, stats) {
@@ -17638,10 +17786,13 @@ function grantBattleExp(win, stats) {
   const totalExp = Math.round(baseExp * ratio);
   // 出戰英雄×1.5，其他英雄×0.5
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
+  const _bossLevelUps = [];
   heroes.forEach(name => {
     const mul = battleHeroes.includes(name) ? 1.5 : 0; // ★ 未出戰=0
-    addHeroExp(name, Math.round(totalExp * mul));
+    const _lu = addHeroExp(name, Math.round(totalExp * mul));
+    if(_lu && _lu.length) _bossLevelUps.push(..._lu);
   });
+  if(typeof window !== 'undefined') window._lastBossLevelUps = _bossLevelUps;
   const battleExp = Math.round(totalExp * 1.5);
   bannerFX(null, `⭐ 出戰英雄 +${battleExp} EXP（加成${Math.round(ratio*100)}%）`, '#ffe066', 2000);
   // 技能升級書
@@ -17656,12 +17807,14 @@ function addHeroExp(name, exp) {
   if(!_heroExp[name]) _heroExp[name] = 0;
   if(!_heroLevels[name]) _heroLevels[name] = 1;
   _heroExp[name] += exp;
+  const _levelUps = []; // ★ 收集本次升級事件
   // 升級
   while(_heroLevels[name] < 50) {
     const needed = _expForLevel(_heroLevels[name]);
     if(_heroExp[name] >= needed) {
       _heroExp[name] -= needed;
       _heroLevels[name]++;
+      _levelUps.push({ name, lv: _heroLevels[name] }); // ★ 記錄
       if(!_heroStatPoints[name]) _heroStatPoints[name] = 0;
       _heroStatPoints[name]++;
       log(`🌟 [${name}] 升級！LV${_heroLevels[name]}！獲得1點素質點數！`);
@@ -17696,6 +17849,7 @@ function addHeroExp(name, exp) {
       }
     } else break;
   }
+  return _levelUps; // ★ 回傳升級清單
 }
 
 // ── 紅點通知系統 ──
@@ -17791,8 +17945,7 @@ function openShopOverlay(){
   _renderShopProducts();
   _renderShopBagPanel();
   // 顯示知識幣
-  const cv = document.getElementById('shop-coins-val');
-  if(cv) cv.textContent = (_knowledgeCoins||0).toLocaleString();
+  _syncCoinsDisplay(); // ★ 同步所有知識幣顯示
   const ov = document.getElementById('shop-overlay');
   if(ov) ov.style.display='block';
   // 播放商店BGM
@@ -17802,7 +17955,9 @@ function openShopOverlay(){
 function closeShopOverlay(){
   const ov = document.getElementById('shop-overlay');
   if(ov) ov.style.display='none';
-  // ★ 恢復正確BGM（冒險模式用場景音樂，其他用選單音樂）
+  // ★ 關閉後同步知識幣顯示（回到冒險頁面時確保數值正確）
+  _syncCoinsDisplay();
+  // ★ 恢復正確BGM
   try{
     const _toId = (typeof _adventureMode !== 'undefined' && _adventureMode) ? 'bgm-adv-scene' : 'bgm-menu-01';
     bgmFadeTo(_toId, 400);
@@ -17915,7 +18070,12 @@ function shopSellItem(id, qty){
   _knowledgeCoins = (_knowledgeCoins||0) + coins;
   gameCloudSave();
   _showInGameToast(`💰 賣出 ${def.name} ×${actual}，獲得 ${coins.toLocaleString()} 知識幣！`, '#ffcc44', 2500);
-  try{ playSfx('sfx-sell', 0.7); }catch(e){ try{ playSfx('sfx-recharge', 0.7); }catch(e2){} }
+  try{
+    const _sfxSell = document.getElementById('sfx-sell-item');
+    if(_sfxSell){ _sfxSell.currentTime=0; _sfxSell.volume=0.85; _sfxSell.play().catch(()=>{}); }
+    else playSfx('sfx-sell', 0.7);
+  }catch(e){}
+  _syncCoinsDisplay();
   openShopOverlay();
 }
 
@@ -19497,8 +19657,10 @@ function advFinishMiniBattle(win) {
         baseExp += (hd && hd.exp) ? hd.exp : 7;
       });
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
+      const _miniLevelUps = []; // ★ 收集升級事件
       heroes.forEach(name => {
-        addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : 0); // ★ 未出戰=0
+        const _lu = addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : 0);
+        if(_lu && _lu.length) _miniLevelUps.push(..._lu);
       });
       // ★ 顯示小怪結算畫面
       // 先清除開場動畫
@@ -19510,8 +19672,14 @@ function advFinishMiniBattle(win) {
         const _miniCoins = Math.round(baseExp*1.5 * 0.20);
         if(_miniCoins > 0) addKnowledgeCoins(_miniCoins);
         if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${Math.round(baseExp*1.5)}　💰+${_miniCoins}知識幣`;
-        _expEl.classList.add('show');
-        // 2.5秒後自動關閉（由下方 _RESULT_DUR 的 setTimeout 統一控制）
+        // ★ 若有升級，先演出升級畫面再顯示結算
+        const _showMiniResult = () => { _expEl.classList.add('show'); };
+        if(_miniLevelUps && _miniLevelUps.length) {
+          setTimeout(() => _showLevelUpSequence(_miniLevelUps, _showMiniResult), 400);
+        } else {
+          _showMiniResult();
+        }
+        // 結算畫面顯示（由下方 _RESULT_DUR 的 setTimeout 統一控制）
       } else {
         bannerFX(null, `⚔️ 小怪擊敗！出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
       }
@@ -19703,17 +19871,25 @@ function _buildMonsterPage() {
 }
 
 
+function _playFlipSfx(){
+  try{
+    const _ff = document.getElementById('sfx-kansatsu-flip');
+    if(_ff){ _ff.currentTime=0; _ff.volume=0.8; _ff.play().catch(()=>{}); }
+    else playSfx('sfx-card', 0.7);
+  }catch(e){}
+}
+
 function monsterDetailPrev() {
   if(!_monsterDetailList.length) return;
   _monsterDetailIdx = (_monsterDetailIdx - 1 + _monsterDetailList.length) % _monsterDetailList.length;
-  try{ playSfx('sfx-card', 0.7); }catch(e){}
+  _playFlipSfx();
   openMonsterDetail(_monsterDetailList[_monsterDetailIdx]);
 }
 
 function monsterDetailNext() {
   if(!_monsterDetailList.length) return;
   _monsterDetailIdx = (_monsterDetailIdx + 1) % _monsterDetailList.length;
-  try{ playSfx('sfx-card', 0.7); }catch(e){}
+  _playFlipSfx();
   openMonsterDetail(_monsterDetailList[_monsterDetailIdx]);
 }
 
