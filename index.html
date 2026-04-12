@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.10</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.23</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -4817,92 +4817,14 @@ function playSkillFX(skillName,actor,targets){
       if(t0){beamFX(actor,t0,'#ff8800',150);flashCard(t0,'rgba(255,120,0,0.9)',300);var rc_sl=cardRect(t0);if(rc_sl){spawnParticles(rc_sl.x,rc_sl.y,{count:22,color:'#ff8800',size:9,spread:65,duration:700});}bannerFX(t0,'絕殺灌籃！','#ff8800',1000);}
       flashScreen('rgba(255,100,0,1)',300);
       break;
-    case  html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTsWozvDMoJyDhPmiYi1QZ31rlyy7fxZc",
-    authDomain: "lxpsgame.firebaseapp.com",
-    projectId: "lxpsgame",
-    storageBucket: "lxpsgame.firebasestorage.app",
-    messagingSenderId: "887017862215",
-    appId: "1:887017862215:web:7f6248ec2e5684cf63ed62"
-  };
-
-  const _fbApp  = initializeApp(firebaseConfig);
-  const _fbAuth = getAuth(_fbApp);
-  const _fbDb   = getFirestore(_fbApp);
-  const _fbProvider = new GoogleAuthProvider();
-
-  // 暴露給全域
-  window._fbSignIn = async function() {
-    try {
-      const result = await signInWithPopup(_fbAuth, _fbProvider);
-      // onAuthStateChanged 會自動觸發
-    } catch(e) {
-      console.error('Google 登入失敗', e);
-      alert('登入失敗，請確認已在 Firebase 設定授權網域。');
-    }
-  };
-
-  window._fbSignOut = async function() {
-    await signOut(_fbAuth);
-  };
-
-  // 雲端儲存
-  window._fbSave = async function(uid, data) {
-    try {
-      await setDoc(doc(_fbDb, 'players', uid), data);
-      return true;
-    } catch(e) { console.error('雲端儲存失敗', e); return false; }
-  };
-
-  // 雲端讀取
-  window._fbLoad = async function(uid) {
-    try {
-      const snap = await getDoc(doc(_fbDb, 'players', uid));
-      return snap.exists() ? snap.data() : null;
-    } catch(e) { console.error('雲端讀取失敗', e); return null; }
-  };
-
-  // 登入狀態變化
-  onAuthStateChanged(_fbAuth, async (user) => {
-    if(user) {
-      window._fbUser = user;
-      window._gUserId = user.uid; // ★ 確保 _gUserId 同步
-      // 更新 UI
-      const av = document.getElementById('google-avatar');
-      const nm = document.getElementById('google-name');
-      const btnWrap = document.getElementById('google-login-btn-wrap');
-      const userInfo = document.getElementById('google-user-info');
-      if(av) av.src = user.photoURL || '';
-      if(nm) nm.textContent = user.displayName || '';
-      if(btnWrap) btnWrap.style.display = 'none';
-      if(userInfo) userInfo.style.display = 'flex';
-      // ★ 關閉登入選擇視窗（若還開著）
-      const lgModal = document.getElementById('login-gate-modal');
-      if(lgModal) lgModal.style.display = 'none';
-      // 讀取雲端進度
-      if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
-      console.log('✅ 已登入:', user.displayName);
-    } else {
-      window._fbUser = null;
-      const btnWrap = document.getElementById('google-login-btn-wrap');
-      const userInfo = document.getElementById('google-user-info');
-      if(btnWrap) btnWrap.style.display = '';
-      if(userInfo) userInfo.style.display = 'none';
-    }
-  });
+    case '謝幕掌聲':
+      playSfx('sfx-burst',0.85);playSfx('sfx-powerup',0.8);
+      if(rc_a){spawnParticles(rc_a.x,rc_a.y,{count:24,color:'#ffcc44',size:8,spread:65,duration:700});ringFX(actor,'#ffcc44',600);}
+      zoneFlash(actor.side,'rgba(255,180,0,0.3)',700);
+      break;
+    default:break;
+  }
+}
 </script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -7882,7 +7804,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.10</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.23</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -13586,6 +13508,16 @@ const BURST_GIF_DB = {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%9B%9B%E8%81%96%E9%99%8D%E8%87%A8.gif',
     sfx:[['sfx-burst',1.0],['sfx-fantasy',0.9]],
     tint:'rgba(220,180,255,0.18)'
+  },
+  '謝幕掌聲': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E8%AC%9D%E5%B9%95%E6%8E%8C%E8%81%B2.gif',
+    sfx:[['sfx-burst',0.85],['sfx-powerup',0.8]],
+    tint:'rgba(255,220,50,0.15)'
+  },
+  '絕殺灌籃': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%B5%95%E6%AE%BA%E7%81%8C%E7%B1%83.gif',
+    sfx:[['sfx-basketball',0.95],['sfx-explode',0.6]],
+    tint:'rgba(255,120,0,0.15)'
   },
 };
 
