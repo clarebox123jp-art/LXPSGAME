@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.47</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.57</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3116,9 +3116,10 @@ body {
       💰 知識幣：<span id="adv-coins-val">0</span>
     </div>
     <button onclick="playSfx('sfx-sel',0.6);openShopOverlay()" style="width:100%;margin-top:10px;padding:14px 8px;font-size:42px;font-weight:800;
-      background:linear-gradient(135deg,rgba(180,110,0,1.0),rgba(140,80,0,1.0));
-      border:2px solid rgba(255,200,80,0.9);color:#ffee88;border-radius:12px;cursor:pointer;
-      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;">
+      background:linear-gradient(135deg,rgba(80,40,180,1.0),rgba(120,30,220,1.0),rgba(60,20,140,1.0));
+      border:2px solid rgba(180,120,255,0.9);color:#ddc8ff;border-radius:12px;cursor:pointer;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;
+      box-shadow:0 0 18px rgba(140,80,255,0.5),inset 0 0 12px rgba(180,100,255,0.15);">
       🛒 不可思議超商
     </button>
     </div>
@@ -7308,17 +7309,15 @@ function dismissFocus(){
 function randomTeamPick(){
   playSfx('sfx-hero',0.7);
 
-  // ── 冒險模式：只從解鎖英雄池隨機
+  // ── 冒險模式：從解鎖英雄池 + 已收錄英雄全部隨機
   if(_adventureMode && _adventureStage){
-    const unlockedPool = (ADV_HERO_POOL[_adventureStage] || []).slice();
-    // 保留已選的解鎖英雄，補滿剩餘名額
-    const keep = _heroPickSelected.filter(n => unlockedPool.includes(n));
-    const need = 4 - keep.length;
-    if(need > 0){
-      const available = unlockedPool.filter(n => !keep.includes(n))
-                                    .sort(() => Math.random() - 0.5);
-      available.slice(0, need).forEach(n => keep.push(n));
-    }
+    // ★ 基礎英雄池（本關卡可用）+ 玩家已解鎖的英雄
+    const basePool = ADV_HERO_POOL[_adventureStage] || [];
+    const unlockedHeroes = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+    const unlockedPool = [...new Set([...basePool, ...unlockedHeroes])];
+    // 完全重新隨機4名
+    const keep = unlockedPool.slice().sort(() => Math.random() - 0.5).slice(0, 4);
+    const need = 0; // 直接取4名，不保留原選
     // 重建選擇狀態
     _heroPickSelected = [];
     _buildHeroPickNodes(); // 格狀重建
@@ -8095,6 +8094,15 @@ function renderField(entranceMode){
     G.p2.forEach(h=>renderCard(h));
   }
 }
+
+// ★ 卡片裝備顯示 HTML（card-equip-ext 區域）
+function equipExtHTML(h){
+  if(!h || !h.equip) return '';
+  const eq = (typeof getEquip === 'function') ? getEquip(h) : null;
+  if(!eq) return '';
+  return '<span style="font-size:11px;color:#d4a843;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;padding:1px 3px;">⚙'+eq.n+'</span>';
+}
+
 function renderCard(h){
   const el=document.getElementById(`card-${h.side}-${h.pos}`);
   if(!el) return;
@@ -17914,6 +17922,42 @@ function _renderBackpackMain(){
   _renderBackpackInto(grid, true); // true=顯示使用按鈕
 }
 
+
+// ★ 背包物品說明彈窗（商店右欄 ? 按鈕）
+function _showBagItemTip(id, el){
+  const old = document.getElementById('bag-item-tip');
+  if(old && old._forId===id){ old.remove(); return; }
+  if(old) old.remove();
+  const def = (typeof BACKPACK_ITEM_DEF !== 'undefined') ? BACKPACK_ITEM_DEF[id] : null;
+  if(!def) return;
+  const t = document.createElement('div');
+  t.id = 'bag-item-tip';
+  t._forId = id;
+  t.style.cssText = 'position:fixed;z-index:9999;max-width:480px;'+
+    'background:rgba(8,10,25,0.97);border:2px solid rgba(100,150,255,0.7);'+
+    'color:#cce;font-size:28px;padding:20px 24px;border-radius:16px;line-height:1.6;'+
+    'box-shadow:0 0 24px rgba(80,120,255,0.4);pointer-events:auto;';
+  const isSell = def.type==='sell_only';
+  const sellTxt = isSell ? '<br><span style="color:#ffaa44;">🛒 賣出：'+(def.sellPrice||0).toLocaleString()+' 💰</span>' : '';
+  t.innerHTML =
+    '<div style="font-size:30px;font-weight:900;color:#ddeeff;margin-bottom:8px;">'+
+    def.icon+' '+def.name+'</div>'+
+    (def.desc||'')+sellTxt;
+  const r2 = el.getBoundingClientRect();
+  const tipW = 480;
+  // 出現在按鈕左側（避免超出右邊）
+  let leftPos = r2.left - tipW - 8;
+  if(leftPos < 8) leftPos = 8;
+  t.style.left = leftPos + 'px';
+  t.style.top  = Math.min(r2.bottom + 4, window.innerHeight - 200) + 'px';
+  document.body.appendChild(t);
+  setTimeout(function(){
+    document.addEventListener('click', function h(ev){
+      if(!t.contains(ev.target)){ t.remove(); document.removeEventListener('click',h,true); }
+    }, {once:false, capture:true});
+  }, 80);
+}
+
 function _renderBackpackInto(container, showUse){
   container.innerHTML='';
   const ids = Object.keys(BACKPACK_ITEM_DEF);
@@ -17942,25 +17986,8 @@ function _renderBackpackInto(container, showUse){
         <div style="font-size:28px;flex-shrink:0;">${def.icon}</div>
         <div style="font-size:22px;font-weight:800;color:#ddeeff;flex:1;min-width:0;
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${def.name}</div>
-        <button onclick="(function(el){
-          var old=document.getElementById('bag-item-tip');
-          if(old&&old._forId==='${id}'){old.remove();return;}
-          if(old)old.remove();
-          var t=document.createElement('div');
-          t.id='bag-item-tip';t._forId='${id}';
-          t.style.cssText='position:fixed;z-index:9999;max-width:320px;'+
-            'background:rgba(8,10,25,0.97);border:1.5px solid rgba(100,150,255,0.6);'+
-            'color:#cce;font-size:20px;padding:12px 16px;border-radius:12px;line-height:1.5;'+
-            'box-shadow:0 0 16px rgba(80,120,255,0.3);pointer-events:auto;';
-          t.innerHTML='<div style=\'font-size:22px;font-weight:900;color:#ddeeff;margin-bottom:6px;\'>${_defIcon} ${_defName}</div>'+
-            '${_defDesc}'+'${_isSell?'<br><span style=\'color:#ffaa44;\'>🛒 賣出：'+_defSell+' 💰</span>':''}';
-          var r2=el.getBoundingClientRect();
-          t.style.right=(window.innerWidth-r2.right+8)+'px';
-          t.style.top=r2.bottom+'px';
-          document.body.appendChild(t);
-          setTimeout(function(){document.addEventListener('click',function h(){t.remove();document.removeEventListener('click',h);},{once:true,capture:true});},50);
-        })(this)" style="flex-shrink:0;width:28px;height:28px;font-size:16px;font-weight:900;
-          background:rgba(80,100,180,0.4);border:1.5px solid rgba(100,150,255,0.6);
+        onclick="_showBagItemTip(\'${id}\',this)" style="flex-shrink:0;width:40px;height:40px;font-size:22px;font-weight:900;
+          background:rgba(80,100,180,0.4);border:2px solid rgba(100,150,255,0.7);
           color:#88aaff;border-radius:50%;cursor:pointer;font-family:inherit;
           display:flex;align-items:center;justify-content:center;line-height:1;padding:0;">？</button>
         <div style="font-size:24px;font-weight:900;color:#ffee88;white-space:nowrap;flex-shrink:0;">×${cnt}</div>`;
