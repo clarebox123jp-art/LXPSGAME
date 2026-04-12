@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.15.19</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.12</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6592,9 +6592,13 @@ function showHeroPickOverlay(){
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
     window._isAdventurePickMode = true; // ★ 標記冒險選角模式
-    // ★ 冒險模式隱藏特定按鈕
+    // ★ 冒險模式：使用冒險專屬返回按鈕（回到冒險關卡選擇頁）
     const _hpBackBtn = document.getElementById('hero-pick-back-btn');
-    if(_hpBackBtn) _hpBackBtn.style.display = 'none';
+    if(_hpBackBtn){
+      _hpBackBtn.style.display = '';
+      _hpBackBtn.innerHTML = '← 返回';
+      _hpBackBtn.onclick = function(){ playSfx('sfx-cancel',0.5); goBackFromAdvHeroPick(); };
+    }
     const _findBtn = document.getElementById('hero-pick-find-btn');
     if(_findBtn) _findBtn.style.display = 'none';
     // ★ 冒險模式：只顯示已解鎖英雄（初始4名 + 解鎖的）
@@ -7885,45 +7889,53 @@ function playBattleStartSfx(){
 
 // ★ 鬥技：選角頁返回首頁
 function goBackFromHeroPick(){
-  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
+  // 鬥技場：返回主選單
   const hpo = document.getElementById('hero-pick-overlay');
   if(hpo) hpo.style.display = 'none';
   const mainOv = document.getElementById('overlay');
   if(mainOv) mainOv.style.display = 'flex';
-  // 重置選角狀態
   if(typeof _heroPickSelected !== 'undefined') _heroPickSelected = [];
   if(typeof bgmPlay === 'function'){ bgmStop(); bgmPlay('bgm-menu-01'); }
 }
 
+function goBackFromAdvHeroPick(){
+  // 冒險模式：返回冒險關卡選擇頁
+  const hpo = document.getElementById('hero-pick-overlay');
+  if(hpo) hpo.style.display = 'none';
+  if(typeof _heroPickSelected !== 'undefined') _heroPickSelected = [];
+  if(typeof _adventureMode !== 'undefined') _adventureMode = false;
+  if(typeof _adventureStage !== 'undefined') _adventureStage = null;
+  const advOv = document.getElementById('adventure-overlay');
+  if(advOv) advOv.style.display = 'flex';
+  try{ bgmStop(); bgmPlay('bgm-menu-01'); }catch(e){}
+}
+
 // ★ 鬥技：元素選擇返回選角頁
 function goBackFromElemPick(){
-  if(typeof _adventureMode !== 'undefined' && _adventureMode) return; // 冒險模式不觸發
+  // 鬥技場 & 冒險模式：都回到選角頁
   const epOv = document.getElementById('elem-pick-overlay');
   if(epOv) epOv.style.display = 'none';
   const hpo = document.getElementById('hero-pick-overlay');
   if(hpo) hpo.style.display = 'flex';
-  // 重置元素選擇
   if(typeof _elemPickSelected !== 'undefined') _elemPickSelected = [null,null,null,null];
   if(typeof _elemPickHeroIdx !== 'undefined') _elemPickHeroIdx = 0;
 }
 
 function goBackToHeroPick(){
-  // 關閉所有可能開著的 overlay
-  ['skill-replace-overlay','elem-pick-overlay'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display='none';
-  });
-  // 重置遊戲狀態
-  G.p1=[]; G.p2=[];
-  _heroPickSelected=[];
-  _elemPickSelected=[null,null,null,null];
-  // 重置排序篩選狀態
-  if(typeof _hpickSortKey!=='undefined'){ _hpickSortKey='default'; _hpickSortAsc=false; _hpickFilterKey='all'; }
-  // 重置 elem-pick 內部狀態，避免舊資料殘留卡死
-  _epHeroes=[]; _epCb=null; _epAssigned={}; _epApplied={}; _epActivePos=0;
-  // 重置 skill-replace 狀態
+  // ★ 替換技能返回：回到元素選擇頁（上一步），不直接跳回選角頁
+  const sro = document.getElementById('skill-replace-overlay');
+  if(sro) sro.style.display = 'none';
+  // 重置 skill-replace 狀態（保留元素選擇結果）
   _skillReplaceMap={}; _selectedPickSkill=null; _pickerFocusPos=null;
-  showHeroPickOverlay();
+  // 重新顯示元素選擇頁（保留已選的元素）
+  const epOv = document.getElementById('elem-pick-overlay');
+  if(epOv) epOv.style.display = 'flex';
+  // 若元素選擇頁未初始化，重新啟動
+  if(!_epHeroes || _epHeroes.length === 0){
+    // 跳回選角頁
+    if(epOv) epOv.style.display = 'none';
+    showHeroPickOverlay();
+  }
 }
 function confirmSkillReplace(){
   playSfx('sfx-confirm2',0.9);
@@ -15632,6 +15644,7 @@ let _advRewardOptions = [];
 function advStartCutscene(stage) {
   _advSceneIdx = 0;
   _advDialogIdx = 0;
+  _advSceneChoiceDone = false; // ★ 初始化選題旗標
   _advTreasures = [null, null, null];
   _advPlayerGrade = '';
   _advPlayerSubject = '';
@@ -15655,6 +15668,8 @@ function advStartCutscene(stage) {
 }
 
 function advLoadScene(stage, idx) {
+  // ★ 重置場景選題旗標（新場景可以再次顯示選擇題）
+  _advSceneChoiceDone = false;
   // ★ 確保過場畫面可見
   const _csOvLoad = document.getElementById('adv-cutscene-overlay');
   if(_csOvLoad && _csOvLoad.style.display !== 'flex'){
@@ -15738,6 +15753,8 @@ function advNextDialog(e) {
   if(_cpEl && _cpEl.children.length > 0) return;
   const _tpEl = document.getElementById('adv-treasure-popup');
   if(_tpEl && _tpEl.classList.contains('show')) return;
+  // ★ 本場景選擇已完成（防止法寶期間誤觸再次顯示選題）
+  if(typeof _advSceneChoiceDone !== 'undefined' && _advSceneChoiceDone) return;
   // ★ 若 quiz overlay 開著，不推進對話
   const _qoEl = document.getElementById('adv-quiz-overlay');
   if(_qoEl && _qoEl.classList.contains('show')) return;
@@ -15797,6 +15814,8 @@ function advOnChoiceSelected(type, value, box, stage, sceneIdx) {
 
 function advConfirmChoice(stage, sceneIdx) {
   if (!_advTempChoice) return;
+  // ★ 立即鎖定，防止對話框點擊再次觸發選題
+  _advSceneChoiceDone = true;
   const scene = ADV_SCENES[stage][sceneIdx];
   if (scene.choiceType === 'grade') {
     _advPlayerGrade = _advTempChoice;
@@ -16248,6 +16267,7 @@ function advShowQuiz() {
 
 // 追蹤題目輪次
 let _advQuizRound = 0;
+let _advSceneChoiceDone = false; // ★ 防止場景選題重複出現
 
 function advPickQuestion() {
   const used = _advUsedQuestionIds;
