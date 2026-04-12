@@ -3122,7 +3122,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.17.41</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.17.48</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -12479,6 +12479,83 @@ function execAtk(actor, target, dmg, opts={}){
 
 
 // ════════════════════════════════════════════════════════
+
+// ★ 補充還原的工具函式
+function clearSel(){
+  clearTurnTimer();
+  document.querySelectorAll('.abtn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.ibox').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('targetable','ally-targetable'));
+  G.selMove=null; G.selItem=null; G.pendingTarget=null; pendingCb=null;
+  document.getElementById('item-ops').style.display='none';
+  // 重置裝備/使用按鈕狀態
+  const useBtn=document.getElementById('iop-use-btn');   if(useBtn)  useBtn.style.display='';
+  const eqBtn =document.getElementById('iop-equip-btn'); if(eqBtn)   eqBtn.style.display='none';
+  hidePassiveBtns();
+  restoreActionBtns();
+  // 移除確認欄
+  const _ac=document.getElementById('action-confirm-bar'); if(_ac) _ac.remove();
+  _pendingActionType=null;
+}
+
+function showPopup(h, val, type){
+  const el=document.getElementById('card-'+h.side+'-'+h.pos);
+  if(!el) return;
+  const gc=document.getElementById('gc');
+  if(!gc) return;
+  const gcR=gc.getBoundingClientRect();
+  const eR=el.getBoundingClientRect();
+  const scale=gcR.width/1920;
+  let x=(eR.left-gcR.left)/scale + eR.width/scale/2;
+  let y=(eR.top-gcR.top)/scale + eR.height/scale*(type==='heal'?0.72:0.22);
+  // 需求1：屬性加成數字偏移到右邊
+  if(type==='elem-adv'||type==='elem-dis'){
+    x += 120; // 偏移到基礎傷害右邊
+    y += 20;  // 稍微往下避免重疊
+  }
+  // 需求2：同一張卡連續傷害加0.5秒延遲
+  const cardKey=h.side+'-'+h.pos;
+  const now=Date.now();
+  let delay=0;
+  if(type==='dmg' && _lastPopupTime[cardKey] && (now-_lastPopupTime[cardKey])<600){
+    delay=500;
+  }
+  if(type==='dmg') _lastPopupTime[cardKey]=now+delay;
+  const p=document.createElement('div');
+  p.className='popup '+type;
+  p.textContent=val;
+  p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;opacity:0;transition:opacity 0.05s;';
+  gc.appendChild(p);
+  setTimeout(function(){
+    p.style.opacity='1';
+    p.style.transition='';
+  }, delay);
+  setTimeout(function(){if(p.parentNode)p.remove();},2100+delay);
+}
+
+function shake(target){
+  if(target){
+    if(!target || target.curHp<=0) return;
+    const el=document.getElementById(`card-${target.side}-${target.pos}`);
+    if(el){
+      // 套在card-inner上：它沒有transition干擾
+      const inner=el.querySelector('.card-inner')||el;
+      inner.classList.remove('card-hit');
+      void inner.offsetWidth;
+      inner.classList.add('card-hit');
+      setTimeout(()=>{ inner.classList.remove('card-hit'); },520);
+      // 星星炸開特效
+      _hitStarBurst(el);
+      return;
+    }
+  }
+}
+
+function showDiceMsg(title,desc){
+  // non-blocking inline log
+  log(`🎲 ${title} → ${desc}`);
+}
+
 function clickItem(it){
   const a=G.activeChar;
   if(!a||a.side!=='p1'||a.acted) return;
@@ -19392,6 +19469,8 @@ function _showLevelUpSequence(levelUps, onDone) {
 // 戰鬥結束後給予英雄經驗值
 function grantBattleExp(win, stats) {
   if(!win) return;
+  // ★ 鬥技場模式不給予任何獎勵（只有冒險模式才有EXP和技能書）
+  if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
   const heroes = advGetUnlockedHeroes();
   if(!heroes.length) return;
   // ★ 依擊敗魔物的個別EXP值計算基礎經驗
