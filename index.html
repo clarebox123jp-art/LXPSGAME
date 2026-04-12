@@ -756,15 +756,17 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   background:rgba(0,0,0,0.72);pointer-events:auto;
 }
 #_tut-box{
-  position:fixed;z-index:9900;max-width:420px;min-width:240px;
+  position:fixed;z-index:9900;max-width:520px;min-width:280px;
+  top:50% !important;left:50% !important;
+  transform:translate(-50%,-50%) !important;
   background:linear-gradient(160deg,rgba(8,14,35,0.98),rgba(4,8,22,0.98));
   border:2px solid rgba(100,180,255,0.85);border-radius:14px;
   padding:21px 24px 16px;box-shadow:0 0 30px rgba(60,140,255,0.5);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;pointer-events:auto;
 }
-#_tut-box ._tut-step{font-size:16px;color:#6699cc;margin-bottom:5px;letter-spacing:1px;}
-#_tut-box ._tut-title{font-size:36px;font-weight:900;color:#88ccff;margin-bottom:10px;}
-#_tut-box ._tut-desc{font-size:25px;color:#ffffff;line-height:1.6;margin-bottom:15px;}
+#_tut-box ._tut-step{font-size:21px;color:#6699cc;margin-bottom:5px;letter-spacing:1px;}
+#_tut-box ._tut-title{font-size:47px;font-weight:900;color:#88ccff;margin-bottom:10px;}
+#_tut-box ._tut-desc{font-size:33px;color:#ffffff;line-height:1.6;margin-bottom:15px;}
 #_tut-box ._tut-arrow{
   position:absolute;width:0;height:0;
 }
@@ -776,12 +778,12 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 #_tut-nav{display:flex;gap:10px;justify-content:flex-end;align-items:center;}
 ._tut-next-btn{
-  padding:9px 27px;font-size:21px;font-weight:800;cursor:pointer;
+  padding:9px 27px;font-size:27px;font-weight:800;cursor:pointer;
   background:rgba(50,120,255,0.3);border:2px solid #4499ff;
   color:#88ccff;border-radius:8px;font-family:inherit;
 }
 ._tut-skip-btn{
-  padding:9px 18px;font-size:18px;cursor:pointer;
+  padding:9px 18px;font-size:23px;cursor:pointer;
   background:transparent;border:1.5px solid rgba(255,100,100,0.5);
   color:#ff9999;border-radius:7px;font-family:inherit;
 }
@@ -2510,10 +2512,10 @@ body {
 /* 中央選擇視窗 */
 #adv-choice-panel{
   position:absolute;top:0;left:0;right:160px;bottom:0;z-index:3;
-  display:flex;align-items:flex-start;justify-content:center;
-  padding:8px 12px;padding-top:16px;
-  background:transparent; /* ★ 無內容時不顯示遮罩 */
-  pointer-events:none; /* 空時不攔截點擊 */
+  display:flex;align-items:center;justify-content:center;
+  padding:8px 12px;
+  background:transparent;
+  pointer-events:none;
 }
 #adv-choice-panel:not(:empty){
   background:rgba(0,0,8,0.55);
@@ -5027,7 +5029,7 @@ const HERO_DB = {
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
-  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP',fd:'使1名對手2回合後強制剩下1點HP'},s2:{n:'黑暗封印',c:3,d:'全體對手封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合'}},
+  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP。目標是BOSS或小怪時，改為給予當前HP20%的傷害，並獲得禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合'}},
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中200%傷害，無法迴避',fd:'用特技的200%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手受到特技70%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
@@ -7503,7 +7505,11 @@ function confirmHeroPick(){
   if(_heroPickSelected.length < 4) return;
   document.getElementById('hero-pick-overlay').style.display = 'none';
   // ── 冒險模式：p2 固定為 BOSS 陣容（必須同時有 _adventureStage 且 overlay 是由冒險模式觸發）
-  const _isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
+  // ★★ 保護層：三個條件缺一不可，防止鬥技場誤用BOSS陣容。請勿修改此判斷式。
+  const _isAdvMode = window._advSystemReady === true
+    && _adventureMode === true
+    && typeof _adventureStage === 'string'
+    && !!_adventureStage;
   if(_isAdvMode){
     document.getElementById('hero-pick-overlay').style.display = 'none';
     G.p1 = _heroPickSelected.map((n,i)=>newHero(n,'p1',i));
@@ -11918,10 +11924,21 @@ function execSkill(a, sk, cost, stype){
   // ====== 暗法師 ======
   else if(n==='死亡宣告'){
     setPending('enemy',t=>{
-      log(`[${a.name}] 死亡宣告 [${t.name}]！下回合強制剩1HP！`);
-      playSkillFX('死亡宣告',a,[t]);
-      addStatus(t,'deathmark',2);
-      endAction(a,cost);
+      // ★ 目標是BOSS或小怪菁英時，改為20%HP傷害+禁療2回合
+      const _isBossTarget = typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t.name);
+      if(_isBossTarget){
+        const _bossDmg = Math.max(1, Math.floor(t.curHp * 0.20));
+        log(`[${a.name}] 死亡宣告 → BOSS模式！[${t.name}] 受到當前HP20%傷害（${_bossDmg}），禁止治療2回合！`);
+        playSkillFX('死亡宣告',a,[t]);
+        doDmg(t, _bossDmg, {isSkill:true, actor:a, piercing:true});
+        addStatus(t,'noheal_curse',2);
+        endAction(a,cost);
+      } else {
+        log(`[${a.name}] 死亡宣告 [${t.name}]！2回合後強制剩1HP！`);
+        playSkillFX('死亡宣告',a,[t]);
+        addStatus(t,'deathmark',2);
+        endAction(a,cost);
+      }
     });
   } else if(n==='黑暗封印'){
     const sealAllFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
@@ -16623,14 +16640,15 @@ function ctrlBattleToggle(show){
         'pointer-events:auto;'
       ].join('');
       floatBtn.innerHTML = `<button onclick="try{playSfx('sfx-sel',0.5);}catch(e){}openTutorial()"
-        style="padding:10px 22px;font-size:22px;font-weight:800;cursor:pointer;
+        style="padding:10px 8px;font-size:20px;font-weight:800;cursor:pointer;
           background:rgba(15,25,60,0.92);border:2px solid rgba(100,160,255,0.7);
           color:#88bbff;border-radius:10px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-          letter-spacing:1px;box-shadow:0 0 12px rgba(60,130,255,0.35);
-          transition:0.15s;"
+          letter-spacing:4px;box-shadow:0 0 12px rgba(60,130,255,0.35);
+          transition:0.15s;writing-mode:vertical-rl;text-orientation:upright;
+          line-height:1.3;"
         onmouseover="this.style.background='rgba(30,60,150,0.95)';this.style.borderColor='#88ccff'"
         onmouseout="this.style.background='rgba(15,25,60,0.92)';this.style.borderColor='rgba(100,160,255,0.7)'">
-        ❓ 戰鬥教學
+        ❓戰鬥教學
       </button>`;
       document.body.appendChild(floatBtn);
     }
@@ -20492,6 +20510,12 @@ function _tutInterInjectCSS() {
       from { transform:translateY(0); }
       to   { transform:translateY(-18px); }
     }
+    /* ★ 實戰引導遮罩：挖空目標元素讓它清晰顯示 */
+    #_ti-dim-overlay {
+      position:fixed; inset:0; z-index:9945; pointer-events:none;
+      background:rgba(0,0,0,0.72);
+      transition:clip-path 0.25s ease;
+    }
     ._ti-msg-bar {
       position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
       z-index:9953; pointer-events:auto;
@@ -20550,9 +20574,36 @@ function _tutInterInjectCSS() {
 }
 
 // ── 箭頭 & 訊息 helpers ──
+
+// ★ 實戰遮罩：以 clip-path 挖空目標元素區域
+function _tutInterShowDim(targetEl) {
+  let dim = document.getElementById('_ti-dim-overlay');
+  if(!dim){
+    dim = document.createElement('div');
+    dim.id = '_ti-dim-overlay';
+    document.body.appendChild(dim);
+  }
+  if(!targetEl){ dim.style.clipPath = ''; return; }
+  requestAnimationFrame(()=>{
+    const pad = 30;
+    const r = targetEl.getBoundingClientRect();
+    const x1 = Math.max(0, r.left - pad), y1 = Math.max(0, r.top - pad);
+    const x2 = Math.min(window.innerWidth, r.right + pad);
+    const y2 = Math.min(window.innerHeight, r.bottom + pad);
+    const vw = window.innerWidth, vh = window.innerHeight;
+    dim.style.clipPath =
+      `polygon(0 0,${vw}px 0,${vw}px ${vh}px,0 ${vh}px,` +
+      `0 0,${x1}px ${y1}px,${x1}px ${y2}px,${x2}px ${y2}px,${x2}px ${y1}px,${x1}px ${y1}px)`;
+  });
+}
+function _tutInterHideDim() {
+  const dim = document.getElementById('_ti-dim-overlay');
+  if(dim) dim.remove();
+}
+
 function _tutInterShowArrow(el) {
   _tutInterClearArrow();
-  if(!el) return;
+  if(!el){ _tutInterShowDim(null); return; }
   const rect = el.getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const wrap = document.createElement('div');
@@ -20562,6 +20613,8 @@ function _tutInterShowArrow(el) {
   wrap.style.left = (cx - 32) + 'px';
   wrap.style.top  = Math.max(4, rect.top - 76) + 'px';
   document.body.appendChild(wrap);
+  // ★ 同步更新遮罩挖空位置
+  _tutInterShowDim(el);
 }
 function _tutInterClearArrow() {
   const el = document.getElementById('_ti-arrow-el'); if(el) el.remove();
@@ -20585,6 +20638,7 @@ function _tutInterClearMsg() {
 }
 function _tutInterClearAll() {
   _tutInterClearArrow(); _tutInterClearMsg();
+  _tutInterHideDim(); // ★ 清除實戰遮罩
   if(_tutInterGcHandler) {
     const gc = document.getElementById('gc');
     if(gc) gc.removeEventListener('click', _tutInterGcHandler, true);
@@ -22799,6 +22853,15 @@ function advStartMiniBattle(nextSceneIdx) {
     if(typeof fieldCards !== 'undefined') fieldCards = [];
     if(typeof updateFieldFX === 'function') updateFieldFX();
     _gamePaused = false;
+
+    // ★ 小怪戰開場發3張物品牌（同正常戰鬥）
+    var _miniInitInv = [null, null, null];
+    for(var _msi = 0; _msi < 3; _msi++){
+      var _mTries = 0, _mDrawn = drawItem();
+      while(_mDrawn.type === 'equip' && _mTries < 10){ _mDrawn = drawItem(); _mTries++; }
+      if(_mDrawn.type !== 'equip') _miniInitInv[_msi] = _mDrawn;
+    }
+    G.inv = _miniInitInv;
 
     // ── 隱藏過場、顯示戰場
     // ★ 清除所有可能遮擋戰場的 overlay（確保點擊能到達卡牌）
