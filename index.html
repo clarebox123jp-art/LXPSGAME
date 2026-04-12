@@ -751,9 +751,9 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #start-btn:hover::before{transform:translateX(100%)}
 /* ── 展開冒險故事按鈕 ── */
 #adventure-btn{
-  padding:20px 70px;font-size:34px;
+  padding:20px 70px;font-size:60px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
-  letter-spacing:8px;cursor:pointer;
+  letter-spacing:6px;cursor:pointer;
   background:linear-gradient(135deg,rgba(0,55,110,0.88),rgba(0,100,190,0.78));
   border:2.5px solid rgba(80,180,255,1);
   color:#b8e4ff;border-radius:8px;
@@ -3068,7 +3068,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.48</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.52</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
