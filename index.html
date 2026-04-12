@@ -3063,7 +3063,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.14.57</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.15.05</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -17986,7 +17986,7 @@ function _renderBackpackInto(container, showUse){
         <div style="font-size:28px;flex-shrink:0;">${def.icon}</div>
         <div style="font-size:22px;font-weight:800;color:#ddeeff;flex:1;min-width:0;
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${def.name}</div>
-        onclick="_showBagItemTip(\'${id}\',this)" style="flex-shrink:0;width:40px;height:40px;font-size:22px;font-weight:900;
+        <button onclick="_showBagItemTip('${id}',this)" style="flex-shrink:0;width:40px;height:40px;font-size:22px;font-weight:900;
           background:rgba(80,100,180,0.4);border:2px solid rgba(100,150,255,0.7);
           color:#88aaff;border-radius:50%;cursor:pointer;font-family:inherit;
           display:flex;align-items:center;justify-content:center;line-height:1;padding:0;">？</button>
