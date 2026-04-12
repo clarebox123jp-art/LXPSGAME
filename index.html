@@ -3122,7 +3122,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.17.53</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.18.00</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -8912,6 +8912,7 @@ function execBurst(side, pos){
   _pSetTimeout(()=>_runBurst(h, bd, side, _interrupted), 1200);
 }
 function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
+  const burstName = bd.n; // ★ 修正：burstName 從爆發資料取得
   const opp=side==='p1'?'p2':'p1';
   const enemies=G[opp].filter(x=>x.curHp>0);
   const allies=G[side].filter(x=>x.curHp>0);
@@ -8923,12 +8924,12 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _doKenshi=(firstTgt)=>{
       let targets=[firstTgt,...G[opp].filter(x=>x.curHp>0&&x!==firstTgt)]; let hitCount=0;
       const doHit=()=>{
-        if(hitCount>=6||!targets.length){updateUI();_pSetTimeout(()=>startTurn(),400);return;}
+        if(hitCount>=6||!targets.length){_burstFinish(h,_interrupted);return;}
         const t=targets[0];
         hitCount++;
         const dmg=Math.floor(h.atk*1.2);
         doDmg(t,dmg,{actor:h,isSkill:true,ignoreBuffs:true});
-        if(t.curHp<=0){ targets=G[opp].filter(x=>x.curHp>0); if(!targets.length){updateUI();_pSetTimeout(()=>startTurn(),400);return;} }
+        if(t.curHp<=0){ targets=G[opp].filter(x=>x.curHp>0); if(!targets.length){_burstFinish(h,_interrupted);return;} }
         if(hitCount===6 && t.curHp>0) addStatus(t,'stun',1);
         updateUI();
         _pSetTimeout(doHit,200);
@@ -9454,7 +9455,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         updateUI(); if(checkWin())return; _pSetTimeout(()=>_burstFinish(h,_interrupted),400); return;
       }
       const _alive2=G[opp].filter(x=>x.curHp>0);
-      if(!_alive2.length){ updateUI(); if(checkWin())return; startTurn(); return; }
+      if(!_alive2.length){ _burstFinish(h,_interrupted); return; }
       _alive2.forEach(t=>doDmg(t,Math.floor(spv*0.5),{actor:h,isSkill:true,isAoe:true,ignoreBuffs:true,piercing:true,ignoreEvasion:true,noHidden:true}));
       _hi2++;
       _pSetTimeout(_doWander,250);
@@ -9506,7 +9507,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(!nextFoes.length){ _remainHits=0; _catNine(null); return; }
         target = nextFoes.sort((a,b)=>a.curHp-b.curHp)[0];
       }
-      const hitDmg = Math.floor(spv(h)*0.5);
+      const hitDmg = Math.floor(spv*0.5);
       doDmg(target, hitDmg, {actor:h, isSkill:true, ignoreBuffs:false});
       _remainHits--;
       renderCard(target);
@@ -9706,7 +9707,13 @@ function _showFanPrompt(hero, attacker, cost, mode, dmgAmt, statusObj){
 function _showBurstMimicPicker(h, side, opp){
   const existing=document.getElementById('burst-mimic-ov'); if(existing) existing.remove();
   const allHeroes=[...G.p1,...G.p2].filter(x=>x.curHp>0&&x!==h&&BURST_DB[x.name]);
-  if(!allHeroes.length){ updateUI(); _pSetTimeout(()=>startTurn(),300); return; }
+  if(!allHeroes.length){
+    h._mimicInProgress = false;
+    updateUI();
+    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },300);
+    return;
+  }
   const ov=document.createElement('div');
   ov.id='burst-mimic-ov';
   ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
@@ -9741,9 +9748,10 @@ function _showBurstMimicPicker(h, side, opp){
   cancelBtn.textContent='✕ 取消';
   cancelBtn.onclick=()=>{
     ov.remove();
-    // 取消時：回合已扣能量和acted，直接推進
+    h._mimicInProgress = false;
     updateUI();
-    _pSetTimeout(()=>startTurn(), 200);
+    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); }, 200);
   };
   ov.appendChild(title);
   ov.appendChild(listDiv);
@@ -12961,7 +12969,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     });
     _rrFoes.forEach(h=>{
       addStatus(h,'poison',5);
-      h._poisonAmt=Math.max(1,Math.floor(h.hp*0.08));
+      h._poisonAmt=12; // ★ 固定12HP/回合（與技能描述一致）
       bannerFX(h,'🎵中毒！','#88ff44',800);
       renderCard(h);
     });
@@ -22215,7 +22223,7 @@ function advFinishMiniBattle(win) {
         if(_miniCoins > 0) addKnowledgeCoins(_miniCoins);
         if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${Math.round(baseExp*1.5)}　💰+${_miniCoins}知識幣`;
         // ★ 若有升級，先演出升級畫面再顯示結算
-        const _showMiniResult = () => { _expEl.classList.add('show'); };
+        const _showMiniResult = () => { _expEl.style.display = 'flex'; _expEl.classList.add('show'); };
         if(_miniLevelUps && _miniLevelUps.length) {
           setTimeout(() => _showLevelUpSequence(_miniLevelUps, _showMiniResult), 400);
         } else {
@@ -22281,6 +22289,7 @@ function advFinishMiniBattle(win) {
 
   // 顯示結算視窗（等玩家按確認）
   if(_miniResultEl2){
+    _miniResultEl2.style.display = 'flex';
     _miniResultEl2.classList.add('show');
     const _btn = document.getElementById('adv-mini-result-btn');
     if(_btn){
@@ -22296,7 +22305,7 @@ function advFinishMiniBattle(win) {
 // ★ 小怪戰勝利確認：玩家按下「繼續冒險」後執行
 function advMiniResultConfirm(){
   const _miniResultEl = document.getElementById('adv-mini-result');
-  if(_miniResultEl) _miniResultEl.classList.remove('show');
+  if(_miniResultEl){ _miniResultEl.classList.remove('show'); _miniResultEl.style.display = 'none'; }
 
   const p = window._advMiniResultPending || {};
   window._advMiniResultPending = null;
@@ -22678,7 +22687,7 @@ window._advSystemReady = true;
 </script>
 
   <!-- ★ 小怪結算彈窗 -->
-  <div id="adv-mini-result" style="display:none;position:absolute;inset:0;z-index:650;
+  <div id="adv-mini-result" style="position:absolute;inset:0;z-index:650;
     align-items:center;justify-content:center;background:rgba(0,0,0,0.75);
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
     <div style="background:linear-gradient(135deg,rgba(5,20,10,0.98),rgba(2,12,5,0.99));
