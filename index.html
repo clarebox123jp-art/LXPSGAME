@@ -750,16 +750,21 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 #start-btn:hover::before{transform:translateX(100%)}
 /* ── 展開冒險故事按鈕 ── */
+@keyframes advBtnGlow{
+  0%,100%{box-shadow:0 0 14px rgba(60,160,255,0.5),0 0 30px rgba(0,100,200,0.2),inset 0 1px 0 rgba(100,200,255,0.2);}
+  50%{box-shadow:0 0 36px rgba(80,200,255,0.95),0 0 70px rgba(40,160,255,0.55),0 0 110px rgba(0,120,255,0.3),inset 0 1px 0 rgba(150,220,255,0.35);}
+}
 #adventure-btn{
-  padding:20px 70px;font-size:60px;
+  padding:15px 52px;font-size:45px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
   letter-spacing:6px;cursor:pointer;
   background:linear-gradient(135deg,rgba(0,55,110,0.88),rgba(0,100,190,0.78));
   border:2.5px solid rgba(80,180,255,1);
   color:#b8e4ff;border-radius:8px;
   text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(80,180,255,0.8);
-  box-shadow:0 0 30px rgba(60,160,255,0.55),0 0 60px rgba(0,100,200,0.25),inset 0 1px 0 rgba(100,200,255,0.25);
-  transition:all 0.25s;overflow:hidden;z-index:2;white-space:nowrap;position:relative;
+  animation:advBtnGlow 2.4s ease-in-out infinite;
+  transition:transform 0.25s,background 0.25s,border-color 0.25s;
+  overflow:hidden;z-index:2;white-space:nowrap;position:relative;
 }
 #adventure-btn::before{
   content:'';position:absolute;inset:0;
@@ -3068,7 +3073,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.52</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.16.57</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
