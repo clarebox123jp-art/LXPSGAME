@@ -753,7 +753,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* ═══ 戰鬥教學系統 ═══ */
 #_tut-dim{
   position:fixed;inset:0;z-index:9850;
-  background:rgba(0,0,0,0.72);pointer-events:auto;
+  background:rgba(0,0,0,0.72);pointer-events:none;
+  /* ★ pointer-events:none 讓 ctrl-bar 等上層按鈕始終可點 */
 }
 #_tut-box{
   position:fixed;z-index:9900;max-width:520px;min-width:280px;
@@ -1727,7 +1728,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .ehb-peek-btn:hover{background:rgba(110,80,220,0.4);border-color:#aa88ff;color:#fff}
 /* b-auto-battle 在冒險模式由JS控制顯示 */
 #ctrl-bar{
-  position:fixed;top:16px;right:16px;z-index:9999;
+  position:fixed;top:16px;right:16px;z-index:99999;
   display:flex;align-items:center;gap:10px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
 }
@@ -20840,13 +20841,22 @@ function _tutInterShowArrow(el) {
   _tutInterClearArrow();
   if(!el){ _tutInterShowDim(null); return; }
   const rect = el.getBoundingClientRect();
+  // ★ 用元素中心的 viewport 座標定位箭頭（getBoundingClientRect 已是 viewport 座標）
   const cx = rect.left + rect.width / 2;
+  // 箭頭在元素正上方，至少留 8px 距頂部
+  const arrowH = 72; // 箭頭+emoji 高度估計
+  let topPos = rect.top - arrowH - 4;
+  // 若空間不足（元素太靠近頂部），改在元素下方
+  if(topPos < 8) topPos = rect.bottom + 8;
+  // 水平確保不超出視窗
+  const leftPos = Math.max(8, Math.min(window.innerWidth - 72, cx - 36));
+
   const wrap = document.createElement('div');
   wrap.id = '_ti-arrow-el';
   wrap.className = '_ti-arrow-wrap';
   wrap.innerHTML = '<div class="ti-bounce">👇</div>';
-  wrap.style.left = (cx - 32) + 'px';
-  wrap.style.top  = Math.max(4, rect.top - 76) + 'px';
+  wrap.style.left = leftPos + 'px';
+  wrap.style.top  = topPos + 'px';
   document.body.appendChild(wrap);
   // ★ 同步更新遮罩挖空位置
   _tutInterShowDim(el);
@@ -20985,8 +20995,13 @@ function _tutInterStartAtkPhase() {
   const atkBtn = document.getElementById('b-atk');
   if(!atkBtn) { _tutInterPhase = 'idle'; return; }
 
-  _tutInterShowArrow(atkBtn);
-  _tutInterShowMsg('⚔️ 現在輪到你！', '點擊「普通攻擊」按鈕發動攻擊！');
+  // ★ 等一幀讓 layout 在 action-panel 顯示後完成，再取座標顯示箭頭
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      _tutInterShowArrow(atkBtn);
+      _tutInterShowMsg('⚔️ 現在輪到你！', '點擊「普通攻擊」按鈕發動攻擊！');
+    });
+  });
 
   const onAtkClick = () => {
     atkBtn.removeEventListener('click', onAtkClick);
@@ -21078,9 +21093,15 @@ function _tutInterShowSkillHint() {
 
   if(!skillBtn || !skillData) { _tutInterFinal(); return; }
 
-  _tutInterShowArrow(skillBtn);
-  _tutInterShowMsg('✨ 使用技能！',
-    `點擊「${skillData.n}」發動技能！消耗 ${skillData.c} 🔷 能量`);
+  // ★ 等一幀讓 layout 完成後再取座標，避免 action-panel 剛顯示時位置為 0
+  const _sb = skillBtn, _sd = skillData;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      _tutInterShowArrow(_sb);
+      _tutInterShowMsg('✨ 使用技能！',
+        `點擊「${_sd.n}」發動技能！消耗 ${_sd.c} 🔷 能量`);
+    });
+  });
 
   _tutInterPhase = 'skill_btn';
   const onSkillClick = () => {
