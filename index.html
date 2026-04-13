@@ -3750,9 +3750,10 @@ body {
     </div>
   </div>
   <!-- 英雄加入演出 overlay -->
-  <div id="adv-hero-meet-overlay" style="display:none;position:absolute;inset:0;z-index:650;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:rgba(0,0,0,0.92);">
+  <div id="adv-hero-meet-overlay" onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="display:none;position:absolute;inset:0;z-index:650;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:rgba(0,0,0,0.92);cursor:pointer;">
     <div id="adv-hmeet-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.35);z-index:0;"></div>
-    <div style="position:relative;z-index:1;width:100%;max-width:700px;padding:20px 16px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+    <div onclick="event.stopPropagation()" style="position:relative;z-index:1;width:100%;max-width:700px;padding:20px 16px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div style="font-size:20px;color:#aaa;text-align:center;margin-bottom:4px;letter-spacing:2px;">點擊畫面任意位置繼續</div>
       <div id="adv-hmeet-msg" style="font-size:28px;font-weight:800;color:#ffe066;text-align:center;line-height:1.6;padding:16px 20px;background:rgba(0,0,0,0.6);border-radius:14px;border:2px solid #ffe066;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
       <div id="adv-hmeet-portrait" style="width:260px;height:320px;background-size:contain;background-position:center top;background-repeat:no-repeat;border-radius:16px;border:3px solid #ffcc44;box-shadow:0 0 40px rgba(255,200,50,0.5);"></div>
       <div id="adv-hmeet-name" style="font-size:52px;font-weight:900;color:#ffcc44;text-shadow:0 0 20px rgba(255,200,50,0.8);font-family:'Noto Serif TC','M PLUS Rounded 1c',sans-serif;"></div>
@@ -19884,7 +19885,11 @@ function advStartWinSequence() {
 
 function advHeroMeetDone() {
   const ov = document.getElementById('adv-hero-meet-overlay');
-  if(ov) ov.style.display = 'none';
+  // ★ 防止重複呼叫（點按鈕和點背景可能同時觸發）
+  if(!ov || ov.style.display === 'none') return;
+  ov.style.display = 'none';
+  // ★ 移除整個 overlay 的 onclick，避免後續事件冒泡再次觸發
+  ov.onclick = null;
   bgmStop();
   // ★ 確保戰鬥畫面完全清除再返回冒險選關頁
   try{
