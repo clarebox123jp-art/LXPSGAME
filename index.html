@@ -3134,7 +3134,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1508</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1548</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -16658,6 +16658,7 @@ function ctrlRestart(){
   }, 200);
   }); // end _customConfirm
 }
+function ctrlFullscreen(){
   const btn=document.getElementById('ctrl-fs');
   const el=document.documentElement;
   // Already in fullscreen → exit
@@ -16726,6 +16727,7 @@ function ctrlLeaveBattle(){
   ctrlBattleToggle(false);
   }); // end _customConfirm
 }
+function ctrlBattleToggle(show){
   const btn=document.getElementById('ctrl-leave-battle');
   const div=document.getElementById('ctrl-leave-divider');
   if(btn) btn.style.display=show?'':'none';
@@ -16794,7 +16796,9 @@ function ctrlQuit(){
     alert('請手動關閉此分頁。');
   }, 300);
   }); // end _customConfirm
-} (required by browser policy)
+}
+
+// Auto-fullscreen on first interaction (required by browser policy)
 let _autoFsAttempted = false;
 function _tryAutoFullscreen(){
   if(_autoFsAttempted) return;
@@ -17766,6 +17770,9 @@ function closeAdventureOverlay(){
   try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(e){}
   // ★ 同時重置守門旗標（以防殘留）
   window._advMiniResultShowing = false;
+  // ★ 確保首頁 overlay 顯示（initGame 會隱藏它，返回時必須補回）
+  const homeOv = document.getElementById('overlay');
+  if(homeOv) homeOv.style.display = 'flex';
   // ★ 停止所有播放中的音樂和音效（含手機端）
   bgmStop();
   document.querySelectorAll('audio').forEach(function(el){
