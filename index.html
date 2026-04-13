@@ -3134,7 +3134,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260412.18.00</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.23.00</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3682,6 +3682,26 @@ body {
     <div class="pause-title" style="animation:pauseFlicker 1.2s ease-in-out infinite">⏸ 遊戲暫停</div>
     <div class="pause-sub">點擊下方按鈕或再按⏸繼續</div>
     <button class="pause-resume-btn" onclick="playSfx('sfx-gentle',0.4);ctrlTogglePause()">▶ 繼續遊戲</button>
+  </div>
+
+  <!-- ★ 自訂確認視窗（取代 confirm()，避免 iPad WKWebView 誤判問題） -->
+  <div id="custom-confirm-overlay" style="display:none;position:fixed;inset:0;z-index:99990;
+    background:rgba(0,0,0,0.82);align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+    <div style="background:linear-gradient(160deg,#12172a,#080c1a);border:2.5px solid rgba(220,80,80,0.6);
+      border-radius:18px;padding:32px 36px;max-width:480px;width:88%;text-align:center;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;box-shadow:0 0 60px rgba(0,0,0,0.9);">
+      <div id="custom-confirm-msg" style="font-size:28px;font-weight:700;color:#fff;line-height:1.6;margin-bottom:24px;"></div>
+      <div style="display:flex;gap:16px;justify-content:center;">
+        <button id="custom-confirm-ok"
+          style="padding:14px 40px;font-size:26px;font-weight:800;background:linear-gradient(135deg,#cc3333,#e84040);
+          border:none;border-radius:12px;color:#fff;cursor:pointer;letter-spacing:2px;
+          font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">確定</button>
+        <button onclick="_customConfirmCancel()"
+          style="padding:14px 40px;font-size:26px;font-weight:800;background:rgba(60,60,80,0.9);
+          border:2px solid #555;border-radius:12px;color:#aaa;cursor:pointer;letter-spacing:2px;
+          font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">取消</button>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -16480,6 +16500,33 @@ function _saveCheatSnapshot(){
   }catch(e){}
 }
 
+// ====== 自訂確認視窗（iOS/iPad 安全，取代原生 confirm()）======
+// 避免 iPad WKWebView 在 App 切換時自動 dismiss confirm() 造成誤確認
+let _customConfirmCb = null;
+function _customConfirm(msg, onOk) {
+  const ov = document.getElementById('custom-confirm-overlay');
+  const msgEl = document.getElementById('custom-confirm-msg');
+  const okBtn = document.getElementById('custom-confirm-ok');
+  if(!ov || !msgEl || !okBtn) {
+    // fallback: 若 DOM 尚未就緒則用原生 confirm
+    if(confirm(msg)) onOk();
+    return;
+  }
+  msgEl.innerHTML = msg.replace(/\n/g, '<br>');
+  _customConfirmCb = onOk;
+  okBtn.onclick = function() {
+    ov.style.display = 'none';
+    _customConfirmCb = null;
+    onOk();
+  };
+  ov.style.display = 'flex';
+}
+function _customConfirmCancel() {
+  const ov = document.getElementById('custom-confirm-overlay');
+  if(ov) ov.style.display = 'none';
+  _customConfirmCb = null;
+}
+
 // ====== CONTROL BAR ======
 function ctrlToggleBgm(){
   _bgmMuted=!_bgmMuted;
@@ -16559,7 +16606,7 @@ function ctrlTogglePause(){
   }
 }
 function ctrlRestart(){
-  if(!confirm('確定要重新開始嗎？目前進度將會失去。')) return;
+  _customConfirm('確定要重新開始嗎？\n目前進度將會失去。', function(){
   // Stop all timers
   clearTurnTimer();
   if(_stuckCheckTimer){ clearInterval(_stuckCheckTimer); }
@@ -16609,8 +16656,8 @@ function ctrlRestart(){
   setTimeout(()=>{
     document.getElementById('overlay').style.display='flex';
   }, 200);
+  }); // end _customConfirm
 }
-function ctrlFullscreen(){
   const btn=document.getElementById('ctrl-fs');
   const el=document.documentElement;
   // Already in fullscreen → exit
@@ -16647,7 +16694,7 @@ function ctrlFullscreen(){
 });
 
 function ctrlLeaveBattle(){
-  if(!confirm('確定要離開戰場並返回首頁嗎？目前進度將失去。')) return;
+  _customConfirm('確定要離開戰場並返回首頁嗎？\n目前進度將失去。', function(){
   // Stop all audio
   bgmStop();
   document.querySelectorAll('audio').forEach(el=>{ try{el.pause();el.currentTime=0;}catch(e){} });
@@ -16677,8 +16724,8 @@ function ctrlLeaveBattle(){
   bgmStop(); bgmPlay('bgm-menu-01');
   // Hide battle leave button
   ctrlBattleToggle(false);
+  }); // end _customConfirm
 }
-function ctrlBattleToggle(show){
   const btn=document.getElementById('ctrl-leave-battle');
   const div=document.getElementById('ctrl-leave-divider');
   if(btn) btn.style.display=show?'':'none';
@@ -16712,7 +16759,7 @@ function ctrlBattleToggle(show){
   }
 }
 function ctrlQuit(){
-  if(!confirm('確定要結束遊戲嗎？')) return;
+  _customConfirm('確定要結束遊戲嗎？', function(){
   // Exit fullscreen first
   const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
   if((document.fullscreenElement||document.webkitFullscreenElement) && exitFs){
@@ -16746,9 +16793,8 @@ function ctrlQuit(){
     bgmFadeTo('bgm-menu',400);
     alert('請手動關閉此分頁。');
   }, 300);
-}
-
-// Auto-fullscreen on first interaction (required by browser policy)
+  }); // end _customConfirm
+} (required by browser policy)
 let _autoFsAttempted = false;
 function _tryAutoFullscreen(){
   if(_autoFsAttempted) return;
@@ -18767,9 +18813,10 @@ function advStartBattle(){
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
-  // 清除小怪戰殘留狀態
+  // ★ 清除小怪戰殘留狀態（含守門旗標，避免iPad上startTurn第一行就return）
+  window._advMiniResultShowing = false;
   if(typeof G !== 'undefined' && G){
-    G._resultShown = false;        // ★ 必須在BOSS戰開始前清除，避免checkWin誤判
+    G._resultShown = false;
     G.pendingTarget = null;
     if(typeof pendingCb !== 'undefined') pendingCb = null;
   }
@@ -19653,7 +19700,7 @@ function advGiveUp() {
 //  重新開戰
 // ════════════════════════════════
 function advRestartBattle() {
-  if(!confirm('確定要重新開戰嗎？目前進度將失去，但考題不變。')) return;
+  _customConfirm('確定要重新開戰嗎？\n目前進度將失去，但考題不變。', function(){
   // 重置隊伍
   G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
   G.p2.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
@@ -19678,10 +19725,8 @@ function advRestartBattle() {
   renderField(true); renderItems(); updateUI();
   _pSetTimeout(startTurn,600);
   log('🔄 重新開戰！');
+  }); // end _customConfirm
 }
-
-// ════════════════════════════════
-//  戰績結算
 // ════════════════════════════════
 function advShowBattleResult(win) {
   const stats = _advStats;
