@@ -3145,7 +3145,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2230</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2255</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -6653,26 +6653,6 @@ function _epSpawnParticles(key, color){
       setTimeout(()=>p.remove(), 700);
     }
   });
-}
-
-function _epShowHeroPreview(name){
-  const b = HERO_DB[name];
-  if(!b) return;
-  // 建立臨時 hero 物件供 showHeroPreview 使用
-  const tmpH = {
-    name, side:'p1', pos:0,
-    hp:b.hp, atk:b.atk, sp:b.sp, spd:b.spd,
-    curHp:b.hp, acted:false,
-    s1:{...b.s1}, s2:{...b.s2},
-    element:null, status:[], buffs:[], equip:null,
-    av: AVATARS[name]||'🗡️'
-  };
-  const ov = document.getElementById('hero-preview-overlay');
-  if(ov && ov.style.display==='flex' && _previewHero && _previewHero.name===name){
-    hideHeroPreview(); return;
-  }
-  _previewHero = tmpH;
-  showHeroPreview(tmpH, false);
 }
 
 function finishElemPick(){
@@ -21677,6 +21657,9 @@ function _advShowTutBtn() {
   if(typeof _tutInterPhase !== 'undefined' && _tutInterPhase !== 'idle') return;
   _startInteractiveTutorial();
 }
+
+// ── 教學完成演出 ──
+function _tutInterFinal() {
   _tutInterPhase = 'idle';
   if(_tutInterPollId){ clearInterval(_tutInterPollId); _tutInterPollId = null; }
   _tutInterClearAll();
@@ -23028,10 +23011,7 @@ function _doAfterAtkTraits(attacker, hitTarget){
   }
 }
 
-function closeHeroPage() {
-  const ov = document.getElementById('hero-page-overlay');
-  if(ov) ov.style.display = 'none';
-}
+
 
 // ★ 排序/篩選狀態
 let _heroSortKey = 'lv';
