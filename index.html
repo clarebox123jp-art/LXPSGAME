@@ -3134,7 +3134,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.23.00</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1508</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -15303,10 +15303,10 @@ function aiUseSkill(a,sk,cost,pref){
 // ====== WIN CHECK ======
 function _advRestartOrSurrender(){
   if(typeof _adventureMode !== 'undefined' && _adventureMode){
-    // 冒險模式：重新開始這場戰鬥
-    if(confirm('確認重新開始這場BOSS戰？')){
+    // 冒險模式：重新開始這場戰鬥（用自訂 overlay 避免 iPad WKWebView 誤判）
+    _customConfirm('確認重新開始這場BOSS戰？', function(){
       try{ advRestartBattle(); }catch(e){ confirmSurrender(); }
-    }
+    });
   } else {
     confirmSurrender();
   }
@@ -17496,6 +17496,9 @@ function newHero_replace(name, side, pos){
 var _stuckCheckTimer = setInterval(function(){
   try {
     if(!G || !G.activeChar) return;
+    // ★ 冒險BOSS戰或答題中：不干預，避免強制還原UI破壞quiz/continue overlay
+    if(typeof _adventureMode !== 'undefined' && _adventureMode) return;
+    if(typeof _gamePaused !== 'undefined' && _gamePaused) return;
     var a = G.activeChar;
     if(!a || a.side !== 'p1' || a.curHp <= 0) return;
     if(a.acted) return;
@@ -17517,13 +17520,27 @@ var _stuckCheckTimer = setInterval(function(){
 }, 8000);
 
 // Mobile: pause/resume BGM on visibility change
+// ★ iPad 保護：App 切換時暫停音樂，回前台時安全恢復，不影響戰鬥狀態
 document.addEventListener('visibilitychange', function(){
   const bgmEl = _curBgm ? document.getElementById(_curBgm) : null;
-  if(!bgmEl) return;
   if(document.hidden){
-    try{ bgmEl.pause(); }catch(e){}
-  } else if(!_bgmMuted && !_gamePaused){
-    try{ bgmEl.play().catch(()=>{}); }catch(e){}
+    // 切到後台：暫停 BGM，若冒險 BOSS 戰中先暫停遊戲計時
+    if(bgmEl) try{ bgmEl.pause(); }catch(e){}
+    // ★ 暫停回合計時器，避免 iPad 後台時計時耗盡
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      if(typeof _turnTimerHandle !== 'undefined' && _turnTimerHandle){
+        clearInterval(_turnTimerHandle); _turnTimerHandle = null; _turnTimerPaused = true;
+      }
+    }
+  } else {
+    // 回前台：恢復 BGM
+    if(bgmEl && !_bgmMuted && !_gamePaused){
+      try{ bgmEl.play().catch(()=>{}); }catch(e){}
+    }
+    // ★ iPad：回前台時若冒險戰鬥中，確保 AudioContext 恢復（iOS 要求）
+    if(typeof AC !== 'undefined' && AC && AC.state === 'suspended'){
+      try{ AC.resume().catch(()=>{}); }catch(e){}
+    }
   }
 });
 
@@ -17534,7 +17551,6 @@ document.addEventListener('visibilitychange', function(){
   document.addEventListener('touchmove', function(e){
     if(e.target.closest('#gc')) e.preventDefault();
   }, { passive: false });
-  // Map single-tap touch to click on game elements (already handled by browser)
   // Prevent long-press context menu on game canvas
   document.addEventListener('contextmenu', function(e){
     if(e.target.closest('#gc')) e.preventDefault();
@@ -17543,6 +17559,31 @@ document.addEventListener('visibilitychange', function(){
   if(window.visualViewport){
     window.visualViewport.addEventListener('scroll', scaleToViewport);
   }
+
+  // ★ iPad 防誤觸：危險按鈕（離開戰場/重新開始）加 350ms touchstart 防抖
+  // 防止 iPad 上快速滑過按鈕時意外觸發
+  var _dangerBtnIds = ['ctrl-leave-battle','ctrl-restart','ctrl-quit'];
+  var _dangerTouchTime = {};
+  document.addEventListener('touchstart', function(e){
+    var btn = e.target.closest('button[id]');
+    if(!btn) return;
+    if(_dangerBtnIds.includes(btn.id)){
+      _dangerTouchTime[btn.id] = Date.now();
+    }
+  }, { passive: true });
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('button[id]');
+    if(!btn) return;
+    if(_dangerBtnIds.includes(btn.id)){
+      var t = _dangerTouchTime[btn.id] || 0;
+      // 若 touchstart 到 click 小於 150ms（可能是意外滑過），阻止
+      if(t > 0 && Date.now() - t < 150){
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        _dangerTouchTime[btn.id] = 0;
+      }
+    }
+  }, true);
 })();
 
 
@@ -18819,6 +18860,7 @@ function advStartBattle(){
     G._resultShown = false;
     G.pendingTarget = null;
     if(typeof pendingCb !== 'undefined') pendingCb = null;
+    G.sellUsed = new Set(); // ★ BOSS戰開始重置販賣限制
   }
   try{ bgmStop(); }catch(e){}
   try{
@@ -19665,6 +19707,8 @@ function _advTriggerBurstFor(h) {
 function advCheckContinue() {
   // 由checkWin失敗時呼叫
   if (!_adventureMode) return false;
+  // ★ 若已呼叫 advGiveUp（G._resultShown=true），不再重複顯示接關視窗
+  if(typeof G !== 'undefined' && G && G._resultShown) return false;
   if (_advContinueCount >= ADV_MAX_CONTINUES) return false;
   _advStats.continueCount++;
   document.getElementById('adv-continue-count').textContent =
@@ -19676,6 +19720,14 @@ function advCheckContinue() {
 function advDoContinue() {
   _advContinueCount++;
   _advStats.deathCount++;
+  // ★ 清除 quiz / 暫停殘留，確保接關後戰鬥能正常恢復
+  try{ clearInterval(_advQuizTimer); _advQuizTimer = null; }catch(e){}
+  _advQuizActive = false; _advQuizPhase = 'idle';
+  if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+  _gamePaused = false;
+  if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0;
+  if(typeof G !== 'undefined' && G) G._resultShown = false;
+  try{ const _qo=document.getElementById('adv-quiz-overlay'); if(_qo) _qo.classList.remove('show'); }catch(e){}
   document.getElementById('adv-continue-overlay').classList.remove('show');
   // 隊伍全部復活
   G.p1.forEach(h => {
@@ -19692,6 +19744,24 @@ function advDoContinue() {
 }
 
 function advGiveUp() {
+  // ★ 完整清除戰鬥狀態，防止 quiz timer / BOSS AI / stuckCheck 繼續干擾
+  try{ clearInterval(_advQuizTimer); _advQuizTimer = null; }catch(e){}
+  try{ clearTurnTimer(); }catch(e){}
+  if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0;
+  _advQuizActive = false;
+  _advQuizPhase  = 'idle';
+  if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+  _gamePaused    = false;
+  if(typeof G !== 'undefined' && G) {
+    G._resultShown  = true;   // ★ 封鎖後續 checkWin 重複觸發
+    G.pendingTarget = null;
+  }
+  try{ if(typeof pendingCb !== 'undefined') pendingCb = null; }catch(e){}
+  // 關閉 quiz overlay 以防殘留
+  try{
+    const _qo = document.getElementById('adv-quiz-overlay');
+    if(_qo) _qo.classList.remove('show');
+  }catch(e){}
   document.getElementById('adv-continue-overlay').classList.remove('show');
   advShowBattleResult(false);
 }
@@ -23167,6 +23237,7 @@ function advStartMiniBattle(nextSceneIdx) {
     G.pendingTarget = null;
     G.selMove = null; G.selItem = null;
     G.taunted = null; G.waitFor = null;
+    G.sellUsed = new Set(); // ★ 每場新戰鬥重置販賣限制（避免第二場起無法賣卡）
     if(typeof fieldCards !== 'undefined') fieldCards = [];
     if(typeof updateFieldFX === 'function') updateFieldFX();
     _gamePaused = false;
