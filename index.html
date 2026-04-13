@@ -3145,7 +3145,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2255</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2343</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -7548,6 +7548,18 @@ function confirmHeroPick(){
   if(_isAdvMode){
     document.getElementById('hero-pick-overlay').style.display = 'none';
     G.p1 = _heroPickSelected.map((n,i)=>newHero(n,'p1',i));
+    // ★ 冒險模式：套用玩家已投資的素質加成（HP/ATK/SP/SPD）
+    G.p1.forEach(h => {
+      const _inv = (_heroStatInvested && _heroStatInvested[h.name]) || {};
+      const _dHp  = _inv.hp  || 0;
+      const _dAtk = _inv.atk || 0;
+      const _dSp  = _inv.sp  || 0;
+      const _dSpd = _inv.spd || 0;
+      if(_dHp)  { h.hp  += _dHp;  h.curHp = h.hp; }
+      if(_dAtk) { h.atk += _dAtk; }
+      if(_dSp)  { h.sp  += _dSp;  }
+      if(_dSpd) { h.spd += _dSpd; }
+    });
     // BOSS 陣容固定，元素已預設
     const bossTeam = ADV_BOSS_TEAMS[_adventureStage];
     G.p2 = bossTeam.map((b,i)=>{
@@ -21789,20 +21801,26 @@ function _showLevelUpSequence(levelUps, onDone) {
     <div class="_lu-name">${item.name}</div>
     <div class="_lu-lv">Lv. ${item.lv}</div>
     <div class="_lu-pt">✨ 獲得 1 點素質點數！</div>
-    <button onclick="(function(){
-      const _ov=document.getElementById('_levelup-ov');
-      if(_ov){_ov.style.opacity='0';_ov.style.transition='opacity 0.3s';setTimeout(()=>{_ov.remove();_showLevelUpSequence(${JSON.stringify(rest)},_luDone_${item.name.replace(/[^a-zA-Z0-9]/g,'_')});},300);}
-    })()" style="margin-top:20px;padding:12px 40px;font-size:26px;font-weight:900;
+    <button class="_lu-confirm-btn" style="margin-top:20px;padding:12px 40px;font-size:26px;font-weight:900;
       background:linear-gradient(135deg,rgba(80,180,80,0.9),rgba(40,120,40,0.9));
       border:3px solid #44ff88;color:#fff;border-radius:14px;cursor:pointer;
       font-family:inherit;box-shadow:0 0 20px rgba(0,255,100,0.4);">
       ✔ 確認
     </button>`;
 
-  // 存回呼以便按鈕使用
-  window[`_luDone_${item.name.replace(/[^a-zA-Z0-9]/g,'_')}`] = function(){
-    _showLevelUpSequence(rest, onDone);
-  };
+  // ★ 用 addEventListener 取代 inline onclick，避免 JSON.stringify 的 " 破壞 HTML 屬性
+  const _luBtn = ov.querySelector('._lu-confirm-btn');
+  if(_luBtn){
+    _luBtn.addEventListener('click', function _luConfirm(){
+      _luBtn.removeEventListener('click', _luConfirm);
+      ov.style.opacity = '0';
+      ov.style.transition = 'opacity 0.3s';
+      setTimeout(() => {
+        if(ov.parentNode) ov.remove();
+        _showLevelUpSequence(rest, onDone);  // ★ 直接傳 rest/onDone 閉包，不走 JSON.stringify
+      }, 300);
+    });
+  }
 
   flashScreen('rgba(255,220,50,0.3)', 400);
   document.body.appendChild(ov);
