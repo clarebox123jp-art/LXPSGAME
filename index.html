@@ -14235,6 +14235,10 @@ function startTurn(){
   if(checkWin()) return;
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
+  // ★ 冒險BOSS戰：每5回合自動存檔（防 iPad 崩潰遺失進度）
+  if(_adventureMode && G && G.round && G.round % 5 === 0){
+    try{ gameCloudSave(); }catch(e){}
+  }
 // ══ 冒險模式 BOSS 天賦 ══
   if(_adventureMode){
     // 統計回合數
@@ -17676,6 +17680,8 @@ var _stuckCheckTimer = setInterval(function(){
 document.addEventListener('visibilitychange', function(){
   const bgmEl = _curBgm ? document.getElementById(_curBgm) : null;
   if(document.hidden){
+    // ★ 切到後台立即存檔（iPad 可能被 iOS 殺掉，這是最後存檔機會）
+    try{ gameCloudSave(); } catch(e){}
     // 切到後台：暫停 BGM，若冒險 BOSS 戰中先暫停遊戲計時
     if(bgmEl) try{ bgmEl.pause(); }catch(e){}
     // ★ 暫停回合計時器，避免 iPad 後台時計時耗盡
@@ -17696,6 +17702,19 @@ document.addEventListener('visibilitychange', function(){
   }
 });
 
+
+// ★ pagehide：頁面關閉/導航離開時存檔（iOS Safari 的 beforeunload 替代方案）
+window.addEventListener('pagehide', function(e){
+  try{
+    const data = _buildSafeData();
+    const localKey = window._gUserId ? 'lxps_' + _gUserId + '_progress' : 'lxps_guest_progress';
+    localStorage.setItem(localKey, JSON.stringify(data));
+    // 同步存快照
+    if(data.advSnapshot && data.advSnapshot.stage){
+      localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot));
+    }
+  } catch(e2){}
+});
 
 // ====== MOBILE TOUCH SUPPORT ======
 (function addTouchSupport(){
@@ -17920,6 +17939,104 @@ function openAdventureOverlay(){
   // ③ 預設顯示第一關資訊
   const firstBtn = document.querySelector('#adv-left-panel .adv-stage-btn:not(.locked)');
   selectAdvStage('maokong', firstBtn);
+
+  // ★ 崩潰恢復：若有未完成的冒險快照（24hr內），彈出提示
+  _advCheckCrashRecovery();
+}
+
+function _advCheckCrashRecovery(){
+  try{
+    const raw = localStorage.getItem('adv_crash_snapshot');
+    if(!raw) return;
+    const snap = JSON.parse(raw);
+    if(!snap || !snap.stage) return;
+    // 超過24小時的快照忽略
+    if(Date.now() - (snap.ts||0) > 24*60*60*1000){ localStorage.removeItem('adv_crash_snapshot'); return; }
+    // 若玩家現在就在這關，不提示
+    if(_adventureStage === snap.stage && _advPlayerGrade && _advPlayerSubject) return;
+
+    // 計算距離崩潰多久
+    const _minsAgo = Math.round((Date.now() - snap.ts) / 60000);
+    const _agoTxt  = _minsAgo < 2 ? '剛才' : _minsAgo < 60 ? _minsAgo+'分鐘前' : Math.round(_minsAgo/60)+'小時前';
+
+    const box = document.createElement('div');
+    box.id = 'adv-crash-recovery-box';
+    box.style.cssText = [
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9900;',
+      'background:linear-gradient(160deg,rgba(10,12,28,0.99),rgba(5,6,16,0.99));',
+      'border:2.5px solid rgba(255,180,0,0.8);border-radius:20px;padding:32px 40px;',
+      'min-width:380px;max-width:560px;width:90%;',
+      'box-shadow:0 0 60px rgba(255,150,0,0.35);',
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;'
+    ].join('');
+
+    const stageLabels = { maokong:'貓空冒險 第一關' };
+    const stageLabel  = stageLabels[snap.stage] || snap.stage;
+    const treasureCount = (snap.treasures||[]).filter(Boolean).length;
+    const heroList = (snap.heroes||[]).filter(Boolean).join('、') || '（無記錄）';
+
+    box.innerHTML =
+      '<div style="font-size:44px;margin-bottom:10px;">⚠️</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#ffcc44;margin-bottom:8px;">偵測到未完成的冒險</div>'+
+      '<div style="font-size:20px;color:#aaa;margin-bottom:18px;">'+_agoTxt+'，遊戲在 BOSS 戰中意外中斷</div>'+
+      '<div style="background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;text-align:left;font-size:20px;line-height:2;">'+
+        '<div>📍 關卡：<b style="color:#fff;">'+stageLabel+'</b></div>'+
+        '<div>👥 隊伍：<b style="color:#aaddff;">'+heroList+'</b></div>'+
+        (snap.grade?'<div>📚 設定：<b style="color:#aaffcc;">'+snap.grade+' / '+snap.subject+' / '+snap.difficulty+'</b></div>':'')+
+        '<div>🏆 法寶：<b style="color:#ffee88;">'+treasureCount+' 個</b></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:12px;justify-content:center;">'+
+        '<button id="_crash_resume_btn" style="flex:1;padding:14px 0;font-size:24px;font-weight:900;'+
+          'background:rgba(255,180,0,0.25);border:2px solid #ffcc44;color:#ffee88;'+
+          'border-radius:12px;cursor:pointer;font-family:inherit;">'+
+          '🔁 繼續這場冒險</button>'+
+        '<button id="_crash_discard_btn" style="padding:14px 20px;font-size:20px;'+
+          'background:rgba(60,10,10,0.4);border:1.5px solid #884444;color:#aa6666;'+
+          'border-radius:12px;cursor:pointer;font-family:inherit;">'+
+          '✕ 放棄</button>'+
+      '</div>';
+
+    document.body.appendChild(box);
+
+    document.getElementById('_crash_resume_btn').onclick = function(){
+      box.remove();
+      _advRestoreSnapshot(snap);
+    };
+    document.getElementById('_crash_discard_btn').onclick = function(){
+      box.remove();
+      localStorage.removeItem('adv_crash_snapshot');
+    };
+  } catch(e){ console.error('[崩潰恢復]', e); }
+}
+
+function _advRestoreSnapshot(snap){
+  try{
+    // 還原關卡選擇、題目設定、法寶
+    _adventureStage      = snap.stage;
+    _advPlayerGrade      = snap.grade      || '';
+    _advPlayerSubject    = snap.subject    || '';
+    _advPlayerDifficulty = snap.difficulty || '';
+    if(Array.isArray(snap.treasures)) _advTreasures = snap.treasures;
+
+    // 選取關卡按鈕
+    const stageBtn = document.querySelector('.adv-stage-btn[data-stage="'+snap.stage+'"]');
+    if(stageBtn){ selectAdvStage(snap.stage, stageBtn); }
+
+    // 恢復法寶顯示
+    try{ advUpdateTreasureBar(); }catch(e){}
+
+    // 清除快照（已恢復）
+    localStorage.removeItem('adv_crash_snapshot');
+
+    // 提示玩家：可以重新出發
+    setTimeout(function(){
+      const _heroNames = (snap.heroes||[]).filter(Boolean);
+      const msg = _heroNames.length
+        ? '進度已恢復！隊伍（'+_heroNames.join('、')+'）重新出發吧！'
+        : '關卡進度已恢復，請重新選擇英雄出戰！';
+      try{ bannerFX(null, '✅ '+msg, '#44ff88', 3500); }catch(e){}
+    }, 600);
+  } catch(e){ console.error('[恢復快照]', e); }
 }
 
 function advNavLocked(name){
@@ -20239,6 +20356,8 @@ function advCloseUnlock() {
 const ADV_HERO_GREETINGS = {"劍士": "「我的劍，願為保護貓空的茶香而揮！」", "刺客": "「從暗處出手是我的風格。好，我就跟你們走！」", "光法師": "「聖光將照耀這片土地，讓我們一起前進吧！」", "冰法師": "「冷靜沉著是我的信條，你們看起來值得信賴。」", "火法師": "「嘿！熱血沸騰的旅程，我最喜歡了！算我一份！」", "雷法師": "「轟！我的雷光將劈碎一切阻礙！同行吧！」", "暗法師": "「黑暗中自有我保護你們，不必擔心。」", "祭司": "「以神明的恩典，我將守護你們的生命。」", "聖騎士": "「榮譽與勇氣是我的鎧甲，願為你們而戰！」", "武鬥家": "「好身手！算你們夠格讓我出手相助！」", "武士": "「以武士之名，我的刀將斬斷邪惡！」", "大力士": "「呼！跟我走，保證沒有搬不動的石頭！」", "守衛": "「保護夥伴是我的使命，交給我！」", "神射手": "「我的箭矢，永遠射向真正的敵人。同行吧！」", "吟遊詩人": "「讓我用歌聲，為你們的旅途增添色彩！」", "煉金術師": "「有趣，有趣！我的道具或許能幫上大忙！」", "凡人": "「就算只是凡人，也能做出非凡的事情！」", "占星師": "「星辰指引著我，你們就是我命中注定的隊友。」", "舞者": "「優雅與力量共存，這就是我的舞蹈！」", "木靈使": "「大地的生命，將為你們的旅途增添力量！」", "時空法師": "「時間與空間在我掌握中，跟我走沒錯的！」", "陰陽師": "「陰陽交錯間，我看清了你們的真心。好，算我一份！」", "學者": "「知識就是力量！讓我的學識為你們開路！」", "機械師": "「齒輪轉動，勝利就在眼前！讓我加入你們的冒險！」", "神偷": "「嘿嘿，我拿走的，都是敵人的好東西！歡迎合作！」", "軍師": "「兵法早已算定，你們的勝利盡在掌握。」", "吸血鬼": "「黑夜是我的舞台…既然如此，就讓我同行吧。」", "幼兒園小孩": "「嗚嗚…不要欺負我！我也會打人的！」", "動物學家": "「每一種生命都值得尊重，我和我的夥伴一起加入！」", "小力": "「汪！汪汪！（搖尾巴）」", "流浪者": "「到處流浪也挺無聊的，帶我一起去冒險吧！」"};
 
 function advStartWinSequence() {
+  // ★ 正常勝利完成：清除崩潰快照，不再提示恢復
+  try{ _advClearCrashSnapshot(); }catch(e){}
   // ★ 書放進背包
   backpackAdd('hero_exp_book', 2);
   backpackAdd('skill_upgrade_book', 1);
@@ -20401,6 +20520,11 @@ function advStartWinSequence() {
   ov.style.display = 'flex';
   playSfx('sfx-revive', 1.0);
   setTimeout(()=>{ flashScreen('rgba(255,200,50,0.5)', 400); }, 200);
+}
+
+function _advClearCrashSnapshot(){
+  // 正常完成冒險後清除崩潰快照
+  try{ localStorage.removeItem('adv_crash_snapshot'); }catch(e){}
 }
 
 function advHeroMeetDone() {
@@ -20673,7 +20797,27 @@ function _buildSafeData() {
     playerBackpack:  _playerBackpack,        // 背包
     shopDailyData:   _shopDailyData,         // 每日商店購買紀錄
     presetTeams:     _presetTeams,            // 常用預設陣容
-    settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted }
+    settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
+    // ★ 冒險進度快照（BOSS崩潰恢復用）
+    advSnapshot: (function(){
+      if(!_adventureMode && !_adventureStage) return null;
+      // 取得當前英雄元素設定
+      const _curElems  = G && G.p1 ? G.p1.map(h=>h.element||'') : [];
+      // 取得技能替換紀錄（_skillReplaceMap 存著 {pos: {slot,skill}}）
+      const _curSkills = (typeof _skillReplaceMap !== 'undefined') ? JSON.parse(JSON.stringify(_skillReplaceMap||{})) : {};
+      return {
+        stage:      _adventureStage,
+        grade:      _advPlayerGrade      || '',
+        subject:    _advPlayerSubject    || '',
+        difficulty: _advPlayerDifficulty || '',
+        treasures:  JSON.parse(JSON.stringify(_advTreasures)),
+        heroes:     _heroPickSelected ? [..._heroPickSelected] : [],
+        elements:   _curElems,
+        skills:     _curSkills,
+        round:      (G && G.round) || 0,
+        ts:         Date.now()
+      };
+    })()
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
 }
@@ -20736,6 +20880,10 @@ function _applySafeData(raw) {
   if(data.settings) {
     if(typeof data.settings.bgmMuted === 'boolean') _bgmMuted = data.settings.bgmMuted;
     if(typeof data.settings.sfxMuted === 'boolean') _sfxMuted = data.settings.sfxMuted;
+  }
+  // ★ 冒險快照：還原到 localStorage，供重新開啟時恢復冒險進度
+  if(data.advSnapshot && data.advSnapshot.stage) {
+    try { localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot)); } catch(e) {}
   }
 }
 
