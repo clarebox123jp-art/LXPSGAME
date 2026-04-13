@@ -3118,7 +3118,7 @@ body {
   </div>
   <div id="google-user-info" style="display:none;align-items:center;gap:10px;">
     <img id="google-avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(212,168,67,0.6);" />
-    <span id="google-name" style="color:#ffe8a0;font-size:20px;font-weight:700;"></span>
+    <span id="google-name" style="color:#1a2a6c;font-size:20px;font-weight:700;padding:3px 12px;background:rgba(255,255,255,0.92);border:2px solid #fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></span>
     <button onclick="playSfx('sfx-confirm',0.5);_fbSwitchAccount && _fbSwitchAccount()" style="padding:4px 14px;font-size:16px;background:rgba(30,60,120,0.85);border:1px solid rgba(100,160,255,0.5);color:#88ccff;border-radius:8px;cursor:pointer;">🔄 切換帳號</button>
     <button onclick="playSfx('sfx-cancel',0.5);window._fbSignOut && window._fbSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
   </div>
@@ -3134,7 +3134,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1700</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1715</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3174,8 +3174,14 @@ body {
     <audio id="adventure-bgm" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%95%85%E4%BA%8B%E9%96%8B%E7%AB%AF.m4a" loop preload="auto">
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
-
-    <!-- 左側：關卡清單 -->
+    <!-- ★ 冒險模式帳號名稱顯示 -->
+    <div id="adv-username-bar" style="display:none;position:absolute;top:130px;left:36px;z-index:11;
+      align-items:center;gap:8px;">
+      <img id="adv-user-avatar" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.7);flex-shrink:0;" />
+      <span id="adv-user-name" style="color:#1a2a6c;font-size:18px;font-weight:800;padding:3px 14px;
+        background:rgba(255,255,255,0.92);border:2px solid #fff;border-radius:8px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.4);white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;"></span>
+    </div>
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
@@ -17742,6 +17748,19 @@ function openAdventureOverlay(){
   // ★ 更新知識幣顯示
   const _acv = document.getElementById('adv-coins-val');
   if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
+  // ★ 同步帳號名稱到冒險頁
+  const _advUBar = document.getElementById('adv-username-bar');
+  const _advUName = document.getElementById('adv-user-name');
+  const _advUAv   = document.getElementById('adv-user-avatar');
+  const _hmName   = document.getElementById('google-name');
+  const _hmAv     = document.getElementById('google-avatar');
+  if(_advUBar && _advUName && _hmName && _hmName.textContent.trim()){
+    _advUName.textContent = _hmName.textContent.trim();
+    if(_advUAv && _hmAv && _hmAv.src) _advUAv.src = _hmAv.src;
+    _advUBar.style.display = 'flex';
+  } else if(_advUBar){
+    _advUBar.style.display = 'none';
+  }
   // ① 先停掉首頁 BGM 並播放關卡選單 BGM（音樂優先）
   bgmStop();
   bgmPlay('bgm-menu-01'); // ★ 關卡選單專屬BGM（遊戲開始音樂1）
@@ -20109,12 +20128,18 @@ function advStartWinSequence() {
     !['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家',
       '幼兒園小孩','小力'].includes(n)  // ★ 這兩位保留給特別關卡
   );
-  const heroName = available.length
-    ? available[Math.floor(Math.random() * available.length)]
-    : (ADV_UNLOCKABLE_HEROES[Math.floor(Math.random() * ADV_UNLOCKABLE_HEROES.length)]);
+
+  // ★ 所有可解鎖角色已全數收錄：跳過英雄加入畫面，直接返回選關頁
+  if(!available.length){
+    if(ov) ov.style.display = 'none';
+    try{ openAdventureOverlay(); }catch(e){ exitAdventureMode(); }
+    return;
+  }
+
+  const heroName = available[Math.floor(Math.random() * available.length)];
 
   // 儲存解鎖
-  if(available.length) advSaveUnlockedHero(heroName);
+  advSaveUnlockedHero(heroName);
 
   // 填入英雄資料
   const hData = (typeof HERO_DB !== 'undefined') ? HERO_DB[heroName] : null;
