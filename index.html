@@ -16388,6 +16388,19 @@ document.addEventListener('keydown', function(e){
       G._resultShown = false; // 重置結算旗標
       updateUI();
       flashScreen('rgba(255,220,50,1)', 400);
+      // ★ 冒險小怪戰：直接呼叫 advFinishMiniBattle，
+      //   避免走 _showResultWithDrama → advFinishMiniBattle 後
+      //   G._resultShown 殘留為 true 導致 BOSS 戰開始後誤判勝利
+      if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
+        setTimeout(function(){
+          try{
+            G._resultShown = false; // ★ 確保清除，BOSS戰不誤判
+            window._advMiniResultShowing = false;
+            advFinishMiniBattle(true);
+          }catch(x){ console.error('[F9 mini]',x); }
+        }, 400);
+        return;
+      }
       // 用原生 setTimeout 避免 _pSetTimeout 暫停問題
       setTimeout(function(){
         try{ _showResultWithDrama(true); }catch(x){ console.error('[F9]',x); }
@@ -17935,7 +17948,46 @@ const ADV_QUIZ_DB = [{"id":1,"grade":"低年級","subject":"國語文","difficul
 // 沒自信：低年級(70%) + 中年級(30%)
 // 普通：中年級(60%) + 低年級(20%) + 高年級(20%)
 // 我很會：高年級(50%) + 國中(50%)
+// ── 五下自然期中評量專屬題庫 ──
+const ADV_QUIZ_5S_MIDTERM = [
+  {id:9001,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'晚上觀星時，如果我們沒有指北針，可以利用哪一顆星星來辨別正北方？',options:['織女星','北極星','天狼星','牛郎星'],answer:'B'},
+  {id:9002,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'使用星座盤觀測星空時，關於星座盤上的「透明片」功能，下列敘述何者正確？',options:['用來遮住看不見的星星','標示日期與月分','對照高度角和方位線','增加星星的亮度'],answer:'C'},
+  {id:9003,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於星星在天空中的移動規律，下列哪一項敘述是正確的？',options:['由西向東移動','由東向西移動','由北向南移動','隨機移動沒有規律'],answer:'B'},
+  {id:9004,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'春、夏季的夜晚，我們通常會利用哪一個星座來尋找北極星？',options:['仙后座','獵戶座','北斗七星','獅子座'],answer:'C'},
+  {id:9005,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'使用「北斗七星」尋找北極星時，要將勺口兩顆星的連線延長約幾倍距離？',options:['2倍','3倍','5倍','10倍'],answer:'C'},
+  {id:9006,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'住在臺灣的小明發現，北極星在空中的高度角大約是多少度？',options:['0度','23.5度','90度','隨季節大幅改變'],answer:'B'},
+  {id:9007,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'星座盤上的「天頂」是指高度角幾度的地方？',options:['0度','45度','90度','180度'],answer:'C'},
+  {id:9008,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'為什麼在都市觀測星星比在郊區困難？',options:['都市的星星比較少','都市建築物會發出吸引星星的光','受到嚴重光害影響','都市的雲層永遠比較厚'],answer:'C'},
+  {id:9009,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於「仙后座」的特徵，下列描述何者正確？',options:['形狀像一個大勺子','只出現在夏季','形狀像英文字母 W 或 M','是由三顆亮星組成的三角形'],answer:'C'},
+  {id:9010,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'觀星時，為了不影響眼睛對暗光的適應，手電筒應該要做什麼處理？',options:['換成大瓦數燈泡','套上紅色玻璃紙','套上藍色玻璃紙','直接關掉不准使用'],answer:'B'},
+  {id:9011,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'進行「蠟燭燃燒需要空氣」實驗時，蓋上廣口瓶的蠟燭會熄滅，這證明燃燒需要空氣中的哪種氣體？',options:['氮氣','氧氣','二氧化碳','氬氣'],answer:'B'},
+  {id:9012,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'空氣中含量最多的氣體是哪一種？',options:['氧氣','二氧化碳','氮氣','水蒸氣'],answer:'C'},
+  {id:9013,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於氧氣的特性，下列何者正確？',options:['有臭味','具有助燃性','會讓點燃的線香熄滅','是空氣中含量最多的氣體'],answer:'B'},
+  {id:9014,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'製造氧氣實驗中，在雙氧水裡加入「金針菇」或「胡蘿蔔」的目的為何？',options:['改變氧氣的味道','作為催化劑加速反應','作為可燃物','讓溶液變色方便觀察'],answer:'B'},
+  {id:9015,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'燃燒三要素不包括下列哪一項？',options:['可燃物','助燃物','達到燃點','二氧化碳'],answer:'D'},
+  {id:9016,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'製造二氧化碳實驗中，通常使用哪兩種材料混合？',options:['雙氧水與金針菇','醋與小蘇打粉','水與砂糖','酒精與食鹽'],answer:'B'},
+  {id:9017,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'下列哪一種做法是利用「移除可燃物」來滅火？',options:['用蓋子蓋住油鍋','消防員灑水降溫','森林火災時開闢防火線','使用二氧化碳滅火器'],answer:'C'},
+  {id:9018,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於二氧化碳的性質，下列何者「錯誤」？',options:['無色無味','不具助燃性','比空氣輕','可以裝入滅火器中'],answer:'C'},
+  {id:9019,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'鋼棉生鏽實驗中，哪一組鋼棉生鏽的速度會最快？',options:['乾燥的鋼棉','沾水的鋼棉','沾醋（酸性溶液）的鋼棉','塗了油的鋼棉'],answer:'C'},
+  {id:9020,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'鐵生鏽主要是因為鐵和空氣中的哪些物質產生作用？',options:['氮氣和二氧化碳','氧氣和水','氬氣和陽光','二氧化碳和灰塵'],answer:'B'},
+  {id:9021,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'下列哪一種防鏽方法是利用「隔絕空氣與水」的原理？',options:['在腳踏車鏈條塗油','在鐵窗上塗油漆','將鐵製品電鍍','以上皆是'],answer:'D'},
+  {id:9022,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於「不鏽鋼」的敘述，下列何者正確？',options:['在鐵中加入其他金屬製成合金','完全不需要保養','是一種噴在鐵上面的油漆','只要擦乾就不會生鏽'],answer:'A'},
+  {id:9023,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'點燃的線香放入充滿二氧化碳的瓶中，會有什麼現象？',options:['燃燒得更旺盛','立刻熄滅','產生爆炸','顏色變藍'],answer:'B'},
+  {id:9024,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'廚師炒菜時油鍋起火，立刻蓋上鍋蓋是利用什麼原理滅火？',options:['降低溫度','移走可燃物','隔絕助燃物（空氣）','改變燃點'],answer:'C'},
+  {id:9025,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'下列何種氣體可用來填充食品包裝以保持新鮮，且不可燃也不助燃？',options:['氧氣','氮氣','二氧化碳','氯氣'],answer:'B'},
+  {id:9026,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於「燃點」的敘述，下列何者正確？',options:['所有物質的燃點都一樣','溫度只要達到燃點，沒有氧氣也能燃燒','物質燃燒時需要的最低溫度','只要有火源，任何東西都會立刻達到燃點'],answer:'C'},
+  {id:9027,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'滅火器使用口訣「拉、瞄、壓、掃」，其中的「掃」是指什麼？',options:['向火源頂部橫向掃射','向火源底部左右掃射','將火場周邊垃圾掃乾淨','對著空氣隨便掃'],answer:'B'},
+  {id:9028,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'如果電器產品起火，絕對不能使用哪一種滅火方式，以免觸電？',options:['乾粉滅火器','二氧化碳滅火器','直接用水潑灑','切斷電源'],answer:'C'},
+  {id:9029,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'鋼棉生鏽實驗後，將點燃的線香放入生鏽鋼棉的廣口瓶中會熄滅，這代表生鏽過程消耗了什麼？',options:['氧氣','水蒸氣','二氧化碳','氮氣'],answer:'A'},
+  {id:9030,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'在戶外觀星，當我們發現獵戶座在晚上 8 點位於東南方，到了晚上 10 點，它大約會移動到哪個方向？',options:['東北方','正南方','正北方','原地不動'],answer:'B'},
+];
+
 function advGetQuizPool(grade, subject, difficulty) {
+  // ★ 選了期中評量 → 直接回傳專屬題庫，不受難度影響
+  if (subject && subject.includes('評量')) {
+    const pool = [...ADV_QUIZ_5S_MIDTERM].sort(() => Math.random() - 0.5);
+    return pool;
+  }
   const diffKey = (difficulty==='沒自信（輕鬆模式）'||difficulty==='沒自信') ? '沒自信'
                 : (difficulty==='我很會（挑戰模式）'||difficulty==='我很會') ? '我很會' : '普通';
   const gradeWeights = {
@@ -17984,6 +18036,7 @@ const ADV_REWARDS = [
   {id:'instant_burst',icon:'💥', name:'極限爆發',   desc:'選擇1名隊友立即發動極限爆發（每場限1次）', _once:true},
   {id:'get_pet',      icon:'🐾', name:'神奇夥伴',   desc:'獲得1隻隨機寵物裝備卡，加入背包'},
   {id:'get_card',     icon:'🃏', name:'補充物資',   desc:'獲得1張隨機物品卡，加入背包'},
+  {id:'boss_skip',    icon:'🚫', name:'封印行動',   desc:'BOSS本回合無法行動！（跳過BOSS的行動）'},
 ];
 // 「極限爆發」獎勵每場戰鬥只出現一次
 let _advBurstRewardUsed = false;
@@ -18002,7 +18055,7 @@ const ADV_SCENES = {
       ],
       choiceType: 'grade',
       choiceTitle: '🎒 告訴九尾空貓怪你的年級！',
-      choices: ['小學低年級', '小學中年級', '小學高年級', '國中'],
+      choices: ['小學低年級', '小學中年級', '小學高年級', '五年級', '國中'],
     },
     {
       key:'trail',
@@ -18015,7 +18068,7 @@ const ADV_SCENES = {
       ],
       choiceType: 'subject',
       choiceTitle: '📚 九尾空貓怪想知道你最擅長哪一科？',
-      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識'],
+      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量'],
     },
     {
       key:'teagarden',
@@ -18112,13 +18165,22 @@ const ADV_SUBJECT_FOCUS = {
 
 // 動態生成開場台詞（依年級、科目、難度精準說明考題方向）
 function getAdvBossIntroLines(){
-  const gradeMap = {'小學低年級':'低年級','小學中年級':'中年級','小學高年級':'高年級','國中':'國中'};
+  const gradeMap = {'小學低年級':'低年級','小學中年級':'中年級','小學高年級':'高年級','五年級':'五年級','國中':'國中'};
   const diffMap  = {'沒自信（輕鬆模式）':'沒自信','普通（標準模式）':'普通','我很會（挑戰模式）':'我很會',
                     '沒自信':'沒自信','普通':'普通','我很會':'我很會'};
   const grade = gradeMap[_advPlayerGrade] || '中年級';
   const diff  = diffMap[_advPlayerDifficulty] || '普通';
   const subj  = _advPlayerSubject || '綜合';
   const isMix = (!subj || subj === '綜合' || subj === '各科');
+
+  // ★ 期中評量：特別台詞，不依難度
+  if (subj.includes('評量')) {
+    return [
+      `喵喵喵～${grade}的小英雄！聽說你要挑戰【${subj}】？本貓已備好30道考題，準備好了嗎？`,
+      `這次是正式評量喵！難度固定，無論選哪個都一樣——本貓可不會手下留情！`,
+      `好！就讓本貓來見識你的真實實力——答題開始喵！`,
+    ];
+  }
 
   // 取得考題重點說明
   let focusLine;
@@ -18327,6 +18389,10 @@ function advNextDialog(e) {
 
 function advShowChoicePanel(stage, sceneIdx) {
   const scene = ADV_SCENES[stage][sceneIdx];
+
+  // ★ 選了期中評量時，難度選擇關還是正常顯示讓玩家操作（以取得第三個法寶），
+  //   只在標題加上說明文字告知難度不影響評量題庫
+
   const panel = document.getElementById('adv-choice-panel');
   const box = document.createElement('div');
   box.className = 'adv-choice-box';
@@ -18334,6 +18400,14 @@ function advShowChoicePanel(stage, sceneIdx) {
   title.className = 'adv-choice-title';
   title.textContent = scene.choiceTitle;
   box.appendChild(title);
+
+  // ★ 評量模式的難度關：加提示說明難度不影響題庫
+  if (scene.choiceType === 'difficulty' && _advPlayerSubject && _advPlayerSubject.includes('評量')) {
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:22px;color:#ffcc88;text-align:center;margin-bottom:8px;';
+    hint.textContent = '📋 評量模式：選任何難度，題目都一樣喵！';
+    box.appendChild(hint);
+  }
 
   const grid = document.createElement('div');
   grid.className = 'adv-choice-grid';
@@ -18357,6 +18431,15 @@ function advShowChoicePanel(stage, sceneIdx) {
 
   panel.innerHTML = '';
   panel.appendChild(box);
+
+  // ★ 鎖定「跳過演出」按鈕，避免選擇中途觸發導致小怪/問題/BOSS同時出現
+  const skipBtn = document.getElementById('adv-skip-btn');
+  if (skipBtn) {
+    skipBtn.disabled = true;
+    skipBtn.style.opacity = '0.35';
+    skipBtn.style.pointerEvents = 'none';
+    skipBtn.title = '請先完成選擇';
+  }
 }
 
 let _advTempChoice = '';
@@ -18375,8 +18458,21 @@ function advConfirmChoice(stage, sceneIdx) {
     _advPlayerGrade = _advTempChoice;
   } else if (scene.choiceType === 'subject') {
     _advPlayerSubject = _advTempChoice;
+    // ★ 期中評量：難度自動設為「普通」（不影響題庫，只是讓流程繼續）
+    if (_advTempChoice.includes('評量')) {
+      _advPlayerDifficulty = '普通';
+    }
   } else if (scene.choiceType === 'difficulty') {
     _advPlayerDifficulty = _advTempChoice.split('（')[0]; // '普通'
+  }
+
+  // ★ 選擇完成，解鎖「跳過演出」按鈕
+  const skipBtn = document.getElementById('adv-skip-btn');
+  if (skipBtn) {
+    skipBtn.disabled = false;
+    skipBtn.style.opacity = '';
+    skipBtn.style.pointerEvents = '';
+    skipBtn.title = '';
   }
 
   // 確認動畫 + 音效
@@ -18491,6 +18587,12 @@ function advConfirmTreasureUse(slotIdx) {
 }
 
 function advSkipCutscene() {
+  // ★ 防護：選擇年級/科目/難度期間禁止跳過
+  const skipBtn = document.getElementById('adv-skip-btn');
+  if (skipBtn && skipBtn.disabled) return;
+  if (document.getElementById('adv-choice-panel') &&
+      document.getElementById('adv-choice-panel').children.length > 0) return;
+
   // ★ 快速跳過：用一個緊湊視窗詢問三個問題，讓玩家選完後才進BOSS戰
   // 如果三個問題都已有答案（可能玩家已點過某些選項），直接結束
   if (_advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
@@ -18511,8 +18613,8 @@ function advSkipCutscene() {
     'box-shadow:0 0 50px rgba(100,60,255,0.4);'
   ].join('');
 
-  const gradeOpts = ['低年級','中年級','高年級','國中'];
-  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識'];
+  const gradeOpts = ['低年級','中年級','高年級','五年級','國中'];
+  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量'];
   const diffOpts  = ['沒自信','普通','我很會'];
 
   function mkRow(label, opts, key) {
@@ -18538,9 +18640,13 @@ function advSkipCutscene() {
         b.style.borderColor = '#aa88ff';
         b.style.color = '#fff';
         if (key==='grade') _advPlayerGrade = o;
-        else if (key==='subject') _advPlayerSubject = o;
+        else if (key==='subject') {
+          _advPlayerSubject = o;
+          // ★ 期中評量：難度自動填入「普通」，不需玩家另選
+          if (o.includes('評量')) _advPlayerDifficulty = '普通';
+        }
         else if (key==='diff') _advPlayerDifficulty = o;
-        // 更新確認按鈕狀態
+        // 更新確認按鈕狀態（期中評量時難度已自動填，不需等玩家選）
         const confirmBtn = document.getElementById('adv-skip-confirm-btn');
         if (confirmBtn && _advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
           confirmBtn.disabled = false;
@@ -18622,7 +18728,7 @@ function advStartBattle(){
   _advMiniBattleActive = false;
   // 清除小怪戰殘留狀態
   if(typeof G !== 'undefined' && G){
-    G._resultShown = false;
+    G._resultShown = false;        // ★ 必須在BOSS戰開始前清除，避免checkWin誤判
     G.pendingTarget = null;
     if(typeof pendingCb !== 'undefined') pendingCb = null;
   }
@@ -18801,6 +18907,8 @@ function advShowQuiz() {
 
   // 顯示視窗
   document.getElementById('adv-quiz-overlay').classList.add('show');
+  // ★ 出題期間暫停戰鬥（等答題+選獎勵完成後才解除）
+  _gamePaused = true;
 
   // 開始計時
   _advQuizSeconds = 60;
@@ -19041,7 +19149,37 @@ function advOnQuizTimeout() {
 
 // Boss行動繼續（在execSkill/aiAct掛鉤呼叫）
 let _advQuizResolveCb = null;
+// ★ BOSS 行動被封印的旗標
+let _advBossActionSkip = false;
+
+// BOSS 生氣台詞（選了封印行動時說）
+const _ADV_BOSS_SKIP_LINES = [
+  '哼！你耍詐！竟敢封印本妖的行動！',
+  '喵嗚～！這是作弊！下回合本妖要加倍奉還！',
+  '什麼！本妖動不了了？！嗚嗚嗚……',
+  '可惡！竟然被一個小毛孩封印！本妖好生氣！',
+  '本妖今天手氣不好！哼，下次絕對不放過你！',
+  '……喵？怎麼感覺身體動不了？難道是吃了假的貓薄荷？',
+];
+
 function advOnQuizSkip() {
+  // ★ 解除戰鬥暫停
+  _gamePaused = false;
+  if (_advBossActionSkip) {
+    // 玩家選了「封印行動」→ 跳過 BOSS 行動並讓 BOSS 生氣說話
+    _advBossActionSkip = false;
+    const _bossLine = _ADV_BOSS_SKIP_LINES[Math.floor(Math.random() * _ADV_BOSS_SKIP_LINES.length)];
+    const _boss = G.p2 ? G.p2.find(h => h.curHp > 0) : null;
+    if (_boss) {
+      bannerFX(_boss, `😾 ${_bossLine}`, '#ff8844', 2500);
+      log(`[${_boss.name}] ${_bossLine}`);
+    }
+    // BOSS 被跳過，不執行 _advQuizResolveCb，直接結束本次行動
+    _advQuizResolveCb = null;
+    // 繼續下一回合
+    setTimeout(() => { try{ startTurn(); }catch(e){} }, 800);
+    return;
+  }
   if (_advQuizResolveCb) { const cb = _advQuizResolveCb; _advQuizResolveCb = null; cb(); }
 }
 
@@ -19223,7 +19361,7 @@ function advKeepReward() {
   // 保留所有當前選項至下次
   _advPendingReward = _advRewardOptions[0] || null;
   document.getElementById('adv-reward-overlay').classList.remove('show');
-  advOnQuizSkip(); // Boss照常行動
+  advOnQuizSkip(); // Boss照常行動（advOnQuizSkip 內已解除暫停）
 }
 
 function advApplyReward(id) {
@@ -19331,10 +19469,20 @@ function advApplyReward(id) {
           log('[獎勵] 🃏 背包已滿，卡片無法加入！');
         }
       }
+    } else if (id === 'boss_skip') {
+      // ★ 封印BOSS行動：設旗標，advOnQuizSkip 時跳過 BOSS 並讓他生氣說話
+      _advBossActionSkip = true;
+      flashScreen('rgba(255,80,0,0.4)', 400);
+      playSfx('sfx-cantmove', 0.9);
+      log('[獎勵] 🚫 BOSS本回合行動被封印！');
     }
     updateUI();
   } catch(e) { console.error('[advApplyReward]',e); }
-  // ★ 等待獎勵視覺效果完成（彈跳數字、復活、粒子動畫）後 BOSS 才繼續行動
+  // ★ boss_skip 直接觸發（旗標已設，advOnQuizSkip 內處理）；其他等視覺效果完成
+  if (id === 'boss_skip') {
+    advOnQuizSkip();
+    return;
+  }
   const _rewardDelay = (id === 'instant_burst') ? 0 : 1500;
   setTimeout(()=>{ advOnQuizSkip(); }, _rewardDelay);
 }
@@ -19617,6 +19765,33 @@ function advStartWinSequence() {
   log(`🏆 勝利獎勵：英雄經驗值之書×2、技能升級書×1、出戰英雄+${_bonusExp}EXP、+${_bossCoins}知識幣`);
   // 隱藏結算畫面
   document.getElementById('adv-result-overlay').classList.remove('show');
+
+  // ★ 立即清除戰鬥畫面，避免返回首頁時仍顯示BOSS HP=0的殘留畫面
+  try{
+    const _gc = document.getElementById('gc');
+    if(_gc){
+      _gc.classList.remove('adv-battle');
+      _gc.style.filter = '';
+      // 清除所有卡牌高亮與狀態殘留
+      _gc.querySelectorAll('.card').forEach(c=>{
+        c.classList.remove('_tut-highlight','sel','acting','dead');
+      });
+    }
+    // 清除行動順序條殘留
+    const _tbar = document.getElementById('turn-bar');
+    if(_tbar) _tbar.innerHTML = '';
+    // 清除戰鬥log不讓它在畫面上殘留
+    const _logEl = document.getElementById('battle-log');
+    if(_logEl) _logEl.innerHTML = '';
+    // 清除暫停/結果 overlay
+    ['battle-start-overlay','result-headline'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){ el.classList.remove('show'); el.style.display='none'; }
+    });
+    // 重置 G.p2 讓卡牌區空白（不再顯示HP=0的BOSS）
+    G._resultShown = false;
+  }catch(_e){}
+
   bgmStop();
   try{ bgmPlay('bgm-adv-scene'); }catch(e){}
 
@@ -19711,6 +19886,17 @@ function advHeroMeetDone() {
   const ov = document.getElementById('adv-hero-meet-overlay');
   if(ov) ov.style.display = 'none';
   bgmStop();
+  // ★ 確保戰鬥畫面完全清除再返回冒險選關頁
+  try{
+    const _gcH = document.getElementById('gc');
+    if(_gcH){ _gcH.classList.remove('adv-battle'); _gcH.style.filter=''; }
+    // 清除 adv-battle-bg
+    const _bgEl = document.getElementById('adv-battle-bg');
+    if(_bgEl){ _bgEl.className=''; _bgEl.classList.remove('visible'); }
+    // 清空行動順序條
+    const _tb = document.getElementById('turn-bar');
+    if(_tb) _tb.innerHTML='';
+  }catch(_e){}
   // ★ 給予戰鬥經驗值，儲存進度
   try{ grantBattleExp(true, _advStats); }catch(e){}
   // ★ 英雄頁面紅點
