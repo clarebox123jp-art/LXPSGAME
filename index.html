@@ -3135,7 +3135,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1800</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2150</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5018,45 +5018,45 @@ const AVATARS = {
   '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧',
 };
 const HERO_IMGS = {
-  '光法師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%85%89%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '冰法師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%86%B0%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '凡人':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%87%A1%E4%BA%BA(%E7%B8%AE%E5%9C%96).png',
-  '刺客':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%88%BA%E5%AE%A2(%E7%B8%AE%E5%9C%96).png',
-  '劍士':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%8A%8D%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
-  '占星師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '大力士':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%A4%A7%E5%8A%9B%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
+  '光法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%85%89%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '冰法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%86%B0%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '凡人':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%87%A1%E4%BA%BA(%E7%B8%AE%E5%9C%96).png',
+  '刺客':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%88%BA%E5%AE%A2(%E7%B8%AE%E5%9C%96).png',
+  '劍士':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%8A%8D%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
+  '占星師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '大力士':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%A4%A7%E5%8A%9B%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
   '守衛':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png',
-  '暗法師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E6%9A%97%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '武鬥家':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E6%AD%A6%E9%AC%A5%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
-  '火法師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%81%AB%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '煉金術師': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%85%89%E9%87%91%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '神偷':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%A5%9E%E5%81%B7(%E7%B8%AE%E5%9C%96).png',
-  '神射手':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%A5%9E%E5%B0%84%E6%89%8B(%E7%B8%AE%E5%9C%96).png',
-  '祭司':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96).png',
-  '聖騎士':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E8%81%96%E9%A8%8E%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
-  '舞者':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E8%88%9E%E8%80%85(%E7%B8%AE%E5%9C%96).png',
-  '警長':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E8%AD%A6%E9%95%B7(%E7%B8%AE%E5%9C%96).png',
+  '暗法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%9A%97%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '武鬥家':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E9%AC%A5%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
+  '火法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%81%AB%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '煉金術師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%85%89%E9%87%91%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '神偷':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%9E%E5%81%B7(%E7%B8%AE%E5%9C%96).png',
+  '神射手':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%9E%E5%B0%84%E6%89%8B(%E7%B8%AE%E5%9C%96).png',
+  '祭司':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96).png',
+  '聖騎士':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%81%96%E9%A8%8E%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
+  '舞者':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%88%9E%E8%80%85(%E7%B8%AE%E5%9C%96).png',
+  '警長':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%AD%A6%E9%95%B7(%E7%B8%AE%E5%9C%96).png',
   '軍師':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E8%BB%8D%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '雷法師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '吟遊詩人':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E9%9F%B3%E6%A8%82%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
-  '吸血鬼':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%90%B8%E8%A1%80%E9%AC%BC(%E7%B8%AE%E5%9C%96).png',
-  '學者':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%AD%B8%E8%80%85(%E7%B8%AE%E5%9C%96).png',
-  '動物學家': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
-  '時空法師': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '木靈使':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E6%9C%A8%E9%9D%88%E4%BD%BF(%E7%B8%AE%E5%9C%96).png',
-  '機械師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E6%A9%9F%E6%A2%B0%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '武士':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
-  '陰陽師':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E9%99%B0%E9%99%BD%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '小力':     'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main//%E5%B0%8F%E5%8A%9B.png',
-  '籃球隊員': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
-  '直笛團員': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
-  '田徑隊員': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
-  '幼兒園小孩': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png',
-  '電腦繪圖師': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '程式設計師': 'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '弦樂團員':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
-  '小劇團員':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
-  '小劇團員':   'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '雷法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '吟遊詩人':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9F%B3%E6%A8%82%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
+  '吸血鬼':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%90%B8%E8%A1%80%E9%AC%BC(%E7%B8%AE%E5%9C%96).png',
+  '學者':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%AD%B8%E8%80%85(%E7%B8%AE%E5%9C%96).png',
+  '動物學家': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
+  '時空法師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '木靈使':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%9C%A8%E9%9D%88%E4%BD%BF(%E7%B8%AE%E5%9C%96).png',
+  '機械師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%A9%9F%E6%A2%B0%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '武士':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
+  '陰陽師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%99%B0%E9%99%BD%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '小力':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%B0%8F%E5%8A%9B.png',
+  '籃球隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '直笛團員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
+  '田徑隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
+  '幼兒園小孩': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png',
+  '電腦繪圖師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '程式設計師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '弦樂團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
   '九尾空貓怪': 'https://github.com/clarebox123jp-art/-/raw/main/BOSS%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AA.png',
   '綠竹筍小妖': 'https://github.com/clarebox123jp-art/-/raw/main/%E7%B6%A0%E7%AB%B9%E7%AD%8D%E5%B0%8F%E5%A6%96.png',
   '茶葉精靈':   'https://github.com/clarebox123jp-art/-/raw/main/%E8%8C%B6%E8%91%89%E7%B2%BE%E9%9D%88.png',
@@ -5184,28 +5184,28 @@ const ITEM_DB = [
 const EQUIP_DB = [
   {
     n:'台灣黑熊', sell:5, icon:'🐻',
-    d:'攻擊+3', pet:'台灣黑熊', petDesc:'胸前印著白 V 標記，山中守護神。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E5%8F%B0%E7%81%A3%E9%BB%91%E7%86%8A.png',
+    d:'攻擊+3', pet:'台灣黑熊', petDesc:'胸前印著白 V 標記，山中守護神。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8F%B0%E7%81%A3%E9%BB%91%E7%86%8A.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="8" width="14" height="10" rx="3" fill="#ff7744"/><rect x="5" y="4" width="10" height="6" rx="2" fill="#cc5522"/><rect x="7" y="2" width="3" height="4" rx="1" fill="#ff9966"/><rect x="11" y="2" width="3" height="4" rx="1" fill="#ff9966"/></svg>',
     onEquip(h){ const _b=getCraftsmanBonus(h.side); h._eqAtkBonus=(3*_b); h.atk+=h._eqAtkBonus; },
     onRemove(h){ h.atk-=h._eqAtkBonus||3; delete h._eqAtkBonus; }
   },
   {
     n:'台灣獼猴', sell:5, icon:'🐒',
-    d:'特技+3', pet:'台灣獼猴', petDesc:'山林間的頑皮大王，身手極靈活。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E5%8F%B0%E7%81%A3%E7%8D%BC%E7%8C%B4.png',
+    d:'特技+3', pet:'台灣獼猴', petDesc:'山林間的頑皮大王，身手極靈活。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8F%B0%E7%81%A3%E7%8D%BC%E7%8C%B4.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><path d="M3 18 L6 8 L12 14 L18 8 L21 18 Z" fill="#ffdd55"/><circle cx="12" cy="6" r="2" fill="#fff8a0"/><circle cx="4" cy="18" r="2" fill="#ffdd55"/><circle cx="20" cy="18" r="2" fill="#ffdd55"/><rect x="3" y="18" width="18" height="3" rx="1" fill="#e6c020"/></svg>',
     onEquip(h){ const _b=getCraftsmanBonus(h.side); h._eqSpBonus=(3*_b); h.sp+=h._eqSpBonus; },
     onRemove(h){ h.sp-=h._eqSpBonus||3; delete h._eqSpBonus; }
   },
   {
     n:'石虎', sell:5, icon:'🐆',
-    d:'速度+3', pet:'石虎', petDesc:'披著豹紋的神祕獵手，目光銳利。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E7%9F%B3%E8%99%8E.png',
+    d:'速度+3', pet:'石虎', petDesc:'披著豹紋的神祕獵手，目光銳利。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9F%B3%E8%99%8E.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><ellipse cx="12" cy="17" rx="9" ry="4" fill="#44ee77"/><path d="M5 17 Q5 10 10 8 L14 8 Q18 8 18 12 L18 17 Z" fill="#33cc66"/><path d="M12 5 Q14 3 17 5 Q16 8 13 8 Z" fill="#88ffaa"/><path d="M14 5 Q16 3 19 5 Q18 7 15 7 Z" fill="#aaffcc" opacity="0.7"/></svg>',
     onEquip(h){ const _b=getCraftsmanBonus(h.side); h._eqSpdBonus=(3*_b); h.spd+=h._eqSpdBonus; },
     onRemove(h){ h.spd-=h._eqSpdBonus||3; delete h._eqSpdBonus; }
   },
   {
     n:'喜鵲', sell:5, icon:'🐦',
-    d:'受到傷害時有40%機率HP最低為1，不會倒下', pet:'喜鵲', petDesc:'身穿黑白燕尾服，報喜的領路人。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E5%96%9C%E9%B5%B2.png',
+    d:'受到傷害時有40%機率HP最低為1，不會倒下', pet:'喜鵲', petDesc:'身穿黑白燕尾服，報喜的領路人。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%96%9C%E9%B5%B2.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="14" r="7" fill="#33aa55" opacity="0.3"/><path d="M12 12 Q9 9 9 6 Q12 4 12 8 Q12 4 15 6 Q15 9 12 12Z" fill="#44cc66"/><path d="M12 12 Q9 12 6 10 Q5 7 9 8 Q7 11 12 12Z" fill="#44cc66"/><path d="M12 12 Q15 12 18 10 Q19 7 15 8 Q17 11 12 12Z" fill="#44cc66"/><circle cx="12" cy="12" r="1.5" fill="#fff"/><line x1="12" y1="12" x2="12" y2="22" stroke="#888" stroke-width="1.5"/></svg>',
     onDmg(h, dmg){
       const _b=getCraftsmanBonus(h.side);
@@ -5219,19 +5219,19 @@ const EQUIP_DB = [
   },
   {
     n:'櫻花鉤吻鮭', sell:5, icon:'🐟',
-    d:'使用恢復HP的技能和物品卡時，恢復效果+40%。', pet:'櫻花鉤吻鮭', petDesc:'深山溪流的紅斑國寶，逆流而上的勇者。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E6%AB%BB%E8%8A%B1%E9%89%A4%E5%90%BB%E9%AE%AD.png',
+    d:'使用恢復HP的技能和物品卡時，恢復效果+40%。', pet:'櫻花鉤吻鮭', petDesc:'深山溪流的紅斑國寶，逆流而上的勇者。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E6%AB%BB%E8%8A%B1%E9%89%A4%E5%90%BB%E9%AE%AD.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 4 L4 20 L20 20 L18 4 Q12 8 6 4Z" fill="#8866ff"/><path d="M9 4 L12 18 L15 4" fill="none" stroke="#ccaaff" stroke-width="1.5"/><circle cx="12" cy="4" r="2" fill="#ddc0ff"/><path d="M8 8 Q12 6 16 8" fill="none" stroke="#ccaaff" stroke-width="1"/></svg>',
     healBonus: 0.4
   },
   {
     n:'五色鳥', sell:5, icon:'🦜',
-    d:'使用技能時有75%機率減少1能量消耗', pet:'五色鳥', petDesc:'森林裡的活潑木工，鳴聲如響板。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E4%BA%94%E8%89%B2%E9%B3%A5.png',
+    d:'使用技能時有75%機率減少1能量消耗', pet:'五色鳥', petDesc:'森林裡的活潑木工，鳴聲如響板。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E4%BA%94%E8%89%B2%E9%B3%A5.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="14" r="6" fill="none" stroke="#88aaff" stroke-width="2.5"/><ellipse cx="12" cy="7" rx="4" ry="5" fill="#6688ff"/><polygon points="12,3 14,7 12,9 10,7" fill="#aabbff"/><line x1="10" y1="7" x2="12" y2="4" stroke="#fff" stroke-width="0.8" opacity="0.7"/></svg>',
     skillCostSave: true  // 50% chance -1 cost, handled in skillCost()
   },
   {
     n:'綠蠵龜', sell:5, icon:'🐢',
-    d:'速度-50%，受到傷害-30%（最低傷害不小於1）', pet:'綠蠵龜', petDesc:'跨越千里的海洋旅者，背負歲月的沉穩。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E7%B6%A0%E8%A0%B5%E9%BE%9C.png',
+    d:'速度-50%，受到傷害-30%（最低傷害不小於1）', pet:'綠蠵龜', petDesc:'跨越千里的海洋旅者，背負歲月的沉穩。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%B6%A0%E8%A0%B5%E9%BE%9C.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 2 L20 6 L20 14 Q20 20 12 22 Q4 20 4 14 L4 6 Z" fill="#667788"/><path d="M12 4 L18 7 L18 14 Q18 19 12 21 Q6 19 6 14 L6 7 Z" fill="#889aaa"/><path d="M12 6 L16 8 L16 13 Q16 17 12 19 Q8 17 8 13 L8 8 Z" fill="#99aabc"/><line x1="12" y1="6" x2="12" y2="19" stroke="#667788" stroke-width="1"/><line x1="8" y1="11" x2="16" y2="11" stroke="#667788" stroke-width="1"/></svg>',
     onEquip(h){ h._spdOrig=h.spd; h.spd=Math.max(0,Math.floor(h.spd*0.5)); },
     onRemove(h){ h.spd=h._spdOrig||h.spd; delete h._spdOrig; },
@@ -5239,13 +5239,13 @@ const EQUIP_DB = [
   },
   {
     n:'台灣藍鵲', sell:5, icon:'🦅',
-    d:'受到傷害時有30%機率將傷害反彈給對手', pet:'台灣藍鵲', petDesc:'拖著長尾的藍色貴族，氣勢十足。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E5%8F%B0%E7%81%A3%E8%97%8D%E9%B5%B2.png',
+    d:'受到傷害時有30%機率將傷害反彈給對手', pet:'台灣藍鵲', petDesc:'拖著長尾的藍色貴族，氣勢十足。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8F%B0%E7%81%A3%E8%97%8D%E9%B5%B2.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><ellipse cx="12" cy="13" rx="8" ry="9" fill="#aabbcc"/><ellipse cx="12" cy="12" rx="6" ry="7" fill="#dde8f0"/><ellipse cx="10" cy="10" rx="2" ry="3" fill="white" opacity="0.5"/><path d="M12 4 L14 2 M14 4 L16 2" stroke="#aaa" stroke-width="1.5" stroke-linecap="round"/></svg>',
     reflect: 0.3
   },
   {
     n:'鱟', sell:5, icon:'🦀',
-    d:'HP最大值+5，每回合恢復5HP', pet:'鱟', petDesc:'跨越億年的湛藍血液，守望灘地的古老靈魂。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E9%B1%9F.png',
+    d:'HP最大值+5，每回合恢復5HP', pet:'鱟', petDesc:'跨越億年的湛藍血液，守望灘地的古老靈魂。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E9%B1%9F.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="16" r="4" fill="#ff4466"/><circle cx="12" cy="16" r="2.5" fill="#ff8899"/><path d="M12 12 Q6 8 5 4 M12 12 Q18 8 19 4" fill="none" stroke="#cc3355" stroke-width="1.5"/><circle cx="5" cy="4" r="1.2" fill="#ff6688"/><circle cx="19" cy="4" r="1.2" fill="#ff6688"/><circle cx="8" cy="5.5" r="1" fill="#ff6688"/><circle cx="16" cy="5.5" r="1" fill="#ff6688"/></svg>',
     onEquip(h){ const _b=getCraftsmanBonus(h.side); const _add=5*_b; h._eqHpBonus=_add; h.hp+=_add; h.curHp=Math.min(h.curHp+_add,h.hp); },
     onRemove(h){ const _add=h._eqHpBonus||5; h.hp-=_add; h.curHp=Math.min(h.curHp,h.hp); delete h._eqHpBonus; },
@@ -5253,19 +5253,19 @@ const EQUIP_DB = [
   },
   {
     n:'梅花鹿', sell:5, icon:'🦌',
-    d:'每回合補充1能量，有25%機率額外補充1能量', pet:'梅花鹿', petDesc:'森林的優雅使者，踏著輕盈步履。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E6%A2%85%E8%8A%B1%E9%B9%BF.png',
+    d:'每回合補充1能量，有25%機率額外補充1能量', pet:'梅花鹿', petDesc:'森林的優雅使者，踏著輕盈步履。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E6%A2%85%E8%8A%B1%E9%B9%BF.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="9" fill="none" stroke="#4499ff" stroke-width="2.5"/><circle cx="12" cy="12" r="6" fill="none" stroke="#88ccff" stroke-width="1.5"/><polygon points="13,5 9,13 12,13 11,19 15,11 12,11" fill="#4499ff"/></svg>',
     energyRegen: 1
   },
   {
     n:'白頭翁', sell:5, icon:'🐦',
-    d:'60%機率免疫不利狀態', pet:'白頭翁', petDesc:'白髮點綴的歌唱家，曲調極動聽。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E7%99%BD%E9%A0%AD%E7%BF%81.png',
+    d:'60%機率免疫不利狀態', pet:'白頭翁', petDesc:'白髮點綴的歌唱家，曲調極動聽。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%99%BD%E9%A0%AD%E7%BF%81.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><ellipse cx="8" cy="8" rx="4" ry="5" fill="#88ffcc"/><path d="M12 5 L18 3 L14 8 Z" fill="#66ddaa"/><circle cx="8" cy="16" r="3" fill="#55eeaa"/><line x1="8" y1="13" x2="8" y2="19" stroke="#33cc88" stroke-width="1.5"/><circle cx="8" cy="20" r="1.5" fill="#44ffbb"/></svg>',
     statusImmune: 0.6
   },
   {
     n:'黑冠麻鷺', sell:2, icon:'🦤',
-    d:'攜帶後，受到致命傷害時免疫該次傷害，發動後此寵物離去', pet:'黑冠麻鷺', petDesc:'大眼睛的擬態高手，愛在大地漫步。', petImg:'https://cdn.jsdelivr.net/gh/clarebox123jp-art/-@main/%E9%BB%91%E5%86%A0%E9%BA%BB%E9%B7%BA.png',
+    d:'攜帶後，受到致命傷害時免疫該次傷害，發動後此寵物離去', pet:'黑冠麻鷺', petDesc:'大眼睛的擬態高手，愛在大地漫步。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E9%BB%91%E5%86%A0%E9%BA%BB%E9%B7%BA.png',
     svg:'<svg viewBox="0 0 24 24" width="18" height="18"><ellipse cx="12" cy="7" rx="4" ry="5" fill="#ffcc88"/><ellipse cx="12" cy="16" rx="6" ry="6" fill="#ff8855"/><circle cx="10" cy="6" r="1" fill="#663300"/><circle cx="14" cy="6" r="1" fill="#663300"/><path d="M10 8.5 Q12 10 14 8.5" fill="none" stroke="#663300" stroke-width="0.8"/><line x1="6" y1="13" x2="3" y2="17" stroke="#ff8855" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="13" x2="21" y2="17" stroke="#ff8855" stroke-width="2" stroke-linecap="round"/></svg>',
     deathShield: true,
     onEquip(h){ },
@@ -9112,7 +9112,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   // 臨摹大師：用被模仿角色的名字來決定爆發效果；否則用自己的名字
   const name=_mimicSourceName||h.name;
   // ★ 極限爆發等級乘數（+0~+4，每級+10%）
-  const _burstLv = (typeof _heroBurstLevels!=='undefined' && _heroBurstLevels[h.name]) || 0;
+  const _burstLv = (_adventureMode && typeof _heroBurstLevels!=='undefined' && _heroBurstLevels[h.name]) || 0;
   const _burstMult = 1.0 + _burstLv * 0.10;
 
   if(name==='劍士'){
@@ -11865,7 +11865,7 @@ function _showCharmPicker(dancer, victim, cost){
 function execSkill(a, sk, cost, stype){
   const n=sk.n;
   // ★ 設定目前技能升級等級倍率
-  _activeSkLv = (_heroSkillLevels&&_heroSkillLevels[a.name]&&stype) ? ((_heroSkillLevels[a.name][stype])||0) : 0;
+  _activeSkLv = (_adventureMode && _heroSkillLevels&&_heroSkillLevels[a.name]&&stype) ? ((_heroSkillLevels[a.name][stype])||0) : 0;
   _activeSkLvMult = 1.0 + _activeSkLv * 0.10;
   a._actionLabel = n+'！';
   G.lastSkill={...sk,actor:a};
@@ -13998,6 +13998,16 @@ function checkInterruptPassive(enemyHero){
 function showPassiveInterruptUI(hero, sk, cost, enemyHero){
   playSfx('sfx-passive',0.7);
 
+  // ★ 教學模式中：自動放棄插隊，不干擾教學引導流程
+  if(typeof _tutInterPhase !== 'undefined' && _tutInterPhase !== 'idle'){
+    log(`[教學] 自動放棄 [${hero.name}] 插隊被動，讓玩家繼續行動`);
+    G.passiveInterruptUsed = false;
+    G.interruptTarget = null;
+    G.activeChar = enemyHero;
+    _pSetTimeout(() => { if(enemyHero.curHp>0&&!enemyHero.acted) aiAct(enemyHero); else startTurn(); }, 600);
+    return;
+  }
+
   // AI 代理自動發動插隊被動（挺身守護自動選HP最低友方，警示鳴槍自動發動）
   if(_autoBattle && hero.side==='p1'){
     // 挺身守護：確認有能量才發動，否則跳過讓敵方正常行動
@@ -14138,6 +14148,11 @@ function showActivePassiveUI(hero, sk, cost, triggerDesc, onUse, onSkip){
   if(hasStatus(hero,'seal')){ onSkip && onSkip(); return; }
   // 若是 AI 方，或 p1 開啟自動代理，直接自動使用
   if(hero.side==='p2' || (hero.side==='p1' && _autoBattle)){ onUse && onUse(); return; }
+  // ★ 教學模式中：自動放棄主動被動，讓攻擊按鈕可見
+  if(typeof _tutInterPhase !== 'undefined' && _tutInterPhase !== 'idle'){
+    log(`[教學] 自動跳過 [${hero.name}] 主動被動，讓玩家正常行動`);
+    onSkip && onSkip(); return;
+  }
 
   document.getElementById('action-panel').style.display='block';
   document.getElementById('actor-info').innerHTML=
@@ -21233,24 +21248,58 @@ function _tutInterShowArrow(el) {
   _tutInterClearArrow();
   if(!el){ _tutInterShowDim(null); return; }
   const rect = el.getBoundingClientRect();
-  // ★ 用元素中心的 viewport 座標定位箭頭（getBoundingClientRect 已是 viewport 座標）
-  const cx = rect.left + rect.width / 2;
-  // 箭頭在元素正上方，至少留 8px 距頂部
-  const arrowH = 72; // 箭頭+emoji 高度估計
-  let topPos = rect.top - arrowH - 4;
-  // 若空間不足（元素太靠近頂部），改在元素下方
-  if(topPos < 8) topPos = rect.bottom + 8;
-  // 水平確保不超出視窗
+  const cx   = rect.left + rect.width / 2;
+  const pad  = 30; // 與 _tutInterShowDim 的 pad 一致（亮區 = rect ± 30px）
+  const brightTop    = Math.max(0, rect.top  - pad);
+  const brightBottom = Math.min(window.innerHeight, rect.bottom + pad);
+  const emojiFontPx  = 56; // CSS font-size of ti-bounce
+
+  // 決定方向：元素在畫面下半 → 手指從上方向下指（👇 貼在亮區頂緣）
+  //           元素在畫面上半 → 手指從下方向上指（👆 貼在亮區底緣）
+  const midScreen  = window.innerHeight / 2;
+  const elMid      = rect.top + rect.height / 2;
+  const fromAbove  = elMid > midScreen;
+
+  let topPos, emoji, bounceFrom, bounceTo;
+  if(fromAbove){
+    // 放在亮區頂緣正上方，tip 貼邊
+    topPos     = brightTop - emojiFontPx;
+    emoji      = '👇';
+    bounceFrom = 'translateY(0)';
+    bounceTo   = 'translateY(-12px)';
+  } else {
+    // 放在亮區底緣正下方，tip 貼邊
+    topPos     = brightBottom;
+    emoji      = '👆';
+    bounceFrom = 'translateY(0)';
+    bounceTo   = 'translateY(12px)';
+  }
+  // 邊界保護
+  topPos  = Math.max(2, Math.min(window.innerHeight - emojiFontPx - 4, topPos));
   const leftPos = Math.max(8, Math.min(window.innerWidth - 72, cx - 36));
+
+  // 更新彈跳動畫方向
+  const cssEl = document.getElementById('_ti-css');
+  if(cssEl) {
+    cssEl.textContent = cssEl.textContent
+      .replace(/@keyframes _tiArrowBounce \{[^}]+from[^}]+\}[^}]+\}/, '')
+    ;
+  }
+  const st = document.getElementById('_ti-bounce-anim') || document.createElement('style');
+  st.id = '_ti-bounce-anim';
+  st.textContent = `@keyframes _tiArrowBounce {
+    from { transform:${bounceFrom}; }
+    to   { transform:${bounceTo}; }
+  }`;
+  if(!st.parentNode) document.head.appendChild(st);
 
   const wrap = document.createElement('div');
   wrap.id = '_ti-arrow-el';
   wrap.className = '_ti-arrow-wrap';
-  wrap.innerHTML = '<div class="ti-bounce">👇</div>';
+  wrap.innerHTML = `<div class="ti-bounce">${emoji}</div>`;
   wrap.style.left = leftPos + 'px';
-  wrap.style.top  = topPos + 'px';
+  wrap.style.top  = topPos  + 'px';
   document.body.appendChild(wrap);
-  // ★ 同步更新遮罩挖空位置
   _tutInterShowDim(el);
 }
 function _tutInterClearArrow() {
@@ -21388,12 +21437,26 @@ function _tutInterStartAtkPhase() {
   if(!atkBtn) { _tutInterPhase = 'idle'; return; }
 
   // ★ 等一幀讓 layout 在 action-panel 顯示後完成，再取座標顯示箭頭
-  requestAnimationFrame(() => {
+  // ★ 防呆：若按鈕被被動UI隱藏（rect.width=0），延遲重試
+  const _tryShowArrow = (attempt) => {
     requestAnimationFrame(() => {
-      _tutInterShowArrow(atkBtn);
-      _tutInterShowMsg('⚔️ 現在輪到你！', '點擊「普通攻擊」按鈕發動攻擊！');
+      requestAnimationFrame(() => {
+        // 確保 b-atk 可見
+        if(atkBtn.style.display === 'none') {
+          restoreActionBtns && restoreActionBtns();
+        }
+        const rect = atkBtn.getBoundingClientRect();
+        if(rect.width === 0 && attempt < 8) {
+          // 按鈕仍在隱藏狀態，150ms後重試
+          setTimeout(() => _tryShowArrow(attempt + 1), 150);
+          return;
+        }
+        _tutInterShowArrow(atkBtn);
+        _tutInterShowMsg('⚔️ 現在輪到你！', '點擊「普通攻擊」按鈕發動攻擊！');
+      });
     });
-  });
+  };
+  _tryShowArrow(0);
 
   const onAtkClick = () => {
     atkBtn.removeEventListener('click', onAtkClick);
@@ -21412,24 +21475,8 @@ function _tutInterShowAtkTarget() {
   const cardEl = document.getElementById(`card-${target.side}-${target.pos}`);
 
   if(cardEl) cardEl.classList.add('_tut-highlight');
-  // ★ 箭頭指向卡牌頂部（名字上方），而非卡牌中心
-  if(cardEl){
-    const rect = cardEl.getBoundingClientRect();
-    const arrowH = 72;
-    const cx = rect.left + rect.width / 2;
-    let topPos = rect.top - arrowH - 4;
-    if(topPos < 8) topPos = rect.bottom + 8;
-    const leftPos = Math.max(8, Math.min(window.innerWidth - 72, cx - 36));
-    _tutInterClearArrow();
-    const wrap = document.createElement('div');
-    wrap.id = '_ti-arrow-el';
-    wrap.className = '_ti-arrow-wrap';
-    wrap.innerHTML = '<div class="ti-bounce">👇</div>';
-    wrap.style.left = leftPos + 'px';
-    wrap.style.top  = topPos + 'px';
-    document.body.appendChild(wrap);
-    _tutInterShowDim(cardEl);
-  }
+  // ★ 統一用 _tutInterShowArrow，自動貼在亮區邊緣
+  _tutInterShowArrow(cardEl || null);
   _tutInterShowMsg('🎯 選擇攻擊目標！', '點擊箭頭所指的敵方角色，對他發動攻擊！');
 
   _tutInterPhase = 'atk_target';
@@ -23698,6 +23745,14 @@ function advFinishMiniBattle(win) {
   }
   // ★ 立即封鎖 checkWin 重觸（防止 startTurn 排程殘留造成 Boss 結算提前出現）
   if(typeof G !== 'undefined' && G) G._resultShown = true;
+  // ★ 先計算小怪EXP（必須在G.p2還原成BOSS陣容之前）
+  let _miniBaseExp = 0;
+  if(win && G && G.p2){
+    G.p2.forEach(h => {
+      const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
+      _miniBaseExp += (hd && hd.exp) ? hd.exp : 7;
+    });
+  }
   // ★ 立即還原 BOSS 陣容（讓 checkWin 看到活著的 Boss，不誤判勝利）
   if(_advBossTeamSaved && typeof G !== 'undefined' && G){
     G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));
@@ -23710,14 +23765,10 @@ function advFinishMiniBattle(win) {
   _gamePaused = false;
 
   if(win) {
-    // 給予小怪EXP
+    // 給予小怪EXP（使用已在 BOSS 陣容還原前算好的 _miniBaseExp）
     const heroes = advGetUnlockedHeroes();
     if(heroes.length) {
-      let baseExp = 0;
-      G.p2.forEach(h => {
-        const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
-        baseExp += (hd && hd.exp) ? hd.exp : 7;
-      });
+      const baseExp = _miniBaseExp;
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
       const _miniLevelUps = []; // ★ 收集升級事件
       heroes.forEach(name => {
