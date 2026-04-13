@@ -21050,22 +21050,22 @@ let _tutorialHighlighted = null; // 目前高亮元素
 
 const TUTORIAL_STEPS = [
   { target:'row2',           side:'right-screen', title:'🎯 勝利目標',
-    desc:'將對手場上所有英雄的HP清零！點擊下方行動按鈕來對英雄造成傷害，全部倒下就獲勝！' },
+    desc:'上面是你的對手，點擊右側行動按鈕來對他們造成傷害，使他們全部倒下就獲勝！' },
   { target:'turn-order-bar', side:'right-screen', title:'⚡ 行動順序',
-    desc:'這裡顯示本回合的行動順序！速度越高越靠前。亮框的英雄是目前輪到行動的角色。' },
+    desc:'這裡顯示本回合的行動順序！速度越高越先行動(靠近左方旗子)。亮框的是目前輪到行動的角色。' },
   { target:'b-atk',          side:'panel-left',   title:'⚔️ 普通攻擊',
     desc:'點「普通攻擊」後，再點對手的英雄卡片，就能發動攻擊！免費使用，每回合一次。' },
   { target:'e1-bar',         side:'panel-left',   title:'🔷 能量系統',
-    desc:'每回合行動結束後，玩家會獲得能量。 技能和爆發都需要消耗🔷能量，要好好分配！' },
+    desc:'每回合所有角色都行動結束後，玩家會獲得3能量。 技能和爆發都需要消耗🔷能量，要好好分配！' },
   { target:'b-s1',           side:'panel-left',   title:'✨ 特技技能',
-    desc:'每位英雄有2個特技（S1、S2）。消耗能量後點技能按鈕，再選目標即可發動強力效果！' },
+    desc:'每位英雄有2招技能。選擇技能後按「使用」再選目標，即可消耗能量並且發動技能的效果！' },
   { target:null,             side:'right-screen', title:'💥 極限爆發',
-    desc:'能量集滿10顆🔷時，英雄卡片上會亮起「⚡爆發」按鈕！ 這是最強的大絕招，威力毀滅性！',
+    desc:'能量集滿10顆🔷時，英雄卡片上會亮起「⚡極限爆發」按鈕！ 這是最強的大絕招，每位英雄在每場戰鬥最多釋放2次！',
     burstMock: true },
   { target:'igrid',          side:'above-right',  title:'🎒 物品背包',
-    desc:'右側物品欄有3格。從牌堆抽到的卡片會出現在這裡。 點卡片查看效果，再選「使用」「攜帶」或「賣出換能量」！' },
+    desc:'右側物品欄有3格。從牌堆抽到的卡片會出現在這裡。 點卡片查看效果，再選「使用」「攜帶(寵物)」或「賣出換能量」！' },
   { target:'b-auto-battle',  side:'panel-left',   title:'🤖 自動戰鬥',
-    desc:'不想手動操作？點此開啟AI自動戰鬥！AI會幫你選最佳行動，隨時可以手動關閉恢復操作。' },
+    desc:'不想手動操作？點此開啟AI自動戰鬥！AI會幫你選最佳行動(理論上啦...?)，覺得AI不太可靠，隨時可以手動關閉恢復操作。' },
   { target:null,             side:'center',       title:'🎉 準備好了！',
     desc:'你已瞭解戰鬥的基本操作！  隨時可以點左下角的「❓ 教學指引」按鈕重看說明。 祝你戰鬥順利，小英雄！' },
 ];
@@ -21450,7 +21450,7 @@ function _tutInterInjectCSS() {
 // ── 箭頭 & 訊息 helpers ──
 
 // ★ 實戰遮罩：以 clip-path 挖空目標元素區域
-function _tutInterShowDim(targetEl) {
+function _tutInterShowDim(targetEl, padOverride) {
   let dim = document.getElementById('_ti-dim-overlay');
   if(!dim){
     dim = document.createElement('div');
@@ -21463,7 +21463,7 @@ function _tutInterShowDim(targetEl) {
       const brightEl = dim._brightEl;
       if(brightEl){
         const r   = brightEl.getBoundingClientRect();
-        const pad = 30;
+        const pad = dim._pad || 30;
         const inBright = e.clientX >= r.left - pad && e.clientX <= r.right + pad &&
                          e.clientY >= r.top  - pad && e.clientY <= r.bottom + pad;
         if(inBright){
@@ -21481,9 +21481,10 @@ function _tutInterShowDim(targetEl) {
     }, true);
   }
   dim._brightEl = targetEl || null;
+  dim._pad = padOverride != null ? padOverride : 30;
   if(!targetEl){ dim.style.clipPath = ''; return; }
   requestAnimationFrame(()=>{
-    const pad = 30;
+    const pad = dim._pad;
     const r = targetEl.getBoundingClientRect();
     const x1 = Math.max(0, r.left - pad), y1 = Math.max(0, r.top - pad);
     const x2 = Math.min(window.innerWidth, r.right + pad);
@@ -21499,47 +21500,63 @@ function _tutInterHideDim() {
   if(dim) dim.remove();
 }
 
-function _tutInterShowArrow(el) {
+function _tutInterShowArrow(el, direction) {
+  // direction: 'auto'(預設,依位置判斷) | 'right'(→,放在左側) | 'up'(↑,貼底緣) | 'down'(↓,貼頂緣)
   _tutInterClearArrow();
   if(!el){ _tutInterShowDim(null); return; }
   const rect = el.getBoundingClientRect();
-  const cx   = rect.left + rect.width / 2;
-  const pad  = 30; // 與 _tutInterShowDim 的 pad 一致（亮區 = rect ± 30px）
+  const pad  = 30;
   const brightTop    = Math.max(0, rect.top  - pad);
   const brightBottom = Math.min(window.innerHeight, rect.bottom + pad);
-  const emojiFontPx  = 56; // CSS font-size of ti-bounce
+  const brightLeft   = Math.max(0, rect.left  - pad);
+  const emojiFontPx  = 56;
 
-  // 決定方向：元素在畫面下半 → 手指從上方向下指（👇 貼在亮區頂緣）
-  //           元素在畫面上半 → 手指從下方向上指（👆 貼在亮區底緣）
-  const midScreen  = window.innerHeight / 2;
-  const elMid      = rect.top + rect.height / 2;
-  const fromAbove  = elMid > midScreen;
+  let topPos, leftPos, emoji, bounceFrom, bounceTo;
+  const dir = direction || 'auto';
 
-  let topPos, emoji, bounceFrom, bounceTo;
-  if(fromAbove){
-    // 放在亮區頂緣正上方，tip 貼邊
-    topPos     = brightTop - emojiFontPx;
+  if(dir === 'right') {
+    // 👉 放在元素左側，水平彈跳
+    emoji      = '👉';
+    topPos     = rect.top + rect.height / 2 - emojiFontPx / 2;
+    leftPos    = brightLeft - emojiFontPx - 8;
+    bounceFrom = 'translateX(0)';
+    bounceTo   = 'translateX(-14px)';
+  } else if(dir === 'up') {
+    // 👆 緊貼元素底緣下方
+    emoji      = '👆';
+    topPos     = brightBottom + 2;
+    leftPos    = rect.left + rect.width / 2 - 28;
+    bounceFrom = 'translateY(0)';
+    bounceTo   = 'translateY(14px)';
+  } else if(dir === 'down') {
+    // 👇 緊貼元素頂緣上方
     emoji      = '👇';
+    topPos     = brightTop - emojiFontPx - 4;
+    leftPos    = rect.left + rect.width / 2 - 28;
     bounceFrom = 'translateY(0)';
     bounceTo   = 'translateY(-12px)';
   } else {
-    // 放在亮區底緣正下方，tip 貼邊
-    topPos     = brightBottom;
-    emoji      = '👆';
-    bounceFrom = 'translateY(0)';
-    bounceTo   = 'translateY(12px)';
+    // auto：依元素在畫面位置決定
+    const midScreen = window.innerHeight / 2;
+    const elMid     = rect.top + rect.height / 2;
+    if(elMid > midScreen){
+      emoji      = '👇';
+      topPos     = brightTop - emojiFontPx;
+      bounceFrom = 'translateY(0)';
+      bounceTo   = 'translateY(-12px)';
+    } else {
+      emoji      = '👆';
+      topPos     = brightBottom;
+      bounceFrom = 'translateY(0)';
+      bounceTo   = 'translateY(12px)';
+    }
+    leftPos = rect.left + rect.width / 2 - 28;
   }
+
   // 邊界保護
   topPos  = Math.max(2, Math.min(window.innerHeight - emojiFontPx - 4, topPos));
-  const leftPos = Math.max(8, Math.min(window.innerWidth - 72, cx - 36));
+  leftPos = Math.max(4, Math.min(window.innerWidth  - 72, leftPos));
 
-  // 更新彈跳動畫方向
-  const cssEl = document.getElementById('_ti-css');
-  if(cssEl) {
-    cssEl.textContent = cssEl.textContent
-      .replace(/@keyframes _tiArrowBounce \{[^}]+from[^}]+\}[^}]+\}/, '')
-    ;
-  }
   const st = document.getElementById('_ti-bounce-anim') || document.createElement('style');
   st.id = '_ti-bounce-anim';
   st.textContent = `@keyframes _tiArrowBounce {
@@ -21555,7 +21572,9 @@ function _tutInterShowArrow(el) {
   wrap.style.left = leftPos + 'px';
   wrap.style.top  = topPos  + 'px';
   document.body.appendChild(wrap);
-  _tutInterShowDim(el);
+  // 依方向決定亮區 padding：按鈕用小padding貼合，卡牌用中padding
+  const dimPad = (dir === 'right') ? 16 : (dir === 'up' || dir === 'down') ? 10 : 28;
+  _tutInterShowDim(el, dimPad);
 }
 function _tutInterClearArrow() {
   const el = document.getElementById('_ti-arrow-el'); if(el) el.remove();
@@ -21706,7 +21725,7 @@ function _tutInterStartAtkPhase() {
           setTimeout(() => _tryShowArrow(attempt + 1), 150);
           return;
         }
-        _tutInterShowArrow(atkBtn);
+        _tutInterShowArrow(atkBtn, 'right');  // ★ →手指，放在按鈕左側
         _tutInterShowMsg('⚔️ 現在輪到你！', '點擊「普通攻擊」按鈕發動攻擊！');
       });
     });
@@ -21730,8 +21749,8 @@ function _tutInterShowAtkTarget() {
   const cardEl = document.getElementById(`card-${target.side}-${target.pos}`);
 
   if(cardEl) cardEl.classList.add('_tut-highlight');
-  // ★ 統一用 _tutInterShowArrow，自動貼在亮區邊緣
-  _tutInterShowArrow(cardEl || null);
+  // ★ 敵方卡牌在畫面上方 → 手指 ↑ 貼底緣
+  _tutInterShowArrow(cardEl || null, 'up');
   _tutInterShowMsg('🎯 選擇攻擊目標！', '點擊箭頭所指的敵方角色，對他發動攻擊！');
 
   _tutInterPhase = 'atk_target';
@@ -21773,7 +21792,7 @@ function _tutInterStartSellOrSkillPhase() {
     _tutInterPrevEnergy = energy;
     _tutInterPhase = 'sell_wait';
     const slotEl = document.getElementById(`slot-${itemIdx}`);
-    _tutInterShowArrow(slotEl);
+    _tutInterShowArrow(slotEl, 'down');  // ★ 物品卡在右欄 → 手指↓從上方指
     _tutInterShowMsg('💰 賣掉物品卡獲得能量！',
       '點擊物品卡，再點「◆ 賣出」按鈕，獲得能量準備使用技能！', null, 'left');
     if(_tutInterPollId) clearInterval(_tutInterPollId);
@@ -21808,7 +21827,7 @@ function _tutInterShowSkillHint() {
   const _sb = skillBtn, _sd = skillData;
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      _tutInterShowArrow(_sb);
+      _tutInterShowArrow(_sb, 'right');  // ★ →手指，放在技能按鈕左側
       _tutInterShowMsg('✨ 使用技能！',
         `點擊「${_sd.n}」發動技能！消耗 ${_sd.c} 🔷 能量`);
     });
@@ -21846,7 +21865,7 @@ function _tutInterAfterSkillClick(hero, skillData) {
   const cardEl = document.getElementById(`card-${target.side}-${target.pos}`);
 
   if(cardEl) cardEl.classList.add('_tut-highlight');
-  _tutInterShowArrow(cardEl);
+  _tutInterShowArrow(cardEl, 'up');  // ★ 卡牌在上方 → 手指 ↑ 貼底緣
   _tutInterShowMsg('🎯 選擇技能目標！',
     `點擊箭頭所指的角色，對其發動「${skillData.n}」！`);
 
