@@ -3040,6 +3040,16 @@ body {
 <div id="_gc_wrapper"><div id="gc">
   <div id="adv-battle-bg"></div>
   <div id="fade-overlay"></div>
+  <!-- ★ 冒險模式戰鬥教學按鈕（左下角，直式） -->
+  <button id="adv-tut-btn" onclick="playSfx('sfx-gentle',0.5);_advShowTutBtn()"
+    style="display:none;position:absolute;left:8px;bottom:8px;z-index:300;
+      writing-mode:vertical-rl;text-orientation:mixed;
+      padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
+      background:rgba(10,20,50,0.82);border:1.5px solid rgba(100,160,255,0.5);
+      color:#88ccff;border-radius:10px;cursor:pointer;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+      box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
+      transition:border-color 0.2s,background 0.2s;">❓教學</button>
   <div id="battle-start-overlay"><div class="bs-text">戰鬥開始!</div></div>
   <div id="field-announce"><span class="fa-icon" id="fa-icon"></span><span class="fa-name" id="fa-name"></span><span class="fa-desc" id="fa-desc"></span></div>
   <div id="field">
@@ -3135,7 +3145,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2150</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2230</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5068,7 +5078,7 @@ const HERO_IMGS = {
 };
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合'}},
-  '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活）',fd:'用特技125%使任意1名友方恢復HP並解除不利狀態(可復活)'},s2:{n:'治癒之風',c:5,d:'治癒全隊，免疫不利狀態1回合',fd:'用特技的80%使全體友方恢復HP並免疫不利狀態1回合'}},
+  '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
   '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵/治癒1友各20%HP',fd:'使1名對手受到HP20%的傷害，同時恢復1名友方20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
   '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'傷害1名對手＋追加10必中',fd:'用特技傷害1名對手，並追加無視其有利狀態的10點傷害'},s2:{n:'地獄之火',c:4,d:'全體對手燃燒（每回合-10HP，2回合）',fd:'使全體對手在行動前後各減少一次5HP(無視其有利狀態)，持續2回合'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
@@ -5079,7 +5089,7 @@ const HERO_DB = {
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
   '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:2,d:'(被動)代替友方承受傷害，可再行動',fd:'(被動)單體友方受傷前觸發，守衛代替其承受傷害，並用特技的200%減輕傷害。(可以再行動1次)',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
-  '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:4,d:'治癒全隊並復活1人',fd:'以特技的75%恢復全體友方的HP並復活1名友方'}},
+  '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
   '警長':  {hp:60,atk:12,sp:1,spd:17,  s1:{n:'物品查封',c:3,d:'封鎖全體對手物品卡',fd:'使全體對手1回合內無法使用和販賣物品卡'},s2:{n:'警示鳴槍',c:2,d:'(被動)對手行動前有機率使其跳過',fd:'(被動)對手行動前觸發，有60%機率使該對手直接放棄這回合行動',p:true}},
   '煉金術師':{hp:61,atk:10,sp:10,spd:9, s1:{n:'道具複製',c:2,d:'(被動)使用物品時消耗2能量，有機率保留',fd:'(被動)使用物品卡時可選擇發動，消耗2能量後使用物品效果，再以70%機率保留該卡片不消耗',p:true},s2:{n:'賢者之石',c:3,d:'完全治癒（可復活）並免疫1次倒下（限用）',fd:'使任意1名友方完全恢復HP(可復活)，並免疫1次倒下。(持續至戰鬥結束，限用一次)',once:true}},
@@ -5450,7 +5460,7 @@ const HERO_BIO = {
 
 const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
-  '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的150%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
+  '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的180%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
   '聖騎士':   {n:'最終殿堂',    d:'全隊無敵1回合並恢復40%HP',fd:'使友方全體免疫所有傷害和不利狀態1回合，同時恢復40%HP。'},
   '火法師':   {n:'烈焰爆發',    d:'傷害全體並燃燒，無視有利狀態',fd:'用特技的150%傷害全體對手，目標陷入燃燒狀態2回合（行動前後各-5HP），此傷害無視有利狀態。'},
   '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
@@ -9143,7 +9153,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         doRevive(t,1,true);
         t.acted=true; // ★ 本回合復活，不立即再行動
       } else {
-        doHeal(t,Math.floor(spv*1.5*_burstMult),{actor:h,isHeal:true});
+        doHeal(t,Math.floor(spv*1.8*_burstMult),{actor:h,isHeal:true});
       }
       clearBadStatus(t); addBuff(t,'statusImmune',2);
     });
@@ -11898,17 +11908,18 @@ function execSkill(a, sk, cost, stype){
       log(`[${a.name}] 救贖神光！`);
       playSkillFX('救贖神光',a,[t]);
       if(t.curHp===0){ doRevive(t,0.5); log(`復活 [${t.name}]`); }
-      else { doHeal(t,Math.floor(spv(a)*1.25),{actor:a,isHeal:true}); }
-      clearBadStatus(t); // removes all bad statuses including deathmark
+      doHeal(t,Math.floor(spv(a)*1.30*(t.curHp>0?1:0)),{actor:a,isHeal:true}); // 復活後curHp>0才補血
+      clearBadStatus(t);
+      addBuff(t,'statusImmune',1);
       endAction(a,cost);
     });
   } else if(n==='治癒之風'){
-    log(`[${a.name}] 治癒之風！全體友方治療！`);
+    log(`[${a.name}] 治癒之風！全體友方治療並解除不利狀態！`);
     const targets=G[a.side].filter(h=>h.curHp>0);
     playSkillFX('治癒之風',a,targets);
     targets.forEach(t=>{
-      doHeal(t,Math.floor(spv(a)*0.8),{actor:a,isHeal:true});
-      addBuff(t,'statusImmune',1);
+      doHeal(t,Math.floor(spv(a)*1.0),{actor:a,isHeal:true});
+      clearBadStatus(t);
     });
     endAction(a,cost);
   }
@@ -12172,10 +12183,16 @@ function execSkill(a, sk, cost, stype){
     sleepAllFoes.forEach(h=>{ if(Math.random()<0.6) addStatus(h,'sleep',2); });
     endAction(a,cost);
   } else if(n==='天堂樂章'){
-    log(`[${a.name}] 天堂樂章！全體友方治療！`);
+    log(`[${a.name}] 天堂樂章！全體友方治療＋護盾！`);
     const alive=G[a.side].filter(h=>h.curHp>0);
     playSkillFX('天堂樂章',a,alive);
-    alive.forEach(h=>doHeal(h,Math.floor(spv(a)*0.75),{actor:a,isHeal:true}));
+    alive.forEach(h=>{
+      doHeal(h,Math.floor(spv(a)*0.75),{actor:a,isHeal:true});
+      const _shieldVal=Math.round(20*_activeSkLvMult);
+      h.buffs=h.buffs.filter(b=>b.type!=='bigshield');
+      h.buffs.push({type:'bigshield',dur:99,_hp:_shieldVal});
+      showPopup(h,'🛡+'+_shieldVal,'heal');
+    });
     const dead=G[a.side].filter(h=>h.curHp===0);
     if(dead.length){
       bannerFX(a,'選擇復活對象','#88ffcc',800);
@@ -15196,13 +15213,17 @@ function aiUseSkill(a,sk,cost,pref){
     if(t){ doDmg(t,n==='降龍伏虎拳'?Math.floor(a.atk*2):n==='瞄準射擊'?Math.floor(spv(a)*2.0):spv(a),{actor:a,ignoreBuffs:n==='降龍伏虎拳',ignoreEvasion:n==='瞄準射擊',noGuard:n==='瞄準射擊',noHidden:n==='瞄準射擊',piercing:n==='瞄準射擊'}); if(n==='迅雷連斬'&&t.curHp>0)doDmg(t,a.atk,{actor:a}); if(n==='冰凍之矛'&&t.curHp>0)addStatus(t,'freeze'); if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para'); if(n==='火焰球')doDmg(t,10,{ignoreBuffs:true}); }
   } else if(n==='神聖鎚擊'){if(t){doDmg(t,Math.max(1,Math.floor(t.hp*0.2)),{actor:a});doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});}}
   else if(n==='刀背擊'){if(t){t.curHp=Math.max(0,t.curHp-1);if(t.curHp>0)addStatus(t,'stun');showPopup(t,1,'dmg');}}
-  else if(n==='救贖神光'){const dead=G[a.side].find(h=>h.curHp===0);if(dead)doRevive(dead,0.5);else doHeal(al,spv(a),{actor:a,isHeal:true});}
-  else if(n==='治癒之風'){allies.forEach(h=>{doHeal(h,Math.floor(spv(a)*0.8),{actor:a,isHeal:true});addBuff(h,'statusImmune',1);});}
+  else if(n==='救贖神光'){
+    const dead=G[a.side].find(h=>h.curHp===0);
+    if(dead){ doRevive(dead,0.5); clearBadStatus(dead); addBuff(dead,'statusImmune',1); }
+    else { doHeal(al,Math.floor(spv(a)*1.30),{actor:a,isHeal:true}); clearBadStatus(al); addBuff(al,'statusImmune',1); }
+  }
+  else if(n==='治癒之風'){allies.forEach(h=>{doHeal(h,Math.floor(spv(a)*1.0),{actor:a,isHeal:true});clearBadStatus(h);});}
   else if(n==='暴風雪'){enemies.forEach(h=>{doDmg(h,Math.floor(spv(a)*0.7),{actor:a,isAoe:true});if(h.curHp>0) addStatus(h,'spddown',1);});}
   else if(n==='連鎖閃電'){let bc=3;if(Math.random()<0.5)bc=4;if(bc===4&&Math.random()<0.5)bc=5;for(let i=0;i<bc;i++){const et=enemies.filter(h=>h.curHp>0);if(et.length)doDmg(et[Math.floor(Math.random()*et.length)],Math.floor(spv(a)*0.7),{actor:a});}}
   else if(n==='地獄之火'){enemies.forEach(h=>{if(h.curHp>0)addStatus(h,'hellfire',2);});}
   else if(n==='搖籃曲'){enemies.filter(h=>h.curHp>0).forEach(h=>{if(Math.random()<0.6)addStatus(h,'sleep',2);});}
-  else if(n==='天堂樂章'){allies.forEach(h=>doHeal(h,Math.floor(spv(a)*0.75),{actor:a,isHeal:true}));const dead2=G[a.side].filter(h=>h.curHp===0);if(dead2.length)doRevive(dead2[0],0.5);}
+  else if(n==='天堂樂章'){allies.forEach(h=>{ doHeal(h,Math.floor(spv(a)*0.75),{actor:a,isHeal:true}); h.buffs=h.buffs.filter(b=>b.type!=='bigshield'); h.buffs.push({type:'bigshield',dur:99,_hp:20}); });const dead2=G[a.side].filter(h=>h.curHp===0);if(dead2.length)doRevive(dead2[0],0.5);}
   else if(n==='熱情之舞'){allies.forEach(h=>addBuff(h,'dmgup',1));}
   else if(n==='魅惑之舞'){
     // AI版魅惑之舞：自動選HP最高的符合對手，讓其攻擊自己陣營最脆弱的英雄
@@ -18156,6 +18177,8 @@ function exitAdventureMode(){
   _advMiniBattleActive = false;
   _advQuizPhase = 'idle';
   window._advMiniResultPending = null;
+  // ★ 隱藏戰鬥教學按鈕
+  try{ _advTutBtnShow(false); }catch(e){}
   // ★ 清除戰鬥背景
   const _xbg = document.getElementById('adv-battle-bg');
   if(_xbg){ _xbg.classList.remove('visible'); setTimeout(()=>{ _xbg.className=''; }, 700); }
@@ -18978,6 +19001,8 @@ function advStartBattle(){
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
+  // ★ 顯示戰鬥教學按鈕
+  try{ _advTutBtnShow(true); }catch(e){}
   // ★ 清除小怪戰殘留狀態（含守門旗標，避免iPad上startTurn第一行就return）
   window._advMiniResultShowing = false;
   if(typeof G !== 'undefined' && G){
@@ -19294,46 +19319,31 @@ function advPickEasierQuestion() {
 // ── 數學題數字隨機化（避免每次考到相同數字）
 function advRandomizeMathQuestion(q){
   if(!q || q.subject !== '數學') return q;
-  // 找出題目中所有數字
   const numRegex = /\d+(\.\d+)?/g;
-  const qNums = [...new Set((q.question.match(numRegex)||[]).map(Number))].filter(n=>n>1);
-  if(qNums.length < 2) return q; // 數字太少，不處理
-  
-  // 為每個數字產生±20%的隨機替換值（保持整數且合理）
-  const scale = 0.7 + Math.random()*0.6; // 0.7~1.3倍
+  // ★ 同時收集題目與所有選項中的數字
+  const allText = q.question + ' ' + q.options.join(' ');
+  const allNums = [...new Set((allText.match(numRegex)||[]).map(Number))].filter(n=>n>1);
+  if(allNums.length < 2) return q;
+
+  // 統一倍率（0.7~1.3倍），確保答案也跟著縮放
+  const scale = 0.7 + Math.random()*0.6;
   const intScale = n => Math.max(1, Math.round(n * scale));
-  
-  // 建立替換對照表
+
   const replaceMap = new Map();
-  qNums.forEach(n => replaceMap.set(n, intScale(n)));
-  
-  // 替換題目文字
-  let newQ = q.question;
-  let newOpts = [...q.options];
-  let newAns = q.answer;
-  
-  // 找出正確答案對應的數字
-  const ansIdx = ['A','B','C','D'].indexOf(q.answer);
-  const ansText = q.options[ansIdx];
-  const ansNums = [...new Set((ansText.match(numRegex)||[]).map(Number))];
-  
-  // 替換題目中的數字
-  replaceMap.forEach((newVal, oldVal) => {
-    newQ = newQ.replace(new RegExp('\\b'+oldVal+'\\b','g'), newVal);
-    newOpts = newOpts.map(opt => opt.replace(new RegExp('\\b'+oldVal+'\\b','g'), newVal));
-  });
-  
-  // 如果答案也需要更新（當答案是個計算結果數字時，重新計算）
-  // 簡單策略：若答案中的數字也在替換表中，一起替換
-  ansNums.forEach(n => {
-    if(replaceMap.has(n)){
-      newOpts = newOpts.map((opt,i) => 
-        i===ansIdx ? opt.replace(new RegExp('\\b'+n+'\\b','g'), replaceMap.get(n)) : opt
-      );
-    }
-  });
-  
-  return {...q, question: newQ, options: newOpts, answer: newAns};
+  allNums.forEach(n => replaceMap.set(n, intScale(n)));
+
+  // ★ 單次全域替換（避免多輪替換：7→8 後又 8→9）
+  const replaceAll = text =>
+    text.replace(/\b\d+(\.\d+)?\b/g, m => {
+      const n = Number(m);
+      return replaceMap.has(n) ? String(replaceMap.get(n)) : m;
+    });
+
+  const newQ    = replaceAll(q.question);
+  const newOpts = q.options.map(replaceAll);
+
+  // 答案字母不變（因為選項數值也跟著縮放，正確選項仍在同一個位置）
+  return {...q, question: newQ, options: newOpts, answer: q.answer};
 }
 
 function advSubmitAnswer(letter, isCorrectOverride) {
@@ -19964,10 +19974,21 @@ function advShowBattleResult(win) {
   // 6. 回合效率（0~5分）：≤30回合=5分，每多5回合-1分
   const score6 = Math.max(0, 5 - Math.floor(Math.max(0, rounds - 30) / 5));
 
-  const score = score1 + score2 + score3 + score4 + score5 + score6; // 0~100分
+  const baseScore = score1 + score2 + score3 + score4 + score5 + score6; // 0~100分
 
-  // 評分門檻（固定，不依難度）
-  const grade = score>=85?'S':score>=65?'A':score>=40?'B':'C';
+  // ── 難易度加成（6項合計後乘倍率）──
+  // 沒自信（簡單）×1.0　普通×1.25　我很會（困難）×1.50
+  const _diffKey3 = (_advPlayerDifficulty==='沒自信（輕鬆模式）'||_advPlayerDifficulty==='沒自信') ? '沒自信'
+                  : (_advPlayerDifficulty==='我很會（挑戰模式）'||_advPlayerDifficulty==='我很會') ? '我很會' : '普通';
+  const _diffMult3 = _diffKey3==='沒自信' ? 1.0 : _diffKey3==='我很會' ? 1.50 : 1.25;
+  const _diffLabel3 = _diffKey3==='沒自信' ? '（無加成）' : _diffKey3==='我很會' ? '（×1.5）' : '（×1.25）';
+  const score = Math.round(baseScore * _diffMult3);
+  const maxScore = Math.round(100 * _diffMult3);
+
+  // ── 評分門檻（難易度加成後）──
+  // S≥90 A≥68 B≥43 C<43
+  // 簡單：S需90%、A需68% / 普通：S需72%、A需54% / 困難：S需60%、A需45%
+  const grade = score>=90?'S':score>=68?'A':score>=43?'B':'C';
   const gradeColors = {S:'#ffe050',A:'#7df0a8',B:'#4a9eff',C:'#cc99ff'};
   const quizScore = (isNaN(stats.totalQuizScore) || !stats.totalQuizScore) ? 0 : Math.round(stats.totalQuizScore);
 
@@ -19984,7 +20005,7 @@ function advShowBattleResult(win) {
   const gradeEl = document.getElementById('adv-result-grade');
   gradeEl.textContent = grade;
   gradeEl.style.color = gradeColors[grade];
-  document.getElementById('adv-result-score').textContent = `總分：${score} 分（滿分100）`;
+  document.getElementById('adv-result-score').textContent = `總分：${score} 分（滿分${maxScore}）`;
   const _rateStr = totalQ > 0 ? `${correct}/${totalQ}（${Math.round(correctRate*100)}%）` : '－';
   document.getElementById('adv-result-stats').innerHTML = `
     <div class="adv-result-row"><span>📚 答題正確率</span><span>${_rateStr} +${score1}分</span></div>
@@ -19993,6 +20014,9 @@ function advShowBattleResult(win) {
     <div class="adv-result-row"><span>🔄 接關次數</span><span>${conts}次 +${score4}分</span></div>
     <div class="adv-result-row"><span>💀 倒下次數</span><span>${deaths}次 +${score5}分</span></div>
     <div class="adv-result-row"><span>⚔ 使用回合數</span><span>${rounds}回合 +${score6}分</span></div>
+    <div class="adv-result-row" style="border-top:1px solid rgba(255,200,0,0.3);margin-top:6px;padding-top:6px;color:#ffdd88;">
+      <span>🎯 難易度加成</span><span>${_diffLabel3}　基礎${baseScore}×${_diffMult3}＝${score}分</span>
+    </div>
   `;
   document.getElementById('adv-result-overlay').classList.add('show');
 
@@ -21153,26 +21177,27 @@ function _tutInterInjectCSS() {
       from { transform:translateY(0); }
       to   { transform:translateY(-18px); }
     }
-    /* ★ 實戰引導遮罩：挖空目標元素讓它清晰顯示 */
+    /* ★ 實戰引導遮罩：挖空目標元素讓它清晰顯示，阻止點擊暗區 */
     #_ti-dim-overlay {
-      position:fixed; inset:0; z-index:9945; pointer-events:none;
-      background:rgba(0,0,0,0.72);
+      position:fixed; inset:0; z-index:9945; pointer-events:auto;
+      background:rgba(0,0,0,0.80);
       transition:clip-path 0.25s ease;
+      cursor:default;
     }
     ._ti-msg-bar {
-      position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
       z-index:9953; pointer-events:auto;
       background:linear-gradient(160deg,rgba(5,15,35,0.97),rgba(3,8,20,0.98));
-      border:2.5px solid #ffcc44; border-radius:16px; padding:16px 30px 14px;
+      border:3px solid #ffcc44; border-radius:22px; padding:24px 44px 20px;
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-      max-width:min(720px,90vw); text-align:center;
-      box-shadow:0 0 40px rgba(255,200,0,0.45);
-      display:flex; flex-direction:column; align-items:center; gap:8px;
+      max-width:min(900px,92vw); text-align:center;
+      box-shadow:0 0 60px rgba(255,200,0,0.55);
+      display:flex; flex-direction:column; align-items:center; gap:12px;
     }
-    ._ti-msg-bar .ti-title { font-size:32px; font-weight:900; color:#ffcc44; }
-    ._ti-msg-bar .ti-text  { font-size:26px; color:#fff; line-height:1.5; }
-    ._ti-msg-bar .ti-skip  { font-size:20px; color:#888; cursor:pointer;
-      padding:4px 16px; border:1px solid #444; border-radius:8px;
+    ._ti-msg-bar .ti-title { font-size:48px; font-weight:900; color:#ffcc44; }
+    ._ti-msg-bar .ti-text  { font-size:38px; color:#fff; line-height:1.5; }
+    ._ti-msg-bar .ti-skip  { font-size:28px; color:#888; cursor:pointer;
+      padding:6px 22px; border:1px solid #444; border-radius:10px;
       background:transparent; font-family:inherit; }
     ._ti-msg-bar .ti-skip:hover { color:#aaa; border-color:#666; }
     @keyframes _tiPraiseIn {
@@ -21225,7 +21250,31 @@ function _tutInterShowDim(targetEl) {
     dim = document.createElement('div');
     dim.id = '_ti-dim-overlay';
     document.body.appendChild(dim);
+    // ★ 點擊穿透：亮區可點，暗區封鎖
+    let _passing = false;
+    dim.addEventListener('click', (e) => {
+      if(_passing) return;
+      const brightEl = dim._brightEl;
+      if(brightEl){
+        const r   = brightEl.getBoundingClientRect();
+        const pad = 30;
+        const inBright = e.clientX >= r.left - pad && e.clientX <= r.right + pad &&
+                         e.clientY >= r.top  - pad && e.clientY <= r.bottom + pad;
+        if(inBright){
+          _passing = true;
+          dim.style.pointerEvents = 'none';
+          const under = document.elementFromPoint(e.clientX, e.clientY);
+          dim.style.pointerEvents = 'auto';
+          _passing = false;
+          if(under && under !== dim) under.click();
+          return;
+        }
+      }
+      // 暗區：封鎖，輕微提示
+      e.stopPropagation();
+    }, true);
   }
+  dim._brightEl = targetEl || null;
   if(!targetEl){ dim.style.clipPath = ''; return; }
   requestAnimationFrame(()=>{
     const pad = 30;
@@ -21618,8 +21667,16 @@ function _tutInterAfterSkillClick(hero, skillData) {
   _tutInterPollId = setInterval(_tutInterPoll, 250);
 }
 
-// ── 最終恭喜 ──
-function _tutInterFinal() {
+// ── 冒險戰鬥教學按鈕控制 ──
+function _advTutBtnShow(show) {
+  const btn = document.getElementById('adv-tut-btn');
+  if(btn) btn.style.display = show ? '' : 'none';
+}
+function _advShowTutBtn() {
+  // 若教學已啟動中，直接略過
+  if(typeof _tutInterPhase !== 'undefined' && _tutInterPhase !== 'idle') return;
+  _startInteractiveTutorial();
+}
   _tutInterPhase = 'idle';
   if(_tutInterPollId){ clearInterval(_tutInterPollId); _tutInterPollId = null; }
   _tutInterClearAll();
@@ -23270,7 +23327,9 @@ function _renderHeroDetail(name, box) {
         ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
             <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
-          </div></div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
+          </div>
+          ${backpackGet('hero_exp_book')>0 ? `<button onclick="playSfx('sfx-powerup',0.7);_useExpBookForHero('${name}')" style="margin-top:7px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(60,180,80,0.25);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📗 使用經驗值之書 <span style="color:#aaffcc;font-size:17px;">×${backpackGet('hero_exp_book')}</span></button>` : ''}
+        </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
       ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
         <div style="font-size:20px;color:#c8d8f0;line-height:1.7;">
@@ -23353,7 +23412,9 @@ function _renderHeroDetail(name, box) {
 function investStat(name, stat) {
   if(!(_heroStatPoints[name] > 0)) return;
   if(!_heroStatInvested[name]) _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
-  if((_heroStatInvested[name][stat]||0) >= 50) return;
+  // ★ 各素質上限：HP=99，攻擊/特技/速度=30
+  const _statCap = stat==='hp' ? 99 : 30;
+  if((_heroStatInvested[name][stat]||0) >= _statCap) return;
   const label = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
   const icon  = {hp:'❤',atk:'⚔',sp:'✨',spd:'💨'}[stat];
   // ★ 遊戲內確認視窗（取代瀏覽器 confirm）
@@ -24195,6 +24256,27 @@ function applyHeroExpBook(name) {
   // Rebuild grid with updated exp
   if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
   bannerFX(null, `📗 ${name} 獲得 +50 EXP！`, '#88ff88', 1800);
+}
+
+// ★ 在英雄圖鑑直接使用英雄經驗值之書
+function _useExpBookForHero(name) {
+  if(backpackGet('hero_exp_book') <= 0){
+    _showInGameToast('背包中沒有英雄經驗值之書！', '#ff8844', 1800);
+    return;
+  }
+  backpackRemove('hero_exp_book');
+  const lvUps = addHeroExp(name, 50);
+  gameCloudSave();
+  _setNavDot('英雄', true);
+  // 重繪英雄詳情（更新EXP條和按鈕數量）
+  const box = document.getElementById('hero-detail-content');
+  if(box) _renderHeroDetail(name, box);
+  if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
+  if(lvUps && lvUps.length){
+    setTimeout(() => _showLevelUpSequence(lvUps, () => {}), 300);
+  } else {
+    _showInGameToast(`📗 [${name}] 獲得 50 EXP！`, '#88ff88', 2000);
+  }
 }
 
 
