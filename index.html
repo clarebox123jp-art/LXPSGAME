@@ -3145,7 +3145,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.2343</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.0004</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3353,7 +3353,7 @@ body {
       <button class="hpsort-btn hpfilter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">💚 治療</button>
       <button class="hpsort-btn hpfilter-btn" data-filter="ctrl" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">🛡 控場/坦克</button>
     </div>
-    <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;justify-content:flex-start;"></div>
+    <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;justify-content:flex-start;-webkit-overflow-scrolling:touch;touch-action:pan-y;"></div>
 
   <!-- ★ 魔物圖鑑 -->
   <div id="monster-page-overlay" style="display:none;position:absolute;inset:0;z-index:720;
@@ -3364,7 +3364,7 @@ body {
       <div style="font-size:36px;font-weight:900;color:#ff8888;">👹 魔物圖鑑</div>
       <div style="width:120px;"></div>
     </div>
-    <div id="monster-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;">
+    <div id="monster-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
       <!-- injected by JS -->
     </div>
   </div>
@@ -3379,7 +3379,7 @@ body {
       <div id="hero-detail-av-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:120px;"></div>
     </div>
     <!-- 右側：英雄資料 -->
-    <div id="hero-detail-box" style="flex:1;overflow-y:auto;padding:24px 28px;position:relative;">
+    <div id="hero-detail-box" style="flex:1;overflow-y:auto;padding:24px 28px;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
       <button onclick="playSfx('sfx-cancel',0.4);closeHeroDetail()" style="position:absolute;top:14px;right:18px;font-size:32px;background:rgba(0,0,0,0.5);border:none;color:#888;cursor:pointer;font-weight:700;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">✕</button>
       <div id="hero-detail-content"></div>
     </div>
@@ -6686,7 +6686,7 @@ function showHeroPickOverlay(){
     const _hpBackBtn = document.getElementById('hero-pick-back-btn');
     if(_hpBackBtn){
       _hpBackBtn.style.display = '';
-      _hpBackBtn.textContent = '← 返回關卡選擇';
+      _hpBackBtn.textContent = '← 返回';
     }
     const _findBtn = document.getElementById('hero-pick-find-btn');
     if(_findBtn) _findBtn.style.display = 'none';
@@ -7548,8 +7548,9 @@ function confirmHeroPick(){
   if(_isAdvMode){
     document.getElementById('hero-pick-overlay').style.display = 'none';
     G.p1 = _heroPickSelected.map((n,i)=>newHero(n,'p1',i));
-    // ★ 冒險模式：套用玩家已投資的素質加成（HP/ATK/SP/SPD）
+    // ★ 冒險模式：把所有升級數據直接存進英雄物件（避免跨Script全域變數問題）
     G.p1.forEach(h => {
+      // 1. 素質投資（HP/ATK/SP/SPD）
       const _inv = (_heroStatInvested && _heroStatInvested[h.name]) || {};
       const _dHp  = _inv.hp  || 0;
       const _dAtk = _inv.atk || 0;
@@ -7559,6 +7560,12 @@ function confirmHeroPick(){
       if(_dAtk) { h.atk += _dAtk; }
       if(_dSp)  { h.sp  += _dSp;  }
       if(_dSpd) { h.spd += _dSpd; }
+      // 2. 技能升級等級 → 直接存在英雄物件上，execSkill 直接讀取
+      h._skLv = (_heroSkillLevels && _heroSkillLevels[h.name])
+        ? { s1: (_heroSkillLevels[h.name].s1 || 0), s2: (_heroSkillLevels[h.name].s2 || 0) }
+        : { s1: 0, s2: 0 };
+      // 3. 爆發等級 → 直接存在英雄物件上，_runBurst 直接讀取
+      h._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[h.name]) || 0;
     });
     // BOSS 陣容固定，元素已預設
     const bossTeam = ADV_BOSS_TEAMS[_adventureStage];
@@ -9114,7 +9121,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   // 臨摹大師：用被模仿角色的名字來決定爆發效果；否則用自己的名字
   const name=_mimicSourceName||h.name;
   // ★ 極限爆發等級乘數（+0~+4，每級+10%）
-  const _burstLv = (_adventureMode && typeof _heroBurstLevels!=='undefined' && _heroBurstLevels[h.name]) || 0;
+  // ★ 爆發等級：優先讀英雄物件上的 _burstLvAdv（冒險建隊時存入），避免跨Script問題
+  const _burstLv = (typeof h._burstLvAdv === 'number' && h._burstLvAdv > 0)
+    ? h._burstLvAdv
+    : ((_adventureMode && typeof _heroBurstLevels!=='undefined' && _heroBurstLevels[h.name]) || 0);
   const _burstMult = 1.0 + _burstLv * 0.10;
 
   if(name==='劍士'){
@@ -11866,8 +11876,16 @@ function _showCharmPicker(dancer, victim, cost){
 
 function execSkill(a, sk, cost, stype){
   const n=sk.n;
-  // ★ 設定目前技能升級等級倍率
-  _activeSkLv = (_adventureMode && _heroSkillLevels&&_heroSkillLevels[a.name]&&stype) ? ((_heroSkillLevels[a.name][stype])||0) : 0;
+  // ★ 設定技能升級等級倍率：優先讀英雄物件上的 _skLv（冒險模式建隊時就存入），
+  //   避免跨Script全域變數讀取問題；fallback 仍保留全域讀取路徑
+  if(stype && a._skLv && typeof a._skLv[stype] === 'number'){
+    // ★ 主要路徑：英雄物件直接存有等級（冒險模式）
+    _activeSkLv = a._skLv[stype];
+  } else {
+    // fallback：全域變數路徑（arena 模式永遠=0）
+    _activeSkLv = (_adventureMode && _heroSkillLevels && _heroSkillLevels[a.name] && stype)
+      ? ((_heroSkillLevels[a.name][stype]) || 0) : 0;
+  }
   _activeSkLvMult = 1.0 + _activeSkLv * 0.10;
   a._actionLabel = n+'！';
   G.lastSkill={...sk,actor:a};
@@ -18934,10 +18952,31 @@ function advSkipCutscene() {
     return row;
   }
 
+  // ★ 左上角「X不跳過」按鈕
+  const headerRow = document.createElement('div');
+  headerRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = '✕ 不跳過';
+  cancelBtn.style.cssText = 'padding:7px 16px;font-size:18px;font-weight:700;cursor:pointer;' +
+    'background:rgba(60,10,10,0.6);border:1.5px solid rgba(220,80,80,0.6);color:#ff9999;' +
+    'border-radius:8px;font-family:inherit;transition:0.15s;white-space:nowrap;flex-shrink:0;';
+  cancelBtn.onmouseenter = () => { cancelBtn.style.background='rgba(200,50,50,0.35)'; };
+  cancelBtn.onmouseleave = () => { cancelBtn.style.background='rgba(60,10,10,0.6)'; };
+  cancelBtn.onclick = () => { box.remove(); };
+  headerRow.appendChild(cancelBtn);
+
   const title = document.createElement('div');
-  title.style.cssText = 'font-size:26px;font-weight:900;color:#ffcc44;text-align:center;margin-bottom:20px;';
+  title.style.cssText = 'flex:1;font-size:24px;font-weight:900;color:#ffcc44;text-align:center;margin:0 8px;';
   title.textContent = '⏭ 跳過演出 — 先選好設定';
-  box.appendChild(title);
+  headerRow.appendChild(title);
+
+  // 右側佔位（保持標題置中）
+  const spacer = document.createElement('div');
+  spacer.style.cssText = 'flex-shrink:0;visibility:hidden;padding:7px 16px;font-size:18px;';
+  spacer.textContent = '✕ 不跳過';
+  headerRow.appendChild(spacer);
+
+  box.appendChild(headerRow);
   box.appendChild(mkRow('📚 年級', gradeOpts, 'grade'));
   box.appendChild(mkRow('📖 科目', subjOpts, 'subject'));
   box.appendChild(mkRow('⭐ 難度', diffOpts, 'diff'));
