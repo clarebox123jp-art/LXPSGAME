@@ -3035,7 +3035,8 @@ body {
 <audio id="sfx-sell-item"    preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B3%A3%E5%87%BA.mp3"></audio>
 <audio id="sfx-kansatsu-flip" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%96%E9%91%91%E7%BF%BB%E9%A0%81.mp3"></audio>
 <audio id="sfx-adv-start"     preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%96%8B%E5%A7%8B%E6%95%B4%E8%A3%9D.mp3"></audio>
-<audio id="sfx-level-up"      preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B3%A3%E5%87%BA.mp3"></audio>
+<audio id="sfx-level-up"      preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%87%E7%B4%9A.mp3"></audio>
+<audio id="sfx-skip-cutscene"  preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%82%B3%E9%80%81%E9%9B%A2%E9%96%8B.mp3"></audio>
 <div id="_gc_wrapper"><div id="gc">
   <div id="adv-battle-bg"></div>
   <div id="fade-overlay"></div>
@@ -3134,7 +3135,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1715</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260413.1800</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -3716,7 +3717,7 @@ body {
   <div id="adv-cutscene-overlay">
     <div id="adv-scene-bg"></div>
     <!-- 跳過按鈕：法寶欄左側 -->
-    <button id="adv-skip-btn" onclick="playSfx('sfx-cancel',0.4);advSkipCutscene()">⏭ 跳過演出</button>
+    <button id="adv-skip-btn" onclick="playSfx('sfx-skip-cutscene',0.85);advSkipCutscene()">⏭ 跳過演出</button>
     <!-- 法寶欄：右側固定 -->
     <div id="adv-treasure-bar">
       <span style="font-size:32px;color:#ffcc44;letter-spacing:2px;font-weight:900;writing-mode:vertical-rl;margin-bottom:10px;text-shadow:0 0 10px rgba(255,200,0,0.6);">法寶</span>
@@ -9150,7 +9151,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(name==='聖騎士'){
     allies.forEach(t=>{
       addBuff(t,'halfDmg',1);
-      doHeal(t,Math.max(1,Math.floor(t.hp*0.4)),{actor:h,isHeal:true});
+      doHeal(t,Math.max(1,Math.floor(t.hp*(0.4+_burstLv*0.05))),{actor:h,isHeal:true});
       addStatus(t,'ctrlImmune',1);
     });
   }
@@ -9238,22 +9239,27 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       t._burstTauntTarget=h;
       bannerFX(t,'強力挑釁！','#ff4400',900);
     });
-    addBuff(h,'halfDmg',2);
-    h._burstGuardMult=true; // 特殊標記：用spv*200%減傷
+    h._burstGuardSpMult = 2.0 + _burstLv * 0.2; // 升級：SP×(200+20*lv)%減傷
   }
   if(name==='吟遊詩人'){
     enemies.forEach(t=>{
-      clearStatus(t,['sleep']); t.status=t.status.filter(s=>s.type==='sleep'?false:true); t.status.push({type:'sleep',dur:99,_burstSleep:true,_burstSleepOwner:h});
+      clearStatus(t,['sleep']); t.status=t.status.filter(s=>s.type==='sleep'?false:true); t.status.push({type:'sleep',dur:99,_burstSleep:true,_burstSleepOwner:h,_sleepHealPct:0.10+_burstLv*0.03});
       bannerFX(t,'強力睡眠！','#bb99ff',1000);
     });
   }
   if(name==='舞者'){
-    allies.forEach(t=>{ addBuff(t,'dmgup',2); addBuff(t,'protectBuff',2); });
+    allies.forEach(t=>{ addBuff(t,'dmgup',2); addBuff(t,'protectBuff',2);
+      if(_burstLv>0){
+        t.buffs=t.buffs.filter(b=>b.type!=='_danceBurstShield');
+        t.buffs.push({type:'_danceBurstShield',dur:2,_pct:_burstLv*0.10});
+      }
+    });
     enemies.forEach(t=>clearGoodBuffs(t));
-    bannerFX(h,'強力增攻！','#ff55cc',900);
+    bannerFX(h,'強力增攻'+((_burstLv>0)?'＋減傷'+((_burstLv*10))+'%！':'！'),'#ff55cc',900);
   }
   if(name==='警長'){
-    enemies.forEach(t=>{ addStatus(t,'nosell',2); t._burstReflect=2;
+    const _refMult = 1.0 + _burstLv * 0.1;
+    enemies.forEach(t=>{ addStatus(t,'nosell',2); t._burstReflect=2; t._burstReflectMult=_refMult;
     t.status=t.status.filter(s=>s.type!=='burstReflect'); t.status.push({type:'burstReflect',dur:2}); bannerFX(t,'強力查封＋反彈！','#ffdd00',900); });
   }
   if(name==='煉金術師'){
@@ -9325,10 +9331,16 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     enemies.forEach((t,i)=>{ t.status.push(...myBad); });
     // 行動結束隊友再行動
     allies.filter(t=>t.acted&&t.curHp>0).forEach(t=>{ t.acted=false; });
-    bannerFX(h,'逆轉神計！','#66ccff',1000);
+    const _strEnergy=4+_burstLv;
+    G.energy[side]=Math.min(10,G.energy[side]+_strEnergy);
+    if(_strEnergy>0){ showPopup(h,'+'+_strEnergy+'E','energy'); sndEnergy(); }
+    bannerFX(h,'逆轉神計！'+(_burstLv>0?'+'+_strEnergy+'能量！':''),'#66ccff',1000);
   }
   if(name==='占星師'){
-    allies.forEach(t=>{ addBuff(t,'zeroCost',2); addBuff(t,'protectBuff',2); bannerFX(t,'星空祝福！無限能量！','#cc99ff',900); });
+    allies.forEach(t=>{ addBuff(t,'zeroCost',2); addBuff(t,'protectBuff',2);
+      t._starBurstEnergyPerTurn = _burstLv; // 升級：每回合開始額外恢復 _burstLv 能量
+      bannerFX(t,'星空祝福！'+(_burstLv>0?'+'+_burstLv+'E/回合！':''),'#cc99ff',900);
+    });
   }
   if(name==='大力士'){
     const _doDls=(t)=>{
@@ -9343,6 +9355,14 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(name==='凡人'){
     // 顯示爆發技能選擇UI（標記進行中，避免守門誤擋）
     h._mimicInProgress = true;
+    // ★ 升級效果：模仿前凡人攻擊/特技/速度提升
+    const _mimicBoost = 8 + _burstLv * 2;
+    if(_mimicBoost>0){
+      h.atk+=_mimicBoost; h.sp+=_mimicBoost; h.spd+=_mimicBoost;
+      h._mimicStatBoost=_mimicBoost;
+      showPopup(h,'ATK/SP/SPD+'+_mimicBoost,'energy');
+      bannerFX(h,'臨摹加持！','#ffeeaa',700);
+    }
     _showBurstMimicPicker(h,side,opp);
     return;
   }
@@ -9356,7 +9376,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(t&&!t.equip){ t.equip={...eq,uid:Math.random(),type:'equip'}; if(eq.onEquip) eq.onEquip(t); renderCard(t); }
       });
       G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
-      allies.forEach(t=>addBuff(t,'protectBuff',2));
+      allies.forEach(t=>{ addBuff(t,'protectBuff',2);
+        if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2,_pct:_burstLv*0.10}); }
+      });
       log(`[${h.name}] 動物大軍！呼喚4隻寵物並保護友方！`);
       updateUI();
       if(checkWin()) return;
@@ -9370,22 +9392,25 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const burstEquips=picks.map(eq=>({...eq,uid:Math.random(),type:'equip'}));
     log(`[${h.name}] 動物大軍！呼喚4隻寵物！`);
     G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
-    allies.forEach(t=>addBuff(t,'protectBuff',2));
+    allies.forEach(t=>{ addBuff(t,'protectBuff',2);
+      if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2,_pct:_burstLv*0.10}); }
+    });
     // 逐一呼出裝備選擇面板（不佔背包欄位）
     _showBurstEquipSequence(burstEquips, 0, h, side, _interrupted);
     return;
   }
   if(name==='機械師'){
     h._burstOverload=0; // 累積傷害
+    h._burstOverloadMult = 1.0 + _burstLv * 0.10; // 升級：釋放威力+10%/級
     addBuff(h,'immune',2); addBuff(h,'protectBuff',2);
     h._burstOverloadActive=2; // 回合數
-    bannerFX(h,'負荷超載！','#aaaaff',1000);
+    bannerFX(h,'負荷超載！'+(_burstLv>0?'威力+'+(_burstLv*10)+'%！':''),'#aaaaff',1000);
   }
   if(name==='吸血鬼'){
     allies.forEach(t=>{
       addBuff(t,'protectBuff',2);
       t.status=t.status.filter(s=>s.type!=='burstVamp');
-      t.status.push({type:'burstVamp',dur:2,_unremovable:true});
+      t.status.push({type:'burstVamp',dur:2,_unremovable:true,_vampMult:1.0+_burstLv*0.10});
       bannerFX(t,'🦇 嗜血！','#ff4488',900);
       log(`🦇 [${t.name}] 獲得「嗜血」！傷害100%吸血＋低血增傷！`);
     });
@@ -9406,7 +9431,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
   }
   if(name==='木靈使'){
-    allies.forEach(t=>{ t.status=t.status.filter(s=>s.type!=='burstUndying'); t.status.push({type:'burstUndying',dur:2,_owner:h}); bannerFX(t,'不倒＋再生！','#44ee44',1000); });
+    const _spiritDur = 2 + _burstLv;
+    allies.forEach(t=>{ t.status=t.status.filter(s=>s.type!=='burstUndying'); t.status.push({type:'burstUndying',dur:_spiritDur,_owner:h}); bannerFX(t,'不倒＋再生！'+(_burstLv>0?'('+_spiritDur+'回合)！':''),'#44ee44',1000); });
   }
   if(name==='時空法師'){
     const _doSkfs=(t)=>{
@@ -9421,7 +9447,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='學者'){
     const elemCount=new Set([...G.p1,...G.p2].filter(x=>x.element).map(x=>x.element)).size;
-    const dmg=Math.floor(spv*(elemCount||1));
+    const dmg=Math.floor(spv*(elemCount||1)*_burstMult);
     const _doXs=(t)=>{
       doDmg(t,dmg,{actor:h,isSkill:true,ignoreBuffs:true,ignoreEvasion:true,noHidden:true});
       const healAmt=Math.floor(dmg*0.5);
@@ -9455,6 +9481,11 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     });
     log(`🐕 [小力] 夾尾皺眉！全體對手陷入「憐惜校犬」2回合，無法使用造成傷害的技能！`);
     zoneFlash(opp,'rgba(255,170,200,0.3)',800);
+    if(_burstLv>0){
+      const _inuHealAmt=Math.floor(spv*(0.10+(_burstLv-1)*0.10));
+      G[side].filter(t=>t.curHp>0).forEach(t=>{ doHeal(t,_inuHealAmt,{actor:h,isHeal:true}); });
+      bannerFX(h,'憐惜治療！','#ffbbee',700);
+    }
   }
   if(name==='籃球隊員'){
     const _doSlam=(t)=>{
@@ -9510,7 +9541,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     sndEnergy();
     // 傷害加倍（下次攻擊）
     h.buffs=h.buffs.filter(b=>b.type!=='_sprintBurst');
-    h.buffs.push({type:'_sprintBurst',dur:1});
+    h.buffs.push({type:'_sprintBurst',dur:1,_mult:2.0+_burstLv*0.20});
     bannerFX(h,'極速閃燃！能量+7！傷害×2！','#44ffcc',1200);
     flashScreen('rgba(60,255,200,1)',350);
     zoneFlash(side,'rgba(60,255,200,0.3)',600);
@@ -9540,7 +9571,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     log(`[${h.name}] 夢境時光！對全體敵人造成HP50%傷害！`);
     playSfx('sfx-burst',0.85); flashScreen('rgba(180,220,255,1)',500);
     _foes4.forEach(t=>{
-      const _dmg=Math.max(1,Math.floor(t.curHp*0.5));
+      const _dmg=Math.max(1,Math.floor(t.hp*(0.10+_burstLv*0.05)));
       doDmg(t,_dmg,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true,isAoe:true});
       if(t.curHp>0){
         const _o2a=t.atk, _o2s=t.sp;
@@ -9622,7 +9653,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         addBuff(t,_goodBuffs[Math.floor(Math.random()*_goodBuffs.length)],2);
       }
       if(t.curHp===0){
-        doRevive(t,0.3);
+        doRevive(t,0.30+_burstLv*0.05);
         t.acted=true; // ★ 復活的隊友本回合已行動，避免立即再行動造成狀態混亂
       }
       bannerFX(t,'BUG修復！','#55ffcc',1000); renderCard(t);
@@ -10296,8 +10327,9 @@ function doDmg(target, rawDmg, opts={}){
   }
   // ── 爆發：警長正義制裁反彈（攻擊者身上有狀態時，傷害100%反彈給自己）──
   if(a && a.side!==target.side && a._burstReflect && !opts.isRebound && !opts.ignoreBuffs){
-    log(`[${a.name}] 正義制裁！傷害100%反彈給自己！`);
-    doDmg(a,rawDmg,{actor:target,noGuard:true,ignoreEvasion:true,isRebound:true});
+    const _reflDmg=Math.floor(rawDmg*(a._burstReflectMult||1.0));
+    log(`[${a.name}] 正義制裁！傷害反彈 ${_reflDmg}（×${(a._burstReflectMult||1.0).toFixed(1)}）給自己！`);
+    doDmg(a,_reflDmg,{actor:target,noGuard:true,ignoreEvasion:true,isRebound:true});
   }
   // Shield
   if(hasBuff(target,'shield')&&!opts.ignoreBuffs){
@@ -10402,8 +10434,16 @@ function doDmg(target, rawDmg, opts={}){
     rawDmg=Math.max(1,Math.ceil(rawDmg*(1-target._zoologistDmgReduce)));
     showPopup(target,'🦁-'+Math.round(target._zoologistDmgReduce*100)+'%','miss');
   }
-  // halfDmg (聖殿領域)
-  if(hasBuff(target,'halfDmg')){ rawDmg=Math.ceil(rawDmg/2); showShieldVFX(target,'halfDmg'); }
+  // halfDmg (聖殿領域) — 守衛爆發升級時改用SP×倍率減傷
+  if(hasBuff(target,'halfDmg')){
+    if(target._burstGuardSpMult){
+      const _gSpv=Math.floor((target.sp||0)*(1+(target.sp||0)*0.01));
+      rawDmg=Math.max(1,rawDmg-Math.floor(_gSpv*target._burstGuardSpMult));
+    } else {
+      rawDmg=Math.ceil(rawDmg/2);
+    }
+    showShieldVFX(target,'halfDmg');
+  }
   // dmgVuln (青龍召喚：受傷+50%)
   if(hasStatus(target,'dmgVuln')){ rawDmg=Math.ceil(rawDmg*1.5); }
   // 綠竹筍小妖天賦：受到傷害時50%機率減少40%
@@ -10478,12 +10518,21 @@ function doDmg(target, rawDmg, opts={}){
   // ★ 技能升級倍率（只對 isSkill:true 的傷害有效）
   if(opts.isSkill && _activeSkLvMult > 1.0) dmg = Math.round(dmg * _activeSkLvMult);
   if(a&&hasBuff(a,'dmgup')&&!opts.isHeal) dmg+=Math.floor(a.sp*0.5);
-  // 極速閃燃：下次傷害×2（使用後移除）
+  // 極速閃燃：下次傷害×(2+升級)(使用後移除)
   if(a&&hasBuff(a,'_sprintBurst')&&!opts.isHeal){
-    dmg=dmg*2;
+    const _sbuf=a.buffs.find(b=>b.type==='_sprintBurst');
+    const _smult=(_sbuf&&_sbuf._mult)||2;
+    dmg=Math.floor(dmg*_smult);
     a.buffs=a.buffs.filter(b=>b.type!=='_sprintBurst');
-    log(`🏃 極速閃燃！[${a.name}] 傷害×2！`);
-    bannerFX(a,'傷害×2！','#44ffcc',700);
+    log(`🏃 極速閃燃！[${a.name}] 傷害×${_smult}！`);
+    bannerFX(a,'傷害×'+_smult+'！','#44ffcc',700);
+  }
+  // 舞者爆發升級：_danceBurstShield 額外減傷
+  if(!opts.isHeal){
+    const _dbs=target&&target.buffs&&target.buffs.find(b=>b.type==='_danceBurstShield');
+    if(_dbs&&_dbs._pct>0){ rawDmg=Math.max(1,Math.floor(rawDmg*(1-_dbs._pct))); }
+    const _abs=target&&target.buffs&&target.buffs.find(b=>b.type==='_animalBurstShield');
+    if(_abs&&_abs._pct>0){ rawDmg=Math.max(1,Math.floor(rawDmg*(1-_abs._pct))); }
   }
   // 接力傳遞：傷害+50%（使用後移除）
   if(a&&hasBuff(a,'_relay')&&!opts.isHeal){
@@ -10549,10 +10598,11 @@ function doDmg(target, rawDmg, opts={}){
   sndAtk();
   /// ── 爆發：鮮血契約→嗜血（傷害100%吸血＋低血增傷）──
   if(a && a.curHp>0 && dmg>0 && a.side!==target.side && hasStatus(a,'burstVamp') && !opts.isRebound){
-    // 100% 吸血
-    const vAmt=dmg;
+    const _vSt=a.status.find(s=>s.type==='burstVamp');
+    const _vMult=(_vSt&&_vSt._vampMult)||1.0;
+    const vAmt=Math.floor(dmg*_vMult);
     doHeal(a,vAmt,{actor:a,noDice:true,isHeal:true});
-    log(`🦇 嗜血！[${a.name}] 吸收 ${vAmt}HP！`);
+    log(`🦇 嗜血！[${a.name}] 吸收 ${vAmt}HP！（×${_vMult.toFixed(1)}）`);
   }
   // Red flash on damaged card — 整張卡紅色光暈
   (function(tgt){
@@ -13809,6 +13859,10 @@ function doUseItemOn(it,a,t){
   applyItemOnTarget(it,a,t);
   removeItem(it);
   a.acted=true;
+  // ★ 冒險BOSS戰物品使用計數（用於評分）
+  if(typeof _adventureMode!=='undefined' && _adventureMode && typeof _advStats!=='undefined'){
+    _advStats.itemUsedCount = (_advStats.itemUsedCount||0) + 1;
+  }
   endAction(a,0);
 }
 function applyItemOnTarget(it,a,t,extraOpts){
@@ -14572,8 +14626,9 @@ function nextRound(){
       if(bsSt && bsSt._burstSleepOwner && bsSt._burstSleepOwner.curHp>0){
         const owner=bsSt._burstSleepOwner;
         G[owner.side].filter(h=>h.curHp>0).forEach(ally=>{
-          doHeal(ally,Math.max(1,Math.floor(ally.hp*0.2)),{actor:owner,noDice:true,isHeal:true});
-          log(`🎵 [${owner.name}] 無盡長眠！[${ally.name}] 友方恢復20%HP！`);
+          const _sleepHp=bsSt._sleepHealPct||0.10;
+          doHeal(ally,Math.max(1,Math.floor(ally.hp*_sleepHp)),{actor:owner,noDice:true,isHeal:true});
+          log(`🎵 [${owner.name}] 無盡長眠！[${ally.name}] 友方恢復${Math.round(_sleepHp*100)}%HP！`);
         });
       }
     });
@@ -14595,20 +14650,43 @@ function nextRound(){
     if(h._burstOverloadActive>0){
       h._burstOverloadActive--;
       if(h._burstOverloadActive<=0){
-        const totalDmg=h._burstOverload||0;
+        const _rawOverload=h._burstOverload||0;
+        const _overMult=h._burstOverloadMult||1.0;
+        const totalDmg=Math.floor(_rawOverload*_overMult);
         if(totalDmg>0){
           const opp2=h.side==='p1'?'p2':'p1';
           const foes=G[opp2].filter(x=>x.curHp>0);
           if(foes.length){
             const share=Math.ceil(totalDmg/foes.length);
             foes.forEach(f=>{ doDmg(f,share,{actor:h,isSkill:true,ignoreBuffs:true}); });
-            log(`⚙️ [${h.name}] 負荷超載爆炸！總傷害${totalDmg}，敵方各受到${share}！`);
+            log(`⚙️ [${h.name}] 負荷超載爆炸！累積${_rawOverload}×${_overMult.toFixed(1)}=${totalDmg}，敵方各受到${share}！`);
             flashScreen('rgba(200,200,255,1)',400);
           }
         }
         h._burstOverload=0;
         h._burstOverloadActive=0;
       }
+    }
+  });
+  // ── 占星師升級：zeroCost期間每回合恢復額外能量 ──
+  ['p1','p2'].forEach(side=>{
+    if(G[side]){
+      const _hasZC = G[side].some(t=>t.curHp>0&&hasBuff(t,'zeroCost'));
+      if(_hasZC){
+        G[side].forEach(t=>{
+          if(t.curHp>0 && t._starBurstEnergyPerTurn && t._starBurstEnergyPerTurn>0){
+            G.energy[side]=Math.min(10,(G.energy[side]||0)+t._starBurstEnergyPerTurn);
+            showPopup(t,'+'+t._starBurstEnergyPerTurn+'E','energy');
+          }
+        });
+      }
+    }
+  });
+  // ── 凡人：模仿加持結束後還原能力值 ──
+  G.p1.concat(G.p2).forEach(h=>{
+    if(h._mimicStatBoost && !h._mimicInProgress){
+      h.atk=Math.max(1,h.atk-h._mimicStatBoost); h.sp=Math.max(0,h.sp-h._mimicStatBoost); h.spd=Math.max(1,h.spd-h._mimicStatBoost);
+      delete h._mimicStatBoost;
     }
   });
   // ── 警長爆發反彈回合遞減 ──
@@ -18397,11 +18475,13 @@ let _advBossRageBurstUsed = false; // 九尾HP≤50% 憤怒爆發已使用
 let _advStats = {
   rounds: 0,
   correctCount: 0,
+  totalQuestions: 0,   // 答題總次數（含答錯）
   totalAnswerTime: 0,
   deathCount: 0,
   continueCount: 0,
   startTime: 0,
-  totalQuizScore: 0, // 累積答題得分（依難度計算）
+  totalQuizScore: 0,   // 累積答題得分（依難度計算）
+  itemUsedCount: 0,    // BOSS戰中使用物品卡次數
 };
 // 題目難度基礎分對照
 const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80 };
@@ -18429,7 +18509,7 @@ function advStartCutscene(stage) {
   if(typeof _advQuizRound !== 'undefined') _advQuizRound = 0;
   _advUsedQuestionIds = new Set();
   _advSessionQuestions = [];
-  _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0};
+  _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0};
   _advBurstRewardUsed = false; // 重置「極限爆發」出現限制
   _advPendingReward = null;
 
@@ -19261,6 +19341,7 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 
   if (isCorrect) {
     _advStats.correctCount++;
+    _advStats.totalQuestions++;
     _advStats.totalAnswerTime += elapsed;
     // 依題目年級和精熟度計算本題得分
     const _qGrade = (_advCurrentQuestion && _advCurrentQuestion.grade) || '中年級';
@@ -19298,6 +19379,7 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       try { beep(300,'sine',0.08,0.12); } catch(e) {}
       return; // 讓玩家繼續作答，不結束
     }
+    _advStats.totalQuestions++; // 答錯計入總次數
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
     // ★ 答錯專用音效
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
@@ -19814,7 +19896,7 @@ function advRestartBattle() {
   advUpdateTreasureBar();
   // 重置接關
   _advContinueCount=0;
-  _advStats={rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0};
+  _advStats={rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0};
   _advPendingReward=null;
   // 關閉所有冒險overlay
   ['adv-quiz-overlay','adv-reward-overlay','adv-continue-overlay','adv-result-overlay']
@@ -19835,23 +19917,44 @@ function advShowBattleResult(win) {
   const deaths = stats.deathCount;
   const conts = stats.continueCount;
 
-  // 計分公式（題目難度越高、答對分數越多）
-  const quizScore = (isNaN(stats.totalQuizScore) || !stats.totalQuizScore) ? 0 : Math.round(stats.totalQuizScore);
-  let score = 0;
-  if(win) score += 1000;
-  score += quizScore;                              // 依難度累積的答題分
-  score += Math.max(0, (20-rounds)*10);            // 回合效率加分
-  score -= deaths * 50;                            // 倒下扣分
-  score -= conts * 100;                            // 接關扣分
-  if(correct>0) score += Math.max(0, Math.floor((30-parseFloat(avgTime))*5)); // 答題速度加分
-  score = Math.max(0, score);
+  // ══════════════════════════════════════════════
+  // ★ 新評分系統（6項依序加權，最高100分）
+  // 1. 答題正確率（最重要）→ 40分
+  // 2. 答題速度              → 20分
+  // 3. 未使用物品卡          → 15分
+  // 4. 未接關                → 10分
+  // 5. 倒下次數              → 10分
+  // 6. 回合數（越少越好）    → 5分
+  // ══════════════════════════════════════════════
+  const totalQ = stats.totalQuestions || 0;
+  const itemUsed = stats.itemUsedCount || 0;
 
-  // 等級門檻依精熟度動態調整
-  const _diffKey2 = (_advPlayerDifficulty==='沒自信（輕鬆模式）'||_advPlayerDifficulty==='沒自信') ? '沒自信'
-                  : (_advPlayerDifficulty==='我很會（挑戰模式）'||_advPlayerDifficulty==='我很會') ? '我很會' : '普通';
-  const _gradeThresh = _diffKey2==='沒自信' ? [800,500,250] : _diffKey2==='我很會' ? [1800,1200,600] : [1200,800,400];
-  const grade = score>=_gradeThresh[0]?'S':score>=_gradeThresh[1]?'A':score>=_gradeThresh[2]?'B':'C';
+  // 1. 正確率（0~40分）
+  const correctRate = totalQ > 0 ? correct / totalQ : 0;
+  const score1 = Math.round(correctRate * 40);
+
+  // 2. 答題速度（0~20分）：平均每題≤5秒滿分，≥20秒0分
+  const avgTimeSec = correct > 0 ? stats.totalAnswerTime / correct : 20;
+  const score2 = Math.round(Math.max(0, Math.min(20, (20 - avgTimeSec) / 15 * 20)));
+
+  // 3. 未使用物品卡（0~15分）：0次=15分，每用1次-3分
+  const score3 = Math.max(0, 15 - itemUsed * 3);
+
+  // 4. 未接關（0~10分）：0次=10分，每接1次-5分
+  const score4 = Math.max(0, 10 - conts * 5);
+
+  // 5. 倒下次數（0~10分）：0次=10分，每倒1次-2分
+  const score5 = Math.max(0, 10 - deaths * 2);
+
+  // 6. 回合效率（0~5分）：≤30回合=5分，每多5回合-1分
+  const score6 = Math.max(0, 5 - Math.floor(Math.max(0, rounds - 30) / 5));
+
+  const score = score1 + score2 + score3 + score4 + score5 + score6; // 0~100分
+
+  // 評分門檻（固定，不依難度）
+  const grade = score>=85?'S':score>=65?'A':score>=40?'B':'C';
   const gradeColors = {S:'#ffe050',A:'#7df0a8',B:'#4a9eff',C:'#cc99ff'};
+  const quizScore = (isNaN(stats.totalQuizScore) || !stats.totalQuizScore) ? 0 : Math.round(stats.totalQuizScore);
 
   document.getElementById('adv-result-title').textContent = win ? '🏆 Boss 討伐成功！' : '💀 戰鬥失敗';
   // ★ 勝利時顯示獎勵預告
@@ -19866,14 +19969,15 @@ function advShowBattleResult(win) {
   const gradeEl = document.getElementById('adv-result-grade');
   gradeEl.textContent = grade;
   gradeEl.style.color = gradeColors[grade];
-  document.getElementById('adv-result-score').textContent = `總分：${score} 分`;
+  document.getElementById('adv-result-score').textContent = `總分：${score} 分（滿分100）`;
+  const _rateStr = totalQ > 0 ? `${correct}/${totalQ}（${Math.round(correctRate*100)}%）` : '－';
   document.getElementById('adv-result-stats').innerHTML = `
-    <div class="adv-result-row"><span>⚔ 使用回合數</span><span>${rounds} 回合</span></div>
-    <div class="adv-result-row"><span>📚 答對題數</span><span>${correct} 題</span></div>
-    <div class="adv-result-row"><span>🏅 答題得分</span><span>${quizScore} 分</span></div>
-    <div class="adv-result-row"><span>⏱ 平均答題速度</span><span>${avgTime} 秒</span></div>
-    <div class="adv-result-row"><span>💀 倒下次數</span><span>${deaths} 次</span></div>
-    <div class="adv-result-row"><span>🔄 接關次數</span><span>${conts} 次</span></div>
+    <div class="adv-result-row"><span>📚 答題正確率</span><span>${_rateStr} +${score1}分</span></div>
+    <div class="adv-result-row"><span>⏱ 答題速度</span><span>平均${avgTimeSec.toFixed(1)}秒 +${score2}分</span></div>
+    <div class="adv-result-row"><span>🎒 物品使用</span><span>${itemUsed}次 +${score3}分</span></div>
+    <div class="adv-result-row"><span>🔄 接關次數</span><span>${conts}次 +${score4}分</span></div>
+    <div class="adv-result-row"><span>💀 倒下次數</span><span>${deaths}次 +${score5}分</span></div>
+    <div class="adv-result-row"><span>⚔ 使用回合數</span><span>${rounds}回合 +${score6}分</span></div>
   `;
   document.getElementById('adv-result-overlay').classList.add('show');
 
@@ -23617,7 +23721,7 @@ function advFinishMiniBattle(win) {
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
       const _miniLevelUps = []; // ★ 收集升級事件
       heroes.forEach(name => {
-        const _lu = addHeroExp(name, battleHeroes.includes(name) ? Math.round(baseExp*1.5) : 0);
+        const _lu = addHeroExp(name, battleHeroes.includes(name) ? baseExp : 0);
         if(_lu && _lu.length) _miniLevelUps.push(..._lu);
       });
       // ★ 顯示小怪結算畫面
@@ -23627,9 +23731,9 @@ function advFinishMiniBattle(win) {
       const _expEl = document.getElementById('adv-mini-result');
       if(_expEl){
         const _expInfoEl = document.getElementById('adv-mini-result-exp');
-        const _miniCoins = Math.round(baseExp*1.5 * 0.20);
+        const _miniCoins = Math.round(baseExp * 0.20);
         if(_miniCoins > 0) addKnowledgeCoins(_miniCoins);
-        if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${Math.round(baseExp*1.5)}　💰+${_miniCoins}知識幣`;
+        if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${baseExp}　💰+${_miniCoins}知識幣`;
         // ★ 若有升級，先演出升級畫面再顯示結算
         const _showMiniResult = () => { _expEl.style.display = 'flex'; _expEl.classList.add('show'); };
         if(_miniLevelUps && _miniLevelUps.length) {
@@ -23639,7 +23743,7 @@ function advFinishMiniBattle(win) {
         }
         // 結算畫面顯示（由下方 _RESULT_DUR 的 setTimeout 統一控制）
       } else {
-        bannerFX(null, `⚔️ 小怪擊敗！出戰英雄 +${Math.round(baseExp*1.5)} EXP`, '#aaffcc', 2000);
+        bannerFX(null, `⚔️ 小怪擊敗！出戰英雄 +${baseExp} EXP`, '#aaffcc', 2000);
       }
       gameCloudSave();
     }
