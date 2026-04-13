@@ -1,4 +1,5 @@
-<button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
+
+            <button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -18779,6 +18780,27 @@ function advStartBattle(){
     G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
     try{ G.p1.forEach(h=>renderCard(h)); }catch(e){}
   }
+
+  // ★ BOSS戰開場：重建牌組並發三張初始物品牌（同正常戰鬥開局）
+  try{ buildDeck(); }catch(e){ console.error('[advStartBattle] buildDeck',e); }
+  try{
+    var _bossInitInv = [null, null, null];
+    for(var _bsi = 0; _bsi < 3; _bsi++){
+      var _bTries = 0, _bDrawn = drawItem();
+      while(_bDrawn.type === 'equip' && _bTries < 10){ _bDrawn = drawItem(); _bTries++; }
+      if(_bDrawn.type !== 'equip') _bossInitInv[_bsi] = _bDrawn;
+    }
+    G.inv = _bossInitInv;
+    // 敵方也發三張（BOSS用）
+    var _bossInitInv2 = [null, null, null];
+    for(var _bsi2 = 0; _bsi2 < 3; _bsi2++){
+      var _bTries2 = 0, _bDrawn2 = drawItem();
+      while(_bDrawn2.type === 'equip' && _bTries2 < 10){ _bDrawn2 = drawItem(); _bTries2++; }
+      if(_bDrawn2.type !== 'equip') _bossInitInv2[_bsi2] = _bDrawn2;
+    }
+    G.inv2 = _bossInitInv2;
+    log('[BOSS戰] 開場發牌：玩家3張物品牌、BOSS3張物品牌');
+  }catch(e){ console.error('[advStartBattle] dealCards',e); }
   // ★ 設定BOSS全螢幕戰鬥背景
   (function(){ const _bb=document.getElementById('adv-battle-bg'); if(_bb){ _bb.className=''; _bb.classList.add('bg-boss'); void _bb.offsetWidth; _bb.classList.add('visible'); } })();
   const gc = document.getElementById('gc');
