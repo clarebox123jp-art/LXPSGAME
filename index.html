@@ -41,6 +41,23 @@
     await signOut(_fbAuth);
   };
 
+  // ★ 切換帳號：先登出再立即重新登入（Google 帳號選擇器會自動彈出）
+  window._fbSwitchAccount = async function() {
+    try {
+      await signOut(_fbAuth);
+      // 稍微延遲確保登出完成，再觸發登入
+      setTimeout(async () => {
+        try {
+          await signInWithPopup(_fbAuth, _fbProvider);
+        } catch(e) {
+          console.error('切換帳號登入失敗', e);
+        }
+      }, 300);
+    } catch(e) {
+      console.error('切換帳號登出失敗', e);
+    }
+  };
+
   // 雲端儲存
   window._fbSave = async function(uid, data) {
     try {
@@ -3104,6 +3121,7 @@ body {
   <div id="google-user-info" style="display:none;align-items:center;gap:10px;">
     <img id="google-avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(212,168,67,0.6);" />
     <span id="google-name" style="color:#ffe8a0;font-size:20px;font-weight:700;"></span>
+    <button onclick="playSfx('sfx-confirm',0.5);_fbSwitchAccount && _fbSwitchAccount()" style="padding:4px 14px;font-size:16px;background:rgba(30,60,120,0.85);border:1px solid rgba(100,160,255,0.5);color:#88ccff;border-radius:8px;cursor:pointer;">🔄 切換帳號</button>
     <button onclick="playSfx('sfx-cancel',0.5);window._fbSignOut && window._fbSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
   </div>
 </div>
