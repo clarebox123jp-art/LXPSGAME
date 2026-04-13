@@ -1,5 +1,4 @@
-
-            <button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
+<button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -8472,6 +8471,9 @@ function renderCard(h){
     e.stopPropagation();
     // 若此卡片可爆發且是p1側，顯示爆發面板
     if(el._previewHero && el._previewHero.side==='p1' && _canBurst(el._previewHero)){
+      // ★ 出題中（_gamePaused=true）時不允許開啟爆發面板，
+      //   因為 _pSetTimeout 在暫停中會延遲，玩家會感覺按了沒反應
+      if(typeof _gamePaused !== 'undefined' && _gamePaused) return;
       const existing=document.getElementById('burst-panel');
       if(existing && existing._forHero===el._previewHero){ hideBurstPanel(); return; }
       hideBurstPanel();
@@ -12092,14 +12094,13 @@ function execSkill(a, sk, cost, stype){
     const _gtAlive=G[a.side].filter(h=>h.curHp>0);
     playSkillFX('全體治療',a,_gtAlive);
     _gtAlive.forEach(h=>doHeal(h,Math.max(1,Math.floor(h.hp*0.2)),{actor:a,isHeal:true}));
-    // 額外再選一名友方恢復額外20%
+    // ★ 額外治療自動選HP最少的己方（不需玩家點擊），避免 pendingCb 殘留導致技能無限連用
     if(_gtAlive.length>0){
-      setPending('self_or_ally',t=>{
-        doHeal(t,Math.max(1,Math.floor(t.hp*0.2)),{actor:a,isHeal:true});
-        log(`[${t.name}] 額外恢復20%HP！`);
-        endAction(a,cost);
-      });
-    } else { endAction(a,cost); }
+      const _gtTarget = _gtAlive.slice().sort((x,y)=>x.curHp-y.curHp)[0];
+      doHeal(_gtTarget,Math.max(1,Math.floor(_gtTarget.hp*0.2)),{actor:a,isHeal:true});
+      log(`[${_gtTarget.name}] 額外恢復20%HP！`);
+    }
+    endAction(a,cost);
   }
   // ====== 舞者 ======
   else if(n==='熱情之舞'){
@@ -16546,7 +16547,19 @@ function ctrlRestart(){
   if(_stuckCheckTimer){ clearInterval(_stuckCheckTimer); }
   if(_gamePaused){ _gamePaused=false; }
 
-  // Hide all overlays（含冒險頁面）
+  // ★ 完整清除冒險模式所有旗標，避免重新開始後殘留狀態干擾新遊戲
+  try{
+    if(typeof exitAdventureMode === 'function') exitAdventureMode();
+  }catch(e){}
+  if(typeof _adventureMode !== 'undefined'){ _adventureMode = false; _adventureStage = null; }
+  if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = false;
+  if(typeof _advMiniResultShowing !== 'undefined') window._advMiniResultShowing = false;
+  if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+  if(typeof _advQuizActive !== 'undefined'){ _advQuizActive = false; _advQuizPhase = 'idle'; }
+  if(typeof _advBossIntroActive !== 'undefined') _advBossIntroActive = false;
+  if(typeof _advBossActionSkip !== 'undefined') _advBossActionSkip = false;
+  try{ if(_advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer=null; } }catch(e){}
+  if(typeof _gamePaused !== 'undefined') _gamePaused = false;
   ['result-overlay','hero-pick-overlay','skill-replace-overlay','equip-overlay',
    'discard-overlay','dice-overlay','pause-overlay','elem-pick-overlay',
    'adventure-overlay'].forEach(id=>{
@@ -16620,9 +16633,18 @@ function ctrlLeaveBattle(){
   // Stop all audio
   bgmStop();
   document.querySelectorAll('audio').forEach(el=>{ try{el.pause();el.currentTime=0;}catch(e){} });
-  // Exit adventure mode
-  if(typeof exitAdventureMode==='function') exitAdventureMode();
+  // ★ 完整清除冒險模式所有旗標
+  try{ if(typeof exitAdventureMode==='function') exitAdventureMode(); }catch(e){}
   if(typeof _adventureMode!=='undefined'){ _adventureMode=false; _adventureStage=null; }
+  if(typeof _advMiniBattleActive!=='undefined') _advMiniBattleActive = false;
+  if(typeof _advMiniResultShowing!=='undefined') window._advMiniResultShowing = false;
+  if(typeof _advQuizResolveCb!=='undefined') _advQuizResolveCb = null;
+  if(typeof _advQuizActive!=='undefined'){ _advQuizActive=false; _advQuizPhase='idle'; }
+  if(typeof _advBossIntroActive!=='undefined') _advBossIntroActive = false;
+  if(typeof _advBossActionSkip!=='undefined') _advBossActionSkip = false;
+  try{ if(_advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer=null; } }catch(e){}
+  if(typeof _gamePaused!=='undefined') _gamePaused = false;
+  clearTurnTimer();
   // Hide gc, show main overlay
   const gc=document.getElementById('gc');
   if(gc) gc.classList.remove('adv-battle');
