@@ -17700,8 +17700,20 @@ document.addEventListener('visibilitychange', function(){
 // ====== MOBILE TOUCH SUPPORT ======
 (function addTouchSupport(){
   // Prevent default touch behaviors that interfere with game
+  // ★ 但排除圖鑑/詳情等可滾動容器（iOS 上需要允許 touchmove 才能滾動）
+  var _scrollableIds = [
+    'hero-page-grid', 'monster-page-content', 'hero-detail-box',
+    'hero-pick-arena-inner', 'skill-replace-overlay', 'backpack-main',
+    'shop-main', 'adv-left-panel', 'adv-right-panel'
+  ];
   document.addEventListener('touchmove', function(e){
-    if(e.target.closest('#gc')) e.preventDefault();
+    if(!e.target.closest('#gc')) return;
+    // 若觸碰起點在可滾動容器內，允許原生滾動
+    var inScrollable = _scrollableIds.some(function(id){
+      return e.target.closest('#'+id);
+    });
+    if(inScrollable) return; // 放行，讓瀏覽器處理滾動
+    e.preventDefault();
   }, { passive: false });
   // Prevent long-press context menu on game canvas
   document.addEventListener('contextmenu', function(e){
