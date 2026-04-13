@@ -7330,6 +7330,21 @@ function focusHero(idx, name){
       +'</div>';
   })();
 
+  // ★ 冒險模式：計算加上投資加成後的實際能力值
+  const _fInv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[name]) || {};
+  const _fHp  = b.hp  + (_fInv.hp  || 0);
+  const _fAtk = b.atk + (_fInv.atk || 0);
+  const _fSp  = b.sp  + (_fInv.sp  || 0);
+  const _fSpd = b.spd + (_fInv.spd || 0);
+  // 產生能力值 HTML（有加點時顯示綠色 +n）
+  function _fStatHtml(key, cls, label, base, total) {
+    const bonus = total - base;
+    const valHtml = bonus > 0
+      ? '<b>'+total+'</b><span style="font-size:17px;color:#44ff88;font-weight:700;"> +'+bonus+'</span>'
+      : '<b>'+total+'</b>';
+    return '<div class="hf-stat '+cls+'" onclick="event.stopPropagation();toggleStatPopup(this,\''+key+'\',26)" style="cursor:pointer"><span class="hf-sl">'+label+'</span>'+valHtml+'</div>';
+  }
+
   focus.innerHTML=''
     +'<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;">'
     +'<div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">'
@@ -7346,10 +7361,10 @@ function focusHero(idx, name){
     +(lore?'<div style="font-size:28px;font-weight:500;color:rgba(200,180,255,0.88);letter-spacing:0.5px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;">「'+lore+'」</div>':'')
     +'</div>'
     +'<div class="hf-stats">'
-    +'<div class="hf-stat hf-stat-hp" onclick="event.stopPropagation();toggleStatPopup(this,\'hp\',26)" style="cursor:pointer"><span class="hf-sl">HP</span><b>'+b.hp+'</b></div>'
-    +'<div class="hf-stat hf-stat-atk" onclick="event.stopPropagation();toggleStatPopup(this,\'atk\',26)" style="cursor:pointer"><span class="hf-sl">攻擊</span><b>'+b.atk+'</b></div>'
-    +'<div class="hf-stat hf-stat-sp" onclick="event.stopPropagation();toggleStatPopup(this,\'sp\',26)" style="cursor:pointer"><span class="hf-sl">特技</span><b>'+b.sp+'</b></div>'
-    +'<div class="hf-stat hf-stat-spd" onclick="event.stopPropagation();toggleStatPopup(this,\'spd\',26)" style="cursor:pointer"><span class="hf-sl">速度</span><b>'+b.spd+'</b></div>'
+    +_fStatHtml('hp',  'hf-stat-hp',  'HP',   b.hp,  _fHp)
+    +_fStatHtml('atk', 'hf-stat-atk', '攻擊', b.atk, _fAtk)
+    +_fStatHtml('sp',  'hf-stat-sp',  '特技', b.sp,  _fSp)
+    +_fStatHtml('spd', 'hf-stat-spd', '速度', b.spd, _fSpd)
     +'</div>'
     +'<div class="hf-skills">'
     +'<div class="hf-skill-row"><div class="hf-sk-header">'
