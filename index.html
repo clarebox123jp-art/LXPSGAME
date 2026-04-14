@@ -3230,7 +3230,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2226</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2233</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -21856,19 +21856,19 @@ function _tutInterInjectCSS() {
       cursor:default;
     }
     ._ti-msg-bar {
-      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+      position:fixed; top:10px; left:50%; transform:translateX(-50%);
       z-index:9953; pointer-events:auto;
       background:linear-gradient(160deg,rgba(5,15,35,0.97),rgba(3,8,20,0.98));
-      border:3px solid #ffcc44; border-radius:22px; padding:24px 44px 20px;
+      border:2px solid #ffcc44; border-radius:16px; padding:10px 24px 10px;
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
       max-width:min(900px,92vw); text-align:center;
-      box-shadow:0 0 60px rgba(255,200,0,0.55);
-      display:flex; flex-direction:column; align-items:center; gap:12px;
+      box-shadow:0 0 40px rgba(255,200,0,0.45);
+      display:flex; flex-direction:column; align-items:center; gap:6px;
     }
-    ._ti-msg-bar .ti-title { font-size:48px; font-weight:900; color:#ffcc44; }
-    ._ti-msg-bar .ti-text  { font-size:38px; color:#fff; line-height:1.5; }
-    ._ti-msg-bar .ti-skip  { font-size:28px; color:#888; cursor:pointer;
-      padding:6px 22px; border:1px solid #444; border-radius:10px;
+    ._ti-msg-bar .ti-title { font-size:28px; font-weight:900; color:#ffcc44; }
+    ._ti-msg-bar .ti-text  { font-size:20px; color:#fff; line-height:1.4; }
+    ._ti-msg-bar .ti-skip  { font-size:17px; color:#888; cursor:pointer;
+      padding:4px 16px; border:1px solid #444; border-radius:8px;
       background:transparent; font-family:inherit; }
     ._ti-msg-bar .ti-skip:hover { color:#aaa; border-color:#666; }
     @keyframes _tiPraiseIn {
