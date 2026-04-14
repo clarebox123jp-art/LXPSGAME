@@ -3230,7 +3230,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2238</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2352</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -5220,15 +5220,15 @@ const HERO_DB = {
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
-  s2:{n:'睡覺功',c:5,d:'解除自身所有不利狀態並恢復10%HP',fd:'解除自己身上所有不利狀態，並恢復最大HP的10%（約50HP）。'}
+  s2:{n:'睡覺功',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'解除自己身上所有不利狀態，並恢復最大HP的10%（約50HP）。'}
 },
 '綠竹筍小妖':{hp:180,atk:9,sp:10,spd:5,exp:20,
-  s1:{n:'筍之守護',c:3,d:'友方全體各獲得20護盾',fd:'使友方全體各獲得可抵擋20傷害的護盾。'},
+  s1:{n:'筍之守護',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'為己方 HP 百分比最低的1名友方附加可抵擋20傷害的護盾。'},
   s2:{n:'筍之刺',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'用特技值對1名對手造成傷害，有50%機率使其「麻痺」無法行動1回合。'}
 },
 '茶葉精靈':{hp:150,atk:7,sp:17,spd:10,exp:18,
   s1:{n:'一壺鐵觀音',c:3,d:'依特技恢復友方全體HP',fd:'用特技值恢復友方全體HP。'},
-  s2:{n:'一壺包種茶',c:3,d:'解除友方全體不利狀態，再恢復HP最少的隊友',fd:'解除友方全體所有不利狀態，並用特技值恢復HP最少的友方HP（可復活）。'}
+  s2:{n:'一壺包種茶',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'解除友方全體所有不利狀態，並用特技值恢復HP比例最低的1名友方HP（可復活）。'}
 },
 '偷摘花的頑皮妖精':{hp:42,atk:10,sp:17,spd:13,exp:8,
   s1:{n:'花瓣飛刀',c:3,d:'依特技對全體敵人造成傷害',fd:'向全體存活的敵人擲出花瓣飛刀，每人受到等同特技值的傷害。'},
@@ -5648,7 +5648,7 @@ const BURST_DB = {
   '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'用特技的40%對敵方全體造成3~5次傷害，此傷害無視有利狀態且必中。同時恢復我方全體HP，HP為0也可復活。'},
   '小劇團員':  {n:'謝幕掌聲', d:'依敵方倒下人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依敵方倒下的人數×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
   // ── BOSS 爆發技能 ──
-  '九尾空貓怪':{n:'焰尾九連擊', d:'SP50%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的50%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
+  '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
 
 };
 
@@ -9918,7 +9918,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(!nextFoes.length){ _remainHits=0; _catNine(null); return; }
         target = nextFoes.sort((a,b)=>a.curHp-b.curHp)[0];
       }
-      const hitDmg = Math.floor(spv*0.5*_burstMult);
+      const hitDmg = Math.floor(spv*0.4*_burstMult);
       doDmg(target, hitDmg, {actor:h, isSkill:true, ignoreBuffs:false});
       _remainHits--;
       renderCard(target);
@@ -12812,16 +12812,17 @@ function execSkill(a, sk, cost, stype){
     endAction(a, cost);
   }
   else if(n==='筍之守護'){
-    log(`🎋 [${a.name}] 筍之守護！友方全體+20護盾！`);
-    G[a.side].forEach(ally=>{
-      if(ally.curHp>0){
-        const existing = ally.buffs.find(b=>b.type==='bigshield');
-        if(existing){ existing._hp = (existing._hp||0)+20; }
-        else { ally.buffs.push({type:'bigshield', dur:99, _hp:20}); }
-        bannerFX(ally, '🎋+20護盾', '#88cc44', 700);
-        renderCard(ally);
-      }
-    });
+    // ★ 只護 HP% 最低的 1 名友方
+    const _aliveAllies = G[a.side].filter(h=>h.curHp>0);
+    const _target = _aliveAllies.sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
+    if(_target){
+      const ex = _target.buffs.find(b=>b.type==='bigshield');
+      if(ex){ ex._hp = (ex._hp||0)+20; }
+      else { _target.buffs.push({type:'bigshield', dur:99, _hp:20}); }
+      bannerFX(_target, '🎋+20護盾', '#88cc44', 800);
+      renderCard(_target);
+      log(`🎋 [${a.name}] 筍之守護！→ [${_target.name}] +20護盾！`);
+    }
     endAction(a, cost);
   }
   else if(n==='筍之刺'){
@@ -12850,7 +12851,7 @@ function execSkill(a, sk, cost, stype){
     log(`🍵 [${a.name}] 一壺包種茶！解除不利狀態並恢復友方！`);
     G[a.side].forEach(ally=>{ clearBadStatus(ally); }); // 包含倒下的
     // 恢復HP最低的存活友方（可復活）
-    const _chaTarget = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0]
+    const _chaTarget = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0]
                     || G[a.side].find(x=>x.curHp===0);
     if(_chaTarget){
       if(_chaTarget.curHp===0){ doRevive(_chaTarget, 0.5); }
@@ -14786,13 +14787,27 @@ function startTurn(){
       const _rbBtn = document.getElementById('adv-rollback-btn');
       if(_rbBtn) _rbBtn.style.display = '';
     }
-    _pSetTimeout(()=>aiAct(next),1200);
+    // ★ 小怪戰：每回合第一隻敵方行動前出問題
+    if(_adventureMode && _advMiniBattleActive && !window._miniQuizDoneThisRound){
+      window._miniQuizDoneThisRound = true;
+      _gamePaused = true;
+      _pSetTimeout(() => {
+        _advMiniQuizAsk(() => {
+          _gamePaused = false;
+          _pSetTimeout(()=>aiAct(next), 400);
+        });
+      }, 800);
+    } else {
+      _pSetTimeout(()=>aiAct(next),1200);
+    }
   }
 }
 
 function nextRound(){
   // 回合數遞增
   G.round = (G.round||1) + 1;
+  // ★ 每回合結束重置小怪戰答題旗標
+  if(_adventureMode && _advMiniBattleActive) window._miniQuizDoneThisRound = false;
   // Tick field card durations
   fieldCards=fieldCards.map(f=>({...f,dur:f.dur-1})).filter(f=>f.dur>0);
   renderBfield(); updateFieldFX();
@@ -15620,19 +15635,20 @@ function aiUseSkill(a,sk,cost,pref){
   }
   // ★ 筍之守護：AI使用 - 友方全體+20護盾
   else if(n==='筍之守護'){
-    G[a.side].forEach(ally=>{
-      if(ally.curHp>0){
-        const ex=ally.buffs.find(b=>b.type==='bigshield');
-        if(ex){ ex._hp=(ex._hp||0)+20; } else { ally.buffs.push({type:'bigshield',dur:99,_hp:20}); }
-        renderCard(ally);
-      }
-    });
-    log(`[${a.name}] 筍之守護！友方全體+20護盾！`);
+    // ★ 只護 HP% 最低的 1 名友方
+    const _aiAllies = G[a.side].filter(h=>h.curHp>0);
+    const _aiTgt = _aiAllies.sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
+    if(_aiTgt){
+      const ex=_aiTgt.buffs.find(b=>b.type==='bigshield');
+      if(ex){ ex._hp=(ex._hp||0)+20; } else { _aiTgt.buffs.push({type:'bigshield',dur:99,_hp:20}); }
+      renderCard(_aiTgt);
+      log(`[${a.name}] 筍之守護！→ [${_aiTgt.name}] +20護盾！`);
+    }
   }
   // ★ 一壺包種茶：AI使用 - 解除不利+治療
   else if(n==='一壺包種茶'){
     G[a.side].forEach(ally=>{ if(ally.curHp>=0) clearBadStatus(ally); });
-    const wk=G[a.side].filter(x=>x.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0];
+    const wk=G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
     if(wk){ doHeal(wk,a.sp,{actor:a,isHeal:true}); }
     G[a.side].forEach(ally=>renderCard(ally));
   }
@@ -19386,10 +19402,11 @@ function advConfirmChoice(stage, sceneIdx) {
   banner.textContent = `✅ 已記錄：${_advTempChoice}`;
   try { beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.1,0.1),120); } catch(e) {}
 
-  // 抽法寶
+  // ★ 法寶改在小怪戰結束時發放（advFinishMiniBattle），這裡直接進小怪戰
   setTimeout(() => {
     banner.textContent = '';
-    advGiveTreasure(sceneIdx);
+    const nextIdx2 = sceneIdx + 1;
+    advStartMiniBattle(nextIdx2);
   }, 1200);
 }
 
@@ -20122,6 +20139,8 @@ function advOnQuizSkip() {
     }
     // BOSS 被跳過，不執行 _advQuizResolveCb，直接結束本次行動
     _advQuizResolveCb = null;
+    // ★ 關鍵：把 BOSS 本回合標記為已行動（防止 startTurn 再次選到同一個 BOSS 觸發答題）
+    if(G && G.p2){ G.p2.forEach(b=>{ if(b.curHp>0) b.acted=true; }); }
     // 繼續下一回合
     setTimeout(() => { try{ startTurn(); }catch(e){} }, 800);
     return;
@@ -22085,6 +22104,24 @@ function _tutInterShowMsg(title, text, skipCb, pos) {
     d.style.transform = 'none';
     d.style.maxWidth = 'min(600px,52vw)';
   }
+  // ★ pos='above-items'：顯示在物品欄上方（技能欄位置），字體與其他教學一致
+  if(pos === 'above-items'){
+    // 找 action-panel 的位置（技能欄），讓提示出現在技能欄上方
+    const apEl = document.getElementById('action-panel');
+    const sbEl = document.getElementById('sb');
+    if(apEl && sbEl){
+      const apRect = apEl.getBoundingClientRect();
+      const sbRect = sbEl.getBoundingClientRect();
+      d.style.position = 'fixed';
+      d.style.bottom = (window.innerHeight - apRect.top + 10) + 'px';
+      d.style.top = 'auto';
+      d.style.right  = (window.innerWidth - sbRect.right + 8) + 'px';
+      d.style.left   = 'auto';
+      d.style.transform = 'none';
+      d.style.maxWidth = (sbRect.width - 16) + 'px';
+      d.style.textAlign = 'center';
+    }
+  }
   document.body.appendChild(d);
 }
 function _tutInterClearMsg() {
@@ -22288,7 +22325,7 @@ function _tutInterStartSellOrSkillPhase() {
     const slotEl = document.getElementById(`slot-${itemIdx}`);
     _tutInterShowArrow(slotEl, 'down');  // ★ 物品卡在右欄 → 手指↓從上方指
     _tutInterShowMsg('💰 賣掉物品卡獲得能量！',
-      '點擊物品卡，再點「◆ 賣出」按鈕，獲得能量準備使用技能！', null, 'left');
+      '點擊物品卡，再點「◆ 賣出」按鈕，獲得能量準備使用技能！', null, 'above-items');
     if(_tutInterPollId) clearInterval(_tutInterPollId);
     _tutInterPollId = setInterval(_tutInterPoll, 250);
   } else {
@@ -24830,9 +24867,158 @@ let _advMiniBattleActive = false;
 let _advMiniBattleNextScene = 0;
 let _advBossTeamSaved = null; // 儲存BOSS陣容，小怪戰後恢復
 
+// ══════════════════════════════════════════════
+//  小怪戰問答系統
+// ══════════════════════════════════════════════
+
+// 依場景取得小怪戰題庫（場景0=自然科簡單，場景1=玩家科目簡單，場景2=玩家科目玩家難度）
+function _advMiniGetQuizPool(sceneIdx) {
+  const grade   = _advPlayerGrade      || '小學中年級';
+  const subject = _advPlayerSubject    || '自然';
+  const diff    = _advPlayerDifficulty || '普通';
+  let targetSubject, targetDiff;
+  if(sceneIdx === 0){
+    targetSubject = '自然'; targetDiff = '沒自信';
+  } else if(sceneIdx === 1){
+    targetSubject = subject; targetDiff = '沒自信';
+  } else {
+    targetSubject = subject; targetDiff = diff;
+  }
+  // 依年級對應
+  const gradeMap = {
+    '小學低年級':['低年級'], '小學中年級':['中年級'], '小學高年級':['高年級'],
+    '五年級':['高年級','五年級'], '國中':['國中','高年級']
+  };
+  const validGrades = gradeMap[grade] || ['中年級'];
+  let pool = ADV_QUIZ_DB.filter(q =>
+    validGrades.some(g => q.grade && q.grade.includes(g)) &&
+    q.subject === targetSubject &&
+    q.difficulty === targetDiff &&
+    !window._miniQuizUsedIds.has(q.id)
+  );
+  // 若 pool 太少則放寬限制（只過濾科目+難度）
+  if(pool.length < 3){
+    pool = ADV_QUIZ_DB.filter(q =>
+      q.subject === targetSubject &&
+      q.difficulty === targetDiff &&
+      !window._miniQuizUsedIds.has(q.id)
+    );
+  }
+  // 再不夠就全部此科目
+  if(pool.length < 2){
+    pool = ADV_QUIZ_DB.filter(q =>
+      q.subject === targetSubject &&
+      !window._miniQuizUsedIds.has(q.id)
+    );
+  }
+  return pool;
+}
+
+function _advMiniQuizAsk(onDone) {
+  const sceneIdx = _advSceneIdx;
+  const pool = _advMiniGetQuizPool(sceneIdx);
+  if(!pool || pool.length === 0){ if(onDone) onDone(); return; }
+  const q = pool[Math.floor(Math.random() * Math.min(pool.length, 5))];
+  if(!q){ if(onDone) onDone(); return; }
+  window._miniQuizUsedIds.add(q.id);
+  window._miniQuizOnDone = onDone;
+  window._miniQuizCurrentQ = q;
+  window._miniQuizPhase = 'asking';
+
+  const qOv = document.getElementById('adv-quiz-overlay');
+  if(!qOv){ if(onDone) onDone(); return; }
+
+  // 停止 BOSS 計時器
+  if(typeof _advQuizTimerHandle !== 'undefined' && _advQuizTimerHandle){
+    clearInterval(_advQuizTimerHandle); _advQuizTimerHandle = null;
+  }
+
+  // 設定題目標籤
+  const qLbl = document.getElementById('adv-quiz-label');
+  if(qLbl) qLbl.textContent = '🐾 小怪出題！回答正確可獲得知識幣';
+
+  // 設定題目文字
+  const qEl = document.getElementById('adv-quiz-question');
+  if(qEl) qEl.textContent = q.question;
+
+  // 隱藏計時器
+  const timerEl = document.getElementById('adv-quiz-timer');
+  if(timerEl) timerEl.style.display = 'none';
+
+  // 清除法寶列
+  const tbEl = document.getElementById('adv-quiz-treasure-bar');
+  if(tbEl) tbEl.innerHTML = '';
+
+  // 用相同的 aqo-btn 系統建立選項（支援洗牌）
+  const optDiv = document.getElementById('adv-quiz-options');
+  const letters = ['A','B','C'];
+  const origOpts = (q.options || [q.A, q.B, q.C].filter(Boolean)).map((text, i) => ({text, origIdx:i}));
+  // 洗牌
+  for(let si=origOpts.length-1; si>0; si--){
+    const sj = Math.floor(Math.random()*(si+1));
+    [origOpts[si], origOpts[sj]] = [origOpts[sj], origOpts[si]];
+  }
+  const correctOrigIdx = letters.indexOf(q.answer);
+  const newCorrectIdx  = origOpts.findIndex(o => o.origIdx === correctOrigIdx);
+  const newCorrectLetter = letters[newCorrectIdx] || q.answer;
+  optDiv.innerHTML = '';
+  origOpts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'aqo-btn';
+    btn.dataset.letter = letters[i];
+    btn.dataset.isCorrect = (opt.origIdx === correctOrigIdx) ? '1' : '0';
+    btn.innerHTML = '<span class="aqo-letter">' + letters[i] + '</span>' + opt.text;
+    btn.onclick = () => _advMiniQuizSubmit(letters[i], btn.dataset.isCorrect === '1');
+    optDiv.appendChild(btn);
+  });
+
+  qOv.classList.add('show');
+}
+
+function _advMiniQuizSubmit(letter, isCorrect) {
+  if(window._miniQuizPhase !== 'asking') return;
+  window._miniQuizPhase = 'done';
+
+  const optDiv = document.getElementById('adv-quiz-options');
+  optDiv.querySelectorAll('.aqo-btn').forEach(btn => {
+    btn.disabled = true;
+    if(btn.dataset.isCorrect === '1') btn.classList.add('correct');
+    else if(btn.dataset.letter === letter && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const qOv = document.getElementById('adv-quiz-overlay');
+
+  if(isCorrect){
+    const coins = 5;
+    window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
+    try{ playSfx('sfx-correct', 0.8); }catch(e){}
+    bannerFX(null, '✅ 答對！獲得 ' + coins + ' 知識幣！', '#44ff88', 1200);
+  } else {
+    try{ playSfx('sfx-wrong', 0.6); }catch(e){}
+    bannerFX(null, '❌ 答錯了！', '#ff6666', 1200);
+  }
+
+  setTimeout(() => {
+    if(qOv) qOv.classList.remove('show');
+    // 恢復計時器顯示
+    const timerEl = document.getElementById('adv-quiz-timer');
+    if(timerEl) timerEl.style.display = '';
+    const onDone = window._miniQuizOnDone;
+    window._miniQuizOnDone = null;
+    window._miniQuizCurrentQ = null;
+    window._miniQuizPhase = null;
+    if(onDone) onDone();
+  }, isCorrect ? 1000 : 1600);
+}
+
+
 function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
+  // ★ 小怪戰答題狀態初始化
+  window._miniQuizDoneThisRound = false;  // 每回合重置（startTurn時觸發）
+  window._miniQuizTotalCoins = 0;         // 本場小怪戰答題累積知識幣
+  window._miniQuizUsedIds = new Set();    // 本場用過的題目 ID
   // ★ 小怪戰：若玩家之前沒開自動戰鬥，先關閉；小怪戰支援AI自動戰鬥
   if(typeof _autoBattle !== 'undefined' && _autoBattle){
     // 保持開啟狀態（玩家可能希望自動）
@@ -25065,8 +25251,35 @@ function advFinishMiniBattle(win) {
       if(_expEl){
         const _expInfoEl = document.getElementById('adv-mini-result-exp');
         const _miniCoins = Math.round(baseExp * 0.20);
-        if(_miniCoins > 0) addKnowledgeCoins(_miniCoins);
-        if(_expInfoEl) _expInfoEl.textContent = `戰鬥EXP +${baseExp}　💰+${_miniCoins}知識幣`;
+        const _quizCoins = window._miniQuizTotalCoins || 0;
+        const _totalCoins = _miniCoins + _quizCoins;
+        if(_totalCoins > 0) addKnowledgeCoins(_totalCoins);
+        // ★ 小怪戰結束時發放法寶（移出過場演出）
+        let _treasureGot = null;
+        const _nextSceneIdx = _advMiniBattleNextScene;
+        if(_nextSceneIdx > 0 && _nextSceneIdx <= 3){
+          const _tSlot = _nextSceneIdx - 1; // 場景0後=slot0, 場景1後=slot1...
+          if(!_advTreasures[_tSlot]){
+            const _t = ADV_TREASURES[Math.floor(Math.random() * ADV_TREASURES.length)];
+            _advTreasures[_tSlot] = _t;
+            advUpdateTreasureBar();
+            _treasureGot = _t;
+          }
+        }
+        // ★ 結算畫面分行顯示（EXP / 知識幣 / 答題幣 / 法寶）
+        if(_expInfoEl){
+          let html = '<div style="display:flex;flex-direction:column;gap:6px;align-items:center;">';
+          html += '<div>⚔️ 戰鬥EXP <span style="color:#44ff88;font-weight:900;">+'+baseExp+'</span></div>';
+          html += '<div>💰 知識幣 <span style="color:#ffcc44;font-weight:900;">+'+_miniCoins+'</span></div>';
+          if(_quizCoins > 0){
+            html += '<div>📚 答題獎勵 <span style="color:#88ccff;font-weight:900;">+'+_quizCoins+'</span> 知識幣</div>';
+          }
+          if(_treasureGot){
+            html += '<div>'+_treasureGot.icon+' 獲得法寶：<span style="color:#ffaa44;font-weight:900;">'+_treasureGot.name+'</span></div>';
+          }
+          html += '</div>';
+          _expInfoEl.innerHTML = html;
+        }
         // ★ 若有升級，先演出升級畫面再顯示結算
         const _showMiniResult = () => { _expEl.style.display = 'flex'; _expEl.classList.add('show'); };
         if(_miniLevelUps && _miniLevelUps.length) {
@@ -25148,6 +25361,31 @@ function advFinishMiniBattle(win) {
 }
 
 // ★ 小怪戰勝利確認：玩家按下「繼續冒險」後執行
+// ★ 小怪戰結算「先回學校」：保存 EXP/幣 進度後回首頁
+function advMiniResultGoHome() {
+  const el = document.getElementById('adv-mini-result');
+  if(el){ el.classList.remove('show'); el.style.display='none'; }
+  window._advMiniResultShowing = false;
+  window._advMiniResultPending = null;
+  // 清除快照（此場冒險結束）
+  try{ _advClearCrashSnapshot(); }catch(e){}
+  // 儲存已獲得的進度（EXP/幣已在 advFinishMiniBattle 中 addHeroExp/addKnowledgeCoins 執行過）
+  try{ gameCloudSave(); }catch(e){}
+  // 退出冒險模式，回首頁
+  try{
+    bgmStop();
+    exitAdventureMode();
+    const homeOv = document.getElementById('overlay');
+    if(homeOv) homeOv.style.display = 'flex';
+    const gc = document.getElementById('gc');
+    if(gc){ gc.style.display=''; gc.classList.remove('adv-battle'); }
+    const advOv = document.getElementById('adventure-overlay');
+    if(advOv) advOv.style.display = 'none';
+  }catch(e){ location.reload(); }
+  bannerFX(null, '🏫 已保存本場進度，回到首頁！', '#bb99ff', 3000);
+}
+
+
 function advMiniResultConfirm(){
   const _miniResultEl = document.getElementById('adv-mini-result');
   if(_miniResultEl){ _miniResultEl.classList.remove('show'); _miniResultEl.style.display = 'none'; }
@@ -25575,13 +25813,24 @@ window._advSystemReady = true;
         text-shadow:0 0 20px rgba(68,255,136,0.6);letter-spacing:2px;">小怪全滅！</div>
       <div style="font-size:28px;color:#ffe8a0;font-weight:700;margin-bottom:8px;" id="adv-mini-result-exp"></div>
       <div style="font-size:22px;color:#88ffaa;margin-bottom:28px;" id="adv-mini-result-heroes"></div>
-      <button onclick="playSfx('sfx-confirm2',0.7);advMiniResultConfirm()" id="adv-mini-result-btn"
-        style="padding:16px 56px;font-size:30px;font-weight:900;letter-spacing:3px;
-        background:linear-gradient(135deg,rgba(50,180,80,0.35),rgba(30,120,50,0.35));
-        border:2.5px solid #44ff88;color:#44ff88;border-radius:14px;cursor:pointer;
-        font-family:inherit;box-shadow:0 0 20px rgba(68,255,136,0.3);transition:all 0.2s;">
-        ✔ 繼續冒險
-      </button>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
+        <button onclick="playSfx('sfx-confirm2',0.7);advMiniResultConfirm()" id="adv-mini-result-btn"
+          style="padding:14px 40px;font-size:26px;font-weight:900;letter-spacing:2px;
+          background:linear-gradient(135deg,rgba(50,180,80,0.35),rgba(30,120,50,0.35));
+          border:2.5px solid #44ff88;color:#44ff88;border-radius:14px;cursor:pointer;
+          font-family:inherit;box-shadow:0 0 20px rgba(68,255,136,0.3);transition:all 0.2s;">
+          ✔ 繼續冒險
+        </button>
+        <button onclick="playSfx('sfx-cancel',0.6);advMiniResultGoHome()" id="adv-mini-result-home-btn"
+          style="padding:14px 28px;font-size:22px;font-weight:700;letter-spacing:1px;
+          background:rgba(30,20,50,0.5);
+          border:2px solid rgba(180,140,255,0.6);color:#bb99ff;border-radius:14px;cursor:pointer;
+          font-family:inherit;transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(100,60,180,0.3)'"
+          onmouseout="this.style.background='rgba(30,20,50,0.5)'">
+          🏫 只是小練身手，先回學校
+        </button>
+      </div>
     </div>
   </div>
 </div><!-- gc_wrapper -->
