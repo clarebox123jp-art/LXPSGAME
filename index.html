@@ -3229,7 +3229,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2200</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2208</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -23906,12 +23906,11 @@ function buildSkillLvTable(skillName, currentLv) {
           ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
         </td>
         <td style="padding:2px 6px;color:${isNext?'#ffe066':'#ddd'};font-size:clamp(11px,1.4vw,16px);">
-          技能效果 ×${(1+pct/100).toFixed(1)} ${pct===0?'（基礎）':'+'+pct+'%'}
+          ${pct===0?'技能威力（基礎）':'技能威力+'+pct+'%'}
         </td>
       </tr>`;
     }
-    return `<div style="font-size:34px;color:#888;margin-bottom:8px;">このスキルの効果は毎レベル+10%増加します</div>
-      <table style="width:100%;border-collapse:collapse;">${rows}</table>`;
+    return `<table style="width:100%;border-collapse:collapse;">${rows}</table>`;
   }
   
   const cat = def.cat;
@@ -23921,7 +23920,7 @@ function buildSkillLvTable(skillName, currentLv) {
     const isNext = lv === currentLv+1;
     let effectText = '';
     if(cat==='dmg'||cat==='heal'||cat==='mixed'){
-      effectText = def.label+' ×'+(1+lv*0.1).toFixed(1)+(lv===0?' (基礎)':' (+'+lv*10+'%)');
+      effectText = lv===0 ? def.label+'（基礎）' : def.label+'+'+lv*10+'%';
     } else if(cat==='shield'){
       const v = Math.round((def.base||30)*(1+lv*0.1));
       effectText = def.label+' '+v+'點'+(lv===0?' (基礎)':'');
