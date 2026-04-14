@@ -2309,6 +2309,42 @@ body {
   .adv-treasure-slot { width:80px; height:96px; font-size:36px; }
   .ts-label { font-size:14px; }
   #adv-choice-panel { right:100px; }
+
+  /* ── 圖1：技能升級確認視窗 ── */
+  #upgrade-confirm-box { padding:14px 12px !important; border-radius:16px !important; }
+  #upgrade-confirm-box button { padding:10px 16px !important; font-size:18px !important; }
+  /* 升級效果一覽 table 字縮小 */
+  #upgrade-confirm-box td { font-size:20px !important; padding:4px 10px !important; }
+  #upgrade-confirm-box th { font-size:20px !important; }
+
+  /* ── 圖2：教學視窗 ── */
+  #_tut-box { max-width:93vw !important; padding:14px 16px 12px !important; }
+  ._tut-title { font-size:28px !important; margin-bottom:6px !important; }
+  #_tut-box ._tut-desc { font-size:20px !important; line-height:1.5 !important; margin-bottom:10px !important; }
+  ._tut-step { font-size:14px !important; }
+  ._tut-next-btn { font-size:18px !important; padding:7px 18px !important; }
+  ._tut-skip-btn { font-size:16px !important; padding:5px 14px !important; }
+
+  /* ── 圖3：過場演出選擇視窗 ── */
+  #adv-dialog-box { padding:16px 100px 50px 20px !important; min-height:auto !important; }
+  #adv-dialog-speaker { font-size:22px !important; margin-bottom:6px !important; }
+  #adv-dialog-text { font-size:22px !important; line-height:1.55 !important; }
+  #adv-dialog-next { font-size:28px !important; }
+  .adv-choice-box { padding:10px 12px !important; max-height:75vh !important; }
+  .adv-choice-title { font-size:20px !important; margin-bottom:8px !important; }
+  .adv-choice-btn { font-size:18px !important; padding:7px 12px !important; }
+  .adv-confirm-btn { font-size:22px !important; padding:10px !important; }
+}
+
+/* ── 小手機（375px 以下）── */
+@media screen and (max-width: 480px) {
+  #adv-dialog-text { font-size:18px !important; }
+  #adv-dialog-speaker { font-size:18px !important; }
+  .adv-choice-btn { font-size:16px !important; padding:6px 10px !important; }
+  .adv-choice-title { font-size:18px !important; }
+  #_tut-box { max-width:96vw !important; }
+  ._tut-title { font-size:22px !important; }
+  #_tut-box ._tut-desc { font-size:17px !important; }
 }
 
 
@@ -3079,6 +3115,16 @@ body {
   <div id="adv-battle-bg"></div>
   <div id="fade-overlay"></div>
   <!-- ★ 冒險模式戰鬥教學按鈕（左下角，直式） -->
+  <!-- ★ 當機回溯按鈕（左下角，教學按鈕上方） -->
+  <button id="adv-rollback-btn" onclick="playSfx('sfx-sel',0.6);_showRollbackMenu()"
+    style="display:none;position:absolute;left:8px;bottom:72px;z-index:300;
+      writing-mode:vertical-rl;text-orientation:mixed;
+      padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
+      background:rgba(40,10,10,0.88);border:1.5px solid rgba(255,140,50,0.7);
+      color:#ffaa44;border-radius:10px;cursor:pointer;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+      box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
+      transition:border-color 0.2s,background 0.2s;">🔄回溯</button>
   <button id="adv-tut-btn" onclick="playSfx('sfx-gentle',0.5);_advShowTutBtn()"
     style="display:none;position:absolute;left:8px;bottom:8px;z-index:300;
       writing-mode:vertical-rl;text-orientation:mixed;
@@ -3183,7 +3229,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.1521</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.1913</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -14671,6 +14717,11 @@ function startTurn(){
     }
     enemyTurnNotice.style.display = 'block';
     enemyTurnNotice.textContent = `⚔ 現在是對手的回合！`;
+    // ★ 確保回溯按鈕可見（冒險模式）
+    if(_adventureMode){
+      const _rbBtn = document.getElementById('adv-rollback-btn');
+      if(_rbBtn) _rbBtn.style.display = '';
+    }
     _pSetTimeout(()=>aiAct(next),1200);
   }
 }
@@ -22163,9 +22214,291 @@ function _tutInterAfterSkillClick(hero, skillData) {
 }
 
 // ── 冒險戰鬥教學按鈕控制 ──
+// ══════════════════════════════════════════
+//  當機回溯：選單 + 兩種恢復方式
+// ══════════════════════════════════════════
+function _showRollbackMenu() {
+  // 防止重複開啟
+  const old = document.getElementById('_rollback-menu');
+  if(old){ old.remove(); return; }
+
+  const menu = document.createElement('div');
+  menu.id = '_rollback-menu';
+  menu.style.cssText = [
+    'position:fixed;bottom:140px;left:12px;z-index:9900;',
+    'background:linear-gradient(160deg,rgba(30,10,0,0.97),rgba(15,5,0,0.98));',
+    'border:2px solid rgba(255,140,50,0.8);border-radius:16px;padding:16px 18px;',
+    'width:min(88vw,380px);',
+    'box-shadow:0 0 40px rgba(255,120,0,0.35);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+
+  // 是否有戰鬥快照
+  let snapRound = 0;
+  try{
+    const raw = localStorage.getItem('adv_battle_snap');
+    if(raw){ const s=JSON.parse(raw); snapRound = (s && s.round) || 0; }
+  }catch(e){}
+  const hasSnap = snapRound > 0;
+
+  menu.innerHTML = `
+    <div style="font-size:22px;font-weight:900;color:#ffaa44;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+      🔄 當機回溯
+      <button onclick="document.getElementById('_rollback-menu').remove()"
+        style="background:none;border:none;color:#888;font-size:24px;cursor:pointer;padding:0 4px;line-height:1;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <!-- 選項1：回溯最近快照 -->
+      <button onclick="_rollbackToLastSnap()"
+        style="padding:12px 14px;text-align:left;font-size:18px;font-weight:700;cursor:pointer;
+          background:${hasSnap?'rgba(255,140,0,0.15)':'rgba(60,60,60,0.3)'};
+          border:2px solid ${hasSnap?'rgba(255,140,0,0.7)':'rgba(80,80,80,0.4)'};
+          color:${hasSnap?'#ffcc88':'#666'};border-radius:10px;font-family:inherit;
+          ${hasSnap?'':'pointer-events:none;'}">
+        ⏪ 回到上一回合（第 ${hasSnap?snapRound:'？'} 回合）<br>
+        <span style="font-size:14px;font-weight:400;color:${hasSnap?'#ffaa66':'#555'};">
+          ${hasSnap?'還原 HP、物品卡、能量等全部戰鬥狀態':'尚無可回溯的快照'}
+        </span>
+      </button>
+      <!-- 選項2：替換英雄重新開始 -->
+      <button onclick="_rollbackReplaceHero()"
+        style="padding:12px 14px;text-align:left;font-size:18px;font-weight:700;cursor:pointer;
+          background:rgba(50,120,50,0.15);border:2px solid rgba(80,200,80,0.6);
+          color:#88ff88;border-radius:10px;font-family:inherit;">
+        🔀 替換 1 名英雄，重新開始本場戰鬥<br>
+        <span style="font-size:14px;font-weight:400;color:#aaffaa;">
+          選擇要換出的英雄，改由其他英雄上場
+        </span>
+      </button>
+    </div>
+  `;
+  document.body.appendChild(menu);
+
+  // 點選選單以外的地方關閉
+  setTimeout(() => {
+    const _closeMenu = (e) => {
+      if(!menu.contains(e.target) && e.target.id !== 'adv-rollback-btn'){
+        menu.remove();
+        document.removeEventListener('click', _closeMenu);
+      }
+    };
+    document.addEventListener('click', _closeMenu);
+  }, 200);
+}
+
+function _rollbackToLastSnap() {
+  const menu = document.getElementById('_rollback-menu');
+  if(menu) menu.remove();
+
+  // 讀取戰鬥快照
+  let snap = null;
+  try{
+    const raw = localStorage.getItem('adv_battle_snap');
+    if(raw) snap = JSON.parse(raw);
+  }catch(e){}
+
+  if(!snap || !snap.battleState || !snap.battleState.p1 || !snap.battleState.p1.length){
+    _showInGameToast('⚠️ 找不到可回溯的戰鬥快照', '#ff8844', 2500);
+    return;
+  }
+
+  // 暫停遊戲
+  _gamePaused = true;
+  try{ clearTurnTimer(); }catch(e){}
+  if(typeof pendingCb !== 'undefined') pendingCb = null;
+  G.pendingTarget = null;
+
+  _customConfirm(
+    `確定要回溯到第 ${snap.round} 回合嗎？
+（HP、物品卡、能量等全部還原）`,
+    () => {
+      try{
+        const bs = snap.battleState;
+        // 還原英雄
+        const _serRestore = (hSnap) => {
+          const h = Object.assign({}, hSnap);
+          h.status = hSnap.status || [];
+          h.buffs  = hSnap.buffs  || [];
+          h._skLv  = hSnap._skLv  || {s1:0, s2:0};
+          h._burstLvAdv = hSnap._burstLvAdv || 0;
+          h.av = (typeof AVATARS!=='undefined'&&AVATARS[h.name]) || '🗡️';
+          return h;
+        };
+        G.p1 = bs.p1.map(_serRestore);
+        G.p2 = bs.p2.map(_serRestore);
+        G.energy     = {...(bs.energy||{p1:0,p2:0})};
+        G.inv        = JSON.parse(JSON.stringify(bs.inv  ||[]));
+        G.inv2       = JSON.parse(JSON.stringify(bs.inv2 ||[]));
+        G.round      = bs.round || 1;
+        G._resultShown = false;
+        G.pendingTarget = null;
+        G.sellUsed   = new Set();
+        G.fieldCards = bs.fieldCards || [];
+        fieldCards   = G.fieldCards;
+        if(bs.pendingReward)  _advPendingReward  = bs.pendingReward;
+        if(bs.rewardOptions && bs.rewardOptions.length) _advRewardOptions = bs.rewardOptions;
+        if(bs.advStats) Object.assign(_advStats, bs.advStats);
+        _gamePaused = false;
+        try{ renderField(true); }catch(e){}
+        try{ renderItems(); updateUI(); }catch(e){}
+        flashScreen('rgba(255,180,50,0.5)', 500);
+        bannerFX(null, `⏪ 已回溯至第 ${G.round} 回合！`, '#ffcc44', 3000);
+        log(`🔄 [當機回溯] 已還原至第 ${G.round} 回合開始狀態`);
+        setTimeout(() => { try{ startTurn(); }catch(e){ console.error(e); } }, 600);
+      }catch(err){
+        console.error('[rollback]', err);
+        _gamePaused = false;
+        _showInGameToast('⚠️ 回溯失敗：' + err.message, '#ff4444', 3000);
+      }
+    }
+  );
+}
+
+function _rollbackReplaceHero() {
+  const menu = document.getElementById('_rollback-menu');
+  if(menu) menu.remove();
+
+  // 暫停遊戲
+  _gamePaused = true;
+  try{ clearTurnTimer(); }catch(e){}
+  if(typeof pendingCb !== 'undefined') pendingCb = null;
+  G.pendingTarget = null;
+
+  // 取可替換英雄清單（和呼叫援軍相同邏輯，但從已解鎖英雄中選）
+  const inTeam = new Set(G.p1.map(h=>h.name));
+  // 冒險模式：只能從已解鎖英雄中選，排除 BOSS
+  const unlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
+  let available = unlocked.filter(n => !inTeam.has(n) && (typeof BOSS_NAMES==='undefined'||!BOSS_NAMES.includes(n)));
+  if(!available.length){
+    // fallback: 鬥技場模式或沒有解鎖英雄
+    available = Object.keys(HERO_DB).filter(n => !inTeam.has(n) && (typeof BOSS_NAMES==='undefined'||!BOSS_NAMES.includes(n)));
+  }
+  if(!available.length){
+    _gamePaused = false;
+    _showInGameToast('⚠️ 沒有可替換的英雄', '#ff8844', 2500);
+    return;
+  }
+
+  // 重用 _showReinforcePicker 邏輯，但結束後重新開始戰鬥
+  const _fakeActor = G.p1.find(h=>h.curHp>0) || G.p1[0];
+  _showRollbackReinforcePicker(_fakeActor, available);
+}
+
+function _showRollbackReinforcePicker(actor, available) {
+  const ov = document.createElement('div');
+  ov.id = 'rollback-reinforce-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.94);z-index:9910;' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow-y:auto;padding:20px;';
+  ov.innerHTML =
+    '<div style="font-size:28px;color:#ffaa44;font-weight:900;letter-spacing:3px;">🔀 替換英雄·重新開始</div>' +
+    '<div style="font-size:18px;color:#aaa;">選擇要換出的隊員</div>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:860px;" id="rrf-step1">' +
+    G.p1.map(h=>`<div onclick="_rrfSelectOut(${h.pos})"
+      style="cursor:pointer;background:rgba(20,20,40,0.9);border:2px solid #ffaa44;border-radius:10px;padding:14px;min-width:130px;text-align:center;">
+      <div style="font-size:44px;">${h.av}</div>
+      <div style="color:#ffaa44;font-weight:700;">${h.name}</div>
+      <div style="font-size:12px;color:#888;margin-top:4px;">HP:${h.curHp}/${h.hp}</div>
+    </div>`).join('') +
+    '</div>' +
+    '<div id="rrf-step2" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1000px;">' +
+    '<div style="font-size:18px;color:#fff;font-weight:700;">選擇新英雄上場：</div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;" id="rrf-newlist"></div>' +
+    '</div>' +
+    '<button onclick="_rrfCancel()" style="margin-top:4px;padding:8px 28px;background:transparent;border:1.5px solid #555;color:#888;cursor:pointer;border-radius:8px;font-family:inherit;font-size:18px;">✕ 取消</button>';
+  document.body.appendChild(ov);
+  window._rrfAvailable = available;
+  window._rrfOutPos = null;
+
+  // 填充新英雄列表
+  document.getElementById('rrf-newlist').innerHTML = available.map(n => {
+    const b = HERO_DB[n]; const av = AVATARS[n]||'🗡️';
+    return `<div onclick="_rrfSelectIn('${n}')"
+      style="cursor:pointer;background:rgba(20,20,40,0.9);border:2px solid #4a9eff;border-radius:10px;padding:10px;min-width:120px;text-align:center;transition:0.15s;"
+      onmouseenter="this.style.border='2px solid #88ccff'"
+      onmouseleave="this.style.border='2px solid #4a9eff'">
+      <div style="font-size:40px;">${av}</div>
+      <div style="color:#4a9eff;font-weight:700;font-size:15px;">${n}</div>
+      <div style="font-size:12px;color:#aaa;">HP${b.hp} 攻${b.atk} 技${b.sp}</div>
+    </div>`;
+  }).join('');
+}
+function _rrfSelectOut(pos) {
+  window._rrfOutPos = pos;
+  document.getElementById('rrf-step1').style.display = 'none';
+  const s2 = document.getElementById('rrf-step2');
+  s2.style.display = 'flex';
+}
+function _rrfSelectIn(newName) {
+  const ov = document.getElementById('rollback-reinforce-ov');
+  if(ov) ov.remove();
+  const pos = window._rrfOutPos;
+  if(pos === null || pos === undefined){ _rrfCancel(); return; }
+  const oldName = G.p1[pos] ? G.p1[pos].name : '（未知）';
+
+  _customConfirm(
+    `確定要以 [${newName}] 替換 [${oldName}]，並重新開始本場戰鬥嗎？`,
+    () => {
+      try{
+        // 替換英雄
+        const newH = newHero_replace(newName, 'p1', pos);
+        // 套用冒險投資
+        if(_adventureMode){
+          const _inv = (_heroStatInvested && _heroStatInvested[newName]) || {};
+          if(_inv.hp)  { newH.hp  += _inv.hp;  newH.curHp = newH.hp; }
+          if(_inv.atk) { newH.atk += _inv.atk; }
+          if(_inv.sp)  { newH.sp  += _inv.sp;  }
+          if(_inv.spd) { newH.spd += _inv.spd; }
+          newH._skLv = (_heroSkillLevels && _heroSkillLevels[newName])
+            ? {s1:(_heroSkillLevels[newName].s1||0), s2:(_heroSkillLevels[newName].s2||0)}
+            : {s1:0, s2:0};
+          newH._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[newName]) || 0;
+        }
+        G.p1[pos] = newH;
+        log(`🔄 [當機回溯] [${oldName}] 換出，[${newName}] 上場，重新開始戰鬥！`);
+        // 重置 BOSS 陣容（若有備份）
+        if(_advBossTeamSaved){ G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved)); }
+        // 重置玩家 HP/status/buffs，不重置裝備
+        G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; h.s2used=false; });
+        G.p2.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
+        G.energy = {p1:2, p2:2};
+        G.round = 1;
+        G._resultShown = false;
+        G.pendingTarget = null;
+        G.sellUsed = new Set();
+        // 重新發牌
+        try{ buildDeck(); }catch(e){}
+        try{
+          const _inv3 = [null,null,null];
+          for(let i=0;i<3;i++){ const d=drawItem(); if(d.type!=='equip') _inv3[i]=d; }
+          G.inv = _inv3;
+        }catch(e){}
+        _gamePaused = false;
+        try{ renderField(true); }catch(e){}
+        try{ renderItems(); updateUI(); }catch(e){}
+        flashScreen('rgba(50,255,100,0.4)', 500);
+        bannerFX(null, `🔀 [${newName}] 上場！重新開始戰鬥！`, '#44ff88', 3000);
+        setTimeout(() => { try{ startTurn(); }catch(e){ console.error(e); } }, 600);
+      }catch(err){
+        console.error('[rollback replace]', err);
+        _gamePaused = false;
+        _showInGameToast('⚠️ 替換失敗：' + err.message, '#ff4444', 3000);
+      }
+    }
+  );
+}
+function _rrfCancel() {
+  const ov = document.getElementById('rollback-reinforce-ov');
+  if(ov) ov.remove();
+  _gamePaused = false;
+}
+
 function _advTutBtnShow(show) {
   const btn = document.getElementById('adv-tut-btn');
   if(btn) btn.style.display = show ? '' : 'none';
+  // ★ 回溯按鈕與教學按鈕同步顯示（僅限冒險BOSS戰）
+  const rbBtn = document.getElementById('adv-rollback-btn');
+  if(rbBtn) rbBtn.style.display = (show && _adventureMode) ? '' : 'none';
 }
 function _advShowTutBtn() {
   // 若教學已啟動中，直接略過
@@ -22486,6 +22819,55 @@ function highlightUpgradableHeroes() {
   }
 }
 
+// ★ 圖鑑高亮：英雄經驗值書可用的英雄（等級未滿50）
+function _highlightHeroesForExpBook() {
+  const unlocked = advGetUnlockedHeroes();
+  const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
+  const all = [...new Set([...unlocked, ...advPool])];
+  const eligible = all.filter(name => (getHeroLevel(name) || 1) < 50);
+  _showHeroGridHighlight(eligible, '📗', '#88ff88');
+  if(eligible.length === 0){
+    try{ bannerFX(null,'所有英雄已達最高等級！','#ffcc44',1500); }catch(e){}
+  }
+}
+
+// ★ 圖鑑高亮：超越極限果實可用的英雄（有爆發技能且等級 < 4）
+function _highlightHeroesForBurstUpgrade() {
+  const unlocked = advGetUnlockedHeroes();
+  const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
+  const all = [...new Set([...unlocked, ...advPool])];
+  const eligible = all.filter(name => {
+    if(typeof BURST_DB === 'undefined' || !BURST_DB[name]) return false;
+    const lv = (_heroBurstLevels && _heroBurstLevels[name]) || 0;
+    return lv < 4;
+  });
+  _showHeroGridHighlight(eligible, '🍑', '#ffaa44');
+  if(eligible.length === 0){
+    try{ bannerFX(null,'所有英雄極限爆發已達最高等級！','#ffaa44',1500); }catch(e){}
+  }
+}
+
+// ★ 共用：在圖鑑格子上顯示升級標記
+function _showHeroGridHighlight(names, icon, color) {
+  // 先清除舊的
+  document.querySelectorAll('.hero-grid-card .upgrade-arrow').forEach(el => el.remove());
+  const nameSet = new Set(names);
+  document.querySelectorAll('.hero-grid-card').forEach(card => {
+    const nm = card.querySelector('.hn-label');
+    if(nm && nameSet.has(nm.textContent.trim())) {
+      const arrow = document.createElement('div');
+      arrow.className = 'upgrade-arrow';
+      arrow.style.cssText = 'position:absolute;bottom:36px;left:50%;transform:translateX(-50%);' +
+        'font-size:26px;animation:upgradeArrowBounce 0.6s ease-in-out infinite alternate;' +
+        'z-index:10;pointer-events:none;';
+      arrow.textContent = icon || '⬆';
+      if(color) arrow.style.filter = `drop-shadow(0 0 6px ${color})`;
+      card.appendChild(arrow);
+      setTimeout(() => { if(arrow.parentNode) arrow.remove(); }, 6000);
+    }
+  });
+}
+
 function openHeroPage() {
   const ov = document.getElementById('hero-page-overlay');
   if(!ov) return;
@@ -22802,30 +23184,16 @@ function useBackpackItem(id){
   if(backpackGet(id)<=0){ _showInGameToast('背包中沒有這個物品', '#ff8844', 1500); return; }
 
   if(id==='hero_exp_book'){
-    _backpackOpenHeroSelect('📗 英雄經驗值之書', '選擇要增加EXP的英雄（+50 EXP）', name=>{
-      backpackRemove('hero_exp_book');
-      addHeroExp(name, 50);
-      gameCloudSave();
-      _setNavDot('英雄', true);
-      _showInGameToast(`📗 [${name}] 獲得 50 EXP！`, '#88ff88', 2000);
-      _renderBackpackMain();
-    }, true); // ★ 只限已收錄英雄// false = 全英雄可選
+    // ★ 直接跳圖鑑，高亮可升級英雄
+    closeBackpackOverlay();
+    openHeroPage();
+    setTimeout(() => { _highlightHeroesForExpBook(); }, 200);
 
   } else if(id==='skill_upgrade_book'){
-    _backpackOpenHeroSelect('📖 技能升級書', '選擇要升級技能的英雄', name=>{
-      _backpackOpenSkillSelect(name, slot=>{
-        const cur = (_heroSkillLevels[name]&&_heroSkillLevels[name][slot])||0;
-        if(cur>=9){ _showInGameToast('此技能已達最高等級（9級）！', '#ff8844', 2000); return; }
-        backpackRemove('skill_upgrade_book');
-        if(!_heroSkillLevels[name]) _heroSkillLevels[name]={s1:0,s2:0};
-        _heroSkillLevels[name][slot] = cur+1;
-        gameCloudSave();
-        log(`📖 技能升級！${name} ${slot} → Lv.${cur+1} (+${(cur+1)*10}%)`);
-        _showInGameToast(`📖 [${name}] 技能升級成功！效果 +${(cur+1)*10}%`, '#ffe066', 2500);
-        _renderBackpackMain();
-        _setNavDot('英雄', true);
-      });
-    }, true); // true = 只已解鎖英雄
+    // ★ 直接跳圖鑑，高亮有技能可升級的英雄
+    closeBackpackOverlay();
+    openHeroPage();
+    setTimeout(() => { highlightUpgradableHeroes(); }, 200);
 
   } else if(id==='stat_reset_book'){
     _backpackOpenHeroSelect('📕 能力素質重置之書', '選擇要重置素質的英雄', name=>{
@@ -22860,24 +23228,10 @@ function useBackpackItem(id){
     }, true);
 
   } else if(id==='burst_upgrade_fruit'){
-    // ★ 超越極限果實：為英雄的極限爆發升1級（最高+4）
-    _backpackOpenHeroSelect('🍑 超越極限果實', '選擇要升級極限爆發的英雄', name=>{
-      // 必須有爆發技能
-      if(typeof BURST_DB === 'undefined' || !BURST_DB[name]){
-        _showInGameToast(`[${name}] 沒有極限爆發技能！`, '#ff8844', 2000); return;
-      }
-      const curLv = (_heroBurstLevels[name])||0;
-      if(curLv >= 4){
-        _showInGameToast('🍑 此英雄極限爆發已達最高等級（+4）！', '#ff8844', 2000); return;
-      }
-      backpackRemove('burst_upgrade_fruit');
-      _heroBurstLevels[name] = curLv + 1;
-      gameCloudSave();
-      log(`🍑 極限爆發升級！${name} 極限爆發 → Lv.${curLv+1} (+${(curLv+1)*10}%)`);
-      _showInGameToast(`🍑 [${name}] 極限爆發升至 +${curLv+1} 級！效果 +${(curLv+1)*10}%`, '#ff88ff', 2800);
-      _renderBackpackMain();
-      _setNavDot('英雄', true);
-    }, true);
+    // ★ 直接跳圖鑑，高亮有極限爆發可升級的英雄
+    closeBackpackOverlay();
+    openHeroPage();
+    setTimeout(() => { _highlightHeroesForBurstUpgrade(); }, 200);
   }
 }
 
@@ -23453,10 +23807,10 @@ function buildSkillLvTable(skillName, currentLv) {
       const isNow = lv === currentLv;
       const isNext = lv === currentLv+1;
       rows += `<tr style="background:${isNext?'rgba(80,200,80,0.18)':isNow?'rgba(100,150,255,0.12)':'transparent'};${isNext?'font-weight:900;':''}">
-        <td style="padding:8px 20px;color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:36px;">
+        <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:clamp(14px,2.5vw,36px);">
           ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
         </td>
-        <td style="padding:8px 20px;color:${isNext?'#ffe066':'#ddd'};font-size:36px;">
+        <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#ffe066':'#ddd'};font-size:clamp(14px,2.5vw,36px);">
           技能效果 ×${(1+pct/100).toFixed(1)} ${pct===0?'（基礎）':'+'+pct+'%'}
         </td>
       </tr>`;
@@ -23495,10 +23849,10 @@ function buildSkillLvTable(skillName, currentLv) {
       effectText = def.label;
     }
     rows += `<tr style="background:${isNext?'rgba(80,200,80,0.18)':isNow?'rgba(100,150,255,0.12)':'transparent'};">
-      <td style="padding:8px 20px;color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:34px;white-space:nowrap;">
+      <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:clamp(14px,2.2vw,34px);white-space:nowrap;">
         ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
       </td>
-      <td style="padding:8px 20px;color:${isNext?'#ffe066':'#ddd'};font-size:34px;font-weight:${isNext?'900':'400'};">
+      <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#ffe066':'#ddd'};font-size:clamp(14px,2.2vw,34px);font-weight:${isNext?'900':'400'};">
         ${effectText}
       </td>
     </tr>`;
@@ -23898,19 +24252,101 @@ function _renderHeroDetail(name, box) {
         </div>`;
       }).join('')}
 <!-- trait moved to below stats -->
-      ${burst ? `<div style="background:rgba(255,100,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,120,50,0.35);">
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
-          <span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>
-          <span style="font-size:28px;font-weight:800;color:#ff9966;">${burst.n}</span>
-        </div>
-        <div style="font-size:24px;color:#ffffff;line-height:1.5;">${burst.fd||burst.d}</div>
-      </div>` : ''}
+      ${(()=>{
+        if(!burst) return '';
+        const _bLv = (_heroBurstLevels && _heroBurstLevels[name]) || 0;
+        const _bMax = _bLv >= 4;
+        const _hasFruit = (typeof backpackGet==='function') && backpackGet('burst_upgrade_fruit')>0;
+        const _canUpg = !_bMax && _hasFruit;
+        let _rows = '';
+        for(let _lv=0; _lv<=4; _lv++){
+          const _isNow = _lv === _bLv, _isNext = _lv === _bLv+1;
+          const _pct = _lv*10;
+          const _bg = _isNext?'rgba(255,120,0,0.18)':_isNow?'rgba(255,80,0,0.10)':'transparent';
+          const _c1 = _isNext?'#ffcc44':_isNow?'#ff9966':'#aaa';
+          const _c2 = _isNext?'#ffee88':'#ddd';
+          const _lbl = (_lv===0?'未升級':'Lv.'+_lv)+(_isNow?' ←目前':'');
+          const _pfx = _isNext?'▶ ':'';
+          const _eff = '效果 ×'+(1+_pct/100).toFixed(1)+(_pct===0?'（基礎）':' +'+_pct+'%');
+          _rows += '<tr style="background:'+_bg+'"><td style="padding:4px 10px;font-size:clamp(13px,1.8vw,22px);color:'+_c1+';white-space:nowrap;">'+_pfx+_lbl+'</td><td style="padding:4px 10px;font-size:clamp(13px,1.8vw,22px);color:'+_c2+';">'+_eff+'</td></tr>';
+        }
+        const _lvB = _bLv>0 ? '<span style="font-size:19px;color:#ffaa66;background:rgba(255,140,0,0.18);border-radius:6px;padding:2px 10px;">+'+_bLv+' 效果+'+(_bLv*10)+'%</span>' : '';
+        const _maxB = _bMax ? '<span style="font-size:19px;color:#ffaa44;font-weight:900;">MAX</span>' : '';
+        const _upgB = _canUpg ? '<button onclick="playSfx(\'sfx-statup\',0.7);upgradeBurst(\''+name+'\')" style="padding:4px 14px;font-size:20px;background:rgba(255,140,0,0.2);border:1.5px solid #ffaa44;color:#ffaa44;border-radius:8px;cursor:pointer;">🍑 升級</button>' : '';
+        return '<div style="background:rgba(255,100,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,120,50,0.35);">'+
+          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">'+
+          '<span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>'+
+          '<span style="font-size:28px;font-weight:800;color:#ff9966;">'+burst.n+'</span>'+
+          _lvB+_maxB+_upgB+'</div>'+
+          '<div style="font-size:24px;color:#ffffff;line-height:1.5;margin-bottom:10px;">'+(burst.fd||burst.d)+'</div>'+
+          '<div style="background:rgba(5,8,20,0.85);border:1px solid rgba(255,120,50,0.2);border-radius:10px;padding:8px 6px;">'+
+          '<div style="font-size:18px;color:#ff9966;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:2px;">── 升級效果一覽 ──</div>'+
+          '<table style="width:100%;border-collapse:collapse;">'+_rows+'</table></div></div>';
+      })()}
       </div>
     </div>
 
     <!-- bio moved to top -->
     </div>`;
 }
+
+function upgradeBurst(name) {
+  if(backpackGet('burst_upgrade_fruit') <= 0){
+    _showInGameToast('背包中沒有超越極限果實！', '#ff8844', 2000); return;
+  }
+  if(!_heroBurstLevels) _heroBurstLevels = {};
+  const curLv = (_heroBurstLevels[name]) || 0;
+  if(curLv >= 4){ _showInGameToast('極限爆發已達最高等級（+4）！', '#ff8844', 2000); return; }
+  if(typeof BURST_DB === 'undefined' || !BURST_DB[name]){
+    _showInGameToast(`[${name}] 沒有極限爆發技能！`, '#ff8844', 2000); return;
+  }
+  const nextLv = curLv + 1;
+  const _old = document.getElementById('burst-upgrade-confirm-box');
+  if(_old) _old.remove();
+  const box = document.createElement('div');
+  box.id = 'burst-upgrade-confirm-box';
+  box.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+    'background:linear-gradient(160deg,rgba(30,10,0,0.99),rgba(15,5,0,0.99));',
+    'border:2.5px solid rgba(255,150,50,0.8);border-radius:20px;',
+    'padding:28px 32px;z-index:9600;text-align:center;width:min(92vw,480px);',
+    'box-shadow:0 0 60px rgba(255,120,0,0.4);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  box.innerHTML = `
+    <div style="font-size:52px;margin-bottom:10px;">🍑</div>
+    <div style="font-size:26px;font-weight:900;color:#ffaa44;margin-bottom:8px;">極限爆發升級確認</div>
+    <div style="font-size:20px;color:#eee;margin-bottom:6px;line-height:1.7;">
+      使用 <span style="color:#ffcc44;font-weight:800;">1 顆</span> 超越極限果實<br>
+      提升 <span style="color:#ff9966;font-weight:800;">【${name}】</span> 的極限爆發<br>
+      Lv.${curLv} → <span style="color:#ffcc44;font-weight:900;">Lv.${nextLv}</span>（效果 +${nextLv*10}%）
+    </div>
+    <div style="font-size:16px;color:#ff8888;margin-bottom:20px;">⚠ 此操作無法反悔，請慎重決定</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button id="_burst_yes" style="padding:12px 36px;font-size:22px;font-weight:800;
+        background:rgba(255,140,0,0.25);border:2px solid #ffaa44;color:#ffcc88;
+        border-radius:12px;cursor:pointer;font-family:inherit;">✔ 確定升級</button>
+      <button id="_burst_no" style="padding:12px 24px;font-size:22px;font-weight:800;
+        background:rgba(60,10,10,0.3);border:2px solid #e84040;color:#e84040;
+        border-radius:12px;cursor:pointer;font-family:inherit;">✕ 取消</button>
+    </div>`;
+  document.body.appendChild(box);
+  document.getElementById('_burst_yes').onclick = () => {
+    box.remove();
+    backpackRemove('burst_upgrade_fruit', 1);
+    _heroBurstLevels[name] = nextLv;
+    gameCloudSave();
+    log(`🍑 極限爆發升級！${name} → Lv.${nextLv} (效果+${nextLv*10}%)`);
+    _showInGameToast(`🍑 [${name}] 極限爆發升至 +${nextLv} 級！效果 +${nextLv*10}%`, '#ffaa44', 2800);
+    try{ playSfx('sfx-powerup', 0.8); }catch(e){}
+    // 重新渲染圖鑑
+    _renderHeroDetail(name, document.getElementById('hero-detail-content'));
+    const _hpC = document.getElementById('hero-page-coins-val');
+    if(_hpC) _hpC.textContent = (_knowledgeCoins||0).toLocaleString();
+  };
+  document.getElementById('_burst_no').onclick = () => box.remove();
+}
+
 
 function investStat(name, stat) {
   if(!(_heroStatPoints[name] > 0)) return;
