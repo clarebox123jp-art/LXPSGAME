@@ -1078,11 +1078,17 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   border:2.5px solid rgba(255,210,60,0.9);color:#fff5b0;
   transition:all 0.25s;
   text-shadow:0 2px 0 rgba(0,0,0,1),0 0 20px rgba(255,180,0,0.6);
-  box-shadow:0 0 30px rgba(220,140,10,0.45);width:100%;
+  animation:advStartBtnBreath 2.2s ease-in-out infinite;
+  width:100%;
+}
+@keyframes advStartBtnBreath{
+  0%,100%{box-shadow:0 0 18px rgba(220,160,20,0.5),0 0 6px rgba(255,210,60,0.4);border-color:rgba(255,210,60,0.8);}
+  50%{box-shadow:0 0 45px rgba(255,200,30,0.9),0 0 20px rgba(255,220,80,0.6);border-color:rgba(255,240,100,1);}
 }
 #adv-start-game-btn:hover{
   background:linear-gradient(135deg,rgba(160,80,0,0.95),rgba(220,120,0,0.9));
-  border-color:#ffe878;box-shadow:0 0 50px rgba(255,160,0,0.7);transform:scale(1.02);
+  border-color:#ffe878;box-shadow:0 0 60px rgba(255,200,30,0.9);transform:scale(1.02);
+  animation:none;
 }
 @keyframes advOverlayFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes enemyTurnPulse{
@@ -2979,6 +2985,9 @@ body {
   box-shadow:0 0 50px rgba(232,64,64,0.25);
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
 }
+@media screen and (min-width:1181px){
+  #adv-continue-box{ max-width:min(96vw,1100px); font-size:200%; }
+}
 #adv-continue-title{font-size:40px;font-weight:900;color:#ff6666;letter-spacing:4px;margin-bottom:8px;}
 #adv-continue-msg{font-size:24px;color:#ffaaaa;line-height:1.7;margin-bottom:24px;}
 #adv-continue-count{font-size:22px;color:#ff8888;margin-bottom:20px;}
@@ -3274,16 +3283,17 @@ body {
 </div>
 <!-- 遊戲介紹按鈕 -->
 <button id="game-info-btn"
-  onclick="playSfx('sfx-gentle',0.4);document.getElementById('game-info-modal').style.display='flex'">
+  onclick="playSfx('sfx-gentle',0.4);var _m=document.getElementById('game-info-modal');_m.style.display='flex';document.documentElement.style.touchAction='pan-y';document.body.style.touchAction='pan-y';">
   📖 遊戲介紹
 </button>
 
 <!-- 遊戲介紹視窗 -->
 <div id="game-info-modal"
-  onclick="if(event.target===this){playSfx('sfx-cancel',0.3);this.style.display='none'}"
+  onclick="if(event.target===this){playSfx('sfx-cancel',0.3);this.style.display='none';document.documentElement.style.touchAction='';document.body.style.touchAction='';}"
   style="display:none;position:fixed;inset:0;z-index:9999;
     background:rgba(0,0,8,0.88);
     overflow-y:auto;-webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
     padding:24px 16px;
     backdrop-filter:blur(10px);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
   <div onclick="event.stopPropagation()" style="
@@ -3293,7 +3303,7 @@ body {
     margin:auto;
     box-shadow:0 0 100px rgba(200,150,30,0.3);position:relative;">
     <!-- 關閉按鈕 -->
-    <button onclick="playSfx('sfx-cancel',0.3);document.getElementById('game-info-modal').style.display='none'"
+    <button onclick="playSfx('sfx-cancel',0.3);document.getElementById('game-info-modal').style.display='none';document.documentElement.style.touchAction='';document.body.style.touchAction='';"
       style="position:absolute;top:18px;right:22px;background:none;border:none;
         color:rgba(255,255,255,0.45);font-size:42px;cursor:pointer;line-height:1;
         font-family:inherit;">✕</button>
@@ -3325,7 +3335,7 @@ body {
     </div>
     <!-- 底部提示 -->
     <div style="text-align:center;margin-top:30px;">
-      <button onclick="playSfx('sfx-confirm',0.4);document.getElementById('game-info-modal').style.display='none'"
+      <button onclick="playSfx('sfx-confirm',0.4);document.getElementById('game-info-modal').style.display='none';document.documentElement.style.touchAction='';document.body.style.touchAction='';"
         style="padding:16px 60px;font-size:27px;font-weight:700;
           background:linear-gradient(135deg,rgba(212,168,67,0.25),rgba(180,130,30,0.2));
           border:2px solid rgba(212,168,67,0.6);color:#ffe8a0;
@@ -3341,7 +3351,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0053</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0143</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -3445,7 +3455,7 @@ body {
           <span class="adv-info-label">🎁 獎勵</span>
           <div id="adv-rewards-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
-        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame('maokong')">📣 開始整隊！</button>
+        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame('maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
 
       </div>
     </div>
@@ -5292,7 +5302,7 @@ const HERO_IMGS = {
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合'}},
   '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
-  '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵/治癒1友各20%HP',fd:'使1名對手受到HP20%的傷害，同時恢復1名友方20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
+  '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
   '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'傷害1名對手＋追加10必中',fd:'用特技傷害1名對手，並追加無視其有利狀態的10點傷害'},s2:{n:'地獄之火',c:4,d:'全體對手燃燒（每回合-10HP，2回合）',fd:'使全體對手在行動前後各減少一次5HP(無視其有利狀態)，持續2回合'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
@@ -10103,6 +10113,7 @@ function _showPassivePrompt(opts){
     'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;',
     'pointer-events:auto;',
   ].join('');
+    if(window.innerWidth > 1180){ pm.style.width='min(96vw,700px)'; pm.style.fontSize='185%'; }
 
   // 倒數計時條
   const countdown = document.createElement('div');
@@ -12256,10 +12267,13 @@ function execSkill(a, sk, cost, stype){
   // ====== 聖騎士 ======
   else if(n==='神聖鎚擊'){
     setPending('enemy',function(t){
-      log('['+a.name+'] 神聖鎚擊！攻擊 ['+t.name+']！');
+      // ★ BOSS 目標傷害為 5%，一般目標 20%
+      var _isBoss = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(t.name);
+      var _dmgPct = _isBoss ? 0.05 : 0.20;
+      log('['+a.name+'] 神聖鎚擊！攻擊 ['+t.name+']'+ (_isBoss?' (BOSS 5%)':' (20%)')+'！');
       playSkillFX('神聖鎚擊',a,[t]);
-      doDmg(t,Math.max(1,Math.floor(t.hp*0.2)),{actor:a,isSkill:true,ignoreBuffs:false});
-      // 自動選 HP 最低的存活友方治療
+      doDmg(t,Math.max(1,Math.floor(t.hp*_dmgPct)),{actor:a,isSkill:true,ignoreBuffs:false});
+      // 恢復 HP 比例最低的存活友方
       var _ha=G[a.side].filter(function(h){return h.curHp>0;});
       if(_ha.length){
         var healTgt=_ha.sort(function(x,y){return (x.curHp/x.hp)-(y.curHp/y.hp);})[0];
@@ -12267,7 +12281,6 @@ function execSkill(a, sk, cost, stype){
         playSkillFX('神聖鎚擊',a,[t,healTgt]);
         doHeal(healTgt,Math.max(1,Math.floor(healTgt.hp*0.2)),{actor:a,isHeal:true});
       }
-      // 確保無論任何情況都結束行動
       G.pendingTarget=null; pendingCb=null;
       endAction(a,cost);
     });
@@ -15568,7 +15581,7 @@ function aiUseSkill(a,sk,cost,pref){
 
   if(['迅雷連斬','瞄準射擊','冰凍之矛','麻痺落雷','火焰球','降龍伏虎拳'].includes(n)){
     if(t){ doDmg(t,n==='降龍伏虎拳'?Math.floor(a.atk*2):n==='瞄準射擊'?Math.floor(spv(a)*2.0):spv(a),{actor:a,ignoreBuffs:n==='降龍伏虎拳',ignoreEvasion:n==='瞄準射擊',noGuard:n==='瞄準射擊',noHidden:n==='瞄準射擊',piercing:n==='瞄準射擊'}); if(n==='迅雷連斬'&&t.curHp>0)doDmg(t,a.atk,{actor:a}); if(n==='冰凍之矛'&&t.curHp>0)addStatus(t,'freeze'); if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para'); if(n==='火焰球')doDmg(t,10,{ignoreBuffs:true}); }
-  } else if(n==='神聖鎚擊'){if(t){doDmg(t,Math.max(1,Math.floor(t.hp*0.2)),{actor:a});doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});}}
+  } else if(n==='神聖鎚擊'){if(t){var _bossHit=typeof BOSS_NAMES!=='undefined'&&BOSS_NAMES.includes(t.name);doDmg(t,Math.max(1,Math.floor(t.hp*(_bossHit?0.05:0.2))),{actor:a});doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});}}
   else if(n==='刀背擊'){if(t){t.curHp=Math.max(0,t.curHp-1);if(t.curHp>0)addStatus(t,'stun');showPopup(t,1,'dmg');}}
   else if(n==='救贖神光'){
     const dead=G[a.side].find(h=>h.curHp===0);
@@ -15902,17 +15915,46 @@ function showResult(win){
   if(typeof clearTurnTimer==='function') clearTurnTimer();
 
   // ── 2.5 關閉所有可能殘留的確認視窗 ──
-  ['discard-overlay','equip-overlay','dice-overlay','reinforce-ov',
-   'charm-ov','mimic-ov','tarot-choice-overlay','immovable-prompt'].forEach(function(id){
+  // 永久性 HTML 元素：只隱藏
+  const _keepIds = new Set(['discard-overlay','equip-overlay','dice-overlay',
+    'adv-hero-meet-overlay','result-overlay','adv-result-overlay']);
+  // 需關閉的所有視窗（靜態 HTML + 動態建立的）
+  [
+    // 原有
+    'discard-overlay','equip-overlay','dice-overlay','reinforce-ov',
+    'charm-ov','mimic-ov','tarot-choice-overlay','immovable-prompt',
+    'adv-hero-meet-overlay',
+    // ★ 被動技能視窗（最重要：玩家沒選擇時必須自動關閉）
+    'passive-prompt','passive-prompt-countdown','passive-prompt-style',
+    // ★ 戰鬥中可能殘留的其他視窗
+    '_rollback-menu','rollback-reinforce-ov',
+    'bag-hero-select','bag-skill-select',
+    'alchemist-prompt','auto-confirm-ov',
+    'burst-mimic-confirm','burst-mimic-ov','burst-equip-ov','burst-panel',
+    '_tut-prompt','_ti-dim-overlay',
+    'action-confirm-bar','fc-detail-pop','_heal-warn-pop','_ts_popup',
+    'adv-treasure-confirm','adv-skip-select-box','adv-skip-confirm-btn',
+    'adv-repick-popup','adv-boss-detail-pop',
+    'burst-upgrade-confirm-box','invest-confirm-box','upgrade-confirm-box',
+  ].forEach(function(id){
     var _ov = document.getElementById(id);
-    if(_ov){ _ov.style.display='none'; if(_ov.remove && id!=='discard-overlay'&&id!=='equip-overlay'&&id!=='dice-overlay') _ov.remove(); }
+    if(!_ov) return;
+    _ov.style.display = 'none';
+    // 動態建立的元素直接移除（保留永久性 HTML 元素）
+    if(!_keepIds.has(id) && typeof _ov.remove === 'function'){
+      try{ _ov.remove(); }catch(e){}
+    }
   });
-  // ★ 冒險 overlay 只隱藏，不移除（元素要保留給下次使用）
-  const _hmOv = document.getElementById('adv-hero-meet-overlay');
-  if(_hmOv) _hmOv.style.display = 'none';
+  // 被動技能回呼也一併清除（視同放棄）
+  if(typeof _passiveResolveCb !== 'undefined') _passiveResolveCb = null;
+  if(typeof _passivePromptActive !== 'undefined') _passivePromptActive = false;
   // 取消待處理的捨棄/裝備回調，避免戰後再次觸發
   if(typeof _discardCb !== 'undefined') _discardCb = null;
   if(typeof _equipCb !== 'undefined') _equipCb = null;
+  // 清除教學遮罩相關元素
+  ['_mini-tut-dim','_mini-tut-msg','_mini-tut-arrow'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.remove();
+  });
 
   const el=document.getElementById('result-overlay');
   // display已由_showResultWithDrama設定，此處只確保可見
@@ -18432,6 +18474,11 @@ function _advCheckCrashRecovery(){
       'box-shadow:0 0 60px rgba(255,150,0,0.35);',
       'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;'
     ].join('');
+    // ★ PC 版放大 100%
+    if(window.innerWidth > 1180){
+      box.style.width = 'min(96vw,1120px)';
+      box.style.fontSize = '200%';
+    }
 
     const stageLabels = { maokong:'貓空冒險 第一關' };
     const stageLabel  = stageLabels[snap.stage] || snap.stage;
@@ -19602,6 +19649,7 @@ function advConfirmTreasureUse(slotIdx) {
     'box-shadow:0 0 40px rgba(255,180,0,0.4);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
+    if(window.innerWidth > 1180){ box.style.width='min(96vw,900px)'; box.style.fontSize='185%'; }
   box.innerHTML = `
     <div style="font-size:52px;margin-bottom:8px;">${t.icon}</div>
     <div style="font-size:30px;font-weight:900;color:#ffcc44;margin-bottom:10px;">${t.name}</div>
@@ -19646,6 +19694,7 @@ function advSkipCutscene() {
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
     'box-shadow:0 0 50px rgba(100,60,255,0.4);'
   ].join('');
+    if(window.innerWidth > 1180){ box.style.width='min(96vw,1000px)'; box.style.fontSize='170%'; }
 
   const gradeOpts = ['低年級','中年級','高年級','五年級','國中'];
   const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量'];
@@ -21620,6 +21669,11 @@ const BACKPACK_ITEM_DEF = {
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
+  // ★ 小怪戰掉落物（只能販賣換知識幣）
+  'half_tea':     { name:'喝一半的好茶',     icon:'🍵', desc:'被史萊姆偷喝了一半的好茶，雖然有點不乾淨，還是值點錢。', type:'sell_only', sellPrice:10 },
+  'picked_flower':{ name:'被摘的花朵',       icon:'🌸', desc:'被頑皮妖精偷摘的野花，稍顯凌亂但仍有芬芳。', type:'sell_only', sellPrice:15 },
+  'damaged_bamboo':{ name:'有點損傷的綠竹筍', icon:'🎋', desc:'被哥布林啃過的竹筍，有些咬痕，但大部分還是好的。', type:'sell_only', sellPrice:14 },
+  'unknown_egg':  { name:'未知的蛋',         icon:'🥚', desc:'鳥人哈維偷來的蛋，不知道是什麼生物的，說不定會孵出什麼。', type:'sell_only', sellPrice:16 },
 };
 
 // 商店商品定義
@@ -21636,7 +21690,11 @@ const SHOP_PRODUCTS = [
 ];
 // 可販賣品（在商店賣掉換知識幣）
 const SHOP_SELL_ITEMS = [
-  { id:'antique_teacup', name:'骨董茶杯', icon:'🍵', sellPrice:1000 },
+  { id:'antique_teacup',  name:'骨董茶杯',       icon:'🍵', sellPrice:1000 },
+  { id:'half_tea',        name:'喝一半的好茶',   icon:'🍵', sellPrice:10 },
+  { id:'picked_flower',   name:'被摘的花朵',     icon:'🌸', sellPrice:15 },
+  { id:'damaged_bamboo',  name:'有點損傷的綠竹筍',icon:'🎋', sellPrice:14 },
+  { id:'unknown_egg',     name:'未知的蛋',       icon:'🥚', sellPrice:16 },
 ];
 
 // 背包工具函式
@@ -21714,6 +21772,7 @@ function _checkShowTutorial(ctx) {
     'box-shadow:0 0 60px rgba(60,140,255,0.5);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
   ].join('');
+    if(window.innerWidth > 1180){ box.style.width='min(96vw,900px)'; box.style.fontSize='185%'; }
   const ctxLabel = ctx === 'mini' ? '小怪戰鬥' : '鬥技場戰鬥';
   pm.innerHTML = `
     <div style="font-size:60px;margin-bottom:12px;">📖</div>
@@ -22554,6 +22613,7 @@ function _showRollbackMenu() {
     'box-shadow:0 0 40px rgba(255,120,0,0.35);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
+    if(window.innerWidth > 1180){ box.style.width='min(88vw,700px)'; box.style.fontSize='180%'; }
 
   // 是否有戰鬥快照
   let snapRound = 0;
@@ -24681,6 +24741,7 @@ function upgradeBurst(name) {
     'box-shadow:0 0 60px rgba(255,120,0,0.4);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
+    if(window.innerWidth > 1180){ box.style.width='min(96vw,960px)'; box.style.fontSize='200%'; }
   box.innerHTML = `
     <div style="font-size:52px;margin-bottom:10px;">🍑</div>
     <div style="font-size:26px;font-weight:900;color:#ffaa44;margin-bottom:8px;">極限爆發升級確認</div>
@@ -24737,6 +24798,7 @@ function investStat(name, stat) {
     'box-shadow:0 0 50px rgba(150,100,255,0.4);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
+    if(window.innerWidth > 1180){ box.style.width='min(96vw,960px)'; box.style.fontSize='190%'; }
   box.innerHTML = `
     <div style="font-size:48px;margin-bottom:10px;">${icon}</div>
     <div style="font-size:26px;font-weight:900;color:#cc99ff;margin-bottom:8px;">投資素質點數</div>
@@ -25238,22 +25300,37 @@ function _advMiniQuizSubmit(letter, isCorrect) {
         }
       }catch(e){}
     }, 400);
+    // ★ 答對後：關閉題目 overlay，顯示答題獎勵
+    setTimeout(() => {
+      if(qOv) qOv.classList.remove('show');
+      const timerEl = document.getElementById('adv-quiz-timer');
+      if(timerEl) timerEl.style.display = '';
+      // 儲存 onDone 回呼，等玩家選完獎勵後繼續
+      const _onDoneAfterReward = window._miniQuizOnDone;
+      window._miniQuizOnDone = null;
+      window._miniQuizCurrentQ = null;
+      window._miniQuizPhase = null;
+      // 顯示獎勵選擇（advShowReward 使用 adv-reward-overlay）
+      try{
+        _advMiniShowReward(_onDoneAfterReward);
+      }catch(e){
+        if(_onDoneAfterReward) _onDoneAfterReward();
+      }
+    }, 1000);
   } else {
     try{ playSfx('sfx-wrong', 0.6); }catch(e){}
     bannerFX(null, '❌ 答錯了！', '#ff6666', 1200);
+    setTimeout(() => {
+      if(qOv) qOv.classList.remove('show');
+      const timerEl = document.getElementById('adv-quiz-timer');
+      if(timerEl) timerEl.style.display = '';
+      const onDone = window._miniQuizOnDone;
+      window._miniQuizOnDone = null;
+      window._miniQuizCurrentQ = null;
+      window._miniQuizPhase = null;
+      if(onDone) onDone();
+    }, 1600);
   }
-
-  setTimeout(() => {
-    if(qOv) qOv.classList.remove('show');
-    // 恢復計時器顯示
-    const timerEl = document.getElementById('adv-quiz-timer');
-    if(timerEl) timerEl.style.display = '';
-    const onDone = window._miniQuizOnDone;
-    window._miniQuizOnDone = null;
-    window._miniQuizCurrentQ = null;
-    window._miniQuizPhase = null;
-    if(onDone) onDone();
-  }, isCorrect ? 1000 : 1600);
 }
 
 
@@ -25478,6 +25555,31 @@ function advFinishMiniBattle(win) {
   _gamePaused = false;
 
   if(win) {
+    // ★ 計算小怪掉落（還原 BOSS 陣容前，G.p2 還是小怪陣容）
+    const _miniDrops = [];
+    const _MINI_DROP_MAP = {
+      '偷喝茶的史萊姆':    'half_tea',
+      '偷摘花的頑皮妖精':  'picked_flower',
+      '偷竹筍的哥布林':    'damaged_bamboo',
+      '偷鳥蛋的鳥人哈維':  'unknown_egg',
+    };
+    if(G && G.p2){
+      G.p2.forEach(mob => {
+        const dropId = _MINI_DROP_MAP[mob.name];
+        if(dropId && Math.random() < 0.5){
+          backpackAdd(dropId, 1);
+          const def = BACKPACK_ITEM_DEF[dropId];
+          if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
+        }
+      });
+    }
+    // ★ 英雄經驗值之書：25% 掉落率
+    if(Math.random() < 0.25){
+      backpackAdd('hero_exp_book', 1);
+      _miniDrops.push({ icon:'📗', name:'英雄經驗值之書×1', sellPrice:null });
+    }
+    window._miniDrops = _miniDrops;
+
     // 給予小怪EXP（使用已在 BOSS 陣容還原前算好的 _miniBaseExp）
     const heroes = advGetUnlockedHeroes();
     if(heroes.length) {
@@ -25511,7 +25613,7 @@ function advFinishMiniBattle(win) {
             _treasureGot = _t;
           }
         }
-        // ★ 結算畫面分行顯示（EXP / 知識幣 / 答題幣 / 法寶）
+        // ★ 結算畫面分行顯示（EXP / 知識幣 / 答題幣 / 法寶 / 掉落物）
         if(_expInfoEl){
           let html = '<div style="display:flex;flex-direction:column;gap:6px;align-items:center;">';
           html += '<div>⚔️ 戰鬥EXP <span style="color:#44ff88;font-weight:900;">+'+baseExp+'</span></div>';
@@ -25522,11 +25624,28 @@ function advFinishMiniBattle(win) {
           if(_treasureGot){
             html += '<div>'+_treasureGot.icon+' 獲得法寶：<span style="color:#ffaa44;font-weight:900;">'+_treasureGot.name+'</span></div>';
           }
+          // ★ 掉落物
+          const _drops = window._miniDrops || [];
+          if(_drops.length){
+            html += '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);width:100%;margin:4px 0;">';
+            html += '<div style="color:#ccbbff;font-weight:700;">🎁 掉落物品：</div>';
+            _drops.forEach(d => {
+              const priceStr = d.sellPrice ? ' <span style="color:#ffcc44;font-size:0.85em;">（可賣 '+d.sellPrice+' 幣）</span>' : '';
+              html += '<div>'+d.icon+' <span style="color:#eeddff;">'+d.name+'</span>'+priceStr+'</div>';
+            });
+          }
           html += '</div>';
           _expInfoEl.innerHTML = html;
         }
         // ★ 若有升級，先演出升級畫面再顯示結算
-        const _showMiniResult = () => { _expEl.style.display = 'flex'; _expEl.classList.add('show'); };
+        const _showMiniResult = () => {
+          _expEl.style.display = 'flex'; _expEl.classList.add('show');
+          // PC 版放大
+          if(window.innerWidth > 1180){
+            const _inner = _expEl.querySelector('div');
+            if(_inner){ _inner.style.width='min(96vw,1000px)'; _inner.style.fontSize='190%'; }
+          }
+        };
         if(_miniLevelUps && _miniLevelUps.length) {
           setTimeout(() => _showLevelUpSequence(_miniLevelUps, _showMiniResult), 400);
         } else {
@@ -25607,6 +25726,64 @@ function advFinishMiniBattle(win) {
 
 // ★ 小怪戰勝利確認：玩家按下「繼續冒險」後執行
 // ★ 小怪戰結算「先回學校」：保存 EXP/幣 進度後回首頁
+// ── 小怪戰答題獎勵（答對後出現，玩家選擇後繼續遊戲）──
+function _advMiniShowReward(onDone) {
+  // 建立獎勵選項（2選1，從 ADV_REWARDS 中隨機取，過濾 boss_skip）
+  const pool = ADV_REWARDS.filter(r => {
+    if(r.id === 'boss_skip') return false;      // boss_skip 不適用小怪戰
+    if(r.id === 'instant_burst' && _advBurstRewardUsed) return false;
+    return true;
+  }).sort(()=>Math.random()-0.5).slice(0,2);
+
+  if(!pool.length){ if(onDone) onDone(); return; }
+
+  const choicesDiv = document.getElementById('adv-reward-choices');
+  const rewardOv   = document.getElementById('adv-reward-overlay');
+  const titleEl    = document.getElementById('adv-reward-title');
+  const subEl      = document.getElementById('adv-reward-subtitle');
+  const keepBtn    = document.getElementById('adv-reward-keep-btn');
+  if(!choicesDiv || !rewardOv){ if(onDone) onDone(); return; }
+
+  // 更新標題
+  if(titleEl) titleEl.textContent = '🎉 答對了！選擇獎勵';
+  if(subEl)   subEl.textContent   = '選一項即時發動效果！';
+  if(keepBtn) keepBtn.style.display = 'none'; // 小怪戰不顯示「保留」按鈕
+
+  choicesDiv.innerHTML = '';
+  pool.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = 'adv-reward-btn';
+    btn.innerHTML = r.icon + ' ' + r.name +
+      '<br><span style="font-size:36px;color:#ffffff;font-weight:500;">' + r.desc + '</span>';
+    btn.onclick = () => {
+      rewardOv.classList.remove('show');
+      if(keepBtn) keepBtn.style.display = ''; // 恢復 keep 按鈕
+      // 套用獎勵（複用 advApplyReward 邏輯，但小怪戰結束後繼續回合）
+      _advMiniApplyReward(r.id, onDone);
+    };
+    choicesDiv.appendChild(btn);
+  });
+
+  _advRewardOptions = pool;
+  rewardOv.classList.add('show');
+}
+
+// 小怪戰套用獎勵後繼續（不走 advOnQuizSkip，直接呼叫 onDone）
+function _advMiniApplyReward(id, onDone) {
+  const r = ADV_REWARDS.find(x=>x.id===id);
+  if(!r){ if(onDone) onDone(); return; }
+  try{
+    // 複用 advApplyReward 的邏輯（它會呼叫 advOnQuizSkip，但在小怪戰中 _gamePaused 已解除）
+    // 直接複用即可，只需把 advOnQuizSkip 的後續替換成 onDone
+    _advQuizResolveCb = onDone; // 讓 advOnQuizSkip 的 cb 呼叫 onDone
+    advApplyReward(id);
+  }catch(e){
+    console.error('[_advMiniApplyReward]', e);
+    if(onDone) onDone();
+  }
+}
+
+
 function advMiniResultGoHome() {
   const el = document.getElementById('adv-mini-result');
   if(el){ el.classList.remove('show'); el.style.display='none'; }
@@ -25616,18 +25793,33 @@ function advMiniResultGoHome() {
   try{ _advClearCrashSnapshot(); }catch(e){}
   // 儲存已獲得的進度（EXP/幣已在 advFinishMiniBattle 中 addHeroExp/addKnowledgeCoins 執行過）
   try{ gameCloudSave(); }catch(e){}
-  // 退出冒險模式，回首頁
+  // 回關卡選擇頁（而非遊戲首頁）
   try{
     bgmStop();
-    exitAdventureMode();
-    const homeOv = document.getElementById('overlay');
-    if(homeOv) homeOv.style.display = 'flex';
+    // 隱藏戰鬥畫面
     const gc = document.getElementById('gc');
-    if(gc){ gc.style.display=''; gc.classList.remove('adv-battle'); }
+    if(gc){ gc.classList.remove('adv-battle'); }
+    // 重置冒險戰鬥旗標（不完全退出冒險模式）
+    _adventureMode = false;
+    _advMiniBattleActive = false;
+    if(typeof G !== 'undefined' && G){ G._resultShown = false; G.pendingTarget = null; }
+    if(typeof pendingCb !== 'undefined') pendingCb = null;
+    // 回到關卡選擇頁
     const advOv = document.getElementById('adventure-overlay');
-    if(advOv) advOv.style.display = 'none';
+    if(advOv){
+      advOv.style.display = 'flex';
+      advOv.style.animation = 'advOverlayFadeIn 0.5s ease-out';
+    }
+    // 更新知識幣顯示
+    const _acv = document.getElementById('adv-coins-val');
+    if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
+    // 播放關卡選單 BGM
+    bgmPlay('bgm-menu-01');
   }catch(e){ location.reload(); }
-  bannerFX(null, '🏫 已保存本場進度，回到首頁！', '#bb99ff', 3000);
+  // 小提示
+  setTimeout(()=>{
+    bannerFX(null, '🏫 已保存本場進度！', '#bb99ff', 2500);
+  }, 500);
 }
 
 
