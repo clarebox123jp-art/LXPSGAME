@@ -115,7 +115,7 @@
   --hp-green:#3ec87a; --energy:#4a9eff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,html,body{width:100%;height:100%;overflow:hidden;background:#000;margin:0;padding:0;touch-action:none;}
+html,html,body{width:100%;height:100%;overflow:hidden;background:#000;margin:0;padding:0;touch-action:none;overscroll-behavior:none;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;}
 #_gc_wrapper{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;}
 body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #gc{
@@ -681,6 +681,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #overlay .title-wrap,#overlay .subtitle{position:relative;z-index:2}
 #overlay #adventure-btn{position:absolute;z-index:2;top:67%;left:50%;transform:translateX(-50%)}
 #overlay #start-btn{position:absolute;z-index:2;top:79%;left:50%;transform:translateX(-50%)}
+#overlay #chrome-hint-btn{position:absolute;z-index:2;top:91%;left:50%;transform:translateX(-50%);white-space:nowrap;}
 /* 主標題容器 */
 #overlay .title-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:-180px}
 /* 中文主標題 - 童趣彩虹圓潤風格 */
@@ -3229,9 +3230,26 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2208</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2226</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
+<button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
+  style="background:rgba(0,0,0,0.55);border:1.5px solid rgba(66,133,244,0.6);
+    color:rgba(200,220,255,0.85);border-radius:20px;padding:8px 22px;
+    font-size:17px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    cursor:pointer;display:flex;align-items:center;gap:8px;letter-spacing:0.5px;
+    transition:background 0.2s,border-color 0.2s;"
+  onmouseover="this.style.background='rgba(66,133,244,0.25)';this.style.borderColor='rgba(66,133,244,0.9)'"
+  onmouseout="this.style.background='rgba(0,0,0,0.55)';this.style.borderColor='rgba(66,133,244,0.6)'">
+  <svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0">
+    <circle cx="12" cy="12" r="4" fill="#fff"/>
+    <path d="M12 8a4 4 0 0 1 3.465 2H20A8 8 0 1 0 20 14h-4.535A4 4 0 0 1 12 8z" fill="#4285F4"/>
+    <path d="M12 8h8a8 8 0 0 1-4.535 6H12" fill="#EA4335"/>
+    <path d="M4 12a8 8 0 0 0 8 8l2-3.465A4 4 0 0 1 8.535 14H4.07A8.05 8.05 0 0 1 4 12z" fill="#FBBC05"/>
+    <path d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-3.465 2H4.07A8.03 8.03 0 0 1 4 12z" fill="#34A853"/>
+  </svg>
+  建議使用 Chrome 以獲得最佳體驗
+</button>
   </div>
   <!-- ★ 登入選擇彈窗 -->
   <div id="login-gate-modal" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -17074,11 +17092,35 @@ function ctrlFullscreen(){
 ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange'].forEach(ev=>{
   document.addEventListener(ev,()=>{
     const btn=document.getElementById('ctrl-fs');
-    if(!btn) return;
-    const isFs=document.fullscreenElement||document.webkitFullscreenElement;
-    btn.classList.toggle('active',!!isFs);
-    btn.querySelector('.ctrl-tip').textContent=isFs?'離開全螢幕':'全螢幕';
-    setTimeout(scaleToViewport,100);
+    if(btn){
+      const isFs=document.fullscreenElement||document.webkitFullscreenElement;
+      btn.classList.toggle('active',!!isFs);
+      btn.querySelector('.ctrl-tip').textContent=isFs?'離開全螢幕':'全螢幕';
+      setTimeout(scaleToViewport,100);
+    }
+    // ★ 退出全螢幕後自動重取（平板不小心滑到邊界觸發退出時自動恢復）
+    const _isNowFs = document.fullscreenElement||document.webkitFullscreenElement;
+    if(!_isNowFs && document.visibilityState==='visible'){
+      // 延遲 1.5 秒後重取，避免使用者主動退出時也強制恢復
+      if(window._fsAutoRestoreTimer) clearTimeout(window._fsAutoRestoreTimer);
+      window._fsAutoRestoreTimer = setTimeout(function(){
+        // 再次確認：若 1.5 秒後依然不在全螢幕 → 自動重取
+        if(!(document.fullscreenElement||document.webkitFullscreenElement)){
+          const el2 = document.documentElement;
+          const fn2 = el2.requestFullscreen||el2.webkitRequestFullscreen||el2.mozRequestFullScreen;
+          if(fn2){ try{ fn2.call(el2,{navigationUI:'hide'}); }catch(e){} }
+          // 同時鎖橫式
+          if(screen.orientation&&screen.orientation.lock){
+            screen.orientation.lock('landscape').catch(()=>{});
+          }
+        }
+      }, 1500);
+    } else if(_isNowFs){
+      // 進入全螢幕時：立即鎖橫式
+      if(screen.orientation&&screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(()=>{});
+      }
+    }
   });
 });
 
@@ -17935,6 +17977,21 @@ document.addEventListener('visibilitychange', function(){
     if(typeof AC !== 'undefined' && AC && AC.state === 'suspended'){
       try{ AC.resume().catch(()=>{}); }catch(e){}
     }
+    // ★ 回前台自動重取全螢幕 + 鎖橫式（防止 iPad 退出全螢幕後不會自動恢復）
+    setTimeout(function(){
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+      if(!isFs){
+        const el = document.documentElement;
+        const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+        if(fn){ try{ fn.call(el,{navigationUI:'hide'}); }catch(e){} }
+      }
+      // 鎖橫式方向
+      if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(()=>{});
+      } else if(screen.lockOrientation){
+        screen.lockOrientation('landscape');
+      }
+    }, 500);
   }
 });
 
@@ -17962,13 +18019,19 @@ window.addEventListener('pagehide', function(e){
     'shop-main', 'adv-left-panel', 'adv-right-panel'
   ];
   document.addEventListener('touchmove', function(e){
-    if(!e.target.closest('#gc')) return;
-    // 若觸碰起點在可滾動容器內，允許原生滾動
+    // ★ 完全阻止 body 層級的 touchmove（防止 iOS 邊界滑動退出全螢幕）
+    // 但保留 #gc 內可滾動容器的原生滾動
     var inScrollable = _scrollableIds.some(function(id){
       return e.target.closest('#'+id);
     });
-    if(inScrollable) return; // 放行，讓瀏覽器處理滾動
+    if(inScrollable) return; // 放行，讓瀏覽器處理圖鑑等容器滾動
     e.preventDefault();
+  }, { passive: false });
+  // ★ 額外攔截：防止 iOS 橡皮筋捲動（overscroll bounce）退出全螢幕
+  document.body.addEventListener('touchmove', function(e){
+    if(e.target === document.body || e.target === document.documentElement){
+      e.preventDefault();
+    }
   }, { passive: false });
   // Prevent long-press context menu on game canvas
   document.addEventListener('contextmenu', function(e){
@@ -18098,7 +18161,21 @@ function renderTurnOrderBar(){
 // Turn order bar updates via direct call in original updateUI
 
 window.addEventListener('resize',scaleToViewport);
-window.addEventListener('orientationchange',function(){ setTimeout(scaleToViewport,200); });
+window.addEventListener('orientationchange',function(){
+  setTimeout(scaleToViewport, 200);
+  // ★ 裝置旋轉時嘗試鎖回橫式
+  setTimeout(function(){
+    if(screen.orientation && screen.orientation.lock){
+      screen.orientation.lock('landscape').catch(()=>{});
+    }
+    // 若全螢幕遺失則重取
+    if(!(document.fullscreenElement||document.webkitFullscreenElement)){
+      const el = document.documentElement;
+      const fn = el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen;
+      if(fn){ try{ fn.call(el,{navigationUI:'hide'}); }catch(e){} }
+    }
+  }, 300);
+});
 if(window.visualViewport) window.visualViewport.addEventListener('resize',scaleToViewport);
 scaleToViewport();
 // ══════════════════════════════════════
@@ -18138,12 +18215,28 @@ function _requestFullscreenAll(){
            || el.mozRequestFullScreen
            || el.msRequestFullscreen;
   if(fn){
-    try{ fn.call(el, {navigationUI:'hide'}); }catch(e){
+    try{
+      const p = fn.call(el, {navigationUI:'hide'});
+      if(p && p.then){
+        p.then(function(){
+          // 進入全螢幕後立即鎖橫式
+          if(screen.orientation && screen.orientation.lock){
+            screen.orientation.lock('landscape').catch(()=>{});
+          }
+        }).catch(()=>{});
+      }
+    }catch(e){
       try{ fn.call(el); }catch(e2){}
     }
   }
-  // iOS Safari（iPhone/iPad）不支援標準 Fullscreen API，改用 standalone 提示
-  // 無法強制全螢幕，但不報錯
+  // 無論全螢幕是否成功，嘗試鎖橫式方向
+  if(screen.orientation && screen.orientation.lock){
+    screen.orientation.lock('landscape').catch(()=>{});
+  } else if(screen.lockOrientation){
+    try{ screen.lockOrientation('landscape'); }catch(e){}
+  } else if(screen.mozLockOrientation){
+    try{ screen.mozLockOrientation('landscape'); }catch(e){}
+  }
 }
 
 function openAdventureOverlay(){
@@ -24579,6 +24672,69 @@ function closeHeroPage() {
 // ══════════════════════════════════════════════
 //  登入選擇視窗
 // ══════════════════════════════════════════════
+function _openInChrome() {
+  // 偵測是否已在 Chrome（含 Chrome for iOS）
+  const ua = navigator.userAgent || '';
+  const isChrome = (ua.indexOf('Chrome') > -1 || ua.indexOf('CriOS') > -1)
+                   && ua.indexOf('Edg') === -1 && ua.indexOf('OPR') === -1;
+  if(isChrome){
+    // 已在 Chrome → 直接全螢幕並開始
+    const btn = document.getElementById('chrome-hint-btn');
+    if(btn) btn.textContent = '✅ 已是 Chrome！點此開始遊戲';
+    try{
+      const el = document.documentElement;
+      const fn = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(fn) fn.call(el, {navigationUI:'hide'}).catch(()=>{});
+    }catch(e){}
+    return;
+  }
+  // 目前 URL
+  const url = encodeURIComponent(location.href);
+  // Android：嘗試用 intent 開啟 Chrome
+  // iOS：嘗試 googlechrome:// 協定
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isAndroid = /Android/.test(ua);
+  if(isIOS){
+    // iOS Chrome URL scheme
+    const chromeUrl = location.href.replace(/^https?:\/\//, '');
+    const iosScheme = 'googlechromes://' + chromeUrl;
+    const fallback  = 'googlechrome://' + chromeUrl;
+    // 嘗試跳轉，若失敗顯示提示
+    const _t = setTimeout(function(){
+      if(confirm('無法自動開啟 Chrome。請手動複製網址，在 Chrome 中貼上開啟。  ' + location.href)){
+        try{ navigator.clipboard.writeText(location.href); }catch(e){}
+      }
+    }, 1500);
+    window.location.href = iosScheme;
+    setTimeout(function(){ clearTimeout(_t); window.location.href = fallback; }, 500);
+  } else if(isAndroid){
+    // Android Intent 開啟 Chrome
+    const intent = 'intent://' + location.host + location.pathname + location.search
+      + '#Intent;scheme=' + location.protocol.replace(':','')
+      + ';package=com.android.chrome;end';
+    window.location.href = intent;
+    setTimeout(function(){
+      if(confirm('請在彈出的選單中選擇「Chrome」開啟。或複製網址手動貼到 Chrome：  ' + location.href)){
+        try{ navigator.clipboard.writeText(location.href); }catch(e){}
+      }
+    }, 1000);
+  } else {
+    // 桌面：直接提示複製網址
+    if(confirm('請用 Google Chrome 瀏覽器開啟以下網址以獲得最佳遊戲體驗：  ' + location.href + '  點確定複製網址')){
+      try{
+        navigator.clipboard.writeText(location.href).then(function(){
+          alert('✅ 已複製！請開啟 Chrome 貼上網址。');
+        }).catch(function(){
+          prompt('請複製以下網址：', location.href);
+        });
+      }catch(e){
+        prompt('請複製以下網址：', location.href);
+      }
+    }
+  }
+}
+
+
 function showLoginGate() {
   // 已登入 → 直接進冒險
   if(window._gUserId) { openAdventureOverlay(); return; }
