@@ -3229,7 +3229,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2134</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2144</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -23690,6 +23690,21 @@ function _applyPresetTeam(slotIdx){
     }
     return h;
   });
+
+  // ★ 冒險模式：套用素質投資、技能等級、爆發等級（與 confirmHeroPick 相同邏輯）
+  if(isAdvMode){
+    G.p1.forEach(h => {
+      const _inv = (_heroStatInvested && _heroStatInvested[h.name]) || {};
+      if(_inv.hp)  { h.hp  += _inv.hp;  h.curHp = h.hp; }
+      if(_inv.atk) { h.atk += _inv.atk; }
+      if(_inv.sp)  { h.sp  += _inv.sp;  }
+      if(_inv.spd) { h.spd += _inv.spd; }
+      h._skLv = (_heroSkillLevels && _heroSkillLevels[h.name])
+        ? { s1: (_heroSkillLevels[h.name].s1 || 0), s2: (_heroSkillLevels[h.name].s2 || 0) }
+        : { s1: 0, s2: 0 };
+      h._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[h.name]) || 0;
+    });
+  }
 
   // 套用技能替換
   G.p1.forEach((h, i)=>{
