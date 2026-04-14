@@ -3264,13 +3264,15 @@ body {
 <div id="game-info-modal"
   onclick="if(event.target===this){playSfx('sfx-cancel',0.3);this.style.display='none'}"
   style="display:none;position:fixed;inset:0;z-index:9999;
-    background:rgba(0,0,8,0.88);align-items:center;justify-content:center;
+    background:rgba(0,0,8,0.88);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:24px 16px;
     backdrop-filter:blur(10px);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
   <div onclick="event.stopPropagation()" style="
     background:linear-gradient(160deg,rgba(8,14,30,0.99),rgba(4,8,18,0.99));
     border:3px solid rgba(212,168,67,0.6);border-radius:30px;
     padding:54px 64px 48px;max-width:min(94vw,1100px);width:100%;
-    max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    margin:auto;
     box-shadow:0 0 100px rgba(200,150,30,0.3);position:relative;">
     <!-- 關閉按鈕 -->
     <button onclick="playSfx('sfx-cancel',0.3);document.getElementById('game-info-modal').style.display='none'"
@@ -3321,7 +3323,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0023</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0041</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -14882,10 +14884,11 @@ function startTurn(){
     if(_adventureMode && _advMiniBattleActive && !window._miniQuizDoneThisRound){
       window._miniQuizDoneThisRound = true;
       _gamePaused = true;
-      _pSetTimeout(() => {
+      // ★ 用 setTimeout（非 _pSetTimeout），因為已暫停，_pSetTimeout 會永遠排隊
+      setTimeout(() => {
         _advMiniQuizAsk(() => {
           _gamePaused = false;
-          _pSetTimeout(()=>aiAct(next), 400);
+          setTimeout(()=>{ try{ aiAct(next); }catch(e){} }, 400);
         });
       }, 800);
     } else {
@@ -25064,7 +25067,130 @@ function _advMiniQuizAsk(onDone) {
   });
 
   qOv.classList.add('show');
+
+  // ★ 首次問答教學：第一次出現時引導玩家
+  if(!window._miniQuizTutDone){
+    window._miniQuizTutDone = true;
+    setTimeout(() => _advMiniQuizTutorial(), 600);
+  }
 }
+
+
+// ══════════════════════════════════════════════
+//  小怪戰：答對時的小怪反應台詞
+// ══════════════════════════════════════════════
+const MINI_MONSTER_REACT_CORRECT = {
+  '偷摘花的頑皮妖精': [
+    '哇啊！你竟然答對了！我的花白偷了……',
+    '不可以！我偷花是為了裝扮自己的！才不服輸！',
+    '哼哼！就算答對也擋不住我飄落的花瓣攻擊！',
+    '你……你只是僥倖猜到的吧？嗚嗚……',
+    '這道題也太難了吧！明明我偷花都是靠直覺的！',
+  ],
+  '偷鳥蛋的鳥人哈維': [
+    '咦咦咦！你怎麼知道！難道你也偷偷看了鳥巢？',
+    '嘎！被看穿了！我今天的鳥蛋白偷了……',
+    '不對不對！這題和鳥蛋有什麼關係！太不公平了！',
+    '啊啊啊！連答題你都贏我，難道你比鳥還聰明？',
+    '哼！羽毛再多也敵不過知識！（低頭認輸）',
+  ],
+  '偷竹筍的哥布林': [
+    '哇咧！答對了！我要回去多吃幾根筍補腦！',
+    '嘿嘿……沒想到竟然輸在答題上，可惡！',
+    '哼！就算你答對，我的筍還是很好吃的！',
+    '什……什麼！連這個你也知道？哥布林族的臉丟大了！',
+    '咬牙切齒！等我吃了更多竹筍就能跟你一樣聰明！',
+  ],
+  '偷喝茶的史萊姆': [
+    '嗝——你答對了……我喝多了茶腦子轉不過來……',
+    '咕嚕嚕……好嗆！輸了輸了，茶也沒喝到！',
+    '不……不應該的！我明明喝了三壺茶補充能量！',
+    '嗯咕……答對了是吧……那我再喝一壺茶想想辦法……',
+    '軟趴趴的史萊姆也是有自尊心的！這道題太狡猾了！',
+  ],
+};
+
+// 取得小怪反應台詞（找 p2 第一隻存活的小怪）
+function _getMiniMonsterReactLine() {
+  if(!G || !G.p2) return null;
+  const mob = G.p2.find(h => h.curHp > 0);
+  if(!mob) return null;
+  const lines = MINI_MONSTER_REACT_CORRECT[mob.name];
+  if(!lines || !lines.length) return null;
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  return { name: mob.name, line, hero: mob };
+}
+
+function _advMiniQuizTutorial() {
+  const qOv = document.getElementById('adv-quiz-overlay');
+  if(!qOv || !qOv.classList.contains('show')) return;
+  const optDiv = document.getElementById('adv-quiz-options');
+  const correctBtn = optDiv ? optDiv.querySelector('[data-is-correct="1"]') : null;
+  if(!correctBtn) return;
+
+  // ── 遮罩 ──
+  const dim = document.createElement('div');
+  dim.id = '_mini-tut-dim';
+  dim.style.cssText = 'position:fixed;inset:0;z-index:9949;background:rgba(0,0,0,0.72);pointer-events:none;';
+  document.body.appendChild(dim);
+
+  // ── 讓 quiz overlay 浮在遮罩上 ──
+  qOv.style.zIndex = '9950';
+
+  // ── 教學訊息（畫面頂部）──
+  const msg = document.createElement('div');
+  msg.id = '_mini-tut-msg';
+  msg.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);' +
+    'z-index:9956;background:linear-gradient(160deg,rgba(5,15,35,0.97),rgba(3,8,20,0.98));' +
+    'border:2px solid #ffcc44;border-radius:16px;padding:10px 24px;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;' +
+    'max-width:min(900px,92vw);box-shadow:0 0 40px rgba(255,200,0,0.4);' +
+    'display:flex;flex-direction:column;align-items:center;gap:6px;';
+  msg.innerHTML =
+    '<div style="font-size:28px;font-weight:900;color:#ffcc44;">🐾 小怪出題！</div>' +
+    '<div style="font-size:20px;color:#fff;line-height:1.5;">每回合小怪行動前都會出一道題！<br>答對可獲得 💰 知識幣！請點選正確答案。</div>' +
+    '<button onclick="_advMiniQuizTutSkip()" style="font-size:17px;color:#888;cursor:pointer;' +
+    'padding:4px 16px;border:1px solid #444;border-radius:8px;background:transparent;font-family:inherit;">跳過教學</button>';
+  document.body.appendChild(msg);
+
+  // ── 彈跳手指指向正確答案 ──
+  const arrow = document.createElement('div');
+  arrow.id = '_mini-tut-arrow';
+  arrow.textContent = '👆';
+  arrow.style.cssText = 'position:fixed;font-size:52px;z-index:9957;pointer-events:none;' +
+    'animation:_tiArrowBounce 0.55s ease-in-out infinite alternate;';
+  document.body.appendChild(arrow);
+
+  const _posArrow = () => {
+    const r = correctBtn.getBoundingClientRect();
+    arrow.style.left = (r.left + r.width/2 - 26) + 'px';
+    arrow.style.top  = (r.top - 65) + 'px';
+  };
+  _posArrow();
+
+  // ── 正確答案高亮 ──
+  correctBtn.style.outline = '4px solid #ffcc44';
+  correctBtn.style.boxShadow = '0 0 22px rgba(255,200,0,0.8)';
+
+  window._miniTutCorrectBtn = correctBtn;
+  correctBtn.addEventListener('click', () => { _advMiniQuizTutClear(); }, {once:true});
+}
+
+function _advMiniQuizTutClear() {
+  ['_mini-tut-dim','_mini-tut-msg','_mini-tut-arrow'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.remove();
+  });
+  const qOv = document.getElementById('adv-quiz-overlay');
+  if(qOv){ qOv.style.zIndex = ''; }
+  const btn = window._miniTutCorrectBtn;
+  if(btn){ btn.style.outline = ''; btn.style.boxShadow = ''; }
+  window._miniTutCorrectBtn = null;
+}
+
+function _advMiniQuizTutSkip() {
+  _advMiniQuizTutClear();
+}
+
 
 function _advMiniQuizSubmit(letter, isCorrect) {
   if(window._miniQuizPhase !== 'asking') return;
@@ -25084,6 +25210,16 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
     try{ playSfx('sfx-correct', 0.8); }catch(e){}
     bannerFX(null, '✅ 答對！獲得 ' + coins + ' 知識幣！', '#44ff88', 1200);
+    // ★ 小怪反應台詞
+    setTimeout(() => {
+      try{
+        const react = _getMiniMonsterReactLine();
+        if(react){
+          bannerFX(react.hero, '😵 ' + react.line, '#ffcc88', 2200);
+          log('[' + react.name + '] ' + react.line);
+        }
+      }catch(e){}
+    }, 400);
   } else {
     try{ playSfx('sfx-wrong', 0.6); }catch(e){}
     bannerFX(null, '❌ 答錯了！', '#ff6666', 1200);
