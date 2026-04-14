@@ -876,6 +876,30 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 #adventure-btn:hover::before{transform:translateX(100%);}
 
+#game-info-btn{
+  padding:15px 52px;font-size:45px;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
+  letter-spacing:6px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(80,50,0,0.88),rgba(160,100,0,0.78));
+  border:2.5px solid rgba(255,200,80,0.9);
+  color:#ffe8a0;border-radius:8px;
+  text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9);
+  transition:transform 0.25s,background 0.25s,border-color 0.25s;
+  overflow:hidden;z-index:2;white-space:nowrap;position:relative;
+}
+#game-info-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,200,80,0.12),transparent);
+  transform:translateX(-100%);transition:transform 0.4s;
+}
+#game-info-btn:hover{
+  background:linear-gradient(135deg,rgba(120,80,0,0.9),rgba(200,130,0,0.85));
+  border-color:#ffd055;color:#fff3c8;
+  box-shadow:0 0 40px rgba(255,180,50,0.85),0 0 80px rgba(200,130,0,0.4);
+  transform:translateX(-50%) scale(1.04);
+}
+#game-info-btn:hover::before{transform:translateX(100%);}
+
 /* ══════════════════════════════════════════
    冒險闖關 ─ 關卡選擇頁面
 ══════════════════════════════════════════ */
@@ -3233,7 +3257,7 @@ body {
 <!-- 遊戲介紹按鈕 -->
 <button id="game-info-btn"
   onclick="playSfx('sfx-gentle',0.4);document.getElementById('game-info-modal').style.display='flex'">
-  ℹ 遊戲介紹
+  📖 遊戲介紹
 </button>
 
 <!-- 遊戲介紹視窗 -->
@@ -3297,7 +3321,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0015</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0023</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
