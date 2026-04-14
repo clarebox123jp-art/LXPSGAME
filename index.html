@@ -3230,7 +3230,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2233</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2238</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -18439,24 +18439,52 @@ function _advRestoreBattleState(snap, bs){
   if(bs.rewardOptions && bs.rewardOptions.length) _advRewardOptions = bs.rewardOptions;
   if(bs.advStats)       Object.assign(_advStats, bs.advStats);
 
+  // ── 判斷是小怪戰還是 BOSS 戰（優先用 isMini 旗標，否則從 p2 名稱推算）──
+  const _restoreIsMini = (bs.isMini === true) ||
+    ((typeof MINI_MONSTERS !== 'undefined') && G.p2.length > 0 && MINI_MONSTERS.includes(G.p2[0].name));
+
   // ── 初始化戰鬥相關旗標 ──
   _adventureMode = true;
-  _advMiniBattleActive = false;
+  _advMiniBattleActive = _restoreIsMini;  // ★ 依快照正確設定小怪/BOSS 旗標
   window._advMiniResultShowing = false;
   if(typeof pendingCb !== 'undefined') pendingCb = null;
-  // ★ 備份 BOSS 陣容（供小怪戰後恢復使用）
-  try{ _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2)); }catch(e){ _advBossTeamSaved = null; }
-  // ★ BOSS 登場動畫已看過，跳過
+
+  // ★ 只有 BOSS 戰才備份 BOSS 陣容（小怪戰時 G.p2 是小怪，不可覆蓋 _advBossTeamSaved）
+  if(!_restoreIsMini){
+    try{ _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2)); }catch(e){ _advBossTeamSaved = null; }
+  }
+  // ★ BOSS 登場動畫已看過，跳過（僅 BOSS 戰需要）
   _advBossIntroShown = true;
 
-  // ── BGM & 背景 ──
+  // ── BGM & 背景（小怪戰和 BOSS 戰不同）──
   try{ bgmStop(); }catch(e){}
   try{
-    const bossBgm = document.getElementById('bgm-boss-01');
-    if(bossBgm){ bossBgm.volume=_bgmMuted?0:BGM_VOLUME; bossBgm.currentTime=0; bossBgm.play().catch(()=>{}); _curBgm='bgm-boss-01'; }
+    if(_restoreIsMini){
+      // 小怪戰：播放隨機戰鬥 BGM
+      const btIds=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
+      const btId = btIds[Math.floor(Math.random()*btIds.length)];
+      const btEl = document.getElementById(btId);
+      if(btEl){ btEl.volume=_bgmMuted?0:BGM_VOLUME; btEl.currentTime=0; btEl.play().catch(()=>{}); _curBgm=btId; }
+    } else {
+      // BOSS 戰：播放 BOSS BGM
+      const bossBgm = document.getElementById('bgm-boss-01');
+      if(bossBgm){ bossBgm.volume=_bgmMuted?0:BGM_VOLUME; bossBgm.currentTime=0; bossBgm.play().catch(()=>{}); _curBgm='bgm-boss-01'; }
+    }
   }catch(e){}
+  // 背景：小怪戰用當前場景背景，BOSS 戰用 bg-boss
   const _bb = document.getElementById('adv-battle-bg');
-  if(_bb){ _bb.className=''; _bb.classList.add('bg-boss'); void _bb.offsetWidth; _bb.classList.add('visible'); }
+  if(_bb){
+    _bb.className='';
+    if(_restoreIsMini){
+      const sceneKey = (typeof _adventureStage !== 'undefined' && ADV_SCENES && ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][0])
+        ? ADV_SCENES[_adventureStage][0].key : 'river';
+      const _bgMap = {river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden'};
+      _bb.classList.add(_bgMap[sceneKey] || 'bg-river');
+    } else {
+      _bb.classList.add('bg-boss');
+    }
+    void _bb.offsetWidth; _bb.classList.add('visible');
+  }
 
   // ── 初始化牌組（供戰鬥中繼續抽牌） ──
   try{ buildDeck(); }catch(e){}
@@ -18464,7 +18492,8 @@ function _advRestoreBattleState(snap, bs){
   // ── 延遲渲染（確保 DOM 已就緒） ──
   setTimeout(function(){
     try{ renderField(true); }catch(e){}
-    try{ markAdventureBossCards && markAdventureBossCards(); }catch(e){}
+    // 只有 BOSS 戰才標記 BOSS 卡片
+    try{ !_restoreIsMini && markAdventureBossCards && markAdventureBossCards(); }catch(e){}
     try{ renderItems(); updateUI(); }catch(e){}
     try{ _advTutBtnShow(true); }catch(e){}
 
