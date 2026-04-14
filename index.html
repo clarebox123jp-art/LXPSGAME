@@ -876,7 +876,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   border:2.5px solid rgba(80,180,255,1);
   color:#b8e4ff;border-radius:8px;
   text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(80,180,255,0.8);
-  animation:advBtnGlow 2.4s ease-in-out infinite;
+  box-shadow:0 0 20px rgba(60,160,255,0.4),0 0 6px rgba(0,100,200,0.2);
   transition:transform 0.25s,background 0.25s,border-color 0.25s;
   overflow:hidden;z-index:2;white-space:nowrap;position:relative;
 }
@@ -3351,7 +3351,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0159</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0203</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -17454,7 +17454,7 @@ window.addEventListener('load',()=>{
     canvas.width=W; canvas.height=H;
     ctx=canvas.getContext('2d');
     embers=[];
-    for(let i=0;i<80;i++){ const e=spawnEmber(); e.y=Math.random()*H; e.life=Math.random(); embers.push(e); }
+    for(let i=0;i<24;i++){ const e=spawnEmber(); e.y=Math.random()*H; e.life=Math.random(); embers.push(e); }
     if(raf) cancelAnimationFrame(raf);
     loop();
   }
@@ -17462,7 +17462,7 @@ window.addEventListener('load',()=>{
     if(!ctx) return;
     ctx.clearRect(0,0,W,H);
     const now=Date.now()/1000;
-    if(Math.random()<0.28) embers.push(spawnEmber());
+    if(Math.random()<0.08) embers.push(spawnEmber());
     embers.forEach(e=>{
       e.x+=e.vx+Math.sin(now*e.flickerSpeed+e.flicker)*0.6;
       e.y+=e.vy; e.life-=e.decay;
