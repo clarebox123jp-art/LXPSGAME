@@ -3229,7 +3229,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2131</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.2134</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -23885,10 +23885,10 @@ function buildSkillLvTable(skillName, currentLv) {
       const isNow = lv === currentLv;
       const isNext = lv === currentLv+1;
       rows += `<tr style="background:${isNext?'rgba(80,200,80,0.18)':isNow?'rgba(100,150,255,0.12)':'transparent'};${isNext?'font-weight:900;':''}">
-        <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:clamp(14px,2.5vw,36px);">
+        <td style="padding:2px 6px;color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:clamp(11px,1.4vw,16px);">
           ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
         </td>
-        <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#ffe066':'#ddd'};font-size:clamp(14px,2.5vw,36px);">
+        <td style="padding:2px 6px;color:${isNext?'#ffe066':'#ddd'};font-size:clamp(11px,1.4vw,16px);">
           技能效果 ×${(1+pct/100).toFixed(1)} ${pct===0?'（基礎）':'+'+pct+'%'}
         </td>
       </tr>`;
@@ -23927,10 +23927,10 @@ function buildSkillLvTable(skillName, currentLv) {
       effectText = def.label;
     }
     rows += `<tr style="background:${isNext?'rgba(80,200,80,0.18)':isNow?'rgba(100,150,255,0.12)':'transparent'};">
-      <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:clamp(14px,2.2vw,34px);white-space:nowrap;">
+      <td style="padding:2px 6px;color:${isNext?'#88ff88':isNow?'#88aaff':'#aaa'};font-size:clamp(11px,1.4vw,16px);white-space:nowrap;">
         ${isNext?'▶ ':''}Lv.${lv}${lv===0?' (未升級)':lv===9?' (MAX)':''}${isNow?' ← 目前':''}
       </td>
-      <td style="padding:clamp(3px,0.8vw,8px) clamp(6px,1.5vw,20px);color:${isNext?'#ffe066':'#ddd'};font-size:clamp(14px,2.2vw,34px);font-weight:${isNext?'900':'400'};">
+      <td style="padding:2px 6px;color:${isNext?'#ffe066':'#ddd'};font-size:clamp(11px,1.4vw,16px);font-weight:${isNext?'900':'400'};">
         ${effectText}
       </td>
     </tr>`;
@@ -24530,8 +24530,8 @@ function upgradeSkill(name, slot) {
       </div>
     </div>
     <!-- 右：Lv.0~9 效果一覽 -->
-    <div style="width:min(480px,100%);flex-shrink:0;background:rgba(5,8,20,0.85);border:2px solid rgba(100,180,255,0.2);border-radius:18px;padding:14px 10px;max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-      <div style="font-size:22px;color:#88aaff;font-weight:700;text-align:center;margin-bottom:10px;letter-spacing:2px;">── 升級效果一覽 ──</div>
+    <div style="width:min(480px,100%);flex-shrink:0;background:rgba(5,8,20,0.85);border:2px solid rgba(100,180,255,0.2);border-radius:18px;padding:10px 6px;">
+      <div style="font-size:16px;color:#88aaff;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:2px;">── 升級效果一覽 ──</div>
       ${(typeof buildSkillLvTable==='function') ? buildSkillLvTable(skName, nextLv-1) : ''}
     </div>
   </div>`;
