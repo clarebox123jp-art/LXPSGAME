@@ -3876,7 +3876,7 @@ function _resumeTimers(){
   });
 }
 // ====== GLOBAL CONSTANTS (must be declared before any function that references them) ======
-const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff'];
+const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt'];
 const GOOD_STATUS=[];
 
 // ====== AUDIO ENGINE ======
@@ -5088,7 +5088,7 @@ const HERO_DB = {
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中200%傷害，無法迴避',fd:'用特技的200%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手受到特技70%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
-  '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:2,d:'(被動)代替友方承受傷害，可再行動',fd:'(被動)單體友方受傷前觸發，守衛代替其承受傷害，並用特技的200%減輕傷害。(可以再行動1次)',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
+  '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)友方受到單體攻擊時，40%機率自動攔截代替承傷，特技×200%減傷。不消耗能量，每升1級+5%觸發率（最高90%）。封印時無效。',fd:'(常駐被動・不消耗能量・永久效果)每當友方受到單體攻擊傷害時，守衛有40%機率自動攔截並代替承受傷害，以特技值×200%減少傷害。不佔用任何行動順序，也不需玩家確認。觸發機率每升1級+5%（Lv.1=45%，最高Lv.9=85%）。被封印狀態下無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
   '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
   '警長':  {hp:60,atk:12,sp:1,spd:17,  s1:{n:'物品查封',c:3,d:'封鎖全體對手物品卡',fd:'使全體對手1回合內無法使用和販賣物品卡'},s2:{n:'警示鳴槍',c:2,d:'(被動)對手行動前有機率使其跳過',fd:'(被動)對手行動前觸發，有60%機率使該對手直接放棄這回合行動',p:true}},
@@ -5301,6 +5301,7 @@ const STATUS_DESCS = {
   noheal_curse: '不治詛咒：無法恢復HP',
   stubbornDebuff:'怨念強化：不利狀態無法被解除',
   berserk:      '狂亂：只能攻擊自己的隊友且傷害+3',
+  strongTaunt:  '強力挑釁：只能普通攻擊施展者，守衛特技×200%減傷',
   exhaust:      '消耗：技能費用+1',
   deathmark:    '死亡宣告：2回合後強制剩1HP',
   booklock:     '禁書封鎖：技能和物品均被封印',
@@ -5586,7 +5587,8 @@ function statTrack(hero, field, amount){
 function addStatus(h,t,dur=1){
   if(!h||h.curHp<=0) return;
   if(fieldHas('purify')) return;
-  if(hasBuff(h,'immune')||hasBuff(h,'statusImmune')){ showShieldVFX(h,'immune'); return; }
+  // ★ strongTaunt（強力挑釁）無法被免疫技能豁免
+  if(t !== 'strongTaunt' && (hasBuff(h,'immune')||hasBuff(h,'statusImmune'))){ showShieldVFX(h,'immune'); return; }
   const _CTRL=['stun','freeze','sleep','para','trap','berserk'];
   // Universal deduplication: refresh duration for ALL statuses
   const _existIdx=h.status.findIndex(s=>s.type===t);
@@ -5729,7 +5731,8 @@ function clearBadStatus(h){
     if(h._weakenOrigSpd!==undefined){ h.spd=h._weakenOrigSpd; delete h._weakenOrigSpd; }
     log(`[${h.name}] 虛弱狀態解除，能力恢復！`);
   }
-  h.status=h.status.filter(s=>!BAD_STATUS.includes(s.type));
+  // ★ 強力挑釁無法被治療/淨化清除（必須等回合數自然消耗）
+  h.status=h.status.filter(s=>!BAD_STATUS.includes(s.type) || s.type==='strongTaunt');
   renderCard(h);
 }
 function clearGoodBuffs(h){
@@ -5784,8 +5787,11 @@ function tickStatus(h){
       log(`[${h.name}] 明鏡止水結束，攻擊值恢復正常。`);
     }
   });
+  // ★ strongTaunt 到期時清除 _burstTauntTarget
+  const _hadStrongTaunt = hasStatus(h, 'strongTaunt');
   h.status=h.status.map(s=>({...s,dur:s.dur-1})).filter(s=>s.dur>0);
   h.buffs=h.buffs.map(b=>({...b,dur:b.dur-1})).filter(b=>b.dur>0);
+  if(_hadStrongTaunt && !hasStatus(h, 'strongTaunt')){ h._burstTauntTarget = null; }
   if(_exp.length>0&&h.curHp>0&&!hasBuff(h,'ctrlImmune')){addBuff(h,'ctrlImmune',1);bannerFX(h,'暫時免疫控制','#88ffcc',800);log(`[${h.name}] 控制解除，獲得1回合免疫控制！`);}
 }
 
@@ -6176,7 +6182,7 @@ function _epBuildAttrPanel(){
   const wrap=document.getElementById('ep-ring-wrap');
   if(!wrap) return;
   const ECOLOR={water:'#55bbff',fire:'#ff7733',wind:'#44cc66',grass:'#88bb22',earth:'#aa7733',light:'#ffdd22',dark:'#9944cc'};
-  const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'地獄之火',reflect:'反射',stubbornDebuff:'能力降低',forecast:'失明',poison:'中毒'};
+  const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'地獄之火',reflect:'反射',stubbornDebuff:'能力降低',forecast:'失明',poison:'中毒'};
   // 環狀定位參數（對應 ring-wrap 850x850, center 425,425, r_label=325）
   const cx=475, cy=475, r_label=357;
   const keys=Object.keys(ELEMENT_DB);
@@ -8562,7 +8568,7 @@ function renderCard(h){
   el.addEventListener('click', el._previewClickBound);
 }
 function statusName(t){
-  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'地獄之火',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'虛弱（特質）',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',
+  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'地獄之火',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'虛弱（特質）',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',
   booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾'
 };
   return m[t]||t;
@@ -9262,9 +9268,14 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='守衛'){
     enemies.forEach(t=>{
-      addStatus(t,'berserk',2); // 用berserk模擬強力挑釁（只能攻擊施展者）
-      t._burstTauntTarget=h;
+      // ★ 強力挑釁：獨立狀態，與狂亂完全不同
+      //   - 只能普通攻擊施展者（守衛），不能使用技能
+      //   - 無法被免疫技能豁免（forceStatus 直接添加）
+      t.status = t.status.filter(s => s.type !== 'strongTaunt'); // 先清舊的
+      t.status.push({ type:'strongTaunt', dur:2, _tauntOwner:h.name });
+      t._burstTauntTarget = h;
       bannerFX(t,'強力挑釁！','#ff4400',900);
+      log(`[${t.name}] 陷入強力挑釁！只能普通攻擊 [${h.name}]！`);
     });
     h._burstGuardSpMult = 2.0 + _burstLv * 0.2; // 升級：SP×(200+20*lv)%減傷
   }
@@ -10377,6 +10388,34 @@ function doDmg(target, rawDmg, opts={}){
   }
     // 守衛 挺身守護 intercept (if not piercing)
   if(!opts.piercing && !opts.noGuard){
+    // ══ 挺身守護：常駐被動，每次友方受到單體攻擊時自動機率觸發 ══
+    if(!opts.noGuard && !opts.isAoe && !opts.isNioGuard && !opts.isChaos){
+      // 找守衛陣營中有挺身守護技能、存活、未被封印的英雄
+      const _tsuHero = G[target.side].find(h =>
+        h !== target && h.curHp > 0 &&
+        (h.s1.n === '挺身守護' || h.s2.n === '挺身守護') &&
+        !hasStatus(h, 'seal')   // 封印時無效
+      );
+      if(_tsuHero){
+        // 計算觸發機率（基礎40% + 每升1級+5%，最高90%）
+        const _tsuSk  = _tsuHero.s1.n === '挺身守護' ? _tsuHero.s1 : _tsuHero.s2;
+        const _tsuSlot= _tsuHero.s1.n === '挺身守護' ? 's1' : 's2';
+        const _tsuLv  = (_tsuHero._skLv && _tsuHero._skLv[_tsuSlot]) || 0;
+        const _tsuPct = Math.min(90, 40 + _tsuLv * 5) / 100;  // 0.40 ~ 0.90
+        if(Math.random() < _tsuPct){
+          // ── 觸發！代替承傷 ──
+          const _gspv = Math.floor((_tsuHero.sp||0) * (1 + (_tsuHero.sp||0) * 0.01));
+          const reduced = Math.max(1, Math.ceil(rawDmg - _gspv * 2));
+          playSfx('sfx-guard', 0.7);
+          log(`🛡 [${_tsuHero.name}] 挺身守護觸發！（${Math.round(_tsuPct*100)}%機率）代替 [${target.name}] 承受傷害！`);
+          showShieldVFX(_tsuHero, 'block');
+          bannerFX(_tsuHero, '挺身守護！', '#4a9eff', 900);
+          playSkillFX('挺身守護', _tsuHero, [target]);
+          return doDmg(_tsuHero, reduced, {...opts, noGuard:true, isNioGuard:false});
+        }
+      }
+    }
+
     // ── 仁王挺立：代替所有隊友受傷，且減傷75% ──
     if(!opts.isNioGuard){
       const nio_guard=G[target.side].find(h=>h!==target&&h.curHp>0&&hasBuff(h,'nioGuard'));
@@ -10389,6 +10428,13 @@ function doDmg(target, rawDmg, opts={}){
         return doDmg(nio_guard, nioReduced, {...opts, noGuard:true, isNioGuard:true});
       }
     }
+    // ── 強力挑釁減傷：攻擊者受強力挑釁而攻擊守衛時，守衛用特技×200%減傷 ──
+    if(opts.isStrongTaunt && target && target._burstGuardSpMult){
+      const _gspv = Math.floor((target.sp||0) * (1 + (target.sp||0) * 0.01));
+      rawDmg = Math.max(1, Math.ceil(rawDmg - _gspv * target._burstGuardSpMult));
+      log(`🛡 [${target.name}] 強力挑釁！特技×${Math.round(target._burstGuardSpMult*100)}%減傷！`);
+    }
+
     // 優先檢查 G.guardFor（新邏輯：不依賴buff）
     if(G.guardFor===target && G.guardHero && G.guardHero!==target && G.guardHero.curHp>0){
       const ally_guard=G.guardHero;
@@ -11581,7 +11627,7 @@ function execAtk(actor, target, dmg, opts={}){
     bannerFX(actor,'暴擊！','#ff8800',600);
     log(`🏀 [籃球隊員] 天賦：隊友暴擊！[${actor.name}] 傷害×1.5！`);
   }
-  doDmg(target, _finalDmg, {actor, ignoreBuffs: !!(actor._burstMirror)});
+  doDmg(target, _finalDmg, {actor, ignoreBuffs: !!(actor._burstMirror), ...opts});
   // 運球第二擊
   if(_dribbleExtra && target.curHp>0){
     _pSetTimeout(()=>{
@@ -12179,20 +12225,9 @@ function execSkill(a, sk, cost, stype){
   }
   // ====== 守衛 ======
   else if(n==='挺身守護'){
-    // 選擇守護目標：HP百分比最低的友方（不含自己）
-    var _aliveA=G[a.side].filter(function(h){return h.curHp>0&&h!==a;});
-    if(!_aliveA.length){ _aliveA=G[a.side].filter(function(h){return h.curHp>0;}); }
-    var _autoTgt=_aliveA.sort(function(x,y){return (x.curHp/x.hp)-(y.curHp/y.hp);})[0]||a;
-    log('['+a.name+'] 挺身守護！守護 ['+_autoTgt.name+']！');
-    playSkillFX('挺身守護',a,[_autoTgt]);
-    // 不加buff，直接設定守護目標（本回合攔截下一次傷害）
-    G.guardFor=_autoTgt;
-    G.guardHero=a;
-    // 標記本回合已使用
-    a._guardUsedThisRound=true;
-    G.interruptTarget=null;
-    a.acted=false;
-    endAction(a,cost,true);
+    // ★ 已改為常駐被動（doDmg 自動觸發），此分支僅作防呆用
+    log('['+a.name+'] 挺身守護已是常駐被動，由戰鬥系統自動觸發。');
+    endAction(a,0,true);
   } else if(n==='仁王挺立'){
     log(`[${a.name}] 仁王挺立！進入仁王狀態！`);
     playSkillFX('仁王挺立',a,[]);
@@ -14009,7 +14044,7 @@ function doSell(){
 // ====== PASSIVE SKILL SYSTEM ======
 
 // 插隊被動清單（敵方行動前可觸發）
-const INTERRUPT_PASSIVES = ['挺身守護','警示鳴槍'];
+const INTERRUPT_PASSIVES = ['警示鳴槍'];  // ★ 挺身守護已改為常駐自動觸發，不再需要插隊UI
 // 主動被動清單（自己回合可選擇啟用）
 const ACTIVE_PASSIVES = ['金鐘罩','以牙還牙','轉禍為福','不動如山'];
 
@@ -14023,12 +14058,6 @@ function checkInterruptPassive(enemyHero){
       if(!sk.p || !INTERRUPT_PASSIVES.includes(sk.n)) continue;
       const cost=skillCost(sk,h);
       if(G.energy[h.side] < cost) continue;
-      // 挺身守護：有友方存活才有意義，且本回合尚未使用
-      if(sk.n==='挺身守護'){
-        if(h._guardUsedThisRound) continue;
-        const targets=G[defendSide].filter(x=>x.curHp>0);
-        if(targets.length) return {hero:h, sk, cost};
-      }
       // 警示鳴槍：目標是即將行動的敵方
       if(sk.n==='警示鳴槍') return {hero:h, sk, cost};
     }
@@ -14050,20 +14079,8 @@ function showPassiveInterruptUI(hero, sk, cost, enemyHero){
     return;
   }
 
-  // AI 代理自動發動插隊被動（挺身守護自動選HP最低友方，警示鳴槍自動發動）
+  // AI 代理自動發動插隊被動（警示鳴槍自動發動）
   if(_autoBattle && hero.side==='p1'){
-    // 挺身守護：確認有能量才發動，否則跳過讓敵方正常行動
-    if(sk.n==='挺身守護' && G.energy[hero.side]>=cost){
-      log(`[${hero.name}] 🤖 自動發動挺身守護！`);
-      hidePassiveBtns(); restoreActionBtns();
-      G.guardFor=enemyHero; G.guardHero=hero;
-      hero._guardUsedThisRound=true;
-      G.energy[hero.side]=Math.max(0,G.energy[hero.side]-cost);
-      G.passiveInterruptUsed=false; G.interruptTarget=null;
-      hero.acted=false;
-      _pSetTimeout(()=>{ if(enemyHero.curHp>0&&!enemyHero.acted) aiAct(enemyHero); else startTurn(); },1000);
-      return;
-    }
     if(sk.n!=='挺身守護'){
       log(`[${hero.name}] 🤖 自動發動插隊被動 [${sk.n}]！`);
       hidePassiveBtns(); restoreActionBtns();
@@ -14071,8 +14088,7 @@ function showPassiveInterruptUI(hero, sk, cost, enemyHero){
       execSkill(hero,sk,cost,stype);
       return;
     }
-    // 能量不足，跳過插隊
-    log(`[${hero.name}] 🤖 能量不足，跳過插隊被動。`);
+    // 跳過插隊
     G.passiveInterruptUsed=false; G.interruptTarget=null;
     G.activeChar=enemyHero;
     _pSetTimeout(()=>aiAct(enemyHero),1000);
@@ -14467,6 +14483,34 @@ function startTurn(){
         doDmg(bt,next.atk+3,{actor:next,ignoreBuffs:false});
         next.acted=true; updateUI(); _pSetTimeout(startTurn,500);
       },600);
+      return;
+    }
+  }
+
+  // ── 強力挑釁：只能普通攻擊施展者（守衛），不能使用技能 ──
+  if(hasStatus(next,'strongTaunt')){
+    const _stStatus = next.status.find(s => s.type === 'strongTaunt');
+    // 找施展者（守衛）
+    const _tauntOwnerName = _stStatus && _stStatus._tauntOwner;
+    const _tauntTarget = _tauntOwnerName
+      ? (G[next.side === 'p1' ? 'p2' : 'p1'] || []).find(h => h.name === _tauntOwnerName && h.curHp > 0)
+        || (next._burstTauntTarget && next._burstTauntTarget.curHp > 0 ? next._burstTauntTarget : null)
+      : null;
+    if(!_tauntTarget){
+      // 施展者已死亡：解除挑釁，正常行動
+      next.status = next.status.filter(s => s.type !== 'strongTaunt');
+      next._burstTauntTarget = null;
+      log(`[${next.name}] 強力挑釁解除（守衛已倒下）`);
+    } else {
+      // 強制普通攻擊守衛（守衛特技×200%減傷在 doDmg 處理）
+      log(`[${next.name}] 強力挑釁！強制普通攻擊 [${_tauntTarget.name}]！`);
+      bannerFX(next, '強力挑釁！', '#ff4400', 800);
+      _pSetTimeout(() => {
+        const _rawDmg = next.atk;
+        execAtk(next, _tauntTarget, _rawDmg, {isStrongTaunt: true});
+        next.acted = true;
+        endAction(next, 0);
+      }, 600);
       return;
     }
   }
@@ -15333,7 +15377,7 @@ function aiUseSkill(a,sk,cost,pref){
   }
   else if(n==='嘲諷'){if(t){G.taunted={attacker:t,target:a};addBuff(a,'taunt',1);}}
   else if(n==='急速閃躲'){addBuff(a,'evasion',2);}
-  else if(n==='挺身守護'){const gAl=allies.find(h=>h!==a&&h.curHp>0);if(gAl){addBuff(a,'guard',1);G.guardFor=gAl;}}
+  else if(n==='挺身守護'){ /* 常駐被動，由 doDmg 自動觸發 */ }
   else if(n==='不動如山'){addBuff(a,'immovable',99);}
   else if(n==='聖殿領域'){allies.forEach(h=>{if(h.curHp>0)addBuff(h,'halfDmg',2);});}
   else if(n==='泰山壓頂'){if(t){doDmg(t,a.atk,{actor:a});if(t.curHp>0)addStatus(t,'stun',1);}}
@@ -18150,7 +18194,8 @@ function _advRestoreBattleState(snap, bs){
   G.fieldCards = bs.fieldCards || [];
   fieldCards   = G.fieldCards; // 同步全域 fieldCards
 
-  // ── 還原法寶欄 ──
+  // ── 還原法寶欄（從快照）──
+  if(Array.isArray(snap.treasures)) _advTreasures = snap.treasures;
   try{ advUpdateTreasureBar(); }catch(e){}
 
   // ── 還原累積獎勵 ──
@@ -18163,6 +18208,10 @@ function _advRestoreBattleState(snap, bs){
   _advMiniBattleActive = false;
   window._advMiniResultShowing = false;
   if(typeof pendingCb !== 'undefined') pendingCb = null;
+  // ★ 備份 BOSS 陣容（供小怪戰後恢復使用）
+  try{ _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2)); }catch(e){ _advBossTeamSaved = null; }
+  // ★ BOSS 登場動畫已看過，跳過
+  _advBossIntroShown = true;
 
   // ── BGM & 背景 ──
   try{ bgmStop(); }catch(e){}
@@ -19694,11 +19743,21 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   // 支援選項隨機排列後的正確答案判斷
   const isCorrect = (isCorrectOverride !== undefined) ? isCorrectOverride : (letter === q.answer);
 
-  // 高亮選項（支援隨機排列後的正確答案）
+  // ★ 幸運流星沙判斷：若答錯且還有第二機會，先不公布正確答案
+  const _hasExtraChance = !isCorrect && q && q._extraChance;
+
+  // 高亮選項
   document.querySelectorAll('.aqo-btn').forEach(btn => {
-    btn.disabled = true;
-    if (btn.dataset.isCorrect === '1') btn.classList.add('correct');
-    else if (btn.dataset.letter === letter && !isCorrect) btn.classList.add('wrong');
+    if(_hasExtraChance){
+      // 流星沙第一次答錯：只標記選錯的選項為 wrong，不揭露正確答案，不 disabled 全部
+      if(btn.dataset.letter === letter) { btn.classList.add('wrong'); btn.disabled = true; }
+      // 其他選項保持可點（讓玩家繼續選）
+    } else {
+      // 正常情況：公布所有選項結果
+      btn.disabled = true;
+      if(btn.dataset.isCorrect === '1') btn.classList.add('correct');
+      else if(btn.dataset.letter === letter && !isCorrect) btn.classList.add('wrong');
+    }
   });
 
   if (isCorrect) {
@@ -19729,13 +19788,11 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     }, 3200);
   } else {
     // ★ 幸運流星沙：答錯可再試一次
-    if (q && q._extraChance) {
+    if (_hasExtraChance) {
       delete q._extraChance;
-      // 把剛選錯的選項禁用
-      const _btnsAll = Array.from(document.querySelectorAll('.aqo-btn'));
-      _btnsAll.forEach(b => {
-        if (b.dataset.value === value) { b.classList.add('wrong'); b.disabled = true; }
-      });
+      // 狀態退回 'asking' 讓玩家可繼續點選
+      _advQuizPhase = 'asking';
+      // 重新啟動計時器（用剩餘時間）
       const _lbl = document.getElementById('adv-quiz-label');
       if(_lbl) _lbl.textContent = '⭐ 答錯了！幸運流星沙效果：還有一次機會！';
       try { beep(300,'sine',0.08,0.12); } catch(e) {}
@@ -23262,6 +23319,8 @@ function _skLvDur(baseDur, perLv=2) {
 
 // 技能升級說明定義（用於升級預覽表）
 const SKILL_UPGRADE_DEF = {
+  // ── 挺身守護：觸發機率 40% + 5%/級 ──
+  '挺身守護': { cat:'pct_buff', base:40, perLv:1, step:5, label:'觸發機率' },
   // ── 傷害類：每級傷害+10% ──
   '迅雷連斬': { cat:'dmg',    label:'技能傷害' },
   '冰凍之矛': { cat:'dmg',    label:'技能傷害' },
