@@ -3351,7 +3351,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0143</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0159</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -3742,7 +3742,7 @@ body {
           <span style="font-size:42px;line-height:1;">🔄</span>
           <span style="font-size:26px;letter-spacing:1px;">尋找新英雄</span>
         </button>
-        <button onclick="playSfx('sfx-sel',0.6);openPresetTeamPanel()" style="flex-shrink:0;padding:10px 20px;font-size:22px;font-weight:700;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,rgba(100,60,200,0.25),rgba(60,30,150,0.2));border:2px solid rgba(180,120,255,0.7);color:#cc99ff;border-radius:12px;cursor:pointer;letter-spacing:1px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <button onclick="playSfx('sfx-sel',0.6);openPresetTeamPanel()" style="flex-shrink:0;padding:10px 20px;font-size:22px;font-weight:700;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:linear-gradient(135deg,#fffbe8,#fff3c0);border:2px solid rgba(180,140,60,0.8);color:#6b4a00;border-radius:12px;cursor:pointer;letter-spacing:1px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 2px 8px rgba(180,140,0,0.2);">
           <span style="font-size:36px;">📋</span>
           <span>常用預設陣容</span>
         </button>
@@ -6265,7 +6265,7 @@ function initGame(){
     });
   }catch(e){}
   // 切換回首頁音樂（無論從結果畫面或首頁按鈕進入）
-  if(typeof bgmFadeTo==='function') bgmFadeTo('bgm-menu',500);
+  if(typeof bgmFadeTo==='function') bgmFadeTo('bgm-menu-01',500);
   document.getElementById('overlay').style.display='none';
   document.getElementById('result-overlay').style.display='none';
   fieldCards=[];
@@ -16859,6 +16859,14 @@ function bgmPlayMenu(){
 }
 function bgmFadeTo(newId,duration){
   duration=duration||800;
+  // ★ 'bgm-battle' 是抽象名稱，映射到第一首戰鬥 BGM（若已在播隨機戰鬥曲則不重播）
+  if(newId==='bgm-battle'){
+    if(_curBgm && typeof BATTLE_BGM_LIST!=='undefined' && BATTLE_BGM_LIST.includes(_curBgm)) return;
+    newId = (typeof BATTLE_BGM_LIST!=='undefined' && BATTLE_BGM_LIST.length)
+      ? BATTLE_BGM_LIST[Math.floor(Math.random()*BATTLE_BGM_LIST.length)] : 'bgm-battle-01';
+  }
+  // ★ 'bgm-menu' → 'bgm-menu-01'
+  if(newId==='bgm-menu') newId='bgm-menu-01';
   if(newId==='bgm-lose'){
     const oldEl=_curBgm?document.getElementById(_curBgm):null;
     const doPlayLose=()=>{
@@ -17227,7 +17235,7 @@ function ctrlRestart(){
   document.getElementById('action-panel').style.display='none';
   document.getElementById('action-panel').style.display='none';
   // Fade to menu
-  bgmFadeTo('bgm-menu',400);
+  bgmFadeTo('bgm-menu-01',400);
   // Show title screen
   setTimeout(()=>{
     document.getElementById('overlay').style.display='flex';
@@ -17392,7 +17400,7 @@ function ctrlQuit(){
     if(_gamePaused){ _gamePaused=false; document.getElementById('pause-overlay').style.display='none'; }
     document.getElementById('action-panel').style.display='none';
     document.getElementById('overlay').style.display='flex';
-    bgmFadeTo('bgm-menu',400);
+    bgmFadeTo('bgm-menu-01',400);
     alert('請手動關閉此分頁。');
   }, 300);
   }); // end _customConfirm
@@ -18720,7 +18728,7 @@ function closeAdventureOverlay(){
     try{ el.pause(); el.currentTime=0; }catch(e){}
   });
   // 恢復首頁音樂
-  if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-menu', 500);
+  if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-menu-01', 500);
 }
 
 function selectAdvStage(key, btnEl){
@@ -21009,8 +21017,7 @@ function advCloseUnlock() {
   // ★ 返回關卡選擇頁（校園）
   exitAdventureMode();
   bgmStop();
-  try{ bgmFadeTo('bgm-menu-01', 600); }catch(e){}
-  // 顯示冒險模式overlay（校園關卡選擇頁）
+  // openAdventureOverlay 內部已處理 bgmStop + bgmPlay，不需要額外 fade
   setTimeout(()=>{ openAdventureOverlay(); }, 400);
 }
 
@@ -21416,8 +21423,7 @@ function advBackToTitle() {
   document.getElementById('adv-result-overlay').classList.remove('show');
   exitAdventureMode();
   bgmStop();
-  try{ bgmFadeTo('bgm-menu-01', 600); }catch(e){}
-  // ★ 回到關卡選擇頁（校園），不是主選單
+  // openAdventureOverlay 內部已處理 bgmStop + bgmPlay
   setTimeout(()=>{ openAdventureOverlay(); }, 400);
 }
 
@@ -23938,7 +23944,10 @@ function openPresetTeamPanel(){
 
   const ov = document.createElement('div');
   ov.id = 'preset-team-panel';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:flex-start;flex-direction:column;padding:24px;overflow-y:auto;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:flex-start;flex-direction:column;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  // ★ iPad：允許 pan-y 滾動（覆蓋全域 touch-action:none）
+  document.documentElement.style.touchAction = 'pan-y';
+  document.body.style.touchAction = 'pan-y';
 
   const box = document.createElement('div');
   box.style.cssText = 'background:linear-gradient(160deg,#0d0a1e,#08061a);border:2.5px solid rgba(180,120,255,0.7);border-radius:20px;padding:28px 32px;max-width:980px;width:100%;box-shadow:0 0 50px rgba(150,80,255,0.35);';
@@ -23988,6 +23997,14 @@ function openPresetTeamPanel(){
   html += "<div style='text-align:center;margin-top:18px;'><button onclick=\"_closePresetOv('preset-team-panel')\" style='padding:10px 32px;font-size:22px;background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;font-family:inherit;'>✕ 關閉</button></div>";
 
   box.innerHTML = html;
+  // ★ 點擊背景關閉 + 恢復 touch-action
+  ov.addEventListener('click', function(e){
+    if(e.target === ov){
+      ov.remove();
+      document.documentElement.style.touchAction = '';
+      document.body.style.touchAction = '';
+    }
+  });
   ov.appendChild(box);
   document.body.appendChild(ov);
 }
@@ -23998,7 +24015,7 @@ function _deletePresetSlot(slotIdx){
   _showInGameToast(`🗑 欄位${slotIdx+1} 已刪除`, '#ff8888', 1500);
   // 重新開啟面板
   const ov = document.getElementById('preset-team-panel');
-  if(ov) ov.remove();
+  if(ov){ ov.remove(); document.documentElement.style.touchAction=''; document.body.style.touchAction=''; }
   openPresetTeamPanel();
 }
 
@@ -24006,7 +24023,7 @@ function _applyPresetTeam(slotIdx){
   const pt = _presetTeams[slotIdx];
   if(!pt){ _showInGameToast('此欄位沒有儲存的陣容', '#ff8844', 1500); return; }
   const ov = document.getElementById('preset-team-panel');
-  if(ov) ov.remove();
+  if(ov){ ov.remove(); document.documentElement.style.touchAction=''; document.body.style.touchAction=''; }
 
   // 關閉英雄選擇頁
   const hpo = document.getElementById('hero-pick-overlay');
