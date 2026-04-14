@@ -14235,7 +14235,11 @@ function startTurn(){
   if(checkWin()) return;
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
-  // ★ 冒險BOSS戰：每5回合自動存檔（防 iPad 崩潰遺失進度）
+  // ★ 冒險BOSS戰：每回合存 localStorage 戰鬥快照（防 iPad 崩潰）
+  if(_adventureMode && G && G.p1 && G.p2){
+    try{ _saveBattleRoundSnapshot(); }catch(e){}
+  }
+  // ★ 每5回合同步雲端存檔
   if(_adventureMode && G && G.round && G.round % 5 === 0){
     try{ gameCloudSave(); }catch(e){}
   }
@@ -16652,6 +16656,58 @@ function _saveCheatSnapshot(){
   }catch(e){}
 }
 
+// ★ 每回合戰鬥快照（崩潰恢復用，只寫 localStorage，不阻塞遊戲）
+function _saveBattleRoundSnapshot(){
+  if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return;
+  if(!_adventureMode || !_adventureStage) return;
+  try{
+    // 序列化英雄：保留所有戰鬥相關屬性
+    const _serHero = h => ({
+      name:h.name, side:h.side, pos:h.pos,
+      hp:h.hp, atk:h.atk, def:h.def||0, sp:h.sp, spd:h.spd,
+      curHp:h.curHp, acted:h.acted||false,
+      s1:JSON.parse(JSON.stringify(h.s1)),
+      s2:JSON.parse(JSON.stringify(h.s2)),
+      element:h.element||null,
+      status:JSON.parse(JSON.stringify(h.status||[])),
+      buffs:JSON.parse(JSON.stringify(h.buffs||[])),
+      s2used:h.s2used||false,
+      equip:h.equip?JSON.parse(JSON.stringify(h.equip)):null,
+      _skLv:h._skLv||{s1:0,s2:0},
+      _burstLvAdv:h._burstLvAdv||0,
+      _mimicUsed:h._mimicUsed||false,
+      _burstUsed:h._burstUsed||0,
+      _sprintTriggered:h._sprintTriggered||false,
+      _sprintOrigSpd:h._sprintOrigSpd||null,
+      _initState:h._initState||null,
+    });
+    const snap = {
+      ts:         Date.now(),
+      stage:      _adventureStage,
+      grade:      _advPlayerGrade      || '',
+      subject:    _advPlayerSubject    || '',
+      difficulty: _advPlayerDifficulty || '',
+      treasures:  JSON.parse(JSON.stringify(_advTreasures||[])),
+      heroes:     _heroPickSelected ? [..._heroPickSelected] : [],
+      round:      G.round || 1,
+      // ── 完整戰鬥狀態 ──
+      battleState: {
+        p1:          (G.p1||[]).map(_serHero),
+        p2:          (G.p2||[]).map(_serHero),
+        energy:      {...(G.energy||{p1:0,p2:0})},
+        inv:         JSON.parse(JSON.stringify(G.inv||[])),
+        inv2:        JSON.parse(JSON.stringify(G.inv2||[])),
+        fieldCards:  JSON.parse(JSON.stringify(G.fieldCards||fieldCards||[])),
+        round:       G.round || 1,
+        pendingReward: _advPendingReward ? JSON.parse(JSON.stringify(_advPendingReward)) : null,
+        rewardOptions: _advRewardOptions ? JSON.parse(JSON.stringify(_advRewardOptions)) : [],
+        advStats:    JSON.parse(JSON.stringify(_advStats||{})),
+      }
+    };
+    localStorage.setItem('adv_battle_snap', JSON.stringify(snap));
+  }catch(e){ console.error('[battleSnap]',e); }
+}
+
 // ====== 自訂確認視窗（iOS/iPad 安全，取代原生 confirm()）======
 // 避免 iPad WKWebView 在 App 切換時自動 dismiss confirm() 造成誤確認
 let _customConfirmCb = null;
@@ -17946,14 +18002,20 @@ function openAdventureOverlay(){
 
 function _advCheckCrashRecovery(){
   try{
-    const raw = localStorage.getItem('adv_crash_snapshot');
+    // ★ 優先讀戰鬥快照（含 battleState），其次讀舊快照
+    let raw = localStorage.getItem('adv_battle_snap');
+    if(!raw) raw = localStorage.getItem('adv_crash_snapshot');
     if(!raw) return;
     const snap = JSON.parse(raw);
     if(!snap || !snap.stage) return;
     // 超過24小時的快照忽略
-    if(Date.now() - (snap.ts||0) > 24*60*60*1000){ localStorage.removeItem('adv_crash_snapshot'); return; }
-    // 若玩家現在就在這關，不提示
-    if(_adventureStage === snap.stage && _advPlayerGrade && _advPlayerSubject) return;
+    if(Date.now() - (snap.ts||0) > 24*60*60*1000){
+      localStorage.removeItem('adv_battle_snap');
+      localStorage.removeItem('adv_crash_snapshot');
+      return;
+    }
+    // 若玩家現在就在這關且已在戰鬥中，不提示
+    if(_adventureStage === snap.stage && _advPlayerGrade && _advPlayerSubject && _adventureMode) return;
 
     // 計算距離崩潰多久
     const _minsAgo = Math.round((Date.now() - snap.ts) / 60000);
@@ -17974,6 +18036,8 @@ function _advCheckCrashRecovery(){
     const stageLabel  = stageLabels[snap.stage] || snap.stage;
     const treasureCount = (snap.treasures||[]).filter(Boolean).length;
     const heroList = (snap.heroes||[]).filter(Boolean).join('、') || '（無記錄）';
+    const hasBattle = !!(snap.battleState && snap.battleState.p1 && snap.battleState.p1.length);
+    const roundInfo = hasBattle ? '第 '+snap.round+' 回合（可完整還原戰鬥狀態）' : '設定已記錄，需重新出戰';
 
     box.innerHTML =
       '<div style="font-size:44px;margin-bottom:10px;">⚠️</div>'+
@@ -17984,6 +18048,7 @@ function _advCheckCrashRecovery(){
         '<div>👥 隊伍：<b style="color:#aaddff;">'+heroList+'</b></div>'+
         (snap.grade?'<div>📚 設定：<b style="color:#aaffcc;">'+snap.grade+' / '+snap.subject+' / '+snap.difficulty+'</b></div>':'')+
         '<div>🏆 法寶：<b style="color:#ffee88;">'+treasureCount+' 個</b></div>'+
+        '<div>⚔️ 進度：<b style="color:'+(hasBattle?'#44ff88':'#ffaa44')+';">'+roundInfo+'</b></div>'+
       '</div>'+
       '<div style="display:flex;gap:12px;justify-content:center;">'+
         '<button id="_crash_resume_btn" style="flex:1;padding:14px 0;font-size:24px;font-weight:900;'+
@@ -18011,32 +18076,129 @@ function _advCheckCrashRecovery(){
 
 function _advRestoreSnapshot(snap){
   try{
-    // 還原關卡選擇、題目設定、法寶
+    // ── 基本設定還原 ──
     _adventureStage      = snap.stage;
     _advPlayerGrade      = snap.grade      || '';
     _advPlayerSubject    = snap.subject    || '';
     _advPlayerDifficulty = snap.difficulty || '';
     if(Array.isArray(snap.treasures)) _advTreasures = snap.treasures;
+    _adventureMode = true;
 
-    // 選取關卡按鈕
-    const stageBtn = document.querySelector('.adv-stage-btn[data-stage="'+snap.stage+'"]');
-    if(stageBtn){ selectAdvStage(snap.stage, stageBtn); }
-
-    // 恢復法寶顯示
-    try{ advUpdateTreasureBar(); }catch(e){}
-
-    // 清除快照（已恢復）
+    // 清除快照
+    localStorage.removeItem('adv_battle_snap');
     localStorage.removeItem('adv_crash_snapshot');
 
-    // 提示玩家：可以重新出發
-    setTimeout(function(){
-      const _heroNames = (snap.heroes||[]).filter(Boolean);
-      const msg = _heroNames.length
-        ? '進度已恢復！隊伍（'+_heroNames.join('、')+'）重新出發吧！'
-        : '關卡進度已恢復，請重新選擇英雄出戰！';
-      try{ bannerFX(null, '✅ '+msg, '#44ff88', 3500); }catch(e){}
-    }, 600);
+    const bs = snap.battleState;
+    if(bs && bs.p1 && bs.p1.length){
+      // ══ 有完整戰鬥快照：直接還原戰鬥狀態 ══
+      _advRestoreBattleState(snap, bs);
+    } else {
+      // ══ 無戰鬥快照：回到選關頁，讓玩家重新出戰 ══
+      _heroPickSelected = (snap.heroes||[]).filter(Boolean);
+      const stageBtn = document.querySelector('.adv-stage-btn[data-stage="'+snap.stage+'"]');
+      if(stageBtn){ selectAdvStage(snap.stage, stageBtn); }
+      try{ advUpdateTreasureBar(); }catch(e){}
+      setTimeout(function(){
+        const _heroNames = _heroPickSelected;
+        const msg = _heroNames.length
+          ? '關卡進度已恢復！請重新選擇英雄出戰！'
+          : '關卡進度已恢復，請重新出戰！';
+        try{ bannerFX(null, '✅ '+msg, '#ffcc44', 3500); }catch(e){}
+      }, 600);
+    }
   } catch(e){ console.error('[恢復快照]', e); }
+}
+
+function _advRestoreBattleState(snap, bs){
+  // ── 關閉冒險選關 overlay，切換到戰鬥畫面 ──
+  const advOv = document.getElementById('adventure-overlay');
+  if(advOv) advOv.style.display = 'none';
+  // ── 確保 gc（遊戲畫面）可見 ──
+  const gc = document.getElementById('gc');
+  if(gc){ gc.style.display='flex'; gc.classList.add('adv-battle'); }
+
+  // ── 重建 G.p1（需套用素質投資） ──
+  const heroNames = (snap.heroes||[]).filter(Boolean);
+  _heroPickSelected = heroNames;
+  G.p1 = bs.p1.map(function(hSnap){
+    // 從快照直接還原（保留所有戰鬥數值）
+    const h = Object.assign({}, hSnap);
+    // 確保 arrays 不是 undefined
+    h.status  = hSnap.status  || [];
+    h.buffs   = hSnap.buffs   || [];
+    h._skLv   = hSnap._skLv   || {s1:0, s2:0};
+    h._burstLvAdv = hSnap._burstLvAdv || 0;
+    h.av = (typeof AVATARS!=='undefined'&&AVATARS[h.name]) || '🗡️';
+    return h;
+  });
+  G.p2 = bs.p2.map(function(hSnap){
+    const h = Object.assign({}, hSnap);
+    h.status  = hSnap.status  || [];
+    h.buffs   = hSnap.buffs   || [];
+    h.av = (typeof AVATARS!=='undefined'&&AVATARS[h.name]) || '🗡️';
+    return h;
+  });
+
+  // ── 還原其他 G 狀態 ──
+  G.energy     = {...(bs.energy||{p1:0,p2:0})};
+  G.inv        = JSON.parse(JSON.stringify(bs.inv  ||[]));
+  G.inv2       = JSON.parse(JSON.stringify(bs.inv2 ||[]));
+  G.round      = bs.round || 1;
+  G._resultShown = false;
+  G.pendingTarget = null;
+  G.sellUsed   = new Set();
+  G.fieldCards = bs.fieldCards || [];
+  fieldCards   = G.fieldCards; // 同步全域 fieldCards
+
+  // ── 還原法寶欄 ──
+  try{ advUpdateTreasureBar(); }catch(e){}
+
+  // ── 還原累積獎勵 ──
+  if(bs.pendingReward)  _advPendingReward  = bs.pendingReward;
+  if(bs.rewardOptions && bs.rewardOptions.length) _advRewardOptions = bs.rewardOptions;
+  if(bs.advStats)       Object.assign(_advStats, bs.advStats);
+
+  // ── 初始化戰鬥相關旗標 ──
+  _adventureMode = true;
+  _advMiniBattleActive = false;
+  window._advMiniResultShowing = false;
+  if(typeof pendingCb !== 'undefined') pendingCb = null;
+
+  // ── BGM & 背景 ──
+  try{ bgmStop(); }catch(e){}
+  try{
+    const bossBgm = document.getElementById('bgm-boss-01');
+    if(bossBgm){ bossBgm.volume=_bgmMuted?0:BGM_VOLUME; bossBgm.currentTime=0; bossBgm.play().catch(()=>{}); _curBgm='bgm-boss-01'; }
+  }catch(e){}
+  const _bb = document.getElementById('adv-battle-bg');
+  if(_bb){ _bb.className=''; _bb.classList.add('bg-boss'); void _bb.offsetWidth; _bb.classList.add('visible'); }
+
+  // ── 初始化牌組（供戰鬥中繼續抽牌） ──
+  try{ buildDeck(); }catch(e){}
+
+  // ── 延遲渲染（確保 DOM 已就緒） ──
+  setTimeout(function(){
+    try{ renderField(true); }catch(e){}
+    try{ markAdventureBossCards && markAdventureBossCards(); }catch(e){}
+    try{ renderItems(); updateUI(); }catch(e){}
+    try{ _advTutBtnShow(true); }catch(e){}
+
+    // ── 顯示恢復提示 ──
+    try{
+      flashScreen('rgba(50,200,100,0.4)', 600);
+      bannerFX(null,
+        '✅ 已恢復至第 '+G.round+' 回合！（隊伍、HP、能量、物品卡均已還原）',
+        '#44ff88', 4000);
+    }catch(e){}
+
+    // ── 稍後啟動回合 ──
+    setTimeout(function(){
+      try{
+        G._resultShown = false;
+        startTurn();
+      }catch(e){ console.error('[restore startTurn]',e); }
+    }, 800);
+  }, 300);
 }
 
 function advNavLocked(name){
@@ -20523,8 +20685,9 @@ function advStartWinSequence() {
 }
 
 function _advClearCrashSnapshot(){
-  // 正常完成冒險後清除崩潰快照
+  // 正常完成冒險後清除所有快照
   try{ localStorage.removeItem('adv_crash_snapshot'); }catch(e){}
+  try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
 }
 
 function advHeroMeetDone() {
@@ -20800,20 +20963,23 @@ function _buildSafeData() {
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
     // ★ 冒險進度快照（BOSS崩潰恢復用）
     advSnapshot: (function(){
+      // ★ 優先使用最新的戰鬥快照（每回合存一次，含完整 G 狀態）
+      try{
+        const _raw = localStorage.getItem('adv_battle_snap');
+        if(_raw){
+          const _bs = JSON.parse(_raw);
+          if(_bs && _bs.stage && (Date.now()-(_bs.ts||0)) < 24*60*60*1000) return _bs;
+        }
+      }catch(e){}
+      // fallback：無戰鬥快照時，只存基本冒險設定
       if(!_adventureMode && !_adventureStage) return null;
-      // 取得當前英雄元素設定
-      const _curElems  = G && G.p1 ? G.p1.map(h=>h.element||'') : [];
-      // 取得技能替換紀錄（_skillReplaceMap 存著 {pos: {slot,skill}}）
-      const _curSkills = (typeof _skillReplaceMap !== 'undefined') ? JSON.parse(JSON.stringify(_skillReplaceMap||{})) : {};
       return {
         stage:      _adventureStage,
         grade:      _advPlayerGrade      || '',
         subject:    _advPlayerSubject    || '',
         difficulty: _advPlayerDifficulty || '',
-        treasures:  JSON.parse(JSON.stringify(_advTreasures)),
+        treasures:  JSON.parse(JSON.stringify(_advTreasures||[])),
         heroes:     _heroPickSelected ? [..._heroPickSelected] : [],
-        elements:   _curElems,
-        skills:     _curSkills,
         round:      (G && G.round) || 0,
         ts:         Date.now()
       };
