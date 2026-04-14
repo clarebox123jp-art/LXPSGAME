@@ -3145,7 +3145,7 @@ body {
   </div>
 </div>
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.0004</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260414.0155</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
   </div>
@@ -5088,7 +5088,7 @@ const HERO_DB = {
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中200%傷害，無法迴避',fd:'用特技的200%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手受到特技70%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
-  '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)友方受到單體攻擊時，40%機率自動攔截代替承傷，特技×200%減傷。不消耗能量，每升1級+5%觸發率（最高90%）。封印時無效。',fd:'(常駐被動・不消耗能量・永久效果)每當友方受到單體攻擊傷害時，守衛有40%機率自動攔截並代替承受傷害，以特技值×200%減少傷害。不佔用任何行動順序，也不需玩家確認。觸發機率每升1級+5%（Lv.1=45%，最高Lv.9=85%）。被封印狀態下無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
+  '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)友方受到單體攻擊時，自動機率攔截代替承傷。按?查看詳細。',fd:'(常駐被動・不消耗能量・永久效果)每當友方受到單體攻擊傷害時，守衛有40%機率自動攔截並代替承受傷害，以特技值×200%減少傷害。不佔用任何行動順序，也不需玩家確認。觸發機率每升1級+5%（Lv.1=45%，最高Lv.9=85%）。被封印狀態下無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
   '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
   '警長':  {hp:60,atk:12,sp:1,spd:17,  s1:{n:'物品查封',c:3,d:'封鎖全體對手物品卡',fd:'使全體對手1回合內無法使用和販賣物品卡'},s2:{n:'警示鳴槍',c:2,d:'(被動)對手行動前有機率使其跳過',fd:'(被動)對手行動前觸發，有60%機率使該對手直接放棄這回合行動',p:true}},
@@ -18114,6 +18114,7 @@ function _advCheckCrashRecovery(){
     document.getElementById('_crash_discard_btn').onclick = function(){
       box.remove();
       localStorage.removeItem('adv_crash_snapshot');
+      localStorage.removeItem('adv_battle_snap');
     };
   } catch(e){ console.error('[崩潰恢復]', e); }
 }
@@ -18154,12 +18155,18 @@ function _advRestoreSnapshot(snap){
 }
 
 function _advRestoreBattleState(snap, bs){
-  // ── 關閉冒險選關 overlay，切換到戰鬥畫面 ──
+  // ── 關閉首頁 overlay（#overlay）讓戰鬥畫面顯示 ──
+  const homeOv = document.getElementById('overlay');
+  if(homeOv) homeOv.style.display = 'none';
+  // ── 關閉冒險選關 overlay ──
   const advOv = document.getElementById('adventure-overlay');
   if(advOv) advOv.style.display = 'none';
   // ── 確保 gc（遊戲畫面）可見 ──
   const gc = document.getElementById('gc');
   if(gc){ gc.style.display='flex'; gc.classList.add('adv-battle'); }
+  // ── 也關閉 result-overlay 防殘留 ──
+  const resOv = document.getElementById('result-overlay');
+  if(resOv) resOv.style.display = 'none';
 
   // ── 重建 G.p1（需套用素質投資） ──
   const heroNames = (snap.heroes||[]).filter(Boolean);
@@ -20751,6 +20758,8 @@ function advHeroMeetDone() {
   const ov = document.getElementById('adv-hero-meet-overlay');
   // ★ 防止重複呼叫（點按鈕和點背景可能同時觸發）
   if(!ov || ov.style.display === 'none') return;
+  // ★ 正常過關流程清除戰鬥快照
+  try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
   ov.style.display = 'none';
   // ★ 移除整個 overlay 的 onclick，避免後續事件冒泡再次觸發
   ov.onclick = null;
