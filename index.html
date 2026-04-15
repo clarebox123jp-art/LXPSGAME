@@ -63,9 +63,10 @@
       await signInWithPopup(_fbAuth, switchProvider);
       // signInWithPopup 完成後 onAuthStateChanged 會自動更新 UI
     } catch(e) {
-      if (e.code !== 'auth/cancelled-by-user' && e.code !== 'auth/popup-closed-by-user') {
-        console.error('切換帳號失敗', e);
-        alert('切換帳號失敗，請再試一次。');
+      const _silentSwitch = ['auth/cancelled-by-user','auth/popup-closed-by-user',
+        'auth/popup-blocked','auth/unauthorized-domain'];
+      if (!_silentSwitch.includes(e.code)) {
+        console.error('切換帳號失敗', e.code, e);
       }
     }
   };
@@ -3362,7 +3363,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2020</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2035</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -14062,9 +14063,13 @@ function endAction(a, cost, noFinish=false){
 function clickItem(it){
   const a=G.activeChar;
   if(!a||a.side!=='p1'||a.acted) return;
+  // ★ 若現在是對手回合（有 pendingCb 但不是玩家的），禁止操作
+  if(G.activeChar && G.activeChar.side !== 'p1') return;
   // nosell（查封）或 noshop（商店停業）任一成立時，禁止點擊物品
   if(hasStatus(a,'nosell')){ log('物品已被查封，無法使用或販賣！'); return; }
   if(fieldHas('noshop')){ log('🚫 神秘商店暫停營業，無法操作物品！'); return; }
+  // ★ 清除舊的待選目標（防止殘留 pendingCb 干擾新的物品操作）
+  G.pendingTarget=null; pendingCb=null;
   clearSel();
   G.selItem=it;
   renderItems();
@@ -14361,6 +14366,11 @@ function alchemistCheck(it,actor){
 function doSell(){
   const it=G.selItem; const a=G.activeChar;
   if(!it) return;
+  // ★ 禁止在對手回合賣出（防止 item-ops 懸空時的誤觸）
+  if(!a || a.side !== 'p1' || a.acted){ 
+    document.getElementById('item-ops').style.display='none';
+    G.selItem=null; return;
+  }
   if(a && hasStatus(a,'nosell')){ log('物品已被查封，無法販賣！'); return; }
   if(a && fieldHas('noshop')){ log('神秘商店暫停營業，無法販賣！'); return; }
   if(a){
@@ -14986,10 +14996,16 @@ function startTurn(){
     if(_adventureMode && _advMiniBattleActive && !window._miniQuizDoneThisRound){
       window._miniQuizDoneThisRound = true;
       _gamePaused = true;
+      // ★ 暫停時清除玩家殘留的選擇狀態（防止item-ops懸空）
+      try{ clearSel(); }catch(e){}
+      document.getElementById('item-ops').style.display='none';
+      G.pendingTarget=null; pendingCb=null;
       // ★ 用 setTimeout（非 _pSetTimeout），因為已暫停，_pSetTimeout 會永遠排隊
       setTimeout(() => {
         _advMiniQuizAsk(() => {
           _gamePaused = false;
+          // 恢復後也確保清除殘留狀態
+          G.pendingTarget=null; pendingCb=null;
           setTimeout(()=>{ try{ aiAct(next); }catch(e){} }, 400);
         });
       }, 800);
@@ -21632,7 +21648,7 @@ function advBackToTitle() {
 let _gUserId = null; // Google 用戶 ID (for namespaced localStorage)
 
 async function doGoogleSignIn() {
-  if(!window._fbSignIn){ alert('Firebase 尚未載入，請重新整理頁面。'); return; }
+  if(!window._fbSignIn){ console.warn('[Firebase] 尚未載入，請重新整理頁面。'); return; }
   const user = await window._fbSignIn();
   if(user) log('✅ 已登入：' + user.displayName);
 }
@@ -25285,7 +25301,7 @@ async function loginGateGoogle() {
       showLoginGate();
     }
   } else {
-    alert('Firebase 尚未載入，請重新整理頁面。');
+    console.warn('[Firebase] 尚未載入，請重新整理頁面。');
   }
 }
 
@@ -26657,7 +26673,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2020';
+  const CURRENT_VERSION = 'v1.0.20260415.2035';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
