@@ -3,6 +3,18 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<!-- ★ 圖片加速：DNS預連線 & 關鍵圖片預載 -->
+<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+<link rel="preconnect" href="https://github.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://raw.githubusercontent.com">
+<link rel="dns-prefetch" href="https://github.com">
+<link rel="dns-prefetch" href="https://objects.githubusercontent.com">
+<link rel="preload" as="image" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<link rel="preload" as="image" href="https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80.png">
+<link rel="preload" as="image" href="https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png">
+<link rel="preload" as="image" href="https://github.com/clarebox123jp-art/-/raw/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png">
+<link rel="preload" as="image" href="https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <!-- Firebase SDK -->
 <script type="module">
@@ -3363,7 +3375,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2035</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2042</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -26673,7 +26685,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2035';
+  const CURRENT_VERSION = 'v1.0.20260415.2042';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -26762,6 +26774,59 @@ function _doVersionRefresh(){
   }
 }
 
+
+// ══════════════════════════════════════════════════
+// ★ 圖片預載快取：遊戲互動後，在背景預載所有角色圖片
+// ══════════════════════════════════════════════════
+const _imgCache = new Map();
+
+function _preloadImage(url) {
+  if (!url || _imgCache.has(url)) return;
+  const img = new Image();
+  img.src = url;
+  _imgCache.set(url, img);
+}
+
+function _preloadAllGameImages() {
+  if (window._imgPreloadDone) return;
+  window._imgPreloadDone = true;
+  // 角色圖片
+  if (typeof HERO_DB !== 'undefined') {
+    Object.values(HERO_DB).forEach(h => {
+      if (h.img) _preloadImage(h.img);
+    });
+  }
+  // 背景圖片
+  const _bgUrls = [
+    'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E6%A8%9F%E6%B9%96%E6%AD%A5%E9%81%93.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E8%87%AA%E7%84%B6%E6%95%99%E5%AE%A4.png',
+    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86.png',
+    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%83%8C%E5%8C%85.png',
+    'https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png',
+  ];
+  _bgUrls.forEach(_preloadImage);
+  // 怪物圖片
+  if (typeof MINI_MONSTERS !== 'undefined') {
+    MINI_MONSTERS.forEach(name => {
+      if (typeof HERO_DB !== 'undefined' && HERO_DB[name] && HERO_DB[name].img)
+        _preloadImage(HERO_DB[name].img);
+    });
+  }
+  console.log('[Preload] 圖片預載完成');
+}
+
+// 第一次點擊/觸碰後開始預載（避免影響首屏）
+['touchstart','click','keydown'].forEach(evt => {
+  window.addEventListener(evt, function _firstInteract(){
+    setTimeout(_preloadAllGameImages, 500);
+    ['touchstart','click','keydown'].forEach(e => window.removeEventListener(e, _firstInteract));
+  }, { once: false, passive: true });
+});
 </script>
 
 </body>
