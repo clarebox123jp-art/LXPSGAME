@@ -3301,7 +3301,7 @@ body {
   <div onclick="event.stopPropagation()" style="
     background:linear-gradient(160deg,rgba(8,14,30,0.99),rgba(4,8,18,0.99));
     border:3px solid rgba(212,168,67,0.6);border-radius:30px;
-    padding:54px 64px 48px;max-width:min(94vw,1100px);width:100%;
+    padding:clamp(20px,3vw,54px) clamp(18px,4vw,64px) clamp(20px,3vw,48px);max-width:min(94vw,1100px);width:100%;
     margin:auto;
     box-shadow:0 0 100px rgba(200,150,30,0.3);position:relative;">
     <!-- 關閉按鈕 -->
@@ -3311,13 +3311,13 @@ body {
         font-family:inherit;">✕</button>
     <!-- 標題 -->
     <div style="text-align:center;margin-bottom:36px;">
-      <div style="font-size:48px;font-weight:900;color:#ffe8a0;letter-spacing:3px;margin-bottom:10px;">
+      <div style="font-size:clamp(26px,3.2vw,48px);font-weight:900;color:#ffe8a0;letter-spacing:3px;margin-bottom:10px;">
         🎮 小英雄大對抗
       </div>
       <div style="font-size:24px;color:#aaa;letter-spacing:1px;">力行小學生與來自異世界的小夥伴</div>
     </div>
     <!-- 內文 -->
-    <div style="font-size:27px;color:#e8e4d8;line-height:1.85;display:flex;flex-direction:column;gap:22px;">
+    <div style="font-size:clamp(16px,1.9vw,27px);color:#e8e4d8;line-height:1.85;display:flex;flex-direction:column;gap:22px;">
       <p>【小英雄大對抗】是一款以臺北市文山區力行國小為舞台的輔助學習&amp;回合制 RPG（角色扮演遊戲）。玩家組建一支四人英雄隊伍，從踏上景美溪河堤到貓空茶園的旅程，接著還有環島旅行與環遊世界，迎戰各種來自異世界的小魔物與強大的頭目戰，在問答中學習在地化與國際化的知識，也會結識形形色色的異世界英雄成為夥伴。</p>
       <p>遊戲以<span style="color:#88ccff;font-weight:700;">回合制戰鬥</span>為核心，每位英雄各有普通攻擊、兩招技能與一招極限爆發大絕技。玩家必須能量管理、關注行動順序、處理有利與不利狀態構成豐富的戰術層次，搭配隨機物品卡的活用使每一場戰鬥都充滿即時判斷的趣味。</p>
       <p>耐玩要素來自<span style="color:#ffcc44;font-weight:700;">豐富的成長系統</span>：英雄可藉由戰鬥累積經驗值升級獲得素質點數，自由投資 HP、攻擊、特技、速度；兩招技能可用升級書提升效果上限；極限爆發也可以透過稀有材料來強化。冒險模式過場中玩家需回答國語、數學、自然等各科知識問答，答對可獲得知識幣與強力獎勵，將課堂上的學習融入遊戲的戰鬥節奏之中！</p>
@@ -3326,7 +3326,7 @@ body {
     <!-- 分隔線 -->
     <hr style="border:none;border-top:1px solid rgba(255,220,100,0.2);margin:32px 0;">
     <!-- 製作人員 -->
-    <div style="font-size:22px;color:#aaa;line-height:2.2;text-align:center;">
+    <div style="font-size:clamp(14px,1.6vw,22px);color:#aaa;line-height:2.2;text-align:center;">
       <div><span style="color:#ffcc44;">遊戲設計</span>　陳祈宏老師</div>
       <div><span style="color:#ffcc44;">製作團隊</span>　力行國小資訊校隊</div>
       <div style="margin-top:8px;color:#888;">
@@ -3338,7 +3338,7 @@ body {
     <!-- 底部提示 -->
     <div style="text-align:center;margin-top:30px;">
       <button onclick="playSfx('sfx-confirm',0.4);document.getElementById('game-info-modal').style.display='none';document.documentElement.style.touchAction='';document.body.style.touchAction='';"
-        style="padding:16px 60px;font-size:27px;font-weight:700;
+        style="padding:16px 60px;font-size:clamp(16px,1.9vw,27px);font-weight:700;
           background:linear-gradient(135deg,rgba(212,168,67,0.25),rgba(180,130,30,0.2));
           border:2px solid rgba(212,168,67,0.6);color:#ffe8a0;
           border-radius:16px;cursor:pointer;font-family:inherit;letter-spacing:1px;
@@ -3393,13 +3393,13 @@ body {
     <div style="background:linear-gradient(160deg,#12172a,#080c1a);border:2.5px solid rgba(212,168,67,0.5);
       border-radius:22px;padding:36px 40px;max-width:540px;width:92%;text-align:center;
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;box-shadow:0 0 80px rgba(0,0,0,0.9);">
-      <div style="font-size:48px;margin-bottom:8px;">🎮</div>
+      <div style="font-size:clamp(26px,3.2vw,48px);margin-bottom:8px;">🎮</div>
       <div style="font-size:34px;font-weight:900;color:#ffe8a0;margin-bottom:8px;">繼續上次的冒險？</div>
-      <div style="font-size:22px;color:#ffaa44;margin-bottom:28px;line-height:1.6;">
+      <div style="font-size:clamp(14px,1.6vw,22px);color:#ffaa44;margin-bottom:clamp(8px,1.8vh,28px);line-height:1.6;">
         使用 Google 登入可以自動儲存你的<br>英雄、等級、技能升級書等所有進度。
       </div>
       <button onclick="playSfx('sfx-confirm',0.5);loginGateGoogle()" style="
-        display:flex;align-items:center;justify-content:center;gap:12px;
+        display:flex;align-items:center;justify-content:center;gap:clamp(4px,1vh,12px);
         width:100%;padding:16px 0;font-size:26px;font-weight:700;
         background:rgba(255,255,255,0.95);border:none;border-radius:14px;cursor:pointer;
         color:#333;margin-bottom:14px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
@@ -3407,7 +3407,7 @@ body {
         使用 Google 登入並繼續冒險
       </button>
       <button onclick="playSfx('sfx-gentle',0.4);loginGateSkip()" style="
-        width:100%;padding:14px 0;font-size:22px;font-weight:600;
+        width:100%;padding:14px 0;font-size:clamp(14px,1.6vw,22px);font-weight:600;
         background:rgba(40,40,60,0.8);border:1.5px solid rgba(100,100,150,0.4);
         border-radius:14px;cursor:pointer;color:#888;">
         不登入 Google，直接體驗遊戲
@@ -3434,10 +3434,10 @@ body {
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
-      <div class="adv-stage-btn locked">🚗 台灣環島歷險記<br><span style="font-size:36px;letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
-      <div class="adv-stage-btn locked">✈ 環遊世界遠征傳說<br><span style="font-size:36px;letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
+      <div class="adv-stage-btn locked">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
+      <div class="adv-stage-btn locked">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
     <!-- ★ 商店按鈕 + 知識幣顯示 -->
-    <div id="adv-coins-bar" style="font-size:20px;font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
+    <div id="adv-coins-bar" style="font-size:clamp(13px,1.5vw,20px);font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
       background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,50,0.3);border-radius:8px;text-align:center;">
       💰 知識幣：<span id="adv-coins-val">0</span>
     </div>
@@ -3486,7 +3486,7 @@ body {
     <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
       padding:14px 28px;border-bottom:2px solid rgba(255,180,50,0.4);
       background:linear-gradient(to right,rgba(40,20,0,0.85),rgba(20,10,0,0.85));gap:24px;">
-      <div style="font-size:60px;font-weight:900;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 20px rgba(255,180,0,0.5);">
+      <div style="font-size:clamp(32px,4vw,60px);font-weight:900;color:#ffcc44;letter-spacing:3px;text-shadow:0 0 20px rgba(255,180,0,0.5);">
         🛒 不可思議超商
       </div>
       <div id="shop-coins-display" style="font-size:42px;font-weight:800;color:#ffee88;
@@ -3494,22 +3494,22 @@ body {
         padding:7px 18px;border-radius:10px;">
         💰 <span id="shop-coins-val">0</span> 知識幣
       </div>
-      <button onclick="closeShopOverlay()" style="padding:9px 22px;font-size:36px;font-weight:700;
+      <button onclick="closeShopOverlay()" style="padding:9px 22px;font-size:clamp(20px,2.5vw,36px);font-weight:700;
         background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;
         border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>
     </div>
     <!-- 主體：左=商品 右=背包 -->
     <div style="position:relative;z-index:1;display:flex;height:calc(100% - 90px);gap:0;">
       <!-- 左側：商品列表 -->
-      <div id="shop-main" style="flex:1;padding:20px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-right:1.5px solid rgba(255,180,50,0.25);">
-        <div style="font-size:42px;font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
+      <div id="shop-main" style="flex:1;padding:clamp(8px,1.5vh,20px) clamp(10px,2vw,24px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-right:1.5px solid rgba(255,180,50,0.25);">
+        <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
         <div id="shop-products-list"></div>
         <!-- 分隔線：可賣出的物品 -->
         <div id="shop-sell-section" style="margin-top:24px;"></div>
       </div>
       <!-- 右側：玩家背包 -->
       <div id="shop-bag-scroll" style="width:440px;padding:20px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(0,0,0,0.2);">
-        <div style="font-size:42px;font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
+        <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
         <div id="shop-bag-panel"></div>
       </div>
     </div>
@@ -5330,7 +5330,7 @@ const HERO_DB = {
   '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
   '警長':  {hp:60,atk:12,sp:1,spd:17,  s1:{n:'物品查封',c:3,d:'封鎖全體對手物品卡',fd:'使全體對手1回合內無法使用和販賣物品卡'},s2:{n:'警示鳴槍',c:2,d:'(被動)對手行動前有機率使其跳過',fd:'(被動)對手行動前觸發，有60%機率使該對手直接放棄這回合行動',p:true}},
-  '煉金術師':{hp:61,atk:10,sp:10,spd:9, s1:{n:'道具複製',c:2,d:'(被動)使用物品時消耗2能量，有機率保留',fd:'(被動)使用物品卡時可選擇發動，消耗2能量後使用物品效果，再以70%機率保留該卡片不消耗',p:true},s2:{n:'賢者之石',c:3,d:'完全治癒（可復活）並免疫1次倒下（限用）',fd:'使任意1名友方完全恢復HP(可復活)，並免疫1次倒下。(持續至戰鬥結束，限用一次)',once:true}},
+  '煉金術師':{hp:61,atk:10,sp:10,spd:9, s1:{n:'道具複製',c:2,d:'(被動)使用物品時消耗2能量，有機率保留',fd:'(被動)使用物品卡時可選擇發動，消耗2能量後使用物品效果，再以70%機率保留該卡片不消耗',p:true},s2:{n:'賢者之石',c:3,d:'完全治癒（可復活）並免疫1次倒下（每升3級+1次使用）',fd:'使任意1名友方完全恢復HP（可復活），並使目標免疫1次倒下（持續至戰鬥結束）。技能每升3級增加1次使用上限（基礎1次，Lv3→2次，Lv6→3次）',once:true}},
   '武鬥家':{hp:64,atk:12,sp:8,spd:6,  s1:{n:'金鐘罩',c:2,d:'(被動)受傷時減傷並反彈相同傷害',fd:'(被動)受到傷害時觸發，先用特技減輕自己受到的傷害，再使1名對手受到與此相同的傷害',p:true},s2:{n:'降龍伏虎拳',c:3,d:'200%攻擊，無視有利狀態',fd:'用攻擊的200%對1名對手造成傷害，且無視其有利狀態'}},
   '軍師':  {hp:57,atk:4,sp:18,spd:11,  s1:{n:'識破全局',c:3,d:'消除弱敵有利狀態，可選擇使戰場卡無效',fd:'消除所有特技低於施展者的對手有利狀態，存在戰場卡時可選擇戰場卡效果對敵方或是友方無效'},s2:{n:'兵貫神速之計',c:2,d:'讓1名友方立即行動',fd:'使1名存活的任意友方立即代替自己行動1回合'}},
   '占星師':{hp:62,atk:5,sp:13,spd:10,  s1:{n:'命運塔羅牌',c:2,d:'抽取物品卡並使用或賣出',fd:'抽取1張物品卡立即使用或賣出'},s2:{n:'轉禍為福',c:1,d:'全隊受傷時各獲得2能量（1回合）',fd:'使友方全體1回合內受到傷害時立即獲得2能量，每個角色只能獲得1次'}},
@@ -12635,14 +12635,21 @@ function execSkill(a, sk, cost, stype){
     a._alchemistActive=true; // no visible buff tag
     endAction(a,cost,true);
   } else if(n==='賢者之石'){
-    if(a.s2used){ log('賢者之石已使用過！'); clearSel(); return; }
+    // ★ 升級效果：每升3級增加1次使用上限（基礎1次）
+    const _sageMax = 1 + Math.floor(_activeSkLv / 3);
+    const _sageUsed = a.s2useCount || 0;
+    if(_sageUsed >= _sageMax){
+      log(`賢者之石已使用 ${_sageMax} 次，本場無法再使用！`);
+      clearSel(); return;
+    }
     setPending('ally_or_dead',t=>{
-      log(`[${a.name}] 賢者之石！`);
+      log(`[${a.name}] 賢者之石！（${_sageUsed+1}/${_sageMax}次）`);
       playSkillFX('賢者之石',a,[t]);
       if(t.curHp===0) doRevive(t,1,true);
       else { t.curHp=t.hp; renderCard(t); showPopup(t,'FULL','heal'); }
       addBuff(t,'deathimmune',99);
-      a.s2used=true;
+      a.s2useCount = _sageUsed + 1;
+      a.s2used = (a.s2useCount >= _sageMax); // 兼容舊邏輯
       endAction(a,cost);
     });
   }
@@ -23291,7 +23298,7 @@ function addHeroExp(name, exp) {
             ].join('');
             _fx.innerHTML = `
               <div style="font-size:26px;color:#ffcc44;margin-bottom:6px;">🎉 天賦強化！</div>
-              <div style="font-size:42px;font-weight:900;color:#fff;text-shadow:0 0 30px #ffcc44;">${name}</div>
+              <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#fff;text-shadow:0 0 30px #ffcc44;">${name}</div>
               <div style="font-size:30px;color:#ffee88;margin-top:8px;">Lv.${_lv} 里程碑達成！</div>
               <div style="font-size:24px;color:#aaffcc;margin-top:6px;">天賦效果 +${_tl*20}%（累計+${_tl*20}%）</div>
             `;
@@ -25273,9 +25280,24 @@ function _advMiniGetQuizPool(sceneIdx) {
   const grade   = _advPlayerGrade      || '小學中年級';
   const subject = _advPlayerSubject    || '自然';
   const diff    = _advPlayerDifficulty || '普通';
+  // ★ 所有可用科目
+  const _allSubjects = ['國語文','英文','數學','自然','社會','音樂','美術'];
   let targetSubject, targetDiff;
   if(sceneIdx === 0){
-    targetSubject = '自然'; targetDiff = '沒自信';
+    // ★ 第一題：隨機科目 + 隨機難度（避免每次都是自然/沒自信）
+    const _diffs = ['沒自信','普通','我很會'];
+    // 隨機但排除已出過的題目後至少有題可選
+    const _subShuffled = _allSubjects.sort(() => Math.random() - 0.5);
+    const _difShuffled = _diffs.sort(() => Math.random() - 0.5);
+    targetSubject = null; targetDiff = null;
+    outer: for(const _s of _subShuffled){
+      for(const _d of _difShuffled){
+        const _test = ADV_QUIZ_DB.filter(q => q.subject === _s && q.difficulty === _d && !window._miniQuizUsedIds.has(q.id));
+        if(_test.length > 0){ targetSubject = _s; targetDiff = _d; break outer; }
+      }
+    }
+    // fallback
+    if(!targetSubject){ targetSubject = '自然'; targetDiff = '普通'; }
   } else if(sceneIdx === 1){
     targetSubject = subject; targetDiff = '沒自信';
   } else {
