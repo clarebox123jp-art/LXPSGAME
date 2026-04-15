@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0001</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0030</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3517,7 +3517,7 @@ body {
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
     <!-- ★ 好友系統：代表英雄顯示 -->
-    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(280px,26vw,460px);z-index:12;
+    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(290px,24vw,400px);z-index:12;
       display:none;align-items:center;gap:clamp(8px,1vw,14px);cursor:pointer;
       padding:clamp(10px,1.2vw,18px) clamp(18px,2vw,34px);
       background:rgba(10,15,35,0.88);border:2px solid rgba(255,200,80,0.6);border-radius:40px;
@@ -3751,7 +3751,7 @@ body {
         <span class="adv-nav-icon">🎒</span>
         <span class="adv-nav-label">背包</span>
       </button>
-      <button class="adv-nav-btn" id="adv-friend-btn" onclick="playSfx('sfx-gentle',0.5);openFriendPanel()" style="border-color:rgba(255,150,200,0.4);">
+      <button class="adv-nav-btn" id="adv-friend-btn" onclick="openFriendPanel()" style="border-color:rgba(255,150,200,0.4);">
         <span class="adv-nav-icon">🤝</span>
         <span class="adv-nav-label">好友英雄</span>
         <span id="adv-friend-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ff4488;color:#fff;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;"></span>
@@ -5470,7 +5470,7 @@ const HERO_DB = {
   '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:3,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:5,d:'友方全體獲得隨機有利狀態+50%效果（2回合）及20護盾',fd:'使友方全體各獲得1個隨機有利狀態（效果+50%，持續2回合），並各獲得可抵擋20傷害的護盾。'}},
   '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:2,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:3,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:4,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
-  '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'}},
+  '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'},_traitDesc:'【天賦】成為攻擊目標機率+40%（每升1級+5%）；受到傷害時20%機率將傷害轉為治療HP（每升1級+5%）'},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -10913,12 +10913,17 @@ function doDmg(target, rawDmg, opts={}){
     }
   }
   // 小劇團員天賦：受傷時20%機率轉為治療
-  if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused') && Math.random()<0.2){
-    doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
-    showPopup(target,'🎭轉化！','energy');
-    bannerFX(target,'轉化治療！','#ff88aa',900);
-    log(`🎭 [小劇團員] 天賦：傷害轉化！${rawDmg}傷害轉為治療！`);
-    return 0;
+  if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused')){
+    // ★ 受傷轉治療：基礎20%，技能升級每級+5%
+    const _skLvBonus2 = (target._skLv && target._skLv.s1 ? target._skLv.s1 * 0.05 : 0);
+    const _convertChance = 0.20 + _skLvBonus2;
+    if(Math.random() < _convertChance){
+      doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
+      showPopup(target,'🎭轉化！','energy');
+      bannerFX(target,'轉化治療！','#ff88aa',900);
+      log(`🎭 [小劇團員] 天賦：傷害轉化！${rawDmg}傷害轉為治療！（機率${Math.round(_convertChance*100)}%）`);
+      return 0;
+    }
   }
   // 動物學家天賦：動物守護減傷（每隻寵物-10%，最高40%）
   if(target.name==='動物學家' && target._zoologistDmgReduce>0 && !opts.ignoreBuffs){
@@ -14717,6 +14722,23 @@ function showActivePassiveUI(hero, sk, cost, triggerDesc, onUse, onSkip){
 }
 
 // ====== TURN ENGINE ======
+// ── 小劇團員天賦：加權隨機選目標（成為目標機率+40%+每技能等級+5%）──
+function _pickWeightedTarget(pool) {
+  if (!pool || !pool.length) return null;
+  const weights = pool.map(h => {
+    if (h.name !== '小劇團員') return 1.0;
+    const lv = (h._skLv && h._skLv.s1) ? h._skLv.s1 : 0;
+    return 1.4 + lv * 0.05;
+  });
+  const total = weights.reduce((s, w) => s + w, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
 function startTurn(){
   // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
   if(window._advMiniResultShowing) return;
@@ -14927,18 +14949,40 @@ function startTurn(){
     updateUI(); _pSetTimeout(startTurn,500); return;
   }
 
-  // 嘲諷 check
-  if(G.taunted&&G.taunted.attacker===next){
-    const tauntTarget=G.taunted.target;
-    if(!tauntTarget||tauntTarget.curHp<=0){ G.taunted=null; }
-    else if(tauntTarget.curHp>0){
+  // ★ 嘲諷 check：根據 status.taunt 的 dur 持續，優先級最高
+  const _tauntSt = next.status && next.status.find(s => s.type === 'taunt');
+  if(_tauntSt && _tauntSt._tauntTarget && _tauntSt._tauntTarget.curHp > 0){
+    const tauntTarget = _tauntSt._tauntTarget;
+    log(`[${next.name}] 受嘲諷，強制攻擊 [${tauntTarget.name}]！（剩${_tauntSt.dur}回合）`);
+    bannerFX(next, '💡 被聚光燈鎖定！', '#ffee44', 700);
+    _pSetTimeout(()=>{
+      doDmg(tauntTarget, next.atk, {actor:next});
+      next.acted = true;
+      tickStatus(next); // ★ 消耗一回合，dur-1 到0時自然移除
+      if(G.taunted && G.taunted.attacker === next){
+        const _remaining = next.status.find(s => s.type === 'taunt');
+        if(!_remaining) G.taunted = null; // 到期才清除
+      }
+      updateUI(); _pSetTimeout(startTurn, 500);
+    }, 600);
+    return;
+  } else if(_tauntSt && (!_tauntSt._tauntTarget || _tauntSt._tauntTarget.curHp <= 0)){
+    // 嘲諷目標已倒，解除
+    next.status = next.status.filter(s => s.type !== 'taunt');
+    G.taunted = null;
+  }
+  // 相容舊 G.taunted 路徑
+  if(G.taunted && G.taunted.attacker === next && !_tauntSt){
+    const tauntTarget = G.taunted.target;
+    if(!tauntTarget || tauntTarget.curHp <= 0){ G.taunted = null; }
+    else {
       log(`[${next.name}] 受嘲諷，只能攻擊 [${tauntTarget.name}]！`);
       _pSetTimeout(()=>{
-        doDmg(tauntTarget,next.atk,{actor:next});
-        next.acted=true; G.taunted=null; updateUI(); _pSetTimeout(startTurn,500);
-      },600);
+        doDmg(tauntTarget, next.atk, {actor:next});
+        next.acted = true; G.taunted = null; updateUI(); _pSetTimeout(startTurn, 500);
+      }, 600);
       return;
-    } else G.taunted=null;
+    }
   }
 
   // 狂亂 check — 強制攻擊己方隨機隊友（傷害+3）
@@ -15440,6 +15484,18 @@ function _realAiAct(a){
   // ★ 防護：若 a 無效直接跳過回合
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
   try {
+  // ★ 暈眩/凍結/睡眠/麻痺/陷阱：即使是BOSS也必須跳過行動
+  const _aiSkipTypes = ['stun','freeze','sleep','para','trap'];
+  const _aiSkipSt = a.status && a.status.find(s => _aiSkipTypes.includes(s.type));
+  if(_aiSkipSt){
+    log(`[${a.name}] 因 ${statusName(_aiSkipSt.type)} 無法行動！`);
+    bannerFX(a, '🌀 無法行動！', '#cc88ff', 900);
+    tickStatus(a);
+    a.acted = true;
+    updateUI();
+    _pSetTimeout(startTurn, 600);
+    return;
+  }
   const opp_side = a.side==='p1'?'p2':'p1';
   const enemies = G[opp_side].filter(h=>h.curHp>0);
   const allies  = G[a.side].filter(h=>h.curHp>0);
@@ -15517,6 +15573,11 @@ function _realAiAct(a){
       if(hasStatus(e,'deathmark')) score += 80;
       // 治療職優先擊殺
       if(HEAL_SKILLS.includes(e.s1.n)||HEAL_SKILLS.includes(e.s2.n)) score += 30;
+      // ★ 小劇團員天賦：成為目標機率+40%（基礎分+40，加上技能等級每級+5%）
+      if(e.name==='小劇團員'){
+        const _skLvBonus = (e._skLv && e._skLv.s1 ? e._skLv.s1 * 5 : 0);
+        score += 40 + _skLvBonus;
+      }
       if(score>bestScore){ bestScore=score; best=e; }
     }
     return best || enemies[0];
@@ -20838,7 +20899,7 @@ function advApplyReward(id) {
       log('[獎勵] 全體狀態清除！');
     } else if (id === 'stun_enemy') {
       const foes=G.p2.filter(x=>x.curHp>0);
-      if(foes.length){ const t=foes[Math.floor(Math.random()*foes.length)]; addStatus(t,'stun',1);
+      if(foes.length){ const t=_pickWeightedTarget(foes)||foes[0]; addStatus(t,'stun',1);
         showPopup(t,'🌀暈眩','dmg'); flashCard(t,'rgba(180,80,255,0.7)',400);
         bannerFX(t,'🌀 靜止封印！','#cc88ff',900); playSfx('sfx-cantmove',0.85);
         log(`[獎勵] ${t.name} 被封印1回合！`); }
@@ -25840,8 +25901,13 @@ async function _addFriendByEmail() {
     return;
   }
   // ★ 防呆：確認 Firebase 已初始化
-  if (!window._fbFindByEmail || !window._gUserId) {
+  if (!window._gUserId) {
     bannerFX(null, '請先登入再加好友', '#ff6666', 2000);
+    return;
+  }
+  if (!window._fbFindByEmail) {
+    bannerFX(null, '好友功能載入中，請稍後再試', '#ff9944', 2000);
+    console.warn('[加好友] _fbFindByEmail 尚未就緒', Object.keys(window).filter(k=>k.startsWith('_fb')));
     return;
   }
   // ★ 鎖定按鈕避免重複點擊
@@ -27406,6 +27472,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0030', items:['修復暈眩獎勵對BOSS無效：_realAiAct加入狀態檢查，BOSS暈眩後確實跳過行動','修復嘲諷（舞台聚光燈）不持續2回合：改由tickStatus控制到期，優先級最高','小劇團員天賦：加入加權隨機選目標系統，確保成為目標機率+40%在所有情境生效'] },
   { ver:'v1.0.20260416.0001', items:['修復加好友按鈕無反應（加入try/catch、Firebase初始化防呆、錯誤訊息顯示）','修復好友面板和代表英雄視窗關閉按鈕失效'] },
   { ver:'v1.0.20260415.2352', items:['修復加好友按鈕無反應：加入try/catch錯誤處理、Firebase初始化防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2346', items:['修復加好友按鈕無反應：加入try/catch、Firebase防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
@@ -27415,15 +27482,15 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2148', items:['暱稱設定視窗PC版放大','帳號名稱列放大','代表英雄欄位移至返回首頁右邊'] },
   { ver:'v1.0.20260415.2143', items:['暱稱改為詞庫組合（46形容詞×65名詞），加入隨機功能'] },
   { ver:'v1.0.20260415.2135', items:['暱稱加入兒童保護：改為指定詞庫組合，防止不雅詞'] },
-  { ver:'v1.0.20260415.2131', items:['暱稱系統：可設定暱稱，儲存至Firebase及本地，好友看到暱稱'] },
 ];
 
 
 
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0001';
+  const CURRENT_VERSION = 'v1.0.20260416.0030';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
