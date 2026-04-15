@@ -3362,7 +3362,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2015</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2020</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -11776,7 +11776,14 @@ function requestAction(type, btnEl){
     const cost=skillCost(sk,a,true);
     if(G.energy[a.side]<cost){ log('能量不足！'); return; }
     if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
-    if(hasStatus(a,'seal')){ log(`[${a.name}] 被封印，無法使用技能！`); return; }
+    // ★ 被封印也可以發動極限爆發（爆發免疫封印）
+    if(hasStatus(a,'seal')){
+      if(_canBurst(a)){
+        execBurst(a.side, a.pos);
+        return;
+      }
+      log(`[${a.name}] 被封印，無法使用技能！`); return;
+    }
     // 憐惜校犬：無法使用造成傷害的技能（攻擊型技能判斷）
     if(hasStatus(a,'_inuPity')){
       const _dmgSkills=['迅雷連斬','刀背擊','火焰球','地獄之火','冰凍之矛','暴風雪','連鎖閃電','麻痺落雷','日月同輝','死亡宣告','黑暗封印','瞄準射擊','天羅地網','潛行暗殺','泰山壓頂','朱雀召喚','青龍召喚','靈魂收割','召喚蝙蝠群','定時炸彈','亂槍射擊','降龍伏虎拳','三分投射','小星星變奏曲'];
@@ -11844,7 +11851,14 @@ function selMove(type){
     const cost=skillCost(sk,a,true);
     if(G.energy[a.side]<cost){ log('能量不足！'); return; }
     if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
-    if(hasStatus(a,'seal')){ log(`[${a.name}] 被封印，無法使用技能！`); return; }
+    // ★ 被封印也可以發動極限爆發（爆發免疫封印）
+    if(hasStatus(a,'seal')){
+      if(_canBurst(a)){
+        execBurst(a.side, a.pos);
+        return;
+      }
+      log(`[${a.name}] 被封印，無法使用技能！`); return;
+    }
     if(sk.once&&a.s2used){ log('此技能只能使用一次！'); return; }
     G.selMove=sk;
     document.getElementById(type==='s1'?'b-s1':'b-s2').classList.add('sel');
@@ -20288,9 +20302,12 @@ function advShowRePickSubject(onDone) {
     _advPlayerSubject   = window._advRePickSubj   || _advPlayerSubject;
     _advPlayerDifficulty= window._advRePickDiff   || _advPlayerDifficulty;
     _pop.remove();
+    // ★ 清除已使用題目紀錄，讓所有題目（含相同科目）都可重新出現
+    if(typeof _advUsedQuestionIds !== 'undefined') _advUsedQuestionIds.clear();
+    _advQuizRound = (_advQuizRound || 0) + 1;
     // 重新準備題庫
     advPrepareSessionQuestions();
-    log(`📚 重新選擇：${_advPlayerSubject} / ${_advPlayerDifficulty}，繼續作答！`);
+    log(`📚 重新選擇：${_advPlayerSubject} / ${_advPlayerDifficulty}，第${_advQuizRound}輪，繼續作答！`);
     if(onDone) onDone();
   };
 }
@@ -26640,7 +26657,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2015';
+  const CURRENT_VERSION = 'v1.0.20260415.2020';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
