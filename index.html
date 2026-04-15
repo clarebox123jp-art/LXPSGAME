@@ -21,7 +21,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc }
+  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -99,18 +99,83 @@
     } catch(e) { console.error('雲端讀取失敗', e); return null; }
   };
 
+  // ── 好友系統 Firebase API ──
+
+  // 儲存代表英雄
+  window._fbSetRepHero = async function(uid, heroData) {
+    try {
+      await updateDoc(doc(_fbDb, 'players', uid), { representativeHero: heroData });
+      return true;
+    } catch(e) {
+      // 若文件不存在則用 setDoc 合併
+      try { await setDoc(doc(_fbDb, 'players', uid), { representativeHero: heroData }, { merge: true }); return true; }
+      catch(e2) { console.error('儲存代表英雄失敗', e2); return false; }
+    }
+  };
+
+  // 以 Gmail 查詢玩家資料（代表英雄 + 名稱）
+  window._fbFindByEmail = async function(email) {
+    try {
+      const q = query(collection(_fbDb, 'players'), where('email', '==', email.toLowerCase().trim()));
+      const snap = await getDocs(q);
+      if(snap.empty) return null;
+      const d = snap.docs[0];
+      return { uid: d.id, ...d.data() };
+    } catch(e) { console.error('查詢好友失敗', e); return null; }
+  };
+
+  // 讀取好友完整資料
+  window._fbLoadFriend = async function(uid) {
+    try {
+      const snap = await getDoc(doc(_fbDb, 'players', uid));
+      return snap.exists() ? { uid: snap.id, ...snap.data() } : null;
+    } catch(e) { console.error('讀取好友資料失敗', e); return null; }
+  };
+
+  // 加好友（存在自己的資料中）
+  window._fbAddFriend = async function(myUid, friendInfo) {
+    try {
+      await setDoc(doc(_fbDb, 'players', myUid), {
+        friends: arrayUnion({ uid: friendInfo.uid, email: friendInfo.email, name: friendInfo.name || friendInfo.email })
+      }, { merge: true });
+      return true;
+    } catch(e) { console.error('加好友失敗', e); return false; }
+  };
+
+  // 刪好友
+  window._fbRemoveFriend = async function(myUid, friendInfo) {
+    try {
+      await setDoc(doc(_fbDb, 'players', myUid), {
+        friends: arrayRemove({ uid: friendInfo.uid, email: friendInfo.email, name: friendInfo.name || friendInfo.email })
+      }, { merge: true });
+      return true;
+    } catch(e) { console.error('刪好友失敗', e); return false; }
+  };
+
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
     if(user) {
       window._fbUser = user;
       window._gUserId = user.uid; // ★ 確保 _gUserId 同步
+      // ★ 同步 email 到 Firestore（供好友搜尋）
+      try {
+        const _nick = localStorage.getItem('lxps_nickname_' + user.uid);
+        await setDoc(doc(_fbDb, 'players', user.uid), {
+          email: (user.email || '').toLowerCase(),
+          displayName: _nick || user.displayName || user.email || ''
+        }, { merge: true });
+      } catch(e) { console.warn('[好友系統] email 同步失敗', e); }
       // 更新 UI
       const av = document.getElementById('google-avatar');
       const nm = document.getElementById('google-name');
       const btnWrap = document.getElementById('google-login-btn-wrap');
       const userInfo = document.getElementById('google-user-info');
       if(av) av.src = user.photoURL || '';
-      if(nm) nm.textContent = user.displayName || '';
+      // ★ 暱稱優先，次為 displayName
+      const _savedNick = localStorage.getItem('lxps_nickname_' + user.uid);
+      const _dispName = _savedNick || user.displayName || user.email || '';
+      window._playerNickname = _dispName;
+      if(nm){ nm.textContent = _dispName; nm.title = '點擊修改暱稱'; nm.style.cursor='pointer'; nm.onclick = openNicknameModal; }
       if(btnWrap) btnWrap.style.display = 'none';
       if(userInfo) userInfo.style.display = 'flex';
       // ★ 關閉登入選擇視窗（若還開著）
@@ -898,6 +963,20 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 @keyframes _tutPulse{0%,100%{box-shadow:0 0 0 4px rgba(255,200,0,0.35),0 0 20px rgba(255,200,0,0.7);}
   50%{box-shadow:0 0 0 8px rgba(255,200,0,0.2),0 0 40px rgba(255,200,0,0.9);}}
 ._tut-highlight{animation:_tutPulse 1.8s ease-in-out infinite;}
+/* ── 好友英雄：戰鬥卡粉紅框 ── */
+.card.friend-hero-card-battle {
+  box-shadow: 0 0 14px rgba(255,100,180,0.5) !important;
+}
+.card.friend-hero-card-battle::before {
+  content: '🤝';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-size: 13px;
+  z-index: 5;
+  pointer-events: none;
+}
+
 /* ── 展開冒險故事按鈕 ── */
 @keyframes advBtnGlow{
   0%,100%{box-shadow:0 0 14px rgba(60,160,255,0.5),0 0 30px rgba(0,100,200,0.2),inset 0 1px 0 rgba(100,200,255,0.2);}
@@ -1094,7 +1173,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .adv-nav-btn:nth-child(2){border-color:rgba(255,100,80,0.25);}  /* 英雄 - 紅 */
 .adv-nav-btn:nth-child(3){border-color:rgba(80,200,255,0.25);}  /* 背包 - 藍 */
 .adv-nav-btn:nth-child(4){border-color:rgba(255,200,50,0.25);}  /* 獎章 - 金 */
-.adv-nav-btn:nth-child(5){border-color:rgba(100,220,100,0.25);} /* 設定 - 綠 */
+.adv-nav-btn:nth-child(5){border-color:rgba(255,200,50,0.25);}  /* 獎章 - 金（原第4）*/
+.adv-nav-btn:nth-child(6){border-color:rgba(100,220,100,0.25);}  /* 設定 - 綠（原第5）*/
 
 .adv-domain-tags{display:flex;gap:8px;flex-wrap:wrap;}
 .adv-domain-tag{
@@ -3375,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2042</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2143</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3436,13 +3516,33 @@ body {
     <audio id="adventure-bgm" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%95%85%E4%BA%8B%E9%96%8B%E7%AB%AF.m4a" loop preload="auto">
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
+    <!-- ★ 好友系統：代表英雄顯示 -->
+    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:12px;left:260px;z-index:12;
+      display:none;align-items:center;gap:8px;cursor:pointer;padding:6px 14px;
+      background:rgba(10,15,35,0.88);border:2px solid rgba(255,200,80,0.6);border-radius:40px;
+      box-shadow:0 2px 12px rgba(255,180,0,0.2);transition:border-color 0.2s;"
+      onclick="playSfx('sfx-gentle',0.5);openSetRepHeroModal()">
+      <div id="adv-rep-hero-img-wrap" style="width:36px;height:36px;border-radius:50%;overflow:hidden;
+        border:2px solid rgba(255,200,80,0.8);background:rgba(20,20,30,0.9);flex-shrink:0;
+        display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>
+      <div style="display:flex;flex-direction:column;line-height:1.2;">
+        <span style="font-size:13px;color:#ffcc44;font-weight:800;" id="adv-rep-hero-name">設定代表英雄</span>
+        <span style="font-size:11px;color:#aaa;" id="adv-rep-hero-lv"></span>
+      </div>
+      <span style="font-size:11px;color:#888;">⭐</span>
+    </div>
     <!-- ★ 冒險模式帳號名稱顯示 -->
     <div id="adv-username-bar" style="display:none;position:absolute;top:130px;left:36px;z-index:11;
       align-items:center;gap:8px;">
       <img id="adv-user-avatar" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.7);flex-shrink:0;" />
-      <span id="adv-user-name" style="color:#1a2a6c;font-size:18px;font-weight:800;padding:3px 14px;
+      <span id="adv-user-name" onclick="playSfx('sfx-gentle',0.3);openNicknameModal()"
+        title="點擊修改暱稱" style="color:#1a2a6c;font-size:18px;font-weight:800;padding:3px 14px;
         background:rgba(255,255,255,0.92);border:2px solid #fff;border-radius:8px;
-        box-shadow:0 2px 8px rgba(0,0,0,0.4);white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;"></span>
+        box-shadow:0 2px 8px rgba(0,0,0,0.4);white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;
+        cursor:pointer;"></span>
+      <span onclick="playSfx('sfx-gentle',0.3);openNicknameModal()" title="修改暱稱"
+        style="font-size:14px;color:rgba(255,255,255,0.7);cursor:pointer;flex-shrink:0;
+        background:rgba(0,0,0,0.3);border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;">✏️</span>
     </div>
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
@@ -3650,6 +3750,11 @@ body {
       <button class="adv-nav-btn" onclick="playSfx('sfx-sel',0.5);openBackpackOverlay()">
         <span class="adv-nav-icon">🎒</span>
         <span class="adv-nav-label">背包</span>
+      </button>
+      <button class="adv-nav-btn" id="adv-friend-btn" onclick="playSfx('sfx-gentle',0.5);openFriendPanel()" style="border-color:rgba(255,150,200,0.4);">
+        <span class="adv-nav-icon">🤝</span>
+        <span class="adv-nav-label">好友英雄</span>
+        <span id="adv-friend-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ff4488;color:#fff;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;"></span>
       </button>
       <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('獎章')">
         <span class="adv-nav-icon">🏅</span>
@@ -7277,6 +7382,8 @@ function _buildHeroPickNodes(){
     const grid = document.createElement('div');
     grid.className = 'hpick-adv-grid';
     grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:16px;padding:16px 12px;justify-content:flex-start;align-content:flex-start;width:100%;';
+    // ★ 注入好友英雄卡（在格狀選角頁頂部）
+    try{ _injectFriendHeroCard(); }catch(e){}
     _heroPickPool.forEach((name, idx) => {
       const av = (typeof AVATARS!=='undefined'&&AVATARS[name])||'🗡️';
       const img = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])||'';
@@ -18581,6 +18688,8 @@ function _requestFullscreenAll(){
 function openAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
+  // ★ 讀取好友系統資料
+  try{ _loadFriendSystemData(); }catch(e){}
   ov.style.display = 'flex';
   ov.style.animation = 'advOverlayFadeIn 0.5s ease-out';
   // ★ 更新知識幣顯示
@@ -18593,7 +18702,7 @@ function openAdventureOverlay(){
   const _hmName   = document.getElementById('google-name');
   const _hmAv     = document.getElementById('google-avatar');
   if(_advUBar && _advUName && _hmName && _hmName.textContent.trim()){
-    _advUName.textContent = _hmName.textContent.trim();
+    _advUName.textContent = window._playerNickname || _hmName.textContent.trim();
     if(_advUAv && _hmAv && _hmAv.src) _advUAv.src = _hmAv.src;
     _advUBar.style.display = 'flex';
   } else if(_advUBar){
@@ -20015,6 +20124,8 @@ function advFinishCutscene() {
 
 // ── 正式啟動戰鬥（過場演出結束後呼叫）
 function advStartBattle(){
+  // ★ 好友英雄加入戰鬥（若已邀請且已選擇）
+  try{ _injectFriendHeroIntoBattle(); }catch(e){}
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
@@ -25291,6 +25402,557 @@ function _pwaGuideClose(){
 }
 
 
+// ══════════════════════════════════════════════════════
+// ★ 暱稱系統
+// ══════════════════════════════════════════════════════
+function openNicknameModal() {
+  const existing = document.getElementById('_nickname-modal');
+  if (existing) { existing.remove(); return; }
+  if (!window._fbUser) { bannerFX(null, '請先登入', '#ff6666', 1500); return; }
+
+  const current = window._playerNickname || window._fbUser.displayName || '';
+
+  const modal = document.createElement('div');
+  modal.id = '_nickname-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:29999;background:rgba(0,0,8,0.88);'
+    + 'display:flex;align-items:center;justify-content:center;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+  // 解析現有暱稱的形容詞/名詞
+  let _initAdj = _NICK_ADJ[0], _initNoun = _NICK_NOUN[0];
+  const _curClean = current.replace(/\s*#\d+$/, '').trim();
+  for (const adj of _NICK_ADJ) {
+    if (_curClean.startsWith(adj)) {
+      const rest = _curClean.slice(adj.length);
+      if (_NICK_NOUN.includes(rest)) { _initAdj = adj; _initNoun = rest; break; }
+    }
+  }
+
+  const _adjOptions  = _NICK_ADJ.map(a  => `<option value="${a}"  ${a===_initAdj  ?'selected':''}>${a}</option>`).join('');
+  const _nounOptions = _NICK_NOUN.map(n => `<option value="${n}" ${n===_initNoun ?'selected':''}>${n}</option>`).join('');
+  const _selStyle = 'padding:10px 12px;font-size:19px;font-weight:700;background:rgba(20,30,50,0.95);'
+    + 'border:1.5px solid rgba(100,200,255,0.5);color:#e0f0ff;border-radius:10px;font-family:inherit;'
+    + 'outline:none;cursor:pointer;flex:1;';
+
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);'
+    + 'border:2.5px solid rgba(100,200,255,0.7);border-radius:20px;'
+    + 'padding:32px 36px;max-width:min(96vw,520px);width:100%;text-align:center;">'
+    + '<div style="font-size:26px;font-weight:900;color:#88ddff;margin-bottom:6px;">✏️ 設定暱稱</div>'
+    + '<div style="font-size:14px;color:#aaa;margin-bottom:18px;">選一個「形容詞＋名詞」組合成你的暱稱</div>'
+    // 下拉選單
+    + '<div style="display:flex;gap:8px;margin-bottom:14px;">'
+    + '<select id="_nick-adj" style="' + _selStyle + '">' + _adjOptions + '</select>'
+    + '<select id="_nick-noun" style="' + _selStyle + '">' + _nounOptions + '</select>'
+    + '</div>'
+    // 即時預覽
+    + '<div id="_nick-preview" style="font-size:20px;font-weight:800;color:#ffcc44;'
+    + 'background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:10px;'
+    + 'padding:10px;margin-bottom:14px;letter-spacing:1px;"></div>'
+    // 隨機按鈕
+    + '<button onclick="_nickRandom()" style="width:100%;padding:9px;font-size:15px;font-weight:700;'
+    + 'background:rgba(100,80,200,0.2);border:1.5px solid rgba(180,120,255,0.5);color:#cc99ff;'
+    + 'border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:16px;">🎲 幫我隨機選一個</button>'
+    + '<div style="display:flex;gap:10px;justify-content:center;">'
+    + '<button onclick="_saveNickname()" style="padding:11px 36px;font-size:18px;font-weight:800;'
+    + 'background:rgba(50,150,255,0.25);border:2px solid rgba(100,200,255,0.7);color:#88ddff;'
+    + 'border-radius:11px;cursor:pointer;font-family:inherit;">✔ 儲存</button>'
+    + '<button onclick="_nickModalClose()" style="padding:11px 28px;font-size:18px;color:#888;'
+    + 'background:none;border:1px solid #444;border-radius:11px;cursor:pointer;font-family:inherit;">取消</button>'
+    + '</div></div>';
+
+  document.body.appendChild(modal);
+
+  // 即時預覽更新
+  function _updateNickPreview() {
+    const adj  = document.getElementById('_nick-adj');
+    const noun = document.getElementById('_nick-noun');
+    const prev = document.getElementById('_nick-preview');
+    if (adj && noun && prev) prev.textContent = adj.value + noun.value;
+  }
+  setTimeout(() => {
+    _updateNickPreview();
+    const a = document.getElementById('_nick-adj');
+    const n = document.getElementById('_nick-noun');
+    if (a) a.addEventListener('change', _updateNickPreview);
+    if (n) n.addEventListener('change', _updateNickPreview);
+  }, 50);
+}
+
+function _nickModalClose(){
+  var e=document.getElementById('_nickname-modal');
+  if(e) e.remove();
+}
+function _nickRandom(){
+  const r = _randomNickname();
+  const clean = r.replace(/\s*#\d+$/, '').trim();
+  let foundAdj='', foundNoun='';
+  for(const adj of _NICK_ADJ){
+    if(clean.startsWith(adj)){
+      const rest = clean.slice(adj.length);
+      if(_NICK_NOUN.includes(rest)){ foundAdj=adj; foundNoun=rest; break; }
+    }
+  }
+  const a=document.getElementById('_nick-adj');
+  const n=document.getElementById('_nick-noun');
+  const p=document.getElementById('_nick-preview');
+  if(a&&foundAdj) a.value=foundAdj;
+  if(n&&foundNoun) n.value=foundNoun;
+  if(p&&foundAdj&&foundNoun) p.textContent=foundAdj+foundNoun;
+}
+
+// ── 暱稱詞庫系統（兒童保護：只能用指定詞組合）──
+const _NICK_ADJ = [
+  '勇敢的','聰明的','快樂的','神秘的','閃亮的','溫柔的','活潑的','冷靜的','熱情的','機靈的',
+  '可愛的','帥氣的','優雅的','強壯的','靈巧的','搞怪的','呆萌的','霸氣的','善良的','努力的',
+  '超級的','無敵的','傳說的','隱藏的','閃電的','彩虹的','星光的','月光的','火焰的','冰雪的',
+  '高貴的','驕傲的','沒自信的','大膽的','有個性的','奇妙的','裝笨的','貪吃的','貪玩的','愛睡的',
+  '笑咪咪的','淚汪汪的','慢熱的','稚氣的','放鬆的','怕生的',
+];
+const _NICK_NOUN = [
+  '英雄','勇士','騎士','魔法師','冒險家','探險家','學者','忍者','武士','獵人',
+  '守護者','戰士','巫師','弓手','劍客','貓咪','熊貓','小龍','獨角獸','鳳凰',
+  '星星','彗星','閃電','海浪','寶石','水晶','彩虹',
+  '小男孩','小女孩','小可愛','小寶寶','帥哥','美女','學霸','偶像','小幫手','明星',
+  '小畫家','舞蹈家','演員','汪星人','喵星人','小鼠','小鴨','小草','小花','小樹',
+  '石頭','小弟弟','小妹妹','大哥哥','大姊姊','學長','學姊','學弟','學妹','前輩',
+  '晚輩','班長','副班長','風紀股長','學藝股長','衛生股長','打飯班長','小老師',
+];
+
+// 產生隨機暱稱（供「隨機」按鈕使用）
+function _randomNickname() {
+  const adj  = _NICK_ADJ[Math.floor(Math.random() * _NICK_ADJ.length)];
+  const noun = _NICK_NOUN[Math.floor(Math.random() * _NICK_NOUN.length)];
+  const num  = Math.floor(Math.random() * 999) + 1;
+  return adj + noun + ' #' + num;
+}
+
+// 驗證暱稱是否由合法詞組成
+function _checkNicknameClean(nick) {
+  // 格式：形容詞 + 名詞 + 可選「 #數字」
+  const cleaned = nick.replace(/\s*#\d+$/, '').trim();
+  for (const adj of _NICK_ADJ) {
+    if (cleaned.startsWith(adj)) {
+      const rest = cleaned.slice(adj.length);
+      if (_NICK_NOUN.includes(rest)) return { ok: true };
+    }
+  }
+  return { ok: false };
+}
+
+async function _saveNickname() {
+  const adjEl  = document.getElementById('_nick-adj');
+  const nounEl = document.getElementById('_nick-noun');
+  if (!adjEl || !nounEl) return;
+  const nick = adjEl.value + nounEl.value;
+  if (!nick) { bannerFX(null, '請選擇形容詞和名詞', '#ff6666', 1500); return; }
+  // 驗證組合合法（防止 DOM 被竄改）
+  const _nickCheck = _checkNicknameClean(nick);
+  if (!_nickCheck.ok) { bannerFX(null, '❌ 暱稱組合不合法', '#ff6666', 1500); return; }
+
+  const uid = window._fbUser && window._fbUser.uid;
+  if (!uid) return;
+
+  // 存入 localStorage（快速）
+  localStorage.setItem('lxps_nickname_' + uid, nick);
+  window._playerNickname = nick;
+
+  // 更新首頁帳號顯示
+  const nm = document.getElementById('google-name');
+  if (nm) nm.textContent = nick;
+
+  // 更新冒險頁帳號顯示
+  const advNm = document.getElementById('adv-user-name');
+  if (advNm) advNm.textContent = nick;
+
+  // 同步到 Firebase
+  try {
+    if (window._fbSetRepHero) {
+      await setDoc
+        ? null // setDoc already available in module scope
+        : null;
+    }
+    if (window._fbUser && window._fbLoad) {
+      // 用 _fbSave 更新 displayName
+      const data = await window._fbLoad(uid);
+      if (data && window._fbSave) {
+        data.displayName = nick;
+        await window._fbSave(uid, data);
+      }
+    }
+  } catch(e) { console.warn('[暱稱] Firebase 同步失敗', e); }
+
+  // 更新代表英雄欄顯示
+  try { _loadRepHeroBar(); } catch(e) {}
+
+  bannerFX(null, `✅ 暱稱已設定為「${nick}」！`, '#88ddff', 2000);
+  playSfx('sfx-confirm', 0.6);
+  document.getElementById('_nickname-modal').remove();
+}
+
+// ══════════════════════════════════════════════════════
+// ★ 好友系統
+// ══════════════════════════════════════════════════════
+let _myRepHero = null;      // 自己的代表英雄資料
+let _friendList = [];       // [{uid, email, name}]
+let _friendHeroData = {};   // {uid: heroData} 快取
+let _invitedFriendHero = null; // 本場邀請的好友英雄
+
+// ── 代表英雄：讀取並顯示在選關頁頂部 ──
+function _loadRepHeroBar() {
+  const bar = document.getElementById('adv-rep-hero-bar');
+  if (!bar) return;
+  const savedName = _myRepHero ? _myRepHero.name : null;
+  const nameEl = document.getElementById('adv-rep-hero-name');
+  const lvEl   = document.getElementById('adv-rep-hero-lv');
+  const imgWrap = document.getElementById('adv-rep-hero-img-wrap');
+  if (savedName && typeof HERO_DB !== 'undefined' && HERO_DB[savedName]) {
+    const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[savedName]) || '';
+    const lv  = (typeof getHeroLevel === 'function') ? getHeroLevel(savedName) : 1;
+    nameEl.textContent = savedName;
+    lvEl.textContent   = 'Lv.' + lv + ' 代表英雄';
+    if (img) imgWrap.innerHTML = `<img src="${img}" style="width:100%;height:100%;object-fit:cover;">`;
+    else      imgWrap.textContent = (typeof AVATARS !== 'undefined' && AVATARS[savedName]) || '⚔';
+    bar.style.display = 'flex';
+  } else {
+    nameEl.textContent = '設定代表英雄';
+    lvEl.textContent   = '';
+    imgWrap.innerHTML  = '👤';
+    bar.style.display = 'flex';
+  }
+}
+
+// ── 設定代表英雄 Modal ──
+function openSetRepHeroModal() {
+  const existing = document.getElementById('_rep-hero-modal');
+  if (existing) { existing.remove(); return; }
+
+  const modal = document.createElement('div');
+  modal.id = '_rep-hero-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:19999;background:rgba(0,0,8,0.92);'
+    + 'display:flex;align-items:flex-start;justify-content:center;'
+    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 16px;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+  const unlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
+  const currentRep = _myRepHero ? _myRepHero.name : null;
+
+  let cardsHTML = unlocked.length ? '' : '<div style="color:#888;font-size:20px;padding:24px;">尚未解鎖任何英雄</div>';
+  unlocked.forEach(name => {
+    const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+    const av  = (typeof AVATARS   !== 'undefined' && AVATARS[name])   || '⚔';
+    const lv  = (typeof getHeroLevel === 'function') ? getHeroLevel(name) : 1;
+    const sel = name === currentRep;
+    cardsHTML +=
+      `<div onclick="_selectRepHero('${name}')" style="cursor:pointer;border-radius:12px;overflow:hidden;`
+      + `border:2.5px solid ${sel ? '#ffcc44' : 'rgba(212,168,67,0.3)'};`
+      + `background:${sel ? 'rgba(80,60,0,0.5)' : 'rgba(10,12,25,0.9)'};`
+      + `transition:0.15s;flex-shrink:0;width:130px;position:relative;">`
+      + (img ? `<img src="${img}" style="width:100%;height:110px;object-fit:cover;display:block;">` : `<div style="height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;">${av}</div>`)
+      + `<div style="font-size:15px;text-align:center;padding:5px 3px;color:#ffe8a0;font-weight:700;">${name} <span style="color:#88ccff;font-size:13px;">Lv${lv}</span></div>`
+      + (sel ? '<div style="position:absolute;top:4px;right:4px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:20px;height:20px;line-height:20px;text-align:center;">★</div>' : '')
+      + '</div>';
+  });
+
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);border:2.5px solid rgba(255,200,80,0.7);border-radius:24px;'
+    + 'padding:36px 40px;max-width:min(96vw,700px);width:100%;margin:auto;">'
+    + '<div style="font-size:32px;font-weight:900;color:#ffcc44;margin-bottom:6px;text-align:center;">⭐ 設定代表英雄</div>'
+    + '<div style="font-size:17px;color:#aaa;margin-bottom:20px;text-align:center;">選一位英雄作為你的代表，好友可以邀請他來協助</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">' + cardsHTML + '</div>'
+    + '<div style="text-align:center;margin-top:20px;">'
+    + '<button onclick="_repHeroModalClose()" style="padding:10px 36px;font-size:18px;color:#888;background:none;border:1px solid #444;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+    + '</div></div>';
+
+  document.body.appendChild(modal);
+}
+
+async function _selectRepHero(name) {
+  if (!name || !window._gUserId) return;
+  const lv  = (typeof getHeroLevel === 'function') ? getHeroLevel(name) : 1;
+  const inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[name]) || {};
+  const skl = (typeof _heroSkillLevels  !== 'undefined' && _heroSkillLevels  && _heroSkillLevels[name])  || {};
+  const bLv = (typeof _heroBurstLevels  !== 'undefined' && _heroBurstLevels  && _heroBurstLevels[name])  || 0;
+  const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+
+  _myRepHero = { name, level: lv, statInvested: inv, skillLevels: skl, burstLevel: bLv, img };
+
+  try {
+    await window._fbSetRepHero(window._gUserId, _myRepHero);
+    bannerFX(null, `⭐ 已設定 ${name} 為代表英雄！`, '#ffcc44', 1800);
+    playSfx('sfx-confirm', 0.6);
+  } catch(e) {}
+
+  const modal = document.getElementById('_rep-hero-modal');
+  if (modal) modal.remove();
+  _loadRepHeroBar();
+}
+
+// ── 好友名單面板 ──
+async function openFriendPanel() {
+  const existing = document.getElementById('_friend-panel');
+  if (existing) { existing.remove(); return; }
+
+  if (!window._gUserId) {
+    bannerFX(null, '請先登入才能使用好友功能！', '#ff6666', 2000);
+    return;
+  }
+
+  // 讀取好友清單（從 Firebase）
+  try {
+    const data = await window._fbLoad(window._gUserId);
+    _friendList = (data && data.friends) || [];
+  } catch(e) { _friendList = []; }
+
+  _renderFriendPanel();
+}
+
+function _renderFriendPanel() {
+  const existing = document.getElementById('_friend-panel');
+  if (existing) existing.remove();
+
+  const panel = document.createElement('div');
+  panel.id = '_friend-panel';
+  panel.style.cssText = 'position:fixed;inset:0;z-index:19999;background:rgba(0,0,8,0.92);'
+    + 'display:flex;align-items:flex-start;justify-content:center;'
+    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:28px 16px;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  panel.onclick = e => { if (e.target === panel) panel.remove(); };
+
+  let friendRows = '';
+  if (_friendList.length === 0) {
+    friendRows = '<div style="color:#888;font-size:18px;padding:24px;text-align:center;">還沒有好友，快去邀請吧！</div>';
+  } else {
+    _friendList.forEach((f, i) => {
+      const fd = _friendHeroData[f.uid];
+      const heroName = fd && fd.representativeHero ? fd.representativeHero.name : '（未設代表英雄）';
+      const heroLv   = fd && fd.representativeHero ? fd.representativeHero.level : '';
+      const heroImg  = fd && fd.representativeHero ? fd.representativeHero.img   : '';
+      const heroAv   = heroName !== '（未設代表英雄）' && typeof AVATARS !== 'undefined' ? (AVATARS[heroName] || '⚔') : '👤';
+      friendRows +=
+        `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;`
+        + `background:rgba(20,15,40,0.85);border:1.5px solid rgba(180,120,255,0.3);border-radius:14px;">`
+        + `<div style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,150,200,0.6);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(10,10,20,0.9);">`
+        + (heroImg ? `<img src="${heroImg}" style="width:100%;height:100%;object-fit:cover;">` : heroAv)
+        + `</div>`
+        + `<div style="flex:1;min-width:0;">`
+        + `<div style="font-size:16px;font-weight:800;color:#e8d8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name || f.email}</div>`
+        + `<div style="font-size:13px;color:#aa88ff;">${heroName}${heroLv ? ' Lv.'+heroLv : ''}</div>`
+        + `</div>`
+        + `<button onclick="_inviteFriendHero(${i})" style="padding:7px 14px;font-size:14px;font-weight:700;`
+        + `background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,130,200,0.6);color:#ff88cc;`
+        + `border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;">🤝 邀請協助</button>`
+        + `<button onclick="_deleteFriend(${i})" style="padding:7px 12px;font-size:13px;`
+        + `background:rgba(60,10,10,0.5);border:1px solid rgba(200,60,60,0.4);color:#ff8888;`
+        + `border-radius:9px;cursor:pointer;font-family:inherit;">✕</button>`
+        + `</div>`;
+    });
+  }
+
+  panel.innerHTML =
+    '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);border:2.5px solid rgba(255,130,200,0.6);border-radius:24px;'
+    + 'padding:32px 36px;max-width:min(96vw,640px);width:100%;margin:auto;">'
+    + '<div style="font-size:30px;font-weight:900;color:#ff88cc;margin-bottom:4px;text-align:center;">🤝 好友英雄</div>'
+    + '<div style="font-size:15px;color:#aaa;margin-bottom:20px;text-align:center;">邀請好友英雄加入你的冒險！</div>'
+    // 新增好友
+    + '<div style="display:flex;gap:8px;margin-bottom:18px;">'
+    + '<input id="_add-friend-input" type="email" placeholder="輸入好友的 Gmail 帳號" '
+    + 'style="flex:1;padding:10px 14px;font-size:15px;background:rgba(20,15,35,0.9);border:1.5px solid rgba(180,120,255,0.5);'
+    + 'color:#e0d0ff;border-radius:10px;font-family:inherit;outline:none;">'
+    + '<button onclick="_addFriendByEmail()" style="padding:10px 18px;font-size:15px;font-weight:700;'
+    + 'background:rgba(100,50,200,0.35);border:1.5px solid rgba(180,120,255,0.7);color:#cc88ff;'
+    + 'border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 加好友</button>'
+    + '</div>'
+    + '<div id="_friend-list-inner">' + friendRows + '</div>'
+    + '<div style="text-align:center;margin-top:16px;">'
+    + '<button onclick="_friendPanelClose()" style="padding:9px 32px;font-size:16px;color:#888;background:none;border:1px solid #444;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+    + '</div></div>';
+
+  document.body.appendChild(panel);
+
+  // 非同步讀取好友英雄資料
+  _friendList.forEach(async (f, i) => {
+    if (!_friendHeroData[f.uid]) {
+      const data = await window._fbLoadFriend(f.uid);
+      if (data) {
+        _friendHeroData[f.uid] = data;
+        _renderFriendPanel(); // 更新顯示
+      }
+    }
+  });
+}
+
+async function _addFriendByEmail() {
+  const input = document.getElementById('_add-friend-input');
+  if (!input) return;
+  const email = input.value.trim().toLowerCase();
+  if (!email || !email.includes('@')) {
+    bannerFX(null, '請輸入有效的 Gmail 帳號', '#ff6666', 1500);
+    return;
+  }
+  if (email === (window._fbUser && window._fbUser.email && window._fbUser.email.toLowerCase())) {
+    bannerFX(null, '不能加自己為好友', '#ff6666', 1500);
+    return;
+  }
+  if (_friendList.some(f => f.email === email)) {
+    bannerFX(null, '已是好友了！', '#ffcc44', 1500);
+    return;
+  }
+  bannerFX(null, '🔍 搜尋中...', '#88ccff', 1000);
+  const found = await window._fbFindByEmail(email);
+  if (!found) {
+    bannerFX(null, '找不到此帳號，請確認對方已登入過遊戲', '#ff6666', 2500);
+    return;
+  }
+  const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
+  await window._fbAddFriend(window._gUserId, friendInfo);
+  _friendList.push(friendInfo);
+  bannerFX(null, `✅ 已加 ${friendInfo.name} 為好友！`, '#44ff88', 1800);
+  playSfx('sfx-confirm', 0.6);
+  _renderFriendPanel();
+}
+
+async function _deleteFriend(idx) {
+  const f = _friendList[idx];
+  if (!f) return;
+  await window._fbRemoveFriend(window._gUserId, f);
+  _friendList.splice(idx, 1);
+  delete _friendHeroData[f.uid];
+  bannerFX(null, `已刪除好友 ${f.name || f.email}`, '#aaa', 1500);
+  _renderFriendPanel();
+}
+
+// ── 邀請好友英雄：注入選角頁 ──
+function _inviteFriendHero(idx) {
+  const f = _friendList[idx];
+  if (!f) return;
+  const fd = _friendHeroData[f.uid];
+  if (!fd || !fd.representativeHero) {
+    bannerFX(null, `${f.name || f.email} 尚未設定代表英雄`, '#ff9944', 2000);
+    return;
+  }
+  _invitedFriendHero = { ...fd.representativeHero, _ownerName: f.name || f.email, _ownerUid: f.uid };
+  bannerFX(null, `🤝 已邀請 ${f.name} 的 ${fd.representativeHero.name}！去選角頁挑選隊友吧！`, '#ff88cc', 2500);
+  playSfx('sfx-confirm', 0.7);
+  const panel = document.getElementById('_friend-panel');
+  if (panel) panel.remove();
+  // 更新好友按鈕顯示邀請中的英雄名
+  const badge = document.getElementById('adv-friend-badge');
+  if (badge) { badge.style.display = 'block'; badge.textContent = '1'; }
+}
+
+// ── 選角頁：加入好友英雄卡 ──
+function _injectFriendHeroCard() {
+  const grid = document.querySelector('.hpick-adv-grid');
+  if (!grid || !_invitedFriendHero) return;
+  // 移除舊的好友卡
+  grid.querySelectorAll('.friend-hero-card').forEach(el => el.remove());
+
+  const fh = _invitedFriendHero;
+  const name = fh.name;
+  const lv   = fh.level || 1;
+  const img  = fh.img || (typeof HERO_IMGS !== 'undefined' ? HERO_IMGS[name] : '') || '';
+  const av   = (typeof AVATARS !== 'undefined' && AVATARS[name]) || '🤝';
+
+  const node = document.createElement('div');
+  node.className = 'hpick-adv-node friend-hero-card';
+  node.style.cssText = 'position:relative;width:155px;cursor:pointer;border-radius:14px;overflow:hidden;'
+    + 'border:2.5px solid rgba(255,130,200,0.9);background:rgba(30,5,20,0.95);'
+    + 'transition:transform 0.15s,border-color 0.15s;flex-shrink:0;'
+    + 'box-shadow:0 0 14px rgba(255,100,180,0.4);';
+  node.innerHTML =
+    (img ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;">` : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>`)
+    + `<div style="font-size:15px;text-align:center;padding:5px 3px;color:#ffcce0;font-weight:700;line-height:1.3;">${name} <span style="font-size:13px;color:#ff99cc;font-weight:600;">Lv.${lv}</span></div>`
+    + `<div style="font-size:11px;text-align:center;padding:0 4px 4px;color:#ff88cc;">🤝 ${fh._ownerName}</div>`
+    // 粉紅握手圖示（右上角）
+    + `<div style="position:absolute;top:4px;right:4px;background:rgba(255,100,180,0.9);border-radius:50%;`
+    + `width:22px;height:22px;line-height:22px;text-align:center;font-size:13px;">🤝</div>`;
+
+  node.onclick = () => _selectFriendHero(name);
+  grid.insertBefore(node, grid.firstChild);
+}
+
+function _selectFriendHero(name) {
+  if (!_invitedFriendHero || _invitedFriendHero.name !== name) return;
+  // 加入選角（不佔用普通英雄槽，作為額外成員）
+  if (!window._friendHeroInParty) {
+    window._friendHeroInParty = true;
+    bannerFX(null, `🤝 ${name} 加入隊伍！`, '#ff88cc', 1500);
+    playSfx('sfx-confirm', 0.6);
+    // 高亮友方卡片
+    const friendCard = document.querySelector('.friend-hero-card');
+    if (friendCard) {
+      friendCard.style.background = 'rgba(80,5,40,0.95)';
+      friendCard.style.borderColor = 'rgba(255,80,160,1)';
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:absolute;top:4px;left:4px;background:#ff44aa;color:#fff;font-size:12px;font-weight:900;border-radius:50%;width:20px;height:20px;line-height:20px;text-align:center;';
+      badge.textContent = '✓';
+      friendCard.appendChild(badge);
+    }
+  } else {
+    // 取消
+    window._friendHeroInParty = false;
+    bannerFX(null, `${name} 已取消加入`, '#aaa', 1200);
+    const friendCard = document.querySelector('.friend-hero-card');
+    if (friendCard) {
+      friendCard.style.background = 'rgba(30,5,20,0.95)';
+      friendCard.style.borderColor = 'rgba(255,130,200,0.9)';
+      friendCard.querySelectorAll('[style*="background:#ff44aa"]').forEach(el => el.remove());
+    }
+  }
+}
+
+// ── 戰鬥開始：將好友英雄加入 G.p1 ──
+function _injectFriendHeroIntoBattle() {
+  if (!_invitedFriendHero || !window._friendHeroInParty) return;
+  const fh = _invitedFriendHero;
+  const name = fh.name;
+  if (!name || typeof HERO_DB === 'undefined' || !HERO_DB[name]) return;
+  // 建立英雄物件（使用好友的等級/素質/技能）
+  const pos = G.p1.length;
+  if (pos >= 4) { log('隊伍已滿，無法加入好友英雄'); return; }
+  const h = typeof newHero === 'function' ? newHero(name, 'p1', pos) : null;
+  if (!h) return;
+  // 套用好友的素質加成
+  const inv = fh.statInvested || {};
+  h.hp  = Math.max(1, h.hp  + (inv.hp  || 0));
+  h.atk = Math.max(1, h.atk + (inv.atk || 0));
+  h.sp  = Math.max(1, h.sp  + (inv.sp  || 0));
+  h.spd = Math.max(1, h.spd + (inv.spd || 0));
+  h.curHp = h.hp;
+  // 套用技能等級
+  const skl = fh.skillLevels || {};
+  h._skLv = { s1: skl.s1 || 0, s2: skl.s2 || 0 };
+  // 套用爆發等級
+  h._burstLvAdv = fh.burstLevel || 0;
+  // 標記為好友英雄（UI顯示粉紅框）
+  h._isFriendHero = true;
+  h._friendOwner  = fh._ownerName;
+  G.p1.push(h);
+  log(`🤝 [好友英雄] ${name}（${fh._ownerName}）加入戰鬥！Lv.${fh.level || 1}`);
+}
+
+// ── 開啟選關頁時讀取雲端好友和代表英雄 ──
+async function _loadFriendSystemData() {
+  if (!window._gUserId || !window._fbLoad) return;
+  try {
+    const data = await window._fbLoad(window._gUserId);
+    if (data) {
+      _myRepHero  = data.representativeHero || null;
+      _friendList = data.friends || [];
+    }
+  } catch(e) { console.warn('[好友系統] 讀取失敗', e); }
+  _loadRepHeroBar();
+  // 更新好友英雄邀請狀態
+  if (_invitedFriendHero) {
+    const badge = document.getElementById('adv-friend-badge');
+    if (badge) { badge.style.display = 'block'; badge.textContent = '1'; }
+  }
+}
+
+
 function showLoginGate() {
   // 已登入 → 直接進冒險
   if(window._gUserId) { openAdventureOverlay(); return; }
@@ -26123,6 +26785,8 @@ function _advMiniApplyReward(id, onDone) {
 
 
 function advMiniResultGoHome() {
+  // ★ 好友英雄狀態重置
+  window._friendHeroInParty = false;
   const el = document.getElementById('adv-mini-result');
   if(el){ el.classList.remove('show'); el.style.display='none'; }
   window._advMiniResultShowing = false;
@@ -26685,7 +27349,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2042';
+  const CURRENT_VERSION = 'v1.0.20260415.2143';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
