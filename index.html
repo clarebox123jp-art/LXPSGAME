@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0054</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0653</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4542,7 +4542,24 @@ function ringFX(h,color,dur){
 }
 function bannerFX(h,text,color,dur){
   ensureFxLayer();dur=dur||900;
-  var rc=cardRect(h);if(!rc)return;
+  var rc=cardRect(h);
+  // ★ h 為 null 時，顯示在畫面中央頂部（用於全域提示）
+  if(!rc){
+    var _gb=document.createElement('div');
+    _gb.style.cssText='position:fixed;top:clamp(60px,8vw,100px);left:50%;transform:translateX(-50%);'
+      +'color:'+color+';font-size:clamp(18px,2.2vw,28px);font-weight:800;'
+      +'background:rgba(0,0,0,0.85);padding:10px 24px;border-radius:12px;'
+      +'border:1.5px solid '+color+';z-index:2147483640;pointer-events:none;'
+      +'text-align:center;max-width:min(90vw,600px);word-break:break-word;'
+      +'animation:bannerRise 0.3s ease-out;';
+    _gb.textContent=text;
+    document.body.appendChild(_gb);
+    setTimeout(function(){
+      _gb.style.transition='opacity 0.4s';_gb.style.opacity='0';
+      setTimeout(function(){if(_gb.parentNode)_gb.parentNode.removeChild(_gb);},400);
+    },dur);
+    return;
+  }
   var b=document.createElement('div');
   b.style.cssText='position:absolute;left:'+rc.x+'px;top:'+(rc.y-30)+'px;transform:translateX(-50%);color:'+color+';font-size:22px;font-weight:500;font-family:Share Tech Mono,monospace;pointer-events:none;text-shadow:0 0 8px '+color+',2px 2px 0 #000;white-space:nowrap;letter-spacing:2px';
   b.textContent=text;
@@ -27552,6 +27569,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0653', items:['修復bannerFX(null,...)靜默失效：所有全域提示訊息（好友系統/版本提示等）改為顯示在畫面頂部中央','修復加好友按鈕完全無反應的根本原因：所有錯誤訊息和搜尋提示都因null而被靜默丟棄'] },
   { ver:'v1.0.20260416.0054', items:['修復加好友按鈕完全無反應：加入完整錯誤訊息顯示、查詢錯誤代碼回報、Enter鍵支援','好友名單輸入框改為text模式避免iOS鍵盤問題'] },
   { ver:'v1.0.20260416.0047', items:['修復好友面板：改為立即顯示面板，背景異步更新資料，不再因Firebase等待而卡住','修復打開好友面板時BGM重播：加入_friendPanelLoading旗標抑制visibilitychange觸發'] },
   { ver:'v1.0.20260416.0035', items:['BGM開關按鈕新增重置功能：關閉後再打開，自動偵測當前場景並播放正確的背景音樂'] },
@@ -27561,7 +27579,6 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2346', items:['修復加好友按鈕無反應：加入try/catch、Firebase防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
   { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
-  { ver:'v1.0.20260415.2152', items:['好友英雄視窗關閉按鈕修復','好友英雄視窗PC版放大100%可捲動'] },
 ];
 
 
@@ -27572,8 +27589,9 @@ const GAME_CHANGELOG = [
 
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0054';
+  const CURRENT_VERSION = 'v1.0.20260416.0653';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
