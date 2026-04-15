@@ -104,6 +104,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+<meta name="apple-mobile-web-app-title" content="小英雄大對抗">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<!-- PWA 啟動畫面（防止白屏閃爍）-->
+<meta name="apple-touch-fullscreen" content="yes">
+<!-- 加入主畫面圖示（使用遊戲封面圖）-->
+<link rel="apple-touch-icon" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<link rel="apple-touch-startup-image" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
 <title>小英雄大對抗</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -3354,6 +3362,17 @@ body {
 <div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0232</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
+<!-- iOS Safari「加入主畫面」提示（僅在 iOS Safari 且非 standalone 時顯示）-->
+<button id="pwa-hint-btn"
+  onclick="playSfx('sfx-gentle',0.3);_showPwaGuide()"
+  style="display:none;position:fixed;bottom:44px;left:50%;transform:translateX(-50%);
+    z-index:9998;background:rgba(0,40,80,0.7);border:1.5px solid rgba(100,180,255,0.7);
+    color:rgba(180,220,255,0.9);border-radius:20px;padding:7px 22px;
+    font-size:15px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    white-space:nowrap;letter-spacing:0.5px;">
+  📲 加入主畫面，像 App 一樣遊玩
+</button>
+
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
   style="background:rgba(0,0,0,0.55);border:1.5px solid rgba(66,133,244,0.6);
     color:rgba(200,220,255,0.85);border-radius:20px;padding:8px 22px;
@@ -20088,6 +20107,21 @@ function advShowQuiz() {
     advOnQuizSkip();
     return;
   }
+  // ★ 題目全部出完：顯示重選視窗，確認後重新出題
+  if (q && q.__needRepick) {
+    const _savedCb = _advQuizResolveCb;
+    _advQuizResolveCb = null;
+    advShowRePickSubject(() => {
+      // 重選後：重置題庫，再次呼叫 advShowQuiz
+      _advQuizPhase = 'idle';
+      _advQuizActive = false;
+      _advQuizResolveCb = _savedCb;
+      setTimeout(() => {
+        try{ advShowQuiz(); }catch(e){ if(_savedCb) _savedCb(); }
+      }, 200);
+    });
+    return;
+  }
   // 數學題：隨機化數字避免重複感
   if(typeof advRandomizeMathQuestion === 'function') q = advRandomizeMathQuestion(q);
   _advCurrentQuestion = q;
@@ -20166,11 +20200,9 @@ function advPickQuestion() {
     _advQuizRound++;
     _advUsedQuestionIds.clear();
     // 僅在 BOSS 戰中（有 _advQuizResolveCb 且非小怪戰）才顯示重選視窗
+    // 回傳特殊旗標讓 advShowQuiz 處理（不在這裡直接呼叫，避免 null 被誤判為跳過）
     if(_advQuizResolveCb && !_advMiniBattleActive){
-      const _savedCb = _advQuizResolveCb;
-      _advQuizResolveCb = null;
-      advShowRePickSubject(_savedCb);
-      return null;
+      return { __needRepick: true };
     }
     // 小怪戰或其他情況：靜默重置，重新從題庫出題
     pool = _advSessionQuestions.length ? _advSessionQuestions : ADV_QUIZ_DB;
@@ -25075,6 +25107,79 @@ function _openInChrome() {
 }
 
 
+// ── PWA / 加入主畫面 ──
+(function _initPWA(){
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  var isStandalone = window.navigator.standalone === true
+    || window.matchMedia('(display-mode: standalone)').matches;
+  if(isStandalone){
+    document.documentElement.style.overscrollBehavior = 'none';
+    setTimeout(function(){
+      var el = document.documentElement;
+      var fn = el.requestFullscreen || el.webkitRequestFullscreen;
+      if(fn) try{ fn.call(el, {navigationUI:'hide'}); }catch(e){}
+      if(screen.orientation && screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(function(){});
+      }
+    }, 500);
+    return;
+  }
+  if(isIOS){
+    var btn = document.getElementById('pwa-hint-btn');
+    if(btn) btn.style.display = 'block';
+  }
+})();
+
+function _showPwaGuide(){
+  var existing = document.getElementById('_pwa-guide-modal');
+  if(existing){ existing.remove(); return; }
+  var modal = document.createElement('div');
+  modal.id = '_pwa-guide-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,8,0.92);'
+    + 'display:flex;align-items:flex-start;justify-content:center;'
+    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 20px;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  modal.onclick = function(e){ if(e.target === modal){ _pwaGuideClose(); } };
+  var ua = navigator.userAgent || '';
+  var isChrome = ua.indexOf('CriOS') > -1;
+  var steps = isChrome
+    ? ['<b>① 點右上角 ⋮ 選單</b>',
+       '<b>② 選擇「加入主畫面」</b>',
+       '<b>③ 輸入名稱後點「加入」</b>']
+    : ['<b>① 點畫面下方分享按鈕（↑）</b>',
+       '<b>② 向下滾動找到「加入主畫面」</b>',
+       '<b>③ 輸入名稱後點右上角「加入」</b>'];
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);'
+    + 'border:2.5px solid rgba(100,180,255,0.7);border-radius:24px;'
+    + 'padding:36px 40px;max-width:min(96vw,600px);width:100%;margin:auto;text-align:center;">'
+    + '<div style="font-size:52px;margin-bottom:12px;">📲</div>'
+    + '<div style="font-size:28px;font-weight:900;color:#88ccff;margin-bottom:8px;">加入主畫面</div>'
+    + '<div style="font-size:18px;color:#aaa;margin-bottom:24px;line-height:1.6;">'
+    + '像 App 一樣從桌面圖示啟動，<br>自動全螢幕、沒有網址列！'
+    + '</div>'
+    + '<div style="background:rgba(0,0,0,0.4);border-radius:16px;padding:20px 24px;text-align:left;margin-bottom:20px;">'
+    + steps.map(function(s){ return '<div style="font-size:20px;color:#e8e4d8;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' + s + '</div>'; }).join('')
+    + '</div>'
+    + '<div style="font-size:16px;color:#888;margin-bottom:20px;">安裝後從主畫面點圖示即可直接遊玩！</div>'
+    + '<button onclick="_pwaGuideClose()" style="padding:12px 40px;font-size:20px;font-weight:700;'
+    + 'background:rgba(100,180,255,0.2);border:1.5px solid rgba(100,180,255,0.6);'
+    + 'color:#88ccff;border-radius:12px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+    + '</div>';
+  document.body.appendChild(modal);
+  document.documentElement.style.touchAction = 'pan-y';
+  document.body.style.touchAction = 'pan-y';
+}
+
+function _pwaGuideClose(){
+  var el = document.getElementById('_pwa-guide-modal');
+  if(el){ el.remove(); }
+  document.documentElement.style.touchAction = '';
+  document.body.style.touchAction = '';
+}
+
+
 function showLoginGate() {
   // 已登入 → 直接進冒險
   if(window._gUserId) { openAdventureOverlay(); return; }
@@ -26422,4 +26527,13 @@ window._advSystemReady = true;
 </script>
 
 </body>
-</html>
+</html    + '<button onclick="_pwaGuideClose()" '
+    + 'style="padding:12px 40px;font-size:20px;font-weight:700;background:rgba(100,180,255,0.2);'
+    + 'border:1.5px solid rgba(100,180,255,0.6);color:#88ccff;border-radius:12px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+    + '</div>';
+
+  document.body.appendChild(modal);
+  document.documentElement.style.touchAction = 'pan-y';
+  document.body.style.touchAction = 'pan-y';
+}
+>
