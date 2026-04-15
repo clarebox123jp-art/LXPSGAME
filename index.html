@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2152</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2157</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -11066,6 +11066,8 @@ function doDmg(target, rawDmg, opts={}){
   }
   // ── 裝備效果：幸運吊飾 30% 死裡逃生
   if(teq && teq.onDmg && !opts.noEquip) dmg=teq.onDmg(target,dmg);
+  // ★ 減傷保底：所有減傷效果後最低傷害為1（無敵/護盾/閃避已在上方 return，不受影響）
+  if(dmg > 0) dmg = Math.max(1, dmg);
   const old=target.curHp;
   target.curHp=Math.max(0,target.curHp-dmg);
   // 統計
@@ -27372,7 +27374,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2152';
+  const CURRENT_VERSION = 'v1.0.20260415.2157';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
