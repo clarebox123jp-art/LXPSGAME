@@ -3362,7 +3362,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.1838</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.1942</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -20772,8 +20772,25 @@ function _advShowBurstTargetPicker(heroes) {
   heroes.forEach(h => {
     const btn = document.createElement('button');
     btn.className = 'adv-reward-btn';
+    btn.style.textAlign = 'left';
     const av = (typeof AVATARS!=='undefined'&&AVATARS[h.name])||'⚔';
-    btn.innerHTML = `${av} ${h.name}<br><span style="font-size:18px;color:#aaa;">HP ${h.curHp}/${h.hp}</span>`;
+    // ★ 顯示爆發技名稱與效果說明
+    const _bd = (typeof BURST_DB!=='undefined' && BURST_DB[h.name]) || null;
+    const _burstName = _bd ? _bd.n : '極限爆發';
+    const _burstDesc = _bd ? (_bd.d || _bd.fd || '') : '能量+5';
+    // 計算當前爆發等級
+    const _bLv = (h._burstLv||0);
+    const _bLvStr = _bLv > 0 ? ` <span style="color:#ffaa44;font-size:0.85em;">Lv${_bLv}</span>` : '';
+    btn.innerHTML =
+      `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">`
+      + `<span style="font-size:1.15em;">${av}</span>`
+      + `<span style="font-weight:900;font-size:1.1em;">${h.name}</span>`
+      + `<span style="color:#aaa;font-size:0.85em;margin-left:auto;">HP ${h.curHp}/${h.hp}</span>`
+      + `</div>`
+      + `<div style="background:rgba(255,150,0,0.12);border-radius:8px;padding:6px 10px;">`
+      + `<div style="color:#ffcc44;font-size:0.95em;font-weight:800;">⚡ ${_burstName}${_bLvStr}</div>`
+      + `<div style="color:#ddd;font-size:0.82em;line-height:1.5;margin-top:3px;">${_burstDesc}</div>`
+      + `</div>`;
     btn.onclick = () => {
       ov.classList.remove('show');
       _advTriggerBurstFor(h);
@@ -25393,17 +25410,7 @@ function _advMiniQuizAsk(onDone) {
 
   qOv.classList.add('show');
 
-  // ★ 首次問答教學：第一次出現時引導玩家
-  // 只在「_tutorialMiniDone 已為 true（已問過要不要教學且同意）」或
-  // 「正在進行教學流程（_tutorialActive）」時才出現
-  // 若尚未問過要不要教學（_tutorialMiniDone = false），跳過此教學
-  //（等 _checkShowTutorial 先問完再說）
-  const _shouldShowQuizTut = (_tutorialMiniDone || window._tutorialActive)
-                              && !window._miniQuizTutDone;
-  if(_shouldShowQuizTut){
-    window._miniQuizTutDone = true;
-    setTimeout(() => _advMiniQuizTutorial(), 600);
-  }
+  // ★ 問答教學引導已移除
 }
 
 
@@ -25539,37 +25546,39 @@ function _advMiniQuizSubmit(letter, isCorrect) {
   if(isCorrect){
     const coins = 5;
     window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
-    try{ playSfx('sfx-correct', 0.8); }catch(e){}
+    // ★ 答對音效：使用 boss 戰相同的 sfx-quiz-correct
+    try{ beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); }catch(e){}
+    try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.9;_csfx.play().catch(()=>{});} }catch(e){}
     bannerFX(null, '✅ 答對！獲得 ' + coins + ' 知識幣！', '#44ff88', 1200);
-    // ★ 小怪反應台詞
+    // ★ 小怪反應對白（與BOSS戰相同呈現方式：氣泡浮現在小怪卡片上）
     setTimeout(() => {
       try{
         const react = _getMiniMonsterReactLine();
         if(react){
-          bannerFX(react.hero, '😵 ' + react.line, '#ffcc88', 2200);
+          bannerFX(react.hero, '😵 ' + react.line, '#ffcc88', 2500);
           log('[' + react.name + '] ' + react.line);
         }
       }catch(e){}
-    }, 400);
-    // ★ 答對後：關閉題目 overlay，顯示答題獎勵
+    }, 300);
+    // ★ 答對後：等反應對白顯示後關閉題目視窗，顯示可保留的答題獎勵
     setTimeout(() => {
       if(qOv) qOv.classList.remove('show');
       const timerEl = document.getElementById('adv-quiz-timer');
       if(timerEl) timerEl.style.display = '';
-      // 儲存 onDone 回呼，等玩家選完獎勵後繼續
       const _onDoneAfterReward = window._miniQuizOnDone;
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
-      // 顯示獎勵選擇（advShowReward 使用 adv-reward-overlay）
       try{
         _advMiniShowReward(_onDoneAfterReward);
       }catch(e){
         if(_onDoneAfterReward) _onDoneAfterReward();
       }
-    }, 1000);
+    }, 1200);
   } else {
-    try{ playSfx('sfx-wrong', 0.6); }catch(e){}
+    // ★ 答錯音效：使用 boss 戰相同的 sfx-quiz-wrong
+    try{ beep(200,'sawtooth',0.1,0.15); }catch(e){}
+    try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
     bannerFX(null, '❌ 答錯了！', '#ff6666', 1200);
     setTimeout(() => {
       if(qOv) qOv.classList.remove('show');
@@ -25997,8 +26006,17 @@ function _advMiniShowReward(onDone) {
 
   // 更新標題
   if(titleEl) titleEl.textContent = '🎉 答對了！選擇獎勵';
-  if(subEl)   subEl.textContent   = '選一項即時發動效果！';
-  if(keepBtn) keepBtn.style.display = 'none'; // 小怪戰不顯示「保留」按鈕
+  if(subEl)   subEl.textContent   = '選一項即時發動，或保留至下回合！';
+  // ★ 小怪戰也顯示「保留」按鈕，讓玩家可保留至下回合
+  if(keepBtn){
+    keepBtn.style.display = '';
+    keepBtn.onclick = () => {
+      _advPendingReward = pool[0] || null;
+      rewardOv.classList.remove('show');
+      bannerFX(null, '📦 獎勵保留至下回合！', '#ffcc44', 1400);
+      if(onDone) onDone();
+    };
+  }
 
   choicesDiv.innerHTML = '';
   pool.forEach(r => {
@@ -26008,7 +26026,7 @@ function _advMiniShowReward(onDone) {
       '<br><span style="font-size:36px;color:#ffffff;font-weight:500;">' + r.desc + '</span>';
     btn.onclick = () => {
       rewardOv.classList.remove('show');
-      if(keepBtn) keepBtn.style.display = ''; // 恢復 keep 按鈕
+      if(keepBtn) keepBtn.style.display = 'none';
       // 套用獎勵（複用 advApplyReward 邏輯，但小怪戰結束後繼續回合）
       _advMiniApplyReward(r.id, onDone);
     };
@@ -26598,7 +26616,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.1838';
+  const CURRENT_VERSION = 'v1.0.20260415.1942';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
