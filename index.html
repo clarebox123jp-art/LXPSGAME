@@ -3192,7 +3192,7 @@ body {
   <!-- ★ 冒險模式戰鬥教學按鈕（左下角，直式） -->
   <!-- ★ 當機回溯按鈕（左下角，教學按鈕上方） -->
   <button id="adv-rollback-btn" onclick="playSfx('sfx-sel',0.6);_showRollbackMenu()"
-    style="display:none;position:absolute;left:8px;bottom:148px;z-index:300;
+    style="display:none;position:fixed;left:8px;bottom:148px;z-index:99999;
       writing-mode:vertical-rl;text-orientation:mixed;
       padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
       background:rgba(40,10,10,0.88);border:1.5px solid rgba(255,140,50,0.7);
@@ -6094,6 +6094,8 @@ function tickStatus(h){
   // ★ strongTaunt 到期時清除 _burstTauntTarget
   const _hadStrongTaunt = hasStatus(h, 'strongTaunt');
   h.status=h.status.map(s=>({...s,dur:s.dur-1})).filter(s=>s.dur>0);
+  // ★ _burstSellDouble 狀態到期時清除旗標
+  if(!h.status.some(s=>s.type==='_burstSellDouble')) h._burstSellDouble = false;
   h.buffs=h.buffs.map(b=>({...b,dur:b.dur-1})).filter(b=>b.dur>0);
   if(_hadStrongTaunt && !hasStatus(h, 'strongTaunt')){ h._burstTauntTarget = null; }
   if(_exp.length>0&&h.curHp>0&&!hasBuff(h,'ctrlImmune')){addBuff(h,'ctrlImmune',1);bannerFX(h,'暫時免疫控制','#88ffcc',800);log(`[${h.name}] 控制解除，獲得1回合免疫控制！`);}
@@ -9612,6 +9614,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     addBuff(t,'protectBuff',2);
     bannerFX(t,'守恆！','#55ffcc',900);
   });
+  // ★ 真理之門：本回合賣卡上限提升為2次
+  h._burstSellDouble = true;
+  h.status = h.status.filter(s=>s.type!=='_burstSellDouble');
+  h.status.push({type:'_burstSellDouble', dur:1});
   log(`[${h.name}] 真理之門！友方獲得守恆！使用物品後100%保留，持續2回合！`);
   updateUI(); renderItems();
 
@@ -14040,7 +14046,7 @@ function clickItem(it){
   document.getElementById('item-ops').style.display='flex';
   // Visually disable sell btn if hero already sold this battle
   const _sb=document.querySelector('#item-ops .iop-btn[onclick*="doSell()"]');
-  if(_sb){ const _hk3=a?a.side+'-'+a.pos:''; const _s3=G.sellUsed&&G.sellUsed.has(_hk3); _sb.disabled=_s3; _sb.style.opacity=_s3?'0.35':'1'; }
+  if(_sb){ const _sellLimit2 = a&&a._burstSellDouble ? 2 : 1; const _s3=(a&&((a._sellThisTurn||0)>=_sellLimit2)); _sb.disabled=_s3; _sb.style.opacity=_s3?'0.35':'1'; }
   // 裝備卡：顯示「裝備」和「賣出」；能量寶石：只顯示「賣出」；其他：顯示「使用」
   if(it.type==='equip'){
     document.getElementById('iop-use-btn').style.display='none';
@@ -14333,16 +14339,18 @@ function doSell(){
   if(a && hasStatus(a,'nosell')){ log('物品已被查封，無法販賣！'); return; }
   if(a && fieldHas('noshop')){ log('神秘商店暫停營業，無法販賣！'); return; }
   if(a){
-    const _hk=a.side+'-'+a.pos;
-    if(G.sellUsed && G.sellUsed.has(_hk)){
-      log(`[${a.name}] 本場已賣出過卡片，無法再次販賣！`);
+    // ★ 每回合每英雄最多賣1次（煉金師「真理之門」爆發期間可賣2次）
+    const _sellLimit = a._burstSellDouble ? 2 : 1;
+    const _sellCount = a._sellThisTurn || 0;
+    if(_sellCount >= _sellLimit){
+      log(`[${a.name}] 本回合已賣出${_sellCount}張，無法再賣！`);
       document.getElementById('item-ops').style.display='none';
       G.selItem=null; renderItems(); return;
     }
   }
   G.energy.p1=Math.min(10,G.energy.p1+it.sell);
   log(`賣出 [${it.n}]：能量+${it.sell}`); sndEnergy();
-  if(a && G.sellUsed) G.sellUsed.add(a.side+'-'+a.pos);
+  if(a){ a._sellThisTurn = (a._sellThisTurn || 0) + 1; }
   removeItem(it); G.selItem=null;
   document.getElementById('item-ops').style.display='none';
   renderItems(); updateUI();
@@ -14920,6 +14928,8 @@ function startTurn(){
     if(_ipl) _ipl.style.display='';
     document.getElementById('action-panel').style.display='block';
     document.getElementById('actor-info').innerHTML=`<div style="font-size:42px;font-weight:700;line-height:1.4;animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;letter-spacing:1px;">✨ 輪到你的 <span style="color:#ffe066;text-shadow:0 0 16px rgba(255,220,0,0.9)">${next.name}</span> 了！<br><span style="font-size:30px;color:#aaaaaa;font-weight:500">選擇下面一種行動</span></div>`;
+    // ★ 每次輪到自己行動時，重置本回合賣卡次數
+    if(next && next.side === 'p1') next._sellThisTurn = 0;
     renderItems();
     updateUI();
     startTurnTimer(next);
