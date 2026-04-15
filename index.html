@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2302</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2346</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3517,21 +3517,20 @@ body {
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
     <!-- ★ 好友系統：代表英雄顯示 -->
-    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(300px,30vw,520px);z-index:12;
-      display:none;align-items:center;gap:clamp(6px,0.8vw,12px);cursor:pointer;
-      padding:clamp(8px,1vw,14px) clamp(14px,1.5vw,26px);
+    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(280px,26vw,460px);z-index:12;
+      display:none;align-items:center;gap:clamp(8px,1vw,14px);cursor:pointer;
+      padding:clamp(10px,1.2vw,18px) clamp(18px,2vw,34px);
       background:rgba(10,15,35,0.88);border:2px solid rgba(255,200,80,0.6);border-radius:40px;
-      box-shadow:0 2px 12px rgba(255,180,0,0.2);transition:border-color 0.2s;"
+      box-shadow:0 2px 16px rgba(255,180,0,0.25);transition:border-color 0.2s,box-shadow 0.2s;"
       onclick="playSfx('sfx-gentle',0.5);openSetRepHeroModal()">
-      <div id="adv-rep-hero-img-wrap" style="width:clamp(36px,4vw,56px);height:clamp(36px,4vw,56px);border-radius:50%;overflow:hidden;
-        border:2px solid rgba(255,200,80,0.8);background:rgba(20,20,30,0.9);flex-shrink:0;
-        display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.5vw,32px);">👤</div>
+      <div id="adv-rep-hero-img-wrap" style="width:clamp(52px,5.5vw,80px);height:clamp(52px,5.5vw,80px);border-radius:50%;overflow:hidden;
+        border:2.5px solid rgba(255,200,80,0.9);background:rgba(20,20,30,0.9);flex-shrink:0;
+        display:flex;align-items:center;justify-content:center;font-size:clamp(28px,3vw,44px);">👤</div>
       <div style="display:flex;flex-direction:column;line-height:1.3;">
-        <span style="font-size:clamp(15px,1.8vw,26px);color:#ffcc44;font-weight:800;" id="adv-rep-hero-name">設定代表英雄</span>
-        <span style="font-size:clamp(11px,1.2vw,18px);color:#aaa;" id="adv-rep-hero-lv"></span>
+        <span style="font-size:clamp(20px,2.2vw,38px);color:#ffcc44;font-weight:900;" id="adv-rep-hero-name">設定代表英雄</span>
+        <span style="font-size:clamp(13px,1.4vw,22px);color:#aaa;" id="adv-rep-hero-lv"></span>
       </div>
-      <span style="font-size:clamp(14px,1.5vw,22px);color:#ffcc44;">⭐</span>
-    </div>
+      <span style="font-size:clamp(18px,2vw,30px);color:#ffcc44;">⭐</span></div>
     <!-- ★ 冒險模式帳號名稱顯示 -->
     <div id="adv-username-bar" style="display:none;position:absolute;top:clamp(80px,9vw,130px);left:36px;z-index:11;
       align-items:center;gap:clamp(6px,1vw,10px);">
@@ -25751,12 +25750,12 @@ function _renderFriendPanel() {
       const heroImg  = fd && fd.representativeHero ? fd.representativeHero.img   : '';
       const heroAv   = heroName !== '（未設代表英雄）' && typeof AVATARS !== 'undefined' ? (AVATARS[heroName] || '⚔') : '👤';
       friendRows +=
-        `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;`
+        `<div id="_friend-row-${i}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;`
         + `background:rgba(20,15,40,0.85);border:1.5px solid rgba(180,120,255,0.3);border-radius:14px;">`
-        + `<div style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,150,200,0.6);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(10,10,20,0.9);">`
+        + `<div class="_friend-hero-img" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,150,200,0.6);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(10,10,20,0.9);">`
         + (heroImg ? `<img src="${heroImg}" style="width:100%;height:100%;object-fit:cover;">` : heroAv)
         + `</div>`
-        + `<div style="flex:1;min-width:0;">`
+        + `<div class="_friend-hero-info" style="flex:1;min-width:0;">`
         + `<div style="font-size:16px;font-weight:800;color:#e8d8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name || f.email}</div>`
         + `<div style="font-size:13px;color:#aa88ff;">${heroName}${heroLv ? ' Lv.'+heroLv : ''}</div>`
         + `</div>`
@@ -25797,13 +25796,28 @@ function _renderFriendPanel() {
 
   document.body.appendChild(panel);
 
-  // 非同步讀取好友英雄資料
+  // 非同步讀取好友英雄資料（只更新個別列，不重建整個面板）
   _friendList.forEach(async (f, i) => {
     if (!_friendHeroData[f.uid]) {
       const data = await window._fbLoadFriend(f.uid);
       if (data) {
         _friendHeroData[f.uid] = data;
-        _renderFriendPanel(); // 更新顯示
+        // 只更新該好友的英雄顯示，不重建整個面板
+        const rowEl = document.getElementById('_friend-row-' + i);
+        if (rowEl) {
+          const heroName = data.representativeHero ? data.representativeHero.name : '（未設代表英雄）';
+          const heroLv   = data.representativeHero ? data.representativeHero.level : '';
+          const heroImg  = data.representativeHero ? data.representativeHero.img   : '';
+          const heroAv   = heroName !== '（未設代表英雄）' && typeof AVATARS !== 'undefined' ? (AVATARS[heroName] || '⚔') : '👤';
+          const imgEl  = rowEl.querySelector('._friend-hero-img');
+          const infoEl = rowEl.querySelector('._friend-hero-info');
+          if (imgEl) imgEl.innerHTML = heroImg
+            ? `<img src="${heroImg}" style="width:100%;height:100%;object-fit:cover;">`
+            : heroAv;
+          if (infoEl) infoEl.innerHTML =
+            `<div style="font-size:16px;font-weight:800;color:#e8d8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name || f.email}</div>`
+            + `<div style="font-size:13px;color:#aa88ff;">${heroName}${heroLv ? ' Lv.'+heroLv : ''}</div>`;
+        }
       }
     }
   });
@@ -25825,18 +25839,33 @@ async function _addFriendByEmail() {
     bannerFX(null, '已是好友了！', '#ffcc44', 1500);
     return;
   }
-  bannerFX(null, '🔍 搜尋中...', '#88ccff', 1000);
-  const found = await window._fbFindByEmail(email);
-  if (!found) {
-    bannerFX(null, '找不到此帳號，請確認對方已登入過遊戲', '#ff6666', 2500);
+  // ★ 防呆：確認 Firebase 已初始化
+  if (!window._fbFindByEmail || !window._gUserId) {
+    bannerFX(null, '請先登入再加好友', '#ff6666', 2000);
     return;
   }
-  const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
-  await window._fbAddFriend(window._gUserId, friendInfo);
-  _friendList.push(friendInfo);
-  bannerFX(null, `✅ 已加 ${friendInfo.name} 為好友！`, '#44ff88', 1800);
-  playSfx('sfx-confirm', 0.6);
-  _renderFriendPanel();
+  // ★ 鎖定按鈕避免重複點擊
+  const btn = document.querySelector('#_friend-panel button[onclick="_addFriendByEmail()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '搜尋中...'; }
+  try {
+    bannerFX(null, '🔍 搜尋中...', '#88ccff', 1500);
+    const found = await window._fbFindByEmail(email);
+    if (!found) {
+      bannerFX(null, '找不到此帳號，請確認對方已登入過遊戲', '#ff6666', 2500);
+      return;
+    }
+    const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
+    await window._fbAddFriend(window._gUserId, friendInfo);
+    _friendList.push(friendInfo);
+    bannerFX(null, `✅ 已加 ${friendInfo.name} 為好友！`, '#44ff88', 1800);
+    playSfx('sfx-confirm', 0.6);
+    _renderFriendPanel();
+  } catch(e) {
+    console.error('[加好友]', e);
+    bannerFX(null, '加好友失敗，請稍後再試（' + (e.message||'未知錯誤') + '）', '#ff6666', 3000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '+ 加好友'; }
+  }
 }
 
 async function _deleteFriend(idx) {
@@ -27377,6 +27406,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260415.2346', items:['修復加好友按鈕無反應：加入try/catch、Firebase防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
   { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
   { ver:'v1.0.20260415.2152', items:['好友英雄視窗關閉按鈕修復','好友英雄視窗PC版放大100%可捲動'] },
@@ -27386,12 +27416,12 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2131', items:['暱稱系統：可設定暱稱，儲存至Firebase及本地，好友看到暱稱'] },
   { ver:'v1.0.20260415.2108', items:['好友系統功能1-4上線：代表英雄、好友名單、選角頁邀請、好友英雄完整參戰'] },
   { ver:'v1.0.20260415.2042', items:['圖片讀取加速：DNS預連線、關鍵圖片預載、背景預載所有角色圖'] },
-  { ver:'v1.0.20260415.2035', items:['全面代碼審查：修復Firebase切換帳號alert、移除debug alert'] },
 ];
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2302';
+  const CURRENT_VERSION = 'v1.0.20260415.2346';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
