@@ -5322,7 +5322,7 @@ const HERO_DB = {
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
-  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP。目標是BOSS或小怪時，改為給予當前HP20%的傷害，並獲得禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合'}},
+  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合（每級+3%）',fd:'使每位對手有70%機率無法使用技能1回合。技能等級每提升1級，封印成功率增加3%（最高100%）'}},
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中200%傷害，無法迴避',fd:'用特技的200%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手受到特技70%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
@@ -5751,7 +5751,7 @@ const BURST_DB = {
   '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
   '雷法師':   {n:'怒雷狂襲',    d:'彈跳傷害4次並強力麻痺（無法免疫）',fd:'用特技的150%傷害對手（彈跳）共4次，有75%機率使目標陷入「強力麻痺」不能動1回合。強力麻痺無法被免疫。'},
   '光法師':   {n:'審判光束',    d:'傷害全體並治癒全隊，附加強力失明',fd:'用特技的100%傷害全體對手，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時用特技的100%恢復全體隊友。'},
-  '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋200%集中傷害，附加強力封印',fd:'用特技的120%傷害全體對手，再對1名目標造成特技200%傷害。每個受傷目標有75%機率陷入「強力封印」無法使用技能1回合。'},
+  '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋200%集中傷害，75%封印（每級+5%）',fd:'用特技的120%傷害全體對手，再對1名目標造成特技200%傷害。每個受傷目標有75%機率陷入「強力封印」無法使用技能1回合。爆發等級每提升1級，封印成功率增加5%（最高100%）。'},
   '神射手':   {n:'流星箭雨',    d:'必中傷害全體，附加強力禁動',fd:'用特技的120%傷害全體對手，無法迴避。受傷目標有75%機率陷入「強力陷阱」無法行動1回合。'},
   '神偷':     {n:'俠盜飛梭',    d:'傷害1名對手並奪取能量/寵物/物品',fd:'用特技的150%攻擊1名對手並奪取3能量及其寵物（可選擇給誰攜帶），再隨機奪取對手1張物品卡。'},
   '刺客':     {n:'死神之鐮',    d:'400%傷害並隱形，強力出血（無法免疫）',fd:'用特技的400%傷害1名對手後自己隱形1回合，並以特技的120%恢復自己HP。目標陷入「強力出血」2回合，每回合-15%HP，無法被免疫。'},
@@ -9504,9 +9504,11 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     allies.forEach(t=>doHeal(t,spv,{actor:h,isHeal:true}));
   }
   if(name==='暗法師'){
+    // ★ 毀滅禁咒：每爆發等級+3%封印成功率，基礎75%
+    const _curseSealRate = Math.min(1.0, 0.75 + _burstLv * 0.05);
     enemies.forEach(t=>{
       doDmg(t,Math.floor(spv*1.2*_burstMult),{actor:h,isSkill:true,isAoe:true});
-      if(t.curHp>0 && Math.random()<0.75){ addStatus(t,'seal',1); bannerFX(t,'強力封印！','#cc44ff',900); }
+      if(t.curHp>0 && Math.random()<_curseSealRate){ addStatus(t,'seal',1); bannerFX(t,'強力封印！','#cc44ff',900); }
     });
     // 選1名目標再打spv*200%
     if(enemies.length){
@@ -12399,27 +12401,39 @@ function execSkill(a, sk, cost, stype){
   // ====== 暗法師 ======
   else if(n==='死亡宣告'){
     setPending('enemy',t=>{
-      // ★ 目標是BOSS或小怪菁英時，改為20%HP傷害+禁療2回合
-      const _isBossTarget = typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t.name);
-      if(_isBossTarget){
-        const _bossDmg = Math.max(1, Math.floor(t.curHp * 0.20));
-        log(`[${a.name}] 死亡宣告 → BOSS模式！[${t.name}] 受到當前HP20%傷害（${_bossDmg}），禁止治療2回合！`);
-        playSkillFX('死亡宣告',a,[t]);
-        doDmg(t, _bossDmg, {isSkill:true, actor:a, piercing:true});
-        addStatus(t,'noheal_curse',2);
-        endAction(a,cost);
-      } else {
+      // 路邊小怪（MINI_MONSTERS）或鬥技場對手 → 2回合後強制剩1HP
+      // 菁英小怪（九尾空貓怪/綠竹筍小妖/茶葉精靈）或BOSS陣容（非小怪戰）→ 20%HP傷害+禁療2回合
+      const _miniMobs = typeof MINI_MONSTERS !== 'undefined' ? MINI_MONSTERS : [];
+      const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈']; // 菁英小怪
+      const _isPathMob  = _miniMobs.includes(t.name);              // 路邊小怪
+      const _isEliteOrBoss = _eliteNames.includes(t.name)          // 菁英小怪
+        || (!_isPathMob && typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t.name) && !_miniMobs.includes(t.name))
+        || (_adventureMode && !_advMiniBattleActive);               // 冒險BOSS戰（非小怪戰）
+      // 鬥技場永遠是「剩1HP」模式
+      const _isArena = !_adventureMode;
+      if(_isPathMob || _isArena){
+        // 路邊小怪 / 鬥技場對手：2回合後強制剩1HP
         log(`[${a.name}] 死亡宣告 [${t.name}]！2回合後強制剩1HP！`);
         playSkillFX('死亡宣告',a,[t]);
         addStatus(t,'deathmark',2);
+        endAction(a,cost);
+      } else {
+        // BOSS / 菁英小怪：減少當前HP 20% + 禁止治療2回合
+        const _bossDmg = Math.max(1, Math.floor(t.curHp * 0.20));
+        log(`[${a.name}] 死亡宣告 → 強敵模式！[${t.name}] 受到當前HP20%傷害（${_bossDmg}），禁止治療2回合！`);
+        playSkillFX('死亡宣告',a,[t]);
+        doDmg(t, _bossDmg, {isSkill:true, actor:a, piercing:true});
+        addStatus(t,'noheal_curse',2);
         endAction(a,cost);
       }
     });
   } else if(n==='黑暗封印'){
     const sealAllFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
-    log(`[${a.name}] 黑暗封印！每位對手70%機率封印技能1回合！`);
+    // ★ 每級+3%成功率，基礎70%
+    const _sealRate = Math.min(1.0, 0.70 + _activeSkLv * 0.03);
+    log(`[${a.name}] 黑暗封印！每位對手${Math.round(_sealRate*100)}%機率封印技能1回合！`);
     playSkillFX('黑暗封印',a,sealAllFoes);
-    sealAllFoes.forEach(h=>{ if(Math.random()<0.7) addStatus(h,'seal',1); });
+    sealAllFoes.forEach(h=>{ if(Math.random()<_sealRate) addStatus(h,'seal',1); });
     endAction(a,cost);
   }
   // ====== 神射手 ======
