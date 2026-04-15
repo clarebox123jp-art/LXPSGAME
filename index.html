@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2346</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0001</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -27406,6 +27406,8 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0001', items:['修復加好友按鈕無反應（加入try/catch、Firebase初始化防呆、錯誤訊息顯示）','修復好友面板和代表英雄視窗關閉按鈕失效'] },
+  { ver:'v1.0.20260415.2352', items:['修復加好友按鈕無反應：加入try/catch錯誤處理、Firebase初始化防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2346', items:['修復加好友按鈕無反應：加入try/catch、Firebase防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
   { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
@@ -27414,14 +27416,14 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2143', items:['暱稱改為詞庫組合（46形容詞×65名詞），加入隨機功能'] },
   { ver:'v1.0.20260415.2135', items:['暱稱加入兒童保護：改為指定詞庫組合，防止不雅詞'] },
   { ver:'v1.0.20260415.2131', items:['暱稱系統：可設定暱稱，儲存至Firebase及本地，好友看到暱稱'] },
-  { ver:'v1.0.20260415.2108', items:['好友系統功能1-4上線：代表英雄、好友名單、選角頁邀請、好友英雄完整參戰'] },
-  { ver:'v1.0.20260415.2042', items:['圖片讀取加速：DNS預連線、關鍵圖片預載、背景預載所有角色圖'] },
 ];
 
 
 
+
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2346';
+  const CURRENT_VERSION = 'v1.0.20260416.0001';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
