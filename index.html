@@ -3351,7 +3351,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0203</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.0232</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -3374,7 +3374,9 @@ body {
   </div>
   <!-- ★ 登入選擇彈窗 -->
   <div id="login-gate-modal" style="display:none;position:fixed;inset:0;z-index:9999;
-    background:rgba(0,0,8,0.88);align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+    background:rgba(0,0,8,0.88);align-items:flex-start;justify-content:center;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 16px;
+    backdrop-filter:blur(8px);">
     <div style="background:linear-gradient(160deg,#12172a,#080c1a);border:2.5px solid rgba(212,168,67,0.5);
       border-radius:22px;padding:36px 40px;max-width:540px;width:92%;text-align:center;
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;box-shadow:0 0 80px rgba(0,0,0,0.9);">
@@ -17279,6 +17281,13 @@ function ctrlFullscreen(){
     // ★ 退出全螢幕後自動重取（平板不小心滑到邊界觸發退出時自動恢復）
     const _isNowFs = document.fullscreenElement||document.webkitFullscreenElement;
     if(!_isNowFs && document.visibilityState==='visible'){
+      // ★ 全螢幕退出時，立即恢復 BGM（Safari 退出全螢幕不會停音，但以防萬一）
+      try{
+        if(typeof _curBgm !== 'undefined' && _curBgm){
+          const _bgmEl2 = document.getElementById(_curBgm);
+          if(_bgmEl2 && _bgmEl2.paused && !_bgmMuted) _bgmEl2.play().catch(()=>{});
+        }
+      }catch(e){}
       // 延遲 1.5 秒後重取，避免使用者主動退出時也強制恢復
       if(window._fsAutoRestoreTimer) clearTimeout(window._fsAutoRestoreTimer);
       window._fsAutoRestoreTimer = setTimeout(function(){
@@ -18194,23 +18203,78 @@ window.addEventListener('pagehide', function(e){
   var _scrollableIds = [
     'hero-page-grid', 'monster-page-content', 'hero-detail-box',
     'hero-pick-arena-inner', 'skill-replace-overlay', 'backpack-main',
-    'shop-main', 'adv-left-panel', 'adv-right-panel'
+    'shop-main', 'adv-left-panel', 'adv-right-panel',
+    // ★ 以下是彈出視窗（需要上下捲動）
+    'game-info-modal', 'preset-team-panel', 'adv-crash-recovery-box',
+    'rollback-reinforce-ov', 'bag-hero-select', 'upgrade-confirm-box',
+    'adv-continue-overlay', 'adv-mini-result', 'adv-continue-box',
+    '_tut-prompt', 'invest-confirm-box', 'burst-upgrade-confirm-box',
+    'adv-treasure-confirm', 'adv-skip-select-box', '_rollback-menu',
+    'bag-skill-select', '_ts_popup', 'login-gate-modal', 'passive-prompt'
   ];
+  // ★ 追蹤觸碰起點（用於判斷邊緣手勢）
+  var _touchStartY = 0, _touchStartX = 0;
+  document.addEventListener('touchstart', function(e){
+    if(e.touches.length > 0){
+      _touchStartY = e.touches[0].clientY;
+      _touchStartX = e.touches[0].clientX;
+    }
+    // ★ 攔截底部 Home Bar 區域（底部 50px）的觸碰，防止 iOS 上滑手勢
+    if(e.touches.length > 0){
+      var _fromBottom = window.innerHeight - e.touches[0].clientY;
+      var _fromTop    = e.touches[0].clientY;
+      if(_fromBottom < 50 || _fromTop < 20){
+        // 在邊緣區域，阻止預設行為（避免觸發 Safari UI）
+        // 但只在非可捲動容器內才阻止
+        var inScroll = _scrollableIds.some(function(id){ return e.target.closest('#'+id); });
+        if(!inScroll) e.preventDefault();
+      }
+    }
+  }, { passive: false });
+
   document.addEventListener('touchmove', function(e){
-    // ★ 完全阻止 body 層級的 touchmove（防止 iOS 邊界滑動退出全螢幕）
-    // 但保留 #gc 內可滾動容器的原生滾動
+    // ★ 若觸碰在任何可捲動容器內（含彈出視窗），放行
     var inScrollable = _scrollableIds.some(function(id){
       return e.target.closest('#'+id);
     });
-    if(inScrollable) return; // 放行，讓瀏覽器處理圖鑑等容器滾動
+    if(inScrollable) return;
+
+    // ★ 計算滑動方向：若是往上滑（可能觸發 Safari 網址列），阻止
+    // 無論方向都阻止，確保遊戲不受干擾
     e.preventDefault();
   }, { passive: false });
+
   // ★ 額外攔截：防止 iOS 橡皮筋捲動（overscroll bounce）退出全螢幕
   document.body.addEventListener('touchmove', function(e){
     if(e.target === document.body || e.target === document.documentElement){
       e.preventDefault();
     }
   }, { passive: false });
+
+  // ★ visualViewport resize = Safari 網址列出現 → 立即重取全螢幕
+  if(window.visualViewport){
+    var _lastViewportH = window.visualViewport.height;
+    window.visualViewport.addEventListener('resize', function(){
+      var newH = window.visualViewport.height;
+      // 高度縮小超過 50px = Safari UI 出現了
+      if(_lastViewportH - newH > 50){
+        // 嘗試重取全螢幕
+        setTimeout(function(){
+          var el = document.documentElement;
+          var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+          if(fn && !(document.fullscreenElement || document.webkitFullscreenElement)){
+            try{ fn.call(el, {navigationUI:'hide'}); }catch(e2){}
+          }
+          if(screen.orientation && screen.orientation.lock){
+            screen.orientation.lock('landscape').catch(function(){});
+          }
+          // 重新縮放遊戲畫面
+          if(typeof scaleToViewport === 'function') scaleToViewport();
+        }, 200);
+      }
+      _lastViewportH = newH;
+    });
+  }
   // Prevent long-press context menu on game canvas
   document.addEventListener('contextmenu', function(e){
     if(e.target.closest('#gc')) e.preventDefault();
@@ -18475,17 +18539,31 @@ function _advCheckCrashRecovery(){
     const box = document.createElement('div');
     box.id = 'adv-crash-recovery-box';
     box.style.cssText = [
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9900;',
+      // ★ 改用全螢幕可滾動容器架構，確保手機也能看到底部按鈕
+      'position:fixed;inset:0;z-index:9900;',
+      'background:rgba(0,0,8,0.92);',
+      'display:flex;align-items:flex-start;justify-content:center;',
+      'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;',
+      'padding:clamp(16px,4vw,40px) clamp(12px,3vw,24px);',
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+    ].join('');
+    // ★ iPad/手機：允許 pan-y 捲動
+    document.documentElement.style.touchAction = 'pan-y';
+    document.body.style.touchAction = 'pan-y';
+    // 內層卡片樣式（包在 box 外再加一層）
+    const _innerCard = document.createElement('div');
+    _innerCard.style.cssText = [
       'background:linear-gradient(160deg,rgba(10,12,28,0.99),rgba(5,6,16,0.99));',
-      'border:2.5px solid rgba(255,180,0,0.8);border-radius:20px;padding:clamp(16px,3vw,32px) clamp(18px,4vw,40px);',
-      'width:min(96vw,560px);overflow-y:auto;max-height:90vh;',
+      'border:2.5px solid rgba(255,180,0,0.8);border-radius:20px;',
+      'padding:clamp(16px,3vw,32px) clamp(18px,4vw,40px);',
+      'width:min(96vw,560px);',
       'box-shadow:0 0 60px rgba(255,150,0,0.35);',
-      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;'
+      'text-align:center;margin:auto;',
     ].join('');
     // ★ PC 版放大 100%
     if(window.innerWidth > 1180){
-      box.style.width = 'min(96vw,1120px)';
-      box.style.fontSize = '200%';
+      _innerCard.style.width = 'min(96vw,1120px)';
+      _innerCard.style.fontSize = '200%';
     }
 
     const stageLabels = { maokong:'貓空冒險 第一關' };
@@ -18495,7 +18573,7 @@ function _advCheckCrashRecovery(){
     const hasBattle = !!(snap.battleState && snap.battleState.p1 && snap.battleState.p1.length);
     const roundInfo = hasBattle ? '第 '+snap.round+' 回合（可完整還原戰鬥狀態）' : '設定已記錄，需重新出戰';
 
-    box.innerHTML =
+    _innerCard.innerHTML =
       '<div style="font-size:44px;margin-bottom:10px;">⚠️</div>'+
       '<div style="font-size:28px;font-weight:900;color:#ffcc44;margin-bottom:8px;">偵測到未完成的冒險</div>'+
       '<div style="font-size:20px;color:#aaa;margin-bottom:18px;">'+_agoTxt+'，遊戲在 BOSS 戰中意外中斷</div>'+
@@ -18517,14 +18595,19 @@ function _advCheckCrashRecovery(){
           '✕ 放棄</button>'+
       '</div>';
 
+    box.appendChild(_innerCard);
     document.body.appendChild(box);
 
     document.getElementById('_crash_resume_btn').onclick = function(){
       box.remove();
+      document.documentElement.style.touchAction = '';
+      document.body.style.touchAction = '';
       _advRestoreSnapshot(snap);
     };
     document.getElementById('_crash_discard_btn').onclick = function(){
       box.remove();
+      document.documentElement.style.touchAction = '';
+      document.body.style.touchAction = '';
       localStorage.removeItem('adv_crash_snapshot');
       localStorage.removeItem('adv_battle_snap');
     };
@@ -19698,7 +19781,7 @@ function advSkipCutscene() {
     'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
     'background:linear-gradient(135deg,rgba(10,8,30,0.98),rgba(5,4,18,0.99));',
     'border:2.5px solid rgba(120,90,255,0.8);border-radius:20px;padding:28px 36px;',
-    'z-index:9300;width:min(96vw,600px);',
+    'z-index:9300;width:min(96vw,600px);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
     'box-shadow:0 0 50px rgba(100,60,255,0.4);'
   ].join('');
@@ -23672,7 +23755,7 @@ function _backpackOpenHeroSelect(title, subtitle, callback, onlyUnlocked){
   ov.id='bag-hero-select';
   ov.style.cssText='position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,0.88);'+
     'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;'+
-    'padding:24px;overflow-y:auto;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+    'padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
 
   const box = document.createElement('div');
   box.style.cssText='background:linear-gradient(160deg,#0a0d1a,#060810);border:2.5px solid rgba(100,150,255,0.6);'+
@@ -23709,7 +23792,7 @@ function _backpackOpenSkillSelect(heroName, callback){
   const ov = document.createElement('div');
   ov.id='bag-skill-select';
   ov.style.cssText='position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,0.88);'+
-    'display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+    'display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 0;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
   const box=document.createElement('div');
   box.style.cssText='background:linear-gradient(160deg,#0a0d1a,#060810);border:2.5px solid rgba(255,200,50,0.6);'+
     'border-radius:20px;padding:28px 40px;max-width:600px;width:90%;text-align:center;';
