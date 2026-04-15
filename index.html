@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0035</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0047</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -17070,6 +17070,8 @@ document.addEventListener('visibilitychange', function(){
     });
   } else if(!document.hidden){
     // 回到前台：恢復之前播放的 audio
+    // ★ 若好友面板正在載入資料（async Firebase），不重複播 BGM
+    if(window._friendPanelLoading) return;
     document.querySelectorAll('audio').forEach(function(el){
       if(el._wasPlayingBefore){ el.play().catch(function(){}); el._wasPlayingBefore=false; }
     });
@@ -25816,21 +25818,38 @@ async function _selectRepHero(name) {
 
 // ── 好友名單面板 ──
 async function openFriendPanel() {
+  // ★ 切換：若已開啟則關閉
   const existing = document.getElementById('_friend-panel');
   if (existing) { existing.remove(); return; }
 
+  // ★ 登入檢查
   if (!window._gUserId) {
     bannerFX(null, '請先登入才能使用好友功能！', '#ff6666', 2000);
     return;
   }
 
-  // 讀取好友清單（從 Firebase）
-  try {
-    const data = await window._fbLoad(window._gUserId);
-    _friendList = (data && data.friends) || [];
-  } catch(e) { _friendList = []; }
-
+  // ★ 立即顯示面板（先用現有 _friendList，不等 Firebase）
   _renderFriendPanel();
+
+  // ★ 背景更新：從 Firebase 重新讀取最新資料
+  window._friendPanelLoading = true;
+  try {
+    if (!window._fbLoad) { window._friendPanelLoading = false; return; }
+    const data = await window._fbLoad(window._gUserId);
+    if (data) {
+      const newList = data.friends || [];
+      // 只有資料有變化才重新渲染
+      if (JSON.stringify(newList) !== JSON.stringify(_friendList)) {
+        _friendList = newList;
+        const p = document.getElementById('_friend-panel');
+        if (p) _renderFriendPanel(); // 面板仍開著才重渲
+      }
+    }
+  } catch(e) {
+    console.warn('[好友系統] 讀取失敗', e);
+  } finally {
+    window._friendPanelLoading = false;
+  }
 }
 
 function _renderFriendPanel() {
@@ -27518,6 +27537,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0047', items:['修復好友面板：改為立即顯示面板，背景異步更新資料，不再因Firebase等待而卡住','修復打開好友面板時BGM重播：加入_friendPanelLoading旗標抑制visibilitychange觸發'] },
   { ver:'v1.0.20260416.0035', items:['BGM開關按鈕新增重置功能：關閉後再打開，自動偵測當前場景並播放正確的背景音樂'] },
   { ver:'v1.0.20260416.0030', items:['修復暈眩獎勵對BOSS無效：_realAiAct加入狀態檢查，BOSS暈眩後確實跳過行動','修復嘲諷（舞台聚光燈）不持續2回合：改由tickStatus控制到期，優先級最高','小劇團員天賦：加入加權隨機選目標系統，確保成為目標機率+40%在所有情境生效'] },
   { ver:'v1.0.20260416.0001', items:['修復加好友按鈕無反應（加入try/catch、Firebase初始化防呆、錯誤訊息顯示）','修復好友面板和代表英雄視窗關閉按鈕失效'] },
@@ -27527,7 +27547,6 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
   { ver:'v1.0.20260415.2152', items:['好友英雄視窗關閉按鈕修復','好友英雄視窗PC版放大100%可捲動'] },
   { ver:'v1.0.20260415.2148', items:['暱稱設定視窗PC版放大','帳號名稱列放大','代表英雄欄位移至返回首頁右邊'] },
-  { ver:'v1.0.20260415.2143', items:['暱稱改為詞庫組合（46形容詞×65名詞），加入隨機功能'] },
 ];
 
 
@@ -27536,8 +27555,9 @@ const GAME_CHANGELOG = [
 
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0035';
+  const CURRENT_VERSION = 'v1.0.20260416.0047';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
