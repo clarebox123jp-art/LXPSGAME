@@ -86,7 +86,8 @@
   // 雲端儲存
   window._fbSave = async function(uid, data) {
     try {
-      await setDoc(doc(_fbDb, 'players', uid), data);
+      // ★ merge:true 保留 representativeHero / friends 等欄位不被覆蓋
+      await setDoc(doc(_fbDb, 'players', uid), data, { merge: true });
       return true;
     } catch(e) { console.error('雲端儲存失敗', e); return false; }
   };
@@ -3455,7 +3456,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0653</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0702</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -22135,7 +22136,7 @@ let _playerBackpack = {};
 // 背包物品定義
 const BACKPACK_ITEM_DEF = {
   'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）' },
-  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能（+10%效果）', type:'use', useLabel:'使用（選擇英雄）' },
+  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）' },
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）' },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
@@ -27569,6 +27570,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0702', items:['修復代表英雄每次更新後消失：雲端存檔改為merge模式，不再覆蓋代表英雄和好友資料','修正技能升級書物品說明，移除不適用的(+10%效果)描述'] },
   { ver:'v1.0.20260416.0653', items:['修復bannerFX(null,...)靜默失效：所有全域提示訊息（好友系統/版本提示等）改為顯示在畫面頂部中央','修復加好友按鈕完全無反應的根本原因：所有錯誤訊息和搜尋提示都因null而被靜默丟棄'] },
   { ver:'v1.0.20260416.0054', items:['修復加好友按鈕完全無反應：加入完整錯誤訊息顯示、查詢錯誤代碼回報、Enter鍵支援','好友名單輸入框改為text模式避免iOS鍵盤問題'] },
   { ver:'v1.0.20260416.0047', items:['修復好友面板：改為立即顯示面板，背景異步更新資料，不再因Firebase等待而卡住','修復打開好友面板時BGM重播：加入_friendPanelLoading旗標抑制visibilitychange觸發'] },
@@ -27578,7 +27580,6 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2352', items:['修復加好友按鈕無反應：加入try/catch錯誤處理、Firebase初始化防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2346', items:['修復加好友按鈕無反應：加入try/catch、Firebase防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
   { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
-  { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
 ];
 
 
@@ -27590,8 +27591,9 @@ const GAME_CHANGELOG = [
 
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0653';
+  const CURRENT_VERSION = 'v1.0.20260416.0702';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
