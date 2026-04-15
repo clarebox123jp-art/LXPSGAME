@@ -3362,7 +3362,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.1942</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2015</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -8693,8 +8693,10 @@ function renderCard(h){
       ${h.element?`<span class="card-elem-sm">${elemIcon(h.element)}</span>`:''}
     </div>
     ${(()=>{
-      // ★ 極限爆發星星指示器：只對有爆發技能的英雄顯示
+      // ★ 極限爆發星星指示器：只對有爆發技能的英雄顯示（BOSS不顯示）
       if(typeof BURST_DB==='undefined'||!BURST_DB[h.name]) return '';
+      // BOSS 沒有次數限制，不顯示星星
+      if(typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name)) return '';
       const _used = h._burstUsed||0;
       const _remain = 2 - _used;
       const _ready = _burstReady(h.side);
@@ -8996,7 +8998,10 @@ function _burstReady(side){
   return G.energy[side]>=10;
 }
 function _canBurst(h){
-  if(!h||h.curHp<=0||h.acted||(h._burstUsed||0)>=2||!_burstReady(h.side)||!BURST_DB[h.name]) return false;
+  if(!h||h.curHp<=0||h.acted||!_burstReady(h.side)||!BURST_DB[h.name]) return false;
+  // 非BOSS英雄：最多爆發2次；BOSS無次數限制
+  const _isBossHero = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name);
+  if(!_isBossHero && (h._burstUsed||0)>=2) return false;
   // 幼兒園小孩：夢境時光只在睡眠中才能發動
   if(h.name==='幼兒園小孩' && !hasStatus(h,'sleep')) return false;
   return true;
@@ -10062,8 +10067,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(!nextFoes.length){ _remainHits=0; _catNine(null); return; }
         target = nextFoes.sort((a,b)=>a.curHp-b.curHp)[0];
       }
-      const hitDmg = Math.floor(spv*0.4*_burstMult);
-      doDmg(target, hitDmg, {actor:h, isSkill:true, ignoreBuffs:false});
+      const hitDmg = Math.max(6, Math.floor(spv*0.4*_burstMult));
+      doDmg(target, hitDmg, {actor:h, isSkill:true, ignoreBuffs:false, minDmg:6});
       _remainHits--;
       renderCard(target);
       if(target.curHp<=0 && _remainHits>0){
@@ -10922,6 +10927,8 @@ function doDmg(target, rawDmg, opts={}){
   const _elemMod=getElemDmgMod(a,target);
   if(_elemMod!==0){ dmg=Math.max(0,dmg+_elemMod); if(_elemMod>0){ log(`⚡元素相剋！傷害+${_elemMod}`); showPopup(target,'▲+'+_elemMod,'elem-adv'); } else { log(`⚡元素劣勢！傷害${_elemMod}`); showPopup(target,'▼'+_elemMod,'elem-dis'); } }
   dmg=Math.max(0,dmg);
+  // ★ minDmg：特定技能的最低傷害保底（如焰尾九連擊每擊最低6傷害）
+  if(opts.minDmg && dmg > 0) dmg = Math.max(opts.minDmg, dmg);
   const _mercyRainActive=hasBuff(target,'mercyRain') && dmg>0;
   // ── 裝備效果：鋼鐵鎧甲
   const teq=getEquip(target);
@@ -11937,9 +11944,11 @@ function execAtk(actor, target, dmg, opts={}){
   const name=actor.name;
   // 天賦觸發標籤 helper（在 bannerFX 之外再加卡牌標籤）
   function _traitLabel(text){ showActionLabel(actor, '✦ '+text+'！'); }
-  // 劍士：30%再行動1次
-  if(name==='劍士' && Math.random()<0.3){
-    log(`⚔️ [劍士] 天賦：連擊！再行動1次！`);
+  // 劍士：30%再行動1次（★ 加計數器，最多連擊2次，防止無限鏈）
+  actor._reActCount = actor._reActCount || 0;
+  if(name==='劍士' && Math.random()<0.3 && actor._reActCount < 2){
+    actor._reActCount++;
+    log(`⚔️ [劍士] 天賦：連擊！再行動1次！（第${actor._reActCount}連擊）`);
     _traitLabel('連擊');
     bannerFX(actor,'連擊！','#ffcc44',900);
     actor._traitReAct = true; // 告知 endAction 不要設 acted=true
@@ -11953,6 +11962,7 @@ function execAtk(actor, target, dmg, opts={}){
     }, 400);
     return;
   }
+  actor._reActCount = 0; // 本回合連擊結束，重置計數
 
   // 祭司：60%恢復HP最低隊友25%HP
   if(name==='祭司' && Math.random()<0.6 && target.curHp>0){
@@ -14929,8 +14939,9 @@ function startTurn(){
     if(_ipl) _ipl.style.display='';
     document.getElementById('action-panel').style.display='block';
     document.getElementById('actor-info').innerHTML=`<div style="font-size:42px;font-weight:700;line-height:1.4;animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;letter-spacing:1px;">✨ 輪到你的 <span style="color:#ffe066;text-shadow:0 0 16px rgba(255,220,0,0.9)">${next.name}</span> 了！<br><span style="font-size:30px;color:#aaaaaa;font-weight:500">選擇下面一種行動</span></div>`;
-    // ★ 每次輪到自己行動時，重置本回合賣卡次數
+    // ★ 每次輪到自己行動時，重置本回合賣卡次數與連擊計數
     if(next && next.side === 'p1') next._sellThisTurn = 0;
+    if(next) next._reActCount = 0;
     renderItems();
     updateUI();
     startTurnTimer(next);
@@ -20813,31 +20824,44 @@ function _advTriggerBurstFor(h) {
       advOnQuizSkip();
       return;
     }
-    // ★ 插隊發動免費爆發：設為可爆發狀態後呼叫完整 execBurst
-    h._burstUsed = false;
-    h.acted = false;
+    // ★ 插隊發動免費爆發：直接呼叫 _runBurst，不經過 burst panel UI
+    //   避免設 energy=10 時讓其他英雄也顯示可爆發
     const _savedEnergy = G.energy[h.side];
-    G.energy[h.side] = 10; // 暫時設滿讓 _canBurst 通過
-    log(`[獎勵] 💥 ${h.name} 插隊發動免費極限爆發！`);
-    // ★ 關鍵：設定插隊目標，爆發後回到原本行動角色
-    const _prevInterrupt = G.interruptTarget;
+    const _bd = BURST_DB[h.name];
+    log(`[獎勵] 💥 ${h.name} 插隊發動免費極限爆發：${_bd.n}！`);
+    // 設定插隊目標，爆發後回到原本行動角色
     G.interruptTarget = G.activeChar || null;
     G.activeChar = h;
-    // 呼叫完整 execBurst（含特寫動畫、技能名稱大字、音效）
+    h._burstUsed = (h._burstUsed || 0); // 保持計數不提前 +1（_runBurst 內處理）
+    // 播放爆發音效 + 特效
+    playSfx('sfx-burst', 1.0);
+    flashScreen('rgba(255,150,0,1)', 600);
+    setTimeout(() => flashScreen('rgba(255,255,255,1)', 300), 200);
+    bannerFX(h, '⚡' + _bd.n, '#ffcc00', 1500);
+    _showBurstCinematic(h, _bd);
+    // 延遲呼叫 _runBurst（不呼叫 execBurst 避免 burst panel 出現）
     _pSetTimeout(() => {
       try {
-        execBurst(h.side, h.pos);
-        // 爆發後恢復能量（不消耗玩家原有能量）
+        // _runBurst 不需要 energy 滿；直接呼叫並傳入 _interrupted
+        const _interrupted = G.interruptTarget || null;
+        G.pendingTarget = null; pendingCb = null;
+        G.interruptTarget = null;
+        G.passiveInterruptUsed = false;
+        h._burstUsed = (h._burstUsed || 0) + 1;
+        updateBurstEffects();
+        updateUI();
+        _runBurst(h, _bd, h.side, _interrupted);
+        // 恢復玩家原有能量（不因爆發消耗）
         _pSetTimeout(() => {
-          if(G.energy[h.side] < _savedEnergy) G.energy[h.side] = _savedEnergy;
+          G.energy[h.side] = Math.max(G.energy[h.side], _savedEnergy);
           updateUI();
-        }, 2000);
+        }, 2500);
       } catch(e) {
         console.error('[advTriggerBurst]', e);
         G.energy[h.side] = _savedEnergy;
         advOnQuizSkip();
       }
-    }, 400);
+    }, 1200);
   } catch(e) { console.error('[advTriggerBurst outer]', e); advOnQuizSkip(); }
 }
 
@@ -26616,7 +26640,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.1942';
+  const CURRENT_VERSION = 'v1.0.20260415.2015';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
