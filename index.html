@@ -17229,6 +17229,12 @@ document.addEventListener('keydown',_tryMenuBgm);
 
 // ★ 開發密技按鍵（測試用）
 document.addEventListener('keydown', function(e){
+  // ★ 密技只限遊戲設計者帳號使用
+  const _devEmail = 'clarebox123@gmail.com';
+  const _isDev = window._fbUser && window._fbUser.email &&
+                 window._fbUser.email.toLowerCase() === _devEmail;
+  if(!_isDev) return;
+
   // F9：直接戰鬥勝利
   if(e.key === 'F9'){
     e.preventDefault();
