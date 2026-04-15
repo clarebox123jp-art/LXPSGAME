@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0047</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0054</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -25908,7 +25908,7 @@ function _renderFriendPanel() {
     + '<div style="font-size:' + _fpSub + ';color:#aaa;margin-bottom:20px;text-align:center;">邀請好友英雄加入你的冒險！</div>'
     // 新增好友
     + '<div style="display:flex;gap:8px;margin-bottom:18px;">'
-    + '<input id="_add-friend-input" type="email" placeholder="輸入好友的 Gmail 帳號" '
+    + '<input id="_add-friend-input" type="text" inputmode="email" autocomplete="email" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="輸入好友的 Gmail 帳號" onkeydown="if(event.key===\'Enter\')_addFriendByEmail()" '
     + 'style="flex:1;padding:clamp(10px,1vw,14px) clamp(12px,1.2vw,18px);font-size:' + _fpInp + ';background:rgba(20,15,35,0.9);border:1.5px solid rgba(180,120,255,0.5);'
     + 'color:#e0d0ff;border-radius:10px;font-family:inherit;outline:none;">'
     + '<button onclick="_addFriendByEmail()" style="padding:clamp(10px,1vw,14px) clamp(16px,1.5vw,24px);font-size:' + _fpBtn + ';font-weight:700;'
@@ -25951,9 +25951,17 @@ function _renderFriendPanel() {
 
 async function _addFriendByEmail() {
   const input = document.getElementById('_add-friend-input');
-  if (!input) return;
+  if (!input) {
+    bannerFX(null, '❌ 找不到輸入框，請重新開啟好友面板', '#ff6666', 2000);
+    return;
+  }
   const email = input.value.trim().toLowerCase();
-  if (!email || !email.includes('@')) {
+  if (!email) {
+    bannerFX(null, '請輸入好友的 Gmail 帳號', '#ff9944', 1500);
+    input.focus();
+    return;
+  }
+  if (!email.includes('@')) {
     bannerFX(null, '請輸入有效的 Gmail 帳號', '#ff6666', 1500);
     return;
   }
@@ -25979,21 +25987,28 @@ async function _addFriendByEmail() {
   const btn = document.querySelector('#_friend-panel button[onclick="_addFriendByEmail()"]');
   if (btn) { btn.disabled = true; btn.textContent = '搜尋中...'; }
   try {
-    bannerFX(null, '🔍 搜尋中...', '#88ccff', 1500);
-    const found = await window._fbFindByEmail(email);
+    bannerFX(null, '🔍 搜尋中...', '#88ccff', 2000);
+    let found = null;
+    try {
+      found = await window._fbFindByEmail(email);
+    } catch(qErr) {
+      console.error('[查詢好友]', qErr);
+      bannerFX(null, '查詢失敗：' + (qErr.code || qErr.message || '網路錯誤'), '#ff6666', 3000);
+      return;
+    }
     if (!found) {
-      bannerFX(null, '找不到此帳號，請確認對方已登入過遊戲', '#ff6666', 2500);
+      bannerFX(null, '找不到此帳號，請確認對方已登入過遊戲，且輸入完整 Gmail', '#ff6666', 3000);
       return;
     }
     const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
     await window._fbAddFriend(window._gUserId, friendInfo);
     _friendList.push(friendInfo);
-    bannerFX(null, `✅ 已加 ${friendInfo.name} 為好友！`, '#44ff88', 1800);
+    bannerFX(null, '✅ 已加 ' + friendInfo.name + ' 為好友！', '#44ff88', 1800);
     playSfx('sfx-confirm', 0.6);
     _renderFriendPanel();
   } catch(e) {
     console.error('[加好友]', e);
-    bannerFX(null, '加好友失敗，請稍後再試（' + (e.message||'未知錯誤') + '）', '#ff6666', 3000);
+    bannerFX(null, '加好友失敗：' + (e.code || e.message || '未知錯誤'), '#ff6666', 3000);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '+ 加好友'; }
   }
@@ -27537,6 +27552,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0054', items:['修復加好友按鈕完全無反應：加入完整錯誤訊息顯示、查詢錯誤代碼回報、Enter鍵支援','好友名單輸入框改為text模式避免iOS鍵盤問題'] },
   { ver:'v1.0.20260416.0047', items:['修復好友面板：改為立即顯示面板，背景異步更新資料，不再因Firebase等待而卡住','修復打開好友面板時BGM重播：加入_friendPanelLoading旗標抑制visibilitychange觸發'] },
   { ver:'v1.0.20260416.0035', items:['BGM開關按鈕新增重置功能：關閉後再打開，自動偵測當前場景並播放正確的背景音樂'] },
   { ver:'v1.0.20260416.0030', items:['修復暈眩獎勵對BOSS無效：_realAiAct加入狀態檢查，BOSS暈眩後確實跳過行動','修復嘲諷（舞台聚光燈）不持續2回合：改由tickStatus控制到期，優先級最高','小劇團員天賦：加入加權隨機選目標系統，確保成為目標機率+40%在所有情境生效'] },
@@ -27546,7 +27562,6 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
   { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
   { ver:'v1.0.20260415.2152', items:['好友英雄視窗關閉按鈕修復','好友英雄視窗PC版放大100%可捲動'] },
-  { ver:'v1.0.20260415.2148', items:['暱稱設定視窗PC版放大','帳號名稱列放大','代表英雄欄位移至返回首頁右邊'] },
 ];
 
 
@@ -27556,8 +27571,9 @@ const GAME_CHANGELOG = [
 
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0047';
+  const CURRENT_VERSION = 'v1.0.20260416.0054';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
