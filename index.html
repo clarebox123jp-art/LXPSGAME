@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2143</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2152</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3517,32 +3517,33 @@ body {
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
     <!-- ★ 好友系統：代表英雄顯示 -->
-    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:12px;left:260px;z-index:12;
-      display:none;align-items:center;gap:8px;cursor:pointer;padding:6px 14px;
+    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(300px,30vw,520px);z-index:12;
+      display:none;align-items:center;gap:clamp(6px,0.8vw,12px);cursor:pointer;
+      padding:clamp(8px,1vw,14px) clamp(14px,1.5vw,26px);
       background:rgba(10,15,35,0.88);border:2px solid rgba(255,200,80,0.6);border-radius:40px;
       box-shadow:0 2px 12px rgba(255,180,0,0.2);transition:border-color 0.2s;"
       onclick="playSfx('sfx-gentle',0.5);openSetRepHeroModal()">
-      <div id="adv-rep-hero-img-wrap" style="width:36px;height:36px;border-radius:50%;overflow:hidden;
+      <div id="adv-rep-hero-img-wrap" style="width:clamp(36px,4vw,56px);height:clamp(36px,4vw,56px);border-radius:50%;overflow:hidden;
         border:2px solid rgba(255,200,80,0.8);background:rgba(20,20,30,0.9);flex-shrink:0;
-        display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>
-      <div style="display:flex;flex-direction:column;line-height:1.2;">
-        <span style="font-size:13px;color:#ffcc44;font-weight:800;" id="adv-rep-hero-name">設定代表英雄</span>
-        <span style="font-size:11px;color:#aaa;" id="adv-rep-hero-lv"></span>
+        display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.5vw,32px);">👤</div>
+      <div style="display:flex;flex-direction:column;line-height:1.3;">
+        <span style="font-size:clamp(15px,1.8vw,26px);color:#ffcc44;font-weight:800;" id="adv-rep-hero-name">設定代表英雄</span>
+        <span style="font-size:clamp(11px,1.2vw,18px);color:#aaa;" id="adv-rep-hero-lv"></span>
       </div>
-      <span style="font-size:11px;color:#888;">⭐</span>
+      <span style="font-size:clamp(14px,1.5vw,22px);color:#ffcc44;">⭐</span>
     </div>
     <!-- ★ 冒險模式帳號名稱顯示 -->
-    <div id="adv-username-bar" style="display:none;position:absolute;top:130px;left:36px;z-index:11;
-      align-items:center;gap:8px;">
-      <img id="adv-user-avatar" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.7);flex-shrink:0;" />
+    <div id="adv-username-bar" style="display:none;position:absolute;top:clamp(80px,9vw,130px);left:36px;z-index:11;
+      align-items:center;gap:clamp(6px,1vw,10px);">
+      <img id="adv-user-avatar" style="width:clamp(28px,3.5vw,44px);height:clamp(28px,3.5vw,44px);border-radius:50%;border:2px solid rgba(255,255,255,0.7);flex-shrink:0;" />
       <span id="adv-user-name" onclick="playSfx('sfx-gentle',0.3);openNicknameModal()"
-        title="點擊修改暱稱" style="color:#1a2a6c;font-size:18px;font-weight:800;padding:3px 14px;
+        title="點擊修改暱稱" style="color:#1a2a6c;font-size:clamp(18px,2.8vw,38px);font-weight:800;padding:clamp(3px,0.4vw,6px) clamp(10px,1.2vw,18px);
         background:rgba(255,255,255,0.92);border:2px solid #fff;border-radius:8px;
-        box-shadow:0 2px 8px rgba(0,0,0,0.4);white-space:nowrap;max-width:260px;overflow:hidden;text-overflow:ellipsis;
+        box-shadow:0 2px 8px rgba(0,0,0,0.4);white-space:nowrap;max-width:clamp(200px,18vw,320px);overflow:hidden;text-overflow:ellipsis;
         cursor:pointer;"></span>
       <span onclick="playSfx('sfx-gentle',0.3);openNicknameModal()" title="修改暱稱"
-        style="font-size:14px;color:rgba(255,255,255,0.7);cursor:pointer;flex-shrink:0;
-        background:rgba(0,0,0,0.3);border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;">✏️</span>
+        style="font-size:clamp(16px,2.2vw,30px);color:rgba(255,255,255,0.8);cursor:pointer;flex-shrink:0;
+        background:rgba(0,0,0,0.35);border-radius:50%;width:clamp(24px,3vw,40px);height:clamp(24px,3vw,40px);line-height:clamp(24px,3vw,40px);text-align:center;">✏️</span>
     </div>
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
@@ -25402,6 +25403,17 @@ function _pwaGuideClose(){
 }
 
 
+// ── 好友系統視窗關閉函式（全域）──
+function _repHeroModalClose(){
+  var e = document.getElementById('_rep-hero-modal');
+  if(e) e.remove();
+}
+function _friendPanelClose(){
+  var e = document.getElementById('_friend-panel');
+  if(e) e.remove();
+}
+
+
 // ══════════════════════════════════════════════════════
 // ★ 暱稱系統
 // ══════════════════════════════════════════════════════
@@ -25435,30 +25447,34 @@ function openNicknameModal() {
     + 'border:1.5px solid rgba(100,200,255,0.5);color:#e0f0ff;border-radius:10px;font-family:inherit;'
     + 'outline:none;cursor:pointer;flex:1;';
 
+  const _isIPad = navigator.maxTouchPoints > 1 && /Macintosh|iPad/.test(navigator.userAgent);
+  const _fs = _isIPad ? '' : 'font-size:clamp(22px,2vw,32px);';
+  const _btnFs = _isIPad ? 'font-size:18px;' : 'font-size:clamp(18px,1.8vw,28px);';
+  const _selStyleFull = _selStyle + (_isIPad ? '' : 'font-size:clamp(19px,1.8vw,28px);');
   modal.innerHTML =
     '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);'
     + 'border:2.5px solid rgba(100,200,255,0.7);border-radius:20px;'
-    + 'padding:32px 36px;max-width:min(96vw,520px);width:100%;text-align:center;">'
-    + '<div style="font-size:26px;font-weight:900;color:#88ddff;margin-bottom:6px;">✏️ 設定暱稱</div>'
-    + '<div style="font-size:14px;color:#aaa;margin-bottom:18px;">選一個「形容詞＋名詞」組合成你的暱稱</div>'
+    + 'padding:clamp(28px,3vw,44px) clamp(28px,4vw,52px);max-width:min(96vw,clamp(480px,50vw,680px));width:100%;text-align:center;">'
+    + '<div style="' + _fs + 'font-size:clamp(24px,2.5vw,36px);font-weight:900;color:#88ddff;margin-bottom:6px;">✏️ 設定暱稱</div>'
+    + '<div style="font-size:clamp(13px,1.3vw,18px);color:#aaa;margin-bottom:clamp(14px,1.5vw,22px);">選一個「形容詞＋名詞」組合成你的暱稱</div>'
     // 下拉選單
-    + '<div style="display:flex;gap:8px;margin-bottom:14px;">'
-    + '<select id="_nick-adj" style="' + _selStyle + '">' + _adjOptions + '</select>'
-    + '<select id="_nick-noun" style="' + _selStyle + '">' + _nounOptions + '</select>'
+    + '<div style="display:flex;gap:clamp(6px,0.8vw,12px);margin-bottom:clamp(12px,1.2vw,18px);">'
+    + '<select id="_nick-adj" style="' + _selStyleFull + '">' + _adjOptions + '</select>'
+    + '<select id="_nick-noun" style="' + _selStyleFull + '">' + _nounOptions + '</select>'
     + '</div>'
     // 即時預覽
-    + '<div id="_nick-preview" style="font-size:20px;font-weight:800;color:#ffcc44;'
+    + '<div id="_nick-preview" style="font-size:clamp(20px,2.2vw,32px);font-weight:800;color:#ffcc44;'
     + 'background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,0,0.3);border-radius:10px;'
-    + 'padding:10px;margin-bottom:14px;letter-spacing:1px;"></div>'
+    + 'padding:clamp(8px,1vw,14px);margin-bottom:clamp(12px,1.2vw,18px);letter-spacing:1px;"></div>'
     // 隨機按鈕
-    + '<button onclick="_nickRandom()" style="width:100%;padding:9px;font-size:15px;font-weight:700;'
+    + '<button onclick="_nickRandom()" style="width:100%;padding:clamp(8px,1vw,12px);font-size:clamp(14px,1.5vw,22px);font-weight:700;'
     + 'background:rgba(100,80,200,0.2);border:1.5px solid rgba(180,120,255,0.5);color:#cc99ff;'
-    + 'border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:16px;">🎲 幫我隨機選一個</button>'
+    + 'border-radius:10px;cursor:pointer;font-family:inherit;margin-bottom:clamp(12px,1.5vw,20px);">🎲 幫我隨機選一個</button>'
     + '<div style="display:flex;gap:10px;justify-content:center;">'
-    + '<button onclick="_saveNickname()" style="padding:11px 36px;font-size:18px;font-weight:800;'
+    + '<button onclick="_saveNickname()" style="padding:clamp(10px,1vw,14px) clamp(28px,3vw,48px);' + _btnFs + 'font-weight:800;'
     + 'background:rgba(50,150,255,0.25);border:2px solid rgba(100,200,255,0.7);color:#88ddff;'
     + 'border-radius:11px;cursor:pointer;font-family:inherit;">✔ 儲存</button>'
-    + '<button onclick="_nickModalClose()" style="padding:11px 28px;font-size:18px;color:#888;'
+    + '<button onclick="_nickModalClose()" style="padding:clamp(10px,1vw,14px) clamp(20px,2.5vw,36px);' + _btnFs + 'color:#888;'
     + 'background:none;border:1px solid #444;border-radius:11px;cursor:pointer;font-family:inherit;">取消</button>'
     + '</div></div>';
 
@@ -25713,11 +25729,12 @@ function _renderFriendPanel() {
   const existing = document.getElementById('_friend-panel');
   if (existing) existing.remove();
 
+  const _fpIsIPad = navigator.maxTouchPoints > 1 && /Macintosh|iPad/.test(navigator.userAgent);
   const panel = document.createElement('div');
   panel.id = '_friend-panel';
   panel.style.cssText = 'position:fixed;inset:0;z-index:19999;background:rgba(0,0,8,0.92);'
     + 'display:flex;align-items:flex-start;justify-content:center;'
-    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:28px 16px;'
+    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:clamp(20px,3vw,40px) 16px;'
     + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
   panel.onclick = e => { if (e.target === panel) panel.remove(); };
 
@@ -25751,23 +25768,29 @@ function _renderFriendPanel() {
     });
   }
 
+  const _fpW  = _fpIsIPad ? 'min(96vw,640px)' : 'min(96vw,860px)';
+  const _fpFs = _fpIsIPad ? '30px' : 'clamp(30px,3vw,48px)';
+  const _fpSub= _fpIsIPad ? '15px' : 'clamp(15px,1.5vw,22px)';
+  const _fpInp= _fpIsIPad ? '15px' : 'clamp(15px,1.5vw,22px)';
+  const _fpBtn= _fpIsIPad ? '15px' : 'clamp(15px,1.5vw,22px)';
+  const _fpPad= _fpIsIPad ? '32px 36px' : 'clamp(32px,3.5vw,52px) clamp(36px,4vw,60px)';
   panel.innerHTML =
     '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);border:2.5px solid rgba(255,130,200,0.6);border-radius:24px;'
-    + 'padding:32px 36px;max-width:min(96vw,640px);width:100%;margin:auto;">'
-    + '<div style="font-size:30px;font-weight:900;color:#ff88cc;margin-bottom:4px;text-align:center;">🤝 好友英雄</div>'
-    + '<div style="font-size:15px;color:#aaa;margin-bottom:20px;text-align:center;">邀請好友英雄加入你的冒險！</div>'
+    + 'padding:' + _fpPad + ';max-width:' + _fpW + ';width:100%;margin:auto;">'
+    + '<div style="font-size:' + _fpFs + ';font-weight:900;color:#ff88cc;margin-bottom:4px;text-align:center;">🤝 好友英雄</div>'
+    + '<div style="font-size:' + _fpSub + ';color:#aaa;margin-bottom:20px;text-align:center;">邀請好友英雄加入你的冒險！</div>'
     // 新增好友
     + '<div style="display:flex;gap:8px;margin-bottom:18px;">'
     + '<input id="_add-friend-input" type="email" placeholder="輸入好友的 Gmail 帳號" '
-    + 'style="flex:1;padding:10px 14px;font-size:15px;background:rgba(20,15,35,0.9);border:1.5px solid rgba(180,120,255,0.5);'
+    + 'style="flex:1;padding:clamp(10px,1vw,14px) clamp(12px,1.2vw,18px);font-size:' + _fpInp + ';background:rgba(20,15,35,0.9);border:1.5px solid rgba(180,120,255,0.5);'
     + 'color:#e0d0ff;border-radius:10px;font-family:inherit;outline:none;">'
-    + '<button onclick="_addFriendByEmail()" style="padding:10px 18px;font-size:15px;font-weight:700;'
+    + '<button onclick="_addFriendByEmail()" style="padding:clamp(10px,1vw,14px) clamp(16px,1.5vw,24px);font-size:' + _fpBtn + ';font-weight:700;'
     + 'background:rgba(100,50,200,0.35);border:1.5px solid rgba(180,120,255,0.7);color:#cc88ff;'
     + 'border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 加好友</button>'
     + '</div>'
     + '<div id="_friend-list-inner">' + friendRows + '</div>'
     + '<div style="text-align:center;margin-top:16px;">'
-    + '<button onclick="_friendPanelClose()" style="padding:9px 32px;font-size:16px;color:#888;background:none;border:1px solid #444;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+    + '<button onclick="_friendPanelClose()" style="padding:clamp(9px,1vw,14px) clamp(28px,3vw,48px);font-size:' + _fpBtn + ';color:#888;background:none;border:1px solid #444;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
     + '</div></div>';
 
   document.body.appendChild(panel);
@@ -27349,7 +27372,7 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2143';
+  const CURRENT_VERSION = 'v1.0.20260415.2152';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
