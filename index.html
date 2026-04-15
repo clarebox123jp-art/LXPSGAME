@@ -3036,6 +3036,7 @@ body {
 .adv-result-grade-A{color:#7df0a8;}
 .adv-result-grade-B{color:#4a9eff;}
 .adv-result-grade-C{color:#cc99ff;}
+.adv-result-grade-D{color:#aaaaaa;}
 #adv-result-stats{text-align:left;border-top:1px solid rgba(255,255,255,0.1);padding-top:20px;margin-top:4px;}
 .adv-result-row{
   display:flex;justify-content:space-between;align-items:center;
@@ -3456,7 +3457,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0702</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0731</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3762,10 +3763,9 @@ body {
         <span class="adv-nav-label">獎章</span>
         <span class="adv-nav-lock">🔒</span>
       </button>
-      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('設定')">
-        <span class="adv-nav-icon">⚙️</span>
-        <span class="adv-nav-label">設定</span>
-        <span class="adv-nav-lock">🔒</span>
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openChangelogPanel()" style="border-color:rgba(100,220,180,0.4);">
+        <span class="adv-nav-icon">📋</span>
+        <span class="adv-nav-label">更新日誌</span>
       </button>
     </div>
   </div>
@@ -17022,6 +17022,7 @@ function log(m){
 const BGM_VOLUME = 0.585;
 let _curBgm = null;
 let _bgmMuted = false;
+let _advBestScore = 0; // ★ 玩家個人最高分（SABCD評分基準）
 let _sfxMuted = false;
 let _gamePaused = false;
 
@@ -21298,39 +21299,98 @@ function advShowBattleResult(win) {
   const score = Math.round(baseScore * _diffMult3);
   const maxScore = Math.round(100 * _diffMult3);
 
-  // ── 評分門檻（難易度加成後）──
-  // S≥90 A≥68 B≥43 C<43
-  // 簡單：S需90%、A需68% / 普通：S需72%、A需54% / 困難：S需60%、A需45%
-  const grade = score>=90?'S':score>=68?'A':score>=43?'B':'C';
-  const gradeColors = {S:'#ffe050',A:'#7df0a8',B:'#4a9eff',C:'#cc99ff'};
+  // ── 評分：依玩家個人最高分為基準，前10%=S，前20%=A，前30%=B，前40%=C，其餘=D ──
+  // 更新個人最高分
+  if(score > (_advBestScore || 0)) _advBestScore = score;
+  const _best = _advBestScore || score || 1;
+  const _pct = score / _best; // 本次分數佔最高分的比例
+  const grade = _pct >= 0.90 ? 'S'
+              : _pct >= 0.80 ? 'A'
+              : _pct >= 0.70 ? 'B'
+              : _pct >= 0.60 ? 'C'
+              : 'D';
+  const gradeColors = {S:'#ffe050',A:'#7df0a8',B:'#4a9eff',C:'#cc99ff',D:'#aaaaaa'};
   const quizScore = (isNaN(stats.totalQuizScore) || !stats.totalQuizScore) ? 0 : Math.round(stats.totalQuizScore);
 
-  document.getElementById('adv-result-title').textContent = win ? '🏆 Boss 討伐成功！' : '💀 戰鬥失敗';
-  // ★ 勝利時顯示獎勵預告
+  document.getElementById('adv-result-title').textContent = win ? '🏆 Boss 討伐成功！' : '💀 再接再厲！';
+
   if(win){
+    // ── 勝利：顯示評分和分數 ──
+    const gradeEl = document.getElementById('adv-result-grade');
+    gradeEl.textContent = grade;
+    gradeEl.style.color = gradeColors[grade];
+    gradeEl.className = 'adv-result-grade-' + grade;
+    gradeEl.style.display = '';
+    // ★ 儲存最高分
+    try{ gameCloudSave(); }catch(e){}
     setTimeout(()=>{
-      const _g = (document.getElementById('adv-result-grade')||{}).textContent||'';
-      const _bExp = _g.includes('S')?100:_g.includes('A')?70:_g.includes('B')?50:30;
+      const _g = grade;
+      const _bExp = _g==='S'?100:_g==='A'?70:_g==='B'?50:_g==='C'?30:15;
       const _rewardEl = document.getElementById('adv-result-reward');
       if(_rewardEl) _rewardEl.innerHTML = '📗 英雄經驗值之書 &times;2 ➜ 背包&nbsp;&nbsp;📖 技能升級書 &times;1 ➜ 背包&nbsp;&nbsp;⭐ 出戰英雄 +'+_bExp+' EXP';
     }, 300);
+    document.getElementById('adv-result-score').textContent = `總分：${score} 分（滿分${maxScore}）`;
+    const _rateStr = totalQ > 0 ? `${correct}/${totalQ}（${Math.round(correctRate*100)}%）` : '－';
+    document.getElementById('adv-result-stats').innerHTML = `
+      <div class="adv-result-row"><span>📚 答題正確率</span><span>${_rateStr} +${score1}分</span></div>
+      <div class="adv-result-row"><span>⏱ 答題速度</span><span>平均${avgTimeSec.toFixed(1)}秒 +${score2}分</span></div>
+      <div class="adv-result-row"><span>🎒 物品使用</span><span>${itemUsed}次 +${score3}分</span></div>
+      <div class="adv-result-row"><span>🔄 接關次數</span><span>${conts}次 +${score4}分</span></div>
+      <div class="adv-result-row"><span>💀 倒下次數</span><span>${deaths}次 +${score5}分</span></div>
+      <div class="adv-result-row"><span>⚔ 使用回合數</span><span>${rounds}回合 +${score6}分</span></div>
+      <div class="adv-result-row" style="border-top:1px solid rgba(255,200,0,0.3);margin-top:6px;padding-top:6px;color:#ffdd88;">
+        <span>🎯 難易度加成</span><span>${_diffLabel3}　基礎${baseScore}×${_diffMult3}＝${score}分</span>
+      </div>
+    `;
+  } else {
+    // ── 失敗：隱藏評分，顯示鼓勵訊息 + 依傷害比例給部分獎勵 ──
+    const gradeEl = document.getElementById('adv-result-grade');
+    gradeEl.textContent = '';
+    gradeEl.style.display = 'none';
+    document.getElementById('adv-result-score').textContent = '';
+
+    // ★ 計算對敵方造成的傷害比例
+    let _losePartialExp = 0, _losePartialCoins = 0;
+    try {
+      // 敵方（p2）總HP
+      const _p2TotalHp = G && G.p2 ? G.p2.reduce((s,h) => s + (h.hp || 0), 0) : 0;
+      // 我方（p1）對敵方造成的總傷害
+      const _p1TotalDmg = G && G.battleStats
+        ? Object.values(G.battleStats).filter(s => s.side === 'p1').reduce((s,v) => s + (v.dmg || 0), 0)
+        : 0;
+      // 傷害比例（最高 100%）
+      const _dmgRatio = _p2TotalHp > 0 ? Math.min(1, _p1TotalDmg / _p2TotalHp) : 0;
+      const _pct = Math.round(_dmgRatio * 100);
+
+      // 基礎獎勵（以勝利 B 級為基準）
+      const _baseExp = 50, _baseCoins = 20;
+      _losePartialExp   = Math.floor(_baseExp * _dmgRatio);
+      _losePartialCoins = Math.floor(_baseCoins * _dmgRatio);
+
+      // 給予獎勵
+      if(_losePartialExp > 0 && G && G.p1)
+        G.p1.forEach(h => { if(h && h.name) addHeroExp(h.name, _losePartialExp); });
+      if(_losePartialCoins > 0)
+        addKnowledgeCoins(_losePartialCoins);
+      if(_losePartialExp > 0 || _losePartialCoins > 0)
+        try{ gameCloudSave(); }catch(e){}
+
+      document.getElementById('adv-result-stats').innerHTML =
+        '<div style="text-align:center;padding:16px 0;line-height:2;">'
+        + '<div style="font-size:clamp(18px,2.2vw,28px);color:#aaa;">不用擔心，每一次練習都讓你更強！</div>'
+        + '<div style="font-size:clamp(14px,1.5vw,20px);color:#888;margin:4px 0;">調整隊伍配置或策略，再試一次吧！</div>'
+        + '<div style="margin-top:14px;padding:10px 16px;background:rgba(255,255,255,0.05);border-radius:10px;display:inline-block;">'
+        + '<span style="font-size:clamp(13px,1.4vw,18px);color:#bbbbbb;">⚔ 對敵方造成 ' + _pct + '% 傷害</span><br>'
+        + (_losePartialExp > 0   ? '<span style="font-size:clamp(12px,1.3vw,17px);color:#88ccff;">⭐ 出戰英雄各 +' + _losePartialExp + ' EXP</span><br>' : '')
+        + (_losePartialCoins > 0 ? '<span style="font-size:clamp(12px,1.3vw,17px);color:#ffee88;">💰 +' + _losePartialCoins + ' 知識幣</span>' : '')
+        + '</div></div>';
+    } catch(e) {
+      document.getElementById('adv-result-stats').innerHTML =
+        '<div style="text-align:center;font-size:clamp(18px,2.2vw,28px);color:#aaa;padding:20px 0;">不用擔心，每一次練習都讓你更強！</div>';
+    }
+    const _rewardEl = document.getElementById('adv-result-reward');
+    if(_rewardEl) _rewardEl.innerHTML = '';
   }
-  const gradeEl = document.getElementById('adv-result-grade');
-  gradeEl.textContent = grade;
-  gradeEl.style.color = gradeColors[grade];
-  document.getElementById('adv-result-score').textContent = `總分：${score} 分（滿分${maxScore}）`;
-  const _rateStr = totalQ > 0 ? `${correct}/${totalQ}（${Math.round(correctRate*100)}%）` : '－';
-  document.getElementById('adv-result-stats').innerHTML = `
-    <div class="adv-result-row"><span>📚 答題正確率</span><span>${_rateStr} +${score1}分</span></div>
-    <div class="adv-result-row"><span>⏱ 答題速度</span><span>平均${avgTimeSec.toFixed(1)}秒 +${score2}分</span></div>
-    <div class="adv-result-row"><span>🎒 物品使用</span><span>${itemUsed}次 +${score3}分</span></div>
-    <div class="adv-result-row"><span>🔄 接關次數</span><span>${conts}次 +${score4}分</span></div>
-    <div class="adv-result-row"><span>💀 倒下次數</span><span>${deaths}次 +${score5}分</span></div>
-    <div class="adv-result-row"><span>⚔ 使用回合數</span><span>${rounds}回合 +${score6}分</span></div>
-    <div class="adv-result-row" style="border-top:1px solid rgba(255,200,0,0.3);margin-top:6px;padding-top:6px;color:#ffdd88;">
-      <span>🎯 難易度加成</span><span>${_diffLabel3}　基礎${baseScore}×${_diffMult3}＝${score}分</span>
-    </div>
-  `;
   document.getElementById('adv-result-overlay').classList.add('show');
 
   // ★ 勝利時播放勝利BGM
@@ -21937,6 +21997,7 @@ function _buildSafeData() {
     shopDailyData:   _shopDailyData,         // 每日商店購買紀錄
     presetTeams:     _presetTeams,            // 常用預設陣容
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
+    advBestScore: (typeof _advBestScore !== 'undefined') ? _advBestScore : 0,
     // ★ 冒險進度快照（BOSS崩潰恢復用）
     advSnapshot: (function(){
       // ★ 優先使用最新的戰鬥快照（每回合存一次，含完整 G 狀態）
@@ -22023,6 +22084,9 @@ function _applySafeData(raw) {
     if(typeof data.settings.bgmMuted === 'boolean') _bgmMuted = data.settings.bgmMuted;
     if(typeof data.settings.sfxMuted === 'boolean') _sfxMuted = data.settings.sfxMuted;
   }
+  // ★ 個人最高分（用於SABC評分）
+  if(typeof data.advBestScore === 'number' && data.advBestScore > 0)
+    _advBestScore = Math.max(_advBestScore || 0, data.advBestScore);
   // ★ 冒險快照：還原到 localStorage，供重新開啟時恢復冒險進度
   if(data.advSnapshot && data.advSnapshot.stage) {
     try { localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot)); } catch(e) {}
@@ -25531,7 +25595,58 @@ function _pwaGuideClose(){
 }
 
 
+// ── 更新日誌面板（玩家手動開啟）──
+function openChangelogPanel() {
+  const existing = document.getElementById('_changelog-panel');
+  if (existing) { existing.remove(); return; }
+
+  const logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []).slice(0, 20);
+  let logHTML = '';
+  logs.forEach((entry) => {
+    logHTML +=
+      '<div style="margin-bottom:10px;padding:10px 14px;border-radius:10px;text-align:left;'
+      + 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">'
+      + '<div style="font-size:clamp(11px,1.1vw,14px);color:#888;margin-bottom:4px;">'
+      + entry.ver + '</div>'
+      + entry.items.map(item =>
+          '<div style="font-size:clamp(14px,1.5vw,20px);color:#ddd;line-height:1.6;padding-left:6px;">・' + item + '</div>'
+        ).join('')
+      + '</div>';
+  });
+
+  const panel = document.createElement('div');
+  panel.id = '_changelog-panel';
+  panel.style.cssText = 'position:fixed;inset:0;z-index:19999;background:rgba(0,0,8,0.92);'
+    + 'display:flex;align-items:flex-start;justify-content:center;'
+    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:28px 16px;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  panel.onclick = e => { if (e.target === panel) panel.remove(); };
+
+  panel.innerHTML =
+    '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);'
+    + 'border:2.5px solid rgba(100,220,180,0.6);border-radius:24px;'
+    + 'padding:clamp(24px,3vw,44px) clamp(24px,4vw,52px);'
+    + 'max-width:min(96vw,680px);width:100%;margin:auto;">'
+    + '<div style="text-align:center;margin-bottom:16px;">'
+    + '<div style="font-size:clamp(24px,3vw,38px);font-weight:900;color:#66ffcc;">📋 更新日誌</div>'
+    + '<div style="font-size:clamp(12px,1.3vw,16px);color:#888;margin-top:4px;">最近 20 次更新內容</div>'
+    + '</div>'
+    + '<div style="max-height:clamp(300px,50vh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;'
+    + 'padding-right:4px;margin-bottom:16px;">' + logHTML + '</div>'
+    + '<div style="text-align:center;">'
+    + '<button onclick="_changelogPanelClose()" '
+    + 'style="padding:clamp(9px,1vw,14px) clamp(28px,3vw,48px);font-size:clamp(14px,1.5vw,20px);'
+    + 'color:#aaa;background:none;border:1px solid #444;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+    + '</div></div>';
+
+  document.body.appendChild(panel);
+}
+
 // ── 好友系統視窗關閉函式（全域）──
+function _changelogPanelClose(){
+  var e=document.getElementById('_changelog-panel');
+  if(e) e.remove();
+}
 function _repHeroModalClose(){
   var e = document.getElementById('_rep-hero-modal');
   if(e) e.remove();
@@ -27570,16 +27685,26 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.0702', items:['修復代表英雄每次更新後消失：雲端存檔改為merge模式，不再覆蓋代表英雄和好友資料','修正技能升級書物品說明，移除不適用的(+10%效果)描述'] },
-  { ver:'v1.0.20260416.0653', items:['修復bannerFX(null,...)靜默失效：所有全域提示訊息（好友系統/版本提示等）改為顯示在畫面頂部中央','修復加好友按鈕完全無反應的根本原因：所有錯誤訊息和搜尋提示都因null而被靜默丟棄'] },
-  { ver:'v1.0.20260416.0054', items:['修復加好友按鈕完全無反應：加入完整錯誤訊息顯示、查詢錯誤代碼回報、Enter鍵支援','好友名單輸入框改為text模式避免iOS鍵盤問題'] },
-  { ver:'v1.0.20260416.0047', items:['修復好友面板：改為立即顯示面板，背景異步更新資料，不再因Firebase等待而卡住','修復打開好友面板時BGM重播：加入_friendPanelLoading旗標抑制visibilitychange觸發'] },
-  { ver:'v1.0.20260416.0035', items:['BGM開關按鈕新增重置功能：關閉後再打開，自動偵測當前場景並播放正確的背景音樂'] },
-  { ver:'v1.0.20260416.0030', items:['修復暈眩獎勵對BOSS無效：_realAiAct加入狀態檢查，BOSS暈眩後確實跳過行動','修復嘲諷（舞台聚光燈）不持續2回合：改由tickStatus控制到期，優先級最高','小劇團員天賦：加入加權隨機選目標系統，確保成為目標機率+40%在所有情境生效'] },
-  { ver:'v1.0.20260416.0001', items:['修復加好友按鈕無反應（加入try/catch、Firebase初始化防呆、錯誤訊息顯示）','修復好友面板和代表英雄視窗關閉按鈕失效'] },
-  { ver:'v1.0.20260415.2352', items:['修復加好友按鈕無反應：加入try/catch錯誤處理、Firebase初始化防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
-  { ver:'v1.0.20260415.2346', items:['修復加好友按鈕無反應：加入try/catch、Firebase防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
-  { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
+  { ver:'v1.0.20260416.0731', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
+  { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
+  { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
+  { ver:'v1.0.20260416.0702', items:['修正代表英雄設定後重新整理會消失的問題','技能升級書說明文字修正'] },
+  { ver:'v1.0.20260416.0653', items:['修正加好友和各種提示訊息完全沒有反應的問題'] },
+  { ver:'v1.0.20260416.0047', items:['修正打開好友面板時音樂重新播放的問題','修正好友面板有時打不開的問題'] },
+  { ver:'v1.0.20260416.0035', items:['音樂開關新增重置功能：關掉再打開會自動播放當前場景的正確音樂'] },
+  { ver:'v1.0.20260416.0030', items:['修正暈眩獎勵對BOSS無效的問題','修正舞台聚光燈嘲諷效果沒有持續2回合','改善小劇團員成為攻擊目標的機率'] },
+  { ver:'v1.0.20260416.0001', items:['修正好友面板和代表英雄視窗的關閉按鈕失效'] },
+  { ver:'v1.0.20260415.2302', items:['新增：遊戲更新時自動跳出更新內容說明視窗'] },
+  { ver:'v1.0.20260415.2157', items:['修正受到減傷效果時傷害最低為1點，不會變成0'] },
+  { ver:'v1.0.20260415.2108', items:['新增好友系統：設定代表英雄、好友名單、邀請好友英雄參戰'] },
+  { ver:'v1.0.20260415.2042', items:['優化圖片讀取速度'] },
+  { ver:'v1.0.20260415.2028', items:['修正小怪出題時，卡片無法使用或賣出的問題'] },
+  { ver:'v1.0.20260415.2020', items:['修正換題庫後可以再次選擇相同科目'] },
+  { ver:'v1.0.20260415.1950', items:['修正答題獎勵選擇極限爆發後，全隊都爆發的問題'] },
+  { ver:'v1.0.20260415.1942', items:['答題獎勵的極限爆發選擇視窗現在會顯示技能名稱和效果'] },
+  { ver:'v1.0.20260415.1855', items:['小怪戰鬥新增答對答錯音效','小怪答對後會有有趣的反應對白','答題獎勵可以保留至下回合'] },
+  { ver:'v1.0.20260415.2018', items:['極限爆發不再被封印狀態阻止'] },
 ];
 
 
@@ -27592,8 +27717,13 @@ const GAME_CHANGELOG = [
 
 
 
+
+
+
+
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0702';
+  const CURRENT_VERSION = 'v1.0.20260416.0731';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -27612,7 +27742,7 @@ function _showChangelogModal(oldVer, newVer){
   if(document.getElementById('_changelog-modal')) return;
 
   // 收集最近10筆更新內容
-  const _logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []).slice(0,10);
+  const _logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []).slice(0,20);
   let _logHTML = '';
   _logs.forEach((entry, i) => {
     const isNew = entry.ver === newVer;
