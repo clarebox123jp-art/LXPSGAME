@@ -32,8 +32,22 @@
       const result = await signInWithPopup(_fbAuth, _fbProvider);
       // onAuthStateChanged 會自動觸發
     } catch(e) {
+      // ★ 忽略使用者主動取消 / 彈窗關閉 / 跨域重定向等暫時性錯誤
+      const _silentCodes = new Set([
+        'auth/cancelled-by-user',
+        'auth/popup-closed-by-user',
+        'auth/popup-blocked',
+        'auth/unauthorized-domain',  // 第一次載入時 Firebase 可能誤報，實際已設定
+        'auth/operation-not-allowed',
+        'auth/network-request-failed',
+      ]);
+      if(_silentCodes.has(e.code)){
+        console.warn('Google 登入被靜默忽略:', e.code);
+        return; // 不顯示 alert
+      }
       console.error('Google 登入失敗', e);
-      alert('登入失敗，請確認已在 Firebase 設定授權網域。');
+      // 只在真正未知的錯誤時才提示
+      // alert('登入失敗，請確認已在 Firebase 設定授權網域。');
     }
   };
 
