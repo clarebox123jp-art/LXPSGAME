@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0030</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0035</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -17381,15 +17381,61 @@ function _customConfirmCancel() {
 }
 
 // ====== CONTROL BAR ======
+function _detectCurrentBgm(){
+  // 根據當前可見場景偵測應播放的 BGM
+  const isVisible = id => {
+    const el = document.getElementById(id);
+    return el && el.style.display !== 'none' && el.style.display !== '';
+  };
+  // BOSS 戰進行中
+  if(typeof G !== 'undefined' && G && G.p2 && G.p2.length && isVisible('gc')){
+    if(_curBgm && _curBgm.includes('boss')) return _curBgm;
+    if(_curBgm && _curBgm.includes('battle')) return _curBgm;
+    if(typeof _adventureMode !== 'undefined' && _adventureMode) return 'bgm-adv-scene';
+    return null; // 戰鬥中維持現狀
+  }
+  // 冒險選關頁
+  if(isVisible('adventure-overlay')) return 'bgm-menu-01';
+  // 超商
+  const shopEl = document.getElementById('shop-overlay');
+  if(shopEl && shopEl.style.display !== 'none') return 'bgm-shop';
+  // 選角頁
+  if(isVisible('hero-pick-overlay')) return 'bgm-menu-02';
+  // 首頁（gc 隱藏中）
+  if(!isVisible('gc')) return 'bgm-menu-02';
+  return _curBgm; // 其他情況維持現狀
+}
+
 function ctrlToggleBgm(){
-  _bgmMuted=!_bgmMuted;
-  const btn=document.getElementById('ctrl-bgm');
-  // Update icon text node only (don't destroy the .ctrl-tip span)
-  btn.childNodes[0].textContent=_bgmMuted?'🔇':'🎵';
-  btn.querySelector('.ctrl-tip').textContent=_bgmMuted?'音樂（已靜音）':'音樂 開/關';
-  btn.classList.toggle('muted',_bgmMuted);
-  const el=_curBgm?document.getElementById(_curBgm):null;
-  if(el) el.volume=_bgmMuted?0:BGM_VOLUME;
+  _bgmMuted = !_bgmMuted;
+  const btn = document.getElementById('ctrl-bgm');
+  btn.childNodes[0].textContent = _bgmMuted ? '🔇' : '🎵';
+  btn.querySelector('.ctrl-tip').textContent = _bgmMuted ? '音樂（已靜音）' : '音樂 開/關';
+  btn.classList.toggle('muted', _bgmMuted);
+
+  if(_bgmMuted){
+    // 靜音：停止所有 BGM
+    document.querySelectorAll('audio[id^="bgm"]').forEach(el => {
+      el.volume = 0;
+      el._wasMuted = true;
+    });
+  } else {
+    // 恢復：偵測當前場景並播放正確的 BGM
+    document.querySelectorAll('audio[id^="bgm"]').forEach(el => {
+      el.volume = 0;
+      el._wasMuted = false;
+    });
+    const targetBgm = _detectCurrentBgm();
+    if(targetBgm){
+      // 強制重播正確 BGM
+      try{
+        bgmStop();
+        setTimeout(() => {
+          try{ bgmPlay(targetBgm); }catch(e){}
+        }, 150);
+      }catch(e){}
+    }
+  }
 }
 function ctrlToggleSfx(){
   _sfxMuted=!_sfxMuted;
@@ -27472,6 +27518,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260416.0035', items:['BGM開關按鈕新增重置功能：關閉後再打開，自動偵測當前場景並播放正確的背景音樂'] },
   { ver:'v1.0.20260416.0030', items:['修復暈眩獎勵對BOSS無效：_realAiAct加入狀態檢查，BOSS暈眩後確實跳過行動','修復嘲諷（舞台聚光燈）不持續2回合：改由tickStatus控制到期，優先級最高','小劇團員天賦：加入加權隨機選目標系統，確保成為目標機率+40%在所有情境生效'] },
   { ver:'v1.0.20260416.0001', items:['修復加好友按鈕無反應（加入try/catch、Firebase初始化防呆、錯誤訊息顯示）','修復好友面板和代表英雄視窗關閉按鈕失效'] },
   { ver:'v1.0.20260415.2352', items:['修復加好友按鈕無反應：加入try/catch錯誤處理、Firebase初始化防呆、按鈕防重複點擊','代表英雄欄放大80%並貼緊返回首頁按鈕右邊'] },
@@ -27481,7 +27528,6 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260415.2152', items:['好友英雄視窗關閉按鈕修復','好友英雄視窗PC版放大100%可捲動'] },
   { ver:'v1.0.20260415.2148', items:['暱稱設定視窗PC版放大','帳號名稱列放大','代表英雄欄位移至返回首頁右邊'] },
   { ver:'v1.0.20260415.2143', items:['暱稱改為詞庫組合（46形容詞×65名詞），加入隨機功能'] },
-  { ver:'v1.0.20260415.2135', items:['暱稱加入兒童保護：改為指定詞庫組合，防止不雅詞'] },
 ];
 
 
@@ -27489,8 +27535,9 @@ const GAME_CHANGELOG = [
 
 
 
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0030';
+  const CURRENT_VERSION = 'v1.0.20260416.0035';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
