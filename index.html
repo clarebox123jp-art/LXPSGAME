@@ -3455,7 +3455,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2157</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260415.2302</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -27373,74 +27373,105 @@ window._advSystemReady = true;
 // ══════════════════════════════════════════════════════
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// ★ 更新日誌（最新在前，只保留最近10筆）
+// ══════════════════════════════════════════════════════
+const GAME_CHANGELOG = [
+  { ver:'v1.0.20260415.2302', items:['更新日誌視窗：自動顯示最近10次修正內容，版本更新時自動觸發','版本維護改為自動化：新增自動更新changelog腳本'] },
+  { ver:'v1.0.20260415.2157', items:['減傷效果最低傷害保底為1（無敵/護盾/閃避除外）'] },
+  { ver:'v1.0.20260415.2152', items:['好友英雄視窗關閉按鈕修復','好友英雄視窗PC版放大100%可捲動'] },
+  { ver:'v1.0.20260415.2148', items:['暱稱設定視窗PC版放大','帳號名稱列放大','代表英雄欄位移至返回首頁右邊'] },
+  { ver:'v1.0.20260415.2143', items:['暱稱改為詞庫組合（46形容詞×65名詞），加入隨機功能'] },
+  { ver:'v1.0.20260415.2135', items:['暱稱加入兒童保護：改為指定詞庫組合，防止不雅詞'] },
+  { ver:'v1.0.20260415.2131', items:['暱稱系統：可設定暱稱，儲存至Firebase及本地，好友看到暱稱'] },
+  { ver:'v1.0.20260415.2108', items:['好友系統功能1-4上線：代表英雄、好友名單、選角頁邀請、好友英雄完整參戰'] },
+  { ver:'v1.0.20260415.2042', items:['圖片讀取加速：DNS預連線、關鍵圖片預載、背景預載所有角色圖'] },
+  { ver:'v1.0.20260415.2035', items:['全面代碼審查：修復Firebase切換帳號alert、移除debug alert'] },
+];
+
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260415.2157';
+  const CURRENT_VERSION = 'v1.0.20260415.2302';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
     if(stored && stored !== CURRENT_VERSION){
-      // 玩家有舊版快取，立即彈出提醒
-      _showVersionUpdateModal(stored, CURRENT_VERSION);
+      // 玩家有舊版快取，顯示更新日誌後再提示重新整理
+      _showChangelogModal(stored, CURRENT_VERSION);
     } else {
-      // 寫入（或更新）當前版本號
       localStorage.setItem(STORAGE_KEY, CURRENT_VERSION);
     }
   }catch(e){
-    // localStorage 不可用時跳過
     console.warn('[版本檢查] localStorage 不可用');
   }
 })();
 
-function _showVersionUpdateModal(oldVer, newVer){
-  // 已有視窗時不重複
-  if(document.getElementById('_ver-update-modal')) return;
+function _showChangelogModal(oldVer, newVer){
+  if(document.getElementById('_changelog-modal')) return;
+
+  // 收集最近10筆更新內容
+  const _logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []).slice(0,10);
+  let _logHTML = '';
+  _logs.forEach((entry, i) => {
+    const isNew = entry.ver === newVer;
+    _logHTML +=
+      '<div style="margin-bottom:10px;padding:10px 14px;border-radius:10px;text-align:left;'
+      + 'background:' + (isNew ? 'rgba(80,200,80,0.1)' : 'rgba(255,255,255,0.03)') + ';'
+      + 'border:1px solid ' + (isNew ? 'rgba(80,200,80,0.4)' : 'rgba(255,255,255,0.07)') + ';">'
+      + '<div style="font-size:clamp(11px,1.2vw,15px);color:' + (isNew ? '#66ff88' : '#888') + ';font-weight:700;margin-bottom:4px;">'
+      + (isNew ? '🆕 ' : '') + entry.ver + '</div>'
+      + entry.items.map(item =>
+          '<div style="font-size:clamp(13px,1.4vw,18px);color:' + (isNew ? '#ddffdd' : '#bbb') + ';line-height:1.6;padding-left:8px;">・' + item + '</div>'
+        ).join('')
+      + '</div>';
+  });
 
   const modal = document.createElement('div');
-  modal.id = '_ver-update-modal';
+  modal.id = '_changelog-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:2147483646;'
-    + 'background:rgba(0,0,8,0.95);'
-    + 'display:flex;align-items:center;justify-content:center;'
+    + 'background:rgba(0,0,8,0.95);display:flex;align-items:flex-start;justify-content:center;'
+    + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 16px;'
     + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
 
   modal.innerHTML =
     '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);'
-    + 'border:2.5px solid rgba(255,180,50,0.8);border-radius:24px;'
-    + 'padding:clamp(20px,4vw,48px) clamp(24px,5vw,60px);'
-    + 'max-width:min(96vw,640px);text-align:center;'
-    + 'box-shadow:0 0 80px rgba(255,150,0,0.4);">'
-    + '<div style="font-size:clamp(44px,6vw,72px);margin-bottom:12px;">🔄</div>'
-    + '<div style="font-size:clamp(22px,2.8vw,36px);font-weight:900;color:#ffcc44;margin-bottom:10px;">'
-    +   '發現新版本！'
+    + 'border:2.5px solid rgba(80,200,120,0.7);border-radius:24px;'
+    + 'padding:clamp(24px,3vw,44px) clamp(24px,4vw,52px);'
+    + 'max-width:min(96vw,700px);width:100%;margin:auto;'
+    + 'box-shadow:0 0 60px rgba(0,200,80,0.25);">'
+    // 標題
+    + '<div style="text-align:center;margin-bottom:6px;">'
+    + '<div style="font-size:clamp(36px,5vw,60px);">🎉</div>'
+    + '<div style="font-size:clamp(20px,2.5vw,34px);font-weight:900;color:#66ff88;margin-bottom:4px;">遊戲已更新！</div>'
+    + '<div style="font-size:clamp(12px,1.3vw,17px);color:#888;margin-bottom:16px;">'
+    +   oldVer + '&nbsp;→&nbsp;<span style="color:#44ff88;">' + newVer + '</span>'
     + '</div>'
-    + '<div style="font-size:clamp(14px,1.8vw,22px);color:#ccc;line-height:1.7;margin-bottom:10px;">'
-    +   '你的瀏覽器可能使用了舊版快取。<br>'
-    +   '請重新整理頁面以獲得最新版本。'
     + '</div>'
-    + '<div style="font-size:clamp(11px,1.3vw,16px);color:#888;margin-bottom:24px;">'
-    +   '目前: <span style="color:#ff9944;">' + oldVer + '</span>'
-    +   '&nbsp;→&nbsp;最新: <span style="color:#44ff88;">' + newVer + '</span>'
-    + '</div>'
+    // 更新日誌
+    + '<div style="font-size:clamp(14px,1.5vw,20px);font-weight:800;color:#aaddff;margin-bottom:10px;">📋 最近更新內容</div>'
+    + '<div style="max-height:clamp(280px,40vh,480px);overflow-y:auto;-webkit-overflow-scrolling:touch;'
+    + 'padding-right:4px;margin-bottom:18px;">' + _logHTML + '</div>'
+    // 按鈕
+    + '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;">'
     + '<button onclick="_doVersionRefresh()" '
-    +   'style="padding:clamp(10px,1.5vw,16px) clamp(28px,4vw,56px);'
-    +   'font-size:clamp(16px,2vw,28px);font-weight:900;'
-    +   'background:linear-gradient(135deg,rgba(255,180,0,0.3),rgba(200,120,0,0.3));'
-    +   'border:2.5px solid #ffcc44;color:#ffee88;'
-    +   'border-radius:12px;cursor:pointer;font-family:inherit;'
-    +   'box-shadow:0 0 30px rgba(255,180,0,0.3);">'
-    +   '🔄 立即重新整理'
-    + '</button>'
-    + '<div style="margin-top:14px;">'
-    + '<button onclick="_verModalClose()" '
-    +   'style="font-size:clamp(12px,1.5vw,18px);color:#888;background:none;'
+    +   'style="width:100%;padding:clamp(12px,1.5vw,18px);font-size:clamp(16px,2vw,26px);font-weight:900;'
+    +   'background:linear-gradient(135deg,rgba(0,200,80,0.3),rgba(0,150,60,0.3));'
+    +   'border:2.5px solid #44ff88;color:#aaffcc;border-radius:14px;cursor:pointer;font-family:inherit;'
+    +   'box-shadow:0 0 24px rgba(0,200,80,0.3);">🔄 重新整理以套用更新</button>'
+    + '<button onclick="_changelogClose()" '
+    +   'style="font-size:clamp(12px,1.3vw,17px);color:#888;background:none;'
     +   'border:none;cursor:pointer;font-family:inherit;text-decoration:underline;">'
-    +   '略過，繼續遊玩舊版'
+    +   '略過，繼續遊玩目前版本'
     + '</button>'
-    + '</div>'
-    + '</div>';
+    + '</div></div>';
 
   document.body.appendChild(modal);
-  // 更新 localStorage 為新版（讓「略過」後不再重複出現）
   try{ localStorage.setItem('lxps_game_version', newVer); }catch(e){}
+}
+
+function _changelogClose(){
+  var e = document.getElementById('_changelog-modal');
+  if(e) e.remove();
 }
 
 function _verModalClose(){
