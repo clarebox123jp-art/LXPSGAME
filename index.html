@@ -3189,26 +3189,6 @@ body {
 <div id="_gc_wrapper"><div id="gc">
   <div id="adv-battle-bg"></div>
   <div id="fade-overlay"></div>
-  <!-- ★ 冒險模式戰鬥教學按鈕（左下角，直式） -->
-  <!-- ★ 當機回溯按鈕（左下角，教學按鈕上方） -->
-  <button id="adv-rollback-btn" onclick="playSfx('sfx-sel',0.6);_showRollbackMenu()"
-    style="display:none;position:fixed;left:8px;bottom:148px;z-index:99999;
-      writing-mode:vertical-rl;text-orientation:mixed;
-      padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
-      background:rgba(40,10,10,0.88);border:1.5px solid rgba(255,140,50,0.7);
-      color:#ffaa44;border-radius:10px;cursor:pointer;
-      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-      box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
-      transition:border-color 0.2s,background 0.2s;">🔄回溯</button>
-  <button id="adv-tut-btn" onclick="playSfx('sfx-gentle',0.5);_advShowTutBtn()"
-    style="display:none;position:absolute;left:8px;bottom:8px;z-index:300;
-      writing-mode:vertical-rl;text-orientation:mixed;
-      padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
-      background:rgba(10,20,50,0.82);border:1.5px solid rgba(100,160,255,0.5);
-      color:#88ccff;border-radius:10px;cursor:pointer;
-      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-      box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
-      transition:border-color 0.2s,background 0.2s;">❓教學</button>
   <div id="battle-start-overlay"><div class="bs-text">戰鬥開始!</div></div>
   <div id="field-announce"><span class="fa-icon" id="fa-icon"></span><span class="fa-name" id="fa-name"></span><span class="fa-desc" id="fa-desc"></span></div>
   <div id="field">
@@ -26508,6 +26488,29 @@ window._advSystemReady = true;
     </div>
   </div>
 </div><!-- gc_wrapper -->
+
+<!-- ★ 回溯＋教學按鈕：移出 #gc，免受 transform/isolation 影響，確保點擊有效 -->
+<button id="adv-rollback-btn" onclick="playSfx('sfx-sel',0.6);_showRollbackMenu()"
+  style="display:none;position:fixed;left:8px;bottom:148px;z-index:2147483647;
+    writing-mode:vertical-rl;text-orientation:mixed;
+    padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
+    background:rgba(40,10,10,0.88);border:1.5px solid rgba(255,140,50,0.7);
+    color:#ffaa44;border-radius:10px;cursor:pointer;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
+    pointer-events:auto !important;
+    transition:border-color 0.2s,background 0.2s;">🔄回溯</button>
+<button id="adv-tut-btn" onclick="playSfx('sfx-gentle',0.5);_advShowTutBtn()"
+  style="display:none;position:fixed;left:8px;bottom:8px;z-index:2147483647;
+    writing-mode:vertical-rl;text-orientation:mixed;
+    padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
+    background:rgba(10,20,50,0.82);border:1.5px solid rgba(100,160,255,0.5);
+    color:#88ccff;border-radius:10px;cursor:pointer;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
+    pointer-events:auto !important;
+    pointer-events:auto !important;
+    transition:border-color 0.2s,background 0.2s;">❓教學</button>
 
 <script>
 // ★★★ 手機/平板動態縮放引擎 ★★★
