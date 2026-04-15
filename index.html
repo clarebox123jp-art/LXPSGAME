@@ -3521,14 +3521,14 @@ body {
     <!-- 主體：左=商品 右=背包 -->
     <div style="position:relative;z-index:1;display:flex;height:calc(100% - 90px);gap:0;">
       <!-- 左側：商品列表 -->
-      <div style="flex:1;padding:20px 24px;overflow-y:auto;border-right:1.5px solid rgba(255,180,50,0.25);">
+      <div id="shop-main" style="flex:1;padding:20px 24px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-right:1.5px solid rgba(255,180,50,0.25);">
         <div style="font-size:42px;font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
         <div id="shop-products-list"></div>
         <!-- 分隔線：可賣出的物品 -->
         <div id="shop-sell-section" style="margin-top:24px;"></div>
       </div>
       <!-- 右側：玩家背包 -->
-      <div style="width:440px;padding:20px 20px;overflow-y:auto;background:rgba(0,0,0,0.2);">
+      <div id="shop-bag-scroll" style="width:440px;padding:20px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(0,0,0,0.2);">
         <div style="font-size:42px;font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
         <div id="shop-bag-panel"></div>
       </div>
@@ -3557,7 +3557,7 @@ body {
         border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>
     </div>
     <!-- 背包格子 -->
-    <div style="position:relative;z-index:1;padding:24px 32px;overflow-y:auto;height:calc(100% - 90px);">
+    <div id="backpack-main" style="position:relative;z-index:1;padding:24px 32px;overflow-y:auto;-webkit-overflow-scrolling:touch;height:calc(100% - 90px);">
       <div id="backpack-grid" style="display:flex;flex-direction:column;gap:12px;"></div>
     </div>
   </div>
@@ -10148,7 +10148,7 @@ function _showPassivePrompt(opts){
     'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;',
     'pointer-events:auto;',
   ].join('');
-    if(window.innerWidth > 1180){ pm.style.width='min(96vw,700px)'; pm.style.fontSize='185%'; }
+    if(window.innerWidth > 1180){ ov.style.width='min(96vw,700px)'; ov.style.fontSize='185%'; }
 
   // 倒數計時條
   const countdown = document.createElement('div');
@@ -18236,7 +18236,7 @@ window.addEventListener('pagehide', function(e){
   var _scrollableIds = [
     'hero-page-grid', 'monster-page-content', 'hero-detail-box',
     'hero-pick-arena-inner', 'skill-replace-overlay', 'backpack-main',
-    'shop-main', 'adv-left-panel', 'adv-right-panel',
+    'shop-main', 'shop-bag-scroll', 'adv-left-panel', 'adv-right-panel',
     // ★ 以下是彈出視窗（需要上下捲動）
     'game-info-modal', 'preset-team-panel', 'adv-crash-recovery-box',
     'rollback-reinforce-ov', 'bag-hero-select', 'upgrade-confirm-box',
@@ -21907,7 +21907,7 @@ function _checkShowTutorial(ctx) {
     'box-shadow:0 0 60px rgba(60,140,255,0.5);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
   ].join('');
-    if(window.innerWidth > 1180){ box.style.width='min(96vw,900px)'; box.style.fontSize='185%'; }
+    if(window.innerWidth > 1180){ pm.style.width='min(96vw,900px)'; pm.style.fontSize='185%'; }
   const ctxLabel = ctx === 'mini' ? '小怪戰鬥' : '鬥技場戰鬥';
   pm.innerHTML = `
     <div style="font-size:60px;margin-bottom:12px;">📖</div>
@@ -22748,7 +22748,7 @@ function _showRollbackMenu() {
     'box-shadow:0 0 40px rgba(255,120,0,0.35);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
-    if(window.innerWidth > 1180){ box.style.width='min(88vw,700px)'; box.style.fontSize='180%'; }
+    if(window.innerWidth > 1180){ menu.style.width='min(88vw,700px)'; menu.style.fontSize='180%'; }
 
   // 是否有戰鬥快照
   let snapRound = 0;
@@ -25368,7 +25368,13 @@ function _advMiniQuizAsk(onDone) {
   qOv.classList.add('show');
 
   // ★ 首次問答教學：第一次出現時引導玩家
-  if(!window._miniQuizTutDone){
+  // 只在「_tutorialMiniDone 已為 true（已問過要不要教學且同意）」或
+  // 「正在進行教學流程（_tutorialActive）」時才出現
+  // 若尚未問過要不要教學（_tutorialMiniDone = false），跳過此教學
+  //（等 _checkShowTutorial 先問完再說）
+  const _shouldShowQuizTut = (_tutorialMiniDone || window._tutorialActive)
+                              && !window._miniQuizTutDone;
+  if(_shouldShowQuizTut){
     window._miniQuizTutDone = true;
     setTimeout(() => _advMiniQuizTutorial(), 600);
   }
