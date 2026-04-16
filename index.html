@@ -3262,7 +3262,9 @@ body {
 <audio id="sfx-battle-start" preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E9%96%8B%E5%A7%8B%E9%80%B2%E6%94%BB.mp3"></audio>
 <audio id="sfx-sel"      preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E9%81%B8%E6%93%87%E4%B8%AD.mp3"></audio>
 <audio id="sfx-burst"    preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
-<audio id="bgm-lose" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
+<audio id="bgm-chest" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B6%E7%AE%B1%E6%80%AABGM.mp3"></audio>
+<audio id="bgm-devil" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94BGM.m4a"></audio>
+<audio id="bgm-lose"  preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
 <audio id="sfx-burst-ready" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%A5%B5%E9%99%90%E7%88%86%E7%99%BC%E5%87%BA%E7%8F%BE.mp3"></audio>
 <audio id="sfx-revive"      preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E5%BE%A9%E6%B4%BB.mp3"></audio>
 <audio id="sfx-crit"        preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E7%88%86%E6%93%8A.mp3"></audio>
@@ -3457,7 +3459,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1850</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2208</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5399,7 +5401,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   '光法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%85%89%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
@@ -5448,7 +5450,9 @@ const HERO_IMGS = {
   '偷鳥蛋的鳥人哈維': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E9%B3%A5%E8%9B%8B%E7%9A%84%E9%B3%A5%E4%BA%BA%E5%93%88%E7%B6%AD.png',
   '偷竹筍的哥布林': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%81%B7%E7%AB%B9%E7%AD%8D%E7%9A%84%E5%93%A5%E5%B8%83%E6%9E%97.png',
   '偷喝茶的史萊姆': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%84%9B%E5%96%9D%E8%8C%B6%E7%9A%84%E5%8F%B2%E8%90%8A%E5%A7%86.png',
-  '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png'
+  '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png',
+  '寶箱怪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B6%E7%AE%B1%E6%80%AA.png',
+  '小惡魔': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94.png',
 };
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。每升1級命中率提升10%，Lv9時能量消耗-1。'}},
@@ -5513,6 +5517,14 @@ const HERO_DB = {
 '偷竹筍的哥布林':{hp:45,atk:10,sp:9,spd:8,exp:7,
   s1:{n:'渾身一擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'傾盡全力重擊1名對手，造成攻擊值200%的傷害，且本技能爆擊率額外提升50%。'},
   s2:{n:'土坑陷阱',c:2,d:'使1名對手下回合最後行動',fd:'快速在腳下挖個土坑，使1名對手陷入「緩速」並在下回合最後才能行動。'}
+},
+'寶箱怪':{hp:99,atk:1,sp:1,spd:50,exp:15,
+  s1:{n:'鎖起來',c:2,d:'使自己無敵1回合',fd:'用神秘的鎖頭將自己鎖死，進入完全無敵狀態1回合，期間不受任何傷害。'},
+  s2:{n:'箱底抹油',c:1,d:'100%逃跑，每回合30%機率觸發',fd:'(被動)每回合有30%機率自動逃跑，成功逃脫後從戰場移除，不給予任何獎勵。',p:true}
+},
+'小惡魔':{hp:50,atk:25,sp:25,spd:25,exp:15,
+  s1:{n:'弄壞你的玩具',c:3,d:'使1名對手HP剩10%，無視有利狀態',fd:'用魔爪弄壞對手最珍視的東西，使1名目標HP強制降至最大HP的10%，無視所有有利狀態。'},
+  s2:{n:'讓你調皮',c:2,d:'使1名對手強制普攻自己隊友',fd:'施加惡作劇詛咒，使1名對手在下回合強制普通攻擊自己的一名隊友，無視目標選擇。'}
 },
 '偷喝茶的史萊姆':{hp:30,atk:5,sp:14,spd:3,exp:5,
   s1:{n:'舔舔治療',c:1,d:'依特技恢復1名友方HP',fd:'用溫熱的茶汁舔癒1名友方，恢復等同特技值的HP。'},
@@ -5892,7 +5904,10 @@ const HERO_BIO = {
   '偷摘花的頑皮妖精':{ role:'河堤花叢間的搗蛋精靈', trait:'頑皮好動，喜歡惡作劇', hobby:'摘花插頭，戲弄路人', quote:'「哈！這朵最漂亮，我先拿了！」' },
   '偷鳥蛋的鳥人哈維':{ role:'指南路旁的羽翼盜蛋怪客', hobby:'收集各種奇怪的蛋，模仿鳥叫', trait:'莽撞粗線條，行事不計後果', quote:'「嘎！這顆蛋看起來最特別，帶走！」' },
   '偷竹筍的哥布林':{ role:'樟湖步道竹林的貪吃搗亂鬼', trait:'貪吃好動，難以滿足', hobby:'挖竹筍，囤積食物', quote:'「竹筍！竹筍！給我多來幾根！」' },
-  '偷喝茶的史萊姆':{ role:'茶園水溝邊的茶色黏液怪', trait:'無聲無息，嗜茶如命', hobby:'滲入茶壺，品茶悠哉', quote:'（咕嚕咕嚕……又偷喝了一壺好茶……）' },};
+  '偷喝茶的史萊姆':{ role:'茶園水溝邊的茶色黏液怪', trait:'無聲無息，嗜茶如命', hobby:'滲入茶壺，品茶悠哉', quote:'（咕嚕咕嚕……又偷喝了一壺好茶……）' },
+  '寶箱怪':          { role:'神出鬼沒的稀有寶箱', trait:'超級膽小，見人就跑', hobby:'收集金幣，躲在暗處', quote:'「才、才不要給你！—— 咻！（逃）」' },
+  '小惡魔':          { role:'從異界竄入的淘氣惡魔', trait:'促狹搗蛋，破壞欲強', hobby:'惡作劇，把玩具弄壞', quote:'「嘿嘿嘿！讓你們亂成一團才好玩！」' },
+};
 
 const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
@@ -6079,7 +6094,7 @@ function addStatus(h,t,dur=1){
   renderCard(h);
 
   // 大力士天賦：受到不利狀態時40%轉化成怒火1回合，攻擊+25%
-  if(h.name==='大力士' && h.curHp>0 && BAD_STATUS.includes(t) && !hasStatus(h,'confused') && Math.random()<0.4){
+  if(h.name==='大力士' && h.curHp>0 && BAD_STATUS.includes(t) && !hasStatus(h,'confused') && Math.random()<Math.min(1,0.40+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[h.name])||0)*0.05)){
     const lastIdx=h.status.findIndex(s=>s.type===t);
     if(lastIdx!==-1) h.status.splice(lastIdx,1);
     const rageAtk=Math.ceil(h.atk*0.25);
@@ -6126,7 +6141,7 @@ function addStatus(h,t,dur=1){
   if(BAD_STATUS.includes(t) && h.curHp>0){
     const _opp=h.side==='p1'?'p2':'p1';
     const _violinist=G[h.side].find(x=>x!==h&&x.curHp>0&&x.name==='弦樂團員'&&!hasStatus(x,'confused'));
-    if(_violinist && Math.random()<0.5){
+    if(_violinist && Math.random()<Math.min(1,0.5+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[_violinist.name])||0)*0.05)){
       const _lastIdx=h.status.map(s=>s.type).lastIndexOf(t);
       if(_lastIdx!==-1){ h.status.splice(_lastIdx,1); }
       sfxPassive(_violinist,0.7,'弦樂團員天賦');
@@ -7713,6 +7728,8 @@ const MONSTER_LORE = {
   '偷鳥蛋的鳥人哈維': '流竄在樟湖步道樹梢間的鳥翼盜賊，以偷竊鳥巢中的蛋為樂，行動敏捷如風，是步道上最難纏的小麻煩。',
   '偷竹筍的哥布林': '躲在貓空竹林深處的貪吃哥布林，把新鮮竹筍視為人間美味，每天偷挖農家竹筍，氣得茶農阿伯跳腳。',
   '偷喝茶的史萊姆': '在貓空茶園水溝邊游蕩的茶色史萊姆，因為吸收了太多茶葉精華而呈現翠綠色，最愛偷喝剛泡好的熱茶。',
+  '寶箱怪': '極為罕見的神秘寶箱生物，據說體內裝滿了財寶。速度奇快，膽子極小，遇到危險就立刻逃跑。務必在牠逃跑前將其擊倒！',
+  '小惡魔': '從異次元偶然竄入人間的小型惡魔，無窮盡的破壞力讓所有人頭痛。喜歡讓敵人互相攻擊，從中作樂。',
 };
 
 
@@ -10947,9 +10964,9 @@ function doDmg(target, rawDmg, opts={}){
   }
   // 小劇團員天賦：受傷時20%機率轉為治療
   if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused')){
-    // ★ 受傷轉治療：基礎20%，技能升級每級+5%
-    const _skLvBonus2 = (target._skLv && target._skLv.s1 ? target._skLv.s1 * 0.05 : 0);
-    const _convertChance = 0.20 + _skLvBonus2;
+    // ★ 受傷轉治療：基礎20%，天賦每級+5%（每10等級+5%）
+    const _traitLvConvert = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[target.name]) || 0;
+    const _convertChance = 0.20 + _traitLvConvert * 0.05;
     if(Math.random() < _convertChance){
       doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
       showPopup(target,'🎭轉化！','energy');
@@ -10984,7 +11001,7 @@ function doDmg(target, rawDmg, opts={}){
   // 土屬性：受傷-2
   { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
   // 聖騎士天賦：40%格擋，減少50%受傷
-  if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<0.6){
+  if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.04)){
     rawDmg=Math.max(1,Math.ceil(rawDmg*0.5));
     showShieldVFX(target,'block');
     log(`🛡️ [聖騎士] 天賦：神聖格擋！傷害減半！`);
@@ -11153,7 +11170,7 @@ function doDmg(target, rawDmg, opts={}){
     clearStatus(target,['sleep']); log(`[${target.name}] 受到傷害，提早從睡眠中甦醒！`); renderCard(target);
   }
   // 武鬥家天賦：受到致命傷害時25%不倒下，HP恢復20%
-  if(target.curHp===0 && target.name==='武鬥家' && !hasStatus(target,'confused') && Math.random()<0.3){
+  if(target.curHp===0 && target.name==='武鬥家' && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.30+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.04)){
     const reviveHp=Math.max(1,Math.floor(target.hp*0.2));
     target.curHp=reviveHp;
     log(`👊 [武鬥家] 天賦：鋼鐵意志！致命傷害中倖存！HP恢復${reviveHp}！`);
@@ -11572,7 +11589,7 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   if(target && target.curHp>0 && dmg>0 && !opts.noInuTrait){
     const inuAllies = G[target.side].filter(h=>h!==target&&h.curHp>0&&h.name==='小力'&&!hasStatus(h,'confused'));
     inuAllies.forEach(inu=>{
-      if(Math.random()<0.35){
+      if(Math.random()<Math.min(1,0.35+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[inu.name])||0)*0.05)){
         const healAmt=Math.max(1,Math.floor(inu.sp*(1+inu.sp*0.01)));
         doHeal(target,healAmt,{actor:inu,isHeal:true,noDice:true});
         log(`🐕 [小力] 天賦觸發！替 [${target.name}] 恢復 ${healAmt}HP！`);
@@ -11582,13 +11599,13 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   }
   // ── 吸血鬼天賦：造成傷害時回復50%傷害量HP ──
   if(a && a.name==='吸血鬼' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side && a.curHp>0 && !opts.isRebound){
-    const vamp=Math.ceil(dmg*0.5);
+    const _vTl=((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[a.name])||0); const vamp=Math.ceil(dmg*(0.5+_vTl*0.04));
     doHeal(a,vamp,{actor:a,noDice:true,noWarhorn:true,isHeal:true});
     log(`🦇 [吸血鬼] 天賦：嗜血！吸收 ${vamp} HP！`);
   }
 
   // ── 機械師天賦：受到傷害時20%觸電反擊 ──
-  if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<0.2){
+  if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<Math.min(1,0.20+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.05)){
     addStatus(a,'para',1);
     log(`⚙️ [機械師] 天賦：觸電反擊！[${a.name}] 麻痺1回合！`);
     bannerFX(target,'觸電反擊！','#aaff00',900);
@@ -11621,7 +11638,8 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     } else {
       // 舊的40%反擊邏輯
       const ctr2=Math.max(1,Math.floor(target.atk*0.5));
-      if(Math.random()<0.4){
+      const _wsTl=((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0);
+      if(Math.random()<Math.min(1,0.40+_wsTl*0.04)){
         log(`🗾 [武士] 天賦：武士反擊！對 [${a.name}] 造成 ${ctr2} 傷害！`);
         bannerFX(target,'武士反擊！','#ff9944',900);
         doDmg(a,ctr2,{actor:target,noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
@@ -11630,7 +11648,7 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   }
 
   // ── 陰陽師天賦：受到技能傷害時60%由式神代替承受 ──
-  if(target.name==='陰陽師' && !hasStatus(target,'confused') && opts.isSkill && old>0 && target.curHp<old && Math.random()<0.6 && !opts.isRebound){
+  if(target.name==='陰陽師' && !hasStatus(target,'confused') && opts.isSkill && old>0 && target.curHp<old && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.04) && !opts.isRebound){
     // 式神承受：恢復被扣除的HP（視為式神吸收了傷害）
     const restored=old-target.curHp;
     target.curHp=old;
@@ -12099,7 +12117,7 @@ function execAtk(actor, target, dmg, opts={}){
   // 籃球隊員天賦：友方普攻時50%暴擊+50%傷害
   let _finalDmg = dmg;
   const _bballLeader = actor.side ? G[actor.side].find(h=>h.curHp>0&&h.name==='籃球隊員'&&h!==actor) : null;
-  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<0.5){
+  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<Math.min(1,0.50+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[_bballLeader.name])||0)*0.05)){
     _finalDmg = Math.floor(_finalDmg * 1.5);
     showPopup(actor,'🏀暴擊！','energy');
     bannerFX(actor,'暴擊！','#ff8800',600);
@@ -12122,9 +12140,11 @@ function execAtk(actor, target, dmg, opts={}){
   const name=actor.name;
   // 天賦觸發標籤 helper（在 bannerFX 之外再加卡牌標籤）
   function _traitLabel(text){ showActionLabel(actor, '✦ '+text+'！'); }
+  // ★ 天賦等級：英雄每10級+1（Lv10/20/30/40/50 各+1，最高5）
+  const _tl = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[name]) || 0;
   // 劍士：30%再行動1次（★ 加計數器，最多連擊2次，防止無限鏈）
   actor._reActCount = actor._reActCount || 0;
-  if(name==='劍士' && Math.random()<0.3 && actor._reActCount < 2){
+  if(name==='劍士' && Math.random()<(0.30+_tl*0.04) && actor._reActCount < 2){
     actor._reActCount++;
     log(`⚔️ [劍士] 天賦：連擊！再行動1次！（第${actor._reActCount}連擊）`);
     _traitLabel('連擊');
@@ -12143,7 +12163,7 @@ function execAtk(actor, target, dmg, opts={}){
   actor._reActCount = 0; // 本回合連擊結束，重置計數
 
   // 祭司：60%恢復HP最低隊友25%HP
-  if(name==='祭司' && Math.random()<0.6 && target.curHp>0){
+  if(name==='祭司' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     const allies=G[actor.side].filter(h=>h.curHp>0);
     if(allies.length){
       const lowest=allies.sort((a,b)=>a.curHp/a.hp - b.curHp/b.hp)[0];
@@ -12156,7 +12176,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 火法師：60%消除目標有利狀態
-  if(name==='火法師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='火法師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     if(target.buffs.length>0){
       clearGoodBuffs(target);
       log(`🔥 [火法師] 天賦：業火焚燒！消除 [${target.name}] 有利狀態！`);
@@ -12166,7 +12186,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 冰法師：60%緩速1回合（速度-50%）
-  if(name==='冰法師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='冰法師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     if(!hasStatus(target,'traitSlow')){
       const orig=target.spd;
       target.spd=Math.max(1,Math.floor(target.spd*0.5));
@@ -12179,7 +12199,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 雷法師：60%對全體敵人造成等量傷害
-  if(name==='雷法師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='雷法師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     const foes=G[actor.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0&&h!==target);
     if(foes.length){
       log(`⚡ [雷法師] 天賦：連鎖電弧！對全體敵人造成 ${dmg} 傷害！`);
@@ -12190,7 +12210,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 光法師：60%失明1回合
-  if(name==='光法師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='光法師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     addStatus(target,'forecast',1);
     log(`☀️ [光法師] 天賦：炫目閃光！[${target.name}] 失明1回合！`);
     showActionLabel(actor,'☀ 炫目閃光 天賦');
@@ -12198,7 +12218,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 暗法師：60%封印1回合
-  if(name==='暗法師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='暗法師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     addStatus(target,'seal',1);
     log(`🌑 [暗法師] 天賦：黑暗咒縛！[${target.name}] 封印1回合！`);
     showActionLabel(actor,'🌑 黑暗咒縛 天賦');
@@ -12206,7 +12226,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 神射手：60%放置陷阱1回合（自己無法被普通攻擊）
-  if(name==='神射手' && Math.random()<0.6){
+  if(name==='神射手' && Math.random()<Math.min(1,0.60+_tl*0.04)){
     addBuff(actor,'trapShield',1);
     log(`🏹 [神射手] 天賦：佈下陷阱！1回合內無法被普通攻擊！`);
     showActionLabel(actor,'🏹 佈下陷阱 天賦');
@@ -12214,7 +12234,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 神偷：50%奪取裝備或有利狀態
-  if(name==='神偷' && Math.random()<0.5 && target.curHp>0){
+  if(name==='神偷' && Math.random()<Math.min(1,0.50+_tl*0.05) && target.curHp>0){
     // 優先奪有利狀態，否則奪裝備
     const stolenBuff = target.buffs && target.buffs.length ? target.buffs.splice(Math.floor(Math.random()*target.buffs.length),1)[0] : null;
     if(stolenBuff){
@@ -12239,7 +12259,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 刺客：60%中毒2回合
-  if(name==='刺客' && Math.random()<0.6 && target.curHp>0){
+  if(name==='刺客' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     addStatus(target,'poison',2);
     target._poisonAmt=Math.max(1,Math.floor(target.hp*0.1));
     log(`👁️ [刺客] 天賦：淬毒之刃！[${target.name}] 中毒2回合！`);
@@ -12248,7 +12268,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 吟遊詩人：60%恢復友方全體10%HP
-  if(name==='吟遊詩人' && Math.random()<0.6){
+  if(name==='吟遊詩人' && Math.random()<Math.min(1,0.60+_tl*0.04)){
     const allies=G[actor.side].filter(h=>h.curHp>0);
     allies.forEach(h=>{ doHeal(h,Math.max(1,Math.floor(h.hp*0.1)),{actor,isHeal:true,noDice:true}); });
     log(`🪕 [吟遊詩人] 天賦：鼓舞樂章！友方全體恢復10%HP！`);
@@ -12257,7 +12277,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 舞者：60%虛弱1回合（攻擊和特技-50%）
-  if(name==='舞者' && Math.random()<0.6 && target.curHp>0){
+  if(name==='舞者' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     if(!hasStatus(target,'traitWeak')){
       const origAtk=target.atk, origSp=target.sp;
       target.atk=Math.max(1,Math.floor(target.atk*0.5));
@@ -12271,7 +12291,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 警長：60%目標行動退到最後
-  if(name==='警長' && Math.random()<0.6 && target.curHp>0){
+  if(name==='警長' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     addStatus(target,'spddown',1);
     // 擊退行動順序：設為極低spd讓本回合排最後
     if(!target._pushBackSpd){ target._pushBackSpd=target.spd; }
@@ -12283,7 +12303,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 軍師：60%疑惑1回合（天賦失效）
-  if(name==='軍師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='軍師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     addStatus(target,'confused',1);
     log(`📜 [軍師] 天賦：迷惑戰術！[${target.name}] 疑惑1回合，天賦失效！`);
     showActionLabel(actor,'📜 迷惑戰術 天賦');
@@ -12291,7 +12311,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 學者：60%奪取對手1能量
-  if(name==='學者' && Math.random()<0.6 && target.curHp>0){
+  if(name==='學者' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     const oppSide=actor.side==='p1'?'p2':'p1';
     if(G.energy[oppSide]>0){
       G.energy[oppSide]=Math.max(0,G.energy[oppSide]-1);
@@ -12304,7 +12324,7 @@ function execAtk(actor, target, dmg, opts={}){
   }
 
   // 時空法師：60%使目標1回合內無法獲得治療和有利狀態
-  if(name==='時空法師' && Math.random()<0.6 && target.curHp>0){
+  if(name==='時空法師' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     addStatus(target,'noheal_curse',1);
     addStatus(target,'nosell',1);
     log(`⏳ [時空法師] 天賦：時間封印！[${target.name}] 1回合無法獲得治療和有利狀態！`);
@@ -12316,14 +12336,14 @@ function execAtk(actor, target, dmg, opts={}){
   // ── 注意：吸血鬼特質在 doDmg hook 中處理（見下方），此處不重複
 
   // 直笛團員：普攻時50%使目標狂亂1回合
-  if(name==='直笛團員' && Math.random()<0.5 && target.curHp>0){
+  if(name==='直笛團員' && Math.random()<Math.min(1,0.50+_tl*0.05) && target.curHp>0){
     addStatus(target,'berserk',1);
     _traitLabel('魔笛狂亂');
     log(`🎵 [直笛團員] 天賦：魔笛旋律！[${target.name}] 陷入狂亂1回合！`);
     bannerFX(target,'狂亂！','#ff55cc',900);
   }
   // 田徑隊員：行動時60%使未行動友方提前到下一個
-  if(name==='田徑隊員' && Math.random()<0.6){
+  if(name==='田徑隊員' && Math.random()<Math.min(1,0.60+_tl*0.04)){
     const _sortFn3=fieldHas('reverse')?(x,y)=>x.spd-y.spd:(x,y)=>y.spd-x.spd;
     const _nextAlly2=G[actor.side].filter(h=>h.curHp>0&&h!==actor&&!h.acted).sort(_sortFn3)[0];
     if(_nextAlly2){
@@ -12428,7 +12448,7 @@ function execSkill(a, sk, cost, stype){
     _activeSkLv = (_adventureMode && _heroSkillLevels && _heroSkillLevels[a.name] && stype)
       ? ((_heroSkillLevels[a.name][stype]) || 0) : 0;
   }
-  _activeSkLvMult = 1.0 + _activeSkLv * 0.10;
+  _activeSkLvMult = 1.0 + _activeSkLv * 0.05;  // ★ 每升1級+5%威力
   a._actionLabel = n+'！';
   G.lastSkill={...sk,actor:a};
   showActionLabel(a, (sk.p?'⚙ ':'')+n, sk.p?'#ffaa44':'#66ddff');
@@ -13971,6 +13991,57 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     if(checkWin()) return;
     endAction(a, cost);
   }
+  // ══ 寶箱怪 ══
+  else if(n==='鎖起來'){
+    log(`[${a.name}] 🔒 鎖起來！進入無敵狀態1回合！`);
+    playSkillFX('仁王挺立', a, [a]);
+    addBuff(a, 'invincible', 1);
+    bannerFX(a, '🔒 無敵！', '#ffcc44', 900);
+    flashScreen('rgba(255,220,0,0.5)', 200);
+    endAction(a, _activeSkLv>=9?Math.max(2,cost-1):cost);
+  }
+  else if(n==='箱底抹油'){
+    // 主動使用時：100%逃跑
+    log(`[${a.name}] 💨 箱底抹油！成功逃跑！`);
+    bannerFX(a, '💨 逃跑！', '#aaaaff', 900);
+    flashScreen('rgba(150,150,255,0.4)', 200);
+    // 從敵方陣容移除
+    const _escSide = a.side;
+    const _escIdx = G[_escSide].indexOf(a);
+    if(_escIdx >= 0){
+      G[_escSide].splice(_escIdx, 1);
+      a.curHp = 0;
+      a._chestEscaped = true;
+      log(`[寶箱怪] 逃之夭夭！從戰場消失，無法獲得其獎勵。`);
+      _showInGameToast('📦 寶箱怪逃跑了！', '#aaaaff', 2000);
+    }
+    updateUI();
+    if(checkWin()) return;
+    // 不呼叫 endAction（移除後無法行動）
+  }
+
+  // ══ 小惡魔 ══
+  else if(n==='弄壞你的玩具'){
+    setPending('enemy', t=>{
+      log(`😈 [${a.name}] 弄壞你的玩具！[${t.name}] HP強制降至10%！`);
+      playSkillFX('死亡宣告', a, [t]);
+      const _toyDmg = Math.max(1, t.curHp - Math.max(1, Math.floor(t.hp * 0.10)));
+      doDmg(t, _toyDmg, {actor:a, isSkill:true, ignoreBuffs:true, ignoreEvasion:true, noGuard:true});
+      bannerFX(t, '😈 玩具壞了！', '#ff4444', 900);
+      endAction(a, _activeSkLv>=9?Math.max(2,cost-1):cost);
+    });
+  }
+  else if(n==='讓你調皮'){
+    setPending('enemy', t=>{
+      log(`😈 [${a.name}] 讓你調皮！[${t.name}] 下回合強制攻擊自己隊友！`);
+      playSkillFX('舞台聚光燈', a, [t]);
+      addStatus(t, 'berserk', 1);
+      t._devilBerserk = true; // 標記為惡魔詛咒（攻擊自己隊友）
+      bannerFX(t, '😈 調皮！', '#ff88ff', 900);
+      endAction(a, _activeSkLv>=9?Math.max(2,cost-1):cost);
+    });
+  }
+
   // ══ 治療之光：單體治療40% ══
   else if(n==='治療之光'){
     setPending('ally', t=>{
@@ -14214,7 +14285,7 @@ function endAction(a, cost, noFinish=false){
     G.lastSkillName=null;
   }
   // 凡人天賦：使用技能時40%不消耗能量
-  if(a.name==='凡人' && cost>0 && !hasStatus(a,'confused') && Math.random()<0.4){
+  if(a.name==='凡人' && cost>0 && !hasStatus(a,'confused') && Math.random()<Math.min(1,0.40+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[a.name])||0)*0.05)){
     log(`🙂 [凡人] 天賦：無限可能！技能能量不消耗！`);
     bannerFX(a,'能量免費！','#88ffcc',900);
     cost=0;
@@ -14791,8 +14862,9 @@ function _pickWeightedTarget(pool) {
   if (!pool || !pool.length) return null;
   const weights = pool.map(h => {
     if (h.name !== '小劇團員') return 1.0;
-    const lv = (h._skLv && h._skLv.s1) ? h._skLv.s1 : 0;
-    return 1.4 + lv * 0.05;
+    // ★ 天賦等級由英雄等級里程碑決定（每10級+1，最高5）
+    const traitLvW = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[h.name]) || 0;
+    return 1.4 + traitLvW * 0.05;
   });
   const total = weights.reduce((s, w) => s + w, 0);
   let r = Math.random() * total;
@@ -14937,7 +15009,7 @@ function startTurn(){
   const next=alive.sort(sortFn)[0];
 
   // 占星師天賦：輪到自己回合時60%機率補充1能量
-  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<0.6){
+  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[next.name])||0)*0.04)){
     G.energy[next.side]=Math.min(10,G.energy[next.side]+1);
     showPopup(next,'+1E','energy');
     log(`🌟 [占星師] 天賦：星命眷顧！補充1能量！`);
@@ -15117,6 +15189,29 @@ function startTurn(){
     if(next.curHp<=0){ next.acted=true; updateUI(); _pSetTimeout(startTurn,300); return; }
   }
 
+  // ★ 寶箱怪：從第3回合開始每回合30%機率自動逃跑（被動）
+  const _chestRound = (typeof G !== 'undefined' && G.round) || 0;
+  if(next.name==='寶箱怪' && next.curHp>0 && next.side!=='p1' && _chestRound >= 3 && Math.random()<0.30){
+    log(`📦 [寶箱怪] 被動：箱底抹油！趁機逃跑！`);
+    bannerFX(next, '💨 逃跑！', '#aaaaff', 900);
+    flashScreen('rgba(150,150,255,0.4)', 200);
+    const _escIdx2 = G[next.side].indexOf(next);
+    if(_escIdx2 >= 0){
+      G[next.side].splice(_escIdx2, 1);
+      next.curHp = 0;
+      next._chestEscaped = true;
+      next.acted = true;
+      log(`[寶箱怪] 逃之夭夭！從戰場消失，無法獲得其獎勵。`);
+      _showInGameToast('📦 寶箱怪逃跑了！沒有獲得獎勵。', '#aaaaff', 2500);
+      // ★ 逃跑後恢復隨機戰鬥BGM
+      bgmFadeTo('bgm-battle', 800);
+    }
+    updateUI();
+    if(checkWin()) return;
+    _pSetTimeout(startTurn, 400);
+    return;
+  }
+
   // 占星師天賦：回合開始60%補1能量
   if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<0.6){
     G.energy[next.side]=Math.min(10,G.energy[next.side]+1);
@@ -15125,7 +15220,7 @@ function startTurn(){
   }
 
   // 木靈使天賦：行動開始時60%解除我方1個不利狀態
-  if(next.name==='木靈使' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<0.6){
+  if(next.name==='木靈使' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[next.name])||0)*0.04)){
     const allAllies=G[next.side].filter(h=>h.curHp>0&&h.status.some(s=>BAD_STATUS.includes(s.type)));
     if(allAllies.length){
       const lucky=allAllies[Math.floor(Math.random()*allAllies.length)];
@@ -15644,8 +15739,8 @@ function _realAiAct(a){
       if(HEAL_SKILLS.includes(e.s1.n)||HEAL_SKILLS.includes(e.s2.n)) score += 30;
       // ★ 小劇團員天賦：成為目標機率+40%（基礎分+40，加上技能等級每級+5%）
       if(e.name==='小劇團員'){
-        const _skLvBonus = (e._skLv && e._skLv.s1 ? e._skLv.s1 * 5 : 0);
-        score += 40 + _skLvBonus;
+        const _traitLvAI = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[e.name]) || 0;
+        score += 40 + _traitLvAI * 5;
       }
       if(score>bestScore){ bestScore=score; best=e; }
     }
@@ -17210,6 +17305,7 @@ function bgmFadeTo(newId,duration){
   }
   // ★ 'bgm-menu' → 'bgm-menu-01'
   if(newId==='bgm-menu') newId='bgm-menu-01';
+  // ★ 稀有怪專屬BGM直接播放（不需映射）
   if(newId==='bgm-lose'){
     const oldEl=_curBgm?document.getElementById(_curBgm):null;
     const doPlayLose=()=>{
@@ -19341,7 +19437,7 @@ function hideSkillDetailPopup(){
 let _adventureMode = false;
 let _adventureStage = null;
 // BOSS 角色名單：永遠排除在選角色池之外
-const BOSS_NAMES = ['九尾空貓怪','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
+const BOSS_NAMES = ['九尾空貓怪','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆','寶箱怪','小惡魔'];
 // 冒險模式允許出場的英雄名單
 const ADV_HERO_POOL = {
   maokong: ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家']
@@ -22428,6 +22524,7 @@ const BACKPACK_ITEM_DEF = {
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）' },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
+  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）', sellPrice:0 },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ 召喚水晶
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。前往英雄圖鑑嘗試使用（召喚功能開放後可指定召喚超極稀有英雄，目前有機率失敗）。', type:'use', useLabel:'使用（召喚英雄）' },
@@ -23616,9 +23713,21 @@ function _rrfSelectIn(newName) {
         }
         // ★ 若為小怪戰，需重新生成小怪陣容
         if(_advMiniBattleActive){
-          const mobs = Array.from({length:4}, () =>
-            MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
-          );
+          const mobs = Array.from({length:4}, () => _pickMiniMob());
+          // ★ 偵測稀有小怪並切換BGM+顯示台詞
+          const _hasChest = mobs.includes('寶箱怪');
+          const _hasDevil = mobs.includes('小惡魔');
+          if(_hasChest){
+            setTimeout(()=>{
+              bgmFadeTo('bgm-chest', 600);
+              _showRareMobIntro('寶箱怪');
+            }, 800);
+          } else if(_hasDevil){
+            setTimeout(()=>{
+              bgmFadeTo('bgm-devil', 600);
+              _showRareMobIntro('小惡魔');
+            }, 800);
+          }
           G.p2 = mobs.map((mname, i) => {
             const h = newHero(mname, 'p2', i);
             h.element = (typeof MINI_MONSTER_ELEM !== 'undefined' && MINI_MONSTER_ELEM[mname]) || 'wind';
@@ -24399,6 +24508,20 @@ function useBackpackItem(id){
       _showInGameToast(`📘 [${name}] 技能等級重置！退還 ${refund} 本技能升級書`, '#88aaff', 2500);
       _renderBackpackMain();
     }, true);
+
+  } else if(id==='hero_exp_book_deluxe'){
+    closeBackpackOverlay();
+    openHeroPage();
+    setTimeout(() => {
+      _backpackOpenHeroSelect('📕 英雄經驗值之書(精裝版)', '選擇要增加200EXP的英雄', name=>{
+        backpackRemove('hero_exp_book_deluxe');
+        addHeroExp(name, 200);
+        gameCloudSave();
+        _setNavDot('英雄', true);
+        _showInGameToast(`📕 [${name}] 獲得200點經驗值！`, '#ffaa88', 2500);
+        _renderBackpackMain();
+      }, true);
+    }, 200);
 
   } else if(id==='burst_upgrade_fruit'){
     // ★ 直接跳圖鑑，高亮有極限爆發可升級的英雄
@@ -25420,8 +25543,10 @@ function _renderHeroDetail(name, box) {
         ${trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
             <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 10px;font-weight:700;">✦ 天賦</span>
-            <span style="font-size:28px;font-weight:800;color:#ffe066;">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||name+'的天賦'}</span></span>
-            ${traitLv>0?`<span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">+${traitLv*20}%</span>`:''}
+            <span style="font-size:28px;font-weight:800;color:#ffe066;cursor:pointer;" onclick="event.stopPropagation();_showTraitLvPopup('${name}',this)">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||name+'的天賦'}</span>
+              <span style="font-size:15px;color:#aaa;vertical-align:middle;margin-left:4px;opacity:0.7;">▲ 點擊看升級效果</span>
+            </span>
+            ${traitLv>0?`<span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">天賦 Lv.${traitLv}</span>`:''}
           </div>
           <div style="font-size:24px;color:#ffffff;line-height:1.5;">${trait.fd||trait.desc||''}</div>
           <div style="font-size:18px;color:#555;margin-top:4px;">下次強化：Lv.${[10,20,30,40,50].find(l=>l>(lv||1))||'MAX'}</div>
@@ -26553,11 +26678,22 @@ function loginGateSkip() {
 //  冒險小怪戰鬥系統
 // ══════════════════════════════════════════════
 const MINI_MONSTERS = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
+// ★ 稀有小怪（5%機率出現，不加入一般池）
+const RARE_MINI_MONSTERS = ['寶箱怪','小惡魔'];
+// 隨機選取小怪（含5%稀有機率）
+function _pickMiniMob(){
+  if(Math.random() < 0.05){
+    return RARE_MINI_MONSTERS[Math.floor(Math.random()*RARE_MINI_MONSTERS.length)];
+  }
+  return MINI_MONSTERS[Math.floor(Math.random()*MINI_MONSTERS.length)];
+}
 const MINI_MONSTER_ELEM = {
   '偷摘花的頑皮妖精': 'dark',
   '偷鳥蛋的鳥人哈維': 'wind',
   '偷竹筍的哥布林':   'earth',
   '偷喝茶的史萊姆':   'water',
+  '寶箱怪':           'earth',
+  '小惡魔':           'dark',
 };
 // 各場景小怪開場白（幽默生動）
 const MINI_BATTLE_INTROS = {
@@ -26681,8 +26817,8 @@ function _advMiniQuizAsk(onDone) {
 
   // 用相同的 aqo-btn 系統建立選項（支援洗牌）
   const optDiv = document.getElementById('adv-quiz-options');
-  const letters = ['A','B','C'];
-  const origOpts = (q.options || [q.A, q.B, q.C].filter(Boolean)).map((text, i) => ({text, origIdx:i}));
+  const letters = ['A','B','C','D'];
+  const origOpts = (q.options || [q.A, q.B, q.C, q.D].filter(Boolean)).map((text, i) => ({text, origIdx:i}));
   // 洗牌
   for(let si=origOpts.length-1; si>0; si--){
     const sj = Math.floor(Math.random()*(si+1));
@@ -27095,10 +27231,14 @@ function advFinishMiniBattle(win) {
   let _miniBaseExp = 0;
   if(win && G && G.p2){
     G.p2.forEach(h => {
+      // ★ 寶箱怪逃跑（curHp=0但name=寶箱怪）：不計入EXP
+      if(h.name === '寶箱怪' && h.curHp <= 0) return;
       const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
       _miniBaseExp += (hd && hd.exp) ? hd.exp : 7;
     });
   }
+  // ★ 先快照小怪陣容（用於掉落計算），再還原 BOSS 陣容
+  const _miniMobSnapshot = (win && G && G.p2) ? G.p2.slice() : [];
   // ★ 立即還原 BOSS 陣容（讓 checkWin 看到活著的 Boss，不誤判勝利）
   if(_advBossTeamSaved && typeof G !== 'undefined' && G){
     G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));
@@ -27119,13 +27259,67 @@ function advFinishMiniBattle(win) {
       '偷竹筍的哥布林':    'damaged_bamboo',
       '偷鳥蛋的鳥人哈維':  'unknown_egg',
     };
-    if(G && G.p2){
-      G.p2.forEach(mob => {
-        const dropId = _MINI_DROP_MAP[mob.name];
-        if(dropId && Math.random() < 0.5){
-          backpackAdd(dropId, 1);
-          const def = BACKPACK_ITEM_DEF[dropId];
-          if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
+    if(_miniMobSnapshot.length > 0){
+      _miniMobSnapshot.forEach(mob => {
+        // ★ 稀有小怪特殊掉落
+        if(mob.name === '寶箱怪'){
+          // ★ 被打倒台詞（逃跑的寶箱怪curHp=0，被打倒的也是0，用_chestEscaped區分）
+          if(!mob._chestEscaped) _showRareMobDefeat('寶箱怪');
+          if(mob._chestEscaped) return; // 逃跑的不給獎勵
+          // 寶箱怪：必定大量知識幣（2500~5000）+ 其他掉落
+          const _chestCoins = 2500 + Math.floor(Math.random() * 2501);
+          addKnowledgeCoins(_chestCoins);
+          _miniDrops.push({ icon:'💰', name:`知識幣×${_chestCoins}`, sellPrice:0 });
+          log(`💰 [寶箱怪] 掉落知識幣 ${_chestCoins} 枚！`);
+          // 2% 超越極限果實
+          if(Math.random() < 0.02){
+            backpackAdd('burst_upgrade_fruit', 1);
+            _miniDrops.push({ icon:'🍑', name:'超越極限果實', sellPrice:0 });
+          }
+          // 50% 隨機賣錢道具 2~3個
+          if(Math.random() < 0.5){
+            const _sellItems = ['antique_teacup','picked_flower','damaged_bamboo','unknown_egg','half_tea'];
+            const _cnt = 2 + Math.floor(Math.random()*2);
+            for(let i=0;i<_cnt;i++){
+              const _sid = _sellItems[Math.floor(Math.random()*_sellItems.length)];
+              backpackAdd(_sid, 1);
+              const _sd = BACKPACK_ITEM_DEF[_sid];
+              if(_sd) _miniDrops.push({ icon:_sd.icon, name:_sd.name, sellPrice:_sd.sellPrice });
+            }
+          }
+        } else if(mob.name === '小惡魔'){
+          // ★ 被打倒台詞
+          _showRareMobDefeat('小惡魔');
+          // 小惡魔：大量EXP（1000~2000）+ 其他掉落
+          const _devilExp = 1000 + Math.floor(Math.random() * 1001);
+          if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, Math.floor(_devilExp/G.p1.length)); });
+          _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（均分）`, sellPrice:0 });
+          log(`⭐ [小惡魔] 掉落經驗值 ${_devilExp}！`);
+          // 2% 超越極限果實
+          if(Math.random() < 0.02){
+            backpackAdd('burst_upgrade_fruit', 1);
+            _miniDrops.push({ icon:'🍑', name:'超越極限果實', sellPrice:0 });
+          }
+          // 50% 技能升級之書 2~3本
+          if(Math.random() < 0.5){
+            const _sc = 2 + Math.floor(Math.random()*2);
+            backpackAdd('skill_upgrade_book', _sc);
+            _miniDrops.push({ icon:'📘', name:`技能升級書×${_sc}`, sellPrice:0 });
+          }
+          // 50% 英雄經驗值之書(精裝版) 2~3本
+          if(Math.random() < 0.5){
+            const _dc = 2 + Math.floor(Math.random()*2);
+            backpackAdd('hero_exp_book_deluxe', _dc);
+            _miniDrops.push({ icon:'📕', name:`英雄EXP書(精裝)×${_dc}`, sellPrice:0 });
+          }
+        } else {
+          // 普通小怪掉落
+          const dropId = _MINI_DROP_MAP[mob.name];
+          if(dropId && Math.random() < 0.5){
+            backpackAdd(dropId, 1);
+            const def = BACKPACK_ITEM_DEF[dropId];
+            if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
+          }
         }
       });
     }
@@ -27767,6 +27961,149 @@ const _origInitGame = typeof initGame !== 'undefined' ? initGame : null;
 window.addEventListener('load', ()=>{ _globalSafetyReset(); });
 
 // ★ 全域雷達圖函式（供英雄圖鑑和魔物圖鑑共用）
+// ── 天賦升級效果說明視窗 ──
+const _TRAIT_LV_INFO = {
+  '劍士':    { base:'30%再行動', bonus:'+4%/天賦級', max:'50%（Lv5）', effect:'普攻後再行動1次的機率' },
+  '祭司':    { base:'60%治療', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後治癒HP最低隊友的機率' },
+  '聖騎士':  { base:'60%格擋', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受傷時格擋減傷50%的機率' },
+  '火法師':  { base:'60%焚燒', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後消除目標有利狀態的機率' },
+  '冰法師':  { base:'60%緩速', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標速度-50%的機率' },
+  '雷法師':  { base:'60%雷鏈', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後對全體敵人造成等量傷害的機率' },
+  '光法師':  { base:'60%目眩', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標失明1回合的機率' },
+  '暗法師':  { base:'60%封魔', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後封印目標技能1回合的機率' },
+  '神射手':  { base:'60%佈陷', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後佈置陷阱免疫下一次普攻的機率' },
+  '神偷':    { base:'50%掠奪', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'普攻後奪取目標有利狀態或寵物的機率' },
+  '刺客':    { base:'60%劇毒', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標中毒2回合的機率' },
+  '守衛':    { base:'30%庇護', bonus:'+4%/天賦級', max:'50%（Lv5）', effect:'友方受單體攻擊時自動攔截代替承傷的機率' },
+  '吟遊詩人':{ base:'60%頌歌', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後恢復友方全體10%HP的機率' },
+  '舞者':    { base:'60%魅惑', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標攻擊和特技-50%的機率' },
+  '警長':    { base:'60%制裁', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標行動退到最後的機率' },
+  '武鬥家':  { base:'30%死鬥', bonus:'+4%/天賦級', max:'50%（Lv5）', effect:'受致命傷害時HP恢復20%並存活的機率' },
+  '軍師':    { base:'60%惑敵', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標疑惑1回合的機率' },
+  '占星師':  { base:'60%星語', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'自己行動時補充1能量的機率' },
+  '大力士':  { base:'40%怒炎', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'受不利狀態時轉化怒火提升攻擊25%的機率' },
+  '凡人':    { base:'40%節省', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'使用技能時不消耗能量的機率' },
+  '木靈使':  { base:'60%淨化', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'自己行動時解除我方1個不利狀態的機率' },
+  '機械師':  { base:'20%觸電', bonus:'+5%/天賦級', max:'45%（Lv5）', effect:'受傷時麻痺攻擊者1回合的機率' },
+  '武士':    { base:'40%反斬', bonus:'+4%/天賦級', max:'60%（Lv5）', effect:'受傷時用攻擊50%反擊的機率' },
+  '陰陽師':  { base:'60%替身', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受技能傷害時由式神代替承傷的機率' },
+  '吸血鬼':  { base:'50%噬血', bonus:'+4%/天賦級', max:'70%（Lv5）', effect:'造成傷害時吸收傷害量為HP的比例' },
+  '學者':    { base:'60%奪能', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後奪取對手1能量的機率' },
+  '時空法師':{ base:'60%時封', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標無法獲得治療和有利狀態的機率' },
+  '小力':    { base:'35%關心', bonus:'+5%/天賦級', max:'60%（Lv5）', effect:'隊友受傷時用特技為其回復HP的機率' },
+  '籃球隊員':{ base:'50%接力', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'友方普攻時觸發暴擊並傷害+50%的機率' },
+  '直笛團員':{ base:'50%妙音', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'普攻後使目標狂亂1回合的機率' },
+  '田徑隊員':{ base:'60%疾走', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'行動時使未行動友方提前到下一個的機率' },
+  '弦樂團員':{ base:'50%弦護', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'友方受不利狀態時立即消除的機率' },
+  '小劇團員':{ base:'40%被選中/20%轉化', bonus:'+5%/天賦級', max:'65%/45%（Lv5）', effect:'成為攻擊目標機率+40%；受傷轉治療機率20%' },
+  '幼兒園小孩':{ base:'全體-20%攻特', bonus:'固定（不隨天賦升級）', max:'固定效果', effect:'存活時全體對手攻擊和特技-20%（最多5回合）' },
+  '煉金術師':{ base:'物品+50%', bonus:'固定（不隨天賦升級）', max:'固定效果', effect:'使用物品卡時所有效果+50%' },
+  '動物學家':{ base:'寵物效果+100%', bonus:'固定（不隨天賦升級）', max:'固定效果', effect:'存活時友方所有寵物效果提升100%' },
+};
+
+function _showTraitLvPopup(heroName, el){
+  var old = document.getElementById('_trait-lv-pop');
+  if(old){ old.remove(); if(old._hero===heroName) return; }
+  var info = _TRAIT_LV_INFO[heroName];
+  var trait = typeof HERO_TRAIT!=='undefined' ? HERO_TRAIT[heroName] : null;
+  var traitLv = (typeof _heroTraitLevel!=='undefined' && _heroTraitLevel[heroName]) || 0;
+  if(!info && !trait) return;
+  var pop = document.createElement('div');
+  pop.id = '_trait-lv-pop';
+  pop._hero = heroName;
+  pop.style.cssText = 'position:fixed;z-index:99001;background:linear-gradient(135deg,rgba(10,15,40,0.98),rgba(5,8,25,0.98));'
+    + 'border:2px solid #ffe066;border-radius:16px;padding:20px 26px;max-width:380px;'
+    + 'box-shadow:0 0 40px rgba(255,220,0,0.3);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  var rows = '';
+  var lvNames = ['Lv1（英雄Lv10）','Lv2（英雄Lv20）','Lv3（英雄Lv30）','Lv4（英雄Lv40）','Lv5（英雄Lv50）'];
+  if(info && info.bonus !== '固定（不隨天賦升級）'){
+    var baseMatch = info.base.match(/(\d+)%/);
+    var bonusMatch = info.bonus.match(/\+(\d+)%/);
+    if(baseMatch && bonusMatch){
+      var base = parseInt(baseMatch[1]);
+      var bonus = parseInt(bonusMatch[1]);
+      for(var i=1;i<=5;i++){
+        var rate = Math.min(100, base + i*bonus);
+        var isCurrent = (i===traitLv);
+        rows += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,220,0,0.1);'+(isCurrent?'background:rgba(255,220,0,0.15);border-radius:6px;padding:4px 8px;':'')+'">'+
+          '<span style="color:'+(isCurrent?'#ffe066':'#aaa')+';">'+(isCurrent?'▶ ':'')+lvNames[i-1]+'</span>'+
+          '<span style="color:'+(isCurrent?'#ffe066':'#fff')+';font-weight:'+(isCurrent?'900':'400')+';">'+rate+'%</span>'+
+          '</div>';
+      }
+    }
+  } else {
+    rows = '<div style="color:#aaa;font-size:16px;padding:8px 0;">此天賦效果固定，不隨天賦等級提升</div>';
+  }
+  pop.innerHTML = '<div style="font-size:22px;font-weight:900;color:#ffe066;margin-bottom:4px;">'+(trait?trait.icon:'')+'【'+heroName+'】天賦升級效果</div>'+
+    '<div style="font-size:17px;color:#aaa;margin-bottom:12px;">'+(info?info.effect:(trait?trait.fd:''))+'</div>'+
+    '<div style="font-size:18px;margin-bottom:8px;">'+rows+'</div>'+
+    '<div style="font-size:15px;color:#666;text-align:right;margin-top:8px;">目前天賦等級：<span style="color:#44ffaa;font-weight:700;">Lv.'+traitLv+'</span> | 點任意處關閉</div>';
+  var container = document.getElementById('hero-detail-box') || document.body;
+  container.appendChild(pop);
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var pw = Math.min(380, vw-32);
+  pop.style.width = pw+'px';
+  // Position: near the trait name (above radar)
+  var radarSvg = container.querySelector('svg');
+  if(radarSvg){
+    var svgR = radarSvg.getBoundingClientRect();
+    pop.style.left = Math.max(8, Math.min(vw-pw-8, svgR.left + svgR.width/2 - pw/2))+'px';
+    pop.style.top  = Math.max(8, svgR.top - 220)+'px';
+  } else {
+    pop.style.left = Math.max(8, vw/2-pw/2)+'px';
+    pop.style.top  = Math.max(8, vh/3)+'px';
+  }
+  setTimeout(function(){ var _c=function(){ pop.remove(); document.removeEventListener('click',_c); }; document.addEventListener('click',_c); }, 50);
+}
+
+
+// ── 稀有小怪登場台詞 ──
+const _RARE_MOB_LINES = {
+  '寶箱怪': {
+    appear: ['📦「嘿！你們是來搶我財寶的吧！！？」', '📦「才、才不要給你們！—— 開始計畫逃跑……」', '📦「哇啊！是人類！財寶是我的！我的！我的！」'],
+    defeat: ['📦「我、我的財寶……全部給你們了啦！嗚嗚！」', '📦「下次一定要跑得更快……（撒金幣）」', '📦「不可能……我明明已經把腳抹油了……」'],
+  },
+  '小惡魔': {
+    appear: ['😈「嘿嘿嘿～有人類！最好玩了！」', '😈「哇哈哈！讓你們打自己人，最好玩了！」', '😈「你們的玩具，通通都是我的啦！嘻嘻！」'],
+    defeat: ['😈「唔……沒想到你們這麼厲害……下次再來！」', '😈「好吧好吧，這次算你們贏……嘿嘿，留著以後再搗蛋！」', '😈「呀！我的惡作劇計畫……失敗了嗎……（消散）」'],
+  },
+};
+
+function _showRareMobIntro(mobName){
+  const lines = _RARE_MOB_LINES[mobName];
+  if(!lines) return;
+  const line = lines.appear[Math.floor(Math.random()*lines.appear.length)];
+  var pop = document.createElement('div');
+  pop.style.cssText = 'position:fixed;z-index:99100;bottom:120px;left:50%;transform:translateX(-50%);'
+    + 'background:linear-gradient(135deg,rgba(15,10,40,0.97),rgba(8,5,25,0.97));'
+    + 'border:3px solid '+(mobName==='寶箱怪'?'#ffcc44':'#ff44aa')+';border-radius:20px;'
+    + 'padding:18px 32px;max-width:min(90vw,500px);text-align:center;'
+    + 'box-shadow:0 0 40px '+(mobName==='寶箱怪'?'rgba(255,200,0,0.5)':'rgba(255,50,150,0.5)')+';'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;font-size:22px;color:#fff;'
+    + 'font-weight:700;letter-spacing:1px;animation:bounceIn 0.4s ease-out;';
+  pop.innerHTML = '<div style="font-size:14px;color:#aaa;margin-bottom:6px;">⚠ 稀有怪出現！</div>'
+    + '<div>'+line+'</div>';
+  document.body.appendChild(pop);
+  setTimeout(()=>{ pop.style.transition='opacity 0.5s'; pop.style.opacity='0'; setTimeout(()=>pop.remove(),500); }, 3000);
+}
+
+function _showRareMobDefeat(mobName){
+  const lines = _RARE_MOB_LINES[mobName];
+  if(!lines) return;
+  const line = lines.defeat[Math.floor(Math.random()*lines.defeat.length)];
+  var pop = document.createElement('div');
+  pop.style.cssText = 'position:fixed;z-index:99100;top:30%;left:50%;transform:translateX(-50%);'
+    + 'background:linear-gradient(135deg,rgba(15,10,40,0.97),rgba(8,5,25,0.97));'
+    + 'border:2px solid #888;border-radius:16px;'
+    + 'padding:16px 28px;max-width:min(90vw,480px);text-align:center;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;font-size:20px;color:#ccc;'
+    + 'font-weight:500;font-style:italic;';
+  pop.innerHTML = line;
+  document.body.appendChild(pop);
+  setTimeout(()=>{ pop.style.transition='opacity 0.6s'; pop.style.opacity='0'; setTimeout(()=>pop.remove(),600); }, 2500);
+}
+
+
 // ── 雷達圖標籤點擊說明視窗 ──
 function _showRadarLabelInfo(key, shortLabel, svgX, svgY){
   // 清除舊的
@@ -27967,7 +28304,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.1850', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.2208', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -28005,7 +28342,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.1850';
+  const CURRENT_VERSION = 'v1.0.20260416.2208';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
