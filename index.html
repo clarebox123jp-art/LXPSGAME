@@ -3889,7 +3889,7 @@ body {
         <div class="hpick-slot" id="hpick-side-0"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
         <div class="hpick-slot" id="hpick-side-1"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
         <div class="hpick-slot" id="hpick-side-2"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
-        <div class="hpick-slot" id="hpick-side-3"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div</div>
+        <div class="hpick-slot" id="hpick-side-3"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
       </div>
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
@@ -7159,6 +7159,9 @@ function showHeroPickOverlay(){
   const hpo = document.getElementById('hero-pick-overlay');
   if(window._advSystemReady && _adventureMode && _adventureStage){
     window._isAdventurePickMode = true; // ★ 標記冒險選角模式
+    // ★ 冒險模式：隱藏屬性相剋圖
+    const _ewAdv = document.getElementById('elem-wheel');
+    if(_ewAdv) _ewAdv.style.display = 'none';
     // ★ 冒險模式隱藏特定按鈕（保留返回按鈕）
     const _hpBackBtn = document.getElementById('hero-pick-back-btn');
     if(_hpBackBtn){
@@ -8036,6 +8039,8 @@ function toggleHeroPick(idx, name){ focusHero(idx,name); } // legacy compat
 function confirmHeroPick(){
   if(_heroPickSelected.length < 4) return;
   document.getElementById('hero-pick-overlay').style.display = 'none';
+  // ★ 恢復屬性相剋圖（僅在非冒險模式時，冒險模式不需要它）
+  if(!window._isAdventurePickMode){ const _ew2 = document.getElementById('elem-wheel'); if(_ew2) _ew2.style.display = ''; }
   // ── 冒險模式：p2 固定為 BOSS 陣容（必須同時有 _adventureStage 且 overlay 是由冒險模式觸發）
   // ★★ 保護層：三個條件缺一不可，防止鬥技場誤用BOSS陣容。請勿修改此判斷式。
   const _isAdvMode = window._advSystemReady === true
@@ -19538,6 +19543,9 @@ function startAdventureGame(stage){
   _adventureStage = stage;
   _advMiniBattleActive = false; // ★ 確保不殘留小怪戰旗標
   window._isAdventurePickMode = true;  // ★ 冒險模式提前設好，不再等showHeroPickOverlay
+  // ★ 隱藏屬性相剋圖
+  const _ewAdv2 = document.getElementById('elem-wheel');
+  if(_ewAdv2) _ewAdv2.style.display = 'none';
   // 關閉英雄圖鑑（若開著）
   try{
     const hpo=document.getElementById('hero-page-overlay');
