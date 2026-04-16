@@ -3459,7 +3459,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2208</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2234</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -27663,10 +27663,12 @@ function _buildMonsterPage() {
   const BOSS_LIST = ['九尾空貓怪'];
   const ELITE_LIST = ['綠竹筍小妖', '茶葉精靈'];
   const MOB_LIST = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
+  const RARE_MOB_LIST = ['寶箱怪','小惡魔'];
 
   const MONSTER_AVTR = {
     '九尾空貓怪': '🐱', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
     '偷摘花的頑皮妖精': '🌸', '偷鳥蛋的鳥人哈維': '🐦', '偷竹筍的哥布林': '🌿', '偷喝茶的史萊姆': '🫖',
+    '寶箱怪': '📦', '小惡魔': '😈',
   };
 
   function makeCard(name, tier) {
@@ -27674,8 +27676,8 @@ function _buildMonsterPage() {
     const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
     const av = MONSTER_AVTR[name] || '👾';
     const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
-    const tierColor = tier==='boss' ? '#ff6644' : tier==='elite' ? '#ffaa44' : '#88cc88';
-    const borderColor = tier==='boss' ? 'rgba(255,100,50,0.7)' : tier==='elite' ? 'rgba(255,160,50,0.5)' : 'rgba(100,200,100,0.35)';
+    const tierColor = tier==='boss' ? '#ff6644' : tier==='elite' ? '#ffaa44' : tier==='rare' ? '#cc88ff' : '#88cc88';
+    const borderColor = tier==='boss' ? 'rgba(255,100,50,0.7)' : tier==='elite' ? 'rgba(255,160,50,0.5)' : tier==='rare' ? 'rgba(180,100,255,0.6)' : 'rgba(100,200,100,0.35)';
     const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
     return `<div style="width:300px;border-radius:16px;overflow:hidden;border:2px solid ${borderColor};
       background:rgba(20,10,10,0.92);cursor:pointer;transition:transform 0.15s;"
@@ -27707,9 +27709,10 @@ function _buildMonsterPage() {
   el.innerHTML =
     makeSection('👑 BOSS', BOSS_LIST, 'boss') +
     makeSection('⚡ 精英小怪', ELITE_LIST, 'elite') +
-    makeSection('🌿 路邊小怪', MOB_LIST, 'mob');
+    makeSection('🌿 路邊小怪', MOB_LIST, 'mob') +
+    makeSection('💜 稀有小怪', RARE_MOB_LIST, 'rare');
   // ★ 設定魔物翻頁清單
-  _monsterDetailList = [...BOSS_LIST, ...ELITE_LIST, ...MOB_LIST];
+  _monsterDetailList = [...BOSS_LIST, ...ELITE_LIST, ...MOB_LIST, ...RARE_MOB_LIST];
 }
 
 
@@ -28124,23 +28127,36 @@ function _showRadarLabelInfo(key, shortLabel, svgX, svgY){
     + '<div style="font-size:18px;color:#ddd;line-height:1.7;">'+info.desc+'</div>'
     + '<div style="font-size:14px;color:#666;margin-top:8px;text-align:right;">點任意處關閉</div>';
   // 放置位置：嘗試放在英雄圖鑑容器內
+  // ★ 定位在六邊形雷達圖正上方（使用 #gc 座標系）
   var container = document.getElementById('hero-detail-box') || document.body;
-  container.appendChild(pop);
-  // ★ 定位在六邊形雷達圖容器上方
   var vw = window.innerWidth, vh = window.innerHeight;
   var pw = Math.min(340, vw-32);
-  pop.style.width = pw+'px';
   // 找雷達圖 SVG 的位置
-  var radarSvg = container.querySelector('svg');
-  if(radarSvg){
+  // ★ 使用 #gc 座標系（與 toggleStatPopup 相同做法，正確處理 scale 縮放）
+  var gc = document.getElementById('gc');
+  var radarSvg = gc ? gc.querySelector('#hero-detail-content svg') : null;
+  if(!radarSvg) radarSvg = container.querySelector('svg');
+  pop.style.position = 'absolute';
+  if(radarSvg && gc){
+    var gcR = gc.getBoundingClientRect();
     var svgR = radarSvg.getBoundingClientRect();
-    var cx = (svgR.left + svgR.right) / 2;
-    var top = svgR.top - 10; // 六邊形正上方
-    pop.style.left = Math.max(8, Math.min(vw-pw-8, cx - pw/2))+'px';
-    pop.style.top  = Math.max(8, top - 160)+'px'; // 彈窗高度估計約160px
+    var sc = gcR.width / 1920;
+    var svgCx = (svgR.left + svgR.right) / 2;
+    var svgTop = svgR.top;
+    // 轉換為 #gc 內部座標
+    var px = (svgCx - gcR.left) / sc;
+    var py = (svgTop - gcR.top) / sc;
+    var popW = Math.min(340, 1920-32);
+    pop.style.width = popW + 'px';
+    pop.style.left = Math.max(8, Math.min(1920-popW-8, px - popW/2)) + 'px';
+    pop.style.top  = Math.max(8, py - 190) + 'px'; // 六邊形正上方
+    gc.appendChild(pop);
   } else {
+    pop.style.position = 'fixed';
+    pop.style.width = pw+'px';
     pop.style.left = Math.max(8, Math.min(vw-pw-8, vw/2-pw/2))+'px';
     pop.style.top  = Math.max(8, vh/2-80)+'px';
+    document.body.appendChild(pop);
   }
   // 點任意處關閉
   setTimeout(function(){
@@ -28304,7 +28320,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.2208', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.2234', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -28342,7 +28358,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.2208';
+  const CURRENT_VERSION = 'v1.0.20260416.2234';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
