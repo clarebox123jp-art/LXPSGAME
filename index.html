@@ -185,6 +185,8 @@
       // 讀取雲端進度
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
+      // ★ 登入後延遲補發已達成但未記錄的成就
+      setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1500);
     } else {
       window._fbUser = null;
       const btnWrap = document.getElementById('google-login-btn-wrap');
@@ -3460,7 +3462,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2344</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2404</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5535,11 +5537,11 @@ const HERO_DB = {
   s1:{n:'渾身一擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'傾盡全力重擊1名對手，造成攻擊值200%的傷害，且本技能爆擊率額外提升50%。'},
   s2:{n:'土坑陷阱',c:2,d:'使1名對手下回合最後行動',fd:'快速在腳下挖個土坑，使1名對手陷入「緩速」並在下回合最後才能行動。'}
 },
-'寶箱怪':{hp:99,atk:1,sp:1,spd:50,exp:15,
+'寶箱怪':{hp:99,atk:1,sp:1,spd:50,exp:0,_rewardType:'coins',_rewardMin:2500,_rewardMax:5000,
   s1:{n:'鎖起來',c:2,d:'使自己無敵1回合',fd:'用神秘的鎖頭將自己鎖死，進入完全無敵狀態1回合，期間不受任何傷害。'},
   s2:{n:'箱底抹油',c:1,d:'100%逃跑，每回合30%機率觸發',fd:'(被動)每回合有30%機率自動逃跑，成功逃脫後從戰場移除，不給予任何獎勵。',p:true}
 },
-'小惡魔':{hp:50,atk:25,sp:25,spd:25,exp:15,
+'小惡魔':{hp:50,atk:25,sp:25,spd:25,exp:0,_rewardType:'exp',_rewardMin:1000,_rewardMax:2000,
   s1:{n:'弄壞你的玩具',c:3,d:'使1名對手HP剩10%，無視有利狀態',fd:'用魔爪弄壞對手最珍視的東西，使1名目標HP強制降至最大HP的10%，無視所有有利狀態。'},
   s2:{n:'讓你調皮',c:2,d:'使1名對手強制普攻自己隊友',fd:'施加惡作劇詛咒，使1名對手在下回合強制普通攻擊自己的一名隊友，無視目標選擇。'}
 },
@@ -22470,6 +22472,8 @@ async function gameCloudLoad() {
     // 訪客模式：只讀本地
     const raw = localStorage.getItem('lxps_guest_progress');
     if(raw) { _applySafeData(raw); log('📂 本地進度已載入'); }
+    // ★ 訪客模式也補發成就
+    setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1000);
     return;
   }
   try {
@@ -26743,6 +26747,52 @@ const MINI_MONSTER_ELEM = {
   '小惡魔':           'dark',
 };
 // 各場景小怪開場白（幽默生動）
+// ── 魔物掉落物定義 ──
+const MONSTER_DROPS = {
+  '偷摘花的頑皮妖精': [
+    { icon:'🌸', name:'被摘的花朵',       rate:'50%', note:'賣出可得知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '偷鳥蛋的鳥人哈維': [
+    { icon:'🥚', name:'未知的蛋',         rate:'50%', note:'賣出可得知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '偷竹筍的哥布林': [
+    { icon:'🎋', name:'有點損傷的綠竹筍', rate:'50%', note:'賣出可得知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '偷喝茶的史萊姆': [
+    { icon:'🍵', name:'喝一半的好茶',     rate:'50%', note:'賣出可得知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '寶箱怪': [
+    { icon:'💰', name:'知識幣 2500~5000', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'🛍️', name:'隨機賣錢道具×2~3', rate:'50%',  note:'' },
+    { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
+  ],
+  '小惡魔': [
+    { icon:'⭐', name:'英雄EXP 1000~2000（均分）', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'📘', name:'技能升級書×2~3',   rate:'50%',  note:'' },
+    { icon:'📕', name:'EXP書(精裝版)×2~3', rate:'50%', note:'' },
+    { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
+  ],
+  '綠竹筍小妖': [
+    { icon:'🍑', name:'超越極限果實',     rate:'依EXP×0.1%', note:'約2~5%' },
+    { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
+  ],
+  '茶葉精靈': [
+    { icon:'🍑', name:'超越極限果實',     rate:'依EXP×0.1%', note:'約2~5%' },
+    { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
+  ],
+  '九尾空貓怪': [
+    { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
+    { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約5.5%', note:'極稀有' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'全英雄收錄時必得', note:'' },
+  ],
+};
+
 const MINI_BATTLE_INTROS = {
   river: [
     '💦「哇哈哈！河堤就是我的地盤！你們這些臭小孩，先跑過我們這關再說！」—— 頑皮妖精叉腰攔路',
@@ -27900,7 +27950,19 @@ function openMonsterDetail(name) {
         </div>` : ''}
       </div>
     </div>
-  `;
+  
+
+    ${(()=>{
+      const drops = (typeof MONSTER_DROPS!=='undefined'&&MONSTER_DROPS[name])||[];
+      const b2 = HERO_DB[name];
+      let rt='';
+      if(b2&&b2._rewardType==='coins') rt='<span style="color:#ffe066;font-weight:900;">💰 必定掉落 '+b2._rewardMin.toLocaleString()+'~'+b2._rewardMax.toLocaleString()+' 知識幣</span>';
+      else if(b2&&b2._rewardType==='exp') rt='<span style="color:#88ff88;font-weight:900;">⭐ 必定掉落 '+b2._rewardMin.toLocaleString()+'~'+b2._rewardMax.toLocaleString()+' 英雄EXP（均分）</span>';
+      else if(b2&&b2.exp>0) rt='<span style="color:#88aaff;">⭐ 基礎EXP：'+b2.exp+'</span>';
+      if(!drops.length&&!rt) return '';
+      let rows=drops.map(d=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);margin-bottom:6px;"><span style="font-size:24px;min-width:32px;">'+d.icon+'</span><span style="flex:1;font-size:18px;color:#ddd;">'+d.name+(d.note?'<span style="color:#666;font-size:14px;margin-left:6px;">（'+d.note+'）</span>':'')+' </span><span style="font-size:18px;font-weight:700;color:#ffcc44;">'+d.rate+'</span></div>').join('');
+      return '<div style="margin-top:20px;padding:16px 20px;background:rgba(255,200,0,0.06);border-radius:14px;border:1px solid rgba(255,200,0,0.25);"><div style="font-size:22px;font-weight:900;color:#ffe066;margin-bottom:10px;">🎁 掉落物與獎勵</div>'+(rt?'<div style="margin-bottom:10px;font-size:18px;">'+rt+'</div>':'')+rows+'</div>';
+    })()}`;
   ov.style.display = 'flex';
 }
 
@@ -28489,6 +28551,79 @@ function _buildMedalPage(){
 // ── 初始化 ──
 _loadMedals();
 
+// ── 登入時批量補發成就（偵測已有的資料） ──
+function _checkMedalsOnLogin(){
+  _loadMedals();
+
+  // ── 英雄相關 ──
+  const unlocked = advGetUnlockedHeroes ? advGetUnlockedHeroes() : [];
+  const starterHeroes = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+  const nonStarter = unlocked.filter(n => !starterHeroes.includes(n) &&
+    (typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n)));
+  if(nonStarter.length > 0) _unlockMedal('first_hero_unlock');
+  if(unlocked.length >= 5)  _unlockMedal('unlock_5');
+  if(unlocked.length >= 10) _unlockMedal('unlock_10');
+  if(unlocked.length >= 20) _unlockMedal('unlock_20');
+  if(unlocked.length >= 30) _unlockMedal('unlock_30');
+  if(typeof HERO_DB !== 'undefined' && typeof BOSS_NAMES !== 'undefined'){
+    const allNormal = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
+    if(allNormal.length > 0 && allNormal.every(n => unlocked.includes(n)))
+      _unlockMedal('all_heroes');
+  }
+
+  // ── 英雄等級 ──
+  if(typeof _heroLevels !== 'undefined'){
+    const levels = Object.values(_heroLevels);
+    if(levels.some(lv => lv >= 10)) _unlockMedal('hero_lv10');
+    if(levels.some(lv => lv >= 30)) _unlockMedal('hero_lv30');
+    if(levels.some(lv => lv >= 50)) _unlockMedal('hero_lv50');
+    if(levels.filter(lv => lv >= 50).length >= 3) _unlockMedal('three_max');
+  }
+
+  // ── 技能等級 ──
+  if(typeof _heroSkillLevels !== 'undefined'){
+    let hasMax = false;
+    Object.values(_heroSkillLevels).forEach(slots => {
+      if((slots.s1||0) >= 9 || (slots.s2||0) >= 9) hasMax = true;
+    });
+    if(hasMax){
+      _unlockMedal('first_skill_up');
+      _unlockMedal('skill_max');
+    } else {
+      // Any upgrade at all?
+      const anyUp = Object.values(_heroSkillLevels).some(s => (s.s1||0)+(s.s2||0) > 0);
+      if(anyUp) _unlockMedal('first_skill_up');
+    }
+  }
+
+  // ── 知識幣 ──
+  if((_knowledgeCoins||0) >= 10000) _unlockMedal('coins_10000');
+
+  // ── 答題累計（從已存的 medalStats）──
+  const ca = _medalStats.correctAnswers || 0;
+  if(ca >= 1)   _unlockMedal('first_correct');
+  if(ca >= 20)  _unlockMedal('answers_20');
+  if(ca >= 40)  _unlockMedal('answers_40');
+  if(ca >= 60)  _unlockMedal('answers_60');
+  if(ca >= 80)  _unlockMedal('answers_80');
+  if(ca >= 100) _unlockMedal('answers_100');
+  if(ca >= 200) _unlockMedal('answers_200');
+  if(ca >= 400) _unlockMedal('answers_400');
+  if(ca >= 600) _unlockMedal('answers_600');
+  if(ca >= 800) _unlockMedal('answers_800');
+  if(ca >= 1000) _unlockMedal('answers_1000');
+  if(ca >= 2000) _unlockMedal('answers_2000');
+  if((_medalStats.hardModeAnswers||0) >= 100) _unlockMedal('hard_100');
+  if((_medalStats.chestKills||0) >= 1) _unlockMedal('defeat_chest');
+  if((_medalStats.chestKills||0) >= 5) _unlockMedal('chest_hunter_5');
+  if((_medalStats.devilKills||0) >= 1) _unlockMedal('defeat_devil');
+  if((_medalStats.devilKills||0) >= 5) _unlockMedal('devil_slayer_5');
+  if((_medalStats.totalCoinsEarned||0) >= 50000) _unlockMedal('coins_50000');
+
+  _saveMedals();
+  log('[獎章] 登入成就補發完成');
+}
+
 
 // ── 稀有小怪登場台詞 ──
 const _RARE_MOB_LINES = {
@@ -28750,7 +28885,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.2344', items:[
+  { ver:'v1.0.20260416.2404', items:[
     '新增稀有小怪「寶箱怪」（5%機率出現）：打倒必得2500~5000知識幣',
     '新增稀有小怪「小惡魔」（5%機率出現）：打倒獲得大量EXP及書籍',
     '寶箱怪和小惡魔已加入魔物圖鑑「稀有小怪」分類',
@@ -28836,7 +28971,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.2344';
+  const CURRENT_VERSION = 'v1.0.20260416.2404';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
