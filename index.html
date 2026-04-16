@@ -3457,7 +3457,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.0731</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1630</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -19499,29 +19499,87 @@ function advGetQuizPool(grade, subject, difficulty) {
     const pool = [...ADV_QUIZ_5S_MIDTERM].sort(() => Math.random() - 0.5);
     return pool;
   }
-  const diffKey = (difficulty==='沒自信（輕鬆模式）'||difficulty==='沒自信') ? '沒自信'
-                : (difficulty==='我很會（挑戰模式）'||difficulty==='我很會') ? '我很會' : '普通';
-  const gradeWeights = {
-    '沒自信': [{'grade':'低年級','w':7},{'grade':'中年級','w':3}],
-    '普通':   [{'grade':'中年級','w':6},{'grade':'低年級','w':2},{'grade':'高年級','w':2}],
-    '我很會': [{'grade':'高年級','w':5},{'grade':'國中','w':5}],
+
+  // ── 年級＝題庫範圍，難度偏好＝優先顯示的難易程度 ──
+  // 年級→對應的 DB difficulty 層級
+  const gradeDiffMap = {
+    '低年級': '沒自信',
+    '中年級': '普通',
+    '高年級': '我很會',
+    '國中':   '我很會',
+    '五年級': '普通',
   };
-  const weights = gradeWeights[diffKey] || gradeWeights['普通'];
-  let pool = [];
-  weights.forEach(({'grade':g,'w':w}) => {
-    let qs = ADV_QUIZ_DB.filter(q => q.grade===g && (!subject || subject==='綜合' || q.subject===subject));
-    if (!qs.length) qs = ADV_QUIZ_DB.filter(q => q.grade===g);
-    // 依權重加入
-    for(let i=0;i<w;i++) pool = pool.concat(qs);
-  });
-  // 洗牌
-  for(let i=pool.length-1;i>0;i--) {
-    const j=Math.floor(Math.random()*(i+1));
-    [pool[i],pool[j]]=[pool[j],pool[i]];
+  // 難度偏好正規化
+  const diffPref = (difficulty==='沒自信（輕鬆模式）'||difficulty==='沒自信') ? '沒自信'
+                 : (difficulty==='我很會（挑戰模式）'||difficulty==='我很會') ? '我很會' : '普通';
+
+  // 年級順序（由易到難），用於抓補充題庫
+  const gradeOrder = ['低年級','中年級','高年級','國中'];
+  const selGrade   = (grade && gradeDiffMap[grade]) ? grade : '中年級';
+  const selGradeIdx = gradeOrder.indexOf(selGrade);
+
+  // ── 1. 主題庫：玩家選的年級 + 科目過濾 ──
+  const subFilter = (q) => !subject || subject==='綜合' || q.subject===subject;
+  let mainPool = ADV_QUIZ_DB.filter(q => q.grade === selGrade && subFilter(q));
+  // 若主題庫空（科目無此年級題目）→ 放寬至全年級
+  if (!mainPool.length) mainPool = ADV_QUIZ_DB.filter(q => q.grade === selGrade);
+
+  // ── 2. 補充題庫：鄰近年級（各佔 30%）──
+  let suppPool = [];
+  if (diffPref === '沒自信') {
+    // 沒自信：加入比選擇年級更容易的年級
+    const easierGrades = gradeOrder.slice(0, selGradeIdx);
+    easierGrades.forEach(g => {
+      const qs = ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q));
+      if (qs.length) suppPool = suppPool.concat(qs);
+    });
+  } else if (diffPref === '我很會') {
+    // 我很會：加入比選擇年級更難的年級
+    const harderGrades = gradeOrder.slice(selGradeIdx+1);
+    harderGrades.forEach(g => {
+      const qs = ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q));
+      if (qs.length) suppPool = suppPool.concat(qs);
+    });
+  } else {
+    // 普通：各加入一個更難、一個更容易（均衡）
+    if(selGradeIdx > 0){
+      const g = gradeOrder[selGradeIdx-1];
+      suppPool = suppPool.concat(ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q)));
+    }
+    if(selGradeIdx < gradeOrder.length-1){
+      const g = gradeOrder[selGradeIdx+1];
+      suppPool = suppPool.concat(ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q)));
+    }
   }
-  // 去重(by id)，每個id只出現一次
-  const seen=new Set();
-  return pool.filter(q=>{if(seen.has(q.id))return false;seen.add(q.id);return true;});
+
+  // ── 3. 洗牌各自的池子 ──
+  const shuffle = (arr) => {
+    for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+    return arr;
+  };
+  shuffle(mainPool); shuffle(suppPool);
+
+  // ── 4. 依難度偏好排序 mainPool（將偏好難度的題目排最前）──
+  const diffOrder = { '沒自信': 0, '普通': 1, '我很會': 2 };
+  if (diffPref === '沒自信') {
+    // 最簡單的先
+    mainPool.sort((a,b) => (diffOrder[a.difficulty]||1) - (diffOrder[b.difficulty]||1));
+  } else if (diffPref === '我很會') {
+    // 最難的先
+    mainPool.sort((a,b) => (diffOrder[b.difficulty]||1) - (diffOrder[a.difficulty]||1));
+  }
+  // 普通：不改變洗牌後的順序
+
+  // ── 5. 合併：主題庫在前，補充題庫在後 ──
+  const combined = mainPool.concat(suppPool);
+
+  // 去重 by id
+  const seen = new Set();
+  return combined.filter(q => {
+    if(seen.has(q.id)) return false;
+    seen.add(q.id);
+    return true;
+  });
 }
 
 // ── 法寶定義 ──
@@ -19760,7 +19818,7 @@ let _advStats = {
   itemUsedCount: 0,    // BOSS戰中使用物品卡次數
 };
 // 題目難度基礎分對照
-const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80 };
+const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80, '五年級':35 };
 // 精熟度選擇加成倍率
 const ADV_DIFF_MULT  = { '沒自信':1.0, '普通':1.2, '我很會':1.5 };
 // 二選一獎勵暫存
@@ -20658,12 +20716,13 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     _advStats.correctCount++;
     _advStats.totalQuestions++;
     _advStats.totalAnswerTime += elapsed;
-    // 依題目年級和精熟度計算本題得分
+    // ★ 依題目本身的年級和難度計算得分（非玩家設定，而是題目實際難度）
     const _qGrade = (_advCurrentQuestion && _advCurrentQuestion.grade) || '中年級';
+    const _qDiffActual = (_advCurrentQuestion && _advCurrentQuestion.difficulty) || '普通';
     const _baseScore = (typeof ADV_GRADE_SCORE!=='undefined' && ADV_GRADE_SCORE[_qGrade]) || 35;
-    const _diffKey = (_advPlayerDifficulty==='沒自信（輕鬆模式）'||_advPlayerDifficulty==='沒自信') ? '沒自信'
-                   : (_advPlayerDifficulty==='我很會（挑戰模式）'||_advPlayerDifficulty==='我很會') ? '我很會' : '普通';
-    const _mult = (typeof ADV_DIFF_MULT!=='undefined' && ADV_DIFF_MULT[_diffKey]) || 1.0;
+    const _mult = (typeof ADV_DIFF_MULT!=='undefined' && ADV_DIFF_MULT[_qDiffActual]) || 1.0;
+    // 舊變數相容
+    const _diffKey = _qDiffActual;
     // ★ 確保 totalQuizScore 是數字（防止 undefined + number = NaN）
     if(typeof _advStats.totalQuizScore !== 'number' || isNaN(_advStats.totalQuizScore)){
       _advStats.totalQuizScore = 0;
@@ -26614,7 +26673,9 @@ function _advMiniQuizSubmit(letter, isCorrect) {
   const qOv = document.getElementById('adv-quiz-overlay');
 
   if(isCorrect){
-    const coins = 5;
+    // ★ 答題獎勵依題目難度給分：沒自信=3, 普通=5, 我很會=8
+    const _qDiff = (window._miniQuizCurrentQ && window._miniQuizCurrentQ.difficulty) || '普通';
+    const coins = _qDiff === '沒自信' ? 3 : _qDiff === '我很會' ? 8 : 5;
     window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
     // ★ 答對音效：使用 boss 戰相同的 sfx-quiz-correct
     try{ beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); }catch(e){}
@@ -27691,7 +27752,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.0731', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.1630', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -27729,7 +27790,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.0731';
+  const CURRENT_VERSION = 'v1.0.20260416.1630';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
