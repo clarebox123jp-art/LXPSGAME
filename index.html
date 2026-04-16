@@ -3264,7 +3264,8 @@ body {
 <audio id="sfx-burst"    preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
 <audio id="bgm-chest" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B6%E7%AE%B1%E6%80%AABGM.mp3"></audio>
 <audio id="bgm-devil" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94BGM.m4a"></audio>
-<audio id="bgm-lose"  preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
+<audio id="sfx-medal-unlock" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8D%B2%E5%BE%97%E6%88%90%E5%B0%B1%E7%8D%8E%E7%AB%A0.mp3"></audio>
+<audio id="bgm-lose"   preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
 <audio id="sfx-burst-ready" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E6%A5%B5%E9%99%90%E7%88%86%E7%99%BC%E5%87%BA%E7%8F%BE.mp3"></audio>
 <audio id="sfx-revive"      preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E5%BE%A9%E6%B4%BB.mp3"></audio>
 <audio id="sfx-crit"        preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/%E7%88%86%E6%93%8A.mp3"></audio>
@@ -3459,7 +3460,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2302</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2342</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3725,6 +3726,23 @@ body {
   </div>
   </div>
 
+  <!-- ★ 獎章頁面 -->
+  <div id="medal-page-overlay" style="display:none;position:absolute;inset:0;z-index:720;
+    background:linear-gradient(160deg,#0a0d1a,#060810);flex-direction:column;gap:0;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 28px 14px;
+      border-bottom:1px solid rgba(255,200,50,0.2);flex-shrink:0;">
+      <div style="font-size:36px;font-weight:900;color:#ffe066;">🏅 獎章</div>
+      <button onclick="playSfx('sfx-cancel',0.4);closeMedalPage()"
+        style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(40,30,0,0.8);
+        border:2px solid rgba(212,168,67,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;">✕ 關閉</button>
+    </div>
+    <div id="medal-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;
+      -webkit-overflow-scrolling:touch;touch-action:pan-y;">
+      <!-- injected by JS -->
+    </div>
+  </div>
+
   <!-- ★ 英雄詳細/養成視窗 -->
   <div id="hero-detail-overlay" style="display:none;position:absolute;inset:0;z-index:710;
     background:linear-gradient(160deg,#080c1a,#040608);flex-direction:row;overflow:hidden;">
@@ -3760,10 +3778,9 @@ body {
         <span class="adv-nav-label">好友英雄</span>
         <span id="adv-friend-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ff4488;color:#fff;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;"></span>
       </button>
-      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('獎章')">
+      <button class="adv-nav-btn" id="adv-medal-btn" onclick="playSfx('sfx-gentle',0.5);openMedalPage()" style="border-color:rgba(255,200,50,0.4);">
         <span class="adv-nav-icon">🏅</span>
         <span class="adv-nav-label">獎章</span>
-        <span class="adv-nav-lock">🔒</span>
       </button>
       <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openChangelogPanel()" style="border-color:rgba(100,220,180,0.4);">
         <span class="adv-nav-icon">📋</span>
@@ -12452,6 +12469,8 @@ function execSkill(a, sk, cost, stype){
   a._actionLabel = n+'！';
   G.lastSkill={...sk,actor:a};
   showActionLabel(a, (sk.p?'⚙ ':'')+n, sk.p?'#ffaa44':'#66ddff');
+  // ★ 成就：第一次使用技能
+  if(n && n !== '普通攻擊') try{ _checkMedalSkillUse(); }catch(e){}
   // ── 特技加成：每1點特技提升1%技能威力 ──
   // spv(a) 回傳加成後的特技值供技能計算使用
   function spv(actor){ return Math.floor((actor.sp||0) * (1 + (actor.sp||0)*0.01)); }
@@ -17572,7 +17591,7 @@ function _detectCurrentBgm(){
   }
   // 冒險選關頁（若英雄圖鑑或魔物圖鑑疊在上方，不重播 BGM，維持現狀）
   if(isVisible('adventure-overlay')){
-    if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay')) return _curBgm;
+    if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay') || isVisible('medal-page-overlay')) return _curBgm;
     return 'bgm-menu-01';
   }
   // 超商
@@ -18693,7 +18712,7 @@ window.addEventListener('pagehide', function(e){
   // Prevent default touch behaviors that interfere with game
   // ★ 但排除圖鑑/詳情等可滾動容器（iOS 上需要允許 touchmove 才能滾動）
   var _scrollableIds = [
-    'hero-page-grid', 'monster-page-content', 'hero-detail-box',
+    'hero-page-grid', 'monster-page-content', 'medal-page-content', 'hero-detail-box',
     'hero-pick-arena-inner', 'skill-replace-overlay', 'backpack-main',
     'shop-main', 'shop-bag-scroll', 'adv-left-panel', 'adv-right-panel',
     // ★ 以下是彈出視窗（需要上下捲動）
@@ -20959,6 +20978,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   if (isCorrect) {
     _advStats.correctCount++;
     _advStats.totalQuestions++;
+    // ★ 獎章系統：BOSS戰答題
+    try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     _advStats.totalAnswerTime += elapsed;
     // ★ 依題目本身的年級和難度計算得分（非玩家設定，而是題目實際難度）
     const _qGrade = (_advCurrentQuestion && _advCurrentQuestion.grade) || '中年級';
@@ -21823,8 +21844,10 @@ function advGetUnlockedHeroes() {
 function advSaveUnlockedHero(name) {
   try {
     const list = advGetUnlockedHeroes();
-    if(!list.includes(name)) list.push(name);
+    const _isNew = !list.includes(name);
+    if(_isNew) list.push(name);
     localStorage.setItem('adv_unlocked_heroes', JSON.stringify(list));
+    if(_isNew) try{ _checkMedalHeroUnlock(name); }catch(e){}
   } catch(e) {}
 }
 
@@ -21877,6 +21900,16 @@ function advStartWinSequence() {
   const _bossTotalExp = (_advStats && _advStats.rounds ? (_advStats.rounds * 10) : 0) + _bonusExp;
   const _bossCoins = Math.round(_bossTotalExp * 0.2);
   if(_bossCoins > 0) addKnowledgeCoins(_bossCoins);
+  // ★ 成就：BOSS打倒
+  if(G && G.p2) G.p2.forEach(h=>{ try{ _checkMedalDefeat(h.name); }catch(e){} });
+  // ★ 獎章系統：BOSS勝利
+  try{
+    const _koCount = (G && G.p1) ? G.p1.filter(h=>h && h.curHp<=0).length : 0;
+    _checkMedalBossWin(_advStats && _advStats.rounds || 0, _koCount, _medalStats._hadRevive||false);
+    _medalStats._hadRevive = false;
+    _checkMedalQuizAce(_advStats && _advStats.correctCount || 0);
+    _checkMedalCoins();
+  }catch(e){}
   // ★ 九尾空貓怪 20% 機率掉落骨董茶杯
   if(Math.random() < 0.20){
     backpackAdd('antique_teacup', 1);
@@ -22577,6 +22610,9 @@ function backpackRemove(id, n=1){
 }
 function addKnowledgeCoins(n){
   _knowledgeCoins = (_knowledgeCoins||0) + Math.round(n);
+  try{ _medalStats.totalCoinsEarned = (_medalStats.totalCoinsEarned||0) + Math.round(n);
+    if(_medalStats.totalCoinsEarned >= 50000) _unlockMedal('coins_50000');
+    if((_knowledgeCoins||0) >= 10000) _unlockMedal('coins_10000'); }catch(e){}
   gameCloudSave();
   _syncCoinsDisplay();
 }
@@ -24325,6 +24361,7 @@ function shopBuyItem(id){
   backpackAdd(id, qty);
   if(prod.dailyLimit > 0) _shopDailyRecordBuy(id, qty);
   gameCloudSave();
+  try{ _checkMedalShop(); }catch(e){}
   _showInGameToast(`✅ 購買 ${prod.name} ×${qty}！支出 ${total.toLocaleString()} 知識幣`, '#44ff88', 2500);
   try{ playSfx('sfx-powerup', 0.7); }catch(e){}
   openShopOverlay(); // 重整畫面
@@ -24469,6 +24506,7 @@ function useBackpackItem(id){
   const def = BACKPACK_ITEM_DEF[id];
   if(!def || def.type==='sell_only') return;
   if(backpackGet(id)<=0){ _showInGameToast('背包中沒有這個物品', '#ff8844', 1500); return; }
+  try{ if(id.startsWith('item_')||['half_tea','picked_flower','damaged_bamboo','unknown_egg'].includes(id)) _checkMedalItemUse(); }catch(e){}
 
   if(id==='hero_exp_book'){
     // ★ 直接跳圖鑑，高亮可升級英雄
@@ -25796,8 +25834,12 @@ function upgradeSkill(name, slot) {
     boxU2.remove();
     backpackRemove('skill_upgrade_book', 1);
     _heroSkillLevels[name][slot] = nextLv;
-    log(`📖 技能升級！${name} ${slot} → +${nextLv} (效果+${nextLv*10}%)`);
+    log(`📖 技能升級！${name} ${slot} → Lv.${nextLv} (威力+${nextLv*5}%)`);
     gameCloudSave();
+    try{
+      _checkMedalSkillUpgrade();
+      if(nextLv >= 9) _checkMedalSkillMax();
+    }catch(e){}
     const bookEl2 = document.getElementById('hero-page-book-count');
     if(bookEl2) bookEl2.textContent = backpackGet('skill_upgrade_book');
     _renderHeroDetail(name, document.getElementById('hero-detail-content'));
@@ -26983,6 +27025,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     const _qDiff = (window._miniQuizCurrentQ && window._miniQuizCurrentQ.difficulty) || '普通';
     const coins = _qDiff === '沒自信' ? 3 : _qDiff === '我很會' ? 8 : 5;
     window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
+    // ★ 獎章系統：答題觸發
+    try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ 答對音效：使用 boss 戰相同的 sfx-quiz-correct
     try{ beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); }catch(e){}
     try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.9;_csfx.play().catch(()=>{});} }catch(e){}
@@ -27269,7 +27313,7 @@ function advFinishMiniBattle(win) {
         // ★ 稀有小怪特殊掉落
         if(mob.name === '寶箱怪'){
           // ★ 被打倒台詞（逃跑的寶箱怪curHp=0，被打倒的也是0，用_chestEscaped區分）
-          if(!mob._chestEscaped) _showRareMobDefeat('寶箱怪');
+          if(!mob._chestEscaped) { _showRareMobDefeat('寶箱怪'); try{ _checkMedalDefeat('寶箱怪'); }catch(e){} }
           if(mob._chestEscaped) return; // 逃跑的不給獎勵
           // 寶箱怪：必定大量知識幣（2500~5000）+ 其他掉落
           const _chestCoins = 2500 + Math.floor(Math.random() * 2501);
@@ -27294,7 +27338,7 @@ function advFinishMiniBattle(win) {
           }
         } else if(mob.name === '小惡魔'){
           // ★ 被打倒台詞
-          _showRareMobDefeat('小惡魔');
+          _showRareMobDefeat('小惡魔'); try{ _checkMedalDefeat('小惡魔'); }catch(e){}
           // 小惡魔：大量EXP（1000~2000）+ 其他掉落
           const _devilExp = 1000 + Math.floor(Math.random() * 1001);
           if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, Math.floor(_devilExp/G.p1.length)); });
@@ -28077,6 +28121,375 @@ function _showTraitLvPopup(heroName, el){
 }
 
 
+
+// ══════════════════════════════════════════════════════
+// ★ 獎章/成就系統
+// ══════════════════════════════════════════════════════
+const MEDAL_DEFS = [
+  // ── 答題成就 ──
+  { id:'first_correct',     icon:'📝', name:'初次答對',       desc:'第一次正確回答問題',             cat:'答題' },
+  { id:'streak_3',          icon:'🔥', name:'三連正解',       desc:'連續答對3題',                    cat:'答題' },
+  { id:'streak_5',          icon:'🔥', name:'五連正解',       desc:'連續答對5題',                    cat:'答題' },
+  { id:'streak_10',         icon:'💥', name:'十連正解',       desc:'連續答對10題',                   cat:'答題' },
+  { id:'answers_20',        icon:'📚', name:'好學生',         desc:'累積回答20個問題',               cat:'答題' },
+  { id:'answers_40',        icon:'📚', name:'認真學習',       desc:'累積回答40個問題',               cat:'答題' },
+  { id:'answers_60',        icon:'📚', name:'知識愛好者',     desc:'累積回答60個問題',               cat:'答題' },
+  { id:'answers_80',        icon:'📖', name:'學海無涯',       desc:'累積回答80個問題',               cat:'答題' },
+  { id:'answers_100',       icon:'🎓', name:'百題達人',       desc:'累積回答100個問題',              cat:'答題' },
+  { id:'answers_200',       icon:'🎓', name:'學識豐富',       desc:'累積回答200個問題',              cat:'答題' },
+  { id:'answers_400',       icon:'🏫', name:'知識先鋒',       desc:'累積回答400個問題',              cat:'答題' },
+  { id:'answers_600',       icon:'🏫', name:'博學多聞',       desc:'累積回答600個問題',              cat:'答題' },
+  { id:'answers_800',       icon:'🌟', name:'智慧之光',       desc:'累積回答800個問題',              cat:'答題' },
+  { id:'answers_1000',      icon:'👑', name:'問答王者',       desc:'累積回答1000個問題',             cat:'答題' },
+  { id:'answers_2000',      icon:'👑', name:'答題神人',       desc:'累積答對問題達2000題',           cat:'答題' },
+  { id:'perfect_mini',      icon:'⭐', name:'完美出擊',       desc:'同一場小怪戰中全部答對',         cat:'答題' },
+  { id:'quiz_ace',          icon:'🏆', name:'答題王',         desc:'單場BOSS戰答對10題以上',         cat:'答題' },
+  { id:'hard_100',          icon:'💪', name:'好問精神',       desc:'累積選擇「我很會」難度答題100次', cat:'答題' },
+  // ── 戰鬥成就 ──
+  { id:'defeat_chest',      icon:'📦', name:'寶箱獵人',       desc:'第一次打倒寶箱怪',              cat:'戰鬥' },
+  { id:'defeat_devil',      icon:'😈', name:'惡魔剋星',       desc:'第一次打倒小惡魔',              cat:'戰鬥' },
+  { id:'defeat_boss',       icon:'🐱', name:'空山之役',       desc:'第一次打倒九尾空貓怪',          cat:'戰鬥' },
+  { id:'defeat_elite',      icon:'⚡', name:'菁英獵手',       desc:'第一次打倒精英小怪',            cat:'戰鬥' },
+  { id:'chest_hunter_5',    icon:'💰', name:'寶箱狩獵者',     desc:'累積打倒5隻寶箱怪',             cat:'戰鬥' },
+  { id:'devil_slayer_5',    icon:'⚔️', name:'惡魔獵手',       desc:'累積打倒5隻小惡魔',             cat:'戰鬥' },
+  { id:'quick_win',         icon:'⚡', name:'速戰速決',       desc:'在10回合內打倒BOSS',             cat:'戰鬥' },
+  { id:'no_ko',             icon:'🛡️', name:'不倒翁',         desc:'一場BOSS戰全程沒有任何英雄倒下', cat:'戰鬥' },
+  { id:'phoenix',           icon:'🔄', name:'不死鳥',         desc:'英雄被復活後繼續打倒BOSS',       cat:'戰鬥' },
+  { id:'win_streak_3',      icon:'🏅', name:'連勝三場',       desc:'連續贏得3場冒險（不中途離開）',  cat:'戰鬥' },
+  { id:'extreme_challenge', icon:'🔥', name:'極限挑戰',       desc:'以Lv1英雄打倒任意BOSS',          cat:'戰鬥' },
+  // ── 英雄成就 ──
+  { id:'first_adventure_win',icon:'🎉',name:'初次大勝',       desc:'贏得第一場BOSS戰',              cat:'英雄' },
+  { id:'first_hero_unlock', icon:'🗝️', name:'第一位夥伴',     desc:'在冒險中解鎖第一位新英雄',       cat:'英雄' },
+  { id:'unlock_5',          icon:'👥', name:'組建小隊',       desc:'解鎖5位英雄',                    cat:'英雄' },
+  { id:'unlock_10',         icon:'👥', name:'英雄招募中',     desc:'解鎖10位英雄',                   cat:'英雄' },
+  { id:'unlock_20',         icon:'🌟', name:'強大陣容',       desc:'解鎖20位英雄',                   cat:'英雄' },
+  { id:'unlock_30',         icon:'💫', name:'英雄大軍',       desc:'解鎖30位英雄',                   cat:'英雄' },
+  { id:'all_heroes',        icon:'👑', name:'全英雄收錄',     desc:'解鎖所有普通英雄（不含魔物）',   cat:'英雄' },
+  { id:'hero_lv10',         icon:'📈', name:'初顯鋒芒',       desc:'任意英雄達到等級10',             cat:'英雄' },
+  { id:'hero_lv30',         icon:'📈', name:'日漸成熟',       desc:'任意英雄達到等級30',             cat:'英雄' },
+  { id:'hero_lv50',         icon:'💎', name:'巔峰之境',       desc:'任意英雄達到滿級（Lv50）',       cat:'英雄' },
+  { id:'three_max',         icon:'💎', name:'三劍客',         desc:'同時擁有3位Lv50英雄',            cat:'英雄' },
+  { id:'skill_max',         icon:'📘', name:'技能大師',       desc:'任意英雄的任一技能升到Lv9',       cat:'英雄' },
+  // ── 其他成就 ──
+  { id:'first_skill_use',   icon:'✨', name:'初試技能',       desc:'戰鬥中第一次使用技能',           cat:'其他' },
+  { id:'first_skill_up',    icon:'📘', name:'初次強化',       desc:'第一次使用技能升級書',           cat:'其他' },
+  { id:'first_item_use',    icon:'🃏', name:'道具初用',       desc:'戰鬥中第一次使用物品卡',         cat:'其他' },
+  { id:'first_shop',        icon:'🛒', name:'第一筆消費',     desc:'在超商第一次購買道具',           cat:'其他' },
+  { id:'coins_10000',       icon:'💰', name:'小有積蓄',       desc:'知識幣存量首次突破10000枚',      cat:'其他' },
+  { id:'coins_50000',       icon:'💎', name:'富甲一方',       desc:'累積獲得知識幣50000枚（總計）',  cat:'其他' },
+];
+
+// ── 成就狀態存取 ──
+let _medals = {};
+let _medalStats = {
+  totalAnswers: 0, correctAnswers: 0, streak: 0, hardModeAnswers: 0,
+  totalCoinsEarned: 0, winStreak: 0, chestKills: 0, devilKills: 0,
+  hadRevive: false,
+};
+
+function _loadMedals(){
+  try{
+    const d = localStorage.getItem('adv_medals');
+    if(d) _medals = JSON.parse(d);
+    const s = localStorage.getItem('adv_medal_stats');
+    if(s) Object.assign(_medalStats, JSON.parse(s));
+  }catch(e){}
+}
+
+function _saveMedals(){
+  try{
+    localStorage.setItem('adv_medals', JSON.stringify(_medals));
+    localStorage.setItem('adv_medal_stats', JSON.stringify(_medalStats));
+  }catch(e){}
+}
+
+function _unlockMedal(id){
+  if(_medals[id]) return; // already unlocked
+  _medals[id] = { unlockedAt: Date.now() };
+  _saveMedals();
+  const def = MEDAL_DEFS.find(m=>m.id===id);
+  if(def){
+    _setMedalDot(true);
+    setTimeout(()=>{ _showMedalCelebration(def); }, 400);
+  }
+}
+
+function _showMedalCelebration(def){
+  // ★ 獲得獎章專屬音效
+  try{
+    const _msfx = document.getElementById('sfx-medal-unlock');
+    if(_msfx){ _msfx.currentTime=0; _msfx.volume=0.9; _msfx.play().catch(()=>{}); }
+    else { playSfx('sfx-confirm2', 0.9); }
+  }catch(e){}
+
+  // 慶祝彈窗
+  const old = document.getElementById('_medal-celebrate');
+  if(old) old.remove();
+  const pop = document.createElement('div');
+  pop.id = '_medal-celebrate';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;pointer-events:auto;';
+  pop.innerHTML = `
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);animation:_fadeIn 0.3s ease-out;"></div>
+    <div id="_medal-card" style="position:relative;z-index:1;
+      background:linear-gradient(135deg,rgba(15,12,40,0.99),rgba(8,6,25,0.99));
+      border:3px solid #ffe066;border-radius:28px;padding:36px 48px;
+      text-align:center;max-width:min(88vw,600px);
+      box-shadow:0 0 80px rgba(255,200,0,0.6),0 0 30px rgba(255,200,0,0.3);
+      animation:_medalPop 0.45s cubic-bezier(0.175,0.885,0.32,1.275);">
+      <!-- 金色粒子背景 -->
+      <div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+        font-size:40px;animation:_spin 1.5s linear infinite;">✨</div>
+      <!-- 獎章圖示 -->
+      <div style="font-size:80px;margin:10px 0 8px;animation:_bounce 0.6s 0.2s ease-out both;">${def.icon}</div>
+      <!-- 標題 -->
+      <div style="font-size:16px;color:#aaa;letter-spacing:4px;margin-bottom:6px;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">🏅 獎章解鎖！</div>
+      <!-- 名稱 -->
+      <div style="font-size:36px;font-weight:900;color:#ffe066;margin-bottom:10px;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+        text-shadow:0 0 20px rgba(255,200,0,0.8);">【${def.name}】</div>
+      <!-- 說明 -->
+      <div style="font-size:20px;color:#ddd;margin-bottom:8px;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">${def.desc}</div>
+      <!-- 獎勵提示 -->
+      <div style="font-size:15px;color:#666;margin-bottom:24px;">🎁 獎勵：即將開放</div>
+      <!-- 關閉按鈕 -->
+      <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('_medal-celebrate').remove();"
+        style="padding:12px 40px;font-size:22px;font-weight:900;
+        background:linear-gradient(135deg,rgba(255,200,0,0.2),rgba(200,150,0,0.2));
+        border:2px solid #ffe066;color:#ffe066;border-radius:14px;cursor:pointer;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+        box-shadow:0 0 20px rgba(255,200,0,0.3);transition:all 0.15s;"
+        onmouseover="this.style.background='rgba(255,200,0,0.35)'"
+        onmouseout="this.style.background='linear-gradient(135deg,rgba(255,200,0,0.2),rgba(200,150,0,0.2))'">
+        ✓ 太棒了！
+      </button>
+    </div>
+    <!-- 煙火粒子 -->
+    <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;" id="_medal-sparks"></div>
+  `;
+  // 加入動畫 CSS（若尚未存在）
+  if(!document.getElementById('_medal-css')){
+    const style = document.createElement('style');
+    style.id = '_medal-css';
+    style.textContent = [
+      '@keyframes _fadeIn { from{opacity:0} to{opacity:1} }',
+      '@keyframes _medalPop { from{opacity:0;transform:scale(0.5) translateY(40px)} to{opacity:1;transform:scale(1) translateY(0)} }',
+      '@keyframes _bounce { 0%{transform:scale(0.3)} 60%{transform:scale(1.15)} 80%{transform:scale(0.95)} 100%{transform:scale(1)} }',
+      '@keyframes _spin { from{transform:translateX(-50%) rotate(0deg)} to{transform:translateX(-50%) rotate(360deg)} }',
+      '@keyframes _sparkFly { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--sx),var(--sy)) scale(0);opacity:0} }',
+    ].join('\n');
+    document.head.appendChild(style);
+  }
+  // 加到 #gc 或 body
+  const gc = document.getElementById('gc');
+  (gc || document.body).appendChild(pop);
+
+  // 生成煙火粒子
+  const sparks = document.getElementById('_medal-sparks');
+  if(sparks){
+    const colors = ['#ffe066','#ff8844','#44ffcc','#ff44aa','#88aaff','#ffffff'];
+    for(let i=0;i<30;i++){
+      const s = document.createElement('div');
+      const angle = (i/30)*360;
+      const dist = 120 + Math.random()*180;
+      const sx = Math.cos(angle*Math.PI/180)*dist + 'px';
+      const sy = (Math.sin(angle*Math.PI/180)*dist - 80) + 'px';
+      s.style.cssText = 'position:absolute;top:50%;left:50%;width:'+(6+Math.random()*6)+'px;height:'+(6+Math.random()*6)+'px;'+
+        'border-radius:50%;background:'+colors[i%colors.length]+';'+
+        '--sx:'+sx+';--sy:'+sy+';'+
+        'animation:_sparkFly '+(0.6+Math.random()*0.8)+'s '+(Math.random()*0.3)+'s ease-out forwards;';
+      sparks.appendChild(s);
+    }
+  }
+
+  // 3秒後自動關閉（若玩家沒有主動關閉）
+  setTimeout(()=>{
+    const p = document.getElementById('_medal-celebrate');
+    if(p){ p.style.transition='opacity 0.4s'; p.style.opacity='0'; setTimeout(()=>p.remove(), 400); }
+  }, 5000);
+}
+
+function _setMedalDot(show){
+  const btn = document.getElementById('adv-medal-btn');
+  if(!btn) return;
+  let dot = btn.querySelector('._medal-dot');
+  if(show && !dot){
+    dot = document.createElement('span');
+    dot.className = '_medal-dot';
+    dot.style.cssText = 'position:absolute;top:2px;right:2px;width:10px;height:10px;background:#ff4444;border-radius:50%;';
+    btn.style.position = 'relative';
+    btn.appendChild(dot);
+  } else if(!show && dot){ dot.remove(); }
+}
+
+// ── 成就觸發函式 ──
+function _checkMedalAnswer(correct, difficulty){
+  _medalStats.totalAnswers++;
+  if(correct){
+    _medalStats.correctAnswers++;
+    _medalStats.streak++;
+    if(difficulty === '我很會') _medalStats.hardModeAnswers++;
+    _unlockMedal('first_correct');
+    if(_medalStats.streak >= 3)  _unlockMedal('streak_3');
+    if(_medalStats.streak >= 5)  _unlockMedal('streak_5');
+    if(_medalStats.streak >= 10) _unlockMedal('streak_10');
+    const ca = _medalStats.correctAnswers;
+    if(ca>=20)   _unlockMedal('answers_20');
+    if(ca>=40)   _unlockMedal('answers_40');
+    if(ca>=60)   _unlockMedal('answers_60');
+    if(ca>=80)   _unlockMedal('answers_80');
+    if(ca>=100)  _unlockMedal('answers_100');
+    if(ca>=200)  _unlockMedal('answers_200');
+    if(ca>=400)  _unlockMedal('answers_400');
+    if(ca>=600)  _unlockMedal('answers_600');
+    if(ca>=800)  _unlockMedal('answers_800');
+    if(ca>=1000) _unlockMedal('answers_1000');
+    if(ca>=2000) _unlockMedal('answers_2000');
+    if(_medalStats.hardModeAnswers >= 100) _unlockMedal('hard_100');
+  } else {
+    _medalStats.streak = 0;
+  }
+  _saveMedals();
+}
+
+function _checkMedalBossWin(roundCount, heroesKO, hadRevive){
+  _unlockMedal('first_adventure_win');
+  _medalStats.winStreak++;
+  if(_medalStats.winStreak >= 3) _unlockMedal('win_streak_3');
+  if(roundCount <= 10) _unlockMedal('quick_win');
+  if(heroesKO === 0)   _unlockMedal('no_ko');
+  if(hadRevive)        _unlockMedal('phoenix');
+  _saveMedals();
+}
+
+function _checkMedalDefeat(mobName){
+  if(mobName === '寶箱怪'){
+    _unlockMedal('defeat_chest');
+    _medalStats.chestKills = (_medalStats.chestKills||0) + 1;
+    if(_medalStats.chestKills >= 5) _unlockMedal('chest_hunter_5');
+  }
+  if(mobName === '小惡魔'){
+    _unlockMedal('defeat_devil');
+    _medalStats.devilKills = (_medalStats.devilKills||0) + 1;
+    if(_medalStats.devilKills >= 5) _unlockMedal('devil_slayer_5');
+  }
+  if(mobName === '九尾空貓怪') _unlockMedal('defeat_boss');
+  if(['綠竹筍小妖','茶葉精靈'].includes(mobName)) _unlockMedal('defeat_elite');
+  _saveMedals();
+}
+
+function _checkMedalHeroUnlock(heroName){
+  _unlockMedal('first_hero_unlock');
+  const unlocked = advGetUnlockedHeroes();
+  if(unlocked.length >= 5)  _unlockMedal('unlock_5');
+  if(unlocked.length >= 10) _unlockMedal('unlock_10');
+  if(unlocked.length >= 20) _unlockMedal('unlock_20');
+  if(unlocked.length >= 30) _unlockMedal('unlock_30');
+  const allNormal = typeof HERO_DB!=='undefined' ? Object.keys(HERO_DB).filter(n=>
+    typeof BOSS_NAMES==='undefined' || !BOSS_NAMES.includes(n)) : [];
+  if(allNormal.length > 0 && allNormal.every(n=>unlocked.includes(n))) _unlockMedal('all_heroes');
+  _saveMedals();
+}
+
+function _checkMedalHeroLevel(heroName, level){
+  if(level >= 10) _unlockMedal('hero_lv10');
+  if(level >= 30) _unlockMedal('hero_lv30');
+  if(level >= 50){
+    _unlockMedal('hero_lv50');
+    // Check if 3 heroes are Lv50
+    const maxHeroes = Object.keys(_heroLevels||{}).filter(n=>(_heroLevels[n]||0)>=50);
+    if(maxHeroes.length >= 3) _unlockMedal('three_max');
+  }
+  _saveMedals();
+}
+
+function _checkMedalSkillUse(){ _unlockMedal('first_skill_use'); _saveMedals(); }
+function _checkMedalSkillUpgrade(){ _unlockMedal('first_skill_up'); _saveMedals(); }
+function _checkMedalItemUse(){ _unlockMedal('first_item_use'); _saveMedals(); }
+function _checkMedalShop(){ _unlockMedal('first_shop'); _saveMedals(); }
+function _checkMedalSkillMax(){
+  _unlockMedal('skill_max'); _saveMedals();
+}
+
+function _checkMedalCoins(){
+  if((_knowledgeCoins||0) >= 10000) _unlockMedal('coins_10000');
+  _saveMedals();
+}
+
+function _checkMedalPerfectMini(allCorrect){
+  if(allCorrect) _unlockMedal('perfect_mini');
+  _saveMedals();
+}
+
+function _checkMedalQuizAce(correctCount){
+  if(correctCount >= 10) _unlockMedal('quiz_ace');
+  _saveMedals();
+}
+
+function _checkMedalExtreme(heroName, heroLevel){
+  if(heroLevel <= 1) _unlockMedal('extreme_challenge');
+  _saveMedals();
+}
+
+// ── 獎章頁面 UI ──
+function openMedalPage(){
+  const ov = document.getElementById('medal-page-overlay');
+  if(!ov) return;
+  ov.style.display = 'flex';
+  _loadMedals();
+  _buildMedalPage();
+  _setMedalDot(false);
+}
+
+function closeMedalPage(){
+  const ov = document.getElementById('medal-page-overlay');
+  if(ov) ov.style.display = 'none';
+}
+
+function _buildMedalPage(){
+  const el = document.getElementById('medal-page-content');
+  if(!el) return;
+  const cats = ['答題','戰鬥','英雄','其他'];
+  const unlockedCount = MEDAL_DEFS.filter(m=>_medals[m.id]).length;
+  let html = `<div style="font-size:22px;color:#aaa;margin-bottom:20px;">
+    已解鎖 <span style="color:#ffe066;font-weight:900;font-size:28px;">${unlockedCount}</span> / ${MEDAL_DEFS.length} 枚
+    <span style="font-size:16px;color:#555;margin-left:12px;">（獎勵兌換功能即將開放）</span>
+  </div>`;
+  for(const cat of cats){
+    const catMedals = MEDAL_DEFS.filter(m=>m.cat===cat);
+    html += `<div style="margin-bottom:28px;">
+      <div style="font-size:26px;font-weight:900;color:#ffe066;margin-bottom:12px;
+        padding-bottom:6px;border-bottom:1px solid rgba(255,220,0,0.2);">
+        ${cat==='答題'?'📝':cat==='戰鬥'?'⚔️':cat==='英雄'?'🦸':'🌟'} ${cat}成就
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">`;
+    for(const m of catMedals){
+      const unlocked = !!_medals[m.id];
+      const date = unlocked && _medals[m.id].unlockedAt
+        ? new Date(_medals[m.id].unlockedAt).toLocaleDateString('zh-TW') : '';
+      html += `<div style="border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;
+        background:${unlocked?'rgba(255,200,0,0.08)':'rgba(255,255,255,0.03)'};
+        border:1.5px solid ${unlocked?'rgba(255,200,0,0.4)':'rgba(255,255,255,0.08)'};
+        opacity:${unlocked?'1':'0.55'};">
+        <div style="font-size:36px;min-width:44px;text-align:center;${unlocked?'':'filter:grayscale(100%)'}">${m.icon}</div>
+        <div style="flex:1;">
+          <div style="font-size:20px;font-weight:800;color:${unlocked?'#ffe066':'#888'};margin-bottom:3px;">${m.name}${unlocked?'':'  🔒'}</div>
+          <div style="font-size:15px;color:#aaa;">${m.desc}</div>
+          ${date?`<div style="font-size:13px;color:#666;margin-top:4px;">${date} 解鎖</div>`:''}
+          <div style="font-size:13px;color:#444;margin-top:4px;">🎁 獎勵：即將開放</div>
+        </div>
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+  el.innerHTML = html;
+}
+
+// ── 初始化 ──
+_loadMedals();
+
+
 // ── 稀有小怪登場台詞 ──
 const _RARE_MOB_LINES = {
   '寶箱怪': {
@@ -28337,7 +28750,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.2302', items:[
+  { ver:'v1.0.20260416.2342', items:[
     '新增稀有小怪「寶箱怪」（5%機率出現）：打倒必得2500~5000知識幣',
     '新增稀有小怪「小惡魔」（5%機率出現）：打倒獲得大量EXP及書籍',
     '寶箱怪和小惡魔已加入魔物圖鑑「稀有小怪」分類',
@@ -28423,7 +28836,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.2302';
+  const CURRENT_VERSION = 'v1.0.20260416.2342';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
