@@ -3890,6 +3890,7 @@ body {
         <div class="hpick-slot" id="hpick-side-1"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
         <div class="hpick-slot" id="hpick-side-2"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
         <div class="hpick-slot" id="hpick-side-3"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
+        <div class="hpick-slot" id="hpick-side-friend" style="border:2px dashed rgba(255,130,200,0.5);border-radius:10px;opacity:0.6;"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt" style="font-size:28px;">🤝</span></div><div class="hpick-slot-info" style="font-size:13px;color:#ff88cc;">好友英雄</div</div>
       </div>
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
@@ -7881,13 +7882,15 @@ function inviteHero(idx, name){
     _heroPickSelected.splice(alreadyIdx,1);
     document.getElementById(`hpick-${nodeId}`)?.classList.remove('picked');
   } else {
-    if(_heroPickSelected.length>=4) return;
+    const _maxPick = (window._invitedFriendHero && window._friendHeroInParty) ? 3 : 4;
+    if(_heroPickSelected.length>=_maxPick) return;
     _heroPickSelected.push(name);
     document.getElementById(`hpick-${nodeId}`)?.classList.add('picked');
   }
   updatePickedBadges();
-  document.getElementById('hero-pick-count').textContent=`請選擇 4 名英雄出戰（已選 ${_heroPickSelected.length} / 4）`;
-  document.getElementById('hero-pick-confirm').disabled=_heroPickSelected.length<4;
+  const _fc1 = (window._invitedFriendHero && window._friendHeroInParty) ? 3 : 4;
+  document.getElementById('hero-pick-count').textContent=`請選擇 ${_fc1} 名英雄出戰（已選 ${_heroPickSelected.length} / ${_fc1}）`;
+  document.getElementById('hero-pick-confirm').disabled=_heroPickSelected.length<_fc1;
   // Always close focus card immediately after any invite/cancel
   dismissFocus();
 }
@@ -8028,12 +8031,32 @@ function updatePickedBadges(){
       slot.onclick=null;
     }
   }
+  // ★ 好友英雄第5格
+  const _fSlot = document.getElementById('hpick-side-friend');
+  if(_fSlot){
+    if(window._invitedFriendHero && window._friendHeroInParty){
+      const fh = window._invitedFriendHero;
+      const imgUrl = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[fh.name]) || '';
+      _fSlot.style.opacity = '1';
+      _fSlot.style.borderColor = 'rgba(255,80,160,0.8)';
+      _fSlot.innerHTML = `<div class="hpick-slot-img">${imgUrl
+        ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:center 10%;display:block;">`
+        : `<span style="font-size:48px">${(typeof AVATARS!=='undefined'&&AVATARS[fh.name])||'🤝'}</span>`}
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,80,160,0.7);font-size:12px;color:#fff;text-align:center;padding:2px;">🤝 ${fh._ownerName||'好友'}</div>
+      </div><div class="hpick-slot-info"><span class="hpick-slot-name" style="color:#ff88cc;">${fh.name}</span></div>`;
+    } else {
+      _fSlot.style.opacity = '0.5';
+      _fSlot.style.borderColor = 'rgba(255,130,200,0.4)';
+      _fSlot.innerHTML = `<div class="hpick-slot-img"><span class="hpick-slot-empty-txt" style="font-size:28px;">🤝</span></div><div class="hpick-slot-info" style="font-size:13px;color:#ff88cc;">好友英雄</div>`;
+    }
+  }
 }
 
 function toggleHeroPick(idx, name){ focusHero(idx,name); } // legacy compat
 
 function confirmHeroPick(){
-  if(_heroPickSelected.length < 4) return;
+  const _needCount = (window._invitedFriendHero && window._friendHeroInParty) ? 3 : 4;
+  if(_heroPickSelected.length < _needCount) return;
   document.getElementById('hero-pick-overlay').style.display = 'none';
   // ── 冒險模式：p2 固定為 BOSS 陣容（必須同時有 _adventureStage 且 overlay 是由冒險模式觸發）
   // ★★ 保護層：三個條件缺一不可，防止鬥技場誤用BOSS陣容。請勿修改此判斷式。
@@ -21723,7 +21746,7 @@ function advShowBattleResult(win) {
 
       // 給予獎勵
       if(_losePartialExp > 0 && G && G.p1)
-        G.p1.forEach(h => { if(h && h.name) addHeroExp(h.name, _losePartialExp); });
+        G.p1.forEach(h => { if(h && h.name && !(window._invitedFriendHero && h && h.name === window._invitedFriendHero.name)) addHeroExp(h.name, _losePartialExp); });
       if(_losePartialCoins > 0)
         addKnowledgeCoins(_losePartialCoins);
       if(_losePartialExp > 0 || _losePartialCoins > 0)
@@ -21919,7 +21942,7 @@ function advStartWinSequence() {
   const _winGrade = (document.getElementById('adv-result-grade')||{}).textContent||'';
   const _bonusExpMap = {'S':100, 'A':70, 'B':50, 'C':30};
   const _bonusExp = Object.entries(_bonusExpMap).reduce((v,[g,e])=>_winGrade.includes(g)?e:v, 30);
-  if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, _bonusExp); });
+  if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name && !(window._invitedFriendHero && h && h.name === window._invitedFriendHero.name)) addHeroExp(h.name, _bonusExp); });
   // ★ 知識幣：BOSS戰EXP × 20%（以_advStats計）
   const _bossTotalExp = (_advStats && _advStats.rounds ? (_advStats.rounds * 10) : 0) + _bonusExp;
   const _bossCoins = Math.round(_bossTotalExp * 0.2);
@@ -24040,6 +24063,7 @@ function grantBattleExp(win, stats) {
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
   const _bossLevelUps = [];
   heroes.forEach(name => {
+    if((window._invitedFriendHero && name === window._invitedFriendHero.name)) return; // ★ 好友英雄不獲得EXP
     const mul = battleHeroes.includes(name) ? 1.5 : 0; // ★ 未出戰=0
     const _lu = addHeroExp(name, Math.round(totalExp * mul));
     if(_lu && _lu.length) _bossLevelUps.push(..._lu);
@@ -24583,6 +24607,10 @@ function useBackpackItem(id){
     openHeroPage();
     setTimeout(() => {
       _backpackOpenHeroSelect('📕 英雄經驗值之書(精裝版)', '選擇要增加200EXP的英雄', name=>{
+        if(window._invitedFriendHero && window._invitedFriendHero.name === name){
+          _showInGameToast('好友英雄無法使用升級物品。', '#ff8844', 2000);
+          return;
+        }
         backpackRemove('hero_exp_book_deluxe');
         addHeroExp(name, 200);
         gameCloudSave();
@@ -25723,6 +25751,10 @@ function _renderHeroDetail(name, box) {
 }
 
 function upgradeBurst(name) {
+  if(window._invitedFriendHero && window._invitedFriendHero.name === name){
+    _showInGameToast('好友英雄無法使用升級物品。', '#ff8844', 2000);
+    return;
+  }
   if(backpackGet('burst_upgrade_fruit') <= 0){
     _showInGameToast('背包中沒有超越極限果實！', '#ff8844', 2000); return;
   }
@@ -25782,6 +25814,10 @@ function upgradeBurst(name) {
 
 
 function investStat(name, stat) {
+  if(window._invitedFriendHero && window._invitedFriendHero.name === name){
+    _showInGameToast('好友英雄無法投資素質點數。', '#ff8844', 2000);
+    return;
+  }
   if(!(_heroStatPoints[name] > 0)) return;
   if(!_heroStatInvested[name]) _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
   // ★ 各素質上限：HP=99，攻擊/特技/速度=30
@@ -25836,6 +25872,11 @@ function investStat(name, stat) {
 }
 
 function upgradeSkill(name, slot) {
+  // ★ 好友英雄無法升級技能
+  if(window._invitedFriendHero && window._invitedFriendHero.name === name){
+    _showInGameToast('好友英雄無法使用升級物品，狀態由好友自行更新。', '#ff8844', 2500);
+    return;
+  }
   if(backpackGet('skill_upgrade_book') <= 0){ _showInGameToast('背包中沒有技能升級書！', '#ff8844', 2000); return; }
   if(!_heroSkillLevels[name]) _heroSkillLevels[name] = {s1:0, s2:0};
   if((_heroSkillLevels[name][slot]||0) >= 9) { alert('技能已達最高等級！'); return; }
@@ -26673,8 +26714,16 @@ function _selectFriendHero(name) {
   // 加入選角（不佔用普通英雄槽，作為額外成員）
   if (!window._friendHeroInParty) {
     window._friendHeroInParty = true;
-    bannerFX(null, `🤝 ${name} 加入隊伍！`, '#ff88cc', 1500);
+    bannerFX(null, `🤝 ${name} 加入！再選 3 名英雄即可出戰`, '#ff88cc', 2000);
     playSfx('sfx-confirm', 0.6);
+    try{
+      updatePickedBadges();
+      const _fc2 = 3;
+      const cnt = document.getElementById('hero-pick-count');
+      if(cnt) cnt.textContent = `請選擇 ${_fc2} 名英雄出戰（已選 ${_heroPickSelected.length} / ${_fc2}）`;
+      const btn = document.getElementById('hero-pick-confirm');
+      if(btn) btn.disabled = _heroPickSelected.length < _fc2;
+    }catch(e){}
     // 高亮友方卡片
     const friendCard = document.querySelector('.friend-hero-card');
     if (friendCard) {
@@ -26689,6 +26738,15 @@ function _selectFriendHero(name) {
     // 取消
     window._friendHeroInParty = false;
     bannerFX(null, `${name} 已取消加入`, '#aaa', 1200);
+    try{
+      updatePickedBadges();
+      const cnt = document.getElementById('hero-pick-count');
+      if(cnt) cnt.textContent = `請選擇 4 名英雄出戰（已選 ${_heroPickSelected.length} / 4）`;
+      const btn = document.getElementById('hero-pick-confirm');
+      if(btn) btn.disabled = _heroPickSelected.length < 4;
+      // 若已選超過3人，移除多餘的（保留前3）
+      // Actually: just re-check the button
+    }catch(e){}
     const friendCard = document.querySelector('.friend-hero-card');
     if (friendCard) {
       friendCard.style.background = 'rgba(30,5,20,0.95)';
@@ -27449,7 +27507,7 @@ function advFinishMiniBattle(win) {
           _showRareMobDefeat('小惡魔'); try{ _checkMedalDefeat('小惡魔'); }catch(e){}
           // 小惡魔：大量EXP（1000~2000）+ 其他掉落
           const _devilExp = 1000 + Math.floor(Math.random() * 1001);
-          if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, _devilExp); });
+          if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name && !(window._invitedFriendHero && h && h.name === window._invitedFriendHero.name)) addHeroExp(h.name, _devilExp); });
           _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（每人）`, sellPrice:0 });
           log(`⭐ [小惡魔] 掉落經驗值 ${_devilExp}！`);
           // 2% 超越極限果實
@@ -27494,6 +27552,7 @@ function advFinishMiniBattle(win) {
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
       const _miniLevelUps = []; // ★ 收集升級事件
       heroes.forEach(name => {
+        if((window._invitedFriendHero && name === window._invitedFriendHero.name)) return; // ★ 好友英雄不獲得EXP
         const _lu = addHeroExp(name, battleHeroes.includes(name) ? baseExp : 0);
         if(_lu && _lu.length) _miniLevelUps.push(..._lu);
       });
