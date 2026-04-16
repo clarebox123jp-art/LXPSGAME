@@ -3457,7 +3457,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1655</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1702</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -25333,7 +25333,7 @@ function _renderHeroDetail(name, box) {
           const icon = {hp:'❤️',atk:'⚔️',sp:'✨',spd:'💨'}[stat];
           const lbl = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
           return `<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:22px;">${icon} ${lbl}</span>
+            <span style="font-size:22px;cursor:pointer;" onclick="event.stopPropagation();toggleStatPopup(this,\'${stat}\',24)">${icon} ${lbl} <span style="font-size:14px;color:#aaa;vertical-align:middle;opacity:0.7;">?</span></span>
             <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${base+bonus}${bonus>0?`<span style="font-size:16px;color:#44ff88;"> +${bonus}</span>`:''}
             </span>
             ${freeP>0&&bonus<50?`<button onclick="playSfx('sfx-statup',0.6);investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
@@ -27842,7 +27842,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.1655', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.1702', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -27880,7 +27880,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.1655';
+  const CURRENT_VERSION = 'v1.0.20260416.1702';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
