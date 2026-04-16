@@ -3457,7 +3457,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1641</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1655</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -19484,6 +19484,57 @@ const ADV_QUIZ_DB = [{"id":1,"grade":"低年級","subject":"國語文","difficul
 {"id": 988, "grade": "關島交流", "subject": "關島交流", "difficulty": "普通", "question": "對於關島的傳統文化表演，表演結束後應？", "options": ["趕快去拿點心吃", "給予熱烈的掌聲", "批評表演不好看", "低頭玩手機"], "answer": "B", "hint": ""},
 {"id": 989, "grade": "關島交流", "subject": "關島交流", "difficulty": "普通", "question": "參加正式交流晚宴時，服裝應該？", "options": ["穿睡衣", "穿著整潔乾淨的校服或規定服裝", "隨便穿背心短褲", "穿萬聖節服裝"], "answer": "B", "hint": ""},
 {"id": 990, "grade": "關島交流", "subject": "關島交流", "difficulty": "普通", "question": "代表文山區贈送禮物給關島友人時，應注意？", "options": ["用雙手遞上並帶著微笑說明禮物意義", "隨手丟在桌上", "叫對方自己來拿", "包裝越貴越好不用說明"], "answer": "A", "hint": ""}
+,
+{"id": 991, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "臺北市立動物園最早是在哪裡創立的，後來才搬遷到木柵？", "options": ["士林", "圓山", "北投", "淡水"], "answer": "B", "hint": ""},
+{"id": 992, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "臺北市立動物園搬遷到木柵至今已超過多少年了？（搬遷於1986年）", "options": ["10年", "20年", "30年", "50年"], "answer": "C", "hint": ""},
+{"id": 993, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "當年動物園從舊址搬到木柵時，是用什麼方式運送大象等大型動物？", "options": ["直升機吊掛", "卡車車隊大遊行", "讓動物自己走過去", "船運"], "answer": "B", "hint": ""},
+{"id": 994, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "木柵動物園門口有一座著名的噴水池，其造型與哪種主題有關？", "options": ["恐龍", "紅鶴", "虎鯨", "大象"], "answer": "B", "hint": ""},
+{"id": 995, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "動物園的標誌（Logo）是由哪三種色塊組成，象徵自然與生命？", "options": ["紅、黃、藍", "綠、藍、橘", "黑、白、灰", "紅、綠、白"], "answer": "B", "hint": ""},
+{"id": 996, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "進入大門後，最先看到的戶外展示區通常是哪一種動物？", "options": ["企鵝", "紅鶴", "獅子", "大象"], "answer": "B", "hint": ""},
+{"id": 997, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "想要看大熊貓「團團、圓圓、圓仔、圓寶」，應該去哪一個展館？", "options": ["兩棲爬蟲館", "新光特展館", "熱帶雨林館", "非洲動物區"], "answer": "B", "hint": ""},
+{"id": 998, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "2019年新開幕，外型像巨型「穿山甲」的室內展館是？", "options": ["沙漠動物區", "熱帶雨林室內館", "溫帶動物區", "企鵝館"], "answer": "B", "hint": ""},
+{"id": 999, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "如果想看國王企鵝與黑腳企鵝，應該前往園區的哪個位置？", "options": ["大門口旁", "園區最上方的企鵝館", "昆蟲館內", "非洲區"], "answer": "B", "hint": ""},
+{"id": 1000, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "要在動物園內往返大門與鳥園站，最省力的方法是搭乘什麼？", "options": ["雲霄飛車", "園區列車", "腳踏車", "纜車"], "answer": "B", "hint": ""},
+{"id": 1001, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "大熊貓的主要食物是什麼？", "options": ["漢堡", "竹子", "魚類", "水果"], "answer": "B", "hint": ""},
+{"id": 1002, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "剛出生的大熊貓寶寶顏色是？", "options": ["黑白色", "粉紅色", "全黑色", "棕色"], "answer": "B", "hint": ""},
+{"id": 1003, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "無尾熊一天大約要花多少小時睡覺？", "options": ["2小時", "8小時", "18-20小時", "12小時"], "answer": "C", "hint": ""},
+{"id": 1004, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "無尾熊最愛吃的樹葉是？", "options": ["楓葉", "尤加利葉", "桑葉", "榕樹葉"], "answer": "B", "hint": ""},
+{"id": 1005, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "大熊貓的「第六隻手指（偽拇指）」其實是哪部分演化來的？", "options": ["骨頭", "指甲", "皮膚", "肌肉"], "answer": "A", "hint": ""},
+{"id": 1006, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "世界上最高的陸生動物是？", "options": ["大象", "長頸鹿", "鴕鳥", "棕熊"], "answer": "B", "hint": ""},
+{"id": 1007, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "長頸鹿的脖子很長，但牠的頸椎骨頭數量和人類一樣是幾塊？", "options": ["7塊", "20塊", "100塊", "3塊"], "answer": "A", "hint": ""},
+{"id": 1008, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "非洲象與亞洲象相比，誰的耳朵比較大？", "options": ["非洲象", "亞洲象", "一樣大", "要看個別動物"], "answer": "A", "hint": ""},
+{"id": 1009, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "河馬雖然看起來笨重，但在水中其實？", "options": ["會溺水", "是游泳高手", "只會走路", "會沉底"], "answer": "B", "hint": ""},
+{"id": 1010, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "斑馬身上的條紋主要作用是？", "options": ["好看", "迷惑掠食者與驅趕昆蟲", "為了取暖", "區分性別"], "answer": "B", "hint": ""},
+{"id": 1011, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "獅子群中，通常是誰負責主要的狩獵工作？", "options": ["雄獅", "雌獅", "幼獅", "老獅"], "answer": "B", "hint": ""},
+{"id": 1012, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "鴕鳥遇到危險時真的會把頭埋進沙子裡嗎？", "options": ["是的", "不會，那是誤解", "只有生病會", "只有幼鳥會"], "answer": "B", "hint": ""},
+{"id": 1013, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "單峰駱駝與雙峰駱駝，哪一種只有一個駝峰？", "options": ["單峰駱駝", "雙峰駱駝", "都沒有", "依地區不同"], "answer": "A", "hint": ""},
+{"id": 1014, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "黑猩猩與人類的基因相似度高達多少？", "options": ["50%", "70%", "98%以上", "30%"], "answer": "C", "hint": ""},
+{"id": 1015, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "金剛猩猩在木柵動物園非常受歡迎，牠屬於什麼食性？", "options": ["純肉食", "雜食偏素食", "只吃石頭", "純素食"], "answer": "B", "hint": ""},
+{"id": 1016, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "國王企鵝孵蛋時，是把蛋放在哪裡？", "options": ["窩裡", "腳掌上並用肚子覆蓋", "翅膀底下", "沙地上"], "answer": "B", "hint": ""},
+{"id": 1017, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "紅鶴為什麼身體是粉紅色的？", "options": ["天生的", "攝取含有類胡蘿蔔素的食物", "曬太陽變色的", "因為喝了海水"], "answer": "B", "hint": ""},
+{"id": 1018, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "大嘴鳥（巨嘴鳥）那大大的嘴巴主要功能之一是？", "options": ["儲存水", "散熱", "當武器戰鬥", "吸引異性"], "answer": "B", "hint": ""},
+{"id": 1019, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "貓頭鷹的頭最多可以旋轉幾度？", "options": ["90度", "180度", "270度", "360度"], "answer": "C", "hint": ""},
+{"id": 1020, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "企鵝是鳥類嗎？", "options": ["是", "不是", "介於兩者之間", "是哺乳類"], "answer": "A", "hint": ""},
+{"id": 1021, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "台灣黑熊胸前的特徵是什麼顏色的V字型？", "options": ["黃色", "白色", "紅色", "橘色"], "answer": "B", "hint": ""},
+{"id": 1022, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "石虎的耳朵後方有什麼特徵？", "options": ["黑底白斑", "全白色", "沒有特徵", "彩色斑點"], "answer": "A", "hint": ""},
+{"id": 1023, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "穿山甲遇到危險時會做出什麼動作？", "options": ["噴毒氣", "縮成一顆球", "爬樹跳水", "大聲吼叫"], "answer": "B", "hint": ""},
+{"id": 1024, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "水豚雖然長得像大老鼠，但牠其實最喜歡待在？", "options": ["沙漠", "水中", "洞穴", "樹上"], "answer": "B", "hint": ""},
+{"id": 1025, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "國王企鵝換羽毛期間，牠們會？", "options": ["照常游泳", "不能下水，只能待在陸地", "飛到樹上", "冬眠"], "answer": "B", "hint": ""},
+{"id": 1026, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "馬來貘的幼崽剛出生時，身上有什麼圖案？", "options": ["條紋與斑點", "跟爸媽一樣黑白分明", "全白色", "全棕色"], "answer": "A", "hint": ""},
+{"id": 1027, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "笑翠鳥的叫聲聽起來像什麼？", "options": ["哭聲", "人的笑聲", "汽車喇叭聲", "鈴聲"], "answer": "B", "hint": ""},
+{"id": 1028, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "浣熊在吃東西前，常會做出什麼動作？", "options": ["唱歌", "放在水裡洗一洗", "挖地洞", "先聞一聞"], "answer": "B", "hint": ""},
+{"id": 1029, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "大象是用什麼部位來抓取食物？", "options": ["腳趾", "靈活的鼻子", "下巴", "嘴唇"], "answer": "B", "hint": ""},
+{"id": 1030, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "老虎身上的條紋是？", "options": ["只有毛有，皮膚沒有", "連皮膚上都有條紋", "會隨年齡消失", "只在腹部"], "answer": "B", "hint": ""},
+{"id": 1031, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "袋鼠的幼兒待在媽媽的哪裡成長？", "options": ["背上", "育兒袋", "嘴巴裡", "腹部皺摺"], "answer": "B", "hint": ""},
+{"id": 1032, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "黑腳企鵝主要分佈在哪裡？", "options": ["南極", "非洲南部沿岸", "北極", "澳洲"], "answer": "B", "hint": ""},
+{"id": 1033, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "狐獴站立起來主要是為了？", "options": ["跳舞", "警戒守望", "曬太陽讓肚子暖和", "找東西吃"], "answer": "B", "hint": ""},
+{"id": 1034, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "蘇卡達象龜是世界上第幾大的陸龜？", "options": ["第一大", "第三大", "第十名", "第五大"], "answer": "B", "hint": ""},
+{"id": 1035, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "長頸鹿的舌頭通常是什麼顏色的？", "options": ["粉紅色", "藍黑色", "白色", "橘色"], "answer": "B", "hint": ""},
+{"id": 1036, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "動物園每年夏天都會舉辦什麼特別的入園活動？", "options": ["聖誕點燈", "週六夏季晚間延長開放", "雪祭", "嘉年華"], "answer": "B", "hint": ""},
+{"id": 1037, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "在動物園內，為了動物的健康，我們絕對不能做什麼事？", "options": ["拍照", "私自餵食動物", "畫圖", "觀察動物"], "answer": "B", "hint": ""},
+{"id": 1038, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "每年10月底，動物園會慶祝什麼特別的節日（也是搬遷紀念日）？", "options": ["兒童節", "園慶", "春節", "動物日"], "answer": "B", "hint": ""},
+{"id": 1039, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "在參觀動物時，哪項拍照行為是正確的？", "options": ["開強光閃光燈", "拍打玻璃吸引注意", "關閉閃光燈安靜拍攝", "用力敲打圍欄"], "answer": "C", "hint": ""},
+{"id": 1040, "grade": "木柵動物園", "subject": "木柵動物園", "difficulty": "普通", "question": "動物園推行的「動物認養計畫」主要目的是什麼？", "options": ["把動物帶回家養", "參與野生動物保育與教育工作", "買下動物園", "換取免費門票"], "answer": "B", "hint": ""}
 ];
 
 // ── 依玩家難度選出本次答題池 ──
@@ -19533,6 +19584,10 @@ function advGetQuizPool(grade, subject, difficulty) {
   // ★ 關島交流：不分年級和難度，全部30題隨機排列出題
   if (subject === '關島交流') {
     return ADV_QUIZ_DB.filter(q => q.subject === '關島交流').sort(() => Math.random() - 0.5);
+  }
+  // ★ 木柵動物園：不分年級難度，全部隨機出題
+  if (subject === '木柵動物園') {
+    return ADV_QUIZ_DB.filter(q => q.subject === '木柵動物園').sort(() => Math.random() - 0.5);
   }
 
   // ── 年級＝題庫範圍，難度偏好＝優先顯示的難易程度 ──
@@ -19672,7 +19727,7 @@ const ADV_SCENES = {
       ],
       choiceType: 'subject',
       choiceTitle: '📚 九尾空貓怪想知道你最擅長哪一科？',
-      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流'],
+      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流','木柵動物園'],
     },
     {
       key:'teagarden',
@@ -19853,7 +19908,7 @@ let _advStats = {
   itemUsedCount: 0,    // BOSS戰中使用物品卡次數
 };
 // 題目難度基礎分對照
-const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80, '五年級':35, '關島交流':40 };
+const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80, '五年級':35, '關島交流':40, '木柵動物園':40 };
 // 精熟度選擇加成倍率
 const ADV_DIFF_MULT  = { '沒自信':1.0, '普通':1.2, '我很會':1.5 };
 // 二選一獎勵暫存
@@ -20223,7 +20278,7 @@ function advSkipCutscene() {
     if(window.innerWidth > 1180){ box.style.width='min(96vw,1000px)'; box.style.fontSize='170%'; }
 
   const gradeOpts = ['低年級','中年級','高年級','五年級','國中'];
-  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流'];
+  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流','木柵動物園','木柵動物園'];
   const diffOpts  = ['沒自信','普通','我很會'];
 
   function mkRow(label, opts, key) {
@@ -20643,7 +20698,7 @@ function advShowRePickSubject(onDone) {
       <div style="margin-bottom:16px;">
         <div style="font-size:22px;color:#ffcc44;margin-bottom:8px;">📖 科目</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-          ${['國語文','英文','數學','社會','自然','美術','音樂','關島交流'].map(s=>
+          ${['國語文','英文','數學','社會','自然','美術','音樂','關島交流','木柵動物園'].map(s=>
             `<button onclick="window._advRePickSubj='${s}';document.querySelectorAll('.repick-subj-btn').forEach(b=>b.style.background='');this.style.background='rgba(180,120,255,0.3)';" class="repick-subj-btn"
               style="padding:10px 20px;font-size:22px;background:rgba(40,30,60,0.8);border:1.5px solid #553a88;color:#ddc0ff;border-radius:10px;cursor:pointer;">${s}</button>`
           ).join('')}
@@ -27787,7 +27842,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.1641', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.1655', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -27825,7 +27880,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.1641';
+  const CURRENT_VERSION = 'v1.0.20260416.1655';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
