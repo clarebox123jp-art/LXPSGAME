@@ -3457,7 +3457,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1702</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.1712</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -16831,10 +16831,12 @@ function toggleSkillPopup(btn, skName, skCost, skDesc){
 
 // ====== 能力說明彈出視窗 ======
 const STAT_DESCS = {
-  hp:  { label:'生命值', color:'#ffffff', desc:'可以承受傷害的上限，降至0時角色會倒下無法戰鬥。' },
-  atk: { label:'攻擊值', color:'#ff9966', desc:'影響普通攻擊和部分技能造成的傷害量。' },
-  sp:  { label:'特技值', color:'#ffdd55', desc:'影響使用技能的威力大小。每1點特技提高1%的技能威力（攻擊與治療皆適用）。' },
-  spd: { label:'速度值', color:'#44ee77', desc:'速度越大，越早開始行動。每1點速度提高1%基礎命中率和迴避率，速度差越大迴避效果越明顯（最高60%迴避）。' },
+  hp:   { label:'生命值', color:'#ff6666', desc:'可承受的最大傷害，歸零即倒下，越高越耐打。' },
+  atk:  { label:'攻擊值', color:'#ff9966', desc:'普通攻擊和部分技能的傷害基礎。' },
+  sp:   { label:'特技值', color:'#cc88ff', desc:'使用大多數技能的強度，每1點提升1%技能威力。' },
+  spd:  { label:'速度值', color:'#44aaff', desc:'數值越大行動越早，也影響命中率與迴避率。' },
+  heal: { label:'治療力', color:'#44ffaa', desc:'治療與支援能力，越高越適合擔任治療角色。' },
+  ctrl: { label:'控場力', color:'#ffdd44', desc:'施加負面狀態的能力，越高越適合擾亂敵陣。' },
 };
 var _statPopupEl = null;
 function toggleStatPopup(el, statKey, numFontSize){
@@ -25278,12 +25280,12 @@ function _renderHeroDetail(name, box) {
   const maxStat = 80;
   function _dimVal(raw) { return Math.max(1, Math.min(10, Math.round(raw))); }
   const dims = [
-    {label:'體',  val: _dimVal((hd.hp  + (inv.hp ||0)) / maxStat * 10)},
-    {label:'攻',  val: _dimVal((hd.atk + (inv.atk||0)) / 20     * 10)},
-    {label:'特',  val: _dimVal((hd.sp  + (inv.sp ||0)) / 20     * 10)},
-    {label:'速',  val: _dimVal((hd.spd + (inv.spd||0)) / 15     * 10)},
-    {label:'治',  val: Math.max(1, healScore)},
-    {label:'控',  val: Math.max(1, ctrlScore)},
+    {label:'體',  key:'hp', val: _dimVal((hd.hp  + (inv.hp ||0)) / maxStat * 10)},
+    {label:'攻',  key:'atk', val: _dimVal((hd.atk + (inv.atk||0)) / 20     * 10)},
+    {label:'特',  key:'sp',  val: _dimVal((hd.sp  + (inv.sp ||0)) / 20     * 10)},
+    {label:'速',  key:'spd', val: _dimVal((hd.spd + (inv.spd||0)) / 15     * 10)},
+    {label:'治',  key:'heal',val: Math.max(1, healScore)},
+    {label:'控',  key:'ctrl',val: Math.max(1, ctrlScore)},
   ];
 
   // SVG 六邊形雷達圖
@@ -27692,6 +27694,42 @@ const _origInitGame = typeof initGame !== 'undefined' ? initGame : null;
 window.addEventListener('load', ()=>{ _globalSafetyReset(); });
 
 // ★ 全域雷達圖函式（供英雄圖鑑和魔物圖鑑共用）
+// ── 雷達圖標籤點擊說明視窗 ──
+function _showRadarLabelInfo(key, shortLabel, svgX, svgY){
+  // 清除舊的
+  var old = document.getElementById('_radar-label-pop');
+  if(old){ old.remove();
+    if(old._key === key) return; // 再次點同一個 → 關閉
+  }
+  var info = STAT_DESCS[key];
+  if(!info) return;
+  var pop = document.createElement('div');
+  pop.id = '_radar-label-pop';
+  pop._key = key;
+  pop.style.cssText = 'position:fixed;z-index:99000;background:linear-gradient(135deg,rgba(10,15,35,0.97),rgba(5,8,20,0.97));'
+    + 'border:2px solid '+info.color+';border-radius:14px;padding:16px 22px;'
+    + 'max-width:340px;pointer-events:auto;'
+    + 'box-shadow:0 0 30px rgba(0,0,0,0.8);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  pop.innerHTML = '<div style="font-size:22px;font-weight:900;color:'+info.color+';margin-bottom:6px;">【'+shortLabel+'】'+info.label+'</div>'
+    + '<div style="font-size:18px;color:#ddd;line-height:1.7;">'+info.desc+'</div>'
+    + '<div style="font-size:14px;color:#666;margin-top:8px;text-align:right;">點任意處關閉</div>';
+  // 放置位置：嘗試放在英雄圖鑑容器內
+  var container = document.getElementById('hero-detail-box') || document.body;
+  container.appendChild(pop);
+  // 計算位置（置中螢幕）
+  var vw = window.innerWidth, vh = window.innerHeight;
+  var pw = Math.min(340, vw-32);
+  pop.style.width = pw+'px';
+  pop.style.left = Math.max(8, Math.min(vw-pw-8, vw/2-pw/2))+'px';
+  pop.style.top  = Math.max(8, vh/2-80)+'px';
+  // 點任意處關閉
+  setTimeout(function(){
+    var _close = function(){ pop.remove(); document.removeEventListener('click',_close); };
+    document.addEventListener('click', _close);
+  }, 50);
+}
+
+
 function makeRadar(dims, size) {
     const cx = size/2, cy = size/2, R = size*0.38;
     const n = dims.length;
@@ -27717,7 +27755,11 @@ function makeRadar(dims, size) {
       const [x,y] = pt(i, labelR);
       const anchor = x < cx-4 ? 'end' : x > cx+4 ? 'start' : 'middle';
       const col = _dimColors[i]||'#ffe8a0';
-      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.078}" fill="${col}" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif">${dims[i].label}</text>`;
+      // ★ 點擊標籤顯示說明（透過 SVG foreignObject 或 data 傳遞給外層）
+      labels += `<text x="${x}" y="${y+5}" text-anchor="${anchor}" font-size="${size*0.078}" fill="${col}" font-weight="700" font-family="'M PLUS Rounded 1c',sans-serif"
+        style="cursor:pointer;text-decoration:underline dotted;"
+        onclick="event.stopPropagation();_showRadarLabelInfo('${dims[i].key||''}','${dims[i].label}',${Math.round(x)},${Math.round(y)})"
+      >${dims[i].label}</text>`;
     }
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
       ${gridLines}${axes}
@@ -27842,7 +27884,7 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.1702', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.1712', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -27880,7 +27922,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.1702';
+  const CURRENT_VERSION = 'v1.0.20260416.1712';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
