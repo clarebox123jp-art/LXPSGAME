@@ -3889,8 +3889,7 @@ body {
         <div class="hpick-slot" id="hpick-side-0"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
         <div class="hpick-slot" id="hpick-side-1"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
         <div class="hpick-slot" id="hpick-side-2"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
-        <div class="hpick-slot" id="hpick-side-3"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div>
-        <div class="hpick-slot" id="hpick-side-friend" style="border:2px dashed rgba(255,130,200,0.5);border-radius:10px;opacity:0.6;"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt" style="font-size:28px;">🤝</span></div><div class="hpick-slot-info" style="font-size:13px;color:#ff88cc;">好友英雄</div</div>
+        <div class="hpick-slot" id="hpick-side-3"><div class="hpick-slot-img"><span class="hpick-slot-empty-txt">+</span></div><div class="hpick-slot-info"></div></div</div>
       </div>
       <!-- 隊伍欄 -->
       <div id="hero-pick-bar">
@@ -7882,15 +7881,13 @@ function inviteHero(idx, name){
     _heroPickSelected.splice(alreadyIdx,1);
     document.getElementById(`hpick-${nodeId}`)?.classList.remove('picked');
   } else {
-    const _maxPick = (window._invitedFriendHero && window._friendHeroInParty) ? 3 : 4;
-    if(_heroPickSelected.length>=_maxPick) return;
+    if(_heroPickSelected.length>=4) return;
     _heroPickSelected.push(name);
     document.getElementById(`hpick-${nodeId}`)?.classList.add('picked');
   }
   updatePickedBadges();
-  const _fc1 = (window._invitedFriendHero && window._friendHeroInParty) ? 3 : 4;
-  document.getElementById('hero-pick-count').textContent=`請選擇 ${_fc1} 名英雄出戰（已選 ${_heroPickSelected.length} / ${_fc1}）`;
-  document.getElementById('hero-pick-confirm').disabled=_heroPickSelected.length<_fc1;
+  document.getElementById('hero-pick-count').textContent=`請選擇 4 名英雄出戰（已選 ${_heroPickSelected.length} / 4）`;
+  document.getElementById('hero-pick-confirm').disabled=_heroPickSelected.length<4;
   // Always close focus card immediately after any invite/cancel
   dismissFocus();
 }
@@ -8031,32 +8028,13 @@ function updatePickedBadges(){
       slot.onclick=null;
     }
   }
-  // ★ 好友英雄第5格
-  const _fSlot = document.getElementById('hpick-side-friend');
-  if(_fSlot){
-    if(window._invitedFriendHero && window._friendHeroInParty){
-      const fh = window._invitedFriendHero;
-      const imgUrl = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[fh.name]) || '';
-      _fSlot.style.opacity = '1';
-      _fSlot.style.borderColor = 'rgba(255,80,160,0.8)';
-      _fSlot.innerHTML = `<div class="hpick-slot-img">${imgUrl
-        ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:center 10%;display:block;">`
-        : `<span style="font-size:48px">${(typeof AVATARS!=='undefined'&&AVATARS[fh.name])||'🤝'}</span>`}
-        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(255,80,160,0.7);font-size:12px;color:#fff;text-align:center;padding:2px;">🤝 ${fh._ownerName||'好友'}</div>
-      </div><div class="hpick-slot-info"><span class="hpick-slot-name" style="color:#ff88cc;">${fh.name}</span></div>`;
-    } else {
-      _fSlot.style.opacity = '0.5';
-      _fSlot.style.borderColor = 'rgba(255,130,200,0.4)';
-      _fSlot.innerHTML = `<div class="hpick-slot-img"><span class="hpick-slot-empty-txt" style="font-size:28px;">🤝</span></div><div class="hpick-slot-info" style="font-size:13px;color:#ff88cc;">好友英雄</div>`;
-    }
-  }
+
 }
 
 function toggleHeroPick(idx, name){ focusHero(idx,name); } // legacy compat
 
 function confirmHeroPick(){
-  const _needCount = (window._invitedFriendHero && window._friendHeroInParty) ? 3 : 4;
-  if(_heroPickSelected.length < _needCount) return;
+  if(_heroPickSelected.length < 4) return;
   document.getElementById('hero-pick-overlay').style.display = 'none';
   // ── 冒險模式：p2 固定為 BOSS 陣容（必須同時有 _adventureStage 且 overlay 是由冒險模式觸發）
   // ★★ 保護層：三個條件缺一不可，防止鬥技場誤用BOSS陣容。請勿修改此判斷式。
@@ -26711,19 +26689,30 @@ function _injectFriendHeroCard() {
 
 function _selectFriendHero(name) {
   if (!_invitedFriendHero || _invitedFriendHero.name !== name) return;
-  // 加入選角（不佔用普通英雄槽，作為額外成員）
+  // ★ 好友英雄直接佔用4格中的一格（與普通英雄相同邏輯）
+  const alreadyIdx = _heroPickSelected.indexOf(name);
+  if(alreadyIdx >= 0){
+    // 取消選取
+    _heroPickSelected.splice(alreadyIdx, 1);
+    window._friendHeroInParty = false;
+    bannerFX(null, `${name} 已取消加入`, '#aaa', 1200);
+    playSfx('sfx-cancel', 0.5);
+    const friendCard = document.querySelector('.friend-hero-card');
+    if(friendCard){ friendCard.style.background='rgba(30,5,20,0.95)'; friendCard.style.borderColor='rgba(255,130,200,0.9)'; friendCard.querySelectorAll('[style*="#ff44aa"]').forEach(el=>el.remove()); }
+    updatePickedBadges();
+    document.getElementById('hero-pick-count').textContent=`請選擇 4 名英雄出戰（已選 ${_heroPickSelected.length} / 4）`;
+    document.getElementById('hero-pick-confirm').disabled=_heroPickSelected.length<4;
+    return;
+  }
+  if(_heroPickSelected.length >= 4){ bannerFX(null,'隊伍已滿（4人）','#ff8844',1200); return; }
   if (!window._friendHeroInParty) {
     window._friendHeroInParty = true;
-    bannerFX(null, `🤝 ${name} 加入！再選 3 名英雄即可出戰`, '#ff88cc', 2000);
+    _heroPickSelected.push(name);
+    updatePickedBadges();
+    document.getElementById('hero-pick-count').textContent=`請選擇 4 名英雄出戰（已選 ${_heroPickSelected.length} / 4）`;
+    document.getElementById('hero-pick-confirm').disabled=_heroPickSelected.length<4;
+    bannerFX(null, `🤝 ${name} 加入隊伍！`, '#ff88cc', 1500);
     playSfx('sfx-confirm', 0.6);
-    try{
-      updatePickedBadges();
-      const _fc2 = 3;
-      const cnt = document.getElementById('hero-pick-count');
-      if(cnt) cnt.textContent = `請選擇 ${_fc2} 名英雄出戰（已選 ${_heroPickSelected.length} / ${_fc2}）`;
-      const btn = document.getElementById('hero-pick-confirm');
-      if(btn) btn.disabled = _heroPickSelected.length < _fc2;
-    }catch(e){}
     // 高亮友方卡片
     const friendCard = document.querySelector('.friend-hero-card');
     if (friendCard) {
@@ -26738,15 +26727,7 @@ function _selectFriendHero(name) {
     // 取消
     window._friendHeroInParty = false;
     bannerFX(null, `${name} 已取消加入`, '#aaa', 1200);
-    try{
-      updatePickedBadges();
-      const cnt = document.getElementById('hero-pick-count');
-      if(cnt) cnt.textContent = `請選擇 4 名英雄出戰（已選 ${_heroPickSelected.length} / 4）`;
-      const btn = document.getElementById('hero-pick-confirm');
-      if(btn) btn.disabled = _heroPickSelected.length < 4;
-      // 若已選超過3人，移除多餘的（保留前3）
-      // Actually: just re-check the button
-    }catch(e){}
+    try{ updatePickedBadges(); }catch(e){}
     const friendCard = document.querySelector('.friend-hero-card');
     if (friendCard) {
       friendCard.style.background = 'rgba(30,5,20,0.95)';
@@ -26762,7 +26743,23 @@ function _injectFriendHeroIntoBattle() {
   const fh = _invitedFriendHero;
   const name = fh.name;
   if (!name || typeof HERO_DB === 'undefined' || !HERO_DB[name]) return;
-  // 建立英雄物件（使用好友的等級/素質/技能）
+  // ★ 好友英雄已透過 _heroPickSelected 編入 G.p1，找到對應 hero 更新其屬性
+  const existingHero = G.p1 ? G.p1.find(h => h.name === name) : null;
+  if(existingHero){
+    // 套用好友的等級/素質/技能到已建立的英雄物件
+    const inv = fh.statInvested || {};
+    existingHero.hp  = Math.max(1, existingHero.hp  + (inv.hp  || 0));
+    existingHero.atk = Math.max(1, existingHero.atk + (inv.atk || 0));
+    existingHero.sp  = Math.max(1, existingHero.sp  + (inv.sp  || 0));
+    existingHero.spd = Math.max(1, existingHero.spd + (inv.spd || 0));
+    existingHero.curHp = existingHero.hp;
+    // 套用技能等級
+    if(fh.skillLevels){ existingHero._skLv = { s1: fh.skillLevels.s1||0, s2: fh.skillLevels.s2||0 }; }
+    existingHero._isFriendHero = true;
+    log(`[好友英雄] ${name}（${fh._ownerName}）屬性已套用！`);
+    return;
+  }
+  // fallback: 若未在 G.p1 中（舊邏輯）
   const pos = G.p1.length;
   if (pos >= 4) { log('隊伍已滿，無法加入好友英雄'); return; }
   const h = typeof newHero === 'function' ? newHero(name, 'p1', pos) : null;
