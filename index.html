@@ -5940,7 +5940,7 @@ const BURST_DB = {
   '神射手':   {n:'流星箭雨',    d:'必中傷害全體，附加強力禁動',fd:'用特技的120%傷害全體對手，無法迴避。受傷目標有75%機率陷入「強力陷阱」無法行動1回合。'},
   '神偷':     {n:'俠盜飛梭',    d:'傷害1名對手並奪取能量/寵物/物品',fd:'用特技的150%攻擊1名對手並奪取3能量及其寵物（可選擇給誰攜帶），再隨機奪取對手1張物品卡。'},
   '刺客':     {n:'死神之鐮',    d:'400%傷害並隱形，強力出血（無法免疫）',fd:'用特技的400%傷害1名對手後自己隱形1回合，並以特技的120%恢復自己HP。目標陷入「強力出血」2回合，每回合-15%HP，無法被免疫。'},
-  '守衛':     {n:'最後之盾',    d:'強制全體敵方攻擊自己，以特技減傷',fd:'使敵方全體陷入「強力挑釁」2回合，只能普通攻擊施展者。期間守衛以特技值減輕受到的傷害。強力挑釁無法被免疫。'},
+  '守衛':     {n:'最後之盾',    d:'強制全體敵方攻擊自己，以特技減傷',fd:'使敵方全體陷入「強力挑釁」2回合，只能普通攻擊施展者。期間守衛以特技×100%減輕受到的傷害。強力挑釁無法被免疫。'},
   '吟遊詩人':   {n:'無盡長眠',    d:'全體敵方強力睡眠，每回合全隊回血',fd:'敵方全體陷入「強力睡眠」（回合開始或受傷有25%機率解除），每過一個睡眠回合就為我方全體恢復10%HP。'},
   '舞者':     {n:'激戰之舞',    d:'全隊強力增攻並使敵方增益失效',fd:'用特技的150%使友方全體獲得「強力增攻」提升傷害及治療量2回合，同時讓敵方有利狀態失效2回合。'},
   '警長':     {n:'正義制裁',    d:'封鎖對手物品，對手傷害全數反彈',fd:'使全體對手陷入「強力查封」無法使用和販賣物品卡2回合，同時對手造成任何傷害時100%反彈給自己。'},
@@ -10893,15 +10893,24 @@ function doDmg(target, rawDmg, opts={}){
         const _tsuSlot= _tsuHero.s1.n === '挺身守護' ? 's1' : 's2';
         const _tsuLv  = (_tsuHero._skLv && _tsuHero._skLv[_tsuSlot]) || 0;
         // 特技×(50%+升級加成)減傷
+        // 特技×50%減傷（技能等級加成）
         const _gspv = Math.floor((_tsuHero.sp||0) * (1 + (_tsuHero.sp||0) * 0.01));
         const _spReduce = Math.floor(_gspv * (0.5 + _tsuLv * 0.05));
-        const reduced = Math.max(1, rawDmg - _spReduce);
+        // ★ 天賦庇護：分攤比例（30% + 天賦Lv×5%），守衛承擔分攤部分，剩餘轉回隊友
+        const _traitLvG = ((typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[_tsuHero.name]) || 0);
+        const _sharePct = 0.30 + _traitLvG * 0.05;  // 0.30 ~ 0.55
+        const _guardDmg = Math.max(1, Math.round(rawDmg * _sharePct) - _spReduce);
+        const _allyDmg  = Math.max(0, rawDmg - Math.round(rawDmg * _sharePct));
         playSfx('sfx-guard', 0.7);
-        log(`🛡 [${_tsuHero.name}] 挺身守護！代替 [${target.name}] 承受傷害（特技減傷${_spReduce}）！`);
+        log(`🛡 [${_tsuHero.name}] 挺身守護！分攤${Math.round(_sharePct*100)}%傷害（特技減傷${_spReduce}），隊友承擔剩餘${Math.round((1-_sharePct)*100)}%！`);
         showShieldVFX(_tsuHero, 'block');
-        bannerFX(_tsuHero, '挺身守護！', '#4a9eff', 900);
+        bannerFX(_tsuHero, `挺身守護！分攤${Math.round(_sharePct*100)}%`, '#4a9eff', 900);
         playSkillFX('挺身守護', _tsuHero, [target]);
-        return doDmg(_tsuHero, reduced, {...opts, noGuard:true, isNioGuard:false});
+        // 守衛承受分攤部分
+        doDmg(_tsuHero, _guardDmg, {...opts, noGuard:true, isNioGuard:false});
+        // 剩餘傷害回到原目標（若有）
+        if(_allyDmg > 0) doDmg(target, _allyDmg, {...opts, noGuard:true, isNioGuard:true});
+        return 0;
       }
     }
 
@@ -28173,7 +28182,7 @@ const _TRAIT_LV_INFO = {
   '神射手':  { base:'60%佈陷', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後佈置陷阱免疫下一次普攻的機率' },
   '神偷':    { base:'50%掠奪', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'普攻後奪取目標有利狀態或寵物的機率' },
   '刺客':    { base:'60%劇毒', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標中毒2回合的機率' },
-  '守衛':    { base:'確定觸發', bonus:'固定（不隨天賦升級）', max:'固定效果', effect:'常駐被動，每次友方受到單體攻擊時必定觸發攔截' },
+  '守衛':    { base:'30%分攤傷害', bonus:'+5%/天賦級', max:'55%（Lv5）', effect:'挺身守護觸發後，代為分攤的傷害比例' },
   '吟遊詩人':{ base:'60%頌歌', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後恢復友方全體10%HP的機率' },
   '舞者':    { base:'60%魅惑', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標攻擊和特技-50%的機率' },
   '警長':    { base:'60%制裁', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標行動退到最後的機率' },
@@ -28242,18 +28251,31 @@ function _showTraitLvPopup(heroName, el){
   var radarSvg = gc ? gc.querySelector('#hero-detail-content svg') : null;
   if(!radarSvg){ var container2 = document.getElementById('hero-detail-box') || document.body; radarSvg = container2.querySelector('svg'); }
   pop.style.position = 'absolute';
-  if(radarSvg && gc){
+  if(gc){
     var gcR = gc.getBoundingClientRect();
-    var svgR = radarSvg.getBoundingClientRect();
     var sc = gcR.width / 1920;
-    var svgCx = (svgR.left + svgR.right) / 2;
-    var svgTop = svgR.top;
-    var px = (svgCx - gcR.left) / sc;
-    var py = (svgTop - gcR.top) / sc;
     var popW = Math.min(400, 1920-32);
     pop.style.width = popW + 'px';
-    pop.style.left = Math.max(8, Math.min(1920-popW-8, px - popW/2)) + 'px';
-    pop.style.top  = Math.max(8, py - 320) + 'px';  // 天賦區塊正上方
+    // ★ 優先用點擊元素 el 定位（天賦的左邊）
+    if(el && el.getBoundingClientRect){
+      var elR = el.getBoundingClientRect();
+      var elCx = (elR.left + elR.right) / 2;
+      var elTop = elR.top;
+      var ex = (elCx - gcR.left) / sc;
+      var ey = (elTop - gcR.top) / sc;
+      // 放在天賦文字左邊，垂直置中
+      pop.style.left = Math.max(8, ex - popW - 20) + 'px';
+      pop.style.top  = Math.max(8, Math.min(1080 - 400, ey - 80)) + 'px';
+    } else if(radarSvg){
+      var svgR = radarSvg.getBoundingClientRect();
+      var px = ((svgR.left - gcR.left) / sc) - popW - 20;
+      var py = (svgR.top - gcR.top) / sc;
+      pop.style.left = Math.max(8, px) + 'px';
+      pop.style.top  = Math.max(8, py) + 'px';
+    } else {
+      pop.style.left = '20px';
+      pop.style.top  = '300px';
+    }
     gc.appendChild(pop);
   } else {
     var vw2 = window.innerWidth, vh2 = window.innerHeight;
