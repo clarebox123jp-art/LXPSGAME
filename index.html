@@ -21,7 +21,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove }
+  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -83,6 +83,44 @@
     }
   };
 
+  // ══ Session 管理 API ══
+
+  // 建立/更新 session（登入時呼叫）
+  window._fbCreateSession = async function(uid, sessionId) {
+    try {
+      await updateDoc(doc(_fbDb, 'players', uid), {
+        activeSession: sessionId,
+        sessionAt: Date.now()
+      });
+    } catch(e) {
+      // 文件不存在時用 setDoc
+      try { await setDoc(doc(_fbDb, 'players', uid), { activeSession: sessionId, sessionAt: Date.now() }, { merge: true }); }
+      catch(e2) { console.warn('[Session] 建立失敗', e2); }
+    }
+  };
+
+  // 心跳更新（保持 session 活躍）
+  window._fbHeartbeat = async function(uid, sessionId) {
+    try {
+      const snap = await getDoc(doc(_fbDb, 'players', uid));
+      if(!snap.exists()) return 'invalid';
+      const d = snap.data();
+      if(d.activeSession !== sessionId) return 'kicked'; // 其他裝置登入了
+      await updateDoc(doc(_fbDb, 'players', uid), { sessionAt: Date.now() });
+      return 'ok';
+    } catch(e) { return 'error'; }
+  };
+
+  // 清除 session（登出時）
+  window._fbClearSession = async function(uid, sessionId) {
+    try {
+      const snap = await getDoc(doc(_fbDb, 'players', uid));
+      if(snap.exists() && snap.data().activeSession === sessionId) {
+        await updateDoc(doc(_fbDb, 'players', uid), { activeSession: null, sessionAt: null });
+      }
+    } catch(e) {}
+  };
+
   // 雲端儲存
   window._fbSave = async function(uid, data) {
     try {
@@ -90,6 +128,19 @@
       await setDoc(doc(_fbDb, 'players', uid), data, { merge: true });
       return true;
     } catch(e) { console.error('雲端儲存失敗', e); return false; }
+  };
+
+  // ── 即時同步：監聽玩家 profile 變更（暱稱、代表英雄、好友名單）──
+  window._fbWatchProfile = function(uid, onChange) {
+    if(!uid) return () => {};
+    const unsubscribe = onSnapshot(
+      doc(_fbDb, 'players', uid),
+      (snap) => {
+        if(snap.exists()) onChange(snap.data());
+      },
+      (err) => console.warn('[即時同步] 監聽失敗', err)
+    );
+    return unsubscribe; // 呼叫可取消監聽
   };
 
   // 雲端讀取
@@ -187,8 +238,58 @@
       console.log('✅ 已登入:', user.displayName);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1500);
+      // ★ Session 管理：登入時建立唯一 sessionId，防止多裝置同時使用
+      const _sid = localStorage.getItem('lxps_session_' + user.uid) || (Math.random().toString(36).slice(2) + Date.now().toString(36));
+      localStorage.setItem('lxps_session_' + user.uid, _sid);
+      window._mySessionId = _sid;
+      if(window._fbCreateSession) window._fbCreateSession(user.uid, _sid);
+      // 心跳：每 45 秒確認 session 仍有效
+      if(window._sessionHeartbeat) clearInterval(window._sessionHeartbeat);
+      window._sessionHeartbeat = setInterval(async () => {
+        if(!window._gUserId || !window._mySessionId) return;
+        const status = await window._fbHeartbeat(window._gUserId, window._mySessionId);
+        if(status === 'kicked'){
+          clearInterval(window._sessionHeartbeat);
+          window._sessionHeartbeat = null;
+          _showKickedNotice();
+        }
+      }, 45000);
+
+      // ★ 啟動即時同步：監聽暱稱/代表英雄/好友名單變更
+      if(window._fbWatchProfile){
+        if(window._profileUnsubscribe) window._profileUnsubscribe();
+        window._profileUnsubscribe = window._fbWatchProfile(user.uid, (data) => {
+          // 暱稱同步
+          if(data.displayName && data.displayName !== window._playerNickname){
+            window._playerNickname = data.displayName;
+            localStorage.setItem('lxps_nickname_' + user.uid, data.displayName);
+            const nm = document.getElementById('google-name');
+            if(nm) nm.textContent = data.displayName;
+            const advNm = document.getElementById('adv-user-name');
+            if(advNm) advNm.textContent = data.displayName;
+          }
+          // 代表英雄同步
+          if(data.representativeHero){
+            window._myRepHero = data.representativeHero;
+            try{ _loadRepHeroBar(); }catch(e){}
+          }
+          // 好友名單同步
+          if(data.friends && Array.isArray(data.friends)){
+            window._friendList = data.friends;
+            // 若好友面板開著，重新渲染
+            const panel = document.getElementById('_friend-panel');
+            if(panel){ try{ _renderFriendPanel(); }catch(e){} }
+          }
+        });
+      }
     } else {
       window._fbUser = null;
+      // ★ 登出時清除 session + 取消監聽 + 停止心跳
+      if(window._sessionHeartbeat){ clearInterval(window._sessionHeartbeat); window._sessionHeartbeat = null; }
+      if(window._gUserId && window._mySessionId && window._fbClearSession)
+        window._fbClearSession(window._gUserId, window._mySessionId);
+      window._mySessionId = null;
+      if(window._profileUnsubscribe){ window._profileUnsubscribe(); window._profileUnsubscribe = null; }
       const btnWrap = document.getElementById('google-login-btn-wrap');
       const userInfo = document.getElementById('google-user-info');
       if(btnWrap) btnWrap.style.display = '';
@@ -3369,8 +3470,8 @@ body {
   <div id="google-user-info" style="display:none;align-items:center;gap:10px;">
     <img id="google-avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(212,168,67,0.6);" />
     <span id="google-name" style="color:#1a2a6c;font-size:20px;font-weight:700;padding:3px 12px;background:rgba(255,255,255,0.92);border:2px solid #fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></span>
-    <button onclick="playSfx('sfx-confirm',0.5);_fbSwitchAccount && _fbSwitchAccount()" style="padding:4px 14px;font-size:16px;background:rgba(30,60,120,0.85);border:1px solid rgba(100,160,255,0.5);color:#88ccff;border-radius:8px;cursor:pointer;">🔄 切換帳號</button>
-    <button onclick="playSfx('sfx-cancel',0.5);window._fbSignOut && window._fbSignOut()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
+    <button onclick="playSfx('sfx-confirm',0.5);_showSwitchAccountPin()" style="padding:4px 14px;font-size:16px;background:rgba(30,60,120,0.85);border:1px solid rgba(100,160,255,0.5);color:#88ccff;border-radius:8px;cursor:pointer;">🔄 切換帳號</button>
+    <button onclick="playSfx('sfx-cancel',0.5);_showLogoutPin()" style="padding:4px 14px;font-size:16px;background:rgba(60,60,80,0.8);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;">登出</button>
     <!-- iOS Safari 加入主畫面（與登出同列，僅在 iOS Safari 且非 standalone 時顯示）-->
     <button id="pwa-hint-btn"
       onclick="playSfx('sfx-gentle',0.3);_showPwaGuide()"
@@ -3462,7 +3563,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2440</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.0736</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -26265,6 +26366,12 @@ const _NICK_NOUN = [
   '小畫家','舞蹈家','演員','汪星人','喵星人','小鼠','小鴨','小草','小花','小樹',
   '石頭','小弟弟','小妹妹','大哥哥','大姊姊','學長','學姊','學弟','學妹','前輩',
   '晚輩','班長','副班長','風紀股長','學藝股長','衛生股長','打飯班長','小老師',
+  // ★ 童話身分、職業、動物（新增30個）
+  '王子','公主','國王','女王','魔女','精靈','仙子','小矮人','美人魚','天使',
+  '惡龍','樵夫','牧羊人','麵包師','魔鏡','小紅帽','灰姑娘','白雪公主','人魚','妖精',
+  '小狐狸','小兔子','大野狼','小熊','長頸鹿','企鵝','無尾熊','刺蝟','小象','火鳳凰',
+  // ★ 台灣特色動物
+  '台灣黑熊','藍鵲','石虎','梅花鹿','飛鼠','穿山甲','山豬','帝雉','綠蠵龜','雲豹',
 ];
 
 // 產生隨機暱稱（供「隨機」按鈕使用）
@@ -26320,12 +26427,14 @@ async function _saveNickname() {
         ? null // setDoc already available in module scope
         : null;
     }
-    if (window._fbUser && window._fbLoad) {
-      // 用 _fbSave 更新 displayName
-      const data = await window._fbLoad(uid);
-      if (data && window._fbSave) {
-        data.displayName = nick;
-        await window._fbSave(uid, data);
+    if (window._fbUser) {
+      // ★ 直接用 updateDoc 只更新 displayName（不需先讀取整份資料）
+      try {
+        await updateDoc(doc(_fbDb, 'players', uid), { displayName: nick });
+      } catch(e2) {
+        // 文件不存在時用 setDoc
+        try { await setDoc(doc(_fbDb, 'players', uid), { displayName: nick }, { merge: true }); }
+        catch(e3) { console.warn('[暱稱] 儲存失敗', e3); }
       }
     }
   } catch(e) { console.warn('[暱稱] Firebase 同步失敗', e); }
@@ -28790,6 +28899,118 @@ function _checkMedalsOnLogin(){
 }
 
 
+// ══ 多裝置保護：被踢出通知 ══
+function _showKickedNotice(){
+  // 先快照儲存當前進度
+  try{ gameCloudSave(); }catch(e){}
+  // 若在戰鬥中，先中止戰鬥
+  try{ if(typeof _gamePaused !== 'undefined') _gamePaused = true; }catch(e){}
+
+  const old = document.getElementById('_kicked-notice');
+  if(old) old.remove();
+  const pop = document.createElement('div');
+  pop.id = '_kicked-notice';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);'
+    + 'display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  pop.innerHTML = '<div style="background:linear-gradient(135deg,#1a0820,#0d0515);border:3px solid #ff4488;'
+    + 'border-radius:24px;padding:48px 56px;max-width:min(90vw,600px);text-align:center;'
+    + 'box-shadow:0 0 60px rgba(255,50,120,0.5);">'
+    + '<div style="font-size:60px;margin-bottom:16px;">📱</div>'
+    + '<div style="font-size:30px;font-weight:900;color:#ff4488;margin-bottom:12px;">帳號已在其他裝置登入</div>'
+    + '<div style="font-size:20px;color:#ccc;margin-bottom:8px;line-height:1.6;">你的遊戲進度已自動儲存。<br>如需繼續遊戲，請點下方按鈕重新取得控制權。</div>'
+    + '<div style="font-size:16px;color:#888;margin-bottom:32px;">（若你沒有在其他裝置登入，請確認帳號安全）</div>'
+    + '<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">'
+    + '<button onclick="_sessionReclaim()" style="padding:14px 40px;font-size:22px;font-weight:900;'
+    + 'background:linear-gradient(135deg,rgba(255,50,120,0.3),rgba(180,20,80,0.3));'
+    + 'border:2px solid #ff4488;color:#ff88bb;border-radius:14px;cursor:pointer;">🔄 重新取得控制</button>'
+    + '<button onclick="_sessionForceLogout()" style="padding:14px 40px;font-size:22px;font-weight:900;'
+    + 'background:rgba(60,60,80,0.5);border:2px solid #555;color:#888;border-radius:14px;cursor:pointer;">登出</button>'
+    + '</div></div>';
+  document.body.appendChild(pop);
+}
+
+function _sessionReclaim(){
+  // 產生新 sessionId 重新取得控制
+  if(!window._gUserId) return;
+  const newSid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  localStorage.setItem('lxps_session_' + window._gUserId, newSid);
+  window._mySessionId = newSid;
+  if(window._fbCreateSession) window._fbCreateSession(window._gUserId, newSid);
+  // 重啟心跳
+  if(window._sessionHeartbeat) clearInterval(window._sessionHeartbeat);
+  window._sessionHeartbeat = setInterval(async () => {
+    if(!window._gUserId || !window._mySessionId) return;
+    const status = await window._fbHeartbeat(window._gUserId, window._mySessionId);
+    if(status === 'kicked'){ clearInterval(window._sessionHeartbeat); _showKickedNotice(); }
+  }, 45000);
+  const pop = document.getElementById('_kicked-notice');
+  if(pop) pop.remove();
+  try{ _gamePaused = false; }catch(e){}
+  bannerFX(null, '✅ 已重新取得控制權！', '#44ff88', 2000);
+}
+
+function _sessionForceLogout(){
+  const pop = document.getElementById('_kicked-notice');
+  if(pop) pop.remove();
+  if(window._fbSignOut) window._fbSignOut();
+}
+
+
+// ══ 帳號切換安全保護（Google 重新驗證）══
+function _closeSwitchConfirm(){ var e=document.getElementById('_switch-confirm'); if(e)e.remove(); }
+function _closeLogoutConfirm(){ var e=document.getElementById('_logout-confirm'); if(e)e.remove(); }
+
+async function _showSwitchAccountPin(){
+  const curName = (window._playerNickname || (window._fbUser && window._fbUser.displayName) || '目前帳號');
+  const pop = document.createElement('div');
+  pop.id = '_switch-confirm';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:linear-gradient(135deg,#0a0e20,#060810);border:2.5px solid #ffaa44;border-radius:20px;padding:40px 48px;max-width:min(90vw,500px);text-align:center;';
+  card.innerHTML = '<div style="font-size:50px;margin-bottom:12px;">🔄</div>'
+    + '<div style="font-size:26px;font-weight:900;color:#ffaa44;margin-bottom:10px;">切換帳號</div>'
+    + '<div style="font-size:18px;color:#ccc;margin-bottom:8px;">目前登入：<span style="color:#ffee88;font-weight:700;">' + curName + '</span></div>'
+    + '<div style="font-size:16px;color:#888;margin-bottom:28px;">將開啟 Google 登入視窗，<br>請選擇或輸入其他帳號。</div>'
+    + '<div style="display:flex;gap:12px;justify-content:center;">'
+    + '<button id="_switch-go" style="padding:12px 36px;font-size:20px;font-weight:900;background:rgba(255,160,50,0.25);border:2px solid #ffaa44;color:#ffaa44;border-radius:12px;cursor:pointer;">繼續切換</button>'
+    + '<button id="_switch-cancel" style="padding:12px 36px;font-size:20px;background:rgba(60,60,80,0.5);border:1px solid #444;color:#888;border-radius:12px;cursor:pointer;">取消</button>'
+    + '</div>';
+  pop.appendChild(card);
+  document.body.appendChild(pop);
+  document.getElementById('_switch-cancel').onclick = _closeSwitchConfirm;
+  document.getElementById('_switch-go').onclick = async () => {
+    _closeSwitchConfirm();
+    try{ gameCloudSave(); }catch(e){}
+    if(window._fbSwitchAccount) await window._fbSwitchAccount();
+  };
+}
+
+async function _showLogoutPin(){
+  const curName = (window._playerNickname || (window._fbUser && window._fbUser.displayName) || '目前帳號');
+  const pop = document.createElement('div');
+  pop.id = '_logout-confirm';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:linear-gradient(135deg,#0a0e20,#060810);border:2.5px solid #ff5566;border-radius:20px;padding:40px 48px;max-width:min(90vw,500px);text-align:center;';
+  card.innerHTML = '<div style="font-size:50px;margin-bottom:12px;">🚪</div>'
+    + '<div style="font-size:26px;font-weight:900;color:#ff5566;margin-bottom:10px;">確認登出</div>'
+    + '<div style="font-size:18px;color:#ccc;margin-bottom:8px;">目前登入：<span style="color:#ffee88;font-weight:700;">' + curName + '</span></div>'
+    + '<div style="font-size:16px;color:#888;margin-bottom:28px;">登出前將自動儲存你的遊戲進度。</div>'
+    + '<div style="display:flex;gap:12px;justify-content:center;">'
+    + '<button id="_logout-go" style="padding:12px 36px;font-size:20px;font-weight:900;background:rgba(255,60,80,0.25);border:2px solid #ff5566;color:#ff8899;border-radius:12px;cursor:pointer;">確認登出</button>'
+    + '<button id="_logout-cancel" style="padding:12px 36px;font-size:20px;background:rgba(60,60,80,0.5);border:1px solid #444;color:#888;border-radius:12px;cursor:pointer;">取消</button>'
+    + '</div>';
+  pop.appendChild(card);
+  document.body.appendChild(pop);
+  document.getElementById('_logout-cancel').onclick = _closeLogoutConfirm;
+  document.getElementById('_logout-go').onclick = async () => {
+    _closeLogoutConfirm();
+    try{ gameCloudSave(); }catch(e){}
+    if(window._fbSignOut) await window._fbSignOut();
+  };
+}
+
+
 // ── 稀有小怪登場台詞 ──
 const _RARE_MOB_LINES = {
   '寶箱怪': {
@@ -29136,7 +29357,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260417.0658';
+  const CURRENT_VERSION = 'v1.0.20260417.0736';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
