@@ -3459,7 +3459,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2234</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260416.2246</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -17570,8 +17570,11 @@ function _detectCurrentBgm(){
     if(typeof _adventureMode !== 'undefined' && _adventureMode) return 'bgm-adv-scene';
     return null; // 戰鬥中維持現狀
   }
-  // 冒險選關頁
-  if(isVisible('adventure-overlay')) return 'bgm-menu-01';
+  // 冒險選關頁（若英雄圖鑑或魔物圖鑑疊在上方，不重播 BGM，維持現狀）
+  if(isVisible('adventure-overlay')){
+    if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay')) return _curBgm;
+    return 'bgm-menu-01';
+  }
   // 超商
   const shopEl = document.getElementById('shop-overlay');
   if(shopEl && shopEl.style.display !== 'none') return 'bgm-shop';
@@ -18993,9 +18996,11 @@ function openAdventureOverlay(){
   } else if(_advUBar){
     _advUBar.style.display = 'none';
   }
-  // ① 先停掉首頁 BGM 並播放關卡選單 BGM（音樂優先）
-  bgmStop();
-  bgmPlay('bgm-menu-01'); // ★ 關卡選單專屬BGM（遊戲開始音樂1）
+  // ① 播放關卡選單 BGM（若已在播就不重播，避免從英雄圖鑑返回時重疊）
+  if(typeof _curBgm === 'undefined' || _curBgm !== 'bgm-menu-01'){
+    bgmStop();
+    bgmPlay('bgm-menu-01'); // ★ 關卡選單專屬BGM
+  }
   // ② 延遲請求全螢幕，避免 visibilitychange 中斷音樂
   setTimeout(function(){ _requestFullscreenAll(); }, 300);
   // ③ 預設顯示第一關資訊
@@ -28320,7 +28325,55 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，只保留最近10筆）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260416.2234', items:['失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
+  { ver:'v1.0.20260416.2246', items:[
+    '新增稀有小怪「寶箱怪」（5%機率出現）：打倒必得2500~5000知識幣',
+    '新增稀有小怪「小惡魔」（5%機率出現）：打倒獲得大量EXP及書籍',
+    '寶箱怪和小惡魔已加入魔物圖鑑「稀有小怪」分類',
+    '修正小怪掉落物完全無法獲得的問題（掉落計算時機錯誤）',
+    '技能威力每升1級從+10%調降為+5%',
+    '新增道具：英雄經驗值之書(精裝版)，使用後+200EXP',
+    '33個英雄天賦全部接上英雄等級升級機制（每10級強化1次）',
+    '英雄圖鑑天賦點擊可顯示各天賦等級的詳細效果',
+    '六邊形能力值說明視窗位置修正，現在正確顯示在六邊形上方',
+  ] },
+  { ver:'v1.0.20260416.2120', items:[
+    '大原則：所有控制技能加入升級機制，100%成功率的技能Lv9消耗-1',
+    '搖籃曲、筍之刺成功率每升1級+5%；大聲啼哭debuff率每升1級+2%',
+    '地獄之火：改為每次行動前扣10HP（不再行動後重複扣），每升1級+1',
+    '大聲啼哭：每升1級HP傷害+1%，對BOSS傷害減半',
+    '刀背擊：每升1級命中率+10%，Lv9消耗-1',
+    '兵貫神速之計：每升3級額外賦予目標10護盾值',
+    '崛起鬥志：修正升級效果，每升2級復活能力+1',
+    '小劇團員天賦說明更新（被攻擊機率+40%每天賦級+5%）',
+  ] },
+  { ver:'v1.0.20260416.2048', items:['修正小怪戰出題時選項D顯示undefined的問題'] },
+  { ver:'v1.0.20260416.2040', items:['修正小怪戰出題時選項D顯示undefined的問題'] },
+  { ver:'v1.0.20260416.1850', items:[
+    '所有技能升級大原則完成：依攻/特/速的傷害和治療每級+10%',
+    '仁王挺立、午睡時間、運球、聖殿領域、熱情之舞、色彩噴濺等15個控制技能Lv9消耗-1',
+    '朱雀召喚、青龍召喚、天羅地網、魅惑之舞 Lv9消耗-1',
+    '召喚水晶：全英雄收錄後BOSS戰必定掉落，未來可召喚超極稀有英雄',
+    '關島交流和木柵動物園題庫加入所有選科目情境',
+  ] },
+  { ver:'v1.0.20260416.1815', items:[
+    '關卡介紹補充：「聽聞這裡有奇裝異服的人也在清剿魔物，如果有緣分說不定能成為夥伴？」',
+  ] },
+  { ver:'v1.0.20260416.1730', items:[
+    '武士天賦「崛起鬥志」升級修正：每升2級復活能力+1（Lv0=+5，Lv9=+9）',
+    '小劇團員天賦說明補充成為攻擊目標機率提升效果',
+  ] },
+  { ver:'v1.0.20260416.1720', items:[
+    '英雄圖鑑補齊16個缺少介紹的英雄（神偷、刺客、守衛、舞者、警長、軍師、凡人、武士、學者及7隻魔物）',
+    '六邊形雷達圖標籤點擊可顯示該能力值的完整說明視窗',
+  ] },
+  { ver:'v1.0.20260416.1712', items:[
+    '英雄圖鑑能力值（HP/攻/特/速）點擊可顯示功能說明',
+  ] },
+  { ver:'v1.0.20260416.1702', items:[
+    '新增題庫：木柵動物園50題（不分年級難度，題目選項每次隨機）',
+    '新增題庫：關島交流30題（文山在地文化×關島人文×國際禮儀）',
+  ] },
+  { ver:'v1.0.20260416.1648', items:['修正：失敗時依對敵方造成的傷害比例，給予對應比例的經驗值和知識幣（無掉落物）'] },
   { ver:'v1.0.20260416.0724', items:['通關失敗時改顯示「再接再厲！」和鼓勵訊息，不再顯示評分和分數'] },
   { ver:'v1.0.20260416.0721', items:['評分系統新增D級：改以個人歷史最高分為基準，前10%是S，前20%是A，前30%是B，前40%是C，其餘是D'] },
   { ver:'v1.0.20260416.0714', items:['底部選單新增「更新日誌」，可隨時查看最近20次更新內容'] },
@@ -28358,7 +28411,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260416.2234';
+  const CURRENT_VERSION = 'v1.0.20260416.2246';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
