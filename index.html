@@ -26826,19 +26826,13 @@ const MONSTER_DROPS = {
     { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
   ],
   '小惡魔': [
-    { icon:'⭐', name:'英雄EXP 1000~2000（均分）', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'⭐', name:'英雄EXP 1000~2000（每人）', rate:'100%', note:'打倒時必定獲得' },
     { icon:'📘', name:'技能升級書×2~3',   rate:'50%',  note:'' },
     { icon:'📕', name:'EXP書(精裝版)×2~3', rate:'50%', note:'' },
     { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
   ],
-  '綠竹筍小妖': [
-    { icon:'🍑', name:'超越極限果實',     rate:'依EXP×0.1%', note:'約2~5%' },
-    { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
-  ],
-  '茶葉精靈': [
-    { icon:'🍑', name:'超越極限果實',     rate:'依EXP×0.1%', note:'約2~5%' },
-    { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
-  ],
+  '綠竹筍小妖': [],
+  '茶葉精靈': [],
   '九尾空貓怪': [
     { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
@@ -27455,8 +27449,8 @@ function advFinishMiniBattle(win) {
           _showRareMobDefeat('小惡魔'); try{ _checkMedalDefeat('小惡魔'); }catch(e){}
           // 小惡魔：大量EXP（1000~2000）+ 其他掉落
           const _devilExp = 1000 + Math.floor(Math.random() * 1001);
-          if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, Math.floor(_devilExp/G.p1.length)); });
-          _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（均分）`, sellPrice:0 });
+          if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name) addHeroExp(h.name, _devilExp); });
+          _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（每人）`, sellPrice:0 });
           log(`⭐ [小惡魔] 掉落經驗值 ${_devilExp}！`);
           // 2% 超越極限果實
           if(Math.random() < 0.02){
