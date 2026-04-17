@@ -212,10 +212,22 @@
       // ★ 同步 email 到 Firestore（供好友搜尋）
       try {
         const _nick = localStorage.getItem('lxps_nickname_' + user.uid);
+        // ★ 跨裝置修復：新裝置首次登入時，先讀雲端既有暱稱，避免被 Google Auth 名稱覆蓋
+        let _remoteName = '';
+        try {
+          const _snap = await getDoc(doc(_fbDb, 'players', user.uid));
+          if(_snap.exists()) _remoteName = _snap.data().displayName || '';
+        } catch(_e) { /* 文件不存在或讀取失敗都當空字串處理 */ }
+        // 優先序：本地暱稱 > 雲端暱稱 > Google Auth 名稱 > email
+        const _finalName = _nick || _remoteName || user.displayName || user.email || '';
         await setDoc(doc(_fbDb, 'players', user.uid), {
           email: (user.email || '').toLowerCase(),
-          displayName: _nick || user.displayName || user.email || ''
+          displayName: _finalName
         }, { merge: true });
+        // 雲端有自訂暱稱但本地沒有 → 補寫到本地，讓下面 UI 更新直接讀到正確值
+        if(!_nick && _remoteName) {
+          localStorage.setItem('lxps_nickname_' + user.uid, _remoteName);
+        }
       } catch(e) { console.warn('[好友系統] email 同步失敗', e); }
       // 更新 UI
       const av = document.getElementById('google-avatar');
@@ -26421,23 +26433,19 @@ async function _saveNickname() {
   if (advNm) advNm.textContent = nick;
 
   // 同步到 Firebase
+  // ★ 修復：原本直接呼叫 updateDoc/doc/setDoc/_fbDb 會 ReferenceError
+  //   （它們都在 <script type="module"> 裡 import，不在本函式作用域）
+  //   改用已經掛在 window 的 _fbSave（內部就是 setDoc + merge:true）
+  let _fbOk = false;
   try {
-    if (window._fbSetRepHero) {
-      await setDoc
-        ? null // setDoc already available in module scope
-        : null;
-    }
-    if (window._fbUser) {
-      // ★ 直接用 updateDoc 只更新 displayName（不需先讀取整份資料）
-      try {
-        await updateDoc(doc(_fbDb, 'players', uid), { displayName: nick });
-      } catch(e2) {
-        // 文件不存在時用 setDoc
-        try { await setDoc(doc(_fbDb, 'players', uid), { displayName: nick }, { merge: true }); }
-        catch(e3) { console.warn('[暱稱] 儲存失敗', e3); }
-      }
+    if (window._fbUser && typeof window._fbSave === 'function') {
+      _fbOk = await window._fbSave(uid, {
+        displayName: nick,
+        email: (window._fbUser.email || '').toLowerCase()
+      });
     }
   } catch(e) { console.warn('[暱稱] Firebase 同步失敗', e); }
+  if (!_fbOk) console.warn('[暱稱] 雲端同步未成功，僅保存到本地');
 
   // 更新代表英雄欄顯示
   try { _loadRepHeroBar(); } catch(e) {}
