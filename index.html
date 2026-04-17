@@ -3575,7 +3575,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.2216</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.2317</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -19184,6 +19184,7 @@ const ADV_STAGES = {
     rewards: [
       {icon:'⭐', text:'英雄成長經驗值'},
       {icon:'📖', text:'技能升級書 ×1'},
+      {icon:'💰', text:'知識幣'},
       {icon:'🦸', text:'獲得隨機新英雄'},
     ],
     tags: [
@@ -20120,9 +20121,13 @@ const ADV_SCENES = {
         '河堤旁的白鷺鷥展翅低飛，像是在為小隊伍送行。微風吹來，帶著青草和溪水的香氣。',
         '「出發！今天要打倒那隻搗蛋的九尾空貓怪，還貓空茶農們一個安寧！」隊長喊道。',
       ],
-      choiceType: 'grade',
-      choiceTitle: '🎒 告訴九尾空貓怪你的年級！',
-      choices: ['小學低年級', '小學中年級', '小學高年級', '五年級', '國中'],
+      // ★ 第一場連問兩題（年級 + 擅長科目），小怪戰會鎖定該科目從「沒自信（簡單）」題庫開始
+      choiceType: 'grade_subject',
+      choiceTitle: '📚 出發前：請告訴我你的資訊',
+      choiceSteps: [
+        { type:'grade',   title:'🎒 你是什麼年級？',       choices:['小學低年級','小學中年級','小學高年級','五年級','國中'] },
+        { type:'subject', title:'📚 你最擅長哪一科？',     choices:['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流','木柵動物園'] },
+      ],
     },
     {
       key:'trail',
@@ -20133,9 +20138,10 @@ const ADV_SCENES = {
         '步道旁，偶爾可以聽見山鳥清脆的鳴叫，還有遠處貓空纜車緩緩滑行的聲音。',
         '「好香喔！這裡的空氣也太清新了！」小隊員們邊走邊讚嘆，步伐也輕快了起來。',
       ],
-      choiceType: 'subject',
-      choiceTitle: '📚 九尾空貓怪想知道你最擅長哪一科？',
-      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流','木柵動物園'],
+      // ★ 第二場：問自信程度（決定題目難度 + 經驗/金幣/BOSS分數加成）
+      choiceType: 'difficulty',
+      choiceTitle: '💪 你對這一科有多少把握？',
+      choices: ['沒自信（輕鬆模式 +0%）', '普通（標準模式 +25%）', '我很會（挑戰模式 +50%）'],
     },
     {
       key:'teagarden',
@@ -20146,9 +20152,8 @@ const ADV_SCENES = {
         '「就是這裡了！九尾空貓怪就藏在前方的山洞裡。」隊長壓低聲音說，大家互相點點頭。',
         '茶農阿伯遠遠招手：「小英雄們，老貓妖被神秘茶香吸引，拜託你們了！加油啊！」',
       ],
-      choiceType: 'difficulty',
-      choiceTitle: '💪 你對這一科有多少把握？',
-      choices: ['沒自信（輕鬆模式）', '普通（標準模式）', '我很會（挑戰模式）'],
+      // ★ 第三場：不提問，觸發隨機事件（在 advConfirmScene3Dialog 裡處理）
+      choiceType: 'random_event',
     },
   ]
 };
@@ -20456,21 +20461,39 @@ function advNextDialog(e) {
   }
 }
 
+// ★ 自信程度加成表（影響經驗值、知識幣、BOSS總分）
+const ADV_CONFIDENCE_MULT = { '沒自信':1.00, '普通':1.25, '我很會':1.50 };
+
 function advShowChoicePanel(stage, sceneIdx) {
   const scene = ADV_SCENES[stage][sceneIdx];
 
-  // ★ 選了期中評量時，難度選擇關還是正常顯示讓玩家操作（以取得第三個法寶），
-  //   只在標題加上說明文字告知難度不影響評量題庫
+  // ★ 第三場「隨機事件」不顯示選擇面板，直接跳去事件觸發
+  if(scene.choiceType === 'random_event'){
+    _advSceneChoiceDone = true;
+    const skipBtn = document.getElementById('adv-skip-btn');
+    if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
+    setTimeout(() => { advStartTeagardenEvent(); }, 300);
+    return;
+  }
 
   const panel = document.getElementById('adv-choice-panel');
   const box = document.createElement('div');
   box.className = 'adv-choice-box';
+
+  // ★ 多步驟選擇（例如 grade_subject = 先選年級再選科目）
+  if(scene.choiceType === 'grade_subject'){
+    _advMultiStepState = { stepIdx: 0, steps: scene.choiceSteps, results: {} };
+    _advRenderMultiStep(panel, box, stage, sceneIdx);
+    return;
+  }
+
+  // ★ 單一步驟選擇（舊邏輯保持相容：difficulty/subject/grade 單選）
   const title = document.createElement('div');
   title.className = 'adv-choice-title';
   title.textContent = scene.choiceTitle;
   box.appendChild(title);
 
-  // ★ 評量模式的難度關：加提示說明難度不影響題庫
+  // 評量模式的難度關：加提示說明難度不影響題庫
   if (scene.choiceType === 'difficulty' && _advPlayerSubject && _advPlayerSubject.includes('評量')) {
     const hint = document.createElement('div');
     hint.style.cssText = 'font-size:22px;color:#ffcc88;text-align:center;margin-bottom:8px;';
@@ -20484,24 +20507,21 @@ function advShowChoicePanel(stage, sceneIdx) {
     const btn = document.createElement('button');
     btn.className = 'adv-choice-btn';
     btn.textContent = c;
-    // ★ 點一下即選取並立即確認，不需額外確認按鈕
     btn.onclick = () => {
       box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       _advTempChoice = c;
       playSfx('sfx-confirm2', 0.85);
-      // 選取動畫後確認
       setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
     };
     grid.appendChild(btn);
   });
   box.appendChild(grid);
-  // ★ 不再生成額外確認按鈕（避免12科目時按鈕超出畫面）
 
   panel.innerHTML = '';
   panel.appendChild(box);
 
-  // ★ 鎖定「跳過演出」按鈕，避免選擇中途觸發導致小怪/問題/BOSS同時出現
+  // 鎖定「跳過演出」按鈕
   const skipBtn = document.getElementById('adv-skip-btn');
   if (skipBtn) {
     skipBtn.disabled = true;
@@ -20509,6 +20529,86 @@ function advShowChoicePanel(stage, sceneIdx) {
     skipBtn.style.pointerEvents = 'none';
     skipBtn.title = '請先完成選擇';
   }
+}
+
+// ★ 多步驟選擇面板狀態與渲染
+let _advMultiStepState = null;
+function _advRenderMultiStep(panel, box, stage, sceneIdx){
+  const st = _advMultiStepState;
+  const step = st.steps[st.stepIdx];
+  box.innerHTML = '';
+
+  // 進度指示
+  const progress = document.createElement('div');
+  progress.style.cssText = 'font-size:18px;color:#aaccff;text-align:center;margin-bottom:6px;letter-spacing:2px;';
+  progress.textContent = `第 ${st.stepIdx + 1} 題 / 共 ${st.steps.length} 題`;
+  box.appendChild(progress);
+
+  const title = document.createElement('div');
+  title.className = 'adv-choice-title';
+  title.textContent = step.title;
+  box.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.className = 'adv-choice-grid';
+  step.choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'adv-choice-btn';
+    btn.textContent = c;
+    btn.onclick = () => {
+      box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      st.results[step.type] = c;
+      playSfx('sfx-confirm2', 0.85);
+      setTimeout(() => {
+        st.stepIdx++;
+        if(st.stepIdx < st.steps.length){
+          _advRenderMultiStep(panel, box, stage, sceneIdx);
+        } else {
+          // 全部步驟完成 → 套用並繼續
+          _advApplyMultiStepResults(st.results);
+          _advMultiStepState = null;
+          advConfirmChoice_multi(stage, sceneIdx);
+        }
+      }, 320);
+    };
+    grid.appendChild(btn);
+  });
+  box.appendChild(grid);
+
+  panel.innerHTML = '';
+  panel.appendChild(box);
+
+  // 鎖定跳過按鈕
+  const skipBtn = document.getElementById('adv-skip-btn');
+  if (skipBtn) {
+    skipBtn.disabled = true;
+    skipBtn.style.opacity = '0.35';
+    skipBtn.style.pointerEvents = 'none';
+    skipBtn.title = '請先完成選擇';
+  }
+}
+function _advApplyMultiStepResults(results){
+  if(results.grade)   _advPlayerGrade   = results.grade;
+  if(results.subject){
+    _advPlayerSubject = results.subject;
+    if(results.subject.includes('評量')) _advPlayerDifficulty = '普通';
+  }
+  if(results.difficulty) _advPlayerDifficulty = results.difficulty.split('（')[0];
+}
+function advConfirmChoice_multi(stage, sceneIdx){
+  _advSceneChoiceDone = true;
+  const skipBtn = document.getElementById('adv-skip-btn');
+  if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
+  document.getElementById('adv-choice-panel').innerHTML = '';
+  const banner = document.getElementById('adv-confirm-banner');
+  if(banner) banner.textContent = `✅ 已記錄：${_advPlayerGrade} / ${_advPlayerSubject}`;
+  try { beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.1,0.1),120); } catch(e) {}
+  setTimeout(() => {
+    if(banner) banner.textContent = '';
+    const nextIdx2 = sceneIdx + 1;
+    advStartMiniBattle(nextIdx2);
+  }, 1200);
 }
 
 let _advTempChoice = '';
@@ -20569,6 +20669,261 @@ function advGiveTreasure(slotIdx) {
   document.getElementById('atp-desc').textContent = t.desc;
   document.getElementById('adv-treasure-popup').classList.add('show');
   try { beep(440,'sine',0.06,0.08); setTimeout(()=>beep(550,'sine',0.08,0.1),100); setTimeout(()=>beep(660,'sine',0.1,0.1),200); setTimeout(()=>beep(880,'sine',0.15,0.12),320); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════
+// ★ 茶園隨機事件系統（第三場景：不再固定小怪戰，改為隨機事件）
+// ═══════════════════════════════════════════════════════
+// 機率分配：20% 神秘寶箱、10% 異次元裂縫、50% 一般小怪戰、20% 遇到野生動物
+// 所有事件結束後都會獲得隨機法寶
+function advStartTeagardenEvent(){
+  const r = Math.random();
+  if(r < 0.20)      advTgEvent_chest();       // 20% 神秘寶箱
+  else if(r < 0.30) advTgEvent_rift();        // 10% 異次元裂縫
+  else if(r < 0.80) advTgEvent_normalBattle();// 50% 一般小怪戰
+  else              advTgEvent_petEncounter();// 20% 遇到野生動物
+}
+
+// 茶園事件：顯示事件對白（使用既有 adv-dialog-box）
+function _tgShowDialog(speaker, lines, onDone){
+  const speakerEl = document.getElementById('adv-dialog-speaker');
+  const textEl    = document.getElementById('adv-dialog-text');
+  const dialog    = document.getElementById('adv-dialog-box');
+  if(!dialog || !textEl){ if(onDone) onDone(); return; }
+  dialog.style.display = 'block';
+  if(speakerEl) speakerEl.textContent = speaker;
+  let idx = 0;
+  const step = () => {
+    if(idx >= lines.length){
+      dialog.onclick = null;
+      dialog.style.display = 'none';
+      if(onDone) onDone();
+      return;
+    }
+    textEl.textContent = lines[idx];
+    idx++;
+    try{ beep(520,'sine',0.05,0.06); }catch(e){}
+  };
+  step();
+  dialog.onclick = step;
+}
+
+// 事件一：神秘寶箱 — 25% 寶箱怪戰、70% 隨機賣錢物、5% 空無一物
+function advTgEvent_chest(){
+  _tgShowDialog('📖 旁白', [
+    '茶園深處，金色光芒閃耀……小隊發現一個被茶葉藤蔓纏繞的古老寶箱！',
+    '「哇——這、這搞不好是個寶貝！」隊員們興奮地圍了上去。',
+    '隊長小心翼翼地伸手掀開了箱蓋……',
+  ], () => {
+    const r = Math.random();
+    if(r < 0.25){
+      // 25%：寶箱怪！直接開戰
+      _tgShowDialog('📦 寶箱怪', [
+        '「呀——！怎麼有人發現我了！」',
+        '箱蓋彈開，一對大眼睛從裡頭瞪出來——竟然是隻寶箱怪！',
+        '「不、不准搶走我的金幣！接招吧！」',
+      ], () => {
+        window._advPreComposedMobs = ['寶箱怪'];
+        window._advNoTreasureThisBattle = true; // ★ 寶箱怪戰不能使用法寶
+        advStartMiniBattle(_advSceneIdx + 1);
+      });
+    } else if(r < 0.95){
+      // 70%：賣錢物品
+      const sellPool = ['antique_teacup','picked_flower','damaged_bamboo','unknown_egg','half_tea'];
+      const id = sellPool[Math.floor(Math.random()*sellPool.length)];
+      const def = BACKPACK_ITEM_DEF[id] || {};
+      backpackAdd(id, 1);
+      _tgShowDialog('📖 旁白', [
+        `「哇——是 ${def.icon||'🎁'} ${def.name||'神秘物品'}！」隊員們驚呼道。`,
+        `雖然不值大錢，拿去超商還能換一些知識幣！（可賣 ${def.sellPrice||'?'} 幣）`,
+      ], () => advTgAwardTreasureAndEnd());
+    } else {
+      // 5%：空無一物
+      _tgShowDialog('📖 旁白', [
+        '……箱子裡空空如也，只有一隻小蜘蛛從箱底爬出來，眾人瞬間冷場。',
+        '「……好啦，至少我們知道這裡沒寶藏了。」隊長無奈聳肩。',
+        '但沿路尋寶的過程中，小隊似乎撿到了一件小法寶！',
+      ], () => advTgAwardTreasureAndEnd());
+    }
+  });
+}
+
+// 事件二：異次元裂縫 — 小惡魔 + 3 隻隨機小怪
+function advTgEvent_rift(){
+  _tgShowDialog('📖 旁白', [
+    '茶園角落的空氣突然扭曲，出現一道紫黑色的裂縫，詭異氣息從中溢出！',
+    '「啊——這是……異次元裂縫？！」隊員瞪大眼睛。',
+    '「嘿嘿嘿！讓你們亂成一團才好玩！」一隻小惡魔從裂縫中跳出，身後還跟著幾隻小妖！',
+  ], () => {
+    const mobs = ['小惡魔'];
+    for(let i = 0; i < 3; i++){
+      mobs.push(MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]);
+    }
+    window._advPreComposedMobs = mobs;
+    window._advNoTreasureThisBattle = true; // ★ 小惡魔戰不能使用法寶
+    advStartMiniBattle(_advSceneIdx + 1);
+  });
+}
+
+// 事件三：一般小怪戰（4 隻隨機小怪）
+function advTgEvent_normalBattle(){
+  _tgShowDialog('📖 旁白', [
+    '茶園濃密的茶叢突然沙沙作響……',
+    '幾隻熟悉的小妖從茶叢後跳出來，一臉挑釁地擋住去路！',
+    '「嘿嘿！想通過茶園？先打贏我們再說！」',
+  ], () => {
+    // 不設 _advPreComposedMobs → advStartMiniBattle 會用正常 MINI_MONSTERS 組 4 隻
+    window._advNoTreasureThisBattle = false;
+    advStartMiniBattle(_advSceneIdx + 1);
+  });
+}
+
+// 事件四：遇到野生動物 — 答題正確則可攜帶寵物，答錯則寵物離開
+function advTgEvent_petEncounter(){
+  // 隨機選一隻寵物
+  const pet = EQUIP_DB[Math.floor(Math.random() * EQUIP_DB.length)];
+  const petName = (pet && pet.pet) || (pet && pet.n) || '神秘野生動物';
+  _tgShowDialog('🐾 野生動物', [
+    `茶園的小徑上，一隻可愛的 ${petName} 正在歪著頭打量你們！`,
+    `「咦？這隻動物好像對我們有興趣！」隊員悄悄說。`,
+    `「牠好像想考考我們——只要答對問題，牠就願意跟著我們冒險！」`,
+  ], () => {
+    // 使用既有的答題系統問玩家一題（鎖定玩家難度科目）
+    if(typeof _advMiniQuizAsk === 'function'){
+      // _advMiniQuizAsk 原本回呼是 onDone，我們自己決定正確與否的後續
+      _tgAskPetQuestion(pet, petName);
+    } else {
+      // 若答題系統不可用 → 直接視為答對
+      _tgPetCorrect(pet, petName);
+    }
+  });
+}
+
+// 答題結果分流（利用既有 _advMiniQuizAsk 但以獨立 callback 包裝）
+function _tgAskPetQuestion(pet, petName){
+  // 初始化單場答題狀態（因為 advStartMiniBattle 還沒被呼叫）
+  if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
+  if(typeof window._miniQuizTotalCoins !== 'number') window._miniQuizTotalCoins = 0;
+  // 呼叫 _advMiniQuizAsk，它會在回答後自行關閉，我們透過 window._tgPetCb 接手
+  window._tgPetCb = function(isCorrect){
+    window._tgPetCb = null;
+    if(isCorrect) _tgPetCorrect(pet, petName);
+    else          _tgPetWrong(pet, petName);
+  };
+  // 直接呼叫現有答題（它結束後會呼叫 onDone）
+  try{
+    _advMiniQuizAsk(function(res){
+      const ok = !!(res && res.correct);
+      if(window._tgPetCb) window._tgPetCb(ok);
+    });
+  }catch(e){
+    // fallback：直接算答對
+    _tgPetCorrect(pet, petName);
+  }
+}
+
+function _tgPetCorrect(pet, petName){
+  _tgShowDialog('🐾 野生動物', [
+    `「嘩——答對啦！你們好聰明！」`,
+    `${petName} 開心地跳了起來，搖著尾巴向小隊湊近。`,
+    `「那我就跟你們一起去冒險吧！」`,
+  ], () => {
+    // 打開既有的寵物攜帶選擇視窗
+    try{
+      const item = { n: pet.n, d: pet.d, type:'equip' };
+      // 手動顯示寵物選擇 overlay（重用 prepEquipUse 的彈窗邏輯，但單純展示讓玩家選角色）
+      const overlay = document.getElementById('equip-overlay');
+      const eq = pet;
+      if(overlay && eq){
+        document.getElementById('equip-title').innerHTML = `${eq.svg||''} 獲得寵物：${petName}`;
+        document.getElementById('equip-desc').innerHTML = `<span style="color:#f0c060;font-size:38px;font-weight:500">${eq.d||''}</span><br><span style="color:#aaaaaa;font-size:28px">選擇要攜帶寵物的角色（已有寵物可替換，舊寵物放生）</span>`;
+        const _pnEl=document.getElementById('equip-pet-name');
+        const _plEl=document.getElementById('equip-pet-lore');
+        const _piEl=document.getElementById('equip-pet-img-wrap');
+        if(_pnEl) _pnEl.textContent = eq.pet || petName;
+        if(_plEl) _plEl.textContent = eq.petDesc || '';
+        if(_piEl){
+          if(eq.petImg){
+            _piEl.innerHTML = `<img src="${eq.petImg}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.parentNode.innerHTML='${eq.icon||'🐾'}'">`;
+          } else {
+            _piEl.innerHTML = eq.icon || '🐾';
+          }
+        }
+        // 簡化版：把寵物加到背包並直接進入下一步；玩家可在戰鬥中自行裝備
+        // （重用完整 prepEquipUse 需要整套卡牌上下文，這裡簡化為自動備好讓玩家之後戰鬥再攜帶）
+        overlay.style.display = 'flex';
+        // 使用獨立的確認/放棄按鈕
+        const _confirmBtn = document.getElementById('equip-tg-confirm');
+        if(!_confirmBtn){
+          const btn = document.createElement('button');
+          btn.id = 'equip-tg-confirm';
+          btn.className = 'equip-skip-btn';
+          btn.style.marginRight = '16px';
+          btn.textContent = '✅ 接受這隻寵物（記入背包）';
+          btn.onclick = () => {
+            overlay.style.display = 'none';
+            btn.remove();
+            try{ playSfx('sfx-equip',0.6); }catch(e){}
+            // 加入 G.inv（冒險中可當作卡牌使用）
+            if(G && G.inv){
+              for(let i=0;i<3;i++){
+                if(!G.inv[i]){ G.inv[i] = { type:'equip', n: pet.n, d: pet.d, icon: pet.icon }; break; }
+              }
+            }
+            _showInGameToast(`🐾 ${petName} 已加入！戰鬥中可攜帶。`, '#88ffaa', 2500);
+            advTgAwardTreasureAndEnd();
+          };
+          const skipBtn = overlay.querySelector('.equip-skip-btn');
+          if(skipBtn){
+            skipBtn.parentNode.insertBefore(btn, skipBtn);
+            // 改寫 skip 行為以支援茶園事件流程
+            skipBtn.onclick = () => {
+              overlay.style.display = 'none';
+              btn.remove();
+              try{ playSfx('sfx-cancel',0.4); }catch(e){}
+              advTgAwardTreasureAndEnd();
+            };
+          }
+        }
+      } else {
+        advTgAwardTreasureAndEnd();
+      }
+    }catch(err){
+      console.error('pet encounter error', err);
+      advTgAwardTreasureAndEnd();
+    }
+  });
+}
+
+function _tgPetWrong(pet, petName){
+  _tgShowDialog('🐾 野生動物', [
+    `「嗚……答錯了啊……」`,
+    `${petName} 眼神露出失望，輕聲嘆了一口氣。`,
+    `「抱歉，下次再見吧！」——說完便消失在茶叢之中。`,
+    '雖然沒帶到寵物，但小隊在茶園中意外找到了一件法寶！',
+  ], () => advTgAwardTreasureAndEnd());
+}
+
+// 事件結束：給法寶並進入 BOSS 戰
+function advTgAwardTreasureAndEnd(){
+  // 給隨機法寶放在 slot 2（第 3 個）
+  if(!_advTreasures[2]){
+    const t = ADV_TREASURES[Math.floor(Math.random() * ADV_TREASURES.length)];
+    _advTreasures[2] = t;
+    advUpdateTreasureBar();
+    // 顯示法寶獲得彈窗
+    document.getElementById('atp-icon').textContent = t.icon;
+    document.getElementById('atp-name').textContent = t.name;
+    document.getElementById('atp-desc').textContent = t.desc;
+    document.getElementById('adv-treasure-popup').classList.add('show');
+    try { beep(440,'sine',0.06,0.08); setTimeout(()=>beep(880,'sine',0.15,0.12),320); } catch(e) {}
+    // advCloseTreasurePopup 會接手進入下一場（這裡是 BOSS）
+  } else {
+    // 已有法寶 → 直接接 BOSS 戰
+    setTimeout(() => {
+      advStartMiniBattle(_advSceneIdx + 1);
+    }, 400);
+  }
 }
 
 function advCloseTreasurePopup() {
@@ -21336,6 +21691,12 @@ function advOnQuizSkip() {
 // ════════════════════════════════
 function advUseTreasure(slotIdx) {
   if (!_advQuizActive || _advQuizPhase !== 'asking') return;
+  // ★ 寶箱怪 / 小惡魔戰不能使用法寶
+  if(window._advNoTreasureThisBattle){
+    try{ _showInGameToast('🚫 對戰稀有怪時無法使用法寶！', '#ff8844', 2000); }catch(e){}
+    try{ playSfx('sfx-cantmove', 0.5); }catch(e){}
+    return;
+  }
   const t = _advTreasures[slotIdx];
   if (!t) return;
   _advTreasures[slotIdx] = null;
@@ -24263,7 +24624,9 @@ function grantBattleExp(win, stats) {
   const ratio = Math.min(2.0,
     1.0 + correct*0.08 + Math.max(0,20-rounds)*0.02 + score*0.0005
   );
-  const totalExp = Math.round(baseExp * ratio);
+  // ★ 自信加成：沒自信+0% / 普通+25% / 我很會+50%
+  const _confMult = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
+  const totalExp = Math.round(baseExp * ratio * _confMult);
   // 出戰英雄×1.5，其他英雄×0.5
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
   const _bossLevelUps = [];
@@ -25662,7 +26025,8 @@ function _buildHeroGrid() {
   const unlocked = advGetUnlockedHeroes();
   const ALL_HEROES = typeof HERO_DB !== 'undefined' ? Object.keys(HERO_DB) : [];
   const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
-  const BOSS_SET = new Set(['九尾空貓怪','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆']);
+  // ★ 直接用 BOSS_NAMES 作為魔物排除集合，保證與其他地方一致（含寶箱怪/小惡魔）
+  const BOSS_SET = new Set(typeof BOSS_NAMES !== 'undefined' ? BOSS_NAMES : []);
   let allKnown = [...new Set([...unlocked, ...advPool, ...ALL_HEROES])].filter(n=>!BOSS_SET.has(n));
   const unlockedSet = new Set([...unlocked, ...advPool]);
 
@@ -27279,30 +27643,17 @@ let _advBossTeamSaved = null; // 儲存BOSS陣容，小怪戰後恢復
 //  小怪戰問答系統
 // ══════════════════════════════════════════════
 
-// 依場景取得小怪戰題庫（場景0=自然科簡單，場景1=玩家科目簡單，場景2=玩家科目玩家難度）
+// 依場景取得小怪戰題庫
+// ★ 新設計：
+//   場景0（河堤）：鎖定玩家擅長科目，從「沒自信（簡單）」題庫開始
+//   場景1（步道）：鎖定玩家擅長科目，使用玩家選擇的難度
+//   場景2（茶園）：已改為隨機事件，通常不會進這個函式；若進了就比照場景1
 function _advMiniGetQuizPool(sceneIdx) {
   const grade   = _advPlayerGrade      || '小學中年級';
   const subject = _advPlayerSubject    || '自然';
   const diff    = _advPlayerDifficulty || '普通';
-  // ★ 所有可用科目
-  const _allSubjects = ['國語文','英文','數學','自然','社會','音樂','美術'];
   let targetSubject, targetDiff;
   if(sceneIdx === 0){
-    // ★ 第一題：隨機科目 + 隨機難度（避免每次都是自然/沒自信）
-    const _diffs = ['沒自信','普通','我很會'];
-    // 隨機但排除已出過的題目後至少有題可選
-    const _subShuffled = _allSubjects.sort(() => Math.random() - 0.5);
-    const _difShuffled = _diffs.sort(() => Math.random() - 0.5);
-    targetSubject = null; targetDiff = null;
-    outer: for(const _s of _subShuffled){
-      for(const _d of _difShuffled){
-        const _test = ADV_QUIZ_DB.filter(q => q.subject === _s && q.difficulty === _d && !window._miniQuizUsedIds.has(q.id));
-        if(_test.length > 0){ targetSubject = _s; targetDiff = _d; break outer; }
-      }
-    }
-    // fallback
-    if(!targetSubject){ targetSubject = '自然'; targetDiff = '普通'; }
-  } else if(sceneIdx === 1){
     targetSubject = subject; targetDiff = '沒自信';
   } else {
     targetSubject = subject; targetDiff = diff;
@@ -27645,9 +27996,17 @@ function advStartMiniBattle(nextSceneIdx) {
     }
 
     // ── 隨機組成4隻小怪（可重複）
-    const mobs = Array.from({length:4}, () =>
-      MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
-    );
+    // ★ 場景0、1 不亂入稀有怪（寶箱/小惡魔移到場景2的隨機事件觸發）
+    // ★ 場景2 的戰鬥若由隨機事件設定，會在事件處理函式裡先寫好 window._advPreComposedMobs 跳過此段
+    let mobs;
+    if(window._advPreComposedMobs && Array.isArray(window._advPreComposedMobs)){
+      mobs = window._advPreComposedMobs.slice();
+      window._advPreComposedMobs = null;
+    } else {
+      mobs = Array.from({length:4}, () =>
+        MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
+      );
+    }
     // ★ 玩家隊伍HP全滿
     if(G.p1) G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
     G.p2 = mobs.map((name, i) => {
@@ -27656,6 +28015,14 @@ function advStartMiniBattle(nextSceneIdx) {
       if(typeof applyElemBonus === 'function') applyElemBonus(h);
       return h;
     });
+    // ★ 若有稀有怪，切換BGM + 顯示登場台詞
+    const _hasChest = mobs.includes('寶箱怪');
+    const _hasDevil = mobs.includes('小惡魔');
+    if(_hasChest){
+      try{ setTimeout(()=>{ bgmFadeTo('bgm-chest', 600); _showRareMobIntro('寶箱怪'); }, 800); }catch(e){}
+    } else if(_hasDevil){
+      try{ setTimeout(()=>{ bgmFadeTo('bgm-devil', 600); _showRareMobIntro('小惡魔'); }, 800); }catch(e){}
+    }
 
     // ── 重置戰鬥狀態（同 advStartBattle）
     G.inv2   = [null, null, null];
@@ -27779,6 +28146,8 @@ function advStartMiniBattle(nextSceneIdx) {
 
 function advFinishMiniBattle(win) {
   _advMiniBattleActive = false;
+  // ★ 清除稀有怪戰的「禁用法寶」旗標，讓之後的 BOSS 戰可正常使用法寶
+  window._advNoTreasureThisBattle = false;
   // ★ 清除答題回呼，防止小怪戰結束後誤觸「題目出完」重選視窗
   if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
   // ★★ 設定結算守門旗標：阻止所有 startTurn / aiAct 在背景推進 Boss 戰
@@ -27903,7 +28272,9 @@ function advFinishMiniBattle(win) {
     // 給予小怪EXP（使用已在 BOSS 陣容還原前算好的 _miniBaseExp）
     const heroes = advGetUnlockedHeroes();
     if(heroes.length) {
-      const baseExp = _miniBaseExp;
+      // ★ 自信加成：沒自信+0% / 普通+25% / 我很會+50%
+      const _confMult = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
+      const baseExp = Math.round(_miniBaseExp * _confMult);
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
       const _miniLevelUps = []; // ★ 收集升級事件
       heroes.forEach(name => {
@@ -29512,6 +29883,24 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260417.2317', items:[
+    '修正英雄圖鑑錯誤顯示寶箱怪與小惡魔的問題（這兩隻屬於魔物圖鑑）',
+  ] },
+  { ver:'v1.0.20260417.2310', items:[
+    '關卡介紹頁的「獎勵」區塊新增「💰 知識幣」項目',
+  ] },
+  { ver:'v1.0.20260417.2303', items:[
+    '冒險模式場景流程大改版：第一場連問「年級+擅長科目」，小怪戰鎖定該科目由簡單開始',
+    '第二場問自信程度（我很會+50% / 普通+25% / 沒自信+0%），加成套用於經驗值、知識幣、BOSS總分',
+    '第三場（茶園）改為隨機事件系統：20%神秘寶箱、10%異次元裂縫、50%一般小怪戰、20%野生動物',
+    '神秘寶箱：25%寶箱怪戰、70%隨機賣錢物品、5%空無一物',
+    '異次元裂縫：小惡魔+3隻隨機小怪',
+    '野生動物：答題正確可選擇攜帶寵物；答錯寵物會離開',
+    '所有茶園事件結束都會獲得隨機法寶',
+    '寶箱怪、小惡魔戰鬥中禁止使用法寶（配合行動前提問機制）',
+    '第一、第二場不再亂入寶箱怪或小惡魔',
+    '每個事件都撰寫了生動的劇情對白',
+  ] },
   { ver:'v1.0.20260417.2216', items:[
     '援軍替換：現在會包含初始 8 位英雄 + 已解鎖英雄，並嚴格排除所有魔物（BOSS、小怪、稀有怪）',
     '鬥技場公平性：敵我雙方角色一律保持 Lv1，特質等級在鬥技場不再套用（冒險模式不受影響）',
@@ -29622,7 +30011,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260417.2216';
+  const CURRENT_VERSION = 'v1.0.20260417.2317';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
