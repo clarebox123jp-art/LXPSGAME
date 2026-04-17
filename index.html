@@ -3575,7 +3575,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.2317</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.2354</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5656,7 +5656,7 @@ const HERO_DB = {
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中200%傷害，無法迴避',fd:'用特技的200%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手受到特技70%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
-  '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)單體友方受傷前觸發，代替承傷並以特技×50%減輕傷害。',fd:'(常駐被動)當單體攻擊即將落在隊友身上時觸發，守衛代替其承受全部傷害，並以特技的50%減輕傷害。封印時無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害且減傷75%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少75%。'}},
+  '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)單體友方受傷前觸發，代替承傷並以特技×50%減輕傷害。',fd:'(常駐被動)當單體攻擊即將落在隊友身上時觸發，守衛代替其承受全部傷害，並以特技的50%減輕傷害。封印時無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害，且受到的傷害減少50%（每升級+2%）',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少50%（每升級再+2%，最高+45%）。'}},
   '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
   '警長':  {hp:60,atk:12,sp:1,spd:17,  s1:{n:'物品查封',c:3,d:'封鎖全體對手物品卡',fd:'使全體對手1回合內無法使用和販賣物品卡'},s2:{n:'警示鳴槍',c:2,d:'(被動)對手行動前有機率使其跳過',fd:'(被動)對手行動前觸發，有60%機率使該對手直接放棄這回合行動',p:true}},
@@ -8234,6 +8234,8 @@ function confirmHeroPick(){
       if(_dAtk) { h.atk += _dAtk; }
       if(_dSp)  { h.sp  += _dSp;  }
       if(_dSpd) { h.spd += _dSpd; }
+      // ★ 冒險模式：等級每級 +2% 基礎HP（玩家投資HP後的「新原始HP」也會被加成）
+      try{ _applyAdvLevelHpBonus(h); }catch(e){}
       // 2. 技能升級等級 → 直接存在英雄物件上，execSkill 直接讀取
       h._skLv = (_heroSkillLevels && _heroSkillLevels[h.name])
         ? { s1: (_heroSkillLevels[h.name].s1 || 0), s2: (_heroSkillLevels[h.name].s2 || 0) }
@@ -11092,13 +11094,17 @@ function doDmg(target, rawDmg, opts={}){
       }
     }
 
-    // ── 仁王挺立：代替所有隊友受傷，且減傷75% ──
+    // ── 仁王挺立：代替所有隊友受傷，基礎減傷50%，每升級再+2% ──
     if(!opts.isNioGuard){
       const nio_guard=G[target.side].find(h=>h!==target&&h.curHp>0&&hasBuff(h,'nioGuard'));
       if(nio_guard){
         playSfx('sfx-guard',0.75);
-        log(`[${nio_guard.name}] 仁王挺立！代替 [${target.name}] 承受傷害，減傷75%！`);
-        const nioReduced=Math.max(1,Math.ceil(rawDmg*0.25));
+        // 取得仁王挺立技能升級等級（s2）：每級+2%減傷
+        const _nioLv = (nio_guard._skLv && nio_guard._skLv.s2) || 0;
+        const _reduceRate = Math.min(0.95, 0.50 + _nioLv * 0.02); // 上限95%（確保至少扣1點）
+        const _takeRate = 1 - _reduceRate;
+        log(`[${nio_guard.name}] 仁王挺立！代替 [${target.name}] 承受傷害，減傷${Math.round(_reduceRate*100)}%！`);
+        const nioReduced=Math.max(1,Math.ceil(rawDmg*_takeRate));
         showShieldVFX(nio_guard,'block');
         bannerFX(nio_guard,'仁王！','#ff8800',900);
         return doDmg(nio_guard, nioReduced, {...opts, noGuard:true, isNioGuard:true});
@@ -16308,7 +16314,7 @@ function aiUseSkill(a,sk,cost,pref){
   }
   else if(n==='黑暗封印'){enemies.filter(h=>h.curHp>0).forEach(h=>{if(Math.random()<0.7)addStatus(h,'seal',1);});}
   else if(n==='死亡宣告'){if(t)addStatus(t,'deathmark',1);}
-  else if(n==='仁王挺立'){addBuff(a,'nioGuard',1);a._nioGuardActive=true;log('['+a.name+'] 仁王挺立！代替所有隊友承受傷害，減傷75%！');}
+  else if(n==='仁王挺立'){addBuff(a,'nioGuard',1);a._nioGuardActive=true;log('['+a.name+'] 仁王挺立！代替所有隊友承受傷害，減傷50%！');}
   else if(n==='催眠之歌'){
     if(t){ addStatus(t,'sleep',3); renderCard(t); log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`); bannerFX(t,'💤 睡眠3回合！','#bb99ff',900); }
   }
@@ -20788,36 +20794,77 @@ function advTgEvent_petEncounter(){
     `「咦？這隻動物好像對我們有興趣！」隊員悄悄說。`,
     `「牠好像想考考我們——只要答對問題，牠就願意跟著我們冒險！」`,
   ], () => {
+    // ★ 畫面中間顯示野生動物圖片與名稱（答題時仍保留在畫面上）
+    _tgShowPetSpotlight(pet, petName);
     // 使用既有的答題系統問玩家一題（鎖定玩家難度科目）
     if(typeof _advMiniQuizAsk === 'function'){
-      // _advMiniQuizAsk 原本回呼是 onDone，我們自己決定正確與否的後續
       _tgAskPetQuestion(pet, petName);
     } else {
-      // 若答題系統不可用 → 直接視為答對
+      _tgHidePetSpotlight();
       _tgPetCorrect(pet, petName);
     }
   });
 }
 
+// 顯示野生動物「聚光燈」視窗（答題前與答題中皆可見）
+function _tgShowPetSpotlight(pet, petName){
+  _tgHidePetSpotlight();
+  const box = document.createElement('div');
+  box.id = '_tg-pet-spotlight';
+  box.style.cssText = [
+    'position:fixed;top:18%;left:50%;transform:translateX(-50%);',
+    'z-index:9400;',  // 高於 cutscene(620) 也高於 quiz(提升後 9500 會蓋在它上面正好)
+    'background:linear-gradient(160deg,#0a1c10,#061208);',
+    'border:2.5px solid rgba(100,220,120,0.75);border-radius:18px;',
+    'padding:14px 20px 16px;',
+    'text-align:center;box-shadow:0 0 50px rgba(100,220,120,0.35);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:advChoiceIn 0.4s cubic-bezier(0.34,1.56,0.64,1);',
+    'pointer-events:none;',
+  ].join('');
+  const imgHtml = (pet && pet.petImg)
+    ? `<img src="${pet.petImg}" style="width:180px;height:180px;object-fit:cover;border-radius:14px;border:2px solid rgba(100,220,120,0.5);display:block;margin:0 auto 10px;">`
+    : `<div style="font-size:96px;margin-bottom:6px;">${(pet&&pet.icon)||'🐾'}</div>`;
+  box.innerHTML = `
+    ${imgHtml}
+    <div style="font-size:28px;font-weight:900;color:#88ffaa;letter-spacing:2px;">🐾 ${petName}</div>
+    ${pet && pet.petDesc ? `<div style="font-size:16px;color:#ccddcc;margin-top:4px;font-style:italic;max-width:260px;">${pet.petDesc}</div>` : ''}
+  `;
+  document.body.appendChild(box);
+}
+function _tgHidePetSpotlight(){
+  const old = document.getElementById('_tg-pet-spotlight');
+  if(old) old.remove();
+}
+
 // 答題結果分流（利用既有 _advMiniQuizAsk 但以獨立 callback 包裝）
 function _tgAskPetQuestion(pet, petName){
-  // 初始化單場答題狀態（因為 advStartMiniBattle 還沒被呼叫）
+  // ★ 初始化答題狀態（此處在過場中觸發，戰鬥尚未啟動）
   if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
   if(typeof window._miniQuizTotalCoins !== 'number') window._miniQuizTotalCoins = 0;
-  // 呼叫 _advMiniQuizAsk，它會在回答後自行關閉，我們透過 window._tgPetCb 接手
-  window._tgPetCb = function(isCorrect){
-    window._tgPetCb = null;
-    if(isCorrect) _tgPetCorrect(pet, petName);
-    else          _tgPetWrong(pet, petName);
-  };
-  // 直接呼叫現有答題（它結束後會呼叫 onDone）
+  // ★ 關鍵修正：cutscene overlay z-index=620 會蓋住 quiz overlay z-index=610，
+  //   必須把 quiz 的 z-index 暫時拉高，答題結束後再還原。
+  const qOv = document.getElementById('adv-quiz-overlay');
+  let _origZ = null;
+  if(qOv){
+    _origZ = qOv.style.zIndex;
+    qOv.style.zIndex = '9500';  // 高於 cutscene (620) 與所有過場元素
+  }
+  // 直接呼叫現有答題。onDone 會收到 {correct:true/false}
   try{
     _advMiniQuizAsk(function(res){
+      // 還原 quiz overlay 的 z-index
+      if(qOv) qOv.style.zIndex = _origZ || '';
+      _tgHidePetSpotlight();  // ★ 答題結束立即移除聚光燈
       const ok = !!(res && res.correct);
-      if(window._tgPetCb) window._tgPetCb(ok);
+      if(ok) _tgPetCorrect(pet, petName);
+      else   _tgPetWrong(pet, petName);
     });
   }catch(e){
     // fallback：直接算答對
+    if(qOv) qOv.style.zIndex = _origZ || '';
+    _tgHidePetSpotlight();
+    console.error('[pet encounter quiz error]', e);
     _tgPetCorrect(pet, petName);
   }
 }
@@ -20828,70 +20875,48 @@ function _tgPetCorrect(pet, petName){
     `${petName} 開心地跳了起來，搖著尾巴向小隊湊近。`,
     `「那我就跟你們一起去冒險吧！」`,
   ], () => {
-    // 打開既有的寵物攜帶選擇視窗
-    try{
-      const item = { n: pet.n, d: pet.d, type:'equip' };
-      // 手動顯示寵物選擇 overlay（重用 prepEquipUse 的彈窗邏輯，但單純展示讓玩家選角色）
-      const overlay = document.getElementById('equip-overlay');
-      const eq = pet;
-      if(overlay && eq){
-        document.getElementById('equip-title').innerHTML = `${eq.svg||''} 獲得寵物：${petName}`;
-        document.getElementById('equip-desc').innerHTML = `<span style="color:#f0c060;font-size:38px;font-weight:500">${eq.d||''}</span><br><span style="color:#aaaaaa;font-size:28px">選擇要攜帶寵物的角色（已有寵物可替換，舊寵物放生）</span>`;
-        const _pnEl=document.getElementById('equip-pet-name');
-        const _plEl=document.getElementById('equip-pet-lore');
-        const _piEl=document.getElementById('equip-pet-img-wrap');
-        if(_pnEl) _pnEl.textContent = eq.pet || petName;
-        if(_plEl) _plEl.textContent = eq.petDesc || '';
-        if(_piEl){
-          if(eq.petImg){
-            _piEl.innerHTML = `<img src="${eq.petImg}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.parentNode.innerHTML='${eq.icon||'🐾'}'">`;
-          } else {
-            _piEl.innerHTML = eq.icon || '🐾';
-          }
-        }
-        // 簡化版：把寵物加到背包並直接進入下一步；玩家可在戰鬥中自行裝備
-        // （重用完整 prepEquipUse 需要整套卡牌上下文，這裡簡化為自動備好讓玩家之後戰鬥再攜帶）
-        overlay.style.display = 'flex';
-        // 使用獨立的確認/放棄按鈕
-        const _confirmBtn = document.getElementById('equip-tg-confirm');
-        if(!_confirmBtn){
-          const btn = document.createElement('button');
-          btn.id = 'equip-tg-confirm';
-          btn.className = 'equip-skip-btn';
-          btn.style.marginRight = '16px';
-          btn.textContent = '✅ 接受這隻寵物（記入背包）';
-          btn.onclick = () => {
-            overlay.style.display = 'none';
-            btn.remove();
-            try{ playSfx('sfx-equip',0.6); }catch(e){}
-            // 加入 G.inv（冒險中可當作卡牌使用）
-            if(G && G.inv){
-              for(let i=0;i<3;i++){
-                if(!G.inv[i]){ G.inv[i] = { type:'equip', n: pet.n, d: pet.d, icon: pet.icon }; break; }
-              }
-            }
-            _showInGameToast(`🐾 ${petName} 已加入！戰鬥中可攜帶。`, '#88ffaa', 2500);
-            advTgAwardTreasureAndEnd();
-          };
-          const skipBtn = overlay.querySelector('.equip-skip-btn');
-          if(skipBtn){
-            skipBtn.parentNode.insertBefore(btn, skipBtn);
-            // 改寫 skip 行為以支援茶園事件流程
-            skipBtn.onclick = () => {
-              overlay.style.display = 'none';
-              btn.remove();
-              try{ playSfx('sfx-cancel',0.4); }catch(e){}
-              advTgAwardTreasureAndEnd();
-            };
-          }
-        }
-      } else {
-        advTgAwardTreasureAndEnd();
-      }
-    }catch(err){
-      console.error('pet encounter error', err);
+    // ★ 改用獨立的高 z-index 確認小視窗，避免 equip-overlay (z=130) 被 cutscene (z=620) 遮住
+    const old = document.getElementById('_tg-pet-accept');
+    if(old) old.remove();
+    const box = document.createElement('div');
+    box.id = '_tg-pet-accept';
+    box.style.cssText = [
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+      'z-index:9500;',
+      'background:linear-gradient(160deg,#0a1c10,#061208);',
+      'border:2.5px solid rgba(100,220,120,0.7);border-radius:18px;',
+      'padding:clamp(16px,3vw,28px) clamp(20px,4vw,40px);',
+      'max-width:min(96vw,620px);width:min(92vw,560px);',
+      'text-align:center;box-shadow:0 0 60px rgba(100,220,120,0.3);',
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+      'animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);',
+    ].join('');
+    const imgHtml = pet.petImg
+      ? `<img src="${pet.petImg}" style="width:160px;height:160px;object-fit:cover;border-radius:14px;border:2px solid rgba(100,220,120,0.4);margin-bottom:14px;">`
+      : `<div style="font-size:90px;margin-bottom:10px;">${pet.icon||'🐾'}</div>`;
+    box.innerHTML = `
+      ${imgHtml}
+      <div style="font-size:34px;font-weight:900;color:#88ffaa;margin-bottom:8px;letter-spacing:2px;">攜帶 ${petName}？</div>
+      <div style="font-size:22px;color:#ccddcc;line-height:1.6;margin-bottom:10px;font-style:italic;">${pet.petDesc||''}</div>
+      <div style="font-size:24px;color:#f0c060;margin-bottom:18px;padding:10px;background:rgba(212,168,67,0.08);border-radius:10px;">⚔ 效果：${pet.d||''}</div>
+      <div style="font-size:19px;color:#aaa;margin-bottom:20px;">接受後，${petName} 會在 BOSS 戰開場時自動放入你的物品格。</div>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+        <button id="_tg-pet-yes" style="padding:14px 32px;font-size:24px;font-weight:800;background:rgba(60,180,80,0.25);border:2px solid #44ff88;color:#aaffcc;border-radius:12px;cursor:pointer;font-family:inherit;">✅ 接受同行</button>
+        <button id="_tg-pet-no"  style="padding:14px 32px;font-size:24px;font-weight:700;background:rgba(60,60,60,0.4);border:1.5px solid #888;color:#aaa;border-radius:12px;cursor:pointer;font-family:inherit;">↩ 婉拒</button>
+      </div>`;
+    document.body.appendChild(box);
+    document.getElementById('_tg-pet-yes').onclick = () => {
+      try{ playSfx('sfx-equip',0.6); }catch(e){}
+      window._pendingEventPet = pet.n;  // ★ 存 EQUIP_DB 的 n（名稱）作為 key
+      _showInGameToast(`🐾 ${petName} 已加入！BOSS 戰開場會自動放入物品格。`, '#88ffaa', 2800);
+      box.remove();
       advTgAwardTreasureAndEnd();
-    }
+    };
+    document.getElementById('_tg-pet-no').onclick = () => {
+      try{ playSfx('sfx-cancel',0.4); }catch(e){}
+      box.remove();
+      advTgAwardTreasureAndEnd();
+    };
   });
 }
 
@@ -21221,6 +21246,19 @@ function advStartBattle(){
       if(_bDrawn.type !== 'equip') _bossInitInv[_bsi] = _bDrawn;
     }
     G.inv = _bossInitInv;
+    // ★ 茶園事件獲得的寵物：開場自動放入第一格（覆蓋原本的 item 牌）
+    try{
+      if(window._pendingEventPet){
+        const _petName = window._pendingEventPet;
+        const _petData = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(e => e.n === _petName) : null;
+        if(_petData){
+          // 從 EQUIP_DB 直接複製完整物件（含 onEquip/onRemove 等回調）
+          G.inv[0] = Object.assign({}, _petData, { type:'equip', uid:'tgpet_'+Date.now() });
+          log(`🐾 [野生動物事件] ${_petName} 已放入物品格 1，可在戰鬥中使用`);
+        }
+        window._pendingEventPet = null;
+      }
+    }catch(e){ console.error('[pendingEventPet hook]', e); }
     // 敵方也發三張（BOSS用）
     var _bossInitInv2 = [null, null, null];
     for(var _bsi2 = 0; _bsi2 < 3; _bsi2++){
@@ -24356,6 +24394,8 @@ function _rrfSelectIn(newName) {
           if(_inv.atk) { newH.atk += _inv.atk; }
           if(_inv.sp)  { newH.sp  += _inv.sp;  }
           if(_inv.spd) { newH.spd += _inv.spd; }
+          // ★ 冒險模式：等級每級 +2% HP
+          try{ _applyAdvLevelHpBonus(newH); }catch(e){}
           newH._skLv = (_heroSkillLevels && _heroSkillLevels[newName])
             ? {s1:(_heroSkillLevels[newName].s1||0), s2:(_heroSkillLevels[newName].s2||0)}
             : {s1:0, s2:0};
@@ -24492,6 +24532,25 @@ function _expForLevel(lv) {
 }
 
 function getHeroLevel(name) { return _heroLevels[name] || 1; }
+
+// ★ 冒險模式：等級每級 +2% 原始HP上限（線性疊加，無條件進位）
+// 呼叫時機：所有英雄加入 G.p1 **並套用素質投資後**（這樣「投資HP」也會被加成）
+// 使用傳入 hero 當下的 hp 作為 baseHp（即 HERO_DB 基本HP + 玩家HP投資）
+// 不對小怪/BOSS 套用（它們走 HERO_DB 原始值，不呼叫這個 helper）
+function _applyAdvLevelHpBonus(hero){
+  if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
+  if(!hero || !hero.name) return;
+  const lv = getHeroLevel(hero.name);
+  if(lv <= 1) return;  // Lv1 無加成
+  const baseHp = hero.hp;  // ★ 目前HP已含投資加成，當作 base
+  if(!baseHp) return;
+  const bonus = Math.ceil(baseHp * 0.02 * (lv - 1));
+  if(bonus > 0){
+    hero.hp    += bonus;
+    hero.curHp  = hero.hp;
+    hero._advLvHpBonus = bonus;  // 記錄以供顯示
+  }
+}
 function getHeroExp(name)   { return _heroExp[name] || 0; }
 
 // ★ 升級慶祝演出
@@ -24862,9 +24921,26 @@ function _renderShopProducts(){
     const qty = (window['_shopQty_'+prod.id]||1);
     const total = prod.price * qty;
     const canAfford = (_knowledgeCoins||0) >= total;
+    // ★ 一次性商品（例如肖像）：若已擁有則鎖定按鈕並改變顯示
+    let _alreadyOwned = false;
+    if(prod.oneTime){
+      const _itemDef = BACKPACK_ITEM_DEF[prod.id] || {};
+      _alreadyOwned = (_itemDef.type === 'portrait'
+                       && _itemDef.heroName && _itemDef.portraitId
+                       && (_heroPortraitUnlocked[_itemDef.heroName] || []).includes(_itemDef.portraitId))
+                   || backpackGet(prod.id) > 0;
+    }
+    const _stockDisplay = _alreadyOwned ? '<span style="color:#888;font-weight:800;">已擁有</span>'
+                                        : prod.stock;
+    const _btnEnabled = !_alreadyOwned && canAfford;
+    const _btnLabel   = _alreadyOwned ? '✓ 已擁有' : '💰 購買';
+    const _btnColor   = _alreadyOwned ? '#666' : (canAfford ? '#44ff88' : '#666');
+    const _btnBg      = _alreadyOwned ? 'rgba(40,40,40,0.3)' : (canAfford ? 'rgba(50,160,50,0.35)' : 'rgba(40,40,40,0.3)');
+    const _btnBorder  = _alreadyOwned ? '#555' : (canAfford ? '#44ff88' : '#555');
     const div = document.createElement('div');
     div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:12px;'+
-      'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;';
+      'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;'+
+      (_alreadyOwned ? 'opacity:0.6;' : '');
     div.innerHTML = `
       <div style="font-size:78px;flex-shrink:0;">${prod.icon}</div>
       <div style="flex:1;min-width:0;">
@@ -24873,22 +24949,22 @@ function _renderShopProducts(){
         <div style="font-size:32px;color:#ffdd88;margin-top:6px;">
           ${prod.dailyLimit > 0
             ? `今日剩餘：<span style="color:${(_shopDailyBought(prod.id)<prod.dailyLimit)?'#44ff88':'#ff6644'};font-weight:800;">${Math.max(0,prod.dailyLimit-_shopDailyBought(prod.id))} / ${prod.dailyLimit}</span> &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
-            : `庫存：${prod.stock} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
+            : `庫存：${_stockDisplay} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
           }</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;${_alreadyOwned?'opacity:0.4;pointer-events:none;':''}">
           <button onclick="shopAdjQty('${prod.id}',-1)" style="width:36px;height:36px;font-size:36px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:8px;cursor:pointer;">−</button>
           <span id="shop-qty-${prod.id}" style="font-size:39px;font-weight:800;color:#fff;min-width:32px;text-align:center;">${qty}</span>
           <button onclick="shopAdjQty('${prod.id}',+1)" style="width:36px;height:36px;font-size:36px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;">＋</button>
         </div>
-        <div style="font-size:30px;color:${canAfford?'#ffe066':'#888'};">合計：${total.toLocaleString()} 💰</div>
+        <div style="font-size:30px;color:${_alreadyOwned?'#666':(canAfford?'#ffe066':'#888')};">${_alreadyOwned?'已擁有此商品':'合計：'+total.toLocaleString()+' 💰'}</div>
         <button onclick="shopBuyItem('${prod.id}')" style="padding:10px 22px;font-size:33px;font-weight:800;
-          background:${canAfford?'rgba(50,160,50,0.35)':'rgba(40,40,40,0.3)'};
-          border:2px solid ${canAfford?'#44ff88':'#555'};
-          color:${canAfford?'#44ff88':'#666'};
+          background:${_btnBg};
+          border:2px solid ${_btnBorder};
+          color:${_btnColor};
           border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;
-          ${canAfford?'':'pointer-events:none;'}">💰 購買</button>
+          ${_btnEnabled?'':'pointer-events:none;'}">${_btnLabel}</button>
       </div>`;
     list.appendChild(div);
   });
@@ -25621,6 +25697,8 @@ function _applyPresetTeam(slotIdx){
       if(_inv.atk) { h.atk += _inv.atk; }
       if(_inv.sp)  { h.sp  += _inv.sp;  }
       if(_inv.spd) { h.spd += _inv.spd; }
+      // ★ 冒險模式：等級每級 +2% HP
+      try{ _applyAdvLevelHpBonus(h); }catch(e){}
       h._skLv = (_heroSkillLevels && _heroSkillLevels[h.name])
         ? { s1: (_heroSkillLevels[h.name].s1 || 0), s2: (_heroSkillLevels[h.name].s2 || 0) }
         : { s1: 0, s2: 0 };
@@ -27465,7 +27543,25 @@ function _injectFriendHeroIntoBattle() {
   if (!name || typeof HERO_DB === 'undefined' || !HERO_DB[name]) return;
   // ★ 好友英雄已透過 _heroPickSelected 編入 G.p1，找到對應 hero 更新其屬性
   const existingHero = G.p1 ? G.p1.find(h => h.name === name) : null;
+  const friendLv = fh.level || 1;
+  // 計算好友等級的 HP 加成（線性 +2%/級，無條件進位；以好友投資後HP為基準）
+  const applyFriendLvHpBonus = (hero, baseAfterInvest) => {
+    if(friendLv <= 1) return 0;
+    const bonus = Math.ceil(baseAfterInvest * 0.02 * (friendLv - 1));
+    if(bonus > 0){
+      hero.hp   += bonus;
+      hero.curHp = hero.hp;
+      hero._advLvHpBonus = bonus;
+    }
+    return bonus;
+  };
   if(existingHero){
+    // 先撤銷「_applyAdvLevelHpBonus」套用的本地玩家等級HP加成（若有）
+    if(existingHero._advLvHpBonus){
+      existingHero.hp   -= existingHero._advLvHpBonus;
+      existingHero.curHp = existingHero.hp;
+      existingHero._advLvHpBonus = 0;
+    }
     // 套用好友的等級/素質/技能到已建立的英雄物件
     const inv = fh.statInvested || {};
     existingHero.hp  = Math.max(1, existingHero.hp  + (inv.hp  || 0));
@@ -27473,10 +27569,12 @@ function _injectFriendHeroIntoBattle() {
     existingHero.sp  = Math.max(1, existingHero.sp  + (inv.sp  || 0));
     existingHero.spd = Math.max(1, existingHero.spd + (inv.spd || 0));
     existingHero.curHp = existingHero.hp;
+    // ★ 套用好友的等級HP加成（以投資後的HP為基準）
+    applyFriendLvHpBonus(existingHero, existingHero.hp);
     // 套用技能等級
     if(fh.skillLevels){ existingHero._skLv = { s1: fh.skillLevels.s1||0, s2: fh.skillLevels.s2||0 }; }
     existingHero._isFriendHero = true;
-    log(`[好友英雄] ${name}（${fh._ownerName}）屬性已套用！`);
+    log(`[好友英雄] ${name}（${fh._ownerName}）Lv.${friendLv} 屬性已套用！`);
     return;
   }
   // fallback: 若未在 G.p1 中（舊邏輯）
@@ -27491,6 +27589,8 @@ function _injectFriendHeroIntoBattle() {
   h.sp  = Math.max(1, h.sp  + (inv.sp  || 0));
   h.spd = Math.max(1, h.spd + (inv.spd || 0));
   h.curHp = h.hp;
+  // ★ 套用好友的等級HP加成
+  applyFriendLvHpBonus(h, h.hp);
   // 套用技能等級
   const skl = fh.skillLevels || {};
   h._skLv = { s1: skl.s1 || 0, s2: skl.s2 || 0 };
@@ -27500,7 +27600,7 @@ function _injectFriendHeroIntoBattle() {
   h._isFriendHero = true;
   h._friendOwner  = fh._ownerName;
   G.p1.push(h);
-  log(`🤝 [好友英雄] ${name}（${fh._ownerName}）加入戰鬥！Lv.${fh.level || 1}`);
+  log(`🤝 [好友英雄] ${name}（${fh._ownerName}）加入戰鬥！Lv.${friendLv}`);
 }
 
 // ── 開啟選關頁時讀取雲端好友和代表英雄 ──
@@ -27921,9 +28021,9 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
       try{
-        _advMiniShowReward(_onDoneAfterReward);
+        _advMiniShowReward(()=>{ if(_onDoneAfterReward) _onDoneAfterReward({correct:true}); });
       }catch(e){
-        if(_onDoneAfterReward) _onDoneAfterReward();
+        if(_onDoneAfterReward) _onDoneAfterReward({correct:true});
       }
     }, 1200);
   } else {
@@ -27941,7 +28041,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
-      if(onDone) onDone();
+      if(onDone) onDone({correct:false});
     }, 1600);
   }
 }
@@ -29883,6 +29983,28 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260417.2354', items:[
+    '好友英雄現在也會套用等級加成（依好友帳號的英雄等級+2%/級 HP）',
+    '超商肖像類限購商品：購買後立即更新顯示為「已擁有」，按鈕自動鎖定防止重複購買',
+  ] },
+  { ver:'v1.0.20260417.2349', items:[
+    '冒險模式：所有英雄等級每級+2%基礎HP上限（線性疊加，無條件進位）',
+    '玩家投資HP後，新的HP也會納入升級加成計算基準（鬥技場不受影響）',
+  ] },
+  { ver:'v1.0.20260417.2340', items:[
+    '守衛【仁王挺立】基礎減傷調整為50%（原75%）',
+    '【仁王挺立】每升級+2%減傷（最高約+45%）',
+  ] },
+  { ver:'v1.0.20260417.2330', items:[
+    '茶園遇到野生動物時，畫面中央上方顯示動物圖片與名稱，答題時保持可見',
+  ] },
+  { ver:'v1.0.20260417.2329', items:[
+    '茶園野生動物事件：答對後改用獨立的攜帶確認視窗（解決原 equip-overlay z-index=130 被 cutscene z-index=620 遮住的問題）',
+    '獲得的寵物現在會在 BOSS 戰開場時自動放入物品格 1，使用完整 EQUIP_DB 資料確保攜帶效果正確',
+  ] },
+  { ver:'v1.0.20260417.2326', items:[
+    '修正茶園遇到野生動物時不顯示問題而卡死的 Bug（答題視窗被過場畫面遮住 + 回呼結果傳遞錯誤）',
+  ] },
   { ver:'v1.0.20260417.2317', items:[
     '修正英雄圖鑑錯誤顯示寶箱怪與小惡魔的問題（這兩隻屬於魔物圖鑑）',
   ] },
@@ -30011,7 +30133,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260417.2317';
+  const CURRENT_VERSION = 'v1.0.20260417.2354';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
