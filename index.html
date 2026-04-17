@@ -3575,7 +3575,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.0736</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.2216</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3865,6 +3865,11 @@ body {
     <div id="hero-detail-img-side" style="width:42%;position:relative;flex-shrink:0;overflow:hidden;background:rgba(0,0,0,0.3);">
       <img id="hero-detail-full-img" style="width:100%;height:auto;max-height:100%;object-fit:contain;object-position:top center;display:block;" src="" onerror="this.style.display='none'"/>
       <div id="hero-detail-av-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:120px;"></div>
+      <!-- ★ 肖像切換浮動按鈕（僅在此英雄有多張肖像時顯示，由 _renderHeroDetail 動態控制） -->
+      <div id="hero-detail-portrait-switcher" style="display:none;position:absolute;right:12px;bottom:12px;background:rgba(10,14,30,0.92);border:2px solid rgba(212,168,67,0.6);border-radius:14px;padding:10px 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.6);z-index:5;max-width:calc(100% - 24px);">
+        <div style="font-size:14px;color:#ffcc66;font-weight:700;margin-bottom:8px;letter-spacing:1px;text-align:center;">✨ 切換肖像</div>
+        <div id="hero-detail-portrait-list" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>
+      </div>
     </div>
     <!-- 右側：英雄資料 -->
     <div id="hero-detail-box" style="flex:1;overflow-y:auto;padding:24px 28px;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
@@ -5586,6 +5591,59 @@ const HERO_IMGS = {
   '寶箱怪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B6%E7%AE%B1%E6%80%AA.png',
   '小惡魔': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94.png',
 };
+
+// ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
+//   id 'default' = 原始肖像（HERO_IMGS 裡的那張）
+//   其他 id 是商店買來或遊戲獲得的替代肖像。
+//   切換時只改 HERO_IMGS[name] 的值，其他散落各處的讀取邏輯都不用動。
+const HERO_PORTRAIT_LIBRARY = {
+  '祭司': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96).png' },
+    { id:'dawn_breeze', name:'曙光微風', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+  ],
+};
+// 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
+let _heroPortraitUnlocked = {};
+// 玩家目前使用的肖像：{heroName: portraitId}；未記錄者 = 'default'
+let _heroPortraitChoice = {};
+
+// 套用目前選擇的肖像到 HERO_IMGS（遊戲啟動 / 存檔載入時呼叫）
+function _applyHeroPortraitChoices(){
+  if(typeof HERO_IMGS === 'undefined') return;
+  Object.keys(HERO_PORTRAIT_LIBRARY).forEach(name => {
+    const lib = HERO_PORTRAIT_LIBRARY[name];
+    const choice = _heroPortraitChoice[name] || 'default';
+    const entry = lib.find(e => e.id === choice) || lib.find(e => e.id === 'default');
+    if(entry) HERO_IMGS[name] = entry.url;
+  });
+}
+// 切換肖像（使用者從英雄圖鑑點擊時呼叫）
+function _switchHeroPortrait(heroName, portraitId){
+  const lib = HERO_PORTRAIT_LIBRARY[heroName];
+  if(!lib) return false;
+  const entry = lib.find(e => e.id === portraitId);
+  if(!entry) return false;
+  // 檢查解鎖狀態
+  if(entry.requiresUnlock && !((_heroPortraitUnlocked[heroName]||[]).includes(portraitId))){
+    return false;
+  }
+  _heroPortraitChoice[heroName] = portraitId;
+  HERO_IMGS[heroName] = entry.url;
+  try{ if(typeof gameCloudSave==='function') gameCloudSave(); }catch(e){}
+  return true;
+}
+// 英雄圖鑑中點擊肖像縮圖的統一入口：切換 + 更新左側立繪 + 重新渲染縮圖列
+function _onPortraitSwitcherClick(heroName, portraitId){
+  if(!_switchHeroPortrait(heroName, portraitId)) return;
+  try{ playSfx('sfx-confirm', 0.6); }catch(e){}
+  // 立即更新左側立繪
+  const imgEl = document.getElementById('hero-detail-full-img');
+  if(imgEl && HERO_IMGS[heroName]){ imgEl.src = HERO_IMGS[heroName]; imgEl.style.display=''; }
+  // 重新渲染詳細頁（為了刷新縮圖列上的 ★ 標記）
+  const box = document.getElementById('hero-detail-content');
+  if(box && typeof _renderHeroDetail === 'function') _renderHeroDetail(heroName, box);
+}
+
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。'}},
   '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
@@ -6226,7 +6284,7 @@ function addStatus(h,t,dur=1){
   renderCard(h);
 
   // 大力士天賦：受到不利狀態時40%轉化成怒火1回合，攻擊+25%
-  if(h.name==='大力士' && h.curHp>0 && BAD_STATUS.includes(t) && !hasStatus(h,'confused') && Math.random()<Math.min(1,0.40+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[h.name])||0)*0.05)){
+  if(h.name==='大力士' && h.curHp>0 && BAD_STATUS.includes(t) && !hasStatus(h,'confused') && Math.random()<Math.min(1,0.40+_getTraitLv(h.name)*0.05)){
     const lastIdx=h.status.findIndex(s=>s.type===t);
     if(lastIdx!==-1) h.status.splice(lastIdx,1);
     const rageAtk=Math.ceil(h.atk*0.25);
@@ -6273,7 +6331,7 @@ function addStatus(h,t,dur=1){
   if(BAD_STATUS.includes(t) && h.curHp>0){
     const _opp=h.side==='p1'?'p2':'p1';
     const _violinist=G[h.side].find(x=>x!==h&&x.curHp>0&&x.name==='弦樂團員'&&!hasStatus(x,'confused'));
-    if(_violinist && Math.random()<Math.min(1,0.5+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[_violinist.name])||0)*0.05)){
+    if(_violinist && Math.random()<Math.min(1,0.5+_getTraitLv(_violinist.name)*0.05)){
       const _lastIdx=h.status.map(s=>s.type).lastIndexOf(t);
       if(_lastIdx!==-1){ h.status.splice(_lastIdx,1); }
       sfxPassive(_violinist,0.7,'弦樂團員天賦');
@@ -7606,7 +7664,8 @@ function _buildHeroPickNodes(){
   _heroPickPool.forEach((name, idx) => {
     const av = (typeof AVATARS!=='undefined' && AVATARS[name]) || '🗡️';
     const img = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[name]) || '';
-    const lv = (typeof getHeroLevel==='function') ? getHeroLevel(name) : 1;
+    // ★ 鬥技場模式強制顯示 Lv1（冒險模式的角色與鬥技場是分開的）
+    const lv = 1;
     const node = document.createElement('div');
     node.className = 'hpick-arena-card';
     node.id = `hpick-${idx}`;
@@ -11016,7 +11075,7 @@ function doDmg(target, rawDmg, opts={}){
         const _gspv = Math.floor((_tsuHero.sp||0) * (1 + (_tsuHero.sp||0) * 0.01));
         const _spReduce = Math.floor(_gspv * (0.5 + _tsuLv * 0.05));
         // ★ 天賦庇護：分攤比例（30% + 天賦Lv×5%），守衛承擔分攤部分，剩餘轉回隊友
-        const _traitLvG = ((typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[_tsuHero.name]) || 0);
+        const _traitLvG = _getTraitLv(_tsuHero.name);
         const _sharePct = 0.30 + _traitLvG * 0.05;  // 0.30 ~ 0.55
         const _guardDmg = Math.max(1, Math.round(rawDmg * _sharePct) - _spReduce);
         const _allyDmg  = Math.max(0, rawDmg - Math.round(rawDmg * _sharePct));
@@ -11115,7 +11174,7 @@ function doDmg(target, rawDmg, opts={}){
   // 小劇團員天賦：受傷時20%機率轉為治療
   if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused')){
     // ★ 受傷轉治療：基礎20%，天賦每級+5%（每10等級+5%）
-    const _traitLvConvert = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[target.name]) || 0;
+    const _traitLvConvert = _getTraitLv(target.name);
     const _convertChance = 0.20 + _traitLvConvert * 0.05;
     if(Math.random() < _convertChance){
       doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
@@ -11151,7 +11210,7 @@ function doDmg(target, rawDmg, opts={}){
   // 土屬性：受傷-2
   { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
   // 聖騎士天賦：40%格擋，減少50%受傷
-  if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.04)){
+  if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(target.name)*0.04)){
     rawDmg=Math.max(1,Math.ceil(rawDmg*0.5));
     showShieldVFX(target,'block');
     log(`🛡️ [聖騎士] 天賦：神聖格擋！傷害減半！`);
@@ -11320,7 +11379,7 @@ function doDmg(target, rawDmg, opts={}){
     clearStatus(target,['sleep']); log(`[${target.name}] 受到傷害，提早從睡眠中甦醒！`); renderCard(target);
   }
   // 武鬥家天賦：受到致命傷害時25%不倒下，HP恢復20%
-  if(target.curHp===0 && target.name==='武鬥家' && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.30+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.04)){
+  if(target.curHp===0 && target.name==='武鬥家' && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.30+_getTraitLv(target.name)*0.04)){
     const reviveHp=Math.max(1,Math.floor(target.hp*0.2));
     target.curHp=reviveHp;
     log(`👊 [武鬥家] 天賦：鋼鐵意志！致命傷害中倖存！HP恢復${reviveHp}！`);
@@ -11739,7 +11798,7 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   if(target && target.curHp>0 && dmg>0 && !opts.noInuTrait){
     const inuAllies = G[target.side].filter(h=>h!==target&&h.curHp>0&&h.name==='小力'&&!hasStatus(h,'confused'));
     inuAllies.forEach(inu=>{
-      if(Math.random()<Math.min(1,0.35+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[inu.name])||0)*0.05)){
+      if(Math.random()<Math.min(1,0.35+_getTraitLv(inu.name)*0.05)){
         const healAmt=Math.max(1,Math.floor(inu.sp*(1+inu.sp*0.01)));
         doHeal(target,healAmt,{actor:inu,isHeal:true,noDice:true});
         log(`🐕 [小力] 天賦觸發！替 [${target.name}] 恢復 ${healAmt}HP！`);
@@ -11749,13 +11808,13 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   }
   // ── 吸血鬼天賦：造成傷害時回復50%傷害量HP ──
   if(a && a.name==='吸血鬼' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side && a.curHp>0 && !opts.isRebound){
-    const _vTl=((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[a.name])||0); const vamp=Math.ceil(dmg*(0.5+_vTl*0.04));
+    const _vTl=_getTraitLv(a.name); const vamp=Math.ceil(dmg*(0.5+_vTl*0.04));
     doHeal(a,vamp,{actor:a,noDice:true,noWarhorn:true,isHeal:true});
     log(`🦇 [吸血鬼] 天賦：嗜血！吸收 ${vamp} HP！`);
   }
 
   // ── 機械師天賦：受到傷害時20%觸電反擊 ──
-  if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<Math.min(1,0.20+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.05)){
+  if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<Math.min(1,0.20+_getTraitLv(target.name)*0.05)){
     addStatus(a,'para',1);
     log(`⚙️ [機械師] 天賦：觸電反擊！[${a.name}] 麻痺1回合！`);
     bannerFX(target,'觸電反擊！','#aaff00',900);
@@ -11788,7 +11847,7 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     } else {
       // 舊的40%反擊邏輯
       const ctr2=Math.max(1,Math.floor(target.atk*0.5));
-      const _wsTl=((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0);
+      const _wsTl=_getTraitLv(target.name);
       if(Math.random()<Math.min(1,0.40+_wsTl*0.04)){
         log(`🗾 [武士] 天賦：武士反擊！對 [${a.name}] 造成 ${ctr2} 傷害！`);
         bannerFX(target,'武士反擊！','#ff9944',900);
@@ -11798,7 +11857,7 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   }
 
   // ── 陰陽師天賦：受到技能傷害時60%由式神代替承受 ──
-  if(target.name==='陰陽師' && !hasStatus(target,'confused') && opts.isSkill && old>0 && target.curHp<old && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[target.name])||0)*0.04) && !opts.isRebound){
+  if(target.name==='陰陽師' && !hasStatus(target,'confused') && opts.isSkill && old>0 && target.curHp<old && Math.random()<Math.min(1,0.60+_getTraitLv(target.name)*0.04) && !opts.isRebound){
     // 式神承受：恢復被扣除的HP（視為式神吸收了傷害）
     const restored=old-target.curHp;
     target.curHp=old;
@@ -12267,7 +12326,7 @@ function execAtk(actor, target, dmg, opts={}){
   // 籃球隊員天賦：友方普攻時50%暴擊+50%傷害
   let _finalDmg = dmg;
   const _bballLeader = actor.side ? G[actor.side].find(h=>h.curHp>0&&h.name==='籃球隊員'&&h!==actor) : null;
-  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<Math.min(1,0.50+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[_bballLeader.name])||0)*0.05)){
+  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<Math.min(1,0.50+_getTraitLv(_bballLeader.name)*0.05)){
     _finalDmg = Math.floor(_finalDmg * 1.5);
     showPopup(actor,'🏀暴擊！','energy');
     bannerFX(actor,'暴擊！','#ff8800',600);
@@ -12291,7 +12350,7 @@ function execAtk(actor, target, dmg, opts={}){
   // 天賦觸發標籤 helper（在 bannerFX 之外再加卡牌標籤）
   function _traitLabel(text){ showActionLabel(actor, '✦ '+text+'！'); }
   // ★ 天賦等級：英雄每10級+1（Lv10/20/30/40/50 各+1，最高5）
-  const _tl = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[name]) || 0;
+  const _tl = _getTraitLv(name);
   // 劍士：30%再行動1次（★ 加計數器，最多連擊2次，防止無限鏈）
   actor._reActCount = actor._reActCount || 0;
   if(name==='劍士' && Math.random()<(0.30+_tl*0.04) && actor._reActCount < 2){
@@ -14437,7 +14496,7 @@ function endAction(a, cost, noFinish=false){
     G.lastSkillName=null;
   }
   // 凡人天賦：使用技能時40%不消耗能量
-  if(a.name==='凡人' && cost>0 && !hasStatus(a,'confused') && Math.random()<Math.min(1,0.40+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[a.name])||0)*0.05)){
+  if(a.name==='凡人' && cost>0 && !hasStatus(a,'confused') && Math.random()<Math.min(1,0.40+_getTraitLv(a.name)*0.05)){
     log(`🙂 [凡人] 天賦：無限可能！技能能量不消耗！`);
     bannerFX(a,'能量免費！','#88ffcc',900);
     cost=0;
@@ -15015,7 +15074,7 @@ function _pickWeightedTarget(pool) {
   const weights = pool.map(h => {
     if (h.name !== '小劇團員') return 1.0;
     // ★ 天賦等級由英雄等級里程碑決定（每10級+1，最高5）
-    const traitLvW = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[h.name]) || 0;
+    const traitLvW = _getTraitLv(h.name);
     return 1.4 + traitLvW * 0.05;
   });
   const total = weights.reduce((s, w) => s + w, 0);
@@ -15161,7 +15220,7 @@ function startTurn(){
   const next=alive.sort(sortFn)[0];
 
   // 占星師天賦：輪到自己回合時60%機率補充1能量
-  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[next.name])||0)*0.04)){
+  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(next.name)*0.04)){
     G.energy[next.side]=Math.min(10,G.energy[next.side]+1);
     showPopup(next,'+1E','energy');
     log(`🌟 [占星師] 天賦：星命眷顧！補充1能量！`);
@@ -15372,7 +15431,7 @@ function startTurn(){
   }
 
   // 木靈使天賦：行動開始時60%解除我方1個不利狀態
-  if(next.name==='木靈使' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+((typeof _heroTraitLevel!=='undefined'&&_heroTraitLevel[next.name])||0)*0.04)){
+  if(next.name==='木靈使' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(next.name)*0.04)){
     const allAllies=G[next.side].filter(h=>h.curHp>0&&h.status.some(s=>BAD_STATUS.includes(s.type)));
     if(allAllies.length){
       const lucky=allAllies[Math.floor(Math.random()*allAllies.length)];
@@ -15891,7 +15950,7 @@ function _realAiAct(a){
       if(HEAL_SKILLS.includes(e.s1.n)||HEAL_SKILLS.includes(e.s2.n)) score += 30;
       // ★ 小劇團員天賦：成為目標機率+40%（基礎分+40，加上技能等級每級+5%）
       if(e.name==='小劇團員'){
-        const _traitLvAI = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel[e.name]) || 0;
+        const _traitLvAI = _getTraitLv(e.name);
         score += 40 + _traitLvAI * 5;
       }
       if(score>bestScore){ bestScore=score; best=e; }
@@ -17338,9 +17397,22 @@ function fadeTransition(cb, duration){
   }, duration);
 }
 
+// ★ 全域 pending retry 追蹤，確保同時最多只有一組待重試的 listener
+let _bgmPendingRetry = null;
+function _bgmClearPendingRetry(){
+  if(!_bgmPendingRetry) return;
+  document.removeEventListener('touchstart', _bgmPendingRetry);
+  document.removeEventListener('click', _bgmPendingRetry);
+  _bgmPendingRetry = null;
+}
+
 function bgmPlay(id){
-  if(_curBgm===id) return;
-  bgmStop();
+  if(_curBgm===id){
+    // 即使 _curBgm 相等，仍要確保 el 實際上在播（例如被 visibilitychange pause 過但旗標沒同步）
+    const _already = document.getElementById(id);
+    if(_already && !_already.paused) return;
+  }
+  bgmStop();   // 會把 _bgmPendingRetry 也清掉
   _curBgm=id;
   const el=document.getElementById(id);
   if(!el) return;
@@ -17350,12 +17422,20 @@ function bgmPlay(id){
   // ★ iOS/iPad: 需要 user gesture 才能播音頻，失敗時排隊等下次觸碰
   const p = el.play();
   if(p && p.catch) p.catch(()=>{
-    // 等待下一次使用者互動再播
+    // 等待下一次使用者互動再播；但要先清掉任何更舊的 pending retry，避免疊加
+    _bgmClearPendingRetry();
     const _retryBgm = ()=>{
-      el.play().catch(()=>{});
       document.removeEventListener('touchstart', _retryBgm);
       document.removeEventListener('click', _retryBgm);
+      _bgmPendingRetry = null;
+      // ★ 關鍵修復：重試時再次確認目前的「應播 BGM」還是自己，
+      //   若已切到其他 BGM（_curBgm 不是 id）就放棄重試，避免兩首同時播
+      if(_curBgm !== id) return;
+      // 若已經有在播了（可能別處已接手），也不重複觸發
+      if(el && !el.paused) return;
+      if(el) el.play().catch(()=>{});
     };
+    _bgmPendingRetry = _retryBgm;
     document.addEventListener('touchstart', _retryBgm, {once:true});
     document.addEventListener('click', _retryBgm, {once:true});
   });
@@ -17367,6 +17447,8 @@ let _battlePlayMode=false;
 let _menuPlaylist=[];
 let _menuPlayMode=false;
 function bgmStop(){
+  // ★ 清掉任何等待中的 retry listener，避免它在稍後觸發把舊 BGM 重新播起來
+  _bgmClearPendingRetry();
   ['bgm-win','bgm-lose','bgm-shop',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
    'bgm-adv-march','bgm-adv-scene','bgm-boss-01','bgm-boss-02','adventure-bgm',
    'sfx-quiz-correct','sfx-quiz-wrong'].forEach(id=>{
@@ -17457,6 +17539,11 @@ function bgmFadeTo(newId,duration){
   }
   // ★ 'bgm-menu' → 'bgm-menu-01'
   if(newId==='bgm-menu') newId='bgm-menu-01';
+  // ★ 防呆：已在播放同一首就不重播（避免商店販賣時重新渲染導致 BGM 重頭播）
+  if(_curBgm === newId){
+    const _curEl = document.getElementById(_curBgm);
+    if(_curEl && !_curEl.paused) return;
+  }
   // ★ 稀有怪專屬BGM直接播放（不需映射）
   if(newId==='bgm-lose'){
     const oldEl=_curBgm?document.getElementById(_curBgm):null;
@@ -17735,6 +17822,22 @@ function _detectCurrentBgm(){
   // 首頁（gc 隱藏中）
   if(!isVisible('gc')) return 'bgm-menu-02';
   return _curBgm; // 其他情況維持現狀
+}
+
+// ★ 統一場景 BGM 入口：依目前場景判斷該播什麼，並避免重複播放。
+//   所有「切換頁面/開關面板」的程式碼應呼叫此函式，而不要各自直接呼叫 bgmPlay。
+function bgmEnsureSceneBgm(){
+  try{
+    const target = _detectCurrentBgm();
+    if(!target) return;                 // 戰鬥中 / 維持現狀
+    if(target === _curBgm){
+      // 防呆：若旗標顯示在播但實際被暫停了（切回前景後），補 play 一次
+      const _el = document.getElementById(_curBgm);
+      if(_el && _el.paused && !_bgmMuted) _el.play().catch(()=>{});
+      return;
+    }
+    bgmPlay(target);
+  }catch(e){}
 }
 
 function ctrlToggleBgm(){
@@ -19148,11 +19251,8 @@ function openAdventureOverlay(){
   } else if(_advUBar){
     _advUBar.style.display = 'none';
   }
-  // ① 播放關卡選單 BGM（若已在播就不重播，避免從英雄圖鑑返回時重疊）
-  if(typeof _curBgm === 'undefined' || _curBgm !== 'bgm-menu-01'){
-    bgmStop();
-    bgmPlay('bgm-menu-01'); // ★ 關卡選單專屬BGM
-  }
+  // ① 播放關卡選單 BGM（若已在播就不重播，透過 bgmEnsureSceneBgm 統一判斷）
+  bgmEnsureSceneBgm();
   // ② 延遲請求全螢幕，避免 visibilitychange 中斷音樂
   setTimeout(function(){ _requestFullscreenAll(); }, 300);
   // ③ 預設顯示第一關資訊
@@ -19985,7 +20085,6 @@ function advGetQuizPool(grade, subject, difficulty) {
 const ADV_TREASURES = [
   {id:'crystal',  icon:'🔮', name:'迷霧水晶球', desc:'隨機去掉一個錯誤選項，縮小範圍'},
   {id:'stardust', icon:'⭐', name:'幸運流星沙', desc:'答錯不算，再給一次機會'},
-  {id:'scroll',   icon:'📜', name:'古老提示卷', desc:'選項旁顯示詳細提示文字'},
   {id:'leaf',     icon:'🍃', name:'換題葉符',   desc:'跳過此題換一道新題目'},
   {id:'paw',      icon:'🐾', name:'貓爪輕巧符', desc:'換成更簡單的一題'},
   {id:'light',    icon:'✨', name:'神諭之光',   desc:'直接揭曉正確答案'},
@@ -21163,6 +21262,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       return; // 讓玩家繼續作答，不結束
     }
     _advStats.totalQuestions++; // 答錯計入總次數
+    // ★ 獎章系統：答錯需通知以重置連續答對連擊（_hasExtraChance 在上方已 return，不會走到這裡）
+    try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
     // ★ 答錯專用音效
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
@@ -21313,26 +21414,6 @@ function advApplyTreasure(id) {
     q._extraChance = true;
     const label = document.getElementById('adv-quiz-label');
     if(label) label.textContent = '⭐ 幸運流星沙：答錯可再答一次！';
-  } else if (id === 'scroll') {
-    // ★ 古老提示卷：標示正確答案的選項文字顏色，並在下方顯示「答案是X」
-    btns.forEach(b => {
-      if (b.dataset.isCorrect === '1') {
-        b.style.border = '2.5px solid #44ff88';
-        b.style.color  = '#44ff88';
-        b.style.boxShadow = '0 0 12px rgba(68,255,136,0.4)';
-        const tag = document.createElement('span');
-        tag.style.cssText = 'font-size:15px;margin-left:6px;color:#44ff88;';
-        tag.textContent = '✔';
-        b.appendChild(tag);
-      }
-    });
-    const hintDiv = document.createElement('div');
-    hintDiv.id = 'adv-scroll-hint';
-    hintDiv.style.cssText = 'font-size:21px;color:#aaffcc;margin-top:10px;text-align:center;padding:8px;background:rgba(0,80,40,0.3);border-radius:8px;';
-    hintDiv.innerHTML = q.hint
-      ? `📜 提示：${q.hint}`
-      : `📜 正確答案已標綠色，仔細看看！`;
-    document.getElementById('adv-quiz-box').appendChild(hintDiv);
   } else if (id === 'leaf') {
     // 換題
     clearInterval(_advQuizTimer);
@@ -22502,6 +22583,9 @@ function _buildSafeData() {
     presetTeams:     _presetTeams,            // 常用預設陣容
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
     advBestScore: (typeof _advBestScore !== 'undefined') ? _advBestScore : 0,
+    // ★ 英雄肖像系統（已解鎖的替代肖像 + 目前選擇）
+    heroPortraitUnlocked: _heroPortraitUnlocked,
+    heroPortraitChoice:   _heroPortraitChoice,
     // ★ 冒險進度快照（BOSS崩潰恢復用）
     advSnapshot: (function(){
       // ★ 優先使用最新的戰鬥快照（每回合存一次，含完整 G 狀態）
@@ -22575,6 +22659,12 @@ function _applySafeData(raw) {
   if(typeof data.knowledgeCoins === 'number') _knowledgeCoins = data.knowledgeCoins;
   if(data.playerBackpack && typeof data.playerBackpack === 'object') _playerBackpack = data.playerBackpack;
   if(Array.isArray(data.presetTeams)) _presetTeams = data.presetTeams;
+  // ★ 英雄肖像系統：載入玩家已解鎖與目前選擇，並套用到 HERO_IMGS
+  if(data.heroPortraitUnlocked && typeof data.heroPortraitUnlocked === 'object')
+    _heroPortraitUnlocked = data.heroPortraitUnlocked;
+  if(data.heroPortraitChoice && typeof data.heroPortraitChoice === 'object')
+    _heroPortraitChoice = data.heroPortraitChoice;
+  try{ _applyHeroPortraitChoices(); }catch(e){}
   // ★ 舊版相容：將舊 _heroExpBookCount/_skillBookCount 遷移到背包
   if((_heroExpBookCount||0) > 0 && !_playerBackpack.hero_exp_book){
     _playerBackpack.hero_exp_book = Math.min(99, _heroExpBookCount);
@@ -22687,7 +22777,13 @@ let _heroSkillLevels = {};  // {heroName: {s1:n, s2:n}}  n=0~9 (+0~+9)
 let _heroBurstLevels = {};  // {heroName: n}  n=0~4 (+0~+4 極限爆發等級)
 let _skillBookCount = 0;    // 技能升級書數量（舊：現已移至背包）
 let _heroExpBookCount = 0;  // 英雄經驗值之書數量（舊：現已移至背包）
-let _heroTraitLevel = {};   // {heroName: 天
+let _heroTraitLevel = {};   // {heroName: 天賦等級}
+
+// ★ 取得英雄特質等級（戰鬥用）：鬥技場一律回 0 以保持 Lv1 公平性，冒險模式才回實際值
+function _getTraitLv(name){
+  if(typeof _adventureMode === 'undefined' || !_adventureMode) return 0;
+  return (_heroTraitLevel && _heroTraitLevel[name]) || 0;
+}
 // ────────────────────────────────────
 // ★ 知識幣 & 背包 系統
 // ────────────────────────────────────
@@ -22718,7 +22814,10 @@ const BACKPACK_ITEM_DEF = {
   'half_tea':     { name:'喝一半的好茶',     icon:'🍵', desc:'被史萊姆偷喝了一半的好茶，雖然有點不乾淨，還是值點錢。', type:'sell_only', sellPrice:10 },
   'picked_flower':{ name:'被摘的花朵',       icon:'🌸', desc:'被頑皮妖精偷摘的野花，稍顯凌亂但仍有芬芳。', type:'sell_only', sellPrice:15 },
   'damaged_bamboo':{ name:'有點損傷的綠竹筍', icon:'🎋', desc:'被哥布林啃過的竹筍，有些咬痕，但大部分還是好的。', type:'sell_only', sellPrice:14 },
-  'unknown_egg':  { name:'未知的蛋',         icon:'🥚', desc:'鳥人哈維偷來的蛋，不知道是什麼生物的，說不定會孵出什麼。', type:'sell_only', sellPrice:16 },
+  // ★ 肖像商品：購買後即自動解鎖，使用時彈出「前往英雄圖鑑切換」提示
+  'priest_portrait_dawn': { name:'祭司肖像：曙光微風', icon:'🌅',
+    desc:'全新繪製的祭司肖像「曙光微風」，購買後可在英雄圖鑑的祭司詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'祭司', portraitId:'dawn_breeze', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -22732,6 +22831,9 @@ const SHOP_PRODUCTS = [
   { id:'burst_upgrade_fruit', name:'超越極限果實', icon:'🍑',
     desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。魔法商店每日只販售1顆，也可能在挑戰BOSS後低機率掉落。',
     price:10000, stock:'每日1個', dailyLimit:1 },
+  { id:'priest_portrait_dawn', name:'祭司肖像：曙光微風', icon:'🌅',
+    desc:'全新繪製的祭司替代肖像「曙光微風」。購買後即永久解鎖，可在英雄圖鑑的祭司詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
 const SHOP_SELL_ITEMS = [
@@ -23806,12 +23908,16 @@ function _rollbackReplaceHero() {
 
   // 取可替換英雄清單（和呼叫援軍相同邏輯，但從已解鎖英雄中選）
   const inTeam = new Set(G.p1.map(h=>h.name));
-  // 冒險模式：只能從已解鎖英雄中選，排除 BOSS
-  const unlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
-  let available = unlocked.filter(n => !inTeam.has(n) && (typeof BOSS_NAMES==='undefined'||!BOSS_NAMES.includes(n)));
+  const _bossNamesSet = (typeof BOSS_NAMES !== 'undefined') ? new Set(BOSS_NAMES) : new Set();
+  const _isMonsterName = n => _bossNamesSet.has(n);
+  // ★ 冒險模式：合併初始池 + 已解鎖英雄，排除所有魔物（BOSS_NAMES 含 BOSS、小怪、稀有怪）
+  const _advInitial = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) ? ADV_HERO_POOL.maokong : [];
+  const _advUnlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
+  const unlocked = [...new Set([..._advInitial, ..._advUnlocked])];
+  let available = unlocked.filter(n => !inTeam.has(n) && !_isMonsterName(n));
   if(!available.length){
-    // fallback: 鬥技場模式或沒有解鎖英雄
-    available = Object.keys(HERO_DB).filter(n => !inTeam.has(n) && (typeof BOSS_NAMES==='undefined'||!BOSS_NAMES.includes(n)));
+    // fallback: 鬥技場模式 → 全英雄池，仍嚴格排除魔物
+    available = Object.keys(HERO_DB).filter(n => !inTeam.has(n) && !_isMonsterName(n));
   }
   if(!available.length){
     _gamePaused = false;
@@ -24381,11 +24487,8 @@ function closeShopOverlay(){
   if(ov) ov.style.display='none';
   // ★ 關閉後同步知識幣顯示（回到冒險頁面時確保數值正確）
   _syncCoinsDisplay();
-  // ★ 恢復正確BGM
-  try{
-    const _toId = (typeof _adventureMode !== 'undefined' && _adventureMode) ? 'bgm-adv-scene' : 'bgm-menu-01';
-    bgmFadeTo(_toId, 400);
-  }catch(e){}
+  // ★ 恢復正確BGM：改用統一場景入口，自動依目前可見場景決定
+  try{ bgmEnsureSceneBgm(); }catch(e){}
 }
 
 function _renderShopProducts(){
@@ -24487,6 +24590,17 @@ function shopBuyItem(id){
   const prod = SHOP_PRODUCTS.find(p=>p.id===id);
   if(!prod) return;
   const qty = window['_shopQty_'+id]||1;
+  // ★ 一次性商品（例如肖像）：已擁有或已解鎖則不能再買
+  if(prod.oneTime){
+    const itemDef = BACKPACK_ITEM_DEF[id] || {};
+    const alreadyUnlocked = itemDef.type === 'portrait'
+      && itemDef.heroName && itemDef.portraitId
+      && (_heroPortraitUnlocked[itemDef.heroName] || []).includes(itemDef.portraitId);
+    if(alreadyUnlocked || backpackGet(id) > 0){
+      _showInGameToast(`✨ 「${prod.name}」已擁有，無需再購買！`, '#ffaa44', 2500); return;
+    }
+    if(qty > 1){ _showInGameToast(`此商品限購 1 次`, '#ffaa44', 2000); return; }
+  }
   // ★ 每日限購檢查
   if(prod.dailyLimit > 0){
     const alreadyBought = _shopDailyBought(id);
@@ -24507,13 +24621,26 @@ function shopBuyItem(id){
     _showInGameToast(`🎒 背包已滿！（${prod.name} 最多持有99個）`, '#ff8844', 2500); return;
   }
   _knowledgeCoins = Math.max(0, (_knowledgeCoins||0) - total);
-  backpackAdd(id, qty);
+  // ★ 肖像類商品：購買後立即解鎖，不進背包（避免多份佔格子）
+  const _itemDef = BACKPACK_ITEM_DEF[id] || {};
+  if(_itemDef.type === 'portrait' && _itemDef.heroName && _itemDef.portraitId){
+    if(!_heroPortraitUnlocked[_itemDef.heroName]) _heroPortraitUnlocked[_itemDef.heroName] = [];
+    if(!_heroPortraitUnlocked[_itemDef.heroName].includes(_itemDef.portraitId)){
+      _heroPortraitUnlocked[_itemDef.heroName].push(_itemDef.portraitId);
+    }
+    // 自動套用新肖像（玩家可事後在圖鑑切回原肖像）
+    _switchHeroPortrait(_itemDef.heroName, _itemDef.portraitId);
+  } else {
+    backpackAdd(id, qty);
+  }
   if(prod.dailyLimit > 0) _shopDailyRecordBuy(id, qty);
   gameCloudSave();
   try{ _checkMedalShop(); }catch(e){}
   _showInGameToast(`✅ 購買 ${prod.name} ×${qty}！支出 ${total.toLocaleString()} 知識幣`, '#44ff88', 2500);
   try{ playSfx('sfx-powerup', 0.7); }catch(e){}
-  openShopOverlay(); // 重整畫面
+  // ★ 不用 openShopOverlay() 避免觸發 BGM 重播；只重新渲染商品列表與背包欄
+  _renderShopProducts();
+  _renderShopBagPanel();
 }
 
 function shopSellItem(id, qty){
@@ -24532,7 +24659,10 @@ function shopSellItem(id, qty){
     else playSfx('sfx-sell', 0.7);
   }catch(e){}
   _syncCoinsDisplay();
-  openShopOverlay();
+  // ★ 原本這裡呼叫 openShopOverlay() 重新渲染，但它會觸發 bgmFadeTo('bgm-shop') 重播 BGM
+  //   改為只重新渲染商品列表與背包欄，不碰 BGM
+  _renderShopProducts();
+  _renderShopBagPanel();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -25646,6 +25776,37 @@ function _renderHeroDetail(name, box) {
     if(img){ imgEl.src=img; imgEl.style.display=''; avEl.style.display='none'; }
     else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; }
   }
+  // ★ 肖像切換面板：若此英雄有多張肖像則顯示，並標記已解鎖/未解鎖/當前選擇
+  try{
+    const _sw = document.getElementById('hero-detail-portrait-switcher');
+    const _list = document.getElementById('hero-detail-portrait-list');
+    const _lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined') ? HERO_PORTRAIT_LIBRARY[name] : null;
+    if(_sw && _list){
+      if(_lib && _lib.length > 1){
+        const _curChoice = _heroPortraitChoice[name] || 'default';
+        const _unlocked = _heroPortraitUnlocked[name] || [];
+        _list.innerHTML = _lib.map(p => {
+          const isDefault = p.id === 'default';
+          const isUnlocked = isDefault || !p.requiresUnlock || _unlocked.includes(p.id);
+          const isSel = p.id === _curChoice;
+          const border = isSel ? '#ffcc44' : (isUnlocked ? 'rgba(212,168,67,0.4)' : 'rgba(120,120,120,0.4)');
+          const overlay = isUnlocked ? '' :
+            '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:24px;">🔒</div>';
+          const badge = isSel ?
+            '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : '';
+          const clickAttr = isUnlocked
+            ? `onclick="_onPortraitSwitcherClick('${name}','${p.id}')"`
+            : `onclick="_showInGameToast('🔒 此肖像尚未解鎖（可至不可思議超商購買）','#ff8844',2200)"`;
+          return `<div ${clickAttr} title="${p.name}" style="position:relative;cursor:pointer;border:2px solid ${border};border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">`
+               + `<img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>`
+               + overlay + badge + `</div>`;
+        }).join('');
+        _sw.style.display = '';
+      } else {
+        _sw.style.display = 'none';
+      }
+    }
+  }catch(e){}
   const lv  = getHeroLevel(name);
   const exp = getHeroExp(name);
   const expNeed = lv < 50 ? _expForLevel(lv) : 0;
@@ -26201,19 +26362,58 @@ function openChangelogPanel() {
   const existing = document.getElementById('_changelog-panel');
   if (existing) { existing.remove(); return; }
 
-  const logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []).slice(0, 20);
-  let logHTML = '';
-  logs.forEach((entry) => {
-    logHTML +=
-      '<div style="margin-bottom:10px;padding:10px 14px;border-radius:10px;text-align:left;'
-      + 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">'
-      + '<div style="font-size:clamp(11px,1.1vw,14px);color:#888;margin-bottom:4px;">'
-      + entry.ver + '</div>'
-      + entry.items.map(item =>
-          '<div style="font-size:clamp(14px,1.5vw,20px);color:#ddd;line-height:1.6;padding-left:6px;">・' + item + '</div>'
-        ).join('')
-      + '</div>';
+  const logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []);
+
+  // ★ 依版本號 v1.0.YYYYMMDD.HHMM 中的 YYYY-MM 分組（保留原始順序：新 → 舊）
+  const months = {};       // { "2026-04": [entry, ...] }
+  const monthOrder = [];   // 月份出現順序
+  logs.forEach(entry => {
+    const m = entry.ver && entry.ver.match(/v\d+\.\d+\.(\d{4})(\d{2})/);
+    const key = m ? (m[1] + '-' + m[2]) : '其他';
+    if (!months[key]) { months[key] = []; monthOrder.push(key); }
+    months[key].push(entry);
   });
+
+  // 月份分頁按鈕（水平捲動）
+  let tabsHTML = '';
+  monthOrder.forEach((key, idx) => {
+    const isActive = idx === 0;
+    tabsHTML +=
+      '<button class="_cl-tab" data-month="' + key + '" '
+      + 'onclick="_changelogSwitchMonth(\'' + key + '\')" '
+      + 'style="flex:0 0 auto;padding:7px 14px;font-size:clamp(13px,1.3vw,17px);'
+      + 'font-weight:' + (isActive ? '800' : '600') + ';'
+      + 'color:' + (isActive ? '#66ffcc' : '#888') + ';'
+      + 'background:' + (isActive ? 'rgba(100,220,180,0.12)' : 'transparent') + ';'
+      + 'border:1.5px solid ' + (isActive ? 'rgba(100,220,180,0.5)' : 'rgba(255,255,255,0.12)') + ';'
+      + 'border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+      + 'transition:all 0.15s;">'
+      + key + ' <span style="opacity:0.6;font-size:0.85em;">(' + months[key].length + ')</span>'
+      + '</button>';
+  });
+
+  // 每個月的內容（預設只顯示第一個月）
+  let contentHTML = '';
+  monthOrder.forEach((key, idx) => {
+    let entriesHTML = '';
+    months[key].forEach(entry => {
+      entriesHTML +=
+        '<div style="margin-bottom:10px;padding:10px 14px;border-radius:10px;text-align:left;'
+        + 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">'
+        + '<div style="font-size:clamp(11px,1.1vw,14px);color:#888;margin-bottom:4px;">'
+        + entry.ver + '</div>'
+        + entry.items.map(item =>
+            '<div style="font-size:clamp(14px,1.5vw,20px);color:#ddd;line-height:1.6;padding-left:6px;">・' + item + '</div>'
+          ).join('')
+        + '</div>';
+    });
+    contentHTML +=
+      '<div class="_cl-month" data-month="' + key + '" '
+      + 'style="display:' + (idx === 0 ? 'block' : 'none') + ';">'
+      + entriesHTML + '</div>';
+  });
+
+  const totalCount = logs.length;
 
   const panel = document.createElement('div');
   panel.id = '_changelog-panel';
@@ -26228,12 +26428,21 @@ function openChangelogPanel() {
     + 'border:2.5px solid rgba(100,220,180,0.6);border-radius:24px;'
     + 'padding:clamp(24px,3vw,44px) clamp(24px,4vw,52px);'
     + 'max-width:min(96vw,680px);width:100%;margin:auto;">'
-    + '<div style="text-align:center;margin-bottom:16px;">'
+    + '<div style="text-align:center;margin-bottom:14px;">'
     + '<div style="font-size:clamp(24px,3vw,38px);font-weight:900;color:#66ffcc;">📋 更新日誌</div>'
-    + '<div style="font-size:clamp(12px,1.3vw,16px);color:#888;margin-top:4px;">最近 20 次更新內容</div>'
+    + '<div style="font-size:clamp(12px,1.3vw,16px);color:#888;margin-top:4px;">全部更新歷史（共 ' + totalCount + ' 筆）</div>'
     + '</div>'
-    + '<div style="max-height:clamp(300px,50vh,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;'
-    + 'padding-right:4px;margin-bottom:16px;">' + logHTML + '</div>'
+    // 月份分頁
+    + '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;'
+    +   'padding:4px 2px 10px 2px;margin-bottom:10px;'
+    +   'border-bottom:1px solid rgba(255,255,255,0.08);scrollbar-width:thin;">'
+    + tabsHTML
+    + '</div>'
+    // 捲動區
+    + '<div id="_cl-scroll" style="max-height:clamp(300px,50vh,560px);overflow-y:auto;'
+    +   '-webkit-overflow-scrolling:touch;padding-right:4px;margin-bottom:16px;">'
+    + contentHTML
+    + '</div>'
     + '<div style="text-align:center;">'
     + '<button onclick="_changelogPanelClose()" '
     + 'style="padding:clamp(9px,1vw,14px) clamp(28px,3vw,48px);font-size:clamp(14px,1.5vw,20px);'
@@ -26242,6 +26451,23 @@ function openChangelogPanel() {
 
   document.body.appendChild(panel);
 }
+
+// ── 更新日誌：切換月份分頁 ──
+window._changelogSwitchMonth = function(key) {
+  document.querySelectorAll('._cl-tab').forEach(b => {
+    const active = b.dataset.month === key;
+    b.style.color       = active ? '#66ffcc' : '#888';
+    b.style.background  = active ? 'rgba(100,220,180,0.12)' : 'transparent';
+    b.style.borderColor = active ? 'rgba(100,220,180,0.5)' : 'rgba(255,255,255,0.12)';
+    b.style.fontWeight  = active ? '800' : '600';
+  });
+  document.querySelectorAll('._cl-month').forEach(d => {
+    d.style.display = (d.dataset.month === key) ? 'block' : 'none';
+  });
+  const sc = document.getElementById('_cl-scroll');
+  if (sc) sc.scrollTop = 0;
+  try { playSfx('sfx-click', 0.4); } catch(e){}
+};
 
 // ── 好友系統視窗關閉函式（全域）──
 function _changelogPanelClose(){
@@ -26500,7 +26726,12 @@ function openSetRepHeroModal() {
     + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
   modal.onclick = e => { if (e.target === modal) modal.remove(); };
 
-  const unlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
+  // ★ 修正：原本只讀 advGetUnlockedHeroes（localStorage 的冒險解鎖清單），
+  //   會漏掉 ADV_HERO_POOL 定義的初始 8 個英雄。改為合併初始池 + 已解鎖池。
+  const initialPool = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) ? ADV_HERO_POOL.maokong : [];
+  const advUnlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
+  const bossNames = (typeof BOSS_NAMES !== 'undefined') ? BOSS_NAMES : [];
+  const unlocked = [...new Set([...initialPool, ...advUnlocked])].filter(n => !bossNames.includes(n));
   const currentRep = _myRepHero ? _myRepHero.name : null;
 
   let cardsHTML = unlocked.length ? '' : '<div style="color:#888;font-size:20px;padding:24px;">尚未解鎖任何英雄</div>';
@@ -27345,6 +27576,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       }
     }, 1200);
   } else {
+    // ★ 獎章系統：答錯需通知以重置連續答對連擊
+    try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     // ★ 答錯音效：使用 boss 戰相同的 sfx-quiz-wrong
     try{ beep(200,'sawtooth',0.1,0.15); }catch(e){}
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
@@ -29276,9 +29509,33 @@ window._advSystemReady = true;
 // ★ 版本檢查：偵測瀏覽器快取舊版，提示玩家重新整理
 // ══════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════
-// ★ 更新日誌（最新在前，只保留最近10筆）
+// ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260417.2216', items:[
+    '援軍替換：現在會包含初始 8 位英雄 + 已解鎖英雄，並嚴格排除所有魔物（BOSS、小怪、稀有怪）',
+    '鬥技場公平性：敵我雙方角色一律保持 Lv1，特質等級在鬥技場不再套用（冒險模式不受影響）',
+    '鬥技場選角頁：所有角色卡片一律顯示 Lv.1',
+    '超商新增商品：祭司替代肖像「曙光微風」3000 知識幣（限購一次）',
+    '新增英雄肖像切換系統：英雄詳細頁右下角新增切換面板，原肖像永遠保留可切回',
+    '修正超商購買商品也會觸發 BGM 重播的問題（與上次販賣修正同一根因）',
+  ] },
+  { ver:'v1.0.20260417.1909', items:[
+    '徹底修正 BGM 疊音：修復 iOS autoplay 重試機制造成的兩首 BGM 同時播放',
+    '新增「場景 BGM 統一入口」，切換頁面時自動判斷該播哪一首、避免無謂重播',
+    '修正「設定代表英雄」選單缺少初始 8 位英雄的問題（電腦繪圖師、程式設計師、弦樂團員等）',
+  ] },
+  { ver:'v1.0.20260417.1850', items:[
+    '修正超商販賣物品時，每賣出一次 BGM 都會從頭重播的問題',
+    'BGM 切換邏輯補上防呆保護：若目前已在播放同一首 BGM，不再重新觸發 fade-in',
+  ] },
+  { ver:'v1.0.20260417.1846', items:[
+    '修正暱稱無法儲存到雲端的問題（作用域錯誤導致 Firebase 呼叫失敗）',
+    '修正跨裝置首次登入時，Google 帳號名稱會覆蓋自訂暱稱的問題',
+    '修正「三連/五連/十連正解」獎章把答錯題目也算進連擊的問題（答錯現在會正確重置連擊）',
+    '移除「古老提示卷」法寶：因實際效果與「神諭之光」重複（都直接揭示答案）',
+    '更新日誌保留全部歷史，並新增月份分頁（可水平捲動切換查看各月更新）',
+  ] },
   { ver:'v1.0.20260416.2440', items:[
     '新增稀有小怪「寶箱怪」（5%機率出現）：打倒必得2500~5000知識幣',
     '新增稀有小怪「小惡魔」（5%機率出現）：打倒獲得大量EXP及書籍',
@@ -29365,7 +29622,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260417.0736';
+  const CURRENT_VERSION = 'v1.0.20260417.2216';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
