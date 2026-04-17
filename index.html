@@ -3575,7 +3575,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260417.2354</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.0006</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -23213,6 +23213,7 @@ const BACKPACK_ITEM_DEF = {
   'half_tea':     { name:'喝一半的好茶',     icon:'🍵', desc:'被史萊姆偷喝了一半的好茶，雖然有點不乾淨，還是值點錢。', type:'sell_only', sellPrice:10 },
   'picked_flower':{ name:'被摘的花朵',       icon:'🌸', desc:'被頑皮妖精偷摘的野花，稍顯凌亂但仍有芬芳。', type:'sell_only', sellPrice:15 },
   'damaged_bamboo':{ name:'有點損傷的綠竹筍', icon:'🎋', desc:'被哥布林啃過的竹筍，有些咬痕，但大部分還是好的。', type:'sell_only', sellPrice:14 },
+  'unknown_egg':  { name:'未知的蛋',         icon:'🥚', desc:'被鳥人哈維偷走的神秘鳥蛋，圓滾滾沉甸甸，似乎還帶著一點餘溫。', type:'sell_only', sellPrice:16 },
   // ★ 肖像商品：購買後即自動解鎖，使用時彈出「前往英雄圖鑑切換」提示
   'priest_portrait_dawn': { name:'祭司肖像：曙光微風', icon:'🌅',
     desc:'全新繪製的祭司肖像「曙光微風」，購買後可在英雄圖鑑的祭司詳細頁切換使用（原肖像永遠保留）。',
@@ -29983,6 +29984,12 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.0006', items:[
+    '版本更新彈窗改為強制模式：舊版玩家必須按「重新整理」才能繼續遊玩（移除「略過」選項）',
+  ] },
+  { ver:'v1.0.20260418.0003', items:[
+    '修正賣出「未知的蛋」獲得 0 知識幣的 Bug（背包物品定義遺漏）',
+  ] },
   { ver:'v1.0.20260417.2354', items:[
     '好友英雄現在也會套用等級加成（依好友帳號的英雄等級+2%/級 HP）',
     '超商肖像類限購商品：購買後立即更新顯示為「已擁有」，按鈕自動鎖定防止重複購買',
@@ -30133,7 +30140,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260417.2354';
+  const CURRENT_VERSION = 'v1.0.20260418.0006';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -30193,18 +30200,14 @@ function _showChangelogModal(oldVer, newVer){
     + '<div style="font-size:clamp(14px,1.5vw,20px);font-weight:800;color:#aaddff;margin-bottom:10px;">📋 最近更新內容</div>'
     + '<div style="max-height:clamp(280px,40vh,480px);overflow-y:auto;-webkit-overflow-scrolling:touch;'
     + 'padding-right:4px;margin-bottom:18px;">' + _logHTML + '</div>'
-    // 按鈕
+    // 按鈕（A方案：強制更新，不提供略過）
     + '<div style="display:flex;flex-direction:column;gap:10px;align-items:center;">'
     + '<button onclick="_doVersionRefresh()" '
     +   'style="width:100%;padding:clamp(12px,1.5vw,18px);font-size:clamp(16px,2vw,26px);font-weight:900;'
     +   'background:linear-gradient(135deg,rgba(0,200,80,0.3),rgba(0,150,60,0.3));'
     +   'border:2.5px solid #44ff88;color:#aaffcc;border-radius:14px;cursor:pointer;font-family:inherit;'
     +   'box-shadow:0 0 24px rgba(0,200,80,0.3);">🔄 重新整理以套用更新</button>'
-    + '<button onclick="_changelogClose()" '
-    +   'style="font-size:clamp(12px,1.3vw,17px);color:#888;background:none;'
-    +   'border:none;cursor:pointer;font-family:inherit;text-decoration:underline;">'
-    +   '略過，繼續遊玩目前版本'
-    + '</button>'
+    + '<div style="font-size:clamp(11px,1.2vw,15px);color:#666;margin-top:4px;">⚠ 為確保遊戲資料同步，必須先重新整理才能繼續遊玩</div>'
     + '</div></div>';
 
   document.body.appendChild(modal);
@@ -30212,8 +30215,12 @@ function _showChangelogModal(oldVer, newVer){
 }
 
 function _changelogClose(){
+  // ★ A方案：舊的「略過」功能已移除；任何試圖關閉此彈窗的行為都會觸發重新整理
   var e = document.getElementById('_changelog-modal');
-  if(e) e.remove();
+  if(e){
+    // 直接進行更新重整
+    _doVersionRefresh();
+  }
 }
 
 function _verModalClose(){
