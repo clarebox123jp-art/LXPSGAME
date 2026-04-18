@@ -26208,7 +26208,7 @@ function _shopDailyRecordBuy(id, qty){
   _shopDailyData[id] = (_shopDailyData[id]||0) + qty;
 }
 
-function shopBuyItem(id){
+async function shopBuyItem(id){
   const prod = SHOP_PRODUCTS.find(p=>p.id===id);
   if(!prod) return;
   const qty = window['_shopQty_'+id]||1;
@@ -26256,16 +26256,17 @@ function shopBuyItem(id){
     backpackAdd(id, qty);
   }
   if(prod.dailyLimit > 0) _shopDailyRecordBuy(id, qty);
-  gameCloudSave();
   try{ _checkMedalShop(); }catch(e){}
   _showInGameToast(`✅ 購買 ${prod.name} ×${qty}！支出 ${total.toLocaleString()} 知識幣`, '#44ff88', 2500);
   try{ playSfx('sfx-powerup', 0.7); }catch(e){}
   // ★ 不用 openShopOverlay() 避免觸發 BGM 重播；只重新渲染商品列表與背包欄
   _renderShopProducts();
   _renderShopBagPanel();
+  // ★ 等待雲端同步完成
+  try{ await gameCloudSave(); }catch(e){ console.error('[buy cloud save]', e); }
 }
 
-function shopSellItem(id, qty){
+async function shopSellItem(id, qty){
   const def = BACKPACK_ITEM_DEF[id]||{};
   const have = backpackGet(id);
   const actual = Math.min(have, qty);
@@ -26273,7 +26274,6 @@ function shopSellItem(id, qty){
   const coins = (def.sellPrice||0) * actual;
   backpackRemove(id, actual);
   _knowledgeCoins = (_knowledgeCoins||0) + coins;
-  gameCloudSave();
   _showInGameToast(`💰 賣出 ${def.name} ×${actual}，獲得 ${coins.toLocaleString()} 知識幣！`, '#ffcc44', 2500);
   try{
     const _sfxSell = document.getElementById('sfx-sell-item');
@@ -26281,10 +26281,10 @@ function shopSellItem(id, qty){
     else playSfx('sfx-sell', 0.7);
   }catch(e){}
   _syncCoinsDisplay();
-  // ★ 原本這裡呼叫 openShopOverlay() 重新渲染，但它會觸發 bgmFadeTo('bgm-shop') 重播 BGM
-  //   改為只重新渲染商品列表與背包欄，不碰 BGM
   _renderShopProducts();
   _renderShopBagPanel();
+  // ★ 確實等待雲端同步完成，避免玩家重整時雲端未寫入 → 賣掉的物品復活
+  try{ await gameCloudSave(); }catch(e){ console.error('[sell cloud save]', e); }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -31244,6 +31244,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1651', items:[
+    '修正商店賣出/購買後立刻重新整理，變動會還原的嚴重洗錢 Bug（確保雲端同步完成後才回應）',
+  ] },
   { ver:'v1.0.20260418.1630', items:[
     '天賦升級節點修正：角色 Lv10→Lv2、Lv20→Lv3、Lv30→Lv4、Lv40→Lv5 (MAX)，Lv50 僅給素質點和獎章（未來裝備可「超越極限」Lv5+1）',
     '超商新增商品：雷法師替代肖像「雷動九霄」3000 知識幣（限購一次）',
@@ -31457,7 +31460,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1630';
+  const CURRENT_VERSION = 'v1.0.20260418.1651';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
