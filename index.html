@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2357</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260419.0000</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -20406,7 +20406,7 @@ function hideSkillDetailPopup(){
 let _adventureMode = false;
 let _adventureStage = null;
 // BOSS 角色名單：永遠排除在選角色池之外
-const BOSS_NAMES = ['九尾空貓怪','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆','寶箱怪','小惡魔'];
+const BOSS_NAMES = ['九尾空貓怪','杏花妖','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆','寶箱怪','小惡魔'];
 // 冒險模式允許出場的英雄名單
 const ADV_HERO_POOL = {
   maokong: ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家']
@@ -32272,6 +32272,10 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0000', items:[
+    '修正杏花妖錯誤出現在英雄圖鑑的問題（杏花妖屬於魔物，應只顯示於魔物圖鑑）',
+    '受影響範圍：英雄圖鑑、冒險選英雄清單、鬥技場對手隨機挑選、各種池內排除邏輯',
+  ] },
   { ver:'v1.0.20260418.2357', items:[
     '英雄經驗值之書(精裝版) 改為可販售，每本 200 知識幣（= 使用時獲得的 200 EXP）',
   ] },
@@ -32648,7 +32652,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2357';
+  const CURRENT_VERSION = 'v1.0.20260419.0000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32665,7 +32669,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2357';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.0000';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
