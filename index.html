@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2348</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2357</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -25101,13 +25101,13 @@ let _playerBackpack = {};
 
 // 背包物品定義
 const BACKPACK_ITEM_DEF = {
-  'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）' },
-  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）' },
+  'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）', sellPrice:50 },
+  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）', sellPrice:50 },
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）' },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
   'apricot_rouge':    { name:'杏花胭脂',       icon:'💄', desc:'杏花妖以千年花蕊與月光淬煉的絕品胭脂，香氣能勾魂攝魄，富商夫人爭相收藏。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1500 },
-  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）', sellPrice:0 },
+  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）', sellPrice:200 },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ 召喚水晶
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。前往英雄圖鑑嘗試使用（召喚功能開放後可指定召喚超極稀有英雄，目前有機率失敗）。', type:'use', useLabel:'使用（召喚英雄）' },
@@ -25171,6 +25171,9 @@ const SHOP_PRODUCTS = [
 const SHOP_SELL_ITEMS = [
   { id:'antique_teacup',  name:'骨董茶杯',       icon:'🍵', sellPrice:1000 },
   { id:'apricot_rouge',   name:'杏花胭脂',       icon:'💄', sellPrice:1500 },
+  { id:'hero_exp_book',   name:'英雄經驗值之書', icon:'📗', sellPrice:50 },
+  { id:'hero_exp_book_deluxe', name:'英雄經驗值之書(精裝版)', icon:'📕', sellPrice:200 },
+  { id:'skill_upgrade_book', name:'技能升級書',  icon:'📖', sellPrice:50 },
   { id:'half_tea',        name:'喝一半的好茶',   icon:'🍵', sellPrice:10 },
   { id:'picked_flower',   name:'被摘的花朵',     icon:'🌸', sellPrice:15 },
   { id:'damaged_bamboo',  name:'有點損傷的綠竹筍',icon:'🎋', sellPrice:14 },
@@ -32269,6 +32272,13 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2357', items:[
+    '英雄經驗值之書(精裝版) 改為可販售，每本 200 知識幣（= 使用時獲得的 200 EXP）',
+  ] },
+  { ver:'v1.0.20260418.2356', items:[
+    '背包新增可販賣物品：技能升級書（每本 50 知識幣）、英雄經驗值之書（每本 50 知識幣）',
+    '可於不可思議超商的「販售區」賣出',
+  ] },
   { ver:'v1.0.20260418.2348', items:[
     '修正治療 GIF 特效沒有顯示的問題（之前被 renderCard 的 innerHTML 覆蓋），現在改在 renderCard 之後加入；同時把 z-index 提高到 200、移除 mix-blend-mode、提高不透明度、延長到 1.2 秒',
   ] },
@@ -32638,7 +32648,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2348';
+  const CURRENT_VERSION = 'v1.0.20260418.2357';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32655,7 +32665,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2348';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2357';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
