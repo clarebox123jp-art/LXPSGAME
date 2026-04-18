@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2207</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2337</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4769,6 +4769,40 @@ function healParticles(h){
   ringFX(h,'#3ec87a',500);
 }
 
+// ★ 恢復HP時在卡片圖片上疊加治療GIF特效（~900ms）
+function _healGifOnCard(h){
+  if(!h) return;
+  const el = document.getElementById('card-'+h.side+'-'+h.pos);
+  if(!el) return;
+  // 避免堆疊：先清舊的
+  const old = el.querySelector('._heal-gif-fx');
+  if(old) old.remove();
+  const img = document.createElement('img');
+  img.className = '_heal-gif-fx';
+  // 加 timestamp 確保 GIF 每次從頭播放
+  img.src = 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%B2%BB%E7%99%82%E7%89%B9%E6%95%88.gif?t='+Date.now();
+  img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:20;opacity:0.85;mix-blend-mode:screen;';
+  // 確保 el 為相對定位容器
+  const cs = getComputedStyle(el);
+  if(cs.position === 'static') el.style.position = 'relative';
+  el.appendChild(img);
+  setTimeout(()=>{ if(img.parentNode) img.remove(); }, 900);
+}
+
+// ★ 升級特效 GIF（疊在升級面板的角色圖片上）
+function _levelUpGifOverlay(imgEl){
+  if(!imgEl) return;
+  const parent = imgEl.parentNode;
+  if(!parent) return;
+  const cs = getComputedStyle(parent);
+  if(cs.position === 'static') parent.style.position = 'relative';
+  const fx = document.createElement('img');
+  fx.src = 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%8D%87%E7%B4%9A.gif?t='+Date.now();
+  fx.style.cssText = 'position:absolute;left:50%;top:50%;width:260px;height:260px;transform:translate(-50%,-50%);pointer-events:none;z-index:5;opacity:0.95;mix-blend-mode:screen;';
+  parent.appendChild(fx);
+  setTimeout(()=>{ if(fx.parentNode) fx.remove(); }, 1800);
+}
+
 // ====== SKILL FX DISPATCH ======
 function playSkillFX(skillName,actor,targets){
   targets=targets||[];
@@ -5679,8 +5713,8 @@ const HERO_DB = {
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
-  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合（每級+3%）',fd:'使每位對手有70%機率無法使用技能1回合。'}},
-  '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中200%傷害，無法迴避',fd:'用特技的200%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手受到特技70%傷害'}},
+  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合。'}},
+  '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中240%傷害，無法迴避',fd:'用特技的240%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使敵方特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手則會受到特技125%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
   '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)單體友方受傷前觸發，代替承傷並以特技×50%減輕傷害。',fd:'(常駐被動)當單體攻擊即將落在隊友身上時觸發，守衛代替其承受全部傷害，並以特技的50%減輕傷害。封印時無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害，且受到的傷害減少50%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少50%。'}},
@@ -5990,8 +6024,8 @@ const BURST_UPGRADE_DEF = {
   '雷法師':    { rows: [[0,'特技×1.5 彈跳4次+麻痺'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   '光法師':    { rows: [[0,'特技×1.0 傷害+治療+失明'],[1,'特技×1.1'],[2,'特技×1.2'],[3,'特技×1.3'],[4,'特技×1.4']] },
   '暗法師':    { rows: [[0,'特技×1.2 全體+×2.0集中+封印'],[1,'特技×1.32'],[2,'特技×1.44'],[3,'特技×1.56'],[4,'特技×1.68']] },
-  '神射手':    { rows: [[0,'特技×1.2 全體必中+強力禁動'],[1,'特技×1.32'],[2,'特技×1.44'],[3,'特技×1.56'],[4,'特技×1.68']] },
-  '神偷':      { rows: [[0,'特技×1.5 傷害+奪取能量/寵物/物品'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
+  '神射手':    { rows: [[0,'特技×1.3 全體必中+強力禁動'],[1,'特技×1.43'],[2,'特技×1.56'],[3,'特技×1.69'],[4,'特技×1.82']] },
+  '神偷':      { rows: [[0,'特技×2.5 傷害+自己速度+10(2回合)+奪取能量/裝備/有利狀態/物品'],[1,'特技×2.75'],[2,'特技×3.0'],[3,'特技×3.25'],[4,'特技×3.5']] },
   '刺客':      { rows: [[0,'特技×4.0 傷害+隱形+強力出血'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
   '武鬥家':    { rows: [[0,'無敵2回合，攻擊傷害×2'],[1,'傷害×2.2'],[2,'傷害×2.4'],[3,'傷害×2.6'],[4,'傷害×2.8']] },
   '大力士':    { rows: [[0,'攻擊×3.0 必中+強力昏迷2回合'],[1,'攻擊×3.3'],[2,'攻擊×3.6'],[3,'攻擊×3.9'],[4,'攻擊×4.2']] },
@@ -6162,9 +6196,9 @@ const BURST_DB = {
   '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
   '雷法師':   {n:'怒雷狂襲',    d:'彈跳傷害4次並強力麻痺（無法免疫）',fd:'用特技的150%傷害對手（彈跳）共4次，有75%機率使目標陷入「強力麻痺」不能動1回合。強力麻痺無法被免疫。'},
   '光法師':   {n:'審判光束',    d:'傷害全體並治癒全隊，附加強力失明',fd:'用特技的100%傷害全體對手，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時用特技的100%恢復全體隊友。'},
-  '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋200%集中傷害，75%封印（每級+5%）',fd:'用特技的120%傷害全體對手，再對1名目標造成特技200%傷害。每個受傷目標有75%機率陷入「強力封印」無法使用技能1回合。爆發等級每提升1級，封印成功率增加5%（最高100%）。'},
-  '神射手':   {n:'流星箭雨',    d:'必中傷害全體，附加強力禁動',fd:'用特技的120%傷害全體對手，無法迴避。受傷目標有75%機率陷入「強力陷阱」無法行動1回合。'},
-  '神偷':     {n:'俠盜飛梭',    d:'傷害1名對手並奪取能量/寵物/物品',fd:'用特技的150%攻擊1名對手並奪取3能量及其寵物（可選擇給誰攜帶），再隨機奪取對手1張物品卡。'},
+  '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋200%集中傷害，75%封印',fd:'用特技的120%傷害全體對手，再對1名目標造成特技200%傷害。每個受傷目標有75%機率陷入「強力封印」無法使用技能1回合。'},
+  '神射手':   {n:'流星箭雨',    d:'必中傷害全體，附加強力禁動',fd:'用特技的130%傷害全體對手，無法迴避此傷害。受到傷害的目標有75%機率陷入「強力陷阱」無法行動1回合，強力陷阱無法被免疫。'},
+  '神偷':     {n:'俠盜飛梭',    d:'自己速度+10，傷害1名對手並奪取能量/裝備/有利狀態/物品',fd:'2回合內自己速度上升10，用特技的250%攻擊1名對手同時奪取3能量及其身上的裝備（此時可選擇給誰穿）和有利狀態，再隨機奪取對手1張物品卡。'},
   '刺客':     {n:'死神之鐮',    d:'400%傷害並隱形，強力出血（無法免疫）',fd:'用特技的400%傷害1名對手後自己隱形1回合，並以特技的120%恢復自己HP。目標陷入「強力出血」2回合，每回合-15%HP，無法被免疫。'},
   '守衛':     {n:'最後之盾',    d:'強制全體敵方攻擊自己，以特技減傷',fd:'使敵方全體陷入「強力挑釁」2回合，只能普通攻擊施展者。期間守衛以特技×100%減輕受到的傷害。強力挑釁無法被免疫。'},
   '吟遊詩人':   {n:'無盡長眠',    d:'全體敵方強力睡眠，每回合全隊回血',fd:'敵方全體陷入「強力睡眠」（回合開始或受傷有25%機率解除），每過一個睡眠回合就為我方全體恢復10%HP。'},
@@ -9775,6 +9809,37 @@ const BURST_GIF_DB = {
     sfx:[['sfx-shoot',1.0],['sfx-rapidfire-gun',0.9]],
     tint:'rgba(200,230,255,0.12)'
   },
+  '最終殿堂': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%9C%80%E7%B5%82%E6%AE%BF%E5%A0%82.gif',
+    sfx:[['sfx-heal',1.0],['sfx-powerup',0.85]],
+    tint:'rgba(255,240,180,0.18)'
+  },
+  '焰尾九連擊': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E7%84%B0%E5%B0%BE%E4%B9%9D%E9%80%A3%E6%93%8A.gif',
+    sfx:[['sfx-sword',1.0],['sfx-explode',0.85]],
+    tint:'rgba(255,100,30,0.18)',
+    playTwice:true
+  },
+  '千年絕美・傾城一笑': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%82%BE%E5%9F%8E%E4%B8%80%E7%AC%91.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-charm',0.85]],
+    tint:'rgba(255,130,200,0.15)'
+  },
+  'BUG修復': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/BUG%E4%BF%AE%E5%BE%A9.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-heal',0.85]],
+    tint:'rgba(85,255,200,0.15)'
+  },
+  '流浪者之歌': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%B5%81%E6%B5%AA%E8%80%85%E4%B9%8B%E6%AD%8C.gif',
+    sfx:[['sfx-fantasy',0.9],['sfx-heal',0.8]],
+    tint:'rgba(200,150,255,0.15)'
+  },
+  '天籟之音': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%A4%A9%E7%B1%9F%E4%B9%8B%E9%9F%B3.gif',
+    sfx:[['sfx-heal',1.0],['sfx-fantasy',0.8]],
+    tint:'rgba(180,80,255,0.15)'
+  },
   '俠盜飛梭': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E4%BF%A0%E7%9B%9C%E9%A3%9B%E6%A2%AD.gif',
     sfx:[['sfx-sword',0.9],['sfx-coin',0.8]],
@@ -9894,48 +9959,52 @@ function _showBurstGif(burstName){
   const gc=document.getElementById('gc');
   if(!gc) return;
 
-  // 移除舊的GIF層
-  const old=document.getElementById('burst-gif-overlay');
-  if(old) old.remove();
+  const _playOnce = (isSecond)=>{
+    // 移除舊的GIF層
+    const old=document.getElementById('burst-gif-overlay');
+    if(old) old.remove();
 
-  const ov=document.createElement('div');
-  ov.id='burst-gif-overlay';
-  ov.style.cssText=[
-    'position:absolute;inset:0;z-index:468;pointer-events:none;',
-    'display:flex;align-items:center;justify-content:center;',
-    'opacity:0;transition:opacity 0.2s ease-out;',
-    'background:'+data.tint+';'
-  ].join('');
+    const ov=document.createElement('div');
+    ov.id='burst-gif-overlay';
+    ov.style.cssText=[
+      'position:absolute;inset:0;z-index:468;pointer-events:none;',
+      'display:flex;align-items:center;justify-content:center;',
+      'opacity:0;transition:opacity 0.2s ease-out;',
+      'background:'+data.tint+';'
+    ].join('');
 
-  // GIF 圖片（置中，等比例填滿，最大 1920×1080）
-  const img=document.createElement('img');
-  img.src=data.url;
-  img.style.cssText=[
-    'max-width:100%;max-height:100%;',
-    'width:1920px;height:1080px;',
-    'object-fit:contain;',
-    'image-rendering:auto;'
-  ].join('');
-  ov.appendChild(img);
-  gc.appendChild(ov);
+    const img=document.createElement('img');
+    // 加 query 參數確保第二次播放時 GIF 重新從頭播
+    img.src=data.url + (isSecond ? ('?r='+Date.now()) : '');
+    img.style.cssText=[
+      'max-width:100%;max-height:100%;',
+      'width:1920px;height:1080px;',
+      'object-fit:contain;',
+      'image-rendering:auto;'
+    ].join('');
+    ov.appendChild(img);
+    gc.appendChild(ov);
 
-  // 淡入
-  void ov.offsetWidth;
-  ov.style.opacity='1';
+    void ov.offsetWidth;
+    ov.style.opacity='1';
 
-  // 播放音效（第一個立即，第二個延遲180ms避免重疊）
-  if(data.sfx){
-    data.sfx.forEach(([id,vol],i)=>{
-      setTimeout(()=>playSfx(id,vol), i*180);
-    });
+    if(data.sfx){
+      data.sfx.forEach(([id,vol],i)=>{
+        setTimeout(()=>playSfx(id,vol), i*180);
+      });
+    }
+
+    setTimeout(()=>{
+      ov.style.opacity='0';
+      ov.style.transition='opacity 0.5s ease-in';
+      setTimeout(()=>{ if(ov.parentNode) ov.remove(); },500);
+    },2000);
+  };
+
+  _playOnce(false);
+  if(data.playTwice){
+    setTimeout(()=>_playOnce(true), 2100);
   }
-
-  // GIF 顯示 2 秒後淡出移除
-  setTimeout(()=>{
-    ov.style.opacity='0';
-    ov.style.transition='opacity 0.5s ease-in';
-    setTimeout(()=>{ if(ov.parentNode) ov.remove(); },500);
-  },2000);
 }
 
 function execBurst(side, pos){
@@ -10072,23 +10141,81 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='神射手'){
     enemies.forEach(t=>{
-      doDmg(t,Math.floor(spv*1.2*_burstMult),{actor:h,isSkill:true,ignoreEvasion:true,noHidden:true});
+      doDmg(t,Math.floor(spv*1.3*_burstMult),{actor:h,isSkill:true,ignoreEvasion:true,noHidden:true});
       if(t.curHp>0 && Math.random()<0.75){ addStatus(t,'trap',1); bannerFX(t,'強力陷阱！','#cc8800',900); }
     });
   }
   if(name==='神偷'){
+    // ★ 自己獲得速度+10持續2回合（自動還原）
+    h.buffs = h.buffs.filter(b => b.type !== '_rogueSwift');
+    h.spd = (h.spd|0) + 10;
+    h.buffs.push({type:'_rogueSwift',dur:2,_spdBoost:10});
+    bannerFX(h,'速度+10！(2回合)','#ffcc00',900);
+
+    const _finalize = () => {
+      G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+      _burstFinish(h,_interrupted);
+    };
     const _doSt=(t)=>{
-      doDmg(t,Math.floor(spv*1.5*_burstMult),{actor:h,isSkill:true});
+      // 250% 特技傷害
+      doDmg(t,Math.floor(spv*2.5*_burstMult),{actor:h,isSkill:true});
+      // 奪取 3 能量
       const drain=Math.min(3,G.energy[opp]);
       G.energy[opp]-=drain; G.energy[side]=Math.min(10,G.energy[side]+drain);
-      if(t.equip){ const eq=t.equip; t.equip=null; log(`[${h.name}] 奪取 [${t.name}] 的寵物 [${eq.n}]！`); }
+      // 奪取有利狀態（加到施術者身上）
+      const PROTECTED_KEEP=['protectBuff','guard','deathimmune','immovable','rebirth','misfortune','alchemist','counter'];
+      const stolenBuffs = t.buffs.filter(b => !PROTECTED_KEEP.includes(b.type));
+      if(stolenBuffs.length){
+        t.buffs = t.buffs.filter(b => PROTECTED_KEEP.includes(b.type));
+        h.buffs.push(...stolenBuffs);
+        log(`[${h.name}] 奪取 [${t.name}] 的有利狀態！`);
+        bannerFX(h,'奪取狀態！','#ffcc00',800);
+      }
+      // 奪取 1 張物品卡
       const inv2=opp==='p2'?G.inv2:G.inv;
       const items=inv2.map((it,i)=>({it,i})).filter(x=>x.it);
-      if(items.length){ const p=items[Math.floor(Math.random()*items.length)]; const myInv=side==='p1'?G.inv:G.inv2; const ei=myInv.findIndex(s=>s===null); if(ei!==-1) myInv[ei]=p.it; inv2[p.i]=null; log(`[${h.name}] 奪取物品 [${p.it.n}]！`); }
+      if(items.length){
+        const p=items[Math.floor(Math.random()*items.length)];
+        const myInv=side==='p1'?G.inv:G.inv2;
+        const ei=myInv.findIndex(s=>s===null);
+        if(ei!==-1) myInv[ei]=p.it;
+        inv2[p.i]=null;
+        log(`[${h.name}] 奪取物品 [${p.it.n}]！`);
+      }
+      // 奪取裝備 → 改為「可選擇給誰穿」
+      if(t.equip){
+        const eq={...t.equip,uid:Math.random(),type:'equip'};
+        if(t.equip.onRemove) t.equip.onRemove(t);
+        t.equip=null;
+        log(`[${h.name}] 奪取 [${t.name}] 的裝備 [${eq.n}]！`);
+        renderCard(t);
+        if(side==='p1'){
+          // 玩家：呼叫裝備指派 UI（結束後會自動推進回合）
+          _showBurstEquipSequence([eq],0,h,side,_interrupted);
+          return; // _showBurstEquipSequence 會處理 finish
+        } else {
+          // AI：自動給無裝備的友方，否則給最強的
+          const allyNoEq = allies.find(a=>!a.equip);
+          const tgtHero = allyNoEq || allies[0];
+          if(tgtHero){
+            tgtHero.equip={...eq};
+            if(eq.onEquip) eq.onEquip(tgtHero);
+            renderCard(tgtHero);
+            log(`[${tgtHero.name}] 攜帶了 ${eq.n}！`);
+          }
+        }
+      }
+      _finalize();
     };
     if(enemies.length){
-      if(side==='p1' && enemies.length>1){ log('⚡ 俠盜飛梭：請選擇目標！'); setPending('enemy',t=>{ G.pendingTarget=null; pendingCb=null; _doSt(t); _burstFinish(h,_interrupted); }); return; }
-      else _doSt(enemies[Math.floor(Math.random()*enemies.length)]);
+      if(side==='p1' && enemies.length>1){
+        log('⚡ 俠盜飛梭：請選擇目標！');
+        setPending('enemy',t=>{ G.pendingTarget=null; pendingCb=null; _doSt(t); });
+        return;
+      } else {
+        _doSt(enemies[Math.floor(Math.random()*enemies.length)]);
+        return;
+      }
     }
   }
   if(name==='刺客'){
@@ -11689,12 +11816,24 @@ function doDmg(target, rawDmg, opts={}){
       }
     }
   }
-  // 占星師 轉禍為福（新版）：友方全體1回合內受到傷害時獲得2能量，每人限1次
+  // 占星師 轉禍為福（新版）：友方全體1回合內受到傷害時獲得2能量，每人 N 次
   if(hasBuff(target,'misfortune2') && old>0 && target.curHp<old){
-    target.buffs=target.buffs.filter(b=>b.type!=='misfortune2');
+    const _mb = target.buffs.find(b=>b.type==='misfortune2');
     G.energy[target.side]=Math.min(10,G.energy[target.side]+2);
     showPopup(target,'+2E','energy'); sndEnergy();
-    sfxPassive(target,0.6); log(`[${target.name}] 轉禍為福！能量+2！`);
+    sfxPassive(target,0.6);
+    if(_mb && typeof _mb._trigCount === 'number'){
+      _mb._trigCount -= 1;
+      const _remain = _mb._trigCount;
+      log(`[${target.name}] 轉禍為福！能量+2！${_remain>0?'（剩餘'+_remain+'次）':''}`);
+      if(_mb._trigCount <= 0){
+        target.buffs = target.buffs.filter(b=>b.type!=='misfortune2');
+      }
+    } else {
+      // 舊資料相容：沒有 _trigCount 的直接移除
+      target.buffs = target.buffs.filter(b=>b.type!=='misfortune2');
+      log(`[${target.name}] 轉禍為福！能量+2！`);
+    }
   }
 
   // ── 被動技能觸發群（doDmg 後鉤子）──
@@ -12165,6 +12304,8 @@ function doHeal(target, rawAmt, opts={}){
   const actual=target.curHp-old;
   if(actual>0){
     showPopup(target,'+'+actual,'heal'); sndHeal(); playSfx('sfx-heal',0.6);
+    // ★ 在卡片圖片上疊加治療 GIF 特效
+    try{ _healGifOnCard(target); }catch(e){}
     // 統計：只記錄對友方（同陣營）的治療
     const _healer=G&&(G.activeChar||opts.actor);
     if(_healer && _healer.side === target.side) statTrack(_healer,'heal',actual);
@@ -13091,9 +13232,9 @@ function execSkill(a, sk, cost, stype){
   // ====== 神射手 ======
   else if(n==='瞄準射擊'){
     setPending('enemy',t=>{
-      log(`[${a.name}] 瞄準射擊 [${t.name}]！SP×200%，必定命中，無法代替！`);
+      log(`[${a.name}] 瞄準射擊 [${t.name}]！SP×240%，必定命中，無法代替！`);
       playSkillFX('瞄準射擊',a,[t]);
-      doDmg(t,Math.floor(spv(a)*2.0),{actor:a,ignoreEvasion:true,noGuard:true,noHidden:true,piercing:true});
+      doDmg(t,Math.floor(spv(a)*2.4),{actor:a,isSkill:true,ignoreEvasion:true,noGuard:true,noHidden:true,piercing:true});
       endAction(a,cost);
     });
   } else if(n==='天羅地網'){
@@ -13109,7 +13250,7 @@ function execSkill(a, sk, cost, stype){
     });
     highSp.forEach(t=>{
       if(t.curHp>0){
-        const dmg=Math.floor(spv(a)*0.7);
+        const dmg=Math.floor(spv(a)*1.25);
         doDmg(t,dmg,{isSkill:true,actor:a});
         log(`[${t.name}] 特技較高，受到${dmg}傷害！`);
       }
@@ -13569,7 +13710,10 @@ function execSkill(a, sk, cost, stype){
     a.acted=true;
     const drawnCard=drawItem();
     log(`[${a.name}] 抽到了：[${drawnCard.n}] - ${drawnCard.d}`);
+    // ★ 升級效果：Lv3/6/9 時販賣能量 +1/+2/+3
+    G._tarotSellBonus = Math.floor((_activeSkLv||0)/3);
     showTarotCardChoice(drawnCard,a,()=>{
+      G._tarotSellBonus = 0;
       clearSel();
       document.getElementById('action-panel').style.display='none';
       updateUI(); renderItems();
@@ -13577,9 +13721,15 @@ function execSkill(a, sk, cost, stype){
     });
   } else if(n==='轉禍為福'){
     const zhAllies=G[a.side].filter(h=>h.curHp>0);
-    log(`[${a.name}] 轉禍為福！友方全體1回合內受到傷害時獲得2能量！`);
+    // ★ 升級效果：Lv3/6/9 時次數+1/+2/+3（基礎1次，MAX 4次）
+    const _trigMax = 1 + Math.floor((_activeSkLv||0)/3);
+    log(`[${a.name}] 轉禍為福！友方全體1回合內受到傷害時獲得2能量（每人${_trigMax}次）！`);
     playSkillFX('轉禍為福',a,zhAllies);
-    zhAllies.forEach(h=>{ addBuff(h,'misfortune2',1); });
+    zhAllies.forEach(h=>{
+      // 移除舊的 misfortune2 並附上計數
+      h.buffs = h.buffs.filter(b=>b.type!=='misfortune2');
+      h.buffs.push({type:'misfortune2',dur:1,_trigCount:_trigMax});
+    });
     zhAllies.forEach((h,i)=>setTimeout(()=>bannerFX(h,'轉禍為福','#ffcc00',900),i*80));
     endAction(a,cost);
   }
@@ -14622,8 +14772,10 @@ function showTarotCardChoice(card, actor, cb){
   // 自動戰鬥：自動使用（能量卡直接賣出，裝備自動裝備，其他自動使用）
   if(_autoBattle){
     if(card.type==='energy'){
-      G.energy[actor.side]=Math.min(10,G.energy[actor.side]+card.sell);
-      log('['+actor.name+'] 🤖 塔羅牌自動賣出 ['+card.n+'] +'+card.sell+'能量');
+      const _bns = (G._tarotSellBonus||0);
+      const _gain = card.sell + _bns;
+      G.energy[actor.side]=Math.min(10,G.energy[actor.side]+_gain);
+      log('['+actor.name+'] 🤖 塔羅牌自動賣出 ['+card.n+'] +'+_gain+'能量'+(_bns>0?'（含升級加成+'+_bns+'）':''));
       cb(); return;
     }
     log('['+actor.name+'] 🤖 塔羅牌自動使用 ['+card.n+']');
@@ -14640,16 +14792,18 @@ function showTarotCardChoice(card, actor, cb){
   var isEnergyOnly = card.type==='energy';
   var isEquip = card.type==='equip';
   var useLabel = isEquip ? '🐾 攜帶寵物' : '▶ 立即使用';
+  var _tSellBonus = (G._tarotSellBonus||0);
+  var _tSellTotal = card.sell + _tSellBonus;
   ov.innerHTML='<div style="font-size:22px;color:#9b6dff;letter-spacing:5px;text-shadow:0 0 20px rgba(155,109,255,0.9)">✦ 命運塔羅牌 ✦</div>'
     +'<div style="background:linear-gradient(160deg,#1a1d2e,#0e1018);border:2px solid '+tc+';border-radius:14px;padding:28px 40px;min-width:360px;max-width:500px;text-align:center;box-shadow:0 0 40px '+tc+'55">'
     +'<div style="font-size:12px;color:'+tc+';letter-spacing:3px;margin-bottom:10px;background:'+tc+'22;padding:4px 14px;border-radius:4px;display:inline-block">'+tl+'</div>'
     +'<div style="font-size:28px;font-weight:500;color:#f0c060;margin:10px 0 14px;letter-spacing:1px">'+card.n+'</div>'
     +'<div style="font-size:15px;font-weight:500;color:#ffffff;line-height:1.7;margin-bottom:8px">'+card.d+'</div>'
-    +'<div style="font-size:13px;color:#888;margin-top:6px">賣出可獲得：<span style="color:#4a9eff;font-weight:500;font-size:16px">'+card.sell+' 🔷</span> 能量</div>'
+    +'<div style="font-size:13px;color:#888;margin-top:6px">賣出可獲得：<span style="color:#4a9eff;font-weight:500;font-size:16px">'+_tSellTotal+' 🔷</span> 能量'+(_tSellBonus>0?' <span style="color:#ffcc44">(含升級+'+_tSellBonus+')</span>':'')+'</div>'
     +'</div>'
     +'<div style="display:flex;gap:18px;margin-top:4px">'
     +(isEnergyOnly ? '' : '<button id="tarot-use-btn" style="padding:16px 48px;font-size:20px;font-family:Share Tech Mono,monospace;background:linear-gradient(135deg,#1a4a10,#0e6020);border:2px solid #3ec87a;color:#3ec87a;border-radius:8px;cursor:pointer;letter-spacing:3px;font-weight:bold;box-shadow:0 0 18px rgba(62,200,122,0.3)">'+useLabel+'</button>')
-    +'<button id="tarot-sell-btn" style="padding:16px 38px;font-size:20px;font-family:Share Tech Mono,monospace;background:linear-gradient(135deg,#101a40,#080e28);border:2px solid #4a9eff;color:#4a9eff;border-radius:8px;cursor:pointer;letter-spacing:2px;font-weight:bold;box-shadow:0 0 18px rgba(74,158,255,0.3)">💰 賣出 +'+card.sell+'🔷</button>'
+    +'<button id="tarot-sell-btn" style="padding:16px 38px;font-size:20px;font-family:Share Tech Mono,monospace;background:linear-gradient(135deg,#101a40,#080e28);border:2px solid #4a9eff;color:#4a9eff;border-radius:8px;cursor:pointer;letter-spacing:2px;font-weight:bold;box-shadow:0 0 18px rgba(74,158,255,0.3)">💰 賣出 +'+_tSellTotal+'🔷</button>'
     +'</div>';
   document.getElementById('gc').appendChild(ov);
   if(!isEnergyOnly){
@@ -14671,10 +14825,12 @@ function showTarotCardChoice(card, actor, cb){
   sellBtn.onmouseout=function(){this.style.background='linear-gradient(135deg,#101a40,#080e28)';this.style.color='#4a9eff';};
   sellBtn.onclick=function(){
     ov.remove();
-    G.energy[actor.side]=Math.min(10,G.energy[actor.side]+card.sell);
-    showPopup(actor,'+'+card.sell+'E','energy');
+    var _bns = (G._tarotSellBonus||0);
+    var _gain = card.sell + _bns;
+    G.energy[actor.side]=Math.min(10,G.energy[actor.side]+_gain);
+    showPopup(actor,'+'+_gain+'E','energy');
     sndEnergy();
-    log('['+actor.name+'] 塔羅牌賣出 ['+card.n+'] 獲得 '+card.sell+' 能量！');
+    log('['+actor.name+'] 塔羅牌賣出 ['+card.n+'] 獲得 '+_gain+' 能量！'+(_bns>0?'（含升級加成+'+_bns+'）':''));
     cb();
   };
 }
@@ -16632,7 +16788,7 @@ function aiUseSkill(a,sk,cost,pref){
   G.energy[a.side]=Math.max(0,G.energy[a.side]-cost);
 
   if(['迅雷連斬','瞄準射擊','冰凍之矛','麻痺落雷','火焰球','降龍伏虎拳'].includes(n)){
-    if(t){ doDmg(t,n==='降龍伏虎拳'?Math.floor(a.atk*2):n==='瞄準射擊'?Math.floor(spv(a)*2.0):spv(a),{actor:a,ignoreBuffs:n==='降龍伏虎拳',ignoreEvasion:n==='瞄準射擊',noGuard:n==='瞄準射擊',noHidden:n==='瞄準射擊',piercing:n==='瞄準射擊'}); if(n==='迅雷連斬'&&t.curHp>0)doDmg(t,a.atk,{actor:a}); if(n==='冰凍之矛'&&t.curHp>0)addStatus(t,'freeze'); if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para'); if(n==='火焰球')doDmg(t,10,{ignoreBuffs:true}); }
+    if(t){ doDmg(t,n==='降龍伏虎拳'?Math.floor(a.atk*2):n==='瞄準射擊'?Math.floor(spv(a)*2.4):spv(a),{actor:a,isSkill:true,ignoreBuffs:n==='降龍伏虎拳',ignoreEvasion:n==='瞄準射擊',noGuard:n==='瞄準射擊',noHidden:n==='瞄準射擊',piercing:n==='瞄準射擊'}); if(n==='迅雷連斬'&&t.curHp>0)doDmg(t,a.atk,{actor:a,isSkill:true}); if(n==='冰凍之矛'&&t.curHp>0)addStatus(t,'freeze'); if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para'); if(n==='火焰球')doDmg(t,10,{ignoreBuffs:true}); }
   } else if(n==='神聖鎚擊'){if(t){var _bossHit=typeof BOSS_NAMES!=='undefined'&&BOSS_NAMES.includes(t.name);doDmg(t,Math.max(1,Math.floor(t.hp*(_bossHit?0.05:0.2))),{actor:a});doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});}}
   else if(n==='刀背擊'){if(t){t.curHp=Math.max(0,t.curHp-1);if(t.curHp>0)addStatus(t,'stun');showPopup(t,1,'dmg');}}
   else if(n==='救贖神光'){
@@ -16730,7 +16886,7 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='隱身療傷'){addBuff(a,'hidden',1);doHeal(a,Math.floor(spv(a)*0.75),{actor:a,isHeal:true});}
   else if(n==='日月同輝'){enemies.forEach(h=>{if(h.curHp>0)doDmg(h,Math.floor(spv(a)*0.5),{actor:a});});allies.forEach(h=>{if(h.curHp>0)doHeal(h,Math.floor(spv(a)*0.5),{actor:a,isHeal:true});});}
   else if(n==='極限閃光'){const fp=enemies.filter(h=>h.curHp>0).sort(()=>Math.random()-0.5).slice(0,3);fp.forEach(h=>addStatus(h,'forecast',1));}
-  else if(n==='天羅地網'){const af2=enemies;const lt2=af2.filter(h=>h.sp<spv(a)).slice(0,2);const ht2=af2.filter(h=>h.sp>=spv(a));lt2.forEach(h=>addStatus(h,'trap',1));ht2.forEach(h=>doDmg(h,Math.floor(spv(a)*0.7),{actor:a}));}
+  else if(n==='天羅地網'){const af2=enemies;const lt2=af2.filter(h=>h.sp<spv(a)).slice(0,2);const ht2=af2.filter(h=>h.sp>=spv(a));lt2.forEach(h=>addStatus(h,'trap',1));ht2.forEach(h=>doDmg(h,Math.floor(spv(a)*1.25),{actor:a,isSkill:true}));}
   else if(n==='歷史的教訓'){enemies.forEach(h=>{if(h.curHp<=0)return;if(h.buffs.length>0){const idx=Math.floor(Math.random()*h.buffs.length);h.buffs.splice(idx,1);renderCard(h);}else doDmg(h,spv(a),{actor:a,isSkill:true});});}
   else if(n==='亂槍射擊'){const sc=Math.floor(Math.random()*3)+3;for(let i=0;i<sc;i++){const tt=enemies[Math.floor(Math.random()*enemies.length)];if(tt&&tt.curHp>0)doDmg(tt,a.atk,{actor:a});}}
   else if(n==='命運塔羅牌'){
@@ -16780,7 +16936,14 @@ function aiUseSkill(a,sk,cost,pref){
       if(t) doDmg(t,a.atk,{actor:a});
     }
   }
-  else if(n==='轉禍為福'){allies.filter(h=>h.curHp>0).forEach(h=>addBuff(h,'misfortune2',1));}
+  else if(n==='轉禍為福'){
+    // AI 版本：使用 _activeSkLv（通常為 0），升級效果：每升3級+1次
+    const _aiTrigMax = 1 + Math.floor((_activeSkLv||0)/3);
+    allies.filter(h=>h.curHp>0).forEach(h=>{
+      h.buffs = h.buffs.filter(b=>b.type!=='misfortune2');
+      h.buffs.push({type:'misfortune2',dur:1,_trigCount:_aiTrigMax});
+    });
+  }
   else if(n==='以牙還牙'){log('['+a.name+'] 以牙還牙（被動待機）！');}
   else if(n==='金鐘罩'){addBuff(a,'counter',1);log('['+a.name+'] 金鐘罩！啟動反傷！');}
   else if(n==='道具複製'){addBuff(a,'alchemist',99);log('['+a.name+'] 道具複製！啟動！');}
@@ -26428,6 +26591,11 @@ function _showLevelUpSequence(levelUps, onDone) {
 
   flashScreen('rgba(255,220,50,0.3)', 400);
   document.body.appendChild(ov);
+  // ★ 升級特效 GIF：疊在角色圖片上
+  try{
+    const _luImg = ov.querySelector('._lu-img');
+    if(_luImg) _levelUpGifOverlay(_luImg);
+  }catch(e){}
 }
 
 
@@ -27689,6 +27857,8 @@ const SKILL_UPGRADE_DEF = {
   '挺身守護': { cat:'pct_buff', base:50, perLv:1, step:5, label:'特技減傷%' }, // 基礎50%+每升1級+5%
   // ── 傷害類：每級傷害+10% ──
   '迅雷連斬': { cat:'dmg',    label:'技能傷害' },
+  '瞄準射擊': { cat:'dmg',    label:'技能傷害' },
+  '天羅地網': { cat:'dmg',    label:'技能傷害' },
   '冰凍之矛': { cat:'dmg',    label:'技能傷害' },
   '麻痺落雷': { cat:'dmg',    label:'技能傷害' },
   '火焰球':   { cat:'dmg',    label:'技能傷害' },
@@ -27754,7 +27924,8 @@ const SKILL_UPGRADE_DEF = {
   '忠犬守護': { cat:'pct_buff',   base:50, perLv:1, step:2, label:'傷害轉移比率' },
   // ── 能量類 ──
   '充能':     { cat:'energy', base:6, perLv:5, label:'補充能量' },
-  '命運塔羅牌':{ cat:'special', label:'Lv.0~3=抽1張，Lv.4~6=抽2張，Lv.7~9=抽3張' },
+  '命運塔羅牌':{ cat:'special_tarot_sell', label:'販賣能量加成' },
+  '轉禍為福': { cat:'special_misfortune', label:'受傷恢復能量次數' },
   '道具複製': { cat:'pct_buff', base:70, perLv:1, step:2, label:'物品保留機率(%)' },
   // ── 靈魂收割：每1級+1HP門檻 ──
   '靈魂收割': { cat:'threshold', base:10, perLv:1, step:1, label:'處決HP門檻' },
@@ -27835,6 +28006,14 @@ function _getSkUpgradeBadge(skillName, skLv){
   if(cat==='special_zoo'){
     const pct = 10 + (skLv||0);
     return def.label + ' ' + pct + '%';
+  }
+  if(cat==='special_tarot_sell'){
+    const bonus = Math.floor((skLv||0)/3);
+    return bonus>0 ? ('販賣能量 +' + bonus) : '抽1張物品卡';
+  }
+  if(cat==='special_misfortune'){
+    const times = 1 + Math.floor((skLv||0)/3);
+    return '受傷回能 ' + times + ' 次';
   }
   return '效果+' + (skLv*5) + '%';
 }
@@ -27926,6 +28105,14 @@ function buildSkillLvTable(skillName, currentLv) {
     } else if(cat==='special_zoo'){
       const pct = 10 + lv;
       effectText = def.label + ' ' + pct + '%（上限 ' + (40+lv*4) + '%）';
+    } else if(cat==='special_tarot_sell'){
+      const bonus = Math.floor(lv/3);
+      if(lv===0) effectText = '抽1張物品卡（基礎）';
+      else if(bonus===0) effectText = '抽1張物品卡';
+      else effectText = '抽1張物品卡，販賣能量 +' + bonus + (lv===9?' (MAX)':'');
+    } else if(cat==='special_misfortune'){
+      const times = 1 + Math.floor(lv/3);
+      effectText = '受傷獲得2能量的次數 ' + times + ' 次' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     } else {
       effectText = def.label;
     }
@@ -27984,7 +28171,7 @@ const HERO_CATEGORIES_OVERRIDE = {
   '武鬥家':      ['dmg'],
   '陰陽師':      ['dmg','ctrl'],
   '學者':        ['dmg','ctrl'],
-  '光法師':      ['dmg','heal'],
+  '光法師':      ['dmg','heal','ctrl'],
   '吸血鬼':      ['dmg','heal'],
   '弦樂團員':    ['dmg','heal'],
   '動物學家':    ['ctrl'],
@@ -27994,6 +28181,7 @@ const HERO_CATEGORIES_OVERRIDE = {
   '直笛團員':    ['heal','ctrl'],
   '程式設計師':  ['dmg','heal','ctrl'],
   '時空法師':    ['ctrl'],
+  '電腦繪圖師':  ['dmg','ctrl'],
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -28002,7 +28190,7 @@ const HERO_HEX_OVERRIDE = {
   '武鬥家':      { heal: 1, ctrl: 1 },
   '陰陽師':      { heal: 1, ctrl: 8 },
   '學者':        { heal: 1, ctrl: 8 },
-  '光法師':      { heal: 8, ctrl: 2 },
+  '光法師':      { heal: 8, ctrl: 6 },
   '吸血鬼':      { heal: 7, ctrl: 2 },
   '弦樂團員':    { heal: 8, ctrl: 2 },
   '動物學家':    { heal: 2, ctrl: 9 },
@@ -28012,6 +28200,14 @@ const HERO_HEX_OVERRIDE = {
   '直笛團員':    { heal: 7, ctrl: 7 },
   '程式設計師':  { heal: 6, ctrl: 6 },
   '時空法師':    { heal: 1, ctrl: 10 },
+  '電腦繪圖師':  { heal: 1, ctrl: 7 },
+  '冰法師':      { heal: 1, ctrl: 10 },
+  '警長':        { heal: 1, ctrl: 10 },
+  '杏花妖':      { heal: 7, ctrl: 10 },
+  '木靈使':      { heal: 10, ctrl: 2 },
+  '神偷':        { heal: 1, ctrl: 7 },
+  '舞者':        { heal: 2, ctrl: 7 },
+  '吟遊詩人':    { heal: 8, ctrl: 7 },
 };
 
 // ★ 回傳英雄的分類陣列（可有多個）
@@ -30865,6 +31061,15 @@ function monsterDetailNext() {
   openMonsterDetail(_monsterDetailList[_monsterDetailIdx]);
 }
 
+// ★ 魔物元素屬性查表（供魔物圖鑑顯示用）
+const MONSTER_ELEMENT = {
+  '九尾空貓怪':'fire', '杏花妖':'grass',
+  '綠竹筍小妖':'earth','茶葉精靈':'grass',
+  '偷摘花的頑皮妖精':'dark', '偷鳥蛋的鳥人哈維':'wind',
+  '偷竹筍的哥布林':'earth', '偷喝茶的史萊姆':'water',
+  '寶箱怪':'earth', '小惡魔':'dark',
+};
+
 function openMonsterDetail(name) {
   const b = HERO_DB[name];
   if(!b) return;
@@ -30883,15 +31088,23 @@ function openMonsterDetail(name) {
 
   // Build dims for radar (same as hero detail)
   function _clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+  // ★ 若有 HERO_HEX_OVERRIDE 指定的 heal/ctrl 值，優先採用
+  let _healOv = null, _ctrlOv = null;
+  if(typeof HERO_HEX_OVERRIDE !== 'undefined' && HERO_HEX_OVERRIDE[name]){
+    if(typeof HERO_HEX_OVERRIDE[name].heal === 'number') _healOv = HERO_HEX_OVERRIDE[name].heal;
+    if(typeof HERO_HEX_OVERRIDE[name].ctrl === 'number') _ctrlOv = HERO_HEX_OVERRIDE[name].ctrl;
+  }
   const dims = [
     {label:'體', val:_clamp(Math.round(b.hp/12),1,10)},
     {label:'攻', val:_clamp(Math.round(b.atk/2),1,10)},
     {label:'特', val:_clamp(Math.round(b.sp/2),1,10)},
     {label:'速', val:_clamp(Math.round(b.spd/3),1,10)},
-    {label:'治', val: (b.s1&&['治療','恢復','復活'].some(k=>b.s1.n.includes(k)))||
-                     (b.s2&&['治療','恢復','復活'].some(k=>b.s2.n.includes(k)))?7:1},
-    {label:'控', val: (b.s1&&['守護','挺立','護盾','嘲諷','封印'].some(k=>b.s1.n.includes(k)))||
-                     (b.s2&&['守護','挺立','護盾','嘲諷','封印'].some(k=>b.s2.n.includes(k)))?7:1},
+    {label:'回', val: _healOv !== null ? _healOv :
+                     ((b.s1&&['治療','恢復','復活'].some(k=>b.s1.n.includes(k)))||
+                     (b.s2&&['治療','恢復','復活'].some(k=>b.s2.n.includes(k)))?7:1)},
+    {label:'控', val: _ctrlOv !== null ? _ctrlOv :
+                     ((b.s1&&['守護','挺立','護盾','嘲諷','封印'].some(k=>b.s1.n.includes(k)))||
+                     (b.s2&&['守護','挺立','護盾','嘲諷','封印'].some(k=>b.s2.n.includes(k)))?7:1)},
   ];
 
   // Tier label
@@ -30938,6 +31151,16 @@ function openMonsterDetail(name) {
       <div>
         <div style="font-size:18px;font-weight:700;color:${tierColor};margin-bottom:4px;">${tierLabel}</div>
         <div style="font-size:56px;font-weight:900;color:#ff8844;margin-bottom:8px;">${name}</div>
+        ${(()=>{
+          const eKey = (typeof MONSTER_ELEMENT!=='undefined') ? MONSTER_ELEMENT[name] : null;
+          const eData = (eKey && typeof ELEMENT_DB!=='undefined') ? ELEMENT_DB[eKey] : null;
+          if(!eData) return '';
+          return `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(212,168,67,0.45);border-radius:10px;padding:6px 14px;margin-bottom:10px;">
+            <span style="font-size:28px;">${eData.icon}</span>
+            <span style="font-size:22px;font-weight:700;color:#ffe8a0;">${eData.name} 屬性</span>
+            <span style="font-size:18px;color:#aaa;">（${eData.desc}）</span>
+          </div>`;
+        })()}
         <div style="font-size:22px;color:#ccaa88;line-height:1.6;">${lore}</div>
       </div>
     </div>
@@ -32038,6 +32261,40 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2337', items:[
+    '爆發技能新增 GIF 特效：最終殿堂（聖騎士）',
+  ] },
+  { ver:'v1.0.20260418.2333', items:[
+    '爆發技能新增全螢幕 GIF 特效：焰尾九連擊（連播兩次）、千年絕美・傾城一笑、BUG修復、流浪者之歌、天籟之音',
+    '所有恢復 HP 時，目標角色卡片上疊加治療 GIF 特效',
+    '角色升級時，升級面板的角色圖片上疊加升級 GIF 特效',
+  ] },
+  { ver:'v1.0.20260418.2257', items:[
+    '魔物圖鑑：魔物詳細頁新增「元素屬性」徽章（顯示元素圖示、名稱、屬性說明）',
+    '占星師【命運塔羅牌】升級效果修正：Lv.4/7/10 時販賣卡片獲得能量 +1/+2/+3（MAX +3）。賣出按鈕會顯示加成後的總能量與來源',
+    '占星師【轉禍為福】升級效果修正：Lv.4/7/10 時受傷恢復能量的次數 +1/+2/+3（基礎1次，MAX 4次），每人獨立計次',
+    '技能說明清理：暗法師【毀滅禁咒】、【黑暗封印】的技能說明移除升級效果描述（升級效果統一在技能升級表裡看）',
+  ] },
+  { ver:'v1.0.20260418.2248', items:[
+    '六邊形雷達圖「控場」向度大幅調整：冰法師、警長、杏花妖 → 10（強力控場定位）',
+    '六邊形雷達圖「回復」向度大幅提高：木靈使 → 10（以HP上限強化與分享剩餘HP為主軸）',
+    '六邊形雷達圖「控場」向度提高：神偷、舞者、吟遊詩人 → 7',
+    '魔物圖鑑中的六邊形雷達圖同步套用覆寫值（例：杏花妖「控」=10）',
+    '魔物圖鑑雷達圖標籤「治」同步改為「回」，與英雄圖鑑一致',
+  ] },
+  { ver:'v1.0.20260418.2234', items:[
+    '神射手【瞄準射擊】3🔷 傷害倍率 200% → 240%（每級+5%）',
+    '神射手【天羅地網】4🔷 特技較高對手傷害倍率 70% → 125%（每級+5%）',
+    '爆發【流星箭雨】全體傷害倍率 120% → 130%',
+    '爆發【俠盜飛梭】傷害倍率 150% → 250%，新增效果：自己速度+10持續2回合、奪取對手有利狀態、奪取對手裝備（可選擇給誰穿）',
+    '瞄準射擊、天羅地網、流星箭雨、俠盜飛梭 升級效果統一：每級 +5% 基本傷害',
+  ] },
+  { ver:'v1.0.20260418.2215', items:[
+    '光法師新增「控場」分類（現在同時是傷害+回復+控場三類），六邊形「控」向度提升至 6',
+  ] },
+  { ver:'v1.0.20260418.2214', items:[
+    '電腦繪圖師新增篩選分類：傷害 + 控場（六邊形「控」向度一併調整至 7）',
+  ] },
   { ver:'v1.0.20260418.2207', items:[
     '英雄選擇篩選分類系統大改版：「💚 治療」按鈕改名為「💚 回復」（英雄圖鑑頁 + 冒險選英雄頁皆同步）',
     '六邊形雷達圖標籤「治」改為「回」，與新分類名稱對應',
@@ -32367,7 +32624,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2207';
+  const CURRENT_VERSION = 'v1.0.20260418.2337';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32384,7 +32641,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2207';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2337';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
