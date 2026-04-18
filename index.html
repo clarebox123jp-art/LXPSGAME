@@ -24152,7 +24152,12 @@ function _buildSafeData() {
     medals:          _playerMedals,
     heroTraitLevel:  _heroTraitLevel,
     knowledgeCoins:  _knowledgeCoins,        // 知識幣
-    playerBackpack:  _playerBackpack,        // 背包
+    playerBackpack:  _playerBackpack,        // 背包（向後相容）
+    // ★ 字串化版本：用來繞過 Firebase merge:true 不會刪除 map 中 key 的限制
+    //   （單賣一項物品後，若僅寫物件形式，雲端會保留舊 key，導致重整後物品復活）
+    playerBackpack_s: JSON.stringify(_playerBackpack),
+    heroStatInvested_s: JSON.stringify(_heroStatInvested),  // 素質重置後也會減 key
+    heroSkillLevels_s:  JSON.stringify(_heroSkillLevels),   // 技能重置後也會歸零
     shopDailyData:   _shopDailyData,         // 每日商店購買紀錄
     presetTeams:     _presetTeams,            // 常用預設陣容
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
@@ -24231,7 +24236,18 @@ function _applySafeData(raw) {
   if(data.heroTraitLevel && typeof data.heroTraitLevel === 'object') _heroTraitLevel = data.heroTraitLevel;
   // ★ 知識幣 & 背包
   if(typeof data.knowledgeCoins === 'number') _knowledgeCoins = data.knowledgeCoins;
-  if(data.playerBackpack && typeof data.playerBackpack === 'object') _playerBackpack = data.playerBackpack;
+  // ★ 優先讀字串化版本（Firebase merge 不會刪 key 的繞道）
+  if(typeof data.playerBackpack_s === 'string'){
+    try{ const _bp = JSON.parse(data.playerBackpack_s); if(_bp && typeof _bp==='object') _playerBackpack = _bp; }catch(e){}
+  } else if(data.playerBackpack && typeof data.playerBackpack === 'object') {
+    _playerBackpack = data.playerBackpack;
+  }
+  if(typeof data.heroStatInvested_s === 'string'){
+    try{ const _v = JSON.parse(data.heroStatInvested_s); if(_v && typeof _v==='object') _heroStatInvested = _v; }catch(e){}
+  }
+  if(typeof data.heroSkillLevels_s === 'string'){
+    try{ const _v = JSON.parse(data.heroSkillLevels_s); if(_v && typeof _v==='object') _heroSkillLevels = _v; }catch(e){}
+  }
   if(Array.isArray(data.presetTeams)) _presetTeams = data.presetTeams;
   // ★ 英雄肖像系統：載入玩家已解鎖與目前選擇，並套用到 HERO_IMGS
   if(data.heroPortraitUnlocked && typeof data.heroPortraitUnlocked === 'object')
@@ -31244,6 +31260,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1709', items:[
+    '真正解決商店賣出物品重整後復活的 Bug：原因是 Firebase 合併儲存會保留舊的 key，現在背包/投資素質/技能等級改用字串化方式儲存，強制完全覆蓋',
+  ] },
   { ver:'v1.0.20260418.1700', items:[
     '全面修補雲端同步時間差漏洞：戰鬥獎勵、答題獎勵、書本類物品使用（素質重置、技能重置、經驗書、升級書）、超越極限果實、素質點投資、戰敗安慰獎、全英雄收錄水晶，現在都會等雲端同步完成才結束動作（防止重整洗錢/洗物品/洗經驗）',
   ] },
@@ -31463,7 +31482,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1700';
+  const CURRENT_VERSION = 'v1.0.20260418.1709';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
