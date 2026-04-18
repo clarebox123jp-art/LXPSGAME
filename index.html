@@ -5607,6 +5607,10 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
     { id:'thunder_sky', name:'雷動九霄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
   ],
+  '武士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'shadow_slash', name:'瞬影絕斬', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+  ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
@@ -24412,6 +24416,9 @@ const BACKPACK_ITEM_DEF = {
   'mage_thunder_portrait': { name:'雷法師肖像：雷動九霄', icon:'⚡',
     desc:'全新繪製的雷法師肖像「雷動九霄」，購買後可在英雄圖鑑的雷法師詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'雷法師', portraitId:'thunder_sky', useLabel:'前往切換' },
+  'samurai_shadow_portrait': { name:'武士肖像：瞬影絕斬', icon:'🗾',
+    desc:'全新繪製的武士肖像「瞬影絕斬」，購買後可在英雄圖鑑的武士詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'武士', portraitId:'shadow_slash', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -24430,6 +24437,9 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'mage_thunder_portrait', name:'雷法師肖像：雷動九霄', icon:'⚡',
     desc:'全新繪製的雷法師替代肖像「雷動九霄」。購買後即永久解鎖，可在英雄圖鑑的雷法師詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'samurai_shadow_portrait', name:'武士肖像：瞬影絕斬', icon:'🗾',
+    desc:'全新繪製的武士替代肖像「瞬影絕斬」。購買後即永久解鎖，可在英雄圖鑑的武士詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -26140,6 +26150,14 @@ function _renderShopProducts(){
     div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:12px;'+
       'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;'+
       (_alreadyOwned ? 'opacity:0.6;' : '');
+    // ★ 肖像商品：加「預覽」按鈕
+    const _prodItemDef = BACKPACK_ITEM_DEF[prod.id] || {};
+    const _isPortrait = _prodItemDef.type === 'portrait';
+    const _previewBtn = _isPortrait
+      ? `<button onclick="_showPortraitPreview('${_prodItemDef.heroName}','${_prodItemDef.portraitId}')" style="padding:8px 18px;font-size:28px;font-weight:800;
+          background:rgba(60,80,160,0.35);border:2px solid #88aaff;color:#aaccff;
+          border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-top:4px;">🔍 預覽</button>`
+      : '';
     div.innerHTML = `
       <div style="font-size:78px;flex-shrink:0;">${prod.icon}</div>
       <div style="flex:1;min-width:0;">
@@ -26150,6 +26168,7 @@ function _renderShopProducts(){
             ? `今日剩餘：<span style="color:${(_shopDailyBought(prod.id)<prod.dailyLimit)?'#44ff88':'#ff6644'};font-weight:800;">${Math.max(0,prod.dailyLimit-_shopDailyBought(prod.id))} / ${prod.dailyLimit}</span> &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
             : `庫存：${_stockDisplay} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
           }</div>
+        ${_previewBtn}
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:8px;${_alreadyOwned?'opacity:0.4;pointer-events:none;':''}">
@@ -26200,6 +26219,36 @@ function _renderShopBagPanel(){
   const panel = document.getElementById('shop-bag-panel');
   if(!panel) return;
   _renderBackpackInto(panel, false); // false=不顯示使用按鈕
+}
+
+// ★ 肖像商品全圖預覽
+function _showPortraitPreview(heroName, portraitId){
+  const lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined' && HERO_PORTRAIT_LIBRARY[heroName]) || [];
+  const entry = lib.find(e => e.id === portraitId);
+  if(!entry){ _showInGameToast('找不到肖像資料', '#ff8844', 1500); return; }
+  // 移除既有預覽
+  const _old = document.getElementById('_portrait-preview-overlay');
+  if(_old) _old.remove();
+  const ov = document.createElement('div');
+  ov.id = '_portrait-preview-overlay';
+  ov.style.cssText = [
+    'position:fixed;inset:0;z-index:9950;background:rgba(0,0,0,0.92);',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;',
+    'padding:24px;cursor:pointer;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  ov.innerHTML = `
+    <div style="font-size:32px;font-weight:900;color:#ffcc44;text-align:center;">
+      ${heroName}：${entry.name}
+    </div>
+    <img src="${entry.url}" style="max-width:90vw;max-height:72vh;object-fit:contain;
+      border:3px solid rgba(255,200,80,0.7);border-radius:16px;
+      box-shadow:0 0 40px rgba(255,200,80,0.35);background:rgba(20,18,10,0.6);" />
+    <div style="font-size:24px;color:#aaa;text-align:center;">（點擊任意處關閉）</div>
+  `;
+  ov.onclick = () => ov.remove();
+  document.body.appendChild(ov);
+  try{ playSfx('sfx-sel', 0.5); }catch(e){}
 }
 
 function shopAdjQty(id, delta){
@@ -31260,6 +31309,10 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1713', items:[
+    '超商新增商品：武士替代肖像「瞬影絕斬」3000 知識幣（限購一次）',
+    '超商肖像商品新增「預覽」按鈕，可點擊開啟全圖預覽（點任意處關閉）',
+  ] },
   { ver:'v1.0.20260418.1709', items:[
     '真正解決商店賣出物品重整後復活的 Bug：原因是 Firebase 合併儲存會保留舊的 key，現在背包/投資素質/技能等級改用字串化方式儲存，強制完全覆蓋',
   ] },
@@ -31482,7 +31535,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1709';
+  const CURRENT_VERSION = 'v1.0.20260418.1713';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
