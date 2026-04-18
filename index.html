@@ -5605,11 +5605,11 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '雷法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'thunder_sky', name:'雷動九霄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+    { id:'thunder_sky', name:'雷動九霄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 15%' },
   ],
   '武士': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'shadow_slash', name:'瞬影絕斬', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+    { id:'shadow_slash', name:'瞬影絕斬', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 18%' },
   ],
   '占星師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -5617,7 +5617,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '守衛': [
     { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png' },
-    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 18%' },
   ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
@@ -6055,15 +6055,36 @@ const HERO_IMG_POS = {
   '小劇團員':  ['90% auto','center 30%'],
 };
 
+function _getCurPortraitObjPos(name){
+  try{
+    const choice = (typeof _heroPortraitChoice !== 'undefined' && _heroPortraitChoice[name]) || 'default';
+    if(choice !== 'default' && typeof HERO_PORTRAIT_LIBRARY !== 'undefined'){
+      const lib = HERO_PORTRAIT_LIBRARY[name];
+      if(lib){
+        const entry = lib.find(e => e.id === choice);
+        if(entry && entry.objPos) return entry.objPos;
+      }
+    }
+  }catch(e){}
+  return null;
+}
 function getHeroObjPos(name){
+  const _override = _getCurPortraitObjPos(name);
+  if(_override){
+    const parts = _override.split(' ');
+    return 'center ' + (parts[1] || parts[0] || '20%');
+  }
   const pos = HERO_IMG_POS[name] || ['160% auto','center 12%'];
   const parts = pos[1].split(' ');
   const vert = parts[1] || '12%';
   return 'center ' + vert;
 }
 function getHeroImgStyle(name){
+  const _override = _getCurPortraitObjPos(name);
   const pos = HERO_IMG_POS[name] || ['160% auto','center 12%'];
-  return 'background-size:'+pos[0]+';background-position:'+pos[1];
+  const _size = pos[0];
+  const _posStr = _override || pos[1];
+  return 'background-size:'+_size+';background-position:'+_posStr;
 }
 // ====== 極限爆發技能 DB ======
 // ★ 英雄角色簡介
@@ -31403,6 +31424,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1853', items:[
+    '調整武士「瞬影絕斬」、雷法師「雷動九霄」、守衛「鋼鐵誓約」新肖像在戰鬥卡與邀請卡的顯示位置，往下偏移 15% 讓臉部完整露出（原始肖像不受影響）',
+  ] },
   { ver:'v1.0.20260418.1834', items:[
     '超商新增商品：守衛替代肖像「鋼鐵誓約」3000 知識幣（限購一次，可於商品列預覽）',
   ] },
@@ -31666,7 +31690,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1834';
+  const CURRENT_VERSION = 'v1.0.20260418.1853';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -31683,7 +31707,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.1834';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.1853';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
