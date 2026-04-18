@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2114</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2207</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -3826,7 +3826,7 @@ body {
       <span style="font-size:22px;color:#aaa;margin-left:8px;margin-right:4px;">篩選：</span>
       <button class="hpsort-btn hpfilter-btn active" data-filter="all" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">全部</button>
       <button class="hpsort-btn hpfilter-btn" data-filter="dmg" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">⚔ 傷害</button>
-      <button class="hpsort-btn hpfilter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">💚 治療</button>
+      <button class="hpsort-btn hpfilter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">💚 回復</button>
       <button class="hpsort-btn hpfilter-btn" data-filter="ctrl" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">🛡 控場/坦克</button>
     </div>
     <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;justify-content:flex-start;-webkit-overflow-scrolling:touch;touch-action:pan-y;"></div>
@@ -3984,7 +3984,7 @@ body {
             <span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">篩選：</span>
             <button class="hpsort-btn hpick-filter-btn active" data-filter="all" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">全部</button>
             <button class="hpsort-btn hpick-filter-btn" data-filter="dmg" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">⚔ 傷害</button>
-            <button class="hpsort-btn hpick-filter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">💚 治療</button>
+            <button class="hpsort-btn hpick-filter-btn" data-filter="heal" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">💚 回復</button>
             <button class="hpsort-btn hpick-filter-btn" data-filter="ctrl" onclick="playSfx('sfx-sel',0.4);hpickFilterClick(this)">🛡 控場</button>
           </div>
         </div>
@@ -5700,7 +5700,7 @@ const HERO_DB = {
   '陰陽師':{hp:58,atk:5,sp:18,spd:9, s1:{n:'朱雀召喚',c:5,d:'傷害全體對手，治療減半2回合',fd:'依特技70%使敵方全體受到傷害，並陷入治療量減半的狀態2回合。'},s2:{n:'青龍召喚',c:5,d:'傷害全體對手，受傷+50%（2回合）',fd:'依特技70%使敵方全體受到傷害，並陷入受到傷害增加50%的狀態2回合。'}},
   '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP低於10的對手',fd:'使剩餘HP未滿10的1名任意對手強制倒下(無視有利狀態或寵物效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:3,d:'5次固定6點必中傷害',fd:'隨機攻擊對手5次，每次造成6固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
-  '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。升級效果：Lv.5 能量消耗-1、Lv.10 能量消耗-2（禁動回合固定 1 回合不變）。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。基礎可使用 1 次，每升 3 級 +1 次（Lv.3=2 次、Lv.6=3 次、Lv.9=4 次）。'}},
+  '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。'}},
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
   '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
@@ -7691,7 +7691,7 @@ function _rebuildPickNodes(){
   if(_hpickFilterKey !== 'all'){
     pool = pool.filter(n => {
       const b = HERO_DB[n]; if(!b) return true;
-      return _heroSkillType(n) === _hpickFilterKey;
+      return _heroSkillTypes(n).includes(_hpickFilterKey);
     });
   }
   // Sort
@@ -27977,6 +27977,50 @@ let _heroSortAsc = false; // false=遞減
 let _heroFilterKey = 'all';
 
 // 技能分類判斷
+// ★ 英雄分類覆寫表：用來精準定義每個英雄屬於哪些分類（多選）
+// 可選值：'dmg'（傷害）、'heal'（回復）、'ctrl'（控場）
+const HERO_CATEGORIES_OVERRIDE = {
+  '占星師':      ['heal'],
+  '武鬥家':      ['dmg'],
+  '陰陽師':      ['dmg','ctrl'],
+  '學者':        ['dmg','ctrl'],
+  '光法師':      ['dmg','heal'],
+  '吸血鬼':      ['dmg','heal'],
+  '弦樂團員':    ['dmg','heal'],
+  '動物學家':    ['ctrl'],
+  '神射手':      ['dmg','ctrl'],
+  '大力士':      ['dmg','ctrl'],
+  '軍師':        ['ctrl'],
+  '直笛團員':    ['heal','ctrl'],
+  '程式設計師':  ['dmg','heal','ctrl'],
+  '時空法師':    ['ctrl'],
+};
+
+// ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
+const HERO_HEX_OVERRIDE = {
+  '占星師':      { heal: 9, ctrl: 2 },
+  '武鬥家':      { heal: 1, ctrl: 1 },
+  '陰陽師':      { heal: 1, ctrl: 8 },
+  '學者':        { heal: 1, ctrl: 8 },
+  '光法師':      { heal: 8, ctrl: 2 },
+  '吸血鬼':      { heal: 7, ctrl: 2 },
+  '弦樂團員':    { heal: 8, ctrl: 2 },
+  '動物學家':    { heal: 2, ctrl: 9 },
+  '神射手':      { heal: 1, ctrl: 7 },
+  '大力士':      { heal: 1, ctrl: 7 },
+  '軍師':        { heal: 2, ctrl: 9 },
+  '直笛團員':    { heal: 7, ctrl: 7 },
+  '程式設計師':  { heal: 6, ctrl: 6 },
+  '時空法師':    { heal: 1, ctrl: 10 },
+};
+
+// ★ 回傳英雄的分類陣列（可有多個）
+function _heroSkillTypes(name){
+  if(HERO_CATEGORIES_OVERRIDE[name]) return HERO_CATEGORIES_OVERRIDE[name].slice();
+  // 沒有覆寫 → 沿用舊的單一分類邏輯
+  return [_heroSkillType(name)];
+}
+
 function _heroSkillType(name) {
   const b = HERO_DB[name];
   if(!b) return 'other';
@@ -28008,21 +28052,15 @@ function _heroSkillType(name) {
     '朱雀召喚','青龍召喚',
     // 坦克技能
     '挺身守護','仁王挺立','金鐘罩','不動如山','忠犬守護','筍之守護','筍之刺'
-    // 排除：火焰球/地獄之火/冰凍之矛/暴風雪/麻痺落雷/潛行暗殺/定時炸彈/刀背擊
-    // 以上雖附帶負面狀態，但主效果是傷害，歸為傷害類
   ]);
 
   const ctrlCount = skills.filter(s=>CTRL_SK.has(s)).length;
-
-  // 有兩招以上控場技能 → 控場優先
   if(ctrlCount >= 2) return 'ctrl';
 
-  // 角色身份為控場/坦克（即使只有一招控場技能）
   const CTRL_ROLES = ['守衛','武鬥家','大力士','小力','幼兒園小孩',
     '時空法師','冰法師','神射手','舞者','警長','陰陽師','電腦繪圖師','直笛團員','小劇團員'];
   if(CTRL_ROLES.includes(name)) return 'ctrl';
 
-  // 有一招控場技能的純輸出角色仍判為dmg
   return 'dmg';
 }
 
@@ -28069,7 +28107,7 @@ function _buildHeroGrid() {
   if(_heroFilterKey !== 'all') {
     filtered = allKnown.filter(n => {
       if(!unlockedSet.has(n)) return false; // 未解鎖不顯示在篩選中
-      return _heroSkillType(n) === _heroFilterKey;
+      return _heroSkillTypes(n).includes(_heroFilterKey);
     });
     // 保留已篩選英雄，加上未解鎖在後面
     const locked = allKnown.filter(n=>!unlockedSet.has(n));
@@ -28268,6 +28306,13 @@ function _renderHeroDetail(name, box) {
   healScore = Math.min(10, Math.round(healScore));
   ctrlScore = Math.min(10, Math.round(ctrlScore));
 
+  // ★ 六邊形覆寫：若此英雄有指定的 heal/ctrl 值，則優先採用
+  if(typeof HERO_HEX_OVERRIDE !== 'undefined' && HERO_HEX_OVERRIDE[name]){
+    const ov = HERO_HEX_OVERRIDE[name];
+    if(typeof ov.heal === 'number') healScore = ov.heal;
+    if(typeof ov.ctrl === 'number') ctrlScore = ov.ctrl;
+  }
+
   // 六維數值（最大值正規化，最低顯示1）
   const maxStat = 80;
   function _dimVal(raw) { return Math.max(1, Math.min(10, Math.round(raw))); }
@@ -28276,7 +28321,7 @@ function _renderHeroDetail(name, box) {
     {label:'攻',  key:'atk', val: _dimVal((hd.atk + (inv.atk||0)) / 20     * 10)},
     {label:'特',  key:'sp',  val: _dimVal((hd.sp  + (inv.sp ||0)) / 20     * 10)},
     {label:'速',  key:'spd', val: _dimVal((hd.spd + (inv.spd||0)) / 15     * 10)},
-    {label:'治',  key:'heal',val: Math.max(1, healScore)},
+    {label:'回',  key:'heal',val: Math.max(1, healScore)},
     {label:'控',  key:'ctrl',val: Math.max(1, ctrlScore)},
   ];
 
@@ -31993,6 +32038,17 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2207', items:[
+    '英雄選擇篩選分類系統大改版：「💚 治療」按鈕改名為「💚 回復」（英雄圖鑑頁 + 冒險選英雄頁皆同步）',
+    '六邊形雷達圖標籤「治」改為「回」，與新分類名稱對應',
+    '新增 HERO_CATEGORIES_OVERRIDE 系統，支援英雄同時屬於多個分類（例：程式設計師 = 傷害/回復/控場三類）',
+    '時空法師：六邊形定位調整為強力控場型，回復降為 1（原本被錯認為有治療能力）',
+    '重新定位 13 位英雄分類：占星師（回復）、武鬥家（攻擊）、陰陽師/學者/神射手/大力士（傷害+控場）、光法師/吸血鬼/弦樂團員（傷害+回復）、動物學家/軍師（控場）、直笛團員（回復+控場）、程式設計師（傷害+回復+控場）、時空法師（控場）',
+    '同步調整這 13 位英雄的六邊形「回」和「控」向度數值，確保雷達圖定位與分類一致',
+  ] },
+  { ver:'v1.0.20260418.2137', items:[
+    '時空法師技能說明文字清除升級效果描述（升級效果只在英雄頁的升級表格呈現，避免重複）',
+  ] },
   { ver:'v1.0.20260418.2114', items:[
     '超商新增商品：時空法師替代肖像「時光迴廊」3000 知識幣（限購一次，可於商品列預覽）',
   ] },
@@ -32311,7 +32367,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2114';
+  const CURRENT_VERSION = 'v1.0.20260418.2207';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32328,7 +32384,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2114';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2207';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
