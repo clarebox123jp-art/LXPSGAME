@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2103</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2114</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5623,6 +5623,10 @@ const HERO_PORTRAIT_LIBRARY = {
   '守衛': [
     { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png' },
     { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 18%' },
+  ],
+  '時空法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'time_corridor', name:'時光迴廊', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
   ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
@@ -24965,6 +24969,9 @@ const BACKPACK_ITEM_DEF = {
   'guard_iron_portrait': { name:'守衛肖像：鋼鐵誓約', icon:'🛡️',
     desc:'全新繪製的守衛肖像「鋼鐵誓約」，購買後可在英雄圖鑑的守衛詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'守衛', portraitId:'iron_oath', useLabel:'前往切換' },
+  'timemage_corridor_portrait': { name:'時空法師肖像：時光迴廊', icon:'⌛',
+    desc:'全新繪製的時空法師肖像「時光迴廊」，購買後可在英雄圖鑑的時空法師詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'時空法師', portraitId:'time_corridor', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -24992,6 +24999,9 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'guard_iron_portrait', name:'守衛肖像：鋼鐵誓約', icon:'🛡️',
     desc:'全新繪製的守衛替代肖像「鋼鐵誓約」。購買後即永久解鎖，可在英雄圖鑑的守衛詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'timemage_corridor_portrait', name:'時空法師肖像：時光迴廊', icon:'⌛',
+    desc:'全新繪製的時空法師替代肖像「時光迴廊」。購買後即永久解鎖，可在英雄圖鑑的時空法師詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -31983,6 +31993,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2114', items:[
+    '超商新增商品：時空法師替代肖像「時光迴廊」3000 知識幣（限購一次，可於商品列預覽）',
+  ] },
   { ver:'v1.0.20260418.2103', items:[
     '時間暫停禁動回合數改回固定 1 回合（移除升級加回合的效果），避免後期過強',
     '升級效果只剩下能量消耗減少：Lv.5 消耗-1、Lv.10 消耗-2（基礎 6🔷 → Lv.5 為 5🔷 → Lv.10 為 4🔷）',
@@ -32298,7 +32311,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2103';
+  const CURRENT_VERSION = 'v1.0.20260418.2114';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32315,7 +32328,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2103';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2114';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
