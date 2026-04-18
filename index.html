@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2341</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2348</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4769,7 +4769,7 @@ function healParticles(h){
   ringFX(h,'#3ec87a',500);
 }
 
-// ★ 恢復HP時在卡片圖片上疊加治療GIF特效（~900ms）
+// ★ 恢復HP時在卡片圖片上疊加治療GIF特效（~1200ms）
 function _healGifOnCard(h){
   if(!h) return;
   const el = document.getElementById('card-'+h.side+'-'+h.pos);
@@ -4781,12 +4781,12 @@ function _healGifOnCard(h){
   img.className = '_heal-gif-fx';
   // 加 timestamp 確保 GIF 每次從頭播放
   img.src = 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%B2%BB%E7%99%82%E7%89%B9%E6%95%88.gif?t='+Date.now();
-  img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:20;opacity:0.85;mix-blend-mode:screen;';
+  img.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:200;opacity:0.9;';
   // 確保 el 為相對定位容器
   const cs = getComputedStyle(el);
   if(cs.position === 'static') el.style.position = 'relative';
   el.appendChild(img);
-  setTimeout(()=>{ if(img.parentNode) img.remove(); }, 900);
+  setTimeout(()=>{ if(img.parentNode) img.remove(); }, 1200);
 }
 
 // ★ 升級特效 GIF（疊在升級面板的角色圖片上）
@@ -12304,13 +12304,13 @@ function doHeal(target, rawAmt, opts={}){
   const actual=target.curHp-old;
   if(actual>0){
     showPopup(target,'+'+actual,'heal'); sndHeal(); playSfx('sfx-heal',0.6);
-    // ★ 在卡片圖片上疊加治療 GIF 特效
-    try{ _healGifOnCard(target); }catch(e){}
     // 統計：只記錄對友方（同陣營）的治療
     const _healer=G&&(G.activeChar||opts.actor);
     if(_healer && _healer.side === target.side) statTrack(_healer,'heal',actual);
   }
   renderCard(target);
+  // ★ 在卡片圖片上疊加治療 GIF 特效（必須在 renderCard 之後，否則會被 innerHTML 覆蓋）
+  if(actual>0){ try{ _healGifOnCard(target); }catch(e){} }
   return actual;
 }
 function _reviveFX(h){
@@ -32269,6 +32269,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2348', items:[
+    '修正治療 GIF 特效沒有顯示的問題（之前被 renderCard 的 innerHTML 覆蓋），現在改在 renderCard 之後加入；同時把 z-index 提高到 200、移除 mix-blend-mode、提高不透明度、延長到 1.2 秒',
+  ] },
   { ver:'v1.0.20260418.2341', items:[
     '魔物圖鑑：強制隱藏肖像切換面板（之前從英雄圖鑑切過來時會殘留），另外清除英雄頁可能殘留的灰階濾鏡',
   ] },
@@ -32635,7 +32638,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2341';
+  const CURRENT_VERSION = 'v1.0.20260418.2348';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32652,7 +32655,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2341';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2348';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
