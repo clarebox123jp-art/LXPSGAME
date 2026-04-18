@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2014</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2026</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -20278,14 +20278,12 @@ function startAdventureGame(stage){
 // ── 標記 BOSS 卡片樣式（renderField 後呼叫）
 function markAdventureBossCards(){
   if(!_adventureMode || !G.p2) return;
-  const bossTeam = ADV_BOSS_TEAMS[_adventureStage];
-  if(!bossTeam) return;
+  const _mainBossNames = ['九尾空貓怪','杏花妖'];
   G.p2.forEach(h=>{
     const cardEl = document.querySelector(`.card[data-side="p2"][data-pos="${h.pos}"]`)
                 || document.querySelector(`#card-p2-${h.pos}`);
     if(!cardEl) return;
-    const bossEntry = bossTeam[h.pos];
-    if(bossEntry && h.name === '九尾空貓怪'){
+    if(_mainBossNames.includes(h.name)){
       cardEl.classList.add('boss-main-card');
     } else {
       cardEl.classList.add('boss-minion-card');
@@ -27422,11 +27420,50 @@ function _applyPresetTeam(slotIdx){
   if(isAdvMode){
     document.getElementById('skill-replace-confirm').style.display = 'none';
     document.getElementById('skill-replace-confirm-adv').style.display = '';
-    const bossTeam = ADV_BOSS_TEAMS[_adventureStage];
+    // ★ 依玩家選擇的 BOSS variant 切換陣容（預設陣容路徑也要支援換路線）
+    let _variant2 = null;
+    try{
+      const variants2 = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
+      if(variants2.length){
+        const idx2 = (window._advSelectedVariantIdx||0) % variants2.length;
+        _variant2 = variants2[idx2];
+      }
+    }catch(e){}
+    window._currentBossVariantInfo = _variant2;
+    let bossTeam;
+    if(_variant2 && _variant2.id === 'apricot'){
+      bossTeam = (window._advApricotPreviewTeam && window._advApricotPreviewTeam.length)
+        ? window._advApricotPreviewTeam
+        : (typeof _buildApricotTeam === 'function' ? _buildApricotTeam() : ADV_BOSS_TEAMS[_adventureStage]);
+    } else {
+      bossTeam = ADV_BOSS_TEAMS[_adventureStage];
+    }
     G.p2 = bossTeam.map((b,i)=>{
       const h = newHero(b.name,'p2',i);
       h.element = b.element;
       if(typeof applyElemBonus==='function') applyElemBonus(h);
+      // ★ 被魅惑的玩家英雄：套用玩家圖鑑中的素質/等級/技能/爆發升級
+      if(b.charmedFromHero){
+        const _src = b.charmedFromHero;
+        h._displayName = '被魅惑的' + _src;
+        h._isCharmedEnemy = true;
+        const _inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested[_src]) || {};
+        if(_inv.hp) { h.hp += _inv.hp; h.curHp = h.hp; }
+        if(_inv.atk) h.atk += _inv.atk;
+        if(_inv.sp)  h.sp  += _inv.sp;
+        if(_inv.spd) h.spd += _inv.spd;
+        const _lv = (typeof _heroLevels !== 'undefined' && _heroLevels[_src]) || 1;
+        if(_lv > 1){
+          const _bonusPct = (_lv - 1) * 0.02;
+          const _bonusHp = Math.round(h.hp * _bonusPct);
+          h.hp += _bonusHp;
+          h.curHp = h.hp;
+        }
+        h._skLv = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[_src])
+          ? { s1: (_heroSkillLevels[_src].s1||0), s2: (_heroSkillLevels[_src].s2||0) }
+          : { s1:0, s2:0 };
+        h._burstLvAdv = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels[_src]) || 0;
+      }
       return h;
     });
     _showInGameToast(`✅ 套用陣容「${pt.name||'預設陣容'}」！`, '#cc99ff', 2000);
@@ -31804,6 +31841,10 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2026', items:[
+    '修正使用「預設陣容」啟動冒險時，即使選了杏花妖路線也會出現九尾空貓怪的 Bug（預設陣容走了不同的程式碼路徑，沒有套用 variant 選擇）',
+    '修正杏花妖在戰鬥場景中被誤標記成小怪卡片樣式的 Bug（主 BOSS 大卡片現已支援雙 BOSS）',
+  ] },
   { ver:'v1.0.20260418.2014', items:[
     '冒險模式英雄選擇頁：BOSS 陣容預覽左邊新增「🔀 換路線」按鈕，每按一次切換成不同 BOSS 陣容（九尾空貓怪 ↔ 杏花妖）',
     '杏花妖陣容每次切換會重新抽取 2 位被魅惑的玩家英雄作為左右小怪',
@@ -32090,7 +32131,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2014';
+  const CURRENT_VERSION = 'v1.0.20260418.2026';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32107,7 +32148,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2014';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2026';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
