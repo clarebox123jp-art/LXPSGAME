@@ -21,7 +21,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot }
+  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -204,11 +204,107 @@
     } catch(e) { console.error('刪好友失敗', e); return false; }
   };
 
+  // ══ 玩家人數統計系統（總玩家數 + 今日上線 + 本週新增玩家 + 累計冒險次數）══
+  // 使用台灣時區（UTC+8）做日期 key
+  function _getTodayKeyTW() {
+    try {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+    } catch(e) {
+      // fallback：手動 +8 小時再取 UTC 日期
+      const d = new Date(Date.now() + 8*60*60*1000);
+      return d.toISOString().slice(0, 10);
+    }
+  }
+
+  // 取得台灣時區「本週週一」的日期字串（YYYY-MM-DD），作為本週 key
+  function _getThisWeekMondayKeyTW() {
+    // Date.now() 是 UTC 毫秒；+8h 後當作台灣時間來計算週一
+    const twMs = Date.now() + 8*3600*1000;
+    const tw = new Date(twMs);
+    // day: 0=Sun, 1=Mon, ..., 6=Sat（getUTCDay 避開本機時區干擾）
+    const day = tw.getUTCDay();
+    const mondayOffset = (day === 0) ? -6 : (1 - day);
+    const monday = new Date(twMs + mondayOffset * 86400000);
+    return monday.toISOString().slice(0, 10);
+  }
+
+  // 登入時觸發：若為新玩家 → totalPlayers+1、newPlayers_週一+1；若今日首次上線 → active_今日+1
+  window._fbTrackPlayerStats = async function(uid) {
+    if(!uid) return;
+    try {
+      const todayKey = _getTodayKeyTW();
+      const weekKey  = _getThisWeekMondayKeyTW();
+      const playerRef = doc(_fbDb, 'players', uid);
+      const playerSnap = await getDoc(playerRef);
+      const isNewPlayer = !playerSnap.exists();
+      const lastActiveDate = playerSnap.exists() ? (playerSnap.data().lastActiveDate || '') : '';
+      const isFirstLoginToday = lastActiveDate !== todayKey;
+
+      const statsUpdates = {};
+      if(isNewPlayer) {
+        statsUpdates.totalPlayers = increment(1);
+        statsUpdates['newPlayers_' + weekKey] = increment(1);
+      }
+      if(isFirstLoginToday) statsUpdates['active_' + todayKey] = increment(1);
+
+      if(Object.keys(statsUpdates).length > 0) {
+        const statsRef = doc(_fbDb, 'stats', 'global');
+        await setDoc(statsRef, statsUpdates, { merge: true });
+      }
+      if(isFirstLoginToday) {
+        await setDoc(playerRef, { lastActiveDate: todayKey }, { merge: true });
+      }
+    } catch(e) {
+      console.warn('[人數統計] 更新失敗（權限不足或網路問題）', e);
+    }
+  };
+
+  // 冒險次數：每次玩家按「整裝出發」啟動一次冒險時呼叫，全域計數 +1
+  window._fbIncrementAdventureCount = async function() {
+    try {
+      const statsRef = doc(_fbDb, 'stats', 'global');
+      await setDoc(statsRef, { totalAdventures: increment(1) }, { merge: true });
+    } catch(e) {
+      console.warn('[人數統計] 冒險次數 +1 失敗', e);
+    }
+  };
+
+  // 即時監聽統計：UI 元件用此更新顯示
+  window._fbWatchStats = function(callback) {
+    try {
+      const statsRef = doc(_fbDb, 'stats', 'global');
+      return onSnapshot(statsRef, (snap) => {
+        const todayKey = _getTodayKeyTW();
+        const weekKey  = _getThisWeekMondayKeyTW();
+        if(!snap.exists()) {
+          callback({ total: 0, todayActive: 0, weekNew: 0, totalAdventures: 0 });
+          return;
+        }
+        const d = snap.data() || {};
+        callback({
+          total:            d.totalPlayers || 0,
+          todayActive:      d['active_' + todayKey] || 0,
+          weekNew:          d['newPlayers_' + weekKey] || 0,
+          totalAdventures:  d.totalAdventures || 0,
+        });
+      }, (err) => {
+        console.warn('[人數統計] 監聽錯誤', err);
+        callback({ total: 0, todayActive: 0, weekNew: 0, totalAdventures: 0 });
+      });
+    } catch(e) {
+      console.warn('[人數統計] 啟動監聽失敗', e);
+      callback({ total: 0, todayActive: 0, weekNew: 0, totalAdventures: 0 });
+      return () => {};
+    }
+  };
+
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
     if(user) {
       window._fbUser = user;
       window._gUserId = user.uid; // ★ 確保 _gUserId 同步
+      // ★ 更新玩家統計（新玩家計數 + 今日上線計數）
+      try { await window._fbTrackPlayerStats(user.uid); } catch(_e) {}
       // ★ 同步 email 到 Firestore（供好友搜尋）
       try {
         const _nick = localStorage.getItem('lxps_nickname_' + user.uid);
@@ -3468,6 +3564,44 @@ body {
   </div>
   <div id="overlay">
     <canvas id="overlay-canvas"></canvas>
+    <!-- ★ 玩家人數即時統計：首頁正上方 -->
+    <div id="player-stats-bar" style="
+      position:absolute; top:12px; left:50%; transform:translateX(-50%);
+      z-index:20; display:flex; align-items:center; gap:14px;
+      padding:10px 22px;
+      background:rgba(0,0,0,0.72); backdrop-filter:blur(8px);
+      border:1.5px solid rgba(212,168,67,0.55);
+      border-radius:30px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5), 0 0 24px rgba(212,168,67,0.12);
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+      font-weight:700; letter-spacing:0.5px;
+      pointer-events:none; flex-wrap:wrap; justify-content:center;
+      max-width:calc(100% - 24px);
+    ">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:18px;">🟢</span>
+        <span style="font-size:13px;color:#aaddff;">今日上線</span>
+        <span id="player-stats-today" style="font-size:22px;color:#66e6ff;text-shadow:0 0 8px rgba(102,230,255,0.5);min-width:24px;text-align:right;">—</span>
+      </div>
+      <div style="width:1px;height:22px;background:rgba(212,168,67,0.4);"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:18px;">✨</span>
+        <span style="font-size:13px;color:#ccffaa;">本週新增</span>
+        <span id="player-stats-weeknew" style="font-size:22px;color:#88ff88;text-shadow:0 0 8px rgba(136,255,136,0.5);min-width:24px;text-align:right;">—</span>
+      </div>
+      <div style="width:1px;height:22px;background:rgba(212,168,67,0.4);"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:18px;">👥</span>
+        <span style="font-size:13px;color:#ffddaa;">總玩家數</span>
+        <span id="player-stats-total" style="font-size:22px;color:#ffd966;text-shadow:0 0 8px rgba(255,217,102,0.5);min-width:24px;text-align:right;">—</span>
+      </div>
+      <div style="width:1px;height:22px;background:rgba(212,168,67,0.4);"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:18px;">⚔️</span>
+        <span style="font-size:13px;color:#ffaacc;">累計冒險</span>
+        <span id="player-stats-adventures" style="font-size:22px;color:#ff99cc;text-shadow:0 0 8px rgba(255,153,204,0.5);min-width:24px;text-align:right;">—</span>
+      </div>
+    </div>
     <div class="title-wrap">
       <div class="title-zh">小英雄大對抗</div>
       <div class="title-en">力行小學生與來自異世界的小夥伴</div>
@@ -20508,6 +20642,8 @@ function startAdventureGame(stage){
   }catch(e){}
   try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
+  // ★ 全域統計：冒險次數 +1（若未登入則跳過）
+  try{ if(window._fbIncrementAdventureCount) window._fbIncrementAdventureCount(); }catch(e){}
   // ★ 防止與鬥技場衝突：重設 G 的冒險無關狀態
   if(typeof G !== 'undefined' && G){
     G.pets = [];
@@ -32193,6 +32329,46 @@ function makeRadar(dims, size) {
     </svg>`;
   }
 
+// ══════════════════════════════════════════════
+// ★ 首頁玩家人數即時統計：啟動監聽
+// ══════════════════════════════════════════════
+(function _initPlayerStatsWatcher(){
+  // Firebase 可能晚一點才載入（module script 非同步），輪詢等它就緒
+  let _tries = 0;
+  const _maxTries = 40; // 最多 20 秒
+  const _fmt = (n) => {
+    if(typeof n !== 'number' || isNaN(n)) return '—';
+    if(n >= 10000) return (n/1000).toFixed(1) + 'k';
+    return n.toLocaleString();
+  };
+  const _render = (stats) => {
+    const elToday    = document.getElementById('player-stats-today');
+    const elWeekNew  = document.getElementById('player-stats-weeknew');
+    const elTotal    = document.getElementById('player-stats-total');
+    const elAdv      = document.getElementById('player-stats-adventures');
+    if(elToday)   elToday.textContent   = _fmt(stats && stats.todayActive);
+    if(elWeekNew) elWeekNew.textContent = _fmt(stats && stats.weekNew);
+    if(elTotal)   elTotal.textContent   = _fmt(stats && stats.total);
+    if(elAdv)     elAdv.textContent     = _fmt(stats && stats.totalAdventures);
+  };
+  const _start = () => {
+    if(typeof window._fbWatchStats !== 'function'){
+      if(_tries++ < _maxTries) setTimeout(_start, 500);
+      return;
+    }
+    try {
+      // 取消前一次訂閱（避免重覆）
+      if(window._playerStatsUnsub) window._playerStatsUnsub();
+      window._playerStatsUnsub = window._fbWatchStats(_render);
+    } catch(e) { console.warn('[人數統計] 啟動失敗', e); }
+  };
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    setTimeout(_start, 300);
+  } else {
+    window.addEventListener('DOMContentLoaded', () => setTimeout(_start, 300));
+  }
+})();
+
 window._advSystemReady = true;
 </script>
 
@@ -32309,6 +32485,18 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0752', items:[
+    '首頁玩家人數統計橫條擴充為 4 項統計：🟢今日上線、✨本週新增、👥總玩家數、⚔️累計冒險',
+    '「本週新增」= 本週（週一至週日，台灣時區）首次加入的不重複玩家數，每週一 00:00 自動歸零',
+    '「累計冒險」= 自遊戲上線以來，所有玩家按下「整裝出發」啟動冒險的總次數（全球共用累積）',
+    '四項統計均以 Firestore atomic increment 更新，所有裝置即時同步',
+  ] },
+  { ver:'v1.0.20260419.0738', items:[
+    '首頁正上方新增「玩家人數即時統計」橫條：顯示「🟢 今日上線」與「👥 總玩家數」，即時從 Firebase 同步更新',
+    '「總玩家數」= 累計所有曾用 Google 登入過遊戲的不重複帳號數',
+    '「今日上線」= 今日（台灣時區）至少登入過一次的不重複帳號數，每日 00:00 自動歸零重新計算',
+    '新玩家首次登入自動 +1 總玩家數；既有玩家當日首次登入自動 +1 今日上線。資料儲存於 Firestore 的 stats/global 文件，採 atomic increment 避免競爭條件',
+  ] },
   { ver:'v1.0.20260419.0701', items:[
     '九尾空貓怪爆發「焰尾九連擊」特效改為播放一次（原本連播兩次），避免特效拖太久影響戰鬥節奏',
   ] },
