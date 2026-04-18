@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2337</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2341</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -31123,7 +31123,15 @@ function openMonsterDetail(name) {
   if(imgEl&&avEl){
     if(img){ imgEl.src=img; imgEl.style.display='block'; avEl.style.display='none'; }
     else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; avEl.style.fontSize='96px'; }
+    // 清除英雄頁可能殘留的 grayscale filter
+    imgEl.style.filter = '';
+    avEl.style.filter = '';
   }
+  // ★ 魔物沒有可切換的肖像，強制隱藏肖像切換面板（避免從英雄頁切過來時殘留）
+  try{
+    const _sw = document.getElementById('hero-detail-portrait-switcher');
+    if(_sw) _sw.style.display = 'none';
+  }catch(e){}
 
   const trHtml = trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
@@ -32261,6 +32269,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2341', items:[
+    '魔物圖鑑：強制隱藏肖像切換面板（之前從英雄圖鑑切過來時會殘留），另外清除英雄頁可能殘留的灰階濾鏡',
+  ] },
   { ver:'v1.0.20260418.2337', items:[
     '爆發技能新增 GIF 特效：最終殿堂（聖騎士）',
   ] },
@@ -32624,7 +32635,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2337';
+  const CURRENT_VERSION = 'v1.0.20260418.2341';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32641,7 +32652,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2337';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2341';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
