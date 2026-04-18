@@ -3346,7 +3346,7 @@ body {
 <audio id="sfx-quiz-correct" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="sfx-quiz-wrong"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="bgm-boss-01" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a" loop></audio>
-<audio id="bgm-boss-apricot" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96BGM.mp3" loop></audio>
+<audio id="bgm-boss-apricot" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96BGM2.m4a" loop></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260419.0000</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260419.0052</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5750,7 +5750,7 @@ const HERO_DB = {
   s2:{n:'睡覺功',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'解除自己身上所有不利狀態，並恢復最大HP的10%（約50HP）。'}
 },
 '杏花妖':{hp:680,atk:17,sp:24,spd:10,exp:75,
-  s1:{n:'杏林春霧',c:3,d:'以特技×150%恢復HP%最低1名友方（可復活）',fd:'召喚滿園杏花春霧滋養同伴，以特技值的150%為 HP 百分比最低的 1 名友方恢復 HP（可復活，以50%HP復活）。'},
+  s1:{n:'杏林春霧',c:3,d:'以特技×150%優先復活倒下友方，並附加30護盾',fd:'召喚滿園杏花春霧滋養同伴，優先以特技值的150%為倒下的友方復活（以50%HP復活）；若無倒下友方則為 HP 百分比最低的 1 名友方恢復 HP。無論治療或復活對象都會獲得可抵擋 30 傷害的護盾（取較大值覆蓋，不疊加）。'},
   s2:{n:'落英繽紛',c:4,d:'以特技對全體敵人造成傷害',fd:'漫天杏花紛落如刀似刃，用特技值對全體存活的敵人造成草屬性傷害。'}
 },
 '綠竹筍小妖':{hp:180,atk:9,sp:10,spd:5,exp:20,
@@ -6042,7 +6042,7 @@ const BURST_UPGRADE_DEF = {
   '弦樂團員':  { rows: [[0,'特技×0.4 全體3~5次（必中）+復活'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
   '小劇團員':  { rows: [[0,'依倒下人數×3回能量，能量提升全隊攻/技'],[1,'提升+10%'],[2,'提升+20%'],[3,'提升+30%'],[4,'提升+40%']] },
   '九尾空貓怪':{ rows: [[0,'特技×0.5 × 9次連擊+地獄之火'],[1,'特技×0.55'],[2,'特技×0.6'],[3,'特技×0.65'],[4,'特技×0.7']] },
-  '杏花妖':    { rows: [[0,'特技×1.5 全體傷害 + 50%魅惑 1回合'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
+  '杏花妖':    { rows: [[0,'特技×1.5 全體傷害 + 75%魅惑 1回合'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   '煉金術師':  { rows: [[0,'抽3張物品牌，友方使用後保留'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
   // ── 特殊效果英雄 ──
   '聖騎士':    { rows: [[0,'全隊無敵1回合，治療40%HP'],[1,'治療45%HP'],[2,'治療50%HP'],[3,'治療55%HP'],[4,'治療60%HP']] },
@@ -6230,7 +6230,7 @@ const BURST_DB = {
   '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下的所有角色（敵我雙方）×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
   // ── BOSS 爆發技能 ──
   '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
-  '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，50%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有50%機率使每一名敵人陷入「魅惑」狀態1回合。'},
+  '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有75%機率使每一名敵人陷入「魅惑」狀態1回合（下一回合自動普攻自己隊友）。'},
 
 };
 
@@ -8048,7 +8048,7 @@ const HERO_TRAIT = {
   '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療（每級+5%）；成為攻擊目標機率+40%（每級+5%）',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
-  '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時30%機率魅惑對手1回合',fd:'受到傷害時有30%機率使攻擊者陷入「魅惑」狀態1回合，下一回合自動普通攻擊自己的隊友。' },
+  '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
   '綠竹筍小妖': { name:'竹甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
   '茶葉精靈':   { name:'茶癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
 };
@@ -10017,6 +10017,10 @@ function execBurst(side, pos){
   G.energy[side]=0;
   h._burstUsed = (h._burstUsed||0) + 1;  // ★ 最多2次
   h.acted=true;
+  // ★ log 剩餘次數，讓玩家清楚看到
+  const _isBossHero2 = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name);
+  const _remain = _isBossHero2 ? '∞' : Math.max(0, 2 - h._burstUsed);
+  log(`⚡ [${h.name}] 發動極限爆發：${bd.n}！（剩餘次數：${_remain}）`);
   // 保存被插隊的角色（如果有），爆發後要恢復其行動權
   const _interrupted = G.interruptTarget || null;
   // 重置插隊狀態
@@ -10024,7 +10028,6 @@ function execBurst(side, pos){
   G.interruptTarget=null;
   G.pendingTarget=null; pendingCb=null;
   G.activeChar=h;
-  log(`⚡ [${h.name}] 發動極限爆發：${bd.n}！`);
   playSfx('sfx-burst',1.0);
   // 全螢幕爆發特效
   flashScreen('rgba(255,150,0,1)',600);
@@ -10032,6 +10035,7 @@ function execBurst(side, pos){
   bannerFX(h,'⚡'+bd.n,'#ffcc00',1500);
   updateBurstEffects();
   updateUI();
+  renderCard(h);
   // 需求4：角色圖片全螢幕浮現 + 技能名稱震動發光
   _showBurstCinematic(h, bd);
   // 執行爆發技能效果（延遲1.2秒等動畫）
@@ -10594,16 +10598,21 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     zoneFlash(opp,'rgba(150,200,255,0.4)',700);
   }
   if(name==='電腦繪圖師'){
-    log(`[${h.name}] 萬物創生！特技500%傷害平均分攤！`);
-    playSfx('sfx-burst',0.9); playSfx('sfx-explode',0.8);
     const _foes5=G[opp].filter(x=>x.curHp>0);
     if(_foes5.length){
+      log(`[${h.name}] 萬物創生！特技500%傷害平均分攤！`);
+      playSfx('sfx-burst',0.9); playSfx('sfx-explode',0.8);
       const _totalDmg=Math.floor(spv*5.0*_burstMult);
       const _each=Math.max(1,Math.floor(_totalDmg/_foes5.length));
       _foes5.forEach(t=>{ doDmg(t,_each,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true}); });
       bannerFX(h,'萬物創生！','#ff88cc',1200);
       flashScreen('rgba(255,100,200,1)',450);
       zoneFlash(opp,'rgba(255,80,180,0.4)',700);
+    } else {
+      // ★ 無存活敵方：跳過傷害階段並顯示提示
+      log(`[${h.name}] 萬物創生！（敵方已無存活目標，直接抽取物品卡）`);
+      bannerFX(h,'萬物創生！','#ff88cc',1200);
+      playSfx('sfx-burst',0.9);
     }
     // ★ 抽3張物品卡，正確處理背包滿和裝備卡情況
     const _drawn3=[];
@@ -10780,8 +10789,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(f.curHp<=0) return;
         doDmg(f, _dmg, {actor:h, isSkill:true, elem:'grass'});
         renderCard(f);
-        // 50% 魅惑 1回合
-        if(f.curHp>0 && !hasStatus(f,'charm') && !hasBuff(f,'ctrlImmune') && !hasBuff(f,'statusImmune') && Math.random()<0.5){
+        // 75% 魅惑 1回合
+        if(f.curHp>0 && !hasStatus(f,'charm') && !hasBuff(f,'ctrlImmune') && !hasBuff(f,'statusImmune') && Math.random()<0.75){
           f.status = f.status.filter(s=>s.type!=='charm');
           f.status.push({type:'charm', dur:2});
           bannerFX(f,'💕 魅惑！','#ff88cc',900);
@@ -11547,15 +11556,15 @@ function doDmg(target, rawDmg, opts={}){
     showPopup(target, '韌竹-40%', 'miss');
     log(`🎋 [綠竹筍小妖] 天賦：韌竹護甲！傷害減少40%！`);
   }
-  // ★ 杏花妖天賦：受到傷害時30%機率魅惑攻擊者1回合
+  // ★ 杏花妖天賦：受到傷害時40%機率魅惑攻擊者1回合
   if(_adventureMode && target.name==='杏花妖' && !hasStatus(target,'confused') && rawDmg>0
      && opts && opts.actor && opts.actor.curHp>0 && opts.actor!==target
      && !hasStatus(opts.actor,'charm') && !hasBuff(opts.actor,'ctrlImmune')
      && !hasBuff(opts.actor,'statusImmune') && !opts.isRebound
-     && Math.random()<0.3){
+     && Math.random()<0.4){
     const _atkr = opts.actor;
     _atkr.status = _atkr.status.filter(s=>s.type!=='charm');
-    _atkr.status.push({type:'charm', dur:2}); // dur:2 → 扣完本回合剩1回合在 next turn 生效
+    _atkr.status.push({type:'charm', dur:2}); // dur:2 → 扣完本回合剩1回合在 next turn 生效，下一回合自動普攻自己隊友
     log(`🌸 [杏花妖] 天賦：媚惑！使 [${_atkr.name}] 陷入魅惑1回合！`);
     bannerFX(_atkr, '💕 魅惑！', '#ff88cc', 900);
     renderCard(_atkr);
@@ -13864,15 +13873,20 @@ function execSkill(a, sk, cost, stype){
     G[a.side].forEach(ally=>renderCard(ally));
     endAction(a, cost);
   }
-  // ★ 杏林春霧：依特技×150%恢復HP%最低1名友方（可復活50%HP）
+  // ★ 杏林春霧：優先復活倒下友方；否則以特技×150%治療HP%最低1名友方，並附加30護盾
   else if(n==='杏林春霧'){
     log(`🌸 [${a.name}] 杏林春霧！召喚杏花春霧滋養同伴！`);
-    const _tgt = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0]
-              || G[a.side].find(x=>x.curHp===0);
+    // ★ 優先對倒下的友方使用復活
+    const _tgt = G[a.side].find(x=>x.curHp===0)
+              || G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
     if(_tgt){
       if(_tgt.curHp===0){ doRevive(_tgt, 0.5); }
       doHeal(_tgt, Math.floor(a.sp*1.5), {actor:a, isHeal:true});
-      bannerFX(_tgt, '🌸 杏林春霧！', '#ffccdd', 900);
+      // ★ 附加 30 護盾（取較大值覆蓋）
+      const _exSh = _tgt.buffs.find(b=>b.type==='bigshield');
+      if(_exSh){ _exSh._hp = Math.max(_exSh._hp||0, 30); _exSh.dur = 99; }
+      else { _tgt.buffs.push({type:'bigshield', dur:99, _hp:30}); }
+      bannerFX(_tgt, '🌸 杏林春霧！+30護盾', '#ffccdd', 900);
     }
     G[a.side].forEach(ally=>renderCard(ally));
     endAction(a, cost);
@@ -16995,15 +17009,19 @@ function aiUseSkill(a,sk,cost,pref){
     });
     bannerFX(a, '鐵觀音！全體回血！', '#88ffaa', 900);
   }
-  // ★ 杏林春霧：AI使用 - 特技×150% 治療HP%最低友方
+  // ★ 杏林春霧：AI使用 - 優先復活倒下友方；否則特技×150%治療HP%最低友方+30護盾
   else if(n==='杏林春霧'){
-    const _tgt = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0]
-              || G[a.side].find(x=>x.curHp===0);
+    const _tgt = G[a.side].find(x=>x.curHp===0)
+              || G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
     if(_tgt){
       if(_tgt.curHp===0){ doRevive(_tgt, 0.5); }
       doHeal(_tgt, Math.floor(a.sp*1.5), {actor:a, isHeal:true});
-      log(`🌸 [${a.name}] 杏林春霧！為 [${_tgt.name}] 恢復 ${Math.floor(a.sp*1.5)}HP！`);
-      bannerFX(_tgt, '🌸 杏林春霧！', '#ffccdd', 900);
+      // ★ 附加 30 護盾
+      const _exSh2 = _tgt.buffs.find(b=>b.type==='bigshield');
+      if(_exSh2){ _exSh2._hp = Math.max(_exSh2._hp||0, 30); _exSh2.dur = 99; }
+      else { _tgt.buffs.push({type:'bigshield', dur:99, _hp:30}); }
+      log(`🌸 [${a.name}] 杏林春霧！為 [${_tgt.name}] 恢復 ${Math.floor(a.sp*1.5)}HP 並附加30護盾！`);
+      bannerFX(_tgt, '🌸 杏林春霧！+30護盾', '#ffccdd', 900);
     }
   }
   // ★ 落英繽紛：AI使用 - 全體草屬性傷害
@@ -22128,6 +22146,17 @@ function advStartCutscene(stage) {
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0};
   _advBurstRewardUsed = false; // 重置「極限爆發」出現限制
   _advPendingReward = null;
+  // ★ BUG修復：清除前一輪BOSS戰結束時可能殘留的旗標（打完BOSS回到選關頁重進時不會卡死）
+  if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = false;
+  window._advPreComposedMobs = null;
+  window._advNoTreasureThisBattle = false;
+  window._advMiniResultShowing = false;
+  window._advMiniResultPending = null;
+  // ★ BUG修復：強制還原 adv-dialog-box 的 onclick（_tgShowDialog 可能將其設為 null）
+  try{
+    const _dlgReset = document.getElementById('adv-dialog-box');
+    if(_dlgReset) _dlgReset.onclick = function(ev){ advNextDialog(ev); };
+  }catch(e){}
 
   const ov = document.getElementById('adv-cutscene-overlay');
   ov.style.display = 'flex';
@@ -22172,6 +22201,8 @@ function advLoadScene(stage, idx) {
   const dialog = document.getElementById('adv-dialog-box');
   dialog.classList.remove('show');
   dialog.style.display = ''; // ★ 清除 mini battle 留下的 inline style
+  // ★ BUG修復：強制還原 onclick 為 advNextDialog（茶園事件 _tgShowDialog 可能將其設為 null 後未還原）
+  dialog.onclick = function(ev){ advNextDialog(ev); };
   document.getElementById('adv-choice-panel').innerHTML = '';
   document.getElementById('adv-confirm-banner').textContent = '';
 
@@ -22479,13 +22510,14 @@ function advGiveTreasure(slotIdx) {
 // ═══════════════════════════════════════════════════════
 // ★ 茶園隨機事件系統（第三場景：不再固定小怪戰，改為隨機事件）
 // ═══════════════════════════════════════════════════════
-// 機率分配：20% 神秘寶箱、10% 異次元裂縫、50% 一般小怪戰、20% 遇到野生動物
-// 所有事件結束後都會獲得隨機法寶
+// ★ 機率分配：
+//   50% 神秘寶箱（內含 50% 寶箱怪 + 50% 直接獲得法寶）
+//   30% 異次元裂縫（100% 小惡魔）
+//   20% 遇到野生動物
 function advStartTeagardenEvent(){
   const r = Math.random();
-  if(r < 0.20)      advTgEvent_chest();       // 20% 神秘寶箱
-  else if(r < 0.30) advTgEvent_rift();        // 10% 異次元裂縫
-  else if(r < 0.80) advTgEvent_normalBattle();// 50% 一般小怪戰
+  if(r < 0.50)      advTgEvent_chest();       // 50% 神秘寶箱
+  else if(r < 0.80) advTgEvent_rift();        // 30% 異次元裂縫
   else              advTgEvent_petEncounter();// 20% 遇到野生動物
 }
 
@@ -22500,7 +22532,8 @@ function _tgShowDialog(speaker, lines, onDone){
   let idx = 0;
   const step = () => {
     if(idx >= lines.length){
-      dialog.onclick = null;
+      // ★ 還原 onclick 為 advNextDialog（不可設為 null，否則之後回到第一場景劇情會卡死）
+      dialog.onclick = function(ev){ advNextDialog(ev); };
       dialog.style.display = 'none';
       if(onDone) onDone();
       return;
@@ -22513,7 +22546,7 @@ function _tgShowDialog(speaker, lines, onDone){
   dialog.onclick = step;
 }
 
-// 事件一：神秘寶箱 — 25% 寶箱怪戰、70% 隨機賣錢物、5% 空無一物
+// 事件一：神秘寶箱 — 50% 寶箱怪戰、50% 直接獲得法寶
 function advTgEvent_chest(){
   _tgShowDialog('📖 旁白', [
     '茶園深處，金色光芒閃耀……小隊發現一個被茶葉藤蔓纏繞的古老寶箱！',
@@ -22521,8 +22554,8 @@ function advTgEvent_chest(){
     '隊長小心翼翼地伸手掀開了箱蓋……',
   ], () => {
     const r = Math.random();
-    if(r < 0.25){
-      // 25%：寶箱怪！直接開戰
+    if(r < 0.50){
+      // 50%：寶箱怪！直接開戰
       _tgShowDialog('📦 寶箱怪', [
         '「呀——！怎麼有人發現我了！」',
         '箱蓋彈開，一對大眼睛從裡頭瞪出來——竟然是隻寶箱怪！',
@@ -22532,22 +22565,12 @@ function advTgEvent_chest(){
         window._advNoTreasureThisBattle = true; // ★ 寶箱怪戰不能使用法寶
         advStartMiniBattle(_advSceneIdx + 1);
       });
-    } else if(r < 0.95){
-      // 70%：賣錢物品
-      const sellPool = ['antique_teacup','picked_flower','damaged_bamboo','unknown_egg','half_tea'];
-      const id = sellPool[Math.floor(Math.random()*sellPool.length)];
-      const def = BACKPACK_ITEM_DEF[id] || {};
-      backpackAdd(id, 1);
-      _tgShowDialog('📖 旁白', [
-        `「哇——是 ${def.icon||'🎁'} ${def.name||'神秘物品'}！」隊員們驚呼道。`,
-        `雖然不值大錢，拿去超商還能換一些知識幣！（可賣 ${def.sellPrice||'?'} 幣）`,
-      ], () => advTgAwardTreasureAndEnd());
     } else {
-      // 5%：空無一物
+      // 50%：直接獲得法寶
       _tgShowDialog('📖 旁白', [
-        '……箱子裡空空如也，只有一隻小蜘蛛從箱底爬出來，眾人瞬間冷場。',
-        '「……好啦，至少我們知道這裡沒寶藏了。」隊長無奈聳肩。',
-        '但沿路尋寶的過程中，小隊似乎撿到了一件小法寶！',
+        '金光閃爍，箱子裡靜靜躺著一件散發神秘氣息的法寶！',
+        '「哇——這就是傳說中的法寶嗎？！」隊員們眼睛發亮。',
+        '小隊小心翼翼地收下了這件寶物，準備用它來對抗最終頭目！',
       ], () => advTgAwardTreasureAndEnd());
     }
   });
@@ -23309,6 +23332,8 @@ function advShowQuiz() {
 // 追蹤題目輪次
 let _advQuizRound = 0;
 let _advSceneChoiceDone = false; // ★ 防止場景選題重複出現
+// ★ 近期出過的題目佇列（最多 24 題），用來減少短期內重複
+let _advRecentQuestionIds = [];
 
 function advPickQuestion() {
   const used = _advUsedQuestionIds;
@@ -23333,8 +23358,20 @@ function advPickQuestion() {
     pool = _advSessionQuestions.length ? _advSessionQuestions : ADV_QUIZ_DB;
     if(!pool.length) return null;
   }
-  // 隨機選一題（避免順序感）
-  return pool[Math.floor(Math.random() * Math.min(pool.length, 3))] || null;
+  // ★ 出題隨機性強化：
+  //    1) 先在整個 pool（整個未出現過題庫的剩餘題）隨機抽
+  //    2) 並額外以最近出過的 24 題為避免池，優先挑未在近期出現過的題
+  const _recent = (_advRecentQuestionIds && _advRecentQuestionIds.length) ? _advRecentQuestionIds : [];
+  const _fresh = pool.filter(q => !_recent.includes(q.id));
+  const _picked = _fresh.length ? _fresh : pool;
+  const _chosen = _picked[Math.floor(Math.random() * _picked.length)] || null;
+  // 維護最近出現佇列
+  if(_chosen){
+    if(!Array.isArray(_advRecentQuestionIds)) _advRecentQuestionIds = [];
+    _advRecentQuestionIds.push(_chosen.id);
+    if(_advRecentQuestionIds.length > 24) _advRecentQuestionIds.shift();
+  }
+  return _chosen;
 }
 
 // ★ 讓玩家重新選擇答題方向
@@ -24096,11 +24133,12 @@ async function advShowBattleResult(win) {
   const score = Math.round(baseScore * _diffMult3);
   const maxScore = Math.round(100 * _diffMult3);
 
-  // ── 評分：依玩家個人最高分為基準，前10%=S，前20%=A，前30%=B，前40%=C，其餘=D ──
-  // 更新個人最高分
+  // ── 評分：依當前難度的滿分為基準（方向A），前10%=S，前20%=A，前30%=B，前40%=C，其餘=D ──
+  //   沒自信 滿分 100、普通 滿分 125、我很會 滿分 150
+  //   三種難度皆可公平拿到 S，不再因為歷史最高分來自高難度而被鎖在 C
+  // 仍然記錄個人最高分（供成就/紀錄顯示使用，但不影響評價計算）
   if(score > (_advBestScore || 0)) _advBestScore = score;
-  const _best = _advBestScore || score || 1;
-  const _pct = score / _best; // 本次分數佔最高分的比例
+  const _pct = maxScore > 0 ? (score / maxScore) : 0; // 本次分數佔當前難度滿分的比例
   const grade = _pct >= 0.90 ? 'S'
               : _pct >= 0.80 ? 'A'
               : _pct >= 0.70 ? 'B'
@@ -32272,6 +32310,27 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0645', items:[
+    'BOSS 杏花妖專屬 BGM 更換為全新版本「杏花妖BGM2.m4a」',
+  ] },
+  { ver:'v1.0.20260419.0612', items:[
+    '第三場景（貓空茶園）事件機率再調整：50% 神秘寶箱（內含 50% 寶箱怪 + 50% 直接獲得法寶）、30% 異次元裂縫（100% 小惡魔）、20% 遇到野生動物。移除原先的「一般小怪戰」與「賣錢物品/空無一物」分支，讓事件更精簡、獎勵更豐厚',
+    '修正評分公平性：評價基準由「玩家個人歷史最高分」改為「當前難度的滿分」——沒自信滿分100、普通滿分125、我很會滿分150，三種難度皆可獨立拿到 S 評價。原本低年級沒自信玩家若曾在高難度拿過高分，此後沒自信的評價會被永遠鎖在 C 的 BUG 已修復',
+  ] },
+  { ver:'v1.0.20260419.0530', items:[
+    '第三場景（貓空茶園）稀有怪出現率大幅提升至合計 50%（原約 15%）：神秘寶箱事件 40%（內含寶箱怪 50%=總率 20%）、異次元裂縫 30%（100% 小惡魔=總率 30%）、一般小怪戰 20%、野生動物 10%',
+    '杏花妖「杏林春霧」改為優先復活倒下的友方（原先優先治療活著的隊友），玩家版與 AI 版皆套用',
+    '「杏林春霧」效果強化：保留原治療／復活，額外附加 30 點護盾（取較大值覆蓋，不疊加）',
+    '杏花妖天賦「媚惑」機率由 30% 提升至 40%；效果維持「受傷時魅惑攻擊者 1 回合，使其下一回合自動普攻自己隊友」',
+    '杏花妖爆發「千年絕美・傾城一笑」魅惑機率由 50% 提升至 75%',
+    '修正打完 BOSS 回到冒險選關後，重新進入冒險關卡會在第一場景（河堤）劇情卡死的 BUG——根本原因是茶園隨機事件的 _tgShowDialog 收尾時把 adv-dialog-box 的 onclick 設為 null，永久破壞了 HTML 上原本的 advNextDialog 綁定。已修復為還原為正確的處理器，並在 advStartCutscene / advLoadScene 加上防禦性還原',
+  ] },
+  { ver:'v1.0.20260419.0052', items:[
+    '出題隨機性大幅強化：之前只會從剩餘題庫的前 3 題挑選，現在會從整個剩餘題庫隨機挑；另外新增「最近 24 題避免池」，短期內同題重複機率大幅降低',
+    '極限爆發每次發動的 log 會顯示剩餘次數（例：「剩餘次數：1」），方便確認是否正常扣次數',
+    '極限爆發發動後會立即 renderCard 刷新卡片的星星計數顯示',
+    '電腦繪圖師【萬物創生】在敵方無存活目標時：仍然正常抽取 3 張物品卡，並在戰鬥 log 提示「敵方已無存活目標」，讓玩家知道原因',
+  ] },
   { ver:'v1.0.20260419.0000', items:[
     '修正杏花妖錯誤出現在英雄圖鑑的問題（杏花妖屬於魔物，應只顯示於魔物圖鑑）',
     '受影響範圍：英雄圖鑑、冒險選英雄清單、鬥技場對手隨機挑選、各種池內排除邏輯',
@@ -32652,7 +32711,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.0000';
+  const CURRENT_VERSION = 'v1.0.20260419.0052';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32669,7 +32728,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.0000';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.0052';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
