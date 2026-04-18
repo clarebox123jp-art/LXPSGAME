@@ -23379,7 +23379,7 @@ function advRestartBattle() {
   }); // end _customConfirm
 }
 // ════════════════════════════════
-function advShowBattleResult(win) {
+async function advShowBattleResult(win) {
   const stats = _advStats;
   const rounds = stats.rounds;
   const correct = stats.correctCount;
@@ -23504,7 +23504,7 @@ function advShowBattleResult(win) {
       if(_losePartialCoins > 0)
         addKnowledgeCoins(_losePartialCoins);
       if(_losePartialExp > 0 || _losePartialCoins > 0)
-        try{ gameCloudSave(); }catch(e){}
+        try{ await gameCloudSave(); }catch(e){}
 
       document.getElementById('adv-result-stats').innerHTML =
         '<div style="text-align:center;padding:16px 0;line-height:2;">'
@@ -23685,7 +23685,7 @@ function advCloseUnlock() {
 // ════════════════════════════════
 const ADV_HERO_GREETINGS = {"劍士": "「我的劍，願為保護貓空的茶香而揮！」", "刺客": "「從暗處出手是我的風格。好，我就跟你們走！」", "光法師": "「聖光將照耀這片土地，讓我們一起前進吧！」", "冰法師": "「冷靜沉著是我的信條，你們看起來值得信賴。」", "火法師": "「嘿！熱血沸騰的旅程，我最喜歡了！算我一份！」", "雷法師": "「轟！我的雷光將劈碎一切阻礙！同行吧！」", "暗法師": "「黑暗中自有我保護你們，不必擔心。」", "祭司": "「以神明的恩典，我將守護你們的生命。」", "聖騎士": "「榮譽與勇氣是我的鎧甲，願為你們而戰！」", "武鬥家": "「好身手！算你們夠格讓我出手相助！」", "武士": "「以武士之名，我的刀將斬斷邪惡！」", "大力士": "「呼！跟我走，保證沒有搬不動的石頭！」", "守衛": "「保護夥伴是我的使命，交給我！」", "神射手": "「我的箭矢，永遠射向真正的敵人。同行吧！」", "吟遊詩人": "「讓我用歌聲，為你們的旅途增添色彩！」", "煉金術師": "「有趣，有趣！我的道具或許能幫上大忙！」", "凡人": "「就算只是凡人，也能做出非凡的事情！」", "占星師": "「星辰指引著我，你們就是我命中注定的隊友。」", "舞者": "「優雅與力量共存，這就是我的舞蹈！」", "木靈使": "「大地的生命，將為你們的旅途增添力量！」", "時空法師": "「時間與空間在我掌握中，跟我走沒錯的！」", "陰陽師": "「陰陽交錯間，我看清了你們的真心。好，算我一份！」", "學者": "「知識就是力量！讓我的學識為你們開路！」", "機械師": "「齒輪轉動，勝利就在眼前！讓我加入你們的冒險！」", "神偷": "「嘿嘿，我拿走的，都是敵人的好東西！歡迎合作！」", "軍師": "「兵法早已算定，你們的勝利盡在掌握。」", "吸血鬼": "「黑夜是我的舞台…既然如此，就讓我同行吧。」", "幼兒園小孩": "「嗚嗚…不要欺負我！我也會打人的！」", "動物學家": "「每一種生命都值得尊重，我和我的夥伴一起加入！」", "小力": "「汪！汪汪！（搖尾巴）」", "流浪者": "「到處流浪也挺無聊的，帶我一起去冒險吧！」"};
 
-function advStartWinSequence() {
+async function advStartWinSequence() {
   // ★ 正常勝利完成：清除崩潰快照，不再提示恢復
   try{ _advClearCrashSnapshot(); }catch(e){}
   // ★ 書放進背包
@@ -23746,7 +23746,7 @@ function advStartWinSequence() {
       }, 1500);
     }
   }catch(e){}
-  gameCloudSave();
+  try{ await gameCloudSave(); }catch(e){}
   _setNavDot('英雄', true);
   log(`🏆 勝利獎勵：英雄經驗值之書×2、技能升級書×1、出戰英雄+${_bonusExp}EXP、+${_bossCoins}知識幣`);
   // 隱藏結算畫面
@@ -23884,7 +23884,7 @@ function _advClearCrashSnapshot(){
   try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
 }
 
-function advHeroMeetDone() {
+async function advHeroMeetDone() {
   const ov = document.getElementById('adv-hero-meet-overlay');
   // ★ 防止重複呼叫（點按鈕和點背景可能同時觸發）
   if(!ov || ov.style.display === 'none') return;
@@ -23906,7 +23906,7 @@ function advHeroMeetDone() {
     if(_tb) _tb.innerHTML='';
   }catch(_e){}
   // ★ 給予戰鬥經驗值，儲存進度
-  try{ grantBattleExp(true, _advStats); }catch(e){}
+  try{ await grantBattleExp(true, _advStats); }catch(e){}
   // ★ 英雄頁面紅點
   try{ _setNavDot('英雄', true); }catch(e){}
   // ★ 若有角色升級，先演出升級畫面
@@ -25843,7 +25843,7 @@ function _showLevelUpSequence(levelUps, onDone) {
 
 
 // 戰鬥結束後給予英雄經驗值
-function grantBattleExp(win, stats) {
+async function grantBattleExp(win, stats) {
   if(!win) return;
   // ★ 鬥技場模式不給予任何獎勵（只有冒險模式才有EXP和技能書）
   if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
@@ -25884,7 +25884,7 @@ function grantBattleExp(win, stats) {
   const books = 1 + (score > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
   _skillBookCount += books;
   log(`📖 獲得技能升級書×${books}（共${_skillBookCount}本）`);
-  gameCloudSave();
+  try{ await gameCloudSave(); }catch(e){}
   _setNavDot('英雄', true);
 }
 
@@ -26422,7 +26422,7 @@ function useBackpackItem(id){
     setTimeout(() => { highlightUpgradableHeroes(); }, 200);
 
   } else if(id==='stat_reset_book'){
-    _backpackOpenHeroSelect('📕 能力素質重置之書', '選擇要重置素質的英雄', name=>{
+    _backpackOpenHeroSelect('📕 能力素質重置之書', '選擇要重置素質的英雄', async name=>{
       const invested = _heroStatInvested[name];
       if(!invested || Object.values(invested).every(v=>v===0)){
         _showInGameToast(`[${name}] 沒有投資任何素質點數。`, '#ff8844', 2000); return;
@@ -26431,14 +26431,14 @@ function useBackpackItem(id){
       backpackRemove('stat_reset_book');
       _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
       _heroStatPoints[name] = (_heroStatPoints[name]||0) + total;
-      gameCloudSave();
+      try{ await gameCloudSave(); }catch(e){}
       _setNavDot('英雄', true);
       _showInGameToast(`📕 [${name}] 素質點數重置！退還 ${total} 點`, '#ffaa88', 2500);
       _renderBackpackMain();
     }, true);
 
   } else if(id==='skill_reset_book'){
-    _backpackOpenHeroSelect('📘 技能等級重置之書', '選擇要重置技能等級的英雄', name=>{
+    _backpackOpenHeroSelect('📘 技能等級重置之書', '選擇要重置技能等級的英雄', async name=>{
       const levels = _heroSkillLevels[name];
       if(!levels||(levels.s1||0)+(levels.s2||0)===0){
         _showInGameToast(`[${name}] 沒有升級任何技能。`, '#ff8844', 2000); return;
@@ -26447,7 +26447,7 @@ function useBackpackItem(id){
       backpackRemove('skill_reset_book');
       _heroSkillLevels[name] = {s1:0, s2:0};
       backpackAdd('skill_upgrade_book', refund); // 退還技能升級書（最多99）
-      gameCloudSave();
+      try{ await gameCloudSave(); }catch(e){}
       _setNavDot('英雄', true);
       _showInGameToast(`📘 [${name}] 技能等級重置！退還 ${refund} 本技能升級書`, '#88aaff', 2500);
       _renderBackpackMain();
@@ -26457,14 +26457,14 @@ function useBackpackItem(id){
     closeBackpackOverlay();
     openHeroPage();
     setTimeout(() => {
-      _backpackOpenHeroSelect('📕 英雄經驗值之書(精裝版)', '選擇要增加200EXP的英雄', name=>{
+      _backpackOpenHeroSelect('📕 英雄經驗值之書(精裝版)', '選擇要增加200EXP的英雄', async name=>{
         if(window._invitedFriendHero && window._invitedFriendHero.name === name){
           _showInGameToast('好友英雄無法使用升級物品。', '#ff8844', 2000);
           return;
         }
         backpackRemove('hero_exp_book_deluxe');
         addHeroExp(name, 200);
-        gameCloudSave();
+        try{ await gameCloudSave(); }catch(e){}
         _setNavDot('英雄', true);
         _showInGameToast(`📕 [${name}] 獲得200點經驗值！`, '#ffaa88', 2500);
         _renderBackpackMain();
@@ -27753,11 +27753,11 @@ function upgradeBurst(name) {
         border-radius:12px;cursor:pointer;font-family:inherit;">✕ 取消</button>
     </div>`;
   document.body.appendChild(box);
-  document.getElementById('_burst_yes').onclick = () => {
+  document.getElementById('_burst_yes').onclick = async () => {
     box.remove();
     backpackRemove('burst_upgrade_fruit', 1);
     _heroBurstLevels[name] = nextLv;
-    gameCloudSave();
+    try{ await gameCloudSave(); }catch(e){}
     log(`🍑 極限爆發升級！${name} → Lv.${nextLv} (效果+${nextLv*10}%)`);
     _showInGameToast(`🍑 [${name}] 極限爆發升至 +${nextLv} 級！效果 +${nextLv*10}%`, '#ffaa44', 2800);
     try{ playSfx('sfx-powerup', 0.8); }catch(e){}
@@ -27817,11 +27817,11 @@ function investStat(name, stat) {
         onmouseout="this.style.background='rgba(60,10,10,0.3)'">✕ 取消</button>
     </div>`;
   document.body.appendChild(box);
-  document.getElementById('_invest_yes').onclick = () => {
+  document.getElementById('_invest_yes').onclick = async () => {
     box.remove();
     _heroStatPoints[name]--;
     _heroStatInvested[name][stat] = (_heroStatInvested[name][stat]||0) + 1;
-    gameCloudSave();
+    try{ await gameCloudSave(); }catch(e){}
     _renderHeroDetail(name, document.getElementById('hero-detail-content'));
     try{ playSfx('sfx-powerup', 0.7); }catch(e){}
   };
@@ -27893,12 +27893,12 @@ function upgradeSkill(name, slot) {
     </div>
   </div>`;
   document.body.appendChild(boxU2);
-  document.getElementById('_upg_yes2').onclick = () => {
+  document.getElementById('_upg_yes2').onclick = async () => {
     boxU2.remove();
     backpackRemove('skill_upgrade_book', 1);
     _heroSkillLevels[name][slot] = nextLv;
     log(`📖 技能升級！${name} ${slot} → Lv.${nextLv+1}`);
-    gameCloudSave();
+    try{ await gameCloudSave(); }catch(e){}
     try{
       _checkMedalSkillUpgrade();
       if(nextLv >= 9) _checkMedalSkillMax();
@@ -29876,7 +29876,7 @@ function _advMiniApplyReward(id, onDone) {
 }
 
 
-function advMiniResultGoHome() {
+async function advMiniResultGoHome() {
   // ★ 好友英雄狀態重置
   window._friendHeroInParty = false;
   const el = document.getElementById('adv-mini-result');
@@ -29886,7 +29886,7 @@ function advMiniResultGoHome() {
   // 清除快照（此場冒險結束）
   try{ _advClearCrashSnapshot(); }catch(e){}
   // 儲存已獲得的進度（EXP/幣已在 advFinishMiniBattle 中 addHeroExp/addKnowledgeCoins 執行過）
-  try{ gameCloudSave(); }catch(e){}
+  try{ await gameCloudSave(); }catch(e){}
   // 回關卡選擇頁（而非遊戲首頁）
   try{
     bgmStop();
@@ -30245,11 +30245,11 @@ function useHeroExpBook() {
   document.body.appendChild(pop);
 }
 
-function applyHeroExpBook(name) {
+async function applyHeroExpBook(name) {
   if((_heroExpBookCount||0) <= 0) return;
   _heroExpBookCount = Math.max(0, _heroExpBookCount - 1);
   addHeroExp(name, 50);
-  gameCloudSave();
+  try{ await gameCloudSave(); }catch(e){}
   // Update UI
   const countEl = document.getElementById('hero-expbook-count');
   if(countEl) countEl.textContent = _heroExpBookCount;
@@ -30264,14 +30264,14 @@ function applyHeroExpBook(name) {
 }
 
 // ★ 在英雄圖鑑直接使用英雄經驗值之書
-function _useExpBookForHero(name) {
+async function _useExpBookForHero(name) {
   if(backpackGet('hero_exp_book') <= 0){
     _showInGameToast('背包中沒有英雄經驗值之書！', '#ff8844', 1800);
     return;
   }
   backpackRemove('hero_exp_book');
   const lvUps = addHeroExp(name, 50);
-  gameCloudSave();
+  try{ await gameCloudSave(); }catch(e){}
   _setNavDot('英雄', true);
   // 重繪英雄詳情（更新EXP條和按鈕數量）
   const box = document.getElementById('hero-detail-content');
@@ -31244,6 +31244,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1700', items:[
+    '全面修補雲端同步時間差漏洞：戰鬥獎勵、答題獎勵、書本類物品使用（素質重置、技能重置、經驗書、升級書）、超越極限果實、素質點投資、戰敗安慰獎、全英雄收錄水晶，現在都會等雲端同步完成才結束動作（防止重整洗錢/洗物品/洗經驗）',
+  ] },
   { ver:'v1.0.20260418.1651', items:[
     '修正商店賣出/購買後立刻重新整理，變動會還原的嚴重洗錢 Bug（確保雲端同步完成後才回應）',
   ] },
@@ -31460,7 +31463,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1651';
+  const CURRENT_VERSION = 'v1.0.20260418.1700';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
