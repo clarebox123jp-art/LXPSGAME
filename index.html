@@ -5611,6 +5611,10 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
     { id:'shadow_slash', name:'瞬影絕斬', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
   ],
+  '占星師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'star_oracle', name:'星辰天啟', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+  ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
@@ -12057,18 +12061,21 @@ function doRevive(target, pct=0.5, full=false){
   renderCard(target);
   // 復活特效：光環 + 光柱 + 羽毛
   _reviveFX(target);
-  // 崛起鬥志（被動）：被復活時提升全屬性5，只能發動一次
-  if((target.s1.n==='崛起鬥志'||target.s2.n==='崛起鬥志') && !target._risingSpiritUsed && !hasStatus(target,'confused')){
-    target._risingSpiritUsed=true;
-    // ★ 升級效果：基礎+5，每升2級再+1（Lv0=+5, Lv2=+6, Lv4=+7...）
+  // 崛起鬥志（被動）：被復活時提升全屬性5，發動次數有限（Lv0~8 = 1 次；Lv9 MAX = 2 次）
+  if(target.s1.n==='崛起鬥志'||target.s2.n==='崛起鬥志'){
     const _rsSlot = (target.s2 && target.s2.n==='崛起鬥志') ? 's2' : 's1';
     const _rsLv   = (target._skLv && target._skLv[_rsSlot]) || 0;
-    const _rsBonus = 5 + Math.floor(_rsLv / 2);
-    target.hp+=_rsBonus; target.atk+=_rsBonus; target.sp+=_rsBonus; target.spd+=_rsBonus;
-    target.curHp=Math.min(target.curHp+_rsBonus, target.hp);
-    log(`🗾 [${target.name}] 崛起鬥志！全屬性+${_rsBonus}！`);
-    bannerFX(target,'崛起鬥志！','#ffe066',1000);
-    renderCard(target);
+    const _rsMaxUse = _rsLv >= 9 ? 2 : 1;
+    if((target._risingSpiritCount||0) < _rsMaxUse && !hasStatus(target,'confused')){
+      target._risingSpiritCount = (target._risingSpiritCount||0) + 1;
+      // ★ 升級效果：基礎+5，每升2級再+1（Lv0=+5, Lv2=+6, Lv4=+7, Lv9=+9）
+      const _rsBonus = 5 + Math.floor(_rsLv / 2);
+      target.hp+=_rsBonus; target.atk+=_rsBonus; target.sp+=_rsBonus; target.spd+=_rsBonus;
+      target.curHp=Math.min(target.curHp+_rsBonus, target.hp);
+      log(`🗾 [${target.name}] 崛起鬥志！全屬性+${_rsBonus}！${_rsMaxUse>1?`（剩餘 ${_rsMaxUse - target._risingSpiritCount} 次）`:''}`);
+      bannerFX(target,'崛起鬥志！','#ffe066',1000);
+      renderCard(target);
+    }
   }
   return true;
 }
@@ -13477,9 +13484,9 @@ function execSkill(a, sk, cost, stype){
     const _target = _aliveAllies.sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
     if(_target){
       const ex = _target.buffs.find(b=>b.type==='bigshield');
-      if(ex){ ex._hp = (ex._hp||0)+20; }
+      if(ex){ ex._hp = Math.max(ex._hp||0, 20); ex.dur = 99; }
       else { _target.buffs.push({type:'bigshield', dur:99, _hp:20}); }
-      bannerFX(_target, '🎋+20護盾', '#88cc44', 800);
+      bannerFX(_target, '🎋護盾20', '#88cc44', 800);
       renderCard(_target);
       log(`🎋 [${a.name}] 筍之守護！→ [${_target.name}] +20護盾！`);
     }
@@ -14340,7 +14347,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     setPending('ally', t=>{
       const _sBase = Math.round(30 * _activeSkLvMult);
       const _existing = t.buffs.find(b=>b.type==='bigshield');
-      if(_existing){ _existing._hp = (_existing._hp||0) + _sBase; }
+      if(_existing){ _existing._hp = Math.max(_existing._hp||0, _sBase); _existing.dur = 99; }
       else { t.buffs.push({type:'bigshield', dur:99, _hp:_sBase}); }
       renderCard(t);
       playSkillFX('護盾術', a, [t]);
@@ -15994,7 +16001,7 @@ function _realAiAct(a){
   const canS2 = G.energy[a.side]>=s2cost && !canSeal && !(a.s2.once&&a.s2used) && !a.s2.p;
   const canAnySkill = canS1||canS2;
 
-  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護'];
+  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復'];
   const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護'];
   const isHealer = HEAL_SKILLS.includes(a.s1.n)||HEAL_SKILLS.includes(a.s2.n);
   const isTank   = TANK_SKILLS.includes(a.s1.n)||TANK_SKILLS.includes(a.s2.n)||a.name==='守衛'||a.name==='武鬥家'||a.name==='大力士'||a.name==='小力';
@@ -16479,10 +16486,20 @@ function aiUseSkill(a,sk,cost,pref){
     const _aiTgt = _aiAllies.sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
     if(_aiTgt){
       const ex=_aiTgt.buffs.find(b=>b.type==='bigshield');
-      if(ex){ ex._hp=(ex._hp||0)+20; } else { _aiTgt.buffs.push({type:'bigshield',dur:99,_hp:20}); }
+      if(ex){ ex._hp = Math.max(ex._hp||0, 20); ex.dur = 99; } else { _aiTgt.buffs.push({type:'bigshield',dur:99,_hp:20}); }
       renderCard(_aiTgt);
-      log(`[${a.name}] 筍之守護！→ [${_aiTgt.name}] +20護盾！`);
+      log(`[${a.name}] 筍之守護！→ [${_aiTgt.name}] 護盾 20！`);
     }
+  }
+  // ★ 一壺鐵觀音：AI使用 - 依特技恢復友方全體HP
+  else if(n==='一壺鐵觀音'){
+    log(`🍵 [${a.name}] 一壺鐵觀音！全體友方恢復 ${a.sp}HP！`);
+    G[a.side].forEach(ally=>{
+      if(ally.curHp>0){
+        doHeal(ally, a.sp, {actor:a, isHeal:true});
+      }
+    });
+    bannerFX(a, '鐵觀音！全體回血！', '#88ffaa', 900);
   }
   // ★ 一壺包種茶：AI使用 - 解除不利+治療
   else if(n==='一壺包種茶'){
@@ -19413,6 +19430,8 @@ function openAdventureOverlay(){
   try{ _loadFriendSystemData(); }catch(e){}
   ov.style.display = 'flex';
   ov.style.animation = 'advOverlayFadeIn 0.5s ease-out';
+  // ★ 回到關卡選擇頁時，若有待處理的版本更新通知（來自戰鬥中偵測到的），現在跳出
+  try{ if(window._flushPendingUpdateIfAny) setTimeout(window._flushPendingUpdateIfAny, 500); }catch(e){}
   // ★ 更新知識幣顯示
   const _acv = document.getElementById('adv-coins-val');
   if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
@@ -24419,6 +24438,9 @@ const BACKPACK_ITEM_DEF = {
   'samurai_shadow_portrait': { name:'武士肖像：瞬影絕斬', icon:'🗾',
     desc:'全新繪製的武士肖像「瞬影絕斬」，購買後可在英雄圖鑑的武士詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'武士', portraitId:'shadow_slash', useLabel:'前往切換' },
+  'astrologer_oracle_portrait': { name:'占星師肖像：星辰天啟', icon:'🌟',
+    desc:'全新繪製的占星師肖像「星辰天啟」，購買後可在英雄圖鑑的占星師詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'占星師', portraitId:'star_oracle', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -24440,6 +24462,9 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'samurai_shadow_portrait', name:'武士肖像：瞬影絕斬', icon:'🗾',
     desc:'全新繪製的武士替代肖像「瞬影絕斬」。購買後即永久解鎖，可在英雄圖鑑的武士詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'astrologer_oracle_portrait', name:'占星師肖像：星辰天啟', icon:'🌟',
+    desc:'全新繪製的占星師替代肖像「星辰天啟」。購買後即永久解鎖，可在英雄圖鑑的占星師詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -25937,6 +25962,25 @@ function addHeroExp(name, exp) {
         const _tl = _heroTraitLevel[name];
         const _tlDisp = _tl + 1; // 顯示值：內部0→Lv1, 內部4→Lv5(MAX)
         log(`✨ [${name}] 天賦強化！角色Lv${_lv} → 天賦 Lv${_tlDisp}${_tl>=4?'（MAX）':''}！`);
+        // ★ 計算當前等級效果說明（用於動畫顯示）
+        let _curEffectTxt = '';
+        try{
+          const _info = (typeof _TRAIT_LV_INFO !== 'undefined') ? _TRAIT_LV_INFO[name] : null;
+          if(_info){
+            if(_info.bonus && _info.bonus.indexOf('固定') === 0){
+              _curEffectTxt = `效果：${_info.base}（固定）`;
+            } else {
+              const _bm = (_info.base||'').match(/(\d+)%/);
+              const _om = (_info.bonus||'').match(/\+(\d+)%/);
+              if(_bm && _om){
+                const _rate = Math.min(100, parseInt(_bm[1]) + _tl * parseInt(_om[1]));
+                _curEffectTxt = `${_info.effect}：<b style="color:#ffee88;">${_rate}%</b>`;
+              } else {
+                _curEffectTxt = _info.effect || '';
+              }
+            }
+          }
+        }catch(e){}
         // 動態升級演示訊息
         setTimeout(()=>{
           try{
@@ -25953,6 +25997,7 @@ function addHeroExp(name, exp) {
               <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#fff;text-shadow:0 0 30px #ffcc44;">${name}</div>
               <div style="font-size:30px;color:#ffee88;margin-top:8px;">角色 Lv.${_lv} 里程碑達成！</div>
               <div style="font-size:24px;color:#aaffcc;margin-top:6px;">天賦 → Lv${_tlDisp}${_tl>=4?' (MAX)':''}</div>
+              ${_curEffectTxt?`<div style="font-size:22px;color:#ffccaa;margin-top:10px;padding:8px 16px;background:rgba(255,200,100,0.12);border:1px solid rgba(255,200,100,0.35);border-radius:10px;">${_curEffectTxt}</div>`:''}
             `;
             document.body.appendChild(_fx);
             setTimeout(()=>{ _fx.style.opacity='0'; _fx.style.transition='opacity 0.5s'; setTimeout(()=>_fx.remove(),500); }, 2800);
@@ -26324,6 +26369,8 @@ async function shopBuyItem(id){
   try{ _checkMedalShop(); }catch(e){}
   _showInGameToast(`✅ 購買 ${prod.name} ×${qty}！支出 ${total.toLocaleString()} 知識幣`, '#44ff88', 2500);
   try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+  // ★ 立即同步知識幣顯示（跟賣出時一致）
+  _syncCoinsDisplay();
   // ★ 不用 openShopOverlay() 避免觸發 BGM 重播；只重新渲染商品列表與背包欄
   _renderShopProducts();
   _renderShopBagPanel();
@@ -27181,7 +27228,7 @@ function _getSkUpgradeBadge(skillName, skLv){
   }
   if(cat==='special_rising'){
     const bonus = 5 + Math.floor((skLv||0)/2);
-    return '復活時全屬性+' + bonus;
+    return '復活時全屬性+' + bonus + ((skLv||0)>=9 ? '，發動次數2' : '');
   }
   if(cat==='special_spotlight'){
     const n = 1 + Math.floor((skLv||0)/3);
@@ -27271,7 +27318,7 @@ function buildSkillLvTable(skillName, currentLv) {
       else effectText = '能量消耗 -1，且目標免疫1次倒下（MAX）';
     } else if(cat==='special_rising'){
       const bonus = 5 + Math.floor(lv/2);
-      effectText = '復活時 HP/攻擊/特技/速度 各 +' + bonus;
+      effectText = '復活時 HP/攻擊/特技/速度 各 +' + bonus + (lv>=9 ? '，發動次數 2 次（MAX）' : '');
     } else if(cat==='special_spotlight'){
       const n = 1 + Math.floor(lv/3);
       effectText = '嘲諷＋失明目標 ' + n + ' 名';
@@ -27459,11 +27506,11 @@ function _buildHeroGrid() {
       style="width:320px;cursor:pointer;border-radius:16px;overflow:hidden;
       border:2px solid ${isUnlocked?'rgba(212,168,67,0.5)':'rgba(60,60,60,0.4)'};
       background:${isUnlocked?'rgba(20,20,35,0.9)':'#0a0a0a'};
-      ${!isUnlocked?'filter:grayscale(1) contrast(0.8);':''}
+      ${!isUnlocked?'filter:grayscale(1) contrast(0.75) brightness(0.7);':''}
       position:relative;transition:transform 0.15s;">
-      ${isUnlocked && img
+      ${img
         ? `<img src="${img}" style="width:100%;height:280px;object-fit:cover;object-position:top center;display:block;background:#111;"/>`
-        : `<div style="width:100%;height:260px;background:${isUnlocked?'rgba(20,20,30,0.8)':'#111'};display:flex;align-items:center;justify-content:center;font-size:100px;${isUnlocked?'':'filter:grayscale(1) brightness(0.4) contrast(1.2);'}">${av}</div>`
+        : `<div style="width:100%;height:260px;background:${isUnlocked?'rgba(20,20,30,0.8)':'#111'};display:flex;align-items:center;justify-content:center;font-size:100px;">${av}</div>`
       }
       <div style="padding:12px 14px 14px;">
         <div style="font-size:54px;font-weight:700;color:${isUnlocked?'#ffe8a0':'#666'};margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -27474,7 +27521,7 @@ function _buildHeroGrid() {
           <div style="height:6px;background:rgba(100,100,150,0.4);border-radius:4px;margin-top:6px;">
             <div style="height:100%;width:${expPct}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
-        ` : `<div style="font-size:26px;color:#445;">未收錄</div>`}
+        ` : `<div style="font-size:26px;color:#445;">🔒 未收錄</div>`}
       </div>
       ${isUnlocked && _heroStatPoints[name] > 0 ? `<div style="position:absolute;top:8px;right:8px;background:#ff3333;color:#fff;font-size:22px;font-weight:900;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">${_heroStatPoints[name]}</div>` : ''}
     </div>`;
@@ -27525,6 +27572,10 @@ function closeHeroDetail() {
 function _renderHeroDetail(name, box) {
   const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[name] : null;
   if(!hd) { box.innerHTML = '<div style="color:#888;font-size:32px;text-align:center;padding:60px;">英雄資料未收錄</div>'; return; }
+  // ★ 檢查此英雄是否已解鎖；未解鎖 → 圖片轉黑白、所有升級/投資按鈕鎖住
+  const _unlockedList = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+  const _advPool2 = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
+  const _heroIsUnlocked = _unlockedList.includes(name) || _advPool2.includes(name);
   const img = typeof HERO_IMGS !== 'undefined' ? (HERO_IMGS[name]||'') : '';
   const av  = typeof AVATARS !== 'undefined' ? (AVATARS[name]||'⚔') : '⚔';
   // 更新左側立繪
@@ -27533,6 +27584,10 @@ function _renderHeroDetail(name, box) {
   if(imgEl && avEl){
     if(img){ imgEl.src=img; imgEl.style.display=''; avEl.style.display='none'; }
     else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; }
+    // ★ 未解鎖 → 立繪轉黑白灰階
+    const _gs = _heroIsUnlocked ? '' : 'grayscale(1) contrast(0.75) brightness(0.7)';
+    imgEl.style.filter = _gs;
+    avEl.style.filter  = _gs;
   }
   // ★ 肖像切換面板：若此英雄有多張肖像則顯示，並標記已解鎖/未解鎖/當前選擇
   try{
@@ -27652,13 +27707,13 @@ function _renderHeroDetail(name, box) {
     <!-- 名稱 + 角色簡介（並排）-->
     <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
       <div style="flex:0 0 auto;">
-        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}</div>
+        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}</div>
         <div style="font-size:32px;color:#88aaff;margin-bottom:6px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
         ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
             <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
-          ${backpackGet('hero_exp_book')>0 ? `<button onclick="playSfx('sfx-powerup',0.7);_useExpBookForHero('${name}')" style="margin-top:7px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(60,180,80,0.25);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📗 使用經驗值之書 <span style="color:#aaffcc;font-size:17px;">×${backpackGet('hero_exp_book')}</span></button>` : ''}
+          ${_heroIsUnlocked && backpackGet('hero_exp_book')>0 ? `<button onclick="playSfx('sfx-powerup',0.7);_useExpBookForHero('${name}')" style="margin-top:7px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(60,180,80,0.25);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📗 使用經驗值之書 <span style="color:#aaffcc;font-size:17px;">×${backpackGet('hero_exp_book')}</span></button>` : ''}
         </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
       ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
@@ -27682,13 +27737,38 @@ function _renderHeroDetail(name, box) {
             <span style="font-size:22px;cursor:pointer;" onclick="event.stopPropagation();toggleStatPopup(this,\'${stat}\',24)">${icon} ${lbl} <span style="font-size:14px;color:#aaa;vertical-align:middle;opacity:0.7;">?</span></span>
             <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${base+bonus}${bonus>0?`<span style="font-size:16px;color:#44ff88;"> +${bonus}</span>`:''}
             </span>
-            ${freeP>0&&bonus<50?`<button onclick="playSfx('sfx-statup',0.6);investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
+            ${_heroIsUnlocked && freeP>0&&bonus<50?`<button onclick="playSfx('sfx-statup',0.6);investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
           </div>`;
         }).join('')}
         ${freeP>0?`<div style="grid-column:1/-1;font-size:22px;color:#44ff88;font-weight:700;padding:2px 0;">💎 素質點數：${freeP}</div>`:''}
         </div>
         <!-- 天賦：緊接在特技/速度下方 -->
-        ${trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
+        ${trait ? (()=>{
+          // ★ 隨天賦等級動態更新描述中的百分比
+          let _fd = trait.fd || trait.desc || '';
+          let _curHint = '';
+          try{
+            const _info = (typeof _TRAIT_LV_INFO !== 'undefined') ? _TRAIT_LV_INFO[name] : null;
+            if(_info){
+              if(_info.bonus && _info.bonus.indexOf('固定') === 0){
+                _curHint = `<div style="font-size:18px;color:#aaffcc;margin-top:4px;opacity:0.85;">（此天賦固定不隨升級改變）</div>`;
+              } else {
+                const _bm = (_info.base||'').match(/(\d+)%/);
+                const _om = (_info.bonus||'').match(/\+(\d+)%/);
+                if(_bm && _om){
+                  const _base = parseInt(_bm[1]);
+                  const _rate = Math.min(100, _base + traitLv * parseInt(_om[1]));
+                  // 把描述裡的基礎%替換為當前%（只換第一次出現）
+                  const _re = new RegExp(_base + '%');
+                  _fd = _fd.replace(_re, `<span style="color:#ffee88;font-weight:900;">${_rate}%</span>`);
+                  if(traitLv > 0){
+                    _curHint = `<div style="font-size:18px;color:#aaffcc;margin-top:4px;opacity:0.85;">（基礎 ${_base}% → Lv.${traitLv+1} 強化為 ${_rate}%）</div>`;
+                  }
+                }
+              }
+            }
+          }catch(e){}
+          return `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
             <span style="font-size:20px;background:rgba(255,200,0,0.2);color:#ffcc44;border-radius:6px;padding:3px 10px;font-weight:700;">✦ 天賦</span>
             <span style="font-size:28px;font-weight:800;color:#ffe066;cursor:pointer;" onclick="event.stopPropagation();_showTraitLvPopup('${name}',this)">${trait.icon||''} <span style="font-size:32px;letter-spacing:3px;">${trait.name||name+'的天賦'}</span>
@@ -27696,9 +27776,11 @@ function _renderHeroDetail(name, box) {
             </span>
             <span style="font-size:18px;color:#aaffcc;background:rgba(0,200,100,0.15);border-radius:6px;padding:2px 8px;">天賦 Lv.${traitLv+1}${traitLv>=4?' (MAX)':''}</span>
           </div>
-          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${trait.fd||trait.desc||''}</div>
+          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${_fd}</div>
+          ${_curHint}
           <div style="font-size:18px;color:#555;margin-top:4px;">下次強化：${traitLv>=4?'MAX':'角色 Lv.'+([10,20,30,40].find(l=>l>(lv||1))||'—')}</div>
-        </div>` : ''}
+        </div>`;
+        })() : ''}
       </div>
       <!-- 右欄：雷達圖 -->
       <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;">
@@ -27725,7 +27807,7 @@ function _renderHeroDetail(name, box) {
             ${_noUp?'<span style="font-size:20px;color:#ffaa77;background:rgba(255,150,80,0.15);border-radius:6px;padding:2px 10px;">🚫 不可升級</span>':''}
             ${!_noUp && skLv>0?`<span style="font-size:20px;color:#ffcc44;background:rgba(255,200,0,0.15);border-radius:6px;padding:2px 10px;">Lv.${skLv+1} ${_getSkUpgradeBadge(sk.n, skLv)}</span>`:''}
             ${!_noUp && maxed?`<span style="font-size:20px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
-            ${!_noUp && !maxed && backpackGet('skill_upgrade_book')>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
+            ${_heroIsUnlocked && !_noUp && !maxed && backpackGet('skill_upgrade_book')>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
           </div>
           <div style="font-size:24px;color:#ffffff;line-height:1.5;">${fd}</div>
         </div>`;
@@ -27736,7 +27818,7 @@ function _renderHeroDetail(name, box) {
         const _bLv = (_heroBurstLevels && _heroBurstLevels[name]) || 0;
         const _bMax = _bLv >= 4;
         const _hasFruit = (typeof backpackGet==='function') && backpackGet('burst_upgrade_fruit')>0;
-        const _canUpg = !_bMax && _hasFruit;
+        const _canUpg = _heroIsUnlocked && !_bMax && _hasFruit;
         let _rows = '';
         // ★ 用 BURST_UPGRADE_DEF 顯示各英雄的真實升級效果
         const _burstDef = (typeof BURST_UPGRADE_DEF !== 'undefined') ? BURST_UPGRADE_DEF[name] : null;
@@ -29952,6 +30034,8 @@ async function advMiniResultGoHome() {
   try{ _advClearCrashSnapshot(); }catch(e){}
   // 儲存已獲得的進度（EXP/幣已在 advFinishMiniBattle 中 addHeroExp/addKnowledgeCoins 執行過）
   try{ await gameCloudSave(); }catch(e){}
+  // ★ 雲端同步完成後，若有待處理的版本更新通知，現在跳出
+  try{ if(window._flushPendingUpdateIfAny) window._flushPendingUpdateIfAny(); }catch(e){}
   // 回關卡選擇頁（而非遊戲首頁）
   try{
     bgmStop();
@@ -31309,6 +31393,40 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1823', items:[
+    '英雄圖鑑天賦說明文字改為動態：描述中的百分比會隨天賦等級即時變更並以黃色高亮（例：武士 Lv.2 → 「受到傷害時有 44% 機率」而非 40%）',
+    '升級後多一行提示顯示「基礎 XX% → Lv.N 強化為 YY%」',
+  ] },
+  { ver:'v1.0.20260418.1817', items:[
+    '新增遊戲版本即時偵測系統：每 5 分鐘自動檢查是否有新版上線（或切回遊戲分頁時）',
+    '偵測到新版時，若玩家不在戰鬥中 → 立即彈出強制重整視窗；若在戰鬥中 → 標記待處理，等戰鬥結束雲端同步完成後，回到關卡選擇頁時再跳出',
+  ] },
+  { ver:'v1.0.20260418.1811', items:[
+    '英雄圖鑑未收錄英雄：現在依然會顯示原始立繪圖片，但整張卡片以黑白灰階呈現（清楚看出「鎖定」狀態）',
+    '未收錄英雄的詳細頁：立繪轉灰階，且所有升級按鈕（素質點+1、📖技能升級、🍑超越極限、📗經驗書）全部鎖住不顯示',
+    '未收錄英雄的名稱旁顯示「🔒 未收錄」標籤',
+  ] },
+  { ver:'v1.0.20260418.1807', items:[
+    '超商新增商品：占星師替代肖像「星辰天啟」3000 知識幣（限購一次，可於商品列預覽）',
+  ] },
+  { ver:'v1.0.20260418.1759', items:[
+    '修正護盾值會疊加的 Bug：已有護盾時再次上護盾只會更新護盾值（取較大值），不再累加',
+    '影響技能：綠竹筍小妖「筍之守護」、護盾術，其餘護盾技能原本就已是覆蓋邏輯',
+  ] },
+  { ver:'v1.0.20260418.1753', items:[
+    '修正茶葉精靈「一壺鐵觀音」被 AI 施展時變成攻擊技能的 Bug（AI 邏輯漏了此技能的治療分支，fallback 到普攻傷害）',
+    '同時把「一壺鐵觀音」「一壺包種茶」「流浪者之歌」「天籟之音」「治療之光」「復活術」「BUG修復」補進 AI 的治療技能清單，讓 AI 正確評分',
+  ] },
+  { ver:'v1.0.20260418.1741', items:[
+    '武士技能「崛起鬥志」升級到 Lv10（MAX）時，追加效果：發動次數上限 +1（1→2 次）',
+  ] },
+  { ver:'v1.0.20260418.1735', items:[
+    '英雄圖鑑天賦區塊新增「目前等級效果」說明，會依當前天賦等級顯示實際發動機率',
+  ] },
+  { ver:'v1.0.20260418.1730', items:[
+    '修正商店購買後知識幣顯示沒立即更新的問題',
+    '天賦升級演出訊息加上該英雄當前等級的效果描述與發動機率',
+  ] },
   { ver:'v1.0.20260418.1713', items:[
     '超商新增商品：武士替代肖像「瞬影絕斬」3000 知識幣（限購一次）',
     '超商肖像商品新增「預覽」按鈕，可點擊開啟全圖預覽（點任意處關閉）',
@@ -31535,7 +31653,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1713';
+  const CURRENT_VERSION = 'v1.0.20260418.1823';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -31549,6 +31667,99 @@ const GAME_CHANGELOG = [
     console.warn('[版本檢查] localStorage 不可用');
   }
 })();
+
+// ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
+// 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
+window._GAME_LOADED_VERSION = 'v1.0.20260418.1823';
+window._pendingForcedUpdate = false;
+window._latestDetectedVersion = null;
+
+function _isInBattleNow(){
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode) return true;
+    if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive) return true;
+    if(typeof G !== 'undefined' && G && G.p1 && G.p1.length>0 && G.p2 && G.p2.length>0){
+      const anyAlive = [...G.p1, ...G.p2].some(h => h && h.curHp > 0);
+      if(anyAlive) return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function _showForceRefreshPopup(newVer){
+  if(document.getElementById('_force-refresh-modal')) return;
+  const box = document.createElement('div');
+  box.id = '_force-refresh-modal';
+  box.style.cssText = [
+    'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.95);',
+    'display:flex;align-items:center;justify-content:center;padding:24px;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  box.innerHTML = `
+    <div style="background:linear-gradient(160deg,#10143a,#080c20);border:3px solid #ffcc44;
+      border-radius:20px;padding:32px 40px;max-width:min(520px,92vw);text-align:center;
+      box-shadow:0 0 50px rgba(255,200,80,0.35);">
+      <div style="font-size:48px;margin-bottom:12px;">✨</div>
+      <div style="font-size:clamp(22px,3vw,32px);font-weight:900;color:#ffcc44;margin-bottom:10px;">
+        偵測到遊戲新版本
+      </div>
+      <div style="font-size:clamp(16px,2vw,22px);color:#ddd;line-height:1.7;margin-bottom:8px;">
+        為了正常使用新功能與修正，<br>請重新整理網頁以載入最新版本。
+      </div>
+      ${newVer?`<div style="font-size:clamp(14px,1.6vw,18px);color:#aaa;margin-bottom:18px;">新版本：<span style="color:#ffee88;font-weight:700;">${newVer}</span></div>`:'<div style="margin-bottom:18px;"></div>'}
+      <button onclick="location.reload(true)" style="padding:14px 40px;font-size:clamp(18px,2.4vw,26px);
+        font-weight:900;background:linear-gradient(135deg,#ffcc44,#ff9944);border:none;
+        color:#1a1400;border-radius:12px;cursor:pointer;letter-spacing:2px;
+        box-shadow:0 4px 20px rgba(255,180,60,0.4);font-family:inherit;">
+        🔄 立即重新整理
+      </button>
+      <div style="font-size:14px;color:#555;margin-top:16px;">（遊戲進度已同步至雲端，放心重整）</div>
+    </div>
+  `;
+  document.body.appendChild(box);
+  // 避免被其他 overlay 蓋住
+  try{ playSfx && playSfx('sfx-powerup', 0.7); }catch(e){}
+}
+
+async function _checkNewVersionOnServer(){
+  try{
+    const resp = await fetch(location.href, { cache: 'no-store' });
+    if(!resp.ok) return;
+    const txt = await resp.text();
+    // 擷取 CURRENT_VERSION 字串
+    const m = txt.match(/const CURRENT_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    if(!m) return;
+    const latest = m[1];
+    window._latestDetectedVersion = latest;
+    // 跟記憶體中的版本比對
+    if(latest !== window._GAME_LOADED_VERSION){
+      if(_isInBattleNow()){
+        // 戰鬥中 → 延後通知
+        window._pendingForcedUpdate = true;
+      } else {
+        // 不在戰鬥 → 立即跳
+        _showForceRefreshPopup(latest);
+      }
+    }
+  }catch(e){ /* 忽略網路錯誤 */ }
+}
+
+// 每 5 分鐘檢查一次
+setInterval(_checkNewVersionOnServer, 5 * 60 * 1000);
+
+// 另外：當網頁從背景切回前景時也檢查一次（玩家離開很久再回來的情境）
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden){
+    setTimeout(_checkNewVersionOnServer, 2000);
+  }
+});
+
+// ★ 供返回關卡選擇頁等處呼叫：檢查是否有待處理的強制更新
+window._flushPendingUpdateIfAny = function(){
+  if(window._pendingForcedUpdate && !document.getElementById('_force-refresh-modal')){
+    _showForceRefreshPopup(window._latestDetectedVersion);
+  }
+};
 
 function _showChangelogModal(oldVer, newVer){
   if(document.getElementById('_changelog-modal')) return;
