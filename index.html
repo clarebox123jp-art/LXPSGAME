@@ -2777,6 +2777,9 @@ body {
 #adv-battle-bg.bg-boss{
   background-image:url("https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png");
 }
+#adv-battle-bg.bg-apricot{
+  background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96%E5%A0%B4%E6%99%AF.png");
+}
 /* 背景暗化遮罩 */
 #adv-battle-bg::after{
   content:'';position:absolute;inset:0;
@@ -3343,6 +3346,7 @@ body {
 <audio id="sfx-quiz-correct" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="sfx-quiz-wrong"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="bgm-boss-01" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a" loop></audio>
+<audio id="bgm-boss-apricot" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96BGM.mp3" loop></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
@@ -3576,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.1548</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2014</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4374,7 +4378,7 @@ function _resumeTimers(){
   });
 }
 // ====== GLOBAL CONSTANTS (must be declared before any function that references them) ======
-const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt'];
+const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm'];
 const GOOD_STATUS=[];
 
 // ====== AUDIO ENGINE ======
@@ -5540,7 +5544,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   '光法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%85%89%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
@@ -5583,6 +5587,7 @@ const HERO_IMGS = {
   '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
   '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
   '九尾空貓怪': 'https://github.com/clarebox123jp-art/-/raw/main/BOSS%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AA.png',
+  '杏花妖':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/BOSS%E6%9D%8F%E8%8A%B1%E5%A6%96.png',
   '綠竹筍小妖': 'https://github.com/clarebox123jp-art/-/raw/main/%E7%B6%A0%E7%AB%B9%E7%AD%8D%E5%B0%8F%E5%A6%96.png',
   '茶葉精靈':   'https://github.com/clarebox123jp-art/-/raw/main/%E8%8C%B6%E8%91%89%E7%B2%BE%E9%9D%88.png',
   '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png',
@@ -5705,6 +5710,10 @@ const HERO_DB = {
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
   s2:{n:'睡覺功',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'解除自己身上所有不利狀態，並恢復最大HP的10%（約50HP）。'}
+},
+'杏花妖':{hp:680,atk:17,sp:24,spd:10,exp:75,
+  s1:{n:'杏林春霧',c:3,d:'以特技×150%恢復HP%最低1名友方（可復活）',fd:'召喚滿園杏花春霧滋養同伴，以特技值的150%為 HP 百分比最低的 1 名友方恢復 HP（可復活，以50%HP復活）。'},
+  s2:{n:'落英繽紛',c:4,d:'以特技對全體敵人造成傷害',fd:'漫天杏花紛落如刀似刃，用特技值對全體存活的敵人造成草屬性傷害。'}
 },
 '綠竹筍小妖':{hp:180,atk:9,sp:10,spd:5,exp:20,
   s1:{n:'筍之守護',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'為己方 HP 百分比最低的1名友方附加可抵擋20傷害的護盾。'},
@@ -5995,6 +6004,7 @@ const BURST_UPGRADE_DEF = {
   '弦樂團員':  { rows: [[0,'特技×0.4 全體3~5次（必中）+復活'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
   '小劇團員':  { rows: [[0,'依倒下人數×3回能量，能量提升全隊攻/技'],[1,'提升+10%'],[2,'提升+20%'],[3,'提升+30%'],[4,'提升+40%']] },
   '九尾空貓怪':{ rows: [[0,'特技×0.5 × 9次連擊+地獄之火'],[1,'特技×0.55'],[2,'特技×0.6'],[3,'特技×0.65'],[4,'特技×0.7']] },
+  '杏花妖':    { rows: [[0,'特技×1.5 全體傷害 + 50%魅惑 1回合'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   '煉金術師':  { rows: [[0,'抽3張物品牌，友方使用後保留'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
   // ── 特殊效果英雄 ──
   '聖騎士':    { rows: [[0,'全隊無敵1回合，治療40%HP'],[1,'治療45%HP'],[2,'治療50%HP'],[3,'治療55%HP'],[4,'治療60%HP']] },
@@ -6043,6 +6053,7 @@ const HERO_IMG_POS = {
   '機械師':  ['160% auto','center 33%'],   // 上移5%（20+5）
   '木靈使':  ['117% auto','center 25%'],   // 上移5%（20+5）
   '武士':    ['160% auto','center 33%'],   // 上移5%（20+5）
+  '杏花妖':  ['150% auto','center 22%'],   // BOSS：臉部置上
   '凡人':    ['160% auto','center 14%'],   // 往上移5%（預設12+5）
   '小力':    ['140% auto','center 25%'],
   '籃球隊員':['140% auto','center 20%'],
@@ -6128,6 +6139,7 @@ const HERO_BIO = {
   '武士':      { role:'東方武道流浪者', trait:'守靜沉默，劍心純淨', hobby:'冥想，研究劍道哲學', quote:'「動如山嶽，靜如止水。」' },
   '學者':      { role:'古代智慧傳承學院院長', trait:'博古通今，謙遜好學', hobby:'著書立說，蒐集珍本古書', quote:'「過去的失敗，是未來最好的老師。」' },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
+  '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
   '茶葉精靈':  { role:'貓空百年老茶樹孕育的茶精', trait:'溫潤優雅，帶著淡淡茶香', hobby:'泡茶，與茶農對話', quote:'「好茶需要慢慢品味，你，夠格嗎？」' },
   '偷摘花的頑皮妖精':{ role:'河堤花叢間的搗蛋精靈', trait:'頑皮好動，喜歡惡作劇', hobby:'摘花插頭，戲弄路人', quote:'「哈！這朵最漂亮，我先拿了！」' },
@@ -6180,6 +6192,7 @@ const BURST_DB = {
   '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下的所有角色（敵我雙方）×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
   // ── BOSS 爆發技能 ──
   '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
+  '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，50%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有50%機率使每一名敵人陷入「魅惑」狀態1回合。'},
 
 };
 
@@ -7389,28 +7402,10 @@ function showHeroPickOverlay(){
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
     hpo.style.background = '#080a18 url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png") center/cover no-repeat';
 
-    // BOSS 預覽
-    const bossTeam = ADV_BOSS_TEAMS[_adventureStage] || [];
-    const enemyTitle = document.getElementById('hpick-enemy-title');
-    if(enemyTitle) enemyTitle.textContent = '🔥 BOSS 陣容';
-    const slotsDiv = document.getElementById('hpick-enemy-slots');
-    if(slotsDiv){
-      const elemIcon = e => e==='fire'?'🔥':e==='earth'?'🪨':e==='grass'?'🌿':'⚡';
-      slotsDiv.innerHTML = bossTeam.map(b => {
-        const imgUrl = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[b.name])||'';
-        const av = (typeof AVATARS!=='undefined'&&AVATARS[b.name])||'👾';
-        const isBoss = b.name==='九尾空貓怪';
-        const w = isBoss ? '340px' : '230px';
-        return `<div onclick="advShowBossDetail('${b.name}')" style="cursor:pointer;width:${w};flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-          <div style="width:100%;height:${isBoss?'140px':'100px'};border-radius:12px;overflow:hidden;border:${isBoss?'2.5px solid #ff6600':'1.5px solid rgba(232,64,64,0.5)'};background:rgba(20,5,0,0.8);position:relative;">
-            ${imgUrl?`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:${isBoss?'center 15%':'center 20%'};display:block;opacity:0.92;">`:`<span style="font-size:${isBoss?'64px':'48px'};line-height:1;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">${av}</span>`}
-            <span style="position:absolute;top:6px;right:8px;font-size:20px;">${elemIcon(b.element)}</span>
-          </div>
-          <div style="font-size:${isBoss?'24px':'20px'};font-weight:${isBoss?'900':'700'};color:${isBoss?'#ff8844':'#ff9999'};letter-spacing:1px;margin-top:5px;text-align:center;">${b.name}</div>
-          <div style="font-size:16px;color:#888;letter-spacing:1px;margin-top:2px;">點擊查看詳情</div>
-        </div>`;
-      }).join('');
-    };
+    // BOSS 預覽（依玩家選擇的 variant）
+    if(typeof window._advSelectedVariantIdx === 'undefined') window._advSelectedVariantIdx = 0;
+    if(typeof window._advApricotPreviewTeam === 'undefined') window._advApricotPreviewTeam = null;
+    _renderAdvBossPreview();
 
     _buildHeroPickNodes();
     _applyAdvLocks(); // ← 取代原本的手動 forEach 鎖定邏輯
@@ -7494,6 +7489,71 @@ function showHeroPickOverlay(){
 
 // 計算對手預覽陣容（與 confirmHeroPick 相同邏輯）並渲染到 ep-slot
 let _previewEnemyNames = [];
+// ★ 冒險模式 BOSS 預覽（可切換變體）
+function _getCurrentAdvBossTeam(){
+  const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
+  if(!variants.length) return ADV_BOSS_TEAMS[_adventureStage] || [];
+  const idx = (window._advSelectedVariantIdx||0) % variants.length;
+  const variant = variants[idx];
+  if(variant.id === 'cat9tail'){
+    return ADV_BOSS_TEAMS[_adventureStage] || [];
+  } else if(variant.id === 'apricot'){
+    if(!window._advApricotPreviewTeam){
+      window._advApricotPreviewTeam = (typeof _buildApricotTeam === 'function') ? _buildApricotTeam() : [];
+    }
+    return window._advApricotPreviewTeam;
+  }
+  return ADV_BOSS_TEAMS[_adventureStage] || [];
+}
+function _renderAdvBossPreview(){
+  const enemyTitle = document.getElementById('hpick-enemy-title');
+  if(enemyTitle) enemyTitle.textContent = '🔥 BOSS 陣容（可換路線）';
+  const slotsDiv = document.getElementById('hpick-enemy-slots');
+  if(!slotsDiv) return;
+  const bossTeam = _getCurrentAdvBossTeam();
+  const _mainBossMap = {cat9tail:'九尾空貓怪', apricot:'杏花妖'};
+  const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
+  const curIdx = (window._advSelectedVariantIdx||0) % Math.max(1, variants.length);
+  const elemIcon = e => e==='fire'?'🔥':e==='earth'?'🪨':e==='grass'?'🌿':e==='water'?'💧':e==='wind'?'🌪️':e==='thunder'?'⚡':e==='light'?'☀️':e==='dark'?'🌑':e==='ice'?'❄️':'⚔️';
+  const _mainNames = Object.values(_mainBossMap);
+  // 換路線按鈕（靠左）
+  const _switchBtnHtml = variants.length > 1
+    ? `<button onclick="_cycleAdvBossVariant()" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:14px 18px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:900;background:rgba(100,180,255,0.18);border:3px solid #5599ff;border-radius:14px;color:#99ccff;cursor:pointer;margin-right:12px;box-shadow:0 0 14px rgba(80,150,255,0.28);">
+        <span style="font-size:28px;line-height:1;">🔀</span>
+        <span style="font-size:16px;letter-spacing:2px;">換路線</span>
+      </button>`
+    : '';
+  const _teamHtml = bossTeam.map(b => {
+    const imgUrl = (typeof HERO_IMGS!=='undefined'&&HERO_IMGS[b.name])||'';
+    const av = (typeof AVATARS!=='undefined'&&AVATARS[b.name])||'👾';
+    const isBoss = _mainNames.includes(b.name);
+    const w = isBoss ? '280px' : '200px';
+    const displayName = b.charmedFromHero ? ('被魅惑的'+b.charmedFromHero) : b.name;
+    const objPos = typeof getHeroObjPos==='function' ? getHeroObjPos(b.name) : 'center 20%';
+    return `<div onclick="advShowBossDetail('${b.name}')" style="cursor:pointer;width:${w};flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+      <div style="width:100%;height:${isBoss?'130px':'95px'};border-radius:12px;overflow:hidden;border:${isBoss?'2.5px solid #ff6600':'1.5px solid rgba(232,64,64,0.5)'};background:rgba(20,5,0,0.8);position:relative;">
+        ${imgUrl?`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:${objPos};display:block;opacity:0.92;">`:`<span style="font-size:${isBoss?'64px':'48px'};line-height:1;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">${av}</span>`}
+        <span style="position:absolute;top:6px;right:8px;font-size:20px;">${elemIcon(b.element)}</span>
+      </div>
+      <div style="font-size:${isBoss?'22px':'17px'};font-weight:${isBoss?'900':'700'};color:${isBoss?'#ff8844':'#ff9999'};letter-spacing:1px;margin-top:5px;text-align:center;">${displayName}</div>
+      <div style="font-size:14px;color:#888;letter-spacing:1px;margin-top:2px;">點擊查看詳情</div>
+    </div>`;
+  }).join('');
+  slotsDiv.innerHTML = _switchBtnHtml + _teamHtml;
+}
+function _cycleAdvBossVariant(){
+  const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
+  if(variants.length <= 1) return;
+  window._advSelectedVariantIdx = ((window._advSelectedVariantIdx||0) + 1) % variants.length;
+  // 若切到 apricot 變體，重新抽一組隨機英雄
+  const newVariant = variants[window._advSelectedVariantIdx];
+  if(newVariant && newVariant.id === 'apricot'){
+    window._advApricotPreviewTeam = (typeof _buildApricotTeam === 'function') ? _buildApricotTeam() : null;
+  }
+  try{ playSfx('sfx-sel', 0.7); }catch(e){}
+  _renderAdvBossPreview();
+}
+
 function _previewEnemyTeam(){
   // ★ 鬥技模式：敵方只從普通英雄中選，嚴格排除所有BOSS角色
   const _advBossAll = typeof ADV_BOSS_TEAMS !== 'undefined'
@@ -7903,8 +7963,9 @@ const HERO_LORE = {
   '小劇團員':  '活躍在戲劇中的千面藝人',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
+  '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
   '綠竹筍小妖': '守護貓空竹林的土地小精靈，用竹根編織護盾保衛家園。',
-  '茶葉精靈':   '凝聚百年茶氣而生，能以茶香癒合傷口，是九尾空貓怪的得力助手。',
+  '茶葉精靈':   '凝聚百年茶氣而生，能以茶香癒合傷口，受神秘的邪惡聲音指使。',
 };
 
 // ====== 天賦 DB ======
@@ -7949,14 +8010,16 @@ const HERO_TRAIT = {
   '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療（每級+5%）；成為攻擊目標機率+40%（每級+5%）',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
+  '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時30%機率魅惑對手1回合',fd:'受到傷害時有30%機率使攻擊者陷入「魅惑」狀態1回合，下一回合自動普通攻擊自己的隊友。' },
   '綠竹筍小妖': { name:'竹甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
   '茶葉精靈':   { name:'茶癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
 };
 
 const MONSTER_LORE = {
-  '九尾空貓怪': '來自異世界的九尾貓妖，被貓空百年茶香吸引而踏入人間，喜歡搶奪他人的寶物，施展邪術封住了景美溪靈氣，是這次冒險的最終首領。',
-  '綠竹筍小妖': '守護貓空竹林的土地小精靈，以竹根編織護盾保衛家園，雖然個性憨厚，卻在九尾空貓怪的蠱惑下成為守門將。',
-  '茶葉精靈': '凝聚百年茶氣而生的茶山精靈，能以茶香癒合傷口，是九尾空貓怪的得力助手，掌管著貓空茶園的靈氣。',
+  '九尾空貓怪': '來自異世界的九尾貓妖，被貓空百年茶香吸引而踏入人間，喜歡搶奪他人的寶物，施展邪術封住了景美溪靈氣，是這次冒險的其中一位最終首領。',
+  '杏花妖': '吸收天地日月精華與異世界能量後化身成妖的千年杏花樹，有著讓人著迷的絕世美貌，深居貓空花林中，掌管花妖一族，嬌氣傲慢、潔癖成性，是另一位封印靈氣的幕後黑手。',
+  '綠竹筍小妖': '守護貓空竹林的土地小精靈，以竹根編織護盾保衛家園，雖然個性憨厚，卻被神秘的邪惡聲音蠱惑而成為守門將。',
+  '茶葉精靈': '凝聚百年茶氣而生的茶山精靈，能以茶香癒合傷口，受神秘的邪惡聲音指使，掌管著貓空茶園的靈氣。',
   '偷摘花的頑皮妖精': '住在景美溪河堤草叢裡的惡作劇精靈，最愛偷摘路邊的野花野草，見到陌生人就跳出來搗亂，笑聲響徹整條步道。',
   '偷鳥蛋的鳥人哈維': '流竄在樟湖步道樹梢間的鳥翼盜賊，以偷竊鳥巢中的蛋為樂，行動敏捷如風，是步道上最難纏的小麻煩。',
   '偷竹筍的哥布林': '躲在貓空竹林深處的貪吃哥布林，把新鮮竹筍視為人間美味，每天偷挖農家竹筍，氣得茶農阿伯跳腳。',
@@ -8282,12 +8345,56 @@ function confirmHeroPick(){
       // 3. 爆發等級 → 直接存在英雄物件上，_runBurst 直接讀取
       h._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[h.name]) || 0;
     });
-    // BOSS 陣容固定，元素已預設
-    const bossTeam = ADV_BOSS_TEAMS[_adventureStage];
+    // BOSS 陣容：使用玩家在選英雄頁「換路線」選定的變體（若未選，預設第一個）
+    let _variant = null;
+    try{
+      const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
+      if(variants.length){
+        const idx = (window._advSelectedVariantIdx||0) % variants.length;
+        _variant = variants[idx];
+      }
+    }catch(e){}
+    window._currentBossVariantInfo = _variant;
+    let bossTeam;
+    if(_variant && _variant.id === 'apricot'){
+      // 優先使用玩家在選英雄頁看到的預覽陣容，確保戰鬥內陣容與預覽一致
+      bossTeam = (window._advApricotPreviewTeam && window._advApricotPreviewTeam.length)
+        ? window._advApricotPreviewTeam
+        : (typeof _buildApricotTeam === 'function' ? _buildApricotTeam() : ADV_BOSS_TEAMS[_adventureStage]);
+    } else {
+      bossTeam = ADV_BOSS_TEAMS[_adventureStage];
+    }
     G.p2 = bossTeam.map((b,i)=>{
       const h = newHero(b.name,'p2',i);
       h.element = b.element;
       applyElemBonus(h);
+      // ★ 杏花妖陣容的小怪 = 被魅惑的玩家英雄，套用玩家圖鑑升級數據
+      if(b.charmedFromHero){
+        const _src = b.charmedFromHero;
+        // 顯示名稱加「被魅惑的」前綴（角色內部名稱仍為原本 name 以利資料查找）
+        h._displayName = '被魅惑的' + _src;
+        h._isCharmedEnemy = true;
+        // 套用玩家的素質投資
+        const _inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested[_src]) || {};
+        if(_inv.hp) { h.hp += _inv.hp; h.curHp = h.hp; }
+        if(_inv.atk) h.atk += _inv.atk;
+        if(_inv.sp)  h.sp  += _inv.sp;
+        if(_inv.spd) h.spd += _inv.spd;
+        // 套用等級 HP 加成（每級 +2% HP）
+        const _lv = (typeof _heroLevels !== 'undefined' && _heroLevels[_src]) || 1;
+        if(_lv > 1){
+          const _bonusPct = (_lv - 1) * 0.02;
+          const _bonusHp = Math.round(h.hp * _bonusPct);
+          h.hp += _bonusHp;
+          h.curHp = h.hp;
+        }
+        // 套用技能升級等級
+        h._skLv = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[_src])
+          ? { s1: (_heroSkillLevels[_src].s1||0), s2: (_heroSkillLevels[_src].s2||0) }
+          : { s1:0, s2:0 };
+        // 套用爆發等級
+        h._burstLvAdv = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels[_src]) || 0;
+      }
       return h;
     });
     
@@ -9105,7 +9212,7 @@ function renderCard(h){
     <div class="card-illus"></div>
     <div class="card-header">
       <span class="card-icon-sm">${h.av}</span>
-      <span class="card-name-sm">${h.name}</span>
+      <span class="card-name-sm">${h._displayName || h.name}</span>
       ${h.element?`<span class="card-elem-sm">${elemIcon(h.element)}</span>`:''}
     </div>
     ${(()=>{
@@ -9272,7 +9379,7 @@ function renderCard(h){
   el.addEventListener('click', el._previewClickBound);
 }
 function statusName(t){
-  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'地獄之火',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'虛弱（特質）',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',
+  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'地獄之火',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'虛弱（特質）',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',
   booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾'
 };
   return m[t]||t;
@@ -10520,6 +10627,31 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
     return;
   }
+  // 杏花妖：千年絕美・傾城一笑
+  if(burstName==='千年絕美・傾城一笑'){
+    const _opp2 = side==='p1'?'p2':'p1';
+    const _foes2 = G[_opp2].filter(x=>x.curHp>0);
+    const _dmg = Math.max(8, Math.floor(spv*1.5*_burstMult));
+    log(`🌸 [${h.name}] 千年絕美・傾城一笑！`);
+    bannerFX(h,'🌸 千年絕美！','#ff88cc',1200);
+    _foes2.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f, _dmg, {actor:h, isSkill:true, elem:'grass'});
+        renderCard(f);
+        // 50% 魅惑 1回合
+        if(f.curHp>0 && !hasStatus(f,'charm') && !hasBuff(f,'ctrlImmune') && !hasBuff(f,'statusImmune') && Math.random()<0.5){
+          f.status = f.status.filter(s=>s.type!=='charm');
+          f.status.push({type:'charm', dur:2});
+          bannerFX(f,'💕 魅惑！','#ff88cc',900);
+          log(`💕 [${f.name}] 被魅惑 1 回合！`);
+          renderCard(f);
+        }
+      }, i*180);
+    });
+    _pSetTimeout(()=>{ _burstFinish(h,_interrupted); }, _foes2.length*180 + 600);
+    return;
+  }
   updateUI();
   if(checkWin()) return;
   // 清除殘留狀態後再推進回合
@@ -11273,6 +11405,19 @@ function doDmg(target, rawDmg, opts={}){
     rawDmg = Math.max(1, Math.floor(rawDmg * 0.6));
     showPopup(target, '韌竹-40%', 'miss');
     log(`🎋 [綠竹筍小妖] 天賦：韌竹護甲！傷害減少40%！`);
+  }
+  // ★ 杏花妖天賦：受到傷害時30%機率魅惑攻擊者1回合
+  if(_adventureMode && target.name==='杏花妖' && !hasStatus(target,'confused') && rawDmg>0
+     && opts && opts.actor && opts.actor.curHp>0 && opts.actor!==target
+     && !hasStatus(opts.actor,'charm') && !hasBuff(opts.actor,'ctrlImmune')
+     && !hasBuff(opts.actor,'statusImmune') && !opts.isRebound
+     && Math.random()<0.3){
+    const _atkr = opts.actor;
+    _atkr.status = _atkr.status.filter(s=>s.type!=='charm');
+    _atkr.status.push({type:'charm', dur:2}); // dur:2 → 扣完本回合剩1回合在 next turn 生效
+    log(`🌸 [杏花妖] 天賦：媚惑！使 [${_atkr.name}] 陷入魅惑1回合！`);
+    bannerFX(_atkr, '💕 魅惑！', '#ff88cc', 900);
+    renderCard(_atkr);
   }
   // 土屬性：受傷-2
   { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
@@ -13555,6 +13700,29 @@ function execSkill(a, sk, cost, stype){
     G[a.side].forEach(ally=>renderCard(ally));
     endAction(a, cost);
   }
+  // ★ 杏林春霧：依特技×150%恢復HP%最低1名友方（可復活50%HP）
+  else if(n==='杏林春霧'){
+    log(`🌸 [${a.name}] 杏林春霧！召喚杏花春霧滋養同伴！`);
+    const _tgt = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0]
+              || G[a.side].find(x=>x.curHp===0);
+    if(_tgt){
+      if(_tgt.curHp===0){ doRevive(_tgt, 0.5); }
+      doHeal(_tgt, Math.floor(a.sp*1.5), {actor:a, isHeal:true});
+      bannerFX(_tgt, '🌸 杏林春霧！', '#ffccdd', 900);
+    }
+    G[a.side].forEach(ally=>renderCard(ally));
+    endAction(a, cost);
+  }
+  // ★ 落英繽紛：依特技對全體敵人造成草屬性傷害
+  else if(n==='落英繽紛'){
+    log(`🌸 [${a.name}] 落英繽紛！漫天花瓣如刀！`);
+    const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    _foes.forEach(f=>{
+      doDmg(f, a.sp, {actor:a, isSkill:true, elem:'grass'});
+    });
+    bannerFX(a, '🌸 落英繽紛！', '#ffaacc', 900);
+    endAction(a, cost);
+  }
   // ====== 新技能實裝 ======
 
   // ── 虛弱咒：依特技降低對手全能力2回合 ──
@@ -15452,6 +15620,23 @@ function startTurn(){
     }
   }
 
+  // ── 魅惑 check — 強制普通攻擊己方隨機隊友（一般攻擊值，不加成） ──
+  if(hasStatus(next,'charm')){
+    const _charmAllies=G[next.side].filter(h=>h.curHp>0&&h!==next);
+    if(!_charmAllies.length){
+      log(`💕 [${next.name}] 魅惑中但無隊友可攻擊，跳過行動！`);
+      next.acted=true; updateUI(); _pSetTimeout(startTurn,400); return;
+    }
+    const _ct=_charmAllies[Math.floor(Math.random()*_charmAllies.length)];
+    log(`💕 [${next.name}] 被魅惑！自動普攻隊友 [${_ct.name}]！`);
+    bannerFX(next,'💕 魅惑中！','#ff88cc',900);
+    _pSetTimeout(()=>{
+      doDmg(_ct,next.atk,{actor:next});
+      next.acted=true; updateUI(); _pSetTimeout(startTurn,500);
+    },600);
+    return;
+  }
+
   // ── 強力挑釁：只能普通攻擊施展者（守衛），不能使用技能 ──
   if(hasStatus(next,'strongTaunt')){
     const _stStatus = next.status.find(s => s.type === 'strongTaunt');
@@ -15945,9 +16130,9 @@ function aiAct(a){
     _pSetTimeout(()=>{ _realAiAct(a); }, 300);
     return;
   }
-  // ★ 冒險模式：九尾空貓怪行動前先出題
+  // ★ 冒險模式：主 BOSS（九尾空貓怪 或 杏花妖）行動前先出題
   if(typeof _adventureMode !== 'undefined' && _adventureMode &&
-     a && a.name === '九尾空貓怪' && a.side === 'p2' && a.curHp > 0 &&
+     a && (a.name === '九尾空貓怪' || a.name === '杏花妖') && a.side === 'p2' && a.curHp > 0 &&
      G.p1.some(h=>h.curHp>0) &&
      typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
     _advQuizResolveCb = ()=>{ _realAiAct(a); };
@@ -15984,14 +16169,19 @@ function _realAiAct(a){
     return;
   }
 
-  // ★ 九尾空貓怪 HP≤50%：強制爆發一次（憤怒模式）
+  // ★ 主 BOSS HP≤50%：強制爆發一次（憤怒模式）
   if(typeof _adventureMode !== 'undefined' && _adventureMode &&
-     a.name === '九尾空貓怪' && a.side === 'p2' &&
+     (a.name === '九尾空貓怪' || a.name === '杏花妖') && a.side === 'p2' &&
      a.curHp <= a.hp * 0.5 && !_advBossRageBurstUsed &&
      typeof BURST_DB !== 'undefined' && BURST_DB[a.name]){
     _advBossRageBurstUsed = true;
     // 顯示憤怒對話氣泡
-    const rageLines = [
+    const rageLines = (a.name === '杏花妖') ? [
+      '唉呀！怎麼會弄髒本仙的花瓣？絕對不能原諒！！',
+      '你們這些粗魯的傢伙，居然把本仙的妝容弄花了！',
+      '看本仙千年養成的真面目吧——傾城一笑！',
+      '竟然把花瓣撕破了？！本仙不能放過你們！',
+    ] : [
       '喵——！！你們敢讓本貓流血……絕對不原諒！！',
       '本貓還沒認真呢！看本貓的真正實力——焰尾九連擊！！',
       '哈哈哈！你以為傷了本貓就贏了？現在才是開始喵！！',
@@ -16026,7 +16216,7 @@ function _realAiAct(a){
   const canS2 = G.energy[a.side]>=s2cost && !canSeal && !(a.s2.once&&a.s2used) && !a.s2.p;
   const canAnySkill = canS1||canS2;
 
-  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復'];
+  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧'];
   const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護'];
   const isHealer = HEAL_SKILLS.includes(a.s1.n)||HEAL_SKILLS.includes(a.s2.n);
   const isTank   = TANK_SKILLS.includes(a.s1.n)||TANK_SKILLS.includes(a.s2.n)||a.name==='守衛'||a.name==='武鬥家'||a.name==='大力士'||a.name==='小力';
@@ -16526,6 +16716,24 @@ function aiUseSkill(a,sk,cost,pref){
     });
     bannerFX(a, '鐵觀音！全體回血！', '#88ffaa', 900);
   }
+  // ★ 杏林春霧：AI使用 - 特技×150% 治療HP%最低友方
+  else if(n==='杏林春霧'){
+    const _tgt = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0]
+              || G[a.side].find(x=>x.curHp===0);
+    if(_tgt){
+      if(_tgt.curHp===0){ doRevive(_tgt, 0.5); }
+      doHeal(_tgt, Math.floor(a.sp*1.5), {actor:a, isHeal:true});
+      log(`🌸 [${a.name}] 杏林春霧！為 [${_tgt.name}] 恢復 ${Math.floor(a.sp*1.5)}HP！`);
+      bannerFX(_tgt, '🌸 杏林春霧！', '#ffccdd', 900);
+    }
+  }
+  // ★ 落英繽紛：AI使用 - 全體草屬性傷害
+  else if(n==='落英繽紛'){
+    const _foes = enemies.filter(h=>h.curHp>0);
+    _foes.forEach(f=>{ doDmg(f, a.sp, {actor:a, isSkill:true, elem:'grass'}); });
+    log(`🌸 [${a.name}] 落英繽紛！對全體敵人造成傷害！`);
+    bannerFX(a, '🌸 落英繽紛！', '#ffaacc', 900);
+  }
   // ★ 一壺包種茶：AI使用 - 解除不利+治療
   else if(n==='一壺包種茶'){
     G[a.side].forEach(ally=>{ if(ally.curHp>=0) clearBadStatus(ally); });
@@ -16579,13 +16787,16 @@ function doSurrender(){
 }
 function checkWin(){
   if(G.p1.every(h=>h.curHp<=0)){ _showResultWithDrama(false); return true; }
-  // 冒險模式：主BOSS（九尾空貓怪）被打倒時，小怪立即投降
+  // 冒險模式：主BOSS被打倒時，小怪立即投降
   if(typeof _adventureMode !== 'undefined' && _adventureMode && window._advSystemReady){
-    const mainBoss = G.p2.find(h=>h.name==='九尾空貓怪');
+    // 找主 BOSS（pos=1 位置，或從 BOSS_NAMES 中查）
+    const _mainBossNames = ['九尾空貓怪','杏花妖'];
+    const mainBoss = G.p2.find(h=>_mainBossNames.includes(h.name));
     if(mainBoss && mainBoss.curHp <= 0){
       // 讓小怪一起倒下
       G.p2.forEach(h=>{ if(h.curHp>0){ h.curHp=0; renderCard(h); } });
-      log('🐱 九尾空貓怪落敗！小怪們也跟著投降了！');
+      const _icn = mainBoss.name==='杏花妖' ? '🌸' : '🐱';
+      log(`${_icn} ${mainBoss.name}落敗！小怪們也跟著投降了！`);
       _showResultWithDrama(true); return true;
     }
   }
@@ -19393,12 +19604,12 @@ const ADV_STAGES = {
   maokong: {
     name: '木柵貓空大冒險',
     emoji: '🌳🐼🚠🍵',
-    desc: '九尾空貓怪竄入貓空山區，以邪術封住了景美溪的靈氣，讓動物園的生靈驚慌失措，茶農們束手無策！身為英雄的你，必須帶領隊伍穿越河堤步道、深入指南宮古道，以知識為武器，一路闖關到貓空山頂，揭開謎底、擊敗魔物，還給貓空一片寧靜。聽聞這裡有奇裝異服的人也在清剿魔物，如果有緣分說不定能成為夥伴？',
+    desc: '一個神秘的邪惡聲音竄入貓空山區，以邪術封住了景美溪的靈氣，讓動物園的生靈驚慌失措，茶農們束手無策！身為英雄的你，必須帶領隊伍穿越河堤步道、深入指南宮古道，以知識為武器，一路闖關到貓空山頂，揭開謎底、擊敗魔物，還給貓空一片寧靜。聽聞這裡有奇裝異服的人也在清剿魔物，如果有緣分說不定能成為夥伴？',
     stars: 3,
     objectives: [
       '🗺 完成景美溪河堤、樟湖步道、貓空茶園三幕場景',
-      '📚 通過九尾空貓怪的知識問答考驗',
-      '⚔ 在 BOSS 戰中擊敗九尾空貓怪',
+      '📚 通過 BOSS 的知識問答考驗',
+      '⚔ 在 BOSS 戰中擊敗幕後黑手',
     ],
     rewards: [
       {icon:'⭐', text:'英雄成長經驗值'},
@@ -19930,6 +20141,49 @@ const ADV_BOSS_TEAMS = {
     {name:'茶葉精靈',   element:'grass'}
   ]
 };
+
+// ★ BOSS 變體陣容：每組各 50% 機率出現。
+//   九尾空貓怪陣容 = ADV_BOSS_TEAMS.maokong（保留為基礎）
+//   杏花妖陣容 = 杏花妖 + 2 名從玩家已收錄英雄中隨機挑選的「被魅惑的」英雄
+const ADV_BOSS_VARIANTS = {
+  maokong: [
+    { id:'cat9tail',  main:'九尾空貓怪', fixedTeam:true },
+    { id:'apricot',   main:'杏花妖',     fixedTeam:false }
+  ]
+};
+
+// 選擇當前這場戰鬥的變體（於進 BOSS 戰時決定並記住整場）
+let _currentBossVariant = null;
+function _pickBossVariant(stage){
+  const pool = ADV_BOSS_VARIANTS[stage] || [];
+  if(!pool.length) return null;
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  _currentBossVariant = pick;
+  return pick;
+}
+
+// 為杏花妖陣容動態產生「被魅惑的」小怪（取玩家已收錄英雄）
+function _buildApricotTeam(){
+  const _unlocked = (typeof advGetUnlockedHeroes==='function') ? advGetUnlockedHeroes() : [];
+  const _basePool = (typeof ADV_HERO_POOL!=='undefined')
+    ? (ADV_HERO_POOL.maokong || [])
+    : [];
+  const _all = [...new Set([..._unlocked, ..._basePool])].filter(n =>
+    typeof HERO_DB !== 'undefined' && HERO_DB[n]
+    && !(typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n))
+  );
+  // 隨機抽 2 位不同的英雄
+  _all.sort(()=>Math.random()-0.5);
+  const pos0Hero = _all[0] || '劍士';
+  const pos2Hero = _all[1] || '祭司';
+  const _elems = ['grass','fire','water','wind','earth','thunder','light','dark','ice'];
+  const pickElem = ()=> _elems[Math.floor(Math.random()*_elems.length)];
+  return [
+    {name:pos0Hero, element:pickElem(), charmedFromHero:pos0Hero},
+    {name:'杏花妖', element:'grass'},
+    {name:pos2Hero, element:pickElem(), charmedFromHero:pos2Hero}
+  ];
+}
 
 // ── 從關卡選擇頁面按下「整裝出發」
 function startAdventureGame(stage){
@@ -21344,7 +21598,7 @@ const ADV_SCENES = {
       dialogs:[
         '清晨的陽光灑在景美溪河堤上，小隊伍背起行囊，踏上了貓空冒險之旅！',
         '河堤旁的白鷺鷥展翅低飛，像是在為小隊伍送行。微風吹來，帶著青草和溪水的香氣。',
-        '「出發！今天要打倒那隻搗蛋的九尾空貓怪，還貓空茶農們一個安寧！」隊長喊道。',
+        '「出發！今天要打倒那個搗蛋的神秘邪惡聲音，還貓空茶農們一個安寧！」隊長喊道。',
       ],
       // ★ 第一場連問兩題（年級 + 擅長科目），小怪戰會鎖定該科目從「沒自信（簡單）」題庫開始
       choiceType: 'grade_subject',
@@ -21374,8 +21628,8 @@ const ADV_SCENES = {
       speaker:'📖 旁白',
       dialogs:[
         '穿過步道，眼前突然開朗——連綿的茶園在陽光下閃著碧綠光芒，茶香撲鼻而來！',
-        '「就是這裡了！九尾空貓怪就藏在前方的山洞裡。」隊長壓低聲音說，大家互相點點頭。',
-        '茶農阿伯遠遠招手：「小英雄們，老貓妖被神秘茶香吸引，拜託你們了！加油啊！」',
+        '「就是這裡了！那個神秘的邪惡聲音就藏在前方的山洞裡。」隊長壓低聲音說，大家互相點點頭。',
+        '茶農阿伯遠遠招手：「小英雄們，聽說妖怪被神秘茶香吸引，拜託你們了！加油啊！」',
       ],
       // ★ 第三場：不提問，觸發隨機事件（在 advConfirmScene3Dialog 裡處理）
       choiceType: 'random_event',
@@ -21462,6 +21716,15 @@ const ADV_SUBJECT_FOCUS = {
 
 // 動態生成開場台詞（依年級、科目、難度精準說明考題方向）
 function getAdvBossIntroLines(){
+  // ★ 偵測當前主 BOSS 變體
+  const _mainBossName = (typeof G !== 'undefined' && G && G.p2)
+    ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪') || {}).name
+    : '九尾空貓怪';
+  const _isApricot = _mainBossName === '杏花妖';
+  const _tailEasy = _isApricot ? '本仙今日心情好，就手下留情一點～' : '本貓手下留情一點喵！';
+  const _tailMid  = _isApricot ? '標準難度，可不要讓本仙失望呀～' : '標準難度，好好發揮喵！';
+  const _tailHard = _isApricot ? '哼！別讓本仙的花瓣因你笨拙而凋謝。' : '哼，別讓本貓失望喵！';
+  const _cat = (s) => _isApricot ? s.replace(/喵喵喵/g,'唉呀唉呀').replace(/喵/g,'呀') : s;
   const gradeMap = {'小學低年級':'低年級','小學中年級':'中年級','小學高年級':'高年級','五年級':'五年級','國中':'國中'};
   const diffMap  = {'沒自信（輕鬆模式）':'沒自信','普通（標準模式）':'普通','我很會（挑戰模式）':'我很會',
                     '沒自信':'沒自信','普通':'普通','我很會':'我很會'};
@@ -21472,6 +21735,13 @@ function getAdvBossIntroLines(){
 
   // ★ 期中評量：特別台詞，不依難度
   if (subj.includes('評量')) {
+    if(_isApricot){
+      return [
+        `唉呀～${grade}的小英雄！居然敢來挑戰【${subj}】？本仙可是準備了 30 道絕妙問題呢～`,
+        `這次是正式評量呀～難度固定，無論選哪個都一樣，本仙的花瓣可不會憐惜失敗者。`,
+        `好啦，就讓本仙欣賞一下你們這些凡人的掙扎——答題開始～`,
+      ];
+    }
     return [
       `喵喵喵～${grade}的小英雄！聽說你要挑戰【${subj}】？本貓已備好30道考題，準備好了嗎？`,
       `這次是正式評量喵！難度固定，無論選哪個都一樣——本貓可不會手下留情！`,
@@ -21483,32 +21753,39 @@ function getAdvBossIntroLines(){
   let focusLine;
   if(!isMix && ADV_SUBJECT_FOCUS[subj] && ADV_SUBJECT_FOCUS[subj][grade] && ADV_SUBJECT_FOCUS[subj][grade][diff]){
     const topic = ADV_SUBJECT_FOCUS[subj][grade][diff];
-    const diffTail = diff==='沒自信' ? '本貓手下留情一點喵！' : diff==='我很會' ? '哼，別讓本貓失望喵！' : '標準難度，好好發揮喵！';
+    const diffTail = diff==='沒自信' ? _tailEasy : diff==='我很會' ? _tailHard : _tailMid;
     focusLine = `今天【${subj}】的考題重點是：${topic}。${diffTail}`;
   } else {
     // 綜合模式：依年級+難度說明
     const mixFocus = {
-      '低年級': { '沒自信':'各科基礎，日常詞彙、簡單加減和生活常識都可能出現喵！',
-                  '普通':   '國字注音、基礎算術和動植物知識，難度適中喵！',
-                  '我很會': '跨科綜合，造詞、算術和生態知識都要會喵！' },
-      '中年級': { '沒自信':'各科入門題，成語、乘法和地理基礎都可能考喵！',
-                  '普通':   '跨科綜合：成語、四則運算、台灣文化都會考到喵！',
-                  '我很會': '閱讀、多步驟計算和歷史人物，都要搞清楚喵！' },
-      '高年級': { '沒自信':'各科基礎：成語、分數和歷史概要喵！',
-                  '普通':   '文言文、比例分數、自然與地理都考喵！',
-                  '我很會': '修辭、複雜四則、社會科學，全部都要會喵！' },
-      '國中':   { '沒自信':'文言文、方程式和地球科學基礎喵！',
-                  '普通':   '詩詞、代數、歷史朝代，跨科綜合考喵！',
-                  '我很會': '文學分析、幾何代數、跨學科推理，最難等級喵！' },
+      '低年級': { '沒自信':'各科基礎，日常詞彙、簡單加減和生活常識都可能出現！',
+                  '普通':   '國字注音、基礎算術和動植物知識，難度適中！',
+                  '我很會': '跨科綜合，造詞、算術和生態知識都要會！' },
+      '中年級': { '沒自信':'各科入門題，成語、乘法和地理基礎都可能考！',
+                  '普通':   '跨科綜合：成語、四則運算、台灣文化都會考到！',
+                  '我很會': '閱讀、多步驟計算和歷史人物，都要搞清楚！' },
+      '高年級': { '沒自信':'各科基礎：成語、分數和歷史概要！',
+                  '普通':   '文言文、比例分數、自然與地理都考！',
+                  '我很會': '修辭、複雜四則、社會科學，全部都要會！' },
+      '國中':   { '沒自信':'文言文、方程式和地球科學基礎！',
+                  '普通':   '詩詞、代數、歷史朝代，跨科綜合考！',
+                  '我很會': '文學分析、幾何代數、跨學科推理，最難等級！' },
     };
-    focusLine = (mixFocus[grade] && mixFocus[grade][diff]) || '今天的題目難度適中，好好作答喵！';
+    focusLine = (mixFocus[grade] && mixFocus[grade][diff]) || '今天的題目難度適中，好好作答！';
   }
 
   const subjDisplay = isMix ? '綜合各科' : subj;
+  if(_isApricot){
+    return [
+      `唉呀～${grade}的小英雄來了呀～別用那麼髒兮兮的鞋踏進我的花林呢～`,
+      `聽說你選的是【${subjDisplay}】，難度是【${diff}】……${focusLine}`,
+      `好吧～就讓本仙傾城的才智陪你們玩玩——答題開始～`,
+    ];
+  }
   return [
     `喵喵喵～${grade}的小英雄來了！本貓最喜歡考倒你們的樣子了～`,
     `聽說你選的是【${subjDisplay}】，難度是【${diff}】……${focusLine}`,
-    `好！就讓九尾空貓怪這位大天才來見識一下你的實力——答題開始喵！`,
+    `好！就讓這位大天才來見識一下你的實力——答題開始喵！`,
   ];
 }
 
@@ -21652,10 +21929,36 @@ function advShowDialog(stage, sceneIdx) {
     advShowChoicePanel(stage, sceneIdx);
     return;
   }
-  if(_txtEl) _txtEl.textContent = scene.dialogs[_advDialogIdx] || '';
+  if(_txtEl) _txtEl.textContent = _transformSceneLineByVariant(scene.dialogs[_advDialogIdx] || '');
   // ★ 清除 inline style（advStartMiniBattle 可能設過 style.display='none'）
   dialog.style.display = '';
   dialog.classList.add('show');
+}
+
+// ★ 依當前玩家選定的 BOSS 變體，轉換場景對白中「神秘的邪惡聲音」等通用字眼 → 該 BOSS 口吻
+function _transformSceneLineByVariant(txt){
+  try{
+    const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
+    const idx = (window._advSelectedVariantIdx||0) % Math.max(1, variants.length);
+    const variant = variants[idx];
+    if(!variant) return txt;
+    if(variant.id === 'cat9tail'){
+      return txt
+        .replace(/那個搗蛋的神秘邪惡聲音/g, '那隻搗蛋的九尾空貓怪')
+        .replace(/那個神秘的邪惡聲音/g, '九尾空貓怪')
+        .replace(/神秘的邪惡聲音/g, '九尾空貓怪')
+        .replace(/聽說妖怪被神秘茶香吸引/g, '老貓妖被神秘茶香吸引');
+    }
+    if(variant.id === 'apricot'){
+      return txt
+        .replace(/那個搗蛋的神秘邪惡聲音/g, '那隻嬌氣的杏花妖')
+        .replace(/那個神秘的邪惡聲音就藏在前方的山洞裡/g, '嬌氣的杏花妖就藏在前方的花林深處')
+        .replace(/那個神秘的邪惡聲音/g, '杏花妖')
+        .replace(/神秘的邪惡聲音/g, '杏花妖')
+        .replace(/聽說妖怪被神秘茶香吸引/g, '聽說杏花妖被花香和茶香吸引到貓空');
+    }
+  }catch(e){}
+  return txt;
 }
 
 function advNextDialog(e) {
@@ -21679,7 +21982,7 @@ function advNextDialog(e) {
   if(!scene || !scene.dialogs) return;
   _advDialogIdx++;
   if (_advDialogIdx < scene.dialogs.length) {
-    document.getElementById('adv-dialog-text').textContent = scene.dialogs[_advDialogIdx];
+    document.getElementById('adv-dialog-text').textContent = _transformSceneLineByVariant(scene.dialogs[_advDialogIdx]);
   } else {
     // 對話結束，顯示選擇視窗
     advShowChoicePanel(stage, _advSceneIdx);
@@ -22432,8 +22735,10 @@ function advStartBattle(){
   }
   try{ bgmStop(); }catch(e){}
   try{
-    // ★ BOSS戰專屬BGM（九尾空貓怪主題曲，loop=true 自動重複）
-    const _bossBgmList = ['bgm-boss-01'];
+    // ★ BOSS戰專屬BGM（依變體切換：九尾空貓怪 vs 杏花妖，loop=true 自動重複）
+    const _bossBgmId = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot')
+      ? 'bgm-boss-apricot' : 'bgm-boss-01';
+    const _bossBgmList = [_bossBgmId];
     let _advBgmIndex = 0;
     function _playAdvBossBgm(){
       bgmStop();
@@ -22488,8 +22793,17 @@ function advStartBattle(){
     G.inv2 = _bossInitInv2;
     log('[BOSS戰] 開場發牌：玩家3張物品牌、BOSS3張物品牌');
   }catch(e){ console.error('[advStartBattle] dealCards',e); }
-  // ★ 設定BOSS全螢幕戰鬥背景
-  (function(){ const _bb=document.getElementById('adv-battle-bg'); if(_bb){ _bb.className=''; _bb.classList.add('bg-boss'); void _bb.offsetWidth; _bb.classList.add('visible'); } })();
+  // ★ 設定BOSS全螢幕戰鬥背景（杏花妖變體使用花林背景）
+  (function(){
+    const _bb=document.getElementById('adv-battle-bg');
+    if(_bb){
+      _bb.className='';
+      const _bgCls = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot') ? 'bg-apricot' : 'bg-boss';
+      _bb.classList.add(_bgCls);
+      void _bb.offsetWidth;
+      _bb.classList.add('visible');
+    }
+  })();
   const gc = document.getElementById('gc');
   if(gc) gc.classList.add('adv-battle');
   try{ playBattleStartSfx(); }catch(e){}
@@ -22562,6 +22876,19 @@ function advShowBossIntro() {
   _advBossIntroShown = true;
   _advBossIntroActive = true;  // ★ 戰鬥暫停，等對白結束
   _advBossIntroLines = getAdvBossIntroLines();
+  // ★ 依當前 BOSS 變體動態設定 BOSS 名稱 + 圖標
+  try{
+    const _mainBoss = (G && G.p2) ? G.p2.find(h => h.name==='九尾空貓怪' || h.name==='杏花妖') : null;
+    if(_mainBoss){
+      const _icon = _mainBoss.name==='杏花妖' ? '🌸' : '🐱';
+      const _n1 = document.getElementById('adv-boss-intro-name');
+      const _n2 = document.getElementById('adv-boss-react-name');
+      const _n3 = document.getElementById('adv-quiz-label');
+      if(_n1) _n1.textContent = `${_icon} ${_mainBoss.name}`;
+      if(_n2) _n2.textContent = `${_icon} ${_mainBoss.name}`;
+      if(_n3) _n3.textContent = `${_icon} ${_mainBoss.name}出題！`;
+    }
+  }catch(e){}
   const box = document.getElementById('adv-boss-intro');
   document.getElementById('adv-boss-intro-text').textContent = _advBossIntroLines[0];
   box.classList.add('show');
@@ -23663,7 +23990,7 @@ function _showBurstFruitDrop() {
       超越極限果實
     </div>
     <div style="font-size:20px;color:#ffbbee;line-height:1.6;margin-bottom:16px;">
-      九尾空貓怪掉落了<br>傳說中的靈果！
+      BOSS 掉落了<br>傳說中的靈果！
     </div>
     <div style="font-size:18px;color:#cc99ff;margin-bottom:20px;line-height:1.5;">
       可為英雄的極限爆發升1級<br>（最高+4級）
@@ -23759,23 +24086,33 @@ async function advStartWinSequence() {
     _checkMedalQuizAce(_advStats && _advStats.correctCount || 0);
     _checkMedalCoins();
   }catch(e){}
-  // ★ 九尾空貓怪 20% 機率掉落骨董茶杯
-  if(Math.random() < 0.20){
-    backpackAdd('antique_teacup', 1);
-    log('🍵 [九尾空貓怪] 掉落了【骨董茶杯】！已放入背包。');
-    _showInGameToast('🍵 獲得骨董茶杯！前往超商可賣出換取1000知識幣', '#ffcc44', 3000);
+  // ★ 主 BOSS 掉落專屬收藏品（20% 機率）
+  const _mainBoss = (G && G.p2 && G.p2[1]) ? G.p2[1].name : '九尾空貓怪';
+  if(_mainBoss === '杏花妖'){
+    if(Math.random() < 0.20){
+      backpackAdd('apricot_rouge', 1);
+      log('💄 [杏花妖] 掉落了【杏花胭脂】！已放入背包。');
+      _showInGameToast('💄 獲得杏花胭脂！前往超商可賣出換取1500知識幣', '#ff88cc', 3000);
+    }
+  } else {
+    // 九尾空貓怪 20% 機率掉落骨董茶杯
+    if(Math.random() < 0.20){
+      backpackAdd('antique_teacup', 1);
+      log('🍵 [九尾空貓怪] 掉落了【骨董茶杯】！已放入背包。');
+      _showInGameToast('🍵 獲得骨董茶杯！前往超商可賣出換取1000知識幣', '#ffcc44', 3000);
+    }
   }
-  // ★ 超越極限果實：掉落率 = BOSS基礎EXP × 0.1%（九尾空貓怪 exp:55 → 5.5%）
+  // ★ 超越極限果實：掉落率 = BOSS基礎EXP × 0.1%
   let _burstFruitDropped = false;
   try{
-    const _bossHero = G && G.p2 ? G.p2.find(h=>h.name==='九尾空貓怪') : null;
+    const _bossHero = G && G.p2 ? G.p2.find(h=>h.name===_mainBoss) : null;
     const _bossBaseExp = (_bossHero && typeof HERO_DB!=='undefined' && HERO_DB[_bossHero.name])
       ? (HERO_DB[_bossHero.name].exp || 0) : 55;
-    const _fruitDropRate = _bossBaseExp * 0.001; // 55 * 0.001 = 0.055 = 5.5%
+    const _fruitDropRate = _bossBaseExp * 0.001;
     if(Math.random() < _fruitDropRate){
       backpackAdd('burst_upgrade_fruit', 1);
       _burstFruitDropped = true;
-      log('🍑 [九尾空貓怪] 掉落了【超越極限果實】！已放入背包。');
+      log(`🍑 [${_mainBoss}] 掉落了【超越極限果實】！已放入背包。`);
     }
   }catch(e){}
   // ★ 召喚水晶：全部英雄已收錄時，BOSS戰後必定獲得1顆
@@ -23978,11 +24315,24 @@ const BOSS_REACT_CORRECT = [
   '切！答對又怎樣！本貓還有一堆題！',
   '你……你只是猜到的吧？一定是的！',
   '奇怪！難道你真的很聰明？不行不行，本貓不承認！',
-  '喵！本貓要提高難度了！（才不會）',
+  '喵!本貓要提高難度了!（才不會）',
   '呼嚕嚕……好煩，又答對了……',
   '哎呀！本貓的尾巴氣得都豎起來了！',
-  '居然！這可是九尾空貓怪親自出的題啊！',
+  '居然！這可是本貓親自出的題啊！',
   '（假裝沒聽到）喵？什麼？你說答對了？沒有的事！',
+];
+// ══ 杏花妖答題反應台詞 ══
+const BOSS_REACT_CORRECT_APRICOT = [
+  '唉呀？居然答對了……哼，一定是運氣啦～',
+  '你、你居然敢答對本仙的題目？真是不懂禮貌的傢伙！',
+  '嗚～本仙的花瓣氣得都蜷起來了啦！',
+  '哼！不過是瞎貓碰上死耗子，本仙的題目才沒這麼簡單呢～',
+  '討、討厭！你怎麼知道答案？該不會在偷看本仙的書本吧！',
+  '不行不行～本仙的妝容都亂了～',
+  '好啦好啦，這題算你運氣好～',
+  '（優雅地搧扇子）算你厲害，本仙賞你一片花瓣～',
+  '唉～答對就算了，反正本仙還有一堆更難的～',
+  '哎呀！居然！本仙要把這題從題庫裡刪掉！',
 ];
 const BOSS_REACT_WRONG = [
   '哈哈哈！答錯了！本貓就知道！',
@@ -23998,11 +24348,29 @@ const BOSS_REACT_WRONG = [
   '（興奮地拍爪子）再錯一次！再錯一次！',
   '哦？沒想到吧，本貓才是這一帶最博學的貓！',
 ];
+const BOSS_REACT_WRONG_APRICOT = [
+  '唉呀呀～果然是凡人的腦子，不堪一擊～',
+  '哼～就說你們配不上本仙的氣質嘛！',
+  '（掩嘴笑）答錯啦～本仙的題目可是千年絕學呢～',
+  '小傻瓜～本仙看你答得這麼認真，還以為會猜對呢～',
+  '唉～真是浪費本仙的花粉，答錯了還這麼得意？',
+  '（搧扇子優雅轉身）答錯了，那就退下吧～',
+  '討厭啦，連這個都不會？本仙懷疑你是不是沒念書呀～',
+  '哼哼！本仙千年養成的智慧，豈是你能碰的～',
+  '錯了錯了～再答錯本仙就要把你變成肥料囉～',
+  '哎呀！你、你這個呆瓜～真是糟蹋了本仙的題目～',
+];
 const BOSS_REACT_TIMEOUT = [
   '喵哈哈！時間到！連答都不敢答嗎？',
   '嘿嘿，在倒數時就開始發抖了吧？',
   '哎唷，時間到了還沒答，是腦袋打結了嗎？',
   '超時了！本貓的題目太難了吧？嘻嘻！',
+];
+const BOSS_REACT_TIMEOUT_APRICOT = [
+  '唉呀～本仙等得都快睡著了呢～',
+  '時間到囉～連想都想不出來？可憐的小東西～',
+  '（優雅打哈欠）真是浪費本仙寶貴的時間～',
+  '超時啦～本仙可不會等凡人這麼久～',
 ];
 
 // 顯示 Boss 反應氣泡
@@ -24012,11 +24380,14 @@ function advShowBossReact(type) {
   const textEl = document.getElementById('adv-boss-react-text');
   if (!el || !textEl) return;
 
-  // 取台詞
+  // 取台詞（依當前主 BOSS 變體）
+  const _isApricotBoss = (typeof G !== 'undefined' && G && G.p2)
+    ? !!G.p2.find(h => h && h.name==='杏花妖' && h.curHp>0)
+    : false;
   let lines;
-  if (type === 'correct')      lines = BOSS_REACT_CORRECT;
-  else if (type === 'timeout') lines = BOSS_REACT_TIMEOUT;
-  else                         lines = BOSS_REACT_WRONG;
+  if (type === 'correct')      lines = _isApricotBoss ? BOSS_REACT_CORRECT_APRICOT : BOSS_REACT_CORRECT;
+  else if (type === 'timeout') lines = _isApricotBoss ? BOSS_REACT_TIMEOUT_APRICOT : BOSS_REACT_TIMEOUT;
+  else                         lines = _isApricotBoss ? BOSS_REACT_WRONG_APRICOT   : BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
   // ★ 定位：畫面最上方，全寬橫條
@@ -24444,6 +24815,7 @@ const BACKPACK_ITEM_DEF = {
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）' },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
+  'apricot_rouge':    { name:'杏花胭脂',       icon:'💄', desc:'杏花妖以千年花蕊與月光淬煉的絕品胭脂，香氣能勾魂攝魄，富商夫人爭相收藏。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1500 },
   'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）', sellPrice:0 },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ 召喚水晶
@@ -24501,6 +24873,7 @@ const SHOP_PRODUCTS = [
 // 可販賣品（在商店賣掉換知識幣）
 const SHOP_SELL_ITEMS = [
   { id:'antique_teacup',  name:'骨董茶杯',       icon:'🍵', sellPrice:1000 },
+  { id:'apricot_rouge',   name:'杏花胭脂',       icon:'💄', sellPrice:1500 },
   { id:'half_tea',        name:'喝一半的好茶',   icon:'🍵', sellPrice:10 },
   { id:'picked_flower',   name:'被摘的花朵',     icon:'🌸', sellPrice:15 },
   { id:'damaged_bamboo',  name:'有點損傷的綠竹筍',icon:'🎋', sellPrice:14 },
@@ -29154,6 +29527,13 @@ const MONSTER_DROPS = {
     { icon:'🍑', name:'超越極限果實',     rate:'約5.5%', note:'極稀有' },
     { icon:'🔮', name:'召喚水晶×1',       rate:'全英雄收錄時必得', note:'' },
   ],
+  '杏花妖': [
+    { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
+    { icon:'💄', name:'杏花胭脂',         rate:'20%',  note:'賣出可得1500知識幣' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約7.5%', note:'極稀有' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'全英雄收錄時必得', note:'' },
+  ],
 };
 
 const MINI_BATTLE_INTROS = {
@@ -30173,13 +30553,13 @@ function _buildMonsterPage() {
   const el = document.getElementById('monster-page-content');
   if(!el) return;
 
-  const BOSS_LIST = ['九尾空貓怪'];
+  const BOSS_LIST = ['九尾空貓怪','杏花妖'];
   const ELITE_LIST = ['綠竹筍小妖', '茶葉精靈'];
   const MOB_LIST = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
   const RARE_MOB_LIST = ['寶箱怪','小惡魔'];
 
   const MONSTER_AVTR = {
-    '九尾空貓怪': '🐱', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
+    '九尾空貓怪': '🐱', '杏花妖': '🌸', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
     '偷摘花的頑皮妖精': '🌸', '偷鳥蛋的鳥人哈維': '🐦', '偷竹筍的哥布林': '🌿', '偷喝茶的史萊姆': '🫖',
     '寶箱怪': '📦', '小惡魔': '😈',
   };
@@ -30263,7 +30643,7 @@ function openMonsterDetail(name) {
   const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
   const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[name]) || null;
   const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
-  const AVTR = {'九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃',
+  const AVTR = {'九尾空貓怪':'🐱','杏花妖':'🌸','綠竹筍小妖':'🎋','茶葉精靈':'🍃',
     '偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🐦','偷竹筍的哥布林':'🌿','偷喝茶的史萊姆':'🫖'};
   const av = AVTR[name]||'👾';
 
@@ -30281,7 +30661,7 @@ function openMonsterDetail(name) {
   ];
 
   // Tier label
-  const BOSS_LIST=['九尾空貓怪'];
+  const BOSS_LIST=['九尾空貓怪','杏花妖'];
   const ELITE_LIST=['綠竹筍小妖','茶葉精靈'];
   const tierLabel = BOSS_LIST.includes(name)?'👑 終極BOSS':ELITE_LIST.includes(name)?'⚡ 精英小怪':'🌿 路邊小怪';
   const tierColor = BOSS_LIST.includes(name)?'#ff6644':ELITE_LIST.includes(name)?'#ffaa44':'#88cc88';
@@ -30863,7 +31243,7 @@ function _checkMedalDefeat(mobName){
     _medalStats.devilKills = (_medalStats.devilKills||0) + 1;
     if(_medalStats.devilKills >= 5) _unlockMedal('devil_slayer_5');
   }
-  if(mobName === '九尾空貓怪') _unlockMedal('defeat_boss');
+  if(mobName === '九尾空貓怪' || mobName === '杏花妖') _unlockMedal('defeat_boss');
   if(['綠竹筍小妖','茶葉精靈'].includes(mobName)) _unlockMedal('defeat_elite');
   _saveMedals();
 }
@@ -31424,6 +31804,26 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2014', items:[
+    '冒險模式英雄選擇頁：BOSS 陣容預覽左邊新增「🔀 換路線」按鈕，每按一次切換成不同 BOSS 陣容（九尾空貓怪 ↔ 杏花妖）',
+    '杏花妖陣容每次切換會重新抽取 2 位被魅惑的玩家英雄作為左右小怪',
+    '取消原本 50/50 隨機出場機制，改由玩家自行決定要挑戰哪隻 BOSS',
+    '3 場景劇情對白會依玩家選定的 BOSS 自動替換用詞（例：九尾空貓怪＝「那隻搗蛋的九尾空貓怪」、杏花妖＝「那隻嬌氣的杏花妖」）',
+    '戰鬥中 BOSS 所有台詞（戰前介紹、答題反應、憤怒覺醒）與玩家選定的 BOSS 口吻一致',
+  ] },
+  { ver:'v1.0.20260418.2001', items:[
+    '新增 BOSS：杏花妖（HP 680 / 攻擊 17 / 特技 24 / 速度 10 / EXP 75 / 草屬性）',
+    '杏花妖陣容特色：主位為杏花妖，左右位各從玩家已收錄的英雄中隨機抽 2 位，前綴加「被魅惑的」顯示；等級/素質/技能升級等數據取自玩家圖鑑中的資料',
+    '杏花妖 S1「杏林春霧」：以特技×150% 為 HP% 最低的 1 名友方恢復 HP（可復活）',
+    '杏花妖 S2「落英繽紛」：以特技對全體敵人造成草屬性傷害',
+    '杏花妖極限爆發「千年絕美・傾城一笑」：以特技×150% 對全體敵人造成草屬性傷害，50% 機率使每一名敵人「魅惑」1 回合',
+    '杏花妖天賦「媚惑」：受到傷害時 30% 機率使攻擊者陷入「魅惑」狀態 1 回合',
+    '新狀態「魅惑」：被魅惑的角色下一回合自動普攻自己隊友',
+    '杏花妖專屬：戰鬥背景切換為「花林」、專屬戰鬥 BGM、戰前/答題反應台詞、HP 50% 以下憤怒爆發台詞（嬌氣潔癖人設）',
+    '杏花妖掉落物：20% 機率掉落「杏花胭脂」（超商賣價 1500 知識幣）',
+    '因 BOSS 不再只限九尾空貓怪，關卡說明與劇情對白中的「九尾空貓怪」統一改為「神秘的邪惡聲音」',
+    '魔物圖鑑 BOSS 分區新增杏花妖；戰前介紹 UI 的 BOSS 名稱、出題標籤、反應氣泡都會依當前 BOSS 動態顯示',
+  ] },
   { ver:'v1.0.20260418.1853', items:[
     '調整武士「瞬影絕斬」、雷法師「雷動九霄」、守衛「鋼鐵誓約」新肖像在戰鬥卡與邀請卡的顯示位置，往下偏移 15% 讓臉部完整露出（原始肖像不受影響）',
   ] },
@@ -31690,7 +32090,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1853';
+  const CURRENT_VERSION = 'v1.0.20260418.2014';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -31707,7 +32107,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.1853';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2014';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
