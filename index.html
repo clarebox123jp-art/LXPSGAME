@@ -9817,8 +9817,7 @@ const BURST_GIF_DB = {
   '焰尾九連擊': {
     url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E7%84%B0%E5%B0%BE%E4%B9%9D%E9%80%A3%E6%93%8A.gif',
     sfx:[['sfx-sword',1.0],['sfx-explode',0.85]],
-    tint:'rgba(255,100,30,0.18)',
-    playTwice:true
+    tint:'rgba(255,100,30,0.18)'
   },
   '千年絕美・傾城一笑': {
     url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%82%BE%E5%9F%8E%E4%B8%80%E7%AC%91.gif',
@@ -32310,6 +32309,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0701', items:[
+    '九尾空貓怪爆發「焰尾九連擊」特效改為播放一次（原本連播兩次），避免特效拖太久影響戰鬥節奏',
+  ] },
   { ver:'v1.0.20260419.0645', items:[
     'BOSS 杏花妖專屬 BGM 更換為全新版本「杏花妖BGM2.m4a」',
   ] },
