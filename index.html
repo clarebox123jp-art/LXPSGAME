@@ -255,7 +255,7 @@
         await setDoc(playerRef, { lastActiveDate: todayKey }, { merge: true });
       }
     } catch(e) {
-      console.warn('[人數統計] 更新失敗（權限不足或網路問題）', e);
+      console.error('❌ [人數統計] 更新失敗 code=' + (e && e.code) + '（可能原因：Firestore 規則未允許寫入 stats 集合）', e);
     }
   };
 
@@ -265,7 +265,7 @@
       const statsRef = doc(_fbDb, 'stats', 'global');
       await setDoc(statsRef, { totalAdventures: increment(1) }, { merge: true });
     } catch(e) {
-      console.warn('[人數統計] 冒險次數 +1 失敗', e);
+      console.error('❌ [人數統計] 冒險次數 +1 失敗 code=' + (e && e.code), e);
     }
   };
 
@@ -277,6 +277,7 @@
         const todayKey = _getTodayKeyTW();
         const weekKey  = _getThisWeekMondayKeyTW();
         if(!snap.exists()) {
+          console.info('ℹ️ [人數統計] stats/global 文件尚未建立（首位玩家登入後會自動建立）');
           callback({ total: 0, todayActive: 0, weekNew: 0, totalAdventures: 0 });
           return;
         }
@@ -288,11 +289,11 @@
           totalAdventures:  d.totalAdventures || 0,
         });
       }, (err) => {
-        console.warn('[人數統計] 監聽錯誤', err);
+        console.error('❌ [人數統計] 監聽錯誤 code=' + (err && err.code) + '（可能原因：Firestore 規則未允許讀取 stats 集合）', err);
         callback({ total: 0, todayActive: 0, weekNew: 0, totalAdventures: 0 });
       });
     } catch(e) {
-      console.warn('[人數統計] 啟動監聽失敗', e);
+      console.error('❌ [人數統計] 啟動監聽失敗', e);
       callback({ total: 0, todayActive: 0, weekNew: 0, totalAdventures: 0 });
       return () => {};
     }
@@ -999,8 +1000,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #overlay .title-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:-180px}
 /* 中文主標題 - 童趣彩虹圓潤風格 */
 .title-zh{
-  font-size:198px;font-weight:800;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-  letter-spacing:20px;line-height:1;
+  font-size:188px;font-weight:800;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  letter-spacing:19px;line-height:1;
   margin-top:-400px;
   background:linear-gradient(135deg,
     #ff6b6b 0%,
@@ -32485,6 +32486,11 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0809', items:[
+    '首頁標題「小英雄大對抗」字級縮小 5%（198px → 188px，字距 20 → 19px），避免與上方玩家人數統計橫條重疊遮擋',
+    '人數統計診斷強化：錯誤記錄由 console.warn 升級為 console.error，並附上錯誤代碼（例：permission-denied），方便診斷 Firestore 規則問題',
+    '若 stats/global 文件尚未建立，Console 會顯示提示訊息（首位玩家登入後會自動建立）',
+  ] },
   { ver:'v1.0.20260419.0752', items:[
     '首頁玩家人數統計橫條擴充為 4 項統計：🟢今日上線、✨本週新增、👥總玩家數、⚔️累計冒險',
     '「本週新增」= 本週（週一至週日，台灣時區）首次加入的不重複玩家數，每週一 00:00 自動歸零',
