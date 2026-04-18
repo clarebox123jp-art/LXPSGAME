@@ -5615,6 +5615,10 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
     { id:'star_oracle', name:'星辰天啟', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
   ],
+  '守衛': [
+    { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png' },
+    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
+  ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
@@ -24441,6 +24445,9 @@ const BACKPACK_ITEM_DEF = {
   'astrologer_oracle_portrait': { name:'占星師肖像：星辰天啟', icon:'🌟',
     desc:'全新繪製的占星師肖像「星辰天啟」，購買後可在英雄圖鑑的占星師詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'占星師', portraitId:'star_oracle', useLabel:'前往切換' },
+  'guard_iron_portrait': { name:'守衛肖像：鋼鐵誓約', icon:'🛡️',
+    desc:'全新繪製的守衛肖像「鋼鐵誓約」，購買後可在英雄圖鑑的守衛詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'守衛', portraitId:'iron_oath', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -24465,6 +24472,9 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'astrologer_oracle_portrait', name:'占星師肖像：星辰天啟', icon:'🌟',
     desc:'全新繪製的占星師替代肖像「星辰天啟」。購買後即永久解鎖，可在英雄圖鑑的占星師詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'guard_iron_portrait', name:'守衛肖像：鋼鐵誓約', icon:'🛡️',
+    desc:'全新繪製的守衛替代肖像「鋼鐵誓約」。購買後即永久解鎖，可在英雄圖鑑的守衛詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -31393,6 +31403,9 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.1834', items:[
+    '超商新增商品：守衛替代肖像「鋼鐵誓約」3000 知識幣（限購一次，可於商品列預覽）',
+  ] },
   { ver:'v1.0.20260418.1823', items:[
     '英雄圖鑑天賦說明文字改為動態：描述中的百分比會隨天賦等級即時變更並以黃色高亮（例：武士 Lv.2 → 「受到傷害時有 44% 機率」而非 40%）',
     '升級後多一行提示顯示「基礎 XX% → Lv.N 強化為 YY%」',
@@ -31653,7 +31666,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.1823';
+  const CURRENT_VERSION = 'v1.0.20260418.1834';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -31670,7 +31683,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.1823';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.1834';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
