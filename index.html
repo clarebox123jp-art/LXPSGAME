@@ -269,6 +269,37 @@
     }
   };
 
+  // ★ 管理員工具：掃描 /players 集合計算歷史總玩家數，覆寫 stats/global.totalPlayers
+  //   用於一次性回填舊資料（新計數系統上線前已存在的玩家）
+  window._fbBackfillTotalPlayers = async function() {
+    try {
+      const snap = await getDocs(collection(_fbDb, 'players'));
+      const count = snap.size;
+      // 用 setDoc 直接覆寫成絕對值（不是 increment）
+      const statsRef = doc(_fbDb, 'stats', 'global');
+      await setDoc(statsRef, { totalPlayers: count, _backfillAt: Date.now() }, { merge: true });
+      console.info('✅ [回填] totalPlayers 已設為 ' + count);
+      return count;
+    } catch(e) {
+      console.error('❌ [回填] 失敗', e);
+      throw e;
+    }
+  };
+
+  // ★ 管理員工具：手動設定 totalAdventures 絕對值（用於回填歷史冒險次數）
+  window._fbSetAdventureTotal = async function(newTotal) {
+    try {
+      const n = Math.max(0, parseInt(newTotal, 10) || 0);
+      const statsRef = doc(_fbDb, 'stats', 'global');
+      await setDoc(statsRef, { totalAdventures: n }, { merge: true });
+      console.info('✅ [管理] totalAdventures 已設為 ' + n);
+      return n;
+    } catch(e) {
+      console.error('❌ [管理] 設定失敗', e);
+      throw e;
+    }
+  };
+
   // 即時監聽統計：UI 元件用此更新顯示
   window._fbWatchStats = function(callback) {
     try {
@@ -18451,7 +18482,138 @@ document.addEventListener('keydown', function(e){
     }catch(err){ console.error('[F8 cheat]', err); }
     return;
   }
+
+  // Shift+F10：管理員人數統計工具面板（回填歷史資料、手動調整冒險次數）
+  if(e.key === 'F10' && e.shiftKey){
+    e.preventDefault();
+    _showAdminStatsPanel();
+    return;
+  }
 });
+
+// ★ 管理員人數統計工具面板
+async function _showAdminStatsPanel(){
+  // 若已開啟則不重開
+  if(document.getElementById('_admin-stats-panel')) return;
+
+  const pop = document.createElement('div');
+  pop.id = '_admin-stats-panel';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);'
+    + 'display:flex;align-items:center;justify-content:center;font-family:inherit;';
+  pop.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(20,30,50,0.98),rgba(10,15,30,0.99));
+      border:3px solid rgba(212,168,67,0.7);border-radius:20px;padding:32px 40px;
+      max-width:560px;width:calc(100% - 48px);color:#eee;">
+      <div style="font-size:26px;font-weight:900;color:#ffcc44;margin-bottom:18px;text-align:center;letter-spacing:2px;">
+        🛠️ 人數統計管理工具
+      </div>
+      <div style="font-size:15px;color:#aaa;margin-bottom:22px;line-height:1.6;">
+        僅限管理員使用。以下操作會直接覆寫 Firestore 中的統計數值，請謹慎使用。
+      </div>
+
+      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,200,50,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#ffd966;margin-bottom:8px;">📊 1. 回填總玩家數</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          掃描 Firestore 的 <code style="color:#88ccff;">/players</code> 集合中所有文件，把總數設定為 <code style="color:#88ccff;">totalPlayers</code>。
+          適合計數系統上線前已有玩家的情況（會覆寫現有值為絕對數量）。
+        </div>
+        <button id="_admin-backfill-players" style="padding:10px 24px;font-size:16px;font-weight:700;
+          background:rgba(100,180,100,0.25);border:2px solid #77cc77;color:#aaffaa;
+          border-radius:8px;cursor:pointer;font-family:inherit;">
+          ▶ 執行回填
+        </button>
+        <div id="_admin-backfill-result" style="margin-top:10px;font-size:14px;color:#88ff88;"></div>
+      </div>
+
+      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,150,200,0.3);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#ff99cc;margin-bottom:8px;">⚔️ 2. 手動設定累計冒險次數</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          直接設定 <code style="color:#88ccff;">totalAdventures</code> 的絕對值（非累加）。
+          適合補登過去的冒險次數估計值。
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input id="_admin-adv-input" type="number" min="0" step="1" placeholder="請輸入總次數"
+            style="flex:1;padding:10px 14px;font-size:16px;background:rgba(20,20,30,0.9);
+            border:2px solid rgba(255,150,200,0.4);color:#fff;border-radius:8px;font-family:inherit;">
+          <button id="_admin-set-adventures" style="padding:10px 20px;font-size:16px;font-weight:700;
+            background:rgba(255,100,180,0.2);border:2px solid #ff77bb;color:#ffaacc;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            ▶ 設定
+          </button>
+        </div>
+        <div id="_admin-adv-result" style="margin-top:10px;font-size:14px;color:#ff99cc;"></div>
+      </div>
+
+      <button id="_admin-close" style="width:100%;padding:12px;font-size:16px;font-weight:700;
+        background:rgba(60,60,80,0.6);border:1px solid #555;color:#aaa;
+        border-radius:8px;cursor:pointer;font-family:inherit;">
+        關閉
+      </button>
+    </div>
+  `;
+  document.body.appendChild(pop);
+
+  document.getElementById('_admin-close').onclick = () => pop.remove();
+  pop.onclick = (ev) => { if(ev.target === pop) pop.remove(); };
+
+  // 回填總玩家數
+  document.getElementById('_admin-backfill-players').onclick = async () => {
+    const btn = document.getElementById('_admin-backfill-players');
+    const res = document.getElementById('_admin-backfill-result');
+    if(!window._fbBackfillTotalPlayers){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ Firebase 尚未就緒，請稍後再試';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '掃描中...';
+    res.style.color = '#88ccff';
+    res.textContent = '正在掃描 /players 集合...';
+    try {
+      const count = await window._fbBackfillTotalPlayers();
+      res.style.color = '#88ff88';
+      res.textContent = `✅ 完成！共找到 ${count} 位歷史玩家，已寫入 totalPlayers。`;
+    } catch(e){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 失敗：' + (e && e.code || e.message || '未知錯誤');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '▶ 執行回填';
+    }
+  };
+
+  // 設定冒險次數
+  document.getElementById('_admin-set-adventures').onclick = async () => {
+    const input = document.getElementById('_admin-adv-input');
+    const btn = document.getElementById('_admin-set-adventures');
+    const res = document.getElementById('_admin-adv-result');
+    const val = parseInt(input.value, 10);
+    if(isNaN(val) || val < 0){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 請輸入 0 或以上的整數';
+      return;
+    }
+    if(!window._fbSetAdventureTotal){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ Firebase 尚未就緒，請稍後再試';
+      return;
+    }
+    if(!confirm(`確定要把「累計冒險次數」設定為 ${val} 嗎？這會覆寫現有值。`)) return;
+    btn.disabled = true;
+    btn.textContent = '設定中...';
+    try {
+      await window._fbSetAdventureTotal(val);
+      res.style.color = '#ff99cc';
+      res.textContent = `✅ 已設定 totalAdventures = ${val}`;
+    } catch(e){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 失敗：' + (e && e.code || e.message || '未知錯誤');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '▶ 設定';
+    }
+  };
+}
 
 // 每回合開始時儲存快照（F8密技用）
 function _saveCheatSnapshot(){
@@ -32486,6 +32648,17 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0854', items:[
+    '修正近日多次版本更新後，玩家未收到「有新版本，請重新整理」通知視窗的問題',
+    '根本原因：版本號常數（CURRENT_VERSION、_GAME_LOADED_VERSION）未同步更新，導致版本比對判定為未變動',
+    '本次補發從 v1.0.20260419.0052 之後的所有累積更新通知',
+  ] },
+  { ver:'v1.0.20260419.0838', items:[
+    '新增管理員工具：Shift+F10 呼叫「人數統計管理面板」（僅限設計者帳號）',
+    '面板功能 1：🔄 回填總玩家數 — 掃描 Firestore 中所有 /players 文件，把總數一次寫入 totalPlayers（用於計數系統上線前已有玩家的情況）',
+    '面板功能 2：⚔️ 手動設定累計冒險次數 — 直接設定 totalAdventures 絕對值，可補登過去的冒險次數',
+    '修正原先「新計數系統上線前的玩家與冒險次數未被統計到」的問題（原先邏輯只會計算新玩家與新冒險）',
+  ] },
   { ver:'v1.0.20260419.0809', items:[
     '首頁標題「小英雄大對抗」字級縮小 5%（198px → 188px，字距 20 → 19px），避免與上方玩家人數統計橫條重疊遮擋',
     '人數統計診斷強化：錯誤記錄由 console.warn 升級為 console.error，並附上錯誤代碼（例：permission-denied），方便診斷 Firestore 規則問題',
@@ -32907,7 +33080,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.0052';
+  const CURRENT_VERSION = 'v1.0.20260419.0854';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32924,7 +33097,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.0052';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.0854';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
