@@ -3580,7 +3580,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2026</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260418.2103</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5696,7 +5696,7 @@ const HERO_DB = {
   '陰陽師':{hp:58,atk:5,sp:18,spd:9, s1:{n:'朱雀召喚',c:5,d:'傷害全體對手，治療減半2回合',fd:'依特技70%使敵方全體受到傷害，並陷入治療量減半的狀態2回合。'},s2:{n:'青龍召喚',c:5,d:'傷害全體對手，受傷+50%（2回合）',fd:'依特技70%使敵方全體受到傷害，並陷入受到傷害增加50%的狀態2回合。'}},
   '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP低於10的對手',fd:'使剩餘HP未滿10的1名任意對手強制倒下(無視有利狀態或寵物效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:3,d:'5次固定6點必中傷害',fd:'隨機攻擊對手5次，每次造成6固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
-  '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:5,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'重置戰鬥至第1回合（限用）',fd:'使時間回到第一回合剛開始的狀態。(限用一次)'}},
+  '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。升級效果：Lv.5 能量消耗-1、Lv.10 能量消耗-2（禁動回合固定 1 回合不變）。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。基礎可使用 1 次，每升 3 級 +1 次（Lv.3=2 次、Lv.6=3 次、Lv.9=4 次）。'}},
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
   '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
@@ -9505,6 +9505,16 @@ function skillCost(s, actor, displayOnly=false){
                   : (actor.s2 && actor.s2.n==='神之賜福') ? 's2' : null;
     if(_slotGD && (actor._skLv[_slotGD]||0) >= 5){
       c = Math.max(1, c-1);
+    }
+  }
+  // ★ 時空法師時間暫停：Lv5(內部lv4) 消耗-1，Lv10(內部lv9) 再 -1 共 -2
+  if(actor && s && s.n==='時間暫停' && actor._skLv){
+    const _slotTP = (actor.s1 && actor.s1.n==='時間暫停') ? 's1'
+                  : (actor.s2 && actor.s2.n==='時間暫停') ? 's2' : null;
+    if(_slotTP){
+      const _lvTP = actor._skLv[_slotTP]||0;
+      if(_lvTP >= 9) c = Math.max(1, c-2);
+      else if(_lvTP >= 4) c = Math.max(1, c-1);
     }
   }
   // 連招疲勞：按英雄個別追蹤，上次用過同一技能則費用+疲勞層數
@@ -14212,9 +14222,9 @@ function execSkill(a, sk, cost, stype){
     endAction(a,cost,true);
   }
 
-  // ── 學者：歷史的教訓 ──
+  // ── 時空法師：時間暫停（禁動固定 1 回合，Lv5/Lv10 消耗降低在 skillCost 處理）──
   else if(n==='時間暫停'){
-    log(`[${a.name}] 時間暫停！敵方全體下回合無法行動！`);
+    log(`[${a.name}] 時間暫停！敵方全體下 1 回合無法行動！`);
     const _pauseFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     playSkillFX('時間停滯',a,_pauseFoes);
     _pauseFoes.forEach(h=>{
@@ -14226,45 +14236,53 @@ function execSkill(a, sk, cost, stype){
     endAction(a,cost);
   }
 
-  // ── 時空法師：時間倒轉（限一次）──
+  // ── 時空法師：時間倒轉（每升3級+1次）回到上一回合剛開始的狀態 ──
   else if(n==='時間倒轉'){
-    if(a.s1.n==='時間倒轉'&&a.s1used){ log('時間倒轉已使用過！'); clearSel(); return; }
-    if(a.s2.n==='時間倒轉'&&a.s2used){ log('時間倒轉已使用過！'); clearSel(); return; }
-    if(a.s1.n==='時間倒轉') a.s1used=true; else a.s2used=true;
-    log(`[${a.name}] 時間倒轉！回到第一回合！`);
+    // ★ 計算當前可用次數：基礎 1 次，每升 3 級 +1 次（Lv0=1, Lv3=2, Lv6=3, Lv9=4）
+    const _slotTR = a.s1 && a.s1.n==='時間倒轉' ? 's1' : 's2';
+    const _skLvTR = (a._skLv && a._skLv[_slotTR]) || 0;
+    const _maxUsesTR = 1 + Math.floor(_skLvTR / 3);
+    a._rewindUsed = a._rewindUsed || 0;
+    if(a._rewindUsed >= _maxUsesTR){
+      log(`時間倒轉已用盡（${a._rewindUsed}/${_maxUsesTR}）！`);
+      clearSel();
+      return;
+    }
+    // ★ 須有上一回合快照（至少第 2 回合才能用）
+    if(!G._prevRoundSnap){
+      _showInGameToast && _showInGameToast('⏳ 目前還沒有上一回合可以倒轉！', '#ff8844', 1800);
+      log('⏳ 時間倒轉無效：沒有上一回合快照。');
+      clearSel();
+      return;
+    }
+    a._rewindUsed++;
+    // 若已達上限，同步標記傳統 used 旗標（讓 UI 按鈕灰掉）
+    if(a._rewindUsed >= _maxUsesTR){
+      if(_slotTR==='s1') a.s1used=true; else a.s2used=true;
+    }
+    log(`[${a.name}] 時間倒轉！（${a._rewindUsed}/${_maxUsesTR} 次）回到上一回合剛開始的狀態！`);
     playSkillFX('時空裂縫',a,[]);
     flashScreen('rgba(180,220,255,1)',600);
-    // 恢復所有角色到初始狀態
     _pSetTimeout(()=>{
-      [...G.p1,...G.p2].forEach(h=>{
-        if(h._initState){
-          h.hp=h._initState.hp; h.atk=h._initState.atk;
-          h.sp=h._initState.sp; h.spd=h._initState.spd;
-          h.curHp=h._initState.hp;
-          h.status=[]; h.buffs=[]; h.acted=false;
-          h.equip=null;
-          renderCard(h);
+      try{ _restoreRoundSnapshot(G._prevRoundSnap); }catch(e){ console.error('[時間倒轉]',e); }
+      // 還原後，把「時間倒轉的使用次數」維持不變（不要被快照覆蓋）
+      try{
+        const _self = (G.p1.concat(G.p2)).find(x => x.name===a.name && x.side===a.side && x.pos===a.pos);
+        if(_self){
+          _self._rewindUsed = a._rewindUsed;
+          if(_self._rewindUsed >= _maxUsesTR){
+            if(_self.s1 && _self.s1.n==='時間倒轉') _self.s1used=true;
+            if(_self.s2 && _self.s2.n==='時間倒轉') _self.s2used=true;
+          } else {
+            // 若還有剩餘次數，清掉快照裡的 used 標記
+            if(_self.s1 && _self.s1.n==='時間倒轉') _self.s1used=false;
+            if(_self.s2 && _self.s2.n==='時間倒轉') _self.s2used=false;
+          }
         }
-      });
-      G.energy.p1=3; G.energy.p2=3;
-      G.round=1;
-      fieldCards=[];
-      G.taunted=null; G.guardFor=null; G.gunnerTarget=null;
-      renderBfield(); updateFieldFX();
-      log('⏳ 時間倒轉！回到第一回合！');
+      }catch(e){}
+      log('⏳ 時間倒轉！回到第 ' + (G.round||1) + ' 回合的開始狀態！');
       updateUI();
-    // 小力：愛護校犬開場自動觸發強力隱身10回合
-  [...G.p1,...G.p2].forEach(h=>{
-    if(h.name==='小力' && h.curHp>0 && (h.s2.n==='愛護校犬'||h.s1.n==='愛護校犬')){
-      addBuff(h,'immune',10);
-      addBuff(h,'inuInvisible',10);
-      h.inuInvisibleDur=10;
-      bannerFX(h,'愛護校犬！強力隱身10回合！','#ffaacc',1200);
-      ringFX(h,'#ffaacc',800);
-      log(`🐕 [小力] 愛護校犬！進入強力隱身狀態10回合！`);
-      renderCard(h);
-    }
-  });
+      renderBfield(); updateFieldFX();
       _pSetTimeout(startTurn,500);
     },700);
     endAction(a,cost);
@@ -15360,6 +15378,14 @@ function startTurn(){
   // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
   if(window._advMiniResultShowing) return;
   if(checkWin()) return;
+  // ★ 時間倒轉用：偵測回合變更 → 取當前回合起始快照
+  try{
+    const _curR = G.round || 1;
+    if(G._lastSnapRound !== _curR){
+      G._curRoundSnap = (typeof _takeRoundSnapshot === 'function') ? _takeRoundSnapshot() : null;
+      G._lastSnapRound = _curR;
+    }
+  }catch(e){}
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
   // ★ 冒險BOSS戰：每回合存 localStorage 戰鬥快照（防 iPad 崩潰）
@@ -15842,7 +15868,93 @@ function startTurn(){
   }
 }
 
+// ★ 時間倒轉用：取當前戰鬥快照 / 還原快照
+function _takeRoundSnapshot(){
+  if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return null;
+  const _ser = h => ({
+    name:h.name, side:h.side, pos:h.pos,
+    hp:h.hp, atk:h.atk, def:h.def||0, sp:h.sp, spd:h.spd,
+    curHp:h.curHp, acted:h.acted||false,
+    s1:JSON.parse(JSON.stringify(h.s1)),
+    s2:JSON.parse(JSON.stringify(h.s2)),
+    element:h.element||null,
+    status:JSON.parse(JSON.stringify(h.status||[])),
+    buffs:JSON.parse(JSON.stringify(h.buffs||[])),
+    s1used:h.s1used||false, s2used:h.s2used||false,
+    equip:h.equip?JSON.parse(JSON.stringify(h.equip)):null,
+    _skLv:h._skLv?JSON.parse(JSON.stringify(h._skLv)):{s1:0,s2:0},
+    _burstLvAdv:h._burstLvAdv||0,
+    _burstUsed:h._burstUsed||0,
+    _risingSpiritCount:h._risingSpiritCount||0,
+    _displayName:h._displayName||null,
+    _isCharmedEnemy:h._isCharmedEnemy||false,
+  });
+  return {
+    round: G.round || 1,
+    p1: (G.p1||[]).map(_ser),
+    p2: (G.p2||[]).map(_ser),
+    energy: { ...(G.energy||{p1:0,p2:0}) },
+    inv: JSON.parse(JSON.stringify(G.inv||[])),
+    inv2: JSON.parse(JSON.stringify(G.inv2||[])),
+    fieldCards: JSON.parse(JSON.stringify((typeof fieldCards !== 'undefined' && fieldCards) || G.fieldCards || [])),
+    comboFatigue: G.comboFatigue||0,
+    comboFatigueByHero: JSON.parse(JSON.stringify(G.comboFatigueByHero||{})),
+    lastSkillName: G.lastSkillName||null,
+    lastSkillByHero: JSON.parse(JSON.stringify(G.lastSkillByHero||{})),
+  };
+}
+function _restoreRoundSnapshot(snap){
+  if(!snap || typeof G === 'undefined' || !G) return;
+  const _apply = (hArr, src) => {
+    src.forEach((s, i) => {
+      const h = hArr[i];
+      if(!h || h.name !== s.name) return;
+      h.hp=s.hp; h.atk=s.atk; h.def=s.def||0; h.sp=s.sp; h.spd=s.spd;
+      h.curHp=s.curHp;
+      h.acted=s.acted;
+      h.status = JSON.parse(JSON.stringify(s.status||[]));
+      h.buffs  = JSON.parse(JSON.stringify(s.buffs||[]));
+      h.s1used = s.s1used; h.s2used = s.s2used;
+      h.equip = s.equip ? JSON.parse(JSON.stringify(s.equip)) : null;
+      h._skLv = s._skLv ? JSON.parse(JSON.stringify(s._skLv)) : {s1:0,s2:0};
+      h._burstLvAdv = s._burstLvAdv||0;
+      h._burstUsed = s._burstUsed||0;
+      h._risingSpiritCount = s._risingSpiritCount||0;
+      if(s._displayName) h._displayName = s._displayName;
+      h._isCharmedEnemy = s._isCharmedEnemy||false;
+    });
+  };
+  _apply(G.p1, snap.p1||[]);
+  _apply(G.p2, snap.p2||[]);
+  G.energy = { ...(snap.energy||{p1:0,p2:0}) };
+  G.inv  = JSON.parse(JSON.stringify(snap.inv||[]));
+  G.inv2 = JSON.parse(JSON.stringify(snap.inv2||[]));
+  if(typeof fieldCards !== 'undefined'){
+    // 清空並換成快照內容
+    fieldCards.length = 0;
+    (snap.fieldCards||[]).forEach(f => fieldCards.push(JSON.parse(JSON.stringify(f))));
+  }
+  G.round = snap.round || 1;
+  G.comboFatigue = snap.comboFatigue||0;
+  G.comboFatigueByHero = JSON.parse(JSON.stringify(snap.comboFatigueByHero||{}));
+  G.lastSkillName = snap.lastSkillName||null;
+  G.lastSkillByHero = JSON.parse(JSON.stringify(snap.lastSkillByHero||{}));
+  G.pendingTarget = null;
+  G.taunted = null;
+  G.guardFor = null;
+  G.gunnerTarget = null;
+  // 重繪所有卡片
+  try{ G.p1.concat(G.p2).forEach(h => renderCard(h)); }catch(e){}
+  try{ renderItems && renderItems(); }catch(e){}
+  // ★ 還原後：快照鏈重置（剛還原到的就是當前）
+  G._curRoundSnap = snap;
+  G._prevRoundSnap = null;
+  G._lastSnapRound = snap.round || 1;
+}
+
 function nextRound(){
+  // ★ 時間倒轉用：滑動快照鏈 — 把目前快照變「上一回合」
+  G._prevRoundSnap = G._curRoundSnap || null;
   // 回合數遞增
   G.round = (G.round||1) + 1;
   // ★ 每回合結束重置小怪戰答題旗標
@@ -22752,10 +22864,24 @@ function advStartBattle(){
     }
     _playAdvBossBgm();
   }catch(e){}
-  // ★ BOSS戰前玩家HP全滿
+  // ★ BOSS戰前玩家HP全滿 + 重置極限爆發次數 + 重置技能疲勞（小怪戰累積的疲勞/爆發到BOSS戰完全歸零）
   if(typeof G !== 'undefined' && G && G.p1){
-    G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
+    G.p1.forEach(h=>{
+      h.curHp = h.hp;
+      h.status = [];
+      h.buffs = [];
+      h.acted = false;
+      h._burstUsed = 0;   // ★ 重置爆發次數（每人 BOSS 戰可用 2 次）
+      h._risingSpiritCount = 0; // ★ 武士崛起鬥志也重置
+    });
     try{ G.p1.forEach(h=>renderCard(h)); }catch(e){}
+  }
+  // ★ 重置連招疲勞（全隊 + 每人）
+  if(typeof G !== 'undefined' && G){
+    G.comboFatigue = 0;
+    G.comboFatigueByHero = {};
+    G.lastSkillName = null;
+    G.lastSkillByHero = {};
   }
 
   // ★ BOSS戰開場：重建牌組並發三張初始物品牌（同正常戰鬥開局）
@@ -27604,7 +27730,7 @@ const SKILL_UPGRADE_DEF = {
   '催眠之歌': { cat:'dur', base:3, perLv:5, label:'睡眠回合' },
   '搖籃曲':   { cat:'dur', base:2, perLv:5, label:'睡眠回合' },
   '黑暗封印': { cat:'special_seal', base:70, perLv:1, step:3, cap:100, label:'封印成功率' },
-  '時間暫停': { cat:'dur', base:1, perLv:5, label:'禁動回合' },
+  '時間暫停': { cat:'special_time_pause', label:'禁動回合／消耗' },
   '花粉迷眼': { cat:'dur', base:1, perLv:5, label:'失明回合' },
   '土坑陷阱': { cat:'dur', base:1, perLv:5, label:'緩速回合' },
   '黏液噴濺': { cat:'dur', base:1, perLv:5, label:'緩速回合' },
@@ -27626,6 +27752,8 @@ const SKILL_UPGRADE_DEF = {
   '崛起鬥志': { cat:'special_rising', label:'復活時全屬性提升值' },
   // ★ 死亡宣告：不可升級（固定效果）
   '死亡宣告': { cat:'no_upgrade', label:'固定效果（不可升級）' },
+  // ── 時空法師時間倒轉：每升3級+1次使用次數（基礎1次，Lv9=4次）──
+  '時間倒轉': { cat:'special_time_rewind', label:'使用次數' },
   // ── 田徑隊員起跑衝刺：每升3級持續回合數+1（基礎5回合）──
   '起跑衝刺': { cat:'special_sprint', label:'持續回合' },
   // ── 動物學家動物守護：每升1級，每隻寵物減傷+1%（基礎10%，基礎上限40%）──
@@ -27685,6 +27813,14 @@ function _getSkUpgradeBadge(skillName, skLv){
   if(cat==='special_sprint'){
     const d = 5 + Math.floor((skLv||0)/3);
     return def.label + ' ' + d + '回合';
+  }
+  if(cat==='special_time_rewind'){
+    const u = 1 + Math.floor((skLv||0)/3);
+    return def.label + ' ' + u + ' 次';
+  }
+  if(cat==='special_time_pause'){
+    const costDown = (skLv||0)>=9 ? 2 : (skLv||0)>=4 ? 1 : 0;
+    return '禁動 1 回合' + (costDown>0 ? '（消耗-' + costDown + '）' : '');
   }
   if(cat==='special_zoo'){
     const pct = 10 + (skLv||0);
@@ -27771,6 +27907,12 @@ function buildSkillLvTable(skillName, currentLv) {
     } else if(cat==='special_sprint'){
       const d = 5 + Math.floor(lv/3);
       effectText = def.label + ' ' + d + ' 回合';
+    } else if(cat==='special_time_rewind'){
+      const u = 1 + Math.floor(lv/3);
+      effectText = def.label + ' ' + u + ' 次';
+    } else if(cat==='special_time_pause'){
+      const costDown = lv>=9 ? 2 : lv>=4 ? 1 : 0;
+      effectText = '禁動 1 回合' + (costDown>0 ? '，能量消耗-' + costDown : '');
     } else if(cat==='special_zoo'){
       const pct = 10 + lv;
       effectText = def.label + ' ' + pct + '%（上限 ' + (40+lv*4) + '%）';
@@ -31841,6 +31983,31 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260418.2103', items:[
+    '時間暫停禁動回合數改回固定 1 回合（移除升級加回合的效果），避免後期過強',
+    '升級效果只剩下能量消耗減少：Lv.5 消耗-1、Lv.10 消耗-2（基礎 6🔷 → Lv.5 為 5🔷 → Lv.10 為 4🔷）',
+  ] },
+  { ver:'v1.0.20260418.2058', items:[
+    '時空法師 S1「時間暫停」基礎能量消耗由 5🔷 調整為 6🔷',
+    '時間暫停升級效果：Lv.5 時能量消耗-1（變 5🔷），Lv.10 時能量消耗再-1（共-2，變 4🔷）',
+    '時間暫停禁動回合數同步生效：每升 5 級 +1 回合（Lv.1~5 禁動 1 回合、Lv.6~10 禁動 2 回合）',
+    '技能升級表格會顯示每一級的禁動回合數與能量消耗',
+  ] },
+  { ver:'v1.0.20260418.2055', items:[
+    '時空法師 S2「時間倒轉」升級效果：基礎 1 次使用，每升 3 級 +1 次（Lv.3 可用 2 次、Lv.6 可用 3 次、Lv.9 可用 4 次）',
+    '技能升級表格會顯示每一級可用的次數',
+    '用完所有次數後技能按鈕會灰掉；還有剩餘次數則維持可用',
+  ] },
+  { ver:'v1.0.20260418.2049', items:[
+    '時空法師 S2「時間倒轉」改版：原本是回到第一回合，改為回到「上一回合剛開始的狀態」（🔷🔷🔷🔷🔷🔷 費用不變、仍限用一次）',
+    '還原範圍包含：全隊 HP/狀態/增益/行動狀態/裝備、雙方能量、手牌/背包、場上戰場卡、連招疲勞、技能已用標記、爆發次數',
+    '第 1 回合使用會顯示「目前還沒有上一回合可以倒轉」提示並不消耗費用',
+  ] },
+  { ver:'v1.0.20260418.2036', items:[
+    'BOSS 戰開場現在會完全重置「極限爆發次數」和「連招疲勞」——進 BOSS 戰時所有隊員爆發次數重置為可用 2 次、所有技能疲勞歸零，讓玩家以最佳狀態迎戰',
+    '小怪戰之間（3 場景）疲勞與爆發次數維持共用的原有設定（未受影響）',
+    '武士「崛起鬥志」發動計數也會在 BOSS 戰開場重置',
+  ] },
   { ver:'v1.0.20260418.2026', items:[
     '修正使用「預設陣容」啟動冒險時，即使選了杏花妖路線也會出現九尾空貓怪的 Bug（預設陣容走了不同的程式碼路徑，沒有套用 variant 選擇）',
     '修正杏花妖在戰鬥場景中被誤標記成小怪卡片樣式的 Bug（主 BOSS 大卡片現已支援雙 BOSS）',
@@ -32131,7 +32298,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260418.2026';
+  const CURRENT_VERSION = 'v1.0.20260418.2103';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -32148,7 +32315,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260418.2026';
+window._GAME_LOADED_VERSION = 'v1.0.20260418.2103';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
