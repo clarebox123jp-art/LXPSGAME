@@ -16828,7 +16828,7 @@ function _realAiAct(a){
     if(n==='物品查封') return 50; // 干擾技有高價值
     if(n==='靈魂收割') return enemies.filter(e=>e.curHp<10).length>0 ? 9999 : -1;
     // ★ 怪物技能 & 被動技能：設定預估值或標記為不列入攻擊選擇
-    if(n==='花瓣飛刀') return spv(a) * enemies.length * 0.9;
+    if(n==='花瓣飛刀') return Math.floor((a.sp||0)*(1+(a.sp||0)*0.01)) * enemies.length * 0.9;
     if(n==='花粉迷眼') return 20; // 失明控制
     if(n==='渾身一擊') return a.atk * 2.5;
     if(n==='土坑陷阱') return 15; // 緩速
@@ -23257,28 +23257,31 @@ function advTgEvent_petEncounter(){
 }
 
 // 顯示野生動物「聚光燈」視窗（答題前與答題中皆可見）
+// ★ 修正：定位在畫面左側，避免遮擋中央的問題視窗
 function _tgShowPetSpotlight(pet, petName){
   _tgHidePetSpotlight();
   const box = document.createElement('div');
   box.id = '_tg-pet-spotlight';
   box.style.cssText = [
-    'position:fixed;top:18%;left:50%;transform:translateX(-50%);',
+    // ★ 改為左側垂直置中，寵物縮小避免蓋住問題視窗
+    'position:fixed;top:50%;left:2.5vw;transform:translateY(-50%);',
     'z-index:9400;',  // 高於 cutscene(620) 也高於 quiz(提升後 9500 會蓋在它上面正好)
     'background:linear-gradient(160deg,#0a1c10,#061208);',
     'border:2.5px solid rgba(100,220,120,0.75);border-radius:18px;',
-    'padding:14px 20px 16px;',
+    'padding:12px 14px 14px;',
     'text-align:center;box-shadow:0 0 50px rgba(100,220,120,0.35);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
     'animation:advChoiceIn 0.4s cubic-bezier(0.34,1.56,0.64,1);',
     'pointer-events:none;',
+    'max-width:min(22vw,200px);',
   ].join('');
   const imgHtml = (pet && pet.petImg)
-    ? `<img src="${pet.petImg}" style="width:180px;height:180px;object-fit:cover;border-radius:14px;border:2px solid rgba(100,220,120,0.5);display:block;margin:0 auto 10px;">`
-    : `<div style="font-size:96px;margin-bottom:6px;">${(pet&&pet.icon)||'🐾'}</div>`;
+    ? `<img src="${pet.petImg}" style="width:min(18vw,140px);height:min(18vw,140px);object-fit:cover;border-radius:12px;border:2px solid rgba(100,220,120,0.5);display:block;margin:0 auto 8px;">`
+    : `<div style="font-size:min(12vw,80px);margin-bottom:4px;">${(pet&&pet.icon)||'🐾'}</div>`;
   box.innerHTML = `
     ${imgHtml}
-    <div style="font-size:28px;font-weight:900;color:#88ffaa;letter-spacing:2px;">🐾 ${petName}</div>
-    ${pet && pet.petDesc ? `<div style="font-size:16px;color:#ccddcc;margin-top:4px;font-style:italic;max-width:260px;">${pet.petDesc}</div>` : ''}
+    <div style="font-size:min(3vw,22px);font-weight:900;color:#88ffaa;letter-spacing:1px;">🐾 ${petName}</div>
+    ${pet && pet.petDesc ? `<div style="font-size:min(2vw,13px);color:#ccddcc;margin-top:4px;font-style:italic;line-height:1.4;">${pet.petDesc}</div>` : ''}
   `;
   document.body.appendChild(box);
 }
@@ -33062,6 +33065,14 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1620', brief:[
+    '修正茶園寵物事件答題卡死、寵物圖片遮擋問題視窗的問題',
+  ], items:[
+    '修正嚴重 Bug：茶園遇到野生動物答題後流程卡死，回合不會進入「攜帶 OO？」視窗',
+    '根本原因：estSkillDmg 內部誤用了 spv() 函式（spv 定義在 aiUseSkill 作用域內，estSkillDmg 看不到），導致 ReferenceError 導致 AI 流程中斷，進而影響答題回呼無法正常觸發',
+    '修正方法：將 spv(a) 改為 inline 計算 Math.floor((a.sp||0)*(1+(a.sp||0)*0.01))',
+    '修正 UI：寵物聚光燈視窗從原本的畫面中央上方移到左側垂直置中，並縮小尺寸（180→最多140px），讓中央的問題視窗不再被遮擋',
+  ] },
   { ver:'v1.0.20260419.1540', brief:[
     '整體音樂與音效音量調降 30%',
   ], items:[
@@ -33612,7 +33623,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1540';
+  const CURRENT_VERSION = 'v1.0.20260419.1620';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33629,7 +33640,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1540';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1620';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
