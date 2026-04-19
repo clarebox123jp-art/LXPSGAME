@@ -24590,6 +24590,14 @@ function _advShowBurstTargetPicker(heroes) {
 // 觸發指定英雄的極限爆發
 function _advTriggerBurstFor(h) {
   try {
+    // ★ 關鍵修正（v1.0.20260419.1830）：清除答題回呼，避免 BOSS 行動搶在爆發之前執行
+    //   原本 bug：button onclick 同時呼叫 _advTriggerBurstFor（1200ms 延遲）與 advOnQuizSkip()（立即執行回呼 → BOSS 馬上行動），
+    //   造成 BOSS 先攻擊、1200ms 後才輪到爆發，此時場上狀態已改變，傷害看起來沒作用或效果錯亂。
+    //   雷法師 的連跳 4 次傷害特別明顯：若 BOSS 在中途打倒爆發者或狀態已改，doDmg 的 actor 可能失效。
+    //   修正：_advTriggerBurstFor 一開始就清除回呼並解除暫停，讓爆發完整執行後再由 _burstFinish 推進回合
+    //   （_burstFinish 會把 _interrupted 的 BOSS 標記為 acted，達到「插隊跳過 BOSS 行動」的效果）。
+    if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+    _gamePaused = false;
     if (typeof BURST_DB === 'undefined' || !BURST_DB[h.name]) {
       bannerFX(h, '💥 能量爆滿！', '#ff9944', 900);
       G.energy.p1 = Math.min(10, G.energy.p1 + 5);
@@ -33089,6 +33097,14 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1830', brief:[
+    '修正答題獎勵「立即使用極限爆發」沒效果的 Bug（雷法師等多英雄受影響）',
+  ], items:[
+    '根本原因：按下「選擇英雄發動爆發」按鈕後，_advTriggerBurstFor 有 1200ms 延遲（等爆發動畫），但按鈕同時呼叫的 advOnQuizSkip() 會立即執行答題回呼（_advQuizResolveCb），進而觸發 BOSS 行動。結果：BOSS 先攻擊、1200ms 後才輪到爆發；此時 G.activeChar 已改變、場上狀態錯位，導致爆發雖有演出但傷害或效果不正確',
+    '雷法師 特別明顯：其爆發為同步連跳 4 次傷害（for loop 內的 doDmg），若 actor 所在場上狀態已改變則第一次 doDmg 就失效；其他爆發（如 AoE 型）表面上可能看起來還有小動作但實質也受影響',
+    '修法：在 _advTriggerBurstFor 一開始就清除 _advQuizResolveCb 並解除 _gamePaused，讓爆發先完整執行。爆發結束後由 _burstFinish 內建的 _interrupted 處理將 BOSS 標記為 acted（跳過本次行動），再由 startTurn 推進回合',
+    '此修正同時惠及所有 37 個英雄爆發與 BOSS 爆發，不再發生動畫播完卻沒傷害的問題',
+  ] },
   { ver:'v1.0.20260419.1750', brief:[
     '警長技能升級效果調整：物品查封升級+回合、警示鳴槍+命中、正義制裁+反傷',
   ], items:[
@@ -33672,7 +33688,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1750';
+  const CURRENT_VERSION = 'v1.0.20260419.1830';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33689,7 +33705,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1750';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1830';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
