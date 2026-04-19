@@ -228,7 +228,12 @@
     return monday.toISOString().slice(0, 10);
   }
 
-  // 登入時觸發：若為新玩家 → totalPlayers+1、newPlayers_週一+1；若今日首次上線 → active_今日+1
+  // 登入時觸發：
+  //  - 若玩家尚未被計入總玩家數（_countedInStats 為 false 或不存在）→ totalPlayers+1 並標記
+  //  - 若為計數系統上線後的全新玩家 → 額外 newPlayers_本週+1
+  //  - 今日首次上線 → active_今日+1
+  // ★ 這種設計讓「新計數系統上線前就存在的舊玩家」在下次登入時自動被補計入，
+  //   不需要管理員手動回填。
   window._fbTrackPlayerStats = async function(uid) {
     if(!uid) return;
     try {
@@ -236,23 +241,32 @@
       const weekKey  = _getThisWeekMondayKeyTW();
       const playerRef = doc(_fbDb, 'players', uid);
       const playerSnap = await getDoc(playerRef);
-      const isNewPlayer = !playerSnap.exists();
-      const lastActiveDate = playerSnap.exists() ? (playerSnap.data().lastActiveDate || '') : '';
+      const existed = playerSnap.exists();
+      const data = existed ? (playerSnap.data() || {}) : {};
+      // 未被計入過的玩家（舊玩家首次回歸也會被標記）
+      const needsCounting = !data._countedInStats;
+      // 是否是真正的全新玩家（文件根本不存在）
+      const isBrandNewPlayer = !existed;
+      const lastActiveDate = data.lastActiveDate || '';
       const isFirstLoginToday = lastActiveDate !== todayKey;
 
+      // ── 更新全域統計 ──
       const statsUpdates = {};
-      if(isNewPlayer) {
-        statsUpdates.totalPlayers = increment(1);
-        statsUpdates['newPlayers_' + weekKey] = increment(1);
-      }
+      if(needsCounting) statsUpdates.totalPlayers = increment(1);
+      // newPlayers_週一 只算真正的全新玩家（避免舊玩家回歸也算新增）
+      if(isBrandNewPlayer) statsUpdates['newPlayers_' + weekKey] = increment(1);
       if(isFirstLoginToday) statsUpdates['active_' + todayKey] = increment(1);
-
       if(Object.keys(statsUpdates).length > 0) {
         const statsRef = doc(_fbDb, 'stats', 'global');
         await setDoc(statsRef, statsUpdates, { merge: true });
       }
-      if(isFirstLoginToday) {
-        await setDoc(playerRef, { lastActiveDate: todayKey }, { merge: true });
+
+      // ── 更新玩家文件上的標記（確保同一玩家不會被重覆計算）──
+      const playerUpdates = {};
+      if(needsCounting) playerUpdates._countedInStats = true;
+      if(isFirstLoginToday) playerUpdates.lastActiveDate = todayKey;
+      if(Object.keys(playerUpdates).length > 0) {
+        await setDoc(playerRef, playerUpdates, { merge: true });
       }
     } catch(e) {
       console.error('❌ [人數統計] 更新失敗 code=' + (e && e.code) + '（可能原因：Firestore 規則未允許寫入 stats 集合）', e);
@@ -260,10 +274,16 @@
   };
 
   // 冒險次數：每次玩家按「整裝出發」啟動一次冒險時呼叫，全域計數 +1
+  // ★ 同時在玩家文件累積個人冒險次數（給個人統計用）
   window._fbIncrementAdventureCount = async function() {
     try {
+      const uid = window._gUserId;
       const statsRef = doc(_fbDb, 'stats', 'global');
       await setDoc(statsRef, { totalAdventures: increment(1) }, { merge: true });
+      if(uid) {
+        const playerRef = doc(_fbDb, 'players', uid);
+        await setDoc(playerRef, { adventureCount: increment(1) }, { merge: true });
+      }
     } catch(e) {
       console.error('❌ [人數統計] 冒險次數 +1 失敗 code=' + (e && e.code), e);
     }
@@ -32648,6 +32668,11 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0910', items:[
+    '總玩家數統計改為「自動補登」機制：每位玩家登入時會檢查自己是否被計入過（_countedInStats 標記），未計入者自動補加 totalPlayers+1。這表示計數系統上線前的舊玩家，只要回來遊戲再登入一次，就會自動被納入統計，不需要管理員手動回填',
+    '新玩家週計數（newPlayers_本週）只計算全新玩家，舊玩家回歸不會誤算為新增',
+    '冒險次數同時寫入個人文件（adventureCount），供日後個人統計使用',
+  ] },
   { ver:'v1.0.20260419.0854', items:[
     '修正近日多次版本更新後，玩家未收到「有新版本，請重新整理」通知視窗的問題',
     '根本原因：版本號常數（CURRENT_VERSION、_GAME_LOADED_VERSION）未同步更新，導致版本比對判定為未變動',
@@ -33080,7 +33105,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.0854';
+  const CURRENT_VERSION = 'v1.0.20260419.0910';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33097,7 +33122,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.0854';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.0910';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
