@@ -5868,6 +5868,16 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'basket_boy',  name:'烈火灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
     { id:'basket_girl', name:'疾風三分', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
   ],
+  '田徑隊員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png' },
+    { id:'track_boy',  name:'長風躍步', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'track_girl', name:'凌雲一躍', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+  ],
+  '小劇團員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    { id:'drama_boy',  name:'銀冕王子', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%B9%B4.png', requiresUnlock:true },
+    { id:'drama_girl', name:'琉璃公主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%A5%B3.png', requiresUnlock:true },
+  ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
@@ -25593,6 +25603,20 @@ const BACKPACK_ITEM_DEF = {
   'basket_girl_portrait': { name:'籃球隊員肖像：疾風三分', icon:'🏀',
     desc:'全新繪製的籃球隊員肖像「疾風三分」，購買後可在英雄圖鑑的籃球隊員詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'籃球隊員', portraitId:'basket_girl', useLabel:'前往切換' },
+  // ── 田徑隊員肖像 ──
+  'track_boy_portrait': { name:'田徑隊員肖像：長風躍步', icon:'🏃',
+    desc:'全新繪製的田徑隊員肖像「長風躍步」(跳遠主題)，購買後可在英雄圖鑑的田徑隊員詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'田徑隊員', portraitId:'track_boy', useLabel:'前往切換' },
+  'track_girl_portrait': { name:'田徑隊員肖像：凌雲一躍', icon:'🏃',
+    desc:'全新繪製的田徑隊員肖像「凌雲一躍」(跳高主題)，購買後可在英雄圖鑑的田徑隊員詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'田徑隊員', portraitId:'track_girl', useLabel:'前往切換' },
+  // ── 小劇團員肖像 ──
+  'drama_boy_portrait': { name:'小劇團員肖像：銀冕王子', icon:'🎭',
+    desc:'全新繪製的小劇團員肖像「銀冕王子」(王子主題)，購買後可在英雄圖鑑的小劇團員詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'小劇團員', portraitId:'drama_boy', useLabel:'前往切換' },
+  'drama_girl_portrait': { name:'小劇團員肖像：琉璃公主', icon:'🎭',
+    desc:'全新繪製的小劇團員肖像「琉璃公主」(公主主題)，購買後可在英雄圖鑑的小劇團員詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'小劇團員', portraitId:'drama_girl', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -25651,6 +25675,20 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'basket_girl_portrait', name:'籃球隊員肖像：疾風三分', icon:'🏀',
     desc:'全新繪製的籃球隊員替代肖像「疾風三分」。購買後即永久解鎖，可在英雄圖鑑的籃球隊員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 田徑隊員肖像 ──
+  { id:'track_boy_portrait', name:'田徑隊員肖像：長風躍步', icon:'🏃',
+    desc:'全新繪製的田徑隊員替代肖像「長風躍步」(跳遠主題)。購買後即永久解鎖，可在英雄圖鑑的田徑隊員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'track_girl_portrait', name:'田徑隊員肖像：凌雲一躍', icon:'🏃',
+    desc:'全新繪製的田徑隊員替代肖像「凌雲一躍」(跳高主題)。購買後即永久解鎖，可在英雄圖鑑的田徑隊員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 小劇團員肖像 ──
+  { id:'drama_boy_portrait', name:'小劇團員肖像：銀冕王子', icon:'🎭',
+    desc:'全新繪製的小劇團員替代肖像「銀冕王子」(王子主題)。購買後即永久解鎖，可在英雄圖鑑的小劇團員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'drama_girl_portrait', name:'小劇團員肖像：琉璃公主', icon:'🎭',
+    desc:'全新繪製的小劇團員替代肖像「琉璃公主」(公主主題)。購買後即永久解鎖，可在英雄圖鑑的小劇團員詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -32798,6 +32836,14 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1320', brief:[
+    '商店新增 4 張肖像：田徑隊員(跳遠／跳高)、小劇團員(王子／公主)',
+  ], items:[
+    '商店新增 4 張全新繪製的替代肖像，每張 3000 知識幣，限購 1 份：',
+    '・田徑隊員「長風躍步」(跳遠主題・男)、「凌雲一躍」(跳高主題・女)',
+    '・小劇團員「銀冕王子」(王子主題・男)、「琉璃公主」(公主主題・女)',
+    '購買後永久解鎖，可在英雄圖鑑對應英雄詳細頁用右下角「✨ 切換肖像」按鈕切換(原始肖像永遠保留)',
+  ] },
   { ver:'v1.0.20260419.1245', brief:[
     '商店新增籃球隊員肖像：烈火灌籃(男)、疾風三分(女)',
   ], items:[
@@ -33316,7 +33362,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1245';
+  const CURRENT_VERSION = 'v1.0.20260419.1320';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33333,7 +33379,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1245';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1320';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
