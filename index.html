@@ -144,11 +144,17 @@
   };
 
   // 雲端讀取
+  // ★ v1.0.20260419.1930: 區分「文件不存在」(return null) 與「讀取失敗」(throw)
+  //   以避免呼叫端把 transient error 當成新玩家而覆蓋雲端資料
   window._fbLoad = async function(uid) {
     try {
       const snap = await getDoc(doc(_fbDb, 'players', uid));
-      return snap.exists() ? snap.data() : null;
-    } catch(e) { console.error('雲端讀取失敗', e); return null; }
+      return snap.exists() ? snap.data() : null;  // null = 確認此玩家尚無文件
+    } catch(e) {
+      console.error('雲端讀取失敗,將往外拋以便呼叫端處理 fallback', e);
+      e._fbLoadFailed = true;
+      throw e;  // ★ 改為 throw,呼叫端可用 try/catch 區分
+    }
   };
 
   // ── 好友系統 Firebase API ──
@@ -25755,7 +25761,52 @@ function _applySafeData(raw) {
 }
 
 async function gameCloudSave() {
+  // ★★★ v1.0.20260419.1930 CRITICAL 保護層 1：登入玩家尚未完成載入 → 拒絕儲存 ★★★
+  //   避免 gameCloudLoad 失敗時，遊戲變數保持預設值就被 autosave 覆蓋雲端
+  if(window._gUserId && !window._progressLoaded) {
+    console.warn('⛔ [存檔保護] 進度尚未載入完畢，拒絕儲存以避免覆蓋雲端資料');
+    return false;
+  }
+
   const data = _buildSafeData();
+
+  // ★★★ v1.0.20260419.1930 CRITICAL 保護層 2：空白狀態不得覆蓋已有進度 ★★★
+  //   即使 _progressLoaded=true，仍檢查當前狀態是否「像新玩家」；
+  //   若是而本地/雲端已有非空資料，判定為異常狀態並拒絕儲存
+  if(window._gUserId) {
+    const currLooksEmpty =
+      (data.knowledgeCoins||0) === 0 &&
+      Object.keys(data.heroLevels||{}).length === 0 &&
+      Object.keys(data.playerBackpack||{}).length === 0 &&
+      (!Array.isArray(data.unlockedHeroes) || data.unlockedHeroes.length <= 15);  // 新玩家預設已有基礎英雄
+    if(currLooksEmpty) {
+      try {
+        const localRaw = localStorage.getItem('lxps_' + window._gUserId + '_progress');
+        if(localRaw) {
+          const local = JSON.parse(localRaw);
+          const localHasProgress =
+            (local.knowledgeCoins||0) > 0 ||
+            Object.keys(local.heroLevels||{}).length > 0 ||
+            Object.keys(local.playerBackpack||{}).length > 0;
+          if(localHasProgress) {
+            console.error('⛔ [存檔保護] 偵測到空白狀態試圖覆蓋本地既有進度，已拒絕儲存', {
+              current: data, local: { coins: local.knowledgeCoins, heroes: Object.keys(local.heroLevels||{}).length, items: Object.keys(local.playerBackpack||{}).length }
+            });
+            // 顯示給玩家看
+            try{
+              const _t=document.createElement('div');
+              _t.style.cssText='position:fixed;top:80px;right:20px;z-index:99999;background:rgba(120,30,30,0.95);border:2px solid #ff6666;color:#ffcccc;font-size:14px;padding:10px 16px;border-radius:8px;max-width:320px;';
+              _t.innerHTML='⛔ 存檔保護啟動<br>偵測到異常空白狀態，已阻止覆蓋<br>請重新整理頁面';
+              document.body.appendChild(_t);
+              setTimeout(()=>{ if(_t.parentNode) _t.remove(); }, 6000);
+            }catch(e){}
+            return false;
+          }
+        }
+      } catch(e) { console.warn('[存檔保護] 本地比對失敗', e); }
+    }
+  }
+
   // ① 本地備份（無論是否登入）
   const localKey = window._gUserId ? 'lxps_' + _gUserId + '_progress' : 'lxps_guest_progress';
   localStorage.setItem(localKey, JSON.stringify(data));
@@ -25766,36 +25817,58 @@ async function gameCloudSave() {
       log('☁️ 雲端已同步');
     } catch(e) { console.error('[雲端存檔失敗]', e); }
   }
+  return true;
 }
 
+// ★ v1.0.20260419.1930：_fbLoad 改為 throw on error，此處也需用 try/catch 區分
 async function gameCloudLoad() {
   if(!window._gUserId) {
-    // 訪客模式：只讀本地
+    // 訪客模式：讀本地
     const raw = localStorage.getItem('lxps_guest_progress');
     if(raw) { _applySafeData(raw); log('📂 本地進度已載入'); }
+    window._progressLoaded = true;  // 訪客一律允許存本地
     // ★ 訪客模式也補發成就
     setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1000);
     return;
   }
+  let data = null;
+  let cloudOk = false;
+  // ① 優先讀雲端（新版 _fbLoad 會在錯誤時 throw）
   try {
-    let data = null;
-    // ① 優先讀雲端
     if(window._fbLoad) data = await window._fbLoad(window._gUserId);
-    // ② 若雲端無資料，讀本地
-    if(!data) {
+    cloudOk = true;
+  } catch(e) {
+    console.error('[gameCloudLoad] 雲端異常，嘗試本地備份', e);
+    cloudOk = false;
+  }
+  // ② 雲端確認為新玩家 → 標記已載入
+  if(cloudOk && !data) {
+    window._progressLoaded = true;
+    log('☁️ 新玩家，歡迎加入！');
+    return;
+  }
+  // ③ 雲端失敗 → 讀本地
+  if(!cloudOk) {
+    try {
       const raw = localStorage.getItem('lxps_' + _gUserId + '_progress');
       if(raw) data = JSON.parse(raw);
+    } catch(e) {}
+    if(!data) {
+      window._progressLoaded = false;  // ★ 沒本地備份也不能存檔
+      console.error('⛔ [存檔保護] 雲端失敗且本地無備份，已停用儲存');
+      return;
     }
-    if(!data) { log('☁️ 尚無存檔記錄，以全新狀態開始'); return; }
+  }
+  try {
     _applySafeData(data);
-    // 同步回本地
+    window._progressLoaded = true;
     localStorage.setItem('lxps_' + _gUserId + '_progress', JSON.stringify(data));
     const saved = data.savedAt ? new Date(data.savedAt).toLocaleString('zh-TW') : '';
     log('☁️ 進度已載入' + (saved ? '（' + saved + '）' : ''));
     setTimeout(()=>{
-      try{ bannerFX(null, '☁️ 雲端進度已同步！', '#44ff88', 2000); }catch(e){}
+      try{ bannerFX(null, cloudOk ? '☁️ 雲端進度已同步！' : '📂 本地備份已載入（雲端失敗）', '#44ff88', 2000); }catch(e){}
     }, 1500);
-  } catch(e) { console.error('[gameCloudLoad error]', e); }
+  } catch(e) { console.error('[gameCloudLoad apply error]', e); }
 }
 
 function _saveKey(key) {
@@ -25806,33 +25879,83 @@ function _saveKey(key) {
 // (已整合至 gameCloudSave/gameCloudLoad)
 
 // 雲端讀取（登入後呼叫）
+// ★ v1.0.20260419.1930 — CRITICAL FIX：雲端載入加入 localStorage fallback，避免清空資料
+//   舊版 bug：若 _fbLoad 返回 null（讀取失敗 or 文件不存在），會直接略過不載入，
+//             遊戲變數保持預設值，下一次 gameCloudSave() 就會用空白狀態覆蓋雲端。
+//   修法：① _fbLoad 失敗時拋錯讓此處 catch ② 讀不到雲端時 fallback 到本地
+//        ③ 成功載入才設 window._progressLoaded=true，gameCloudSave 會檢查此 flag 拒絕空白覆蓋
 window.gameCloudLoad = async function(uid) {
+  let data = null;
+
+  // ① 嘗試雲端（新版 _fbLoad 在讀取異常時會 throw，文件不存在才回傳 null）
+  let cloudOk = false;
   try {
-    const data = await window._fbLoad(uid);
-    if(data) {
-      _applySafeData(data);
-      // 同步回本地
-      localStorage.setItem('lxps_' + uid + '_progress', JSON.stringify(data));
-      log('☁️ 雲端進度已載入（' + new Date(data.savedAt).toLocaleString('zh-TW') + '）');
-      // 顯示歡迎訊息
-      setTimeout(()=>{
-        const nm = document.getElementById('google-name');
-        // ★ 雲端同步提示（不用 bannerFX 避免 null 崩潰）
-        try{
-          const _toast=document.createElement('div');
-          _toast.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;'+
-            'background:rgba(30,80,50,0.95);border:1.5px solid #44ff88;color:#aaffcc;'+
-            'font-size:20px;padding:10px 24px;border-radius:10px;pointer-events:none;';
-          _toast.textContent='☁️ 歡迎回來！進度已從雲端同步 ✅';
-          document.body.appendChild(_toast);
-          setTimeout(()=>{ _toast.style.opacity='0'; _toast.style.transition='opacity 0.5s';
-            setTimeout(()=>{ if(_toast.parentNode)_toast.remove(); },600); }, 2000);
-        }catch(e){}
-      }, 1000);
-    } else {
-      log('☁️ 雲端無記錄，使用本地進度');
+    data = await window._fbLoad(uid);
+    cloudOk = true;  // 即使 data===null 也算成功（只代表文件不存在）
+  } catch(e) {
+    console.error('[gameCloudLoad] 雲端讀取失敗，將嘗試本地備份', e);
+    cloudOk = false;
+  }
+
+  // ② 若雲端成功但 data 是 null → 確認是新玩家（文件不存在）
+  if(cloudOk && !data) {
+    window._progressLoaded = true;  // 新玩家，允許後續存檔
+    log('☁️ 新玩家，歡迎加入！');
+    return;
+  }
+
+  let source = null;
+
+  // ③ 若雲端失敗 → 讀 localStorage 作為 fallback
+  if(!cloudOk) {
+    try {
+      const raw = localStorage.getItem('lxps_' + uid + '_progress');
+      if(raw) { data = JSON.parse(raw); source = 'local'; }
+    } catch(e) { console.warn('[gameCloudLoad] 本地備份解析失敗', e); }
+
+    if(!data) {
+      // ⚠️ 雲端失敗且本地無備份 → 不可假設玩家是新的！拒絕啟用存檔功能以保護資料
+      window._progressLoaded = false;
+      console.error('⛔ [存檔保護] 雲端連線異常且本地無備份，已停用雲端儲存以保護現有資料');
+      try{
+        const _toast=document.createElement('div');
+        _toast.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;'+
+          'background:rgba(120,30,30,0.95);border:2px solid #ff6666;color:#ffcccc;'+
+          'font-size:18px;padding:12px 24px;border-radius:10px;max-width:90vw;text-align:center;';
+        _toast.innerHTML='⚠️ 雲端連線異常，進度未載入<br>為保護您的資料，存檔功能已暫時停用<br>請檢查網路後<b>重新整理頁面</b>';
+        document.body.appendChild(_toast);
+        setTimeout(()=>{ _toast.style.opacity='0'; _toast.style.transition='opacity 0.5s';
+          setTimeout(()=>{ if(_toast.parentNode)_toast.remove(); },600); }, 8000);
+      }catch(e){}
+      return;
     }
-  } catch(e) { console.error('gameCloudLoad error', e); }
+  } else {
+    source = 'cloud';
+  }
+
+  // ④ 有資料 → 套用
+  _applySafeData(data);
+  window._progressLoaded = true;  // ★ 關鍵 flag：gameCloudSave 會檢查此值才允許儲存
+  if(source === 'cloud') {
+    localStorage.setItem('lxps_' + uid + '_progress', JSON.stringify(data));
+    log('☁️ 雲端進度已載入（' + new Date(data.savedAt||0).toLocaleString('zh-TW') + '）');
+  } else {
+    log('📂 雲端連線異常，已使用本地備份進度（稍後會嘗試同步回雲端）');
+  }
+
+  // 歡迎訊息
+  setTimeout(()=>{
+    try{
+      const _toast=document.createElement('div');
+      _toast.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;'+
+        'background:rgba(30,80,50,0.95);border:1.5px solid #44ff88;color:#aaffcc;'+
+        'font-size:20px;padding:10px 24px;border-radius:10px;pointer-events:none;';
+      _toast.textContent = source === 'cloud' ? '☁️ 歡迎回來！進度已從雲端同步 ✅' : '📂 歡迎回來！(本地備份已載入)';
+      document.body.appendChild(_toast);
+      setTimeout(()=>{ _toast.style.opacity='0'; _toast.style.transition='opacity 0.5s';
+        setTimeout(()=>{ if(_toast.parentNode)_toast.remove(); },600); }, 2000);
+    }catch(e){}
+  }, 1000);
 };
 
 // ── 英雄養成資料 ──
@@ -33163,6 +33286,18 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1930', brief:[
+    '🚨 緊急修補：修復登入時雲端讀取失敗會導致帳號被清空的重大 bug',
+    '新增三層存檔保護：載入失敗時停用儲存、空白狀態不覆蓋既有進度、雲端失敗自動 fallback 到本地',
+  ], items:[
+    '【重大安全修補】原本 window.gameCloudLoad 在 _fbLoad 返回 null 時(不論是文件不存在還是網路/權限錯誤),都不會套用任何資料,遊戲變數會保持預設值(Lv1、0幣、空背包)。緊接著玩家任何動作觸發 gameCloudSave() 就會用空白狀態覆蓋雲端 → 帳號資料整個消失',
+    '影響範圍:任何一位登入玩家,只要 Firestore 讀取因網路抖動、Firebase 故障、rate limit 等 transient error 失敗,就可能被清空資料,不限管理員',
+    '【保護層 1】_fbLoad 改為「文件不存在 return null」「讀取失敗 throw」以區分兩種狀況',
+    '【保護層 2】window.gameCloudLoad 改為:雲端讀失敗 → fallback localStorage;若連本地也沒有 → 設 _progressLoaded=false,顯示紅色錯誤彈窗,停用儲存,要求玩家重整',
+    '【保護層 3】gameCloudSave 檢查 window._progressLoaded,若為 false 直接拒絕儲存',
+    '【保護層 4】gameCloudSave 比對當前資料與本地備份,若當前為空白但本地有進度,拒絕儲存並彈窗警告',
+    '內部 gameCloudLoad()(訪客+登入共用版)也同步套用上述修法',
+  ] },
   { ver:'v1.0.20260419.1900', brief:[
     '管理員面板新增「手動設定總玩家數」功能（繞過 permission-denied）',
   ], items:[
@@ -33761,7 +33896,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1900';
+  const CURRENT_VERSION = 'v1.0.20260419.1930';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33778,7 +33913,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1900';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1930';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
