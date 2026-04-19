@@ -1051,8 +1051,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #overlay .title-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:-180px}
 /* 中文主標題 - 童趣彩虹圓潤風格 */
 .title-zh{
-  font-size:188px;font-weight:800;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-  letter-spacing:19px;line-height:1;
+  font-size:169px;font-weight:800;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  letter-spacing:17px;line-height:1;
   margin-top:-400px;
   background:linear-gradient(135deg,
     #ff6b6b 0%,
@@ -32668,50 +32668,83 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260419.0910', items:[
+  { ver:'v1.0.20260419.0945', brief:[
+    '首頁標題再縮小 10%，徹底解決與人數橫條重疊問題',
+  ], items:[
+    '首頁標題「小英雄大對抗」字級再縮小 10%（188px → 169px，字距 19 → 17px）',
+    '之前縮小 5% 仍不夠，此次加大幅度以徹底避免與上方人數統計橫條重疊遮擋',
+  ] },
+  { ver:'v1.0.20260419.0930', brief:[
+    '更新通知改為簡述版，僅顯示核心變更',
+  ], items:[
+    '修正：所有遊戲更新通知從詳細多行描述改為單行簡述版',
+    '日後每次改動都自動在 changelog 陣列提供 brief 欄位（簡述）；保留 items 欄位（詳細）供內部追蹤，但玩家彈窗只顯示 brief',
+    '若只有 items 沒有 brief，彈窗會自動抓第一條 items 顯示（向下相容）',
+  ] },
+  { ver:'v1.0.20260419.0910', brief:[
+    '總玩家數改為自動補登，舊玩家回來玩一次就會被計入',
+  ], items:[
     '總玩家數統計改為「自動補登」機制：每位玩家登入時會檢查自己是否被計入過（_countedInStats 標記），未計入者自動補加 totalPlayers+1。這表示計數系統上線前的舊玩家，只要回來遊戲再登入一次，就會自動被納入統計，不需要管理員手動回填',
     '新玩家週計數（newPlayers_本週）只計算全新玩家，舊玩家回歸不會誤算為新增',
     '冒險次數同時寫入個人文件（adventureCount），供日後個人統計使用',
   ] },
-  { ver:'v1.0.20260419.0854', items:[
+  { ver:'v1.0.20260419.0854', brief:[
+    '修正先前多次版本更新未彈出重整通知的問題',
+  ], items:[
     '修正近日多次版本更新後，玩家未收到「有新版本，請重新整理」通知視窗的問題',
     '根本原因：版本號常數（CURRENT_VERSION、_GAME_LOADED_VERSION）未同步更新，導致版本比對判定為未變動',
     '本次補發從 v1.0.20260419.0052 之後的所有累積更新通知',
   ] },
-  { ver:'v1.0.20260419.0838', items:[
+  { ver:'v1.0.20260419.0838', brief:[
+    '新增管理員人數統計工具（Shift+F10）',
+  ], items:[
     '新增管理員工具：Shift+F10 呼叫「人數統計管理面板」（僅限設計者帳號）',
     '面板功能 1：🔄 回填總玩家數 — 掃描 Firestore 中所有 /players 文件，把總數一次寫入 totalPlayers（用於計數系統上線前已有玩家的情況）',
     '面板功能 2：⚔️ 手動設定累計冒險次數 — 直接設定 totalAdventures 絕對值，可補登過去的冒險次數',
     '修正原先「新計數系統上線前的玩家與冒險次數未被統計到」的問題（原先邏輯只會計算新玩家與新冒險）',
   ] },
-  { ver:'v1.0.20260419.0809', items:[
+  { ver:'v1.0.20260419.0809', brief:[
+    '首頁標題縮小 5%，避免遮擋人數統計橫條',
+  ], items:[
     '首頁標題「小英雄大對抗」字級縮小 5%（198px → 188px，字距 20 → 19px），避免與上方玩家人數統計橫條重疊遮擋',
     '人數統計診斷強化：錯誤記錄由 console.warn 升級為 console.error，並附上錯誤代碼（例：permission-denied），方便診斷 Firestore 規則問題',
     '若 stats/global 文件尚未建立，Console 會顯示提示訊息（首位玩家登入後會自動建立）',
   ] },
-  { ver:'v1.0.20260419.0752', items:[
+  { ver:'v1.0.20260419.0752', brief:[
+    '首頁人數橫條擴充為 4 項：今日上線／本週新增／總玩家／累計冒險',
+  ], items:[
     '首頁玩家人數統計橫條擴充為 4 項統計：🟢今日上線、✨本週新增、👥總玩家數、⚔️累計冒險',
     '「本週新增」= 本週（週一至週日，台灣時區）首次加入的不重複玩家數，每週一 00:00 自動歸零',
     '「累計冒險」= 自遊戲上線以來，所有玩家按下「整裝出發」啟動冒險的總次數（全球共用累積）',
     '四項統計均以 Firestore atomic increment 更新，所有裝置即時同步',
   ] },
-  { ver:'v1.0.20260419.0738', items:[
+  { ver:'v1.0.20260419.0738', brief:[
+    '首頁新增玩家人數即時統計橫條',
+  ], items:[
     '首頁正上方新增「玩家人數即時統計」橫條：顯示「🟢 今日上線」與「👥 總玩家數」，即時從 Firebase 同步更新',
     '「總玩家數」= 累計所有曾用 Google 登入過遊戲的不重複帳號數',
     '「今日上線」= 今日（台灣時區）至少登入過一次的不重複帳號數，每日 00:00 自動歸零重新計算',
     '新玩家首次登入自動 +1 總玩家數；既有玩家當日首次登入自動 +1 今日上線。資料儲存於 Firestore 的 stats/global 文件，採 atomic increment 避免競爭條件',
   ] },
-  { ver:'v1.0.20260419.0701', items:[
+  { ver:'v1.0.20260419.0701', brief:[
+    '九尾空貓怪爆發特效改為播放一次',
+  ], items:[
     '九尾空貓怪爆發「焰尾九連擊」特效改為播放一次（原本連播兩次），避免特效拖太久影響戰鬥節奏',
   ] },
-  { ver:'v1.0.20260419.0645', items:[
+  { ver:'v1.0.20260419.0645', brief:[
+    'BOSS 杏花妖 BGM 更換',
+  ], items:[
     'BOSS 杏花妖專屬 BGM 更換為全新版本「杏花妖BGM2.m4a」',
   ] },
-  { ver:'v1.0.20260419.0612', items:[
+  { ver:'v1.0.20260419.0612', brief:[
+    '第三場景事件機率微調、評分公平性修正',
+  ], items:[
     '第三場景（貓空茶園）事件機率再調整：50% 神秘寶箱（內含 50% 寶箱怪 + 50% 直接獲得法寶）、30% 異次元裂縫（100% 小惡魔）、20% 遇到野生動物。移除原先的「一般小怪戰」與「賣錢物品/空無一物」分支，讓事件更精簡、獎勵更豐厚',
     '修正評分公平性：評價基準由「玩家個人歷史最高分」改為「當前難度的滿分」——沒自信滿分100、普通滿分125、我很會滿分150，三種難度皆可獨立拿到 S 評價。原本低年級沒自信玩家若曾在高難度拿過高分，此後沒自信的評價會被永遠鎖在 C 的 BUG 已修復',
   ] },
-  { ver:'v1.0.20260419.0530', items:[
+  { ver:'v1.0.20260419.0530', brief:[
+    '第三場景稀有怪率提高、杏花妖技能強化、修正冒險劇情卡死 BUG',
+  ], items:[
     '第三場景（貓空茶園）稀有怪出現率大幅提升至合計 50%（原約 15%）：神秘寶箱事件 40%（內含寶箱怪 50%=總率 20%）、異次元裂縫 30%（100% 小惡魔=總率 30%）、一般小怪戰 20%、野生動物 10%',
     '杏花妖「杏林春霧」改為優先復活倒下的友方（原先優先治療活著的隊友），玩家版與 AI 版皆套用',
     '「杏林春霧」效果強化：保留原治療／復活，額外附加 30 點護盾（取較大值覆蓋，不疊加）',
@@ -33105,7 +33138,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.0910';
+  const CURRENT_VERSION = 'v1.0.20260419.0945';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33122,7 +33155,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.0910';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.0945';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
@@ -33216,18 +33249,22 @@ window._flushPendingUpdateIfAny = function(){
 function _showChangelogModal(oldVer, newVer){
   if(document.getElementById('_changelog-modal')) return;
 
-  // 收集最近10筆更新內容
+  // 收集最近更新內容（優先顯示 brief 簡述版，沒有才用 items 的第一條）
   const _logs = (typeof GAME_CHANGELOG !== 'undefined' ? GAME_CHANGELOG : []).slice(0,20);
   let _logHTML = '';
   _logs.forEach((entry, i) => {
     const isNew = entry.ver === newVer;
+    // 決定要顯示哪個欄位：brief 優先、其次 items、最後 fallback 空陣列
+    const lines = (Array.isArray(entry.brief) && entry.brief.length) ? entry.brief
+                : (Array.isArray(entry.items) && entry.items.length) ? [entry.items[0]]
+                : [];
     _logHTML +=
       '<div style="margin-bottom:10px;padding:10px 14px;border-radius:10px;text-align:left;'
       + 'background:' + (isNew ? 'rgba(80,200,80,0.1)' : 'rgba(255,255,255,0.03)') + ';'
       + 'border:1px solid ' + (isNew ? 'rgba(80,200,80,0.4)' : 'rgba(255,255,255,0.07)') + ';">'
       + '<div style="font-size:clamp(11px,1.2vw,15px);color:' + (isNew ? '#66ff88' : '#888') + ';font-weight:700;margin-bottom:4px;">'
       + (isNew ? '🆕 ' : '') + entry.ver + '</div>'
-      + entry.items.map(item =>
+      + lines.map(item =>
           '<div style="font-size:clamp(13px,1.4vw,18px);color:' + (isNew ? '#ddffdd' : '#bbb') + ';line-height:1.6;padding-left:8px;">・' + item + '</div>'
         ).join('')
       + '</div>';
