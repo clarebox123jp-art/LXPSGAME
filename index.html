@@ -16827,11 +16827,23 @@ function _realAiAct(a){
     if(n==='命運塔羅牌'||n==='兵貫神速之計'||n==='識破全局') return 40;
     if(n==='物品查封') return 50; // 干擾技有高價值
     if(n==='靈魂收割') return enemies.filter(e=>e.curHp<10).length>0 ? 9999 : -1;
+    // ★ 怪物技能 & 被動技能：設定預估值或標記為不列入攻擊選擇
+    if(n==='花瓣飛刀') return spv(a) * enemies.length * 0.9;
+    if(n==='花粉迷眼') return 20; // 失明控制
+    if(n==='渾身一擊') return a.atk * 2.5;
+    if(n==='土坑陷阱') return 15; // 緩速
+    if(n==='黏液噴濺') return 10 * enemies.length; // 全體緩速
+    if(n==='鎖起來') return -1; // 自我無敵，純防禦
+    if(n==='弄壞你的玩具') return 100; // 無視防禦的高傷
+    if(n==='讓你調皮') return 40; // 魅惑控制
+    if(n==='俯衝搶奪') return a.atk + a.spd*0.2;
+    if(n==='定時炸彈') return 30;
     if(HEAL_SKILLS.includes(n)||TANK_SKILLS.includes(n)) return -1;
     // 純輔助/控制技能（無傷害）→不列入攻擊技能選擇
     if(['盜取','急速閃躲','物品查封','識破全局','兵貫神速之計','命運塔羅牌',
         '轉禍為福','道具複製','邏輯優化','色彩噴濺','動物守護','接力傳遞',
-        '起跑衝刺','午睡時間','餘音繞樑','動物守護','崛起鬥志','迴避反擊'].includes(n)) return -1;
+        '起跑衝刺','午睡時間','餘音繞樑','動物守護','崛起鬥志','迴避反擊',
+        '箱底抹油','獻祭的餘暉','模仿','修改代碼','鑑往知來','愛護校犬','舔舔治療'].includes(n)) return -1;
     return a.sp;
   }
 
@@ -17038,8 +17050,11 @@ function aiUseSkill(a,sk,cost,pref){
   const allies=G[a.side].filter(h=>h.curHp>0);
   // SP加成：每1點特技+2%威力
   const spv=actor=>Math.floor((actor.sp||0)*(1+(actor.sp||0)*0.01));
-  // 攻擊目標：優先pref（策略層傳入），否則隨機敵人
-  const t=pref&&pref.curHp>0?pref:(enemies.length?enemies[Math.floor(Math.random()*enemies.length)]:null);
+  // ★ 攻擊目標 t：強制只選敵方。即使 pref 是友方（治療用 pref），t 仍指向隨機敵人，
+  //   避免 aiUseSkill 內任何 doDmg(t,...) 誤擊友方的情況（例如未實作的技能走入 fallback）。
+  const t = (pref && pref.side !== a.side && pref.curHp > 0)
+            ? pref
+            : (enemies.length ? enemies[Math.floor(Math.random() * enemies.length)] : null);
   // 治療目標：優先pref（若是友方），否則最低HP友方
   const healT = (pref && G[a.side].includes(pref)) ? pref
     : (allies.sort((x,y)=>x.curHp-y.curHp)[0] || a);
@@ -17298,7 +17313,218 @@ function aiUseSkill(a,sk,cost,pref){
     G[a.side].filter(h=>h.curHp>0).forEach(h=>addBuff(h,'dribble',1));
     log(`[${a.name}] 運球！友方全體普攻×2！`);
   }
-  else { if(t) doDmg(t,spv(a),{actor:a}); }
+  // ★ 神之賜福：使1名友方HP上限+10並完全治癒（不可疊加）
+  else if(n==='神之賜福'){
+    const tgt = al;
+    if(tgt){
+      if(!hasBuff(tgt,'divineBlessing')){
+        tgt.hp = (tgt.hp||0) + 10;
+        addBuff(tgt,'divineBlessing',99);
+      }
+      tgt.curHp = tgt.hp;
+      renderCard(tgt);
+      log('['+a.name+'] 神之賜福！['+tgt.name+'] HP上限+10並完全恢復！');
+      bannerFX(tgt,'神之賜福！','#ffffff',900);
+    }
+  }
+  // ★ 三分投射：特技 250% 傷害，暴擊 +2 能量（籃球隊員）
+  else if(n==='三分投射'){
+    if(t){
+      const _crit = Math.random() < 0.3;
+      const _dmg = Math.floor(spv(a) * 2.5) * (_crit ? 2 : 1);
+      doDmg(t, _dmg, {actor:a, isSkill:true});
+      if(_crit){
+        G.energy[a.side] = Math.min(10, G.energy[a.side] + 2);
+        log('['+a.name+'] 三分投射暴擊！+2能量！');
+      }
+    }
+  }
+  // ★ 召喚蝙蝠群 / 靈魂收割：處決 HP 低於 10 的對手
+  else if(n==='召喚蝙蝠群' || n==='靈魂收割'){
+    enemies.filter(h=>h.curHp>0 && h.curHp<=10).forEach(h=>{
+      doDmg(h, h.curHp, {actor:a, isSkill:true, piercing:true});
+      log('['+a.name+'] '+n+' 處決 ['+h.name+']！');
+    });
+  }
+  // ★ 朱雀召喚 / 青龍召喚：全體傷害 + 治療減半 2 回合
+  else if(n==='朱雀召喚' || n==='青龍召喚'){
+    enemies.forEach(h=>{
+      if(h.curHp>0){
+        doDmg(h, Math.floor(spv(a)*1.2), {actor:a, isSkill:true, isAoe:true});
+        if(h.curHp>0) addStatus(h, 'healcut', 2);
+      }
+    });
+  }
+  // ★ 命運塔羅牌 / 兵貫神速之計 / 識破全局：消除弱敵有利狀態
+  else if(n==='兵貫神速之計' || n==='識破全局'){
+    enemies.forEach(h=>{
+      if(h.curHp>0 && h.sp < spv(a)){
+        clearGoodBuffs(h);
+        renderCard(h);
+      }
+    });
+    log('['+a.name+'] '+n+'！消除較弱對手的有利狀態！');
+  }
+  // ★ 物品查封 / 警示鳴槍：封鎖全體對手物品卡
+  else if(n==='物品查封' || n==='警示鳴槍'){
+    enemies.forEach(h=>{
+      if(h.curHp>0) addStatus(h, 'itemSeal', 2);
+    });
+    log('['+a.name+'] '+n+'！全體對手物品被封鎖！');
+  }
+  // ★ 動物召喚 / 動物守護 / 舔舔治療：治療 HP 最低的友方
+  else if(n==='動物召喚' || n==='動物守護'){
+    // 呼叫動物：依特技攻擊HP最低敵方1~2次
+    if(enemies.length){
+      const _low = enemies.sort((x,y)=>x.curHp-y.curHp)[0];
+      const _hits = 1 + Math.floor(Math.random()*2);
+      for(let i=0; i<_hits && _low.curHp>0; i++){
+        doDmg(_low, spv(a), {actor:a, isSkill:true});
+      }
+    }
+    // 治療最低 HP 友方
+    if(al) doHeal(al, Math.floor(spv(a)*0.5), {actor:a, isHeal:true});
+  }
+  else if(n==='舔舔治療'){
+    if(al) doHeal(al, spv(a), {actor:a, isHeal:true});
+  }
+  // ★ 獻祭的餘暉（被動觸發，不主動施放；防止誤用走入 fallback）
+  else if(n==='獻祭的餘暉'){
+    // 被動技能：倒下時才觸發，AI 主動使用時什麼也不做
+    log('['+a.name+'] 獻祭的餘暉（被動待機）');
+  }
+  // ★ 崛起鬥志 / 迴避反擊：被動反擊類，標記啟動
+  else if(n==='崛起鬥志' || n==='迴避反擊'){
+    addBuff(a, 'counter', 2);
+    addBuff(a, 'evasion', 2);
+    log('['+a.name+'] '+n+'！進入閃避反擊狀態！');
+  }
+  // ★ 起跑衝刺：開場 5 回合速度+50% + 緩速免疫（被動類）
+  else if(n==='起跑衝刺'){
+    addBuff(a, 'spdup', 5);
+    addBuff(a, 'ctrlImmune', 5);
+    log('['+a.name+'] 起跑衝刺！速度提升並免疫緩速！');
+  }
+  // ★ 鑑往知來：被動，友方受傷反擊（此處 AI 主動用時給個狀態）
+  else if(n==='鑑往知來'){
+    addBuff(a, 'counter', 3);
+    log('['+a.name+'] 鑑往知來！啟動回憶反擊！');
+  }
+  // ★ 模仿：被動技能，不主動使用
+  else if(n==='模仿'){
+    log('['+a.name+'] 模仿（被動待機）');
+  }
+  // ★ 修改代碼：被動技能
+  else if(n==='修改代碼'){
+    log('['+a.name+'] 修改代碼（被動待機）');
+  }
+  // ★ 愛護校犬：1回合內友方受傷轉移給自己
+  else if(n==='愛護校犬'){
+    addBuff(a, 'nioGuard', 1);
+    a._nioGuardActive = true;
+    log('['+a.name+'] 愛護校犬！代替隊友承受傷害！');
+  }
+  // ★ 盜取 / 俯衝搶奪：攻擊 + 搶奪物品
+  else if(n==='盜取'){
+    // 竊取特技：對最高特技敵人造成特技傷害，讓其特技-3（1回合）
+    if(enemies.length){
+      const _tgt = enemies.sort((x,y)=>y.sp-x.sp)[0];
+      doDmg(_tgt, spv(a), {actor:a, isSkill:true});
+      if(_tgt.curHp>0){
+        const _orig = _tgt.sp;
+        _tgt.sp = Math.max(0, _tgt.sp - 3);
+        _tgt.status.push({type:'_spDebuff', dur:1, _origSp:_orig});
+        renderCard(_tgt);
+      }
+    }
+  }
+  else if(n==='俯衝搶奪'){
+    if(t){
+      const _dmg = a.atk + Math.floor(a.spd * 0.2);
+      doDmg(t, _dmg, {actor:a, isSkill:true});
+    }
+  }
+  // ★ 定時炸彈：目標下回合 -30HP
+  else if(n==='定時炸彈'){
+    if(t){
+      t.status.push({type:'_timebomb', dur:1, _dmg:30, _source:a});
+      bannerFX(t, '💣 定時炸彈！', '#ff6644', 900);
+      renderCard(t);
+    }
+  }
+  // ★ 花粉迷眼：1名對手失明
+  else if(n==='花粉迷眼'){
+    if(t) addStatus(t, 'blind', 1);
+    log('['+a.name+'] 花粉迷眼！['+(t?t.name:'')+'] 失明！');
+  }
+  // ★ 花瓣飛刀：依特技對全體對手傷害
+  else if(n==='花瓣飛刀'){
+    enemies.forEach(h=>{
+      if(h.curHp>0) doDmg(h, spv(a), {actor:a, isSkill:true, isAoe:true});
+    });
+  }
+  // ★ 黏液噴濺：全體對手緩速
+  else if(n==='黏液噴濺'){
+    enemies.forEach(h=>{
+      if(h.curHp>0) addStatus(h, 'spddown', 1);
+    });
+    log('['+a.name+'] 黏液噴濺！全體對手緩速！');
+  }
+  // ★ 渾身一擊：攻擊200%+爆擊
+  else if(n==='渾身一擊'){
+    if(t){
+      const _crit = Math.random() < 0.7;
+      const _dmg = a.atk * 2 * (_crit ? 2 : 1);
+      doDmg(t, _dmg, {actor:a, isSkill:true});
+      if(_crit) log('['+a.name+'] 渾身一擊暴擊！');
+    }
+  }
+  // ★ 土坑陷阱：使對手下回合最後行動（緩速）
+  else if(n==='土坑陷阱'){
+    if(t) addStatus(t, 'spddown', 2);
+  }
+  // ★ 鎖起來：自己無敵1回合
+  else if(n==='鎖起來'){
+    addBuff(a, 'immune', 1);
+    log('['+a.name+'] 鎖起來！進入無敵狀態！');
+    bannerFX(a, '🔒 無敵！', '#ffcc44', 900);
+  }
+  // ★ 箱底抹油：被動逃跑（AI 主動使用時不處理，由被動系統觸發）
+  else if(n==='箱底抹油'){
+    log('['+a.name+'] 箱底抹油（被動待機）');
+  }
+  // ★ 弄壞你的玩具：使1名對手HP剩10%
+  else if(n==='弄壞你的玩具'){
+    if(t && t.side !== a.side){
+      const _target10 = Math.max(1, Math.floor(t.hp * 0.10));
+      const _dmg = Math.max(0, t.curHp - _target10);
+      if(_dmg > 0){
+        doDmg(t, _dmg, {actor:a, isSkill:true, piercing:true, ignoreBuffs:true});
+      }
+      log('['+a.name+'] 弄壞你的玩具！['+t.name+'] HP 剩 10%！');
+    }
+  }
+  // ★ 讓你調皮：使1名對手強制普攻自己隊友（使用 charm 狀態）
+  else if(n==='讓你調皮'){
+    if(t && t.side !== a.side && !hasBuff(t,'ctrlImmune') && !hasBuff(t,'statusImmune')){
+      t.status = t.status.filter(s=>s.type!=='charm');
+      t.status.push({type:'charm', dur:2});
+      log('['+a.name+'] 讓你調皮！['+t.name+'] 下回合強制攻擊自己隊友！');
+      bannerFX(t, '😈 惡作劇！', '#cc44ff', 900);
+      renderCard(t);
+    }
+  }
+  // ★ 最後兜底：技能名未匹配任何分支。若是治療技能就治療 al，否則才對敵人造成傷害。
+  //   原本這裡的 fallback 一律 doDmg(t, spv(a))，當 t 是友方（治療 pref）時會打到自己人。
+  else {
+    const _isHealSk = (typeof HEAL_SKILLS !== 'undefined') && HEAL_SKILLS.includes(n);
+    if(_isHealSk){
+      if(al){ doHeal(al, spv(a), {actor:a, isHeal:true}); log('['+a.name+'] '+n+'（泛用治療處理）→ ['+al.name+']'); }
+    } else {
+      // 只在 t 確實是敵方時才造成傷害，避免 pref 是友方時誤擊
+      if(t && t.side !== a.side){ doDmg(t, spv(a), {actor:a}); }
+    }
+  }
 
   a.acted=true; updateUI(); _pSetTimeout(startTurn,500);
 }
@@ -32836,6 +33062,22 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1510', brief:[
+    '全面修正 AI 技能邏輯：補齊 32 個未實作技能、避免更多誤擊友方',
+  ], items:[
+    '系統性檢查 aiUseSkill：發現 32 個技能在 AI 路徑上沒有實作（包括大部分怪物技能與數個新英雄技能）',
+    '新增實作：三分投射、召喚蝙蝠群、靈魂收割、朱雀/青龍召喚、兵貫神速之計、識破全局、物品查封、警示鳴槍、動物召喚、動物守護、舔舔治療、獻祭的餘暉、崛起鬥志、迴避反擊、起跑衝刺、鑑往知來、模仿、修改代碼、愛護校犬、盜取、俯衝搶奪、定時炸彈、花粉迷眼、花瓣飛刀、黏液噴濺、渾身一擊、土坑陷阱、鎖起來、箱底抹油、弄壞你的玩具、讓你調皮',
+    'estSkillDmg 補充：把所有怪物技能與被動技能加入預估清單，確保 AI 選技能時有正確的優先度',
+  ] },
+  { ver:'v1.0.20260419.1410', brief:[
+    '修正鬥技場 AI 攻擊到自己隊友、治療技能被當傷害技能的嚴重 Bug',
+  ], items:[
+    '根本原因：aiUseSkill 的 fallback 分支（未實作的技能走這裡）一律會 doDmg(t,...)，而 t 在治療情境下是友方目標，導致 AI 傷害到自己隊友',
+    '特別案例：木靈使的「神之賜福」完全沒在 aiUseSkill 實作，每次 AI 木靈使用它都會打到隊友',
+    '修正 1：新增「神之賜福」明確處理分支，正確執行 HP 上限 +10 並完全治癒友方',
+    '修正 2：aiUseSkill 裡的 t（攻擊目標）改為強制只選敵方，即使 caller 傳入友方 pref 也不會誤擊自己人',
+    '修正 3：fallback 分支加上保護 — 若技能名屬於 HEAL_SKILLS 則治療 al，否則才攻擊，且僅當 t 確實為敵方才 doDmg',
+  ] },
   { ver:'v1.0.20260419.1320', brief:[
     '商店新增 4 張肖像：田徑隊員(跳遠／跳高)、小劇團員(王子／公主)',
   ], items:[
@@ -33362,7 +33604,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1320';
+  const CURRENT_VERSION = 'v1.0.20260419.1510';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33379,7 +33621,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1320';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1510';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
