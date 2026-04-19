@@ -326,6 +326,59 @@
     }
   };
 
+  // ★ v1.0.20260419.1930 ── 維修模式系統 ──
+  //   用途：發現重大 bug 時可遠端停用非管理員登入,避免更多玩家資料受損
+  //   儲存位置:stats/global 的 maintenance 欄位
+  //   結構: { enabled: bool, message: string, startedAt: number, startedBy: string }
+
+  // 讀取目前維修狀態
+  window._fbGetMaintenance = async function() {
+    try {
+      const snap = await getDoc(doc(_fbDb, 'stats', 'global'));
+      if(!snap.exists()) return { enabled: false };
+      const m = snap.data().maintenance;
+      return (m && typeof m === 'object') ? m : { enabled: false };
+    } catch(e) {
+      console.warn('[維修模式] 讀取失敗(網路問題 or 權限),視為關閉', e);
+      return { enabled: false };  // 讀取失敗時保守視為關閉,避免全體鎖死
+    }
+  };
+
+  // 設定維修狀態(管理員用)
+  window._fbSetMaintenance = async function(enabled, message, adminEmail) {
+    try {
+      const payload = {
+        enabled: !!enabled,
+        message: message || '',
+        startedAt: Date.now(),
+        startedBy: adminEmail || 'unknown'
+      };
+      await setDoc(doc(_fbDb, 'stats', 'global'), { maintenance: payload }, { merge: true });
+      console.info('✅ [維修模式] 已設定為', payload);
+      return payload;
+    } catch(e) {
+      console.error('❌ [維修模式] 設定失敗', e);
+      throw e;
+    }
+  };
+
+  // 即時監聽維修狀態變更(若管理員中途開啟,要立刻踢出非管理員玩家)
+  window._fbWatchMaintenance = function(callback) {
+    try {
+      return onSnapshot(doc(_fbDb, 'stats', 'global'), (snap) => {
+        if(!snap.exists()) { callback({ enabled: false }); return; }
+        const m = snap.data().maintenance;
+        callback((m && typeof m === 'object') ? m : { enabled: false });
+      }, (err) => {
+        console.warn('[維修模式] 監聽錯誤', err);
+        callback({ enabled: false });
+      });
+    } catch(e) {
+      console.error('[維修模式] 啟動監聽失敗', e);
+      return () => {};
+    }
+  };
+
   // ★ 管理員工具：手動設定 totalPlayers 絕對值（當 _fbBackfillTotalPlayers 因權限失敗時的替代方案）
   //   此函式直接寫 stats/global.totalPlayers，不需要讀取 /players 集合，可避開掃描權限問題
   window._fbSetTotalPlayers = async function(newTotal) {
@@ -374,6 +427,27 @@
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
     if(user) {
+      // ★★★ v1.0.20260419.1930 維修模式檢查 ★★★
+      //   若維修模式開啟且此玩家非管理員 → 強制登出並顯示維修畫面
+      const _DEV_EMAIL = 'clarebox123@gmail.com';
+      const _isDev = (user.email || '').toLowerCase() === _DEV_EMAIL;
+      if(!_isDev) {
+        try {
+          const m = await window._fbGetMaintenance();
+          if(m && m.enabled) {
+            console.warn('[維修模式] 已啟動,非管理員被拒絕登入');
+            // 立刻登出
+            try { await _fbAuth.signOut(); } catch(_e) {}
+            window._fbUser = null;
+            window._gUserId = null;
+            // 顯示維修畫面
+            try { window._showMaintenanceOverlay && window._showMaintenanceOverlay(m); }
+            catch(_e) { console.error(_e); }
+            return;  // 停止後續登入流程
+          }
+        } catch(_e) { console.warn('[維修模式] 檢查失敗,放行以避免全體鎖死', _e); }
+      }
+
       window._fbUser = user;
       window._gUserId = user.uid; // ★ 確保 _gUserId 同步
       // ★ 更新玩家統計（新玩家計數 + 今日上線計數）
@@ -18870,6 +18944,33 @@ async function _showAdminStatsPanel(){
         僅限管理員使用。以下操作會直接覆寫 Firestore 中的統計數值，請謹慎使用。
       </div>
 
+      <div id="_admin-maint-section" style="background:rgba(60,20,20,0.4);border:2px solid rgba(255,100,100,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#ff8888;margin-bottom:8px;">🔧 0. 維修模式（非管理員登入封鎖）</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          開啟後，<b>非管理員帳號無法登入</b>遊戲，正在遊戲中的其他玩家也會被自動登出，避免修補 bug 期間繼續產生資料損失。管理員（<code style="color:#88ccff;">clarebox123@gmail.com</code>）不受限制。
+        </div>
+        <div id="_admin-maint-status" style="font-size:14px;color:#ffcc66;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.4);border-radius:6px;">
+          載入中...
+        </div>
+        <textarea id="_admin-maint-msg" placeholder="維修公告訊息（會顯示給被擋下的玩家）"
+          style="width:100%;min-height:60px;padding:10px;font-size:14px;background:rgba(20,20,30,0.9);
+          border:1.5px solid rgba(255,100,100,0.4);color:#fff;border-radius:8px;font-family:inherit;
+          box-sizing:border-box;margin-bottom:10px;resize:vertical;">系統維修中，發現重大存檔 bug 正在修復，請稍候 10~15 分鐘後再重新整理嘗試。</textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="_admin-maint-on" style="flex:1;min-width:140px;padding:11px 20px;font-size:15px;font-weight:800;
+            background:rgba(255,80,80,0.25);border:2px solid #ff6666;color:#ffaaaa;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            🔒 開啟維修模式
+          </button>
+          <button id="_admin-maint-off" style="flex:1;min-width:140px;padding:11px 20px;font-size:15px;font-weight:800;
+            background:rgba(80,255,80,0.2);border:2px solid #66dd66;color:#aaffaa;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            🔓 解除維修模式
+          </button>
+        </div>
+        <div id="_admin-maint-result" style="margin-top:10px;font-size:14px;"></div>
+      </div>
+
       <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,200,50,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ffd966;margin-bottom:8px;">📊 1. 回填總玩家數</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
@@ -18933,6 +19034,81 @@ async function _showAdminStatsPanel(){
 
   document.getElementById('_admin-close').onclick = () => pop.remove();
   pop.onclick = (ev) => { if(ev.target === pop) pop.remove(); };
+
+  // ★★★ 維修模式(v1.0.20260419.1930) ★★★
+  // 讀取目前狀態並更新顯示
+  const _updateMaintStatus = async () => {
+    const statusEl = document.getElementById('_admin-maint-status');
+    if(!statusEl) return;
+    if(!window._fbGetMaintenance){ statusEl.textContent = '❌ Firebase 尚未就緒'; return; }
+    try {
+      const m = await window._fbGetMaintenance();
+      if(m && m.enabled) {
+        const when = m.startedAt ? new Date(m.startedAt).toLocaleString('zh-TW') : '未知';
+        statusEl.innerHTML = '<span style="color:#ff8888;">🔴 目前：<b>維修中</b></span>'
+          + '<div style="font-size:12px;color:#aaa;margin-top:4px;">開始於 ' + when + ' / 由 ' + (m.startedBy||'?') + '</div>'
+          + (m.message ? '<div style="font-size:12px;color:#ffcc88;margin-top:4px;border-left:2px solid #ffaa44;padding-left:6px;">訊息：' + m.message + '</div>' : '');
+        // 填入訊息輸入框
+        const ta = document.getElementById('_admin-maint-msg');
+        if(ta && m.message) ta.value = m.message;
+      } else {
+        statusEl.innerHTML = '<span style="color:#88ff88;">🟢 目前：<b>正常運作</b></span>';
+      }
+    } catch(e) {
+      statusEl.textContent = '❌ 讀取狀態失敗：' + (e.message || e);
+    }
+  };
+  _updateMaintStatus();
+
+  // 開啟維修
+  document.getElementById('_admin-maint-on').onclick = async () => {
+    const btn = document.getElementById('_admin-maint-on');
+    const res = document.getElementById('_admin-maint-result');
+    const msg = (document.getElementById('_admin-maint-msg').value || '').trim();
+    if(!msg) {
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 請先輸入維修公告訊息';
+      return;
+    }
+    if(!confirm('確定開啟維修模式嗎？\n\n所有非管理員玩家都會：\n• 無法再登入遊戲\n• 目前正在遊戲中的也會被強制登出\n• 看到你輸入的維修訊息\n\n管理員（你）不受影響。')) return;
+    btn.disabled = true;
+    btn.textContent = '開啟中...';
+    try {
+      const email = (window._fbUser && window._fbUser.email) || 'unknown';
+      await window._fbSetMaintenance(true, msg, email);
+      res.style.color = '#ff8888';
+      res.textContent = '🔒 維修模式已開啟,非管理員已被阻擋登入';
+      _updateMaintStatus();
+    } catch(e) {
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 失敗：' + (e && e.code || e.message || '未知錯誤');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔒 開啟維修模式';
+    }
+  };
+
+  // 解除維修
+  document.getElementById('_admin-maint-off').onclick = async () => {
+    const btn = document.getElementById('_admin-maint-off');
+    const res = document.getElementById('_admin-maint-result');
+    if(!confirm('確定解除維修模式嗎？玩家就可以正常登入了。')) return;
+    btn.disabled = true;
+    btn.textContent = '解除中...';
+    try {
+      const email = (window._fbUser && window._fbUser.email) || 'unknown';
+      await window._fbSetMaintenance(false, '', email);
+      res.style.color = '#88ff88';
+      res.textContent = '🔓 維修模式已解除,玩家可正常登入';
+      _updateMaintStatus();
+    } catch(e) {
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 失敗：' + (e && e.code || e.message || '未知錯誤');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔓 解除維修模式';
+    }
+  };
 
   // 回填總玩家數
   document.getElementById('_admin-backfill-players').onclick = async () => {
@@ -32930,6 +33106,77 @@ function _sessionForceLogout(){
   if(window._fbSignOut) window._fbSignOut();
 }
 
+// ══════════════════════════════════════════════════════════
+// ★ v1.0.20260419.1930 維修模式 UI ★
+// ══════════════════════════════════════════════════════════
+
+window._showMaintenanceOverlay = function(maintInfo){
+  const msg = (maintInfo && maintInfo.message) || '系統維修中，請稍後再試';
+  const startedAt = maintInfo && maintInfo.startedAt ? new Date(maintInfo.startedAt).toLocaleString('zh-TW') : '';
+
+  // 移除舊的
+  const old = document.getElementById('_maint-overlay');
+  if(old) old.remove();
+
+  const pop = document.createElement('div');
+  pop.id = '_maint-overlay';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.95);'
+    + 'display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  pop.innerHTML = '<div style="background:linear-gradient(135deg,#1a1208,#0a0604);border:3px solid #ffaa44;'
+    + 'border-radius:24px;padding:48px 56px;max-width:min(92vw,620px);text-align:center;'
+    + 'box-shadow:0 0 60px rgba(255,170,68,0.35);">'
+    + '<div style="font-size:72px;margin-bottom:16px;">🔧</div>'
+    + '<div style="font-size:32px;font-weight:900;color:#ffaa44;margin-bottom:16px;letter-spacing:2px;">系統維修中</div>'
+    + '<div style="font-size:18px;color:#ddd;margin-bottom:24px;line-height:1.8;padding:18px;background:rgba(255,170,68,0.08);border:1px solid rgba(255,170,68,0.3);border-radius:12px;white-space:pre-wrap;word-break:break-all;">'
+    + msg.replace(/[<>&]/g, (c)=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))
+    + '</div>'
+    + (startedAt ? '<div style="font-size:13px;color:#888;margin-bottom:18px;">維修開始時間：' + startedAt + '</div>' : '')
+    + '<div style="font-size:15px;color:#aaa;margin-bottom:32px;line-height:1.6;">為了保護您的遊戲資料,登入已暫時停用。<br>請稍候幾分鐘後重試。</div>'
+    + '<button onclick="location.reload()" style="padding:14px 40px;font-size:20px;font-weight:900;'
+    + 'background:linear-gradient(135deg,rgba(255,170,68,0.3),rgba(200,130,40,0.3));'
+    + 'border:2px solid #ffaa44;color:#ffd088;border-radius:14px;cursor:pointer;">🔄 重新載入頁面</button>'
+    + '</div>';
+  document.body.appendChild(pop);
+
+  // 播放背景音樂也暫停以避免干擾
+  try { document.querySelectorAll('audio').forEach(a => { try{ a.pause(); }catch(e){} }); } catch(e){}
+};
+
+window._hideMaintenanceOverlay = function(){
+  const old = document.getElementById('_maint-overlay');
+  if(old) old.remove();
+};
+
+// ★ 即時監聽維修狀態:若管理員中途開啟維修,立刻把正在玩的非管理員玩家踢出
+window._startMaintenanceWatcher = function(){
+  if(window._maintUnsubscribe) return;  // 已啟動
+  if(!window._fbWatchMaintenance) return;
+  window._maintUnsubscribe = window._fbWatchMaintenance((m) => {
+    const isDev = window._fbUser && (window._fbUser.email||'').toLowerCase() === 'clarebox123@gmail.com';
+    if(m && m.enabled && !isDev) {
+      console.warn('[維修模式] 偵測到維修開啟,強制登出非管理員');
+      // 先儲存進度
+      try { if(window._progressLoaded) gameCloudSave(); } catch(e){}
+      // 登出
+      try { if(window._fbSignOut) window._fbSignOut(); } catch(e){}
+      // 顯示畫面
+      try { window._showMaintenanceOverlay(m); } catch(e){}
+    } else if(m && !m.enabled) {
+      // 若維修解除且畫面開著(管理員自己開的),隱藏畫面
+      if(isDev) window._hideMaintenanceOverlay();
+    }
+  });
+};
+
+// 頁面載入完成後自動啟動監聽
+if(document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(()=>{ try{ window._startMaintenanceWatcher(); }catch(e){} }, 2500);
+} else {
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(()=>{ try{ window._startMaintenanceWatcher(); }catch(e){} }, 2500);
+  });
+}
+
 
 // ══ 帳號切換安全保護（Google 重新驗證）══
 function _closeSwitchConfirm(){ var e=document.getElementById('_switch-confirm'); if(e)e.remove(); }
@@ -33289,6 +33536,7 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260419.1930', brief:[
     '🚨 緊急修補：修復登入時雲端讀取失敗會導致帳號被清空的重大 bug',
     '新增三層存檔保護：載入失敗時停用儲存、空白狀態不覆蓋既有進度、雲端失敗自動 fallback 到本地',
+    '🔧 新增管理員維修模式：可一鍵封鎖非管理員登入(Shift+F10 面板頂部)',
   ], items:[
     '【重大安全修補】原本 window.gameCloudLoad 在 _fbLoad 返回 null 時(不論是文件不存在還是網路/權限錯誤),都不會套用任何資料,遊戲變數會保持預設值(Lv1、0幣、空背包)。緊接著玩家任何動作觸發 gameCloudSave() 就會用空白狀態覆蓋雲端 → 帳號資料整個消失',
     '影響範圍:任何一位登入玩家,只要 Firestore 讀取因網路抖動、Firebase 故障、rate limit 等 transient error 失敗,就可能被清空資料,不限管理員',
@@ -33297,6 +33545,11 @@ const GAME_CHANGELOG = [
     '【保護層 3】gameCloudSave 檢查 window._progressLoaded,若為 false 直接拒絕儲存',
     '【保護層 4】gameCloudSave 比對當前資料與本地備份,若當前為空白但本地有進度,拒絕儲存並彈窗警告',
     '內部 gameCloudLoad()(訪客+登入共用版)也同步套用上述修法',
+    '【維修模式】新增 stats/global.maintenance 欄位控制,管理員可在 Shift+F10 面板開關',
+    '【維修模式】開啟後:非管理員 onAuthStateChanged 時被攔截 → 立刻 signOut + 顯示維修畫面',
+    '【維修模式】開啟後:正在遊戲中的非管理員玩家會透過 onSnapshot 即時偵測到狀態變更,被強制登出並顯示畫面',
+    '【維修模式】管理員 clarebox123@gmail.com 不受限制,可繼續登入',
+    '【維修模式】加入自訂公告訊息,會顯示給被擋下的玩家看',
   ] },
   { ver:'v1.0.20260419.1900', brief:[
     '管理員面板新增「手動設定總玩家數」功能（繞過 permission-denied）',
