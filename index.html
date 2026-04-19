@@ -1051,9 +1051,9 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #overlay .title-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:-180px}
 /* 中文主標題 - 童趣彩虹圓潤風格 */
 .title-zh{
-  font-size:169px;font-weight:800;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-  letter-spacing:17px;line-height:1;
-  margin-top:-400px;
+  font-size:188px;font-weight:800;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  letter-spacing:19px;line-height:1;
+  margin-top:-320px;
   background:linear-gradient(135deg,
     #ff6b6b 0%,
     #ff9f43 14%,
@@ -32668,6 +32668,13 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.0958', brief:[
+    '首頁標題位置下移，徹底不再被人數橫條遮擋',
+  ], items:[
+    '找到標題被遮擋的真正原因：標題 margin-top:-400px 把整個標題往上推到螢幕頂端，覆蓋範圍剛好和人數橫條重疊',
+    '將 margin-top 從 -400px 改為 -320px（標題整體下移 80px），讓標題完整位於人數橫條下方',
+    '字級從 169px 還原為 188px（上次誤判縮小字級能解決，其實是定位問題）',
+  ] },
   { ver:'v1.0.20260419.0945', brief:[
     '首頁標題再縮小 10%，徹底解決與人數橫條重疊問題',
   ], items:[
@@ -33138,7 +33145,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.0945';
+  const CURRENT_VERSION = 'v1.0.20260419.0958';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33155,7 +33162,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.0945';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.0958';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
