@@ -5963,7 +5963,7 @@ const HERO_DB = {
   s1:{n:'鎖起來',c:2,d:'使自己無敵1回合',fd:'用神秘的鎖頭將自己鎖死，進入完全無敵狀態1回合，期間不受任何傷害。'},
   s2:{n:'箱底抹油',c:1,d:'100%逃跑，每回合30%機率觸發',fd:'(被動)每回合有30%機率自動逃跑，成功逃脫後從戰場移除，不給予任何獎勵。',p:true}
 },
-'小惡魔':{hp:50,atk:25,sp:25,spd:25,exp:0,_rewardType:'exp',_rewardMin:1000,_rewardMax:2000,
+'小惡魔':{hp:250,atk:25,sp:25,spd:25,exp:0,_rewardType:'exp',_rewardMin:1000,_rewardMax:2000,
   s1:{n:'弄壞你的玩具',c:3,d:'使1名對手HP剩10%，無視有利狀態',fd:'用魔爪弄壞對手最珍視的東西，使1名目標HP強制降至最大HP的10%，無視所有有利狀態。'},
   s2:{n:'讓你調皮',c:2,d:'使1名對手強制普攻自己隊友',fd:'施加惡作劇詛咒，使1名對手在下回合強制普通攻擊自己的一名隊友，無視目標選擇。'}
 },
@@ -8237,6 +8237,8 @@ const HERO_TRAIT = {
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
   '綠竹筍小妖': { name:'竹甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
   '茶葉精靈':   { name:'茶癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
+  '小惡魔':     { name:'還手', icon:'😈', desc:'受到傷害時立即以特技反擊攻擊者',fd:'受到任何傷害時，立即對攻擊者造成等同於特技值的反擊傷害。反擊不會再觸發對方的還手類天賦，避免無限循環。' },
+  '寶箱怪':     { name:'儲存', icon:'📦', desc:'回合開始時恢復自己10%HP',fd:'每回合開始時，寶箱怪會自動恢復自己最大 HP 的 10%。' },
 };
 
 const MONSTER_LORE = {
@@ -11753,6 +11755,23 @@ function doDmg(target, rawDmg, opts={}){
     log(`🌸 [杏花妖] 天賦：媚惑！使 [${_atkr.name}] 陷入魅惑1回合！`);
     bannerFX(_atkr, '💕 魅惑！', '#ff88cc', 900);
     renderCard(_atkr);
+  }
+  // ★ 小惡魔天賦：受到傷害時立即以特技反擊攻擊者（不會無限循環）
+  if(_adventureMode && target.name==='小惡魔' && !hasStatus(target,'confused') && rawDmg>0
+     && opts && opts.actor && opts.actor.curHp>0 && opts.actor!==target
+     && !opts.isRebound && target.curHp>0){
+    const _atkr = opts.actor;
+    const _counterDmg = target.sp || 25;
+    log(`😈 [小惡魔] 天賦：還手！對 [${_atkr.name}] 造成 ${_counterDmg} 傷害反擊！`);
+    bannerFX(target, '😈 還手！', '#cc44ff', 900);
+    // 使用 setTimeout 讓反擊在本次傷害動畫結束後發生，並標記 isRebound 避免對方還手類天賦觸發
+    setTimeout(()=>{
+      try{
+        if(target.curHp>0 && _atkr.curHp>0){
+          doDmg(_atkr, _counterDmg, {actor:target, isRebound:true, ignoreEvasion:true, noGuard:true});
+        }
+      }catch(e){}
+    }, 350);
   }
   // 土屬性：受傷-2
   { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
@@ -15793,6 +15812,20 @@ function startTurn(){
         }
       }
     });
+    // ★ 寶箱怪天賦：回合開始時恢復自己最大 HP 10%
+    ['p1','p2'].forEach(side=>{
+      G[side].forEach(h=>{
+        if(h.curHp>0 && h.name==='寶箱怪' && !hasStatus(h,'confused')){
+          const healAmt = Math.max(1, Math.floor(h.hp * 0.10));
+          if(h.curHp < h.hp){
+            h.curHp = Math.min(h.hp, h.curHp + healAmt);
+            showPopup(h,'+'+healAmt,'heal');
+            log(`📦 [寶箱怪] 天賦：儲存！恢復 ${healAmt}HP！`);
+            renderCard(h);
+          }
+        }
+      });
+    });
     // 綠竹筍小妖天賦：受到傷害減少40%（在 dealDmg 中處理，此處更新卡片顯示）
     markAdventureBossCards();
   }
@@ -18254,11 +18287,16 @@ let _menuPlayMode=false;
 function bgmStop(){
   // ★ 清掉任何等待中的 retry listener，避免它在稍後觸發把舊 BGM 重新播起來
   _bgmClearPendingRetry();
-  ['bgm-win','bgm-lose','bgm-shop',...BATTLE_BGM_LIST,...MENU_BGM_LIST,
-   'bgm-adv-march','bgm-adv-scene','bgm-boss-01','bgm-boss-02','adventure-bgm',
-   'sfx-quiz-correct','sfx-quiz-wrong'].forEach(id=>{
+  // ★ 改用 querySelectorAll 涵蓋所有 audio[id^="bgm"]，避免硬編清單漏掉新 BGM（如 bgm-devil、bgm-chest、bgm-boss-apricot）
+  document.querySelectorAll('audio[id^="bgm"]').forEach(el=>{
+    el.onended=null;
+    el.pause();
+    try{ el.currentTime=0; }catch(e){}
+  });
+  // 考試音效也一併停（原有行為）
+  ['sfx-quiz-correct','sfx-quiz-wrong'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el){el.onended=null;el.pause();el.currentTime=0;}
+    if(el){el.onended=null;el.pause();try{el.currentTime=0;}catch(e){}}
   });
   _curBgm=null;
   _battlePlayMode=false;
@@ -18740,10 +18778,26 @@ function _detectCurrentBgm(){
   };
   // BOSS 戰進行中
   if(typeof G !== 'undefined' && G && G.p2 && G.p2.length && isVisible('gc')){
+    // ★ 優先檢查當前 BOSS 變體，回傳對應的 BOSS 專屬 BGM
+    //   這樣即使 _curBgm 為 null（從靜音切回）也能正確判斷
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      const _names = G.p2.map(h => h && h.name).filter(Boolean);
+      // 稀有怪戰（優先判斷，避免被 BOSS_NAMES 誤判成 BOSS）
+      if(_names.includes('寶箱怪')) return 'bgm-chest';
+      if(_names.includes('小惡魔')) return 'bgm-devil';
+      // ★ 依 BOSS 變體決定 BOSS BGM（即使 _curBgm 為 null 從靜音切回也能正確判斷）
+      if(window._currentBossVariantInfo && window._currentBossVariantInfo.id === 'apricot'){
+        return 'bgm-boss-apricot';
+      }
+      if(_names.includes('九尾空貓怪')) return 'bgm-boss-01';
+      if(_names.includes('杏花妖')) return 'bgm-boss-apricot';
+      // 一般小怪戰：用場景 BGM
+      return 'bgm-adv-scene';
+    }
+    // 鬥技場等非冒險模式戰鬥：維持 _curBgm 的戰鬥/BOSS BGM
     if(_curBgm && _curBgm.includes('boss')) return _curBgm;
     if(_curBgm && _curBgm.includes('battle')) return _curBgm;
-    if(typeof _adventureMode !== 'undefined' && _adventureMode) return 'bgm-adv-scene';
-    return null; // 戰鬥中維持現狀
+    return null; // 無法判斷則維持現狀
   }
   // 冒險選關頁（若英雄圖鑑或魔物圖鑑疊在上方，不重播 BGM，維持現狀）
   if(isVisible('adventure-overlay')){
@@ -32668,6 +32722,21 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1108', brief:[
+    '小惡魔強化：HP 50→250，新增天賦「還手」；寶箱怪新增天賦「儲存」',
+  ], items:[
+    '小惡魔 HP 從 50 → 250，提升稀有怪挑戰性',
+    '小惡魔新增天賦「還手」：受到傷害時立即以特技值（25）反擊攻擊者。反擊標記 isRebound 不會再觸發對方的還手類天賦，避免無限循環',
+    '寶箱怪新增天賦「儲存」：每回合開始時恢復自己最大 HP 的 10%（99*0.1≈10），但仍保留原有的「箱底抹油」S2 被動 30% 逃跑',
+    '兩隻稀有怪的天賦說明已加入 MONSTER_TRAITS 圖鑑資料庫，可在圖鑑查看',
+  ] },
+  { ver:'v1.0.20260419.1025', brief:[
+    '修正稀有怪BGM殘留、BOSS杏花妖BGM切換錯誤的問題',
+  ], items:[
+    '修正 Bug 1：戰勝小惡魔/寶箱怪後，專屬BGM沒有被停止，導致與下一場景BGM重疊。根本原因：bgmStop 硬編清單沒包含 bgm-devil / bgm-chest / bgm-boss-apricot。改為用 querySelectorAll 掃描所有 bgm-* audio 元素，避免新增 BGM 時忘記加入清單',
+    '修正 Bug 2：靜音後在BOSS杏花妖戰中重新開啟BGM，會播成首頁BGM而不是杏花妖BGM。根本原因：_detectCurrentBgm 只檢查 _curBgm.includes("boss")，靜音後 _curBgm 變 null 時整個判斷失效',
+    '_detectCurrentBgm 重寫：冒險模式下，依 p2 角色名稱與 _currentBossVariantInfo 變體精準判斷 BGM（寶箱怪→bgm-chest、小惡魔→bgm-devil、九尾空貓怪→bgm-boss-01、杏花妖→bgm-boss-apricot）',
+  ] },
   { ver:'v1.0.20260419.0958', brief:[
     '首頁標題位置下移，徹底不再被人數橫條遮擋',
   ], items:[
@@ -33145,7 +33214,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.0958';
+  const CURRENT_VERSION = 'v1.0.20260419.1108';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33162,7 +33231,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.0958';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1108';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
