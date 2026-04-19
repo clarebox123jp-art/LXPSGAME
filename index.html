@@ -5848,6 +5848,26 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
     { id:'time_corridor', name:'時光迴廊', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
   ],
+  '電腦繪圖師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'graphic_boy',  name:'數位逐夢', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'graphic_girl', name:'彩筆織光', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+  ],
+  '直笛團員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png' },
+    { id:'recorder_boy',  name:'竹音清徹', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'recorder_girl', name:'晨笛迴旋', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+  ],
+  '弦樂團員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    { id:'strings_boy',  name:'琴鍵共鳴', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'strings_girl', name:'弓弦流月', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+  ],
+  '籃球隊員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    { id:'basket_boy',  name:'烈火灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'basket_girl', name:'疾風三分', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+  ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
@@ -25545,6 +25565,34 @@ const BACKPACK_ITEM_DEF = {
   'timemage_corridor_portrait': { name:'時空法師肖像：時光迴廊', icon:'⌛',
     desc:'全新繪製的時空法師肖像「時光迴廊」，購買後可在英雄圖鑑的時空法師詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'時空法師', portraitId:'time_corridor', useLabel:'前往切換' },
+  // ── 電腦繪圖師肖像 ──
+  'graphic_boy_portrait': { name:'電腦繪圖師肖像：數位逐夢', icon:'🎨',
+    desc:'全新繪製的電腦繪圖師肖像「數位逐夢」，購買後可在英雄圖鑑的電腦繪圖師詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'電腦繪圖師', portraitId:'graphic_boy', useLabel:'前往切換' },
+  'graphic_girl_portrait': { name:'電腦繪圖師肖像:彩筆織光', icon:'🎨',
+    desc:'全新繪製的電腦繪圖師肖像「彩筆織光」，購買後可在英雄圖鑑的電腦繪圖師詳細頁切換使用(原肖像永遠保留)。',
+    type:'portrait', heroName:'電腦繪圖師', portraitId:'graphic_girl', useLabel:'前往切換' },
+  // ── 直笛團員肖像 ──
+  'recorder_boy_portrait': { name:'直笛團員肖像:竹音清徹', icon:'🎶',
+    desc:'全新繪製的直笛團員肖像「竹音清徹」，購買後可在英雄圖鑑的直笛團員詳細頁切換使用(原肖像永遠保留)。',
+    type:'portrait', heroName:'直笛團員', portraitId:'recorder_boy', useLabel:'前往切換' },
+  'recorder_girl_portrait': { name:'直笛團員肖像:晨笛迴旋', icon:'🎶',
+    desc:'全新繪製的直笛團員肖像「晨笛迴旋」，購買後可在英雄圖鑑的直笛團員詳細頁切換使用(原肖像永遠保留)。',
+    type:'portrait', heroName:'直笛團員', portraitId:'recorder_girl', useLabel:'前往切換' },
+  // ── 弦樂團員肖像 ──
+  'strings_boy_portrait': { name:'弦樂團員肖像:琴鍵共鳴', icon:'🎻',
+    desc:'全新繪製的弦樂團員肖像「琴鍵共鳴」，購買後可在英雄圖鑑的弦樂團員詳細頁切換使用(原肖像永遠保留)。',
+    type:'portrait', heroName:'弦樂團員', portraitId:'strings_boy', useLabel:'前往切換' },
+  'strings_girl_portrait': { name:'弦樂團員肖像:弓弦流月', icon:'🎻',
+    desc:'全新繪製的弦樂團員肖像「弓弦流月」，購買後可在英雄圖鑑的弦樂團員詳細頁切換使用(原肖像永遠保留)。',
+    type:'portrait', heroName:'弦樂團員', portraitId:'strings_girl', useLabel:'前往切換' },
+  // ── 籃球隊員肖像 ──
+  'basket_boy_portrait': { name:'籃球隊員肖像：烈火灌籃', icon:'🏀',
+    desc:'全新繪製的籃球隊員肖像「烈火灌籃」，購買後可在英雄圖鑑的籃球隊員詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'籃球隊員', portraitId:'basket_boy', useLabel:'前往切換' },
+  'basket_girl_portrait': { name:'籃球隊員肖像：疾風三分', icon:'🏀',
+    desc:'全新繪製的籃球隊員肖像「疾風三分」，購買後可在英雄圖鑑的籃球隊員詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'籃球隊員', portraitId:'basket_girl', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -25575,6 +25623,34 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'timemage_corridor_portrait', name:'時空法師肖像：時光迴廊', icon:'⌛',
     desc:'全新繪製的時空法師替代肖像「時光迴廊」。購買後即永久解鎖，可在英雄圖鑑的時空法師詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 電腦繪圖師肖像 ──
+  { id:'graphic_boy_portrait', name:'電腦繪圖師肖像：數位逐夢', icon:'🎨',
+    desc:'全新繪製的電腦繪圖師替代肖像「數位逐夢」。購買後即永久解鎖，可在英雄圖鑑的電腦繪圖師詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'graphic_girl_portrait', name:'電腦繪圖師肖像：彩筆織光', icon:'🎨',
+    desc:'全新繪製的電腦繪圖師替代肖像「彩筆織光」。購買後即永久解鎖，可在英雄圖鑑的電腦繪圖師詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 直笛團員肖像 ──
+  { id:'recorder_boy_portrait', name:'直笛團員肖像：竹音清徹', icon:'🎶',
+    desc:'全新繪製的直笛團員替代肖像「竹音清徹」。購買後即永久解鎖，可在英雄圖鑑的直笛團員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'recorder_girl_portrait', name:'直笛團員肖像：晨笛迴旋', icon:'🎶',
+    desc:'全新繪製的直笛團員替代肖像「晨笛迴旋」。購買後即永久解鎖，可在英雄圖鑑的直笛團員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 弦樂團員肖像 ──
+  { id:'strings_boy_portrait', name:'弦樂團員肖像：琴鍵共鳴', icon:'🎻',
+    desc:'全新繪製的弦樂團員替代肖像「琴鍵共鳴」。購買後即永久解鎖，可在英雄圖鑑的弦樂團員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'strings_girl_portrait', name:'弦樂團員肖像：弓弦流月', icon:'🎻',
+    desc:'全新繪製的弦樂團員替代肖像「弓弦流月」。購買後即永久解鎖，可在英雄圖鑑的弦樂團員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 籃球隊員肖像 ──
+  { id:'basket_boy_portrait', name:'籃球隊員肖像：烈火灌籃', icon:'🏀',
+    desc:'全新繪製的籃球隊員替代肖像「烈火灌籃」。購買後即永久解鎖，可在英雄圖鑑的籃球隊員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'basket_girl_portrait', name:'籃球隊員肖像：疾風三分', icon:'🏀',
+    desc:'全新繪製的籃球隊員替代肖像「疾風三分」。購買後即永久解鎖，可在英雄圖鑑的籃球隊員詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -32722,6 +32798,32 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1245', brief:[
+    '商店新增籃球隊員肖像：烈火灌籃(男)、疾風三分(女)',
+  ], items:[
+    '商店新增 2 張全新繪製的籃球隊員替代肖像，每張 3000 知識幣，限購 1 份：',
+    '・烈火灌籃(男孩)：熱血扣籃氣勢',
+    '・疾風三分(女孩)：敏捷遠距神射',
+    '購買後永久解鎖，可在英雄圖鑑的籃球隊員詳細頁用右下角「✨ 切換肖像」按鈕切換(原始肖像永遠保留)',
+  ] },
+  { ver:'v1.0.20260419.1210', brief:[
+    '商店新增 6 張英雄肖像(搭配專屬四字稱號)',
+  ], items:[
+    '商店新增 6 張全新繪製的替代肖像，每張 3000 知識幣，限購 1 份:',
+    '・電腦繪圖師:數位逐夢(男)、彩筆織光(女)',
+    '・直笛團員:竹音清徹(男)、晨笛迴旋(女)',
+    '・弦樂團員:琴鍵共鳴(男)、弓弦流月(女)',
+    '購買後永久解鎖，可在英雄圖鑑對應英雄的詳細頁用右下角「✨ 切換肖像」按鈕切換(原始肖像永遠保留，可隨時切回)',
+  ] },
+  { ver:'v1.0.20260419.1155', brief:[
+    '商店新增 6 張英雄肖像：電腦繪圖師／直笛團員／弦樂團員 各有男孩與女孩版',
+  ], items:[
+    '商店新增 6 張全新繪製的替代肖像，每張 3000 知識幣，限購 1 份：',
+    '・電腦繪圖師：像素男孩、像素女孩',
+    '・直笛團員：笛韻男孩、笛韻女孩',
+    '・弦樂團員：琴音男孩、琴音女孩',
+    '購買後永久解鎖，可在英雄圖鑑對應英雄的詳細頁用右下角「✨ 切換肖像」按鈕切換（原始肖像永遠保留，可隨時切回）',
+  ] },
   { ver:'v1.0.20260419.1108', brief:[
     '小惡魔強化：HP 50→250，新增天賦「還手」；寶箱怪新增天賦「儲存」',
   ], items:[
@@ -33214,7 +33316,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1108';
+  const CURRENT_VERSION = 'v1.0.20260419.1245';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33231,7 +33333,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1108';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1245';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
