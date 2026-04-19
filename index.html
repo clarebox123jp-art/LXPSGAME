@@ -4606,9 +4606,9 @@ function playSfx(id, vol){
     if(el._fadeTimer){ clearTimeout(el._fadeTimer); el._fadeTimer=null; }
     if(el._fadeIv){ clearInterval(el._fadeIv); el._fadeIv=null; }
     el.currentTime=0;
-    // 音效降低30%，暫停時再降50%
+    // 音效總音量再降30%（0.7→0.49），暫停時再降50%
     const _pauseMod = _gamePaused ? 0.5 : 1.0;
-    const v=(vol||0.7)*0.7*_pauseMod;
+    const v=(vol||0.7)*0.49*_pauseMod;
     el.volume=v;
     el.play().catch(()=>{});
     el._fadeTimer=setTimeout(()=>{
@@ -9075,7 +9075,7 @@ function playBattleStartSfx(){
   var el=document.getElementById('sfx-battle-start');
   if(!el||_sfxMuted) return;
   el.currentTime=0;
-  el.volume=0.85;
+  el.volume=0.595;
   el.play().catch(function(){});
   // Fade out after 2 seconds over 0.6s
   setTimeout(function(){
@@ -18472,7 +18472,7 @@ function log(m){
 }
 
 // ====== BGM ENGINE ======
-const BGM_VOLUME = 0.585;
+const BGM_VOLUME = 0.4095;
 let _curBgm = null;
 let _bgmMuted = false;
 let _advBestScore = 0; // ★ 玩家個人最高分（SABCD評分基準）
@@ -24139,7 +24139,7 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     _advStats.totalQuizScore += Math.round(_baseScore * _mult);
     try { beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); } catch(e) {}
     // ★ 答對專用音效
-    try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.9;_csfx.play().catch(()=>{});} }catch(e){}
+    try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.63;_csfx.play().catch(()=>{});} }catch(e){}
     setTimeout(()=>{ try{ advShowBossReact('correct'); }catch(e){} }, 300);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
     setTimeout(() => {
@@ -24165,7 +24165,7 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
     // ★ 答錯專用音效
-    try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
+    try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.63;_wsfx.play().catch(()=>{});} }catch(e){}
     setTimeout(()=>{ try{ advShowBossReact('wrong'); }catch(e){} }, 200);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
     setTimeout(() => {
@@ -27252,7 +27252,7 @@ function _showLevelUpSequence(levelUps, onDone) {
   // 播放音效
   try{
     const _lu = document.getElementById('sfx-level-up');
-    if(_lu){ _lu.currentTime=0; _lu.volume=0.9; _lu.play().catch(()=>{}); }
+    if(_lu){ _lu.currentTime=0; _lu.volume=0.63; _lu.play().catch(()=>{}); }
     else{ beep(660,'sine',0.1,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); setTimeout(()=>beep(1100,'sine',0.15,0.15),320); }
   }catch(e){}
 
@@ -27848,7 +27848,7 @@ async function shopSellItem(id, qty){
   _showInGameToast(`💰 賣出 ${def.name} ×${actual}，獲得 ${coins.toLocaleString()} 知識幣！`, '#ffcc44', 2500);
   try{
     const _sfxSell = document.getElementById('sfx-sell-item');
-    if(_sfxSell){ _sfxSell.currentTime=0; _sfxSell.volume=0.85; _sfxSell.play().catch(()=>{}); }
+    if(_sfxSell){ _sfxSell.currentTime=0; _sfxSell.volume=0.595; _sfxSell.play().catch(()=>{}); }
     else playSfx('sfx-sell', 0.7);
   }catch(e){}
   _syncCoinsDisplay();
@@ -31001,7 +31001,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ 答對音效：使用 boss 戰相同的 sfx-quiz-correct
     try{ beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); }catch(e){}
-    try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.9;_csfx.play().catch(()=>{});} }catch(e){}
+    try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.63;_csfx.play().catch(()=>{});} }catch(e){}
     bannerFX(null, '✅ 答對！獲得 ' + coins + ' 知識幣！', '#44ff88', 1200);
     // ★ 小怪反應對白（與BOSS戰相同呈現方式：氣泡浮現在小怪卡片上）
     setTimeout(() => {
@@ -31033,7 +31033,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     // ★ 答錯音效：使用 boss 戰相同的 sfx-quiz-wrong
     try{ beep(200,'sawtooth',0.1,0.15); }catch(e){}
-    try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.9;_wsfx.play().catch(()=>{});} }catch(e){}
+    try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.63;_wsfx.play().catch(()=>{});} }catch(e){}
     bannerFX(null, '❌ 答錯了！', '#ff6666', 1200);
     setTimeout(() => {
       if(qOv) qOv.classList.remove('show');
@@ -31795,7 +31795,7 @@ function _buildMonsterPage() {
 function _playFlipSfx(){
   try{
     const _ff = document.getElementById('sfx-kansatsu-flip');
-    if(_ff){ _ff.currentTime=0; _ff.volume=0.8; _ff.play().catch(()=>{}); }
+    if(_ff){ _ff.currentTime=0; _ff.volume=0.56; _ff.play().catch(()=>{}); }
     else playSfx('sfx-card', 0.7);
   }catch(e){}
 }
@@ -32305,7 +32305,7 @@ function _showMedalCelebration(def){
   // ★ 獲得獎章專屬音效
   try{
     const _msfx = document.getElementById('sfx-medal-unlock');
-    if(_msfx){ _msfx.currentTime=0; _msfx.volume=0.9; _msfx.play().catch(()=>{}); }
+    if(_msfx){ _msfx.currentTime=0; _msfx.volume=0.63; _msfx.play().catch(()=>{}); }
     else { playSfx('sfx-confirm2', 0.9); }
   }catch(e){}
 
@@ -33062,6 +33062,14 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1540', brief:[
+    '整體音樂與音效音量調降 30%',
+  ], items:[
+    'BGM 主音量從 0.585 降至 0.4095（-30%），適用於所有背景音樂（首頁、冒險、BOSS 戰、商店等）',
+    'SFX 主音量乘數從 0.7 降至 0.49（-30%），適用於所有透過 playSfx 播放的音效',
+    '直接指定音量的特殊音效同步降 30%：答題正確/錯誤音效（0.9→0.63）、升級音效、道具賣出音效（0.85→0.595）、Fireball 音效（0.8→0.56）、魔力音效等',
+    '戰鬥開始音效音量從 0.85 → 0.595',
+  ] },
   { ver:'v1.0.20260419.1510', brief:[
     '全面修正 AI 技能邏輯：補齊 32 個未實作技能、避免更多誤擊友方',
   ], items:[
@@ -33604,7 +33612,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1510';
+  const CURRENT_VERSION = 'v1.0.20260419.1540';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33621,7 +33629,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1510';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1540';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
