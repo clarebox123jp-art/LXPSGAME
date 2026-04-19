@@ -320,6 +320,21 @@
     }
   };
 
+  // ★ 管理員工具：手動設定 totalPlayers 絕對值（當 _fbBackfillTotalPlayers 因權限失敗時的替代方案）
+  //   此函式直接寫 stats/global.totalPlayers，不需要讀取 /players 集合，可避開掃描權限問題
+  window._fbSetTotalPlayers = async function(newTotal) {
+    try {
+      const n = Math.max(0, parseInt(newTotal, 10) || 0);
+      const statsRef = doc(_fbDb, 'stats', 'global');
+      await setDoc(statsRef, { totalPlayers: n, _manualSetAt: Date.now() }, { merge: true });
+      console.info('✅ [管理] totalPlayers 已手動設為 ' + n);
+      return n;
+    } catch(e) {
+      console.error('❌ [管理] 設定失敗', e);
+      throw e;
+    }
+  };
+
   // 即時監聽統計：UI 元件用此更新顯示
   window._fbWatchStats = function(callback) {
     try {
@@ -18863,6 +18878,25 @@ async function _showAdminStatsPanel(){
         <div id="_admin-backfill-result" style="margin-top:10px;font-size:14px;color:#88ff88;"></div>
       </div>
 
+      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(100,220,255,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#88ddff;margin-bottom:8px;">👥 1b. 手動設定總玩家數</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          直接設定 <code style="color:#88ccff;">totalPlayers</code> 的絕對值（非累加）。
+          適合回填因權限無法掃描 <code style="color:#88ccff;">/players</code> 集合時使用。
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input id="_admin-players-input" type="number" min="0" step="1" placeholder="請輸入玩家總數"
+            style="flex:1;padding:10px 14px;font-size:16px;background:rgba(20,20,30,0.9);
+            border:2px solid rgba(100,220,255,0.4);color:#fff;border-radius:8px;font-family:inherit;">
+          <button id="_admin-set-players" style="padding:10px 20px;font-size:16px;font-weight:700;
+            background:rgba(100,180,255,0.2);border:2px solid #77bbff;color:#aaddff;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            ▶ 設定
+          </button>
+        </div>
+        <div id="_admin-players-result" style="margin-top:10px;font-size:14px;color:#88ccff;"></div>
+      </div>
+
       <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,150,200,0.3);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#ff99cc;margin-bottom:8px;">⚔️ 2. 手動設定累計冒險次數</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
@@ -18943,6 +18977,38 @@ async function _showAdminStatsPanel(){
       await window._fbSetAdventureTotal(val);
       res.style.color = '#ff99cc';
       res.textContent = `✅ 已設定 totalAdventures = ${val}`;
+    } catch(e){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 失敗：' + (e && e.code || e.message || '未知錯誤');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '▶ 設定';
+    }
+  };
+
+  // 手動設定總玩家數（avoid scan permission）
+  document.getElementById('_admin-set-players').onclick = async () => {
+    const input = document.getElementById('_admin-players-input');
+    const btn = document.getElementById('_admin-set-players');
+    const res = document.getElementById('_admin-players-result');
+    const val = parseInt(input.value, 10);
+    if(isNaN(val) || val < 0){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 請輸入 0 或以上的整數';
+      return;
+    }
+    if(!window._fbSetTotalPlayers){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ Firebase 尚未就緒，請稍後再試';
+      return;
+    }
+    if(!confirm(`確定要把「總玩家數」設定為 ${val} 嗎？這會覆寫現有值。`)) return;
+    btn.disabled = true;
+    btn.textContent = '設定中...';
+    try {
+      await window._fbSetTotalPlayers(val);
+      res.style.color = '#88ccff';
+      res.textContent = `✅ 已設定 totalPlayers = ${val}`;
     } catch(e){
       res.style.color = '#ff6666';
       res.textContent = '❌ 失敗：' + (e && e.code || e.message || '未知錯誤');
@@ -33097,6 +33163,13 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260419.1900', brief:[
+    '管理員面板新增「手動設定總玩家數」功能（繞過 permission-denied）',
+  ], items:[
+    '背景：原本的「回填總玩家數」功能需要讀取 /players 整個集合才能計算總數，但 Firestore 安全規則通常不允許整集合讀取，造成 permission-denied',
+    '新增 window._fbSetTotalPlayers(n)：直接寫 stats/global.totalPlayers = n，不需讀 /players 集合，可避開權限問題',
+    'UI 新增「👥 1b. 手動設定總玩家數」區塊，在管理面板中輸入數字即可直接覆寫',
+  ] },
   { ver:'v1.0.20260419.1830', brief:[
     '修正答題獎勵「立即使用極限爆發」沒效果的 Bug（雷法師等多英雄受影響）',
   ], items:[
@@ -33688,7 +33761,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1830';
+  const CURRENT_VERSION = 'v1.0.20260419.1900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -33705,7 +33778,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1830';
+window._GAME_LOADED_VERSION = 'v1.0.20260419.1900';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
