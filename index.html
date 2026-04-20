@@ -1639,8 +1639,31 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   80% {transform:translate3d(2px,0,0) rotate(0.4deg)}
   100%{transform:translate3d(0,0,0) rotate(0deg) scale(1)}
 }
-.card-hit{animation:cardHitBobble 0.5s ease-out both;transform-origin:center center;}
-.card.card-hit{animation:cardHitBobble 0.5s ease-out both;transform-origin:center center;}
+.card-hit{animation:cardHitBobble 0.5s ease-out both !important;transform-origin:center center !important;}
+.card.card-hit{animation:cardHitBobble 0.5s ease-out both !important;transform-origin:center center !important;}
+/* ── v1.0.20260420.1900 — 屬性攻擊光束 ── */
+@keyframes atkBeamFly {
+  0%   { transform:scaleX(0); opacity:0.9; }
+  45%  { transform:scaleX(1); opacity:1.0; }
+  100% { transform:scaleX(1); opacity:0; }
+}
+.atk-beam-wrap{
+  position:absolute;pointer-events:none;z-index:455;
+  transform-origin:0% 50%;
+  will-change:transform;
+}
+.atk-beam-inner{
+  height:10px;border-radius:5px;
+  transform-origin:0% 50%;
+  animation:atkBeamFly 0.34s ease-out forwards;
+  filter:brightness(1.4);
+}
+.atk-beam-head{
+  position:absolute;right:-6px;top:50%;width:22px;height:22px;
+  transform:translateY(-50%);border-radius:50%;
+  animation:atkBeamFly 0.34s ease-out forwards;
+  will-change:transform,opacity;
+}
 .shake{animation:shake 0.25s}
 
 /* RESULT */
@@ -12113,6 +12136,13 @@ function doDmg(target, rawDmg, opts={}){
     showPopup(target,dmg,'dmg');
   }
   sndAtk();
+  // ★ v1.0.20260420.1900 — 屬性攻擊光束特效
+  //   條件:有攻擊者(非狀態傷害)、不同陣營、非反彈/天賦分攤類的連鎖扣血、實際造成傷害
+  //   群體技能對每個目標都會 call 一次 doDmg → 自動形成多條光束,符合需求
+  if(a && a !== target && a.side !== target.side && dmg > 0
+     && !opts.isRebound && !opts.isTraitShare && !opts.noBeam){
+    try{ spawnAttackBeam(a, target); }catch(_e){}
+  }
   /// ── 爆發：鮮血契約→嗜血（傷害100%吸血＋低血增傷）──
   if(a && a.curHp>0 && dmg>0 && a.side!==target.side && hasStatus(a,'burstVamp') && !opts.isRebound){
     const _vSt=a.status.find(s=>s.type==='burstVamp');
@@ -12879,6 +12909,78 @@ function shake(target){
     }
   }
 }
+
+// ★ v1.0.20260420.1900 — 屬性攻擊光束特效
+// 依攻擊者屬性著色:火=紅、風=淡藍綠、水=藍、土=土黃、草=綠、光=黃、暗=紫
+const ATTACK_BEAM_COLORS = {
+  fire:  { core:'#fff5e0', mid:'#ff9040', edge:'#ff2a00', glow:'rgba(255,70,10,0.95)' },  // 紅
+  wind:  { core:'#e8fffb', mid:'#a0f0dc', edge:'#48d8b8', glow:'rgba(140,240,220,0.90)' }, // 淡藍綠
+  water: { core:'#eaf4ff', mid:'#6aa8ff', edge:'#1e56ff', glow:'rgba(50,130,255,0.95)' },  // 藍
+  earth: { core:'#fff1c6', mid:'#dcbd68', edge:'#8a6820', glow:'rgba(210,160,40,0.90)' },  // 土黃
+  grass: { core:'#eaffd8', mid:'#8fe880', edge:'#2ea038', glow:'rgba(100,210,90,0.90)' },  // 綠
+  light: { core:'#fffde0', mid:'#ffec78', edge:'#ffc400', glow:'rgba(255,220,70,0.95)' },  // 黃
+  dark:  { core:'#f0dcff', mid:'#b880ee', edge:'#6018a8', glow:'rgba(160,70,220,0.95)' },  // 紫
+};
+
+function spawnAttackBeam(attacker, target){
+  try{
+    if(!attacker || !target || attacker === target) return;
+    const gc = document.getElementById('gc');
+    if(!gc) return;
+    const srcEl = document.getElementById('card-'+attacker.side+'-'+attacker.pos);
+    const dstEl = document.getElementById('card-'+target.side+'-'+target.pos);
+    if(!srcEl || !dstEl) return;
+    const gcR = gc.getBoundingClientRect();
+    const sR  = srcEl.getBoundingClientRect();
+    const dR  = dstEl.getBoundingClientRect();
+    const scale = gcR.width / 1920 || 1;
+    // 以 gc 原始 1920×1080 為座標基準(getBoundingClientRect 回傳的是 transform 後實際位置)
+    const sx = (sR.left - gcR.left)/scale + sR.width /scale/2;
+    const sy = (sR.top  - gcR.top )/scale + sR.height/scale/2;
+    const dx = (dR.left - gcR.left)/scale + dR.width /scale/2;
+    const dy = (dR.top  - gcR.top )/scale + dR.height/scale/2;
+    const dxv = dx - sx, dyv = dy - sy;
+    const len = Math.hypot(dxv, dyv);
+    if(len < 20) return;
+    const ang = Math.atan2(dyv, dxv) * 180 / Math.PI;
+
+    const elem = attacker.element || 'wind';
+    const c = ATTACK_BEAM_COLORS[elem] || ATTACK_BEAM_COLORS.wind;
+
+    // wrapper 只負責旋轉與定位,inner 負責 scaleX 動畫(避免 transform 互相覆蓋)
+    const wrap = document.createElement('div');
+    wrap.className = 'atk-beam-wrap';
+    wrap.style.left = sx + 'px';
+    wrap.style.top  = (sy - 5) + 'px';
+    wrap.style.width = len + 'px';
+    wrap.style.transform = 'rotate(' + ang + 'deg)';
+
+    const inner = document.createElement('div');
+    inner.className = 'atk-beam-inner';
+    inner.style.width = '100%';
+    // 光束本體:中間亮、兩端淡,並有多層發光
+    inner.style.background =
+      'linear-gradient(90deg,transparent 0%,' + c.core + ' 15%,' +
+      c.mid + ' 45%,' + c.edge + ' 60%,' + c.mid + ' 78%,' + c.core + ' 92%,transparent 100%)';
+    inner.style.boxShadow =
+      '0 0 8px ' + c.glow + ',' +
+      '0 0 18px ' + c.glow + ',' +
+      '0 0 32px ' + c.glow;
+    wrap.appendChild(inner);
+
+    // 光束頭部:圓形光點強化抵達感
+    const head = document.createElement('div');
+    head.className = 'atk-beam-head';
+    head.style.background = 'radial-gradient(circle,' + c.core + ' 0%,' + c.mid + ' 45%,' + c.edge + ' 80%,transparent 100%)';
+    head.style.boxShadow  = '0 0 16px ' + c.glow + ',0 0 32px ' + c.glow;
+    wrap.appendChild(head);
+
+    gc.appendChild(wrap);
+    // 340ms animation 跑完自動移除
+    setTimeout(() => { if(wrap.parentNode) wrap.remove(); }, 400);
+  }catch(e){}
+}
+
 function _hitStarBurst(cardEl){
   const gc=document.getElementById('gc');
   if(!gc||!cardEl) return;
@@ -32212,10 +32314,14 @@ function advStartMiniBattle(nextSceneIdx) {
   const text    = document.getElementById('adv-dialog-text');
   const dialog  = document.getElementById('adv-dialog-box');
 
+  // ★ v1.0.20260420.2000 — 修復:sceneKey 必須在 if block 外宣告
+  //   否則非事件戰鬥時 sceneKey 的 const 作用域只在 if block 內,
+  //   下方 setTimeout 存取 sceneKey 會 ReferenceError → 戰場初始化中斷 → 卡死空畫面
+  const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
+    ? ADV_SCENES[_adventureStage][_advSceneIdx].key : 'river';
+
   if(!_isEventBattle){
     // 一般小怪戰:顯示通用開場白(依場景抽一句)
-    const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
-      ? ADV_SCENES[_adventureStage][_advSceneIdx].key : 'river';
     const intros = MINI_BATTLE_INTROS[sceneKey] || MINI_BATTLE_INTROS.river;
     const intro = intros[Math.floor(Math.random() * intros.length)];
     if(speaker) speaker.textContent = '⚔️ 小怪出現!';
@@ -34322,6 +34428,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2000', brief:[
+    '緊急修復:河堤第一場小怪戰鬥進入後卡死空畫面的問題',
+  ], items:[
+    '【成因】v1.0.20260420.1800 重構 advStartMiniBattle 時,把 const sceneKey 寫進 if(!_isEventBattle){} block 內,結果是 block-scoped,只在 if 區塊內存活',
+    '【卡死點】setTimeout(() => {...}, _introDelay) 的 callback 在 if block 之外,line 32416 存取 sceneKey 時拋 ReferenceError,setTimeout body 中斷,renderField/renderCard/startTurn 通通沒跑 → 畫面只剩 ENEMY/PLAYER 文字水印、中間一面小旗子,沒有卡片',
+    '【連帶影響】不只河堤第一場,茶園事件戰鬥(寶箱怪/小惡魔)與寵物事件也會卡死 — 只是畫面不同。之前回報的「寵物答題完卡住」很可能是這 bug 的另一觸發(事件戰鬥路徑根本沒進 if block,sceneKey 連宣告都沒有)',
+    '【修補】把 const sceneKey 宣告提前到 if block 之外、setTimeout 之外,讓函式作用域內所有位置都能存取。原本 if 區塊內用到 sceneKey 的 const intros 改用提前宣告的 sceneKey,語意不變',
+    '【教訓】JavaScript 的 const/let 是 block-scoped,在 if/for/{} 內宣告的變數,block 結束就消失。若需要跨 if + 後續 setTimeout closure 共用,務必在 function 層宣告',
+  ] },
+  { ver:'v1.0.20260420.1900', brief:[
+    '修正:受傷時卡片震動動畫不再失效',
+    '新增:攻擊時從攻擊者卡片發射屬性光束到被擊者,群體技能會同時多條',
+  ], items:[
+    '【震動失效成因】.card.burst-ready(能量滿、可爆發時套在卡片)使用 animation:burstGlow !important,永久壓過 .card-hit 的 animation:cardHitBobble(無 !important)。由於 CSS animation 是互斥覆蓋而非疊加,任一方能量滿後,可爆發角色被打都不會震 — 戰鬥中後期幾乎永遠處於此狀態,所以你「感覺都沒成功震」',
+    '【震動修補】.card-hit 與 .card.card-hit 的 animation 都加上 !important,與 burst-ready 平權,加上 source order 在後,正確勝出。震動 0.5 秒跑完 class 移除,burst-ready 的火光閃爍自動恢復,不衝突',
+    '【屬性光束】新增 spawnAttackBeam(attacker, target),從攻擊者卡片中心射出光束到目標中心。採 wrapper(負責旋轉與定位)+ inner(負責 scaleX 動畫)雙層結構,避免 CSS transform 互相覆蓋',
+    '【屬性配色】ATTACK_BEAM_COLORS 依屬性著色:火=紅(#ff2a00)、風=淡藍綠(#48d8b8)、水=藍(#1e56ff)、土=土黃(#8a6820)、草=綠(#2ea038)、光=黃(#ffc400)、暗=紫(#6018a8)。光束本體為「中間亮、兩端淡」線性漸層,外層多層 box-shadow 發光,頭部加一個圓形光點強化抵達感',
+    '【觸發條件】普通攻擊、單體技能、群體技能都走 doDmg,光束插在傷害結算後、shake 之前。有 attacker、不同陣營、實際造成傷害(dmg>0)才 spawn。排除反彈(isRebound)、天賦分攤(isTraitShare)、狀態 tick 傷害(無 actor)、顯式標註 noBeam',
+    '【群體=多光束】群體技能對每個目標 call 一次 doDmg,自動形成多條光束(同時從同一攻擊者往不同目標發散,視覺上像扇形射線),不需特別處理',
+    '【時序】光束動畫 340ms、shake 動畫 500ms、星星爆炸 520ms、popup 數字 約 1s。光束最早結束,視覺上「光束飛到→目標爆星星+震動+跳數字」自然連貫',
+  ] },
   { ver:'v1.0.20260420.1800', brief:[
     '修正:第三場景茶園遇到寶箱怪或小惡魔時,不會再插入不相關的哥布林/史萊姆開場白',
   ], items:[
@@ -35095,7 +35222,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1800';
+  const CURRENT_VERSION = 'v1.0.20260420.2000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35112,7 +35239,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1800';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2000';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
