@@ -5894,6 +5894,9 @@ function playSkillFX(skillName,actor,targets){
   }
 }
 // ====== HERO DB ======
+// ★ v1.0.20260420.1130 — 活動限定英雄清單(圖鑑會標示「🎪 活動獲得」)
+//   這些英雄無法從冒險模式 BOSS 戰解鎖池取得,只能透過特殊活動/贈送獲得
+const EVENT_ONLY_HEROES = new Set(['小力', '幼兒園小孩']);
 const AVATARS = {
   '劍士':'⚔️','祭司':'✨','聖騎士':'🛡','火法師':'🔥','冰法師':'❄️','雷法師':'⚡',
   '光法師':'☀️','暗法師':'🌑','神射手':'🏹','神偷':'💰','刺客':'👁️','守衛':'🛡️',
@@ -23438,11 +23441,141 @@ function advStartCutscene(stage) {
     if(_dlgReset) _dlgReset.onclick = function(ev){ advNextDialog(ev); };
   }catch(e){}
 
-  const ov = document.getElementById('adv-cutscene-overlay');
-  ov.style.display = 'flex';
-  // ★ 過場（河堤/步道/茶園）專屬BGM
-  try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
-  advLoadScene(stage, 0);
+  // ★ v1.0.20260420.1230 — 冒險開始前先詢問玩家要不要跳過整個旅途直接挑 BOSS
+  //   選「是」→ 走原本的跳過流程(年級/科目/難度 → BOSS)
+  //   選「否」→ 永久隱藏跳過按鈕,必須完整過完三場景
+  window._advDeclinedSkip = false;
+  window._advUpfrontSkipChosen = false;  // 每次新冒險重置,避免上次殘留
+
+  const _beginCutsceneNow = () => {
+    const ov = document.getElementById('adv-cutscene-overlay');
+    ov.style.display = 'flex';
+    // ★ 過場（河堤/步道/茶園）專屬BGM
+    try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+    advLoadScene(stage, 0);
+  };
+
+  _advShowUpfrontSkipDecision(
+    // 選「是」
+    () => {
+      // 讓跳過按鈕可用(上游流程會檢查)
+      const skipBtn = document.getElementById('adv-skip-btn');
+      if(skipBtn){
+        skipBtn.disabled = false;
+        skipBtn.style.opacity = '';
+        skipBtn.style.pointerEvents = '';
+      }
+      // ★ 標記為「從上場前popup進來」→ advSkipCutscene 與後續流程不再二次警告
+      window._advUpfrontSkipChosen = true;
+      // 走原本的 advSkipCutscene:顯示年級/科目/難度視窗,按確認後 _advSkipGiveTreasures → advFinishCutscene → BOSS
+      advSkipCutscene();
+    },
+    // 選「否」
+    () => {
+      window._advDeclinedSkip = true;
+      const skipBtn = document.getElementById('adv-skip-btn');
+      if(skipBtn){ skipBtn.style.display = 'none'; }
+      _beginCutsceneNow();
+    }
+  );
+}
+
+// ★ v1.0.20260420.1230 — 冒險開始前詢問是否直接挑戰 BOSS
+function _advShowUpfrontSkipDecision(onYes, onNo){
+  // 移除可能殘留的舊彈窗
+  const old = document.getElementById('adv-upfront-skip');
+  if(old) old.remove();
+
+  const pop = document.createElement('div');
+  pop.id = 'adv-upfront-skip';
+  pop.style.cssText = [
+    'position:fixed;inset:0;z-index:9400;',
+    'background:radial-gradient(ellipse at center,rgba(20,15,40,0.88) 0%,rgba(5,3,15,0.97) 70%);',
+    'display:flex;align-items:center;justify-content:center;',
+    'padding:20px;box-sizing:border-box;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:_upfrontFadeIn 0.35s ease-out;'
+  ].join('');
+
+  // 注入動畫
+  if(!document.getElementById('_upfront-skip-style')){
+    const st = document.createElement('style');
+    st.id = '_upfront-skip-style';
+    st.textContent = [
+      '@keyframes _upfrontFadeIn { from{opacity:0} to{opacity:1} }',
+      '@keyframes _upfrontCardIn { from{opacity:0;transform:translateY(18px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }',
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+
+  const card = document.createElement('div');
+  card.style.cssText = [
+    'background:linear-gradient(160deg,rgba(20,14,50,0.98),rgba(10,6,28,0.99));',
+    'border:3px solid rgba(160,120,255,0.7);border-radius:22px;',
+    'padding:clamp(22px,3vw,36px) clamp(24px,4vw,48px);',
+    'width:min(96vw,620px);max-height:calc(100vh - 40px);overflow-y:auto;box-sizing:border-box;',
+    'box-shadow:0 0 80px rgba(120,80,255,0.35),0 0 30px rgba(120,80,255,0.2);',
+    'animation:_upfrontCardIn 0.4s cubic-bezier(0.22,1,0.36,1);',
+    'color:#eee;'
+  ].join('');
+
+  card.innerHTML = `
+    <div style="font-size:clamp(22px,2.6vw,30px);font-weight:900;color:#ddbbff;text-align:center;letter-spacing:2px;margin-bottom:6px;">
+      🧭 冒險開始前
+    </div>
+    <div style="font-size:clamp(15px,1.55vw,19px);color:#bbccee;text-align:center;line-height:1.75;margin-bottom:14px;">
+      你準備踏上景美溪河堤,展開包含 3 個場景的冒險旅途。
+    </div>
+    <div style="font-size:clamp(17px,1.85vw,22px);font-weight:800;color:#ffcc44;text-align:center;line-height:1.65;margin-bottom:14px;padding:10px 14px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.35);border-radius:12px;">
+      要不要直接登上山頂挑戰 BOSS,略過途中的冒險?
+    </div>
+    <div style="background:rgba(80,20,20,0.25);border:1.5px solid rgba(255,120,120,0.4);border-radius:12px;padding:12px 16px;margin-bottom:10px;">
+      <div style="font-size:clamp(13px,1.35vw,16px);color:#ffaabb;font-weight:700;margin-bottom:6px;">按「是」會失去:</div>
+      <ul style="margin:0;padding-left:22px;font-size:clamp(13px,1.3vw,16px);color:#ddd;line-height:1.75;">
+        <li>3 場小怪戰的 EXP、知識幣、掉落物</li>
+        <li>最多 3 個珍貴法寶(每場獲得 1 個)</li>
+        <li>稀有怪遇(小惡魔、寶箱怪)的機會</li>
+        <li>場景事件的答題獎勵與劇情體驗</li>
+      </ul>
+    </div>
+    <div style="background:rgba(40,80,40,0.2);border:1.5px solid rgba(120,220,140,0.3);border-radius:12px;padding:10px 16px;margin-bottom:18px;">
+      <div style="font-size:clamp(13px,1.3vw,15px);color:#bbddbb;line-height:1.6;">
+        💡 按「否」代表完整體驗本次冒險,<b style="color:#88ff88;">途中不會再出現跳過演出按鈕</b>,請耐心破完三個場景才能挑 BOSS。
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button id="_upfront-no" style="flex:1;min-width:150px;padding:14px 18px;font-size:clamp(16px,1.8vw,20px);font-weight:900;
+        background:linear-gradient(135deg,rgba(60,160,90,0.35),rgba(40,120,70,0.35));
+        border:2.5px solid #3ec87a;color:#aaffcc;border-radius:12px;cursor:pointer;
+        font-family:inherit;box-shadow:0 0 14px rgba(60,200,100,0.25);transition:0.15s;">
+        ❌ 否,完整冒險
+      </button>
+      <button id="_upfront-yes" style="flex:1;min-width:150px;padding:14px 18px;font-size:clamp(16px,1.8vw,20px);font-weight:900;
+        background:linear-gradient(135deg,rgba(200,120,50,0.3),rgba(160,80,30,0.3));
+        border:2.5px solid #e89840;color:#ffcc88;border-radius:12px;cursor:pointer;
+        font-family:inherit;box-shadow:0 0 14px rgba(230,150,50,0.25);transition:0.15s;">
+        ✅ 是,直接挑 BOSS
+      </button>
+    </div>
+  `;
+
+  pop.appendChild(card);
+  document.body.appendChild(pop);
+
+  const _close = () => { try{ pop.remove(); }catch(_e){} };
+  document.getElementById('_upfront-no').onclick = () => {
+    playSfx('sfx-confirm2', 0.6);
+    _close();
+    if(typeof onNo === 'function') onNo();
+  };
+  document.getElementById('_upfront-yes').onclick = () => {
+    playSfx('sfx-skip-cutscene', 0.85);
+    _close();
+    if(typeof onYes === 'function') onYes();
+  };
+  // 背景點擊不關閉 — 強制玩家做選擇(避免誤操作)
+
+  playSfx('sfx-sel', 0.5);
 }
 
 function advLoadScene(stage, idx) {
@@ -24143,15 +24276,25 @@ function advConfirmTreasureUse(slotIdx) {
 }
 
 function advSkipCutscene() {
+  // ★ v1.0.20260420.1230 — 玩家在冒險開始前選擇「否,完整冒險」則拒絕所有跳過請求
+  if (window._advDeclinedSkip) {
+    console.warn('[advSkipCutscene] 玩家已選擇完整冒險,跳過按鈕應已隱藏');
+    return;
+  }
   // ★ 防護：選擇年級/科目/難度期間禁止跳過
   const skipBtn = document.getElementById('adv-skip-btn');
   if (skipBtn && skipBtn.disabled) return;
   if (document.getElementById('adv-choice-panel') &&
       document.getElementById('adv-choice-panel').children.length > 0) return;
 
-  // ★ 快速跳過：用一個緊湊視窗詢問三個問題，讓玩家選完後才進BOSS戰
-  // 如果三個問題都已有答案（可能玩家已點過某些選項），直接結束
+  // ★ v1.0.20260420.1200 — 快速跳過路徑:若三個問題都已有答案,仍需警告剩餘法寶會放棄
+  //   v1.0.20260420.1230 — 若從上場前 popup 進來,已在那邊警告過,這裡不再 confirm
   if (_advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
+    const _unearned = _advTreasures.filter(t => !t).length;
+    if (_unearned > 0 && !window._advUpfrontSkipChosen) {
+      const _msg = '跳過演出會直接進入 BOSS 戰,未打的 ' + _unearned + ' 場小怪戰將會放棄其法寶獎勵,確定要跳過嗎?';
+      if (!confirm(_msg)) return;
+    }
     _advSkipGiveTreasures();
     return;
   }
@@ -24234,7 +24377,21 @@ function advSkipCutscene() {
     'border-radius:8px;font-family:inherit;transition:0.15s;white-space:nowrap;flex-shrink:0;';
   cancelBtn.onmouseenter = () => { cancelBtn.style.background='rgba(200,50,50,0.35)'; };
   cancelBtn.onmouseleave = () => { cancelBtn.style.background='rgba(60,10,10,0.6)'; };
-  cancelBtn.onclick = () => { box.remove(); };
+  cancelBtn.onclick = () => {
+    box.remove();
+    // ★ v1.0.20260420.1230 — 若從上場前 popup 進來,取消後要把上場前 popup 重新叫回,
+    //   避免卡在黑畫面(因為 advStartCutscene 當初還沒呼叫 advLoadScene)
+    if(window._advUpfrontSkipChosen){
+      window._advUpfrontSkipChosen = false;
+      // 把旗標清掉(稍後 upfront popup 的 YES 會再設回來,NO 則永久 disable 跳過)
+      // 用現有 stage 重新進入流程最乾淨:呼叫 advStartCutscene(_adventureStage) 整個 reset 重來
+      try {
+        if(typeof _adventureStage !== 'undefined' && _adventureStage){
+          advStartCutscene(_adventureStage);
+        }
+      } catch(_e){ console.warn('[setup cancel 回推失敗]', _e); }
+    }
+  };
   headerRow.appendChild(cancelBtn);
 
   const title = document.createElement('div');
@@ -24260,25 +24417,39 @@ function advSkipCutscene() {
   confirmBtn.style.cssText = 'width:100%;padding:14px;font-size:24px;font-weight:900;margin-top:12px;' +
     'background:rgba(50,180,80,0.3);border:2px solid #3ec87a;color:#3ec87a;border-radius:12px;cursor:pointer;' +
     'font-family:inherit;opacity:' + (_allReady?'1':'0.4') + ';transition:0.2s;';
-  confirmBtn.textContent = '✔ 確認，進入Boss戰';
+  // ★ v1.0.20260420.1200 — 按鈕文案揭露後果:剩餘法寶會放棄
+  //   v1.0.20260420.1230 — 若從上場前 popup 進來,不用再顯示警語(已在 popup 警告過)
+  const _unearnedInit = _advTreasures.filter(t => !t).length;
+  const _fromUpfront = !!window._advUpfrontSkipChosen;
+  confirmBtn.textContent = (_unearnedInit > 0 && !_fromUpfront)
+    ? ('✔ 確認跳過(放棄 ' + _unearnedInit + ' 個未完成關卡法寶)')
+    : '✔ 確認,進入 Boss 戰';
+  // 補個小提示在按鈕下方(僅當不是從上場前 popup 進來)
+  if(_unearnedInit > 0 && !_fromUpfront){
+    const _warn = document.createElement('div');
+    _warn.style.cssText = 'margin-top:8px;font-size:14px;color:#ffaa88;text-align:center;line-height:1.5;';
+    _warn.innerHTML = '⚠ 跳過後剩餘小怪戰的 EXP、知識幣、掉落物、法寶都會放棄';
+    box.appendChild(confirmBtn);
+    box.appendChild(_warn);
+  } else {
+    box.appendChild(confirmBtn);
+  }
   confirmBtn.onclick = () => {
     box.remove();
     _advSkipGiveTreasures();
   };
-  box.appendChild(confirmBtn);
   document.body.appendChild(box);
   playSfx('sfx-sel', 0.5);
 }
 
 function _advSkipGiveTreasures() {
-  // 隨機給所有未領到的法寶
-  for (let i = 0; i < 3; i++) {
-    if (!_advTreasures[i]) {
-      const _usedTids = new Set(_advTreasures.filter(Boolean).map(x=>x.id));
-      const _remaining = ADV_TREASURES.filter(x=>!_usedTids.has(x.id));
-      _advTreasures[i] = (_remaining.length ? _remaining : ADV_TREASURES)[
-        Math.floor(Math.random()*(_remaining.length||ADV_TREASURES.length))];
-    }
+  // ★ v1.0.20260420.1200 — 修補 bug:原本會把所有未領到的法寶自動隨機補滿,
+  //    造成「按跳過演出 → 無須打小怪戰就拿到 BOSS 戰需要的所有法寶」。
+  //    現在改為:跳過後剩餘關卡的法寶放棄,玩家帶著現有法寶進入 BOSS 戰。
+  //    函式名維持(許多呼叫點用此名稱),但實作改為只記錄放棄的數量。
+  const _unearned = _advTreasures.filter(t => !t).length;
+  if (_unearned > 0) {
+    try { log('⏭ 已放棄 ' + _unearned + ' 個未完成關卡的法寶獎勵'); } catch(_e) {}
   }
   advUpdateTreasureBar();
   advFinishCutscene();
@@ -25681,7 +25852,14 @@ function advSaveUnlockedHero(name) {
 
 function advShowUnlockHero() {
   const unlocked = advGetUnlockedHeroes();
-  const available = ADV_UNLOCKABLE_HEROES.filter(n=>!unlocked.includes(n)&&!['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'].includes(n));
+  // ★ v1.0.20260420.1130 — 排除商店肖像英雄 + 活動限定英雄(小力/幼兒園小孩),讓 BOSS 解鎖池乾淨
+  const _shopExcl = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+  const _eventExcl = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
+  const available = ADV_UNLOCKABLE_HEROES.filter(n =>
+    !unlocked.includes(n) &&
+    !_shopExcl.includes(n) &&
+    !_eventExcl.includes(n)
+  );
   if(!available.length) {
     document.getElementById('adv-result-overlay').classList.remove('show');
     return;
@@ -25836,10 +26014,13 @@ async function advStartWinSequence() {
 
   // 選取要加入的英雄
   const unlocked = advGetUnlockedHeroes();
+  // ★ v1.0.20260420.1130 — 用 EVENT_ONLY_HEROES 集合統一管理活動限定英雄,未來新增活動英雄只要改一處
+  const _shopExcl2 = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+  const _eventExcl2 = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
   const available = ADV_UNLOCKABLE_HEROES.filter(n =>
     !unlocked.includes(n) &&
-    !['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家',
-      '幼兒園小孩','小力'].includes(n)  // ★ 這兩位保留給特別關卡
+    !_shopExcl2.includes(n) &&
+    !_eventExcl2.includes(n)
   );
 
   // ★ 所有可解鎖角色已全數收錄：跳過英雄加入畫面，直接返回選關頁
@@ -29948,6 +30129,7 @@ function _buildHeroGrid() {
             <div style="height:100%;width:${expPct}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
         ` : `<div style="font-size:26px;color:#445;">🔒 未收錄</div>`}
+        ${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🎪 活動限定</div>` : ''}
       </div>
       ${isUnlocked && _heroStatPoints[name] > 0 ? `<div style="position:absolute;top:8px;right:8px;background:#ff3333;color:#fff;font-size:22px;font-weight:900;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">${_heroStatPoints[name]}</div>` : ''}
     </div>`;
@@ -30140,7 +30322,7 @@ function _renderHeroDetail(name, box) {
     <!-- 名稱 + 角色簡介（並排）-->
     <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
       <div style="flex:0 0 auto;">
-        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}</div>
+        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name))?'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🎪 活動獲得</span>':''}</div>
         <div style="font-size:32px;color:#88aaff;margin-bottom:6px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
         ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
@@ -34027,6 +34209,38 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.1230', brief:[
+    '「跳過演出」改為冒險開始前一次性選擇:進河堤場景前彈窗詢問「是否跳過旅途直接挑 BOSS?」,若選「否」則整趟冒險都無法再跳過',
+    '這避免玩家中途分心想偷懶,同時給忙碌時明確的捷徑',
+  ], items:[
+    '新增 _advShowUpfrontSkipDecision(onYes, onNo):冒險一啟動就顯示紫色決策彈窗,清楚列出「是」會失去:3 場小怪戰 EXP/知識幣/掉落物、3 個法寶、稀有怪遇(小惡魔/寶箱怪)、答題獎勵與劇情',
+    '「是,直接挑 BOSS」:走既有 advSkipCutscene 流程(年級/科目/難度 → BOSS),並設 window._advUpfrontSkipChosen=true 讓後續流程知道已警告過,不再重複提示',
+    '「否,完整冒險」:設 window._advDeclinedSkip=true,整趟冒險中 #adv-skip-btn 永久 display:none,advSkipCutscene 加 guard 拒絕任何跳過請求',
+    'upfront popup 背景點擊不關閉,強迫玩家明確選擇,避免誤操作',
+    '邊界處理:若玩家在 upfront 選「是」後又在年級/科目選單按「✕ 不跳過」,會重新叫回 upfront popup(而非卡在黑畫面)',
+    'advStartCutscene 開頭重置 _advDeclinedSkip 與 _advUpfrontSkipChosen,避免上次冒險的旗標殘留',
+    '移除 v1.0.20260420.1200 的中途跳過二次確認(因為現在跳過只發生在冒險開始前,中途不會再有跳過按鈕)',
+  ] },
+  { ver:'v1.0.20260420.1200', brief:[
+    '修復:按「跳過演出」會把所有未打小怪戰的法寶直接送給玩家(偷跑 bug)',
+    '跳過演出前會先警告「將放棄剩餘關卡的法寶、EXP、知識幣、掉落物」,按確認才會進 BOSS 戰',
+  ], items:[
+    '【根本原因】_advSkipGiveTreasures() 有一段 for 迴圈會掃 _advTreasures 陣列,把所有空位隨機填上法寶。結果玩家只要進冒險模式按「⏭ 跳過演出」就能不打任何小怪戰直接拿到 BOSS 戰需要的 3 個法寶',
+    '【影響】玩家可以完全繞過 3 場小怪戰(= 該場的 EXP、知識幣、掉落物、答題獎勵通通拿不到也不打,但法寶卻照收),直接進 BOSS 戰',
+    '【修補 1】移除 _advSkipGiveTreasures 的法寶自動補滿邏輯,跳過後剩餘關卡的法寶一律放棄,戰鬥 log 會記錄「已放棄 N 個未完成關卡的法寶獎勵」',
+    '【修補 2】advSkipCutscene 的快速跳過路徑(三個設定都已選好時)加上 confirm 對話框:「跳過演出會直接進入 BOSS 戰,未打的 N 場小怪戰將會放棄其法寶獎勵,確定要跳過嗎?」',
+    '【修補 3】跳過選擇視窗的「確認」按鈕文案改為「✔ 確認跳過(放棄 N 個未完成關卡法寶)」,下方加橘色小警語「⚠ 跳過後剩餘小怪戰的 EXP、知識幣、掉落物、法寶都會放棄」,玩家明確知道後果才按',
+    '【行為】玩家若已打完所有小怪戰再跳過,則沒有警告(沒有要放棄的東西),行為不變',
+  ] },
+  { ver:'v1.0.20260420.1130', brief:[
+    '小力和幼兒園小孩在圖鑑中標示為「🎪 活動限定 / 活動獲得」,和商店肖像英雄一樣不會在 BOSS 戰解鎖池中出現',
+  ], items:[
+    '新增 EVENT_ONLY_HEROES 全域集合 = {小力, 幼兒園小孩},未來若要新增活動限定英雄只要改這一處',
+    '英雄圖鑑卡片(不論已收錄/未收錄)顯示粉紅色「🎪 活動限定」小徽章',
+    '英雄詳細頁標題右側顯示「🎪 活動獲得」徽章',
+    '修補:advShowUnlockHero(BOSS 戰後隨機解鎖英雄)先前排除清單缺少小力/幼兒園小孩,會錯誤地把她們當 BOSS 獎勵抽出;改為統一使用 EVENT_ONLY_HEROES 排除',
+    '另一個解鎖點 advTryUnlockCompanion 原本就有排除,改為同樣使用 EVENT_ONLY_HEROES 集合保持兩邊一致',
+  ] },
   { ver:'v1.0.20260420.1100', brief:[
     '小劇團員預覽視窗圖片整張往下移 10%,原始肖像、銀冕王子(男)、琉璃公主(女)三張都同步調整',
   ], items:[
@@ -34715,7 +34929,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1100';
+  const CURRENT_VERSION = 'v1.0.20260420.1230';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34732,7 +34946,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1100';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.1230';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
