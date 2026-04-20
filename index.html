@@ -2869,7 +2869,7 @@ body {
   /* 選擇視窗（年級/科目/難度）*/
   .adv-choice-title { font-size:28px; margin-bottom:10px; }
   .adv-choice-btn { font-size:26px; padding:10px 18px; }
-  .adv-choice-box { padding:14px 16px; max-height:85vh; }
+  .adv-choice-box { padding:14px 16px; max-height:520px; }
 
   /* 答題獎勵視窗 */
   #adv-reward-overlay { width:50%; }
@@ -2925,7 +2925,7 @@ body {
   #adv-dialog-speaker { font-size:22px !important; margin-bottom:6px !important; }
   #adv-dialog-text { font-size:22px !important; line-height:1.55 !important; }
   #adv-dialog-next { font-size:28px !important; }
-  .adv-choice-box { padding:10px 12px !important; max-height:75vh !important; }
+  .adv-choice-box { padding:10px 12px !important; max-height:520px !important; }
   .adv-choice-title { font-size:20px !important; margin-bottom:8px !important; }
   .adv-choice-btn { font-size:18px !important; padding:7px 12px !important; }
   .adv-confirm-btn { font-size:22px !important; padding:10px !important; }
@@ -3199,7 +3199,7 @@ body {
 .adv-treasure-slot .ts-label{font-size:22px;color:#ffcc44;margin-top:4px;letter-spacing:0px;text-align:center;line-height:1.2;font-weight:700;}
 /* 中央選擇視窗 */
 #adv-choice-panel{
-  position:absolute;top:0;left:0;right:160px;bottom:0;z-index:3;
+  position:absolute;top:0;left:0;right:160px;bottom:34vh;z-index:3;
   display:flex;align-items:flex-start;justify-content:center;
   padding:24px 12px 8px;
   background:transparent;
@@ -3213,10 +3213,20 @@ body {
   background:rgba(8,10,22,0.95);backdrop-filter:blur(12px);
   border:2px solid rgba(255,220,80,0.5);border-radius:18px;
   padding:18px 20px;max-width:95vw;width:auto;
-  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  /* ★ v1.0.20260420.2800 — #gc 是 1920×1080 固定內部座標 + transform 縮放,
+     vh(瀏覽器視窗)跟 #gc 內部不匹配。對話框 min-height:320px + padding/border 合計 ≥425px,
+     再加對話文字占位,實際用掉底部 ~560px。故 box 用 #gc 內部絕對像素 520px 保證
+     不超出對話框上方的可見區。內容超過時捲軸必定觸發 */
+  max-height:520px;overflow-y:auto;-webkit-overflow-scrolling:touch;
   box-shadow:0 0 60px rgba(0,0,0,0.9);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,220,80,0.8) rgba(0,0,0,0.4);
 }
+.adv-choice-box::-webkit-scrollbar{width:14px;}
+.adv-choice-box::-webkit-scrollbar-track{background:rgba(0,0,0,0.45);border-radius:7px;margin:4px 0;}
+.adv-choice-box::-webkit-scrollbar-thumb{background:rgba(255,220,80,0.75);border-radius:7px;border:2px solid rgba(0,0,0,0.4);min-height:40px;}
+.adv-choice-box::-webkit-scrollbar-thumb:hover{background:rgba(255,220,80,1);}
 @keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .adv-choice-title{
   font-size:44px;font-weight:900;color:#ffe050;letter-spacing:2px;
@@ -34572,6 +34582,17 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2800', brief:[
+    '修復科目選擇視窗無法捲動 bug,下面的「國際教育」「動物園」組被對話框遮住',
+    '換上更明顯的金色捲軸,內容超過時看得出來可以捲',
+  ], items:[
+    '【BUG 根因】#gc 遊戲畫布是 1920×1080 固定內部座標 + transform:scale 縮放到視窗。但 .adv-choice-box 舊的 max-height 用 vh/calc(100vh-...),vh 算的是瀏覽器視窗高,跟 #gc 內部不匹配,導致 box 計算出的高度超過 #gc 實際可用空間,底部被同 z-index 的 #adv-dialog-box 蓋掉',
+    '【數據對照】#adv-dialog-box 是 position:absolute; bottom:0; min-height:320px; padding:32/70; border:2.5 → 對話框占 #gc 底部至少 425px,加上實際文字占位常到 ~560px。故 box 最大可用 ~520px',
+    '【修復】.adv-choice-box max-height 改為 520px(純 px,#gc 內部座標),徹底脫離 vh。內容超過時 overflow-y:auto 必定觸發,捲軸必定出現',
+    '【統一】平板(1024bp)與手機(820bp)breakpoint 內也一併改為 520px。#gc 尺寸不隨 breakpoint 變,只是 transform scale 不同,max-height 不需要依 breakpoint 調整',
+    '【捲軸視覺強化】加粗到 14px、顏色提升到金黃 rgba(255,220,80,0.75)、軌道加深、thumb 最小高度 40px + 2px track margin,手動捲動時非常明顯',
+    '【未動到的】#adv-choice-panel 定位(flex-start+padding-top:24px)、5 大類分組 render(_advGroupSubjects)、按鈕分類著色(_advGetSubjectBtnStyle)全部保留'
+  ] },
   { ver:'v1.0.20260420.2700', brief:[
     '科目選擇視窗分 5 大類:一般學科 / 生活常識 / 課堂複習 / 國際教育 / 動物園,每類獨立框線',
   ], items:[
@@ -35450,7 +35471,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2700';
+  const CURRENT_VERSION = 'v1.0.20260420.2800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35467,7 +35488,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2700';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
