@@ -25052,6 +25052,37 @@ function advStartBattle(){
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
+  // ★ v1.0.20260420.3400 — BOSS 戰真正進入時才套 HP 倍率
+  //   此時:(a)_advPlayerDifficulty 已確定(過場 2 已選過)、
+  //         (b)G.p2 一定是 BOSS 陣容(advFinishMiniBattle 已還原 _advBossTeamSaved,沒有 mini 戰則始終是原陣容)、
+  //         (c)_advBossHpMultApplied 由 advStartCutscene 重置為 false
+  //   用 flag 確保每場 BOSS 戰只套一次,不會被接關/重新開戰 advRestartBattle 重覆套
+  try {
+    const _applied = window._advBossHpMultApplied;
+    const _mult = (typeof _advBossHpMult === 'function') ? _advBossHpMult() : 1.00;
+    console.log('[BOSS HP 難度倍率] 檢查:', {
+      applied: _applied,
+      difficulty: typeof _advPlayerDifficulty !== 'undefined' ? _advPlayerDifficulty : '(undefined)',
+      mult: _mult,
+      p2count: G && G.p2 ? G.p2.length : 0,
+      p2hp: G && G.p2 ? G.p2.map(h=>({name:h.name, hp:h.hp})) : []
+    });
+    if(!_applied && G && G.p2 && G.p2.length && _mult !== 1.00){
+      G.p2.forEach(h => {
+        if(h && typeof h.hp === 'number' && h.hp > 0){
+          const _before = h.hp;
+          h.hp = Math.max(1, Math.round(h.hp * _mult));
+          h.curHp = h.hp;
+          console.log(`[BOSS HP 難度倍率] ${h.name}: ${_before} → ${h.hp} (×${_mult})`);
+        }
+      });
+      // 同步更新 _advBossTeamSaved(快照也用已縮放值,若之後有 restore 才不會被復原成未縮放)
+      if(typeof _advBossTeamSaved !== 'undefined' && _advBossTeamSaved){
+        _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2));
+      }
+    }
+    window._advBossHpMultApplied = true;
+  } catch(_hpE){ console.warn('[BOSS HP 難度倍率] 套用失敗:', _hpE); }
   // ★ 顯示戰鬥教學按鈕
   try{ _advTutBtnShow(true); }catch(e){}
   // ★ 清除小怪戰殘留狀態（含守門旗標，避免iPad上startTurn第一行就return）
@@ -32863,20 +32894,9 @@ function advStartMiniBattle(nextSceneIdx) {
     // 保持開啟狀態（玩家可能希望自動）
   }
 
-  // ★ v1.0.20260420.3200 — 快照前先套 BOSS HP 難度倍率(真正時機:難度已選、BOSS 陣容還沒被儲存)
-  //   flag 保證整場冒險只套一次(advStartCutscene 會 reset),之後每場小怪戰快照的都是已縮放值。
-  if(G.p2 && !window._advBossHpMultApplied){
-    const _hpMultLate = (typeof _advBossHpMult === 'function') ? _advBossHpMult() : 1.00;
-    if(_hpMultLate !== 1.00){
-      G.p2.forEach(h => {
-        if(h && typeof h.hp === 'number'){
-          h.hp = Math.max(1, Math.round(h.hp * _hpMultLate));
-          h.curHp = h.hp;
-        }
-      });
-    }
-    window._advBossHpMultApplied = true; // 不管倍率是否為 1 都 set,避免重進時多次跑進分支
-  }
+  // ★ v1.0.20260420.3400 — HP 倍率不再在這裡套用(太早;mini battle 結束會 restore 覆蓋),
+  //   改到 advStartBattle(BOSS 戰正式進入時)套用,此時 G.p2 一定是 BOSS 陣容且難度已確定
+  //   本區塊保留空白註解當作歷史記錄點,避免未來誤加回 bug
 
   // 儲存BOSS陣容（深拷貝）
   _advBossTeamSaved = G.p2 ? JSON.parse(JSON.stringify(G.p2)) : null;
@@ -35145,6 +35165,33 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.3400', brief:[
+    '再次修復「我很會」難度 BOSS 血量不放大的 bug:倍率套用時機從 advStartMiniBattle 改到 advStartBattle(BOSS 戰真正進入時)',
+    '加 console.log 追蹤倍率是否套用(開 F12 檢查 log)',
+  ], items:[
+    '【v3200 修復沒成功的原因分析】',
+    '  v3200 把 HP 倍率套在 advStartMiniBattle(快照 _advBossTeamSaved 之前),原以為這時難度已選、G.p2 是 BOSS 陣容。但可能有場景路徑下,advStartMiniBattle 執行時 G.p2 已被替換或 _advPlayerDifficulty 狀態異常,導致倍率沒有真正套到 BOSS 陣容上',
+    '  另外就算成功套了,若 mini battle 結束後的 advFinishMiniBattle 還原路徑有 bug 或多次 applyElemBonus 覆蓋,也會讓倍率被洗掉',
+    '【v3400 新方案:套用點後移到 advStartBattle】',
+    '  advStartBattle 是 BOSS 戰真正進入的函式(advFinishCutscene → advStartBattle),此時:',
+    '    - _advPlayerDifficulty 一定已確定(過場 2 已選過)',
+    '    - G.p2 一定是 BOSS 陣容(沒有 mini 戰則始終是原陣容,有 mini 戰則剛被 _advBossTeamSaved 還原完畢)',
+    '    - _advBossHpMultApplied 由 advStartCutscene 重置為 false',
+    '  用 flag window._advBossHpMultApplied 確保每場 BOSS 戰只套一次,不會被接關/advRestartBattle 重覆套',
+    '  套完後同步更新 _advBossTeamSaved 為已縮放版本,避免後續意外 restore 復原成未縮放',
+    '【移除 advStartMiniBattle 的 v3200 邏輯】',
+    '  該位置改為空白註解當歷史記錄點,避免未來誤加回',
+    '【Debug 工具】',
+    '  advStartBattle 首段 console.log 輸出:applied(flag 狀態)、difficulty(當前難度值)、mult(倍率結果)、p2count、p2hp(三隻 BOSS 的 name+hp)',
+    '  套用每一隻時也 log:「名稱: 原 HP → 新 HP (×倍率)」',
+    '  若玩家回報仍然沒生效,可請開 F12 Console 看 log 直接判斷是:(a)difficulty 空字串 (b)flag 已是 true (c)mult 是 1.00 (d)p2 是空陣列',
+    '【預期結果】(F12 Console 會看到)',
+    '  [BOSS HP 難度倍率] 檢查: {applied: false, difficulty: "我很會", mult: 1.5, p2count: 3, p2hp: [...]}',
+    '  [BOSS HP 難度倍率] 綠竹筍小妖: 80 → 120 (×1.5)',
+    '  [BOSS HP 難度倍率] 杏花妖: 680 → 1020 (×1.5)',
+    '  [BOSS HP 難度倍率] 茶葉精靈: 70 → 105 (×1.5)',
+    '【備註】log 訊息留在程式碼裡,未來確認 bug 徹底修掉後可移除',
+  ] },
   { ver:'v1.0.20260420.3300', brief:[
     'BOSS 討伐結算面板新增右側獎勵區,同時顯示 EXP、知識幣、掉落物清單(與小怪戰一致)',
     '天賦強化通知改為右側滑入(不再佔據畫面中央),與角色升級通知同風格',
@@ -36161,7 +36208,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.3300';
+  const CURRENT_VERSION = 'v1.0.20260420.3400';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -36178,7 +36225,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.3300';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.3400';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
