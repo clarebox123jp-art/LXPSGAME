@@ -23591,45 +23591,46 @@ function _advShowUpfrontSkipDecision(onYes, onNo){
   card.style.cssText = [
     'background:linear-gradient(160deg,rgba(20,14,50,0.98),rgba(10,6,28,0.99));',
     'border:3px solid rgba(160,120,255,0.7);border-radius:22px;',
-    'padding:clamp(22px,3vw,36px) clamp(24px,4vw,48px);',
-    'width:min(96vw,620px);max-height:calc(100vh - 40px);overflow-y:auto;box-sizing:border-box;',
+    'padding:clamp(22px,3.2vw,48px) clamp(24px,4.2vw,64px);',
+    // ★ v1.0.20260420.1600 — PC 大螢幕放大:寬度 620→1000px 上限,動態依視窗寬度調整
+    'width:min(96vw,1000px);max-height:calc(100vh - 40px);overflow-y:auto;box-sizing:border-box;',
     'box-shadow:0 0 80px rgba(120,80,255,0.35),0 0 30px rgba(120,80,255,0.2);',
     'animation:_upfrontCardIn 0.4s cubic-bezier(0.22,1,0.36,1);',
     'color:#eee;'
   ].join('');
 
   card.innerHTML = `
-    <div style="font-size:clamp(22px,2.6vw,30px);font-weight:900;color:#ddbbff;text-align:center;letter-spacing:2px;margin-bottom:6px;">
+    <div style="font-size:clamp(22px,3vw,42px);font-weight:900;color:#ddbbff;text-align:center;letter-spacing:2px;margin-bottom:10px;">
       🧭 冒險開始前
     </div>
-    <div style="font-size:clamp(15px,1.55vw,19px);color:#bbccee;text-align:center;line-height:1.75;margin-bottom:14px;">
+    <div style="font-size:clamp(15px,1.75vw,24px);color:#bbccee;text-align:center;line-height:1.75;margin-bottom:18px;">
       你準備踏上景美溪河堤,展開包含 3 個場景的冒險旅途。
     </div>
-    <div style="font-size:clamp(17px,1.85vw,22px);font-weight:800;color:#ffcc44;text-align:center;line-height:1.65;margin-bottom:14px;padding:10px 14px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.35);border-radius:12px;">
+    <div style="font-size:clamp(17px,2.1vw,28px);font-weight:800;color:#ffcc44;text-align:center;line-height:1.65;margin-bottom:18px;padding:clamp(10px,1.4vw,18px) clamp(14px,1.8vw,24px);background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.35);border-radius:12px;">
       要不要直接登上山頂挑戰 BOSS,略過途中的冒險?
     </div>
-    <div style="background:rgba(80,20,20,0.25);border:1.5px solid rgba(255,120,120,0.4);border-radius:12px;padding:12px 16px;margin-bottom:10px;">
-      <div style="font-size:clamp(13px,1.35vw,16px);color:#ffaabb;font-weight:700;margin-bottom:6px;">按「是」會失去:</div>
-      <ul style="margin:0;padding-left:22px;font-size:clamp(13px,1.3vw,16px);color:#ddd;line-height:1.75;">
+    <div style="background:rgba(80,20,20,0.25);border:1.5px solid rgba(255,120,120,0.4);border-radius:12px;padding:clamp(12px,1.6vw,20px) clamp(16px,2vw,26px);margin-bottom:12px;">
+      <div style="font-size:clamp(13px,1.5vw,20px);color:#ffaabb;font-weight:700;margin-bottom:8px;">按「是」會失去:</div>
+      <ul style="margin:0;padding-left:22px;font-size:clamp(13px,1.45vw,19px);color:#ddd;line-height:1.8;">
         <li>3 場小怪戰的 EXP、知識幣、掉落物</li>
         <li>最多 3 個珍貴法寶(每場獲得 1 個)</li>
         <li>稀有怪遇(小惡魔、寶箱怪)的機會</li>
         <li>場景事件的答題獎勵與劇情體驗</li>
       </ul>
     </div>
-    <div style="background:rgba(40,80,40,0.2);border:1.5px solid rgba(120,220,140,0.3);border-radius:12px;padding:10px 16px;margin-bottom:18px;">
-      <div style="font-size:clamp(13px,1.3vw,15px);color:#bbddbb;line-height:1.6;">
+    <div style="background:rgba(40,80,40,0.2);border:1.5px solid rgba(120,220,140,0.3);border-radius:12px;padding:clamp(10px,1.4vw,18px) clamp(16px,2vw,26px);margin-bottom:22px;">
+      <div style="font-size:clamp(13px,1.4vw,18px);color:#bbddbb;line-height:1.65;">
         💡 按「否」代表完整體驗本次冒險,<b style="color:#88ff88;">途中不會再出現跳過演出按鈕</b>,請耐心破完三個場景才能挑 BOSS。
       </div>
     </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;">
-      <button id="_upfront-no" style="flex:1;min-width:150px;padding:14px 18px;font-size:clamp(16px,1.8vw,20px);font-weight:900;
+    <div style="display:flex;gap:clamp(10px,1.4vw,18px);flex-wrap:wrap;">
+      <button id="_upfront-no" style="flex:1;min-width:180px;padding:clamp(14px,1.8vw,22px) clamp(18px,2.2vw,28px);font-size:clamp(16px,2vw,26px);font-weight:900;
         background:linear-gradient(135deg,rgba(60,160,90,0.35),rgba(40,120,70,0.35));
         border:2.5px solid #3ec87a;color:#aaffcc;border-radius:12px;cursor:pointer;
         font-family:inherit;box-shadow:0 0 14px rgba(60,200,100,0.25);transition:0.15s;">
         ❌ 否,完整冒險
       </button>
-      <button id="_upfront-yes" style="flex:1;min-width:150px;padding:14px 18px;font-size:clamp(16px,1.8vw,20px);font-weight:900;
+      <button id="_upfront-yes" style="flex:1;min-width:180px;padding:clamp(14px,1.8vw,22px) clamp(18px,2.2vw,28px);font-size:clamp(16px,2vw,26px);font-weight:900;
         background:linear-gradient(135deg,rgba(200,120,50,0.3),rgba(160,80,30,0.3));
         border:2.5px solid #e89840;color:#ffcc88;border-radius:12px;cursor:pointer;
         font-family:inherit;box-shadow:0 0 14px rgba(230,150,50,0.25);transition:0.15s;">
@@ -24167,11 +24168,22 @@ function _tgAskPetQuestion(pet, petName){
     _origZ = qOv.style.zIndex;
     qOv.style.zIndex = '9500';  // 高於 cutscene (620) 與所有過場元素
   }
+  // ★ v1.0.20260420.1700 — 答對後會彈 #adv-reward-overlay (CSS z=612),
+  //   同樣會被 cutscene(620) 蓋住 → 寵物事件答對後獎勵視窗看不到、點不到 → 卡死。
+  //   此處同步拉高獎勵視窗 z-index,答題流程結束時再還原。
+  const rOv = document.getElementById('adv-reward-overlay');
+  let _origRZ = null;
+  if(rOv){
+    _origRZ = rOv.style.zIndex;
+    rOv.style.zIndex = '9500';
+  }
   // 直接呼叫現有答題。onDone 會收到 {correct:true/false}
   try{
     _advMiniQuizAsk(function(res){
       // 還原 quiz overlay 的 z-index
       if(qOv) qOv.style.zIndex = _origZ || '';
+      // ★ v1.0.20260420.1700 — 還原獎勵視窗 z-index
+      if(rOv) rOv.style.zIndex = _origRZ || '';
       _tgHidePetSpotlight();  // ★ 答題結束立即移除聚光燈
       const ok = !!(res && res.correct);
       if(ok) _tgPetCorrect(pet, petName);
@@ -31865,6 +31877,18 @@ function _advMiniGetQuizPool(sceneIdx) {
   const grade   = _advPlayerGrade      || '小學中年級';
   const subject = _advPlayerSubject    || '自然';
   const diff    = _advPlayerDifficulty || '普通';
+  // ★ v1.0.20260420.1700 — 三個五下自然獨立題庫(不在 ADV_QUIZ_DB 內),直接從對應陣列取題
+  //   修復 Bug:選這些科目時小怪戰/pet 事件瞬間彈「所有題目都出過囉」重選視窗
+  if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
+  if(subject === '五下自然期中評量' && typeof ADV_QUIZ_5S_MIDTERM !== 'undefined'){
+    return ADV_QUIZ_5S_MIDTERM.filter(q => !window._miniQuizUsedIds.has(q.id));
+  }
+  if(subject === '五下自然第三單元' && typeof ADV_QUIZ_5S_U3_ANIMAL !== 'undefined'){
+    return ADV_QUIZ_5S_U3_ANIMAL.filter(q => !window._miniQuizUsedIds.has(q.id));
+  }
+  if(subject === '五下自然第四單元' && typeof ADV_QUIZ_5S_U4_SOUND !== 'undefined'){
+    return ADV_QUIZ_5S_U4_SOUND.filter(q => !window._miniQuizUsedIds.has(q.id));
+  }
   let targetSubject, targetDiff;
   if(sceneIdx === 0){
     targetSubject = subject; targetDiff = '沒自信';
@@ -34288,6 +34312,24 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.1700', brief:[
+    '修正:選「五下自然」系列題庫時,小怪戰/寵物事件立刻彈「所有題目都出過囉」重選視窗',
+    '修正:茶園寵物事件答對後卡死,應該要出現接受/婉拒視窗',
+  ] , items:[
+    '【Bug 1 成因】_advMiniGetQuizPool(小怪戰專用選題函式)只從 ADV_QUIZ_DB 過濾題目,但五下自然期中評量/第三單元/第四單元是三個獨立陣列,完全不在 ADV_QUIZ_DB 內 → pool 永遠 0 → 立刻跳重選視窗。這是 v1.0.20260418 新增期中評量時就埋下的 bug,當時只改了 BOSS 戰選題函式',
+    '【Bug 1 修補】_advMiniGetQuizPool 最前面新增三個特殊 subject 分支,各自回傳對應陣列減去已用題目',
+    '【Bug 2 成因】茶園寵物事件答對後會彈 #adv-reward-overlay(選擇獎勵),該視窗 CSS z-index=612,低於 cutscene overlay z=620 → 獎勵視窗被過場畫面蓋住看不到也點不到 → 流程卡住',
+    '【Bug 2 修補】_tgAskPetQuestion 的 z-index 暫時拉高邏輯,現同步對 #adv-reward-overlay 也做相同處理(9500),答題結束後還原原值。原本就有對 quiz overlay 做這動作,只是漏掉了 reward overlay',
+    '【聯動效應】Bug 1 修掉後,即便 Bug 2 的 z-index 問題仍在,寵物事件也不會先卡在重選視窗;兩 bug 獨立但同時出現才會讓人覺得「每次都卡」',
+  ] },
+  { ver:'v1.0.20260420.1600', brief:[
+    '改善:冒險開始前「是否跳過過場」確認視窗,在 PC 大螢幕上放大,不再縮成一小團',
+  ], items:[
+    '【問題】_advShowUpfrontSkipDecision 彈窗寬度上限只有 620px,在 FHD(1920px)或更大的 PC 螢幕上僅佔視窗寬度約 32%,視覺上太小',
+    '【調整】card 寬度上限 620px → 1000px,padding/字體的 clamp 上限全面放寬(標題 30→42px、次標題 22→28px、清單字 16→19px、按鈕 20→26px),所有尺寸皆以 vw 為中間值,隨視窗大小自動縮放',
+    '【邊界保護】維持 width:min(96vw,1000px) 與 max-height:calc(100vh - 40px) + overflow-y:auto,確保在任何解析度下都不會超出螢幕;小螢幕走 clamp 下限值,排版不變',
+    '【預期效果】大螢幕顯示明顯放大、內容易讀;平板/手機維持原本好用的尺寸',
+  ] },
   { ver:'v1.0.20260420.1500', brief:[
     '改善:冒險中選科目視窗在選項變多後,小螢幕不會再被截斷,必要時可用手指滑動',
   ], items:[
@@ -35034,7 +35076,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1500';
+  const CURRENT_VERSION = 'v1.0.20260420.1700';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35051,7 +35093,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1500';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.1700';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
