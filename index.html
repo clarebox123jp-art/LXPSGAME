@@ -1631,16 +1631,23 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 @keyframes shake{0%{transform:translate(0,0)}15%{transform:translate(-5px,-2px)}30%{transform:translate(5px,2px)}45%{transform:translate(-4px,-1px)}60%{transform:translate(4px,1px)}75%{transform:translate(-2px,0)}90%{transform:translate(2px,0)}100%{transform:translate(0,0)}}
 @keyframes cardHitBobble{
   0%  {transform:translate3d(0,0,0) rotate(0deg) scale(1)}
-  10% {transform:translate3d(-6px,-2px,0) rotate(-2deg) scale(1.04)}
-  22% {transform:translate3d(6px,2px,0) rotate(2deg) scale(0.96)}
-  35% {transform:translate3d(-5px,-1px,0) rotate(-1.5deg) scale(1.03)}
-  50% {transform:translate3d(5px,1px,0) rotate(1.2deg) scale(0.98)}
-  65% {transform:translate3d(-3px,0,0) rotate(-0.8deg) scale(1.01)}
-  80% {transform:translate3d(2px,0,0) rotate(0.4deg)}
+  8%  {transform:translate3d(-14px,-4px,0) rotate(-4deg) scale(1.06)}
+  20% {transform:translate3d(14px,4px,0) rotate(4deg) scale(0.94)}
+  32% {transform:translate3d(-12px,-3px,0) rotate(-3deg) scale(1.05)}
+  46% {transform:translate3d(11px,3px,0) rotate(2.6deg) scale(0.96)}
+  60% {transform:translate3d(-7px,-1px,0) rotate(-1.6deg) scale(1.02)}
+  76% {transform:translate3d(4px,0,0) rotate(0.8deg)}
   100%{transform:translate3d(0,0,0) rotate(0deg) scale(1)}
 }
-.card-hit{animation:cardHitBobble 0.5s ease-out both !important;transform-origin:center center !important;}
-.card.card-hit{animation:cardHitBobble 0.5s ease-out both !important;transform-origin:center center !important;}
+.card-hit{animation:cardHitBobble 0.5s ease-out both !important;transform-origin:center center !important;transition:none !important;will-change:transform;}
+.card.card-hit{animation:cardHitBobble 0.5s ease-out both !important;transform-origin:center center !important;transition:none !important;will-change:transform;}
+/* ★ v1.0.20260420.2300 — 拉高 specificity 到 #z1/#z2 層級,徹底蓋過 #z1 .card.active 的 translateY 與 transition */
+#z1 .card.card-hit, #z2 .card.card-hit, #gc .card.card-hit{
+  animation:cardHitBobble 0.5s ease-out both !important;
+  transform-origin:center center !important;
+  transition:none !important;
+  will-change:transform;
+}
 /* ── v1.0.20260420.1900 — 屬性攻擊光束 ── */
 @keyframes atkBeamFly {
   0%   { transform:scaleX(0); opacity:0.9; }
@@ -10510,13 +10517,21 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     });
   }
   if(name==='雷法師'){
-    let all=G[opp].filter(x=>x.curHp>0);
+    // ★ v1.0.20260420.2300 — 序列化 4 次彈跳,每 200ms 跳一次(與視覺 lightningFX 的 i*200 同步)
+    //   原本的 for loop 在同一 frame 打完 4 次 doDmg,造成傷害/卡片震動/麻痺全部同時爆發,
+    //   跟視覺上「依序彈跳」的感覺完全對不上。現在改成 _pSetTimeout,每跳才 doDmg 一次
+    const _dmg = Math.floor(spv*1.5*_burstMult);
     for(let i=0;i<4;i++){
-      if(!all.length) break;
-      const t=all[Math.floor(Math.random()*all.length)];
-      doDmg(t,Math.floor(spv*1.5*_burstMult),{actor:h,isSkill:true});
-      if(t.curHp>0 && Math.random()<0.75){ addStatus(t,'para',1); bannerFX(t,'強力麻痺！','#aaff00',900); }
-      all=G[opp].filter(x=>x.curHp>0);
+      _pSetTimeout(() => {
+        const alive = G[opp].filter(x=>x.curHp>0);
+        if(!alive.length) return;
+        const t = alive[Math.floor(Math.random()*alive.length)];
+        doDmg(t, _dmg, {actor:h, isSkill:true});
+        if(t.curHp>0 && Math.random()<0.75){
+          addStatus(t,'para',1);
+          bannerFX(t,'強力麻痺！','#aaff00',900);
+        }
+      }, i*200);
     }
   }
   if(name==='光法師'){
@@ -12898,11 +12913,33 @@ function shake(target){
     if(!target || target.curHp<=0) return;
     const el=document.getElementById(`card-${target.side}-${target.pos}`);
     if(el){
-      // ★ 套在外層 .card，避免 renderCard() 重建 .card-inner 時中斷動畫
-      el.classList.remove('card-hit');
+      // ★ v1.0.20260420.2400 — 用 inline !important 徹底繞開 CSS cascade
+      //   問題:就算 .card.card-hit 加 !important,遇到 .card.burst-ready 的 animation !important
+      //   時某些瀏覽器實作會搶占,造成可爆發角色被打不震動。
+      //   解法:inline style 的 !important 永遠贏過 stylesheet !important(同為 author origin 但 inline
+      //   specificity 最高)。若該卡片處於 burst-ready 狀態,用 multi-animation 語法讓震動 + 火光閃爍並存
+      // ★ v1.0.20260420.2500 — 修正 timeout 碰撞:同卡 520ms 內被多次 shake(連鎖閃電、蝙蝠群、多段技)
+      //   會讓舊 timeout 砍掉新動畫。用 el._shakeTimer 追蹤當前 pending timeout,新震動前先清舊
+      if(el._shakeTimer){ clearTimeout(el._shakeTimer); el._shakeTimer = null; }
+      const hasBurstReady = el.classList.contains('burst-ready');
+      const animStr = hasBurstReady
+        ? 'cardHitBobble 0.5s ease-out both, burstGlow 0.8s ease-in-out infinite'
+        : 'cardHitBobble 0.5s ease-out both';
+      // 先強制清除,再強制重設,確保動畫從 0% 重啟
+      el.style.animation = 'none';
       void el.offsetWidth;
+      el.style.setProperty('animation', animStr, 'important');
+      el.style.setProperty('transform-origin', 'center center', 'important');
+      el.style.setProperty('transition', 'none', 'important');
+      // 保留 class 以保留未來 CSS 查詢能力,但實際動畫由 inline style 驅動
       el.classList.add('card-hit');
-      setTimeout(()=>{ el.classList.remove('card-hit'); },520);
+      el._shakeTimer = setTimeout(()=>{
+        el._shakeTimer = null;
+        el.classList.remove('card-hit');
+        el.style.removeProperty('animation');
+        el.style.removeProperty('transform-origin');
+        el.style.removeProperty('transition');
+      }, 520);
       // 星星炸開特效
       _hitStarBurst(el);
       return;
@@ -34452,6 +34489,42 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2500', brief:[
+    '修正:多段技能(如雷法師連鎖閃電、蝙蝠群)打到同一隻時,震動被砍斷的小 bug',
+  ], items:[
+    '【偵測】v1.0.20260420.2400 shake 改 inline style 後,審查發現 timeout 碰撞隱患:同張卡在 520ms 內被 shake 多次(連鎖閃電彈同一隻、蝙蝠群連打同一隻、多段技能),舊 setTimeout 會在 520ms 觸發並砍掉新動畫',
+    '【時序示意】t=0 shake A 排 timer1 在 520ms 清;t=200 shake B 排 timer2 在 720ms 清;但 t=520 timer1 仍觸發,把 B 的動畫砍到 320ms 就提前結束',
+    '【修補】shake() 新增 el._shakeTimer 追蹤當前 pending timeout。新震動觸發前先 clearTimeout(el._shakeTimer) 清掉舊的,再排新的。這樣 t=200 新震動會取消 t=520 的舊 timer,t=720 新 timer 乾淨執行',
+    '【效能考量】expando property _shakeTimer 存在 outer .card 元素上,renderCard 只動 innerHTML 不影響 outer,所以 property 在卡片生命週期內穩定保留',
+    '【無卡死風險確認】審查完整 shake 流程:所有 guard 齊全、setTimeout 瀏覽器保證觸發、removeProperty 對不存在屬性是 no-op、沒有無限迴圈/Promise 等待/外部事件阻塞。就算卡片元素在 520ms 內從 DOM 移除,後續 timeout callback 操作也是 silent no-op',
+  ] },
+  { ver:'v1.0.20260420.2400', brief:[
+    '徹底修復:所有受傷角色卡片現在都一定會震動(含可爆發角色)',
+  ], items:[
+    '【殘留問題】v1.0.20260420.2300 雖然 CSS 改成 !important + 高 specificity + 關閉 transition,理論上 .card.card-hit 應該贏過 .card.burst-ready。但玩家實測回報仍有角色卡不震動,懷疑某些瀏覽器實作在 animation cascade 處理上有 quirk',
+    '【根本解法】shake() 改用 JavaScript 直接設定 inline !important style:el.style.setProperty("animation", "...", "important")。inline 的 specificity 最高(1000),!important 又是 author-origin 頂級,永遠勝過任何 stylesheet 規則',
+    '【兼顧 burst-ready】用 CSS multi-animation 語法同時跑兩個動畫:"cardHitBobble 0.5s, burstGlow 0.8s infinite"。這樣可爆發角色被打時,震動跟火光閃爍並存,而非互相覆蓋。震動結束後移除 inline style,burstGlow 自動恢復為 CSS 控制',
+    '【時序】先 el.style.animation="none" + 強制 reflow + 重設,確保動畫從 0% 重啟,避免連續被打時動畫卡在中段',
+    '【相容性】保留 .card-hit class 的 add/remove 以便未來 CSS 查詢,但實際動畫由 inline style 驅動,CSS 的 .card-hit 規則淪為備援',
+  ] },
+  { ver:'v1.0.20260420.2300', brief:[
+    '修正:受傷角色卡片現在會明顯震動搖晃',
+    '強化:雷法師「怒雷狂襲」改為依序彈跳(像連鎖閃電),每次彈跳有節奏感',
+  ], items:[
+    '【震動修補】原本 .card-hit 雖然加了 !important 仍無震動效果。更深入排查發現:',
+    '  (1) .card 基本 transition:transform 0.2s 會讓每次 transform 變化都被 0.2s 平滑 — 對 0.5s 的高頻震動動畫來說,多出的 0.2s 過渡讓幅度視覺上縮小',
+    '  (2) #z1 .card.active / #z2 .card.active 有 transform:translateY(-30px) 的更高 specificity 規則,可能在動畫剛開始的某些 frame 蓋過震動',
+    '  (3) 原動畫幅度只有 6px + 2°,在其他特效(光束、星星、數字)疊加下不夠醒目',
+    '【震動三管齊下修補】',
+    '  (1) 加大 cardHitBobble 幅度:位移 6→14px、旋轉 2°→4°、縮放 0.04→0.06,視覺更明顯',
+    '  (2) .card-hit 與 .card.card-hit 加 transition:none !important 徹底關閉 transition 干擾',
+    '  (3) 新增 #z1 .card.card-hit / #z2 .card.card-hit / #gc .card.card-hit 高 specificity 規則,與 #z1 .card.active 平權以上,source order 在後,保證震動 transform 勝出',
+    '  (4) 加 will-change:transform 提示 GPU 建立獨立 layer,減少重繪成本',
+    '【雷法師連鎖閃電序列化】',
+    '  【問題】怒雷狂襲 _runBurst line 10519 原本用同步 for loop,4 次 doDmg 在同 frame 執行完,造成傷害/震動/麻痺 4 個同時爆發。而視覺 lightningFX 雖已 i*200ms stagger,兩者完全對不上,玩家看到視覺彈跳但所有傷害一起落地,失去連鎖感',
+    '  【修補】把 for loop 內容包進 _pSetTimeout(fn, i*200),讓每次彈跳的 doDmg / 麻痺判定都跟視覺 lightningFX 同步。每次跳前重新抓 alive 陣列,前一跳打死了會自動跳別的活目標',
+    '  【效果】玩家會看到:第 0ms 雷電彈向第一隻、傷害/震動/麻痺落地;200ms 彈下一隻;400ms 第三;600ms 第四。像連鎖閃電真正跳動',
+  ] },
   { ver:'v1.0.20260420.2200', brief:[
     '改善:遊戲內更新日誌改為顯示玩家友善的精簡版,不再出現一堆程式技術細節',
   ], items:[
@@ -35265,7 +35338,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2200';
+  const CURRENT_VERSION = 'v1.0.20260420.2500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35282,7 +35355,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2200';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2500';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
