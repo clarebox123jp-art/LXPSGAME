@@ -26337,6 +26337,25 @@ async function advShowBattleResult(win) {
           }
           // 超越極限果實(BOSS基礎EXP × 0.1%)
           html += `<div class="adv-reward-row drop" style="opacity:0.6;"><span class="ari">🍑</span><span class="arn">超越極限果實</span><span class="arv" style="color:#ff99aa;font-size:14px;">稀有掉落</span></div>`;
+          // ★ v1.0.20260420.3500 — 全英雄收錄 → 50% × 難度倍率掉落召喚水晶
+          try {
+            const _shopExclPanel = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+            const _eventExclPanel = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
+            const _reqHeroes = typeof HERO_DB !== 'undefined'
+              ? Object.keys(HERO_DB).filter(n =>
+                  (typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n)) &&
+                  !_shopExclPanel.includes(n) &&
+                  !_eventExclPanel.includes(n)
+                )
+              : [];
+            const _unlockedNow = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+            const _allOk = _reqHeroes.length > 0 && _reqHeroes.every(n => _unlockedNow.includes(n));
+            if(_allOk){
+              const _dropMultPanel = (typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00;
+              const _finalPct = Math.round(Math.min(1.0, 0.50 * _dropMultPanel) * 100);
+              html += `<div class="adv-reward-row drop" style="border-left-color:#cc88ff;background:rgba(200,136,255,0.08);"><span class="ari">🔮</span><span class="arn" style="color:#ddccff;">召喚水晶<span style="color:#aaa;font-size:13px;"> (全英雄收錄)</span></span><span class="arv" style="color:#cc88ff;font-size:15px;">${_finalPct}% 機率</span></div>`;
+            }
+          } catch(_ccE){}
         } catch(_e){}
         _rewardPanel.innerHTML = html;
       }
@@ -26675,20 +26694,39 @@ async function advStartWinSequence() {
       log(`🍑 [${_mainBoss}] 掉落了【超越極限果實】！已放入背包。`);
     }
   }catch(e){}
-  // ★ 召喚水晶：全部英雄已收錄時，BOSS戰後必定獲得1顆
+  // ★ v1.0.20260420.3500 — 召喚水晶改為機率掉落:
+  //   條件:收集完「冒險可獲得」的英雄(排除 BOSS/活動限定/商店肖像英雄,這些不算在「全收錄」要求中)
+  //   基礎掉落率:50%,乘上難度倍率(沒自信 ×0.5 / 普通 ×1.0 / 我很會 ×1.25 → 最終 25% / 50% / 62.5%)
   try{
-    const _allHeroNames = typeof HERO_DB !== 'undefined'
-      ? Object.keys(HERO_DB).filter(n => typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n))
+    // 組「必須全部收錄」的英雄清單:排除 BOSS、EVENT_ONLY_HEROES、商店肖像英雄(都算活動限定)
+    const _shopExclCrystal = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+    const _eventExclCrystal = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
+    const _requiredHeroes = typeof HERO_DB !== 'undefined'
+      ? Object.keys(HERO_DB).filter(n =>
+          (typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n)) &&
+          !_shopExclCrystal.includes(n) &&
+          !_eventExclCrystal.includes(n)
+        )
       : [];
-    const _unlockedHeroes = advGetUnlockedHeroes();
-    const _allUnlocked = _allHeroNames.length > 0
-      && _allHeroNames.every(n => _unlockedHeroes.includes(n));
-    if(_allUnlocked){
-      backpackAdd('summon_crystal', 1);
-      log('🔮 全英雄收錄成就！獲得【召喚水晶】×1！');
-      setTimeout(()=>{
-        _showInGameToast('🔮 全英雄收錄！獲得召喚水晶×1（召喚功能開放後可指定召喚超極稀有英雄）', '#cc88ff', 4000);
-      }, 1500);
+    const _unlockedHeroesForCrystal = advGetUnlockedHeroes();
+    const _allRequiredUnlocked = _requiredHeroes.length > 0
+      && _requiredHeroes.every(n => _unlockedHeroesForCrystal.includes(n));
+    if(_allRequiredUnlocked){
+      // 基礎 50% × 難度掉落倍率
+      const _crystalBaseRate = 0.50;
+      const _crystalDropMult = (typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00;
+      const _finalRate = Math.min(1.0, _crystalBaseRate * _crystalDropMult);
+      const _roll = Math.random();
+      const _finalPct = Math.round(_finalRate * 100);
+      if(_roll < _finalRate){
+        backpackAdd('summon_crystal', 1);
+        log(`🔮 全英雄收錄成就！獲得【召喚水晶】×1！(掉落機率 ${_finalPct}%)`);
+        setTimeout(()=>{
+          _showInGameToast(`🔮 全英雄收錄！獲得召喚水晶×1(${_finalPct}% 機率)`, '#cc88ff', 4000);
+        }, 1500);
+      } else {
+        log(`🔮 全英雄收錄狀態:召喚水晶本次未掉落(掉落機率 ${_finalPct}%)`);
+      }
     }
   }catch(e){}
   try{ await gameCloudSave(); }catch(e){}
@@ -27533,7 +27571,7 @@ const BACKPACK_ITEM_DEF = {
   'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）', sellPrice:200 },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ 召喚水晶
-  'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。前往英雄圖鑑嘗試使用（召喚功能開放後可指定召喚超極稀有英雄，目前有機率失敗）。', type:'use', useLabel:'使用（召喚英雄）' },
+  'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。⚠ 目前尚未開放使用，請先收藏等待未來版本開放召喚功能。', type:'use', useLabel:'使用（尚未開放）' },
   // ★ 小怪戰掉落物（只能販賣換知識幣）
   'half_tea':     { name:'喝一半的好茶',     icon:'🍵', desc:'被史萊姆偷喝了一半的好茶，雖然有點不乾淨，還是值點錢。', type:'sell_only', sellPrice:10 },
   'picked_flower':{ name:'被摘的花朵',       icon:'🌸', desc:'被頑皮妖精偷摘的野花，稍顯凌亂但仍有芬芳。', type:'sell_only', sellPrice:15 },
@@ -32512,14 +32550,14 @@ const MONSTER_DROPS = {
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
     { icon:'🍑', name:'超越極限果實',     rate:'約5.5%', note:'極稀有' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'全英雄收錄時必得', note:'' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄(排除活動限定)時才可能掉落,依難度決定:沒自信 25%/普通 50%/我很會 62.5%。⚠ 目前尚未開放使用' },
   ],
   '杏花妖': [
     { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'💄', name:'杏花胭脂',         rate:'20%',  note:'賣出可得1500知識幣' },
     { icon:'🍑', name:'超越極限果實',     rate:'約7.5%', note:'極稀有' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'全英雄收錄時必得', note:'' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄(排除活動限定)時才可能掉落,依難度決定:沒自信 25%/普通 50%/我很會 62.5%。⚠ 目前尚未開放使用' },
   ],
 };
 
@@ -35165,6 +35203,39 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.3600', brief:[
+    '召喚水晶的說明補上「尚未開放使用」提示,避免玩家誤以為是 bug',
+  ], items:[
+    '【背包 BACKPACK_ITEM_DEF】',
+    '  summon_crystal 的 desc 改寫:「蘊含神秘能量的水晶,據說能夠召喚超極稀有的英雄。⚠ 目前尚未開放使用,請先收藏等待未來版本開放召喚功能。」',
+    '  useLabel 從「使用（召喚英雄）」改為「使用（尚未開放）」,讓按鈕本身也明示',
+    '【BOSS 圖鑑掉落表】九尾空貓怪/杏花妖 的召喚水晶 note 尾端附加「⚠ 目前尚未開放使用」',
+    '【保留不動】實際點按鈕使用時的 _showInGameToast「超極稀有英雄召喚功能尚未開放,水晶已為你保留!」維持原樣(line 29883),避免多處訊息重覆',
+  ] },
+  { ver:'v1.0.20260420.3500', brief:[
+    '召喚水晶改為 50% 機率掉落(原本是必掉),並乘上難度掉落倍率',
+    '「全英雄收錄」的判斷排除活動限定英雄(小力/幼兒園小孩)+商店肖像英雄(電腦繪圖師等)',
+    'BOSS 結算獎勵面板會顯示當前玩家的召喚水晶掉落機率,若未集滿則不顯示',
+  ], items:[
+    '【需求】玩家原本打完 BOSS 只要「全英雄收錄」就必掉一顆召喚水晶,現在改:',
+    '  - 基礎 50% 掉落率(不再 100%)',
+    '  - 乘上答題信心難度的掉落倍率(沒自信 ×0.5、普通 ×1.0、我很會 ×1.25)',
+    '  - 最終機率:沒自信 25% / 普通 50% / 我很會 62.5%',
+    '  - 「全英雄收錄」判定排除活動限定類英雄(活動限定 EVENT_ONLY_HEROES = 小力/幼兒園小孩、商店肖像英雄 = 電腦繪圖師/程式設計師/弦樂團員/小劇團員/田徑隊員/直笛團員/籃球隊員/動物學家)',
+    '【實作變動 1:advStartWinSequence 召喚水晶區塊】',
+    '  必須全收錄的清單 _requiredHeroes = HERO_DB.keys - BOSS_NAMES - 商店肖像 - EVENT_ONLY_HEROES',
+    '  _finalRate = min(1.0, 0.50 × _advDropRateMult())',
+    '  roll < _finalRate 才給水晶,Toast 標示「🔮 全英雄收錄!獲得召喚水晶×1(50% 機率)」',
+    '  沒中也會 log 一條「召喚水晶本次未掉落(機率 ...%)」方便 debug',
+    '【實作變動 2:advShowBattleResult 獎勵面板】',
+    '  v3300 的右側獎勵清單新增一行:若玩家已「全英雄收錄」則顯示「🔮 召喚水晶 XX% 機率」(用紫色 border-left-color #cc88ff 做視覺區隔)',
+    '  若尚未全收錄則該行不顯示(避免誤導玩家以為本場有機會掉)',
+    '【無影響】召喚水晶本身的道具定義、使用邏輯、庫存顯示都不動,僅修改掉落判定',
+    '【平衡思考】',
+    '  單場 BOSS 期望水晶數:沒自信 0.25 / 普通 0.50 / 我很會 0.625',
+    '  等於打 4 場普通難度平均 2 顆、打 2 場我很會平均 1.25 顆',
+    '  既獎勵難度挑戰(我很會掉得更多),也讓沒自信的玩家不會完全沒機會',
+  ] },
   { ver:'v1.0.20260420.3400', brief:[
     '再次修復「我很會」難度 BOSS 血量不放大的 bug:倍率套用時機從 advStartMiniBattle 改到 advStartBattle(BOSS 戰真正進入時)',
     '加 console.log 追蹤倍率是否套用(開 F12 檢查 log)',
@@ -36208,7 +36279,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.3400';
+  const CURRENT_VERSION = 'v1.0.20260420.3600';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -36225,7 +36296,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.3400';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.3600';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
