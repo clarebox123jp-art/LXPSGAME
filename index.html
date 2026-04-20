@@ -31061,12 +31061,17 @@ function openChangelogPanel() {
   monthOrder.forEach((key, idx) => {
     let entriesHTML = '';
     months[key].forEach(entry => {
+      // ★ v1.0.20260420.2200 — 優先顯示 brief(玩家精簡版),沒有 brief 才 fallback 到 items(舊版相容)
+      //   items 通常包含技術細節(如 const/block-scoped/ReferenceError 等),不適合直接給玩家看
+      const _lines = (Array.isArray(entry.brief) && entry.brief.length) ? entry.brief
+                   : (Array.isArray(entry.items) && entry.items.length) ? entry.items
+                   : [];
       entriesHTML +=
         '<div style="margin-bottom:10px;padding:10px 14px;border-radius:10px;text-align:left;'
         + 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">'
         + '<div style="font-size:clamp(11px,1.1vw,14px);color:#888;margin-bottom:4px;">'
         + entry.ver + '</div>'
-        + entry.items.map(item =>
+        + _lines.map(item =>
             '<div style="font-size:clamp(14px,1.5vw,20px);color:#ddd;line-height:1.6;padding-left:6px;">・' + item + '</div>'
           ).join('')
         + '</div>';
@@ -34447,6 +34452,14 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2200', brief:[
+    '改善:遊戲內更新日誌改為顯示玩家友善的精簡版,不再出現一堆程式技術細節',
+  ], items:[
+    '【問題】遊戲內「更新日誌」面板(openChangelogPanel)直接使用 entry.items 陣列,items 是為開發留存細節的完整技術說明(如「const sceneKey 宣告提前到 if block 之外」、「setTimeout body 中斷 ReferenceError」這類),對一般玩家而言完全是噪音',
+    '【對照】遊戲首頁的版本更新彈窗(_showChangelogModal)本來就正確使用 brief 優先,只是更新日誌面板沒同步',
+    '【修補】openChangelogPanel 的 entriesHTML 改用「brief 優先、items fallback」的邏輯,與首頁版本彈窗一致。舊版條目若只有 items 沒 brief(歷史條目)仍可正常顯示,不會出現空白',
+    '【未來規劃】寫新 changelog 時持續維持 brief(玩家看)+ items(開發留存)雙陣列結構,brief 只寫玩家關心的體驗變化(如「修正卡死」、「新增功能」、「答題不再重複」),items 保留根因與實作細節供後續維護查閱',
+  ] },
   { ver:'v1.0.20260420.2100', brief:[
     '修正:小怪戰答題老是反覆出現相同幾題的問題(實際上只用到題庫前 5 題)',
   ], items:[
@@ -35252,7 +35265,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2100';
+  const CURRENT_VERSION = 'v1.0.20260420.2200';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35269,7 +35282,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2100';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2200';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
