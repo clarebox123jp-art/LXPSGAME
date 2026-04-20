@@ -3200,8 +3200,8 @@ body {
 /* 中央選擇視窗 */
 #adv-choice-panel{
   position:absolute;top:0;left:0;right:160px;bottom:0;z-index:3;
-  display:flex;align-items:center;justify-content:center;
-  padding:8px 12px;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:24px 12px 8px;
   background:transparent;
   pointer-events:none;
 }
@@ -24001,6 +24001,60 @@ function advShowChoicePanel(stage, sceneIdx) {
   }
 }
 
+// ★ v1.0.20260420.2600 — 特殊科目按鈕分類配色
+// ★ v1.0.20260420.2700 — 新增 _advGroupSubjects 做五大類分組 render
+//   紫色「一般學科」(國語文、英文、數學、…) / 白色「生活常識」/ 亮黃色「課堂複習」
+//   (具體年級+科目範圍,如 五下自然期中評量) / 淡藍色「國際教育」(xx 交流)
+//   / 亮綠色「動物園」(木柵動物園)
+function _advGetSubjectBtnStyle(subjectName){
+  if(subjectName === '木柵動物園'){
+    return 'color:#4dff6a;border-color:#4dff6a;text-shadow:0 0 10px rgba(77,255,106,0.55);';
+  }
+  if(subjectName === '生活常識'){
+    return 'color:#ffffff;border-color:#e0e0e0;text-shadow:0 0 10px rgba(255,255,255,0.55);';
+  }
+  // 國家名稱 + 交流 系列(關島交流 / 未來夏威夷交流、沖繩交流 等)
+  if(/交流$/.test(subjectName)){
+    return 'color:#88ddff;border-color:#88ddff;text-shadow:0 0 10px rgba(136,221,255,0.55);';
+  }
+  // 具體年級 + 科目範圍系列(如 五下自然期中評量、國一上英文)
+  // 條件:低/中/高/國[一二三] 或 數字 年級 + 上/下
+  if(/^(低|中|高|國[一二三]|[一二三四五六七八九十]+)[上下]/.test(subjectName)){
+    return 'color:#ffeb3b;border-color:#ffeb3b;text-shadow:0 0 10px rgba(255,235,59,0.55);';
+  }
+  return ''; // default 紫色
+}
+
+// ★ v1.0.20260420.2700 — 把科目分成 5 大類,每類一個群組,只保留有項目的群組
+function _advGroupSubjects(choices){
+  const groups = [
+    { key:'normal', label:'🎨 一般學科',
+      labelColor:'#cc99ff', glow:'rgba(204,153,255,0.55)',
+      borderColor:'rgba(204,153,255,0.45)', bgColor:'rgba(60,40,100,0.20)', items:[] },
+    { key:'life',   label:'🏠 生活常識',
+      labelColor:'#ffffff', glow:'rgba(255,255,255,0.55)',
+      borderColor:'rgba(255,255,255,0.45)', bgColor:'rgba(255,255,255,0.06)', items:[] },
+    { key:'review', label:'📖 課堂複習',
+      labelColor:'#ffeb3b', glow:'rgba(255,235,59,0.55)',
+      borderColor:'rgba(255,235,59,0.5)',   bgColor:'rgba(255,235,59,0.08)',   items:[] },
+    { key:'intl',   label:'🌏 國際教育',
+      labelColor:'#88ddff', glow:'rgba(136,221,255,0.55)',
+      borderColor:'rgba(136,221,255,0.5)',  bgColor:'rgba(136,221,255,0.07)',  items:[] },
+    { key:'zoo',    label:'🐼 動物園',
+      labelColor:'#4dff6a', glow:'rgba(77,255,106,0.55)',
+      borderColor:'rgba(77,255,106,0.5)',   bgColor:'rgba(77,255,106,0.07)',   items:[] },
+  ];
+  const byKey = Object.fromEntries(groups.map(g=>[g.key,g]));
+  choices.forEach(c => {
+    if(c === '木柵動物園')                                                       byKey.zoo.items.push(c);
+    else if(c === '生活常識')                                                    byKey.life.items.push(c);
+    else if(/交流$/.test(c))                                                     byKey.intl.items.push(c);
+    else if(/^(低|中|高|國[一二三]|[一二三四五六七八九十]+)[上下]/.test(c))        byKey.review.items.push(c);
+    else                                                                         byKey.normal.items.push(c);
+  });
+  return groups.filter(g => g.items.length > 0);
+}
+
 // ★ 多步驟選擇面板狀態與渲染
 let _advMultiStepState = null;
 function _advRenderMultiStep(panel, box, stage, sceneIdx){
@@ -24019,12 +24073,12 @@ function _advRenderMultiStep(panel, box, stage, sceneIdx){
   title.textContent = step.title;
   box.appendChild(title);
 
-  const grid = document.createElement('div');
-  grid.className = 'adv-choice-grid';
-  step.choices.forEach(c => {
+  // ★ 共用按鈕工廠:保持 click 行為一致
+  const makeBtn = (c, extraStyle) => {
     const btn = document.createElement('button');
     btn.className = 'adv-choice-btn';
     btn.textContent = c;
+    if(extraStyle) btn.style.cssText = extraStyle;
     btn.onclick = () => {
       box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
@@ -24035,16 +24089,45 @@ function _advRenderMultiStep(panel, box, stage, sceneIdx){
         if(st.stepIdx < st.steps.length){
           _advRenderMultiStep(panel, box, stage, sceneIdx);
         } else {
-          // 全部步驟完成 → 套用並繼續
           _advApplyMultiStepResults(st.results);
           _advMultiStepState = null;
           advConfirmChoice_multi(stage, sceneIdx);
         }
       }, 320);
     };
-    grid.appendChild(btn);
-  });
-  box.appendChild(grid);
+    return btn;
+  };
+
+  if(step.type === 'subject'){
+    // ★ v1.0.20260420.2700 — 科目選擇分 5 大類渲染,每類獨立框線
+    const groups = _advGroupSubjects(step.choices);
+    groups.forEach(g => {
+      const groupWrap = document.createElement('div');
+      groupWrap.style.cssText =
+        `width:100%;padding:10px 14px 12px;border-radius:14px;margin-bottom:10px;` +
+        `border:2px dashed ${g.borderColor};background:${g.bgColor};box-sizing:border-box;`;
+      const label = document.createElement('div');
+      label.style.cssText =
+        `font-size:22px;font-weight:800;text-align:left;margin-bottom:8px;letter-spacing:3px;` +
+        `color:${g.labelColor};text-shadow:0 0 8px ${g.glow};`;
+      label.textContent = g.label;
+      groupWrap.appendChild(label);
+      const groupGrid = document.createElement('div');
+      groupGrid.className = 'adv-choice-grid';
+      groupGrid.style.cssText = 'justify-content:flex-start;';
+      g.items.forEach(c => {
+        groupGrid.appendChild(makeBtn(c, _advGetSubjectBtnStyle(c)));
+      });
+      groupWrap.appendChild(groupGrid);
+      box.appendChild(groupWrap);
+    });
+  } else {
+    // 單一 flat grid(年級 / 難度 等步驟)
+    const grid = document.createElement('div');
+    grid.className = 'adv-choice-grid';
+    step.choices.forEach(c => grid.appendChild(makeBtn(c)));
+    box.appendChild(grid);
+  }
 
   panel.innerHTML = '';
   panel.appendChild(box);
@@ -34489,6 +34572,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2700', brief:[
+    '科目選擇視窗分 5 大類:一般學科 / 生活常識 / 課堂複習 / 國際教育 / 動物園,每類獨立框線',
+  ], items:[
+    '【分組設計】在「📚 你最擅長哪一科?」選擇步驟新增五大類群組,各群組用虛線框 + 淡色背景視覺區隔:',
+    '  🎨 一般學科 → 紫色框:國語文、英文、數學、社會、自然、美術、音樂、表演藝術、健康與體育、資訊科技、本土語',
+    '  🏠 生活常識 → 白色框:生活常識',
+    '  📖 課堂複習 → 亮黃色框:五下自然期中評量、五下自然第三單元、五下自然第四單元 等具體年級+科目範圍系列',
+    '  🌏 國際教育 → 淡藍色框:關島交流 及未來新增的 夏威夷交流、沖繩交流 等交流系列',
+    '  🐼 動物園 → 亮綠色框:木柵動物園',
+    '【實作】新增 _advGroupSubjects(choices) 用 regex 自動分類,每類群組有 label + 虛線框 + 背景色;_advRenderMultiStep 在 step.type === "subject" 時改用分組渲染,其他步驟(年級、難度)仍用單一 grid',
+    '【按鈕配色】各科目仍保留原本的文字色彩,現在再加上框線視覺分類,雙重辨識',
+    '【未展示的類別隱藏】filter(g => g.items.length > 0) 確保沒有項目的類別不會畫出空框',
+    '【規則擴展】regex 同時強化為 /^(低|中|高|國[一二三]|[一二三四五六七八九十]+)[上下]/,未來新增「國一上英文」「國二下國語」等國中學期科目也會自動進「課堂複習」組',
+    '【重構】抽出 makeBtn 工廠函式,複用 click + 音效 + 下一步邏輯,避免分組版與 flat 版重覆寫',
+  ] },
+  { ver:'v1.0.20260420.2600', brief:[
+    '科目選擇視窗改貼螢幕上方,不再被對話框覆蓋',
+    '特殊科目用不同顏色標示:生活常識=白、年級系列=亮黃、交流系列=淡藍、木柵動物園=亮綠',
+  ], items:[
+    '【UI 位置】#adv-choice-panel 的 align-items 由 center 改為 flex-start,並加 padding-top:24px。整個選擇面板(年級/科目/難度/事件)統一貼齊螢幕上方,底部對話框不會再遮擋選項。視覺上也更符合「先選上方問題、再看下方旁白」的閱讀動線',
+    '【按鈕分類著色】新增 _advGetSubjectBtnStyle(subjectName) 依科目名稱自動派發樣式:',
+    '  - 木柵動物園 → 亮綠色(#4dff6a) + 綠色光暈',
+    '  - 生活常識 → 白色(#ffffff) + 白色光暈',
+    '  - 任何以「交流」結尾的(關島交流、未來夏威夷交流、沖繩交流等)→ 淡藍色(#88ddff) + 藍色光暈',
+    '  - 開頭為「低/中/高/國/一~十」+「上/下」的具體年級範圍(如 五下自然期中評量、五下自然第三單元、五下自然第四單元,未來六上、七下等同理)→ 亮黃色(#ffeb3b) + 黃色光暈',
+    '  - 其他一般科目維持原紫色',
+    '【套用範圍】僅對 step.type === "subject" 的按鈕套用,確保年級/難度選擇步驟不受影響',
+    '【未來擴展性】用 regex 判斷(非寫死列表),未來增加新國家交流或其他年級的具體科目範圍時,無須改動代碼就會自動套色',
+  ] },
   { ver:'v1.0.20260420.2500', brief:[
     '修正:多段技能(如雷法師連鎖閃電、蝙蝠群)打到同一隻時,震動被砍斷的小 bug',
   ], items:[
@@ -35338,7 +35450,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2500';
+  const CURRENT_VERSION = 'v1.0.20260420.2700';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35355,7 +35467,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2500';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2700';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
