@@ -21877,6 +21877,155 @@ function _buildApricotTeam(){
   ];
 }
 
+// ★ v1.0.20260420.2900 — 進選角頁面前,先跳 BOSS 路線選擇視窗
+//   把每個 variant(路線)的 BOSS 圖片、名字、戰鬥特色、簡介顯示出來讓玩家先選
+//   玩家選完 → 關閉視窗 → 才進選角流程,敵方陣容也自動換成該 BOSS 變體
+//   (原本選角頁右上的「🔀 換路線」按鈕保留,玩家之後還能臨時改)
+function _advShowBossRouteSelector(onConfirm){
+  const stage = _adventureStage;
+  const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[stage]) || [];
+  // 只有 0 或 1 種 variant 時跳過,直接進選角
+  if(variants.length <= 1){
+    window._advSelectedVariantIdx = 0;
+    if(onConfirm) onConfirm();
+    return;
+  }
+
+  // 每個 variant 的顯示資訊(主 BOSS 名稱、戰鬥特色副標題、陣容說明、主色)
+  const BOSS_LABELS = {
+    cat9tail: {
+      mainName: '九尾空貓怪',
+      subtitle: '🔥 火焰連擊 × 穿透掠奪',
+      teamDesc: '固定陣容:綠竹筍小妖 + 九尾空貓怪 + 茶葉精靈',
+      color:    '#ff6633',
+      glow:     'rgba(255,100,50,0.5)',
+      badge:    '連擊型',
+    },
+    apricot: {
+      mainName: '杏花妖',
+      subtitle: '🌸 草系魅惑 × 反轉夥伴',
+      teamDesc: '陣容:被魅惑的你方英雄 × 2 + 杏花妖',
+      color:    '#ff88cc',
+      glow:     'rgba(255,130,200,0.5)',
+      badge:    '魅惑型',
+    }
+  };
+
+  // 移除舊彈窗避免殘留
+  const old = document.getElementById('adv-boss-route-pop');
+  if(old) old.remove();
+
+  const pop = document.createElement('div');
+  pop.id = 'adv-boss-route-pop';
+  pop.style.cssText =
+    'position:absolute;inset:0;z-index:9850;' +
+    'background:linear-gradient(135deg,rgba(6,0,2,0.97),rgba(10,2,4,0.97));' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'backdrop-filter:blur(8px);padding:24px 12px;' +
+    'animation:advRouteIn 0.4s cubic-bezier(0.34,1.56,0.64,1);' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  // 確保 keyframes 只注入一次
+  if(!document.getElementById('_adv-route-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_adv-route-kf';
+    kf.textContent = '@keyframes advRouteIn{from{opacity:0;transform:scale(0.96) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}';
+    document.head.appendChild(kf);
+  }
+
+  // 標題
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:54px;font-weight:900;color:#ffaa44;letter-spacing:6px;margin-bottom:10px;text-shadow:0 0 20px rgba(255,120,40,0.6);text-align:center;';
+  title.textContent = '🔥 選擇挑戰路線';
+  pop.appendChild(title);
+
+  const subtitle = document.createElement('div');
+  subtitle.style.cssText = 'font-size:24px;color:#ffdd99;letter-spacing:3px;margin-bottom:28px;text-align:center;opacity:0.88;';
+  subtitle.textContent = '不同路線遇到不同 BOSS,戰鬥體驗也不同,請選擇一條路再進選角';
+  pop.appendChild(subtitle);
+
+  // 卡片容器
+  const cardsWrap = document.createElement('div');
+  cardsWrap.style.cssText = 'display:flex;gap:40px;max-width:1400px;width:96%;justify-content:center;flex-wrap:wrap;margin-bottom:18px;';
+  pop.appendChild(cardsWrap);
+
+  variants.forEach((variant, idx) => {
+    const info = BOSS_LABELS[variant.id] || {
+      mainName: variant.main, subtitle:'', teamDesc:'', color:'#ffaa44',
+      glow:'rgba(255,180,60,0.45)', badge:'挑戰'
+    };
+    const imgUrl = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[info.mainName]) || '';
+    const av     = (typeof AVATARS    !== 'undefined' && AVATARS[info.mainName])   || '👾';
+    const lore   = (typeof HERO_LORE  !== 'undefined' && HERO_LORE[info.mainName]) || '';
+
+    const card = document.createElement('div');
+    card.style.cssText =
+      'width:500px;max-width:100%;flex:0 1 auto;box-sizing:border-box;' +
+      'background:linear-gradient(160deg,rgba(20,8,4,0.95),rgba(8,4,2,0.98));' +
+     `border:3px solid ${info.color};border-radius:20px;padding:20px 22px 24px;` +
+     `box-shadow:0 0 40px ${info.glow};cursor:pointer;` +
+      'transition:transform 0.2s,box-shadow 0.2s;' +
+      'display:flex;flex-direction:column;gap:12px;';
+    card.onmouseover = () => { card.style.transform = 'translateY(-6px) scale(1.02)'; card.style.boxShadow = `0 10px 60px ${info.glow}`; };
+    card.onmouseout  = () => { card.style.transform = ''; card.style.boxShadow = `0 0 40px ${info.glow}`; };
+
+    card.innerHTML =
+      `<div style="width:100%;height:240px;border-radius:14px;overflow:hidden;border:2px solid ${info.color};background:rgba(0,0,0,0.7);position:relative;">` +
+        (imgUrl
+          ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block;">`
+          : `<span style="font-size:120px;display:flex;align-items:center;justify-content:center;height:100%;">${av}</span>`) +
+       `<div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,0.75);color:${info.color};font-size:18px;font-weight:900;letter-spacing:2px;padding:4px 10px;border-radius:8px;border:1.5px solid ${info.color};">路線 ${idx+1} · ${info.badge}</div>` +
+      `</div>` +
+      `<div style="font-size:42px;font-weight:900;color:${info.color};letter-spacing:3px;text-align:center;text-shadow:0 0 14px ${info.glow};">${info.mainName}</div>` +
+      `<div style="font-size:24px;color:#ffddaa;letter-spacing:3px;text-align:center;margin-top:-4px;">${info.subtitle}</div>` +
+      (lore ? `<div style="font-size:22px;color:#e8e0d4;line-height:1.65;padding:10px 14px;background:rgba(255,200,120,0.06);border-left:3px solid ${info.color};border-radius:0 8px 8px 0;">${lore}</div>` : '') +
+      `<div style="font-size:20px;color:#99ccff;letter-spacing:1px;line-height:1.5;text-align:center;opacity:0.92;">${info.teamDesc}</div>` +
+      `<div style="display:flex;gap:10px;margin-top:6px;">` +
+       `<button data-action="detail" style="flex:1;padding:12px;font-size:22px;font-weight:700;letter-spacing:2px;background:rgba(80,140,255,0.15);border:2px solid rgba(80,140,255,0.55);color:#99ccff;border-radius:10px;cursor:pointer;font-family:inherit;transition:all 0.15s;">ℹ︎ 詳細資料</button>` +
+       `<button data-action="select" style="flex:2;padding:12px;font-size:26px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,${info.color},rgba(0,0,0,0.1));border:2px solid ${info.color};color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;text-shadow:0 0 6px rgba(0,0,0,0.5);transition:all 0.15s;">⚔ 選擇此路線</button>` +
+      `</div>`;
+
+    // 綁定事件
+    const detailBtn = card.querySelector('[data-action="detail"]');
+    const selectBtn = card.querySelector('[data-action="select"]');
+    detailBtn.onmouseover = () => { detailBtn.style.background = 'rgba(80,140,255,0.35)'; detailBtn.style.color = '#fff'; };
+    detailBtn.onmouseout  = () => { detailBtn.style.background = 'rgba(80,140,255,0.15)'; detailBtn.style.color = '#99ccff'; };
+    detailBtn.onclick = (e) => {
+      e.stopPropagation();
+      try { playSfx('sfx-sel', 0.6); } catch(_){}
+      if(typeof advShowBossDetail === 'function') advShowBossDetail(info.mainName);
+    };
+
+    const commit = () => {
+      try { playSfx('sfx-confirm2', 0.95); } catch(_){}
+      window._advSelectedVariantIdx = idx;
+      // 若挑到杏花妖,預先產生被魅惑的隊伍(與 _cycleAdvBossVariant 邏輯一致)
+      if(variant.id === 'apricot'){
+        window._advApricotPreviewTeam = (typeof _buildApricotTeam === 'function') ? _buildApricotTeam() : null;
+      } else {
+        window._advApricotPreviewTeam = null;
+      }
+      // 淡出動畫再移除
+      pop.style.transition = 'opacity 0.25s';
+      pop.style.opacity = '0';
+      setTimeout(() => { pop.remove(); if(onConfirm) onConfirm(); }, 230);
+    };
+    selectBtn.onclick = (e) => { e.stopPropagation(); commit(); };
+    // 整張卡(除了按鈕區)也能點擊選擇
+    card.onclick = (e) => { if(!e.target.closest('button')) commit(); };
+
+    cardsWrap.appendChild(card);
+  });
+
+  // 底部提示
+  const tip = document.createElement('div');
+  tip.style.cssText = 'font-size:20px;color:#bbb;letter-spacing:2px;margin-top:10px;text-align:center;';
+  tip.textContent = '💡 選完進選角畫面後,右邊的「🔀 換路線」按鈕仍可切換';
+  pop.appendChild(tip);
+
+  (document.getElementById('gc') || document.body).appendChild(pop);
+}
+
 // ── 從關卡選擇頁面按下「整裝出發」
 function startAdventureGame(stage){
   // 安全檢查：確認冒險系統已正確載入
@@ -21993,8 +22142,11 @@ function startAdventureGame(stage){
     battleStats:{},lastSkillName:null,comboFatigue:0
   };
   buildDeck();
-  // ★ 先選角英雄，過場在確認技能後才啟動
-  fadeTransition(()=>{ showHeroPickOverlay(); }, 350);
+  // ★ v1.0.20260420.2900 — 先彈 BOSS 路線選擇視窗,選完才進選角
+  //   若該關只有一個 variant,selector 會直接 callback,不會卡流程
+  fadeTransition(()=>{
+    _advShowBossRouteSelector(()=> showHeroPickOverlay());
+  }, 350);
 }
 
 // ── 標記 BOSS 卡片樣式（renderField 後呼叫）
@@ -34582,6 +34734,28 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2900', brief:[
+    '冒險模式進選角前,先跳出「BOSS 路線選擇」視窗,讓你挑戰前先看各路線 BOSS 的圖、簡介、陣容再決定',
+    '選完才進選角,敵方陣容自動換成你選的 BOSS,原本選角頁的「🔀 換路線」按鈕保留仍可切換',
+  ], items:[
+    '【流程】startAdventureGame 在 buildDeck 後,fadeTransition 的回呼改為 _advShowBossRouteSelector(()=> showHeroPickOverlay()) 鏈式觸發:先彈路線選擇 → 玩家選定 → 淡出移除 → 呼叫原本的 showHeroPickOverlay',
+    '【新函式 _advShowBossRouteSelector(onConfirm)】',
+    '  - 全螢幕 overlay(z-index 9850,高於一般 UI 但低於詳情 popup 的 9900),深色漸層背景 + backdrop-filter blur',
+    '  - 標題「🔥 選擇挑戰路線」+ 副標題引導',
+    '  - 每個 variant 渲染一張大卡:240px BOSS 圖片、路線編號 + 類型徽章(連擊型/魅惑型)、BOSS 名稱(variant 主色)、戰鬥特色副標題、HERO_LORE 簡介引言、陣容說明、兩顆按鈕(詳細資料 / 選擇此路線)',
+    '  - 兩顆按鈕分工:「ℹ︎ 詳細資料」呼叫既有 advShowBossDetail(name) 顯示完整數值/技能(不關閉選擇視窗)、「⚔ 選擇此路線」commit 選擇',
+    '  - 整張卡點擊(排除按鈕區)也會觸發 commit,等同快速選',
+    '  - commit 邏輯:設定 window._advSelectedVariantIdx、若選杏花妖則呼叫 _buildApricotTeam() 產生被魅惑隊伍、淡出後移除並呼叫 onConfirm(進選角)',
+    '【safety fallback】若某關只有 0 或 1 種 variant,函式會直接設 _advSelectedVariantIdx=0 並立即呼叫 onConfirm,不會卡流程',
+    '【與既有系統整合】',
+    '  - _advSelectedVariantIdx 已存在(原「🔀 換路線」使用),只是改由這個新彈窗提前設好初始值',
+    '  - 既有的 _getCurrentAdvBossTeam、_renderAdvBossPreview、showHeroPickOverlay 裡的 BOSS 預覽區讀的都是同一個 idx,所以進選角會自動顯示正確的 BOSS 陣容',
+    '  - 既有的 confirmHeroPick(line 8775 起)讀的也是同一個 idx,開戰時 G.p2 直接帶對應變體的陣容',
+    '  - 既有的「🔀 換路線」按鈕完全保留,玩家選完仍可修正',
+    '【BOSS 顯示資訊】九尾空貓怪「🔥 火焰連擊 × 穿透掠奪 / 連擊型 / 固定陣容」色 #ff6633;杏花妖「🌸 草系魅惑 × 反轉夥伴 / 魅惑型 / 陣容:被魅惑的你方英雄 × 2 + 杏花妖」色 #ff88cc',
+    '【動畫】進場 cubic-bezier 彈入(縮放 + 位移 0.4s),出場淡出 0.25s;卡片 hover 會上升 + 發光',
+    '【keyframes 注入】使用 id=_adv-route-kf 的 style 元素動態注入 advRouteIn keyframe,避免重複注入',
+  ] },
   { ver:'v1.0.20260420.2800', brief:[
     '修復科目選擇視窗無法捲動 bug,下面的「國際教育」「動物園」組被對話框遮住',
     '換上更明顯的金色捲軸,內容超過時看得出來可以捲',
@@ -35471,7 +35645,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2800';
+  const CURRENT_VERSION = 'v1.0.20260420.2900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35488,7 +35662,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2800';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2900';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
