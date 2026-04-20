@@ -3183,7 +3183,7 @@ body {
   background:rgba(8,10,22,0.95);backdrop-filter:blur(12px);
   border:2px solid rgba(255,220,80,0.5);border-radius:18px;
   padding:18px 20px;max-width:95vw;width:auto;
-  max-height:92vh;overflow:hidden;
+  max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
   box-shadow:0 0 60px rgba(0,0,0,0.9);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
 }
@@ -23035,7 +23035,83 @@ const ADV_QUIZ_5S_MIDTERM = [
   {id:9030,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'在戶外觀星，當我們發現獵戶座在晚上 8 點位於東南方，到了晚上 10 點，它大約會移動到哪個方向？',options:['東北方','正南方','正北方','原地不動'],answer:'B'},
 ];
 
+// ── 五下自然第三單元「動物的生活」專屬題庫 ──
+const ADV_QUIZ_5S_U3_ANIMAL = [
+  {id:9101,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於人類手臂運動的敘述，哪一項正確？',options:['只要有肌肉就能動','彎曲時內側肌肉舒張','伸直時外側肌肉收縮','骨骼會主動收縮帶動肌肉'],answer:'C'},
+  {id:9102,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物的運動器官主要是「鰭」？',options:['鴨子','魚','候鳥','蜘蛛'],answer:'B'},
+  {id:9103,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'蚯蚓沒有骨骼，牠主要是靠什麼方式在土裡活動？',options:['腹足','翅膀','肌肉與剛毛','八隻腕'],answer:'C'},
+  {id:9104,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'人體骨骼與骨骼的連接處稱為什麼？',options:['關節','肌肉','韌帶','纖維'],answer:'A'},
+  {id:9105,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物「求偶」的敘述，哪一項錯誤？',options:['為了吸引異性','為了繁衍後代','每一種動物求偶方式都一樣','螢火蟲會利用發光求偶'],answer:'C'},
+  {id:9106,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'雄孔雀展開鮮豔的尾羽是為了什麼？',options:['嚇跑敵人','捕食獵物','吸引雌孔雀','準備飛行'],answer:'C'},
+  {id:9107,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'「卵生動物」胚胎發育所需的養分主要來源為何？',options:['母體的血液','卵黃與蛋白','胎盤','外界的水分'],answer:'B'},
+  {id:9108,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「胎生動物」的特徵，哪一項正確？',options:['小寶寶在母體外孵化','小寶寶產出時已有完整形體','一次產下的數量通常比卵生多','胚胎由卵黃提供養分'],answer:'B'},
+  {id:9109,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物具有「育兒袋」來保護幼兒？',options:['狗','鱷魚','袋鼠','負子蟲'],answer:'C'},
+  {id:9110,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'東方環頸鴴出現「擬傷行為」的主要目的是？',options:['練習跳舞','吸引天敵注意以保護幼鳥','尋找食物','吸引配偶'],answer:'B'},
+  {id:9111,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「社會性行為」，哪種動物的描述正確？',options:['蜜蜂各有分工，共同生活','鬥魚成群生活互相幫忙','蜘蛛會合作織網','變色龍會群體打獵'],answer:'A'},
+  {id:9112,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'蜜蜂家族中，負責「產卵」的是誰？',options:['雄蜂','工蜂','蜂后','偵查蜂'],answer:'C'},
+  {id:9113,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物「傳遞訊息」的方式，哪一項錯誤？',options:['蜜蜂會跳舞','海豚靠聲音溝通','螞蟻會留下氣味','所有的動物都靠語言溝通'],answer:'D'},
+  {id:9114,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'下列哪一種特徵是由父母「遺傳」給子代的？',options:['疤痕','雙眼皮','染過的髮色','騎腳踏車的技術'],answer:'B'},
+  {id:9115,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「二分法」分類動物，下列敘述何者正確？',options:['只能用腳的數量分類','標準必須是「是與不是」或「有與沒有」','每一層則分出三類','只有科學家才能使用'],answer:'B'},
+  {id:9116,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'變溫動物（外溫動物）在天冷時通常會怎麼做？',options:['吹風散熱','曬太陽增加體溫','拼命流汗','扇動耳朵'],answer:'B'},
+  {id:9117,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於恆溫動物（內溫動物）的散熱行為，哪項正確？',options:['狗靠吐舌頭喘氣','大象縮小耳朵','烏龜躲進洞穴','蛇在太陽下取暖'],answer:'A'},
+  {id:9118,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'黑面琵鷺每年秋、冬季節遷移到臺灣，這種行為稱為什麼？',options:['避敵','覓食','遷移','育幼'],answer:'C'},
+  {id:9119,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪種動物利用「保護色」來避敵或覓食？',options:['枯葉蝶','穿山甲','河豚','刺蝟'],answer:'A'},
+  {id:9120,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'鬥魚看到鏡中的自己會展開鰓蓋，這是什麼行為？',options:['求偶行為','威嚇或敵對行為','社交行為','覓食行為'],answer:'B'},
+  {id:9121,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'肉食性動物的牙齒通常具有什麼特徵？',options:['臼齒發達平整','犬齒長而尖銳','沒有門齒','牙齒數量極少'],answer:'B'},
+  {id:9122,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物是「雜食性」的？',options:['獅子','斑馬','人類','鯊魚'],answer:'C'},
+  {id:9123,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'變色龍利用什麼器官來捕捉昆蟲？',options:['爪子','翅膀','具黏性的長舌頭','尾巴'],answer:'C'},
+  {id:9124,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'「胎兒在母體子宮內發育，透過臍帶吸收養分」，這是描述哪類動物？',options:['卵生','胎生','卵胎生','無性生殖'],answer:'B'},
+  {id:9125,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'下列哪一項不是育幼行為？',options:['鳥類餵食雛鳥','獅子訓練小獅子打獵','狗媽媽分泌乳汁','雄孔雀開屏'],answer:'D'},
+  {id:9126,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物行為與環境適應，哪項錯誤？',options:['紫斑蝶會南下度冬','螞蟻分工可增加生存機會','鯨魚利用腮在水中呼吸','貓在黑暗中瞳孔會放大'],answer:'C'},
+  {id:9127,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'穿山甲遇到危險會縮成球狀，是利用身體什麼構造？',options:['刺','堅硬的外殼與鱗片','臭氣','毒液'],answer:'B'},
+  {id:9128,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「回聲定位」，下列哪種動物具備此能力？',options:['蚯蚓','蝙蝠','蝸牛','蝴蝶'],answer:'B'},
+  {id:9129,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'人類消化系統中，主要負責吸收養分的器官是？',options:['胃','食道','小腸','大腸'],answer:'C'},
+  {id:9130,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於親代與子代的敘述，哪項正確？',options:['子代一定跟父親長得一模一樣','子代與親代間只有相似性沒有相異性','子代會繼承親代所有的性狀','受精卵是由精子與卵子結合而成'],answer:'D'},
+];
+
+// ── 五下自然第四單元「聲音與樂器」專屬題庫 ──
+const ADV_QUIZ_5S_U4_SOUND = [
+  {id:9201,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音的大小在科學上稱為什麼？',options:['音調','響度','音色','頻率'],answer:'B'},
+  {id:9202,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'想要讓同一個鼓發出較大的聲音，應該怎麼做？',options:['用力敲打','輕輕敲打','換一個小鼓','換一根鼓棒'],answer:'A'},
+  {id:9203,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'物體振動「大」時，發出的聲音會如何？',options:['較高','較小','較大','較低'],answer:'C'},
+  {id:9204,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音的高低在科學上稱為什麼？',options:['音量','響度','音調','音色'],answer:'C'},
+  {id:9205,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'敲擊鐵琴時，哪一種琴鍵發出的音調較「高」？',options:['較長的琴鍵','較厚的琴鍵','較短的琴鍵','較寬的琴鍵'],answer:'C'},
+  {id:9206,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'彈撥烏克麗麗時，哪種弦發出的聲音較「低」？',options:['較細的弦','較短的弦','較緊的弦','較粗的弦'],answer:'D'},
+  {id:9207,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於弦樂器發聲的敘述，哪項正確？',options:['弦愈鬆音調愈高','弦愈長音調愈低','弦愈細音調愈低','與弦的粗細無關'],answer:'B'},
+  {id:9208,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'吹奏直笛時，是什麼東西振動產生聲音？',options:['笛子的外殼','吹口','空氣柱','手指頭'],answer:'C'},
+  {id:9209,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'按住直笛的笛孔愈多，空氣柱會如何變化？',options:['愈短，音愈高','愈長，音愈低','愈短，音愈低','愈長，音愈高'],answer:'B'},
+  {id:9210,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'我們能分辨鋼琴聲與小提琴聲的不同，是因為它們的什麼性質不同？',options:['響度','音調','音色','節奏'],answer:'C'},
+  {id:9211,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音三要素是指哪三項？',options:['高低、大小、長短','音調、響度、音色','頻率、分貝、波長','音量、大小、音質'],answer:'B'},
+  {id:9212,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於「噪音」的定義，下列何者較準確？',options:['只要是音樂就不是噪音','聽起來吵雜刺耳、影響生活安寧的聲音','分貝數低於 10 的聲音','只有施工聲才是噪音'],answer:'B'},
+  {id:9213,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'測量音量大小的單位是什麼？',options:['公分','公斤','分貝','秒'],answer:'C'},
+  {id:9214,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'長期處於多少分貝以上的環境，可能會使聽力受損？',options:['30','50','85','10'],answer:'C'},
+  {id:9215,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'下列哪一項不是防治噪音的方法？',options:['安裝氣密窗','戴隔音耳罩','道路旁架設隔音牆','加強室內的燈光'],answer:'D'},
+  {id:9216,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'為什麼電影院的牆壁常鋪設海綿或絨布？',options:['為了美觀','為了吸收聲音減少回聲','為了保暖','為了讓牆壁變軟'],answer:'B'},
+  {id:9217,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音在傳播過程中碰到障礙物反射回來的現象稱為什麼？',options:['超音波','回聲','噪音','音色'],answer:'B'},
+  {id:9218,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'倒車雷達是應用什麼原理來測量距離？',options:['聲波反射（超音波）','磁鐵吸力','紅外線照射','壓力感應'],answer:'A'},
+  {id:9219,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'製作簡易「紙盒烏克麗麗」時，挖洞的主要功能是？',options:['為了拿取方便','作為音箱放大聲音','為了減輕重量','為了裝飾'],answer:'B'},
+  {id:9220,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'在「探究與實作」實驗中，為了實驗目的而改變的因素稱為什麼？',options:['控制變因','操縱變因','應變變因','固定變因'],answer:'B'},
+  {id:9221,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'想要降低鬧鐘的音量，哪種方法有效？',options:['用毛巾包裹鬧鐘','把鬧鐘放在金屬盤上','拿掉鬧鐘的電池','對著鬧鐘大叫'],answer:'A'},
+  {id:9222,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'敲擊裝水的玻璃杯，水量愈多，敲出的音調會？',options:['愈高','愈低','不變','消失'],answer:'B'},
+  {id:9223,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於人聲的產生，主要是靠哪個部位振動？',options:['嘴唇','牙齒','聲帶','舌頭'],answer:'C'},
+  {id:9224,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'哪一種樂器屬於「打擊樂器」？',options:['長笛','爵士鼓','吉他','小提琴'],answer:'B'},
+  {id:9225,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'在簡易樂器實驗中，若想研究「橡皮筋粗細對音高的影響」，哪項應作為控制變因？',options:['橡皮筋的粗細','橡皮筋的長短與鬆緊','發出的聲音高低','撥彈的人'],answer:'B'},
+  {id:9226,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'下列哪種材質的隔音效果通常較佳？',options:['鐵片','透明塑膠片','具細小孔洞的海綿','玻璃'],answer:'C'},
+  {id:9227,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音在空氣中是以什麼形式傳遞？',options:['直線跑動','波的形式','圓圈形式','顆粒形式'],answer:'B'},
+  {id:9228,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於噪音防治，下列哪項做法不恰當？',options:['在室內輕聲細語','搬動椅子用拉的','晚間不彈奏樂器','樂器加裝消音器'],answer:'B'},
+  {id:9229,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'自製吸管笛時，若將吸管剪短，吹出的聲音會？',options:['變大聲','音調變高','音調變低','變小聲'],answer:'B'},
+  {id:9230,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'醫生使用的「超音波檢查儀」是模仿哪種動物的本領？',options:['螞蟻','蝙蝠','老虎','蝴蝶'],answer:'B'},
+];
+
 function advGetQuizPool(grade, subject, difficulty) {
+  // ★ v1.0.20260420.1400 — 五下自然第三單元「動物的生活」專屬題庫
+  if (subject === '五下自然第三單元') {
+    return [...ADV_QUIZ_5S_U3_ANIMAL].sort(() => Math.random() - 0.5);
+  }
+  // ★ v1.0.20260420.1400 — 五下自然第四單元「聲音與樂器」專屬題庫
+  if (subject === '五下自然第四單元') {
+    return [...ADV_QUIZ_5S_U4_SOUND].sort(() => Math.random() - 0.5);
+  }
   // ★ 選了期中評量 → 直接回傳專屬題庫，不受難度影響
   if (subject && subject.includes('評量')) {
     const pool = [...ADV_QUIZ_5S_MIDTERM].sort(() => Math.random() - 0.5);
@@ -23176,7 +23252,7 @@ const ADV_SCENES = {
       choiceTitle: '📚 出發前：請告訴我你的資訊',
       choiceSteps: [
         { type:'grade',   title:'🎒 你是什麼年級？',       choices:['小學低年級','小學中年級','小學高年級','五年級','國中'] },
-        { type:'subject', title:'📚 你最擅長哪一科？',     choices:['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流','木柵動物園'] },
+        { type:'subject', title:'📚 你最擅長哪一科？',     choices:['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園'] },
       ],
     },
     {
@@ -24317,7 +24393,7 @@ function advSkipCutscene() {
     if(window.innerWidth > 1180){ box.style.width='min(96vw,1000px)'; box.style.fontSize='170%'; }
 
   const gradeOpts = ['低年級','中年級','高年級','五年級','國中'];
-  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','關島交流','木柵動物園','木柵動物園'];
+  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園','木柵動物園'];
   const diffOpts  = ['沒自信','普通','我很會'];
 
   function mkRow(label, opts, key) {
@@ -34212,6 +34288,25 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.1500', brief:[
+    '改善:冒險中選科目視窗在選項變多後,小螢幕不會再被截斷,必要時可用手指滑動',
+  ], items:[
+    '【背景】v1.0.20260420.1400 新增了兩個五下自然單元題庫,讓冒險中選科目面板從 15 個選項擴充到 17 個',
+    '【風險分析】.adv-choice-box 原本設定 overflow:hidden + max-height 92vh/85vh/75vh,在手機橫躺小螢幕(如 667×375)計算後剩餘空間僅 19px,臨界可能被截斷',
+    '【修補】將 .adv-choice-box 的 overflow:hidden 改為 overflow-y:auto,並加上 -webkit-overflow-scrolling:touch 確保 iOS 上滑動流暢',
+    '【副作用】零副作用:桌面/平板/手機直向的選項本來就塞得下,這個修改只有在真正超出時啟用捲軸;未來若繼續增加題庫或開無障礙大字體也不會漏看',
+  ] },
+  { ver:'v1.0.20260420.1400', brief:[
+    '新增題庫:「五下自然第三單元 動物的生活」共 30 題',
+    '新增題庫:「五下自然第四單元 聲音與樂器」共 30 題',
+  ], items:[
+    '新增 ADV_QUIZ_5S_U3_ANIMAL 陣列(30 題,id 9101-9130),主題涵蓋:骨骼肌肉運動、求偶繁殖行為、卵生/胎生、社會性行為、遺傳、分類學、變溫/恆溫動物、遷徙、保護色、食性與特殊構造等',
+    '新增 ADV_QUIZ_5S_U4_SOUND 陣列(30 題,id 9201-9230),主題涵蓋:聲音三要素(音調/響度/音色)、弦樂器/管樂器/打擊樂器發聲原理、噪音與分貝、回聲與超音波、探究變因、消音吸音等',
+    'advGetQuizPool 函式新增兩個明確 subject 分支,選到此兩單元時直接回傳該單元 30 題的完整隨機池(與期中評量相同模式)',
+    '科目下拉選單兩處同步新增:(1) 冒險中選科目面板 (2) 跳過過場的科目選擇面板,插在「五下自然期中評量」後方以便成組',
+    '格式與期中評量完全一致:grade:"五年級", difficulty:"普通", options 為 4 選項陣列, answer 為 A/B/C/D 字母',
+    '原始文稿中「減寫重量」typo 已修正為「減輕重量」(Q9219)',
+  ] },
   { ver:'v1.0.20260420.1300', brief:[
     '修正:「🔄回溯」與「❓教學」兩顆按鈕會殘留在冒險選關頁(打完 BOSS 回來時),現已改為只在戰鬥中出現',
   ], items:[
@@ -34939,7 +35034,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1300';
+  const CURRENT_VERSION = 'v1.0.20260420.1500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34956,7 +35051,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1300';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.1500';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
