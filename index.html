@@ -6453,7 +6453,7 @@ const HERO_IMG_POS = {
   '電腦繪圖師':['90% auto','center 30%'],
   '程式設計師':['90% auto','center 30%'],
   '弦樂團員':  ['90% auto','center 30%'],
-  '小劇團員':  ['90% auto','center 30%'],
+  '小劇團員':  ['90% auto','center 20%'],  // v1.0.20260420.1100 整張往下移 10%(30→20),同步影響原始/銀冕王子/琉璃公主三張肖像
 };
 
 function _getCurPortraitObjPos(name){
@@ -34027,6 +34027,12 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.1100', brief:[
+    '小劇團員預覽視窗圖片整張往下移 10%,原始肖像、銀冕王子(男)、琉璃公主(女)三張都同步調整',
+  ], items:[
+    'HERO_IMG_POS[\'小劇團員\'] 由 [\'90% auto\',\'center 30%\'] 改為 [\'90% auto\',\'center 20%\'],Y% 減少 10 等於圖片整體往下移 10%(顯示更多圖片上緣、減少下緣)',
+    '因為 HERO_PORTRAIT_LIBRARY 中 drama_boy(銀冕王子)與 drama_girl(琉璃公主)兩張替代肖像都沒有獨立的 objPos,會 fallback 到共用的 HERO_IMG_POS,所以這一行改動能同步套用到三張',
+  ] },
   { ver:'v1.0.20260420.1030', brief:[
     '修復:被救援補償升級的英雄沒有拿到應有素質點數的 bug。所有受影響玩家登入後會自動補發應有的素質點數',
     '確認:素質重置與技能重置的退還機制正確運作',
@@ -34709,7 +34715,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1030';
+  const CURRENT_VERSION = 'v1.0.20260420.1100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34726,7 +34732,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1030';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.1100';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
