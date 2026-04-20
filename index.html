@@ -7822,6 +7822,28 @@ function showHeroPickOverlay(){
   document.getElementById('fate-text').textContent = '與你命運交織的夥伴';
   // ★ 鬥技場模式：強制重置冒險旗標
   _adventureMode = false;
+  // ★ v1.0.20260420.0830 — 鬥技場敵方預覽區「徹底還原」
+  //   修復:先進冒險看到 BOSS 陣容,再回首頁進鬥技場會顯示成 BOSS 陣容的 bug
+  //   原因:_renderAdvBossPreview 會用 innerHTML 重寫 hpick-enemy-slots,
+  //        把 ep-slot-0~3 四個子 div 全刪了;鬥技場 _renderEnemySlots 找不到
+  //        就靜靜跳過,BOSS 的殘留 HTML 就留在畫面上
+  try {
+    const _entTitle = document.getElementById('hpick-enemy-title');
+    if(_entTitle) _entTitle.textContent = '🟥 對手陣容';
+    const _entSlots = document.getElementById('hpick-enemy-slots');
+    if(_entSlots){
+      _entSlots.innerHTML = '<div class="ep-slot" id="ep-slot-0"></div>'
+                          + '<div class="ep-slot" id="ep-slot-1"></div>'
+                          + '<div class="ep-slot" id="ep-slot-2"></div>'
+                          + '<div class="ep-slot" id="ep-slot-3"></div>';
+    }
+    // 清除冒險模式預覽暫存,避免下次進冒險看到舊的陣容
+    window._advApricotPreviewTeam = null;
+    _previewEnemyNames = [];
+    // 還原屬性相剋圖(冒險模式會藏)
+    const _entEW = document.getElementById('elem-wheel');
+    if(_entEW) _entEW.style.display = '';
+  } catch(_resEPE){ console.warn('[鬥技場預覽重置失敗]', _resEPE); }
   // ★ 鬥技模式顯示返回按鈕
   const _hpBackBtn2 = document.getElementById('hero-pick-back-btn');
   if(_hpBackBtn2) _hpBackBtn2.style.display = '';
@@ -18973,11 +18995,62 @@ async function _showAdminStatsPanel(){
   const pop = document.createElement('div');
   pop.id = '_admin-stats-panel';
   pop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);'
-    + 'display:flex;align-items:center;justify-content:center;font-family:inherit;';
+    + 'display:flex;align-items:center;justify-content:center;font-family:inherit;'
+    + 'padding:20px;box-sizing:border-box;';
   pop.innerHTML = `
+    <style>
+      /* v1.0.20260420.0900 — GM 面板響應式縮放
+         策略:卡片內部捲動(max-height + overflow) + 視窗過小時用屬性選擇器縮小文字 */
+      #_admin-stats-panel > div::-webkit-scrollbar { width: 8px; }
+      #_admin-stats-panel > div::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
+      #_admin-stats-panel > div::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.5); border-radius: 4px; }
+      #_admin-stats-panel > div::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.8); }
+      /* 小螢幕 / 矮視窗:整體縮小(clamp 確保不會過小)
+         觸發條件:高度 ≤ 900 或 寬度 ≤ 700 */
+      @media (max-height: 900px), (max-width: 700px) {
+        #_admin-stats-panel > div {
+          padding: clamp(14px, 2.4vw, 32px) clamp(18px, 3vw, 40px) !important;
+        }
+        #_admin-stats-panel [style*="font-size:26px"] { font-size: clamp(17px, 2.3vw, 22px) !important; }
+        #_admin-stats-panel [style*="font-size:22px"] { font-size: clamp(14px, 1.9vw, 18px) !important; }
+        #_admin-stats-panel [style*="font-size:18px"] { font-size: clamp(13px, 1.6vw, 16px) !important; }
+        #_admin-stats-panel [style*="font-size:16px"] { font-size: clamp(12px, 1.45vw, 14px) !important; }
+        #_admin-stats-panel [style*="font-size:15px"] { font-size: clamp(11px, 1.35vw, 13px) !important; }
+        #_admin-stats-panel [style*="font-size:14px"] { font-size: clamp(11px, 1.3vw, 13px) !important; }
+        #_admin-stats-panel [style*="font-size:13px"] { font-size: clamp(10px, 1.2vw, 12px) !important; }
+        #_admin-stats-panel [style*="font-size:12px"] { font-size: clamp(10px, 1.1vw, 11px) !important; }
+        #_admin-stats-panel [style*="padding:16px"] { padding: clamp(9px, 1.5vw, 14px) !important; }
+        #_admin-stats-panel [style*="min-height:60px"] { min-height: clamp(40px, 5vh, 55px) !important; }
+        #_admin-stats-panel [style*="margin-bottom:22px"] { margin-bottom: clamp(8px, 1.3vw, 16px) !important; }
+        #_admin-stats-panel [style*="margin-bottom:18px"] { margin-bottom: clamp(7px, 1.15vw, 14px) !important; }
+        #_admin-stats-panel [style*="margin-bottom:14px"] { margin-bottom: clamp(6px, 1vw, 12px) !important; }
+        #_admin-stats-panel [style*="margin-bottom:12px"] { margin-bottom: clamp(5px, 0.9vw, 10px) !important; }
+        #_admin-stats-panel [style*="margin-bottom:10px"] { margin-bottom: clamp(4px, 0.8vw, 9px) !important; }
+        #_admin-stats-panel [style*="padding:12px"] { padding: clamp(7px, 1.1vw, 11px) !important; }
+        #_admin-stats-panel button[style*="padding:11px 20px"],
+        #_admin-stats-panel button[style*="padding:10px 20px"],
+        #_admin-stats-panel button[style*="padding:10px 24px"] {
+          padding: clamp(7px, 1vw, 10px) clamp(12px, 1.7vw, 22px) !important;
+        }
+        #_admin-stats-panel input[style*="padding:10px 14px"],
+        #_admin-stats-panel textarea {
+          padding: clamp(6px, 0.9vw, 10px) clamp(8px, 1.1vw, 13px) !important;
+        }
+      }
+      /* 非常矮的螢幕(<700px)再縮一點 */
+      @media (max-height: 700px) {
+        #_admin-stats-panel > div { padding: 12px 18px !important; }
+        #_admin-stats-panel [style*="font-size:26px"] { font-size: 17px !important; }
+        #_admin-stats-panel [style*="font-size:18px"] { font-size: 13px !important; }
+        #_admin-stats-panel [style*="line-height:1.55"],
+        #_admin-stats-panel [style*="line-height:1.6"],
+        #_admin-stats-panel [style*="line-height:1.7"] { line-height: 1.35 !important; }
+      }
+    </style>
     <div style="background:linear-gradient(135deg,rgba(20,30,50,0.98),rgba(10,15,30,0.99));
       border:3px solid rgba(212,168,67,0.7);border-radius:20px;padding:32px 40px;
-      max-width:560px;width:calc(100% - 48px);color:#eee;">
+      width:min(560px, 100%);max-height:calc(100vh - 40px);overflow-y:auto;
+      box-sizing:border-box;color:#eee;">
       <div style="font-size:26px;font-weight:900;color:#ffcc44;margin-bottom:18px;text-align:center;letter-spacing:2px;">
         🛠️ 人數統計管理工具
       </div>
@@ -33817,6 +33890,25 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.0900', brief:[
+    'Shift+F10 管理員面板改為響應式設計,自動適應不同螢幕解析度',
+  ], items:[
+    '【修補】卡片加上 max-height:calc(100vh - 40px) + overflow-y:auto,內容過高時卡片內部捲動,不再被畫面切掉',
+    '【修補】外層 popup 加 padding:20px 讓卡片與螢幕邊緣保持距離',
+    '【修補】卡片寬度改為 min(560px, 100%),窄螢幕自動縮小',
+    '【修補】注入 @media (max-height:900px) 與 (max-width:700px) 規則,用屬性選擇器 [style*="font-size:XXpx"] 配合 clamp() 在小螢幕自動縮小所有文字、padding、margin — 不用改動 34,000 行程式的既有內聯樣式',
+    '【修補】非常矮的螢幕(<700px 高)再一次縮小字體與 line-height',
+    '【修補】加上金色細捲軸樣式(webkit-scrollbar),和面板整體配色一致',
+  ] },
+  { ver:'v1.0.20260420.0830', brief:[
+    '修復:先進冒險模式看到 BOSS 陣容後再回首頁進鬥技場,敵方預覽會殘留 BOSS 陣容的 bug',
+    '鬥技場改為永遠乾淨 — 敵方隨機英雄正確顯示、屬性相剋圖正確還原',
+  ], items:[
+    '【根本原因】_renderAdvBossPreview 會用 innerHTML 重寫 #hpick-enemy-slots 塞 BOSS 卡,把裡面的 ep-slot-0~3 四個子 div 全刪了',
+    '【根本原因】鬥技場的 _previewEnemyTeam → _renderEnemySlots 走 document.getElementById(ep-slot-X),找不到就靜靜 return,結果 BOSS 的殘留 HTML 就留在畫面上',
+    '【修補】showHeroPickOverlay 鬥技場分支在呼叫 _previewEnemyTeam() 前:(1) 把 #hpick-enemy-title 文字還原成「🟥 對手陣容」 (2) 把 #hpick-enemy-slots 的 innerHTML 重建為 4 個空的 ep-slot-X 子 div (3) 還原 #elem-wheel 顯示 (4) 清除 window._advApricotPreviewTeam / _previewEnemyNames 暫存',
+    '【確保】鬥技場現在永遠是乾淨的測試環境,不會再被冒險模式的狀態污染',
+  ] },
   { ver:'v1.0.20260420.0800', brief:[
     '修復打完 BOSS 回關卡選擇頁後,重新進入冒險卡在第一場景(沒旁白/沒題目)的 bug',
     '強化題目出題隨機性,同年級+科目+難度下再洗一次牌,減少「感覺題目一樣」',
@@ -34447,7 +34539,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.0800';
+  const CURRENT_VERSION = 'v1.0.20260420.0900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34464,7 +34556,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.0800';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.0900';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
