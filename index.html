@@ -8852,6 +8852,13 @@ function confirmHeroPick(){
         // 套用爆發等級
         h._burstLvAdv = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels[_src]) || 0;
       }
+      // ★ v1.0.20260420.3100 — BOSS 陣容血量按「答題信心」難度加成(沒自信不變/普通+25%/我很會+50%)
+      //   必須放在所有前面的 HP 計算之後,確保加成套在最終 HP 上
+      const _hpMult = (typeof _advBossHpMult === 'function') ? _advBossHpMult() : 1.00;
+      if(_hpMult !== 1.00){
+        h.hp = Math.max(1, Math.round(h.hp * _hpMult));
+        h.curHp = h.hp;
+      }
       return h;
     });
     
@@ -23769,6 +23776,9 @@ let _advStats = {
   startTime: 0,
   totalQuizScore: 0,   // 累積答題得分（依難度計算）
   itemUsedCount: 0,    // BOSS戰中使用物品卡次數
+  // ★ v1.0.20260420.3100 — 連續答對連擊(本場最高紀錄用於結算 EXP 加成)
+  currentStreak: 0,    // 當前連續答對數
+  maxStreak: 0,        // 本場最高連擊(結算時每 1 連擊 +5% EXP)
 };
 // 題目難度基礎分對照
 const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80, '五年級':35, '關島交流':40, '木柵動物園':40 };
@@ -23807,7 +23817,7 @@ function advStartCutscene(stage) {
   _advSessionQuestions = [];
   // ★ v1.0.20260420.2000 — 清空跨戰鬥的「近期題目佇列」,避免冒險之間的殘留狀態影響出題
   window._miniRecentQuestionIds = [];
-  _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0};
+  _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0,currentStreak:0,maxStreak:0};
   _advQuizHistory = []; // ★ v1.0.20260420.1000 — 每局重置答題場次歷史
   _advBurstRewardUsed = false; // 重置「極限爆發」出現限制
   _advPendingReward = null;
@@ -24095,6 +24105,18 @@ function advNextDialog(e) {
 
 // ★ 自信程度加成表（影響經驗值、知識幣、BOSS總分）
 const ADV_CONFIDENCE_MULT = { '沒自信':1.00, '普通':1.25, '我很會':1.50 };
+// ★ v1.0.20260420.3100 — 新增:BOSS 血量按難度加成(沒自信不變、普通+25%、我很會+50%)
+const ADV_CONFIDENCE_HP_MULT   = { '沒自信':1.00, '普通':1.25, '我很會':1.50 };
+// ★ v1.0.20260420.3100 — 新增:基礎掉落率按難度加成(沒自信 -50%、普通 0%、我很會 +25%)
+const ADV_CONFIDENCE_DROP_MULT = { '沒自信':0.50, '普通':1.00, '我很會':1.25 };
+// helper:取當前掉落率倍率(吃玩家選的難度)
+function _advDropRateMult(){
+  return (typeof ADV_CONFIDENCE_DROP_MULT !== 'undefined' && ADV_CONFIDENCE_DROP_MULT[_advPlayerDifficulty]) || 1.00;
+}
+// helper:取當前 BOSS HP 倍率
+function _advBossHpMult(){
+  return (typeof ADV_CONFIDENCE_HP_MULT !== 'undefined' && ADV_CONFIDENCE_HP_MULT[_advPlayerDifficulty]) || 1.00;
+}
 
 function advShowChoicePanel(stage, sceneIdx) {
   const scene = ADV_SCENES[stage][sceneIdx];
@@ -25434,6 +25456,11 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   if (isCorrect) {
     _advStats.correctCount++;
     _advStats.totalQuestions++;
+    // ★ v1.0.20260420.3100 — 連續答對連擊 + 本場最高紀錄
+    _advStats.currentStreak = (_advStats.currentStreak || 0) + 1;
+    if(_advStats.currentStreak > (_advStats.maxStreak || 0)){
+      _advStats.maxStreak = _advStats.currentStreak;
+    }
     // ★ 獎章系統：BOSS戰答題
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     _advStats.totalAnswerTime += elapsed;
@@ -25473,6 +25500,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       return; // 讓玩家繼續作答，不結束
     }
     _advStats.totalQuestions++; // 答錯計入總次數
+    // ★ v1.0.20260420.3100 — 確認答錯(已過 _hasExtraChance 檢查)→ 連擊歸零,但 maxStreak 保留為本場最高
+    _advStats.currentStreak = 0;
     // ★ 獎章系統：答錯需通知以重置連續答對連擊（_hasExtraChance 在上方已 return，不會走到這裡）
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
@@ -25687,6 +25716,50 @@ function advShowReward() {
   let pool = [...basePool].sort(()=>Math.random()-0.5).slice(0,2);
   if (_advPendingReward) pool = [_advPendingReward, ...pool].slice(0,3);
   _advRewardOptions = pool;
+
+  // ★ v1.0.20260420.3100 — 連續答對連擊訊息:走到這個函式代表剛答對,顯示目前連擊 + 累積 EXP 加成
+  try{
+    const _box = document.getElementById('adv-reward-box');
+    // 先移除舊的(避免重覆疊加)
+    const _oldStreak = document.getElementById('adv-reward-streak');
+    if(_oldStreak) _oldStreak.remove();
+    const _cur = (_advStats && _advStats.currentStreak) || 0;
+    const _max = (_advStats && _advStats.maxStreak) || 0;
+    if(_box && _cur >= 1){
+      const _finalStreak = Math.max(_cur, _max);
+      const _bonusPct = _finalStreak * 5;
+      const _streakEl = document.createElement('div');
+      _streakEl.id = 'adv-reward-streak';
+      // 3 連擊以上漸強色調(橘→紅),視覺鼓勵
+      const _tier = _cur >= 7 ? '#ff3366' : _cur >= 5 ? '#ff6633' : _cur >= 3 ? '#ffaa33' : '#ffcc66';
+      const _emoji = _cur >= 7 ? '🔥🔥🔥' : _cur >= 5 ? '🔥🔥' : _cur >= 3 ? '🔥' : '✨';
+      const _breakTxt = (_cur < _max) ? `<div style="font-size:24px;color:#88ccff;margin-top:6px;opacity:0.92;">本場最高 ${_max} 連擊 → 結算時套用 +${_max*5}% EXP</div>` : '';
+      _streakEl.style.cssText =
+        'background:linear-gradient(135deg,rgba(40,20,0,0.92),rgba(30,10,0,0.92));' +
+        'border:2.5px solid ' + _tier + ';border-radius:14px;' +
+        'padding:14px 22px;margin:0 0 14px;text-align:center;' +
+        'box-shadow:0 0 22px ' + _tier + '66;' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+        'animation:advDialogIn 0.35s cubic-bezier(0.34,1.56,0.64,1);';
+      _streakEl.innerHTML =
+        '<div style="font-size:30px;font-weight:900;color:' + _tier + ';letter-spacing:3px;text-shadow:0 0 12px ' + _tier + '88;">' +
+          _emoji + ' 連續答對 ' + _cur + ' 題！' +
+        '</div>' +
+        '<div style="font-size:26px;color:#ffeedd;margin-top:4px;">' +
+          '本場結算時額外 EXP <span style="color:#44ff88;font-weight:900;">+' + _bonusPct + '%</span>' +
+        '</div>' +
+        _breakTxt;
+      // 插到標題後,選項前
+      const _title = document.getElementById('adv-reward-title');
+      const _sub   = document.getElementById('adv-reward-subtitle');
+      const _anchor = _sub || _title || _box.firstChild;
+      if(_anchor && _anchor.parentNode === _box){
+        _box.insertBefore(_streakEl, _anchor.nextSibling);
+      } else {
+        _box.insertBefore(_streakEl, _box.firstChild);
+      }
+    }
+  }catch(_e){}
 
   const choicesDiv = document.getElementById('adv-reward-choices');
   choicesDiv.innerHTML = '';
@@ -28881,7 +28954,10 @@ async function grantBattleExp(win, stats) {
   );
   // ★ 自信加成：沒自信+0% / 普通+25% / 我很會+50%
   const _confMult = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
-  const totalExp = Math.round(baseExp * ratio * _confMult);
+  // ★ v1.0.20260420.3100 — 連續答對連擊加成:本場最高連擊 × 5% EXP
+  const _maxStreak = (stats && stats.maxStreak) || 0;
+  const _streakBonus = 1 + _maxStreak * 0.05;
+  const totalExp = Math.round(baseExp * ratio * _confMult * _streakBonus);
   // 出戰英雄×1.5，其他英雄×0.5
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
   const _bossLevelUps = [];
@@ -28893,7 +28969,9 @@ async function grantBattleExp(win, stats) {
   });
   if(typeof window !== 'undefined') window._lastBossLevelUps = _bossLevelUps;
   const battleExp = Math.round(totalExp * 1.5);
-  bannerFX(null, `⭐ 出戰英雄 +${battleExp} EXP（加成${Math.round(ratio*100)}%）`, '#ffe066', 2000);
+  // ★ v1.0.20260420.3100 — 結算 banner 同時顯示連擊加成
+  const _streakTxt = _maxStreak > 0 ? `，連擊+${_maxStreak*5}%(最高${_maxStreak}連)` : '';
+  bannerFX(null, `⭐ 出戰英雄 +${battleExp} EXP（加成${Math.round(ratio*100)}%${_streakTxt}）`, '#ffe066', 2400);
   // 技能升級書
   const books = 1 + (score > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
   _skillBookCount += books;
@@ -30024,6 +30102,12 @@ function _applyPresetTeam(slotIdx){
           ? { s1: (_heroSkillLevels[_src].s1||0), s2: (_heroSkillLevels[_src].s2||0) }
           : { s1:0, s2:0 };
         h._burstLvAdv = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels[_src]) || 0;
+      }
+      // ★ v1.0.20260420.3100 — BOSS 陣容血量按難度加成(同 confirmHeroPick 邏輯)
+      const _hpMult2 = (typeof _advBossHpMult === 'function') ? _advBossHpMult() : 1.00;
+      if(_hpMult2 !== 1.00){
+        h.hp = Math.max(1, Math.round(h.hp * _hpMult2));
+        h.curHp = h.hp;
       }
       return h;
     });
@@ -32857,6 +32941,8 @@ function advFinishMiniBattle(win) {
       '偷竹筍的哥布林':    'damaged_bamboo',
       '偷鳥蛋的鳥人哈維':  'unknown_egg',
     };
+    // ★ v1.0.20260420.3100 — 所有基礎掉落機率吃難度倍率(沒自信×0.5/普通×1.0/我很會×1.25)
+    const _dropMult = (typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00;
     if(_miniMobSnapshot.length > 0){
       _miniMobSnapshot.forEach(mob => {
         // ★ 稀有小怪特殊掉落
@@ -32869,13 +32955,13 @@ function advFinishMiniBattle(win) {
           addKnowledgeCoins(_chestCoins);
           _miniDrops.push({ icon:'💰', name:`知識幣×${_chestCoins}`, sellPrice:0 });
           log(`💰 [寶箱怪] 掉落知識幣 ${_chestCoins} 枚！`);
-          // 2% 超越極限果實
-          if(Math.random() < 0.02){
+          // 2% 超越極限果實(× 難度倍率)
+          if(Math.random() < 0.02 * _dropMult){
             backpackAdd('burst_upgrade_fruit', 1);
             _miniDrops.push({ icon:'🍑', name:'超越極限果實', sellPrice:0 });
           }
-          // 50% 隨機賣錢道具 2~3個
-          if(Math.random() < 0.5){
+          // 50% 隨機賣錢道具 2~3個(× 難度倍率)
+          if(Math.random() < 0.5 * _dropMult){
             const _sellItems = ['antique_teacup','picked_flower','damaged_bamboo','unknown_egg','half_tea'];
             const _cnt = 2 + Math.floor(Math.random()*2);
             for(let i=0;i<_cnt;i++){
@@ -32902,27 +32988,27 @@ function advFinishMiniBattle(win) {
           });
           _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（每人）`, sellPrice:0 });
           log(`⭐ [小惡魔] 掉落經驗值 ${_devilExp}！`);
-          // 2% 超越極限果實
-          if(Math.random() < 0.02){
+          // 2% 超越極限果實(× 難度倍率)
+          if(Math.random() < 0.02 * _dropMult){
             backpackAdd('burst_upgrade_fruit', 1);
             _miniDrops.push({ icon:'🍑', name:'超越極限果實', sellPrice:0 });
           }
-          // 50% 技能升級之書 2~3本
-          if(Math.random() < 0.5){
+          // 50% 技能升級之書 2~3本(× 難度倍率)
+          if(Math.random() < 0.5 * _dropMult){
             const _sc = 2 + Math.floor(Math.random()*2);
             backpackAdd('skill_upgrade_book', _sc);
             _miniDrops.push({ icon:'📘', name:`技能升級書×${_sc}`, sellPrice:0 });
           }
-          // 50% 英雄經驗值之書(精裝版) 2~3本
-          if(Math.random() < 0.5){
+          // 50% 英雄經驗值之書(精裝版) 2~3本(× 難度倍率)
+          if(Math.random() < 0.5 * _dropMult){
             const _dc = 2 + Math.floor(Math.random()*2);
             backpackAdd('hero_exp_book_deluxe', _dc);
             _miniDrops.push({ icon:'📕', name:`英雄EXP書(精裝)×${_dc}`, sellPrice:0 });
           }
         } else {
-          // 普通小怪掉落
+          // 普通小怪掉落(× 難度倍率)
           const dropId = _MINI_DROP_MAP[mob.name];
-          if(dropId && Math.random() < 0.5){
+          if(dropId && Math.random() < 0.5 * _dropMult){
             backpackAdd(dropId, 1);
             const def = BACKPACK_ITEM_DEF[dropId];
             if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
@@ -32930,8 +33016,8 @@ function advFinishMiniBattle(win) {
         }
       });
     }
-    // ★ 英雄經驗值之書：25% 掉落率
-    if(Math.random() < 0.25){
+    // ★ 英雄經驗值之書：25% 掉落率(× 難度倍率)
+    if(Math.random() < 0.25 * _dropMult){
       backpackAdd('hero_exp_book', 1);
       _miniDrops.push({ icon:'📗', name:'英雄經驗值之書×1', sellPrice:null });
     }
@@ -34869,6 +34955,43 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.3100', brief:[
+    '重新平衡三個難度:沒自信 0%/BOSS 原血/掉落×0.5、普通 +25%/BOSS+25%血/掉落正常、我很會 +50%/BOSS+50%血/掉落×1.25',
+    '新增「連續答對」EXP 加成:每連 1 題結算 +5% EXP,中斷歸零但保留本場最高連擊,答對獎勵視窗會顯示目前連擊與累積 %',
+  ], items:[
+    '【Task 1-A 難度對 EXP/知識幣】完全沿用既有的 ADV_CONFIDENCE_MULT(1.00/1.25/1.50),getBattleExp 與小怪 baseExp 都已有套用,維持不變',
+    '【Task 1-B 難度對 BOSS 血量】新增 ADV_CONFIDENCE_HP_MULT={沒自信:1.00,普通:1.25,我很會:1.50} + helper _advBossHpMult()',
+    '  - 套用點 1:confirmHeroPick 建立 BOSS 陣容時 G.p2.map callback 尾端,套在「被魅惑的玩家英雄」HP 加成之後,對最終 HP 做倍率',
+    '  - 套用點 2:載入陣容模板(適用 template)的 BOSS 建立路徑(line ~30002)同樣處理',
+    '  - 套用 3 個成員(小怪+BOSS主+小怪),整個 BOSS 隊伍一起依難度變強',
+    '【Task 1-C 難度對基礎掉落率】新增 ADV_CONFIDENCE_DROP_MULT={沒自信:0.50,普通:1.00,我很會:1.25} + helper _advDropRateMult()',
+    '  - 套用:小怪戰結算所有 Math.random() < X 的掉落判定乘上 _dropMult',
+    '  - 涵蓋範圍:寶箱怪的 2% 極限果實 + 50% 賣錢道具、小惡魔的 2% 極限果實 + 50% 技能書 + 50% EXP書(精裝)、普通小怪 50% 特殊掉落、通用 25% 英雄 EXP 書',
+    '  - 不涵蓋:寶箱怪的「必定知識幣 2500~5000」與小惡魔的「必定 EXP 1000~2000」,這是稀有怪的保底獎勵,不該被難度懲罰',
+    '【Task 2 連續答對 EXP 加成】',
+    '  - _advStats 新增欄位:currentStreak(當前連擊)、maxStreak(本場最高,結算用)',
+    '  - advStartCutscene 重置時兩個欄位都歸 0',
+    '  - advSubmitAnswer 答對分支:currentStreak++ 再 max(maxStreak, currentStreak)',
+    '  - advSubmitAnswer 答錯分支(已過 _hasExtraChance return):currentStreak = 0,但 maxStreak 保留(本場最高紀錄)',
+    '  - 流星沙第二次機會不算斷連擊(因為第一次錯時會 return 還沒走到歸零)',
+    '  - 逾時不歸零(玩家沒主動答錯,維持紀錄)',
+    '【UI 連擊訊息橫幅】',
+    '  - advShowReward 在顯示獎勵選項前動態插入 #adv-reward-streak 元素',
+    '  - 位置:標題「🎉 答對了！選擇獎勵」與副標題之後、獎勵按鈕之前',
+    '  - 顯示:「🔥 連續答對 N 題！本場結算時額外 EXP +N×5%」',
+    '  - 若 currentStreak < maxStreak(例如曾經連 5 次,現在答錯後重新連 2 次),額外提示「本場最高 M 連擊 → 結算時套用 +M×5% EXP」',
+    '  - 3/5/7 連擊的顏色與 emoji 漸強:✨ → 🔥(橘) → 🔥🔥(紅橘) → 🔥🔥🔥(血紅),搭配 box-shadow 發光',
+    '  - 每次重新渲染時移除舊元素,避免重覆疊加',
+    '【結算 EXP 套用】',
+    '  - grantBattleExp:_streakBonus = 1 + maxStreak × 0.05',
+    '  - totalExp = baseExp × ratio × _confMult × _streakBonus',
+    '  - 結算 banner 改為「⭐ 出戰英雄 +XXX EXP(加成 YYY%,連擊+ZZ%(最高 N 連))」',
+    '  - 若本場無連擊(maxStreak=0)則不顯示連擊字樣,維持原樣',
+    '【平衡考量】',
+    '  - 假設 BOSS 場 20 題全對 → 1 + 20×5% = 2.0x(EXP 翻倍),上限自然設在「完美連勝」',
+    '  - 若完美連勝 + 我很會難度 + 積分加成 200%:總倍率 2.0 × 1.5 × 2.0 = 6x,極高但需要高難度實力',
+    '  - 沒自信 + 5 連擊:2.0 × 1.0 × 1.25 = 2.5x(不爆量、鼓勵新手也能連對)',
+  ] },
   { ver:'v1.0.20260420.3000', brief:[
     '小惡魔、寶箱怪的登場/敗北對話視窗放大成 BOSS 風格大對話框,置於畫面上方',
     '小怪戰後若英雄升級,會像 BOSS 戰一樣出現右側升級通知,再顯示結算畫面',
@@ -35800,7 +35923,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.3000';
+  const CURRENT_VERSION = 'v1.0.20260420.3100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35817,7 +35940,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.3000';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.3100';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
