@@ -23606,6 +23606,8 @@ function advStartCutscene(stage) {
   if(typeof _advQuizRound !== 'undefined') _advQuizRound = 0;
   _advUsedQuestionIds = new Set();
   _advSessionQuestions = [];
+  // ★ v1.0.20260420.2000 — 清空跨戰鬥的「近期題目佇列」,避免冒險之間的殘留狀態影響出題
+  window._miniRecentQuestionIds = [];
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0};
   _advQuizHistory = []; // ★ v1.0.20260420.1000 — 每局重置答題場次歷史
   _advBurstRewardUsed = false; // 重置「極限爆發」出現限制
@@ -32040,8 +32042,25 @@ function _advMiniQuizAsk(onDone) {
     });
     return;
   }
-  const q = pool[Math.floor(Math.random() * Math.min(pool.length, 5))];
+  // ★ v1.0.20260420.2000 — 重大修復:原本 Math.min(pool.length, 5) 只在 pool 前 5 筆抽題,
+  //   加上 _miniQuizUsedIds 每場戰鬥重置,造成玩家實際上只會看到 DB 中前 5 題反覆輪流。
+  //   後面加進來的題目(id 較大或五下自然獨立題庫)永遠抽不到。
+  //
+  //   新邏輯:
+  //   1) 從整個 pool 抽(移除「前 5 筆」限制,發揮整個題庫)
+  //   2) 維護跨戰鬥的 _miniRecentQuestionIds 佇列(近期出過的題目),優先挑不在佇列中的題
+  //   3) 若所有題目都在近期佇列(小題庫情境),退回整個 pool 隨機抽,避免卡死
+  //   4) 佇列大小自動適應 pool 大小:max(15, pool.length*0.75),永遠保留 ~25% 新鮮感
+  if(!Array.isArray(window._miniRecentQuestionIds)) window._miniRecentQuestionIds = [];
+  const _miniRecent = window._miniRecentQuestionIds;
+  const _fresh = pool.filter(p => !_miniRecent.includes(p.id));
+  const _candidates = _fresh.length ? _fresh : pool;
+  const q = _candidates[Math.floor(Math.random() * _candidates.length)];
   if(!q){ if(onDone) onDone(); return; }
+  // 維護近期佇列:隨 pool 大小動態調整 window
+  const _maxWindow = Math.max(15, Math.floor(pool.length * 0.75));
+  _miniRecent.push(q.id);
+  while(_miniRecent.length > _maxWindow) _miniRecent.shift();
   window._miniQuizUsedIds.add(q.id);
   window._miniQuizOnDone = onDone;
   window._miniQuizCurrentQ = q;
@@ -34428,6 +34447,17 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.2100', brief:[
+    '修正:小怪戰答題老是反覆出現相同幾題的問題(實際上只用到題庫前 5 題)',
+  ], items:[
+    '【成因】_advMiniQuizAsk 挑題邏輯用 pool[Math.floor(Math.random() * Math.min(pool.length, 5))],永遠只從 pool 前 5 筆抽。加上 _miniQuizUsedIds 每場戰鬥重置,所以每場戰鬥都從同樣的「前 5 題」開始抽',
+    '【實測影響】玩家選「低年級+英文+沒自信」,資料庫有 31 題符合,但實際上只會反覆看到 id 21-25 這 5 題;後面加進的 id 1148+ 等 16 題幾乎成為 dead code。各年級各科都有同樣問題',
+    '【修補 1】把 Math.min(pool.length, 5) 限制拿掉,讓整個 pool 都可能被抽到',
+    '【修補 2】新增 window._miniRecentQuestionIds 跨戰鬥「近期題目」佇列,挑題時優先排除佇列中的題目。若所有題都在佇列(小題庫情境)退回整個 pool 隨機抽,避免卡死',
+    '【修補 3】佇列大小自動適應 pool 大小:max(15, pool.length * 0.75),永遠保留約 25% 新鮮感。31 題的英文池 → 佇列容納 23 題、新鮮 8 題;30 題的五下單元池 → 佇列 22 題、新鮮 8 題',
+    '【修補 4】startAdventureGame 清空 window._miniRecentQuestionIds,避免跨冒險殘留狀態',
+    '【預期效果】玩家每場小怪戰都會看到不同題目,題庫所有題目都可能被抽到,重複感大幅降低',
+  ] },
   { ver:'v1.0.20260420.2000', brief:[
     '緊急修復:河堤第一場小怪戰鬥進入後卡死空畫面的問題',
   ], items:[
@@ -35222,7 +35252,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2000';
+  const CURRENT_VERSION = 'v1.0.20260420.2100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35239,7 +35269,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2000';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.2100';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
