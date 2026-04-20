@@ -394,6 +394,47 @@
     }
   };
 
+  // ★ v1.0.20260419.1930 ── 玩家資料急救工具 ──
+  //   診斷:讀取指定 uid 的雲端資料,回傳結構分析(哪些欄位有、哪些是空的、是否可疑)
+  window._fbDiagnosePlayer = async function(uid) {
+    if(!uid) throw new Error('必須提供 uid');
+    const snap = await getDoc(doc(_fbDb, 'players', uid));
+    if(!snap.exists()) return { exists: false, uid };
+    const d = snap.data() || {};
+    const heroLevelsCount = Object.keys(d.heroLevels || {}).length;
+    const backpackCount = Object.keys(d.playerBackpack || {}).length;
+    const coins = d.knowledgeCoins || 0;
+    const unlockedCount = (d.unlockedHeroes || []).length;
+    const hasRepHero = !!(d.representativeHero && d.representativeHero.name);
+    // 可疑空白判定:有代表英雄或解鎖多位英雄但主要資料空白
+    const looksDamaged = (hasRepHero || unlockedCount > 10) &&
+                         heroLevelsCount === 0 && backpackCount === 0 && coins === 0;
+    return {
+      exists: true, uid,
+      savedAt: d.savedAt || 0,
+      email: d.email || '',
+      displayName: d.displayName || '',
+      knowledgeCoins: coins,
+      heroLevelsCount,
+      backpackCount,
+      unlockedCount,
+      hasRepHero,
+      representativeHero: d.representativeHero || null,
+      unlockedHeroes: d.unlockedHeroes || [],
+      looksDamaged,
+      rawData: d  // 提供完整資料供後續處理
+    };
+  };
+
+  // 還原:把提供的 payload merge 進 players/{uid}(保留現有欄位)
+  window._fbRestorePlayer = async function(uid, payload) {
+    if(!uid || !payload) throw new Error('uid 與 payload 為必要');
+    // 用 setDoc + merge:true 保留未提及的欄位(如 _countedInStats、email、displayName 等)
+    await setDoc(doc(_fbDb, 'players', uid), payload, { merge: true });
+    console.info('✅ [急救] 已還原玩家資料', uid, payload);
+    return true;
+  };
+
   // 即時監聽統計：UI 元件用此更新顯示
   window._fbWatchStats = function(callback) {
     try {
@@ -19023,6 +19064,64 @@ async function _showAdminStatsPanel(){
         <div id="_admin-adv-result" style="margin-top:10px;font-size:14px;color:#ff99cc;"></div>
       </div>
 
+      <div style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#cc99ff;margin-bottom:8px;">🚑 3. 玩家資料急救工具</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          用於救援被 1.0.20260419.1930 之前 bug 誤清空的玩家資料。輸入受害玩家 uid,診斷殘存資料後可自訂補償。<br>
+          <span style="color:#cc99ff;">留空 uid 欄位會預設套用<b>目前登入帳號</b>(也就是你自己)。</span>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-rescue-uid" type="text" placeholder="玩家 uid (留空=自己)"
+            style="flex:1;min-width:160px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(200,120,255,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-rescue-diagnose" style="padding:8px 18px;font-size:14px;font-weight:700;
+            background:rgba(180,120,255,0.2);border:2px solid #aa88ff;color:#ddaaff;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔍 診斷
+          </button>
+        </div>
+
+        <div id="_admin-rescue-diag" style="font-size:13px;color:#ccc;margin-bottom:10px;padding:10px;background:rgba(0,0,0,0.4);border-radius:6px;display:none;line-height:1.7;"></div>
+
+        <div id="_admin-rescue-form" style="display:none;background:rgba(80,40,120,0.2);border:1px dashed rgba(200,120,255,0.4);border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:700;color:#ddaaff;margin-bottom:10px;">補償參數(可調整後再送出):</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <label style="font-size:13px;color:#ccc;">補償知識幣
+              <input id="_admin-rescue-coins" type="number" min="0" value="10000"
+                style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(200,120,255,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+            </label>
+            <label style="font-size:13px;color:#ccc;">英雄預設等級(每位)
+              <input id="_admin-rescue-hero-lv" type="number" min="0" max="10" value="5"
+                style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(200,120,255,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+            </label>
+            <label style="font-size:13px;color:#ccc;">經驗之書
+              <input id="_admin-rescue-exp-book" type="number" min="0" max="99" value="30"
+                style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(200,120,255,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+            </label>
+            <label style="font-size:13px;color:#ccc;">技能升級書
+              <input id="_admin-rescue-skill-book" type="number" min="0" max="99" value="15"
+                style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(200,120,255,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+            </label>
+            <label style="font-size:13px;color:#ccc;">素質之書
+              <input id="_admin-rescue-stat-book" type="number" min="0" max="99" value="5"
+                style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(200,120,255,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+            </label>
+            <label style="font-size:13px;color:#ccc;">極限爆發之果
+              <input id="_admin-rescue-burst-book" type="number" min="0" max="99" value="3"
+                style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(200,120,255,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+            </label>
+          </div>
+          <button id="_admin-rescue-apply" style="width:100%;padding:11px;font-size:15px;font-weight:800;
+            background:rgba(200,120,255,0.3);border:2px solid #cc99ff;color:#eebbff;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            🚑 執行還原(保留已有 representativeHero / unlockedHeroes / medals)
+          </button>
+        </div>
+
+        <div id="_admin-rescue-result" style="margin-top:8px;font-size:13px;color:#ddaaff;"></div>
+      </div>
+
       <button id="_admin-close" style="width:100%;padding:12px;font-size:16px;font-weight:700;
         background:rgba(60,60,80,0.6);border:1px solid #555;color:#aaa;
         border-radius:8px;cursor:pointer;font-family:inherit;">
@@ -19197,6 +19296,156 @@ async function _showAdminStatsPanel(){
     } finally {
       btn.disabled = false;
       btn.textContent = '▶ 設定';
+    }
+  };
+
+  // ★★★ 玩家資料急救工具(v1.0.20260419.1930) ★★★
+  let _rescueDiagData = null;  // 暫存最近一次診斷結果
+
+  // 診斷
+  document.getElementById('_admin-rescue-diagnose').onclick = async () => {
+    const uidInput = document.getElementById('_admin-rescue-uid');
+    const diag = document.getElementById('_admin-rescue-diag');
+    const form = document.getElementById('_admin-rescue-form');
+    const res = document.getElementById('_admin-rescue-result');
+    res.textContent = '';
+    form.style.display = 'none';
+    diag.style.display = 'block';
+    diag.innerHTML = '<span style="color:#aaa;">診斷中...</span>';
+    const uid = (uidInput.value || '').trim() || window._gUserId;
+    if(!uid){
+      diag.innerHTML = '<span style="color:#ff6666;">❌ 無法取得 uid（未登入且未輸入）</span>';
+      return;
+    }
+    if(!window._fbDiagnosePlayer){
+      diag.innerHTML = '<span style="color:#ff6666;">❌ Firebase 尚未就緒</span>';
+      return;
+    }
+    try {
+      const d = await window._fbDiagnosePlayer(uid);
+      _rescueDiagData = d;
+      if(!d.exists){
+        diag.innerHTML = '<span style="color:#ffaa66;">⚠️ 此 uid 在 Firestore 無文件紀錄,可能是尚未遊玩過的新玩家。</span>';
+        return;
+      }
+      const savedStr = d.savedAt ? new Date(d.savedAt).toLocaleString('zh-TW') : '(無)';
+      const statusColor = d.looksDamaged ? '#ff6666' : '#88ff88';
+      const statusText = d.looksDamaged ? '⚠️ 疑似受損（有代表英雄/解鎖名單但主資料空白）' : '✅ 看起來正常';
+      diag.innerHTML = ''
+        + '<div style="color:' + statusColor + ';font-weight:700;margin-bottom:6px;">' + statusText + '</div>'
+        + '<div><b>uid:</b> <code style="color:#88ccff;">' + uid + '</code></div>'
+        + '<div><b>email:</b> ' + (d.email || '(無)') + '</div>'
+        + '<div><b>暱稱:</b> ' + (d.displayName || '(無)') + '</div>'
+        + '<div><b>最後存檔:</b> ' + savedStr + '</div>'
+        + '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:6px 0;">'
+        + '<div>💰 知識幣: <b style="color:' + (d.knowledgeCoins === 0 && d.looksDamaged ? '#ff8888' : '#ffee88') + ';">' + d.knowledgeCoins + '</b></div>'
+        + '<div>🦸 英雄等級紀錄: <b>' + d.heroLevelsCount + '</b> 位</div>'
+        + '<div>🎒 背包物品: <b>' + d.backpackCount + '</b> 種</div>'
+        + '<div>⚔️ 已解鎖英雄: <b>' + d.unlockedCount + '</b> 位</div>'
+        + '<div>👤 代表英雄: <b>' + (d.hasRepHero ? (d.representativeHero.name + ' Lv' + (d.representativeHero.level||'?')) : '(無)') + '</b></div>';
+      // 若受損,顯示還原表單
+      if(d.looksDamaged){
+        form.style.display = 'block';
+        // 預設:若有代表英雄等級,預填為英雄預設等級
+        if(d.hasRepHero && d.representativeHero.level){
+          document.getElementById('_admin-rescue-hero-lv').value = Math.max(5, d.representativeHero.level - 2);
+        }
+      }
+    } catch(e){
+      diag.innerHTML = '<span style="color:#ff6666;">❌ 診斷失敗：' + (e.code || e.message || e) + '</span>';
+    }
+  };
+
+  // 執行還原
+  document.getElementById('_admin-rescue-apply').onclick = async () => {
+    const btn = document.getElementById('_admin-rescue-apply');
+    const res = document.getElementById('_admin-rescue-result');
+    if(!_rescueDiagData || !_rescueDiagData.exists){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 請先診斷';
+      return;
+    }
+    const coins = parseInt(document.getElementById('_admin-rescue-coins').value, 10) || 0;
+    const heroLv = Math.max(0, Math.min(10, parseInt(document.getElementById('_admin-rescue-hero-lv').value, 10) || 0));
+    const expBook = Math.max(0, Math.min(99, parseInt(document.getElementById('_admin-rescue-exp-book').value, 10) || 0));
+    const skillBook = Math.max(0, Math.min(99, parseInt(document.getElementById('_admin-rescue-skill-book').value, 10) || 0));
+    const statBook = Math.max(0, Math.min(99, parseInt(document.getElementById('_admin-rescue-stat-book').value, 10) || 0));
+    const burstBook = Math.max(0, Math.min(99, parseInt(document.getElementById('_admin-rescue-burst-book').value, 10) || 0));
+
+    const uid = _rescueDiagData.uid;
+    const rep = _rescueDiagData.representativeHero;
+    const unlocked = _rescueDiagData.unlockedHeroes || [];
+
+    // 組出還原用 payload
+    const heroLevels = {};
+    const heroExp = {};
+    unlocked.forEach(name => {
+      if(rep && rep.name === name){
+        // 代表英雄用其自身等級(若有),沒有則用預設
+        heroLevels[name] = (rep.level && rep.level > 0) ? rep.level : (heroLv || 1);
+      } else {
+        heroLevels[name] = heroLv;
+      }
+      heroExp[name] = 0;
+    });
+
+    // 代表英雄的 skillLevels / statInvested 可保留
+    const heroSkillLevels = {};
+    const heroStatInvested = {};
+    const heroBurstLevels = {};
+    if(rep && rep.name){
+      if(rep.skillLevels) heroSkillLevels[rep.name] = rep.skillLevels;
+      if(rep.statInvested) heroStatInvested[rep.name] = rep.statInvested;
+      if(typeof rep.burstLevel === 'number') heroBurstLevels[rep.name] = rep.burstLevel;
+    }
+
+    const playerBackpack = {
+      hero_exp_book: expBook,
+      skill_upgrade_book: skillBook,
+      stat_reset_book: statBook,
+      burst_upgrade_fruit: burstBook
+    };
+
+    const payload = {
+      v: 2,
+      savedAt: Date.now(),
+      knowledgeCoins: coins,
+      heroLevels,
+      heroExp,
+      heroSkillLevels,
+      heroSkillLevels_s: JSON.stringify(heroSkillLevels),
+      heroStatInvested,
+      heroStatInvested_s: JSON.stringify(heroStatInvested),
+      heroBurstLevels,
+      playerBackpack,
+      playerBackpack_s: JSON.stringify(playerBackpack),
+      unlockedHeroes: unlocked,  // 保留解鎖名單
+      _rescuedAt: Date.now(),
+      _rescuedBy: (window._fbUser && window._fbUser.email) || 'admin'
+    };
+
+    const summary = '將寫入:\n'
+      + '• 知識幣 ' + coins + '\n'
+      + '• ' + unlocked.length + ' 位英雄設為 Lv' + heroLv + '(代表英雄 ' + (rep && rep.name) + ' 保持 Lv' + (heroLevels[rep.name]||'?') + ')\n'
+      + '• 經驗書×' + expBook + ' 技能書×' + skillBook + ' 素質書×' + statBook + ' 爆發果×' + burstBook + '\n\n此操作無法復原,確定嗎？';
+    if(!confirm(summary)) return;
+
+    btn.disabled = true;
+    btn.textContent = '還原中...';
+    try {
+      await window._fbRestorePlayer(uid, payload);
+      res.style.color = '#88ff88';
+      res.textContent = '✅ 已成功還原 ' + uid + ' 的資料。請該玩家重新整理頁面或重新登入。';
+      // 若救的是自己,提示重整
+      if(uid === window._gUserId){
+        res.innerHTML += '<br><b style="color:#ffee88;">(您救的是自己的帳號,請<u>重新整理頁面</u>來載入還原後的資料)</b>';
+      }
+    } catch(e){
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 還原失敗：' + (e.code || e.message || e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🚑 執行還原(保留已有 representativeHero / unlockedHeroes / medals)';
     }
   };
 }
@@ -21407,6 +21656,34 @@ function startAdventureGame(stage){
   }catch(e){}
   try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
+  // ★ v1.0.20260420.0800 — 徹底清除上一局冒險殘留狀態（修復重進第一場景卡死 bug）
+  //   原因:打完 BOSS 回關卡選擇頁後沒呼叫 exitAdventureMode,許多旗標會殘留
+  try {
+    _advQuizActive = false;
+    _advQuizPhase = 'idle';
+    _advSceneIdx = 0;
+    _advDialogIdx = 0;
+    _advBossIntroActive = false;
+    _advBossIntroShown = false;
+    _advSceneChoiceDone = false;
+    _advMiniBattleActive = false;
+    if(_advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
+    // 清除茶園事件 / quiz 相關的 callback 殘留
+    if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+    window._advMiniResultShowing = false;
+    window._advMiniResultPending = null;
+    window._advPreComposedMobs = null;
+    window._advNoTreasureThisBattle = false;
+    // 重置 adv-dialog-box:強制還原 display 與 onclick(茶園事件 _tgShowDialog 會改兩者)
+    const _dlgBox = document.getElementById('adv-dialog-box');
+    if(_dlgBox){
+      _dlgBox.style.display = '';
+      _dlgBox.classList.remove('show');
+      _dlgBox.onclick = function(ev){ try{ advNextDialog(ev); }catch(e){} };
+    }
+    // 清除近期題目紀錄,讓新冒險的題目分布更乾淨
+    _advRecentQuestionIds = [];
+  } catch(_rstE){ console.warn('[冒險重置] 部分狀態清除失敗', _rstE); }
   // ★ 全域統計：冒險次數 +1（若未登入則跳過）
   try{ if(window._fbIncrementAdventureCount) window._fbIncrementAdventureCount(); }catch(e){}
   // ★ 防止與鬥技場衝突：重設 G 的冒險無關狀態
@@ -24073,7 +24350,14 @@ function advStartBattle(){
 function advPrepareSessionQuestions() {
   // ★ 修復：將題目同步存入 _advSessionQuestions（advPickQuestion 讀取此變數）
   const pool = advGetQuizPool(_advPlayerGrade, _advPlayerSubject, _advPlayerDifficulty);
-  const finalPool = pool.length ? pool : ADV_QUIZ_DB.slice().sort(()=>Math.random()-0.5);
+  let finalPool = pool.length ? pool : ADV_QUIZ_DB.slice();
+  // ★ v1.0.20260420.0800 — 對整個 final pool 再做一次 Fisher-Yates 洗牌,
+  //   確保即使選同樣年級+科目+難度,每次冒險的題目順序都大幅不同。
+  //   advGetQuizPool 雖然已洗各池,但會按難度偏好排序導致同一批人看到類似順序
+  for(let _fpI = finalPool.length - 1; _fpI > 0; _fpI--){
+    const _fpJ = Math.floor(Math.random() * (_fpI + 1));
+    [finalPool[_fpI], finalPool[_fpJ]] = [finalPool[_fpJ], finalPool[_fpI]];
+  }
   _advSessionQuestions = finalPool;   // ← advPickQuestion 實際讀取的變數
   _advQuestionPool     = finalPool;   // ← 備份
   _advQuestionIndex    = 0;
@@ -24272,7 +24556,7 @@ function advPickQuestion() {
   if(_chosen){
     if(!Array.isArray(_advRecentQuestionIds)) _advRecentQuestionIds = [];
     _advRecentQuestionIds.push(_chosen.id);
-    if(_advRecentQuestionIds.length > 24) _advRecentQuestionIds.shift();
+    if(_advRecentQuestionIds.length > 40) _advRecentQuestionIds.shift();
   }
   return _chosen;
 }
@@ -33533,6 +33817,18 @@ window._advSystemReady = true;
 // ★ 更新日誌（最新在前，保留全部歷史；顯示時依月份分頁）
 // ══════════════════════════════════════════════════════
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.0800', brief:[
+    '修復打完 BOSS 回關卡選擇頁後,重新進入冒險卡在第一場景(沒旁白/沒題目)的 bug',
+    '強化題目出題隨機性,同年級+科目+難度下再洗一次牌,減少「感覺題目一樣」',
+  ], items:[
+    '【重大修復】startAdventureGame 最前面加上徹底的冒險狀態重置區塊:清掉 _advQuizActive、_advQuizPhase、_advSceneIdx、_advDialogIdx、_advBossIntroActive、_advBossIntroShown、_advSceneChoiceDone、_advMiniBattleActive、_advQuizTimer、_advQuizResolveCb 以及 window._advMiniResultShowing/_advMiniResultPending/_advPreComposedMobs/_advNoTreasureThisBattle 等旗標',
+    '【重大修復】同時強制還原 adv-dialog-box 的 style.display(清除空字串)、移除 .show class、重新綁定 onclick 為 advNextDialog — 前一局茶園事件的 _tgShowDialog 會把 onclick 改成 step 且把 display 設為 none,若沒清會卡死',
+    '【原因】advStartWinSequence 結束 BOSS 戰回到冒險選關頁時,沒呼叫 exitAdventureMode,所以上述旗標會殘留到下一局',
+    '【題目隨機性】advPrepareSessionQuestions 在 advGetQuizPool 之後再做一次 Fisher-Yates 全池洗牌,消除「難度偏好排序」造成的固定順序',
+    '【題目隨機性】新冒險開始時清空 _advRecentQuestionIds(近期題目紀錄),避免跨冒險殘留',
+    '【題目隨機性】近期避免池從 24 題擴大到 40 題,短期內不會看到相同題目',
+    '【題目隨機性】註記:選項 A/B/C/D 位置其實早已在 advShowQuiz 用 Fisher-Yates 洗牌(24440-24457 行),這部分不需要再改',
+  ] },
   { ver:'v1.0.20260419.1930', brief:[
     '🚨 緊急修補：修復登入時雲端讀取失敗會導致帳號被清空的重大 bug',
     '新增三層存檔保護：載入失敗時停用儲存、空白狀態不覆蓋既有進度、雲端失敗自動 fallback 到本地',
@@ -33550,6 +33846,8 @@ const GAME_CHANGELOG = [
     '【維修模式】開啟後:正在遊戲中的非管理員玩家會透過 onSnapshot 即時偵測到狀態變更,被強制登出並顯示畫面',
     '【維修模式】管理員 clarebox123@gmail.com 不受限制,可繼續登入',
     '【維修模式】加入自訂公告訊息,會顯示給被擋下的玩家看',
+    '🚑 新增「玩家資料急救工具」(Shift+F10 面板第 3 區):管理員可輸入 uid 診斷受損狀況,系統自動判斷「有 representativeHero 但主資料空白」為疑似受損,並提供還原表單,可自訂補償知識幣、英雄預設等級、各種書冊數量,執行時保留 representativeHero/unlockedHeroes/medals 等殘存欄位',
+    '新增 window._fbDiagnosePlayer(uid) 和 window._fbRestorePlayer(uid, payload) API 供管理工具與未來擴充使用',
   ] },
   { ver:'v1.0.20260419.1900', brief:[
     '管理員面板新增「手動設定總玩家數」功能（繞過 permission-denied）',
@@ -34149,7 +34447,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260419.1930';
+  const CURRENT_VERSION = 'v1.0.20260420.0800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34166,7 +34464,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260419.1930';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.0800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
