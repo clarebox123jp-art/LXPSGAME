@@ -32202,26 +32202,36 @@ function advStartMiniBattle(nextSceneIdx) {
   if(typeof _advPlayerPetsSaved === 'undefined') window._advPlayerPetsSaved = null;
   _advPlayerPetsSaved = G.pets ? JSON.parse(JSON.stringify(G.pets)) : [];
 
-  // 先顯示開場白（在過場畫面內）
-  const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
-    ? ADV_SCENES[_adventureStage][_advSceneIdx].key : 'river';
-  const intros = MINI_BATTLE_INTROS[sceneKey] || MINI_BATTLE_INTROS.river;
-  const intro = intros[Math.floor(Math.random() * intros.length)];
+  // ★ v1.0.20260420.1800 — 若為事件戰鬥(寶箱怪/小惡魔),事件流程已給過主題對白,
+  //   不應再顯示 MINI_BATTLE_INTROS 的通用小怪雜魚台詞(史萊姆喝茶/妖精護花等),
+  //   否則玩家看完寶箱怪/小惡魔對白後立刻又跳出不相干角色的對白,非常出戲。
+  //   事件戰鬥直接短延遲進戰鬥,稀有怪的登場台詞會在 _showRareMobIntro 另行播放。
+  const _isEventBattle = !!(window._advPreComposedMobs && Array.isArray(window._advPreComposedMobs));
 
   const speaker = document.getElementById('adv-dialog-speaker');
   const text    = document.getElementById('adv-dialog-text');
   const dialog  = document.getElementById('adv-dialog-box');
-  if(speaker) speaker.textContent = '⚔️ 小怪出現！';
-  if(text)    text.textContent    = intro;
-  // ★ 小怪開場白：暫時替換 onclick 以防止觸發 advNextDialog
-  if(dialog){
-    dialog.style.display = 'block';
-    dialog._origOnclick = dialog.onclick;
-    dialog.onclick = null;  // 開場白不需點擊推進
-  }
-  try{ beep(350,'square',0.12,0.15); setTimeout(()=>beep(450,'square',0.1,0.1),200); }catch(e){}
 
-  // 2.5秒後進入小怪戰鬥
+  if(!_isEventBattle){
+    // 一般小怪戰:顯示通用開場白(依場景抽一句)
+    const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
+      ? ADV_SCENES[_adventureStage][_advSceneIdx].key : 'river';
+    const intros = MINI_BATTLE_INTROS[sceneKey] || MINI_BATTLE_INTROS.river;
+    const intro = intros[Math.floor(Math.random() * intros.length)];
+    if(speaker) speaker.textContent = '⚔️ 小怪出現!';
+    if(text)    text.textContent    = intro;
+    // ★ 小怪開場白:暫時替換 onclick 以防止觸發 advNextDialog
+    if(dialog){
+      dialog.style.display = 'block';
+      dialog._origOnclick = dialog.onclick;
+      dialog.onclick = null;  // 開場白不需點擊推進
+    }
+    try{ beep(350,'square',0.12,0.15); setTimeout(()=>beep(450,'square',0.1,0.1),200); }catch(e){}
+  }
+  // 事件戰鬥時 dialog 已在事件流程 _tgShowDialog 的 onDone 裡設為 display:none,不需處理
+
+  // 一般戰鬥等 2.5 秒讓玩家讀完開場白;事件戰鬥只需 300ms 讓 UI 穩定
+  const _introDelay = _isEventBattle ? 300 : 2500;
   setTimeout(() => {
     if(dialog){
       dialog.style.display = 'none';
@@ -32378,7 +32388,7 @@ function advStartMiniBattle(nextSceneIdx) {
         _showResultWithDrama(true);
       }
     }, 1000);
-  }, 2500);
+  }, _introDelay);
 }
 
 function advFinishMiniBattle(win) {
@@ -34312,6 +34322,15 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.1800', brief:[
+    '修正:第三場景茶園遇到寶箱怪或小惡魔時,不會再插入不相關的哥布林/史萊姆開場白',
+  ], items:[
+    '【成因】advStartMiniBattle 對所有小怪戰一律先播 MINI_BATTLE_INTROS 通用開場白(依場景抽一句史萊姆/妖精/哥布林台詞),然後 2.5 秒後再進戰鬥',
+    '【衝突】茶園事件(advTgEvent_chest/advTgEvent_rift)已先用 _tgShowDialog 播過寶箱怪/小惡魔的主題對白,進 advStartMiniBattle 又被插入通用開場 → 玩家看完「寶箱怪:『呀——!』」下一秒跳出「史萊姆從茶壺裡探出頭」,出戲又奇怪',
+    '【注意】line 32258-32262 原本就有 _showRareMobIntro(寶箱怪/小惡魔)的專屬登場台詞,所以通用 intro 本來就是多餘',
+    '【修補】advStartMiniBattle 以 window._advPreComposedMobs 是否已被事件設定為判斷依據,事件戰鬥跳過通用 intro、把 2500ms 延遲縮為 300ms(純 UI 穩定緩衝),稀有怪專屬登場台詞仍會正常播放',
+    '【副作用評估】一般小怪戰(場景 0/1 河堤與步道)流程完全不變,通用 intro + 2.5s 計時照舊',
+  ] },
   { ver:'v1.0.20260420.1700', brief:[
     '修正:選「五下自然」系列題庫時,小怪戰/寵物事件立刻彈「所有題目都出過囉」重選視窗',
     '修正:茶園寵物事件答對後卡死,應該要出現接受/婉拒視窗',
@@ -35076,7 +35095,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1700';
+  const CURRENT_VERSION = 'v1.0.20260420.1800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35093,7 +35112,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1700';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.1800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
