@@ -21202,6 +21202,9 @@ function _requestFullscreenAll(){
 function openAdventureOverlay(){
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
+  // ★ v1.0.20260420.1300 — 確保「🔄回溯」與「❓教學」按鈕只在戰鬥中顯示
+  //   任何流程進到冒險選關頁都強制 hide,避免從 BOSS 勝利序列回選關頁時殘留
+  try{ _advTutBtnShow && _advTutBtnShow(false); }catch(_e){}
   // ★ 讀取好友系統資料
   try{ _loadFriendSystemData(); }catch(e){}
   ov.style.display = 'flex';
@@ -34209,6 +34212,13 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.1300', brief:[
+    '修正:「🔄回溯」與「❓教學」兩顆按鈕會殘留在冒險選關頁(打完 BOSS 回來時),現已改為只在戰鬥中出現',
+  ], items:[
+    '【原因】advStartWinSequence 結束 BOSS 戰後走 openAdventureOverlay() 回選關頁,但沒先呼叫 exitAdventureMode,所以 _advTutBtnShow(false) 的 hide 邏輯沒機會執行,兩顆按鈕會一直卡在左下',
+    '【修補】在 openAdventureOverlay 函式開頭直接呼叫 _advTutBtnShow(false),保證無論從哪條路徑進選關頁(正常勝利/解鎖英雄/取消冒險/例外回退),都會把戰鬥專用按鈕藏起來',
+    '這也順手保險了其他進選關頁的路徑,未來有新的流程接進來也不會重現此問題',
+  ] },
   { ver:'v1.0.20260420.1230', brief:[
     '「跳過演出」改為冒險開始前一次性選擇:進河堤場景前彈窗詢問「是否跳過旅途直接挑 BOSS?」,若選「否」則整趟冒險都無法再跳過',
     '這避免玩家中途分心想偷懶,同時給忙碌時明確的捷徑',
@@ -34929,7 +34939,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.1230';
+  const CURRENT_VERSION = 'v1.0.20260420.1300';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -34946,7 +34956,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.1230';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.1300';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
