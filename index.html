@@ -32890,7 +32890,16 @@ function advFinishMiniBattle(win) {
           _showRareMobDefeat('小惡魔'); try{ _checkMedalDefeat('小惡魔'); }catch(e){}
           // 小惡魔：大量EXP（1000~2000）+ 其他掉落
           const _devilExp = 1000 + Math.floor(Math.random() * 1001);
-          if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name && !(window._invitedFriendHero && h && h.name === window._invitedFriendHero.name)) addHeroExp(h.name, _devilExp); });
+          // ★ v1.0.20260420.3000 — 捕獲 addHeroExp 回傳的升級清單,塞進 pending 讓結算前演出
+          if(G && G.p1) G.p1.forEach(h=>{
+            if(h && h.name && !(window._invitedFriendHero && h.name === window._invitedFriendHero.name)){
+              const _lu = addHeroExp(h.name, _devilExp);
+              if(_lu && _lu.length){
+                window._miniLevelUpsPending = window._miniLevelUpsPending || [];
+                window._miniLevelUpsPending.push(..._lu);
+              }
+            }
+          });
           _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（每人）`, sellPrice:0 });
           log(`⭐ [小惡魔] 掉落經驗值 ${_devilExp}！`);
           // 2% 超越極限果實
@@ -32935,7 +32944,12 @@ function advFinishMiniBattle(win) {
       const _confMult = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
       const baseExp = Math.round(_miniBaseExp * _confMult);
       const battleHeroes = G.p1 ? G.p1.map(h=>h.name) : [];
-      const _miniLevelUps = []; // ★ 收集升級事件
+      // ★ v1.0.20260420.3000 — 初始化時帶入小惡魔 drop 階段已捕獲的升級
+      const _miniLevelUps = [];
+      if(window._miniLevelUpsPending && window._miniLevelUpsPending.length){
+        _miniLevelUps.push(...window._miniLevelUpsPending);
+      }
+      window._miniLevelUpsPending = null;
       heroes.forEach(name => {
         if((window._invitedFriendHero && name === window._invitedFriendHero.name)) return; // ★ 好友英雄不獲得EXP
         const _lu = addHeroExp(name, battleHeroes.includes(name) ? baseExp : 0);
@@ -32988,21 +33002,11 @@ function advFinishMiniBattle(win) {
           html += '</div>';
           _expInfoEl.innerHTML = html;
         }
-        // ★ 若有升級，先演出升級畫面再顯示結算
-        const _showMiniResult = () => {
-          _expEl.style.display = 'flex'; _expEl.classList.add('show');
-          // PC 版放大
-          if(window.innerWidth > 1180){
-            const _inner = _expEl.querySelector('div');
-            if(_inner){ _inner.style.width='min(96vw,1000px)'; _inner.style.fontSize='190%'; }
-          }
-        };
-        if(_miniLevelUps && _miniLevelUps.length) {
-          setTimeout(() => _showLevelUpSequence(_miniLevelUps, _showMiniResult), 400);
-        } else {
-          _showMiniResult();
-        }
-        // 結算畫面顯示（由下方 _RESULT_DUR 的 setTimeout 統一控制）
+        // ★ v1.0.20260420.3000 — 把升級清單存到 window,由下方 adv-mini-result 顯示段統一處理
+        //   原本在這裡立刻 setTimeout 顯示,但下方 line ~33064 也會 .classList.add('show'),
+        //   導致結算視窗搶先出現(雖然 level-up z-index 9800 會疊上去,但時序混亂)。
+        //   現在統一由下方結算段讀 pending 決定是先演升級再顯示、或直接顯示
+        window._miniLevelUpsPending = _miniLevelUps;
       } else {
         bannerFX(null, `⚔️ 小怪擊敗！出戰英雄 +${baseExp} EXP`, '#aaffcc', 2000);
       }
@@ -33042,7 +33046,7 @@ function advFinishMiniBattle(win) {
     bgmPlay('bgm-win');
   }catch(e){}
 
-  // ★ 流程：顯示小怪專屬結算視窗 → 玩家按確認 → 過場 → 載入下一場景
+  // ★ 流程：(可選)升級演出 → 顯示小怪專屬結算視窗 → 玩家按確認 → 過場 → 載入下一場景
   const _miniResultEl2 = document.getElementById('adv-mini-result');
   const _savedBossTeam    = _advBossTeamSaved;
   const _savedPlayerPets  = window._advPlayerPetsSaved;
@@ -33060,18 +33064,29 @@ function advFinishMiniBattle(win) {
     stage:           _adventureStage
   };
 
-  // 顯示結算視窗（等玩家按確認）
-  if(_miniResultEl2){
-    _miniResultEl2.style.display = 'flex';
-    _miniResultEl2.classList.add('show');
-    const _btn = document.getElementById('adv-mini-result-btn');
-    if(_btn){
-      _btn.onmouseover = ()=>{ _btn.style.opacity='0.8'; _btn.style.transform='scale(1.06)'; };
-      _btn.onmouseout  = ()=>{ _btn.style.opacity='1';   _btn.style.transform=''; };
+  // 顯示結算視窗的核心邏輯(抽成內部函式供升級演出完後呼叫)
+  const _showMiniResultInternal = () => {
+    if(_miniResultEl2){
+      _miniResultEl2.style.display = 'flex';
+      _miniResultEl2.classList.add('show');
+      const _btn = document.getElementById('adv-mini-result-btn');
+      if(_btn){
+        _btn.onmouseover = ()=>{ _btn.style.opacity='0.8'; _btn.style.transform='scale(1.06)'; };
+        _btn.onmouseout  = ()=>{ _btn.style.opacity='1';   _btn.style.transform=''; };
+      }
+    } else {
+      // 保險備用：元素不存在時自動繼續
+      setTimeout(advMiniResultConfirm, 2000);
     }
+  };
+
+  // ★ v1.0.20260420.3000 — 若有角色升級,先演出右側升級通知再顯示結算(與 BOSS 戰一致)
+  const _miniLUsNow = window._miniLevelUpsPending || [];
+  window._miniLevelUpsPending = null;
+  if(_miniLUsNow.length && typeof _showLevelUpSequence === 'function'){
+    setTimeout(() => _showLevelUpSequence(_miniLUsNow, _showMiniResultInternal), 400);
   } else {
-    // 保險備用：元素不存在時自動繼續
-    setTimeout(advMiniResultConfirm, 2000);
+    _showMiniResultInternal();
   }
 }
 
@@ -34404,37 +34419,157 @@ const _RARE_MOB_LINES = {
 };
 
 function _showRareMobIntro(mobName){
+  // ★ v1.0.20260420.3000 — 升級為 BOSS 風格大型對話框,置於畫面上方
+  //   原本只有 position:fixed;bottom:120px + max-width:500px + font-size:22px 太小,現改為:
+  //   - position:absolute;inset:0 覆蓋整個 #gc
+  //   - 對話框在螢幕上方(padding-top:60px),不再與底部 UI 擠在一起
+  //   - 用 HERO_IMGS[mobName] 顯示大頭像 + 大字對白
+  //   - 設計風格(暗色漸層 + 主色框線 + 光暈)對齊 #adv-boss-intro
   const lines = _RARE_MOB_LINES[mobName];
   if(!lines) return;
   const line = lines.appear[Math.floor(Math.random()*lines.appear.length)];
-  var pop = document.createElement('div');
-  pop.style.cssText = 'position:fixed;z-index:99100;bottom:120px;left:50%;transform:translateX(-50%);'
-    + 'background:linear-gradient(135deg,rgba(15,10,40,0.97),rgba(8,5,25,0.97));'
-    + 'border:3px solid '+(mobName==='寶箱怪'?'#ffcc44':'#ff44aa')+';border-radius:20px;'
-    + 'padding:18px 32px;max-width:min(90vw,500px);text-align:center;'
-    + 'box-shadow:0 0 40px '+(mobName==='寶箱怪'?'rgba(255,200,0,0.5)':'rgba(255,50,150,0.5)')+';'
-    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;font-size:22px;color:#fff;'
-    + 'font-weight:700;letter-spacing:1px;animation:bounceIn 0.4s ease-out;';
-  pop.innerHTML = '<div style="font-size:14px;color:#aaa;margin-bottom:6px;">⚠ 稀有怪出現！</div>'
-    + '<div>'+line+'</div>';
-  document.body.appendChild(pop);
-  setTimeout(()=>{ pop.style.transition='opacity 0.5s'; pop.style.opacity='0'; setTimeout(()=>pop.remove(),500); }, 3000);
+  const existing = document.getElementById('_rare-mob-dlg');
+  if(existing) existing.remove();
+
+  const isChest   = mobName === '寶箱怪';
+  const mainColor = isChest ? '#ffcc44' : '#ff44aa';
+  const glow      = isChest ? 'rgba(255,200,0,0.5)' : 'rgba(255,80,160,0.5)';
+  const icon      = isChest ? '📦' : '😈';
+  const img = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[mobName]) || '';
+  const av  = (typeof AVATARS  !=='undefined' && AVATARS[mobName])   || icon;
+
+  const pop = document.createElement('div');
+  pop.id = '_rare-mob-dlg';
+  pop.style.cssText =
+    'position:absolute;inset:0;z-index:9850;' +
+    'background:rgba(0,0,0,0.82);backdrop-filter:blur(4px);' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;' +
+    'padding-top:60px;cursor:pointer;' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;' +
+    'animation:advDialogIn 0.4s ease-out;';
+
+  // 標籤:稀有怪出現
+  const badge = document.createElement('div');
+  badge.style.cssText =
+    `background:rgba(0,0,0,0.85);border:2px solid ${mainColor};border-radius:30px;` +
+    `padding:8px 30px;font-size:28px;font-weight:900;color:${mainColor};` +
+    `letter-spacing:4px;margin-bottom:20px;` +
+    `box-shadow:0 0 25px ${glow};`;
+  badge.textContent = '⚠ 稀有怪出現!';
+  pop.appendChild(badge);
+
+  // 主對話框
+  const box = document.createElement('div');
+  box.style.cssText =
+    `background:linear-gradient(160deg,rgba(40,5,0,0.96),rgba(20,3,0,0.98));` +
+    `border:3px solid ${mainColor};border-radius:22px;` +
+    `padding:32px 44px 40px;max-width:900px;width:90%;box-sizing:border-box;` +
+    `box-shadow:0 0 60px ${glow};` +
+    `display:flex;flex-direction:column;align-items:center;gap:20px;` +
+    `position:relative;`;
+
+  // 頭像 + 名稱
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:26px;width:100%;justify-content:center;';
+  header.innerHTML =
+    `<div style="width:150px;height:150px;border-radius:16px;overflow:hidden;border:3px solid ${mainColor};background:rgba(0,0,0,0.7);box-shadow:0 0 24px ${glow};flex-shrink:0;">` +
+      (img
+        ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        : `<span style="font-size:96px;display:flex;align-items:center;justify-content:center;height:100%;">${av}</span>`) +
+    `</div>` +
+    `<div style="font-size:54px;font-weight:900;color:${mainColor};letter-spacing:4px;text-shadow:0 0 18px ${glow};">${icon} ${mobName}</div>`;
+  box.appendChild(header);
+
+  // 對白文字
+  const textEl = document.createElement('div');
+  textEl.style.cssText = 'font-size:42px;color:#ffd6a0;line-height:1.6;text-align:center;letter-spacing:1px;padding:0 8px;';
+  textEl.textContent = line;
+  box.appendChild(textEl);
+
+  // 點擊提示
+  const hint = document.createElement('div');
+  hint.style.cssText = `font-size:22px;color:${mainColor};letter-spacing:3px;margin-top:4px;opacity:0.85;animation:dialogArrow 0.9s ease-in-out infinite;`;
+  hint.textContent = '▶ 點擊任意處繼續';
+  box.appendChild(hint);
+
+  pop.appendChild(box);
+
+  const _dismiss = () => {
+    if(!pop.parentNode) return;
+    pop.style.transition = 'opacity 0.3s';
+    pop.style.opacity = '0';
+    setTimeout(()=>{ if(pop.parentNode) pop.remove(); }, 320);
+  };
+  pop.onclick = _dismiss;
+
+  // 保險備用:5 秒沒點也會自動消失
+  setTimeout(_dismiss, 5000);
+
+  (document.getElementById('gc') || document.body).appendChild(pop);
 }
 
 function _showRareMobDefeat(mobName){
+  // ★ v1.0.20260420.3000 — 同樣升級為 BOSS 風格大型對話框,置於畫面上方
   const lines = _RARE_MOB_LINES[mobName];
   if(!lines) return;
   const line = lines.defeat[Math.floor(Math.random()*lines.defeat.length)];
-  var pop = document.createElement('div');
-  pop.style.cssText = 'position:fixed;z-index:99100;top:30%;left:50%;transform:translateX(-50%);'
-    + 'background:linear-gradient(135deg,rgba(15,10,40,0.97),rgba(8,5,25,0.97));'
-    + 'border:2px solid #888;border-radius:16px;'
-    + 'padding:16px 28px;max-width:min(90vw,480px);text-align:center;'
-    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;font-size:20px;color:#ccc;'
-    + 'font-weight:500;font-style:italic;';
-  pop.innerHTML = line;
-  document.body.appendChild(pop);
-  setTimeout(()=>{ pop.style.transition='opacity 0.6s'; pop.style.opacity='0'; setTimeout(()=>pop.remove(),600); }, 2500);
+  const existing = document.getElementById('_rare-mob-defeat-dlg');
+  if(existing) existing.remove();
+
+  const isChest   = mobName === '寶箱怪';
+  const mainColor = isChest ? '#ffcc44' : '#ff44aa';
+  const glow      = isChest ? 'rgba(255,200,0,0.4)' : 'rgba(255,80,160,0.4)';
+  const icon      = isChest ? '📦' : '😈';
+  const img = (typeof HERO_IMGS!=='undefined' && HERO_IMGS[mobName]) || '';
+  const av  = (typeof AVATARS  !=='undefined' && AVATARS[mobName])   || icon;
+
+  const pop = document.createElement('div');
+  pop.id = '_rare-mob-defeat-dlg';
+  pop.style.cssText =
+    'position:absolute;inset:0;z-index:9850;' +
+    'background:rgba(0,0,0,0.75);backdrop-filter:blur(3px);' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;' +
+    'padding-top:60px;cursor:pointer;' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;' +
+    'animation:advDialogIn 0.4s ease-out;';
+
+  const box = document.createElement('div');
+  box.style.cssText =
+    `background:linear-gradient(160deg,rgba(20,20,30,0.95),rgba(10,10,15,0.98));` +
+    `border:2.5px solid ${mainColor};border-radius:22px;` +
+    `padding:28px 40px 32px;max-width:820px;width:88%;box-sizing:border-box;` +
+    `box-shadow:0 0 40px ${glow};` +
+    `display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0.92;`;
+
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;gap:20px;width:100%;justify-content:center;';
+  header.innerHTML =
+    `<div style="width:120px;height:120px;border-radius:14px;overflow:hidden;border:2.5px solid ${mainColor};background:rgba(0,0,0,0.7);opacity:0.78;filter:grayscale(0.4);flex-shrink:0;">` +
+      (img
+        ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        : `<span style="font-size:76px;display:flex;align-items:center;justify-content:center;height:100%;">${av}</span>`) +
+    `</div>` +
+    `<div style="font-size:40px;font-weight:900;color:${mainColor};letter-spacing:3px;opacity:0.85;">${icon} ${mobName} 敗北</div>`;
+  box.appendChild(header);
+
+  const textEl = document.createElement('div');
+  textEl.style.cssText = 'font-size:36px;color:#ccc;line-height:1.65;text-align:center;letter-spacing:1px;font-style:italic;padding:0 8px;';
+  textEl.textContent = line;
+  box.appendChild(textEl);
+
+  pop.appendChild(box);
+
+  const _dismiss = () => {
+    if(!pop.parentNode) return;
+    pop.style.transition = 'opacity 0.35s';
+    pop.style.opacity = '0';
+    setTimeout(()=>{ if(pop.parentNode) pop.remove(); }, 360);
+  };
+  pop.onclick = _dismiss;
+
+  setTimeout(_dismiss, 4500);
+
+  (document.getElementById('gc') || document.body).appendChild(pop);
 }
 
 
@@ -34734,6 +34869,26 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260420.3000', brief:[
+    '小惡魔、寶箱怪的登場/敗北對話視窗放大成 BOSS 風格大對話框,置於畫面上方',
+    '小怪戰後若英雄升級,會像 BOSS 戰一樣出現右側升級通知,再顯示結算畫面',
+  ], items:[
+    '【Task 1】小惡魔、寶箱怪的對話視窗重設計:',
+    '  - 原本:position:fixed;bottom:120px + max-width:500px + font-size:22px → 夾在底部,文字太小',
+    '  - 現在 _showRareMobIntro(mobName):全畫面 overlay(position:absolute;inset:0;z-index:9850) + backdrop-filter blur + padding-top:60px 置頂',
+    '  - 標籤「⚠ 稀有怪出現!」在頂端圓膠囊顯示,主色邊框(寶箱怪金、小惡魔粉)',
+    '  - 主對話框沿用 #adv-boss-intro 視覺語彙:linear-gradient 暗紅底、3px 主色邊、0 0 60px 光暈、900px 最大寬、22px 圓角、32/44 padding',
+    '  - 150×150 HERO_IMGS 大頭像 + 54px 主色 BOSS 名稱(含 icon)並排顯示',
+    '  - 42px 對白文字置中,點擊任意處關閉,保險 5 秒自動消失',
+    '  - _showRareMobDefeat 同樣升級為 BOSS 風格大對話框(略暗化並 italic 處理,暗示敗北),自動 4.5 秒消失',
+    '  - 兩者都用 animation:advDialogIn(既有的 BOSS 對話淡入 keyframe)保持視覺一致',
+    '【Task 2】小怪戰升級通知系統修復:',
+    '  - 原本 bug:addHeroExp 回傳的升級清單存到 window._miniLevelUpsPending 後,下方結算段落直接 _miniResultEl2.classList.add("show") 就顯示結算視窗,從未呼叫 _showLevelUpSequence,升級通知被跳過',
+    '  - 修復:把結算視窗顯示邏輯抽成 _showMiniResultInternal 內部函式,然後在呼叫前讀取 window._miniLevelUpsPending,若有內容先 setTimeout(_showLevelUpSequence(_miniLUsNow, _showMiniResultInternal), 400),沒有就直接 _showMiniResultInternal',
+    '  - 這樣流程與 BOSS 戰(line 26612)完全一致:升級清單 → 右側升級通知演出(已存在的 _showLevelUpSequence,z-index 9800,右側滑入)→ 玩家按確認逐個看完 → 最後顯示結算視窗',
+    '  - 支援小惡魔 drop 階段捕獲的額外升級(line 32898-32900 把 _lu push 到 _miniLevelUpsPending,line 32949-32952 合併到 _miniLevelUps)',
+    '【無破壞】升級序列函式 _showLevelUpSequence 本身完全未動,已支援多人升級遞歸、粒子特效、素質點提示、確認按鈕。只是把它從「未被呼叫」狀態修復為「會被呼叫」',
+  ] },
   { ver:'v1.0.20260420.2900', brief:[
     '冒險模式進選角前,先跳出「BOSS 路線選擇」視窗,讓你挑戰前先看各路線 BOSS 的圖、簡介、陣容再決定',
     '選完才進選角,敵方陣容自動換成你選的 BOSS,原本選角頁的「🔀 換路線」按鈕保留仍可切換',
@@ -35645,7 +35800,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.2900';
+  const CURRENT_VERSION = 'v1.0.20260420.3000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -35662,7 +35817,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.2900';
+window._GAME_LOADED_VERSION = 'v1.0.20260420.3000';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
