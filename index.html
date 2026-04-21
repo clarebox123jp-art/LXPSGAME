@@ -4011,7 +4011,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000d</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -19822,6 +19822,13 @@ function bgmPlayMenu(){
 }
 function bgmFadeTo(newId,duration){
   duration=duration||800;
+  // ★ v1.0.20260421.3000d — 日本關攔截：bgm-battle 是通用戰鬥 BGM 抽象名，
+  //   原本會從 BATTLE_BGM_LIST（貓空系列）隨機挑一首，導致日本關會先播貓空 BGM
+  //   再切日本 BGM。此處統一映射到日本小怪戰 BGM；BOSS 戰後續會由 _playAdvBossBgm
+  //   自動切到對應 BOSS BGM，全程不會播到貓空 BGM。
+  if(newId==='bgm-battle' && typeof _adventureStage!=='undefined' && _adventureStage==='japan'){
+    newId = 'bgm-japan-battle';
+  }
   // ★ 'bgm-battle' 是抽象名稱，映射到第一首戰鬥 BGM（若已在播隨機戰鬥曲則不重播）
   if(newId==='bgm-battle'){
     if(_curBgm && typeof BATTLE_BGM_LIST!=='undefined' && BATTLE_BGM_LIST.includes(_curBgm)) return;
@@ -26544,6 +26551,8 @@ function _tgHidePetSpotlight(){
 
 // 答題結果分流（利用既有 _advMiniQuizAsk 但以獨立 callback 包裝）
 function _tgAskPetQuestion(pet, petName){
+  // ★ v1.0.20260421.3000c — 標記為寵物事件答題模式，跳過答對獎勵視窗
+  window._tgPetQuizMode = true;
   // ★ 初始化答題狀態（此處在過場中觸發，戰鬥尚未啟動）
   if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
   if(typeof window._miniQuizTotalCoins !== 'number') window._miniQuizTotalCoins = 0;
@@ -35122,6 +35131,12 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
+      // ★ v1.0.20260421.3000c — 寵物事件答題模式：跳過獎勵視窗，直接進寵物對白
+      if(window._tgPetQuizMode){
+        window._tgPetQuizMode = false;
+        if(_onDoneAfterReward) _onDoneAfterReward({correct:true});
+        return;
+      }
       try{
         _advMiniShowReward(()=>{ if(_onDoneAfterReward) _onDoneAfterReward({correct:true}); });
       }catch(e){
@@ -35143,6 +35158,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
+      // ★ v1.0.20260421.3000c — 答錯時也要清寵物事件旗標
+      if(window._tgPetQuizMode) window._tgPetQuizMode = false;
       if(onDone) onDone({correct:false});
     }, 1600);
   }
@@ -37814,6 +37831,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000d', brief:[
+    '日本關 BGM 修正 + 題庫強化 + 寵物事件獎勵視窗跳過',
+    'v3000 系列最終版（累積 3000b/3000c/3000d 修正）',
+  ], items:[
+    '【BGM 修正：日本戰鬥不再先播貓空版 BGM】',
+    '  bgmFadeTo 主函式開頭加入日本關攔截',
+    '  _adventureStage==="japan" 時 bgm-battle 直接映射為 bgm-japan-battle',
+    '  一次解決所有觸發點：小怪戰進場、寶箱怪逃跑後、預設陣容開戰',
+    '  BOSS 戰後續由 _playAdvBossBgm 自動切到對應日本 BOSS BGM',
+    '  全程不會出現貓空戰鬥 BGM，純粹日本氛圍',
+    '【題庫判斷強化：v3000b】',
+    '  advGetQuizPool / _advMiniGetQuizPool 改用雙重判斷',
+    '  subject==="日本關" OR _adventureStage==="japan"',
+    '  避免 subject 因 snapshot 還原等流程被覆寫導致失效',
+    '  加 console.log 診斷（可確認分支觸發）',
+    '【寵物事件獎勵視窗跳過：v3000c】',
+    '  _tgAskPetQuestion 開頭設 window._tgPetQuizMode = true',
+    '  _advMiniQuizAsk 答對分支判斷旗標，寵物模式跳過 _advMiniShowReward',
+    '  答對直接進「接受同行」對白，不再出現選擇獎勵視窗',
+    '  答錯也會清旗標，不影響後續戰鬥',
+  ]},
   { ver:'v1.0.20260421.3000', brief:[
     '日本關卡 4 項 bug 修復 + 53 獎章系統 + 第三場景隨機事件',
     '日本小怪戰 BGM、題庫、BOSS 對白、第三場景互動全面到位',
@@ -39533,7 +39571,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000';
+  const CURRENT_VERSION = 'v1.0.20260421.3000d';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -39550,7 +39588,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000d';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
