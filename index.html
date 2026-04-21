@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1900</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.2000</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4157,18 +4157,21 @@ body {
         background:rgba(60,10,10,0.4);border:2px solid #e84040;color:#e84040;
         border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button>
     </div>
-    <!-- 主體：左=商品 右=背包 -->
+    <!-- 主體：左=商品 右=背包（v1.0.20260421.2000 改為 50/50 並統一賣出按鈕到右側） -->
     <div style="position:relative;z-index:1;display:flex;height:calc(100% - 90px);gap:0;">
       <!-- 左側：商品列表 -->
-      <div id="shop-main" style="flex:1;padding:clamp(8px,1.5vh,20px) clamp(10px,2vw,24px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-right:1.5px solid rgba(255,180,50,0.25);">
+      <div id="shop-main" style="flex:1;width:50%;padding:clamp(8px,1.5vh,20px) clamp(10px,2vw,24px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-right:1.5px solid rgba(255,180,50,0.25);">
         <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#ffcc44;margin-bottom:16px;letter-spacing:2px;">🏪 商品</div>
         <div id="shop-products-list"></div>
-        <!-- 分隔線：可賣出的物品 -->
-        <div id="shop-sell-section" style="margin-top:24px;"></div>
       </div>
-      <!-- 右側：玩家背包 -->
-      <div id="shop-bag-scroll" style="width:440px;padding:20px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(0,0,0,0.2);">
-        <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#88ccff;margin-bottom:16px;letter-spacing:2px;">🎒 我的背包</div>
+      <!-- 右側：玩家背包（整合賣出功能） -->
+      <div id="shop-bag-scroll" style="flex:1;width:50%;padding:20px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(0,0,0,0.2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;">
+          <div style="font-size:clamp(24px,3vw,42px);font-weight:900;color:#88ccff;letter-spacing:2px;">🎒 我的背包</div>
+          <button id="shop-sell-all-btn" onclick="shopSellAllItems()" style="padding:10px 18px;font-size:clamp(18px,2vw,26px);font-weight:800;
+            background:linear-gradient(135deg,rgba(180,60,0,0.45),rgba(255,120,40,0.35));
+            border:2px solid #ff8844;color:#ffcc88;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;white-space:nowrap;">💱 一鍵賣出所有賣錢物品</button>
+        </div>
         <div id="shop-bag-panel"></div>
       </div>
     </div>
@@ -31243,39 +31246,13 @@ function _renderShopProducts(){
       </div>`;
     list.appendChild(div);
   });
-
-  // 可賣出的物品
-  const sellSec = document.getElementById('shop-sell-section');
-  if(!sellSec) return;
-  const sellable = SHOP_SELL_ITEMS.filter(si => backpackGet(si.id) > 0);
-  if(!sellable.length){ sellSec.innerHTML=''; return; }
-  sellSec.innerHTML = '<div style="font-size:36px;font-weight:900;color:#ffaa44;margin-bottom:12px;border-top:1.5px solid rgba(255,150,50,0.3);padding-top:16px;">💱 賣出收藏品</div>';
-  sellable.forEach(si => {
-    const have = backpackGet(si.id);
-    const def = BACKPACK_ITEM_DEF[si.id]||{};
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:14px 20px;margin-bottom:10px;'+
-      'background:rgba(40,20,0,0.7);border:1.5px solid rgba(255,150,50,0.3);border-radius:12px;';
-    div.innerHTML = `
-      <div style="font-size:66px;">${def.icon||si.icon}</div>
-      <div style="flex:1;">
-        <div style="font-size:36px;font-weight:900;color:#ffbb44;">${si.name}</div>
-        <div style="font-size:27px;color:#aaa;">持有：${have} 個 &nbsp;|&nbsp; 賣價：<span style="color:#ffe066;font-weight:800;">${si.sellPrice.toLocaleString()} 💰</span>/個</div>
-      </div>
-      <button onclick="shopSellItem('${si.id}',1)" style="padding:10px 22px;font-size:33px;font-weight:800;
-        background:rgba(180,100,0,0.35);border:2px solid #ffaa44;color:#ffaa44;
-        border-radius:10px;cursor:pointer;font-family:inherit;">💱 賣出1個</button>
-      <button onclick="shopSellItem('${si.id}',${have})" style="padding:10px 22px;font-size:33px;font-weight:800;
-        background:rgba(180,60,0,0.35);border:2px solid #ff6622;color:#ff8844;
-        border-radius:10px;cursor:pointer;font-family:inherit;">全部賣出</button>`;
-    sellSec.appendChild(div);
-  });
+  // ★ v1.0.20260421.2000 — 賣出物品已移至右側背包欄，此處不再渲染賣出區
 }
 
 function _renderShopBagPanel(){
   const panel = document.getElementById('shop-bag-panel');
   if(!panel) return;
-  _renderBackpackInto(panel, false); // false=不顯示使用按鈕
+  _renderBackpackInto(panel, false, 'shop'); // shop 模式=顯示賣出按鈕
 }
 
 // ★ 肖像商品全圖預覽
@@ -31411,6 +31388,45 @@ async function shopSellItem(id, qty){
   try{ await gameCloudSave(); }catch(e){ console.error('[sell cloud save]', e); }
 }
 
+// ★ v1.0.20260421.2000 — 一鍵賣出所有可賣物品
+async function shopSellAllItems(){
+  const sellable = SHOP_SELL_ITEMS.filter(si => backpackGet(si.id) > 0);
+  if(!sellable.length){
+    _showInGameToast('背包中沒有可賣出的物品', '#ff8844', 1800);
+    return;
+  }
+  // 計算總賣價和摘要
+  let _totalCoins = 0;
+  const _summary = [];
+  sellable.forEach(si => {
+    const have = backpackGet(si.id);
+    const def = BACKPACK_ITEM_DEF[si.id]||{};
+    const coins = (def.sellPrice||0) * have;
+    _totalCoins += coins;
+    _summary.push(`${def.icon||''} ${def.name} ×${have}`);
+  });
+  const _msg = `確認要一鍵賣出以下 ${sellable.length} 種物品？\n\n${_summary.join('\n')}\n\n總收益：${_totalCoins.toLocaleString()} 💰`;
+  if(!confirm(_msg)) return;
+  // 批次賣出（不觸發個別 toast，最後統一一個提示）
+  sellable.forEach(si => {
+    const have = backpackGet(si.id);
+    const def = BACKPACK_ITEM_DEF[si.id]||{};
+    backpackRemove(si.id, have);
+    _knowledgeCoins = (_knowledgeCoins||0) + (def.sellPrice||0) * have;
+  });
+  // 音效 + toast
+  try{
+    const _sfxSell = document.getElementById('sfx-sell-item');
+    if(_sfxSell){ _sfxSell.currentTime=0; _sfxSell.volume=0.7; _sfxSell.play().catch(()=>{}); }
+    else playSfx('sfx-sell', 0.75);
+  }catch(e){}
+  _showInGameToast(`💰 一鍵賣出完成！共 ${sellable.length} 種物品，獲得 ${_totalCoins.toLocaleString()} 知識幣！`, '#ffcc44', 3500);
+  _syncCoinsDisplay();
+  _renderShopProducts();
+  _renderShopBagPanel();
+  try{ await gameCloudSave(); }catch(e){ console.error('[sell all cloud save]', e); }
+}
+
 // ════════════════════════════════════════════════════════════════
 // ★ 背包系統
 // ════════════════════════════════════════════════════════════════
@@ -31470,11 +31486,16 @@ function _showBagItemTip(id, el){
   }, 80);
 }
 
-function _renderBackpackInto(container, showUse){
+function _renderBackpackInto(container, showUse, mode){
   container.innerHTML='';
   const ids = Object.keys(BACKPACK_ITEM_DEF);
   const hasAny = ids.some(id => backpackGet(id)>0);
   const _isCompact = !showUse; // ★ 商店右欄用緊湊模式
+  const _isShopMode = mode === 'shop'; // ★ v1.0.20260421.2000 — 商店模式顯示賣出按鈕
+  // 建立可賣物品 id 集合，方便快速判斷
+  const _sellableIds = _isShopMode && typeof SHOP_SELL_ITEMS !== 'undefined'
+    ? new Set(SHOP_SELL_ITEMS.map(si => si.id))
+    : null;
   if(!hasAny){
     container.innerHTML=`<div style="font-size:${_isCompact?'26':'44'}px;color:#666;text-align:center;padding:20px;">（背包是空的）</div>`;
     return;
@@ -31484,25 +31505,39 @@ function _renderBackpackInto(container, showUse){
     if(cnt<=0) return;
     const def = BACKPACK_ITEM_DEF[id];
     const isSellOnly = def.type==='sell_only';
+    const _canSell = _isShopMode && _sellableIds && _sellableIds.has(id) && (def.sellPrice||0) > 0;
     const row = document.createElement('div');
     if(_isCompact){
       // ★ 緊湊單行 + ? 詳細說明（商店右欄）
-      row.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 12px;'+
-        'background:rgba(15,20,40,0.75);border:1.5px solid rgba(100,150,255,0.25);border-radius:10px;';
-      const _isSell = isSellOnly;
-      const _defDesc = def.desc||'';
-      const _defSell = (def.sellPrice||0).toLocaleString();
-      const _defName = def.name;
-      const _defIcon = def.icon;
-      row.innerHTML=`
-        <div style="font-size:28px;flex-shrink:0;">${def.icon}</div>
-        <div style="font-size:22px;font-weight:800;color:#ddeeff;flex:1;min-width:0;
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${def.name}</div>
-        <button onclick="_showBagItemTip('${id}',this)" style="flex-shrink:0;width:40px;height:40px;font-size:22px;font-weight:900;
-          background:rgba(80,100,180,0.4);border:2px solid rgba(100,150,255,0.7);
-          color:#88aaff;border-radius:50%;cursor:pointer;font-family:inherit;
-          display:flex;align-items:center;justify-content:center;line-height:1;padding:0;">？</button>
-        <div style="font-size:24px;font-weight:900;color:#ffee88;white-space:nowrap;flex-shrink:0;">×${cnt}</div>`;
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 12px;'+
+        'background:rgba(15,20,40,0.75);border:1.5px solid rgba(100,150,255,0.25);border-radius:10px;'+
+        'flex-wrap:wrap;';
+      // ★ 主資訊列（圖示+名稱+?+數量）
+      let _html = `
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+          <div style="font-size:28px;flex-shrink:0;">${def.icon}</div>
+          <div style="font-size:22px;font-weight:800;color:#ddeeff;flex:1;min-width:0;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${def.name}</div>
+          <button onclick="_showBagItemTip('${id}',this)" style="flex-shrink:0;width:40px;height:40px;font-size:22px;font-weight:900;
+            background:rgba(80,100,180,0.4);border:2px solid rgba(100,150,255,0.7);
+            color:#88aaff;border-radius:50%;cursor:pointer;font-family:inherit;
+            display:flex;align-items:center;justify-content:center;line-height:1;padding:0;">？</button>
+          <div style="font-size:24px;font-weight:900;color:#ffee88;white-space:nowrap;flex-shrink:0;">×${cnt}</div>
+        </div>`;
+      // ★ 商店模式：可賣物品加賣出按鈕 + 單價
+      if(_canSell){
+        _html += `
+        <div style="display:flex;align-items:center;gap:6px;width:100%;margin-top:4px;padding-top:6px;border-top:1px dashed rgba(255,150,50,0.25);">
+          <div style="font-size:18px;color:#ffcc88;flex:1;">💰 單價 ${(def.sellPrice||0).toLocaleString()}</div>
+          <button onclick="shopSellItem('${id}',1)" style="padding:6px 12px;font-size:18px;font-weight:800;
+            background:rgba(180,100,0,0.35);border:2px solid #ffaa44;color:#ffcc66;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">💱 賣 1</button>
+          <button onclick="shopSellItem('${id}',${cnt})" style="padding:6px 12px;font-size:18px;font-weight:800;
+            background:rgba(180,60,0,0.35);border:2px solid #ff6622;color:#ff8844;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">全部賣 (${(def.sellPrice*cnt).toLocaleString()}💰)</button>
+        </div>`;
+      }
+      row.innerHTML = _html;
       container.appendChild(row);
       return;
     }
@@ -36950,6 +36985,24 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.2000', brief:[
+    '不可思議超商 UI 重整：商品與背包改 50/50 版面',
+    '賣出按鈕全部移到右側背包，每項物品旁邊都有 💱 賣 1 / 全部賣',
+    '新增 💱 一鍵賣出所有賣錢物品 按鈕（有 confirm 防誤觸）',
+  ], items:[
+    '【版面】商店主體左右欄改為 flex:1 / flex:1 各佔 50%',
+    '【商品欄】移除底部「💱 賣出收藏品」區塊',
+    '【背包欄】每項可賣物品下方加入 💰 單價 + 💱 賣 1 + 全部賣 (含總價) 三段資訊',
+    '【一鍵賣出】',
+    '  新增 shopSellAllItems() 函式',
+    '  按下前彈出 confirm 列出「即將賣出的物品清單 + 總收益」',
+    '  確認後批次扣除 + 結算金幣 + 播放 sfx-sell-item 音效',
+    '  顯示單一 toast 告知總賣出種類與總金幣',
+    '  同步 gameCloudSave 確保重整不復活',
+    '【相容性】',
+    '  _renderBackpackInto 新增第 3 參數 mode，只有 "shop" 才渲染賣出按鈕',
+    '  原背包頁面 openBackpackOverlay 呼叫不變，不影響背包頁',
+  ] },
   { ver:'v1.0.20260421.1900', brief:[
     '修正日本關進入後仍出現貓空 BOSS 的嚴重 bug',
   ], items:[
@@ -38429,7 +38482,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.1900';
+  const CURRENT_VERSION = 'v1.0.20260421.2000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38446,7 +38499,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.1900';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.2000';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
