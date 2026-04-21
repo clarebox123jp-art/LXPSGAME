@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1100</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1500</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -5997,10 +5997,289 @@ function playSkillFX(skillName,actor,targets){
       if(rc_a){spawnParticles(rc_a.x,rc_a.y,{count:24,color:'#ffcc44',size:8,spread:65,duration:700});ringFX(actor,'#ffcc44',700);bannerFX(actor,'謝幕掌聲！','#ffcc44',1200);flashScreen('rgba(255,200,0,1)',400);}
       zoneFlash(actor.side,'rgba(255,180,0,0.3)',700);
       break;
+    // ═══════════════════════════════════════════════════════════════
+    // ★ v1.0.20260421.1400 — 日本關卡 14 個技能攻擊特效與音效
+    // ═══════════════════════════════════════════════════════════════
+    // ── 大天狗 S1：疾風團扇擊（風，單目標） ──
+    case '疾風團扇擊':
+      playSfx('sfx-sword',0.85); playSfx('sfx-punch',0.55);
+      if(t0){
+        beamFX(actor,t0,'#99eeff',260);
+        flashCard(t0,'rgba(120,230,255,0.75)',200);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:16,color:'#aaddff',size:7,spread:80,duration:600,rise:false});
+        ringFX(t0,'#bbeeff',500);
+      }
+      zoneFlash(actor.side,'rgba(170,220,255,0.12)',400);
+      break;
+    // ── 大天狗 S2：風捲殘雲（風，全體3次） ──
+    case '風捲殘雲':
+      playSfx('sfx-fantasy',0.85); playSfx('sfx-sword',0.6);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(150,220,255,0.65)',220);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:12,color:'#cce8ff',size:6,spread:60,duration:500});
+        ringFX(h,'#aaddff',350);
+      },i*100)});
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(170,220,255,0.25)',700);
+      flashScreen('rgba(150,200,255,0.25)',350);
+      break;
+    // ── 酒吞童子 S1：鬼力橫掃（暗，全體+爆擊） ──
+    case '鬼力橫掃':
+      playSfx('sfx-explode',0.8); playSfx('sfx-punch',0.85);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(180,60,80,0.8)',260);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:18,color:'#cc2244',size:8,spread:70,duration:650,rise:true,gravity:-0.2});
+        bannerFX(h,'💢爆擊+50%','#ff4466',600);
+      },i*80)});
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(140,30,50,0.28)',700);
+      flashScreen('rgba(130,20,40,0.25)',400);
+      break;
+    // ── 酒吞童子 S2：酒宴（我方回血+增益） ──
+    case '酒宴':
+      playSfx('sfx-heal',0.9); playSfx('sfx-powerup',0.7);
+      targets.forEach(function(h,i){setTimeout(function(){
+        ringFX(h,'#ff9944',550);
+        flashCard(h,'rgba(255,150,70,0.4)',500);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:14,color:'#ffaa66',size:7,spread:55,duration:700,rise:true});
+      },i*120)});
+      zoneFlash(actor.side,'rgba(255,150,80,0.22)',700);
+      break;
+    // ── 玉藻前 S1：九尾狐火（火，隨機多段+地獄之火） ──
+    case '九尾狐火':
+      playSfx('sfx-explode',0.7); playSfx('sfx-fantasy',0.65);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(255,130,40,0.8)',260);
+        var rc=cardRect(h);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:16,color:'#ff5522',size:7,spread:55,duration:550,rise:true,gravity:-0.25});
+          spawnParticles(rc.x,rc.y,{count:10,color:'#ffcc44',size:6,spread:40,duration:500,rise:true,gravity:-0.3});
+        }
+        ringFX(h,'#ff7733',400);
+      },i*110)});
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(255,120,50,0.22)',600);
+      break;
+    // ── 玉藻前 S2：妖狐幻惑（全體強力失明+自身護盾） ──
+    case '妖狐幻惑':
+      playSfx('sfx-fantasy',1.0); playSfx('sfx-charm',0.6);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(255,230,100,0.65)',300);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:14,color:'#ffe066',size:7,spread:50,duration:600,rise:true});
+        bannerFX(h,'👁失明 2r','#ffee88',600);
+      },i*100)});
+      if(rc_a){
+        ringFX(actor,'#ffcc66',700);
+        spawnParticles(rc_a.x,rc_a.y,{count:20,color:'#ffcc66',size:8,spread:60,duration:700,rise:true});
+      }
+      bannerFX(actor,'🛡護盾+30','#ffcc66',700);
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(255,220,100,0.2)',700);
+      break;
+    // ── 八岐大蛇 S1：八首齊噬（龍，8次隨機連擊） ──
+    case '八首齊噬':
+      playSfx('sfx-sword',0.9); playSfx('sfx-explode',0.65);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(180,80,220,0.75)',200);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:12,color:'#aa66cc',size:6,spread:50,duration:500});
+        ringFX(h,'#cc88dd',300);
+      },i*60)});
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(150,60,200,0.18)',500);
+      flashScreen('rgba(130,50,180,0.2)',350);
+      break;
+    // ── 八岐大蛇 S2：暗冰雷焰吐息（全體2次+隨機2狀態） ──
+    case '暗冰雷焰吐息':
+      playSfx('sfx-explode',1.0); playSfx('sfx-fantasy',0.7);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(100,60,220,0.85)',300);
+        var rc=cardRect(h);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:16,color:'#aa44ff',size:8,spread:65,duration:700,rise:true});
+          spawnParticles(rc.x,rc.y,{count:10,color:'#4488ff',size:6,spread:50,duration:600,rise:true});
+          spawnParticles(rc.x,rc.y,{count:10,color:'#ff4488',size:6,spread:50,duration:600,rise:true});
+        }
+        ringFX(h,'#aa66ff',500);
+      },i*110)});
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(120,60,220,0.28)',800);
+      flashScreen('rgba(100,50,200,0.28)',400);
+      break;
+    // ── 菁英：黑羽護盾 / 鬼腕橫掃 / 石化結界（同效果群：友方護盾） ──
+    case '黑羽護盾':
+    case '鬼腕橫掃':
+    case '石化結界':
+      playSfx('sfx-guard',0.85); playSfx('sfx-defense',0.6);
+      targets.forEach(function(h){
+        ringFX(h,'#88cc88',600);
+        flashCard(h,'rgba(120,220,120,0.5)',500);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:12,color:'#aaffaa',size:7,spread:45,duration:600,rise:true});
+      });
+      break;
+    // ── 菁英：羽刃斬擊 / 血怨之拳 / 毒氣侵蝕（同效果群：單體+50%麻痺） ──
+    case '羽刃斬擊':
+    case '血怨之拳':
+    case '毒氣侵蝕':
+      playSfx('sfx-sword',0.9); playSfx('sfx-punch',0.5);
+      if(t0){
+        beamFX(actor,t0,'#cc66ff',260);
+        flashCard(t0,'rgba(200,100,255,0.75)',260);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:16,color:'#cc88ff',size:8,spread:55,duration:600,rise:true});
+      }
+      break;
+    // ── 菁英：一葉山風 / 熊之酒 / 狐火療傷（同效果群：全體治療） ──
+    case '一葉山風':
+    case '熊之酒':
+    case '狐火療傷':
+      playSfx('sfx-heal',0.9); playSfx('sfx-gentle',0.6);
+      targets.forEach(function(h,i){setTimeout(function(){
+        ringFX(h,'#88ffaa',500);
+        flashCard(h,'rgba(100,255,150,0.35)',500);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:12,color:'#88ffcc',size:7,spread:45,duration:600,rise:true});
+      },i*100)});
+      zoneFlash(actor.side,'rgba(100,255,150,0.2)',600);
+      break;
+    // ── 菁英：萬葉療方 / 星夜妖酒 / 七色狐火（同效果群：解不利+復活） ──
+    case '萬葉療方':
+    case '星夜妖酒':
+    case '七色狐火':
+      playSfx('sfx-revive',0.85); playSfx('sfx-goddess',0.6);
+      targets.forEach(function(h,i){setTimeout(function(){
+        ringFX(h,'#ffe066',600);
+        flashCard(h,'rgba(255,230,120,0.55)',650);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:16,color:'#ffe880',size:8,spread:55,duration:700,rise:true});
+      },i*120)});
+      zoneFlash(actor.side,'rgba(255,230,120,0.22)',700);
+      break;
+    // ── 路邊：水盤滋潤（水，治療） ──
+    case '水盤滋潤':
+      playSfx('sfx-heal',0.7);
+      if(t0){
+        ringFX(t0,'#66ccff',500);
+        flashCard(t0,'rgba(100,200,255,0.4)',450);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:12,color:'#99ddff',size:7,spread:45,duration:600,rise:true});
+      }
+      break;
+    // ── 路邊：泥濘手爪（全體緩速） ──
+    case '泥濘手爪':
+      playSfx('sfx-powerdown',0.8); playSfx('sfx-cantmove',0.55);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(100,80,50,0.6)',350);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:10,color:'#998855',size:6,spread:40,duration:500});
+        bannerFX(h,'🐌緩速','#aa9955',500);
+      },i*90)});
+      break;
+    // ── 路邊：陰森飛髮（全體黑髮鞭擊） ──
+    case '陰森飛髮':
+      playSfx('sfx-sword',0.6); playSfx('sfx-fantasy',0.5);
+      targets.forEach(function(h,i){setTimeout(function(){
+        if(h.curHp<=0) return;
+        flashCard(h,'rgba(60,20,60,0.75)',300);
+        var rc=cardRect(h);
+        if(rc)spawnParticles(rc.x,rc.y,{count:10,color:'#552244',size:6,spread:50,duration:500});
+      },i*85)});
+      zoneFlash(actor.side==='p1'?'p2':'p1','rgba(60,20,60,0.2)',550);
+      break;
+    // ── 路邊：低聲詛咒（單體失明） ──
+    case '低聲詛咒':
+      playSfx('sfx-charm',0.7); playSfx('sfx-powerdown',0.5);
+      if(t0){
+        flashCard(t0,'rgba(200,200,120,0.5)',400);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:10,color:'#bbaa66',size:6,spread:35,duration:500,rise:true});
+        bannerFX(t0,'👁失明','#ddcc66',500);
+      }
+      break;
+    // ── 路邊：冰封搖籃曲（睡眠） ──
+    case '冰封搖籃曲':
+      playSfx('sfx-ice1',0.8); playSfx('sfx-gentle',0.7);
+      if(t0){
+        flashCard(t0,'rgba(180,230,255,0.7)',500);
+        ringFX(t0,'#aaddff',500);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:14,color:'#cceeff',size:7,spread:50,duration:700,rise:true});
+        bannerFX(t0,'💤睡眠 3r','#aaddff',600);
+      }
+      break;
+    // ── 路邊：雪風俯衝（單體+奪物品） ──
+    case '雪風俯衝':
+      playSfx('sfx-ice2',0.85); playSfx('sfx-sword',0.6);
+      if(t0){
+        beamFX(actor,t0,'#ccddff',250);
+        flashCard(t0,'rgba(200,230,255,0.8)',260);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:16,color:'#aaeeff',size:7,spread:60,duration:600,rise:false});
+      }
+      break;
+    // ── 路邊：獨眼狠擊（重擊+暴擊） ──
+    case '獨眼狠擊':
+      playSfx('sfx-punch',1.0); playSfx('sfx-crit',0.8);
+      if(t0){
+        flashCard(t0,'rgba(255,100,100,0.85)',280);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:18,color:'#ff5555',size:9,spread:65,duration:650,rise:true,gravity:-0.3});
+        ringFX(t0,'#ff7777',500);
+        bannerFX(t0,'💥爆擊+50%','#ff6666',600);
+      }
+      flashScreen('rgba(255,80,80,0.2)',300);
+      break;
+    // ── 路邊：踩腳陷阱（緩速最後行動） ──
+    case '踩腳陷阱':
+      playSfx('sfx-cantmove',0.85); playSfx('sfx-powerdown',0.55);
+      if(t0){
+        flashCard(t0,'rgba(120,80,50,0.65)',400);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:10,color:'#886644',size:6,spread:40,duration:500});
+        bannerFX(t0,'🪤陷阱','#aa7744',500);
+      }
+      break;
+    // ── 稀有：石像護體（自身無敵） ──
+    case '石像護體':
+      playSfx('sfx-guard',1.0); playSfx('sfx-statup',0.6);
+      if(rc_a){
+        ringFX(actor,'#aaaaaa',700);
+        spawnParticles(rc_a.x,rc_a.y,{count:16,color:'#cccccc',size:8,spread:55,duration:700,rise:true});
+      }
+      bannerFX(actor,'🗿石化無敵','#cccccc',700);
+      break;
+    // ── 稀有：家神惡作劇（強制HP剩10%） ──
+    case '家神惡作劇':
+      playSfx('sfx-charm',1.0); playSfx('sfx-fantasy',0.7);
+      if(t0){
+        flashCard(t0,'rgba(255,180,220,0.75)',500);
+        ringFX(t0,'#ff99cc',700);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:16,color:'#ffaaee',size:8,spread:60,duration:700,rise:true});
+        bannerFX(t0,'👻HP→10%','#ff77bb',700);
+      }
+      break;
+    // ── 稀有：捉迷藏詛咒（強制普攻隊友） ──
+    case '捉迷藏詛咒':
+      playSfx('sfx-charm',0.85); playSfx('sfx-cantmove',0.6);
+      if(t0){
+        flashCard(t0,'rgba(200,100,200,0.65)',500);
+        ringFX(t0,'#cc66cc',600);
+        var rc=cardRect(t0);
+        if(rc)spawnParticles(rc.x,rc.y,{count:12,color:'#cc88dd',size:7,spread:55,duration:600,rise:true});
+        bannerFX(t0,'🙈捉迷藏','#dd88cc',600);
+      }
+      break;
     default:break;
   }
 }
-// ====== HERO DB ======
 // ★ v1.0.20260420.1130 — 活動限定英雄清單(圖鑑會標示「🎪 活動獲得」)
 //   這些英雄無法從冒險模式 BOSS 戰解鎖池取得,只能透過特殊活動/贈送獲得
 const EVENT_ONLY_HEROES = new Set(['小力', '幼兒園小孩']);
@@ -10289,6 +10568,31 @@ function _showBurstCinematic(h, bd){
 // ── 爆發GIF特效資料庫 ──
 // URL為 GitHub raw（blob→raw 轉換），音效為 [sfxId, volume] 陣列
 const BURST_GIF_DB = {
+  // ★ v1.0.20260421.1500 — 日本關 4 大 BOSS 爆發技動畫
+  '神威風獵': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%A8%81%E9%A2%A8%E7%8D%B5.gif',
+    sfx:[['sfx-sword',1.0],['sfx-fantasy',0.85],['sfx-crit',0.75]],
+    tint:'rgba(170,220,255,0.18)'
+  },
+  '鬼王酒宴': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif',
+    sfx:[['sfx-explode',1.0],['sfx-punch',0.9],['sfx-heal',0.7]],
+    tint:'rgba(255,100,60,0.18)'
+  },
+  '禍世邪魅': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A6%8D%E4%B8%96%E9%82%AA%E9%AD%85.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-charm',0.9],['sfx-explode',0.6]],
+    tint:'rgba(255,150,80,0.18)'
+  },
+  // 八頭龍滅世：兩段接力（先火雨 → 再八龍頭滅世）
+  '八頭龍滅世': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%81%AB%E9%9B%A8.gif',
+    url2:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%85%AB%E9%BE%8D%E9%A0%AD%E6%BB%85%E4%B8%96.gif',
+    sfx:[['sfx-explode',1.0],['sfx-fantasy',0.85],['sfx-burst',0.9]],
+    tint:'rgba(255,80,40,0.22)',
+    tint2:'rgba(150,60,220,0.22)',
+    dur:1800, dur2:2200
+  },
   '劍神連斬': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
     sfx:[['sfx-sword',1.0],['sfx-crit',0.9]],
@@ -10478,8 +10782,9 @@ function _showBurstGif(burstName){
   const gc=document.getElementById('gc');
   if(!gc) return;
 
-  const _playOnce = (isSecond)=>{
-    // 移除舊的GIF層
+  // ★ v1.0.20260421.1500 — 支援「兩支不同 GIF 接力播放」
+  //   設定 data.url2 後會先播 url 再播 url2，兩支的時長由 data.dur / data.dur2 控制
+  const _playClip = (clipUrl, dur, tint) => new Promise(resolve => {
     const old=document.getElementById('burst-gif-overlay');
     if(old) old.remove();
 
@@ -10489,12 +10794,11 @@ function _showBurstGif(burstName){
       'position:absolute;inset:0;z-index:468;pointer-events:none;',
       'display:flex;align-items:center;justify-content:center;',
       'opacity:0;transition:opacity 0.2s ease-out;',
-      'background:'+data.tint+';'
+      'background:'+(tint||data.tint)+';'
     ].join('');
 
     const img=document.createElement('img');
-    // 加 query 參數確保第二次播放時 GIF 重新從頭播
-    img.src=data.url + (isSecond ? ('?r='+Date.now()) : '');
+    img.src = clipUrl + '?r=' + Date.now();
     img.style.cssText=[
       'max-width:100%;max-height:100%;',
       'width:1920px;height:1080px;',
@@ -10507,22 +10811,35 @@ function _showBurstGif(burstName){
     void ov.offsetWidth;
     ov.style.opacity='1';
 
-    if(data.sfx){
-      data.sfx.forEach(([id,vol],i)=>{
-        setTimeout(()=>playSfx(id,vol), i*180);
-      });
-    }
-
     setTimeout(()=>{
       ov.style.opacity='0';
       ov.style.transition='opacity 0.5s ease-in';
-      setTimeout(()=>{ if(ov.parentNode) ov.remove(); },500);
-    },2000);
-  };
+      setTimeout(()=>{
+        if(ov.parentNode) ov.remove();
+        resolve();
+      },500);
+    }, dur || 2000);
+  });
 
-  _playOnce(false);
-  if(data.playTwice){
-    setTimeout(()=>_playOnce(true), 2100);
+  // 播放音效（在整段特效開始時一次性觸發）
+  if(data.sfx){
+    data.sfx.forEach(([id,vol],i)=>{
+      setTimeout(()=>playSfx(id,vol), i*180);
+    });
+  }
+
+  // 播放 GIF（單 / 雙 / 接力）
+  if(data.url2){
+    // 接力播放：先 url 再 url2
+    _playClip(data.url, data.dur || 2000, data.tint).then(()=>{
+      return _playClip(data.url2, data.dur2 || 2000, data.tint2 || data.tint);
+    });
+  } else {
+    _playClip(data.url, data.dur || 2000, data.tint).then(()=>{
+      if(data.playTwice){
+        _playClip(data.url, data.dur || 2000, data.tint);
+      }
+    });
   }
 }
 
@@ -24457,7 +24774,7 @@ ADV_SCENES.japan = {
   const JP_IMG = {
     '月輪熊':'月輪熊.png','雪猴':'雪猴.png','對馬山貓':'對馬山貓.png','丹頂鶴':'丹頂鶴.png',
     '錦鯉':'錦鯉.png','綠雉':'綠雉.png','日本大山椒魚':'日本大山椒魚.png','翠鳥':'翠鳥.png',
-    '日本鱟':'日本鱟.png','奈良神鹿':'奈良神鹿.png','白鼬':'白鼬.png','變化狸':'變化狸.png',
+    '日本鱟':'日本鱟.png','奈良神鹿':'奈良神鹿.png','白鼬':'白鼬.png','變化狸':'狸貓.png',
   };
   Object.keys(TW_MAP).forEach(twName => {
     const orig = EQUIP_DB.find(e => e.n === twName);
@@ -24594,12 +24911,29 @@ Object.assign(HERO_DB, {
 });
 
 // ── 8. 日本寵物同步建立 HERO_IMGS（避免缺圖 bug）──
+// ★ v1.0.20260421.1200 — 用明確檔名對應表(部分檔名與角色名不一致)
 if(typeof HERO_IMGS !== 'undefined'){
   const JP_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
-  ['大天狗','酒吞童子','玉藻前','八岐大蛇',
-   '烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐',
-   '河童','二口女','雪女','獨眼小僧','行走的二宮尊德像','座敷童子'].forEach(n => {
-    if(!HERO_IMGS[n]) HERO_IMGS[n] = JP_BASE + encodeURIComponent(n + '.png');
+  const JP_MONSTER_IMG = {
+    '大天狗':           '大天狗.png',
+    '酒吞童子':         '酒吞童子.png',
+    '玉藻前':           '玉藻前.png',
+    '八岐大蛇':         '八歧大蛇.png',       // ← 檔名是「歧」非「岐」
+    '烏天狗':           '烏鴉天狗.png',       // ← 檔名是「烏鴉」
+    '木葉天狗':         '木葉天狗.png',
+    '茨木童子':         '茨木童子.png',
+    '星熊童子':         '星熊童子.png',
+    '殺生石分身':       '殺生石.png',         // ← 檔名無「分身」
+    '管狐':             '管狐.png',
+    '河童':             '河童.png',
+    '二口女':           '二口女.png',
+    '雪女':             '雪女.png',
+    '獨眼小僧':         '獨眼小僧.png',
+    '行走的二宮尊德像': '二宮尊德像.png',     // ← 檔名無「行走的」
+    '座敷童子':         '座敷童子.png',
+  };
+  Object.keys(JP_MONSTER_IMG).forEach(n => {
+    HERO_IMGS[n] = JP_BASE + encodeURIComponent(JP_MONSTER_IMG[n]);
   });
 }
 
@@ -36542,6 +36876,78 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.1500', brief:[
+    '接入日本關 4 大 BOSS 爆發技 GIF 動畫',
+    '八頭龍滅世支援「火雨 → 八龍頭滅世」兩段接力播放',
+  ], items:[
+    '【新增爆發技動畫】',
+    '  神威風獵 (大天狗)：神威風獵.gif + sfx-sword/fantasy/crit 3 段音效',
+    '  鬼王酒宴 (酒吞童子)：鬼王酒宴.gif + sfx-explode/punch/heal',
+    '  禍世邪魅 (玉藻前)：禍世邪魅.gif + sfx-fantasy/charm/explode',
+    '  八頭龍滅世 (八岐大蛇)：火雨.gif 1.8秒 → 八龍頭滅世.gif 2.2秒 接力播放',
+    '【新機制：兩段接力 GIF】',
+    '  _showBurstGif 函式重構為 Promise 鏈，支援 data.url2/tint2/dur2 欄位',
+    '  先播 url（tint, dur 毫秒），淡出 500ms → 再播 url2（tint2, dur2）',
+    '  舊 data.playTwice 旗標向下相容保留（其他 BOSS 不受影響）',
+    '  音效依原本 180ms 間隔在開頭一次性觸發（不跟隨 GIF 切換）',
+    '【實作位置】',
+    '  BURST_GIF_DB 開頭新增 4 個條目（line ~10572）',
+    '  _showBurstGif 函式改寫為 _playClip Promise 模式（line ~10757）',
+  ] },
+  { ver:'v1.0.20260421.1400', brief:[
+    '為日本關所有普通技能加上攻擊特效與音效（主 BOSS S1/S2、菁英、路邊、稀有共 22 個技能）',
+  ], items:[
+    '【主 BOSS S1/S2（6 個）】',
+    '  疾風團扇擊：sfx-sword + 風系粒子 beamFX + ringFX（單體風擊）',
+    '  風捲殘雲：sfx-fantasy 循環動畫 + 全體 flashCard 疊加 + zoneFlash（3 次循環視覺節奏）',
+    '  鬼力橫掃：sfx-explode + sfx-punch + 紅色爆擊粒子 + 爆擊 bannerFX + flashScreen',
+    '  酒宴：sfx-heal + sfx-powerup + 友方 ringFX + 橘紅向上粒子（全體增益視覺）',
+    '  九尾狐火：sfx-explode 連擊 + 橘紅+金黃雙層火焰粒子（3~4 段連擊視覺）',
+    '  妖狐幻惑：sfx-fantasy + sfx-charm + 全體失明 flashCard + 自身 ringFX 護盾特效',
+    '【八岐大蛇 S1/S2（2 個）】',
+    '  八首齊噬：sfx-sword 快速循環 + 紫色粒子(60ms 間隔) + flashScreen（8 連擊視覺）',
+    '  暗冰雷焰吐息：sfx-explode + 紫/藍/紅三色粒子（多元素吐息）',
+    '【菁英小怪（6 個，分 3 組）】',
+    '  黑羽護盾/鬼腕橫掃/石化結界：sfx-guard + 綠色 ringFX 護盾粒子',
+    '  羽刃斬擊/血怨之拳/毒氣侵蝕：sfx-sword + beamFX 紫色連線（單體傷害+麻痺）',
+    '  一葉山風/熊之酒/狐火療傷：sfx-heal + sfx-gentle + 全體治療粒子',
+    '  萬葉療方/星夜妖酒/七色狐火：sfx-revive + sfx-goddess + 金色復活粒子',
+    '【路邊小怪（8 個）】',
+    '  水盤滋潤（藍色治療） / 泥濘手爪（緩速 bannerFX） / 陰森飛髮（暗紫粒子）',
+    '  低聲詛咒（失明 flashCard） / 冰封搖籃曲（sfx-ice1 + 睡眠 bannerFX）',
+    '  雪風俯衝（sfx-ice2 + beamFX） / 獨眼狠擊（sfx-crit + 紅色爆擊 flashScreen） / 踩腳陷阱（陷阱 bannerFX）',
+    '【稀有小怪（3 個）】',
+    '  石像護體（sfx-guard + 灰色無敵粒子）',
+    '  家神惡作劇（sfx-charm + 粉紅「HP→10%」bannerFX）',
+    '  捉迷藏詛咒（sfx-charm + sfx-cantmove + 紫色詛咒粒子）',
+    '【實作位置】playSkillFX switch block default 前方插入 22 個 case',
+    '【技術說明】使用遊戲既有 helper: beamFX/flashCard/ringFX/spawnParticles/bannerFX/zoneFlash/flashScreen',
+    '【不含項目】爆發技能 (神威風獵/鬼王酒宴/禍世邪魅/八頭龍滅世) 的特效暫不加入，等玩家提供 GIF 後再接上',
+  ] },
+  { ver:'v1.0.20260421.1300', brief:[
+    '接入日本關 12 隻寵物的正式肖像圖',
+  ], items:[
+    '【檔名對應】',
+    '  11 隻寵物檔名與寵物名完全一致（月輪熊/雪猴/對馬山貓/丹頂鶴/錦鯉/綠雉/日本大山椒魚/翠鳥/日本鱟/奈良神鹿/白鼬）',
+    '  變化狸 → 檔名 狸貓.png（對應表中唯一不一致的檔名）',
+    '【生效範圍】戰鬥中寵物展示、背包裝備卡、寵物詳情頁、動物學家召喚等畫面全部會顯示正式肖像',
+  ] },
+  { ver:'v1.0.20260421.1200', brief:[
+    '接入日本關 16 隻怪物的正式肖像圖（4 BOSS + 6 菁英 + 4 路邊 + 2 稀有）',
+  ], items:[
+    '【檔名對應表方式取代舊的自動拼接】',
+    '  舊版假設檔名 = 角色名 + .png，但使用者提供的檔名有 4 個不一致，會 404',
+    '  新版改用 JP_MONSTER_IMG 明確 mapping，對所有 16 隻怪物指定確切檔名',
+    '【檔名差異修正】',
+    '  八岐大蛇 → 八歧大蛇.png（「岐」簡化寫成「歧」）',
+    '  烏天狗 → 烏鴉天狗.png',
+    '  殺生石分身 → 殺生石.png（檔名省略「分身」）',
+    '  行走的二宮尊德像 → 二宮尊德像.png（檔名省略「行走的」）',
+    '  其他 12 個角色檔名與角色名一致',
+    '【無影響】',
+    '  不影響 12 隻日本寵物圖片（那些已由 JP_IMG 對應表管理，檔名正確）',
+    '  不影響場景背景/BGM/技能邏輯',
+  ] },
   { ver:'v1.0.20260421.1100', brief:[
     '日本三大 BOSS（大天狗 / 酒吞童子 / 玉藻前）拿 S 評價有 5% 機率成為夥伴加入',
     '這三隻同時出現在英雄圖鑑（標「🗾 日本BOSS戰低機率獲得」）與魔物圖鑑',
@@ -37877,7 +38283,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.1100';
+  const CURRENT_VERSION = 'v1.0.20260421.1500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -37894,7 +38300,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.1100';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.1500';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
