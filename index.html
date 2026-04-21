@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1800</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1900</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4129,7 +4129,7 @@ body {
           <span class="adv-info-label">🎁 獎勵</span>
           <div id="adv-rewards-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
-        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame('maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
+        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame(window._advSelectedStage||'maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
 
       </div>
     </div>
@@ -22543,6 +22543,8 @@ function closeAdventureOverlay(){
 }
 
 function selectAdvStage(key, btnEl){
+  // ★ v1.0.20260421.1900 — 記錄當前選擇的關卡，給「開始冒險」按鈕讀取
+  window._advSelectedStage = key;
   // 更新左側按鈕選中狀態
   document.querySelectorAll('#adv-left-panel .adv-stage-btn:not(.locked)').forEach(b => b.classList.remove('selected'));
   if(btnEl) btnEl.classList.add('selected');
@@ -36948,6 +36950,23 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.1900', brief:[
+    '修正日本關進入後仍出現貓空 BOSS 的嚴重 bug',
+  ], items:[
+    '【問題】日本關解鎖後，點擊「開始冒險」按鈕進入的仍然是貓空關',
+    '  路線選擇視窗只顯示貓空 2 條路線（九尾空貓怪/杏花妖），找不到日本 4 路線',
+    '【根本原因】「開始冒險」按鈕 onclick 寫死 startAdventureGame(\"maokong\")',
+    '  無論左側面板選哪一關，按鈕永遠啟動 maokong',
+    '  這是從只有貓空關時代遺留下來的 hardcode，加日本關時沒改',
+    '【修正】',
+    '  1. selectAdvStage(key) 把 key 存入 window._advSelectedStage',
+    '  2. 按鈕 onclick 改為 startAdventureGame(window._advSelectedStage||"maokong")',
+    '  3. fallback 保留 "maokong"，避免首次進入時變數未定義崩潰',
+    '【驗證】',
+    '  選日本關 → 按開始 → 進入 _advShowBossRouteSelector',
+    '  讀 ADV_BOSS_VARIANTS["japan"] → 應顯示大天狗/酒吞童子/玉藻前/八岐大蛇 4 條路線',
+    '  八岐大蛇預設鎖定，需集齊 3 神器才能挑戰',
+  ] },
   { ver:'v1.0.20260421.1800', brief:[
     '老玩家回溯修復：手動確認按鈕讓已通關過的玩家可直接解鎖日本關',
     '雙重旗標偵測：支援 adv_maokong_s_full_clear + adv_maokong_legacy_clear_confirmed + adv_maokong_best_rank="S"',
@@ -38410,7 +38429,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.1800';
+  const CURRENT_VERSION = 'v1.0.20260421.1900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38427,7 +38446,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.1800';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.1900';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
