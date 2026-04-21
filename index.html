@@ -3228,6 +3228,7 @@ body {
      再加對話文字占位,實際用掉底部 ~560px。故 box 用 #gc 內部絕對像素 520px 保證
      不超出對話框上方的可見區。內容超過時捲軸必定觸發 */
   max-height:520px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  touch-action:pan-y;overscroll-behavior:contain;
   box-shadow:0 0 60px rgba(0,0,0,0.9);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
   scrollbar-width:thin;
@@ -3236,8 +3237,7 @@ body {
 .adv-choice-box::-webkit-scrollbar{width:14px;}
 .adv-choice-box::-webkit-scrollbar-track{background:rgba(0,0,0,0.45);border-radius:7px;margin:4px 0;}
 .adv-choice-box::-webkit-scrollbar-thumb{background:rgba(255,220,80,0.75);border-radius:7px;border:2px solid rgba(0,0,0,0.4);min-height:40px;}
-.adv-choice-box::-webkit-scrollbar-thumb:hover{background:rgba(255,220,80,1);}
-@keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.adv-choice-box::-webkit-scrollbar-thumb:hover{background:rgba(255,220,80,1);}@keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .adv-choice-title{
   font-size:44px;font-weight:900;color:#ffe050;letter-spacing:2px;
   margin-bottom:12px;text-shadow:0 0 16px rgba(255,200,0,0.5);text-align:center;
@@ -4086,7 +4086,7 @@ body {
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
       <div class="adv-stage-btn locked">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
-      <div class="adv-stage-btn locked">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
+      <div class="adv-stage-btn" onclick="_japanTrySelect(this)">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffcc66;">🗾 第一關：日本探險</span></div>
     <!-- ★ 商店按鈕 + 知識幣顯示 -->
     <div id="adv-coins-bar" style="font-size:clamp(13px,1.5vw,20px);font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
       background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,50,0.3);border-radius:8px;text-align:center;">
@@ -21979,6 +21979,39 @@ function _advShowBossRouteSelector(onConfirm){
       color:    '#ff88cc',
       glow:     'rgba(255,130,200,0.5)',
       badge:    '魅惑型',
+    },
+    // ═ 日本關 4 條路線 ═
+    tengu: {
+      mainName: '大天狗',
+      subtitle: '🍃 山風妖王 × 高速連擊',
+      teamDesc: '陣容:烏天狗 + 大天狗 + 木葉天狗｜勝利獲得【草薙劍】',
+      color:    '#66cc88',
+      glow:     'rgba(100,220,140,0.5)',
+      badge:    '風之試煉',
+    },
+    shutendoji: {
+      mainName: '酒吞童子',
+      subtitle: '🍶 鬼王狂宴 × 爆擊橫掃',
+      teamDesc: '陣容:茨木童子 + 酒吞童子 + 星熊童子｜勝利獲得【八尺瓊勾玉】',
+      color:    '#cc3344',
+      glow:     'rgba(220,70,90,0.5)',
+      badge:    '鬼之試煉',
+    },
+    tamamo: {
+      mainName: '玉藻前',
+      subtitle: '🦊 九尾妖狐 × 火焰幻術',
+      teamDesc: '陣容:殺生石分身 + 玉藻前 + 管狐｜勝利獲得【八咫鏡】',
+      color:    '#ffaa44',
+      glow:     'rgba(255,180,80,0.5)',
+      badge:    '狐之試煉',
+    },
+    yamata: {
+      mainName: '八岐大蛇',
+      subtitle: '🐉 八首遠古巨龍 × 雷焰冰風',
+      teamDesc: '單體超強BOSS｜集齊三神器自動弱化HP/ATK共-30%',
+      color:    '#8844ff',
+      glow:     'rgba(140,80,255,0.6)',
+      badge:    '🔒 隱藏試煉',
     }
   };
 
@@ -22029,6 +22062,19 @@ function _advShowBossRouteSelector(onConfirm){
     const av     = (typeof AVATARS    !== 'undefined' && AVATARS[info.mainName])   || '👾';
     const lore   = (typeof HERO_LORE  !== 'undefined' && HERO_LORE[info.mainName]) || '';
 
+    // ★ 隱藏 BOSS 八岐大蛇：檢查是否集齊三神器
+    let isLocked = false;
+    let lockReason = '';
+    let treasureCount = 0;
+    if(variant.hidden && variant.id === 'yamata'){
+      const tr = _japanGetTreasures();
+      treasureCount = (tr.tengu?1:0) + (tr.shutendoji?1:0) + (tr.tamamo?1:0);
+      if(treasureCount < 3){
+        isLocked = true;
+        lockReason = `🔒 需先通過大天狗、酒吞童子、玉藻前 3 條路線\n（目前已集齊 ${treasureCount}/3 件神器）`;
+      }
+    }
+
     const card = document.createElement('div');
     card.style.cssText =
       'width:500px;max-width:100%;flex:0 1 auto;box-sizing:border-box;' +
@@ -22041,19 +22087,22 @@ function _advShowBossRouteSelector(onConfirm){
     card.onmouseout  = () => { card.style.transform = ''; card.style.boxShadow = `0 0 40px ${info.glow}`; };
 
     card.innerHTML =
-      `<div style="width:100%;height:240px;border-radius:14px;overflow:hidden;border:2px solid ${info.color};background:rgba(0,0,0,0.7);position:relative;">` +
+      `<div style="width:100%;height:240px;border-radius:14px;overflow:hidden;border:2px solid ${info.color};background:rgba(0,0,0,0.7);position:relative;${isLocked?'filter:grayscale(0.7) brightness(0.55);':''}">` +
         (imgUrl
           ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block;">`
           : `<span style="font-size:120px;display:flex;align-items:center;justify-content:center;height:100%;">${av}</span>`) +
        `<div style="position:absolute;top:10px;left:12px;background:rgba(0,0,0,0.75);color:${info.color};font-size:18px;font-weight:900;letter-spacing:2px;padding:4px 10px;border-radius:8px;border:1.5px solid ${info.color};">路線 ${idx+1} · ${info.badge}</div>` +
+       (isLocked ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);font-size:90px;">🔒</div>` : '') +
       `</div>` +
       `<div style="font-size:42px;font-weight:900;color:${info.color};letter-spacing:3px;text-align:center;text-shadow:0 0 14px ${info.glow};">${info.mainName}</div>` +
       `<div style="font-size:24px;color:#ffddaa;letter-spacing:3px;text-align:center;margin-top:-4px;">${info.subtitle}</div>` +
       (lore ? `<div style="font-size:22px;color:#e8e0d4;line-height:1.65;padding:10px 14px;background:rgba(255,200,120,0.06);border-left:3px solid ${info.color};border-radius:0 8px 8px 0;">${lore}</div>` : '') +
       `<div style="font-size:20px;color:#99ccff;letter-spacing:1px;line-height:1.5;text-align:center;opacity:0.92;">${info.teamDesc}</div>` +
+      (isLocked ? `<div style="font-size:20px;color:#ff8866;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(255,80,80,0.12);border-radius:8px;white-space:pre-line;">${lockReason}</div>` : '') +
+      (variant.id==='yamata' && !isLocked ? `<div style="font-size:20px;color:#aaffaa;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(100,255,100,0.12);border-radius:8px;">✨ 已集齊三神器，八岐大蛇 HP/ATK 共 -30%！</div>` : '') +
       `<div style="display:flex;gap:10px;margin-top:6px;">` +
        `<button data-action="detail" style="flex:1;padding:12px;font-size:22px;font-weight:700;letter-spacing:2px;background:rgba(80,140,255,0.15);border:2px solid rgba(80,140,255,0.55);color:#99ccff;border-radius:10px;cursor:pointer;font-family:inherit;transition:all 0.15s;">ℹ︎ 詳細資料</button>` +
-       `<button data-action="select" style="flex:2;padding:12px;font-size:26px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,${info.color},rgba(0,0,0,0.1));border:2px solid ${info.color};color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;text-shadow:0 0 6px rgba(0,0,0,0.5);transition:all 0.15s;">⚔ 選擇此路線</button>` +
+       `<button data-action="select" ${isLocked?'disabled':''} style="flex:2;padding:12px;font-size:26px;font-weight:900;letter-spacing:3px;background:${isLocked?'rgba(80,80,80,0.4)':`linear-gradient(135deg,${info.color},rgba(0,0,0,0.1))`};border:2px solid ${isLocked?'#555':info.color};color:${isLocked?'#888':'#fff'};border-radius:10px;cursor:${isLocked?'not-allowed':'pointer'};font-family:inherit;text-shadow:0 0 6px rgba(0,0,0,0.5);transition:all 0.15s;">${isLocked?'🔒 尚未解鎖':'⚔ 選擇此路線'}</button>` +
       `</div>`;
 
     // 綁定事件
@@ -22068,6 +22117,7 @@ function _advShowBossRouteSelector(onConfirm){
     };
 
     const commit = () => {
+      if(isLocked){ try { playSfx('sfx-cancel', 0.5); } catch(_){} return; }
       try { playSfx('sfx-confirm2', 0.95); } catch(_){}
       window._advSelectedVariantIdx = idx;
       // 若挑到杏花妖,預先產生被魅惑的隊伍(與 _cycleAdvBossVariant 邏輯一致)
@@ -22161,6 +22211,7 @@ function startAdventureGame(stage){
     }
     if(typeof _advTreasures !== 'undefined') _advTreasures = [null, null, null];
     window._advBossHpMultApplied = false;
+    window._advJapanYamataWeakApplied = false;
   } catch(_rstE){ console.warn('[冒險重置] 部分狀態清除失敗', _rstE); }
   // ★ 全域統計：冒險次數 +1（若未登入則跳過）
   try{ if(window._fbIncrementAdventureCount) window._fbIncrementAdventureCount(); }catch(e){}
@@ -22184,6 +22235,18 @@ function startAdventureGame(stage){
   _adventureStage = stage;
   _advMiniBattleActive = false; // ★ 確保不殘留小怪戰旗標
   window._isAdventurePickMode = true;  // ★ 冒險模式提前設好，不再等showHeroPickOverlay
+  // ★ 日本關：自動設定年級/科目/難度，跳過選擇流程
+  if(stage === 'japan'){
+    _advPlayerGrade = '日本關';
+    _advPlayerSubject = '日本關';
+    _advPlayerDifficulty = '普通';
+  }
+  // ★ 日本關自動設定題庫參數（跳過年級/科目/難度選擇）
+  if(stage === 'japan'){
+    _advPlayerGrade = '日本關';
+    _advPlayerSubject = '日本關';
+    _advPlayerDifficulty = '普通';
+  }
   // ★ 隱藏屬性相剋圖
   const _ewAdv2 = document.getElementById('elem-wheel');
   if(_ewAdv2) _ewAdv2.style.display = 'none';
@@ -23376,7 +23439,108 @@ const ADV_QUIZ_DB = [{"id":1,"grade":"低年級","subject":"國語文","difficul
 {"id": 2041, "grade": "低年級", "subject": "自然", "difficulty": "普通", "question": "下列何者會「飛」?", "options": ["鴿子", "老鼠", "青蛙"], "answer": "A", "hint": ""},
 {"id": 2042, "grade": "中年級", "subject": "數學", "difficulty": "沒自信", "question": "12月共有幾天?", "options": ["30天", "31天", "28天"], "answer": "B", "hint": ""},
 {"id": 2043, "grade": "高年級", "subject": "表演藝術", "difficulty": "普通", "question": "舞台設計的「三度空間」是指?", "options": ["寬度、深度、高度的立體空間", "只有平面", "只有螢幕"], "answer": "A", "hint": ""},
-{"id": 2044, "grade": "國中", "subject": "資訊科技", "difficulty": "我很會", "question": "下列何者是「變數」的合法名稱(常見程式語言)?", "options": ["score", "1score", "sc ore"], "answer": "A", "hint": ""}
+{"id": 2044, "grade": "國中", "subject": "資訊科技", "difficulty": "我很會", "question": "下列何者是「變數」的合法名稱(常見程式語言)?", "options": ["score", "1score", "sc ore"], "answer": "A", "hint": ""},
+// ═══ 日本關 100 題（環遊世界遠征傳說 1-1）═══
+{"id":3001,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本女性在特殊節慶穿的長袖華服叫什麼？","options":["旗袍","和服","韓服","紗麗"],"answer":"B","hint":""},
+{"id":3002,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"下列哪一種是日本傳統武術，穿腰帶在圓形土俵上對決？","options":["柔道","劍道","空手道","相撲"],"answer":"D","hint":""},
+{"id":3003,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本春天最具代表性的賞花活動是？","options":["賞櫻（花見）","賞楓","賞梅","賞荷"],"answer":"A","hint":""},
+{"id":3004,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本茶道倒茶時，用哪種竹製工具攪拌抹茶？","options":["筷子","茶筅","湯匙","叉子"],"answer":"B","hint":""},
+{"id":3005,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳統木屐叫什麼名字？","options":["草鞋","布鞋","下駄","皮鞋"],"answer":"C","hint":""},
+{"id":3006,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本新年時家家戶戶會寫什麼來許願？","options":["春聯","繪馬","福字","對聯"],"answer":"B","hint":""},
+{"id":3007,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本「折紙」最經典的作品，象徵健康長壽是？","options":["紙飛機","千羽鶴","紙船","紙花"],"answer":"B","hint":""},
+{"id":3008,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"用筆墨在紙上寫出優美文字的日本藝術叫？","options":["書道","畫道","跳舞","吟詩"],"answer":"A","hint":""},
+{"id":3009,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳統戲劇，演員戴著面具表演的是？","options":["歌仔戲","能劇","京劇","布袋戲"],"answer":"B","hint":""},
+{"id":3010,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本人把櫻花飄落的景象稱為？","options":["櫻吹雪","櫻花雨","櫻暴風","櫻大雪"],"answer":"A","hint":""},
+{"id":3011,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"去日本朋友家拜訪，進門時一定要先做什麼？","options":["大聲問好","脫下鞋子","直接跑進去","打開電視"],"answer":"B","hint":""},
+{"id":3012,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本人見面打招呼最常見的動作是？","options":["握手","鞠躬","擁抱","擊掌"],"answer":"B","hint":""},
+{"id":3013,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"在日本吃飯前，通常會說哪一句話？","options":["我開動了（いただきます）","再見","謝謝","早安"],"answer":"A","hint":""},
+{"id":3014,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"在日本吃完飯要說哪句感謝話？","options":["多謝款待（ごちそうさま）","晚安","對不起","請進"],"answer":"A","hint":""},
+{"id":3015,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本用筷子時，哪種行為不禮貌？","options":["筷子插在飯中間","夾菜吃","放在筷架","雙手拿筷"],"answer":"A","hint":""},
+{"id":3016,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本餐廳，不可以把什麼放進味噌湯裡？","options":["豆腐","海帶","整隻筷子插進去","蔥花"],"answer":"C","hint":""},
+{"id":3017,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本泡溫泉前必須先做什麼？","options":["穿衣服下水","把身體洗乾淨","大聲唱歌","帶食物進去"],"answer":"B","hint":""},
+{"id":3018,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本泡溫泉時，毛巾應放哪裡？","options":["泡進水裡","頭頂或池邊","丟到地上","給別人"],"answer":"B","hint":""},
+{"id":3019,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本電車上手機應該？","options":["大聲講電話","調成靜音","放音樂","開擴音"],"answer":"B","hint":""},
+{"id":3020,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本關西（大阪）搭電扶梯通常站哪邊讓路？","options":["站右邊","站左邊","站中間","不用讓"],"answer":"A","hint":""},
+{"id":3021,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本關東（東京）搭電扶梯通常站哪邊讓路？","options":["站左邊","站右邊","躺著","亂站"],"answer":"A","hint":""},
+{"id":3022,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本人收到禮物時通常會？","options":["當場拆開","先收下道謝之後再拆","丟到一邊","退回去"],"answer":"B","hint":""},
+{"id":3023,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本送禮物，下列哪個數字被認為不吉利？","options":["三","四（與「死」同音）","五","七"],"answer":"B","hint":""},
+{"id":3024,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"進日本神社鳥居時應該？","options":["從中間走","靠左或右走","跳過去","爬過去"],"answer":"B","hint":""},
+{"id":3025,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"去日本神社參拜前，要先用什麼清潔手和嘴？","options":["手水舍的水","飲料","果汁","牛奶"],"answer":"A","hint":""},
+{"id":3026,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神社參拜的正確順序是？","options":["二拜二拍手一拜","三拜三拍手","一拜一拍手","不用動作"],"answer":"A","hint":""},
+{"id":3027,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"收到日本朋友名片時應該？","options":["隨手塞口袋","雙手接過仔細看","折起來","馬上還回去"],"answer":"B","hint":""},
+{"id":3028,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"在日本排隊時應該？","options":["插隊","好好排後面","大聲催促","推前面的人"],"answer":"B","hint":""},
+{"id":3029,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本公共場所講話應該？","options":["大聲喧嘩","保持小聲","唱歌","吹口哨"],"answer":"B","hint":""},
+{"id":3030,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"去日本人家做客應該準備什麼？","options":["空手去","帶小禮物（伴手禮）","帶一大堆行李","帶寵物"],"answer":"B","hint":""},
+{"id":3031,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本榻榻米房間哪種行為失禮？","options":["坐著","踩到門檻或榻榻米邊線","脫鞋","安靜說話"],"answer":"B","hint":""},
+{"id":3032,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神社的「繪馬」是用來做什麼？","options":["當食物","寫願望掛起來","當玩具","丟到河裡"],"answer":"B","hint":""},
+{"id":3033,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"在日本搭計程車，車門會？","options":["自己下車開","司機會自動打開","用腳踢開","敲打車門"],"answer":"B","hint":""},
+{"id":3034,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本浴衣（ゆかた）正確穿法是？","options":["右襟在上","左襟在上（右下左上）","任意穿","反穿"],"answer":"B","hint":""},
+{"id":3035,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本餐廳結帳時，一般會？","options":["留小費","不需要給小費","要給很多小費","討價還價"],"answer":"B","hint":""},
+{"id":3036,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本正月最常吃哪種傳統食物？","options":["餃子","御節料理（おせち）","炸雞","薯條"],"answer":"B","hint":""},
+{"id":3037,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本寺廟中哪種行為要避免？","options":["鞠躬","輕聲低語","用手指指神像","投賽錢"],"answer":"C","hint":""},
+{"id":3038,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本人送花當禮物，下列哪種通常不送人？","options":["玫瑰","菊花（葬禮用）","鬱金香","向日葵"],"answer":"B","hint":""},
+{"id":3039,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本乘電車禁止的行為是？","options":["看書","吃味道很重的食物","閉目休息","滑手機"],"answer":"B","hint":""},
+{"id":3040,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳統新年吃的跨年麵叫什麼？","options":["年越蕎麥","烏龍麵","拉麵","沙拉"],"answer":"A","hint":""},
+{"id":3041,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本最後一個武士時代，由將軍統治的時期叫？","options":["幕府時代","戰國時代","明治時代","平成時代"],"answer":"A","hint":""},
+{"id":3042,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本西元1868年開始的「明治維新」是一次？","options":["戰爭","快速現代化的改革","慶典","地震"],"answer":"B","hint":""},
+{"id":3043,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"「武士」在日本傳統中是哪一種身分？","options":["農夫","軍人貴族","商人","學生"],"answer":"B","hint":""},
+{"id":3044,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本武士腰間佩帶的標誌性武器是？","options":["弓","刀（日本刀）","槍","斧頭"],"answer":"B","hint":""},
+{"id":3045,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本首都從京都遷到東京是哪個時代？","options":["幕府時代","明治時代","昭和時代","平成時代"],"answer":"B","hint":""},
+{"id":3046,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本古代首都在今天的哪個城市？","options":["京都","札幌","沖繩","仙台"],"answer":"A","hint":""},
+{"id":3047,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本最早統一全國的戰國名將，建立豐臣政權的是？","options":["織田信長","豐臣秀吉","德川家康","源義經"],"answer":"B","hint":""},
+{"id":3048,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"「忍者」在日本歷史中是哪一類人？","options":["廚師","暗中執行任務的特殊身分","老師","醫生"],"answer":"B","hint":""},
+{"id":3049,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本皇室象徵中連續傳承最久的是？","options":["天皇家族","總統","國王","酋長"],"answer":"A","hint":""},
+{"id":3050,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"「德川家康」開啟了哪一段長期安定時代？","options":["江戶時代","繩文時代","彌生時代","奈良時代"],"answer":"A","hint":""},
+{"id":3051,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神話中的太陽女神叫什麼名字？","options":["月讀","天照大神","須佐之男","伊邪那美"],"answer":"B","hint":""},
+{"id":3052,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神話中斬殺八岐大蛇的神是？","options":["天照大神","須佐之男","大國主","伊邪那岐"],"answer":"B","hint":""},
+{"id":3053,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"八岐大蛇有幾個頭和尾巴？","options":["五","八","九","十"],"answer":"B","hint":""},
+{"id":3054,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"須佐之男從八岐大蛇尾巴中取出的神劍叫？","options":["村正","草薙劍","菊一文字","正宗"],"answer":"B","hint":""},
+{"id":3055,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本三神器（天皇象徵）是哪三樣？","options":["劍、鏡、勾玉","劍、弓、槍","鏡、書、筆","鼓、琴、笛"],"answer":"A","hint":""},
+{"id":3056,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神話中，連接天界和人間的彩虹橋叫？","options":["天之浮橋","奈何橋","七彩橋","銀河橋"],"answer":"A","hint":""},
+{"id":3057,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"民間故事「桃太郎」是從哪裡蹦出來的？","options":["竹子","桃子","蘋果","西瓜"],"answer":"B","hint":""},
+{"id":3058,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"桃太郎出發去討伐哪種妖怪？","options":["天狗","鬼（鬼ヶ島）","河童","狐狸"],"answer":"B","hint":""},
+{"id":3059,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"桃太郎的三位夥伴是？","options":["狗、猴、雉雞","貓、狗、牛","虎、象、馬","豬、羊、鴨"],"answer":"A","hint":""},
+{"id":3060,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"「浦島太郎」救了什麼動物後被帶到龍宮？","options":["海龜","鯨魚","海豚","鯊魚"],"answer":"A","hint":""},
+{"id":3061,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳說中住山裡，長鼻子和翅膀的妖怪是？","options":["天狗","河童","雪女","狸"],"answer":"A","hint":""},
+{"id":3062,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳說中住水邊，頭頂有盤子的綠色妖怪是？","options":["天狗","河童","雪女","狸"],"answer":"B","hint":""},
+{"id":3063,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"河童頭頂盤子裡裝的是什麼？沒了就失去法力？","options":["水","沙","火","雪"],"answer":"A","hint":""},
+{"id":3064,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本民間故事中，雪夜出現的美麗妖怪是？","options":["雪女","天狗","河童","山姥"],"answer":"A","hint":""},
+{"id":3065,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳說中九條尾巴的妖狐叫？","options":["玉藻前","白狐","銀狐","赤狐"],"answer":"A","hint":""},
+{"id":3066,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"「狸」在日本傳說中最著名的本領是？","options":["放火","變身","飛天","隱身"],"answer":"B","hint":""},
+{"id":3067,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神話中的風神通常背著什麼？","options":["扇子","裝風的大袋子","雨傘","風箏"],"answer":"B","hint":""},
+{"id":3068,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本神話中雷神背上揹著什麼？","options":["太鼓圈","劍","書","花"],"answer":"A","hint":""},
+{"id":3069,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"「座敷童子」會給家裡帶來什麼？","options":["壞運","好運與繁榮","地震","火災"],"answer":"B","hint":""},
+{"id":3070,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"會幫忙人類工作、被看到就消失的日本家神叫？","options":["座敷童子","稻荷神","雷神","風神"],"answer":"A","hint":""},
+{"id":3071,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本最高的山是哪一座？","options":["阿里山","富士山","玉山","泰山"],"answer":"B","hint":""},
+{"id":3072,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"富士山最近一次大爆發在哪個時代？","options":["江戶時代（1707年）","平成時代","令和時代","明治時代"],"answer":"A","hint":""},
+{"id":3073,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"富士山位於日本哪兩個縣交界？","options":["北海道","靜岡縣與山梨縣","沖繩縣","東京都"],"answer":"B","hint":""},
+{"id":3074,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本春天最具代表性的花是？","options":["牡丹","櫻花","玫瑰","百合"],"answer":"B","hint":""},
+{"id":3075,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本國花是？","options":["櫻花和菊花","玫瑰","水仙","茉莉"],"answer":"A","hint":""},
+{"id":3076,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本的國鳥是？","options":["丹頂鶴","綠雉","麻雀","鴿子"],"answer":"B","hint":""},
+{"id":3077,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"奈良公園最著名的動物是？","options":["鹿","熊","猴","羊"],"answer":"A","hint":""},
+{"id":3078,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本溫泉地著名的泡湯動物是？","options":["企鵝","日本獼猴（雪猴）","北極熊","駱駝"],"answer":"B","hint":""},
+{"id":3079,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"下列哪種是日本胸前有白色V字標記的熊？","options":["北極熊","月輪熊","棕熊","貓熊"],"answer":"B","hint":""},
+{"id":3080,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本瀕危的野生貓科動物是？","options":["石虎","對馬山貓","歐亞猞猁","美洲豹"],"answer":"B","hint":""},
+{"id":3081,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本水池中常見的彩色觀賞魚是？","options":["熱帶魚","錦鯉","金魚","鯨魚"],"answer":"B","hint":""},
+{"id":3082,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"屋久島最著名的古老樹木是？","options":["櫻花樹","屋久杉（繩文杉）","榕樹","椰子樹"],"answer":"B","hint":""},
+{"id":3083,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本最大的兩棲類動物（國家特別天然紀念物）是？","options":["蛙","日本大山椒魚","壁虎","蟾蜍"],"answer":"B","hint":""},
+{"id":3084,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本北海道象徵長壽的鳥類是？","options":["丹頂鶴","鴿子","企鵝","鴕鳥"],"answer":"A","hint":""},
+{"id":3085,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本四季中「楓紅」最常出現在哪個季節？","options":["春","夏","秋","冬"],"answer":"C","hint":""},
+{"id":3086,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本目前最活躍的活火山之一是？","options":["富士山","櫻島（鹿兒島）","阿爾卑斯山","玉山"],"answer":"B","hint":""},
+{"id":3087,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本梅雨季通常在哪幾個月？","options":["1~2月","6~7月","9~10月","11~12月"],"answer":"B","hint":""},
+{"id":3088,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本的颱風多半從哪個方向來？","options":["從北極","從太平洋南邊","從歐洲","從非洲"],"answer":"B","hint":""},
+{"id":3089,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"北海道特有的狐狸叫？","options":["北狐（赤狐）","沙漠狐","銀狐","熊狐"],"answer":"A","hint":""},
+{"id":3090,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本鹿除了奈良，還住在哪個世界自然遺產森林？","options":["屋久島","北極","沙漠","海底"],"answer":"A","hint":""},
+{"id":3091,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"下列哪種是日本海底特別的生物？","options":["小丑魚","北海道毛蟹","鱷魚","犀牛"],"answer":"B","hint":""},
+{"id":3092,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本傳統賞花，除了櫻花，秋天最常賞的是？","options":["楓葉（紅葉狩）","菊花","荷花","梅花"],"answer":"A","hint":""},
+{"id":3093,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本瀨戶內海著名的「活化石」節肢動物是？","options":["螃蟹","日本鱟","蝦","龍蝦"],"answer":"B","hint":""},
+{"id":3094,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本冬天下最多雪的地區是？","options":["沖繩","北陸與北海道","四國","九州"],"answer":"B","hint":""},
+{"id":3095,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本的地形多半是？","options":["平原","山地與丘陵","高原","沙漠"],"answer":"B","hint":""},
+{"id":3096,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本位於哪個海洋板塊交界，所以常有地震？","options":["大西洋","太平洋","印度洋","北冰洋"],"answer":"B","hint":""},
+{"id":3097,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本最北邊的大島是？","options":["本州","北海道","九州","四國"],"answer":"B","hint":""},
+{"id":3098,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本人稱呼秋天的紅葉為？","options":["紅葉（もみじ）","青葉","白葉","黃葉"],"answer":"A","hint":""},
+{"id":3099,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"下列哪種鳥在日本冬天才從西伯利亞飛來度冬？","options":["丹頂鶴","麻雀","企鵝","孔雀"],"answer":"A","hint":""},
+{"id":3100,"grade":"日本關","subject":"日本關","difficulty":"普通","question":"日本國土主要由幾個大島組成？","options":["一個","四個（本州、北海道、九州、四國）","二十個","一百個"],"answer":"B","hint":""}
 ];
 
 // ── 依玩家難度選出本次答題池 ──
@@ -23506,6 +23670,10 @@ function advGetQuizPool(grade, subject, difficulty) {
   // ★ 木柵動物園：不分年級難度，全部隨機出題
   if (subject === '木柵動物園') {
     return ADV_QUIZ_DB.filter(q => q.subject === '木柵動物園').sort(() => Math.random() - 0.5);
+  }
+  // ★ 日本關（環遊世界遠征傳說 第1關）：不分年級難度，100題隨機出題
+  if (subject === '日本關') {
+    return ADV_QUIZ_DB.filter(q => q.subject === '日本關').sort(() => Math.random() - 0.5);
   }
 
   // ── 年級＝題庫範圍，難度偏好＝優先顯示的難易程度 ──
@@ -23665,6 +23833,378 @@ const ADV_SCENES = {
     },
   ]
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// ★★★ 日本關（環遊世界遠征傳說 1-1）擴充區塊 START ★★★
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 1. ADV_STAGES.japan：關卡資訊（3 顆星，獎勵+20%）──
+ADV_STAGES.japan = {
+  name:'✈ 日本探險（環遊世界 1-1）',
+  emoji:'🗾⛩🦊',
+  desc:'海風徐徐吹拂，遠方富士山頂雪白如鏡！小隊乘渡輪抵達日本，表參道祭典燈籠高掛，空氣中卻瀰漫不祥妖氣——原來三大妖魔「大天狗、酒吞童子、玉藻前」正暗中作亂！選擇路線，集齊三神器（草薙劍、八尺瓊勾玉、八咫鏡），揭開幕後黑手八岐大蛇的真相！',
+  stars:3,
+  objectives:[
+    '🎯 選擇大天狗 / 酒吞童子 / 玉藻前 三大路線之一',
+    '⚔ 擊敗菁英小怪後挑戰路線 BOSS',
+    '🏆 通關後獲得對應的三神器之一',
+    '🐉 集齊三神器可解鎖隱藏關：八岐大蛇',
+  ],
+  rewards:[
+    {icon:'💰', text:'金幣獎勵（貓空 +20%）'},
+    {icon:'⭐', text:'經驗值（貓空 +20%）'},
+    {icon:'🎴', text:'日本主題寵物 ×12 隻'},
+    {icon:'📜', text:'三神器（草薙劍 / 八尺瓊勾玉 / 八咫鏡）'},
+  ],
+  tags:[
+    {cls:'social', text:'🗾 日本文化'},
+    {cls:'nature', text:'🌸 自然生態'},
+    {cls:'lang',   text:'⛩ 神話歷史'},
+    {cls:'social', text:'🎎 生活禮儀'}
+  ]
+};
+
+// ── 2. ADV_HERO_POOL.japan：沿用貓空力行英雄池 ──
+ADV_HERO_POOL.japan = [...(ADV_HERO_POOL.maokong || [])];
+
+// ── 3. ADV_BOSS_TEAMS.japan：預設為大天狗陣容（實際由 variant 動態決定）──
+ADV_BOSS_TEAMS.japan = [
+  {name:'烏天狗',       element:'wind'},
+  {name:'大天狗',       element:'wind'},
+  {name:'木葉天狗',     element:'wind'}
+];
+
+// ── 4. ADV_BOSS_VARIANTS.japan：4 路線（3 正規 + 1 隱藏）──
+ADV_BOSS_VARIANTS.japan = [
+  { id:'tengu',       main:'大天狗',     fixedTeam:true,  minions:['烏天狗','木葉天狗'],         element:'wind', treasureKey:'tengu',      treasureName:'草薙劍' },
+  { id:'shutendoji',  main:'酒吞童子',   fixedTeam:true,  minions:['茨木童子','星熊童子'],       element:'dark', treasureKey:'shutendoji', treasureName:'八尺瓊勾玉' },
+  { id:'tamamo',      main:'玉藻前',     fixedTeam:true,  minions:['殺生石分身','管狐'],         element:'fire', treasureKey:'tamamo',     treasureName:'八咫鏡' },
+  { id:'yamata',      main:'八岐大蛇',   fixedTeam:true,  minions:[],                           element:'dark', hidden:true,              treasureName:'三神器加成' },
+];
+
+// ── 5. ADV_SCENES.japan：三場景（choiceType='japan_auto' 自動推進）──
+ADV_SCENES.japan = {
+  name:'✈ 日本探險',
+  bossBg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+  scenes:[
+    {
+      bg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+      dialogs:[
+        '📖 旁白：海風徐徐吹拂，小隊搭乘的渡輪緩緩靠近日本海岸——遠方富士山白雪覆頂，閃耀著耀眼光芒。',
+        '📖 旁白：「歡迎來到日本！不過……空氣中怎麼飄著一股不祥妖氣？」隊長皺起眉頭。',
+        '📖 旁白：小隊踏上陸地，首先來到熱鬧的表參道。祭典燈籠一盞盞亮起，紙燈搖曳，太鼓聲陣陣，穿著浴衣的人潮川流不息。',
+        '📖 旁白：突然人群中傳來尖叫——幾個妖怪混入人群搗亂！章魚燒被偷吃、金魚缸被打翻、繪馬被撕毀一地！',
+        '⛩ 巫女小雪：「勇者大人！這次作亂的是**三大妖魔**的手下……你們必須集齊**三神器**才能阻止幕後黑手！」',
+        '⛩ 巫女小雪：「已經選好了路線吧？那就出發吧！妖怪就在前方，請小心！」',
+      ],
+      choiceType:'japan_auto',
+    },
+    {
+      bg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+      dialogs:[
+        '📖 旁白：循著妖氣，小隊深入山林，來到一座古老神社。參道兩旁的石燈籠亮著幽幽青光。',
+        '📖 旁白：神社前，強烈妖氣翻騰——這條路線的菁英守衛已經擋在眼前！',
+        '🗣️ 隊長：「打敗這些菁英小怪，我們就能直搗黃龍！保持警戒，準備戰鬥！」',
+      ],
+      choiceType:'japan_auto',
+    },
+    {
+      bg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+      dialogs:[
+        '📖 旁白：翻越險峻山路，小隊終於抵達富士山深處，雲霧繚繞，寒風凜冽。',
+        '📖 旁白：遠方傳來令人心驚膽戰的妖氣——路線 BOSS 就在前方！',
+        '🗣️ 隊長：「大家打起精神！這場戰鬥決定一切，為了和平——出發！」',
+      ],
+      choiceType:'japan_auto',
+    },
+  ]
+};
+
+// ── 6. EQUIP_DB 擴充：12 隻日本主題寵物（效果與台灣版完全一致）──
+(function(){
+  const TW_MAP = {
+    '台灣黑熊':     {n:'月輪熊',       petDesc:'胸前白月牙印，日本山神的同族兄弟。',         icon:'🐻'},
+    '台灣獼猴':     {n:'雪猴',         petDesc:'悠閒泡溫泉的雪國靈巧頑童，身手飛快。',       icon:'🐒'},
+    '石虎':         {n:'對馬山貓',     petDesc:'日本瀕危的野生貓科，迅捷如閃電的獵手。',     icon:'🐈'},
+    '喜鵲':         {n:'丹頂鶴',       petDesc:'「鶴千年」長壽守護，在絕境中預見危險。',     icon:'🕊️'},
+    '櫻花鉤吻鮭':   {n:'錦鯉',         petDesc:'日本庭園的祥瑞彩魚，流淌的治癒之泉。',       icon:'🐟'},
+    '五色鳥':       {n:'綠雉',         petDesc:'日本國鳥，翠綠羽毛閃耀神聖靈力。',           icon:'🦚'},
+    '綠蠵龜':       {n:'日本大山椒魚', petDesc:'日本特有的活化石兩棲類，慢而極耐命。',       icon:'🦎'},
+    '台灣藍鵲':     {n:'翠鳥',         petDesc:'日本河川邊的藍色閃電，俯衝反擊毫不手軟。',   icon:'🐦'},
+    '鱟':           {n:'日本鱟',       petDesc:'瀨戶內海的億年活化石，血液湛藍滋養生命。',   icon:'🦀'},
+    '梅花鹿':       {n:'奈良神鹿',     petDesc:'春日大社神之使者，踏著神聖步履補充能量。',   icon:'🦌'},
+    '白頭翁':       {n:'白鼬',         petDesc:'冬天換上純白雪衣，靈巧躲避一切侵擾。',       icon:'🐀'},
+    '黑冠麻鷺':     {n:'變化狸',       petDesc:'日本狸最著名的本領——拿葉子變身脫險。',       icon:'🦝'},
+  };
+  // 複製 EQUIP_DB 中的台灣寵物，改名/改描述/改圖後推入成為日本寵物
+  // 保留所有 onEquip/onRemove/healBonus/reflect 等函式邏輯完全不變
+  const JP_BASE_URL = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+  const JP_IMG = {
+    '月輪熊':'月輪熊.png','雪猴':'雪猴.png','對馬山貓':'對馬山貓.png','丹頂鶴':'丹頂鶴.png',
+    '錦鯉':'錦鯉.png','綠雉':'綠雉.png','日本大山椒魚':'日本大山椒魚.png','翠鳥':'翠鳥.png',
+    '日本鱟':'日本鱟.png','奈良神鹿':'奈良神鹿.png','白鼬':'白鼬.png','變化狸':'變化狸.png',
+  };
+  Object.keys(TW_MAP).forEach(twName => {
+    const orig = EQUIP_DB.find(e => e.n === twName);
+    if(!orig) return;
+    const info = TW_MAP[twName];
+    // 深拷貝方法：保留函式引用（onEquip/onRemove），但改 n/pet/petDesc/icon/petImg
+    const clone = Object.assign({}, orig, {
+      n:        info.n,
+      pet:      info.n,
+      petDesc:  info.petDesc,
+      icon:     info.icon,
+      petImg:   JP_BASE_URL + encodeURIComponent(JP_IMG[info.n] || (info.n + '.png')),
+      _jpOrig:  twName, // 追蹤對應關係（偵錯用）
+    });
+    EQUIP_DB.push(clone);
+  });
+  // 更新 EQUIP_NAMES Set（上方已宣告為 new Set）
+  EQUIP_DB.forEach(e => { if(typeof EQUIP_NAMES !== 'undefined') EQUIP_NAMES.add(e.n); });
+  // 更新 _EQUIP_SHORT 短描述
+  if(typeof _EQUIP_SHORT !== 'undefined'){
+    _EQUIP_SHORT['月輪熊']='攻擊+3';
+    _EQUIP_SHORT['雪猴']='特技+3';
+    _EQUIP_SHORT['對馬山貓']='速度+3';
+    _EQUIP_SHORT['丹頂鶴']='機率不會倒下';
+    _EQUIP_SHORT['錦鯉']='治療上升';
+    _EQUIP_SHORT['綠雉']='機率省能量';
+    _EQUIP_SHORT['日本大山椒魚']='減速減受傷';
+    _EQUIP_SHORT['翠鳥']='機率反彈傷害';
+    _EQUIP_SHORT['日本鱟']='HP持續恢復';
+    _EQUIP_SHORT['奈良神鹿']='額外補充能量';
+    _EQUIP_SHORT['白鼬']='機率免疫狀態';
+    _EQUIP_SHORT['變化狸']='抵抗1次倒下';
+  }
+})();
+
+// ── 7. HERO_DB 擴充：日本主題怪物（貓空怪 × 1.2）──
+// 隨機小怪 4 種 + 稀有小怪 2 種 + 菁英小怪 6 種 + 主 BOSS 3 + 隱藏 BOSS 1 = 16 個
+Object.assign(HERO_DB, {
+  // ── 4 種隨機小怪（貓空小怪 ×1.2 並改主題）──
+  '河童':{hp:36,atk:6,sp:17,spd:4,exp:6,
+    s1:{n:'水盤滋潤',c:1,d:'依特技恢復1名友方HP',fd:'頭頂水盤灑下清涼泉水，用特技值為1名友方恢復HP。'},
+    s2:{n:'泥濘手爪',c:2,d:'使全體對手緩速1回合，速度-50%',fd:'用濕滑綠爪抓出黏膩泥濘，使全體對手陷入「緩速」狀態1回合。'}
+  },
+  '二口女':{hp:50,atk:12,sp:20,spd:16,exp:10,
+    s1:{n:'陰森飛髮',c:3,d:'依特技對全體敵人造成傷害',fd:'後腦的第二張嘴伸出漆黑長髮鞭擊，用特技值對全體敵人造成傷害。'},
+    s2:{n:'低聲詛咒',c:2,d:'使1名對手失明1回合，行動成功率減半',fd:'用嘶啞嗓音念出詛咒咒語，使1名對手陷入「失明」狀態1回合。'}
+  },
+  '雪女':{hp:48,atk:12,sp:16,spd:19,exp:10,
+    s1:{n:'冰封搖籃曲',c:2,d:'使1名對手睡眠3回合（受傷50%提早醒）',fd:'吐出幽冷吐息，低吟搖籃曲使1名對手陷入「睡眠」狀態3回合。'},
+    s2:{n:'雪風俯衝',c:2,d:'攻擊+速度×0.2傷害1名對手，並奪取1張物品卡',fd:'化作雪風俯衝對手，造成（攻擊+速度×0.2）的傷害並奪取1張物品卡。'}
+  },
+  '獨眼小僧':{hp:54,atk:12,sp:11,spd:10,exp:8,
+    s1:{n:'獨眼狠擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'瞪大獨眼聚集力量，傾盡全力重擊1名對手，造成攻擊值200%的傷害，爆擊率+50%。'},
+    s2:{n:'踩腳陷阱',c:2,d:'使1名對手下回合最後行動',fd:'快速挖出陷坑，使1名對手陷入「緩速」，下回合最後行動。'}
+  },
+
+  // ── 2 種稀有小怪（對應寶箱怪 / 小惡魔）──
+  '行走的二宮尊德像':{hp:119,atk:1,sp:1,spd:60,exp:0,_rewardType:'coins',_rewardMin:3000,_rewardMax:6000,
+    s1:{n:'石像護體',c:2,d:'使自己無敵1回合',fd:'披上石像硬皮，進入完全無敵狀態1回合，期間不受任何傷害。'},
+    s2:{n:'書卷疾走',c:1,d:'100%逃跑，每回合30%機率觸發',fd:'(被動)背著柴薪讀著書飛快離去，每回合30%機率自動逃離戰場，不給予任何獎勵。',p:true}
+  },
+  '座敷童子':{hp:300,atk:30,sp:30,spd:30,exp:0,_rewardType:'exp',_rewardMin:1200,_rewardMax:2400,
+    s1:{n:'家神惡作劇',c:3,d:'使1名對手HP剩10%，無視有利狀態',fd:'調皮的家神現出笑臉，使1名目標HP強制降至最大HP的10%，無視所有有利狀態。'},
+    s2:{n:'捉迷藏詛咒',c:2,d:'使1名對手強制普攻自己隊友',fd:'邀請對手玩捉迷藏，使1名對手在下回合強制普通攻擊自己的一名隊友。'}
+  },
+
+  // ── 3 主 BOSS（貓空 BOSS ×1.2）──
+  '大天狗':{hp:600,atk:15,sp:23,spd:24,exp:66,
+    s1:{n:'疾風團扇擊',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'揮動羽扇掀起狂風，用攻擊值對隨機存活對手造成2到3次風屬性傷害。'},
+    s2:{n:'山中冥想',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'閉目冥想山之力，解除自己身上所有不利狀態，並恢復最大HP的10%（約60HP）。'}
+  },
+  '酒吞童子':{hp:600,atk:15,sp:23,spd:24,exp:66,
+    s1:{n:'鬼力橫掃',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'揮動巨大鐵棒橫掃戰場，用攻擊值對隨機存活對手造成2到3次暗屬性傷害。'},
+    s2:{n:'酒宴復活',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'豪飲一口妖酒，解除自己身上所有不利狀態，並恢復最大HP的10%（約60HP）。'}
+  },
+  '玉藻前':{hp:600,atk:15,sp:23,spd:24,exp:66,
+    s1:{n:'九尾狐火',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'九條金尾掃出熾烈狐火，用攻擊值對隨機存活對手造成2到3次火屬性傷害。'},
+    s2:{n:'妖狐幻惑',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'撒出迷幻狐術，解除自己身上所有不利狀態，並恢復最大HP的10%（約60HP）。'}
+  },
+
+  // ── 6 菁英小怪（貓空 綠竹筍/茶葉精靈 ×1.2）──
+  '烏天狗':{hp:216,atk:11,sp:12,spd:6,exp:24,
+    s1:{n:'黑羽護盾',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'抖落漆黑羽毛，為己方HP百分比最低的1名友方附加可抵擋20傷害的護盾。'},
+    s2:{n:'羽刃斬擊',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'用銳利羽刃斬向1名對手，造成特技值傷害並有50%機率使其「麻痺」1回合。'}
+  },
+  '木葉天狗':{hp:180,atk:8,sp:20,spd:12,exp:22,
+    s1:{n:'一葉山風',c:3,d:'依特技恢復友方全體HP',fd:'吹響木葉笛召喚山風，用特技值恢復友方全體HP。'},
+    s2:{n:'萬葉療方',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'散落萬片療傷木葉，解除友方全體不利狀態，並用特技值恢復HP百分比最低的1名隊友HP（可復活）。'}
+  },
+  '茨木童子':{hp:216,atk:11,sp:12,spd:6,exp:24,
+    s1:{n:'鬼腕橫掃',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'伸出粗壯鬼腕格擋傷害，為己方HP百分比最低的1名友方附加可抵擋20傷害的護盾。'},
+    s2:{n:'血怨之拳',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'灌注怨氣的紅拳轟向1名對手，造成特技值傷害並有50%機率使其「麻痺」1回合。'}
+  },
+  '星熊童子':{hp:180,atk:8,sp:20,spd:12,exp:22,
+    s1:{n:'熊之酒',c:3,d:'依特技恢復友方全體HP',fd:'將酒灑向同伴，用特技值恢復友方全體HP。'},
+    s2:{n:'星夜妖酒',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'傾倒壓箱妖酒，解除友方全體不利狀態，並用特技值恢復HP百分比最低的1名隊友HP（可復活）。'}
+  },
+  '殺生石分身':{hp:216,atk:11,sp:12,spd:6,exp:24,
+    s1:{n:'石化結界',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'釋放死氣結界包覆同伴，為己方HP百分比最低的1名友方附加可抵擋20傷害的護盾。'},
+    s2:{n:'毒氣侵蝕',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'噴出致命毒氣籠罩1名對手，造成特技值傷害並有50%機率使其「麻痺」1回合。'}
+  },
+  '管狐':{hp:180,atk:8,sp:20,spd:12,exp:22,
+    s1:{n:'狐火療傷',c:3,d:'依特技恢復友方全體HP',fd:'吹奏竹管引狐火癒傷，用特技值恢復友方全體HP。'},
+    s2:{n:'七色狐火',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'綻放七彩狐火，解除友方全體不利狀態，並用特技值恢復HP百分比最低的1名隊友HP（可復活）。'}
+  },
+
+  // ── 隱藏 BOSS：八岐大蛇（比三大 BOSS 再強一階）──
+  '八岐大蛇':{hp:800,atk:20,sp:28,spd:22,exp:120,
+    s1:{n:'八首齊噬',c:2,d:'依攻擊對隨機目標造成3~4次傷害',fd:'八個龍頭一齊撲咬，用攻擊值對隨機存活對手造成3到4次龍屬性傷害，每次各自結算暴擊。'},
+    s2:{n:'噴吐雷焰冰風',c:4,d:'解除自身所有不利狀態並恢復15%HP',fd:'八頭齊噴雷焰冰風，解除自己身上所有不利狀態，並恢復最大HP的15%（約120HP）。'}
+  },
+});
+
+// ── 8. 日本寵物同步建立 HERO_IMGS（避免缺圖 bug）──
+if(typeof HERO_IMGS !== 'undefined'){
+  const JP_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+  ['大天狗','酒吞童子','玉藻前','八岐大蛇',
+   '烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐',
+   '河童','二口女','雪女','獨眼小僧','行走的二宮尊德像','座敷童子'].forEach(n => {
+    if(!HERO_IMGS[n]) HERO_IMGS[n] = JP_BASE + encodeURIComponent(n + '.png');
+  });
+}
+
+// ── 9. AVATARS 設定 ──
+if(typeof AVATARS !== 'undefined'){
+  const JP_AV = {
+    '大天狗':'👺','酒吞童子':'👹','玉藻前':'🦊','八岐大蛇':'🐉',
+    '烏天狗':'🦅','木葉天狗':'🍃','茨木童子':'🦹','星熊童子':'🐻',
+    '殺生石分身':'🗿','管狐':'🔥',
+    '河童':'🐢','二口女':'👻','雪女':'❄️','獨眼小僧':'👁️',
+    '行走的二宮尊德像':'📚','座敷童子':'🎎',
+  };
+  Object.keys(JP_AV).forEach(k => { if(!AVATARS[k]) AVATARS[k] = JP_AV[k]; });
+}
+
+// ── 10. BOSS_NAMES 擴充（讓系統認得日本 BOSS）──
+if(typeof BOSS_NAMES !== 'undefined' && Array.isArray(BOSS_NAMES)){
+  ['大天狗','酒吞童子','玉藻前','八岐大蛇'].forEach(n => { if(!BOSS_NAMES.includes(n)) BOSS_NAMES.push(n); });
+}
+
+// ── 11. 簡介（HERO_LORE）──
+if(typeof HERO_LORE !== 'undefined'){
+  HERO_LORE['大天狗'] = '統領山中天狗一族的風之妖王，鼻長紅面，手持大羽扇召喚狂風。';
+  HERO_LORE['酒吞童子'] = '大江山鬼族之王，頭生雙角、肌膚赤紅，嗜酒如命且力大無窮。';
+  HERO_LORE['玉藻前'] = '九條金尾的絕世妖狐，化作美貌女子禍亂宮廷的傳說妖魔。';
+  HERO_LORE['八岐大蛇'] = '八首八尾的遠古巨龍，曾被須佐之男以十拳劍斬殺。千年後復甦，怒火衝天。';
+  HERO_LORE['烏天狗'] = '披著黑羽的山中侍從，擅長以羽刃遠距斬擊。';
+  HERO_LORE['木葉天狗'] = '隱於樹林的綠衣小天狗，善用木葉與山風療癒同伴。';
+  HERO_LORE['茨木童子'] = '酒吞童子最忠心的副手，曾被渡邊綱斬斷一臂仍不屈。';
+  HERO_LORE['星熊童子'] = '酒吞童子四大天王之一，力大如熊，善於釀造妖酒。';
+  HERO_LORE['殺生石分身'] = '玉藻前死後化身的毒石碎片，散發致死之氣。';
+  HERO_LORE['管狐'] = '陰陽師役使的小狐靈，藏於竹管中隨時出動。';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ★★★ 日本關擴充區塊 END（資料部分）★★★
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 日本關 helper 函式：三神器持久化、獎勵加成、解鎖檢查 ──
+function _japanGetTreasures(){
+  try{
+    const raw = localStorage.getItem('adv_japan_treasures');
+    const obj = raw ? JSON.parse(raw) : {};
+    return { tengu:!!obj.tengu, shutendoji:!!obj.shutendoji, tamamo:!!obj.tamamo };
+  }catch(e){ return { tengu:false, shutendoji:false, tamamo:false }; }
+}
+function _japanSetTreasure(key){
+  try{
+    const cur = _japanGetTreasures();
+    cur[key] = true;
+    localStorage.setItem('adv_japan_treasures', JSON.stringify(cur));
+  }catch(e){}
+}
+function _japanTreasureCount(){
+  const t = _japanGetTreasures();
+  return (t.tengu?1:0) + (t.shutendoji?1:0) + (t.tamamo?1:0);
+}
+
+// 點「日本探險」按鈕時檢查解鎖條件：貓空A評價+完整通關+英雄lv≥10
+function _japanCheckUnlock(){
+  // 檢查 1：貓空曾經 A 級通關（不跳過劇情）
+  let maokongACleared = false;
+  try{
+    const raw = localStorage.getItem('adv_maokong_best_rank') || '';
+    // 可能的值：'S','A','B','C' 等；A 或以上皆算通過
+    if(raw === 'S' || raw === 'A' || raw === 'A+') maokongACleared = true;
+    // 備用：若有 adv_maokong_clear_log，檢查 skipped:false 且 rank>=A
+    if(!maokongACleared){
+      const logRaw = localStorage.getItem('adv_maokong_clear_log');
+      if(logRaw){
+        const log = JSON.parse(logRaw);
+        if(Array.isArray(log)){
+          maokongACleared = log.some(r => !r.skipped && (r.rank==='S'||r.rank==='A'));
+        }
+      }
+    }
+  }catch(e){}
+  // 檢查 2：是否至少一位英雄達 Lv.10（讀取 HERO_LEVELS 或 localStorage）
+  let hasLv10Hero = false;
+  try{
+    if(typeof HERO_LEVELS !== 'undefined' && HERO_LEVELS){
+      for(const k in HERO_LEVELS){ if(HERO_LEVELS[k] >= 10){ hasLv10Hero = true; break; } }
+    }
+    if(!hasLv10Hero){
+      const raw = localStorage.getItem('hero_levels');
+      if(raw){
+        const obj = JSON.parse(raw);
+        for(const k in obj){ if(obj[k] >= 10){ hasLv10Hero = true; break; } }
+      }
+    }
+  }catch(e){}
+  return { maokongACleared, hasLv10Hero, canEnter: maokongACleared && hasLv10Hero };
+}
+
+// 日本關獎勵 +20% 的加成倍率（供金幣/EXP 系統讀取）
+window._japanRewardMult = 1.20;
+
+// 點擊日本關按鈕的包裝函式：先檢查解鎖條件再進入
+window._japanTrySelect = function(btnEl){
+  const check = _japanCheckUnlock();
+  if(!check.canEnter){
+    try{ playSfx('sfx-cancel', 0.6); }catch(_){}
+    const msg = '🔒 尚未解鎖日本探險\n\n需要達成以下條件：\n' +
+      (check.maokongACleared ? '✅' : '❌') + ' 貓空大冒險完整通關且獲得 A 以上評價\n' +
+      (check.hasLv10Hero     ? '✅' : '❌') + ' 擁有至少 1 位 Lv.10 以上的英雄\n\n請先完成貓空大冒險後再來挑戰！';
+    alert(msg);
+    return;
+  }
+  selectAdvStage('japan', btnEl);
+};
+
+// BOSS 戰開始時若為日本關 yamata，套用神器弱化
+window._applyJapanYamataWeaken = function(){
+  if(_adventureStage !== 'japan') return 1.0;
+  const v = ADV_BOSS_VARIANTS.japan && ADV_BOSS_VARIANTS.japan[window._advSelectedVariantIdx];
+  if(!v || v.id !== 'yamata') return 1.0;
+  const cnt = _japanTreasureCount();
+  // 1件-10%, 2件-20%, 3件-30%
+  return Math.max(0.7, 1.0 - 0.1*cnt);
+};
+
+// BOSS 擊敗時若為日本關前三路線，自動獲得對應神器
+window._onJapanBossDefeated = function(){
+  if(_adventureStage !== 'japan') return;
+  const v = ADV_BOSS_VARIANTS.japan && ADV_BOSS_VARIANTS.japan[window._advSelectedVariantIdx];
+  if(!v || !v.treasureKey || v.id === 'yamata') return;
+  const before = _japanTreasureCount();
+  _japanSetTreasure(v.treasureKey);
+  const after = _japanTreasureCount();
+  if(after > before){
+    // 顯示神器獲得通知
+    try{
+      setTimeout(()=>{
+        if(typeof showPopup==='function'){
+          // 用現有的 log 系統記錄
+        }
+        if(typeof log==='function') log(`🏆 獲得神器：${v.treasureName}！目前已收集 ${after}/3 件。`);
+      }, 500);
+    }catch(e){}
+  }
+};
+// ═══════════════════════════════════════════════════════════════════
 
 // ADV_BOSS_INTRO_LINES 改為動態產生（依年級/科目/難度）
 // ── 各科目 × 年級 考題重點說明 ──
@@ -24197,12 +24737,30 @@ function _advBossHpMult(){
 function advShowChoicePanel(stage, sceneIdx) {
   const scene = ADV_SCENES[stage][sceneIdx];
 
+  // ★ 日本關 japan_auto：不需選擇，直接推進到下一場小怪戰
+  if(scene.choiceType === 'japan_auto'){
+    _advSceneChoiceDone = true;
+    const skipBtn = document.getElementById('adv-skip-btn');
+    if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
+    setTimeout(() => { advStartMiniBattle(sceneIdx + 1); }, 300);
+    return;
+  }
+
   // ★ 第三場「隨機事件」不顯示選擇面板，直接跳去事件觸發
   if(scene.choiceType === 'random_event'){
     _advSceneChoiceDone = true;
     const skipBtn = document.getElementById('adv-skip-btn');
     if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
     setTimeout(() => { advStartTeagardenEvent(); }, 300);
+    return;
+  }
+
+  // ★ 日本關專用：'japan_auto' 不顯示選擇面板，直接推進到下一場小怪戰/BOSS
+  if(scene.choiceType === 'japan_auto'){
+    _advSceneChoiceDone = true;
+    const skipBtn = document.getElementById('adv-skip-btn');
+    if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
+    setTimeout(() => { advStartMiniBattle(sceneIdx + 1); }, 300);
     return;
   }
 
@@ -25083,6 +25641,26 @@ function advStartBattle(){
     }
     window._advBossHpMultApplied = true;
   } catch(_hpE){ console.warn('[BOSS HP 難度倍率] 套用失敗:', _hpE); }
+  // ★ 日本關八岐大蛇：根據三神器持有數量套用 HP/ATK 弱化（1件-10%/2件-20%/3件-30%）
+  try {
+    if(_adventureStage === 'japan' && typeof window._applyJapanYamataWeaken === 'function'){
+      const _jpMult = window._applyJapanYamataWeaken();
+      if(_jpMult < 1.00 && G && G.p2 && G.p2.length && !window._advJapanYamataWeakApplied){
+        G.p2.forEach(h => {
+          if(h && typeof h.hp === 'number' && h.hp > 0){
+            h.hp  = Math.max(1, Math.round(h.hp  * _jpMult));
+            h.atk = Math.max(1, Math.round((h.atk||1) * _jpMult));
+            h.curHp = h.hp;
+          }
+        });
+        if(typeof _advBossTeamSaved !== 'undefined' && _advBossTeamSaved){
+          _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2));
+        }
+        window._advJapanYamataWeakApplied = true;
+        try{ if(typeof log==='function') log(`🏆 三神器之力共鳴！八岐大蛇 HP & ATK 已弱化至 ${Math.round(_jpMult*100)}%。`); }catch(_){}
+      }
+    }
+  } catch(_ymE){ console.warn('[日本關八岐大蛇弱化] 套用失敗:', _ymE); }
   // ★ 顯示戰鬥教學按鈕
   try{ _advTutBtnShow(true); }catch(e){}
   // ★ 清除小怪戰殘留狀態（含守門旗標，避免iPad上startTurn第一行就return）
@@ -26304,11 +26882,14 @@ async function advShowBattleResult(win) {
         const _maxStreakPanel = (stats && stats.maxStreak) || 0;
         const _streakBonusPanel = 1 + _maxStreakPanel * 0.05;
         const _totalExpEach = Math.round(Math.round(_baseBossExp * _ratio * _confMultPanel * _streakBonusPanel) * 1.5);
+        // ★ 日本關獎勵 +20%
+        const _jpRewardMult = (_adventureStage === 'japan' && typeof window._japanRewardMult === 'number') ? window._japanRewardMult : 1.0;
+        const _totalExpEachFinal = Math.round(_totalExpEach * _jpRewardMult);
         // 2) 額外評分加成 EXP(advStartWinSequence)
         const _bonusExpMap = {'S':100, 'A':70, 'B':50, 'C':30};
-        const _bonusExp = _bonusExpMap[grade] || 30;
+        const _bonusExp = Math.round((_bonusExpMap[grade] || 30) * _jpRewardMult);
         // 3) 知識幣:(rounds × 10 + bonusExp) × 0.2
-        const _bossCoins = Math.round(((rounds * 10) + _bonusExp) * 0.2);
+        const _bossCoins = Math.round(((rounds * 10) + _bonusExp) * 0.2 * _jpRewardMult);
         // 4) 技能升級書:1(固定) + 1(score>500) + 1(correct>=3) = 1~3 本
         const _bookCount = 1 + ((stats.totalQuizScore||0) > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
         // 5) 難度倍率標示
@@ -26317,7 +26898,10 @@ async function advShowBattleResult(win) {
         // 組合 HTML
         let html = '<div class="adv-reward-panel-title">🎁 獲得獎勵</div>';
         // EXP 區
-        html += `<div class="adv-reward-row exp"><span class="ari">⭐</span><span class="arn">出戰英雄 EXP</span><span class="arv">+${_totalExpEach}</span></div>`;
+        html += `<div class="adv-reward-row exp"><span class="ari">⭐</span><span class="arn">出戰英雄 EXP</span><span class="arv">+${_totalExpEachFinal}</span></div>`;
+        if(_jpRewardMult > 1.0){
+          html += `<div style="font-size:14px;color:#ffcc66;margin:-6px 0 0 10px;line-height:1.4;">🗾 日本探險獎勵 +20%</div>`;
+        }
         if(_confTag || _streakTag){
           html += `<div style="font-size:14px;color:#bbb;margin:-6px 0 0 10px;line-height:1.4;">${_confTag}${_streakTag}</div>`;
         }
@@ -26483,6 +27067,8 @@ async function advShowBattleResult(win) {
   if(win) {
     // 不再立即顯示舊的解鎖overlay，改由新序列處理
     // setTimeout(()=>advShowUnlockHero(), 1500);
+    // ★ 日本關：若勝利的是前三路線 BOSS，發放對應神器
+    try{ if(typeof window._onJapanBossDefeated === 'function') window._onJapanBossDefeated(); }catch(_jpE){}
   }
 }
 
