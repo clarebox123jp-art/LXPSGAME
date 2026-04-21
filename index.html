@@ -1522,7 +1522,12 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   overflow-y:auto;
 }
 #adv-info-window{
-  background:rgba(6,8,18,0.9);
+  /* ★ v1.0.20260421.2900 — 支援關卡場景背景圖淡出顯示：
+     用雙層背景（上：半透明黑遮罩 / 下：場景圖 cover）
+     JS 會在 selectAdvStage 時把 --stage-bg 設為對應圖片 */
+  background:
+    linear-gradient(rgba(6,8,18,0.72),rgba(6,8,18,0.72)),
+    var(--stage-bg, none) center/cover no-repeat;
   border:2px solid rgba(212,168,67,0.4);
   border-radius:22px 0 0 0;padding:20px 32px;
   width:100%;max-width:100%;
@@ -1531,6 +1536,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   display:flex;flex-direction:column;gap:10px;
   overflow-y:visible;
+  transition:background 0.6s ease;
 }
 #adv-info-img{
   width:100%;height:64px;border-radius:14px;
@@ -3731,6 +3737,10 @@ body {
 <audio id="bgm-japan-menu"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81.m4a" loop></audio>
 <audio id="bgm-japan-battle" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E5%B0%8F%E6%80%AA%E6%88%B0BGM2.mp3" loop></audio>
 <audio id="bgm-japan-boss"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%ACBOSS%E6%88%B0.m4a" loop></audio>
+<!-- ★ v1.0.20260421.2800 — 日本關場景與 BOSS 專屬 BGM 擴充 -->
+<audio id="bgm-japan-scene2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E6%84%9F%E6%87%B7.m4a" loop></audio>
+<audio id="bgm-japan-boss-shutendoji" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90BGM.m4a" loop></audio>
+<audio id="bgm-japan-boss-tamamo" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8E%89%E8%97%BB%E5%89%8DBGM.m4a" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
 <audio id="sfx-normalatk" preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%99%AE%E9%80%9A%E6%94%BB%E6%93%8A.mp3"></audio>
@@ -4001,7 +4011,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.2500</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -20656,9 +20666,16 @@ function _detectCurrentBgm(){
       if(_names.includes('寶箱怪')) return 'bgm-chest';
       if(_names.includes('小惡魔')) return 'bgm-devil';
       // ★ v1.0.20260421.0600 — 日本關專屬 BGM 判斷（優先於其他 BOSS BGM）
+      //   v1.0.20260421.2800 — BOSS BGM 依 variant 細分（shutendoji/tamamo 有自己的 BGM）
       if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
         const _japanBosses = ['大天狗','酒吞童子','玉藻前','八岐大蛇'];
-        if(_names.some(n => _japanBosses.includes(n))) return 'bgm-japan-boss';
+        if(_names.some(n => _japanBosses.includes(n))){
+          const _jv = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.japan)
+            ? ADV_BOSS_VARIANTS.japan[window._advSelectedVariantIdx] : null;
+          if(_jv && _jv.id === 'shutendoji') return 'bgm-japan-boss-shutendoji';
+          if(_jv && _jv.id === 'tamamo') return 'bgm-japan-boss-tamamo';
+          return 'bgm-japan-boss';
+        }
         return 'bgm-japan-battle';
       }
       // ★ 依 BOSS 變體決定 BOSS BGM（即使 _curBgm 為 null 從靜音切回也能正確判斷）
@@ -22554,6 +22571,18 @@ function selectAdvStage(key, btnEl){
   // 取得關卡資料
   const data = ADV_STAGES[key];
   if(!data) return;
+  // ★ v1.0.20260421.2900 — 右側關卡介紹視窗的背景場景圖（隱約透出）
+  try{
+    const _win = document.getElementById('adv-info-window');
+    if(_win){
+      const _stageBgMap = {
+        maokong: 'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92.png',
+        japan:   (typeof _JP_BG !== 'undefined' && _JP_BG.opening) ? _JP_BG.opening : '',
+      };
+      const _url = _stageBgMap[key] || '';
+      _win.style.setProperty('--stage-bg', _url ? `url("${_url}")` : 'none');
+    }
+  }catch(_sbgE){}
   // ★ v1.0.20260421.0600 — 選到日本關時切換為日本關首頁 BGM，其他關卡恢復一般選單 BGM
   try{
     if(typeof bgmFadeTo === 'function'){
@@ -22926,6 +22955,16 @@ function _advShowBossRouteSelector(onConfirm){
       } else {
         window._advApricotPreviewTeam = null;
       }
+      // ★ v1.0.20260421.2700 — 八岐大蛇：詢問是否消耗三神器弱化
+      //   玩家選擇前，視窗停留；選擇後才淡出 + 呼叫 onConfirm
+      if(variant.id === 'yamata'){
+        _showYamataTreasureChoice(() => {
+          pop.style.transition = 'opacity 0.25s';
+          pop.style.opacity = '0';
+          setTimeout(() => { pop.remove(); if(onConfirm) onConfirm(); }, 230);
+        });
+        return;
+      }
       // 淡出動畫再移除
       pop.style.transition = 'opacity 0.25s';
       pop.style.opacity = '0';
@@ -23012,6 +23051,7 @@ function startAdventureGame(stage){
     if(typeof _advTreasures !== 'undefined') _advTreasures = [null, null, null];
     window._advBossHpMultApplied = false;
     window._advJapanYamataWeakApplied = false;
+    window._advJapanEliteBuffApplied = false; // ★ v1.0.20260421.2800
   } catch(_rstE){ console.warn('[冒險重置] 部分狀態清除失敗', _rstE); }
   // ★ 全域統計：冒險次數 +1（若未登入則跳過）
   try{ if(window._fbIncrementAdventureCount) window._fbIncrementAdventureCount(); }catch(e){}
@@ -24638,12 +24678,12 @@ const ADV_SCENES = {
 // ★★★ 日本關（環遊世界遠征傳說 1-1）擴充區塊 START ★★★
 // ═══════════════════════════════════════════════════════════════════
 
-// ── 1. ADV_STAGES.japan：關卡資訊（3 顆星，獎勵+20%）──
+// ── 1. ADV_STAGES.japan：關卡資訊（5 顆星 / 高難度，獎勵+20%）──
 ADV_STAGES.japan = {
   name:'✈ 日本探險（環遊世界 1-1）',
   emoji:'🗾⛩🦊',
   desc:'海風徐徐吹拂，遠方富士山頂雪白如鏡！小隊乘渡輪抵達日本，表參道祭典燈籠高掛，空氣中卻瀰漫不祥妖氣——原來三大妖魔「大天狗、酒吞童子、玉藻前」正暗中作亂！選擇路線，集齊三神器（草薙劍、八尺瓊勾玉、八咫鏡），揭開幕後黑手八岐大蛇的真相！',
-  stars:3,
+  stars:5,
   objectives:[
     '🎯 選擇大天狗 / 酒吞童子 / 玉藻前 三大路線之一',
     '⚔ 擊敗菁英小怪後挑戰路線 BOSS',
@@ -24651,10 +24691,10 @@ ADV_STAGES.japan = {
     '🐉 集齊三神器可解鎖隱藏關：八岐大蛇',
   ],
   rewards:[
-    {icon:'💰', text:'金幣獎勵（貓空 +20%）'},
-    {icon:'⭐', text:'經驗值（貓空 +20%）'},
-    {icon:'🎴', text:'日本主題寵物 ×12 隻'},
-    {icon:'📜', text:'三神器（草薙劍 / 八尺瓊勾玉 / 八咫鏡）'},
+    {icon:'⭐', text:'英雄成長經驗值'},
+    {icon:'📖', text:'技能升級書'},
+    {icon:'💰', text:'知識幣'},
+    {icon:'🦸', text:'關卡中的新英雄（機率）'},
   ],
   tags:[
     {cls:'social', text:'🗾 日本文化'},
@@ -25203,8 +25243,8 @@ function _japanShowLockedModal(check){
   if(legacyBtn){
     legacyBtn.onclick = () => {
       try{ playSfx('sfx-confirm', 0.8); }catch(_){}
-      const ok = confirm('你確定你曾經以 S 級評價完整通關（不跳過小怪）木柵貓空的 BOSS 嗎？\n\n不誠實的確認會影響遊戲平衡體驗，系統會記錄此次手動確認。');
-      if(ok){
+      // ★ v1.0.20260421.2700 — 改用遊戲內確認視窗
+      _customConfirm('你確定你曾經以 S 級評價完整通關（不跳過小怪）木柵貓空的 BOSS 嗎？\n\n不誠實的確認會影響遊戲平衡體驗，系統會記錄此次手動確認。', () => {
         try{
           localStorage.setItem('adv_maokong_legacy_clear_confirmed', '1');
           localStorage.setItem('adv_maokong_legacy_clear_date', new Date().toISOString());
@@ -25212,7 +25252,7 @@ function _japanShowLockedModal(check){
         modal.remove();
         _showInGameToast('✨ 已確認老玩家通關紀錄，日本關已解鎖！', '#66ff99', 3500);
         try{ playSfx('sfx-medal-unlock', 0.9); }catch(_){}
-      }
+      });
     };
     legacyBtn.onmouseover = () => { legacyBtn.style.background = 'rgba(100,180,255,0.4)'; legacyBtn.style.color = '#fff'; };
     legacyBtn.onmouseout  = () => { legacyBtn.style.background = 'rgba(100,180,255,0.2)'; legacyBtn.style.color = '#aaccff'; };
@@ -25236,14 +25276,121 @@ function _japanShowLockedModal(check){
 }
 
 // BOSS 戰開始時若為日本關 yamata，套用神器弱化
+// ★ v1.0.20260421.2700 — 改為玩家主動選擇是否消耗三神器弱化
+//   若 window._japanUseTreasures === true → HP/ATK/SP 各 -20%
+//   否則大蛇滿血滿狀態（神器保留）
 window._applyJapanYamataWeaken = function(){
   if(_adventureStage !== 'japan') return 1.0;
   const v = ADV_BOSS_VARIANTS.japan && ADV_BOSS_VARIANTS.japan[window._advSelectedVariantIdx];
   if(!v || v.id !== 'yamata') return 1.0;
-  const cnt = _japanTreasureCount();
-  // 1件-10%, 2件-20%, 3件-30%
-  return Math.max(0.7, 1.0 - 0.1*cnt);
+  return window._japanUseTreasures === true ? 0.80 : 1.0;
 };
+
+// ★ v1.0.20260421.2700 — 八岐大蛇前，詢問玩家是否消耗三神器弱化大蛇
+//   選「是」：HP/ATK/SP 各 -20%，戰後神器清空、大蛇重鎖
+//   選「否」：大蛇滿血，神器保留
+function _showYamataTreasureChoice(onDone){
+  const old = document.getElementById('yamata-treasure-choice-modal');
+  if(old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'yamata-treasure-choice-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
+    'background:radial-gradient(circle at center,rgba(60,0,60,0.85),rgba(0,0,0,0.95));' +
+    'backdrop-filter:blur(8px);animation:fadeIn 0.35s;';
+  modal.innerHTML =
+    '<div style="max-width:720px;width:92%;padding:40px 36px 32px;text-align:center;' +
+      'background:linear-gradient(160deg,rgba(30,8,30,0.98),rgba(10,2,10,0.98));' +
+      'border:2.5px solid rgba(180,80,255,0.6);border-radius:22px;' +
+      'box-shadow:0 0 80px rgba(140,60,255,0.5);font-family:inherit;">' +
+      '<div style="font-size:88px;margin-bottom:8px;">📜</div>' +
+      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#cc99ff;margin-bottom:10px;letter-spacing:3px;">三神器之力</div>' +
+      '<div style="font-size:clamp(20px,2.3vw,28px);font-weight:800;color:#ffddff;margin-bottom:20px;">🐉 八岐大蛇的試煉</div>' +
+      '<div style="background:rgba(0,0,0,0.5);border:1.5px solid rgba(180,80,255,0.35);border-radius:14px;padding:22px 26px;margin-bottom:22px;text-align:left;">' +
+        '<div style="font-size:clamp(17px,1.9vw,22px);color:#ddeeff;line-height:1.9;">' +
+          '✨ 你已集齊三神器 <b style="color:#ffcc66;">草薙劍、八尺瓊勾玉、八咫鏡</b>，<br>' +
+          '是否要消耗三神器之力削弱這條遠古巨龍？<br><br>' +
+          '<b style="color:#88ffaa;">使用三神器：</b><br>' +
+          '　・大蛇 HP / 攻擊 / 特技 各 −20%<br>' +
+          '　・戰鬥勝利後三神器消失<br>' +
+          '　・八岐大蛇重新鎖定，需再次收集神器才能挑戰<br><br>' +
+          '<b style="color:#ffaa88;">保留三神器：</b><br>' +
+          '　・大蛇保持最強狀態<br>' +
+          '　・三神器不消耗<br>' +
+          '　・獎勵不受影響（兩種選擇獎勵相同）' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;">' +
+        '<button id="yamata-use-yes" style="padding:14px 36px;font-size:clamp(19px,2.2vw,26px);font-weight:900;letter-spacing:2px;' +
+          'background:linear-gradient(135deg,rgba(80,220,120,0.35),rgba(40,180,80,0.35));' +
+          'border:2.5px solid #44ff88;color:#aaffcc;border-radius:12px;cursor:pointer;font-family:inherit;' +
+          'box-shadow:0 4px 20px rgba(80,220,120,0.35);">✨ 使用三神器（弱化）</button>' +
+        '<button id="yamata-use-no" style="padding:14px 36px;font-size:clamp(19px,2.2vw,26px);font-weight:900;letter-spacing:2px;' +
+          'background:linear-gradient(135deg,rgba(255,100,100,0.3),rgba(200,60,60,0.3));' +
+          'border:2.5px solid #ff8866;color:#ffbbaa;border-radius:12px;cursor:pointer;font-family:inherit;' +
+          'box-shadow:0 4px 20px rgba(220,80,80,0.35);">⚔ 保留三神器（硬戰）</button>' +
+      '</div>' +
+    '</div>';
+  (document.getElementById('gc') || document.body).appendChild(modal);
+  const yes = modal.querySelector('#yamata-use-yes');
+  const no  = modal.querySelector('#yamata-use-no');
+  const finish = (useTreasures) => {
+    window._japanUseTreasures = !!useTreasures;
+    try{ playSfx(useTreasures ? 'sfx-medal-unlock' : 'sfx-confirm2', 0.85); }catch(_){}
+    modal.style.transition = 'opacity 0.25s';
+    modal.style.opacity = '0';
+    setTimeout(() => { modal.remove(); if(onDone) onDone(); }, 240);
+  };
+  if(yes) yes.onclick = () => finish(true);
+  if(no)  no.onclick  = () => finish(false);
+}
+
+// ★ v1.0.20260421.2700 — 八岐大蛇擊敗後，若玩家使用了三神器 → 顯示消耗劇情
+function _showYamataTreasureConsumedScene(){
+  const old = document.getElementById('yamata-treasure-consumed-modal');
+  if(old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'yamata-treasure-consumed-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
+    'background:radial-gradient(circle at center,rgba(80,20,80,0.85),rgba(0,0,0,0.96));' +
+    'backdrop-filter:blur(8px);animation:fadeIn 0.4s;';
+  modal.innerHTML =
+    '<div style="max-width:720px;width:92%;padding:42px 38px 34px;text-align:center;' +
+      'background:linear-gradient(160deg,rgba(20,8,30,0.98),rgba(8,2,12,0.98));' +
+      'border:2.5px solid rgba(220,180,80,0.65);border-radius:22px;' +
+      'box-shadow:0 0 100px rgba(255,200,80,0.4);font-family:inherit;">' +
+      '<div style="font-size:90px;margin-bottom:8px;filter:drop-shadow(0 0 20px rgba(255,200,80,0.8));">📜</div>' +
+      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#ffcc66;margin-bottom:10px;letter-spacing:3px;text-shadow:0 0 18px rgba(255,200,80,0.6);">三神器之力耗盡</div>' +
+      '<div style="background:rgba(0,0,0,0.55);border:1.5px solid rgba(220,180,80,0.4);border-radius:14px;padding:24px 28px;margin:22px 0;text-align:left;">' +
+        '<div style="font-size:clamp(18px,2vw,24px);color:#ddeeff;line-height:2.0;">' +
+          '⚔ 隨著八岐大蛇倒下，天地再次歸於平靜。<br><br>' +
+          '🗡 <b style="color:#ffcc66;">草薙劍</b>刃鋒光芒漸弱，化作點點金光散去……<br>' +
+          '💎 <b style="color:#99ddff;">八尺瓊勾玉</b>裂成細碎光塵，消融於風中……<br>' +
+          '🪞 <b style="color:#ffaa88;">八咫鏡</b>映出最後一抹夕照，終於不再映照……<br><br>' +
+          '⛩ 巫女小雪：「三神器為了封印遠古魔龍，已經用盡了所有力量……<br>' +
+          '　若未來再有妖魔作亂，必須再次打倒大天狗、酒吞童子、玉藻前，<br>' +
+          '　才能重新集齊三神器，再次挑戰大蛇的試煉。」<br><br>' +
+          '<span style="color:#ffaa44;">💡 日本關「八岐大蛇」已重新鎖定，需再次集齊三神器才能挑戰。</span>' +
+        '</div>' +
+      '</div>' +
+      '<button id="yamata-consumed-close" style="padding:14px 46px;font-size:clamp(20px,2.3vw,28px);' +
+        'font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,rgba(255,180,80,0.3),rgba(255,140,40,0.3));' +
+        'border:2.5px solid #ffaa44;color:#ffdd99;border-radius:12px;cursor:pointer;font-family:inherit;' +
+        'box-shadow:0 4px 20px rgba(255,180,60,0.35);">✔ 我明白了</button>' +
+    '</div>';
+  (document.getElementById('gc') || document.body).appendChild(modal);
+  try{ playSfx('sfx-medal-unlock', 0.9); }catch(_){}
+  const btn = modal.querySelector('#yamata-consumed-close');
+  if(btn){
+    btn.onclick = () => {
+      try{ playSfx('sfx-sel', 0.7); }catch(_){}
+      modal.style.transition = 'opacity 0.3s';
+      modal.style.opacity = '0';
+      setTimeout(() => modal.remove(), 280);
+    };
+  }
+}
 
 // BOSS 擊敗時若為日本關前三路線，自動獲得對應神器
 window._onJapanBossDefeated = function(){
@@ -25495,6 +25642,7 @@ function advStartCutscene(stage) {
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0,currentStreak:0,maxStreak:0};
   // ★ v1.0.20260420.3200 — 重置「BOSS HP 難度倍率已套用」旗標,讓新一輪冒險能重新根據當局難度套一次
   window._advBossHpMultApplied = false;
+  window._advJapanEliteBuffApplied = false; // ★ v1.0.20260421.2800 日本菁英 +20% 旗標
   _advQuizHistory = []; // ★ v1.0.20260420.1000 — 每局重置答題場次歷史
   _advBurstRewardUsed = false; // 重置「極限爆發」出現限制
   _advPendingReward = null;
@@ -25520,10 +25668,11 @@ function advStartCutscene(stage) {
     const ov = document.getElementById('adv-cutscene-overlay');
     ov.style.display = 'flex';
     // ★ 過場 BGM：依關卡切換
-    //   v1.0.20260421.2300 — 日本關用 bgm-japan-battle(小怪戰BGM)，貓空仍用 bgm-adv-scene
+    //   v1.0.20260421.2800 — 日本關首場用 bgm-japan-menu（關卡首頁BGM），
+    //   advLoadScene 內會依場景 idx 再細調為 bgm-japan-scene2
     try{
       bgmStop();
-      const _cutsceneBgm = (stage === 'japan') ? 'bgm-japan-battle' : 'bgm-adv-scene';
+      const _cutsceneBgm = (stage === 'japan') ? 'bgm-japan-menu' : 'bgm-adv-scene';
       bgmPlay(_cutsceneBgm);
     }catch(e){}
     advLoadScene(stage, 0);
@@ -25691,6 +25840,18 @@ function advLoadScene(stage, idx) {
       if(vId && scene.bgByVariant[vId]) _bgUrl = scene.bgByVariant[vId];
     }
   }catch(_bgvE){}
+
+  // ★ v1.0.20260421.2800 — 日本關場景 BGM 切換：
+  //   第一場景(idx=0)：bgm-japan-menu
+  //   第二、三場景(idx≥1)：bgm-japan-scene2（日本關卡感懷.m4a）
+  try{
+    if(stage === 'japan' && typeof bgmFadeTo === 'function'){
+      const _targetBgm = (idx === 0) ? 'bgm-japan-menu' : 'bgm-japan-scene2';
+      if(typeof _curBgm === 'undefined' || _curBgm !== _targetBgm){
+        bgmFadeTo(_targetBgm, 700);
+      }
+    }
+  }catch(_sceneBgmE){}
 
   // 背景淡入
   const bg = document.getElementById('adv-scene-bg');
@@ -26727,6 +26888,30 @@ function advStartBattle(){
     }
     window._advBossHpMultApplied = true;
   } catch(_hpE){ console.warn('[BOSS HP 難度倍率] 套用失敗:', _hpE); }
+  // ★ v1.0.20260421.2800 — 日本關菁英小怪 +20%（HP/ATK/SP/SPD），BOSS 本身不加
+  //   對 3 隻陣容：p2[0] 與 p2[2] 是菁英小怪，p2[1] 是 BOSS → 只強化 0 和 2
+  //   對 1 隻陣容（yamata）：p2[0] 就是 BOSS → 不強化
+  //   使用 flag 確保只套一次（避免 advRestartBattle 重覆套）
+  try{
+    if(_adventureStage === 'japan' && !window._advJapanEliteBuffApplied
+       && G && G.p2 && G.p2.length >= 2){
+      [0, 2].forEach(i => {
+        const h = G.p2[i];
+        if(h && typeof h.hp === 'number' && h.hp > 0){
+          h.hp  = Math.max(1, Math.round(h.hp  * 1.20));
+          h.atk = Math.max(1, Math.round((h.atk||1) * 1.20));
+          h.sp  = Math.max(1, Math.round((h.sp ||1) * 1.20));
+          h.spd = Math.max(1, Math.round((h.spd||1) * 1.20));
+          h.curHp = h.hp;
+        }
+      });
+      if(typeof _advBossTeamSaved !== 'undefined' && _advBossTeamSaved){
+        _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2));
+      }
+      window._advJapanEliteBuffApplied = true;
+      try{ if(typeof log==='function') log('🗾 日本菁英小怪能力強化 +20%（HP / ATK / 特技 / 速度）'); }catch(_){}
+    }
+  }catch(_jpeE){ console.warn('[日本菁英+20%] 套用失敗:', _jpeE); }
   // ★ 日本關八岐大蛇：根據三神器持有數量套用 HP/ATK 弱化（1件-10%/2件-20%/3件-30%）
   try {
     if(_adventureStage === 'japan' && typeof window._applyJapanYamataWeaken === 'function'){
@@ -26736,6 +26921,7 @@ function advStartBattle(){
           if(h && typeof h.hp === 'number' && h.hp > 0){
             h.hp  = Math.max(1, Math.round(h.hp  * _jpMult));
             h.atk = Math.max(1, Math.round((h.atk||1) * _jpMult));
+            h.sp  = Math.max(1, Math.round((h.sp ||1) * _jpMult)); // ★ v1.0.20260421.2700 — 特技也-20%
             h.curHp = h.hp;
           }
         });
@@ -26743,7 +26929,7 @@ function advStartBattle(){
           _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2));
         }
         window._advJapanYamataWeakApplied = true;
-        try{ if(typeof log==='function') log(`🏆 三神器之力共鳴！八岐大蛇 HP & ATK 已弱化至 ${Math.round(_jpMult*100)}%。`); }catch(_){}
+        try{ if(typeof log==='function') log(`🏆 三神器之力共鳴！八岐大蛇 HP / ATK / 特技 已弱化至 ${Math.round(_jpMult*100)}%。`); }catch(_){}
       }
     }
   } catch(_ymE){ console.warn('[日本關八岐大蛇弱化] 套用失敗:', _ymE); }
@@ -26759,9 +26945,22 @@ function advStartBattle(){
   }
   try{ bgmStop(); }catch(e){}
   try{
-    // ★ BOSS戰專屬BGM（依變體切換：九尾空貓怪 vs 杏花妖，loop=true 自動重複）
-    const _bossBgmId = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot')
-      ? 'bgm-boss-apricot' : 'bgm-boss-01';
+    // ★ BOSS戰專屬BGM
+    //   v1.0.20260421.2800 — 日本關依 variant 切換：
+    //   大天狗 / 八岐大蛇 → bgm-japan-boss
+    //   酒吞童子 → bgm-japan-boss-shutendoji
+    //   玉藻前 → bgm-japan-boss-tamamo
+    let _bossBgmId;
+    if(_adventureStage === 'japan'){
+      const _jv = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.japan)
+        ? ADV_BOSS_VARIANTS.japan[window._advSelectedVariantIdx] : null;
+      if(_jv && _jv.id === 'shutendoji') _bossBgmId = 'bgm-japan-boss-shutendoji';
+      else if(_jv && _jv.id === 'tamamo') _bossBgmId = 'bgm-japan-boss-tamamo';
+      else _bossBgmId = 'bgm-japan-boss';
+    } else {
+      _bossBgmId = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot')
+        ? 'bgm-boss-apricot' : 'bgm-boss-01';
+    }
     const _bossBgmList = [_bossBgmId];
     let _advBgmIndex = 0;
     function _playAdvBossBgm(){
@@ -28444,6 +28643,30 @@ async function advStartWinSequence() {
       backpackAdd(_jd.id, 1);
       log(`${_jd.icon} [${_mainBoss}] 掉落了【${_jd.name}】！已放入背包。`);
       _showInGameToast(`${_jd.icon} 獲得${_jd.name}！前往超商可賣出換取${_jd.price.toLocaleString()}知識幣`, _jd.color, 3200);
+    }
+    // ★ v1.0.20260421.2700 — 八岐大蛇額外固定獎勵與神器消耗
+    if(_mainBoss === '八岐大蛇'){
+      // 必掉：精裝經驗值書 ×10 + 技能升級書 ×5
+      backpackAdd('hero_exp_book_deluxe', 10);
+      backpackAdd('skill_upgrade_book', 5);
+      log('📕 [八岐大蛇] 必掉：英雄經驗值之書(精裝版) ×10');
+      log('📖 [八岐大蛇] 必掉：技能升級書 ×5');
+      // 10% 機率超越極限果實 ×1
+      if(Math.random() < 0.10){
+        backpackAdd('burst_upgrade_fruit', 1);
+        log('🍑 [八岐大蛇] 稀有掉落:超越極限果實 ×1！');
+        try{ _showBurstFruitDrop && _showBurstFruitDrop(); }catch(_){}
+      }
+      // 神器消耗：玩家戰前選擇「使用三神器」才觸發
+      if(window._japanUseTreasures === true){
+        try{
+          localStorage.removeItem('adv_japan_treasures');
+          log('📜 三神器之力已耗盡，從持有中消失……');
+          // 延遲播放劇情對話，讓玩家先看完一般結算
+          setTimeout(() => { _showYamataTreasureConsumedScene(); }, 800);
+        }catch(_){}
+        window._japanUseTreasures = false;
+      }
     }
   } else if(_mainBoss === '杏花妖'){
     if(Math.random() < 0.20){
@@ -31507,25 +31730,27 @@ async function shopSellAllItems(){
     _summary.push(`${def.icon||''} ${def.name} ×${have}`);
   });
   const _msg = `確認要一鍵賣出以下 ${sellable.length} 種物品？\n\n${_summary.join('\n')}\n\n總收益：${_totalCoins.toLocaleString()} 💰`;
-  if(!confirm(_msg)) return;
-  // 批次賣出（不觸發個別 toast，最後統一一個提示）
-  sellable.forEach(si => {
-    const have = backpackGet(si.id);
-    const def = BACKPACK_ITEM_DEF[si.id]||{};
-    backpackRemove(si.id, have);
-    _knowledgeCoins = (_knowledgeCoins||0) + (def.sellPrice||0) * have;
+  // ★ v1.0.20260421.2600 — 改用遊戲內確認視窗（不再用瀏覽器原生 confirm）
+  _customConfirm(_msg, async () => {
+    // 批次賣出（不觸發個別 toast，最後統一一個提示）
+    sellable.forEach(si => {
+      const have = backpackGet(si.id);
+      const def = BACKPACK_ITEM_DEF[si.id]||{};
+      backpackRemove(si.id, have);
+      _knowledgeCoins = (_knowledgeCoins||0) + (def.sellPrice||0) * have;
+    });
+    // 音效 + toast
+    try{
+      const _sfxSell = document.getElementById('sfx-sell-item');
+      if(_sfxSell){ _sfxSell.currentTime=0; _sfxSell.volume=0.7; _sfxSell.play().catch(()=>{}); }
+      else playSfx('sfx-sell', 0.75);
+    }catch(e){}
+    _showInGameToast(`💰 一鍵賣出完成！共 ${sellable.length} 種物品，獲得 ${_totalCoins.toLocaleString()} 知識幣！`, '#ffcc44', 3500);
+    _syncCoinsDisplay();
+    _renderShopProducts();
+    _renderShopBagPanel();
+    try{ await gameCloudSave(); }catch(e){ console.error('[sell all cloud save]', e); }
   });
-  // 音效 + toast
-  try{
-    const _sfxSell = document.getElementById('sfx-sell-item');
-    if(_sfxSell){ _sfxSell.currentTime=0; _sfxSell.volume=0.7; _sfxSell.play().catch(()=>{}); }
-    else playSfx('sfx-sell', 0.75);
-  }catch(e){}
-  _showInGameToast(`💰 一鍵賣出完成！共 ${sellable.length} 種物品，獲得 ${_totalCoins.toLocaleString()} 知識幣！`, '#ffcc44', 3500);
-  _syncCoinsDisplay();
-  _renderShopProducts();
-  _renderShopBagPanel();
-  try{ await gameCloudSave(); }catch(e){ console.error('[sell all cloud save]', e); }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -34894,6 +35119,14 @@ function advStartMiniBattle(nextSceneIdx) {
       const h = newHero(name, 'p2', i);
       h.element = MINI_MONSTER_ELEM[name] || 'wind';
       if(typeof applyElemBonus === 'function') applyElemBonus(h);
+      // ★ v1.0.20260421.2800 — 日本關小怪能力 +20%（HP / ATK / SP / SPD）
+      if(_adventureStage === 'japan'){
+        h.hp  = Math.max(1, Math.round(h.hp  * 1.20));
+        h.atk = Math.max(1, Math.round((h.atk||1) * 1.20));
+        h.sp  = Math.max(1, Math.round((h.sp ||1) * 1.20));
+        h.spd = Math.max(1, Math.round((h.spd||1) * 1.20));
+        h.curHp = h.hp;
+      }
       return h;
     });
     // ★ 若有稀有怪，切換BGM + 顯示登場台詞
@@ -35553,10 +35786,10 @@ function advMiniResultConfirm(){
   if(_pf2) _pf2.style.visibility = '';
 
   // 切換到過場BGM
-  // ★ v1.0.20260421.2300 — 依關卡切換
+  // ★ v1.0.20260421.2800 — 依關卡切換；日本關小怪戰結束必定是第二/三場景之間，用 scene2
   try{
     bgmStop();
-    const _nextBgm = (_adventureStage === 'japan') ? 'bgm-japan-battle' : 'bgm-adv-scene';
+    const _nextBgm = (_adventureStage === 'japan') ? 'bgm-japan-scene2' : 'bgm-adv-scene';
     bgmPlay(_nextBgm);
   }catch(e){}
 
@@ -37181,6 +37414,106 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000', brief:[
+    '日本關卡介紹頁獎勵清單修正',
+  ], items:[
+    '【移除】🎴 日本主題寵物 ×12 隻（寵物不算獎勵，是過程物品）',
+    '【移除】📜 三神器（不算獎勵，是解鎖用的任務物品）',
+    '【移除】金幣/經驗值 的「貓空 +20%」標註',
+    '【新獎勵清單】(與貓空格式一致)',
+    '  ⭐ 英雄成長經驗值',
+    '  📖 技能升級書',
+    '  💰 知識幣',
+    '  🦸 關卡中的新英雄（機率）',
+    '【備註】日本關卡的 stars 已在 v2700 改為 5，截圖顯示 3 是舊快取',
+  ] },
+  { ver:'v1.0.20260421.2900', brief:[
+    '關卡介紹視窗加入場景背景圖（隱約透出）',
+  ], items:[
+    '【改動】#adv-info-window 從實色改為「黑色半透明遮罩 + 場景圖」雙層背景',
+    '  黑色透明度由 0.90 降為 0.72（保留可讀性）',
+    '  用 CSS 變數 --stage-bg 動態切換場景圖',
+    '  貓空關卡 → 茶園場景圖',
+    '  日本關卡 → 表參道祭典圖（_JP_BG.opening）',
+    '  切換時有 0.6 秒柔和過渡',
+    '【實作位置】',
+    '  CSS：#adv-info-window（約 line 1524）',
+    '  JS：selectAdvStage 開頭加 setProperty(\'--stage-bg\', url)',
+    '【文字顏色】不變，黑色遮罩 72% 已足以確保可讀性',
+  ] },
+  { ver:'v1.0.20260421.2800', brief:[
+    '日本關 BGM 依場景/BOSS 細分（共 5 種 BGM）',
+    '日本關小怪能力 +20%（路邊怪 + 菁英怪，BOSS 本身不加）',
+    '日本關題庫 100 題實裝確認',
+  ], items:[
+    '【BGM 擴充】新增 3 個 audio tag',
+    '  bgm-japan-scene2       日本關卡感懷.m4a（第二場景之後）',
+    '  bgm-japan-boss-shutendoji  酒吞童子BGM.m4a',
+    '  bgm-japan-boss-tamamo      玉藻前BGM.m4a',
+    '【BGM 切換對應】',
+    '  關卡選擇頁日本關介紹 → bgm-japan-menu（日本關卡首頁.m4a）',
+    '  進入日本第一場景(表參道) → bgm-japan-menu',
+    '  第二、三場景(神社 / 富士山) → bgm-japan-scene2（感懷）',
+    '  小怪戰結束回過場 → bgm-japan-scene2',
+    '  大天狗戰 → bgm-japan-boss（日本BOSS戰.m4a）',
+    '  酒吞童子戰 → bgm-japan-boss-shutendoji',
+    '  玉藻前戰 → bgm-japan-boss-tamamo',
+    '  八岐大蛇戰 → bgm-japan-boss（沿用）',
+    '【小怪 +20%】HP / ATK / SP（特技） / SPD（速度） 四項能力同步強化',
+    '  路邊小怪戰：河童/二口女/雪女/獨眼小僧 四隻全+20%',
+    '  BOSS 戰菁英：烏天狗/木葉天狗/茨木童子/星熊童子/殺生石分身/管狐 +20%',
+    '  主 BOSS：大天狗/酒吞童子/玉藻前/八岐大蛇 不加，保持原難度',
+    '【旗標】_advJapanEliteBuffApplied 確保每場只套一次，冒險開始時歸零',
+    '【題庫確認】日本關 100 題完整（id 3001-3100），advGetQuizPool 分支已接通',
+    '  進日本關時 _advPlayerSubject 自動設為「日本關」，不需玩家選',
+    '【程式位置】',
+    '  audio tags：line 3734-3736（3 個新增）',
+    '  過場 BGM 切換：advLoadScene line ~25816（依 idx 選 menu 或 scene2）',
+    '  BOSS BGM 依 variant：advStartBattle line ~26780',
+    '  _detectCurrentBgm 也同步更新日本 BOSS variant 判斷',
+    '  小怪 +20%：advStartMiniBattle p2 組完後 line ~35077',
+    '  菁英 +20%：advStartBattle HP 難度倍率後 line ~26871',
+  ] },
+  { ver:'v1.0.20260421.2700', brief:[
+    '日本關難度升級為 5 星',
+    '八岐大蛇機制重做：玩家主動選擇是否消耗三神器',
+    '八岐大蛇掉落追加：精裝經驗書×10 + 技能升級書×5，10%機率超越極限果實×1',
+    'BOSS 戰 BGM 日本關統一使用日本 BOSS 戰 BGM',
+    '老玩家確認按鈕改用遊戲內 modal（不再用瀏覽器彈窗）',
+  ], items:[
+    '【難度】ADV_STAGES.japan.stars: 3 → 5',
+    '【BGM】advStartBattle 日本關 BOSS 統一切到 bgm-japan-boss（之前只切換一般 BOSS BGM）',
+    '【三神器新機制】',
+    '  選了 yamata 路線 → 彈出 _showYamataTreasureChoice 遊戲內 modal',
+    '  讓玩家選「使用神器」或「保留神器」',
+    '  使用神器 → HP / ATK / 特技 各 −20%（之前是 HP/ATK 依持有數漸進，現改為固定 20%）',
+    '  保留神器 → 大蛇滿血，神器保留',
+    '  兩種選擇的獎勵完全相同',
+    '【戰後處理】',
+    '  若使用神器勝利 → 清空 localStorage adv_japan_treasures',
+    '  彈出 _showYamataTreasureConsumedScene 劇情 modal：三神器消逝劇情對白',
+    '  八岐大蛇自動重鎖，需再次打倒三大妖怪收集神器才能再戰',
+    '【八岐大蛇新掉落】',
+    '  必掉：📕 英雄經驗值之書(精裝版) ×10',
+    '  必掉：📖 技能升級書 ×5',
+    '  10% 機率：🍑 超越極限果實 ×1（觸發既有的 _showBurstFruitDrop 特效）',
+    '【程式碼調整】',
+    '  _applyJapanYamataWeaken 改為看 window._japanUseTreasures 旗標',
+    '  advStartBattle 弱化邏輯補上 sp 屬性（原本只有 hp/atk）',
+    '  路線選擇器的 commit() 在 yamata 時延後 pop.remove() 直到玩家做完選擇',
+    '  老玩家確認按鈕 confirm() → _customConfirm helper',
+  ] },
+  { ver:'v1.0.20260421.2600', brief:[
+    '一鍵賣出確認視窗改為遊戲內 UI 風格，不再是瀏覽器原生彈窗',
+  ], items:[
+    '【改動】shopSellAllItems 的 confirm() 改用 _customConfirm helper',
+    '  沿用既有的 #custom-confirm-overlay 樣式（遊戲內暗色主題）',
+    '  保留完整物品清單與總收益顯示',
+    '  支援 \\n 自動換行轉 <br>',
+    '【後續規範】遊戲內所有確認/提示視窗一律用遊戲內 modal',
+    '  避免 iPad WKWebView 誤判問題',
+    '  外觀與遊戲風格一致',
+  ] },
   { ver:'v1.0.20260421.2500', brief:[
     '🔧 日本關卡暫停開放（維護中）— 測試完成後將重新開放',
   ], items:[
@@ -38778,7 +39111,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.2500';
+  const CURRENT_VERSION = 'v1.0.20260421.3000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38795,7 +39128,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.2500';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
