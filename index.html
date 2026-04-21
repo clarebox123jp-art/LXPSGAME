@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.2300</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.2500</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -25063,7 +25063,17 @@ function _japanCheckUnlock(){
 window._japanRewardMult = 1.20;
 
 // 點擊日本關按鈕的包裝函式：先檢查解鎖條件再進入
+// ★ v1.0.20260421.2500 — 日本關維護模式開關（true = 鎖住，僅 admin 可進）
+//   測試完畢後，改為 false 並發 changelog 公告即可解鎖
+window._JAPAN_MAINTENANCE_MODE = true;
+
 window._japanTrySelect = function(btnEl){
+  // ★ v1.0.20260421.2500 — 維護模式檢查：非 admin 一律擋下
+  if(window._JAPAN_MAINTENANCE_MODE && !(typeof window._isAdminUser === 'function' && window._isAdminUser())){
+    try{ playSfx('sfx-cancel', 0.6); }catch(_){}
+    _japanShowMaintenanceModal();
+    return;
+  }
   const check = _japanCheckUnlock();
   if(!check.canEnter){
     try{ playSfx('sfx-cancel', 0.6); }catch(_){}
@@ -25073,6 +25083,55 @@ window._japanTrySelect = function(btnEl){
   }
   selectAdvStage('japan', btnEl);
 };
+
+// ★ v1.0.20260421.2500 — 日本關維護中提示視窗
+function _japanShowMaintenanceModal(){
+  const old = document.getElementById('japan-maint-modal');
+  if(old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'japan-maint-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
+    'background:radial-gradient(circle at center,rgba(60,30,0,0.85),rgba(0,0,0,0.92));' +
+    'backdrop-filter:blur(6px);animation:fadeIn 0.35s;';
+  modal.innerHTML =
+    '<div style="max-width:640px;width:90%;padding:40px 40px 32px;text-align:center;' +
+      'background:linear-gradient(160deg,rgba(40,20,8,0.98),rgba(20,10,4,0.98));' +
+      'border:2.5px solid rgba(255,180,80,0.55);border-radius:22px;' +
+      'box-shadow:0 0 80px rgba(255,140,40,0.35);font-family:inherit;">' +
+      '<div style="font-size:88px;margin-bottom:10px;">🔧</div>' +
+      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#ffcc66;margin-bottom:8px;letter-spacing:3px;">日本關卡維護中</div>' +
+      '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:800;color:#ffddaa;margin-bottom:22px;">🗾 第一關：日本探險 暫停開放</div>' +
+      '<div style="background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,180,80,0.3);border-radius:14px;padding:20px 24px;margin-bottom:24px;text-align:left;">' +
+        '<div style="font-size:clamp(17px,1.9vw,22px);color:#ddeeff;line-height:1.85;">' +
+          '親愛的勇者們，<br><br>' +
+          '🛠️ 日本探險目前正在進行最終調校與平衡測試，<br>' +
+          '為了提供各位更完整、更穩定的冒險體驗，<br>' +
+          '本關卡將暫時關閉，待測試完成後會再次開放。<br><br>' +
+          '📣 解鎖時間將透過 <b style="color:#ffcc66;">遊戲公告（新版本記錄）</b> 通知，<br>' +
+          '敬請期待三大妖魔的挑戰！<br><br>' +
+          '⏳ 造成不便敬請見諒，感謝您的耐心等候。' +
+        '</div>' +
+      '</div>' +
+      '<button id="japan-maint-close" style="padding:14px 44px;font-size:clamp(20px,2.3vw,28px);' +
+        'font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,rgba(255,180,80,0.28),rgba(255,140,40,0.28));' +
+        'border:2.5px solid #ffaa44;color:#ffdd99;border-radius:12px;cursor:pointer;font-family:inherit;' +
+        'box-shadow:0 4px 20px rgba(255,180,60,0.3);">✔ 我知道了</button>' +
+    '</div>';
+  (document.getElementById('gc') || document.body).appendChild(modal);
+  const btn = modal.querySelector('#japan-maint-close');
+  if(btn){
+    btn.onclick = () => {
+      try{ playSfx('sfx-sel', 0.65); }catch(_){}
+      modal.style.transition = 'opacity 0.25s';
+      modal.style.opacity = '0';
+      setTimeout(() => modal.remove(), 230);
+    };
+    btn.onmouseover = () => { btn.style.background = 'linear-gradient(135deg,rgba(255,180,80,0.5),rgba(255,140,40,0.5))'; btn.style.color = '#fff'; };
+    btn.onmouseout  = () => { btn.style.background = 'linear-gradient(135deg,rgba(255,180,80,0.28),rgba(255,140,40,0.28))'; btn.style.color = '#ffdd99'; };
+  }
+  modal.addEventListener('click', (e) => { if(e.target === modal && btn) btn.click(); });
+}
 
 // ★ 日本關解鎖條件提示視窗（遊戲內樣式）
 function _japanShowLockedModal(check){
@@ -35147,6 +35206,14 @@ function advFinishMiniBattle(win) {
             _miniDrops.push({ icon:'📕', name:`英雄EXP書(精裝)×${_dc}`, sellPrice:0 });
           }
         } else {
+          // 普通小怪掉落(× 難度倍率)
+          const dropId = _MINI_DROP_MAP[mob.name];
+          if(dropId && Math.random() < 0.5 * _dropMult){
+            backpackAdd(dropId, 1);
+            const def = BACKPACK_ITEM_DEF[dropId];
+            if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
+          }
+        }
       });
     }
     // ★ 英雄經驗值之書：25% 掉落率(× 難度倍率)
@@ -37114,6 +37181,34 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.2500', brief:[
+    '🔧 日本關卡暫停開放（維護中）— 測試完成後將重新開放',
+  ], items:[
+    '🗾 親愛的勇者們：',
+    '日本探險關卡目前正在進行最終調校與平衡測試，為了提供更完整、更穩定的冒險體驗，暫時關閉入口。',
+    '📣 重新開放時間將透過本公告（新版本記錄）通知，敬請期待三大妖魔 — 大天狗、酒吞童子、玉藻前 — 的挑戰！',
+    '⏳ 造成不便敬請見諒，感謝您的耐心等候。',
+  ] },
+  { ver:'v1.0.20260421.2400', brief:[
+    '緊急修復 v2200 造成的 SyntaxError：冒險/鬥技場進不去',
+  ], items:[
+    '【症狀】v2200~v2300 期間按「展開冒險故事」或「英雄鬥技場」沒反應',
+    '  Console 報 Uncaught SyntaxError: Unexpected token ")" (line 35150)',
+    '  以及 showLoginGate / openNicknameModal / BOSS_NAMES is not defined',
+    '【根本原因】v2200 新增「行走的二宮尊德像」「座敷童子」稀有怪掉落時，',
+    '  用 str_replace 替換最後一個 else 分支（貓空路邊怪的正常掉落邏輯），',
+    '  結果誤把原本的「普通小怪掉落 fallback」區塊刪除，只留空的 else { }。',
+    '  造成 advStartWinSequence 裡出現 } else { });  的語法炸裂，',
+    '  整個 <script> 區塊在瀏覽器解析時就 crash，',
+    '  後面所有的 function（showLoginGate / openNicknameModal / initGame 等）都沒定義。',
+    '【為什麼 node --check 沒抓到】',
+    '  我之前是把所有 <script> 合併後 node --check，',
+    '  這樣全局括號數湊得起來，但瀏覽器每個 <script> 是獨立 parse。',
+    '  已改用「個別 script 區塊逐一檢查」作為標準驗證流程。',
+    '【修復】補回被誤刪的 fallback 區塊：',
+    '  else { 讀 _MINI_DROP_MAP[mob.name] → 50% 機率 × 難度倍率 掉落 }',
+    '【影響版本】v2200, v2300 均有此 bug，v2400 修正',
+  ] },
   { ver:'v1.0.20260421.2300', brief:[
     '修復日本關進入後 BGM 錯、小怪是貓空、對白也是貓空的三大 bug',
   ], items:[
@@ -38683,7 +38778,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.2300';
+  const CURRENT_VERSION = 'v1.0.20260421.2500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38700,7 +38795,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.2300';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.2500';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
