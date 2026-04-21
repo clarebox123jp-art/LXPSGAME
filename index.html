@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000m</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000n</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6509,7 +6509,7 @@ const HERO_DB = {
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
   '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
   '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:4,d:'攻擊+速度×150%傷害1名敵人，下一位行動友方傷害/治療+50%',fd:'以（攻擊＋速度×1.5）對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%（持續1回合）。'}},
-  '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害（對BOSS傷害減半），並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率醒來。'}},
+  '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害（對BOSS傷害減半），並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠最多4回合並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態最多4回合，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率提早醒來。'}},
   '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:5,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:5,d:'友方全體獲得隨機有利狀態+50%效果（2回合）及20護盾',fd:'使友方全體各獲得1個隨機有利狀態（效果+50%，持續2回合），並各獲得可抵擋20傷害的護盾。'}},
   '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:3,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:5,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:5,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
@@ -10007,6 +10007,17 @@ function _doConfirmSkillReplace(){
         bannerFX(h,'愛護校犬！強力隱身10回合！','#ffaacc',1200);
         ringFX(h,'#ffaacc',800);
         log(`🐕 [小力] 愛護校犬！進入強力隱身狀態10回合！`);
+        renderCard(h);
+      }
+    });
+    // ★ v1.0.20260421.3000n — 元素增幅：常駐被動，開場自動啟用（不消耗能量）
+    [...G.p1,...G.p2].forEach(h=>{
+      if(h.curHp>0 && ((h.s1&&h.s1.n==='元素增幅')||(h.s2&&h.s2.n==='元素增幅'))){
+        h.elemBoost=true;
+        addBuff(h,'elemBoost',9999);
+        bannerFX(h,'元素增幅！（常駐被動）','#aaddff',1200);
+        try{ ringFX(h,'#aaddff',800); }catch(_){}
+        log(`🌈 [${h.name}] 元素增幅（被動）！屬性抵抗100%，相剋增傷+2！`);
         renderCard(h);
       }
     });
@@ -14831,10 +14842,10 @@ function execSkill(a, sk, cost, stype){
   else if(n==='午睡時間'){
     log(`[${a.name}] 午睡時間！進入睡眠，獲得50護盾！`);
     playSkillFX('午睡時間',a,[a]);
-    addStatus(a,'sleep',99); // 持續睡眠直到條件解除
+    addStatus(a,'sleep',4); // v1.0.20260421.3000n — 最多4回合（條件符合會提早醒）
     a._napMode=true; a._napHealPct=0.25;
     a.buffs=a.buffs.filter(b=>b.type!=='_napShield');
-    a.buffs.push({type:'_napShield',dur:99,_hp:50});
+    a.buffs.push({type:'_napShield',dur:4,_hp:50});
     bannerFX(a,'午睡中...','#aaddff',1200);
     showPopup(a,'💤護盾50','energy');
     endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
@@ -15462,16 +15473,13 @@ function execSkill(a, sk, cost, stype){
     renderCard(a); endAction(a,cost);
   }
 
-  // ── 元素增幅：屬性抵抗100%，相剋增減傷+2（限一次）──
+  // ── 元素增幅：常駐被動（v1.0.20260421.3000n）──
+  //   開場自動啟動 elemBoost buff（不消耗能量，整場戰鬥有效）
+  //   主動觸發路徑保留為 no-op，避免點選後卡住流程
   else if(n==='元素增幅'){
-    if(a.s1.n==='元素增幅'&&a.s1used){ log('元素增幅已使用！'); clearSel(); return; }
-    if(a.s2.n==='元素增幅'&&a.s2used){ log('元素增幅已使用！'); clearSel(); return; }
-    a.elemBoost=true; // flagged: immunity to all elem dmg mod, own elem adv+2
-    log(`[${a.name}] 元素增幅！屬性抵抗100%，相剋增傷+2！`);
-    playSkillFX('元素增幅',a,[]);
-    addBuff(a,'elemBoost',99);
-    if(a.s1.n==='元素增幅') a.s1used=true; else a.s2used=true;
-    renderCard(a); endAction(a,cost);
+    log(`[${a.name}] 元素增幅為常駐被動（開場自動啟用），無需主動釋放。`);
+    clearSel();
+    return;
   }
 
   // ── 元素爆裂：SP × 元素種類數 傷害1名對手（限一次）──
@@ -18419,8 +18427,8 @@ function aiUseSkill(a,sk,cost,pref){
     });
   }
   else if(n==='午睡時間'){
-    addStatus(a,'sleep',99); a._napMode=true; a._napHealPct=0.25;
-    a.buffs=a.buffs.filter(b=>b.type!=='_napShield'); a.buffs.push({type:'_napShield',dur:99,_hp:50});
+    addStatus(a,'sleep',4); a._napMode=true; a._napHealPct=0.25;
+    a.buffs=a.buffs.filter(b=>b.type!=='_napShield'); a.buffs.push({type:'_napShield',dur:4,_hp:50});
   }
   else if(n==='圖層隱藏'){
     enemies.forEach(h=>{ clearGoodBuffs(h); doDmg(h,Math.floor(a.sp*(1+a.sp*0.01)),{actor:a,isSkill:true}); });
@@ -38187,6 +38195,21 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000n', brief:[
+    '午睡時間改為最多4回合；元素增幅改為常駐被動',
+  ], items:[
+    '【午睡時間（幼兒園小孩 s2）】',
+    '  sleep 狀態從 dur=99 改為 dur=4（最多 4 回合）',
+    '  _napShield 護盾 dur 同步改為 4',
+    '  HERO_DB 說明文字更新：「最多4回合」',
+    '  條件解除（護盾耗盡 / HP 回滿 / 40%機率被打醒）仍保留，可提早醒',
+    '【元素增幅 — 常駐被動】',
+    '  改為開場自動啟用，整場戰鬥有效（類似挺身守護）',
+    '  不消耗能量，不需要主動釋放',
+    '  任何英雄的 s1 或 s2 掛「元素增幅」→ 戰鬥開始時自動加 elemBoost buff',
+    '  主動點選此技能 → 顯示「常駐被動，無需主動釋放」提示',
+    '  （HERO_DB 目前沒有英雄學此技能，此改動為未來掛載做準備）',
+  ]},
   { ver:'v1.0.20260421.3000m', brief:[
     '日本關開場對白加入三神器持有狀況提示（神器名稱亮黃色）',
   ], items:[
@@ -40048,7 +40071,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000m';
+  const CURRENT_VERSION = 'v1.0.20260421.3000n';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40065,7 +40088,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000m';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000n';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
