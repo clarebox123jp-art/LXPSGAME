@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.2000</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.2300</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -25460,8 +25460,13 @@ function advStartCutscene(stage) {
   const _beginCutsceneNow = () => {
     const ov = document.getElementById('adv-cutscene-overlay');
     ov.style.display = 'flex';
-    // ★ 過場（河堤/步道/茶園）專屬BGM
-    try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+    // ★ 過場 BGM：依關卡切換
+    //   v1.0.20260421.2300 — 日本關用 bgm-japan-battle(小怪戰BGM)，貓空仍用 bgm-adv-scene
+    try{
+      bgmStop();
+      const _cutsceneBgm = (stage === 'japan') ? 'bgm-japan-battle' : 'bgm-adv-scene';
+      bgmPlay(_cutsceneBgm);
+    }catch(e){}
     advLoadScene(stage, 0);
   };
 
@@ -28367,7 +28372,21 @@ async function advStartWinSequence() {
   }catch(e){}
   // ★ 主 BOSS 掉落專屬收藏品（20% 機率）
   const _mainBoss = (G && G.p2 && G.p2[1]) ? G.p2[1].name : '九尾空貓怪';
-  if(_mainBoss === '杏花妖'){
+  // ★ v1.0.20260421.2200 — 日本 BOSS 專屬收藏品
+  const _JAPAN_BOSS_DROPS = {
+    '大天狗':   { id:'tengu_fan',    icon:'🪶', name:'天狗的羽扇',  color:'#99ddff', price:1200, rate:0.20 },
+    '酒吞童子': { id:'oni_sake_cup', icon:'🍶', name:'鬼王的酒盃',  color:'#ff8866', price:1200, rate:0.20 },
+    '玉藻前':   { id:'kyuubi_fur',   icon:'🦊', name:'九尾狐毛髮',  color:'#ffbb44', price:1800, rate:0.20 },
+    '八岐大蛇': { id:'dragon_scale', icon:'🐉', name:'龍鱗片',      color:'#aa66ff', price:3000, rate:0.50 }, // 隱藏 BOSS 提高至 50%
+  };
+  if(_JAPAN_BOSS_DROPS[_mainBoss]){
+    const _jd = _JAPAN_BOSS_DROPS[_mainBoss];
+    if(Math.random() < _jd.rate){
+      backpackAdd(_jd.id, 1);
+      log(`${_jd.icon} [${_mainBoss}] 掉落了【${_jd.name}】！已放入背包。`);
+      _showInGameToast(`${_jd.icon} 獲得${_jd.name}！前往超商可賣出換取${_jd.price.toLocaleString()}知識幣`, _jd.color, 3200);
+    }
+  } else if(_mainBoss === '杏花妖'){
     if(Math.random() < 0.20){
       backpackAdd('apricot_rouge', 1);
       log('💄 [杏花妖] 掉落了【杏花胭脂】！已放入背包。');
@@ -28491,7 +28510,11 @@ async function advStartWinSequence() {
   }catch(_e){}
 
   bgmStop();
-  try{ bgmPlay('bgm-adv-scene'); }catch(e){}
+  // ★ v1.0.20260421.2300 — 依關卡切換 BGM（日本關不走此茶園流程，防萬一）
+  try{
+    const _meetBgm = (_adventureStage === 'japan') ? 'bgm-japan-battle' : 'bgm-adv-scene';
+    bgmPlay(_meetBgm);
+  }catch(e){}
 
   // 淡入茶園場景 + 加入訊息
   const ov = document.getElementById('adv-hero-meet-overlay');
@@ -29286,14 +29309,15 @@ let _presetTeams = [null, null, null, null, null];
 let _playerBackpack = {};
 
 // 背包物品定義
+// ★ v1.0.20260421.2100 — 經驗值/技能書移除 sellPrice 欄位，確保任何地方都不能販賣
 const BACKPACK_ITEM_DEF = {
-  'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）', sellPrice:50 },
-  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）', sellPrice:50 },
+  'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）' },
+  'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）' },
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）' },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
   'apricot_rouge':    { name:'杏花胭脂',       icon:'💄', desc:'杏花妖以千年花蕊與月光淬煉的絕品胭脂，香氣能勾魂攝魄，富商夫人爭相收藏。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1500 },
-  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）', sellPrice:200 },
+  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）' },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ 召喚水晶
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。⚠ 目前尚未開放使用，請先收藏等待未來版本開放召喚功能。', type:'use', useLabel:'使用（尚未開放）' },
@@ -29302,6 +29326,16 @@ const BACKPACK_ITEM_DEF = {
   'picked_flower':{ name:'被摘的花朵',       icon:'🌸', desc:'被頑皮妖精偷摘的野花，稍顯凌亂但仍有芬芳。', type:'sell_only', sellPrice:15 },
   'damaged_bamboo':{ name:'有點損傷的綠竹筍', icon:'🎋', desc:'被哥布林啃過的竹筍，有些咬痕，但大部分還是好的。', type:'sell_only', sellPrice:14 },
   'unknown_egg':  { name:'未知的蛋',         icon:'🥚', desc:'被鳥人哈維偷走的神秘鳥蛋，圓滾滾沉甸甸，似乎還帶著一點餘溫。', type:'sell_only', sellPrice:16 },
+  // ★ v1.0.20260421.2200 — 日本關掉落物
+  'stolen_cucumber':   { name:'被偷的小黃瓜',   icon:'🥒', desc:'河童最愛的小黃瓜被搶回來，仍清脆多汁。前往超商可賣出。', type:'sell_only', sellPrice:12 },
+  'bitten_onigiri':    { name:'被咬過的飯糰',   icon:'🍙', desc:'二口女偷吃一半的飯糰，海苔包裹得還算完整。前往超商可賣出。', type:'sell_only', sellPrice:15 },
+  'ice_shard':         { name:'碎冰片',         icon:'❄️', desc:'雪女身上凍落的結晶冰片，冰涼剔透，可製作清涼飲品。前往超商可賣出。', type:'sell_only', sellPrice:13 },
+  'yokai_marble':      { name:'妖怪玻璃珠',     icon:'🔮', desc:'獨眼小僧珍藏的玻璃珠，在陽光下折射出詭異光芒。前往超商可賣出。', type:'sell_only', sellPrice:14 },
+  // ★ 日本 BOSS 專屬收藏品
+  'tengu_fan':         { name:'天狗的羽扇',     icon:'🪶', desc:'大天狗掌中的神風羽扇，揮動即有山風颯颯。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:1200 },
+  'oni_sake_cup':      { name:'鬼王的酒盃',     icon:'🍶', desc:'酒吞童子愛用的朱紅酒盃，盃中餘香陳醇難忘。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:1200 },
+  'kyuubi_fur':        { name:'九尾狐毛髮',     icon:'🦊', desc:'玉藻前脫落的金黃狐尾毛髮，柔軟中帶有火焰餘溫。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:1800 },
+  'dragon_scale':      { name:'龍鱗片',         icon:'🐉', desc:'八岐大蛇身上剝落的幽紫龍鱗，蘊含遠古神力。傳說中的珍稀寶物。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:3000 },
   // ★ 肖像商品：購買後即自動解鎖，使用時彈出「前往英雄圖鑑切換」提示
   'priest_portrait_dawn': { name:'祭司肖像：曙光微風', icon:'🌅',
     desc:'全新繪製的祭司肖像「曙光微風」，購買後可在英雄圖鑑的祭司詳細頁切換使用（原肖像永遠保留）。',
@@ -29438,16 +29472,24 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
+// ★ v1.0.20260421.2100 — 排除經驗值/技能/爆發技相關物品
+//   hero_exp_book / hero_exp_book_deluxe / skill_upgrade_book / burst_upgrade_fruit 不可賣
 const SHOP_SELL_ITEMS = [
   { id:'antique_teacup',  name:'骨董茶杯',       icon:'🍵', sellPrice:1000 },
   { id:'apricot_rouge',   name:'杏花胭脂',       icon:'💄', sellPrice:1500 },
-  { id:'hero_exp_book',   name:'英雄經驗值之書', icon:'📗', sellPrice:50 },
-  { id:'hero_exp_book_deluxe', name:'英雄經驗值之書(精裝版)', icon:'📕', sellPrice:200 },
-  { id:'skill_upgrade_book', name:'技能升級書',  icon:'📖', sellPrice:50 },
   { id:'half_tea',        name:'喝一半的好茶',   icon:'🍵', sellPrice:10 },
   { id:'picked_flower',   name:'被摘的花朵',     icon:'🌸', sellPrice:15 },
   { id:'damaged_bamboo',  name:'有點損傷的綠竹筍',icon:'🎋', sellPrice:14 },
   { id:'unknown_egg',     name:'未知的蛋',       icon:'🥚', sellPrice:16 },
+  // ★ v1.0.20260421.2200 — 日本關掉落物
+  { id:'stolen_cucumber', name:'被偷的小黃瓜',   icon:'🥒', sellPrice:12 },
+  { id:'bitten_onigiri',  name:'被咬過的飯糰',   icon:'🍙', sellPrice:15 },
+  { id:'ice_shard',       name:'碎冰片',         icon:'❄️', sellPrice:13 },
+  { id:'yokai_marble',    name:'妖怪玻璃珠',     icon:'🔮', sellPrice:14 },
+  { id:'tengu_fan',       name:'天狗的羽扇',     icon:'🪶', sellPrice:1200 },
+  { id:'oni_sake_cup',    name:'鬼王的酒盃',     icon:'🍶', sellPrice:1200 },
+  { id:'kyuubi_fur',      name:'九尾狐毛髮',     icon:'🦊', sellPrice:1800 },
+  { id:'dragon_scale',    name:'龍鱗片',         icon:'🐉', sellPrice:3000 },
 ];
 
 // 背包工具函式
@@ -34257,6 +34299,8 @@ function loginGateSkip() {
 //  冒險小怪戰鬥系統
 // ══════════════════════════════════════════════
 const MINI_MONSTERS = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
+// ★ v1.0.20260421.2300 — 日本關路邊小怪池（對應 4 隻日本妖怪）
+const MINI_MONSTERS_JP = ['河童','二口女','雪女','獨眼小僧'];
 // ★ 稀有小怪（5%機率出現，不加入一般池）
 const RARE_MINI_MONSTERS = ['寶箱怪','小惡魔'];
 // 隨機選取小怪（含5%稀有機率）
@@ -34273,6 +34317,11 @@ const MINI_MONSTER_ELEM = {
   '偷喝茶的史萊姆':   'water',
   '寶箱怪':           'earth',
   '小惡魔':           'dark',
+  // ★ v1.0.20260421.2300 — 日本關 4 隻路邊小怪
+  '河童':             'water',
+  '二口女':           'dark',
+  '雪女':             'ice',
+  '獨眼小僧':         'earth',
 };
 // 各場景小怪開場白（幽默生動）
 // ── 魔物掉落物定義 ──
@@ -34334,9 +34383,26 @@ const MINI_BATTLE_INTROS = {
     '🌿 清晨的步道突然熱鬧起來！幾隻小妖搶先一步攔住去路，搖著屁股：「打得過我們再說！」',
   ],
   teagarden: [
-    '🍵「這茶喝得正爽，你們來搞什麼？！」—— 史萊姆從茶壺裡探出頭，滿嘴茶葉',
-    '🌸「茶園的花是我的！誰都不准摘！喂喂喂！你們想做什麼？！」—— 頑皮妖精護著花叢大喊',
+    '🍵「這茶喝得正爽，你們來搞什麼?!」—— 史萊姆從茶壺裡探出頭，滿嘴茶葉',
+    '🌸「茶園的花是我的！誰都不准摘！喂喂喂！你們想做什麼?!」—— 頑皮妖精護著花叢大喊',
     '☁️「哈哈哈！茶山就是咱的地盤！先打一架，再談其他的！」—— 一群小妖從茶叢後躍出！',
+  ],
+  // ★ v1.0.20260421.2300 — 日本關三場景開場白
+  'japan-opening': [
+    '🏮「呱呱！祭典的章魚燒是我的！我說是我的就是我的！」—— 河童抓著一盒章魚燒氣呼呼',
+    '🍙「啊～～肚子好餓啊～～這飯糰，我就不客氣囉！」—— 二口女張開兩張嘴，口水直流',
+    '❄️「哎呀呀～妖氣濃得可以凍結一切～你們可別妨礙姊姊我啊～」—— 雪女飄過，寒氣逼人',
+    '👁️「嘿嘿！一個眼睛看你們四個人，數不過來啦！上啊小子們！」—— 獨眼小僧蹦出來叫陣',
+  ],
+  'japan-shrine': [
+    '⛩️「膽敢踏入神社禁地，你們準備好了嗎？」—— 妖氣籠罩整個參道',
+    '🌲「前方就是結界——先過我們這一關吧！」—— 森林中幾個黑影閃動，殺意滿滿',
+    '🔔 神社的大鈴無風自響——不祥之音在山林間迴盪。菁英妖怪已在前方列隊等候！',
+  ],
+  'japan-fuji': [
+    '🗻「越過這片冰雪，就是 BOSS 的地盤……先讓我們當開胃菜吧！」—— 幾隻小妖突然從雪地竄出',
+    '🌋「哼！敢接近富士山頂？今天就讓你們見識見識！」—— 山頂寒風中，小妖一字排開',
+    '☁️ 雲霧瀰漫富士山腰——幾個詭譎身影從迷霧中現身，對著小隊咧嘴獰笑！',
   ],
 };
 
@@ -34755,8 +34821,12 @@ function advStartMiniBattle(nextSceneIdx) {
       mobs = window._advPreComposedMobs.slice();
       window._advPreComposedMobs = null;
     } else {
+      // ★ v1.0.20260421.2300 — 依關卡選擇小怪池（日本關用 MINI_MONSTERS_JP）
+      const _miniPool = (_adventureStage === 'japan' && typeof MINI_MONSTERS_JP !== 'undefined')
+        ? MINI_MONSTERS_JP
+        : MINI_MONSTERS;
       mobs = Array.from({length:4}, () =>
-        MINI_MONSTERS[Math.floor(Math.random() * MINI_MONSTERS.length)]
+        _miniPool[Math.floor(Math.random() * _miniPool.length)]
       );
     }
     // ★ 玩家隊伍HP全滿
@@ -34949,6 +35019,11 @@ function advFinishMiniBattle(win) {
       '偷摘花的頑皮妖精':  'picked_flower',
       '偷竹筍的哥布林':    'damaged_bamboo',
       '偷鳥蛋的鳥人哈維':  'unknown_egg',
+      // ★ v1.0.20260421.2200 — 日本關 4 隻路邊小怪掉落物
+      '河童':              'stolen_cucumber',
+      '二口女':            'bitten_onigiri',
+      '雪女':              'ice_shard',
+      '獨眼小僧':          'yokai_marble',
     };
     // ★ v1.0.20260420.3100 — 所有基礎掉落機率吃難度倍率(沒自信×0.5/普通×1.0/我很會×1.25)
     const _dropMult = (typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00;
@@ -35014,15 +35089,64 @@ function advFinishMiniBattle(win) {
             backpackAdd('hero_exp_book_deluxe', _dc);
             _miniDrops.push({ icon:'📕', name:`英雄EXP書(精裝)×${_dc}`, sellPrice:0 });
           }
-        } else {
-          // 普通小怪掉落(× 難度倍率)
-          const dropId = _MINI_DROP_MAP[mob.name];
-          if(dropId && Math.random() < 0.5 * _dropMult){
-            backpackAdd(dropId, 1);
-            const def = BACKPACK_ITEM_DEF[dropId];
-            if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
+        } else if(mob.name === '行走的二宮尊德像'){
+          // ★ v1.0.20260421.2200 — 日本關稀有怪(對應寶箱怪)
+          _showRareMobDefeat('行走的二宮尊德像'); try{ _checkMedalDefeat('行走的二宮尊德像'); }catch(e){}
+          // 必定大量知識幣（2500~5000）+ 其他掉落
+          const _chestCoins = 2500 + Math.floor(Math.random() * 2501);
+          addKnowledgeCoins(_chestCoins);
+          _miniDrops.push({ icon:'💰', name:`知識幣×${_chestCoins}`, sellPrice:0 });
+          log(`💰 [行走的二宮尊德像] 掉落知識幣 ${_chestCoins} 枚！`);
+          // 2% 超越極限果實
+          if(Math.random() < 0.02 * _dropMult){
+            backpackAdd('burst_upgrade_fruit', 1);
+            _miniDrops.push({ icon:'🍑', name:'超越極限果實', sellPrice:0 });
           }
-        }
+          // 50% 隨機賣錢道具 2~3個(從日本路邊怪掉落池抽)
+          if(Math.random() < 0.5 * _dropMult){
+            const _sellItems = ['stolen_cucumber','bitten_onigiri','ice_shard','yokai_marble'];
+            const _cnt = 2 + Math.floor(Math.random()*2);
+            for(let i=0;i<_cnt;i++){
+              const _sid = _sellItems[Math.floor(Math.random()*_sellItems.length)];
+              backpackAdd(_sid, 1);
+              const _sd = BACKPACK_ITEM_DEF[_sid];
+              if(_sd) _miniDrops.push({ icon:_sd.icon, name:_sd.name, sellPrice:_sd.sellPrice });
+            }
+          }
+        } else if(mob.name === '座敷童子'){
+          // ★ v1.0.20260421.2200 — 日本關稀有怪(對應小惡魔)
+          _showRareMobDefeat('座敷童子'); try{ _checkMedalDefeat('座敷童子'); }catch(e){}
+          // 大量EXP（1000~2000）+ 其他掉落
+          const _devilExp = 1000 + Math.floor(Math.random() * 1001);
+          if(G && G.p1) G.p1.forEach(h=>{
+            if(h && h.name && !(window._invitedFriendHero && h.name === window._invitedFriendHero.name)){
+              const _lu = addHeroExp(h.name, _devilExp);
+              if(_lu && _lu.length){
+                window._miniLevelUpsPending = window._miniLevelUpsPending || [];
+                window._miniLevelUpsPending.push(..._lu);
+              }
+            }
+          });
+          _miniDrops.push({ icon:'⭐', name:`英雄EXP×${_devilExp}（每人）`, sellPrice:0 });
+          log(`⭐ [座敷童子] 掉落經驗值 ${_devilExp}！`);
+          // 2% 超越極限果實
+          if(Math.random() < 0.02 * _dropMult){
+            backpackAdd('burst_upgrade_fruit', 1);
+            _miniDrops.push({ icon:'🍑', name:'超越極限果實', sellPrice:0 });
+          }
+          // 50% 技能升級之書 2~3本
+          if(Math.random() < 0.5 * _dropMult){
+            const _sc = 2 + Math.floor(Math.random()*2);
+            backpackAdd('skill_upgrade_book', _sc);
+            _miniDrops.push({ icon:'📘', name:`技能升級書×${_sc}`, sellPrice:0 });
+          }
+          // 50% 英雄經驗值之書(精裝版) 2~3本
+          if(Math.random() < 0.5 * _dropMult){
+            const _dc = 2 + Math.floor(Math.random()*2);
+            backpackAdd('hero_exp_book_deluxe', _dc);
+            _miniDrops.push({ icon:'📕', name:`英雄EXP書(精裝)×${_dc}`, sellPrice:0 });
+          }
+        } else {
       });
     }
     // ★ 英雄經驗值之書：25% 掉落率(× 難度倍率)
@@ -35362,7 +35486,12 @@ function advMiniResultConfirm(){
   if(_pf2) _pf2.style.visibility = '';
 
   // 切換到過場BGM
-  try{ bgmStop(); bgmPlay('bgm-adv-scene'); }catch(e){}
+  // ★ v1.0.20260421.2300 — 依關卡切換
+  try{
+    bgmStop();
+    const _nextBgm = (_adventureStage === 'japan') ? 'bgm-japan-battle' : 'bgm-adv-scene';
+    bgmPlay(_nextBgm);
+  }catch(e){}
 
   // 清除殘留元素
   const _bdp = document.getElementById('adv-boss-detail-pop');
@@ -36985,6 +37114,78 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.2300', brief:[
+    '修復日本關進入後 BGM 錯、小怪是貓空、對白也是貓空的三大 bug',
+  ], items:[
+    '【BGM 修復】3 處 bgmPlay("bgm-adv-scene") 寫死改為依關卡切換',
+    '  _beginCutsceneNow (進冒險過場)',
+    '  advStartWinSequence 茶園英雄加入場景',
+    '  小怪戰結束回過場處',
+    '  japan 關卡一律改播 bgm-japan-battle（日本小怪戰BGM.mp3）',
+    '【小怪陣容修復】新增 MINI_MONSTERS_JP 常數',
+    '  = [河童, 二口女, 雪女, 獨眼小僧]',
+    '  advStartMiniBattle 依 _adventureStage 選池:',
+    '    japan → MINI_MONSTERS_JP',
+    '    其他 → MINI_MONSTERS',
+    '  MINI_MONSTER_ELEM 補上 4 隻日本小怪的屬性',
+    '    河童=water / 二口女=dark / 雪女=ice / 獨眼小僧=earth',
+    '【對白修復】MINI_BATTLE_INTROS 新增 3 組日本關對白',
+    '  japan-opening: 河童/二口女/雪女/獨眼小僧 表參道祭典搗亂對白',
+    '  japan-shrine: 參道神社菁英戰的妖氣壓迫對白',
+    '  japan-fuji: 富士山頂 BOSS 戰前的小妖吆喝對白',
+    '  key 對應 ADV_SCENES.japan.scenes[*].key',
+    '【一鍵賣出確認】',
+    '  超越極限果實(burst_upgrade_fruit)本來就不在 SHOP_SELL_ITEMS',
+    '  一鍵賣出不會賣掉：✅ 書類(3種)、✅ 重置書(2種)、✅ 召喚水晶、✅ 超越極限果實',
+    '  只賣：骨董茶杯/杏花胭脂/日本4BOSS收藏/貓空4路邊小怪掉落物/日本4路邊小怪掉落物(共14種)',
+  ] },
+  { ver:'v1.0.20260421.2200', brief:[
+    '日本關卡 10 項掉落物完整實作',
+    '4 小怪 + 2 稀有怪 + 4 BOSS 專屬收藏品',
+  ], items:[
+    '【日本路邊小怪掉落物（50% 機率×難度倍率）】',
+    '  🥒 被偷的小黃瓜 (河童, 12💰)',
+    '  🍙 被咬過的飯糰 (二口女, 15💰)',
+    '  ❄️ 碎冰片 (雪女, 13💰)',
+    '  🔮 妖怪玻璃珠 (獨眼小僧, 14💰)',
+    '【日本稀有小怪】',
+    '  行走的二宮尊德像(寶箱怪類):',
+    '    必掉 2500~5000 知識幣 + 2% 超越極限果實 + 50% 機率掉 2~3 件日本賣錢道具',
+    '  座敷童子(小惡魔類):',
+    '    必掉 1000~2000 全隊EXP + 2% 超越極限果實 + 50% 技能升級書×2~3 + 50% 英雄EXP書精裝版×2~3',
+    '【日本 BOSS 專屬收藏品（BOSS 戰勝利）】',
+    '  🪶 天狗的羽扇 (大天狗, 20%, 1200💰)',
+    '  🍶 鬼王的酒盃 (酒吞童子, 20%, 1200💰)',
+    '  🦊 九尾狐毛髮 (玉藻前, 20%, 1800💰)',
+    '  🐉 龍鱗片 (八岐大蛇, 50%, 3000💰) — 隱藏 BOSS 提高機率',
+    '【實作位置】',
+    '  BACKPACK_ITEM_DEF 新增 10 項定義(皆 type:"sell_only")',
+    '  SHOP_SELL_ITEMS 擴充 10 項(一鍵賣出會自動包含)',
+    '  _MINI_DROP_MAP 擴充 4 隻日本路邊怪',
+    '  advStartWinSequence BOSS 掉落區塊新增 _JAPAN_BOSS_DROPS 對應表',
+    '  稀有小怪處理加入 行走的二宮尊德像 與 座敷童子 兩個 else-if 分支',
+  ] },
+  { ver:'v1.0.20260421.2100', brief:[
+    '賣錢物品清單移除 3 本書：經驗值之書、經驗值之書(精裝版)、技能升級書',
+    '超越極限果實本來就不可賣，不變',
+  ], items:[
+    '【從 SHOP_SELL_ITEMS 移除】',
+    '  📗 hero_exp_book（英雄經驗值之書，原賣價 50）',
+    '  📕 hero_exp_book_deluxe（精裝版，原賣價 200）',
+    '  📖 skill_upgrade_book（技能升級書，原賣價 50）',
+    '【同時清除 BACKPACK_ITEM_DEF 的 sellPrice 欄位】',
+    '  確保任何地方用 sellPrice 判斷可賣性都一致為「不可賣」',
+    '  不影響遊戲內「使用」功能',
+    '【目前賣錢物品清單（共 6 項）】',
+    '  🍵 骨董茶杯 1000 / 💄 杏花胭脂 1500',
+    '  🍵 喝一半的好茶 10 / 🌸 被摘的花朵 15',
+    '  🎋 有點損傷的綠竹筍 14 / 🥚 未知的蛋 16',
+    '【不可賣出物品】',
+    '  經驗值類: hero_exp_book / hero_exp_book_deluxe',
+    '  技能類: skill_upgrade_book / stat_reset_book / skill_reset_book',
+    '  爆發類: burst_upgrade_fruit（原本就不可賣）',
+    '  收藏類: summon_crystal 召喚水晶',
+  ] },
   { ver:'v1.0.20260421.2000', brief:[
     '不可思議超商 UI 重整：商品與背包改 50/50 版面',
     '賣出按鈕全部移到右側背包，每項物品旁邊都有 💱 賣 1 / 全部賣',
@@ -38482,7 +38683,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.2000';
+  const CURRENT_VERSION = 'v1.0.20260421.2300';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38499,7 +38700,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.2000';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.2300';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
