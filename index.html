@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000k</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000m</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -23015,7 +23015,7 @@ function _advShowBossRouteSelector(onConfirm){
     yamata: {
       mainName: '八岐大蛇',
       subtitle: '🐉 八首遠古巨龍 × 雷焰冰風',
-      teamDesc: '單體超強BOSS｜集齊三神器自動弱化HP/ATK共-30%',
+      teamDesc: '單體超強BOSS｜集齊三神器後可戰前選擇消耗弱化 -20%',
       color:    '#8844ff',
       glow:     'rgba(140,80,255,0.6)',
       badge:    '🔒 隱藏試煉',
@@ -23108,7 +23108,7 @@ function _advShowBossRouteSelector(onConfirm){
       (lore ? `<div style="font-size:22px;color:#e8e0d4;line-height:1.65;padding:10px 14px;background:rgba(255,200,120,0.06);border-left:3px solid ${info.color};border-radius:0 8px 8px 0;">${lore}</div>` : '') +
       `<div style="font-size:20px;color:#99ccff;letter-spacing:1px;line-height:1.5;text-align:center;opacity:0.92;">${info.teamDesc}</div>` +
       (isLocked ? `<div style="font-size:20px;color:#ff8866;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(255,80,80,0.12);border-radius:8px;white-space:pre-line;">${lockReason}</div>` : '') +
-      (variant.id==='yamata' && !isLocked ? `<div style="font-size:20px;color:#aaffaa;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(100,255,100,0.12);border-radius:8px;">✨ 已集齊三神器，八岐大蛇 HP/ATK 共 -30%！</div>` : '') +
+      (variant.id==='yamata' && !isLocked ? `<div style="font-size:20px;color:#aaffaa;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(100,255,100,0.12);border-radius:8px;">✨ 已集齊三神器！戰前可選擇消耗三神器，弱化八岐大蛇 HP/攻擊/特技各 -20%</div>` : '') +
       `<div style="display:flex;gap:10px;margin-top:6px;">` +
        `<button data-action="detail" style="flex:1;padding:12px;font-size:22px;font-weight:700;letter-spacing:2px;background:rgba(80,140,255,0.15);border:2px solid rgba(80,140,255,0.55);color:#99ccff;border-radius:10px;cursor:pointer;font-family:inherit;transition:all 0.15s;">ℹ︎ 詳細資料</button>` +
        `<button data-action="select" ${isLocked?'disabled':''} style="flex:2;padding:12px;font-size:26px;font-weight:900;letter-spacing:3px;background:${isLocked?'rgba(80,80,80,0.4)':`linear-gradient(135deg,${info.color},rgba(0,0,0,0.1))`};border:2px solid ${isLocked?'#555':info.color};color:${isLocked?'#888':'#fff'};border-radius:10px;cursor:${isLocked?'not-allowed':'pointer'};font-family:inherit;text-shadow:0 0 6px rgba(0,0,0,0.5);transition:all 0.15s;">${isLocked?'🔒 尚未解鎖':'⚔ 選擇此路線'}</button>` +
@@ -24950,6 +24950,9 @@ ADV_SCENES.japan = {
         '📖 旁白：小隊踏上陸地，首先來到熱鬧的表參道。祭典燈籠一盞盞亮起，紙燈搖曳，太鼓聲陣陣，穿著浴衣的人潮川流不息。',
         '📖 旁白：突然人群中傳來尖叫——幾個妖怪混入人群搗亂！章魚燒被偷吃、金魚缸被打翻、繪馬被撕毀一地！',
         '⛩ 巫女小雪：「勇者大人！這次作亂的是三大妖魔的手下……你們必須集齊三神器才能阻止幕後黑手！」',
+        '⛩ 巫女小雪：「傳說中的三神器——草薙劍、八尺瓊勾玉、八咫鏡，分別由三大妖魔守護著。」',
+        '⛩ 巫女小雪：「勇者目前的神器持有狀況：{TREASURE_STATUS}」',
+        '⛩ 巫女小雪：「若能集齊三神器並選擇消耗，即可在八岐大蛇戰前削弱牠 HP/攻擊/特技各 -20%；不使用則保留神器供下次挑戰。」',
         '⛩ 巫女小雪：「已經選好了路線吧？那就出發吧！妖怪就在前方，請小心！」',
       ],
       choiceType:'japan_auto',
@@ -26120,7 +26123,7 @@ function advShowDialog(stage, sceneIdx) {
     advShowChoicePanel(stage, sceneIdx);
     return;
   }
-  if(_txtEl) _txtEl.textContent = _transformSceneLineByVariant(scene.dialogs[_advDialogIdx] || '');
+  if(_txtEl) _txtEl.innerHTML = _renderDialogWithHighlights(_transformSceneLineByVariant(scene.dialogs[_advDialogIdx] || ''));
   // ★ 清除 inline style（advStartMiniBattle 可能設過 style.display='none'）
   dialog.style.display = '';
   dialog.classList.add('show');
@@ -26152,6 +26155,52 @@ function _transformSceneLineByVariant(txt){
   return txt;
 }
 
+// ★ v1.0.20260421.3000m — 對白高亮處理：神器名稱顯示亮黃色
+//   先 escape HTML 避免注入，再把神器關鍵字包 <span> 上色
+//   {TREASURE_STATUS} 佔位符會替換為當前三神器持有狀態（已獲得=亮色、未獲得=灰色）
+function _renderDialogWithHighlights(txt){
+  let s = String(txt);
+  // ★ 先處理 {TREASURE_STATUS} 佔位符（必須在 escape 前，因為要塞 HTML 進去）
+  if(s.indexOf('{TREASURE_STATUS}') >= 0){
+    let tr = { tengu:false, shutendoji:false, tamamo:false };
+    try{
+      if(typeof _japanGetTreasures === 'function') tr = _japanGetTreasures() || tr;
+    }catch(_){}
+    const mkItem = (has, name) => has
+      ? '<span style="color:#ffdd44;font-weight:900;text-shadow:0 0 8px rgba(255,200,60,0.8);">✨' + name + '</span>'
+      : '<span style="color:#666;font-weight:700;">🔒' + name + '</span>';
+    const items = [
+      mkItem(tr.tengu,      '草薙劍'),
+      mkItem(tr.shutendoji, '八尺瓊勾玉'),
+      mkItem(tr.tamamo,     '八咫鏡'),
+    ].join('　');
+    const cnt = (tr.tengu?1:0) + (tr.shutendoji?1:0) + (tr.tamamo?1:0);
+    const summary = (cnt === 3)
+      ? '<br><span style="color:#88ffaa;font-weight:800;">（已集齊三神器！）</span>'
+      : '<br><span style="color:#ffaa66;">（目前持有 ' + cnt + '/3 件）</span>';
+    // 用特殊標記先替換，之後再跳過 escape
+    s = s.replace(/\{TREASURE_STATUS\}/g, '\u0001' + items + summary + '\u0001');
+  }
+  // escape HTML，但保留 \u0001 間的區段
+  const parts = s.split('\u0001');
+  for(let i=0; i<parts.length; i++){
+    if(i % 2 === 0){
+      parts[i] = parts[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+  }
+  let safe = parts.join('');
+  // 神器名稱 → 亮黃色（但已在 \u0001 內包過的跳過）
+  // 此處用簡單 replace 即可，因佔位符區段已包 HTML，剩下的字串不含尖括號
+  const highlight = '<span style="color:#ffdd44;font-weight:900;text-shadow:0 0 6px rgba(255,200,60,0.6);">';
+  // 避免 double-wrap 已包過的：用 marker 排除 <span ...>...</span> 內部
+  safe = safe
+    .replace(/草薙劍/g,      function(m){ return highlight + m + '</span>'; })
+    .replace(/八尺瓊勾玉/g,  function(m){ return highlight + m + '</span>'; })
+    .replace(/八咫鏡/g,      function(m){ return highlight + m + '</span>'; })
+    .replace(/三神器/g,      function(m){ return highlight + m + '</span>'; });
+  return safe;
+}
+
 function advNextDialog(e) {
   // 若點到略過按鈕，不推進
   if(e && e.target && (e.target.id === 'adv-skip-btn' || e.target.closest('#adv-skip-btn'))) return;
@@ -26174,7 +26223,7 @@ function advNextDialog(e) {
   if(!scene || !scene.dialogs) return;
   _advDialogIdx++;
   if (_advDialogIdx < scene.dialogs.length) {
-    document.getElementById('adv-dialog-text').textContent = _transformSceneLineByVariant(scene.dialogs[_advDialogIdx]);
+    document.getElementById('adv-dialog-text').innerHTML = _renderDialogWithHighlights(_transformSceneLineByVariant(scene.dialogs[_advDialogIdx]));
   } else {
     // 對話結束，顯示選擇視窗
     advShowChoicePanel(stage, _advSceneIdx);
@@ -31916,13 +31965,17 @@ function _renderShopProducts(){
                        && (_heroPortraitUnlocked[_itemDef.heroName] || []).includes(_itemDef.portraitId))
                    || backpackGet(prod.id) > 0;
     }
+    // ★ v1.0.20260421.3000L — 每日限購商品:已達上限則灰化按鈕並顯示重置倒數
+    const _isDailyCapped = prod.dailyLimit > 0 && _shopDailyBought(prod.id) >= prod.dailyLimit;
     const _stockDisplay = _alreadyOwned ? '<span style="color:#888;font-weight:800;">已擁有</span>'
                                         : prod.stock;
-    const _btnEnabled = !_alreadyOwned && canAfford;
-    const _btnLabel   = _alreadyOwned ? '✓ 已擁有' : '💰 購買';
-    const _btnColor   = _alreadyOwned ? '#666' : (canAfford ? '#44ff88' : '#666');
-    const _btnBg      = _alreadyOwned ? 'rgba(40,40,40,0.3)' : (canAfford ? 'rgba(50,160,50,0.35)' : 'rgba(40,40,40,0.3)');
-    const _btnBorder  = _alreadyOwned ? '#555' : (canAfford ? '#44ff88' : '#555');
+    const _btnEnabled = !_alreadyOwned && !_isDailyCapped && canAfford;
+    const _btnLabel   = _alreadyOwned ? '✓ 已擁有'
+                     : _isDailyCapped ? '⏰ 今日已售完'
+                     : '💰 購買';
+    const _btnColor   = (_alreadyOwned || _isDailyCapped) ? '#666' : (canAfford ? '#44ff88' : '#666');
+    const _btnBg      = (_alreadyOwned || _isDailyCapped) ? 'rgba(40,40,40,0.3)' : (canAfford ? 'rgba(50,160,50,0.35)' : 'rgba(40,40,40,0.3)');
+    const _btnBorder  = (_alreadyOwned || _isDailyCapped) ? '#555' : (canAfford ? '#44ff88' : '#555');
     const div = document.createElement('div');
     div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:12px;'+
       'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;'+
@@ -31960,6 +32013,10 @@ function _renderShopProducts(){
           color:${_btnColor};
           border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;
           ${_btnEnabled?'':'pointer-events:none;'}">${_btnLabel}</button>
+        ${_isDailyCapped ? `<div style="font-size:24px;color:#ffaa66;letter-spacing:1px;text-align:center;margin-top:2px;line-height:1.4;">
+          🕐 每日 <b style="color:#ffcc88;">08:00</b> 重置<br>
+          <span style="font-size:22px;color:#ffcc66;">（剩餘 ${_shopResetCountdown()}）</span>
+        </div>` : ''}
       </div>`;
     list.appendChild(div);
   });
@@ -32011,6 +32068,15 @@ function shopAdjQty(id, delta){
 
 // ★ 每日商店庫存輔助
 function _getShopDailyKey(){ return new Date().toISOString().slice(0,10).replace(/-/g,''); }
+// ★ v1.0.20260421.3000L — 距離下次重置（UTC 00:00 = 台灣 08:00）的倒數文字
+function _shopResetCountdown(){
+  const now = new Date();
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()+1, 0, 0, 0));
+  const diff = Math.max(0, next.getTime() - now.getTime());
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h + '小時 ' + m + '分';
+}
 function _shopDailyBought(id){
   const today = _getShopDailyKey();
   if(!_shopDailyData || _shopDailyData.date !== today) return 0;
@@ -38121,6 +38187,28 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000m', brief:[
+    '日本關開場對白加入三神器持有狀況提示（神器名稱亮黃色）',
+  ], items:[
+    '【對白提示】',
+    '  巫女小雪開場對白擴充 3 行：提及神器名稱、當前持有狀況、-20% 消耗機制',
+    '  神器名稱（草薙劍、八尺瓊勾玉、八咫鏡、三神器）在對白中以亮黃色 + 光暈顯示',
+    '  動態顯示已獲得=亮色 ✨ / 未獲得=灰色 🔒 及 X/3 集齊進度',
+    '【文案修正】',
+    '  八岐大蛇卡片舊文案「集齊三神器自動弱化 -30%」→ 改為「戰前可選擇消耗三神器弱化 -20%」',
+    '  路線卡 teamDesc 同步修正',
+    '【技術】',
+    '  新增 _renderDialogWithHighlights() 處理對白 HTML 高亮與佔位符替換',
+    '  adv-dialog-text 由 textContent 改為 innerHTML（含安全 escape）',
+  ]},
+  { ver:'v1.0.20260421.3000L', brief:[
+    '商店每日限購商品售完後按鈕灰化 + 顯示重置倒數',
+  ], items:[
+    '【商店每日限購改進】',
+    '  已達每日上限的商品：購買按鈕變灰，按鈕文字改為「⏰ 今日已售完」',
+    '  按鈕下方顯示「🕐 每日 08:00 重置（剩餘 X小時 Y分）」倒數',
+    '  新增 _shopResetCountdown() 計算距離台灣 08:00（UTC 00:00）的剩餘時間',
+  ]},
   { ver:'v1.0.20260421.3000k', brief:[
     '新增日本小怪戰第二首 BGM，兩首輪流播放',
   ], items:[
@@ -39960,7 +40048,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000k';
+  const CURRENT_VERSION = 'v1.0.20260421.3000m';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -39977,7 +40065,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000k';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000m';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
