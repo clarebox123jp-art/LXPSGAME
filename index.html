@@ -3997,7 +3997,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.0100</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.0500</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -8021,6 +8021,10 @@ function _getCurrentAdvBossTeam(){
     }
     return window._advApricotPreviewTeam;
   }
+  // ★ v1.0.20260421.0500 — 日本關 4 路線動態組陣容
+  if(_adventureStage === 'japan' && typeof window._buildJapanBossTeam === 'function'){
+    return window._buildJapanBossTeam(variant);
+  }
   return ADV_BOSS_TEAMS[_adventureStage] || [];
 }
 function _renderAdvBossPreview(){
@@ -8881,6 +8885,9 @@ function confirmHeroPick(){
       bossTeam = (window._advApricotPreviewTeam && window._advApricotPreviewTeam.length)
         ? window._advApricotPreviewTeam
         : (typeof _buildApricotTeam === 'function' ? _buildApricotTeam() : ADV_BOSS_TEAMS[_adventureStage]);
+    } else if(_variant && _adventureStage === 'japan' && typeof window._buildJapanBossTeam === 'function'){
+      // ★ v1.0.20260421.0500 — 日本關依 variant 動態組陣容
+      bossTeam = window._buildJapanBossTeam(_variant);
     } else {
       bossTeam = ADV_BOSS_TEAMS[_adventureStage];
     }
@@ -9650,8 +9657,11 @@ function buildDeck(){
     if(_isAdv && it.type === 'field') return; // 冒險模式不放戰場卡
     pool.push({...it, uid:Math.random()});
   });
-  // 裝備卡各1張
-  EQUIP_DB.forEach(eq=>{
+  // ★ v1.0.20260421.0400 — 依關卡取寵物池：貓空/鬥技場=台灣12、日本關=日本12
+  const _equipPool = (typeof window._getEquipPoolForStage === 'function')
+    ? window._getEquipPoolForStage()
+    : EQUIP_DB;
+  _equipPool.forEach(eq=>{
     pool.push({...eq, uid:Math.random(), type:'equip'});
   });
   // Fisher-Yates 洗牌，確保隨機且無重複
@@ -9660,7 +9670,7 @@ function buildDeck(){
     [pool[i],pool[j]]=[pool[j],pool[i]];
   }
   G.deck=pool;
-  log(`🃏 新牌組建立！共 ${pool.length} 張（物品${ITEM_DB.length}張 + 寵物${EQUIP_DB.length}張），p1/p2共用同一牌池。`);
+  log(`🃏 新牌組建立！共 ${pool.length} 張（物品${ITEM_DB.length}張 + 寵物${_equipPool.length}張），p1/p2共用同一牌池。`);
 }
 function drawItem(){
   if(!G.deck||!G.deck.length){
@@ -10884,7 +10894,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(name==='動物學家'){
     if(side!=='p1'){ 
       // AI用：直接隨機裝備給存活友方
-      const EQUIP_LIST2=EQUIP_DB.filter(e=>e.n);
+      // ★ v1.0.20260421.0500 — 動物學家召喚依關卡決定（鬥技場=台灣、貓空=台灣、日本關=日本）
+      const EQUIP_LIST2=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : EQUIP_DB.filter(e=>e.n);
       const picks2=[...EQUIP_LIST2].sort(()=>Math.random()-0.5).slice(0,4);
       picks2.forEach((eq,i)=>{
         const t=allies[i%allies.length];
@@ -10902,7 +10913,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       return;
     }
     // 玩家用：呼喚4件裝備，逐一讓玩家裝備
-    const EQUIP_LIST=EQUIP_DB.filter(e=>e.n);
+    // ★ v1.0.20260421.0500 — 動物學家召喚依關卡決定（鬥技場=台灣、貓空=台灣、日本關=日本）
+    const EQUIP_LIST=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : EQUIP_DB.filter(e=>e.n);
     const picks=[...EQUIP_LIST].sort(()=>Math.random()-0.5).slice(0,4);
     const burstEquips=picks.map(eq=>({...eq,uid:Math.random(),type:'equip'}));
     log(`[${h.name}] 動物大軍！呼喚4隻寵物！`);
@@ -14915,7 +14927,8 @@ function execSkill(a, sk, cost, stype){
       }
     }
     // 召喚1隻寵物
-    const _EQUIP_POOL2=EQUIP_DB.filter(e=>e.n);
+    // ★ v1.0.20260421.0500 — 動物學家召喚依關卡決定
+    const _EQUIP_POOL2=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : EQUIP_DB.filter(e=>e.n);
     const _randEq2={..._EQUIP_POOL2[Math.floor(Math.random()*_EQUIP_POOL2.length)],uid:Math.random(),type:'equip'};
     bannerFX(a,'召喚寵物！','#d4a843',900);
     _showBurstEquipSequence([_randEq2],0,a,a.side,null);
@@ -21154,7 +21167,9 @@ window.addEventListener('pagehide', function(e){
     'adv-treasure-confirm', 'adv-skip-select-box', '_rollback-menu',
     'bag-skill-select', '_ts_popup', 'login-gate-modal', 'passive-prompt',
     // ★ v1.0.20260421.0100 — 冒險科目/難度選擇面板、題目出完後的重選彈窗
-    'adv-choice-panel', 'adv-repick-popup'
+    'adv-choice-panel', 'adv-repick-popup',
+    // ★ v1.0.20260421.0500 — 冒險路線選擇視窗（日本關 4 卡會超出 1080 需捲動）、日本關鎖定提示
+    'adv-boss-route-pop', 'japan-locked-modal'
   ];
   // ★ 追蹤觸碰起點（用於判斷邊緣手勢）
   var _touchStartY = 0, _touchStartX = 0;
@@ -22031,8 +22046,10 @@ function _advShowBossRouteSelector(onConfirm){
   pop.style.cssText =
     'position:absolute;inset:0;z-index:9850;' +
     'background:linear-gradient(135deg,rgba(6,0,2,0.97),rgba(10,2,4,0.97));' +
-    'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;' +
     'backdrop-filter:blur(8px);padding:24px 12px;' +
+    // ★ v1.0.20260421.0500 — 日本關 4 張卡片 2×2 排列高度可能超出 1080，啟用內部捲動
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;' +
     'animation:advRouteIn 0.4s cubic-bezier(0.34,1.56,0.64,1);' +
     'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
 
@@ -23889,6 +23906,24 @@ ADV_BOSS_VARIANTS.japan = [
   { id:'yamata',      main:'八岐大蛇',   fixedTeam:true,  minions:[],                           element:'dark', hidden:true,              treasureName:'三神器加成' },
 ];
 
+// ★ v1.0.20260421.0500 — 依日本關 variant 動態建構 BOSS 陣容
+//   p2[0] = 左側菁英、p2[1] = 主 BOSS、p2[2] = 右側菁英
+//   八岐大蛇單獨一隻（陣容長度 1，不帶小怪）
+window._buildJapanBossTeam = function(variant){
+  if(!variant) return ADV_BOSS_TEAMS.japan || [];
+  const mainElem = variant.element || 'dark';
+  // 八岐大蛇路線：單隻 BOSS
+  if(variant.id === 'yamata'){
+    return [ { name:'八岐大蛇', element:mainElem } ];
+  }
+  const mins = variant.minions || [];
+  const team = [];
+  if(mins[0]) team.push({ name:mins[0], element:mainElem });
+  team.push({ name:variant.main, element:mainElem });
+  if(mins[1]) team.push({ name:mins[1], element:mainElem });
+  return team;
+};
+
 // ── 5. ADV_SCENES.japan：三場景（choiceType='japan_auto' 自動推進）──
 ADV_SCENES.japan = {
   name:'✈ 日本探險',
@@ -23962,7 +23997,8 @@ ADV_SCENES.japan = {
       petDesc:  info.petDesc,
       icon:     info.icon,
       petImg:   JP_BASE_URL + encodeURIComponent(JP_IMG[info.n] || (info.n + '.png')),
-      _jpOrig:  twName, // 追蹤對應關係（偵錯用）
+      _stage:   'japan',  // ★ v1.0.20260421.0400 — 標記為日本關專屬寵物
+      _jpOrig:  twName,   // 追蹤對應關係（偵錯用）
     });
     EQUIP_DB.push(clone);
   });
@@ -23984,6 +24020,27 @@ ADV_SCENES.japan = {
     _EQUIP_SHORT['變化狸']='抵抗1次倒下';
   }
 })();
+
+// ★ v1.0.20260421.0400 — 依關卡取得寵物池 helper
+//   (a) 貓空/台灣關、鬥技場(非冒險模式)、其他關卡預設 → 只抽台灣原本 12 隻
+//   (b) 日本關 → 只抽日本 12 隻
+//   (c) 動物學家的爆發「動物大軍」+ S1「動物召喚」不受關卡影響，
+//       強制呼叫 _getTaiwanEquipPool() 永遠只抽台灣動物
+window._getEquipPoolForStage = function(){
+  const stage = (typeof _adventureStage !== 'undefined') ? _adventureStage : null;
+  const inAdv = (typeof _adventureMode !== 'undefined') && _adventureMode;
+  if(inAdv && stage === 'japan'){
+    // 日本關：只抽日本寵物
+    return EQUIP_DB.filter(e => e && e.n && e._stage === 'japan');
+  }
+  // 其他情況(鬥技場/貓空關/未知關)：只抽台灣原本寵物
+  return EQUIP_DB.filter(e => e && e.n && e._stage !== 'japan');
+};
+
+// ★ 動物學家專用池：永遠只抽台灣寵物
+window._getTaiwanEquipPool = function(){
+  return EQUIP_DB.filter(e => e && e.n && e._stage !== 'japan');
+};
 
 // ── 7. HERO_DB 擴充：日本主題怪物（貓空怪 × 1.2）──
 // 隨機小怪 4 種 + 稀有小怪 2 種 + 菁英小怪 6 種 + 主 BOSS 3 + 隱藏 BOSS 1 = 16 個
@@ -24172,14 +24229,87 @@ window._japanTrySelect = function(btnEl){
   const check = _japanCheckUnlock();
   if(!check.canEnter){
     try{ playSfx('sfx-cancel', 0.6); }catch(_){}
-    const msg = '🔒 尚未解鎖日本探險\n\n需要達成以下條件：\n' +
-      (check.maokongACleared ? '✅' : '❌') + ' 貓空大冒險完整通關且獲得 A 以上評價\n' +
-      (check.hasLv10Hero     ? '✅' : '❌') + ' 擁有至少 1 位 Lv.10 以上的英雄\n\n請先完成貓空大冒險後再來挑戰！';
-    alert(msg);
+    // ★ v1.0.20260421.0300 — 用遊戲內彈窗取代瀏覽器 alert，視覺更一致
+    _japanShowLockedModal(check);
     return;
   }
   selectAdvStage('japan', btnEl);
 };
+
+// ★ 日本關解鎖條件提示視窗（遊戲內樣式）
+function _japanShowLockedModal(check){
+  // 避免重複彈出
+  const old = document.getElementById('japan-locked-modal');
+  if(old) old.remove();
+
+  const ok   = '✅';
+  const fail = '❌';
+  const c1   = check.maokongACleared ? ok : fail;
+  const c2   = check.hasLv10Hero     ? ok : fail;
+  const c1Color = check.maokongACleared ? '#66ff88' : '#ff6666';
+  const c2Color = check.hasLv10Hero     ? '#66ff88' : '#ff6666';
+
+  const modal = document.createElement('div');
+  modal.id = 'japan-locked-modal';
+  modal.style.cssText = [
+    'position:absolute;inset:0;z-index:9860;',
+    'background:linear-gradient(135deg,rgba(6,0,2,0.94),rgba(10,2,4,0.94));',
+    'display:flex;align-items:center;justify-content:center;',
+    'backdrop-filter:blur(8px);padding:24px;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:japanLockIn 0.35s cubic-bezier(0.34,1.56,0.64,1);',
+  ].join('');
+
+  // keyframes 只注入一次
+  if(!document.getElementById('_japan-lock-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_japan-lock-kf';
+    kf.textContent = '@keyframes japanLockIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}';
+    document.head.appendChild(kf);
+  }
+
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,#10143a,#080c20);' +
+    'border:3px solid #ffaa44;border-radius:22px;' +
+    'padding:40px 56px;max-width:min(680px,92vw);text-align:center;' +
+    'box-shadow:0 0 60px rgba(255,180,80,0.35);">' +
+      // 鎖頭標題
+      '<div style="font-size:72px;margin-bottom:8px;">🔒</div>' +
+      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#ffcc66;margin-bottom:6px;letter-spacing:3px;">尚未解鎖</div>' +
+      '<div style="font-size:clamp(24px,2.8vw,34px);font-weight:800;color:#ffddaa;margin-bottom:20px;letter-spacing:2px;">🗾 環遊世界遠征傳說 · 日本探險</div>' +
+      // 條件列表
+      '<div style="background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,180,80,0.3);border-radius:14px;padding:22px 28px;margin-bottom:22px;text-align:left;">' +
+        '<div style="font-size:clamp(18px,2vw,24px);color:#aaccff;margin-bottom:12px;letter-spacing:2px;">📋 需要達成以下條件：</div>' +
+        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c1Color};line-height:1.9;padding:6px 0;">${c1} 貓空大冒險完整通關並獲得 A 以上評價</div>` +
+        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c2Color};line-height:1.9;padding:6px 0;">${c2} 擁有至少 1 位 Lv.10 以上的英雄</div>` +
+      '</div>' +
+      // 提示
+      '<div style="font-size:clamp(16px,1.8vw,22px);color:#bbb;margin-bottom:24px;line-height:1.6;">請先完成貓空大冒險後再來挑戰！</div>' +
+      // 關閉按鈕
+      '<button id="japan-locked-close" style="padding:14px 48px;font-size:clamp(20px,2.3vw,28px);' +
+      'font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,rgba(255,180,80,0.25),rgba(255,140,40,0.25));' +
+      'border:2.5px solid #ffaa44;color:#ffdd99;border-radius:12px;cursor:pointer;font-family:inherit;' +
+      'box-shadow:0 4px 20px rgba(255,180,60,0.3);">✔ 我知道了</button>' +
+    '</div>';
+
+  (document.getElementById('gc') || document.body).appendChild(modal);
+
+  const closeBtn = modal.querySelector('#japan-locked-close');
+  if(closeBtn){
+    closeBtn.onclick = () => {
+      try{ playSfx('sfx-sel', 0.65); }catch(_){}
+      modal.style.transition = 'opacity 0.25s';
+      modal.style.opacity = '0';
+      setTimeout(() => modal.remove(), 230);
+    };
+    closeBtn.onmouseover = () => { closeBtn.style.background = 'linear-gradient(135deg,rgba(255,180,80,0.45),rgba(255,140,40,0.45))'; closeBtn.style.color = '#fff'; };
+    closeBtn.onmouseout  = () => { closeBtn.style.background = 'linear-gradient(135deg,rgba(255,180,80,0.25),rgba(255,140,40,0.25))'; closeBtn.style.color = '#ffdd99'; };
+  }
+  // 點空白處也能關閉
+  modal.addEventListener('click', (e) => {
+    if(e.target === modal && closeBtn) closeBtn.click();
+  });
+}
 
 // BOSS 戰開始時若為日本關 yamata，套用神器弱化
 window._applyJapanYamataWeaken = function(){
@@ -24744,7 +24874,7 @@ function _advBossHpMult(){
 function advShowChoicePanel(stage, sceneIdx) {
   const scene = ADV_SCENES[stage][sceneIdx];
 
-  // ★ 日本關 japan_auto：不需選擇，直接推進到下一場小怪戰
+  // ★ 日本關 japan_auto：不需選擇，直接推進到下一場小怪戰/BOSS
   if(scene.choiceType === 'japan_auto'){
     _advSceneChoiceDone = true;
     const skipBtn = document.getElementById('adv-skip-btn');
@@ -24759,15 +24889,6 @@ function advShowChoicePanel(stage, sceneIdx) {
     const skipBtn = document.getElementById('adv-skip-btn');
     if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
     setTimeout(() => { advStartTeagardenEvent(); }, 300);
-    return;
-  }
-
-  // ★ 日本關專用：'japan_auto' 不顯示選擇面板，直接推進到下一場小怪戰/BOSS
-  if(scene.choiceType === 'japan_auto'){
-    _advSceneChoiceDone = true;
-    const skipBtn = document.getElementById('adv-skip-btn');
-    if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
-    setTimeout(() => { advStartMiniBattle(sceneIdx + 1); }, 300);
     return;
   }
 
@@ -25150,8 +25271,11 @@ function advTgEvent_normalBattle(){
 
 // 事件四：遇到野生動物 — 答題正確則可攜帶寵物，答錯則寵物離開
 function advTgEvent_petEncounter(){
-  // 隨機選一隻寵物
-  const pet = EQUIP_DB[Math.floor(Math.random() * EQUIP_DB.length)];
+  // 隨機選一隻寵物（依關卡抽：貓空→台灣池、日本→日本池）
+  const _petPool = (typeof window._getEquipPoolForStage === 'function')
+    ? window._getEquipPoolForStage()
+    : EQUIP_DB;
+  const pet = _petPool[Math.floor(Math.random() * _petPool.length)];
   const petName = (pet && pet.pet) || (pet && pet.n) || '神秘野生動物';
   _tgShowDialog('🐾 野生動物', [
     `茶園的小徑上，一隻可愛的 ${petName} 正在歪著頭打量你們！`,
@@ -26088,33 +26212,104 @@ function advPickEasierQuestion() {
 }
 
 // ── 數學題數字隨機化（避免每次考到相同數字）
+// ★ v1.0.20260421.0200 — 數學題隨機化強化版
+//   舊版問題：盲目把所有數字等比例縮放，可能產生負數答案、不整除、選項重複、
+//   應用題語意壞掉等問題。新版加入三道驗證：
+//     (1) 題型分類：只對「純算式題」(A op B = ?) 隨機化，應用題保守不動
+//     (2) 隨機化後必須通過「邏輯檢查」：結果須為非負整數、除法須整除
+//     (3) 隨機化後必須通過「唯一答案檢查」：答案選項值剛好等於計算結果，
+//         且其他選項值都不等於計算結果（確保只有一個正解）
+//   任一驗證失敗 → 換一組倍率重試；最多 6 次失敗 → 回傳原題不動
 function advRandomizeMathQuestion(q){
   if(!q || q.subject !== '數學') return q;
-  const numRegex = /\d+(\.\d+)?/g;
-  // ★ 同時收集題目與所有選項中的數字
-  const allText = q.question + ' ' + q.options.join(' ');
-  const allNums = [...new Set((allText.match(numRegex)||[]).map(Number))].filter(n=>n>1);
-  if(allNums.length < 2) return q;
+  const letters = ['A','B','C','D'];
+  const ansIdx = letters.indexOf(q.answer);
+  if(ansIdx < 0 || ansIdx >= q.options.length) return q;
 
-  // 統一倍率（0.7~1.3倍），確保答案也跟著縮放
-  const scale = 0.7 + Math.random()*0.6;
-  const intScale = n => Math.max(1, Math.round(n * scale));
+  // ── 題型分類：只對「純算式題」A op B = ? 形式進行隨機化 ──
+  const pureMatch = q.question.trim().match(/^(\d+)\s*([\+\-×÷\*\/])\s*(\d+)\s*=\s*\?$/);
+  if(!pureMatch) return q; // 應用題保守不動
 
-  const replaceMap = new Map();
-  allNums.forEach(n => replaceMap.set(n, intScale(n)));
+  const A = parseInt(pureMatch[1], 10);
+  const rawOp = pureMatch[2];
+  const bNum = parseInt(pureMatch[3], 10);
+  const op = (rawOp === '*') ? '×' : (rawOp === '/') ? '÷' : rawOp;
 
-  // ★ 單次全域替換（避免多輪替換：7→8 後又 8→9）
-  const replaceAll = text =>
-    text.replace(/\b\d+(\.\d+)?\b/g, m => {
-      const n = Number(m);
-      return replaceMap.has(n) ? String(replaceMap.get(n)) : m;
-    });
+  // 計算並回傳結果
+  const compute = (x, y, operator) => {
+    if(operator === '+') return x + y;
+    if(operator === '-') return x - y;
+    if(operator === '×') return x * y;
+    if(operator === '÷') return (y !== 0 && x % y === 0) ? (x / y) : null;
+    return null;
+  };
 
-  const newQ    = replaceAll(q.question);
-  const newOpts = q.options.map(replaceAll);
+  // 解析原選項的「主要數值」（抓出每個選項中的第一個純數字，
+  // 若選項有單位如「24元」抓 24）
+  const extractNum = (s) => {
+    const m = s.match(/-?\d+(\.\d+)?/);
+    return m ? Number(m[0]) : NaN;
+  };
+  const origOptNums = q.options.map(extractNum);
+  if(origOptNums.some(n => Number.isNaN(n))) return q; // 選項不都是數字→保守不動
 
-  // 答案字母不變（因為選項數值也跟著縮放，正確選項仍在同一個位置）
-  return {...q, question: newQ, options: newOpts, answer: q.answer};
+  // 驗證原題邏輯：原答案確實等於計算結果
+  const origCorrect = compute(A, bNum, op);
+  if(origCorrect === null || origOptNums[ansIdx] !== origCorrect) return q;
+
+  // 計算原選項跟正解的「相對差距」，之後換數字時保留同樣的干擾邏輯
+  const offsets = origOptNums.map(n => n - origCorrect);
+
+  // ── 開始隨機化：最多嘗試 6 次，任一驗證失敗就換組倍率 ──
+  const buildSuffix = (text) => {
+    // 抓原選項中第一個數字後面的文字（如「元」「支」「隻」），放在新數字後保留單位
+    const m = text.match(/-?\d+(\.\d+)?([^\d]*)$/);
+    return m ? m[2] : '';
+  };
+  const optSuffixes = q.options.map(buildSuffix);
+
+  for(let attempt = 0; attempt < 6; attempt++){
+    // 每次隨機新的 A, B（用原題的規模為基準，±30%）
+    const scaleA = 0.7 + Math.random() * 0.6;
+    const scaleB = 0.7 + Math.random() * 0.6;
+    let newA = Math.max(1, Math.round(A * scaleA));
+    let newB = Math.max(1, Math.round(bNum * scaleB));
+
+    // 特殊處理：除法要整除 → 把 newA 調整為 newB 的整數倍
+    if(op === '÷'){
+      newA = newB * Math.max(1, Math.round(newA / newB));
+    }
+    // 特殊處理：減法結果非負 → 若 newA < newB，交換或重採樣
+    if(op === '-' && newA < newB){
+      // 隨機再拉大 A 避免負數
+      newA = newB + Math.max(1, Math.round(Math.random() * Math.max(1, bNum)));
+    }
+
+    const newResult = compute(newA, newB, op);
+    if(newResult === null) continue;
+
+    // ── 邏輯檢查 ──
+    if(newResult < 0) continue;                              // 結果不可負
+    if(!Number.isInteger(newResult)) continue;               // 結果必為整數
+    if(newA === A && newB === bNum) continue;                // 跟原題一樣就重試（增加變化）
+
+    // ── 根據 offsets 重建新選項數值，維持干擾邏輯 ──
+    const newOptNums = offsets.map(off => newResult + off);
+
+    // ── 唯一答案檢查 ──
+    if(newOptNums.some(n => n < 0)) continue;                // 干擾項不可為負（低年級友善）
+    if(new Set(newOptNums).size !== newOptNums.length) continue; // 選項不可重複
+    const correctCount = newOptNums.filter(n => n === newResult).length;
+    if(correctCount !== 1) continue;                         // 必須剛好一個正解
+
+    // ── 全部驗證通過：組出新題目 ──
+    const newQuestion = `${newA} ${op} ${newB} = ?`;
+    const newOptions  = newOptNums.map((n, i) => String(n) + optSuffixes[i]);
+    return { ...q, question: newQuestion, options: newOptions, answer: q.answer };
+  }
+
+  // 6 次都失敗 → 回傳原題
+  return q;
 }
 
 function advSubmitAnswer(letter, isCorrectOverride) {
@@ -26546,8 +26741,10 @@ function advApplyReward(id) {
         return; // 由選擇結果觸發 advOnQuizSkip
       }
     } else if (id === 'get_pet') {
-      // 獲得1隻隨機寵物（EQUIP_DB中有pet屬性的）
-      const petEquips = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.filter(e=>e.pet) : [];
+      // 獲得1隻隨機寵物（依關卡過濾：貓空=台灣池、日本=日本池）
+      const petEquips = (typeof window._getEquipPoolForStage === 'function')
+        ? window._getEquipPoolForStage().filter(e=>e.pet)
+        : ((typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.filter(e=>e.pet) : []);
       if(petEquips.length){
         const picked = petEquips[Math.floor(Math.random()*petEquips.length)];
         const emptySlot = G.inv.findIndex(s=>s===null);
@@ -30916,6 +31113,9 @@ function _applyPresetTeam(slotIdx){
       bossTeam = (window._advApricotPreviewTeam && window._advApricotPreviewTeam.length)
         ? window._advApricotPreviewTeam
         : (typeof _buildApricotTeam === 'function' ? _buildApricotTeam() : ADV_BOSS_TEAMS[_adventureStage]);
+    } else if(_variant2 && _adventureStage === 'japan' && typeof window._buildJapanBossTeam === 'function'){
+      // ★ v1.0.20260421.0500 — 日本關依 variant 動態組陣容
+      bossTeam = window._buildJapanBossTeam(_variant2);
     } else {
       bossTeam = ADV_BOSS_TEAMS[_adventureStage];
     }
@@ -35796,6 +35996,100 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.0500', brief:[
+    '修正日本關選擇酒吞童子/玉藻前/八岐大蛇路線後，預覽和實戰都錯誤變成大天狗陣容的重大 bug',
+    '修正日本關路線選擇視窗 4 張卡片超出畫面無法捲動的問題',
+    '其他日本關全面檢查：流程、資料、視窗佈局、卡死風險均通過驗證',
+  ], items:[
+    '【Bug 1：BOSS 陣容錯誤 - 重大】',
+    '  原 _getCurrentAdvBossTeam() 和 advStartBattle 的 bossTeam 組隊只處理貓空 variant (cat9tail/apricot)',
+    '  日本關 4 條路線 (tengu/shutendoji/tamamo/yamata) 全部 fallback 到 ADV_BOSS_TEAMS.japan (大天狗陣容)',
+    '  症狀：選「酒吞童子」路線預覽和實戰都變成打大天狗，完全失去路線選擇意義',
+    '  修正：新增 _buildJapanBossTeam(variant) helper，依 variant.main + variant.minions 動態組隊',
+    '    - 大天狗：[烏天狗, 大天狗, 木葉天狗]',
+    '    - 酒吞童子：[茨木童子, 酒吞童子, 星熊童子]',
+    '    - 玉藻前：[殺生石分身, 玉藻前, 管狐]',
+    '    - 八岐大蛇：[八岐大蛇] (單隻)',
+    '  修正點：_getCurrentAdvBossTeam (預覽) + 兩處 bossTeam 組隊邏輯 (battle 入口)',
+    '【Bug 2：路線選擇視窗超出畫面】',
+    '  日本關 4 張 500px 卡片 2×2 排列總高 ~1500px，但 #adv-boss-route-pop 沒有 overflow-y',
+    '  原 justify-content:center 會讓內容溢出上下邊界且無法捲動',
+    '  修正：改 justify-content:flex-start + overflow-y:auto + touch-action:pan-y + overscroll-behavior:contain',
+    '  同時把 adv-boss-route-pop 和 japan-locked-modal 加入 _scrollableIds 清單，iPad 全域 touchmove 不會擋它',
+    '【Bug 3：advShowChoicePanel 內 japan_auto 冗餘死碼】',
+    '  同樣的 if(scene.choiceType === "japan_auto") 區塊寫了兩次，第二次永遠不會執行',
+    '  已移除重複區塊',
+    '【通過檢查的項目】',
+    '  ✅ JavaScript 語法 node --check 完全正確',
+    '  ✅ HERO_DB 日本怪物 16 隻 (4 BOSS + 6 菁英 + 4 隨機 + 2 稀有) 全有定義',
+    '  ✅ EQUIP_DB 日本寵物 12 隻欄位完整 (onEquip/onRemove/名稱/圖/描述)',
+    '  ✅ ADV_BOSS_VARIANTS.japan 的 minions 全部在 HERO_DB 有對應',
+    '  ✅ ADV_SCENES.japan 三場景結構完整，choiceType="japan_auto" 正確',
+    '  ✅ ADV_QUIZ_DB 日本關 100 題 (id 3001-3100) grade/subject 標記正確',
+    '  ✅ 神器發放 _onJapanBossDefeated / 八岐大蛇弱化 _applyJapanYamataWeaken callback 呼叫鏈完整',
+    '  ✅ 對話系統有越界保護 (if _advDialogIdx >= dialogs.length → 跳過)',
+    '  ✅ 日本鎖定 modal 高度 ~450px 遠低於 1080，無超出風險',
+  ] },
+  { ver:'v1.0.20260421.0400', brief:[
+    '寵物依關卡分離：貓空關+鬥技場只出台灣寵物、日本關只出日本寵物',
+    '動物學家的召喚/爆發技也依所在關卡決定寵物（鬥技場=台灣、日本關=日本）',
+  ], items:[
+    '【需求】目前 EQUIP_DB 混合 12 台灣 + 12 日本寵物，造成：',
+    '  - 貓空/鬥技場牌組會抽到日本寵物（情境不符）',
+    '  - 日本關牌組會抽到台灣寵物',
+    '  - 動物學家召喚可能跨文化（想在日本關召喚日本動物才合理）',
+    '【實作 1：EQUIP_DB 標記分類】',
+    '  日本寵物 clone 時加上 _stage:"japan" 欄位',
+    '  台灣寵物原本沒有 _stage 欄位，視同預設 stage',
+    '【實作 2：Helper 函式】',
+    '  window._getEquipPoolForStage() — 依當前關卡回傳對應池',
+    '    冒險模式 + _adventureStage==="japan" → 只回傳日本寵物 12 隻',
+    '    其他情況(鬥技場/貓空關/未指定) → 只回傳台灣寵物 12 隻',
+    '【實作 3：所有抽寵物的點全改用 helper】',
+    '  (1) buildDeck 建立牌組 — 依關卡決定放進牌池的寵物',
+    '  (2) advTgEvent_petEncounter 貓空野生動物事件 — 依關卡',
+    '  (3) 答題獎勵 id="get_pet" — 依關卡',
+    '  (4) 動物學家爆發技「動物大軍」AI 路徑 — 依關卡',
+    '  (5) 動物學家爆發技「動物大軍」玩家路徑 — 依關卡',
+    '  (6) 動物學家 S1「動物召喚」— 依關卡',
+    '【影響】EQUIP_DB 結構本身保留（因為 onEquip/onRemove 函式引用都完好不動）',
+    '  只在「抽取時」做過濾，不影響裝備後的行為邏輯',
+  ] },
+  { ver:'v1.0.20260421.0300', brief:[
+    '日本關卡未解鎖時的條件提示改為遊戲內樣式彈窗（原本是瀏覽器 alert 視窗）',
+  ], items:[
+    '【需求】玩家點擊「✈ 環遊世界遠征傳說 / 🗾 日本探險」按鈕但尚未符合解鎖條件時，',
+    '        原本會跳出瀏覽器內建的 alert() 視窗，外觀與遊戲畫面風格不一致且無法自訂樣式',
+    '【實作】新增 _japanShowLockedModal(check) 函式，建立符合遊戲美術風格的 DOM 彈窗：',
+    '  - 暗色漸層背景 + 金色邊框 (#ffaa44) + 背景模糊 (backdrop-filter:blur)',
+    '  - 大型 🔒 鎖頭 emoji + 「尚未解鎖 · 🗾 環遊世界遠征傳說 · 日本探險」標題',
+    '  - 兩項條件含 ✅/❌ 即時狀態顯示：「貓空大冒險完整通關並獲得 A 以上評價」、「擁有至少 1 位 Lv.10 以上的英雄」',
+    '  - 未達成的條件以紅色 (#ff6666) 顯示，已達成以綠色 (#66ff88) 顯示',
+    '  - 「✔ 我知道了」關閉按鈕 + 淡出動畫 (opacity transition)',
+    '  - 點擊彈窗外空白區也能關閉',
+    '  - 入場動畫：japanLockIn 0.35s cubic-bezier (scale 0.94 → 1)',
+    '【技術細節】z-index:9860（高於冒險頁面但低於其他系統 modal）',
+    '  附加至 #gc 節點，不影響遊戲其他 overlay',
+    '【影響範圍】只改動 _japanTrySelect 函式內的錯誤提示；解鎖成功的 selectAdvStage 流程不變',
+  ] },
+  { ver:'v1.0.20260421.0200', brief:[
+    '數學題隨機化強化：每次出題隨機調整數字時，先檢查題目邏輯合理、選項有唯一正確答案',
+  ], items:[
+    '【背景】舊版 advRandomizeMathQuestion 盲目對題目+選項所有數字等比例縮放，容易產生：',
+    '  (a) 減法結果變負數（如 20-7=13 隨機後變成 14-16=-2 這種不合理題）',
+    '  (b) 除法不整除（如 12÷3=4 隨機後變成 10÷3=3.33 非整數答案）',
+    '  (c) 選項四捨五入後重複（例如 [7,8] 都乘以 1.3 變 [9,10] 但邊緣情況可能重疊）',
+    '  (d) 應用題語意壞掉（如「買3張60元全票」隨機後變「買2張48元」3→2 語意改變）',
+    '【新版加入三道驗證】',
+    '  (1) 題型分類：只對「純算式題」(A op B = ?) 隨機化，應用題保守不動',
+    '  (2) 邏輯檢查：結果須為非負整數；除法須整除（自動把 newA 調整為 newB 的整數倍）；',
+    '      減法若 newA < newB 會自動把 newA 拉大避免負數',
+    '  (3) 唯一答案檢查：根據原選項與正解的相對差距重建新選項，確保選項無重複、',
+    '      且剛好只有一個選項等於新計算結果',
+    '【演算法】最多嘗試 6 次不同倍率，全部失敗則回傳原題不改（fail-safe）',
+    '【實測】已用 Node.js 驗算 5 種測試案例（加減乘除 + 應用題）各跑 5 次，所有結果均通過驗證',
+    '【無影響】應用題、五下自然題庫、關島/木柵/日本關題庫完全不受影響（因非「純算式題」形式）',
+  ] },
   { ver:'v1.0.20260421.0100', brief:[
     '新增「環遊世界遠征傳說」第一關：日本探險！含三路線BOSS+隱藏關八岐大蛇',
     '新增日本主題 12 隻寵物、16 種日本妖怪/BOSS、100 題日本文化題庫',
@@ -36891,7 +37185,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.0100';
+  const CURRENT_VERSION = 'v1.0.20260421.0500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -36908,7 +37202,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.0100';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.0500';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
