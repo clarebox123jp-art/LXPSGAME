@@ -615,6 +615,9 @@
   --hp-green:#3ec87a; --energy:#4a9eff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* ★ v1.0.20260421.0100 — iPad 全域按鈕修復：確保所有 button 在 iOS/iPadOS 上點擊不會延遲或失效
+   全域 touch-action:none 會讓 inline onclick 在 Safari 偶爾失靈，這裡覆蓋回 manipulation */
+button{touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.15);}
 html,html,body{width:100%;height:100%;overflow:hidden;background:#000;margin:0;padding:0;touch-action:none;overscroll-behavior:none;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;}
 #_gc_wrapper{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;}
 body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
@@ -1172,7 +1175,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .ibox.itype-equip{border-color:#1a6ecc99;background:rgba(15,70,160,0.13);box-shadow:0 0 7px rgba(30,100,200,0.18)}
 .ibox.itype-equip:hover{border-color:#4a9eff;background:rgba(30,100,200,0.22)}
 #item-ops{display:none;flex-direction:row;gap:8px;margin-top:8px}
-.iop-btn{flex:1;padding:8px;color:#fff;font-size:28px;font-weight:bold;border:none;border-radius:5px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif}
+.iop-btn{flex:1;padding:8px;color:#fff;font-size:28px;font-weight:bold;border:none;border-radius:5px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.2);user-select:none;-webkit-user-select:none}
 
 /* BATTLEFIELD CARDS */
 #bfield-panel{padding:12px}
@@ -3237,7 +3240,8 @@ body {
 .adv-choice-box::-webkit-scrollbar{width:14px;}
 .adv-choice-box::-webkit-scrollbar-track{background:rgba(0,0,0,0.45);border-radius:7px;margin:4px 0;}
 .adv-choice-box::-webkit-scrollbar-thumb{background:rgba(255,220,80,0.75);border-radius:7px;border:2px solid rgba(0,0,0,0.4);min-height:40px;}
-.adv-choice-box::-webkit-scrollbar-thumb:hover{background:rgba(255,220,80,1);}@keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.adv-choice-box::-webkit-scrollbar-thumb:hover{background:rgba(255,220,80,1);}
+@keyframes advChoiceIn{from{opacity:0;transform:scale(0.88) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .adv-choice-title{
   font-size:44px;font-weight:900;color:#ffe050;letter-spacing:2px;
   margin-bottom:12px;text-shadow:0 0 16px rgba(255,200,0,0.5);text-align:center;
@@ -3993,7 +3997,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260419.0052</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.0100</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6229,7 +6233,7 @@ const HERO_DB = {
 },
 '寶箱怪':{hp:99,atk:1,sp:1,spd:50,exp:0,_rewardType:'coins',_rewardMin:2500,_rewardMax:5000,
   s1:{n:'鎖起來',c:2,d:'使自己無敵1回合',fd:'用神秘的鎖頭將自己鎖死，進入完全無敵狀態1回合，期間不受任何傷害。'},
-  s2:{n:'箱底抹油',c:1,d:'100%逃跑，每回合30%機率觸發',fd:'(被動)每回合有30%機率自動逃跑，成功逃脫後從戰場移除，不給予任何獎勵。',p:true}
+  s2:{n:'箱底抹油',c:1,d:'每回合30%機率逃跑，第10回合強制逃跑',fd:'(被動)從第3回合起每回合有30%機率自動逃跑；第10回合起強制逃跑。成功逃脫後從戰場移除，不給予任何獎勵。',p:true}
 },
 '小惡魔':{hp:250,atk:25,sp:25,spd:25,exp:0,_rewardType:'exp',_rewardMin:1000,_rewardMax:2000,
   s1:{n:'弄壞你的玩具',c:3,d:'使1名對手HP剩10%，無視有利狀態',fd:'用魔爪弄壞對手最珍視的東西，使1名目標HP強制降至最大HP的10%，無視所有有利狀態。'},
@@ -16523,9 +16527,10 @@ function startTurn(){
     if(next.curHp<=0){ next.acted=true; updateUI(); _pSetTimeout(startTurn,300); return; }
   }
 
-  // ★ 寶箱怪：從第3回合開始每回合30%機率自動逃跑（被動）
+  // ★ 寶箱怪：從第3回合開始每回合30%機率自動逃跑；第10回合起強制逃跑（被動）
   const _chestRound = (typeof G !== 'undefined' && G.round) || 0;
-  if(next.name==='寶箱怪' && next.curHp>0 && next.side!=='p1' && _chestRound >= 3 && Math.random()<0.30){
+  const _chestForceEscape = _chestRound >= 10; // 第10回合起強制逃跑
+  if(next.name==='寶箱怪' && next.curHp>0 && next.side!=='p1' && _chestRound >= 3 && (_chestForceEscape || Math.random()<0.30)){
     log(`📦 [寶箱怪] 被動：箱底抹油！趁機逃跑！`);
     bannerFX(next, '💨 逃跑！', '#aaaaff', 900);
     flashScreen('rgba(150,150,255,0.4)', 200);
@@ -21147,7 +21152,9 @@ window.addEventListener('pagehide', function(e){
     'adv-continue-overlay', 'adv-mini-result', 'adv-continue-box',
     '_tut-prompt', 'invest-confirm-box', 'burst-upgrade-confirm-box',
     'adv-treasure-confirm', 'adv-skip-select-box', '_rollback-menu',
-    'bag-skill-select', '_ts_popup', 'login-gate-modal', 'passive-prompt'
+    'bag-skill-select', '_ts_popup', 'login-gate-modal', 'passive-prompt',
+    // ★ v1.0.20260421.0100 — 冒險科目/難度選擇面板、題目出完後的重選彈窗
+    'adv-choice-panel', 'adv-repick-popup'
   ];
   // ★ 追蹤觸碰起點（用於判斷邊緣手勢）
   var _touchStartY = 0, _touchStartX = 0;
@@ -35789,6 +35796,25 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.0100', brief:[
+    '新增「環遊世界遠征傳說」第一關：日本探險！含三路線BOSS+隱藏關八岐大蛇',
+    '新增日本主題 12 隻寵物、16 種日本妖怪/BOSS、100 題日本文化題庫',
+    '修正 iPad 上所有按鈕（含賣出、重選科目確認等）偶爾點擊無效的 bug',
+    '修正 iPad 上科目/難度選擇視窗、題目用完後重選視窗無法上下捲動的問題',
+    '寶箱怪調整：第10回合起強制逃跑（不再依機率觸發）',
+  ], items:[
+    '【新關卡】環遊世界遠征傳說 1-1「日本探險」',
+    '  解鎖條件：(1)貓空大冒險完整通關(不跳劇情) (2)評價A以上 (3)擁有至少 1 位 Lv.10 英雄',
+    '  三路線：大天狗(獲得草薙劍)、酒吞童子(八尺瓊勾玉)、玉藻前(八咫鏡)',
+    '  集齊三神器後解鎖隱藏關八岐大蛇，每持有 1 件神器 BOSS 減 10% HP/ATK',
+    '  能力提升+20%、獎勵金幣/EXP +20%（相較貓空版）',
+    '【新寵物 12 隻】月輪熊/雪猴/對馬山貓/丹頂鶴/錦鯉/綠雉/日本大山椒魚/翠鳥/日本鱟/奈良神鹿/白鼬/變化狸(效果同台灣寵物)',
+    '【新怪物】大天狗/酒吞童子/玉藻前/八岐大蛇(BOSS)、烏天狗/木葉天狗/茨木童子/星熊童子/殺生石分身/管狐(菁英)、河童/二口女/雪女/獨眼小僧(隨機)、行走的二宮尊德像(高金幣)/座敷童子(高EXP)',
+    '【新題庫】日本關 100 題：民族文化10+生活禮儀30+歷史10+神話20+自然生態20(grade="日本關", subject="日本關")',
+    '【iPad 修正 1】全域 <button> 加上 touch-action:manipulation + -webkit-tap-highlight-color，修復 iOS 上 inline onclick 按鈕點擊延遲/失效問題(特別影響賣出、重選科目確認等按鈕)',
+    '【iPad 修正 2】_scrollableIds 陣列新增 adv-choice-panel 和 adv-repick-popup，讓全域 touchmove preventDefault 允許這兩個彈窗內部捲動',
+    '【寶箱怪】箱底抹油被動改為：第3~9回合每回合30%機率逃跑，第10回合起強制逃跑(技能說明同步更新)',
+  ] },
   { ver:'v1.0.20260420.3600', brief:[
     '召喚水晶的說明補上「尚未開放使用」提示,避免玩家誤以為是 bug',
   ], items:[
@@ -36865,7 +36891,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260420.3600';
+  const CURRENT_VERSION = 'v1.0.20260421.0100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -36882,7 +36908,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260420.3600';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.0100';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
