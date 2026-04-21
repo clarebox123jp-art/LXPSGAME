@@ -24512,8 +24512,11 @@ function advGetQuizPool(grade, subject, difficulty) {
     return ADV_QUIZ_DB.filter(q => q.subject === '木柵動物園').sort(() => Math.random() - 0.5);
   }
   // ★ 日本關（環遊世界遠征傳說 第1關）：不分年級難度，100題隨機出題
-  if (subject === '日本關') {
-    return ADV_QUIZ_DB.filter(q => q.subject === '日本關').sort(() => Math.random() - 0.5);
+  //   v1.0.20260421.3000b — 改用 _adventureStage 判斷，避免 subject 被覆寫導致失效
+  if (subject === '日本關' || (typeof _adventureStage !== 'undefined' && _adventureStage === 'japan')) {
+    const _jp = ADV_QUIZ_DB.filter(q => q.subject === '日本關').sort(() => Math.random() - 0.5);
+    console.log('[題庫] 日本關分支觸發 (BOSS戰)，共', _jp.length, '題');
+    return _jp;
   }
 
   // ── 年級＝題庫範圍，難度偏好＝優先顯示的難易程度 ──
@@ -34828,8 +34831,11 @@ function _advMiniGetQuizPool(sceneIdx) {
     return ADV_QUIZ_5S_U4_SOUND.filter(q => !window._miniQuizUsedIds.has(q.id));
   }
   // ★ v1.0.20260421.3000 — 日本關題庫分支（不分年級難度，全 100 題池）
-  if(subject === '日本關'){
-    return ADV_QUIZ_DB.filter(q => q.subject === '日本關' && !window._miniQuizUsedIds.has(q.id));
+  //   v1.0.20260421.3000b — 改用 _adventureStage 判斷更可靠，避免 subject 被覆寫
+  if(subject === '日本關' || (typeof _adventureStage !== 'undefined' && _adventureStage === 'japan')){
+    const _jp = ADV_QUIZ_DB.filter(q => q.subject === '日本關' && !window._miniQuizUsedIds.has(q.id));
+    console.log('[題庫] 日本關分支觸發 (小怪戰)，可用', _jp.length, '題');
+    return _jp;
   }
   let targetSubject, targetDiff;
   if(sceneIdx === 0){
