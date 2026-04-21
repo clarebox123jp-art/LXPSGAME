@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1600</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1800</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6286,6 +6286,14 @@ const EVENT_ONLY_HEROES = new Set(['小力', '幼兒園小孩']);
 // ★ v1.0.20260421.1100 — 日本 BOSS 可透過戰鬥 S 評價 5% 機率解鎖成為夥伴
 //   這三隻會同時出現在英雄圖鑑(標「日本BOSS戰低機率獲得」)和魔物圖鑑(BOSS 區)
 const JAPAN_BOSS_HEROES = new Set(['大天狗','酒吞童子','玉藻前']);
+// ★ v1.0.20260421.1700 — 日本關全部 16 隻角色，統一過濾用（鬥技場不出現這些）
+//   包含 4 BOSS + 6 菁英 + 4 隨機小怪 + 2 稀有怪
+const JAPAN_ALL_CHARACTERS = new Set([
+  '大天狗','酒吞童子','玉藻前','八岐大蛇',
+  '烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐',
+  '河童','二口女','雪女','獨眼小僧',
+  '行走的二宮尊德像','座敷童子'
+]);
 const AVATARS = {
   '劍士':'⚔️','祭司':'✨','聖騎士':'🛡','火法師':'🔥','冰法師':'❄️','雷法師':'⚡',
   '光法師':'☀️','暗法師':'🌑','神射手':'🏹','神偷':'💰','刺客':'👁️','守衛':'🛡️',
@@ -8253,7 +8261,8 @@ function showHeroPickOverlay(){
   window._isAdventurePickMode = false; // ★ 清除冒險選角模式
   _heroPickSelected = [];
   _heroSeenPool = new Set(); // 每次開新遊戲重置循環
-  const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
+  // ★ v1.0.20260421.1700 — 鬥技場排除日本關所有角色
+  const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n) && !JAPAN_ALL_CHARACTERS.has(n));
   // 初始12個也優先選未見過的（第一次全都未見，直接隨機）
   const shuffled = [...allNames].sort(()=>Math.random()-0.5);
   _heroPickPool = shuffled.slice(0, 10);
@@ -8376,7 +8385,7 @@ function _previewEnemyTeam(){
   const _advBossAll = typeof ADV_BOSS_TEAMS !== 'undefined'
     ? Object.values(ADV_BOSS_TEAMS).flat().map(b=>b.name)
     : [];
-  const _excludeAll = new Set([...BOSS_NAMES, ..._advBossAll]);
+  const _excludeAll = new Set([...BOSS_NAMES, ..._advBossAll, ...JAPAN_ALL_CHARACTERS]);
   const allNames = Object.keys(HERO_DB).filter(n => !_excludeAll.has(n));
   // ★ 不用 _heroPickPool（可能含冒險英雄），直接用全體普通英雄隨機
   const p2pool = [...allNames].sort(()=>Math.random()-0.5);
@@ -8681,7 +8690,8 @@ function _refreshHeroPool(){
       const selectedSet = new Set(_heroPickSelected);
       // 已選的解鎖英雄不動；未被選的解鎖英雄格才刷新（但解鎖英雄都顯示，不隨機）
       // 非解鎖格：從所有非BOSS、非解鎖、未選的角色裡隨機抽幾個佔位（鎖定狀態）
-      const allNonBoss = Object.keys(HERO_DB).filter(n=>!BOSS_NAMES.includes(n));
+      // ★ v1.0.20260421.1700 — 冒險選角的鎖定候選池也排除日本關角色
+      const allNonBoss = Object.keys(HERO_DB).filter(n=>!BOSS_NAMES.includes(n) && !JAPAN_ALL_CHARACTERS.has(n));
       const lockedCandidates = allNonBoss.filter(n=>!unlockedSet.has(n)&&!selectedSet.has(n))
                                           .sort(()=>Math.random()-0.5);
       let li = 0;
@@ -8695,7 +8705,8 @@ function _refreshHeroPool(){
       _applyAdvLocks();
     } else {
       // ── 正常模式：原有輪替邏輯
-      const allNames = Object.keys(HERO_DB).filter(n=>!BOSS_NAMES.includes(n));
+      // ★ v1.0.20260421.1700 — 鬥技場輪替池排除日本關角色
+      const allNames = Object.keys(HERO_DB).filter(n=>!BOSS_NAMES.includes(n) && !JAPAN_ALL_CHARACTERS.has(n));
       const selectedSet = new Set(_heroPickSelected);
       _heroPickPool.forEach(n=>_heroSeenPool.add(n));
       let unseenNames = allNames.filter(n=>!selectedSet.has(n)&&!_heroSeenPool.has(n));
@@ -9040,7 +9051,8 @@ function randomTeamPick(){
   }
 
   // ── 正常模式：只重新隨機玩家隊伍，對手隊伍不變
-  const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n));
+  // ★ v1.0.20260421.1700 — 鬥技場重抽池排除日本關角色
+  const allNames = Object.keys(HERO_DB).filter(n => !BOSS_NAMES.includes(n) && !JAPAN_ALL_CHARACTERS.has(n));
   // 完全重抽4名不重複的英雄
   const newTeam = allNames.sort(()=>Math.random()-0.5).slice(0,4);
   // 若新英雄不在現有池裡，擴充池（確保可以被選到）
@@ -24997,35 +25009,42 @@ function _japanCheckUnlock(){
   // ★ v1.0.20260421.1600 — 解鎖條件修正
   //   (1) S 級評價完整通關木柵貓空任意 BOSS（不可跳過小怪）
   //   (2) Lv.10 以上英雄達到 4 名
+  // ★ v1.0.20260421.1700 — 修正 Lv10 統計的變數名稱
+  // ★ v1.0.20260421.1800 — 回溯檢查：若舊版通關過(有解鎖英雄紀錄)但沒寫旗標，自動補上
   let maokongSFullClear = false;
   try{
-    // 主要旗標：prev clear S 完整通關才寫入
+    // 主要旗標：正規 S 完整通關才寫入
     if(localStorage.getItem('adv_maokong_s_full_clear') === '1') maokongSFullClear = true;
+    // 老玩家回溯：手動確認旗標 (給老玩家的補救機制)
+    if(localStorage.getItem('adv_maokong_legacy_clear_confirmed') === '1') maokongSFullClear = true;
+    // 另一道備援：若從 gameCloudSave 發現有歷史 best_rank=S 紀錄也通過
+    if(localStorage.getItem('adv_maokong_best_rank') === 'S') maokongSFullClear = true;
   }catch(e){}
   // 統計 Lv≥10 的英雄數量
   let lv10HeroCount = 0;
   try{
     const _counted = new Set();
-    if(typeof HERO_LEVELS !== 'undefined' && HERO_LEVELS){
-      for(const k in HERO_LEVELS){
-        if(HERO_LEVELS[k] >= 10 && !_counted.has(k)){
+    // 來源 1：全域 _heroLevels (遊戲運行時即時)
+    if(typeof _heroLevels !== 'undefined' && _heroLevels && typeof _heroLevels === 'object'){
+      for(const k in _heroLevels){
+        if((_heroLevels[k]||1) >= 10 && !_counted.has(k)){
           _counted.add(k);
           lv10HeroCount++;
         }
       }
     }
-    // 備用來源：直接讀 localStorage
-    const raw = localStorage.getItem('hero_levels');
-    if(raw){
-      const obj = JSON.parse(raw);
-      for(const k in obj){
-        if(obj[k] >= 10 && !_counted.has(k)){
-          _counted.add(k);
-          lv10HeroCount++;
-        }
-      }
+    // 來源 2：備用 — 用 getHeroLevel() 搭配所有已解鎖的英雄（萬一 _heroLevels 沒載入）
+    if(lv10HeroCount === 0 && typeof getHeroLevel === 'function' && typeof HERO_DB !== 'undefined'){
+      Object.keys(HERO_DB).forEach(n => {
+        try{
+          if(getHeroLevel(n) >= 10 && !_counted.has(n)){
+            _counted.add(n);
+            lv10HeroCount++;
+          }
+        }catch(_){}
+      });
     }
-  }catch(e){}
+  }catch(e){ console.warn('[日本關] Lv10統計失敗:', e); }
   const hasEnoughLv10 = lv10HeroCount >= 4;
   return {
     maokongSFullClear,
@@ -25099,7 +25118,13 @@ function _japanShowLockedModal(check){
         `<div style="font-size:clamp(20px,2.3vw,28px);color:${c2Color};line-height:1.9;padding:6px 0;">${c2} 擁有 4 位以上 Lv.10 英雄（目前 ${_lv10Count} 位）</div>` +
       '</div>' +
       // 提示
-      '<div style="font-size:clamp(16px,1.8vw,22px);color:#bbb;margin-bottom:24px;line-height:1.6;">請先完成貓空大冒險後再來挑戰！</div>' +
+      '<div style="font-size:clamp(16px,1.8vw,22px);color:#bbb;margin-bottom:18px;line-height:1.6;">請先完成貓空大冒險後再來挑戰！</div>' +
+      // ★ v1.0.20260421.1800 — 老玩家回溯確認按鈕：條件1未達成時才顯示
+      (!check.maokongSFullClear ?
+        '<div style="background:rgba(100,180,255,0.1);border:1.5px dashed rgba(100,180,255,0.5);border-radius:10px;padding:14px 18px;margin-bottom:18px;text-align:left;">' +
+          '<div style="font-size:clamp(14px,1.7vw,20px);color:#aaccff;line-height:1.7;">💡 <b>老玩家提醒：</b>若你在 v1600 之前通關過貓空關（S 級且未跳過小怪），系統可能未記錄。可點下方按鈕手動確認。</div>' +
+          '<button id="japan-legacy-confirm" style="margin-top:12px;padding:10px 24px;font-size:clamp(16px,1.8vw,22px);font-weight:700;background:rgba(100,180,255,0.2);border:2px solid #66aaff;color:#aaccff;border-radius:8px;cursor:pointer;font-family:inherit;">🗝️ 我已 S 級完整通關過（確認解鎖）</button>' +
+        '</div>' : '') +
       // 關閉按鈕
       '<button id="japan-locked-close" style="padding:14px 48px;font-size:clamp(20px,2.3vw,28px);' +
       'font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,rgba(255,180,80,0.25),rgba(255,140,40,0.25));' +
@@ -25108,6 +25133,26 @@ function _japanShowLockedModal(check){
     '</div>';
 
   (document.getElementById('gc') || document.body).appendChild(modal);
+
+  // ★ v1.0.20260421.1800 — 老玩家確認按鈕事件
+  const legacyBtn = modal.querySelector('#japan-legacy-confirm');
+  if(legacyBtn){
+    legacyBtn.onclick = () => {
+      try{ playSfx('sfx-confirm', 0.8); }catch(_){}
+      const ok = confirm('你確定你曾經以 S 級評價完整通關（不跳過小怪）木柵貓空的 BOSS 嗎？\n\n不誠實的確認會影響遊戲平衡體驗，系統會記錄此次手動確認。');
+      if(ok){
+        try{
+          localStorage.setItem('adv_maokong_legacy_clear_confirmed', '1');
+          localStorage.setItem('adv_maokong_legacy_clear_date', new Date().toISOString());
+        }catch(_e){}
+        modal.remove();
+        _showInGameToast('✨ 已確認老玩家通關紀錄，日本關已解鎖！', '#66ff99', 3500);
+        try{ playSfx('sfx-medal-unlock', 0.9); }catch(_){}
+      }
+    };
+    legacyBtn.onmouseover = () => { legacyBtn.style.background = 'rgba(100,180,255,0.4)'; legacyBtn.style.color = '#fff'; };
+    legacyBtn.onmouseout  = () => { legacyBtn.style.background = 'rgba(100,180,255,0.2)'; legacyBtn.style.color = '#aaccff'; };
+  }
 
   const closeBtn = modal.querySelector('#japan-locked-close');
   if(closeBtn){
@@ -36903,6 +36948,36 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.1800', brief:[
+    '老玩家回溯修復：手動確認按鈕讓已通關過的玩家可直接解鎖日本關',
+    '雙重旗標偵測：支援 adv_maokong_s_full_clear + adv_maokong_legacy_clear_confirmed + adv_maokong_best_rank="S"',
+  ], items:[
+    '【問題】v1600 之前通關過的玩家沒有旗標紀錄，雖然實際通關過也顯示 ❌',
+    '【原因】寫入邏輯是 v1600 才加入的，v1600 之前通關紀錄是空的',
+    '【新增三重檢查】_japanCheckUnlock 會任一符合即通過：',
+    '  1. adv_maokong_s_full_clear === "1"（正規路徑，新通關會自動寫）',
+    '  2. adv_maokong_legacy_clear_confirmed === "1"（老玩家手動確認）',
+    '  3. adv_maokong_best_rank === "S"（備援，v1600 後有寫但沒 full clear 旗標者）',
+    '【UI 新增】鎖定 modal 底部加入「🗝️ 我已 S 級完整通關過」按鈕',
+    '  僅在條件 1 未達成時顯示（避免已解鎖者看到奇怪按鈕）',
+    '  按下會彈出 confirm 二次確認，防誤觸',
+    '  使用信任制（不強制驗證），但會存時間戳供未來稽核',
+    '  成功後顯示綠色 toast + sfx-medal-unlock 音效',
+    '【不影響新玩家】新玩家仍需正常通關 S 級才解鎖，行為不變',
+  ] },
+  { ver:'v1.0.20260421.1700', brief:[
+    '修正日本關 Lv.10 英雄統計永遠是 0 的 bug（變數名用錯）',
+  ], items:[
+    '【問題】玩家明明有 4+ 位 Lv.10 英雄，解鎖條件仍顯示 ❌',
+    '【原因】v1600 寫錯變數名',
+    '  誤用 HERO_LEVELS（不存在）→ for 迴圈永遠跑不到',
+    '  誤用 localStorage.getItem("hero_levels")（key 名錯誤，實際是 heroLevels）→ 讀到 null',
+    '  結果：lv10HeroCount 永遠是 0',
+    '【修正】改用正確的變數來源',
+    '  主要：全域 _heroLevels 物件（line ~29220 宣告），即時反映當前等級',
+    '  備用：getHeroLevel(name) 函式搭配 HERO_DB 掃描（fallback）',
+    '  兩層保護確保無論何時打開 modal 都能正確讀到',
+  ] },
   { ver:'v1.0.20260421.1600', brief:[
     '修正日本關解鎖條件並修復原本「寫入旗標從來不存在」的隱藏 bug',
     '新條件：(1) S 級完整通關貓空任意 BOSS（不跳過小怪）(2) Lv.10 以上英雄 4 位',
@@ -38335,7 +38410,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.1600';
+  const CURRENT_VERSION = 'v1.0.20260421.1800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38352,7 +38427,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.1600';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.1800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
