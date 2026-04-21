@@ -4011,7 +4011,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000d</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000i</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6702,7 +6702,7 @@ const STATUS_DESCS = {
   nosell:       '查封：無法使用或販賣物品',
   forecast:     '失明：行動成功率減半',
   spddown:      '遲緩：本回合最後行動',
-  hellfire:     '地獄之火：每次行動前後各損失5HP',
+  hellfire:     '地獄之火：每回合行動前損失10HP',
   poison:       '劇毒：每回合損失HP',
   noheal_curse: '不治詛咒：無法恢復HP',
   stubbornDebuff:'怨念強化：不利狀態無法被解除',
@@ -6957,7 +6957,7 @@ const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
   '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的180%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
   '聖騎士':   {n:'最終殿堂',    d:'全隊無敵1回合並恢復40%HP',fd:'使友方全體免疫所有傷害和不利狀態1回合，同時恢復40%HP。'},
-  '火法師':   {n:'烈焰爆發',    d:'傷害全體並燃燒，無視有利狀態',fd:'用特技的150%傷害全體對手，目標陷入燃燒狀態2回合（行動前後各-5HP），此傷害無視有利狀態。'},
+  '火法師':   {n:'烈焰爆發',    d:'傷害全體並燃燒，無視有利狀態',fd:'用特技的150%傷害全體對手，目標陷入燃燒狀態2回合（每回合行動前-10HP），此傷害無視有利狀態。'},
   '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
   '雷法師':   {n:'怒雷狂襲',    d:'彈跳傷害4次並強力麻痺（無法免疫）',fd:'用特技的150%傷害對手（彈跳）共4次，有75%機率使目標陷入「強力麻痺」不能動1回合。強力麻痺無法被免疫。'},
   '光法師':   {n:'審判光束',    d:'傷害全體並治癒全隊，附加強力失明',fd:'用特技的100%傷害全體對手，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時用特技的100%恢復全體隊友。'},
@@ -7006,12 +7006,30 @@ const BURST_DB = {
 // ====== GAME STATE ======
 let G = {};
 
+// ★ v1.0.20260421.3000f — 三大妖怪作為「玩家英雄」時使用的弱版素質
+//   BOSS 戰時（p2 方）仍使用 HERO_DB 的強版數據（hp:600 等）
+//   作為玩家英雄加入隊伍（p1 方）時，用此弱版數據覆寫，與一般英雄平衡
+//   技能 s1/s2 保留原 BOSS 技能（使用者要求）
+//   exp 也降成一般英雄水準（55~65 區間）
+const JP_BOSS_HERO_STATS = {
+  '大天狗':   { hp:58, atk:10, sp:13, spd:17, exp:55 },
+  '酒吞童子': { hp:72, atk:16, sp:9,  spd:6,  exp:60 },
+  '玉藻前':   { hp:56, atk:5,  sp:19, spd:11, exp:58 },
+};
+
 function newHero(name,side,pos){
   const b=HERO_DB[name];
+  // ★ v1.0.20260421.3000f — 三大妖怪作為玩家英雄（p1）時套弱版素質
+  //   side==='p2' 時不覆寫，維持 BOSS 戰強度
+  const _jpOverride = (side==='p1' && JP_BOSS_HERO_STATS[name]) ? JP_BOSS_HERO_STATS[name] : null;
+  const _hp  = _jpOverride ? _jpOverride.hp  : b.hp;
+  const _atk = _jpOverride ? _jpOverride.atk : b.atk;
+  const _sp  = _jpOverride ? _jpOverride.sp  : b.sp;
+  const _spd = _jpOverride ? _jpOverride.spd : b.spd;
   return {
     name,side,pos,
-    hp:b.hp,atk:b.atk,def:b.def||0,sp:b.sp,spd:b.spd,
-    curHp:b.hp,acted:false,
+    hp:_hp,atk:_atk,def:b.def||0,sp:_sp,spd:_spd,
+    curHp:_hp,acted:false,
     s1:{...b.s1},s2:{...b.s2},
     element:null,
     status:[],  // array of {type, dur} e.g. {type:'stun',dur:1}
@@ -8856,6 +8874,15 @@ const HERO_TRAIT = {
   '茶葉精靈':   { name:'茶癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
   '小惡魔':     { name:'還手', icon:'😈', desc:'受到傷害時立即以特技反擊攻擊者',fd:'受到任何傷害時，立即對攻擊者造成等同於特技值的反擊傷害。反擊不會再觸發對方的還手類天賦，避免無限循環。' },
   '寶箱怪':     { name:'儲存', icon:'📦', desc:'回合開始時恢復自己10%HP',fd:'每回合開始時，寶箱怪會自動恢復自己最大 HP 的 10%。' },
+  // ── 日本關 BOSS / 英雄 ──
+  // ★ v1.0.20260421.3000f
+  '大天狗':     { name:'疾風之翼', icon:'🌪️', desc:'行動前60%機率速度+2',fd:'每次行動前有60%機率使自身速度+2（可累積，持續到戰鬥結束）。' },
+  '酒吞童子':   { name:'酒入鬼力', icon:'🍶', desc:'受傷時60%機率恢復1能量',fd:'受到傷害時有60%機率立即恢復1能量。' },
+  '玉藻前':     { name:'媚惑窺破', icon:'👁️‍🗨️', desc:'造成傷害時60%機率無視有利狀態',fd:'造成傷害時有60%機率無視目標身上的有利狀態（護盾、免疫、減傷等）。' },
+  '八岐大蛇':   { name:'八首吞天', icon:'🐉', desc:'傷害25%吸血，普攻2下',fd:'造成傷害的25%轉化為自身HP恢復；普通攻擊變為連續2下。' },
+  // ── 日本關稀有小怪 ──
+  '行走的二宮尊德像': { name:'勤學不輟', icon:'📚', desc:'免疫不利狀態，行動前回15%HP',fd:'免疫所有不利狀態，每次自己行動前恢復最大HP的15%。' },
+  '座敷童子':   { name:'家之守護', icon:'🎎', desc:'受傷時以特技50%反擊隨機3次',fd:'受到傷害時立即以特技值的50%反擊隨機3個敵方目標（若敵方不足3人則重複挑選）。' },
 };
 
 const MONSTER_LORE = {
@@ -8869,6 +8896,27 @@ const MONSTER_LORE = {
   '偷喝茶的史萊姆': '在貓空茶園水溝邊游蕩的茶色史萊姆，因為吸收了太多茶葉精華而呈現翠綠色，最愛偷喝剛泡好的熱茶。',
   '寶箱怪': '極為罕見的神秘寶箱生物，據說體內裝滿了財寶。速度奇快，膽子極小，遇到危險就立刻逃跑。務必在牠逃跑前將其擊倒！',
   '小惡魔': '從異次元偶然竄入人間的小型惡魔，無窮盡的破壞力讓所有人頭痛。喜歡讓敵人互相攻擊，從中作樂。',
+  // ★ v1.0.20260421.3000f — 日本關 16 隻妖怪介紹文
+  // ── 4 BOSS ──
+  '大天狗': '日本山岳信仰中最尊貴的大妖，手持羽扇一揮即喚起颶風，能預知萬里之外的變故。統領天狗一族駐守深山，修行千年已入神格。',
+  '酒吞童子': '盤踞大江山的鬼王，嗜酒如命卻武藝絕倫，一斬能破開鐵石。手下百鬼夜行，傳說是當年被遺棄的神童墮落後化成的最強鬼族。',
+  '玉藻前': '金毛九尾狐所化的絕世美女，傳說曾迷惑天皇引發亂世。被陰陽師識破後化為殺生石，怨念卻從未消散，如今重新聚形而出。',
+  '八岐大蛇': '遠古神話中擁有八頭八尾的巨型惡蛇，身軀盤繞八山八谷。眼如赤漿果、腹中常流血水，傳說須獻三神器之力方能封印。',
+  // ── 6 菁英（各路線左衛/右衛）──
+  '烏天狗': '大天狗的直屬侍從，身披黑羽、嘴如鐵喙，手持鐵扇與太刀。飛行迅捷如閃電，是山林中最令人畏懼的刺客。',
+  '木葉天狗': '較為年輕的天狗族人，擅長利用樹葉與山風掩蓋行蹤。雖階級稍低但機靈敏捷，常在深林設下迷陣戲耍闖入者。',
+  '茨木童子': '酒吞童子的左臂大將，傳說連渡邊綱都曾斬下其一臂。性情殘暴，手刃千鬼而不眨眼，以一己之力橫掃京都陰間。',
+  '星熊童子': '酒吞童子麾下勇猛的鬼將，力大無窮，能單手舉起巨岩。額上星紋是鬼族的榮耀印記，象徵無可撼動的戰鬥本能。',
+  '殺生石分身': '由玉藻前封印地裂解而出的碎片之魂，石紋中閃著赤紅妖氣。靠近者會迅速中毒，是狐妖復活儀式的犧牲祭品。',
+  '管狐': '被陰陽師豢養、寄宿於細竹管中的小狐妖。雖小卻毒辣，能鑽入對手體內作祟，玉藻前靠牠們操控人心、散布混亂。',
+  // ── 4 路邊小怪 ──
+  '河童': '日本河川傳說的代表性妖怪，頭頂有盤水（皿）是力量的來源。喜歡惡作劇拖人入水，卻又很講義氣，相撲時絕對守規矩。',
+  '二口女': '後腦長著第二張嘴的女妖，前嘴小食如貓，後嘴卻是貪婪無底洞。常假扮善良婦人接近旅人，背後藏著驚人食慾。',
+  '雪女': '暴風雪夜中顯現的白衣女妖，肌膚如雪、眼眸冰藍。對闖入雪山的旅人或吹出冰息、或引路脫險，心意隨緣難測。',
+  '獨眼小僧': '額頭只有一隻大眼的小鬼，模樣可愛卻愛嚇人。常半夜從障子門縫探頭盯看，膽小的人被盯上就會生一場小病。',
+  // ── 2 稀有小怪 ──
+  '行走的二宮尊德像': '全國小學門口常見的銅像於深夜甦醒，背著柴薪邊走邊讀書。見到懶惰的人會長聲嘆息，見到勤學的則悄悄賜福。',
+  '座敷童子': '寄居於老屋和室中的童靈，身穿紅衣梳著河童頭。被牠守護的家族會興旺百年，一旦離去則家道中落，日本最被珍視的瑞祥妖怪。',
 };
 
 
@@ -12385,6 +12433,12 @@ function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
   const a=G.activeChar||opts.actor;
 
+  // ★ v1.0.20260421.3000f — 玉藻前天賦：造成傷害時60%機率無視有利狀態
+  if(a && a.name==='玉藻前' && !opts.ignoreBuffs && target && a.side!==target.side && Math.random()<0.6){
+    opts.ignoreBuffs = true;
+    try{ log(`👁️‍🗨️ [玉藻前] 天賦：媚惑窺破！無視 [${target.name}] 的有利狀態！`); }catch(e){}
+  }
+
   // ── 強力隱身（小力）：絕對免疫，無視一切傷害來源 ──
   // 必須在所有判斷之前，包括 ignoreBuffs、AoE、必中等
   if(hasBuff(target,'inuInvisible')){
@@ -13277,6 +13331,39 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     log(`🦇 [吸血鬼] 天賦：嗜血！吸收 ${vamp} HP！`);
   }
 
+  // ★ v1.0.20260421.3000f — 八岐大蛇天賦：造成傷害的25%轉化為自身HP恢復
+  if(a && a.name==='八岐大蛇' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side && a.curHp>0 && !opts.isRebound){
+    const vamp = Math.max(1, Math.ceil(dmg*0.25));
+    try{ doHeal(a, vamp, {actor:a, noDice:true, noWarhorn:true, isHeal:true}); }catch(e){}
+    log(`🐉 [八岐大蛇] 天賦：八首吞天！吸收 ${vamp} HP！`);
+  }
+
+  // ★ v1.0.20260421.3000f — 酒吞童子天賦：受傷60%機率回復1能量
+  if(target.name==='酒吞童子' && !hasStatus(target,'confused') && old>0 && target.curHp<old && Math.random()<0.6){
+    G.energy[target.side] = Math.min(10, (G.energy[target.side]||0) + 1);
+    try{ showPopup(target,'+1E','energy'); }catch(e){}
+    try{ sndEnergy(); }catch(e){}
+    log(`🍶 [酒吞童子] 天賦：酒入鬼力！受傷回復1能量！`);
+    bannerFX(target,'酒入鬼力！','#ff6688',800);
+  }
+
+  // ★ v1.0.20260421.3000f — 座敷童子天賦：受傷立即以特技50%反擊隨機3個敵方目標
+  if(target.name==='座敷童子' && !hasStatus(target,'confused') && old>0 && target.curHp<old && !opts.isRebound){
+    const _oppSide = (target.side==='p1' ? 'p2' : 'p1');
+    const _foes = G[_oppSide].filter(h => h.curHp>0);
+    if(_foes.length){
+      const _ctr = Math.max(1, Math.floor((target.sp||target.atk||1)*0.5));
+      log(`🎎 [座敷童子] 天賦：家之守護！反擊3次，每次 ${_ctr} 傷害！`);
+      bannerFX(target,'家之守護！','#ffccee',900);
+      for(let _k=0;_k<3;_k++){
+        const _pick = _foes[Math.floor(Math.random()*_foes.length)];
+        if(_pick && _pick.curHp>0){
+          try{ doDmg(_pick, _ctr, {actor:target, noGuard:true, ignoreEvasion:true, noHidden:true, isRebound:true}); }catch(e){}
+        }
+      }
+    }
+  }
+
   // ── 機械師天賦：受到傷害時20%觸電反擊 ──
   if(target.name==='機械師' && !hasStatus(target,'confused') && old>0 && target.curHp<old && a && Math.random()<Math.min(1,0.20+_getTraitLv(target.name)*0.05)){
     addStatus(a,'para',1);
@@ -13932,6 +14019,23 @@ function execAtk(actor, target, dmg, opts={}){
     return;
   }
   actor._reActCount = 0; // 本回合連擊結束，重置計數
+
+  // ★ v1.0.20260421.3000f — 八岐大蛇天賦：普通攻擊為2下（追加第二擊）
+  //   使用 _yamataDoubleTriggered 旗標防止遞迴；第二擊不再觸發天賦
+  if(name==='八岐大蛇' && target && target.curHp>0 && !actor._yamataDoubleTriggered){
+    actor._yamataDoubleTriggered = true;
+    log(`🐉 [八岐大蛇] 天賦：八首吞天！追加第二次普攻！`);
+    bannerFX(actor,'八首吞天！','#8844ff',800);
+    _pSetTimeout(()=>{
+      try{
+        if(target && target.curHp>0 && actor.curHp>0){
+          const _dmg2 = Math.max(1, actor.atk||1);
+          doDmg(target, _dmg2, {actor:actor});
+        }
+      }catch(e){}
+      actor._yamataDoubleTriggered = false;
+    }, 350);
+  }
 
   // 祭司：60%恢復HP最低隊友25%HP
   if(name==='祭司' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
@@ -17357,6 +17461,29 @@ function startTurn(){
     }
   }
 
+  // ★ v1.0.20260421.3000f — 大天狗天賦：行動前60%機率速度+2（可累積）
+  if(next.name==='大天狗' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<0.6){
+    next.spd = (next.spd||0) + 2;
+    try{ showPopup(next,'速度+2','spd'); }catch(e){}
+    log(`🌪️ [大天狗] 天賦：疾風之翼！速度+2！（現速度 ${next.spd}）`);
+    bannerFX(next,'疾風之翼！','#88ccff',800);
+  }
+
+  // ★ v1.0.20260421.3000f — 二宮尊德像天賦：免疫不利狀態 + 行動前回15%HP
+  if(next.name==='行走的二宮尊德像' && next.curHp>0){
+    // 免疫不利狀態（持續添加避免消失）
+    if(typeof addStatus === 'function' && !hasStatus(next,'statusImmune')){
+      try{ addStatus(next,'statusImmune',99); }catch(e){}
+    }
+    // 行動前回 15% HP
+    if(next.curHp < next.hp){
+      const healAmt = Math.max(1, Math.floor(next.hp * 0.15));
+      try{ doHeal(next, healAmt, {actor:next, noDice:true, noWarhorn:true, isHeal:true}); }catch(e){}
+      log(`📚 [二宮尊德像] 天賦：勤學不輟！恢復 ${healAmt} HP！`);
+      bannerFX(next,'勤學不輟！','#ffcc66',800);
+    }
+  }
+
   updateUI();
 
   if(next.side==='p1'){
@@ -17839,9 +17966,15 @@ function aiAct(a){
     _pSetTimeout(()=>{ _realAiAct(a); }, 300);
     return;
   }
-  // ★ 冒險模式：主 BOSS（九尾空貓怪 或 杏花妖）行動前先出題
+  // ★ 冒險模式：主 BOSS 行動前先出題
+  //   貓空：九尾空貓怪 / 杏花妖
+  //   日本：大天狗 / 酒吞童子 / 玉藻前 / 八岐大蛇
+  //   v1.0.20260421.3000e — 補齊日本四大 BOSS，修正日本 BOSS 戰不提問的 bug
   if(typeof _adventureMode !== 'undefined' && _adventureMode &&
-     a && (a.name === '九尾空貓怪' || a.name === '杏花妖') && a.side === 'p2' && a.curHp > 0 &&
+     a && (a.name === '九尾空貓怪' || a.name === '杏花妖' ||
+           a.name === '大天狗' || a.name === '酒吞童子' ||
+           a.name === '玉藻前' || a.name === '八岐大蛇') &&
+     a.side === 'p2' && a.curHp > 0 &&
      G.p1.some(h=>h.curHp>0) &&
      typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
     _advQuizResolveCb = ()=>{ _realAiAct(a); };
@@ -21846,8 +21979,14 @@ function _rfCancel(){
 }
 function newHero_replace(name, side, pos){
   const b=HERO_DB[name];
+  // ★ v1.0.20260421.3000f — 三大妖怪作為玩家英雄（p1）時套弱版素質
+  const _jpOv = (side==='p1' && typeof JP_BOSS_HERO_STATS!=='undefined' && JP_BOSS_HERO_STATS[name]) ? JP_BOSS_HERO_STATS[name] : null;
+  const _hp  = _jpOv ? _jpOv.hp  : b.hp;
+  const _atk = _jpOv ? _jpOv.atk : b.atk;
+  const _sp  = _jpOv ? _jpOv.sp  : b.sp;
+  const _spd = _jpOv ? _jpOv.spd : b.spd;
   const h={
-    name,side,pos,hp:b.hp,atk:b.atk,sp:b.sp,spd:b.spd,curHp:b.hp,acted:false,
+    name,side,pos,hp:_hp,atk:_atk,sp:_sp,spd:_spd,curHp:_hp,acted:false,
     s1:{...b.s1},s2:{...b.s2},element:null,status:[],buffs:[],s2used:false,equip:null,
     av:AVATARS[name]||'🗡️'
   };
@@ -22722,7 +22861,18 @@ function hideSkillDetailPopup(){
 let _adventureMode = false;
 let _adventureStage = null;
 // BOSS 角色名單：永遠排除在選角色池之外
-const BOSS_NAMES = ['九尾空貓怪','杏花妖','綠竹筍小妖','茶葉精靈','偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆','寶箱怪','小惡魔'];
+const BOSS_NAMES = [
+  // 貓空關
+  '九尾空貓怪','杏花妖','綠竹筍小妖','茶葉精靈',
+  '偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆',
+  '寶箱怪','小惡魔',
+  // ★ v1.0.20260421.3000h — 日本關 13 隻（菁英6 + 路邊4 + 稀有2 + 隱藏BOSS八岐大蛇）
+  //   大天狗/酒吞童子/玉藻前 不在此列（作為可解鎖英雄顯示於英雄圖鑑）
+  '烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐',
+  '河童','二口女','雪女','獨眼小僧',
+  '行走的二宮尊德像','座敷童子',
+  '八岐大蛇',
+];
 // 冒險模式允許出場的英雄名單
 const ADV_HERO_POOL = {
   maokong: ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家']
@@ -24940,7 +25090,7 @@ Object.assign(HERO_DB, {
     s2:{n:'酒宴',c:6,d:'恢復友方全體20%HP並提升25%攻擊與特技2回合',fd:'豪飲妖酒並灑向同伴，恢復我方全體最大HP的20%，同時提升我方全體攻擊與特技25%，持續2回合。'}
   },
   '玉藻前':{hp:600,atk:15,sp:23,spd:24,exp:66,
-    s1:{n:'九尾狐火',c:4,d:'依特技對隨機目標造成3~4次傷害，附加地獄之火',fd:'九條金尾噴射熾烈狐火，用特技值對隨機存活對手造成3~4次火屬性傷害，每次獨立結算暴擊；所有命中的目標追加地獄之火2回合（行動前後各-5HP）。'},
+    s1:{n:'九尾狐火',c:4,d:'依特技對隨機目標造成3~4次傷害，附加地獄之火',fd:'九條金尾噴射熾烈狐火，用特技值對隨機存活對手造成3~4次火屬性傷害，每次獨立結算暴擊；所有命中的目標追加地獄之火2回合（每回合行動前-10HP）。'},
     s2:{n:'妖狐幻惑',c:4,d:'使敵方全體失明2回合（無法免疫），附加30護盾',fd:'綻放妖豔狐術迷惑敵人，使敵方全體陷入「強力失明」2回合，行動成功率減半（無法被免疫或解除）。同時為自己附加可抵擋30傷害的護盾。'}
   },
 
@@ -25682,6 +25832,7 @@ function advStartCutscene(stage) {
   // ★ v1.0.20260420.3200 — 重置「BOSS HP 難度倍率已套用」旗標,讓新一輪冒險能重新根據當局難度套一次
   window._advBossHpMultApplied = false;
   window._advJapanEliteBuffApplied = false; // ★ v1.0.20260421.2800 日本菁英 +20% 旗標
+  window._advJapanDifficultyShown = false;  // ★ v1.0.20260421.3000g 重置日本關難度選擇旗標
   _advQuizHistory = []; // ★ v1.0.20260420.1000 — 每局重置答題場次歷史
   _advBurstRewardUsed = false; // 重置「極限爆發」出現限制
   _advPendingReward = null;
@@ -26958,7 +27109,104 @@ function advFinishCutscene() {
 }
 
 // ── 正式啟動戰鬥（過場演出結束後呼叫）
+
+// ★ v1.0.20260421.3000g — 日本關第三場景事件結束後，BOSS 戰啟動前彈難度選擇 modal
+//   (遊戲專案禁止使用瀏覽器原生彈窗，一律用遊戲內 modal)
+//   選完後寫入 _advPlayerDifficulty → 影響 BOSS HP 倍率 (_advBossHpMult) 與掉落率 (_advDropRateMult)
+//   使用 window._advJapanDifficultyShown 旗標避免同一場戰鬥重複彈出
+window._advShowJapanDifficulty = function(callback){
+  // 移除舊 modal 避免殘留
+  const old = document.getElementById('adv-jp-diff-modal');
+  if(old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'adv-jp-diff-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.82);' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  const opts = [
+    { label:'🌸 沒自信',       sub:'輕鬆模式 +0%',    key:'沒自信', color:'#88cc88', glow:'rgba(100,220,140,0.45)' },
+    { label:'🎴 普通',         sub:'標準模式 +25%',   key:'普通',   color:'#4a9eff', glow:'rgba(74,158,255,0.45)' },
+    { label:'🗡️ 我很會',       sub:'挑戰模式 +50%',   key:'我很會', color:'#ff6644', glow:'rgba(255,100,70,0.45)' },
+  ];
+
+  const btnHtml = opts.map((o,i) => (
+    '<button class="adv-jp-diff-btn" data-key="' + o.key + '" style="' +
+      'padding:18px 22px;font-size:clamp(18px,2vw,24px);font-weight:900;letter-spacing:2px;' +
+      'background:linear-gradient(135deg,rgba(20,15,25,0.95),rgba(40,25,40,0.95));' +
+      'border:2.5px solid ' + o.color + ';color:' + o.color + ';border-radius:14px;' +
+      'cursor:pointer;font-family:inherit;box-shadow:0 4px 20px ' + o.glow + ';' +
+      'display:flex;flex-direction:column;align-items:center;gap:6px;min-width:180px;' +
+      'transition:transform 0.15s,box-shadow 0.15s;">' +
+      '<span style="font-size:clamp(22px,2.4vw,30px);">' + o.label + '</span>' +
+      '<span style="font-size:clamp(14px,1.4vw,17px);opacity:0.85;font-weight:600;letter-spacing:1px;">' + o.sub + '</span>' +
+    '</button>'
+  )).join('');
+
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,rgba(25,15,30,0.98),rgba(15,10,20,0.98));' +
+      'border:3px solid #ffaa44;border-radius:20px;padding:36px 44px;max-width:720px;' +
+      'box-shadow:0 0 50px rgba(255,170,70,0.4);text-align:center;">' +
+      '<div style="font-size:clamp(26px,2.8vw,36px);font-weight:900;color:#ffccaa;' +
+        'letter-spacing:3px;margin-bottom:10px;">🗾 富士山 BOSS 最終試煉</div>' +
+      '<div style="font-size:clamp(16px,1.8vw,22px);color:#ddbbaa;margin-bottom:26px;' +
+        'letter-spacing:1px;">你對即將到來的 BOSS 戰有多少把握？</div>' +
+      '<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">' + btnHtml + '</div>' +
+      '<div style="font-size:clamp(13px,1.3vw,16px);color:#888;margin-top:22px;letter-spacing:1px;">' +
+        '💡 難度越高 → BOSS HP 越強 + 掉落獎勵越豐厚' +
+      '</div>' +
+    '</div>';
+
+  (document.getElementById('gc') || document.body).appendChild(modal);
+
+  try{ playSfx('sfx-sel', 0.6); }catch(_){}
+
+  modal.querySelectorAll('.adv-jp-diff-btn').forEach(function(btn){
+    btn.onmouseover = function(){
+      btn.style.transform = 'scale(1.06)';
+      btn.style.boxShadow = '0 6px 28px rgba(255,200,100,0.6)';
+    };
+    btn.onmouseout = function(){
+      btn.style.transform = '';
+      btn.style.boxShadow = btn.style.boxShadow.split(';')[0];
+    };
+    btn.onclick = function(){
+      const key = btn.getAttribute('data-key');
+      _advPlayerDifficulty = key;
+      try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
+      try{ log('🗾 [日本關] 已選擇難度：' + key + '（BOSS HP 倍率：×' +
+        ((typeof ADV_CONFIDENCE_HP_MULT !== 'undefined' && ADV_CONFIDENCE_HP_MULT[key]) || 1.00) + '）'); }catch(_){}
+      modal.style.transition = 'opacity 0.3s';
+      modal.style.opacity = '0';
+      setTimeout(function(){
+        modal.remove();
+        if(typeof callback === 'function') callback();
+      }, 280);
+    };
+  });
+};
+
 function advStartBattle(){
+  // ★ v1.0.20260421.3000g — 日本關第三場景事件結束後、BOSS 戰啟動前，彈難度選擇 modal
+  //   條件：(a) 日本關 (b) 尚未選過難度（_advPlayerDifficulty 為空）(c) 本場未彈過
+  //   八岐大蛇路線也適用（同樣是日本 BOSS）
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+       && (!_advPlayerDifficulty || _advPlayerDifficulty === '')
+       && !window._advJapanDifficultyShown){
+      window._advJapanDifficultyShown = true;
+      if(typeof window._advShowJapanDifficulty === 'function'){
+        window._advShowJapanDifficulty(function(){
+          // 選完難度後，回呼原本的 advStartBattle 流程
+          advStartBattle();
+        });
+        return; // 關鍵：此次提前 return，等 callback 再進來
+      }
+    }
+  }catch(_jpDiffE){ console.warn('[日本難度選擇] 失敗:', _jpDiffE); }
+
   // ★ 好友英雄加入戰鬥（若已邀請且已選擇）
   try{ _injectFriendHeroIntoBattle(); }catch(e){}
   // ★ 確保冒險模式旗標正確
@@ -27019,7 +27267,9 @@ function advStartBattle(){
       try{ if(typeof log==='function') log('🗾 日本菁英小怪能力強化 +20%（HP / ATK / 特技 / 速度）'); }catch(_){}
     }
   }catch(_jpeE){ console.warn('[日本菁英+20%] 套用失敗:', _jpeE); }
-  // ★ 日本關八岐大蛇：根據三神器持有數量套用 HP/ATK 弱化（1件-10%/2件-20%/3件-30%）
+  // ★ 日本關八岐大蛇：玩家在 _showYamataTreasureChoice 選擇使用三神器時，套用 HP/ATK/SP 各 -20%
+  //   未選擇使用（或路線非 yamata）時 _applyJapanYamataWeaken 回傳 1.00，不套用任何弱化
+  //   戰鬥勝利後神器在 advStartWinSequence 內清空、大蛇重鎖；失敗則保留神器可重挑戰
   try {
     if(_adventureStage === 'japan' && typeof window._applyJapanYamataWeaken === 'function'){
       const _jpMult = window._applyJapanYamataWeaken();
@@ -36122,10 +36372,12 @@ function openMonsterDetail(name) {
   ];
 
   // Tier label
-  const BOSS_LIST=['九尾空貓怪','杏花妖'];
-  const ELITE_LIST=['綠竹筍小妖','茶葉精靈'];
-  const tierLabel = BOSS_LIST.includes(name)?'👑 終極BOSS':ELITE_LIST.includes(name)?'⚡ 精英小怪':'🌿 路邊小怪';
-  const tierColor = BOSS_LIST.includes(name)?'#ff6644':ELITE_LIST.includes(name)?'#ffaa44':'#88cc88';
+  // ★ v1.0.20260421.3000f — 補齊日本 BOSS 與菁英名單，修正詳細頁顯示「路邊小怪」的 bug
+  const BOSS_LIST=['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+  const ELITE_LIST=['綠竹筍小妖','茶葉精靈','烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐'];
+  const RARE_LIST=['寶箱怪','小惡魔','行走的二宮尊德像','座敷童子'];
+  const tierLabel = BOSS_LIST.includes(name)?'👑 終極BOSS':ELITE_LIST.includes(name)?'⚡ 精英小怪':RARE_LIST.includes(name)?'💜 稀有小怪':'🌿 路邊小怪';
+  const tierColor = BOSS_LIST.includes(name)?'#ff6644':ELITE_LIST.includes(name)?'#ffaa44':RARE_LIST.includes(name)?'#cc88ff':'#88cc88';
 
   // Use hero-detail-overlay (same structure as hero detail)
   const ov = document.getElementById('hero-detail-overlay');
@@ -37831,6 +38083,81 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000i', brief:[
+    '修正八岐大蛇弱化註解（過時文字不影響運作）',
+  ], items:[
+    '【註解修正】',
+    '  line 27270 舊註解「1件-10%/2件-20%/3件-30%」已過時',
+    '  實際機制：玩家於開戰前 modal 選擇使用三神器才套用 HP/ATK/SP 各 -20%',
+    '  勝利 → 神器清空、大蛇重鎖；失敗 → 神器保留可持續挑戰',
+  ]},
+  { ver:'v1.0.20260421.3000h', brief:[
+    '英雄圖鑑過濾日本小怪 + 地獄之火描述統一 + 三神器掉落率確認',
+  ], items:[
+    '【英雄圖鑑修正】',
+    '  BOSS_NAMES 擴充：加入日本 13 隻（6 菁英 + 4 路邊 + 2 稀有 + 八岐大蛇）',
+    '  這些小怪不再出現在英雄圖鑑，只在魔物圖鑑顯示',
+    '  保留大天狗 / 酒吞童子 / 玉藻前 為可解鎖英雄（標「🗾 日本BOSS戰低機率獲得」）',
+    '【地獄之火描述統一】',
+    '  狀態說明文字：「行動前後各損失5HP」→「每回合行動前損失10HP」',
+    '  火法師爆發技「烈焰爆發」fd：同步更新',
+    '  玉藻前 s1「九尾狐火」fd：同步更新',
+    '  （戰鬥邏輯本來就是行動前 -10HP，只是文字描述未更新）',
+    '【三神器掉落率確認】',
+    '  _onJapanBossDefeated 無條件呼叫 _japanSetTreasure，打贏三大 BOSS 100% 掉落對應神器',
+    '  草薙劍（大天狗路線）/ 八尺瓊勾玉（酒吞童子路線）/ 八咫鏡（玉藻前路線）',
+  ]},
+  { ver:'v1.0.20260421.3000g', brief:[
+    '日本關第三場景事件結束後，BOSS 戰前彈難度選擇',
+  ], items:[
+    '【日本關難度選擇】（同貓空關卡設計）',
+    '  新增 _advShowJapanDifficulty(callback) 函式：彈出沒自信／普通／我很會 modal',
+    '  遵守專案禁令「遊戲內禁用 alert/confirm/prompt」，採遊戲內 modal',
+    '  攔截點：advStartBattle 開頭（BOSS 戰啟動前）',
+    '  條件：_adventureStage==="japan" + _advPlayerDifficulty 為空 + _advJapanDifficultyShown 未觸發',
+    '  選完寫入 _advPlayerDifficulty，自動影響：',
+    '    BOSS HP 倍率（_advBossHpMult → ADV_CONFIDENCE_HP_MULT）',
+    '    掉落獎勵倍率（_advDropRateMult）',
+    '    英雄 EXP 倍率（ADV_CONFIDENCE_MULT）',
+    '  advStartCutscene 新增重置 window._advJapanDifficultyShown = false',
+    '  八岐大蛇路線也適用（屬日本 BOSS）',
+  ]},
+  { ver:'v1.0.20260421.3000f', brief:[
+    '三大妖怪加入英雄圖鑑完整化 + 6 特質戰鬥邏輯實裝 + 日本魔物介紹文補齊',
+  ], items:[
+    '【BUG 修復（承 v3000e）】日本 BOSS 戰不提問已修',
+    '  AI 回合出題白名單補齊大天狗/酒吞童子/玉藻前/八岐大蛇',
+    '【BUG 修復】魔物圖鑑詳細頁大天狗顯示「路邊小怪」',
+    '  BOSS_LIST 與 ELITE_LIST 補齊日本 BOSS/菁英名單',
+    '  新增 RARE_LIST 處理稀有小怪（行走的二宮尊德像、座敷童子）',
+    '【日本關魔物介紹文】',
+    '  MONSTER_LORE 新增 16 筆：4 BOSS + 6 菁英 + 4 路邊 + 2 稀有',
+    '  涵蓋妖怪典故與關卡劇情',
+    '【三大妖怪作為英雄】',
+    '  HERO_TRAIT 新增 6 個特質（大天狗/酒吞童子/玉藻前/八岐大蛇/二宮尊德像/座敷童子）',
+    '  6 個特質的戰鬥邏輯全部實裝：',
+    '    🌪️ 大天狗「疾風之翼」— 行動前 60% 速度+2（可累積）',
+    '    🍶 酒吞童子「酒入鬼力」— 受傷 60% 回 1 能量',
+    '    👁️‍🗨️ 玉藻前「媚惑窺破」— 造成傷害時 60% 無視有利狀態',
+    '    🐉 八岐大蛇「八首吞天」— 傷害 25% 吸血 + 普攻 2 下',
+    '    📚 二宮尊德像「勤學不輟」— 免疫不利狀態 + 行動前回 15% HP',
+    '    🎎 座敷童子「家之守護」— 受傷以特技 50% 反擊隨機 3 次',
+    '【拆分 BOSS 版與英雄版數據】',
+    '  新增 JP_BOSS_HERO_STATS 字典：三大妖怪作為玩家英雄時用弱版素質',
+    '  BOSS 戰（p2）仍用 HERO_DB 的強版（hp:600 等）— 難度不變',
+    '  加入玩家隊伍（p1）時自動套弱版（hp:58-72）— 與一般英雄平衡',
+    '  技能 s1/s2 保留原 BOSS 技能（使用者要求）',
+    '  newHero / newHero_replace 兩處都加入判斷',
+  ]},
+  { ver:'v1.0.20260421.3000e', brief:[
+    '日本 BOSS 戰提問修復',
+  ], items:[
+    '【Bug 修復：日本 BOSS 戰不會提問】',
+    '  BOSS 提問觸發條件（aiAct）原本只認貓空的九尾空貓怪/杏花妖',
+    '  日本四大妖怪（大天狗/酒吞童子/玉藻前/八岐大蛇）不在名單',
+    '  導致 BOSS 登場對白正常 → 戰鬥開始 → 但 AI 回合直接攻擊，不出題',
+    '  補齊 6 名 BOSS 白名單，日本 BOSS 戰正確觸發答題機制',
+  ]},
   { ver:'v1.0.20260421.3000d', brief:[
     '日本關 BGM 修正 + 題庫強化 + 寵物事件獎勵視窗跳過',
     'v3000 系列最終版（累積 3000b/3000c/3000d 修正）',
@@ -39571,7 +39898,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000d';
+  const CURRENT_VERSION = 'v1.0.20260421.3000i';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -39588,7 +39915,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000d';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000i';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
