@@ -3727,6 +3727,10 @@ body {
 <audio id="bgm-boss-01" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a" loop></audio>
 <audio id="bgm-boss-apricot" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96BGM2.m4a" loop></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
+<!-- ★ v1.0.20260421.0600 — 日本關專屬 BGM（關卡首頁、小怪戰、BOSS戰） -->
+<audio id="bgm-japan-menu"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81.m4a" loop></audio>
+<audio id="bgm-japan-battle" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E5%B0%8F%E6%80%AA%E6%88%B0BGM2.mp3" loop></audio>
+<audio id="bgm-japan-boss"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%ACBOSS%E6%88%B0.m4a" loop></audio>
 <audio id="sfx-gong"     preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%95%B2%E9%91%BC.mp3"></audio>
 <audio id="sfx-cancel"   preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E5%8F%96%E6%B6%88.mp3"></audio>
 <audio id="sfx-normalatk" preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E6%99%AE%E9%80%9A%E6%94%BB%E6%93%8A.mp3"></audio>
@@ -3997,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.0500</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1100</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6000,6 +6004,9 @@ function playSkillFX(skillName,actor,targets){
 // ★ v1.0.20260420.1130 — 活動限定英雄清單(圖鑑會標示「🎪 活動獲得」)
 //   這些英雄無法從冒險模式 BOSS 戰解鎖池取得,只能透過特殊活動/贈送獲得
 const EVENT_ONLY_HEROES = new Set(['小力', '幼兒園小孩']);
+// ★ v1.0.20260421.1100 — 日本 BOSS 可透過戰鬥 S 評價 5% 機率解鎖成為夥伴
+//   這三隻會同時出現在英雄圖鑑(標「日本BOSS戰低機率獲得」)和魔物圖鑑(BOSS 區)
+const JAPAN_BOSS_HEROES = new Set(['大天狗','酒吞童子','玉藻前']);
 const AVATARS = {
   '劍士':'⚔️','祭司':'✨','聖騎士':'🛡','火法師':'🔥','冰法師':'❄️','雷法師':'⚡',
   '光法師':'☀️','暗法師':'🌑','神射手':'🏹','神偷':'💰','刺客':'👁️','守衛':'🛡️',
@@ -6689,6 +6696,10 @@ const BURST_DB = {
   // ── BOSS 爆發技能 ──
   '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
   '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有75%機率使每一名敵人陷入「魅惑」狀態1回合（下一回合自動普攻自己隊友）。'},
+  '八岐大蛇':  {n:'八頭龍滅世', d:'依特技對隨機目標造成8次必中傷害，隨機附加3種強力不利狀態(無法免疫)',fd:'八條龍頭同時吐出世界毀滅之息，以特技值對隨機存活對手造成8次必中傷害且無視有利狀態。每次命中後從「強力冰凍、強力地獄之火、強力封印、強力麻痺、強力失明、強力中毒、強力減療」中隨機選出3種附加給目標，這些強力狀態無法被免疫或解除。'},
+  '大天狗':    {n:'神威風獵', d:'特技150%×5次隨機連擊，30%強力暈眩；最後全體颶風傷害並減速',fd:'張開巨翼掀起毀天狂風，以特技值的150%對隨機存活敵人連續5次打擊，每段有30%機率使該目標陷入「強力暈眩」1回合。第5段結束後額外對全體敵人造成攻擊100%颶風傷害，並使全體敵人速度-50%持續2回合。'},
+  '酒吞童子':  {n:'鬼王酒宴', d:'恢復自身15%HP，500%重擊+擊倒轉移(最多3連鎖)，2回合吸血+攻擊提升',fd:'豪飲妖酒一飲而盡，自身恢復最大HP的15%。接著以攻擊值的500%重擊1名敵人，若該目標倒下則剩餘傷害轉移至下一位存活敵人，最多連鎖3次。之後自身獲得「嗜血狂潮」狀態2回合：造成傷害的100%轉化為回血，且攻擊額外提升50%。'},
+  '玉藻前':    {n:'禍世邪魅', d:'特技200%幻陣全體火傷害，65%強力魅惑1回合(無法免疫)，被魅惑者傷害轉為回血給玉藻前',fd:'九條金色狐尾一齊張開形成絢爛幻陣，以特技值的200%對全體敵人造成火屬性傷害，並有65%機率使每一名敵人陷入「強力魅惑」1回合（下循環自動普攻自己隊友，無法被免疫或解除）。被強力魅惑的敵人普攻隊友造成的傷害會全部轉為玉藻前的HP恢復。'},
 
 };
 
@@ -6973,6 +6984,11 @@ function tickStatus(h){
       delete h._mirrorOrigAtk;
       h._burstMirror=false;
       log(`[${h.name}] 明鏡止水結束，攻擊值恢復正常。`);
+    }
+    // ★ v1.0.20260421.0700 — 酒吞童子「酒宴」到期還原攻擊與特技
+    if(b.type==='shutenBoost'){
+      if(h._shutenOrigAtk !== undefined){ h.atk = h._shutenOrigAtk; delete h._shutenOrigAtk; }
+      if(h._shutenOrigSp  !== undefined){ h.sp  = h._shutenOrigSp;  delete h._shutenOrigSp;  }
     }
   });
   // ★ strongTaunt 到期時清除 _burstTauntTarget
@@ -9927,12 +9943,12 @@ function statusName(t){
   return m[t]||t;
 }
 function buffClass(t){
-  const m={immune:'immune',shield:'shield',taunt:'taunt',evasion:'evasion',spdAvoid:'evasion',hidden:'hidden',dmgup:'dmgup',absorb:'absorb',deathimmune:'deathimmune',immovable:'immune',halfDmg:'halfDmg',warhorn:'dmgup',noRecover:'noatk',bigshield:'shield',regen:'absorb',fieldImmune:'immune',protectBuff:'immune',discount:'immune',counter:'absorb',rebirth:'dmgup',misfortune:'dmgup',misfortune2:'dmgup',alchemist:'dmgup',guard:'shield',ctrlImmune:'immune',divineBlessing:'absorb',hpRegen:'absorb',zeroCost:'dmgup',doubleatk:'dmgup',strengthened:'dmgup',conservation:'absorb',_relay:'dmgup',_sprint:'dmgup',
+  const m={immune:'immune',shield:'shield',taunt:'taunt',evasion:'evasion',spdAvoid:'evasion',hidden:'hidden',dmgup:'dmgup',absorb:'absorb',deathimmune:'deathimmune',immovable:'immune',halfDmg:'halfDmg',warhorn:'dmgup',noRecover:'noatk',bigshield:'shield',regen:'absorb',fieldImmune:'immune',protectBuff:'immune',discount:'immune',counter:'absorb',rebirth:'dmgup',misfortune:'dmgup',misfortune2:'dmgup',alchemist:'dmgup',guard:'shield',ctrlImmune:'immune',divineBlessing:'absorb',hpRegen:'absorb',zeroCost:'dmgup',doubleatk:'dmgup',strengthened:'dmgup',shutenBoost:'dmgup',conservation:'absorb',_relay:'dmgup',_sprint:'dmgup',
   dribble:'dmgup',elemBoost:'dmgup',trapShield:'shield',_inuGuard:'shield',_inuPity:'absorb',_slamSpd:'dmgup',_sprintBurst:'dmgup',burstVamp:'absorb',taunt:'taunt'};
   return m[t]||'stag';
 }
 function buffName(t){
-  const m={immune:'無敵',shield:'護盾',evasion:'迴避',spdAvoid:'閃躲',hidden:'隱身',dmgup:'攻增',absorb:'吸收',deathimmune:'死亡免疫',immovable:'免疫狀態',halfDmg:'🛡減傷½',warhorn:'戰意',bigshield:'護盾',regen:'持續恢復',fieldImmune:'場地免疫',protectBuff:'狀態保護',discount:'節能',counter:'金鐘罩',misfortune:'轉禍為福',misfortune2:'轉禍為福',alchemist:'道具複製',guard:'守護',ctrlImmune:'控制免疫',divineBlessing:'神之賜福',hpRegen:'持續恢復',mercyRain:'慈悲之雨',chargeAtk:'蓄力中',zeroCost:'⚡無限能量',nioGuard:'🛡仁王挺立',doubleatk:'倍攻',strengthened:'增強',conservation:'守恆',burstUndying:'不倒再生',inuInvisible:'🐕強力隱身',statusImmune:'免疫狀態',
+  const m={immune:'無敵',shield:'護盾',evasion:'迴避',spdAvoid:'閃躲',hidden:'隱身',dmgup:'攻增',absorb:'吸收',deathimmune:'死亡免疫',immovable:'免疫狀態',halfDmg:'🛡減傷½',warhorn:'戰意',bigshield:'護盾',regen:'持續恢復',fieldImmune:'場地免疫',protectBuff:'狀態保護',discount:'節能',counter:'金鐘罩',misfortune:'轉禍為福',misfortune2:'轉禍為福',alchemist:'道具複製',guard:'守護',ctrlImmune:'控制免疫',divineBlessing:'神之賜福',hpRegen:'持續恢復',mercyRain:'慈悲之雨',chargeAtk:'蓄力中',zeroCost:'⚡無限能量',nioGuard:'🛡仁王挺立',doubleatk:'倍攻',strengthened:'增強',shutenBoost:'🍶酒宴+25%',conservation:'守恆',burstUndying:'不倒再生',inuInvisible:'🐕強力隱身',statusImmune:'免疫狀態',
   inuGuard:'忠犬守護中',_relay:'接力強化',_sprint:'起跑加速',
   dribble:'運球',elemBoost:'元素增幅',trapShield:'天網護盾',_inuGuard:'忠犬守護中',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',burstVamp:'鮮血吸收',taunt:'嘲諷中',_napShield:'午睡護盾',burstVamp:'🦇嗜血'};
   return m[t]||t;
@@ -11314,6 +11330,200 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       }, i*180);
     });
     _pSetTimeout(()=>{ _burstFinish(h,_interrupted); }, _foes2.length*180 + 600);
+    return;
+  }
+
+  // ══════════════════════════════════════════════════════
+  // ★ v1.0.20260421.0900 — 日本關三大 BOSS 爆發技能實作
+  // ══════════════════════════════════════════════════════
+  // 大天狗：神威風獵
+  //   特技150% × 5次隨機連擊，每次30%機率強力暈眩1回合
+  //   最後一段對全體造成攻擊100%颶風傷害 + 全體速度-50% 持續2回合
+  if(burstName==='神威風獵'){
+    const _oppT = side==='p1'?'p2':'p1';
+    log(`🌪️ [${h.name}] 神威風獵！巨翼捲起毀天狂風！`);
+    bannerFX(h, '🌪️ 神威風獵！', '#99ddff', 1400);
+    const perDmg = Math.max(8, Math.floor(spv * 1.5 * _burstMult));
+    let i = 0;
+    function tenguStrike(){
+      const liveFoes = G[_oppT].filter(x => x.curHp>0);
+      if(i >= 5 || !liveFoes.length || checkWin()){
+        // 5 次連擊結束 → 最後一段：全體颶風傷害 + 強力減速 2 回合
+        const finalFoes = G[_oppT].filter(x => x.curHp>0);
+        if(finalFoes.length){
+          const finalDmg = Math.max(6, Math.floor(h.atk * 1.0 * _burstMult));
+          finalFoes.forEach(t => {
+            doDmg(t, finalDmg, {actor:h, isSkill:true, elem:'wind'});
+            addStatus(t, 'spddown', 2);
+            bannerFX(t, '🌪️颶風 -50%速', '#88ccff', 800);
+            renderCard(t);
+          });
+        }
+        updateUI();
+        _pSetTimeout(() => _burstFinish(h, _interrupted), 500);
+        return;
+      }
+      const t = liveFoes[Math.floor(Math.random() * liveFoes.length)];
+      doDmg(t, perDmg, {actor:h, isSkill:true, elem:'wind'});
+      if(t.curHp > 0 && Math.random() < 0.30){
+        addStatus(t, 'stun', 1);
+        bannerFX(t, '💫強力暈眩', '#ffaa00', 800);
+      }
+      renderCard(t);
+      i++;
+      _pSetTimeout(tenguStrike, 280);
+    }
+    tenguStrike();
+    return;
+  }
+
+  // 酒吞童子：鬼王酒宴
+  //   自身回血15%HP，攻擊500% 單體重擊，擊倒傳遞(最多3連鎖)
+  //   之後附加 burstVamp (100%吸血) 2回合 + shutenBoost+50% 2回合
+  if(burstName==='鬼王酒宴'){
+    const _oppS = side==='p1'?'p2':'p1';
+    log(`👹 [${h.name}] 鬼王酒宴！豪飲妖酒，恢復力量！`);
+    bannerFX(h, '👹 鬼王酒宴！', '#ff6644', 1400);
+    // 第 1 步：自身回血 15%
+    const selfHeal = Math.floor(h.hp * 0.15);
+    h.curHp = Math.min(h.hp, h.curHp + selfHeal);
+    showPopup(h, '+' + selfHeal, 'heal');
+    renderCard(h);
+    // 第 2 步：攻擊500%單體重擊 + 擊倒連鎖（最多3次）
+    const mainDmg = Math.max(15, Math.floor(h.atk * 5.0 * _burstMult));
+    let chainsLeft = 3;
+    function shutenStrike(t){
+      if(!t || t.curHp <= 0 || chainsLeft <= 0){
+        // 第 3 步：附加狀態給自己（100% 吸血 + +50% 攻擊，2 回合）
+        h.status = h.status.filter(s => s.type !== 'burstVamp');
+        h.status.push({type:'burstVamp', dur:2, _unremovable:true, _vampMult:1.0});
+        // shutenBoost 若已在，刷新；否則新增；強度調為 +50%（因為爆發更強）
+        h.buffs = h.buffs.filter(b => b.type !== 'shutenBoost');
+        const origAtk = h._shutenOrigAtk !== undefined ? h._shutenOrigAtk : h.atk;
+        const origSp  = h._shutenOrigSp  !== undefined ? h._shutenOrigSp  : h.sp;
+        h._shutenOrigAtk = origAtk;
+        h._shutenOrigSp  = origSp;
+        h.atk = Math.max(1, Math.floor(origAtk * 1.5));
+        h.sp  = Math.max(1, Math.floor(origSp  * 1.5));
+        h.buffs.push({type:'shutenBoost', dur:2});
+        bannerFX(h, '🦇嗜血狂潮！', '#cc2244', 900);
+        renderCard(h);
+        updateUI();
+        _pSetTimeout(() => _burstFinish(h, _interrupted), 500);
+        return;
+      }
+      doDmg(t, mainDmg, {actor:h, isSkill:true, elem:'dark'});
+      renderCard(t);
+      chainsLeft--;
+      if(t.curHp <= 0 && chainsLeft > 0){
+        // 連鎖：找下一個存活目標（最低 HP 優先）
+        const next = G[_oppS].filter(x => x.curHp>0).sort((a,b) => a.curHp - b.curHp)[0];
+        if(next){
+          bannerFX(h, '連鎖！', '#ff8800', 600);
+          _pSetTimeout(() => shutenStrike(next), 350);
+        } else {
+          shutenStrike(null);
+        }
+      } else {
+        shutenStrike(null);
+      }
+    }
+    // 需玩家選擇目標（p1 有 2+ 存活敵人時）
+    const startFoes = G[_oppS].filter(x => x.curHp>0);
+    if(!startFoes.length){
+      _burstFinish(h, _interrupted);
+      return;
+    }
+    if(side === 'p1' && startFoes.length > 1){
+      log('⚡ 鬼王酒宴：請選擇重擊目標！');
+      setPending('enemy', t => { G.pendingTarget = null; pendingCb = null; shutenStrike(t); });
+    } else {
+      // AI 或只剩 1 個目標：選 HP 最低
+      const t = startFoes.sort((a, b) => a.curHp - b.curHp)[0];
+      shutenStrike(t);
+    }
+    return;
+  }
+
+  // 玉藻前：禍世邪魅
+  //   特技200% 全體火傷害 + 65% 機率強力魅惑 1 回合 (無法免疫)
+  //   被魅惑敵人在普攻隊友時，造成的傷害轉為恢復玉藻前的 HP
+  if(burstName==='禍世邪魅'){
+    const _oppM = side==='p1'?'p2':'p1';
+    const foesM = G[_oppM].filter(x => x.curHp>0);
+    const dmgM = Math.max(10, Math.floor(spv * 2.0 * _burstMult));
+    log(`🦊 [${h.name}] 禍世邪魅！九尾張開幻陣！`);
+    bannerFX(h, '🦊 禍世邪魅！', '#ffaa00', 1400);
+    foesM.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        doDmg(f, dmgM, {actor:h, isSkill:true, elem:'fire'});
+        renderCard(f);
+        // 65% 強力魅惑 1 回合（無法免疫，不檢查 ctrlImmune/statusImmune）
+        if(f.curHp > 0 && Math.random() < 0.65){
+          f.status = f.status.filter(s => s.type !== 'charm');
+          // dur:2 → 本回合扣剩1，下一回合生效後扣0 → 相當於下1循環自動普攻
+          f.status.push({type:'charm', dur:2, _tamamoVampire:h.name, _tamamoSide:h.side});
+          bannerFX(f, '💕強力魅惑！', '#ff88cc', 900);
+          log(`💕 [${f.name}] 被玉藻前強力魅惑 1 回合（無法免疫）！`);
+          renderCard(f);
+        }
+      }, i * 180);
+    });
+    _pSetTimeout(() => {
+      updateUI();
+      _burstFinish(h, _interrupted);
+    }, foesM.length * 180 + 600);
+    return;
+  }
+  // ══════════════════════════════════════════════════════
+
+  // ★ v1.0.20260421.0800 — 八岐大蛇：八頭龍滅世
+  // 依特技對隨機目標造成8次必中傷害，每次命中隨機從 7 種強力不利狀態選 3 種附加（無法免疫）
+  if(burstName==='八頭龍滅世'){
+    const _oppY = side==='p1'?'p2':'p1';
+    const _dmgY = Math.max(10, Math.floor(spv * _burstMult));
+    log(`🐉 [${h.name}] 八頭龍滅世！八頭齊吐滅世之息！`);
+    bannerFX(h, '🐉 八頭龍滅世！', '#aa44ff', 1400);
+    // 強力狀態池（無法免疫）
+    const STRONG_POOL = ['freeze','hellfire','seal','para','forecast','poison','healReduced'];
+    const STRONG_LABEL = {
+      freeze:'❄️強力冰凍', hellfire:'🔥強力地獄之火', seal:'🚫強力封印',
+      para:'⚡強力麻痺', forecast:'👁️強力失明', poison:'☠️強力中毒', healReduced:'💔強力減療'
+    };
+    let hit = 0;
+    function yamataBurst(){
+      const liveFoes = G[_oppY].filter(x => x.curHp>0);
+      if(hit >= 8 || !liveFoes.length || checkWin()){
+        updateUI();
+        _pSetTimeout(() => _burstFinish(h, _interrupted), 400);
+        return;
+      }
+      const t = liveFoes[Math.floor(Math.random() * liveFoes.length)];
+      // 必中 + 無視有利狀態
+      doDmg(t, _dmgY, {actor:h, isSkill:true, ignoreBuffs:true, mustHit:true, elem:'dark'});
+      renderCard(t);
+      // 若目標未倒下，隨機抽 3 種強力狀態（無法免疫：直接 addStatus，不做 immune 檢查）
+      if(t.curHp > 0){
+        const localPool = [...STRONG_POOL];
+        for(let k=0; k<3 && localPool.length; k++){
+          const rnd = Math.floor(Math.random() * localPool.length);
+          const s = localPool.splice(rnd, 1)[0];
+          addStatus(t, s, 2);
+          if(s === 'hellfire'){
+            const hs = t.status.find(x => x.type==='hellfire');
+            if(hs) hs._actor = h;
+          } else if(s === 'poison'){
+            t._poisonAmt = Math.max(1, Math.floor(t.hp * 0.15));
+          }
+          bannerFX(t, STRONG_LABEL[s], '#cc88ff', 700);
+        }
+        renderCard(t);
+      }
+      hit++;
+      _pSetTimeout(yamataBurst, 280);
+    }
+    yamataBurst();
     return;
   }
   updateUI();
@@ -14459,6 +14669,206 @@ function execSkill(a, sk, cost, stype){
     renderCard(a);
     endAction(a, cost);
   }
+  // ══════════════════════════════════════════════════════
+  // ★ v1.0.20260421.0700 — 日本關三大 BOSS 技能實作
+  // ══════════════════════════════════════════════════════
+  // 大天狗 S1：依特技+速度對1名敵人造成1次傷害（風屬性）
+  else if(n==='疾風團扇擊'){
+    setPending('enemy', t => {
+      const dmg = spv(a) + a.spd;
+      log(`🌪️ [${a.name}] 疾風團扇擊！依特技+速度對 [${t.name}] 造成 ${dmg} 傷害！`);
+      playSkillFX('疾風團扇擊', a, [t]);
+      doDmg(t, dmg, {actor:a, isSkill:true, element:'wind'});
+      renderCard(t);
+      endAction(a, cost);
+    });
+  }
+  // 大天狗 S2：依特技70%對全體造成3次傷害
+  else if(n==='風捲殘雲'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const foes = G[opp].filter(h => h.curHp>0);
+    if(!foes.length){ endAction(a, cost); return; }
+    log(`🌪️ [${a.name}] 風捲殘雲！狂風席捲全場 3 次！`);
+    playSkillFX('風捲殘雲', a, foes);
+    const perDmg = Math.max(1, Math.floor(spv(a) * 0.70));
+    let round = 0;
+    function fengJuan(){
+      if(round >= 3 || checkWin()){ updateUI(); endAction(a, cost); return; }
+      const liveFoes = G[opp].filter(h => h.curHp>0);
+      if(!liveFoes.length){ updateUI(); endAction(a, cost); return; }
+      liveFoes.forEach(t => {
+        doDmg(t, perDmg, {actor:a, isSkill:true, element:'wind'});
+        renderCard(t);
+      });
+      round++;
+      _pSetTimeout(fengJuan, 380);
+    }
+    fengJuan();
+    return;
+  }
+  // 酒吞童子 S1：依特技150%對全體造成1次傷害，爆擊+50%
+  else if(n==='鬼力橫掃'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const foes = G[opp].filter(h => h.curHp>0);
+    if(!foes.length){ endAction(a, cost); return; }
+    log(`👹 [${a.name}] 鬼力橫掃！以 150% 特技全體重擊，爆擊率 +50%！`);
+    playSkillFX('鬼力橫掃', a, foes);
+    const dmg = Math.max(1, Math.floor(spv(a) * 1.50));
+    foes.forEach(t => {
+      doDmg(t, dmg, {actor:a, isSkill:true, element:'dark', forceCritRate: 0.5});
+      renderCard(t);
+    });
+    endAction(a, cost);
+  }
+  // 酒吞童子 S2：恢復友方20%HP，攻擊+特技+25% 2回合
+  else if(n==='酒宴'){
+    log(`👹 [${a.name}] 酒宴！豪飲妖酒振奮全隊！`);
+    const allies = G[a.side].filter(h => h.curHp>0);
+    playSkillFX('酒宴', a, allies);
+    allies.forEach(t => {
+      // 恢復 20% 最大 HP
+      const healAmt = Math.floor(t.hp * 0.20);
+      t.curHp = Math.min(t.hp, t.curHp + healAmt);
+      showPopup(t, '+'+healAmt, 'heal');
+      // 加上 shutenBoost buff（+25% 攻擊與特技，2回合）— 刷新覆蓋
+      t.buffs = t.buffs.filter(b => b.type !== 'shutenBoost');
+      const origAtk = t._shutenOrigAtk !== undefined ? t._shutenOrigAtk : t.atk;
+      const origSp  = t._shutenOrigSp  !== undefined ? t._shutenOrigSp  : t.sp;
+      t._shutenOrigAtk = origAtk;
+      t._shutenOrigSp  = origSp;
+      t.atk = Math.max(1, Math.floor(origAtk * 1.25));
+      t.sp  = Math.max(1, Math.floor(origSp  * 1.25));
+      t.buffs.push({type:'shutenBoost', dur:2});
+      bannerFX(t, '酒宴！', '#ff9944', 900);
+      renderCard(t);
+    });
+    endAction(a, cost);
+  }
+  // 玉藻前 S1：依特技對隨機目標造成3~4次傷害（火），附加地獄之火
+  else if(n==='九尾狐火'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const hitCount = 3 + Math.floor(Math.random()*2); // 3~4
+    log(`🦊 [${a.name}] 九尾狐火！連擊 ${hitCount} 次並附加地獄之火！`);
+    playSkillFX('九尾狐火', a, G[opp].filter(h=>h.curHp>0));
+    const hitTargets = new Set();
+    let i = 0;
+    function jiuWei(){
+      const liveFoes = G[opp].filter(h => h.curHp>0);
+      if(i >= hitCount || !liveFoes.length || checkWin()){
+        // 全部連擊結束：對被命中的目標附加地獄之火 2 回合
+        hitTargets.forEach(t => {
+          if(t.curHp > 0){
+            addStatus(t, 'hellfire', 2);
+            const hs = t.status.find(s => s.type==='hellfire');
+            if(hs) hs._actor = a;
+            bannerFX(t, '🔥地獄之火', '#ff4400', 800);
+          }
+        });
+        updateUI();
+        endAction(a, cost);
+        return;
+      }
+      const t = liveFoes[Math.floor(Math.random() * liveFoes.length)];
+      doDmg(t, spv(a), {actor:a, isSkill:true, element:'fire'});
+      renderCard(t);
+      hitTargets.add(t);
+      i++;
+      _pSetTimeout(jiuWei, 300);
+    }
+    jiuWei();
+    return;
+  }
+  // 玉藻前 S2：全體強力失明2回合，自己+30護盾
+  else if(n==='妖狐幻惑'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const foes = G[opp].filter(h => h.curHp>0);
+    log(`🦊 [${a.name}] 妖狐幻惑！全體敵人陷入失明，自身附加護盾！`);
+    playSkillFX('妖狐幻惑', a, foes);
+    foes.forEach(t => {
+      addStatus(t, 'forecast', 2);
+      bannerFX(t, '強力失明 2r', '#ffff88', 900);
+      renderCard(t);
+    });
+    // 自己附加 30 護盾（取較大值覆蓋）
+    const ex = a.buffs.find(b => b.type === 'bigshield');
+    if(ex){ ex._hp = Math.max(ex._hp||0, 30); ex.dur = 99; }
+    else   { a.buffs.push({type:'bigshield', dur:99, _hp:30}); }
+    bannerFX(a, '🛡️護盾30', '#ffcc66', 900);
+    renderCard(a);
+    endAction(a, cost);
+  }
+  // ══════════════════════════════════════════════════════
+  // ★ v1.0.20260421.0800 — 隱藏 BOSS 八岐大蛇 S1/S2 技能實作
+  // ══════════════════════════════════════════════════════
+  // 八岐大蛇 S1：依攻擊40%對隨機目標造成8次傷害（龍屬性，每次獨立結算暴擊）
+  else if(n==='八首齊噬'){
+    const opp = a.side==='p1'?'p2':'p1';
+    log(`🐉 [${a.name}] 八首齊噬！八個龍頭連續撲咬 8 次！`);
+    playSkillFX('八首齊噬', a, G[opp].filter(h=>h.curHp>0));
+    const perDmg = Math.max(1, Math.floor(a.atk * 0.40));
+    let i = 0;
+    function yamataBite(){
+      const liveFoes = G[opp].filter(h => h.curHp>0);
+      if(i >= 8 || !liveFoes.length || checkWin()){
+        updateUI();
+        endAction(a, cost);
+        return;
+      }
+      const t = liveFoes[Math.floor(Math.random() * liveFoes.length)];
+      doDmg(t, perDmg, {actor:a, isSkill:true, element:'dark'});
+      renderCard(t);
+      i++;
+      _pSetTimeout(yamataBite, 250);
+    }
+    yamataBite();
+    return;
+  }
+  // 八岐大蛇 S2：依特技對全體造成 2 次傷害，隨機附加 2 種狀態
+  else if(n==='暗冰雷焰吐息'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const foes = G[opp].filter(h => h.curHp>0);
+    if(!foes.length){ endAction(a, cost); return; }
+    log(`🐉 [${a.name}] 暗冰雷焰吐息！毒息籠罩全場！`);
+    playSkillFX('暗冰雷焰吐息', a, foes);
+    const dmg = spv(a);
+    const statusPool = ['freeze','hellfire','seal','para'];
+    const statusLabel = {freeze:'❄️冰凍', hellfire:'🔥地獄之火', seal:'🚫封印', para:'⚡麻痺'};
+    let round = 0;
+    function yamataBreath(){
+      if(round >= 2 || checkWin()){ updateUI(); endAction(a, cost); return; }
+      const liveFoes = G[opp].filter(h => h.curHp>0);
+      if(!liveFoes.length){ updateUI(); endAction(a, cost); return; }
+      liveFoes.forEach(t => {
+        doDmg(t, dmg, {actor:a, isSkill:true, element:'dark'});
+        renderCard(t);
+      });
+      round++;
+      _pSetTimeout(yamataBreath, 420);
+    }
+    yamataBreath();
+    // 在傷害結算後（兩輪後）統一給狀態
+    _pSetTimeout(() => {
+      const pool = [...statusPool];
+      // 對每個命中的目標：隨機抽 2 個不重複的狀態
+      G[opp].filter(h=>h.curHp>0).forEach(t => {
+        const localPool = [...pool];
+        for(let k=0; k<2; k++){
+          if(!localPool.length) break;
+          const rnd = Math.floor(Math.random()*localPool.length);
+          const s = localPool.splice(rnd, 1)[0];
+          addStatus(t, s, 2);
+          if(s === 'hellfire'){
+            const hs = t.status.find(x => x.type==='hellfire');
+            if(hs) hs._actor = a;
+          }
+          bannerFX(t, statusLabel[s], '#99ccff', 700);
+        }
+        renderCard(t);
+      });
+      updateUI();
+    }, 2*420 + 150);
+  }
+  // ══════════════════════════════════════════════════════
   else if(n==='筍之守護'){
     // ★ 只護 HP% 最低的 1 名友方
     const _aliveAllies = G[a.side].filter(h=>h.curHp>0);
@@ -16481,10 +16891,27 @@ function startTurn(){
       next.acted=true; updateUI(); _pSetTimeout(startTurn,400); return;
     }
     const _ct=_charmAllies[Math.floor(Math.random()*_charmAllies.length)];
+    // ★ v1.0.20260421.1000 — 檢查是否為玉藻前禍世邪魅的強力魅惑，若是則傷害轉為玉藻前回血
+    const _charmStatus = next.status.find(s => s.type === 'charm');
+    const _tamamoName = _charmStatus && _charmStatus._tamamoVampire;
+    const _tamamoSide = _charmStatus && _charmStatus._tamamoSide;
+    const _tamamoHero = (_tamamoName && _tamamoSide)
+      ? (G[_tamamoSide] || []).find(h => h.name === _tamamoName && h.curHp > 0)
+      : null;
     log(`💕 [${next.name}] 被魅惑！自動普攻隊友 [${_ct.name}]！`);
     bannerFX(next,'💕 魅惑中！','#ff88cc',900);
     _pSetTimeout(()=>{
+      const _hpBefore = _ct.curHp;
       doDmg(_ct,next.atk,{actor:next});
+      const _actualDmg = Math.max(0, _hpBefore - _ct.curHp);
+      // ★ 玉藻前吸血：若魅惑帶有 _tamamoVampire 且玉藻前存活，傷害 100% 轉為玉藻前回血
+      if(_tamamoHero && _actualDmg > 0){
+        const _healAmt = _actualDmg;
+        _tamamoHero.curHp = Math.min(_tamamoHero.hp, _tamamoHero.curHp + _healAmt);
+        showPopup(_tamamoHero, '+' + _healAmt, 'heal');
+        log(`🦊 玉藻前的禍世邪魅！從魅惑傷害中吸取 ${_healAmt}HP！`);
+        renderCard(_tamamoHero);
+      }
       next.acted=true; updateUI(); _pSetTimeout(startTurn,500);
     },600);
     return;
@@ -19896,6 +20323,12 @@ function _detectCurrentBgm(){
       // 稀有怪戰（優先判斷，避免被 BOSS_NAMES 誤判成 BOSS）
       if(_names.includes('寶箱怪')) return 'bgm-chest';
       if(_names.includes('小惡魔')) return 'bgm-devil';
+      // ★ v1.0.20260421.0600 — 日本關專屬 BGM 判斷（優先於其他 BOSS BGM）
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
+        const _japanBosses = ['大天狗','酒吞童子','玉藻前','八岐大蛇'];
+        if(_names.some(n => _japanBosses.includes(n))) return 'bgm-japan-boss';
+        return 'bgm-japan-battle';
+      }
       // ★ 依 BOSS 變體決定 BOSS BGM（即使 _curBgm 為 null 從靜音切回也能正確判斷）
       if(window._currentBossVariantInfo && window._currentBossVariantInfo.id === 'apricot'){
         return 'bgm-boss-apricot';
@@ -21708,8 +22141,8 @@ function _advRestoreBattleState(snap, bs){
   if(_bb){
     _bb.className='';
     if(_restoreIsMini){
-      const sceneKey = (typeof _adventureStage !== 'undefined' && ADV_SCENES && ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][0])
-        ? ADV_SCENES[_adventureStage][0].key : 'river';
+      const _sceneArr0 = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(_adventureStage) : (ADV_SCENES && ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage].scenes) || ADV_SCENES[_adventureStage] || [];
+      const sceneKey = (_sceneArr0[0] && _sceneArr0[0].key) ? _sceneArr0[0].key : 'river';
       const _bgMap = {river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden'};
       _bb.classList.add(_bgMap[sceneKey] || 'bg-river');
     } else {
@@ -21787,6 +22220,13 @@ function selectAdvStage(key, btnEl){
   // 取得關卡資料
   const data = ADV_STAGES[key];
   if(!data) return;
+  // ★ v1.0.20260421.0600 — 選到日本關時切換為日本關首頁 BGM，其他關卡恢復一般選單 BGM
+  try{
+    if(typeof bgmFadeTo === 'function'){
+      if(key === 'japan') bgmFadeTo('bgm-japan-menu', 700);
+      else if(_curBgm === 'bgm-japan-menu') bgmFadeTo('bgm-menu-01', 700);
+    }
+  }catch(_bgE){}
   // 更新右側面板內容（加入null保護，避免遊戲進行中呼叫時崩潰）
   const _inName=document.getElementById('adv-info-name'); if(_inName) _inName.textContent=data.name;
   const _inImg=document.getElementById('adv-info-img'); if(_inImg) _inImg.textContent=data.emoji;
@@ -21953,9 +22393,11 @@ function _buildApricotTeam(){
   const _basePool = (typeof ADV_HERO_POOL!=='undefined')
     ? (ADV_HERO_POOL.maokong || [])
     : [];
+  // ★ v1.0.20260421.1100 — 日本 BOSS 即使已解鎖也不能被杏花妖魅惑當手下
   const _all = [...new Set([..._unlocked, ..._basePool])].filter(n =>
     typeof HERO_DB !== 'undefined' && HERO_DB[n]
     && !(typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n))
+    && !(typeof JAPAN_BOSS_HEROES !== 'undefined' && JAPAN_BOSS_HEROES.has(n))
   );
   // 隨機抽 2 位不同的英雄
   _all.sort(()=>Math.random()-0.5);
@@ -23925,24 +24367,47 @@ window._buildJapanBossTeam = function(variant){
 };
 
 // ── 5. ADV_SCENES.japan：三場景（choiceType='japan_auto' 自動推進）──
+// ★ v1.0.20260421.0600 — 填入使用者提供的真實背景圖
+//   第二場景依路線 variant 不同換圖（大天狗/酒吞童子/玉藻前 各自的神社背景）
+//   第三場景若為隱藏關八岐大蛇 → 富士山火口；其他三路線 → 富士山深入
+const _JP_BG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+const _JP_BG = {
+  opening:  _JP_BG_BASE + encodeURIComponent('表參道祭典 第一場景 共通開場.png'),
+  shrineTengu:     _JP_BG_BASE + encodeURIComponent('古老神社 第二場景 大天狗路線.png'),
+  shrineShuten:    _JP_BG_BASE + encodeURIComponent('古老神社 第二場景 酒吞童子軍路線.png'),
+  shrineTamamo:    _JP_BG_BASE + encodeURIComponent('古老神社 第二場景 玉藻前路線.png'),
+  fujiBossPre:     _JP_BG_BASE + encodeURIComponent('富士山深入 第三場景 三路線共通BOSS戰前.png'),
+  fujiYamata:      _JP_BG_BASE + encodeURIComponent('富士山火口 隱藏BOSS 八岐大蛇.png'),
+};
 ADV_SCENES.japan = {
   name:'✈ 日本探險',
-  bossBg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+  bossBg: _JP_BG.fujiBossPre,
   scenes:[
     {
-      bg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+      key:'japan-opening',
+      bg: _JP_BG.opening,
+      speaker:'📖 旁白',
       dialogs:[
         '📖 旁白：海風徐徐吹拂，小隊搭乘的渡輪緩緩靠近日本海岸——遠方富士山白雪覆頂，閃耀著耀眼光芒。',
         '📖 旁白：「歡迎來到日本！不過……空氣中怎麼飄著一股不祥妖氣？」隊長皺起眉頭。',
         '📖 旁白：小隊踏上陸地，首先來到熱鬧的表參道。祭典燈籠一盞盞亮起，紙燈搖曳，太鼓聲陣陣，穿著浴衣的人潮川流不息。',
         '📖 旁白：突然人群中傳來尖叫——幾個妖怪混入人群搗亂！章魚燒被偷吃、金魚缸被打翻、繪馬被撕毀一地！',
-        '⛩ 巫女小雪：「勇者大人！這次作亂的是**三大妖魔**的手下……你們必須集齊**三神器**才能阻止幕後黑手！」',
+        '⛩ 巫女小雪：「勇者大人！這次作亂的是三大妖魔的手下……你們必須集齊三神器才能阻止幕後黑手！」',
         '⛩ 巫女小雪：「已經選好了路線吧？那就出發吧！妖怪就在前方，請小心！」',
       ],
       choiceType:'japan_auto',
     },
     {
-      bg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+      key:'japan-shrine',
+      // 預設 bg（variant 對不上時的 fallback）
+      bg: _JP_BG.shrineTengu,
+      bgByVariant:{
+        tengu:      _JP_BG.shrineTengu,
+        shutendoji: _JP_BG.shrineShuten,
+        tamamo:     _JP_BG.shrineTamamo,
+        yamata:     _JP_BG.shrineTengu, // 隱藏關用不到，備援
+      },
+      speaker:'📖 旁白',
       dialogs:[
         '📖 旁白：循著妖氣，小隊深入山林，來到一座古老神社。參道兩旁的石燈籠亮著幽幽青光。',
         '📖 旁白：神社前，強烈妖氣翻騰——這條路線的菁英守衛已經擋在眼前！',
@@ -23951,10 +24416,18 @@ ADV_SCENES.japan = {
       choiceType:'japan_auto',
     },
     {
-      bg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E9%A6%96%E9%A0%81%E8%83%8C%E6%99%AF.png',
+      key:'japan-fuji',
+      bg: _JP_BG.fujiBossPre,
+      bgByVariant:{
+        tengu:      _JP_BG.fujiBossPre,
+        shutendoji: _JP_BG.fujiBossPre,
+        tamamo:     _JP_BG.fujiBossPre,
+        yamata:     _JP_BG.fujiYamata,
+      },
+      speaker:'📖 旁白',
       dialogs:[
         '📖 旁白：翻越險峻山路，小隊終於抵達富士山深處，雲霧繚繞，寒風凜冽。',
-        '📖 旁白：遠方傳來令人心驚膽戰的妖氣——路線 BOSS 就在前方！',
+        '📖 旁白:遠方傳來令人心驚膽戰的妖氣——路線 BOSS 就在前方！',
         '🗣️ 隊長：「大家打起精神！這場戰鬥決定一切，為了和平——出發！」',
       ],
       choiceType:'japan_auto',
@@ -24075,16 +24548,16 @@ Object.assign(HERO_DB, {
 
   // ── 3 主 BOSS（貓空 BOSS ×1.2）──
   '大天狗':{hp:600,atk:15,sp:23,spd:24,exp:66,
-    s1:{n:'疾風團扇擊',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'揮動羽扇掀起狂風，用攻擊值對隨機存活對手造成2到3次風屬性傷害。'},
-    s2:{n:'山中冥想',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'閉目冥想山之力，解除自己身上所有不利狀態，並恢復最大HP的10%（約60HP）。'}
+    s1:{n:'疾風團扇擊',c:3,d:'依特技+速度對目標造成1次傷害',fd:'揮動巨大羽扇凝聚山嵐狂風，以特技+速度的值對1名指定目標造成1次風屬性傷害。'},
+    s2:{n:'風捲殘雲',c:6,d:'依特技70%對全體目標造成3次傷害',fd:'掀起狂暴颶風橫掃戰場，用特技值的70%對全體存活對手造成3次風屬性傷害，每次獨立結算暴擊。'}
   },
   '酒吞童子':{hp:600,atk:15,sp:23,spd:24,exp:66,
-    s1:{n:'鬼力橫掃',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'揮動巨大鐵棒橫掃戰場，用攻擊值對隨機存活對手造成2到3次暗屬性傷害。'},
-    s2:{n:'酒宴復活',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'豪飲一口妖酒，解除自己身上所有不利狀態，並恢復最大HP的10%（約60HP）。'}
+    s1:{n:'鬼力橫掃',c:5,d:'依特技150%對全體造成1次傷害，爆擊率+50%',fd:'揮動巨大鐵棒橫掃戰場，用特技值的150%對全體存活對手造成1次暗屬性傷害，此傷害爆擊率+50%。'},
+    s2:{n:'酒宴',c:6,d:'恢復友方全體20%HP並提升25%攻擊與特技2回合',fd:'豪飲妖酒並灑向同伴，恢復我方全體最大HP的20%，同時提升我方全體攻擊與特技25%，持續2回合。'}
   },
   '玉藻前':{hp:600,atk:15,sp:23,spd:24,exp:66,
-    s1:{n:'九尾狐火',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'九條金尾掃出熾烈狐火，用攻擊值對隨機存活對手造成2到3次火屬性傷害。'},
-    s2:{n:'妖狐幻惑',c:4,d:'解除自身所有不利狀態並恢復10%HP',fd:'撒出迷幻狐術，解除自己身上所有不利狀態，並恢復最大HP的10%（約60HP）。'}
+    s1:{n:'九尾狐火',c:4,d:'依特技對隨機目標造成3~4次傷害，附加地獄之火',fd:'九條金尾噴射熾烈狐火，用特技值對隨機存活對手造成3~4次火屬性傷害，每次獨立結算暴擊；所有命中的目標追加地獄之火2回合（行動前後各-5HP）。'},
+    s2:{n:'妖狐幻惑',c:4,d:'使敵方全體失明2回合（無法免疫），附加30護盾',fd:'綻放妖豔狐術迷惑敵人，使敵方全體陷入「強力失明」2回合，行動成功率減半（無法被免疫或解除）。同時為自己附加可抵擋30傷害的護盾。'}
   },
 
   // ── 6 菁英小怪（貓空 綠竹筍/茶葉精靈 ×1.2）──
@@ -24115,8 +24588,8 @@ Object.assign(HERO_DB, {
 
   // ── 隱藏 BOSS：八岐大蛇（比三大 BOSS 再強一階）──
   '八岐大蛇':{hp:800,atk:20,sp:28,spd:22,exp:120,
-    s1:{n:'八首齊噬',c:2,d:'依攻擊對隨機目標造成3~4次傷害',fd:'八個龍頭一齊撲咬，用攻擊值對隨機存活對手造成3到4次龍屬性傷害，每次各自結算暴擊。'},
-    s2:{n:'噴吐雷焰冰風',c:4,d:'解除自身所有不利狀態並恢復15%HP',fd:'八頭齊噴雷焰冰風，解除自己身上所有不利狀態，並恢復最大HP的15%（約120HP）。'}
+    s1:{n:'八首齊噬',c:3,d:'依攻擊40%對隨機目標造成8次傷害',fd:'八個龍頭一齊撲咬，用攻擊值的40%對隨機存活對手造成8次龍屬性傷害，每次獨立結算暴擊。'},
+    s2:{n:'暗冰雷焰吐息',c:5,d:'依特技對全體造成2次傷害，隨機附加2種不利狀態',fd:'八頭齊噴暗焰、冰雪、落雷、烈焰等毒氣，用特技值對全體敵人造成2次傷害，並隨機從「冰凍、地獄之火、封印、麻痺」中附加2種不利狀態。'}
   },
 });
 
@@ -24724,6 +25197,13 @@ function _advShowUpfrontSkipDecision(onYes, onNo){
   playSfx('sfx-sel', 0.5);
 }
 
+// ★ v1.0.20260421.0600 — 統一 ADV_SCENES 存取 helper，相容陣列(貓空)與 {scenes:[]}(日本)
+window._getAdvSceneArray = function(stage){
+  if(!stage || typeof ADV_SCENES === 'undefined' || !ADV_SCENES[stage]) return [];
+  const raw = ADV_SCENES[stage];
+  return Array.isArray(raw) ? raw : (raw.scenes || []);
+};
+
 function advLoadScene(stage, idx) {
   // ★ 重置場景選題旗標（新場景可以再次顯示選擇題）
   _advSceneChoiceDone = false;
@@ -24737,17 +25217,30 @@ function advLoadScene(stage, idx) {
     try{ advFinishCutscene(); }catch(e){}
     return;
   }
-  const scenes = ADV_SCENES[stage];
+  // ★ v1.0.20260421.0600 — 相容兩種結構：陣列(貓空) 或 {scenes:[]}(日本)
+  const stageRaw = ADV_SCENES[stage];
+  const scenes = Array.isArray(stageRaw) ? stageRaw : (stageRaw.scenes || []);
   if(!scenes || idx >= scenes.length) { advFinishCutscene(); return; }
   _advSceneIdx = idx;
   _advDialogIdx = 0;
   const scene = scenes[idx];
 
+  // ★ v1.0.20260421.0600 — 日本關第二/第三場景可依玩家選的 variant 切換背景圖
+  let _bgUrl = scene.bg;
+  try{
+    if(stage === 'japan' && scene.bgByVariant){
+      const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.japan) || [];
+      const vIdx = (window._advSelectedVariantIdx||0) % Math.max(1, variants.length);
+      const vId = variants[vIdx] && variants[vIdx].id;
+      if(vId && scene.bgByVariant[vId]) _bgUrl = scene.bgByVariant[vId];
+    }
+  }catch(_bgvE){}
+
   // 背景淡入
   const bg = document.getElementById('adv-scene-bg');
   bg.classList.remove('visible');
   setTimeout(() => {
-    bg.style.backgroundImage = `url("${scene.bg}")`;
+    bg.style.backgroundImage = `url("${_bgUrl}")`;
     bg.classList.add('visible');
   }, 400);
 
@@ -24783,8 +25276,9 @@ function advLoadScene(stage, idx) {
 }
 
 function advShowDialog(stage, sceneIdx) {
-  if(!stage || !ADV_SCENES[stage] || !ADV_SCENES[stage][sceneIdx]) return;
-  const scene = ADV_SCENES[stage][sceneIdx];
+  const _sceneArrSD = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
+  if(!_sceneArrSD[sceneIdx]) return;
+  const scene = _sceneArrSD[sceneIdx];
   if(!scene || !scene.dialogs) return;
   const dialog = document.getElementById('adv-dialog-box');
   if(!dialog) return;
@@ -24844,8 +25338,9 @@ function advNextDialog(e) {
   const _qoEl = document.getElementById('adv-quiz-overlay');
   if(_qoEl && _qoEl.classList.contains('show')) return;
   const stage = _adventureStage;
-  if(!stage || !ADV_SCENES[stage] || !ADV_SCENES[stage][_advSceneIdx]) return;
-  const scene = ADV_SCENES[stage][_advSceneIdx];
+  const _sceneArrND = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
+  if(!_sceneArrND[_advSceneIdx]) return;
+  const scene = _sceneArrND[_advSceneIdx];
   if(!scene || !scene.dialogs) return;
   _advDialogIdx++;
   if (_advDialogIdx < scene.dialogs.length) {
@@ -24872,7 +25367,9 @@ function _advBossHpMult(){
 }
 
 function advShowChoicePanel(stage, sceneIdx) {
-  const scene = ADV_SCENES[stage][sceneIdx];
+  const _sceneArrCP = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
+  const scene = _sceneArrCP[sceneIdx];
+  if(!scene) return;
 
   // ★ 日本關 japan_auto：不需選擇，直接推進到下一場小怪戰/BOSS
   if(scene.choiceType === 'japan_auto'){
@@ -25121,7 +25618,9 @@ function advConfirmChoice(stage, sceneIdx) {
   if (!_advTempChoice) return;
   // ★ 立即鎖定，防止對話框點擊再次觸發選題
   _advSceneChoiceDone = true;
-  const scene = ADV_SCENES[stage][sceneIdx];
+  const _sceneArrCC = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
+  const scene = _sceneArrCC[sceneIdx];
+  if(!scene) return;
   if (scene.choiceType === 'grade') {
     _advPlayerGrade = _advTempChoice;
   } else if (scene.choiceType === 'subject') {
@@ -25456,7 +25955,7 @@ function advTgAwardTreasureAndEnd(){
 function advCloseTreasurePopup() {
   document.getElementById('adv-treasure-popup').classList.remove('show');
   const nextIdx = _advSceneIdx + 1;
-  const scenes = ADV_SCENES[_adventureStage] || [];
+  const scenes = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(_adventureStage) : [];
   // ★ 每場景後穿插一場小怪戰鬥（最後一場景也有，before BOSS）
   setTimeout(() => {
     advStartMiniBattle(nextIdx);
@@ -27471,6 +27970,28 @@ async function advStartWinSequence() {
       _showInGameToast('🍵 獲得骨董茶杯！前往超商可賣出換取1000知識幣', '#ffcc44', 3000);
     }
   }
+  // ★ v1.0.20260421.1100 — 日本 BOSS S 評價 5% 機率解鎖成為夥伴
+  //   對象：大天狗、酒吞童子、玉藻前（八岐大蛇不在此列）
+  //   條件：關卡=日本、BOSS 名字在 JAPAN_BOSS_HEROES、評級 = S
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+       && typeof JAPAN_BOSS_HEROES !== 'undefined' && JAPAN_BOSS_HEROES.has(_mainBoss)
+       && _winGrade && _winGrade.includes('S')){
+      const _unlockedSet = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      const _alreadyHave = _unlockedSet.includes(_mainBoss);
+      if(!_alreadyHave && Math.random() < 0.05){
+        advSaveUnlockedHero(_mainBoss);
+        log(`✨ 奇蹟！[${_mainBoss}] 被你的實力所折服，主動加入冒險者行列！（S評價 5%機率）`);
+        setTimeout(()=>{
+          _showInGameToast(
+            `✨ 日本 BOSS 加入夥伴！[${_mainBoss}] 成為你的夥伴！（S評價 5%機率觸發）`,
+            '#ffcc44', 5500
+          );
+        }, 1200);
+        _setNavDot('英雄', true);
+      }
+    }
+  }catch(_jpBossE){ console.warn('[日本 BOSS 解鎖] 失敗:', _jpBossE); }
   // ★ 超越極限果實：掉落率 = BOSS基礎EXP × 0.1%
   let _burstFruitDropped = false;
   try{
@@ -27488,14 +28009,17 @@ async function advStartWinSequence() {
   //   條件:收集完「冒險可獲得」的英雄(排除 BOSS/活動限定/商店肖像英雄,這些不算在「全收錄」要求中)
   //   基礎掉落率:50%,乘上難度倍率(沒自信 ×0.5 / 普通 ×1.0 / 我很會 ×1.25 → 最終 25% / 50% / 62.5%)
   try{
-    // 組「必須全部收錄」的英雄清單:排除 BOSS、EVENT_ONLY_HEROES、商店肖像英雄(都算活動限定)
+    // 組「必須全部收錄」的英雄清單:排除 BOSS、EVENT_ONLY_HEROES、商店肖像英雄、日本 BOSS(都算活動限定)
     const _shopExclCrystal = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
     const _eventExclCrystal = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
+    // ★ v1.0.20260421.1100 — 日本 BOSS 機率極低(5%)，不計入「全英雄收錄」判定
+    const _japanBossExcl = (typeof JAPAN_BOSS_HEROES !== 'undefined') ? Array.from(JAPAN_BOSS_HEROES) : [];
     const _requiredHeroes = typeof HERO_DB !== 'undefined'
       ? Object.keys(HERO_DB).filter(n =>
           (typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n)) &&
           !_shopExclCrystal.includes(n) &&
-          !_eventExclCrystal.includes(n)
+          !_eventExclCrystal.includes(n) &&
+          !_japanBossExcl.includes(n)
         )
       : [];
     const _unlockedHeroesForCrystal = advGetUnlockedHeroes();
@@ -31728,6 +32252,7 @@ function _buildHeroGrid() {
           </div>
         ` : `<div style="font-size:26px;color:#445;">🔒 未收錄</div>`}
         ${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🎪 活動限定</div>` : ''}
+        ${(typeof JAPAN_BOSS_HEROES !== 'undefined' && JAPAN_BOSS_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ffcc44;background:rgba(255,180,50,0.15);border:1.5px solid rgba(255,200,60,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🗾 日本BOSS戰低機率獲得</div>` : ''}
       </div>
       ${isUnlocked && _heroStatPoints[name] > 0 ? `<div style="position:absolute;top:8px;right:8px;background:#ff3333;color:#fff;font-size:22px;font-weight:900;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">${_heroStatPoints[name]}</div>` : ''}
     </div>`;
@@ -33748,8 +34273,8 @@ function advStartMiniBattle(nextSceneIdx) {
   // ★ v1.0.20260420.2000 — 修復:sceneKey 必須在 if block 外宣告
   //   否則非事件戰鬥時 sceneKey 的 const 作用域只在 if block 內,
   //   下方 setTimeout 存取 sceneKey 會 ReferenceError → 戰場初始化中斷 → 卡死空畫面
-  const sceneKey = (ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage][_advSceneIdx])
-    ? ADV_SCENES[_adventureStage][_advSceneIdx].key : 'river';
+  const _sceneArrSK = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(_adventureStage) : [];
+  const sceneKey = (_sceneArrSK[_advSceneIdx] && _sceneArrSK[_advSceneIdx].key) ? _sceneArrSK[_advSceneIdx].key : 'river';
 
   if(!_isEventBattle){
     // 一般小怪戰:顯示通用開場白(依場景抽一句)
@@ -34435,15 +34960,27 @@ function _buildMonsterPage() {
   const el = document.getElementById('monster-page-content');
   if(!el) return;
 
+  // 貓空關
   const BOSS_LIST = ['九尾空貓怪','杏花妖'];
   const ELITE_LIST = ['綠竹筍小妖', '茶葉精靈'];
   const MOB_LIST = ['偷摘花的頑皮妖精','偷鳥蛋的鳥人哈維','偷竹筍的哥布林','偷喝茶的史萊姆'];
   const RARE_MOB_LIST = ['寶箱怪','小惡魔'];
 
+  // ★ v1.0.20260421.1100 — 日本關 16 隻
+  const JP_BOSS_LIST = ['大天狗','酒吞童子','玉藻前','八岐大蛇'];
+  const JP_ELITE_LIST = ['烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐'];
+  const JP_MOB_LIST = ['河童','二口女','雪女','獨眼小僧'];
+  const JP_RARE_LIST = ['行走的二宮尊德像','座敷童子'];
+
   const MONSTER_AVTR = {
     '九尾空貓怪': '🐱', '杏花妖': '🌸', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
     '偷摘花的頑皮妖精': '🌸', '偷鳥蛋的鳥人哈維': '🐦', '偷竹筍的哥布林': '🌿', '偷喝茶的史萊姆': '🫖',
     '寶箱怪': '📦', '小惡魔': '😈',
+    // 日本
+    '大天狗':'👺','酒吞童子':'👹','玉藻前':'🦊','八岐大蛇':'🐉',
+    '烏天狗':'🦅','木葉天狗':'🍃','茨木童子':'👿','星熊童子':'🐻','殺生石分身':'🗿','管狐':'🦊',
+    '河童':'💧','二口女':'👄','雪女':'❄️','獨眼小僧':'👁️',
+    '行走的二宮尊德像':'🗿','座敷童子':'👧',
   };
 
   function makeCard(name, tier) {
@@ -34482,12 +35019,21 @@ function _buildMonsterPage() {
   }
 
   el.innerHTML =
+    `<div style="font-size:40px;font-weight:900;color:#ffccaa;margin-bottom:18px;letter-spacing:3px;border-bottom:3px solid rgba(255,180,120,0.5);padding-bottom:10px;">🏞 貓空關</div>` +
     makeSection('👑 BOSS', BOSS_LIST, 'boss') +
     makeSection('⚡ 精英小怪', ELITE_LIST, 'elite') +
     makeSection('🌿 路邊小怪', MOB_LIST, 'mob') +
-    makeSection('💜 稀有小怪', RARE_MOB_LIST, 'rare');
+    makeSection('💜 稀有小怪', RARE_MOB_LIST, 'rare') +
+    `<div style="font-size:40px;font-weight:900;color:#ffccaa;margin:40px 0 18px;letter-spacing:3px;border-bottom:3px solid rgba(255,180,120,0.5);padding-bottom:10px;">🗾 日本關</div>` +
+    makeSection('👑 BOSS', JP_BOSS_LIST, 'boss') +
+    makeSection('⚡ 精英小怪', JP_ELITE_LIST, 'elite') +
+    makeSection('🌿 路邊小怪', JP_MOB_LIST, 'mob') +
+    makeSection('💜 稀有小怪', JP_RARE_LIST, 'rare');
   // ★ 設定魔物翻頁清單
-  _monsterDetailList = [...BOSS_LIST, ...ELITE_LIST, ...MOB_LIST, ...RARE_MOB_LIST];
+  _monsterDetailList = [
+    ...BOSS_LIST, ...ELITE_LIST, ...MOB_LIST, ...RARE_MOB_LIST,
+    ...JP_BOSS_LIST, ...JP_ELITE_LIST, ...JP_MOB_LIST, ...JP_RARE_LIST,
+  ];
 }
 
 
@@ -35996,6 +36542,152 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.1100', brief:[
+    '日本三大 BOSS（大天狗 / 酒吞童子 / 玉藻前）拿 S 評價有 5% 機率成為夥伴加入',
+    '這三隻同時出現在英雄圖鑑（標「🗾 日本BOSS戰低機率獲得」）與魔物圖鑑',
+    '魔物圖鑑全面擴充日本關 16 隻怪物資料',
+  ], items:[
+    '【新增 JAPAN_BOSS_HEROES 常數】',
+    '  Set([大天狗, 酒吞童子, 玉藻前])，集中管理這三個「可英雄化」的日本 BOSS',
+    '  八岐大蛇為隱藏最終 BOSS，不在英雄化名單中',
+    '【解鎖機制】',
+    '  條件：_adventureStage==="japan" + BOSS 名字在 JAPAN_BOSS_HEROES + _winGrade 含 "S" + Math.random() < 0.05',
+    '  在 advStartWinSequence BOSS 掉落收藏品區塊之後執行',
+    '  觸發時：呼叫 advSaveUnlockedHero + 顯示 5500ms 金色 toast「✨ 日本 BOSS 加入夥伴！」+ _setNavDot("英雄", true)',
+    '  若已解鎖過則不重複觸發（避免重複 toast）',
+    '【英雄圖鑑顯示】',
+    '  _buildHeroGrid 無需修改過濾邏輯（日本 BOSS 本就在 HERO_DB 且不在 BOSS_NAMES，所以直接以未解鎖灰卡顯示）',
+    '  解鎖後顯示正常英雄卡 + 金色徽章「🗾 日本BOSS戰低機率獲得」',
+    '  與「🎪 活動限定」徽章類似的視覺風格，但使用金色色系',
+    '【魔物圖鑑擴充】',
+    '  _buildMonsterPage 加入 JP_BOSS_LIST(4)/JP_ELITE_LIST(6)/JP_MOB_LIST(4)/JP_RARE_LIST(2) 共 16 隻',
+    '  分區呈現：貓空關 10 隻 + 日本關 16 隻 = 26 隻總覽',
+    '  MONSTER_AVTR 擴充日本怪表情 emoji',
+    '  _monsterDetailList 也包含日本 16 隻，詳情翻頁可瀏覽',
+    '【防呆處理】',
+    '  _buildApricotTeam 抽魅惑手下時排除 JAPAN_BOSS_HEROES（避免解鎖的日本 BOSS 被杏花妖抓去打自己）',
+    '  「全英雄收錄」判定(召喚水晶掉落)排除日本 BOSS（5%機率太低，不列為必收錄項目）',
+    '【不受影響】',
+    '  冒險選角池 (_heroPickPool / fullPool) 保留日本 BOSS — 解鎖後他們可正常當隊員出戰',
+    '  援軍選擇池保留日本 BOSS — 解鎖後可被替換上場',
+  ] },
+  { ver:'v1.0.20260421.1000', brief:[
+    '修正三大日本 BOSS 爆發技的數值與效果：',
+    '大天狗 神威風狩 → 神威風獵（傷害改為特技150%）',
+    '酒吞童子 鬼王酒宴（恢復 30%→15%、攻擊 400%→500%）',
+    '玉藻前 九尾魅惑・傾國一瞥 → 禍世邪魅（新機制：強力魅惑+吸血轉化）',
+  ], items:[
+    '【大天狗 神威風獵】（原「神威風狩」）',
+    '  改名為「神威風獵」；傷害從「攻擊350%」改為「特技150%」× 5次隨機連擊',
+    '  其他效果不變（30%強力暈眩、最後全體颶風100%攻擊傷害 + 全體速度-50% 2回合）',
+    '【酒吞童子 鬼王酒宴】',
+    '  自身恢復從「30%最大HP」改為「15%最大HP」',
+    '  單體重擊從「攻擊400%」改為「攻擊500%」',
+    '  其他效果不變（擊倒最多連鎖3次、2回合後 burstVamp嗜血+shutenBoost+50%攻擊/特技）',
+    '【玉藻前 禍世邪魅】（原「九尾魅惑・傾國一瞥」）',
+    '  改名為「禍世邪魅」；傷害保持特技200%全體火屬性',
+    '  魅惑機率從 75%→65%，但改為「強力魅惑」(無法被免疫或解除)',
+    '    - 移除 ctrlImmune/statusImmune/hasStatus charm 三層檢查',
+    '    - 直接推入 charm status 並帶 _tamamoVampire 標記',
+    '  新機制：被強力魅惑的敵人在下回合自動普攻隊友時，造成的傷害 100% 轉為玉藻前回血',
+    '    - 在 charm 行動邏輯(line ~16896)加入 _tamamoVampire 檢查',
+    '    - 若魅惑帶有此標記，計算實際傷害並呼叫 _tamamoHero.curHp += _actualDmg',
+    '    - 顯示回血數字 popup + log 紀錄「玉藻前的禍世邪魅！從魅惑傷害中吸取X HP！」',
+    '  移除原本「傷害結算完畢吸取總傷害50%」的一次性吸血（換成持續性魅惑吸血）',
+    '【實作機制說明】',
+    '  強力魅惑 = charm 狀態 + _tamamoVampire 自訂屬性 + 跳過免疫檢查',
+    '  沿用現有 charm 自動普攻機制，只在魅惑者普攻隊友時多一步回血邏輯',
+  ] },
+  { ver:'v1.0.20260421.0900', brief:[
+    '三大日本 BOSS 爆發技能全新設計並實作（大天狗/酒吞童子/玉藻前）',
+  ], items:[
+    '【大天狗：神威風狩】',
+    '  攻擊350% × 5次隨機連擊，每次30%機率強力暈眩1回合',
+    '  第5段結束後額外對全體造成攻擊100%颶風傷害，並使全體敵人陷入強力減速2回合(-50%速度)',
+    '【酒吞童子：鬼王酒宴】',
+    '  第一階段：自身恢復30%最大HP',
+    '  第二階段：攻擊400%重擊1目標，若目標倒下則連鎖傳遞至下一位(最多3次連鎖)',
+    '  第三階段：自身附加 burstVamp 嗜血 2回合（100% 吸血）+ shutenBoost 2回合（+50% 攻擊與特技）',
+    '  玩家控制時需選擇初始目標；AI 自動選 HP 最低的敵人',
+    '【玉藻前：九尾魅惑・傾國一瞥】',
+    '  以特技值200%對全體敵人造成火屬性傷害',
+    '  75% 機率魅惑 1 回合（下回合自動普攻自己隊友，受 ctrlImmune/statusImmune 免疫）',
+    '  傷害結算完畢後額外吸取「本次造成總傷害」的 50% 回血給玉藻前自己',
+    '  程式使用 totalDmgDealt 累計每個目標的實際傷害（考慮目標護盾/減傷後的真實扣血）',
+    '【實作位置】BURST 技能大 switch 區塊內，在千年絕美之後、八頭龍滅世之前新增 3 個 if(burstName===)',
+    '【機制複用】',
+    '  burstVamp：沿用吸血鬼鮮血契約現有 100% 吸血機制(_vampMult:1.0)',
+    '  shutenBoost：沿用 S2 酒宴的 buff 類型，爆發版升級為 +50%（非 25%），同樣自動在 buff 期滿還原',
+    '  stun/spddown/charm：沿用雷法師/光法師/杏花妖的既有狀態機制，無須新增機制',
+  ] },
+  { ver:'v1.0.20260421.0800', brief:[
+    '隱藏 BOSS 八岐大蛇技能重新設計：八首齊噬 + 暗冰雷焰吐息',
+    '新增八岐大蛇爆發技【八頭龍滅世】：8 次必中 + 隨機 3 種強力狀態',
+  ], items:[
+    '【八岐大蛇 S1 八首齊噬 (3能量)】',
+    '  依攻擊值的40%對隨機存活對手造成8次龍屬性傷害，每次獨立結算暴擊',
+    '  實作：for-loop 隨機抽存活目標，每發 250ms 延遲，目標倒下則重新抽',
+    '【八岐大蛇 S2 暗冰雷焰吐息 (5能量)】',
+    '  依特技對全體造成2次傷害，並從「冰凍、地獄之火、封印、麻痺」中隨機抽2種附加到每個目標',
+    '  實作：2 輪全體傷害 (每輪420ms延遲) → 傷害結束後統一隨機抽2種狀態附加',
+    '【八岐大蛇爆發技【八頭龍滅世】— 無法免疫】',
+    '  依特技對隨機目標造成8次必中傷害（ignoreBuffs + mustHit）',
+    '  每次命中後從 7 種「強力版」狀態中隨機抽 3 種附加給目標，無法被免疫或解除：',
+    '    強力冰凍、強力地獄之火、強力封印、強力麻痺、強力失明、強力中毒、強力減療',
+    '  註冊到 BURST_DB["八岐大蛇"]，八岐大蛇戰鬥中累積能量至 10 會自動發動',
+    '【強力狀態不可免疫機制】',
+    '  使用直接 addStatus 不做 immune/statusImmune/ctrlImmune 檢查（沿用現有雷法師怒雷狂襲、光法師審判光束的作法）',
+    '  中毒附加時自動設 _poisonAmt = 目標最大HP*15%、地獄之火附加時設 _actor 指向八岐大蛇本人',
+    '【原問題】之前八岐大蛇 S1/S2 也跟三大 BOSS 一樣只有技能名稱沒實作 case，加上沒爆發技',
+    '  此版本完整補齊，讓隱藏 BOSS 真正有「最強一階」的威脅感',
+  ] },
+  { ver:'v1.0.20260421.0700', brief:[
+    '三大日本 BOSS 技能全面重新設計並實作戰鬥邏輯（原本只有技能名稱無實際效果）',
+    '大天狗：疾風團扇擊 + 風捲殘雲',
+    '酒吞童子：鬼力橫掃 + 酒宴（新增 shutenBoost buff 顯示）',
+    '玉藻前：九尾狐火 + 妖狐幻惑',
+  ], items:[
+    '【原問題】HERO_DB 中三大 BOSS 的 S1/S2 技能原本只有名稱＋文字描述，沒有對應的 case 處理，'
+      + '實戰中 AI 按下技能也不會產生效果 — 等於這三個 BOSS 其實只會普攻！',
+    '【大天狗】',
+    '  S1 疾風團扇擊 (3能量)：依(特技+速度)對1名指定目標造成1次風屬性傷害',
+    '  S2 風捲殘雲 (6能量)：依特技的70%對全體敵人造成3次風屬性傷害（每次獨立暴擊）',
+    '【酒吞童子】',
+    '  S1 鬼力橫掃 (5能量)：依特技150%對全體敵人造成1次暗屬性傷害，此傷害爆擊率+50% (forceCritRate:0.5)',
+    '  S2 酒宴 (6能量)：恢復友方全體20%最大HP，並提升攻擊與特技25%持續2回合',
+    '    - 新增 shutenBoost buff 類型，自動在期滿時還原攻擊/特技原值',
+    '    - 買 buff 徽章顯示為「🍶酒宴+25%」',
+    '【玉藻前】',
+    '  S1 九尾狐火 (4能量)：依特技對隨機目標造成3~4次火屬性連擊，所有被命中目標追加地獄之火2回合',
+    '  S2 妖狐幻惑 (4能量)：使敵方全體陷入強力失明2回合（無法免疫），同時為自己附加30護盾(bigshield)',
+    '【實作位置】戰鬥 case 區塊 (line ~14467)，緊接貓空 BOSS 技能之後，語法已驗證通過',
+    '【能量成本調整】原本 2/4 能量設計改為 3~6 能量，配合新技能更強的效果',
+  ] },
+  { ver:'v1.0.20260421.0600', brief:[
+    '補上日本關全部正式背景圖：表參道、三路線神社（大天狗/酒吞童子/玉藻前各自一張）、富士山深入、富士山火口',
+    '新增日本關專屬 BGM：關卡首頁主題曲、小怪戰、BOSS 戰三種',
+    '修復日本關場景系統的潛在卡死 bug（ADV_SCENES.japan 物件結構與貓空陣列結構相容問題）',
+  ], items:[
+    '【背景圖更新】',
+    '  第一場景（共通開場）：表參道祭典 第一場景 共通開場.png',
+    '  第二場景（依 variant 換圖）：古老神社 第二場景 × 大天狗/酒吞童子/玉藻前 三條路線各自背景',
+    '  第三場景（依 variant 換圖）：富士山深入 第三場景 三路線共通 BOSS 戰前 / 富士山火口 隱藏 BOSS 八岐大蛇',
+    '【新 BGM 音檔】',
+    '  bgm-japan-menu  — 日本關卡首頁.m4a（選到日本關時播放）',
+    '  bgm-japan-battle — 日本小怪戰 BGM2.mp3（日本關小怪戰）',
+    '  bgm-japan-boss   — 日本 BOSS 戰.m4a（四路線 BOSS 戰）',
+    '【核心流程修復 - 潛在卡死 bug】',
+    '  ADV_SCENES.japan 是 {scenes:[]} 物件結構，但原系統多處把 ADV_SCENES[stage] 直接當陣列用',
+    '  包括 advShowDialog / advNextDialog / advShowChoicePanel / advConfirmChoice / advCloseTreasurePopup / advStartMiniBattle（sceneKey 存取）',
+    '  這些地方在日本關會讀到 undefined 或取不到 .length → 進場景可能卡白畫面',
+    '  新增 window._getAdvSceneArray(stage) helper 相容兩種結構：回傳 Array',
+    '  把所有直接 array access 的點全部改用 helper（6 處存取點）',
+    '【系統擴充】',
+    '  advLoadScene 支援 scene.bgByVariant — 日本關第二/第三場景依玩家選的路線動態切背景圖',
+    '  getDesiredBgm 分派器：日本關 BOSS 戰 → bgm-japan-boss、小怪戰 → bgm-japan-battle（優先於 adventure-scene 通用 BGM）',
+    '  selectAdvStage hook：選到日本關時 BGM fade 到 bgm-japan-menu，切其他關自動還原到 bgm-menu-01',
+    '【無影響】貓空關卡流程與 BGM 完全不受影響（陣列結構的既有存取仍正常）',
+  ] },
   { ver:'v1.0.20260421.0500', brief:[
     '修正日本關選擇酒吞童子/玉藻前/八岐大蛇路線後，預覽和實戰都錯誤變成大天狗陣容的重大 bug',
     '修正日本關路線選擇視窗 4 張卡片超出畫面無法捲動的問題',
@@ -37185,7 +37877,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.0500';
+  const CURRENT_VERSION = 'v1.0.20260421.1100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -37202,7 +37894,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.0500';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.1100';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
