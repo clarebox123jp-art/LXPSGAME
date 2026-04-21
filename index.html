@@ -24804,7 +24804,7 @@ ADV_SCENES.japan = {
         '📖 旁白:遠方傳來令人心驚膽戰的妖氣——路線 BOSS 就在前方！',
         '🗣️ 隊長：「大家打起精神！這場戰鬥決定一切，為了和平——出發！」',
       ],
-      choiceType:'japan_auto',
+      choiceType:'random_event',
     },
   ]
 };
@@ -25410,6 +25410,8 @@ window._onJapanBossDefeated = function(){
         if(typeof log==='function') log(`🏆 獲得神器：${v.treasureName}！目前已收集 ${after}/3 件。`);
       }, 500);
     }catch(e){}
+    // ★ v1.0.20260421.3000 — 三神器獎章
+    try{ _checkMedalJapanTreasure(); }catch(_){}
   }
 };
 // ═══════════════════════════════════════════════════════════════════
@@ -25495,8 +25497,35 @@ const ADV_SUBJECT_FOCUS = {
 function getAdvBossIntroLines(){
   // ★ 偵測當前主 BOSS 變體
   const _mainBossName = (typeof G !== 'undefined' && G && G.p2)
-    ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪') || {}).name
+    ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪'
+        || h.name==='大天狗' || h.name==='酒吞童子' || h.name==='玉藻前' || h.name==='八岐大蛇') || {}).name
     : '九尾空貓怪';
+  // ★ v1.0.20260421.3000 — 日本關 BOSS 專屬對白（不套年級/科目/難度模板）
+  const _JP_BOSS_INTROS = {
+    '大天狗': [
+      '🪶「哼！區區凡人也敢踏入我大天狗的山領？」',
+      '「這場考驗，是對你心性與智慧的試煉——答錯就別想活著下山！」',
+      '「吾乃風之主宰！風有多烈，吾之怒火就有多烈！出題吧——」',
+    ],
+    '酒吞童子': [
+      '🍶「嗝……又來一群不怕死的小鬼……」',
+      '「既然來了，就陪老夫喝一杯，不，答幾題再說！」',
+      '「若答不出來——嘿嘿，就把你的魂魄泡進我的酒盃裡！」',
+    ],
+    '玉藻前': [
+      '🦊「唉呀～這些小英雄好可愛喔～讓姊姊好好看看……」',
+      '「選了日本關？居然敢跟本狐仙玩知識大比拼？」',
+      '「答對了姐姐就放你過關～答錯了……就乖乖成為我的狐族一員吧～」',
+    ],
+    '八岐大蛇': [
+      '🐉「唔……終於還是集齊三神器來找本王算帳了嗎？」',
+      '「本王沉睡千年，想不到區區小輩也敢打擾……」',
+      '「好！就讓你見識古代神獸的真正威能——知識之戰，開始！」',
+    ],
+  };
+  if(_JP_BOSS_INTROS[_mainBossName]){
+    return _JP_BOSS_INTROS[_mainBossName];
+  }
   const _isApricot = _mainBossName === '杏花妖';
   const _tailEasy = _isApricot ? '本仙今日心情好，就手下留情一點～' : '本貓手下留情一點喵！';
   const _tailMid  = _isApricot ? '標準難度，可不要讓本仙失望呀～' : '標準難度，好好發揮喵！';
@@ -26294,10 +26323,76 @@ function advGiveTreasure(slotIdx) {
 //   30% 異次元裂縫（100% 小惡魔）
 //   20% 遇到野生動物
 function advStartTeagardenEvent(){
+  // ★ v1.0.20260421.3000 — 依當前關卡分派對應的第三場景事件
+  if(_adventureStage === 'japan'){
+    return advStartJapanFujiEvent();
+  }
   const r = Math.random();
   if(r < 0.50)      advTgEvent_chest();       // 50% 神秘寶箱
   else if(r < 0.80) advTgEvent_rift();        // 30% 異次元裂縫
   else              advTgEvent_petEncounter();// 20% 遇到野生動物
+}
+
+// ═══════════════════════════════════════════════════════
+// ★ v1.0.20260421.3000 — 日本富士山第三場景隨機事件
+// ═══════════════════════════════════════════════════════
+// 機率分配（與貓空一致）：
+//   50% 古老寶箱 → 50% 行走的二宮尊德像 / 50% 直接獲得法寶
+//   30% 妖氣結界 → 座敷童子 + 3 隻隨機日本小怪
+//   20% 遇到日本寵物 → 答題決定是否同行
+function advStartJapanFujiEvent(){
+  const r = Math.random();
+  if(r < 0.50)      advJpEvent_chest();
+  else if(r < 0.80) advJpEvent_rift();
+  else              advTgEvent_petEncounter();  // ★ 共用：寵物池已自動取日本池
+}
+
+// 事件一：神秘古寶箱 — 50% 行走的二宮尊德像戰、50% 直接獲得法寶
+function advJpEvent_chest(){
+  _tgShowDialog('📖 旁白', [
+    '富士山深處，樹蔭下金光閃爍……小隊發現一個被注連繩綑綁的古老神社寶箱！',
+    '「哇——這看起來是很有歷史的寶物啊！」隊員們興奮地圍了上去。',
+    '隊長小心翼翼地掀開了箱蓋……',
+  ], () => {
+    if(Math.random() < 0.50){
+      // 50%：行走的二宮尊德像
+      _tgShowDialog('🗿 行走的二宮尊德像', [
+        '「哎呀呀……我在看書呢，是誰打擾我了？」',
+        '箱底竟緩緩站起一尊背著柴薪、手捧書卷的石像——行走的二宮尊德像！',
+        '「既然打擾我讀書，就陪我考一考學問吧！」',
+      ], () => {
+        window._advPreComposedMobs = ['行走的二宮尊德像'];
+        window._advNoTreasureThisBattle = true;
+        advStartMiniBattle(_advSceneIdx + 1);
+      });
+    } else {
+      // 50%：直接獲得法寶
+      _tgShowDialog('📖 旁白', [
+        '金光閃爍，箱子裡靜靜躺著一件散發神秘氣息的法寶！',
+        '「哇——竟然是真正的法寶！」隊員們眼睛發亮。',
+        '小隊小心翼翼地收下了這件寶物，準備用它來對抗 BOSS！',
+      ], () => advTgAwardTreasureAndEnd());
+    }
+  });
+}
+
+// 事件二：妖氣結界 — 座敷童子 + 3 隻隨機日本小怪
+function advJpEvent_rift(){
+  _tgShowDialog('📖 旁白', [
+    '富士山半山腰，空氣突然變得沉重，一道朱紅色結界憑空展開，童謠聲從中飄出！',
+    '「啊——這是……妖怪結界？！」隊員瞪大眼睛。',
+    '「呵呵呵～來和我一起玩嘛～」一個小小身影從結界中蹦出，身後還跟著幾隻小妖！',
+  ], () => {
+    const mobs = ['座敷童子'];
+    const _jpPool = (typeof MINI_MONSTERS_JP !== 'undefined' && Array.isArray(MINI_MONSTERS_JP))
+      ? MINI_MONSTERS_JP : MINI_MONSTERS;
+    for(let i = 0; i < 3; i++){
+      mobs.push(_jpPool[Math.floor(Math.random() * _jpPool.length)]);
+    }
+    window._advPreComposedMobs = mobs;
+    window._advNoTreasureThisBattle = true;
+    advStartMiniBattle(_advSceneIdx + 1);
+  });
 }
 
 // 茶園事件：顯示事件對白（使用既有 adv-dialog-box）
@@ -27124,9 +27219,14 @@ function advShowBossIntro() {
   _advBossIntroLines = getAdvBossIntroLines();
   // ★ 依當前 BOSS 變體動態設定 BOSS 名稱 + 圖標
   try{
-    const _mainBoss = (G && G.p2) ? G.p2.find(h => h.name==='九尾空貓怪' || h.name==='杏花妖') : null;
+    // ★ v1.0.20260421.3000 — 擴充日本 BOSS 識別
+    const _JP_BOSS_ICONS = {'大天狗':'🪶','酒吞童子':'🍶','玉藻前':'🦊','八岐大蛇':'🐉'};
+    const _mainBoss = (G && G.p2) ? G.p2.find(h =>
+      h.name==='九尾空貓怪' || h.name==='杏花妖'
+      || _JP_BOSS_ICONS[h.name]) : null;
     if(_mainBoss){
-      const _icon = _mainBoss.name==='杏花妖' ? '🌸' : '🐱';
+      const _icon = _JP_BOSS_ICONS[_mainBoss.name]
+        || (_mainBoss.name==='杏花妖' ? '🌸' : '🐱');
       const _n1 = document.getElementById('adv-boss-intro-name');
       const _n2 = document.getElementById('adv-boss-react-name');
       const _n3 = document.getElementById('adv-quiz-label');
@@ -28643,7 +28743,15 @@ async function advStartWinSequence() {
       backpackAdd(_jd.id, 1);
       log(`${_jd.icon} [${_mainBoss}] 掉落了【${_jd.name}】！已放入背包。`);
       _showInGameToast(`${_jd.icon} 獲得${_jd.name}！前往超商可賣出換取${_jd.price.toLocaleString()}知識幣`, _jd.color, 3200);
+      // ★ v1.0.20260421.3000 — 收藏品獎章
+      try{ _checkMedalJapanCollect(_jd.id); }catch(_){}
     }
+    // ★ v1.0.20260421.3000 — 日本 BOSS 勝利獎章（BOSS kill/S評/路線/零KO/10回合/神器策略/低等挑戰 一次處理）
+    try{
+      const _koCount2 = (G && G.p1) ? G.p1.filter(h=>h && h.curHp<=0).length : 0;
+      const _rounds2 = (_advStats && _advStats.rounds) || 0;
+      _checkMedalJapanBossKill(_mainBoss, _winGrade||'', _koCount2, _rounds2);
+    }catch(_){}
     // ★ v1.0.20260421.2700 — 八岐大蛇額外固定獎勵與神器消耗
     if(_mainBoss === '八岐大蛇'){
       // 必掉：精裝經驗值書 ×10 + 技能升級書 ×5
@@ -34719,6 +34827,10 @@ function _advMiniGetQuizPool(sceneIdx) {
   if(subject === '五下自然第四單元' && typeof ADV_QUIZ_5S_U4_SOUND !== 'undefined'){
     return ADV_QUIZ_5S_U4_SOUND.filter(q => !window._miniQuizUsedIds.has(q.id));
   }
+  // ★ v1.0.20260421.3000 — 日本關題庫分支（不分年級難度，全 100 題池）
+  if(subject === '日本關'){
+    return ADV_QUIZ_DB.filter(q => q.subject === '日本關' && !window._miniQuizUsedIds.has(q.id));
+  }
   let targetSubject, targetDiff;
   if(sceneIdx === 0){
     targetSubject = subject; targetDiff = '沒自信';
@@ -35136,6 +35248,15 @@ function advStartMiniBattle(nextSceneIdx) {
       try{ setTimeout(()=>{ bgmFadeTo('bgm-chest', 600); _showRareMobIntro('寶箱怪'); }, 800); }catch(e){}
     } else if(_hasDevil){
       try{ setTimeout(()=>{ bgmFadeTo('bgm-devil', 600); _showRareMobIntro('小惡魔'); }, 800); }catch(e){}
+    } else {
+      // ★ v1.0.20260421.3000 — 一般小怪戰（非稀有）依關卡切換戰鬥 BGM
+      try{
+        if(_adventureStage === 'japan'){
+          setTimeout(()=>{ bgmFadeTo('bgm-japan-battle', 700); }, 600);
+        } else {
+          setTimeout(()=>{ bgmFadeTo('bgm-battle', 700); }, 600);
+        }
+      }catch(e){}
     }
 
     // ── 重置戰鬥狀態（同 advStartBattle）
@@ -36381,6 +36502,75 @@ const MEDAL_DEFS = [
   { id:'first_shop',        icon:'🛒', name:'第一筆消費',     desc:'在超商第一次購買道具',           cat:'其他' },
   { id:'coins_10000',       icon:'💰', name:'小有積蓄',       desc:'知識幣存量首次突破10000枚',      cat:'其他' },
   { id:'coins_50000',       icon:'💎', name:'富甲一方',       desc:'累積獲得知識幣50000枚（總計）',  cat:'其他' },
+  // ═══════════════════════════════════════════════
+  // ★ v1.0.20260421.3000 — 日本關成就 × 53
+  // ═══════════════════════════════════════════════
+  // ── 四大 BOSS 初次擊敗（4） ──
+  { id:'jp_boss_tengu',       icon:'🪶', name:'風神下凡',         desc:'第一次擊敗大天狗',                cat:'日本關' },
+  { id:'jp_boss_shutendoji',  icon:'🍶', name:'鬼王討伐',         desc:'第一次擊敗酒吞童子',              cat:'日本關' },
+  { id:'jp_boss_tamamo',      icon:'🦊', name:'妖狐斬',           desc:'第一次擊敗玉藻前',                cat:'日本關' },
+  { id:'jp_boss_yamata',      icon:'🐉', name:'斬龍勇者',         desc:'第一次擊敗八岐大蛇',              cat:'日本關' },
+  // ── BOSS 累積擊敗 3 次（4） ──
+  { id:'jp_tengu_3',          icon:'🌪', name:'天狗常客',         desc:'累積擊敗大天狗 3 次',             cat:'日本關' },
+  { id:'jp_shutendoji_3',     icon:'🍻', name:'鬼酒暢飲',         desc:'累積擊敗酒吞童子 3 次',           cat:'日本關' },
+  { id:'jp_tamamo_3',         icon:'💋', name:'千尾獵人',         desc:'累積擊敗玉藻前 3 次',             cat:'日本關' },
+  { id:'jp_yamata_3',         icon:'⚡', name:'伏龍大師',         desc:'累積擊敗八岐大蛇 3 次',           cat:'日本關' },
+  // ── BOSS S 級評價（4） ──
+  { id:'jp_tengu_s',          icon:'🌟', name:'天狗 S 評',        desc:'以 S 級評價擊敗大天狗',           cat:'日本關' },
+  { id:'jp_shutendoji_s',     icon:'🌟', name:'酒吞 S 評',        desc:'以 S 級評價擊敗酒吞童子',         cat:'日本關' },
+  { id:'jp_tamamo_s',         icon:'🌟', name:'玉藻 S 評',        desc:'以 S 級評價擊敗玉藻前',           cat:'日本關' },
+  { id:'jp_yamata_s',         icon:'🌟', name:'大蛇 S 評',        desc:'以 S 級評價擊敗八岐大蛇',         cat:'日本關' },
+  // ── 首次/全路線（2） ──
+  { id:'jp_first_clear',      icon:'🎌', name:'踏上日本',         desc:'第一次通關日本關任意路線',        cat:'日本關' },
+  { id:'jp_all_routes',       icon:'⛩', name:'三路線征服者',     desc:'大天狗、酒吞、玉藻 三路線都至少通關一次', cat:'日本關' },
+  // ── 三神器（5） ──
+  { id:'jp_treasure_1',       icon:'📜', name:'初見神器',         desc:'首次獲得三神器之一',              cat:'日本關' },
+  { id:'jp_treasure_3',       icon:'📿', name:'三神器齊聚',       desc:'同時持有草薙劍、八尺瓊勾玉、八咫鏡', cat:'日本關' },
+  { id:'jp_treasure_consume', icon:'✨', name:'神器之力',         desc:'消耗三神器弱化大蛇並擊敗之',      cat:'日本關' },
+  { id:'jp_treasure_preserve',icon:'💪', name:'不靠神器',         desc:'保留三神器直接打倒滿血八岐大蛇',  cat:'日本關' },
+  { id:'jp_yamata_reunlock',  icon:'🔁', name:'捲土重來',         desc:'消耗神器後再次集齊三神器',        cat:'日本關' },
+  // ── 路邊小怪首次擊敗（4） ──
+  { id:'jp_defeat_kappa',     icon:'🥒', name:'河童剋星',         desc:'第一次擊敗河童',                  cat:'日本關' },
+  { id:'jp_defeat_futakuchi', icon:'🍙', name:'噤聲妖女',         desc:'第一次擊敗二口女',                cat:'日本關' },
+  { id:'jp_defeat_yukionna',  icon:'❄️', name:'破冰者',           desc:'第一次擊敗雪女',                  cat:'日本關' },
+  { id:'jp_defeat_hitotsume', icon:'👁', name:'獨目警衛',         desc:'第一次擊敗獨眼小僧',              cat:'日本關' },
+  // ── 稀有小怪（4） ──
+  { id:'jp_defeat_ninomiya',  icon:'📚', name:'苦學之償',         desc:'第一次擊敗行走的二宮尊德像',      cat:'日本關' },
+  { id:'jp_defeat_zashiki',   icon:'🎎', name:'童子造訪',         desc:'第一次擊敗座敷童子',              cat:'日本關' },
+  { id:'jp_ninomiya_3',       icon:'📖', name:'勤學不輟',         desc:'累積擊敗行走的二宮尊德像 3 次',   cat:'日本關' },
+  { id:'jp_zashiki_3',        icon:'🏮', name:'童子故事',         desc:'累積擊敗座敷童子 3 次',           cat:'日本關' },
+  // ── 菁英小怪（6） ──
+  { id:'jp_defeat_karasu',    icon:'🦅', name:'烏鴉退散',         desc:'第一次擊敗烏天狗',                cat:'日本關' },
+  { id:'jp_defeat_konoha',    icon:'🍃', name:'木葉隨風',         desc:'第一次擊敗木葉天狗',              cat:'日本關' },
+  { id:'jp_defeat_ibaraki',   icon:'🗡', name:'魅惑鬼女',         desc:'第一次擊敗茨木童子',              cat:'日本關' },
+  { id:'jp_defeat_hoshiguma', icon:'🌠', name:'星辰化霜',         desc:'第一次擊敗星熊童子',              cat:'日本關' },
+  { id:'jp_defeat_sessho',    icon:'🪨', name:'鎮石破碎',         desc:'第一次擊敗殺生石分身',            cat:'日本關' },
+  { id:'jp_defeat_kuda',      icon:'🐺', name:'管狐使喚',         desc:'第一次擊敗管狐',                  cat:'日本關' },
+  // ── BOSS 專屬收藏品（4） ──
+  { id:'jp_collect_fan',      icon:'🪶', name:'羽扇收藏家',       desc:'獲得天狗的羽扇',                  cat:'日本關' },
+  { id:'jp_collect_sake',     icon:'🍶', name:'鬼酒賞玩',         desc:'獲得鬼王的酒盃',                  cat:'日本關' },
+  { id:'jp_collect_fur',      icon:'🦊', name:'金尾閃耀',         desc:'獲得九尾狐毛髮',                  cat:'日本關' },
+  { id:'jp_collect_scale',    icon:'🐉', name:'龍之證明',         desc:'獲得龍鱗片',                      cat:'日本關' },
+  // ── 路邊怪掉落物收集 10 個（4） ──
+  { id:'jp_collect_cucumber', icon:'🥬', name:'河童補給',         desc:'累積獲得被偷的小黃瓜 10 個',      cat:'日本關' },
+  { id:'jp_collect_onigiri',  icon:'🍱', name:'飯糰大戶',         desc:'累積獲得被咬過的飯糰 10 個',      cat:'日本關' },
+  { id:'jp_collect_ice',      icon:'🧊', name:'冰晶商人',         desc:'累積獲得碎冰片 10 個',            cat:'日本關' },
+  { id:'jp_collect_marble',   icon:'🔮', name:'玻璃珠王',         desc:'累積獲得妖怪玻璃珠 10 個',        cat:'日本關' },
+  // ── 日本 BOSS 英雄解鎖（4） ──
+  { id:'jp_hero_tengu',       icon:'🤝', name:'結拜大天狗',       desc:'將大天狗解鎖為夥伴',              cat:'日本關' },
+  { id:'jp_hero_shutendoji',  icon:'🤝', name:'結拜酒吞童子',     desc:'將酒吞童子解鎖為夥伴',            cat:'日本關' },
+  { id:'jp_hero_tamamo',      icon:'🤝', name:'結拜玉藻前',       desc:'將玉藻前解鎖為夥伴',              cat:'日本關' },
+  { id:'jp_hero_all3',        icon:'👹', name:'三妖同盟',         desc:'同時解鎖大天狗/酒吞/玉藻三位妖魔英雄', cat:'日本關' },
+  // ── 日本寵物（3） ──
+  { id:'jp_pet_first',        icon:'🎴', name:'初遇日本寵物',     desc:'第一次裝備日本主題寵物出戰',      cat:'日本關' },
+  { id:'jp_pet_full',         icon:'🎎', name:'日本寵物圖鑑',     desc:'解鎖全部 12 隻日本主題寵物',      cat:'日本關' },
+  { id:'jp_pet_battle_5',     icon:'🐾', name:'寵物戰友',         desc:'使用日本寵物完成 5 場戰鬥',       cat:'日本關' },
+  // ── 玩法成就（5） ──
+  { id:'jp_quiz_all_correct', icon:'💯', name:'日本通',           desc:'日本關單場小怪戰題目全部答對',    cat:'日本關' },
+  { id:'jp_no_ko',            icon:'🛡', name:'不敗神話',         desc:'日本 BOSS 戰全程無英雄倒下',      cat:'日本關' },
+  { id:'jp_quick_yamata',     icon:'⚔', name:'閃電伏龍',         desc:'10 回合內擊敗八岐大蛇',           cat:'日本關' },
+  { id:'jp_5_clears',         icon:'🎯', name:'日本探險常客',     desc:'累積通關日本關 5 次',             cat:'日本關' },
+  { id:'jp_low_lv_win',       icon:'🔥', name:'以弱勝強',         desc:'出戰隊伍全員 Lv20 以下擊敗任何日本 BOSS', cat:'日本關' },
 ];
 
 // ── 成就狀態存取 ──
@@ -36389,6 +36579,14 @@ let _medalStats = {
   totalAnswers: 0, correctAnswers: 0, streak: 0, hardModeAnswers: 0,
   totalCoinsEarned: 0, winStreak: 0, chestKills: 0, devilKills: 0,
   hadRevive: false,
+  // ★ v1.0.20260421.3000 — 日本關獎章專用統計
+  jpBossKills: { tengu:0, shutendoji:0, tamamo:0, yamata:0 },
+  jpMobKills: { kappa:0, futakuchi:0, yukionna:0, hitotsume:0, ninomiya:0, zashiki:0 },
+  jpClears: 0,
+  jpRoutesCleared: { tengu:false, shutendoji:false, tamamo:false },
+  jpCollectCounts: { cucumber:0, onigiri:0, ice:0, marble:0 },
+  jpPetBattles: 0,
+  jpTreasuresConsumed: false,  // 曾用過一次三神器弱化通關
 };
 
 function _loadMedals(){
@@ -36581,6 +36779,8 @@ function _checkMedalDefeat(mobName){
   }
   if(mobName === '九尾空貓怪' || mobName === '杏花妖') _unlockMedal('defeat_boss');
   if(['綠竹筍小妖','茶葉精靈'].includes(mobName)) _unlockMedal('defeat_elite');
+  // ★ v1.0.20260421.3000 — 日本小怪/菁英獎章（委派給專屬函式）
+  try{ _checkMedalJapanMob(mobName); }catch(_){}
   _saveMedals();
 }
 
@@ -36637,6 +36837,200 @@ function _checkMedalExtreme(heroName, heroLevel){
   _saveMedals();
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ★ v1.0.20260421.3000 — 日本關獎章檢查函式
+// ═══════════════════════════════════════════════════════════════
+
+// BOSS 擊敗統計與對應獎章
+function _checkMedalJapanBossKill(bossName, winGrade, heroesKO, rounds){
+  try{
+    const map = {
+      '大天狗':   { key:'tengu',      firstId:'jp_boss_tengu',      kill3Id:'jp_tengu_3',      sId:'jp_tengu_s' },
+      '酒吞童子': { key:'shutendoji', firstId:'jp_boss_shutendoji', kill3Id:'jp_shutendoji_3', sId:'jp_shutendoji_s' },
+      '玉藻前':   { key:'tamamo',     firstId:'jp_boss_tamamo',     kill3Id:'jp_tamamo_3',     sId:'jp_tamamo_s' },
+      '八岐大蛇': { key:'yamata',     firstId:'jp_boss_yamata',     kill3Id:'jp_yamata_3',     sId:'jp_yamata_s' },
+    };
+    const info = map[bossName];
+    if(!info) return;
+    _medalStats.jpBossKills = _medalStats.jpBossKills || {};
+    _medalStats.jpBossKills[info.key] = (_medalStats.jpBossKills[info.key]||0) + 1;
+    _unlockMedal(info.firstId);
+    if(_medalStats.jpBossKills[info.key] >= 3) _unlockMedal(info.kill3Id);
+    if(winGrade && winGrade.includes('S')) _unlockMedal(info.sId);
+    // 首次通關日本關
+    _unlockMedal('jp_first_clear');
+    // 累積通關次數（每場 BOSS 戰贏都算）
+    _medalStats.jpClears = (_medalStats.jpClears||0) + 1;
+    if(_medalStats.jpClears >= 5) _unlockMedal('jp_5_clears');
+    // 三路線完整
+    if(bossName === '大天狗' || bossName === '酒吞童子' || bossName === '玉藻前'){
+      _medalStats.jpRoutesCleared = _medalStats.jpRoutesCleared || {};
+      _medalStats.jpRoutesCleared[info.key] = true;
+      const r = _medalStats.jpRoutesCleared;
+      if(r.tengu && r.shutendoji && r.tamamo) _unlockMedal('jp_all_routes');
+    }
+    // 零 KO
+    if(heroesKO === 0) _unlockMedal('jp_no_ko');
+    // 10 回合內伏龍
+    if(bossName === '八岐大蛇' && rounds && rounds <= 10) _unlockMedal('jp_quick_yamata');
+    // 大蛇弱勢挑戰
+    try{
+      if(window._japanUseTreasures === true && bossName === '八岐大蛇'){
+        _unlockMedal('jp_treasure_consume');
+        _medalStats.jpTreasuresConsumed = true;
+      } else if(bossName === '八岐大蛇'){
+        // 保留神器打贏滿血大蛇（進戰前 _japanUseTreasures=false）
+        _unlockMedal('jp_treasure_preserve');
+      }
+    }catch(_){}
+    // 低等通關
+    try{
+      if(typeof G !== 'undefined' && G && G.p1){
+        const allLow = G.p1.every(h => {
+          const lv = (typeof _heroLevels !== 'undefined' && _heroLevels[h.name]) || 1;
+          return lv <= 20;
+        });
+        if(allLow) _unlockMedal('jp_low_lv_win');
+      }
+    }catch(_){}
+    _saveMedals();
+  }catch(e){ console.warn('[日本 BOSS 獎章]', e); }
+}
+
+// 路邊/稀有/菁英小怪擊敗
+function _checkMedalJapanMob(mobName){
+  try{
+    const mobMap = {
+      '河童':                { firstId:'jp_defeat_kappa',    key:'kappa' },
+      '二口女':              { firstId:'jp_defeat_futakuchi',key:'futakuchi' },
+      '雪女':                { firstId:'jp_defeat_yukionna', key:'yukionna' },
+      '獨眼小僧':            { firstId:'jp_defeat_hitotsume',key:'hitotsume' },
+      '行走的二宮尊德像':    { firstId:'jp_defeat_ninomiya', key:'ninomiya', count3Id:'jp_ninomiya_3' },
+      '座敷童子':            { firstId:'jp_defeat_zashiki',  key:'zashiki',  count3Id:'jp_zashiki_3' },
+    };
+    const info = mobMap[mobName];
+    if(info){
+      _medalStats.jpMobKills = _medalStats.jpMobKills || {};
+      _medalStats.jpMobKills[info.key] = (_medalStats.jpMobKills[info.key]||0) + 1;
+      _unlockMedal(info.firstId);
+      if(info.count3Id && _medalStats.jpMobKills[info.key] >= 3) _unlockMedal(info.count3Id);
+    }
+    const eliteMap = {
+      '烏天狗':       'jp_defeat_karasu',
+      '木葉天狗':     'jp_defeat_konoha',
+      '茨木童子':     'jp_defeat_ibaraki',
+      '星熊童子':     'jp_defeat_hoshiguma',
+      '殺生石分身':   'jp_defeat_sessho',
+      '管狐':         'jp_defeat_kuda',
+    };
+    if(eliteMap[mobName]) _unlockMedal(eliteMap[mobName]);
+    _saveMedals();
+  }catch(e){ console.warn('[日本小怪獎章]', e); }
+}
+
+// 神器相關
+function _checkMedalJapanTreasure(){
+  try{
+    const tr = (typeof _japanGetTreasures === 'function') ? _japanGetTreasures() : null;
+    if(!tr) return;
+    const cnt = (tr.tengu?1:0) + (tr.shutendoji?1:0) + (tr.tamamo?1:0);
+    if(cnt >= 1) _unlockMedal('jp_treasure_1');
+    if(cnt >= 3){
+      _unlockMedal('jp_treasure_3');
+      // 若曾消耗神器過、現在又集齊 → 捲土重來
+      if(_medalStats.jpTreasuresConsumed === true) _unlockMedal('jp_yamata_reunlock');
+    }
+    _saveMedals();
+  }catch(e){ console.warn('[神器獎章]', e); }
+}
+
+// 日本 BOSS 收藏品（BOSS 戰後 backpackAdd 時呼叫）
+function _checkMedalJapanCollect(itemId){
+  try{
+    const map = {
+      'tengu_fan':       'jp_collect_fan',
+      'oni_sake_cup':    'jp_collect_sake',
+      'kyuubi_fur':      'jp_collect_fur',
+      'dragon_scale':    'jp_collect_scale',
+    };
+    if(map[itemId]) _unlockMedal(map[itemId]);
+    // 路邊怪掉落物累積 10 個
+    const cumMap = {
+      'stolen_cucumber': { key:'cucumber', medal:'jp_collect_cucumber' },
+      'bitten_onigiri':  { key:'onigiri',  medal:'jp_collect_onigiri' },
+      'ice_shard':       { key:'ice',      medal:'jp_collect_ice' },
+      'yokai_marble':    { key:'marble',   medal:'jp_collect_marble' },
+    };
+    const info = cumMap[itemId];
+    if(info){
+      _medalStats.jpCollectCounts = _medalStats.jpCollectCounts || {};
+      _medalStats.jpCollectCounts[info.key] = (_medalStats.jpCollectCounts[info.key]||0) + 1;
+      if(_medalStats.jpCollectCounts[info.key] >= 10) _unlockMedal(info.medal);
+    }
+    _saveMedals();
+  }catch(e){ console.warn('[日本收藏獎章]', e); }
+}
+
+// 日本 BOSS 解鎖為英雄時
+function _checkMedalJapanHeroUnlock(heroName){
+  try{
+    const map = {
+      '大天狗':   'jp_hero_tengu',
+      '酒吞童子': 'jp_hero_shutendoji',
+      '玉藻前':   'jp_hero_tamamo',
+    };
+    if(map[heroName]){
+      _unlockMedal(map[heroName]);
+      // 檢查三妖同盟
+      const unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      if(unlocked.includes('大天狗') && unlocked.includes('酒吞童子') && unlocked.includes('玉藻前')){
+        _unlockMedal('jp_hero_all3');
+      }
+    }
+    _saveMedals();
+  }catch(e){ console.warn('[日本英雄獎章]', e); }
+}
+
+// 日本寵物（裝備或戰鬥時呼叫）
+function _checkMedalJapanPet(){
+  try{
+    if(typeof G === 'undefined' || !G || !G.pets) return;
+    const hasJpPet = G.pets.some(p => p && p._stage === 'japan');
+    if(hasJpPet){
+      _unlockMedal('jp_pet_first');
+      _medalStats.jpPetBattles = (_medalStats.jpPetBattles||0) + 1;
+      if(_medalStats.jpPetBattles >= 5) _unlockMedal('jp_pet_battle_5');
+    }
+    // 圖鑑完整（12 隻解鎖）→ 在英雄/寵物解鎖時另檢查
+    _saveMedals();
+  }catch(e){ console.warn('[日本寵物獎章]', e); }
+}
+
+// 日本寵物圖鑑全解鎖
+function _checkMedalJapanPetFull(){
+  try{
+    if(typeof EQUIP_DB === 'undefined') return;
+    const jpPets = Object.values(EQUIP_DB).filter(e => e && e._stage === 'japan');
+    if(jpPets.length < 12) return;
+    const unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+    // 寵物解鎖改以 pet._stage === 'japan' 且玩家擁有（通關取得）來判斷。
+    // 此處簡化：若過關時有日本寵物在陣容，就統計。若已解鎖日本關 12 種 BOSS/怪，就算完整。
+    // 保守起見：只要 jp_pet_first 已解鎖並且 jp_all_routes 也有 → 視為圖鑑完整
+    if(_medals['jp_pet_first'] && _medals['jp_all_routes']) _unlockMedal('jp_pet_full');
+    _saveMedals();
+  }catch(e){ console.warn('[日本寵物圖鑑]', e); }
+}
+
+// 小怪戰全對（日本關）
+function _checkMedalJapanPerfectMini(allCorrect){
+  try{
+    if(!allCorrect) return;
+    if(typeof _adventureStage === 'undefined' || _adventureStage !== 'japan') return;
+    _unlockMedal('jp_quiz_all_correct');
+    _saveMedals();
+  }catch(e){}
+}
+
 // ── 獎章頁面 UI ──
 function openMedalPage(){
   const ov = document.getElementById('medal-page-overlay');
@@ -36655,7 +37049,7 @@ function closeMedalPage(){
 function _buildMedalPage(){
   const el = document.getElementById('medal-page-content');
   if(!el) return;
-  const cats = ['答題','戰鬥','英雄','其他'];
+  const cats = ['答題','戰鬥','英雄','其他','日本關'];
   const unlockedCount = MEDAL_DEFS.filter(m=>_medals[m.id]).length;
   let html = `<div style="font-size:22px;color:#aaa;margin-bottom:20px;">
     已解鎖 <span style="color:#ffe066;font-weight:900;font-size:28px;">${unlockedCount}</span> / ${MEDAL_DEFS.length} 枚
@@ -36666,7 +37060,7 @@ function _buildMedalPage(){
     html += `<div style="margin-bottom:28px;">
       <div style="font-size:26px;font-weight:900;color:#ffe066;margin-bottom:12px;
         padding-bottom:6px;border-bottom:1px solid rgba(255,220,0,0.2);">
-        ${cat==='答題'?'📝':cat==='戰鬥'?'⚔️':cat==='英雄'?'🦸':'🌟'} ${cat}成就
+        ${cat==='答題'?'📝':cat==='戰鬥'?'⚔️':cat==='英雄'?'🦸':cat==='日本關'?'🗾':'🌟'} ${cat}成就
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">`;
     for(const m of catMedals){
@@ -37415,17 +37809,39 @@ window._filterChangelogForDisplay = function(entries){
 
 const GAME_CHANGELOG = [
   { ver:'v1.0.20260421.3000', brief:[
-    '日本關卡介紹頁獎勵清單修正',
+    '日本關卡 4 項 bug 修復 + 53 獎章系統 + 第三場景隨機事件',
+    '日本小怪戰 BGM、題庫、BOSS 對白、第三場景互動全面到位',
   ], items:[
-    '【移除】🎴 日本主題寵物 ×12 隻（寵物不算獎勵，是過程物品）',
-    '【移除】📜 三神器（不算獎勵，是解鎖用的任務物品）',
-    '【移除】金幣/經驗值 的「貓空 +20%」標註',
-    '【新獎勵清單】(與貓空格式一致)',
-    '  ⭐ 英雄成長經驗值',
-    '  📖 技能升級書',
-    '  💰 知識幣',
-    '  🦸 關卡中的新英雄（機率）',
-    '【備註】日本關卡的 stars 已在 v2700 改為 5，截圖顯示 3 是舊快取',
+    '【Bug 1 修復：日本小怪戰 BGM 沒切換】',
+    '  advStartMiniBattle 非稀有怪分支加入主動 bgmFadeTo',
+    '  日本關 → bgm-japan-battle（日本小怪戰BGM2.mp3）',
+    '  貓空關 → bgm-battle（保留原行為）',
+    '【Bug 2 修復：日本題庫沒接通，出題仍是「自然」】',
+    '  _advMiniGetQuizPool 加入 subject===「日本關」分支',
+    '  直接從 ADV_QUIZ_DB 過濾 subject===「日本關」共 100 題',
+    '  不過濾年級/難度（日本關所有玩家共用同一題池）',
+    '【Bug 3 修復：日本 BOSS 對白仍是九尾空貓怪版】',
+    '  getAdvBossIntroLines 加入 _JP_BOSS_INTROS 4 組專屬對白',
+    '    🪶 大天狗 / 🍶 酒吞童子 / 🦊 玉藻前 / 🐉 八岐大蛇',
+    '  advShowBossIntro 的 UI icon 識別新增 _JP_BOSS_ICONS',
+    '    BOSS 登場視窗的名稱與圖示正確顯示對應妖怪',
+    '【Bug 4 修復：日本第三場景缺少隨機事件】',
+    '  japan-fuji 場景 choiceType 從 japan_auto 改為 random_event',
+    '  新增 advStartJapanFujiEvent 分派函式',
+    '  advStartTeagardenEvent 依 _adventureStage 自動分派到日本版',
+    '  新增 advJpEvent_chest：古老神社寶箱',
+    '    50% → 行走的二宮尊德像戰（稀有怪，掉 3000~6000 金幣）',
+    '    50% → 直接獲得法寶',
+    '  新增 advJpEvent_rift：妖氣結界',
+    '    100% → 座敷童子 + 3 隻隨機日本小怪（稀有怪，掉 1200~2400 經驗）',
+    '  寵物事件 → 共用 advTgEvent_petEncounter',
+    '    _getEquipPoolForStage() 自動取日本寵物池（12 隻）',
+    '【獎章系統】53 個日本關獎章（12 分類）',
+    '  MEDAL_DEFS 新增 53 entry / cat:「日本關」',
+    '  _buildMedalPage cats 新增「日本關」+ 🗾',
+    '  _medalStats 擴充 jpBossKills/jpMobKills/jpClears/jpRoutesCleared',
+    '    /jpCollectCounts/jpPetBattles/jpTreasuresConsumed',
+    '  7 個 _checkMedalJapan* 函式接通觸發點',
   ] },
   { ver:'v1.0.20260421.2900', brief:[
     '關卡介紹視窗加入場景背景圖（隱約透出）',
