@@ -4001,7 +4001,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1500</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.1600</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -24994,38 +24994,45 @@ function _japanTreasureCount(){
 
 // 點「日本探險」按鈕時檢查解鎖條件：貓空A評價+完整通關+英雄lv≥10
 function _japanCheckUnlock(){
-  // 檢查 1：貓空曾經 A 級通關（不跳過劇情）
-  let maokongACleared = false;
+  // ★ v1.0.20260421.1600 — 解鎖條件修正
+  //   (1) S 級評價完整通關木柵貓空任意 BOSS（不可跳過小怪）
+  //   (2) Lv.10 以上英雄達到 4 名
+  let maokongSFullClear = false;
   try{
-    const raw = localStorage.getItem('adv_maokong_best_rank') || '';
-    // 可能的值：'S','A','B','C' 等；A 或以上皆算通過
-    if(raw === 'S' || raw === 'A' || raw === 'A+') maokongACleared = true;
-    // 備用：若有 adv_maokong_clear_log，檢查 skipped:false 且 rank>=A
-    if(!maokongACleared){
-      const logRaw = localStorage.getItem('adv_maokong_clear_log');
-      if(logRaw){
-        const log = JSON.parse(logRaw);
-        if(Array.isArray(log)){
-          maokongACleared = log.some(r => !r.skipped && (r.rank==='S'||r.rank==='A'));
+    // 主要旗標：prev clear S 完整通關才寫入
+    if(localStorage.getItem('adv_maokong_s_full_clear') === '1') maokongSFullClear = true;
+  }catch(e){}
+  // 統計 Lv≥10 的英雄數量
+  let lv10HeroCount = 0;
+  try{
+    const _counted = new Set();
+    if(typeof HERO_LEVELS !== 'undefined' && HERO_LEVELS){
+      for(const k in HERO_LEVELS){
+        if(HERO_LEVELS[k] >= 10 && !_counted.has(k)){
+          _counted.add(k);
+          lv10HeroCount++;
+        }
+      }
+    }
+    // 備用來源：直接讀 localStorage
+    const raw = localStorage.getItem('hero_levels');
+    if(raw){
+      const obj = JSON.parse(raw);
+      for(const k in obj){
+        if(obj[k] >= 10 && !_counted.has(k)){
+          _counted.add(k);
+          lv10HeroCount++;
         }
       }
     }
   }catch(e){}
-  // 檢查 2：是否至少一位英雄達 Lv.10（讀取 HERO_LEVELS 或 localStorage）
-  let hasLv10Hero = false;
-  try{
-    if(typeof HERO_LEVELS !== 'undefined' && HERO_LEVELS){
-      for(const k in HERO_LEVELS){ if(HERO_LEVELS[k] >= 10){ hasLv10Hero = true; break; } }
-    }
-    if(!hasLv10Hero){
-      const raw = localStorage.getItem('hero_levels');
-      if(raw){
-        const obj = JSON.parse(raw);
-        for(const k in obj){ if(obj[k] >= 10){ hasLv10Hero = true; break; } }
-      }
-    }
-  }catch(e){}
-  return { maokongACleared, hasLv10Hero, canEnter: maokongACleared && hasLv10Hero };
+  const hasEnoughLv10 = lv10HeroCount >= 4;
+  return {
+    maokongSFullClear,
+    lv10HeroCount,
+    hasEnoughLv10,
+    canEnter: maokongSFullClear && hasEnoughLv10
+  };
 }
 
 // 日本關獎勵 +20% 的加成倍率（供金幣/EXP 系統讀取）
@@ -25051,10 +25058,11 @@ function _japanShowLockedModal(check){
 
   const ok   = '✅';
   const fail = '❌';
-  const c1   = check.maokongACleared ? ok : fail;
-  const c2   = check.hasLv10Hero     ? ok : fail;
-  const c1Color = check.maokongACleared ? '#66ff88' : '#ff6666';
-  const c2Color = check.hasLv10Hero     ? '#66ff88' : '#ff6666';
+  const c1   = check.maokongSFullClear ? ok : fail;
+  const c2   = check.hasEnoughLv10     ? ok : fail;
+  const c1Color = check.maokongSFullClear ? '#66ff88' : '#ff6666';
+  const c2Color = check.hasEnoughLv10     ? '#66ff88' : '#ff6666';
+  const _lv10Count = check.lv10HeroCount || 0;
 
   const modal = document.createElement('div');
   modal.id = 'japan-locked-modal';
@@ -25087,8 +25095,8 @@ function _japanShowLockedModal(check){
       // 條件列表
       '<div style="background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,180,80,0.3);border-radius:14px;padding:22px 28px;margin-bottom:22px;text-align:left;">' +
         '<div style="font-size:clamp(18px,2vw,24px);color:#aaccff;margin-bottom:12px;letter-spacing:2px;">📋 需要達成以下條件：</div>' +
-        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c1Color};line-height:1.9;padding:6px 0;">${c1} 貓空大冒險完整通關並獲得 A 以上評價</div>` +
-        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c2Color};line-height:1.9;padding:6px 0;">${c2} 擁有至少 1 位 Lv.10 以上的英雄</div>` +
+        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c1Color};line-height:1.9;padding:6px 0;">${c1} 以 S 級評價完整通關木柵貓空任意 BOSS（不跳過小怪）</div>` +
+        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c2Color};line-height:1.9;padding:6px 0;">${c2} 擁有 4 位以上 Lv.10 英雄（目前 ${_lv10Count} 位）</div>` +
       '</div>' +
       // 提示
       '<div style="font-size:clamp(16px,1.8vw,22px);color:#bbb;margin-bottom:24px;line-height:1.6;">請先完成貓空大冒險後再來挑戰！</div>' +
@@ -28273,6 +28281,25 @@ async function advStartWinSequence() {
   const _winGrade = (document.getElementById('adv-result-grade')||{}).textContent||'';
   const _bonusExpMap = {'S':100, 'A':70, 'B':50, 'C':30};
   const _bonusExp = Object.entries(_bonusExpMap).reduce((v,[g,e])=>_winGrade.includes(g)?e:v, 30);
+  // ★ v1.0.20260421.1600 — 紀錄貓空關 S 評價完整通關(不跳過小怪)，用於日本關解鎖
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'maokong' && _winGrade){
+      // 檢查是否完整通關 = 拿到全部 3 個法寶（跳過任何小怪戰都會少）
+      const _treasuresFull = (typeof _advTreasures !== 'undefined' && Array.isArray(_advTreasures))
+        ? _advTreasures.filter(t => !!t).length >= 3
+        : false;
+      // 更新最高評價（只記錄最佳）
+      const _prevRank = localStorage.getItem('adv_maokong_best_rank') || '';
+      const _rankOrder = {'S':4, 'A':3, 'B':2, 'C':1, 'D':0};
+      if((_rankOrder[_winGrade] || 0) > (_rankOrder[_prevRank] || 0)){
+        localStorage.setItem('adv_maokong_best_rank', _winGrade);
+      }
+      // 記錄 S 完整通關旗標（一旦達成就永久保留）
+      if(_winGrade === 'S' && _treasuresFull){
+        localStorage.setItem('adv_maokong_s_full_clear', '1');
+      }
+    }
+  }catch(_rcE){ console.warn('[貓空通關紀錄] 寫入失敗:', _rcE); }
   if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name && !(window._invitedFriendHero && h && h.name === window._invitedFriendHero.name)) addHeroExp(h.name, _bonusExp); });
   // ★ 知識幣：BOSS戰EXP × 20%（以_advStats計）
   const _bossTotalExp = (_advStats && _advStats.rounds ? (_advStats.rounds * 10) : 0) + _bonusExp;
@@ -36876,6 +36903,31 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.1600', brief:[
+    '修正日本關解鎖條件並修復原本「寫入旗標從來不存在」的隱藏 bug',
+    '新條件：(1) S 級完整通關貓空任意 BOSS（不跳過小怪）(2) Lv.10 以上英雄 4 位',
+  ], items:[
+    '【隱藏 bug 修復 - 嚴重】',
+    '  原本 _japanCheckUnlock 讀取 adv_maokong_best_rank 與 adv_maokong_clear_log 兩個 localStorage key',
+    '  但整個程式碼庫從來沒有任何地方「寫入」這兩個 key → 所有玩家永遠解不開日本關（需手動改 localStorage）',
+    '  修正：在 advStartWinSequence 的貓空關 BOSS 勝利結算時寫入紀錄',
+    '【新條件 1：S 級完整通關】',
+    '  完整通關判定 = _advTreasures 陣列中 3 個法寶都有拿到（打滿所有小怪戰才會集齊）',
+    '  跳過任何一場小怪戰 → _advSkipGiveTreasures 放棄該法寶 → 結算時不足 3 個',
+    '  寫入 localStorage: adv_maokong_s_full_clear = "1"（一旦達成就永久保留）',
+    '  同時更新 adv_maokong_best_rank 記錄歷史最佳評價（只升不降，S>A>B>C>D）',
+    '【新條件 2：Lv.10 英雄 4 位】',
+    '  從 HERO_LEVELS 全域物件 + localStorage hero_levels 合併統計',
+    '  用 Set 去重避免重複計算',
+    '  舊條件「至少 1 位 Lv.10」過於簡單，4 位要求玩家更認真練角',
+    '【UI 更新】',
+    '  鎖定 modal 文字改為新條件描述',
+    '  Lv.10 條件顯示目前有幾位（例：「擁有 4 位以上 Lv.10 英雄（目前 2 位）」）',
+    '【 _japanCheckUnlock 回傳欄位變更】',
+    '  舊：maokongACleared / hasLv10Hero',
+    '  新：maokongSFullClear / hasEnoughLv10 / lv10HeroCount',
+    '  canEnter 判定：maokongSFullClear && hasEnoughLv10',
+  ] },
   { ver:'v1.0.20260421.1500', brief:[
     '接入日本關 4 大 BOSS 爆發技 GIF 動畫',
     '八頭龍滅世支援「火雨 → 八龍頭滅世」兩段接力播放',
@@ -38283,7 +38335,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.1500';
+  const CURRENT_VERSION = 'v1.0.20260421.1600';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -38300,7 +38352,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.1500';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.1600';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
