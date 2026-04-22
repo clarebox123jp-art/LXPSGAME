@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000u</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3002</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4233,6 +4233,12 @@ body {
           font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;white-space:nowrap;">
           👹 魔物圖鑑
         </button>
+        <button onclick="playSfx('sfx-gentle',0.5);openPetPage()" style="padding:8px 18px;font-size:22px;font-weight:700;
+          background:rgba(40,160,80,0.2);border:1.5px solid rgba(80,220,140,0.5);
+          color:#99ffcc;border-radius:10px;cursor:pointer;
+          font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;white-space:nowrap;">
+          🐾 寵物圖鑑
+        </button>
         <button id="hero-expbook-btn" onclick="playSfx('sfx-recharge',0.6);useHeroExpBook()" style="display:none;flex;align-items:center;gap:6px;
           padding:8px 16px;font-size:22px;font-weight:700;
           background:rgba(50,150,50,0.2);border:1.5px solid rgba(80,200,80,0.5);
@@ -4280,6 +4286,20 @@ body {
       <div style="width:120px;"></div>
     </div>
     <div id="monster-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
+      <!-- injected by JS -->
+    </div>
+  </div>
+
+  <!-- ★ v1.0.20260421.3000x 寵物圖鑑 -->
+  <div id="pet-page-overlay" style="display:none;position:absolute;inset:0;z-index:720;
+    background:linear-gradient(160deg,#0a1a10,#060b08);flex-direction:column;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:2px solid rgba(80,220,140,0.3);">
+      <button onclick="playSfx('sfx-cancel',0.4);closePetPage()" style="padding:10px 24px;font-size:24px;font-weight:700;background:rgba(20,50,30,0.8);border:1.5px solid rgba(80,220,140,0.5);color:#99ffcc;border-radius:10px;cursor:pointer;font-family:inherit;">← 返回</button>
+      <div style="font-size:36px;font-weight:900;color:#99ffcc;">🐾 寵物圖鑑</div>
+      <div style="width:120px;"></div>
+    </div>
+    <div id="pet-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
       <!-- injected by JS -->
     </div>
   </div>
@@ -6424,6 +6444,59 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96).png' },
     { id:'dawn_breeze', name:'曙光微風', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true },
   ],
+  // ★ v1.0.20260421.3002 — 13 位英雄新肖像
+  '冰法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%86%B0%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'ice_frost', name:'冰封霜華', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%86%B0%E6%B3%95%E5%B8%AB2.png', requiresUnlock:true },
+  ],
+  '刺客': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%88%BA%E5%AE%A2(%E7%B8%AE%E5%9C%96).png' },
+    { id:'shadow_rose', name:'幻影玫瑰', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%88%BA%E5%AE%A22.png', requiresUnlock:true },
+  ],
+  '吸血鬼': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%90%B8%E8%A1%80%E9%AC%BC(%E7%B8%AE%E5%9C%96).png' },
+    { id:'dark_rose', name:'暗夜薔薇', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%90%B8%E8%A1%80%E9%AC%BC2.png', requiresUnlock:true },
+  ],
+  '大力士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%A4%A7%E5%8A%9B%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'invincible', name:'所向無敵', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A7%E5%8A%9B%E5%A3%AB2.png', requiresUnlock:true },
+  ],
+  '學者': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%AD%B8%E8%80%85(%E7%B8%AE%E5%9C%96).png' },
+    { id:'wisdom_light', name:'知識燈塔', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AD%B8%E8%80%852.png', requiresUnlock:true },
+  ],
+  '機械師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%A9%9F%E6%A2%B0%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'steel_innov', name:'鋼鐵革新', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A9%9F%E6%A2%B0%E5%B8%AB2.png', requiresUnlock:true },
+  ],
+  '武鬥家': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E9%AC%A5%E5%AE%B6(%E7%B8%AE%E5%9C%96).png' },
+    { id:'iron_fist', name:'鐵拳無雙', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E9%AC%A5%E5%AE%B62.png', requiresUnlock:true },
+  ],
+  '火法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%81%AB%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'blaze_sky', name:'烈焰焚天', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%81%AB%E6%B3%95%E5%B8%AB2.png', requiresUnlock:true },
+  ],
+  '神射手': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%9E%E5%B0%84%E6%89%8B(%E7%B8%AE%E5%9C%96).png' },
+    { id:'cloud_shot', name:'百步穿雲', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%B0%84%E6%89%8B2.png', requiresUnlock:true },
+  ],
+  '程式設計師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'quantum_code', name:'量子編碼', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB2.png', requiresUnlock:true },
+  ],
+  '聖騎士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%81%96%E9%A8%8E%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'temple_pillar', name:'聖殿支柱', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%96%E9%A8%8E%E5%A3%AB2.png', requiresUnlock:true },
+  ],
+  '軍師': [
+    { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E8%BB%8D%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB2.png', requiresUnlock:true },
+  ],
+  '陰陽師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%99%B0%E9%99%BD%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'four_saints', name:'天地四聖', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%99%B0%E9%99%BD%E5%B8%AB2.png', requiresUnlock:true },
+  ],
   '雷法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
     { id:'thunder_sky', name:'雷動九霄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 15%' },
@@ -6743,6 +6816,37 @@ const EQUIP_DB = [
   }
 ];
 const EQUIP_NAMES = new Set(EQUIP_DB.map(e=>e.n));
+
+// ★ v1.0.20260421.3000x — 寵物圖鑑科普知識資料
+// 欄位：中文名(key)、sci:學名、alias:別名、region:分布地區、food:主要食物、enemy:主要天敵、habit:特殊習性、reproduce:繁殖方式
+const PET_KNOWLEDGE = {
+  // ── 台灣寵物 12 隻 ──
+  '台灣黑熊':{sci:'Ursus thibetanus formosanus',alias:'月熊、狗熊（因胸前 V 字）',region:'台灣 1,000~3,500 公尺中高海拔山區',food:'雜食性：殼斗科堅果、漿果、昆蟲、蜂蜜、小動物',enemy:'主要威脅為人類盜獵與棲地破壞',habit:'善爬樹與游泳；冬季不完全冬眠；活動範圍達數十公里',reproduce:'胎生；每胎 1~3 隻，延遲著床於 11~2 月產仔'},
+  '台灣獼猴':{sci:'Macaca cyclopis',alias:'黑肢猴、山猴、猴搬仔',region:'台灣全島 100~3,000 公尺丘陵山區',food:'雜食性：果實、嫩葉、昆蟲、鳥蛋',enemy:'流浪犬、猛禽（對幼體）；盜獵',habit:'社群性強，族群可達 30~50 隻，有嚴格階級制度',reproduce:'胎生；每胎 1 隻，妊娠期約 165 天'},
+  '石虎':{sci:'Prionailurus bengalensis chinensis',alias:'山貓、豹貓',region:'台灣 1,000 公尺以下淺山丘陵（苗栗/南投/台中）',food:'肉食：老鼠、小鳥、蜥蜴、昆蟲',enemy:'流浪犬攻擊、路殺、農藥中毒',habit:'夜行性獨居；領域意識強；善爬樹游泳',reproduce:'胎生；每胎 2~3 隻，春夏季產仔'},
+  '喜鵲':{sci:'Pica serica',alias:'客鳥、飛駁鳥',region:'東亞廣泛分布，台灣低海拔平原',food:'雜食：昆蟲、果實、小動物、腐食',enemy:'猛禽、蛇類（對巢）',habit:'高智商鳥類，能認鏡中自己；會收藏亮物；聲稱「報喜」',reproduce:'卵生；每窩 5~8 枚蛋，雌雄共同育雛'},
+  '櫻花鉤吻鮭':{sci:'Oncorhynchus formosanus',alias:'台灣鱒、梨山鱒、本邦鱒',region:'台灣雪山山脈七家灣溪特有種',food:'水生昆蟲、小魚、甲殼類',enemy:'水質汙染、颱風洪水、外來種競爭',habit:'冰河孑遺物種；終生陸封不降海；需冷水環境（<16℃）',reproduce:'卵生；秋季溯溪產卵於砂礫河床'},
+  '五色鳥':{sci:'Psilopogon nuchalis',alias:'花和尚、台灣擬啄木',region:'台灣低中海拔闊葉林（2,500 公尺以下）',food:'雜食：漿果、昆蟲',enemy:'蛇類、松鼠（對巢）',habit:'羽色鮮艷綠紅黃藍黑五色；繁殖期敲木頭如木魚聲',reproduce:'卵生；啄朽木築巢，每窩 3~4 枚蛋'},
+  '綠蠵龜':{sci:'Chelonia mydas',alias:'黑龜、綠海龜',region:'全球熱帶/亞熱帶海域，台灣澎湖望安、蘭嶼為產卵地',food:'成龜草食（海草海藻）；幼龜雜食',enemy:'鯊魚、虎鯨、人類（誤捕漁網）',habit:'洄游性；母龜必返出生海灘產卵；壽命可達 80 年',reproduce:'卵生；每窩 100~150 枚蛋，孵化期約 60 天'},
+  '台灣藍鵲':{sci:'Urocissa caerulea',alias:'長尾山娘、長尾陣',region:'台灣特有種，中低海拔闊葉林',food:'雜食：果實、昆蟲、小動物、腐食',enemy:'猛禽、蛇類（對巢）',habit:'群居合作育雛；攻擊性強，會群起攻擊天敵',reproduce:'卵生；每窩 3~8 枚蛋，幫手鳥制（家族共同照顧）'},
+  '鱟':{sci:'Tachypleus tridentatus',alias:'夫妻魚、馬蹄蟹、活化石',region:'金門、澎湖潮間帶與淺海沙泥底',food:'小型底棲無脊椎動物、有機碎屑',enemy:'棲地開發、海岸汙染',habit:'4.5 億年活化石；藍色血液含銅；夫妻終身相隨',reproduce:'卵生；雌雄偕行上岸產卵於潮間帶砂灘'},
+  '梅花鹿':{sci:'Cervus nippon taiouanus',alias:'花鹿',region:'台灣特有亞種，曾野外滅絕後墾丁復育',food:'草食：嫩葉、果實、樹皮',enemy:'流浪犬、過去為獵人目標',habit:'群居；冬季褪斑紋；公鹿長角每年脫換',reproduce:'胎生；每胎 1 隻，妊娠期 7~8 個月'},
+  '白頭翁':{sci:'Pycnonotus sinensis',alias:'白頭殼仔、白頭鵯',region:'東亞廣布，台灣低海拔常見都市鳥',food:'雜食：漿果、昆蟲、花蜜',enemy:'野貓、猛禽、八哥競爭',habit:'聲音清脆多變；與烏頭翁分布以花東為界',reproduce:'卵生；每窩 3~5 枚蛋，一年可繁殖 2~3 次'},
+  '黑冠麻鷺':{sci:'Gorsachius melanolophus',alias:'大笨鳥、地瓜鳥',region:'台灣各地平原與都市公園綠地',food:'肉食：蚯蚓、蜥蜴、昆蟲',enemy:'流浪犬、遊隼',habit:'以擬態為防禦策略，遇危險會僵立不動',reproduce:'卵生；每窩 3~5 枚蛋，築巢於樹冠層'},
+  // ── 日本寵物 12 隻 ──
+  '月輪熊':{sci:'Ursus thibetanus japonicus',alias:'日本黑熊、月之輪熊',region:'日本本州、四國山區（北海道另為棕熊）',food:'雜食：橡實、山毛櫸果、昆蟲、蜂蜜',enemy:'主要威脅為棲地縮減與人熊衝突',habit:'胸前月牙白紋為名由來；冬季冬眠；偶爾「熊出沒」闖入山村',reproduce:'胎生；每胎 1~2 隻，冬眠期產仔'},
+  '雪猴':{sci:'Macaca fuscata',alias:'日本獼猴',region:'日本本州、四國、九州',food:'雜食：果實、樹皮、昆蟲',enemy:'野狗、猛禽（對幼體）',habit:'世界最北靈長類；冬季泡溫泉禦寒（長野地獄谷最著名）',reproduce:'胎生；每胎 1 隻，母系社會'},
+  '對馬山貓':{sci:'Prionailurus bengalensis euptilurus',alias:'對州山貓',region:'日本長崎對馬島特有亞種',food:'肉食：老鼠、鳥類、昆蟲',enemy:'路殺、流浪犬、棲地開發',habit:'僅存不到 100 隻，日本國指定天然紀念物',reproduce:'胎生；每胎 2~4 隻'},
+  '丹頂鶴':{sci:'Grus japonensis',alias:'仙鶴、日本鶴',region:'北海道釧路濕原、俄中韓東北亞',food:'雜食：魚、蛙、昆蟲、穀物',enemy:'棲地喪失、電線撞擊',habit:'頭頂紅色裸皮為「丹頂」名由來；日本國鳥級象徵；配對終身',reproduce:'卵生；每窩 2 枚蛋，雌雄共同孵育'},
+  '錦鯉':{sci:'Cyprinus rubrofuscus（改良品系）',alias:'泳動的寶石、Nishikigoi',region:'日本新潟起源，現為世界觀賞魚',food:'雜食：水生植物、昆蟲、魚飼料',enemy:'翠鳥、水鳥、疾病',habit:'日本國魚；壽命可達 70 年以上；超過 100 種色彩品系',reproduce:'卵生；春末夏初產黏性卵於水草'},
+  '綠雉':{sci:'Phasianus versicolor',alias:'日本雉、キジ',region:'日本本州、四國、九州特有種',food:'雜食：種子、昆蟲、嫩芽',enemy:'老鷹、狐狸、黃鼠狼',habit:'日本國鳥；桃太郎故事中同行夥伴；雄鳥羽色翠綠',reproduce:'卵生；每窩 6~12 枚蛋，雌鳥獨立育雛'},
+  '日本大山椒魚':{sci:'Andrias japonicus',alias:'大鯢、半兵衛',region:'日本本州西部、四國、九州溪流',food:'肉食：魚、蝦、蛙、水生昆蟲',enemy:'水質汙染、外來中國大鯢雜交',habit:'現存最大兩棲類，可達 1.5 米；壽命 70~80 年；特別天然紀念物',reproduce:'卵生；雄性護巢習性，水底岩縫產卵'},
+  '翠鳥':{sci:'Alcedo atthis',alias:'魚狗、釣魚翁',region:'歐亞大陸廣布，日本全境溪流湖泊',food:'肉食：小魚、水生昆蟲',enemy:'隼、猛禽、蛇',habit:'俯衝捕魚速度極快；羽色如寶石藍；挖土巢',reproduce:'卵生；於水岸土坡掘洞築巢，每窩 5~7 枚蛋'},
+  '日本鱟':{sci:'Tachypleus tridentatus',alias:'カブトガニ、武士蟹',region:'日本瀨戶內海、九州北部潮間帶',food:'底棲無脊椎動物、有機碎屑',enemy:'棲地開發、海岸工程',habit:'日本指定天然紀念物；藍色血液為內毒素檢測珍貴原料',reproduce:'卵生；雌雄偕行上岸產卵於砂灘'},
+  '奈良神鹿':{sci:'Cervus nippon',alias:'神之使者',region:'日本奈良公園及春日大社周邊',food:'草食；遊客也常餵食「鹿仙貝」',enemy:'人類活動（車輛）、過去禁獵',habit:'春日大社視為神使，受天然紀念物保護；會向遊客鞠躬求食',reproduce:'胎生；每胎 1 隻，夏季產仔'},
+  '白鼬':{sci:'Mustela erminea',alias:'銀鼬、短尾鼬',region:'北海道、本州中部高山',food:'肉食：老鼠、兔、小鳥',enemy:'狐狸、貓頭鷹',habit:'冬季體毛變雪白（尾端保留黑色）；善鑽洞穴',reproduce:'胎生；延遲著床，每胎 4~9 隻'},
+  '變化狸':{sci:'Nyctereutes procyonoides',alias:'貉、狸貓、Tanuki',region:'日本全境及東亞廣布',food:'雜食：果實、小動物、昆蟲、魚',enemy:'狐狸、狼（歷史上）、車禍',habit:'日本民間傳說中能化身變形；秋季囤積脂肪過冬；假死自衛',reproduce:'胎生；每胎 6~8 隻，雌雄共同育幼（一夫一妻制）'},
+};
 
 
 const STATUS_DESCS = {
@@ -15168,6 +15272,212 @@ function execSkill(a, sk, cost, stype){
       endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
     });
   }
+  // ══════════════════════════════════════════════
+  // ★ v1.0.20260421.3000z — 日本關小怪 20 個技能
+  //   路邊 4 隻：河童 / 二口女 / 雪女 / 獨眼小僧
+  //   菁英 6 隻：烏天狗 / 木葉天狗 / 茨木童子 / 星熊童子 / 殺生石分身 / 管狐
+  // ══════════════════════════════════════════════
+  // ── 河童 S1 水盤守護：HP%最低友方附加減傷½2回合 + 依特技恢復HP ──
+  else if(n==='水盤守護'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    if(!_allies.length){ endAction(a,cost); return; }
+    const _tgt = _allies.sort((x,y)=>(x.curHp/(x.hp||1))-(y.curHp/(y.hp||1)))[0];
+    log(`[${a.name}] 水盤守護！守護 [${_tgt.name}]！`);
+    playSkillFX('水盤守護',a,[_tgt]);
+    addBuff(_tgt,'halfDmg',2);
+    doHeal(_tgt,Math.max(1,spv(a)),{actor:a,isHeal:true});
+    bannerFX(_tgt,'🛡減傷½','#66ccff',900);
+    endAction(a,cost);
+  }
+  // ── 河童 S2 潑水惡作劇：全體對手查封1回合 ──
+  else if(n==='潑水惡作劇'){
+    const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    log(`[${a.name}] 潑水惡作劇！全體對手物品被查封！`);
+    playSkillFX('潑水惡作劇',a,_foes);
+    _foes.forEach(h=>{ addStatus(h,'nosell',1); bannerFX(h,'🚫查封','#4488ff',800); });
+    endAction(a,cost);
+  }
+  // ── 二口女 S1 陰森長髮鞭：依特技70% 對全體2次傷害 ──
+  else if(n==='陰森長髮鞭'){
+    const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    log(`[${a.name}] 陰森長髮鞭擊！全體受到2次傷害！`);
+    playSkillFX('陰森長髮鞭',a,_foes);
+    const _d = Math.max(1, Math.round(spv(a)*0.7));
+    for(let hit=0;hit<2;hit++){
+      _foes.filter(h=>h.curHp>0).forEach(h=>{
+        doDmg(h,_d,{actor:a,isSkill:true,isAoe:true});
+      });
+    }
+    endAction(a,cost);
+  }
+  // ── 二口女 S2 雙嘴詛咒：1名對手中毒+禁療各2回合 ──
+  else if(n==='雙嘴詛咒'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 雙嘴詛咒！[${t.name}] 中毒＋禁療！`);
+      playSkillFX('雙嘴詛咒',a,[t]);
+      addStatus(t,'poison',2);
+      addStatus(t,'noheal_curse',2);
+      bannerFX(t,'☠毒＋禁療','#aa44ff',900);
+      endAction(a,cost);
+    });
+  }
+  // ── 雪女 S1 冰晶凝聚：友方全體附加 20 護盾 ──
+  else if(n==='冰晶凝聚'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    log(`[${a.name}] 冰晶凝聚！為全體附加護盾！`);
+    playSkillFX('冰晶凝聚',a,_allies);
+    _allies.forEach(h=>{ h.shield=(h.shield||0)+20; bannerFX(h,'🛡+20','#aaddff',800); renderCard(h); });
+    endAction(a,cost);
+  }
+  // ── 雪女 S2 幽寒吐息：依特技對全體對手傷害 + 50% 冰凍1回合 ──
+  else if(n==='幽寒吐息'){
+    const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    log(`[${a.name}] 幽寒吐息！全體受寒氣吞噬！`);
+    playSkillFX('幽寒吐息',a,_foes);
+    const _d = Math.max(1, spv(a));
+    _foes.forEach(h=>{
+      doDmg(h,_d,{actor:a,isSkill:true,isAoe:true,elem:'ice'});
+      if(h.curHp>0 && Math.random()<0.5){ addStatus(h,'freeze',1); bannerFX(h,'❄冰凍','#88ddff',800); }
+    });
+    endAction(a,cost);
+  }
+  // ── 獨眼小僧 S1 瞪目威嚇：1 名對手無力 2 回合 ──
+  else if(n==='瞪目威嚇'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 瞪目威嚇！[${t.name}] 無法普攻！`);
+      playSkillFX('瞪目威嚇',a,[t]);
+      addStatus(t,'noatk',2);
+      bannerFX(t,'👁無力','#ff8844',900);
+      endAction(a,cost);
+    });
+  }
+  // ── 獨眼小僧 S2 暴走衝撞：依攻擊175% 傷害1名對手+減對手2能量 ──
+  else if(n==='暴走衝撞'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 暴走衝撞！`);
+      playSkillFX('暴走衝撞',a,[t]);
+      const _d = Math.max(1, Math.round(atkv(a)*1.75));
+      doDmg(t,_d,{actor:a,isSkill:true});
+      const _foeSide = t.side;
+      G.energy[_foeSide] = Math.max(0, (G.energy[_foeSide]||0)-2);
+      bannerFX(t,'⚡ -2能量','#ffcc44',900);
+      log(`[${t.name}] 陣營能量 -2！`);
+      endAction(a,cost);
+    });
+  }
+  // ── 烏天狗 S1 暗羽突襲：攻擊200% 傷害1名對手 + 50% 麻痺1回合 ──
+  else if(n==='暗羽突襲'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 暗羽突襲！`);
+      playSkillFX('暗羽突襲',a,[t]);
+      const _d = Math.max(1, Math.round(atkv(a)*2.0));
+      doDmg(t,_d,{actor:a,isSkill:true,elem:'dark'});
+      if(t.curHp>0 && Math.random()<0.5){ addStatus(t,'para',1); bannerFX(t,'⚡麻痺','#ffdd44',900); }
+      endAction(a,cost);
+    });
+  }
+  // ── 烏天狗 S2 羽刃陣列：友方全體「迴避」1回合 ──
+  else if(n==='羽刃陣列'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    log(`[${a.name}] 羽刃陣列！全體獲得迴避！`);
+    playSkillFX('羽刃陣列',a,_allies);
+    _allies.forEach(h=>{ addBuff(h,'evasion',1); bannerFX(h,'💨迴避','#aaaaff',800); });
+    endAction(a,cost);
+  }
+  // ── 木葉天狗 S1 落葉迷霧：全體對手失明1回合 ──
+  else if(n==='落葉迷霧'){
+    const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    log(`[${a.name}] 落葉迷霧！全體失明！`);
+    playSkillFX('落葉迷霧',a,_foes);
+    _foes.forEach(h=>{ addStatus(h,'forecast',1); bannerFX(h,'🌫失明','#88aa44',800); });
+    endAction(a,cost);
+  }
+  // ── 木葉天狗 S2 樹葉守護：友方全體 20 護盾 + 狀態免疫1回合 ──
+  else if(n==='樹葉守護'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    log(`[${a.name}] 樹葉守護！`);
+    playSkillFX('樹葉守護',a,_allies);
+    _allies.forEach(h=>{ h.shield=(h.shield||0)+20; addBuff(h,'statusImmune',1); bannerFX(h,'🍃守護','#77dd77',800); renderCard(h); });
+    endAction(a,cost);
+  }
+  // ── 茨木童子 S1 斷腕狂拳：依攻擊180% 傷害1名對手 + 易傷1回合 ──
+  else if(n==='斷腕狂拳'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 斷腕狂拳！`);
+      playSkillFX('斷腕狂拳',a,[t]);
+      const _d = Math.max(1, Math.round(atkv(a)*1.8));
+      doDmg(t,_d,{actor:a,isSkill:true});
+      if(t.curHp>0){ addStatus(t,'dmgVuln',1); bannerFX(t,'💔易傷','#ff6644',800); }
+      endAction(a,cost);
+    });
+  }
+  // ── 茨木童子 S2 鬼王怒吼：友方全體「攻增」2回合 ──
+  else if(n==='鬼王怒吼'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    log(`[${a.name}] 鬼王怒吼！全體攻擊力提升！`);
+    playSkillFX('鬼王怒吼',a,_allies);
+    _allies.forEach(h=>{ addBuff(h,'dmgup',2); bannerFX(h,'⚔攻增','#ffaa44',800); });
+    endAction(a,cost);
+  }
+  // ── 星熊童子 S1 酒宴狂歡：陣營補 5 能量 + 友方攻增1回合 ──
+  else if(n==='酒宴狂歡'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    G.energy[a.side] = Math.min(10, (G.energy[a.side]||0)+5);
+    log(`[${a.name}] 酒宴狂歡！陣營 +5 能量！`);
+    playSkillFX('酒宴狂歡',a,_allies);
+    _allies.forEach(h=>{ addBuff(h,'dmgup',1); bannerFX(h,'🍶攻增','#ffaa44',800); });
+    showPopup(a,'+5E','energy');
+    endAction(a,cost);
+  }
+  // ── 星熊童子 S2 熊力撞擊：依攻擊200% 傷害1名對手 + 50% 暈眩1回合 ──
+  else if(n==='熊力撞擊'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 熊力撞擊！`);
+      playSkillFX('熊力撞擊',a,[t]);
+      const _d = Math.max(1, Math.round(atkv(a)*2.0));
+      doDmg(t,_d,{actor:a,isSkill:true});
+      if(t.curHp>0 && Math.random()<0.5){ addStatus(t,'stun',1); bannerFX(t,'💫暈眩','#ffdd44',900); }
+      endAction(a,cost);
+    });
+  }
+  // ── 殺生石分身 S1 死氣結界：友方全體「減傷½」1回合 ──
+  else if(n==='死氣結界'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    log(`[${a.name}] 死氣結界！全體減傷！`);
+    playSkillFX('死氣結界',a,_allies);
+    _allies.forEach(h=>{ addBuff(h,'halfDmg',1); bannerFX(h,'🛡減半','#aa66aa',800); });
+    endAction(a,cost);
+  }
+  // ── 殺生石分身 S2 石化凝視：1 名對手禁動 1 回合 + 劇毒 2 回合 ──
+  else if(n==='石化凝視'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 石化凝視！[${t.name}] 禁動＋劇毒！`);
+      playSkillFX('石化凝視',a,[t]);
+      addStatus(t,'trap',1);
+      addStatus(t,'poison',2);
+      bannerFX(t,'🗿石化','#999999',900);
+      endAction(a,cost);
+    });
+  }
+  // ── 管狐 S1 狐火護佑：友方全體「死亡免疫」1回合 ──
+  else if(n==='狐火護佑'){
+    const _allies = G[a.side].filter(h=>h.curHp>0);
+    log(`[${a.name}] 狐火護佑！全體死亡免疫！`);
+    playSkillFX('狐火護佑',a,_allies);
+    _allies.forEach(h=>{ addBuff(h,'deathimmune',1); bannerFX(h,'🦊死亡免疫','#ff8844',800); });
+    endAction(a,cost);
+  }
+  // ── 管狐 S2 狐惑封言：全體對手「封印」1回合 ──
+  else if(n==='狐惑封言'){
+    const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    log(`[${a.name}] 狐惑封言！全體封印！`);
+    playSkillFX('狐惑封言',a,_foes);
+    _foes.forEach(h=>{ addStatus(h,'seal',1); bannerFX(h,'🚫封印','#aa44ff',800); });
+    endAction(a,cost);
+  }
+  // ══════════════════════════════════════════════
+  // ★ 日本關小怪技能區 END
+  // ══════════════════════════════════════════════
   // ====== 軍師 ======
   else if(n==='識破全局'){
     log(`[${a.name}] 識破全局！`);
@@ -18696,6 +19006,67 @@ function aiUseSkill(a,sk,cost,pref){
       if(t.curHp>0){ addStatus(t,'dmgVuln',1); t._vulnStrong=true; }
     }
   }
+  // ★ v1.0.20260421.3000z — 日本關小怪 20 技能 AI 分支
+  else if(n==='水盤守護'){
+    if(allies.length){
+      const tgt = allies.slice().sort((x,y)=>(x.curHp/(x.hp||1))-(y.curHp/(y.hp||1)))[0];
+      addBuff(tgt,'halfDmg',2);
+      doHeal(tgt,Math.max(1,spv(a)),{actor:a,isHeal:true});
+    }
+  }
+  else if(n==='潑水惡作劇'){ enemies.forEach(h=>{ if(h.curHp>0) addStatus(h,'nosell',1); }); }
+  else if(n==='陰森長髮鞭'){
+    const _d=Math.max(1,Math.round(spv(a)*0.7));
+    for(let hit=0;hit<2;hit++) enemies.filter(h=>h.curHp>0).forEach(h=>doDmg(h,_d,{actor:a,isSkill:true,isAoe:true}));
+  }
+  else if(n==='雙嘴詛咒'){ if(t){ addStatus(t,'poison',2); addStatus(t,'noheal_curse',2); } }
+  else if(n==='冰晶凝聚'){ allies.forEach(h=>{ if(h.curHp>0){ h.shield=(h.shield||0)+20; renderCard(h); } }); }
+  else if(n==='幽寒吐息'){
+    const _d=Math.max(1,spv(a));
+    enemies.forEach(h=>{
+      doDmg(h,_d,{actor:a,isSkill:true,isAoe:true,elem:'ice'});
+      if(h.curHp>0 && Math.random()<0.5) addStatus(h,'freeze',1);
+    });
+  }
+  else if(n==='瞪目威嚇'){ if(t) addStatus(t,'noatk',2); }
+  else if(n==='暴走衝撞'){
+    if(t){
+      doDmg(t,Math.max(1,Math.round(atkv(a)*1.75)),{actor:a,isSkill:true});
+      G.energy[t.side] = Math.max(0,(G.energy[t.side]||0)-2);
+    }
+  }
+  else if(n==='暗羽突襲'){
+    if(t){
+      doDmg(t,Math.max(1,Math.round(atkv(a)*2.0)),{actor:a,isSkill:true,elem:'dark'});
+      if(t.curHp>0 && Math.random()<0.5) addStatus(t,'para',1);
+    }
+  }
+  else if(n==='羽刃陣列'){ allies.forEach(h=>{ if(h.curHp>0) addBuff(h,'evasion',1); }); }
+  else if(n==='落葉迷霧'){ enemies.forEach(h=>{ if(h.curHp>0) addStatus(h,'forecast',1); }); }
+  else if(n==='樹葉守護'){
+    allies.forEach(h=>{ if(h.curHp>0){ h.shield=(h.shield||0)+20; addBuff(h,'statusImmune',1); renderCard(h); } });
+  }
+  else if(n==='斷腕狂拳'){
+    if(t){
+      doDmg(t,Math.max(1,Math.round(atkv(a)*1.8)),{actor:a,isSkill:true});
+      if(t.curHp>0) addStatus(t,'dmgVuln',1);
+    }
+  }
+  else if(n==='鬼王怒吼'){ allies.forEach(h=>{ if(h.curHp>0) addBuff(h,'dmgup',2); }); }
+  else if(n==='酒宴狂歡'){
+    G.energy[a.side] = Math.min(10,(G.energy[a.side]||0)+5);
+    allies.forEach(h=>{ if(h.curHp>0) addBuff(h,'dmgup',1); });
+  }
+  else if(n==='熊力撞擊'){
+    if(t){
+      doDmg(t,Math.max(1,Math.round(atkv(a)*2.0)),{actor:a,isSkill:true});
+      if(t.curHp>0 && Math.random()<0.5) addStatus(t,'stun',1);
+    }
+  }
+  else if(n==='死氣結界'){ allies.forEach(h=>{ if(h.curHp>0) addBuff(h,'halfDmg',1); }); }
+  else if(n==='石化凝視'){ if(t){ addStatus(t,'trap',1); addStatus(t,'poison',2); } }
+  else if(n==='狐火護佑'){ allies.forEach(h=>{ if(h.curHp>0) addBuff(h,'deathimmune',1); }); }
+  else if(n==='狐惑封言'){ enemies.forEach(h=>{ if(h.curHp>0) addStatus(h,'seal',1); }); }
   else if(n==='不熟練習曲'){
     enemies.forEach(h=>{
       doDmg(h,Math.floor(spv(a)*0.7),{actor:a,isSkill:true,isAoe:true});
@@ -19529,6 +19900,8 @@ function doEquip(pos){
   // 裝備新物品
   h.equip = {n:item.n};
   if(eq && eq.onEquip) eq.onEquip(h);
+  // ★ v1.0.20260421.3000x — 寵物圖鑑收錄追蹤
+  try{ if(eq && eq.pet && typeof _markPetCollected === 'function') _markPetCollected(eq.pet); }catch(_){}
   log(`⚙ [${h.name}] 攜帶了 [${item.n}]！${item.d}`);
   playSfx('sfx-equip',0.75);
   document.getElementById('equip-overlay').style.display = 'none';
@@ -21104,7 +21477,7 @@ function _detectCurrentBgm(){
   }
   // 冒險選關頁（若英雄圖鑑或魔物圖鑑疊在上方，不重播 BGM，維持現狀）
   if(isVisible('adventure-overlay')){
-    if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay') || isVisible('medal-page-overlay')) return _curBgm;
+    if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay') || isVisible('medal-page-overlay') || isVisible('pet-page-overlay')) return _curBgm;
     return 'bgm-menu-01';
   }
   // 超商
@@ -23299,6 +23672,23 @@ function _advShowBossRouteSelector(onConfirm){
   title.textContent = '🔥 選擇挑戰路線';
   pop.appendChild(title);
 
+  // ★ v1.0.20260421.3000w — 左上返回按鈕
+  const backBtn = document.createElement('button');
+  backBtn.textContent = '← 返回';
+  backBtn.style.cssText = 'position:absolute;top:24px;left:24px;padding:10px 22px;font-size:24px;font-weight:700;background:rgba(40,30,0,0.8);border:2px solid rgba(212,168,67,0.55);color:#ffe8a0;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;z-index:10;';
+  backBtn.onmouseover = () => { backBtn.style.background = 'rgba(60,45,0,0.9)'; };
+  backBtn.onmouseout  = () => { backBtn.style.background = 'rgba(40,30,0,0.8)'; };
+  backBtn.onclick = () => {
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    // 關閉 BOSS 路線選擇頁，返回冒險關卡選擇頁
+    try{ pop.remove(); }catch(_){}
+    try{
+      const advOv = document.getElementById('adventure-overlay');
+      if(advOv){ advOv.style.display = 'flex'; advOv.classList.add('show'); }
+    }catch(_){}
+  };
+  pop.appendChild(backBtn);
+
   const subtitle = document.createElement('div');
   subtitle.style.cssText = 'font-size:24px;color:#ffdd99;letter-spacing:3px;margin-bottom:28px;text-align:center;opacity:0.88;';
   subtitle.textContent = '不同路線遇到不同 BOSS,戰鬥體驗也不同,請選擇一條路再進選角';
@@ -23322,9 +23712,21 @@ function _advShowBossRouteSelector(onConfirm){
     let isLocked = false;
     let lockReason = '';
     let treasureCount = 0;
+    let treasureStatusHtml = ''; // v1.0.20260421.3000v 三神器持有狀態顯示
     if(variant.hidden && variant.id === 'yamata'){
       const tr = _japanGetTreasures();
       treasureCount = (tr.tengu?1:0) + (tr.shutendoji?1:0) + (tr.tamamo?1:0);
+      // ★ v1.0.20260421.3000v — 標示三神器個別獲得狀態
+      const mkT = (has, name) => has
+        ? `<span style="display:inline-block;margin:2px 4px;padding:3px 10px;font-size:18px;font-weight:900;color:#ffdd44;background:rgba(255,200,60,0.15);border:1.5px solid rgba(255,200,60,0.6);border-radius:8px;text-shadow:0 0 6px rgba(255,200,60,0.5);">✨${name}</span>`
+        : `<span style="display:inline-block;margin:2px 4px;padding:3px 10px;font-size:18px;font-weight:700;color:#666;background:rgba(40,40,40,0.4);border:1.5px solid #555;border-radius:8px;">🔒${name}</span>`;
+      treasureStatusHtml =
+        `<div style="font-size:18px;color:#ffddaa;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px 6px;background:rgba(60,30,80,0.3);border:1.5px solid rgba(200,160,255,0.35);border-radius:8px;">` +
+          `<div style="margin-bottom:4px;color:#cc99ff;font-weight:800;">三神器持有狀況</div>` +
+          mkT(tr.tengu,      '草薙劍') +
+          mkT(tr.shutendoji, '八尺瓊勾玉') +
+          mkT(tr.tamamo,     '八咫鏡') +
+        `</div>`;
       if(treasureCount < 3){
         isLocked = true;
         lockReason = `🔒 需先通過大天狗、酒吞童子、玉藻前 3 條路線\n（目前已集齊 ${treasureCount}/3 件神器）`;
@@ -23354,6 +23756,7 @@ function _advShowBossRouteSelector(onConfirm){
       `<div style="font-size:24px;color:#ffddaa;letter-spacing:3px;text-align:center;margin-top:-4px;">${info.subtitle}</div>` +
       (lore ? `<div style="font-size:22px;color:#e8e0d4;line-height:1.65;padding:10px 14px;background:rgba(255,200,120,0.06);border-left:3px solid ${info.color};border-radius:0 8px 8px 0;">${lore}</div>` : '') +
       `<div style="font-size:20px;color:#99ccff;letter-spacing:1px;line-height:1.5;text-align:center;opacity:0.92;">${info.teamDesc}</div>` +
+      treasureStatusHtml +
       (isLocked ? `<div style="font-size:20px;color:#ff8866;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(255,80,80,0.12);border-radius:8px;white-space:pre-line;">${lockReason}</div>` : '') +
       (variant.id==='yamata' && !isLocked ? `<div style="font-size:20px;color:#aaffaa;letter-spacing:1px;line-height:1.5;text-align:center;padding:8px;background:rgba(100,255,100,0.12);border-radius:8px;">✨ 已集齊三神器！戰前可選擇消耗三神器，弱化八岐大蛇 HP/攻擊/特技各 -20%</div>` : '') +
       `<div style="display:flex;gap:10px;margin-top:6px;">` +
@@ -25327,20 +25730,20 @@ window._getTaiwanEquipPool = function(){
 Object.assign(HERO_DB, {
   // ── 4 種隨機小怪（貓空小怪 ×1.2 並改主題）──
   '河童':{hp:36,atk:6,sp:17,spd:4,exp:6,
-    s1:{n:'水盤滋潤',c:1,d:'依特技恢復1名友方HP',fd:'頭頂水盤灑下清涼泉水，用特技值為1名友方恢復HP。'},
-    s2:{n:'泥濘手爪',c:2,d:'使全體對手緩速1回合，速度-50%',fd:'用濕滑綠爪抓出黏膩泥濘，使全體對手陷入「緩速」狀態1回合。'}
+    s1:{n:'水盤守護',c:3,d:'為HP%最低的1名友方附加「減傷½」2回合，並依特技恢復HP',fd:'頭頂水盤灑下清泉，為己方HP百分比最低的1名友方附加「減傷½」2回合，並依特技值恢復HP。'},
+    s2:{n:'潑水惡作劇',c:2,d:'使全體對手「查封」1回合（無法使用物品）',fd:'頑皮地潑灑一盆水弄濕敵方物品袋，使全體對手陷入「查封」狀態1回合，無法使用或販賣物品。'}
   },
   '二口女':{hp:50,atk:12,sp:20,spd:16,exp:10,
-    s1:{n:'陰森飛髮',c:3,d:'依特技對全體敵人造成傷害',fd:'後腦的第二張嘴伸出漆黑長髮鞭擊，用特技值對全體敵人造成傷害。'},
-    s2:{n:'低聲詛咒',c:2,d:'使1名對手失明1回合，行動成功率減半',fd:'用嘶啞嗓音念出詛咒咒語，使1名對手陷入「失明」狀態1回合。'}
+    s1:{n:'陰森長髮鞭',c:4,d:'依特技70%對全體對手造成2次傷害',fd:'後腦的第二張嘴伸出漆黑長髮鞭擊，用特技值的70%對全體對手造成2次傷害。'},
+    s2:{n:'雙嘴詛咒',c:2,d:'使1名對手陷入「中毒」和「禁療」2回合',fd:'雙嘴低吟詛咒咒語，使1名對手同時陷入「中毒」和「禁止治療」狀態各2回合。'}
   },
   '雪女':{hp:48,atk:12,sp:16,spd:19,exp:10,
-    s1:{n:'冰封搖籃曲',c:2,d:'使1名對手睡眠3回合（受傷50%提早醒）',fd:'吐出幽冷吐息，低吟搖籃曲使1名對手陷入「睡眠」狀態3回合。'},
-    s2:{n:'雪風俯衝',c:2,d:'攻擊+速度×0.2傷害1名對手，並奪取1張物品卡',fd:'化作雪風俯衝對手，造成（攻擊+速度×0.2）的傷害並奪取1張物品卡。'}
+    s1:{n:'冰晶凝聚',c:4,d:'為友方全體附加20護盾',fd:'凝聚寒冷結晶化為冰盾，為友方全體附加可抵擋20傷害的護盾。'},
+    s2:{n:'幽寒吐息',c:4,d:'依特技對全體對手造成傷害，50%機率「冰凍」1回合',fd:'吐出幽冷寒氣籠罩戰場，用特技值對全體對手造成冰屬性傷害，每人50%機率陷入「冰凍」狀態1回合。'}
   },
   '獨眼小僧':{hp:54,atk:12,sp:11,spd:10,exp:8,
-    s1:{n:'獨眼狠擊',c:2,d:'依攻擊200%重擊1名對手，爆擊率+50%',fd:'瞪大獨眼聚集力量，傾盡全力重擊1名對手，造成攻擊值200%的傷害，爆擊率+50%。'},
-    s2:{n:'踩腳陷阱',c:2,d:'使1名對手下回合最後行動',fd:'快速挖出陷坑，使1名對手陷入「緩速」，下回合最後行動。'}
+    s1:{n:'瞪目威嚇',c:2,d:'使1名對手「無力」2回合（無法普攻）',fd:'瞪大獨眼放出威嚇的妖氣，使1名對手陷入「無力」狀態2回合，無法進行普通攻擊。'},
+    s2:{n:'暴走衝撞',c:2,d:'依攻擊175%傷害1名對手，同時減少對手2能量',fd:'失控狂奔衝向敵人，造成攻擊值 175% 的傷害，同時使對手陣營的能量減少 2 點。'}
   },
 
   // ── 2 種稀有小怪（對應寶箱怪 / 小惡魔）──
@@ -25369,28 +25772,28 @@ Object.assign(HERO_DB, {
 
   // ── 6 菁英小怪（貓空 綠竹筍/茶葉精靈 ×1.2）──
   '烏天狗':{hp:216,atk:11,sp:12,spd:6,exp:24,
-    s1:{n:'黑羽護盾',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'抖落漆黑羽毛，為己方HP百分比最低的1名友方附加可抵擋20傷害的護盾。'},
-    s2:{n:'羽刃斬擊',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'用銳利羽刃斬向1名對手，造成特技值傷害並有50%機率使其「麻痺」1回合。'}
+    s1:{n:'暗羽突襲',c:3,d:'依攻擊200%傷害1名對手，50%機率麻痺1回合',fd:'黑羽閃電般突襲1名對手，造成攻擊值200%的暗屬性傷害，50%機率使其「麻痺」1回合。'},
+    s2:{n:'羽刃陣列',c:2,d:'為友方全體附加「迴避」1回合',fd:'抖落密集黑羽形成刃陣，為友方全體附加「迴避」1回合。'}
   },
   '木葉天狗':{hp:180,atk:8,sp:20,spd:12,exp:22,
-    s1:{n:'一葉山風',c:3,d:'依特技恢復友方全體HP',fd:'吹響木葉笛召喚山風，用特技值恢復友方全體HP。'},
-    s2:{n:'萬葉療方',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'散落萬片療傷木葉，解除友方全體不利狀態，並用特技值恢復HP百分比最低的1名隊友HP（可復活）。'}
+    s1:{n:'落葉迷霧',c:2,d:'使全體對手「失明」1回合',fd:'吹起漫天落葉迷霧，使全體對手陷入「失明」狀態1回合，行動成功率減半。'},
+    s2:{n:'樹葉守護',c:3,d:'為友方全體附加20護盾+「狀態免疫」1回合',fd:'編織樹葉結界，為友方全體附加可抵擋20傷害的護盾，並附加「狀態免疫」1回合。'}
   },
   '茨木童子':{hp:216,atk:11,sp:12,spd:6,exp:24,
-    s1:{n:'鬼腕橫掃',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'伸出粗壯鬼腕格擋傷害，為己方HP百分比最低的1名友方附加可抵擋20傷害的護盾。'},
-    s2:{n:'血怨之拳',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'灌注怨氣的紅拳轟向1名對手，造成特技值傷害並有50%機率使其「麻痺」1回合。'}
+    s1:{n:'斷腕狂拳',c:3,d:'依攻擊180%傷害1名對手，附加「易傷」1回合',fd:'揮動斷腕狂拳重擊1名對手，造成攻擊值180%的傷害並附加「易傷」狀態1回合。'},
+    s2:{n:'鬼王怒吼',c:2,d:'為友方全體附加「攻增」2回合',fd:'發出震撼京都的怒吼，激勵所有同伴，為友方全體附加「攻增」狀態2回合。'}
   },
   '星熊童子':{hp:180,atk:8,sp:20,spd:12,exp:22,
-    s1:{n:'熊之酒',c:3,d:'依特技恢復友方全體HP',fd:'將酒灑向同伴，用特技值恢復友方全體HP。'},
-    s2:{n:'星夜妖酒',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'傾倒壓箱妖酒，解除友方全體不利狀態，並用特技值恢復HP百分比最低的1名隊友HP（可復活）。'}
+    s1:{n:'酒宴狂歡',c:2,d:'陣營補充5能量，友方全體附加「攻增」1回合',fd:'舉起妖酒大肆狂飲，為己方陣營補充5能量，並為友方全體附加「攻增」狀態1回合。'},
+    s2:{n:'熊力撞擊',c:3,d:'依攻擊200%傷害1名對手，50%機率「暈眩」1回合',fd:'以星熊之力全力撞擊1名對手，造成攻擊值200%的傷害，50%機率使其「暈眩」1回合。'}
   },
   '殺生石分身':{hp:216,atk:11,sp:12,spd:6,exp:24,
-    s1:{n:'石化結界',c:2,d:'為HP%最低的友方1人附加20護盾',fd:'釋放死氣結界包覆同伴，為己方HP百分比最低的1名友方附加可抵擋20傷害的護盾。'},
-    s2:{n:'毒氣侵蝕',c:3,d:'依特技傷害1名對手，50%麻痺1回合',fd:'噴出致命毒氣籠罩1名對手，造成特技值傷害並有50%機率使其「麻痺」1回合。'}
+    s1:{n:'死氣結界',c:3,d:'為友方全體附加「減傷½」1回合',fd:'釋放死氣結界籠罩同伴，為友方全體附加「減傷½」狀態1回合。'},
+    s2:{n:'石化凝視',c:2,d:'使1名對手「禁動」1回合+「劇毒」2回合',fd:'凝視中釋放石化妖氣，使1名對手陷入「禁動」狀態1回合並附加「劇毒」2回合。'}
   },
   '管狐':{hp:180,atk:8,sp:20,spd:12,exp:22,
-    s1:{n:'狐火療傷',c:3,d:'依特技恢復友方全體HP',fd:'吹奏竹管引狐火癒傷，用特技值恢復友方全體HP。'},
-    s2:{n:'七色狐火',c:3,d:'解除友方全體不利狀態，再依特技恢復HP%最低的1名隊友HP',fd:'綻放七彩狐火，解除友方全體不利狀態，並用特技值恢復HP百分比最低的1名隊友HP（可復活）。'}
+    s1:{n:'狐火護佑',c:3,d:'為友方全體附加「死亡免疫」1回合',fd:'狐火圍繞同伴形成護盾，為友方全體附加「死亡免疫」1回合。'},
+    s2:{n:'狐惑封言',c:2,d:'使全體對手「封印」1回合（無法使用技能）',fd:'吹奏迷惑竹管，使全體對手陷入「封印」狀態1回合，無法使用技能。'}
   },
 
   // ── 隱藏 BOSS：八岐大蛇（比三大 BOSS 再強一階）──
@@ -29950,6 +30353,8 @@ function _buildSafeData() {
     heroTraitLevel:  _heroTraitLevel,
     knowledgeCoins:  _knowledgeCoins,        // 知識幣
     playerBackpack:  _playerBackpack,        // 背包（向後相容）
+    // ★ v1.0.20260421.3000x — 寵物圖鑑已收錄集合（轉 array 才能上雲）
+    petsEverCollected: (typeof _petsEverCollected !== 'undefined' && _petsEverCollected) ? Array.from(_petsEverCollected) : [],
     // ★ 字串化版本：用來繞過 Firebase merge:true 不會刪除 map 中 key 的限制
     //   （單賣一項物品後，若僅寫物件形式，雲端會保留舊 key，導致重整後物品復活）
     playerBackpack_s: JSON.stringify(_playerBackpack),
@@ -30046,6 +30451,10 @@ function _applySafeData(raw) {
     try{ const _v = JSON.parse(data.heroSkillLevels_s); if(_v && typeof _v==='object') _heroSkillLevels = _v; }catch(e){}
   }
   if(Array.isArray(data.presetTeams)) _presetTeams = data.presetTeams;
+  // ★ v1.0.20260421.3000x — 寵物圖鑑已收錄集合（從 array 還原 Set）
+  if(Array.isArray(data.petsEverCollected)){
+    _petsEverCollected = new Set(data.petsEverCollected);
+  }
   // ★ 英雄肖像系統：載入玩家已解鎖與目前選擇，並套用到 HERO_IMGS
   if(data.heroPortraitUnlocked && typeof data.heroPortraitUnlocked === 'object')
     _heroPortraitUnlocked = data.heroPortraitUnlocked;
@@ -30365,6 +30774,13 @@ const BACKPACK_ITEM_DEF = {
   'oni_sake_cup':      { name:'鬼王的酒盃',     icon:'🍶', desc:'酒吞童子愛用的朱紅酒盃，盃中餘香陳醇難忘。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:1200 },
   'kyuubi_fur':        { name:'九尾狐毛髮',     icon:'🦊', desc:'玉藻前脫落的金黃狐尾毛髮，柔軟中帶有火焰餘溫。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:1800 },
   'dragon_scale':      { name:'龍鱗片',         icon:'🐉', desc:'八岐大蛇身上剝落的幽紫龍鱗，蘊含遠古神力。傳說中的珍稀寶物。前往超商可賣出換取知識幣。', type:'sell_only', sellPrice:3000 },
+  // ★ v1.0.20260421.3000z — 日本關菁英小怪專屬掉落物
+  'crow_feather':      { name:'烏天狗的黑羽',   icon:'🪶', desc:'烏天狗抖落的漆黑羽毛，刃尖鋒利得能當武器。前往超商可賣出。', type:'sell_only', sellPrice:120 },
+  'mystic_leaf':       { name:'木葉天狗的幻葉', icon:'🍃', desc:'木葉天狗身上散落的神秘樹葉，帶有一絲山風的餘韻。前往超商可賣出。', type:'sell_only', sellPrice:110 },
+  'oni_arm_bone':      { name:'茨木童子的斷腕骨',icon:'🦴', desc:'傳說中茨木童子被斬下的鬼腕殘骨，蘊藏不滅怨氣。前往超商可賣出。', type:'sell_only', sellPrice:140 },
+  'star_bear_fang':    { name:'星熊童子的獠牙', icon:'🦷', desc:'星熊童子裂開的巨大獠牙，帶有酒香與鬼威。前往超商可賣出。', type:'sell_only', sellPrice:140 },
+  'sessho_stone':      { name:'殺生石碎片',     icon:'🗿', desc:'殺生石崩落的紅紋碎片，靠近仍能感到妖氣渾身發麻。前往超商可賣出。', type:'sell_only', sellPrice:130 },
+  'fox_tube':          { name:'管狐的竹管',     icon:'🎋', desc:'管狐寄身的纖細竹管，狐毛還卡在縫隙。前往超商可賣出。', type:'sell_only', sellPrice:110 },
   // ★ 肖像商品：購買後即自動解鎖，使用時彈出「前往英雄圖鑑切換」提示
   'priest_portrait_dawn': { name:'祭司肖像：曙光微風', icon:'🌅',
     desc:'全新繪製的祭司肖像「曙光微風」，購買後可在英雄圖鑑的祭司詳細頁切換使用（原肖像永遠保留）。',
@@ -30430,6 +30846,20 @@ const BACKPACK_ITEM_DEF = {
   'miko_shrine_portrait': { name:'巫女肖像：神社祭禮', icon:'⛩',
     desc:'全新繪製的巫女肖像「神社祭禮」，購買後可在英雄圖鑑的巫女詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'巫女', portraitId:'miko_shrine', useLabel:'前往切換' },
+  // ★ v1.0.20260421.3002 — 13 位英雄新肖像
+  'mage_ice_portrait':      { name:'冰法師肖像：冰封霜華', icon:'❄️', desc:'全新繪製的冰法師肖像「冰封霜華」，購買後可在英雄圖鑑的冰法師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'冰法師',   portraitId:'ice_frost',     useLabel:'前往切換' },
+  'rogue_portrait':         { name:'刺客肖像：幻影玫瑰',   icon:'🗡', desc:'全新繪製的刺客肖像「幻影玫瑰」，購買後可在英雄圖鑑的刺客詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'刺客',     portraitId:'shadow_rose',   useLabel:'前往切換' },
+  'vampire_portrait':       { name:'吸血鬼肖像：暗夜薔薇', icon:'🦇', desc:'全新繪製的吸血鬼肖像「暗夜薔薇」，購買後可在英雄圖鑑的吸血鬼詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'吸血鬼',   portraitId:'dark_rose',     useLabel:'前往切換' },
+  'hercules_portrait':      { name:'大力士肖像：所向無敵', icon:'💪', desc:'全新繪製的大力士肖像「所向無敵」，購買後可在英雄圖鑑的大力士詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'大力士',   portraitId:'invincible',    useLabel:'前往切換' },
+  'scholar_portrait':       { name:'學者肖像：知識燈塔',   icon:'🎓', desc:'全新繪製的學者肖像「知識燈塔」，購買後可在英雄圖鑑的學者詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'學者',     portraitId:'wisdom_light',  useLabel:'前往切換' },
+  'machinist_portrait':     { name:'機械師肖像：鋼鐵革新', icon:'⚙', desc:'全新繪製的機械師肖像「鋼鐵革新」，購買後可在英雄圖鑑的機械師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'機械師',   portraitId:'steel_innov',   useLabel:'前往切換' },
+  'fighter_portrait':       { name:'武鬥家肖像：鐵拳無雙', icon:'🥊', desc:'全新繪製的武鬥家肖像「鐵拳無雙」，購買後可在英雄圖鑑的武鬥家詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'武鬥家',   portraitId:'iron_fist',     useLabel:'前往切換' },
+  'mage_fire_portrait':     { name:'火法師肖像：烈焰焚天', icon:'🔥', desc:'全新繪製的火法師肖像「烈焰焚天」，購買後可在英雄圖鑑的火法師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'火法師',   portraitId:'blaze_sky',     useLabel:'前往切換' },
+  'archer_portrait':        { name:'神射手肖像：百步穿雲', icon:'🏹', desc:'全新繪製的神射手肖像「百步穿雲」，購買後可在英雄圖鑑的神射手詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'神射手',   portraitId:'cloud_shot',    useLabel:'前往切換' },
+  'coder_portrait':         { name:'程式設計師肖像：量子編碼', icon:'💻', desc:'全新繪製的程式設計師肖像「量子編碼」，購買後可在英雄圖鑑的程式設計師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'程式設計師', portraitId:'quantum_code',  useLabel:'前往切換' },
+  'paladin_portrait':       { name:'聖騎士肖像：聖殿支柱', icon:'🛡', desc:'全新繪製的聖騎士肖像「聖殿支柱」，購買後可在英雄圖鑑的聖騎士詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'聖騎士',   portraitId:'temple_pillar', useLabel:'前往切換' },
+  'strategist_portrait':    { name:'軍師肖像：運籌帷幄',   icon:'🪶', desc:'全新繪製的軍師肖像「運籌帷幄」，購買後可在英雄圖鑑的軍師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'軍師',     portraitId:'tactic_web',    useLabel:'前往切換' },
+  'onmyoji_portrait':       { name:'陰陽師肖像：天地四聖', icon:'☯️', desc:'全新繪製的陰陽師肖像「天地四聖」，購買後可在英雄圖鑑的陰陽師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'陰陽師',   portraitId:'four_saints',   useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -30507,6 +30937,20 @@ const SHOP_PRODUCTS = [
   { id:'miko_shrine_portrait', name:'巫女肖像：神社祭禮', icon:'⛩',
     desc:'全新繪製的巫女替代肖像「神社祭禮」。購買後即永久解鎖，可在英雄圖鑑的巫女詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ★ v1.0.20260421.3002 — 13 位英雄新肖像
+  { id:'mage_ice_portrait',   name:'冰法師肖像：冰封霜華',   icon:'❄️', desc:'全新繪製的冰法師替代肖像「冰封霜華」。購買後即永久解鎖，可在英雄圖鑑的冰法師詳細頁切換使用（原始肖像仍保留）。',     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'rogue_portrait',      name:'刺客肖像：幻影玫瑰',     icon:'🗡', desc:'全新繪製的刺客替代肖像「幻影玫瑰」。購買後即永久解鎖，可在英雄圖鑑的刺客詳細頁切換使用（原始肖像仍保留）。',       price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'vampire_portrait',    name:'吸血鬼肖像:暗夜薔薇',    icon:'🦇', desc:'全新繪製的吸血鬼替代肖像「暗夜薔薇」。購買後即永久解鎖，可在英雄圖鑑的吸血鬼詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'hercules_portrait',   name:'大力士肖像：所向無敵',   icon:'💪', desc:'全新繪製的大力士替代肖像「所向無敵」。購買後即永久解鎖，可在英雄圖鑑的大力士詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'scholar_portrait',    name:'學者肖像：知識燈塔',     icon:'🎓', desc:'全新繪製的學者替代肖像「知識燈塔」。購買後即永久解鎖，可在英雄圖鑑的學者詳細頁切換使用（原始肖像仍保留）。',       price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'machinist_portrait',  name:'機械師肖像：鋼鐵革新',   icon:'⚙',  desc:'全新繪製的機械師替代肖像「鋼鐵革新」。購買後即永久解鎖，可在英雄圖鑑的機械師詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'fighter_portrait',    name:'武鬥家肖像：鐵拳無雙',   icon:'🥊', desc:'全新繪製的武鬥家替代肖像「鐵拳無雙」。購買後即永久解鎖，可在英雄圖鑑的武鬥家詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'mage_fire_portrait',  name:'火法師肖像：烈焰焚天',   icon:'🔥', desc:'全新繪製的火法師替代肖像「烈焰焚天」。購買後即永久解鎖，可在英雄圖鑑的火法師詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'archer_portrait',     name:'神射手肖像：百步穿雲',   icon:'🏹', desc:'全新繪製的神射手替代肖像「百步穿雲」。購買後即永久解鎖，可在英雄圖鑑的神射手詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'coder_portrait',      name:'程式設計師肖像：量子編碼', icon:'💻', desc:'全新繪製的程式設計師替代肖像「量子編碼」。購買後即永久解鎖，可在英雄圖鑑的程式設計師詳細頁切換使用（原始肖像仍保留）。', price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'paladin_portrait',    name:'聖騎士肖像：聖殿支柱',   icon:'🛡', desc:'全新繪製的聖騎士替代肖像「聖殿支柱」。購買後即永久解鎖，可在英雄圖鑑的聖騎士詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'strategist_portrait', name:'軍師肖像：運籌帷幄',     icon:'🪶', desc:'全新繪製的軍師替代肖像「運籌帷幄」。購買後即永久解鎖，可在英雄圖鑑的軍師詳細頁切換使用（原始肖像仍保留）。',       price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  { id:'onmyoji_portrait',    name:'陰陽師肖像：天地四聖',   icon:'☯️', desc:'全新繪製的陰陽師替代肖像「天地四聖」。購買後即永久解鎖，可在英雄圖鑑的陰陽師詳細頁切換使用（原始肖像仍保留）。',   price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
 // ★ v1.0.20260421.2100 — 排除經驗值/技能/爆發技相關物品
@@ -30527,6 +30971,13 @@ const SHOP_SELL_ITEMS = [
   { id:'oni_sake_cup',    name:'鬼王的酒盃',     icon:'🍶', sellPrice:1200 },
   { id:'kyuubi_fur',      name:'九尾狐毛髮',     icon:'🦊', sellPrice:1800 },
   { id:'dragon_scale',    name:'龍鱗片',         icon:'🐉', sellPrice:3000 },
+  // ★ v1.0.20260421.3000z — 日本關菁英小怪掉落物
+  { id:'crow_feather',    name:'烏天狗的黑羽',   icon:'🪶', sellPrice:120 },
+  { id:'mystic_leaf',     name:'木葉天狗的幻葉', icon:'🍃', sellPrice:110 },
+  { id:'oni_arm_bone',    name:'茨木童子的斷腕骨',icon:'🦴', sellPrice:140 },
+  { id:'star_bear_fang',  name:'星熊童子的獠牙', icon:'🦷', sellPrice:140 },
+  { id:'sessho_stone',    name:'殺生石碎片',     icon:'🗿', sellPrice:130 },
+  { id:'fox_tube',        name:'管狐的竹管',     icon:'🎋', sellPrice:110 },
 ];
 
 // 背包工具函式
@@ -32264,6 +32715,8 @@ function closeShopOverlay(){
 function _renderShopProducts(){
   const list = document.getElementById('shop-products-list');
   if(!list) return;
+  // ★ v1.0.20260421.3002 — 商品改為 4 欄網格
+  list.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:10px;';
   list.innerHTML = '';
   SHOP_PRODUCTS.forEach(prod => {
     const qty = (window['_shopQty_'+prod.id]||1);
@@ -32278,62 +32731,92 @@ function _renderShopProducts(){
                        && (_heroPortraitUnlocked[_itemDef.heroName] || []).includes(_itemDef.portraitId))
                    || backpackGet(prod.id) > 0;
     }
-    // ★ v1.0.20260421.3000L — 每日限購商品:已達上限則灰化按鈕並顯示重置倒數
     const _isDailyCapped = prod.dailyLimit > 0 && _shopDailyBought(prod.id) >= prod.dailyLimit;
-    const _stockDisplay = _alreadyOwned ? '<span style="color:#888;font-weight:800;">已擁有</span>'
-                                        : prod.stock;
     const _btnEnabled = !_alreadyOwned && !_isDailyCapped && canAfford;
     const _btnLabel   = _alreadyOwned ? '✓ 已擁有'
-                     : _isDailyCapped ? '⏰ 今日已售完'
+                     : _isDailyCapped ? '⏰ 售完'
                      : '💰 購買';
     const _btnColor   = (_alreadyOwned || _isDailyCapped) ? '#666' : (canAfford ? '#44ff88' : '#666');
     const _btnBg      = (_alreadyOwned || _isDailyCapped) ? 'rgba(40,40,40,0.3)' : (canAfford ? 'rgba(50,160,50,0.35)' : 'rgba(40,40,40,0.3)');
     const _btnBorder  = (_alreadyOwned || _isDailyCapped) ? '#555' : (canAfford ? '#44ff88' : '#555');
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:16px;padding:16px 20px;margin-bottom:12px;'+
-      'background:rgba(40,25,0,0.7);border:1.5px solid rgba(255,180,50,0.3);border-radius:14px;'+
-      (_alreadyOwned ? 'opacity:0.6;' : '');
-    // ★ 肖像商品：加「預覽」按鈕
-    const _prodItemDef = BACKPACK_ITEM_DEF[prod.id] || {};
-    const _isPortrait = _prodItemDef.type === 'portrait';
-    const _previewBtn = _isPortrait
-      ? `<button onclick="_showPortraitPreview('${_prodItemDef.heroName}','${_prodItemDef.portraitId}')" style="padding:8px 18px;font-size:28px;font-weight:800;
-          background:rgba(60,80,160,0.35);border:2px solid #88aaff;color:#aaccff;
-          border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-top:4px;">🔍 預覽</button>`
-      : '';
-    div.innerHTML = `
-      <div style="font-size:78px;flex-shrink:0;">${prod.icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:39px;font-weight:900;color:#ffcc44;">${prod.name}</div>
-        <div style="font-size:28px;color:#ccc;margin-top:3px;line-height:1.5;">${prod.desc}</div>
-        <div style="font-size:32px;color:#ffdd88;margin-top:6px;">
-          ${prod.dailyLimit > 0
-            ? `今日剩餘：<span style="color:${(_shopDailyBought(prod.id)<prod.dailyLimit)?'#44ff88':'#ff6644'};font-weight:800;">${Math.max(0,prod.dailyLimit-_shopDailyBought(prod.id))} / ${prod.dailyLimit}</span> &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
-            : `庫存：${_stockDisplay} &nbsp;|&nbsp; 單價：<span style="color:#ffe066;font-weight:800;">${prod.price.toLocaleString()} 💰</span>`
-          }</div>
-        ${_previewBtn}
+    const _stockTxt   = _alreadyOwned ? '已擁有'
+                     : prod.dailyLimit > 0
+                       ? `今日剩 ${Math.max(0,prod.dailyLimit-_shopDailyBought(prod.id))}/${prod.dailyLimit}`
+                       : `庫存：${prod.stock}`;
+    const cell = document.createElement('div');
+    cell.style.cssText = 'display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:10px 8px 8px;'+
+      'background:rgba(40,25,0,0.72);border:1.5px solid rgba(255,180,50,0.35);border-radius:12px;'+
+      'position:relative;min-height:0;'+
+      (_alreadyOwned ? 'opacity:0.55;' : '');
+    cell.innerHTML = `
+      <button onclick="_showShopDetail('${prod.id}')" title="查看詳細介紹" style="
+        position:absolute;top:6px;right:6px;width:30px;height:30px;font-size:18px;font-weight:900;
+        background:rgba(80,120,200,0.35);border:1.5px solid #88bbff;color:#cfe4ff;
+        border-radius:50%;cursor:pointer;font-family:inherit;line-height:1;padding:0;z-index:2;">?</button>
+      <div style="font-size:44px;text-align:center;line-height:1;margin-top:4px;">${prod.icon}</div>
+      <div style="font-size:20px;font-weight:900;color:#ffcc44;text-align:center;line-height:1.25;min-height:50px;display:flex;align-items:center;justify-content:center;padding:0 24px;">${prod.name}</div>
+      <div style="font-size:16px;color:${(_alreadyOwned||_isDailyCapped)?'#888':(prod.dailyLimit>0?'#88ffcc':'#ffdd88')};text-align:center;">${_stockTxt}</div>
+      <div style="font-size:22px;font-weight:900;color:#ffe066;text-align:center;">${prod.price.toLocaleString()} 💰</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;${_alreadyOwned?'opacity:0.4;pointer-events:none;':''}">
+        <button onclick="shopAdjQty('${prod.id}',-1)" style="width:26px;height:26px;font-size:20px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:6px;cursor:pointer;line-height:1;padding:0;">−</button>
+        <span id="shop-qty-${prod.id}" style="font-size:20px;font-weight:800;color:#fff;min-width:22px;text-align:center;">${qty}</span>
+        <button onclick="shopAdjQty('${prod.id}',+1)" style="width:26px;height:26px;font-size:20px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:6px;cursor:pointer;line-height:1;padding:0;">＋</button>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;">
-        <div style="display:flex;align-items:center;gap:8px;${_alreadyOwned?'opacity:0.4;pointer-events:none;':''}">
-          <button onclick="shopAdjQty('${prod.id}',-1)" style="width:36px;height:36px;font-size:36px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:8px;cursor:pointer;">−</button>
-          <span id="shop-qty-${prod.id}" style="font-size:39px;font-weight:800;color:#fff;min-width:32px;text-align:center;">${qty}</span>
-          <button onclick="shopAdjQty('${prod.id}',+1)" style="width:36px;height:36px;font-size:36px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;">＋</button>
-        </div>
-        <div style="font-size:30px;color:${_alreadyOwned?'#666':(canAfford?'#ffe066':'#888')};">${_alreadyOwned?'已擁有此商品':'合計：'+total.toLocaleString()+' 💰'}</div>
-        <button onclick="shopBuyItem('${prod.id}')" style="padding:10px 22px;font-size:33px;font-weight:800;
-          background:${_btnBg};
-          border:2px solid ${_btnBorder};
-          color:${_btnColor};
-          border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;
-          ${_btnEnabled?'':'pointer-events:none;'}">${_btnLabel}</button>
-        ${_isDailyCapped ? `<div style="font-size:24px;color:#ffaa66;letter-spacing:1px;text-align:center;margin-top:2px;line-height:1.4;">
-          🕐 每日 <b style="color:#ffcc88;">08:00</b> 重置<br>
-          <span style="font-size:22px;color:#ffcc66;">（剩餘 ${_shopResetCountdown()}）</span>
-        </div>` : ''}
-      </div>`;
-    list.appendChild(div);
+      <div style="font-size:15px;color:${_alreadyOwned?'#666':(canAfford?'#ffe066':'#888')};text-align:center;line-height:1.2;">${_alreadyOwned?'—':'合計 '+total.toLocaleString()+'💰'}</div>
+      <button onclick="shopBuyItem('${prod.id}')" style="padding:8px 6px;font-size:18px;font-weight:800;
+        background:${_btnBg};border:1.5px solid ${_btnBorder};color:${_btnColor};
+        border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;
+        ${_btnEnabled?'':'pointer-events:none;'}">${_btnLabel}</button>
+      ${_isDailyCapped ? `<div style="font-size:13px;color:#ffaa66;text-align:center;line-height:1.3;">🕐 08:00 重置<br>剩 ${_shopResetCountdown()}</div>` : ''}`;
+    list.appendChild(cell);
   });
-  // ★ v1.0.20260421.2000 — 賣出物品已移至右側背包欄，此處不再渲染賣出區
+}
+
+// ★ v1.0.20260421.3002 — 商品詳細介紹視窗
+function _showShopDetail(productId){
+  const prod = SHOP_PRODUCTS.find(p => p.id === productId);
+  if(!prod) return;
+  try{ playSfx('sfx-sel', 0.5); }catch(_){}
+  const old = document.getElementById('shop-detail-modal');
+  if(old) old.remove();
+
+  const _itemDef = (typeof BACKPACK_ITEM_DEF !== 'undefined') ? (BACKPACK_ITEM_DEF[prod.id]||{}) : {};
+  const _isPortrait = _itemDef.type === 'portrait';
+  const _previewBtn = _isPortrait
+    ? `<button onclick="_showPortraitPreview('${_itemDef.heroName}','${_itemDef.portraitId}')" style="padding:10px 22px;font-size:22px;font-weight:800;background:rgba(60,80,160,0.35);border:2px solid #88aaff;color:#aaccff;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-top:10px;">🔍 預覽肖像大圖</button>`
+    : '';
+  const _stockInfo = prod.dailyLimit > 0
+    ? `今日剩餘：<span style="color:#88ffcc;font-weight:800;">${Math.max(0,prod.dailyLimit-_shopDailyBought(prod.id))} / ${prod.dailyLimit}</span>`
+    : `庫存：<span style="color:#ffdd88;font-weight:800;">${prod.stock}</span>`;
+
+  const modal = document.createElement('div');
+  modal.id = 'shop-detail-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit;';
+  modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div style="background:linear-gradient(160deg,rgba(40,25,0,0.99),rgba(20,12,0,0.99));
+      border:2.5px solid rgba(255,180,50,0.7);border-radius:18px;max-width:680px;width:100%;max-height:90vh;
+      overflow-y:auto;padding:28px 32px;box-shadow:0 0 50px rgba(255,180,50,0.4);">
+      <div style="display:flex;gap:20px;align-items:center;margin-bottom:18px;">
+        <div style="font-size:96px;line-height:1;flex-shrink:0;">${prod.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:34px;font-weight:900;color:#ffcc44;letter-spacing:2px;line-height:1.2;">${prod.name}</div>
+          <div style="font-size:20px;color:#ffdd88;margin-top:8px;">${_stockInfo}</div>
+          <div style="font-size:28px;font-weight:900;color:#ffe066;margin-top:6px;">單價：${prod.price.toLocaleString()} 💰</div>
+        </div>
+      </div>
+      <div style="padding:16px 20px;background:rgba(255,200,60,0.08);border-left:3px solid #ffcc44;border-radius:0 10px 10px 0;font-size:20px;color:#eee8d4;line-height:1.7;">
+        ${prod.desc || '（無詳細介紹）'}
+      </div>
+      ${_previewBtn}
+      <div style="text-align:center;margin-top:20px;">
+        <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('shop-detail-modal').remove()"
+          style="padding:12px 36px;font-size:22px;font-weight:800;background:rgba(60,10,10,0.4);
+          border:2px solid #e84040;color:#ff9999;border-radius:10px;cursor:pointer;
+          font-family:inherit;letter-spacing:2px;">✕ 關閉</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function _renderShopBagPanel(){
@@ -34205,8 +34688,8 @@ function investStat(name, stat) {
   }
   if(!(_heroStatPoints[name] > 0)) return;
   if(!_heroStatInvested[name]) _heroStatInvested[name] = {hp:0,atk:0,sp:0,spd:0};
-  // ★ 各素質上限：HP=99，攻擊/特技/速度=30
-  const _statCap = stat==='hp' ? 99 : 30;
+  // ★ 各素質上限：HP=50，攻擊/特技/速度=30
+  const _statCap = stat==='hp' ? 50 : 30;
   if((_heroStatInvested[name][stat]||0) >= _statCap) return;
   const label = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
   const icon  = {hp:'❤',atk:'⚔',sp:'✨',spd:'💨'}[stat];
@@ -35427,6 +35910,95 @@ const MONSTER_DROPS = {
     { icon:'🍑', name:'超越極限果實',     rate:'約7.5%', note:'極稀有' },
     { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄(排除活動限定)時才可能掉落,依難度決定:沒自信 25%/普通 50%/我很會 62.5%。⚠ 目前尚未開放使用' },
   ],
+  // ★ v1.0.20260421.3000z — 日本關魔物掉落
+  // ── 路邊小怪 4 隻（通用日本物 50% + 英雄經驗書 25%）──
+  '河童': [
+    { icon:'🥒', name:'被偷的小黃瓜',     rate:'50%', note:'賣出可得12知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '二口女': [
+    { icon:'🍙', name:'被咬過的飯糰',     rate:'50%', note:'賣出可得15知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '雪女': [
+    { icon:'❄️', name:'碎冰片',           rate:'50%', note:'賣出可得13知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  '獨眼小僧': [
+    { icon:'🔮', name:'妖怪玻璃珠',       rate:'50%', note:'賣出可得14知識幣' },
+    { icon:'📚', name:'英雄經驗值之書',   rate:'25%', note:'' },
+  ],
+  // ── 菁英小怪 6 隻（專屬物 60% + 技能書 20%，另由場景結算統一掉落 25% 經驗書）──
+  '烏天狗': [
+    { icon:'🪶', name:'烏天狗的黑羽',     rate:'60%', note:'賣出可得120知識幣' },
+    { icon:'📘', name:'技能升級書',       rate:'20%', note:'' },
+  ],
+  '木葉天狗': [
+    { icon:'🍃', name:'木葉天狗的幻葉',   rate:'60%', note:'賣出可得110知識幣' },
+    { icon:'📘', name:'技能升級書',       rate:'20%', note:'' },
+  ],
+  '茨木童子': [
+    { icon:'🦴', name:'茨木童子的斷腕骨', rate:'60%', note:'賣出可得140知識幣' },
+    { icon:'📘', name:'技能升級書',       rate:'20%', note:'' },
+  ],
+  '星熊童子': [
+    { icon:'🦷', name:'星熊童子的獠牙',   rate:'60%', note:'賣出可得140知識幣' },
+    { icon:'📘', name:'技能升級書',       rate:'20%', note:'' },
+  ],
+  '殺生石分身': [
+    { icon:'🗿', name:'殺生石碎片',       rate:'60%', note:'賣出可得130知識幣' },
+    { icon:'📘', name:'技能升級書',       rate:'20%', note:'' },
+  ],
+  '管狐': [
+    { icon:'🎋', name:'管狐的竹管',       rate:'60%', note:'賣出可得110知識幣' },
+    { icon:'📘', name:'技能升級書',       rate:'20%', note:'' },
+  ],
+  // ── 日本 4 BOSS ──
+  '大天狗': [
+    { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
+    { icon:'🪶', name:'天狗的羽扇',       rate:'20%',  note:'賣出可得1200知識幣' },
+    { icon:'🗡', name:'草薙劍',           rate:'100%', note:'擊敗必得神器（全集齊可挑戰八岐大蛇）' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約5%',   note:'極稀有' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+  ],
+  '酒吞童子': [
+    { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
+    { icon:'🍶', name:'鬼王的酒盃',       rate:'20%',  note:'賣出可得1200知識幣' },
+    { icon:'💎', name:'八尺瓊勾玉',       rate:'100%', note:'擊敗必得神器（全集齊可挑戰八岐大蛇）' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約5%',   note:'極稀有' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+  ],
+  '玉藻前': [
+    { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
+    { icon:'🦊', name:'九尾狐毛髮',       rate:'20%',  note:'賣出可得1800知識幣' },
+    { icon:'🪞', name:'八咫鏡',           rate:'100%', note:'擊敗必得神器（全集齊可挑戰八岐大蛇）' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約7.5%', note:'極稀有' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+  ],
+  '八岐大蛇': [
+    { icon:'📚', name:'英雄經驗值之書×3', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×2',     rate:'100%', note:'勝利必得' },
+    { icon:'📕', name:'英雄EXP書(精裝版)×10', rate:'100%', note:'隱藏BOSS必得' },
+    { icon:'📖', name:'技能升級書×5',     rate:'100%', note:'隱藏BOSS必得' },
+    { icon:'🐉', name:'龍鱗片',           rate:'50%',  note:'賣出可得3000知識幣' },
+    { icon:'🍑', name:'超越極限果實',     rate:'10%',  note:'稀有度最高的隱藏BOSS獎勵' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+  ],
+  // ── 日本稀有小怪 2 隻 ──
+  '行走的二宮尊德像': [
+    { icon:'💰', name:'知識幣 3000~6000', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'🛍️', name:'隨機賣錢道具×2~3', rate:'50%',  note:'' },
+    { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
+  ],
+  '座敷童子': [
+    { icon:'⭐', name:'英雄EXP 1200~2400（每人）', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'📘', name:'技能升級書×2~3',   rate:'50%',  note:'' },
+    { icon:'📕', name:'EXP書(精裝版)×2~3', rate:'50%', note:'' },
+    { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
+  ],
 };
 
 const MINI_BATTLE_INTROS = {
@@ -36130,6 +36702,15 @@ function advFinishMiniBattle(win) {
       '雪女':              'ice_shard',
       '獨眼小僧':          'yokai_marble',
     };
+    // ★ v1.0.20260421.3000z — 日本關菁英小怪專屬掉落對照
+    const JAPAN_ELITE_DROP_MAP = {
+      '烏天狗':     'crow_feather',
+      '木葉天狗':   'mystic_leaf',
+      '茨木童子':   'oni_arm_bone',
+      '星熊童子':   'star_bear_fang',
+      '殺生石分身': 'sessho_stone',
+      '管狐':       'fox_tube',
+    };
     // ★ v1.0.20260420.3100 — 所有基礎掉落機率吃難度倍率(沒自信×0.5/普通×1.0/我很會×1.25)
     const _dropMult = (typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00;
     if(_miniMobSnapshot.length > 0){
@@ -36250,6 +36831,19 @@ function advFinishMiniBattle(win) {
             const _dc = 2 + Math.floor(Math.random()*2);
             backpackAdd('hero_exp_book_deluxe', _dc);
             _miniDrops.push({ icon:'📕', name:`英雄EXP書(精裝)×${_dc}`, sellPrice:0 });
+          }
+        } else if(typeof JAPAN_ELITE_DROP_MAP !== 'undefined' && JAPAN_ELITE_DROP_MAP[mob.name]){
+          // ★ v1.0.20260421.3000z — 日本關菁英小怪掉落
+          //   專屬物 60% + 技能書 20%（場景結算會另外疊 25% 經驗書，所以菁英內不再重複掉經驗書）
+          const eliteDropId = JAPAN_ELITE_DROP_MAP[mob.name];
+          if(Math.random() < 0.60 * _dropMult){
+            backpackAdd(eliteDropId, 1);
+            const def = BACKPACK_ITEM_DEF[eliteDropId];
+            if(def) _miniDrops.push({ icon: def.icon, name: def.name, sellPrice: def.sellPrice });
+          }
+          if(Math.random() < 0.20 * _dropMult){
+            backpackAdd('skill_upgrade_book', 1);
+            _miniDrops.push({ icon:'📘', name:'技能升級書×1', sellPrice:null });
           }
         } else {
           // 普通小怪掉落(× 難度倍率)
@@ -36639,6 +37233,145 @@ function openMonsterPage() {
 function closeMonsterPage() {
   const ov = document.getElementById('monster-page-overlay');
   if(ov) ov.style.display = 'none';
+}
+
+// ★ v1.0.20260421.3000x — 寵物圖鑑
+let _petsEverCollected = new Set(); // 已收錄寵物集合
+
+function _markPetCollected(petName){
+  if(!petName) return;
+  if(!_petsEverCollected) _petsEverCollected = new Set();
+  _petsEverCollected.add(petName);
+}
+function _isPetCollected(petName){
+  if(!_petsEverCollected) return false;
+  return _petsEverCollected.has(petName);
+}
+
+function openPetPage(){
+  const ov = document.getElementById('pet-page-overlay');
+  if(!ov) return;
+  ov.style.display = 'flex';
+  _buildPetPage();
+}
+function closePetPage(){
+  const ov = document.getElementById('pet-page-overlay');
+  if(ov) ov.style.display = 'none';
+  // 關閉詳細卡（若開啟中）
+  const dt = document.getElementById('pet-detail-modal');
+  if(dt) dt.remove();
+}
+
+function _buildPetPage(){
+  const el = document.getElementById('pet-page-content');
+  if(!el || typeof EQUIP_DB === 'undefined') return;
+
+  // 依關卡分組
+  const twPets = EQUIP_DB.filter(e => !e._stage);  // 預設 = 台灣
+  const jpPets = EQUIP_DB.filter(e => e._stage === 'japan');
+
+  const collectedTw = twPets.filter(e => _isPetCollected(e.pet||e.n)).length;
+  const collectedJp = jpPets.filter(e => _isPetCollected(e.pet||e.n)).length;
+
+  const renderSection = (title, color, pets, collCnt) => {
+    const cards = pets.map(eq => {
+      const name = eq.pet || eq.n;
+      const isCol = _isPetCollected(name);
+      const img = eq.petImg || '';
+      return `<div onclick="playSfx('sfx-sel',0.4);_showPetDetail('${name.replace(/'/g,"\\'")}')" style="
+        width:140px;background:${isCol?'rgba(40,60,40,0.85)':'rgba(30,30,40,0.75)'};
+        border:2px solid ${isCol?color:'rgba(100,100,120,0.4)'};border-radius:14px;overflow:hidden;
+        cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;
+        ${isCol?'':'filter:grayscale(0.85) brightness(0.55);'}
+        " onmouseover="this.style.transform='translateY(-3px) scale(1.04)';this.style.boxShadow='0 6px 24px ${color}'"
+          onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="width:100%;height:120px;background:rgba(0,0,0,0.4);overflow:hidden;position:relative;">
+          ${img ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>` : `<div style="font-size:64px;display:flex;align-items:center;justify-content:center;height:100%;">${eq.icon||'🐾'}</div>`}
+          ${!isCol ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;font-size:58px;">🔒</div>` : ''}
+        </div>
+        <div style="padding:6px 8px;text-align:center;font-size:18px;font-weight:700;color:${isCol?'#ffee88':'#888'};">
+          ${isCol ? name : '???'}
+        </div>
+      </div>`;
+    }).join('');
+    return `
+      <div style="margin-bottom:32px;">
+        <div style="font-size:28px;font-weight:900;color:${color};letter-spacing:2px;margin-bottom:12px;border-left:4px solid ${color};padding-left:12px;">
+          ${title}
+          <span style="font-size:20px;color:#ccc;margin-left:12px;font-weight:600;">（已收錄 ${collCnt}/${pets.length}）</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;">${cards}</div>
+      </div>`;
+  };
+
+  const intro = `
+    <div style="background:rgba(40,80,60,0.2);border-left:4px solid #88ddaa;border-radius:0 10px 10px 0;padding:14px 18px;margin-bottom:24px;color:#ddeee4;line-height:1.7;">
+      <div style="font-size:22px;font-weight:900;color:#aaffcc;margin-bottom:6px;">🌿 關於寵物系統</div>
+      <div style="font-size:17px;">
+        寵物是英雄在冒險中可裝備的夥伴，能提供各種戰鬥輔助效果（如攻擊、治療加成、機率免傷等）。<br>
+        冒險途中遇到寵物並裝備後即會解鎖收錄。點擊已收錄寵物可查看詳細科普資料。
+      </div>
+    </div>`;
+
+  el.innerHTML = intro +
+    renderSection('🇹🇼 台灣寵物', '#66ccff', twPets, collectedTw) +
+    renderSection('🎌 日本寵物', '#ff88cc', jpPets, collectedJp);
+}
+
+function _showPetDetail(petName){
+  if(!_isPetCollected(petName)){
+    try{ bannerFX(null,'此寵物尚未收錄','#ff8866',1400); }catch(_){}
+    return;
+  }
+  const eq = EQUIP_DB.find(e => (e.pet||e.n) === petName);
+  if(!eq) return;
+  const k = (typeof PET_KNOWLEDGE !== 'undefined') ? PET_KNOWLEDGE[petName] : null;
+
+  const old = document.getElementById('pet-detail-modal');
+  if(old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'pet-detail-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit;';
+  modal.onclick = (e) => { if(e.target === modal) modal.remove(); };
+
+  const row = (label, val) => val ? `<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed rgba(180,220,200,0.15);"><div style="min-width:90px;color:#88ddaa;font-weight:700;">${label}</div><div style="color:#eee;flex:1;">${val}</div></div>` : '';
+
+  modal.innerHTML = `
+    <div style="background:linear-gradient(160deg,rgba(16,28,22,0.98),rgba(10,16,14,0.98));
+      border:2px solid rgba(80,220,140,0.55);border-radius:18px;max-width:640px;width:100%;max-height:90vh;
+      overflow-y:auto;padding:24px 28px;box-shadow:0 0 40px rgba(80,220,140,0.25);">
+      <div style="display:flex;gap:18px;align-items:flex-start;margin-bottom:14px;">
+        <div style="flex:0 0 160px;height:160px;background:rgba(0,0,0,0.4);border-radius:12px;overflow:hidden;border:1.5px solid rgba(80,220,140,0.4);">
+          ${eq.petImg ? `<img src="${eq.petImg}" style="width:100%;height:100%;object-fit:cover;display:block;"/>` : `<div style="font-size:84px;display:flex;align-items:center;justify-content:center;height:100%;">${eq.icon||'🐾'}</div>`}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:32px;font-weight:900;color:#aaffcc;letter-spacing:2px;">${petName} ${eq.icon||''}</div>
+          ${k && k.sci ? `<div style="font-size:17px;color:#88bbaa;font-style:italic;margin-top:4px;">${k.sci}</div>` : ''}
+          ${eq.petDesc ? `<div style="font-size:17px;color:#ddeee4;margin-top:8px;line-height:1.5;">${eq.petDesc}</div>` : ''}
+          <div style="margin-top:10px;padding:8px 12px;background:rgba(255,200,60,0.12);border:1.5px solid rgba(255,200,60,0.4);border-radius:8px;color:#ffdd88;font-size:16px;">
+            ⚙ 戰鬥效果：${eq.d||'—'}
+          </div>
+        </div>
+      </div>
+      ${k ? `
+      <div style="margin-top:12px;padding:14px 16px;background:rgba(20,40,30,0.6);border-radius:10px;font-size:17px;">
+        <div style="font-size:20px;color:#aaffcc;font-weight:900;margin-bottom:8px;letter-spacing:1px;">📖 生態科普</div>
+        ${row('別名', k.alias)}
+        ${row('分布地區', k.region)}
+        ${row('主要食物', k.food)}
+        ${row('主要天敵', k.enemy)}
+        ${row('特殊習性', k.habit)}
+        ${row('繁殖方式', k.reproduce)}
+      </div>` : ''}
+      <div style="text-align:center;margin-top:18px;">
+        <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('pet-detail-modal').remove()"
+          style="padding:10px 32px;font-size:22px;font-weight:700;background:rgba(40,80,60,0.8);
+          border:1.5px solid rgba(80,220,140,0.6);color:#aaffcc;border-radius:10px;cursor:pointer;
+          font-family:inherit;letter-spacing:2px;">✕ 關閉</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 
 function _buildMonsterPage() {
@@ -37323,44 +38056,41 @@ function _showMedalCelebration(def){
   if(old) old.remove();
   const pop = document.createElement('div');
   pop.id = '_medal-celebrate';
-  // ★ v1.0.20260420.1000 — 彈窗改為畫面上方置頂(類似 BOSS 答題反應對話的位置),不擋住戰場
-  pop.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding-top:clamp(20px,4vh,60px);pointer-events:auto;';
+  // ★ v1.0.20260421.3000y — 改為「加寬置頂橫幅」樣式（仿 BOSS 答題反應對白）
+  pop.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;flex-direction:column;align-items:stretch;pointer-events:auto;animation:_medalBannerIn 0.42s cubic-bezier(0.34,1.56,0.64,1);';
   pop.innerHTML = `
-    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);animation:_fadeIn 0.3s ease-out;"></div>
-    <div id="_medal-card" style="position:relative;z-index:1;
-      background:linear-gradient(135deg,rgba(15,12,40,0.99),rgba(8,6,25,0.99));
-      border:3px solid #ffe066;border-radius:22px;padding:20px 36px 22px;
-      text-align:center;max-width:min(88vw,560px);
-      box-shadow:0 0 80px rgba(255,200,0,0.6),0 0 30px rgba(255,200,0,0.3);
-      animation:_medalPop 0.45s cubic-bezier(0.175,0.885,0.32,1.275);">
-      <!-- 金色粒子背景 -->
-      <div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);
-        font-size:34px;animation:_spin 1.5s linear infinite;">✨</div>
-      <!-- 獎章圖示 -->
-      <div style="font-size:64px;margin:6px 0 4px;animation:_bounce 0.6s 0.2s ease-out both;">${def.icon}</div>
-      <!-- 標題 -->
-      <div style="font-size:15px;color:#aaa;letter-spacing:4px;margin-bottom:4px;
-        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">🏅 獎章解鎖！</div>
-      <!-- 名稱 -->
-      <div style="font-size:30px;font-weight:900;color:#ffe066;margin-bottom:6px;
-        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-        text-shadow:0 0 20px rgba(255,200,0,0.8);">【${def.name}】</div>
-      <!-- 說明 -->
-      <div style="font-size:17px;color:#ddd;margin-bottom:6px;
-        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">${def.desc}</div>
-      <!-- 獎勵提示 -->
-      <div style="font-size:13px;color:#666;margin-bottom:14px;">🎁 獎勵：即將開放</div>
-      <!-- 關閉按鈕 -->
-      <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('_medal-celebrate').remove();"
-        style="padding:10px 32px;font-size:19px;font-weight:900;
-        background:linear-gradient(135deg,rgba(255,200,0,0.2),rgba(200,150,0,0.2));
-        border:2px solid #ffe066;color:#ffe066;border-radius:12px;cursor:pointer;
-        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-        box-shadow:0 0 20px rgba(255,200,0,0.3);transition:all 0.15s;"
-        onmouseover="this.style.background='rgba(255,200,0,0.35)'"
-        onmouseout="this.style.background='linear-gradient(135deg,rgba(255,200,0,0.2),rgba(200,150,0,0.2))'">
-        ✓ 太棒了！
-      </button>
+    <div id="_medal-card" style="
+      background:linear-gradient(135deg,rgba(40,30,0,0.98),rgba(25,18,0,0.99));
+      border-bottom:3px solid #ffe066;border-left:3px solid #ffe066;border-right:3px solid #ffe066;
+      border-radius:0 0 18px 18px;
+      padding:16px 32px 18px;width:100%;box-sizing:border-box;
+      box-shadow:0 6px 40px rgba(255,200,0,0.55),0 4px 20px rgba(0,0,0,0.85);
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;position:relative;">
+      <!-- 旋轉閃光 -->
+      <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:30px;animation:_spin 1.5s linear infinite;">✨</div>
+      <!-- 橫幅 row -->
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <!-- 獎章圖示 -->
+        <div style="font-size:72px;line-height:1;animation:_bounce 0.6s 0.2s ease-out both;flex-shrink:0;">${def.icon}</div>
+        <!-- 中間文字區 -->
+        <div style="flex:1;min-width:240px;">
+          <div style="font-size:17px;color:#ffdd88;letter-spacing:5px;margin-bottom:2px;font-weight:700;">🏅 獎章解鎖！</div>
+          <div style="font-size:32px;font-weight:900;color:#ffe066;margin-bottom:4px;text-shadow:0 0 20px rgba(255,200,0,0.8);letter-spacing:2px;">【${def.name}】</div>
+          <div style="font-size:18px;color:#eee;line-height:1.5;">${def.desc}</div>
+          <div style="font-size:14px;color:#999;margin-top:4px;">🎁 獎勵：即將開放</div>
+        </div>
+        <!-- 關閉按鈕 -->
+        <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('_medal-celebrate').remove();"
+          style="padding:12px 28px;font-size:20px;font-weight:900;
+          background:linear-gradient(135deg,rgba(255,200,0,0.25),rgba(200,150,0,0.2));
+          border:2px solid #ffe066;color:#ffe066;border-radius:12px;cursor:pointer;
+          font-family:inherit;letter-spacing:2px;flex-shrink:0;
+          box-shadow:0 0 20px rgba(255,200,0,0.35);transition:all 0.15s;"
+          onmouseover="this.style.background='rgba(255,200,0,0.45)'"
+          onmouseout="this.style.background='linear-gradient(135deg,rgba(255,200,0,0.25),rgba(200,150,0,0.2))'">
+          ✓ 太棒了！
+        </button>
+      </div>
     </div>
     <!-- 煙火粒子 -->
     <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;" id="_medal-sparks"></div>
@@ -37371,7 +38101,7 @@ function _showMedalCelebration(def){
     style.id = '_medal-css';
     style.textContent = [
       '@keyframes _fadeIn { from{opacity:0} to{opacity:1} }',
-      '@keyframes _medalPop { from{opacity:0;transform:scale(0.5) translateY(40px)} to{opacity:1;transform:scale(1) translateY(0)} }',
+      '@keyframes _medalBannerIn { from{opacity:0;transform:translateY(-40px)} to{opacity:1;transform:translateY(0)} }',
       '@keyframes _bounce { 0%{transform:scale(0.3)} 60%{transform:scale(1.15)} 80%{transform:scale(0.95)} 100%{transform:scale(1)} }',
       '@keyframes _spin { from{transform:translateX(-50%) rotate(0deg)} to{transform:translateX(-50%) rotate(360deg)} }',
       '@keyframes _sparkFly { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(var(--sx),var(--sy)) scale(0);opacity:0} }',
@@ -38502,6 +39232,84 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3002', brief:[
+    '商店新增 13 位英雄新肖像 + 商品版面改為 4 欄網格',
+  ], items:[
+    '【13 位英雄新肖像】',
+    '  冰法師：冰封霜華、刺客：幻影玫瑰、吸血鬼：暗夜薔薇',
+    '  大力士：所向無敵、學者：知識燈塔、機械師：鋼鐵革新',
+    '  武鬥家：鐵拳無雙、火法師：烈焰焚天、神射手：百步穿雲',
+    '  程式設計師：量子編碼、聖騎士：聖殿支柱、軍師：運籌帷幄、陰陽師：天地四聖',
+    '  每項 3000💰 限購 1 次',
+    '【商店版面改版】',
+    '  左側商品從橫條卡片改為 4 欄網格',
+    '  每格顯示：圖示、名稱、庫存、單價、-+數量、合計、購買按鈕、右上「?」詳細按鈕',
+    '  點「?」開啟詳細介紹視窗（顯示放大圖示、完整描述、肖像預覽按鈕）',
+    '  支援垂直捲動瀏覽全部商品',
+  ]},
+  { ver:'v1.0.20260421.3001', brief:[
+    '健檢修正：菁英小怪經驗書掉落不重複疊加',
+  ], items:[
+    '【菁英小怪掉落平衡修正】',
+    '  原設定：菁英內 40% 經驗書 + 場景結算 25% 經驗書 = 實際 55% 雙重觸發（過高）',
+    '  修正為：菁英內只掉 專屬物 60% + 技能書 20%，經驗書統一由場景結算 25% 負責',
+    '  魔物圖鑑顯示同步更新，不再列菁英的經驗書項目',
+    '【全面健檢通過】',
+    '  20 個新技能完整性驗證、狀態 key 合法、函式宣告齊全、版本號一致、無無限迴圈',
+  ]},
+  { ver:'v1.0.20260421.3000z', brief:[
+    '日本關 20 個技能全新設計 + 16 隻魔物掉落補完',
+  ], items:[
+    '【日本關小怪 20 個技能全新設計】',
+    '  路邊 4 隻：河童(水盤守護/潑水惡作劇)、二口女(陰森長髮鞭/雙嘴詛咒)、雪女(冰晶凝聚/幽寒吐息)、獨眼小僧(瞪目威嚇/暴走衝撞)',
+    '  菁英 6 隻：烏天狗(暗羽突襲/羽刃陣列)、木葉天狗(落葉迷霧/樹葉守護)、茨木童子(斷腕狂拳/鬼王怒吼)、星熊童子(酒宴狂歡/熊力撞擊)、殺生石分身(死氣結界/石化凝視)、管狐(狐火護佑/狐惑封言)',
+    '  20 技能效果全部不重複，涵蓋傷害、賦益、狀態控制等多樣化類型',
+    '【菁英小怪專屬掉落物】',
+    '  新增 6 種日本菁英掉落：烏羽120💰、幻葉110💰、斷腕骨140💰、獠牙140💰、殺生石碎片130💰、狐毛竹管110💰',
+    '  掉落率：專屬物 60%／英雄EXP書 40%／技能升級書 20%',
+    '【魔物圖鑑掉落補完】',
+    '  日本關 16 隻魔物（4 BOSS + 6 菁英 + 4 路邊 + 2 稀有）全部補齊掉落表',
+    '  八岐大蛇掉落顯示同步為 50%（程式實際值）',
+  ]},
+  { ver:'v1.0.20260421.3000y', brief:[
+    '獎章解鎖彈窗改為加寬置頂橫幅式',
+  ], items:[
+    '【獎章解鎖視窗改版】',
+    '  樣式從置中小卡改為「加寬置頂橫幅」（類似 BOSS 答題反應對白）',
+    '  版面：獎章圖示 + 名稱說明 + 關閉按鈕 橫向排列',
+    '  從頂部滑入、不擋住戰場中央',
+    '【下輪待辦】日本關魔物掉落物補充、小怪技能全部重設',
+  ]},
+  { ver:'v1.0.20260421.3000x', brief:[
+    '新增寵物圖鑑系統 — 24 隻寵物詳細科普資料',
+  ], items:[
+    '【寵物圖鑑】',
+    '  英雄圖鑑頁新增「🐾 寵物圖鑑」按鈕（魔物圖鑑旁）',
+    '  分類顯示：🇹🇼 台灣寵物 12 隻 / 🎌 日本寵物 12 隻',
+    '  未收錄顯示灰階「???」，已收錄顯示彩色圖像＋名字',
+    '  點擊已收錄寵物 → 開啟詳細卡，含生態科普 7 項：',
+    '    學名、別名、分布地區、主要食物、主要天敵、特殊習性、繁殖方式',
+    '【寵物收錄追蹤】',
+    '  裝備寵物時自動加入 _petsEverCollected 集合（永久記錄）',
+    '  存檔同步雲端：petsEverCollected（Array→Set）',
+  ]},
+  { ver:'v1.0.20260421.3000w', brief:[
+    'BOSS選擇頁新增返回按鈕（寵物圖鑑下輪繼續）',
+  ], items:[
+    '【BOSS 選擇頁返回】',
+    '  左上角新增「← 返回」按鈕，點擊返回冒險關卡選擇頁',
+    '【下輪預告】寵物圖鑑系統（含 24 隻寵物科普知識）',
+  ]},
+  { ver:'v1.0.20260421.3000v', brief:[
+    'HP投資上限50；八岐大蛇卡片標示三神器持有狀況',
+  ], items:[
+    '【HP投資上限調整】',
+    '  HP 上限從 99 點改為 50 點（攻擊/特技/速度維持 30 點）',
+    '  已投資超過 50 點的英雄保留現狀，但無法再加點',
+    '【八岐大蛇卡片三神器狀態】',
+    '  新增個別神器持有顯示：✨草薙劍（已獲得 亮黃）/ 🔒八尺瓊勾玉（未獲得 灰色）等',
+    '  放置在隊伍陣容描述下方，鎖定提示文字上方',
+  ]},
   { ver:'v1.0.20260421.3000u', brief:[
     '修正縮圖調整位置 — 原 v3000q 改到錯的地方（右側預覽），此版修正',
   ], items:[
@@ -40468,7 +41276,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000u';
+  const CURRENT_VERSION = 'v1.0.20260421.3002';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40485,7 +41293,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000u';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3002';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
