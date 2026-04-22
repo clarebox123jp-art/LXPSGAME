@@ -4018,7 +4018,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3015</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3017</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6922,7 +6922,7 @@ const BUFF_DESCS = {
   fieldImmune:   '場地免疫：免疫戰場卡負面效果',
   protectBuff:   '狀態保護：有利狀態不被消除',
   discount:      '節能：技能費用-1',
-  elemBoost:     '元素增幅：屬性抵抗100%且相剋增傷+2',
+  elemBoost:     '元素增幅：自己元素對應的不利狀態抵抗100%，相剋增減傷10%→20%',
   regen:         '持續恢復：每回合恢復12HP',
   conservation:  '守恆：使用物品卡後100%保留不消耗',
   warhorn:       '戰意：造成傷害和治療量+3',
@@ -7782,7 +7782,7 @@ const ELEMENT_DB = {
     bonus_hp:5,
     immune50:['freeze','reflect'],
     vs_adv:['fire'], vs_dis:['earth'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   fire: {
     icon:'🔥', name:'火', cls:'elem-fire',
@@ -7790,7 +7790,7 @@ const ELEMENT_DB = {
     bonus_atk:4,
     immune50:['noatk','sleep'],
     vs_adv:['wind'], vs_dis:['water'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   wind: {
     icon:'🪽', name:'風', cls:'elem-wind',
@@ -7798,7 +7798,7 @@ const ELEMENT_DB = {
     bonus_spd:4,
     immune50:['para','spddown'],
     vs_adv:['grass'], vs_dis:['fire'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   grass: {
     icon:'🌿', name:'草', cls:'elem-grass',
@@ -7806,7 +7806,7 @@ const ELEMENT_DB = {
     bonus_healflat:5,
     immune50:['noheal_curse','poison'],
     vs_adv:['earth'], vs_dis:['wind'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   earth: {
     icon:'🪨', name:'土', cls:'elem-earth',
@@ -7814,7 +7814,7 @@ const ELEMENT_DB = {
     bonus_dmgreduce:4,
     immune50:['stubbornDebuff','stun'],
     vs_adv:['water'], vs_dis:['grass'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   light: {
     icon:'⭐', name:'光', cls:'elem-light',
@@ -7822,7 +7822,7 @@ const ELEMENT_DB = {
     bonus_sp:4,
     immune50:['seal','forecast'],
     vs_adv:['dark'], vs_dis:['dark'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   dark: {
     icon:'🌙', name:'暗', cls:'elem-dark',
@@ -7831,7 +7831,7 @@ const ELEMENT_DB = {
     bonus_sp:2,
     immune50:['nosell','deathmark'],
     vs_adv:['light'], vs_dis:['light'],
-    adv_dmg:+2, dis_dmg:-2
+    adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
 };
 // element pick state
@@ -7859,13 +7859,21 @@ function applyElemBonus(h){
 
 function getElemDmgMod(attacker, target){
   if(fieldHas('balance')) return 0;
-  // Returns damage modifier (+N or -N) based on element matchup
+  // ★ v1.0.20260421.3017 — 相剋 +10%、劣勢 -10%；元素增幅把 ±10% 提升為 ±20%（取代，不疊加）
   const ae=attacker&&attacker.element, te=target&&target.element;
   if(!ae||!te||ae===te) return 0;
   const aData=ELEMENT_DB[ae];
   if(!aData) return 0;
-  if(aData.vs_adv && aData.vs_adv.includes(te)) return aData.adv_dmg||0;
-  if(aData.vs_dis && aData.vs_dis.includes(te)) return aData.dis_dmg||0;
+  const _atkBoost = attacker && (attacker.elemBoost || hasBuff(attacker,'elemBoost'));
+  const _defBoost = target   && (target.elemBoost   || hasBuff(target,'elemBoost'));
+  if(aData.vs_adv && aData.vs_adv.includes(te)){
+    // 相剋增傷：攻擊方元素增幅 → 10% 提升為 20%
+    return _atkBoost ? 0.20 : (aData.adv_dmg_pct||0.10);
+  }
+  if(aData.vs_dis && aData.vs_dis.includes(te)){
+    // 劣勢減傷：被攻擊方元素增幅 → -10% 提升為 -20%（對受害者更有利）
+    return _defBoost ? -0.20 : (aData.dis_dmg_pct||-0.10);
+  }
   return 0;
 }
 
@@ -7873,8 +7881,12 @@ function checkElemImmune(h, statusType){
   if(fieldHas('balance')) return true;
   const e=getElemData(h.element);
   if(!e||!e.immune50) return false;
-  if(e.immune50.includes(statusType) && Math.random()<0.5){
-    log(`[${h.name}] 元素免疫觸發（${ELEMENT_DB[h.element].name}）！免疫 ${statusName(statusType)}！`);
+  if(!e.immune50.includes(statusType)) return false;
+  // ★ v1.0.20260421.3017 — 元素增幅：對應元素的不利狀態抵抗 50% → 100%
+  const _hasBoost = h && (h.elemBoost || (typeof hasBuff==='function' && hasBuff(h,'elemBoost')));
+  const _rate = _hasBoost ? 1.0 : 0.5;
+  if(Math.random() < _rate){
+    log(`[${h.name}] 元素免疫觸發（${ELEMENT_DB[h.element].name}${_hasBoost?'・增幅':''}）！免疫 ${statusName(statusType)}！`);
     playSfx('sfx-resist',0.75);
     showPopup(h,'抵抗','miss');
     return true;
@@ -10260,7 +10272,7 @@ function _doConfirmSkillReplace(){
         addBuff(h,'elemBoost',9999);
         bannerFX(h,'元素增幅！（常駐被動）','#aaddff',1200);
         try{ ringFX(h,'#aaddff',800); }catch(_){}
-        log(`🌈 [${h.name}] 元素增幅（被動）！屬性抵抗100%，相剋增傷+2！`);
+        log(`🌈 [${h.name}] 元素增幅（被動）！不利狀態抵抗100%、相剋增減傷 10%→20%！`);
         renderCard(h);
       }
     });
@@ -13111,9 +13123,24 @@ function doDmg(target, rawDmg, opts={}){
   // minDmg field
   if(fieldHas('minDmg')) dmg=Math.max(3,dmg);
 
-  // ── 元素相剋傷害加成
-  const _elemMod=getElemDmgMod(a,target);
-  if(_elemMod!==0){ dmg=Math.max(0,dmg+_elemMod); if(_elemMod>0){ log(`⚡元素相剋！傷害+${_elemMod}`); showPopup(target,'▲+'+_elemMod,'elem-adv'); } else { log(`⚡元素劣勢！傷害${_elemMod}`); showPopup(target,'▼'+_elemMod,'elem-dis'); } }
+  // ── 元素相剋傷害加成（★ v1.0.20260421.3016 改為百分比）
+  //   「小數點無條件進位」：先用變化量絕對值 ceil，再依 sign 加減
+  //   例：dmg=5 增傷+10% → Δ=ceil(0.5)=1 → 5+1=6；減傷-10% → Δ=ceil(0.5)=1 → 5-1=4
+  const _elemPct=getElemDmgMod(a,target);
+  if(_elemPct!==0 && dmg>0){
+    const _delta = Math.ceil(dmg * Math.abs(_elemPct));
+    if(_elemPct>0){
+      dmg = dmg + _delta;
+      const _pctDisp = Math.round(_elemPct*100);
+      log(`⚡元素相剋！傷害+${_pctDisp}% (+${_delta})`);
+      showPopup(target,'▲+'+_pctDisp+'%','elem-adv');
+    } else {
+      dmg = Math.max(0, dmg - _delta);
+      const _pctDisp = Math.round(Math.abs(_elemPct)*100);
+      log(`⚡元素劣勢！傷害-${_pctDisp}% (-${_delta})`);
+      showPopup(target,'▼-'+_pctDisp+'%','elem-dis');
+    }
+  }
   dmg=Math.max(0,dmg);
   // ★ minDmg：特定技能的最低傷害保底（如焰尾九連擊每擊最低6傷害）
   if(opts.minDmg && dmg > 0) dmg = Math.max(opts.minDmg, dmg);
@@ -20477,8 +20504,8 @@ function stopIllusSparkles(){
     el.innerHTML='<div class="ep-title"><span>'+ed.icon+'</span><span style="color:'+bc+'">'+ed.name+'屬性</span></div>'
       +'<div class="ep-section"><div class="ep-label">▸ 50%機率免疫異常</div><div class="ep-row ep-immune">'+imm+'</div></div>'
       +'<div class="ep-section"><div class="ep-label">▸ 能力提升</div><div class="ep-row ep-bonus">'+(bon.length?bon.join('　'):'—')+'</div></div>'
-      +'<div class="ep-section"><div class="ep-label">▸ 造成傷害+'+Math.abs(ed.adv_dmg||2)+'的相剋目標</div><div class="ep-row ep-adv">→ '+adv+'</div></div>'
-      +'<div class="ep-section"><div class="ep-label">▸ 受到傷害+'+(Math.abs(ed.dis_dmg||2))+'的劣勢來源</div><div class="ep-row ep-dis">← '+dis+'</div></div>'
+      +'<div class="ep-section"><div class="ep-label">▸ 造成傷害+'+Math.round((ed.adv_dmg_pct||0.10)*100)+'%的相剋目標</div><div class="ep-row ep-adv">→ '+adv+'</div></div>'
+      +'<div class="ep-section"><div class="ep-label">▸ 受到傷害變動'+Math.round((ed.dis_dmg_pct||-0.10)*100)+'%的劣勢來源</div><div class="ep-row ep-dis">← '+dis+'</div></div>'
       +'<div style="font-size:11px;color:#555;margin-top:8px;text-align:center">再次點擊或點擊其他處關閉</div>';
     // Fixed center position - no px/py calculation needed
     // Position is fixed center via CSS (left:50%;top:50%;transform:translate(-50%,-50%))
@@ -39405,6 +39432,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3017', brief:[
+    '元素增幅(常駐被動)效果修正',
+  ], items:[
+    '【元素增幅新效果】',
+    '  (1) 自己元素對應的不利狀態抵抗：50% → 100%',
+    '  (2) 相剋增減傷：10% → 20%（取代基礎值，不疊加）',
+    '  例：水屬性開元素增幅，打火屬性時傷害 +20%（原本 +10%）',
+    '  例：水屬性開元素增幅，被土屬性打時傷害 -20%（原本 -10%）',
+    '【實作】',
+    '  checkElemImmune：檢查 elemBoost buff，有則機率改 100%',
+    '  getElemDmgMod：攻擊方有 elemBoost → 相剋傷害從 0.10 取代為 0.20；被攻擊方有 → 劣勢從 -0.10 取代為 -0.20',
+  ]},
+  { ver:'v1.0.20260421.3016', brief:[
+    '元素相剋公式改為百分比（+/-10%）+ 元素增幅增強至 20%',
+  ], items:[
+    '【元素相剋增減傷公式】',
+    '  原本：相剋固定 +2 / 劣勢 -2',
+    '  新版：相剋 +10% / 劣勢 -10%（小數無條件進位）',
+    '  計算方式：Δ = ceil(傷害 × 10%)，增傷時 +Δ、減傷時 -Δ',
+    '  範例：傷害 5 → 相剋 +1 = 6、劣勢 -1 = 4；傷害 10 → 相剋 +1 = 11、劣勢 -1 = 9',
+    '  光暗互剋（光打暗、暗打光雙方都 +10%）維持不變',
+    '【元素增幅技能強化】',
+    '  相剋增傷加成：+2 → +20%（疊加後：相剋時 +30% 增傷、受劣勢時 -30% 減傷）',
+    '  getElemDmgMod 函式新增 elemBoost 檢查（攻擊方或被攻擊方擁有此 buff 時自動生效）',
+    '【顯示更新】',
+    '  元素選擇頁：「造成傷害+2」改為「造成傷害+10%」',
+    '  戰鬥 log：顯示百分比與實際變化值',
+    '  相剋 popup 改顯示「▲+10%」/「▼-10%」',
+  ]},
   { ver:'v1.0.20260421.3015', brief:[
     '修正：學者新肖像「知識燈塔」右側預覽圖下移 15%',
   ], items:[
@@ -41593,7 +41649,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3015';
+  const CURRENT_VERSION = 'v1.0.20260421.3017';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41610,7 +41666,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3015';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3017';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
