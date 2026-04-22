@@ -1174,8 +1174,15 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* 裝備型 → 藍 */
 .ibox.itype-equip{border-color:#1a6ecc99;background:rgba(15,70,160,0.13);box-shadow:0 0 7px rgba(30,100,200,0.18)}
 .ibox.itype-equip:hover{border-color:#4a9eff;background:rgba(30,100,200,0.22)}
-#item-ops{display:none;flex-direction:row;gap:8px;margin-top:8px}
+/* ★ v1.0.20260422.0107 — item-ops 移到 igrid 上方；加入 fadeIn 動畫讓玩家注意到按鈕出現 */
+#item-ops{display:none;flex-direction:row;gap:8px;margin:6px 0 10px;animation:itemOpsIn 0.22s ease-out;}
+@keyframes itemOpsIn{
+  0%{opacity:0;transform:translateY(-4px);}
+  100%{opacity:1;transform:translateY(0);}
+}
 .iop-btn{flex:1;padding:8px;color:#fff;font-size:28px;font-weight:bold;border:none;border-radius:5px;cursor:pointer;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.2);user-select:none;-webkit-user-select:none}
+.iop-btn:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.iop-btn:active{transform:translateY(1px);filter:brightness(0.9);}
 
 /* BATTLEFIELD CARDS */
 #bfield-panel{padding:12px}
@@ -3865,15 +3872,16 @@ body {
     </div>
     <div id="item-panel">
       <h4>▸ 🎒包包裡的物品 🍎💣🦮</h4>
-      <div class="igrid" id="igrid">
-        <div class="islot" id="slot-0">— 空 —</div>
-        <div class="islot" id="slot-1">— 空 —</div>
-        <div class="islot" id="slot-2">— 空 —</div>
-      </div>
+      <!-- ★ v1.0.20260422.0107 — 使用/攜帶/賣出 按鈕移到標題下方（原本在最底部，iPad 橫握時底部邊緣容易誤觸 Home 指示條/控制中心） -->
       <div id="item-ops">
         <button id="iop-use-btn"   class="iop-btn" style="background:#27ae60"            onclick="playSfx('sfx-equip',0.5);prepItemUse()">▶ 使用</button>
         <button id="iop-equip-btn" class="iop-btn" style="background:#2255cc;display:none" onclick="playSfx('sfx-equip',0.5);prepEquipUse()">🐾 攜帶寵物</button>
         <button class="iop-btn" style="background:#8e44ad" onclick="playSfx('sfx-coin',0.6);doSell()">◆ 賣出</button>
+      </div>
+      <div class="igrid" id="igrid">
+        <div class="islot" id="slot-0">— 空 —</div>
+        <div class="islot" id="slot-1">— 空 —</div>
+        <div class="islot" id="slot-2">— 空 —</div>
       </div>
     </div>
     <!-- ★ 教學指引懸浮按鈕（左下角固定） -->
@@ -4037,7 +4045,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0102</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0107</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4838,7 +4846,11 @@ body {
         </div>
       </div>
       <div id="adv-result-btns">
-        <button class="adv-result-play-again" onclick="playSfx('sfx-confirm',0.5);advPlayAgain()">🔄 重新打一次</button>
+        <!-- ★ v1.0.20260422.0104 — 敗北時顯示三個選項（勝利仍用「重新打一次」＋「確認」） -->
+        <button id="adv-result-lose-easier"  class="adv-result-play-again adv-result-lose-btn" onclick="playSfx('sfx-confirm',0.5);advPlayAgainEasier()" style="display:none;background:linear-gradient(135deg,rgba(100,220,140,0.15),rgba(40,120,60,0.2));border-color:#66cc88;color:#88ee99;">🔰 降低難度再戰</button>
+        <button id="adv-result-lose-retry"   class="adv-result-play-again adv-result-lose-btn" onclick="playSfx('sfx-confirm',0.5);advPlayAgain()" style="display:none;">⚔️ 現在難度再戰</button>
+        <button id="adv-result-lose-quit"    class="adv-result-back-title adv-result-lose-btn" onclick="playSfx('sfx-confirm',0.5);advGoRestAtSchool()" style="display:none;">🏃 先放過他，回學校休整</button>
+        <button id="adv-result-play-again-btn" class="adv-result-play-again" onclick="playSfx('sfx-confirm',0.5);advPlayAgain()">🔄 重新打一次</button>
         <button id="adv-result-win-next" class="adv-result-play-again" onclick="playSfx('sfx-goddess',0.7);advStartWinSequence()" style="background:linear-gradient(135deg,rgba(255,200,50,0.2),rgba(200,120,0,0.2));border-color:#ffcc44;color:#ffcc44;display:none;">✅ 確認</button>
       </div>
     </div>
@@ -7339,6 +7351,12 @@ function addStatus(h,t,dur=1){
     log(`🐉 [八岐大蛇] 八首吞天：免疫 ${statusName(t)}！`);
     return;
   }
+  // ★ v1.0.20260422.0106 — strongTaunt 也一併免疫（原本的例外取消）
+  if(h.name === '八岐大蛇' && t === 'strongTaunt'){
+    showShieldVFX(h,'immune');
+    log(`🐉 [八岐大蛇] 八首吞天：免疫 強力挑釁！`);
+    return;
+  }
   // ★ strongTaunt（強力挑釁）無法被免疫技能豁免
   if(t !== 'strongTaunt' && (hasBuff(h,'immune')||hasBuff(h,'statusImmune'))){ showShieldVFX(h,'immune'); return; }
   const _CTRL=['stun','freeze','sleep','para','trap','berserk'];
@@ -7486,6 +7504,21 @@ function clearBadStatus(h){
   // ★ 強力挑釁無法被治療/淨化清除（必須等回合數自然消耗）
   h.status=h.status.filter(s=>!BAD_STATUS.includes(s.type) || s.type==='strongTaunt');
   renderCard(h);
+}
+
+// ★ v1.0.20260422.0106 — 八岐大蛇嘲諷系列免疫檢查
+//   普通 嘲諷（G.taunted 全域強制） / 舞台聚光燈（taunt 狀態 push） / 強勢對決 / 強力挑釁
+//   這些都繞過 addStatus 直接操作，所以需要呼叫端自行檢查。
+//   八岐大蛇天賦「八首吞天」免疫所有不利狀態，嘲諷類也應包含在內。
+function _tauntImmuneCheck(t){
+  if(!t) return false;
+  if(t.name === '八岐大蛇'){
+    try{ showShieldVFX(t,'immune'); }catch(_){}
+    try{ log(`🐉 [八岐大蛇] 八首吞天：免疫 嘲諷！`); }catch(_){}
+    try{ bannerFX(t, '🛡 免疫嘲諷！', '#88ccff', 1000); }catch(_){}
+    return true;
+  }
+  return false;
 }
 function clearGoodBuffs(h){
     // 堅定祈禱（protectBuff）：有此 buff 時有利狀態不可被消除
@@ -10420,7 +10453,8 @@ function renderCard(h){
       if(typeof BURST_DB==='undefined'||!BURST_DB[h.name]) return '';
       // BOSS 沒有次數限制，不顯示星星
       if(typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name)) return '';
-      const _used = h._burstUsed||0;
+      // ★ v1.0.20260422.0103 — 用 _burstUsedNum 避免 _burstUsed 被誤寫成布林值時顯示錯星數
+      const _used = (typeof _burstUsedNum === 'function') ? _burstUsedNum(h) : (h._burstUsed||0);
       const _remain = 2 - _used;
       const _ready = _burstReady(h.side);
       const _star = (i)=>{
@@ -10742,6 +10776,16 @@ function skillCost(s, actor, displayOnly=false){
 }
 
 // ====== 極限爆發系統 ======
+// ★ v1.0.20260422.0103 — 統一型別處理：_burstUsed 歷史上曾被誤賦值為 true/字串等非數字，
+//   這個 helper 把任何值都 coerce 成正確的數字（true→1、undefined/false→0、數字照原樣）。
+//   所有讀取 _burstUsed 的地方（_canBurst、updateBurstEffects、星星指示器等）都應透過此 helper。
+function _burstUsedNum(h){
+  if(!h) return 0;
+  const v = h._burstUsed;
+  if(typeof v === 'number') return v;
+  if(v === true) return 1;
+  return 0;
+}
 function _burstReady(side){
   return G.energy[side]>=10;
 }
@@ -10749,7 +10793,8 @@ function _canBurst(h){
   if(!h||h.curHp<=0||h.acted||!_burstReady(h.side)||!BURST_DB[h.name]) return false;
   // 非BOSS英雄：最多爆發2次；BOSS無次數限制
   const _isBossHero = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name);
-  if(!_isBossHero && (h._burstUsed||0)>=2) return false;
+  // ★ v1.0.20260422.0103 — 用 _burstUsedNum 取代直接讀 _burstUsed，避免布林值污染
+  if(!_isBossHero && _burstUsedNum(h)>=2) return false;
   // 幼兒園小孩：夢境時光只在睡眠中才能發動
   if(h.name==='幼兒園小孩' && !hasStatus(h,'sleep')) return false;
   return true;
@@ -10771,7 +10816,11 @@ function updateBurstEffects(){
       if(!el) return;
       // 移除舊的火焰元素
       el.querySelectorAll('.burst-flame,.burst-label').forEach(e=>e.remove());
-      if(ready && _canBurst(h)){
+      // ★ v1.0.20260422.0103 — UI 保險：即使 _canBurst 因故漏判，
+      //   這裡強制檢查「非 BOSS + 計數 >= 2」→ 絕對不能亮起爆發邊框/火焰/標籤。
+      const _isBossHeroU = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name);
+      const _usedUpU = (!_isBossHeroU) && (_burstUsedNum(h) >= 2);
+      if(ready && _canBurst(h) && !_usedUpU){
         el.classList.add('burst-ready');
         const flame=document.createElement('div');
         flame.className='burst-flame';
@@ -10819,6 +10868,83 @@ function hideBurstPanel(){
   const p=document.getElementById('burst-panel');
   if(p) p.remove();
 }
+
+// ★ v1.0.20260422.0105 — 玩家爆發優先提示
+//   當敵方（BOSS）打算爆發，但此時我方也有英雄可以爆發時，
+//   顯示此提示讓玩家先決定是否發動自己的爆發。
+//   玩家可選：
+//     (A) 直接點擊冒火邊框的英雄 → 開啟爆發面板 → 發動爆發
+//         execBurst 會自動清掉本 modal；爆發後 _burstFinish → startTurn → 敵方 aiAct 重新進入，
+//         此時我方能量=0 → 正常讓敵方爆發（若還活著且沒失去行動）
+//     (B) 點「⏭ 跳過，讓對手先放」→ 關閉 modal → 直接呼叫 execBurst 讓敵方爆發
+//   isRage=true 時：BOSS 是因 HP<50% 觸發憤怒爆發，跳過時要補設 _advBossRageBurstUsed + 能量給滿
+function _showPlayerBurstPriority(bossHero, isRage){
+  // 避免同時存在多個 priority modal
+  const existing = document.getElementById('burst-priority-modal');
+  if(existing) existing.remove();
+  if(!bossHero) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'burst-priority-modal';
+  modal.style.cssText = [
+    'position:absolute;left:50%;bottom:110px;transform:translateX(-50%);',
+    'z-index:9700;max-width:640px;width:92%;',
+    'background:linear-gradient(160deg,rgba(40,20,0,0.96),rgba(20,10,0,0.96));',
+    'border:3px solid #ff9900;border-radius:16px;',
+    'padding:18px 24px 16px;box-shadow:0 0 40px rgba(255,150,0,0.55);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'text-align:center;pointer-events:auto;',
+    'animation:burstPanelIn 0.3s cubic-bezier(0.34,1.56,0.64,1);',
+  ].join('');
+
+  const _rageTag = isRage ? '<span style="color:#ff4444;font-weight:900;">（憤怒）</span> ' : '';
+  modal.innerHTML = [
+    '<div style="font-size:26px;font-weight:900;color:#ffcc44;letter-spacing:2px;margin-bottom:4px;">',
+      '⚡ 優先爆發機會！',
+    '</div>',
+    '<div style="font-size:18px;color:#ffd6a0;margin-bottom:4px;">',
+      _rageTag, '對手 <b style="color:#ff8844;">', bossHero.name, '</b> 也準備爆發！',
+    '</div>',
+    '<div style="font-size:16px;color:#aaa;margin-bottom:14px;line-height:1.5;">',
+      '點選冒火邊框的我方英雄發動爆發（會打斷對手行動），<br>',
+      '或點「跳過」讓對手先放。',
+    '</div>',
+    '<button id="bpm-skip" style="',
+      'padding:12px 28px;font-size:20px;font-weight:700;',
+      'background:rgba(60,30,0,0.7);border:1.5px solid #886644;border-radius:10px;',
+      'color:#ddbb88;cursor:pointer;letter-spacing:2px;',
+      'font-family:inherit;transition:0.15s;',
+    '" onmouseover="this.style.background=\'rgba(120,60,0,0.85)\';this.style.color=\'#fff\';" ',
+      'onmouseout="this.style.background=\'rgba(60,30,0,0.7)\';this.style.color=\'#ddbb88\';">',
+      '⏭ 跳過，讓對手先放',
+    '</button>',
+  ].join('');
+
+  (document.getElementById('gc') || document.body).appendChild(modal);
+  try{ playSfx('sfx-burst-ready', 0.9); }catch(_){}
+
+  const _skipBtn = document.getElementById('bpm-skip');
+  if(_skipBtn){
+    _skipBtn.onclick = () => {
+      try{ modal.remove(); }catch(_){}
+      // 跳過 → 讓敵方爆發
+      if(isRage){
+        // 憤怒爆發的原本副作用必須補上
+        _advBossRageBurstUsed = true;
+        G.energy[bossHero.side] = 10;
+        bossHero._burstUsed = Math.max(0, (bossHero._burstUsed||0) - 1);
+        try{ bannerFX(bossHero, '😾 憤怒覺醒！', '#ff2200', 1500); }catch(_){}
+        try{ flashScreen('rgba(255,0,0,0.6)', 600); }catch(_){}
+        try{ playSfx('sfx-burst', 1.0); }catch(_){}
+      }
+      _pSetTimeout(() => {
+        try{ execBurst(bossHero.side, bossHero.pos); }
+        catch(e){ console.error('[priority skip burst]', e); _pSetTimeout(startTurn, 400); }
+      }, isRage ? 800 : 200);
+    };
+  }
+}
+window._showPlayerBurstPriority = _showPlayerBurstPriority;
 
 function _showBurstCinematic(h, bd){
   const gc=document.getElementById('gc');
@@ -11224,6 +11350,11 @@ function _showBurstGif(burstName){
 }
 
 function execBurst(side, pos){
+  // ★ v1.0.20260422.0105 — 若玩家爆發優先提示仍存在（玩家點冒火英雄自己發動），一併關閉
+  try{
+    const _pm = document.getElementById('burst-priority-modal');
+    if(_pm) _pm.remove();
+  }catch(_){}
   hideBurstPanel();
   const h=G[side][pos];
   if(!h||!_canBurst(h)) return;
@@ -11460,6 +11591,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='守衛'){
     enemies.forEach(t=>{
+      // ★ v1.0.20260422.0106 — 八岐大蛇免疫強力挑釁
+      if(_tauntImmuneCheck(t)) return;
       // ★ 強力挑釁：獨立狀態，與狂亂完全不同
       //   - 只能普通攻擊施展者（守衛），不能使用技能
       //   - 無法被免疫技能豁免（forceStatus 直接添加）
@@ -11790,7 +11923,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     playSfx('sfx-statup',0.85);
     log(`[${h.name}] 極速閃燃！獲得7能量、下次傷害加倍、立即再行動！`);
     // 立即再次行動
-    h._burstUsed=true; h.acted=false;
+    // ★ v1.0.20260422.0103 — 移除錯誤的 h._burstUsed=true 賦值：
+    //   _burstUsed 是數字計數器（0~2），execBurst 已正確 +1；此處誤用 =true 會把計數器變成布林值，
+    //   下次 _canBurst 檢查 (true||0)>=2 → (1>=2) → false，導致田徑隊員可以無限爆發。
+    h.acted=false;
     updateUI();
     if(checkWin()) return;
     G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
@@ -15336,6 +15472,8 @@ function execSkill(a, sk, cost, stype){
       playSkillFX('舞台聚光燈',a,_allTargets);
 
       _allTargets.forEach(tg=>{
+        // ★ v1.0.20260422.0106 — 八岐大蛇免疫嘲諷
+        if(_tauntImmuneCheck(tg)) return;
         // 強迫被挑釁：只能攻擊 a
         tg.status = tg.status.filter(s=>s.type!=='taunt');
         tg.status.push({type:'taunt', dur:2, _tauntTarget:a});
@@ -15343,8 +15481,11 @@ function execSkill(a, sk, cost, stype){
         addStatus(tg,'forecast',2);
         bannerFX(tg,'💡 聚光燈！','#ffee44',1200);
       });
-      // 同步全域挑釁（以第一個目標為代表）
-      G.taunted = {attacker:t, target:a};
+      // 同步全域挑釁（挑選第一個非八岐大蛇的目標代表）
+      const _validTaunt = _allTargets.find(tg => tg.name !== '八岐大蛇');
+      if(_validTaunt){
+        G.taunted = {attacker:_validTaunt, target:a};
+      }
       ringFX(a,'#ffee44',600);
       endAction(a,cost);
     });
@@ -16127,7 +16268,9 @@ function execSkill(a, sk, cost, stype){
   else if(n==='強勢對決'){
     log(`[${a.name}] 強勢對決！所有對手本回合只能攻擊施展者！`);
     const foes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
-    foes.forEach(t=>{ G.taunted={attacker:t,target:a}; });
+    // ★ v1.0.20260422.0106 — 八岐大蛇免疫嘲諷（過濾後才套 taunted）
+    const _tauntFoes = foes.filter(t => !_tauntImmuneCheck(t));
+    _tauntFoes.forEach(t=>{ G.taunted={attacker:t,target:a}; });
     addBuff(a,'taunt',1);
     // Mark that 懲戒之盾 can be triggered once this turn if equipped
     G.strongDuelActive=true;
@@ -18705,6 +18848,19 @@ function _realAiAct(a){
 
   // ── AI 極限爆發：能量滿且未使用時直接發動 ──
   if(_canBurst(a)){
+    // ★ v1.0.20260422.0105 — 玩家爆發優先：
+    //   若我方有任何英雄也可以爆發（_canBurst 為 true），
+    //   暫緩敵方爆發，彈出提示讓玩家優先決定是否發動自己的爆發。
+    //   玩家發動後，_burstFinish → startTurn 會重新進入敵方 aiAct，
+    //   此時我方能量已=0 → _canBurst(p1) = false → 敵方正常爆發；
+    //   玩家按「跳過」時則由 priority modal 直接呼叫 execBurst 讓敵方發動。
+    if(a.side === 'p2' && G.p1 && G.p1.some(h => _canBurst(h))){
+      try{ _showPlayerBurstPriority(a); }catch(_bpE){
+        console.error('[玩家爆發優先提示] 失敗,退回敵方直接爆發:', _bpE);
+        _pSetTimeout(()=>execBurst(a.side, a.pos), 300);
+      }
+      return;
+    }
     _pSetTimeout(()=>execBurst(a.side, a.pos), 300);
     return;
   }
@@ -18714,6 +18870,19 @@ function _realAiAct(a){
      (a.name === '九尾空貓怪' || a.name === '杏花妖') && a.side === 'p2' &&
      a.curHp <= a.hp * 0.5 && !_advBossRageBurstUsed &&
      typeof BURST_DB !== 'undefined' && BURST_DB[a.name]){
+    // ★ v1.0.20260422.0105 — 憤怒爆發也遵守玩家爆發優先規則
+    //   （注意：此處不提前 _advBossRageBurstUsed=true，以免 defer 後重入時失效）
+    if(G.p1 && G.p1.some(h => _canBurst(h))){
+      try{ _showPlayerBurstPriority(a, /*isRage=*/true); }catch(_bpRE){
+        console.error('[玩家爆發優先提示 rage] 失敗,退回敵方憤怒爆發:', _bpRE);
+        // 退回原路：直接執行憤怒爆發
+        _advBossRageBurstUsed = true;
+        G.energy[a.side] = 10;
+        a._burstUsed = Math.max(0, (a._burstUsed||0) - 1);
+        _pSetTimeout(()=>{ execBurst(a.side, a.pos); }, 1200);
+      }
+      return;
+    }
     _advBossRageBurstUsed = true;
     // 顯示憤怒對話氣泡
     const rageLines = (a.name === '杏花妖') ? [
@@ -19256,7 +19425,12 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='催眠之歌'){
     if(t){ addStatus(t,'sleep',3); renderCard(t); log(`[${a.name}] 催眠之歌！[${t.name}] 睡眠3回合！`); bannerFX(t,'💤 睡眠3回合！','#bb99ff',900); }
   }
-  else if(n==='嘲諷'){if(t){G.taunted={attacker:t,target:a};addBuff(a,'taunt',1);}}
+  else if(n==='嘲諷'){if(t){
+    // ★ v1.0.20260422.0106 — 八岐大蛇免疫嘲諷
+    if(!_tauntImmuneCheck(t)){
+      G.taunted={attacker:t,target:a};addBuff(a,'taunt',1);
+    }
+  }}
   else if(n==='急速閃躲'){addBuff(a,'evasion',2);}
   else if(n==='挺身守護'){ /* 常駐被動，由 doDmg 自動觸發 */ }
   else if(n==='不動如山'){addBuff(a,'immovable',99);}
@@ -27023,14 +27197,41 @@ function advFinishCutscene() {
   // 淡出過場
   const ov = document.getElementById('adv-cutscene-overlay');
   const bg = document.getElementById('adv-scene-bg');
-  bg.classList.remove('visible');
-  setTimeout(() => {
-    ov.style.display = 'none';
-    // 準備題庫（依玩家選的年級/科目/程度過濾）
-    advPrepareSessionQuestions();
-    // ★ 過場結束 → 正式開始戰鬥
-    advStartBattle();
-  }, 900);
+
+  // ★ v1.0.20260422.0105 — 日本關難度選擇：從 advStartBattle 移到這裡處理。
+  //   原因：advStartBattle 內遞迴呼叫自己在 PC 上偶有時序問題造成「卡在第二場景」。
+  //   新流程：過場結束 → 若尚未選過日本難度 → 彈 modal(此時 overlay 仍可見)
+  //          → 選完後才淡出過場 → advStartBattle（單次呼叫，無遞迴）
+  const _needJpDiff = (typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+    && (!_advPlayerDifficulty || _advPlayerDifficulty === '')
+    && !window._advJapanDifficultyShown
+    && typeof window._advShowJapanDifficulty === 'function');
+
+  const _continueToBattle = () => {
+    try{ if(bg) bg.classList.remove('visible'); }catch(_){}
+    setTimeout(() => {
+      try{ if(ov) ov.style.display = 'none'; }catch(_){}
+      try{ advPrepareSessionQuestions(); }catch(e){ console.error('[advFinishCutscene prepareQ]', e); }
+      try{ advStartBattle(); }catch(e){ console.error('[advFinishCutscene startBattle]', e); }
+    }, 900);
+  };
+
+  if(_needJpDiff){
+    window._advJapanDifficultyShown = true;
+    console.log('[日本難度] advFinishCutscene: 顯示難度選擇 modal');
+    try{
+      window._advShowJapanDifficulty(() => {
+        console.log('[日本難度] 已選擇 → 進入戰鬥流程');
+        _continueToBattle();
+      });
+    }catch(_mE){
+      console.error('[日本難度] modal 顯示失敗,使用預設「普通」:', _mE);
+      _advPlayerDifficulty = '普通';
+      _continueToBattle();
+    }
+    return;
+  }
+  _continueToBattle();
 }
 
 // ── 正式啟動戰鬥（過場演出結束後呼叫）
@@ -27098,6 +27299,13 @@ window._advShowJapanDifficulty = function(callback){
       btn.style.boxShadow = btn.style.boxShadow.split(';')[0];
     };
     btn.onclick = function(){
+      // ★ v1.0.20260422.0104 — 防止重複點擊（iPad 上偶有 tap 會觸發兩次 onclick 導致卡死）
+      if(modal._diffClicked) return;
+      modal._diffClicked = true;
+      modal.querySelectorAll('.adv-jp-diff-btn').forEach(function(b){
+        b.style.pointerEvents = 'none';
+        b.style.opacity = '0.5';
+      });
       const key = btn.getAttribute('data-key');
       _advPlayerDifficulty = key;
       try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
@@ -27106,37 +27314,60 @@ window._advShowJapanDifficulty = function(callback){
       modal.style.transition = 'opacity 0.3s';
       modal.style.opacity = '0';
       setTimeout(function(){
-        modal.remove();
-        if(typeof callback === 'function') callback();
+        try{ modal.remove(); }catch(_mE){}
+        // ★ v1.0.20260422.0104 — 回呼包 try/catch，失敗也要 log 不靜默消失
+        if(typeof callback === 'function'){
+          try{ callback(); }
+          catch(_cbE){ console.error('[日本難度選擇] 回呼失敗:', _cbE); }
+        }
       }, 280);
     };
   });
 };
 
 function advStartBattle(){
-  // ★ v1.0.20260421.3000g — 日本關第三場景事件結束後、BOSS 戰啟動前，彈難度選擇 modal
-  //   條件：(a) 日本關 (b) 尚未選過難度（_advPlayerDifficulty 為空）(c) 本場未彈過
-  //   八岐大蛇路線也適用（同樣是日本 BOSS）
-  try{
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
-       && (!_advPlayerDifficulty || _advPlayerDifficulty === '')
-       && !window._advJapanDifficultyShown){
-      window._advJapanDifficultyShown = true;
-      if(typeof window._advShowJapanDifficulty === 'function'){
-        window._advShowJapanDifficulty(function(){
-          // 選完難度後，回呼原本的 advStartBattle 流程
-          advStartBattle();
-        });
-        return; // 關鍵：此次提前 return，等 callback 再進來
-      }
-    }
-  }catch(_jpDiffE){ console.warn('[日本難度選擇] 失敗:', _jpDiffE); }
+  // ★ v1.0.20260422.0105 — 日本關難度選擇已移至 advFinishCutscene。
+  //   原本在此彈 modal + 遞迴呼叫 advStartBattle，PC 上偶有時序問題造成「卡在第二場景」。
+  //   現在 advFinishCutscene 會在過場淡出前先彈難度 modal，選完才呼叫 advStartBattle，無遞迴。
+  //   ※ 保留保底：若意外路徑沒選過難度就進來（例如 advStartCutscene catch fallback），
+  //      預設為「普通」避免後續計算 NaN
+  if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+     && (!_advPlayerDifficulty || _advPlayerDifficulty === '')){
+    console.warn('[advStartBattle] 日本關進入戰鬥但 _advPlayerDifficulty 為空，使用預設「普通」');
+    _advPlayerDifficulty = '普通';
+  }
 
   // ★ 好友英雄加入戰鬥（若已邀請且已選擇）
   try{ _injectFriendHeroIntoBattle(); }catch(e){}
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
+  // ★ v1.0.20260422.0104/0105 — 強制清除所有可能殘留的過場元素，避免「選完難度卡在場景」
+  //   遊戲 overlay z-index 620 會蓋住戰場（戰場 z-index 0），所以若沒清乾淨，玩家看到的還是上一場景背景。
+  //   修正：每次進入 BOSS 戰一律強制關閉這些過場 UI + visibility:hidden 雙保險。
+  try{
+    const _csOvB = document.getElementById('adv-cutscene-overlay');
+    if(_csOvB){
+      _csOvB.classList.remove('show');
+      _csOvB.style.display = 'none';
+      _csOvB.style.visibility = 'hidden';
+    }
+    const _sBgB = document.getElementById('adv-scene-bg');
+    if(_sBgB){
+      _sBgB.classList.remove('visible');
+      _sBgB.style.opacity = '0';
+      _sBgB.style.visibility = 'hidden';
+    }
+    const _dlgB = document.getElementById('adv-dialog-box');
+    if(_dlgB){ _dlgB.classList.remove('show'); _dlgB.style.display = 'none'; }
+    const _cpB = document.getElementById('adv-choice-panel');
+    if(_cpB) _cpB.innerHTML = '';
+    const _banB = document.getElementById('adv-confirm-banner');
+    if(_banB) _banB.textContent = '';
+    // 過場的日本難度 modal 若仍殘留也一併清除（保險）
+    const _jpMod = document.getElementById('adv-jp-diff-modal');
+    if(_jpMod) _jpMod.remove();
+  }catch(_clsE){ console.warn('[advStartBattle] 清除過場殘留失敗:', _clsE); }
   // ★ v1.0.20260420.3400 — BOSS 戰真正進入時才套 HP 倍率
   //   此時:(a)_advPlayerDifficulty 已確定(過場 2 已選過)、
   //         (b)G.p2 一定是 BOSS 陣容(advFinishMiniBattle 已還原 _advBossTeamSaved,沒有 mini 戰則始終是原陣容)、
@@ -27495,6 +27726,17 @@ function advShowQuiz() {
   }
   // ★ 題目全部出完：顯示重選視窗，確認後重新出題
   if (q && q.__needRepick) {
+    // ★ v1.0.20260422.0103 — 日本關：不顯示重選視窗，清除已用題目紀錄後直接再出題
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
+      if(typeof _advUsedQuestionIds !== 'undefined') _advUsedQuestionIds.clear();
+      _advQuizRound = (_advQuizRound || 0) + 1;
+      advPrepareSessionQuestions();
+      log(`📚 [日本關] 題目已出過一輪，循環再出（第${_advQuizRound}輪）。`);
+      setTimeout(() => {
+        try{ advShowQuiz(); }catch(e){ if(_advQuizResolveCb){ const _cb = _advQuizResolveCb; _advQuizResolveCb = null; _cb(); } }
+      }, 200);
+      return;
+    }
     const _savedCb = _advQuizResolveCb;
     _advQuizResolveCb = null;
     advShowRePickSubject(() => {
@@ -28737,6 +28979,45 @@ async function advShowBattleResult(win) {
   const _winNextBtn = document.getElementById('adv-result-win-next');
   if(_winNextBtn) _winNextBtn.style.display = win ? '' : 'none';
 
+  // ★ v1.0.20260422.0104 — 敗北時：隱藏「重新打一次」，顯示「降低難度再戰／現在難度再戰／先放過他」3 個選項
+  //   勝利時：隱藏這 3 個選項，維持原本「重新打一次＋確認」
+  try{
+    const _loseBtns = [
+      document.getElementById('adv-result-lose-easier'),
+      document.getElementById('adv-result-lose-retry'),
+      document.getElementById('adv-result-lose-quit'),
+    ];
+    const _origPlayAgain = document.getElementById('adv-result-play-again-btn');
+    if(win){
+      _loseBtns.forEach(b => { if(b) b.style.display = 'none'; });
+      if(_origPlayAgain) _origPlayAgain.style.display = '';
+    } else {
+      _loseBtns.forEach(b => { if(b) b.style.display = ''; });
+      if(_origPlayAgain) _origPlayAgain.style.display = 'none';
+      // 當前難度已是最低（沒自信）→ 降低難度按鈕停用（灰掉）
+      const _curDiffKey = (_advPlayerDifficulty==='沒自信（輕鬆模式）'||_advPlayerDifficulty==='沒自信') ? '沒自信'
+                         :(_advPlayerDifficulty==='我很會（挑戰模式）'||_advPlayerDifficulty==='我很會') ? '我很會'
+                         : '普通';
+      const _easierBtn = document.getElementById('adv-result-lose-easier');
+      if(_easierBtn){
+        if(_curDiffKey === '沒自信'){
+          _easierBtn.disabled = true;
+          _easierBtn.style.opacity = '0.35';
+          _easierBtn.style.cursor = 'not-allowed';
+          _easierBtn.title = '已是最低難度，無法再降低';
+          _easierBtn.textContent = '🔰 已是最低難度';
+        } else {
+          _easierBtn.disabled = false;
+          _easierBtn.style.opacity = '';
+          _easierBtn.style.cursor = '';
+          _easierBtn.title = '';
+          const _nextDiff = (_curDiffKey === '我很會') ? '普通' : '沒自信';
+          _easierBtn.textContent = '🔰 降低至「' + _nextDiff + '」再戰';
+        }
+      }
+    }
+  }catch(_btnE){ console.warn('[result btns]', _btnE); }
+
   if(win) {
     // 不再立即顯示舊的解鎖overlay，改由新序列處理
     // setTimeout(()=>advShowUnlockHero(), 1500);
@@ -29485,6 +29766,99 @@ function advShowBossDetail(name){
 }function advPlayAgain() {
   document.getElementById('adv-result-overlay').classList.remove('show');
   advRestartBattle();
+}
+
+// ★ v1.0.20260422.0104 — 敗北後「降低難度再戰」：自動把難度降一檔後重啟
+//   我很會 → 普通、普通 → 沒自信、沒自信 → 維持（按鈕會被停用所以理論上不會進來）
+//   降低後 BOSS HP 變低、EXP/知識幣/掉落率也跟著變少（獎勵變差）
+function advPlayAgainEasier(){
+  try{
+    const _curKey = (_advPlayerDifficulty==='沒自信（輕鬆模式）'||_advPlayerDifficulty==='沒自信') ? '沒自信'
+                   :(_advPlayerDifficulty==='我很會（挑戰模式）'||_advPlayerDifficulty==='我很會') ? '我很會'
+                   : '普通';
+    const _nextKey = (_curKey === '我很會') ? '普通'
+                    :(_curKey === '普通')   ? '沒自信'
+                    : '沒自信';
+    if(_curKey === _nextKey){
+      try{ _showInGameToast && _showInGameToast('已是最低難度，無法再降低', '#ff8844', 1800); }catch(_){}
+      return;
+    }
+    _advPlayerDifficulty = _nextKey;
+    // BOSS HP 倍率需重新套用（關掉 applied 旗標，advStartBattle 開頭會依新難度重套）
+    window._advBossHpMultApplied = false;
+    // ★ 同時重算 _advBossTeamSaved 的 HP：以「原始 HP ÷ 舊倍率 × 新倍率」處理
+    //   但實作上 advRestartBattle 會把 G.p2 各 h.curHp 重置回 h.hp。
+    //   由於 h.hp 已被當初套的舊倍率改過，這裡需要先把 h.hp 回推成原始值再套新倍率。
+    try{
+      const _oldMult = (typeof ADV_CONFIDENCE_HP_MULT !== 'undefined' && ADV_CONFIDENCE_HP_MULT[_curKey]) || 1.00;
+      const _newMult = (typeof ADV_CONFIDENCE_HP_MULT !== 'undefined' && ADV_CONFIDENCE_HP_MULT[_nextKey]) || 1.00;
+      if(G && G.p2 && _oldMult > 0 && _oldMult !== _newMult){
+        G.p2.forEach(h => {
+          if(h && typeof h.hp === 'number' && h.hp > 0){
+            // 回推原始 HP 再套新倍率
+            const _orig = Math.round(h.hp / _oldMult);
+            h.hp = Math.max(1, Math.round(_orig * _newMult));
+            h.curHp = h.hp;
+          }
+        });
+        if(typeof _advBossTeamSaved !== 'undefined' && _advBossTeamSaved){
+          _advBossTeamSaved = JSON.parse(JSON.stringify(G.p2));
+        }
+        // 標記為已套用新倍率，advStartBattle 不會再次重套
+        window._advBossHpMultApplied = true;
+      }
+    }catch(_mE){ console.warn('[降低難度 HP 重算]', _mE); }
+    try{ log('🔰 難度已降低：' + _curKey + ' → ' + _nextKey + '（獎勵同步降低）'); }catch(_){}
+    try{ bannerFX(null, '🔰 難度降低為「' + _nextKey + '」', '#88ee99', 1400); }catch(_){}
+  }catch(_dE){ console.warn('[advPlayAgainEasier]', _dE); }
+  document.getElementById('adv-result-overlay').classList.remove('show');
+  advRestartBattle();
+}
+
+// ★ v1.0.20260422.0104 — 敗北後「先放過他，回學校休整」：保留進度回關卡選擇頁
+//   參考 advMiniResultGoHome 的清理流程，但此處不需清小怪戰特有旗標
+async function advGoRestAtSchool(){
+  try{
+    // 關閉結算視窗
+    const _resOv = document.getElementById('adv-result-overlay');
+    if(_resOv) _resOv.classList.remove('show');
+    // 清除各種戰鬥殘留狀態
+    try{ clearInterval(_advQuizTimer); _advQuizTimer = null; }catch(_){}
+    try{ clearTurnTimer(); }catch(_){}
+    if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0;
+    _advQuizActive = false;
+    _advQuizPhase  = 'idle';
+    if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+    _gamePaused = false;
+    if(typeof G !== 'undefined' && G){
+      G._resultShown = true;
+      G.pendingTarget = null;
+    }
+    try{ if(typeof pendingCb !== 'undefined') pendingCb = null; }catch(_){}
+    // 清掉當機回溯快照（此場冒險結束）
+    try{ _advClearCrashSnapshot && _advClearCrashSnapshot(); }catch(_){}
+    // 保存進度到雲端（EXP/幣在打小怪戰時已累積）
+    try{ await gameCloudSave(); }catch(_){}
+    // 隱藏戰鬥畫面 class
+    const _gc = document.getElementById('gc');
+    if(_gc) _gc.classList.remove('adv-battle');
+    // 退出冒險模式旗標（但保留 unlocked 資料）
+    try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(_){}
+    _adventureMode = false;
+    _advMiniBattleActive = false;
+    // 切回關卡首頁 BGM + 顯示選關頁
+    try{ bgmStop(); }catch(_){}
+    setTimeout(()=>{
+      try{
+        if(typeof openAdventureOverlay === 'function') openAdventureOverlay();
+      }catch(_oE){ console.error('[advGoRestAtSchool] openAdventureOverlay', _oE); }
+    }, 400);
+  }catch(e){
+    console.error('[advGoRestAtSchool]', e);
+    // 失敗時仍嘗試退出冒險
+    try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(_){}
+    try{ if(typeof openAdventureOverlay === 'function') openAdventureOverlay(); }catch(_){}
+  }
 }
 
 function advBackToTitle() {
@@ -35317,7 +35691,16 @@ function _advMiniQuizAsk(onDone) {
   const sceneIdx = _advSceneIdx;
   const pool = _advMiniGetQuizPool(sceneIdx);
   if(!pool || pool.length === 0){
-    // ★ 題目出完：顯示換題庫視窗，重選後重新出題，不卡死
+    // ★ v1.0.20260422.0103 — 日本關：不顯示「重新選題庫」視窗，直接循環日本題庫
+    //   用戶回報日本關小怪戰結束後若所有題目出完，重選視窗選完會卡死在場景對白中。
+    //   解法：日本關固定只出日本題，題目循環使用（清除 used set 後重新出），不彈重選視窗。
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
+      if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
+      log('📚 [日本關] 所有題目已出過，循環再出一次。');
+      setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 200);
+      return;
+    }
+    // ★ 題目出完：顯示換題庫視窗，重選後重新出題，不卡死（非日本關才走此路）
     advShowRePickSubject(() => {
       // 清除已用題目，重新建題庫
       if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
@@ -36299,6 +36682,9 @@ function _advMiniShowReward(onDone) {
 function _advMiniApplyReward(id, onDone) {
   const r = ADV_REWARDS.find(x=>x.id===id);
   if(!r){ if(onDone) onDone(); return; }
+  // ★ v1.0.20260422.0104 — instant_burst 需要觸發實際爆發，onDone 由爆發流程接管
+  //   此旗標用來讓外層 setTimeout 不重複推進回合
+  let _skipOnDoneAfter = false;
   try{
     // ★ 修正：小怪戰獎勵不走 advApplyReward（會呼叫 advShowQuiz 觸發 BOSS 戰流程卡死）
     // 直接套用獎勵效果，再呼叫 onDone 恢復小怪戰
@@ -36322,9 +36708,22 @@ function _advMiniApplyReward(id, onDone) {
         p1.forEach(h=>{ addBuff(h,'shieldBuff',2); });
         bannerFX(null, '🛡️ 全體護盾！', '#88aaff', 1200);
       } else if(id === 'instant_burst' && !_advBurstRewardUsed){
+        // ★ v1.0.20260422.0104 — 原版誤改為只 +3 能量，與卡片說明「選 1 名隊友立即發動極限爆發」不符。
+        //   修正：真正觸發爆發（與 BOSS 戰流程一致）。
+        //   若有可選隊友，由 _advTriggerBurstFor / _advShowBurstTargetPicker 接管流程，
+        //   外層 setTimeout 不再呼叫 onDone；爆發完 _burstFinish → startTurn 會接手回合推進。
         _advBurstRewardUsed = true;
-        G.energy['p1'] = Math.min(10, (G.energy['p1']||0)+3);
-        bannerFX(null, '⚡ 能量暴增 +3！', '#ffcc44', 1200);
+        if(p1.length === 0){
+          // 沒存活隊友：退回 +3 能量保底
+          G.energy['p1'] = Math.min(10, (G.energy['p1']||0)+3);
+          bannerFX(null, '⚡ 能量 +3（無可用隊友）', '#ffcc44', 1200);
+        } else if(p1.length === 1){
+          _skipOnDoneAfter = true;
+          try{ _advTriggerBurstFor(p1[0]); }catch(_bE){ console.error('[instant_burst mini]', _bE); }
+        } else {
+          _skipOnDoneAfter = true;
+          try{ _advShowBurstTargetPicker(p1); }catch(_pE){ console.error('[instant_burst picker mini]', _pE); }
+        }
       } else {
         // 其他獎勵：透過安全路徑套用（不觸發 advShowQuiz）
         _advQuizResolveCb = null; // 確保清空，不讓 advOnQuizSkip 走錯路
@@ -36335,9 +36734,11 @@ function _advMiniApplyReward(id, onDone) {
   }catch(e){
     console.error('[_advMiniApplyReward]', e);
   }
-  // ★ 無論如何都直接呼叫 onDone，繼續小怪戰流程
+  // ★ 除非 instant_burst 走爆發流程接管，否則呼叫 onDone 繼續小怪戰
   _advQuizResolveCb = null;
-  setTimeout(()=>{ if(onDone) onDone(); }, 300);
+  if(!_skipOnDoneAfter){
+    setTimeout(()=>{ if(onDone) onDone(); }, 300);
+  }
 }
 
 
@@ -37295,25 +37696,22 @@ function _showMedalCelebration(def){
       background:linear-gradient(135deg,rgba(40,30,0,0.98),rgba(25,18,0,0.99));
       border-bottom:3px solid #ffe066;border-left:3px solid #ffe066;border-right:3px solid #ffe066;
       border-radius:0 0 18px 18px;
-      padding:16px 32px 18px;width:100%;box-sizing:border-box;
+      padding:22px 40px 22px;width:100%;box-sizing:border-box;
       box-shadow:0 6px 40px rgba(255,200,0,0.55),0 4px 20px rgba(0,0,0,0.85);
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;position:relative;">
       <!-- 旋轉閃光 -->
       <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:30px;animation:_spin 1.5s linear infinite;">✨</div>
-      <!-- 橫幅 row -->
-      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <!-- ★ v1.0.20260422.0106 — 改為單行置中橫幅：icon + 同一行大標題 + 關閉按鈕 -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:24px;">
         <!-- 獎章圖示 -->
-        <div style="font-size:72px;line-height:1;animation:_bounce 0.6s 0.2s ease-out both;flex-shrink:0;">${def.icon}</div>
-        <!-- 中間文字區 -->
-        <div style="flex:1;min-width:240px;">
-          <div style="font-size:17px;color:#ffdd88;letter-spacing:5px;margin-bottom:2px;font-weight:700;">🏅 獎章解鎖！</div>
-          <div style="font-size:32px;font-weight:900;color:#ffe066;margin-bottom:4px;text-shadow:0 0 20px rgba(255,200,0,0.8);letter-spacing:2px;">【${def.name}】</div>
-          <div style="font-size:18px;color:#eee;line-height:1.5;">${def.desc}</div>
-          <div style="font-size:14px;color:#999;margin-top:4px;">🎁 獎勵：即將開放</div>
+        <div style="font-size:clamp(56px,5vw,82px);line-height:1;animation:_bounce 0.6s 0.2s ease-out both;flex-shrink:0;">${def.icon}</div>
+        <!-- 單行大標題 -->
+        <div style="font-size:clamp(30px,3.4vw,48px);font-weight:900;color:#ffe066;text-shadow:0 0 20px rgba(255,200,0,0.9),0 0 40px rgba(255,150,0,0.5);letter-spacing:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">
+          🏅 獎章解鎖：【${def.name}】
         </div>
         <!-- 關閉按鈕 -->
         <button onclick="playSfx('sfx-cancel',0.4);document.getElementById('_medal-celebrate').remove();"
-          style="padding:12px 28px;font-size:20px;font-weight:900;
+          style="padding:14px 32px;font-size:clamp(18px,1.8vw,26px);font-weight:900;
           background:linear-gradient(135deg,rgba(255,200,0,0.25),rgba(200,150,0,0.2));
           border:2px solid #ffe066;color:#ffe066;border-radius:12px;cursor:pointer;
           font-family:inherit;letter-spacing:2px;flex-shrink:0;
@@ -38464,6 +38862,164 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0107', brief:[
+    '包包「使用／攜帶／賣出」按鈕移到標題下方，避開 iPad 底部邊緣',
+  ], items:[
+    '【問題】iPad 橫握時，包包最下方的「使用／賣出／攜帶」按鈕靠近底部邊緣，',
+    '  偶爾會踩到 iOS 的 Home 指示條或上滑手勢區，導致按鈕點擊無效。',
+    '【解法】把 #item-ops 按鈕區塊從 igrid（3 個物品格）底下，移到 igrid 上方、',
+    '  「▸ 🎒包包裡的物品 🍎💣🦮」標題下方。HTML 重排，邏輯完全不動。',
+    '  好處：',
+    '  1. 避開 iPad 螢幕底部保留手勢區',
+    '  2. Android / PC 也受益，按鈕位置更顯眼',
+    '  3. 按鈕靠近標題，視覺層次更清楚（標題 → 動作 → 格子）',
+    '  附帶改進：',
+    '  - 加入 0.22s fadeIn 動畫，玩家選到物品時按鈕會輕微下拉浮現，更容易注意到',
+    '  - hover / active 微加 transform 與 filter，讓點擊回饋更明確',
+    '  - 調整 margin 為「標題下 6px / igrid 上 10px」，視覺間距更平均',
+  ]},
+  { ver:'v1.0.20260422.0106', brief:[
+    '獎章解鎖通知改為置中大字單行橫幅',
+    '八岐大蛇免疫所有嘲諷系列技能（嘲諷／舞台聚光燈／強勢對決／強力挑釁）',
+  ], items:[
+    '【獎章通知 UI 改進】',
+    '  原本 3 行小字擠在最左邊，不起眼。',
+    '  改為單行大標題置中顯示：「🏅 獎章解鎖：【獎章名稱】」',
+    '  - 字體動態大小 clamp(30px, 3.4vw, 48px)，大螢幕最大到 48px',
+    '  - 圖示 icon 放大到 clamp(56px, 5vw, 82px)',
+    '  - 整個橫幅改為 center 對齊（原本是 flex-wrap:wrap 導致文字列擠到左邊）',
+    '  - 加強發光陰影（text-shadow 雙層 rgba 200/150 0 的橘黃光暈）',
+    '  - 移除副標題、描述、「獎勵：即將開放」三行文字',
+    '  - 加寬 padding（22px 40px）提升視覺份量',
+    '【八岐大蛇免疫嘲諷系列】',
+    '  八岐大蛇天賦「八首吞天」：「免疫所有不利狀態」',
+    '  但原本只有 addStatus 內有檢查，而嘲諷類技能都繞過 addStatus 直接操作。',
+    '  新增 _tauntImmuneCheck(target) helper：若為八岐大蛇則顯示盾牌 VFX + log + banner，回傳 true 讓呼叫端 skip',
+    '  套用至 4 個施法點：',
+    '  1. 嘲諷（t.n=嘲諷）→ 免疫時不設 G.taunted 也不加 taunt buff',
+    '  2. 舞台聚光燈（舞者）→ 免疫的目標不 push taunt status；G.taunted 改用第一個非八岐大蛇代表',
+    '  3. 強勢對決（t.n=強勢對決）→ 先 filter 掉八岐大蛇才設 G.taunted',
+    '  4. 強力挑釁（守衛爆發）→ 免疫的目標不 push strongTaunt status',
+    '  addStatus 內原本的 strongTaunt 例外也取消（八岐大蛇現在對 strongTaunt 也免疫）。',
+    '  由於八岐大蛇是 1v1 單獨 BOSS，對戰不會有「部分隊友可挑諷、部分免疫」的問題。',
+  ]},
+  { ver:'v1.0.20260422.0105', brief:[
+    '修正 日本關選完自信程度後卡在第二場景的根本原因（PC 也會發生）',
+    '新增 雙方同時爆發時「玩家爆發優先」機制',
+  ], items:[
+    '【Bug 1：日本關選完難度卡在第二場景 — 根本原因】',
+    '  用戶回報 PC 上也會發生（不只 iPad），代表之前懷疑的「iPad 連點」並非主因。',
+    '  重新檢查後發現：真正兇手是 advStartBattle 內遞迴呼叫自己的設計。',
+    '  原流程：advFinishCutscene → advStartBattle(首次) → 檢查 Japan + 無難度 → 彈 modal → return',
+    '         → 玩家選擇 → callback → advStartBattle(遞迴) → 本次 Japan 檢查 skip → 繼續 BOSS 設定',
+    '  問題：首次呼叫 advStartBattle 時，adv-cutscene-overlay 已由 advFinishCutscene 設 display:none，',
+    '        但 adv-scene-bg 的 visible class 仍在（transition 0.8s 尚未完成）。遞迴回來時若某些',
+    '        過場 UI 殘留，加上 PC 渲染排程的細微時序差異，會讓場景背景長期蓋在戰場上方。',
+    '【解法】徹底重構此流程：',
+    '  1. advFinishCutscene 內提前處理日本難度：',
+    '     - 若尚未選過，先彈 _advShowJapanDifficulty modal（此時 cutscene overlay 還在）',
+    '     - 玩家選完才執行原本的「淡出 overlay → advStartBattle」序列',
+    '     - 單一線性流程，advStartBattle 只呼叫一次，無遞迴',
+    '  2. advStartBattle 內移除原本的 Japan modal 遞迴區塊',
+    '     保留保底：若意外路徑進來但 _advPlayerDifficulty 為空，預設「普通」避免 NaN',
+    '  3. advStartBattle 開頭強化清場：',
+    '     - adv-cutscene-overlay：移 show class + display:none + visibility:hidden（三重保險）',
+    '     - adv-scene-bg：移 visible class + opacity:0 + visibility:hidden',
+    '     - adv-dialog-box / adv-choice-panel / adv-confirm-banner 全部清',
+    '     - adv-jp-diff-modal 若仍殘留一併 remove',
+    '  4. 加入 console.log 診斷訊息，之後若仍卡住可由瀏覽器 console 追蹤',
+    '【新增：玩家爆發優先機制】',
+    '  用戶回報：雙方同時能量滿、對手搶先爆發導致我方爆發被「吃掉」。',
+    '【機制】在敵方 aiAct 的爆發分支加入判斷：',
+    '  if (敵方可爆發 且 我方至少 1 位英雄也可爆發) {',
+    '      顯示「⚡ 優先爆發機會」提示視窗，暫停敵方爆發',
+    '      → 玩家可點擊冒火邊框英雄發動爆發',
+    '      → 爆發完成後 _burstFinish → startTurn → 敵方 aiAct 重新進入',
+    '        此時我方能量=0 → _canBurst(p1)=false → 敵方正常爆發（若還活著且沒失去行動）',
+    '      → 或玩家點「跳過」讓敵方先放',
+    '  }',
+    '【涵蓋範圍】',
+    '  1. 一般 AI 爆發（所有敵方英雄，小怪戰 / BOSS 戰）',
+    '  2. 主 BOSS HP≤50% 的「憤怒覺醒」強制爆發（貓空九尾空貓怪 / 杏花妖）',
+    '     憤怒爆發被跳過時會正確補上 _advBossRageBurstUsed + 能量給滿的副作用',
+    '【UI】',
+    '  下方中央浮現橙框彈窗，標題「⚡ 優先爆發機會！」＋單一按鈕「⏭ 跳過，讓對手先放」。',
+    '  execBurst 內自動移除此彈窗（玩家自行點英雄發動時無需再手動關閉）。',
+  ]},
+  { ver:'v1.0.20260422.0104', brief:[
+    '修正 日本關選完自信程度後偶爾卡死在第二場景',
+    '修正 答題獎勵「額外一次極限爆發」卡片使用後沒效果',
+    '新增 滅團／接關用完後的 3 種選項（降低難度再戰／現在難度再戰／先放過他回學校休整）',
+  ], items:[
+    '【Bug 1：日本關選完難度卡在第二場景】',
+    '  用戶回報：小怪戰後進入 BOSS 戰前，彈難度選擇視窗，選完後有時會卡在第二場景對白畫面，無法進入 BOSS 戰。',
+    '  可能原因：過場 UI（adv-cutscene-overlay / adv-scene-bg / adv-dialog-box）在難度 modal 回呼後沒被正確關閉，',
+    '  BOSS 戰畫面被遮住 → 看起來像「卡在第二場景」。另外 iPad 上 tap 偶爾會連發兩次，',
+    '  造成 modal 重複觸發 callback 導致狀態混亂。',
+    '【解法】三層防護：',
+    '  1. 難度按鈕防連點：按一次後立即 pointer-events:none + 透明度 0.5，避免第二次 tap 觸發',
+    '  2. 回呼包 try/catch：失敗會 log 到 console，不再靜默消失',
+    '  3. advStartBattle 開頭強制清除所有過場殘留 UI：',
+    '     - adv-cutscene-overlay：display:none',
+    '     - adv-scene-bg：移除 visible class + opacity:0',
+    '     - adv-dialog-box：移除 show class + display:none',
+    '     - adv-choice-panel / adv-confirm-banner：清空內容',
+    '  這樣即使前面某個環節沒清乾淨，BOSS 戰一定會正常顯示',
+    '【Bug 2：答題獎勵「額外極限爆發」卡無效】',
+    '  卡片原設計：「選 1 名隊友立即發動極限爆發（每場限 1 次）」',
+    '  小怪戰的 _advMiniApplyReward 中，instant_burst 分支被錯誤改成只「+3 能量」，',
+    '  完全沒觸發爆發（動畫/傷害/效果都沒有）',
+    '  推測：過去為了避開 advShowQuiz 導致的連鎖 bug，改成 placeholder 就沒改回',
+    '【解法】改回真正觸發爆發：',
+    '  if(存活隊友 === 0) → 保底 +3 能量（沒人可選）',
+    '  if(存活隊友 === 1) → 呼叫 _advTriggerBurstFor 直接發動',
+    '  if(存活隊友 >= 2) → 呼叫 _advShowBurstTargetPicker 顯示選擇面板',
+    '  加 _skipOnDoneAfter 旗標：爆發接管流程後，外層 setTimeout 不再呼叫 onDone，',
+    '  由爆發內部 _burstFinish → startTurn 負責推進回合，避免雙重觸發',
+    '【新增：滅團／接關用完後的 3 種選項】',
+    '  原本只有「🔄 重新打一次」，現在敗北結算視窗顯示 3 個選項：',
+    '  1. 🔰 降低難度再戰（動態顯示下一檔，我很會→普通／普通→沒自信；已是沒自信則按鈕停用）',
+    '     → 降低難度同時縮小 BOSS HP（立即重算 h.hp：舊倍率回推 × 新倍率），',
+    '       EXP/知識幣/掉落率倍率也因難度改變而自動調整',
+    '  2. ⚔️ 現在難度再戰（等同原本「重新打一次」，維持難度重來）',
+    '  3. 🏃 先放過他，回學校休整（回關卡選擇頁，保留已獲得的 EXP/知識幣）',
+    '     → 清戰鬥狀態、雲端存檔、退出冒險模式、開 openAdventureOverlay',
+    '  勝利畫面按鈕不變（仍是「重新打一次」＋「確認」）',
+  ]},
+  { ver:'v1.0.20260422.0103', brief:[
+    '修正 日本關題目出完時彈「重新選題庫」視窗、選完卡死在場景對白',
+    '修正 田徑隊員極速閃燃爆發後可以無限次爆發',
+    '修正 某些英雄兩顆爆發星星用完後，爆發火焰邊框與按鈕仍會亮起',
+  ], items:[
+    '【Bug 1：日本關重新選題視窗卡死】',
+    '  用戶回報：日本關小怪戰結束後若所有題目已出完，會跳「重新選題庫」視窗，',
+    '  選完後遊戲卡死在場景劇情對白裡無法推進。',
+    '【解法】日本關移除重選視窗，改為自動循環日本題庫。',
+    '  _advMiniQuizAsk（小怪戰出題）當偵測到 _adventureStage==="japan" 且題庫已空時：',
+    '    1. 清空 _miniQuizUsedIds（已用題目紀錄）',
+    '    2. 直接重新呼叫 _advMiniQuizAsk 從頭抽題',
+    '    3. 完全不走 advShowRePickSubject 視窗',
+    '  advShowQuiz（BOSS 戰出題）偵測到日本關 + __needRepick 時：',
+    '    清空 _advUsedQuestionIds、advPrepareSessionQuestions()、遞增 _advQuizRound 後重抽。',
+    '  非日本關維持原本重選視窗行為。',
+    '【Bug 2：田徑隊員爆發無限次】',
+    '  極速閃燃爆發後會「立即再行動一次」，但原程式寫了：',
+    '    h._burstUsed = true; h.acted = false;',
+    '  _burstUsed 是 0~2 的數字計數器，誤賦值為 true 會讓下一次 _canBurst 計算',
+    '    (true||0) >= 2 → (1 >= 2) → false，判定仍可爆發，變成無限爆發。',
+    '【解法】移除錯誤的 h._burstUsed=true 那句，只保留 h.acted=false。',
+    '  execBurst 已經在進入 _runBurst 前 +1 計數，_runBurst 內不需要再動計數器。',
+    '【Bug 3：爆發用完後仍亮邊框/按鈕】',
+    '  除了田徑隊員本身的 bug，如果未來有其他地方誤把 _burstUsed 寫成布林值，',
+    '  爆發判斷會一直失準、邊框火焰還會亮起。',
+    '【解法】多層防禦：',
+    '  1. 新增 _burstUsedNum(h) helper：把任何值都正確轉成數字（true→1、其他非數字→0）',
+    '  2. _canBurst 改用 _burstUsedNum 判斷，杜絕型別污染',
+    '  3. updateBurstEffects（UI 爆發邊框）額外加一道保險：',
+    '     即使 _canBurst 漏判，若計數 >= 2 仍強制移除 burst-ready、火焰、⚡極限爆發標籤',
+    '  4. 星星指示器（hp 上方的 ⭐/★）也改用 _burstUsedNum，避免布林值顯示錯數量',
+    '  這樣三層保護下來：出問題也不會在 UI 上誤導玩家、玩家點不開爆發面板。',
+  ]},
   { ver:'v1.0.20260422.0102', brief:[
     '修正 iPad：戰鬥中按「賣出」常沒反應，要切全螢幕後再按才有用',
     '修正 iPad：部分彈窗內無法捲動導致卡死',
@@ -40872,7 +41428,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0102';
+  const CURRENT_VERSION = 'v1.0.20260422.0107';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40889,7 +41445,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0102';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0107';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
