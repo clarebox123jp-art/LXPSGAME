@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3002</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3005</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6606,7 +6606,7 @@ const HERO_DB = {
   '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合。'}},
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中240%傷害，無法迴避',fd:'用特技的240%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'控制特技低的2名對手；傷害特技高的其餘對手',fd:'使敵方特技比自己低的2名對手無法行動1回合，特技比自己高的其他對手則會受到特技125%傷害'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
-  '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'200%傷害並附加出血（-10%HP/回）',fd:'用特技的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
+  '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'(特技+攻擊)×200%傷害並附加出血（-10%HP/回）',fd:'用(特技+攻擊)的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
   '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)單體友方受傷前觸發，代替承傷並以特技×50%減輕傷害。',fd:'(常駐被動)當單體攻擊即將落在隊友身上時觸發，守衛代替其承受全部傷害，並以特技的50%減輕傷害。封印時無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害，且受到的傷害減少50%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少50%。'}},
   '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
   '舞者':  {hp:58,atk:7,sp:9,spd:16, s1:{n:'熱情之舞',c:3,d:'全隊傷害和治療量提升',fd:'1回合內以特技使全體友方的傷害及治療量增加'},s2:{n:'魅惑之舞',c:3,d:'操控1名對手行動1次',fd:'操控1名最大HP高於施展者的對手進行1次行動'}},
@@ -6622,7 +6622,7 @@ const HERO_DB = {
   '動物學家':{hp:61,atk:7,sp:10,spd:12, s1:{n:'動物召喚',c:2,d:'用特技攻擊HP最低的敵方1~2次並召喚1隻寵物',fd:'用特技對HP最低的敵方造成1~2次傷害，同時召喚出1隻寵物讓友方攜帶。'},s2:{n:'動物守護',c:3,d:'2回合內友方全體的卡片、寵物和能量受到保護，每隻寵物為動物學家減傷10%',fd:'2回合內友方全體的卡片、寵物和能量受到保護，不會被禁用、交換、奪取或破壞。且隊伍每存在1隻寵物可為動物學家減傷10%（最多40%）。'}},
   '武士':  {hp:60,atk:14,sp:10,spd:6, s1:{n:'迴避反擊',c:4,p:true,d:'(被動)被攻擊時100%閃躲並反擊150%攻擊傷害',fd:'(被動)被攻擊時觸發，有100%機率閃躲，再給對手攻擊150%的傷害。'},s2:{n:'崛起鬥志',c:4,p:true,d:'(被動)復活時各項能力+5（限用一次）',fd:'(被動)被復活時觸發，提升自己基本HP、攻擊、特技、速度各5點。只能發動一次。'}},
   '陰陽師':{hp:58,atk:5,sp:18,spd:9, s1:{n:'朱雀召喚',c:5,d:'傷害全體對手，治療減半2回合',fd:'依特技70%使敵方全體受到傷害，並陷入治療量減半的狀態2回合。'},s2:{n:'青龍召喚',c:5,d:'傷害全體對手，受傷+50%（2回合）',fd:'依特技70%使敵方全體受到傷害，並陷入受到傷害增加50%的狀態2回合。'}},
-  '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP低於10的對手',fd:'使剩餘HP未滿10的1名任意對手強制倒下(無視有利狀態或寵物效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:3,d:'5次固定6點必中傷害',fd:'隨機攻擊對手5次，每次造成6固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
+  '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP未滿10%的對手',fd:'使剩餘HP未滿10%的1名任意對手強制倒下(無視有利狀態或裝備效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:4,d:'隨機攻擊對手5次，每次特技50%固定傷害',fd:'隨機攻擊對手5次，每次用特技50%造成固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
   '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。'}},
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
@@ -6635,7 +6635,7 @@ const HERO_DB = {
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:5,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:5,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'},_traitDesc:'【天賦】成為攻擊目標機率+40%；受傷時20%機率將傷害轉為治療HP'},
   // ★ v1.0.20260421.3000o — 日本關限定角色（打贏八岐大蛇後 5% 機率觸發劇情解救加入）
-  '巫女':    {hp:56,atk:8,sp:16,spd:10, s1:{n:'神籤',c:4,d:'為HP比例最少的2名友方附加隨機2個有利狀態，並依特技恢復HP（每升1級+5%恢復量）',fd:'搖動祭鈴抽取神籤，為HP比例最少的2名友方各附加隨機2個有利狀態（持續2回合），並依特技值恢復HP。每升1級恢復量提升5%。'},s2:{n:'破魔矢',c:4,d:'特技200%傷害1名對手（日本妖怪+100%），附加易傷1回合（受傷+100%）（每升1級+5%傷害）',fd:'射出破魔神矢貫穿妖氣，用特技值的200%對1名對手造成光屬性傷害；目標若為日本妖怪則傷害提升100%。命中後為目標附加「強力易傷」狀態1回合（受到的傷害提升100%）。每升1級傷害提升5%。'}},
+  '巫女':    {hp:56,atk:8,sp:16,spd:10, s1:{n:'神籤',c:4,d:'為HP比例最少的2名友方附加隨機2個有利狀態，並依特技恢復HP',fd:'搖動祭鈴抽取神籤，為HP比例最少的2名友方各附加隨機2個有利狀態（持續2回合），並依特技值恢復HP。'},s2:{n:'破魔矢',c:4,d:'特技200%傷害1名對手（日本妖怪+100%），附加易傷1回合（受傷+100%）',fd:'射出破魔神矢貫穿妖氣，用特技值的200%對1名對手造成光屬性傷害；目標若為日本妖怪則傷害提升100%。命中後為目標附加「強力易傷」狀態1回合（受到的傷害提升100%）。'}},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -6967,6 +6967,7 @@ const BURST_UPGRADE_DEF = {
   '九尾空貓怪':{ rows: [[0,'特技×0.5 × 9次連擊+地獄之火'],[1,'特技×0.55'],[2,'特技×0.6'],[3,'特技×0.65'],[4,'特技×0.7']] },
   '杏花妖':    { rows: [[0,'特技×1.5 全體傷害 + 75%魅惑 1回合'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   '煉金術師':  { rows: [[0,'抽3張物品牌，友方使用後保留'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
+  '巫女':      { rows: [[0,'解除不利狀態+3強力有利狀態+特技×1.5 全體治療(可復活)'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   // ── 特殊效果英雄 ──
   '聖騎士':    { rows: [[0,'全隊無敵1回合，治療40%HP'],[1,'治療45%HP'],[2,'治療50%HP'],[3,'治療55%HP'],[4,'治療60%HP']] },
   '守衛':      { rows: [[0,'強力挑釁2回合，特技×100%減傷'],[1,'特技×110%減傷'],[2,'特技×120%減傷'],[3,'特技×130%減傷'],[4,'特技×140%減傷']] },
@@ -7169,7 +7170,7 @@ const BURST_DB = {
   '大力士':   {n:'地球上投',    d:'300%必中，強力昏迷2回合',fd:'對敵方單體造成攻擊300%傷害，此傷害必中且無視有利狀態，並讓目標陷入「強力昏迷」無法行動2回合，無法被免疫和解除。'},
   '凡人':     {n:'臨摹大師',    d:'模仿任意角色的極限爆發',fd:'模仿敵我雙方任意角色的極限爆發技能並施展出來。'},
   '動物學家': {n:'動物大軍', d:'呼喚4隻隨機寵物供全隊攜帶，並保護友方全體2回合',fd:'瞬間呼喚出隨機4隻不同的寵物，讓我方角色可以立即攜帶或替換。完成後2回合內友方全體的卡片、寵物和能量受到保護，不會被禁用、交換、奪取或破壞。'},
-  '機械師':   {n:'負荷超載',    d:'累積我方傷害，2回合後轉移至敵方',fd:'進入「負荷超載」2回合，期間我方受到的傷害全部累積，結束後釋放所有累積傷害由敵方全體平均分攤。'},
+  '機械師':   {n:'負荷超載',    d:'2回合我方傷害全累積並回血50%，結束後平均分給敵方',fd:'進入「負荷超載」狀態2回合，期間我方所有受到的傷害全部累積計算且每次受到傷害立即恢復該傷害50%的HP，在負荷超載結束後釋放所有累積的傷害，由敵方全體平均分攤此傷害。負荷超載狀態不會被消除或奪取。'},
   '吸血鬼':   {n:'鮮血契約',    d:'全隊獲得「嗜血」2回合，傷害100%吸血，血量越低增傷越高',fd:'使我方全體獲得「嗜血」能力2回合：造成傷害的100%轉化為恢復自身HP，且造成傷害時依自身血量減少的百分比轉換為等量增傷百分比（最高+100%）。「嗜血」狀態不會被消除或奪取。'},
   '武士':     {n:'神鬼盡滅',    d:'480%必中，溢出傷害轉移',fd:'對敵方單體造成攻擊480%傷害，必中且無視有利狀態。溢出傷害轉移至敵方HP最少的角色身上。'},
   '木靈使':   {n:'神樹恩澤',    d:'全隊不倒＋再生（2回合）',fd:'使友方全體獲得「不倒」和「再生」2回合，期間HP最低為1，且每回合恢復木靈使特技值HP。'},
@@ -7186,7 +7187,7 @@ const BURST_DB = {
   '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'用特技的40%對敵方全體造成3~5次傷害，此傷害無視有利狀態且必中。同時恢復我方全體HP，HP為0也可復活。'},
   '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下的所有角色（敵我雙方）×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
   // ★ v1.0.20260421.3000o — 日本關限定角色爆發
-  '巫女':      {n:'神樂舞', d:'全體友方解除所有不利狀態(含強力)，附加隨機3個強力有利狀態(不可解除)，再依特技150%恢復HP（每升1級+10%恢復量）',fd:'翩翩起舞獻納祭神樂曲，為友方全體解除所有不利狀態（包含強力狀態），並附加隨機3個強力有利狀態（不會被搶奪和解除），再依特技值的150%恢復全體友方HP（可復活）。每升1級恢復量提升10%。'},
+  '巫女':      {n:'神樂舞', d:'全體友方解除所有不利狀態(含強力)，附加隨機3個強力有利狀態(不可解除)，再依特技150%恢復HP',fd:'翩翩起舞獻納祭神樂曲，為友方全體解除所有不利狀態（包含強力狀態），並附加隨機3個強力有利狀態（不會被搶奪和解除），再依特技值的150%恢復全體友方HP（可復活）。'},
   // ── BOSS 爆發技能 ──
   '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
   '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有75%機率使每一名敵人陷入「魅惑」狀態1回合（下一回合自動普攻自己隊友）。'},
@@ -9027,7 +9028,7 @@ const HERO_LORE = {
 
 // ====== 天賦 DB ======
 const HERO_TRAIT = {
-  '劍士':    { name:'連斬', icon:'⚔️',  desc:'普攻後有機率再行動',fd:'普通攻擊時有30%機率再行動1次' },
+  '劍士':    { name:'連斬', icon:'⚔️',  desc:'普攻後有機率再行動1次',fd:'普通攻擊時有30%機率再行動1次（每升1級+4%，最多連擊1次）' },
   '祭司':    { name:'聖癒', icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
   '聖騎士':  { name:'聖盾', icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
   '火法師':  { name:'焚滅', icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
@@ -9041,7 +9042,7 @@ const HERO_TRAIT = {
   '守衛':    { name:'庇護', icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
   '吟遊詩人':  { name:'頌歌', icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
   '舞者':    { name:'魅惑', icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
-  '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
+  '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'物品卡效果+50%（每升1級+10%）',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%，每升1級再+10%。' },
   '警長':    { name:'制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
   '武鬥家':  { name:'死鬥', icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
   '軍師':    { name:'惑敵', icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
@@ -9050,7 +9051,7 @@ const HERO_TRAIT = {
   '凡人':    { name:'節省', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
   '木靈使':  { name:'淨化', icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
   '機械師':  { name:'觸電', icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
-  '動物學家':{ name:'獸盟', icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
+  '動物學家':{ name:'獸盟', icon:'🦁',  desc:'存活時友方寵物效果提升100%（每升1級+10%）',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%，每升1級再+10%。' },
   '武士':    { name:'反斬', icon:'🗾',  desc:'受傷時有機率反擊',fd:'受到傷害時有40%機率用攻擊的50%進行反擊' },
   '陰陽師':  { name:'替身', icon:'☯️',  desc:'受技能傷害時有機率由式神代替',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
   '吸血鬼':  { name:'噬血', icon:'🦇',  desc:'造成傷害時吸收為HP',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
@@ -9061,12 +9062,12 @@ const HERO_TRAIT = {
   '直笛團員':{ name:'妙音', icon:'🎵',  desc:'普攻時50%機率使目標狂亂1回合',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
   '田徑隊員':{ name:'疾走', icon:'🏃',  desc:'行動時60%使未行動友方提前到下一個',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。' },
   '幼兒園小孩':{ name:'賣萌', icon:'👶', desc:'存活時對手全體攻擊和特技降低20%（最多5回合）',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
-  '電腦繪圖師':{ name:'上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
-  '程式設計師':{ name:'加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
+  '電腦繪圖師':{ name:'上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾（每升1級+10）',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾，每升1級+10。' },
+  '程式設計師':{ name:'加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3（每升1級再+2）',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3（每升1級再+2）。' },
   '弦樂團員':  { name:'弦護', icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
   '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療（每級+5%）；成為攻擊目標機率+40%（每級+5%）',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
   // ★ v1.0.20260421.3000o — 日本關限定角色天賦
-  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方附加1個有利狀態（每升1級+1個），50%機率恢復1能量',fd:'每次自己的回合開始時為1名目前有利狀態最少的友方（並列時隨機選1名，含自己）附加1個隨機有利狀態（持續2回合）。每升1級多附加1個。並有50%機率為自己的陣營恢復1能量。' },
+  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方各附加1個有利狀態，能量恢復50%機率',fd:'每次自己的回合開始時，選擇有利狀態最少的N名友方（Lv1=1人/Lv2=2人/Lv3=3人/Lv4=4人）各附加1個隨機有利狀態（持續2回合）；Lv5起每人改為附加2個狀態。另有50%機率為陣營恢復1能量（每升1級+10%）。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -11544,11 +11545,13 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return;
   }
   if(name==='機械師'){
+    // ★ v1.0.20260421.3003 — 重構：期間我方受傷「全部累積」，每次受傷立即恢復 50% HP，2回合後平均分攤給敵方
     h._burstOverload=0; // 累積傷害
     h._burstOverloadMult = 1.0 + _burstLv * 0.10; // 升級：釋放威力+10%/級
-    addBuff(h,'immune',2); addBuff(h,'protectBuff',2);
+    addBuff(h,'protectBuff',2); // 狀態不可被消除或奪取
     h._burstOverloadActive=2; // 回合數
     bannerFX(h,'負荷超載！'+(_burstLv>0?'威力+'+(_burstLv*10)+'%！':''),'#aaaaff',1000);
+    log(`⚙️ [${h.name}] 負荷超載！我方受傷將全部累積並回血50%，2回合後釋放！`);
   }
   if(name==='吸血鬼'){
     allies.forEach(t=>{
@@ -12734,12 +12737,21 @@ function doDmg(target, rawDmg, opts={}){
     showShieldVFX(target,'immune'); showPopup(target,'免疫','miss');
     log(`[${target.name}] 免疫狀態，傷害無效！`); return 0;
   }
-  // ── 爆發：負荷超載→累積傷害，但目標仍正常受傷 ──
+  // ── 爆發：負荷超載→累積傷害，但目標仍正常受傷（v3003：擴及全隊 + 每次受傷回血50%）──
   if(a && a.side!==target.side && !opts.isRebound && !opts.noGuard){
-    const _overloader=G[target.side].find(x=>x._burstOverloadActive>0);
+    const _overloader=G[target.side].find(x=>x._burstOverloadActive>0 && x.curHp>0);
     if(_overloader){
       _overloader._burstOverload=(_overloader._burstOverload||0)+rawDmg;
       log(`⚙️ 負荷超載累積 [${_overloader.name}] +${rawDmg}（total:${_overloader._burstOverload}）`);
+      // ★ v1.0.20260421.3003 — 每次受傷後立即恢復該傷害 50% 的 HP（目標本人）
+      const _healBack = Math.max(1, Math.floor(rawDmg * 0.5));
+      // 延遲到傷害結算後再回血，避免還沒扣血就先加回去
+      setTimeout(() => {
+        if(target.curHp > 0){
+          doHeal(target, _healBack, {actor:_overloader, noDice:true, noWarhorn:true, isHeal:true});
+          log(`⚙️ 負荷超載回血 [${target.name}] +${_healBack}（受傷50%）`);
+        }
+      }, 60);
       // 不 return，讓傷害繼續往下正常執行
     }
   }
@@ -14255,9 +14267,9 @@ function execAtk(actor, target, dmg, opts={}){
   function _traitLabel(text){ showActionLabel(actor, '✦ '+text+'！'); }
   // ★ 天賦等級：英雄每10級+1（Lv10/20/30/40/50 各+1，最高5）
   const _tl = _getTraitLv(name);
-  // 劍士：30%再行動1次（★ 加計數器，最多連擊2次，防止無限鏈）
+  // 劍士：30%再行動1次（★ v1.0.20260421.3003 改為最多連擊 1 次，防止無限鏈 + 符合說明）
   actor._reActCount = actor._reActCount || 0;
-  if(name==='劍士' && Math.random()<(0.30+_tl*0.04) && actor._reActCount < 2){
+  if(name==='劍士' && Math.random()<(0.30+_tl*0.04) && actor._reActCount < 1){
     actor._reActCount++;
     log(`⚔️ [劍士] 天賦：連擊！再行動1次！（第${actor._reActCount}連擊）`);
     _traitLabel('連擊');
@@ -14860,10 +14872,11 @@ function execSkill(a, sk, cost, stype){
     setPending('any',t=>{
       log(`[${a.name}] 潛行暗殺 [${t.name}]！`);
       playSkillFX('潛行暗殺',a,[t]);
-      const base=Math.floor(spv(a)*2.0);
+      // ★ v1.0.20260421.3003 — 傷害改為 (特技+攻擊)*200%
+      const base=Math.floor((spv(a)+atkv(a))*2.0 * _activeSkLvMult);
       const roll=Math.random();
       const dmg=roll<0.6?Math.floor(base*1.5):base;
-      log(roll<0.6?`60%觸發！SP×200%+50% = ${dmg}傷！目標出血！`:`潛行暗殺 SP×200% = ${dmg}傷！`);
+      log(roll<0.6?`60%觸發！(特技+攻擊)×200%+50% = ${dmg}傷！目標出血！`:`潛行暗殺 (特技+攻擊)×200% = ${dmg}傷！`);
       doDmg(t,dmg,{isSkill:true,actor:a,piercing:true});
       if(roll<0.6 && t.curHp>0){ addStatus(t,'poison',2); t._poisonAmt=Math.max(1,Math.floor(t.hp*0.1)); log(`[${t.name}] 出血！每回合損失${t._poisonAmt}HP！`); }
       endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
@@ -16371,10 +16384,13 @@ function execSkill(a, sk, cost, stype){
 
   // ── 吸血鬼：靈魂收割 ──
   else if(n==='靈魂收割'){
-    const _reapTargets=G[a.side==='p1'?'p2':'p1'].concat(G[a.side]).filter(h=>h.curHp>0&&h.curHp<10);
-    if(!_reapTargets.length){ log(`[${a.name}] 靈魂收割：無符合目標（HP<10）！`); clearSel(); return; }
+    // ★ v1.0.20260421.3004 — HP 未滿 10% + 每升1級 +1%（最高 Lv9 = 19%）
+    const _reapPct = 0.10 + (_activeSkLv||0)*0.01;
+    const _reapCheck = h => h.curHp>0 && (h.curHp/(h.hp||1)) < _reapPct;
+    const _reapTargets=G[a.side==='p1'?'p2':'p1'].concat(G[a.side]).filter(_reapCheck);
+    if(!_reapTargets.length){ log(`[${a.name}] 靈魂收割：無符合目標（HP%<${Math.round(_reapPct*100)}%）！`); clearSel(); return; }
     setPending('any',t=>{
-      if(t.curHp<=0||t.curHp>=10){ log('目標不符合（需HP未滿10）！'); clearSel(); return; }
+      if(!_reapCheck(t)){ log(`目標不符合（需HP未滿${Math.round(_reapPct*100)}%）！`); clearSel(); return; }
       log(`[${a.name}] 靈魂收割！[${t.name}] 強制倒下！`);
       playSkillFX('死亡宣告',a,[t]);
       const stolen=t.curHp;
@@ -16463,19 +16479,26 @@ function execSkill(a, sk, cost, stype){
 
   // ====== 常駐被動（選到即永遠自動觸發，不需手動啟動）======
   else if(n==='召喚蝙蝠群'){
-    log(`[${a.name}] 召喚蝙蝠群！5次固定傷害！`);
+    // ★ v1.0.20260421.3004 — 次數：基礎 5 次，升到 4/7/10 級各 +1
+    let _batHits = 5;
+    if(_activeSkLv>=4) _batHits++;
+    if(_activeSkLv>=7) _batHits++;
+    if(_activeSkLv>=10) _batHits++;
+    log(`[${a.name}] 召喚蝙蝠群！${_batHits}次固定傷害！`);
     const batFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     if(!batFoes.length){ endAction(a,cost); return; }
     playSkillFX('召喚蝙蝠群',a,batFoes);
+    // ★ v1.0.20260421.3004 — 每次傷害 = 特技值 × 50%
+    const _batDmg = Math.max(1, Math.round(spv(a)*0.5));
     let _bi=0;
     const _doBat=()=>{
-      if(_bi>=5){ endAction(a,cost); return; }
+      if(_bi>=_batHits){ endAction(a,cost); return; }
       const aliveFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
       if(aliveFoes.length){
         const bt=aliveFoes[Math.floor(Math.random()*aliveFoes.length)];
-        // Fixed 6 dmg: bypass evasion, buffs, shields, elem mod
-        bt.curHp=Math.max(0,bt.curHp-6);
-showPopup(bt,6,'dmg'); sndAtk(); shake(bt);
+        // 固定傷害：繞過迴避、有利狀態、護盾、屬性
+        bt.curHp=Math.max(0,bt.curHp-_batDmg);
+showPopup(bt,_batDmg,'dmg'); sndAtk(); shake(bt);
 // 吸血鬼天賦：召喚蝙蝠群每次命中也觸發嗜血
 if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   const vamp=3;
@@ -17245,10 +17268,11 @@ function applyItemOnTarget(it,a,t,extraOpts){
       log(`💻 [程式設計師] 修改代碼！對 [${_codeTarget.name}] 造成 ${_codeDmg} 傷害！`);
     }
   }
-  // 煉金術師天賦：以 G.activeChar 或傳入的 a 判斷，效果+50%
+  // 煉金術師天賦：以 G.activeChar 或傳入的 a 判斷，效果+50%（每升1級再+10%）
   const _user = (a && a.name) ? a : (G && G.activeChar ? G.activeChar : null);
-  const _alchBoost = (_user && _user.name==='煉金術師' && !hasStatus(_user,'confused')) ? 1.5 : 1.0;
-  if(_alchBoost>1) log(`⚗️ [煉金術師] 天賦觸發！物品效果+50%！`);
+  const _alchTraitLv = (_user && _user.name==='煉金術師') ? _getTraitLv('煉金術師') : 0;
+  const _alchBoost = (_user && _user.name==='煉金術師' && !hasStatus(_user,'confused')) ? (1.5 + _alchTraitLv*0.10) : 1.0;
+  if(_alchBoost>1) log(`⚗️ [煉金術師] 天賦觸發！物品效果+${Math.round((_alchBoost-1)*100)}%！`);
 
   if(it.type==='atk'){
     if(it.n==='煉金術炸彈'){
@@ -17661,21 +17685,26 @@ function startTurn(){
     if(_inu && _inu._kinderRounds<5) _inu._kinderRounds=(_inu._kinderRounds||0)+1;
   });
 
-  // ── 程式設計師天賦：存活時友方全體攻擊和特技+3 ──
+  // ── 程式設計師天賦：存活時友方全體攻擊和特技+3（每升1級再+2） ──
   ['p1','p2'].forEach(side=>{
     const _prog=G[side].find(h=>h.curHp>0&&h.name==='程式設計師'&&!hasStatus(h,'confused'));
+    // ★ v1.0.20260421.3003 — 天賦等級加成
+    const _progTl = _prog ? _getTraitLv('程式設計師') : 0;
+    const _progBonus = 3 + _progTl*2; // Lv0=3, Lv9=21
     G[side].forEach(h=>{
       if(h.curHp>0){
         if(_prog && h!==_prog._processed){
-          if(!h._progBuff){
+          if(!h._progBuff || h._progBuffAmt !== _progBonus){
+            // 先撤回舊的（若有），再重新套用新量
+            if(h._progBuff && h._progOrigAtk!==undefined){ h.atk=h._progOrigAtk; h.sp=h._progOrigSp; }
             h._progOrigAtk=h.atk; h._progOrigSp=h.sp;
-            h.atk+=3; h.sp+=3;
-            h._progBuff=true;
+            h.atk+=_progBonus; h.sp+=_progBonus;
+            h._progBuff=true; h._progBuffAmt=_progBonus;
           }
         } else if(!_prog && h._progBuff){
           if(h._progOrigAtk!==undefined) h.atk=h._progOrigAtk;
           if(h._progOrigSp!==undefined)  h.sp=h._progOrigSp;
-          h._progBuff=false;
+          h._progBuff=false; h._progBuffAmt=0;
         }
       }
     });
@@ -17715,34 +17744,41 @@ function startTurn(){
     log(`🌟 [占星師] 天賦：星命眷顧！補充1能量！`);
   }
   // ★ v1.0.20260421.3000o — 巫女天賦「祝禱」
-  //   v1.0.20260421.3000p — 改為：有利狀態最少的友方優先；升級每級 +1 個附加有利狀態
+  //   v1.0.20260421.3003 — Lv1=1人1狀態 / Lv2=2人1狀態 / Lv3=3人1狀態 / Lv4=4人1狀態 / Lv5+=4人各2狀態
   if(next.name==='巫女' && next.curHp>0 && !hasStatus(next,'confused')){
+    const _miTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('巫女') || 0) : 0;
     const _miAllies = G[next.side].filter(h=>h.curHp>0);
     if(_miAllies.length){
-      // 取有利狀態最少的友方（並列時隨機 1 名）
-      const _miSorted = [..._miAllies].sort((a,b) => (a.buffs||[]).length - (b.buffs||[]).length);
-      const _minBuffCnt = (_miSorted[0].buffs||[]).length;
-      const _miCandidates = _miSorted.filter(h => (h.buffs||[]).length === _minBuffCnt);
-      const _miTgt = _miCandidates[Math.floor(Math.random()*_miCandidates.length)];
-      // 升級：每升1級 +1 個附加有利狀態（天賦等級 0~9）
-      const _miTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('巫女') || 0) : 0;
-      const _miBuffAddCount = 1 + _miTraitLv;
+      // 決定選幾位友方 & 每人幾個狀態
+      const _miTargetCount = Math.min(4, Math.max(1, _miTraitLv || 1)); // Lv0=1, Lv1=1..Lv4+=4
+      const _miBuffsPer = _miTraitLv >= 5 ? 2 : 1;
+      // 依「有利狀態最少」排序，並列時隨機
+      const _miSorted = [..._miAllies].sort((a,b) => {
+        const da = (a.buffs||[]).length - (b.buffs||[]).length;
+        if(da !== 0) return da;
+        return Math.random() - 0.5;
+      });
+      const _miTgts = _miSorted.slice(0, Math.min(_miTargetCount, _miSorted.length));
       const _miGood = ['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune'];
-      const _miPool = [..._miGood];
-      const _miGiven = [];
-      for(let i=0; i<_miBuffAddCount && _miPool.length; i++){
-        const _idx = Math.floor(Math.random()*_miPool.length);
-        const _pick = _miPool.splice(_idx,1)[0];
-        addBuff(_miTgt,_pick,2);
-        _miGiven.push(buffName(_pick));
-      }
-      bannerFX(_miTgt,'⛩ 祝禱！×'+_miGiven.length,'#ffee88',900);
-      log(`⛩ [巫女] 天賦：祝禱！[${_miTgt.name}]（狀態最少）獲得 ${_miGiven.join('、')}！`);
+      _miTgts.forEach(_miTgt => {
+        const _miPool = [..._miGood];
+        const _miGiven = [];
+        for(let i=0; i<_miBuffsPer && _miPool.length; i++){
+          const _idx = Math.floor(Math.random()*_miPool.length);
+          const _pick = _miPool.splice(_idx,1)[0];
+          addBuff(_miTgt,_pick,2);
+          _miGiven.push(buffName(_pick));
+        }
+        bannerFX(_miTgt,'⛩ 祝禱！×'+_miGiven.length,'#ffee88',900);
+        log(`⛩ [巫女] 天賦：祝禱！[${_miTgt.name}]（狀態最少）獲得 ${_miGiven.join('、')}！`);
+      });
     }
-    if(Math.random() < 0.50){
+    // ★ v1.0.20260421.3003 — 能量恢復機率 50% + 每升1級 +10%（Lv9 = 140%→必中）
+    const _miEnergyChance = Math.min(1, 0.50 + (_miTraitLv||0)*0.10);
+    if(Math.random() < _miEnergyChance){
       G.energy[next.side] = Math.min(10, G.energy[next.side] + 1);
       showPopup(next,'+1E','energy');
-      log(`⛩ [巫女] 祝禱：恢復1能量！`);
+      log(`⛩ [巫女] 祝禱：恢復1能量！（機率${Math.round(_miEnergyChance*100)}%）`);
     }
   }
 
@@ -17773,17 +17809,20 @@ function startTurn(){
   G.passiveInterruptUsed=false;
   G.activeChar=next;
 
-  // ── 電腦繪圖師天賦：輪到自己時，HP最低的友方獲得20護盾 ──
+  // ── 電腦繪圖師天賦：輪到自己時，HP最低的友方獲得護盾（每升1級+10） ──
   if(next && next.name==='電腦繪圖師' && !hasStatus(next,'confused')){
     const _allies=G[next.side].filter(h=>h.curHp>0);
     if(_allies.length){
       const _lowest=_allies.sort((a,b)=>(a.curHp/a.hp)-(b.curHp/b.hp))[0];
       _lowest.buffs=_lowest.buffs.filter(b=>b.type!=='bigshield');
-      const _bsBuff={type:'bigshield',dur:1,_hp:20};
+      // ★ v1.0.20260421.3003 — 每升1級 +10 護盾值
+      const _gdTraitLv = _getTraitLv('電腦繪圖師');
+      const _gdShield = 20 + _gdTraitLv * 10;
+      const _bsBuff={type:'bigshield',dur:1,_hp:_gdShield};
       _lowest.buffs.push(_bsBuff);
       showPopup(_lowest,'🎨護盾','energy');
       bannerFX(_lowest,'繪圖師護盾！','#ff88cc',800);
-      log(`🎨 [電腦繪圖師] 天賦：為 [${_lowest.name}] 附加20護盾！`);
+      log(`🎨 [電腦繪圖師] 天賦：為 [${_lowest.name}] 附加${_gdShield}護盾！`);
       renderCard(_lowest);
     }
   }
@@ -18599,8 +18638,8 @@ function _realAiAct(a){
   const canS2 = G.energy[a.side]>=s2cost && !canSeal && !(a.s2.once&&a.s2used) && !a.s2.p;
   const canAnySkill = canS1||canS2;
 
-  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧'];
-  const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護'];
+  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧','神籤','水盤守護','狐火護佑'];
+  const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護','冰晶凝聚','樹葉守護','死氣結界','羽刃陣列'];
   const isHealer = HEAL_SKILLS.includes(a.s1.n)||HEAL_SKILLS.includes(a.s2.n);
   const isTank   = TANK_SKILLS.includes(a.s1.n)||TANK_SKILLS.includes(a.s2.n)||a.name==='守衛'||a.name==='武鬥家'||a.name==='大力士'||a.name==='小力';
 
@@ -18651,12 +18690,12 @@ function _realAiAct(a){
     if(n==='迅雷連斬') return a.atk*2;
     if(['火焰球','冰凍之矛','麻痺落雷','瞄準射擊'].includes(n)) return Math.floor(a.sp)+10;
     if(n==='降龍伏虎拳') return Math.floor(a.atk*2.0);
-    if(n==='潛行暗殺') return Math.floor(a.sp*2.0);
+    if(n==='潛行暗殺') return Math.floor((a.sp+a.atk)*2.0);
     if(n==='日月同輝') return Math.floor(a.sp*0.4)*foes.length;
     if(n==='暴風雪') return Math.floor(a.sp*0.7)*foes.length;
     if(n==='連鎖閃電') return Math.floor(a.sp*0.5)*4;
     if(n==='炫目神光') return Math.floor(a.sp*0.9)*2;
-    if(n==='召喚蝙蝠群') return 30;
+    if(n==='召喚蝙蝠群') return Math.floor(a.sp*0.5)*5;
     if(n==='亂槍射擊') return a.atk*4;
     if(n==='泰山壓頂') return a.atk+10;
     if(n==='死亡宣告') return 9999;
@@ -18675,7 +18714,20 @@ function _realAiAct(a){
     if(n==='朱雀召喚'||n==='青龍召喚') return a.sp*1.2;
     if(n==='命運塔羅牌'||n==='兵貫神速之計'||n==='識破全局') return 40;
     if(n==='物品查封') return 50; // 干擾技有高價值
-    if(n==='靈魂收割') return enemies.filter(e=>e.curHp<10).length>0 ? 9999 : -1;
+    if(n==='靈魂收割'){
+      // ★ v1.0.20260421.3004 — HP 未滿 10%（每升1級+1%）
+      const _reapLv = (a && a._skLv) ? ((a.s1 && a.s1.n==='靈魂收割') ? a._skLv.s1 : a._skLv.s2) || 0 : 0;
+      const _reapPct2 = 0.10 + _reapLv*0.01;
+      return enemies.filter(e=>e.curHp>0 && (e.curHp/(e.hp||1)) < _reapPct2).length>0 ? 9999 : -1;
+    }
+    // ★ v1.0.20260421.3004p — 日本關菁英/小怪/巫女傷害型技能評分
+    if(n==='破魔矢') return Math.floor(a.sp*2.0);
+    if(n==='陰森長髮鞭') return Math.floor(a.sp*0.7)*2*foes.length;
+    if(n==='幽寒吐息') return Math.floor(a.sp)*foes.length;
+    if(n==='暴走衝撞') return Math.floor(a.atk*1.75);
+    if(n==='暗羽突襲') return Math.floor(a.atk*2.0);
+    if(n==='斷腕狂拳') return Math.floor(a.atk*1.8);
+    if(n==='熊力撞擊') return Math.floor(a.atk*2.0);
     // ★ 怪物技能 & 被動技能：設定預估值或標記為不列入攻擊選擇
     if(n==='花瓣飛刀') return Math.floor((a.sp||0)*(1+(a.sp||0)*0.01)) * enemies.length * 0.9;
     if(n==='花粉迷眼') return 20; // 失明控制
@@ -18692,7 +18744,9 @@ function _realAiAct(a){
     if(['盜取','急速閃躲','物品查封','識破全局','兵貫神速之計','命運塔羅牌',
         '轉禍為福','道具複製','邏輯優化','色彩噴濺','動物守護','接力傳遞',
         '起跑衝刺','午睡時間','餘音繞樑','動物守護','崛起鬥志','迴避反擊',
-        '箱底抹油','獻祭的餘暉','模仿','修改代碼','鑑往知來','愛護校犬','舔舔治療'].includes(n)) return -1;
+        '箱底抹油','獻祭的餘暉','模仿','修改代碼','鑑往知來','愛護校犬','舔舔治療',
+        '潑水惡作劇','雙嘴詛咒','瞪目威嚇','落葉迷霧','鬼王怒吼','酒宴狂歡',
+        '石化凝視','狐惑封言'].includes(n)) return -1;
     return a.sp;
   }
 
@@ -19270,12 +19324,35 @@ function aiUseSkill(a,sk,cost,pref){
       }
     }
   }
-  // ★ 召喚蝙蝠群 / 靈魂收割：處決 HP 低於 10 的對手
-  else if(n==='召喚蝙蝠群' || n==='靈魂收割'){
-    enemies.filter(h=>h.curHp>0 && h.curHp<=10).forEach(h=>{
-      doDmg(h, h.curHp, {actor:a, isSkill:true, piercing:true});
-      log('['+a.name+'] '+n+' 處決 ['+h.name+']！');
-    });
+  // ★ v1.0.20260421.3004 — 靈魂收割：HP 未滿 10%+Lv*1% 時處決
+  else if(n==='靈魂收割'){
+    const _lvSr = (a && a._skLv) ? ((a.s1 && a.s1.n==='靈魂收割') ? a._skLv.s1 : a._skLv.s2) || 0 : 0;
+    const _pctSr = 0.10 + _lvSr*0.01;
+    const _tgtSr = enemies.filter(h=>h.curHp>0 && (h.curHp/(h.hp||1)) < _pctSr)[0];
+    if(_tgtSr){
+      const stolen = _tgtSr.curHp;
+      doDmg(_tgtSr, _tgtSr.curHp, {actor:a, isSkill:true, piercing:true});
+      doHeal(a, stolen, {actor:a, noDice:true, isHeal:true});
+      log('['+a.name+'] 靈魂收割處決 ['+_tgtSr.name+']！');
+    }
+  }
+  // ★ v1.0.20260421.3004 — 召喚蝙蝠群：AI 分支（隨機 5+（Lv>=4)*1+（Lv>=7)*1+（Lv>=10)*1 次，每次特技50%固定傷害）
+  else if(n==='召喚蝙蝠群'){
+    const _lvBat = (a && a._skLv) ? ((a.s1 && a.s1.n==='召喚蝙蝠群') ? a._skLv.s1 : a._skLv.s2) || 0 : 0;
+    let _batCnt = 5;
+    if(_lvBat>=4) _batCnt++;
+    if(_lvBat>=7) _batCnt++;
+    if(_lvBat>=10) _batCnt++;
+    const _batDmg = Math.max(1, Math.round(spv(a)*0.5));
+    for(let i=0; i<_batCnt; i++){
+      const aliveFoes = enemies.filter(h=>h.curHp>0);
+      if(!aliveFoes.length) break;
+      const bt = aliveFoes[Math.floor(Math.random()*aliveFoes.length)];
+      bt.curHp = Math.max(0, bt.curHp - _batDmg);
+      if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
+        doHeal(a, 3, {actor:a, noDice:true, noWarhorn:true, isHeal:true});
+      }
+    }
   }
   // ★ 朱雀召喚 / 青龍召喚：全體傷害 + 治療減半 2 回合
   else if(n==='朱雀召喚' || n==='青龍召喚'){
@@ -19954,7 +20031,10 @@ function getEquip(h){
 function getCraftsmanBonus(side){
   if(!G||!G[side]) return 1;
   const craftsman=G[side].find(h=>h.curHp>0&&h.name==='動物學家'&&!hasStatus(h,'confused'));
-  return craftsman ? 2 : 1;
+  if(!craftsman) return 1;
+  // ★ v1.0.20260421.3003 — 基礎 2 倍，每升1級再+0.1（Lv0=2.0, Lv9=2.9）
+  const _tl = (typeof _getTraitLv === 'function') ? _getTraitLv('動物學家') : 0;
+  return 2 + _tl * 0.1;
 }
 
 // ====== DISCARD UI ======
@@ -33794,7 +33874,7 @@ const SKILL_UPGRADE_DEF = {
   '暴風雪':   { cat:'dmg',    label:'技能傷害' },
   '連鎖閃電': { cat:'dmg',    label:'技能傷害' },
   '炫目神光': { cat:'dmg',    label:'技能傷害' },
-  '召喚蝙蝠群':{ cat:'dmg',   label:'技能傷害' },
+  '召喚蝙蝠群':{ cat:'special_bat_hits', label:'攻擊次數' },
   '亂槍射擊': { cat:'dmg',    label:'技能傷害' },
   '花瓣飛刀': { cat:'dmg',    label:'技能傷害' },
   '渾身一擊': { cat:'dmg',    label:'技能傷害' },
@@ -33856,7 +33936,7 @@ const SKILL_UPGRADE_DEF = {
   '轉禍為福': { cat:'special_misfortune', label:'受傷恢復能量次數' },
   '道具複製': { cat:'pct_buff', base:70, perLv:1, step:2, label:'物品保留機率(%)' },
   // ── 靈魂收割：每1級+1HP門檻 ──
-  '靈魂收割': { cat:'threshold', base:10, perLv:1, step:1, label:'處決HP門檻' },
+  '靈魂收割': { cat:'threshold_pct', base:10, perLv:1, step:1, label:'處決HP%門檻' },
   // ── 武士崛起鬥志：每升2級 +1 能力上升值 ──
   '崛起鬥志': { cat:'special_rising', label:'復活時全屬性提升值' },
   // ★ 死亡宣告：不可升級（固定效果）
@@ -33898,6 +33978,19 @@ function _getSkUpgradeBadge(skillName, skLv){
   if(cat==='threshold'){
     const t = (def.base||10)+Math.floor(skLv/(def.perLv||2))*(def.step||5);
     return def.label + ' ' + t + 'HP以下';
+  }
+  if(cat==='threshold_pct'){
+    // ★ v1.0.20260421.3004 — 靈魂收割：每升1級+1%
+    const pct = (def.base||10) + skLv * (def.step||1);
+    return def.label + ' HP<' + pct + '%';
+  }
+  if(cat==='special_bat_hits'){
+    // ★ v1.0.20260421.3004 — 召喚蝙蝠群：基礎5次，Lv4/7/10 各+1
+    let hits = 5;
+    if(skLv>=4) hits++;
+    if(skLv>=7) hits++;
+    if(skLv>=10) hits++;
+    return def.label + ' ' + hits + ' 次';
   }
   if(cat==='special_divine'){
     if(skLv>=9) return '能量-1，目標免疫1次倒下';
@@ -34005,6 +34098,15 @@ function buildSkillLvTable(skillName, currentLv) {
     } else if(cat==='threshold'){
       const t = (def.base||10)+Math.floor(lv/(def.perLv||2))*(def.step||5);
       effectText = def.label+' '+t+'HP以下';
+    } else if(cat==='threshold_pct'){
+      const pct = (def.base||10) + lv * (def.step||1);
+      effectText = def.label+' HP<'+pct+'%';
+    } else if(cat==='special_bat_hits'){
+      let hits = 5;
+      if(lv>=4) hits++;
+      if(lv>=7) hits++;
+      if(lv>=10) hits++;
+      effectText = def.label+' '+hits+' 次';
     } else if(cat==='special_divine'){
       if(lv===0) effectText = '基礎效果（HP上限+20%並完全治癒）';
       else if(lv<5) effectText = '基礎效果';
@@ -39232,6 +39334,57 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3005', brief:[
+    'AI 新技能評分補完 + 技能說明升級文字清除',
+  ], items:[
+    '【AI 新技能評分補完】',
+    '  潛行暗殺 AI 估傷：特技×2.0 → (特技+攻擊)×2.0（同步新邏輯）',
+    '  召喚蝙蝠群 AI 估傷：寫死 30 → 特技×0.5×5 次（同步新邏輯）',
+    '  HEAL_SKILLS 增加：神籤、水盤守護、狐火護佑',
+    '  TANK_SKILLS 增加：冰晶凝聚、樹葉守護、死氣結界、羽刃陣列',
+    '  AI 排除攻擊清單增加 8 個控制/賦益技：潑水惡作劇/雙嘴詛咒/瞪目威嚇/落葉迷霧/鬼王怒吼/酒宴狂歡/石化凝視/狐惑封言',
+    '  新增 7 個傷害技評分：破魔矢/陰森長髮鞭/幽寒吐息/暴走衝撞/暗羽突襲/斷腕狂拳/熊力撞擊',
+    '【技能說明升級文字清除】',
+    '  吸血鬼 S1 靈魂收割：移除「每升1級+1%」文字',
+    '  吸血鬼 S2 召喚蝙蝠群：移除「升至4/7/10級+1次」文字',
+    '  巫女 S1 神籤：移除「每升1級+5%」文字',
+    '  巫女 S2 破魔矢：移除「每升1級+5%」文字',
+    '  巫女爆發「神樂舞」：移除「每升1級+10%」文字',
+    '  巫女爆發補入 BURST_UPGRADE_DEF（讓升級效果能在爆發詳細頁顯示）',
+    '  升級效果改由升級視窗的 Lv 對照表顯示',
+  ]},
+  { ver:'v1.0.20260421.3004', brief:[
+    '靈魂收割、召喚蝙蝠群再次修正',
+  ], items:[
+    '【靈魂收割修正】',
+    '  處決門檻從「HP<10」固定值 → 改為「HP%<10%」（每升1級+1%，Lv9=19%）',
+    '  說明：使剩餘HP未滿10%的1名任意對手強制倒下（無視有利狀態或裝備效果），並恢復施展者此HP量',
+    '  升級表顯示：Lv1=HP<11%、Lv5=HP<15%、Lv9=HP<19%',
+    '【召喚蝙蝠群修正】',
+    '  能量消耗：3 → 4',
+    '  傷害：特技值 → 特技×50%（固定傷害不變、仍無視屬性狀態、必中）',
+    '  攻擊次數升級：基礎5次，Lv4/Lv7/Lv10 各+1次（最多8次）',
+    '  升級表顯示：Lv0-3=5次、Lv4-6=6次、Lv7-9=7次、Lv10=8次',
+  ]},
+  { ver:'v1.0.20260421.3003', brief:[
+    '6 天賦升級效果修正 + 2 技能修正 + 機械師爆發重構',
+  ], items:[
+    '【天賦升級效果修正】',
+    '  電腦繪圖師：護盾 20 → 每升1級+10（Lv9=110）',
+    '  煉金術師：物品效果+50% → 每升1級+10%（Lv9=+140%）',
+    '  劍士：再行動上限 2次 → 改為只能1次',
+    '  程式設計師：友方攻擊/特技+3 → 每升1級+2（Lv9=21）',
+    '  動物學家：寵物效果×2 → 每升1級+10%（Lv9=2.9倍）',
+    '  巫女（新邏輯 a 版）：Lv1=1人、Lv2=2人、Lv3=3人、Lv4=4人（各1個狀態）；Lv5+=4人各2個狀態；能量恢復機率 50%+Lv×10%',
+    '【技能修正】',
+    '  召喚蝙蝠群：固定 6 傷害 → 依特技值造成固定傷害（不受屬性/狀態影響、必中）',
+    '  潛行暗殺：傷害從特技×200% → (特技+攻擊)×200%',
+    '【機械師爆發「負荷超載」重構】',
+    '  移除原本附加的「無敵」狀態（改為正常受傷）',
+    '  每次受傷立即恢復該傷害 50% 的 HP（補血機制）',
+    '  2回合後累積傷害平均分給敵方全體（不變）',
+    '  保留「狀態保護」防止狀態被消除或奪取',
+  ]},
   { ver:'v1.0.20260421.3002', brief:[
     '商店新增 13 位英雄新肖像 + 商品版面改為 4 欄網格',
   ], items:[
@@ -41276,7 +41429,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3002';
+  const CURRENT_VERSION = 'v1.0.20260421.3005';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41293,7 +41446,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3002';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3005';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
