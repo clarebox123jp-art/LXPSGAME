@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000q</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000r</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6544,7 +6544,7 @@ const HERO_DB = {
   '占星師':{hp:62,atk:5,sp:13,spd:10,  s1:{n:'命運塔羅牌',c:2,d:'抽取物品卡並使用或賣出',fd:'抽取1張物品卡立即使用或賣出'},s2:{n:'轉禍為福',c:1,d:'全隊受傷時各獲得2能量（1回合）',fd:'使友方全體1回合內受到傷害時立即獲得2能量，每個角色只能獲得1次'}},
   '大力士':{hp:71,atk:15,sp:1,spd:3,   s1:{n:'泰山壓頂',c:3,d:'普攻後昏迷目標',fd:'普通攻擊1次後讓目標不能動1回合'},s2:{n:'不動如山',c:1,d:'(被動)免疫1次不利狀態，可再行動',fd:'(被動)受到不利狀態時觸發，可免疫此次不利狀態。(可以再行動1次)',p:true}},
   '凡人':  {hp:60,atk:10,sp:10,spd:10, s1:{n:'以牙還牙',c:2,d:'(被動)受傷或受控時複製給1名對手',fd:'(被動)受到傷害或不利狀態時觸發，消耗能量後使1名對手承受等量的傷害或相同的不利狀態。',p:true},s2:{n:'模仿',c:3,d:'模仿任意角色1個技能',fd:'模仿場上任意角色的1項技能並以自己的能力來發動效果'}},
-  '木靈使':{hp:63,atk:7,sp:13,spd:7, s1:{n:'神之賜福',c:5,d:'使1名友方HP上限+10並完全治癒',fd:'使1名友方HP最大值提高10並全滿恢復，此HP提升狀態不可疊加，倒下後狀態消失。'},s2:{n:'獻祭的餘暉',c:2,p:true,d:'(被動)倒下時反彈傷害並分享剩餘HP給隊友',fd:'(被動)倒下時觸發，使對手受到同樣傷害，並分享自己最後一次剩餘的HP給1名隊友。'}},
+  '木靈使':{hp:63,atk:7,sp:13,spd:7, s1:{n:'神之賜福',c:5,d:'使1名友方HP上限+20%並完全治癒',fd:'使1名友方HP最大值提高20%並全滿恢復，此HP提升狀態不可疊加，倒下後狀態消失。'},s2:{n:'獻祭的餘暉',c:2,p:true,d:'(被動)倒下時反彈傷害並分享最大HP50%給HP最少隊友（可復活）',fd:'(被動)倒下時觸發，使對手受到同樣傷害，並分享自己最大HP的50%給HP最少的隊友（可復活）。'}},
   '機械師':{hp:74,atk:14,sp:0,spd:2, s1:{n:'定時炸彈',c:4,d:'目標下回合爆炸-30HP，波及鄰近',fd:'使1名對手在下1回合行動前爆炸-30HP，此傷害的50%波及其身旁角色。'},s2:{n:'亂槍射擊',c:4,d:'隨機攻擊3～5次',fd:'隨機發射子彈，用攻擊值造成3~5次傷害攻擊隨機對手目標。'}},
   '動物學家':{hp:61,atk:7,sp:10,spd:12, s1:{n:'動物召喚',c:2,d:'用特技攻擊HP最低的敵方1~2次並召喚1隻寵物',fd:'用特技對HP最低的敵方造成1~2次傷害，同時召喚出1隻寵物讓友方攜帶。'},s2:{n:'動物守護',c:3,d:'2回合內友方全體的卡片、寵物和能量受到保護，每隻寵物為動物學家減傷10%',fd:'2回合內友方全體的卡片、寵物和能量受到保護，不會被禁用、交換、奪取或破壞。且隊伍每存在1隻寵物可為動物學家減傷10%（最多40%）。'}},
   '武士':  {hp:60,atk:14,sp:10,spd:6, s1:{n:'迴避反擊',c:4,p:true,d:'(被動)被攻擊時100%閃躲並反擊150%攻擊傷害',fd:'(被動)被攻擊時觸發，有100%機率閃躲，再給對手攻擊150%的傷害。'},s2:{n:'崛起鬥志',c:4,p:true,d:'(被動)復活時各項能力+5（限用一次）',fd:'(被動)被復活時觸發，提升自己基本HP、攻擊、特技、速度各5點。只能發動一次。'}},
@@ -6562,7 +6562,7 @@ const HERO_DB = {
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:5,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:5,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'},_traitDesc:'【天賦】成為攻擊目標機率+40%；受傷時20%機率將傷害轉為治療HP'},
   // ★ v1.0.20260421.3000o — 日本關限定角色（打贏八岐大蛇後 5% 機率觸發劇情解救加入）
-  '巫女':    {hp:56,atk:8,sp:16,spd:10, s1:{n:'神籤',c:4,d:'為全體友方附加隨機2個有利狀態，並依特技恢復HP（每升1級+5%恢復量）',fd:'搖動祭鈴抽取神籤，為全體友方附加隨機2個有利狀態（持續2回合），並依特技值恢復HP。每升1級恢復量提升5%。'},s2:{n:'破魔矢',c:4,d:'特技200%傷害1名對手（日本妖怪+100%），附加易傷1回合（受傷+100%）（每升1級+5%傷害）',fd:'射出破魔神矢貫穿妖氣，用特技值的200%對1名對手造成光屬性傷害；目標若為日本妖怪則傷害提升100%。命中後為目標附加「強力易傷」狀態1回合（受到的傷害提升100%）。每升1級傷害提升5%。'}},
+  '巫女':    {hp:56,atk:8,sp:16,spd:10, s1:{n:'神籤',c:4,d:'為HP比例最少的2名友方附加隨機2個有利狀態，並依特技恢復HP（每升1級+5%恢復量）',fd:'搖動祭鈴抽取神籤，為HP比例最少的2名友方各附加隨機2個有利狀態（持續2回合），並依特技值恢復HP。每升1級恢復量提升5%。'},s2:{n:'破魔矢',c:4,d:'特技200%傷害1名對手（日本妖怪+100%），附加易傷1回合（受傷+100%）（每升1級+5%傷害）',fd:'射出破魔神矢貫穿妖氣，用特技值的200%對1名對手造成光屬性傷害；目標若為日本妖怪則傷害提升100%。命中後為目標附加「強力易傷」狀態1回合（受到的傷害提升100%）。每升1級傷害提升5%。'}},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -6800,7 +6800,7 @@ const BUFF_DESCS = {
   alchemist:     '道具複製：使用物品有70%不消耗',
   guard:         '守護：代替友方承受傷害',
   ctrlImmune:    '控制免疫：本回合控制效果無效',
-  divineBlessing:'神之賜福：HP上限提升15',
+  divineBlessing:'神之賜福：HP上限提升20%',
   hpRegen:       '持續恢復：每回合恢復12HP',
   mercyRain:     '慈悲之雨：受傷後恢復50%失去的HP',
   bigshield:     '護盾：累積吸收最多20點傷害後消失',
@@ -13037,7 +13037,8 @@ function doDmg(target, rawDmg, opts={}){
     target.buffs=[];
     if(hasBuff(target,'divineBlessing')){
       if(target._baseHp){ target.hp=target._baseHp; delete target._baseHp; }
-      else target.hp=Math.max(1,target.hp-15);
+      // 找不到 _baseHp 記錄時的 fallback：假設 +20% 反推原本 HP
+      else target.hp=Math.max(1, Math.round(target.hp / 1.20));
       log(`[${target.name}] 神之賜福消失，HP上限復原至 ${target.hp}。`);
     }
     playSfx('sfx-ko',0.85);
@@ -13377,7 +13378,8 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     }
   }
 
-  // ── 獻祭的餘暉（被動）: on death → deal same to enemy, share last HP ──
+  // ── 獻祭的餘暉（被動）: on death → deal same to enemy, share max HP 50% ──
+  //   v1.0.20260421.3000r — 改為分享「自己最大HP的50%」給HP最少的隊友（可復活）
   if(target.curHp===0 && old>0){
     if(target.s1.n==='獻祭的餘暉'||target.s2.n==='獻祭的餘暉'){
       const atk_side2=a?a.side:null;
@@ -13389,12 +13391,19 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
           log(`[${target.name}] 獻祭的餘暉！對 [${st.name}] 造成 ${dmg} 傷害！`);
           doDmg(st,dmg,{actor:target,noGuard:true,ignoreBuffs:true});
         }
-        // 分享受傷前的HP（即 old）給HP最少的存活隊友
-        const fr3=G[target.side].filter(h=>h.curHp>0);
-        if(fr3.length){
-          const shTgt=fr3.sort((x,y)=>x.curHp-y.curHp)[0];
-          doHeal(shTgt,old,{actor:target,noDice:true,isHeal:true});
-          log(`[${target.name}] 遺留 ${old}HP 給 [${shTgt.name}]！`);
+        // 分享「最大 HP 的 50%」給 HP 最少的隊友（可復活）
+        // 使用 _baseHp（若被神之賜福加過就用原生 HP），否則用當前 hp
+        const _shareMaxHp = target._baseHp || target.hp;
+        const _shareAmt = Math.max(1, Math.round(_shareMaxHp * 0.50));
+        // 候選：全體「HP 最少」（可含倒下），優先復活倒下的隊友
+        const _pool = G[target.side].filter(h=>h!==target);
+        if(_pool.length){
+          const shTgt = _pool.sort((x,y)=>x.curHp - y.curHp)[0];
+          if(shTgt.curHp===0){
+            try{ doRevive(shTgt, 0); }catch(_){}
+          }
+          doHeal(shTgt,_shareAmt,{actor:target,noDice:true,isHeal:true});
+          log(`[${target.name}] 遺留 ${_shareAmt}HP（最大HP 50%）給 [${shTgt.name}]！`);
         }
         bannerFX(target,'獻祭的餘暉','#ffaa55',1000); sndDeathMark();
       }
@@ -15074,14 +15083,17 @@ function execSkill(a, sk, cost, stype){
       endAction(a,cost);
     });
   }
-  // ★ v1.0.20260421.3000o — 巫女 S1 神籤：全體友方附加隨機2個有利狀態，依特技恢復HP
+  // ★ v1.0.20260421.3000o — 巫女 S1 神籤：HP比例最少的2名友方附加隨機2個有利狀態，依特技恢復HP
+  //   v1.0.20260421.3000r — 改為 HP 比例最少的 2 名友方（原：全體）
   else if(n==='神籤'){
-    const _allies=G[a.side].filter(h=>h.curHp>0);
+    const _alivePool=G[a.side].filter(h=>h.curHp>0);
+    // 依 curHp/hp 比例由小到大排序，取前 2 名
+    const _targets = _alivePool.sort((x,y)=>(x.curHp/(x.hp||1)) - (y.curHp/(y.hp||1))).slice(0,2);
     const _goodPool=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune'];
-    log(`[${a.name}] 神籤！搖鈴抽籤，為全體友方附加有利狀態並治癒！`);
-    playSkillFX('神籤',a,_allies);
+    log(`[${a.name}] 神籤！搖鈴抽籤，為HP比例最少的2名友方附加有利狀態並治癒！`);
+    playSkillFX('神籤',a,_targets);
     const _healAmt = Math.max(1, Math.round(spv(a) * _activeSkLvMult));
-    _allies.forEach(h=>{
+    _targets.forEach(h=>{
       // 隨機抽 2 個不重複的有利狀態（2 回合）
       const _pool = [..._goodPool];
       for(let k=0;k<2 && _pool.length;k++){
@@ -15825,7 +15837,8 @@ function execSkill(a, sk, cost, stype){
         endAction(a,cost); return;
       }
       t._baseHp=t._baseHp||t.hp;
-      t.hp+=15; t.curHp=t.hp;
+      const _blessBonus=Math.max(1, Math.round(t._baseHp * 0.20)); // v1.0.20260421.3000r HP 上限 +20%
+      t.hp+=_blessBonus; t.curHp=t.hp;
       addBuff(t,'divineBlessing',999);
       // 滿級：額外附加免疫1次倒下
       if(_lvND>=9){
@@ -18631,9 +18644,11 @@ function aiUseSkill(a,sk,cost,pref){
     if(t){ G.taunted={attacker:t,target:a}; addBuff(a,'taunt',2); addStatus(t,'forecast',2); }
   }
   // ★ v1.0.20260421.3000o — 巫女 AI 分支
+  //   v1.0.20260421.3000r — 改為 HP 比例最少的 2 名友方
   else if(n==='神籤'){
     const _pool=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune'];
-    allies.forEach(h=>{
+    const _tgts = [...allies].sort((x,y)=>(x.curHp/(x.hp||1)) - (y.curHp/(y.hp||1))).slice(0,2);
+    _tgts.forEach(h=>{
       const _p=[..._pool];
       for(let k=0;k<2 && _p.length;k++){ const i=Math.floor(Math.random()*_p.length); addBuff(h,_p.splice(i,1)[0],2); }
       doHeal(h,Math.max(1,spv(a)),{actor:a,isHeal:true});
@@ -18822,17 +18837,19 @@ function aiUseSkill(a,sk,cost,pref){
     G[a.side].filter(h=>h.curHp>0).forEach(h=>addBuff(h,'dribble',1));
     log(`[${a.name}] 運球！友方全體普攻×2！`);
   }
-  // ★ 神之賜福：使1名友方HP上限+10並完全治癒（不可疊加）
+  // ★ 神之賜福：使1名友方HP上限+20%並完全治癒（不可疊加）
   else if(n==='神之賜福'){
     const tgt = al;
     if(tgt){
       if(!hasBuff(tgt,'divineBlessing')){
-        tgt.hp = (tgt.hp||0) + 10;
+        tgt._baseHp = tgt._baseHp || tgt.hp;
+        const _aibless = Math.max(1, Math.round(tgt._baseHp * 0.20));
+        tgt.hp = (tgt.hp||0) + _aibless;
         addBuff(tgt,'divineBlessing',99);
       }
       tgt.curHp = tgt.hp;
       renderCard(tgt);
-      log('['+a.name+'] 神之賜福！['+tgt.name+'] HP上限+10並完全恢復！');
+      log('['+a.name+'] 神之賜福！['+tgt.name+'] HP上限+20%並完全恢復！');
       bannerFX(tgt,'神之賜福！','#ffffff',900);
     }
   }
@@ -38449,6 +38466,20 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000r', brief:[
+    '技能調整：神籤、神之賜福、獻祭的餘暉',
+  ], items:[
+    '【神籤（巫女 s1）】',
+    '  目標從「全體友方」改為「HP比例最少的2名友方」',
+    '  其他效果不變（隨機2個有利狀態+依特技恢復HP）',
+    '【神之賜福（木靈使 s1）】',
+    '  HP上限提升從「固定+15」改為「最大HP +20%」',
+    '  倒下時 HP 還原用 _baseHp 記錄；無記錄時反推除以 1.20 恢復',
+    '  tooltip 同步更新為「HP上限提升20%」',
+    '【獻祭的餘暉（木靈使 s2）】',
+    '  分享HP改為「最大HP的50%」（原為死前剩餘HP）',
+    '  候選隊友改為「HP最少者」可包含倒下的，會優先復活倒下的隊友',
+  ]},
   { ver:'v1.0.20260421.3000q', brief:[
     '調整英雄卡牌縮圖位置，讓臉部/眼神更清晰可見',
   ], items:[
@@ -40366,7 +40397,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000q';
+  const CURRENT_VERSION = 'v1.0.20260421.3000r';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40383,7 +40414,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000q';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000r';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
