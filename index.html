@@ -4037,7 +4037,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0101</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0102</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -22952,8 +22952,48 @@ window.addEventListener('pagehide', function(e){
     // ★ v1.0.20260421.0500 — 冒險路線選擇視窗（日本關 4 卡會超出 1080 需捲動）、日本關鎖定提示
     'adv-boss-route-pop', 'japan-locked-modal'
   ];
-  // ★ 追蹤觸碰起點（用於判斷邊緣手勢）
+  // ★ v1.0.20260422.0102 — iPad 通用捲動偵測：
+  //   原本只靠 _scrollableIds 白名單，每次新增彈窗都要記得加進來，
+  //   忘了就會發生「彈窗無法捲動卡死」的情況。
+  //   改為動態偵測：祖先鏈中任何節點符合以下條件即視為可捲動容器：
+  //     1. ID 在 _scrollableIds 白名單（向下相容）
+  //     2. data-scrollable="true" 屬性（未來新增彈窗直接標記即可）
+  //     3. CSS overflow-x/y 為 auto/scroll，且內容確實溢出（scrollHeight>clientHeight）
+  var _isScrollableElement = function(el){
+    if(!el || el.nodeType !== 1) return false;
+    if(el.dataset && el.dataset.scrollable === 'true') return true;
+    var cs;
+    try{ cs = window.getComputedStyle(el); }catch(_){ return false; }
+    if(!cs) return false;
+    var oy = cs.overflowY, ox = cs.overflowX;
+    var canScrollY = (oy === 'auto' || oy === 'scroll') && (el.scrollHeight > el.clientHeight + 1);
+    var canScrollX = (ox === 'auto' || ox === 'scroll') && (el.scrollWidth > el.clientWidth + 1);
+    return canScrollY || canScrollX;
+  };
+  var _targetInScrollable = function(target){
+    if(!target) return false;
+    // 1. 白名單優先（快速路徑）
+    for(var i = 0; i < _scrollableIds.length; i++){
+      if(target.closest && target.closest('#' + _scrollableIds[i])) return true;
+    }
+    // 2. 動態檢查祖先鏈
+    var el = target;
+    var depth = 0;
+    while(el && el !== document.body && depth < 20){
+      if(_isScrollableElement(el)) return true;
+      el = el.parentElement;
+      depth++;
+    }
+    return false;
+  };
+  // ★ 追蹤觸碰起點（用於判斷邊緣手勢、以及 iPad 小移動 tap 判定）
   var _touchStartY = 0, _touchStartX = 0;
+  // ★ v1.0.20260422.0102 — iPad tap 意圖判定閾值：手指移動 < 10px 視為 tap
+  //   原問題：iPad 用戶「按賣出按鈕沒反應」要切全螢幕後再按才動
+  //   原因：iPad 手指按下時常伴隨 1~5px 微小移動 → 觸發 touchmove → preventDefault →
+  //        某些 iOS 版本會因此把後續的 synthetic click 視為「已被 handler 處理」而抑制
+  //   解法：touchmove 距離 < TAP_THRESHOLD 時不 preventDefault（判定為 tap 非滑動）
+  var TAP_THRESHOLD = 10;
   document.addEventListener('touchstart', function(e){
     if(e.touches.length > 0){
       _touchStartY = e.touches[0].clientY;
@@ -22966,18 +23006,22 @@ window.addEventListener('pagehide', function(e){
       if(_fromBottom < 50 || _fromTop < 20){
         // 在邊緣區域，阻止預設行為（避免觸發 Safari UI）
         // 但只在非可捲動容器內才阻止
-        var inScroll = _scrollableIds.some(function(id){ return e.target.closest('#'+id); });
-        if(!inScroll) e.preventDefault();
+        if(!_targetInScrollable(e.target)) e.preventDefault();
       }
     }
   }, { passive: false });
 
   document.addEventListener('touchmove', function(e){
-    // ★ 若觸碰在任何可捲動容器內（含彈出視窗），放行
-    var inScrollable = _scrollableIds.some(function(id){
-      return e.target.closest('#'+id);
-    });
-    if(inScrollable) return;
+    // ★ v1.0.20260422.0102 — tap 意圖保護：手指未大幅移動時視為 tap，不 preventDefault
+    //   否則在 iPad 上會抑制按鈕的 click 事件（例：賣出按鈕按了沒反應）
+    var t = e.touches && e.touches[0];
+    if(t){
+      var dx = Math.abs(t.clientX - _touchStartX);
+      var dy = Math.abs(t.clientY - _touchStartY);
+      if(dx < TAP_THRESHOLD && dy < TAP_THRESHOLD) return;
+    }
+    // ★ 若觸碰在任何可捲動容器內（含彈出視窗），放行（現在用動態偵測，不只靠白名單）
+    if(_targetInScrollable(e.target)) return;
 
     // ★ 計算滑動方向：若是往上滑（可能觸發 Safari 網址列），阻止
     // 無論方向都阻止，確保遊戲不受干擾
@@ -38420,6 +38464,38 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0102', brief:[
+    '修正 iPad：戰鬥中按「賣出」常沒反應，要切全螢幕後再按才有用',
+    '修正 iPad：部分彈窗內無法捲動導致卡死',
+    '未來新增彈窗可直接標 data-scrollable="true" 或設 overflow-y:auto 自動捲動',
+  ], items:[
+    '【Bug 1：iPad 賣出按鈕失靈】',
+    '  用戶回報：戰鬥中按賣出物品按鈕經常沒反應，切換全螢幕一次後再按就正常。',
+    '【根本原因】',
+    '  document 層級的 touchmove handler 對所有非白名單區域一律 preventDefault()。',
+    '  iPad 手指按下按鈕時自然會微動 1~5px → 觸發 touchmove → 被 preventDefault，',
+    '  某些 iOS Safari 版本會把後續的 synthetic click 視為「已處理」而抑制掉。',
+    '  切全螢幕會觸發 fullscreenchange → scaleToViewport() → #gc 重新合成，',
+    '  順帶清掉 iOS 的卡住 compositor 狀態，所以「看起來」切一次就修好。',
+    '【修正】Tap 意圖保護（TAP_THRESHOLD = 10px）',
+    '  touchmove handler 內計算手指與 touchstart 起點的位移，',
+    '  若 dx < 10 && dy < 10 視為 tap 意圖，不 preventDefault，放行讓 click 事件正常觸發。',
+    '【Bug 2：iPad 彈窗無法捲動】',
+    '  用戶回報：遊戲內某些視窗沒辦法捲動，卡死。',
+    '【根本原因】',
+    '  _scrollableIds 是硬編碼白名單。每新增一個彈窗都要記得加進去，忘了就捲不動。',
+    '  （歷史紀錄 line 39629/39720 都是這種問題的補丁）',
+    '【修正】動態捲動容器偵測',
+    '  新增 _isScrollableElement(el) + _targetInScrollable(target)：',
+    '    1. 優先查 _scrollableIds 白名單（向下相容、快速路徑）',
+    '    2. 查 data-scrollable="true" 屬性（未來新增彈窗標這個就好）',
+    '    3. 動態走祖先鏈，任一節點 overflow-x/y: auto|scroll 且內容確實溢出',
+    '       （scrollHeight > clientHeight + 1） → 視為可捲動',
+    '  touchstart 的邊緣手勢偵測、touchmove 的容器偵測都改用 _targetInScrollable()。',
+    '【意外的副效益】',
+    '  現在只要彈窗 CSS 寫了 overflow-y:auto 就會自動允許捲動。',
+    '  開發者不用再維護 _scrollableIds 白名單，也不會再發生「忘了加進去」的 bug。',
+  ]},
   { ver:'v1.0.20260422.0101', brief:[
     '修正 戰鬥中斷恢復（崩潰/關瀏覽器後重開）時日本關背景與 BGM 回到貓空',
     '快照新增保存場景索引 sceneIdx 與 BOSS 路線 variantIdx',
@@ -40796,7 +40872,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0101';
+  const CURRENT_VERSION = 'v1.0.20260422.0102';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40813,7 +40889,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0101';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0102';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
