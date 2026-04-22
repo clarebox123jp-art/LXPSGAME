@@ -1587,13 +1587,15 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .adv-nav-icon{font-size:38px;line-height:1;flex-shrink:0;}
 .adv-nav-label{font-size:50px;color:#778;letter-spacing:1px;font-weight:800;line-height:1;}
 .adv-nav-lock{position:absolute;top:4px;right:6px;font-size:14px;opacity:0.5;}
-/* 各按鈕顏色（鎖定時半透明）*/
+/* 各按鈕顏色（依新 8 顆順序：召喚/英雄/魔物/寵物/好友/背包/獎章/更新日誌）*/
 .adv-nav-btn:nth-child(1){border-color:rgba(180,80,255,0.25);}  /* 召喚 - 紫 */
 .adv-nav-btn:nth-child(2){border-color:rgba(255,100,80,0.25);}  /* 英雄 - 紅 */
-.adv-nav-btn:nth-child(3){border-color:rgba(80,200,255,0.25);}  /* 背包 - 藍 */
-.adv-nav-btn:nth-child(4){border-color:rgba(255,200,50,0.25);}  /* 獎章 - 金 */
-.adv-nav-btn:nth-child(5){border-color:rgba(255,200,50,0.25);}  /* 獎章 - 金（原第4）*/
-.adv-nav-btn:nth-child(6){border-color:rgba(100,220,100,0.25);}  /* 設定 - 綠（原第5）*/
+.adv-nav-btn:nth-child(3){border-color:rgba(200,60,60,0.25);}   /* 魔物 - 暗紅 */
+.adv-nav-btn:nth-child(4){border-color:rgba(100,220,140,0.25);} /* 寵物 - 綠 */
+.adv-nav-btn:nth-child(5){border-color:rgba(255,150,200,0.25);} /* 好友 - 粉 */
+.adv-nav-btn:nth-child(6){border-color:rgba(80,200,255,0.25);}  /* 背包 - 藍 */
+.adv-nav-btn:nth-child(7){border-color:rgba(255,200,50,0.25);}  /* 獎章 - 金 */
+.adv-nav-btn:nth-child(8){border-color:rgba(100,220,180,0.25);} /* 更新日誌 - 青綠 */
 
 .adv-domain-tags{display:flex;gap:8px;flex-wrap:wrap;}
 .adv-domain-tag{
@@ -4016,7 +4018,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3008</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3009</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4275,9 +4277,10 @@ body {
       <button class="hpsort-btn hpfilter-btn" data-filter="ctrl" onclick="playSfx('sfx-sel',0.4);heroFilterClick(this)">🛡 控場/坦克</button>
     </div>
     <div id="hero-page-grid" style="flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start;justify-content:flex-start;-webkit-overflow-scrolling:touch;touch-action:pan-y;"></div>
+  </div>
 
   <!-- ★ 魔物圖鑑 -->
-  <div id="monster-page-overlay" style="display:none;position:absolute;inset:0;z-index:720;
+  <div id="monster-page-overlay" style="display:none;position:absolute;inset:0;z-index:9100;
     background:linear-gradient(160deg,#100a0a,#0a0608);flex-direction:column;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:2px solid rgba(200,60,60,0.3);">
@@ -4291,7 +4294,7 @@ body {
   </div>
 
   <!-- ★ v1.0.20260421.3000x 寵物圖鑑 -->
-  <div id="pet-page-overlay" style="display:none;position:absolute;inset:0;z-index:720;
+  <div id="pet-page-overlay" style="display:none;position:absolute;inset:0;z-index:9100;
     background:linear-gradient(160deg,#0a1a10,#060b08);flex-direction:column;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:2px solid rgba(80,220,140,0.3);">
@@ -4302,7 +4305,6 @@ body {
     <div id="pet-page-content" style="flex:1;overflow-y:auto;padding:20px 28px;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
       <!-- injected by JS -->
     </div>
-  </div>
   </div>
 
   <!-- ★ 獎章頁面 -->
@@ -4353,11 +4355,11 @@ body {
         <span class="adv-nav-icon">⚔️</span>
         <span class="adv-nav-label">英雄</span>
       </button>
-      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openMonsterPage()">
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);window.openMonsterPage&&window.openMonsterPage()">
         <span class="adv-nav-icon">👹</span>
         <span class="adv-nav-label">魔物</span>
       </button>
-      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openPetPage()">
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);window.openPetPage&&window.openPetPage()">
         <span class="adv-nav-icon">🐾</span>
         <span class="adv-nav-label">寵物</span>
       </button>
@@ -4376,7 +4378,7 @@ body {
       </button>
       <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openChangelogPanel()" style="border-color:rgba(100,220,180,0.4);">
         <span class="adv-nav-icon">📋</span>
-        <span class="adv-nav-label">更新日誌</span>
+        <span class="adv-nav-label" style="font-size:80%;">更新日誌</span>
       </button>
     </div>
   </div>
@@ -37369,10 +37371,13 @@ function advMiniResultConfirm(){
 }
 function openMonsterPage() {
   const ov = document.getElementById('monster-page-overlay');
-  if(!ov) return;
+  if(!ov){ console.warn('[openMonsterPage] overlay not found'); return; }
   ov.style.display = 'flex';
-  _buildMonsterPage();
+  try { _buildMonsterPage(); }
+  catch(e){ console.error('[openMonsterPage] build error:', e); }
 }
+window.openMonsterPage = openMonsterPage;
+window.closeMonsterPage = closeMonsterPage;
 
 function closeMonsterPage() {
   const ov = document.getElementById('monster-page-overlay');
@@ -37394,10 +37399,13 @@ function _isPetCollected(petName){
 
 function openPetPage(){
   const ov = document.getElementById('pet-page-overlay');
-  if(!ov) return;
+  if(!ov){ console.warn('[openPetPage] overlay not found'); return; }
   ov.style.display = 'flex';
-  _buildPetPage();
+  try { _buildPetPage(); }
+  catch(e){ console.error('[openPetPage] build error:', e); }
 }
+window.openPetPage = openPetPage;
+window.closePetPage = closePetPage;
 function closePetPage(){
   const ov = document.getElementById('pet-page-overlay');
   if(ov) ov.style.display = 'none';
@@ -39376,6 +39384,18 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3009', brief:[
+    '底部選單修正：魔物/寵物按鈕可用、更新日誌文字縮小',
+  ], items:[
+    '【更新日誌按鈕】label 字體縮小 20%（font-size:80%）避免擠壓',
+    '【魔物/寵物按鈕修正】',
+    '  提高 monster-page-overlay / pet-page-overlay 的 z-index（720 → 9100）確保顯示在最上層',
+    '  openMonsterPage / openPetPage 加上 try-catch + 錯誤訊息',
+    '  明確將這兩個函式掛到 window（window.openMonsterPage / window.openPetPage）',
+    '  HTML onclick 改用 `window.openMonsterPage && window.openMonsterPage()` 防呆',
+    '【CSS 配色補齊】',
+    '  adv-nav-btn 的 nth-child 顏色定義從 1-6 擴增到 1-8，對應新順序',
+  ]},
   { ver:'v1.0.20260421.3008', brief:[
     '冒險關卡選擇頁底部選單擴充為 8 顆按鈕',
   ], items:[
@@ -41503,7 +41523,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3008';
+  const CURRENT_VERSION = 'v1.0.20260421.3009';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41520,7 +41540,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3008';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3009';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
