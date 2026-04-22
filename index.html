@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000n</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000p</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6016,6 +6016,44 @@ function playSkillFX(skillName,actor,targets){
       zoneFlash(actor.side,'rgba(255,180,0,0.3)',700);
       break;
     // ═══════════════════════════════════════════════════════════════
+    // ★ v1.0.20260421.3000o — 日本關限定角色「巫女」技能特效
+    // ═══════════════════════════════════════════════════════════════
+    case '神籤':
+      playSfx('sfx-heal',0.75); playSfx('sfx-statup',0.7);
+      if(rc_a){ spawnParticles(rc_a.x,rc_a.y,{count:22,color:'#ffee88',size:7,spread:70,duration:700,rise:true,gravity:-0.25}); ringFX(actor,'#ffee88',700); bannerFX(actor,'神籤！','#ffee88',1100); }
+      (targets||[]).forEach(t=>{ var rct=cardRect(t); if(rct){ spawnParticles(rct.x,rct.y,{count:12,color:'#ffddaa',size:6,spread:50,duration:600,rise:true}); ringFX(t,'#ffddaa',500);} });
+      zoneFlash(actor.side,'rgba(255,230,120,0.25)',700);
+      break;
+    case '破魔矢':
+      playSfx('sfx-sword',0.8); playSfx('sfx-arrow',0.75);
+      if(t0){
+        beamFX(actor,t0,'#ffffdd',260);
+        flashCard(t0,'rgba(255,255,200,0.85)',250);
+        var rcPM=cardRect(t0);
+        if(rcPM) spawnParticles(rcPM.x,rcPM.y,{count:24,color:'#ffee66',size:8,spread:85,duration:700});
+        ringFX(t0,'#ffff88',600);
+      }
+      flashScreen('rgba(255,255,180,0.5)',250);
+      break;
+    case '神樂舞':
+      playSfx('sfx-burst',0.9); playSfx('sfx-heal',0.85);
+      // ★ 神樂舞 GIF 覆蓋全場（持續 2.4s）
+      try{
+        var _kgWrap = document.createElement('div');
+        _kgWrap.style.cssText = 'position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);pointer-events:none;';
+        var _kgImg = document.createElement('img');
+        _kgImg.src = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E6%A8%82%E8%88%9E.gif';
+        _kgImg.style.cssText = 'max-width:70%;max-height:70%;object-fit:contain;filter:drop-shadow(0 0 24px rgba(255,220,120,0.9));';
+        _kgWrap.appendChild(_kgImg);
+        document.body.appendChild(_kgWrap);
+        setTimeout(function(){ try{ _kgWrap.remove(); }catch(_){} }, 2400);
+      }catch(_kgE){}
+      if(rc_a){ spawnParticles(rc_a.x,rc_a.y,{count:36,color:'#ffccff',size:9,spread:90,duration:900,rise:true,gravity:-0.4}); ringFX(actor,'#ffccff',900); bannerFX(actor,'神樂舞！','#ffccff',1400); }
+      (targets||[]).forEach(t=>{ var rct2=cardRect(t); if(rct2){ spawnParticles(rct2.x,rct2.y,{count:18,color:'#ffeedd',size:7,spread:70,duration:800,rise:true}); ringFX(t,'#ffeedd',700);} });
+      flashScreen('rgba(255,220,180,0.85)',500);
+      zoneFlash(actor.side,'rgba(255,200,255,0.35)',900);
+      break;
+    // ═══════════════════════════════════════════════════════════════
     // ★ v1.0.20260421.1400 — 日本關卡 14 個技能攻擊特效與音效
     // ═══════════════════════════════════════════════════════════════
     // ── 大天狗 S1：疾風團扇擊（風，單目標） ──
@@ -6300,10 +6338,13 @@ function playSkillFX(skillName,actor,targets){
 }
 // ★ v1.0.20260420.1130 — 活動限定英雄清單(圖鑑會標示「🎪 活動獲得」)
 //   這些英雄無法從冒險模式 BOSS 戰解鎖池取得,只能透過特殊活動/贈送獲得
-const EVENT_ONLY_HEROES = new Set(['小力', '幼兒園小孩']);
+const EVENT_ONLY_HEROES = new Set(['小力', '幼兒園小孩', '巫女']);
 // ★ v1.0.20260421.1100 — 日本 BOSS 可透過戰鬥 S 評價 5% 機率解鎖成為夥伴
 //   這三隻會同時出現在英雄圖鑑(標「日本BOSS戰低機率獲得」)和魔物圖鑑(BOSS 區)
 const JAPAN_BOSS_HEROES = new Set(['大天狗','酒吞童子','玉藻前']);
+// ★ v1.0.20260421.3000p — 日本關限定英雄（圖鑑統一標示「🗾 日本關卡機率獲得」）
+//   涵蓋三大 BOSS + 巫女。優先於 EVENT_ONLY_HEROES 標籤顯示。
+const JAPAN_EXCLUSIVE_HEROES = new Set(['大天狗','酒吞童子','玉藻前','巫女']);
 // ★ v1.0.20260421.1700 — 日本關全部 16 隻角色，統一過濾用（鬥技場不出現這些）
 //   包含 4 BOSS + 6 菁英 + 4 隨機小怪 + 2 稀有怪
 const JAPAN_ALL_CHARACTERS = new Set([
@@ -6318,7 +6359,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   '光法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%85%89%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
@@ -6355,6 +6396,7 @@ const HERO_IMGS = {
   '直笛團員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
   '田徑隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
   '幼兒園小孩': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png',
+  '巫女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png',
   '電腦繪圖師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
   '程式設計師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
   '弦樂團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
@@ -6431,6 +6473,11 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
     { id:'drama_boy',  name:'銀冕王子', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%B9%B4.png', requiresUnlock:true },
     { id:'drama_girl', name:'琉璃公主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%A5%B3.png', requiresUnlock:true },
+  ],
+  // ★ v1.0.20260421.3000p — 巫女替代肖像
+  '巫女': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png' },
+    { id:'miko_shrine', name:'神社祭禮', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B7%AB%E5%A5%B32.png', requiresUnlock:true },
   ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
@@ -6514,6 +6561,8 @@ const HERO_DB = {
   '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:3,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:5,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:5,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'},_traitDesc:'【天賦】成為攻擊目標機率+40%；受傷時20%機率將傷害轉為治療HP'},
+  // ★ v1.0.20260421.3000o — 日本關限定角色（打贏八岐大蛇後 5% 機率觸發劇情解救加入）
+  '巫女':    {hp:56,atk:8,sp:16,spd:10, s1:{n:'神籤',c:4,d:'為全體友方附加隨機2個有利狀態，並依特技恢復HP（每升1級+5%恢復量）',fd:'搖動祭鈴抽取神籤，為全體友方附加隨機2個有利狀態（持續2回合），並依特技值恢復HP。每升1級恢復量提升5%。'},s2:{n:'破魔矢',c:4,d:'特技200%傷害1名對手（日本妖怪+100%），附加易傷1回合（受傷+100%）（每升1級+5%傷害）',fd:'射出破魔神矢貫穿妖氣，用特技值的200%對1名對手造成光屬性傷害；目標若為日本妖怪則傷害提升100%。命中後為目標附加「強力易傷」狀態1回合（受到的傷害提升100%）。每升1級傷害提升5%。'}},
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -6998,6 +7047,8 @@ const BURST_DB = {
   '程式設計師':{n:'BUG修復',  d:'將我方全體不利狀態轉換成隨機有利狀態，並復活所有倒下的隊友',fd:'將我方全體的不利狀態轉換成隨機有利狀態，同時讓所有倒下的隊友以HP30%復活。'},
   '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'用特技的40%對敵方全體造成3~5次傷害，此傷害無視有利狀態且必中。同時恢復我方全體HP，HP為0也可復活。'},
   '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下的所有角色（敵我雙方）×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
+  // ★ v1.0.20260421.3000o — 日本關限定角色爆發
+  '巫女':      {n:'神樂舞', d:'全體友方解除所有不利狀態(含強力)，附加隨機3個強力有利狀態(不可解除)，再依特技150%恢復HP（每升1級+10%恢復量）',fd:'翩翩起舞獻納祭神樂曲，為友方全體解除所有不利狀態（包含強力狀態），並附加隨機3個強力有利狀態（不會被搶奪和解除），再依特技值的150%恢復全體友方HP（可復活）。每升1級恢復量提升10%。'},
   // ── BOSS 爆發技能 ──
   '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
   '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有75%機率使每一名敵人陷入「魅惑」狀態1回合（下一回合自動普攻自己隊友）。'},
@@ -7289,6 +7340,8 @@ function tickStatus(h){
     if(s.type==='traitSlow' && s._origSpd!==undefined){ h.spd=s._origSpd; }
     if(s.type==='traitWeak' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
     if(s.type==='traitRage' && s._rageAtkBonus!==undefined){ h.atk=Math.max(1,h.atk-s._rageAtkBonus); }
+    // ★ v1.0.20260421.3000o — 強力易傷到期清除 _vulnStrong 旗標
+    if(s.type==='dmgVuln' && h._vulnStrong){ delete h._vulnStrong; }
     if(s.type==='_sprint' && s._spdBoost!==undefined){ h.spd=Math.max(1,h.spd-s._spdBoost);
     if(s.type==='_cryDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; } h._sprintOrigSpd=undefined; log(`🏃 [${h.name}] 起跑衝刺結束，速度恢復！`); }
     // 虛弱咒到期恢復
@@ -8825,6 +8878,8 @@ const HERO_LORE = {
   '程式設計師':'自由修改遊戲數據的專家',
   '弦樂團員':  '指尖流淌夢幻旋律，弦音定勝負',
   '小劇團員':  '活躍在戲劇中的千面藝人',
+  // ★ v1.0.20260421.3000o — 日本關限定
+  '巫女':      '守護境內安寧，以祭鈴驅散晦暗的神職',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -8872,6 +8927,8 @@ const HERO_TRAIT = {
   '程式設計師':{ name:'加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
   '弦樂團員':  { name:'弦護', icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
   '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療（每級+5%）；成為攻擊目標機率+40%（每級+5%）',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
+  // ★ v1.0.20260421.3000o — 日本關限定角色天賦
+  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方附加1個有利狀態（每升1級+1個），50%機率恢復1能量',fd:'每次自己的回合開始時為1名目前有利狀態最少的友方（並列時隨機選1名，含自己）附加1個隨機有利狀態（持續2回合）。每升1級多附加1個。並有50%機率為自己的陣營恢復1能量。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -11669,6 +11726,41 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },600);
     return;
   }
+  // ★ v1.0.20260421.3000o — 巫女：神樂舞
+  if(name==='巫女'){
+    log(`[${h.name}] 神樂舞！翩翩起舞獻納祭神樂曲！`);
+    playSfx('sfx-burst',0.85);
+    const _allies = G[side].filter(x=>x.curHp>0);
+    // 強力有利狀態池（爆發級：不會被解除/搶奪）
+    const _strongGood = ['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune','protectBuff'];
+    _allies.forEach(t=>{
+      // 1. 解除所有不利狀態（含強力，忽略 stubbornDebuff 保護）
+      t.status = [];
+      // 2. 附加隨機 3 個不重複強力有利狀態（用 protectBuff 2 回合保證不被解除/搶奪）
+      const pool = [..._strongGood];
+      for(let k=0; k<3 && pool.length; k++){
+        const pick = pool.splice(Math.floor(Math.random()*pool.length),1)[0];
+        addBuff(t, pick, 3);
+        bannerFX(t,'⛩ '+buffName(pick)+'！','#ffee88',700);
+      }
+      // 再加 protectBuff：使這些有利狀態無法被消除/搶奪
+      addBuff(t,'protectBuff',3);
+      // 3. 依特技 150% × 爆發倍率 恢復 HP（可復活）
+      const _healAmt = Math.max(1, Math.round(spv(h) * 1.5 * _burstMult));
+      if(t.curHp===0) doRevive(t,0);
+      doHeal(t,_healAmt,{actor:h,isHeal:true});
+      renderCard(t);
+    });
+    bannerFX(h,'神樂舞！','#ffccff',1200);
+    flashScreen('rgba(255,220,120,0.9)',400);
+    try{ playSkillFX('神樂舞',h,_allies); }catch(_){}
+    updateUI();
+    if(checkWin()) return;
+    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){ _interrupted.acted=true; }
+    _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },600);
+    return;
+  }
   // 九尾空貓怪：焰尾九連擊
   if(burstName==='焰尾九連擊'){
     const _opp = side==='p1'?'p2':'p1';
@@ -12685,7 +12777,7 @@ function doDmg(target, rawDmg, opts={}){
     showShieldVFX(target,'halfDmg');
   }
   // dmgVuln (青龍召喚：受傷+50%)
-  if(hasStatus(target,'dmgVuln')){ rawDmg=Math.ceil(rawDmg*1.5); }
+  if(hasStatus(target,'dmgVuln')){ rawDmg=Math.ceil(rawDmg * (target._vulnStrong ? 2.0 : 1.5)); }
   // 綠竹筍小妖天賦：受到傷害時50%機率減少40%
   if(_adventureMode && target.name==='綠竹筍小妖' && !hasStatus(target,'confused') && rawDmg>0 && Math.random()<0.5){
     rawDmg = Math.max(1, Math.floor(rawDmg * 0.6));
@@ -14982,6 +15074,54 @@ function execSkill(a, sk, cost, stype){
       endAction(a,cost);
     });
   }
+  // ★ v1.0.20260421.3000o — 巫女 S1 神籤：全體友方附加隨機2個有利狀態，依特技恢復HP
+  else if(n==='神籤'){
+    const _allies=G[a.side].filter(h=>h.curHp>0);
+    const _goodPool=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune'];
+    log(`[${a.name}] 神籤！搖鈴抽籤，為全體友方附加有利狀態並治癒！`);
+    playSkillFX('神籤',a,_allies);
+    const _healAmt = Math.max(1, Math.round(spv(a) * _activeSkLvMult));
+    _allies.forEach(h=>{
+      // 隨機抽 2 個不重複的有利狀態（2 回合）
+      const _pool = [..._goodPool];
+      for(let k=0;k<2 && _pool.length;k++){
+        const idx = Math.floor(Math.random()*_pool.length);
+        const pick = _pool.splice(idx,1)[0];
+        addBuff(h,pick,2);
+        bannerFX(h,'🎋 '+buffName(pick),'#ffee88',700);
+      }
+      // 依特技恢復 HP
+      doHeal(h,_healAmt,{actor:a,isHeal:true});
+      renderCard(h);
+    });
+    endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
+  }
+  // ★ v1.0.20260421.3000o — 巫女 S2 破魔矢：特技200%傷害1名對手（日本妖怪+100%），附加強力易傷1回合
+  else if(n==='破魔矢'){
+    setPending('enemy',t=>{
+      log(`[${a.name}] 破魔矢！射出神矢貫穿妖氣！`);
+      playSkillFX('破魔矢',a,[t]);
+      // 基礎傷害：特技 × 200% × 升級倍率
+      let _dmgMult = 2.0 * _activeSkLvMult;
+      // 日本妖怪 → +100%
+      const _isJapanFoe = (typeof JAPAN_ALL_CHARACTERS !== 'undefined' && JAPAN_ALL_CHARACTERS.has(t.name));
+      if(_isJapanFoe){
+        _dmgMult *= 2; // +100%
+        bannerFX(t,'🌸 破魔・妖怪特效！','#ffccff',900);
+      }
+      const _dmg = Math.max(1, Math.round(spv(a) * _dmgMult));
+      doDmg(t,_dmg,{actor:a,isSkill:true,elem:'light'});
+      // 命中後附加強力易傷（受傷+100%）1 回合
+      if(t.curHp>0){
+        addStatus(t,'dmgVuln',1);
+        // 為 dmgVuln 加強力旗標：讓 doDmg 讀取 _vulnStrong 使其變 +100%
+        t._vulnStrong = true;
+        bannerFX(t,'💥 強力易傷！','#ff6644',900);
+      }
+      renderCard(t);
+      endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
+    });
+  }
   // ====== 軍師 ======
   else if(n==='識破全局'){
     log(`[${a.name}] 識破全局！`);
@@ -17217,6 +17357,37 @@ function startTurn(){
     showPopup(next,'+1E','energy');
     log(`🌟 [占星師] 天賦：星命眷顧！補充1能量！`);
   }
+  // ★ v1.0.20260421.3000o — 巫女天賦「祝禱」
+  //   v1.0.20260421.3000p — 改為：有利狀態最少的友方優先；升級每級 +1 個附加有利狀態
+  if(next.name==='巫女' && next.curHp>0 && !hasStatus(next,'confused')){
+    const _miAllies = G[next.side].filter(h=>h.curHp>0);
+    if(_miAllies.length){
+      // 取有利狀態最少的友方（並列時隨機 1 名）
+      const _miSorted = [..._miAllies].sort((a,b) => (a.buffs||[]).length - (b.buffs||[]).length);
+      const _minBuffCnt = (_miSorted[0].buffs||[]).length;
+      const _miCandidates = _miSorted.filter(h => (h.buffs||[]).length === _minBuffCnt);
+      const _miTgt = _miCandidates[Math.floor(Math.random()*_miCandidates.length)];
+      // 升級：每升1級 +1 個附加有利狀態（天賦等級 0~9）
+      const _miTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('巫女') || 0) : 0;
+      const _miBuffAddCount = 1 + _miTraitLv;
+      const _miGood = ['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune'];
+      const _miPool = [..._miGood];
+      const _miGiven = [];
+      for(let i=0; i<_miBuffAddCount && _miPool.length; i++){
+        const _idx = Math.floor(Math.random()*_miPool.length);
+        const _pick = _miPool.splice(_idx,1)[0];
+        addBuff(_miTgt,_pick,2);
+        _miGiven.push(buffName(_pick));
+      }
+      bannerFX(_miTgt,'⛩ 祝禱！×'+_miGiven.length,'#ffee88',900);
+      log(`⛩ [巫女] 天賦：祝禱！[${_miTgt.name}]（狀態最少）獲得 ${_miGiven.join('、')}！`);
+    }
+    if(Math.random() < 0.50){
+      G.energy[next.side] = Math.min(10, G.energy[next.side] + 1);
+      showPopup(next,'+1E','energy');
+      log(`⛩ [巫女] 祝禱：恢復1能量！`);
+    }
+  }
 
   // ── 插隊被動檢查（守衛挺身守護、警長警示鳴槍）──
   // 當下一行動者是某方時，另一方的插隊型被動可觸發
@@ -18458,6 +18629,23 @@ function aiUseSkill(a,sk,cost,pref){
   }
   else if(n==='舞台聚光燈'){
     if(t){ G.taunted={attacker:t,target:a}; addBuff(a,'taunt',2); addStatus(t,'forecast',2); }
+  }
+  // ★ v1.0.20260421.3000o — 巫女 AI 分支
+  else if(n==='神籤'){
+    const _pool=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','deathimmune'];
+    allies.forEach(h=>{
+      const _p=[..._pool];
+      for(let k=0;k<2 && _p.length;k++){ const i=Math.floor(Math.random()*_p.length); addBuff(h,_p.splice(i,1)[0],2); }
+      doHeal(h,Math.max(1,spv(a)),{actor:a,isHeal:true});
+    });
+  }
+  else if(n==='破魔矢'){
+    if(t){
+      let mult=2.0;
+      if(typeof JAPAN_ALL_CHARACTERS!=='undefined' && JAPAN_ALL_CHARACTERS.has(t.name)) mult*=2;
+      doDmg(t,Math.max(1,Math.round(spv(a)*mult)),{actor:a,isSkill:true,elem:'light'});
+      if(t.curHp>0){ addStatus(t,'dmgVuln',1); t._vulnStrong=true; }
+    }
   }
   else if(n==='不熟練習曲'){
     enemies.forEach(h=>{
@@ -25540,6 +25728,54 @@ function _showYamataTreasureChoice(onDone){
 }
 
 // ★ v1.0.20260421.2700 — 八岐大蛇擊敗後，若玩家使用了三神器 → 顯示消耗劇情
+// ★ v1.0.20260421.3000o — 巫女解救劇情 modal（八岐大蛇勝利後 5% 觸發）
+function _showMikoRescueScene(){
+  const old = document.getElementById('miko-rescue-modal');
+  if(old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'miko-rescue-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
+    'background:radial-gradient(circle at center,rgba(255,180,200,0.6),rgba(40,10,30,0.96));' +
+    'backdrop-filter:blur(8px);animation:fadeIn 0.4s;';
+  modal.innerHTML =
+    '<div style="max-width:760px;width:92%;padding:36px 34px 30px;text-align:center;' +
+      'background:linear-gradient(160deg,rgba(40,15,30,0.98),rgba(12,4,10,0.98));' +
+      'border:2.5px solid rgba(255,200,220,0.75);border-radius:22px;' +
+      'box-shadow:0 0 100px rgba(255,180,220,0.5);font-family:inherit;">' +
+      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#ffddee;margin-bottom:8px;letter-spacing:3px;text-shadow:0 0 18px rgba(255,180,220,0.7);">✨ 奇蹟降臨 ✨</div>' +
+      '<div style="display:flex;align-items:center;justify-content:center;gap:22px;margin:16px 0 10px;">' +
+        '<img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png" style="width:160px;height:160px;object-fit:cover;border-radius:16px;border:3px solid #ffccdd;box-shadow:0 0 28px rgba(255,200,220,0.75);" alt="巫女">' +
+      '</div>' +
+      '<div style="font-size:clamp(24px,2.6vw,32px);font-weight:900;color:#ffccdd;margin-bottom:6px;letter-spacing:3px;">巫女・小雪</div>' +
+      '<div style="font-size:clamp(14px,1.4vw,18px);color:#ffaacc;margin-bottom:16px;letter-spacing:1px;">守護境內安寧，以祭鈴驅散晦暗的神職</div>' +
+      '<div style="background:rgba(0,0,0,0.55);border:1.5px solid rgba(255,200,220,0.45);border-radius:14px;padding:22px 26px;margin:18px 0;text-align:left;">' +
+        '<div style="font-size:clamp(17px,1.9vw,22px);color:#ffeedd;line-height:1.95;">' +
+          '🐉 八岐大蛇倒下的瞬間，神社深處傳來微弱的祭鈴聲……<br><br>' +
+          '「勇者大人……這裡……」<br><br>' +
+          '順著鈴聲，小隊在大蛇盤踞的巢穴深處，發現被封印的<b style="color:#ffccdd;">巫女小雪</b>——原來她為了收集三神器的線索，不幸被八岐大蛇綁架困在此地！<br><br>' +
+          '⛩ 巫女小雪：「謝謝你們解救了我！為了報答勇者的恩情，請讓我加入你們的冒險吧！」<br><br>' +
+          '<span style="color:#ffcc66;">✨ 巫女「小雪」加入你的隊伍！</span>' +
+        '</div>' +
+      '</div>' +
+      '<button id="miko-rescue-close" style="padding:14px 46px;font-size:clamp(20px,2.3vw,28px);' +
+        'font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,rgba(255,180,220,0.3),rgba(255,120,180,0.3));' +
+        'border:2.5px solid #ffaadd;color:#ffddee;border-radius:12px;cursor:pointer;font-family:inherit;' +
+        'box-shadow:0 4px 20px rgba(255,180,220,0.5);">✔ 歡迎加入隊伍！</button>' +
+    '</div>';
+  (document.getElementById('gc') || document.body).appendChild(modal);
+  try{ playSfx('sfx-medal-unlock', 0.9); }catch(_){}
+  const btn = modal.querySelector('#miko-rescue-close');
+  if(btn){
+    btn.onclick = () => {
+      try{ playSfx('sfx-sel', 0.7); }catch(_){}
+      modal.style.transition = 'opacity 0.3s';
+      modal.style.opacity = '0';
+      setTimeout(() => modal.remove(), 280);
+    };
+  }
+}
+
 function _showYamataTreasureConsumedScene(){
   const old = document.getElementById('yamata-treasure-consumed-modal');
   if(old) old.remove();
@@ -29117,6 +29353,16 @@ async function advStartWinSequence() {
         }catch(_){}
         window._japanUseTreasures = false;
       }
+      // ★ v1.0.20260421.3000o — 5% 機率觸發劇情解救巫女
+      try{
+        const _mikoUnlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+        if(!_mikoUnlocked.includes('巫女') && Math.random() < 0.05){
+          if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero('巫女');
+          log('✨ 奇蹟！在大蛇巢穴深處發現被封印的【巫女・小雪】並成功解救！');
+          setTimeout(() => { _showMikoRescueScene(); }, 2400);
+          if(typeof _setNavDot === 'function') _setNavDot('英雄', true);
+        }
+      }catch(_mikoE){ console.warn('[巫女解救] 失敗:', _mikoE); }
     }
   } else if(_mainBoss === '杏花妖'){
     if(Math.random() < 0.20){
@@ -30129,6 +30375,10 @@ const BACKPACK_ITEM_DEF = {
   'drama_girl_portrait': { name:'小劇團員肖像：琉璃公主', icon:'🎭',
     desc:'全新繪製的小劇團員肖像「琉璃公主」(公主主題)，購買後可在英雄圖鑑的小劇團員詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'小劇團員', portraitId:'drama_girl', useLabel:'前往切換' },
+  // ★ v1.0.20260421.3000p — 巫女肖像
+  'miko_shrine_portrait': { name:'巫女肖像：神社祭禮', icon:'⛩',
+    desc:'全新繪製的巫女肖像「神社祭禮」，購買後可在英雄圖鑑的巫女詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'巫女', portraitId:'miko_shrine', useLabel:'前往切換' },
 };
 
 // 商店商品定義
@@ -30201,6 +30451,10 @@ const SHOP_PRODUCTS = [
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   { id:'drama_girl_portrait', name:'小劇團員肖像：琉璃公主', icon:'🎭',
     desc:'全新繪製的小劇團員替代肖像「琉璃公主」(公主主題)。購買後即永久解鎖，可在英雄圖鑑的小劇團員詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 巫女肖像 ──
+  { id:'miko_shrine_portrait', name:'巫女肖像：神社祭禮', icon:'⛩',
+    desc:'全新繪製的巫女替代肖像「神社祭禮」。購買後即永久解鎖，可在英雄圖鑑的巫女詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
 // 可販賣品（在商店賣掉換知識幣）
@@ -33487,8 +33741,8 @@ function _buildHeroGrid() {
             <div style="height:100%;width:${expPct}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
         ` : `<div style="font-size:26px;color:#445;">🔒 未收錄</div>`}
-        ${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🎪 活動限定</div>` : ''}
-        ${(typeof JAPAN_BOSS_HEROES !== 'undefined' && JAPAN_BOSS_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ffcc44;background:rgba(255,180,50,0.15);border:1.5px solid rgba(255,200,60,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🗾 日本BOSS戰低機率獲得</div>` : ''}
+        ${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name) && !(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🎪 活動限定</div>` : ''}
+        ${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ffcc44;background:rgba(255,180,50,0.15);border:1.5px solid rgba(255,200,60,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</div>` : ''}
       </div>
       ${isUnlocked && _heroStatPoints[name] > 0 ? `<div style="position:absolute;top:8px;right:8px;background:#ff3333;color:#fff;font-size:22px;font-weight:900;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">${_heroStatPoints[name]}</div>` : ''}
     </div>`;
@@ -33681,7 +33935,7 @@ function _renderHeroDetail(name, box) {
     <!-- 名稱 + 角色簡介（並排）-->
     <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
       <div style="flex:0 0 auto;">
-        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name))?'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🎪 活動獲得</span>':''}</div>
+        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))?'<span style="font-size:22px;color:#ffcc44;background:rgba(255,180,50,0.2);border:1.5px solid rgba(255,200,60,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</span>':((typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name))?'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🎪 活動獲得</span>':'')}</div>
         <div style="font-size:32px;color:#88aaff;margin-bottom:6px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
         ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
@@ -38195,6 +38449,38 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000p', brief:[
+    '商店新增巫女新肖像；巫女祝禱天賦優化；統一日本關英雄圖鑑標籤',
+  ], items:[
+    '【商店新增】巫女肖像「神社祭禮」3000 知識幣（限購 1 次）',
+    '【巫女天賦「祝禱」優化】',
+    '  目標改為「有利狀態最少的友方優先」（並列時隨機選1名）',
+    '  升級效果：每升1級多附加1個隨機有利狀態（Lv0=1個，Lv9=10個）',
+    '  50% 機率恢復1能量機制不變',
+    '【英雄圖鑑標籤統一】',
+    '  新增 JAPAN_EXCLUSIVE_HEROES 集合：大天狗、酒吞童子、玉藻前、巫女',
+    '  全部改用金色徽章「🗾 日本關卡機率獲得」（取代原本巫女的「🎪 活動限定」和三大妖怪的「🗾 日本BOSS戰低機率獲得」）',
+    '  詳細頁與卡片 grid 同步更新',
+  ]},
+  { ver:'v1.0.20260421.3000o', brief:[
+    '🎊 新增日本關限定角色「巫女・小雪」！打倒八岐大蛇後 5% 機率解救加入',
+  ], items:[
+    '【🌸 新英雄：巫女（日本關限定）】',
+    '  數據：HP 56 / 攻擊 8 / 特技 16 / 速度 10',
+    '  說明：「守護境內安寧，以祭鈴驅散晦暗的神職」',
+    '  天賦「祝禱」：回合開始為隨機友方附加1個有利狀態，50%機率恢復1能量',
+    '  S1 神籤（c:4）：為全體友方附加隨機2個有利狀態，並依特技恢復HP（每升1級+5%）',
+    '  S2 破魔矢（c:4）：特技200%傷害1名對手（日本妖怪+100%），附加強力易傷1回合（受傷+100%）（每升1級+5%）',
+    '  爆發「神樂舞」：全體友方解除不利狀態（含強力）、附加隨機3個強力有利狀態（不可解除/搶奪）、依特技150%恢復HP（每升1級+10%）',
+    '  爆發特效：神樂舞 GIF 全場覆蓋 2.4 秒 + 祭典金光粒子',
+    '【取得方式】',
+    '  打倒八岐大蛇後有 5% 機率觸發劇情，在大蛇巢穴深處解救被封印的巫女小雪',
+    '  不列入召喚水晶「全英雄收錄」條件（等同小力、幼兒園小孩）',
+    '【技術細節】',
+    '  新增強力易傷變體：目標 _vulnStrong=true 時 doDmg 讀取 2.0x（一般 dmgVuln 維持 1.5x）',
+    '  tickStatus 到期時自動清除 _vulnStrong 旗標',
+    '  新增 _showMikoRescueScene() 劇情 modal（肖像 + 解救對白）',
+  ]},
   { ver:'v1.0.20260421.3000n', brief:[
     '午睡時間改為最多4回合；元素增幅改為常駐被動',
   ], items:[
@@ -40071,7 +40357,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000n';
+  const CURRENT_VERSION = 'v1.0.20260421.3000p';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40088,7 +40374,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000n';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000p';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
