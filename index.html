@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000r</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000u</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6438,7 +6438,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '守衛': [
     { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png' },
-    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center -2%' },
+    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 18%' },
   ],
   '時空法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -6446,8 +6446,8 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '電腦繪圖師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'graphic_boy',  name:'數位逐夢', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
-    { id:'graphic_girl', name:'彩筆織光', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
+    { id:'graphic_boy',  name:'數位逐夢', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'graphic_girl', name:'彩筆織光', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
   ],
   '直笛團員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png' },
@@ -6456,13 +6456,13 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '弦樂團員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
-    { id:'strings_boy',  name:'琴鍵共鳴', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
-    { id:'strings_girl', name:'弓弦流月', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
+    { id:'strings_boy',  name:'琴鍵共鳴', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'strings_girl', name:'弓弦流月', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
   ],
   '籃球隊員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
-    { id:'basket_boy',  name:'烈火灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true, objPos:'center 0%' },
-    { id:'basket_girl', name:'疾風三分', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true, objPos:'center 0%' },
+    { id:'basket_boy',  name:'烈火灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
+    { id:'basket_girl', name:'疾風三分', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
   ],
   '田徑隊員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png' },
@@ -6471,8 +6471,8 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '小劇團員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
-    { id:'drama_boy',  name:'銀冕王子', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%B9%B4.png', requiresUnlock:true, objPos:'center 0%' },
-    { id:'drama_girl', name:'琉璃公主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%A5%B3.png', requiresUnlock:true, objPos:'center 0%' },
+    { id:'drama_boy',  name:'銀冕王子', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%B9%B4.png', requiresUnlock:true },
+    { id:'drama_girl', name:'琉璃公主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%A5%B3.png', requiresUnlock:true },
   ],
   // ★ v1.0.20260421.3000p — 巫女替代肖像
   '巫女': [
@@ -6544,7 +6544,7 @@ const HERO_DB = {
   '占星師':{hp:62,atk:5,sp:13,spd:10,  s1:{n:'命運塔羅牌',c:2,d:'抽取物品卡並使用或賣出',fd:'抽取1張物品卡立即使用或賣出'},s2:{n:'轉禍為福',c:1,d:'全隊受傷時各獲得2能量（1回合）',fd:'使友方全體1回合內受到傷害時立即獲得2能量，每個角色只能獲得1次'}},
   '大力士':{hp:71,atk:15,sp:1,spd:3,   s1:{n:'泰山壓頂',c:3,d:'普攻後昏迷目標',fd:'普通攻擊1次後讓目標不能動1回合'},s2:{n:'不動如山',c:1,d:'(被動)免疫1次不利狀態，可再行動',fd:'(被動)受到不利狀態時觸發，可免疫此次不利狀態。(可以再行動1次)',p:true}},
   '凡人':  {hp:60,atk:10,sp:10,spd:10, s1:{n:'以牙還牙',c:2,d:'(被動)受傷或受控時複製給1名對手',fd:'(被動)受到傷害或不利狀態時觸發，消耗能量後使1名對手承受等量的傷害或相同的不利狀態。',p:true},s2:{n:'模仿',c:3,d:'模仿任意角色1個技能',fd:'模仿場上任意角色的1項技能並以自己的能力來發動效果'}},
-  '木靈使':{hp:63,atk:7,sp:13,spd:7, s1:{n:'神之賜福',c:5,d:'使1名友方HP上限+20%並完全治癒',fd:'使1名友方HP最大值提高20%並全滿恢復，此HP提升狀態不可疊加，倒下後狀態消失。'},s2:{n:'獻祭的餘暉',c:2,p:true,d:'(被動)倒下時反彈傷害並分享最大HP50%給HP最少隊友（可復活）',fd:'(被動)倒下時觸發，使對手受到同樣傷害，並分享自己最大HP的50%給HP最少的隊友（可復活）。'}},
+  '木靈使':{hp:63,atk:7,sp:13,spd:7, s1:{n:'神之賜福',c:5,d:'使1名友方HP上限+20%並完全治癒',fd:'使1名友方HP最大值提高20%並全滿恢復，此HP提升狀態不可疊加，倒下後狀態消失。'},s2:{n:'獻祭的餘暉',c:4,p:true,d:'(被動)倒下時反彈傷害並分享最大HP50%給HP最少隊友（可復活）',fd:'(被動)倒下時觸發，使對手受到同樣傷害，並分享自己最大HP的50%給HP最少的隊友（可復活）。'}},
   '機械師':{hp:74,atk:14,sp:0,spd:2, s1:{n:'定時炸彈',c:4,d:'目標下回合爆炸-30HP，波及鄰近',fd:'使1名對手在下1回合行動前爆炸-30HP，此傷害的50%波及其身旁角色。'},s2:{n:'亂槍射擊',c:4,d:'隨機攻擊3～5次',fd:'隨機發射子彈，用攻擊值造成3~5次傷害攻擊隨機對手目標。'}},
   '動物學家':{hp:61,atk:7,sp:10,spd:12, s1:{n:'動物召喚',c:2,d:'用特技攻擊HP最低的敵方1~2次並召喚1隻寵物',fd:'用特技對HP最低的敵方造成1~2次傷害，同時召喚出1隻寵物讓友方攜帶。'},s2:{n:'動物守護',c:3,d:'2回合內友方全體的卡片、寵物和能量受到保護，每隻寵物為動物學家減傷10%',fd:'2回合內友方全體的卡片、寵物和能量受到保護，不會被禁用、交換、奪取或破壞。且隊伍每存在1隻寵物可為動物學家減傷10%（最多40%）。'}},
   '武士':  {hp:60,atk:14,sp:10,spd:6, s1:{n:'迴避反擊',c:4,p:true,d:'(被動)被攻擊時100%閃躲並反擊150%攻擊傷害',fd:'(被動)被攻擊時觸發，有100%機率閃躲，再給對手攻擊150%的傷害。'},s2:{n:'崛起鬥志',c:4,p:true,d:'(被動)復活時各項能力+5（限用一次）',fd:'(被動)被復活時觸發，提升自己基本HP、攻擊、特技、速度各5點。只能發動一次。'}},
@@ -6879,39 +6879,39 @@ const BURST_UPGRADE_DEF = {
 };
 
 const HERO_IMG_POS = {
-  '舞者':    ['235% auto','center 10%'],
-  '刺客':    ['176% auto','center 15%'],
+  '舞者':    ['235% auto','center 20%'],
+  '刺客':    ['176% auto','center 25%'],
   '吟遊詩人':  ['176% auto','center 32%'],
   '大力士':  ['176% auto','center 23%'],
-  '軍師':    ['176% auto','center 5%'],
+  '軍師':    ['176% auto','center 15%'],
   '煉金術師':['95% auto','center 28%'],
   '占星師':  ['168% auto','center 28%'],
-  '武鬥家':  ['202% auto','center 10%'],
+  '武鬥家':  ['202% auto','center 20%'],
   '祭司':    ['152% auto','center 35%'],
-  '劍士':    ['276% auto','center 12%'],
+  '劍士':    ['276% auto','center 22%'],
   '光法師':  ['255% auto','center 30%'],
-  '警長':    ['211% auto','center 20%'],
+  '警長':    ['211% auto','center 30%'],
   '聖騎士':  ['202% auto','center 25%'],
-  '暗法師':  ['211% auto','center 13%'],
-  '雷法師':  ['139% auto','center 10%'],
+  '暗法師':  ['211% auto','center 23%'],
+  '雷法師':  ['139% auto','center 30%'],
   '冰法師':  ['131% auto','center 30%'],
   '守衛':    ['192% auto','center 33%'],
   '偷摘花的頑皮妖精': ['144% auto','center 20%'],
   '偷鳥蛋的鳥人哈維': ['144% auto','center 20%'],
-  '火法師':  ['160% auto','center 20%'],
-  '神射手':  ['251% auto','center 15%'],
+  '火法師':  ['160% auto','center 30%'],
+  '神射手':  ['251% auto','center 25%'],
   '神偷':    ['92% auto','center 35%'],
   // ── 新角色 ──
   '學者':    ['144% auto','center 40%'],    // 上移40%（20+40）
-  '時空法師':['105% auto','center 10%'],    // v1.0.20260421.3000q 下移10%
+  '時空法師':['105% auto','center 20%'],    // 上移5%（20+5）
   '陰陽師':  ['122% auto','center 30%'],   // 放大10%（160→176）+上移10%（20+10）
-  '動物學家':['160% auto','center 10%'],   // v1.0.20260421.3000q 下移10%
+  '動物學家':['160% auto','center 20%'],   // 放大5%（160→168）+上移5%（20+5）
   '吸血鬼':  ['136% auto','center 30%'],   // 放大10%（160→176）+上移10%（20+10）
   '機械師':  ['160% auto','center 33%'],   // 上移5%（20+5）
-  '木靈使':  ['117% auto','center 15%'],   // v1.0.20260421.3000q 下移10%
-  '武士':    ['160% auto','center 13%'],   // v1.0.20260421.3000q 下移20%
+  '木靈使':  ['117% auto','center 25%'],   // 上移5%（20+5）
+  '武士':    ['160% auto','center 33%'],   // 上移5%（20+5）
   '杏花妖':  ['150% auto','center 22%'],   // BOSS：臉部置上
-  '凡人':    ['160% auto','center -6%'],   // v1.0.20260421.3000q 下移20%
+  '凡人':    ['160% auto','center 14%'],   // 往上移5%（預設12+5）
   '小力':    ['140% auto','center 25%'],
   '籃球隊員':['140% auto','center 20%'],
   '直笛團員':['160% auto','center 30%'],
@@ -6946,6 +6946,40 @@ function getHeroObjPos(name){
   const parts = pos[1].split(' ');
   const vert = parts[1] || '12%';
   return 'center ' + vert;
+}
+
+// ★ v1.0.20260421.3000u — 左側英雄選擇網格縮圖專用位置
+//   預設 center center (50%)；下方清單為使用者指定要下移的英雄
+//   「下移 10%」= Y% 從 50 - 10 = 40；「下移 20%」= Y% = 30
+const HERO_THUMB_POS = {
+  // 下移 10%（預設 50% - 10% = 40%）
+  '動物學家':'center 40%', '神射手':'center 40%', '木靈使':'center 40%',
+  '軍師':'center 40%',     '劍士':'center 40%',   '暗法師':'center 40%',
+  '刺客':'center 40%',     '舞者':'center 40%',   '武鬥家':'center 40%',
+  '火法師':'center 40%',   '時空法師':'center 40%','警長':'center 40%',
+  // 下移 20%（預設 50% - 20% = 30%）
+  '武士':'center 30%', '凡人':'center 30%', '雷法師':'center 30%',
+};
+
+// 新肖像縮圖下移 20% → Y% = 30%
+const HERO_THUMB_POS_BY_PORTRAIT = {
+  // heroName: { portraitId: 'center Y%' }
+  '電腦繪圖師': { 'graphic_boy':'center 30%', 'graphic_girl':'center 30%' },
+  '弦樂團員':   { 'strings_boy':'center 30%',  'strings_girl':'center 30%' },
+  '籃球隊員':   { 'basket_boy':'center 30%',   'basket_girl':'center 30%' },
+  '小劇團員':   { 'drama_boy':'center 30%',    'drama_girl':'center 30%' },
+  '守衛':       { 'iron_oath':'center 30%' },
+};
+
+// 左側縮圖使用：依當前選擇的肖像套用對應位置；否則 fallback 到 HERO_THUMB_POS
+function getHeroThumbObjPos(name){
+  try{
+    const choice = (typeof _heroPortraitChoice !== 'undefined' && _heroPortraitChoice[name]) || 'default';
+    if(choice !== 'default' && HERO_THUMB_POS_BY_PORTRAIT[name] && HERO_THUMB_POS_BY_PORTRAIT[name][choice]){
+      return HERO_THUMB_POS_BY_PORTRAIT[name][choice];
+    }
+  }catch(_){}
+  return HERO_THUMB_POS[name] || 'center center';
 }
 function getHeroImgStyle(name){
   const _override = _getCurPortraitObjPos(name);
@@ -8646,7 +8680,7 @@ function _buildHeroPickNodes(){
       node.id = `hpick-${idx}`;
       node.style.cssText = 'position:relative;width:155px;cursor:pointer;border-radius:14px;overflow:hidden;border:2.5px solid rgba(212,168,67,0.4);background:rgba(10,12,25,0.92);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;';
       node.innerHTML = img
-        ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;"/>
+        ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;object-position:${(typeof getHeroThumbObjPos==='function')?getHeroThumbObjPos(name):'center center'};display:block;"/>
            <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:15px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`
         : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>
            <div style="font-size:16px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`;
@@ -8691,7 +8725,7 @@ function _buildHeroPickNodes(){
       'flex-shrink:0;'
     ].join('');
     node.innerHTML = img
-      ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;"/>
+      ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;object-position:${(typeof getHeroThumbObjPos==='function')?getHeroThumbObjPos(name):'center center'};display:block;"/>
          <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`
       : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:58px;">${av}</div>
          <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`;
@@ -33292,6 +33326,7 @@ const SKILL_UPGRADE_DEF = {
   '朱雀召喚': { cat:'dmg',    label:'技能傷害' },
   '青龍召喚': { cat:'dmg',    label:'技能傷害' },
   '變臉戲法': { cat:'dmg',    label:'技能傷害' },
+  '破魔矢':   { cat:'dmg',    label:'技能傷害' },
   '舞台聚光燈':{ cat:'special_spotlight', label:'嘲諷＋失明目標數' },
   // ── 治療類：每級治療+10% ──
   '救贖神光': { cat:'heal',   label:'治療量' },
@@ -33304,7 +33339,8 @@ const SKILL_UPGRADE_DEF = {
   '神之賜福': { cat:'special_divine', label:'能量消耗／免疫倒下' },
   '慈悲之雨': { cat:'heal',   label:'治療量' },
   '黃昏詩歌': { cat:'heal',   label:'治療量' },
-  '獻祭的餘暉':{ cat:'heal',  label:'治療量' },
+  '獻祭的餘暉':{ cat:'no_upgrade', label:'固定效果：分享最大HP 50%，可復活倒下隊友' },
+  '神籤':     { cat:'heal',   label:'恢復量' },
   '雙小提琴協奏曲':{ cat:'heal',label:'治療量' },
   '餘音繞樑': { cat:'heal',   label:'治療量' },
   '舔舔治療': { cat:'heal',   label:'治療量' },
@@ -33487,7 +33523,7 @@ function buildSkillLvTable(skillName, currentLv) {
       const t = (def.base||10)+Math.floor(lv/(def.perLv||2))*(def.step||5);
       effectText = def.label+' '+t+'HP以下';
     } else if(cat==='special_divine'){
-      if(lv===0) effectText = '基礎效果（HP上限+15並完全治癒）';
+      if(lv===0) effectText = '基礎效果（HP上限+20%並完全治癒）';
       else if(lv<5) effectText = '基礎效果';
       else if(lv<9) effectText = '能量消耗 -1';
       else effectText = '能量消耗 -1，且目標免疫1次倒下（MAX）';
@@ -38466,6 +38502,41 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000u', brief:[
+    '修正縮圖調整位置 — 原 v3000q 改到錯的地方（右側預覽），此版修正',
+  ], items:[
+    '【撤銷 v3000q 的錯誤改動】',
+    '  HERO_IMG_POS 所有垂直值還原為 v3000p 狀態',
+    '  HERO_PORTRAIT_LIBRARY 5 個新肖像的 objPos 屬性移除，守衛 iron_oath 還原 center 18%',
+    '【正確改動：左側英雄選擇縮圖】',
+    '  新增 HERO_THUMB_POS 對照表（僅影響左側選擇網格縮圖）',
+    '  新增 HERO_THUMB_POS_BY_PORTRAIT（新肖像的縮圖位置覆蓋）',
+    '  新增 getHeroThumbObjPos() helper — 依當前選肖像回傳縮圖位置',
+    '  左側網格兩處 <img>（hpick-adv-node + hpick-arena-card）加 object-position',
+    '【縮圖下移 10%（Y%=40）】',
+    '  動物學家、神射手、木靈使、軍師、劍士、暗法師、刺客、舞者、武鬥家、火法師、時空法師、警長',
+    '【縮圖下移 20%（Y%=30）】',
+    '  武士、凡人、雷法師（base）',
+    '  電腦繪圖師、弦樂團員、籃球隊員、小劇團員、守衛 — 新肖像',
+  ]},
+  { ver:'v1.0.20260421.3000t', brief:[
+    '破魔矢補進英雄圖鑑升級效果',
+  ], items:[
+    '【破魔矢】',
+    '  新增 SKILL_UPGRADE_DEF 項目（cat:dmg，label:技能傷害）',
+    '  升級徽章與詳細頁正確顯示「技能傷害+X%」（每升1級 +5%）',
+  ]},
+  { ver:'v1.0.20260421.3000s', brief:[
+    '英雄圖鑑同步更新技能升級效果顯示',
+  ], items:[
+    '【神籤】',
+    '  新增 SKILL_UPGRADE_DEF 項目（cat:heal，label:恢復量），升級徽章正確顯示「恢復量+X%」',
+    '【獻祭的餘暉】',
+    '  SKILL_UPGRADE_DEF 改為 no_upgrade（固定效果「分享最大HP 50%，可復活倒下隊友」）',
+    '  能量消耗從 c:2 改為 c:4（配合規格 🔷🔷🔷🔷）',
+    '【神之賜福】',
+    '  buildSkillLvTable 的 Lv0 基礎效果文案「HP上限+15」→「HP上限+20%」',
+  ]},
   { ver:'v1.0.20260421.3000r', brief:[
     '技能調整：神籤、神之賜福、獻祭的餘暉',
   ], items:[
@@ -40397,7 +40468,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000r';
+  const CURRENT_VERSION = 'v1.0.20260421.3000u';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40414,7 +40485,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000r';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000u';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
