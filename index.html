@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000p</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3000q</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -6438,7 +6438,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '守衛': [
     { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png' },
-    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center 18%' },
+    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96)2.png', requiresUnlock:true, objPos:'center -2%' },
   ],
   '時空法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -6446,8 +6446,8 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '電腦繪圖師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'graphic_boy',  name:'數位逐夢', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
-    { id:'graphic_girl', name:'彩筆織光', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+    { id:'graphic_boy',  name:'數位逐夢', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
+    { id:'graphic_girl', name:'彩筆織光', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
   ],
   '直笛團員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png' },
@@ -6456,13 +6456,13 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '弦樂團員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
-    { id:'strings_boy',  name:'琴鍵共鳴', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
-    { id:'strings_girl', name:'弓弦流月', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+    { id:'strings_boy',  name:'琴鍵共鳴', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
+    { id:'strings_girl', name:'弓弦流月', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true, objPos:'center 10%' },
   ],
   '籃球隊員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
-    { id:'basket_boy',  name:'烈火灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true },
-    { id:'basket_girl', name:'疾風三分', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true },
+    { id:'basket_boy',  name:'烈火灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E7%94%B7%E5%AD%A9.png', requiresUnlock:true, objPos:'center 0%' },
+    { id:'basket_girl', name:'疾風三分', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%A5%B3%E5%AD%A9.png', requiresUnlock:true, objPos:'center 0%' },
   ],
   '田徑隊員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png' },
@@ -6471,8 +6471,8 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '小劇團員': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
-    { id:'drama_boy',  name:'銀冕王子', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%B9%B4.png', requiresUnlock:true },
-    { id:'drama_girl', name:'琉璃公主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%A5%B3.png', requiresUnlock:true },
+    { id:'drama_boy',  name:'銀冕王子', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%B9%B4.png', requiresUnlock:true, objPos:'center 0%' },
+    { id:'drama_girl', name:'琉璃公主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96)%E5%B0%91%E5%A5%B3.png', requiresUnlock:true, objPos:'center 0%' },
   ],
   // ★ v1.0.20260421.3000p — 巫女替代肖像
   '巫女': [
@@ -6879,39 +6879,39 @@ const BURST_UPGRADE_DEF = {
 };
 
 const HERO_IMG_POS = {
-  '舞者':    ['235% auto','center 20%'],
-  '刺客':    ['176% auto','center 25%'],
+  '舞者':    ['235% auto','center 10%'],
+  '刺客':    ['176% auto','center 15%'],
   '吟遊詩人':  ['176% auto','center 32%'],
   '大力士':  ['176% auto','center 23%'],
-  '軍師':    ['176% auto','center 15%'],
+  '軍師':    ['176% auto','center 5%'],
   '煉金術師':['95% auto','center 28%'],
   '占星師':  ['168% auto','center 28%'],
-  '武鬥家':  ['202% auto','center 20%'],
+  '武鬥家':  ['202% auto','center 10%'],
   '祭司':    ['152% auto','center 35%'],
-  '劍士':    ['276% auto','center 22%'],
+  '劍士':    ['276% auto','center 12%'],
   '光法師':  ['255% auto','center 30%'],
-  '警長':    ['211% auto','center 30%'],
+  '警長':    ['211% auto','center 20%'],
   '聖騎士':  ['202% auto','center 25%'],
-  '暗法師':  ['211% auto','center 23%'],
-  '雷法師':  ['139% auto','center 30%'],
+  '暗法師':  ['211% auto','center 13%'],
+  '雷法師':  ['139% auto','center 10%'],
   '冰法師':  ['131% auto','center 30%'],
   '守衛':    ['192% auto','center 33%'],
   '偷摘花的頑皮妖精': ['144% auto','center 20%'],
   '偷鳥蛋的鳥人哈維': ['144% auto','center 20%'],
-  '火法師':  ['160% auto','center 30%'],
-  '神射手':  ['251% auto','center 25%'],
+  '火法師':  ['160% auto','center 20%'],
+  '神射手':  ['251% auto','center 15%'],
   '神偷':    ['92% auto','center 35%'],
   // ── 新角色 ──
   '學者':    ['144% auto','center 40%'],    // 上移40%（20+40）
-  '時空法師':['105% auto','center 20%'],    // 上移5%（20+5）
+  '時空法師':['105% auto','center 10%'],    // v1.0.20260421.3000q 下移10%
   '陰陽師':  ['122% auto','center 30%'],   // 放大10%（160→176）+上移10%（20+10）
-  '動物學家':['160% auto','center 20%'],   // 放大5%（160→168）+上移5%（20+5）
+  '動物學家':['160% auto','center 10%'],   // v1.0.20260421.3000q 下移10%
   '吸血鬼':  ['136% auto','center 30%'],   // 放大10%（160→176）+上移10%（20+10）
   '機械師':  ['160% auto','center 33%'],   // 上移5%（20+5）
-  '木靈使':  ['117% auto','center 25%'],   // 上移5%（20+5）
-  '武士':    ['160% auto','center 33%'],   // 上移5%（20+5）
+  '木靈使':  ['117% auto','center 15%'],   // v1.0.20260421.3000q 下移10%
+  '武士':    ['160% auto','center 13%'],   // v1.0.20260421.3000q 下移20%
   '杏花妖':  ['150% auto','center 22%'],   // BOSS：臉部置上
-  '凡人':    ['160% auto','center 14%'],   // 往上移5%（預設12+5）
+  '凡人':    ['160% auto','center -6%'],   // v1.0.20260421.3000q 下移20%
   '小力':    ['140% auto','center 25%'],
   '籃球隊員':['140% auto','center 20%'],
   '直笛團員':['160% auto','center 30%'],
@@ -38449,6 +38449,15 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3000q', brief:[
+    '調整英雄卡牌縮圖位置，讓臉部/眼神更清晰可見',
+  ], items:[
+    '【下移 10%（臉部往上露出更多）】',
+    '  動物學家、神射手、木靈使、軍師、劍士、暗法師、刺客、舞者、武鬥家、火法師、時空法師、警長',
+    '【下移 20%】',
+    '  武士、凡人、雷法師（HERO_IMG_POS 調整）',
+    '  電腦繪圖師、弦樂團員、小劇團員、籃球隊員、守衛 — 新肖像加 objPos 覆蓋',
+  ]},
   { ver:'v1.0.20260421.3000p', brief:[
     '商店新增巫女新肖像；巫女祝禱天賦優化；統一日本關英雄圖鑑標籤',
   ], items:[
@@ -40357,7 +40366,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3000p';
+  const CURRENT_VERSION = 'v1.0.20260421.3000q';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40374,7 +40383,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3000p';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3000q';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
