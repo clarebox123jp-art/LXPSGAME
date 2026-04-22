@@ -4016,7 +4016,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3005</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3008</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4342,7 +4342,7 @@ body {
     </div>
   </div>
 
-    <!-- ★ 底部功能選單：固定在冒險overlay底部 -->
+    <!-- ★ v1.0.20260421.3008 — 底部功能選單：8 顆按鈕 -->
     <div id="adv-bottom-nav">
       <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('召喚')">
         <span class="adv-nav-icon">🔮</span>
@@ -4351,16 +4351,24 @@ body {
       </button>
       <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openHeroPage()">
         <span class="adv-nav-icon">⚔️</span>
-        <span class="adv-nav-label">英雄圖鑑</span>
+        <span class="adv-nav-label">英雄</span>
+      </button>
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openMonsterPage()">
+        <span class="adv-nav-icon">👹</span>
+        <span class="adv-nav-label">魔物</span>
+      </button>
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openPetPage()">
+        <span class="adv-nav-icon">🐾</span>
+        <span class="adv-nav-label">寵物</span>
+      </button>
+      <button class="adv-nav-btn" id="adv-friend-btn" onclick="openFriendPanel()" style="border-color:rgba(255,150,200,0.4);">
+        <span class="adv-nav-icon">🤝</span>
+        <span class="adv-nav-label">好友</span>
+        <span id="adv-friend-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ff4488;color:#fff;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;"></span>
       </button>
       <button class="adv-nav-btn" onclick="playSfx('sfx-sel',0.5);openBackpackOverlay()">
         <span class="adv-nav-icon">🎒</span>
         <span class="adv-nav-label">背包</span>
-      </button>
-      <button class="adv-nav-btn" id="adv-friend-btn" onclick="openFriendPanel()" style="border-color:rgba(255,150,200,0.4);">
-        <span class="adv-nav-icon">🤝</span>
-        <span class="adv-nav-label">好友英雄</span>
-        <span id="adv-friend-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ff4488;color:#fff;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;"></span>
       </button>
       <button class="adv-nav-btn" id="adv-medal-btn" onclick="playSfx('sfx-gentle',0.5);openMedalPage()" style="border-color:rgba(255,200,50,0.4);">
         <span class="adv-nav-icon">🏅</span>
@@ -7299,6 +7307,12 @@ function statTrack(hero, field, amount){
 function addStatus(h,t,dur=1){
   if(!h||h.curHp<=0) return;
   if(fieldHas('purify')) return;
+  // ★ v1.0.20260421.3007 — 八岐大蛇天賦：免疫所有不利狀態（不受 confused 影響，天生能力）
+  if(h.name === '八岐大蛇' && t !== 'strongTaunt'){
+    showShieldVFX(h,'immune');
+    log(`🐉 [八岐大蛇] 八首吞天：免疫 ${statusName(t)}！`);
+    return;
+  }
   // ★ strongTaunt（強力挑釁）無法被免疫技能豁免
   if(t !== 'strongTaunt' && (hasBuff(h,'immune')||hasBuff(h,'statusImmune'))){ showShieldVFX(h,'immune'); return; }
   const _CTRL=['stun','freeze','sleep','para','trap','berserk'];
@@ -8543,7 +8557,18 @@ let _previewEnemyNames = [];
 function _getCurrentAdvBossTeam(){
   const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
   if(!variants.length) return ADV_BOSS_TEAMS[_adventureStage] || [];
-  const idx = (window._advSelectedVariantIdx||0) % variants.length;
+  let idx = (window._advSelectedVariantIdx||0) % variants.length;
+  // ★ v1.0.20260421.3006 — 若當前 idx 指向未解鎖的隱藏路線，自動回到第一個正規路線
+  const _v0 = variants[idx];
+  if(_v0 && _v0.hidden){
+    const _locked = (_adventureStage === 'japan' && _v0.id === 'yamata')
+      ? ((typeof _japanTreasureCount === 'function') ? (_japanTreasureCount() < 3) : true)
+      : true;
+    if(_locked){
+      idx = 0;
+      window._advSelectedVariantIdx = 0;
+    }
+  }
   const variant = variants[idx];
   if(variant.id === 'cat9tail'){
     return ADV_BOSS_TEAMS[_adventureStage] || [];
@@ -8598,7 +8623,22 @@ function _renderAdvBossPreview(){
 function _cycleAdvBossVariant(){
   const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[_adventureStage]) || [];
   if(variants.length <= 1) return;
-  window._advSelectedVariantIdx = ((window._advSelectedVariantIdx||0) + 1) % variants.length;
+  // ★ v1.0.20260421.3006 — 隱藏路線（八岐大蛇）必須集滿三神器才可挑戰
+  //   切換時跳過未解鎖的 hidden variant
+  const _isVariantLocked = (v) => {
+    if(!v || !v.hidden) return false;
+    if(_adventureStage === 'japan' && v.id === 'yamata'){
+      return (typeof _japanTreasureCount === 'function') ? (_japanTreasureCount() < 3) : true;
+    }
+    return true; // 其他未識別的 hidden 路線預設鎖定
+  };
+  // 找下一個未鎖定的路線（最多繞一圈避免無限迴圈）
+  let _nextIdx = window._advSelectedVariantIdx || 0;
+  for(let i=0; i<variants.length; i++){
+    _nextIdx = (_nextIdx + 1) % variants.length;
+    if(!_isVariantLocked(variants[_nextIdx])) break;
+  }
+  window._advSelectedVariantIdx = _nextIdx;
   // 若切到 apricot 變體，重新抽一組隨機英雄
   const newVariant = variants[window._advSelectedVariantIdx];
   if(newVariant && newVariant.id === 'apricot'){
@@ -9080,7 +9120,7 @@ const HERO_TRAIT = {
   '大天狗':     { name:'疾風之翼', icon:'🌪️', desc:'行動前60%機率速度+2',fd:'每次行動前有60%機率使自身速度+2（可累積，持續到戰鬥結束）。' },
   '酒吞童子':   { name:'酒入鬼力', icon:'🍶', desc:'受傷時60%機率恢復1能量',fd:'受到傷害時有60%機率立即恢復1能量。' },
   '玉藻前':     { name:'媚惑窺破', icon:'👁️‍🗨️', desc:'造成傷害時60%機率無視有利狀態',fd:'造成傷害時有60%機率無視目標身上的有利狀態（護盾、免疫、減傷等）。' },
-  '八岐大蛇':   { name:'八首吞天', icon:'🐉', desc:'傷害25%吸血，普攻2下',fd:'造成傷害的25%轉化為自身HP恢復；普通攻擊變為連續2下。' },
+  '八岐大蛇':   { name:'八首吞天', icon:'🐉', desc:'傷害25%吸血，普攻2下，免疫所有不利狀態',fd:'造成傷害的25%轉化為自身HP恢復；普通攻擊變為連續2下；免疫所有不利狀態（冰凍、燃燒、麻痺、中毒、失明、封印等皆無效）。' },
   // ── 日本關稀有小怪 ──
   '行走的二宮尊德像': { name:'勤學不輟', icon:'📚', desc:'免疫不利狀態，行動前回15%HP',fd:'免疫所有不利狀態，每次自己行動前恢復最大HP的15%。' },
   '座敷童子':   { name:'家之守護', icon:'🎎', desc:'受傷時以特技50%反擊隨機3次',fd:'受到傷害時立即以特技值的50%反擊隨機3個敵方目標（若敵方不足3人則重複挑選）。' },
@@ -25528,8 +25568,8 @@ const ADV_REWARDS = [
   {id:'cleanse',      icon:'🌟', name:'淨化光芒',   desc:'清除全體隊友的不利狀態'},
   {id:'stun_enemy',   icon:'🌀', name:'靜止封印',   desc:'強制使1名對手無法行動1回合'},
   {id:'heal_50',      icon:'🍵', name:'貓空茶香',   desc:'全體隊友恢復50%HP'},
-  {id:'dmg_one',      icon:'🌿', name:'竹筍突刺',   desc:'使1名對手受到最大HP 20%傷害'},
-  {id:'dmg_all',      icon:'🔥', name:'焰尾橫掃',   desc:'使全體對手各受到最大HP 20%傷害'},
+  {id:'dmg_one',      icon:'🌿', name:'竹筍突刺',   desc:'使1名對手受到當前剩餘HP 20%傷害'},
+  {id:'dmg_all',      icon:'🔥', name:'焰尾橫掃',   desc:'使全體對手各受到當前剩餘HP 20%傷害'},
   {id:'instant_burst',icon:'💥', name:'極限爆發',   desc:'選擇1名隊友立即發動極限爆發（每場限1次）', _once:true},
   {id:'get_pet',      icon:'🐾', name:'神奇夥伴',   desc:'獲得1隻隨機寵物裝備卡，加入背包'},
   {id:'get_card',     icon:'🃏', name:'補充物資',   desc:'獲得1張隨機物品卡，加入背包'},
@@ -25877,7 +25917,7 @@ Object.assign(HERO_DB, {
   },
 
   // ── 隱藏 BOSS：八岐大蛇（比三大 BOSS 再強一階）──
-  '八岐大蛇':{hp:800,atk:20,sp:28,spd:22,exp:120,
+  '八岐大蛇':{hp:1500,atk:20,sp:28,spd:22,exp:120,
     s1:{n:'八首齊噬',c:3,d:'依攻擊40%對隨機目標造成8次傷害',fd:'八個龍頭一齊撲咬，用攻擊值的40%對隨機存活對手造成8次龍屬性傷害，每次獨立結算暴擊。'},
     s2:{n:'暗冰雷焰吐息',c:5,d:'依特技對全體造成2次傷害，隨機附加2種不利狀態',fd:'八頭齊噴暗焰、冰雪、落雷、烈焰等毒氣，用特技值對全體敵人造成2次傷害，並隨機從「冰凍、地獄之火、封印、麻痺」中附加2種不利狀態。'}
   },
@@ -29079,14 +29119,16 @@ function advApplyReward(id) {
         } else if (id === 'dmg_one') {
       const foes=G.p2.filter(x=>x.curHp>0);
       if(foes.length){ const t=foes[Math.floor(Math.random()*foes.length)];
-        const dmg=Math.floor(t.hp*0.2);
+        // ★ v1.0.20260421.3007 — 改為「當前剩餘HP」20%
+        const dmg=Math.max(1, Math.floor(t.curHp*0.2));
         flashCard(t,'rgba(100,200,80,0.85)',400);
         doDmg(t,dmg,{ignoreBuffs:true,isSkill:true});
         playSfx('sfx-explode',0.75); bannerFX(t,'🌿 竹筍突刺！','#88ff44',900);
         log(`[獎勵] ${t.name} 受到${dmg}傷害！`); }
         } else if (id === 'dmg_all') {
       G.p2.filter(x=>x.curHp>0).forEach(t=>{
-        const dmg=Math.floor(t.hp*0.2);
+        // ★ v1.0.20260421.3007 — 改為「當前剩餘HP」20%
+        const dmg=Math.max(1, Math.floor(t.curHp*0.2));
         flashCard(t,'rgba(255,80,30,0.85)',400);
         doDmg(t,dmg,{ignoreBuffs:true,isSkill:true});
         bannerFX(t,'🔥 焰尾橫掃！','#ff6633',900);
@@ -39334,6 +39376,38 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3008', brief:[
+    '冒險關卡選擇頁底部選單擴充為 8 顆按鈕',
+  ], items:[
+    '【底部選單改版】',
+    '  原 6 顆 → 新 8 顆：召喚、英雄、魔物、寵物、好友、背包、獎章、更新日誌',
+    '  「英雄圖鑑」拆成三個獨立按鈕（英雄／魔物／寵物），可直接開啟對應圖鑑',
+    '  圖鑑頁內原本的分頁切換按鈕保留，仍可在三個圖鑑間切換',
+  ]},
+  { ver:'v1.0.20260421.3007', brief:[
+    '八岐大蛇強化（HP 1500 + 免疫不利狀態）+ 答題獎勵改為當前剩餘HP計算',
+  ], items:[
+    '【八岐大蛇強化】',
+    '  基礎 HP：800 → 1500（隱藏 BOSS 應有的壓迫感）',
+    '  天賦「八首吞天」追加效果：免疫所有不利狀態',
+    '  （原效果保留：造成傷害 25% 吸血、普攻連擊 2 下）',
+    '  冰凍/燃燒/麻痺/中毒/失明/封印 等狀態對八岐大蛇皆無效',
+    '【答題獎勵修正】',
+    '  竹筍突刺（單體）：最大HP 20% → 當前剩餘HP 20%',
+    '  焰尾橫掃（全體）：最大HP 20% → 當前剩餘HP 20%',
+    '  避免滿血 BOSS 一次被打掉 20% 過於強勢，改用當前 HP 計算更合理',
+  ]},
+  { ver:'v1.0.20260421.3006', brief:[
+    '【嚴重 BUG 修正】日本關角色選擇頁「換路線」可繞過神器挑戰八岐大蛇',
+  ], items:[
+    '【BUG 描述】',
+    '  玩家在日本關角色選擇頁按「換路線」按鈕循環切換時，可切到隱藏路線八岐大蛇',
+    '  即使三神器尚未集齊也能直接挑戰，完全繞過解鎖條件',
+    '【修正】',
+    '  _cycleAdvBossVariant() 循環時跳過未解鎖的 hidden 路線（八岐大蛇需 3 神器）',
+    '  _getCurrentAdvBossTeam() 若當前 idx 指向未解鎖隱藏路線，自動回到第一條正規路線',
+    '  雙重保險防止神器未齊時進入八岐大蛇戰鬥',
+  ]},
   { ver:'v1.0.20260421.3005', brief:[
     'AI 新技能評分補完 + 技能說明升級文字清除',
   ], items:[
@@ -41429,7 +41503,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3005';
+  const CURRENT_VERSION = 'v1.0.20260421.3008';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41446,7 +41520,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3005';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3008';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
