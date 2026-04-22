@@ -4018,7 +4018,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3009</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3015</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4325,7 +4325,7 @@ body {
   </div>
 
   <!-- ★ 英雄詳細/養成視窗 -->
-  <div id="hero-detail-overlay" style="display:none;position:absolute;inset:0;z-index:710;
+  <div id="hero-detail-overlay" style="display:none;position:absolute;inset:0;z-index:9200;
     background:linear-gradient(160deg,#080c1a,#040608);flex-direction:row;overflow:hidden;">
     <!-- 左側：英雄立繪 -->
     <div id="hero-detail-img-side" style="width:42%;position:relative;flex-shrink:0;overflow:hidden;background:rgba(0,0,0,0.3);">
@@ -6465,7 +6465,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '吸血鬼': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%90%B8%E8%A1%80%E9%AC%BC(%E7%B8%AE%E5%9C%96).png' },
-    { id:'dark_rose', name:'暗夜薔薇', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%90%B8%E8%A1%80%E9%AC%BC2.png', requiresUnlock:true },
+    { id:'dark_rose', name:'暗夜薔薇', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%90%B8%E8%A1%80%E9%AC%BC2.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   '大力士': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%A4%A7%E5%8A%9B%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -6473,7 +6473,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '學者': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%AD%B8%E8%80%85(%E7%B8%AE%E5%9C%96).png' },
-    { id:'wisdom_light', name:'知識燈塔', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AD%B8%E8%80%852.png', requiresUnlock:true },
+    { id:'wisdom_light', name:'知識燈塔', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AD%B8%E8%80%852.png', requiresUnlock:true, objPos:'center 25%' },
   ],
   '機械師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%A9%9F%E6%A2%B0%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -6493,7 +6493,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '程式設計師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'quantum_code', name:'量子編碼', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB2.png', requiresUnlock:true },
+    { id:'quantum_code', name:'量子編碼', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB2.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   '聖騎士': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%81%96%E9%A8%8E%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -6501,11 +6501,11 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '軍師': [
     { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E8%BB%8D%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB2.png', requiresUnlock:true },
+    { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB2.png', requiresUnlock:true, objPos:'center 5%' },
   ],
   '陰陽師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%99%B0%E9%99%BD%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
-    { id:'four_saints', name:'天地四聖', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%99%B0%E9%99%BD%E5%B8%AB2.png', requiresUnlock:true },
+    { id:'four_saints', name:'天地四聖', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%99%B0%E9%99%BD%E5%B8%AB2.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   '雷法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
@@ -7084,6 +7084,11 @@ const HERO_THUMB_POS_BY_PORTRAIT = {
   '籃球隊員':   { 'basket_boy':'center 30%',   'basket_girl':'center 30%' },
   '小劇團員':   { 'drama_boy':'center 30%',    'drama_girl':'center 30%' },
   '守衛':       { 'iron_oath':'center 30%' },
+  // ★ v1.0.20260421.3013 — 4 位角色的新肖像下移 20%
+  '程式設計師': { 'quantum_code':'center 30%' },
+  '軍師':       { 'tactic_web':'center 30%' },
+  '陰陽師':     { 'four_saints':'center 30%' },
+  '吸血鬼':     { 'dark_rose':'center 30%' },
 };
 
 // 左側縮圖使用：依當前選擇的肖像套用對應位置；否則 fallback 到 HERO_THUMB_POS
@@ -16521,11 +16526,11 @@ function execSkill(a, sk, cost, stype){
 
   // ====== 常駐被動（選到即永遠自動觸發，不需手動啟動）======
   else if(n==='召喚蝙蝠群'){
-    // ★ v1.0.20260421.3004 — 次數：基礎 5 次，升到 4/7/10 級各 +1
+    // ★ v1.0.20260421.3010 — 次數：基礎 5 次，Lv4=6次／Lv7=7次／Lv10=8次
     let _batHits = 5;
-    if(_activeSkLv>=4) _batHits++;
-    if(_activeSkLv>=7) _batHits++;
-    if(_activeSkLv>=10) _batHits++;
+    if(_activeSkLv>=3) _batHits++;  // Lv4
+    if(_activeSkLv>=6) _batHits++;  // Lv7
+    if(_activeSkLv>=9) _batHits++;  // Lv10
     log(`[${a.name}] 召喚蝙蝠群！${_batHits}次固定傷害！`);
     const batFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     if(!batFoes.length){ endAction(a,cost); return; }
@@ -19382,9 +19387,9 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='召喚蝙蝠群'){
     const _lvBat = (a && a._skLv) ? ((a.s1 && a.s1.n==='召喚蝙蝠群') ? a._skLv.s1 : a._skLv.s2) || 0 : 0;
     let _batCnt = 5;
-    if(_lvBat>=4) _batCnt++;
-    if(_lvBat>=7) _batCnt++;
-    if(_lvBat>=10) _batCnt++;
+    if(_lvBat>=3) _batCnt++;  // Lv4
+    if(_lvBat>=6) _batCnt++;  // Lv7
+    if(_lvBat>=9) _batCnt++;  // Lv10
     const _batDmg = Math.max(1, Math.round(spv(a)*0.5));
     for(let i=0; i<_batCnt; i++){
       const aliveFoes = enemies.filter(h=>h.curHp>0);
@@ -26007,13 +26012,13 @@ function _japanTreasureCount(){
   return (t.tengu?1:0) + (t.shutendoji?1:0) + (t.tamamo?1:0);
 }
 
-// 點「日本探險」按鈕時檢查解鎖條件：貓空A評價+完整通關+英雄lv≥10
+// 點「日本探險」按鈕時檢查解鎖條件：貓空A評價+完整通關+英雄lv≥10+額外解鎖英雄
 function _japanCheckUnlock(){
   // ★ v1.0.20260421.1600 — 解鎖條件修正
   //   (1) S 級評價完整通關木柵貓空任意 BOSS（不可跳過小怪）
   //   (2) Lv.10 以上英雄達到 4 名
-  // ★ v1.0.20260421.1700 — 修正 Lv10 統計的變數名稱
-  // ★ v1.0.20260421.1800 — 回溯檢查：若舊版通關過(有解鎖英雄紀錄)但沒寫旗標，自動補上
+  // ★ v1.0.20260421.3012 — 新增第 3 項檢核：
+  //   (3) 擁有初始 8 隻以外的任意英雄（= 通關 BOSS 解鎖的額外英雄，防止不誠實繞過）
   let maokongSFullClear = false;
   try{
     // 主要旗標：正規 S 完整通關才寫入
@@ -26049,11 +26054,23 @@ function _japanCheckUnlock(){
     }
   }catch(e){ console.warn('[日本關] Lv10統計失敗:', e); }
   const hasEnoughLv10 = lv10HeroCount >= 4;
+  // ★ v1.0.20260421.3012 — 檢核：擁有初始 8 隻以外的任意英雄（通關 BOSS 才會解鎖）
+  let hasExtraHero = false;
+  let extraHeroCount = 0;
+  try{
+    const INIT_8 = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) ? ADV_HERO_POOL.maokong : [];
+    const unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+    const extraList = unlocked.filter(n => !INIT_8.includes(n));
+    extraHeroCount = extraList.length;
+    hasExtraHero = extraHeroCount > 0;
+  }catch(e){ console.warn('[日本關] 額外英雄檢核失敗:', e); }
   return {
     maokongSFullClear,
     lv10HeroCount,
     hasEnoughLv10,
-    canEnter: maokongSFullClear && hasEnoughLv10
+    hasExtraHero,
+    extraHeroCount,
+    canEnter: maokongSFullClear && hasEnoughLv10 && hasExtraHero
   };
 }
 
@@ -26141,9 +26158,12 @@ function _japanShowLockedModal(check){
   const fail = '❌';
   const c1   = check.maokongSFullClear ? ok : fail;
   const c2   = check.hasEnoughLv10     ? ok : fail;
+  const c3   = check.hasExtraHero      ? ok : fail;
   const c1Color = check.maokongSFullClear ? '#66ff88' : '#ff6666';
   const c2Color = check.hasEnoughLv10     ? '#66ff88' : '#ff6666';
+  const c3Color = check.hasExtraHero      ? '#66ff88' : '#ff6666';
   const _lv10Count = check.lv10HeroCount || 0;
+  const _extraCount = check.extraHeroCount || 0;
 
   const modal = document.createElement('div');
   modal.id = 'japan-locked-modal';
@@ -26178,6 +26198,7 @@ function _japanShowLockedModal(check){
         '<div style="font-size:clamp(18px,2vw,24px);color:#aaccff;margin-bottom:12px;letter-spacing:2px;">📋 需要達成以下條件：</div>' +
         `<div style="font-size:clamp(20px,2.3vw,28px);color:${c1Color};line-height:1.9;padding:6px 0;">${c1} 以 S 級評價完整通關木柵貓空任意 BOSS（不跳過小怪）</div>` +
         `<div style="font-size:clamp(20px,2.3vw,28px);color:${c2Color};line-height:1.9;padding:6px 0;">${c2} 擁有 4 位以上 Lv.10 英雄（目前 ${_lv10Count} 位）</div>` +
+        `<div style="font-size:clamp(20px,2.3vw,28px);color:${c3Color};line-height:1.9;padding:6px 0;">${c3} 擁有初始 8 位以外的英雄（通關 BOSS 解鎖，目前 ${_extraCount} 位）</div>` +
       '</div>' +
       // 提示
       '<div style="font-size:clamp(16px,1.8vw,22px);color:#bbb;margin-bottom:18px;line-height:1.6;">請先完成貓空大冒險後再來挑戰！</div>' +
@@ -34029,11 +34050,11 @@ function _getSkUpgradeBadge(skillName, skLv){
     return def.label + ' HP<' + pct + '%';
   }
   if(cat==='special_bat_hits'){
-    // ★ v1.0.20260421.3004 — 召喚蝙蝠群：基礎5次，Lv4/7/10 各+1
+    // ★ v1.0.20260421.3010 — 召喚蝙蝠群：基礎5次，Lv4=6次／Lv7=7次／Lv10=8次（lv=儲存值 0~9）
     let hits = 5;
-    if(skLv>=4) hits++;
-    if(skLv>=7) hits++;
-    if(skLv>=10) hits++;
+    if(skLv>=3) hits++;  // Lv4
+    if(skLv>=6) hits++;  // Lv7
+    if(skLv>=9) hits++;  // Lv10
     return def.label + ' ' + hits + ' 次';
   }
   if(cat==='special_divine'){
@@ -34147,9 +34168,9 @@ function buildSkillLvTable(skillName, currentLv) {
       effectText = def.label+' HP<'+pct+'%';
     } else if(cat==='special_bat_hits'){
       let hits = 5;
-      if(lv>=4) hits++;
-      if(lv>=7) hits++;
-      if(lv>=10) hits++;
+      if(lv>=3) hits++;  // Lv4
+      if(lv>=6) hits++;  // Lv7
+      if(lv>=9) hits++;  // Lv10
       effectText = def.label+' '+hits+' 次';
     } else if(cat==='special_divine'){
       if(lv===0) effectText = '基礎效果（HP上限+20%並完全治癒）';
@@ -39384,6 +39405,55 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260421.3015', brief:[
+    '修正：學者新肖像「知識燈塔」右側預覽圖下移 15%',
+  ], items:[
+    '【修正 v3014 對象】',
+    '  v3014 誤改學者預設肖像，已還原',
+    '  正確：學者新肖像「知識燈塔」(wisdom_light) 右側預覽下移 15%（Y%: 40% → 25%）',
+    '  實作：HERO_PORTRAIT_LIBRARY 學者 wisdom_light 加上 objPos:"center 25%"',
+  ]},
+  { ver:'v1.0.20260421.3013', brief:[
+    '新肖像右側預覽圖下移 10%',
+  ], items:[
+    '【右側預覽圖位置調整】',
+    '  4 位角色的新肖像（商店購買的那款）右側預覽圖各下移 10%',
+    '  程式設計師 量子編碼 (center 30%→20%)',
+    '  軍師 運籌帷幄 (center 15%→5%)',
+    '  陰陽師 天地四聖 (center 30%→20%)',
+    '  吸血鬼 暗夜薔薇 (center 30%→20%)',
+    '  實作：HERO_PORTRAIT_LIBRARY 對應 4 個肖像新增 objPos 屬性，由 getHeroObjPos() 讀取',
+    '  ※ v3012 改的是「左側選擇網格縮圖」，本版改的是「右側大預覽圖」，兩者是獨立設定',
+  ]},
+  { ver:'v1.0.20260421.3012', brief:[
+    '縮圖位置微調 + 日本關解鎖新增防繞過檢核',
+  ], items:[
+    '【角色選擇頁縮圖下移 20%】',
+    '  程式設計師、陰陽師、吸血鬼（新增）、軍師（從 10% 改為 20%）',
+    '【日本關解鎖條件新增第 3 檢核】',
+    '  原條件：S 級通關貓空 + 4 位 Lv10 英雄',
+    '  新增：擁有初始 8 位以外的任意英雄（= 通關 BOSS 解鎖過英雄的真實證據）',
+    '  目的：堵住不誠實玩家手動改 localStorage 繞過貓空關直接挑戰日本關的漏洞',
+    '  解鎖彈窗同步顯示第 3 項檢核狀態',
+  ]},
+  { ver:'v1.0.20260421.3011', brief:[
+    '修正魔物圖鑑：點擊魔物後詳細頁被遮住的問題',
+  ], items:[
+    '【BUG 原因】',
+    '  v3009 把 monster-page-overlay z-index 提高到 9100，但 hero-detail-overlay（魔物/英雄詳細頁）仍是 710',
+    '  導致點擊魔物後詳細頁被圖鑑遮住，要按「返回」關閉圖鑑才看得到',
+    '【修正】',
+    '  hero-detail-overlay z-index：710 → 9200（壓過魔物/寵物圖鑑層）',
+    '  現在點擊魔物可直接彈出詳細頁，關閉後仍停留在圖鑑頁',
+  ]},
+  { ver:'v1.0.20260421.3010', brief:[
+    '召喚蝙蝠群升級門檻修正：Lv4=6次/Lv7=7次/Lv10=8次',
+  ], items:[
+    '【召喚蝙蝠群門檻對齊】',
+    '  原本實際值：Lv5 起 6次、Lv8 起 7次、Lv11 起 8次（但 MAX 只到 Lv10）',
+    '  修正為：Lv4=6次、Lv7=7次、Lv10(MAX)=8次（如玩家預期）',
+    '  影響主邏輯、AI 分支、升級預覽徽章、升級對照表 — 全部同步',
+  ]},
   { ver:'v1.0.20260421.3009', brief:[
     '底部選單修正：魔物/寵物按鈕可用、更新日誌文字縮小',
   ], items:[
@@ -41523,7 +41593,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3009';
+  const CURRENT_VERSION = 'v1.0.20260421.3015';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41540,7 +41610,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3009';
+window._GAME_LOADED_VERSION = 'v1.0.20260421.3015';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
