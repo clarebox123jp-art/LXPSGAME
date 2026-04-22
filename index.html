@@ -3115,6 +3115,25 @@ body {
 #adv-battle-bg.bg-apricot{
   background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96%E5%A0%B4%E6%99%AF.png");
 }
+/* ★ v1.0.20260422.0100 — 日本關 BOSS 戰背景 */
+/* 富士山深入（大天狗/酒吞童子/玉藻前 三路線共通 BOSS 戰背景） */
+#adv-battle-bg.bg-fuji{
+  background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%8C%E5%A3%AB%E5%B1%B1%E6%B7%B1%E5%85%A5%20%E7%AC%AC%E4%B8%89%E5%A0%B4%E6%99%AF%20%E4%B8%89%E8%B7%AF%E7%B7%9A%E5%85%B1%E9%80%9ABOSS%E6%88%B0%E5%89%8D.png");
+}
+/* 富士山火口（八岐大蛇 隱藏 BOSS 專屬） */
+#adv-battle-bg.bg-yamata{
+  background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%8C%E5%A3%AB%E5%B1%B1%E7%81%AB%E5%8F%A3%20%E9%9A%B1%E8%97%8FBOSS%20%E5%85%AB%E5%B2%90%E5%A4%A7%E8%9B%87.png");
+}
+/* 日本關小怪戰背景（三場景共用日本場景背景） */
+#adv-battle-bg.bg-japan-opening{
+  background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A1%A8%E5%8F%83%E9%81%93%E7%A5%AD%E5%85%B8%20%E7%AC%AC%E4%B8%80%E5%A0%B4%E6%99%AF%20%E5%85%B1%E9%80%9A%E9%96%8B%E5%A0%B4.png");
+}
+#adv-battle-bg.bg-japan-shrine{
+  background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%A4%E8%80%81%E7%A5%9E%E7%A4%BE%20%E7%AC%AC%E4%BA%8C%E5%A0%B4%E6%99%AF%20%E5%A4%A7%E5%A4%A9%E7%8B%97%E8%B7%AF%E7%B7%9A.png");
+}
+#adv-battle-bg.bg-japan-fuji{
+  background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%8C%E5%A3%AB%E5%B1%B1%E6%B7%B1%E5%85%A5%20%E7%AC%AC%E4%B8%89%E5%A0%B4%E6%99%AF%20%E4%B8%89%E8%B7%AF%E7%B7%9A%E5%85%B1%E9%80%9ABOSS%E6%88%B0%E5%89%8D.png");
+}
 /* 背景暗化遮罩 */
 #adv-battle-bg::after{
   content:'';position:absolute;inset:0;
@@ -4018,7 +4037,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260421.3022</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0101</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -21568,6 +21587,10 @@ function _saveBattleRoundSnapshot(){
       treasures:  JSON.parse(JSON.stringify(_advTreasures||[])),
       heroes:     _heroPickSelected ? [..._heroPickSelected] : [],
       round:      G.round || 1,
+      // ★ v1.0.20260422.0100 — 保存場景索引與 BOSS 變體索引，
+      //   讓 _advRestoreBattleState 能還原正確的背景圖與 BGM（尤其日本關各路線）
+      sceneIdx:   (typeof _advSceneIdx === 'number') ? _advSceneIdx : 0,
+      variantIdx: (typeof window._advSelectedVariantIdx === 'number') ? window._advSelectedVariantIdx : 0,
       // ── 完整戰鬥狀態 ──
       battleState: {
         p1:          (G.p1||[]).map(_serHero),
@@ -23347,6 +23370,19 @@ function _advRestoreSnapshot(snap){
     _advPlayerDifficulty = snap.difficulty || '';
     if(Array.isArray(snap.treasures)) _advTreasures = snap.treasures;
     _adventureMode = true;
+    // ★ v1.0.20260422.0100 — 還原場景索引與 BOSS 變體索引
+    //   若舊版快照沒存這兩欄，fallback 為 0（行為與舊版一致）
+    if(typeof snap.sceneIdx === 'number') _advSceneIdx = snap.sceneIdx;
+    if(typeof snap.variantIdx === 'number'){
+      window._advSelectedVariantIdx = snap.variantIdx;
+      // 同步設定 _currentBossVariantInfo，讓 BOSS 背景/BGM/對白偵測邏輯能取得正確 variant
+      try{
+        const _vlist = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[snap.stage]) || [];
+        if(_vlist.length){
+          window._currentBossVariantInfo = _vlist[snap.variantIdx % _vlist.length] || null;
+        }
+      }catch(_rvE){}
+    }
 
     // 清除快照
     localStorage.removeItem('adv_battle_snap');
@@ -23447,31 +23483,79 @@ function _advRestoreBattleState(snap, bs){
   _advBossIntroShown = true;
 
   // ── BGM & 背景（小怪戰和 BOSS 戰不同）──
+  // ★ v1.0.20260422.0100 — 修正：原邏輯寫死貓空 BGM/背景，
+  //   日本關恢復戰鬥時會錯播貓空戰鬥曲並顯示貓空 BOSS/景美溪背景。
+  //   現在依 _adventureStage + _currentBossVariantInfo（由 variantIdx 還原）正確選擇。
   try{ bgmStop(); }catch(e){}
   try{
     if(_restoreIsMini){
-      // 小怪戰：播放隨機戰鬥 BGM
-      const btIds=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
-      const btId = btIds[Math.floor(Math.random()*btIds.length)];
-      const btEl = document.getElementById(btId);
-      if(btEl){ btEl.volume=_bgmMuted?0:BGM_VOLUME; btEl.currentTime=0; btEl.play().catch(()=>{}); _curBgm=btId; }
+      // 小怪戰 BGM：日本關用 Japan 戰鬥 BGM，貓空用貓空戰鬥 BGM
+      let _btId;
+      if(_adventureStage === 'japan'){
+        const _jpList = (typeof JAPAN_BATTLE_BGM_LIST !== 'undefined' && JAPAN_BATTLE_BGM_LIST.length)
+          ? JAPAN_BATTLE_BGM_LIST : ['bgm-japan-battle'];
+        _btId = _jpList[Math.floor(Math.random()*_jpList.length)];
+      } else {
+        const _btIds=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
+        _btId = _btIds[Math.floor(Math.random()*_btIds.length)];
+      }
+      const btEl = document.getElementById(_btId);
+      if(btEl){ btEl.volume=_bgmMuted?0:BGM_VOLUME; btEl.currentTime=0; btEl.play().catch(()=>{}); _curBgm=_btId; }
     } else {
-      // BOSS 戰：播放 BOSS BGM
-      const bossBgm = document.getElementById('bgm-boss-01');
-      if(bossBgm){ bossBgm.volume=_bgmMuted?0:BGM_VOLUME; bossBgm.currentTime=0; bossBgm.play().catch(()=>{}); _curBgm='bgm-boss-01'; }
+      // BOSS 戰 BGM：依關卡 + variant 決定
+      let _bossBgmId = 'bgm-boss-01';
+      const _vi = window._currentBossVariantInfo;
+      const _p2Names = (G.p2||[]).map(h => h && h.name).filter(Boolean);
+      if(_adventureStage === 'japan'){
+        // 酒吞童子 / 玉藻前 各有專屬 BGM；大天狗 / 八岐大蛇 共用 bgm-japan-boss
+        if((_vi && _vi.id === 'shutendoji') || _p2Names.includes('酒吞童子')){
+          _bossBgmId = 'bgm-japan-boss-shutendoji';
+        } else if((_vi && _vi.id === 'tamamo') || _p2Names.includes('玉藻前')){
+          _bossBgmId = 'bgm-japan-boss-tamamo';
+        } else {
+          _bossBgmId = 'bgm-japan-boss';
+        }
+      } else if((_vi && _vi.id === 'apricot') || _p2Names.includes('杏花妖')){
+        _bossBgmId = 'bgm-boss-apricot';
+      }
+      const bossBgm = document.getElementById(_bossBgmId);
+      if(bossBgm){ bossBgm.volume=_bgmMuted?0:BGM_VOLUME; bossBgm.currentTime=0; bossBgm.play().catch(()=>{}); _curBgm=_bossBgmId; }
     }
   }catch(e){}
-  // 背景：小怪戰用當前場景背景，BOSS 戰用 bg-boss
+  // 背景：小怪戰依場景 key，BOSS 戰依關卡 + variant
   const _bb = document.getElementById('adv-battle-bg');
   if(_bb){
     _bb.className='';
     if(_restoreIsMini){
-      const _sceneArr0 = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(_adventureStage) : (ADV_SCENES && ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage].scenes) || ADV_SCENES[_adventureStage] || [];
-      const sceneKey = (_sceneArr0[0] && _sceneArr0[0].key) ? _sceneArr0[0].key : 'river';
-      const _bgMap = {river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden'};
-      _bb.classList.add(_bgMap[sceneKey] || 'bg-river');
+      const _sceneArr0 = (typeof window._getAdvSceneArray === 'function')
+        ? window._getAdvSceneArray(_adventureStage)
+        : (ADV_SCENES && ADV_SCENES[_adventureStage] && ADV_SCENES[_adventureStage].scenes) || ADV_SCENES[_adventureStage] || [];
+      // ★ 使用 _advSceneIdx（已從 snap.sceneIdx 還原）取得當前場景；若 idx 越界就用第 0 場
+      const _sceneObj = _sceneArr0[_advSceneIdx] || _sceneArr0[0];
+      const sceneKey = (_sceneObj && _sceneObj.key) ? _sceneObj.key : 'river';
+      const _bgMap = {
+        river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden',
+        'japan-opening':'bg-japan-opening',
+        'japan-shrine' :'bg-japan-shrine',
+        'japan-fuji'   :'bg-japan-fuji',
+      };
+      const _fallback = (_adventureStage === 'japan') ? 'bg-japan-opening' : 'bg-river';
+      _bb.classList.add(_bgMap[sceneKey] || _fallback);
     } else {
-      _bb.classList.add('bg-boss');
+      // BOSS 戰背景：依關卡 + variant
+      let _bgCls = 'bg-boss';
+      const _vi2 = window._currentBossVariantInfo;
+      const _p2Names2 = (G.p2||[]).map(h => h && h.name).filter(Boolean);
+      if(_adventureStage === 'japan'){
+        if((_vi2 && _vi2.id === 'yamata') || _p2Names2.includes('八岐大蛇')){
+          _bgCls = 'bg-yamata';
+        } else {
+          _bgCls = 'bg-fuji';  // 大天狗 / 酒吞童子 / 玉藻前 共用
+        }
+      } else if((_vi2 && _vi2.id === 'apricot') || _p2Names2.includes('杏花妖')){
+        _bgCls = 'bg-apricot';
+      }
+      _bb.classList.add(_bgCls);
     }
     void _bb.offsetWidth; _bb.classList.add('visible');
   }
@@ -25396,10 +25480,21 @@ const ADV_SUBJECT_FOCUS = {
 // 動態生成開場台詞（依年級、科目、難度精準說明考題方向）
 function getAdvBossIntroLines(){
   // ★ 偵測當前主 BOSS 變體
-  const _mainBossName = (typeof G !== 'undefined' && G && G.p2)
-    ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪'
-        || h.name==='大天狗' || h.name==='酒吞童子' || h.name==='玉藻前' || h.name==='八岐大蛇') || {}).name
-    : '九尾空貓怪';
+  // ★ v1.0.20260422.0100 — 日本關優先從 _currentBossVariantInfo.main 取得 BOSS 名稱，
+  //   避免 G.p2 尚未完全就位時 fallback 到「九尾空貓怪」預設值導致顯示貓空台詞。
+  let _mainBossName = null;
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+       && window._currentBossVariantInfo && window._currentBossVariantInfo.main){
+      _mainBossName = window._currentBossVariantInfo.main;
+    }
+  }catch(_eJP){}
+  if(!_mainBossName){
+    _mainBossName = (typeof G !== 'undefined' && G && G.p2)
+      ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪'
+          || h.name==='大天狗' || h.name==='酒吞童子' || h.name==='玉藻前' || h.name==='八岐大蛇') || {}).name
+      : '九尾空貓怪';
+  }
   // ★ v1.0.20260421.3000 — 日本關 BOSS 專屬對白（不套年級/科目/難度模板）
   const _JP_BOSS_INTROS = {
     '大天狗': [
@@ -27174,11 +27269,26 @@ function advStartBattle(){
     log('[BOSS戰] 開場發牌：玩家3張物品牌、BOSS3張物品牌');
   }catch(e){ console.error('[advStartBattle] dealCards',e); }
   // ★ 設定BOSS全螢幕戰鬥背景（杏花妖變體使用花林背景）
+  // ★ v1.0.20260422.0100 — 日本關 BOSS 依 variant 套不同背景：
+  //   八岐大蛇 → 富士山火口 (bg-yamata)
+  //   大天狗 / 酒吞童子 / 玉藻前 → 富士山深入 三路線共通 (bg-fuji)
+  //   原邏輯只認 'apricot',所有日本 BOSS 都 fallback 到 bg-boss (貓空BOSS戰背景),
+  //   導致 大蛇路線 BOSS 戰背景顯示九尾貓場景。
   (function(){
     const _bb=document.getElementById('adv-battle-bg');
     if(_bb){
       _bb.className='';
-      const _bgCls = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot') ? 'bg-apricot' : 'bg-boss';
+      let _bgCls;
+      const _vi = window._currentBossVariantInfo;
+      const _stage = (typeof _adventureStage !== 'undefined') ? _adventureStage : null;
+      if(_stage === 'japan'){
+        if(_vi && _vi.id === 'yamata') _bgCls = 'bg-yamata';
+        else _bgCls = 'bg-fuji';  // tengu / shutendoji / tamamo 共用
+      } else if(_vi && _vi.id === 'apricot'){
+        _bgCls = 'bg-apricot';
+      } else {
+        _bgCls = 'bg-boss';
+      }
       _bb.classList.add(_bgCls);
       void _bb.offsetWidth;
       _bb.classList.add('visible');
@@ -27269,9 +27379,18 @@ function advShowBossIntro() {
   try{
     // ★ v1.0.20260421.3000 — 擴充日本 BOSS 識別
     const _JP_BOSS_ICONS = {'大天狗':'🪶','酒吞童子':'🍶','玉藻前':'🦊','八岐大蛇':'🐉'};
-    const _mainBoss = (G && G.p2) ? G.p2.find(h =>
-      h.name==='九尾空貓怪' || h.name==='杏花妖'
-      || _JP_BOSS_ICONS[h.name]) : null;
+    // ★ v1.0.20260422.0100 — 日本關優先用 _currentBossVariantInfo.main 決定 BOSS 名稱，
+    //   避免 G.p2 尚未 ready 或結構異常時 fallback 到「九尾空貓怪」預設圖示/文字。
+    let _mainBoss = null;
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
+       && window._currentBossVariantInfo && window._currentBossVariantInfo.main){
+      _mainBoss = { name: window._currentBossVariantInfo.main };
+    }
+    if(!_mainBoss){
+      _mainBoss = (G && G.p2) ? G.p2.find(h =>
+        h.name==='九尾空貓怪' || h.name==='杏花妖'
+        || _JP_BOSS_ICONS[h.name]) : null;
+    }
     if(_mainBoss){
       const _icon = _JP_BOSS_ICONS[_mainBoss.name]
         || (_mainBoss.name==='杏花妖' ? '🌸' : '🐱');
@@ -35603,25 +35722,44 @@ function advStartMiniBattle(nextSceneIdx) {
     if(cutsceneOv) cutsceneOv.style.display = 'none';
     const gc = document.getElementById('gc');
     // ★ 設定全螢幕戰鬥背景
+    // ★ v1.0.20260422.0100 — 新增日本關場景對應：否則日本小怪戰會 fallback 到 bg-river（貓空溪河堤）
     const _advBgEl = document.getElementById('adv-battle-bg');
-    const _bgClassMap = {river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden'};
+    const _bgClassMap = {
+      river:'bg-river', trail:'bg-trail', teagarden:'bg-teagarden',
+      'japan-opening':'bg-japan-opening',
+      'japan-shrine' :'bg-japan-shrine',
+      'japan-fuji'   :'bg-japan-fuji',
+    };
     if(_advBgEl){
       _advBgEl.className = ''; // 清除舊 class
-      _advBgEl.classList.add(_bgClassMap[sceneKey] || 'bg-river');
+      // ★ 日本關沒對到 key 時 fallback 到 bg-japan-opening（而非 bg-river）
+      const _fallback = (_adventureStage === 'japan') ? 'bg-japan-opening' : 'bg-river';
+      _advBgEl.classList.add(_bgClassMap[sceneKey] || _fallback);
       void _advBgEl.offsetWidth; // reflow
       _advBgEl.classList.add('visible');
     }
     if(gc) gc.classList.add('adv-battle');
 
     // ── BGM：先停再播戰鬥曲（loop=true 要先 pause 再設 src）
+    // ★ v1.0.20260422.0100 — 日本關與稀有怪 BGM 已在上方（line ~35544-35567）正確設定，
+    //   此處的 bgmStop() + bgmPlay(btId) 只針對「貓空一般小怪戰」執行，
+    //   否則會覆蓋掉剛剛設好的日本小怪 BGM / 寶箱怪 / 小惡魔 / 座敷童子 / 二宮尊德像 BGM。
+    //   原 bug:日本關所有小怪戰（含寵物事件、座敷童子、二宮尊德像）BGM 整場都播貓空 BGM，
+    //        因為此處 synchronously bgmStop() 並 bgmPlay('bgm-battle-0X') 蓋掉 Japan fade。
     try{
-      bgmStop();
-      // 確保 bgm-adv-scene 停掉
-      const sceneEl = document.getElementById('bgm-adv-scene');
-      if(sceneEl){ sceneEl.pause(); sceneEl.currentTime=0; }
-      const btIds=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
-      const btId  = btIds[Math.floor(Math.random()*btIds.length)];
-      bgmPlay(btId);
+      if(_adventureStage !== 'japan' && !_hasChest && !_hasDevil){
+        bgmStop();
+        // 確保 bgm-adv-scene 停掉
+        const sceneEl = document.getElementById('bgm-adv-scene');
+        if(sceneEl){ sceneEl.pause(); sceneEl.currentTime=0; }
+        const btIds=['bgm-battle-01','bgm-battle-02','bgm-battle-03','bgm-battle-04'];
+        const btId  = btIds[Math.floor(Math.random()*btIds.length)];
+        bgmPlay(btId);
+      } else {
+        // ★ 日本關 / 貓空稀有怪（寶箱怪/小惡魔）：仍把 bgm-adv-scene 停掉（上方 bgmFadeTo 會接手播正確曲）
+        const sceneEl = document.getElementById('bgm-adv-scene');
+        if(sceneEl){ sceneEl.pause(); sceneEl.currentTime=0; }
+      }
     }catch(e){}
 
     // ── 重建牌組（小怪戰用同一牌組）
@@ -38282,6 +38420,79 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0101', brief:[
+    '修正 戰鬥中斷恢復（崩潰/關瀏覽器後重開）時日本關背景與 BGM 回到貓空',
+    '快照新增保存場景索引 sceneIdx 與 BOSS 路線 variantIdx',
+  ], items:[
+    '【Bug：_advRestoreBattleState 完全沒支援日本關】',
+    '  玩家在戰鬥中崩潰/關瀏覽器後重開遊戲，會觸發 _advRestoreBattleState 恢復戰鬥，',
+    '  但該函式內 4 處邏輯寫死貓空 BGM/背景：',
+    '    1. 小怪戰 BGM 只從 bgm-battle-01..04（貓空戰鬥 BGM）隨機抽',
+    '    2. BOSS 戰 BGM 永遠播 bgm-boss-01（貓空 BOSS BGM）',
+    '    3. 小怪戰背景 _bgMap 只有 {river, trail, teagarden}（貓空 key）',
+    '    4. BOSS 戰背景永遠用 bg-boss（貓空BOSS戰背景）',
+    '  連帶問題：原邏輯用 _sceneArr0[0]（第 0 場）取 sceneKey，',
+    '    就算有多場景也只看第 0 場的 key → 場景 2/3 的背景也錯。',
+    '【修正】',
+    '  1. 快照新增 sceneIdx / variantIdx 兩個欄位（向下相容：舊快照 fallback 為 0）',
+    '  2. _advRestoreSnapshot 還原這兩欄並同步設定 window._currentBossVariantInfo',
+    '  3. _advRestoreBattleState BGM 改依 _adventureStage + variant：',
+    '     小怪戰：japan → JAPAN_BATTLE_BGM_LIST 隨機；其他 → 貓空 BGM_01..04',
+    '     BOSS 戰：',
+    '       japan + shutendoji → bgm-japan-boss-shutendoji',
+    '       japan + tamamo     → bgm-japan-boss-tamamo',
+    '       japan + 其他       → bgm-japan-boss（大天狗/八岐大蛇 共用）',
+    '       其他 + apricot     → bgm-boss-apricot',
+    '       其他預設           → bgm-boss-01',
+    '  4. _advRestoreBattleState 背景同步對齊：',
+    '     小怪戰 _bgMap 加入 japan-opening/shrine/fuji；fallback 依關卡分流',
+    '     BOSS 戰 bg-yamata / bg-fuji / bg-apricot / bg-boss 依 variant 決定',
+    '  5. 小怪戰背景 sceneKey 改用 _sceneArr0[_advSceneIdx]（而非固定 [0]）',
+    '【備援】若 _currentBossVariantInfo 為 null（舊快照無 variantIdx），',
+    '  背景/BGM 偵測會退回用 G.p2 角色名稱判斷（八岐大蛇/酒吞童子/玉藻前/杏花妖）。',
+  ]},
+  { ver:'v1.0.20260422.0100', brief:[
+    '修正 八岐大蛇（大蛇路線）BOSS 戰背景顯示貓空BOSS戰場景',
+    '修正 日本關所有小怪戰（含寵物事件/座敷童子/二宮尊德像）BGM 整場錯播貓空戰鬥曲',
+    '修正 日本關 BOSS 登場對白/名稱/圖示在部分情境顯示為「🐱 九尾空貓怪」',
+    '新增 日本關小怪戰背景圖（三場景各自對應，不再 fallback 到貓空景美溪）',
+  ], items:[
+    '【Bug 1：大蛇路線 BOSS 戰背景錯誤】',
+    '  advStartBattle 設定 adv-battle-bg 的 CSS class 時，',
+    '  原邏輯只認 window._currentBossVariantInfo.id===\'apricot\' → bg-apricot，',
+    '  其餘一律 fallback 到 bg-boss（= 貓空BOSS戰背景.png）。',
+    '  結果日本關四條路線（大天狗/酒吞童子/玉藻前/八岐大蛇）的 BOSS 戰',
+    '  背景全部都套到貓空的九尾空貓怪場景圖。',
+    '【修正】新增 2 個 CSS 類別：',
+    '  bg-fuji  → 富士山深入 第三場景 三路線共通BOSS戰前.png',
+    '           （大天狗 / 酒吞童子 / 玉藻前 三路線共用）',
+    '  bg-yamata → 富士山火口 隱藏BOSS 八岐大蛇.png（八岐大蛇路線專用）',
+    '  advStartBattle 判斷 _adventureStage===\'japan\' 時依 variant.id 選擇 class',
+    '【Bug 2：日本小怪戰 BGM 整場都是貓空戰鬥曲】',
+    '  advStartMiniBattle 在 line ~35544-35567 已有正確的 Japan/Zashiki/Ninomiya BGM fade 邏輯，',
+    '  但緊接著 line ~35650 還有一段 legacy 程式：',
+    '    bgmStop(); bgmPlay(btIds[隨機]);  // btIds=[bgm-battle-01..04]',
+    '  這段是 synchronous 跑在 Japan fade 之後，立刻覆蓋掉剛 set 好的日本 BGM，',
+    '  所以整場 mini-battle 都是貓空戰鬥 BGM 在播。',
+    '  用戶實測：日本第三場景「寵物事件 / 座敷童子 / 二宮尊德像」',
+    '  觸發的 mini-battle BGM 整場都是貓空音樂，即為此 bug。',
+    '【修正】guard 住該 legacy 區塊：',
+    '  只在「非日本關 且 無寶箱怪 且 無小惡魔」時才執行 bgmPlay(btId)；',
+    '  其餘情況（日本關、貓空稀有怪）交由上方已排程的 bgmFadeTo 正確播放。',
+    '【Bug 3：日本關 BOSS 開場對白可能顯示九尾空貓怪】',
+    '  advShowBossIntro / getAdvBossIntroLines 原本都用 G.p2.find(...) 偵測 BOSS 名稱，',
+    '  若 G.p2 時序上尚未完全 ready，會 fallback 到「九尾空貓怪」預設字串，',
+    '  導致標題/圖示短暫或完全顯示為「🐱 九尾空貓怪」即使路線是日本關。',
+    '【修正】日本關優先從 window._currentBossVariantInfo.main 取 BOSS 名稱',
+    '  （這個變數在 route 選擇當下就已寫入、比 G.p2 組好更早可用）',
+    '  G.p2.find 僅作為 fallback。',
+    '【Bonus：日本小怪戰背景】',
+    '  原 _bgClassMap = {river, trail, teagarden} 只涵蓋貓空 3 個場景 key，',
+    '  日本關 key（japan-opening / japan-shrine / japan-fuji）全部對不上 → fallback 到 bg-river（景美溪河堤）。',
+    '  新增這 3 組 key → bg-japan-opening / bg-japan-shrine / bg-japan-fuji，',
+    '  並把 fallback 改成：日本關 bg-japan-opening、貓空關 bg-river。',
+    '  （用戶本次雖未明提，但與 Bug 1 同系列的視覺不一致，一併補上）',
+  ]},
   { ver:'v1.0.20260421.3022', brief:[
     '修正吸血鬼「鮮血契約」吸血完全失效、普攻無特效直接扣血',
     '修正吸血鬼「靈魂收割」處決後不回血',
@@ -40585,7 +40796,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260421.3022';
+  const CURRENT_VERSION = 'v1.0.20260422.0101';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40602,7 +40813,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260421.3022';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0101';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
