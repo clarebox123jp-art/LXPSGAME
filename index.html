@@ -1103,6 +1103,54 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .popup.miss{color:#dddddd;font-size:36px;font-style:italic;letter-spacing:4px;text-shadow:0 0 16px rgba(220,220,220,0.9),0 0 32px rgba(180,180,180,0.5),2px 2px 0 #000;animation:floatUp 0.85s ease-out forwards;}
 .popup.elem-adv{color:#ffee44;font-size:32px;text-shadow:0 0 10px rgba(255,220,50,0.9),2px 2px 0 #000;animation:elemMod 2s ease-out forwards;}
 .popup.elem-dis{color:#66aaff;font-size:32px;text-shadow:0 0 10px rgba(80,160,255,0.9),2px 2px 0 #000;animation:elemMod 2s ease-out forwards;}
+/* ★ v1.0.20260423.0100 — 多段傷害/治療 合計數字 視覺 */
+.popup.total-dmg, .popup.total-heal{
+  font-size:88px;font-weight:900;letter-spacing:2px;z-index:220;
+  display:inline-flex;align-items:baseline;gap:6px;
+}
+.popup.total-dmg{
+  color:#ffeeaa;
+  text-shadow:0 0 16px rgba(255,200,60,1),0 0 36px rgba(255,130,0,0.85),0 0 64px rgba(255,90,30,0.6),3px 3px 0 #000;
+  animation:totalBurst 2.2s cubic-bezier(0.22,1.5,0.36,1) forwards;
+}
+.popup.total-heal{
+  color:#ccffdd;
+  text-shadow:0 0 16px rgba(120,255,160,1),0 0 36px rgba(50,220,120,0.85),0 0 64px rgba(30,180,80,0.6),3px 3px 0 #000;
+  animation:totalBurst 2.2s cubic-bezier(0.22,1.5,0.36,1) forwards;
+}
+.popup.total-dmg .total-label, .popup.total-heal .total-label{
+  font-size:36px;font-weight:700;letter-spacing:4px;opacity:0.92;
+  text-shadow:0 0 10px rgba(0,0,0,0.9),2px 2px 0 #000;
+  vertical-align:middle;
+}
+.popup.total-dmg .total-label{color:#ffdd66;}
+.popup.total-heal .total-label{color:#88ff99;}
+@keyframes totalBurst{
+  0%  {transform:translate(-50%,-20px) scale(0.35);opacity:0;filter:blur(6px);}
+  18% {transform:translate(-50%,-60px) scale(1.45);opacity:1;filter:blur(0);}
+  40% {transform:translate(-50%,-90px) scale(1.05);opacity:1;filter:blur(0);}
+  70% {transform:translate(-50%,-130px) scale(1.0);opacity:0.85;filter:blur(0);}
+  100%{transform:translate(-50%,-180px) scale(0.9);opacity:0;filter:blur(2px);}
+}
+/* ★ v1.0.20260423.0100 — 吸血鬼靈魂收割可處決目標高亮（持續脈動） */
+.card.reap-eligible{
+  border-color:#cc33ff!important;
+  animation:reapPulse 1.1s ease-in-out infinite!important;
+}
+.card.reap-eligible::after{
+  content:'💀';position:absolute;top:-4px;right:-4px;
+  font-size:34px;z-index:40;pointer-events:none;
+  filter:drop-shadow(0 0 8px #cc33ff) drop-shadow(0 0 16px rgba(200,60,255,0.75));
+  animation:reapIcon 1.1s ease-in-out infinite;
+}
+@keyframes reapPulse{
+  0%,100%{box-shadow:0 0 12px rgba(200,60,255,0.5),inset 0 0 12px rgba(200,60,255,0.15);}
+  50%    {box-shadow:0 0 36px rgba(220,80,255,1),0 0 64px rgba(180,40,255,0.6),inset 0 0 24px rgba(220,80,255,0.3);}
+}
+@keyframes reapIcon{
+  0%,100%{transform:scale(1) rotate(-6deg);opacity:0.9;}
+  50%    {transform:scale(1.22) rotate(6deg);opacity:1;}
+}
 
 /* SIDEBAR */
 #sb{width:560px;background:#0e1018;border-left:1px solid var(--border);display:flex;flex-direction:column;gap:0;position:relative;z-index:2;}
@@ -10616,7 +10664,10 @@ function renderCard(h){
     // but don't restart it by re-adding the class on every renderCard
   } else if(h.acted) cls+=' acted';
   if(G.activeChar===h) cls+=' active';
+  // ★ v1.0.20260423.0100 — 保留吸血鬼收割目標高亮 class（className 賦值會洗掉，需手動保留）
+  const _hadReap = el.classList && el.classList.contains('reap-eligible');
   el.className=cls;
+  if(_hadReap) el.classList.add('reap-eligible');
   // 點擊特寫：再點關閉（僅在非選擇動作狀態時生效）
   el.dataset.heroSide = h.side;
   el.dataset.heroPos  = h.pos;
@@ -10682,6 +10733,41 @@ function colorizeSkillDesc(desc){
     '<b style="color:#88ffaa;font-weight:500;white-space:nowrap;display:inline">$1</b>');
   return desc;
 }
+// ★ v1.0.20260423.0100 — 吸血鬼「靈魂收割」可處決目標持續高亮
+function _updateReapEligibleHighlight(){
+  // 先清掉所有現有高亮
+  const _oldCards = document.querySelectorAll('.card.reap-eligible');
+  _oldCards.forEach(el => el.classList.remove('reap-eligible'));
+  if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return;
+  const _all = [...G.p1, ...G.p2];
+  let _reapPctMax = 0;
+  let _anyReady = false;
+  _all.forEach(h => {
+    if(!h || h.curHp<=0) return;
+    const _hasS1 = h.s1 && h.s1.n==='靈魂收割';
+    const _hasS2 = h.s2 && h.s2.n==='靈魂收割';
+    if(!_hasS1 && !_hasS2) return;
+    // 封印/全場封印時該角色無法觸發
+    try{
+      if(typeof hasStatus === 'function' && hasStatus(h,'seal')) return;
+      if(typeof fieldHas === 'function' && fieldHas('sealall')) return;
+    }catch(_){}
+    const _slot = _hasS1 ? 's1' : 's2';
+    const _skLv = (h._skLv && typeof h._skLv[_slot]==='number') ? h._skLv[_slot] : 0;
+    const _reapPct = 0.10 + (_skLv||0)*0.01;
+    if(_reapPct > _reapPctMax) _reapPctMax = _reapPct;
+    _anyReady = true;
+  });
+  if(!_anyReady || _reapPctMax <= 0) return;
+  _all.forEach(t => {
+    if(!t || t.curHp<=0) return;
+    const _ratio = t.curHp / (t.hp || 1);
+    if(_ratio < _reapPctMax){
+      const _el = document.getElementById('card-'+t.side+'-'+t.pos);
+      if(_el) _el.classList.add('reap-eligible');
+    }
+  });
+}
 function updateUI(){
   ['p1','p2'].forEach(s=>{
     G[s].forEach(h=>renderCard(h));
@@ -10693,6 +10779,8 @@ function updateUI(){
     if(G.energy[s]>=10) bar.classList.add('energy-full');
     else bar.classList.remove('energy-full');
   });
+  // ★ v1.0.20260423.0100 — 吸血鬼「靈魂收割」可處決目標持續高亮
+  try{ _updateReapEligibleHighlight(); }catch(_rheE){}
   const a=G.activeChar;
   if(a&&a.side==='p1'){
     // action-panel 顯示條件：角色尚未行動
@@ -12177,13 +12265,14 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(burstName==='焰尾九連擊'){
     const _opp = side==='p1'?'p2':'p1';
     let _remainHits = 9;
+    beginBatchTotals();
     function _catNine(target){
       if(_remainHits<=0 || checkWin()){ 
         // 全部結束後附加地獄之火
         G[_opp].forEach(foe=>{
           if(foe.curHp>0){ addStatus(foe,'hellfire',2); bannerFX(foe,'地獄之火！','#ff4400',700); }
         });
-        updateUI(); _burstFinish(h,_interrupted); return; 
+        updateUI(); setTimeout(endBatchTotals,50); _burstFinish(h,_interrupted); return; 
       }
       if(!target || target.curHp<=0){
         // 轉移：選 HP 最少的存活對手
@@ -12207,7 +12296,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       }
     }
     const startFoes = G[_opp].filter(x=>x.curHp>0);
-    if(!startFoes.length){ _burstFinish(h,_interrupted); return; }
+    if(!startFoes.length){ setTimeout(endBatchTotals,50); _burstFinish(h,_interrupted); return; }
     // p1 需選擇目標，p2 自動選最低HP
     if(side==='p1' && startFoes.length>1){
       log('⚡ 焰尾九連擊：請選擇初始目標！');
@@ -13408,6 +13497,8 @@ function doDmg(target, rawDmg, opts={}){
   } else {
     showPopup(target,dmg,'dmg');
   }
+  // ★ v1.0.20260423.0100 — 多段傷害合計
+  try{ _batchAccum('dmg', target, dmg); }catch(_bte){}
   sndAtk();
   // ★ v1.0.20260420.1900 — 屬性攻擊光束特效
   //   條件:有攻擊者(非狀態傷害)、不同陣營、非反彈/天賦分攤類的連鎖扣血、實際造成傷害
@@ -13983,6 +14074,8 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     return 0;
   }
 
+  // ★ v1.0.20260423.0100 — HP 改變後刷新吸血鬼收割高亮
+  try{ _updateReapEligibleHighlight(); }catch(_){}
   return dmg;
 }
 function doHeal(target, rawAmt, opts={}){
@@ -14045,6 +14138,8 @@ function doHeal(target, rawAmt, opts={}){
   const actual=target.curHp-old;
   if(actual>0){
     showPopup(target,'+'+actual,'heal'); sndHeal(); playSfx('sfx-heal',0.6);
+    // ★ v1.0.20260423.0100 — 多段治療合計
+    try{ _batchAccum('heal', target, actual); }catch(_bte){}
     // 統計：只記錄對友方（同陣營）的治療
     const _healer=G&&(G.activeChar||opts.actor);
     if(_healer && _healer.side === target.side) statTrack(_healer,'heal',actual);
@@ -14052,6 +14147,8 @@ function doHeal(target, rawAmt, opts={}){
   renderCard(target);
   // ★ 在卡片圖片上疊加治療 GIF 特效（必須在 renderCard 之後，否則會被 innerHTML 覆蓋）
   if(actual>0){ try{ _healGifOnCard(target); }catch(e){} }
+  // ★ v1.0.20260423.0100 — HP 改變後刷新吸血鬼收割高亮
+  try{ _updateReapEligibleHighlight(); }catch(_){}
   return actual;
 }
 function _reviveFX(h){
@@ -14182,6 +14279,79 @@ function showPopup(h, val, type){
     p.style.transition='';
   }, delay);
   setTimeout(function(){if(p.parentNode)p.remove();},2100+delay);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ★ v1.0.20260423.0100 — 多段傷害/治療「合計」統計顯示
+// ══════════════════════════════════════════════════════════════════
+//   用途：當一個技能對同一目標造成多次傷害(或治療)時，
+//        在最後顯示一個合計 XXX 的大字視覺。
+//   使用方式：
+//     beginBatchTotals();           // 多段技開始前呼叫
+//     ... doDmg / doHeal 多次 ...    // 過程中會自動累加
+//     endBatchTotals();             // 結束時呼叫（可延遲呼叫）
+//   規則：只有同一目標累計 >= 2 次才顯示「合計」；單次傷害/治療不顯示。
+// ══════════════════════════════════════════════════════════════════
+window._batchTotals = null;
+function beginBatchTotals(){
+  // 巢狀安全：若已經開啟一場 batch，保留外層，不另建
+  if(window._batchTotals && window._batchTotals._nestLv >= 0){
+    window._batchTotals._nestLv++;
+    return;
+  }
+  window._batchTotals = {
+    _nestLv: 0,
+    dmg:  new Map(),  // key: side+'-'+pos → { target, sum, hits, isCrit }
+    heal: new Map(),
+  };
+}
+function _batchKey(h){ return h ? (h.side+'-'+h.pos) : null; }
+function _batchAccum(type, target, amount){
+  if(!window._batchTotals || !target || !amount || amount <= 0) return;
+  const map = window._batchTotals[type];
+  if(!map) return;
+  const k = _batchKey(target);
+  if(!k) return;
+  const ent = map.get(k) || { target, sum:0, hits:0 };
+  ent.sum += amount;
+  ent.hits += 1;
+  map.set(k, ent);
+}
+function endBatchTotals(){
+  const bt = window._batchTotals;
+  if(!bt) return;
+  if(bt._nestLv > 0){ bt._nestLv--; return; }
+  // 計算各目標的合計並顯示
+  const _flush = (map, popupType, label) => {
+    if(!map) return;
+    map.forEach((ent) => {
+      if(ent.hits >= 2 && ent.target && ent.sum > 0){
+        _showTotalPopup(ent.target, ent.sum, popupType, label);
+      }
+    });
+  };
+  _flush(bt.dmg,  'total-dmg',  '合計');
+  _flush(bt.heal, 'total-heal', '合計');
+  window._batchTotals = null;
+}
+function _showTotalPopup(h, val, type, label){
+  const el=document.getElementById('card-'+h.side+'-'+h.pos);
+  if(!el) return;
+  const gc=document.getElementById('gc');
+  if(!gc) return;
+  const gcR=gc.getBoundingClientRect();
+  const eR=el.getBoundingClientRect();
+  const scale=gcR.width/1920;
+  const x=(eR.left-gcR.left)/scale + eR.width/scale/2;
+  // 合計顯示在卡片上方中央（比單次傷害再高一些，避免與前面堆疊的popup重疊）
+  const y=(eR.top-gcR.top)/scale - 10;
+  const p=document.createElement('div');
+  p.className='popup '+type;
+  p.innerHTML='<span class="total-label">'+(label||'合計')+'</span>'+
+              '<span class="total-num">'+(type==='total-heal'?'+':'')+val+'</span>';
+  p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;';
+  gc.appendChild(p);
+  setTimeout(function(){if(p.parentNode)p.remove();},2300);
 }
 function _screenShake2(){
   const gc=document.getElementById('gc');
@@ -14896,8 +15066,9 @@ function execSkill(a, sk, cost, stype){
     setPending('enemy',t=>{
       log(`[${a.name}] 迅雷連斬！`);
       playSkillFX('迅雷連斬',a,[t]);
+      beginBatchTotals();
       doDmg(t,a.atk,{actor:a,isSkill:true});
-      setTimeout(()=>{if(t.curHp>0) doDmg(t,a.atk,{actor:a,isSkill:true}); updateUI();},300);
+      setTimeout(()=>{if(t.curHp>0) doDmg(t,a.atk,{actor:a,isSkill:true}); updateUI(); setTimeout(endBatchTotals,50);},300);
       endAction(a,cost);
     });
   } else if(n==='刀背擊'){
@@ -15016,8 +15187,9 @@ function execSkill(a, sk, cost, stype){
     const targets=[];
     for(let i=0;i<bounces;i++) if(allEnemies.length) targets.push(allEnemies[Math.floor(Math.random()*allEnemies.length)]);
     playSkillFX('連鎖閃電',a,targets);
+    beginBatchTotals();
     targets.forEach((h,i)=>setTimeout(()=>{ doDmg(h,Math.floor(spv(a)*0.7),{actor:a}); updateUI(); },i*200));
-    setTimeout(()=>endAction(a,cost), targets.length*200+100);
+    setTimeout(()=>{ endBatchTotals(); endAction(a,cost); }, targets.length*200+100);
   } else if(n==='麻痺落雷'){
     setPending('enemy',t=>{
       log(`[${a.name}] 麻痺落雷！`);
@@ -15612,11 +15784,13 @@ function execSkill(a, sk, cost, stype){
     log(`[${a.name}] 陰森長髮鞭擊！全體受到2次傷害！`);
     playSkillFX('陰森長髮鞭',a,_foes);
     const _d = Math.max(1, Math.round(spv(a)*0.7));
+    beginBatchTotals();
     for(let hit=0;hit<2;hit++){
       _foes.filter(h=>h.curHp>0).forEach(h=>{
         doDmg(h,_d,{actor:a,isSkill:true,isAoe:true});
       });
     }
+    setTimeout(endBatchTotals, 400);
     endAction(a,cost);
   }
   // ── 二口女 S2 雙嘴詛咒：1名對手中毒+禁療各2回合 ──
@@ -15959,10 +16133,11 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('風捲殘雲', a, foes);
     const perDmg = Math.max(1, Math.floor(spv(a) * 0.70));
     let round = 0;
+    beginBatchTotals();
     function fengJuan(){
-      if(round >= 3 || checkWin()){ updateUI(); endAction(a, cost); return; }
+      if(round >= 3 || checkWin()){ updateUI(); setTimeout(endBatchTotals,50); endAction(a, cost); return; }
       const liveFoes = G[opp].filter(h => h.curHp>0);
-      if(!liveFoes.length){ updateUI(); endAction(a, cost); return; }
+      if(!liveFoes.length){ updateUI(); setTimeout(endBatchTotals,50); endAction(a, cost); return; }
       liveFoes.forEach(t => {
         doDmg(t, perDmg, {actor:a, isSkill:true, element:'wind'});
         renderCard(t);
@@ -15992,11 +16167,17 @@ function execSkill(a, sk, cost, stype){
     log(`👹 [${a.name}] 酒宴！豪飲妖酒振奮全隊！`);
     const allies = G[a.side].filter(h => h.curHp>0);
     playSkillFX('酒宴', a, allies);
+    beginBatchTotals();
     allies.forEach(t => {
       // 恢復 20% 最大 HP
       const healAmt = Math.floor(t.hp * 0.20);
+      const _before = t.curHp;
       t.curHp = Math.min(t.hp, t.curHp + healAmt);
-      showPopup(t, '+'+healAmt, 'heal');
+      const _actual = t.curHp - _before;
+      if(_actual > 0){
+        showPopup(t, '+'+_actual, 'heal');
+        try{ _batchAccum('heal', t, _actual); }catch(_){}
+      }
       // 加上 shutenBoost buff（+25% 攻擊與特技，2回合）— 刷新覆蓋
       t.buffs = t.buffs.filter(b => b.type !== 'shutenBoost');
       const origAtk = t._shutenOrigAtk !== undefined ? t._shutenOrigAtk : t.atk;
@@ -16009,6 +16190,7 @@ function execSkill(a, sk, cost, stype){
       bannerFX(t, '酒宴！', '#ff9944', 900);
       renderCard(t);
     });
+    setTimeout(endBatchTotals, 100);
     endAction(a, cost);
   }
   // 玉藻前 S1：依特技對隨機目標造成3~4次傷害（火），附加地獄之火
@@ -16019,6 +16201,7 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('九尾狐火', a, G[opp].filter(h=>h.curHp>0));
     const hitTargets = new Set();
     let i = 0;
+    beginBatchTotals();
     function jiuWei(){
       const liveFoes = G[opp].filter(h => h.curHp>0);
       if(i >= hitCount || !liveFoes.length || checkWin()){
@@ -16032,6 +16215,7 @@ function execSkill(a, sk, cost, stype){
           }
         });
         updateUI();
+        setTimeout(endBatchTotals, 50);
         endAction(a, cost);
         return;
       }
@@ -16074,10 +16258,12 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('八首齊噬', a, G[opp].filter(h=>h.curHp>0));
     const perDmg = Math.max(1, Math.floor(a.atk * 0.40));
     let i = 0;
+    beginBatchTotals();
     function yamataBite(){
       const liveFoes = G[opp].filter(h => h.curHp>0);
       if(i >= 8 || !liveFoes.length || checkWin()){
         updateUI();
+        setTimeout(endBatchTotals, 50);
         endAction(a, cost);
         return;
       }
@@ -16101,10 +16287,11 @@ function execSkill(a, sk, cost, stype){
     const statusPool = ['freeze','hellfire','seal','para'];
     const statusLabel = {freeze:'❄️冰凍', hellfire:'🔥地獄之火', seal:'🚫封印', para:'⚡麻痺'};
     let round = 0;
+    beginBatchTotals();
     function yamataBreath(){
-      if(round >= 2 || checkWin()){ updateUI(); endAction(a, cost); return; }
+      if(round >= 2 || checkWin()){ updateUI(); setTimeout(endBatchTotals,50); endAction(a, cost); return; }
       const liveFoes = G[opp].filter(h => h.curHp>0);
-      if(!liveFoes.length){ updateUI(); endAction(a, cost); return; }
+      if(!liveFoes.length){ updateUI(); setTimeout(endBatchTotals,50); endAction(a, cost); return; }
       liveFoes.forEach(t => {
         doDmg(t, dmg, {actor:a, isSkill:true, element:'dark'});
         renderCard(t);
@@ -16457,9 +16644,10 @@ function execSkill(a, sk, cost, stype){
     log(`[${a.name}] 亂槍射擊！${shotCount}次！`);
     const shotFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     if(!shotFoes.length){ endAction(a,cost); return; }
+    beginBatchTotals();
     let _si=0;
     const _doShot=()=>{
-      if(_si>=shotCount){ endAction(a,cost); return; }
+      if(_si>=shotCount){ setTimeout(endBatchTotals,50); endAction(a,cost); return; }
       const tgt=shotFoes.filter(h=>h.curHp>0);
       if(tgt.length) doDmg(tgt[Math.floor(Math.random()*tgt.length)],a.atk,{isSkill:true,actor:a});
       updateUI(); _si++;
@@ -16788,15 +16976,19 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('召喚蝙蝠群',a,batFoes);
     // ★ v1.0.20260421.3004 — 每次傷害 = 特技值 × 50%
     const _batDmg = Math.max(1, Math.round(spv(a)*0.5));
+    // ★ v1.0.20260423.0100 — 多段傷害合計
+    beginBatchTotals();
     let _bi=0;
     const _doBat=()=>{
-      if(_bi>=_batHits){ endAction(a,cost); return; }
+      if(_bi>=_batHits){ setTimeout(endBatchTotals,100); endAction(a,cost); return; }
       const aliveFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
       if(aliveFoes.length){
         const bt=aliveFoes[Math.floor(Math.random()*aliveFoes.length)];
         // 固定傷害：繞過迴避、有利狀態、護盾、屬性
         bt.curHp=Math.max(0,bt.curHp-_batDmg);
 showPopup(bt,_batDmg,'dmg'); sndAtk(); shake(bt);
+// 固定傷害繞過 doDmg → 手動累加至合計
+try{ _batchAccum('dmg', bt, _batDmg); }catch(_){}
 // 吸血鬼天賦：召喚蝙蝠群每次命中也觸發嗜血
 if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   const vamp=3;
@@ -17878,6 +18070,8 @@ function _pickWeightedTarget(pool) {
 function startTurn(){
   // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
   if(window._advMiniResultShowing) return;
+  // ★ v1.0.20260423.0100 — 安全：清除可能殘留的合計計數狀態（新一回合開始時視為乾淨起點）
+  try{ if(window._batchTotals){ window._batchTotals = null; } }catch(_){}
   if(checkWin()) return;
   // ★ 時間倒轉用：偵測回合變更 → 取當前回合起始快照
   try{
@@ -19920,12 +20114,18 @@ function checkWin(){
   // 冒險模式：主BOSS被打倒時，小怪立即投降
   if(typeof _adventureMode !== 'undefined' && _adventureMode && window._advSystemReady){
     // 找主 BOSS（pos=1 位置，或從 BOSS_NAMES 中查）
-    const _mainBossNames = ['九尾空貓怪','杏花妖'];
+    // ★ v1.0.20260423.0100 — 納入日本關主 BOSS，讓主 BOSS 倒下時小怪也跟著投降
+    const _mainBossNames = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
     const mainBoss = G.p2.find(h=>_mainBossNames.includes(h.name));
     if(mainBoss && mainBoss.curHp <= 0){
       // 讓小怪一起倒下
       G.p2.forEach(h=>{ if(h.curHp>0){ h.curHp=0; renderCard(h); } });
-      const _icn = mainBoss.name==='杏花妖' ? '🌸' : '🐱';
+      const _icn = mainBoss.name==='杏花妖' ? '🌸'
+                 : mainBoss.name==='大天狗' ? '🦅'
+                 : mainBoss.name==='酒吞童子' ? '👹'
+                 : mainBoss.name==='玉藻前' ? '🦊'
+                 : mainBoss.name==='八岐大蛇' ? '🐉'
+                 : '🐱';
       log(`${_icn} ${mainBoss.name}落敗！小怪們也跟著投降了！`);
       _showResultWithDrama(true); return true;
     }
@@ -19935,6 +20135,21 @@ function checkWin(){
     if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
       advFinishMiniBattle(true);
       return true;
+    }
+    // ★ v1.0.20260423.0100 — 防呆（Bug #5 修復）：
+    //   即使 _advMiniBattleActive 為 false，若 G.p2 沒有任何 BOSS 名字，
+    //   也強制走 advFinishMiniBattle，避免誤觸 advShowBattleResult 發 BOSS 獎勵
+    if(typeof _adventureMode !== 'undefined' && _adventureMode && G.p2 && G.p2.length > 0){
+      const _BOSS_SET = new Set(['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇']);
+      const _hasBoss = G.p2.some(h => _BOSS_SET.has(h.name));
+      if(!_hasBoss){
+        console.warn('[防呆] G.p2 全無 BOSS 但 _advMiniBattleActive=false，強制 mini 戰結算避免誤發 BOSS 獎勵');
+        if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = true;
+        if(typeof advFinishMiniBattle === 'function'){
+          advFinishMiniBattle(true);
+          return true;
+        }
+      }
     }
     _showResultWithDrama(true); return true;
   }
@@ -19946,6 +20161,21 @@ function _showResultWithDrama(win){
   if(_advMiniBattleActive){
     advFinishMiniBattle(win);
     return;
+  }
+  // ★ v1.0.20260423.0100 — 防呆（Bug #5 修復）：
+  //   即使 _advMiniBattleActive 為 false，若是勝利且 G.p2 無任何 BOSS 名字，
+  //   視為小怪戰結算而非 BOSS 結算，避免誤發 BOSS 獎勵
+  if(win && typeof _adventureMode !== 'undefined' && _adventureMode && G && G.p2 && G.p2.length > 0){
+    const _BOSS_SET2 = new Set(['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇']);
+    const _hasBoss2 = G.p2.some(h => _BOSS_SET2.has(h.name));
+    if(!_hasBoss2){
+      console.warn('[防呆] _showResultWithDrama: G.p2 無 BOSS 但走到 BOSS 結算流程，改為 mini 戰結算');
+      if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = true;
+      if(typeof advFinishMiniBattle === 'function'){
+        advFinishMiniBattle(win);
+        return;
+      }
+    }
   }
   // 冒險模式：失敗時先嘗試接關
   if(typeof _adventureMode !== 'undefined' && _adventureMode && !win){
@@ -24617,6 +24847,21 @@ function exitAdventureMode(){
   _advMiniBattleActive = false;
   _advQuizPhase = 'idle';
   window._advMiniResultPending = null;
+  // ★ v1.0.20260423.0100 — 徹底清除 BOSS 戰相關殘留旗標與備份，
+  //   避免重新進入冒險後第一場小怪戰就被誤判為 BOSS 戰結算(issue #5)
+  try{
+    if(typeof _advBossTeamSaved !== 'undefined') _advBossTeamSaved = null;
+    if(typeof _currentBossVariant !== 'undefined') _currentBossVariant = null;
+    window._currentBossVariantInfo = null;
+    window._advApricotPreviewTeam = null;
+    window._advBossHpMultApplied = false;
+    window._advJapanEliteBuffApplied = false;
+    window._advJapanYamataWeakApplied = false;
+    window._advJapanDifficultyShown = false;
+    window._advMiniResultShowing = false;
+    window._advPreComposedMobs = null;
+    window._advNoTreasureThisBattle = false;
+  }catch(_){}
   // ★ 隱藏戰鬥教學按鈕
   try{ _advTutBtnShow(false); }catch(e){}
   // ★ 清除戰鬥背景
@@ -29542,7 +29787,7 @@ async function advStartWinSequence() {
       _gc.style.filter = '';
       // 清除所有卡牌高亮與狀態殘留
       _gc.querySelectorAll('.card').forEach(c=>{
-        c.classList.remove('_tut-highlight','sel','acting','dead');
+        c.classList.remove('_tut-highlight','sel','acting','dead','reap-eligible','burst-ready','active','card-hit');
       });
     }
     // 清除行動順序條殘留
@@ -29556,8 +29801,37 @@ async function advStartWinSequence() {
       const el = document.getElementById(id);
       if(el){ el.classList.remove('show'); el.style.display='none'; }
     });
-    // 重置 G.p2 讓卡牌區空白（不再顯示HP=0的BOSS）
-    G._resultShown = false;
+    // ★ v1.0.20260423.0100 — BUG修復：真正清空 G.p2 並重畫卡牌區，
+    //   避免切到下一關(貓空/日本)選 BOSS 路線後一進去仍看到上一場 BOSS HP=0 的殘影
+    if(typeof G !== 'undefined' && G){
+      G._resultShown = false;
+      G.p2 = [];
+      G.p1 = [];
+      G.activeChar = null;
+      G.pendingTarget = null;
+      G.taunted = null;
+      try{ if(typeof pendingCb !== 'undefined') pendingCb = null; }catch(_){}
+    }
+    // 清掉上/下兩排卡牌 DOM（行動順序條已清，卡牌也一併清）
+    const _row1 = document.getElementById('row1');
+    const _row2 = document.getElementById('row2');
+    if(_row1) _row1.innerHTML = '';
+    if(_row2) _row2.innerHTML = '';
+    // 清除 BOSS 戰相關的殘留旗標與備份，避免回到選關頁後下一場戰鬥誤用
+    try{
+      if(typeof _advBossTeamSaved !== 'undefined') _advBossTeamSaved = null;
+      if(typeof _currentBossVariant !== 'undefined') _currentBossVariant = null;
+      window._currentBossVariantInfo = null;
+      window._advApricotPreviewTeam = null;
+      window._advBossHpMultApplied = false;
+      window._advJapanEliteBuffApplied = false;
+      window._advJapanYamataWeakApplied = false;
+      window._advJapanDifficultyShown = false;
+      window._advMiniResultShowing = false;
+      window._advMiniResultPending = null;
+      window._advPreComposedMobs = null;
+      if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = false;
+    }catch(_clrE){ console.warn('[BOSS勝利清殘留]', _clrE); }
   }catch(_e){}
 
   bgmStop();
