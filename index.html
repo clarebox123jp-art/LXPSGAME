@@ -39461,6 +39461,47 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.0200', brief:[
+    '🎨 多段傷害/治療新增「合計」視覺；🦇 吸血鬼靈魂收割可處決目標持續高亮；🛠 修復日本 BOSS 戰結束後的畫面殘留與獎勵誤發 BUG',
+  ], items:[
+    '【新增 1：多段傷害/治療「合計」數字】',
+    '  11 個多段技能（迅雷連斬、陰森長髮鞭、連鎖閃電、召喚蝙蝠群、亂槍射擊、',
+    '  風捲殘雲、酒宴、九尾狐火、八首齊噬、暗冰雷焰吐息、焰尾九連擊）',
+    '  結算後會在該角色身上跳出「合計 XXX」大字：',
+    '  - 傷害用金色（橘紅光暈），治療用綠色（綠光暈）',
+    '  - 小 → 爆出 1.45× → 縮回 1.05× → 淡出的彈跳動畫',
+    '  - 合計字固定在角色卡片中央、不會飄出畫面',
+    '  - 單次命中不顯示，只有累計 ≥2 次才顯示',
+    '【新增 2：吸血鬼「靈魂收割」可處決目標持續高亮】',
+    '  只要場上有吸血鬼存活、能使用靈魂收割，',
+    '  所有血量低於處決門檻（10% + 技能等級×1%，最高 19%）的目標',
+    '  會持續顯示紫色脈動光暈 + 右上 💀 圖示，直到血量回升或吸血鬼倒下。',
+    '  HP 即時變動（受傷/受治療）都會重新掃描。',
+    '【修正 1：checkWin 日本 BOSS 偵測補齊】',
+    '  原先 checkWin 只認貓空 BOSS（九尾空貓怪、杏花妖），',
+    '  日本四大 BOSS（大天狗、酒吞童子、玉藻前、八岐大蛇）倒下時小怪不會跟著投降。',
+    '  現已全部納入 _mainBossNames，主 BOSS 倒下立即全場清場。',
+    '【修正 2：日本 BOSS 戰結束後畫面殘留】',
+    '  原因：advStartWinSequence 的註解寫「重置 G.p2 讓卡牌區空白」，',
+    '  但實際只改了 G._resultShown = false，G.p1/G.p2/row1/row2 DOM 都沒清。',
+    '  導致切換到下一關選 BOSS 路線進去時，仍顯示上一場 BOSS HP=0 的殘影、卡死。',
+    '  修正：勝利結算後真正清空 G.p1、G.p2、row1/row2 DOM，',
+    '  並移除 reap-eligible/burst-ready/active/card-hit 等所有卡片 class 殘留。',
+    '【修正 3：重進日本路線，第一場小怪勝利直接獲得 BOSS 獎勵的 BUG】',
+    '  根本原因：_advMiniBattleActive 在極少數情況殘留為 false，',
+    '  導致小怪戰結束時 checkWin 走到 _showResultWithDrama → advShowBattleResult(true)，',
+    '  直接依 G.p2[1] 取 BOSS 名字發 BOSS 獎勵。',
+    '  三層防禦修復：',
+    '  1. checkWin：若 G.p2 全無 BOSS 名字但旗標=false，強制修為 true 並走 advFinishMiniBattle。',
+    '  2. _showResultWithDrama：同樣的防呆攔截，避免上層漏網。',
+    '  3. exitAdventureMode + advStartWinSequence：徹底清除 _advBossTeamSaved、',
+    '     _currentBossVariantInfo、_advApricotPreviewTeam、HP 倍率旗標等所有 BOSS 戰備份，',
+    '     避免跨冒險狀態殘留。',
+    '【驗證：日本小怪 20 個技能實作】',
+    '  逐一核對河童/二口女/雪女/獨眼小僧（路邊）',
+    '  與烏天狗/木葉天狗/茨木童子/星熊童子/殺生石分身/管狐（菁英）',
+    '  各 S1+S2 主動與 AI 分支，效果與 HERO_DB 描述完全相符，無需修改。',
+  ]},
   { ver:'v1.0.20260423.0100', brief:[
     '修正 iPad 上「點任何地方滑動都會跑出 Safari 網址列 / 解除全螢幕」',
   ], items:[
@@ -42258,7 +42299,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0114';
+  const CURRENT_VERSION = 'v1.0.20260423.0200';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -42275,7 +42316,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0114';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.0200';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
