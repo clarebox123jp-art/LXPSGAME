@@ -4047,7 +4047,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0110</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0111</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -29977,10 +29977,18 @@ function _buildSafeData() {
     heroBurstLevels: _heroBurstLevels,       // {name: n} 極限爆發等級（0~4）
     skillBookCount:  _skillBookCount,        // 舊版相容
     heroExpBookCount: _heroExpBookCount,      // 舊版相容
-    medals:          _playerMedals,
+    medals:          _playerMedals,           // 【遺留欄位】永遠空陣列，保留避免破壞舊存檔讀取
     heroTraitLevel:  _heroTraitLevel,
     knowledgeCoins:  _knowledgeCoins,        // 知識幣
     playerBackpack:  _playerBackpack,        // 背包（向後相容）
+    // ★ v1.0.20260422.0111 — 獎章系統雲端同步
+    //   playerMedals 欄位原本是孤兒（_playerMedals 變數從未被寫入），現改為實際儲存 _medals 內容。
+    //   medalStats 新增：答題次數/連擊/BOSS 擊殺/日本關進度等累積統計，獎章解鎖進度依此計算。
+    //   兩個都用字串化版本（_s）繞過 Firebase merge:true 不刪舊 key 的限制。
+    playerMedals:   _medals,                 // {id: {unlockedAt:number}}
+    playerMedals_s: JSON.stringify(_medals||{}),
+    medalStats:     _medalStats,
+    medalStats_s:   JSON.stringify(_medalStats||{}),
     // ★ v1.0.20260421.3000x — 寵物圖鑑已收錄集合（轉 array 才能上雲）
     petsEverCollected: (typeof _petsEverCollected !== 'undefined' && _petsEverCollected) ? Array.from(_petsEverCollected) : [],
     // ★ 字串化版本：用來繞過 Firebase merge:true 不會刪除 map 中 key 的限制
@@ -30082,6 +30090,93 @@ function _applySafeData(raw) {
   if(typeof data.heroExpBookCount === 'number') _heroExpBookCount = data.heroExpBookCount;
   if(Array.isArray(data.medals)) _playerMedals = data.medals;
   if(data.heroTraitLevel && typeof data.heroTraitLevel === 'object') _heroTraitLevel = data.heroTraitLevel;
+
+  // ★ v1.0.20260422.0111 — 獎章解鎖 + 獎章統計雲端還原
+  //   合併規則（「較高狀態優先，永不回退」）：
+  //   1. 獎章解鎖：雲端或本地任一已解鎖就保留（取較早的 unlockedAt 時間戳）
+  //   2. 統計數字：取較大值（correctAnswers, chestKills, jpBossKills.tengu 等）
+  //   3. 布林旗標（jpTreasuresConsumed, jpRoutesCleared.*）：任一為 true 就保留 true
+  //   3. streak / winStreak 例外：直接採雲端值（避免本地中斷後雲端反而把它刷回大值）
+  //      → 這兩個值是「當前連擊」，不該單純取 max；改取「雲端值」確保跨裝置看到的是最近紀錄
+  try{
+    // 保險：若 _medals / _medalStats 尚未從 localStorage 載入（極端初始化時序），先載入
+    //        這樣合併邏輯才有正確的「本地基礎狀態」可參照
+    if(!_medals || Object.keys(_medals).length === 0){
+      try{ if(typeof _loadMedals === 'function') _loadMedals(); }catch(_){}
+    }
+    // === (1) 獎章解鎖 ===
+    let _cloudMedals = null;
+    if(typeof data.playerMedals_s === 'string'){
+      try{ _cloudMedals = JSON.parse(data.playerMedals_s); }catch(_){}
+    }
+    if(!_cloudMedals && data.playerMedals && typeof data.playerMedals === 'object'){
+      _cloudMedals = data.playerMedals;
+    }
+    if(_cloudMedals && typeof _cloudMedals === 'object'){
+      // 本地已先由 _loadMedals 載入進 _medals；這裡做合併
+      Object.keys(_cloudMedals).forEach(id => {
+        const cM = _cloudMedals[id];
+        const lM = _medals[id];
+        if(!lM){
+          // 本地無 → 採雲端
+          _medals[id] = cM;
+        } else if(cM && cM.unlockedAt && lM.unlockedAt && cM.unlockedAt < lM.unlockedAt){
+          // 兩邊皆解鎖 → 保留較早的時間戳（更精確反映首次解鎖）
+          _medals[id] = cM;
+        }
+        // 其他情況：本地已有且時間戳更早 / 相同 → 維持本地
+      });
+    }
+    // === (2) 獎章統計 ===
+    let _cloudStats = null;
+    if(typeof data.medalStats_s === 'string'){
+      try{ _cloudStats = JSON.parse(data.medalStats_s); }catch(_){}
+    }
+    if(!_cloudStats && data.medalStats && typeof data.medalStats === 'object'){
+      _cloudStats = data.medalStats;
+    }
+    if(_cloudStats && typeof _cloudStats === 'object'){
+      // 本地已由 _loadMedals 載入 _medalStats；這裡逐欄位合併
+      const _numKeys = ['totalAnswers','correctAnswers','hardModeAnswers',
+                        'totalCoinsEarned','chestKills','devilKills','jpClears','jpPetBattles'];
+      _numKeys.forEach(k => {
+        const c = Number(_cloudStats[k] || 0);
+        const l = Number(_medalStats[k] || 0);
+        if(c > l) _medalStats[k] = c;
+      });
+      // streak / winStreak：採雲端值（最新紀錄）
+      if(typeof _cloudStats.streak === 'number') _medalStats.streak = _cloudStats.streak;
+      if(typeof _cloudStats.winStreak === 'number') _medalStats.winStreak = _cloudStats.winStreak;
+      // 布林值：任一為 true 就保留 true
+      ['hadRevive','jpTreasuresConsumed'].forEach(k => {
+        if(_cloudStats[k] === true) _medalStats[k] = true;
+      });
+      // 嵌套物件：jpBossKills / jpMobKills / jpCollectCounts（數字 → 取較大）
+      ['jpBossKills','jpMobKills','jpCollectCounts'].forEach(groupKey => {
+        if(_cloudStats[groupKey] && typeof _cloudStats[groupKey] === 'object'){
+          if(!_medalStats[groupKey] || typeof _medalStats[groupKey] !== 'object') _medalStats[groupKey] = {};
+          Object.keys(_cloudStats[groupKey]).forEach(subKey => {
+            const c = Number(_cloudStats[groupKey][subKey] || 0);
+            const l = Number(_medalStats[groupKey][subKey] || 0);
+            if(c > l) _medalStats[groupKey][subKey] = c;
+          });
+        }
+      });
+      // jpRoutesCleared（布林 → 任一為 true 就保留）
+      if(_cloudStats.jpRoutesCleared && typeof _cloudStats.jpRoutesCleared === 'object'){
+        if(!_medalStats.jpRoutesCleared || typeof _medalStats.jpRoutesCleared !== 'object') _medalStats.jpRoutesCleared = {};
+        Object.keys(_cloudStats.jpRoutesCleared).forEach(k => {
+          if(_cloudStats.jpRoutesCleared[k] === true) _medalStats.jpRoutesCleared[k] = true;
+        });
+      }
+    }
+    // 合併完成後立即寫回 localStorage，確保下次讀取一致
+    try{
+      localStorage.setItem('adv_medals', JSON.stringify(_medals));
+      localStorage.setItem('adv_medal_stats', JSON.stringify(_medalStats));
+    }catch(_){}
+  }catch(_medalMergeE){ console.warn('[獎章合併] 失敗:', _medalMergeE); }
+
   // ★ 知識幣 & 背包
   if(typeof data.knowledgeCoins === 'number') _knowledgeCoins = data.knowledgeCoins;
   // ★ 優先讀字串化版本（Firebase merge 不會刪 key 的繞道）
@@ -37792,6 +37887,16 @@ function _saveMedals(){
     localStorage.setItem('adv_medals', JSON.stringify(_medals));
     localStorage.setItem('adv_medal_stats', JSON.stringify(_medalStats));
   }catch(e){}
+  // ★ v1.0.20260422.0111 — 獎章變動時同步到 Firebase
+  //   使用 debounce（500ms）避免短時間內多次觸發（例如答對一題連解 3 個獎章）
+  //   造成 Firebase 寫入過頻
+  try{
+    if(window._medalCloudSaveTimer) clearTimeout(window._medalCloudSaveTimer);
+    window._medalCloudSaveTimer = setTimeout(() => {
+      window._medalCloudSaveTimer = null;
+      try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
+    }, 500);
+  }catch(_){}
 }
 
 function _unlockMedal(id){
@@ -38991,6 +39096,41 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0111', brief:[
+    '獎章解鎖狀態 + 答題統計資料同步到 Firebase 雲端',
+  ], items:[
+    '【問題】',
+    '  獎章系統從未同步到雲端！',
+    '  - _medals（哪些獎章解鎖了）→ 只存 localStorage adv_medals',
+    '  - _medalStats（答題次數/連擊/BOSS 擊殺數/日本關統計）→ 只存 localStorage adv_medal_stats',
+    '  影響：',
+    '  - 換裝置登入 → 所有獎章消失、答題統計歸零',
+    '  - 清快取 → 獎章、連擊紀錄、日本關 BOSS 擊殺全部重來',
+    '  - 手機/平板/電腦三邊各玩各的，獎章與統計完全獨立',
+    '【同步的欄位】',
+    '  1. playerMedals（{獎章 id: {unlockedAt}}）：所有已解鎖獎章與解鎖時間',
+    '  2. medalStats：',
+    '     - 答題：totalAnswers / correctAnswers / streak / hardModeAnswers',
+    '     - 戰績：totalCoinsEarned / winStreak / chestKills / devilKills / hadRevive',
+    '     - 日本關 BOSS 擊殺：jpBossKills (tengu/shutendoji/tamamo/yamata)',
+    '     - 日本關小怪擊殺：jpMobKills (kappa/futakuchi/yukionna/hitotsume/ninomiya/zashiki)',
+    '     - 日本關路線全通過：jpRoutesCleared (tengu/shutendoji/tamamo)',
+    '     - 日本關道具收集：jpCollectCounts (cucumber/onigiri/ice/marble)',
+    '     - jpClears / jpPetBattles / jpTreasuresConsumed',
+    '【合併邏輯（較高者勝，永不回退）】',
+    '  - 獎章解鎖：雲端或本地任一已解鎖就保留，時間戳取較早的（較精確反映首次解鎖）',
+    '  - 累積數字（totalAnswers 等）：取較大值',
+    '  - 布林旗標（hadRevive / jpTreasuresConsumed / jpRoutesCleared.*）：任一為 true 就保留 true',
+    '  - streak / winStreak 例外：直接採雲端值（這兩個是「當前連擊」，不是「最高紀錄」）',
+    '【即時同步】',
+    '  _saveMedals 每次觸發都會排程 500ms debounce 後呼叫 gameCloudSave',
+    '  debounce 目的：答對一題可能同時解 3 個獎章，避免 Firebase 短時間內被打 3 次',
+    '【舊欄位處理】',
+    '  原本的 medals 欄位（對應孤兒變數 _playerMedals）保留以向後相容，',
+    '  但已不再承擔獎章資料職責（_playerMedals 永遠空陣列）。',
+    '  新的獎章資料一律寫入 playerMedals / playerMedals_s / medalStats / medalStats_s 四個欄位。',
+    '  _s 尾綴為字串化備份，繞過 Firebase merge:true 不會刪除 map 舊 key 的限制。',
+  ]},
   { ver:'v1.0.20260422.0110', brief:[
     '「開始整隊，踏上冒險之旅！」按鈕音效音量降 30%、縮短至 2 秒後淡出',
   ], items:[
@@ -41647,7 +41787,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0110';
+  const CURRENT_VERSION = 'v1.0.20260422.0111';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41664,7 +41804,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0110';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0111';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
