@@ -618,6 +618,22 @@
    全域 touch-action:none 會讓 inline onclick 在 Safari 偶爾失靈，這裡覆蓋回 manipulation */
 button{touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.15);}
 html,html,body{width:100%;height:100%;overflow:hidden;background:#000;margin:0;padding:0;touch-action:none;overscroll-behavior:none;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;}
+/* ★ v1.0.20260423.0100 — 所有可捲動容器一律 overscroll-behavior:contain
+   目的：捲動到邊界後繼續拉不會觸發外層橡皮筋 → Safari 網址列不會因此冒出 */
+[data-scrollable="true"],
+#hero-page-grid,#monster-page-content,#medal-page-content,#hero-detail-box,
+#hero-pick-arena-inner,#skill-replace-overlay,#backpack-main,
+#shop-main,#shop-bag-scroll,#adv-left-panel,#adv-right-panel,
+#game-info-modal,#preset-team-panel,#adv-crash-recovery-box,
+#rollback-reinforce-ov,#bag-hero-select,#upgrade-confirm-box,
+#adv-continue-overlay,#adv-mini-result,#adv-continue-box,
+#_tut-prompt,#invest-confirm-box,#burst-upgrade-confirm-box,
+#adv-treasure-confirm,#adv-skip-select-box,#_rollback-menu,
+#bag-skill-select,#_ts_popup,#login-gate-modal,#passive-prompt,
+#adv-choice-panel,#adv-repick-popup,
+#adv-boss-route-pop,#japan-locked-modal{
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+}
 /* ★ v1.0.20260422.0112 — iPad 全螢幕置中根本修正：
    舊方法：wrapper 用 100% 高度（iPad 會用 layout viewport 包含 Safari chrome / home indicator 區）
           + #gc 用 position:absolute 脫離 flex 流，靠 JS 手動算 translate 置中。
@@ -23233,16 +23249,32 @@ window.addEventListener('pagehide', function(e){
   };
   // ★ 追蹤觸碰起點（用於判斷邊緣手勢、以及 iPad 小移動 tap 判定）
   var _touchStartY = 0, _touchStartX = 0;
+  // ★ v1.0.20260423.0100 — touchstart 時記錄「目標是否為可點擊元素」
+  //   用於 touchmove 中判斷是否該套用 TAP_THRESHOLD 保護
+  var _touchStartOnClickable = false;
   // ★ v1.0.20260422.0102 — iPad tap 意圖判定閾值：手指移動 < 10px 視為 tap
   //   原問題：iPad 用戶「按賣出按鈕沒反應」要切全螢幕後再按才動
   //   原因：iPad 手指按下時常伴隨 1~5px 微小移動 → 觸發 touchmove → preventDefault →
   //        某些 iOS 版本會因此把後續的 synthetic click 視為「已被 handler 處理」而抑制
   //   解法：touchmove 距離 < TAP_THRESHOLD 時不 preventDefault（判定為 tap 非滑動）
   var TAP_THRESHOLD = 10;
+  // ★ v1.0.20260423.0100 — 判斷 target 是否為可點擊元素（按鈕、連結、輸入框等）
+  //   只有這類元素才需要 TAP_THRESHOLD 保護（避免抑制 click）
+  //   非可點擊區域（例如遊戲畫布、空白背景）不需要保護，touchmove 應立即攔截
+  var _isClickableTarget = function(target){
+    if(!target || !target.closest) return false;
+    return !!target.closest(
+      'button, a, input, select, textarea, label, [onclick], [role="button"], ' +
+      '.abtn, .ctrl-btn, .card, .hero-card, .monster-card, .medal-card, ' +
+      '.iop-btn, .shop-btn, .bag-item, .skill-slot, .equip-badge'
+    );
+  };
   document.addEventListener('touchstart', function(e){
     if(e.touches.length > 0){
       _touchStartY = e.touches[0].clientY;
       _touchStartX = e.touches[0].clientX;
+      // ★ v1.0.20260423.0100 — 記錄目標是否為可點擊元素
+      _touchStartOnClickable = _isClickableTarget(e.target);
     }
     // ★ 攔截底部 Home Bar 區域（底部 50px）的觸碰，防止 iOS 上滑手勢
     if(e.touches.length > 0){
@@ -23257,10 +23289,13 @@ window.addEventListener('pagehide', function(e){
   }, { passive: false });
 
   document.addEventListener('touchmove', function(e){
-    // ★ v1.0.20260422.0102 — tap 意圖保護：手指未大幅移動時視為 tap，不 preventDefault
-    //   否則在 iPad 上會抑制按鈕的 click 事件（例：賣出按鈕按了沒反應）
+    // ★ v1.0.20260423.0100 — 修正「任何地方滑動都出現 Safari 網址列」：
+    //   原本 TAP_THRESHOLD 保護對「全部」目標生效，導致非按鈕區域的小移動也被放行
+    //   → iOS 累積這些放行的 touchmove，開始顯示網址列
+    //   改為：TAP_THRESHOLD 保護「只對可點擊元素」生效（避免抑制按鈕 click）
+    //         其他區域（遊戲畫布、空白背景等）touchmove 立即 preventDefault
     var t = e.touches && e.touches[0];
-    if(t){
+    if(t && _touchStartOnClickable){
       var dx = Math.abs(t.clientX - _touchStartX);
       var dy = Math.abs(t.clientY - _touchStartY);
       if(dx < TAP_THRESHOLD && dy < TAP_THRESHOLD) return;
@@ -37540,7 +37575,7 @@ function openMonsterDetail(name) {
       const b2 = HERO_DB[name];
       let rt='';
       if(b2&&b2._rewardType==='coins') rt='<span style="color:#ffe066;font-weight:900;">💰 必定掉落 '+b2._rewardMin.toLocaleString()+'~'+b2._rewardMax.toLocaleString()+' 知識幣</span>';
-      else if(b2&&b2._rewardType==='exp') rt='<span style="color:#88ff88;font-weight:900;">⭐ 必定掉落 '+b2._rewardMin.toLocaleString()+'~'+b2._rewardMax.toLocaleString()+' 英雄EXP（均分）</span>';
+      else if(b2&&b2._rewardType==='exp') rt='<span style="color:#88ff88;font-weight:900;">⭐ 必定掉落 '+b2._rewardMin.toLocaleString()+'~'+b2._rewardMax.toLocaleString()+' 英雄EXP（每人）</span>';
       else if(b2&&b2.exp>0) rt='<span style="color:#88aaff;">⭐ 基礎EXP：'+b2.exp+'</span>';
       if(!drops.length&&!rt) return '';
       let rows=drops.map(d=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);margin-bottom:6px;"><span style="font-size:24px;min-width:32px;">'+d.icon+'</span><span style="flex:1;font-size:18px;color:#ddd;">'+d.name+(d.note?'<span style="color:#666;font-size:14px;margin-left:6px;">（'+d.note+'）</span>':'')+' </span><span style="font-size:18px;font-weight:700;color:#ffcc44;">'+d.rate+'</span></div>').join('');
