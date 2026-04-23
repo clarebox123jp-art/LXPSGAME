@@ -4047,7 +4047,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0109</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0110</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4175,7 +4175,7 @@ body {
           <span class="adv-info-label">🎁 獎勵</span>
           <div id="adv-rewards-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
-        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame(window._advSelectedStage||'maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
+        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.49,2000);startAdventureGame(window._advSelectedStage||'maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
 
       </div>
     </div>
@@ -4922,7 +4922,7 @@ function noise(dur,vol){
   g.gain.setValueAtTime(vol,AC.currentTime);g.gain.linearRampToValueAtTime(0,AC.currentTime+dur);
   src.start();
 }
-function playSfx(id, vol){
+function playSfx(id, vol, fadeStartMs){
   if(_sfxMuted) return;
   const el=document.getElementById(id);
   if(!el) return;
@@ -4935,6 +4935,8 @@ function playSfx(id, vol){
     const v=(vol||0.7)*0.49*_pauseMod;
     el.volume=v;
     el.play().catch(()=>{});
+    // ★ v1.0.20260422.0110 — 可選 fadeStartMs 參數：指定多少毫秒後開始淡出（預設 2700ms）
+    const _fadeStart = (typeof fadeStartMs === 'number' && fadeStartMs > 0) ? fadeStartMs : 2700;
     el._fadeTimer=setTimeout(()=>{
       const steps=20, dur=300;
       let step=0;
@@ -4946,7 +4948,7 @@ function playSfx(id, vol){
           try{ el.pause(); }catch(e){}
         }
       }, dur/steps);
-    }, 2700);
+    }, _fadeStart);
   }catch(e){}
 }
 function sndGong(){
@@ -38989,6 +38991,19 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0110', brief:[
+    '「開始整隊，踏上冒險之旅！」按鈕音效音量降 30%、縮短至 2 秒後淡出',
+  ], items:[
+    '【調整內容】',
+    '  按鈕音效 sfx-battle-start：',
+    '  - 音量從 0.7 降到 0.49（約 70% × 70% = 降 30%）',
+    '  - 淡出起始時間從 2700ms 縮短到 2000ms',
+    '  （淡出本身仍維持 300ms，所以 2 秒後開始漸淡、約 2.3 秒完全靜音）',
+    '【playSfx 小擴充】',
+    '  為了不影響其他地方的音效設定，幫 playSfx 加了第 3 個可選參數 fadeStartMs。',
+    '  沒帶參數時維持原本 2700ms 淡出，不破壞既有任何呼叫。',
+    '  只有此按鈕傳 2000 進去客製化較短的淡出時機。',
+  ]},
   { ver:'v1.0.20260422.0109', brief:[
     '日本關解鎖、三神器、八岐大蛇解鎖狀態同步到 Firebase 雲端',
   ], items:[
@@ -41632,7 +41647,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0109';
+  const CURRENT_VERSION = 'v1.0.20260422.0110';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41649,7 +41664,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0109';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0110';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
