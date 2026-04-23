@@ -4083,7 +4083,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0114</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260423.0100</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -39187,6 +39187,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.0100', brief:[
+    '修正 iPad 上「點任何地方滑動都會跑出 Safari 網址列 / 解除全螢幕」',
+  ], items:[
+    '【問題】',
+    '  iPad 遊玩時只要手指在畫面任何地方滑動，Safari 網址列就會出現，等於解除全螢幕。',
+    '【原因】',
+    '  v0102 為了修「按鈕沒反應」加的 TAP_THRESHOLD（手指移動<10px 視為 tap，放行 touchmove），',
+    '  對「全部目標」都生效。於是非按鈕區域的小移動也被放行，iOS 累積這些放行的 touchmove，',
+    '  就會開始顯示 Safari UI。',
+    '【修正】',
+    '  1. TAP_THRESHOLD 保護「只對可點擊元素」生效（button/a/input/.abtn/.card 等），',
+    '     其他區域（遊戲畫布、空白背景）touchmove 立即 preventDefault。',
+    '     → 不影響原本「按鈕 click 不抑制」的修復。',
+    '  2. 所有已知可捲動容器（白名單 + data-scrollable 元素）CSS 加上 overscroll-behavior:contain，',
+    '     彈窗/圖鑑捲到邊界後繼續拉不會再觸發外層橡皮筋。',
+    '【保留】',
+    '  白名單、_targetInScrollable 動態偵測、body 橡皮筋攔截、visualViewport resize 重取全螢幕',
+    '  這些既有機制完全不動。',
+  ]},
+  { ver:'v1.0.20260422.0115', brief:[
+    '魔物圖鑑 EXP 掉落描述「均分」→「每人」（顯示文字修正，實際結算不變）',
+  ], items:[
+    '【問題】',
+    '  魔物圖鑑對小惡魔、座敷童子顯示「必定掉落 X~Y 英雄EXP（均分）」，',
+    '  但實際結算是每名英雄各自獲得完整 EXP，顯示與實際不符。',
+    '【修正】',
+    '  MONSTER_DROPS 渲染段的顯示文字「（均分）」改為「（每人）」。',
+    '  HERO_DB 的 _rewardType:"exp" 機制本身維持原樣、EXP 數值維持原樣。',
+  ]},
   { ver:'v1.0.20260422.0114', brief:[
     '「開始整隊」音效調整對象修正：降 sfx-adv-start 30% 音量並縮短至 2 秒淡出',
   ], items:[
