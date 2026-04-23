@@ -619,13 +619,33 @@
    全域 touch-action:none 會讓 inline onclick 在 Safari 偶爾失靈，這裡覆蓋回 manipulation */
 button{touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.15);}
 html,html,body{width:100%;height:100%;overflow:hidden;background:#000;margin:0;padding:0;touch-action:none;overscroll-behavior:none;overscroll-behavior-y:none;-webkit-overflow-scrolling:auto;}
-#_gc_wrapper{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;}
+/* ★ v1.0.20260422.0112 — iPad 全螢幕置中根本修正：
+   舊方法：wrapper 用 100% 高度（iPad 會用 layout viewport 包含 Safari chrome / home indicator 區）
+          + #gc 用 position:absolute 脫離 flex 流，靠 JS 手動算 translate 置中。
+   問題：iPad 的 visualViewport.height 在全螢幕切換時回報不穩，有時大於實際可用區 → JS 把 #gc
+         算到底部溢出區，下方按鈕跑到 home indicator 下方或視窗外 → 按不到、卡死。
+   新方法：wrapper 用 100dvh（動態視口高度，永遠對應實際可見區），
+           #gc 改為 position:relative 參與 flex 流，由瀏覽器原生 flex 置中，
+           JS 的 scaleToViewport 只負責計算縮放倍率，不再算偏移量。
+           完全擺脫 visualViewport.height 回報不準的影響。
+   PC 無影響：flex 置中在 PC 上效果一樣，JS 簡化不改變視覺結果。 */
+#_gc_wrapper{
+  position:fixed;top:0;left:0;
+  width:100%;
+  height:100vh;              /* fallback for older browsers */
+  height:100dvh;             /* iOS 15.4+ / modern browsers: 動態視口高度，排除 Safari chrome */
+  overflow:hidden;background:#000;
+  display:flex;align-items:center;justify-content:center;
+}
 body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #gc{
-  position:absolute;top:0;left:0;display:flex;
+  position:relative;         /* ★ v1.0.20260422.0112 — 從 absolute 改為 relative，讓 #gc 參與 wrapper 的 flex 置中 */
+  display:flex;
   width:1920px;height:1080px;
+  flex-shrink:0;             /* ★ 避免 flex 容器擠壓固定尺寸 */
   background:var(--bg);border:none;overflow:hidden;
-  transform-origin:top left;isolation:isolate;
+  transform-origin:center center;  /* ★ 從 top left 改為 center center，配合 flex 置中讓 scale 以中心為軸 */
+  isolation:isolate;
 }
 
 /* FIELD */
@@ -3738,7 +3758,8 @@ body {
 
 /* ★ 手機/平板縮放樣式 */
 @media screen and (max-width: 1919px), screen and (max-height: 1079px) {
-  #gc { transform-origin: top left; }
+  /* ★ v1.0.20260422.0112 — 跟主規則一致，改為 center center（配合新的 flex 置中架構） */
+  #gc { transform-origin: center center; }
 }
 /* iOS safe area */
 @supports (padding: env(safe-area-inset-top)) {
@@ -4047,7 +4068,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0111</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0112</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -22800,18 +22821,17 @@ function scaleToViewport(){
   const gc=document.getElementById('gc');
   if(!gc) return;
   const W=1920, H=1080;
-  // Use visual viewport if available (handles mobile keyboard/notch)
+  // ★ v1.0.20260422.0112 — 大幅簡化：不再手動計算 translate 偏移量。
+  //   新架構由 CSS 負責置中（wrapper 的 flex align/justify-center + #gc 的 center center transform-origin），
+  //   本函式只需計算 scale 倍率讓 1920×1080 的內容適配當前視口。
+  //   好處：
+  //   1. 不再依賴 visualViewport.height 的準確度（iPad Safari 全螢幕時該值不穩）
+  //   2. 即使 scale 計算略有誤差（例如 ±1%），視覺上完全看不出來
+  //   3. 置中完全交給瀏覽器 flex 佈局引擎，比任何 JS 計算都穩定
   const vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || window.innerWidth;
   const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight;
-  const scaleX = vw / W;
-  const scaleY = vh / H;
-  const scale = Math.min(scaleX, scaleY);
-  const offsetX = (vw - W * scale) / 2;
-  const offsetY = (vh - H * scale) / 2;
-  gc.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${scale})`;
-  gc.style.transformOrigin = 'top left';
-  gc.style.width = W + 'px';
-  gc.style.height = H + 'px';
+  const scale = Math.min(vw / W, vh / H);
+  gc.style.transform = `scale(${scale})`;
   // Store scale for VFX coord calculations
   window._gcScale = scale;
 }
@@ -23435,6 +23455,22 @@ window.addEventListener('orientationchange', () => {
   if(typeof _scaleToViewportRetry === 'function') _scaleToViewportRetry();
   else setTimeout(scaleToViewport, 300);
 });
+// ★ v1.0.20260422.0112 — 清除舊版（v0111 以下）scaleGame IIFE 可能遺留在 inline style 上的
+//   left / top / width / height 值。新架構完全靠 CSS flex 置中，這些 inline 值會干擾版面。
+try{
+  const _gcInit = document.getElementById('gc');
+  if(_gcInit){
+    _gcInit.style.left = '';
+    _gcInit.style.top = '';
+    _gcInit.style.width = '';
+    _gcInit.style.height = '';
+  }
+  const _wrInit = document.getElementById('_gc_wrapper');
+  if(_wrInit){
+    _wrInit.style.width = '';
+    _wrInit.style.height = '';
+  }
+}catch(_){}
 scaleToViewport();
 // ══════════════════════════════════════
 // 冒險闖關模式 - 關卡選擇系統
@@ -39002,7 +39038,14 @@ window._advSystemReady = true;
 
 <script>
 // ★★★ 手機/平板動態縮放引擎 ★★★
+// ★ v1.0.20260422.0112 — 停用此第二套縮放引擎
+//   原因：此函式與主流程的 scaleToViewport 互相覆寫同一個 #gc.style.transform /
+//         .transformOrigin / .left / .top，兩者計算方式不同（此處用 inline 座標 top/left +
+//         transform-origin:top left，主流程改為 transform-origin:center center + 靠 flex 置中），
+//         同時啟用會讓 iPad 視口變化時產生競態，造成置中不穩、下方按鈕跑到不可見區。
+//   新架構下完全由 scaleToViewport + CSS flex 處理，此 IIFE 保留框架以防回退但立即 return。
 (function(){
+  return; // 停用：改由 scaleToViewport 統一管理
   const GW = 1920, GH = 1080;
 
   function scaleGame(){
@@ -39096,6 +39139,42 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0112', brief:[
+    'iPad 全螢幕置中根本修正（找到並解決兩套縮放引擎互相覆寫的競態問題）',
+  ], items:[
+    '【真正的根本原因】',
+    '  程式碼裡有兩套縮放引擎同時運作，不斷互相覆寫同一個 #gc element 的 style：',
+    '  (A) 主流程的 scaleToViewport 函式',
+    '  (B) 另一個獨立的 scaleGame IIFE（在檔案靠底部）',
+    '  兩者演算法不同：',
+    '  - (A) 用 transform: translate() + scale()，transform-origin: top left',
+    '  - (B) 用 inline style.left/top + transform: scale()，transform-origin: top left',
+    '  視口變化時兩者會陸續觸發，最終誰贏取決於誰最晚執行。',
+    '  iPad 的 visualViewport.resize 事件觸發得比較晚，',
+    '  導致 (B) 用不對的 window.innerHeight 覆蓋 (A) 的正確結果 → 畫面偏下。',
+    '  v0108 的 retry 機制只能緩解這個時序問題，無法解決競態本身。',
+    '【解法 1：停用 (B) scaleGame IIFE】',
+    '  直接在函式最前面 return，只保留框架以防日後回退。',
+    '  唯一的 window.scaleGame 引用是它自己建立的，沒有外部呼叫者。',
+    '【解法 2：改用瀏覽器原生 flex 置中】',
+    '  CSS 調整：',
+    '  - #_gc_wrapper 的高度從 100% 改為 100dvh (iOS 15.4+ 動態視口高度)，',
+    '    排除 Safari chrome / home indicator 等非可見區，保留 100vh 當 fallback',
+    '  - #gc 從 position: absolute 改為 position: relative 參與 wrapper 的 flex 流',
+    '  - #gc 新增 flex-shrink: 0 避免被擠壓',
+    '  - #gc transform-origin 從 top left 改為 center center，讓 scale 以中心為軸',
+    '  JS 大幅簡化 scaleToViewport：',
+    '  - 刪掉 offsetX / offsetY 計算',
+    '  - 只設 transform: scale(...)，置中由 CSS flex 處理',
+    '  好處：',
+    '  1. 不再依賴 visualViewport.height 的準確度（iPad Safari 全螢幕時不穩）',
+    '  2. 即使 scale 略有 ±1% 誤差，視覺上完全看不出',
+    '  3. 置中由瀏覽器 flex 佈局引擎負責，比任何 JS 計算都穩定',
+    '【清除舊版殘留】',
+    '  初始化時清掉 (B) scaleGame 可能遺留的 inline left/top/width/height，避免干擾新佈局',
+    '【PC 無影響】',
+    '  flex 置中 + scale 縮放在 PC 上視覺結果完全一樣',
+  ]},
   { ver:'v1.0.20260422.0111', brief:[
     '獎章解鎖狀態 + 答題統計資料同步到 Firebase 雲端',
   ], items:[
@@ -41787,7 +41866,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0111';
+  const CURRENT_VERSION = 'v1.0.20260422.0112';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41804,7 +41883,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0111';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0112';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
