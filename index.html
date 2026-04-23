@@ -28212,6 +28212,20 @@ let _advSceneChoiceDone = false; // ★ 防止場景選題重複出現
 let _advRecentQuestionIds = [];
 
 function advPickQuestion() {
+  // ★ v1.0.20260423.0100 — 日本關洗牌制:100 題全部出完才重新洗牌,期間保證不重複
+  //   (取代原本「最近 40 題避免池」的軟性機制,真正的 shuffle-bag 發牌)
+  if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
+    if(!Array.isArray(window._japanShuffleBag) || !window._japanShuffleBag.length){
+      const _jpAll = ADV_QUIZ_DB.filter(q => q.subject === '日本關').slice();
+      for(let i = _jpAll.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [_jpAll[i], _jpAll[j]] = [_jpAll[j], _jpAll[i]];
+      }
+      window._japanShuffleBag = _jpAll;
+      try{ log(`📚 [日本關] 題庫已重新洗牌,共 ${_jpAll.length} 題,下一輪前保證不重複。`); }catch(_e){}
+    }
+    return window._japanShuffleBag.shift() || null;
+  }
   const used = _advUsedQuestionIds;
   let pool = _advSessionQuestions.filter(q => !used.has(q.id));
   // 按科目過濾（如有）
