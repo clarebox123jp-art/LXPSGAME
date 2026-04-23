@@ -28538,23 +28538,80 @@ let _advQuizResolveCb = null;
 let _advBossActionSkip = false;
 
 // BOSS 生氣台詞（選了封印行動時說）
+// BOSS 生氣台詞（選了封印行動時說） — 依 BOSS 角色分流
+// ★ v1.0.20260423.0200 — 拆分為各 BOSS 專屬語氣,修正日本關用貓語氣的違和感
+const _ADV_BOSS_SKIP_LINES_MAP = {
+  '九尾空貓怪': [
+    '哼！你耍詐！竟敢封印本貓的行動！',
+    '喵嗚～！這是作弊！下回合本貓要加倍奉還！',
+    '什麼！本貓動不了了？！嗚嗚嗚……',
+    '可惡！竟然被一個小毛孩封印！本貓好生氣！',
+    '本貓今天手氣不好！哼,下次絕對不放過你！',
+    '……喵？怎麼感覺身體動不了？難道是吃了假的貓薄荷？',
+  ],
+  '杏花妖': [
+    '唉呀呀～本仙千年養成的花姿,竟被凡人封住了？',
+    '討厭啦！連本仙的花瓣都揮不動了,真是沒禮貌！',
+    '（氣得花瓣發抖）你、你竟敢封印本仙？！',
+    '哼！區區小把戲～本仙下次可不會再大意了！',
+    '真是的～本仙連扇子都舉不起來,氣死人啦！',
+    '（花香飄散）本仙……本仙就這樣待著好了,哼！',
+  ],
+  '大天狗': [
+    '放肆！竟敢封印本座的羽翼！',
+    '哼！凡人的雕蟲小技,也敢在天狗族前賣弄？',
+    '（羽扇微微顫動）此等陰招……本座記下了！',
+    '可恨！連一陣山風都喚不起,真是奇恥大辱！',
+    '小子,別以為封得住本座一時,就封得住一世！',
+    '（目露精光）下回合,本座將以十倍雷霆奉還！',
+  ],
+  '酒吞童子': [
+    '嗝——！咱的酒杯都舉不起來了!可惡！',
+    '哈哈哈！有兩下子嘛,居然能封住咱大江山之主！',
+    '咦？身體怎麼軟綿綿的……莫非是酒喝多了？',
+    '臭小子！敢讓咱丟面子,下次咱一定把你生吞！',
+    '（揮舞酒壺）來啊！再封一次試試看!咱才不怕！',
+    '哼!咱只是今天酒喝少了,不然早把你撕成兩半！',
+  ],
+  '玉藻前': [
+    '唉唷～小傢伙的手段還挺狠的嘛～妾身可有點動氣了喔？',
+    '（尾巴優雅一甩）哼～就讓你囂張這一回合吧～',
+    '妾身的狐火都燒不起來了……真是個壞孩子～',
+    '（嬌媚一笑）封得了身,可封不住妾身千年的怨念哦～',
+    '呵呵～下回合妾身要好好「疼愛」你一下～',
+    '算你厲害～不過迷惑凡人這種事,妾身還有的是方法～',
+  ],
+  '八岐大蛇': [
+    '……可惡！吾之八首竟被爾等封印！',
+    '（八道龍影搖曳）凡人之力,竟也能困住古龍？',
+    '吾乃遠古神獸,豈容爾等如此放肆！',
+    '（發出低沉咆哮）此仇……吾之八尾必以血記之！',
+    '哼！待此封印解開,必以滅世之息將爾等焚盡！',
+    '吾沉睡千年,僅此一瞬的停滯……竟也成了屈辱！',
+  ],
+};
+// 通用 fallback(萬一遇到未列入的 BOSS)
 const _ADV_BOSS_SKIP_LINES = [
-  '哼！你耍詐！竟敢封印本妖的行動！',
-  '喵嗚～！這是作弊！下回合本妖要加倍奉還！',
-  '什麼！本妖動不了了？！嗚嗚嗚……',
-  '可惡！竟然被一個小毛孩封印！本妖好生氣！',
-  '本妖今天手氣不好！哼，下次絕對不放過你！',
-  '……喵？怎麼感覺身體動不了？難道是吃了假的貓薄荷？',
+  '哼！你耍詐！竟敢封印本座的行動！',
+  '這是作弊！下回合本座要加倍奉還！',
+  '什麼！本座動不了了？！可惡……',
+  '竟然被小輩封印！太可恨了！',
 ];
-
 function advOnQuizSkip() {
   // ★ 解除戰鬥暫停
   _gamePaused = false;
   if (_advBossActionSkip) {
     // 玩家選了「封印行動」→ 跳過 BOSS 行動並讓 BOSS 生氣說話
     _advBossActionSkip = false;
-    const _bossLine = _ADV_BOSS_SKIP_LINES[Math.floor(Math.random() * _ADV_BOSS_SKIP_LINES.length)];
-    const _boss = G.p2 ? G.p2.find(h => h.curHp > 0) : null;
+    // ★ v1.0.20260423.0200 — 依當前主 BOSS 角色挑對應語氣的氣話
+    const _SKIP_MAIN_BOSS_SET = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+    const _boss = G.p2
+      ? (G.p2.find(h => h.curHp > 0 && _SKIP_MAIN_BOSS_SET.includes(h.name))
+         || G.p2.find(h => h.curHp > 0))
+      : null;
+    const _skipLinesArr = (_boss && _ADV_BOSS_SKIP_LINES_MAP[_boss.name])
+      || _ADV_BOSS_SKIP_LINES;
+    const _bossLine = _skipLinesArr[Math.floor(Math.random() * _skipLinesArr.length)];
     if (_boss) {
       bannerFX(_boss, `😾 ${_bossLine}`, '#ff8844', 2500);
       log(`[${_boss.name}] ${_bossLine}`);
@@ -30061,6 +30118,87 @@ const BOSS_REACT_TIMEOUT_APRICOT = [
   '超時啦～本仙可不會等凡人這麼久～',
 ];
 
+// ══ v1.0.20260423.0200 — 日本關四大 BOSS 答題反應台詞 ══
+const BOSS_REACT_CORRECT_TENGU = [
+  '哼！凡人偶爾也有點小聰明嘛。',
+  '（羽扇輕搧）此題答對,本座姑且記你一功。',
+  '不錯……能答出本座的題,算你有慧根。',
+  '看來此山的靈氣,也餵養出了些許聰明人。',
+  '算你走運!本座的考題可不是每題都這麼淺的。',
+];
+const BOSS_REACT_WRONG_TENGU = [
+  '哈哈哈！凡人的智慧果然有限！',
+  '（羽扇一揮）連這都答不出,真是辱沒了本座的題目！',
+  '可笑!這種題目本座幼雛時期就會了。',
+  '看來山風把你的腦子也吹糊塗了。',
+  '（冷笑）如此愚昧,也敢登臨本座的山頭？',
+];
+const BOSS_REACT_TIMEOUT_TENGU = [
+  '時間已至,爾竟連一字都答不出？',
+  '（羽扇停滯）本座一陣山風的功夫,都比你思考來得快。',
+  '愚鈍!如此遲鈍之輩也敢來挑戰?',
+];
+
+const BOSS_REACT_CORRECT_SHUTEN = [
+  '哦——?這題竟被你答對了,有點意思！',
+  '（舉起酒杯）敬你這一題！答對的獎勵就是讓你多活一回合！',
+  '哈哈哈!小子挺聰明嘛,來來來,跟咱喝一杯!',
+  '嗯?答對了?那咱可要認真點出題了!',
+  '（大笑）好!有膽識又有腦子,咱欣賞!',
+];
+const BOSS_REACT_WRONG_SHUTEN = [
+  '哈哈哈!答錯啦!來,陪咱喝一杯解解愁!',
+  '（仰頭大笑）人類的腦袋就跟咱的酒一樣——醉了!',
+  '嗝——!連這都不會,難怪只能當咱的點心!',
+  '哎呀呀!這題有那麼難嗎?咱看你是怕了!',
+  '（拍桌大笑）錯啦錯啦!再來一題,咱倒要看看你會幾題!',
+];
+const BOSS_REACT_TIMEOUT_SHUTEN = [
+  '嗝——時間到囉!你連答都不敢答?',
+  '（晃著酒壺）咱一杯酒的功夫,你連題目都還沒讀完?',
+  '哈哈,想太久了吧?咱的酒都要冷了!',
+];
+
+const BOSS_REACT_CORRECT_TAMAMO = [
+  '唉唷～小傢伙答對了呢～妾身有點意外喔～',
+  '（尾巴輕擺）呵呵～這題算你僥倖～',
+  '哼哼～不愧是妾身看上的對手,有點小聰明～',
+  '（嬌笑）答對了也別高興太早～妾身的題還多著呢～',
+  '真是個有趣的孩子～妾身開始捨不得吞掉你了~',
+];
+const BOSS_REACT_WRONG_TAMAMO = [
+  '呵呵～答錯了呢～妾身的狐火要燒到你囉～',
+  '（媚笑）小傻瓜～妾身千年修為的題,豈是你能答?',
+  '唉呀~連這都錯了,妾身可要生氣囉～',
+  '（玩著尾巴）錯啦錯啦~妾身早就看出你不行了~',
+  '呵呵~真是可愛的錯誤呢~妾身笑得尾巴都翹起來了~',
+];
+const BOSS_REACT_TIMEOUT_TAMAMO = [
+  '時間到囉～妾身都快無聊死了呢～',
+  '（優雅撥髮）連想都想不出來？真是無趣的凡人～',
+  '呵呵～妾身等得連狐火都快熄滅了~',
+];
+
+const BOSS_REACT_CORRECT_YAMATA = [
+  '……哼。凡人竟也能答出古之問題,倒也難得。',
+  '（八首齊動）此題答對,吾暫且饒爾一命。',
+  '意外……爾之智慧,遠超吾之預期。',
+  '古老的問題被解開了……爾或許有些本事。',
+  '（低沉龍吟）不錯,吾之題意被爾洞悉了。',
+];
+const BOSS_REACT_WRONG_YAMATA = [
+  '愚昧!此等淺題,爾竟也答錯!',
+  '（八道龍息噴發）爾之智慧,不足以仰望古神!',
+  '哼,凡人終究是凡人,千萬年來一無長進。',
+  '錯——!爾之魂魄,今日便為吾所吞!',
+  '（八首齊笑）如此無知,竟敢踏上富士神山?',
+];
+const BOSS_REACT_TIMEOUT_YAMATA = [
+  '時既已至,爾竟無言以對……吾甚為失望。',
+  '（八首緩緩垂下）凡人的思緒,何其遲鈍。',
+  '沉默……是爾承認失敗之意嗎?',
+];
+
 // 顯示 Boss 反應氣泡
 let _bossReactTimer = null;
 function advShowBossReact(type) {
@@ -30068,14 +30206,26 @@ function advShowBossReact(type) {
   const textEl = document.getElementById('adv-boss-react-text');
   if (!el || !textEl) return;
 
+  
   // 取台詞（依當前主 BOSS 變體）
-  const _isApricotBoss = (typeof G !== 'undefined' && G && G.p2)
-    ? !!G.p2.find(h => h && h.name==='杏花妖' && h.curHp>0)
-    : false;
+  // ★ v1.0.20260423.0200 — 擴充日本四大 BOSS 分流,避免用貓組預設台詞
+  const _mainReactBoss = (typeof G !== 'undefined' && G && G.p2)
+    ? G.p2.find(h => h && h.curHp>0 &&
+        ['杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'].includes(h.name))
+    : null;
   let lines;
-  if (type === 'correct')      lines = _isApricotBoss ? BOSS_REACT_CORRECT_APRICOT : BOSS_REACT_CORRECT;
-  else if (type === 'timeout') lines = _isApricotBoss ? BOSS_REACT_TIMEOUT_APRICOT : BOSS_REACT_TIMEOUT;
-  else                         lines = _isApricotBoss ? BOSS_REACT_WRONG_APRICOT   : BOSS_REACT_WRONG;
+  const _REACT_MAP = {
+    '杏花妖':   { correct: BOSS_REACT_CORRECT_APRICOT, wrong: BOSS_REACT_WRONG_APRICOT, timeout: BOSS_REACT_TIMEOUT_APRICOT },
+    '大天狗':   { correct: BOSS_REACT_CORRECT_TENGU,   wrong: BOSS_REACT_WRONG_TENGU,   timeout: BOSS_REACT_TIMEOUT_TENGU   },
+    '酒吞童子': { correct: BOSS_REACT_CORRECT_SHUTEN,  wrong: BOSS_REACT_WRONG_SHUTEN,  timeout: BOSS_REACT_TIMEOUT_SHUTEN  },
+    '玉藻前':   { correct: BOSS_REACT_CORRECT_TAMAMO,  wrong: BOSS_REACT_WRONG_TAMAMO,  timeout: BOSS_REACT_TIMEOUT_TAMAMO  },
+    '八岐大蛇': { correct: BOSS_REACT_CORRECT_YAMATA,  wrong: BOSS_REACT_WRONG_YAMATA,  timeout: BOSS_REACT_TIMEOUT_YAMATA  },
+  };
+  const _fallback = { correct: BOSS_REACT_CORRECT, wrong: BOSS_REACT_WRONG, timeout: BOSS_REACT_TIMEOUT };
+  const _bucket = (_mainReactBoss && _REACT_MAP[_mainReactBoss.name]) || _fallback;
+  if (type === 'correct')      lines = _bucket.correct;
+  else if (type === 'timeout') lines = _bucket.timeout;
+  else                         lines = _bucket.wrong;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
   // ★ 定位：畫面最上方，全寬橫條
