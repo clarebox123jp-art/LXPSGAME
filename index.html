@@ -1258,32 +1258,33 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(180,120,20,0.5);
 }
 /* 進入戰場按鈕 */
+/* ★ v1.0.20260422.0108 — 改為淡藍色（原橙棕色），與遊戲介紹按鈕同色系 */
 #start-btn{
   position:absolute;left:50%;top:68%;transform:translateX(-50%);
   margin-top:0;
   padding:22px 80px;font-size:32px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
   letter-spacing:10px;cursor:pointer;
-  background:linear-gradient(135deg,rgba(100,50,0,0.88),rgba(160,80,0,0.75));
-  border:2.5px solid rgba(255,210,60,1);
-  color:#fff5b0;
+  background:linear-gradient(135deg,rgba(0,55,110,0.88),rgba(0,100,190,0.78));
+  border:2.5px solid rgba(120,200,255,1);
+  color:#d8f0ff;
   border-radius:8px;
-  text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(255,180,0,0.8);
-  box-shadow:0 0 30px rgba(220,140,10,0.7),0 0 60px rgba(180,100,0,0.4),inset 0 1px 0 rgba(255,230,100,0.4);
+  text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(80,180,255,0.7);
+  box-shadow:0 0 30px rgba(60,160,255,0.55),0 0 60px rgba(0,120,200,0.3),inset 0 1px 0 rgba(150,220,255,0.35);
   transition:all 0.25s;
   overflow:hidden;
   z-index:2;white-space:nowrap;
 }
 #start-btn::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,220,80,0.12),transparent);
+  background:linear-gradient(90deg,transparent,rgba(120,200,255,0.12),transparent);
   transform:translateX(-100%);transition:transform 0.4s;
 }
 #start-btn:hover{
-  background:linear-gradient(135deg,rgba(180,90,0,0.9),rgba(220,120,0,0.8));
-  border-color:#ffe878;color:#fff8d0;
-  box-shadow:0 0 40px rgba(255,160,0,0.8),inset 0 1px 0 rgba(255,230,100,0.4);
-  transform:scale(1.04);
+  background:linear-gradient(135deg,rgba(0,80,160,0.9),rgba(0,140,240,0.85));
+  border-color:#b0ddff;color:#eaf6ff;
+  box-shadow:0 0 40px rgba(80,180,255,0.85),inset 0 1px 0 rgba(150,220,255,0.35);
+  transform:translateX(-50%) scale(1.04);
 }
 #start-btn:hover::before{transform:translateX(100%)}
 
@@ -1398,31 +1399,32 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 
 /* ── 展開冒險故事按鈕 ── */
+/* ★ v1.0.20260422.0108 — 改為黃色（原藍色），作為首頁最主要的行動按鈕 */
 @keyframes advBtnGlow{
-  0%,100%{box-shadow:0 0 14px rgba(60,160,255,0.5),0 0 30px rgba(0,100,200,0.2),inset 0 1px 0 rgba(100,200,255,0.2);}
-  50%{box-shadow:0 0 36px rgba(80,200,255,0.95),0 0 70px rgba(40,160,255,0.55),0 0 110px rgba(0,120,255,0.3),inset 0 1px 0 rgba(150,220,255,0.35);}
+  0%,100%{box-shadow:0 0 14px rgba(255,200,60,0.5),0 0 30px rgba(220,140,10,0.25),inset 0 1px 0 rgba(255,230,100,0.25);}
+  50%{box-shadow:0 0 36px rgba(255,220,80,0.95),0 0 70px rgba(220,150,20,0.6),0 0 110px rgba(180,120,0,0.35),inset 0 1px 0 rgba(255,240,150,0.45);}
 }
 #adventure-btn{
   padding:15px 52px;font-size:45px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
   letter-spacing:6px;cursor:pointer;
-  background:linear-gradient(135deg,rgba(0,55,110,0.88),rgba(0,100,190,0.78));
-  border:2.5px solid rgba(80,180,255,1);
-  color:#b8e4ff;border-radius:8px;
-  text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(80,180,255,0.8);
-  box-shadow:0 0 20px rgba(60,160,255,0.4),0 0 6px rgba(0,100,200,0.2);
+  background:linear-gradient(135deg,rgba(120,70,0,0.92),rgba(200,130,0,0.82));
+  border:2.5px solid rgba(255,210,60,1);
+  color:#fff5b0;border-radius:8px;
+  text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9),0 0 24px rgba(255,200,60,0.85);
+  box-shadow:0 0 20px rgba(255,200,60,0.45),0 0 6px rgba(220,150,20,0.25);
   transition:transform 0.25s,background 0.25s,border-color 0.25s;
   overflow:hidden;z-index:2;white-space:nowrap;position:relative;
 }
 #adventure-btn::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(80,200,255,0.12),transparent);
+  background:linear-gradient(90deg,transparent,rgba(255,230,120,0.14),transparent);
   transform:translateX(-100%);transition:transform 0.4s;
 }
 #adventure-btn:hover{
-  background:linear-gradient(135deg,rgba(0,80,160,0.9),rgba(0,140,240,0.85));
-  border-color:#88ccff;color:#d8f0ff;
-  box-shadow:0 0 40px rgba(80,180,255,0.85),0 0 80px rgba(0,120,220,0.4);
+  background:linear-gradient(135deg,rgba(160,100,0,0.92),rgba(230,160,20,0.88));
+  border-color:#ffe878;color:#fff8d0;
+  box-shadow:0 0 40px rgba(255,200,60,0.9),0 0 80px rgba(200,130,0,0.5);
   transform:translateX(-50%) scale(1.04);
 }
 #adventure-btn:hover::before{transform:translateX(100%);}
@@ -1431,22 +1433,22 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   padding:15px 52px;font-size:45px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
   letter-spacing:6px;cursor:pointer;
-  background:linear-gradient(135deg,rgba(80,50,0,0.88),rgba(160,100,0,0.78));
-  border:2.5px solid rgba(255,200,80,0.9);
-  color:#ffe8a0;border-radius:8px;
+  background:linear-gradient(135deg,rgba(0,55,110,0.88),rgba(0,100,190,0.78));
+  border:2.5px solid rgba(120,200,255,0.95);
+  color:#d8f0ff;border-radius:8px;
   text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9);
   transition:transform 0.25s,background 0.25s,border-color 0.25s;
   overflow:hidden;z-index:2;white-space:nowrap;position:relative;
 }
 #game-info-btn::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,200,80,0.12),transparent);
+  background:linear-gradient(90deg,transparent,rgba(120,200,255,0.12),transparent);
   transform:translateX(-100%);transition:transform 0.4s;
 }
 #game-info-btn:hover{
-  background:linear-gradient(135deg,rgba(120,80,0,0.9),rgba(200,130,0,0.85));
-  border-color:#ffd055;color:#fff3c8;
-  box-shadow:0 0 40px rgba(255,180,50,0.85),0 0 80px rgba(200,130,0,0.4);
+  background:linear-gradient(135deg,rgba(0,80,160,0.9),rgba(0,140,240,0.85));
+  border-color:#b0ddff;color:#eaf6ff;
+  box-shadow:0 0 40px rgba(80,180,255,0.85),0 0 80px rgba(0,120,220,0.4);
   transform:translateX(-50%) scale(1.04);
 }
 #game-info-btn:hover::before{transform:translateX(100%);}
@@ -4045,7 +4047,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0107</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0109</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -21897,6 +21899,16 @@ function ctrlToggleBgm(){
   btn.querySelector('.ctrl-tip').textContent = _bgmMuted ? '音樂（已靜音）' : '音樂 開/關';
   btn.classList.toggle('muted', _bgmMuted);
 
+  // ★ v1.0.20260422.0108 — iPad 音訊恢復強化：
+  //   iOS 上 AudioContext 可能處於 suspended 狀態（切回前景、Silent mode 等），
+  //   即使旗標顯示「未靜音」實際也無聲。每次按此按鈕時都嘗試 resume，
+  //   並強制 retry 當前該播的 BGM。
+  try{
+    if(typeof AC !== 'undefined' && AC && AC.state === 'suspended'){
+      AC.resume().catch(()=>{});
+    }
+  }catch(_){}
+
   if(_bgmMuted){
     // 靜音：停止所有 BGM
     document.querySelectorAll('audio[id^="bgm"]').forEach(el => {
@@ -21916,6 +21928,16 @@ function ctrlToggleBgm(){
         bgmStop();
         setTimeout(() => {
           try{ bgmPlay(targetBgm); }catch(e){}
+          // ★ iPad 保險：150ms 後若仍 paused，再嘗試一次（user gesture 已在 onclick 觸發）
+          setTimeout(() => {
+            try{
+              const _el = document.getElementById(targetBgm);
+              if(_el && _el.paused){
+                _el.volume = BGM_VOLUME;
+                _el.play().catch(()=>{});
+              }
+            }catch(_){}
+          }, 300);
         }, 150);
       }catch(e){}
     }
@@ -21927,6 +21949,19 @@ function ctrlToggleSfx(){
   btn.childNodes[0].textContent=_sfxMuted?'🔈':'🔊';
   btn.querySelector('.ctrl-tip').textContent=_sfxMuted?'音效（已靜音）':'音效 開/關';
   btn.classList.toggle('muted',_sfxMuted);
+  // ★ v1.0.20260422.0108 — iPad 音訊恢復：
+  //   AudioContext 可能處於 suspended，取消靜音時一併 resume 以喚醒 beep/noise 音效
+  if(!_sfxMuted){
+    try{
+      if(typeof AC !== 'undefined' && AC && AC.state === 'suspended'){
+        AC.resume().catch(()=>{});
+      }
+      // 播一個非常輕微的 beep 確認 AC 是否真正 running（user gesture 下才能成功）
+      if(typeof AC !== 'undefined' && AC && AC.state === 'running'){
+        try{ beep(880,'sine',0.05,0.02); }catch(_){}
+      }
+    }catch(_){}
+  }
 }
 // Wrap beep/noise to respect sfx mute (done after function definitions)
 function ctrlTogglePause(){
@@ -22180,7 +22215,9 @@ function ctrlFullscreen(){
       const isFs=document.fullscreenElement||document.webkitFullscreenElement;
       btn.classList.toggle('active',!!isFs);
       btn.querySelector('.ctrl-tip').textContent=isFs?'離開全螢幕':'全螢幕';
-      setTimeout(scaleToViewport,100);
+      // ★ v1.0.20260422.0108 — 用 retry 版本解決 iPad viewport 延遲回報問題
+      if(typeof _scaleToViewportRetry === 'function') _scaleToViewportRetry();
+      else setTimeout(scaleToViewport,100);
     }
     // ★ 退出全螢幕後自動重取（平板不小心滑到邊界觸發退出時自動恢復）
     const _isNowFs = document.fullscreenElement||document.webkitFullscreenElement;
@@ -22776,6 +22813,19 @@ function scaleToViewport(){
   // Store scale for VFX coord calculations
   window._gcScale = scale;
 }
+
+// ★ v1.0.20260422.0108 — iPad 全螢幕 viewport 延遲問題的補強呼叫
+//   問題：iPad Safari 進全螢幕後，visualViewport.height 有時要 300~800ms 才更新為正確值。
+//   若只在 fullscreenchange + 100ms delay 呼叫 scaleToViewport，會用舊尺寸計算導致畫面偏下。
+//   解法：多次延遲呼叫（累積式，最後一次會定於正確尺寸）。
+//   PC 上不會造成影響——scaleToViewport 本身冪等，多次呼叫結果一樣。
+function _scaleToViewportRetry(){
+  scaleToViewport();
+  setTimeout(scaleToViewport, 80);
+  setTimeout(scaleToViewport, 300);
+  setTimeout(scaleToViewport, 800);
+}
+window._scaleToViewportRetry = _scaleToViewportRetry;
 
 // ====== REST & COUNTDOWN TIMER ======
 var _turnTimerHandle = null;
@@ -23377,6 +23427,12 @@ window.addEventListener('orientationchange',function(){
   }, 300);
 });
 if(window.visualViewport) window.visualViewport.addEventListener('resize',scaleToViewport);
+// ★ v1.0.20260422.0108 — 監聽更多會讓 iPad viewport 變動的事件
+window.addEventListener('resize', scaleToViewport);
+window.addEventListener('orientationchange', () => {
+  if(typeof _scaleToViewportRetry === 'function') _scaleToViewportRetry();
+  else setTimeout(scaleToViewport, 300);
+});
 scaleToViewport();
 // ══════════════════════════════════════
 // 冒險闖關模式 - 關卡選擇系統
@@ -25180,6 +25236,8 @@ function _japanSetTreasure(key){
     const cur = _japanGetTreasures();
     cur[key] = true;
     localStorage.setItem('adv_japan_treasures', JSON.stringify(cur));
+    // ★ v1.0.20260422.0109 — 取得神器後即時同步到 Firebase，避免換裝置不同步
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
   }catch(e){}
 }
 function _japanTreasureCount(){
@@ -25403,6 +25461,8 @@ function _japanShowLockedModal(check){
           localStorage.setItem('adv_maokong_legacy_clear_confirmed', '1');
           localStorage.setItem('adv_maokong_legacy_clear_date', new Date().toISOString());
         }catch(_e){}
+        // ★ v1.0.20260422.0109 — 老玩家確認後即時同步到 Firebase
+        try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
         modal.remove();
         _showInGameToast('✨ 已確認老玩家通關紀錄，日本關已解鎖！', '#66ff99', 3500);
         try{ playSfx('sfx-medal-unlock', 0.9); }catch(_){}
@@ -29200,12 +29260,19 @@ async function advStartWinSequence() {
       // 更新最高評價（只記錄最佳）
       const _prevRank = localStorage.getItem('adv_maokong_best_rank') || '';
       const _rankOrder = {'S':4, 'A':3, 'B':2, 'C':1, 'D':0};
+      let _changed = false;
       if((_rankOrder[_winGrade] || 0) > (_rankOrder[_prevRank] || 0)){
         localStorage.setItem('adv_maokong_best_rank', _winGrade);
+        _changed = true;
       }
       // 記錄 S 完整通關旗標（一旦達成就永久保留）
-      if(_winGrade === 'S' && _treasuresFull){
+      if(_winGrade === 'S' && _treasuresFull && localStorage.getItem('adv_maokong_s_full_clear') !== '1'){
         localStorage.setItem('adv_maokong_s_full_clear', '1');
+        _changed = true;
+      }
+      // ★ v1.0.20260422.0109 — 狀態有變更時即時同步到 Firebase
+      if(_changed){
+        try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
       }
     }
   }catch(_rcE){ console.warn('[貓空通關紀錄] 寫入失敗:', _rcE); }
@@ -29266,6 +29333,8 @@ async function advStartWinSequence() {
         try{
           localStorage.removeItem('adv_japan_treasures');
           log('📜 三神器之力已耗盡，從持有中消失……');
+          // ★ v1.0.20260422.0109 — 神器消耗後即時同步（確保其他裝置也看到歸零）
+          try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
           // 延遲播放劇情對話，讓玩家先看完一般結算
           setTimeout(() => { _showYamataTreasureConsumedScene(); }, 800);
         }catch(_){}
@@ -29946,6 +30015,24 @@ function _buildSafeData() {
         round:      (G && G.round) || 0,
         ts:         Date.now()
       };
+    })(),
+    // ★ v1.0.20260422.0109 — 日本關進度跨裝置同步
+    //   日本關解鎖狀態（貓空 S 完整通關旗標）、三神器持有、八岐大蛇解鎖狀態
+    //   原本都只存 localStorage，換裝置 / 清快取就會重置。現在一併同步到 Firebase。
+    //   八岐大蛇解鎖狀態 = 由 japanTreasures 三項都為 true 推算得出，不需另存
+    japanProgress: (function(){
+      try{
+        return {
+          // 三神器（從 localStorage adv_japan_treasures 讀取）
+          treasures: (typeof _japanGetTreasures === 'function') ? _japanGetTreasures() : null,
+          // 貓空 S 級完整通關（解鎖日本關卡的主條件）
+          maokongSFullClear:  localStorage.getItem('adv_maokong_s_full_clear') || '',
+          // 老玩家手動確認旗標
+          maokongLegacyConfirmed: localStorage.getItem('adv_maokong_legacy_clear_confirmed') || '',
+          // 貓空歷史最佳評價（S/A/B/C/D）
+          maokongBestRank:    localStorage.getItem('adv_maokong_best_rank') || '',
+        };
+      }catch(_e){ return null; }
     })()
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
@@ -30037,6 +30124,46 @@ function _applySafeData(raw) {
   // ★ 冒險快照：還原到 localStorage，供重新開啟時恢復冒險進度
   if(data.advSnapshot && data.advSnapshot.stage) {
     try { localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot)); } catch(e) {}
+  }
+
+  // ★ v1.0.20260422.0109 — 還原日本關進度（三神器 + 貓空解鎖旗標 + 歷史最佳評價）
+  //   merge 邏輯：任何一邊有 true / S 就採用較高者，確保跨裝置不會不小心退回較差的狀態
+  if(data.japanProgress && typeof data.japanProgress === 'object'){
+    try{
+      const jp = data.japanProgress;
+      // 1) 三神器：雲端有的才更新對應 key 為 true（不會把 true 覆寫成 false）
+      if(jp.treasures && typeof jp.treasures === 'object'){
+        const _localTr = (typeof _japanGetTreasures === 'function') ? _japanGetTreasures() : {};
+        const _merged = {
+          tengu:      !!(jp.treasures.tengu      || _localTr.tengu),
+          shutendoji: !!(jp.treasures.shutendoji || _localTr.shutendoji),
+          tamamo:     !!(jp.treasures.tamamo     || _localTr.tamamo),
+        };
+        // 只要有任一個 true 才寫回 localStorage（避免空物件污染）
+        if(_merged.tengu || _merged.shutendoji || _merged.tamamo){
+          localStorage.setItem('adv_japan_treasures', JSON.stringify(_merged));
+        }
+      }
+      // 2) 貓空 S 完整通關旗標：任一邊有 '1' 就設為 '1'
+      if(jp.maokongSFullClear === '1' ||
+         localStorage.getItem('adv_maokong_s_full_clear') === '1'){
+        localStorage.setItem('adv_maokong_s_full_clear', '1');
+      }
+      // 3) 老玩家手動確認旗標：同上
+      if(jp.maokongLegacyConfirmed === '1' ||
+         localStorage.getItem('adv_maokong_legacy_clear_confirmed') === '1'){
+        localStorage.setItem('adv_maokong_legacy_clear_confirmed', '1');
+      }
+      // 4) 歷史最佳評價：取 S > A > B > C > D 較高者
+      const _rankOrder = {'S':4, 'A':3, 'B':2, 'C':1, 'D':0, '':-1};
+      const _localRank = localStorage.getItem('adv_maokong_best_rank') || '';
+      const _cloudRank = jp.maokongBestRank || '';
+      const _localVal = _rankOrder[_localRank] ?? -1;
+      const _cloudVal = _rankOrder[_cloudRank] ?? -1;
+      if(_cloudVal > _localVal && _cloudRank){
+        localStorage.setItem('adv_maokong_best_rank', _cloudRank);
+      }
+    }catch(_jpApplyE){ console.warn('[日本關進度還原] 失敗:', _jpApplyE); }
   }
 
   // ★★★ v1.0.20260420.1030 — 素質點數自癒(回溯修補救援 bug) ★★★
@@ -38862,6 +38989,83 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0109', brief:[
+    '日本關解鎖、三神器、八岐大蛇解鎖狀態同步到 Firebase 雲端',
+  ], items:[
+    '【問題】',
+    '  日本關相關的進度原本只存在 localStorage（本機瀏覽器的小倉庫），',
+    '  不會跟著 Google 帳號走。所以：',
+    '  - 換裝置登入 → 日本關又變回鎖住',
+    '  - 清瀏覽器快取 → 三神器歸零',
+    '  - 手機/平板/電腦三邊各自獨立，不同步',
+    '【涵蓋 4 項旗標】',
+    '  1. 貓空 S 完整通關（adv_maokong_s_full_clear）',
+    '     → 解鎖日本關的主要條件',
+    '  2. 貓空歷史最佳評價（adv_maokong_best_rank）',
+    '     → 備援解鎖條件 + 顯示紀錄',
+    '  3. 老玩家手動確認（adv_maokong_legacy_clear_confirmed）',
+    '     → 原本為沒紀錄的老玩家設計的補救機制',
+    '  4. 三神器（adv_japan_treasures 的 tengu/shutendoji/tamamo）',
+    '     → 打贏 3 大妖怪拿到的神器，集齊才能挑戰八岐大蛇',
+    '  八岐大蛇解鎖狀態不另外存（它是由「三神器都拿到」推算出來的）。',
+    '【同步機制】',
+    '  上傳（_buildSafeData）：',
+    '  - 新增 japanProgress 欄位，打包上述 4 項旗標',
+    '  - 四個狀態有變動時立即觸發 gameCloudSave（取得神器、S 通關、升級最佳評價、老玩家確認）',
+    '  下載（_applySafeData）：',
+    '  - 雲端讀到 japanProgress 後寫回 localStorage',
+    '  - 採「較高狀態優先」合併（永不回退）：',
+    '    * 三神器：雲端或本地任一為 true 就保留 true',
+    '    * S 完整通關：任一為 1 就設為 1',
+    '    * 老玩家確認：任一為 1 就設為 1',
+    '    * 最佳評價：S > A > B > C > D，取較高者',
+    '  好處：即使雲端和本地不同步，合併後不會不小心把玩家的進度降低。',
+    '【使用方式】',
+    '  登入 Google 帳號後就會自動同步，不需手動操作。',
+    '  換裝置登入後，日本關的解鎖與神器持有會自動還原到雲端紀錄。',
+  ]},
+  { ver:'v1.0.20260422.0108', brief:[
+    '首頁三顆按鈕配色調整（遊戲介紹/英雄鬥技場→淡藍色，展開冒險故事→黃色）',
+    'iPad 全螢幕畫面偏下的置中修正（PC 完全不受影響）',
+    'iPad 音樂/音效失效時，按右上角兩個開關可自動復原',
+  ], items:[
+    '【首頁三按鈕配色】',
+    '  原本：遊戲介紹=橙棕、展開冒險故事=藍、英雄鬥技場=橙棕',
+    '  新版：遊戲介紹=淡藍、展開冒險故事=黃色、英雄鬥技場=淡藍',
+    '  展開冒險故事作為最主要行動，改用黃色突顯；上下兩顆淡藍色形成夾擊，',
+    '  更容易把視覺焦點引導到中間黃色按鈕。',
+    '  hover 動畫、邊框發光、文字陰影全部跟著配色重調，沒有硬切換。',
+    '【iPad 全螢幕置中強化】',
+    '  症狀：iPad 全螢幕時，有時遊戲畫面貼齊底部，下方按鈕按不到。',
+    '  根本原因：iPad Safari 進全螢幕後，visualViewport.height 需要 300~800ms 才更新',
+    '  為正確值。原本只在 fullscreenchange 後 100ms 呼叫一次 scaleToViewport，',
+    '  常用到舊尺寸計算，offsetY 偏移錯誤 → 畫面位置不對。',
+    '  修正：',
+    '  1. 新增 _scaleToViewportRetry()：依 0ms/80ms/300ms/800ms 四個時間點連續呼叫，',
+    '     最後一次一定能抓到正確 viewport',
+    '  2. fullscreenchange 事件改用 retry 版本',
+    '  3. 監聽 orientationchange（轉橫式/直式）也觸發 retry',
+    '  4. 監聽 window.resize（除原本的 visualViewport.resize 外多一道保險）',
+    '  PC 不受影響：scaleToViewport 本身是冪等的（多次呼叫結果一樣），PC viewport',
+    '  不會延遲回報，所以多次呼叫只是做無用功，不會造成抖動或錯位。',
+    '【iPad 音訊失效自動復原】',
+    '  症狀：iPad 上有時完全聽不到音樂和音效，按右上角「🎵 音樂」「🔊 音效」',
+    '  開關切換也沒反應。',
+    '  根本原因：iOS 上 AudioContext（控制 beep/noise 音效）可能被系統轉成 suspended 狀態',
+    '  （切前後台、Silent mode、低電量等），即使「沒靜音」實際也無聲。',
+    '  HTML <audio> 元素播放 BGM 也會因為系統暫停而 paused=true。',
+    '  修正：',
+    '  1. 按「🎵 音樂」切換時：',
+    '     - 一定先呼叫 AC.resume() 喚醒 AudioContext（若在 suspended）',
+    '     - 強制 bgmStop() 再 bgmPlay() 重播正確 BGM',
+    '     - 300ms 後再檢查一次：若 audio 仍 paused，強制呼叫 .play()',
+    '  2. 按「🔊 音效」切換時：',
+    '     - 非靜音方向切換時呼叫 AC.resume()',
+    '     - 若 AC 變成 running，播一個幾乎聽不到的 880Hz 0.05s 0.02 音量 beep',
+    '       作為 user gesture 確認（很多 iOS 要這一下才會真正喚醒音訊）',
+    '  總結：這兩顆開關現在身兼「靜音切換」+「音訊重啟」兩用，iPad 上卡住時',
+    '  連點切換兩次（關→開）即可完全復原。',
+  ]},
   { ver:'v1.0.20260422.0107', brief:[
     '包包「使用／攜帶／賣出」按鈕移到標題下方，避開 iPad 底部邊緣',
   ], items:[
@@ -41428,7 +41632,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0107';
+  const CURRENT_VERSION = 'v1.0.20260422.0109';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41445,7 +41649,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0107';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0109';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
