@@ -1,5 +1,4 @@
-
-            <button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
+<button id="hpick-sort-lv-btn" class="hpsort-btn hpick-sort-btn" data-sort="lv" data-asc="0" onclick="playSfx('sfx-sel',0.4);hpickSortClick(this)" style="display:none">LV ↓</button><!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -4068,7 +4067,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0112</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260422.0114</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -4196,7 +4195,7 @@ body {
           <span class="adv-info-label">🎁 獎勵</span>
           <div id="adv-rewards-list" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
         </div>
-        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.49,2000);startAdventureGame(window._advSelectedStage||'maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
+        <button id="adv-start-game-btn" onclick="playSfx('sfx-battle-start',0.7);startAdventureGame(window._advSelectedStage||'maokong')">⚔️ 開始整隊，踏上冒險之旅！</button>
 
       </div>
     </div>
@@ -23314,8 +23313,16 @@ window.addEventListener('pagehide', function(e){
     window.visualViewport.addEventListener('scroll', scaleToViewport);
   }
 
-  // ★ iPad 防誤觸：危險按鈕（離開戰場/重新開始）加 350ms touchstart 防抖
-  // 防止 iPad 上快速滑過按鈕時意外觸發
+  // ★ v1.0.20260422.0113 — 移除原本的「iPad 150ms 防誤觸」邏輯
+  //   原因：正常 iPad 點擊 touchstart → click 間隔約 80~100ms，小於 150ms 門檻 →
+  //         邏輯把所有正常點擊全部攔截，導致 iPad 上「重新開始/結束遊戲/離開戰場」
+  //         三個按鈕完全點不動。
+  //   PC 不受影響：PC 無 touchstart 事件，判斷永遠不成立，click 正常通過。
+  //   真正的防誤觸：這三個按鈕本來就都會彈出 _customConfirm 二次確認視窗，
+  //                 已經有足夠的保護，不需要再加時間門檻。
+  //   若日後真的需要防滑過，應該檢查 touchmove 距離（滑動>10px 才算誤觸），
+  //   而不是時間。
+  /* 以下為已停用的舊邏輯，保留註解以防未來需要參考：
   var _dangerBtnIds = ['ctrl-leave-battle','ctrl-restart','ctrl-quit'];
   var _dangerTouchTime = {};
   document.addEventListener('touchstart', function(e){
@@ -23330,7 +23337,6 @@ window.addEventListener('pagehide', function(e){
     if(!btn) return;
     if(_dangerBtnIds.includes(btn.id)){
       var t = _dangerTouchTime[btn.id] || 0;
-      // 若 touchstart 到 click 小於 150ms（可能是意外滑過），阻止
       if(t > 0 && Date.now() - t < 150){
         e.stopImmediatePropagation();
         e.preventDefault();
@@ -23338,6 +23344,7 @@ window.addEventListener('pagehide', function(e){
       }
     }
   }, true);
+  */
 })();
 
 
@@ -24406,23 +24413,29 @@ function startAdventureGame(stage){
     alert('冒險系統尚未就緒，請重新整理頁面後再試。');
     return;
   }
-  // ★ 開始整裝音效（播放後5秒淡出）
+  // ★ 開始整裝音效（播放後2秒淡出）
+  //   v1.0.20260422.0110 原本把 sfx-battle-start 調成 0.49 音量 / 2 秒淡出，
+  //   但實際上真正大聲的是這首 sfx-adv-start（音量 1.0 + 5 秒才淡出），
+  //   且 sfx-battle-start 的聲音被它完全蓋過。v0114 把調整對象改正：
+  //   - 音量從 1.0 降到 0.7（降 30%）
+  //   - 淡出起始時間從 5000ms 縮短到 2000ms
+  //   - 淡出速度加快（每 100ms 減 0.1，約 0.7 秒淡完），避免尾巴拖太久
   try{
     const _advStartSfx = document.getElementById('sfx-adv-start');
     if(_advStartSfx){
       _advStartSfx.currentTime = 0;
-      _advStartSfx.volume = 1.0;
+      _advStartSfx.volume = 0.7;
       _advStartSfx.play().catch(()=>{});
-      // 5秒後淡出
+      // 2 秒後淡出
       setTimeout(()=>{
         let _vol = _advStartSfx.volume;
         const _fade = setInterval(()=>{
-          _vol = Math.max(0, _vol - 0.05);
+          _vol = Math.max(0, _vol - 0.1);
           _advStartSfx.volume = _vol;
           if(_vol <= 0){ clearInterval(_fade); _advStartSfx.pause(); }
         }, 100);
-      }, 5000);
-    } else { playSfx('sfx-confirm2', 1.0); }
+      }, 2000);
+    } else { playSfx('sfx-confirm2', 0.7); }
   }catch(e){}
   try{ flashScreen('rgba(255,180,50,0.35)', 300); }catch(e){}
   _adventureMode = true;
@@ -39139,6 +39152,47 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260422.0114', brief:[
+    '「開始整隊」音效調整對象修正：降 sfx-adv-start 30% 音量並縮短至 2 秒淡出',
+  ], items:[
+    '【v0110 的調整對象搞錯了】',
+    '  按鈕按下去其實會同時播兩個音效：',
+    '  - sfx-battle-start（音量 0.7，較小聲）',
+    '  - sfx-adv-start（音量 1.0，5 秒後才淡出） ← 真正吵的是這個',
+    '  v0110 把 sfx-battle-start 降到 0.49，但它本來就被 sfx-adv-start 完全蓋過，',
+    '  實際聽感沒差別。',
+    '【這次的正確修正】',
+    '  - sfx-adv-start 音量從 1.0 降到 0.7（降 30%）',
+    '  - 淡出起始時間從 5000ms 縮短到 2000ms',
+    '  - 淡出速度加快（每 100ms 減 0.1，約 0.7 秒淡完），避免尾巴拖太久',
+    '  - fallback 音效（sfx-confirm2）也同步降到 0.7',
+    '  同時把 v0110 的 sfx-battle-start 改動還原為原本 0.7 + 預設淡出',
+    '  （playSfx 的 3 參數擴充保留，不影響其他地方）',
+    '【實際聽感】',
+    '  按下按鈕 → 整裝音效以較輕柔音量播 2 秒 → 迅速淡出 → 進入過場',
+  ]},
+  { ver:'v1.0.20260422.0113', brief:[
+    '修正 iPad 右上角「重新開始／結束遊戲／離開戰場」三個按鈕完全點不到的 bug',
+  ], items:[
+    '【Bug】',
+    '  iPad 版右上角工具列的「🔄 重新開始」「✕ 結束遊戲」「離開戰場」三個按鈕無反應。',
+    '  PC 版完全正常。',
+    '【根本原因】',
+    '  程式碼裡有一段舊的「iPad 防誤觸」邏輯（寫法錯誤）：',
+    '  - touchstart 時記錄時間戳',
+    '  - click 時若距離 touchstart 小於 150ms，認定為「意外滑過」並攔截',
+    '  但這個 150ms 門檻設定錯了：',
+    '  - 正常 iPad 點擊 touchstart → click 間隔約 80~100ms',
+    '  - 加上 touch-action: manipulation 消除 300ms delay 後更短',
+    '  - 結果：所有正常點擊都被攔截，這三個按鈕完全沒反應',
+    '  PC 不受影響的原因：PC 無 touchstart 事件，_dangerTouchTime[btn.id] 永遠是 0，',
+    '  判斷 if(t > 0 && ...) 不成立，click 正常通過。',
+    '【修正】',
+    '  直接移除這段錯誤的防誤觸邏輯。',
+    '  這三個按鈕本來就都會彈出 _customConfirm 二次確認視窗，已有足夠保護。',
+    '  若日後真的需要防滑過：應檢查 touchmove 距離（移動>10px 才算誤觸），',
+    '  而不是時間門檻。但目前並無此需求。',
+  ]},
   { ver:'v1.0.20260422.0112', brief:[
     'iPad 全螢幕置中根本修正（找到並解決兩套縮放引擎互相覆寫的競態問題）',
   ], items:[
@@ -41866,7 +41920,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260422.0112';
+  const CURRENT_VERSION = 'v1.0.20260422.0114';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -41883,7 +41937,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260422.0112';
+window._GAME_LOADED_VERSION = 'v1.0.20260422.0114';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
