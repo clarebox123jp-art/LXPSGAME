@@ -1105,32 +1105,32 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .popup.elem-dis{color:#66aaff;font-size:32px;text-shadow:0 0 10px rgba(80,160,255,0.9),2px 2px 0 #000;animation:elemMod 2s ease-out forwards;}
 /* ★ v1.0.20260423.0100 — 多段傷害/治療 合計數字 視覺 */
 .popup.total-dmg, .popup.total-heal{
-  font-size:88px;font-weight:900;letter-spacing:2px;z-index:220;
-  display:inline-flex;align-items:baseline;gap:6px;
+  font-size:80px;font-weight:900;letter-spacing:2px;z-index:220;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  line-height:0.95;
 }
 .popup.total-dmg{
   color:#ffeeaa;
   text-shadow:0 0 16px rgba(255,200,60,1),0 0 36px rgba(255,130,0,0.85),0 0 64px rgba(255,90,30,0.6),3px 3px 0 #000;
-  animation:totalBurst 2.2s cubic-bezier(0.22,1.5,0.36,1) forwards;
+  animation:totalBurst 2.0s cubic-bezier(0.22,1.5,0.36,1) forwards;
 }
 .popup.total-heal{
   color:#ccffdd;
   text-shadow:0 0 16px rgba(120,255,160,1),0 0 36px rgba(50,220,120,0.85),0 0 64px rgba(30,180,80,0.6),3px 3px 0 #000;
-  animation:totalBurst 2.2s cubic-bezier(0.22,1.5,0.36,1) forwards;
+  animation:totalBurst 2.0s cubic-bezier(0.22,1.5,0.36,1) forwards;
 }
 .popup.total-dmg .total-label, .popup.total-heal .total-label{
-  font-size:36px;font-weight:700;letter-spacing:4px;opacity:0.92;
+  font-size:26px;font-weight:700;letter-spacing:4px;opacity:0.95;
   text-shadow:0 0 10px rgba(0,0,0,0.9),2px 2px 0 #000;
-  vertical-align:middle;
 }
 .popup.total-dmg .total-label{color:#ffdd66;}
 .popup.total-heal .total-label{color:#88ff99;}
 @keyframes totalBurst{
-  0%  {transform:translate(-50%,-20px) scale(0.35);opacity:0;filter:blur(6px);}
-  18% {transform:translate(-50%,-60px) scale(1.45);opacity:1;filter:blur(0);}
-  40% {transform:translate(-50%,-90px) scale(1.05);opacity:1;filter:blur(0);}
-  70% {transform:translate(-50%,-130px) scale(1.0);opacity:0.85;filter:blur(0);}
-  100%{transform:translate(-50%,-180px) scale(0.9);opacity:0;filter:blur(2px);}
+  0%  {transform:translate(-50%,-50%) scale(0.35);opacity:0;filter:blur(6px);}
+  18% {transform:translate(-50%,-50%) scale(1.45);opacity:1;filter:blur(0);}
+  40% {transform:translate(-50%,-50%) scale(1.15);opacity:1;filter:blur(0);}
+  70% {transform:translate(-50%,-50%) scale(1.05);opacity:0.85;filter:blur(0);}
+  100%{transform:translate(-50%,-50%) scale(1.0);opacity:0;filter:blur(2px);}
 }
 /* ★ v1.0.20260423.0100 — 吸血鬼靈魂收割可處決目標高亮（持續脈動） */
 .card.reap-eligible{
@@ -14343,15 +14343,15 @@ function _showTotalPopup(h, val, type, label){
   const eR=el.getBoundingClientRect();
   const scale=gcR.width/1920;
   const x=(eR.left-gcR.left)/scale + eR.width/scale/2;
-  // 合計顯示在卡片上方中央（比單次傷害再高一些，避免與前面堆疊的popup重疊）
-  const y=(eR.top-gcR.top)/scale - 10;
+  // ★ 合計固定在卡片中央（垂直方向略偏上），動畫不再位移，避免飄出畫面
+  const y=(eR.top-gcR.top)/scale + eR.height/scale*0.45;
   const p=document.createElement('div');
   p.className='popup '+type;
   p.innerHTML='<span class="total-label">'+(label||'合計')+'</span>'+
               '<span class="total-num">'+(type==='total-heal'?'+':'')+val+'</span>';
   p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;';
   gc.appendChild(p);
-  setTimeout(function(){if(p.parentNode)p.remove();},2300);
+  setTimeout(function(){if(p.parentNode)p.remove();},2100);
 }
 function _screenShake2(){
   const gc=document.getElementById('gc');
