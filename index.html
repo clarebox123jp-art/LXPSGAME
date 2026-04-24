@@ -30905,7 +30905,10 @@ function _buildSafeData() {
     heroStatInvested_s: JSON.stringify(_heroStatInvested),  // 素質重置後也會減 key
     heroSkillLevels_s:  JSON.stringify(_heroSkillLevels),   // 技能重置後也會歸零
     shopDailyData:   _shopDailyData,         // 每日商店購買紀錄
-    presetTeams:     _presetTeams,            // 常用預設陣容
+    // ★ v1.0.20260423.2600 — 鬥技場與冒險預設陣容分開儲存(舊欄位 presetTeams 保留寫入以便舊版讀取)
+    presetTeams:     _arenaPresetTeams,       // 鬥技場預設陣容(舊欄位名,保留以相容舊版讀取)
+    arenaPresetTeams: _arenaPresetTeams,      // 新欄位:鬥技場(明確命名)
+    advPresetTeams:   _advPresetTeams,        // 新欄位:冒險模式
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
     advBestScore: (typeof _advBestScore !== 'undefined') ? _advBestScore : 0,
     // ★ 英雄肖像系統（已解鎖的替代肖像 + 目前選擇）
@@ -31104,7 +31107,34 @@ function _applySafeData(raw) {
   if(typeof data.heroSkillLevels_s === 'string'){
     try{ const _v = JSON.parse(data.heroSkillLevels_s); if(_v && typeof _v==='object') _heroSkillLevels = _v; }catch(e){}
   }
-  if(Array.isArray(data.presetTeams)) _presetTeams = data.presetTeams;
+  // ★ v1.0.20260423.2700 — 鬥技場與冒險預設陣容分開載入
+  //   新版存檔(有 arenaPresetTeams/advPresetTeams):直接讀取對應陣列
+  //   舊版存檔(只有 presetTeams):視為「兩邊共用」的舊資料,同步複製到兩個新陣列
+  //     保留玩家既有設定,兩邊都能看到相同的預設;之後新存/改/刪才會真正分開
+  //     安全性靠「第三層防禦」:冒險模式 _applyPresetTeam 載入前檢查英雄是否已解鎖
+  //     含未解鎖英雄的預設雖然在冒險面板看得到,但按下「套用」會被擋,並顯示紅色提示
+  if(Array.isArray(data.arenaPresetTeams) || Array.isArray(data.advPresetTeams)){
+    // 新版存檔:各自獨立
+    if(Array.isArray(data.arenaPresetTeams)){
+      _arenaPresetTeams = data.arenaPresetTeams.slice(0,5);
+      while(_arenaPresetTeams.length < 5) _arenaPresetTeams.push(null);
+    }
+    if(Array.isArray(data.advPresetTeams)){
+      _advPresetTeams = data.advPresetTeams.slice(0,5);
+      while(_advPresetTeams.length < 5) _advPresetTeams.push(null);
+    }
+  } else if(Array.isArray(data.presetTeams)){
+    // 舊版存檔:同時複製到兩個新陣列(深拷貝避免共用同一物件)
+    const _arenaMig = data.presetTeams.slice(0,5).map(p => p ? JSON.parse(JSON.stringify(p)) : null);
+    const _advMig   = data.presetTeams.slice(0,5).map(p => p ? JSON.parse(JSON.stringify(p)) : null);
+    while(_arenaMig.length < 5) _arenaMig.push(null);
+    while(_advMig.length   < 5) _advMig.push(null);
+    _arenaPresetTeams = _arenaMig;
+    _advPresetTeams   = _advMig;
+    try{ console.log('[預設陣容遷移] 舊版 presetTeams 已複製到鬥技場與冒險模式兩邊'); }catch(_){}
+  }
+  // 同步 _presetTeams 指向(新版程式碼都透過 _getCurrentPresetTeams,但舊的 let 綁定需保持指向鬥技場)
+  _presetTeams = _arenaPresetTeams;
   // ★ v1.0.20260421.3000x — 寵物圖鑑已收錄集合（從 array 還原 Set）
   if(Array.isArray(data.petsEverCollected)){
     _petsEverCollected = new Set(data.petsEverCollected);
@@ -31464,7 +31494,23 @@ let _shopDailyData = {};   // 每日商店購買紀錄 {date:'YYYYMMDD', burst_u
 // 每個槽位：{ name:'自訂名稱', heroes:['h1','h2','h3','h4'],
 //             elements:['elem1','elem2','elem3','elem4'],
 //             skills:[{slot:'s1'|'s2'|null, skillName:str|null}, ...] }
-let _presetTeams = [null, null, null, null, null];
+// ★ v1.0.20260423.2600 — 安全性修正:鬥技場與冒險模式的預設陣容分開儲存,
+//   避免玩家在鬥技場存入未解鎖英雄後,在冒險模式載入繞過解鎖限制
+let _arenaPresetTeams = [null, null, null, null, null]; // 鬥技場預設陣容
+let _advPresetTeams   = [null, null, null, null, null]; // 冒險模式預設陣容
+// _presetTeams 是動態指向當前模式陣列的 getter(透過 _getCurrentPresetTeams() 取用)
+// 舊版讀 _presetTeams[i] 的地方會被 str_replace 改為 _getCurrentPresetTeams()[i]
+function _getCurrentPresetTeams(){
+  return (typeof _adventureMode !== 'undefined' && _adventureMode) ? _advPresetTeams : _arenaPresetTeams;
+}
+// 舊版寫 _presetTeams[i] = ... 的地方會被改為呼叫此函式
+function _setCurrentPresetTeamSlot(slotIdx, val){
+  const arr = _getCurrentPresetTeams();
+  arr[slotIdx] = val;
+}
+// 向後相容:從雲端讀回的舊欄位名 presetTeams (單一陣列) 當作鬥技場資料載入
+//   冒險模式資料從新欄位 advPresetTeams 載;若雲端無此欄則冒險陣列維持空值
+let _presetTeams = _arenaPresetTeams; // 直接指向鬥技場陣列,舊程式碼透過 _presetTeams 可讀寫鬥技場資料
 // 背包物品 {id: count}，每種上限99
 let _playerBackpack = {};
 
@@ -34144,7 +34190,7 @@ function openSavePresetPanel(){
   html += '<div style="display:flex;flex-direction:column;gap:10px;">';
 
   for(let i=0; i<5; i++){
-    const pt = _presetTeams[i];
+    const pt = _getCurrentPresetTeams()[i];
     const slotName = pt ? (pt.name||`陣容${i+1}`) : `（空）`;
     const slotHeroes = pt ? pt.heroes.join('・') : '尚未儲存';
     const isEmpty = !pt;
@@ -34187,7 +34233,7 @@ function _saveToPresetSlot(slotIdx, heroes, elems, skills){
   const nameOv = document.createElement('div');
   nameOv.id = 'preset-name-input';
   nameOv.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-  const existing = _presetTeams[slotIdx];
+  const existing = _getCurrentPresetTeams()[slotIdx];
   const defaultName = existing ? (existing.name||`陣容${slotIdx+1}`) : `陣容${slotIdx+1}`;
 
   // ★ 修正：將資料存在 DOM 元素上，避免 JSON.stringify 雙引號破壞 onclick 屬性
@@ -34232,7 +34278,7 @@ function _confirmSavePreset(slotIdx, heroesStr, elemsStr, skills){
   const nameOv = document.getElementById('preset-name-input');
   if(nameOv) nameOv.remove();
 
-  _presetTeams[slotIdx] = { name, heroes, elements: elems, skills };
+  _setCurrentPresetTeamSlot(slotIdx, { name, heroes, elements: elems, skills });
   gameCloudSave();
   _showInGameToast(`✅ 陣容「${name}」已儲存到欄位${slotIdx+1}！`, '#cc99ff', 2500);
   try{ playSfx('sfx-powerup', 0.7); }catch(e){}
@@ -34245,7 +34291,7 @@ function openPresetTeamPanel(){
   const existing = document.getElementById('preset-team-panel');
   if(existing){ existing.remove(); return; }
 
-  const hasAny = _presetTeams.some(p=>p!==null);
+  const hasAny = _getCurrentPresetTeams().some(p=>p!==null);
 
   const ov = document.createElement('div');
   ov.id = 'preset-team-panel';
@@ -34263,7 +34309,7 @@ function openPresetTeamPanel(){
   } else {
     html += '<div style="display:flex;flex-direction:column;gap:14px;margin-top:12px;">';
     for(let i=0; i<5; i++){
-      const pt = _presetTeams[i];
+      const pt = _getCurrentPresetTeams()[i];
       if(!pt){ 
         html += `<div style="padding:12px 18px;background:rgba(20,15,30,0.5);border:1.5px dashed rgba(100,80,150,0.3);border-radius:12px;color:#444;font-size:20px;text-align:center;">欄位${i+1}（空）</div>`;
         continue;
@@ -34315,7 +34361,7 @@ function openPresetTeamPanel(){
 }
 
 function _deletePresetSlot(slotIdx){
-  _presetTeams[slotIdx] = null;
+  _setCurrentPresetTeamSlot(slotIdx, null);
   gameCloudSave();
   _showInGameToast(`🗑 欄位${slotIdx+1} 已刪除`, '#ff8888', 1500);
   // 重新開啟面板
@@ -34325,8 +34371,30 @@ function _deletePresetSlot(slotIdx){
 }
 
 function _applyPresetTeam(slotIdx){
-  const pt = _presetTeams[slotIdx];
+  const pt = _getCurrentPresetTeams()[slotIdx];
   if(!pt){ _showInGameToast('此欄位沒有儲存的陣容', '#ff8844', 1500); return; }
+
+  // ★ v1.0.20260423.2600 — 防禦性檢查:套用前確認所有英雄在當前模式都可用
+  //   即使儲存路徑已分流,舊雲端資料或其他邊緣案例可能仍讓未解鎖英雄流入
+  //   若偵測到不可用英雄,拒絕套用並提示玩家
+  const isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
+  if(isAdvMode){
+    try{
+      const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      const _basePool = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL[_adventureStage]) || [];
+      const _allowed = new Set([..._basePool, ..._unlocked]);
+      const _invalid = pt.heroes.filter(n => !_allowed.has(n));
+      if(_invalid.length){
+        _showInGameToast(
+          '⛔ 陣容包含未解鎖英雄:' + _invalid.join('、') + ' — 無法在冒險模式套用',
+          '#ff4444', 4500
+        );
+        try{ playSfx('sfx-cancel', 0.7); }catch(_){}
+        return;
+      }
+    }catch(_preE){ console.warn('[預設陣容] 防禦性檢查失敗:', _preE); }
+  }
+
   const ov = document.getElementById('preset-team-panel');
   if(ov){ ov.remove(); document.documentElement.style.touchAction=''; document.body.style.touchAction=''; }
 
@@ -34335,7 +34403,6 @@ function _applyPresetTeam(slotIdx){
   if(hpo) hpo.style.display='none';
 
   // 建立 G.p1
-  const isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
   G.p1 = pt.heroes.map((name, i)=>{
     const h = newHero(name, 'p1', i);
     // 套用元素
@@ -40092,6 +40159,57 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.2700', brief:[
+    '🛡 調整預設陣容遷移策略:舊玩家升級後,既有預設會同時保留在鬥技場與冒險兩邊,不會遺失',
+    '之後在兩邊新存/修改/刪除才真正分開,各自獨立的 5 格互不影響',
+  ], items:[
+    '【v2600 原本做法】',
+    '  舊存檔的 presetTeams 升級時只複製到鬥技場,冒險模式變成空的',
+    '  主要玩冒險模式的玩家升級後會發現預設不見了,需要重新設定一次',
+    '【v2700 改良做法】',
+    '  舊存檔的 presetTeams 升級時「同時複製到兩邊」,深拷貝避免物件共用',
+    '  玩家升級後鬥技場和冒險模式都能看到原本的預設',
+    '  之後新存/改/刪才真正分開記錄(各自 5 格獨立)',
+    '【安全性如何保持】',
+    '  第三層防禦性檢查沒有改動,含未解鎖英雄的舊預設雖然在冒險面板看得到,',
+    '  但按下「套用」會被 _applyPresetTeam 攔截並顯示:',
+    '  「⛔ 陣容包含未解鎖英雄:XXX — 無法在冒險模式套用」',
+    '  玩家看得到但用不了,不會破壞冒險模式解鎖進度',
+    '【玩家端感受】',
+    '  只在鬥技場玩過:升級後鬥技場預設還在、冒險有一份複本(用不用看角色解鎖狀態)',
+    '  只在冒險模式玩過:升級後冒險預設還在、鬥技場也有一份複本(都可用)',
+    '  兩邊都玩過:舊資料各一份複本,不會丟失',
+    '  完全沒存過預設:兩邊都是空的(和升級前一樣)',
+  ] },
+  { ver:'v1.0.20260423.2600', brief:[
+    '🛡 修正嚴重安全性 bug:玩家可在鬥技場選好預設陣容(含未解鎖英雄),再到冒險模式直接套用繞過解鎖限制',
+    '鬥技場預設陣容與冒險預設陣容現在完全分開儲存,各有獨立 5 個欄位,互不影響',
+  ], items:[
+    '【Bug 根因】',
+    '  _presetTeams 是全域單一陣列(5 格),鬥技場 / 冒險模式共用同一套儲存空間',
+    '  鬥技場池 = ADV_UNLOCKABLE_HEROES(31 隻全部) vs 冒險池 = ADV_HERO_POOL.maokong(8 隻基礎 + 已解鎖)',
+    '  玩家在鬥技場存下含有「冒險模式尚未解鎖英雄」的預設陣容',
+    '  切換到冒險模式後點「📋 常用預設陣容」→ 載入鬥技場存的那組 → 未解鎖英雄直接上場',
+    '【修正做法】',
+    '  (1) 資料儲存分流:',
+    '      新增 _arenaPresetTeams 陣列(鬥技場專用)',
+    '      新增 _advPresetTeams 陣列(冒險模式專用)',
+    '      新增 _getCurrentPresetTeams() / _setCurrentPresetTeamSlot() 依當前模式分派',
+    '      預設陣容面板的「儲存 / 載入 / 刪除 / 顯示」全改用這組代理函式',
+    '  (2) 雲端存檔分流:',
+    '      新欄位 arenaPresetTeams / advPresetTeams,存讀都分開',
+    '      舊欄位 presetTeams 保留寫入(相容舊版客戶端),但讀取時只回填到 _arenaPresetTeams,',
+    '      冒險陣列維持空值 — 確保舊版鬥技場資料不會自動變成冒險資料',
+    '  (3) 防禦性檢查(Defense in Depth):',
+    '      _applyPresetTeam() 冒險模式套用前再次檢查陣容所有英雄是否在',
+    '      (ADV_HERO_POOL[stage] ∪ 已解鎖英雄) 集合中',
+    '      若發現不可用英雄,拒絕套用並提示「⛔ 陣容包含未解鎖英雄:XXX」',
+    '      即使未來有未預期的資料流入也會被這層擋住',
+    '【升級影響】',
+    '  玩家升級到本版後,舊存檔裡的預設陣容會自動視為鬥技場資料,冒險模式欄位為空',
+    '  玩家第一次進冒險模式後,再存的預設陣容才會進 _advPresetTeams',
+    '  已存入鬥技場的陣容在鬥技場仍可正常使用,不受任何影響',
+  ] },
   { ver:'v1.0.20260423.2500', brief:[
     '🎬 修正最終 BOSS 被擊倒時,結算畫面會瞬間蓋掉 2 秒慢動作特效的時序問題',
   ], items:[
@@ -43116,7 +43234,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.2500';
+  const CURRENT_VERSION = 'v1.0.20260423.2700';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43133,7 +43251,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.2500';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.2700';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
