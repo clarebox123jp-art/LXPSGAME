@@ -3612,9 +3612,9 @@ body {
 
 /* 答對獎勵視窗 */
 #adv-reward-overlay{
-  /* ★ v1.0.20260423.3200 — 改為右上靠齊(原為 top:36%),釋出畫面中央讓玩家持續看到戰場狀況 */
-  display:none;position:absolute;top:0;right:0;
-  width:44%;height:auto;max-height:calc(100% - 20px);z-index:612;
+  /* ★ v1.0.20260423.3500 — 從 top:0 改為 top:80px,避開右上角控制按鈕列(54px 高 + 邊距) */
+  display:none;position:absolute;top:80px;right:0;
+  width:44%;height:auto;max-height:calc(100% - 100px);z-index:612;
   background:none;
   align-items:flex-end;justify-content:flex-start;
   flex-direction:column;gap:0;pointer-events:none;
@@ -3797,7 +3797,8 @@ body {
   .adv-hmeet-layout{ flex-direction:column !important; overflow-y:auto !important; }
   #adv-hmeet-portrait-col{ max-width:100% !important; flex:0 0 auto !important; }
   #adv-hmeet-portrait{ width:min(80vw,420px) !important; height:min(50vh,480px) !important; }
-  #adv-hmeet-info-col{ height:auto !important; overflow-y:visible !important; }
+  /* 窄螢幕直式:右欄不用 margin-top 避開控制按鈕(因為已經是上下排,左欄插圖在上),改保留較小的上邊距 */
+  #adv-hmeet-info-col{ height:auto !important; overflow-y:visible !important; margin-top:0 !important; padding:12px 14px !important; }
 }
 #adv-unlock-box{
   background:linear-gradient(160deg,#0a0e24,#050810);
@@ -5011,14 +5012,15 @@ body {
   <div id="adv-hero-meet-overlay" onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="display:none;position:absolute;inset:0;z-index:650;flex-direction:column;align-items:stretch;justify-content:center;overflow:hidden;background:rgba(0,0,0,0.92);cursor:pointer;">
     <div id="adv-hmeet-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.35);z-index:0;"></div>
     <!-- ★ v1.0.20260423.3300 — 改為左右兩欄排版:左=大型插圖,右=能力面板(仿英雄圖鑑)
-         下方「繼續冒險」按鈕與點擊提示不用捲動就能看到 -->
+         下方「繼續冒險」按鈕與點擊提示不用捲動就能看到
+         v1.0.20260423.3600 — 右欄下移避開控制按鈕列 + 加深色透明背景盒 -->
     <div onclick="event.stopPropagation()" class="adv-hmeet-layout" style="position:relative;z-index:1;width:100%;height:100%;padding:14px 18px;display:flex;flex-direction:row;gap:20px;align-items:stretch;justify-content:center;box-sizing:border-box;">
       <!-- 左欄:大型插圖 -->
       <div id="adv-hmeet-portrait-col" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;max-width:52%;">
         <div id="adv-hmeet-portrait" style="width:min(52vw,620px);height:min(92vh,820px);background-size:contain;background-position:center;background-repeat:no-repeat;"></div>
       </div>
       <!-- 右欄:能力 / 技能 / 天賦 / 打招呼 / 按鈕 -->
-      <div id="adv-hmeet-info-col" style="flex:1 1 0;display:flex;flex-direction:column;gap:10px;min-width:0;max-width:720px;height:100%;overflow-y:auto;padding-right:8px;align-items:stretch;">
+      <div id="adv-hmeet-info-col" style="flex:1 1 0;display:flex;flex-direction:column;gap:10px;min-width:0;max-width:720px;height:calc(100% - 84px);margin-top:84px;overflow-y:auto;padding:16px 18px;background:rgba(10,15,30,0.82);border:1.5px solid rgba(255,204,68,0.35);border-radius:14px;box-shadow:0 6px 30px rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:stretch;box-sizing:border-box;">
         <div id="adv-hmeet-continue-hint" style="font-size:16px;color:#aaa;text-align:center;letter-spacing:2px;margin-bottom:2px;">點擊畫面任意位置繼續</div>
         <div id="adv-hmeet-msg" style="font-size:20px;font-weight:800;color:#ffe066;text-align:center;line-height:1.5;padding:10px 14px;background:rgba(0,0,0,0.6);border-radius:12px;border:2px solid #ffe066;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
         <div id="adv-hmeet-name" style="font-size:40px;font-weight:900;color:#ffcc44;text-shadow:0 0 14px rgba(255,200,50,0.8);font-family:'Noto Serif TC','M PLUS Rounded 1c',sans-serif;text-align:center;line-height:1.1;"></div>
@@ -11193,6 +11195,11 @@ function showBurstPanel(h){
   panel.dataset.heroName = h.name;
   panel.dataset.heroSide = h.side;
   panel.dataset.heroPos  = String(h.pos);
+  // ★ v1.0.20260423.3500 — 修正 onclick 語法錯誤:舊版用 ${JSON.stringify(h.name)}
+  //   會把 "小劇團員" 的雙引號和外層 onclick="..." 衝突,導致 Unexpected end of input
+  //   → 無法施放極限爆發的嚴重 bug
+  //   改用 HTML 實體編碼的單引號包字串(或呼叫 encodeURIComponent),避免跟 onclick 的引號打架
+  const _safeName = String(h.name||'').replace(/['"\\]/g,''); // 角色名不會有特殊字元,保險過濾一下
   panel.innerHTML=`
     <div class="bp-title">⚡ 極限爆發</div>
     <div class="bp-name">${bd.n} ${_sdpBtn(bd,'⚡ 極限爆發',true)}</div>
@@ -11200,7 +11207,7 @@ function showBurstPanel(h){
     <div class="bp-desc">${bd.d}</div>
     <div class="bp-cost">消耗全部能量（10格）</div>
     <div class="bp-btns">
-      <button class="bp-use" onclick="execBurst('${h.side}',${h.pos},${JSON.stringify(h.name)})">⚡ 發動</button>
+      <button class="bp-use" onclick="execBurst('${h.side}',${h.pos},'${_safeName}')">⚡ 發動</button>
       <button class="bp-skip" onclick="hideBurstPanel()">✕ 取消</button>
     </div>`;
   gc.appendChild(panel);
@@ -20458,6 +20465,12 @@ function checkWin(){
 }
 // 慢動作 → 大標題 → 結算的完整流程
 function _showResultWithDrama(win){
+  // ★ v1.0.20260423.3700 — 戰鬥結束時強制關閉所有可能殘留的互動視窗,
+  //   避免「答題獎勵未選 → 戰鬥結束 → 獎勵視窗殘留在下一場冒險選關頁」等類似 bug
+  //   涵蓋:答題獎勵(含其內部重用的極限爆發隊友選擇器)、問題視窗、被動技能提示、
+  //         爆發優先選擇、爆發發動確認
+  try{ _closeAllBattleModals(); }catch(_cE){ console.warn('[戰鬥結束清理] 失敗:', _cE); }
+
   // ★ v1.0.20260423.2500 — 若正在播放 BOSS 擊倒慢動作(2秒),延後顯示結算畫面,
   //   讓玩家完整看完慢動作特效後再進入結算視窗。
   //   小怪戰不觸發慢動作,也不會進入此延後分支。
@@ -24137,9 +24150,54 @@ function _clearBattleBg(reason){
   }catch(_e){ console.warn('[背景清除] 失敗:', _e); }
 }
 
+// ★ v1.0.20260423.3700 — 戰鬥結束時關閉所有互動視窗的統一函式
+//   使用情境:
+//   (1) 玩家答對題目但還沒選獎勵 → 同時另一個英雄行動擊倒 BOSS → 戰鬥結束但獎勵視窗仍殘留
+//   (2) 被動技能提示彈出中,戰鬥因其他原因結束 → 提示殘留
+//   (3) 多人同時可爆發的優先選擇視窗 / 單人爆發確認面板同類情況
+//   一律視為「放棄選擇」自動關閉,避免視窗漂在戰鬥結束後的選關頁/過場畫面上
+function _closeAllBattleModals(){
+  const _ids = [
+    'adv-reward-overlay',    // 答題獎勵(內部也用此 DOM 做「選擇爆發隊友」picker)
+    'adv-quiz-overlay',      // 問題視窗
+    'passive-prompt',        // 被動技能提示
+    'burst-priority-modal',  // 多人可爆發的優先選擇
+    'burst-panel',           // 單人爆發確認面板
+  ];
+  _ids.forEach(id => {
+    try{
+      const el = document.getElementById(id);
+      if(!el) return;
+      // (a) 移除 .show class(class-based overlay)
+      el.classList.remove('show');
+      // (b) 強制 display:none(inline-style overlay)
+      el.style.display = 'none';
+      // (c) 對於動態產生後 appendChild 的 modal(burst-priority-modal / burst-panel),直接移除
+      if(id === 'burst-priority-modal' || id === 'burst-panel' || id === 'passive-prompt'){
+        el.remove();
+      }
+    }catch(_e){}
+  });
+  // 同步清理可能被面板留下來的全域旗標
+  try{
+    if(typeof window !== 'undefined'){
+      window._advSelectedRewardId = null;
+      window._advRewardContext = null;
+      window._advMiniRewardOnDone = null;
+    }
+    // 計時器
+    if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
+    if(typeof _advQuizTimerHandle !== 'undefined' && _advQuizTimerHandle){ clearInterval(_advQuizTimerHandle); _advQuizTimerHandle = null; }
+    if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+  }catch(_){}
+  console.log('[戰鬥結束清理] 互動視窗已全部關閉');
+}
+
 function openAdventureOverlay(){
   // ★ v1.0.20260423.3400 — 進選關頁時立即再次清除戰鬥背景,防止從戰鬥直接返回時殘留
   _clearBattleBg('openAdventureOverlay');
+  // ★ v1.0.20260423.3700 — 同時關閉任何殘留的戰鬥互動視窗
+  try{ if(typeof _closeAllBattleModals === 'function') _closeAllBattleModals(); }catch(_){}
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
   // ★ v1.0.20260420.1300 — 確保「🔄回溯」與「❓教學」按鈕只在戰鬥中顯示
@@ -37626,6 +37684,8 @@ function advStartMiniBattle(nextSceneIdx) {
 
 function advFinishMiniBattle(win) {
   _advMiniBattleActive = false;
+  // ★ v1.0.20260423.3700 — 小怪戰結束一律關閉所有殘留的互動視窗(獎勵/題目/被動技能/爆發選擇)
+  try{ _closeAllBattleModals(); }catch(_){}
   // ★ 清除稀有怪戰的「禁用法寶」旗標，讓之後的 BOSS 戰可正常使用法寶
   window._advNoTreasureThisBattle = false;
   // ★ 清除答題回呼，防止小怪戰結束後誤觸「題目出完」重選視窗
@@ -40250,6 +40310,65 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.3700', brief:[
+    '🚨 修正戰鬥結束時互動視窗殘留 bug:答題獎勵未選、被動技能提示、爆發選擇等視窗會漂在後續選關頁上',
+    '戰鬥結束(勝利/失敗/小怪戰結算)時自動關閉所有未關閉的互動視窗,等於玩家自動放棄選擇',
+  ], items:[
+    '【回報症狀】',
+    '  答題獎勵視窗(含極限爆發隊友選擇)在玩家還沒點選時,若其他隊友擊倒最後一個敵人結束戰鬥,',
+    '  獎勵視窗會漂浮在戰鬥結算畫面和後續選關頁上,造成視覺混亂與潛在卡死',
+    '【修正做法】',
+    '  新增 _closeAllBattleModals() 統一清理函式,關閉 5 個可能殘留的視窗:',
+    '    (1) adv-reward-overlay — 答題獎勵(內含極限爆發隊友選擇器)',
+    '    (2) adv-quiz-overlay — 題目視窗',
+    '    (3) passive-prompt — 被動技能提示(使用/略過)',
+    '    (4) burst-priority-modal — 多人同時可爆發時的優先選擇',
+    '    (5) burst-panel — 單人爆發發動確認',
+    '【觸發時機 - 三層防禦】',
+    '  (1) _showResultWithDrama() BOSS 戰結算開始時立即清理',
+    '  (2) advFinishMiniBattle() 小怪戰結算開始時立即清理',
+    '  (3) openAdventureOverlay() 回到選關頁時最後防線(即使前兩層漏掉也會被攔下)',
+    '【附加清理】',
+    '  清除答題計時器(_advQuizTimer / _advQuizTimerHandle)避免繼續倒數',
+    '  重置 _advQuizPhase 為 idle',
+    '  清除 _advSelectedRewardId / _advRewardContext / _advMiniRewardOnDone 旗標',
+    '  避免殘留狀態影響下一場戰鬥出題流程',
+  ] },
+  { ver:'v1.0.20260423.3600', brief:[
+    '🎨 「獲得新英雄」畫面調整:右側能力面板下移 84px 避開控制按鈕列,並加上深色透明背景盒',
+  ], items:[
+    '【調整細節】',
+    '  右欄 margin-top: 0 → 84px(避開右上角全螢幕/音樂/音效等控制按鈕,54px + 邊距 + buffer)',
+    '  右欄 height: 100% → calc(100% - 84px) 維持底部對齊',
+    '【深色透明背景盒】',
+    '  background: 無 → rgba(10,15,30,0.82) 深藍黑半透明',
+    '  border: 無 → 金色半透明邊框 rgba(255,204,68,0.35)',
+    '  border-radius: 14px 圓角',
+    '  box-shadow: 外層深色陰影,強化浮起感',
+    '  backdrop-filter: blur(4px) 玻璃霧面效果',
+    '  padding: 原 0 8px → 16px 18px 讓內容與邊框有呼吸空間',
+    '【Responsive】',
+    '  窄螢幕(<900px)直式排版時,右欄不套 margin-top(因左欄插圖在上方、右欄不會被控制按鈕擋到)',
+  ] },
+  { ver:'v1.0.20260423.3500', brief:[
+    '🚨 緊急修正:無法施放極限爆發的嚴重 bug(v2900 引入的回歸錯誤)',
+    '🎨 答題獎勵視窗下移 80px,避開右上角控制按鈕列',
+  ], items:[
+    '【爆發施放 bug 根因】',
+    '  v2900 為了修「點 A 卻發動 B 的爆發」bug,在按鈕 onclick 加入 ${JSON.stringify(h.name)}',
+    '  但 JSON.stringify(\'小劇團員\') 產出 "小劇團員"(帶雙引號字串)',
+    '  插入 HTML 屬性時:onclick="execBurst(\'p1\',2,"小劇團員")" ←雙引號跟外層 onclick 衝突',
+    '  瀏覽器解析為 onclick="execBurst(\'p1\',2," 就結束,後面的 "小劇團員")" 變無效 HTML',
+    '  觸發時整段 JavaScript 變成 execBurst(\'p1\',2, → Unexpected end of input',
+    '  玩家按下「發動」按鈕,瀏覽器無法執行任何程式碼,爆發完全失效',
+    '【爆發 bug 修法】',
+    '  移除 JSON.stringify,改用單引號包字串: \'${_safeName}\'',
+    '  _safeName 把 \' 和 " 過濾掉,避免意外的特殊字元(角色名正常不會有)',
+    '  原本 v2900 的 expectedName 驗證邏輯保持完整,execBurst 仍會比對是否錯位',
+    '【獎勵視窗位置】',
+    '  top:0 → top:80px,避開控制按鈕列(54px 高 + 12~14px 邊距 + buffer)',
+    '  max-height:calc(100% - 20px) → calc(100% - 100px),確保不會超出畫面底部',
+  ] },
   { ver:'v1.0.20260423.3400', brief:[
     '🚨 徹底修正嚴重 bug:打完 BOSS 回關卡頁後再進新關卡,舊 BOSS 戰紅/黑背景會覆蓋河堤場景造成遊戲卡死',
   ], items:[
@@ -43476,7 +43595,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.3400';
+  const CURRENT_VERSION = 'v1.0.20260423.3700';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43493,7 +43612,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.3400';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.3700';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
