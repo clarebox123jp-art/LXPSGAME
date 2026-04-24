@@ -21795,12 +21795,10 @@ document.addEventListener('keydown', function(e){
         console.log('[F9] 目前不在戰鬥中'); return;
       }
       console.log('[F9] 強制勝利觸發！');
-      // ★ v1.0.20260423.4700 — F9 重構:徹底模擬正常勝利流程,避免 setTimeout race condition
-      //   造成的「再進新戰鬥時背景/狀態殘留」問題
-      //   (1) 同步清乾淨所有計時器與 pending 狀態
-      //   (2) 同步關閉所有互動視窗
-      //   (3) 同步讓敵方全滅
-      //   (4) 同步呼叫 checkWin() 讓遊戲本身的勝利偵測接手
+      // ★ v1.0.20260423.4800 — F9 重構 v2:模擬真正最後一擊 doDmg,讓 doDmg 裡的自然清理邏輯跑完
+      //   根因:F9 v1 直接 curHp=0 跳過 doDmg,導致敵人物件上殘留的 status/buff/pending 沒清乾淨,
+      //   某些帶有 setTimeout/closure 的 effect 仍會推進,污染後續新戰鬥的全域狀態
+      //   解法:用 doDmg(h, 99999) 模擬打致命傷,doDmg 的 curHp<=0 分支會自動清狀態/buff/pending 效果
       try{ clearTurnTimer(); }catch(x){}
       try{ clearInterval(_advQuizTimer); _advQuizTimer=null; }catch(x){}
       try{ clearInterval(_advQuizTimerHandle); _advQuizTimerHandle=null; }catch(x){}
@@ -21808,17 +21806,36 @@ document.addEventListener('keydown', function(e){
       try{ if(typeof _closeAllBattleModals === 'function') _closeAllBattleModals(); }catch(x){}
       try{ G.pendingTarget=null; pendingCb=null; }catch(x){}
       try{ _gamePaused=false; }catch(x){}
-      // ★ 清除所有 pending setTimeout 佇列,避免殘留的 startTurn/aiAct 等在新戰鬥推進
       try{ if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0; }catch(x){}
-      // ★ 讓所有敵方倒下
-      G.p2.forEach(h=>{ h.curHp=0; try{renderCard(h);}catch(x){} });
-      G._resultShown = false; // 重置結算旗標
-      updateUI();
+      G._resultShown = false;
       flashScreen('rgba(255,220,50,1)', 400);
-      // ★ 直接呼叫 checkWin,讓它走正常勝利流程
-      //   (p2 全滅 → checkWin 內部依 _advMiniBattleActive 判斷走 advFinishMiniBattle 或 _showResultWithDrama)
-      //   這樣與玩家自然勝利走的路徑完全一樣,避免 F9 特殊路徑的殘留
-      try{ checkWin(); }catch(x){ console.error('[F9 checkWin]',x); }
+      // ★ 對每個活著的 p2 呼叫 doDmg,用巨量傷害確保一擊必殺,走 doDmg 自然清理流程
+      //   ignoreBuffs/piercing/ignoreEvasion 確保不被護盾/迴避卡住
+      try{
+        const _fakeActor = G.p1.find(h => h && h.curHp > 0) || G.p1[0];
+        G.p2.filter(h => h && h.curHp > 0).forEach(h => {
+          try{
+            doDmg(h, 99999, {actor: _fakeActor, isSkill: true, ignoreBuffs: true, piercing: true, ignoreEvasion: true, noHidden: true, skipSfx: true});
+          }catch(dE){
+            // 如果 doDmg 本身出錯,回退到直接設 curHp=0
+            console.warn('[F9 doDmg fallback]', dE);
+            h.curHp = 0;
+            try{ h.status=[]; h.buffs=[]; }catch(_){}
+            try{ renderCard(h); }catch(_){}
+          }
+        });
+      }catch(bulkE){ console.warn('[F9 bulk kill]', bulkE); }
+      updateUI();
+      // doDmg 裡面最後一擊會呼叫 checkWin,不用再手動呼叫
+      // 但為保險,延遲 100ms 再確認一次(若 doDmg 沒觸發 checkWin 因故)
+      setTimeout(function(){
+        try{
+          if(G && G.p2 && G.p2.every(h => h.curHp <= 0) && !G._resultShown){
+            console.log('[F9] 補呼叫 checkWin');
+            checkWin();
+          }
+        }catch(x){ console.error('[F9 late checkWin]',x); }
+      }, 120);
     }catch(err){ console.error('[F9 error]',err); }
     return;
   }
@@ -40471,6 +40488,23 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.4800', adminOnly:true, brief:[
+    '🔑 F9 再次重構(管理員):改用 doDmg 模擬致命傷,讓遊戲自然清理敵人狀態/buff/pending effect',
+  ], items:[
+    '【v4700 殘留 bug 根因推測】',
+    '  v4700 F9 直接設 h.curHp=0 跳過 doDmg,但敵人身上的 status/buff/pending effect',
+    '  (尤其 BOSS 的持續傷害、暈眩倒數、某些帶 setTimeout 的效果)沒被清理',
+    '  這些殘留物件被 closure/timer 引用,在結算後仍繼續推進,污染後續新戰鬥',
+    '【v4800 修正做法】',
+    '  F9 按下時改呼叫 doDmg(h, 99999) 對每個活著的 p2,讓 doDmg 的 curHp<=0 分支',
+    '  自然執行清理(清 status、清 buff、處理死亡特效、觸發最後一擊 checkWin)',
+    '  ignoreBuffs + piercing + ignoreEvasion 確保護盾/迴避不擋',
+    '  skipSfx 避免密技發出一堆音效',
+    '  若 doDmg 本身出錯有 fallback 直接 curHp=0',
+    '  延遲 120ms 再檢查一次,確保 checkWin 有被呼叫(補保險)',
+    '【驗證重點】',
+    '  F9 勝利後回關卡頁 → 再進任何一關(同一關或不同關) → 戰鬥應該正常,背景/卡片正常渲染',
+  ] },
   { ver:'v1.0.20260423.4700', adminOnly:true, brief:[
     '🚨 F9 密技重構:徹底消除戰鬥狀態殘留問題,改用 checkWin 讓它走正常勝利流程',
   ], items:[
@@ -44015,7 +44049,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.4700';
+  const CURRENT_VERSION = 'v1.0.20260423.4800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44032,7 +44066,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.4700';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.4800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
