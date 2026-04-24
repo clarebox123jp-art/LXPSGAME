@@ -25367,6 +25367,15 @@ function markAdventureBossCards(){
 
 // ── 關閉冒險模式，回首頁
 function exitAdventureMode(){
+  // ★ v1.0.20260423.4900 — 診斷 log:記錄誰呼叫了 exitAdventureMode,幫助追查 F9 流程污染
+  //   若玩家在冒險過程中意外觸發(例如過場中),Console 會顯示 stack trace 指出呼叫來源
+  try{
+    const _inAdv = typeof _adventureMode !== 'undefined' && _adventureMode;
+    if(_inAdv){
+      console.warn('[exitAdventureMode 被呼叫] 當前 _adventureMode=true,可能意外中斷冒險流程!');
+      console.trace('[exitAdventureMode 呼叫者堆疊]');
+    }
+  }catch(_diagE){}
   _adventureMode = false;
   _adventureStage = null;
   _advMiniBattleActive = false;
@@ -40488,6 +40497,17 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.4900', adminOnly:true, brief:[
+    '🔍 診斷工具:在 exitAdventureMode 加上 stack trace,下次 F9 流程污染時 Console 會指出呼叫者',
+  ], items:[
+    '【用法】',
+    '  F12 Console 若看到 [exitAdventureMode 被呼叫] 警告 + [呼叫者堆疊] trace,',
+    '  表示冒險流程中途被某個來源呼叫了 exitAdventureMode',
+    '  堆疊最下方的函式名就是罪魁禍首',
+    '【目的】',
+    '  此版不修 bug,只加診斷 log,幫助精準定位 F9 後「紅藍色塊覆蓋過場」的真正根因',
+    '  Console 截圖之後我才能對症下藥',
+  ] },
   { ver:'v1.0.20260423.4800', adminOnly:true, brief:[
     '🔑 F9 再次重構(管理員):改用 doDmg 模擬致命傷,讓遊戲自然清理敵人狀態/buff/pending effect',
   ], items:[
@@ -44049,7 +44069,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.4800';
+  const CURRENT_VERSION = 'v1.0.20260423.4900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44066,7 +44086,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.4800';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.4900';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
