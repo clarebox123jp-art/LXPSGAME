@@ -26840,8 +26840,39 @@ function advStartCutscene(stage) {
   const _beginCutsceneNow = () => {
     // ★ v1.0.20260423.3400 — 過場開始前最後一次清除戰鬥背景,確保不會透出
     try{ if(typeof _clearBattleBg === 'function') _clearBattleBg('cutscene begin'); }catch(_){}
+    // ★ v1.0.20260423.5000 — 額外保險:過場顯示期間強制把 #gc 的 .adv-battle 移除
+    //   避免下層 #z1/#z2 紅藍色塊透過 overlay 透出(即使 overlay 本身 background:#000,
+    //   仍有極端情況會透出,不清楚根因,但此保險可 100% 確保紅藍色塊消失)
+    try{
+      const _gcForce = document.getElementById('gc');
+      if(_gcForce){
+        _gcForce.classList.remove('adv-battle');
+        // 強制清掉可能殘留的 inline background
+        _gcForce.style.filter = '';
+      }
+      // 同步清 #z1 / #z2 的 inline style,避免被其他流程設定殘留
+      ['z1','z2'].forEach(zid => {
+        const _z = document.getElementById(zid);
+        if(_z){ _z.style.background = ''; }
+      });
+    }catch(_zE){ console.warn('[cutscene begin] 強制清 zones 失敗:', _zE); }
     const ov = document.getElementById('adv-cutscene-overlay');
     ov.style.display = 'flex';
+    // ★ v1.0.20260423.5000 — 保險:重置 visibility(可能被 advStartBattle 設為 hidden)
+    ov.style.visibility = 'visible';
+    ov.style.opacity = '';
+    // 同時確保 scene-bg 可見
+    const _sBgReset = document.getElementById('adv-scene-bg');
+    if(_sBgReset){ _sBgReset.style.visibility = 'visible'; _sBgReset.style.opacity = ''; }
+    // ★ v1.0.20260423.5100 — 同時清 adv-dialog-box 的 inline display:none
+    //   (advStartBattle line 28316 會設 display:none,導致下次過場對話框不顯示)
+    const _dlgReset = document.getElementById('adv-dialog-box');
+    if(_dlgReset){ _dlgReset.style.display = ''; _dlgReset.style.visibility = ''; _dlgReset.style.opacity = ''; }
+    // 對話內容區
+    const _dlgSpkr = document.getElementById('adv-dialog-speaker');
+    if(_dlgSpkr){ _dlgSpkr.style.display = ''; _dlgSpkr.style.visibility = ''; }
+    const _dlgText = document.getElementById('adv-dialog-text');
+    if(_dlgText){ _dlgText.style.display = ''; _dlgText.style.visibility = ''; }
     // ★ 過場 BGM：依關卡切換
     //   v1.0.20260421.2800 — 日本關首場用 bgm-japan-menu（關卡首頁BGM），
     //   advLoadScene 內會依場景 idx 再細調為 bgm-japan-scene2
@@ -40497,6 +40528,48 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.5100', adminOnly:true, brief:[
+    '🎯 F9 後過場永久卡死的完整修復:除了 visibility 還要清 adv-dialog-box 的 display:none',
+  ], items:[
+    '【v5000 不完整的地方】',
+    '  v5000 只重置 overlay 本身的 visibility,沒清 adv-dialog-box 的 inline display:none',
+    '  advStartBattle line 28316 會設 adv-dialog-box.style.display = \'none\' inline',
+    '  下次過場 advShowDialog 靠 classList.add(\'show\') 顯示對話框,',
+    '  但 inline display:none 蓋過 CSS → 對話框不顯示 → 過場永遠卡在淡入無內容',
+    '【v5100 補修】',
+    '  _beginCutsceneNow 額外清:',
+    '    adv-dialog-box.style.display = \'\' (清掉 none)',
+    '    adv-dialog-box.style.visibility = \'\' (清掉 hidden)',
+    '    adv-dialog-speaker、adv-dialog-text 的 inline display/visibility 也清',
+    '【為何是「永遠卡死」】',
+    '  advLoadScene 的 setTimeout(2000) 後呼叫 advShowDialog',
+    '  advShowDialog 塞文字到 adv-dialog-speaker/text,但 adv-dialog-box 本身 inline display:none',
+    '  玩家看到:紅藍色塊(因 visibility) + 完全沒劇情文字 + 對話框也不出現 → 卡死',
+    '【驗證】',
+    '  F9 勝利 → 回關卡頁 → 再進關 → 應該正常看到場景圖 + 對話框 + 劇情文字',
+  ] },
+  { ver:'v1.0.20260423.5000', adminOnly:true, brief:[
+    '🎯 找到並修正 F9 後「紅藍色塊覆蓋過場」的真正根因:visibility:hidden 沒重置!',
+  ], items:[
+    '【真正根因】',
+    '  advStartBattle (line 28284-28286) 進入 BOSS 戰時清除過場:',
+    '    _csOvB.style.display = \'none\';',
+    '    _csOvB.style.visibility = \'hidden\';    ← 關鍵!',
+    '  `visibility:hidden` 是 inline style,會永遠掛在 DOM 上',
+    '  下次 advStartCutscene 呼叫 `ov.style.display = \'flex\'` 顯示過場時,',
+    '  visibility 仍是 hidden → overlay 雖然 display:flex 但實際看不見',
+    '  → 紅藍色塊(下層 #z1/#z2)透過 hidden overlay 透出來',
+    '【為何只 F9 後觸發】',
+    '  推測:正常通關勝利時某條路徑有把 visibility 重置回 visible,但 F9 路徑沒涵蓋',
+    '  或者 F9 的 BOSS 戰結算流程異於正常勝利,錯過某個清理步驟',
+    '【修正做法(三層保險)】',
+    '  (1) _beginCutsceneNow 重置:ov.style.visibility = \'visible\'、ov.style.opacity = \'\'',
+    '  (2) 同步重置 #adv-scene-bg 的 visibility 與 opacity',
+    '  (3) 過場開始時暴力清 #gc 的 .adv-battle class 與 #z1/#z2 inline background',
+    '       讓下層紅藍色塊 100% 消失(即使 overlay 異常透明也看不到)',
+    '【驗證】',
+    '  F9 勝利 → 回關卡頁 → 再進同關 → 過場應該正常顯示劇情,不再有紅藍色塊',
+  ] },
   { ver:'v1.0.20260423.4900', adminOnly:true, brief:[
     '🔍 診斷工具:在 exitAdventureMode 加上 stack trace,下次 F9 流程污染時 Console 會指出呼叫者',
   ], items:[
@@ -44069,7 +44142,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.4900';
+  const CURRENT_VERSION = 'v1.0.20260423.5100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44086,7 +44159,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.4900';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.5100';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
