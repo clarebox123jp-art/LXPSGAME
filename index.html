@@ -11236,12 +11236,14 @@ function _showPlayerBurstPriority(bossHero, isRage){
 
   const modal = document.createElement('div');
   modal.id = 'burst-priority-modal';
+  // ★ v1.0.20260423.4600 — 改移到右側空白區(原本 bottom:110px center,會擋住我方角色)
+  //   右側空間更寬敞,配合右欄面板(戰鬥 log 區域)可以放更大的字
   modal.style.cssText = [
-    'position:absolute;left:50%;bottom:110px;transform:translateX(-50%);',
-    'z-index:9700;max-width:640px;width:92%;',
-    'background:linear-gradient(160deg,rgba(40,20,0,0.96),rgba(20,10,0,0.96));',
+    'position:absolute;right:16px;top:64%;transform:translateY(-50%);',
+    'z-index:9700;max-width:460px;width:32%;min-width:320px;',
+    'background:linear-gradient(160deg,rgba(40,20,0,0.98),rgba(20,10,0,0.98));',
     'border:3px solid #ff9900;border-radius:16px;',
-    'padding:18px 24px 16px;box-shadow:0 0 40px rgba(255,150,0,0.55);',
+    'padding:22px 26px 20px;box-shadow:0 0 50px rgba(255,150,0,0.7);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
     'text-align:center;pointer-events:auto;',
     'animation:burstPanelIn 0.3s cubic-bezier(0.34,1.56,0.64,1);',
@@ -11249,18 +11251,19 @@ function _showPlayerBurstPriority(bossHero, isRage){
 
   const _rageTag = isRage ? '<span style="color:#ff4444;font-weight:900;">（憤怒）</span> ' : '';
   modal.innerHTML = [
-    '<div style="font-size:26px;font-weight:900;color:#ffcc44;letter-spacing:2px;margin-bottom:4px;">',
+    '<div style="font-size:32px;font-weight:900;color:#ffcc44;letter-spacing:3px;margin-bottom:8px;">',
       '⚡ 優先爆發機會！',
     '</div>',
-    '<div style="font-size:18px;color:#ffd6a0;margin-bottom:4px;">',
+    '<div style="font-size:22px;color:#ffd6a0;margin-bottom:8px;line-height:1.5;">',
       _rageTag, '對手 <b style="color:#ff8844;">', bossHero.name, '</b> 也準備爆發！',
     '</div>',
-    '<div style="font-size:16px;color:#aaa;margin-bottom:14px;line-height:1.5;">',
-      '點選冒火邊框的我方英雄發動爆發（會打斷對手行動），<br>',
+    '<div style="font-size:18px;color:#aaa;margin-bottom:18px;line-height:1.55;">',
+      '點選冒火邊框的我方英雄發動爆發<br>',
+      '（會打斷對手行動）<br>',
       '或點「跳過」讓對手先放。',
     '</div>',
     '<button id="bpm-skip" style="',
-      'padding:12px 28px;font-size:20px;font-weight:700;',
+      'padding:14px 32px;font-size:22px;font-weight:700;',
       'background:rgba(60,30,0,0.7);border:1.5px solid #886644;border-radius:10px;',
       'color:#ddbb88;cursor:pointer;letter-spacing:2px;',
       'font-family:inherit;transition:0.15s;',
@@ -11874,6 +11877,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(name==='暗法師'){
     // ★ 毀滅禁咒：每爆發等級+3%封印成功率，基礎75%
     const _curseSealRate = Math.min(1.0, 0.75 + _burstLv * 0.05);
+    // ★ v1.0.20260423.4500 — 同一目標可能被打兩次(全體 120% + 集中 200%),用 batch 顯示合計
+    beginBatchTotals();
     enemies.forEach(t=>{
       doDmg(t,Math.floor(spv*1.2*_burstMult),{actor:h,isSkill:true,isAoe:true});
       if(t.curHp>0 && Math.random()<_curseSealRate){ addStatus(t,'seal',1+_lv5Extra); bannerFX(t,'強力封印！','#cc44ff',900); }
@@ -11882,12 +11887,19 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     if(enemies.length){
       if(side==='p1' && G[opp].filter(x=>x.curHp>0).length>1){
         log('⚡ 毀滅禁咒：請選擇集中目標！');
-        setPending('enemy',t2=>{ G.pendingTarget=null; pendingCb=null; if(t2.curHp>0) doDmg(t2,Math.floor(spv*2.0*_burstMult),{actor:h,isSkill:true}); _burstFinish(h,_interrupted); }); return;
+        setPending('enemy',t2=>{
+          G.pendingTarget=null; pendingCb=null;
+          if(t2.curHp>0) doDmg(t2,Math.floor(spv*2.0*_burstMult),{actor:h,isSkill:true});
+          setTimeout(endBatchTotals,50);
+          _burstFinish(h,_interrupted);
+        });
+        return;
       } else {
         const t2=G[opp].filter(x=>x.curHp>0)[0];
         if(t2) doDmg(t2,Math.floor(spv*2.0*_burstMult),{actor:h,isSkill:true});
       }
     }
+    setTimeout(endBatchTotals,50);
   }
   if(name==='神射手'){
     enemies.forEach(t=>{
@@ -12524,10 +12536,14 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     playSfx('sfx-burst',0.85); playSfx('sfx-fantasy',0.7);
     const _foes6=G[opp].filter(x=>x.curHp>0);
     let _hi2=0;
+    // ★ v1.0.20260423.4500 — 多段傷害 batch,最後一次結算後顯示「合計」總傷害彈跳
+    beginBatchTotals();
     // ★ v1.0.20260423.4200 — 把治療/復活獨立出來,避免敵方提早全滅就跳過治療
     //   舊版 bug:攻擊迴圈一旦敵方全死 → _burstFinish,完全跳過治療/復活
     //   技能描述是「同時恢復我方全體 HP」,應保證發生
     function _doWanderHeal(){
+      // ★ 先結束 batch,讓合計彈跳在治療前顯示
+      try{ endBatchTotals(); }catch(_){}
       G[side].forEach(t=>{
         if(t.curHp===0){ doRevive(t,0.25); t.acted=true; }
         doHeal(t,Math.floor(spv*0.6*_burstMult),{actor:h,isHeal:true});
@@ -16031,7 +16047,10 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='雙小提琴協奏曲'){
     log(`[${a.name}] 雙小提琴協奏曲！恢復HP最低2名友方！`);
-    const _allAllies=G[a.side].sort((x,y)=>x.curHp-y.curHp).slice(0,2);
+    // ★ v1.0.20260423.4600 — 重大 bug 修復:G[a.side].sort 原地改變 G.p1 陣列,
+    //   導致英雄卡片的 pos 索引與陣列位置錯亂,點錯英雄爆發、其他技能也受影響
+    //   改用 slice() 建立副本後才 sort,保持原陣列順序
+    const _allAllies=G[a.side].slice().sort((x,y)=>x.curHp-y.curHp).slice(0,2);
     playSkillFX('雙小提琴協奏曲',a,_allAllies);
     _allAllies.forEach(h=>{
       if(h.curHp===0){ doRevive(h,0); doHeal(h,spv(a),{actor:a,isHeal:true}); }
@@ -19953,7 +19972,8 @@ function aiUseSkill(a,sk,cost,pref){
     for(let _i=0;_i<_h2;_i++){ enemies.filter(h=>h.curHp>0).forEach(h=>doDmg(h,Math.floor(a.sp*(1+a.sp*0.01)*0.3),{actor:a,isSkill:true,isAoe:true})); }
   }
   else if(n==='雙小提琴協奏曲'){
-    const _low2=G[a.side].sort((x,y)=>x.curHp-y.curHp).slice(0,2);
+    // ★ v1.0.20260423.4600 — 同樣用 slice() 避免原地改變 G.p1 陣列
+    const _low2=G[a.side].slice().sort((x,y)=>x.curHp-y.curHp).slice(0,2);
     _low2.forEach(h=>{ if(h.curHp===0)doRevive(h,0); doHeal(h,Math.floor(a.sp*(1+a.sp*0.01)),{actor:a,isHeal:true}); });
   }
   else if(n==='變臉戲法'){
@@ -40453,6 +40473,63 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.4600', brief:[
+    '🚨 修正極其嚴重的爆發錯位 bug:點擊英雄發動的爆發,執行的卻是另一個英雄的爆發',
+    '🎨 爆發優先選擇視窗移到右側空白區並放大,不再擋住我方角色',
+  ], items:[
+    '【爆發錯位 bug 根因】(**這是 v2900 一直沒根治的老 bug 的真正源頭!**)',
+    '  弦樂團員的 S2 技能「雙小提琴協奏曲」程式碼:',
+    '    const _allAllies = G[a.side].sort((x,y) => x.curHp-y.curHp).slice(0,2);',
+    '  JavaScript 的 Array.prototype.sort() 會**原地修改**陣列',
+    '  所以每次玩家使用雙小提琴協奏曲,G.p1 陣列就被按 HP 由低到高重新排序',
+    '  但每個英雄物件上的 h.pos 屬性並沒有同步變,造成:',
+    '    → G.p1[0] 變成 HP 最低的英雄(可能是 pos=2 的程式設計師)',
+    '    → G.p1[1] 變成 HP 次低的英雄(可能是 pos=3 的電腦繪圖師)',
+    '    → 但卡片 DOM id 還是按 h.pos 命名 (card-p1-0 是 h.pos=0 的小劇團員)',
+    '  → 玩家點小劇團員的卡片(card-p1-0),execBurst(\'p1\', 0) 抓 G.p1[0] = 已經被重排到第一位的程式設計師',
+    '【為什麼 v2900 的 expectedName 驗證沒擋下?】',
+    '  v2900 加的驗證「若 G.p1[pos].name !== expectedName 則自動搜尋」其實會自動修正,',
+    '  但玩家報的症狀裡,每次點擊都「錯位」(跑到另一個英雄),代表驗證沒觸發',
+    '  後來發現原因:面板渲染時抓的 expectedName 來自 el._previewHero,',
+    '  但由於 G.p1 已經被 sort,el._previewHero 也在 renderCard 重新綁定時被錯誤地指向 G.p1[pos],',
+    '  造成 expectedName 本身就是「錯位後的英雄名」→ 驗證認為「一致」→ 不會自動修正',
+    '【修正做法】',
+    '  line 16047(玩家版本)與 line 19969(AI 版本)的 G[a.side].sort(...) 改為 G[a.side].slice().sort(...)',
+    '  slice() 先建立陣列副本,sort 作用在副本上不會動到原 G.p1',
+    '  全域掃描確認沒有其他 G.p1/G.p2 的原地 sort 遺漏',
+    '【這個 bug 的恐怖影響範圍】',
+    '  不只爆發會錯位,任何在「雙小提琴協奏曲」之後透過 pos 取 G.p1[pos] 的地方都可能混亂',
+    '  包含:目標選擇、狀態效果套用、AI 決策、戰鬥 log 顯示等',
+    '  v2900 到 v4500 的多次修補其實都治不了根,因為根因在另一個技能',
+    '',
+    '【爆發優先選擇視窗位置調整】',
+    '  舊:left:50% bottom:110px(畫面底部中央) → 擋住我方卡片,讓玩家看不到哪個能點',
+    '  新:right:16px top:64%(右側空白區域) → 不擋畫面,戰鬥 log 旁邊',
+    '  寬度從 92% 縮為 32%(min 320px / max 460px),適配右側空間',
+    '  字體放大:標題 26px→32px、說明 18px→22px、副說明 16px→18px、按鈕 20px→22px',
+  ] },
+  { ver:'v1.0.20260423.4500', brief:[
+    '🎻 修正弦樂團員爆發「流浪者之歌」多段傷害後沒有顯示「合計」總傷害彈跳的 bug',
+    '💀 順帶修正暗法師爆發「毀滅禁咒」若玩家重複打到同一目標時也沒顯示合計彈跳',
+  ], items:[
+    '【根因】',
+    '  batch totals 機制(beginBatchTotals / endBatchTotals)專門負責多段傷害結束後彈出「合計 NNN」',
+    '  只有命中 2 次以上的目標才會顯示,用來讓玩家清楚看到總輸出',
+    '  但弦樂團員 _doWander 遞迴執行 3~5 次 doDmg 時完全沒呼叫 beginBatchTotals / endBatchTotals',
+    '  → 每次 doDmg 各自彈跳個別數字,沒有最後的合計彈跳',
+    '【弦樂團員 修正】',
+    '  在 _doWander 開始前呼叫 beginBatchTotals()',
+    '  在 _doWanderHeal() 進入時(也就是攻擊全部結束時)呼叫 endBatchTotals()',
+    '  合計彈跳會在治療之前顯示,時序正確',
+    '【暗法師 修正】',
+    '  毀滅禁咒是「全體 120% AoE + 選中目標再補 200%」,',
+    '  若被選中的目標剛好活到第二擊,會被打兩次,但舊版沒包 batchTotals',
+    '  現在包上後,該目標會跳出「合計」總傷害彈跳',
+    '【掃描其他爆發】',
+    '  寫了 python 掃描工具檢查所有 39 個爆發分支',
+    '  武士「神鬼盡滅」主目標+溢出轉移是 2 個不同目標,每個各打 1 次,不需要 batch(確認過)',
+    '  其他有多段傷害的爆發(劍士、雷法師、刺客、陰陽師、九尾空貓怪、酒吞童子等)都已正確使用 batch',
+  ] },
   { ver:'v1.0.20260423.4400', brief:[
     '⚡ 程式設計師爆發「BUG修復」重構:新增全體 50%HP 恢復 + 2 名對手無法行動(滿級 3 名)',
     '🎵 直笛團員爆發「天籟之音」重構:從純治療變成傷害+狂亂+治療+持續恢復的攻守一體型爆發',
@@ -43912,7 +43989,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.4400';
+  const CURRENT_VERSION = 'v1.0.20260423.4600';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43929,7 +44006,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.4400';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.4600';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
