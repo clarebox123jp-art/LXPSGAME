@@ -3612,8 +3612,9 @@ body {
 
 /* 答對獎勵視窗 */
 #adv-reward-overlay{
-  display:none;position:absolute;top:36%;right:0;
-  width:44%;height:auto;max-height:64%;z-index:612;
+  /* ★ v1.0.20260423.3200 — 改為右上靠齊(原為 top:36%),釋出畫面中央讓玩家持續看到戰場狀況 */
+  display:none;position:absolute;top:0;right:0;
+  width:44%;height:auto;max-height:calc(100% - 20px);z-index:612;
   background:none;
   align-items:flex-end;justify-content:flex-start;
   flex-direction:column;gap:0;pointer-events:none;
@@ -3621,12 +3622,12 @@ body {
 #adv-reward-overlay.show{display:flex;}
 #adv-reward-box{
   background:linear-gradient(160deg,rgba(8,13,32,0.97),rgba(4,8,14,0.97));
-  border:2.5px solid rgba(62,200,122,0.6);border-radius:14px 0 0 14px;
+  border:2.5px solid rgba(62,200,122,0.6);border-radius:0 0 0 14px;
   padding:16px 24px 16px;width:100%;text-align:center;
-  box-shadow:-6px 0 40px rgba(62,200,122,0.15);
+  box-shadow:-6px 6px 40px rgba(62,200,122,0.2);
   animation:advChoiceIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
   pointer-events:all;
-  max-height:calc(100vh - 60px);overflow-y:auto;
+  max-height:calc(100vh - 40px);overflow-y:auto;
   display:flex;flex-direction:column;gap:10px;
 }
 #adv-reward-title{font-size:36px;font-weight:900;color:#7df0a8;letter-spacing:3px;margin-bottom:4px;}
@@ -3790,6 +3791,14 @@ body {
   background:rgba(0,0,0,0.9);align-items:center;justify-content:center;flex-direction:column;gap:20px;
 }
 #adv-unlock-overlay.show{display:flex;}
+
+/* ★ v1.0.20260423.3300 — 「獲得新英雄」畫面 responsive:窄螢幕退回直式 */
+@media screen and (max-width: 900px){
+  .adv-hmeet-layout{ flex-direction:column !important; overflow-y:auto !important; }
+  #adv-hmeet-portrait-col{ max-width:100% !important; flex:0 0 auto !important; }
+  #adv-hmeet-portrait{ width:min(80vw,420px) !important; height:min(50vh,480px) !important; }
+  #adv-hmeet-info-col{ height:auto !important; overflow-y:visible !important; }
+}
 #adv-unlock-box{
   background:linear-gradient(160deg,#0a0e24,#050810);
   border:3px solid rgba(212,168,67,0.8);border-radius:20px;
@@ -4999,18 +5008,26 @@ body {
     </div>
   </div>
   <!-- 英雄加入演出 overlay -->
-  <div id="adv-hero-meet-overlay" onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="display:none;position:absolute;inset:0;z-index:650;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:rgba(0,0,0,0.92);cursor:pointer;">
+  <div id="adv-hero-meet-overlay" onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="display:none;position:absolute;inset:0;z-index:650;flex-direction:column;align-items:stretch;justify-content:center;overflow:hidden;background:rgba(0,0,0,0.92);cursor:pointer;">
     <div id="adv-hmeet-bg" style="position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.35);z-index:0;"></div>
-    <div onclick="event.stopPropagation()" style="position:relative;z-index:1;width:100%;max-width:700px;padding:20px 16px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;">
-      <div style="font-size:20px;color:#aaa;text-align:center;margin-bottom:4px;letter-spacing:2px;">點擊畫面任意位置繼續</div>
-      <div id="adv-hmeet-msg" style="font-size:28px;font-weight:800;color:#ffe066;text-align:center;line-height:1.6;padding:16px 20px;background:rgba(0,0,0,0.6);border-radius:14px;border:2px solid #ffe066;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
-      <div id="adv-hmeet-portrait" style="width:260px;height:320px;background-size:contain;background-position:center top;background-repeat:no-repeat;border-radius:16px;border:3px solid #ffcc44;box-shadow:0 0 40px rgba(255,200,50,0.5);"></div>
-      <div id="adv-hmeet-name" style="font-size:52px;font-weight:900;color:#ffcc44;text-shadow:0 0 20px rgba(255,200,50,0.8);font-family:'Noto Serif TC','M PLUS Rounded 1c',sans-serif;"></div>
-      <div id="adv-hmeet-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;font-size:22px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
-      <div id="adv-hmeet-skills" style="width:100%;display:flex;flex-direction:column;gap:8px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
-      <div id="adv-hmeet-trait" style="width:100%;padding:12px 16px;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.4);border-radius:10px;font-size:22px;color:#cc88ff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
-      <div id="adv-hmeet-greeting" style="font-size:30px;font-weight:700;color:#fff;text-align:center;line-height:1.6;padding:16px 20px;background:rgba(255,200,50,0.12);border-radius:14px;border:1px solid rgba(255,200,50,0.3);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-style:italic;"></div>
-      <button onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="padding:16px 56px;font-size:30px;font-weight:800;background:linear-gradient(135deg,#ffcc44,#ff8800);color:#000;border:none;border-radius:12px;cursor:pointer;letter-spacing:3px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;margin-top:8px;">繼續冒險！→</button>
+    <!-- ★ v1.0.20260423.3300 — 改為左右兩欄排版:左=大型插圖,右=能力面板(仿英雄圖鑑)
+         下方「繼續冒險」按鈕與點擊提示不用捲動就能看到 -->
+    <div onclick="event.stopPropagation()" class="adv-hmeet-layout" style="position:relative;z-index:1;width:100%;height:100%;padding:14px 18px;display:flex;flex-direction:row;gap:20px;align-items:stretch;justify-content:center;box-sizing:border-box;">
+      <!-- 左欄:大型插圖 -->
+      <div id="adv-hmeet-portrait-col" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;max-width:52%;">
+        <div id="adv-hmeet-portrait" style="width:min(52vw,620px);height:min(92vh,820px);background-size:contain;background-position:center;background-repeat:no-repeat;"></div>
+      </div>
+      <!-- 右欄:能力 / 技能 / 天賦 / 打招呼 / 按鈕 -->
+      <div id="adv-hmeet-info-col" style="flex:1 1 0;display:flex;flex-direction:column;gap:10px;min-width:0;max-width:720px;height:100%;overflow-y:auto;padding-right:8px;align-items:stretch;">
+        <div id="adv-hmeet-continue-hint" style="font-size:16px;color:#aaa;text-align:center;letter-spacing:2px;margin-bottom:2px;">點擊畫面任意位置繼續</div>
+        <div id="adv-hmeet-msg" style="font-size:20px;font-weight:800;color:#ffe066;text-align:center;line-height:1.5;padding:10px 14px;background:rgba(0,0,0,0.6);border-radius:12px;border:2px solid #ffe066;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+        <div id="adv-hmeet-name" style="font-size:40px;font-weight:900;color:#ffcc44;text-shadow:0 0 14px rgba(255,200,50,0.8);font-family:'Noto Serif TC','M PLUS Rounded 1c',sans-serif;text-align:center;line-height:1.1;"></div>
+        <div id="adv-hmeet-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;font-size:20px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+        <div id="adv-hmeet-skills" style="width:100%;display:flex;flex-direction:column;gap:6px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+        <div id="adv-hmeet-trait" style="width:100%;padding:10px 14px;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.4);border-radius:10px;font-size:20px;color:#cc88ff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;line-height:1.5;"></div>
+        <div id="adv-hmeet-greeting" style="font-size:22px;font-weight:700;color:#fff;text-align:center;line-height:1.5;padding:12px 16px;background:rgba(255,200,50,0.12);border-radius:12px;border:1px solid rgba(255,200,50,0.3);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-style:italic;"></div>
+        <button onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="padding:14px 40px;font-size:26px;font-weight:800;background:linear-gradient(135deg,#ffcc44,#ff8800);color:#000;border:none;border-radius:12px;cursor:pointer;letter-spacing:3px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;margin-top:4px;align-self:center;">繼續冒險！→</button>
+      </div>
     </div>
   </div>
 
@@ -24102,7 +24119,27 @@ function _requestFullscreenAll(){
   }
 }
 
+// ★ v1.0.20260423.3400 — 徹底清除戰鬥背景的統一函式
+//   背景殘留 bug 根源:舊版用 setTimeout(()=>{className=''}, 700) 延遲清除,
+//   當玩家在 700ms 內快速進入新關卡時,setTimeout 會把新關卡剛設定的背景 class 清掉 → 黑畫面
+//   解決:**立即**清除 className 和 visible,不用 setTimeout。視覺淡出改靠 CSS opacity transition
+function _clearBattleBg(reason){
+  try{
+    const _bb = document.getElementById('adv-battle-bg');
+    if(_bb){
+      _bb.classList.remove('visible');
+      _bb.className = ''; // 立即清空所有 bg-* class
+    }
+    // 一併清除戰鬥容器的 .adv-battle class,避免黑色戰鬥模式遮罩殘留
+    const _gc = document.getElementById('gc');
+    if(_gc){ _gc.classList.remove('adv-battle'); _gc.style.filter = ''; }
+    if(reason) console.log('[背景清除]', reason);
+  }catch(_e){ console.warn('[背景清除] 失敗:', _e); }
+}
+
 function openAdventureOverlay(){
+  // ★ v1.0.20260423.3400 — 進選關頁時立即再次清除戰鬥背景,防止從戰鬥直接返回時殘留
+  _clearBattleBg('openAdventureOverlay');
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
   // ★ v1.0.20260420.1300 — 確保「🔄回溯」與「❓教學」按鈕只在戰鬥中顯示
@@ -24974,6 +25011,9 @@ function startAdventureGame(stage){
     alert('冒險系統尚未就緒，請重新整理頁面後再試。');
     return;
   }
+  // ★ v1.0.20260423.3400 — 防禦性清除:進入新冒險前強制清掉舊戰鬥背景
+  //   即使前面所有清除點都出錯,這裡也能攔下(避免背景殘留 bug 整個卡住遊戲)
+  _clearBattleBg('startAdventureGame entry');
   // ★ 開始整裝音效（播放後2秒淡出）
   //   v1.0.20260422.0110 原本把 sfx-battle-start 調成 0.49 音量 / 2 秒淡出，
   //   但實際上真正大聲的是這首 sfx-adv-start（音量 1.0 + 5 秒才淡出），
@@ -25160,9 +25200,8 @@ function exitAdventureMode(){
   }catch(_){}
   // ★ 隱藏戰鬥教學按鈕
   try{ _advTutBtnShow(false); }catch(e){}
-  // ★ 清除戰鬥背景
-  const _xbg = document.getElementById('adv-battle-bg');
-  if(_xbg){ _xbg.classList.remove('visible'); setTimeout(()=>{ _xbg.className=''; }, 700); }
+  // ★ v1.0.20260423.3400 — 徹底清除戰鬥背景(立即,不用 setTimeout 避免 race condition)
+  _clearBattleBg('exitAdventureMode reset');
   _advQuizActive = false;
   _advBossIntroActive = false;
   if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer) {
@@ -26552,6 +26591,8 @@ function _advRecordQuizSession(g, s, d){
 // ════════════════════════════════
 
 function advStartCutscene(stage) {
+  // ★ v1.0.20260423.3400 — 防禦性清除:進入過場前強制清掉戰鬥背景
+  try{ if(typeof _clearBattleBg === 'function') _clearBattleBg('advStartCutscene entry'); }catch(_){}
   _advSceneIdx = 0;
   _advDialogIdx = 0;
   _advSceneChoiceDone = false; // ★ 初始化選題旗標
@@ -26599,6 +26640,8 @@ function advStartCutscene(stage) {
   window._advUpfrontSkipChosen = false;  // 每次新冒險重置,避免上次殘留
 
   const _beginCutsceneNow = () => {
+    // ★ v1.0.20260423.3400 — 過場開始前最後一次清除戰鬥背景,確保不會透出
+    try{ if(typeof _clearBattleBg === 'function') _clearBattleBg('cutscene begin'); }catch(_){}
     const ov = document.getElementById('adv-cutscene-overlay');
     ov.style.display = 'flex';
     // ★ 過場 BGM：依關卡切換
@@ -30393,7 +30436,8 @@ async function advStartWinSequence() {
   // 插畫
   const portEl = document.getElementById('adv-hmeet-portrait');
   if(portEl) {
-    if(hImg) { portEl.style.backgroundImage = 'url("' + hImg + '")'; portEl.style.display = ''; }
+    // ★ v1.0.20260423.3300 — 大圖展示,改用 center 對齊(原本 center top 是頭像裁切)
+    if(hImg) { portEl.style.backgroundImage = 'url("' + hImg + '")'; portEl.style.display = ''; portEl.style.backgroundPosition = 'center'; }
     else portEl.style.display = 'none';
   }
 
@@ -30458,12 +30502,9 @@ async function advHeroMeetDone() {
   ov.onclick = null;
   bgmStop();
   // ★ 確保戰鬥畫面完全清除再返回冒險選關頁
+  // ★ v1.0.20260423.3400 — 改用統一 helper,立即清除 adv-battle-bg 所有 class
   try{
-    const _gcH = document.getElementById('gc');
-    if(_gcH){ _gcH.classList.remove('adv-battle'); _gcH.style.filter=''; }
-    // 清除 adv-battle-bg
-    const _bgEl = document.getElementById('adv-battle-bg');
-    if(_bgEl){ _bgEl.className=''; _bgEl.classList.remove('visible'); }
+    _clearBattleBg('BOSS victory return');
     // 清空行動順序條
     const _tb = document.getElementById('turn-bar');
     if(_tb) _tb.innerHTML='';
@@ -38138,10 +38179,9 @@ function advMiniResultConfirm(){
 
   // 移除戰鬥class並恢復欄位可見性
   if(typeof ctrlBattleToggle==='function') ctrlBattleToggle(false);
-  const _gcD = document.getElementById('gc');
-  if(_gcD) _gcD.classList.remove('adv-battle');
-  // ★ 清除戰鬥背景
-  (function(){ const _rb=document.getElementById('adv-battle-bg'); if(_rb){ _rb.classList.remove('visible'); setTimeout(()=>{ _rb.className=''; },700); } })();
+  // ★ v1.0.20260423.3400 — 統一用 _clearBattleBg 立即清除,避免 700ms setTimeout 在玩家
+  //   快速進入新關卡時把新背景清掉造成黑畫面
+  _clearBattleBg('mini battle end');
   const _pf2 = document.getElementById('p2-field');
   if(_pf2) _pf2.style.visibility = '';
 
@@ -40210,6 +40250,66 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.3400', brief:[
+    '🚨 徹底修正嚴重 bug:打完 BOSS 回關卡頁後再進新關卡,舊 BOSS 戰紅/黑背景會覆蓋河堤場景造成遊戲卡死',
+  ], items:[
+    '【根因】',
+    '  舊版有 3 處背景清除點使用 setTimeout(()=>{className=\'\'}, 700) 延遲清除',
+    '  race condition:玩家在 700ms 內快速進入新關卡 →',
+    '    t=0    戰鬥結束,setTimeout 排程 700ms 後清 className',
+    '    t=300  新關卡設定背景 class = bg-river',
+    '    t=500  setTimeout 觸發,把剛設好的 bg-river 清空 → 黑畫面/殘留紅背景',
+    '【修正做法 - 五層防禦】',
+    '  (1) 新增 _clearBattleBg(reason) 統一清除函式:立即移除 visible + className + adv-battle class,不用 setTimeout',
+    '  (2) 3 個原清除點(exitAdventureMode / BOSS勝利 / 小怪戰結束)全改用新 helper,移除所有 setTimeout 延遲',
+    '  (3) openAdventureOverlay() 進入時再次清除 - 從戰鬥直接回選關頁時防線',
+    '  (4) startAdventureGame() 進入時再次清除 - 新冒險開始前防線',
+    '  (5) _beginCutsceneNow() 過場開始前再次清除 - 場景切換時防線',
+    '【為何立即清除不會造成視覺跳變】',
+    '  背景淡出本來就是靠 CSS 的 opacity transition (visible class),',
+    '  className 保留 700ms 只是讓 opacity 從 1 降到 0 的過渡期仍顯示舊圖',
+    '  但新版進入新關卡時會立即 add(\'visible\') + add(\'bg-river\'),',
+    '  CSS opacity 會從 0 → 1 淡入,視覺上無差異',
+    '【診斷 log】',
+    '  每次清除會 console.log: [背景清除] <reason>',
+    '  future debugging 時打開 F12 即可追蹤清除路徑',
+  ] },
+  { ver:'v1.0.20260423.3300', brief:[
+    '🎨 「獲得新英雄」畫面改為左右兩欄排版:左側大型角色插圖、右側能力面板',
+    '插圖放大約 2~2.4 倍(260×320 → 620×820 max),完整展示角色',
+    '「繼續冒險」按鈕與所有資訊一次看完,不再需要往下捲動',
+  ], items:[
+    '【排版變更】',
+    '  原本:直式單欄(訊息→插圖→名字→能力→技能→天賦→打招呼→按鈕),畫面往下長',
+    '  現在:左右兩欄(桌機/平板橫式),釋出垂直空間給所有資訊',
+    '【左欄 - 插圖】',
+    '  尺寸:width min(52vw, 620px) × height min(92vh, 820px)',
+    '  從 260×320 放大到 ~620×820,視覺衝擊力提升',
+    '  background-position 改為 center(原本 center top 為了頭像裁切,現在改展示全圖)',
+    '  移除原本的金色邊框與陰影,讓插圖單純以大圖呈現',
+    '【右欄 - 能力面板】',
+    '  「點擊畫面任意位置繼續」提示置頂',
+    '  訊息、名字、能力數值(2×2 grid)、技能說明、天賦說明、打招呼台詞',
+    '  最下方「繼續冒險!→」按鈕',
+    '  若內容超過高度,右欄可獨立捲動(不影響左欄)',
+    '【Responsive】',
+    '  窄螢幕(max-width 900px):自動退回直式排版',
+    '  插圖縮回 80vw / 420px 寬',
+  ] },
+  { ver:'v1.0.20260423.3200', brief:[
+    '🎨 答題獎勵視窗從原本「右邊中央偏上(top:36%)」改為「右上角貼齊(top:0)」',
+    '釋出更多畫面中央空間,讓玩家在選擇獎勵時仍能持續觀察戰場狀況',
+  ], items:[
+    '【調整細節】',
+    '  top: 36% → 0(貼齊畫面頂部)',
+    '  max-height: 64% → calc(100% - 20px)(避免超出畫面)',
+    '  圓角從 14px 0 0 14px (左上左下圓) 改為 0 0 0 14px (只有左下圓),視覺上更貼合右上角',
+    '  box-shadow 新增向下偏移,強調從右上「垂落」的視覺感',
+    '【不影響的部分】',
+    '  兩段式獎勵流程邏輯不變(點選 → 使用/保留)',
+    '  手機直式版寬度設定(width:64%)維持不變',
+    '  平板版寬度設定(width:50%)維持不變',
+  ] },
   { ver:'v1.0.20260423.3100', brief:[
     '✨ 日本三大可解鎖 BOSS 英雄（大天狗、酒吞童子、玉藻前）的爆發在 Lv5 也延長 1 回合',
     '補充上版的遺漏:這 3 隻雖是 BOSS 但玩家也能解鎖帶出戰,有英雄升級配套應當與其他英雄同享爆發升級加成',
@@ -43376,7 +43476,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.3100';
+  const CURRENT_VERSION = 'v1.0.20260423.3400';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43393,7 +43493,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.3100';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.3400';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
