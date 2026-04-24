@@ -1742,6 +1742,65 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 
 /* SHAKE */
 @keyframes shake{0%{transform:translate(0,0)}15%{transform:translate(-5px,-2px)}30%{transform:translate(5px,2px)}45%{transform:translate(-4px,-1px)}60%{transform:translate(4px,1px)}75%{transform:translate(-2px,0)}90%{transform:translate(2px,0)}100%{transform:translate(0,0)}}
+
+/* ★ v1.0.20260423.2300 — BOSS 擊倒慢動作效果 */
+.boss-kill-slowmo{
+  animation: bossKillSlowmo 2s ease-in-out !important;
+}
+.boss-kill-slowmo *, .boss-kill-slowmo *::before, .boss-kill-slowmo *::after{
+  animation-duration: calc(var(--original-duration, 1s) * 3) !important;
+  animation-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+  transition-duration: 600ms !important;
+}
+@keyframes bossKillSlowmo{
+  0%   { filter: brightness(1) saturate(1); }
+  15%  { filter: brightness(1.8) saturate(1.6) hue-rotate(-10deg); }
+  50%  { filter: brightness(0.7) saturate(0.8) hue-rotate(-20deg); }
+  100% { filter: brightness(1) saturate(1); }
+}
+.boss-kill-slowmo::before{
+  content: "";
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: radial-gradient(ellipse at center, rgba(255,220,100,0.08) 0%, rgba(0,0,0,0.35) 70%);
+  z-index: 9998;
+  pointer-events: none;
+  animation: bossKillOverlay 2s ease-in-out forwards;
+}
+@keyframes bossKillOverlay{
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.boss-kill-flash{
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  background: #ffe066; opacity: 0;
+  z-index: 9999; pointer-events: none;
+  animation: bossKillFlash 600ms ease-out forwards;
+}
+@keyframes bossKillFlash{
+  0%   { opacity: 0; }
+  10%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+.boss-kill-banner{
+  position: fixed; top: 40%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  font-size: 64px; font-weight: 900;
+  color: #ffe066;
+  text-shadow: 0 0 25px rgba(255,200,50,0.9), 0 0 50px rgba(255,150,0,0.7), 3px 3px 0 #663300;
+  z-index: 10000; pointer-events: none;
+  letter-spacing: 8px;
+  animation: bossKillBanner 2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes bossKillBanner{
+  0%   { transform: translate(-50%, -50%) scale(0.3) rotate(-8deg); opacity: 0; }
+  20%  { transform: translate(-50%, -50%) scale(1.3) rotate(2deg); opacity: 1; }
+  40%  { transform: translate(-50%, -50%) scale(1.0) rotate(0deg); opacity: 1; }
+  85%  { transform: translate(-50%, -50%) scale(1.05) rotate(0deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.3) rotate(0deg); opacity: 0; }
+}
 @keyframes cardHitBobble{
   0%  {transform:translate3d(0,0,0) rotate(0deg) scale(1)}
   8%  {transform:translate3d(-14px,-4px,0) rotate(-4deg) scale(1.06)}
@@ -3580,6 +3639,51 @@ body {
   width:100%;line-height:1.5;text-align:left;
 }
 .adv-reward-btn:hover{background:rgba(62,200,122,0.2);border-color:#3ec87a;color:#fff;transform:scale(1.03);}
+/* ★ v1.0.20260423.2400 — 兩段式獎勵流程:選中狀態 + 確認按鈕 */
+.adv-reward-btn.selected{
+  background:rgba(62,200,122,0.35);
+  border-color:#7df0a8;
+  color:#fff;
+  box-shadow:0 0 20px rgba(125,240,168,0.6), inset 0 0 15px rgba(125,240,168,0.25);
+  transform:scale(1.02);
+}
+.adv-reward-btn.dimmed{
+  opacity:0.35;
+  filter:grayscale(0.5);
+}
+#adv-reward-confirm-row{
+  display:none;
+  gap:12px;
+  margin-top:12px;
+  flex-direction:row;
+  justify-content:center;
+  animation:advChoiceIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+#adv-reward-confirm-row.show{display:flex;}
+.adv-reward-confirm-btn{
+  padding:18px 24px;font-size:30px;font-weight:800;
+  border-radius:12px;cursor:pointer;letter-spacing:2px;
+  transition:all 0.2s;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  flex:1;min-width:0;
+}
+#adv-reward-use-btn{
+  background:rgba(62,200,122,0.85);border:2.5px solid #7df0a8;color:#fff;
+  box-shadow:0 0 15px rgba(125,240,168,0.4);
+}
+#adv-reward-use-btn:hover{background:rgba(90,230,150,0.95);transform:scale(1.04);}
+#adv-reward-keep-confirm-btn{
+  background:rgba(80,60,30,0.85);border:2.5px solid #ffcc44;color:#ffe090;
+  box-shadow:0 0 12px rgba(255,204,68,0.3);
+}
+#adv-reward-keep-confirm-btn:hover{background:rgba(120,90,40,0.95);transform:scale(1.04);}
+#adv-reward-cancel-btn{
+  padding:14px 18px;font-size:24px;font-weight:600;
+  background:rgba(40,40,50,0.7);border:1.5px solid #666;color:#aaa;
+  border-radius:10px;cursor:pointer;letter-spacing:1px;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  flex:0 0 auto;
+}
+#adv-reward-cancel-btn:hover{background:rgba(80,80,90,0.9);color:#ddd;}
 #adv-reward-keep-btn{
   padding:14px 0;font-size:33px;font-weight:700;
   background:rgba(10,10,20,0.8);border:1.5px solid #666;color:#aaa;
@@ -4870,9 +4974,15 @@ body {
   <div id="adv-reward-overlay">
     <div id="adv-reward-box">
       <div id="adv-reward-title">🎉 答對了！選擇獎勵</div>
-      <div id="adv-reward-subtitle">選擇一項獎勵施放到戰場上</div>
+      <div id="adv-reward-subtitle">點選一項獎勵,再選擇立即使用或保留至下回合</div>
       <div id="adv-reward-choices"></div>
-      <button id="adv-reward-keep-btn" onclick="playSfx('sfx-powerup',0.6);advKeepReward()">📦 保留至下次</button>
+      <!-- ★ v1.0.20260423.2400 — 兩段式選擇:先點獎勵高亮,再顯示此確認區 -->
+      <div id="adv-reward-confirm-row">
+        <button id="adv-reward-cancel-btn" onclick="advRewardCancelSelection()">↶ 取消</button>
+        <button id="adv-reward-use-btn" class="adv-reward-confirm-btn" onclick="advRewardConfirmUse()">✨ 立即使用</button>
+        <button id="adv-reward-keep-confirm-btn" class="adv-reward-confirm-btn" onclick="advRewardConfirmKeep()">📦 保留至下回合</button>
+      </div>
+      <button id="adv-reward-keep-btn" style="display:none;" onclick="playSfx('sfx-powerup',0.6);advKeepReward()">📦 保留至下次</button>
     </div>
   </div>
   <!-- 接關視窗 -->
@@ -4962,6 +5072,68 @@ function _pSetTimeout(fn, delay){
     return -1;
   }
 }
+// ★ v1.0.20260423.2300 — BOSS 擊倒慢動作 2 秒勝利回饋
+//   觸發時機:doDmg 裡偵測到 target.curHp===0 且 target 是 BOSS 類角色時呼叫
+//   效果:戰鬥畫面全體 2 秒慢動作 + 黃色閃光 + 中央「擊倒」橫幅 + 色調變化
+function _triggerBossKillSlowmo(bossName){
+  if(window._bossKillSlowmoActive) return; // 防止同回合多次觸發(連鎖擊倒 BOSS 時)
+  window._bossKillSlowmoActive = true;
+
+  try{
+    const _root = document.querySelector('.gamebox') || document.querySelector('#gamebox') || document.body;
+    if(_root) _root.classList.add('boss-kill-slowmo');
+
+    // 全畫面黃色閃光
+    const _flash = document.createElement('div');
+    _flash.className = 'boss-kill-flash';
+    document.body.appendChild(_flash);
+    setTimeout(()=>{ try{ _flash.remove(); }catch(_){}}, 650);
+
+    // 中央勝利橫幅
+    const _banner = document.createElement('div');
+    _banner.className = 'boss-kill-banner';
+    _banner.textContent = bossName ? `擊倒 ${bossName}！` : '擊倒 BOSS！';
+    document.body.appendChild(_banner);
+    setTimeout(()=>{ try{ _banner.remove(); }catch(_){}}, 2100);
+
+    // BOSS 擊倒音效加重
+    try{ playSfx('sfx-ko', 1.0); }catch(_){}
+    try{ playSfx('sfx-explode', 0.6); }catch(_){}
+
+    // 戰鬥 log 強調
+    try{ log(`🎊 [BOSS] ${bossName||''} 被擊倒！慢動作勝利回饋！`); }catch(_){}
+  }catch(e){ console.warn('[BOSS 慢動作] 觸發失敗:', e); }
+
+  // 2 秒後清除 class、恢復正常速度
+  setTimeout(()=>{
+    try{
+      const _root = document.querySelector('.gamebox') || document.querySelector('#gamebox') || document.body;
+      if(_root) _root.classList.remove('boss-kill-slowmo');
+    }catch(_){}
+    window._bossKillSlowmoActive = false;
+  }, 2000);
+}
+
+// ★ v1.0.20260423.2400 — 判定是否為 BOSS 角色(會觸發擊倒慢動作)
+function _isBossForSlowmo(target){
+  if(!target) return false;
+  try{
+    // ★ v1.0.20260423.2400 — 只在「BOSS 戰」觸發,小怪戰不觸發(玩家常秒掉小怪,會看到太多次)
+    //   判斷:必須是冒險模式 + 非小怪戰階段
+    if(typeof _adventureMode === 'undefined' || !_adventureMode) return false;
+    if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive) return false;
+    // 到此即冒險模式且當前是 BOSS 戰;目標只要在 p2 陣容中且是 BOSS/日本大 BOSS 就觸發
+    // (排除玩家方隊友倒下,避免誤觸發)
+    if(target.side !== 'p2') return false;
+    // (1) 在 BOSS_NAMES 中(涵蓋貓空所有 BOSS 與日本菁英/小怪,但既然已限制為 BOSS 戰階段,這些都是真正的 BOSS)
+    if(typeof BOSS_NAMES !== 'undefined' && Array.isArray(BOSS_NAMES) && BOSS_NAMES.includes(target.name)) return true;
+    // (2) 日本四大可解鎖 BOSS(不在 BOSS_NAMES 但 BOSS 戰也會出現)
+    const _jpBosses = ['大天狗','酒吞童子','玉藻前','八岐大蛇','杏花妖'];
+    if(_jpBosses.includes(target.name)) return true;
+  }catch(_){}
+  return false;
+}
+
 function _resumeTimers(){
   var now=Date.now();
   var timers=_pendingTimers.splice(0);
@@ -6681,6 +6853,11 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png' },
     { id:'miko_shrine', name:'神社祭禮', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B7%AB%E5%A5%B32.png', requiresUnlock:true },
   ],
+  // ★ v1.0.20260423.1800 — 木靈使肖像「千年神木」
+  '木靈使': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%9C%A8%E9%9D%88%E4%BD%BF(%E7%B8%AE%E5%9C%96).png' },
+    { id:'ancient_tree', name:'千年神木', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BF2.png', requiresUnlock:true },
+  ],
 };
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
@@ -7084,7 +7261,7 @@ const BURST_UPGRADE_DEF = {
   '武士':      { rows: [[0,'攻擊×4.8 必中，溢傷轉移'],[1,'攻擊×5.28'],[2,'攻擊×5.76'],[3,'攻擊×6.24'],[4,'攻擊×6.72']] },
   '時空法師':  { rows: [[0,'特技×4.0 必中，倒下不可復活'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
   '學者':      { rows: [[0,'元素倍率必中傷害，50%轉治療'],[1,'傷害/治療+10%'],[2,'傷害/治療+20%'],[3,'傷害/治療+30%'],[4,'傷害/治療+40%']] },
-  '木靈使':    { rows: [[0,'全隊不倒+再生（特技HP/回合）'],[1,'再生+10%'],[2,'再生+20%'],[3,'再生+30%'],[4,'再生+40%']] },
+  '木靈使':    { rows: [[0,'全隊不倒+再生2回合（特技HP/回合）'],[1,'再生+10%，持續+1回合'],[2,'再生+20%，持續+2回合'],[3,'再生+30%，持續+3回合'],[4,'再生+40%，持續+4回合']] },
   '籃球隊員':  { rows: [[0,'特技×4.0，全隊速度+50% 2回合'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
   '直笛團員':  { rows: [[0,'特技×1.5 治療全隊(可復活)+護盾20'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   '田徑隊員':  { rows: [[0,'7能量+下次傷害×2+再行動'],[1,'下次傷害×2.2'],[2,'下次傷害×2.4'],[3,'下次傷害×2.6'],[4,'下次傷害×2.8']] },
@@ -7307,7 +7484,7 @@ const BURST_DB = {
   '機械師':   {n:'負荷超載',    d:'2回合我方傷害全累積並回血50%，結束後平均分給敵方',fd:'進入「負荷超載」狀態2回合，期間我方所有受到的傷害全部累積計算且每次受到傷害立即恢復該傷害50%的HP，在負荷超載結束後釋放所有累積的傷害，由敵方全體平均分攤此傷害。負荷超載狀態不會被消除或奪取。'},
   '吸血鬼':   {n:'鮮血契約',    d:'全隊獲得「嗜血」2回合，傷害100%吸血，血量越低增傷越高',fd:'使我方全體獲得「嗜血」能力2回合：造成傷害的100%轉化為恢復自身HP，且造成傷害時依自身血量減少的百分比轉換為等量增傷百分比（最高+100%）。「嗜血」狀態不會被消除或奪取。'},
   '武士':     {n:'神鬼盡滅',    d:'480%必中，溢出傷害轉移',fd:'對敵方單體造成攻擊480%傷害，必中且無視有利狀態。溢出傷害轉移至敵方HP最少的角色身上。'},
-  '木靈使':   {n:'神樹恩澤',    d:'全隊不倒＋再生（2回合）',fd:'使友方全體獲得「不倒」和「再生」2回合，期間HP最低為1，且每回合恢復木靈使特技值HP。'},
+  '木靈使':   {n:'神樹恩澤',    d:'全隊「不倒再生」2回合（特技HP/回合）',fd:'使友方全體獲得「不倒再生」狀態2回合，期間HP最低為1，且每回合恢復木靈使特技值HP。每升一級：恢復量+10%、持續回合數+1。'},
   '時空法師': {n:'時間壓縮',    d:'400%必中，倒下後無法復活',fd:'用特技的400%對1名敵方造成必中傷害且無視有利狀態。目標倒下時陷入2回合無法被復活的狀態，此狀態無法解除或預防。'},
   '學者':     {n:'元素智慧',    d:'元素倍率必中傷害，50%轉為治療',fd:'依特技×雙方元素屬性種類數對1名對手造成必中傷害且無視有利狀態。再將傷害值的50%轉為治療恢復我方單人HP。'},
  '陰陽師':   {n:'四聖降臨',    d:'傷害全體4次，附加強力不利狀態',fd:'依特技50%使敵方全體受到4次傷害，每次有70%機率隨機附加1個強力不利狀態。'},
@@ -7562,14 +7739,19 @@ function addStatus(h,t,dur=1){
 }
 function addBuff(h,t,dur=1){
   if(!h||h.curHp<=0) return;
+  // ★ v1.0.20260423.2300 — 爆發保護標記
+  const _isBurstCast = !!window._burstCastActive;
   // 去重：同類buff只刷新持續時間，不重複疊加
   const _existIdx=h.buffs.findIndex(b=>b.type===t);
   if(_existIdx>=0){
     h.buffs[_existIdx].dur=Math.max(h.buffs[_existIdx].dur,dur);
+    if(_isBurstCast) h.buffs[_existIdx]._fromBurst = true;
     renderCard(h);
     return;
   }
-  h.buffs.push({type:t,dur});
+  const _newBuff = {type:t,dur};
+  if(_isBurstCast) _newBuff._fromBurst = true;
+  h.buffs.push(_newBuff);
   renderCard(h);
   // 能力提升類buff播放專屬音效
   const _statUpBuffs=['dmgup','strengthened','zeroCost','elemBoost','divineBlessing','hpRegen','regen','discount'];
@@ -7613,8 +7795,10 @@ function clearGoodBuffs(h){
   if(hasBuff(h,'protectBuff')) return;
   // 小力：強力隱身不可被消除
   if(hasBuff(h,'inuInvisible')) { h.buffs=h.buffs.filter(b=>b.type==='inuInvisible'||b.type==='immune'||['deathimmune','immovable','rebirth','misfortune','alchemist','counter'].includes(b.type)); return; }
+  // ★ v1.0.20260423.2300 — 爆發技能附加的有利狀態不可被消除(神偷/軍師爆發自己呼叫時會用 {ignoreBurstGuard:true} 旁路)
+  //   本函式在非「神偷/軍師爆發清除」的路徑都應保留帶 _fromBurst 的 buff
   const PROTECTED_BUFFS=['deathimmune','immovable','rebirth','misfortune','alchemist','counter'];
-  h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type));
+  h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type) || b._fromBurst);
   // 還原 strengthened 的能力值
   const str=h.buffs.find(b=>b.type==='strengthened');
   if(str && str._origAtk!==undefined){ h.atk=str._origAtk; h.sp=str._origSp; h.spd=str._origSpd; }
@@ -7625,7 +7809,7 @@ function clearGoodBuffs(h){
     delete h._mirrorOrigAtk;
     h._burstMirror=false;
   }
-  h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type));
+  h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type) || b._fromBurst);
   // 以下 buff 永遠不被 dispel 消除（角色核心被動狀態）
   // 忠犬守護：_inuGuard buff消失時同步清除 _inuGuardActive
       if(!h.buffs.some(b=>b.type==='_inuGuard')){
@@ -11517,6 +11701,10 @@ function execBurst(side, pos){
   _pSetTimeout(()=>_runBurst(h, bd, side, _interrupted), 1200);
 }
 function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
+  // ★ v1.0.20260423.2300 — 爆發技能保護機制:
+  //   設定全域旗標,讓 addBuff / 直接 push 的 buff 自動標記 _fromBurst:true
+  //   任何非神偷/軍師爆發的 消除/搶奪/交換 操作會跳過帶此旗標的 buff
+  window._burstCastActive = true;
   const burstName = bd.n; // ★ 修正：burstName 從爆發資料取得
   const opp=side==='p1'?'p2':'p1';
   const enemies=G[opp].filter(x=>x.curHp>0);
@@ -11636,7 +11824,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     // ★ 自己獲得速度+10持續2回合（自動還原）
     h.buffs = h.buffs.filter(b => b.type !== '_rogueSwift');
     h.spd = (h.spd|0) + 10;
-    h.buffs.push({type:'_rogueSwift',dur:2,_spdBoost:10});
+    h.buffs.push({type:'_rogueSwift',dur:2,_spdBoost:10,_fromBurst:true});
     bannerFX(h,'速度+10！(2回合)','#ffcc00',900);
 
     const _finalize = () => {
@@ -11745,7 +11933,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     allies.forEach(t=>{ addBuff(t,'dmgup',2); addBuff(t,'protectBuff',2);
       if(_burstLv>0){
         t.buffs=t.buffs.filter(b=>b.type!=='_danceBurstShield');
-        t.buffs.push({type:'_danceBurstShield',dur:2,_pct:_burstLv*0.10});
+        t.buffs.push({type:'_danceBurstShield',dur:2,_pct:_burstLv*0.10,_fromBurst:true});
       }
     });
     enemies.forEach(t=>clearGoodBuffs(t));
@@ -11761,7 +11949,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   // 守恆：使用物品卡後100%保留，受protectBuff保護
   allies.forEach(t=>{
     t.buffs=t.buffs.filter(b=>b.type!=='conservation');
-    t.buffs.push({type:'conservation',dur:2,_protected:true});
+    t.buffs.push({type:'conservation',dur:2,_protected:true,_fromBurst:true});
     addBuff(t,'protectBuff',2);
     bannerFX(t,'守恆！','#55ffcc',900);
   });
@@ -11877,7 +12065,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       });
       G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
       allies.forEach(t=>{ addBuff(t,'protectBuff',2);
-        if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2,_pct:_burstLv*0.10}); }
+        if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2,_pct:_burstLv*0.10,_fromBurst:true}); }
       });
       log(`[${h.name}] 動物大軍！呼喚4隻寵物並保護友方！`);
       updateUI();
@@ -11894,7 +12082,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     log(`[${h.name}] 動物大軍！呼喚4隻寵物！`);
     G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
     allies.forEach(t=>{ addBuff(t,'protectBuff',2);
-      if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2,_pct:_burstLv*0.10}); }
+      if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2,_pct:_burstLv*0.10,_fromBurst:true}); }
     });
     // 逐一呼出裝備選擇面板（不佔背包欄位）
     _showBurstEquipSequence(burstEquips, 0, h, side, _interrupted);
@@ -11934,8 +12122,17 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
   }
   if(name==='木靈使'){
+    // ★ v1.0.20260423.2100 — 神樹恩澤升級效果:每級+10%恢復量 + 1回合
     const _spiritDur = 2 + _burstLv;
-    allies.forEach(t=>{ t.status=t.status.filter(s=>s.type!=='burstUndying'); t.status.push({type:'burstUndying',dur:_spiritDur,_owner:h}); bannerFX(t,'不倒＋再生！'+(_burstLv>0?'('+_spiritDur+'回合)！':''),'#44ee44',1000); });
+    const _spiritHealMult = 1.0 + _burstLv * 0.10;
+    allies.forEach(t=>{
+      t.status = t.status.filter(s=>s.type!=='burstUndying');
+      t.status.push({ type:'burstUndying', dur:_spiritDur, _owner:h, _healMult:_spiritHealMult });
+      const _bannerTxt = _burstLv>0
+        ? `不倒再生！(${_spiritDur}回合 +${Math.round(_burstLv*10)}%恢復)`
+        : '不倒再生！2回合';
+      bannerFX(t, _bannerTxt, '#44ee44', 1000);
+    });
   }
   if(name==='時空法師'){
     const _doSkfs=(t)=>{
@@ -12026,7 +12223,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       if(t.curHp===0){ doRevive(t,0.01); } // 復活（以最低HP復活，再由doHeal補滿）
       doHeal(t,Math.floor(spv*1.5*_burstMult),{actor:h,isHeal:true});
       t.buffs=t.buffs.filter(b=>b.type!=='bigshield');
-      t.buffs.push({type:'bigshield',dur:99,_hp:20});
+      t.buffs.push({type:'bigshield',dur:99,_hp:20,_fromBurst:true});
       bannerFX(t,'天籟之音！','#cc55ff',1000);
       renderCard(t);
     });
@@ -12044,7 +12241,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     sndEnergy();
     // 傷害加倍（下次攻擊）
     h.buffs=h.buffs.filter(b=>b.type!=='_sprintBurst');
-    h.buffs.push({type:'_sprintBurst',dur:1,_mult:2.0+_burstLv*0.20});
+    h.buffs.push({type:'_sprintBurst',dur:1,_mult:2.0+_burstLv*0.20,_fromBurst:true});
     bannerFX(h,'極速閃燃！能量+7！傷害×2！','#44ffcc',1200);
     flashScreen('rgba(60,255,200,1)',350);
     zoneFlash(side,'rgba(60,255,200,0.3)',600);
@@ -12404,7 +12601,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         h._shutenOrigSp  = origSp;
         h.atk = Math.max(1, Math.floor(origAtk * 1.5));
         h.sp  = Math.max(1, Math.floor(origSp  * 1.5));
-        h.buffs.push({type:'shutenBoost', dur:2});
+        h.buffs.push({type:'shutenBoost', dur:2, _fromBurst:true});
         bannerFX(h, '🦇嗜血狂潮！', '#cc2244', 900);
         renderCard(h);
         updateUI();
@@ -12543,6 +12740,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
 }
 // 爆發技能選目標後的收尾函式
 function _burstFinish(h, _interrupted){
+  // ★ v1.0.20260423.2300 — 清除爆發保護旗標
+  window._burstCastActive = false;
   updateUI();
   if(checkWin()) return;
   G.passiveInterruptUsed=false;
@@ -13472,6 +13671,25 @@ function doDmg(target, rawDmg, opts={}){
   }
   // ── 裝備效果：幸運吊飾 30% 死裡逃生
   if(teq && teq.onDmg && !opts.noEquip) dmg=teq.onDmg(target,dmg);
+  // ★ v1.0.20260423.1500 — 數值型護盾(target.shield)吸收傷害
+  //   涵蓋：雪女 冰晶凝聚、樹葉守護、死氣結界 等使用 target.shield 屬性的技能
+  //   (原本只有 hasBuff(target,'shield') 的 buff 型護盾會攔截,target.shield 這個數值
+  //    完全沒被 doDmg 讀取過 → 護盾形同虛設)
+  if(dmg > 0 && target.shield && target.shield > 0 && !opts.ignoreBuffs){
+    const _absorb = Math.min(target.shield, dmg);
+    target.shield -= _absorb;
+    dmg -= _absorb;
+    if(target.shield <= 0) target.shield = 0;
+    if(_absorb > 0){
+      log(`🛡 [${target.name}] 護盾吸收了 ${_absorb} 傷害（剩餘 ${target.shield}）`);
+      try{ showShieldVFX(target, 'block'); }catch(_e){}
+      try{ renderCard(target); }catch(_e){}
+    }
+    if(dmg <= 0){
+      try{ showPopup(target, '🛡', 'miss'); }catch(_e){}
+      return 0;
+    }
+  }
   // ★ 減傷保底：所有減傷效果後最低傷害為1（無敵/護盾/閃避已在上方 return，不受影響）
   if(dmg > 0) dmg = Math.max(1, dmg);
   const old=target.curHp;
@@ -13570,6 +13788,15 @@ function doDmg(target, rawDmg, opts={}){
   }
   if(target.curHp===0){
     log(`💀 [${target.name}] 倒下！`);
+    // ★ v1.0.20260423.2300 — BOSS 擊倒慢動作 2 秒回饋
+    //   只有從活著到 HP=0 的瞬間觸發(old>0),避免對已倒下目標多次觸發
+    if(old>0){
+      try{
+        if(_isBossForSlowmo(target)){
+          _triggerBossKillSlowmo(target.name);
+        }
+      }catch(_bke){ console.warn('[BOSS 慢動作] 偵測失敗:', _bke); }
+    }
     // 清除所有狀態與增益
     target.status=[];
     target.buffs=[];
@@ -14836,8 +15063,14 @@ function execAtk(actor, target, dmg, opts={}){
   // 神偷：50%奪取裝備或有利狀態
   if(name==='神偷' && Math.random()<Math.min(1,0.50+_tl*0.05) && target.curHp>0){
     // 優先奪有利狀態，否則奪裝備
-    const stolenBuff = target.buffs && target.buffs.length ? target.buffs.splice(Math.floor(Math.random()*target.buffs.length),1)[0] : null;
+    // ★ v1.0.20260423.2300 — 神偷「被動」也受爆發保護規則約束(只有神偷/軍師的「爆發」可無視)
+    //   被動普攻不是爆發,所以仍受保護;只能從非爆發來源的 buff 中挑
+    const _stealablePool = target.buffs ? target.buffs.filter(b=>!b._fromBurst) : [];
+    const stolenBuff = _stealablePool.length ? _stealablePool.splice(Math.floor(Math.random()*_stealablePool.length),1)[0] : null;
     if(stolenBuff){
+      // 從原陣列中移除被偷走的 buff
+      const _idx = target.buffs.indexOf(stolenBuff);
+      if(_idx>=0) target.buffs.splice(_idx,1);
       actor.buffs.push({...stolenBuff, dur:Math.max(stolenBuff.dur,1)});
       log(`🗡️ [神偷] 天賦：掠奪！奪取 [${target.name}] 的狀態 [${buffName(stolenBuff.type)||stolenBuff.type}]！`);
       showActionLabel(actor,'🗡️ 狀態掠奪 天賦');
@@ -16698,9 +16931,13 @@ function execSkill(a, sk, cost, stype){
   else if(n==='強奪'){
     setPending('enemy',t=>{
       log(`[${a.name}] 強奪！`);
-      if(t.buffs.length>0){
+      // ★ v1.0.20260423.2300 — 強奪是「技能」不是爆發,受爆發保護規則約束
+      const _grabPool = t.buffs.filter(b=>!b._fromBurst);
+      if(_grabPool.length>0){
         // Take a random buff, refresh its duration
-        const stolen=t.buffs.splice(Math.floor(Math.random()*t.buffs.length),1)[0];
+        const stolen = _grabPool[Math.floor(Math.random()*_grabPool.length)];
+        const _idx = t.buffs.indexOf(stolen);
+        if(_idx>=0) t.buffs.splice(_idx,1);
         stolen.dur=3; // refresh
         a.buffs.push(stolen);
         log(`[${a.name}] 奪取了 [${t.name}] 的 [${buffName(stolen.type)}]！`);
@@ -18861,17 +19098,19 @@ function nextRound(){
     });
   });
   // ── 爆發：木靈使 神樹恩澤→再生恢復 ──
+  // ★ v1.0.20260423.2100 — 恢復量套用 _healMult（每升一級+10%）
   G.p1.concat(G.p2).forEach(h=>{
     if(h.curHp>0){
       const uSt=h.status.find(s=>s.type==='burstUndying');
       if(uSt&&uSt._owner&&uSt._owner.curHp>=0){
         const ownerSpv=Math.floor((uSt._owner.sp||0)*(1+(uSt._owner.sp||0)*0.01));
-        doHeal(h,ownerSpv,{noDice:true,isHeal:true});
+        const _healAmt=Math.max(1, Math.floor(ownerSpv * (uSt._healMult || 1)));
+        doHeal(h,_healAmt,{noDice:true,isHeal:true});
         h.curHp=Math.max(1,h.curHp); // HP最低為1
-        log(`🌿 [${h.name}] 神樹再生！恢復 ${ownerSpv}HP！`);
+        log(`🌿 [${h.name}] 神樹再生！恢復 ${_healAmt}HP！`);
       }
     }
-  });nextRound 
+  });
   // ── 爆發：負荷超載→計時，結束時爆炸 ──
   G.p1.concat(G.p2).forEach(h=>{
     if(h._burstOverloadActive>0){
@@ -26272,6 +26511,10 @@ function advStartCutscene(stage) {
   _advSessionQuestions = [];
   // ★ v1.0.20260420.2000 — 清空跨戰鬥的「近期題目佇列」,避免冒險之間的殘留狀態影響出題
   window._miniRecentQuestionIds = [];
+  // ★ v1.0.20260423.1500 — 新冒險開始時也清空 _miniQuizUsedIds 和 _japanShuffleBag,
+  //   避免上一場冒險的「已出題目」殘留
+  window._miniQuizUsedIds = new Set();
+  window._japanShuffleBag = null;
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0,currentStreak:0,maxStreak:0};
   // ★ v1.0.20260420.3200 — 重置「BOSS HP 難度倍率已套用」旗標,讓新一輪冒險能重新根據當局難度套一次
   window._advBossHpMultApplied = false;
@@ -28087,9 +28330,31 @@ function advNextBossLine() {
 function advCloseBossIntro() {
   document.getElementById('adv-boss-intro').classList.remove('show');
   // ★ 對白結束 → 解除暫停，正式開始第一回合
+  // ★ v1.0.20260423.2400 — BOSS 開場白說完直接出第一題,不等第一位角色行動
+  //   並從 _miniQuizUsedIds / _advUsedQuestionIds 過濾,確認和小怪戰不重複
   if(_advBossIntroActive){
     _advBossIntroActive = false;
-    _pSetTimeout(startTurn, 400);
+    _pSetTimeout(()=>{
+      try{
+        // 確保題目狀態乾淨
+        if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+        // 暫停戰鬥,彈出第一題,答完才 startTurn
+        _gamePaused = true;
+        // 讓 advShowQuiz 在答題結束後呼叫 advOnQuizResolve/Skip → 解除暫停 → startTurn
+        // 設定一個 resolve callback 指向 startTurn
+        _advQuizResolveCb = function(){
+          _gamePaused = false;
+          G.pendingTarget = null; pendingCb = null;
+          _pSetTimeout(startTurn, 200);
+        };
+        advShowQuiz();
+      }catch(_qe){
+        console.warn('[BOSS 開場題] 失敗,fallback 到 startTurn:', _qe);
+        _gamePaused = false;
+        _advQuizResolveCb = null;
+        startTurn();
+      }
+    }, 400);
   }
 }
 
@@ -28222,6 +28487,9 @@ function advPickQuestion() {
         [_jpAll[i], _jpAll[j]] = [_jpAll[j], _jpAll[i]];
       }
       window._japanShuffleBag = _jpAll;
+      // ★ v1.0.20260423.1500 — bag 重置時也清空 _miniQuizUsedIds,讓小怪戰和 BOSS 共用
+      //   同一輪次的「未出題」狀態
+      try{ if(window._miniQuizUsedIds) window._miniQuizUsedIds.clear(); }catch(_e){}
       try{ log(`📚 [日本關] 題庫已重新洗牌,共 ${_jpAll.length} 題,下一輪前保證不重複。`); }catch(_e){}
     }
     return window._japanShuffleBag.shift() || null;
@@ -28239,6 +28507,10 @@ function advPickQuestion() {
     // ★ 題目全部出過一輪：重置後繼續出題
     _advQuizRound++;
     _advUsedQuestionIds.clear();
+    // ★ v1.0.20260423.1500 — 木柵關/其他關卡 BOSS 題庫耗盡時,同步清空
+    //   _miniQuizUsedIds,讓下一輪小怪戰也從完整題庫重新出題
+    try{ if(window._miniQuizUsedIds) window._miniQuizUsedIds.clear(); }catch(_e){}
+    try{ log(`📚 [題庫] 整輪 ${_advQuizRound} 題庫已全部出過,重新開始新一輪(不重複保證延續)。`); }catch(_e){}
     // 僅在 BOSS 戰中（有 _advQuizResolveCb 且非小怪戰）才顯示重選視窗
     // 回傳特殊旗標讓 advShowQuiz 處理（不在這裡直接呼叫，避免 null 被誤判為跳過）
     if(_advQuizResolveCb && !_advMiniBattleActive){
@@ -28432,6 +28704,12 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 
   const q = _advCurrentQuestion;
   _advUsedQuestionIds.add(q.id);
+  // ★ v1.0.20260423.1500 — BOSS 戰抽題後同步到小怪戰用的 _miniQuizUsedIds
+  //   (日本關 _japanShuffleBag 本來就由 advPickQuestion shift 掉,不需再處理)
+  try{
+    if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
+    window._miniQuizUsedIds.add(q.id);
+  }catch(_syncE){ console.warn('[題庫同步] BOSS 戰抽題後同步失敗:', _syncE); }
   // 支援選項隨機排列後的正確答案判斷
   const isCorrect = (isCorrectOverride !== undefined) ? isCorrectOverride : (letter === q.answer);
 
@@ -28819,11 +29097,18 @@ function advShowReward() {
 
   const choicesDiv = document.getElementById('adv-reward-choices');
   choicesDiv.innerHTML = '';
+  // ★ v1.0.20260423.2400 — 兩段式流程:點獎勵高亮,顯示「立即使用」「保留至下回合」確認按鈕
+  //   1. 先清除舊的選擇狀態
+  window._advSelectedRewardId = null;
+  window._advRewardContext = 'boss'; // 區分 BOSS 戰 / 小怪戰路徑
+  const _confirmRow = document.getElementById('adv-reward-confirm-row');
+  if(_confirmRow) _confirmRow.classList.remove('show');
   pool.forEach(r => {
     const btn = document.createElement('button');
     btn.className = 'adv-reward-btn';
+    btn.dataset.rewardId = r.id;
     btn.innerHTML = `${r.icon} ${r.name}<br><span style="font-size:36px;color:#ffffff;font-weight:500;">${r.desc}</span>`;
-    btn.onclick = () => advApplyReward(r.id);
+    btn.onclick = () => advRewardSelectItem(r.id);
     choicesDiv.appendChild(btn);
   });
 
@@ -28831,8 +29116,99 @@ function advShowReward() {
   document.getElementById('adv-reward-overlay').classList.add('show');
 }
 
+// ★ v1.0.20260423.2400 — 兩段式獎勵流程:選擇獎勵項目(高亮) → 顯示使用/保留按鈕
+function advRewardSelectItem(rewardId){
+  window._advSelectedRewardId = rewardId;
+  try{ playSfx('sfx-confirm2', 0.5); }catch(_){}
+  const _choicesDiv = document.getElementById('adv-reward-choices');
+  if(_choicesDiv){
+    Array.from(_choicesDiv.querySelectorAll('.adv-reward-btn')).forEach(el=>{
+      if(el.dataset.rewardId === rewardId){
+        el.classList.add('selected');
+        el.classList.remove('dimmed');
+      } else {
+        el.classList.remove('selected');
+        el.classList.add('dimmed');
+      }
+    });
+  }
+  const _confirmRow = document.getElementById('adv-reward-confirm-row');
+  if(_confirmRow) _confirmRow.classList.add('show');
+}
+
+// 取消選擇,回到初始狀態
+function advRewardCancelSelection(){
+  try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+  window._advSelectedRewardId = null;
+  const _choicesDiv = document.getElementById('adv-reward-choices');
+  if(_choicesDiv){
+    Array.from(_choicesDiv.querySelectorAll('.adv-reward-btn')).forEach(el=>{
+      el.classList.remove('selected');
+      el.classList.remove('dimmed');
+    });
+  }
+  const _confirmRow = document.getElementById('adv-reward-confirm-row');
+  if(_confirmRow) _confirmRow.classList.remove('show');
+}
+
+// 確認使用選中的獎勵
+function advRewardConfirmUse(){
+  const _id = window._advSelectedRewardId;
+  if(!_id) return;
+  try{ playSfx('sfx-confirm', 0.7); }catch(_){}
+  // 關閉確認區
+  const _confirmRow = document.getElementById('adv-reward-confirm-row');
+  if(_confirmRow) _confirmRow.classList.remove('show');
+  window._advSelectedRewardId = null;
+  // 依情境分派
+  if(window._advRewardContext === 'mini'){
+    // 小怪戰路徑
+    const _rewardOv = document.getElementById('adv-reward-overlay');
+    if(_rewardOv) _rewardOv.classList.remove('show');
+    const _keepBtn = document.getElementById('adv-reward-keep-btn');
+    if(_keepBtn) _keepBtn.style.display = 'none';
+    const _onDone = window._advMiniRewardOnDone;
+    window._advMiniRewardOnDone = null;
+    _advMiniApplyReward(_id, _onDone);
+  } else {
+    // BOSS 戰路徑
+    advApplyReward(_id);
+  }
+}
+
+// 確認保留至下回合
+function advRewardConfirmKeep(){
+  const _id = window._advSelectedRewardId;
+  if(!_id) return;
+  try{ playSfx('sfx-powerup', 0.6); }catch(_){}
+  // 關閉確認區
+  const _confirmRow = document.getElementById('adv-reward-confirm-row');
+  if(_confirmRow) _confirmRow.classList.remove('show');
+  window._advSelectedRewardId = null;
+  // 依情境分派
+  if(window._advRewardContext === 'mini'){
+    // 小怪戰:保留 + 觸發 onDone 繼續戰鬥
+    const _pool = _advRewardOptions || [];
+    _advPendingReward = _pool.find(r=>r.id===_id) || _pool[0] || null;
+    const _rewardOv = document.getElementById('adv-reward-overlay');
+    if(_rewardOv) _rewardOv.classList.remove('show');
+    try{ bannerFX(null, '📦 獎勵保留至下回合！', '#ffcc44', 1400); }catch(_){}
+    const _onDone = window._advMiniRewardOnDone;
+    window._advMiniRewardOnDone = null;
+    if(_onDone) _onDone();
+  } else {
+    // BOSS 戰:保留選中的那個,彈窗關閉,照 advKeepReward 邏輯繼續
+    const _pool = _advRewardOptions || [];
+    _advPendingReward = _pool.find(r=>r.id===_id) || _pool[0] || null;
+    const _rewardOv = document.getElementById('adv-reward-overlay');
+    if(_rewardOv) _rewardOv.classList.remove('show');
+    try{ bannerFX(null, '📦 獎勵保留至下回合！', '#ffcc44', 1400); }catch(_){}
+    advOnQuizSkip();
+  }
+}
+
 function advKeepReward() {
-  // 保留所有當前選項至下次
+  // 保留所有當前選項至下次（舊版相容路徑）
   _advPendingReward = _advRewardOptions[0] || null;
   document.getElementById('adv-reward-overlay').classList.remove('show');
   advOnQuizSkip(); // Boss照常行動（advOnQuizSkip 內已解除暫停）
@@ -30208,24 +30584,23 @@ function advShowBossReact(type) {
   if (!el || !textEl) return;
 
   // 取台詞（依當前主 BOSS 變體）
-  // ★ v1.0.20260423.1500 — 改用 _REACT_MAP 物件直接查表，避免依賴 window[...] 抓不到 const 變數導致永遠 fallback 到貓組預設台詞的 bug
+  // 取台詞（依當前主 BOSS 變體）
+  // ★ v1.0.20260423.0200 — 擴充日本四大 BOSS 分流,避免用貓組預設台詞
   const _mainReactBoss = (typeof G !== 'undefined' && G && G.p2)
     ? G.p2.find(h => h && h.curHp>0 &&
         ['杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'].includes(h.name))
     : null;
+  const _reactSuffix = _mainReactBoss ? ({
+    '杏花妖':   '_APRICOT',
+    '大天狗':   '_TENGU',
+    '酒吞童子': '_SHUTEN',
+    '玉藻前':   '_TAMAMO',
+    '八岐大蛇': '_YAMATA',
+  })[_mainReactBoss.name] : '';
   let lines;
-  const _REACT_MAP = {
-    '杏花妖':   { correct: BOSS_REACT_CORRECT_APRICOT, wrong: BOSS_REACT_WRONG_APRICOT, timeout: BOSS_REACT_TIMEOUT_APRICOT },
-    '大天狗':   { correct: BOSS_REACT_CORRECT_TENGU,   wrong: BOSS_REACT_WRONG_TENGU,   timeout: BOSS_REACT_TIMEOUT_TENGU   },
-    '酒吞童子': { correct: BOSS_REACT_CORRECT_SHUTEN,  wrong: BOSS_REACT_WRONG_SHUTEN,  timeout: BOSS_REACT_TIMEOUT_SHUTEN  },
-    '玉藻前':   { correct: BOSS_REACT_CORRECT_TAMAMO,  wrong: BOSS_REACT_WRONG_TAMAMO,  timeout: BOSS_REACT_TIMEOUT_TAMAMO  },
-    '八岐大蛇': { correct: BOSS_REACT_CORRECT_YAMATA,  wrong: BOSS_REACT_WRONG_YAMATA,  timeout: BOSS_REACT_TIMEOUT_YAMATA  },
-  };
-  const _fallback = { correct: BOSS_REACT_CORRECT, wrong: BOSS_REACT_WRONG, timeout: BOSS_REACT_TIMEOUT };
-  const _bucket = (_mainReactBoss && _REACT_MAP[_mainReactBoss.name]) || _fallback;
-  if (type === 'correct')      lines = _bucket.correct;
-  else if (type === 'timeout') lines = _bucket.timeout;
-  else                         lines = _bucket.wrong;
+  if (type === 'correct')      lines = (typeof window !== 'undefined' && window['BOSS_REACT_CORRECT'+_reactSuffix]) || BOSS_REACT_CORRECT;
+  else if (type === 'timeout') lines = (typeof window !== 'undefined' && window['BOSS_REACT_TIMEOUT'+_reactSuffix]) || BOSS_REACT_TIMEOUT;
+  else                         lines = (typeof window !== 'undefined' && window['BOSS_REACT_WRONG'+_reactSuffix])   || BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
   // ★ 定位：畫面最上方，全寬橫條
@@ -31184,6 +31559,10 @@ const BACKPACK_ITEM_DEF = {
   'miko_shrine_portrait': { name:'巫女肖像：神社祭禮', icon:'⛩',
     desc:'全新繪製的巫女肖像「神社祭禮」，購買後可在英雄圖鑑的巫女詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'巫女', portraitId:'miko_shrine', useLabel:'前往切換' },
+  // ★ v1.0.20260423.1800 — 木靈使肖像
+  'dryad_ancient_tree_portrait': { name:'木靈使肖像：千年神木', icon:'🌿',
+    desc:'全新繪製的木靈使肖像「千年神木」，購買後可在英雄圖鑑的木靈使詳細頁切換使用（原肖像永遠保留）。',
+    type:'portrait', heroName:'木靈使', portraitId:'ancient_tree', useLabel:'前往切換' },
   // ★ v1.0.20260421.3002 — 13 位英雄新肖像
   'mage_ice_portrait':      { name:'冰法師肖像：冰封霜華', icon:'❄️', desc:'全新繪製的冰法師肖像「冰封霜華」，購買後可在英雄圖鑑的冰法師詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'冰法師',   portraitId:'ice_frost',     useLabel:'前往切換' },
   'rogue_portrait':         { name:'刺客肖像：幻影玫瑰',   icon:'🗡', desc:'全新繪製的刺客肖像「幻影玫瑰」，購買後可在英雄圖鑑的刺客詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'刺客',     portraitId:'shadow_rose',   useLabel:'前往切換' },
@@ -31274,6 +31653,10 @@ const SHOP_PRODUCTS = [
   // ── 巫女肖像 ──
   { id:'miko_shrine_portrait', name:'巫女肖像：神社祭禮', icon:'⛩',
     desc:'全新繪製的巫女替代肖像「神社祭禮」。購買後即永久解鎖，可在英雄圖鑑的巫女詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ── 木靈使肖像 ──
+  { id:'dryad_ancient_tree_portrait', name:'木靈使肖像：千年神木', icon:'🌿',
+    desc:'全新繪製的木靈使替代肖像「千年神木」(古森林守護者之姿，寓意長生與神木傳承)。購買後即永久解鎖，可在英雄圖鑑的木靈使詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   // ★ v1.0.20260421.3002 — 13 位英雄新肖像
   { id:'mage_ice_portrait',   name:'冰法師肖像：冰封霜華',   icon:'❄️', desc:'全新繪製的冰法師替代肖像「冰封霜華」。購買後即永久解鎖，可在英雄圖鑑的冰法師詳細頁切換使用（原始肖像仍保留）。',     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
@@ -36429,9 +36812,23 @@ function _advMiniGetQuizPool(sceneIdx) {
   }
   // ★ v1.0.20260421.3000 — 日本關題庫分支（不分年級難度，全 100 題池）
   //   v1.0.20260421.3000b — 改用 _adventureStage 判斷更可靠，避免 subject 被覆寫
+  //   v1.0.20260423.1500 — 小怪戰改讀取共用 _japanShuffleBag:
+  //     BOSS 戰 shift()、小怪戰抽後從 bag 移除;整 100 題全出完前不重複,
+  //     出完後 bag 會自動重新洗牌(shuffle bag 耗盡判定在 advPickQuestion)
   if(subject === '日本關' || (typeof _adventureStage !== 'undefined' && _adventureStage === 'japan')){
-    const _jp = ADV_QUIZ_DB.filter(q => q.subject === '日本關' && !window._miniQuizUsedIds.has(q.id));
-    console.log('[題庫] 日本關分支觸發 (小怪戰)，可用', _jp.length, '題');
+    if(!Array.isArray(window._japanShuffleBag) || !window._japanShuffleBag.length){
+      const _jpAll = ADV_QUIZ_DB.filter(q => q.subject === '日本關').slice();
+      for(let i = _jpAll.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [_jpAll[i], _jpAll[j]] = [_jpAll[j], _jpAll[i]];
+      }
+      window._japanShuffleBag = _jpAll;
+      try{ log(`📚 [日本關] 題庫已重新洗牌,共 ${_jpAll.length} 題,下一輪前保證不重複。`); }catch(_e){}
+    }
+    // 進一步過濾掉本場已抽的(_miniQuizUsedIds,同場小怪戰不重複);
+    // bag 本身已涵蓋「跨戰鬥、跨 BOSS/小怪不重複」
+    const _jp = window._japanShuffleBag.filter(q => !window._miniQuizUsedIds.has(q.id));
+    console.log('[題庫] 日本關分支觸發 (小怪戰)，可用', _jp.length, '題 (bag剩', window._japanShuffleBag.length, ')');
     return _jp;
   }
   let targetSubject, targetDiff;
@@ -36512,6 +36909,19 @@ function _advMiniQuizAsk(onDone) {
   _miniRecent.push(q.id);
   while(_miniRecent.length > _maxWindow) _miniRecent.shift();
   window._miniQuizUsedIds.add(q.id);
+  // ★ v1.0.20260423.1500 — 同步題庫狀態:
+  //   (1) 日本關抽題後從 _japanShuffleBag 移除,避免 BOSS 戰再抽到
+  //   (2) 同步加入 _advUsedQuestionIds(木柵關 BOSS 戰讀取的集合),
+  //       確保後續 BOSS 戰不會出到同一題
+  try{
+    if(Array.isArray(window._japanShuffleBag) && window._japanShuffleBag.length){
+      const _bi = window._japanShuffleBag.findIndex(x => x.id === q.id);
+      if(_bi >= 0) window._japanShuffleBag.splice(_bi, 1);
+    }
+    if(typeof _advUsedQuestionIds !== 'undefined' && _advUsedQuestionIds && typeof _advUsedQuestionIds.add === 'function'){
+      _advUsedQuestionIds.add(q.id);
+    }
+  }catch(_syncE){ console.warn('[題庫同步] 小怪戰抽題後同步失敗:', _syncE); }
   window._miniQuizOnDone = onDone;
   window._miniQuizCurrentQ = q;
   window._miniQuizPhase = 'asking';
@@ -36769,7 +37179,11 @@ function advStartMiniBattle(nextSceneIdx) {
   // ★ 小怪戰答題狀態初始化
   window._miniQuizDoneThisRound = false;  // 每回合重置（startTurn時觸發）
   window._miniQuizTotalCoins = 0;         // 本場小怪戰答題累積知識幣
-  window._miniQuizUsedIds = new Set();    // 本場用過的題目 ID
+  // ★ v1.0.20260423.1500 — _miniQuizUsedIds 不再每場戰鬥重置;改為跨戰鬥累積,
+  //   和 BOSS 戰的 _advUsedQuestionIds 以及 _japanShuffleBag 合力確保
+  //   100 題(或其他關卡題庫)全部出完前不重複。只在 startAdventureGame
+  //   或題庫耗盡時才重置。
+  if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
   // ★ 小怪戰：若玩家之前沒開自動戰鬥，先關閉；小怪戰支援AI自動戰鬥
   if(typeof _autoBattle !== 'undefined' && _autoBattle){
     // 保持開啟狀態（玩家可能希望自動）
@@ -37002,9 +37416,19 @@ function advStartMiniBattle(nextSceneIdx) {
 
     setTimeout(()=>{
       try{
-        // ★ 第一次小怪戰鬥 → 先讓戰鬥正常跑（含敵方先行動的情況），
-        //   等輪到玩家回合時才彈出教學提示
-        startTurn();
+        // ★ v1.0.20260423.2400 — 小怪戰開場直接出第一題,避免玩家速度快秒殺全體小怪跳過問題
+        //   原流程:startTurn() → 等輪到敵方行動前才出題 → 玩家太快時小怪全死沒機會答題
+        //   新流程:先暫停戰鬥、彈出第一題,答完才讓戰鬥正式跑第一回合
+        window._miniQuizDoneThisRound = true; // 預先標記(避免 startTurn 再觸發一次)
+        _gamePaused = true;
+        setTimeout(() => {
+          _advMiniQuizAsk(() => {
+            _gamePaused = false;
+            G.pendingTarget = null; pendingCb = null;
+            startTurn();
+          });
+        }, 300);
+
         if(!_tutorialMiniDone){
           // 啟動實戰引導輪詢：等到玩家回合自動觸發教學
           _tutInterInjectCSS();
@@ -37430,30 +37854,25 @@ function _advMiniShowReward(onDone) {
 
   // 更新標題
   if(titleEl) titleEl.textContent = '🎉 答對了！選擇獎勵';
-  if(subEl)   subEl.textContent   = '選一項即時發動，或保留至下回合！';
-  // ★ 小怪戰也顯示「保留」按鈕，讓玩家可保留至下回合
-  if(keepBtn){
-    keepBtn.style.display = '';
-    keepBtn.onclick = () => {
-      _advPendingReward = pool[0] || null;
-      rewardOv.classList.remove('show');
-      bannerFX(null, '📦 獎勵保留至下回合！', '#ffcc44', 1400);
-      if(onDone) onDone();
-    };
-  }
+  if(subEl)   subEl.textContent   = '點選一項獎勵,再選擇立即使用或保留至下回合';
+  // ★ v1.0.20260423.2400 — 舊「保留」按鈕不再顯示(改走兩段式確認)
+  if(keepBtn) keepBtn.style.display = 'none';
+
+  // ★ v1.0.20260423.2400 — 兩段式流程:點獎勵高亮,顯示使用/保留按鈕
+  window._advSelectedRewardId = null;
+  window._advRewardContext = 'mini';
+  window._advMiniRewardOnDone = onDone;
+  const _confirmRow = document.getElementById('adv-reward-confirm-row');
+  if(_confirmRow) _confirmRow.classList.remove('show');
 
   choicesDiv.innerHTML = '';
   pool.forEach(r => {
     const btn = document.createElement('button');
     btn.className = 'adv-reward-btn';
+    btn.dataset.rewardId = r.id;
     btn.innerHTML = r.icon + ' ' + r.name +
       '<br><span style="font-size:36px;color:#ffffff;font-weight:500;">' + r.desc + '</span>';
-    btn.onclick = () => {
-      rewardOv.classList.remove('show');
-      if(keepBtn) keepBtn.style.display = 'none';
-      // 套用獎勵（複用 advApplyReward 邏輯，但小怪戰結束後繼續回合）
-      _advMiniApplyReward(r.id, onDone);
-    };
+    btn.onclick = () => advRewardSelectItem(r.id);
     choicesDiv.appendChild(btn);
   });
 
@@ -39662,31 +40081,147 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.2400', brief:[
+    '🎬 BOSS 擊倒慢動作現在只在「真正的 BOSS 戰」觸發(小怪戰不再觸發,避免玩家秒殺後視覺疲勞)',
+    '📝 所有戰鬥(小怪戰 / BOSS 戰)一進場直接出第一題,避免玩家速度快秒殺跳過答題機會',
+    '✨ 答題獎勵流程改為兩段式:點選獎勵 → 出現「立即使用」「保留至下回合」按鈕再確認',
+  ], items:[
+    '【BOSS 慢動作 修正】',
+    '  _isBossForSlowmo() 新增前置檢查:必須是冒險模式 + 非小怪戰階段 + 目標為 p2 陣容',
+    '  小怪戰中即使擊殺 BOSS_NAMES 裡的名字(如寶箱怪)也不會觸發慢動作',
+    '  只有真正的「BOSS 戰」階段才觸發',
+    '【開場出題 修正】',
+    '  小怪戰:進場後立刻彈出第一題,答完才呼叫 startTurn() 開始戰鬥',
+    '     (原本要等第一隻敵方行動前才出題,玩家速度快時全體小怪已被秒殺,直接跳過答題)',
+    '  BOSS 戰:advCloseBossIntro (BOSS 開場白結束) 直接呼叫 advShowQuiz(),',
+    '     答完才 startTurn()。題目從 _japanShuffleBag / _advUsedQuestionIds 過濾,',
+    '     確實和小怪戰不重複',
+    '【獎勵流程 修正】',
+    '  第一步:點擊獎勵項目 → 高亮選中 + 其他項目變暗',
+    '  第二步:底部出現「↶ 取消」「✨ 立即使用」「📦 保留至下回合」三個按鈕',
+    '  「取消」回到初始狀態,可重選',
+    '  「立即使用」套用選中的獎勵',
+    '  「保留至下回合」保留選中的那張,下次答對時會變成 3 選 1',
+    '  BOSS 戰 / 小怪戰都用同一套 UI,共用 advRewardSelectItem / Confirm Use / Confirm Keep / Cancel',
+    '【技術實作】',
+    '  新增 advRewardSelectItem(id) — 高亮選中',
+    '  新增 advRewardCancelSelection() — 取消選擇',
+    '  新增 advRewardConfirmUse() / advRewardConfirmKeep() — 確認分派',
+    '  用 window._advRewardContext (\'boss\'/\'mini\') 區分兩條分派路徑',
+    '  小怪戰的 onDone callback 存在 window._advMiniRewardOnDone',
+    '  新增 .adv-reward-btn.selected / .dimmed CSS + #adv-reward-confirm-row UI',
+    '  舊的一段式「#adv-reward-keep-btn」按鈕改為永遠 display:none,保留函式供相容',
+  ] },
+  { ver:'v1.0.20260423.2300', brief:[
+    '✨ 爆發技能附加的有利狀態一律受保護：不會被消除、搶奪、交換；只有神偷和軍師的「爆發技能」可無視此規則',
+    '🎯 擊倒 BOSS 時進入 2 秒慢動作勝利回饋：全畫面變黃光閃爍、放慢速度、顯示「擊倒 XXX！」橫幅',
+  ], items:[
+    '【爆發保護規則】',
+    '  任何透過爆發技能附加的 buff 都會自動標記 _fromBurst:true',
+    '  受影響的保護類型:',
+    '  ・clearGoodBuffs()—火法師天賦/消除噴霧劑/極效消除噴霧劑/學者歷史的教訓等「消除」效果',
+    '  ・神偷被動普攻「掠奪」—50% 奪取改為只能奪非爆發 buff',
+    '  ・神偷 S1「強奪」—只能奪非爆發 buff',
+    '【可無視保護的例外】',
+    '  神偷爆發「俠盜飛梭」—俠盜本色,唯一能奪取爆發 buff 的爆發技能',
+    '  軍師爆發「逆轉神計」—神計妙算,唯一能交換雙方爆發 buff 的爆發技能',
+    '【技術實作】',
+    '  全域旗標 window._burstCastActive 在 _runBurst 開始時設 true,_burstFinish 清除',
+    '  addBuff() 期間檢查旗標,push 的 buff 自動帶 _fromBurst:true',
+    '  爆發內直接 push 的 8 處特殊 buff 也手動標記(_rogueSwift/_danceBurstShield/conservation/_animalBurstShield×2/bigshield/_sprintBurst/shutenBoost)',
+    '【BOSS 擊倒慢動作】',
+    '  偵測時機:doDmg 扣血後 target.curHp===0 且 old>0(從活到死的瞬間)',
+    '  判定 BOSS:BOSS_NAMES + 日本四大 BOSS + 冒險模式 _isFinalBoss 標記',
+    '  效果:.gamebox 套用 .boss-kill-slowmo CSS class 2 秒',
+    '  ・動畫時長 ×3、transition ×600ms、濾鏡先亮後暗',
+    '  ・放射狀暗角 overlay 聚焦畫面中央',
+    '  ・全畫面黃色閃光 600ms',
+    '  ・中央「擊倒 XXX！」金色大字橫幅(彈跳進場、停駐、淡出)',
+    '  ・加強 ko + explode 音效',
+    '  同場連鎖擊倒多個 BOSS 時只觸發第一次(防止視覺疲勞)',
+  ] },
+  { ver:'v1.0.20260423.2100', brief:[
+    '🌿 修正木靈使爆發「神樹恩澤」的升級效果：每升一級「恢復量 +10%、持續 +1 回合」',
+    '順帶清掉 nextRound() 裡一段孤懸的無用語句（不影響玩法，純程式碼整理）',
+  ], items:[
+    '【神樹恩澤 基礎規則】',
+    '  Lv0：使友方全體獲得「不倒再生」狀態 2 回合',
+    '  每回合恢復量 = 木靈使特技值（未升級時無加成）',
+    '  期間友方 HP 最低為 1（不倒）',
+    '【神樹恩澤 升級效果】',
+    '  Lv1：恢復量 +10%、持續 +1 回合（共 3 回合）',
+    '  Lv2：恢復量 +20%、持續 +2 回合（共 4 回合）',
+    '  Lv3：恢復量 +30%、持續 +3 回合（共 5 回合）',
+    '  Lv4：恢復量 +40%、持續 +4 回合（共 6 回合）',
+    '【技術細節】',
+    '  施放時在狀態物件上寫入 _healMult = 1.0 + _burstLv × 0.10',
+    '  nextRound 的再生 tick 讀取 _healMult 計算該回合實際恢復值',
+    '  戰鬥 log 會顯示實際恢復數值（含升級加成後）',
+    '【順手清理】',
+    '  nextRound() 函式內 18898 行有一段 `});nextRound ` 的孤懸識別子殘留',
+    '  雖然 JS 允許此語法（回傳函式引用作為 expression statement），但顯然是舊版重構殘留',
+    '  已清除，不影響任何既有邏輯',
+  ] },
+  { ver:'v1.0.20260423.1900', brief:[
+    '🌿 商店新增木靈使肖像「千年神木」3000 知識幣（限購 1 次）',
+  ], items:[
+    '【商店新增】木靈使肖像「千年神木」',
+    '  命名取義：千年 = 長生、神木 = 古森林守護者，呼應木靈使「古森林精靈守護者」的身世',
+    '  售價 3000 知識幣，限購 1 次，購買後永久解鎖',
+    '  可在英雄圖鑑的木靈使詳細頁自由切換，原始肖像永遠保留',
+    '【技術細節】',
+    '  HERO_PORTRAIT_LIBRARY 新增 木靈使 條目，portrait id = ancient_tree',
+    '  圖片路徑：raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/木靈使2.png',
+  ] },
+  { ver:'v1.0.20260423.1800', brief:[
+    '修正雪女「冰晶凝聚」技能產生的護盾沒有實際吸收傷害的 bug（樹葉守護、死氣結界等數值型護盾技能一併修復）',
+    '題庫不重複機制全面升級：日本關 100 題、木柵關題庫在全部出完前不會重複出現，小怪戰/BOSS戰/不同關卡共用同一份「已出題」記錄',
+  ], items:[
+    '【護盾 BUG 根因】',
+    '  doDmg() 只檢查 buff 型護盾 hasBuff(target,\'shield\'),但冰晶凝聚/樹葉守護寫入的是 target.shield(數值型)',
+    '  這個數值屬性從頭到尾沒被傷害計算讀到過,形同虛設',
+    '  表現:雪女使用冰晶凝聚後,友方看起來沒加護盾,下一次被打照樣全額受傷',
+    '【護盾修正做法】',
+    '  doDmg() 在傷害扣血前新增 target.shield 吸收邏輯',
+    '  shield 值會優先承受傷害,扣到 0 才讓剩餘傷害打到 HP',
+    '  吸收時顯示「🛡 護盾吸收了 N 傷害(剩餘 M)」的戰鬥 log',
+    '  若 shield 完全擋下則不會觸發最低傷害 1 保底',
+    '  受益技能:雪女 冰晶凝聚、綠竹筍小妖 樹葉守護、死氣結界,以及所有使用 target.shield 的被動/裝備效果',
+    '',
+    '【題庫 BUG 根因】',
+    '  小怪戰和 BOSS 戰使用完全獨立的兩套「已出題」追蹤機制:',
+    '    BOSS 戰: _japanShuffleBag (日本關) / _advUsedQuestionIds (木柵關)',
+    '    小怪戰: _miniQuizUsedIds (每場戰鬥都 new Set() 重置)',
+    '  兩套系統不互通,且小怪戰每場都清空 → 玩家在小怪戰常重複看到同樣的題目',
+    '  BOSS 戰抽過的題,小怪戰也可能再抽到',
+    '【題庫修正做法】',
+    '  (1) 移除小怪戰開場時的 _miniQuizUsedIds 重置,改為跨戰鬥累積',
+    '  (2) 日本關小怪戰改讀取共用的 _japanShuffleBag,和 BOSS 戰共享同一個 100 題池',
+    '  (3) 小怪戰抽題後同步:從 _japanShuffleBag 移除 + 加入 _advUsedQuestionIds',
+    '  (4) BOSS 戰抽題後同步:加入 _miniQuizUsedIds',
+    '  (5) 題庫耗盡時一併清空所有追蹤集合(_miniQuizUsedIds / _advUsedQuestionIds / _japanShuffleBag)',
+    '  (6) 新冒險開始時徹底重置,避免上一場殘留',
+    '【題庫新行為】',
+    '  日本關 100 題在全部出完前絕不重複(不論 BOSS 戰或小怪戰)',
+    '  木柵關題庫同樣不重複(按年級/科目/難度過濾後的剩餘題)',
+    '  題庫耗盡後自動重新洗牌,Log 會顯示「題庫已重新洗牌」或「整輪題庫已全部出過」',
+  ] },
   { ver:'v1.0.20260423.1500', brief:[
     '修正英雄等級已達 Lv10+ 但天賦仍停在 Lv1 沒自動升級的 bug（例：Lv11 吸血鬼的天賦應為 Lv2）',
     '所有受影響的英雄會在下次登入時自動補正，不限特定角色',
-    '修正日本四大 BOSS（大天狗、酒吞童子、玉藻前、八岐大蛇）答題反應一直用貓組預設台詞的 bug',
   ], items:[
-    '【天賦等級 BUG 根因】',
+    '【BUG 根因】',
     '  天賦等級只在「跨過里程碑(Lv10/20/30/40)的那一刻」才會往上升',
     '  v1.0.20260418.1548 天賦系統改版前已 Lv10+ 的英雄，改版當下沒做回填',
     '  結果 _heroTraitLevel 長期停在 0（顯示 Lv1），即使後續吃經驗書升級也不會再觸發',
-    '【天賦等級修正做法】',
+    '【修正做法】',
     '  新增 _expectedTraitLv(heroLv) — 依英雄等級反推應有的天賦等級（Lv10→1/Lv20→2/Lv30→3/Lv40→4）',
     '  新增 _syncHeroTraitLevels() — 掃描所有英雄，把 _heroTraitLevel 補到至少等於反推值（只補不降）',
     '  雲端資料載入完成後自動呼叫 sync，Console 會顯示補正了幾位英雄',
     '  _getTraitLv() 加上防禦性計算：即使 sync 沒跑到，戰鬥中的天賦機率也會即時反推',
-    '【天賦等級影響範圍】',
+    '【影響範圍】',
     '  戰鬥用天賦機率、英雄詳細頁顯示、天賦升級效果彈窗 — 三處都會同步正確顯示',
     '  不會降低任何已升高的天賦等級（sync 只會往上補，不會往下砍）',
-    '【BOSS 對白 BUG 根因】',
-    '  advShowBossReact() 原本用 window[\'BOSS_REACT_CORRECT\'+_reactSuffix] 動態抓變數',
-    '  但那些台詞陣列是用 const 宣告，不會掛在 window 上 → 抓不到 → 永遠 fallback 到貓組預設',
-    '  導致日本四大 BOSS（大天狗/酒吞童子/玉藻前/八岐大蛇）的專屬台詞完全沒被用到',
-    '【BOSS 對白修正做法】',
-    '  改用 _REACT_MAP 物件直接查表，鍵值直接指向 const 陣列（不走 window）',
-    '  杏花妖、大天狗、酒吞童子、玉藻前、八岐大蛇 各自有 correct/wrong/timeout 三組台詞',
-    '  找不到對應 BOSS 時 fallback 到 _fallback（貓組），保持原有行為',
   ] },
   { ver:'v1.0.20260423.0300', brief:[
     '💰 日本關卡小怪掉落物價值 +50%（路邊+菁英全部同步調漲）',
@@ -42550,7 +43085,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.1500';
+  const CURRENT_VERSION = 'v1.0.20260423.2400';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -42567,7 +43102,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.1500';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.2400';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
