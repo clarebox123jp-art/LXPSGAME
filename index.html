@@ -5026,6 +5026,8 @@ body {
         <div id="adv-hmeet-name" style="font-size:40px;font-weight:900;color:#ffcc44;text-shadow:0 0 14px rgba(255,200,50,0.8);font-family:'Noto Serif TC','M PLUS Rounded 1c',sans-serif;text-align:center;line-height:1.1;"></div>
         <div id="adv-hmeet-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;font-size:20px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
         <div id="adv-hmeet-skills" style="width:100%;display:flex;flex-direction:column;gap:6px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;"></div>
+        <!-- ★ v1.0.20260423.3900 — 補上爆發技能區塊(橙紅色系,跟戰鬥中的爆發按鈕同調性) -->
+        <div id="adv-hmeet-burst" style="width:100%;padding:10px 14px;background:rgba(255,120,30,0.12);border:1px solid rgba(255,150,60,0.45);border-radius:10px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;line-height:1.5;"></div>
         <div id="adv-hmeet-trait" style="width:100%;padding:10px 14px;background:rgba(155,109,255,0.15);border:1px solid rgba(155,109,255,0.4);border-radius:10px;font-size:20px;color:#cc88ff;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;line-height:1.5;"></div>
         <div id="adv-hmeet-greeting" style="font-size:22px;font-weight:700;color:#fff;text-align:center;line-height:1.5;padding:12px 16px;background:rgba(255,200,50,0.12);border-radius:12px;border:1px solid rgba(255,200,50,0.3);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-style:italic;"></div>
         <button onclick="playSfx('sfx-confirm2',0.6);advHeroMeetDone()" style="padding:14px 40px;font-size:26px;font-weight:800;background:linear-gradient(135deg,#ffcc44,#ff8800);color:#000;border:none;border-radius:12px;cursor:pointer;letter-spacing:3px;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;margin-top:4px;align-self:center;">繼續冒險！→</button>
@@ -12445,24 +12447,40 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return; // ★ 必須 return，防止再次呼叫 startTurn
   }
   if(name==='弦樂團員'){
-    log(`[${h.name}] 流浪者之歌！特技50%全體4~5次！無視有利狀態，必中！`);
+    // ★ v1.0.20260423.4200 — 對齊升級表規格:
+    //   舊 code:傷害 0.5 × _burstMult(Lv0=50%,Lv4=70%),次數 4~5
+    //   新(升級表 Lv0~4 = 0.4/0.44/0.48/0.52/0.56,次數 3~5)
+    //   倍率 = 0.4 × _burstMult (1.0/1.1/1.2/1.3/1.4 → 0.4/0.44/0.48/0.52/0.56)
+    const _hits2 = 3 + Math.floor(Math.random()*3); // 3~5 次
+    log(`[${h.name}] 流浪者之歌!特技×${Math.round(40*_burstMult)}% 全體 ${_hits2} 次!無視有利狀態,必中!`);
     playSfx('sfx-burst',0.85); playSfx('sfx-fantasy',0.7);
     const _foes6=G[opp].filter(x=>x.curHp>0);
-    const _hits2=4+Math.floor(Math.random()*2); // 4~5次
     let _hi2=0;
+    // ★ v1.0.20260423.4200 — 把治療/復活獨立出來,避免敵方提早全滅就跳過治療
+    //   舊版 bug:攻擊迴圈一旦敵方全死 → _burstFinish,完全跳過治療/復活
+    //   技能描述是「同時恢復我方全體 HP」,應保證發生
+    function _doWanderHeal(){
+      G[side].forEach(t=>{
+        if(t.curHp===0){ doRevive(t,0.25); t.acted=true; }
+        doHeal(t,Math.floor(spv*0.6*_burstMult),{actor:h,isHeal:true});
+        bannerFX(t,'流浪者之歌！','#cc88ff',900);
+      });
+      updateUI();
+      if(checkWin()) return; // 小怪戰若已結算會在這裡 return,_burstFinish 不再跑
+      _pSetTimeout(()=>_burstFinish(h,_interrupted),400);
+    }
     function _doWander(){
       if(_hi2>=_hits2){
-        // 完成攻擊後治療+復活（全體含倒下）
-        G[side].forEach(t=>{
-          if(t.curHp===0){ doRevive(t,0.25); t.acted=true; }
-          doHeal(t,Math.floor(spv*0.6*_burstMult),{actor:h,isHeal:true});
-          bannerFX(t,'流浪者之歌！','#cc88ff',900);
-        });
-        updateUI(); if(checkWin())return; _pSetTimeout(()=>_burstFinish(h,_interrupted),400); return;
+        _doWanderHeal();
+        return;
       }
       const _alive2=G[opp].filter(x=>x.curHp>0);
-      if(!_alive2.length){ _burstFinish(h,_interrupted); return; }
-      _alive2.forEach(t=>doDmg(t,Math.floor(spv*0.5*_burstMult),{actor:h,isSkill:true,isAoe:true,ignoreBuffs:true,piercing:true,ignoreEvasion:true,noHidden:true}));
+      if(!_alive2.length){
+        // ★ 敵方提早全滅 → 仍跑治療/復活,不直接 _burstFinish
+        _doWanderHeal();
+        return;
+      }
+      _alive2.forEach(t=>doDmg(t,Math.floor(spv*0.4*_burstMult),{actor:h,isSkill:true,isAoe:true,ignoreBuffs:true,piercing:true,ignoreEvasion:true,noHidden:true}));
       _hi2++;
       _pSetTimeout(_doWander,250);
     }
@@ -15962,13 +15980,14 @@ function execSkill(a, sk, cost, stype){
       // 隨機附加一個有利狀態
       const _goodBuffList=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','deathimmune'];
       const _randBuff=_goodBuffList[Math.floor(Math.random()*_goodBuffList.length)];
-      addBuff(a,_randBuff,2);
+      // ★ v1.0.20260423.4100 — 附加 1 回合有利狀態(對齊技能描述),攻擊後保留不移除
+      //   舊版:addBuff 2 回合 + 攻擊後立即 filter 刪除 → 玩家完全看不到狀態,bug
+      //   修正:改為 addBuff 1 回合、移除攻擊後的 filter
+      addBuff(a,_randBuff,1);
       bannerFX(a,'變臉！'+buffName(_randBuff),'#ffcc44',800);
       // 傷害 = 特技 + 攻擊 + 速度
       const _totalDmg=Math.max(1,(a.sp||0)+(a.atk||0)+(a.spd||0));
       doDmg(t,_totalDmg,{actor:a,isSkill:true});
-      // ★ 攻擊完狀態復原
-      a.buffs=a.buffs.filter(b=>b.type!==_randBuff);
       renderCard(a);
       endAction(a,cost);
     });
@@ -18439,20 +18458,11 @@ function startTurn(){
         }
       }
     });
-    // ★ 寶箱怪天賦：回合開始時恢復自己最大 HP 10%
-    ['p1','p2'].forEach(side=>{
-      G[side].forEach(h=>{
-        if(h.curHp>0 && h.name==='寶箱怪' && !hasStatus(h,'confused')){
-          const healAmt = Math.max(1, Math.floor(h.hp * 0.10));
-          if(h.curHp < h.hp){
-            h.curHp = Math.min(h.hp, h.curHp + healAmt);
-            showPopup(h,'+'+healAmt,'heal');
-            log(`📦 [寶箱怪] 天賦：儲存！恢復 ${healAmt}HP！`);
-            renderCard(h);
-          }
-        }
-      });
-    });
+    // ★ v1.0.20260423.4100 — 寶箱怪回血搬家:
+    //   原本在此處每次 startTurn 都遍歷全體角色幫寶箱怪回血,
+    //   造成每個玩家隊友行動前寶箱怪都回血一次(遠超描述的「回合開始時」)
+    //   → 改為在 next.name==='寶箱怪' 的分支裡,只有輪到寶箱怪自己行動時才回血
+    //     (搬到下方 next 行動前處理區塊,跟二宮尊德像同樣寫法)
     // 綠竹筍小妖天賦：受到傷害減少40%（在 dealDmg 中處理，此處更新卡片顯示）
     markAdventureBossCards();
   }
@@ -18852,6 +18862,19 @@ function startTurn(){
     try{ showPopup(next,'速度+2','spd'); }catch(e){}
     log(`🌪️ [大天狗] 天賦：疾風之翼！速度+2！（現速度 ${next.spd}）`);
     bannerFX(next,'疾風之翼！','#88ccff',800);
+  }
+
+  // ★ v1.0.20260423.4100 — 寶箱怪天賦「儲存」:輪到自己行動前回 10% HP
+  //   (舊版在 startTurn 頂部每回合都遍歷全體幫寶箱怪回血,造成每個玩家隊友行動前都回一次)
+  //   改為跟二宮尊德像同樣:只在 next = 寶箱怪 的那次 startTurn 才回
+  if(next.name==='寶箱怪' && next.curHp>0 && !hasStatus(next,'confused')){
+    if(next.curHp < next.hp){
+      const healAmt = Math.max(1, Math.floor(next.hp * 0.10));
+      next.curHp = Math.min(next.hp, next.curHp + healAmt);
+      showPopup(next,'+'+healAmt,'heal');
+      log(`📦 [寶箱怪] 天賦:儲存!恢復 ${healAmt} HP!`);
+      try{ renderCard(next); }catch(e){}
+    }
   }
 
   // ★ v1.0.20260421.3000f — 二宮尊德像天賦：免疫不利狀態 + 行動前回15%HP
@@ -19868,7 +19891,8 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='變臉戲法'){
     if(t){
       const _gb2=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','deathimmune'];
-      addBuff(a,_gb2[Math.floor(Math.random()*_gb2.length)],2);
+      // ★ v1.0.20260423.4100 — 對齊玩家版本:1 回合(技能描述寫 1 回合)
+      addBuff(a,_gb2[Math.floor(Math.random()*_gb2.length)],1);
       const _td2=Math.max(1,(a.sp||0)+(a.atk||0)+(a.spd||0));
       doDmg(t,_td2,{actor:a,isSkill:true});
     }
@@ -29210,7 +29234,11 @@ function advShowReward() {
     return true;
   });
   let pool = [...basePool].sort(()=>Math.random()-0.5).slice(0,2);
-  if (_advPendingReward) pool = [_advPendingReward, ...pool].slice(0,3);
+  // ★ v1.0.20260423.4000 — 合併保留的獎勵;避免隨機 pool 重複出現同樣 id
+  if (_advPendingReward){
+    pool = pool.filter(r => r.id !== _advPendingReward.id);
+    pool = [_advPendingReward, ...pool].slice(0,3);
+  }
   _advRewardOptions = pool;
 
   // ★ v1.0.20260420.3100 — 連續答對連擊訊息:走到這個函式代表剛答對,顯示目前連擊 + 累積 EXP 加成
@@ -29274,7 +29302,10 @@ function advShowReward() {
     choicesDiv.appendChild(btn);
   });
 
-  _advPendingReward = null;
+  // ★ v1.0.20260423.4000 — 移除舊的 `_advPendingReward = null`(在視窗顯示的當下就清掉)
+  //   bug 症狀:玩家選「保留至下回合」後,下次答題雖然看到 3 選項,但再下一次就變回 2 選項
+  //   (因為 advShowReward 一開就把保留值清零)
+  //   改正:在 advApplyReward / advRewardConfirmKeep 中精確清理/覆寫 _advPendingReward
   document.getElementById('adv-reward-overlay').classList.add('show');
 }
 
@@ -29380,6 +29411,11 @@ function advApplyReward(id) {
   document.getElementById('adv-reward-overlay').classList.remove('show');
   const r = ADV_REWARDS.find(x=>x.id===id);
   if (!r) { advOnQuizSkip(); return; }
+  // ★ v1.0.20260423.4000 — 若玩家使用的獎勵就是之前保留的那個,清掉 _advPendingReward
+  //   (若使用的是新選出的,_advPendingReward 仍保留給下次)
+  if(_advPendingReward && _advPendingReward.id === id){
+    _advPendingReward = null;
+  }
   try {
     if (id === 'fullheal_min') {
       const h = G.p1.filter(x=>x.curHp>0).sort((a,b)=>a.curHp-b.curHp)[0];
@@ -30489,7 +30525,11 @@ async function advStartWinSequence() {
   const hData = (typeof HERO_DB !== 'undefined') ? HERO_DB[heroName] : null;
   const hImg  = (typeof HERO_IMGS !== 'undefined') ? (HERO_IMGS[heroName] || '') : '';
   const hAv   = (typeof AVATARS !== 'undefined') ? (AVATARS[heroName] || '⚔') : '⚔';
-  const hTrait= (typeof HERO_TRAITS !== 'undefined') ? (HERO_TRAITS[heroName] || null) : null;
+  // ★ v1.0.20260423.3900 — 修正:變數名原本是 HERO_TRAITS (複數S),但實際資料在 HERO_TRAIT (單數)
+  //   → 導致天賦區塊找不到資料,整個天賦 div 被 display:none 隱藏
+  const hTrait= (typeof HERO_TRAIT !== 'undefined') ? (HERO_TRAIT[heroName] || null) : null;
+  // ★ v1.0.20260423.3900 — 新增:爆發技能資料
+  const hBurst= (typeof BURST_DB !== 'undefined') ? (BURST_DB[heroName] || null) : null;
 
   // 名字
   const nameEl = document.getElementById('adv-hmeet-name');
@@ -30525,11 +30565,30 @@ async function advStartWinSequence() {
     skillsEl.innerHTML = mkSkill(hData.s1, '技能1') + mkSkill(hData.s2, '技能2');
   }
 
+  // ★ v1.0.20260423.3900 — 爆發技能
+  const burstEl = document.getElementById('adv-hmeet-burst');
+  if(burstEl) {
+    if(hBurst) {
+      burstEl.innerHTML =
+        `<div style="font-size:22px;color:#ff9955;font-weight:700;">⚡ 極限爆發：${hBurst.n}</div>` +
+        `<div style="font-size:20px;color:#ffcc99;margin-top:4px;">${hBurst.fd || hBurst.d || ''}</div>`;
+      burstEl.style.display = '';
+    } else {
+      burstEl.style.display = 'none';
+    }
+  }
+
   // 天賦
   const traitEl = document.getElementById('adv-hmeet-trait');
   if(traitEl) {
     if(hTrait) {
-      traitEl.innerHTML = `<span style="color:#cc88ff;font-weight:700;">🌟 天賦：${hTrait.desc||hTrait.fd||''}</span>`;
+      // ★ v1.0.20260423.3900 — 顯示完整天賦:icon + 名稱(粗體) + 完整說明
+      const _ticon = hTrait.icon || '🌟';
+      const _tname = hTrait.name || '天賦';
+      const _tdesc = hTrait.fd || hTrait.desc || '';
+      traitEl.innerHTML =
+        `<div style="font-size:22px;color:#cc88ff;font-weight:700;">${_ticon} 天賦：${_tname}</div>` +
+        `<div style="font-size:20px;color:#e0c8ff;margin-top:4px;">${_tdesc}</div>`;
       traitEl.style.display = '';
     } else {
       traitEl.style.display = 'none';
@@ -38066,11 +38125,19 @@ function advFinishMiniBattle(win) {
 // ── 小怪戰答題獎勵（答對後出現，玩家選擇後繼續遊戲）──
 function _advMiniShowReward(onDone) {
   // 建立獎勵選項（2選1，從 ADV_REWARDS 中隨機取，過濾 boss_skip）
-  const pool = ADV_REWARDS.filter(r => {
+  let pool = ADV_REWARDS.filter(r => {
     if(r.id === 'boss_skip') return false;      // boss_skip 不適用小怪戰
     if(r.id === 'instant_burst' && _advBurstRewardUsed) return false;
     return true;
   }).sort(()=>Math.random()-0.5).slice(0,2);
+
+  // ★ v1.0.20260423.4000 — 合併上回合保留的獎勵(若有),同 BOSS 戰流程
+  //   bug 修復:原本小怪戰完全忽略 _advPendingReward,導致「保留至下回合」在小怪戰失效
+  if(_advPendingReward){
+    // 避免重複(如果上次保留的已在隨機 pool 中,移掉再塞到最前面)
+    pool = pool.filter(r => r.id !== _advPendingReward.id);
+    pool = [_advPendingReward, ...pool].slice(0,3);
+  }
 
   if(!pool.length){ if(onDone) onDone(); return; }
 
@@ -38113,6 +38180,10 @@ function _advMiniShowReward(onDone) {
 function _advMiniApplyReward(id, onDone) {
   const r = ADV_REWARDS.find(x=>x.id===id);
   if(!r){ if(onDone) onDone(); return; }
+  // ★ v1.0.20260423.4000 — 若玩家使用的獎勵就是之前保留的那個,清掉 _advPendingReward
+  if(_advPendingReward && _advPendingReward.id === id){
+    _advPendingReward = null;
+  }
   // ★ v1.0.20260422.0104 — instant_burst 需要觸發實際爆發，onDone 由爆發流程接管
   //   此旗標用來讓外層 setTimeout 不重複推進回合
   let _skipOnDoneAfter = false;
@@ -40314,6 +40385,100 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.4200', brief:[
+    '🎻 修正弦樂團員爆發「流浪者之歌」2 個問題:敵方提早全滅會跳過治療/復活 + 傷害倍率與升級表不一致',
+  ], items:[
+    '【Bug 1:敵方提早全滅跳過治療/復活】',
+    '  舊版攻擊迴圈內,若偵測 `!_alive2.length` 就直接 _burstFinish,',
+    '  完全跳過後面的治療與復活邏輯',
+    '  → 小怪戰單次群傷打光全場時,玩家看不到治療 banner,倒下的隊友也沒復活',
+    '  → BOSS 戰不容易發生(BOSS HP 高),但若玩家裝備/加成夠強也可能發生',
+    '  與技能描述「同時恢復我方全體 HP」矛盾',
+    '【Bug 1 修正】',
+    '  把治療/復活獨立為 _doWanderHeal() 內部函式',
+    '  不論正常打完 4~5 次或是中途全滅,都會進 _doWanderHeal 執行治療',
+    '  治療後再呼叫 checkWin(),確保小怪戰的 advFinishMiniBattle 能正確結算',
+    '【Bug 2:傷害倍率與升級表不一致】',
+    '  升級表 Lv0~4 寫 特技×0.4/0.44/0.48/0.52/0.56(即 0.4 × _burstMult)',
+    '  BURST_DB 描述也寫「特技40%傷害全體3~5次」',
+    '  但實際 code 用 spv × 0.5 × _burstMult,攻擊次數 4~5(少了 3 次的可能)',
+    '  Lv0 實際 50%,Lv4 實際 70%,都比玩家看到的規格高',
+    '【Bug 2 修正】',
+    '  倍率 0.5 → 0.4(對齊升級表 Lv0)',
+    '  次數 4~5 → 3~5(對齊描述)',
+    '  log 顯示實際倍率 Math.round(40×_burstMult)%,讓玩家知道當下實際值',
+    '【BOSS 戰 / 小怪戰驗證】',
+    '  兩種戰鬥情境都走同一個 _runBurst 分支,修正對兩邊都生效',
+    '  BOSS 被秒殺 → _doWanderHeal → checkWin → _showResultWithDrama(true)',
+    '  小怪被秒殺 → _doWanderHeal → checkWin → advFinishMiniBattle(true)',
+    '  未秒殺則正常打完 3~5 次 → 治療 → _burstFinish 交接下回合',
+  ] },
+  { ver:'v1.0.20260423.4100', brief:[
+    '🎭 修正小劇團員「變臉戲法」施放後,玩家完全看不到隨機有利狀態的 bug',
+    '📦 修正寶箱怪「儲存」天賦變成每個玩家隊友行動前都回一次血的 bug',
+  ], items:[
+    '【變臉戲法 bug 根因】',
+    '  舊版在攻擊後立即 `a.buffs = a.buffs.filter(b=>b.type!==_randBuff)`,',
+    '  把剛加上去的隨機有利狀態馬上刪掉',
+    '  → 戰鬥 banner 閃過一下就消失,UI 上看不到狀態圖示,等於沒加',
+    '  與技能描述「先隨機附加有利狀態 1 回合,再用特技+攻擊+速度造成傷害」完全矛盾',
+    '【變臉戲法 修正】',
+    '  改為 addBuff(a, randBuff, 1) 持續 1 回合,並移除攻擊後的 filter',
+    '  AI 版本也同步對齊(原本誤寫 2 回合)',
+    '',
+    '【寶箱怪「儲存」天賦 bug 根因】',
+    '  舊版把回血邏輯放在 startTurn() 的頂部,用 forEach 遍歷所有角色',
+    '  但 startTurn() 是「輪到下一個角色行動前」都會呼叫,不只是每輪開始時',
+    '  → 玩家有 4 個隊友各行動 1 次,寶箱怪就被回血 4 次(還沒算敵方的其他角色)',
+    '  → 寶箱怪實際上根本打不死',
+    '【寶箱怪 修正】',
+    '  搬家到 next.name===\'寶箱怪\' 的分支(跟二宮尊德像同樣 pattern),',
+    '  只在「輪到寶箱怪自己行動前」才回血 10% HP',
+    '  → 一個完整輪次寶箱怪只會回血 1 次,符合技能描述',
+    '【二宮尊德像】',
+    '  檢查後寫法正確(已放在 next 行動前區塊),不需修改',
+  ] },
+  { ver:'v1.0.20260423.4000', brief:[
+    '🎁 修正「保留至下回合」獎勵在下次答題時未出現為第3個選項的 bug',
+    '確認「保留至下回合」的效果只能有 1 個(新保留會自動覆寫舊的)',
+  ], items:[
+    '【Bug 1:小怪戰「保留」失效】',
+    '  _advMiniShowReward() 建立獎勵 pool 時完全忽略 _advPendingReward',
+    '  → 小怪戰選「保留至下回合」後,下次答題只顯示 2 選 1,沒有第 3 個保留的選項',
+    '  修正:小怪戰獎勵 pool 建立時,和 BOSS 戰一樣合併 _advPendingReward 到 pool 最前面',
+    '【Bug 2:BOSS 戰保留過早被清空】',
+    '  advShowReward() 在視窗顯示的當下執行 `_advPendingReward = null`',
+    '  → 雖然當次看得到 3 選項,但如果玩家選了其他兩項(非保留項),保留值就永遠消失',
+    '  → 下次答題只會看到 2 選項,再之後也看不到保留的那個',
+    '  修正:移除視窗顯示時的清空。改為在 advApplyReward / _advMiniApplyReward 中,',
+    '       當玩家使用的獎勵 id 剛好等於保留的 id 時,才清掉 _advPendingReward',
+    '       當玩家使用的是新隨機抽出的獎勵時,保留值維持不動,下次答題仍會出現',
+    '【Bug 3:保留項目與隨機 pool 可能重複】',
+    '  若剛好 _advPendingReward.id 也出現在本次隨機抽出的 2 個中,會重複顯示同一個獎勵',
+    '  修正:合併前先從隨機 pool 過濾掉與保留項相同的 id',
+    '【保留效果只能有一個】',
+    '  _advPendingReward 是單一變數,當玩家按「保留至下回合」時直接覆寫,保證只有最新的 1 個',
+    '  (如果玩家第 1 次保留 A,第 2 次又保留 B,A 會被 B 取代,A 就消失了)',
+  ] },
+  { ver:'v1.0.20260423.3900', brief:[
+    '🎨 「獲得新英雄」右側面板補上「爆發技能」區塊 + 修正「天賦」一直不顯示的 bug',
+  ], items:[
+    '【天賦不顯示 bug 根因】',
+    '  JS 讀取 HERO_TRAITS[heroName](複數 S),但實際資料存在 HERO_TRAIT(單數)',
+    '  變數名打錯 → 永遠抓不到資料 → 天賦 div 被 display:none',
+    '【修正做法】',
+    '  (1) JS 變數名 HERO_TRAITS → HERO_TRAIT(對齊實際資料)',
+    '  (2) HTML 新增 #adv-hmeet-burst 爆發技能 DOM(橙紅色系)',
+    '  (3) JS 從 BURST_DB[heroName] 讀取爆發資料並填入',
+    '【視覺調整】',
+    '  爆發技能區塊:橙紅色系 rgba(255,120,30,0.12),呼應戰鬥中爆發按鈕的橙紅色',
+    '  天賦區塊:從單行「🌟 天賦：XXX」擴充為:',
+    '    第1行:icon + 天賦名稱(粗體紫色)',
+    '    第2行:完整說明(fd 欄位,有完整機率與效果文字)',
+    '【右欄內容順序(由上到下)】',
+    '  點擊提示 → 加入訊息 → 角色名 → 能力值(HP/攻/特/速) →',
+    '  技能1 → 技能2 → 極限爆發 → 天賦 → 打招呼台詞 → 繼續冒險按鈕',
+  ] },
   { ver:'v1.0.20260423.3800', brief:[
     '🚨 緊急修正:任何英雄發動爆發技能都會造成戰鬥卡死的嚴重 bug(v3000 引入的回歸錯誤)',
   ], items:[
@@ -43620,7 +43785,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.3800';
+  const CURRENT_VERSION = 'v1.0.20260423.4200';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43637,7 +43802,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.3800';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.4200';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
