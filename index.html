@@ -11775,11 +11775,6 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   const spv=Math.floor((h.sp||0)*(1+(h.sp||0)*0.01));
   // 臨摹大師：用被模仿角色的名字來決定爆發效果；否則用自己的名字
   const name=_mimicSourceName||h.name;
-  // ★ v1.0.20260423.3000 — Lv5 爆發附加狀態延長 +1 回合
-  //   當爆發等級達到 MAX(內部值=4, 顯示 Lv5),所有「固定時長」的爆發附加狀態都延長 1 回合
-  //   排除:dur:99 類永續狀態(搖籃曲 sleep、小星星變奏曲 bigshield、夢境時光 _dreamDebuff)
-  //         木靈使 burstUndying(已按等級遞增,不重複加)
-  const _lv5Extra = (_burstLv >= 4) ? 1 : 0;
 
   // ★ 極限爆發等級乘數（+0~+4，每級+10%）
   // ★ 爆發等級：優先讀英雄物件上的 _burstLvAdv（冒險建隊時存入），避免跨Script問題
@@ -11787,6 +11782,15 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     ? h._burstLvAdv
     : ((_adventureMode && typeof _heroBurstLevels!=='undefined' && _heroBurstLevels[h.name]) || 0);
   const _burstMult = 1.0 + _burstLv * 0.10;
+
+  // ★ v1.0.20260423.3800 — Lv5 爆發附加狀態延長 +1 回合
+  //   【bug 修復】v3000 原本把 _lv5Extra 宣告在 _burstLv 之前,
+  //    造成 TDZ (Temporal Dead Zone) ReferenceError: Cannot access '_burstLv' before initialization
+  //    → 爆發發動時整個 _runBurst 掛掉 → 戰鬥卡死(萬物創生沒效果等典型症狀)
+  //   當爆發等級達到 MAX(內部值=4, 顯示 Lv5),所有「固定時長」的爆發附加狀態都延長 1 回合
+  //   排除:dur:99 類永續狀態(搖籃曲 sleep、小星星變奏曲 bigshield、夢境時光 _dreamDebuff)
+  //         木靈使 burstUndying(已按等級遞增,不重複加)
+  const _lv5Extra = (_burstLv >= 4) ? 1 : 0;
 
   if(name==='劍士'){
     const _doKenshi=(firstTgt)=>{
@@ -40310,6 +40314,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.3800', brief:[
+    '🚨 緊急修正:任何英雄發動爆發技能都會造成戰鬥卡死的嚴重 bug(v3000 引入的回歸錯誤)',
+  ], items:[
+    '【根因 - JavaScript TDZ 錯誤】',
+    '  v3000 為實作「Lv5 爆發附加狀態延長 1 回合」,在 _runBurst 頂部加了:',
+    '    const _lv5Extra = (_burstLv >= 4) ? 1 : 0;',
+    '  但 _lv5Extra 寫在 _burstLv 宣告之前',
+    '  const 有 Temporal Dead Zone:在宣告前存取變數會丟 ReferenceError',
+    '  錯誤訊息:Uncaught ReferenceError: Cannot access \'_burstLv\' before initialization',
+    '  → 任何英雄爆發發動時,_runBurst 立刻掛掉',
+    '  → 爆發沒執行、戰鬥不結束回合、遊戲卡死',
+    '  玩家回報症狀:電腦繪圖師「萬物創生」發動後沒效果、戰鬥永遠無法結束',
+    '【修正做法】',
+    '  把 _lv5Extra 宣告**移到** _burstLv 宣告**之後**(物理位置順序:_burstLv → _burstMult → _lv5Extra)',
+    '  邏輯完全相同,只是順序對了 TDZ 就消失',
+    '  Lv5 延長 1 回合的功能保持,所有英雄爆發恢復正常',
+    '【為什麼開發時沒抓到】',
+    '  TDZ 是「執行時」才觸發的錯誤,程式碼「編譯」階段看不出來',
+    '  若當時測試沒真的發動過爆發(例如只測了其他功能),就會漏掉',
+    '  未來開發完應優先進戰鬥發動至少一個英雄的爆發作為 smoke test',
+  ] },
   { ver:'v1.0.20260423.3700', brief:[
     '🚨 修正戰鬥結束時互動視窗殘留 bug:答題獎勵未選、被動技能提示、爆發選擇等視窗會漂在後續選關頁上',
     '戰鬥結束(勝利/失敗/小怪戰結算)時自動關閉所有未關閉的互動視窗,等於玩家自動放棄選擇',
@@ -43595,7 +43620,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.3700';
+  const CURRENT_VERSION = 'v1.0.20260423.3800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43612,7 +43637,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.3700';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.3800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
