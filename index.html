@@ -20396,6 +20396,17 @@ function checkWin(){
 }
 // 慢動作 → 大標題 → 結算的完整流程
 function _showResultWithDrama(win){
+  // ★ v1.0.20260423.2500 — 若正在播放 BOSS 擊倒慢動作(2秒),延後顯示結算畫面,
+  //   讓玩家完整看完慢動作特效後再進入結算視窗。
+  //   小怪戰不觸發慢動作,也不會進入此延後分支。
+  if(win && window._bossKillSlowmoActive && !window._bossKillResultDelayed){
+    window._bossKillResultDelayed = true;
+    setTimeout(()=>{
+      window._bossKillResultDelayed = false;
+      _showResultWithDrama(win);
+    }, 2100); // 比慢動作 2000ms 多 100ms,確保 CSS class 已清除
+    return;
+  }
   // ★ 小怪戰鬥結束
   if(_advMiniBattleActive){
     advFinishMiniBattle(win);
@@ -40081,6 +40092,26 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.2500', brief:[
+    '🎬 修正最終 BOSS 被擊倒時,結算畫面會瞬間蓋掉 2 秒慢動作特效的時序問題',
+  ], items:[
+    '【原問題】',
+    '  doDmg 偵測 BOSS HP=0 → 立刻加上 .boss-kill-slowmo 2 秒 CSS class + 黃光橫幅',
+    '  同一呼叫堆疊結束後幾毫秒,checkWin → _showResultWithDrama → advShowBattleResult',
+    '  結算視窗的 z-index 高於慢動作 overlay,所以**幾乎立刻**把慢動作蓋住,',
+    '  玩家根本來不及看到「擊倒 BOSS」橫幅與畫面放慢效果',
+    '【修正做法】',
+    '  _showResultWithDrama(win=true) 進入時檢查 window._bossKillSlowmoActive',
+    '  若慢動作正在播 → 延後 2100ms(慢動作 2000ms + 100ms buffer)再顯示結算',
+    '  用 window._bossKillResultDelayed 旗標避免重複延後',
+    '  小怪戰不觸發慢動作,也不會進此分支,流程不受影響',
+    '【流程說明】',
+    '  情境 A(普通戰鬥擊殺 BOSS):',
+    '    doDmg → BOSS HP=0 → 慢動作(2秒) → 結算畫面',
+    '  情境 B(獎勵視窗的「極限爆發」擊殺 BOSS):',
+    '    答題 → 獎勵視窗(選立即使用) → 爆發 → BOSS HP=0 → 慢動作(2秒) → 結算畫面',
+    '  兩種情境現在都能完整播完慢動作才進結算',
+  ] },
   { ver:'v1.0.20260423.2400', brief:[
     '🎬 BOSS 擊倒慢動作現在只在「真正的 BOSS 戰」觸發(小怪戰不再觸發,避免玩家秒殺後視覺疲勞)',
     '📝 所有戰鬥(小怪戰 / BOSS 戰)一進場直接出第一題,避免玩家速度快秒殺跳過答題機會',
@@ -43085,7 +43116,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.2400';
+  const CURRENT_VERSION = 'v1.0.20260423.2500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43102,7 +43133,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.2400';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.2500';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
