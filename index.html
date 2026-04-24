@@ -7257,7 +7257,7 @@ const BUFF_DESCS = {
   dribble:       '運球：普通攻擊變為2次攻擊',
   _relay:        '接力強化：下次造成的傷害或治療+50%',
   _sprint:       '起跑加速：速度+50%，免疫停止行動的狀態',
-  _sprintBurst:  '極速閃燃：下次造成的傷害×2',
+  _sprintBurst:  '閃燃:下次造成的傷害×2(每級+0.1),持續到造成傷害為止',
   _inuGuard:     '忠犬守護：本回合代替隊友承受50%傷害',
   _slamSpd:      '灌籃加速：速度暫時大幅提升',
   _napShield:   '午睡護盾：累積吸收最多50點傷害，受擊有40%機率驚醒',
@@ -7285,11 +7285,11 @@ const BURST_UPGRADE_DEF = {
   '學者':      { rows: [[0,'元素倍率必中傷害，50%轉治療'],[1,'傷害/治療+10%'],[2,'傷害/治療+20%'],[3,'傷害/治療+30%'],[4,'傷害/治療+40%']] },
   '木靈使':    { rows: [[0,'全隊不倒+再生2回合（特技HP/回合）'],[1,'再生+10%，持續+1回合'],[2,'再生+20%，持續+2回合'],[3,'再生+30%，持續+3回合'],[4,'再生+40%，持續+4回合']] },
   '籃球隊員':  { rows: [[0,'特技×4.0，全隊速度+50% 2回合'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
-  '直笛團員':  { rows: [[0,'特技×1.5 治療全隊(可復活)+護盾20'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  '田徑隊員':  { rows: [[0,'7能量+下次傷害×2+再行動'],[1,'下次傷害×2.2'],[2,'下次傷害×2.4'],[3,'下次傷害×2.6'],[4,'下次傷害×2.8']] },
+  '直笛團員':  { rows: [[0,'特技×1.5 全體傷害+狂亂1回合+全隊治療+持續恢復5回合'],[1,'傷害&治療+10%'],[2,'傷害&治療+20%'],[3,'傷害&治療+30%'],[4,'傷害&治療+40%、狂亂+1回合']] },
+  '田徑隊員':  { rows: [[0,'速度×200% 全體+7能量+閃燃×2.0+再行動'],[1,'速度×220%、閃燃×2.1'],[2,'速度×240%、閃燃×2.2'],[3,'速度×260%、閃燃×2.3'],[4,'速度×280%、閃燃×2.4']] },
   '幼兒園小孩':{ rows: [[0,'HP×0.5 傷害全體，敵方攻/技-50%'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
   '電腦繪圖師':{ rows: [[0,'特技×6.0 全體平分（必中）+抽3牌'],[1,'特技×6.6'],[2,'特技×7.2'],[3,'特技×7.8'],[4,'特技×8.4']] },
-  '程式設計師':{ rows: [[0,'不利→有利，復活全隊30%HP'],[1,'治療+10%'],[2,'治療+20%'],[3,'治療+30%'],[4,'治療+40%']] },
+  '程式設計師':{ rows: [[0,'不利→有利+全體50%HP+2名對手無法行動'],[1,'恢復+10%'],[2,'恢復+20%'],[3,'恢復+30%'],[4,'恢復+40%、+1名目標']] },
   '弦樂團員':  { rows: [[0,'特技×0.4 全體3~5次（必中）+復活'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
   '小劇團員':  { rows: [[0,'依倒下人數×3回能量，能量提升全隊攻/技'],[1,'提升+10%'],[2,'提升+20%'],[3,'提升+30%'],[4,'提升+40%']] },
   '九尾空貓怪':{ rows: [[0,'特技×0.5 × 9次連擊+地獄之火'],[1,'特技×0.55'],[2,'特技×0.6'],[3,'特技×0.65'],[4,'特技×0.7']] },
@@ -7512,11 +7512,11 @@ const BURST_DB = {
  '陰陽師':   {n:'四聖降臨',    d:'傷害全體4次，附加強力不利狀態',fd:'依特技50%使敵方全體受到4次傷害，每次有70%機率隨機附加1個強力不利狀態。'},
   '小力':     {n:'夾尾皺眉',    d:'全體對手無法使用造成傷害的技能或物品（2回合）',fd:'使全體對手陷入「憐惜校犬」狀態2回合，無法使用任何會造成傷害的技能或物品。此狀態不會被免疫或解除。'},
   '籃球隊員': {n:'絕殺灌籃',    d:'400%傷害1名對手，全隊速度提升2回合',fd:'對1名對手造成特技400%傷害，並使友方全體速度提升50%共2回合。'},
-  '直笛團員': {n:'天籟之音', d:'特技150%恢復全體隊友（可復活），並附加20護盾',fd:'用特技的150%恢復全體友方HP（可復活），並使全體友方獲得可以抵擋20傷害的護盾。'},
-  '田徑隊員': {n:'極速閃燃', d:'獲得7能量、傷害加倍並立即再次行動',fd:'立即獲得7能量、本輪下次造成的傷害提升100%，並立即可再次行動1次。'},
+  '直笛團員': {n:'天籟之音', d:'特技150%傷害全體+狂亂1回合，我方治療+持續恢復5回合',fd:'用特技的150%對敵方全體造成傷害,並使其陷入狂亂1回合(滿級時+1回合)。同時解除我方全體不利狀態、恢復我方全體HP(可復活),再附加持續恢復5回合。每級+10%傷害量與恢復量。'},
+  '田徑隊員': {n:'極速閃燃', d:'200%速度傷害全體、獲得7能量、附加閃燃、再行動',fd:'用速度的200%對敵方全體造成傷害,獲得7能量,附加「閃燃」狀態(下次造成的傷害×2),持續到造成傷害為止,並立即再次行動。'},
   '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP50%傷害全體，攻擊和特技-50%直到醒來',fd:'睡眠狀態時才能發動。對全體敵人造成HP50%傷害，此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低50%，直到施展者從睡眠中醒來。'},
   '電腦繪圖師':{n:'萬物創生', d:'特技500%傷害全體平均分攤（必中），再抽3張物品卡',fd:'用特技的600%傷害讓敵方全體平均分攤，此傷害無視有利狀態且必中。再抽出額外3張物品卡。'},
-  '程式設計師':{n:'BUG修復',  d:'將我方全體不利狀態轉換成隨機有利狀態，並復活所有倒下的隊友',fd:'將我方全體的不利狀態轉換成隨機有利狀態，同時讓所有倒下的隊友以HP30%復活。'},
+  '程式設計師':{n:'BUG修復',  d:'不利轉有利+全體恢復50%HP(可復活)+2名對手無法行動',fd:'將我方全體的不利狀態轉換成隨機有利狀態,同時恢復全體50%HP(可復活),再使2名對手無法行動1次。每級+10%恢復量,滿級時+1名無法行動目標。'},
   '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'用特技的40%對敵方全體造成3~5次傷害，此傷害無視有利狀態且必中。同時恢復我方全體HP，HP為0也可復活。'},
   '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下的所有角色（敵我雙方）×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
   // ★ v1.0.20260421.3000o — 日本關限定角色爆發
@@ -12291,17 +12291,42 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return;
   }
   if(name==='直笛團員'){
-    const _tlAllies=G[side].filter(t=>t.curHp>0);
-    log(`[${h.name}] 天籟之音！全體隊友恢復HP並獲得護盾！`);
-    // ★ 天籟之音：治療全體（含復活），護盾20
+    // ★ v1.0.20260423.4300 — 天籟之音重構:
+    //   (1) 用特技 150% × _burstMult 對敵方全體造成傷害
+    //   (2) 敵方陷入狂亂 1 回合;滿級(Lv4)時 +1 回合(_lv5Extra 已處理)
+    //   (3) 解除我方全體不利狀態
+    //   (4) 恢復我方全體 HP(可復活),倍率 1.5 × _burstMult
+    //   (5) 附加持續恢復 hpRegen 5 回合
+    const _dmgMult = 1.5 * _burstMult; // Lv0=1.5, Lv4=2.1
+    const _healMult = 1.5 * _burstMult; // 同步升級
+    const _berserkDur = 1 + _lv5Extra;  // Lv5 滿級時 +1 回合
+    log(`[${h.name}] 天籟之音!特技×${Math.round(_dmgMult*100)}% 全體傷害 + 狂亂${_berserkDur}回合 + 我方治療+持續恢復!`);
+    playSfx('sfx-burst',0.85); playSfx('sfx-fantasy',0.7);
+
+    // (1)(2) 對敵方全體造成傷害 + 狂亂
+    const _foesR = G[opp].filter(x=>x.curHp>0);
+    _foesR.forEach(t=>{
+      doDmg(t, Math.floor(spv*_dmgMult), {actor:h, isSkill:true, isAoe:true});
+      if(t.curHp>0){
+        addStatus(t, 'berserk', _berserkDur);
+        bannerFX(t, '🎵 狂亂', '#ff4466', 900);
+        renderCard(t);
+      }
+    });
+
+    // (3)(4)(5) 我方全體:解除不利狀態 + 治療(含復活) + 持續恢復
     G[side].forEach(t=>{
-      if(t.curHp===0){ doRevive(t,0.01); } // 復活（以最低HP復活，再由doHeal補滿）
-      doHeal(t,Math.floor(spv*1.5*_burstMult),{actor:h,isHeal:true});
-      t.buffs=t.buffs.filter(b=>b.type!=='bigshield');
-      t.buffs.push({type:'bigshield',dur:99,_hp:20,_fromBurst:true});
-      bannerFX(t,'天籟之音！','#cc55ff',1000);
+      clearBadStatus(t);
+      if(t.curHp===0){
+        doRevive(t, 0.01); // 以最低 HP 復活,再由 doHeal 補
+      }
+      doHeal(t, Math.floor(spv*_healMult), {actor:h, isHeal:true});
+      // 持續恢復 5 回合
+      addBuff(t, 'hpRegen', 5);
+      bannerFX(t, '天籟之音!', '#cc55ff', 1000);
       renderCard(t);
     });
+
     zoneFlash(side,'rgba(200,100,255,0.3)',700);
     flashScreen('rgba(200,100,255,1)',350);
     playSfx('sfx-heal',0.85);
@@ -12310,31 +12335,49 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return;
   }
   if(name==='田徑隊員'){
-    // 獲得7能量、傷害加倍、立即再次行動
-    G.energy[side]=Math.min(10,G.energy[side]+7);
-    showPopup(h,'+7E','energy');
-    sndEnergy();
-    // 傷害加倍（下次攻擊）
-    h.buffs=h.buffs.filter(b=>b.type!=='_sprintBurst');
-    h.buffs.push({type:'_sprintBurst',dur:1+_lv5Extra,_mult:2.0+_burstLv*0.20,_fromBurst:true});
-    bannerFX(h,'極速閃燃！能量+7！傷害×2！','#44ffcc',1200);
+    // ★ v1.0.20260423.4300 — 急速閃燃重構:
+    //   (1) 用 200% 速度對敵方全體造成傷害(每級 +10% 傷害,透過 _burstMult)
+    //   (2) 獲得 7 能量
+    //   (3) 附加「閃燃」:下次造成的傷害 +100%(Lv0=×2.0,每級 +10% → Lv4=×2.4)
+    //       持續到造成傷害為止(dur:99,doDmg 觸發時自動 filter 掉)
+    //   (4) 立即再次行動
+    log(`[${h.name}] 急速閃燃!疾風突擊全體,閃燃蓄力中!`);
+    playSfx('sfx-burst',0.85);
     flashScreen('rgba(60,255,200,1)',350);
     zoneFlash(side,'rgba(60,255,200,0.3)',600);
+
+    // (1) 用速度 × 200% × _burstMult 對敵方全體造成傷害
+    const _sprintFoes = G[opp].filter(x=>x.curHp>0);
+    const _sprintDmg = Math.max(1, Math.floor((h.spd||0) * 2.0 * _burstMult));
+    _sprintFoes.forEach(t => doDmg(t, _sprintDmg, {actor:h, isSkill:true, isAoe:true}));
+
+    // (2) 獲得 7 能量
+    G.energy[side] = Math.min(10, G.energy[side] + 7);
+    showPopup(h,'+7E','energy');
+    sndEnergy();
+
+    // (3) 閃燃 buff:持續到造成傷害為止,所以 dur 設很大(99),doDmg 會自動 filter
+    //     倍率 _mult = 2.0 + _burstLv × 0.10 (Lv0=2.0, Lv4=2.4)
+    const _flashMult = 2.0 + _burstLv * 0.10;
+    h.buffs = h.buffs.filter(b => b.type !== '_sprintBurst');
+    h.buffs.push({type:'_sprintBurst', dur:99, _mult:_flashMult, _fromBurst:true, _untilDmg:true});
+    bannerFX(h, `急速閃燃!能量+7!下次傷害×${_flashMult.toFixed(1)}!`, '#44ffcc', 1200);
     playSfx('sfx-statup',0.85);
-    log(`[${h.name}] 極速閃燃！獲得7能量、下次傷害加倍、立即再行動！`);
-    // 立即再次行動
-    // ★ v1.0.20260422.0103 — 移除錯誤的 h._burstUsed=true 賦值：
-    //   _burstUsed 是數字計數器（0~2），execBurst 已正確 +1；此處誤用 =true 會把計數器變成布林值，
-    //   下次 _canBurst 檢查 (true||0)>=2 → (1>=2) → false，導致田徑隊員可以無限爆發。
-    h.acted=false;
+    log(`[${h.name}] 急速閃燃!獲得 7 能量,下次造成的傷害 ×${_flashMult.toFixed(1)}(閃燃狀態持續到造成傷害為止),立即再次行動!`);
+
+    // (4) 立即再次行動
+    // ★ v1.0.20260422.0103 — 移除錯誤的 h._burstUsed=true 賦值:
+    //   _burstUsed 是數字計數器(0~2),execBurst 已正確 +1;此處誤用 =true 會把計數器變成布林值,
+    //   下次 _canBurst 檢查 (true||0)>=2 → (1>=2) → false,導致田徑隊員可以無限爆發
+    h.acted = false;
     updateUI();
     if(checkWin()) return;
-    G.passiveInterruptUsed=false; G.interruptTarget=null; G.pendingTarget=null; pendingCb=null;
+    G.passiveInterruptUsed = false; G.interruptTarget = null; G.pendingTarget = null; pendingCb = null;
     if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
-      _interrupted.acted=true;
-      log(`[${_interrupted.name}] 被極限爆發插隊，跳過本次行動。`);
+      _interrupted.acted = true;
+      log(`[${_interrupted.name}] 被極限爆發插隊,跳過本次行動。`);
     }
-    G.activeChar=h;
+    G.activeChar = h;
     _pSetTimeout(()=>{
       if(h.curHp>0){
         if(h.side==='p1'){ updateUI(); document.getElementById('action-panel').style.display='block'; }
@@ -12426,25 +12469,50 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return; // ★ 非同步：由 _addNextCard3 最後呼叫 _burstFinish
   }
   if(name==='程式設計師'){
-    log(`[${h.name}] BUG修復！不利狀態轉有利狀態，復活全體！`);
+    // ★ v1.0.20260423.4300 — BUG修復重構:
+    //   (1) 我方全體不利狀態轉隨機有利狀態
+    //   (2) 全體恢復 50% HP(可復活),每級 +10%(Lv0=50%, Lv4=90%)
+    //   (3) 2 名對手無法行動 1 次;滿級(Lv4)時 +1 名(共 3 名)
+    const _healPct = 0.50 + _burstLv * 0.10; // Lv0=0.50, Lv4=0.90
+    const _stunCount = (_burstLv >= 4) ? 3 : 2;
+    log(`[${h.name}] BUG修復!不利轉有利 + 全體恢復${Math.round(_healPct*100)}%HP + ${_stunCount}名對手無法行動!`);
     playSfx('sfx-heal',0.9); playSfx('sfx-powerup',0.7);
     const _goodBuffs=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune'];
+
+    // (1)(2) 我方全體:狀態轉換 + 治療(含復活)
     G[side].forEach(t=>{
       const _badCount=t.status.filter(s=>BAD_STATUS.includes(s.type)).length;
       clearBadStatus(t);
       for(let _bi=0;_bi<_badCount;_bi++){
         addBuff(t,_goodBuffs[Math.floor(Math.random()*_goodBuffs.length)],2);
       }
+      // 復活 + 治療
       if(t.curHp===0){
-        doRevive(t,0.30+_burstLv*0.05);
-        t.acted=true; // ★ 復活的隊友本回合已行動，避免立即再行動造成狀態混亂
+        doRevive(t, _healPct);
+        t.acted=true; // ★ 復活的隊友本回合已行動,避免立即再行動造成狀態混亂
+      } else {
+        const _healAmt = Math.max(1, Math.floor(t.hp * _healPct));
+        doHeal(t, _healAmt, {actor:h, isHeal:true});
       }
-      bannerFX(t,'BUG修復！','#55ffcc',1000); renderCard(t);
+      bannerFX(t,'BUG修復!','#55ffcc',1000); renderCard(t);
     });
+
+    // (3) 隨機選 2(或 Lv4 時 3) 名對手 stun 1 回合
+    const _enemies = G[opp].filter(x=>x.curHp>0);
+    const _stunTargets = [..._enemies].sort(()=>Math.random()-0.5).slice(0, _stunCount);
+    _stunTargets.forEach(t=>{
+      addStatus(t, 'stun', 1+_lv5Extra);
+      bannerFX(t,'💫 系統錯誤','#55ffcc',900);
+      renderCard(t);
+    });
+    if(_stunTargets.length){
+      log(`💫 [程式設計師] BUG修復!${_stunTargets.map(e=>e.name).join('、')} 陷入系統錯誤,無法行動!`);
+    }
+
     flashScreen('rgba(60,255,200,1)',400); zoneFlash(side,'rgba(60,255,200,0.3)',700);
     updateUI();
     _pSetTimeout(()=>{ _burstFinish(h,_interrupted); }, 800); // ★ 明確結束爆發
-    return; // ★ 必須 return，防止再次呼叫 startTurn
+    return; // ★ 必須 return,防止再次呼叫 startTurn
   }
   if(name==='弦樂團員'){
     // ★ v1.0.20260423.4200 — 對齊升級表規格:
@@ -40385,6 +40453,65 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.4400', brief:[
+    '⚡ 程式設計師爆發「BUG修復」重構:新增全體 50%HP 恢復 + 2 名對手無法行動(滿級 3 名)',
+    '🎵 直笛團員爆發「天籟之音」重構:從純治療變成傷害+狂亂+治療+持續恢復的攻守一體型爆發',
+  ], items:[
+    '【BUG修復 新規格】',
+    '  (1) 我方全體不利狀態轉換為隨機有利狀態(維持舊有邏輯)',
+    '  (2) 全體恢復 50% HP,可復活(原本只有復活倒下隊友,無治療)',
+    '  (3) 隨機 2 名對手陷入無法行動 1 次(stun)',
+    '  (4) 升級:每級 +10% 恢復量(Lv0=50% → Lv4=90%)',
+    '  (5) 升級:滿級(Lv4) +1 名無法行動目標(共 3 名)',
+    '【天籟之音 新規格】',
+    '  (1) 用特技 150% × _burstMult 對敵方全體造成傷害',
+    '  (2) 敵方陷入狂亂 1 回合(berserk:只能攻擊自己隊友+傷害+3)',
+    '  (3) 解除我方全體不利狀態(新增)',
+    '  (4) 恢復我方全體 HP(可復活),特技 150% × _burstMult',
+    '  (5) 附加持續恢復 hpRegen 5 回合(新增)',
+    '  (6) 升級:每級 +10% 傷害量與恢復量(Lv0=1.5 → Lv4=2.1)',
+    '  (7) 升級:滿級(Lv4) 狂亂 +1 回合(共 2 回合)',
+    '【移除的舊功能】',
+    '  BUG修復 舊版的「復活 30%+每級+5%」→ 改為全體 50% HP(含可復活)',
+    '  天籟之音 舊版的「+20 護盾」→ 移除,替換為狂亂+持續恢復',
+    '【同步更新】',
+    '  BURST_DB 描述文字(兩個技能的 d 與 fd 欄位都更新)',
+    '  升級表 rows(玩家按爆發面板的 ? 會看到新規格)',
+    '【設計理念】',
+    '  BUG修復:從「復活為主」變成「全體大治療 + 控場」,讓程式設計師在危急時能一手翻盤',
+    '  天籟之音:從「純治療」變成「攻守一體」,讓直笛團員在爆發回合也能有攻擊壓迫力',
+  ] },
+  { ver:'v1.0.20260423.4300', brief:[
+    '🏃 田徑隊員爆發「急速閃燃」重構:新增用 200% 速度對敵方全體造成傷害,閃燃狀態持續到造成傷害為止',
+  ], items:[
+    '【新版規格】',
+    '  (1) 用 200% 速度 × _burstMult 對敵方全體造成傷害',
+    '  (2) 獲得 7 能量',
+    '  (3) 附加「閃燃」狀態:下次造成的傷害 ×2.0(Lv0),持續到造成任何傷害為止',
+    '  (4) 立即再次行動',
+    '【升級效果】',
+    '  Lv0:速度×200%、閃燃×2.0',
+    '  Lv1:速度×220%、閃燃×2.1(每級傷害 +10%、閃燃效果 +10%)',
+    '  Lv2:速度×240%、閃燃×2.2',
+    '  Lv3:速度×260%、閃燃×2.3',
+    '  Lv4:速度×280%、閃燃×2.4',
+    '【與舊版差異】',
+    '  舊:只給能量+閃燃buff(1回合期限)+再次行動,沒有主動造成傷害',
+    '  新:發動即對敵方全體造成一次實質傷害(200%速度)',
+    '  舊:閃燃只持續 1 回合(Lv5 才 2 回合),可能到下回合開始自動消失',
+    '  新:閃燃持續到造成傷害為止(dur:99),玩家不會因時機錯過閃燃加成',
+    '  舊:每級閃燃 +20%(Lv4=×2.8),超出直覺',
+    '  新:每級閃燃 +10%(Lv4=×2.4),和其他爆發升級幅度一致',
+    '【技術細節】',
+    '  執行順序:先造成 200% 速度傷害 → 再加閃燃 buff → 觸發再次行動',
+    '  (這順序確保 200% 傷害本身不會被自己加到的閃燃 buff 放大)',
+    '  閃燃 buff dur 設為 99,doDmg 會在玩家造成傷害時 filter 掉',
+    '  若玩家後續行動沒造成傷害(例如只治療/使用物品),閃燃會一直保留,直到真正造成傷害才消耗',
+    '【描述與 UI 同步更新】',
+    '  BURST_DB 技能描述更新為新規格',
+    '  升級表 rows 對齊新數值',
+    '  buff 提示文字更新為「閃燃:下次造成的傷害×2(每級+0.1),持續到造成傷害為止」',
+  ] },
   { ver:'v1.0.20260423.4200', brief:[
     '🎻 修正弦樂團員爆發「流浪者之歌」2 個問題:敵方提早全滅會跳過治療/復活 + 傷害倍率與升級表不一致',
   ], items:[
@@ -43785,7 +43912,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.4200';
+  const CURRENT_VERSION = 'v1.0.20260423.4400';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -43802,7 +43929,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.4200';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.4400';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
