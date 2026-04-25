@@ -39992,17 +39992,25 @@ function _showTraitLvPopup(heroName, el){
   var rows = '';
   var lvNames = ['Lv1（基礎）','Lv2（英雄Lv10）','Lv3（英雄Lv20）','Lv4（英雄Lv30）','Lv5（英雄Lv40）'];
   if(info && info.bonus !== '固定（不隨天賦升級）'){
-    var baseMatch = info.base.match(/(\d+)%/);
-    var bonusMatch = info.bonus.match(/\+(\d+)%/);
+    // ★ v1.0.20260423.9600 — 同時支援 % 數值(機率類)與純數字(護盾/攻擊+特技類)
+    //   電腦繪圖師「20 護盾 +5/級」、程式設計師「+3 攻擊和特技 +1/級」 都能正確顯示
+    //   修正:Math.min(100,...) 只用於機率類(<=100% 才有意義),數值類不設上限
+    var baseMatch = info.base.match(/(\d+)%/) || info.base.match(/(\d+)/);
+    var bonusMatch = info.bonus.match(/\+(\d+)%/) || info.bonus.match(/\+(\d+)/);
+    var hasPct = info.base.includes('%');
+    var unit = hasPct ? '%' : '';
     if(baseMatch && bonusMatch){
       var base = parseInt(baseMatch[1]);
       var bonus = parseInt(bonusMatch[1]);
+      // 判斷是否為機率類:若 bonus 描述含「機率」「機率」或 base 描述含關鍵字才設上限
+      var isProbability = hasPct && /(機率|率)/.test(info.effect||'') ;
       for(var i=0;i<=4;i++){
-        var rate = Math.min(100, base + i*bonus);
+        var raw = base + i*bonus;
+        var rate = isProbability ? Math.min(100, raw) : raw;
         var isCurrent = (i===traitLv);
         rows += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,220,0,0.1);'+(isCurrent?'background:rgba(255,220,0,0.15);border-radius:6px;padding:4px 8px;':'')+'">'+
           '<span style="color:'+(isCurrent?'#ffe066':'#aaa')+';">'+(isCurrent?'▶ ':'')+lvNames[i]+'</span>'+
-          '<span style="color:'+(isCurrent?'#ffe066':'#fff')+';font-weight:'+(isCurrent?'900':'400')+';">'+rate+'%</span>'+
+          '<span style="color:'+(isCurrent?'#ffe066':'#fff')+';font-weight:'+(isCurrent?'900':'400')+';">'+rate+unit+'</span>'+
           '</div>';
       }
     }
@@ -41435,6 +41443,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.9600', brief:[
+    '🐛 修正電腦繪圖師、程式設計師、動物學家 天賦升級彈窗只顯示文字、看不到升級階梯的 bug',
+  ], items:[
+    '【根因】',
+    '  _showTraitLvPopup 解析 base/bonus 時用的 regex 只支援 % 結尾的數值',
+    '    var baseMatch = info.base.match(/(\\d+)%/);',
+    '    var bonusMatch = info.bonus.match(/\\+(\\d+)%/);',
+    '  電腦繪圖師「20 護盾 +5/級」、程式設計師「+3 攻擊和特技 +1/級」沒有 %',
+    '  → regex 配對失敗 → 不進升級表迴圈 → 視窗只顯示文字、空白升級階梯',
+    '【修正】',
+    '  regex 加上 fallback:先嘗試 %,失敗再用純數字',
+    '    /(\\d+)%/ || /(\\d+)/',
+    '  根據 base 是否含 % 決定顯示單位(%或無單位)',
+    '【顯示效果】',
+    '  電腦繪圖師:Lv1=20、Lv2=25、Lv3=30、Lv4=35、Lv5=40 護盾',
+    '  程式設計師:Lv1=3、Lv2=4、Lv3=5、Lv4=6、Lv5=7 攻擊和特技',
+    '  動物學家:Lv1=100、Lv2=110、Lv3=120、Lv4=130、Lv5=140 (寵物效果%)',
+    '【附帶修正】',
+    '  Math.min(100,...) 改為僅用於「機率類」天賦,數值類(護盾/攻特/寵物效果)不限上限',
+    '  避免動物學家 110%/120%/... 被卡在 100%',
+  ] },
   { ver:'v1.0.20260423.9500', brief:[
     '🐛 修正精美畫風時原 Q 版圖片被錯誤下移、只看到頭頂的 bug',
   ], items:[
@@ -45960,7 +45989,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.9500';
+  const CURRENT_VERSION = 'v1.0.20260423.9600';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45977,7 +46006,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.9500';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.9600';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
