@@ -37701,12 +37701,14 @@ function openSetRepHeroModal() {
     const av  = (typeof AVATARS   !== 'undefined' && AVATARS[name])   || '⚔';
     const lv  = (typeof getHeroLevel === 'function') ? getHeroLevel(name) : 1;
     const sel = name === currentRep;
+    // ★ v1.0.20260424.0420 — 縮圖也套用 getHeroThumbObjPos(精美版自動下移 20% 顯示頭部)
+    const _objPos = (typeof getHeroThumbObjPos === 'function') ? getHeroThumbObjPos(name) : 'center center';
     cardsHTML +=
       `<div onclick="_selectRepHero('${name}')" style="cursor:pointer;border-radius:12px;overflow:hidden;`
       + `border:2.5px solid ${sel ? '#ffcc44' : 'rgba(212,168,67,0.3)'};`
       + `background:${sel ? 'rgba(80,60,0,0.5)' : 'rgba(10,12,25,0.9)'};`
       + `transition:0.15s;flex-shrink:0;width:130px;position:relative;">`
-      + (img ? `<img src="${img}" style="width:100%;height:110px;object-fit:cover;display:block;">` : `<div style="height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;">${av}</div>`)
+      + (img ? `<img src="${img}" style="width:100%;height:110px;object-fit:cover;object-position:${_objPos};display:block;">` : `<div style="height:110px;display:flex;align-items:center;justify-content:center;font-size:40px;">${av}</div>`)
       + `<div style="font-size:15px;text-align:center;padding:5px 3px;color:#ffe8a0;font-weight:700;">${name} <span style="color:#88ccff;font-size:13px;">Lv${lv}</span></div>`
       + (sel ? '<div style="position:absolute;top:4px;right:4px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:20px;height:20px;line-height:20px;text-align:center;">★</div>' : '')
       + '</div>';
@@ -41781,6 +41783,20 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0420', brief:[
+    '🎨 「設定代表英雄」面板的縮圖也套用 getHeroThumbObjPos,精美版自動往下移 20% 顯示頭部',
+  ], items:[
+    '【舊版】',
+    '  代表英雄選角面板的縮圖 <img object-fit:cover> 沒指定 object-position',
+    '  default 為 center center → 精美版全身圖只顯示中間(看不到臉,看到肚子)',
+    '【修正】',
+    '  縮圖加上 object-position:${getHeroThumbObjPos(name)}',
+    '  此 helper 會依當前畫風和 portrait 狀態自動回適當位置:',
+    '    精美版/LV10/LV20/3 號圖 → center 20%(往下顯示頭部)',
+    '    Q 版原圖 → 各角色已調好的位置',
+    '【效果】',
+    '  代表英雄選擇彈窗中的縮圖,所有角色都顯示完整臉部',
+  ] },
   { ver:'v1.0.20260424.0410', brief:[
     '🔢 版本號改為 +10 遞增(0400 → 0410 → 0420...)',
     '⚔️ 鬥技場精美畫風:全角色無條件顯示 LV20/LV10 圖(視覺改善,不影響進度)',
@@ -46483,7 +46499,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0410';
+  const CURRENT_VERSION = 'v1.0.20260424.0420';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -46500,7 +46516,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0410';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0420';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
