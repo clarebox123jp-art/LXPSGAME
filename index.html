@@ -4246,7 +4246,7 @@ body {
 </div>
 
 <!-- 版本標示 -->
-<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260423.0100</div>
+<div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260423.6000</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
 <button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
@@ -33575,7 +33575,10 @@ async function grantBattleExp(win, stats) {
   if(!win) return;
   // ★ 鬥技場模式不給予任何獎勵（只有冒險模式才有EXP和技能書）
   if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
-  const heroes = advGetUnlockedHeroes();
+  // ★ v1.0.20260423.5800 — 修正:基礎英雄沒被列入 advGetUnlockedHeroes,出戰也拿不到 EXP
+  const _unlocked = advGetUnlockedHeroes();
+  const _basePool = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL[_adventureStage]) || [];
+  const heroes = Array.from(new Set([..._basePool, ..._unlocked]));
   if(!heroes.length) return;
   // ★ v1.0.20260423.5400 — EXP 改用統一公式 (hp+atk+sp+spd) × 50%
   //   讀當下 stat,所以 HP 倍率(難度提升)會自動讓 EXP 跟著浮動
@@ -38155,7 +38158,12 @@ function advFinishMiniBattle(win) {
     window._miniDrops = _miniDrops;
 
     // 給予小怪EXP（使用已在 BOSS 陣容還原前算好的 _miniBaseExp）
-    const heroes = advGetUnlockedHeroes();
+    // ★ v1.0.20260423.5800 — 修正:基礎英雄(電腦繪圖師等 8 隻)沒被列入 advGetUnlockedHeroes,
+    //   舊版只發給「BOSS 解鎖英雄」,造成電腦繪圖師等出戰也拿不到 EXP
+    //   修正:把 ADV_HERO_POOL[stage] 的初始英雄也加進去
+    const _unlocked = advGetUnlockedHeroes();
+    const _basePool = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL[_adventureStage]) || [];
+    const heroes = Array.from(new Set([..._basePool, ..._unlocked]));
     if(heroes.length) {
       // ★ 自信加成：沒自信+0% / 普通+25% / 我很會+50%
       const _confMult = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
@@ -40595,6 +40603,36 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.6000', adminOnly:true, brief:[
+    '🔧 首頁右下角版本徽章改為自動同步 _GAME_LOADED_VERSION,以後升版不會再忘記改',
+  ], items:[
+    '【舊問題】',
+    '  首頁右下角 #version-badge 是寫死在 HTML 的版本字串',
+    '  歷次升版只更新 CURRENT_VERSION 和 _GAME_LOADED_VERSION,沒同步改 #version-badge',
+    '  → 玩家看到的版本號永遠停留在 v1.0.20260423.0100,容易誤以為遊戲沒更新',
+    '【修正】',
+    '  在 _GAME_LOADED_VERSION 賦值後立即用 document.getElementById(\'version-badge\').textContent 同步',
+    '  以後只要改 _GAME_LOADED_VERSION,首頁右下角會自動更新顯示',
+  ] },
+  { ver:'v1.0.20260423.5900', brief:[
+    '🚨 修正基礎英雄(電腦繪圖師、程式設計師、弦樂團員、小劇團員、田徑隊員、直笛團員、籃球隊員、動物學家)無法獲得戰鬥 EXP 的嚴重 bug',
+  ], items:[
+    '【Bug 根因】',
+    '  advFinishMiniBattle / grantBattleExp 用 advGetUnlockedHeroes() 取「拿 EXP 名單」',
+    '  但這個函式只回 localStorage [adv_unlocked_heroes],只含「BOSS 戰勝利後解鎖」的英雄',
+    '  → 8 隻初始基礎英雄(電腦繪圖師等)永遠不在這個清單裡 → 永遠拿不到 EXP',
+    '【Bug 影響】',
+    '  Lv.14 電腦繪圖師打了多場小怪戰、累積 1177 EXP — 這 1177 是怎麼來的?',
+    '  推測:某些更早期版本有正確發 EXP,後來改版漏了基礎英雄',
+    '  最近幾版的戰鬥 EXP 完全沒進到電腦繪圖師等基礎英雄身上',
+    '【修正】',
+    '  advFinishMiniBattle 與 grantBattleExp 兩處取「拿 EXP 名單」改為:',
+    '    Array.from(new Set([...ADV_HERO_POOL[stage], ...advGetUnlockedHeroes()]))',
+    '  Set 自動去重,基礎英雄與 BOSS 解鎖英雄都會被涵蓋',
+    '【舊累積資料保留】',
+    '  既有的 _heroExp 和 _heroLevels 不變,只是修好「未來」的 EXP 發放',
+    '  下一場戰鬥 console.log 應該會看到 [addHeroExp] 電腦繪圖師 ... (+196) 之類的 log',
+  ] },
   { ver:'v1.0.20260423.5800', adminOnly:true, brief:[
     '🔍 診斷工具:addHeroExp 加上 console.log,追查 EXP 為何沒加到角色身上',
   ], items:[
@@ -44359,7 +44397,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.5800';
+  const CURRENT_VERSION = 'v1.0.20260423.6000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44376,7 +44414,12 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.5800';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.6000';
+// ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
+try{
+  const _vb = document.getElementById('version-badge');
+  if(_vb) _vb.textContent = window._GAME_LOADED_VERSION;
+}catch(_){}
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
