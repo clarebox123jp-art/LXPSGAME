@@ -1538,6 +1538,37 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #game-info-btn:hover::before{transform:translateX(100%);}
 
 /* ══════════════════════════════════════════
+   ★ v1.0.20260423.6400 — 畫風切換按鈕(可愛 / 精美)
+   位置:遊戲介紹按鈕上方
+   ★ v1.0.20260423.7100 — 暫時上鎖,視覺上讓按鈕變灰階表示未開放
+══════════════════════════════════════════ */
+#art-style-bar{
+  position:absolute;z-index:2;top:47%;left:50%;transform:translateX(-50%);
+  display:flex;gap:14px;align-items:center;
+}
+.art-style-btn{
+  padding:10px 26px;font-size:24px;font-weight:700;letter-spacing:2px;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;cursor:pointer;
+  /* 上鎖樣式 - 灰階 + 半透明 */
+  background:linear-gradient(135deg,rgba(50,50,55,0.7),rgba(40,40,45,0.6));
+  border:2px solid rgba(120,120,120,0.5);color:rgba(200,200,200,0.7);
+  border-radius:10px;
+  transition:all 0.2s;text-shadow:0 1px 2px rgba(0,0,0,0.9);
+  filter:grayscale(0.5);
+}
+.art-style-btn:hover{
+  background:linear-gradient(135deg,rgba(60,60,65,0.85),rgba(55,55,60,0.75));
+  border-color:rgba(150,150,150,0.7);color:rgba(220,220,220,0.85);
+  transform:scale(1.02);
+}
+.art-style-btn.selected{
+  background:linear-gradient(135deg,rgba(50,50,55,0.7),rgba(40,40,45,0.6));
+  border-color:rgba(120,120,120,0.5);color:rgba(200,200,200,0.7);
+  filter:grayscale(0.5);
+}
+#overlay #art-style-bar{position:absolute;z-index:2;}
+
+/* ══════════════════════════════════════════
    冒險闖關 ─ 關卡選擇頁面
 ══════════════════════════════════════════ */
 #adventure-overlay{
@@ -3291,6 +3322,23 @@ body {
   content:'';position:absolute;inset:0;
   background:rgba(0,0,0,0.40);pointer-events:none;
 }
+
+/* ══════════════════════════════════════════
+   ★ v1.0.20260423.6400 — 精美畫風的戰鬥背景覆蓋
+   切換到精美畫風時 body.art-premium,以下覆蓋 background-image
+   等玩家提供精美版連結後填入 url
+══════════════════════════════════════════ */
+body.art-premium #adv-battle-bg.bg-river       { /* background-image:url("PREMIUM_river_url"); */ }
+body.art-premium #adv-battle-bg.bg-trail       { /* background-image:url("PREMIUM_trail_url"); */ }
+body.art-premium #adv-battle-bg.bg-teagarden   { /* background-image:url("PREMIUM_teagarden_url"); */ }
+body.art-premium #adv-battle-bg.bg-boss        { /* background-image:url("PREMIUM_boss_url"); */ }
+body.art-premium #adv-battle-bg.bg-apricot     { /* background-image:url("PREMIUM_apricot_url"); */ }
+body.art-premium #adv-battle-bg.bg-fuji        { /* background-image:url("PREMIUM_fuji_url"); */ }
+body.art-premium #adv-battle-bg.bg-yamata      { /* background-image:url("PREMIUM_yamata_url"); */ }
+body.art-premium #adv-battle-bg.bg-japan-opening { /* background-image:url("PREMIUM_japan_opening_url"); */ }
+body.art-premium #adv-battle-bg.bg-japan-shrine  { /* background-image:url("PREMIUM_japan_shrine_url"); */ }
+body.art-premium #adv-battle-bg.bg-japan-fuji    { /* background-image:url("PREMIUM_japan_fuji_url"); */ }
+
 /* 冒險模式：zone 半透明讓背景透出 */
 #gc.adv-battle #z1{
   background:rgba(0,5,40,0.60) !important;
@@ -4176,6 +4224,13 @@ body {
     </div>
   </div>
 </div>
+<!-- ★ v1.0.20260423.6400 — 畫風切換按鈕(可愛/精美) -->
+<!-- ★ v1.0.20260423.7100 — 暫時上鎖,點擊只顯示「未開放」提示 -->
+<div id="art-style-bar">
+  <button id="art-style-cute-btn" class="art-style-btn selected" onclick="playSfx('sfx-cancel',0.4);_showInGameToast('🔒 此功能尚未開放', '#888888', 1800)">🔒 可愛畫風</button>
+  <button id="art-style-premium-btn" class="art-style-btn" onclick="playSfx('sfx-cancel',0.4);_showInGameToast('🔒 此功能尚未開放', '#888888', 1800)">🔒 精美畫風</button>
+</div>
+
 <!-- 遊戲介紹按鈕 -->
 <button id="game-info-btn"
   onclick="playSfx('sfx-gentle',0.4);var _m=document.getElementById('game-info-modal');_m.style.display='flex';document.documentElement.style.touchAction='pan-y';document.body.style.touchAction='pan-y';">
@@ -6881,12 +6936,282 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png' },
     { id:'miko_shrine', name:'神社祭禮', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B7%AB%E5%A5%B32.png', requiresUnlock:true },
   ],
-  // ★ v1.0.20260423.1800 — 木靈使肖像「千年神木」
+  // ★ v1.0.20260423.6400 — 木靈使肖像「千年神木」
   '木靈使': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%9C%A8%E9%9D%88%E4%BD%BF(%E7%B8%AE%E5%9C%96).png' },
     { id:'ancient_tree', name:'千年神木', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BF2.png', requiresUnlock:true },
+    { id:'dryad_lv20', name:'木靈使 Lv20', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BFLV20.png', requiresUnlock:true },
+    { id:'dryad_shop3', name:'木靈使 進階版', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BF3.png', requiresUnlock:true },
   ],
 };
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260423.7000 — 批次新增 LV10 / LV20 / 商店圖片3 肖像
+//   LV10 命名規則:無接性別=原 Q 版性別、接「男孩/女孩」=補另一性別
+//   全部加進 HERO_PORTRAIT_LIBRARY 對應陣列
+// ════════════════════════════════════════════════════════════════
+(function _addNewPortraits(){
+  const _BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+  function _u(filename){ return _BASE + encodeURIComponent(filename); }
+  function _add(heroName, items){
+    if(!HERO_PORTRAIT_LIBRARY[heroName]) HERO_PORTRAIT_LIBRARY[heroName] = [];
+    items.forEach(item => HERO_PORTRAIT_LIBRARY[heroName].push(item));
+  }
+
+  // ─── LV10 補完(初始 8 隻角色) ───
+  // 電腦繪圖師(原 Q 女) - 已有 graphic_boy/girl 商店絕版,新增 LV10 兩張(不同圖)
+  _add('電腦繪圖師', [
+    { id:'graphic_girl_lv10', name:'電腦繪圖女 Lv10', url:_u('電腦繪圖師LV10.png'), requiresUnlock:true },
+    { id:'graphic_boy_lv10',  name:'電腦繪圖男 Lv10', url:_u('電腦繪圖師LV10男孩.png'), requiresUnlock:true },
+  ]);
+  // 程式設計師 - 一張(原性別)
+  _add('程式設計師', [
+    { id:'coder_lv10', name:'程式設計師 Lv10', url:_u('程式設計師LV10.png'), requiresUnlock:true },
+  ]);
+  // 弦樂團員(原 Q 男) - 男(LV10) + 女(LV10女孩)
+  _add('弦樂團員', [
+    { id:'strings_boy_lv10',  name:'弦樂男 Lv10', url:_u('弦樂團員LV10.png'), requiresUnlock:true },
+    { id:'strings_girl_lv10', name:'弦樂女 Lv10', url:_u('弦樂團員LV10女孩.png'), requiresUnlock:true },
+  ]);
+  // 小劇團員(原 Q 女) - 女(LV10) + 男(LV10男孩)
+  _add('小劇團員', [
+    { id:'drama_girl_lv10', name:'小劇女 Lv10', url:_u('小劇團員LV10.png'), requiresUnlock:true },
+    { id:'drama_boy_lv10',  name:'小劇男 Lv10', url:_u('小劇團員LV10男孩.png'), requiresUnlock:true },
+  ]);
+  // 直笛團員 - 原(LV10) + 男(LV10男孩)(原 Q 是女,男孩是新增)
+  // 註:此項假設原 Q 是女,若不是再調整
+  _add('直笛團員', [
+    { id:'recorder_orig_lv10', name:'直笛團員 Lv10', url:_u('直笛團員LV10.png'), requiresUnlock:true },
+    { id:'recorder_boy_lv10',  name:'直笛男 Lv10',   url:_u('直笛團員LV10男孩.png'), requiresUnlock:true },
+  ]);
+  // 田徑隊員 - 只有 LV10 男孩 (檔名漏「員」字)
+  _add('田徑隊員', [
+    { id:'track_boy_lv10', name:'田徑男 Lv10', url:_u('田徑隊LV10男孩.png'), requiresUnlock:true },
+  ]);
+  // 籃球隊員 - 原(LV10) + 女(LV10女孩,檔名漏「員」字)
+  _add('籃球隊員', [
+    { id:'basket_orig_lv10', name:'籃球隊員 Lv10', url:_u('籃球隊員LV10.png'), requiresUnlock:true },
+    { id:'basket_girl_lv10', name:'籃球女 Lv10',  url:_u('籃球隊LV10女孩.png'), requiresUnlock:true },
+  ]);
+  // 動物學家 - 一張
+  _add('動物學家', [
+    { id:'animal_lv10', name:'動物學家 Lv10', url:_u('動物學家LV10.png'), requiresUnlock:true },
+  ]);
+
+  // ─── LV20 (其他英雄各一張) ───
+  const _LV20_LIST = [
+    ['凡人','mortal_lv20','凡人 Lv20','凡人LV20.png'],
+    ['大力士','hercules_lv20','大力士 Lv20','大力士LV20.png'],
+    ['刺客','rogue_lv20','刺客 Lv20','刺客LV20.png'],
+    ['占星師','astrologer_lv20','占星師 Lv20','占星師LV20.png'],
+    ['光法師','light_lv20','光法師 Lv20','光法師LV20.png'],
+    ['冰法師','ice_lv20','冰法師 Lv20','冰法師LV20.png'],
+    ['吟遊詩人','bard_lv20','吟遊詩人 Lv20','吟遊詩人LV20.png'],
+    ['吸血鬼','vampire_lv20','吸血鬼 Lv20','吸血鬼LV20.png'],
+    ['巫女','miko_lv20','巫女 Lv20','巫女LV20.png'],
+    ['武士','samurai_lv20','武士 Lv20','武士LV20.png'],
+    ['武鬥家','fighter_lv20','武鬥家 Lv20','武鬥家LV20.png'],
+    ['軍師','strategist_lv20','軍師 Lv20','軍師LV20.png'],
+    ['時空法師','time_lv20','時空法師 Lv20','時空法師LV20.png'],
+    ['神射手','archer_lv20','神射手 Lv20','神射手LV20.png'],
+    ['神偷','thief_lv20','神偷 Lv20','神偷LV20.png'],
+    ['祭司','priest_lv20','祭司 Lv20','祭司LV20.png'],
+    ['煉金術師','alchemist_lv20','煉金術師 Lv20','煉金術士LV20.png'], // 注意檔名是「術士」
+    ['聖騎士','paladin_lv20','聖騎士 Lv20','聖騎士LV20.png'],
+    ['雷法師','thunder_lv20','雷法師 Lv20','雷法師LV20.png'],
+    ['暗法師','dark_lv20','暗法師 Lv20','暗法師LV20.png'],
+    ['舞者','dancer_lv20','舞者 Lv20','舞者LV20.png'],
+    ['劍士','kenshi_lv20','劍士 Lv20','劍士LV20.png'],
+    ['學者','scholar_lv20','學者 Lv20','學者LV20.png'],
+    ['機械師','machinist_lv20','機械師 Lv20','機械師LV20.png'],
+    ['警長','sheriff_lv20','警長 Lv20','警長LV20.png'],
+    ['陰陽師','onmyoji_lv20','陰陽師 Lv20','陰陽師LV20.png'],
+    ['火法師','fire_lv20','火法師 Lv20','火法師LV20.png'],
+  ];
+  _LV20_LIST.forEach(([hero, id, name, file]) => {
+    _add(hero, [{ id, name, url:_u(file), requiresUnlock:true }]);
+  });
+
+  // ─── 商店圖片3 (付費版,需玩家點商店購買) ───
+  // 18 個檔,加進 HERO_PORTRAIT_LIBRARY 但需配對應商品在 SHOP_PRODUCTS
+  // (現有商品已存在,以下只新增「未上架」的 LXPSGAME repo 中新版圖,等管理員需要時再加商品)
+  const _SHOP3_LIST = [
+    ['大力士','hercules_shop3','大力士 進階','大力士3.png'],
+    ['火法師','fire_shop3','火法師 進階','火法師3.png'],
+    ['占星師','astrologer_shop3','占星師 進階','占星師3.png'],
+    ['守衛','guard_shop3','守衛 進階','守衛3.png'],
+    ['吟遊詩人','bard_shop3','吟遊詩人 進階','吟遊詩人3.png'],
+    ['吸血鬼','vampire_shop3','吸血鬼 進階','吸血鬼3.png'],
+    ['刺客','rogue_shop3','刺客 進階','刺客3.png'],
+    ['武士','samurai_shop3','武士 進階','武士3.png'],
+    ['武鬥家','fighter_shop3','武鬥家 進階','武鬥家3.png'],
+    ['軍師','strategist_shop3','軍師 進階','軍師3.png'],
+    ['時空法師','time_shop3','時空法師 進階','時空法師3.png'],
+    ['神射手','archer_shop3','神射手 進階','神射手3.png'],
+    ['祭司','priest_shop3','祭司 進階','祭司3.png'],
+    ['陰陽師','onmyoji_shop3','陰陽師 進階','陰陽師3.png'],
+    ['雷法師','thunder_shop3','雷法師 進階','雷法師3.png'],
+    ['學者','scholar_shop3','學者 進階','學者3.png'],
+    ['機械師','machinist_shop3','機械師 進階','機械師3.png'],
+    // 木靈使3 已在上面木靈使陣列直接加了
+  ];
+  _SHOP3_LIST.forEach(([hero, id, name, file]) => {
+    _add(hero, [{ id, name, url:_u(file), requiresUnlock:true }]);
+  });
+})();
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260423.6400 — 畫風切換系統(可愛/精美)
+//   玩家可在首頁切換,影響:英雄插圖、英雄替代肖像、魔物插圖、寵物圖、戰鬥背景
+//   實作方式:用 _PREMIUM_ART_OVERRIDE 對照表存「ID → 精美版 URL」,
+//   切換時批次修改 HERO_IMGS / HERO_PORTRAIT_LIBRARY / PET_DB 等,然後重繪
+// ════════════════════════════════════════════════════════════════
+
+// 玩家當前畫風(從 localStorage 讀取,預設 'cute')
+let _artStyle = 'cute';
+try{
+  const _saved = localStorage.getItem('lxps_art_style');
+  if(_saved === 'premium' || _saved === 'cute') _artStyle = _saved;
+}catch(_){}
+
+// 精美版資源對照表(玩家提供連結後填入)
+// 結構: { hero: {...}, mob: {...}, pet: {...}, scene: {...}, portrait: {...}, shop: {...} }
+//   hero[name]:    精美版英雄插圖(對應 HERO_IMGS)
+//   mob[name]:     精美版魔物插圖(BOSS / 小怪 / 稀有怪等)
+//   pet[name]:     精美版寵物插圖
+//   scene[key]:    精美版場景背景(river, trail, teagarden, japan-XX 等)
+//   portrait[id]:  替代肖像精美版(那是另一張新插圖,不是原圖的精美版)
+//   shop[name]:    精美版商店插圖(原本的「3」標記版)
+const _PREMIUM_ART_OVERRIDE = {
+  hero:    {},   // 例:'凡人': 'https://.../凡人2.png'
+  mob:     {},
+  pet:     {},
+  scene:   {},   // 例:'river': 'https://.../景美河堤2.png'
+  portrait:{},   // 例:'miko_shrine': 'https://.../巫女2_premium.png'
+  shop:    {},   // 例:'凡人': 'https://.../凡人3.png'
+};
+
+// 備份原始(可愛版)資源,以便切回時還原
+let _CUTE_ART_BACKUP = null;
+
+function _backupCuteArt(){
+  if(_CUTE_ART_BACKUP) return; // 只備份一次
+  _CUTE_ART_BACKUP = {
+    HERO_IMGS: typeof HERO_IMGS !== 'undefined' ? Object.assign({}, HERO_IMGS) : {},
+    // PET_DB / HERO_PORTRAIT_LIBRARY 用深拷貝(內含物件)
+    PET_DB: typeof PET_DB !== 'undefined' ? JSON.parse(JSON.stringify(PET_DB)) : {},
+    HERO_PORTRAIT_LIBRARY: typeof HERO_PORTRAIT_LIBRARY !== 'undefined' ? JSON.parse(JSON.stringify(HERO_PORTRAIT_LIBRARY)) : {},
+  };
+}
+
+// 套用當前畫風到所有資源(會修改 HERO_IMGS / PET_DB / HERO_PORTRAIT_LIBRARY)
+function _applyArtStyle(){
+  _backupCuteArt();
+  const isPrem = (_artStyle === 'premium');
+  // 1. 英雄插圖
+  if(typeof HERO_IMGS !== 'undefined' && _CUTE_ART_BACKUP){
+    Object.keys(_CUTE_ART_BACKUP.HERO_IMGS).forEach(name => {
+      if(isPrem && _PREMIUM_ART_OVERRIDE.hero[name]){
+        HERO_IMGS[name] = _PREMIUM_ART_OVERRIDE.hero[name];
+      } else if(isPrem && _PREMIUM_ART_OVERRIDE.mob[name]){
+        // mob 也覆蓋同一個 HERO_IMGS(因為 BOSS/魔物也存在 HERO_IMGS 裡)
+        HERO_IMGS[name] = _PREMIUM_ART_OVERRIDE.mob[name];
+      } else {
+        HERO_IMGS[name] = _CUTE_ART_BACKUP.HERO_IMGS[name];
+      }
+    });
+  }
+  // 2. 寵物
+  if(typeof PET_DB !== 'undefined' && _CUTE_ART_BACKUP){
+    Object.keys(_CUTE_ART_BACKUP.PET_DB).forEach(name => {
+      const cute = _CUTE_ART_BACKUP.PET_DB[name];
+      if(!cute) return;
+      if(isPrem && _PREMIUM_ART_OVERRIDE.pet[name]){
+        if(PET_DB[name]) PET_DB[name].img = _PREMIUM_ART_OVERRIDE.pet[name];
+      } else {
+        if(PET_DB[name] && cute.img) PET_DB[name].img = cute.img;
+      }
+    });
+  }
+  // 3. 替代肖像(library 裡的非 default 項目)
+  if(typeof HERO_PORTRAIT_LIBRARY !== 'undefined' && _CUTE_ART_BACKUP){
+    Object.keys(_CUTE_ART_BACKUP.HERO_PORTRAIT_LIBRARY).forEach(name => {
+      const cuteList = _CUTE_ART_BACKUP.HERO_PORTRAIT_LIBRARY[name];
+      const liveList = HERO_PORTRAIT_LIBRARY[name];
+      if(!cuteList || !liveList) return;
+      cuteList.forEach((cuteItem, i) => {
+        if(!liveList[i]) return;
+        // default 肖像跟 hero 圖同源,讓 _applyHeroPortraitChoices 處理;這裡只動 alt 肖像
+        if(cuteItem.id === 'default'){
+          // default 的 url 跟 HERO_IMGS 同步,不在此處改
+          return;
+        }
+        if(isPrem && _PREMIUM_ART_OVERRIDE.portrait[cuteItem.id]){
+          liveList[i].url = _PREMIUM_ART_OVERRIDE.portrait[cuteItem.id];
+        } else {
+          liveList[i].url = cuteItem.url;
+        }
+      });
+    });
+  }
+  // 4. 套用當前選擇的肖像到 HERO_IMGS(這個 helper 已存在於遊戲邏輯)
+  try{ if(typeof _applyHeroPortraitChoices === 'function') _applyHeroPortraitChoices(); }catch(_){}
+  // 5. 場景背景:用 body class 切換 CSS 變數
+  try{
+    document.body.classList.toggle('art-premium', isPrem);
+    document.body.classList.toggle('art-cute', !isPrem);
+  }catch(_){}
+  // 6. 重繪可見的英雄圖鑑/卡片
+  try{ if(typeof _buildHeroGrid === 'function') _buildHeroGrid(); }catch(_){}
+  try{
+    if(typeof G !== 'undefined' && G.p1 && G.p2){
+      [...G.p1, ...G.p2].forEach(h => { try{ renderCard(h); }catch(_){} });
+    }
+  }catch(_){}
+}
+
+// 切換畫風(由按鈕呼叫)
+function _setArtStyle(style){
+  if(style !== 'cute' && style !== 'premium') return;
+  if(_artStyle === style) return; // 無變化
+  _artStyle = style;
+  try{ localStorage.setItem('lxps_art_style', _artStyle); }catch(_){}
+  // 更新按鈕視覺
+  try{
+    const _cute = document.getElementById('art-style-cute-btn');
+    const _prem = document.getElementById('art-style-premium-btn');
+    if(_cute) _cute.classList.toggle('selected', style === 'cute');
+    if(_prem) _prem.classList.toggle('selected', style === 'premium');
+  }catch(_){}
+  _applyArtStyle();
+  // toast 提示
+  try{
+    const _msg = (style === 'premium') ? '✨ 已切換為精美畫風' : '🎨 已切換為可愛畫風';
+    if(typeof _showInGameToast === 'function') _showInGameToast(_msg, '#ffcc88', 1500);
+  }catch(_){}
+}
+
+// 啟動時:同步按鈕視覺到當前 _artStyle、套用畫風
+function _initArtStyleUI(){
+  try{
+    const _cute = document.getElementById('art-style-cute-btn');
+    const _prem = document.getElementById('art-style-premium-btn');
+    if(_cute) _cute.classList.toggle('selected', _artStyle === 'cute');
+    if(_prem) _prem.classList.toggle('selected', _artStyle === 'premium');
+  }catch(_){}
+  // 延遲套用,確保 HERO_IMGS / PET_DB / HERO_PORTRAIT_LIBRARY 都已載入
+  if(_artStyle === 'premium'){
+    setTimeout(()=>{ try{ _applyArtStyle(); }catch(_){} }, 100);
+  } else {
+    document.body.classList.add('art-cute');
+  }
+}
+// 在 DOM 載入後初始化(_artStyle 已從 localStorage 讀取)
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', _initArtStyleUI);
+} else {
+  setTimeout(_initArtStyleUI, 0);
+}
+
 // 玩家已解鎖的替代肖像：{heroName: [portraitId, ...]}（不含 'default'，default 永遠解鎖）
 let _heroPortraitUnlocked = {};
 // 玩家目前使用的肖像：{heroName: portraitId}；未記錄者 = 'default'
@@ -7376,6 +7701,12 @@ function _getCurPortraitObjPos(name){
   return null;
 }
 function getHeroObjPos(name){
+  // ★ v1.0.20260423.6600 — 精美畫風只提供全身圖,在卡片/預覽用 CSS 自動裁切到頭部
+  //   做法:object-position: center top(讓圖片頂端對齊容器頂端,顯示頭部)
+  //   配合 getHeroImgStyle 的 background-size 放大,讓頭部塞滿容器
+  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
+    return 'center top';
+  }
   const _override = _getCurPortraitObjPos(name);
   if(_override){
     const parts = _override.split(' ');
@@ -7417,6 +7748,10 @@ const HERO_THUMB_POS_BY_PORTRAIT = {
 
 // 左側縮圖使用：依當前選擇的肖像套用對應位置；否則 fallback 到 HERO_THUMB_POS
 function getHeroThumbObjPos(name){
+  // ★ v1.0.20260423.6600 — 精美畫風縮圖也是全身圖裁切到頭部
+  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
+    return 'center top';
+  }
   try{
     const choice = (typeof _heroPortraitChoice !== 'undefined' && _heroPortraitChoice[name]) || 'default';
     if(choice !== 'default' && HERO_THUMB_POS_BY_PORTRAIT[name] && HERO_THUMB_POS_BY_PORTRAIT[name][choice]){
@@ -7426,6 +7761,13 @@ function getHeroThumbObjPos(name){
   return HERO_THUMB_POS[name] || 'center center';
 }
 function getHeroImgStyle(name){
+  // ★ v1.0.20260423.6600 — 精美畫風(戰鬥卡片用):全身圖 + 放大 + 對齊上方,顯示頭部
+  //   背景大小 220% auto = 放大 2.2 倍,讓頭部佔滿容器
+  //   背景位置 center top = 圖頂端對齊容器頂端
+  //   注意:此函式只用於戰鬥卡片(card-illus 等),圖鑑詳細頁用另一條路徑(直接 img tag)
+  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
+    return 'background-size:220% auto;background-position:center top;background-repeat:no-repeat';
+  }
   const _override = _getCurPortraitObjPos(name);
   const pos = HERO_IMG_POS[name] || ['160% auto','center 12%'];
   const _size = pos[0];
@@ -31792,6 +32134,16 @@ async function gameCloudLoad() {
     localStorage.setItem('lxps_' + _gUserId + '_progress', JSON.stringify(data));
     const saved = data.savedAt ? new Date(data.savedAt).toLocaleString('zh-TW') : '';
     log('☁️ 進度已載入' + (saved ? '（' + saved + '）' : ''));
+    // ★ v1.0.20260423.6800 — 雲端載入後檢查是否補發等級自動解鎖肖像(Lv10 / Lv20)
+    //   (老玩家可能已經是 Lv10+/Lv20+ 但解鎖前商品已從商店移除,需要補發)
+    try{
+      if(typeof _scanAllLvUnlockPortraits === 'function'){
+        const _newCount = _scanAllLvUnlockPortraits();
+        if(_newCount > 0){
+          console.log('[等級解鎖肖像] 補發 ' + _newCount + ' 張精美肖像');
+        }
+      }
+    }catch(_){}
     setTimeout(()=>{
       try{ bannerFX(null, cloudOk ? '☁️ 雲端進度已同步！' : '📂 本地備份已載入（雲端失敗）', '#44ff88', 2000); }catch(e){}
     }, 1500);
@@ -32016,48 +32368,8 @@ const BACKPACK_ITEM_DEF = {
   'timemage_corridor_portrait': { name:'時空法師肖像：時光迴廊', icon:'⌛',
     desc:'全新繪製的時空法師肖像「時光迴廊」，購買後可在英雄圖鑑的時空法師詳細頁切換使用（原肖像永遠保留）。',
     type:'portrait', heroName:'時空法師', portraitId:'time_corridor', useLabel:'前往切換' },
-  // ── 電腦繪圖師肖像 ──
-  'graphic_boy_portrait': { name:'電腦繪圖師肖像：數位逐夢', icon:'🎨',
-    desc:'全新繪製的電腦繪圖師肖像「數位逐夢」，購買後可在英雄圖鑑的電腦繪圖師詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'電腦繪圖師', portraitId:'graphic_boy', useLabel:'前往切換' },
-  'graphic_girl_portrait': { name:'電腦繪圖師肖像:彩筆織光', icon:'🎨',
-    desc:'全新繪製的電腦繪圖師肖像「彩筆織光」，購買後可在英雄圖鑑的電腦繪圖師詳細頁切換使用(原肖像永遠保留)。',
-    type:'portrait', heroName:'電腦繪圖師', portraitId:'graphic_girl', useLabel:'前往切換' },
-  // ── 直笛團員肖像 ──
-  'recorder_boy_portrait': { name:'直笛團員肖像:竹音清徹', icon:'🎶',
-    desc:'全新繪製的直笛團員肖像「竹音清徹」，購買後可在英雄圖鑑的直笛團員詳細頁切換使用(原肖像永遠保留)。',
-    type:'portrait', heroName:'直笛團員', portraitId:'recorder_boy', useLabel:'前往切換' },
-  'recorder_girl_portrait': { name:'直笛團員肖像:晨笛迴旋', icon:'🎶',
-    desc:'全新繪製的直笛團員肖像「晨笛迴旋」，購買後可在英雄圖鑑的直笛團員詳細頁切換使用(原肖像永遠保留)。',
-    type:'portrait', heroName:'直笛團員', portraitId:'recorder_girl', useLabel:'前往切換' },
-  // ── 弦樂團員肖像 ──
-  'strings_boy_portrait': { name:'弦樂團員肖像:琴鍵共鳴', icon:'🎻',
-    desc:'全新繪製的弦樂團員肖像「琴鍵共鳴」，購買後可在英雄圖鑑的弦樂團員詳細頁切換使用(原肖像永遠保留)。',
-    type:'portrait', heroName:'弦樂團員', portraitId:'strings_boy', useLabel:'前往切換' },
-  'strings_girl_portrait': { name:'弦樂團員肖像:弓弦流月', icon:'🎻',
-    desc:'全新繪製的弦樂團員肖像「弓弦流月」，購買後可在英雄圖鑑的弦樂團員詳細頁切換使用(原肖像永遠保留)。',
-    type:'portrait', heroName:'弦樂團員', portraitId:'strings_girl', useLabel:'前往切換' },
-  // ── 籃球隊員肖像 ──
-  'basket_boy_portrait': { name:'籃球隊員肖像：烈火灌籃', icon:'🏀',
-    desc:'全新繪製的籃球隊員肖像「烈火灌籃」，購買後可在英雄圖鑑的籃球隊員詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'籃球隊員', portraitId:'basket_boy', useLabel:'前往切換' },
-  'basket_girl_portrait': { name:'籃球隊員肖像：疾風三分', icon:'🏀',
-    desc:'全新繪製的籃球隊員肖像「疾風三分」，購買後可在英雄圖鑑的籃球隊員詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'籃球隊員', portraitId:'basket_girl', useLabel:'前往切換' },
-  // ── 田徑隊員肖像 ──
-  'track_boy_portrait': { name:'田徑隊員肖像：長風躍步', icon:'🏃',
-    desc:'全新繪製的田徑隊員肖像「長風躍步」(跳遠主題)，購買後可在英雄圖鑑的田徑隊員詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'田徑隊員', portraitId:'track_boy', useLabel:'前往切換' },
-  'track_girl_portrait': { name:'田徑隊員肖像：凌雲一躍', icon:'🏃',
-    desc:'全新繪製的田徑隊員肖像「凌雲一躍」(跳高主題)，購買後可在英雄圖鑑的田徑隊員詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'田徑隊員', portraitId:'track_girl', useLabel:'前往切換' },
-  // ── 小劇團員肖像 ──
-  'drama_boy_portrait': { name:'小劇團員肖像：銀冕王子', icon:'🎭',
-    desc:'全新繪製的小劇團員肖像「銀冕王子」(王子主題)，購買後可在英雄圖鑑的小劇團員詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'小劇團員', portraitId:'drama_boy', useLabel:'前往切換' },
-  'drama_girl_portrait': { name:'小劇團員肖像：琉璃公主', icon:'🎭',
-    desc:'全新繪製的小劇團員肖像「琉璃公主」(公主主題)，購買後可在英雄圖鑑的小劇團員詳細頁切換使用（原肖像永遠保留）。',
-    type:'portrait', heroName:'小劇團員', portraitId:'drama_girl', useLabel:'前往切換' },
+  // ★ v1.0.20260423.6700 — 移除以下初始角色肖像商品(電繪/直笛/弦樂/籃球/田徑/小劇 boy+girl 共12個)
+  //   改為達 Lv10 自動解鎖,商品定義已移除避免商店仍能購買
   // ★ v1.0.20260421.3000p — 巫女肖像
   'miko_shrine_portrait': { name:'巫女肖像：神社祭禮', icon:'⛩',
     desc:'全新繪製的巫女肖像「神社祭禮」，購買後可在英雄圖鑑的巫女詳細頁切換使用（原肖像永遠保留）。',
@@ -32111,48 +32423,8 @@ const SHOP_PRODUCTS = [
   { id:'timemage_corridor_portrait', name:'時空法師肖像：時光迴廊', icon:'⌛',
     desc:'全新繪製的時空法師替代肖像「時光迴廊」。購買後即永久解鎖，可在英雄圖鑑的時空法師詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  // ── 電腦繪圖師肖像 ──
-  { id:'graphic_boy_portrait', name:'電腦繪圖師肖像：數位逐夢', icon:'🎨',
-    desc:'全新繪製的電腦繪圖師替代肖像「數位逐夢」。購買後即永久解鎖，可在英雄圖鑑的電腦繪圖師詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  { id:'graphic_girl_portrait', name:'電腦繪圖師肖像：彩筆織光', icon:'🎨',
-    desc:'全新繪製的電腦繪圖師替代肖像「彩筆織光」。購買後即永久解鎖，可在英雄圖鑑的電腦繪圖師詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  // ── 直笛團員肖像 ──
-  { id:'recorder_boy_portrait', name:'直笛團員肖像：竹音清徹', icon:'🎶',
-    desc:'全新繪製的直笛團員替代肖像「竹音清徹」。購買後即永久解鎖，可在英雄圖鑑的直笛團員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  { id:'recorder_girl_portrait', name:'直笛團員肖像：晨笛迴旋', icon:'🎶',
-    desc:'全新繪製的直笛團員替代肖像「晨笛迴旋」。購買後即永久解鎖，可在英雄圖鑑的直笛團員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  // ── 弦樂團員肖像 ──
-  { id:'strings_boy_portrait', name:'弦樂團員肖像：琴鍵共鳴', icon:'🎻',
-    desc:'全新繪製的弦樂團員替代肖像「琴鍵共鳴」。購買後即永久解鎖，可在英雄圖鑑的弦樂團員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  { id:'strings_girl_portrait', name:'弦樂團員肖像：弓弦流月', icon:'🎻',
-    desc:'全新繪製的弦樂團員替代肖像「弓弦流月」。購買後即永久解鎖，可在英雄圖鑑的弦樂團員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  // ── 籃球隊員肖像 ──
-  { id:'basket_boy_portrait', name:'籃球隊員肖像：烈火灌籃', icon:'🏀',
-    desc:'全新繪製的籃球隊員替代肖像「烈火灌籃」。購買後即永久解鎖，可在英雄圖鑑的籃球隊員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  { id:'basket_girl_portrait', name:'籃球隊員肖像：疾風三分', icon:'🏀',
-    desc:'全新繪製的籃球隊員替代肖像「疾風三分」。購買後即永久解鎖，可在英雄圖鑑的籃球隊員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  // ── 田徑隊員肖像 ──
-  { id:'track_boy_portrait', name:'田徑隊員肖像：長風躍步', icon:'🏃',
-    desc:'全新繪製的田徑隊員替代肖像「長風躍步」(跳遠主題)。購買後即永久解鎖，可在英雄圖鑑的田徑隊員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  { id:'track_girl_portrait', name:'田徑隊員肖像：凌雲一躍', icon:'🏃',
-    desc:'全新繪製的田徑隊員替代肖像「凌雲一躍」(跳高主題)。購買後即永久解鎖，可在英雄圖鑑的田徑隊員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  // ── 小劇團員肖像 ──
-  { id:'drama_boy_portrait', name:'小劇團員肖像：銀冕王子', icon:'🎭',
-    desc:'全新繪製的小劇團員替代肖像「銀冕王子」(王子主題)。購買後即永久解鎖，可在英雄圖鑑的小劇團員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
-  { id:'drama_girl_portrait', name:'小劇團員肖像：琉璃公主', icon:'🎭',
-    desc:'全新繪製的小劇團員替代肖像「琉璃公主」(公主主題)。購買後即永久解鎖，可在英雄圖鑑的小劇團員詳細頁切換使用（原始肖像仍保留）。',
-    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ★ v1.0.20260423.6700 — 移除電繪/直笛/弦樂/籃球/田徑/小劇 boy+girl 共 12 個商品
+  //   改為達 Lv10 自動解鎖,商店不再販售
   // ── 巫女肖像 ──
   { id:'miko_shrine_portrait', name:'巫女肖像：神社祭禮', icon:'⛩',
     desc:'全新繪製的巫女替代肖像「神社祭禮」。購買後即永久解鎖，可在英雄圖鑑的巫女詳細頁切換使用（原始肖像仍保留）。',
@@ -33496,6 +33768,92 @@ function _expForLevel(lv) {
 
 function getHeroLevel(name) { return _heroLevels[name] || 1; }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260423.6800 — 統一的等級解鎖肖像對照表
+//   結構: { 角色名: { lv: 解鎖等級, ids: [portrait id 陣列] } }
+//   Lv10 (初始 7 隻) - 解鎖「圖片2」精美版
+//     6 隻有 boy/girl 兩張、程式設計師有一張新圖片2
+//   Lv20 (其他英雄) - 解鎖一張精美升級版
+//   實際的 portrait id 與 URL 等玩家提供精美版連結後再加入 HERO_PORTRAIT_LIBRARY
+//   並把對應 id 填到此表
+// ★ v1.0.20260423.6900 — id 命名規則:
+//   為避免跟商店付費版 portrait id 衝突,Lv10/Lv20 解鎖版一律使用 _lv10 / _lv20 後綴
+//   例如田徑男孩 Lv10 版 → 'track_boy_lv10' (商店付費版 'track_boy' 仍保留為「絕版圖」)
+//   這樣老玩家付費購買的圖跟新玩家等級解鎖的圖是不同的圖,不會衝突
+// ════════════════════════════════════════════════════════════════
+const _LV_UNLOCK_PORTRAITS = {
+  // ─── Lv10 解鎖(初始 8 隻角色) ───
+  // ★ v1.0.20260423.7000 — 全部填入完整 id (對應 HERO_PORTRAIT_LIBRARY 新增條目)
+  '電腦繪圖師': { lv:10, ids:['graphic_girl_lv10', 'graphic_boy_lv10'] },
+  '弦樂團員':   { lv:10, ids:['strings_boy_lv10', 'strings_girl_lv10'] },
+  '小劇團員':   { lv:10, ids:['drama_girl_lv10', 'drama_boy_lv10'] },
+  '田徑隊員':   { lv:10, ids:['track_boy_lv10'] },  // 只有男孩版
+  '直笛團員':   { lv:10, ids:['recorder_orig_lv10', 'recorder_boy_lv10'] },
+  '籃球隊員':   { lv:10, ids:['basket_orig_lv10', 'basket_girl_lv10'] },
+  '程式設計師': { lv:10, ids:['coder_lv10'] },
+  '動物學家':   { lv:10, ids:['animal_lv10'] },
+
+  // ─── Lv20 解鎖(其他英雄各一張) ───
+  '凡人':       { lv:20, ids:['mortal_lv20'] },
+  '大力士':     { lv:20, ids:['hercules_lv20'] },
+  '刺客':       { lv:20, ids:['rogue_lv20'] },
+  '占星師':     { lv:20, ids:['astrologer_lv20'] },
+  '光法師':     { lv:20, ids:['light_lv20'] },
+  '冰法師':     { lv:20, ids:['ice_lv20'] },
+  '吟遊詩人':   { lv:20, ids:['bard_lv20'] },
+  '吸血鬼':     { lv:20, ids:['vampire_lv20'] },
+  '巫女':       { lv:20, ids:['miko_lv20'] },
+  '武士':       { lv:20, ids:['samurai_lv20'] },
+  '武鬥家':     { lv:20, ids:['fighter_lv20'] },
+  '軍師':       { lv:20, ids:['strategist_lv20'] },
+  '時空法師':   { lv:20, ids:['time_lv20'] },
+  '神射手':     { lv:20, ids:['archer_lv20'] },
+  '神偷':       { lv:20, ids:['thief_lv20'] },
+  '祭司':       { lv:20, ids:['priest_lv20'] },
+  '煉金術師':   { lv:20, ids:['alchemist_lv20'] },
+  '聖騎士':     { lv:20, ids:['paladin_lv20'] },
+  '雷法師':     { lv:20, ids:['thunder_lv20'] },
+  '暗法師':     { lv:20, ids:['dark_lv20'] },
+  '舞者':       { lv:20, ids:['dancer_lv20'] },
+  '劍士':       { lv:20, ids:['kenshi_lv20'] },
+  '學者':       { lv:20, ids:['scholar_lv20'] },
+  '機械師':     { lv:20, ids:['machinist_lv20'] },
+  '警長':       { lv:20, ids:['sheriff_lv20'] },
+  '陰陽師':     { lv:20, ids:['onmyoji_lv20'] },
+  '火法師':     { lv:20, ids:['fire_lv20'] },
+  '木靈使':     { lv:20, ids:['dryad_lv20'] },
+};
+
+// 檢查單一英雄,若 Lv 達標則自動解鎖,回傳新解鎖的 id 陣列
+function _checkLvUnlockPortraits(name){
+  const def = _LV_UNLOCK_PORTRAITS[name];
+  if(!def || !def.ids || !def.ids.length) return [];
+  const lv = (_heroLevels && _heroLevels[name]) || 1;
+  if(lv < def.lv) return [];
+  if(!_heroPortraitUnlocked[name]) _heroPortraitUnlocked[name] = [];
+  const newlyUnlocked = [];
+  def.ids.forEach(id => {
+    if(!_heroPortraitUnlocked[name].includes(id)){
+      _heroPortraitUnlocked[name].push(id);
+      newlyUnlocked.push(id);
+    }
+  });
+  return newlyUnlocked;
+}
+
+// 啟動 / 雲端載入後 / 玩家進英雄圖鑑時呼叫,掃所有英雄補發
+function _scanAllLvUnlockPortraits(){
+  let _totalNew = 0;
+  Object.keys(_LV_UNLOCK_PORTRAITS).forEach(name => {
+    const newly = _checkLvUnlockPortraits(name);
+    _totalNew += newly.length;
+  });
+  if(_totalNew > 0){
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+  }
+  return _totalNew;
+}
+
 // ★ 冒險模式：等級每級 +2% 原始HP上限（線性疊加，無條件進位）
 // 呼叫時機：所有英雄加入 G.p1 **並套用素質投資後**（這樣「投資HP」也會被加成）
 // 使用傳入 hero 當下的 hp 作為 baseHp（即 HERO_DB 基本HP + 玩家HP投資）
@@ -33716,6 +34074,19 @@ function addHeroExp(name, exp) {
       if(!_heroStatPoints[name]) _heroStatPoints[name] = 0;
       _heroStatPoints[name]++;
       log(`🌟 [${name}] 升級！LV${_heroLevels[name]}！獲得1點素質點數！`);
+      // ★ v1.0.20260423.6800 — 等級解鎖肖像(統一處理 Lv10 / Lv20):
+      //   到達該角色定義的解鎖等級時觸發,可解鎖 1 張或多張(boy + girl)
+      try{
+        const _newPortraits = _checkLvUnlockPortraits(name);
+        if(_newPortraits.length > 0){
+          const _def = _LV_UNLOCK_PORTRAITS[name];
+          const _msg = `🎨 [${name}] 達 Lv${_def.lv}!解鎖精美肖像 ${_newPortraits.length} 張!可在英雄圖鑑切換`;
+          log(_msg);
+          if(typeof _showInGameToast === 'function'){
+            _showInGameToast(_msg, '#ffcc88', 3500);
+          }
+        }
+      }catch(_){}
       // ★ 里程碑升級：天賦技能強化（角色 Lv10/20/30/40 → 天賦 Lv2/Lv3/Lv4/Lv5 MAX；Lv50 僅給素質點與獎章）
       const _lv = _heroLevels[name];
       if([10,20,30,40].includes(_lv)){
@@ -40674,6 +41045,195 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.7100', brief:[
+    '🔒 首頁畫風切換按鈕暫時上鎖,點擊顯示「未開放」提示',
+  ], items:[
+    '【調整】',
+    '  「🎨 可愛畫風」「✨ 精美畫風」兩顆按鈕改為:',
+    '    圖示前加 🔒 鎖頭符號',
+    '    點擊不切換,改為彈出 toast「🔒 此功能尚未開放」',
+    '    視覺改為灰階 + 半透明,讓玩家一看就知道暫時不可用',
+    '【為什麼上鎖】',
+    '  精美畫風的圖片資源還在持續補充中',
+    '  之前先做好框架,現在資源還沒齊全前先暫停玩家使用,避免顯示不一致',
+    '【後續開放方式】',
+    '  等所有英雄/魔物/寵物/背景的精美版圖都備齊',
+    '  把按鈕的 onclick 改回 _setArtStyle 即可開放',
+    '  整套畫風系統的核心邏輯仍保留,沒被刪除',
+  ] },
+  { ver:'v1.0.20260423.7000', brief:[
+    '🎁 批次匯入 LV10 / LV20 / 商店圖片3 全部精美肖像連結!',
+    '✨ 8 隻初始角色達 Lv10、27 隻其他角色達 Lv20 自動解鎖精美版,可在英雄圖鑑切換',
+  ], items:[
+    '【LV10 解鎖(8 隻初始角色,共 13 張新肖像)】',
+    '  電腦繪圖師:graphic_girl_lv10(原Q女)、graphic_boy_lv10(補男版)',
+    '  程式設計師:coder_lv10(一張)',
+    '  弦樂團員:strings_boy_lv10(原Q男)、strings_girl_lv10(補女版)',
+    '  小劇團員:drama_girl_lv10(原Q女)、drama_boy_lv10(補男版)',
+    '  直笛團員:recorder_orig_lv10、recorder_boy_lv10',
+    '  田徑隊員:track_boy_lv10(只有男孩版)',
+    '  籃球隊員:basket_orig_lv10、basket_girl_lv10',
+    '  動物學家:animal_lv10(一張)',
+    '【LV20 解鎖(27 隻其他角色,各一張)】',
+    '  凡人、大力士、刺客、占星師、光法師、冰法師、吟遊詩人、吸血鬼、',
+    '  巫女、武士、武鬥家、軍師、時空法師、神射手、神偷、祭司、煉金術師、',
+    '  聖騎士、雷法師、暗法師、舞者、劍士、學者、機械師、警長、陰陽師、火法師',
+    '  全部一張新進階版,達 Lv20 自動解鎖,加進英雄圖鑑切換清單',
+    '  另外 木靈使 也加 Lv20 解鎖(dryad_lv20)',
+    '【商店圖片3(18 個進階版,加進肖像庫)】',
+    '  大力士、火法師、占星師、守衛、吟遊詩人、吸血鬼、刺客、武士、武鬥家、',
+    '  軍師、時空法師、神射手、祭司、陰陽師、雷法師、學者、機械師(各一張),木靈使3',
+    '  目前以 _shop3 後綴 portrait id 加入 HERO_PORTRAIT_LIBRARY',
+    '  注意:商店實際購買流程要靠 SHOP_PRODUCTS 配對(若需要商店上架可後續再加)',
+    '【舊絕版商品保留】',
+    '  原有的 graphic_boy / drama_girl / strings_boy 等付費版仍存在,',
+    '  老玩家既有解鎖紀錄不變,仍可在英雄圖鑑切換使用',
+    '【關於 raw URL】',
+    '  所有新加 URL 統一格式:https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/<檔名>',
+    '  檔名透過 encodeURIComponent 自動轉換中文(避免特殊字元 URL 錯誤)',
+    '【後續微調】',
+    '  進遊戲後若發現某些 portrait 名稱不喜歡(例如「電腦繪圖男 Lv10」),告訴我我可以改',
+    '  若直笛團員 / 田徑隊員 / 籃球隊員 / 動物學家 / 程式設計師 原 Q 版性別需修正,',
+    '  可以調整 portrait id 名稱(目前先用「orig」表示「沿用原 Q 版性別的 LV10 版」)',
+  ] },
+  { ver:'v1.0.20260423.6900', brief:[
+    '🛍️ 確立「絕版」概念:老玩家曾付費購買的肖像跟新玩家 Lv10/Lv20 解鎖的肖像是不同張圖',
+    '✨ 老玩家付費版稱為「絕版限定圖」(已下架),新玩家等級解鎖的是另一張新繪圖',
+  ], items:[
+    '【概念釐清】',
+    '  原本以為:老玩家付費版 = 新玩家 Lv10 解鎖版(同一張圖)',
+    '  實際上:管理員會繪製「另一張新圖」作為 Lv10/Lv20 等級解鎖獎勵,跟老玩家絕版圖不同',
+    '【命名規則】',
+    '  老玩家付費版(從商店移除後視為絕版):graphic_boy, graphic_girl, strings_boy 等',
+    '  新玩家 Lv10 解鎖版:graphic_boy_lv10, graphic_girl_lv10 等(加 _lv10 後綴)',
+    '  其他英雄 Lv20 解鎖版:fire_lv20, ice_lv20, kenshi_lv20 等(加 _lv20 後綴)',
+    '  檔名命名建議:角色名 + LV10/LV20 (例:田徑隊男孩LV10.png、劍士LV20.png)',
+    '【實作改動】',
+    '  _LV_UNLOCK_PORTRAITS 表的 portrait id 全改為 _lv10 / _lv20 後綴',
+    '  避免跟 HERO_PORTRAIT_LIBRARY 中商店付費版 id 衝突',
+    '  老玩家的 _heroPortraitUnlocked 紀錄不動,他們仍能在英雄圖鑑切換到絕版圖',
+    '  新玩家升到 Lv10 時拿到的是 graphic_boy_lv10(不同 id,不同圖)',
+    '【後續】',
+    '  等管理員提供新版「LV10/LV20 圖」連結時:',
+    '    1. 在 HERO_PORTRAIT_LIBRARY 新增條目,id 帶 _lv10/_lv20 後綴',
+    '    2. _LV_UNLOCK_PORTRAITS 該角色的 ids 陣列已預填好',
+    '    3. 該角色升到對應等級即自動解鎖',
+  ] },
+  { ver:'v1.0.20260423.6800', brief:[
+    '🎁 統一肖像解鎖規則:Lv10 / Lv20 自動解鎖「圖片2」精美版,不需購買',
+    '🛒 商店保留現有 17 個肖像為「圖片3」付費版(另一張不同主題)',
+  ], items:[
+    '【三層肖像規則】',
+    '  圖片1 = 預設肖像(Lv1 自帶)',
+    '  圖片2 = 等級自動解鎖的精美版',
+    '    ・初始 6 隻角色(電腦繪圖師、弦樂團員、小劇團員、田徑隊員、直笛團員、籃球隊員)',
+    '      → Lv10 同時解鎖 boy + girl 兩張',
+    '    ・程式設計師 → Lv10 解鎖一張(等連結)',
+    '    ・其他英雄(火法、冰法、刺客、武鬥家、巫女、木靈使、大天狗等)',
+    '      → Lv20 解鎖一張進階精美版(等連結)',
+    '  圖片3 = 商店付費版(現有 17 個商品保留,等於是「另一張不同主題」的特別版)',
+    '【統一資料表】',
+    '  新增 _LV_UNLOCK_PORTRAITS 對照表,結構: { 角色名: { lv, ids } }',
+    '  目前 Lv10 對應 6 隻角色已啟用,程式設計師 + 動物學家 + 17 隻其他英雄等連結',
+    '【目前已啟用解鎖】',
+    '  電腦繪圖師、弦樂團員、小劇團員、田徑隊員、直笛團員、籃球隊員',
+    '  → 達 Lv10 自動解鎖 boy + girl 兩張精美肖像',
+    '【補發機制】',
+    '  雲端載入後 _scanAllLvUnlockPortraits() 檢查所有英雄等級,補發應有的解鎖',
+    '【商店現狀(17 個保留商品)】',
+    '  火法師、冰法師、雷法師、刺客、吸血鬼、大力士、學者、機械師、武鬥家、',
+    '  神射手、程式設計師(quantum_code)、聖騎士、軍師、陰陽師、巫女、木靈使、時空法師、祭司',
+    '【後續】',
+    '  等管理員提供「圖片2」精美版連結時:',
+    '    1. 在 HERO_PORTRAIT_LIBRARY 新增 portrait id + url',
+    '    2. 取消 _LV_UNLOCK_PORTRAITS 中對應角色的註解',
+    '    3. 該角色升到對應等級即自動解鎖',
+  ] },
+  { ver:'v1.0.20260423.6700', brief:[
+    '🎁 6 隻初始角色精美肖像改為「達 Lv10 自動解鎖 boy + girl 兩張」!不再需要購買',
+    '🛒 商店移除以下 12 個肖像商品,改為等級獎勵',
+  ], items:[
+    '【免費解鎖規則】',
+    '  電腦繪圖師、弦樂團員、小劇團員、田徑隊員、直笛團員、籃球隊員',
+    '  以上 6 隻角色升到 Lv10 時,自動同時解鎖該角色的「男生版 + 女生版」精美肖像',
+    '  解鎖後到英雄圖鑑詳細頁,可以隨時切換 default / boy / girl 三張肖像',
+    '【商店移除】',
+    '  從 SHOP_PRODUCTS 與 BACKPACK_ITEM_DEF 移除 12 個商品定義',
+    '【補發機制】',
+    '  老玩家若已是 Lv10+ 但帳號中未解鎖此 6 隻肖像,登入後雲端載入時會自動補發',
+    '【未動的角色】',
+    '  程式設計師「量子編碼」(quantum_code) — 仍是商店付費商品,沒做 boy/girl 兩版',
+    '  動物學家 — 目前還沒有 boy/girl 兩張圖,先不在自動解鎖清單內',
+    '  之後若提供圖,加進 _AUTO_UNLOCK_L10_PORTRAITS 對照表即可',
+    '【已購玩家】',
+    '  舊玩家若已用知識幣購買過這 12 個商品,_heroPortraitUnlocked 中的解鎖紀錄保留',
+    '  繼續可以切換使用,不會因為商品移除而消失',
+  ] },
+  { ver:'v1.0.20260423.6600', adminOnly:true, brief:[
+    '🎨 精美畫風的圖片定位策略確認:每個角色只需一張全身圖,CSS 自動裁切',
+  ], items:[
+    '【設計確認】',
+    '  每個英雄/魔物/寵物在精美畫風下只需要 1 張全身圖,不必另外提供頭部裁切版',
+    '  圖鑑詳細頁、獲得新英雄畫面 → 顯示完整全身圖(object-fit: contain, top center)',
+    '  戰鬥卡片、選角頁、預覽縮圖 → 用 CSS 自動裁切到頭部',
+    '【CSS 自動裁切的做法】',
+    '  background-size: 220% auto → 圖片放大 2.2 倍',
+    '  background-position: center top → 圖頂端對齊容器頂端,顯示頭部那塊',
+    '  object-position: center top(用 img 標籤的場景)',
+    '  → 全身圖會自動「顯示頭部部位」,玩家不會看到腰部以下',
+    '【後續微調】',
+    '  若某張圖頭部位置特別(例如戴帽子或頭髮特別高的角色),可能需要調整裁切位置',
+    '  屆時再針對單一角色加 PREMIUM_HEAD_POS 對照表處理',
+  ] },
+  { ver:'v1.0.20260423.6500', adminOnly:true, brief:[
+    '🎨 精美畫風的圖片定位:預設用 center center + contain,讓全身圖正常置中顯示',
+  ], items:[
+    '【背景】',
+    '  舊版可愛畫風是 Q 版頭身比,所以 HERO_IMG_POS 把圖片裁切到「上方 12%」(把臉對齊容器中央)',
+    '  精美版是全身圖,套用同一裁切會把臉切掉(顯示腰部以下)',
+    '【修正】',
+    '  getHeroObjPos / getHeroThumbObjPos / getHeroImgStyle 三個函式在 _artStyle === \'premium\' 時:',
+    '    object-position 預設 center center(完整置中)',
+    '    background-size 改為 contain(全圖完整顯示不裁切)',
+    '  HERO_IMG_POS / HERO_THUMB_POS 的 Q 版裁切設定都不套用',
+    '【後續微調】',
+    '  等玩家提供精美版連結並進遊戲看實際顯示後,可能需要微調個別角色',
+    '  例如某張全身圖比例特別高時,可能需要 object-position: center 30% 之類',
+    '  屆時再針對單一角色加 PREMIUM_OBJ_POS 對照表處理',
+  ] },
+  { ver:'v1.0.20260423.6400', brief:[
+    '🎨 首頁新增「畫風切換」按鈕!可愛畫風 / 精美畫風隨時切換',
+    '⚠ 此版只完成框架,精美版插圖/背景連結尚未填入(等管理員陸續補充)',
+  ], items:[
+    '【按鈕位置】',
+    '  首頁主畫面「📖 遊戲介紹」按鈕上方,並排兩顆:',
+    '    🎨 可愛畫風(預設,目前用的)',
+    '    ✨ 精美畫風(切換後使用第二版精美插圖)',
+    '【系統機制】',
+    '  選擇儲存:localStorage `lxps_art_style`(全裝置同步,不依賴雲端)',
+    '  即時生效:切換時立刻重繪所有可見的英雄卡片、肖像、寵物、戰鬥場景',
+    '【涵蓋資源】',
+    '  英雄插圖(HERO_IMGS)',
+    '  英雄替代肖像(HERO_PORTRAIT_LIBRARY)',
+    '  魔物插圖(BOSS / 菁英 / 路邊小怪 / 稀有怪)',
+    '  寵物插圖(PET_DB)',
+    '  戰鬥場景背景(河堤、樟湖步道、茶園、貓空 BOSS、杏花妖、富士山深入、富士山火口、',
+    '              表參道祭典、古老神社等 10 種背景)',
+    '【內部結構】',
+    '  _PREMIUM_ART_OVERRIDE = { hero, mob, pet, scene, portrait, shop }',
+    '  _CUTE_ART_BACKUP 保留可愛版原始 URL,切回時還原',
+    '  _applyArtStyle() 批次替換 HERO_IMGS / PET_DB / HERO_PORTRAIT_LIBRARY',
+    '  CSS body.art-premium / body.art-cute 切換戰鬥場景背景',
+    '【替代肖像規則】',
+    '  注意:替代肖像(神社祭禮、千年神木等)不是原圖的精美版',
+    '  而是「另一張不同的精美插圖」,只在精美畫風下顯示',
+    '  cute 模式仍顯示原本的可愛版替代肖像',
+    '【後續】',
+    '  此版只搭骨架,等玩家提供以下連結時,我會填入 _PREMIUM_ART_OVERRIDE:',
+    '    每個英雄/魔物/寵物的精美版 URL(命名規則:原檔名+「2」)',
+    '    商店插圖精美版(命名規則:原檔名+「3」)',
+    '    每個戰鬥背景的精美版 URL',
+  ] },
   { ver:'v1.0.20260423.6300', brief:[
     '🔥 火法師爆發「烈焰爆發」附加狀態升級為「強力燃燒」(行動前後各-10HP);Lv5 滿級時 +1 回合',
     '🔥 火法師 S1「火焰球」改為「特技150%+追加10必中」基礎,每級 +5% 傷害、追加 +1',
@@ -44522,7 +45082,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.6300';
+  const CURRENT_VERSION = 'v1.0.20260423.7100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44539,7 +45099,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.6300';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.7100';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
