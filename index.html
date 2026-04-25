@@ -6933,7 +6933,7 @@ const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。'}},
   '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
   '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
-  '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'傷害1名對手＋追加10必中',fd:'用特技傷害1名對手，並追加無視其有利狀態的10點傷害'},s2:{n:'地獄之火',c:4,d:'全體對手燃燒（每回合-10HP，2回合）',fd:'使全體對手每次行動前損失10HP（無視有利狀態），持續2回合。'}},
+  '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'傷害1名對手＋追加10必中',fd:'用特技傷害1名對手，並追加無視其有利狀態的10點傷害'},s2:{n:'地獄之火',c:4,d:'特技40%全體+燃燒2回合',fd:'依特技值的40%傷害全體對手(每升 1 級+5%基礎傷害),同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
@@ -7194,7 +7194,7 @@ const STATUS_DESCS = {
   nosell:       '查封：無法使用或販賣物品',
   forecast:     '失明：行動成功率減半',
   spddown:      '遲緩：本回合最後行動',
-  hellfire:     '地獄之火：每回合行動前損失10HP',
+  hellfire:     '燃燒：行動前後各損失5HP',
   poison:       '劇毒：每回合損失HP',
   noheal_curse: '不治詛咒：無法恢復HP',
   stubbornDebuff:'怨念強化：不利狀態無法被解除',
@@ -7298,7 +7298,7 @@ const BURST_UPGRADE_DEF = {
   '程式設計師':{ rows: [[0,'不利→有利+全體50%HP+2名對手無法行動'],[1,'恢復+10%'],[2,'恢復+20%'],[3,'恢復+30%'],[4,'恢復+40%、+1名目標']] },
   '弦樂團員':  { rows: [[0,'特技×0.4 全體3~5次（必中）+復活'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
   '小劇團員':  { rows: [[0,'依倒下人數×3回能量，能量提升全隊攻/技'],[1,'提升+10%'],[2,'提升+20%'],[3,'提升+30%'],[4,'提升+40%']] },
-  '九尾空貓怪':{ rows: [[0,'特技×0.4 × 9次連擊+地獄之火'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
+  '九尾空貓怪':{ rows: [[0,'特技×0.4 × 9次連擊+燃燒'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
   '杏花妖':    { rows: [[0,'特技×1.5 全體傷害 + 75%魅惑 1回合'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
   '煉金術師':  { rows: [[0,'抽3張物品牌，友方使用後保留'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
   '巫女':      { rows: [[0,'解除不利狀態+3強力有利狀態+特技×1.5 全體治療(可復活)'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
@@ -7528,9 +7528,9 @@ const BURST_DB = {
   // ★ v1.0.20260421.3000o — 日本關限定角色爆發
   '巫女':      {n:'神樂舞', d:'全體友方解除所有不利狀態(含強力)，附加隨機3個強力有利狀態(不可解除)，再依特技150%恢復HP',fd:'翩翩起舞獻納祭神樂曲，為友方全體解除所有不利狀態（包含強力狀態），並附加隨機3個強力有利狀態（不會被搶奪和解除），再依特技值的150%恢復全體友方HP（可復活）。'},
   // ── BOSS 爆發技能 ──
-  '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加地獄之火',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加地獄之火2回合。'},
+  '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加燃燒',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加燃燒2回合。'},
   '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有75%機率使每一名敵人陷入「魅惑」狀態1回合（下一回合自動普攻自己隊友）。'},
-  '八岐大蛇':  {n:'八頭龍滅世', d:'依特技對隨機目標造成8次必中傷害，隨機附加3種強力不利狀態(無法免疫)',fd:'八條龍頭同時吐出世界毀滅之息，以特技值對隨機存活對手造成8次必中傷害且無視有利狀態。每次命中後從「強力冰凍、強力地獄之火、強力封印、強力麻痺、強力失明、強力中毒、強力減療」中隨機選出3種附加給目標，這些強力狀態無法被免疫或解除。'},
+  '八岐大蛇':  {n:'八頭龍滅世', d:'依特技對隨機目標造成8次必中傷害，隨機附加3種強力不利狀態(無法免疫)',fd:'八條龍頭同時吐出世界毀滅之息，以特技值對隨機存活對手造成8次必中傷害且無視有利狀態。每次命中後從「強力冰凍、強力燃燒、強力封印、強力麻痺、強力失明、強力中毒、強力減療」中隨機選出3種附加給目標，這些強力狀態無法被免疫或解除。'},
   '大天狗':    {n:'神威風獵', d:'特技150%×5次隨機連擊，30%強力暈眩；最後全體颶風傷害並減速',fd:'張開巨翼掀起毀天狂風，以特技值的150%對隨機存活敵人連續5次打擊，每段有30%機率使該目標陷入「強力暈眩」1回合。第5段結束後額外對全體敵人造成攻擊100%颶風傷害，並使全體敵人速度-50%持續2回合。'},
   '酒吞童子':  {n:'鬼王酒宴', d:'恢復自身15%HP，500%重擊+擊倒轉移(最多3連鎖)，2回合吸血+攻擊提升',fd:'豪飲妖酒一飲而盡，自身恢復最大HP的15%。接著以攻擊值的500%重擊1名敵人，若該目標倒下則剩餘傷害轉移至下一位存活敵人，最多連鎖3次。之後自身獲得「嗜血狂潮」狀態2回合：造成傷害的100%轉化為回血，且攻擊額外提升50%。'},
   '玉藻前':    {n:'禍世邪魅', d:'特技200%幻陣全體火傷害，65%強力魅惑1回合(無法免疫)，被魅惑者傷害轉為回血給玉藻前',fd:'九條金色狐尾一齊張開形成絢爛幻陣，以特技值的200%對全體敵人造成火屬性傷害，並有65%機率使每一名敵人陷入「強力魅惑」1回合（下循環自動普攻自己隊友，無法被免疫或解除）。被強力魅惑的敵人普攻隊友造成的傷害會全部轉為玉藻前的HP恢復。'},
@@ -8288,7 +8288,7 @@ function _epBuildAttrPanel(){
   const wrap=document.getElementById('ep-ring-wrap');
   if(!wrap) return;
   const ECOLOR={water:'#55bbff',fire:'#ff7733',wind:'#44cc66',grass:'#88bb22',earth:'#aa7733',light:'#ffdd22',dark:'#9944cc'};
-  const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'地獄之火',reflect:'反射',stubbornDebuff:'能力降低',forecast:'失明',poison:'中毒'};
+  const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'燃燒',reflect:'反射',stubbornDebuff:'能力降低',forecast:'失明',poison:'中毒'};
   // 環狀定位參數（對應 ring-wrap 850x850, center 425,425, r_label=325）
   const cx=475, cy=475, r_label=357;
   const keys=Object.keys(ELEMENT_DB);
@@ -10921,7 +10921,7 @@ function renderCard(h){
   el.addEventListener('click', el._previewClickBound);
 }
 function statusName(t){
-  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'地獄之火',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'虛弱（特質）',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',
+  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'虛弱（特質）',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',
   booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾'
 };
   return m[t]||t;
@@ -12649,9 +12649,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     beginBatchTotals();
     function _catNine(target){
       if(_remainHits<=0 || checkWin()){ 
-        // 全部結束後附加地獄之火
+        // 全部結束後附加燃燒
         G[_opp].forEach(foe=>{
-          if(foe.curHp>0){ addStatus(foe,'hellfire',2); bannerFX(foe,'地獄之火！','#ff4400',700); }
+          if(foe.curHp>0){ addStatus(foe,'hellfire',2); bannerFX(foe,'燃燒！','#ff4400',700); }
         });
         updateUI(); setTimeout(endBatchTotals,50); _burstFinish(h,_interrupted); return; 
       }
@@ -12868,7 +12868,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     // 強力狀態池（無法免疫）
     const STRONG_POOL = ['freeze','hellfire','seal','para','forecast','poison','healReduced'];
     const STRONG_LABEL = {
-      freeze:'❄️強力冰凍', hellfire:'🔥強力地獄之火', seal:'🚫強力封印',
+      freeze:'❄️強力冰凍', hellfire:'🔥強力燃燒', seal:'🚫強力封印',
       para:'⚡強力麻痺', forecast:'👁️強力失明', poison:'☠️強力中毒', healReduced:'💔強力減療'
     };
     let hit = 0;
@@ -15567,9 +15567,21 @@ function execSkill(a, sk, cost, stype){
     });
   } else if(n==='地獄之火'){
     const hfFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
-    log(`[${a.name}] 地獄之火！全體對手陷入地獄業火！`);
+    // ★ v1.0.20260423.6100 — 地獄之火重構:
+    //   (1) 依特技 40% 對全體造成傷害(每升 1 級基礎傷害 +5%)
+    //   (2) 附加「燃燒」狀態 2 回合(行動前後各 -5HP,無視有利狀態)
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _hfMult = 0.40 + _s2Lv * 0.05; // Lv0=40%, Lv1=45%, ...
+    log(`[${a.name}] 地獄之火!特技×${Math.round(_hfMult*100)}% 全體傷害 + 附加燃燒 2 回合!`);
     playSkillFX('地獄之火',a,hfFoes);
-    hfFoes.forEach(t=>{ addStatus(t,'hellfire',2); const _hs=t.status.find(s=>s.type==='hellfire'); if(_hs) _hs._actor=a; });
+    hfFoes.forEach(t=>{
+      doDmg(t, Math.floor(spv(a) * _hfMult), {actor:a, isSkill:true, isAoe:true, elem:'fire'});
+      if(t.curHp>0){
+        addStatus(t,'hellfire',2);
+        const _hs=t.status.find(s=>s.type==='hellfire');
+        if(_hs) _hs._actor=a;
+      }
+    });
     endAction(a,cost);
   }
   // ====== 冰法師 ======
@@ -16617,11 +16629,11 @@ function execSkill(a, sk, cost, stype){
     setTimeout(endBatchTotals, 100);
     endAction(a, cost);
   }
-  // 玉藻前 S1：依特技對隨機目標造成3~4次傷害（火），附加地獄之火
+  // 玉藻前 S1：依特技對隨機目標造成3~4次傷害（火），附加燃燒
   else if(n==='九尾狐火'){
     const opp = a.side==='p1'?'p2':'p1';
     const hitCount = 3 + Math.floor(Math.random()*2); // 3~4
-    log(`🦊 [${a.name}] 九尾狐火！連擊 ${hitCount} 次並附加地獄之火！`);
+    log(`🦊 [${a.name}] 九尾狐火！連擊 ${hitCount} 次並附加燃燒！`);
     playSkillFX('九尾狐火', a, G[opp].filter(h=>h.curHp>0));
     const hitTargets = new Set();
     let i = 0;
@@ -16629,13 +16641,13 @@ function execSkill(a, sk, cost, stype){
     function jiuWei(){
       const liveFoes = G[opp].filter(h => h.curHp>0);
       if(i >= hitCount || !liveFoes.length || checkWin()){
-        // 全部連擊結束：對被命中的目標附加地獄之火 2 回合
+        // 全部連擊結束：對被命中的目標附加燃燒 2 回合
         hitTargets.forEach(t => {
           if(t.curHp > 0){
             addStatus(t, 'hellfire', 2);
             const hs = t.status.find(s => s.type==='hellfire');
             if(hs) hs._actor = a;
-            bannerFX(t, '🔥地獄之火', '#ff4400', 800);
+            bannerFX(t, '🔥燃燒', '#ff4400', 800);
           }
         });
         updateUI();
@@ -16709,7 +16721,7 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('暗冰雷焰吐息', a, foes);
     const dmg = spv(a);
     const statusPool = ['freeze','hellfire','seal','para'];
-    const statusLabel = {freeze:'❄️冰凍', hellfire:'🔥地獄之火', seal:'🚫封印', para:'⚡麻痺'};
+    const statusLabel = {freeze:'❄️冰凍', hellfire:'🔥燃燒', seal:'🚫封印', para:'⚡麻痺'};
     let round = 0;
     beginBatchTotals();
     function yamataBreath(){
@@ -17914,9 +17926,14 @@ function endAction(a, cost, noFinish=false){
   if(a._traitReAct){ delete a._traitReAct; }
   // 地獄之火：行動前已扣10HP，行動後不再扣（改為只觸發一次/回合）
   if(!noFinish && hasStatus(a,'hellfire') && a.curHp>0){
-    // ★ 已改為只在行動前觸發，行動後不再扣HP
-    // doDmg(a,5,...) → 移除
-    void 0;  // placeholder，保留結構
+    // ★ v1.0.20260423.6100 — 燃燒(hellfire) 行動後再 -5HP,跟行動前共 -10HP/回合
+    const _hfDmgPost = 5;
+    try{
+      doDmg(a, _hfDmgPost, {ignoreBuffs:true, noGuard:true});
+      log(`🔥 燃燒行動後灼燒 [${a.name}]！(${_hfDmgPost}傷害)`);
+    }catch(_){}
+    // ★ 行動後遞減 dur(整個回合 = 行動前+行動後 算一次)
+    a.status = a.status.map(s => s.type === 'hellfire' ? {...s, dur: s.dur - 1} : s).filter(s => s.dur > 0);
     renderCard(a);
   }
   clearSel();
@@ -18891,15 +18908,12 @@ function startTurn(){
     }
   }
 
-  // 地獄之火：行動前觸發（施術者技能升級+1傷害/級）
+  // ★ v1.0.20260423.6100 — 燃燒(hellfire) 改為行動前後各 -5HP,固定 5 點不再受技能等級影響
+  //   行動前在此扣 5,行動後在 endAction 末尾再扣 5,dur 由 nextRound 統一遞減
   if(hasStatus(next,'hellfire') && next.curHp>0){
-    // 找施術者（hellfire狀態存施術者引用，或fallback=10）
-    const _hfSrc = next.status.find(s=>s.type==='hellfire');
-    const _hfActor = _hfSrc && _hfSrc._actor;
-    const _hfLv = (_hfActor && _hfActor._skLv) ? ((_hfActor._skLv.s2||0)) : 0;
-    const _hfDmg = 10 + _hfLv;
-    doDmg(next,_hfDmg,{ignoreBuffs:true,noGuard:true}); log(`🔥 地獄之火行動前灼燒 [${next.name}]！（${_hfDmg}傷害）`);
-    next.status=next.status.map(s=>s.type==='hellfire'?{...s,dur:s.dur-1}:s).filter(s=>s.dur>0);
+    const _hfDmgPre = 5;
+    doDmg(next,_hfDmgPre,{ignoreBuffs:true,noGuard:true});
+    log(`🔥 燃燒行動前灼燒 [${next.name}]！(${_hfDmgPre}傷害)`);
     renderCard(next);
     if(next.curHp<=0){ next.acted=true; updateUI(); _pSetTimeout(startTurn,300); return; }
   }
@@ -19936,7 +19950,19 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='治癒之風'){allies.forEach(h=>{doHeal(h,Math.floor(spv(a)*1.0),{actor:a,isHeal:true});clearBadStatus(h);});}
   else if(n==='暴風雪'){enemies.forEach(h=>{doDmg(h,Math.floor(spv(a)*0.7),{actor:a,isAoe:true});if(h.curHp>0) addStatus(h,'spddown',1);});}
   else if(n==='連鎖閃電'){let bc=3;if(Math.random()<0.5)bc=4;if(bc===4&&Math.random()<0.5)bc=5;for(let i=0;i<bc;i++){const et=enemies.filter(h=>h.curHp>0);if(et.length)doDmg(et[Math.floor(Math.random()*et.length)],Math.floor(spv(a)*0.7),{actor:a});}}
-  else if(n==='地獄之火'){enemies.forEach(h=>{if(h.curHp>0)addStatus(h,'hellfire',2);});}
+  else if(n==='地獄之火'){
+    // ★ v1.0.20260423.6100 — 對齊玩家版本:特技 40%(每級+5%) + 燃燒 2 回合
+    const _s2Lv = (a._skLv && typeof a._skLv.s2==='number') ? a._skLv.s2 : 0;
+    const _hfMult = 0.40 + _s2Lv*0.05;
+    enemies.forEach(h=>{
+      doDmg(h, Math.floor(spv(a) * _hfMult), {actor:a, isSkill:true, isAoe:true, elem:'fire'});
+      if(h.curHp>0){
+        addStatus(h,'hellfire',2);
+        const _hs=h.status.find(s=>s.type==='hellfire');
+        if(_hs) _hs._actor=a;
+      }
+    });
+  }
   else if(n==='搖籃曲'){enemies.filter(h=>h.curHp>0).forEach(h=>{if(Math.random()<0.6)addStatus(h,'sleep',2);});}
   else if(n==='天堂樂章'){allies.forEach(h=>{ doHeal(h,Math.floor(spv(a)*0.75),{actor:a,isHeal:true}); h.buffs=h.buffs.filter(b=>b.type!=='bigshield'); h.buffs.push({type:'bigshield',dur:99,_hp:20}); });const dead2=G[a.side].filter(h=>h.curHp===0);if(dead2.length)doRevive(dead2[0],0.5);}
   else if(n==='熱情之舞'){allies.forEach(h=>addBuff(h,'dmgup',1));}
@@ -21428,7 +21454,7 @@ function stopIllusSparkles(){
     if(!ed||!el)return;
     var SN={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',para:'麻痺',trap:'禁動',seal:'封印技能',
       noatk:'封印攻擊',nosell:'封印物品',deathmark:'死亡宣告',noheal_curse:'禁止恢復',
-      berserk:'狂亂',spddown:'遲緩',hellfire:'地獄之火',exhaust:'技能費+1',forecast:'失明',
+      berserk:'狂亂',spddown:'遲緩',hellfire:'燃燒',exhaust:'技能費+1',forecast:'失明',
       stubbornDebuff:'怨念強化',poison:'劇毒'};
     var imm=(ed.immune50||[]).map(function(s){return SN[s]||s;}).join('、')||'—';
     var adv=(ed.vs_adv||[]).map(function(k){return ELEMENT_DB[k]?ELEMENT_DB[k].name:k;}).join('、')||'—';
@@ -25997,7 +26023,7 @@ Object.assign(HERO_DB, {
     s2:{n:'酒宴',c:6,d:'恢復友方全體20%HP並提升25%攻擊與特技2回合',fd:'豪飲妖酒並灑向同伴，恢復我方全體最大HP的20%，同時提升我方全體攻擊與特技25%，持續2回合。'}
   },
   '玉藻前':{hp:600,atk:15,sp:23,spd:24,exp:66,
-    s1:{n:'九尾狐火',c:4,d:'依特技對隨機目標造成3~4次傷害，附加地獄之火',fd:'九條金尾噴射熾烈狐火，用特技值對隨機存活對手造成3~4次火屬性傷害，每次獨立結算暴擊；所有命中的目標追加地獄之火2回合（每回合行動前-10HP）。'},
+    s1:{n:'九尾狐火',c:4,d:'依特技對隨機目標造成3~4次傷害，附加燃燒',fd:'九條金尾噴射熾烈狐火，用特技值對隨機存活對手造成3~4次火屬性傷害，每次獨立結算暴擊；所有命中的目標追加燃燒2回合（行動前後各 -5HP）。'},
     s2:{n:'妖狐幻惑',c:4,d:'使敵方全體失明2回合（無法免疫），附加30護盾',fd:'綻放妖豔狐術迷惑敵人，使敵方全體陷入「強力失明」2回合，行動成功率減半（無法被免疫或解除）。同時為自己附加可抵擋30傷害的護盾。'}
   },
 
@@ -26030,7 +26056,7 @@ Object.assign(HERO_DB, {
   // ── 隱藏 BOSS：八岐大蛇（比三大 BOSS 再強一階）──
   '八岐大蛇':{hp:1500,atk:20,sp:28,spd:22,exp:120,
     s1:{n:'八首齊噬',c:3,d:'依攻擊40%對隨機目標造成8次傷害',fd:'八個龍頭一齊撲咬，用攻擊值的40%對隨機存活對手造成8次龍屬性傷害，每次獨立結算暴擊。'},
-    s2:{n:'暗冰雷焰吐息',c:5,d:'依特技對全體造成2次傷害，隨機附加2種不利狀態',fd:'八頭齊噴暗焰、冰雪、落雷、烈焰等毒氣，用特技值對全體敵人造成2次傷害，並隨機從「冰凍、地獄之火、封印、麻痺」中附加2種不利狀態。'}
+    s2:{n:'暗冰雷焰吐息',c:5,d:'依特技對全體造成2次傷害，隨機附加2種不利狀態',fd:'八頭齊噴暗焰、冰雪、落雷、烈焰等毒氣，用特技值對全體敵人造成2次傷害，並隨機從「冰凍、燃燒、封印、麻痺」中附加2種不利狀態。'}
   },
 });
 
@@ -40603,6 +40629,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.6100', brief:[
+    '🔥 火法師技能【地獄之火】重構:新增當下傷害,並把附加狀態統一改名為「燃燒」(行動前後各 -5HP)',
+  ], items:[
+    '【技能本身】',
+    '  舊:只附加 hellfire 狀態,沒當下傷害',
+    '  新:依特技 40% 對全體造成傷害(每升 1 級基礎傷害 +5%),同時附加「燃燒」狀態 2 回合',
+    '  Lv0 = 40%、Lv1 = 45%、Lv2 = 50%、Lv3 = 55%、Lv4 = 60%、Lv5 = 65%(MAX)',
+    '【「燃燒」狀態(原 hellfire,顯示名改為燃燒)】',
+    '  舊:每回合行動前損失 10HP(隨技能等級+1/級)',
+    '  新:每回合行動前 -5HP、行動後 -5HP(共 -10HP/回合,固定不再隨等級浮動)',
+    '【受影響的其他技能/爆發(全部統一改顯示為「燃燒」)】',
+    '  火法師爆發「焚滅全域」附加的燃燒',
+    '  九尾空貓怪爆發「焰尾九連擊」結束後附加的燃燒',
+    '  玉藻前 S1「九尾狐火」附加的燃燒',
+    '  八岐大蛇 S2「暗冰雷焰吐息」隨機附加的燃燒',
+    '  八岐大蛇爆發「八頭龍滅世」隨機附加的「強力燃燒」(無法免疫)',
+    '【內部技術細節(adminOnly,給管理員看)】',
+    '  狀態 type 仍叫 hellfire(避免大改 BAD_STATUS 陣列、訊息表等),只把顯示名稱改為「燃燒」',
+    '  傷害觸發點:行動前在 startTurn(line ~18909)、行動後在 endAction(line ~17916)',
+    '  dur 遞減改在行動後處理(整個回合 = 行動前+行動後 = 算一次 dur)',
+  ] },
   { ver:'v1.0.20260423.6000', adminOnly:true, brief:[
     '🔧 首頁右下角版本徽章改為自動同步 _GAME_LOADED_VERSION,以後升版不會再忘記改',
   ], items:[
@@ -44397,7 +44444,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.6000';
+  const CURRENT_VERSION = 'v1.0.20260423.6100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44414,7 +44461,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.6000';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.6100';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
