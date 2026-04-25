@@ -7832,11 +7832,28 @@ function getHeroObjPos(name){
   // ★ v1.0.20260423.9500 — 精美畫風時:
   //   - 若該 portrait 有自己的 objPos 設定(LV10/LV20/3 號圖) → 用它(center 20%)
   //   - 沒有設定(即 default 原圖) → 用原本可愛版的位置設定(HERO_IMG_POS)
-  //   舊版 v6600 強制回 'center top' 是錯的,造成原圖被裁掉只看到頭頂
+  // ★ v1.0.20260424.0100 — 補:精美畫風時若 HERO_IMGS 已換成精美版(達 Lv10/20 自動套用、
+  //   或 _PREMIUM_ART_OVERRIDE / 鬥技場精美覆寫),也要套 center 20%
   const _override = _getCurPortraitObjPos(name);
   if(_override){
     const parts = _override.split(' ');
     return 'center ' + (parts[1] || parts[0] || '20%');
+  }
+  // 精美畫風自動偵測
+  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
+    try{
+      const _hasPremiumOverride =
+        (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[name]) ||
+        (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.hero && _PREMIUM_ART_OVERRIDE.hero[name]);
+      const _arenaCovered = (typeof _arenaPremiumApplied !== 'undefined' && _arenaPremiumApplied);
+      if(_hasPremiumOverride || _arenaCovered) return 'center 20%';
+      const _lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined') ? HERO_PORTRAIT_LIBRARY[name] : null;
+      const _curUrl = (typeof HERO_IMGS !== 'undefined') ? HERO_IMGS[name] : '';
+      if(_lib && _curUrl){
+        const _matchPremium = _lib.find(p => (p.id||'').match(/_lv10$|_lv20$|_shop3$/) && p.url === _curUrl);
+        if(_matchPremium) return 'center 20%';
+      }
+    }catch(_){}
   }
   const pos = HERO_IMG_POS[name] || ['160% auto','center 12%'];
   const parts = pos[1].split(' ');
@@ -7914,10 +7931,34 @@ function getHeroThumbObjPos(name){
   // ★ v1.0.20260423.9500 — 移除「精美畫風一律 center top」的錯誤邏輯
   //   依當前選擇的 portrait 取對應位置(LV10/LV20/3 號版有自己的 center 20%),
   //   default 原圖則走原本 HERO_THUMB_POS 的位置設定
+  // ★ v1.0.20260424.0100 — 補:精美畫風時若 HERO_IMGS 已被替換成精美版圖
+  //   (例如冒險模式達 Lv10 / 鬥技場精美覆寫 / _PREMIUM_ART_OVERRIDE.hero/mob),
+  //   縮圖位置也要套用 'center 20%' 以正確顯示頭部,否則精美全身圖會看到全身
   try{
     const choice = (typeof _heroPortraitChoice !== 'undefined' && _heroPortraitChoice[name]) || 'default';
     if(choice !== 'default' && HERO_THUMB_POS_BY_PORTRAIT[name] && HERO_THUMB_POS_BY_PORTRAIT[name][choice]){
       return HERO_THUMB_POS_BY_PORTRAIT[name][choice];
+    }
+    // 精美畫風 + HERO_IMGS 已被換成精美版 → 套用 'center 20%'
+    if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
+      const _hasPremiumOverride =
+        (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[name]) ||
+        (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.hero && _PREMIUM_ART_OVERRIDE.hero[name]);
+      const _arenaCovered = (typeof _arenaPremiumApplied !== 'undefined' && _arenaPremiumApplied);
+      // 冒險模式下:default 連結若是 lv10/lv20/3 號 url → 也要 center 20%
+      // 簡化判斷:若該英雄在 HERO_PORTRAIT_LIBRARY 有 _lv10/_lv20 entry,
+      //          且當前 HERO_IMGS[name] 等於該 entry 的 url → 套用 'center 20%'
+      if(_hasPremiumOverride || _arenaCovered){
+        return 'center 20%';
+      }
+      try{
+        const _lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined') ? HERO_PORTRAIT_LIBRARY[name] : null;
+        const _curUrl = (typeof HERO_IMGS !== 'undefined') ? HERO_IMGS[name] : '';
+        if(_lib && _curUrl){
+          const _matchPremium = _lib.find(p => (p.id||'').match(/_lv10$|_lv20$|_shop3$|_lv20$/) && p.url === _curUrl);
+          if(_matchPremium) return 'center 20%';
+        }
+      }catch(_){}
     }
   }catch(_){}
   return HERO_THUMB_POS[name] || 'center center';
@@ -7927,10 +7968,32 @@ function getHeroImgStyle(name){
   //   舊版 v6600 強制 220% size + center top 會讓 Q 版原圖被裁切到只看到頭頂
   //   現在依 portrait 個別 objPos 設定 → LV10/LV20/3 號版用自己的(center 20%);
   //   default 原圖用原本 HERO_IMG_POS 設定(各角色都已調好的可愛版位置)
+  // ★ v1.0.20260424.0100 — 補:精美畫風時若 HERO_IMGS 已換成精美版,
+  //   戰鬥卡片大圖也要套 center 20%,否則全身圖看到全身
   const _override = _getCurPortraitObjPos(name);
+  // 嘗試精美版自動偵測
+  let _premPos = null;
+  if(!_override && typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
+    try{
+      const _hasPremiumOverride =
+        (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[name]) ||
+        (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.hero && _PREMIUM_ART_OVERRIDE.hero[name]);
+      const _arenaCovered = (typeof _arenaPremiumApplied !== 'undefined' && _arenaPremiumApplied);
+      if(_hasPremiumOverride || _arenaCovered){
+        _premPos = 'center 20%';
+      } else {
+        const _lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined') ? HERO_PORTRAIT_LIBRARY[name] : null;
+        const _curUrl = (typeof HERO_IMGS !== 'undefined') ? HERO_IMGS[name] : '';
+        if(_lib && _curUrl){
+          const _matchPremium = _lib.find(p => (p.id||'').match(/_lv10$|_lv20$|_shop3$/) && p.url === _curUrl);
+          if(_matchPremium) _premPos = 'center 20%';
+        }
+      }
+    }catch(_){}
+  }
   const pos = HERO_IMG_POS[name] || ['160% auto','center 12%'];
   const _size = pos[0];
-  const _posStr = _override || pos[1];
+  const _posStr = _override || _premPos || pos[1];
   return 'background-size:'+_size+';background-position:'+_posStr;
 }
 // ====== 極限爆發技能 DB ======
@@ -41547,6 +41610,26 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0100', brief:[
+    '🐛 修正精美畫風下 LV10/LV20 自動解鎖的角色縮圖位置不對(顯示全身、看不到臉)的 bug',
+  ], items:[
+    '【症狀】',
+    '  玩家切到精美畫風,角色升 Lv10/Lv20 自動套用精美版圖到 HERO_IMGS',
+    '  但 _heroPortraitChoice[name] 仍是 default(因為玩家沒手動切 portrait)',
+    '  結果:選角頁、邀請加入面板、戰鬥卡片 顯示全身全部裁切到全身,看不到臉',
+    '【根因】',
+    '  getHeroThumbObjPos / getHeroObjPos / getHeroImgStyle 三個函式判斷縮圖位置時:',
+    '    if(choice !== \'default\') → 套 center 20%',
+    '    else → 走 default 位置(沒下移)',
+    '  但 HERO_IMGS 已被換成精美版圖,圖片是全身的卻用 default 位置 → 不匹配',
+    '【修正】',
+    '  三個函式加上「精美畫風自動偵測」邏輯:',
+    '    精美畫風 + HERO_IMGS 已換成精美版(_PREMIUM_ART_OVERRIDE / 鬥技場 /',
+    '    HERO_IMGS 等於 _lv10/_lv20/_shop3 portrait 的 url) → 自動套 center 20%',
+    '【影響範圍】',
+    '  選角頁縮圖、邀請加入面板、戰鬥卡片、預覽圖等所有讀 HERO_IMGS 的位置',
+    '  全部會根據當前圖片是否為精美版自動調整裁切位置',
+  ] },
   { ver:'v1.0.20260423.9900', brief:[
     '🏟️ 補充選角頁操場精美版背景 — 冒險與鬥技場兩個選角頁統一切換',
   ], items:[
@@ -46143,7 +46226,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.9900';
+  const CURRENT_VERSION = 'v1.0.20260424.0100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -46160,7 +46243,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.9900';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0100';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
