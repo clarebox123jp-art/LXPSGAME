@@ -1540,7 +1540,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* ══════════════════════════════════════════
    ★ v1.0.20260423.6400 — 畫風切換按鈕(可愛 / 精美)
    位置:遊戲介紹按鈕上方
-   ★ v1.0.20260423.7100 — 暫時上鎖,視覺上讓按鈕變灰階表示未開放
+   ★ v1.0.20260423.9200 — 解鎖功能,恢復彩色樣式
 ══════════════════════════════════════════ */
 #art-style-bar{
   position:absolute;z-index:2;top:47%;left:50%;transform:translateX(-50%);
@@ -1549,22 +1549,21 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .art-style-btn{
   padding:10px 26px;font-size:24px;font-weight:700;letter-spacing:2px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;cursor:pointer;
-  /* 上鎖樣式 - 灰階 + 半透明 */
-  background:linear-gradient(135deg,rgba(50,50,55,0.7),rgba(40,40,45,0.6));
-  border:2px solid rgba(120,120,120,0.5);color:rgba(200,200,200,0.7);
-  border-radius:10px;
+  background:linear-gradient(135deg,rgba(40,30,60,0.85),rgba(60,40,80,0.75));
+  border:2px solid rgba(180,140,220,0.6);color:#d8c8f0;border-radius:10px;
   transition:all 0.2s;text-shadow:0 1px 2px rgba(0,0,0,0.9);
-  filter:grayscale(0.5);
 }
 .art-style-btn:hover{
-  background:linear-gradient(135deg,rgba(60,60,65,0.85),rgba(55,55,60,0.75));
-  border-color:rgba(150,150,150,0.7);color:rgba(220,220,220,0.85);
-  transform:scale(1.02);
+  background:linear-gradient(135deg,rgba(70,50,100,0.95),rgba(100,70,140,0.85));
+  border-color:rgba(220,180,255,0.85);color:#fff;
+  transform:scale(1.05);
+  box-shadow:0 0 20px rgba(180,140,220,0.5);
 }
 .art-style-btn.selected{
-  background:linear-gradient(135deg,rgba(50,50,55,0.7),rgba(40,40,45,0.6));
-  border-color:rgba(120,120,120,0.5);color:rgba(200,200,200,0.7);
-  filter:grayscale(0.5);
+  background:linear-gradient(135deg,rgba(255,180,80,0.92),rgba(255,140,40,0.85));
+  border-color:#ffd068;color:#fff;
+  box-shadow:0 0 25px rgba(255,180,80,0.7);
+  text-shadow:0 1px 3px rgba(120,40,0,1),0 0 8px rgba(255,200,120,0.6);
 }
 #overlay #art-style-bar{position:absolute;z-index:2;}
 
@@ -3326,18 +3325,32 @@ body {
 /* ══════════════════════════════════════════
    ★ v1.0.20260423.6400 — 精美畫風的戰鬥背景覆蓋
    切換到精美畫風時 body.art-premium,以下覆蓋 background-image
-   等玩家提供精美版連結後填入 url
+   ★ v1.0.20260423.9200 — 填入精美版 URL
 ══════════════════════════════════════════ */
-body.art-premium #adv-battle-bg.bg-river       { /* background-image:url("PREMIUM_river_url"); */ }
-body.art-premium #adv-battle-bg.bg-trail       { /* background-image:url("PREMIUM_trail_url"); */ }
-body.art-premium #adv-battle-bg.bg-teagarden   { /* background-image:url("PREMIUM_teagarden_url"); */ }
-body.art-premium #adv-battle-bg.bg-boss        { /* background-image:url("PREMIUM_boss_url"); */ }
-body.art-premium #adv-battle-bg.bg-apricot     { /* background-image:url("PREMIUM_apricot_url"); */ }
-body.art-premium #adv-battle-bg.bg-fuji        { /* background-image:url("PREMIUM_fuji_url"); */ }
-body.art-premium #adv-battle-bg.bg-yamata      { /* background-image:url("PREMIUM_yamata_url"); */ }
-body.art-premium #adv-battle-bg.bg-japan-opening { /* background-image:url("PREMIUM_japan_opening_url"); */ }
-body.art-premium #adv-battle-bg.bg-japan-shrine  { /* background-image:url("PREMIUM_japan_shrine_url"); */ }
-body.art-premium #adv-battle-bg.bg-japan-fuji    { /* background-image:url("PREMIUM_japan_fuji_url"); */ }
+/* 貓空 3 場景 + BOSS 戰 */
+body.art-premium #adv-battle-bg.bg-river       { background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4(%E7%B2%BE%E7%BE%8E%E7%89%88).png") !important; }
+body.art-premium #adv-battle-bg.bg-trail       { background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A8%9F%E6%B9%96%E6%AD%A5%E9%81%93(%E7%B2%BE%E7%BE%8E%E7%89%88).png") !important; }
+body.art-premium #adv-battle-bg.bg-teagarden   { background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92(%E7%B2%BE%E7%BE%8E%E7%89%88).png") !important; }
+/* 九尾空貓怪 BOSS 戰 = 用茶園精美版背景(管理員指定) */
+body.art-premium #adv-battle-bg.bg-boss        { background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92(%E7%B2%BE%E7%BE%8E%E7%89%88).png") !important; }
+/* 杏花妖 = 維持原圖(管理員指定不變) */
+/* body.art-premium #adv-battle-bg.bg-apricot — 不覆蓋,沿用 cute */
+/* 日本關背景 — 暫時用舊版,等管理員補新圖再覆蓋 */
+/* body.art-premium #adv-battle-bg.bg-fuji ... */
+/* body.art-premium #adv-battle-bg.bg-japan-opening ... */
+/* body.art-premium #adv-battle-bg.bg-japan-shrine ... */
+/* body.art-premium #adv-battle-bg.bg-japan-fuji ... */
+
+/* 首頁封面、關卡選擇、元素屬性選擇 三大場景 */
+body.art-premium #overlay {
+  background:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%81%8A%E6%88%B2%E9%A6%96%E9%A0%81(%E7%B2%BE%E7%BE%8E%E7%89%88).png") center/cover no-repeat !important;
+}
+body.art-premium #adventure-overlay {
+  background:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80%E5%8F%A3(%E7%B2%BE%E7%BE%8E%E7%89%88).png") center/cover no-repeat !important;
+}
+body.art-premium #elem-pick-overlay {
+  background:#060810 url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%87%AA%E7%84%B6%E6%95%99%E5%AE%A4(%E7%B2%BE%E7%BE%8E%E7%89%88).png") center/cover no-repeat !important;
+}
 
 /* 冒險模式：zone 半透明讓背景透出 */
 #gc.adv-battle #z1{
@@ -4225,10 +4238,10 @@ body.art-premium #adv-battle-bg.bg-japan-fuji    { /* background-image:url("PREM
   </div>
 </div>
 <!-- ★ v1.0.20260423.6400 — 畫風切換按鈕(可愛/精美) -->
-<!-- ★ v1.0.20260423.7100 — 暫時上鎖,點擊只顯示「未開放」提示 -->
+<!-- ★ v1.0.20260423.9200 — 解鎖功能 -->
 <div id="art-style-bar">
-  <button id="art-style-cute-btn" class="art-style-btn selected" onclick="playSfx('sfx-cancel',0.4);_showInGameToast('🔒 此功能尚未開放', '#888888', 1800)">🔒 可愛畫風</button>
-  <button id="art-style-premium-btn" class="art-style-btn" onclick="playSfx('sfx-cancel',0.4);_showInGameToast('🔒 此功能尚未開放', '#888888', 1800)">🔒 精美畫風</button>
+  <button id="art-style-cute-btn" class="art-style-btn selected" onclick="playSfx('sfx-sel',0.5);_setArtStyle('cute')">🎨 可愛畫風</button>
+  <button id="art-style-premium-btn" class="art-style-btn" onclick="playSfx('sfx-sel',0.5);_setArtStyle('premium')">✨ 精美畫風</button>
 </div>
 
 <!-- 遊戲介紹按鈕 -->
@@ -7093,11 +7106,21 @@ try{
 //   shop[name]:    精美版商店插圖(原本的「3」標記版)
 const _PREMIUM_ART_OVERRIDE = {
   hero:    {},   // 例:'凡人': 'https://.../凡人2.png'
-  mob:     {},
+  // ★ v1.0.20260423.9200 — 填入精美版 BOSS 圖
+  //   - 九尾空貓怪、杏花妖、八岐大蛇 用獨立精美版圖檔
+  //   - 大天狗、酒吞童子、玉藻前 在精美畫風下用 LV20 圖(管理員指定)
+  mob:     {
+    '九尾空貓怪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AA(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+    '杏花妖':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+    '八岐大蛇':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%85%AB%E6%AD%A7%E5%A4%A7%E8%9B%87(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+    '大天狗':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A7%E5%A4%A9%E7%8B%97LV20.png',
+    '酒吞童子':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90LV20.png',
+    '玉藻前':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8E%89%E8%97%BB%E5%89%8DLV20.png',
+  },
   pet:     {},
-  scene:   {},   // 例:'river': 'https://.../景美河堤2.png'
-  portrait:{},   // 例:'miko_shrine': 'https://.../巫女2_premium.png'
-  shop:    {},   // 例:'凡人': 'https://.../凡人3.png'
+  scene:   {},   // 場景背景已經用 CSS body.art-premium 切換,這裡留空
+  portrait:{},   // 替代肖像精美版(等之後管理員提供)
+  shop:    {},   // 精美版商店插圖(原本的「3」標記版)
 };
 
 // 備份原始(可愛版)資源,以便切回時還原
@@ -34684,6 +34707,80 @@ function _showPortraitPreview(heroName, portraitId){
   try{ playSfx('sfx-sel', 0.5); }catch(e){}
 }
 
+// ★ v1.0.20260423.9300 — 魔物圖鑑插畫切換預覽
+//   在魔物詳細頁切換「可愛/精美」版本插畫,只是預覽,不會改變全域 HERO_IMGS
+//   玩家若想真的套用,需到首頁切換畫風
+function _previewMonsterArt(monsterName, style){
+  if(style !== 'cute' && style !== 'premium') return;
+  try{ playSfx('sfx-sel', 0.5); }catch(_){}
+  // 找對應 URL
+  let _url = '';
+  if(style === 'cute'){
+    // 從 _CUTE_ART_BACKUP 取得原圖,fallback 到當前 HERO_IMGS
+    if(typeof _CUTE_ART_BACKUP !== 'undefined' && _CUTE_ART_BACKUP && _CUTE_ART_BACKUP.HERO_IMGS && _CUTE_ART_BACKUP.HERO_IMGS[monsterName]){
+      _url = _CUTE_ART_BACKUP.HERO_IMGS[monsterName];
+    } else {
+      _url = HERO_IMGS[monsterName] || '';
+    }
+  } else {
+    if(typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[monsterName]){
+      _url = _PREMIUM_ART_OVERRIDE.mob[monsterName];
+    }
+  }
+  if(!_url){
+    try{ _showInGameToast('找不到該版本插畫', '#ff8844', 1500); }catch(_){}
+    return;
+  }
+  // 只更新詳細頁的圖片,不變更全域 HERO_IMGS
+  const imgEl = document.getElementById('hero-detail-full-img');
+  if(imgEl){
+    imgEl.src = _url;
+    imgEl.style.display = 'block';
+  }
+  // 更新切換按鈕的選中標記
+  const _list = document.getElementById('hero-detail-portrait-list');
+  if(_list){
+    // 重新渲染按鈕(更新 ★ 標記和邊框顏色)
+    const _hasPremium = (typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
+                       && _PREMIUM_ART_OVERRIDE.mob
+                       && _PREMIUM_ART_OVERRIDE.mob[monsterName]);
+    if(_hasPremium){
+      let _cuteUrl = '';
+      try{
+        if(typeof _CUTE_ART_BACKUP !== 'undefined' && _CUTE_ART_BACKUP && _CUTE_ART_BACKUP.HERO_IMGS && _CUTE_ART_BACKUP.HERO_IMGS[monsterName]){
+          _cuteUrl = _CUTE_ART_BACKUP.HERO_IMGS[monsterName];
+        } else { _cuteUrl = HERO_IMGS[monsterName] || ''; }
+      }catch(_){ _cuteUrl = HERO_IMGS[monsterName] || ''; }
+      const _premiumUrl = _PREMIUM_ART_OVERRIDE.mob[monsterName];
+      _list.innerHTML = `
+        <div onclick="event.stopPropagation();_previewMonsterArt('${monsterName}','cute')"
+          title="可愛版"
+          style="position:relative;cursor:pointer;border:2px solid ${style==='cute'?'#ffcc44':'rgba(212,168,67,0.4)'};
+          border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">
+          <img src="${_cuteUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>
+          ${style==='cute' ? '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : ''}
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;text-align:center;padding:2px 0;">🎨 可愛</div>
+        </div>
+        <div onclick="event.stopPropagation();_previewMonsterArt('${monsterName}','premium')"
+          title="精美版"
+          style="position:relative;cursor:pointer;border:2px solid ${style==='premium'?'#ffcc44':'rgba(212,168,67,0.4)'};
+          border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">
+          <img src="${_premiumUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>
+          ${style==='premium' ? '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : ''}
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;text-align:center;padding:2px 0;">✨ 精美</div>
+        </div>
+      `;
+    }
+  }
+  // 提示玩家:這只是預覽,要真的套用請去首頁
+  try{
+    const _msg = (style==='premium')
+      ? '✨ 預覽精美版 — 實際畫風請至首頁切換'
+      : '🎨 預覽可愛版 — 實際畫風請至首頁切換';
+    _showInGameToast(_msg, '#ffcc88', 1800);
+  }catch(_){}
+}
+
 function shopAdjQty(id, delta){
   window['_shopQty_'+id] = Math.max(1, Math.min(99, (window['_shopQty_'+id]||1)+delta));
   const el = document.getElementById('shop-qty-'+id);
@@ -39552,10 +39649,56 @@ function openMonsterDetail(name) {
     avEl.style.filter = '';
   }
   // ★ 魔物沒有可切換的肖像，強制隱藏肖像切換面板（避免從英雄頁切過來時殘留）
+  // ★ v1.0.20260423.9300 — 對有精美版的 BOSS 開放預覽切換(只是預覽,不會改 HERO_IMGS)
+  //   切換時只改詳細頁的 img,玩家想真的套用要去首頁切換畫風
   try{
     const _sw = document.getElementById('hero-detail-portrait-switcher');
-    if(_sw) _sw.style.display = 'none';
-  }catch(e){}
+    const _hasPremiumMob = (typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
+                          && _PREMIUM_ART_OVERRIDE.mob
+                          && _PREMIUM_ART_OVERRIDE.mob[name]);
+    if(_sw){
+      if(_hasPremiumMob){
+        // 找出可愛版 URL(從 _CUTE_ART_BACKUP 或當前 HERO_IMGS)
+        let _cuteUrl = '';
+        try{
+          if(typeof _CUTE_ART_BACKUP !== 'undefined' && _CUTE_ART_BACKUP && _CUTE_ART_BACKUP.HERO_IMGS && _CUTE_ART_BACKUP.HERO_IMGS[name]){
+            _cuteUrl = _CUTE_ART_BACKUP.HERO_IMGS[name];
+          } else {
+            _cuteUrl = HERO_IMGS[name] || '';
+          }
+        }catch(_){ _cuteUrl = HERO_IMGS[name] || ''; }
+        const _premiumUrl = _PREMIUM_ART_OVERRIDE.mob[name];
+        const _curStyle = (typeof _artStyle !== 'undefined') ? _artStyle : 'cute';
+        // 渲染兩個切換按鈕
+        const _list = document.getElementById('hero-detail-portrait-list');
+        if(_list){
+          _list.innerHTML = `
+            <div onclick="event.stopPropagation();_previewMonsterArt('${name}','cute')"
+              title="可愛版"
+              style="position:relative;cursor:pointer;border:2px solid ${_curStyle==='cute'?'#ffcc44':'rgba(212,168,67,0.4)'};
+              border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">
+              <img src="${_cuteUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>
+              ${_curStyle==='cute' ? '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : ''}
+              <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;text-align:center;padding:2px 0;">🎨 可愛</div>
+            </div>
+            <div onclick="event.stopPropagation();_previewMonsterArt('${name}','premium')"
+              title="精美版"
+              style="position:relative;cursor:pointer;border:2px solid ${_curStyle==='premium'?'#ffcc44':'rgba(212,168,67,0.4)'};
+              border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">
+              <img src="${_premiumUrl}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>
+              ${_curStyle==='premium' ? '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : ''}
+              <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;font-size:11px;text-align:center;padding:2px 0;">✨ 精美</div>
+            </div>
+          `;
+        }
+        _sw.style.display = '';
+      } else {
+        _sw.style.display = 'none';
+      }
+    }
+  }catch(_e){
+    try{ const _sw2 = document.getElementById('hero-detail-portrait-switcher'); if(_sw2) _sw2.style.display = 'none'; }catch(_){}
+  }
 
   const trHtml = trait ? `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,200,50,0.3);">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
@@ -41284,6 +41427,55 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.9300', brief:[
+    '🔍 魔物圖鑑詳細頁:6 隻有精美版的 BOSS 可在「可愛/精美」之間切換預覽',
+    'ℹ️ 切換預覽不影響全域畫風,要真的改用要去首頁切換',
+  ], items:[
+    '【涵蓋的 6 隻 BOSS】',
+    '  九尾空貓怪、杏花妖、八岐大蛇、大天狗、酒吞童子、玉藻前',
+    '  進魔物圖鑑點他們 → 詳細頁右下角出現切換面板',
+    '  顯示兩張縮圖:🎨 可愛 / ✨ 精美',
+    '  當前畫風的版本標 ★ 星號',
+    '【點擊行為】',
+    '  點縮圖 → 詳細頁圖片立即切換到對應版本',
+    '  彈出 toast 提示「實際畫風請至首頁切換」',
+    '  HERO_IMGS 不變(全域畫風維持原狀,戰鬥/卡片/英雄圖鑑不受影響)',
+    '【其他魔物不變】',
+    '  小怪、菁英、稀有怪等沒精美版的魔物 → 切換面板不顯示',
+    '【實作技術細節】',
+    '  新增 _previewMonsterArt(monsterName, style) 函式',
+    '  從 _CUTE_ART_BACKUP / _PREMIUM_ART_OVERRIDE.mob 取得對應 URL',
+    '  只更新 hero-detail-full-img 的 src,不動 HERO_IMGS',
+  ] },
+  { ver:'v1.0.20260423.9200', brief:[
+    '🎨 解鎖首頁畫風切換功能!玩家可隨時在「可愛畫風」與「精美畫風」之間切換',
+    '✨ 補充精美版圖片:首頁封面、關卡選擇、自然教室、貓空 3 場景、4 隻 BOSS',
+  ], items:[
+    '【場景背景精美版】',
+    '  首頁封面 → 遊戲首頁(精美版).png',
+    '  關卡選擇 → 力行校門口(精美版).png',
+    '  元素屬性選擇 → 自然教室(精美版).png',
+    '  貓空關第一場景(景美溪河堤) → 景美溪河堤(精美版).png',
+    '  貓空關第二場景(樟湖步道) → 樟湖步道(精美版).png',
+    '  貓空關第三場景(茶園) → 貓空茶園(精美版).png',
+    '  貓空 BOSS 戰背景 → 用茶園精美版(管理員指定)',
+    '  杏花妖背景 → 維持原圖(管理員指定不變)',
+    '  日本關背景 → 暫時用舊版,等管理員補新圖',
+    '【BOSS 精美版圖】',
+    '  九尾空貓怪 → 九尾空貓怪(精美版).png',
+    '  杏花妖 → 杏花妖(精美版).png',
+    '  八岐大蛇 → 八歧大蛇(精美版).png',
+    '  大天狗、酒吞童子、玉藻前 → 在精美畫風下使用 LV20 圖(管理員指定)',
+    '【按鈕解鎖】',
+    '  從鎖頭🔒「未開放」改為:',
+    '    🎨 可愛畫風 / ✨ 精美畫風',
+    '  視覺從灰階改回紫色(預設)和橘色(已選),selected 狀態高亮',
+    '  點擊立即切換,玩家偏好存到 localStorage 跨裝置同步',
+    '【實作機制】',
+    '  CSS body.art-premium 切換場景背景(7 個位置)',
+    '  _PREMIUM_ART_OVERRIDE.mob 對應表覆蓋 HERO_IMGS(BOSS 戰場上的圖)',
+    '  英雄、寵物的精美版等之後管理員陸續提供',
+  ] },
   { ver:'v1.0.20260423.9100', brief:[
     '🌪️ 大天狗 S1/S2 每升 1 級 +5% 傷害,爆發每級 +10% 傷害(乘算)',
     '🍶 酒吞童子 S1 +5% 傷害/級,S2 +5% 恢復量/級,爆發 +10% 傷害/級',
@@ -45719,7 +45911,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.9100';
+  const CURRENT_VERSION = 'v1.0.20260423.9300';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45736,7 +45928,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.9100';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.9300';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
