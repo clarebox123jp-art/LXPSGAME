@@ -13980,22 +13980,9 @@ function doDmg(target, rawDmg, opts={}){
           _triggerBossKillSlowmo(target.name);
         }
       }catch(_bke){ console.warn('[BOSS 慢動作] 偵測失敗:', _bke); }
-      // ★ v1.0.20260423.5400 — 擊敗敵人即時掉金幣:該怪 EXP × 50%
-      //   只有冒險模式 + 玩家擊敗的 p2 才掉
-      try{
-        if(target.side === 'p2'
-           && typeof _adventureMode !== 'undefined' && _adventureMode
-           && typeof _calcMobExp === 'function'
-           && typeof addKnowledgeCoins === 'function'){
-          const _mobExp = _calcMobExp(target);
-          const _coinDrop = Math.round(_mobExp * 0.5);
-          if(_coinDrop > 0){
-            addKnowledgeCoins(_coinDrop);
-            try{ showPopup(target, '💰+' + _coinDrop, 'coin'); }catch(_){}
-            try{ log(`💰 擊敗 [${target.name}] 掉落 ${_coinDrop} 知識幣`); }catch(_){}
-          }
-        }
-      }catch(_dropE){ console.warn('[怪物金幣掉落] 失敗:', _dropE); }
+      // ★ v1.0.20260423.5500 — 移除戰鬥中即時掉金幣的 popup/log,改為只在戰鬥結算時一次發放
+      //   設計理念:戰鬥中專注於戰鬥本身,所有獎勵(EXP/金幣/掉落物)在結算畫面一次顯示總和
+      //   每隻怪的金幣值仍以 _calcMobExp × 0.5 計算,但只在 grantBattleExp/advFinishMiniBattle 結算時加總
     }
     // 清除所有狀態與增益
     target.status=[];
@@ -30002,8 +29989,8 @@ async function advShowBattleResult(win) {
         // 2) 額外評分加成 EXP(advStartWinSequence)
         const _bonusExpMap = {'S':100, 'A':70, 'B':50, 'C':30};
         const _bonusExp = Math.round((_bonusExpMap[grade] || 30) * _jpRewardMult);
-        // 3) 知識幣:(rounds × 10 + bonusExp) × 0.2
-        const _bossCoins = Math.round(((rounds * 10) + _bonusExp) * 0.2 * _jpRewardMult);
+        // 3) 知識幣 ★ v1.0.20260423.5600 — 改用「最終出戰英雄 EXP × 0.5」,跟發放邏輯一致
+        const _bossCoins = Math.round(_totalExpEachFinal * 0.3);
         // 4) 技能升級書:1(固定) + 1(score>500) + 1(correct>=3) = 1~3 本
         const _bookCount = 1 + ((stats.totalQuizScore||0) > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
         // 5) 難度倍率標示
@@ -30416,9 +30403,26 @@ async function advStartWinSequence() {
     }
   }catch(_rcE){ console.warn('[貓空通關紀錄] 寫入失敗:', _rcE); }
   if(G && G.p1) G.p1.forEach(h=>{ if(h && h.name && !(window._invitedFriendHero && h && h.name === window._invitedFriendHero.name)) addHeroExp(h.name, _bonusExp); });
-  // ★ 知識幣：BOSS戰EXP × 20%（以_advStats計）
-  const _bossTotalExp = (_advStats && _advStats.rounds ? (_advStats.rounds * 10) : 0) + _bonusExp;
-  const _bossCoins = Math.round(_bossTotalExp * 0.2);
+  // ★ v1.0.20260423.5600 — 知識幣公式改為「最終結算給玩家的出戰英雄 EXP × 0.5」
+  //   含 ratio(答題)、自信、連擊、出戰×1.5 等所有加成,跟玩家拿到的 EXP 同步浮動
+  //   邏輯與 grantBattleExp 完全一致(複製過來計算)
+  let _bossCoins = 0;
+  try{
+    let _baseExpForCoin = 0;
+    if(G && G.p2 && typeof _calcMobExp === 'function'){
+      G.p2.forEach(h => { _baseExpForCoin += _calcMobExp(h); });
+    }
+    if(_baseExpForCoin === 0) _baseExpForCoin = 100;
+    const _correctC = (_advStats && _advStats.correctCount) || 0;
+    const _roundsC  = (_advStats && _advStats.rounds) || 1;
+    const _scoreC   = (_advStats && _advStats.totalQuizScore) || 0;
+    const _ratioC = Math.min(2.0, 1.0 + _correctC*0.08 + Math.max(0,20-_roundsC)*0.02 + _scoreC*0.0005);
+    const _confMultC = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
+    const _streakBonusC = 1 + ((_advStats && _advStats.maxStreak) || 0) * 0.05;
+    const _totalExpC = Math.round(_baseExpForCoin * _ratioC * _confMultC * _streakBonusC);
+    const _battleExpC = Math.round(_totalExpC * 1.5); // 出戰英雄 ×1.5
+    _bossCoins = Math.round(_battleExpC * 0.3);
+  }catch(_coinE){ console.warn('[BOSS 結算金幣] 計算失敗:', _coinE); }
   if(_bossCoins > 0) addKnowledgeCoins(_bossCoins);
   // ★ 成就：BOSS打倒
   if(G && G.p2) G.p2.forEach(h=>{ try{ _checkMedalDefeat(h.name); }catch(e){} });
@@ -33606,6 +33610,8 @@ async function grantBattleExp(win, stats) {
   });
   if(typeof window !== 'undefined') window._lastBossLevelUps = _bossLevelUps;
   const battleExp = Math.round(totalExp * 1.5);
+  // ★ v1.0.20260423.5600 — 暴露最後結算 EXP,讓金幣計算可用 battleExp × 0.5 公式
+  if(typeof window !== 'undefined') window._lastBattleExp = battleExp;
   // ★ v1.0.20260420.3100 — 結算 banner 同時顯示連擊加成
   const _streakTxt = _maxStreak > 0 ? `，連擊+${_maxStreak*5}%(最高${_maxStreak}連)` : '';
   bannerFX(null, `⭐ 出戰英雄 +${battleExp} EXP（加成${Math.round(ratio*100)}%${_streakTxt}）`, '#ffe066', 2400);
@@ -37947,13 +37953,13 @@ function advFinishMiniBattle(win) {
   // ★ 立即封鎖 checkWin 重觸（防止 startTurn 排程殘留造成 Boss 結算提前出現）
   if(typeof G !== 'undefined' && G) G._resultShown = true;
   // ★ 先計算小怪EXP（必須在G.p2還原成BOSS陣容之前）
+  // ★ v1.0.20260423.5500 — 改用統一公式 _calcMobExp:(hp+atk+sp+spd)×0.5
   let _miniBaseExp = 0;
   if(win && G && G.p2){
     G.p2.forEach(h => {
       // ★ 寶箱怪逃跑（curHp=0但name=寶箱怪）：不計入EXP
       if(h.name === '寶箱怪' && h.curHp <= 0) return;
-      const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
-      _miniBaseExp += (hd && hd.exp) ? hd.exp : 7;
+      _miniBaseExp += (typeof _calcMobExp === 'function') ? _calcMobExp(h) : 10;
     });
   }
   // ★ 先快照小怪陣容（用於掉落計算），再還原 BOSS 陣容
@@ -38169,7 +38175,10 @@ function advFinishMiniBattle(win) {
       const _expEl = document.getElementById('adv-mini-result');
       if(_expEl){
         const _expInfoEl = document.getElementById('adv-mini-result-exp');
-        const _miniCoins = Math.round(baseExp * 0.20);
+        // ★ v1.0.20260423.5600 — 知識幣公式改為「最終發給玩家的 EXP(baseExp,已含自信加成) × 0.5」
+        //   小怪戰 baseExp = _miniBaseExp × confMult,直接代表發給玩家的 EXP
+        //   跟 BOSS 戰邏輯一致(都是「最終結算 EXP × 0.5」)
+        const _miniCoins = Math.round(baseExp * 0.3);
         const _quizCoins = window._miniQuizTotalCoins || 0;
         const _totalCoins = _miniCoins + _quizCoins;
         if(_totalCoins > 0) addKnowledgeCoins(_totalCoins);
@@ -40582,6 +40591,72 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.5700', brief:[
+    '⚖ 金幣比例調整:結算金幣從「最終 EXP × 0.5」降為「最終 EXP × 0.3」',
+  ], items:[
+    '【調整原因】',
+    '  v5600 的 0.5 比例使 BOSS 戰金幣動輒破千,商店物價需要重新平衡',
+    '  改為 0.3 後金幣量更接近合理範圍,玩家累積進度仍有正回饋但不會過於膨脹',
+    '【新公式】',
+    '  小怪戰:baseExp × 0.3 (baseExp 已含自信加成)',
+    '  BOSS 戰:battleExp × 0.3 (battleExp 含 ratio/自信/連擊/出戰×1.5 全部加成)',
+    '【新數值範例(普通難度)】',
+    '  小怪戰:179 EXP × 0.3 = 54 金幣 (原 89)',
+    '  BOSS 戰(8/15題、5連擊):2138 EXP × 0.3 = 641 金幣 (原 1069)',
+    '  整場冒險(3小怪+1BOSS):54×3 + 641 = 803 金幣',
+    '【設計理念維持】',
+    '  EXP 與金幣連動:打得越好 → EXP 越多 → 金幣也越多',
+    '  難度提升讓 HP 倍率自動讓 EXP/金幣浮動',
+  ] },
+  { ver:'v1.0.20260423.5600', brief:[
+    '💰 知識幣公式改為「最終結算給玩家的 EXP × 50%」,跟玩家拿到的 EXP 等比例同步',
+  ], items:[
+    '【新公式 vs 舊公式】',
+    '  舊(v5500):金幣 = 怪物 stat 加總 × 0.5(baseExp,沒含加成)',
+    '  新(v5600):金幣 = 最終結算給玩家的 EXP × 0.5',
+    '  → 答題加成、自信、連擊、出戰英雄 ×1.5、日本獎勵 +20% 等',
+    '    所有讓 EXP 變高的因素也會等比例讓金幣變高',
+    '【小怪戰公式】',
+    '  baseExp = _miniBaseExp × 自信加成(普通×1.25/我很會×1.5)',
+    '  小怪戰沒有 ratio / 連擊 / 出戰×1.5 加成,baseExp 就是發給玩家的 EXP',
+    '  金幣 = baseExp × 0.5',
+    '【BOSS 戰公式】',
+    '  baseExp = G.p2 全體 _calcMobExp 加總',
+    '  ratio = 1 + 答對×0.08 + max(0,20-rounds)×0.02 + score×0.0005 (上限 2.0)',
+    '  totalExp = baseExp × ratio × confMult × streakBonus',
+    '  battleExp = totalExp × 1.5 (出戰英雄)',
+    '  金幣 = battleExp × 0.5',
+    '【範例】',
+    '  小怪戰 baseExp=143、自信普通 → EXP +179、金幣 +89',
+    '  BOSS 戰 baseExp=470、ratio=1.94、自信×1.25、5連擊 → EXP +2138、金幣 +1069',
+    '【設計理念】',
+    '  玩家「打得越好(對越多題、連擊越久) → 拿越多 EXP → 也拿越多金幣」',
+    '  邏輯一致,不會出現「打很好 EXP 翻倍但金幣不變」的不協調',
+  ] },
+  { ver:'v1.0.20260423.5500', brief:[
+    '⚖ 修正 v5400 戰鬥中即時掉金幣造成的「重複拿獎勵」混淆',
+    '🎁 戰鬥中不再有獎勵飄字,所有 EXP/知識幣/掉落物都改為戰鬥結束時一次在勝利結算畫面合計顯示',
+  ], items:[
+    '【v5400 的問題】',
+    '  我加的「擊敗敵人即時掉金幣」(💰+N 飄字)在戰鬥中就跳出',
+    '  但結算時又有「baseExp × 0.20」的結算金幣,玩家拿到兩份金幣造成混淆',
+    '  這跟玩家想要的「戰鬥專注、獎勵集中在結算畫面顯示」設計理念不符',
+    '【v5500 修正】',
+    '  (1) 移除戰鬥中即時掉金幣的 popup 飄字 + log 訊息',
+    '  (2) 統一金幣公式為「該場敵人 EXP 總和 × 0.5」,跟 EXP 公式對齊',
+    '       小怪戰:_miniBaseExp(全體小怪 EXP 總和) × 0.5',
+    '       BOSS 戰:G.p2 全體 EXP 總和 × 0.5',
+    '  (3) 結算面板預覽金幣同步用新公式',
+    '【新公式範例】',
+    '  打 4 隻日本路邊小怪(河童32+二口女49+雪女48+獨眼44=173 EXP)',
+    '    → 結算金幣 173×0.5 = 86 知識幣',
+    '  打 BOSS 場(主BOSS 大天狗331+菁英2隻 約220 = 551 EXP)',
+    '    → 結算金幣 551×0.5 = 276 知識幣',
+    '【設計理念】',
+    '  戰鬥中專注於戰鬥本身,所有獎勵在結算畫面一次顯示總和',
+    '  玩家清楚知道每場戰鬥的總收益,不會被中途飄字混淆',
+    '  難度提升時 HP 倍率讓 EXP/金幣自動跟著浮動的特性保留',
+  ] },
   { ver:'v1.0.20260423.5400', brief:[
     '⚖ 全面重構戰鬥獎勵公式:EXP = (HP + 攻擊 + 特技 + 速度) × 50%',
     '💰 每擊敗一隻怪即時掉落知識幣(該怪 EXP × 50%),戰鬥結算還會再給結算金幣',
@@ -44269,7 +44344,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.5400';
+  const CURRENT_VERSION = 'v1.0.20260423.5700';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44286,7 +44361,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.5400';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.5700';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
