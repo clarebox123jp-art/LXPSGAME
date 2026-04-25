@@ -7253,7 +7253,21 @@ let _heroPortraitChoice = {};
 // 套用目前選擇的肖像到 HERO_IMGS（遊戲啟動 / 存檔載入時呼叫）
 function _applyHeroPortraitChoices(){
   if(typeof HERO_IMGS === 'undefined') return;
+  // ★ v1.0.20260423.9400 — 尊重精美畫風:當前在 premium 模式下,
+  //   _PREMIUM_ART_OVERRIDE.mob 中的角色(BOSS等)不該被本函式的 default url 覆蓋,
+  //   避免把 _applyArtStyle 剛設好的 LV20 / 精美版圖又改回原 Q 版
+  const _isPrem = (typeof _artStyle !== 'undefined' && _artStyle === 'premium');
   Object.keys(HERO_PORTRAIT_LIBRARY).forEach(name => {
+    // 精美畫風:跳過 _PREMIUM_ART_OVERRIDE.mob 中的角色(已由 _applyArtStyle 套用 mob 精美版)
+    if(_isPrem && typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
+       && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[name]){
+      return;
+    }
+    // 同樣跳過 hero 精美版(避免精美英雄圖被 default 覆蓋)
+    if(_isPrem && typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
+       && _PREMIUM_ART_OVERRIDE.hero && _PREMIUM_ART_OVERRIDE.hero[name]){
+      return;
+    }
     const lib = HERO_PORTRAIT_LIBRARY[name];
     const choice = _heroPortraitChoice[name] || 'default';
     const entry = lib.find(e => e.id === choice) || lib.find(e => e.id === 'default');
@@ -7742,12 +7756,10 @@ function _getCurPortraitObjPos(name){
   return null;
 }
 function getHeroObjPos(name){
-  // ★ v1.0.20260423.6600 — 精美畫風只提供全身圖,在卡片/預覽用 CSS 自動裁切到頭部
-  //   做法:object-position: center top(讓圖片頂端對齊容器頂端,顯示頭部)
-  //   配合 getHeroImgStyle 的 background-size 放大,讓頭部塞滿容器
-  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
-    return 'center top';
-  }
+  // ★ v1.0.20260423.9500 — 精美畫風時:
+  //   - 若該 portrait 有自己的 objPos 設定(LV10/LV20/3 號圖) → 用它(center 20%)
+  //   - 沒有設定(即 default 原圖) → 用原本可愛版的位置設定(HERO_IMG_POS)
+  //   舊版 v6600 強制回 'center top' 是錯的,造成原圖被裁掉只看到頭頂
   const _override = _getCurPortraitObjPos(name);
   if(_override){
     const parts = _override.split(' ');
@@ -7826,10 +7838,9 @@ const HERO_THUMB_POS_BY_PORTRAIT = {
 
 // 左側縮圖使用：依當前選擇的肖像套用對應位置；否則 fallback 到 HERO_THUMB_POS
 function getHeroThumbObjPos(name){
-  // ★ v1.0.20260423.6600 — 精美畫風縮圖也是全身圖裁切到頭部
-  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
-    return 'center top';
-  }
+  // ★ v1.0.20260423.9500 — 移除「精美畫風一律 center top」的錯誤邏輯
+  //   依當前選擇的 portrait 取對應位置(LV10/LV20/3 號版有自己的 center 20%),
+  //   default 原圖則走原本 HERO_THUMB_POS 的位置設定
   try{
     const choice = (typeof _heroPortraitChoice !== 'undefined' && _heroPortraitChoice[name]) || 'default';
     if(choice !== 'default' && HERO_THUMB_POS_BY_PORTRAIT[name] && HERO_THUMB_POS_BY_PORTRAIT[name][choice]){
@@ -7839,13 +7850,10 @@ function getHeroThumbObjPos(name){
   return HERO_THUMB_POS[name] || 'center center';
 }
 function getHeroImgStyle(name){
-  // ★ v1.0.20260423.6600 — 精美畫風(戰鬥卡片用):全身圖 + 放大 + 對齊上方,顯示頭部
-  //   背景大小 220% auto = 放大 2.2 倍,讓頭部佔滿容器
-  //   背景位置 center top = 圖頂端對齊容器頂端
-  //   注意:此函式只用於戰鬥卡片(card-illus 等),圖鑑詳細頁用另一條路徑(直接 img tag)
-  if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
-    return 'background-size:220% auto;background-position:center top;background-repeat:no-repeat';
-  }
+  // ★ v1.0.20260423.9500 — 移除「精美畫風一律放大+置頂」的錯誤邏輯
+  //   舊版 v6600 強制 220% size + center top 會讓 Q 版原圖被裁切到只看到頭頂
+  //   現在依 portrait 個別 objPos 設定 → LV10/LV20/3 號版用自己的(center 20%);
+  //   default 原圖用原本 HERO_IMG_POS 設定(各角色都已調好的可愛版位置)
   const _override = _getCurPortraitObjPos(name);
   const pos = HERO_IMG_POS[name] || ['160% auto','center 12%'];
   const _size = pos[0];
@@ -41427,6 +41435,47 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.9500', brief:[
+    '🐛 修正精美畫風時原 Q 版圖片被錯誤下移、只看到頭頂的 bug',
+  ], items:[
+    '【根因(我之前犯的錯)】',
+    '  v6600 在 getHeroObjPos / getHeroThumbObjPos / getHeroImgStyle 三個函式都加了',
+    '  「精美畫風一律強制 center top + 220% 放大」的邏輯',
+    '  但這會覆寫所有圖片,包括原 Q 版圖(其 HERO_IMG_POS 已調好的位置設定)',
+    '  → Q 版圖被當成全身圖處理,顯示時切掉肩膀以下,只看到頭頂',
+    '【真正應有的設計】',
+    '  LV10 / LV20 / 3 號版圖 → 用各自 portrait 的 objPos: center 20%(全身圖裁切到頭部)',
+    '  default 原圖 → 用 HERO_IMG_POS 各角色已調好的可愛版位置(不要動)',
+    '【修正】',
+    '  移除 3 個函式中「if _artStyle === premium 強制 center top」的判斷',
+    '  改回原本邏輯:_override 來自 portrait.objPos,沒有 override 走 HERO_IMG_POS',
+    '  → LV10/LV20/3 號版繼續用 center 20%(已驗證 OK,你說不要動)',
+    '  → 原 Q 版圖回到原本的位置(臉部正確顯示)',
+    '【影響範圍】',
+    '  魔物圖鑑、英雄圖鑑、戰鬥卡片、選角頁縮圖、邀請加入面板等',
+    '  所有使用 HERO_IMGS 顯示圖片的地方,Q 版原圖回到正確位置',
+  ] },
+  { ver:'v1.0.20260423.9400', brief:[
+    '🐛 修正大天狗、酒吞童子、玉藻前 切換到精美畫風時沒有顯示 LV20 圖的 bug',
+  ], items:[
+    '【根因】',
+    '  _applyArtStyle 步驟 1 把 HERO_IMGS[\'大天狗\'] 設成 LV20 圖 ✅',
+    '  _applyArtStyle 步驟 4 呼叫 _applyHeroPortraitChoices()',
+    '  _applyHeroPortraitChoices 跑進去 HERO_PORTRAIT_LIBRARY[\'大天狗\'],找 default entry',
+    '  把 HERO_IMGS[\'大天狗\'] 改回 default 的 url(原 Q 版圖)',
+    '  → 步驟 1 剛覆蓋的 LV20 URL,被步驟 4 又改回原圖!',
+    '【修正】',
+    '  _applyHeroPortraitChoices 加上「精美畫風例外」邏輯:',
+    '  - 當 _artStyle === \'premium\' 且該角色在 _PREMIUM_ART_OVERRIDE.mob/hero 中',
+    '  - 跳過該角色,不覆蓋 HERO_IMGS(尊重 _applyArtStyle 已設好的精美版)',
+    '【影響範圍(這次修好的)】',
+    '  魔物圖鑑:三隻 BOSS 顯示 LV20 圖 ✅',
+    '  選擇挑戰路線:三隻 BOSS 顯示 LV20 圖 ✅',
+    '  戰鬥角色卡:三隻 BOSS 顯示 LV20 圖 ✅',
+    '  其他用 HERO_IMGS 的地方也都會自動更新',
+    '【可愛畫風不受影響】',
+    '  _isPrem 判斷只在精美畫風生效;可愛畫風時邏輯不變',
+  ] },
   { ver:'v1.0.20260423.9300', brief:[
     '🔍 魔物圖鑑詳細頁:6 隻有精美版的 BOSS 可在「可愛/精美」之間切換預覽',
     'ℹ️ 切換預覽不影響全域畫風,要真的改用要去首頁切換',
@@ -45911,7 +45960,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.9300';
+  const CURRENT_VERSION = 'v1.0.20260423.9500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45928,7 +45977,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.9300';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.9500';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
