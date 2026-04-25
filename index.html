@@ -7081,6 +7081,33 @@ const HERO_PORTRAIT_LIBRARY = {
   _add('吟遊詩人', [
     { id:'bard_shop3', name:'吟風醉月', url:_u('吟遊詩人3.png'), requiresUnlock:true },
   ]);
+
+  // ★ v1.0.20260424.0440 — 個別 portrait 客製 objPos 覆寫(預覽圖位置微調)
+  //   預設精美版是 center 20%,以下名單依管理員指定客製化
+  //   ★ v1.0.20260424.0450 — 修正方向錯誤
+  //     正確邏輯:Y 值越大 → 看到圖片更下方部分 → 視覺上人物「往上移」
+  //              Y 值越小 → 看到圖片更上方部分 → 視覺上人物「往下移」
+  //   - 木靈使「往上移 20%」:從預設 20% → 40%(看到更下方部分,人物往上挪)
+  //   - 14 個角色「往下移 10%」:從預設 20% → 10%(看到更上方部分,人物往下挪)
+  const _customObjPosMap = {};
+  // 直接遍歷對應 portrait id 設定 objPos
+  const _moveUp20  = ['dryad_lv20'];                            // 木靈使(管理員說 LV10,目前該角色只有 LV20)
+  const _moveDown10 = [
+    'coder_lv10','recorder_orig_lv10','recorder_boy_lv10',     // 程式設計師 LV10 + 直笛 LV10
+    'time_lv20','mortal_lv20','onmyoji_lv20','ice_lv20',
+    'guard_lv20','fighter_lv20','astrologer_lv20','paladin_lv20',
+    'scholar_lv20','strategist_lv20','samurai_lv20','sheriff_lv20',
+  ];
+  Object.keys(HERO_PORTRAIT_LIBRARY).forEach(name => {
+    (HERO_PORTRAIT_LIBRARY[name]||[]).forEach(p => {
+      if(!p || !p.id) return;
+      if(_moveUp20.includes(p.id)){
+        p.objPos = 'center 40%'; // 從預設 20% → 40% (容器顯示更下方,人物在容器中往上挪,看到完整臉部)
+      } else if(_moveDown10.includes(p.id)){
+        p.objPos = 'center 10%'; // 從預設 20% 下移 10% → 10%
+      }
+    });
+  });
 })();
 // ════════════════════════════════════════════════════════════════
 // ★ v1.0.20260423.6400 — 畫風切換系統(可愛/精美)
@@ -7993,13 +8020,23 @@ function getHeroObjPos(name){
   // 精美畫風自動偵測
   if(typeof _artStyle !== 'undefined' && _artStyle === 'premium'){
     try{
+      // ★ v1.0.20260424.0440 — 若 HERO_IMGS 已換成精美版,優先讀對應 portrait 的個別 objPos
+      //   讓特定角色(木靈使 Lv10 上移、時空法師 Lv20 下移等)能客製化裁切位置
+      const _lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined') ? HERO_PORTRAIT_LIBRARY[name] : null;
+      const _curUrl = (typeof HERO_IMGS !== 'undefined') ? HERO_IMGS[name] : '';
+      if(_lib && _curUrl){
+        const _curEntry = _lib.find(p => p.url === _curUrl);
+        if(_curEntry && _curEntry.objPos){
+          const parts = _curEntry.objPos.split(' ');
+          return 'center ' + (parts[1] || parts[0] || '20%');
+        }
+      }
+      // fallback:default 'center 20%'
       const _hasPremiumOverride =
         (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[name]) ||
         (typeof _PREMIUM_ART_OVERRIDE !== 'undefined' && _PREMIUM_ART_OVERRIDE.hero && _PREMIUM_ART_OVERRIDE.hero[name]);
       const _arenaCovered = (typeof _arenaPremiumApplied !== 'undefined' && _arenaPremiumApplied);
       if(_hasPremiumOverride || _arenaCovered) return 'center 20%';
-      const _lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined') ? HERO_PORTRAIT_LIBRARY[name] : null;
-      const _curUrl = (typeof HERO_IMGS !== 'undefined') ? HERO_IMGS[name] : '';
       if(_lib && _curUrl){
         const _matchPremium = _lib.find(p => (p.id||'').match(/_lv10$|_lv20$|_shop3$/) && p.url === _curUrl);
         if(_matchPremium) return 'center 20%';
@@ -35820,11 +35857,15 @@ function openPresetTeamPanel(){
             const sk = pt.skills[hi]||{};
             const skLabel = sk.skillName ? `🔄${sk.slot?sk.slot.toUpperCase():''}: ${sk.skillName}` : '（不替換）';
             const _oPos = (typeof getHeroObjPos==='function') ? getHeroObjPos(name) : 'center 20%';
+            // ★ v1.0.20260424.0430 — 冒險模式預設陣容顯示當前 Lv,鬥技場不顯示
+            const _isAdv = (typeof _adventureMode !== 'undefined' && _adventureMode);
+            const _heroLv = _isAdv && (typeof getHeroLevel === 'function') ? getHeroLevel(name) : 0;
+            const _lvLabel = (_isAdv && _heroLv > 0) ? ` <span style="color:#88ccff;font-size:16px;">Lv${_heroLv}</span>` : '';
             return `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:200px;">
               <div style="width:200px;height:160px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(200,150,255,0.4);background:#0a0818;position:relative;flex-shrink:0;">
                 ${imgUrl?`<div style="width:100%;height:100%;background:url('${imgUrl}') ${_oPos}/cover;"></div>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;">${(typeof AVATARS!=='undefined'&&AVATARS[name])||'⚔'}</div>`}
               </div>
-              <div style="font-size:19px;font-weight:800;color:#ddd;">${name}</div>
+              <div style="font-size:19px;font-weight:800;color:#ddd;">${name}${_lvLabel}</div>
               <div style="font-size:17px;color:#88aaff;">${elem?_presetElemLabel(elem):''}</div>
               <div style="font-size:15px;color:#cc99ff;text-align:center;max-width:200px;word-break:break-all;">${skLabel}</div>
             </div>`;
@@ -41783,6 +41824,83 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0470', brief:[
+    '🔄 還原 14 個 LV20 角色 objPos 為 center 10%(管理員指定下移 10%,不是極限值)',
+  ], items:[
+    '【釐清】',
+    '  管理員指定:14 個角色「下移 10%」 = Y 從預設 20% 改為 10%',
+    '  v0460 我改成 0% 是反應過度,擅自設成極限值',
+    '  v0470 還原為 10%(精確下移 10%,如管理員所要求)',
+    '【若 10% 仍頭頂被切】',
+    '  可能不是位置問題,而是原圖留白不足或容器高度比例需調整',
+    '  屆時告訴我,可考慮:容器加高、圖片放大比例、單獨針對某角色細調',
+  ] },
+  { ver:'v1.0.20260424.0460', brief:[
+    '🎨 14 個 LV20 角色預覽圖位置調整 → 從 center 10% 改為 center 0%,完整顯示頭頂',
+  ], items:[
+    '【需求釐清】',
+    '  管理員回報:14 個 LV20 角色「現在頭頂被切掉,要看到完整頭頂」',
+    '  → 圖片需往螢幕下方移動,容器顯示更上方部分',
+    '  → object-position Y 值越小越好',
+    '【調整】',
+    '  從 center 10% → center 0% (圖片頂端完全對齊容器頂端)',
+    '  讓 14 個角色頭頂以上不再被裁切',
+    '【涵蓋角色】',
+    '  程式設計師 LV10、直笛團員 LV10(orig + boy)、',
+    '  時空法師、凡人、陰陽師、冰法師、守衛、武鬥家、占星師、',
+    '  聖騎士、學者、軍師、武士、警長 LV20',
+    '【木靈使不變】',
+    '  仍維持 center 40%(看到完整臉部)',
+  ] },
+  { ver:'v1.0.20260424.0450', brief:[
+    '🐛 修正 v0440 的 objPos 方向錯誤(我把上下搞反了)',
+  ], items:[
+    '【方向釐清】',
+    '  object-position Y 值越大 → 容器顯示圖片更「下方」部分 → 視覺上人物「往上挪」',
+    '  object-position Y 值越小 → 容器顯示圖片更「上方」部分 → 視覺上人物「往下挪」',
+    '【修正前(錯誤)】',
+    '  木靈使「往上移」→ center 0%(只看到頭頂)❌',
+    '  14 個 LV20「往下移」→ center 30%(看到下半身)❌',
+    '【修正後(正確)】',
+    '  木靈使「往上移 20%」→ center 40%(從預設 20 → 40)',
+    '    視覺:看到完整的臉(原本只看到頭頂)',
+    '  14 個 LV20「往下移 10%」→ center 10%(從預設 20 → 10)',
+    '    視覺:看到角色頭頂以上的留白/裝飾元素',
+    '【說明】',
+    '  我之前在程式註解誤標方向,現已釐清',
+  ] },
+  { ver:'v1.0.20260424.0440', brief:[
+    '🎨 個別 portrait 客製預覽圖位置(邀請加入面板)',
+  ], items:[
+    '【15 個角色客製化】',
+    '  上移 20%(從預設 20% → 0%):',
+    '    木靈使 LV20 (管理員說「LV10」但該角色只有 LV20,先暫定 LV20)',
+    '  下移 10%(從預設 20% → 30%):',
+    '    程式設計師 LV10、直笛團員 LV10(orig + boy)',
+    '    時空法師 LV20、凡人 LV20、陰陽師 LV20、冰法師 LV20、',
+    '    守衛 LV20、武鬥家 LV20、占星師 LV20、聖騎士 LV20、',
+    '    學者 LV20、軍師 LV20、武士 LV20、警長 LV20',
+    '【實作】',
+    '  IIFE 結尾遍歷 HERO_PORTRAIT_LIBRARY,為這 15 個 portrait 加上 objPos',
+    '  getHeroObjPos 中的「精美自動偵測」優先讀對應 portrait 的個別 objPos',
+    '【影響範圍】',
+    '  邀請加入面板大圖(.hf-illus)的位置',
+    '  其他位置(縮圖、戰鬥卡片)未受影響',
+  ] },
+  { ver:'v1.0.20260424.0430', brief:[
+    '📋 冒險模式的「常用預設陣容」面板:角色名稱後面顯示當前 Lv',
+  ], items:[
+    '【顯示規則】',
+    '  冒險模式進預設陣容面板 → 名稱後面加「Lv X」(藍色字)',
+    '    範例:火法師 Lv25、電腦繪圖師 Lv15',
+    '  鬥技場進預設陣容面板 → 不顯示 Lv(因為鬥技場一律 Lv1)',
+    '【實作】',
+    '  _renderPresetSlots 中,依 _adventureMode 旗標決定是否加 Lv 標籤',
+    '  Lv 從 getHeroLevel(name) 取得當前等級',
+    '【為何只在冒險模式顯示】',
+    '  鬥技場全角色都是 Lv1,顯示「Lv1」沒意義也佔空間',
+    '  冒險模式角色等級重要(影響戰鬥力與肖像解鎖),玩家需要快速看到',
+  ] },
   { ver:'v1.0.20260424.0420', brief:[
     '🎨 「設定代表英雄」面板的縮圖也套用 getHeroThumbObjPos,精美版自動往下移 20% 顯示頭部',
   ], items:[
@@ -46499,7 +46617,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0420';
+  const CURRENT_VERSION = 'v1.0.20260424.0470';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -46516,7 +46634,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0420';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0470';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
