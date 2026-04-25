@@ -7221,7 +7221,8 @@ function _applyArenaPremiumImgs(){
   if(typeof HERO_IMGS === 'undefined' || typeof HERO_PORTRAIT_LIBRARY === 'undefined') return;
   // 備份目前的 HERO_IMGS
   _arenaPremiumBackup = Object.assign({}, HERO_IMGS);
-  // 覆寫:每位英雄找對應 LV10/LV20 portrait 的 url
+  // ★ v1.0.20260424.0410 — 鬥技場視覺改:全角色顯示 LV20/LV10 (無條件,不檢查解鎖)
+  //   設計理念:鬥技場只是視覺改善,不影響進度;冒險模式才需要解鎖才能用精美版
   Object.keys(HERO_IMGS).forEach(name => {
     try{
       const lib = HERO_PORTRAIT_LIBRARY[name];
@@ -7230,7 +7231,6 @@ function _applyArenaPremiumImgs(){
       // 其他英雄:找 _lv20 結尾的 portrait
       const _isInitial = _ARENA_INITIAL_HEROES.includes(name);
       const _suffix = _isInitial ? '_lv10' : '_lv20';
-      // 優先找精準 _suffix 結尾的(會跳過 boy/girl 之類的)
       let _entry = lib.find(p => p.id && p.id.endsWith(_suffix));
       if(_entry && _entry.url){
         HERO_IMGS[name] = _entry.url;
@@ -7263,10 +7263,31 @@ function _revertArenaPremiumImgs(){
   }catch(_){}
 }
 
+// ★ v1.0.20260424.0400 — 切換冷卻狀態(避免連點導致圖片不一致)
+let _artStyleSwitching = false;
+
 // 切換畫風(由按鈕呼叫)
 function _setArtStyle(style){
   if(style !== 'cute' && style !== 'premium') return;
   if(_artStyle === style) return; // 無變化
+  // ★ v1.0.20260424.0400 — 5 秒讀條 + 冷卻,防止連點
+  if(_artStyleSwitching){
+    try{ _showInGameToast('⏳ 切換中,請稍候...', '#ffaa66', 1200); }catch(_){}
+    return;
+  }
+  _artStyleSwitching = true;
+  // 顯示讀條 overlay
+  _showArtStyleProgress(style);
+  // 鎖按鈕(視覺)
+  try{
+    const _cuteBtn = document.getElementById('art-style-cute-btn');
+    const _premBtn = document.getElementById('art-style-premium-btn');
+    if(_cuteBtn) _cuteBtn.style.pointerEvents = 'none';
+    if(_premBtn) _premBtn.style.pointerEvents = 'none';
+    if(_cuteBtn) _cuteBtn.style.opacity = '0.5';
+    if(_premBtn) _premBtn.style.opacity = '0.5';
+  }catch(_){}
+
   _artStyle = style;
   try{ localStorage.setItem('lxps_art_style', _artStyle); }catch(_){}
   // 更新按鈕視覺
@@ -7289,11 +7310,66 @@ function _setArtStyle(style){
       }
     }
   }catch(_){}
-  // toast 提示
-  try{
-    const _msg = (style === 'premium') ? '✨ 已切換為精美畫風' : '🎨 已切換為可愛畫風';
-    if(typeof _showInGameToast === 'function') _showInGameToast(_msg, '#ffcc88', 1500);
-  }catch(_){}
+  // 5 秒後解鎖
+  setTimeout(() => {
+    _artStyleSwitching = false;
+    try{
+      const _cuteBtn = document.getElementById('art-style-cute-btn');
+      const _premBtn = document.getElementById('art-style-premium-btn');
+      if(_cuteBtn){ _cuteBtn.style.pointerEvents = ''; _cuteBtn.style.opacity = ''; }
+      if(_premBtn){ _premBtn.style.pointerEvents = ''; _premBtn.style.opacity = ''; }
+    }catch(_){}
+    _hideArtStyleProgress();
+    // toast 提示完成
+    try{
+      const _msg = (style === 'premium') ? '✨ 已切換為精美畫風' : '🎨 已切換為可愛畫風';
+      if(typeof _showInGameToast === 'function') _showInGameToast(_msg, '#ffcc88', 1500);
+    }catch(_){}
+  }, 5000);
+}
+
+// ★ v1.0.20260424.0400 — 顯示切換中讀條 overlay (5 秒)
+function _showArtStyleProgress(style){
+  // 移除既有讀條
+  const _old = document.getElementById('art-style-progress-overlay');
+  if(_old) _old.remove();
+  const _label = (style === 'premium') ? '✨ 切換到精美畫風中...' : '🎨 切換到可愛畫風中...';
+  const ov = document.createElement('div');
+  ov.id = 'art-style-progress-overlay';
+  ov.style.cssText = [
+    'position:fixed;inset:0;z-index:99999;',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;',
+    'background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:artFadeIn 0.3s ease-out;'
+  ].join('');
+  ov.innerHTML = `
+    <style>
+      @keyframes artFadeIn { from{opacity:0} to{opacity:1} }
+      @keyframes artBarFill { from{width:0%} to{width:100%} }
+    </style>
+    <div style="font-size:42px;font-weight:900;color:#ffe066;letter-spacing:6px;text-shadow:0 0 20px rgba(255,224,102,0.6);">
+      ${_label}
+    </div>
+    <div style="width:480px;max-width:80vw;height:24px;background:rgba(20,15,40,0.85);
+      border:2px solid rgba(255,224,102,0.5);border-radius:14px;overflow:hidden;
+      box-shadow:0 0 30px rgba(255,224,102,0.25);">
+      <div style="height:100%;background:linear-gradient(90deg,#ff7730,#ffe066,#88ddff);
+        border-radius:12px;animation:artBarFill 5s linear forwards;
+        box-shadow:0 0 12px rgba(255,224,102,0.6);"></div>
+    </div>
+    <div style="font-size:22px;color:#ccc;letter-spacing:3px;">請稍候 5 秒,完成圖片載入...</div>
+  `;
+  document.body.appendChild(ov);
+}
+
+function _hideArtStyleProgress(){
+  const _ov = document.getElementById('art-style-progress-overlay');
+  if(_ov){
+    _ov.style.transition = 'opacity 0.3s';
+    _ov.style.opacity = '0';
+    setTimeout(() => _ov.remove(), 320);
+  }
 }
 
 // 啟動時:同步按鈕視覺到當前 _artStyle、套用畫風
@@ -7310,6 +7386,65 @@ function _initArtStyleUI(){
   } else {
     document.body.classList.add('art-cute');
   }
+  // ★ v1.0.20260424.0400 — 啟動後預載精美版圖,讓首次切換體驗更順暢
+  setTimeout(_preloadPremiumArt, 2000);
+}
+
+// ★ v1.0.20260424.0400 — 預載精美版圖
+//   啟動 2 秒後在背景下載所有精美版資源,讓玩家第一次按切換時已有快取
+//   不阻塞主線程,失敗的圖也不影響(只是體感較慢)
+let _premiumArtPreloaded = false;
+function _preloadPremiumArt(){
+  if(_premiumArtPreloaded) return;
+  _premiumArtPreloaded = true;
+  const _urls = [];
+  try{
+    // BOSS 精美版
+    if(typeof _PREMIUM_ART_OVERRIDE !== 'undefined'){
+      ['hero','mob','pet','portrait','shop'].forEach(cat => {
+        const map = _PREMIUM_ART_OVERRIDE[cat];
+        if(!map) return;
+        Object.values(map).forEach(url => { if(url) _urls.push(url); });
+      });
+    }
+    // 場景背景圖(7 個 + 4 個選角頁)
+    const _premiumScenes = [
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%81%8A%E6%88%B2%E9%A6%96%E9%A0%81(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80%E5%8F%A3(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%87%AA%E7%84%B6%E6%95%99%E5%AE%A4(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A8%9F%E6%B9%96%E6%AD%A5%E9%81%93(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%93%8D%E5%A0%B4(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+    ];
+    _urls.push(..._premiumScenes);
+    // LV10/LV20/3 號圖 portrait(從 HERO_PORTRAIT_LIBRARY)
+    if(typeof HERO_PORTRAIT_LIBRARY !== 'undefined'){
+      Object.keys(HERO_PORTRAIT_LIBRARY).forEach(name => {
+        (HERO_PORTRAIT_LIBRARY[name]||[]).forEach(p => {
+          if(p && p.url && /(_lv10$|_lv20$|_shop3$|3\.png|2\.png)/.test(p.id||'') ){
+            _urls.push(p.url);
+          }
+          if(p && p.url && /3\.png/.test(p.url)) _urls.push(p.url);
+        });
+      });
+    }
+    // 去重
+    const _unique = Array.from(new Set(_urls.filter(Boolean)));
+    console.log('[精美版預載] 開始下載 ' + _unique.length + ' 張圖...');
+    let _loaded = 0;
+    _unique.forEach(url => {
+      const img = new Image();
+      img.onload = () => {
+        _loaded++;
+        if(_loaded === _unique.length){
+          console.log('[精美版預載] 完成 ' + _loaded + ' / ' + _unique.length);
+        }
+      };
+      img.onerror = () => { _loaded++; };
+      img.src = url;
+    });
+  }catch(_e){ console.warn('[精美版預載] 失敗:', _e); }
 }
 // 在 DOM 載入後初始化(_artStyle 已從 localStorage 讀取)
 if(document.readyState === 'loading'){
@@ -7329,6 +7464,9 @@ function _applyHeroPortraitChoices(){
   // ★ v1.0.20260423.9400 — 尊重精美畫風:當前在 premium 模式下,
   //   _PREMIUM_ART_OVERRIDE.mob 中的角色(BOSS等)不該被本函式的 default url 覆蓋,
   //   避免把 _applyArtStyle 剛設好的 LV20 / 精美版圖又改回原 Q 版
+  // ★ v1.0.20260424.0410 — 精美畫風時,若玩家沒手動選肖像(choice='default'),
+  //   自動套用「已解鎖的最高等級精美版」(LV20 > LV10 > 商店3 > default)
+  //   冒險模式中的玩家英雄會自動切到精美 LV20/LV10 圖,前提是玩家解鎖過該肖像
   const _isPrem = (typeof _artStyle !== 'undefined' && _artStyle === 'premium');
   Object.keys(HERO_PORTRAIT_LIBRARY).forEach(name => {
     // 精美畫風:跳過 _PREMIUM_ART_OVERRIDE.mob 中的角色(已由 _applyArtStyle 套用 mob 精美版)
@@ -7342,7 +7480,20 @@ function _applyHeroPortraitChoices(){
       return;
     }
     const lib = HERO_PORTRAIT_LIBRARY[name];
-    const choice = _heroPortraitChoice[name] || 'default';
+    let choice = _heroPortraitChoice[name] || 'default';
+    // ★ v1.0.20260424.0410 — 精美 + 玩家沒手動選 → 自動找最高等級已解鎖肖像
+    if(_isPrem && choice === 'default'){
+      try{
+        const _unlocked = (typeof _heroPortraitUnlocked !== 'undefined' && _heroPortraitUnlocked[name]) || [];
+        // 優先順序:_lv20 > _lv10 > _shop3 > 其他已解鎖 > default
+        const _findByPattern = (pattern) => {
+          const entry = lib.find(p => p.id && pattern.test(p.id) && _unlocked.includes(p.id));
+          return entry ? entry.id : null;
+        };
+        const _bestId = _findByPattern(/_lv20$/) || _findByPattern(/_lv10$/) || _findByPattern(/_shop3$/);
+        if(_bestId) choice = _bestId;
+      }catch(_){}
+    }
     const entry = lib.find(e => e.id === choice) || lib.find(e => e.id === 'default');
     if(entry) HERO_IMGS[name] = entry.url;
   });
@@ -32457,8 +32608,11 @@ async function gameCloudLoad() {
     //   解決情境:老玩家曾購買 graphic_boy 等舊版肖像,但商品/lib 已下架,
     //             _heroPortraitUnlocked 仍存著這些孤兒 id,_heroPortraitChoice 也可能選著它
     //   清理方式:任何不在當前 HERO_PORTRAIT_LIBRARY 中的 portrait id,從玩家資料中刪除
+    // ★ v1.0.20260424.0300 — 加上解鎖檢查:若玩家當前選的 portrait 沒在已解鎖清單中,
+    //   自動回到 default(避免歷史殘留資料造成「未解鎖也顯示精美版」)
     try{
       let _orphanCount = 0;
+      let _lockedCount = 0;
       Object.keys(_heroPortraitUnlocked).forEach(heroName => {
         const lib = HERO_PORTRAIT_LIBRARY[heroName];
         if(!lib) return;
@@ -32471,8 +32625,25 @@ async function gameCloudLoad() {
           _heroPortraitChoice[heroName] = 'default';
         }
       });
-      if(_orphanCount > 0){
-        console.log('[肖像清理] 清除 ' + _orphanCount + ' 個孤兒 portrait id (已從商店下架的舊版圖)');
+      // ★ 額外:檢查所有 _heroPortraitChoice,若選的 portrait 需解鎖但玩家沒解鎖 → 回 default
+      Object.keys(_heroPortraitChoice).forEach(heroName => {
+        const choice = _heroPortraitChoice[heroName];
+        if(!choice || choice === 'default') return;
+        const lib = HERO_PORTRAIT_LIBRARY[heroName];
+        if(!lib) return;
+        const entry = lib.find(p => p.id === choice);
+        if(!entry) return; // 上面已處理孤兒
+        if(entry.requiresUnlock){
+          const _unlocked = _heroPortraitUnlocked[heroName] || [];
+          if(!_unlocked.includes(choice)){
+            _heroPortraitChoice[heroName] = 'default';
+            _lockedCount++;
+          }
+        }
+      });
+      if(_orphanCount > 0 || _lockedCount > 0){
+        if(_orphanCount > 0) console.log('[肖像清理] 清除 ' + _orphanCount + ' 個孤兒 portrait id');
+        if(_lockedCount > 0) console.log('[肖像鎖定] 重置 ' + _lockedCount + ' 個未解鎖卻選中的肖像為 default');
         try{ _applyHeroPortraitChoices(); }catch(_){}
       }
     }catch(_cE){ console.warn('[肖像清理] 失敗:', _cE); }
@@ -41610,6 +41781,92 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0410', brief:[
+    '🔢 版本號改為 +10 遞增(0400 → 0410 → 0420...)',
+    '⚔️ 鬥技場精美畫風:全角色無條件顯示 LV20/LV10 圖(視覺改善,不影響進度)',
+    '🎮 冒險模式精美畫風:玩家英雄自動套用「已解鎖的最高等級肖像」,沒解鎖則用原圖',
+  ], items:[
+    '【1. 版本號規則】',
+    '  改為一次 +10 遞增,從 0400 跳到 0410 後,下一版會是 0420',
+    '【2. 鬥技場規則(無條件)】',
+    '  進精美畫風鬥技場 → 所有角色無條件顯示 LV20/LV10 精美圖',
+    '  v0200 加的「解鎖檢查」已移除',
+    '  設計理念:鬥技場是純視覺體驗,讓玩家欣賞精美版,不影響任何進度',
+    '【3. 冒險模式規則(依解鎖)】',
+    '  6 隻 BOSS(大天狗、酒吞、玉藻、九尾、杏花、八岐) → 顯示精美版(管理員指定)',
+    '  玩家英雄 → _applyHeroPortraitChoices 加上「最高等級自動套用」邏輯:',
+    '    精美畫風 + 玩家沒手動選肖像 + 已解鎖 LV20 → 自動用 LV20',
+    '    沒 LV20 → 找 LV10 → 找商店3 → 都沒解鎖 → 用 default(Q 版原圖)',
+    '  優先順序:_lv20 > _lv10 > _shop3 > default',
+    '【4. 雲端載入解鎖驗證(v0300 仍生效)】',
+    '  歷史殘留的「未解鎖卻選著精美肖像」會自動歸零回 default',
+    '【效果範例】',
+    '  火法師 Lv25(已解鎖 LV20) → 冒險精美畫風自動顯示 LV20',
+    '  火法師 Lv5(未解鎖) → 顯示 Q 版原圖',
+    '  電腦繪圖師 Lv15(已解鎖 LV10) → 自動顯示 LV10',
+  ] },
+  { ver:'v1.0.20260424.0400', brief:[
+    '⚡ 預載精美版圖,讓首次切換畫風更順暢',
+    '⏳ 切換畫風時顯示 5 秒讀條 + 按鈕冷卻,避免連點造成圖片風格不一致',
+  ], items:[
+    '【1. 預載精美版圖】',
+    '  進首頁 2 秒後自動在背景下載所有精美版資源:',
+    '  - 6 隻 BOSS 精美版圖(_PREMIUM_ART_OVERRIDE.mob)',
+    '  - 7 個場景背景(首頁、選關卡、自然教室、貓空 3 場景、操場)',
+    '  - LV10/LV20/3 號等 portrait 圖',
+    '  下載失敗的圖不影響(只是體感較慢),Console 會顯示「[精美版預載] 完成 N / 總數」',
+    '【2. 切換畫風讀條】',
+    '  按下「🎨 可愛畫風」或「✨ 精美畫風」按鈕後:',
+    '  - 顯示全螢幕讀條 overlay (5 秒從 0% → 100%)',
+    '  - 文字「切換到 X 畫風中...請稍候 5 秒,完成圖片載入...」',
+    '  - 兩顆切換按鈕同時鎖住(pointer-events:none + opacity 0.5)',
+    '  - 5 秒後自動解除,顯示完成 toast「✨ 已切換為精美畫風」',
+    '【3. 連點防護】',
+    '  讀條期間若再點切換按鈕 → 顯示 toast「⏳ 切換中,請稍候...」,不執行切換',
+    '【效果】',
+    '  首次切換:讀條期間圖片已預載完,5 秒後體感無延遲',
+    '  避免連續點擊造成圖片載入混亂(精美/可愛混雜)',
+  ] },
+  { ver:'v1.0.20260424.0300', brief:[
+    '🔒 雲端載入後驗證玩家肖像選擇,若選了未解鎖的肖像 → 自動回到原圖',
+  ], items:[
+    '【觀察到的 bug】',
+    '  田徑/直笛/籃球 Lv.5(未達 Lv10)的角色 卻顯示精美 LV10 圖',
+    '  推測:歷史殘留資料(舊版 v8800 點縮圖未檢查解鎖、或測試時手動切過)',
+    '       _heroPortraitChoice[name] 殘留 LV10/LV20 portrait id',
+    '       而 _heroPortraitUnlocked 沒對應的解鎖紀錄',
+    '【修正】',
+    '  雲端載入後的「肖像清理」流程,加上「解鎖檢查」階段',
+    '  掃描所有 _heroPortraitChoice,若選的 portrait:',
+    '    - requiresUnlock 為 true',
+    '    - 且不在 _heroPortraitUnlocked[name] 清單中',
+    '  → 自動把該角色的 _heroPortraitChoice 改回 default(原圖)',
+    '【效果】',
+    '  下次重整載入時,所有歷史殘留的「未解鎖卻選中」肖像會自動歸零',
+    '  Console 會看到「[肖像鎖定] 重置 N 個未解鎖卻選中的肖像為 default」',
+    '【執行頻率】',
+    '  每次玩家登入雲端載入時跑一次,清理完即時生效',
+  ] },
+  { ver:'v1.0.20260424.0200', brief:[
+    '🔒 修正鬥技場精美畫風下「未解鎖肖像也被自動套用」的 bug',
+  ], items:[
+    '【舊版問題】',
+    '  v9800 加的 _applyArenaPremiumImgs 邏輯:精美畫風進鬥技場時把所有英雄 HERO_IMGS',
+    '  覆寫成 _lv10/_lv20 結尾的 portrait url',
+    '  問題:沒檢查玩家是否解鎖該肖像 → 任何人進精美鬥技場就看到 LV20 圖,失去解鎖意義',
+    '【修正】',
+    '  _applyArenaPremiumImgs 加上解鎖檢查:',
+    '  - 該 portrait 有 requiresUnlock 標記',
+    '  - 且不在 _heroPortraitUnlocked[name] 中',
+    '  → 不覆寫 HERO_IMGS,維持原圖',
+    '【效果】',
+    '  玩家未解鎖 LV10/LV20 的角色 → 進精美鬥技場仍顯示原 Q 版',
+    '  玩家已解鎖的 → 才顯示精美 LV10/LV20 版',
+    '  鼓勵玩家升角色等級才能在鬥技場看精美圖',
+    '【6 隻 BOSS 不受影響】',
+    '  大天狗、酒吞童子、玉藻前、九尾空貓怪、杏花妖、八岐大蛇 在精美畫風戰鬥中',
+    '  仍顯示 LV20 / 精美版圖(因為他們是 BOSS,不是玩家可使用的英雄,管理員指定不鎖)',
+  ] },
   { ver:'v1.0.20260424.0100', brief:[
     '🐛 修正精美畫風下 LV10/LV20 自動解鎖的角色縮圖位置不對(顯示全身、看不到臉)的 bug',
   ], items:[
@@ -46226,7 +46483,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0100';
+  const CURRENT_VERSION = 'v1.0.20260424.0410';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -46243,7 +46500,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0100';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0410';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
