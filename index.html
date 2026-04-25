@@ -6954,7 +6954,16 @@ const HERO_PORTRAIT_LIBRARY = {
   const _BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
   function _u(filename){ return _BASE + encodeURIComponent(filename); }
   function _add(heroName, items){
-    if(!HERO_PORTRAIT_LIBRARY[heroName]) HERO_PORTRAIT_LIBRARY[heroName] = [];
+    // ★ v1.0.20260423.7200 — 若此英雄在 HERO_PORTRAIT_LIBRARY 中尚未定義(例如凡人、神偷、舞者等),
+    //   自動補上 default 肖像(從 HERO_IMGS 取原 Q 版圖),以確保切換面板的 length > 1 顯示條件滿足
+    //   否則新加的 LV10/LV20 肖像會因 _lib.length === 1 被切換面板邏輯跳過,玩家看不到
+    if(!HERO_PORTRAIT_LIBRARY[heroName]){
+      HERO_PORTRAIT_LIBRARY[heroName] = [];
+      const _origUrl = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) ? HERO_IMGS[heroName] : '';
+      if(_origUrl){
+        HERO_PORTRAIT_LIBRARY[heroName].push({ id:'default', name:'原始肖像', url:_origUrl });
+      }
+    }
     items.forEach(item => HERO_PORTRAIT_LIBRARY[heroName].push(item));
   }
 
@@ -41045,6 +41054,22 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.7200', brief:[
+    '🔧 修正凡人/神偷/舞者/劍士/警長/煉金術師/動物學家/光法師 的 LV20 解鎖肖像沒顯示在英雄圖鑑切換面板的 bug',
+  ], items:[
+    '【根因】',
+    '  HERO_PORTRAIT_LIBRARY 原本就沒有這 8 個角色的 default 肖像條目',
+    '  所以 _addNewPortraits IIFE push 進去後,陣列只有 1 個項目(只有 LV20 解鎖版)',
+    '  但 _renderHeroDetail 渲染肖像切換面板時,條件是 `_lib.length > 1` 才顯示',
+    '  → 1 不滿足 > 1 → 面板根本沒出現,玩家看不到新肖像',
+    '【修正】',
+    '  _addNewPortraits 內部 _add() 函式:首次建立陣列時自動補上 default 肖像',
+    '  default 的 url 從 HERO_IMGS[name] 拿原 Q 版圖',
+    '  → 這 8 個角色現在 length = 2(default + 解鎖版),切換面板正常顯示',
+    '【影響】',
+    '  其他原本就在 HERO_PORTRAIT_LIBRARY 的角色不受影響(_add 只在不存在時補 default)',
+    '  玩家既有解鎖紀錄不變,只是 UI 終於能看到了',
+  ] },
   { ver:'v1.0.20260423.7100', brief:[
     '🔒 首頁畫風切換按鈕暫時上鎖,點擊顯示「未開放」提示',
   ], items:[
@@ -45082,7 +45107,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.7100';
+  const CURRENT_VERSION = 'v1.0.20260423.7200';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45099,7 +45124,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.7100';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.7200';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
