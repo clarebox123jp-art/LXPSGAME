@@ -6954,9 +6954,16 @@ const HERO_PORTRAIT_LIBRARY = {
     // ★ v1.0.20260423.7200 — 若此英雄在 HERO_PORTRAIT_LIBRARY 中尚未定義(例如凡人、神偷、舞者等),
     //   自動補上 default 肖像(從 HERO_IMGS 取原 Q 版圖),以確保切換面板的 length > 1 顯示條件滿足
     //   否則新加的 LV10/LV20 肖像會因 _lib.length === 1 被切換面板邏輯跳過,玩家看不到
+    // ★ v1.0.20260423.9000 — fallback:若 HERO_IMGS[name] 此時尚未填入(如大天狗等三大日本 BOSS,
+    //   他們的 HERO_IMGS 由後面的 Object.assign 動態填入),改用第一個 item 的 url 當 default
+    //   保證切換面板能顯示
     if(!HERO_PORTRAIT_LIBRARY[heroName]){
       HERO_PORTRAIT_LIBRARY[heroName] = [];
-      const _origUrl = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) ? HERO_IMGS[heroName] : '';
+      let _origUrl = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) ? HERO_IMGS[heroName] : '';
+      // fallback:用第一張 item 的 url 當 default(避免 length=1 卡住)
+      if(!_origUrl && items && items.length && items[0].url){
+        _origUrl = items[0].url;
+      }
       if(_origUrl){
         HERO_PORTRAIT_LIBRARY[heroName].push({ id:'default', name:'原始肖像', url:_origUrl });
       }
@@ -7647,6 +7654,10 @@ const BURST_UPGRADE_DEF = {
   '機械師':    { rows: [[0,'累積受傷2回合後轉給敵方'],[1,'釋放威力+10%'],[2,'釋放威力+20%'],[3,'釋放威力+30%'],[4,'釋放威力+40%']] },
   '吸血鬼':    { rows: [[0,'全隊嗜血2回合，傷害100%吸血'],[1,'傷害110%吸血'],[2,'傷害120%吸血'],[3,'傷害130%吸血'],[4,'傷害140%吸血']] },
   '小力':      { rows: [[0,'全體敵方憐惜校犬2回合'],[1,'友方再生+10%特技/回合'],[2,'友方再生+20%特技/回合'],[3,'友方再生+30%特技/回合'],[4,'友方再生+40%特技/回合']] },
+  // ★ v1.0.20260423.9100 — 日本三大可解鎖 BOSS 英雄爆發升級表
+  '大天狗':    { rows: [[0,'特技150%×5次連擊+全體颶風'],[1,'傷害+10%(全部)'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
+  '酒吞童子':  { rows: [[0,'500%重擊+連鎖+嗜血狂潮2回合'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
+  '玉藻前':    { rows: [[0,'特技200%全體火傷+65%強力魅惑'],[1,'傷害+10%、魅惑+5%'],[2,'傷害+20%、魅惑+10%'],[3,'傷害+30%、魅惑+15%'],[4,'傷害+40%、魅惑+20%']] },
 };
 
 const HERO_IMG_POS = {
@@ -13230,15 +13241,17 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _oppM = side==='p1'?'p2':'p1';
     const foesM = G[_oppM].filter(x => x.curHp>0);
     const dmgM = Math.max(10, Math.floor(spv * 2.0 * _burstMult));
-    log(`🦊 [${h.name}] 禍世邪魅！九尾張開幻陣！`);
+    // ★ v1.0.20260423.9100 — 魅惑機率每升 1 級 +5% (Lv0=65%, Lv4=85%)
+    const _charmChance = Math.min(1, 0.65 + _burstLv * 0.05);
+    log(`🦊 [${h.name}] 禍世邪魅!九尾張開幻陣(魅惑機率 ${Math.round(_charmChance*100)}%)!`);
     bannerFX(h, '🦊 禍世邪魅！', '#ffaa00', 1400);
     foesM.forEach((f, i) => {
       _pSetTimeout(() => {
         if(f.curHp <= 0) return;
         doDmg(f, dmgM, {actor:h, isSkill:true, elem:'fire'});
         renderCard(f);
-        // 65% 強力魅惑 1 回合（無法免疫，不檢查 ctrlImmune/statusImmune）
-        if(f.curHp > 0 && Math.random() < 0.65){
+        // 強力魅惑 1 回合(無法免疫,不檢查 ctrlImmune/statusImmune)
+        if(f.curHp > 0 && Math.random() < _charmChance){
           f.status = f.status.filter(s => s.type !== 'charm');
           // dur:2 → 本回合扣剩1，下一回合生效後扣0 → 相當於下1循環自動普攻
           f.status.push({type:'charm', dur:2+_lv5Extra, _tamamoVampire:h.name, _tamamoSide:h.side});
@@ -16968,8 +16981,11 @@ function execSkill(a, sk, cost, stype){
   // 大天狗 S1：依特技+速度對1名敵人造成1次傷害（風屬性）
   else if(n==='疾風團扇擊'){
     setPending('enemy', t => {
-      const dmg = spv(a) + a.spd;
-      log(`🌪️ [${a.name}] 疾風團扇擊！依特技+速度對 [${t.name}] 造成 ${dmg} 傷害！`);
+      // ★ v1.0.20260423.9100 — 每升 1 級 +5% 傷害
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _multTengu1 = 1.0 + _s1Lv * 0.05;
+      const dmg = Math.floor((spv(a) + a.spd) * _multTengu1);
+      log(`🌪️ [${a.name}] 疾風團扇擊!依特技+速度×${Math.round(_multTengu1*100)}% 對 [${t.name}] 造成 ${dmg} 傷害!`);
       playSkillFX('疾風團扇擊', a, [t]);
       doDmg(t, dmg, {actor:a, isSkill:true, element:'wind'});
       renderCard(t);
@@ -16981,9 +16997,12 @@ function execSkill(a, sk, cost, stype){
     const opp = a.side==='p1'?'p2':'p1';
     const foes = G[opp].filter(h => h.curHp>0);
     if(!foes.length){ endAction(a, cost); return; }
-    log(`🌪️ [${a.name}] 風捲殘雲！狂風席捲全場 3 次！`);
+    // ★ v1.0.20260423.9100 — 每升 1 級 +5% 傷害(基礎 70%)
+    const _s2LvT = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _multTengu2 = 0.70 + _s2LvT * 0.05;
+    log(`🌪️ [${a.name}] 風捲殘雲!狂風席捲全場 3 次,每段特技×${Math.round(_multTengu2*100)}%!`);
     playSkillFX('風捲殘雲', a, foes);
-    const perDmg = Math.max(1, Math.floor(spv(a) * 0.70));
+    const perDmg = Math.max(1, Math.floor(spv(a) * _multTengu2));
     let round = 0;
     beginBatchTotals();
     function fengJuan(){
@@ -17005,9 +17024,12 @@ function execSkill(a, sk, cost, stype){
     const opp = a.side==='p1'?'p2':'p1';
     const foes = G[opp].filter(h => h.curHp>0);
     if(!foes.length){ endAction(a, cost); return; }
-    log(`👹 [${a.name}] 鬼力橫掃！以 150% 特技全體重擊，爆擊率 +50%！`);
+    // ★ v1.0.20260423.9100 — 每升 1 級 +5% 傷害(基礎 150%)
+    const _s1LvSh = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _multSh1 = 1.50 + _s1LvSh * 0.05;
+    log(`👹 [${a.name}] 鬼力橫掃!以特技×${Math.round(_multSh1*100)}% 全體重擊,爆擊率 +50%!`);
     playSkillFX('鬼力橫掃', a, foes);
-    const dmg = Math.max(1, Math.floor(spv(a) * 1.50));
+    const dmg = Math.max(1, Math.floor(spv(a) * _multSh1));
     foes.forEach(t => {
       doDmg(t, dmg, {actor:a, isSkill:true, element:'dark', forceCritRate: 0.5});
       renderCard(t);
@@ -17016,13 +17038,16 @@ function execSkill(a, sk, cost, stype){
   }
   // 酒吞童子 S2：恢復友方20%HP，攻擊+特技+25% 2回合
   else if(n==='酒宴'){
-    log(`👹 [${a.name}] 酒宴！豪飲妖酒振奮全隊！`);
+    // ★ v1.0.20260423.9100 — 每升 1 級 +5% 恢復量(基礎 20%,Lv5=45%)
+    const _s2LvSh = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _healPctSh = 0.20 + _s2LvSh * 0.05;
+    log(`👹 [${a.name}] 酒宴!豪飲妖酒振奮全隊(恢復 ${Math.round(_healPctSh*100)}% HP)!`);
     const allies = G[a.side].filter(h => h.curHp>0);
     playSkillFX('酒宴', a, allies);
     beginBatchTotals();
     allies.forEach(t => {
-      // 恢復 20% 最大 HP
-      const healAmt = Math.floor(t.hp * 0.20);
+      // 恢復 20%+5%/級 最大 HP
+      const healAmt = Math.floor(t.hp * _healPctSh);
       const _before = t.curHp;
       t.curHp = Math.min(t.hp, t.curHp + healAmt);
       const _actual = t.curHp - _before;
@@ -17049,7 +17074,11 @@ function execSkill(a, sk, cost, stype){
   else if(n==='九尾狐火'){
     const opp = a.side==='p1'?'p2':'p1';
     const hitCount = 3 + Math.floor(Math.random()*2); // 3~4
-    log(`🦊 [${a.name}] 九尾狐火！連擊 ${hitCount} 次並附加燃燒！`);
+    // ★ v1.0.20260423.9100 — 每升 1 級 +5% 傷害,滿級(Lv10)燃燒 +1 回合
+    const _s1LvT = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _multTam1 = 1.0 + _s1LvT * 0.05;
+    const _burnDur = (_s1LvT >= 10) ? 3 : 2;
+    log(`🦊 [${a.name}] 九尾狐火!連擊 ${hitCount} 次,每段特技×${Math.round(_multTam1*100)}%,附加燃燒 ${_burnDur} 回合!`);
     playSkillFX('九尾狐火', a, G[opp].filter(h=>h.curHp>0));
     const hitTargets = new Set();
     let i = 0;
@@ -17057,10 +17086,10 @@ function execSkill(a, sk, cost, stype){
     function jiuWei(){
       const liveFoes = G[opp].filter(h => h.curHp>0);
       if(i >= hitCount || !liveFoes.length || checkWin()){
-        // 全部連擊結束：對被命中的目標附加燃燒 2 回合
+        // 全部連擊結束：對被命中的目標附加燃燒
         hitTargets.forEach(t => {
           if(t.curHp > 0){
-            addStatus(t, 'hellfire', 2);
+            addStatus(t, 'hellfire', _burnDur);
             const hs = t.status.find(s => s.type==='hellfire');
             if(hs) hs._actor = a;
             bannerFX(t, '🔥燃燒', '#ff4400', 800);
@@ -17072,7 +17101,7 @@ function execSkill(a, sk, cost, stype){
         return;
       }
       const t = liveFoes[Math.floor(Math.random() * liveFoes.length)];
-      doDmg(t, spv(a), {actor:a, isSkill:true, element:'fire'});
+      doDmg(t, Math.floor(spv(a) * _multTam1), {actor:a, isSkill:true, element:'fire'});
       renderCard(t);
       hitTargets.add(t);
       i++;
@@ -17085,18 +17114,22 @@ function execSkill(a, sk, cost, stype){
   else if(n==='妖狐幻惑'){
     const opp = a.side==='p1'?'p2':'p1';
     const foes = G[opp].filter(h => h.curHp>0);
-    log(`🦊 [${a.name}] 妖狐幻惑！全體敵人陷入失明，自身附加護盾！`);
+    // ★ v1.0.20260423.9100 — 每升 1 級 +5 護盾(基礎 30,Lv10=80),滿級 Lv10 失明 +1 回合(2→3)
+    const _s2LvT = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _shieldAmt = 30 + _s2LvT * 5;
+    const _forecastDur = (_s2LvT >= 10) ? 3 : 2;
+    log(`🦊 [${a.name}] 妖狐幻惑!全體敵人陷入強力失明 ${_forecastDur} 回合,自身附加 ${_shieldAmt} 護盾!`);
     playSkillFX('妖狐幻惑', a, foes);
     foes.forEach(t => {
-      addStatus(t, 'forecast', 2);
-      bannerFX(t, '強力失明 2r', '#ffff88', 900);
+      addStatus(t, 'forecast', _forecastDur);
+      bannerFX(t, '強力失明 '+_forecastDur+'r', '#ffff88', 900);
       renderCard(t);
     });
-    // 自己附加 30 護盾（取較大值覆蓋）
+    // 自己附加護盾(取較大值覆蓋)
     const ex = a.buffs.find(b => b.type === 'bigshield');
-    if(ex){ ex._hp = Math.max(ex._hp||0, 30); ex.dur = 99; }
-    else   { a.buffs.push({type:'bigshield', dur:99, _hp:30}); }
-    bannerFX(a, '🛡️護盾30', '#ffcc66', 900);
+    if(ex){ ex._hp = Math.max(ex._hp||0, _shieldAmt); ex.dur = 99; }
+    else   { a.buffs.push({type:'bigshield', dur:99, _hp:_shieldAmt}); }
+    bannerFX(a, '🛡️護盾'+_shieldAmt, '#ffcc66', 900);
     renderCard(a);
     endAction(a, cost);
   }
@@ -26535,6 +26568,21 @@ if(typeof HERO_IMGS !== 'undefined'){
   Object.keys(JP_MONSTER_IMG).forEach(n => {
     HERO_IMGS[n] = JP_BASE + encodeURIComponent(JP_MONSTER_IMG[n]);
   });
+  // ★ v1.0.20260423.9000 — 修補大天狗/酒吞童子/玉藻前 portrait library 的 default url
+  //   IIFE 執行時 HERO_IMGS 還沒填入這三隻,造成 default 用 fallback(LV20 圖)當 default
+  //   在這裡(JP HERO_IMGS 已填入後)修正成真正的 Q 版 BOSS 檔名
+  try{
+    if(typeof HERO_PORTRAIT_LIBRARY !== 'undefined'){
+      ['大天狗','酒吞童子','玉藻前'].forEach(name => {
+        const lib = HERO_PORTRAIT_LIBRARY[name];
+        if(!lib) return;
+        const _defaultEntry = lib.find(p => p.id === 'default');
+        if(_defaultEntry && HERO_IMGS[name]){
+          _defaultEntry.url = HERO_IMGS[name];
+        }
+      });
+    }
+  }catch(_){}
 }
 
 // ── 9. AVATARS 設定 ──
@@ -41236,6 +41284,58 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.9100', brief:[
+    '🌪️ 大天狗 S1/S2 每升 1 級 +5% 傷害,爆發每級 +10% 傷害(乘算)',
+    '🍶 酒吞童子 S1 +5% 傷害/級,S2 +5% 恢復量/級,爆發 +10% 傷害/級',
+    '🦊 玉藻前 S1 +5% 傷害/級+滿級燃燒+1回合,S2 +5 護盾/級+滿級失明+1回合,爆發 +10% 傷害+5%魅惑/級',
+    '✅ 確認所有爆發升級為「乘算」(_burstMult = 1.0 + lv×0.10),例:200% × 1.1 = 220%',
+  ], items:[
+    '【大天狗 S1 疾風團扇擊】',
+    '  特技+速度 × (100% + 5%/級) → Lv5 = 125%, Lv10 = 150%',
+    '【大天狗 S2 風捲殘雲】',
+    '  特技 × (70% + 5%/級) × 3次 → Lv5 = 95%, Lv10 = 120%',
+    '【酒吞童子 S1 鬼力橫掃】',
+    '  特技 × (150% + 5%/級) → Lv5 = 175%, Lv10 = 200%',
+    '【酒吞童子 S2 酒宴】',
+    '  恢復 (20% + 5%/級) HP → Lv5 = 45%, Lv10 = 70%',
+    '【玉藻前 S1 九尾狐火】',
+    '  特技 × (100% + 5%/級) × 3~4 次 → Lv5 = 125%, Lv10 = 150%',
+    '  Lv10 滿級時燃燒持續 3 回合(原 2 回合)',
+    '【玉藻前 S2 妖狐幻惑】',
+    '  護盾值 30 + 5/級 → Lv5 = 55, Lv10 = 80',
+    '  Lv10 滿級時強力失明持續 3 回合(原 2 回合)',
+    '【三大爆發升級】',
+    '  神威風獵、鬼王酒宴、禍世邪魅 都已用 _burstMult(乘算)',
+    '  禍世邪魅多了「魅惑機率每級 +5%」(Lv0=65%, Lv4=85%)',
+    '【乘算確認】',
+    '  全部英雄爆發都用 spv * X * _burstMult 模式 = 乘算',
+    '  Lv0: 200% × 1.0 = 200%',
+    '  Lv1: 200% × 1.1 = 220% ✅(不是 210% 加算)',
+    '  Lv4: 200% × 1.4 = 280%',
+    '  例外:聖騎士「聖殿園地」治療量 (40% + 10%/級) 是加算 — 經管理員確認保留原設計',
+    '         理由:百分比治療上限 80% 是有意設計,改乘算會降低效果',
+    '【BURST_UPGRADE_DEF 也補完】',
+    '  大天狗、酒吞童子、玉藻前 升級階梯顯示已加入',
+  ] },
+  { ver:'v1.0.20260423.9000', brief:[
+    '🎯 修正大天狗、酒吞童子、玉藻前 英雄圖鑑無 LV20 切換按鈕的 bug',
+  ], items:[
+    '【根因】',
+    '  HERO_IMGS 的這三隻角色由後面的 Object.assign 動態填入(line 26543)',
+    '  但 HERO_PORTRAIT_LIBRARY 的 _addNewPortraits IIFE 在前面執行(line 6950)',
+    '  IIFE 跑時 HERO_IMGS[\'大天狗\'] 還是 undefined → default 沒被補上',
+    '  → 三隻 portrait 陣列只有 1 個 LV20 → 切換面板的 length>1 條件不滿足 → 不顯示',
+    '【兩道修法同步進行】',
+    '  (1) _add() 函式 fallback:HERO_IMGS 取不到時,用第一個 item.url 當 default',
+    '       保證陣列至少有 2 個項目,切換面板能顯示',
+    '  (2) Object.assign 跑完後,修補三隻 default url 為正確的 Q 版 BOSS 圖',
+    '       (大天狗.png/酒吞童子.png/玉藻前.png),不再跟 LV20 圖重複',
+    '【效果】',
+    '  英雄圖鑑點大天狗/酒吞童子/玉藻前 詳細頁',
+    '  右下角切換面板出現 2 個肖像:',
+    '    default(原 Q 版 BOSS 圖)',
+    '    LV20(精美版,達 Lv20 自動解鎖)',
+  ] },
   { ver:'v1.0.20260423.8900', brief:[
     '🔍 英雄圖鑑未解鎖肖像也開放點擊預覽全圖,但無法套用為當前肖像',
   ], items:[
@@ -45619,7 +45719,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.8900';
+  const CURRENT_VERSION = 'v1.0.20260423.9100';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45636,7 +45736,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.8900';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.9100';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
