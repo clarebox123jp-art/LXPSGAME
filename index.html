@@ -33626,7 +33626,11 @@ async function grantBattleExp(win, stats) {
 function addHeroExp(name, exp) {
   if(!_heroExp[name]) _heroExp[name] = 0;
   if(!_heroLevels[name]) _heroLevels[name] = 1;
+  // ★ v1.0.20260423.5800 — 診斷 log:確認 EXP 真的進到角色身上
+  const _expBefore = _heroExp[name];
+  const _lvBefore = _heroLevels[name];
   _heroExp[name] += exp;
+  console.log(`[addHeroExp] ${name} Lv${_lvBefore} EXP ${_expBefore}→${_heroExp[name]} (+${exp})`);
   const _levelUps = []; // ★ 收集本次升級事件
   // 升級
   while(_heroLevels[name] < 50) {
@@ -40591,6 +40595,17 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.5800', adminOnly:true, brief:[
+    '🔍 診斷工具:addHeroExp 加上 console.log,追查 EXP 為何沒加到角色身上',
+  ], items:[
+    '【目的】',
+    '  玩家回報 Lv.14 角色打完戰鬥後 EXP 沒有增加',
+    '  此版加 [addHeroExp] log 在 F12 Console 顯示每次 EXP 加成的具體前後值',
+    '  例:[addHeroExp] 電腦繪圖師 Lv14 EXP 1177→1363 (+186)',
+    '  若 log 出現但 UI 顯示沒變,代表是 UI 渲染問題或記憶體被覆寫',
+    '  若 log 完全沒出現,代表 addHeroExp 沒被該角色觸發到',
+    '【目前不修 bug,等診斷資訊再對症下藥】',
+  ] },
   { ver:'v1.0.20260423.5700', brief:[
     '⚖ 金幣比例調整:結算金幣從「最終 EXP × 0.5」降為「最終 EXP × 0.3」',
   ], items:[
@@ -44344,7 +44359,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.5700';
+  const CURRENT_VERSION = 'v1.0.20260423.5800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44361,7 +44376,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.5700';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.5800';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
