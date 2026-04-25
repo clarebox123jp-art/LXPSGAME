@@ -6933,7 +6933,7 @@ const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。'}},
   '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
   '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
-  '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'傷害1名對手＋追加10必中',fd:'用特技傷害1名對手，並追加無視其有利狀態的10點傷害'},s2:{n:'地獄之火',c:4,d:'特技40%全體+燃燒2回合',fd:'依特技值的40%傷害全體對手(每升 1 級+5%基礎傷害),同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
+  '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'特技150%傷害1名對手+追加10必中傷害',fd:'用特技的150%傷害1名對手,並追加無視其有利狀態的10點傷害。'},s2:{n:'地獄之火',c:4,d:'特技40%全體+燃燒2回合',fd:'依特技值的40%傷害全體對手,同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'傷害全體對手，使其下回合最後行動',fd:'用特技的70%傷害所有對手，並使其下1回合最後才行動'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
@@ -7489,7 +7489,7 @@ const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
   '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的180%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
   '聖騎士':   {n:'最終殿堂',    d:'全隊無敵1回合並恢復40%HP',fd:'使友方全體免疫所有傷害和不利狀態1回合，同時恢復40%HP。'},
-  '火法師':   {n:'烈焰爆發',    d:'傷害全體並燃燒，無視有利狀態',fd:'用特技的150%傷害全體對手，目標陷入燃燒狀態2回合（每回合行動前-10HP），此傷害無視有利狀態。'},
+  '火法師':   {n:'烈焰爆發',    d:'特技150%全體+強力燃燒2回合(行動前後各-10HP)',fd:'用特技的150%傷害全體對手,目標陷入「強力燃燒」狀態2回合,行動前後各損失10HP,此傷害無視有利狀態。'},
   '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
   '雷法師':   {n:'怒雷狂襲',    d:'彈跳傷害4次並強力麻痺（無法免疫）',fd:'用特技的150%傷害對手（彈跳）共4次，有75%機率使目標陷入「強力麻痺」不能動1回合。強力麻痺無法被免疫。'},
   '光法師':   {n:'審判光束',    d:'傷害全體並治癒全隊，附加強力失明',fd:'用特技的150%傷害全體對手，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時恢復全體隊友。'},
@@ -7512,17 +7512,17 @@ const BURST_DB = {
   '機械師':   {n:'負荷超載',    d:'2回合我方傷害全累積並回血50%，結束後平均分給敵方',fd:'進入「負荷超載」狀態2回合，期間我方所有受到的傷害全部累積計算且每次受到傷害立即恢復該傷害50%的HP，在負荷超載結束後釋放所有累積的傷害，由敵方全體平均分攤此傷害。負荷超載狀態不會被消除或奪取。'},
   '吸血鬼':   {n:'鮮血契約',    d:'全隊獲得「嗜血」2回合，傷害100%吸血，血量越低增傷越高',fd:'使我方全體獲得「嗜血」能力2回合：造成傷害的100%轉化為恢復自身HP，且造成傷害時依自身血量減少的百分比轉換為等量增傷百分比（最高+100%）。「嗜血」狀態不會被消除或奪取。'},
   '武士':     {n:'神鬼盡滅',    d:'480%必中，溢出傷害轉移',fd:'對敵方單體造成攻擊480%傷害，必中且無視有利狀態。溢出傷害轉移至敵方HP最少的角色身上。'},
-  '木靈使':   {n:'神樹恩澤',    d:'全隊「不倒再生」2回合（特技HP/回合）',fd:'使友方全體獲得「不倒再生」狀態2回合，期間HP最低為1，且每回合恢復木靈使特技值HP。每升一級：恢復量+10%、持續回合數+1。'},
+  '木靈使':   {n:'神樹恩澤',    d:'全隊「不倒再生」2回合（特技HP/回合）',fd:'使友方全體獲得「不倒再生」狀態2回合，期間HP最低為1，且每回合恢復木靈使特技值HP。'},
   '時空法師': {n:'時間壓縮',    d:'400%必中，倒下後無法復活',fd:'用特技的400%對1名敵方造成必中傷害且無視有利狀態。目標倒下時陷入2回合無法被復活的狀態，此狀態無法解除或預防。'},
   '學者':     {n:'元素智慧',    d:'元素倍率必中傷害，50%轉為治療',fd:'依特技×雙方元素屬性種類數對1名對手造成必中傷害且無視有利狀態。再將傷害值的50%轉為治療恢復我方單人HP。'},
  '陰陽師':   {n:'四聖降臨',    d:'傷害全體4次，附加強力不利狀態',fd:'依特技50%使敵方全體受到4次傷害，每次有70%機率隨機附加1個強力不利狀態。'},
   '小力':     {n:'夾尾皺眉',    d:'全體對手無法使用造成傷害的技能或物品（2回合）',fd:'使全體對手陷入「憐惜校犬」狀態2回合，無法使用任何會造成傷害的技能或物品。此狀態不會被免疫或解除。'},
   '籃球隊員': {n:'絕殺灌籃',    d:'400%傷害1名對手，全隊速度提升2回合',fd:'對1名對手造成特技400%傷害，並使友方全體速度提升50%共2回合。'},
-  '直笛團員': {n:'天籟之音', d:'特技150%傷害全體+狂亂1回合，我方治療+持續恢復5回合',fd:'用特技的150%對敵方全體造成傷害,並使其陷入狂亂1回合(滿級時+1回合)。同時解除我方全體不利狀態、恢復我方全體HP(可復活),再附加持續恢復5回合。每級+10%傷害量與恢復量。'},
+  '直笛團員': {n:'天籟之音', d:'特技150%傷害全體+狂亂1回合，我方治療+持續恢復5回合',fd:'用特技的150%對敵方全體造成傷害,並使其陷入狂亂1回合。同時解除我方全體不利狀態、恢復我方全體HP(可復活),再附加持續恢復5回合。'},
   '田徑隊員': {n:'極速閃燃', d:'200%速度傷害全體、獲得7能量、附加閃燃、再行動',fd:'用速度的200%對敵方全體造成傷害,獲得7能量,附加「閃燃」狀態(下次造成的傷害×2),持續到造成傷害為止,並立即再次行動。'},
-  '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP10%傷害全體，攻擊和特技-50%直到醒來',fd:'睡眠狀態時才能發動。對全體敵人造成其最大HP 10%的傷害(每級+5%,Lv5=30%),此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低50%,直到施展者從睡眠中醒來。'},
+  '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP10%傷害全體，攻擊和特技-50%直到醒來',fd:'睡眠狀態時才能發動。對全體敵人造成其最大HP 10%的傷害,此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低50%,直到施展者從睡眠中醒來。'},
   '電腦繪圖師':{n:'萬物創生', d:'特技600%傷害全體平均分攤（必中），再抽3張物品卡',fd:'用特技的600%傷害讓敵方全體平均分攤，此傷害無視有利狀態且必中。再抽出額外3張物品卡。'},
-  '程式設計師':{n:'BUG修復',  d:'不利轉有利+全體恢復50%HP(可復活)+2名對手無法行動',fd:'將我方全體的不利狀態轉換成隨機有利狀態,同時恢復全體50%HP(可復活),再使2名對手無法行動1次。每級+10%恢復量,滿級時+1名無法行動目標。'},
+  '程式設計師':{n:'BUG修復',  d:'不利轉有利+全體恢復50%HP(可復活)+2名對手無法行動',fd:'將我方全體的不利狀態轉換成隨機有利狀態,同時恢復全體50%HP(可復活),再使2名對手無法行動1次。'},
   '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'用特技的40%對敵方全體造成3~5次傷害，此傷害無視有利狀態且必中。同時恢復我方全體HP，HP為0也可復活。'},
   '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下的所有角色（敵我雙方）×3恢復能量，再以當前能量值來提升我方全體攻擊力和特技，直到戰鬥結束。'},
   // ★ v1.0.20260421.3000o — 日本關限定角色爆發
@@ -9439,7 +9439,7 @@ const HERO_LORE = {
 
 // ====== 天賦 DB ======
 const HERO_TRAIT = {
-  '劍士':    { name:'連斬', icon:'⚔️',  desc:'普攻後有機率再行動1次',fd:'普通攻擊時有30%機率再行動1次（每升1級+4%，最多連擊1次）' },
+  '劍士':    { name:'連斬', icon:'⚔️',  desc:'普攻後有機率再行動1次',fd:'普通攻擊時有30%機率再行動1次（最多連擊1次）' },
   '祭司':    { name:'聖癒', icon:'✨',  desc:'普攻後治癒HP最低隊友',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
   '聖騎士':  { name:'聖盾', icon:'🛡️',  desc:'受傷時有機率格擋減傷',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
   '火法師':  { name:'焚滅', icon:'🔥',  desc:'普攻後有機率消除目標增益',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
@@ -9453,7 +9453,7 @@ const HERO_TRAIT = {
   '守衛':    { name:'庇護', icon:'🗡️',  desc:'代替隊友分攤傷害',fd:'代替隊友分攤30%的受傷' },
   '吟遊詩人':  { name:'頌歌', icon:'🪕',  desc:'普攻後有機率治癒全隊',fd:'普通攻擊時有60%機率恢復友方全體10%的HP' },
   '舞者':    { name:'魅惑', icon:'💃',  desc:'普攻後有機率使目標虛弱',fd:'普通攻擊時有60%機率使目標虛弱1回合，攻擊和特技下降50%' },
-  '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'物品卡效果+50%（每升1級+10%）',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%，每升1級再+10%。' },
+  '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'物品卡效果+50%',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
   '警長':    { name:'制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
   '武鬥家':  { name:'死鬥', icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
   '軍師':    { name:'惑敵', icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
@@ -9462,7 +9462,7 @@ const HERO_TRAIT = {
   '凡人':    { name:'節省', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
   '木靈使':  { name:'淨化', icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
   '機械師':  { name:'觸電', icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
-  '動物學家':{ name:'獸盟', icon:'🦁',  desc:'存活時友方寵物效果提升100%（每升1級+10%）',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%，每升1級再+10%。' },
+  '動物學家':{ name:'獸盟', icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
   '武士':    { name:'反斬', icon:'🗾',  desc:'受傷時有機率反擊',fd:'受到傷害時有40%機率用攻擊的50%進行反擊' },
   '陰陽師':  { name:'替身', icon:'☯️',  desc:'受技能傷害時有機率由式神代替',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
   '吸血鬼':  { name:'噬血', icon:'🦇',  desc:'造成傷害時吸收為HP',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
@@ -9473,12 +9473,12 @@ const HERO_TRAIT = {
   '直笛團員':{ name:'妙音', icon:'🎵',  desc:'普攻時50%機率使目標狂亂1回合',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
   '田徑隊員':{ name:'疾走', icon:'🏃',  desc:'行動時60%使未行動友方提前到下一個',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。' },
   '幼兒園小孩':{ name:'賣萌', icon:'👶', desc:'存活時對手全體攻擊和特技降低20%（最多5回合）',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
-  '電腦繪圖師':{ name:'上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾（每升1級+10）',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾，每升1級+10。' },
-  '程式設計師':{ name:'加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3（每升1級再+2）',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3（每升1級再+2）。' },
+  '電腦繪圖師':{ name:'上色', icon:'🎨', desc:'回合開始時HP最低的隊友獲得20護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
+  '程式設計師':{ name:'加成', icon:'💻', desc:'存活時友方全體攻擊和特技+3',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
   '弦樂團員':  { name:'弦護', icon:'🎻', desc:'友方受到不利狀態時50%立即消除',fd:'友方角色受到不利狀態時有50%機率立即將其消除。' },
-  '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療（每級+5%）；成為攻擊目標機率+40%（每級+5%）',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
+  '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療；成為攻擊目標機率+40%',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
   // ★ v1.0.20260421.3000o — 日本關限定角色天賦
-  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方各附加1個有利狀態，能量恢復50%機率',fd:'每次自己的回合開始時，選擇有利狀態最少的N名友方（Lv1=1人/Lv2=2人/Lv3=3人/Lv4=4人）各附加1個隨機有利狀態（持續2回合）；Lv5起每人改為附加2個狀態。另有50%機率為陣營恢復1能量（每升1級+10%）。' },
+  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方各附加1個有利狀態，能量恢復50%機率',fd:'每次自己的回合開始時，選擇有利狀態最少的友方各附加1個隨機有利狀態（持續2回合）。另有50%機率為陣營恢復1能量。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -11845,9 +11845,20 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     });
   }
   if(name==='火法師'){
+    // ★ v1.0.20260423.6200 — 烈焰爆發:附加「強力燃燒」(行動前後各 -10HP),Lv5 滿級時 +1 回合
+    //   舊:hellfire dur 2+_lv5Extra,普通燃燒每回合 -10HP(前 5 後 5)
+    //   新:強力燃燒(用 _strong 標記),每回合 -20HP(前 10 後 10),時長 2 回合;Lv5 →3 回合
     enemies.forEach(t=>{
       doDmg(t,Math.floor(spv*1.5*_burstMult),{actor:h,isSkill:true,ignoreBuffs:true,isAoe:true});
-      if(t.curHp>0) addStatus(t,'hellfire',2+_lv5Extra);
+      if(t.curHp>0){
+        addStatus(t,'hellfire',2 + _lv5Extra);
+        const _hs = t.status.find(s => s.type==='hellfire');
+        if(_hs){
+          _hs._actor = h;
+          _hs._strong = true; // 強力標記:行動前後各 -10HP
+        }
+        bannerFX(t,'🔥 強力燃燒','#ff2200',900);
+      }
     });
   }
   if(name==='冰法師'){
@@ -12892,7 +12903,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
           addStatus(t, s, 2);
           if(s === 'hellfire'){
             const hs = t.status.find(x => x.type==='hellfire');
-            if(hs) hs._actor = h;
+            if(hs){ hs._actor = h; hs._strong = true; } // ★ v1.0.20260423.6200 — 強力燃燒
           } else if(s === 'poison'){
             t._poisonAmt = Math.max(1, Math.floor(t.hp * 0.15));
           }
@@ -15559,10 +15570,15 @@ function execSkill(a, sk, cost, stype){
   // ====== 火法師 ======
   else if(n==='火焰球'){
     setPending('enemy',t=>{
-      log(`[${a.name}] 火焰球！`);
+      // ★ v1.0.20260423.6200 — 火焰球新規格:
+      //   主傷害 = 特技 × (150% + 每級 5%)、追加傷害 = 10 + 每級 +1
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _fbMult = 1.5 + _s1Lv * 0.05;
+      const _fbExtra = 10 + _s1Lv;
+      log(`[${a.name}] 火焰球!特技×${Math.round(_fbMult*100)}%+追加${_fbExtra}!`);
       playSkillFX('火焰球',a,[t]);
-      doDmg(t,spv(a),{actor:a});
-      doDmg(t,10,{isSkill:true,actor:a,ignoreBuffs:true});
+      doDmg(t, Math.floor(spv(a) * _fbMult), {actor:a, isSkill:true, elem:'fire'});
+      doDmg(t, _fbExtra, {isSkill:true, actor:a, ignoreBuffs:true});
       endAction(a,cost);
     });
   } else if(n==='地獄之火'){
@@ -15570,14 +15586,19 @@ function execSkill(a, sk, cost, stype){
     // ★ v1.0.20260423.6100 — 地獄之火重構:
     //   (1) 依特技 40% 對全體造成傷害(每升 1 級基礎傷害 +5%)
     //   (2) 附加「燃燒」狀態 2 回合(行動前後各 -5HP,無視有利狀態)
+    // ★ v1.0.20260423.6200 — 升級效果:每升至 4/7/10 級 +1 回合
     const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
     const _hfMult = 0.40 + _s2Lv * 0.05; // Lv0=40%, Lv1=45%, ...
-    log(`[${a.name}] 地獄之火!特技×${Math.round(_hfMult*100)}% 全體傷害 + 附加燃燒 2 回合!`);
+    let _hfDur = 2;
+    if(_s2Lv >= 4)  _hfDur = 3;
+    if(_s2Lv >= 7)  _hfDur = 4;
+    if(_s2Lv >= 10) _hfDur = 5;
+    log(`[${a.name}] 地獄之火!特技×${Math.round(_hfMult*100)}% 全體傷害 + 附加燃燒 ${_hfDur} 回合!`);
     playSkillFX('地獄之火',a,hfFoes);
     hfFoes.forEach(t=>{
       doDmg(t, Math.floor(spv(a) * _hfMult), {actor:a, isSkill:true, isAoe:true, elem:'fire'});
       if(t.curHp>0){
-        addStatus(t,'hellfire',2);
+        addStatus(t,'hellfire',_hfDur);
         const _hs=t.status.find(s=>s.type==='hellfire');
         if(_hs) _hs._actor=a;
       }
@@ -17924,13 +17945,15 @@ function endAction(a, cost, noFinish=false){
   G.energy[a.side]=Math.max(0,G.energy[a.side]-cost);
   if(!noFinish && !a._traitReAct) a.acted=true;
   if(a._traitReAct){ delete a._traitReAct; }
-  // 地獄之火：行動前已扣10HP，行動後不再扣（改為只觸發一次/回合）
+  // 地獄之火：行動前已扣HP，行動後再扣
   if(!noFinish && hasStatus(a,'hellfire') && a.curHp>0){
-    // ★ v1.0.20260423.6100 — 燃燒(hellfire) 行動後再 -5HP,跟行動前共 -10HP/回合
-    const _hfDmgPost = 5;
+    // ★ v1.0.20260423.6200 — 強力燃燒(_strong) 行動後 -10HP,普通 -5HP
+    const _hfSrc2 = a.status.find(s=>s.type==='hellfire');
+    const _isStrongHF2 = _hfSrc2 && _hfSrc2._strong;
+    const _hfDmgPost = _isStrongHF2 ? 10 : 5;
     try{
       doDmg(a, _hfDmgPost, {ignoreBuffs:true, noGuard:true});
-      log(`🔥 燃燒行動後灼燒 [${a.name}]！(${_hfDmgPost}傷害)`);
+      log(`🔥 ${_isStrongHF2?'強力':''}燃燒行動後灼燒 [${a.name}]！(${_hfDmgPost}傷害)`);
     }catch(_){}
     // ★ 行動後遞減 dur(整個回合 = 行動前+行動後 算一次)
     a.status = a.status.map(s => s.type === 'hellfire' ? {...s, dur: s.dur - 1} : s).filter(s => s.dur > 0);
@@ -18908,12 +18931,14 @@ function startTurn(){
     }
   }
 
-  // ★ v1.0.20260423.6100 — 燃燒(hellfire) 改為行動前後各 -5HP,固定 5 點不再受技能等級影響
-  //   行動前在此扣 5,行動後在 endAction 末尾再扣 5,dur 由 nextRound 統一遞減
+  // ★ v1.0.20260423.6100 — 燃燒(hellfire) 行動前後各 -5HP
+  // ★ v1.0.20260423.6200 — 若 _strong:true → 強力燃燒,行動前後各 -10HP
   if(hasStatus(next,'hellfire') && next.curHp>0){
-    const _hfDmgPre = 5;
+    const _hfSrc = next.status.find(s=>s.type==='hellfire');
+    const _isStrongHF = _hfSrc && _hfSrc._strong;
+    const _hfDmgPre = _isStrongHF ? 10 : 5;
     doDmg(next,_hfDmgPre,{ignoreBuffs:true,noGuard:true});
-    log(`🔥 燃燒行動前灼燒 [${next.name}]！(${_hfDmgPre}傷害)`);
+    log(`🔥 ${_isStrongHF?'強力':''}燃燒行動前灼燒 [${next.name}]！(${_hfDmgPre}傷害)`);
     renderCard(next);
     if(next.curHp<=0){ next.acted=true; updateUI(); _pSetTimeout(startTurn,300); return; }
   }
@@ -19939,7 +19964,22 @@ function aiUseSkill(a,sk,cost,pref){
   G.energy[a.side]=Math.max(0,G.energy[a.side]-cost);
 
   if(['迅雷連斬','瞄準射擊','冰凍之矛','麻痺落雷','火焰球','降龍伏虎拳'].includes(n)){
-    if(t){ doDmg(t,n==='降龍伏虎拳'?Math.floor(a.atk*2):n==='瞄準射擊'?Math.floor(spv(a)*2.4):spv(a),{actor:a,isSkill:true,ignoreBuffs:n==='降龍伏虎拳',ignoreEvasion:n==='瞄準射擊',noGuard:n==='瞄準射擊',noHidden:n==='瞄準射擊',piercing:n==='瞄準射擊'}); if(n==='迅雷連斬'&&t.curHp>0)doDmg(t,a.atk,{actor:a,isSkill:true}); if(n==='冰凍之矛'&&t.curHp>0)addStatus(t,'freeze'); if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para'); if(n==='火焰球')doDmg(t,10,{ignoreBuffs:true}); }
+    if(t){
+      // ★ v1.0.20260423.6200 — 火焰球 AI 對齊玩家版本:特技×(150%+5%/lv) + 追加(10+1/lv)
+      const _s1LvA = (n==='火焰球' && a._skLv && typeof a._skLv.s1==='number') ? a._skLv.s1 : 0;
+      const _fbMultA = 1.5 + _s1LvA * 0.05;
+      const _fbExtraA = 10 + _s1LvA;
+      const _mainDmg =
+        n==='降龍伏虎拳' ? Math.floor(a.atk*2) :
+        n==='瞄準射擊'   ? Math.floor(spv(a)*2.4) :
+        n==='火焰球'     ? Math.floor(spv(a) * _fbMultA) :
+        spv(a);
+      doDmg(t, _mainDmg, {actor:a,isSkill:true,ignoreBuffs:n==='降龍伏虎拳',ignoreEvasion:n==='瞄準射擊',noGuard:n==='瞄準射擊',noHidden:n==='瞄準射擊',piercing:n==='瞄準射擊'});
+      if(n==='迅雷連斬'&&t.curHp>0)doDmg(t,a.atk,{actor:a,isSkill:true});
+      if(n==='冰凍之矛'&&t.curHp>0)addStatus(t,'freeze');
+      if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para');
+      if(n==='火焰球')doDmg(t, _fbExtraA, {ignoreBuffs:true, actor:a, isSkill:true});
+    }
   } else if(n==='神聖鎚擊'){if(t){var _bossHit=typeof BOSS_NAMES!=='undefined'&&BOSS_NAMES.includes(t.name);doDmg(t,Math.max(1,Math.floor(t.hp*(_bossHit?0.05:0.2))),{actor:a});doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});}}
   else if(n==='刀背擊'){if(t){t.curHp=Math.max(0,t.curHp-1);if(t.curHp>0)addStatus(t,'stun');showPopup(t,1,'dmg');}}
   else if(n==='救贖神光'){
@@ -19952,12 +19992,17 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='連鎖閃電'){let bc=3;if(Math.random()<0.5)bc=4;if(bc===4&&Math.random()<0.5)bc=5;for(let i=0;i<bc;i++){const et=enemies.filter(h=>h.curHp>0);if(et.length)doDmg(et[Math.floor(Math.random()*et.length)],Math.floor(spv(a)*0.7),{actor:a});}}
   else if(n==='地獄之火'){
     // ★ v1.0.20260423.6100 — 對齊玩家版本:特技 40%(每級+5%) + 燃燒 2 回合
+    // ★ v1.0.20260423.6200 — 升級效果:每升至 4/7/10 級 +1 回合
     const _s2Lv = (a._skLv && typeof a._skLv.s2==='number') ? a._skLv.s2 : 0;
     const _hfMult = 0.40 + _s2Lv*0.05;
+    let _hfDur = 2;
+    if(_s2Lv >= 4)  _hfDur = 3;
+    if(_s2Lv >= 7)  _hfDur = 4;
+    if(_s2Lv >= 10) _hfDur = 5;
     enemies.forEach(h=>{
       doDmg(h, Math.floor(spv(a) * _hfMult), {actor:a, isSkill:true, isAoe:true, elem:'fire'});
       if(h.curHp>0){
-        addStatus(h,'hellfire',2);
+        addStatus(h,'hellfire',_hfDur);
         const _hs=h.status.find(s=>s.type==='hellfire');
         if(_hs) _hs._actor=a;
       }
@@ -40629,6 +40674,39 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.6300', brief:[
+    '🔥 火法師爆發「烈焰爆發」附加狀態升級為「強力燃燒」(行動前後各-10HP);Lv5 滿級時 +1 回合',
+    '🔥 火法師 S1「火焰球」改為「特技150%+追加10必中」基礎,每級 +5% 傷害、追加 +1',
+    '🔥 火法師 S2「地獄之火」升級表調整:每升至 4/7/10 級燃燒回合 +1',
+    '📋 全面清理技能/爆發/天賦說明中的「升級效果」文字,只在升級視窗顯示升級內容',
+  ], items:[
+    '【烈焰爆發 強力燃燒】',
+    '  舊:附加普通燃燒,每回合行動前後各 -5HP',
+    '  新:附加「強力燃燒」(內部用 _strong 標記),每回合行動前後各 -10HP',
+    '  Lv0~Lv4 → 持續 2 回合;Lv5(MAX) → 持續 3 回合',
+    '【火焰球 升級】',
+    '  Lv0:特技 150% + 追加 10 必中傷害',
+    '  Lv5:特技 175% + 追加 15',
+    '  Lv10(MAX):特技 200% + 追加 20',
+    '【地獄之火 升級】',
+    '  Lv0~3:燃燒持續 2 回合',
+    '  Lv4~6:燃燒持續 3 回合',
+    '  Lv7~9:燃燒持續 4 回合',
+    '  Lv10:燃燒持續 5 回合',
+    '【八岐大蛇】',
+    '  「強力燃燒」(_strong 標記)同樣 -10HP/前+-10HP/後',
+    '【描述清理(升級資訊只在升級視窗顯示)】',
+    '  爆發描述:神樹恩澤、天籟之音、夢境時光、BUG修復',
+    '  天賦描述:劍士連斬、煉金術師煉化、動物學家獸盟、電腦繪圖師上色、',
+    '            程式設計師加成、小劇團員吃苦、巫女祝禱',
+    '  全部從原本的「(每升X級+...)」「滿級時...」等字樣移除,',
+    '  保留純功能描述,讓升級內容由升級視窗負責呈現',
+  ] },
+  { ver:'v1.0.20260423.6200', brief:[
+    '⚡ 中間版本(已被 v6300 包含)',
+  ], items:[
+    '此版的 1~3 項火法師重構已合併到 v6300 changelog,單獨此版不再贅述',
+  ] },
   { ver:'v1.0.20260423.6100', brief:[
     '🔥 火法師技能【地獄之火】重構:新增當下傷害,並把附加狀態統一改名為「燃燒」(行動前後各 -5HP)',
   ], items:[
@@ -44444,7 +44522,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.6100';
+  const CURRENT_VERSION = 'v1.0.20260423.6300';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44461,7 +44539,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.6100';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.6300';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
