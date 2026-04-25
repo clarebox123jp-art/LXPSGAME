@@ -7202,6 +7202,67 @@ function _applyArtStyle(){
   }catch(_){}
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260423.9800 — 鬥技場「精美畫風」專用視覺覆寫
+//   精美畫風 + 鬥技場時:全角色顯示 LV20 圖,初始 8 隻顯示 LV10 圖
+//   stat 不變(等級維持 1),只動 HERO_IMGS 視覺
+//   進鬥技場呼叫 _applyArenaPremiumImgs(),離開呼叫 _revertArenaPremiumImgs()
+//   這樣冒險模式完全不受影響
+// ════════════════════════════════════════════════════════════════
+let _arenaPremiumApplied = false;        // 記錄目前是否處於鬥技場精美覆寫狀態
+let _arenaPremiumBackup = null;          // 進入時 HERO_IMGS 的快照(用於還原)
+
+// 初始 8 隻角色 (Lv10 解鎖版)
+const _ARENA_INITIAL_HEROES = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+
+function _applyArenaPremiumImgs(){
+  if(_arenaPremiumApplied) return;
+  if(typeof _artStyle === 'undefined' || _artStyle !== 'premium') return;
+  if(typeof HERO_IMGS === 'undefined' || typeof HERO_PORTRAIT_LIBRARY === 'undefined') return;
+  // 備份目前的 HERO_IMGS
+  _arenaPremiumBackup = Object.assign({}, HERO_IMGS);
+  // 覆寫:每位英雄找對應 LV10/LV20 portrait 的 url
+  Object.keys(HERO_IMGS).forEach(name => {
+    try{
+      const lib = HERO_PORTRAIT_LIBRARY[name];
+      if(!lib) return;
+      // 初始 8 隻角色:找 _lv10 結尾的 portrait
+      // 其他英雄:找 _lv20 結尾的 portrait
+      const _isInitial = _ARENA_INITIAL_HEROES.includes(name);
+      const _suffix = _isInitial ? '_lv10' : '_lv20';
+      // 優先找精準 _suffix 結尾的(會跳過 boy/girl 之類的)
+      let _entry = lib.find(p => p.id && p.id.endsWith(_suffix));
+      if(_entry && _entry.url){
+        HERO_IMGS[name] = _entry.url;
+      }
+    }catch(_){}
+  });
+  _arenaPremiumApplied = true;
+  // 重繪可見卡片
+  try{
+    if(typeof G !== 'undefined' && G.p1 && G.p2){
+      [...G.p1, ...G.p2].forEach(h => { try{ renderCard(h); }catch(_){} });
+    }
+  }catch(_){}
+}
+
+function _revertArenaPremiumImgs(){
+  if(!_arenaPremiumApplied) return;
+  if(_arenaPremiumBackup && typeof HERO_IMGS !== 'undefined'){
+    Object.keys(_arenaPremiumBackup).forEach(name => {
+      HERO_IMGS[name] = _arenaPremiumBackup[name];
+    });
+  }
+  _arenaPremiumApplied = false;
+  _arenaPremiumBackup = null;
+  // 重繪
+  try{
+    if(typeof G !== 'undefined' && G.p1 && G.p2){
+      [...G.p1, ...G.p2].forEach(h => { try{ renderCard(h); }catch(_){} });
+    }
+  }catch(_){}
+}
+
 // 切換畫風(由按鈕呼叫)
 function _setArtStyle(style){
   if(style !== 'cute' && style !== 'premium') return;
@@ -7216,6 +7277,18 @@ function _setArtStyle(style){
     if(_prem) _prem.classList.toggle('selected', style === 'premium');
   }catch(_){}
   _applyArtStyle();
+  // ★ v1.0.20260423.9800 — 若目前在鬥技場(非冒險模式),根據新畫風決定是否覆寫
+  //   切到精美 → 覆寫;切到可愛 → 還原(先還原再切)
+  try{
+    const _inArena = (typeof _adventureMode === 'undefined' || !_adventureMode);
+    if(_inArena){
+      // 先還原(如果先前已覆寫),再依新畫風決定
+      _revertArenaPremiumImgs();
+      if(style === 'premium'){
+        _applyArenaPremiumImgs();
+      }
+    }
+  }catch(_){}
   // toast 提示
   try{
     const _msg = (style === 'premium') ? '✨ 已切換為精美畫風' : '🎨 已切換為可愛畫風';
@@ -9240,7 +9313,13 @@ function showHeroPickOverlay(){
     _heroPickSelected = [];
 
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
-    hpo.style.background = '#080a18 url("https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png") center/cover no-repeat';
+    // ★ v1.0.20260423.9900 — 精美畫風用操場精美版背景
+    {
+      const _bgUrlAdv = (typeof _artStyle !== 'undefined' && _artStyle === 'premium')
+        ? 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%93%8D%E5%A0%B4(%E7%B2%BE%E7%BE%8E%E7%89%88).png'
+        : 'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png';
+      hpo.style.background = '#080a18 url("' + _bgUrlAdv + '") center/cover no-repeat';
+    }
 
     // BOSS 預覽（依玩家選擇的 variant）
     if(typeof window._advSelectedVariantIdx === 'undefined') window._advSelectedVariantIdx = 0;
@@ -9268,10 +9347,18 @@ function showHeroPickOverlay(){
     return;
   }
   // 正常模式：還原背景與標語
-  hpo.style.background = '#080a18 url("https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png") center/cover no-repeat';
+  // ★ v1.0.20260423.9900 — 精美畫風用操場精美版背景(鬥技場 + 冒險選隊頁統一)
+  {
+    const _bgUrlAr = (typeof _artStyle !== 'undefined' && _artStyle === 'premium')
+      ? 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%93%8D%E5%A0%B4(%E7%B2%BE%E7%BE%8E%E7%89%88).png'
+      : 'https://cdn.jsdelivr.net/gh/ChrisRaelGameMaster/Game@main/%E9%81%B8%E9%9A%8A%E5%8F%8B%E8%83%8C%E6%99%AF.png';
+    hpo.style.background = '#080a18 url("' + _bgUrlAr + '") center/cover no-repeat';
+  }
   document.getElementById('fate-text').textContent = '與你命運交織的夥伴';
   // ★ 鬥技場模式：強制重置冒險旗標
   _adventureMode = false;
+  // ★ v1.0.20260423.9800 — 進入鬥技場時,若是精美畫風則覆寫 HERO_IMGS 為 LV20/LV10 圖
+  try{ if(typeof _applyArenaPremiumImgs === 'function') _applyArenaPremiumImgs(); }catch(_){}
   // ★ v1.0.20260420.0830 — 鬥技場敵方預覽區「徹底還原」
   //   修復:先進冒險看到 BOSS 陣容,再回首頁進鬥技場會顯示成 BOSS 陣容的 bug
   //   原因:_renderAdvBossPreview 會用 innerHTML 重寫 hpick-enemy-slots,
@@ -23421,6 +23508,8 @@ function backToHomeArena(){
   try{ clearTurnTimer(); }catch(e){}
   try{ if(_stuckCheckTimer){ clearInterval(_stuckCheckTimer); } }catch(e){}
   if(typeof _gamePaused !== 'undefined') _gamePaused=false;
+  // ★ v1.0.20260423.9800 — 離開鬥技場時還原 HERO_IMGS(若先前覆寫過)
+  try{ if(typeof _revertArenaPremiumImgs === 'function') _revertArenaPremiumImgs(); }catch(_){}
   // ★ 先完全停止所有音訊避免殘留，再淡入主選單 BGM
   try{ bgmStop(); }catch(e){}
   try{
@@ -27610,6 +27699,21 @@ function advLoadScene(stage, idx) {
       if(vId && scene.bgByVariant[vId]) _bgUrl = scene.bgByVariant[vId];
     }
   }catch(_bgvE){}
+
+  // ★ v1.0.20260423.9700 — 過場背景:精美畫風時用精美版圖
+  //   貓空 3 場景已有精美版圖,日本關等補新圖再加
+  try{
+    if(typeof _artStyle !== 'undefined' && _artStyle === 'premium' && stage === 'maokong'){
+      const _premiumSceneMap = {
+        river:     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+        trail:     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A8%9F%E6%B9%96%E6%AD%A5%E9%81%93(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+        teagarden: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92(%E7%B2%BE%E7%BE%8E%E7%89%88).png',
+      };
+      if(_premiumSceneMap[scene.key]){
+        _bgUrl = _premiumSceneMap[scene.key];
+      }
+    }
+  }catch(_premBgE){}
 
   // ★ v1.0.20260421.2800 — 日本關場景 BGM 切換：
   //   第一場景(idx=0)：bgm-japan-menu
@@ -41443,6 +41547,56 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.9900', brief:[
+    '🏟️ 補充選角頁操場精美版背景 — 冒險與鬥技場兩個選角頁統一切換',
+  ], items:[
+    '【替換的兩個位置】',
+    '  冒險模式選角頁背景:力行操場.png → 操場(精美版).png',
+    '  鬥技場選角頁背景:選隊友背景.png → 操場(精美版).png',
+    '  兩者切換到精美畫風時,自動使用同一張新精美圖',
+    '【實作機制】',
+    '  原本是 hpo.style.background 寫死 inline URL,所以 CSS body.art-premium 蓋不到',
+    '  改成依當前 _artStyle 動態選擇 URL,精美時用新圖、可愛時用原圖',
+    '【兩個位置都動是因為】',
+    '  管理員指定:首頁切換精美時兩個都替換',
+  ] },
+  { ver:'v1.0.20260423.9800', brief:[
+    '⚔️ 鬥技場精美畫風視覺升級:全角色顯示 LV20 圖,初始 8 隻顯示 LV10 圖',
+  ], items:[
+    '【觸發條件】',
+    '  畫風 = 精美 + 模式 = 鬥技場(非冒險)',
+    '【視覺效果】',
+    '  鬥技場選角頁、敵方陣容預覽、戰鬥卡片、技能預覽 都顯示 LV20/LV10 圖',
+    '  初始 8 隻角色:電腦繪圖師、程式設計師、弦樂團員、小劇團員、田徑隊員、',
+    '                直笛團員、籃球隊員、動物學家 → 顯示 LV10 圖',
+    '  其他英雄 → 顯示 LV20 圖',
+    '【數值不變】',
+    '  stat 維持 Lv1 基礎值,不會乘以等級加成',
+    '  傷害公式跟原本一樣,只是視覺更精美',
+    '【實作機制】',
+    '  進入鬥技場時:備份 HERO_IMGS,然後依規則覆寫(LV10 / LV20 圖 URL)',
+    '  離開鬥技場(回首頁)時:從備份還原 HERO_IMGS',
+    '  鬥技場中切換畫風:即時覆寫/還原',
+    '  → 冒險模式完全不受影響',
+    '【特殊情況】',
+    '  程式設計師、動物學家 等只有 LV10 沒 LV20 的角色 → 找不到時保持原圖',
+    '  其他畫風(可愛) → 完全不啟動,維持原本邏輯',
+  ] },
+  { ver:'v1.0.20260423.9700', brief:[
+    '🐛 修正貓空 3 場景過場背景在精美畫風下沒換成精美版的 bug',
+  ], items:[
+    '【根因】',
+    '  過場背景由 #adv-scene-bg 元素的 inline style background-image 設定',
+    '  inline style 比 CSS body.art-premium 規則優先,所以 CSS 覆蓋不到',
+    '  且過場用的 _bgUrl 來自 ADV_SCENES[stage].bg(寫死的可愛版 URL)',
+    '【修正】',
+    '  advLoadScene 拿到 _bgUrl 後,加一道精美畫風檢查',
+    '  若當前 _artStyle === premium 且場景在貓空,改用精美版 URL',
+    '  景美溪河堤、樟湖步道、貓空茶園 三場景的精美版 URL 對照表',
+    '【日本關】',
+    '  日本 3 場景背景目前還沒精美版,維持舊版顯示',
+    '  待管理員提供新圖時加入 _premiumSceneMap',
+  ] },
   { ver:'v1.0.20260423.9600', brief:[
     '🐛 修正電腦繪圖師、程式設計師、動物學家 天賦升級彈窗只顯示文字、看不到升級階梯的 bug',
   ], items:[
@@ -45989,7 +46143,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.9600';
+  const CURRENT_VERSION = 'v1.0.20260423.9900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -46006,7 +46160,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.9600';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.9900';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
