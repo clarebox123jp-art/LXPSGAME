@@ -34601,6 +34601,9 @@ function _showPortraitPreview(heroName, portraitId){
   const lib = (typeof HERO_PORTRAIT_LIBRARY !== 'undefined' && HERO_PORTRAIT_LIBRARY[heroName]) || [];
   const entry = lib.find(e => e.id === portraitId);
   if(!entry){ _showInGameToast('找不到肖像資料', '#ff8844', 1500); return; }
+  // ★ v1.0.20260423.8900 — 檢查是否已解鎖,未解鎖時顯示提示
+  const _isUnlockedHere = !entry.requiresUnlock || entry.id === 'default'
+    || ((_heroPortraitUnlocked[heroName]||[]).includes(entry.id));
   // 移除既有預覽
   const _old = document.getElementById('_portrait-preview-overlay');
   if(_old) _old.remove();
@@ -34616,9 +34619,16 @@ function _showPortraitPreview(heroName, portraitId){
     <div style="font-size:32px;font-weight:900;color:#ffcc44;text-align:center;">
       ${heroName}：${entry.name}
     </div>
-    <img src="${entry.url}" style="max-width:90vw;max-height:72vh;object-fit:contain;
+    ${_isUnlockedHere ? '' : `
+      <div style="font-size:22px;font-weight:800;color:#ff8844;text-align:center;
+        background:rgba(80,30,0,0.6);border:2px solid rgba(255,140,80,0.6);
+        border-radius:12px;padding:8px 20px;">
+        🔒 此肖像尚未解鎖（可至不可思議超商購買）
+      </div>
+    `}
+    <img src="${entry.url}" style="max-width:90vw;max-height:${_isUnlockedHere?72:64}vh;object-fit:contain;
       border:3px solid rgba(255,200,80,0.7);border-radius:16px;
-      box-shadow:0 0 40px rgba(255,200,80,0.35);background:rgba(20,18,10,0.6);" />
+      box-shadow:0 0 40px rgba(255,200,80,0.35);background:rgba(20,18,10,0.6);${_isUnlockedHere?'':'filter:grayscale(0.3) brightness(0.85);'}" />
     <div style="font-size:24px;color:#aaa;text-align:center;">（點擊任意處關閉）</div>
   `;
   ov.onclick = () => ov.remove();
@@ -36196,9 +36206,13 @@ function _renderHeroDetail(name, box) {
             '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:24px;">🔒</div>';
           const badge = isSel ?
             '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : '';
+          // ★ v1.0.20260423.8900 — 未解鎖也可點擊預覽全圖,只是無法套用為當前肖像
+          //   解鎖:點擊套用 + 切換 (_onPortraitSwitcherClick)
+          //   未解鎖:點擊只開預覽視窗 (_showPortraitPreview),看完關閉,不會套用
           const clickAttr = isUnlocked
             ? `onclick="_onPortraitSwitcherClick('${name}','${p.id}')"`
-            : `onclick="_showInGameToast('🔒 此肖像尚未解鎖（可至不可思議超商購買）','#ff8844',2200)"`;
+            : `onclick="_showPortraitPreview('${name}','${p.id}')"
+               title="🔒 尚未解鎖（可至不可思議超商購買）— 點擊預覽大圖"`;
           return `<div ${clickAttr} title="${p.name}" style="position:relative;cursor:pointer;border:2px solid ${border};border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">`
                + `<img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>`
                + overlay + badge + `</div>`;
@@ -41222,6 +41236,23 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.8900', brief:[
+    '🔍 英雄圖鑑未解鎖肖像也開放點擊預覽全圖,但無法套用為當前肖像',
+  ], items:[
+    '【舊行為】',
+    '  英雄詳細頁的肖像切換面板,點擊未解鎖肖像 → 只彈 toast 提示「未解鎖」',
+    '  玩家無法看到肖像長什麼樣,只能去商店或英雄圖鑑慢慢瀏覽',
+    '【新行為】',
+    '  點擊未解鎖肖像 → 開啟全圖預覽視窗,讓玩家先看再決定要不要購買 / 升級',
+    '  預覽視窗頂部多一行橘色提示:「🔒 此肖像尚未解鎖(可至不可思議超商購買)」',
+    '  圖片帶輕微灰階濾鏡(grayscale 30%, brightness 85%),視覺上區分鎖定狀態',
+    '  圖片高度略小(64vh vs 72vh),讓提示文字有空間',
+    '【已解鎖肖像不變】',
+    '  點擊已解鎖肖像 → 仍是套用為當前肖像 + 切換顯示(_onPortraitSwitcherClick)',
+    '【場景流程】',
+    '  玩家進英雄詳細頁 → 看到鎖頭🔒肖像 → 點一下 → 預覽全圖 → 看完關閉',
+    '  → 想買就去商店買、未達等級就繼續打 → 解鎖後再回來套用',
+  ] },
   { ver:'v1.0.20260423.8800', brief:[
     '🏀 籃球隊員新增首個商店付費肖像「絕殺灌籃」(籃球隊員3.png)',
   ], items:[
@@ -45588,7 +45619,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.8800';
+  const CURRENT_VERSION = 'v1.0.20260423.8900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -45605,7 +45636,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.8800';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.8900';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
