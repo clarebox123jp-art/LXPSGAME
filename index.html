@@ -13980,6 +13980,22 @@ function doDmg(target, rawDmg, opts={}){
           _triggerBossKillSlowmo(target.name);
         }
       }catch(_bke){ console.warn('[BOSS 慢動作] 偵測失敗:', _bke); }
+      // ★ v1.0.20260423.5400 — 擊敗敵人即時掉金幣:該怪 EXP × 50%
+      //   只有冒險模式 + 玩家擊敗的 p2 才掉
+      try{
+        if(target.side === 'p2'
+           && typeof _adventureMode !== 'undefined' && _adventureMode
+           && typeof _calcMobExp === 'function'
+           && typeof addKnowledgeCoins === 'function'){
+          const _mobExp = _calcMobExp(target);
+          const _coinDrop = Math.round(_mobExp * 0.5);
+          if(_coinDrop > 0){
+            addKnowledgeCoins(_coinDrop);
+            try{ showPopup(target, '💰+' + _coinDrop, 'coin'); }catch(_){}
+            try{ log(`💰 擊敗 [${target.name}] 掉落 ${_coinDrop} 知識幣`); }catch(_){}
+          }
+        }
+      }catch(_dropE){ console.warn('[怪物金幣掉落] 失敗:', _dropE); }
     }
     // 清除所有狀態與增益
     target.status=[];
@@ -29969,14 +29985,12 @@ async function advShowBattleResult(win) {
       const _rewardPanel = document.getElementById('adv-result-reward-panel');
       if(_rewardPanel){
         // 1) 出戰英雄結算 EXP:沿用 grantBattleExp 公式
+        // ★ v1.0.20260423.5400 — 改用統一的 _calcMobExp 公式 (hp+atk+sp+spd) × 50%
         let _baseBossExp = 0;
-        if(G && G.p2){
-          G.p2.forEach(h => {
-            const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
-            _baseBossExp += (hd && hd.exp) ? hd.exp : 10;
-          });
+        if(G && G.p2 && typeof _calcMobExp === 'function'){
+          G.p2.forEach(h => { _baseBossExp += _calcMobExp(h); });
         }
-        if(_baseBossExp === 0) _baseBossExp = 93;
+        if(_baseBossExp === 0) _baseBossExp = 100;
         const _ratio = Math.min(2.0, 1.0 + correct*0.08 + Math.max(0, 20-rounds)*0.02 + (stats.totalQuizScore||0)*0.0005);
         const _confMultPanel = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
         const _maxStreakPanel = (stats && stats.maxStreak) || 0;
@@ -33540,21 +33554,34 @@ function _showLevelUpSequence(levelUps, onDone) {
 
 
 // 戰鬥結束後給予英雄經驗值
+// ★ v1.0.20260423.5400 — 統一的怪物 EXP 計算公式
+//   EXP = (hp + atk + sp + spd) × 0.5
+//   讀取 mob 物件的當下 stat,所以 BOSS HP 倍率(難度提升)會自動讓 EXP 變高
+//   傳入 mob 物件(p2 陣容裡的角色)
+function _calcMobExp(mob){
+  if(!mob) return 0;
+  const _hp  = (typeof mob.hp  === 'number') ? mob.hp  : 0;
+  const _atk = (typeof mob.atk === 'number') ? mob.atk : 0;
+  const _sp  = (typeof mob.sp  === 'number') ? mob.sp  : 0;
+  const _spd = (typeof mob.spd === 'number') ? mob.spd : 0;
+  return Math.max(0, Math.round((_hp + _atk + _sp + _spd) * 0.5));
+}
+
 async function grantBattleExp(win, stats) {
   if(!win) return;
   // ★ 鬥技場模式不給予任何獎勵（只有冒險模式才有EXP和技能書）
   if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
   const heroes = advGetUnlockedHeroes();
   if(!heroes.length) return;
-  // ★ 依擊敗魔物的個別EXP值計算基礎經驗
+  // ★ v1.0.20260423.5400 — EXP 改用統一公式 (hp+atk+sp+spd) × 50%
+  //   讀當下 stat,所以 HP 倍率(難度提升)會自動讓 EXP 跟著浮動
   let baseExp = 0;
   if(G && G.p2) {
     G.p2.forEach(h => {
-      const hd = typeof HERO_DB !== 'undefined' ? HERO_DB[h.name] : null;
-      baseExp += (hd && hd.exp) ? hd.exp : 10;
+      baseExp += _calcMobExp(h);
     });
   }
-  if(baseExp === 0) baseExp = 93; // 預設BOSS場（55+20+18）
+  if(baseExp === 0) baseExp = 100; // 保底:極端情況(p2 全空)的預設值
   // 積分加成比率：最多200%
   const correct = stats && stats.correctCount ? stats.correctCount : 0;
   const rounds  = stats && stats.rounds ? stats.rounds : 1;
@@ -35658,6 +35685,7 @@ function _renderHeroDetail(name, box) {
             <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
           ${_heroIsUnlocked && backpackGet('hero_exp_book')>0 ? `<button onclick="playSfx('sfx-powerup',0.7);_useExpBookForHero('${name}')" style="margin-top:7px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(60,180,80,0.25);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📗 使用經驗值之書 <span style="color:#aaffcc;font-size:17px;">×${backpackGet('hero_exp_book')}</span></button>` : ''}
+          ${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>0 ? `<button onclick="playSfx('sfx-powerup',0.75);_useExpBookDeluxeForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(255,180,60,0.22);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📕 使用精裝版經驗值之書 <span style="color:#ffe090;font-size:17px;">×${backpackGet('hero_exp_book_deluxe')}</span></button>` : ''}
         </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
       ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
@@ -39010,6 +39038,26 @@ async function _useExpBookForHero(name) {
   }
 }
 
+// ★ v1.0.20260423.5300 — 精裝版經驗值之書:在英雄詳細頁也能使用(+200 EXP)
+async function _useExpBookDeluxeForHero(name) {
+  if(backpackGet('hero_exp_book_deluxe') <= 0){
+    _showInGameToast('背包中沒有精裝版英雄經驗值之書！', '#ff8844', 1800);
+    return;
+  }
+  backpackRemove('hero_exp_book_deluxe');
+  const lvUps = addHeroExp(name, 200);
+  try{ await gameCloudSave(); }catch(e){}
+  _setNavDot('英雄', true);
+  const box = document.getElementById('hero-detail-content');
+  if(box) _renderHeroDetail(name, box);
+  if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
+  if(lvUps && lvUps.length){
+    setTimeout(() => _showLevelUpSequence(lvUps, () => {}), 300);
+  } else {
+    _showInGameToast(`📕 [${name}] 獲得 200 EXP!`, '#ffcc44', 2000);
+  }
+}
+
 
 // ★★ 全域防護：偵測並修復卡死的戰鬥背景
 function _globalSafetyReset() {
@@ -40534,6 +40582,58 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260423.5400', brief:[
+    '⚖ 全面重構戰鬥獎勵公式:EXP = (HP + 攻擊 + 特技 + 速度) × 50%',
+    '💰 每擊敗一隻怪即時掉落知識幣(該怪 EXP × 50%),戰鬥結算還會再給結算金幣',
+    '📈 難度提升時 HP 倍率自動讓 EXP/金幣跟著浮動,挑戰愈難回報愈好',
+  ], items:[
+    '【舊問題】',
+    '  原本依 HERO_DB[name].exp 寫死的 EXP 值',
+    '  日本關卡所有怪物都漏設 exp,fallback 到預設 10 → 玩家只拿到 32 EXP 之類的低值',
+    '  寶箱怪/小惡魔/二宮尊德像/座敷童子 等稀有怪 exp:0 也不合理',
+    '【新公式】',
+    '  EXP = (mob.hp + mob.atk + mob.sp + mob.spd) × 0.5',
+    '  即時金幣 = 該怪 EXP × 0.5(擊敗瞬間掉)',
+    '  動態讀取 mob 物件的當下 stat → BOSS HP 倍率(難度提升)會讓 EXP 跟著變高',
+    '【新公式對照(節選)】',
+    '  日本路邊小怪:河童 EXP 6→32、雪女 10→48、二口女 10→49、獨眼小僧 10→44',
+    '  日本菁英:木葉天狗/星熊童子/管狐 22→110、烏天狗/茨木童子/殺生石分身 24→122',
+    '  日本主 BOSS:大天狗/酒吞童子/玉藻前 66→331、八岐大蛇 120→785',
+    '  日本稀有:行走的二宮尊德像 0→91、座敷童子 0→195',
+    '  貓空小怪:史萊姆 5→26、哥布林 7→36、哈維 8→40、妖精 8→41',
+    '  貓空菁英:茶葉精靈 18→92、綠竹筍小妖 20→102',
+    '  貓空主 BOSS:九尾空貓怪 55→276、杏花妖 75→366',
+    '  貓空稀有:寶箱怪 0→76、小惡魔 0→162',
+    '【實作細節】',
+    '  新增 _calcMobExp(mob) 統一函式',
+    '  grantBattleExp 改用此公式計算 baseExp',
+    '  doDmg 偵測敵人 curHp=0 瞬間直接 addKnowledgeCoins(EXP×0.5)',
+    '  右側獎勵預覽面板的 EXP 估算也同步更新',
+    '【設計理念】',
+    '  打越強的怪 → 拿越多 EXP 與金幣,符合直覺',
+    '  難度提升時 HP 倍率(×1.5)讓 EXP 自動跟著放大,自信「我很會」報酬更豐厚',
+    '  即時金幣掉落讓玩家戰鬥中就有正回饋(不必等結算)',
+    '  原本「掉落物販賣價值」維持不變(被偷的小黃瓜等的賣價沒動)',
+  ] },
+  { ver:'v1.0.20260423.5300', brief:[
+    '📕 英雄詳細頁新增「使用精裝版經驗值之書」按鈕(+200 EXP),位於一般版按鈕旁邊',
+  ], items:[
+    '【新增內容】',
+    '  英雄詳細頁(角色卡片上的 Lv.XX + EXP 條下方),',
+    '  原本只有「📗 使用經驗值之書」(一般版,+50 EXP,綠色按鈕),',
+    '  現在多了「📕 使用精裝版經驗值之書」(+200 EXP,金色按鈕),',
+    '  背包有精裝版庫存時才會顯示,並顯示剩餘數量',
+    '【按鈕顯示條件】',
+    '  (1) 英雄已解鎖(否則不顯示任何經驗書按鈕)',
+    '  (2) 未達最高等級 Lv.50',
+    '  (3) 背包有對應的書(分別獨立判斷一般版/精裝版)',
+    '【技術細節】',
+    '  新增 _useExpBookDeluxeForHero(name) 函式',
+    '  邏輯與 _useExpBookForHero 相同,差別只在:',
+    '    消耗 hero_exp_book_deluxe 而非 hero_exp_book',
+    '    增加 200 EXP 而非 50 EXP',
+    '    toast 用金色圖示 📕 而非 📗',
+  ] },
   { ver:'v1.0.20260423.5200', brief:[
     '🎬 修正 BOSS 擊倒慢動作演出觸發時機:只有擊倒主 BOSS 才觸發,菁英小怪不再誤觸發',
   ], items:[
@@ -44169,7 +44269,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260423.5200';
+  const CURRENT_VERSION = 'v1.0.20260423.5400';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -44186,7 +44286,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260423.5200';
+window._GAME_LOADED_VERSION = 'v1.0.20260423.5400';
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
