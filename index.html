@@ -26515,14 +26515,14 @@ function _showNewHeroAnnouncement(){
     'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;'
   ].join('');
   header.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:clamp(28px,4vw,40px);animation:newHeroSparkle 1.2s ease-in-out infinite;">✨</span>
-      <span style="font-size:clamp(22px,3.5vw,34px);font-weight:900;color:#ffe066;
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite;">✨</span>
+      <span style="font-size:clamp(30px,4.5vw,46px);font-weight:900;color:#ffe066;
         text-shadow:0 0 14px rgba(255,200,80,0.85),0 2px 6px rgba(0,0,0,0.7);
         letter-spacing:2px;">🎉 新角色登場！</span>
-      <span style="font-size:clamp(28px,4vw,40px);animation:newHeroSparkle 1.2s ease-in-out infinite 0.6s;">✨</span>
+      <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite 0.6s;">✨</span>
     </div>
-    <div style="font-size:clamp(13px,1.4vw,16px);color:#ffccdd;letter-spacing:1px;">
+    <div style="font-size:clamp(17px,1.9vw,22px);color:#ffccdd;letter-spacing:1px;font-weight:700;">
       💖 答題獎章獲得限定
     </div>
   `;
@@ -26548,17 +26548,17 @@ function _showNewHeroAnnouncement(){
             <div class="new-hero-portrait-wrap" style="border-color:${theme.portraitBorder};">
               <img src="${img}" alt="${heroName}" />
             </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <div style="font-size:clamp(26px,3.5vw,36px);font-weight:900;color:${theme.nameColor};
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+              <div style="font-size:clamp(34px,4.5vw,48px);font-weight:900;color:${theme.nameColor};
                 text-shadow:0 0 12px ${theme.glow},0 2px 4px rgba(0,0,0,0.8);letter-spacing:2px;">
                 ${heroName}
               </div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-                <span style="font-size:14px;color:#ffd966;background:rgba(255,200,80,0.18);
-                  border:1.5px solid rgba(255,200,80,0.55);border-radius:6px;padding:2px 10px;
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                <span style="font-size:18px;color:#ffd966;background:rgba(255,200,80,0.18);
+                  border:1.5px solid rgba(255,200,80,0.55);border-radius:8px;padding:4px 14px;
                   letter-spacing:1px;font-weight:700;">${theme.role}</span>
-                <span style="font-size:14px;color:#ff99cc;background:rgba(255,100,180,0.18);
-                  border:1.5px solid rgba(255,120,180,0.55);border-radius:6px;padding:2px 10px;
+                <span style="font-size:18px;color:#ff99cc;background:rgba(255,100,180,0.18);
+                  border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:4px 14px;
                   letter-spacing:1px;font-weight:700;">🏅 答題獎章獲得</span>
               </div>
             </div>
@@ -26566,46 +26566,46 @@ function _showNewHeroAnnouncement(){
           <!-- 簡介 + 技能 -->
           <div style="flex:1 1 320px;min-width:0;">
             <!-- 基礎屬性 -->
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-              <span style="font-size:14px;color:#ff8866;background:rgba(255,80,80,0.18);border:1.5px solid rgba(255,80,80,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">❤️ HP ${hero.hp}</span>
-              <span style="font-size:14px;color:#ff9966;background:rgba(255,160,80,0.18);border:1.5px solid rgba(255,160,80,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">⚔️ 攻 ${hero.atk}</span>
-              <span style="font-size:14px;color:#aaccff;background:rgba(120,180,255,0.18);border:1.5px solid rgba(120,180,255,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">✨ 特 ${hero.sp}</span>
-              <span style="font-size:14px;color:#aaff99;background:rgba(120,220,120,0.18);border:1.5px solid rgba(120,220,120,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">💨 速 ${hero.spd}</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+              <span style="font-size:18px;color:#ff8866;background:rgba(255,80,80,0.18);border:1.5px solid rgba(255,80,80,0.5);border-radius:8px;padding:4px 14px;font-weight:800;">❤️ HP ${hero.hp}</span>
+              <span style="font-size:18px;color:#ff9966;background:rgba(255,160,80,0.18);border:1.5px solid rgba(255,160,80,0.5);border-radius:8px;padding:4px 14px;font-weight:800;">⚔️ 攻 ${hero.atk}</span>
+              <span style="font-size:18px;color:#aaccff;background:rgba(120,180,255,0.18);border:1.5px solid rgba(120,180,255,0.5);border-radius:8px;padding:4px 14px;font-weight:800;">✨ 特 ${hero.sp}</span>
+              <span style="font-size:18px;color:#aaff99;background:rgba(120,220,120,0.18);border:1.5px solid rgba(120,220,120,0.5);border-radius:8px;padding:4px 14px;font-weight:800;">💨 速 ${hero.spd}</span>
             </div>
             <!-- 角色定位 -->
             <div style="background:rgba(0,0,30,0.35);border-left:4px solid ${theme.border};
-              padding:8px 12px;border-radius:6px;margin-bottom:12px;">
-              <div style="font-size:13px;color:#ffaa66;font-weight:700;margin-bottom:4px;">📌 職業定位</div>
-              <div style="font-size:15px;color:#ffe;line-height:1.5;">${theme.intro}</div>
+              padding:12px 16px;border-radius:8px;margin-bottom:16px;">
+              <div style="font-size:18px;color:#ffaa66;font-weight:800;margin-bottom:6px;">📌 職業定位</div>
+              <div style="font-size:19px;color:#ffe;line-height:1.55;">${theme.intro}</div>
             </div>
             <!-- 技能列表 -->
-            <div class="new-hero-skill-row">
-              <div style="font-size:14px;color:#aaccff;font-weight:700;margin-bottom:4px;">
-                💠 ${hero.s1.n} <span style="font-size:12px;color:#88aaff;">(消耗 ${hero.s1.c||0} 能量)</span>
+            <div class="new-hero-skill-row" style="padding:14px 16px;">
+              <div style="font-size:20px;color:#aaccff;font-weight:800;margin-bottom:6px;">
+                💠 ${hero.s1.n} <span style="font-size:16px;color:#88aaff;font-weight:600;">(消耗 ${hero.s1.c||0} 能量)</span>
               </div>
-              <div style="font-size:13px;color:#dde;line-height:1.5;">${hero.s1.d}</div>
+              <div style="font-size:17px;color:#dde;line-height:1.55;">${hero.s1.d}</div>
             </div>
-            <div class="new-hero-skill-row">
-              <div style="font-size:14px;color:#aaccff;font-weight:700;margin-bottom:4px;">
-                💠 ${hero.s2.n} <span style="font-size:12px;color:#88aaff;">${hero.s2.p?'(被動)':('(消耗 '+(hero.s2.c||0)+' 能量)')}</span>
+            <div class="new-hero-skill-row" style="padding:14px 16px;">
+              <div style="font-size:20px;color:#aaccff;font-weight:800;margin-bottom:6px;">
+                💠 ${hero.s2.n} <span style="font-size:16px;color:#88aaff;font-weight:600;">${hero.s2.p?'(被動)':('(消耗 '+(hero.s2.c||0)+' 能量)')}</span>
               </div>
-              <div style="font-size:13px;color:#dde;line-height:1.5;">${hero.s2.d}</div>
+              <div style="font-size:17px;color:#dde;line-height:1.55;">${hero.s2.d}</div>
             </div>
             ${burst ? `
-            <div class="new-hero-burst-row">
-              <div style="font-size:14px;color:#ffaaff;font-weight:700;margin-bottom:4px;">
+            <div class="new-hero-burst-row" style="padding:14px 16px;">
+              <div style="font-size:20px;color:#ffaaff;font-weight:800;margin-bottom:6px;">
                 ⚡ 爆發技：${burst.n}
               </div>
-              <div style="font-size:13px;color:#ffe;line-height:1.5;">${burst.d}</div>
+              <div style="font-size:17px;color:#ffe;line-height:1.55;">${burst.d}</div>
             </div>
             ` : ''}
             ${_trait ? `
             <div style="background:rgba(80,40,0,0.4);border:1.5px solid rgba(255,180,80,0.5);
-              border-radius:10px;padding:10px 12px;">
-              <div style="font-size:14px;color:#ffcc66;font-weight:700;margin-bottom:4px;">
+              border-radius:10px;padding:14px 16px;">
+              <div style="font-size:20px;color:#ffcc66;font-weight:800;margin-bottom:6px;">
                 🌟 天賦：${_trait.name||_trait.n||''}
               </div>
-              <div style="font-size:13px;color:#ffe;line-height:1.5;">${_trait.fd||_trait.desc||_trait.d||''}</div>
+              <div style="font-size:17px;color:#ffe;line-height:1.55;">${_trait.fd||_trait.desc||_trait.d||''}</div>
             </div>
             ` : ''}
           </div>
@@ -26617,50 +26617,50 @@ function _showNewHeroAnnouncement(){
   // === 獲得方式說明卡片 ===
   const buildMethodSection = () => {
     return `
-      <div class="new-hero-method-card">
-        <div style="font-size:clamp(20px,2.5vw,26px);font-weight:900;color:#ffaaee;
-          text-shadow:0 0 10px rgba(255,150,200,0.6);margin-bottom:12px;
+      <div class="new-hero-method-card" style="padding:18px 20px;">
+        <div style="font-size:clamp(26px,3vw,32px);font-weight:900;color:#ffaaee;
+          text-shadow:0 0 10px rgba(255,150,200,0.6);margin-bottom:14px;
           display:flex;align-items:center;gap:8px;">
           <span style="font-size:1.2em;">🏅</span> 獲得方式
         </div>
-        <div style="font-size:15px;color:#ffe;line-height:1.7;margin-bottom:14px;">
-          這兩位角色 <span style="color:#ffe066;font-weight:700;">不會在 BOSS 戰隨機解鎖</span>，必須通過特定題庫完成挑戰才能獲得！
+        <div style="font-size:19px;color:#ffe;line-height:1.7;margin-bottom:16px;">
+          這兩位角色 <span style="color:#ffe066;font-weight:800;">不會在 BOSS 戰隨機解鎖</span>，必須通過特定題庫完成挑戰才能獲得！
         </div>
-        <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+        <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
           <!-- 小力獲得方式 -->
           <div style="background:rgba(40,80,40,0.4);border:2px solid rgba(120,220,150,0.55);
-            border-radius:12px;padding:12px 14px;">
-            <div style="font-size:17px;color:#88ff99;font-weight:800;margin-bottom:8px;">
+            border-radius:12px;padding:16px 18px;">
+            <div style="font-size:22px;color:#88ff99;font-weight:800;margin-bottom:10px;">
               🐕 解鎖【校犬小力】
             </div>
-            <div style="font-size:14px;color:#ffe;line-height:1.6;margin-bottom:8px;">
-              <span style="color:#ffe066;font-weight:700;">「領養與照顧狗狗」</span>題庫共 20 題，
-              <span style="color:#ff99cc;font-weight:700;">全部答對</span>即可解鎖！
+            <div style="font-size:18px;color:#ffe;line-height:1.65;margin-bottom:10px;">
+              <span style="color:#ffe066;font-weight:800;">「領養與照顧狗狗」</span>題庫共 20 題，
+              <span style="color:#ff99cc;font-weight:800;">全部答對</span>即可解鎖！
             </div>
-            <div style="font-size:13px;color:#bbd;line-height:1.5;">
+            <div style="font-size:16px;color:#bbd;line-height:1.55;">
               💡 已答對的題目會永久記錄,中途離開或滅團都不會清除進度
             </div>
           </div>
           <!-- 幼兒園小孩獲得方式 -->
           <div style="background:rgba(80,60,30,0.4);border:2px solid rgba(255,200,120,0.55);
-            border-radius:12px;padding:12px 14px;">
-            <div style="font-size:17px;color:#ffcc66;font-weight:800;margin-bottom:8px;">
+            border-radius:12px;padding:16px 18px;">
+            <div style="font-size:22px;color:#ffcc66;font-weight:800;margin-bottom:10px;">
               👶 解鎖【幼兒園小孩】
             </div>
-            <div style="font-size:14px;color:#ffe;line-height:1.6;margin-bottom:8px;">
-              <span style="color:#ffe066;font-weight:700;">「照顧與陪伴幼兒」</span>題庫共 20 題，
-              <span style="color:#ff99cc;font-weight:700;">全部答對</span>即可解鎖！
+            <div style="font-size:18px;color:#ffe;line-height:1.65;margin-bottom:10px;">
+              <span style="color:#ffe066;font-weight:800;">「照顧與陪伴幼兒」</span>題庫共 20 題，
+              <span style="color:#ff99cc;font-weight:800;">全部答對</span>即可解鎖！
             </div>
-            <div style="font-size:13px;color:#bbd;line-height:1.5;">
+            <div style="font-size:16px;color:#bbd;line-height:1.55;">
               💡 已答對的題目會永久記錄,中途離開或滅團都不會清除進度
             </div>
           </div>
         </div>
-        <div style="margin-top:14px;padding:10px 12px;background:rgba(60,80,160,0.3);
-          border-left:4px solid #88ddff;border-radius:6px;">
-          <div style="font-size:14px;color:#aaddff;line-height:1.6;">
-            📍 <span style="font-weight:700;">入口位置：</span>進入冒險選擇 BOSS 後,
-            「年級 → 科目」第二步驟中可選 <span style="color:#ff99cc;font-weight:700;">💝 養護專題</span>分類,
+        <div style="margin-top:16px;padding:14px 16px;background:rgba(60,80,160,0.3);
+          border-left:4px solid #88ddff;border-radius:8px;">
+          <div style="font-size:18px;color:#aaddff;line-height:1.65;">
+            📍 <span style="font-weight:800;">入口位置：</span>進入冒險選擇 BOSS 後,
+            「年級 → 科目」第二步驟中可選 <span style="color:#ff99cc;font-weight:800;">💝 養護專題</span>分類,
             內含這兩個專屬題庫!
           </div>
         </div>
@@ -26688,12 +26688,12 @@ function _showNewHeroAnnouncement(){
 
   scrollArea.innerHTML = `
     <!-- 開場介紹文字 -->
-    <div style="text-align:center;padding:8px 16px;">
-      <div style="font-size:clamp(18px,2.5vw,24px);color:#ffeebb;line-height:1.6;font-weight:600;
+    <div style="text-align:center;padding:10px 16px;">
+      <div style="font-size:clamp(24px,3vw,30px);color:#ffeebb;line-height:1.55;font-weight:700;
         text-shadow:0 2px 4px rgba(0,0,0,0.6);">
         💝 配合教育議題推出兩位<span style="color:#ff99cc;font-weight:900;">活動限定英雄</span>！
       </div>
-      <div style="font-size:clamp(14px,1.6vw,17px);color:#ddccff;margin-top:6px;">
+      <div style="font-size:clamp(18px,2vw,22px);color:#ddccff;margin-top:8px;font-weight:600;">
         透過答題獎章活動專屬題庫挑戰即可獲得!
       </div>
     </div>
@@ -26717,8 +26717,8 @@ function _showNewHeroAnnouncement(){
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕ 關閉';
   closeBtn.style.cssText = [
-    'padding:10px 28px;',
-    'font-size:clamp(15px,1.8vw,18px);font-weight:800;',
+    'padding:14px 36px;',
+    'font-size:clamp(20px,2.2vw,24px);font-weight:800;',
     'background:linear-gradient(135deg,rgba(80,80,100,0.85),rgba(60,60,80,0.85));',
     'color:#ffe;',
     'border:2px solid rgba(180,180,200,0.6);',
@@ -26737,8 +26737,8 @@ function _showNewHeroAnnouncement(){
   const skipTodayBtn = document.createElement('button');
   skipTodayBtn.textContent = '🌙 今日不再顯示';
   skipTodayBtn.style.cssText = [
-    'padding:10px 24px;',
-    'font-size:clamp(15px,1.8vw,18px);font-weight:800;',
+    'padding:14px 32px;',
+    'font-size:clamp(20px,2.2vw,24px);font-weight:800;',
     'background:linear-gradient(135deg,rgba(120,80,160,0.85),rgba(80,60,140,0.85));',
     'color:#ffe;',
     'border:2px solid rgba(200,150,255,0.6);',
@@ -40785,6 +40785,21 @@ function _advMiniGetQuizPool(sceneIdx) {
   // ★ v1.0.20260420.1700 — 三個五下自然獨立題庫(不在 ADV_QUIZ_DB 內),直接從對應陣列取題
   //   修復 Bug:選這些科目時小怪戰/pet 事件瞬間彈「所有題目都出過囉」重選視窗
   if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
+  // ★ v1.0.20260424.0750 — 照顧與陪伴幼兒 / 領養與照顧狗狗 (專屬題庫,獨立記錄已答對)
+  //   修復 Bug:選這兩個題庫進小怪戰跳出「所有題目都出過」重選視窗
+  if(subject === '照顧與陪伴幼兒' || subject === '領養與照顧狗狗'){
+    const _full = (subject === '照顧與陪伴幼兒')
+      ? (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : [])
+      : (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : []);
+    const _key = (subject === '照顧與陪伴幼兒') ? 'careInfantPerfect' : 'dogCarePerfect';
+    let _correctSet = {};
+    try { _correctSet = (_medalStats && _medalStats[_key]) || {}; } catch(_e) {}
+    // 過濾:本場未抽過 + 尚未答對的
+    const _remaining = _full.filter(q => !_correctSet[q.id] && !window._miniQuizUsedIds.has(q.id));
+    if(_remaining.length > 0) return _remaining;
+    // 全部答對(理論上會觸發解鎖+清空進度) → 退而求其次,從全題庫抽未抽過的
+    return _full.filter(q => !window._miniQuizUsedIds.has(q.id));
+  }
   if(subject === '五下自然期中評量' && typeof ADV_QUIZ_5S_MIDTERM !== 'undefined'){
     return ADV_QUIZ_5S_MIDTERM.filter(q => !window._miniQuizUsedIds.has(q.id));
   }
@@ -40861,6 +40876,14 @@ function _advMiniQuizAsk(onDone) {
     if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
       if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
       log('📚 [日本關] 所有題目已出過，循環再出一次。');
+      setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 200);
+      return;
+    }
+    // ★ v1.0.20260424.0750 — 照顧/狗狗題庫:不彈重選視窗,清空 used 後循環
+    if(typeof _advPlayerSubject !== 'undefined' &&
+       (_advPlayerSubject === '照顧與陪伴幼兒' || _advPlayerSubject === '領養與照顧狗狗')){
+      if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
+      try{ log(`📚 [${_advPlayerSubject}] 本場題目已出過,自動循環再出(已答對的不會再出)。`); }catch(_e){}
       setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 200);
       return;
     }
@@ -44234,6 +44257,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0750', brief:[
+    '🐛 修正:選照顧/狗狗題庫進小怪戰跳「所有題目都出過」重選視窗',
+    '🔠 新角色登場視窗整體文字放大(約 +30~50%)',
+  ], items:[
+    '【1. 修正照顧/狗狗題庫小怪戰 Bug】',
+    '  - 問題:_advMiniGetQuizPool 沒有照顧/狗狗的特殊分支',
+    '         空池時 _advMiniQuizAsk 會 fallback 到 advShowRePickSubject 視窗',
+    '  - 修正一:_advMiniGetQuizPool 加入特殊分支',
+    '         (與 advGetQuizPool 邏輯一致,過濾已答對 + 本場已抽)',
+    '  - 修正二:_advMiniQuizAsk 偵測到照顧/狗狗 subject 時',
+    '         自動清空 _miniQuizUsedIds 後循環再出,不彈視窗',
+    '  - 與既有日本關處理邏輯相同',
+    '【2. 新角色登場視窗放大】',
+    '  - 主標題「🎉 新角色登場！」: 22~34px → 30~46px',
+    '  - 副標籤「💖 答題獎章獲得限定」: 13~16px → 17~22px',
+    '  - 開場介紹大字: 18~24px → 24~30px',
+    '  - 開場副介紹: 14~17px → 18~22px',
+    '  - 角色名稱: 26~36px → 34~48px',
+    '  - 屬性標籤(HP/攻/特/速): 14px → 18px',
+    '  - 職業定位標題: 13px → 18px,內文: 15px → 19px',
+    '  - 技能名稱: 14px → 20px,技能描述: 13px → 17px',
+    '  - 爆發技/天賦: 14px / 13px → 20px / 17px',
+    '  - 獲得方式標題: 20~26px → 26~32px',
+    '  - 獲得方式內文: 14px → 18px',
+    '  - 提示說明: 13px → 16px',
+    '  - 入口位置: 14px → 18px',
+    '  - 「✕ 關閉」/「🌙 今日不再顯示」按鈕: 15~18px → 20~24px',
+    '  - 內邊距同步增加,提升閱讀舒適度',
+  ] },
   { ver:'v1.0.20260424.0740', brief:[
     '⚗️ 商店新增「極限重置秘藥」5000 幣 / 每日限購1顆',
     '🏷️ 每日特價系統:每天 08:00 隨機抽一樣商品 7 折',
@@ -49651,7 +49703,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0740';
+  const CURRENT_VERSION = 'v1.0.20260424.0750';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -49668,7 +49720,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0740';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0750';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
