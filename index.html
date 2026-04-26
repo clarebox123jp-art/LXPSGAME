@@ -6808,7 +6808,7 @@ const HERO_IMGS = {
   '機械師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%A9%9F%E6%A2%B0%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
   '武士':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
   '陰陽師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%99%B0%E9%99%BD%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '小力':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%B0%8F%E5%8A%9B.png',
+  '小力':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%9BQ%E7%89%88.png',
   '籃球隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
   '直笛團員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
   '田徑隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
@@ -7032,6 +7032,16 @@ const HERO_PORTRAIT_LIBRARY = {
   // 動物學家 - 一張
   _add('動物學家', [
     { id:'animal_lv10', name:'動物學家 Lv10', url:_u('動物學家LV10.png'), requiresUnlock:true },
+  ]);
+  // ★ v1.0.20260424.0690 — 小力 / 幼兒園小孩 LV10 肖像(專屬題庫解鎖)
+  // ★ v1.0.20260424.0730 — 小力商店付費版「原始本能」
+  _add('小力', [
+    { id:'xiaoli_lv10', name:'小力 Lv10', url:_u('小力LV10.png'), requiresUnlock:true },
+    { id:'primal_instinct', name:'原始本能', url:_u('小力3.png'), requiresUnlock:true },
+  ]);
+  _add('幼兒園小孩', [
+    { id:'kid_lv10', name:'幼兒園小孩 Lv10', url:_u('幼兒園小孩LV10.png'), requiresUnlock:true },
+    { id:'kid_girl_lv10', name:'幼兒園小孩女 Lv10', url:_u('幼兒園小孩LV10女孩.png'), requiresUnlock:true },
   ]);
 
   // ─── LV20 (其他英雄各一張) ───
@@ -7562,7 +7572,7 @@ const HERO_DB = {
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
   '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合。'}},
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中240%傷害，無法迴避',fd:'用特技的240%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'特技低者:特技傷害+禁動;特技高者:特技150%傷害',fd:'使特技比自己低的對手受到特技傷害且禁動 1 回合;特技比自己高的對手則受到特技 150% 傷害。'}},
-  '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'奪取對手物品卡或竊取特技',fd:'對方存在特技低於自己的對手時，可隨機奪取其1張物品卡。否則盜取特技最高對手5點特技，持續2回合'},s2:{n:'急速閃躲',c:2,d:'使較慢對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下30%'}},
+  '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'從對手身上偷取物品/寵物/狀態',fd:'發動時彈出選擇視窗,可從對手身上偷取「物品卡」、「寵物」或「有利狀態」(保護類狀態無法偷),可偷 1 次。可從不同對手或同一對手偷不同類別。'},s2:{n:'急速閃躲',c:2,d:'使速度較慢的對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下 30%。'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'(特技+攻擊)×200%傷害並附加出血（-10%HP/回）',fd:'用(特技+攻擊)的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
   '守衛':  {hp:77,atk:3,sp:8,spd:2,  s1:{n:'挺身守護',c:0,d:'(常駐被動)單體友方受傷前觸發，代替承傷並以特技×50%減輕傷害。',fd:'(常駐被動)當單體攻擊即將落在隊友身上時觸發，守衛代替其承受全部傷害，並以特技的50%減輕傷害。封印時無效。',p:true},s2:{n:'仁王挺立',c:3,d:'進入「仁王」狀態1回合，代替所有隊友承受傷害，且受到的傷害減少50%',fd:'使自己進入「仁王」狀態1回合，期間代替所有隊友承受任何傷害，且受到的傷害減少50%。'}},
   '吟遊詩人':{hp:64,atk:4,sp:15,spd:7,  s1:{n:'搖籃曲',c:3,d:'使全體敵方陷入睡眠2回合',fd:'敵方全體每個單位都有60%機率陷入睡眠2回合不能動。睡眠狀態受到傷害有50%會提早解除'},s2:{n:'天堂樂章',c:5,d:'治癒全隊、復活1人並附加護盾',fd:'以特技的75%恢復全體友方的HP並復活1名友方，同時附加全體20護盾值'}},
@@ -7582,11 +7592,11 @@ const HERO_DB = {
   '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP未滿10%的對手',fd:'使剩餘HP未滿10%的1名任意對手強制倒下(無視有利狀態或裝備效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:4,d:'隨機攻擊對手5次，每次特技50%固定傷害',fd:'隨機攻擊對手5次，每次用特技50%造成固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
   '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。'}},
-  '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場自動隱身10回合，時間到就回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，時間到後直接回去休息(無法戰鬥)。'}},
+  '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移50%給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。每升 1 級轉移傷害+5%(Lv10 達 95%)。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場隱身10回合並每回合依特技恢復HP，時間到回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，且每回合依特技值恢復自己HP（每升 1 級恢復量+5%，基礎 100%）。時間到後直接回去休息(無法戰鬥)。'}},
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
   '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
   '田徑隊員':{hp:61,atk:9,sp:0,spd:20, s1:{n:'起跑衝刺',c:2,p:true,d:'(被動)開場5回合速度+50%，免疫停止和緩速',fd:'(被動)開場自動附加5回合「起跑」狀態，速度+50%且免疫所有會停止行動或擊退行動順序的狀態影響。'},s2:{n:'接力傳遞',c:4,d:'攻擊+速度×150%傷害1名敵人，下一位行動友方傷害/治療+50%',fd:'以（攻擊＋速度×1.5）對1名敵人造成傷害，並使下一位行動的友方造成的傷害或治療提升50%（持續1回合）。'}},
-  '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-20%（2回合）',fd:'對全體敵人造成其當前HP10%的傷害（對BOSS傷害減半），並有75%機率使其攻擊和特技降低20%，持續2回合。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠最多4回合並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態最多4回合，立即獲得50護盾值，且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率提早醒來。'}},
+  '幼兒園小孩':{hp:50,atk:5,sp:5,spd:5, s1:{n:'大聲啼哭',c:3,d:'依敵人HP10%傷害全體，75%機率使其攻擊和特技-10%（2回合，不可堆疊）',fd:'對全體敵人造成其當前HP10%的傷害（對BOSS傷害減半），並有75%機率使其攻擊和特技降低10%，持續2回合，效果不可堆疊。每升 1 級成功率+2%、降低效果+1%(Lv10:成功率93%、降低28%)。'},s2:{n:'午睡時間',c:4,d:'(主動)自身進入睡眠最多4回合並獲得50護盾，睡眠期間每回合恢復25%HP',fd:'自己進入睡眠狀態最多4回合，立即獲得50護盾值（每升 1 級+5，Lv10 達 95），且睡眠期間每回合恢復25%HP。護盾耗盡、HP回滿或受到攻擊時有40%機率提早醒來。'}},
   '電腦繪圖師':{hp:60,atk:4,sp:19,spd:7, s1:{n:'圖層隱藏',c:5,d:'使全體對手有利狀態失效1回合，再依特技造成傷害',fd:'使全體對手身上的有利狀態強制失效1回合，再依特技對全體對手造成傷害。'},s2:{n:'色彩噴濺',c:5,d:'友方全體獲得隨機有利狀態+50%效果（2回合）及20護盾',fd:'使友方全體各獲得1個隨機有利狀態（效果+50%，持續2回合），並各獲得可抵擋20傷害的護盾。'}},
   '程式設計師':{hp:59,atk:8,sp:15,spd:8, s1:{n:'修改代碼',c:4,p:true,d:'(被動)使用物品卡時，依卡片賣價×10對敵方1人造成傷害',fd:'(被動)使用物品卡時觸發，根據卡片販賣價值的10倍對敵方1名對手造成傷害。'},s2:{n:'邏輯優化',c:3,d:'清除友方1人所有不利狀態，每個狀態恢復20%HP，免疫2回合',fd:'清除我方1名角色（可倒下）所有的不利狀態，每清除1個不利狀態就恢復最大HP的20%，並使其免疫不利狀態與控制2回合。'}},
   '弦樂團員':  {hp:56,atk:8,sp:19,spd:7, s1:{n:'小星星變奏曲',c:5,d:'特技30%傷害敵方全體3~4次，無視有利狀態',fd:'用特技的30%對敵方全體造成3~4次傷害。無視對手有利狀態。'},s2:{n:'雙小提琴協奏曲',c:5,d:'用特技恢復HP最低的2名友方（可復活）',fd:'用特技恢復HP最低的2名友方HP，HP為0也可復活。'}},
@@ -7843,8 +7853,8 @@ const STATUS_DESCS = {
   _mayin:       '魔音：每回合損失2能量',
   _inuPity:     '憐惜校犬：敵方下回合優先攻擊速度最高的敵人',
   _slamSpd:     '灌籃加速：速度暫時大幅提升',
-  _cryDebuff:   '啼哭弱化：攻擊和特技降低30%',
-  _dreamDebuff: '夢境弱化：攻擊和特技降低50%（幼兒園小孩睡眠中持續）',
+  _cryDebuff:   '啼哭弱化：攻擊和特技降低（不可堆疊，視等級而定）',
+  _dreamDebuff: '夢境弱化：攻擊和特技降低 25%（每次施展+1 回合）',
 };
 const BUFF_DESCS = {
   immune:        '無敵：持續期間免疫傷害和不利狀態',
@@ -8035,11 +8045,11 @@ const BURST_UPGRADE_DEF = {
     [4,'速度×280%,閃燃×240%,再行動(MAX)'],
   ] },
   '幼兒園小孩':{ rows: [
-    [0,'HP×10% 全體傷害,敵方攻/特技-50% 1回合'],
-    [1,'HP×15% 全體傷害,敵方攻/特技-50%'],
-    [2,'HP×20% 全體傷害,敵方攻/特技-50%'],
-    [3,'HP×25% 全體傷害,敵方攻/特技-50%'],
-    [4,'HP×30% 全體傷害,敵方攻/特技-50% 2回合(MAX)'],
+    [0,'HP×10% 全體傷害,敵方攻/特技-25% 1回合'],
+    [1,'HP×15% 全體傷害,敵方攻/特技-25% 2回合'],
+    [2,'HP×20% 全體傷害,敵方攻/特技-25% 3回合'],
+    [3,'HP×25% 全體傷害,敵方攻/特技-25% 4回合'],
+    [4,'HP×30% 全體傷害,敵方攻/特技-25% 5回合(MAX)'],
   ] },
   '電腦繪圖師':{ rows: [
     [0,'特技×600% 全體平分(必中),抽3張物品牌'],
@@ -8540,7 +8550,7 @@ const BURST_DB = {
   '籃球隊員': {n:'絕殺灌籃',    d:'400%傷害1名對手，全隊速度提升2回合',fd:'對1名對手造成特技400%傷害，並使友方全體速度提升50%共2回合。'},
   '直笛團員': {n:'天籟之音', d:'特技150%傷害全體+狂亂1回合，我方治療+持續恢復5回合',fd:'用特技的150%對敵方全體造成傷害,並使其陷入狂亂1回合。同時解除我方全體不利狀態、恢復我方全體HP(可復活),再附加持續恢復5回合。'},
   '田徑隊員': {n:'極速閃燃', d:'200%速度傷害全體、獲得7能量、附加閃燃、再行動',fd:'用速度的200%對敵方全體造成傷害,獲得7能量,附加「閃燃」狀態(下次造成的傷害×2),持續到造成傷害為止,並立即再次行動。'},
-  '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP10%傷害全體，攻擊和特技-50%直到醒來',fd:'睡眠狀態時才能發動。對全體敵人造成其最大HP 10%的傷害,此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低50%,直到施展者從睡眠中醒來。'},
+  '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP10%傷害全體，攻擊和特技-25%持續1回合',fd:'睡眠狀態時才能發動。對全體敵人造成其最大HP 10%的傷害,此傷害無視有利狀態且必中。並使敵方全體攻擊和特技降低 25% 持續 1 回合（每升 1 級 +1 回合，Lv5(MAX) 達 5 回合）。'},
   '電腦繪圖師':{n:'萬物創生', d:'特技600%傷害全體平均分攤（必中），再抽3張物品卡',fd:'用特技的600%傷害讓敵方全體平均分攤，此傷害無視有利狀態且必中。再抽出額外3張物品卡。'},
   '程式設計師':{n:'BUG修復',  d:'不利轉有利+全體恢復50%HP(可復活)+2名對手無法行動',fd:'將我方全體的不利狀態轉換成隨機有利狀態,同時恢復全體50%HP(可復活),再使2名對手無法行動1次。'},
   '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'用特技的40%對敵方全體造成3~5次傷害，此傷害無視有利狀態且必中。同時恢復我方全體HP，HP為0也可復活。'},
@@ -8874,8 +8884,10 @@ function tickStatus(h){
     if(s.type==='traitRage' && s._rageAtkBonus!==undefined){ h.atk=Math.max(1,h.atk-s._rageAtkBonus); }
     // ★ v1.0.20260421.3000o — 強力易傷到期清除 _vulnStrong 旗標
     if(s.type==='dmgVuln' && h._vulnStrong){ delete h._vulnStrong; }
-    if(s.type==='_sprint' && s._spdBoost!==undefined){ h.spd=Math.max(1,h.spd-s._spdBoost);
-    if(s.type==='_cryDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; } h._sprintOrigSpd=undefined; log(`🏃 [${h.name}] 起跑衝刺結束，速度恢復！`); }
+    if(s.type==='_sprint' && s._spdBoost!==undefined){ h.spd=Math.max(1,h.spd-s._spdBoost); h._sprintOrigSpd=undefined; log(`🏃 [${h.name}] 起跑衝刺結束，速度恢復！`); }
+    // ★ v1.0.20260424.0700 — 啼哭/夢境弱化到期還原 atk/sp
+    if(s.type==='_cryDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
+    if(s.type==='_dreamDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
     // 虛弱咒到期恢復
     if(s.type==='weakened'){
       if(h._weakenOrigAtk!==undefined){ h.atk=h._weakenOrigAtk; delete h._weakenOrigAtk; }
@@ -12078,12 +12090,16 @@ function updateUI(){
     // ★ v1.0.20260421.3020 — 顯示當前技能等級與該級效果
     const _s1Lv = (a._skLv && typeof a._skLv.s1==='number') ? a._skLv.s1 : 0;
     const _s2Lv = (a._skLv && typeof a._skLv.s2==='number') ? a._skLv.s2 : 0;
-    const _s1BadgeHtml = (typeof _getSkUpgradeBadge==='function')
-      ? `<span style="font-size:18px;color:#ffcc44;background:rgba(255,200,0,0.12);border-radius:5px;padding:1px 7px;margin-left:6px;">Lv.${_s1Lv+1}${_s1Lv>=9?' MAX':''} ｜ ${_getSkUpgradeBadge(a.s1.n,_s1Lv)}</span>` : '';
-    const _s2BadgeHtml = (typeof _getSkUpgradeBadge==='function')
-      ? `<span style="font-size:18px;color:#ffcc44;background:rgba(255,200,0,0.12);border-radius:5px;padding:1px 7px;margin-left:6px;">Lv.${_s2Lv+1}${_s2Lv>=9?' MAX':''} ｜ ${_getSkUpgradeBadge(a.s2.n,_s2Lv)}</span>` : '';
-    s1b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s1.n} ${_s1costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s1.n}" data-skmeta="${_s1meta}" data-skdesc="${(a.s1.fd||a.s1.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span>${_s1BadgeHtml}</b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s1.d||''}</span>`;
-    s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${(a.s2.fd||a.s2.d||'').replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span>${_s2BadgeHtml}</b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
+    // ★ v1.0.20260424.0630 — 移除黃色徽章,改用 _renderSkillFdWithLv 把等級資訊融入 fd 內;
+    //   卡片標題只保留簡單的 Lv 標籤
+    const _s1LvTag = `<span style="font-size:18px;color:#ffcc44;font-weight:900;background:rgba(255,200,0,0.15);border-radius:5px;padding:1px 7px;margin-left:6px;">Lv.${_s1Lv+1}${_s1Lv>=9?' MAX':''}</span>`;
+    const _s2LvTag = `<span style="font-size:18px;color:#ffcc44;font-weight:900;background:rgba(255,200,0,0.15);border-radius:5px;padding:1px 7px;margin-left:6px;">Lv.${_s2Lv+1}${_s2Lv>=9?' MAX':''}</span>`;
+    const _s1FdWithLv = (typeof _renderSkillFdWithLv==='function')
+      ? _renderSkillFdWithLv(a.s1.n, a.s1.fd||a.s1.d||'', _s1Lv) : (a.s1.fd||a.s1.d||'');
+    const _s2FdWithLv = (typeof _renderSkillFdWithLv==='function')
+      ? _renderSkillFdWithLv(a.s2.n, a.s2.fd||a.s2.d||'', _s2Lv) : (a.s2.fd||a.s2.d||'');
+    s1b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s1.n} ${_s1costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s1.n}" data-skmeta="${_s1meta}" data-skdesc="${_s1FdWithLv.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span>${_s1LvTag}</b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s1.d||''}</span>`;
+    s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${_s2FdWithLv.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span>${_s2LvTag}</b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
     const s1IsPassive = !!(a.s1.p);
     const s2IsPassive = !!(a.s2.p);
     const isSealed = hasStatus(a,'seal') || fieldHas('sealall');
@@ -13522,7 +13538,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     if(!hasStatus(h,'sleep')){ bannerFX(h,'必須在睡眠中！','#ff4444',1000); updateUI(); if(checkWin())return; startTurn(); return; }
     const _foes4=G[opp].filter(x=>x.curHp>0);
     const _dmgPct = 0.10 + _burstLv*0.05; // Lv0=10%,Lv4=30%
-    log(`[${h.name}] 夢境時光！對全體敵人造成HP ${Math.round(_dmgPct*100)}% 傷害！`);
+    // ★ v1.0.20260424.0700 — 攻擊和特技降低 25% 持續 (1+_burstLv) 回合(取代原本 50% 直到醒來)
+    const _dreamReducePct = 0.25;
+    const _dreamDur = 1 + _burstLv;  // Lv1=1, Lv5=5
+    log(`[${h.name}] 夢境時光!對全體敵人造成HP ${Math.round(_dmgPct*100)}% 傷害,攻擊/特技-${Math.round(_dreamReducePct*100)}% 持續 ${_dreamDur} 回合!`);
     playSfx('sfx-burst',0.85); flashScreen('rgba(180,220,255,1)',500);
     _foes4.forEach(t=>{
       const _dmg=Math.max(1,Math.floor(t.hp*(0.10+_burstLv*0.05)));
@@ -13530,10 +13549,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       if(t.curHp>0){
         const _o2a=t.atk, _o2s=t.sp;
         t.status=t.status.filter(s=>s.type!=='_dreamDebuff');
-        t.status.push({type:'_dreamDebuff',dur:99,_origAtk:_o2a,_origSp:_o2s,_owner:h});
-        t.atk=Math.max(1,Math.floor(t.atk*0.5));
-        t.sp=Math.max(0,Math.floor(t.sp*0.5));
-        bannerFX(t,'夢境弱化！','#aaddff',900); renderCard(t);
+        t.status.push({type:'_dreamDebuff',dur:_dreamDur,_origAtk:_o2a,_origSp:_o2s,_owner:h});
+        t.atk=Math.max(1,Math.floor(t.atk*(1-_dreamReducePct)));
+        t.sp=Math.max(0,Math.floor(t.sp*(1-_dreamReducePct)));
+        bannerFX(t,`夢境弱化! -${Math.round(_dreamReducePct*100)}%`,'#aaddff',900); renderCard(t);
       }
     });
     zoneFlash(opp,'rgba(150,200,255,0.4)',700);
@@ -14747,7 +14766,11 @@ function doDmg(target, rawDmg, opts={}){
     if(!opts.noInuGuard){
       const inuHero = G[target.side].find(h=>h!==target&&h.curHp>1&&h._inuGuardActive&&!hasStatus(h,'confused'));
       if(inuHero){
-        const transfer=Math.max(1,Math.ceil(rawDmg*0.5));
+        // ★ v1.0.20260424.0700 — 忠犬守護:每升 1 級轉移傷害+5%(基礎 50%, Lv10 達 95%)
+        const _inuLv = (inuHero._skLv && typeof inuHero._skLv.s1==='number' && inuHero.s1 && inuHero.s1.n==='忠犬守護') ? inuHero._skLv.s1
+                     : (inuHero._skLv && typeof inuHero._skLv.s2==='number' && inuHero.s2 && inuHero.s2.n==='忠犬守護') ? inuHero._skLv.s2 : 0;
+        const _transferRate = 0.5 + (_inuLv * 0.05);
+        const transfer=Math.max(1,Math.ceil(rawDmg*_transferRate));
         rawDmg=Math.max(0,rawDmg-transfer);
         log(`🐕 [小力] 忠犬守護！替 [${target.name}] 吸收 ${transfer} 傷害！`);
         // 直接扣血並保底1，不走完整doDmg流程（避免遞迴/卡死）
@@ -17746,21 +17769,23 @@ function execSkill(a, sk, cost, stype){
       const _dmgPct = _isBossCry ? _cryPct * 0.5 : _cryPct;
       const _dmg=Math.max(1,Math.floor(h.curHp*_dmgPct));
       doDmg(h,_dmg,{actor:a,isSkill:true,ignoreBuffs:false});
-      // ★ debuff機率也每升1級+2%（基礎75%）
+      // ★ debuff機率每升 1 級+2%(基礎 75%)、降低效果 10%+1%/級(基礎 10%, Lv10 達 28%);不可堆疊(已有則只刷新回合)
       const _cryDebuffRate = Math.min(1.0, 0.75 + _activeSkLv * 0.02);
+      const _cryReducePct = 0.10 + _activeSkLv * 0.01;  // 10%~28%
+      const _cryMult = 1.0 - _cryReducePct;             // 0.9 ~ 0.72
       if(h.curHp>0 && Math.random()<_cryDebuffRate){
         const _existCry=h.status.find(s=>s.type==='_cryDebuff');
         if(_existCry){
-          // 已有啼哭弱化：只刷新回合，不重新套用數值
+          // 已有啼哭弱化:只刷新回合,不重新套用數值(不可堆疊)
           _existCry.dur=2;
-          bannerFX(h,'啼哭弱化（刷新）','#aaddff',700);
+          bannerFX(h,'啼哭弱化(刷新)','#aaddff',700);
         } else {
-          // 尚無：記錄原始值並套用
+          // 尚無:記錄原始值並套用
           const _origAtk2=h.atk, _origSp2=h.sp;
           h.status.push({type:'_cryDebuff',dur:2,_origAtk:_origAtk2,_origSp:_origSp2});
-          h.atk=Math.max(1,Math.floor(h.atk*0.8));
-          h.sp=Math.max(0,Math.floor(h.sp*0.8));
-          bannerFX(h,'啼哭弱化！','#aaddff',800);
+          h.atk=Math.max(1,Math.floor(h.atk*_cryMult));
+          h.sp=Math.max(0,Math.floor(h.sp*_cryMult));
+          bannerFX(h,`啼哭弱化! -${Math.round(_cryReducePct*100)}%`,'#aaddff',800);
         }
         renderCard(h);
       }
@@ -17770,14 +17795,16 @@ function execSkill(a, sk, cost, stype){
   else if(n==='午睡時間'){
     // ★ v1.0.20260424.0530 — 每升 1 級 +5% 恢復(基礎 25%, Lv10=70%)
     const _napHealRate = 0.25 + _activeSkLv * 0.05;
-    log(`💤 [${a.name}] 午睡時間!進入睡眠,每回合恢復 ${Math.round(_napHealRate*100)}% HP,獲得50護盾!`);
+    // ★ v1.0.20260424.0700 — 每升 1 級 護盾+5(基礎 50, Lv10 達 95)
+    const _napShieldHp = 50 + _activeSkLv * 5;
+    log(`💤 [${a.name}] 午睡時間!進入睡眠,每回合恢復 ${Math.round(_napHealRate*100)}% HP,獲得 ${_napShieldHp} 護盾!`);
     playSkillFX('午睡時間',a,[a]);
     addStatus(a,'sleep',4);
     a._napMode=true; a._napHealPct = _napHealRate;
     a.buffs=a.buffs.filter(b=>b.type!=='_napShield');
-    a.buffs.push({type:'_napShield',dur:4,_hp:50});
+    a.buffs.push({type:'_napShield',dur:4,_hp:_napShieldHp});
     bannerFX(a,'午睡中...','#aaddff',1200);
-    showPopup(a,'💤護盾50','energy');
+    showPopup(a,'💤護盾'+_napShieldHp,'energy');
     endAction(a, cost);
   }
   // ── 電腦繪圖師 ──
@@ -21254,6 +21281,21 @@ G.p1.concat(G.p2).forEach(h=>{
     if(h._burstNoRevive>0){ h._burstNoRevive--; }
    // 小力：強力隱身倒計時，消失後直接「回去休息」（無法戰鬥）
     const _hadInuInvisible = h.name==='小力' && h.curHp>0 && h.buffs.some(b=>b.type==='inuInvisible');
+    // ★ v1.0.20260424.0700 — 小力 愛護校犬:每回合依特技恢復 HP(每升 1 級+5%)
+    if(_hadInuInvisible && (h.s2 && h.s2.n==='愛護校犬' || h.s1 && h.s1.n==='愛護校犬')){
+      const _doglv = (h._skLv && typeof h._skLv.s2==='number' && h.s2 && h.s2.n==='愛護校犬') ? h._skLv.s2
+                   : (h._skLv && typeof h._skLv.s1==='number' && h.s1 && h.s1.n==='愛護校犬') ? h._skLv.s1 : 0;
+      const _regenPct = 1.0 + (_doglv * 0.05);  // 100% → 145% (Lv10)
+      const _regenAmt = Math.floor(spv(h) * _regenPct);
+      const _before = h.curHp;
+      h.curHp = Math.min(h.hp, h.curHp + _regenAmt);
+      const _actual = h.curHp - _before;
+      if(_actual > 0){
+        showPopup(h, _actual, 'heal');
+        log(`🐕 [小力] 愛護校犬恢復 ${_actual} HP！`);
+        renderCard(h);
+      }
+    }
     tickStatus(h);
     if(_hadInuInvisible && !h.buffs.some(b=>b.type==='inuInvisible')){
       h.buffs=h.buffs.filter(b=>b.type!=='immune');
@@ -26345,6 +26387,395 @@ function openAdventureOverlay(){
 
   // ★ 崩潰恢復：若有未完成的冒險快照（24hr內），彈出提示
   _advCheckCrashRecovery();
+
+  // ★ v1.0.20260424.0720 — 新角色登場通知視窗(小力 + 幼兒園小孩)
+  try{ _showNewHeroAnnouncement(); }catch(_e){ console.warn('新角色視窗失敗', _e); }
+}
+
+// ════════════════════════════════════════
+// ★ v1.0.20260424.0720 — 新角色登場視窗(小力 + 幼兒園小孩)
+//   - 進冒險選關頁時彈出
+//   - 約佔畫面 80%,可滾動
+//   - 依序展示:小力 大圖 + 簡介 → 幼兒園小孩 大圖 + 簡介 → 獲得方式
+//   - 「關閉」/ 「今日不再顯示」按鈕
+// ════════════════════════════════════════
+function _showNewHeroAnnouncement(){
+  // 檢查「今日不再顯示」旗標
+  try{
+    const skipUntil = localStorage.getItem('newHeroAnnounce_skipUntil');
+    if(skipUntil && Date.now() < parseInt(skipUntil, 10)){
+      return; // 還在「今日不顯示」期間
+    }
+  }catch(_e){}
+
+  // 避免重複開啟
+  if(document.getElementById('new-hero-announce-overlay')) return;
+
+  // 取得 LV1 圖片
+  const _xiaoliImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['小力'])
+    ? HERO_IMGS['小力']
+    : 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%9BQ%E7%89%88.png';
+  const _kidImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['幼兒園小孩'])
+    ? HERO_IMGS['幼兒園小孩']
+    : 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png';
+
+  // 取得技能資料(用於呈現)
+  const _xiaoli = (HERO_DB && HERO_DB['小力']) || null;
+  const _kid    = (HERO_DB && HERO_DB['幼兒園小孩']) || null;
+  const _xiaoliBurst = (typeof BURST_DB !== 'undefined' && BURST_DB['小力']) || null;
+  const _kidBurst    = (typeof BURST_DB !== 'undefined' && BURST_DB['幼兒園小孩']) || null;
+
+  const ov = document.createElement('div');
+  ov.id = 'new-hero-announce-overlay';
+  ov.style.cssText = [
+    'position:fixed;inset:0;z-index:9950;',
+    'background:rgba(5,3,15,0.85);',
+    'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);',
+    'display:flex;align-items:center;justify-content:center;',
+    'padding:clamp(8px,2vw,16px);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:newHeroOvFadeIn 0.4s ease-out;'
+  ].join('');
+
+  // 注入動畫樣式(只注一次)
+  if(!document.getElementById('new-hero-announce-style')){
+    const st = document.createElement('style');
+    st.id = 'new-hero-announce-style';
+    st.textContent = `
+      @keyframes newHeroOvFadeIn { from{opacity:0;transform:scale(0.96);} to{opacity:1;transform:scale(1);} }
+      @keyframes newHeroSparkle  { 0%,100%{opacity:0.4;transform:scale(1);} 50%{opacity:1;transform:scale(1.15);} }
+      @keyframes newHeroGlow     { 0%,100%{box-shadow:0 0 30px rgba(255,200,80,0.4),0 0 60px rgba(255,150,200,0.2);} 50%{box-shadow:0 0 50px rgba(255,200,80,0.7),0 0 100px rgba(255,150,200,0.4);} }
+      .new-hero-card{
+        background:linear-gradient(135deg,rgba(40,20,60,0.85),rgba(30,15,45,0.9));
+        border:2px solid rgba(255,200,100,0.55);
+        border-radius:20px;
+        padding:clamp(16px,3vw,28px);
+        box-shadow:0 8px 30px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08);
+      }
+      .new-hero-portrait-wrap{
+        position:relative;
+        flex:0 0 auto;
+        width:clamp(160px,30vw,260px);
+        height:clamp(160px,30vw,260px);
+        border-radius:50%;
+        overflow:hidden;
+        border:4px solid #ffd966;
+        box-shadow:0 0 40px rgba(255,200,80,0.6),inset 0 0 20px rgba(0,0,0,0.3);
+        animation:newHeroGlow 2.5s ease-in-out infinite;
+        background:radial-gradient(circle,rgba(255,220,150,0.2),rgba(0,0,0,0.4));
+      }
+      .new-hero-portrait-wrap img{
+        width:100%;height:100%;object-fit:cover;display:block;
+      }
+      .new-hero-skill-row{
+        background:rgba(0,0,20,0.5);
+        border:1.5px solid rgba(150,180,255,0.4);
+        border-radius:10px;
+        padding:10px 12px;
+        margin-bottom:8px;
+      }
+      .new-hero-burst-row{
+        background:linear-gradient(135deg,rgba(120,60,200,0.3),rgba(180,80,150,0.3));
+        border:1.5px solid rgba(255,180,255,0.55);
+        border-radius:10px;
+        padding:10px 12px;
+        margin-bottom:8px;
+      }
+      .new-hero-method-card{
+        background:linear-gradient(135deg,rgba(60,30,100,0.5),rgba(40,20,80,0.5));
+        border:2px solid rgba(255,150,200,0.45);
+        border-radius:14px;
+        padding:14px 16px;
+        margin-bottom:10px;
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // 主容器(80% 螢幕)
+  const box = document.createElement('div');
+  box.style.cssText = [
+    'width:80vw;height:80vh;',
+    'max-width:1280px;max-height:900px;',
+    'background:linear-gradient(160deg,rgba(20,10,40,0.97),rgba(15,5,30,0.97));',
+    'border:3px solid rgba(255,210,100,0.7);',
+    'border-radius:18px;',
+    'box-shadow:0 12px 60px rgba(0,0,0,0.8),0 0 80px rgba(255,180,80,0.3);',
+    'display:flex;flex-direction:column;',
+    'overflow:hidden;'
+  ].join('');
+
+  // 標題列(置頂、不滾動)
+  const header = document.createElement('div');
+  header.style.cssText = [
+    'flex:0 0 auto;',
+    'padding:clamp(12px,2vw,18px) clamp(16px,3vw,28px);',
+    'background:linear-gradient(90deg,rgba(80,40,120,0.7),rgba(140,60,160,0.7),rgba(80,40,120,0.7));',
+    'border-bottom:2px solid rgba(255,200,100,0.5);',
+    'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;'
+  ].join('');
+  header.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:clamp(28px,4vw,40px);animation:newHeroSparkle 1.2s ease-in-out infinite;">✨</span>
+      <span style="font-size:clamp(22px,3.5vw,34px);font-weight:900;color:#ffe066;
+        text-shadow:0 0 14px rgba(255,200,80,0.85),0 2px 6px rgba(0,0,0,0.7);
+        letter-spacing:2px;">🎉 新角色登場！</span>
+      <span style="font-size:clamp(28px,4vw,40px);animation:newHeroSparkle 1.2s ease-in-out infinite 0.6s;">✨</span>
+    </div>
+    <div style="font-size:clamp(13px,1.4vw,16px);color:#ffccdd;letter-spacing:1px;">
+      💖 答題獎章獲得限定
+    </div>
+  `;
+
+  // 滾動區
+  const scrollArea = document.createElement('div');
+  scrollArea.style.cssText = [
+    'flex:1 1 auto;',
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;',
+    'padding:clamp(14px,2.5vw,24px);',
+    'display:flex;flex-direction:column;gap:clamp(14px,2vw,20px);'
+  ].join('');
+
+  // === 角色卡片產生器 ===
+  const buildHeroCard = (heroName, img, hero, burst, theme) => {
+    if(!hero) return '';
+    const _trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[heroName]) || null;
+    return `
+      <div class="new-hero-card" style="border-color:${theme.border};">
+        <div style="display:flex;flex-wrap:wrap;gap:clamp(14px,2.5vw,24px);align-items:flex-start;">
+          <!-- 大頭像 + 名稱 -->
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div class="new-hero-portrait-wrap" style="border-color:${theme.portraitBorder};">
+              <img src="${img}" alt="${heroName}" />
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div style="font-size:clamp(26px,3.5vw,36px);font-weight:900;color:${theme.nameColor};
+                text-shadow:0 0 12px ${theme.glow},0 2px 4px rgba(0,0,0,0.8);letter-spacing:2px;">
+                ${heroName}
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+                <span style="font-size:14px;color:#ffd966;background:rgba(255,200,80,0.18);
+                  border:1.5px solid rgba(255,200,80,0.55);border-radius:6px;padding:2px 10px;
+                  letter-spacing:1px;font-weight:700;">${theme.role}</span>
+                <span style="font-size:14px;color:#ff99cc;background:rgba(255,100,180,0.18);
+                  border:1.5px solid rgba(255,120,180,0.55);border-radius:6px;padding:2px 10px;
+                  letter-spacing:1px;font-weight:700;">🏅 答題獎章獲得</span>
+              </div>
+            </div>
+          </div>
+          <!-- 簡介 + 技能 -->
+          <div style="flex:1 1 320px;min-width:0;">
+            <!-- 基礎屬性 -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+              <span style="font-size:14px;color:#ff8866;background:rgba(255,80,80,0.18);border:1.5px solid rgba(255,80,80,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">❤️ HP ${hero.hp}</span>
+              <span style="font-size:14px;color:#ff9966;background:rgba(255,160,80,0.18);border:1.5px solid rgba(255,160,80,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">⚔️ 攻 ${hero.atk}</span>
+              <span style="font-size:14px;color:#aaccff;background:rgba(120,180,255,0.18);border:1.5px solid rgba(120,180,255,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">✨ 特 ${hero.sp}</span>
+              <span style="font-size:14px;color:#aaff99;background:rgba(120,220,120,0.18);border:1.5px solid rgba(120,220,120,0.5);border-radius:6px;padding:2px 10px;font-weight:700;">💨 速 ${hero.spd}</span>
+            </div>
+            <!-- 角色定位 -->
+            <div style="background:rgba(0,0,30,0.35);border-left:4px solid ${theme.border};
+              padding:8px 12px;border-radius:6px;margin-bottom:12px;">
+              <div style="font-size:13px;color:#ffaa66;font-weight:700;margin-bottom:4px;">📌 職業定位</div>
+              <div style="font-size:15px;color:#ffe;line-height:1.5;">${theme.intro}</div>
+            </div>
+            <!-- 技能列表 -->
+            <div class="new-hero-skill-row">
+              <div style="font-size:14px;color:#aaccff;font-weight:700;margin-bottom:4px;">
+                💠 ${hero.s1.n} <span style="font-size:12px;color:#88aaff;">(消耗 ${hero.s1.c||0} 能量)</span>
+              </div>
+              <div style="font-size:13px;color:#dde;line-height:1.5;">${hero.s1.d}</div>
+            </div>
+            <div class="new-hero-skill-row">
+              <div style="font-size:14px;color:#aaccff;font-weight:700;margin-bottom:4px;">
+                💠 ${hero.s2.n} <span style="font-size:12px;color:#88aaff;">${hero.s2.p?'(被動)':('(消耗 '+(hero.s2.c||0)+' 能量)')}</span>
+              </div>
+              <div style="font-size:13px;color:#dde;line-height:1.5;">${hero.s2.d}</div>
+            </div>
+            ${burst ? `
+            <div class="new-hero-burst-row">
+              <div style="font-size:14px;color:#ffaaff;font-weight:700;margin-bottom:4px;">
+                ⚡ 爆發技：${burst.n}
+              </div>
+              <div style="font-size:13px;color:#ffe;line-height:1.5;">${burst.d}</div>
+            </div>
+            ` : ''}
+            ${_trait ? `
+            <div style="background:rgba(80,40,0,0.4);border:1.5px solid rgba(255,180,80,0.5);
+              border-radius:10px;padding:10px 12px;">
+              <div style="font-size:14px;color:#ffcc66;font-weight:700;margin-bottom:4px;">
+                🌟 天賦：${_trait.name||_trait.n||''}
+              </div>
+              <div style="font-size:13px;color:#ffe;line-height:1.5;">${_trait.fd||_trait.desc||_trait.d||''}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  // === 獲得方式說明卡片 ===
+  const buildMethodSection = () => {
+    return `
+      <div class="new-hero-method-card">
+        <div style="font-size:clamp(20px,2.5vw,26px);font-weight:900;color:#ffaaee;
+          text-shadow:0 0 10px rgba(255,150,200,0.6);margin-bottom:12px;
+          display:flex;align-items:center;gap:8px;">
+          <span style="font-size:1.2em;">🏅</span> 獲得方式
+        </div>
+        <div style="font-size:15px;color:#ffe;line-height:1.7;margin-bottom:14px;">
+          這兩位角色 <span style="color:#ffe066;font-weight:700;">不會在 BOSS 戰隨機解鎖</span>，必須通過特定題庫完成挑戰才能獲得！
+        </div>
+        <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+          <!-- 小力獲得方式 -->
+          <div style="background:rgba(40,80,40,0.4);border:2px solid rgba(120,220,150,0.55);
+            border-radius:12px;padding:12px 14px;">
+            <div style="font-size:17px;color:#88ff99;font-weight:800;margin-bottom:8px;">
+              🐕 解鎖【校犬小力】
+            </div>
+            <div style="font-size:14px;color:#ffe;line-height:1.6;margin-bottom:8px;">
+              <span style="color:#ffe066;font-weight:700;">「領養與照顧狗狗」</span>題庫共 20 題，
+              <span style="color:#ff99cc;font-weight:700;">全部答對</span>即可解鎖！
+            </div>
+            <div style="font-size:13px;color:#bbd;line-height:1.5;">
+              💡 已答對的題目會永久記錄,中途離開或滅團都不會清除進度
+            </div>
+          </div>
+          <!-- 幼兒園小孩獲得方式 -->
+          <div style="background:rgba(80,60,30,0.4);border:2px solid rgba(255,200,120,0.55);
+            border-radius:12px;padding:12px 14px;">
+            <div style="font-size:17px;color:#ffcc66;font-weight:800;margin-bottom:8px;">
+              👶 解鎖【幼兒園小孩】
+            </div>
+            <div style="font-size:14px;color:#ffe;line-height:1.6;margin-bottom:8px;">
+              <span style="color:#ffe066;font-weight:700;">「照顧與陪伴幼兒」</span>題庫共 20 題，
+              <span style="color:#ff99cc;font-weight:700;">全部答對</span>即可解鎖！
+            </div>
+            <div style="font-size:13px;color:#bbd;line-height:1.5;">
+              💡 已答對的題目會永久記錄,中途離開或滅團都不會清除進度
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:10px 12px;background:rgba(60,80,160,0.3);
+          border-left:4px solid #88ddff;border-radius:6px;">
+          <div style="font-size:14px;color:#aaddff;line-height:1.6;">
+            📍 <span style="font-weight:700;">入口位置：</span>進入冒險選擇 BOSS 後,
+            「年級 → 科目」第二步驟中可選 <span style="color:#ff99cc;font-weight:700;">💝 養護專題</span>分類,
+            內含這兩個專屬題庫!
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  // 拼裝主題
+  const _xiaoliTheme = {
+    border:'rgba(120,220,150,0.55)',
+    portraitBorder:'#88ff99',
+    nameColor:'#ffe066',
+    glow:'rgba(120,220,150,0.7)',
+    role:'🛡️ 回復・坦克',
+    intro:'忠實的校犬,以「忠犬守護」分擔隊友傷害,並在開場進入 10 回合強力隱身,期間每回合自動恢復 HP。是隊伍最堅實的後盾。'
+  };
+  const _kidTheme = {
+    border:'rgba(255,200,120,0.55)',
+    portraitBorder:'#ffcc66',
+    nameColor:'#ff99cc',
+    glow:'rgba(255,180,200,0.7)',
+    role:'🌀 控場',
+    intro:'天真的幼兒園小孩,卻有意想不到的控場能力!「大聲啼哭」全體降攻特,「午睡時間」進入無敵睡眠狀態,睡夢中還能發動「夢境時光」讓敵方陷入低能力夢境。'
+  };
+
+  scrollArea.innerHTML = `
+    <!-- 開場介紹文字 -->
+    <div style="text-align:center;padding:8px 16px;">
+      <div style="font-size:clamp(18px,2.5vw,24px);color:#ffeebb;line-height:1.6;font-weight:600;
+        text-shadow:0 2px 4px rgba(0,0,0,0.6);">
+        💝 配合教育議題推出兩位<span style="color:#ff99cc;font-weight:900;">活動限定英雄</span>！
+      </div>
+      <div style="font-size:clamp(14px,1.6vw,17px);color:#ddccff;margin-top:6px;">
+        透過答題獎章活動專屬題庫挑戰即可獲得!
+      </div>
+    </div>
+    ${buildHeroCard('小力', _xiaoliImg, _xiaoli, _xiaoliBurst, _xiaoliTheme)}
+    ${buildHeroCard('幼兒園小孩', _kidImg, _kid, _kidBurst, _kidTheme)}
+    ${buildMethodSection()}
+    <!-- 底部填充,確保最後內容能被滾動到 -->
+    <div style="height:8px;flex:0 0 auto;"></div>
+  `;
+
+  // 底部按鈕列(固定)
+  const footer = document.createElement('div');
+  footer.style.cssText = [
+    'flex:0 0 auto;',
+    'padding:clamp(12px,2vw,16px) clamp(16px,3vw,24px);',
+    'background:linear-gradient(0deg,rgba(40,20,60,0.95),rgba(30,15,45,0.85));',
+    'border-top:2px solid rgba(255,200,100,0.5);',
+    'display:flex;gap:10px;justify-content:center;flex-wrap:wrap;'
+  ].join('');
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕ 關閉';
+  closeBtn.style.cssText = [
+    'padding:10px 28px;',
+    'font-size:clamp(15px,1.8vw,18px);font-weight:800;',
+    'background:linear-gradient(135deg,rgba(80,80,100,0.85),rgba(60,60,80,0.85));',
+    'color:#ffe;',
+    'border:2px solid rgba(180,180,200,0.6);',
+    'border-radius:10px;cursor:pointer;',
+    'font-family:inherit;letter-spacing:1px;',
+    'box-shadow:0 4px 12px rgba(0,0,0,0.4);',
+    'transition:transform 0.15s,box-shadow 0.15s;'
+  ].join('');
+  closeBtn.onmouseenter = () => { closeBtn.style.transform = 'translateY(-2px)'; closeBtn.style.boxShadow = '0 6px 18px rgba(0,0,0,0.5)'; };
+  closeBtn.onmouseleave = () => { closeBtn.style.transform = ''; closeBtn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)'; };
+  closeBtn.onclick = () => {
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    ov.remove();
+  };
+
+  const skipTodayBtn = document.createElement('button');
+  skipTodayBtn.textContent = '🌙 今日不再顯示';
+  skipTodayBtn.style.cssText = [
+    'padding:10px 24px;',
+    'font-size:clamp(15px,1.8vw,18px);font-weight:800;',
+    'background:linear-gradient(135deg,rgba(120,80,160,0.85),rgba(80,60,140,0.85));',
+    'color:#ffe;',
+    'border:2px solid rgba(200,150,255,0.6);',
+    'border-radius:10px;cursor:pointer;',
+    'font-family:inherit;letter-spacing:1px;',
+    'box-shadow:0 4px 12px rgba(80,40,120,0.4);',
+    'transition:transform 0.15s,box-shadow 0.15s;'
+  ].join('');
+  skipTodayBtn.onmouseenter = () => { skipTodayBtn.style.transform = 'translateY(-2px)'; skipTodayBtn.style.boxShadow = '0 6px 18px rgba(80,40,120,0.5)'; };
+  skipTodayBtn.onmouseleave = () => { skipTodayBtn.style.transform = ''; skipTodayBtn.style.boxShadow = '0 4px 12px rgba(80,40,120,0.4)'; };
+  skipTodayBtn.onclick = () => {
+    try{ playSfx('sfx-confirm2', 0.6); }catch(_){}
+    // 設定到隔天 00:00
+    try{
+      const tomorrow = new Date();
+      tomorrow.setHours(24, 0, 0, 0);
+      localStorage.setItem('newHeroAnnounce_skipUntil', String(tomorrow.getTime()));
+    }catch(_e){}
+    ov.remove();
+  };
+
+  footer.appendChild(closeBtn);
+  footer.appendChild(skipTodayBtn);
+
+  box.appendChild(header);
+  box.appendChild(scrollArea);
+  box.appendChild(footer);
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+
+  // 點擊背景關閉(不觸發「今日不再顯示」)
+  ov.addEventListener('click', (e) => {
+    if(e.target === ov){
+      try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+      ov.remove();
+    }
+  });
 }
 
 function _advCheckCrashRecovery(){
@@ -27520,7 +27951,75 @@ const ADV_QUIZ_5S_U4_SOUND = [
   {id:9230,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'醫生使用的「超音波檢查儀」是模仿哪種動物的本領？',options:['螞蟻','蝙蝠','老虎','蝴蝶'],answer:'B'},
 ];
 
+// ★ v1.0.20260424.0660 — 照顧與陪伴幼兒 (解鎖幼兒園小孩成就)
+const ADV_QUIZ_CARE_INFANT = [
+  {id:9301,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'照顧小弟弟、小妹妹時，哪種行為最安全？',options:['給他們玩很小的積木','讓他們去廚房','陪在旁邊看著玩','教他們用火柴'],answer:'C'},
+  {id:9302,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'如果看到幼兒不小心燙傷了，正確做法是？',options:['塗牙膏','先沖冷水降溫','用手刺破水泡','塗香油'],answer:'B'},
+  {id:9303,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'為什麼不能給一歲以下的嬰兒吃「蜂蜜」？',options:['太甜會胖','蜂蜜很貴','可能含有致命細菌','會長不高'],answer:'C'},
+  {id:9304,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'跟幼兒說話時，怎樣的方式比較體貼？',options:['大聲吼叫','蹲下來與眼睛平齊對談','不理會哭鬧','一直捏臉'],answer:'B'},
+  {id:9305,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'哪一種食物對幼兒來說最容易發生噎到危險？',options:['稀飯','布丁','整顆葡萄或硬糖果','蘋果泥'],answer:'C'},
+  {id:9306,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'照顧幼兒時，哪樣物品應該收好不讓他們摸？',options:['乾淨毛巾','塑膠袋和打火機','布娃娃','繪本'],answer:'B'},
+  {id:9307,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'當小寶寶在哭的時候，我們應該怎麼做？',options:['做鬼臉嚇他','觀察是否餓了或尿布濕了','用力搖晃','玩手機'],answer:'B'},
+  {id:9308,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'陪幼兒玩玩具後，應該教導他們什麼？',options:['全部丟掉','等媽媽收','練習把玩具收回原位','直接去睡覺'],answer:'C'},
+  {id:9309,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'為什麼要幫幼兒剪指甲？',options:['變漂亮','怕抓傷自己或藏汙納垢','指甲會發光','老師規定'],answer:'B'},
+  {id:9310,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'過馬路時，應該怎麼牽著幼兒最安全？',options:['牽手指','讓他們走前面','緊緊牽住手腕','叫他們跑過去'],answer:'C'},
+  {id:9311,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'幼兒發燒時，照顧者正確的處理是？',options:['穿厚外套出汗','吃大人藥','補充水分並看醫生','去跑步'],answer:'C'},
+  {id:9312,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'什麼時候一定要提醒幼兒洗手？',options:['玩遊戲前','看電視時','吃東西前和上廁所後','睡覺醒來'],answer:'C'},
+  {id:9313,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'陪幼兒看繪本有什麼好處？',options:['變超人','增進感情並學習說話','不用吃午餐','變愛買書'],answer:'B'},
+  {id:9314,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'幼兒在玩溜滑梯時，我們應該提醒他？',options:['從下面爬上去','排隊並坐好滑下','頭朝下溜','在上面推人'],answer:'B'},
+  {id:9315,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'為什麼家裡插座要裝上安全防護蓋？',options:['怕灰塵','防止幼兒亂摳導致觸電','裝飾牆壁','插座很醜'],answer:'B'},
+  {id:9316,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'看到幼兒亂發脾氣時，我們可以？',options:['一起大吼','冷靜等平復再溝通','給糖果堵嘴','嘲笑他'],answer:'B'},
+  {id:9317,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'如果幼兒流鼻血了，應該怎麼辦？',options:['頭用力後仰','低頭並輕壓鼻翼止血','塞衛生紙跑步','一直挖鼻孔'],answer:'B'},
+  {id:9318,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'測量幼兒洗澡水溫最好的方法是？',options:['用手背或手肘試溫','直接丟進去','看顏色','看熱氣'],answer:'A'},
+  {id:9319,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'帶幼兒坐車時，一定要讓他們坐？',options:['副駕駛座','駕駛大腿上','後座安全座椅','後車廂'],answer:'C'},
+  {id:9320,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'如果要離開照顧幼兒的房間時應該？',options:['獨自留下他們','請大人幫忙看著','叫他們看電視','鎖門'],answer:'B'},
+];
+
+// ★ v1.0.20260424.0660 — 領養與照顧狗狗 (解鎖小力成就)
+const ADV_QUIZ_DOG_CARE = [
+  {id:9401,subject:'領養與照顧狗狗',difficulty:'普通',question:'領養狗狗最重要的事情是？',options:['長得漂亮','買名牌衣','有時間陪伴照顧','會表演雜耍'],answer:'C'},
+  {id:9402,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗吃到哪種零食會中毒有生命危險？',options:['水煮蛋','巧克力或洋蔥','燙青菜','白飯'],answer:'B'},
+  {id:9403,subject:'領養與照顧狗狗',difficulty:'普通',question:'帶狗狗散步時，哪件物品是絕對必備的？',options:['墨鏡','牽繩與清便袋','玩具車','香水'],answer:'B'},
+  {id:9404,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗不小心在門口尿尿了，你該怎麼辦？',options:['跑走','拿水射牠','立刻清乾淨並沖水','大聲責罵'],answer:'C'},
+  {id:9405,subject:'領養與照顧狗狗',difficulty:'普通',question:'當狗狗正在睡覺或吃東西時，我們應該？',options:['尖叫嚇牠','搶牠的碗','安靜不要打擾','用力抱住'],answer:'C'},
+  {id:9406,subject:'領養與照顧狗狗',difficulty:'普通',question:'想要親近不認識的狗，正確做法是？',options:['衝去抱牠','尖叫','問主人並伸出手讓牠聞','丟石頭'],answer:'C'},
+  {id:9407,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗「搖尾巴」代表的意思是？',options:['絕對很開心','不一定，要看整體表情','生病了','想洗澡'],answer:'B'},
+  {id:9408,subject:'領養與照顧狗狗',difficulty:'普通',question:'夏天帶狗狗散步，應該避免什麼時間？',options:['清晨','晚上','中午太陽大路面燙時','隨時都行'],answer:'C'},
+  {id:9409,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗不斷抓耳朵或甩頭，可能是？',options:['在跳舞','耳朵發炎或有寄生蟲','覺得帥','練脖子'],answer:'B'},
+  {id:9410,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗最喜歡的獎勵方式通常是？',options:['穿重衣服','稱讚並給健康小零食','大吼大叫','關籠子'],answer:'B'},
+  {id:9411,subject:'領養與照顧狗狗',difficulty:'普通',question:'為什麼要定期幫狗狗打預防針？',options:['讓毛變長','預防傳染病健康','增加體重','想見醫生'],answer:'B'},
+  {id:9412,subject:'領養與照顧狗狗',difficulty:'普通',question:'如果你領養的是老狗狗，你應該？',options:['嫌慢拉扯','有耐心並定期檢查','送走','逼牠跑步'],answer:'B'},
+  {id:9413,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗如果一直舔自己的腳趾，可能是？',options:['好吃','受傷或過敏發癢','練洗臉','無聊'],answer:'B'},
+  {id:9414,subject:'領養與照顧狗狗',difficulty:'普通',question:'植入晶片是為了？',options:['變聰明','走丟時找回主人','控制行動','讀取想法'],answer:'B'},
+  {id:9415,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗不能吃太鹹的食物，是因為？',options:['變太黑','造成腎臟負擔','想唱歌','變貓咪'],answer:'B'},
+  {id:9416,subject:'領養與照顧狗狗',difficulty:'普通',question:'發現狗狗亂咬鞋子時，應該？',options:['打牠頭','當場制止並給對的玩具','不給飯吃','鞋子塞嘴裡'],answer:'B'},
+  {id:9417,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗一直喘氣、流口水、沒精神，可能是？',options:['想唱歌','中暑了','太開心','想吃冰'],answer:'B'},
+  {id:9418,subject:'領養與照顧狗狗',difficulty:'普通',question:'為什麼要幫狗狗梳毛？',options:['像獅子','檢查身體蟲子減少掉毛','變大隻','會飛起來'],answer:'B'},
+  {id:9419,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗最需要的運動是？',options:['看電視','關籠子','適當散步與奔跑','玩手機'],answer:'C'},
+  {id:9420,subject:'領養與照顧狗狗',difficulty:'普通',question:'「領養代替購買」的意思是？',options:['不花錢','給流浪狗一個溫暖家','買貴的狗','不用吃飯'],answer:'B'},
+];
+
 function advGetQuizPool(grade, subject, difficulty) {
+  // ★ v1.0.20260424.0680 — 照顧與陪伴幼兒 / 領養與照顧狗狗 專屬出題邏輯
+  //   特殊規則:
+  //   1. 持久化記錄已答對題目(localStorage)
+  //   2. 出題優先選「未答對過」的題目
+  //   3. 20 題全答對 → 解鎖角色 + 重置(讓玩家可重玩)
+  //   4. 滅團/離開不會清除進度
+  //   5. 選項順序在答題彈窗時隨機(不在這裡處理,在彈窗 render 時)
+  if (subject === '照顧與陪伴幼兒' || subject === '領養與照顧狗狗') {
+    const _full = (subject === '照顧與陪伴幼兒') ? ADV_QUIZ_CARE_INFANT : ADV_QUIZ_DOG_CARE;
+    const _key = (subject === '照顧與陪伴幼兒') ? 'careInfantPerfect' : 'dogCarePerfect';
+    let _correctSet = {};
+    try {
+      _correctSet = (_medalStats && _medalStats[_key]) || {};
+    } catch(_e) {}
+    // 過濾出尚未答對的題目
+    const _remaining = _full.filter(q => !_correctSet[q.id]);
+    // 若全部答對 → 給全 20 題(理論上會在外部觸發解鎖,然後清除進度從頭來)
+    const _pool = _remaining.length > 0 ? _remaining : _full.slice();
+    return [..._pool].sort(() => Math.random() - 0.5);
+  }
   // ★ v1.0.20260420.1400 — 五下自然第三單元「動物的生活」專屬題庫
   if (subject === '五下自然第三單元') {
     return [...ADV_QUIZ_5S_U3_ANIMAL].sort(() => Math.random() - 0.5);
@@ -27676,7 +28175,7 @@ const ADV_SCENES = {
       choiceTitle: '📚 出發前：請告訴我你的資訊',
       choiceSteps: [
         { type:'grade',   title:'🎒 你是什麼年級？',       choices:['小學低年級','小學中年級','小學高年級','五年級','國中'] },
-        { type:'subject', title:'📚 你最擅長哪一科？',     choices:['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園'] },
+        { type:'subject', title:'📚 你最擅長哪一科？',     choices:['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗'] },
       ],
     },
     {
@@ -28763,7 +29262,7 @@ let _advStats = {
   maxStreak: 0,        // 本場最高連擊(結算時每 1 連擊 +5% EXP)
 };
 // 題目難度基礎分對照
-const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80, '五年級':35, '關島交流':40, '木柵動物園':40 };
+const ADV_GRADE_SCORE = { '低年級':20, '中年級':35, '高年級':55, '國中':80, '五年級':35, '關島交流':40, '木柵動物園':40, '照顧與陪伴幼兒':40, '領養與照顧狗狗':40 };
 // 精熟度選擇加成倍率
 const ADV_DIFF_MULT  = { '沒自信':1.0, '普通':1.2, '我很會':1.5 };
 // 二選一獎勵暫存
@@ -29331,6 +29830,10 @@ function _advGetSubjectBtnStyle(subjectName){
   if(subjectName === '木柵動物園'){
     return 'color:#4dff6a;border-color:#4dff6a;text-shadow:0 0 10px rgba(77,255,106,0.55);';
   }
+  // ★ v1.0.20260424.0670 — 養護專題系列(照顧與陪伴幼兒、領養與照顧狗狗)
+  if(subjectName === '照顧與陪伴幼兒' || subjectName === '領養與照顧狗狗'){
+    return 'color:#ff99cc;border-color:#ff99cc;text-shadow:0 0 10px rgba(255,153,204,0.55);';
+  }
   if(subjectName === '生活常識'){
     return 'color:#ffffff;border-color:#e0e0e0;text-shadow:0 0 10px rgba(255,255,255,0.55);';
   }
@@ -29364,10 +29867,16 @@ function _advGroupSubjects(choices){
     { key:'zoo',    label:'🐼 動物園',
       labelColor:'#4dff6a', glow:'rgba(77,255,106,0.55)',
       borderColor:'rgba(77,255,106,0.5)',   bgColor:'rgba(77,255,106,0.07)',   items:[] },
+    // ★ v1.0.20260424.0670 — 養護專題群組(解鎖活動英雄)
+    { key:'care',   label:'💝 養護專題',
+      labelColor:'#ff99cc', glow:'rgba(255,153,204,0.55)',
+      borderColor:'rgba(255,153,204,0.5)',  bgColor:'rgba(255,153,204,0.07)',  items:[] },
   ];
   const byKey = Object.fromEntries(groups.map(g=>[g.key,g]));
   choices.forEach(c => {
     if(c === '木柵動物園')                                                       byKey.zoo.items.push(c);
+    // ★ v1.0.20260424.0670 — 養護專題分類
+    else if(c === '照顧與陪伴幼兒' || c === '領養與照顧狗狗')                    byKey.care.items.push(c);
     else if(c === '生活常識')                                                    byKey.life.items.push(c);
     else if(/交流$/.test(c))                                                     byKey.intl.items.push(c);
     else if(/^(低|中|高|國[一二三]|[一二三四五六七八九十]+)[上下]/.test(c))        byKey.review.items.push(c);
@@ -30815,6 +31324,26 @@ let _advSceneChoiceDone = false; // ★ 防止場景選題重複出現
 let _advRecentQuestionIds = [];
 
 function advPickQuestion() {
+  // ★ v1.0.20260424.0680 — 照顧/狗狗題庫:不彈「重選題目」視窗,自動重洗繼續
+  if (typeof _advPlayerSubject !== 'undefined' &&
+      (_advPlayerSubject === '照顧與陪伴幼兒' || _advPlayerSubject === '領養與照顧狗狗')) {
+    // 從 _advSessionQuestions 中過濾掉本場已用過的
+    const _used = _advUsedQuestionIds || new Set();
+    let _pool = (_advSessionQuestions || []).filter(q => !_used.has(q.id));
+    // 池空 → 重新呼叫 advGetQuizPool 拿新一批(會剔除已答對過的,若都答對則拿全 20 題隨機)
+    if (_pool.length === 0) {
+      const _fresh = (typeof advGetQuizPool === 'function')
+        ? advGetQuizPool(_advPlayerGrade, _advPlayerSubject, _advPlayerDifficulty) : [];
+      _advSessionQuestions = _fresh;
+      _advQuestionPool = _fresh;
+      _advUsedQuestionIds = new Set();
+      _pool = _fresh;
+      try { log(`📚 [${_advPlayerSubject}] 本場題目用完,自動重洗(已答對的不會再出)。`); } catch(_e){}
+    }
+    if (!_pool.length) return null;
+    const _chosen = _pool[Math.floor(Math.random() * _pool.length)];
+    return _chosen;
+  }
   // ★ v1.0.20260423.0100 — 日本關洗牌制:100 題全部出完才重新洗牌,期間保證不重複
   //   (取代原本「最近 40 題避免池」的軟性機制,真正的 shuffle-bag 發牌)
   if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
@@ -31078,6 +31607,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     }
     // ★ 獎章系統：BOSS戰答題
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
+    // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
+    try{ _trackUnlockHeroProgress(_advCurrentQuestion); }catch(e){}
     _advStats.totalAnswerTime += elapsed;
     // ★ 依題目本身的年級和難度計算得分（非玩家設定，而是題目實際難度）
     const _qGrade = (_advCurrentQuestion && _advCurrentQuestion.grade) || '中年級';
@@ -32724,12 +33255,21 @@ async function advStartWinSequence() {
   // 技能
   const skillsEl = document.getElementById('adv-hmeet-skills');
   if(skillsEl && hData) {
-    const mkSkill = (sk, label) => sk ? `
+    // ★ v1.0.20260424.0630 — 使用 _renderSkillFdWithLv,顯示當前等級資訊(剛解鎖一律 Lv1=內部0)
+    //   若該英雄本來已有等級則用實際等級
+    const _curLv = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[heroName]) || {s1:0, s2:0};
+    const mkSkill = (sk, label, slot) => {
+      if(!sk) return '';
+      const _lv = _curLv[slot] || 0;
+      const _fd = (typeof _renderSkillFdWithLv === 'function')
+        ? _renderSkillFdWithLv(sk.n, sk.fd || sk.d || '', _lv) : (sk.fd || sk.d || '');
+      return `
       <div style="background:rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">
         <div style="font-size:22px;color:#ffcc44;font-weight:700;">${label}：${sk.n} <span style="color:#aaa;font-size:18px">（${sk.c}能量）</span></div>
-        <div style="font-size:20px;color:#ccc;margin-top:4px;">${sk.fd || sk.d}</div>
-      </div>` : '';
-    skillsEl.innerHTML = mkSkill(hData.s1, '技能1') + mkSkill(hData.s2, '技能2');
+        <div style="font-size:20px;color:#ccc;margin-top:4px;">${_fd}</div>
+      </div>`;
+    };
+    skillsEl.innerHTML = mkSkill(hData.s1, '技能1', 's1') + mkSkill(hData.s2, '技能2', 's2');
   }
 
   // ★ v1.0.20260423.3900 — 爆發技能
@@ -33957,6 +34497,8 @@ const BACKPACK_ITEM_DEF = {
   'apricot_rouge':    { name:'杏花胭脂',       icon:'💄', desc:'杏花妖以千年花蕊與月光淬煉的絕品胭脂，香氣能勾魂攝魄，富商夫人爭相收藏。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1500 },
   'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）' },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
+  // ★ v1.0.20260424.0740 — 極限重置秘藥
+  'burst_reset_potion': { name:'極限重置秘藥', icon:'⚗️', desc:'神秘煉金師調配的逆轉之藥，可將1名英雄的極限爆發等級歸零，並退還曾消耗的「超越極限果實」。', type:'use', useLabel:'使用（重置爆發）' },
   // ★ 召喚水晶
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。⚠ 目前尚未開放使用，請先收藏等待未來版本開放召喚功能。', type:'use', useLabel:'使用（尚未開放）' },
   // ★ 小怪戰掉落物（只能販賣換知識幣）
@@ -34015,6 +34557,8 @@ const BACKPACK_ITEM_DEF = {
   'coder_portrait':         { name:'程式設計師肖像:量子編碼', icon:'💻', desc:'全新繪製的程式設計師肖像「量子編碼」,購買後可在英雄圖鑑的程式設計師詳細頁切換使用(原肖像永遠保留)。', type:'portrait', heroName:'程式設計師', portraitId:'quantum_code',  useLabel:'前往切換' },
   // ★ v1.0.20260423.8800 — 新增籃球隊員「絕殺灌籃」付費商品
   'basket_clutch_portrait': { name:'籃球隊員肖像:絕殺灌籃', icon:'🏀', desc:'全新繪製的籃球隊員肖像「絕殺灌籃」,購買後可在英雄圖鑑的籃球隊員詳細頁切換使用(原肖像永遠保留)。', type:'portrait', heroName:'籃球隊員', portraitId:'basket_clutch', useLabel:'前往切換' },
+  // ★ v1.0.20260424.0730 — 小力「原始本能」付費肖像
+  'xiaoli_primal_portrait': { name:'校犬小力肖像:原始本能', icon:'🐕', desc:'全新繪製的校犬小力替代肖像「原始本能」，描繪小力潛藏在毛茸茸外表下的野性靈魂。購買後可在英雄圖鑑的小力詳細頁切換使用（原肖像永遠保留）。', type:'portrait', heroName:'小力', portraitId:'primal_instinct', useLabel:'前往切換' },
   // ★ v1.0.20260423.1800 — 木靈使肖像
   'dryad_ancient_tree_portrait': { name:'木靈使肖像：千年神木', icon:'🌿',
     desc:'全新繪製的木靈使肖像「千年神木」，購買後可在英雄圖鑑的木靈使詳細頁切換使用（原肖像永遠保留）。',
@@ -34046,6 +34590,10 @@ const SHOP_PRODUCTS = [
   { id:'burst_upgrade_fruit', name:'超越極限果實', icon:'🍑',
     desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。魔法商店每日只販售1顆，也可能在挑戰BOSS後低機率掉落。',
     price:10000, stock:'每日1個', dailyLimit:1 },
+  // ★ v1.0.20260424.0740 — 極限重置秘藥(每日限購1顆)
+  { id:'burst_reset_potion', name:'極限重置秘藥', icon:'⚗️',
+    desc:'神秘煉金師調配的逆轉之藥，色澤如琥珀，氣味如花蜜。使用後可將1名英雄的極限爆發等級歸零，並完整退還此英雄已消耗的「超越極限果實」(每等級退1顆)。每日商店限購1顆。',
+    price:5000, stock:'每日1個', dailyLimit:1 },
   { id:'priest_portrait_dawn', name:'祭司肖像：曙光微風', icon:'🌅',
     desc:'全新繪製的祭司替代肖像「曙光微風」。購買後即永久解鎖，可在英雄圖鑑的祭司詳細頁切換使用（原始肖像仍保留）。',
     price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
@@ -34077,6 +34625,10 @@ const SHOP_PRODUCTS = [
   { id:'coder_portrait',      name:'程式設計師肖像:量子編碼', icon:'💻', desc:'全新繪製的程式設計師替代肖像「量子編碼」。購買後即永久解鎖,可在英雄圖鑑的程式設計師詳細頁切換使用(原始肖像仍保留)。', price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   // ★ v1.0.20260423.8800 — 新增籃球隊員「絕殺灌籃」付費商品(該角色第一個商店付費版)
   { id:'basket_clutch_portrait', name:'籃球隊員肖像:絕殺灌籃', icon:'🏀', desc:'全新繪製的籃球隊員替代肖像「絕殺灌籃」。購買後即永久解鎖,可在英雄圖鑑的籃球隊員詳細頁切換使用(原始肖像仍保留)。', price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
+  // ★ v1.0.20260424.0730 — 校犬小力「原始本能」付費商品
+  { id:'xiaoli_primal_portrait', name:'校犬小力肖像:原始本能', icon:'🐕',
+    desc:'全新繪製的校犬小力替代肖像「原始本能」，描繪小力潛藏在毛茸茸外表下的野性靈魂。購買後即永久解鎖，可在英雄圖鑑的小力詳細頁切換使用（原始肖像仍保留）。',
+    price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
   // ── 木靈使肖像 ──
   { id:'dryad_ancient_tree_portrait', name:'木靈使肖像：千年神木', icon:'🌿',
     desc:'全新繪製的木靈使替代肖像「千年神木」(古森林守護者之姿，寓意長生與神木傳承)。購買後即永久解鎖，可在英雄圖鑑的木靈使詳細頁切換使用（原始肖像仍保留）。',
@@ -35991,9 +36543,20 @@ function _renderShopProducts(){
   // ★ v1.0.20260421.3002 — 商品改為 4 欄網格
   list.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:10px;';
   list.innerHTML = '';
-  SHOP_PRODUCTS.forEach(prod => {
+  // ★ v1.0.20260424.0740 — 取得當日特價商品 id(每日 08:00 隨機抽一個打 7 折)
+  const _todayDiscountId = (typeof _shopGetTodayDiscountId === 'function') ? _shopGetTodayDiscountId() : null;
+  // ★ 特價商品排到最前面(醒目展示)
+  const _sortedProducts = SHOP_PRODUCTS.slice().sort((a,b)=>{
+    if(a.id === _todayDiscountId) return -1;
+    if(b.id === _todayDiscountId) return 1;
+    return 0;
+  });
+  _sortedProducts.forEach(prod => {
     const qty = (window['_shopQty_'+prod.id]||1);
-    const total = prod.price * qty;
+    // ★ 每日特價:該商品打 7 折
+    const _onSale = (_todayDiscountId && _todayDiscountId === prod.id);
+    const _effPrice = _onSale ? Math.round(prod.price * SHOP_DISCOUNT_RATE) : prod.price;
+    const total = _effPrice * qty;
     const canAfford = (_knowledgeCoins||0) >= total;
     // ★ 一次性商品（例如肖像）：若已擁有則鎖定按鈕並改變顯示
     let _alreadyOwned = false;
@@ -36063,21 +36626,32 @@ function _renderShopProducts(){
     }
     const cell = document.createElement('div');
     cell.style.cssText = 'display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:10px 8px 8px;'+
-      'background:rgba(40,25,0,0.72);border:1.5px solid rgba(255,180,50,0.35);border-radius:12px;'+
+      (_onSale
+        ? 'background:linear-gradient(160deg,rgba(80,20,30,0.85),rgba(60,10,20,0.85));border:2.5px solid #ff4488;box-shadow:0 0 18px rgba(255,80,140,0.55);'
+        : 'background:rgba(40,25,0,0.72);border:1.5px solid rgba(255,180,50,0.35);')+
+      'border-radius:12px;'+
       'position:relative;min-height:0;'+
       (_alreadyOwned ? 'opacity:0.55;' : '');
+    // 價格區塊:若特價則顯示劃掉原價 + 紅字折扣價 + 標籤
+    const _priceHtml = _onSale
+      ? `<div style="text-align:center;line-height:1.1;">
+          <div style="font-size:13px;color:#ff88aa;font-weight:800;letter-spacing:1px;">🏷️ 7 折特價中</div>
+          <div style="font-size:14px;color:#aaa;text-decoration:line-through;">${prod.price.toLocaleString()}💰</div>
+          <div style="font-size:24px;font-weight:900;color:#ff5577;text-shadow:0 0 8px rgba(255,80,120,0.7);">${_effPrice.toLocaleString()} 💰</div>
+         </div>`
+      : `<div style="font-size:22px;font-weight:900;color:#ffe066;text-align:center;">${prod.price.toLocaleString()} 💰</div>`;
     cell.innerHTML = `
       ${_detailBtnHtml}
       ${_topVisualHtml}
       <div style="font-size:20px;font-weight:900;color:#ffcc44;text-align:center;line-height:1.25;min-height:50px;display:flex;align-items:center;justify-content:center;padding:0 4px;">${prod.name}</div>
       <div style="font-size:16px;color:${(_alreadyOwned||_isDailyCapped)?'#888':(prod.dailyLimit>0?'#88ffcc':'#ffdd88')};text-align:center;">${_stockTxt}</div>
-      <div style="font-size:22px;font-weight:900;color:#ffe066;text-align:center;">${prod.price.toLocaleString()} 💰</div>
+      ${_priceHtml}
       <div style="display:flex;align-items:center;justify-content:center;gap:4px;${_alreadyOwned?'opacity:0.4;pointer-events:none;':''}">
         <button onclick="shopAdjQty('${prod.id}',-1)" style="width:26px;height:26px;font-size:20px;font-weight:900;background:rgba(80,20,0,0.4);border:1.5px solid #ff8844;color:#ff8844;border-radius:6px;cursor:pointer;line-height:1;padding:0;">−</button>
         <span id="shop-qty-${prod.id}" style="font-size:20px;font-weight:800;color:#fff;min-width:22px;text-align:center;">${qty}</span>
         <button onclick="shopAdjQty('${prod.id}',+1)" style="width:26px;height:26px;font-size:20px;font-weight:900;background:rgba(0,60,0,0.4);border:1.5px solid #44ff88;color:#44ff88;border-radius:6px;cursor:pointer;line-height:1;padding:0;">＋</button>
       </div>
-      <div style="font-size:15px;color:${_alreadyOwned?'#666':(canAfford?'#ffe066':'#888')};text-align:center;line-height:1.2;">${_alreadyOwned?'—':'合計 '+total.toLocaleString()+'💰'}</div>
+      <div style="font-size:15px;color:${_alreadyOwned?'#666':(canAfford?(_onSale?'#ff99bb':'#ffe066'):'#888')};text-align:center;line-height:1.2;">${_alreadyOwned?'—':'合計 '+total.toLocaleString()+'💰'}</div>
       <button onclick="shopBuyItem('${prod.id}')" style="padding:8px 6px;font-size:18px;font-weight:800;
         background:${_btnBg};border:1.5px solid ${_btnBorder};color:${_btnColor};
         border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;
@@ -36103,6 +36677,17 @@ function _showShopDetail(productId){
   const _stockInfo = prod.dailyLimit > 0
     ? `今日剩餘：<span style="color:#88ffcc;font-weight:800;">${Math.max(0,prod.dailyLimit-_shopDailyBought(prod.id))} / ${prod.dailyLimit}</span>`
     : `庫存：<span style="color:#ffdd88;font-weight:800;">${prod.stock}</span>`;
+  // ★ v1.0.20260424.0740 — 折扣顯示
+  const _todayDiscount = (typeof _shopGetTodayDiscountId === 'function') ? _shopGetTodayDiscountId() : null;
+  const _isOnSale = (_todayDiscount && _todayDiscount === prod.id);
+  const _saleEffPrice = _isOnSale ? Math.round(prod.price * SHOP_DISCOUNT_RATE) : prod.price;
+  const _priceLine = _isOnSale
+    ? `<div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;">
+         <div style="font-size:16px;color:#ff88aa;font-weight:800;letter-spacing:1px;">🏷️ 7 折特價中</div>
+         <div style="font-size:18px;color:#aaa;text-decoration:line-through;">原價：${prod.price.toLocaleString()} 💰</div>
+         <div style="font-size:30px;font-weight:900;color:#ff5577;text-shadow:0 0 8px rgba(255,80,120,0.7);">特價：${_saleEffPrice.toLocaleString()} 💰</div>
+       </div>`
+    : `<div style="font-size:28px;font-weight:900;color:#ffe066;margin-top:6px;">單價：${prod.price.toLocaleString()} 💰</div>`;
 
   const modal = document.createElement('div');
   modal.id = 'shop-detail-modal';
@@ -36117,7 +36702,7 @@ function _showShopDetail(productId){
         <div style="flex:1;min-width:0;">
           <div style="font-size:34px;font-weight:900;color:#ffcc44;letter-spacing:2px;line-height:1.2;">${prod.name}</div>
           <div style="font-size:20px;color:#ffdd88;margin-top:8px;">${_stockInfo}</div>
-          <div style="font-size:28px;font-weight:900;color:#ffe066;margin-top:6px;">單價：${prod.price.toLocaleString()} 💰</div>
+          ${_priceLine}
         </div>
       </div>
       <div style="padding:16px 20px;background:rgba(255,200,60,0.08);border-left:3px solid #ffcc44;border-radius:0 10px 10px 0;font-size:20px;color:#eee8d4;line-height:1.7;">
@@ -36280,9 +36865,67 @@ function _shopDailyBought(id){
 function _shopDailyRecordBuy(id, qty){
   const today = _getShopDailyKey();
   if(!_shopDailyData || _shopDailyData.date !== today){
+    // ★ v1.0.20260424.0740 — 跨日重置時,保留剛抽的 discountId(如果有)
+    const _keepDiscount = (_shopDailyData && _shopDailyData.date === today) ? _shopDailyData.discountId : undefined;
     _shopDailyData = { date: today };
+    if(_keepDiscount) _shopDailyData.discountId = _keepDiscount;
   }
   _shopDailyData[id] = (_shopDailyData[id]||0) + qty;
+}
+
+// ★ v1.0.20260424.0740 — 每日特價系統:每天 08:00(UTC 00:00)隨機抽一樣商品打 7 折
+const SHOP_DISCOUNT_RATE = 0.7;
+function _shopGetEligibleDiscountIds(){
+  // 找出可被抽中折扣的商品:
+  // - 排除一次性已擁有的(玩家無法購買)
+  // - 排除已達每日限購上限的(無意義)
+  // - 排除沒有 price 或 price <= 0 的
+  const ids = [];
+  if(typeof SHOP_PRODUCTS === 'undefined') return ids;
+  SHOP_PRODUCTS.forEach(prod => {
+    if(!prod || !prod.id || !(prod.price > 0)) return;
+    // 一次性商品已擁有 → 排除
+    if(prod.oneTime){
+      const itemDef = (typeof BACKPACK_ITEM_DEF !== 'undefined') ? (BACKPACK_ITEM_DEF[prod.id]||{}) : {};
+      const alreadyOwned = (itemDef.type === 'portrait'
+                          && itemDef.heroName && itemDef.portraitId
+                          && (typeof _heroPortraitUnlocked!=='undefined')
+                          && (_heroPortraitUnlocked[itemDef.heroName] || []).includes(itemDef.portraitId))
+                       || (typeof backpackGet === 'function' && backpackGet(prod.id) > 0);
+      if(alreadyOwned) return;
+    }
+    ids.push(prod.id);
+  });
+  return ids;
+}
+function _shopGetTodayDiscountId(){
+  const today = _getShopDailyKey();
+  if(!_shopDailyData || _shopDailyData.date !== today){
+    // 跨日 → 重置 _shopDailyData,並抽當日新折扣
+    const eligible = _shopGetEligibleDiscountIds();
+    const newDiscount = eligible.length > 0
+      ? eligible[Math.floor(Math.random() * eligible.length)]
+      : null;
+    _shopDailyData = { date: today };
+    if(newDiscount) _shopDailyData.discountId = newDiscount;
+  } else if(!_shopDailyData.discountId){
+    // 當天首次進商店,抽折扣
+    const eligible = _shopGetEligibleDiscountIds();
+    if(eligible.length > 0){
+      _shopDailyData.discountId = eligible[Math.floor(Math.random() * eligible.length)];
+    }
+  }
+  return _shopDailyData.discountId || null;
+}
+// 取得實際售價(套用每日折扣)
+function _shopGetEffectivePrice(prod){
+  if(!prod) return 0;
+  const basePrice = prod.price || 0;
+  const todayDiscount = _shopGetTodayDiscountId();
+  if(todayDiscount && todayDiscount === prod.id){
+    return Math.round(basePrice * SHOP_DISCOUNT_RATE);
+  }
+  return basePrice;
 }
 
 async function shopBuyItem(id){
@@ -36311,7 +36954,8 @@ async function shopBuyItem(id){
       _showInGameToast(`🍑 今日只剩 ${remaining} 個可購買！`, '#ffaa44', 2500); return;
     }
   }
-  const total = prod.price * qty;
+  const effectivePrice = _shopGetEffectivePrice(prod);
+  const total = effectivePrice * qty;
   if((_knowledgeCoins||0) < total){
     _showInGameToast('💰 知識幣不足！', '#ff6644', 2000); return;
   }
@@ -36615,6 +37259,31 @@ function useBackpackItem(id){
     closeBackpackOverlay();
     openHeroPage();
     setTimeout(() => { _highlightHeroesForBurstUpgrade(); }, 200);
+
+  } else if(id==='burst_reset_potion'){
+    // ★ v1.0.20260424.0740 — 極限重置秘藥:重置選定英雄的極限爆發等級並退還果實
+    _backpackOpenHeroSelect('⚗️ 極限重置秘藥', '選擇要重置極限爆發的英雄', async name=>{
+      const lv = (_heroBurstLevels && _heroBurstLevels[name]) || 0;
+      if(lv <= 0){
+        _showInGameToast(`[${name}] 的極限爆發等級為 0，無需重置。`, '#ff8844', 2000); return;
+      }
+      backpackRemove('burst_reset_potion');
+      _heroBurstLevels[name] = 0;
+      // 退還對應數量的超越極限果實
+      backpackAdd('burst_upgrade_fruit', lv);
+      // 更新場上英雄的 _burstLvAdv
+      try{
+        if(typeof heroes!=='undefined' && Array.isArray(heroes)){
+          heroes.forEach(h=>{
+            if(h && h.name===name) h._burstLvAdv = 0;
+          });
+        }
+      }catch(_){}
+      try{ await gameCloudSave(); }catch(e){}
+      _setNavDot('英雄', true);
+      _showInGameToast(`⚗️ [${name}] 極限爆發已重置！退還 ${lv} 顆超越極限果實 🍑`, '#ffaa66', 3000);
+      _renderBackpackMain();
+    }, true);
 
   } else if(id==='summon_crystal'){
     // ★ 召喚水晶：目前功能尚未開放，顯示說明
@@ -37231,7 +37900,7 @@ const SKILL_UPGRADE_DEF = {
   '小星星變奏曲':{ cat:'dmg', label:'技能傷害' },
   '俯衝搶奪': { cat:'dmg',    label:'技能傷害' },
   '三分投射': { cat:'dmg',    label:'技能傷害' },
-  '大聲啼哭': { cat:'dmg',    label:'技能傷害' },
+  '大聲啼哭': { cat:'special_cry',    label:'啼哭弱化' },
   '圖層隱藏': { cat:'dmg',    label:'技能傷害' },
   '刀背擊':   { cat:'dmg',    label:'技能傷害' },
   '泰山壓頂': { cat:'dmg',    label:'技能傷害' },
@@ -37281,7 +37950,7 @@ const SKILL_UPGRADE_DEF = {
   '虛弱咒':   { cat:'pct_debuff', base:30, perLv:1, step:2, label:'能力降低幅度' },
   '增強術':   { cat:'pct_buff',   base:30, perLv:1, step:2, label:'能力提升幅度' },
   '群體挑釁': { cat:'pct_buff',   base:30, perLv:1, step:2, label:'自身減傷幅度' },
-  '忠犬守護': { cat:'pct_buff',   base:50, perLv:1, step:2, label:'傷害轉移比率' },
+  '忠犬守護': { cat:'pct_buff',   base:50, perLv:1, step:5, label:'傷害轉移比率' },
   // ── 能量類 ──
   '充能':     { cat:'energy', base:6, perLv:5, label:'補充能量' },
   '命運塔羅牌':{ cat:'special_tarot_sell', label:'販賣能量加成' },
@@ -37319,7 +37988,8 @@ const SKILL_UPGRADE_DEF = {
   '動物召喚':     { cat:'special_summon', label:'技能傷害' },                                          // 每級+5% 傷害, Lv10 攻擊次數 2~3
   '歷史的教訓':   { cat:'dmg', label:'技能傷害' },                                                       // 每級+5%
   '仁王挺立':     { cat:'special_nio', label:'減傷+回合' },                                             // 每級減少受傷2%, Lv10+1 回合
-  '午睡時間':     { cat:'heal', label:'恢復量' },                                                       // 每級+5%
+  '午睡時間':     { cat:'special_nap', label:'恢復+護盾' },                                            // 每級+5% 恢復, +5 護盾
+  '愛護校犬':     { cat:'special_dogregen', label:'每回合恢復HP' },                                     // 每級+5% 恢復量(基礎100%特技)
   '不熟練習曲':   { cat:'dmg', label:'技能傷害' },                                                       // 每級+5%
   '運球':         { cat:'special_dribble', label:'增益回合' },                                          // Lv10+1 回合
   '物品查封':     { cat:'special_seal', base:70, step:2, cap:100, label:'查封機率' },                   // 每級+2%
@@ -37327,7 +37997,291 @@ const SKILL_UPGRADE_DEF = {
   '定時炸彈':     { cat:'special_bomb', label:'固定傷害' },                                             // 每級+5 固定傷害
 };
 
-// ── 技能升級徽章文字（依 SKILL_UPGRADE_DEF 顯示正確效果）──
+// ★ v1.0.20260424.0630 — 把當前等級資訊融入 fd 描述
+//   範例:
+//     fd: '用特技的70%傷害所有對手,並有50%機率使目標冰凍1回合不能動'
+//     skLv: 4 (=顯示Lv5)
+//     結果: '用特技的<紅>90%</紅>傷害所有對手,並有<紅>62%</紅>機率使目標冰凍<紅>1</紅>回合不能動 [Lv.5]'
+// ★ v1.0.20260424.0650 — 修正 Lv1(skLv=0)時不該 highlight、盜取/出奇制勝 fd 重新調整
+function _renderSkillFdWithLv(skillName, originalFd, skLv){
+  if(!originalFd) return '';
+  if(typeof skLv !== 'number') skLv = 0;
+  const def = (typeof SKILL_UPGRADE_DEF !== 'undefined') ? SKILL_UPGRADE_DEF[skillName] : null;
+  // 用紅色顯示動態數字(只在 skLv > 0 時 highlight,Lv1 基礎值不標紅)
+  const HL = (txt) => (skLv > 0)
+    ? '<span style="color:#ff8866;font-weight:900;">' + txt + '</span>'
+    : '<span style="color:#fff;font-weight:700;">' + txt + '</span>';
+  // 等級標籤
+  const _lvTag = ' <span style="color:#ffcc44;font-weight:900;background:rgba(255,200,0,0.15);padding:1px 8px;border-radius:6px;margin-left:4px;">Lv.' + (skLv+1) + (skLv>=9?' MAX':'') + '</span>';
+  // 沒有 def 或被動 → 直接加 Lv 標籤
+  if(!def || def.cat === 'no_upgrade'){
+    return originalFd + _lvTag;
+  }
+  let fd = originalFd;
+  const cat = def.cat;
+  // 通用 dmg/heal/mixed:基礎 X% → 實際 X*(1+lv*0.05)%
+  // 找 fd 中所有 N% 數值,替換為(N + N*lv*0.05).round() %
+  if(cat === 'dmg' || cat === 'heal' || cat === 'mixed'){
+    const _mult = 1 + skLv * 0.05;
+    fd = fd.replace(/(\d+(?:\.\d+)?)%/g, function(m, num){
+      const newVal = Math.round(parseFloat(num) * _mult);
+      return HL(newVal + '%');
+    });
+  }
+  else if(cat === 'special_fireball'){
+    // 火焰球: 主傷+5%/級, 追加+1/級
+    const mainPct = 150 + skLv*5;
+    const extra = 10 + skLv;
+    fd = fd.replace(/特技的\s*150\s*%/g, '特技的 ' + HL(mainPct + '%'))
+           .replace(/追加\s*10\s*點/g, '追加 ' + HL(extra) + ' 點');
+  }
+  else if(cat === 'special_blizzard'){
+    // 暴風雪: 70% → +5%/級, 50% → +3%/級
+    const dmgPct = 70 + skLv*5;
+    const frzPct = 50 + skLv*3;
+    fd = fd.replace(/特技的\s*70\s*%/g, '特技的 ' + HL(dmgPct + '%'))
+           .replace(/有\s*50\s*%機率/g, '有 ' + HL(frzPct + '%') + ' 機率');
+  }
+  else if(cat === 'special_random_shot'){
+    // 亂槍射擊: 3~5次/4~5次/4~6次
+    let mn = 3, mx = 5;
+    if(skLv >= 9){ mn = 4; mx = 6; }
+    else if(skLv >= 4){ mn = 4; mx = 5; }
+    fd = fd.replace(/3\s*~\s*5\s*次/g, HL(mn + '~' + mx + ' 次'));
+  }
+  else if(cat === 'special_paradise'){
+    // 天堂樂章: 治療 75% → +5%/級, 復活 1→2
+    const healPct = 75 + skLv*5;
+    const revive = skLv >= 9 ? 2 : 1;
+    fd = fd.replace(/特技的\s*75\s*%/g, '特技的 ' + HL(healPct + '%'))
+           .replace(/復活\s*1\s*名/g, '復活 ' + HL(revive) + ' 名');
+  }
+  else if(cat === 'special_kungfu' || cat === 'special_assassin'){
+    // 降龍伏虎拳/潛行暗殺: (攻擊+特技) × 200% → +5%/級
+    const pct = 200 + skLv*5;
+    fd = fd.replace(/200\s*%/g, HL(pct + '%'));
+  }
+  else if(cat === 'special_kuyou_fox'){
+    // 九尾狐火: 特技% +5/級, 燃燒 2→3
+    const dmgPct = 100 + skLv*5;
+    const burnDur = skLv >= 9 ? 3 : 2;
+    fd = fd.replace(/用特技值/g, '用特技值的 ' + HL(dmgPct + '%'))
+           .replace(/燃燒\s*2\s*回合/g, '燃燒 ' + HL(burnDur) + ' 回合');
+  }
+  else if(cat === 'special_youkofox'){
+    // 妖狐幻惑: 護盾 30 +5/級, 失明 2→3
+    const sh = 30 + skLv*5;
+    const blindDur = skLv >= 9 ? 3 : 2;
+    fd = fd.replace(/30\s*護盾/g, HL(sh) + ' 護盾')
+           .replace(/30/g, HL(sh)) // fallback
+           .replace(/失明\s*2\s*回合/g, '失明 ' + HL(blindDur) + ' 回合');
+  }
+  else if(cat === 'special_steal'){
+    // 盜取: Lv5/Lv10 偷物次數+1 (Lv0~3=1 次, Lv4~8=2 次, Lv9=3 次)
+    const cnt = skLv >= 9 ? 3 : skLv >= 4 ? 2 : 1;
+    // fd 含「可偷 1 次」「基礎可偷 1 次」「增為 2 次」「增為 3 次」
+    // 統一替換「可偷 1 次」「基礎可偷 1 次」為當前數值
+    fd = fd.replace(/基礎可偷\s*1\s*次/g, '基礎可偷 ' + HL(cnt) + ' 次')
+           .replace(/可偷\s*1\s*次/g, '可偷 ' + HL(cnt) + ' 次');
+  }
+  else if(cat === 'special_dodge'){
+    // 急速閃躲: 命中率剩 30% +對手命中-2%/級
+    //   Lv0: 命中 30% (閃躲 70%)
+    //   Lv5: 命中 20% (閃躲 80%)
+    //   Lv10: 命中 10% (閃躲 90%)
+    const hitRate = Math.max(5, 30 - skLv * 2);
+    fd = fd.replace(/30\s*%/g, HL(hitRate + '%'));
+  }
+  else if(cat === 'special_sanctuary'){
+    // 聖殿領域: Lv5+1 回合
+    const dur = skLv >= 4 ? 3 : 2;
+    fd = fd.replace(/2\s*回合/g, HL(dur) + ' 回合');
+  }
+  else if(cat === 'special_passion'){
+    // 熱情之舞: 每級+1 回合
+    const dur = 1 + skLv;
+    fd = fd.replace(/1\s*回合/g, HL(dur) + ' 回合');
+  }
+  else if(cat === 'special_strategy'){
+    // 出奇制勝: Lv5/Lv10 +1 抽卡 (基礎 3 張, Lv5=4 張, Lv10=5 張)
+    const cnt = skLv >= 9 ? 5 : skLv >= 4 ? 4 : 3;
+    // fd 中是「抽取 3 張」(中間有「取」),用 /抽取?\s*3\s*張/
+    fd = fd.replace(/抽取?\s*3\s*張/g, '抽取 ' + HL(cnt) + ' 張');
+  }
+  else if(cat === 'special_advisor'){
+    // 兵貫神速: Lv5 解狀態, Lv10 復活
+    if(skLv >= 9) fd += '<br>★ 升級加成: ' + HL('解除目標所有不利狀態 + 可選 20%HP 復活倒下友方');
+    else if(skLv >= 4) fd += '<br>★ 升級加成: ' + HL('解除目標所有不利狀態');
+  }
+  else if(cat === 'special_mimic'){
+    // 模仿: Lv5/Lv10 +15% HP
+    if(skLv >= 9) fd += '<br>★ 升級加成: ' + HL('額外恢復自己 30% HP');
+    else if(skLv >= 4) fd += '<br>★ 升級加成: ' + HL('額外恢復自己 15% HP');
+  }
+  else if(cat === 'special_summon'){
+    // 動物召喚: 每級+5%, Lv10 攻擊次數變
+    const mult = 100 + skLv*5;
+    const hits = skLv >= 9 ? '2~3 次' : '1~2 次';
+    fd = fd.replace(/1\s*~\s*2\s*次/g, HL(hits))
+           .replace(/用特技/g, '用特技的 ' + HL(mult + '%'));
+  }
+  else if(cat === 'special_nio'){
+    // 仁王挺立: 每級減傷-2%, Lv10+1 回合
+    const reduce = 50 + skLv*2;
+    const dur = skLv >= 9 ? 2 : 1;
+    fd = fd.replace(/減少\s*50\s*%/g, '減少 ' + HL(reduce + '%'))
+           .replace(/減傷\s*50\s*%/g, '減傷 ' + HL(reduce + '%'))
+           .replace(/1\s*回合/g, HL(dur) + ' 回合');
+  }
+  else if(cat === 'special_dribble'){
+    // 運球: Lv10+1 回合
+    const dur = skLv >= 9 ? 3 : 2;
+    fd = fd.replace(/1\s*回合/g, HL(dur) + ' 回合');
+  }
+  // ★ v1.0.20260424.0700 — 大聲啼哭: 75%+2%/級, 降低 10%+1%/級, 不可堆疊
+  else if(cat === 'special_cry'){
+    const rate = Math.min(100, 75 + skLv * 2);
+    const reduce = 10 + skLv * 1;
+    fd = fd.replace(/75\s*%/g, HL(rate + '%'))
+           .replace(/降低\s*10\s*%/g, '降低 ' + HL(reduce + '%'));
+  }
+  // ★ v1.0.20260424.0700 — 午睡時間: 護盾 50+5/級, 恢復 25%+5%/級
+  else if(cat === 'special_nap'){
+    const heal = 25 + skLv * 5;
+    const shieldHp = 50 + skLv * 5;
+    fd = fd.replace(/25\s*%\s*HP/g, HL(heal + '%') + ' HP')
+           .replace(/50\s*護盾/g, HL(shieldHp) + ' 護盾');
+  }
+  // ★ v1.0.20260424.0700 — 愛護校犬: 每級恢復量+5%(基礎100%特技)
+  else if(cat === 'special_dogregen'){
+    const pct = 100 + skLv * 5;
+    fd = fd.replace(/特技值恢復自己HP/g, '特技值的 ' + HL(pct + '%') + ' 恢復自己HP');
+  }
+  else if(cat === 'special_bomb'){
+    // 定時炸彈: 30+5/級
+    const fixedBase = 30 + skLv*5;
+    fd = fd.replace(/30\s*\+/g, HL(fixedBase) + ' +');
+  }
+  else if(cat === 'special_lullaby'){
+    // 搖籃曲: 60% +3%/級, Lv10 +1 回合
+    const rate = Math.min(100, 60 + skLv*3);
+    const dur = skLv >= 9 ? 3 : 2;
+    fd = fd.replace(/60\s*%機率/g, HL(rate + '%') + ' 機率')
+           .replace(/睡眠\s*2\s*回合/g, '睡眠 ' + HL(dur) + ' 回合');
+  }
+  else if(cat === 'special_bat_hits'){
+    // 召喚蝙蝠群: Lv4/7/10 各+1 (基礎 5)
+    let hits = 5;
+    if(skLv >= 3) hits++;
+    if(skLv >= 6) hits++;
+    if(skLv >= 9) hits++;
+    fd = fd.replace(/(攻擊對手|對手)\s*5\s*次/g, '$1 ' + HL(hits) + ' 次')
+           .replace(/(\D|^)5\s*次/g, '$1' + HL(hits) + ' 次');
+  }
+  else if(cat === 'special_seal'){
+    // 物品查封 / 警示鳴槍 / 黑暗封印 等: 機率類
+    const base = def.base || 70;
+    const step = def.step || 3;
+    const cap = def.cap || 100;
+    const pct = Math.min(cap, base + skLv * step);
+    // 替換最近的百分比
+    fd = fd.replace(new RegExp(base + '\\s*%','g'), HL(pct + '%'));
+  }
+  else if(cat === 'pct_buff' || cat === 'pct_debuff'){
+    // 挺身守護等: 基礎N%, +step%/perLv 級
+    const base = def.base || 30;
+    const step = def.step || 5;
+    const perLv = def.perLv || 1;
+    const pct = base + Math.floor(skLv / perLv) * step;
+    fd = fd.replace(new RegExp(base + '\\s*%','g'), HL(pct + '%'));
+  }
+  // ★ v1.0.20260424.0640 — 補上缺漏的 cat
+  else if(cat === 'dur'){
+    // 持續回合類:base + floor(lv/perLv)
+    const base = def.base || 2;
+    const perLv = def.perLv || 2;
+    const newDur = base + Math.floor(skLv / perLv);
+    // 替換 fd 中對應的「N回合」(取最接近 base 的那個)
+    fd = fd.replace(new RegExp(base + '\\s*回合','g'), HL(newDur) + ' 回合');
+  }
+  else if(cat === 'energy'){
+    // 充能:基礎 N 能量, +1/perLv 級
+    const base = def.base || 6;
+    const perLv = def.perLv || 2;
+    const e = base + Math.floor(skLv / perLv);
+    fd = fd.replace(new RegExp('\\D' + base + '\\s*能量','g'), function(m){
+      return m[0] + HL(e) + ' 能量';
+    });
+  }
+  else if(cat === 'shield'){
+    // 護盾類:基礎 N 點, *(1+lv*0.05)
+    const base = def.base || 30;
+    const v = Math.round(base * (1 + skLv*0.05));
+    fd = fd.replace(new RegExp(base + '\\s*點','g'), HL(v) + ' 點')
+           .replace(new RegExp(base + '(?!\\d)','g'), HL(v));
+  }
+  else if(cat === 'threshold_pct'){
+    // 靈魂收割:HP 門檻 base + lv*step
+    const base = def.base || 10;
+    const step = def.step || 1;
+    const pct = base + skLv * step;
+    fd = fd.replace(new RegExp('未滿\\s*' + base + '\\s*%','g'), '未滿 ' + HL(pct + '%'))
+           .replace(new RegExp('HP\\s*' + base + '\\s*%','g'), 'HP ' + HL(pct + '%'))
+           .replace(new RegExp(base + '\\s*%','g'), HL(pct + '%'));
+  }
+  else if(cat === 'special_divine'){
+    // 神之賜福:Lv5(內4) 能量-1; Lv10(內9) 能量-1+免疫倒下
+    if(skLv >= 9) fd += '<br>★ 升級加成: ' + HL('能量消耗 -1, 目標額外免疫 1 次倒下');
+    else if(skLv >= 4) fd += '<br>★ 升級加成: ' + HL('能量消耗 -1');
+  }
+  else if(cat === 'special_misfortune'){
+    // 轉禍為福:每升3級+1次
+    const times = 1 + Math.floor(skLv / 3);
+    fd = fd.replace(/受傷時/, '受傷時 (' + HL(times) + ' 次/回合)');
+  }
+  else if(cat === 'special_rising'){
+    // 崛起鬥志:每升2級全屬性+1
+    const bonus = 5 + Math.floor(skLv / 2);
+    fd = fd.replace(/全屬性\s*\+5/g, '全屬性 +' + HL(bonus))
+           .replace(/各\s*\+5/g, '各 +' + HL(bonus));
+    if(skLv >= 9) fd += '<br>★ 升級加成: ' + HL('發動次數 +1 (共 2 次)');
+  }
+  else if(cat === 'special_spotlight'){
+    // 舞台聚光燈:每升3級+1人
+    const n = 1 + Math.floor(skLv / 3);
+    fd = fd.replace(/1\s*名(?=對手|目標)/g, HL(n) + ' 名');
+  }
+  else if(cat === 'special_sprint'){
+    // 起跑衝刺:每升3級+1回合
+    const d = 5 + Math.floor(skLv / 3);
+    fd = fd.replace(/5\s*回合/g, HL(d) + ' 回合');
+  }
+  else if(cat === 'special_tarot_sell'){
+    // 命運塔羅牌:每升3級販賣能量+1
+    const bonus = Math.floor(skLv / 3);
+    if(bonus > 0) fd += '<br>★ 升級加成: 販賣物品時額外 +' + HL(bonus) + ' 能量';
+  }
+  else if(cat === 'special_time_pause'){
+    // 時間暫停:Lv5 能量-1, Lv10 -2
+    const costDown = skLv >= 9 ? 2 : skLv >= 4 ? 1 : 0;
+    if(costDown > 0) fd += '<br>★ 升級加成: 能量消耗 -' + HL(costDown);
+  }
+  else if(cat === 'special_time_rewind'){
+    // 時間倒轉:基礎1次, 每升3級+1次
+    const u = 1 + Math.floor(skLv / 3);
+    fd = fd.replace(/1\s*次/g, HL(u) + ' 次');
+  }
+  else if(cat === 'special_zoo'){
+    // 動物守護:基礎10%, 每升1級+1%, 上限基礎40%+4%/級
+    const pct = 10 + skLv;
+    const cap = 40 + skLv * 4;
+    fd = fd.replace(/10\s*%/g, HL(pct + '%'))
+           .replace(/40\s*%/g, HL(cap + '%'));
+  }
+  // 無匹配 cat → 不修改 fd,但仍加 Lv 標籤
+  return fd + _lvTag;
+}
+
 function _getSkUpgradeBadge(skillName, skLv){
   const def = (typeof SKILL_UPGRADE_DEF !== 'undefined') ? SKILL_UPGRADE_DEF[skillName] : null;
   if(!def) return '效果+' + (skLv*5) + '%';
@@ -37528,6 +38482,23 @@ function _getSkUpgradeBadge(skillName, skLv){
     const rate = Math.min(100, 60 + (skLv||0)*3);
     const dur = (skLv||0) >= 9 ? 3 : 2;
     return rate + '% 睡眠 ' + dur + ' 回合,解 1 不利';
+  }
+  // ★ v1.0.20260424.0700 — 大聲啼哭:75%+2%/級, 降低 10%+1%/級
+  if(cat==='special_cry'){
+    const rate = Math.min(100, 75 + (skLv||0)*2);
+    const reduce = 10 + (skLv||0);
+    return rate + '% 機率,攻/特-' + reduce + '%';
+  }
+  // ★ v1.0.20260424.0700 — 午睡時間:護盾 50+5/級, 恢復 25%+5%/級
+  if(cat==='special_nap'){
+    const heal = 25 + (skLv||0)*5;
+    const shieldHp = 50 + (skLv||0)*5;
+    return '護盾 ' + shieldHp + ', 每回合恢復 ' + heal + '%HP';
+  }
+  // ★ v1.0.20260424.0700 — 愛護校犬:每級恢復量+5%(基礎100%特技)
+  if(cat==='special_dogregen'){
+    const pct = 100 + (skLv||0)*5;
+    return '隱身10回合,每回合恢復特技×' + pct + '%';
   }
   return '效果+' + (skLv*5) + '%';
 }
@@ -37745,6 +38716,23 @@ function buildSkillLvTable(skillName, currentLv) {
       const rate = Math.min(100, 60 + lv*3);
       const dur = lv >= 9 ? 3 : 2;
       effectText = rate + '% 睡眠 ' + dur + ' 回合 + 解我方 1 不利' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260424.0700 — 大聲啼哭:75%+2%/級成功率, 降低 10%+1%/級
+    else if(cat==='special_cry'){
+      const rate = Math.min(100, 75 + lv*2);
+      const reduce = 10 + lv;
+      effectText = '全體 HP10% 傷害 + ' + rate + '% 機率使其 攻/特 -' + reduce + '%（不可堆疊，2回合）' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260424.0700 — 午睡時間:護盾 50+5/級, 恢復 25%+5%/級
+    else if(cat==='special_nap'){
+      const heal = 25 + lv*5;
+      const shieldHp = 50 + lv*5;
+      effectText = '睡眠4回合,護盾 ' + shieldHp + ',每回合恢復 ' + heal + '% HP' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260424.0700 — 愛護校犬:每級+5%每回合恢復量(基礎100%特技)
+    else if(cat==='special_dogregen'){
+      const pct = 100 + lv*5;
+      effectText = '隱身10回合 + 每回合恢復 特技×' + pct + '% HP' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     } else {
       effectText = def.label;
     }
@@ -37814,6 +38802,9 @@ const HERO_CATEGORIES_OVERRIDE = {
   '程式設計師':  ['dmg','heal','ctrl'],
   '時空法師':    ['ctrl'],
   '電腦繪圖師':  ['dmg','ctrl'],
+  // ★ v1.0.20260424.0710 — 小力(回復), 幼兒園小孩(控場)
+  '小力':        ['heal'],
+  '幼兒園小孩':  ['ctrl'],
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -37840,6 +38831,9 @@ const HERO_HEX_OVERRIDE = {
   '神偷':        { heal: 1, ctrl: 7 },
   '舞者':        { heal: 2, ctrl: 7 },
   '吟遊詩人':    { heal: 8, ctrl: 7 },
+  // ★ v1.0.20260424.0710 — 小力(回復+坦克), 幼兒園小孩(控場)
+  '小力':        { heal: 10, ctrl: 1 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合恢復=回復)
+  '幼兒園小孩':  { heal: 2, ctrl: 10 },   // 大聲啼哭(降攻特) + 午睡時間(隱身) + 夢境時光(降攻特AOE)
 };
 
 // ★ 回傳英雄的分類陣列（可有多個）
@@ -37985,7 +38979,11 @@ function _buildHeroGrid() {
             <div style="height:100%;width:${expPct}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
         ` : `<div style="font-size:26px;color:#445;">🔒 未收錄</div>`}
-        ${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name) && !(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🎪 活動限定</div>` : ''}
+        ${(typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name) && !(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))) ? (
+          (name === '小力' || name === '幼兒園小孩')
+            ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🏅 答題獎章獲得</div>`
+            : `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ff99cc;background:rgba(255,100,180,0.15);border:1.5px solid rgba(255,120,180,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🎪 活動限定</div>`
+        ) : ''}
         ${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ffcc44;background:rgba(255,180,50,0.15);border:1.5px solid rgba(255,200,60,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</div>` : ''}
       </div>
       ${isUnlocked && _heroStatPoints[name] > 0 ? `<div style="position:absolute;top:8px;right:8px;background:#ff3333;color:#fff;font-size:22px;font-weight:900;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">${_heroStatPoints[name]}</div>` : ''}
@@ -38197,7 +39195,8 @@ function _renderHeroDetail(name, box) {
     <!-- 名稱 + 角色簡介（並排）-->
     <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
       <div style="flex:0 0 auto;">
-        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))?'<span style="font-size:22px;color:#ffcc44;background:rgba(255,180,50,0.2);border:1.5px solid rgba(255,200,60,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</span>':((typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name))?'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🎪 活動獲得</span>':'')}</div>
+        <div style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${name}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))?'<span style="font-size:22px;color:#ffcc44;background:rgba(255,180,50,0.2);border:1.5px solid rgba(255,200,60,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</span>':((typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name))?((name==='小力'||name==='幼兒園小孩')?'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🏅 答題獎章獲得</span>':'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🎪 活動獲得</span>'):'')}</div>
+        ${(!_heroIsUnlocked && (name === '幼兒園小孩' || name === '小力')) ? `<div style="margin:6px 0 10px;padding:10px 16px;background:rgba(255,200,80,0.12);border:2px solid rgba(255,200,80,0.5);border-radius:10px;font-size:20px;color:#ffe066;line-height:1.5;font-weight:600;">🔓 <b>解鎖條件：</b>${name === '幼兒園小孩' ? '完成「<b style=\"color:#ffaadd;\">照顧與陪伴幼兒</b>」題庫所有 20 題，且全部答對(正確率 100%)' : '完成「<b style=\"color:#ffaadd;\">領養與照顧狗狗</b>」題庫所有 20 題，且全部答對(正確率 100%)'}</div>` : ''}
         <div style="font-size:32px;color:#88aaff;margin-bottom:6px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
         ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
@@ -38289,15 +39288,16 @@ function _renderHeroDetail(name, box) {
         // ★ 檢查是否為不可升級技能
         const _uDef = (typeof SKILL_UPGRADE_DEF !== 'undefined') ? SKILL_UPGRADE_DEF[sk.n] : null;
         const _noUp = _uDef && _uDef.cat === 'no_upgrade';
-        const fd = sk.fd || sk.d;
+        // ★ v1.0.20260424.0630 — fd 內含當前等級數值,用紅色標示;移除單獨的黃色徽章
+        const _origFd = sk.fd || sk.d || '';
+        const fd = (typeof _renderSkillFdWithLv === 'function')
+          ? _renderSkillFdWithLv(sk.n, _origFd, skLv) : _origFd;
         return `<div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px 18px;border:1px solid rgba(255,255,255,0.12);">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
             <span style="font-size:28px;font-weight:800;color:#ffe8a0;">${sk.n}</span>
             <span style="font-size:22px;color:#4a9eff;">🔷${sk.c}</span>
             ${sk.p?'<span style="font-size:20px;color:#aaa;background:rgba(100,100,100,0.3);border-radius:6px;padding:2px 8px;">[被動]</span>':''}
             ${_noUp?'<span style="font-size:20px;color:#ffaa77;background:rgba(255,150,80,0.15);border-radius:6px;padding:2px 10px;">🚫 不可升級</span>':''}
-            ${!_noUp && skLv>0?`<span style="font-size:20px;color:#ffcc44;background:rgba(255,200,0,0.15);border-radius:6px;padding:2px 10px;">Lv.${skLv+1} ${_getSkUpgradeBadge(sk.n, skLv)}</span>`:''}
-            ${!_noUp && maxed?`<span style="font-size:20px;color:#ffcc44;font-weight:900;">MAX</span>`:''}
             ${_heroIsUnlocked && !_noUp && !maxed && backpackGet('skill_upgrade_book')>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
           </div>
           <div style="font-size:24px;color:#ffffff;line-height:1.5;">${fd}</div>
@@ -40099,6 +41099,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
     // ★ 獎章系統：答題觸發
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
+    // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
+    try{ _trackUnlockHeroProgress(window._miniQuizCurrentQ); }catch(e){}
     // ★ 答對音效：使用 boss 戰相同的 sfx-quiz-correct
     try{ beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); }catch(e){}
     try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.63;_csfx.play().catch(()=>{});} }catch(e){}
@@ -41850,6 +42852,9 @@ const MEDAL_DEFS = [
   { id:'first_shop',        icon:'🛒', name:'第一筆消費',     desc:'在超商第一次購買道具',           cat:'其他' },
   { id:'coins_10000',       icon:'💰', name:'小有積蓄',       desc:'知識幣存量首次突破10000枚',      cat:'其他' },
   { id:'coins_50000',       icon:'💎', name:'富甲一方',       desc:'累積獲得知識幣50000枚（總計）',  cat:'其他' },
+  // ★ v1.0.20260424.0660 — 解鎖活動英雄成就(獎勵:解鎖角色)
+  { id:'unlock_kid',        icon:'👶', name:'幼兒守護者',     desc:'「照顧與陪伴幼兒」題庫所有題目都答對(20題正確率100%)，解鎖【幼兒園小孩】', cat:'其他' },
+  { id:'unlock_xiaoli',     icon:'🐕', name:'忠犬好夥伴',     desc:'「領養與照顧狗狗」題庫所有題目都答對(20題正確率100%)，解鎖【小力】',     cat:'其他' },
   // ═══════════════════════════════════════════════
   // ★ v1.0.20260421.3000 — 日本關成就 × 53
   // ═══════════════════════════════════════════════
@@ -41935,6 +42940,9 @@ let _medalStats = {
   jpCollectCounts: { cucumber:0, onigiri:0, ice:0, marble:0 },
   jpPetBattles: 0,
   jpTreasuresConsumed: false,  // 曾用過一次三神器弱化通關
+  // ★ v1.0.20260424.0660 — 解鎖活動英雄成就追蹤(每個 id 答對一次就記錄)
+  careInfantPerfect: {},  // {9301:true, 9302:true, ...} 答對 20 題 → 解鎖幼兒園小孩
+  dogCarePerfect:    {},  // {9401:true, 9402:true, ...} 答對 20 題 → 解鎖小力
 };
 
 function _loadMedals(){
@@ -41971,6 +42979,60 @@ function _unlockMedal(id){
   if(def){
     _setMedalDot(true);
     setTimeout(()=>{ _showMedalCelebration(def); }, 400);
+  }
+}
+
+// ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態並解鎖角色
+function _trackUnlockHeroProgress(q){
+  if(!q || !q.subject) return;
+  const _heroUnlock = (heroName) => {
+    try{
+      // 用標準 API 寫入解鎖列表
+      const _list = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      if(!_list.includes(heroName)){
+        if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(heroName);
+      }
+      log(`🎉 [成就解鎖] 全題答對「${q.subject}」 → 獲得活動英雄【${heroName}】!`);
+      try{ bannerFX(null, '🎉 解鎖新英雄:' + heroName + '!', '#ffe066', 2000); }catch(e){}
+    }catch(e){ console.warn('解鎖英雄失敗', e); }
+  };
+  // 照顧與陪伴幼兒 → 幼兒園小孩
+  if(q.subject === '照顧與陪伴幼兒'){
+    _medalStats.careInfantPerfect = _medalStats.careInfantPerfect || {};
+    _medalStats.careInfantPerfect[q.id] = true;
+    _saveMedals();
+    const _total = (typeof ADV_QUIZ_CARE_INFANT !== 'undefined') ? ADV_QUIZ_CARE_INFANT.length : 20;
+    const _correct = Object.keys(_medalStats.careInfantPerfect).length;
+    if(_correct >= _total){
+      // ★ 達成 20 題全對:解鎖成就 + 解鎖英雄(只第一次)
+      if(!_medals['unlock_kid']){
+        _unlockMedal('unlock_kid');
+        _heroUnlock('幼兒園小孩');
+      }
+      // ★ v1.0.20260424.0680 — 重置進度,讓下次重玩時題庫重新洗牌可從頭再來
+      _medalStats.careInfantPerfect = {};
+      _saveMedals();
+      try { log(`🎯 [照顧與陪伴幼兒] 已全部答對!題庫重置,可重新挑戰。`); } catch(_e){}
+    }
+  }
+  // 領養與照顧狗狗 → 小力
+  else if(q.subject === '領養與照顧狗狗'){
+    _medalStats.dogCarePerfect = _medalStats.dogCarePerfect || {};
+    _medalStats.dogCarePerfect[q.id] = true;
+    _saveMedals();
+    const _total = (typeof ADV_QUIZ_DOG_CARE !== 'undefined') ? ADV_QUIZ_DOG_CARE.length : 20;
+    const _correct = Object.keys(_medalStats.dogCarePerfect).length;
+    if(_correct >= _total){
+      // ★ 達成 20 題全對:解鎖成就 + 解鎖英雄(只第一次)
+      if(!_medals['unlock_xiaoli']){
+        _unlockMedal('unlock_xiaoli');
+        _heroUnlock('小力');
+      }
+      // ★ v1.0.20260424.0680 — 重置進度,讓下次重玩時題庫重新洗牌可從頭再來
+      _medalStats.dogCarePerfect = {};
+      _saveMedals();
+      try { log(`🎯 [領養與照顧狗狗] 已全部答對!題庫重置,可重新挑戰。`); } catch(_e){}
+    }
   }
 }
 
@@ -43172,6 +44234,297 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0740', brief:[
+    '⚗️ 商店新增「極限重置秘藥」5000 幣 / 每日限購1顆',
+    '🏷️ 每日特價系統:每天 08:00 隨機抽一樣商品 7 折',
+  ], items:[
+    '【1. 極限重置秘藥】',
+    '  - 商品 id: burst_reset_potion',
+    '  - 5000 幣 / 每日限購 1 顆',
+    '  - 使用後可重置 1 名英雄的極限爆發等級至 0',
+    '  - 並完整退還已消耗的「超越極限果實」(每等級退 1 顆)',
+    '  - 退還果實受背包 99 上限保護',
+    '  - 場上英雄的 _burstLvAdv 同步歸零',
+    '【2. 每日特價系統】',
+    '  - 每天台灣時間 08:00 (UTC 00:00) 重置',
+    '  - 隨機抽一個可購買商品打 7 折',
+    '  - 排除一次性已擁有的商品(避免抽中無效)',
+    '  - 特價商品自動排在最前面,醒目展示:',
+    '    • 紅色發光邊框',
+    '    • 標籤:🏷️ 7 折特價中',
+    '    • 顯示:劃掉的原價 + 紅色發光的折扣價',
+    '  - 詳細介紹視窗也顯示折扣資訊',
+    '  - 折扣價計算: round(原價 × 0.7)',
+    '  - discountId 儲存在 _shopDailyData 中,跨日自動重置',
+    '【實作位置】',
+    '  - BACKPACK_ITEM_DEF: line ~34499',
+    '  - SHOP_PRODUCTS: line ~34593',
+    '  - useBackpackItem(burst_reset_potion): line ~37165',
+    '  - _shopGetTodayDiscountId / _shopGetEffectivePrice: line ~36841',
+    '  - _renderShopProducts: line ~36540',
+    '  - _showShopDetail: line ~36651',
+  ] },
+  { ver:'v1.0.20260424.0730', brief:[
+    '👶 新增幼兒園小孩 LV10 第二款肖像「女孩」',
+    '🐕 商店新增校犬小力付費肖像「原始本能」(3000幣)',
+  ], items:[
+    '【1. 幼兒園小孩 LV10 女孩肖像】',
+    '  - id: kid_girl_lv10',
+    '  - 圖檔: 幼兒園小孩LV10女孩.png',
+    '  - 解鎖條件: 與男孩版同等(LV10 自動解鎖)',
+    '  - 玩家可在圖鑑切換男/女兩個版本',
+    '【2. 商店新增小力付費肖像】',
+    '  - 商品 id: xiaoli_primal_portrait',
+    '  - 肖像 id: primal_instinct (原始本能)',
+    '  - 圖檔: 小力3.png',
+    '  - 售價: 3000 知識幣',
+    '  - 限購 1 次,購買即永久解鎖',
+    '  - 描繪「校犬小力潛藏在毛茸茸外表下的野性靈魂」',
+  ] },
+  { ver:'v1.0.20260424.0721', brief:[
+    '🐛 修正新角色登場視窗:小力與幼兒園小孩的天賦無法顯示',
+  ], items:[
+    '【問題】HERO_TRAIT 結構使用 name/desc/fd 欄位,',
+    '       而新視窗誤用 n/d 欄位導致天賦欄空白',
+    '【修正】優先讀取 name/fd/desc,並 fallback 到 n/d',
+    '【小力天賦】🐕 關心:隊友受傷時有 35% 機率用特技幫他恢復 HP',
+    '【幼兒園小孩天賦】👶 賣萌:存活時對手全體攻擊和特技 -20%',
+    '                  (最多 5 回合)',
+  ] },
+  { ver:'v1.0.20260424.0720', brief:[
+    '🎉 新增「新角色登場！」展示視窗',
+    '📍 進入冒險選關頁時自動彈出',
+    '⏱ 支援「今日不再顯示」,隔日 00:00 後重新提示',
+  ], items:[
+    '【1. 視窗結構】',
+    '  - 約佔螢幕 80%(width:80vw / height:80vh, max 1280×900)',
+    '  - 三層結構:標題列(置頂) + 滾動內容區 + 按鈕列(置底)',
+    '  - 標題列「🎉 新角色登場!」+ 角標「💖 答題獎章獲得限定」',
+    '【2. 內容(可滾動)】',
+    '  ① 開場介紹文字(教育議題說明)',
+    '  ② 小力卡片:大頭像 + 名稱 + 職業定位 + HP/攻/特/速 + S1/S2 + 爆發',
+    '  ③ 幼兒園小孩卡片:同上格式',
+    '  ④ 獲得方式說明:',
+    '     - 兩位都不會在 BOSS 戰隨機解鎖',
+    '     - 小力 → 「領養與照顧狗狗」 20 題全對',
+    '     - 幼兒園小孩 → 「照顧與陪伴幼兒」 20 題全對',
+    '     - 已答對題目永久記錄,中途離開不清除進度',
+    '     - 入口位置提示(冒險選 BOSS → 養護專題分類)',
+    '【3. 視覺設計】',
+    '  - 漸變紫色主題 + 金色邊框',
+    '  - 大頭像有發光呼吸動畫',
+    '  - 標題 ✨ 閃爍動畫,標題色金黃',
+    '  - 點擊背景遮罩可關閉(不觸發今日不顯示)',
+    '【4. 按鈕】',
+    '  - 「✕ 關閉」(灰色):本次關閉,下次仍會顯示',
+    '  - 「🌙 今日不再顯示」(紫色):記錄到 localStorage,',
+    '    隔天 00:00 後才會再次顯示',
+    '  - hover 浮起特效',
+  ] },
+  { ver:'v1.0.20260424.0710', brief:[
+    '🐕 校犬小力六邊形:回 10、控 1(回復+坦克職業定位)',
+    '👶 幼兒園小孩六邊形:回 2、控 10(控場職業定位)',
+  ], items:[
+    '【1. 小力職業定位:回復、坦克】',
+    '  - HERO_HEX_OVERRIDE: heal=10, ctrl=1',
+    '  - HP=99(自帶滿格體=10),自然體現坦克屬性',
+    '  - 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合恢復=回復)',
+    '  - HERO_CATEGORIES_OVERRIDE: ["heal"](圖鑑分類標籤)',
+    '【2. 幼兒園小孩職業定位:控場】',
+    '  - HERO_HEX_OVERRIDE: heal=2, ctrl=10',
+    '  - 大聲啼哭(降攻特+不可堆疊) + 午睡時間(自我隱身)',
+    '  - 夢境時光爆發(全體攻特-25%持續多回合)',
+    '  - HERO_CATEGORIES_OVERRIDE: ["ctrl"](圖鑑分類標籤)',
+  ] },
+  { ver:'v1.0.20260424.0700', brief:[
+    '🐕 校犬小力技能升級邏輯補完(忠犬守護/愛護校犬)',
+    '👶 幼兒園小孩技能升級邏輯補完(大聲啼哭/午睡時間)',
+    '💤 夢境時光修正:25%降低×可疊加回合,改 1 回合(每升+1)',
+  ], items:[
+    '【1. 忠犬守護】每升 1 級,傷害轉移率+5%(基礎 50%, Lv10 達 95%)',
+    '【2. 愛護校犬】原效果保留(隱身10回合),新增每回合依特技恢復 HP',
+    '  Lv1: 100% 特技值, 每升 1 級+5%(Lv10 達 145%)',
+    '【3. 大聲啼哭】',
+    '  - 降低值: 20% → 10%(基礎),每升 1 級+1%(Lv10 達 28%)',
+    '  - 成功率: 75% 基礎,每升 1 級+2%(Lv10 達 93%)',
+    '  - 不可堆疊:已有啼哭弱化只刷新回合,不重新套用數值',
+    '【4. 午睡時間】每升 1 級,護盾值+5(基礎 50, Lv10 達 95)',
+    '【5. 夢境時光(爆發)】',
+    '  - 舊: 50% 降低,直到醒來(可能永久)',
+    '  - 新: 25% 降低,1 回合(每升 1 級+1 回合,Lv5 達 5 回合)',
+    '  - 解鎖夢境弱化的清除邏輯:回合到期會自動還原 atk/sp',
+    '  - 修正 tickStatus 中 _cryDebuff 還原邏輯被誤包在 _sprint 內的 bug',
+    '  - _dreamDebuff 也加入到期還原邏輯',
+    '【6. 升級表/badge UI】',
+    '  - 新增 special_cry / special_nap / special_dogregen 三個 cat 處理',
+    '  - 圖鑑技能升級表 Lv1~10 各級顯示完整數值',
+    '  - 戰鬥內技能 ? popup 同步顯示當前等級數值(紅色高亮)',
+    '【7. 圖鑑爆發升級表】夢境時光 5 級各自正確的回合數',
+  ] },
+  { ver:'v1.0.20260424.0690', brief:[
+    '🐕 校犬小力 Q 版圖片更新',
+    '🆕 新增小力 LV10、幼兒園小孩 LV10 肖像',
+    '🏅 小力/幼兒園小孩 圖鑑徽章「活動獲得」改為「答題獎章獲得」',
+  ], items:[
+    '【1. 校犬小力初始圖】',
+    '  舊: github.com/clarebox123jp-art/-/main/小力.png',
+    '  新: github.com/clarebox123jp-art/LXPSGAME/main/小力Q版.png',
+    '【2. 新增 LV10 肖像】',
+    '  小力 LV10: 小力LV10.png (id: xiaoli_lv10)',
+    '  幼兒園小孩 LV10: 幼兒園小孩LV10.png (id: kid_lv10)',
+    '  兩個都加 requiresUnlock:true,需玩家解鎖角色後才看得到',
+    '【3. 圖鑑徽章文字】',
+    '  小力 / 幼兒園小孩 → 「🏅 答題獎章獲得」(粉紅色)',
+    '  巫女(同樣是 EVENT_ONLY_HEROES) → 維持「🎪 活動獲得」',
+    '  日本三大 BOSS → 維持「🗾 日本關卡機率獲得」(金色)',
+    '  圖鑑列表卡片 + 詳細頁主標題 兩處都已更新',
+  ] },
+  { ver:'v1.0.20260424.0680', brief:[
+    '📚 照顧/狗狗題庫:已答對的題目持久記錄,跨關卡/離開遊戲都不會重複',
+    '🔁 題目用完自動重洗,不再彈「換題組」視窗',
+    '🎯 集滿 20 題答對 → 解鎖角色 + 重置進度可重玩',
+  ], items:[
+    '【1. 持久化已答對題目】',
+    '  _medalStats.careInfantPerfect / dogCarePerfect 記錄已答對題 id',
+    '  資料存 localStorage + 同步 Firebase(透過既有的 _saveMedals)',
+    '  滅團、回到學校、離開遊戲都不會清除進度',
+    '【2. advGetQuizPool 特殊邏輯】',
+    '  進「照顧/狗狗」題庫時:',
+    '    - 從 20 題完整題庫剔除已答對的(_correctSet)',
+    '    - 剩下未答對的隨機排列,做為本場題庫',
+    '    - 若已全部答對(理論上會在解鎖時就重置,這是 fallback) → 給全 20 題隨機',
+    '【3. advPickQuestion 特殊邏輯】',
+    '  本場題目用完時:不彈「重選題組」視窗,自動呼叫 advGetQuizPool 重洗',
+    '  確保答對流程順暢,不會被中斷',
+    '【4. 解鎖後自動重置】',
+    '  20 題全部答對 → 觸發解鎖 + 解鎖後清空 careInfantPerfect/dogCarePerfect',
+    '  讓玩家下次重玩此題庫時,可重新從 20 題隨機開始',
+    '【5. 玩家流程】',
+    '  ① 第一次玩 → 隨機 20 題 → 答對 18 題、答錯 2 題 → 進度 18/20 已存',
+    '  ② 滅團/離開 → 進度仍然是 18/20',
+    '  ③ 再次進入此題庫 → 跳過那 18 題,只出剩下 2 題 + 之前答錯的可能再出',
+    '  ④ 答對全 20 題 → 解鎖角色 + 進度重置',
+    '  ⑤ 想再玩 → 又是全 20 題隨機重新挑戰',
+  ] },
+  { ver:'v1.0.20260424.0670', brief:[
+    '📚 冒險選題庫 UI 加上「照顧與陪伴幼兒」、「領養與照顧狗狗」入口',
+    '💝 新增「養護專題」分類 (粉紅色),這兩題庫歸入此分類',
+  ], items:[
+    '【1. choices 陣列加入新題庫】',
+    '  原 17 個 subject → 19 個',
+    '  選題庫頁面現在可看到「照顧與陪伴幼兒」、「領養與照顧狗狗」',
+    '【2. ADV_GRADE_SCORE 計分】',
+    '  兩個新 subject 都設 40 分基礎(跟關島交流、木柵動物園相同)',
+    '【3. 新增「養護專題」群組(粉紅色 #ff99cc)】',
+    '  跟「動物園」「國際教育」「課堂複習」「生活常識」「一般學科」並列',
+    '  預期結果:玩家會看到「💝 養護專題」分組,內含這兩題庫',
+    '【4. 配套機制(已在 v0660 完成)】',
+    '  ✅ 答對全部 20 題 → 自動觸發成就 + 解鎖角色',
+    '  ✅ 圖鑑詳細頁顯示解鎖條件提示',
+  ] },
+  { ver:'v1.0.20260424.0660', brief:[
+    '📚 新增兩個專屬題庫:照顧與陪伴幼兒、領養與照顧狗狗(各 20 題)',
+    '🏆 新增兩個成就獎勵:解鎖【幼兒園小孩】、解鎖【小力】',
+    '📖 英雄圖鑑加上未解鎖時的解鎖條件提示',
+  ], items:[
+    '【1. 新題庫】',
+    '  ADV_QUIZ_CARE_INFANT(20 題,id 9301~9320):嬰幼兒安全照顧、餵食、互動',
+    '  ADV_QUIZ_DOG_CARE(20 題,id 9401~9420):狗狗領養、健康、訓練、零食安全',
+    '  advGetQuizPool 加上 subject 分支處理',
+    '【2. 新成就】',
+    '  unlock_kid: 完成「照顧與陪伴幼兒」全題答對 → 解鎖幼兒園小孩',
+    '  unlock_xiaoli: 完成「領養與照顧狗狗」全題答對 → 解鎖小力',
+    '【3. 追蹤邏輯】',
+    '  _medalStats 新增 careInfantPerfect / dogCarePerfect 物件',
+    '  每題答對時 _trackUnlockHeroProgress 記錄該題 id,集滿 20 個解鎖角色',
+    '  支援 BOSS 戰 + 小怪戰兩種答題情境',
+    '  解鎖後立即:1) 加入 advSaveUnlockedHero 解鎖列表 2) 觸發成就慶祝',
+    '【4. 圖鑑提示】',
+    '  小力 / 幼兒園小孩 未解鎖時,英雄圖鑑詳細頁顯示金色提示框',
+    '  「🔓 解鎖條件:完成「<題庫>」所有 20 題,且全部答對(正確率 100%)」',
+  ] },
+  { ver:'v1.0.20260424.0650', brief:[
+    '🐛 修正軍師出奇制勝/神偷盜取/急速閃躲 升級顯示錯誤',
+  ], items:[
+    '【1. 出奇制勝 regex 修正】',
+    '  舊 regex: /抽\\s*3\\s*張/ (中間「取」字無法匹配)',
+    '  新 regex: /抽取?\\s*3\\s*張/ (「取」可選,正確匹配「抽取3張」)',
+    '【2. 盜取 fd 全面更新】',
+    '  舊 fd 仍是「特技低於自己時奪物品卡,否則盜5點特技」(舊版邏輯)',
+    '  新 fd:「彈出選擇視窗,可偷物品/寵物/狀態,可偷 1 次」',
+    '  special_steal 替換邏輯:基礎可偷 N 次,Lv5=2 次, Lv10=3 次',
+    '【3. 急速閃躲 fd 修正】',
+    '  改為描述「對手命中率剩下 N%」(對手命中下降,而非自己閃躲率上升)',
+    '  Lv1: 30%、Lv5: 22%、Lv10: 12%',
+    '【4. Lv1 不 highlight 紅色】',
+    '  Lv1 是基礎值,沒升級,改用「白色 bold」標示(不是紅色)',
+    '  Lv2 起才標紅色(代表升級加成)',
+    '  避免玩家誤以為基礎值就是「升級的數字」',
+    '【測試已通過】',
+    '  6 個技能 × 3 個等級 = 18 個案例全部正確',
+    '  出奇制勝 Lv1=白3,Lv5=紅4,Lv10=紅5',
+    '  盜取 Lv1=白1,Lv5=紅2,Lv10=紅3',
+    '  急速閃躲 Lv1=白30%,Lv5=紅22%,Lv10=紅12%',
+  ] },
+  { ver:'v1.0.20260424.0640', brief:[
+    '🎨 補完 13 個 cat / 22 個技能的 fd 升級顯示處理',
+  ], items:[
+    '【v0630 漏掉的 cat → v0640 補完】',
+    '  dur (持續回合類): 催眠之歌、花粉迷眼、土坑陷阱、黏液噴濺、地獄之火、極限閃光、魅惑之舞',
+    '  energy (充能類): 充能',
+    '  shield (護盾類): 護盾術、筍之守護、色彩噴濺',
+    '  threshold_pct: 靈魂收割 (HP 門檻 +1%/級)',
+    '  special_divine: 神之賜福 (Lv5 -1 能量, Lv10 +免疫倒下)',
+    '  special_misfortune: 轉禍為福 (受傷回能次數)',
+    '  special_rising: 崛起鬥志 (復活時全屬性 +N)',
+    '  special_spotlight: 舞台聚光燈 (嘲諷+失明 N 名)',
+    '  special_sprint: 起跑衝刺 (持續回合)',
+    '  special_tarot_sell: 命運塔羅牌 (販賣能量+N)',
+    '  special_time_pause: 時間暫停 (能量 -N)',
+    '  special_time_rewind: 時間倒轉 (使用次數)',
+    '  special_zoo: 動物守護 (每寵物減傷%+上限)',
+    '【現在涵蓋率】',
+    '  41/41 cat 類別都有對應的 fd 升級顯示邏輯',
+    '  全部技能在英雄圖鑑、戰鬥中、邀請預覽都會顯示當前等級的真實數值',
+  ] },
+  { ver:'v1.0.20260424.0630', brief:[
+    '🎨 技能說明融入當前等級數值,升級的數字用紅色標出',
+    '🟡 移除戰鬥/英雄圖鑑/邀請預覽中的黃色升級徽章(改用 fd 內顏色)',
+  ], items:[
+    '【新 helper:_renderSkillFdWithLv(name, fd, skLv)】',
+    '  接收技能名+原 fd+當前等級,動態替換 fd 內的數字為當前等級的真實值',
+    '  替換的數字用紅色 #ff8866 + bold 標示',
+    '  結尾加上 [Lv.N] 標籤(原黃底紅字)',
+    '【涵蓋的 cat 種類】',
+    '  dmg/heal/mixed - 通用 +5%/級',
+    '  special_fireball - 火焰球: 主傷+5%/級, 追加+1/級',
+    '  special_blizzard - 暴風雪: +5% 傷害, +3% 冰凍率',
+    '  special_random_shot - 亂槍射擊: 攻擊次數變化',
+    '  special_paradise - 天堂樂章: 治療量+復活人數',
+    '  special_kungfu / special_assassin - (攻擊+特技)+5%/級',
+    '  special_kuyou_fox / special_youkofox - 玉藻前 S1/S2',
+    '  special_steal - 盜取次數',
+    '  special_dodge - 急速閃躲機率',
+    '  special_sanctuary - 聖殿領域 Lv5+1 回合',
+    '  special_passion - 熱情之舞 +1 回合/級',
+    '  special_strategy - 出奇制勝抽卡數',
+    '  special_advisor - 兵貫神速 Lv5/Lv10 加成',
+    '  special_mimic - 模仿 Lv5/Lv10 +HP',
+    '  special_summon - 動物召喚 +5% +攻擊次數',
+    '  special_nio - 仁王挺立 -2%/級',
+    '  special_dribble - 運球 Lv10+1 回合',
+    '  special_bomb - 定時炸彈 +5/級',
+    '  special_lullaby - 搖籃曲機率+回合',
+    '  special_bat_hits - 召喚蝙蝠群 攻擊次數',
+    '  special_seal - 物品查封/警示鳴槍/黑暗封印 機率',
+    '  pct_buff/pct_debuff - 挺身守護等百分比類',
+    '【已套用的位置】',
+    '  ✅ 戰鬥中卡片(? 按鈕點開的詳細說明)',
+    '  ✅ 英雄圖鑑詳細頁(技能說明)',
+    '  ✅ 邀請加入(打贏 BOSS 解鎖英雄時的介紹頁)',
+    '【未套用】',
+    '  魔物圖鑑(管理員指定不動,因魔物技能不會升級)',
+  ] },
   { ver:'v1.0.20260424.0620', brief:[
     '📋 重寫所有 42 個爆發升級表:每一級都顯示完整效果(原本 Lv2~Lv5 只顯示差異,看不到附加效果)',
   ], items:[
@@ -48298,7 +49651,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0620';
+  const CURRENT_VERSION = 'v1.0.20260424.0740';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -48315,7 +49668,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0620';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0740';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
