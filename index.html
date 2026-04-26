@@ -10072,11 +10072,19 @@ function showHeroPickOverlay(){
       .map(n => n.trim())
       .filter(n => n.length > 0);
     _unlockedRaw = [...new Set(_unlockedRaw)];  // 去重
+    // ★ v1.0.20260424.0992 — 真正根因修復:大天狗/酒吞童子/玉藻前/巫女/八岐大蛇 雖然存在於
+    //   BOSS_NAMES(line ~29191 的 push 邏輯讓系統能把它們當 BOSS 識別),
+    //   但這 4 隻是「召喚稀有角色」,玩家解鎖後應該能在冒險選英雄頁使用!
+    //   解法:排除 SUMMON_RARE_HEROES 的 BOSS_NAMES 檢查
+    const _SUMMON_RARES_FOR_PICK = (typeof SUMMON_RARE_HEROES !== 'undefined')
+      ? SUMMON_RARE_HEROES
+      : ['大天狗','玉藻前','酒吞童子','巫女'];
     const unlockedExtra = _unlockedRaw.filter(n =>
       n &&
       typeof HERO_DB !== 'undefined' && HERO_DB[n] &&  // 確保是合法英雄(有 stat 定義)
       !basePool.includes(n) &&
-      !BOSS_NAMES.includes(n)
+      // BOSS_NAMES 檢查:若是 SUMMON_RARE_HEROES 之一則不過濾(它們雖在 BOSS_NAMES 但是解鎖角色)
+      (!BOSS_NAMES.includes(n) || _SUMMON_RARES_FOR_PICK.includes(n))
     );
     _heroPickPool = [...basePool, ...unlockedExtra];
     // ★ 診斷 log:幫助玩家回報問題時提供資訊
@@ -11010,7 +11018,14 @@ function randomTeamPick(){
     // ★ 合併初始池 + 已解鎖英雄（排除魔物），確保所有英雄都有機會被選入
     const basePool = (ADV_HERO_POOL[_adventureStage] || []).slice();
     const unlocked = (typeof advGetUnlockedHeroes==='function') ? advGetUnlockedHeroes() : [];
-    const fullPool = [...new Set([...basePool, ...unlocked])].filter(n => !BOSS_NAMES.includes(n));
+    // ★ v1.0.20260424.0992 — 同步修復:SUMMON_RARE_HEROES(大天狗/酒吞童子/玉藻前/巫女)雖在 BOSS_NAMES,
+    //   但是召喚解鎖角色,應該允許出現在隨機補滿池中
+    const _summonRaresForFill = (typeof SUMMON_RARE_HEROES !== 'undefined')
+      ? SUMMON_RARE_HEROES
+      : ['大天狗','玉藻前','酒吞童子','巫女'];
+    const fullPool = [...new Set([...basePool, ...unlocked])].filter(n =>
+      !BOSS_NAMES.includes(n) || _summonRaresForFill.includes(n)
+    );
     // 保留已選的英雄，補滿剩餘名額
     const keep = _heroPickSelected.filter(n => fullPool.includes(n));
     const need = 4 - keep.length;
@@ -45730,6 +45745,31 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0992', brief:[
+    '🎯 真正根因找到!玉藻前/大天狗/酒吞童子/巫女 在 BOSS_NAMES 列表中,被冒險選英雄頁誤過濾',
+  ], items:[
+    '【根因確認】',
+    '  v0991 加強診斷 log 後玩家回報:',
+    '    [玉藻前] HERO_DB存在? true | basePool? false | BOSS_NAMES? true ← 真兇!',
+    '  → 玉藻前確實在 localStorage 解鎖列表,但因為 BOSS_NAMES 包含它而被過濾掉',
+    '【線索追蹤】',
+    '  原本的 BOSS_NAMES 定義(line ~28001)只包含貓空關 BOSS + 日本關小怪 + 八岐大蛇',
+    '  原本註解寫:「大天狗/酒吞童子/玉藻前 不在此列(作為可解鎖英雄顯示於英雄圖鑑)」',
+    '  但 line ~29191 有後續擴充程式:',
+    '    [\'大天狗\',\'酒吞童子\',\'玉藻前\',\'八岐大蛇\'].forEach(n => BOSS_NAMES.push(n))',
+    '  → 這段是為了讓系統識別它們是 BOSS(用於擊倒判定/獎勵發放等),',
+    '    但「冒險選英雄頁」用 BOSS_NAMES 過濾,導致 4 隻召喚角色(大天狗/酒吞童子/玉藻前/巫女)被排除',
+    '  → 八岐大蛇本來就在原始 BOSS_NAMES,巫女不在 BOSS_NAMES(所以巫女顯示正常)',
+    '  → 但大天狗/酒吞童子/玉藻前 因為 push 的緣故,通通被誤殺',
+    '【修復方案】',
+    '  在「冒險選英雄頁」與「自動補滿池」邏輯中,放寬 BOSS_NAMES 檢查:',
+    '    !BOSS_NAMES.includes(n) || SUMMON_RARE_HEROES.includes(n)',
+    '  即:若該角色在 SUMMON_RARE_HEROES 清單中,即使它存在於 BOSS_NAMES,',
+    '  也視為合法的可選英雄(因為它們是召喚解鎖的稀有角色)',
+    '【修改位置】',
+    '  - showHeroPickOverlay 內 _heroPickPool 構建: line ~10080',
+    '  - 冒險模式自動隨機補滿英雄池: line ~11020',
+  ] },
   { ver:'v1.0.20260424.0991', brief:[
     '🔍 找到「玉藻前等稀有角色不在冒險選英雄列表」的根因 — localStorage 名字含空白',
   ], items:[
@@ -51888,7 +51928,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0991';
+  const CURRENT_VERSION = 'v1.0.20260424.0992';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51905,7 +51945,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0991';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0992';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
