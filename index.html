@@ -1186,16 +1186,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   50%{opacity:0.95;transform:scale(1.1)}
 }
 /* ★ 流星(偶爾) */
-/* ★ v1.0.20260424.1010 — 流星方向左右翻轉:改為由左上往右下劃落
- *   起點:左上 → 移動向量:(+dx, +dy) 往右下
- *   尾巴留在左上(漸變: 右→左 = 頭→尾),所以漸變改為 270deg 反向
- *   transform-origin 用 right center,讓 scaleX 從尾巴(右)向前(左)伸長
- *   旋轉角度改為 -25deg(左下走勢) */
+/* ★ v1.0.20260424.1040 — 流星線條方向與移動方向一致(左上 → 右下)
+ *   移動向量:(+dx, +dy) 往右下,線條角度也應為「左上→右下」斜線
+ *   CSS rotate(+25deg) = 順時針旋轉 = 把水平線變成「左上→右下」斜線(與移動一致)
+ *   尾巴在左上(透明),頭在右下(亮白) → 漸變 90deg(從左 0% 透明 → 右 100% 亮白)
+ *   transform-origin: left center → 尾巴錨在左端,scaleX 從尾巴往右(頭)伸長 */
 @keyframes summonShootingStar{
-  0%{opacity:0;transform:translate(0,0) rotate(-25deg) scaleX(0.5)}
+  0%{opacity:0;transform:translate(0,0) rotate(25deg) scaleX(0.5)}
   10%{opacity:1}
   60%{opacity:0.85}
-  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(-25deg) scaleX(1)}
+  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(25deg) scaleX(1)}
 }
 /* ★ v1.0.20260424.0970 — 河面波紋反光搖晃 */
 @keyframes summonRiverRipple{
@@ -26639,8 +26639,16 @@ window.addEventListener('pagehide', function(e){
     const localKey = window._gUserId ? 'lxps_' + _gUserId + '_progress' : 'lxps_guest_progress';
     localStorage.setItem(localKey, JSON.stringify(data));
     // 同步存快照
-    if(data.advSnapshot && data.advSnapshot.stage){
+    // ★ v1.0.20260424.1030 — 戰鬥已結束則不要存 crash_snapshot
+    //   並且只有「真的有戰鬥資料」才存,避免 fallback 殘留造成下次假的「未完成戰鬥」
+    if(window._advBattleResultShown){
+      try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
+    } else if(data.advSnapshot && data.advSnapshot.stage
+              && data.advSnapshot.p1 && Array.isArray(data.advSnapshot.p1) && data.advSnapshot.p1.length > 0){
       localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot));
+    } else {
+      // 無有效戰鬥資料 → 順便清掉殘留
+      try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
     }
   } catch(e2){}
 });
@@ -27539,6 +27547,17 @@ function _advCheckCrashRecovery(){
     if(!snap || !snap.stage) return;
     // 超過24小時的快照忽略
     if(Date.now() - (snap.ts||0) > 24*60*60*1000){
+      localStorage.removeItem('adv_battle_snap');
+      localStorage.removeItem('adv_crash_snapshot');
+      return;
+    }
+    // ★ v1.0.20260424.1030 — 強化驗證:必須有真的戰鬥資料(p1/p2 陣列且至少跑過 1 回合)
+    //   才算「未完成戰鬥」,否則視為殘留(可能是雲端 fallback)直接清除
+    const _hasBattleData = snap.p1 && Array.isArray(snap.p1) && snap.p1.length > 0
+                         && snap.p2 && Array.isArray(snap.p2) && snap.p2.length > 0;
+    const _hasRoundProgress = (snap.round || 0) >= 1;
+    if(!_hasBattleData || !_hasRoundProgress){
+      try{ console.log('[crash recovery] 快照不含真實戰鬥資料(可能是雲端殘留),已清除'); }catch(_){}
       localStorage.removeItem('adv_battle_snap');
       localStorage.removeItem('adv_crash_snapshot');
       return;
@@ -34623,6 +34642,9 @@ function _buildSafeData() {
     heroPortraitChoice:   _heroPortraitChoice,
     // ★ 冒險進度快照（BOSS崩潰恢復用）
     advSnapshot: (function(){
+      // ★ v1.0.20260424.1030 — 戰鬥已結束(贏了或結算面板顯示過)就不要存快照,
+      //   避免雲端殘留舊資料,玩家下次進入又看到「未完成戰鬥」
+      try{ if(window._advBattleResultShown) return null; }catch(_){}
       // ★ 優先使用最新的戰鬥快照（每回合存一次，含完整 G 狀態）
       try{
         const _raw = localStorage.getItem('adv_battle_snap');
@@ -34631,8 +34653,13 @@ function _buildSafeData() {
           if(_bs && _bs.stage && (Date.now()-(_bs.ts||0)) < 24*60*60*1000) return _bs;
         }
       }catch(e){}
-      // fallback：無戰鬥快照時，只存基本冒險設定
-      if(!_adventureMode && !_adventureStage) return null;
+      // ★ v1.0.20260424.1030 — fallback 不再無條件回傳:
+      //   只有在戰鬥真的進行中(G.p1/G.p2 存在 + 至少跑了 1 回合 + 還沒結算)才存 fallback,
+      //   避免「在選關頁停留」也把 stage 當快照存進去
+      if(!_adventureMode || !_adventureStage) return null;
+      const _inActiveBattle = (typeof G !== 'undefined' && G && Array.isArray(G.p1) && Array.isArray(G.p2)
+                                && G.p1.length > 0 && G.p2.length > 0 && (G.round||0) >= 1);
+      if(!_inActiveBattle) return null;
       return {
         stage:      _adventureStage,
         grade:      _advPlayerGrade      || '',
@@ -34869,8 +34896,25 @@ function _applySafeData(raw) {
   if(typeof data.advBestScore === 'number' && data.advBestScore > 0)
     _advBestScore = Math.max(_advBestScore || 0, data.advBestScore);
   // ★ 冒險快照：還原到 localStorage，供重新開啟時恢復冒險進度
+  // ★ v1.0.20260424.1030 — 強化驗證:只有快照含「完整戰鬥資料」(p1/p2 陣列)才寫回,
+  //   避免雲端殘留的「無戰鬥資料 fallback」造成下次進遊戲看到假的「未完成戰鬥」
   if(data.advSnapshot && data.advSnapshot.stage) {
-    try { localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot)); } catch(e) {}
+    const _hasBattleData = data.advSnapshot.p1 && Array.isArray(data.advSnapshot.p1) && data.advSnapshot.p1.length > 0
+                          && data.advSnapshot.p2 && Array.isArray(data.advSnapshot.p2) && data.advSnapshot.p2.length > 0;
+    // 還要檢查時效性:超過 24 小時的快照不應再用
+    const _isFresh = data.advSnapshot.ts && (Date.now() - data.advSnapshot.ts) < 24*60*60*1000;
+    if(_hasBattleData && _isFresh){
+      try { localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot)); } catch(e) {}
+    } else {
+      // 雲端有殘留但不完整/過期 → 主動清除本地殘留,避免疑似「未完成戰鬥」
+      try{ localStorage.removeItem('adv_crash_snapshot'); }catch(e){}
+      try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
+      try{ console.log('[雲端載入] advSnapshot 不含完整戰鬥資料(可能是已通關殘留),已清除本地快照'); }catch(_){}
+    }
+  } else {
+    // 雲端沒有 advSnapshot → 確保本地也沒有殘留
+    try{ localStorage.removeItem('adv_crash_snapshot'); }catch(e){}
+    try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
   }
 
   // ★ v1.0.20260422.0109 — 還原日本關進度（三神器 + 貓空解鎖旗標 + 歷史最佳評價）
@@ -37509,12 +37553,13 @@ function _spawnSummonShootingStar(){
     'top:' + startY + '%',
     'width:' + len + 'px',
     'height:2px',
-    // 漸變:右(尾巴,透明)→左(頭,亮白) — 配合 -25deg 旋轉,尾巴朝左上、頭朝右下
-    'background:linear-gradient(270deg,rgba(255,255,255,0) 0%,rgba(220,230,255,0.6) 30%,rgba(255,240,200,1) 80%,rgba(255,255,255,1) 100%)',
+    // ★ v1.0.20260424.1040 — 漸變與 transform-origin 與移動方向一致(左上→右下)
+    // 漸變:左(尾巴,透明)→右(頭,亮白) — 配合 +25deg 旋轉,線條呈「左上→右下」斜線
+    'background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(220,230,255,0.6) 30%,rgba(255,240,200,1) 80%,rgba(255,255,255,1) 100%)',
     'box-shadow:0 0 8px rgba(220,230,255,0.9),0 0 16px rgba(220,230,255,0.5)',
     'border-radius:1px',
-    // 從尾巴端伸長:scaleX 以右端為錨點(right center),讓尾巴留在原處
-    'transform-origin:right center',
+    // 從尾巴端伸長:scaleX 以左端(左上的尾巴)為錨點,讓尾巴留在原處往右下伸出頭
+    'transform-origin:left center',
     '--ssx:' + dx + 'px',
     '--ssy:' + dy + 'px',
     'animation:summonShootingStar ' + dur + 's ease-out forwards',
@@ -45805,6 +45850,69 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1040', brief:[
+    '☄️ 修正流星線條方向與移動方向不一致(線歪錯邊)',
+  ], items:[
+    '【問題】',
+    '  v1010 修流星左右翻轉時改成移動「左上→右下」,',
+    '  但 CSS rotate(-25deg) 在 CSS 中是逆時針旋轉,',
+    '  把水平線條變成「左下→右上」斜線(跟移動方向相反)',
+    '  視覺上流星滑落往右下,但線條卻歪向左上,看起來不對勁',
+    '【修復】',
+    '  - rotate(-25deg) → rotate(+25deg) 改順時針旋轉',
+    '    把水平線變成「左上→右下」斜線(與移動方向一致)',
+    '  - 漸變方向 270deg → 90deg(從左透明到右亮白)',
+    '    線條左端是尾巴(透明),右端是頭(亮白)',
+    '  - transform-origin: right center → left center',
+    '    讓 scaleX 從尾巴(左端)往頭(右端)伸長',
+    '【最終視覺效果】',
+    '  - 流星位置:左上開始,劃向右下',
+    '  - 線條形狀:左上(尾巴透明) → 右下(頭亮白) 斜線',
+    '  - 三者一致:位置移動 / 線條方向 / 漸變光頭尾',
+    '【實作位置】',
+    '  - keyframes summonShootingStar: line ~1188',
+    '  - _spawnSummonShootingStar: line ~37469',
+  ] },
+  { ver:'v1.0.20260424.1030', brief:[
+    '🚨 重大 BUG 修復:每次進遊戲常看到「未完成戰鬥」(明明上次有打完)',
+  ], items:[
+    '【症狀】',
+    '  玩家明明上一場戰鬥已經打完並領完獎勵,但下次進入遊戲又看到',
+    '  「上次未完成的戰鬥」提示。v0910 雖然修了一個漏洞,但根本問題還在。',
+    '【完整 bug 流程追溯】',
+    '  1) 戰鬥到第 5 回合 → gameCloudSave() 把 advSnapshot 上雲(含戰鬥中狀態)',
+    '  2) 玩家打贏了 → 本地 adv_battle_snap 被清除(v0910 修了)',
+    '  3) 玩家領完獎勵繼續玩 → gameCloudSave() 又被觸發。此時 _advBattleResultShown=true',
+    '     但 _buildSafeData() 內 advSnapshot 構建會 fallback 生成「只含 stage 的基本快照」',
+    '     寫到雲端(因為 _adventureMode 仍 true)',
+    '  4) 玩家下次開遊戲 → 載入雲端 → 雲端載入器看到 data.advSnapshot.stage 存在,',
+    '     就無條件把它寫回 localStorage 的 adv_crash_snapshot',
+    '  5) _advCheckCrashRecovery 看到 adv_crash_snapshot 有 stage → 顯示「未完成戰鬥」',
+    '【修復:四重保險】',
+    '  1) _buildSafeData() 內 advSnapshot 構建:',
+    '     - 戰鬥已結束 (_advBattleResultShown=true) → 直接 return null',
+    '     - fallback 加嚴格條件:必須 G.p1/G.p2 都存在且至少跑了 1 回合,否則 return null',
+    '  2) 雲端載入時 (loadFromFirebaseData):',
+    '     - 只有快照含「真實戰鬥資料」(p1/p2 陣列且非空) + 24 小時內,才寫回 localStorage',
+    '     - 不符條件 → 主動清除本地 adv_crash_snapshot 和 adv_battle_snap',
+    '     - 雲端沒有 advSnapshot → 也清除本地殘留',
+    '  3) pagehide 自動存檔:',
+    '     - 戰鬥已結束 → 移除 adv_crash_snapshot,不再寫入',
+    '     - 沒有有效戰鬥資料 → 同樣移除殘留',
+    '  4) _advCheckCrashRecovery 強化驗證:',
+    '     - 必須有 p1/p2 陣列 + round >= 1 才視為「未完成戰鬥」',
+    '     - 否則直接清除快照(可能是雲端殘留)',
+    '【實作位置】',
+    '  - _buildSafeData advSnapshot 構建: line ~34625',
+    '  - loadFromFirebaseData advSnapshot 還原: line ~34872',
+    '  - pagehide 存檔: line ~26635',
+    '  - _advCheckCrashRecovery 驗證: line ~27540',
+    '【建議玩家做的事】',
+    '  載入 v1030 後,雲端的舊 fallback 殘留會被自動偵測並清除,',
+    '  console 會顯示「[crash recovery] 快照不含真實戰鬥資料(可能是雲端殘留),已清除」',
+    '  之後就不會再看到假的「未完成戰鬥」提示了。',
+    '  若仍看到,代表你真的有戰鬥到一半就退出 — 那才是合法的恢復流程。',
+  ] },
   { ver:'v1.0.20260424.1020', brief:[
     '⭐ 設定代表英雄選單加入大天狗/酒吞童子/玉藻前 英雄版',
   ], items:[
@@ -52075,7 +52183,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1020';
+  const CURRENT_VERSION = 'v1.0.20260424.1040';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -52092,7 +52200,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1020';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1040';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
