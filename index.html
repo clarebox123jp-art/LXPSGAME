@@ -1186,11 +1186,14 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   50%{opacity:0.95;transform:scale(1.1)}
 }
 /* ★ 流星(偶爾) */
+/* ★ v1.0.20260424.0990 — 流星方向修正:由右上往左下劃落,角度 +25deg(右上→左下),
+ *   尾巴跟在「右上方」,所以漸變方向用「左到右」(尾巴在左、頭在右)
+ *   transform-origin 用 left center,讓 scaleX 從尾巴(左)向前(右)伸長 */
 @keyframes summonShootingStar{
-  0%{opacity:0;transform:translate(0,0) rotate(-25deg) scaleX(0.5)}
+  0%{opacity:0;transform:translate(0,0) rotate(25deg) scaleX(0.5)}
   10%{opacity:1}
   60%{opacity:0.85}
-  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(-25deg) scaleX(1)}
+  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(25deg) scaleX(1)}
 }
 /* ★ v1.0.20260424.0970 — 河面波紋反光搖晃 */
 @keyframes summonRiverRipple{
@@ -7450,13 +7453,17 @@ function _applyArenaPremiumImgs(){
   _arenaPremiumBackup = Object.assign({}, HERO_IMGS);
   // ★ v1.0.20260424.0410 — 鬥技場視覺改:全角色顯示 LV20/LV10 (無條件,不檢查解鎖)
   //   設計理念:鬥技場只是視覺改善,不影響進度;冒險模式才需要解鎖才能用精美版
+  // ★ v1.0.20260424.0990 — 幼兒園小孩在 HERO_PORTRAIT_LIBRARY 只有 _lv10 沒有 _lv20,
+  //   原邏輯把它當「其他英雄」走 _lv20 查找,結果找不到不替換 → 鬥技場仍是 Q 版。
+  //   修復:擴充 _LV10_FALLBACK_HEROES,讓它也走 _lv10 路徑。
+  const _LV10_FALLBACK_HEROES = ['幼兒園小孩'];
   Object.keys(HERO_IMGS).forEach(name => {
     try{
       const lib = HERO_PORTRAIT_LIBRARY[name];
       if(!lib) return;
-      // 初始 8 隻角色:找 _lv10 結尾的 portrait
+      // 初始 8 隻角色 + LV10 fallback 角色:找 _lv10 結尾的 portrait
       // 其他英雄:找 _lv20 結尾的 portrait
-      const _isInitial = _ARENA_INITIAL_HEROES.includes(name);
+      const _isInitial = _ARENA_INITIAL_HEROES.includes(name) || _LV10_FALLBACK_HEROES.includes(name);
       const _suffix = _isInitial ? '_lv10' : '_lv20';
       let _entry = lib.find(p => p.id && p.id.endsWith(_suffix));
       if(_entry && _entry.url){
@@ -10059,6 +10066,12 @@ function showHeroPickOverlay(){
     //   修復:多重來源檢查 + console.log 診斷
     let _unlockedRaw = [];
     try{ _unlockedRaw = advGetUnlockedHeroes() || []; }catch(_){ _unlockedRaw = []; }
+    // ★ v1.0.20260424.0990 — 對每個名字 trim 並去重,避免空白字元造成 HERO_DB 查不到
+    _unlockedRaw = _unlockedRaw
+      .filter(n => typeof n === 'string')
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
+    _unlockedRaw = [...new Set(_unlockedRaw)];  // 去重
     const unlockedExtra = _unlockedRaw.filter(n =>
       n &&
       typeof HERO_DB !== 'undefined' && HERO_DB[n] &&  // 確保是合法英雄(有 stat 定義)
@@ -10074,6 +10087,23 @@ function showHeroPickOverlay(){
       console.log('[冒險選英雄] localStorage adv_unlocked_heroes =', _unlockedRaw);
       if(_missingRare.length > 0){
         console.warn('[冒險選英雄][異常] 已解鎖但未顯示的稀有角色:', _missingRare);
+        // ★ v1.0.20260424.0990 — 詳細診斷:逐一檢查為何被過濾
+        _missingRare.forEach(n => {
+          const _inHeroDB = (typeof HERO_DB !== 'undefined') && !!HERO_DB[n];
+          const _inBaseP = basePool.includes(n);
+          const _inBOSSN = (typeof BOSS_NAMES !== 'undefined') && BOSS_NAMES.includes(n);
+          console.warn('  └ ['+n+'] HERO_DB存在?', _inHeroDB, '| basePool?', _inBaseP, '| BOSS_NAMES?', _inBOSSN);
+        });
+      }
+      // ★ v1.0.20260424.0990 — 額外印出 28 vs 29 的差異:找出 1 個被誤殺的角色
+      if(_unlockedRaw.length !== unlockedExtra.length + basePool.filter(n => _unlockedRaw.includes(n)).length){
+        const _unshown = _unlockedRaw.filter(n => !_heroPickPool.includes(n));
+        console.warn('[冒險選英雄][異常] localStorage 中被過濾掉(不在最終列表)的角色:', _unshown);
+        _unshown.forEach(n => {
+          const _inHeroDB = (typeof HERO_DB !== 'undefined') && !!HERO_DB[n];
+          const _inBOSSN = (typeof BOSS_NAMES !== 'undefined') && BOSS_NAMES.includes(n);
+          console.warn('  └ ['+n+'] HERO_DB存在?', _inHeroDB, '| BOSS_NAMES?', _inBOSSN);
+        });
       }
       const _shownRare = _summonRare.filter(n => _heroPickPool.includes(n));
       if(_shownRare.length > 0){
@@ -37392,26 +37422,33 @@ function _initSummonStars(){
 }
 
 // ★ v1.0.20260424.0970 — 偶爾生成流星(劃過天際)
+// ★ v1.0.20260424.0990 — 修正:固定在上半部天空區域,由右上往左下劃落
+//   父層 #summon-stars 已限制 height:50%,所以流星不會超出天空
 function _spawnSummonShootingStar(){
   const layer = document.getElementById('summon-stars');
   if(!layer) return;
   const ss = document.createElement('div');
-  const startX = Math.random()*70;                  // 從左到中
-  const startY = 5 + Math.random()*30;              // 上半部
-  const dx = 200 + Math.random()*200;               // 往右下劃
-  const dy = 100 + Math.random()*150;
+  // 起點:右上角區域 (X=55%~88%,Y=3%~25%)
+  const startX = 55 + Math.random()*33;
+  const startY = 3 + Math.random()*22;
+  // 移動向量:由右上往左下 (dx 負值往左, dy 正值往下)
+  // 限制 dy 不超過天空區域剩餘高度,避免流星跑到山下
+  const dx = -(280 + Math.random()*200);            // -280 ~ -480 px (往左)
+  const dy = 60 + Math.random()*80;                  // 60~140 px (往下,但仍在天空區)
   const dur = 0.9 + Math.random()*0.6;              // 0.9~1.5 秒
-  const len = 60 + Math.random()*60;
+  const len = 60 + Math.random()*60;                 // 流星本體長度 60~120 px
   ss.style.cssText = [
     'position:absolute',
     'left:' + startX + '%',
     'top:' + startY + '%',
     'width:' + len + 'px',
     'height:2px',
+    // 漸變:左(尾巴,透明)→右(頭,亮白) — 配合 +25deg 旋轉,尾巴朝右上、頭朝左下
     'background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(220,230,255,0.6) 30%,rgba(255,240,200,1) 80%,rgba(255,255,255,1) 100%)',
     'box-shadow:0 0 8px rgba(220,230,255,0.9),0 0 16px rgba(220,230,255,0.5)',
     'border-radius:1px',
-    'transform-origin:right center',
+    // 從尾巴端伸長:scaleX 以左端為錨點(left center),讓尾巴留在原處
+    'transform-origin:left center',
     '--ssx:' + dx + 'px',
     '--ssy:' + dy + 'px',
     'animation:summonShootingStar ' + dur + 's ease-out forwards',
@@ -45693,6 +45730,60 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0991', brief:[
+    '🔍 找到「玉藻前等稀有角色不在冒險選英雄列表」的根因 — localStorage 名字含空白',
+  ], items:[
+    '【根因確認】',
+    '  v0980 加入診斷 log 後,玩家回報:',
+    '    - localStorage adv_unlocked_heroes 有 29 個角色',
+    '    - 但 unlockedExtra 只剩 28 隻 → 1 隻被誤殺',
+    '    - 警告:「已解鎖但未顯示的稀有角色: Array(1)」',
+    '  → 確定 localStorage 確實有寫入,但構建池時被某條件過濾掉了',
+    '【最可能原因】',
+    '  localStorage 中存的角色名字含有看不見的空白字元(空格/換行/全形空白等),',
+    '  導致 HERO_DB[n] 查不到 → 被合法性檢查過濾掉。',
+    '  例如「玉藻前 」(尾巴有空格) ≠ HERO_DB 中的「玉藻前」',
+    '【修復:trim + 去重】',
+    '  1) 對 advGetUnlockedHeroes() 取出的每個名字呼叫 .trim()',
+    '     去除前後空白(包括全形空白若有)',
+    '  2) 過濾掉非字串、空字串',
+    '  3) 用 Set 去重,避免重複名字佔位',
+    '  4) 再進入原本的 HERO_DB[n] / basePool / BOSS_NAMES 過濾',
+    '【強化診斷】',
+    '  若仍有誤殺,console 會逐一印出每個被濾掉的角色名,',
+    '  顯示它在 HERO_DB / basePool / BOSS_NAMES 各自的判定結果,',
+    '  幫助快速找出根因(例如名字打錯、登入了另個英雄分類等)',
+    '【實作位置】',
+    '  - showHeroPickOverlay 內 _heroPickPool 構建: line ~10054',
+  ] },
+  { ver:'v1.0.20260424.0990', brief:[
+    '👶 鬥技場精美畫風幼兒園小孩改用 LV10 版,不再是 Q 版',
+    '☄️ 修正召喚星空流星方向:固定上半天空,由右上往左下劃落',
+  ], items:[
+    '【1. 幼兒園小孩鬥技場精美版】',
+    '  根因:_applyArenaPremiumImgs 對非 _ARENA_INITIAL_HEROES 的角色用 _lv20 後綴查找,',
+    '       但幼兒園小孩在 HERO_PORTRAIT_LIBRARY 只有 _lv10 結尾(kid_lv10/kid_girl_lv10),',
+    '       沒有 _lv20 → 找不到 → 不替換 → 鬥技場仍顯示 Q 版',
+    '  修復:新增 _LV10_FALLBACK_HEROES 列表(目前包含「幼兒園小孩」),',
+    '       讓它走 _lv10 路徑,鬥技場精美畫風會載入「幼兒園小孩LV10.png」',
+    '【2. 召喚星空流星方向修正】',
+    '  原本問題:',
+    '    - 流星起點隨機在左到中(0~70%),終點往右下劃(dx 200~400, dy 100~250)',
+    '    - dy 過大導致流星可能劃到山稜以下(超出天空區)',
+    '    - 方向是「左上→右下」,跟玩家描述「右上→左下」相反',
+    '  修復:',
+    '    - 起點改為右上區域(X=55~88%, Y=3~25%)',
+    '    - 移動向量改為「往左下」(dx=-280~-480, dy=60~140)',
+    '    - dy 降低不超過天空區域,父層 #summon-stars 已限 height:50% 雙保險',
+    '    - keyframes 旋轉角度從 -25deg 改為 +25deg(配合左下方向)',
+    '    - transform-origin 從 right center 改為 left center,',
+    '      尾巴留在右上、頭往左下伸長,符合「拖尾巴」視覺',
+    '    - 漸變方向不變(左透明→右亮白),配合新角度:亮頭朝左下、尾朝右上',
+    '【實作位置】',
+    '  - _LV10_FALLBACK_HEROES: line ~7454',
+    '  - summonShootingStar keyframes: line ~1188',
+    '  - _spawnSummonShootingStar: line ~37399',
+  ] },
   { ver:'v1.0.20260424.0980', brief:[
     '🔍 強化冒險模式英雄選擇列表的稀有角色檢查 + 診斷 log',
   ], items:[
@@ -51797,7 +51888,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0980';
+  const CURRENT_VERSION = 'v1.0.20260424.0991';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51814,7 +51905,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0980';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0991';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
