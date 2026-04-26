@@ -4420,6 +4420,15 @@ body.art-premium #elem-pick-overlay {
       box-shadow:0 0 18px rgba(140,80,255,0.5),inset 0 0 12px rgba(180,100,255,0.15);">
       🛒 不可思議超商
     </button>
+    <!-- ★ v1.0.20260424.0770 — 近期活動與新角色 -->
+    <button onclick="playSfx('sfx-sel',0.6);try{_showNewHeroAnnouncement(true);}catch(e){console.warn(e);}"
+      style="width:100%;margin-top:8px;padding:11px 8px;font-size:clamp(20px,2.4vw,32px);font-weight:800;
+      background:linear-gradient(135deg,rgba(180,60,140,0.95),rgba(220,80,160,0.95),rgba(140,40,120,0.95));
+      border:2px solid rgba(255,150,200,0.85);color:#ffe0ee;border-radius:12px;cursor:pointer;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;
+      box-shadow:0 0 16px rgba(255,100,180,0.45),inset 0 0 10px rgba(255,150,200,0.2);">
+      🎉 近期活動與新角色
+    </button>
     </div>
 
     <!-- 右側：關卡簡介視窗 -->
@@ -26633,14 +26642,18 @@ function openAdventureOverlay(){
 //   - 依序展示:小力 大圖 + 簡介 → 幼兒園小孩 大圖 + 簡介 → 獲得方式
 //   - 「關閉」/ 「今日不再顯示」按鈕
 // ════════════════════════════════════════
-function _showNewHeroAnnouncement(){
-  // 檢查「今日不再顯示」旗標
-  try{
-    const skipUntil = localStorage.getItem('newHeroAnnounce_skipUntil');
-    if(skipUntil && Date.now() < parseInt(skipUntil, 10)){
-      return; // 還在「今日不顯示」期間
-    }
-  }catch(_e){}
+function _showNewHeroAnnouncement(forceShow){
+  // ★ v1.0.20260424.0770 — forceShow=true 時跳過「今日不再顯示」檢查
+  //   從按鈕「近期活動與新角色」點開時 forceShow=true,可隨時重新開啟
+  if(!forceShow){
+    // 檢查「今日不再顯示」旗標(只在自動彈出時檢查)
+    try{
+      const skipUntil = localStorage.getItem('newHeroAnnounce_skipUntil');
+      if(skipUntil && Date.now() < parseInt(skipUntil, 10)){
+        return; // 還在「今日不顯示」期間
+      }
+    }catch(_e){}
+  }
 
   // 避免重複開啟
   if(document.getElementById('new-hero-announce-overlay')) return;
@@ -44491,6 +44504,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0770', brief:[
+    '🎉 新增「近期活動與新角色」按鈕(不可思議超商下方)',
+    '✓ 視窗關閉後可隨時透過此按鈕重新開啟',
+  ], items:[
+    '【1. 新增按鈕位置】',
+    '  - 冒險選關頁面的左下角',
+    '  - 不可思議超商按鈕正下方',
+    '  - 粉紅漸層樣式(與紫色商店按鈕區隔)',
+    '  - 寬度: 與超商按鈕相同(width:100%)',
+    '【2. 行為】',
+    '  - 點擊→呼叫 _showNewHeroAnnouncement(true)',
+    '  - forceShow=true 跳過「今日不再顯示」檢查',
+    '  - 即使按了「🌙 今日不再顯示」也能重新開啟',
+    '【3. 自動彈出邏輯不變】',
+    '  - 進入冒險選關頁第一次仍會自動彈出',
+    '  - 「今日不再顯示」依然有效(只影響自動彈出)',
+    '  - forceShow 只用於「按鈕重新開啟」情境',
+    '【實作位置】',
+    '  - 按鈕 HTML: line ~4423',
+    '  - _showNewHeroAnnouncement(forceShow): line ~26636',
+  ] },
   { ver:'v1.0.20260424.0760', brief:[
     '🐛 修正軍師「出奇制勝」抽卡點選後視窗關閉沒效果的 bug',
     '🗡️ 神偷盜取技能改進:背包已滿時跳出丟棄選擇視窗',
@@ -49961,7 +49995,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0760';
+  const CURRENT_VERSION = 'v1.0.20260424.0770';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -49978,7 +50012,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0760';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0770';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
