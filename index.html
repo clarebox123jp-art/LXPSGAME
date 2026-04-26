@@ -7900,54 +7900,315 @@ const BUFF_DESCS = {
 // Format: 'size% auto, vertical%'  (vertical% of image from top to show face)
 // ★ 極限爆發升級效果定義（每英雄的升級說明）
 const BURST_UPGRADE_DEF = {
-  // ── 通用：傷害/治療倍率 +10%/級（使用 _burstMult）──
-  '劍士':      { rows: [[0,'攻擊×1.2 連斬6次'],[1,'攻擊×1.3'],[2,'攻擊×1.4'],[3,'攻擊×1.5'],[4,'攻擊×1.6']] },
-  '祭司':      { rows: [[0,'特技×1.8 全隊治療(可復活)'],[1,'特技×1.98'],[2,'特技×2.16'],[3,'特技×2.34'],[4,'特技×2.52']] },
-  '火法師':    { rows: [[0,'特技×1.5 全體傷害+燃燒'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  '冰法師':    { rows: [[0,'特技×1.5 全體+強力冰凍'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  '雷法師':    { rows: [[0,'特技×1.5 彈跳4次+麻痺'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  '光法師':    { rows: [[0,'特技×1.5 傷害+治療+失明'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  '暗法師':    { rows: [[0,'特技×1.2 全體+×2.0集中+封印'],[1,'特技×1.32'],[2,'特技×1.44'],[3,'特技×1.56'],[4,'特技×1.68']] },
-  '神射手':    { rows: [[0,'特技×1.3 全體必中+強力禁動'],[1,'特技×1.43'],[2,'特技×1.56'],[3,'特技×1.69'],[4,'特技×1.82']] },
-  '神偷':      { rows: [[0,'特技×2.5 傷害+自己速度+10(2回合)+奪取能量/裝備/有利狀態/物品'],[1,'特技×2.75'],[2,'特技×3.0'],[3,'特技×3.25'],[4,'特技×3.5']] },
-  '刺客':      { rows: [[0,'特技×4.0 傷害+隱形+強力出血'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
-  '武鬥家':    { rows: [[0,'無敵2回合，攻擊傷害×2'],[1,'傷害×2.2'],[2,'傷害×2.4'],[3,'傷害×2.6'],[4,'傷害×2.8']] },
-  '大力士':    { rows: [[0,'攻擊×3.0 必中+強力昏迷2回合'],[1,'攻擊×3.3'],[2,'攻擊×3.6'],[3,'攻擊×3.9'],[4,'攻擊×4.2']] },
-  '武士':      { rows: [[0,'攻擊×4.8 必中，溢傷轉移'],[1,'攻擊×5.28'],[2,'攻擊×5.76'],[3,'攻擊×6.24'],[4,'攻擊×6.72']] },
-  '時空法師':  { rows: [[0,'特技×4.0 必中，倒下不可復活'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
-  '學者':      { rows: [[0,'元素倍率必中傷害，50%轉治療'],[1,'傷害/治療+10%'],[2,'傷害/治療+20%'],[3,'傷害/治療+30%'],[4,'傷害/治療+40%']] },
-  '木靈使':    { rows: [[0,'全隊不倒+再生2回合（特技HP/回合）'],[1,'再生+10%，持續+1回合'],[2,'再生+20%，持續+2回合'],[3,'再生+30%，持續+3回合'],[4,'再生+40%，持續+4回合']] },
-  '籃球隊員':  { rows: [[0,'特技×4.0，全隊速度+50% 2回合'],[1,'特技×4.4'],[2,'特技×4.8'],[3,'特技×5.2'],[4,'特技×5.6']] },
-  '直笛團員':  { rows: [[0,'特技×1.5 全體傷害+狂亂1回合+全隊治療+持續恢復5回合'],[1,'傷害&治療+10%'],[2,'傷害&治療+20%'],[3,'傷害&治療+30%'],[4,'傷害&治療+40%、狂亂+1回合']] },
-  '田徑隊員':  { rows: [[0,'速度×200% 全體+7能量+閃燃×2.0+再行動'],[1,'速度×220%、閃燃×2.1'],[2,'速度×240%、閃燃×2.2'],[3,'速度×260%、閃燃×2.3'],[4,'速度×280%、閃燃×2.4']] },
-  '幼兒園小孩':{ rows: [[0,'HP×10% 傷害全體，敵方攻/技-50%'],[1,'HP×15%'],[2,'HP×20%'],[3,'HP×25%'],[4,'HP×30%']] },
-  '電腦繪圖師':{ rows: [[0,'特技×6.0 全體平分（必中）+抽3牌'],[1,'特技×6.6'],[2,'特技×7.2'],[3,'特技×7.8'],[4,'特技×8.4']] },
-  '程式設計師':{ rows: [[0,'不利→有利+全體50%HP+2名對手無法行動'],[1,'恢復+10%'],[2,'恢復+20%'],[3,'恢復+30%'],[4,'恢復+40%、+1名目標']] },
-  '弦樂團員':  { rows: [[0,'特技×0.4 全體3~5次（必中）+復活'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
-  '小劇團員':  { rows: [[0,'依倒下人數×3回能量，能量提升全隊攻/技'],[1,'提升+10%'],[2,'提升+20%'],[3,'提升+30%'],[4,'提升+40%']] },
-  '九尾空貓怪':{ rows: [[0,'特技×0.4 × 9次連擊+燃燒'],[1,'特技×0.44'],[2,'特技×0.48'],[3,'特技×0.52'],[4,'特技×0.56']] },
-  '杏花妖':    { rows: [[0,'特技×1.5 全體傷害 + 75%魅惑 1回合'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  '煉金術師':  { rows: [[0,'抽3張物品牌，友方使用後保留'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
-  '巫女':      { rows: [[0,'解除不利狀態+3強力有利狀態+特技×1.5 全體治療(可復活)'],[1,'特技×1.65'],[2,'特技×1.8'],[3,'特技×1.95'],[4,'特技×2.1']] },
-  // ── 特殊效果英雄 ──
-  '聖騎士':    { rows: [[0,'全隊無敵1回合，治療40%HP'],[1,'治療50%HP'],[2,'治療60%HP'],[3,'治療70%HP'],[4,'治療80%HP']] },
-  '守衛':      { rows: [[0,'強力挑釁2回合，特技×100%減傷'],[1,'特技×110%減傷'],[2,'特技×120%減傷'],[3,'特技×130%減傷'],[4,'特技×140%減傷']] },
-  '吟遊詩人':  { rows: [[0,'全體強力睡眠，每回合回復10%HP'],[1,'每回合回復13%HP'],[2,'每回合回復16%HP'],[3,'每回合回復19%HP'],[4,'每回合回復22%HP']] },
-  '舞者':      { rows: [[0,'全隊強力增攻，消除敵方增益'],[1,'友方+10%減傷'],[2,'友方+20%減傷'],[3,'友方+30%減傷'],[4,'友方+40%減傷']] },
-  '警長':      { rows: [[0,'全體封鎖物品，傷害100%反彈'],[1,'傷害105%反彈'],[2,'傷害110%反彈'],[3,'傷害115%反彈'],[4,'傷害120%反彈']] },
-  '軍師':      { rows: [[0,'交換狀態，友方可再行動，+4能量'],[1,'+5能量'],[2,'+6能量'],[3,'+7能量'],[4,'+8能量']] },
-  '占星師':    { rows: [[0,'全隊2回合技能不耗能量'],[1,'附加每回合+1能量'],[2,'附加每回合+2能量'],[3,'附加每回合+3能量'],[4,'附加每回合+4能量']] },
-  '凡人':      { rows: [[0,'模仿任意爆發，威力上限×1.8'],[1,'威力上限×2.0'],[2,'威力上限×2.2'],[3,'威力上限×2.4'],[4,'威力上限×2.6']] },
-  '動物學家':  { rows: [[0,'呼喚4寵物，友方保護2回合'],[1,'保護+10%傷害減免'],[2,'保護+20%傷害減免'],[3,'保護+30%傷害減免'],[4,'保護+40%傷害減免']] },
-  '機械師':    { rows: [[0,'累積受傷2回合後轉給敵方'],[1,'釋放威力+10%'],[2,'釋放威力+20%'],[3,'釋放威力+30%'],[4,'釋放威力+40%']] },
-  '吸血鬼':    { rows: [[0,'全隊嗜血2回合，傷害100%吸血'],[1,'傷害110%吸血'],[2,'傷害120%吸血'],[3,'傷害130%吸血'],[4,'傷害140%吸血']] },
-  '小力':      { rows: [[0,'全體敵方憐惜校犬2回合'],[1,'友方再生+10%特技/回合'],[2,'友方再生+20%特技/回合'],[3,'友方再生+30%特技/回合'],[4,'友方再生+40%特技/回合']] },
-  // ★ v1.0.20260423.9100 — 日本三大可解鎖 BOSS 英雄爆發升級表
-  '大天狗':    { rows: [[0,'特技150%×5次連擊+全體颶風'],[1,'傷害+10%(全部)'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
-  '酒吞童子':  { rows: [[0,'500%重擊+連鎖+嗜血狂潮2回合'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
-  '玉藻前':    { rows: [[0,'特技200%全體火傷+65%強力魅惑'],[1,'傷害+10%、魅惑+5%'],[2,'傷害+20%、魅惑+10%'],[3,'傷害+30%、魅惑+15%'],[4,'傷害+40%、魅惑+20%']] },
-  // ★ v1.0.20260424.0530 — 補上陰陽師爆發升級表
-  '陰陽師':    { rows: [[0,'特技50%×4輪全體+70%隨機強力狀態'],[1,'傷害+10%'],[2,'傷害+20%'],[3,'傷害+30%'],[4,'傷害+40%']] },
+  // ★ v1.0.20260424.0620 — 重新設計:每一級都完整顯示所有效果(原本只寫差異,玩家看不到附加效果)
+  '劍士':      { rows: [
+    [0,'攻擊×120%, 連斬6次,目標倒下轉移,末擊附加暈眩'],
+    [1,'攻擊×132%, 連斬6次,目標倒下轉移,末擊附加暈眩'],
+    [2,'攻擊×144%, 連斬6次,目標倒下轉移,末擊附加暈眩'],
+    [3,'攻擊×156%, 連斬6次,目標倒下轉移,末擊附加暈眩'],
+    [4,'攻擊×168%, 連斬6次,目標倒下轉移,末擊附加暈眩(MAX:暈眩+1回合)'],
+  ] },
+  '祭司':      { rows: [
+    [0,'特技×180% 全隊治療(可復活)+免疫不利狀態'],
+    [1,'特技×198% 全隊治療(可復活)+免疫不利狀態'],
+    [2,'特技×216% 全隊治療(可復活)+免疫不利狀態'],
+    [3,'特技×234% 全隊治療(可復活)+免疫不利狀態'],
+    [4,'特技×252% 全隊治療(可復活)+免疫不利狀態(MAX:免疫+1回合)'],
+  ] },
+  '火法師':    { rows: [
+    [0,'特技×150% 全體傷害+強力燃燒2回合(行動前後各-10HP)'],
+    [1,'特技×165% 全體傷害+強力燃燒2回合'],
+    [2,'特技×180% 全體傷害+強力燃燒2回合'],
+    [3,'特技×195% 全體傷害+強力燃燒2回合'],
+    [4,'特技×210% 全體傷害+強力燃燒3回合(MAX)'],
+  ] },
+  '冰法師':    { rows: [
+    [0,'特技×150% 全體傷害,85%強力冰凍1回合(無法免疫)'],
+    [1,'特技×165% 全體傷害,85%強力冰凍1回合'],
+    [2,'特技×180% 全體傷害,85%強力冰凍1回合'],
+    [3,'特技×195% 全體傷害,85%強力冰凍1回合'],
+    [4,'特技×210% 全體傷害,85%強力冰凍2回合(MAX)'],
+  ] },
+  '雷法師':    { rows: [
+    [0,'特技×150% 彈跳4次,75%強力麻痺1回合(無法免疫)'],
+    [1,'特技×165% 彈跳4次,75%強力麻痺1回合'],
+    [2,'特技×180% 彈跳4次,75%強力麻痺1回合'],
+    [3,'特技×195% 彈跳4次,75%強力麻痺1回合'],
+    [4,'特技×210% 彈跳4次,75%強力麻痺2回合(MAX)'],
+  ] },
+  '光法師':    { rows: [
+    [0,'特技×150% 全體傷害+全隊治療,75%強力失明'],
+    [1,'特技×165% 全體傷害+全隊治療,75%強力失明'],
+    [2,'特技×180% 全體傷害+全隊治療,75%強力失明'],
+    [3,'特技×195% 全體傷害+全隊治療,75%強力失明'],
+    [4,'特技×210% 全體傷害+全隊治療,75%強力失明 +1回合(MAX)'],
+  ] },
+  '暗法師':    { rows: [
+    [0,'特技×120% 全體+×200% 集中傷害,75%強力封印1回合'],
+    [1,'特技×132% 全體+×220% 集中,75%強力封印1回合'],
+    [2,'特技×144% 全體+×240% 集中,75%強力封印1回合'],
+    [3,'特技×156% 全體+×260% 集中,75%強力封印1回合'],
+    [4,'特技×168% 全體+×280% 集中,75%強力封印2回合(MAX)'],
+  ] },
+  '神射手':    { rows: [
+    [0,'特技×130% 全體必中,75%強力陷阱禁動1回合'],
+    [1,'特技×143% 全體必中,75%強力陷阱禁動1回合'],
+    [2,'特技×156% 全體必中,75%強力陷阱禁動1回合'],
+    [3,'特技×169% 全體必中,75%強力陷阱禁動1回合'],
+    [4,'特技×182% 全體必中,75%強力陷阱禁動2回合(MAX)'],
+  ] },
+  '神偷':      { rows: [
+    [0,'特技×350% 傷害+自己速度+10(2回合)+奪取能量/寵物/全部有利狀態(含保護類)/物品'],
+    [1,'特技×385% 傷害+速度+10(2回合)+全奪取'],
+    [2,'特技×420% 傷害+速度+10(2回合)+全奪取'],
+    [3,'特技×455% 傷害+速度+10(2回合)+全奪取'],
+    [4,'特技×490% 傷害+速度+10(3回合)+全奪取(MAX)'],
+  ] },
+  '刺客':      { rows: [
+    [0,'特技×500% 傷害+自己隱身1回合+特技×120%回血,強力出血2回合(無法免疫,每回合-15%HP)'],
+    [1,'特技×550% 傷害+自己隱身1回合+回血,強力出血2回合'],
+    [2,'特技×600% 傷害+自己隱身1回合+回血,強力出血2回合'],
+    [3,'特技×650% 傷害+自己隱身1回合+回血,強力出血2回合'],
+    [4,'特技×700% 傷害+自己隱身2回合+回血,強力出血3回合(MAX)'],
+  ] },
+  '武鬥家':    { rows: [
+    [0,'明鏡止水2回合(無敵+免疫不利+攻擊×2),解除自己所有不利狀態'],
+    [1,'明鏡止水2回合,攻擊×2.2,解除不利'],
+    [2,'明鏡止水2回合,攻擊×2.4,解除不利'],
+    [3,'明鏡止水2回合,攻擊×2.6,解除不利'],
+    [4,'明鏡止水3回合,攻擊×2.8,解除不利(MAX)'],
+  ] },
+  '大力士':    { rows: [
+    [0,'攻擊×500% 必中+強力昏迷2回合(無法免疫)'],
+    [1,'攻擊×550% 必中+強力昏迷2回合'],
+    [2,'攻擊×600% 必中+強力昏迷2回合'],
+    [3,'攻擊×650% 必中+強力昏迷2回合'],
+    [4,'攻擊×700% 必中+強力昏迷3回合(MAX)'],
+  ] },
+  '武士':      { rows: [
+    [0,'攻擊×480% 必中,溢傷轉移其他敵方'],
+    [1,'攻擊×528% 必中,溢傷轉移'],
+    [2,'攻擊×576% 必中,溢傷轉移'],
+    [3,'攻擊×624% 必中,溢傷轉移'],
+    [4,'攻擊×672% 必中,溢傷轉移(MAX)'],
+  ] },
+  '時空法師':  { rows: [
+    [0,'特技×400% 必中,目標倒下不可復活'],
+    [1,'特技×440% 必中,倒下不可復活'],
+    [2,'特技×480% 必中,倒下不可復活'],
+    [3,'特技×520% 必中,倒下不可復活'],
+    [4,'特技×560% 必中,倒下不可復活(MAX)'],
+  ] },
+  '學者':      { rows: [
+    [0,'元素倍率必中傷害,50%轉治療'],
+    [1,'傷害+10%,50%轉治療'],
+    [2,'傷害+20%,50%轉治療'],
+    [3,'傷害+30%,50%轉治療'],
+    [4,'傷害+40%,50%轉治療(MAX)'],
+  ] },
+  '木靈使':    { rows: [
+    [0,'全隊不倒+再生2回合(每回合 特技 HP)'],
+    [1,'全隊不倒+再生 +10% 持續+1回合'],
+    [2,'全隊不倒+再生 +20% 持續+2回合'],
+    [3,'全隊不倒+再生 +30% 持續+3回合'],
+    [4,'全隊不倒+再生 +40% 持續+4回合(MAX)'],
+  ] },
+  '籃球隊員':  { rows: [
+    [0,'特技×400% 集中傷害,全隊速度+50% 2回合'],
+    [1,'特技×440% 集中,全隊速度+50% 2回合'],
+    [2,'特技×480% 集中,全隊速度+50% 2回合'],
+    [3,'特技×520% 集中,全隊速度+50% 2回合'],
+    [4,'特技×560% 集中,全隊速度+50% 3回合(MAX)'],
+  ] },
+  '直笛團員':  { rows: [
+    [0,'特技×150% 全體傷害+狂亂1回合,全隊治療+持續恢復5回合'],
+    [1,'傷害+10%,治療+10%,狂亂1回合'],
+    [2,'傷害+20%,治療+20%,狂亂1回合'],
+    [3,'傷害+30%,治療+30%,狂亂1回合'],
+    [4,'傷害+40%,治療+40%,狂亂2回合(MAX)'],
+  ] },
+  '田徑隊員':  { rows: [
+    [0,'速度×200% 全體+陣營+7能量+極速閃燃×200%+本隊再行動'],
+    [1,'速度×220%,閃燃×210%,再行動'],
+    [2,'速度×240%,閃燃×220%,再行動'],
+    [3,'速度×260%,閃燃×230%,再行動'],
+    [4,'速度×280%,閃燃×240%,再行動(MAX)'],
+  ] },
+  '幼兒園小孩':{ rows: [
+    [0,'HP×10% 全體傷害,敵方攻/特技-50% 1回合'],
+    [1,'HP×15% 全體傷害,敵方攻/特技-50%'],
+    [2,'HP×20% 全體傷害,敵方攻/特技-50%'],
+    [3,'HP×25% 全體傷害,敵方攻/特技-50%'],
+    [4,'HP×30% 全體傷害,敵方攻/特技-50% 2回合(MAX)'],
+  ] },
+  '電腦繪圖師':{ rows: [
+    [0,'特技×600% 全體平分(必中),抽3張物品牌'],
+    [1,'特技×660% 平分,抽3張'],
+    [2,'特技×720% 平分,抽3張'],
+    [3,'特技×780% 平分,抽3張'],
+    [4,'特技×840% 平分,抽3張(MAX)'],
+  ] },
+  '程式設計師':{ rows: [
+    [0,'我方不利→有利+全體50%HP+敵方2名禁動1回合'],
+    [1,'恢復+10%,2名禁動'],
+    [2,'恢復+20%,2名禁動'],
+    [3,'恢復+30%,2名禁動'],
+    [4,'恢復+40%,3名禁動(MAX)'],
+  ] },
+  '弦樂團員':  { rows: [
+    [0,'特技×40%×3~5次(必中),復活倒下隊友50%HP'],
+    [1,'特技×44%,復活50%HP'],
+    [2,'特技×48%,復活50%HP'],
+    [3,'特技×52%,復活50%HP'],
+    [4,'特技×56%,復活50%HP(MAX)'],
+  ] },
+  '小劇團員':  { rows: [
+    [0,'依倒下人數×3回能量,能量提升全隊攻/特技2回合'],
+    [1,'提升+10%,能量+1'],
+    [2,'提升+20%,能量+1'],
+    [3,'提升+30%,能量+1'],
+    [4,'提升+40%,持續+1回合(MAX)'],
+  ] },
+  '九尾空貓怪':{ rows: [
+    [0,'特技×40%×9次連擊,擊倒轉移,全體燃燒2回合'],
+    [1,'特技×44%×9次,燃燒2回合'],
+    [2,'特技×48%×9次,燃燒2回合'],
+    [3,'特技×52%×9次,燃燒2回合'],
+    [4,'特技×56%×9次,燃燒3回合(MAX)'],
+  ] },
+  '杏花妖':    { rows: [
+    [0,'特技×150% 全體傷害+75%強力魅惑1回合'],
+    [1,'特技×165%,75%魅惑1回合'],
+    [2,'特技×180%,75%魅惑1回合'],
+    [3,'特技×195%,75%魅惑1回合'],
+    [4,'特技×210%,75%魅惑2回合(MAX)'],
+  ] },
+  '煉金術師':  { rows: [
+    [0,'抽3張物品牌+全隊使用後保留(守恆2回合)'],
+    [1,'守恆2回合,效果+10%'],
+    [2,'守恆2回合,效果+20%'],
+    [3,'守恆2回合,效果+30%'],
+    [4,'守恆3回合,效果+40%(MAX)'],
+  ] },
+  '巫女':      { rows: [
+    [0,'解除全隊不利+附加3個強力有利,特技×150% 全體治療(可復活)'],
+    [1,'特技×165% 全體治療'],
+    [2,'特技×180% 全體治療'],
+    [3,'特技×195% 全體治療'],
+    [4,'特技×210% 全體治療(MAX)'],
+  ] },
+  '聖騎士':    { rows: [
+    [0,'全隊無敵1回合,治療40%HP'],
+    [1,'全隊無敵1回合,治療50%HP'],
+    [2,'全隊無敵1回合,治療60%HP'],
+    [3,'全隊無敵1回合,治療70%HP'],
+    [4,'全隊無敵2回合,治療80%HP(MAX)'],
+  ] },
+  '守衛':      { rows: [
+    [0,'敵方全體強力挑釁2回合,自己特技×100%減傷'],
+    [1,'特技×110%減傷'],
+    [2,'特技×120%減傷'],
+    [3,'特技×130%減傷'],
+    [4,'特技×140%減傷,挑釁3回合(MAX)'],
+  ] },
+  '吟遊詩人':  { rows: [
+    [0,'敵方全體強力睡眠,我方每回合回血10%HP+解2不利狀態'],
+    [1,'每回合+13%HP,解不利'],
+    [2,'每回合+16%HP,解不利'],
+    [3,'每回合+19%HP,解不利'],
+    [4,'每回合+22%HP,解不利(MAX)'],
+  ] },
+  '舞者':      { rows: [
+    [0,'全隊強力增攻2回合,消除敵方有利狀態(2回合失效)'],
+    [1,'友方+10%減傷'],
+    [2,'友方+20%減傷'],
+    [3,'友方+30%減傷'],
+    [4,'友方+40%減傷,3回合(MAX)'],
+  ] },
+  '警長':      { rows: [
+    [0,'敵方全體強力查封2回合(無法用物品),傷害100%反彈'],
+    [1,'反彈105%'],
+    [2,'反彈110%'],
+    [3,'反彈115%'],
+    [4,'反彈120%,查封3回合(MAX)'],
+  ] },
+  '軍師':      { rows: [
+    [0,'交換雙方狀態+補4能量+我方再行動+抽6戰場卡選1設置(3回合)'],
+    [1,'+5能量,抽6戰場卡'],
+    [2,'+6能量,抽6戰場卡'],
+    [3,'+7能量,抽6戰場卡'],
+    [4,'+8能量,抽6戰場卡(MAX)'],
+  ] },
+  '占星師':    { rows: [
+    [0,'全隊2回合技能不耗能量'],
+    [1,'附加每回合+1能量'],
+    [2,'附加每回合+2能量'],
+    [3,'附加每回合+3能量'],
+    [4,'附加每回合+4能量,持續3回合(MAX)'],
+  ] },
+  '凡人':      { rows: [
+    [0,'模仿任意爆發,威力上限×180%'],
+    [1,'威力上限×200%'],
+    [2,'威力上限×220%'],
+    [3,'威力上限×240%'],
+    [4,'威力上限×260%(MAX)'],
+  ] },
+  '動物學家':  { rows: [
+    [0,'呼喚4寵物到友方+保護2回合(免被禁/搶/奪)'],
+    [1,'保護+10%減傷'],
+    [2,'保護+20%減傷'],
+    [3,'保護+30%減傷'],
+    [4,'保護+40%減傷,3回合(MAX)'],
+  ] },
+  '機械師':    { rows: [
+    [0,'累積受傷2回合後轉化傷害給敵方'],
+    [1,'釋放威力+10%'],
+    [2,'釋放威力+20%'],
+    [3,'釋放威力+30%'],
+    [4,'釋放威力+40%(MAX)'],
+  ] },
+  '吸血鬼':    { rows: [
+    [0,'全隊嗜血2回合,造成傷害100%吸血'],
+    [1,'吸血110%'],
+    [2,'吸血120%'],
+    [3,'吸血130%'],
+    [4,'吸血140%,3回合(MAX)'],
+  ] },
+  '小力':      { rows: [
+    [0,'全體敵方憐惜校犬2回合(無法用造成傷害的技能/物品)'],
+    [1,'友方再生+10%特技/回合'],
+    [2,'友方再生+20%特技/回合'],
+    [3,'友方再生+30%特技/回合'],
+    [4,'友方再生+40%特技/回合,3回合(MAX)'],
+  ] },
+  '大天狗':    { rows: [
+    [0,'特技×150%×5次連擊+30%強力暈眩,全體颶風100%+減速50% 2回合'],
+    [1,'傷害+10%(全部)'],
+    [2,'傷害+20%'],
+    [3,'傷害+30%'],
+    [4,'傷害+40%,暈眩/減速+1回合(MAX)'],
+  ] },
+  '酒吞童子':  { rows: [
+    [0,'恢復自身15%HP+攻擊×500% 重擊(連鎖最多3次),嗜血狂潮2回合(吸血+攻擊+50%)'],
+    [1,'傷害+10%'],
+    [2,'傷害+20%'],
+    [3,'傷害+30%'],
+    [4,'傷害+40%,嗜血狂潮3回合(MAX)'],
+  ] },
+  '玉藻前':    { rows: [
+    [0,'特技×200% 全體火傷+65%強力魅惑1回合(無法免疫,被魅惑者傷害轉回血)'],
+    [1,'傷害+10%,魅惑+5%(70%)'],
+    [2,'傷害+20%,魅惑+10%(75%)'],
+    [3,'傷害+30%,魅惑+15%(80%)'],
+    [4,'傷害+40%,魅惑+20%(85%) 2回合(MAX)'],
+  ] },
+  '陰陽師':    { rows: [
+    [0,'特技×50%×4輪全體+70%隨機強力狀態1回合(冰凍/燃燒/封印/麻痺/失明/中毒/陷阱)'],
+    [1,'傷害+10%'],
+    [2,'傷害+20%'],
+    [3,'傷害+30%'],
+    [4,'傷害+40%,強力狀態+1回合(MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -8254,18 +8515,18 @@ const BURST_DB = {
   '光法師':   {n:'審判光束',    d:'傷害全體並治癒全隊，附加強力失明',fd:'用特技的150%傷害全體對手，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時恢復全體隊友。'},
   '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋200%集中傷害，75%封印',fd:'用特技的120%傷害全體對手，再對1名目標造成特技200%傷害。每個受傷目標有75%機率陷入「強力封印」無法使用技能1回合。'},
   '神射手':   {n:'流星箭雨',    d:'必中傷害全體，附加強力禁動',fd:'用特技的130%傷害全體對手，無法迴避此傷害。受到傷害的目標有75%機率陷入「強力陷阱」無法行動1回合，強力陷阱無法被免疫。'},
-  '神偷':     {n:'俠盜飛梭',    d:'自己速度+10，傷害1名對手並奪取能量/寵物/有利狀態/物品',fd:'2回合內自己速度上升10，用特技的350%攻擊1名對手同時奪取3能量及其身上的寵物（此時可選擇給誰穿）和有利狀態，再隨機奪取對手1張物品卡。'},
-  '刺客':     {n:'死神之鐮',    d:'400%傷害並隱形，強力出血（無法免疫）',fd:'用特技的400%傷害1名對手後自己隱形1回合，並以特技的120%恢復自己HP。目標陷入「強力出血」2回合，每回合-15%HP，無法被免疫。'},
+  '神偷':     {n:'俠盜飛梭',    d:'自己速度+10，傷害1名對手並奪取能量/寵物/有利狀態(全部)/物品',fd:'2回合內自己速度上升10，用特技的350%攻擊1名對手同時奪取3能量及其身上的寵物（此時可選擇給誰穿）和全部有利狀態（包含「不可被偷」的保護類，如 protectBuff/guard/deathimmune 等），再隨機奪取對手1張物品卡。'},
+  '刺客':     {n:'死神之鐮',    d:'500%傷害並隱形，強力出血（無法免疫）',fd:'用特技的500%傷害1名對手後自己隱形1回合，並以特技的120%恢復自己HP。目標陷入「強力出血」2回合，每回合-15%HP，無法被免疫。'},
   '守衛':     {n:'最後之盾',    d:'強制全體敵方攻擊自己，以特技減傷',fd:'使敵方全體陷入「強力挑釁」2回合，只能普通攻擊施展者。期間守衛以特技×100%減輕受到的傷害。強力挑釁無法被免疫。'},
   '吟遊詩人':   {n:'無盡長眠',    d:'全體敵方強力睡眠，每回合全隊回血',fd:'敵方全體陷入「強力睡眠」（回合開始或受傷有25%機率解除），每過一個睡眠回合就為我方全體恢復10%HP。'},
   '舞者':     {n:'激戰之舞',    d:'全隊強力增攻並使敵方增益失效',fd:'用特技的150%使友方全體獲得「強力增攻」提升傷害及治療量2回合，同時讓敵方有利狀態失效2回合。'},
   '警長':     {n:'正義制裁',    d:'封鎖對手物品，對手傷害全數反彈',fd:'使全體對手陷入「強力查封」無法使用和販賣物品卡2回合，同時對手造成任何傷害時100%反彈給自己。'},
   '煉金術師': {n:'真理之門',    d:'立即抽3張物品卡，友方獲得「守恆」狀態2回合，使用物品後保留卡片',
   fd:'立即抽取3張隨機物品卡加入背包（背包滿時可選擇捨棄）。同時使友方全體獲得「守恆」狀態2回合：使用物品卡後有100%機率保留該卡片不消耗。此狀態不會被對手消除或搶奪。'},
-  '武鬥家':   {n:'明鏡止水',    d:'完全無敵2回合，攻擊翻倍',fd:'自己獲得「明鏡止水」2回合：免疫所有傷害、控制及不利狀態，攻擊傷害提高為2倍且無視對手有利狀態。'},
-  '軍師':     {n:'逆轉神計',    d:'交換雙方所有狀態，我方可再行動',fd:'奪取全體對手的有利狀態附加到我方，將我方不利狀態轉移到敵方，使我方行動結束的存活隊員可再行動1次。'},
+  '武鬥家':   {n:'明鏡止水',    d:'完全無敵2回合，攻擊翻倍，解除不利狀態',fd:'自己獲得「明鏡止水」2回合：免疫所有傷害、控制及不利狀態，攻擊傷害提高為2倍且無視對手有利狀態。發動時立即解除自己身上所有不利狀態。'},
+  '軍師':     {n:'逆轉神計',    d:'交換雙方狀態+補能量+我方再行動+抽 6 戰場卡',fd:'奪取全體對手的有利狀態附加到我方,將我方不利狀態轉移到敵方,使我方行動結束的存活隊員可再行動 1 次。同時為陣營補充 4 能量(每升 1 級+1)。並立即抽 6 張戰場卡選 1 張設置(固定 3 回合)。'},
   '占星師':   {n:'星空祝福',    d:'全隊技能不消耗能量（2回合）',fd:'使我方全體獲得「星空祝福」2回合，期間使用技能不消耗能量。此狀態不會被消除或搶奪。'},
-  '大力士':   {n:'地球上投',    d:'300%必中，強力昏迷2回合',fd:'對敵方單體造成攻擊300%傷害，此傷害必中且無視有利狀態，並讓目標陷入「強力昏迷」無法行動2回合，無法被免疫和解除。'},
+  '大力士':   {n:'地球上投',    d:'500%必中，強力昏迷2回合',fd:'對敵方單體造成攻擊500%傷害，此傷害必中且無視有利狀態，並讓目標陷入「強力昏迷」無法行動2回合，無法被免疫和解除。'},
   '凡人':     {n:'臨摹大師',    d:'模仿任意角色的極限爆發',fd:'模仿敵我雙方任意角色的極限爆發技能並施展出來。'},
   '動物學家': {n:'動物大軍', d:'呼喚4隻隨機寵物供全隊攜帶，並保護友方全體2回合',fd:'瞬間呼喚出隨機4隻不同的寵物，讓我方角色可以立即攜帶或替換。完成後2回合內友方全體的卡片、寵物和能量受到保護，不會被禁用、交換、奪取或破壞。'},
   '機械師':   {n:'負荷超載',    d:'2回合我方傷害全累積並回血50%，結束後平均分給敵方',fd:'進入「負荷超載」狀態2回合，期間我方所有受到的傷害全部累積計算且每次受到傷害立即恢復該傷害50%的HP，在負荷超載結束後釋放所有累積的傷害，由敵方全體平均分攤此傷害。負荷超載狀態不會被消除或奪取。'},
@@ -12518,6 +12779,18 @@ function execBurst(side, pos, expectedName){
   hideBurstPanel();
   const h=G[side][pos];
   if(!h||!_canBurst(h)) return;
+  // ★ v1.0.20260424.0600 — 神偷俠盜飛梭發動前先彈預覽視窗(只玩家側)
+  //   讓玩家先看「將會偷到什麼」再決定發動
+  if(h.name === '神偷' && side === 'p1' && !window._stealBurstConfirmed){
+    const _opp = side === 'p1' ? 'p2' : 'p1';
+    const _foes = G[_opp].filter(x => x.curHp > 0);
+    if(_foes.length){
+      _showStealBurstPreview(h, side, pos, expectedName, _foes);
+      return; // 暫停爆發,等玩家確認
+    }
+  }
+  // 清除確認旗標
+  delete window._stealBurstConfirmed;
   // ★ v1.0.20260423.2900 — 防禦性檢查:若提供了 expectedName,必須與當前 h.name 一致
   //   目的:防止「小劇團員和程式設計師同時冒火,點一個卻發動另一個」的潛在錯位 bug
   //   原因:舊版可能因 onclick 字串模板渲染時機問題,或 G.p1[pos] 被意外重排導致不同步
@@ -12745,13 +13018,14 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       const drain=Math.min(3,G.energy[opp]);
       G.energy[opp]-=drain; G.energy[side]=Math.min(10,G.energy[side]+drain);
       // 奪取有利狀態（加到施術者身上）
-      const PROTECTED_KEEP=['protectBuff','guard','deathimmune','immovable','rebirth','misfortune','alchemist','counter'];
-      const stolenBuffs = t.buffs.filter(b => !PROTECTED_KEEP.includes(b.type));
+      // ★ v1.0.20260424.0610 — 爆發版「俠盜飛梭」可偷取全部有利狀態,包含「不可偷」的保護類
+      //   (盜取技能仍受 PROTECTED_KEEP 限制)
+      const stolenBuffs = (t.buffs || []).slice();
       if(stolenBuffs.length){
-        t.buffs = t.buffs.filter(b => PROTECTED_KEEP.includes(b.type));
+        t.buffs = [];
         h.buffs.push(...stolenBuffs);
-        log(`[${h.name}] 奪取 [${t.name}] 的有利狀態！`);
-        bannerFX(h,'奪取狀態！','#ffcc00',800);
+        log(`[${h.name}] 奪取 [${t.name}] 的全部有利狀態(${stolenBuffs.length} 個)!`);
+        bannerFX(h,'奪取狀態!','#ffcc00',800);
       }
       // 奪取 1 張物品卡
       const inv2=opp==='p2'?G.inv2:G.inv;
@@ -16260,6 +16534,141 @@ function execAtk(actor, target, dmg, opts={}){
 
 // ★ v1.0.20260424.0510 — 盜取選擇視窗:讓玩家選偷物品/寵物/狀態
 //   stealCount = 可偷次數 (Lv0=1, Lv5=2, Lv10=3)
+// ★ v1.0.20260424.0600 — 神偷盜取/俠盜飛梭發動前的預覽小視窗
+//   列出對手可偷項目數,讓玩家先看再決定是否使用
+// ★ v1.0.20260424.0610 — 區分模式:盜取技能受 PROTECTED 保護,爆發可偷全部
+const _PROTECTED_KEEP_STEAL = ['protectBuff','guard','deathimmune','immovable','rebirth','misfortune','alchemist','counter'];
+
+function _countStealableForFoe(foe, mode){
+  const _vSide = foe.side;
+  const _vInv = (_vSide === 'p2') ? G.inv2 : G.inv;
+  const _items = (_vInv || []).filter(it => it !== null);
+  const _hasPet = foe.equip && foe.equip.n;
+  // 爆發版可偷全部有利狀態(包含保護類);技能版排除保護類
+  let _stealableBuffs;
+  if(mode === 'burst'){
+    _stealableBuffs = (foe.buffs || []).slice();
+  } else {
+    _stealableBuffs = (foe.buffs || []).filter(b => !_PROTECTED_KEEP_STEAL.includes(b.type));
+  }
+  return { items: _items.length, pet: _hasPet ? 1 : 0, buffs: _stealableBuffs.length };
+}
+
+function _renderStealPreviewBody(foes, mode){
+  // 統計總計 + 各對手分項
+  let _totalItems = 0, _totalPets = 0, _totalBuffs = 0;
+  const _rows = foes.map(foe => {
+    const c = _countStealableForFoe(foe, mode);
+    _totalItems += c.items;
+    _totalPets += c.pet;
+    _totalBuffs += c.buffs;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(40,30,20,0.5);border:1.5px solid rgba(220,180,80,0.4);border-radius:10px;padding:8px 14px;gap:14px;">
+      <div style="font-size:18px;font-weight:800;color:#ffe066;flex:1;">${foe.av || '⚔'} ${foe.name}</div>
+      <div style="display:flex;gap:14px;font-size:16px;">
+        <span style="color:#88ddff;">📦 ${c.items}</span>
+        <span style="color:#ffaa66;">🐾 ${c.pet}</span>
+        <span style="color:#88ffaa;">✨ ${c.buffs}</span>
+      </div>
+    </div>`;
+  }).join('');
+  return {
+    html: `<div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:500px;">${_rows}</div>
+      <div style="display:flex;gap:24px;font-size:18px;font-weight:800;background:rgba(255,200,80,0.15);padding:10px 24px;border-radius:10px;border:2px solid rgba(255,200,80,0.4);">
+        <span style="color:#88ddff;">📦 物品 ${_totalItems}</span>
+        <span style="color:#ffaa66;">🐾 寵物 ${_totalPets}</span>
+        <span style="color:#88ffaa;">✨ 狀態 ${_totalBuffs}</span>
+      </div>`,
+    total: _totalItems + _totalPets + _totalBuffs,
+  };
+}
+
+function _showStealPreview(thief, foes, stealCount, cost, mode){
+  // mode: 'skill' = 盜取技能, 'burst' = 俠盜飛梭爆發
+  const _old = document.getElementById('steal-preview-ov');
+  if(_old) _old.remove();
+
+  const _body = _renderStealPreviewBody(foes, mode);
+  const _isBurst = (mode === 'burst');
+  const _title = _isBurst ? '⚡ 俠盜飛梭 預覽' : '🗡️ 盜取 預覽';
+  const _subtitle = _isBurst
+    ? '發動後將奪取對手能量+寵物+所有有利狀態(含保護類)+物品卡'
+    : `預計可偷 ${stealCount} 次(可從不同對手偷,保護類狀態無法偷)`;
+  const _continueLabel = _isBurst ? '⚡ 發動爆發' : '🗡️ 繼續偷取';
+
+  const ov = document.createElement('div');
+  ov.id = 'steal-preview-ov';
+  ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.88);z-index:312;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;';
+
+  // 標題
+  const _hdr = document.createElement('div');
+  _hdr.style.cssText = 'font-size:30px;font-weight:900;color:#ffe066;letter-spacing:2px;';
+  _hdr.textContent = _title;
+  ov.appendChild(_hdr);
+
+  // 副標題
+  const _sub = document.createElement('div');
+  _sub.style.cssText = 'font-size:16px;color:#aaa;letter-spacing:1px;';
+  _sub.textContent = _subtitle;
+  ov.appendChild(_sub);
+
+  // body html
+  const _bodyDiv = document.createElement('div');
+  _bodyDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:14px;';
+  _bodyDiv.innerHTML = _body.html;
+  ov.appendChild(_bodyDiv);
+
+  // 提示(若沒可偷)
+  if(_body.total === 0){
+    const _warn = document.createElement('div');
+    _warn.style.cssText = 'font-size:18px;color:#ff8866;background:rgba(180,60,30,0.2);padding:8px 18px;border-radius:8px;';
+    _warn.textContent = '⚠️ 對手身上沒有可偷的東西!';
+    ov.appendChild(_warn);
+  }
+
+  // 按鈕區
+  const _btnBar = document.createElement('div');
+  _btnBar.style.cssText = 'display:flex;gap:18px;margin-top:8px;';
+
+  const _useBtn = document.createElement('button');
+  const _useColor = (_body.total === 0) ? '#888' : '#66ddaa';
+  _useBtn.style.cssText = `padding:12px 32px;font-size:20px;font-weight:900;background:linear-gradient(135deg,rgba(60,180,100,${_body.total===0?0.4:0.95}),rgba(40,140,70,${_body.total===0?0.5:1}));border:2.5px solid ${_useColor};color:#fff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:2px;${_body.total===0?'opacity:0.6;':''}`;
+  _useBtn.textContent = _continueLabel;
+  _useBtn.addEventListener('click', function(){
+    ov.remove();
+    if(_isBurst){
+      // 標記已確認,重新呼叫 execBurst
+      window._stealBurstConfirmed = true;
+      execBurst(thief.side, thief.pos);
+    } else {
+      // 進選對手 → picker
+      setPending('enemy', t => {
+        _showStealPicker(thief, t, stealCount, cost);
+      });
+    }
+  });
+  _btnBar.appendChild(_useBtn);
+
+  const _cancelBtn = document.createElement('button');
+  _cancelBtn.style.cssText = 'padding:12px 32px;font-size:20px;font-weight:900;background:linear-gradient(135deg,rgba(140,140,160,0.7),rgba(100,100,120,0.85));border:2.5px solid #888;color:#fff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:2px;';
+  _cancelBtn.textContent = '✗ 取消';
+  _cancelBtn.addEventListener('click', function(){
+    ov.remove();
+    log(`🗡️ [${thief.name}] 取消${_isBurst?'發動爆發':'盜取'}!`);
+    try{ clearSel(); updateUI(); }catch(_){}
+  });
+  _btnBar.appendChild(_cancelBtn);
+
+  ov.appendChild(_btnBar);
+
+  // append to #gc
+  const _gc = document.getElementById('gc');
+  (_gc || document.body).appendChild(ov);
+}
+
+function _showStealBurstPreview(thief, side, pos, expectedName, foes){
+  _showStealPreview(thief, foes, 0, 0, 'burst');
+}
+
 function _showStealPicker(thief, victim, stealCount, cost){
   // 移除既有
   const _old = document.getElementById('steal-picker-ov');
@@ -16525,31 +16934,57 @@ function _renderSurpriseFieldPickerUI(){
     }
     return { n: cardName, d: '...', effect: '?' };
   };
-  const _cardsHtml = drawnCards.map((cardName, idx) => {
+
+  // 標題
+  const _title = document.createElement('div');
+  _title.style.cssText = 'font-size:36px;font-weight:900;color:#ffe066;text-shadow:0 0 16px rgba(255,224,102,0.6);';
+  _title.textContent = '🪶 出奇制勝';
+  ov.appendChild(_title);
+
+  // 副標題
+  const _subTitle = document.createElement('div');
+  _subTitle.style.cssText = 'font-size:18px;color:#aaa;letter-spacing:2px;';
+  _subTitle.textContent = `抽到 ${drawnCards.length} 張戰場卡,點擊預覽其效果`;
+  ov.appendChild(_subTitle);
+
+  // 卡片容器
+  const _cardsWrap = document.createElement('div');
+  _cardsWrap.style.cssText = 'display:flex;gap:18px;flex-wrap:wrap;justify-content:center;';
+  drawnCards.forEach(cardName => {
     const _card = _findCard(cardName);
     const _isGood = goodList.includes(cardName);
     const _color = _isGood ? '#88ddaa' : '#ff8866';
     const _bgColor = _isGood ? 'rgba(60,150,90,0.2)' : 'rgba(180,60,30,0.2)';
     const _scopeText = _isGood ? '有利戰場卡' : '不利戰場卡';
-    return `<div onclick="_confirmSurpriseFieldCard('${cardName}', ${_isGood?1:0}, ${cost})"
-      style="cursor:pointer;background:${_bgColor};border:2.5px solid ${_color};border-radius:14px;
-      padding:16px 20px;min-width:200px;max-width:240px;display:flex;flex-direction:column;gap:10px;
-      transition:transform 0.15s, box-shadow 0.15s;"
-      onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 0 24px ${_color}'"
-      onmouseout="this.style.transform='scale(1)';this.style.boxShadow=''">
+    const _bgScope = _isGood ? 'rgba(60,150,90,0.4)' : 'rgba(180,60,30,0.4)';
+
+    // 用 createElement + addEventListener 確保事件穩定
+    const _div = document.createElement('div');
+    _div.style.cssText = `cursor:pointer;background:${_bgColor};border:2.5px solid ${_color};border-radius:14px;padding:16px 20px;min-width:200px;max-width:240px;display:flex;flex-direction:column;gap:10px;transition:transform 0.15s, box-shadow 0.15s;`;
+    _div.innerHTML = `
       <div style="font-size:24px;font-weight:900;color:${_color};text-align:center;">${cardName}</div>
-      <div style="font-size:14px;font-weight:700;color:${_color};text-align:center;background:${_isGood?'rgba(60,150,90,0.4)':'rgba(180,60,30,0.4)'};padding:3px 8px;border-radius:6px;">${_scopeText}</div>
+      <div style="font-size:14px;font-weight:700;color:${_color};text-align:center;background:${_bgScope};padding:3px 8px;border-radius:6px;">${_scopeText}</div>
       <div style="font-size:15px;color:#ddd;text-align:center;line-height:1.4;">${_card.d || ''}</div>
       <div style="font-size:13px;color:#888;text-align:center;">3 回合</div>
-    </div>`;
-  }).join('');
-  ov.innerHTML = `
-    <div style="font-size:36px;font-weight:900;color:#ffe066;text-shadow:0 0 16px rgba(255,224,102,0.6);">🪶 出奇制勝</div>
-    <div style="font-size:18px;color:#aaa;letter-spacing:2px;">抽到 ${drawnCards.length} 張戰場卡,點擊預覽其效果</div>
-    <div style="display:flex;gap:18px;flex-wrap:wrap;justify-content:center;">${_cardsHtml}</div>
-    <div style="font-size:14px;color:#888;margin-top:8px;">點擊任一卡片進入確認頁</div>
-  `;
-  document.body.appendChild(ov);
+    `;
+    _div.onmouseover = function(){ this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 24px ' + _color; };
+    _div.onmouseout = function(){ this.style.transform='scale(1)'; this.style.boxShadow=''; };
+    _div.addEventListener('click', function(){
+      _confirmSurpriseFieldCard(cardName, _isGood?1:0, cost);
+    });
+    _cardsWrap.appendChild(_div);
+  });
+  ov.appendChild(_cardsWrap);
+
+  // 提示
+  const _hint = document.createElement('div');
+  _hint.style.cssText = 'font-size:14px;color:#888;margin-top:8px;';
+  _hint.textContent = '點擊任一卡片進入確認頁';
+  ov.appendChild(_hint);
+
+  // ★ v1.0.20260424.0580 — 改用 #gc 容器
+  const _gc = document.getElementById('gc');
+  (_gc || document.body).appendChild(ov);
 }
 
 // 第二階段:確認視窗
@@ -16563,36 +16998,55 @@ function _confirmSurpriseFieldCard(cardName, isGood, cost){
   if(!_card) return;
   const _color = isGood ? '#88ddaa' : '#ff8866';
   const _bg = isGood ? 'rgba(60,150,90,0.25)' : 'rgba(180,60,30,0.25)';
+  const _bgScope = isGood ? 'rgba(60,150,90,0.5)' : 'rgba(180,60,30,0.5)';
   const _scope = isGood ? '✨ 有利戰場卡' : '⚠ 不利戰場卡';
 
   const ov = document.createElement('div');
   ov.id = 'surprise-confirm-ov';
   ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.9);z-index:311;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;';
-  ov.innerHTML = `
-    <div style="font-size:30px;font-weight:900;color:#ffe066;letter-spacing:3px;">🪶 確認設置戰場卡</div>
-    <div style="background:${_bg};border:3px solid ${_color};border-radius:18px;padding:28px 40px;
-      max-width:520px;display:flex;flex-direction:column;gap:14px;align-items:center;
-      box-shadow:0 0 40px ${_color}55;">
-      <div style="font-size:42px;font-weight:900;color:${_color};text-shadow:0 0 16px ${_color}88;">${cardName}</div>
-      <div style="font-size:18px;font-weight:800;color:${_color};background:${isGood?'rgba(60,150,90,0.5)':'rgba(180,60,30,0.5)'};padding:6px 18px;border-radius:10px;letter-spacing:2px;">${_scope}</div>
-      <div style="font-size:20px;color:#fff;text-align:center;line-height:1.6;padding:10px 4px;">${_card.d || ''}</div>
-      <div style="font-size:15px;color:#aaa;letter-spacing:1px;">⏳ 持續 3 回合</div>
-    </div>
-    <div style="display:flex;gap:18px;margin-top:8px;">
-      <button onclick="_applySurpriseFieldCard('${cardName}',${isGood},${cost})"
-        style="padding:14px 38px;font-size:22px;font-weight:900;
-        background:linear-gradient(135deg,rgba(60,180,100,0.95),rgba(40,140,70,1));
-        border:2.5px solid #66ddaa;color:#fff;border-radius:12px;cursor:pointer;
-        font-family:inherit;letter-spacing:3px;
-        box-shadow:0 0 24px rgba(102,221,170,0.5);">✓ 使用</button>
-      <button onclick="_rerollSurpriseFieldCard()"
-        style="padding:14px 38px;font-size:22px;font-weight:900;
-        background:linear-gradient(135deg,rgba(140,140,160,0.7),rgba(100,100,120,0.85));
-        border:2.5px solid #888;color:#fff;border-radius:12px;cursor:pointer;
-        font-family:inherit;letter-spacing:3px;">↩ 換一張</button>
-    </div>
+
+  // 標題
+  const _hdr = document.createElement('div');
+  _hdr.style.cssText = 'font-size:30px;font-weight:900;color:#ffe066;letter-spacing:3px;';
+  _hdr.textContent = '🪶 確認設置戰場卡';
+  ov.appendChild(_hdr);
+
+  // 卡片詳細
+  const _card_box = document.createElement('div');
+  _card_box.style.cssText = `background:${_bg};border:3px solid ${_color};border-radius:18px;padding:28px 40px;max-width:520px;display:flex;flex-direction:column;gap:14px;align-items:center;box-shadow:0 0 40px ${_color}55;`;
+  _card_box.innerHTML = `
+    <div style="font-size:42px;font-weight:900;color:${_color};text-shadow:0 0 16px ${_color}88;">${cardName}</div>
+    <div style="font-size:18px;font-weight:800;color:${_color};background:${_bgScope};padding:6px 18px;border-radius:10px;letter-spacing:2px;">${_scope}</div>
+    <div style="font-size:20px;color:#fff;text-align:center;line-height:1.6;padding:10px 4px;">${_card.d || ''}</div>
+    <div style="font-size:15px;color:#aaa;letter-spacing:1px;">⏳ 持續 3 回合</div>
   `;
-  document.body.appendChild(ov);
+  ov.appendChild(_card_box);
+
+  // 按鈕區
+  const _btnBar = document.createElement('div');
+  _btnBar.style.cssText = 'display:flex;gap:18px;margin-top:8px;';
+
+  const _useBtn = document.createElement('button');
+  _useBtn.style.cssText = 'padding:14px 38px;font-size:22px;font-weight:900;background:linear-gradient(135deg,rgba(60,180,100,0.95),rgba(40,140,70,1));border:2.5px solid #66ddaa;color:#fff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:3px;box-shadow:0 0 24px rgba(102,221,170,0.5);';
+  _useBtn.textContent = '✓ 使用';
+  _useBtn.addEventListener('click', function(){
+    _applySurpriseFieldCard(cardName, isGood, cost);
+  });
+  _btnBar.appendChild(_useBtn);
+
+  const _rerollBtn = document.createElement('button');
+  _rerollBtn.style.cssText = 'padding:14px 38px;font-size:22px;font-weight:900;background:linear-gradient(135deg,rgba(140,140,160,0.7),rgba(100,100,120,0.85));border:2.5px solid #888;color:#fff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:3px;';
+  _rerollBtn.textContent = '↩ 換一張';
+  _rerollBtn.addEventListener('click', function(){
+    _rerollSurpriseFieldCard();
+  });
+  _btnBar.appendChild(_rerollBtn);
+
+  ov.appendChild(_btnBar);
+
+  // ★ v1.0.20260424.0580 — 改用 #gc 容器
+  const _gcCnf = document.getElementById('gc');
+  (_gcCnf || document.body).appendChild(ov);
 }
 
 function _rerollSurpriseFieldCard(){
@@ -17014,17 +17468,11 @@ function execSkill(a, sk, cost, stype){
   }
   // ====== 神偷 ======
   else if(n==='盜取'){
-    // ★ v1.0.20260424.0510 — 重新設計:彈視窗讓玩家選擇偷取目標
-    //   可偷:物品卡、寵物、有利狀態 各一(預設1次)
-    //   Lv5(內部4):偷物次數 +1 (共2次)
-    //   Lv10(內部9):偷物次數 +1 (共3次,可全偷或同類複偷)
+    // ★ v1.0.20260424.0600 — 先彈預覽視窗:列出對手可偷項目數,讓玩家決定是否繼續
     const _allFoes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     if(!_allFoes.length){ log('無目標'); clearSel(); return; }
-    // 先選對手目標
-    setPending('enemy', t => {
-      const _stealCount = (_activeSkLv >= 9) ? 3 : (_activeSkLv >= 4 ? 2 : 1);
-      _showStealPicker(a, t, _stealCount, cost);
-    });
+    const _stealCount = (_activeSkLv >= 9) ? 3 : (_activeSkLv >= 4 ? 2 : 1);
+    _showStealPreview(a, _allFoes, _stealCount, cost, 'skill');
   } else if(n==='急速閃躲'){
     log(`[${a.name}] 急速閃躲！`);
     playSkillFX('急速閃躲',a,[]);
@@ -36819,7 +37267,8 @@ const SKILL_UPGRADE_DEF = {
   '色彩噴濺': { cat:'shield', base:20,  label:'護盾值' },
   // ── 控制類：每5級+1回合 ──
   '催眠之歌': { cat:'dur', base:3, perLv:5, label:'睡眠回合' },
-  '搖籃曲':   { cat:'dur', base:2, perLv:5, label:'睡眠回合' },
+  // ★ v1.0.20260424.0570 — 搖籃曲: 60%睡眠+3%/級, Lv10 +1 回合, 解 1 不利狀態
+  '搖籃曲':   { cat:'special_lullaby', label:'睡眠機率+回合' },
   '黑暗封印': { cat:'special_seal', base:70, perLv:1, step:3, cap:100, label:'封印成功率' },
   '時間暫停': { cat:'special_time_pause', label:'禁動回合／消耗' },
   '花粉迷眼': { cat:'dur', base:1, perLv:5, label:'失明回合' },
@@ -37074,6 +37523,12 @@ function _getSkUpgradeBadge(skillName, skLv){
     const reviveCount = (skLv||0) >= 9 ? 2 : 1;
     return '治療×' + healPct + '%, 復活 ' + reviveCount + ' 人';
   }
+  if(cat==='special_lullaby'){
+    // 搖籃曲:60%睡眠+3%/級, Lv10 +1 回合, 解 1 不利
+    const rate = Math.min(100, 60 + (skLv||0)*3);
+    const dur = (skLv||0) >= 9 ? 3 : 2;
+    return rate + '% 睡眠 ' + dur + ' 回合,解 1 不利';
+  }
   return '效果+' + (skLv*5) + '%';
 }
 
@@ -37284,6 +37739,12 @@ function buildSkillLvTable(skillName, currentLv) {
       const healPct = 75 + lv*5;
       const reviveCount = lv >= 9 ? 2 : 1;
       effectText = '治療×' + healPct + '% + 護盾20 + 復活 ' + reviveCount + ' 人' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_lullaby'){
+      // 搖籃曲:60%睡眠+3%/級, Lv10 +1 回合, 解 1 不利
+      const rate = Math.min(100, 60 + lv*3);
+      const dur = lv >= 9 ? 3 : 2;
+      effectText = rate + '% 睡眠 ' + dur + ' 回合 + 解我方 1 不利' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     } else {
       effectText = def.label;
     }
@@ -42711,6 +43172,126 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0620', brief:[
+    '📋 重寫所有 42 個爆發升級表:每一級都顯示完整效果(原本 Lv2~Lv5 只顯示差異,看不到附加效果)',
+  ], items:[
+    '【舊問題】',
+    '  Lv1: "攻擊×120% 連斬6次,目標倒下轉移,末擊附加暈眩"(完整)',
+    '  Lv2: "攻擊×130%"(只有差異,看不到「連斬6次」「暈眩」等核心效果)',
+    '  Lv3: "攻擊×140%"(同上)',
+    '  →玩家以為升 Lv2 後失去附加效果',
+    '【新設計】',
+    '  Lv1: 攻擊×120% 連斬6次,目標倒下轉移,末擊附加暈眩',
+    '  Lv2: 攻擊×132% 連斬6次,目標倒下轉移,末擊附加暈眩',
+    '  ...',
+    '  Lv5: 攻擊×168% 連斬6次,目標倒下轉移,末擊附加暈眩(MAX:暈眩+1回合)',
+    '【涵蓋範圍】',
+    '  劍士、祭司、火/冰/雷/光/暗 5 法師、神射手、神偷、刺客、武鬥家、',
+    '  大力士、武士、時空法師、學者、木靈使、籃球隊員、直笛團員、田徑隊員、',
+    '  幼兒園小孩、電腦繪圖師、程式設計師、弦樂團員、小劇團員、煉金術師、',
+    '  巫女、聖騎士、守衛、吟遊詩人、舞者、警長、軍師、占星師、凡人、動物學家、',
+    '  機械師、吸血鬼、小力、大天狗、酒吞童子、玉藻前、陰陽師、九尾空貓怪、杏花妖',
+    '  共 43 個英雄(含 BOSS)',
+    '【MAX 註解】',
+    '  Lv5(MAX) 行末加註特殊狀態加成(_lv5Extra),例如「暈眩+1回合」「持續+1回合」',
+    '  讓玩家清楚知道 Lv5 的額外好處',
+  ] },
+  { ver:'v1.0.20260424.0610', brief:[
+    '🗡️ 神偷俠盜飛梭爆發改為「可偷全部有利狀態」(包含 PROTECTED 保護類)',
+    '🪶 盜取/俠盜飛梭預覽視窗 計算依模式而異',
+  ], items:[
+    '【設計區別】',
+    '  盜取技能(S1):',
+    '    - 受 PROTECTED_KEEP 保護(8 種): protectBuff、guard、deathimmune、',
+    '      immovable、rebirth、misfortune、alchemist、counter',
+    '    - 預覽視窗計算「可偷狀態」時排除這些保護類',
+    '  俠盜飛梭爆發:',
+    '    - 不受 PROTECTED 限制,可奪取對手 100% 有利狀態',
+    '    - 預覽視窗顯示包含保護類在內的所有 buff 數',
+    '【俠盜飛梭程式碼修改】',
+    '  舊:filter(b => !PROTECTED_KEEP.includes(b.type))',
+    '  新:全部 buff slice 後直接複製到自己身上',
+    '  保留戰鬥訊息「奪取 X 個有利狀態」清楚顯示',
+    '【BURST_DB 說明更新】',
+    '  俠盜飛梭 fd 加上「(包含「不可被偷」的保護類)」',
+    '【效果差異範例】',
+    '  對手有 5 個 buff,其中 2 個是 protectBuff/guard',
+    '    盜取技能: 預覽顯示「✨ 3」,只能偷 3 個',
+    '    俠盜飛梭: 預覽顯示「✨ 5」,全部 5 個都偷走',
+  ] },
+  { ver:'v1.0.20260424.0600', brief:[
+    '🗡️ 神偷盜取/俠盜飛梭 發動前彈預覽小視窗,顯示對手可偷物品/寵物/狀態各 N 個',
+  ], items:[
+    '【新流程】',
+    '  1. 玩家點「盜取」技能 / 「俠盜飛梭」爆發',
+    '  2. 彈出預覽視窗:',
+    '     - 列出每個存活對手的可偷項目數(📦 N | 🐾 N | ✨ N)',
+    '     - 總計顯示 物品 X / 寵物 Y / 狀態 Z',
+    '  3. 玩家確認:',
+    '     - 「🗡️ 繼續偷取」/「⚡ 發動爆發」 → 進入後續流程',
+    '     - 「✗ 取消」 → 中止技能,不消耗能量、不結束行動',
+    '【取消機制】',
+    '  技能:setPending 還沒設定,直接 clearSel + updateUI',
+    '  爆發:在 execBurst 開頭加 hook,只在 window._stealBurstConfirmed 為 true 才繼續',
+    '【補充】',
+    '  AI 神偷不彈視窗,維持自動執行(避免卡死)',
+    '  若所有對手都沒可偷項目,「使用」按鈕仍可點(會直接結束),但會 toast 提示',
+    '【保護類有利狀態不算可偷】',
+    '  protectBuff/guard/deathimmune/immovable/rebirth/misfortune/alchemist/counter',
+    '  跟原盜取邏輯一致',
+  ] },
+  { ver:'v1.0.20260424.0590', brief:[
+    '🔧 修正 4 個爆發技說明文字過時(BURST_DB d/fd) — 軍師、武鬥家、刺客、大力士',
+  ], items:[
+    '【1. 軍師「逆轉神計」】',
+    '  舊:交換雙方所有狀態,我方可再行動',
+    '  新:交換雙方狀態+補能量+我方再行動+抽 6 戰場卡選 1 設置(3 回合)',
+    '【2. 武鬥家「明鏡止水」】',
+    '  舊:完全無敵2回合,攻擊翻倍',
+    '  新:完全無敵 2 回合, 攻擊翻倍, **解除自己所有不利狀態**',
+    '【3. 刺客「死神之鐮」】',
+    '  舊:400% 傷害',
+    '  新:**500%** 傷害並隱形,強力出血(無法免疫)',
+    '【4. 大力士「地球上投」】',
+    '  舊:300% 必中',
+    '  新:**500%** 必中,強力昏迷 2 回合',
+  ] },
+  { ver:'v1.0.20260424.0580', brief:[
+    '🐛 修正出奇制勝點戰場卡沒進確認頁的 bug',
+  ], items:[
+    '【根因(2 個)】',
+    '  1. overlay 用 document.body.appendChild → 跟其他遊戲 UI 元素的 z-index/事件衝突',
+    '     參考魅惑視窗用 #gc.appendChild,改用相同方式',
+    '  2. onclick 內嵌字串中含中文 cardName,部分瀏覽器 / 環境會解析失敗',
+    '     改用 createElement + addEventListener 的標準 DOM API,完全避免字串嵌入問題',
+    '【修正範圍】',
+    '  選卡頁(_renderSurpriseFieldPickerUI):每張戰場卡 div 用 addEventListener',
+    '  確認頁(_confirmSurpriseFieldCard):「使用」「換一張」按鈕用 addEventListener',
+    '  兩個 overlay 都改 appendChild 到 #gc',
+    '【效果】',
+    '  點戰場卡 → 進確認頁',
+    '  確認頁可看到完整效果說明,選擇「使用」或「換一張」',
+    '  「使用」→ 戰場卡正確上場 + 中央大公告',
+    '  「換一張」→ 回到選卡頁可重選',
+  ] },
+  { ver:'v1.0.20260424.0570', brief:[
+    '🎵 搖籃曲升級表修正:顯示成功率(60%~87%)、Lv10 睡眠+1 回合、解 1 不利',
+    '✅ 全爆發 _lv5Extra 確認:42 個英雄爆發中所有狀態 dur 都已用 _lv5Extra(Lv5 +1 回合)',
+  ], items:[
+    '【1. 搖籃曲升級表修正】',
+    '  舊 cat:dur (顯示「睡眠回合 N」,但實際邏輯是升成功率,顯示錯誤)',
+    '  新 cat:special_lullaby',
+    '  Lv1: 60% 睡眠 2 回合 + 解我方 1 不利(基礎)',
+    '  Lv2: 63%、Lv3: 66%...',
+    '  Lv10: 87% 睡眠 3 回合 + 解我方 1 不利(MAX)',
+    '【2. 爆發 _lv5Extra 全面確認】',
+    '  自動掃描 _runBurst 中所有 addStatus / addBuff / status.push 的 dur 表達式',
+    '  結果:42 個英雄爆發中,所有狀態 dur 都已正確用 _lv5Extra',
+    '    例:刺客 隱身 1+_lv5Extra、刺客 中毒 2+_lv5Extra、',
+    '       吟遊詩人 強力睡眠 99(永久,本身就不需 _lv5Extra)、',
+    '       軍師、玉藻前、酒吞童子、大天狗 等所有 BOSS 爆發都 OK',
+    '  _lv5Extra 觸發條件:_burstLv >= 4 (對應顯示 Lv5/MAX)',
+  ] },
   { ver:'v1.0.20260424.0560', brief:[
     '🐛 全面修正用 dmg/heal cat 但實際有特殊升級邏輯的 8 個技能升級顯示',
   ], items:[
@@ -47717,7 +48298,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0560';
+  const CURRENT_VERSION = 'v1.0.20260424.0620';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -47734,7 +48315,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0560';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0620';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
