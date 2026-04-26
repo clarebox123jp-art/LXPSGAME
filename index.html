@@ -37064,13 +37064,7 @@ function _syncSummonCrystalDisplay(){
 function openSummonOverlay(){
   const ov = document.getElementById('summon-overlay');
   if(!ov) return;
-  // ★ 管理員檢查(雙保險,即使按鈕意外顯示也不允許非管理員開啟)
-  try{
-    if(typeof window._isAdminUser === 'function' && !window._isAdminUser()){
-      _showInGameToast && _showInGameToast('⚠ 召喚功能尚未開放,敬請期待!', '#ffaa44', 2400);
-      return;
-    }
-  }catch(_){}
+  // ★ v1.0.20260424.0900 — 移除管理員限制,召喚功能正式開放給所有玩家
   // 同步水晶數量
   _syncSummonCrystalDisplay();
   // 顯示
@@ -37451,13 +37445,10 @@ function _showSummonRareHeroPreview(rareResults){
   try{ playSfx('sfx-summon-reveal', 0.7); }catch(_){}
 }
 
-// 在登入後 / 開啟冒險頁時顯示召喚按鈕(若管理員)
+// ★ v1.0.20260424.0900 — 召喚按鈕已移到 nav bar(永遠顯示),此函式保留為空以維持向後相容
 function _refreshSummonBtnVisibility(){
-  const btn = document.getElementById('adv-summon-btn');
-  if(!btn) return;
-  let isAdmin = false;
-  try{ isAdmin = (typeof window._isAdminUser === 'function') ? window._isAdminUser() : false; }catch(_){}
-  btn.style.display = isAdmin ? 'block' : 'none';
+  // 原本是檢查管理員顯示 panel 內的召喚按鈕,該按鈕已於 v0890 移除
+  // 召喚 nav bar 按鈕在所有玩家身上都顯示,不需動態顯隱
 }
 
 
@@ -45182,6 +45173,23 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0900', brief:[
+    '🌟 召喚功能完全開放(移除所有管理員限制)',
+  ], items:[
+    '【症狀】',
+    '  - v0890 雖然解鎖了 nav bar 召喚按鈕,但點下去仍會被擋下',
+    '  - 因為 openSummonOverlay 函式內還有「雙保險」的管理員檢查',
+    '  - 非管理員會看到「⚠ 召喚功能尚未開放,敬請期待!」提示',
+    '【修復】',
+    '  1. 移除 openSummonOverlay 內的管理員檢查',
+    '     舊: if (!_isAdminUser()) { 顯示尚未開放; return; }',
+    '     新: 直接開啟 overlay,所有玩家可使用',
+    '  2. _refreshSummonBtnVisibility 簡化為空函式',
+    '     (panel 內的召喚按鈕已於 v0890 移除,nav bar 按鈕永遠顯示)',
+    '【實作位置】',
+    '  - openSummonOverlay: line ~37064',
+    '  - _refreshSummonBtnVisibility: line ~37448',
+  ] },
   { ver:'v1.0.20260424.0890', brief:[
     '🎉 召喚功能正式開放(原本 nav bar 鎖頭按鈕解鎖)',
     '🔥 召喚煙火與角色特效放大到滿螢幕',
@@ -51031,7 +51039,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0890';
+  const CURRENT_VERSION = 'v1.0.20260424.0900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51048,7 +51056,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0890';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0900';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
