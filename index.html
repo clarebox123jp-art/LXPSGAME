@@ -1186,14 +1186,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   50%{opacity:0.95;transform:scale(1.1)}
 }
 /* ★ 流星(偶爾) */
-/* ★ v1.0.20260424.0990 — 流星方向修正:由右上往左下劃落,角度 +25deg(右上→左下),
- *   尾巴跟在「右上方」,所以漸變方向用「左到右」(尾巴在左、頭在右)
- *   transform-origin 用 left center,讓 scaleX 從尾巴(左)向前(右)伸長 */
+/* ★ v1.0.20260424.1010 — 流星方向左右翻轉:改為由左上往右下劃落
+ *   起點:左上 → 移動向量:(+dx, +dy) 往右下
+ *   尾巴留在左上(漸變: 右→左 = 頭→尾),所以漸變改為 270deg 反向
+ *   transform-origin 用 right center,讓 scaleX 從尾巴(右)向前(左)伸長
+ *   旋轉角度改為 -25deg(左下走勢) */
 @keyframes summonShootingStar{
-  0%{opacity:0;transform:translate(0,0) rotate(25deg) scaleX(0.5)}
+  0%{opacity:0;transform:translate(0,0) rotate(-25deg) scaleX(0.5)}
   10%{opacity:1}
   60%{opacity:0.85}
-  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(25deg) scaleX(1)}
+  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(-25deg) scaleX(1)}
 }
 /* ★ v1.0.20260424.0970 — 河面波紋反光搖晃 */
 @keyframes summonRiverRipple{
@@ -8423,11 +8425,11 @@ const HERO_IMG_POS = {
   '刺客':    ['176% auto','center 25%'],
   '吟遊詩人':  ['176% auto','center 32%'],
   '大力士':  ['176% auto','center 23%'],
-  '軍師':    ['176% auto','center 15%'],
+  '軍師':    ['176% auto','center 30%'],
   '煉金術師':['95% auto','center 28%'],
   '占星師':  ['168% auto','center 28%'],
   '武鬥家':  ['202% auto','center 20%'],
-  '祭司':    ['152% auto','center 35%'],
+  '祭司':    ['152% auto','center 50%'],
   '劍士':    ['276% auto','center 22%'],
   '光法師':  ['255% auto','center 30%'],
   '警長':    ['211% auto','center 30%'],
@@ -30515,11 +30517,19 @@ function advShowChoicePanel(stage, sceneIdx) {
 
   const grid = document.createElement('div');
   grid.className = 'adv-choice-grid';
+  let _choiceLocked = false;  // ★ v1.0.20260424.1010 — debounce:點過第一次後鎖定整個面板
   scene.choices.forEach(c => {
     const btn = document.createElement('button');
     btn.className = 'adv-choice-btn';
     btn.textContent = c;
     btn.onclick = () => {
+      // ★ v1.0.20260424.1010 — 防止連點/race condition 造成選擇彈兩次
+      if(_choiceLocked) return;
+      _choiceLocked = true;
+      // 鎖定所有按鈕(視覺禁用,避免再次點擊)
+      box.querySelectorAll('.adv-choice-btn').forEach(b => {
+        b.style.pointerEvents = 'none';
+      });
       box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       _advTempChoice = c;
@@ -30626,12 +30636,20 @@ function _advRenderMultiStep(panel, box, stage, sceneIdx){
   box.appendChild(title);
 
   // ★ 共用按鈕工廠:保持 click 行為一致
+  // ★ v1.0.20260424.1010 — debounce:防止連點造成下一步彈兩次
+  let _stepLocked = false;
   const makeBtn = (c, extraStyle) => {
     const btn = document.createElement('button');
     btn.className = 'adv-choice-btn';
     btn.textContent = c;
     if(extraStyle) btn.style.cssText = extraStyle;
     btn.onclick = () => {
+      // ★ 防止連點/race condition 造成選擇彈兩次
+      if(_stepLocked) return;
+      _stepLocked = true;
+      box.querySelectorAll('.adv-choice-btn').forEach(b => {
+        b.style.pointerEvents = 'none';
+      });
       box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       st.results[step.type] = c;
@@ -30702,6 +30720,8 @@ function _advApplyMultiStepResults(results){
   if(results.difficulty) _advPlayerDifficulty = results.difficulty.split('（')[0];
 }
 function advConfirmChoice_multi(stage, sceneIdx){
+  // ★ v1.0.20260424.1010 — 防重入:同 advConfirmChoice 防護
+  if(_advSceneChoiceDone) return;
   _advSceneChoiceDone = true;
   const skipBtn = document.getElementById('adv-skip-btn');
   if (skipBtn) { skipBtn.disabled = false; skipBtn.style.opacity=''; skipBtn.style.pointerEvents=''; skipBtn.title=''; }
@@ -30725,6 +30745,9 @@ function advOnChoiceSelected(type, value, box, stage, sceneIdx) {
 
 function advConfirmChoice(stage, sceneIdx) {
   if (!_advTempChoice) return;
+  // ★ v1.0.20260424.1010 — 防重入:若已執行過(_advSceneChoiceDone=true),直接 return
+  //   避免連點按鈕造成 advConfirmChoice 被呼叫兩次,進而 advStartMiniBattle 兩次
+  if(_advSceneChoiceDone) return;
   // ★ 立即鎖定，防止對話框點擊再次觸發選題
   _advSceneChoiceDone = true;
   const _sceneArrCC = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
@@ -37470,12 +37493,13 @@ function _spawnSummonShootingStar(){
   const layer = document.getElementById('summon-stars');
   if(!layer) return;
   const ss = document.createElement('div');
-  // 起點:右上角區域 (X=55%~88%,Y=3%~25%)
-  const startX = 55 + Math.random()*33;
+  // ★ v1.0.20260424.1010 — 流星方向左右翻轉:由左上往右下劃落
+  // 起點:左上角區域 (X=12%~45%,Y=3%~25%)
+  const startX = 12 + Math.random()*33;
   const startY = 3 + Math.random()*22;
-  // 移動向量:由右上往左下 (dx 負值往左, dy 正值往下)
+  // 移動向量:由左上往右下 (dx 正值往右, dy 正值往下)
   // 限制 dy 不超過天空區域剩餘高度,避免流星跑到山下
-  const dx = -(280 + Math.random()*200);            // -280 ~ -480 px (往左)
+  const dx = 280 + Math.random()*200;                // +280 ~ +480 px (往右)
   const dy = 60 + Math.random()*80;                  // 60~140 px (往下,但仍在天空區)
   const dur = 0.9 + Math.random()*0.6;              // 0.9~1.5 秒
   const len = 60 + Math.random()*60;                 // 流星本體長度 60~120 px
@@ -37485,12 +37509,12 @@ function _spawnSummonShootingStar(){
     'top:' + startY + '%',
     'width:' + len + 'px',
     'height:2px',
-    // 漸變:左(尾巴,透明)→右(頭,亮白) — 配合 +25deg 旋轉,尾巴朝右上、頭朝左下
-    'background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(220,230,255,0.6) 30%,rgba(255,240,200,1) 80%,rgba(255,255,255,1) 100%)',
+    // 漸變:右(尾巴,透明)→左(頭,亮白) — 配合 -25deg 旋轉,尾巴朝左上、頭朝右下
+    'background:linear-gradient(270deg,rgba(255,255,255,0) 0%,rgba(220,230,255,0.6) 30%,rgba(255,240,200,1) 80%,rgba(255,255,255,1) 100%)',
     'box-shadow:0 0 8px rgba(220,230,255,0.9),0 0 16px rgba(220,230,255,0.5)',
     'border-radius:1px',
-    // 從尾巴端伸長:scaleX 以左端為錨點(left center),讓尾巴留在原處
-    'transform-origin:left center',
+    // 從尾巴端伸長:scaleX 以右端為錨點(right center),讓尾巴留在原處
+    'transform-origin:right center',
     '--ssx:' + dx + 'px',
     '--ssy:' + dy + 'px',
     'animation:summonShootingStar ' + dur + 's ease-out forwards',
@@ -41596,7 +41620,16 @@ function openSetRepHeroModal() {
   const initialPool = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) ? ADV_HERO_POOL.maokong : [];
   const advUnlocked = typeof advGetUnlockedHeroes === 'function' ? advGetUnlockedHeroes() : [];
   const bossNames = (typeof BOSS_NAMES !== 'undefined') ? BOSS_NAMES : [];
-  const unlocked = [...new Set([...initialPool, ...advUnlocked])].filter(n => !bossNames.includes(n));
+  // ★ v1.0.20260424.1020 — 大天狗/酒吞童子/玉藻前/巫女 雖在 BOSS_NAMES,
+  //   但是召喚解鎖的英雄,應該允許出現在代表英雄選單中
+  const _summonRaresForRep = (typeof SUMMON_RARE_HEROES !== 'undefined')
+    ? SUMMON_RARE_HEROES
+    : ['大天狗','玉藻前','酒吞童子','巫女'];
+  const unlocked = [...new Set([...initialPool, ...advUnlocked])]
+    .filter(n => typeof n === 'string')
+    .map(n => n.trim())
+    .filter(n => n && (typeof HERO_DB === 'undefined' || HERO_DB[n]))
+    .filter(n => !bossNames.includes(n) || _summonRaresForRep.includes(n));
   const currentRep = _myRepHero ? _myRepHero.name : null;
 
   let cardsHTML = unlocked.length ? '' : '<div style="color:#888;font-size:20px;padding:24px;">尚未解鎖任何英雄</div>';
@@ -45772,6 +45805,66 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1020', brief:[
+    '⭐ 設定代表英雄選單加入大天狗/酒吞童子/玉藻前 英雄版',
+  ], items:[
+    '【問題】',
+    '  代表英雄選單(設定關卡頁頂部代表英雄條)未顯示已解鎖的日本三大 BOSS',
+    '【根因】',
+    '  跟 v0992 修復冒險選英雄頁類似的問題:',
+    '  openSetRepHeroModal 用 !bossNames.includes(n) 過濾,',
+    '  但 BOSS_NAMES 在 line ~29191 把大天狗/酒吞童子/玉藻前 push 進去了,',
+    '  導致這三隻被誤殺',
+    '【修復】',
+    '  套用相同邏輯:!bossNames.includes(n) || SUMMON_RARE_HEROES.includes(n)',
+    '  讓「召喚解鎖稀有角色」即使在 BOSS_NAMES 也能顯示',
+    '  順便加 trim/HERO_DB 合法性檢查(同 v0991 強化措施)',
+    '【實作位置】',
+    '  - openSetRepHeroModal 內 unlocked 構建: line ~41618',
+    '【注意:能力值機制】',
+    '  代表英雄面板僅顯示英雄名 + 等級 + 縮圖,實際戰鬥能力值套用以',
+    '  newHero(name, side, pos) 為準,p1 方會自動套 JP_BOSS_HERO_STATS 弱版(v1000 已修):',
+    '    大天狗  hp:58, atk:10, sp:13, spd:17',
+    '    酒吞童子 hp:72, atk:16, sp:9,  spd:6',
+    '    玉藻前  hp:56, atk:5,  sp:19, spd:11',
+    '  好友邀請來協助時也走同一條 newHero 路徑,確保不會用到 BOSS 版能力',
+  ] },
+  { ver:'v1.0.20260424.1010', brief:[
+    '☄️ 召喚星空流星左右翻轉(從左上往右下劃落)',
+    '🎯 修復選主題/難度連點兩次造成彈兩次的 bug',
+    '🎨 祭司圖往下移 15%,軍師圖往上移 15%',
+  ], items:[
+    '【1. 流星方向左右翻轉】',
+    '  原本:右上 → 左下,旋轉 +25deg',
+    '  改為:左上 → 右下,旋轉 -25deg',
+    '  - 起點 startX:55%~88% → 12%~45%',
+    '  - 移動向量 dx:-280~-480 → +280~+480',
+    '  - 漸變方向 90deg → 270deg(尾巴在右、頭在左)',
+    '  - transform-origin: left center → right center',
+    '【2. 選主題/難度彈兩次修復】',
+    '  根因:btn.onclick 沒做 debounce,玩家連點或 race condition 時:',
+    '    1) 第一次點 → setTimeout 320ms 後呼叫 advConfirmChoice',
+    '    2) 第二次點(在 320ms 內) → 又一個 setTimeout',
+    '    → advConfirmChoice 被呼叫兩次,advStartMiniBattle 也被呼叫兩次',
+    '  修復(三層保護):',
+    '    a) advShowChoicePanel 內 btn.onclick 加 _choiceLocked 旗標,',
+    '       點擊一次後其他按鈕的 pointerEvents 直接 disable',
+    '    b) _advRenderMultiStep 內 makeBtn 同樣加 _stepLocked 旗標',
+    '    c) advConfirmChoice 與 advConfirmChoice_multi 開頭加防重入:',
+    '       if(_advSceneChoiceDone) return;',
+    '【3. 祭司/軍師肖像位置調整】',
+    '  - 祭司 HERO_IMG_POS:  center 35% → center 50%(整張圖往下 15%)',
+    '    → 視野看到圖片更上方,鼻子以上不再被切掉',
+    '  - 軍師 HERO_IMG_POS:  center 15% → center 30%(整張圖往上 15%)',
+    '    → 視野看到圖片更下方,眼睛以下完整顯示',
+    '【實作位置】',
+    '  - summonShootingStar keyframes: line ~1188',
+    '  - _spawnSummonShootingStar: line ~37469',
+    '  - advShowChoicePanel debounce: line ~30518',
+    '  - _advRenderMultiStep debounce: line ~30638',
+    '  - advConfirmChoice 防重入: line ~30728',
+    '  - HERO_IMG_POS 祭司/軍師: line ~8428, 8432',
+  ] },
   { ver:'v1.0.20260424.1000', brief:[
     '🛡 強化「玉藻前/大天狗/酒吞童子」作為玩家英雄時的能力值修正',
   ], items:[
@@ -51982,7 +52075,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1000';
+  const CURRENT_VERSION = 'v1.0.20260424.1020';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51999,7 +52092,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1000';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1020';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
