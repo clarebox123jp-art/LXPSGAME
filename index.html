@@ -1164,6 +1164,48 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   0%,100%{text-shadow:0 0 8px rgba(255,210,0,0.4)}
   50%{text-shadow:0 0 20px rgba(255,220,50,0.9),0 0 40px rgba(255,180,0,0.5)}
 }
+/* ★ v1.0.20260424.0790 — 召喚系統動畫 */
+@keyframes summonTitleGlow{
+  0%,100%{text-shadow:0 0 18px rgba(150,200,255,0.85),0 0 36px rgba(100,140,220,0.55),0 2px 4px #000}
+  50%{text-shadow:0 0 28px rgba(220,200,255,1),0 0 56px rgba(180,150,255,0.85),0 2px 4px #000}
+}
+@keyframes summonFireflyFloat{
+  0%{transform:translate(0,0) scale(0.7);opacity:0.3}
+  20%{opacity:0.95}
+  50%{transform:translate(var(--ffx),var(--ffy)) scale(1.15);opacity:1}
+  80%{opacity:0.85}
+  100%{transform:translate(calc(var(--ffx)*1.6),calc(var(--ffy)*1.6)) scale(0.7);opacity:0}
+}
+@keyframes summonResultPop{
+  0%{opacity:0;transform:scale(0.4) rotate(-20deg)}
+  60%{opacity:1;transform:scale(1.15) rotate(5deg)}
+  100%{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes summonGridIn{
+  from{opacity:0;transform:scale(0.7) translateY(20px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+@keyframes summonRareGlow{
+  0%,100%{box-shadow:0 0 20px rgba(255,200,80,0.7),0 0 40px rgba(255,150,200,0.5)}
+  50%{box-shadow:0 0 40px rgba(255,220,100,1),0 0 80px rgba(255,180,220,0.85)}
+}
+.summon-result-card{
+  background:linear-gradient(135deg,rgba(20,15,50,0.92),rgba(40,30,90,0.92));
+  border:2px solid rgba(180,150,255,0.65);border-radius:14px;
+  padding:14px 12px;text-align:center;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  animation:summonGridIn 0.5s ease-out backwards;
+}
+.summon-result-card.rare{
+  border-color:rgba(255,220,100,0.95);
+  background:linear-gradient(135deg,rgba(60,40,10,0.95),rgba(90,40,90,0.95));
+  animation:summonGridIn 0.5s ease-out backwards,summonRareGlow 1.4s ease-in-out infinite 0.5s;
+}
+.summon-result-card .sric{font-size:46px;line-height:1.1;display:block;margin-bottom:4px;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,0.5));}
+.summon-result-card .srnm{font-size:18px;color:#fff;font-weight:700;line-height:1.3;}
+.summon-result-card .srqty{font-size:16px;color:#ffe066;font-weight:900;letter-spacing:1px;margin-top:2px;}
+.summon-result-card.rare .srnm{color:#ffe066;text-shadow:0 0 8px rgba(255,200,80,0.6);}
 /* 技能按鈕：固定總高，標題1行+說明3行 */
 .abtn{
   width:100%;padding:5px 10px 4px;margin:3px 0;cursor:pointer;
@@ -1581,12 +1623,13 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   z-index:0;pointer-events:none;
 }
 #adv-back-btn{
+  /* ★ v1.0.20260424.0790 — 縮小返回首頁按鈕,讓代表英雄條可以左移而不蓋住關卡視窗 */
   position:absolute;top:28px;left:36px;z-index:10;
-  padding:14px 36px;font-size:46px;font-weight:700;
+  padding:9px 22px;font-size:30px;font-weight:700;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   background:rgba(0,0,0,0.65);border:2px solid rgba(255,255,255,0.28);
   color:#ddd;border-radius:8px;cursor:pointer;
-  transition:all 0.2s;letter-spacing:3px;backdrop-filter:blur(4px);
+  transition:all 0.2s;letter-spacing:2px;backdrop-filter:blur(4px);
 }
 #adv-back-btn:hover{background:rgba(40,40,80,0.85);border-color:rgba(255,255,255,0.6);color:#fff;}
 /* ── 左側關卡清單 ── */
@@ -4020,6 +4063,10 @@ body.art-premium #elem-pick-overlay {
 <audio id="bgm-adv-scene" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a" loop></audio>
 <audio id="sfx-quiz-correct" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D%E9%9F%B3%E6%95%88.mp3"></audio>
 <audio id="sfx-quiz-wrong"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
+<!-- ★ v1.0.20260424.0790 — 召喚系統 BGM/SFX -->
+<audio id="bgm-summon"        preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a" loop></audio>
+<audio id="sfx-summon-smoke"  preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
+<audio id="sfx-summon-reveal" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.mp3"></audio>
 <audio id="bgm-boss-01" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a" loop></audio>
 <audio id="bgm-boss-apricot" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9D%8F%E8%8A%B1%E5%A6%96BGM2.m4a" loop></audio>
 <audio id="bgm-boss-02" preload="auto" src="https://github.com/clarebox123jp-art/-/raw/main/BOSS%E6%88%B002.mp3" loop></audio>
@@ -4376,20 +4423,21 @@ body.art-premium #elem-pick-overlay {
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
     <!-- ★ 好友系統：代表英雄顯示 -->
-    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(290px,24vw,400px);z-index:12;
-      display:none;align-items:center;gap:clamp(8px,1vw,14px);cursor:pointer;
-      padding:clamp(10px,1.2vw,18px) clamp(18px,2vw,34px);
+    <!-- ★ v1.0.20260424.0790 — 左移代表英雄條,避免蓋到關卡視窗(原 left:clamp(290px,24vw,400px)→180px,18vw,260px) -->
+    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(180px,18vw,260px);z-index:12;
+      display:none;align-items:center;gap:clamp(6px,0.8vw,12px);cursor:pointer;
+      padding:clamp(6px,0.8vw,12px) clamp(12px,1.4vw,24px);
       background:rgba(10,15,35,0.88);border:2px solid rgba(255,200,80,0.6);border-radius:40px;
       box-shadow:0 2px 16px rgba(255,180,0,0.25);transition:border-color 0.2s,box-shadow 0.2s;"
       onclick="playSfx('sfx-gentle',0.5);openSetRepHeroModal()">
-      <div id="adv-rep-hero-img-wrap" style="width:clamp(52px,5.5vw,80px);height:clamp(52px,5.5vw,80px);border-radius:50%;overflow:hidden;
-        border:2.5px solid rgba(255,200,80,0.9);background:rgba(20,20,30,0.9);flex-shrink:0;
-        display:flex;align-items:center;justify-content:center;font-size:clamp(28px,3vw,44px);">👤</div>
-      <div style="display:flex;flex-direction:column;line-height:1.3;">
-        <span style="font-size:clamp(20px,2.2vw,38px);color:#ffcc44;font-weight:900;" id="adv-rep-hero-name">設定代表英雄</span>
-        <span style="font-size:clamp(13px,1.4vw,22px);color:#aaa;" id="adv-rep-hero-lv"></span>
+      <div id="adv-rep-hero-img-wrap" style="width:clamp(38px,4vw,58px);height:clamp(38px,4vw,58px);border-radius:50%;overflow:hidden;
+        border:2px solid rgba(255,200,80,0.9);background:rgba(20,20,30,0.9);flex-shrink:0;
+        display:flex;align-items:center;justify-content:center;font-size:clamp(20px,2.2vw,32px);">👤</div>
+      <div style="display:flex;flex-direction:column;line-height:1.2;">
+        <span style="font-size:clamp(14px,1.6vw,26px);color:#ffcc44;font-weight:900;" id="adv-rep-hero-name">設定代表英雄</span>
+        <span style="font-size:clamp(10px,1.1vw,18px);color:#aaa;" id="adv-rep-hero-lv"></span>
       </div>
-      <span style="font-size:clamp(18px,2vw,30px);color:#ffcc44;">⭐</span></div>
+      <span style="font-size:clamp(14px,1.6vw,24px);color:#ffcc44;">⭐</span></div>
     <!-- ★ 冒險模式帳號名稱顯示 -->
     <div id="adv-username-bar" style="display:none;position:absolute;top:clamp(80px,9vw,130px);left:36px;z-index:11;
       align-items:center;gap:clamp(6px,1vw,10px);">
@@ -4429,6 +4477,15 @@ body.art-premium #elem-pick-overlay {
       box-shadow:0 0 16px rgba(255,100,180,0.45),inset 0 0 10px rgba(255,150,200,0.2);">
       🎉 近期活動與新角色
     </button>
+    <!-- ★ v1.0.20260424.0790 — 召喚按鈕(管理員限定,預設隱藏,登入後再判斷顯示) -->
+    <button id="adv-summon-btn" onclick="playSfx('sfx-sel',0.6);openSummonOverlay()"
+      style="display:none;width:100%;margin-top:8px;padding:12px 8px;font-size:clamp(22px,2.6vw,34px);font-weight:800;
+      background:linear-gradient(135deg,rgba(40,80,180,0.95),rgba(80,140,240,0.95),rgba(20,40,120,0.95));
+      border:2px solid rgba(150,200,255,0.9);color:#e0f0ff;border-radius:12px;cursor:pointer;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:2px;
+      box-shadow:0 0 20px rgba(100,160,255,0.5),inset 0 0 12px rgba(180,220,255,0.2);">
+      🌟 召喚 <span style="font-size:0.7em;color:#aabbff;">(管理員測試)</span>
+    </button>
     </div>
 
     <!-- 右側：關卡簡介視窗 -->
@@ -4457,7 +4514,78 @@ body.art-premium #elem-pick-overlay {
     </div>
 
 
-  <!-- ★ 不可思議超商 -->
+  <!-- ★ v1.0.20260424.0790 — 召喚系統 overlay (管理員測試中) -->
+  <div id="summon-overlay" style="display:none;position:absolute;inset:0;z-index:780;
+    background:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA(%E5%8F%AF%E6%84%9B%E7%89%88).png') center/cover no-repeat;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
+    <!-- 半透明遮罩,讓UI更清楚 -->
+    <div style="position:absolute;inset:0;background:rgba(10,5,35,0.35);z-index:0;pointer-events:none;"></div>
+    <!-- 螢火蟲層 (z-index:1) -->
+    <div id="summon-fireflies" style="position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;"></div>
+    <!-- 左上:返回按鈕 -->
+    <button id="summon-back-btn" onclick="playSfx('sfx-cancel',0.5);closeSummonOverlay()"
+      style="position:absolute;top:24px;left:28px;z-index:10;
+      padding:10px 24px;font-size:clamp(22px,2.6vw,32px);font-weight:700;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+      background:rgba(0,0,10,0.7);border:2px solid rgba(180,200,255,0.5);
+      color:#cfd8ff;border-radius:10px;cursor:pointer;letter-spacing:2px;
+      backdrop-filter:blur(4px);box-shadow:0 0 12px rgba(100,160,255,0.3);">
+      ← 返回
+    </button>
+    <!-- 標題 -->
+    <div style="position:absolute;top:32px;left:50%;transform:translateX(-50%);z-index:9;
+      font-size:clamp(36px,4.2vw,60px);font-weight:900;
+      color:#fff;letter-spacing:6px;
+      text-shadow:0 0 18px rgba(150,200,255,0.85),0 0 36px rgba(100,140,220,0.55),0 2px 4px #000;
+      animation:summonTitleGlow 2.6s ease-in-out infinite;">
+      🌟 召喚星空
+    </div>
+    <!-- 左下:召喚水晶數量 + 說明 -->
+    <div style="position:absolute;bottom:32px;left:32px;z-index:10;display:flex;align-items:center;gap:12px;">
+      <div style="display:flex;align-items:center;gap:10px;
+        padding:12px 22px;background:rgba(20,10,40,0.85);
+        border:2px solid rgba(200,150,255,0.7);border-radius:14px;
+        box-shadow:0 0 18px rgba(180,130,255,0.4);">
+        <span style="font-size:clamp(28px,3.2vw,42px);">🔮</span>
+        <span style="font-size:clamp(20px,2.4vw,32px);color:#ddd;font-weight:700;">召喚水晶</span>
+        <span id="summon-crystal-count" style="font-size:clamp(28px,3.2vw,40px);font-weight:900;
+          color:#dabffe;letter-spacing:2px;
+          text-shadow:0 0 14px rgba(200,140,255,0.85);">0</span>
+      </div>
+      <button id="summon-help-btn" onclick="playSfx('sfx-gentle',0.5);_showSummonHelp()"
+        style="width:clamp(38px,4vw,52px);height:clamp(38px,4vw,52px);font-size:clamp(22px,2.4vw,30px);font-weight:900;
+        background:rgba(30,20,60,0.85);border:2px solid rgba(180,140,255,0.65);
+        color:#dabffe;border-radius:50%;cursor:pointer;font-family:inherit;
+        box-shadow:0 0 14px rgba(180,130,255,0.4);"
+        title="召喚機率說明">?</button>
+    </div>
+    <!-- 中下:召喚按鈕區 -->
+    <div style="position:absolute;bottom:38px;left:50%;transform:translateX(-50%);z-index:10;
+      display:flex;gap:24px;align-items:stretch;">
+      <button id="summon-1x-btn" onclick="playSfx('sfx-sel',0.7);doSummon(1)"
+        style="padding:18px 38px;font-size:clamp(24px,2.8vw,38px);font-weight:900;
+        background:linear-gradient(135deg,rgba(40,30,90,0.95),rgba(80,60,160,0.95),rgba(30,20,80,0.95));
+        border:3px solid rgba(180,140,255,0.85);color:#fff;border-radius:14px;cursor:pointer;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:3px;
+        box-shadow:0 0 22px rgba(160,110,255,0.55),inset 0 0 14px rgba(220,180,255,0.2);
+        transition:transform 0.15s,box-shadow 0.15s;">
+        🌟 召喚 1 次<br><span style="font-size:0.6em;color:#dabffe;">消耗 🔮 ×1</span>
+      </button>
+      <button id="summon-10x-btn" onclick="playSfx('sfx-sel',0.7);doSummon(10)"
+        style="padding:18px 38px;font-size:clamp(24px,2.8vw,38px);font-weight:900;
+        background:linear-gradient(135deg,rgba(80,30,140,0.95),rgba(160,80,220,0.95),rgba(60,20,100,0.95));
+        border:3px solid rgba(220,170,255,0.95);color:#fff;border-radius:14px;cursor:pointer;
+        font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:3px;
+        box-shadow:0 0 28px rgba(200,130,255,0.65),inset 0 0 14px rgba(255,200,255,0.25);
+        transition:transform 0.15s,box-shadow 0.15s;">
+        ✨ 連續召喚 10 次<br><span style="font-size:0.6em;color:#fad8ff;">消耗 🔮 ×10</span>
+      </button>
+    </div>
+    <!-- 召喚動畫層(放粉煙火/角色GIF) -->
+    <div id="summon-fx-layer" style="position:absolute;inset:0;z-index:30;pointer-events:none;display:none;"></div>
+  </div>
+
+
   <div id="shop-overlay" style="display:none;position:absolute;inset:0;z-index:750;
     background:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86.png') center/cover no-repeat;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
@@ -8676,7 +8804,8 @@ function statTrack(hero, field, amount){
 
 function addStatus(h,t,dur=1){
   if(!h||h.curHp<=0) return;
-  if(fieldHas('purify')) return;
+  // ★ v1.0.20260424.0800 — 潔淨之樹改用 side 過濾(軍師有利卡只惠己方)
+  if(fieldHas('purify', h.side)) return;
   // ★ v1.0.20260421.3007 — 八岐大蛇天賦：免疫所有不利狀態（不受 confused 影響，天生能力）
   if(h.name === '八岐大蛇' && t !== 'strongTaunt'){
     showShieldVFX(h,'immune');
@@ -8931,8 +9060,30 @@ function tickStatus(h){
 }
 
 // Field cards
-let fieldCards=[]; // {effect, name, side (who played), dur}
-function fieldHas(eff){return fieldCards.some(f=>f.effect===eff)}
+let fieldCards=[]; // {effect, name, side (who played), dur, _surpriseSide?, _surpriseGood?}
+// ★ v1.0.20260424.0800 — fieldHas 支援 side 過濾(軍師戰場卡專用)
+//   軍師「出奇制勝」放置的卡會帶 _surpriseSide(放卡的陣營) 和 _surpriseGood(是否有利):
+//     有利卡(sanctuary/warhorn/purify/discount):僅 _surpriseSide 那一方生效
+//     不利卡(noshop/sealall/noheal/exhaust):僅 對手陣營(非 _surpriseSide)生效
+//   呼叫 fieldHas(eff, side):若卡有 _surpriseSide 旗標,依規則決定是否套用;
+//     沒帶 side 參數則退回原本「只要存在就生效」的全體模式(向後相容)
+function fieldHas(eff, side){
+  return fieldCards.some(f => {
+    if(f.effect !== eff) return false;
+    // 沒側別限制 → 全體生效
+    if(!f._surpriseSide) return true;
+    // 沒傳 side 參數 → 視為全體生效(向後相容,不過濾)
+    if(!side) return true;
+    // 軍師卡:依 good/bad 決定生效對象
+    if(f._surpriseGood){
+      // 有利卡:只對放卡方生效
+      return side === f._surpriseSide;
+    } else {
+      // 不利卡:只對對手生效
+      return side !== f._surpriseSide;
+    }
+  });
+}
 
 // ====== MUSIC SKILL TUNES ======
 function playMusicSkill(type){
@@ -12040,7 +12191,7 @@ function _updateReapEligibleHighlight(){
     // 封印/全場封印時該角色無法觸發
     try{
       if(typeof hasStatus === 'function' && hasStatus(h,'seal')) return;
-      if(typeof fieldHas === 'function' && fieldHas('sealall')) return;
+      if(typeof fieldHas === 'function' && fieldHas('sealall', h.side)) return;
     }catch(_){}
     const _slot = _hasS1 ? 's1' : 's2';
     const _skLv = (h._skLv && typeof h._skLv[_slot]==='number') ? h._skLv[_slot] : 0;
@@ -12082,8 +12233,8 @@ function updateUI(){
     document.getElementById('actor-info').innerHTML=`<div style="font-size:42px;font-weight:700;line-height:1.4;animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;letter-spacing:1px;">✨ 輪到你的 <span style="color:#ffe066;text-shadow:0 0 16px rgba(255,220,0,0.9)">${a.name}</span> 了！<br><span style="font-size:30px;color:#aaaaaa;font-weight:500">選擇下面一種行動</span></div>`;
     const s1b=document.getElementById('b-s1'),s2b=document.getElementById('b-s2');
     const c1=skillCost(a.s1,a,true),c2=skillCost(a.s2,a,true);
-    const _s1base=a.s1.c+(fieldHas('discount')?-1:0)+(fieldHas('exhaust')?1:0);
-    const _s2base=a.s2.c+(fieldHas('discount')?-1:0)+(fieldHas('exhaust')?1:0);
+    const _s1base=a.s1.c+(fieldHas('discount', a.side)?-1:0)+(fieldHas('exhaust', a.side)?1:0);
+    const _s2base=a.s2.c+(fieldHas('discount', a.side)?-1:0)+(fieldHas('exhaust', a.side)?1:0);
     const _hk_ui = a.side+'-'+a.pos;
     const _fat_ui = (G.comboFatigueByHero&&G.comboFatigueByHero[_hk_ui])||0;
     const _lastSk_ui = (G.lastSkillByHero&&G.lastSkillByHero[_hk_ui])||'';
@@ -12111,7 +12262,7 @@ function updateUI(){
     s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${_s2FdWithLv.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span>${_s2LvTag}</b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
     const s1IsPassive = !!(a.s1.p);
     const s2IsPassive = !!(a.s2.p);
-    const isSealed = hasStatus(a,'seal') || fieldHas('sealall');
+    const isSealed = hasStatus(a,'seal') || fieldHas('sealall', a.side);
     // 按鈕 disabled 判斷：已行動 or 能量不足 or 封印 or 被動
     s1b.disabled = a.acted || s1IsPassive || G.energy.p1<c1 || isSealed;
     s2b.disabled = a.acted || s2IsPassive || G.energy.p1<c2 || (a.s2.once&&a.s2used) || isSealed;
@@ -12158,8 +12309,10 @@ function updateUI(){
 // skillCost：計算技能消耗。displayOnly=true 時不包含隨機折扣（用於UI顯示）
 function skillCost(s, actor, displayOnly=false){
   let c=s.c;
-  if(fieldHas('discount')) c=Math.max(1,c-1);
-  if(fieldHas('exhaust')) c=c+1;
+  // ★ v1.0.20260424.0800 — 軍師戰場卡 discount/exhaust 用 actor.side 過濾
+  const _aside = actor && actor.side;
+  if(fieldHas('discount', _aside)) c=Math.max(1,c-1);
+  if(fieldHas('exhaust', _aside)) c=c+1;
   // 星空祝福：技能費用變0
   if(actor && hasBuff(actor,'zeroCost')) return 0;
   // ★ 木靈使神之賜福 Lv>=5：能量消耗-1
@@ -14975,7 +15128,8 @@ function doDmg(target, rawDmg, opts={}){
   // chaos field (damage -> heal, heal -> dmg handled in doHeal)
   if(fieldHas('chaos')&&!opts.isChaos) { doHeal(target,dmg,{isChaos:true}); return 0; }
   // warhorn field
-  if(fieldHas('warhorn')&&!opts.noWarhorn) dmg+=3;
+  // ★ v1.0.20260424.0800 — 戰爭號角(有利)只對攻擊者陣營生效(軍師卡)
+  if(fieldHas('warhorn', a&&a.side)&&!opts.noWarhorn) dmg+=3;
   // minDmg field
   if(fieldHas('minDmg')) dmg=Math.max(3,dmg);
 
@@ -15692,7 +15846,8 @@ function doHeal(target, rawAmt, opts={}){
       }
     }
   }
-  if(fieldHas('noheal')&&!opts.isChaos){ log(`🚫 受詛咒的神像：無法恢復HP！`); return 0; }
+  // ★ v1.0.20260424.0800 — 受詛咒的神像(不利)只對對手陣營生效(軍師卡):用 target.side 過濾
+  if(fieldHas('noheal', target&&target.side)&&!opts.isChaos){ log(`🚫 受詛咒的神像：無法恢復HP！`); return 0; }
   if(target && hasStatus(target,'noheal_curse')&&!opts.isChaos){ log(`🚫 不治詛咒：[${target.name}] 無法恢復HP！`); return 0; }
   // healReduced (朱雀召喚：治療量減半)
   if(target && hasStatus(target,'healReduced')){ rawAmt=Math.ceil(rawAmt*0.5); }
@@ -15712,7 +15867,8 @@ function doHeal(target, rawAmt, opts={}){
     else { amt=Math.ceil(amt*0.5); showDiceMsg('占卜水晶','治療-50%'); }
   }
   if(fieldHas('chaos')&&!opts.isChaos){ doDmg(target,amt,{isChaos:true}); return 0; }
-  if(fieldHas('warhorn')&&!opts.noWarhorn) amt+=3;
+  // ★ v1.0.20260424.0800 — 戰爭號角(有利)只對治療者陣營生效(軍師卡)
+  if(fieldHas('warhorn', a&&a.side)&&!opts.noWarhorn) amt+=3;
   // 祭司長袍：治療效果+40%（寵物專家加倍）
   const aeq=a?getEquip(a):null;
   if(aeq && aeq.healBonus && opts.isHeal){
@@ -16130,7 +16286,7 @@ function requestAction(type, btnEl){
     if(sk.p){ log(`⚙ [${sk.n}] 是被動技能`); return; }
     const cost=skillCost(sk,a,true);
     if(G.energy[a.side]<cost){ log('能量不足！'); return; }
-    if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
+    if(fieldHas('sealall', a.side)){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
     // ★ 被封印也可以發動極限爆發（爆發免疫封印）
     if(hasStatus(a,'seal')){
       if(_canBurst(a)){
@@ -16205,7 +16361,7 @@ function selMove(type){
     // 統一用 displayOnly=true 計算 cost（不含魔水晶戒指隨機折扣）作為判斷與扣除基準
     const cost=skillCost(sk,a,true);
     if(G.energy[a.side]<cost){ log('能量不足！'); return; }
-    if(fieldHas('sealall')){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
+    if(fieldHas('sealall', a.side)){ log('🚫 封印魔法石碑：無法使用技能！'); return; }
     // ★ 被封印也可以發動極限爆發（爆發免疫封印）
     if(hasStatus(a,'seal')){
       if(_canBurst(a)){
@@ -17341,7 +17497,10 @@ function _applySurpriseFieldCard(cardName, isGood, cost){
       log(`🔄 舊戰場卡 [${fieldCards[0].n}] 已移除,新戰場卡啟動!`);
     }
     fieldCards.length = 0;
-    fieldCards.push({..._card, side: actor.side, dur: 3});
+    // ★ v1.0.20260424.0800 — 軍師戰場卡標記 _surpriseSide/_surpriseGood,
+    //   讓 fieldHas(eff, side) 依規則過濾(有利只惠己方,不利只克敵方)
+    fieldCards.push({..._card, side: actor.side, dur: 3,
+      _surpriseSide: actor.side, _surpriseGood: !!isGood});
     try{ if(typeof renderBfield === 'function') renderBfield(); }catch(_){}
     try{ if(typeof updateFieldFX === 'function') updateFieldFX(); }catch(_){}
     try{ playSfx('sfx-field', 0.8); }catch(_){}
@@ -20090,7 +20249,7 @@ function clickItem(it){
   if(G.activeChar && G.activeChar.side !== 'p1') return;
   // nosell（查封）或 noshop（商店停業）任一成立時，禁止點擊物品
   if(hasStatus(a,'nosell')){ log('物品已被查封，無法使用或販賣！'); return; }
-  if(fieldHas('noshop')){ log('🚫 神秘商店暫停營業，無法操作物品！'); return; }
+  if(fieldHas('noshop', a.side)){ log('🚫 神秘商店暫停營業，無法操作物品！'); return; }
   // ★ 清除舊的待選目標（防止殘留 pendingCb 干擾新的物品操作）
   G.pendingTarget=null; pendingCb=null;
   clearSel();
@@ -20131,7 +20290,7 @@ function _hasAlchemistPassive(actor){
   if(!sk) return null;
   const cost = skillCost(sk, actor, true);
   if(G.energy[actor.side] < cost) return null;
-  if(hasStatus(actor,'seal') || fieldHas('sealall')) return null;
+  if(hasStatus(actor,'seal') || fieldHas('sealall', actor.side)) return null;
   return {sk, cost};
 }
 
@@ -20396,7 +20555,7 @@ function doSell(){
     G.selItem=null; return;
   }
   if(a && hasStatus(a,'nosell')){ log('物品已被查封，無法販賣！'); return; }
-  if(a && fieldHas('noshop')){ log('神秘商店暫停營業，無法販賣！'); return; }
+  if(a && fieldHas('noshop', a.side)){ log('神秘商店暫停營業，無法販賣！'); return; }
   if(a){
     // ★ 每回合每英雄最多賣1次（煉金師「真理之門」爆發期間可賣2次）
     const _sellLimit = a._burstSellDouble ? 2 : 1;
@@ -21350,12 +21509,15 @@ function nextRound(){
   renderBfield(); updateFieldFX();
 
   // Sanctuary: heal+cleanse at round start
-  if(fieldHas('sanctuary')){
-    G.p1.concat(G.p2).forEach(h=>{
-      if(h.curHp>0){ doHeal(h,5,{actor:null,noDice:true,noWarhorn:true}); clearBadStatus(h); }
-    });
-    log('🌿 醫療聖所：所有存活角色恢復5HP並消除不利狀態');
-  }
+  // ★ v1.0.20260424.0800 — 改為逐角色檢查 fieldHas('sanctuary', h.side),
+  //   軍師卡只惠己方;一般戰場卡(無 _surpriseSide)維持全體生效
+  G.p1.concat(G.p2).forEach(h=>{
+    if(h.curHp>0 && fieldHas('sanctuary', h.side)){
+      doHeal(h,5,{actor:null,noDice:true,noWarhorn:true});
+      clearBadStatus(h);
+    }
+  });
+  if(fieldHas('sanctuary')){ log('🌿 醫療聖所：依規則為相應角色恢復5HP並消除不利狀態'); }
   // Death mark: fire at round start（含定時炸彈）
   G.p1.concat(G.p2).forEach(h=>{
     if(hasStatus(h,'deathmark') && h.curHp>0){
@@ -21588,8 +21750,8 @@ G.p1.concat(G.p2).forEach(h=>{
   //    第二次 aiAct 進入 _pendingTimers 卻永遠不被釋放,造成 BOSS 不行動)
   //   修復:用 _pendingPlayerUI 旗標標記非同步路徑,確保每次 nextRound 只排一次 startTurn
   let _pendingPlayerUI = false;
-  // Always draw 1 card each new round (unless noshop)
-  if(!fieldHas('noshop')){
+  // ★ v1.0.20260424.0800 — 玩家(p1)抽卡:用 fieldHas('noshop','p1') 過濾(軍師卡可能只克 p2)
+  if(!fieldHas('noshop', 'p1')){
     const newCard = drawItem();
     // 裝備卡直接進入裝備選擇，不佔背包欄位
     if(newCard.type==='equip'){
@@ -21613,7 +21775,8 @@ G.p1.concat(G.p2).forEach(h=>{
     log('🚫 神秘商店暫停營業：本回合無法抽卡');
   }
   // Draw 1 card for p2 AI (if not noshop) - no UI needed, direct to inv2
-  if(!fieldHas('noshop')){
+  // ★ v1.0.20260424.0800 — AI(p2) 抽卡:用 fieldHas('noshop','p2') 過濾
+  if(!fieldHas('noshop', 'p2')){
     const _p2Card=drawItem();
     if(_p2Card.type==='equip'){
       // AI auto-equips to lowest HP hero
@@ -21782,9 +21945,9 @@ function _realAiAct(a){
     return;
   }
 
-  const _canUseItems = !hasStatus(a,'nosell') && !fieldHas('noshop');
+  const _canUseItems = !hasStatus(a,'nosell') && !fieldHas('noshop', a.side);
   const inv = _canUseItems ? ((a.side==='p2'?G.inv2:G.inv)||[]) : [];
-  const canSeal = fieldHas('sealall')||hasStatus(a,'seal');
+  const canSeal = fieldHas('sealall', a.side)||hasStatus(a,'seal');
   const s1cost = skillCost(a.s1,a), s2cost = skillCost(a.s2,a);
   const canS1 = G.energy[a.side]>=s1cost && !canSeal && !a.s1.p;
   const canS2 = G.energy[a.side]>=s2cost && !canSeal && !(a.s2.once&&a.s2used) && !a.s2.p;
@@ -24738,26 +24901,24 @@ function _saveBattleRoundSnapshot(){
   if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return;
   if(!_adventureMode || !_adventureStage) return;
   try{
-    // 序列化英雄：保留所有戰鬥相關屬性
-    const _serHero = h => ({
-      name:h.name, side:h.side, pos:h.pos,
-      hp:h.hp, atk:h.atk, def:h.def||0, sp:h.sp, spd:h.spd,
-      curHp:h.curHp, acted:h.acted||false,
-      s1:JSON.parse(JSON.stringify(h.s1)),
-      s2:JSON.parse(JSON.stringify(h.s2)),
-      element:h.element||null,
-      status:JSON.parse(JSON.stringify(h.status||[])),
-      buffs:JSON.parse(JSON.stringify(h.buffs||[])),
-      s2used:h.s2used||false,
-      equip:h.equip?JSON.parse(JSON.stringify(h.equip)):null,
-      _skLv:h._skLv||{s1:0,s2:0},
-      _burstLvAdv:h._burstLvAdv||0,
-      _mimicUsed:h._mimicUsed||false,
-      _burstUsed:h._burstUsed||0,
-      _sprintTriggered:h._sprintTriggered||false,
-      _sprintOrigSpd:h._sprintOrigSpd||null,
-      _initState:h._initState||null,
-    });
+    // ★ v1.0.20260424.0800 — 序列化英雄:用「全屬性深複製」避免某些 _xxx 旗標被遺漏
+    //   (原版手動列舉欄位,結果 _yamataDoubleTriggered/_kinderRounds/shield 等沒被存到,
+    //    導致回溯後對手 HP/狀態看似正常,但部分內部狀態錯亂或殘留)
+    const _serHero = h => {
+      // 從原物件深複製,但要排除函式引用
+      const _out = {};
+      for(const k in h){
+        if(!Object.prototype.hasOwnProperty.call(h, k)) continue;
+        const v = h[k];
+        if(typeof v === 'function') continue; // 跳過函式
+        try{
+          _out[k] = (typeof v === 'object' && v !== null) ? JSON.parse(JSON.stringify(v)) : v;
+        }catch(_){
+          // JSON 不能序列化的(如 DOM 元素)就略過
+        }
+      }
+      return _out;
+    };
     const snap = {
       ts:         Date.now(),
       stage:      _adventureStage,
@@ -24778,12 +24939,17 @@ function _saveBattleRoundSnapshot(){
         energy:      {...(G.energy||{p1:0,p2:0})},
         inv:         JSON.parse(JSON.stringify(G.inv||[])),
         inv2:        JSON.parse(JSON.stringify(G.inv2||[])),
-        fieldCards:  JSON.parse(JSON.stringify(G.fieldCards||fieldCards||[])),
+        fieldCards:  JSON.parse(JSON.stringify((typeof fieldCards !== 'undefined' && fieldCards) || G.fieldCards || [])),
         round:       G.round || 1,
         isMini:      !!_advMiniBattleActive,  // ★ 記錄是否為小怪戰
         pendingReward: _advPendingReward ? JSON.parse(JSON.stringify(_advPendingReward)) : null,
         rewardOptions: _advRewardOptions ? JSON.parse(JSON.stringify(_advRewardOptions)) : [],
         advStats:    JSON.parse(JSON.stringify(_advStats||{})),
+        // ★ v1.0.20260424.0800 — 補充全域戰鬥旗標,確保回溯後行為正確
+        comboFatigue: G.comboFatigue||0,
+        comboFatigueByHero: JSON.parse(JSON.stringify(G.comboFatigueByHero||{})),
+        lastSkillName: G.lastSkillName||null,
+        lastSkillByHero: JSON.parse(JSON.stringify(G.lastSkillByHero||{})),
       }
     };
     localStorage.setItem('adv_battle_snap', JSON.stringify(snap));
@@ -24820,14 +24986,27 @@ function _customConfirmCancel() {
 // ====== CONTROL BAR ======
 function _detectCurrentBgm(){
   // 根據當前可見場景偵測應播放的 BGM
+  // ★ v1.0.20260424.0800 — isVisible 修復:
+  //   原版 `style.display !== '' && style.display !== 'none'` 在元素以 CSS 預設顯示時
+  //   會誤判為隱藏(因為 inline style.display 是空字串),導致音樂開關只能切到首頁 BGM。
+  //   改用 getComputedStyle 檢查實際 display,並 fallback 到 inline style。
   const isVisible = id => {
     const el = document.getElementById(id);
-    return el && el.style.display !== 'none' && el.style.display !== '';
+    if(!el) return false;
+    try{
+      const cs = window.getComputedStyle(el);
+      return cs && cs.display !== 'none' && cs.visibility !== 'hidden';
+    }catch(_){
+      return el.style.display !== 'none';
+    }
   };
   // BOSS 戰進行中
-  if(typeof G !== 'undefined' && G && G.p2 && G.p2.length && isVisible('gc')){
-    // ★ 優先檢查當前 BOSS 變體，回傳對應的 BOSS 專屬 BGM
-    //   這樣即使 _curBgm 為 null（從靜音切回）也能正確判斷
+  // ★ v1.0.20260424.0800 — 改用 _adventureMode 與 G.p2 綜合判斷,不再單看 isVisible('gc'):
+  //   iPad 從背景回前景或音訊重啟時,gc 的 display 偶爾會被瀏覽器重設,
+  //   導致 isVisible 失準把戰鬥中誤判成首頁。用 _adventureMode 旗標更可靠。
+  const _inAdvBattle = (typeof _adventureMode !== 'undefined' && _adventureMode &&
+                       typeof G !== 'undefined' && G && G.p2 && G.p2.length);
+  if(_inAdvBattle || (typeof G !== 'undefined' && G && G.p2 && G.p2.length && isVisible('gc'))){
     if(typeof _adventureMode !== 'undefined' && _adventureMode){
       const _names = G.p2.map(h => h && h.name).filter(Boolean);
       // 稀有怪戰（優先判斷，避免被 BOSS_NAMES 誤判成 BOSS）
@@ -24865,14 +25044,15 @@ function _detectCurrentBgm(){
     if(_curBgm && _curBgm.includes('battle')) return _curBgm;
     return null; // 無法判斷則維持現狀
   }
+  // ★ v1.0.20260424.0790 — 召喚頁
+  if(isVisible('summon-overlay')) return 'bgm-summon';
   // 冒險選關頁（若英雄圖鑑或魔物圖鑑疊在上方，不重播 BGM，維持現狀）
   if(isVisible('adventure-overlay')){
     if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay') || isVisible('medal-page-overlay') || isVisible('pet-page-overlay')) return _curBgm;
     return 'bgm-menu-01';
   }
   // 超商
-  const shopEl = document.getElementById('shop-overlay');
-  if(shopEl && shopEl.style.display !== 'none') return 'bgm-shop';
+  if(isVisible('shop-overlay')) return 'bgm-shop';
   // 選角頁
   if(isVisible('hero-pick-overlay')) return 'bgm-menu-02';
   // 首頁（gc 隱藏中）
@@ -25873,8 +26053,8 @@ function startTurnTimer(actor){
         // Attempt AI-style action
         try {
           // Pick best action: use highest-value skill if enough energy, else attack, else rest
-          var _canS1=!actor.s1.p && G.energy.p1>=skillCost(actor.s1,actor,true) && !fieldHas('sealall') && !hasStatus(actor,'seal');
-          var _canS2=!actor.s2.p && !(actor.s2.once&&actor.s2used) && G.energy.p1>=skillCost(actor.s2,actor,true) && !fieldHas('sealall') && !hasStatus(actor,'seal');
+          var _canS1=!actor.s1.p && G.energy.p1>=skillCost(actor.s1,actor,true) && !fieldHas('sealall', actor.side) && !hasStatus(actor,'seal');
+          var _canS2=!actor.s2.p && !(actor.s2.once&&actor.s2used) && G.energy.p1>=skillCost(actor.s2,actor,true) && !fieldHas('sealall', actor.side) && !hasStatus(actor,'seal');
           var _enemies=G.p2.filter(function(h){return h.curHp>0;});
           if(_enemies.length>0){
             // Prefer skill with highest damage potential
@@ -26650,6 +26830,9 @@ function openAdventureOverlay(){
 
   // ★ v1.0.20260424.0720 — 新角色登場通知視窗(小力 + 幼兒園小孩)
   try{ _showNewHeroAnnouncement(); }catch(_e){ console.warn('新角色視窗失敗', _e); }
+
+  // ★ v1.0.20260424.0790 — 召喚按鈕顯示判定(管理員限定)
+  try{ _refreshSummonBtnVisibility(); }catch(_e){}
 }
 
 // ════════════════════════════════════════
@@ -28264,13 +28447,10 @@ const ADV_QUIZ_DOG_CARE = [
 ];
 
 function advGetQuizPool(grade, subject, difficulty) {
-  // ★ v1.0.20260424.0680 — 照顧與陪伴幼兒 / 領養與照顧狗狗 專屬出題邏輯
-  //   特殊規則:
-  //   1. 持久化記錄已答對題目(localStorage)
-  //   2. 出題優先選「未答對過」的題目
-  //   3. 20 題全答對 → 解鎖角色 + 重置(讓玩家可重玩)
-  //   4. 滅團/離開不會清除進度
-  //   5. 選項順序在答題彈窗時隨機(不在這裡處理,在彈窗 render 時)
+  // ★ v1.0.20260424.0810 — 全題庫統一改用「全部不重複出完一輪才重新排序」邏輯
+  //   不再依年級/難度過濾,全部依「科目」抽出後 Fisher-Yates 洗牌出題
+  //   (跟照顧與陪伴幼兒/領養與照顧狗狗的規則一致)
+  // ★ 照顧與陪伴幼兒 / 領養與照顧狗狗 專屬出題邏輯(持久化記錄已答對題目)
   if (subject === '照顧與陪伴幼兒' || subject === '領養與照顧狗狗') {
     const _full = (subject === '照顧與陪伴幼兒') ? ADV_QUIZ_CARE_INFANT : ADV_QUIZ_DOG_CARE;
     const _key = (subject === '照顧與陪伴幼兒') ? 'careInfantPerfect' : 'dogCarePerfect';
@@ -28284,115 +28464,43 @@ function advGetQuizPool(grade, subject, difficulty) {
     const _pool = _remaining.length > 0 ? _remaining : _full.slice();
     return [..._pool].sort(() => Math.random() - 0.5);
   }
-  // ★ v1.0.20260420.1400 — 五下自然第三單元「動物的生活」專屬題庫
+  // ★ 五下自然第三單元「動物的生活」專屬題庫
   if (subject === '五下自然第三單元') {
     return [...ADV_QUIZ_5S_U3_ANIMAL].sort(() => Math.random() - 0.5);
   }
-  // ★ v1.0.20260420.1400 — 五下自然第四單元「聲音與樂器」專屬題庫
+  // ★ 五下自然第四單元「聲音與樂器」專屬題庫
   if (subject === '五下自然第四單元') {
     return [...ADV_QUIZ_5S_U4_SOUND].sort(() => Math.random() - 0.5);
   }
-  // ★ 選了期中評量 → 直接回傳專屬題庫，不受難度影響
+  // ★ 期中評量
   if (subject && subject.includes('評量')) {
-    const pool = [...ADV_QUIZ_5S_MIDTERM].sort(() => Math.random() - 0.5);
-    return pool;
+    return [...ADV_QUIZ_5S_MIDTERM].sort(() => Math.random() - 0.5);
   }
-  // ★ 關島交流：不分年級和難度，全部30題隨機排列出題
-  if (subject === '關島交流') {
-    return ADV_QUIZ_DB.filter(q => q.subject === '關島交流').sort(() => Math.random() - 0.5);
-  }
-  // ★ 木柵動物園：不分年級難度，全部隨機出題
-  if (subject === '木柵動物園') {
-    return ADV_QUIZ_DB.filter(q => q.subject === '木柵動物園').sort(() => Math.random() - 0.5);
-  }
-  // ★ 日本關（環遊世界遠征傳說 第1關）：不分年級難度，100題隨機出題
-  //   v1.0.20260421.3000b — 改用 _adventureStage 判斷，避免 subject 被覆寫導致失效
+  // ★ 日本關（環遊世界遠征傳說 第1關）：100 題隨機出題
   if (subject === '日本關' || (typeof _adventureStage !== 'undefined' && _adventureStage === 'japan')) {
     const _jp = ADV_QUIZ_DB.filter(q => q.subject === '日本關').sort(() => Math.random() - 0.5);
     console.log('[題庫] 日本關分支觸發 (BOSS戰)，共', _jp.length, '題');
     return _jp;
   }
 
-  // ── 年級＝題庫範圍，難度偏好＝優先顯示的難易程度 ──
-  // 年級→對應的 DB difficulty 層級
-  const gradeDiffMap = {
-    '低年級': '沒自信',
-    '中年級': '普通',
-    '高年級': '我很會',
-    '國中':   '我很會',
-    '五年級': '普通',
-  };
-  // 難度偏好正規化
-  const diffPref = (difficulty==='沒自信（輕鬆模式）'||difficulty==='沒自信') ? '沒自信'
-                 : (difficulty==='我很會（挑戰模式）'||difficulty==='我很會') ? '我很會' : '普通';
-
-  // 年級順序（由易到難），用於抓補充題庫
-  const gradeOrder = ['低年級','中年級','高年級','國中'];
-  const selGrade   = (grade && gradeDiffMap[grade]) ? grade : '中年級';
-  const selGradeIdx = gradeOrder.indexOf(selGrade);
-
-  // ── 1. 主題庫：玩家選的年級 + 科目過濾 ──
-  const subFilter = (q) => !subject || subject==='綜合' || q.subject===subject;
-  let mainPool = ADV_QUIZ_DB.filter(q => q.grade === selGrade && subFilter(q));
-  // 若主題庫空（科目無此年級題目）→ 放寬至全年級
-  if (!mainPool.length) mainPool = ADV_QUIZ_DB.filter(q => q.grade === selGrade);
-
-  // ── 2. 補充題庫：鄰近年級（各佔 30%）──
-  let suppPool = [];
-  if (diffPref === '沒自信') {
-    // 沒自信：加入比選擇年級更容易的年級
-    const easierGrades = gradeOrder.slice(0, selGradeIdx);
-    easierGrades.forEach(g => {
-      const qs = ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q));
-      if (qs.length) suppPool = suppPool.concat(qs);
-    });
-  } else if (diffPref === '我很會') {
-    // 我很會：加入比選擇年級更難的年級
-    const harderGrades = gradeOrder.slice(selGradeIdx+1);
-    harderGrades.forEach(g => {
-      const qs = ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q));
-      if (qs.length) suppPool = suppPool.concat(qs);
-    });
-  } else {
-    // 普通：各加入一個更難、一個更容易（均衡）
-    if(selGradeIdx > 0){
-      const g = gradeOrder[selGradeIdx-1];
-      suppPool = suppPool.concat(ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q)));
+  // ★ v1.0.20260424.0810 — 其餘所有科目都走「全題庫不分年級難度」隨機出題
+  //   (移除原本依年級+難度偏好的複雜邏輯,讓所有題目同等機會出現)
+  if (subject && subject !== '綜合') {
+    const _all = ADV_QUIZ_DB.filter(q => q.subject === subject);
+    // Fisher-Yates 洗牌
+    for(let i = _all.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [_all[i], _all[j]] = [_all[j], _all[i]];
     }
-    if(selGradeIdx < gradeOrder.length-1){
-      const g = gradeOrder[selGradeIdx+1];
-      suppPool = suppPool.concat(ADV_QUIZ_DB.filter(q => q.grade===g && subFilter(q)));
-    }
+    return _all;
   }
-
-  // ── 3. 洗牌各自的池子 ──
-  const shuffle = (arr) => {
-    for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
-    return arr;
-  };
-  shuffle(mainPool); shuffle(suppPool);
-
-  // ── 4. 依難度偏好排序 mainPool（將偏好難度的題目排最前）──
-  const diffOrder = { '沒自信': 0, '普通': 1, '我很會': 2 };
-  if (diffPref === '沒自信') {
-    // 最簡單的先
-    mainPool.sort((a,b) => (diffOrder[a.difficulty]||1) - (diffOrder[b.difficulty]||1));
-  } else if (diffPref === '我很會') {
-    // 最難的先
-    mainPool.sort((a,b) => (diffOrder[b.difficulty]||1) - (diffOrder[a.difficulty]||1));
+  // 沒選科目或選綜合 → 全題庫
+  const _all = ADV_QUIZ_DB.slice();
+  for(let i = _all.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [_all[i], _all[j]] = [_all[j], _all[i]];
   }
-  // 普通：不改變洗牌後的順序
-
-  // ── 5. 合併：主題庫在前，補充題庫在後 ──
-  const combined = mainPool.concat(suppPool);
-
-  // 去重 by id
-  const seen = new Set();
-  return combined.filter(q => {
-    if(seen.has(q.id)) return false;
-    seen.add(q.id);
-    return true;
-  });
+  return _all;
 }
 
 // ── 法寶定義 ──
@@ -28434,13 +28542,10 @@ const ADV_SCENES = {
         '河堤旁的白鷺鷥展翅低飛，像是在為小隊伍送行。微風吹來，帶著青草和溪水的香氣。',
         '「出發！今天要打倒那個搗蛋的神秘邪惡聲音，還貓空茶農們一個安寧！」隊長喊道。',
       ],
-      // ★ 第一場連問兩題（年級 + 擅長科目），小怪戰會鎖定該科目從「沒自信（簡單）」題庫開始
-      choiceType: 'grade_subject',
-      choiceTitle: '📚 出發前：請告訴我你的資訊',
-      choiceSteps: [
-        { type:'grade',   title:'🎒 你是什麼年級？',       choices:['小學低年級','小學中年級','小學高年級','五年級','國中'] },
-        { type:'subject', title:'📚 你最擅長哪一科？',     choices:['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗'] },
-      ],
+      // ★ v1.0.20260424.0810 — 移除年級調查(不再有難度差異),只問挑戰主題
+      choiceType: 'subject',
+      choiceTitle: '📚 這次想挑戰的問答主題是？',
+      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗'],
     },
     {
       key:'trail',
@@ -33774,12 +33879,35 @@ const BOSS_REACT_TIMEOUT_YAMATA = [
 // 顯示 Boss 反應氣泡
 // 顯示 Boss 反應氣泡
 let _bossReactTimer = null;
+// ★ v1.0.20260424.0810 — 對白查找表
+//   原版用 window['BOSS_REACT_'+...] 查找,但這些變數是用 const 宣告,
+//   並不會掛在 window 上,造成所有非貓 BOSS(杏花妖/大天狗/酒吞童子/玉藻前/八岐大蛇)
+//   都 fallback 到預設值「九尾空貓怪」的反應台詞。改用顯式查找表修正。
+const _BOSS_REACT_MAP = {
+  'CORRECT':         BOSS_REACT_CORRECT,
+  'WRONG':           BOSS_REACT_WRONG,
+  'TIMEOUT':         BOSS_REACT_TIMEOUT,
+  'CORRECT_APRICOT': BOSS_REACT_CORRECT_APRICOT,
+  'WRONG_APRICOT':   BOSS_REACT_WRONG_APRICOT,
+  'TIMEOUT_APRICOT': BOSS_REACT_TIMEOUT_APRICOT,
+  'CORRECT_TENGU':   BOSS_REACT_CORRECT_TENGU,
+  'WRONG_TENGU':     BOSS_REACT_WRONG_TENGU,
+  'TIMEOUT_TENGU':   BOSS_REACT_TIMEOUT_TENGU,
+  'CORRECT_SHUTEN':  BOSS_REACT_CORRECT_SHUTEN,
+  'WRONG_SHUTEN':    BOSS_REACT_WRONG_SHUTEN,
+  'TIMEOUT_SHUTEN':  BOSS_REACT_TIMEOUT_SHUTEN,
+  'CORRECT_TAMAMO':  BOSS_REACT_CORRECT_TAMAMO,
+  'WRONG_TAMAMO':    BOSS_REACT_WRONG_TAMAMO,
+  'TIMEOUT_TAMAMO':  BOSS_REACT_TIMEOUT_TAMAMO,
+  'CORRECT_YAMATA':  BOSS_REACT_CORRECT_YAMATA,
+  'WRONG_YAMATA':    BOSS_REACT_WRONG_YAMATA,
+  'TIMEOUT_YAMATA':  BOSS_REACT_TIMEOUT_YAMATA,
+};
 function advShowBossReact(type) {
   const el = document.getElementById('adv-boss-react');
   const textEl = document.getElementById('adv-boss-react-text');
   if (!el || !textEl) return;
 
-  // 取台詞（依當前主 BOSS 變體）
   // 取台詞（依當前主 BOSS 變體）
   // ★ v1.0.20260423.0200 — 擴充日本四大 BOSS 分流,避免用貓組預設台詞
   const _mainReactBoss = (typeof G !== 'undefined' && G && G.p2)
@@ -33793,10 +33921,12 @@ function advShowBossReact(type) {
     '玉藻前':   '_TAMAMO',
     '八岐大蛇': '_YAMATA',
   })[_mainReactBoss.name] : '';
-  let lines;
-  if (type === 'correct')      lines = (typeof window !== 'undefined' && window['BOSS_REACT_CORRECT'+_reactSuffix]) || BOSS_REACT_CORRECT;
-  else if (type === 'timeout') lines = (typeof window !== 'undefined' && window['BOSS_REACT_TIMEOUT'+_reactSuffix]) || BOSS_REACT_TIMEOUT;
-  else                         lines = (typeof window !== 'undefined' && window['BOSS_REACT_WRONG'+_reactSuffix])   || BOSS_REACT_WRONG;
+  // ★ v1.0.20260424.0810 — 改用 _BOSS_REACT_MAP 查找,不再透過 window
+  const _typeKey = type === 'correct' ? 'CORRECT'
+                 : type === 'timeout' ? 'TIMEOUT'
+                 : 'WRONG';
+  let lines = _BOSS_REACT_MAP[_typeKey + _reactSuffix];
+  if(!lines || !lines.length) lines = _BOSS_REACT_MAP[_typeKey] || BOSS_REACT_WRONG;
   const line = lines[Math.floor(Math.random() * lines.length)];
 
   // ★ 定位：畫面最上方，全寬橫條
@@ -35950,21 +36080,27 @@ function _rollbackToLastSnap() {
     () => {
       try{
         const bs = snap.battleState;
-        // 還原英雄
+        // ★ v1.0.20260424.0800 — 用全屬性深複製還原英雄
+        //   原版只手動拷貝幾個欄位,造成 _yamataDoubleTriggered/shield/_kinderRounds 等
+        //   殘留在 stale G.p2 物件中,雖然新物件 curHp/status 對了,某些 BOSS 旗標仍混亂,
+        //   尤其重新渲染後仍可見「對手 HP/狀態」沒被乾淨重置
         const _serRestore = (hSnap) => {
-          const h = Object.assign({}, hSnap);
-          h.status = hSnap.status || [];
-          h.buffs  = hSnap.buffs  || [];
-          h._skLv  = hSnap._skLv  || {s1:0, s2:0};
-          h._burstLvAdv = hSnap._burstLvAdv || 0;
-          h.av = (typeof AVATARS!=='undefined'&&AVATARS[h.name]) || '🗡️';
+          if(!hSnap || typeof hSnap !== 'object') return null;
+          // 深複製整個 hSnap,確保不會引用 localStorage 解析後的同一個 array/object
+          const h = JSON.parse(JSON.stringify(hSnap));
+          // av 顯示用,從 AVATARS 重新取(避免存到 emoji 後改了沒同步)
+          h.av = (typeof AVATARS!=='undefined' && AVATARS[h.name]) || h.av || '🗡️';
+          // 確保關鍵陣列/物件存在(避免後續存取 undefined)
+          if(!Array.isArray(h.status)) h.status = [];
+          if(!Array.isArray(h.buffs))  h.buffs  = [];
+          if(!h.s1) h.s1 = {};
+          if(!h.s2) h.s2 = {};
+          if(!h._skLv || typeof h._skLv !== 'object') h._skLv = {s1:0, s2:0};
           return h;
         };
-        G.p1 = bs.p1.map(_serRestore);
-        G.p2 = bs.p2.map(_serRestore);
+        G.p1 = (bs.p1||[]).map(_serRestore).filter(Boolean);
+        G.p2 = (bs.p2||[]).map(_serRestore).filter(Boolean);
         // ★ 判斷快照是小怪戰還是 BOSS 戰，設定正確旗標
-        // p2 第一個英雄的 name 是否在 MINI_MONSTERS 中 → 小怪戰
-        // 優先用快照記錄的 isMini 旗標，否則從 p2 英雄名推算
         const _snapIsMini = (bs.isMini === true) ||
           ((typeof MINI_MONSTERS !== 'undefined') && G.p2.length > 0 && MINI_MONSTERS.includes(G.p2[0].name));
         _advMiniBattleActive = _snapIsMini;
@@ -35974,9 +36110,18 @@ function _rollbackToLastSnap() {
         G.round      = bs.round || 1;
         G._resultShown = false;
         G.pendingTarget = null;
+        G.activeChar = null;  // ★ v1.0.20260424.0800 — 清除 stale activeChar 引用
+        G.taunted = null;
+        G.guardFor = null;
+        G.gunnerTarget = null;
         G.sellUsed   = new Set();
         G.fieldCards = bs.fieldCards || [];
         fieldCards   = G.fieldCards;
+        // ★ v1.0.20260424.0800 — 還原疲勞與技能名等全域戰鬥旗標
+        if(typeof bs.comboFatigue === 'number') G.comboFatigue = bs.comboFatigue;
+        if(bs.comboFatigueByHero) G.comboFatigueByHero = JSON.parse(JSON.stringify(bs.comboFatigueByHero));
+        if('lastSkillName' in bs) G.lastSkillName = bs.lastSkillName || null;
+        if(bs.lastSkillByHero) G.lastSkillByHero = JSON.parse(JSON.stringify(bs.lastSkillByHero));
         if(bs.pendingReward)  _advPendingReward  = bs.pendingReward;
         if(bs.rewardOptions && bs.rewardOptions.length) _advRewardOptions = bs.rewardOptions;
         if(bs.advStats) Object.assign(_advStats, bs.advStats);
@@ -35984,9 +36129,13 @@ function _rollbackToLastSnap() {
         if(_advPlayerGrade && _advPlayerSubject) {
           try{ advPrepareSessionQuestions(); }catch(e){}
         }
+        // ★ v1.0.20260424.0800 — 清空 _pendingTimers,避免回溯前的 setTimeout 在恢復後觸發
+        try{ if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0; }catch(_){}
         _gamePaused = false;
         try{ renderField(true); }catch(e){}
         try{ renderItems(); updateUI(); }catch(e){}
+        // ★ v1.0.20260424.0800 — 雙重保險:強制再渲染一次每一張卡片(確保 HP/狀態正確)
+        try{ G.p1.concat(G.p2).forEach(h=>renderCard(h)); }catch(e){}
         flashScreen('rgba(255,180,50,0.5)', 500);
         bannerFX(null, `⏪ 已回溯至第 ${G.round} 回合！`, '#ffcc44', 3000);
         log(`🔄 [當機回溯] 已還原至第 ${G.round} 回合開始狀態`);
@@ -36806,6 +36955,490 @@ function closeShopOverlay(){
   // ★ 恢復正確BGM：改用統一場景入口，自動依目前可見場景決定
   try{ bgmEnsureSceneBgm(); }catch(e){}
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ★ v1.0.20260424.0790 — 召喚系統(管理員測試中)
+// ═══════════════════════════════════════════════════════════════════
+
+// 召喚池資源 URL
+const SUMMON_FX_SMOKE_GIF  = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.gif';
+const SUMMON_FX_REVEAL_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.gif';
+
+// 稀有角色池
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女'];
+
+// BOSS 賣錢物品池(召喚也可獲得)
+const SUMMON_BOSS_SELL_ITEMS = ['antique_teacup','apricot_rouge','tengu_fan','oni_sake_cup','kyuubi_fur','dragon_scale'];
+
+// 召喚機率(總和 100)
+const SUMMON_RATES = [
+  { kind:'rare_hero',     pct:10, label:'稀有角色',           desc:'大天狗 / 玉藻前 / 酒吞童子 / 巫女(已收錄則轉為超越極限果實×1)' },
+  { kind:'skill_book',    pct:25, label:'技能升級書 ×1',      desc:'升級英雄技能用' },
+  { kind:'boss_sell',     pct:30, label:'BOSS 賣錢物品 ×1',   desc:'珍貴收藏品,超商高價收購' },
+  { kind:'exp_book_dlx',  pct:30, label:'精裝英雄經驗之書 ×3', desc:'快速升級英雄' },
+  { kind:'burst_fruit',   pct: 5, label:'超越極限果實 ×1',    desc:'極限爆發升 1 級' },
+];
+
+// 螢火蟲粒子 timer handle
+let _summonFireflyTimer = null;
+
+function _spawnSummonFirefly(){
+  const layer = document.getElementById('summon-fireflies');
+  if(!layer) return;
+  const ff = document.createElement('div');
+  const sz = 4 + Math.random()*8;
+  const dur = 4 + Math.random()*4;
+  const startX = Math.random()*100;
+  const startY = 60 + Math.random()*40; // 從下半部開始飛
+  const dx = (Math.random()-0.5) * 200;
+  const dy = -(60 + Math.random()*120); // 往上飛
+  ff.style.cssText = [
+    'position:absolute',
+    'left:' + startX + '%',
+    'top:' + startY + '%',
+    'width:' + sz + 'px',
+    'height:' + sz + 'px',
+    'border-radius:50%',
+    'background:radial-gradient(circle,rgba(255,240,150,1) 0%,rgba(255,200,80,0.85) 40%,rgba(255,150,50,0) 70%)',
+    'box-shadow:0 0 ' + (sz*2) + 'px rgba(255,220,100,0.95),0 0 ' + (sz*4) + 'px rgba(255,200,80,0.5)',
+    '--ffx:' + dx + 'px',
+    '--ffy:' + dy + 'px',
+    'animation:summonFireflyFloat ' + dur + 's ease-in-out forwards',
+    'pointer-events:none',
+  ].join(';');
+  layer.appendChild(ff);
+  setTimeout(()=>{ try{ ff.remove(); }catch(_){} }, dur*1000 + 100);
+}
+
+function _startSummonFireflies(){
+  if(_summonFireflyTimer) return;
+  // 一開始先生成 6 隻,讓畫面就有
+  for(let i=0;i<6;i++) setTimeout(_spawnSummonFirefly, i*220);
+  _summonFireflyTimer = setInterval(()=>{
+    // 每 0.45 秒生成 1~2 隻
+    _spawnSummonFirefly();
+    if(Math.random() < 0.5) _spawnSummonFirefly();
+  }, 450);
+}
+
+function _stopSummonFireflies(){
+  if(_summonFireflyTimer){ clearInterval(_summonFireflyTimer); _summonFireflyTimer = null; }
+  const layer = document.getElementById('summon-fireflies');
+  if(layer) layer.innerHTML = '';
+}
+
+function _syncSummonCrystalDisplay(){
+  const el = document.getElementById('summon-crystal-count');
+  if(!el) return;
+  let n = 0;
+  try{
+    if(typeof backpackGet === 'function'){
+      n = backpackGet('summon_crystal') || 0;
+    } else if(window._playerBackpack){
+      n = window._playerBackpack.summon_crystal || 0;
+    }
+  }catch(_){}
+  el.textContent = n;
+}
+
+function openSummonOverlay(){
+  const ov = document.getElementById('summon-overlay');
+  if(!ov) return;
+  // ★ 管理員檢查(雙保險,即使按鈕意外顯示也不允許非管理員開啟)
+  try{
+    if(typeof window._isAdminUser === 'function' && !window._isAdminUser()){
+      _showInGameToast && _showInGameToast('⚠ 召喚功能尚未開放,敬請期待!', '#ffaa44', 2400);
+      return;
+    }
+  }catch(_){}
+  // 同步水晶數量
+  _syncSummonCrystalDisplay();
+  // 顯示
+  ov.style.display = 'block';
+  // 啟動螢火蟲
+  _startSummonFireflies();
+  // 切換 BGM
+  try{ bgmFadeTo('bgm-summon', 400); }catch(e){ try{ bgmPlay('bgm-summon'); }catch(e2){} }
+}
+
+function closeSummonOverlay(){
+  const ov = document.getElementById('summon-overlay');
+  if(ov) ov.style.display = 'none';
+  _stopSummonFireflies();
+  // 清除任何特效層
+  const fxLayer = document.getElementById('summon-fx-layer');
+  if(fxLayer){ fxLayer.innerHTML = ''; fxLayer.style.display = 'none'; }
+  // 恢復場景 BGM
+  try{ bgmEnsureSceneBgm(); }catch(e){}
+}
+
+function _showSummonHelp(){
+  // 移除舊的(若存在)
+  const old = document.getElementById('summon-help-popup');
+  if(old){ old.remove(); return; }
+  const pop = document.createElement('div');
+  pop.id = 'summon-help-popup';
+  pop.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9990;',
+    'max-width:min(96vw,560px);width:auto;',
+    'background:linear-gradient(160deg,rgba(20,15,55,0.97),rgba(40,25,80,0.97));',
+    'border:2.5px solid rgba(180,140,255,0.8);border-radius:16px;',
+    'padding:22px 26px 18px;text-align:left;',
+    'box-shadow:0 10px 50px rgba(120,80,200,0.5);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'animation:newHeroOvFadeIn 0.3s ease-out;',
+  ].join('');
+  let html = '<div style="font-size:26px;font-weight:900;color:#e0c4ff;letter-spacing:3px;margin-bottom:14px;text-align:center;">🔮 召喚機率說明</div>';
+  html += '<div style="font-size:18px;color:#cbb8ff;line-height:1.6;margin-bottom:12px;">每次召喚消耗 1 顆 🔮 召喚水晶,依下表機率獲得獎勵:</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">';
+  SUMMON_RATES.forEach(r => {
+    const _color = r.kind==='rare_hero' ? '#ffe066' : r.kind==='burst_fruit' ? '#ff99dd' : '#cbb8ff';
+    html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:rgba(60,40,100,0.4);border-radius:8px;border-left:3px solid ' + _color + ';">'
+      + '<span style="font-size:22px;font-weight:900;color:' + _color + ';min-width:50px;">' + r.pct + '%</span>'
+      + '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:' + _color + ';">' + r.label + '</div>'
+      + '<div style="font-size:14px;color:#aab;line-height:1.4;margin-top:2px;">' + r.desc + '</div></div>'
+      + '</div>';
+  });
+  html += '</div>';
+  html += '<div style="text-align:center;margin-top:6px;">';
+  html += '<button onclick="document.getElementById(\'summon-help-popup\').remove()" '
+    + 'style="padding:8px 28px;font-size:18px;font-weight:700;'
+    + 'background:rgba(120,80,200,0.7);border:2px solid rgba(200,160,255,0.7);'
+    + 'color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:2px;">了解了</button>';
+  html += '</div>';
+  pop.innerHTML = html;
+  document.body.appendChild(pop);
+}
+
+// 抽 1 次的結果(回傳 reward 物件 {kind,id?,name,icon,qty,heroName?})
+function _rollOneSummon(){
+  const r = Math.random()*100;
+  let acc = 0;
+  let chosen = null;
+  for(const cfg of SUMMON_RATES){
+    acc += cfg.pct;
+    if(r < acc){ chosen = cfg.kind; break; }
+  }
+  if(!chosen) chosen = SUMMON_RATES[SUMMON_RATES.length-1].kind;
+
+  if(chosen === 'rare_hero'){
+    // 從未收錄的 4 隻稀有角色中挑 1 隻;全收錄 → 轉超越極限果實
+    let unlocked = [];
+    try{ unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : []; }catch(_){}
+    const _avail = SUMMON_RARE_HEROES.filter(h => !unlocked.includes(h));
+    if(_avail.length){
+      const heroName = _avail[Math.floor(Math.random()*_avail.length)];
+      return { kind:'rare_hero', name:heroName, heroName:heroName, icon:'🌟', qty:1, isRare:true };
+    } else {
+      // 全收錄 → 轉超越極限果實
+      return { kind:'burst_fruit_alt', id:'burst_upgrade_fruit', name:'超越極限果實(稀有角色已全收錄)', icon:'🍑', qty:1, isRare:true };
+    }
+  }
+  if(chosen === 'skill_book'){
+    return { kind:'skill_book', id:'skill_upgrade_book', name:'技能升級書', icon:'📖', qty:1 };
+  }
+  if(chosen === 'boss_sell'){
+    const itemId = SUMMON_BOSS_SELL_ITEMS[Math.floor(Math.random()*SUMMON_BOSS_SELL_ITEMS.length)];
+    let info = { name:itemId, icon:'💎', sellPrice:0 };
+    try{
+      if(typeof BACKPACK_ITEM_DEF !== 'undefined' && BACKPACK_ITEM_DEF[itemId]){
+        info = BACKPACK_ITEM_DEF[itemId];
+      }
+    }catch(_){}
+    return { kind:'boss_sell', id:itemId, name:info.name||itemId, icon:info.icon||'💎', qty:1, sellPrice:info.sellPrice||0 };
+  }
+  if(chosen === 'exp_book_dlx'){
+    return { kind:'exp_book_dlx', id:'hero_exp_book_deluxe', name:'精裝英雄經驗之書', icon:'📗', qty:3 };
+  }
+  if(chosen === 'burst_fruit'){
+    return { kind:'burst_fruit', id:'burst_upgrade_fruit', name:'超越極限果實', icon:'🍑', qty:1, isRare:true };
+  }
+  // 安全預設
+  return { kind:'skill_book', id:'skill_upgrade_book', name:'技能升級書', icon:'📖', qty:1 };
+}
+
+// 應用召喚結果到背包/解鎖
+function _applySummonReward(rwd){
+  try{
+    if(rwd.kind === 'rare_hero'){
+      // 解鎖角色
+      if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(rwd.heroName);
+    } else if(rwd.id){
+      // 加入背包
+      if(typeof backpackAdd === 'function') backpackAdd(rwd.id, rwd.qty || 1);
+    }
+  }catch(e){ console.error('[summon apply]', e); }
+}
+
+// 批次應用後存檔
+function _commitSummonRewards(){
+  try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+}
+
+// 播放召喚煙火特效(回呼 onDone 在動畫結束後執行)
+function _playSummonSmokeFx(onDone){
+  const fx = document.getElementById('summon-fx-layer');
+  if(!fx){ if(onDone) onDone(); return; }
+  fx.style.display = 'block';
+  fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+    + 'width:min(80vw,720px);max-width:90vw;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_SMOKE_GIF + '" style="width:100%;height:auto;max-height:70vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 30px rgba(255,180,255,0.6));" alt="召喚煙火"/>'
+    + '</div>';
+  try{ playSfx('sfx-summon-smoke', 0.85); }catch(_){}
+  setTimeout(()=>{
+    if(fx) fx.innerHTML = '';
+    if(onDone) onDone();
+  }, 1800);
+}
+
+// 播放召喚角色特效(回呼 onDone)
+function _playSummonRevealFx(onDone){
+  const fx = document.getElementById('summon-fx-layer');
+  if(!fx){ if(onDone) onDone(); return; }
+  fx.style.display = 'block';
+  fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+    + 'width:min(80vw,720px);max-width:90vw;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_REVEAL_GIF + '" style="width:100%;height:auto;max-height:70vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 40px rgba(255,230,120,0.8));" alt="召喚角色"/>'
+    + '</div>';
+  try{ playSfx('sfx-summon-reveal', 0.95); }catch(_){}
+  setTimeout(()=>{
+    if(fx) fx.innerHTML = '';
+    if(onDone) onDone();
+  }, 1800);
+}
+
+// 主流程:執行 N 次召喚
+function doSummon(times){
+  if(!times || times < 1) times = 1;
+  // 防止重複點擊
+  const btn1 = document.getElementById('summon-1x-btn');
+  const btn10 = document.getElementById('summon-10x-btn');
+  if(btn1 && btn1.disabled) return;
+  // 檢查水晶
+  let have = 0;
+  try{
+    if(typeof backpackGet === 'function') have = backpackGet('summon_crystal') || 0;
+    else if(window._playerBackpack) have = window._playerBackpack.summon_crystal || 0;
+  }catch(_){}
+  if(have < times){
+    _showInGameToast && _showInGameToast('🔮 召喚水晶不足!需要 ' + times + ' 顆,目前只有 ' + have + ' 顆。', '#ff8844', 2800);
+    return;
+  }
+  // 扣水晶
+  try{
+    if(typeof backpackRemove === 'function'){
+      backpackRemove('summon_crystal', times);
+    } else if(window._playerBackpack){
+      window._playerBackpack.summon_crystal = Math.max(0, (window._playerBackpack.summon_crystal||0) - times);
+    }
+    if(typeof gameCloudSave === 'function') gameCloudSave();
+  }catch(e){ console.error('[扣水晶]', e); }
+  _syncSummonCrystalDisplay();
+
+  // 鎖按鈕
+  if(btn1) btn1.disabled = true;
+  if(btn10) btn10.disabled = true;
+  if(btn1) btn1.style.opacity = '0.5';
+  if(btn10) btn10.style.opacity = '0.5';
+
+  // 抽結果
+  const results = [];
+  for(let i=0;i<times;i++) results.push(_rollOneSummon());
+
+  // 應用獎勵
+  results.forEach(r => _applySummonReward(r));
+  _commitSummonRewards();
+
+  // 播放煙火特效 → 播放角色特效 → 顯示結果
+  _playSummonSmokeFx(()=>{
+    const hasRare = results.some(r => r.isRare || r.kind === 'rare_hero');
+    if(hasRare){
+      _playSummonRevealFx(()=>{ _showSummonResults(results); });
+    } else {
+      _showSummonResults(results);
+    }
+  });
+}
+
+// 顯示召喚結果(1 次或 10 次)
+function _showSummonResults(results){
+  const fx = document.getElementById('summon-fx-layer');
+  if(!fx) return;
+  fx.style.display = 'block';
+  // 結果視窗
+  const ov = document.createElement('div');
+  ov.style.cssText = [
+    'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;',
+    'background:rgba(0,0,15,0.55);backdrop-filter:blur(4px);',
+    'padding:20px;pointer-events:auto;animation:newHeroOvFadeIn 0.35s ease-out;',
+  ].join(';');
+  // 中央卡片區
+  const card = document.createElement('div');
+  card.style.cssText = [
+    'background:linear-gradient(160deg,rgba(20,15,55,0.95),rgba(40,25,90,0.95))',
+    'border:3px solid rgba(180,140,255,0.7)',
+    'border-radius:18px',
+    'padding:22px 24px',
+    'max-width:min(96vw,860px)',
+    'max-height:90vh',
+    'overflow-y:auto',
+    'box-shadow:0 10px 60px rgba(120,80,200,0.55)',
+  ].join(';');
+  // 標題
+  let title = '';
+  if(results.length === 1){
+    const r = results[0];
+    title = r.isRare || r.kind==='rare_hero'
+      ? '<div style="font-size:30px;font-weight:900;color:#ffe066;letter-spacing:3px;text-shadow:0 0 16px rgba(255,200,80,0.85);">🌟 稀有獲得! 🌟</div>'
+      : '<div style="font-size:26px;font-weight:900;color:#e0c4ff;letter-spacing:2px;">✨ 召喚結果 ✨</div>';
+  } else {
+    const _rareCount = results.filter(r => r.isRare || r.kind==='rare_hero').length;
+    title = '<div style="font-size:28px;font-weight:900;color:#e0c4ff;letter-spacing:2px;">✨ 連續召喚 ' + results.length + ' 次結果 ✨</div>';
+    if(_rareCount > 0){
+      title += '<div style="font-size:18px;color:#ffe066;margin-top:6px;text-shadow:0 0 10px rgba(255,200,80,0.6);">🌟 含 ' + _rareCount + ' 件稀有獎勵! 🌟</div>';
+    }
+  }
+  // 內容(網格)
+  let content = '<div style="display:grid;grid-template-columns:repeat(' + (results.length===1?1:5) + ',1fr);gap:10px;margin-top:14px;">';
+  results.forEach((r,i) => {
+    const _delay = (i*0.08).toFixed(2);
+    const _isRare = (r.isRare || r.kind==='rare_hero');
+    const _name = r.kind==='rare_hero' ? r.heroName : r.name;
+    const _qtyStr = r.qty > 1 ? '×' + r.qty : '';
+    content += '<div class="summon-result-card' + (_isRare?' rare':'') + '" style="animation-delay:' + _delay + 's;">'
+      + '<span class="sric">' + (r.icon || '🎁') + '</span>'
+      + '<div class="srnm">' + _name + '</div>'
+      + (r.qty > 1 ? '<div class="srqty">' + _qtyStr + '</div>' : '')
+      + '</div>';
+  });
+  content += '</div>';
+  // 關閉按鈕
+  const closeBtn = '<div style="text-align:center;margin-top:18px;">'
+    + '<button onclick="(function(){playSfx(\'sfx-confirm\',0.6);_dismissSummonResults();})()" '
+    + 'style="padding:10px 36px;font-size:22px;font-weight:700;'
+    + 'background:linear-gradient(135deg,rgba(120,80,200,0.8),rgba(160,110,240,0.8));'
+    + 'border:2px solid rgba(220,180,255,0.85);color:#fff;border-radius:10px;cursor:pointer;'
+    + 'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;letter-spacing:3px;'
+    + 'box-shadow:0 0 16px rgba(180,130,255,0.55);">確 認</button></div>';
+  card.innerHTML = '<div style="text-align:center;margin-bottom:8px;">' + title + '</div>' + content + closeBtn;
+  ov.appendChild(card);
+  fx.innerHTML = '';
+  fx.appendChild(ov);
+  // 若含稀有角色,在結果視窗上方額外顯示角色預覽(類似新角色登場視窗)
+  const _rareHeroResults = results.filter(r => r.kind === 'rare_hero');
+  if(_rareHeroResults.length){
+    setTimeout(()=>{
+      try{ _showSummonRareHeroPreview(_rareHeroResults); }catch(e){ console.warn('[召喚角色預覽]', e); }
+    }, 600);
+  }
+}
+
+function _dismissSummonResults(){
+  const fx = document.getElementById('summon-fx-layer');
+  if(fx){ fx.innerHTML = ''; fx.style.display = 'none'; }
+  // 解鎖按鈕
+  const btn1 = document.getElementById('summon-1x-btn');
+  const btn10 = document.getElementById('summon-10x-btn');
+  if(btn1){ btn1.disabled = false; btn1.style.opacity = '1'; }
+  if(btn10){ btn10.disabled = false; btn10.style.opacity = '1'; }
+  // 同步水晶顯示
+  _syncSummonCrystalDisplay();
+}
+
+// 顯示召喚到的稀有角色預覽(展示插圖 + 簡介)
+function _showSummonRareHeroPreview(rareResults){
+  if(!rareResults || !rareResults.length) return;
+  const ov = document.createElement('div');
+  ov.id = 'summon-rare-preview-ov';
+  ov.style.cssText = [
+    'position:fixed;inset:0;z-index:9970;',
+    'background:rgba(5,3,15,0.92);backdrop-filter:blur(5px);',
+    'display:flex;align-items:center;justify-content:center;padding:16px;',
+    'animation:newHeroOvFadeIn 0.45s ease-out;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+  ].join('');
+  // 卡片區
+  const inner = document.createElement('div');
+  inner.style.cssText = [
+    'background:linear-gradient(135deg,rgba(40,20,60,0.95),rgba(30,15,45,0.95))',
+    'border:3px solid rgba(255,200,100,0.7)',
+    'border-radius:20px',
+    'padding:28px',
+    'max-width:min(96vw,720px)',
+    'max-height:92vh',
+    'overflow-y:auto',
+    'animation:newHeroGlow 2.4s ease-in-out infinite',
+    'text-align:center',
+  ].join(';');
+  let html = '<div style="font-size:32px;font-weight:900;color:#ffe066;letter-spacing:5px;'
+    + 'text-shadow:0 0 18px rgba(255,200,80,0.95),0 0 36px rgba(255,150,200,0.5);margin-bottom:18px;">'
+    + '🌟 召喚成功! 🌟</div>';
+  rareResults.forEach((r, idx) => {
+    const heroName = r.heroName;
+    const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName])
+      ? HERO_IMGS[heroName]
+      : '';
+    const heroDb = (typeof HERO_DB !== 'undefined' && HERO_DB[heroName]) || null;
+    const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[heroName]) || null;
+    const av = (typeof AVATARS !== 'undefined' && AVATARS[heroName]) || '🗡️';
+    html += '<div style="margin:' + (idx>0?20:0) + 'px 0 18px;display:flex;flex-direction:column;align-items:center;gap:14px;">';
+    // 圖片
+    if(img){
+      html += '<div style="width:min(80vw,360px);aspect-ratio:1/1;border-radius:18px;overflow:hidden;'
+        + 'border:3px solid rgba(255,200,100,0.85);box-shadow:0 0 30px rgba(255,200,80,0.65);'
+        + 'background:rgba(20,15,40,0.7);">'
+        + '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover;" '
+        + 'onerror="this.parentNode.innerHTML=\'<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:120px;&quot;>' + av + '</div>\'"/>'
+        + '</div>';
+    }
+    // 名稱
+    html += '<div style="font-size:38px;font-weight:900;color:#ffe066;letter-spacing:5px;'
+      + 'text-shadow:0 0 14px rgba(255,200,80,0.85);">' + heroName + '</div>';
+    // 技能
+    if(heroDb){
+      html += '<div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:520px;">';
+      if(heroDb.s1) html += '<div style="background:rgba(60,40,100,0.5);border-radius:10px;padding:10px 14px;text-align:left;">'
+        + '<div style="font-size:18px;font-weight:900;color:#ffcc66;">⚔ ' + heroDb.s1.n + ' (' + (heroDb.s1.c||0) + '🔷)</div>'
+        + '<div style="font-size:15px;color:#ddd;line-height:1.5;margin-top:3px;">' + (heroDb.s1.d||'') + '</div></div>';
+      if(heroDb.s2) html += '<div style="background:rgba(60,40,100,0.5);border-radius:10px;padding:10px 14px;text-align:left;">'
+        + '<div style="font-size:18px;font-weight:900;color:#ffcc66;">⚔ ' + heroDb.s2.n + ' (' + (heroDb.s2.c||0) + '🔷)</div>'
+        + '<div style="font-size:15px;color:#ddd;line-height:1.5;margin-top:3px;">' + (heroDb.s2.d||'') + '</div></div>';
+      html += '</div>';
+    }
+    // 爆發
+    if(burst){
+      html += '<div style="background:rgba(120,40,80,0.45);border:2px solid rgba(255,150,200,0.5);border-radius:10px;padding:10px 14px;width:100%;max-width:520px;text-align:left;">'
+        + '<div style="font-size:18px;font-weight:900;color:#ff99cc;">💥 極限爆發:' + burst.n + '</div>'
+        + '<div style="font-size:15px;color:#ddd;line-height:1.5;margin-top:3px;">' + (burst.d||'') + '</div></div>';
+    }
+    html += '</div>';
+  });
+  // 關閉按鈕
+  html += '<div style="margin-top:14px;">'
+    + '<button onclick="document.getElementById(\'summon-rare-preview-ov\').remove()" '
+    + 'style="padding:12px 44px;font-size:22px;font-weight:800;'
+    + 'background:linear-gradient(135deg,rgba(180,100,40,0.85),rgba(220,140,60,0.85));'
+    + 'border:2.5px solid rgba(255,220,150,0.85);color:#fff;border-radius:10px;cursor:pointer;'
+    + 'font-family:inherit;letter-spacing:3px;'
+    + 'box-shadow:0 0 18px rgba(255,180,80,0.6);">太棒了!</button></div>';
+  inner.innerHTML = html;
+  ov.appendChild(inner);
+  document.body.appendChild(ov);
+  try{ playSfx('sfx-summon-reveal', 0.7); }catch(_){}
+}
+
+// 在登入後 / 開啟冒險頁時顯示召喚按鈕(若管理員)
+function _refreshSummonBtnVisibility(){
+  const btn = document.getElementById('adv-summon-btn');
+  if(!btn) return;
+  let isAdmin = false;
+  try{ isAdmin = (typeof window._isAdminUser === 'function') ? window._isAdminUser() : false; }catch(_){}
+  btn.style.display = isAdmin ? 'block' : 'none';
+}
+
+
 
 function _renderShopProducts(){
   const list = document.getElementById('shop-products-list');
@@ -44527,6 +45160,146 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0810', brief:[
+    '🐉 修復所有 BOSS 答題反應台詞錯誤(都用了九尾的)',
+    '🪶 確認軍師戰場卡規則(鬥技場仍可正確分敵我)',
+    '📚 統一所有題庫出題規則(全部不重複出完一輪才重排)',
+    '🎓 移除關卡開始的「年級」調查(不再有難度差異)',
+    '📝 標題改為「這次想挑戰的問答主題是？」',
+  ], items:[
+    '【1. BOSS 答題反應台詞修復】',
+    '  - 症狀: 八岐大蛇(及其他非貓 BOSS)答題反應顯示九尾的台詞',
+    '  - 原因: 原版用 window[\'BOSS_REACT_CORRECT\'+_reactSuffix] 查找,',
+    '         但這些變數是 const 宣告,不會掛在 window 上,',
+    '         所有非貓 BOSS(杏花/天狗/酒吞/玉藻/八岐)都 fallback 到貓的預設台詞',
+    '  - 修復: 建立 _BOSS_REACT_MAP 顯式查找表,直接用 const 變數',
+    '         六位 BOSS(九尾/杏花/天狗/酒吞/玉藻/八岐)現在都會顯示自己的台詞',
+    '【2. 軍師戰場卡規則確認】',
+    '  - 鬥技場玩家手動使用戰場卡: 仍對雙方生效(無 _surpriseSide 旗標)',
+    '  - 軍師「出奇制勝」: 不論在鬥技場或冒險模式,都依',
+    '    「有利只惠己方/不利只克敵方」規則生效(_surpriseSide+_surpriseGood 旗標)',
+    '【3. 題庫出題規則統一】',
+    '  - 簡化 advGetQuizPool: 全部走「依科目過濾後 Fisher-Yates 洗牌」邏輯',
+    '  - 移除原本依年級+難度偏好的複雜分配(主題庫+補充題庫合併)',
+    '  - 跟「照顧與陪伴幼兒」「領養與照顧狗狗」一樣,出完一輪才會重新排序',
+    '  - _miniQuizUsedIds + _advUsedQuestionIds 確保戰鬥/BOSS 不重複出題',
+    '【4. 移除年級調查】',
+    '  - ADV_SCENES.maokong[0] 不再有 grade 步驟',
+    '  - choiceType 從 \'grade_subject\'(多步驟) 改為 \'subject\'(單步驟)',
+    '  - 改用單一 choices 陣列(不需 choiceSteps)',
+    '【5. 標題文字調整】',
+    '  - 原: 「📚 你最擅長哪一科？」',
+    '  - 新: 「📚 這次想挑戰的問答主題是？」',
+    '【實作位置】',
+    '  - _BOSS_REACT_MAP: line ~33960',
+    '  - advGetQuizPool 簡化: line ~28449',
+    '  - ADV_SCENES.maokong 第一場: line ~28547',
+  ] },
+  { ver:'v1.0.20260424.0800', brief:[
+    '🔄 修復戰鬥回溯沒回溯對手 HP/狀態',
+    '🪶 修復軍師戰場卡側別過濾(有利惠己方/不利克敵方)',
+    '🎵 修復音樂開關只播首頁 BGM',
+  ], items:[
+    '【1. 戰鬥回溯修復】',
+    '  - 症狀: 按「回到上一回合」後對手 HP 與狀態不變,只還原玩家側',
+    '  - 原因 1: _saveBattleRoundSnapshot 用手動列舉欄位,漏掉許多 _xxx 旗標',
+    '         (如 _yamataDoubleTriggered、shield、_kinderRounds 等),回溯後',
+    '         舊 G.p2 物件殘留錯亂',
+    '  - 原因 2: _rollbackToLastSnap 用 Object.assign 淺複製,部分屬性引用快照',
+    '  - 修復:',
+    '    a) snapshot 改用「全屬性深複製」(for-in + JSON 序列化)',
+    '       自動含括所有 _xxx 旗標,確保 BOSS 內部狀態完整保存',
+    '    b) restore 改用 JSON.parse(JSON.stringify(snap)) 深複製整個物件',
+    '    c) 清除 stale G.activeChar、_pendingTimers,避免回溯前的計時器觸發',
+    '    d) 雙重保險:renderField 後再強制 renderCard 一次',
+    '【2. 軍師戰場卡側別過濾】',
+    '  - 出奇制勝: 「不利戰場卡只對敵方有效,有利戰場卡只對友方有效」',
+    '  - 原版 fieldHas(eff) 只檢查存在性,不分側別,導致軍師卡對雙方都生效',
+    '  - 修復:',
+    '    a) fieldHas(eff, side) 加第二參數,軍師卡(_surpriseSide/_surpriseGood)',
+    '       依規則過濾(有利→只 side===_surpriseSide;不利→只 side!==_surpriseSide)',
+    '    b) _applySurpriseFieldCard 放卡時標記 _surpriseSide=actor.side、',
+    '       _surpriseGood=isGood',
+    '    c) 更新所有相關呼叫處傳入 side:',
+    '       - addStatus(purify): 傳 h.side',
+    '       - skillCost(discount/exhaust): 傳 actor.side',
+    '       - doDmg(warhorn): 傳 a.side(攻擊者)',
+    '       - doHeal(noheal/warhorn): 傳 target.side / a.side',
+    '       - selMove + _hasAlchemistPassive(sealall): 傳 actor.side',
+    '       - aiAct(noshop/sealall): 傳 a.side',
+    '       - clickItem/doSell(noshop): 傳 a.side',
+    '       - nextRound(noshop): 玩家用 \'p1\',AI 用 \'p2\'',
+    '       - sanctuary 改逐角色檢查 fieldHas(\'sanctuary\', h.side)',
+    '       - updateUI 顯示按鈕(sealall/discount/exhaust): 傳 a.side',
+    '       - 靈魂收割(sealall): 傳 h.side',
+    '       - passive AI(sealall): 傳 actor.side',
+    '  - 一般戰場卡(非軍師)無 _surpriseSide → fieldHas 仍維持「全體生效」原邏輯',
+    '【3. 音樂開關只播首頁 BGM】',
+    '  - 症狀: 音樂消失後按音樂開關 → 只播首頁 BGM,不照當前場景',
+    '  - 原因: _detectCurrentBgm 內 isVisible 檢查 style.display !== \'\'',
+    '         CSS 預設顯示的元素 inline display 是空字串,被誤判為隱藏',
+    '         BOSS 戰中 isVisible(\'gc\') 偶爾失準 → 落到 \'bgm-menu-02\'(首頁)',
+    '  - 修復:',
+    '    a) isVisible 改用 getComputedStyle 檢查實際 display 與 visibility',
+    '    b) BOSS 戰偵測加 _adventureMode 旗標備援(更可靠)',
+    '    c) 改用統一的 isVisible(\'shop-overlay\')',
+    '    d) 加入召喚頁 BGM 偵測(\'summon-overlay\' → \'bgm-summon\')',
+    '【實作位置】',
+    '  - _saveBattleRoundSnapshot: line ~24865',
+    '  - _rollbackToLastSnap: line ~36066',
+    '  - fieldHas(eff, side): line ~9061',
+    '  - _applySurpriseFieldCard: line ~17467',
+    '  - _detectCurrentBgm: line ~24987',
+  ] },
+  { ver:'v1.0.20260424.0790', brief:[
+    '🌟 新增「召喚」系統(管理員測試中)',
+    '✓ 召喚星空頁面 + 螢火蟲特效 + BGM',
+    '✓ 1 次/10 連抽 + 機率說明 + 結果展示',
+    '✓ 縮小返回首頁按鈕,代表英雄條左移',
+  ], items:[
+    '【1. 召喚按鈕】',
+    '  - 位置: 關卡選擇頁左下,「近期活動與新角色」之下',
+    '  - 藍色漸層樣式,「🌟 召喚 (管理員測試)」',
+    '  - 預設隱藏,只有 _isAdminUser() 為 true 才顯示',
+    '【2. 召喚頁面】',
+    '  - 背景: 召喚星空(可愛版).png',
+    '  - 專屬 BGM: 召喚星空.m4a (loop)',
+    '  - 左上「← 返回」按鈕',
+    '  - 中央上方「🌟 召喚星空」標題(發光動畫)',
+    '  - 螢火蟲粒子: 持續從下半部生成,往上飄並淡出',
+    '【3. 左下水晶資訊】',
+    '  - 🔮 召喚水晶 + 數量(從背包讀取)',
+    '  - ? 按鈕: 點擊彈出機率說明視窗',
+    '【4. 召喚按鈕】',
+    '  - 「🌟 召喚 1 次」: 消耗 🔮×1',
+    '  - 「✨ 連續召喚 10 次」: 消耗 🔮×10',
+    '  - 不足時顯示提示 toast',
+    '【5. 召喚機率】',
+    '  - 10% 稀有角色 (大天狗/玉藻前/酒吞童子/巫女)',
+    '         - 已收錄則轉為超越極限果實×1',
+    '  - 25% 技能升級書 ×1',
+    '  - 30% BOSS 賣錢物品 ×1 (骨董茶杯/杏花胭脂/天狗羽扇/酒吞酒盃/九尾狐毛/龍鱗片)',
+    '  - 30% 精裝英雄經驗之書 ×3',
+    '  -  5% 超越極限果實 ×1',
+    '【6. 視覺特效】',
+    '  - 按召喚 → 召喚煙火.gif 全螢幕特效 + 召喚煙火.mp3',
+    '  - 含稀有/角色 → 召喚角色.gif 特效 + 召喚角色.mp3',
+    '  - 結果視窗:',
+    '    - 1 次召喚: 單張大卡',
+    '    - 10 連抽: 5×2 網格(依序動畫進場)',
+    '    - 含稀有角色: 顯示角色預覽(圖+技能+爆發,類似新角色登場)',
+    '【7. UI 調整】',
+    '  - 返回首頁按鈕: 46px → 30px,padding 也縮小',
+    '  - 代表英雄條: left 290~400px → 180~260px(避免蓋到關卡視窗)',
+    '  - 代表英雄頭像/字體都同步縮小',
+    '【實作位置】',
+    '  - 音效元素: line ~4023 (BGM/SFX)',
+    '  - 召喚 overlay HTML: line ~4476',
+    '  - 召喚動畫 CSS: line ~1167',
+    '  - 召喚 JS 系統: line ~36945 (openSummonOverlay 起)',
+    '  - 召喚按鈕(關卡選擇頁): line ~4432',
+    '  - openAdventureOverlay 加 _refreshSummonBtnVisibility: line ~26780',
+  ] },
   { ver:'v1.0.20260424.0780', brief:[
     '🐉 修復「所有 BOSS」戰卡死 Bug (不只八岐大蛇)',
     '✓ 修復雙重 startTurn 排程造成 BOSS 不行動',
@@ -50059,7 +50832,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0780';
+  const CURRENT_VERSION = 'v1.0.20260424.0810';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -50076,7 +50849,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0780';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0810';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
