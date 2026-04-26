@@ -4143,6 +4143,8 @@ body.art-premium #summon-overlay {
 <audio id="sfx-battle-start" preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E9%96%8B%E5%A7%8B%E9%80%B2%E6%94%BB.mp3"></audio>
 <audio id="sfx-sel"      preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E9%81%B8%E6%93%87%E4%B8%AD.mp3"></audio>
 <audio id="sfx-burst"    preload="auto" src="https://github.com/ChrisRaelGameMaster/Game/raw/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
+<!-- ★ v1.0.20260424.0940 — 小劇團員爆發技「謝幕掌聲」專屬音效 -->
+<audio id="sfx-applause" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%8E%8C%E8%81%B2.mp3"></audio>
 <audio id="bgm-chest" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B6%E7%AE%B1%E6%80%AABGM.mp3"></audio>
 <audio id="bgm-devil" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94BGM.m4a"></audio>
 <audio id="sfx-medal-unlock" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8D%B2%E5%BE%97%E6%88%90%E5%B0%B1%E7%8D%8E%E7%AB%A0.mp3"></audio>
@@ -12691,6 +12693,13 @@ function _showBurstCinematic(h, bd){
 // ── 爆發GIF特效資料庫 ──
 // URL為 GitHub raw（blob→raw 轉換），音效為 [sfxId, volume] 陣列
 const BURST_GIF_DB = {
+  // ★ v1.0.20260424.0930 — 小劇團員爆發技「謝幕掌聲」動畫
+  // ★ v1.0.20260424.0940 — 加入專屬「掌聲」音效
+  '謝幕掌聲': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%AC%9D%E5%B9%95%E6%8E%8C%E8%81%B2.gif',
+    sfx:[['sfx-applause',1.0],['sfx-burst',0.7],['sfx-powerup',0.7]],
+    tint:'rgba(255,200,60,0.18)'
+  },
   // ★ v1.0.20260421.1500 — 日本關 4 大 BOSS 爆發技動畫
   '神威風獵': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%A8%81%E9%A2%A8%E7%8D%B5.gif',
@@ -20170,6 +20179,8 @@ function autoUseItem(item, actor, cb){
 }
 
 function endAction(a, cost, noFinish=false){
+  // ★ v1.0.20260424.0910 — 正常結束行動時清除 AI watchdog,避免誤觸發
+  try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
   // ★ 重置技能升級倍率
   _activeSkLvMult = 1.0; _activeSkLv = 0;
   try {
@@ -20822,6 +20833,27 @@ function startTurn(){
   if(window._advMiniResultShowing) return;
   // ★ v1.0.20260423.0100 — 安全：清除可能殘留的合計計數狀態（新一回合開始時視為乾淨起點）
   try{ if(window._batchTotals){ window._batchTotals = null; } }catch(_){}
+  // ★ v1.0.20260424.0910 — 保險:每回合開始時重置 BOSS 的暫態旗標,
+  //   避免上回合殘留(例如 _yamataDoubleTriggered 因 _gamePaused queue 沒 reset)
+  //   導致下回合 BOSS 行為異常(雙擊跳過、AI 邏輯錯亂等)
+  try{
+    if(G && G.p2){
+      G.p2.forEach(h => {
+        if(h){
+          if(h._yamataDoubleTriggered) h._yamataDoubleTriggered = false;
+          if(h._reActCount) h._reActCount = 0;
+        }
+      });
+    }
+    if(G && G.p1){
+      G.p1.forEach(h => {
+        if(h){
+          if(h._yamataDoubleTriggered) h._yamataDoubleTriggered = false;
+          if(h._reActCount) h._reActCount = 0;
+        }
+      });
+    }
+  }catch(_){}
   if(checkWin()) return;
   // ★ 時間倒轉用：偵測回合變更 → 取當前回合起始快照
   try{
@@ -21434,26 +21466,29 @@ function startTurn(){
 }
 
 // ★ 時間倒轉用：取當前戰鬥快照 / 還原快照
+// ★ v1.0.20260424.0920 — 重大修復:回溯 bug
+//   原版 _ser 只手動列舉部分欄位,某些 _xxx 狀態(如 _yamataDoubleTriggered、shield、_kinderRounds 等)沒被存到。
+//   且 _restoreRoundSnapshot 用 name 匹配,若 name 字串有任何細微差異會 skip 不還原該角色。
+//   改為:
+//   1. _ser 改用全屬性深複製(跳過函式),確保所有狀態都被保留(含大蛇等 BOSS 的特殊旗標)
+//   2. _restoreRoundSnapshot 改用 side+pos 匹配,並把所有屬性還原到場上角色(避免 name 不一致導致 BOSS HP 沒還原的 bug)
 function _takeRoundSnapshot(){
   if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return null;
-  const _ser = h => ({
-    name:h.name, side:h.side, pos:h.pos,
-    hp:h.hp, atk:h.atk, def:h.def||0, sp:h.sp, spd:h.spd,
-    curHp:h.curHp, acted:h.acted||false,
-    s1:JSON.parse(JSON.stringify(h.s1)),
-    s2:JSON.parse(JSON.stringify(h.s2)),
-    element:h.element||null,
-    status:JSON.parse(JSON.stringify(h.status||[])),
-    buffs:JSON.parse(JSON.stringify(h.buffs||[])),
-    s1used:h.s1used||false, s2used:h.s2used||false,
-    equip:h.equip?JSON.parse(JSON.stringify(h.equip)):null,
-    _skLv:h._skLv?JSON.parse(JSON.stringify(h._skLv)):{s1:0,s2:0},
-    _burstLvAdv:h._burstLvAdv||0,
-    _burstUsed:h._burstUsed||0,
-    _risingSpiritCount:h._risingSpiritCount||0,
-    _displayName:h._displayName||null,
-    _isCharmedEnemy:h._isCharmedEnemy||false,
-  });
+  const _ser = h => {
+    if(!h || typeof h !== 'object') return null;
+    const _out = {};
+    for(const k in h){
+      if(!Object.prototype.hasOwnProperty.call(h, k)) continue;
+      const v = h[k];
+      if(typeof v === 'function') continue; // 跳過函式
+      try{
+        _out[k] = (typeof v === 'object' && v !== null) ? JSON.parse(JSON.stringify(v)) : v;
+      }catch(_){
+        // 跳過無法序列化的欄位
+      }
+    }
+    return _out;
+  };
   return {
     round: G.round || 1,
     p1: (G.p1||[]).map(_ser),
@@ -21470,23 +21505,33 @@ function _takeRoundSnapshot(){
 }
 function _restoreRoundSnapshot(snap){
   if(!snap || typeof G === 'undefined' || !G) return;
+  // ★ v1.0.20260424.0920 — 改用「按 side+pos 匹配 + 全屬性還原」,
+  //   確保 BOSS HP 等狀態確實被還原(不再因 name 字串細微差異而 skip)
   const _apply = (hArr, src) => {
+    if(!Array.isArray(hArr) || !Array.isArray(src)) return;
     src.forEach((s, i) => {
-      const h = hArr[i];
-      if(!h || h.name !== s.name) return;
-      h.hp=s.hp; h.atk=s.atk; h.def=s.def||0; h.sp=s.sp; h.spd=s.spd;
-      h.curHp=s.curHp;
-      h.acted=s.acted;
-      h.status = JSON.parse(JSON.stringify(s.status||[]));
-      h.buffs  = JSON.parse(JSON.stringify(s.buffs||[]));
-      h.s1used = s.s1used; h.s2used = s.s2used;
-      h.equip = s.equip ? JSON.parse(JSON.stringify(s.equip)) : null;
-      h._skLv = s._skLv ? JSON.parse(JSON.stringify(s._skLv)) : {s1:0,s2:0};
-      h._burstLvAdv = s._burstLvAdv||0;
-      h._burstUsed = s._burstUsed||0;
-      h._risingSpiritCount = s._risingSpiritCount||0;
-      if(s._displayName) h._displayName = s._displayName;
-      h._isCharmedEnemy = s._isCharmedEnemy||false;
+      if(!s) return;
+      // 優先用 side+pos 匹配,其次 fallback 到 i 索引
+      let h = hArr.find(x => x && x.side === s.side && x.pos === s.pos);
+      if(!h) h = hArr[i];
+      if(!h) return;
+      // ★ 全屬性還原:逐欄位寫回(保留 h 物件的引用,但內容用 snapshot 的)
+      //   先把 h 上的可能殘留 _xxx flag 清掉,避免新狀態混合舊狀態
+      const _existKeys = Object.keys(h);
+      _existKeys.forEach(k => {
+        // 只刪 _xxx 暫態旗標(避免移除 hp/atk 等基礎屬性)
+        if(k.startsWith('_') && !(k in s)){
+          try{ delete h[k]; }catch(_){}
+        }
+      });
+      // 套用 snapshot 中的所有屬性
+      for(const k in s){
+        if(!Object.prototype.hasOwnProperty.call(s, k)) continue;
+        const v = s[k];
+        try{
+          h[k] = (typeof v === 'object' && v !== null) ? JSON.parse(JSON.stringify(v)) : v;
+        }catch(_){}
+      }
     });
   };
   _apply(G.p1, snap.p1||[]);
@@ -21508,13 +21553,18 @@ function _restoreRoundSnapshot(snap){
   G.taunted = null;
   G.guardFor = null;
   G.gunnerTarget = null;
+  G.activeChar = null;  // ★ 還原後清掉 activeChar,避免 race condition
   // 重繪所有卡片
   try{ G.p1.concat(G.p2).forEach(h => renderCard(h)); }catch(e){}
   try{ renderItems && renderItems(); }catch(e){}
-  // ★ 還原後：快照鏈重置（剛還原到的就是當前）
+  try{ updateUI && updateUI(); }catch(e){}
+  // ★ 還原後:快照鏈重置(剛還原到的就是當前)
   G._curRoundSnap = snap;
   G._prevRoundSnap = null;
   G._lastSnapRound = snap.round || 1;
+  // ★ v1.0.20260424.0920 — 還原後清除任何 pending timer,避免上一回合的延遲傷害(如八首吞天第二擊)在還原後才生效,造成 BOSS HP 又被打掉
+  try{ if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0; }catch(_){}
+  try{ console.log('[時間倒轉] 還原快照完成 → round=', snap.round, ' p2[0].curHp=', (G.p2&&G.p2[0])?G.p2[0].curHp:'N/A'); }catch(_){}
 }
 
 function nextRound(){
@@ -21876,6 +21926,36 @@ function aiAct(a){
 function _realAiAct(a){
   // ★ 防護：若 a 無效直接跳過回合
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
+  // ★ v1.0.20260424.0910 — BOSS AI watchdog: 防止某些情況下 AI 行動卡死整場戰鬥
+  //   常見場景: 八岐大蛇 S1 八首齊噬有 8 次 _pSetTimeout 連擊,
+  //   若中途 _gamePaused=true(如玩家中斷或 BOSS quiz 異常),timer 被 queue 但 _resumeTimers 沒被呼叫,
+  //   導致 endAction 永遠不執行,下一回合 BOSS 又準備行動但永遠不出手 → 卡死。
+  //   watchdog 在 30 秒後強制結束行動,讓戰鬥流程繼續。
+  try{
+    if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; }
+    window._aiWatchdog = setTimeout(function(){
+      try{
+        if(!a || a.curHp <= 0) return;
+        if(a.acted || G.activeChar !== a) return;  // 已正常結束行動
+        // 玩家正在 BOSS quiz 答題 → 等待中,不算卡死
+        const _qov = document.getElementById('adv-quiz-overlay');
+        if(_qov && _qov.classList.contains('show')) return;
+        // 結算面板已顯示 → 戰鬥已結束,不算卡死
+        const _resOv = document.getElementById('adv-result-overlay');
+        if(_resOv && _resOv.classList.contains('show')) return;
+        console.warn('[AI watchdog] '+(a.name||'未知')+' 行動超時,強制結束以恢復戰鬥流程');
+        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        try{ window._gamePaused = false; }catch(_){}
+        a.acted = true;
+        if(typeof endAction === 'function') {
+          try{ endAction(a, 0); }catch(_){ setTimeout(function(){ try{ startTurn(); }catch(__){} }, 400); }
+        } else if(typeof startTurn === 'function') {
+          setTimeout(startTurn, 400);
+        }
+      }catch(_){}
+      window._aiWatchdog = null;
+    }, 30000);
+  }catch(_){}
   try {
   // ★ 暈眩/凍結/睡眠/麻痺/陷阱：即使是BOSS也必須跳過行動
   const _aiSkipTypes = ['stun','freeze','sleep','para','trap'];
@@ -24920,6 +25000,9 @@ function _saveCheatSnapshot(){
 function _saveBattleRoundSnapshot(){
   if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return;
   if(!_adventureMode || !_adventureStage) return;
+  // ★ v1.0.20260424.0910 — 戰鬥結算面板已顯示時不再存快照
+  //   (避免 BOSS 死亡後若還有 startTurn 觸發,把已清除的快照寫回去)
+  try{ if(window._advBattleResultShown) return; }catch(_){}
   try{
     // ★ v1.0.20260424.0800 — 序列化英雄:用「全屬性深複製」避免某些 _xxx 旗標被遺漏
     //   (原版手動列舉欄位,結果 _yamataDoubleTriggered/_kinderRounds/shield 等沒被存到,
@@ -29673,6 +29756,9 @@ function _advRecordQuizSession(g, s, d){
 function advStartCutscene(stage) {
   // ★ v1.0.20260423.3400 — 防禦性清除:進入過場前強制清掉戰鬥背景
   try{ if(typeof _clearBattleBg === 'function') _clearBattleBg('advStartCutscene entry'); }catch(_){}
+  // ★ v1.0.20260424.0910 — 新冒險開始時重置「戰鬥結算已顯示」flag,
+  //   讓 _saveBattleRoundSnapshot 能正常存新一場戰鬥的快照
+  try{ window._advBattleResultShown = false; }catch(_){}
   _advSceneIdx = 0;
   _advDialogIdx = 0;
   _advSceneChoiceDone = false; // ★ 初始化選題旗標
@@ -29900,6 +29986,27 @@ window._getAdvSceneArray = function(stage){
 function advLoadScene(stage, idx) {
   // ★ 重置場景選題旗標（新場景可以再次顯示選擇題）
   _advSceneChoiceDone = false;
+  // ★ v1.0.20260424.0920 — 強化重置:確保場景切換時所有可能殘留的 flag 都清掉,
+  //   避免日本關 mini 戰結束後場景對白卡死(因 _advMiniResultShowing/_advMiniBattleActive 殘留為 true,
+  //   或 _gamePaused 沒解除,或 _pendingTimers 還有殘留)
+  try{
+    if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = false;
+    window._advMiniResultShowing = false;
+    window._advMiniResultPending = null;
+    window._gamePaused = false;
+    if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0;
+    if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; }
+    // 戰鬥相關殘留 modal 也關閉
+    const _qov = document.getElementById('adv-quiz-overlay');
+    if(_qov && _qov.classList.contains('show')) _qov.classList.remove('show');
+    const _bdp = document.getElementById('adv-boss-detail-pop');
+    if(_bdp) _bdp.remove();
+    // ★ 戰鬥區 #gc 在過場時應隱藏(避免背景有戰鬥在進行但看不到)
+    const _gc = document.getElementById('gc');
+    if(_gc) _gc.classList.remove('adv-battle');
+    // ★ 戰鬥背景也清除
+    if(typeof _clearBattleBg === 'function') _clearBattleBg('advLoadScene flag reset');
+  }catch(_loadResetE){}
   // ★ 確保過場畫面可見
   const _csOvLoad = document.getElementById('adv-cutscene-overlay');
   if(_csOvLoad && _csOvLoad.style.display !== 'flex'){
@@ -30091,15 +30198,42 @@ function _renderDialogWithHighlights(txt){
 function advNextDialog(e) {
   // 若點到略過按鈕，不推進
   if(e && e.target && (e.target.id === 'adv-skip-btn' || e.target.closest('#adv-skip-btn'))) return;
+  // ★ v1.0.20260424.0920 — 強化自我修復:檢查 cutscene overlay 是否顯示中,
+  //   若是且各種 flag 殘留為 true,代表流程錯誤,reset 讓對話可繼續
+  const _csOv = document.getElementById('adv-cutscene-overlay');
+  const _csVisible = _csOv && _csOv.style.display === 'flex';
   // ★ 小怪戰鬥中：對話框只是顯示開場白，不觸發劇情推進
-  if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive) return;
+  //   但若已進入下一場景的 cutscene(過場畫面顯示),代表戰鬥已結束,flag 殘留 → 強制 reset
+  if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
+    if(_csVisible){
+      try{ console.warn('[advNextDialog 自我修復] _advMiniBattleActive 殘留為 true 但已進入過場,重置'); }catch(_){}
+      _advMiniBattleActive = false;
+    } else {
+      return;
+    }
+  }
   // 若選擇視窗或法寶彈窗開著，不推進對話
   const _cpEl = document.getElementById('adv-choice-panel');
   if(_cpEl && _cpEl.children.length > 0) return;
   const _tpEl = document.getElementById('adv-treasure-popup');
   if(_tpEl && _tpEl.classList.contains('show')) return;
-  // ★ 本場景選擇已完成（防止法寶期間誤觸再次顯示選題）
-  if(typeof _advSceneChoiceDone !== 'undefined' && _advSceneChoiceDone) return;
+  // ★ v1.0.20260424.0910 — 自我修復:若 _advSceneChoiceDone 殘留為 true 但選擇面板無內容,
+  //   代表上一個場景的選擇流程結束但 flag 未被重置,造成 dialog 卡住點不動。
+  //   reset flag 讓對話可繼續推進(常見於日本關連續場景之間)。
+  if(typeof _advSceneChoiceDone !== 'undefined' && _advSceneChoiceDone){
+    if(!_cpEl || _cpEl.children.length === 0){
+      try{ console.warn('[advNextDialog 自我修復] _advSceneChoiceDone 殘留為 true 但 panel 無內容,重置 flag'); }catch(_){}
+      _advSceneChoiceDone = false;
+      // 繼續往下執行,不 return
+    } else {
+      return;  // panel 有選項,等待玩家選擇
+    }
+  }
+  // ★ v1.0.20260424.0920 — 同樣自我修復 _advMiniResultShowing(若已進過場代表 mini 結算早結束)
+  if(typeof window._advMiniResultShowing !== 'undefined' && window._advMiniResultShowing && _csVisible){
+    try{ console.warn('[advNextDialog 自我修復] _advMiniResultShowing 殘留為 true 但已進入過場,重置'); }catch(_){}
+    window._advMiniResultShowing = false;
+  }
   // ★ 若 quiz overlay 開著，不推進對話
   const _qoEl = document.getElementById('adv-quiz-overlay');
   if(_qoEl && _qoEl.classList.contains('show')) return;
@@ -32818,6 +32952,22 @@ function advRestartBattle() {
 }
 // ════════════════════════════════
 async function advShowBattleResult(win) {
+  // ★ v1.0.20260424.0910 — 嚴重 bug 修復:
+  //   原本只在玩家點「✅ 確認」(advStartWinSequence)後才清除戰鬥快照,
+  //   導致玩家在結算面板重新整理或回首頁,下次進入會看到「繼續戰鬥」,
+  //   進去後 BOSS 是殘血狀態,可重複擊倒刷獎勵(尤其八岐大蛇)
+  //   修復:勝利時(win=true)立即清除兩個快照,因為戰鬥已經實質結束
+  if(win){
+    try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
+    try{ localStorage.removeItem('adv_crash_snapshot'); }catch(e){}
+    // ★ 設 flag 阻止後續 _saveBattleRoundSnapshot 把快照寫回去
+    //   (例如 BOSS 死亡同回合若還有 startTurn 觸發,會誤存舊狀態)
+    try{ window._advBattleResultShown = true; }catch(_){}
+    // ★ 順便清除任何 pending timer 並解除暫停,避免戰鬥流程繼續推進
+    try{ if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0; }catch(_){}
+    try{ window._gamePaused = false; }catch(_){}
+    try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
+  }
   const stats = _advStats;
   const rounds = stats.rounds;
   const correct = stats.correctCount;
@@ -34920,7 +35070,8 @@ const BACKPACK_ITEM_DEF = {
   // ★ v1.0.20260424.0740 — 極限重置秘藥
   'burst_reset_potion': { name:'極限重置秘藥', icon:'⚗️', desc:'神秘煉金師調配的逆轉之藥，可將1名英雄的極限爆發等級歸零，並退還曾消耗的「超越極限果實」。', type:'use', useLabel:'使用（重置爆發）' },
   // ★ 召喚水晶
-  'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，據說能夠召喚超極稀有的英雄。⚠ 目前尚未開放使用，請先收藏等待未來版本開放召喚功能。', type:'use', useLabel:'使用（尚未開放）' },
+  // ★ v1.0.20260424.0920 — 召喚已開放,更新描述
+  'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，每次召喚消耗 1 顆，可獲得稀有英雄、技能升級書、BOSS 賣錢物品、超越極限果實等獎勵。', type:'use', useLabel:'前往召喚星空' },
   // ★ 小怪戰掉落物（只能販賣換知識幣）
   'half_tea':     { name:'喝一半的好茶',     icon:'🍵', desc:'被史萊姆偷喝了一半的好茶，雖然有點不乾淨，還是值點錢。', type:'sell_only', sellPrice:10 },
   'picked_flower':{ name:'被摘的花朵',       icon:'🌸', desc:'被頑皮妖精偷摘的野花，稍顯凌亂但仍有芬芳。', type:'sell_only', sellPrice:15 },
@@ -35001,6 +35152,10 @@ const BACKPACK_ITEM_DEF = {
 
 // 商店商品定義
 const SHOP_PRODUCTS = [
+  // ★ v1.0.20260424.0920 — 召喚水晶(永遠置頂,每日限購 1 顆)
+  { id:'summon_crystal',  name:'召喚水晶', icon:'🔮',
+    desc:'蘊含神秘能量的水晶，每次召喚消耗 1 顆，可獲得稀有英雄、技能升級書、BOSS 賣錢物品、超越極限果實等獎勵。每日商店限購 1 顆。',
+    price:1000, stock:'每日1個', dailyLimit:1, pinTop:true },
   { id:'stat_reset_book',  name:'能力素質重置之書', icon:'📕',
     desc:'使用後可以使1名英雄所有投資的素質點數退還，重置到最初狀態，可重新分配點數。',
     price:500, stock:'∞', dailyLimit:0 },
@@ -37462,7 +37617,10 @@ function _renderShopProducts(){
   // ★ v1.0.20260424.0740 — 取得當日特價商品 id(每日 08:00 隨機抽一個打 7 折)
   const _todayDiscountId = (typeof _shopGetTodayDiscountId === 'function') ? _shopGetTodayDiscountId() : null;
   // ★ 特價商品排到最前面(醒目展示)
+  // ★ v1.0.20260424.0920 — 召喚水晶永遠置頂(pinTop:true),其次才是當日特價
   const _sortedProducts = SHOP_PRODUCTS.slice().sort((a,b)=>{
+    if(a.pinTop && !b.pinTop) return -1;
+    if(b.pinTop && !a.pinTop) return 1;
     if(a.id === _todayDiscountId) return -1;
     if(b.id === _todayDiscountId) return 1;
     return 0;
@@ -38175,6 +38333,13 @@ function useBackpackItem(id){
     closeBackpackOverlay();
     openHeroPage();
     setTimeout(() => { _highlightHeroesForBurstUpgrade(); }, 200);
+
+  } else if(id==='summon_crystal'){
+    // ★ v1.0.20260424.0920 — 召喚水晶:跳轉到召喚星空頁面(不消耗,實際消耗在召喚時)
+    closeBackpackOverlay();
+    setTimeout(() => {
+      try{ if(typeof openSummonOverlay === 'function') openSummonOverlay(); }catch(_){}
+    }, 200);
 
   } else if(id==='burst_reset_potion'){
     // ★ v1.0.20260424.0740 — 極限重置秘藥:重置選定英雄的極限爆發等級並退還果實
@@ -45173,6 +45338,127 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0940', brief:[
+    '🎵 新增「謝幕掌聲」爆發技專屬音效',
+  ], items:[
+    '【新增 audio 元素】',
+    '  - id="sfx-applause" 指向 掌聲.mp3',
+    '【更新 BURST_GIF_DB.謝幕掌聲】',
+    '  - sfx 列表加入新音效:',
+    '    舊: [sfx-burst:0.9, sfx-powerup:0.85]',
+    '    新: [sfx-applause:1.0, sfx-burst:0.7, sfx-powerup:0.7]',
+    '    (掌聲音效為主,爆發/能量音效降低成輔助層次,避免蓋過主音效)',
+    '【實作位置】',
+    '  - sfx-applause audio 元素: line ~4146',
+    '  - BURST_GIF_DB.謝幕掌聲: line ~12694',
+  ] },
+  { ver:'v1.0.20260424.0930', brief:[
+    '🎭 新增小劇團員爆發技「謝幕掌聲」演出動畫',
+  ], items:[
+    '【新增爆發 GIF】',
+    '  - 在 BURST_GIF_DB 加入「謝幕掌聲」條目:',
+    '    url: 謝幕掌聲.gif (raw URL)',
+    '    sfx: sfx-burst (0.9) + sfx-powerup (0.85)',
+    '    tint: 金黃色 rgba(255,200,60,0.18) 搭配技能金色發光',
+    '【效果】',
+    '  小劇團員發動爆發技「謝幕掌聲」時,會全螢幕播放對應 GIF',
+    '  與其他爆發技(劍神連斬/烈焰爆發/冰封末日等)演出方式一致',
+    '【實作位置】',
+    '  - BURST_GIF_DB: line ~12693',
+  ] },
+  { ver:'v1.0.20260424.0920', brief:[
+    '🛒 商店新增「召喚水晶」每日限購 1 顆,1000 知識幣,永遠置頂',
+    '⏪ 重大修復:時間倒轉沒還原大蛇 HP 的 BUG(可重複削血)',
+    '🎭 日本關第二場景對白卡死(背景有戰鬥)的強化修復',
+  ], items:[
+    '【1. 商店召喚水晶】',
+    '  - SHOP_PRODUCTS 第 1 個位置(永遠置頂):',
+    '    id:summon_crystal, price:1000, dailyLimit:1, pinTop:true',
+    '  - 排序邏輯加 pinTop 判斷,讓置頂商品永遠在最前',
+    '  - BACKPACK_ITEM_DEF[summon_crystal] 描述更新(召喚已開放)',
+    '    useLabel 從「使用(尚未開放)」改為「前往召喚星空」',
+    '  - useBackpackItem 內加 summon_crystal 分支:點使用直接開啟召喚 overlay',
+    '【2. 時間倒轉 + 大蛇 HP 沒還原】',
+    '  症狀:玩家點時間倒轉後大蛇 HP 沒回溯,可連續用回溯削血',
+    '  根因:_takeRoundSnapshot 用「手動列舉欄位」,某些 _xxx flag 沒存到',
+    '       _restoreRoundSnapshot 用 name 字串匹配,若 name 不一致會 skip(BOSS HP 不還原)',
+    '  修復:',
+    '    a) _takeRoundSnapshot 改用「全屬性深複製」,所有狀態都被存到',
+    '    b) _restoreRoundSnapshot 改用「side+pos 匹配」,fallback 才用 i 索引',
+    '    c) 還原時用「全屬性還原」(逐 key 寫回 snapshot 的所有欄位)',
+    '    d) 順便清空 _pendingTimers,避免上回合延遲傷害(如八首吞天第二擊)在還原後才生效',
+    '    e) 加 console.log 顯示還原後的 G.p2[0].curHp,方便診斷',
+    '【3. 日本關第二場景對白卡死】',
+    '  症狀:用弦樂團/小劇團/程式設計師/電腦繪圖師打日本關,第二場景對白必定卡死,',
+    '       且背景有戰鬥在進行但看不到',
+    '  根因:mini 戰結束 → 進入下一場景時,某些 flag 殘留為 true:',
+    '       - _advMiniBattleActive (advNextDialog 內 early return)',
+    '       - _advMiniResultShowing (戰鬥背景沒清乾淨)',
+    '       - _gamePaused / _pendingTimers 殘留',
+    '  修復:',
+    '    a) advLoadScene 開頭強化重置:',
+    '       - _advMiniBattleActive = false',
+    '       - _advMiniResultShowing = false',
+    '       - _gamePaused = false',
+    '       - _pendingTimers 清空',
+    '       - _aiWatchdog 清除',
+    '       - 隱藏 quiz overlay / boss-detail-pop',
+    '       - #gc 移除 adv-battle class',
+    '       - _clearBattleBg() 清除戰鬥背景',
+    '    b) advNextDialog 加自我修復:',
+    '       - 若 cutscene overlay 顯示中但 _advMiniBattleActive=true → reset',
+    '       - 若 cutscene overlay 顯示中但 _advMiniResultShowing=true → reset',
+    '       - 配合既有 _advSceneChoiceDone 自我修復',
+    '【實作位置】',
+    '  - SHOP_PRODUCTS: line ~35088',
+    '  - BACKPACK_ITEM_DEF[summon_crystal]: line ~35009',
+    '  - useBackpackItem summon_crystal 分支: line ~38269',
+    '  - _renderShopProducts pinTop 排序: line ~37549',
+    '  - _takeRoundSnapshot/_restoreRoundSnapshot: line ~21459',
+    '  - advLoadScene 強化重置: line ~29977',
+    '  - advNextDialog 強化自我修復: line ~30091',
+  ] },
+  { ver:'v1.0.20260424.0910', brief:[
+    '🚨 嚴重 BUG 修復:八岐大蛇等 BOSS 戰結束後重整可重複刷獎勵',
+    '🔧 日本關劇情對話卡住的自我修復機制',
+    '🛡 BOSS AI watchdog:30 秒內若 BOSS 無法行動強制結束,避免戰鬥卡死',
+  ], items:[
+    '【1. 嚴重 BUG:刷獎勵漏洞修復】',
+    '  症狀:八岐大蛇戰鬥結束領完獎勵後,重整或回首頁再進遊戲,',
+    '       會看到「上次戰鬥未完成」,點繼續會回到 BOSS 殘血狀態,可重複擊倒刷獎勵',
+    '  根因:原本只在玩家點「✅ 確認」按鈕(advStartWinSequence)後才清除 adv_battle_snap',
+    '       戰鬥結算面板顯示後若玩家中途離開,快照仍是「戰鬥中(BOSS 殘血)」狀態',
+    '  修復:',
+    '    a) advShowBattleResult(true) 立即清除 adv_battle_snap + adv_crash_snapshot',
+    '    b) 設 window._advBattleResultShown = true 阻止後續 startTurn 觸發 _saveBattleRoundSnapshot',
+    '       把舊狀態寫回去(例如 BOSS 死亡同回合若還有 startTurn 觸發)',
+    '    c) advStartCutscene(新冒險開始) 重置 _advBattleResultShown = false',
+    '    d) 順便清空 _pendingTimers + 解除 _gamePaused + 清除 watchdog',
+    '【2. 日本關對話卡住:自我修復】',
+    '  症狀:日本關場景間切換時,對話可能卡住點不動',
+    '  根因:_advSceneChoiceDone 旗標在某些情況下殘留為 true,讓 advNextDialog early return',
+    '  修復:advNextDialog 加自我修復',
+    '    若 _advSceneChoiceDone=true 但 choice panel 無內容(代表流程出錯),',
+    '    自動 reset flag 並繼續推進對話,並 console.warn 提示',
+    '【3. BOSS AI watchdog】',
+    '  症狀:BOSS 戰每當新回合開始,大蛇 AI 可能產生 BUG 導致戰鬥卡死',
+    '  根因(推測):某些 race condition 下,_pSetTimeout 因 _gamePaused 被 queue 但 _resumeTimers 未被呼叫',
+    '             例如八首齊噬 8 次連擊或暗冰雷焰 2 次循環中途暫停 → endAction 永遠不執行',
+    '  修復:',
+    '    a) _realAiAct 開頭設 30 秒 watchdog(用 setTimeout 而非 _pSetTimeout 確保不受暫停影響)',
+    '       時間到時若 a.acted 仍 false,且 quiz/結算面板都沒顯示 → 強制 endAction',
+    '    b) endAction 開頭清除 watchdog(正常結束時不誤觸發)',
+    '    c) startTurn 開頭重置所有 BOSS 暫態旗標(_yamataDoubleTriggered, _reActCount 等)',
+    '       避免上回合殘留導致下回合行為異常',
+    '【實作位置】',
+    '  - advShowBattleResult: line ~32820',
+    '  - _saveBattleRoundSnapshot: line ~24952',
+    '  - advStartCutscene: line ~29708',
+    '  - advNextDialog: line ~30091',
+    '  - _realAiAct: line ~21876',
+    '  - endAction: line ~20172',
+    '  - startTurn: line ~20822',
+  ] },
   { ver:'v1.0.20260424.0900', brief:[
     '🌟 召喚功能完全開放(移除所有管理員限制)',
   ], items:[
@@ -51039,7 +51325,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0900';
+  const CURRENT_VERSION = 'v1.0.20260424.0940';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51056,7 +51342,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0900';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0940';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
