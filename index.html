@@ -470,7 +470,7 @@
       // ★★★ v1.0.20260419.1930 維修模式檢查 ★★★
       //   若維修模式開啟且此玩家非管理員 → 強制登出並顯示維修畫面
       // ★ v1.0.20260423.2800 — 管理員帳號白名單(多帳號)
-      const _DEV_EMAILS = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw'];
+      const _DEV_EMAILS = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
       const _isDev = _DEV_EMAILS.includes((user.email || '').toLowerCase());
       if(!_isDev) {
         try {
@@ -24525,7 +24525,7 @@ document.addEventListener('keydown',_tryMenuBgm);
 document.addEventListener('keydown', function(e){
   // ★ 密技只限遊戲設計者帳號使用
   // ★ v1.0.20260423.2800 — 管理員帳號白名單(多帳號)
-  const _devEmails = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw'];
+  const _devEmails = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
   const _userEmail = (window._fbUser && window._fbUser.email || '').toLowerCase();
   const _isDev = !!_userEmail && _devEmails.includes(_userEmail);
   if(!_isDev) return;
@@ -24699,7 +24699,7 @@ async function _showAdminStatsPanel(){
       <div id="_admin-maint-section" style="background:rgba(60,20,20,0.4);border:2px solid rgba(255,100,100,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ff8888;margin-bottom:8px;">🔧 0. 維修模式（非管理員登入封鎖）</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
-          開啟後，<b>非管理員帳號無法登入</b>遊戲，正在遊戲中的其他玩家也會被自動登出，避免修補 bug 期間繼續產生資料損失。管理員（<code style="color:#88ccff;">clarebox123@gmail.com</code>、<code style="color:#88ccff;">clarebox123@lsps.tp.edu.tw</code>）不受限制。
+          開啟後，<b>非管理員帳號無法登入</b>遊戲，正在遊戲中的其他玩家也會被自動登出，避免修補 bug 期間繼續產生資料損失。管理員帳號不受限制。
         </div>
         <div id="_admin-maint-status" style="font-size:14px;color:#ffcc66;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.4);border-radius:6px;">
           載入中...
@@ -45295,7 +45295,7 @@ window._startMaintenanceWatcher = function(){
   if(!window._fbWatchMaintenance) return;
   window._maintUnsubscribe = window._fbWatchMaintenance((m) => {
     // ★ v1.0.20260423.2800 — 管理員帳號白名單(多帳號)
-    const _devEmails = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw'];
+    const _devEmails = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
     const _email = (window._fbUser && window._fbUser.email||'').toLowerCase();
     const isDev = !!_email && _devEmails.includes(_email);
     if(m && m.enabled && !isDev) {
@@ -45813,7 +45813,7 @@ window._isAdminUser = function(){
     if(!u) return false;
     const email = (u.email || '').toLowerCase();
     // ★ v1.0.20260423.2800 — 管理員帳號白名單(多帳號)
-    const _devEmails = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw'];
+    const _devEmails = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
     return _devEmails.includes(email);
   } catch(e){ return false; }
 };
@@ -45850,6 +45850,12 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1050', brief:[
+    '🔧 內部維護更新',
+  ], items:[
+    '【內部維護】',
+    '  本版為內部維護更新,玩遊戲體驗無差異',
+  ] },
   { ver:'v1.0.20260424.1040', brief:[
     '☄️ 修正流星線條方向與移動方向不一致(線歪錯邊)',
   ], items:[
@@ -49091,7 +49097,7 @@ const GAME_CHANGELOG = [
     '  這些檢查僅在發動爆發的瞬間執行一次,對戰鬥流暢度無任何影響',
   ] },
   { ver:'v1.0.20260423.2800', adminOnly:true, brief:[
-    '🔑 管理員帳號白名單擴充:新增 clarebox123@lsps.tp.edu.tw 為第二管理員帳號',
+    '🔑 管理員帳號白名單擴充:新增第二管理員帳號',
     '包含 F8 回溯、F9 直接戰鬥勝利、Shift+F10 管理面板、維修模式繞過、維修模式通知等五處權限檢查同步放行',
   ], items:[
     '【修改的 5 處權限檢查點】',
@@ -49099,7 +49105,7 @@ const GAME_CHANGELOG = [
     '  (2) 鍵盤密技守門(line 21590) — F8/F9/Shift+F10 三個熱鍵共用此檢查',
     '  (3) 維修模式即時監聽(line 39613) — 避免管理員中途被自己開啟的維修模式踢出',
     '  (4) window._isAdminUser() 全域助手(line 40126) — changelog 機密過濾等地方共用',
-    '  (5) 維修模式彈窗文字 — 顯示兩個白名單帳號',
+    '  (5) 維修模式彈窗文字',
     '【統一設計】',
     '  所有檢查都改為 includes() 陣列查詢,加新管理員帳號只需編輯一個地方即可擴充',
     '  使用 .toLowerCase() 統一大小寫比對,避免因大小寫導致檢查失敗',
@@ -51526,7 +51532,7 @@ const GAME_CHANGELOG = [
   { ver:'v1.0.20260420.0930', adminOnly:true, brief:[
     '對非管理員隱藏 changelog 中的所有管理員相關內容(極機密)',
   ], items:[
-    '新增 window._isAdminUser() 全域助手,檢查當前登入的 Firebase 使用者 email 是否為 clarebox123@gmail.com',
+    '新增 window._isAdminUser() 全域助手,檢查當前登入的 Firebase 使用者 email 是否在管理員白名單中',
     '新增 window._filterChangelogForDisplay(entries) 過濾器:若當前不是管理員,去掉任何 entry.adminOnly:true 的整筆,以及 brief/items 內含管理員關鍵字的單行,若過濾後 brief+items 都空就整筆隱藏',
     '管理員關鍵字正則涵蓋:管理員 / Shift+F10 / 維修模式 / 急救工具 / 救援工具 / 人數統計(管理|工具|面板|診斷) / 手動設定總玩家 / 回填 / totalPlayers / totalAdventures / stats\\/global / _fbDiagnose* / _fbRestore* / _fbGetMaintenance / _fbSetMaintenance / _fbSetTotalPlayers / _showAdminStatsPanel / permission-denied / 設計者帳號 / GM 面板 等',
     '在 _showChangelogModal(版本更新彈窗) 與 openChangelogPanel(玩家手動開啟) 兩處都套用過濾器',
@@ -51580,7 +51586,7 @@ const GAME_CHANGELOG = [
     '【維修模式】新增 stats/global.maintenance 欄位控制,管理員可在 Shift+F10 面板開關',
     '【維修模式】開啟後:非管理員 onAuthStateChanged 時被攔截 → 立刻 signOut + 顯示維修畫面',
     '【維修模式】開啟後:正在遊戲中的非管理員玩家會透過 onSnapshot 即時偵測到狀態變更,被強制登出並顯示畫面',
-    '【維修模式】管理員 clarebox123@gmail.com 不受限制,可繼續登入',
+    '【維修模式】管理員不受限制,可繼續登入',
     '【維修模式】加入自訂公告訊息,會顯示給被擋下的玩家看',
     '🚑 新增「玩家資料急救工具」(Shift+F10 面板第 3 區):管理員可輸入 uid 診斷受損狀況,系統自動判斷「有 representativeHero 但主資料空白」為疑似受損,並提供還原表單,可自訂補償知識幣、英雄預設等級、各種書冊數量,執行時保留 representativeHero/unlockedHeroes/medals 等殘存欄位',
     '新增 window._fbDiagnosePlayer(uid) 和 window._fbRestorePlayer(uid, payload) API 供管理工具與未來擴充使用',
@@ -52183,7 +52189,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1040';
+  const CURRENT_VERSION = 'v1.0.20260424.1051';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -52200,7 +52206,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1040';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1051';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
