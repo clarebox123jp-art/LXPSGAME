@@ -1647,10 +1647,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   height:100%;
   overflow-y:auto;
   overflow-x:hidden;
+  /* ★ v1.0.20260424.0880 — 移除 v0870 的 clip-path(誤判),
+     按鈕變窄是因為 flex children 被預設壓縮(flex-shrink:1),
+     真正修法是讓 children flex-shrink:0,並確保 overflow:auto 能捲動 */
   /* 自訂滾動條樣式(玩家不易察覺,但能滾動) */
   scrollbar-width:thin;
   scrollbar-color:rgba(255,200,80,0.5) rgba(0,0,0,0.2);
 }
+/* ★ v1.0.20260424.0880 — 防止 panel 內 flex 子元素(關卡按鈕等)被壓縮變窄,
+   讓按鈕保持原始高度,超出時用 panel 的 overflow-y:auto 捲動 */
+#adv-left-panel > * { flex-shrink:0; }
 #adv-left-panel::-webkit-scrollbar{ width:6px; }
 #adv-left-panel::-webkit-scrollbar-track{ background:rgba(0,0,0,0.2); border-radius:3px; }
 #adv-left-panel::-webkit-scrollbar-thumb{ background:rgba(255,200,80,0.5); border-radius:3px; }
@@ -4498,15 +4504,6 @@ body.art-premium #summon-overlay {
       box-shadow:0 0 16px rgba(255,100,180,0.45),inset 0 0 10px rgba(255,150,200,0.2);">
       🎉 近期活動與新角色
     </button>
-    <!-- ★ v1.0.20260424.0790 — 召喚按鈕(管理員限定,預設隱藏,登入後再判斷顯示) -->
-    <button id="adv-summon-btn" onclick="playSfx('sfx-sel',0.6);openSummonOverlay()"
-      style="display:none;width:100%;margin-top:8px;padding:12px 8px;font-size:clamp(22px,2.6vw,34px);font-weight:800;
-      background:linear-gradient(135deg,rgba(40,80,180,0.95),rgba(80,140,240,0.95),rgba(20,40,120,0.95));
-      border:2px solid rgba(150,200,255,0.9);color:#e0f0ff;border-radius:12px;cursor:pointer;
-      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:2px;
-      box-shadow:0 0 20px rgba(100,160,255,0.5),inset 0 0 12px rgba(180,220,255,0.2);">
-      🌟 召喚 <span style="font-size:0.7em;color:#aabbff;">(管理員測試)</span>
-    </button>
     </div>
 
     <!-- 右側：關卡簡介視窗 -->
@@ -4800,10 +4797,10 @@ body.art-premium #summon-overlay {
 
     <!-- ★ v1.0.20260421.3008 — 底部功能選單：8 顆按鈕 -->
     <div id="adv-bottom-nav">
-      <button class="adv-nav-btn locked-nav" onclick="playSfx('sfx-cantmove',0.6);advNavLocked('召喚')">
+      <!-- ★ v1.0.20260424.0890 — 解鎖召喚功能,改為開啟召喚 overlay -->
+      <button class="adv-nav-btn" onclick="playSfx('sfx-sel',0.6);openSummonOverlay()">
         <span class="adv-nav-icon">🔮</span>
         <span class="adv-nav-label">召喚</span>
-        <span class="adv-nav-lock">🔒</span>
       </button>
       <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openHeroPage()">
         <span class="adv-nav-icon">⚔️</span>
@@ -7047,7 +7044,7 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'temple_pillar', name:'聖殿支柱', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%96%E9%A8%8E%E5%A3%AB3.png', requiresUnlock:true },
   ],
   '軍師': [
-    { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E8%BB%8D%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%ABQ%E7%89%88.png' },
     { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 5%' },
   ],
   '陰陽師': [
@@ -37203,10 +37200,11 @@ function _playSummonSmokeFx(onDone){
   const fx = document.getElementById('summon-fx-layer');
   if(!fx){ if(onDone) onDone(); return; }
   fx.style.display = 'block';
+  // ★ v1.0.20260424.0890 — 煙火特效放大到滿螢幕(width 100vw + max-height 100vh,object-fit:contain 保持比例)
   fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
-    + 'width:min(80vw,720px);max-width:90vw;display:flex;align-items:center;justify-content:center;">'
-    + '<img src="' + SUMMON_FX_SMOKE_GIF + '" style="width:100%;height:auto;max-height:70vh;object-fit:contain;'
-    + 'filter:drop-shadow(0 0 30px rgba(255,180,255,0.6));" alt="召喚煙火"/>'
+    + 'width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_SMOKE_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 60px rgba(255,180,255,0.8));" alt="召喚煙火"/>'
     + '</div>';
   try{ playSfx('sfx-summon-smoke', 0.85); }catch(_){}
   setTimeout(()=>{
@@ -37220,10 +37218,11 @@ function _playSummonRevealFx(onDone){
   const fx = document.getElementById('summon-fx-layer');
   if(!fx){ if(onDone) onDone(); return; }
   fx.style.display = 'block';
+  // ★ v1.0.20260424.0890 — 角色特效放大到滿螢幕
   fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
-    + 'width:min(80vw,720px);max-width:90vw;display:flex;align-items:center;justify-content:center;">'
-    + '<img src="' + SUMMON_FX_REVEAL_GIF + '" style="width:100%;height:auto;max-height:70vh;object-fit:contain;'
-    + 'filter:drop-shadow(0 0 40px rgba(255,230,120,0.8));" alt="召喚角色"/>'
+    + 'width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_REVEAL_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 80px rgba(255,230,120,1));" alt="召喚角色"/>'
     + '</div>';
   try{ playSfx('sfx-summon-reveal', 0.95); }catch(_){}
   setTimeout(()=>{
@@ -45183,6 +45182,73 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0890', brief:[
+    '🎉 召喚功能正式開放(原本 nav bar 鎖頭按鈕解鎖)',
+    '🔥 召喚煙火與角色特效放大到滿螢幕',
+  ], items:[
+    '【1. 召喚功能正式開放】',
+    '  - 移除我之前在 panel 內加的「🌟 召喚星空(管理員測試)」按鈕(line ~4507)',
+    '  - 解鎖底部 nav bar 上原本就存在的「召喚」按鈕(line ~4809)',
+    '    舊: class="adv-nav-btn locked-nav" + 🔒 + onclick=advNavLocked',
+    '    新: class="adv-nav-btn" 直接 onclick=openSummonOverlay()',
+    '【2. 召喚特效放大到滿螢幕】',
+    '  - _playSummonSmokeFx (煙火):',
+    '    舊: width:min(80vw,720px); max-height:70vh',
+    '    新: width:100vw; height:100vh; object-fit:contain',
+    '  - _playSummonRevealFx (角色):',
+    '    舊: width:min(80vw,720px); max-height:70vh',
+    '    新: width:100vw; height:100vh; object-fit:contain',
+    '  - 兩者 drop-shadow 也加強(發光更明顯,氣勢更足)',
+    '【實作位置】',
+    '  - 移除 panel 召喚按鈕: line ~4507(舊位置已刪)',
+    '  - nav bar 召喚按鈕解鎖: line ~4809',
+    '  - _playSummonSmokeFx: line ~37198',
+    '  - _playSummonRevealFx: line ~37214',
+  ] },
+  { ver:'v1.0.20260424.0880', brief:[
+    '🔧 修復:左側 panel 按鈕被壓縮變窄(真正原因是 flex-shrink)',
+    '🪶 軍師圖鑑「原始肖像」也更換為新的軍師Q版.png',
+  ], items:[
+    '【1. 左側 panel 按鈕變窄修復】',
+    '  - 用戶澄清:不是被代表英雄條/暱稱條遮住,是按鈕「自己的框變窄了」',
+    '  - 真正原因: flex container with children: 預設 flex-shrink:1',
+    '    → 當 children 總高度 > container 高度時,children 會被壓縮',
+    '    → 按鈕高度被壓縮但內部文字字體大小不變,文字被裁切',
+    '  - 修復:',
+    '    a) 移除 v0870 的 clip-path(誤判)',
+    '    b) 加 #adv-left-panel > * { flex-shrink:0; }',
+    '       讓所有子元素保持原始高度,不被壓縮',
+    '    c) overflow-y:auto 仍保留,超出時自然出現滾動條',
+    '【2. 軍師原始肖像 URL】',
+    '  - HERO_IMGS(Q版縮圖)在 v0820 已改成軍師Q版.png ✓',
+    '  - 但 HERO_PORTRAIT_LIBRARY 的 default 肖像 URL 沒改到',
+    '    (英雄圖鑑→點軍師→切換肖像 看到的「原始肖像」仍是舊圖)',
+    '  - 此版本一併更新 line ~7055 的 default URL,',
+    '    跟 HERO_IMGS 統一指向 軍師Q版.png',
+    '【實作位置】',
+    '  - panel CSS: line ~1636 (移除 clip-path,加 flex-shrink:0 規則)',
+    '  - HERO_PORTRAIT_LIBRARY 軍師 default: line ~7055',
+  ] },
+  { ver:'v1.0.20260424.0870', brief:[
+    '✂️ 修復:關卡按鈕的字被代表英雄條/暱稱條遮住',
+  ], items:[
+    '【症狀】',
+    '  - v0860 加了 overflow-y:auto 後,捲動 panel 時關卡按鈕(木柵貓空大冒險等)的字',
+    '    被上方 absolute 的代表英雄條「電腦繪圖師」、暱稱條「稚氣的小畫家」遮住',
+    '【原因】',
+    '  - CSS 規範:overflow:auto 裁切到 padding-box(含 padding 區域)',
+    '  - 也就是 padding-top 區域可以顯示捲動的 content',
+    '  - 當用戶捲動 panel,按鈕從 content-box 進入 padding-top 區域時,',
+    '    跟原本就在 padding-top 區域的 absolute 元素(rep-hero/username)重疊',
+    '【修復】',
+    '  - 在 #adv-left-panel 加 clip-path: inset(clamp(220px,24vw,280px) 0 0 0)',
+    '  - 這會裁切掉 panel 在 padding-top 區域的所有可見內容',
+    '  - absolute 元素(rep-hero/username)在 panel 之外(overlay 子元素),不受影響',
+    '  - 結果:panel 內容只在 padding-top 之下顯示,捲動時不會穿過上方區域',
+    '【實作位置】',
+    '  - #adv-left-panel CSS: line ~1636',
+    '  - 加 clip-path 與 -webkit-clip-path(Safari 相容)',
+  ] },
   { ver:'v1.0.20260424.0860', brief:[
     '📜 修復:關卡介紹左側 panel 內容被底部 nav bar 切掉(改成可捲動)',
   ], items:[
@@ -50965,7 +51031,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0860';
+  const CURRENT_VERSION = 'v1.0.20260424.0890';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -50982,7 +51048,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0860';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0890';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
