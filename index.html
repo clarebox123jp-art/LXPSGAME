@@ -1176,6 +1176,35 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   80%{opacity:0.85}
   100%{transform:translate(calc(var(--ffx)*1.6),calc(var(--ffy)*1.6)) scale(0.7);opacity:0}
 }
+/* ★ v1.0.20260424.0970 — 星星閃爍 (天空區域) */
+@keyframes summonStarTwinkle{
+  0%,100%{opacity:0.25;transform:scale(0.7)}
+  50%{opacity:1;transform:scale(1.25)}
+}
+@keyframes summonStarTwinkleSlow{
+  0%,100%{opacity:0.45;transform:scale(0.85)}
+  50%{opacity:0.95;transform:scale(1.1)}
+}
+/* ★ 流星(偶爾) */
+@keyframes summonShootingStar{
+  0%{opacity:0;transform:translate(0,0) rotate(-25deg) scaleX(0.5)}
+  10%{opacity:1}
+  60%{opacity:0.85}
+  100%{opacity:0;transform:translate(var(--ssx),var(--ssy)) rotate(-25deg) scaleX(1)}
+}
+/* ★ v1.0.20260424.0970 — 河面波紋反光搖晃 */
+@keyframes summonRiverRipple{
+  0%{opacity:0;transform:translateX(-50%) scaleX(0.4);filter:blur(0.5px)}
+  20%{opacity:0.9}
+  60%{opacity:0.7;transform:translateX(-50%) scaleX(1.3);filter:blur(1px)}
+  100%{opacity:0;transform:translateX(-50%) scaleX(1.8);filter:blur(2px)}
+}
+@keyframes summonRiverShimmer{
+  0%,100%{opacity:0.35;transform:translateX(0) scaleY(0.85)}
+  25%{opacity:0.85;transform:translateX(-3px) scaleY(1.1)}
+  50%{opacity:1;transform:translateX(2px) scaleY(0.95)}
+  75%{opacity:0.7;transform:translateX(4px) scaleY(1.15)}
+}
 @keyframes summonResultPop{
   0%{opacity:0;transform:scale(0.4) rotate(-20deg)}
   60%{opacity:1;transform:scale(1.15) rotate(5deg)}
@@ -4540,8 +4569,12 @@ body.art-premium #summon-overlay {
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;overflow:hidden;">
     <!-- 半透明遮罩,讓UI更清楚 -->
     <div style="position:absolute;inset:0;background:rgba(10,5,35,0.35);z-index:0;pointer-events:none;"></div>
-    <!-- 螢火蟲層 (z-index:1) -->
-    <div id="summon-fireflies" style="position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;"></div>
+    <!-- ★ v1.0.20260424.0970 — 星星閃爍層 (天空區域,上半部) -->
+    <div id="summon-stars" style="position:absolute;left:0;top:0;width:100%;height:50%;z-index:1;pointer-events:none;overflow:hidden;"></div>
+    <!-- ★ v1.0.20260424.0970 — 河面波紋反光層 (下半部) -->
+    <div id="summon-river" style="position:absolute;left:0;bottom:0;width:100%;height:32%;z-index:1;pointer-events:none;overflow:hidden;"></div>
+    <!-- 螢火蟲層 (z-index:2,在星星與河面之上) -->
+    <div id="summon-fireflies" style="position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;"></div>
     <!-- 左上:返回按鈕 -->
     <button id="summon-back-btn" onclick="playSfx('sfx-cancel',0.5);closeSummonOverlay()"
       style="position:absolute;top:24px;left:28px;z-index:10;
@@ -37224,6 +37257,11 @@ const SUMMON_RATES = [
 
 // 螢火蟲粒子 timer handle
 let _summonFireflyTimer = null;
+// ★ v1.0.20260424.0970 — 星星 / 流星 / 河面波紋 timer handles
+let _summonStarsInited = false;
+let _summonShootingStarTimer = null;
+let _summonRiverRippleTimer = null;
+let _summonRiverShimmerInited = false;
 
 function _spawnSummonFirefly(){
   const layer = document.getElementById('summon-fireflies');
@@ -37253,6 +37291,179 @@ function _spawnSummonFirefly(){
   setTimeout(()=>{ try{ ff.remove(); }catch(_){} }, dur*1000 + 100);
 }
 
+// ★ v1.0.20260424.0970 — 在天空層(上半部)生成靜態閃爍星星
+//   星星只生成一次,每顆有不同的閃爍週期讓畫面有層次
+function _initSummonStars(){
+  if(_summonStarsInited) return;
+  const layer = document.getElementById('summon-stars');
+  if(!layer) return;
+  layer.innerHTML = '';
+  // 大量小星星(約 60 顆)做底色
+  const _starCount = 60;
+  for(let i=0; i<_starCount; i++){
+    const st = document.createElement('div');
+    const sz = 1.2 + Math.random()*2.5;            // 1.2~3.7px
+    const x = Math.random()*100;                    // 整個天空區域
+    const y = Math.random()*95;                     // 上下都有
+    const dur = 1.4 + Math.random()*2.6;            // 1.4~4 秒週期
+    const delay = -Math.random()*3;                 // 隨機起始 phase
+    const isSlowStar = Math.random() < 0.35;
+    const animName = isSlowStar ? 'summonStarTwinkleSlow' : 'summonStarTwinkle';
+    const tone = Math.random();
+    let color, glow;
+    if(tone < 0.5){
+      // 白色星
+      color = 'rgba(255,255,255,1)';
+      glow = 'rgba(220,230,255,0.85)';
+    } else if(tone < 0.8){
+      // 淡紫色星
+      color = 'rgba(220,210,255,1)';
+      glow = 'rgba(190,170,255,0.8)';
+    } else {
+      // 金黃色星
+      color = 'rgba(255,240,200,1)';
+      glow = 'rgba(255,220,140,0.85)';
+    }
+    st.style.cssText = [
+      'position:absolute',
+      'left:' + x + '%',
+      'top:' + y + '%',
+      'width:' + sz + 'px',
+      'height:' + sz + 'px',
+      'border-radius:50%',
+      'background:radial-gradient(circle,' + color + ' 0%,' + glow + ' 50%,rgba(255,255,255,0) 80%)',
+      'box-shadow:0 0 ' + (sz*2.5) + 'px ' + glow + ',0 0 ' + (sz*5) + 'px ' + glow,
+      'animation:' + animName + ' ' + dur + 's ease-in-out infinite',
+      'animation-delay:' + delay + 's',
+      'pointer-events:none',
+    ].join(';');
+    layer.appendChild(st);
+  }
+  // 少量大型亮星(約 8 顆)點綴
+  for(let i=0; i<8; i++){
+    const st = document.createElement('div');
+    const sz = 3.5 + Math.random()*2.5;             // 3.5~6px
+    const x = Math.random()*100;
+    const y = Math.random()*70;                     // 主要在上半段(避免擠到山稜)
+    const dur = 2 + Math.random()*2;
+    const delay = -Math.random()*3;
+    st.style.cssText = [
+      'position:absolute',
+      'left:' + x + '%',
+      'top:' + y + '%',
+      'width:' + sz + 'px',
+      'height:' + sz + 'px',
+      'border-radius:50%',
+      'background:radial-gradient(circle,rgba(255,255,255,1) 0%,rgba(255,240,200,0.9) 40%,rgba(220,200,255,0.5) 70%,rgba(255,255,255,0) 90%)',
+      'box-shadow:0 0 ' + (sz*4) + 'px rgba(255,240,200,0.9),0 0 ' + (sz*8) + 'px rgba(220,200,255,0.65)',
+      'animation:summonStarTwinkle ' + dur + 's ease-in-out infinite',
+      'animation-delay:' + delay + 's',
+      'pointer-events:none',
+    ].join(';');
+    layer.appendChild(st);
+  }
+  _summonStarsInited = true;
+}
+
+// ★ v1.0.20260424.0970 — 偶爾生成流星(劃過天際)
+function _spawnSummonShootingStar(){
+  const layer = document.getElementById('summon-stars');
+  if(!layer) return;
+  const ss = document.createElement('div');
+  const startX = Math.random()*70;                  // 從左到中
+  const startY = 5 + Math.random()*30;              // 上半部
+  const dx = 200 + Math.random()*200;               // 往右下劃
+  const dy = 100 + Math.random()*150;
+  const dur = 0.9 + Math.random()*0.6;              // 0.9~1.5 秒
+  const len = 60 + Math.random()*60;
+  ss.style.cssText = [
+    'position:absolute',
+    'left:' + startX + '%',
+    'top:' + startY + '%',
+    'width:' + len + 'px',
+    'height:2px',
+    'background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(220,230,255,0.6) 30%,rgba(255,240,200,1) 80%,rgba(255,255,255,1) 100%)',
+    'box-shadow:0 0 8px rgba(220,230,255,0.9),0 0 16px rgba(220,230,255,0.5)',
+    'border-radius:1px',
+    'transform-origin:right center',
+    '--ssx:' + dx + 'px',
+    '--ssy:' + dy + 'px',
+    'animation:summonShootingStar ' + dur + 's ease-out forwards',
+    'pointer-events:none',
+  ].join(';');
+  layer.appendChild(ss);
+  setTimeout(()=>{ try{ ss.remove(); }catch(_){} }, dur*1000 + 100);
+}
+
+// ★ v1.0.20260424.0970 — 河面靜態反光條紋(只生成一次)
+function _initSummonRiverShimmer(){
+  if(_summonRiverShimmerInited) return;
+  const layer = document.getElementById('summon-river');
+  if(!layer) return;
+  layer.innerHTML = '';
+  // 約 14 條水平反光線(水面波紋)
+  const _stripeCount = 14;
+  for(let i=0; i<_stripeCount; i++){
+    const stripe = document.createElement('div');
+    const w = 30 + Math.random()*45;                // 30~75% 寬
+    const x = Math.random()*60;                     // 左側起點
+    const y = 5 + (i / _stripeCount) * 90 + Math.random()*8;  // 從上到下分散
+    const h = 1 + Math.random()*2.5;                // 1~3.5px
+    const dur = 2.5 + Math.random()*3;              // 2.5~5.5 秒
+    const delay = -Math.random()*4;
+    const tone = Math.random();
+    let bg;
+    if(tone < 0.5){
+      bg = 'linear-gradient(90deg,rgba(180,210,255,0) 0%,rgba(200,220,255,0.85) 50%,rgba(180,210,255,0) 100%)';
+    } else if(tone < 0.8){
+      bg = 'linear-gradient(90deg,rgba(255,240,200,0) 0%,rgba(255,230,170,0.85) 50%,rgba(255,240,200,0) 100%)';
+    } else {
+      bg = 'linear-gradient(90deg,rgba(220,200,255,0) 0%,rgba(220,200,255,0.7) 50%,rgba(220,200,255,0) 100%)';
+    }
+    stripe.style.cssText = [
+      'position:absolute',
+      'left:' + x + '%',
+      'top:' + y + '%',
+      'width:' + w + '%',
+      'height:' + h + 'px',
+      'background:' + bg,
+      'box-shadow:0 0 6px rgba(200,220,255,0.55)',
+      'border-radius:2px',
+      'animation:summonRiverShimmer ' + dur + 's ease-in-out infinite',
+      'animation-delay:' + delay + 's',
+      'pointer-events:none',
+      'filter:blur(0.5px)',
+    ].join(';');
+    layer.appendChild(stripe);
+  }
+  _summonRiverShimmerInited = true;
+}
+
+// ★ v1.0.20260424.0970 — 動態波紋(漣漪擴散),由 timer 持續生成
+function _spawnSummonRiverRipple(){
+  const layer = document.getElementById('summon-river');
+  if(!layer) return;
+  const rp = document.createElement('div');
+  const x = 5 + Math.random()*90;                   // 河面任一位置
+  const y = 20 + Math.random()*70;                  // 河面高度範圍
+  const w = 60 + Math.random()*120;                 // 60~180px 起始寬度
+  const dur = 2.4 + Math.random()*1.8;
+  rp.style.cssText = [
+    'position:absolute',
+    'left:' + x + '%',
+    'top:' + y + '%',
+    'width:' + w + 'px',
+    'height:' + (w*0.18) + 'px',
+    'border:1.5px solid rgba(220,235,255,0.85)',
+    'border-radius:50%',
+    'box-shadow:0 0 10px rgba(200,220,255,0.7),inset 0 0 6px rgba(255,255,255,0.5)',
+    'animation:summonRiverRipple ' + dur + 's ease-out forwards',
+    'pointer-events:none',
+  ].join(';');
+  layer.appendChild(rp);
+  setTimeout(()=>{ try{ rp.remove(); }catch(_){} }, dur*1000 + 100);
+}
+
 function _startSummonFireflies(){
   if(_summonFireflyTimer) return;
   // 一開始先生成 6 隻,讓畫面就有
@@ -37262,12 +37473,62 @@ function _startSummonFireflies(){
     _spawnSummonFirefly();
     if(Math.random() < 0.5) _spawnSummonFirefly();
   }, 450);
+  // ★ v1.0.20260424.0970 — 同時啟動星星與河面特效
+  try{ _initSummonStars(); }catch(_){}
+  try{ _initSummonRiverShimmer(); }catch(_){}
+  // 流星每 6~12 秒一顆
+  if(!_summonShootingStarTimer){
+    const _scheduleShootingStar = () => {
+      const delay = 6000 + Math.random()*6000;
+      _summonShootingStarTimer = setTimeout(()=>{
+        try{ _spawnSummonShootingStar(); }catch(_){}
+        _scheduleShootingStar();
+      }, delay);
+    };
+    _scheduleShootingStar();
+  }
+  // 河面動態漣漪每 1.2~2.2 秒生成一個
+  if(!_summonRiverRippleTimer){
+    _summonRiverRippleTimer = setInterval(()=>{
+      try{ _spawnSummonRiverRipple(); }catch(_){}
+      // 偶爾連續生成兩個漣漪,讓河面更生動
+      if(Math.random() < 0.3){
+        setTimeout(()=>{ try{ _spawnSummonRiverRipple(); }catch(_){} }, 400);
+      }
+    }, 1500);
+    // 開場立即生成 2 個漣漪
+    for(let i=0; i<2; i++) setTimeout(_spawnSummonRiverRipple, i*600);
+  }
 }
 
 function _stopSummonFireflies(){
   if(_summonFireflyTimer){ clearInterval(_summonFireflyTimer); _summonFireflyTimer = null; }
   const layer = document.getElementById('summon-fireflies');
   if(layer) layer.innerHTML = '';
+  // ★ v1.0.20260424.0970 — 同時停止星星閃爍與河面特效
+  if(_summonShootingStarTimer){ clearTimeout(_summonShootingStarTimer); _summonShootingStarTimer = null; }
+  if(_summonRiverRippleTimer){ clearInterval(_summonRiverRippleTimer); _summonRiverRippleTimer = null; }
+  // 清掉動態元素(漣漪、流星) 但保留靜態星星與條紋,下次開啟可重用
+  // 但若要徹底清除可重置標記
+  const starLayer = document.getElementById('summon-stars');
+  if(starLayer){
+    // 只移除 transform-origin 的流星(短期元素,通常 1.5 秒內消失,但保險起見清掉)
+    Array.from(starLayer.querySelectorAll('div')).forEach(el => {
+      if(el.style.animation && el.style.animation.indexOf('summonShootingStar') >= 0){
+        try{ el.remove(); }catch(_){}
+      }
+    });
+  }
+  const riverLayer = document.getElementById('summon-river');
+  if(riverLayer){
+    // 移除動態漣漪(animation 含 summonRiverRipple),保留靜態反光條紋
+    Array.from(riverLayer.querySelectorAll('div')).forEach(el => {
+      if(el.style.animation && el.style.animation.indexOf('summonRiverRipple') >= 0
+         && el.style.animation.indexOf('Shimmer') < 0){
+        try{ el.remove(); }catch(_){}
+      }
+    });
+  }
 }
 
 function _syncSummonCrystalDisplay(){
@@ -45406,6 +45667,32 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0970', brief:[
+    '✨ 召喚星空畫面新增天空星星閃爍 + 河面波紋反光搖晃特效',
+  ], items:[
+    '【天空區域 (上半部 50%)】',
+    '  - 60 顆小星星(1.2~3.7px)隨機分佈,3 種色調(白/淡紫/金黃),',
+    '    每顆有獨立的閃爍週期(1.4~4 秒)+ 隨機 phase,呈現漫天繁星',
+    '  - 8 顆大型亮星(3.5~6px)點綴在上半段,有強烈光暈',
+    '  - 35% 的星星走較慢的閃爍動畫,讓畫面有層次感',
+    '  - 每 6~12 秒隨機劃過一道流星(從左上往右下,留長尾光跡)',
+    '【河面區域 (下半部 32%)】',
+    '  - 14 條水平反光條紋(水面波紋),3 種色調(藍白/暖黃/淡紫),',
+    '    各自有不同的搖晃週期(2.5~5.5 秒),呈現水面靜態反光',
+    '  - 動態漣漪每 1.5 秒生成,從中心擴散+模糊,30% 機率連續生成 2 個',
+    '  - 開場立即生成 2 個漣漪,讓畫面馬上有動感',
+    '【實作細節】',
+    '  - 新增 #summon-stars (z-index:1, 上半 50%) 與 #summon-river (z-index:1, 下半 32%) 兩層,',
+    '    螢火蟲層 z-index:2 在最上面',
+    '  - 星星與條紋只在開啟時 init 一次(_summonStarsInited / _summonRiverShimmerInited),',
+    '    關閉時保留靜態元素只清動態元素(流星/漣漪)',
+    '  - 流星用 setTimeout 隨機排程,漣漪用 setInterval 規律生成',
+    '  - 4 個新 keyframes:summonStarTwinkle / summonStarTwinkleSlow / summonShootingStar / summonRiverRipple / summonRiverShimmer',
+    '【實作位置】',
+    '  - CSS keyframes: line ~1172',
+    '  - HTML 兩層: line ~4543',
+    '  - 函式: _initSummonStars / _spawnSummonShootingStar / _initSummonRiverShimmer / _spawnSummonRiverRipple: line ~37260',
+  ] },
   { ver:'v1.0.20260424.0960', brief:[
     '🛡 全面盤點所有可能造成「卡死」的連擊技能,加 _burstFinish watchdog',
   ], items:[
@@ -51447,7 +51734,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0960';
+  const CURRENT_VERSION = 'v1.0.20260424.0970';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51464,7 +51751,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0960';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0970';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
