@@ -1636,10 +1636,25 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #adv-left-panel{
   position:relative;z-index:2;
   width:38%;display:flex;flex-direction:column;
-  align-items:flex-start;justify-content:center;
-  /* ★ v1.0.20260424.0840 — padding-top 加大,避免被代表英雄條與暱稱條(在 panel 上層 absolute 定位)遮擋 */
-  padding:clamp(220px,24vw,280px) 20px 40px 40px;gap:16px;
+  align-items:flex-start;
+  /* ★ v1.0.20260424.0860 — 改為 flex-start + overflow-y:auto,讓內容可捲動,
+     避免「不可思議超商/近期活動/召喚」等按鈕被底部 nav bar 切掉 */
+  justify-content:flex-start;
+  /* padding-top 保留(避開上方 absolute 的代表英雄條/暱稱條) */
+  /* padding-bottom 增加 140px,為底部 nav bar 留空間 */
+  padding:clamp(220px,24vw,280px) 20px 140px 40px;
+  gap:16px;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  /* 自訂滾動條樣式(玩家不易察覺,但能滾動) */
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,200,80,0.5) rgba(0,0,0,0.2);
 }
+#adv-left-panel::-webkit-scrollbar{ width:6px; }
+#adv-left-panel::-webkit-scrollbar-track{ background:rgba(0,0,0,0.2); border-radius:3px; }
+#adv-left-panel::-webkit-scrollbar-thumb{ background:rgba(255,200,80,0.5); border-radius:3px; }
+#adv-left-panel::-webkit-scrollbar-thumb:hover{ background:rgba(255,200,80,0.75); }
 .adv-list-title{
   font-size:28px;font-weight:700;color:#ffe8a0;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
@@ -3394,6 +3409,10 @@ body.art-premium #adventure-overlay {
 }
 body.art-premium #elem-pick-overlay {
   background:#060810 url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%87%AA%E7%84%B6%E6%95%99%E5%AE%A4(%E7%B2%BE%E7%BE%8E%E7%89%88).png") center/cover no-repeat !important;
+}
+/* ★ v1.0.20260424.0850 — 召喚頁精美版背景(原本是 inline style 寫死可愛版,需用 !important 覆蓋) */
+body.art-premium #summon-overlay {
+  background:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA(%E7%B2%BE%E7%BE%8E%E7%89%88).png") center/cover no-repeat !important;
 }
 
 /* 冒險模式：zone 半透明讓背景透出 */
@@ -45164,6 +45183,46 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0860', brief:[
+    '📜 修復:關卡介紹左側 panel 內容被底部 nav bar 切掉(改成可捲動)',
+  ], items:[
+    '【症狀】',
+    '  - 左側 panel 中,「不可思議超商」「近期活動與新角色」「召喚」按鈕底部',
+    '    被底部 nav bar(英雄/魔物/寵物/好友/背包/獎章/更新日誌)切掉',
+    '  - 內容無法捲動,使用者看不到完整按鈕',
+    '【原因】',
+    '  - #adv-left-panel 用 justify-content:center(垂直置中),內容超出時上下都會裁掉',
+    '  - 沒設 overflow-y:auto,無法捲動',
+    '  - padding-bottom 只有 40px,不夠避開底部 nav bar',
+    '【修復】',
+    '  1. justify-content: center → flex-start(從上開始排列)',
+    '  2. 新增 overflow-y:auto 讓內容可捲動',
+    '  3. padding-bottom: 40px → 140px(為底部 nav bar 留空)',
+    '  4. height:100% 確保 panel 高度滿版',
+    '  5. 加自訂滾動條樣式(細條金色,搭配 UI 風格)',
+    '【實作位置】',
+    '  - #adv-left-panel CSS: line ~1636',
+  ] },
+  { ver:'v1.0.20260424.0850', brief:[
+    '🎨 修復:精美畫風切換後,召喚頁背景仍是可愛版',
+  ], items:[
+    '【症狀】',
+    '  - 切換到「精美畫風」後進入召喚頁,背景圖仍顯示「召喚星空(可愛版).png」',
+    '  - 預期應該切換到「召喚星空(精美版).png」',
+    '【原因】',
+    '  - #summon-overlay 的背景是用 inline style 寫死的(可愛版 URL)',
+    '  - 原本的精美版切換規則(body.art-premium #xxx)沒有覆蓋這個 overlay',
+    '  - inline style 比沒帶 !important 的 CSS 規則優先級高',
+    '【修復】',
+    '  - 在 body.art-premium 區塊新增:',
+    '    body.art-premium #summon-overlay {',
+    '      background: url(召喚星空(精美版).png) center/cover no-repeat !important;',
+    '    }',
+    '  - 用 !important 覆蓋 inline style,確保精美畫風生效',
+    '【實作位置】',
+    '  - body.art-premium CSS 區塊: line ~3398',
+    '  - 與其他精美版 overlay 規則一起(自然教室/力行校門口/遊戲首頁)',
+  ] },
   { ver:'v1.0.20260424.0840', brief:[
     '🎯 玩家暱稱與代表英雄條對齊到關卡介紹視窗左側邊線',
   ], items:[
@@ -50906,7 +50965,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0840';
+  const CURRENT_VERSION = 'v1.0.20260424.0860';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -50923,7 +50982,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0840';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0860';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
