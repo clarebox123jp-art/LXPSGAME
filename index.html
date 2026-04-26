@@ -16796,7 +16796,15 @@ function _doSteal(kind, idx){
     if(!_it){ log('該物品已被偷走!'); return; }
     const _myInv = (thief.side === 'p1') ? G.inv : G.inv2;
     const _ei = _myInv.findIndex(s => s === null);
-    if(_ei === -1){ log('⚠️ 自己背包已滿,無法偷取!'); return; }
+    if(_ei === -1){
+      // ★ v1.0.20260424.0760 — 自己背包滿:彈出丟棄選擇視窗(僅玩家側)
+      if(thief.side === 'p1'){
+        _showStealDiscardPicker(thief, victim, idx, cost, _it);
+      } else {
+        log(`⚠️ AI [${thief.name}] 背包已滿,無法偷取!`);
+      }
+      return;
+    }
     _myInv[_ei] = _it;
     _vInv[idx] = null;
     log(`🗡️ [${thief.name}] 從 [${victim.name}] 偷走 [${_it.n}]!`);
@@ -16821,6 +16829,14 @@ function _doSteal(kind, idx){
         log(`🗡️ [${thief.name}] 從 [${victim.name}] 偷走寵物 [${_eq.n}] 放入背包!`);
         if(thief.side === 'p1') renderItems();
       } else {
+        // ★ v1.0.20260424.0760 — 玩家側背包滿:彈丟棄視窗;AI 側維持原本「消失」邏輯
+        if(thief.side === 'p1'){
+          // 還原 victim,再彈丟棄視窗讓玩家選
+          if(_eq.onEquip) try{ _eq.onEquip(victim); }catch(_){}
+          victim.equip = _eq;
+          _showStealPetDiscardPicker(thief, victim, cost, _eq);
+          return;
+        }
         log(`🗡️ 偷走 [${_eq.n}] 但背包已滿,寵物消失!`);
       }
     }
@@ -16863,6 +16879,224 @@ function _finishSteal(){
   if(st){
     endAction(st.thief, st.cost);
     window._stealState = null;
+  }
+}
+
+// ★ v1.0.20260424.0760 — 偷物品時背包已滿,彈出丟棄選擇視窗
+function _showStealDiscardPicker(thief, victim, victimItemIdx, cost, stolenItem){
+  const _old = document.getElementById('steal-discard-ov');
+  if(_old) _old.remove();
+  const _myInv = (thief.side === 'p1') ? G.inv : G.inv2;
+
+  const ov = document.createElement('div');
+  ov.id = 'steal-discard-ov';
+  ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:313;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;';
+
+  // 標題
+  const _hdr = document.createElement('div');
+  _hdr.style.cssText = 'font-size:30px;font-weight:900;color:#ffaa66;letter-spacing:2px;text-shadow:0 0 14px rgba(255,160,80,0.6);';
+  _hdr.textContent = '🎒 背包已滿!';
+  ov.appendChild(_hdr);
+
+  // 副標題
+  const _sub = document.createElement('div');
+  _sub.style.cssText = 'font-size:18px;color:#eee;letter-spacing:1px;text-align:center;line-height:1.5;';
+  _sub.innerHTML = `要偷走 <span style="color:#ffe066;font-weight:800;">[${stolenItem.n}]</span>,請選擇一張要丟棄的卡片來騰出空間:`;
+  ov.appendChild(_sub);
+
+  // 偷得物提示
+  const _stolenBox = document.createElement('div');
+  _stolenBox.style.cssText = 'background:rgba(255,200,80,0.18);border:2px solid rgba(255,200,80,0.65);border-radius:12px;padding:10px 18px;display:flex;align-items:center;gap:12px;';
+  _stolenBox.innerHTML = `
+    <div style="font-size:30px;">🗡️</div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="font-size:13px;color:#ffe066;letter-spacing:1px;font-weight:700;">即將偷取</div>
+      <div style="font-size:18px;color:#fff;font-weight:800;">${stolenItem.n}</div>
+      <div style="font-size:13px;color:#ddd;line-height:1.4;">${stolenItem.d || ''}</div>
+    </div>
+  `;
+  ov.appendChild(_stolenBox);
+
+  // 卡片區:玩家當前 3 張背包卡片
+  const _cardsWrap = document.createElement('div');
+  _cardsWrap.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;justify-content:center;';
+  _myInv.forEach((it, slotIdx) => {
+    if(!it) return;
+    const _div = document.createElement('div');
+    _div.style.cssText = 'cursor:pointer;background:rgba(60,30,30,0.6);border:2.5px solid rgba(255,120,80,0.6);border-radius:12px;padding:14px 16px;min-width:170px;max-width:200px;display:flex;flex-direction:column;gap:8px;transition:transform 0.15s,box-shadow 0.15s;';
+    _div.innerHTML = `
+      <div style="font-size:20px;font-weight:900;color:#ffaa66;text-align:center;">${it.n}</div>
+      <div style="font-size:13px;color:#ddd;text-align:center;line-height:1.4;min-height:40px;">${it.d || ''}</div>
+      <div style="font-size:13px;color:#ff8866;text-align:center;font-weight:700;background:rgba(255,80,80,0.15);padding:3px 8px;border-radius:6px;">🗑️ 丟棄此張</div>
+    `;
+    _div.onmouseover = function(){ this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 24px rgba(255,120,80,0.5)'; };
+    _div.onmouseout = function(){ this.style.transform='scale(1)'; this.style.boxShadow=''; };
+    _div.addEventListener('click', function(){
+      // 確認再次後執行丟棄+偷取
+      _doStealReplaceItem(thief, victim, victimItemIdx, slotIdx, stolenItem);
+    });
+    _cardsWrap.appendChild(_div);
+  });
+  ov.appendChild(_cardsWrap);
+
+  // 按鈕區:取消(放棄這次偷取)
+  const _btnBar = document.createElement('div');
+  _btnBar.style.cssText = 'display:flex;gap:14px;margin-top:8px;';
+  const _cancelBtn = document.createElement('button');
+  _cancelBtn.style.cssText = 'padding:12px 30px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(140,140,160,0.7),rgba(100,100,120,0.85));border:2.5px solid #888;color:#fff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:2px;';
+  _cancelBtn.textContent = '✗ 放棄這次偷取';
+  _cancelBtn.addEventListener('click', function(){
+    ov.remove();
+    log(`🗡️ [${thief.name}] 背包已滿,放棄偷取 [${stolenItem.n}]!`);
+    // 回到偷取 picker(可換偷其他)
+    const st = window._stealState;
+    if(st && st.remaining > 0){
+      _showStealPicker(thief, victim, st.remaining, cost);
+    }
+  });
+  _btnBar.appendChild(_cancelBtn);
+  ov.appendChild(_btnBar);
+
+  const _gc = document.getElementById('gc');
+  (_gc || document.body).appendChild(ov);
+}
+
+// 執行:丟棄玩家某格物品 + 將偷到的物品放入該格
+function _doStealReplaceItem(thief, victim, victimItemIdx, mySlotIdx, stolenItem){
+  const _ov = document.getElementById('steal-discard-ov');
+  if(_ov) _ov.remove();
+  const _vInv = (victim.side === 'p2') ? G.inv2 : G.inv;
+  const _myInv = (thief.side === 'p1') ? G.inv : G.inv2;
+  const _discarded = _myInv[mySlotIdx];
+  // 對方那格仍存在嗎?
+  if(_vInv[victimItemIdx] !== stolenItem){
+    log('該物品已不存在,偷取失敗!');
+    // 回到 picker
+    const st = window._stealState;
+    if(st && st.remaining > 0) _showStealPicker(thief, victim, st.remaining, st.cost);
+    return;
+  }
+  // 執行丟棄+置換
+  _myInv[mySlotIdx] = stolenItem;
+  _vInv[victimItemIdx] = null;
+  log(`🗑️ [${thief.name}] 丟棄 [${_discarded ? _discarded.n : '空格'}],偷得 [${stolenItem.n}]!`);
+  bannerFX(thief, '🗡偷得 '+stolenItem.n, '#ffcc00', 800);
+  if(thief.side === 'p1') renderItems();
+
+  // 更新 stealState
+  const st = window._stealState;
+  if(st){
+    st.remaining--;
+    const _cntEl = document.getElementById('steal-remaining-cnt');
+    if(_cntEl) _cntEl.textContent = st.remaining;
+    if(st.remaining > 0){
+      _showStealPicker(thief, victim, st.remaining, st.cost);
+    } else {
+      _finishSteal();
+    }
+  }
+}
+
+// ★ v1.0.20260424.0760 — 偷寵物時自己已有寵物且背包已滿,彈出丟棄選擇
+function _showStealPetDiscardPicker(thief, victim, cost, stolenPetEq){
+  const _old = document.getElementById('steal-discard-ov');
+  if(_old) _old.remove();
+  const _myInv = (thief.side === 'p1') ? G.inv : G.inv2;
+
+  const ov = document.createElement('div');
+  ov.id = 'steal-discard-ov';
+  ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:313;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;';
+
+  const _hdr = document.createElement('div');
+  _hdr.style.cssText = 'font-size:30px;font-weight:900;color:#ffaa66;letter-spacing:2px;text-shadow:0 0 14px rgba(255,160,80,0.6);';
+  _hdr.textContent = '🎒 背包已滿!';
+  ov.appendChild(_hdr);
+
+  const _sub = document.createElement('div');
+  _sub.style.cssText = 'font-size:18px;color:#eee;letter-spacing:1px;text-align:center;line-height:1.5;';
+  _sub.innerHTML = `要偷走寵物 <span style="color:#ffe066;font-weight:800;">[${stolenPetEq.n}]</span> 並放入背包,請選擇一張要丟棄的卡片:`;
+  ov.appendChild(_sub);
+
+  const _stolenBox = document.createElement('div');
+  _stolenBox.style.cssText = 'background:rgba(255,200,80,0.18);border:2px solid rgba(255,200,80,0.65);border-radius:12px;padding:10px 18px;display:flex;align-items:center;gap:12px;';
+  _stolenBox.innerHTML = `
+    <div style="font-size:30px;">🐾</div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="font-size:13px;color:#ffe066;letter-spacing:1px;font-weight:700;">即將偷取的寵物</div>
+      <div style="font-size:18px;color:#fff;font-weight:800;">${stolenPetEq.n}</div>
+      <div style="font-size:13px;color:#ddd;line-height:1.4;">${stolenPetEq.d || ''}</div>
+    </div>
+  `;
+  ov.appendChild(_stolenBox);
+
+  const _cardsWrap = document.createElement('div');
+  _cardsWrap.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;justify-content:center;';
+  _myInv.forEach((it, slotIdx) => {
+    if(!it) return;
+    const _div = document.createElement('div');
+    _div.style.cssText = 'cursor:pointer;background:rgba(60,30,30,0.6);border:2.5px solid rgba(255,120,80,0.6);border-radius:12px;padding:14px 16px;min-width:170px;max-width:200px;display:flex;flex-direction:column;gap:8px;transition:transform 0.15s,box-shadow 0.15s;';
+    _div.innerHTML = `
+      <div style="font-size:20px;font-weight:900;color:#ffaa66;text-align:center;">${it.n}</div>
+      <div style="font-size:13px;color:#ddd;text-align:center;line-height:1.4;min-height:40px;">${it.d || ''}</div>
+      <div style="font-size:13px;color:#ff8866;text-align:center;font-weight:700;background:rgba(255,80,80,0.15);padding:3px 8px;border-radius:6px;">🗑️ 丟棄此張</div>
+    `;
+    _div.onmouseover = function(){ this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 24px rgba(255,120,80,0.5)'; };
+    _div.onmouseout = function(){ this.style.transform='scale(1)'; this.style.boxShadow=''; };
+    _div.addEventListener('click', function(){
+      _doStealReplacePet(thief, victim, slotIdx, stolenPetEq);
+    });
+    _cardsWrap.appendChild(_div);
+  });
+  ov.appendChild(_cardsWrap);
+
+  const _btnBar = document.createElement('div');
+  _btnBar.style.cssText = 'display:flex;gap:14px;margin-top:8px;';
+  const _cancelBtn = document.createElement('button');
+  _cancelBtn.style.cssText = 'padding:12px 30px;font-size:18px;font-weight:900;background:linear-gradient(135deg,rgba(140,140,160,0.7),rgba(100,100,120,0.85));border:2.5px solid #888;color:#fff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:2px;';
+  _cancelBtn.textContent = '✗ 放棄這次偷取';
+  _cancelBtn.addEventListener('click', function(){
+    ov.remove();
+    log(`🗡️ [${thief.name}] 背包已滿,放棄偷取寵物 [${stolenPetEq.n}]!`);
+    const st = window._stealState;
+    if(st && st.remaining > 0){
+      _showStealPicker(thief, victim, st.remaining, cost);
+    }
+  });
+  _btnBar.appendChild(_cancelBtn);
+  ov.appendChild(_btnBar);
+
+  const _gc = document.getElementById('gc');
+  (_gc || document.body).appendChild(ov);
+}
+
+function _doStealReplacePet(thief, victim, mySlotIdx, stolenPetEq){
+  const _ov = document.getElementById('steal-discard-ov');
+  if(_ov) _ov.remove();
+  const _myInv = (thief.side === 'p1') ? G.inv : G.inv2;
+  const _discarded = _myInv[mySlotIdx];
+  // 把寵物從 victim 拔下來
+  if(victim.equip && victim.equip.n === stolenPetEq.n){
+    if(victim.equip.onRemove) try{ victim.equip.onRemove(victim); }catch(_){}
+    victim.equip = null;
+  }
+  // 丟棄 + 放入背包
+  _myInv[mySlotIdx] = {n: stolenPetEq.n, icon: stolenPetEq.icon || '🐾', d: stolenPetEq.d, type: 'pet', _stolenPet: stolenPetEq};
+  log(`🗑️ [${thief.name}] 丟棄 [${_discarded ? _discarded.n : '空格'}],偷得寵物 [${stolenPetEq.n}] 放入背包!`);
+  bannerFX(thief, '🗡偷得寵物', '#ffcc00', 800);
+  renderCard(victim);
+  renderCard(thief);
+  if(thief.side === 'p1') renderItems();
+
+  const st = window._stealState;
+  if(st){
+    st.remaining--;
+    const _cntEl = document.getElementById('steal-remaining-cnt');
+    if(_cntEl) _cntEl.textContent = st.remaining;
+    if(st.remaining > 0){
+      _showStealPicker(thief, victim, st.remaining, st.cost);
+    } else {
+      _finishSteal();
+    }
   }
 }
 
@@ -16951,8 +17185,8 @@ function _renderSurpriseFieldPickerUI(){
   ov.id = 'surprise-field-ov';
   ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,0.88);z-index:310;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;';
   const _findCard = (cardName) => {
-    if(typeof ITEM_DECK !== 'undefined'){
-      const f = ITEM_DECK.find(it => it.n === cardName);
+    if(typeof ITEM_DB !== 'undefined'){
+      const f = ITEM_DB.find(it => it.n === cardName);
       if(f) return f;
     }
     return { n: cardName, d: '...', effect: '?' };
@@ -17015,8 +17249,8 @@ function _confirmSurpriseFieldCard(cardName, isGood, cost){
   const _ov1 = document.getElementById('surprise-field-ov');
   if(_ov1) _ov1.remove();
   let _card = null;
-  if(typeof ITEM_DECK !== 'undefined'){
-    _card = ITEM_DECK.find(it => it.n === cardName);
+  if(typeof ITEM_DB !== 'undefined'){
+    _card = ITEM_DB.find(it => it.n === cardName);
   }
   if(!_card) return;
   const _color = isGood ? '#88ddaa' : '#ff8866';
@@ -17087,8 +17321,8 @@ function _applySurpriseFieldCard(cardName, isGood, cost){
   const actor = window._surpriseFieldActor;
   if(!actor) return;
   let _card = null;
-  if(typeof ITEM_DECK !== 'undefined'){
-    _card = ITEM_DECK.find(it => it.n === cardName);
+  if(typeof ITEM_DB !== 'undefined'){
+    _card = ITEM_DB.find(it => it.n === cardName);
   }
   const _skipEndAction = (cost === -1);
   if(!_card){ if(!_skipEndAction) endAction(actor, cost); return; }
@@ -44257,6 +44491,30 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0760', brief:[
+    '🐛 修正軍師「出奇制勝」抽卡點選後視窗關閉沒效果的 bug',
+    '🗡️ 神偷盜取技能改進:背包已滿時跳出丟棄選擇視窗',
+  ], items:[
+    '【1. 軍師出奇制勝 Bug】',
+    '  - 根本原因:_renderSurpriseFieldPickerUI / _confirmSurpriseFieldCard /',
+    '            _applySurpriseFieldCard 中誤用 `ITEM_DECK` 變數名',
+    '            (實際 const 名是 `ITEM_DB`)',
+    '  - 結果:`_card = ITEM_DECK.find(...)` 永遠是 undefined',
+    '         `if(!_card) return;` 直接退出 → 視窗關閉但啥也沒發生',
+    '  - 修正:三處全改為 ITEM_DB',
+    '  - 點選戰場卡 → 顯示確認頁(✓使用 / ↩換一張) → 套用',
+    '【2. 神偷盜取背包已滿改進】',
+    '  - 原行為:背包滿時直接 log「無法偷取」並結束',
+    '  - 新行為:跳出「丟棄選擇」視窗',
+    '    • 顯示即將偷取的物品(名稱 + 描述)',
+    '    • 列出玩家當前背包 3 張卡片(可點擊丟棄)',
+    '    • 點擊任一張 → 自動丟棄 + 放入偷得物品',
+    '    • 「✗ 放棄這次偷取」按鈕(可改偷其他)',
+    '  - 同時處理:偷寵物時自己已有寵物 + 背包滿',
+    '             也彈出寵物丟棄視窗',
+    '  - AI 維持原本邏輯(背包滿就跳過/寵物消失)',
+    '  - 偷取完成後自動更新 stealState.remaining 並接續流程',
+  ] },
   { ver:'v1.0.20260424.0750', brief:[
     '🐛 修正:選照顧/狗狗題庫進小怪戰跳「所有題目都出過」重選視窗',
     '🔠 新角色登場視窗整體文字放大(約 +30~50%)',
@@ -49703,7 +49961,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0750';
+  const CURRENT_VERSION = 'v1.0.20260424.0760';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -49720,7 +49978,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0750';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0760';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
