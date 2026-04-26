@@ -14259,6 +14259,35 @@ function _burstFinish(h, _interrupted){
     log(`[${_interrupted.name}] 被極限爆發插隊，跳過本次行動。`);
   }
   _pSetTimeout(()=>{ if(checkWin()) return; startTurn(); },600);
+  // ★ v1.0.20260424.0960 — 爆發技 watchdog:同 endAction 邏輯,防止爆發後卡死
+  //   爆發技多半有 5+ 次 _pSetTimeout 連擊,結尾 _pSetTimeout(startTurn,600),
+  //   若 _gamePaused 在這段期間變 true 且 _resumeTimers 未呼叫,會永久卡死。
+  try{
+    const _wdRound = G ? (G.round||0) : 0;
+    setTimeout(function(){
+      try{
+        if(!G) return;
+        if(G.round !== _wdRound) return;
+        if(G.activeChar && G.activeChar !== h && G.activeChar.acted === false) return;  // 已換人
+        const _qov = document.getElementById('adv-quiz-overlay');
+        if(_qov && _qov.classList.contains('show')) return;
+        const _resOv = document.getElementById('adv-result-overlay');
+        if(_resOv && _resOv.classList.contains('show')) return;
+        const _miniRes = document.getElementById('adv-mini-result');
+        if(_miniRes && _miniRes.classList.contains('show')) return;
+        console.warn('[burstFinish watchdog] startTurn 卡住超過 5 秒,強制解除 (爆發者:'+(h&&h.name)+')');
+        try{ window._gamePaused = false; }catch(_){}
+        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        setTimeout(function(){
+          try{
+            if(!G) return;
+            if(G.round !== _wdRound) return;
+            if(typeof startTurn === 'function') startTurn();
+          }catch(_){}
+        }, 100);
+      }catch(_wdE){ console.warn('[burstFinish watchdog 異常]', _wdE); }
+    }, 5000);
+  }catch(_){}
 }
 function _showPassivePrompt(opts){
   // opts: { hero, skillName, color, cost, desc, onUse, onSkip }
@@ -20262,6 +20291,45 @@ function endAction(a, cost, noFinish=false){
   updateUI(); renderItems();
   if(!noFinish){
     _pSetTimeout(startTurn,500);
+    // ★ v1.0.20260424.0950 — 強力 watchdog 修復「弦樂團員→大蛇 必卡死」bug
+    //   症狀:弦樂團員「小星星變奏曲」(3~4次 _pSetTimeout 連擊)結束 endAction 後,
+    //   原本用 _pSetTimeout(startTurn, 500),若 _gamePaused 在這500ms內變 true 且
+    //   _resumeTimers 沒被呼叫,startTurn 會被 queue 永遠不執行,大蛇 BOSS 永不行動 → 卡死。
+    //   修復:額外設 5 秒普通 setTimeout watchdog,若到時 startTurn 仍未執行(回合沒變),
+    //   且沒有 quiz/結算面板顯示中,強制解除 _gamePaused 並 _resumeTimers。
+    try{
+      const _wdRound = G ? (G.round||0) : 0;
+      const _wdActor = a;
+      setTimeout(function(){
+        try{
+          if(!G) return;
+          // 若 G.round 改變代表已成功進入下一回合,不需介入
+          // 若 G.activeChar 已換人也代表正常運行
+          if(G.round !== _wdRound) return;
+          if(G.activeChar && G.activeChar !== _wdActor) return;
+          // 檢查 modal:quiz/結算/獎勵面板顯示中是合理等待,不強制
+          const _qov = document.getElementById('adv-quiz-overlay');
+          if(_qov && _qov.classList.contains('show')) return;
+          const _resOv = document.getElementById('adv-result-overlay');
+          if(_resOv && _resOv.classList.contains('show')) return;
+          const _miniRes = document.getElementById('adv-mini-result');
+          if(_miniRes && _miniRes.classList.contains('show')) return;
+          // 沒 modal 顯示但卡住 → 強制 resume
+          console.warn('[endAction watchdog] startTurn 卡住超過 5 秒,強制解除 _gamePaused 並 _resumeTimers (actor:'+(_wdActor&&_wdActor.name)+')');
+          try{ window._gamePaused = false; }catch(_){}
+          try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+          // 100ms 後若仍卡,直接呼叫 startTurn
+          setTimeout(function(){
+            try{
+              if(!G) return;
+              if(G.round !== _wdRound) return;
+              if(G.activeChar && G.activeChar !== _wdActor) return;
+              if(typeof startTurn === 'function') startTurn();
+            }catch(_){}
+          }, 100);
+        }catch(_wdE){ console.warn('[endAction watchdog 異常]', _wdE); }
+      }, 5000);
+    }catch(_){}
   } else if(a.side==='p2' || (a.side==='p1' && _autoBattle)){
     // AI（敵方或我方自動代管）用完 noFinish 被動後，回 startTurn 重新排序
     // 守衛 acted=false 自然再輪到，_guardUsedThisRound=true 防止重覆觸發插隊
@@ -45338,6 +45406,60 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0960', brief:[
+    '🛡 全面盤點所有可能造成「卡死」的連擊技能,加 _burstFinish watchdog',
+  ], items:[
+    '【可能造成卡死的所有連擊技能盤點】',
+    '  ── 一般技能 (走 endAction,已被 v0950 watchdog 保護) ──',
+    '  - 弦樂團員 S1 小星星變奏曲   _doStar (3~4次連擊,每次 250ms)',
+    '  - 籃球隊員 S1 連續貓爪功     catClaw (多次連擊,每次 300ms)',
+    '  - 玉藻前 S1 九尾狐火        jiuWei (3~4次連擊,每次 300ms)',
+    '  - 八岐大蛇 S1 八首齊噬       yamataBite (8次連擊,每次 250ms)',
+    '  - 八岐大蛇 S2 暗冰雷焰吐息    yamataBreath (2輪+附狀態,420ms)',
+    '  - 九尾空貓怪 S1 連續貓爪功    _doCatClaw (多次連擊,每次 280ms)',
+    '  ── 爆發技 (走 _burstFinish,本版加 watchdog 保護) ──',
+    '  - 弦樂團員 爆發 流浪者之歌   _doWander (連擊+治療,250ms)',
+    '  - 大天狗 爆發 神威風獵       tenguStrike (連擊+暈眩,280ms)',
+    '  - 酒吞童子 爆發 嗜血鬼炎     shutenStrike (連鎖,350ms)',
+    '  - 八岐大蛇 爆發 八頭龍滅世   yamataBurst (8次連擊,280ms)',
+    '  - 杏花妖 爆發 (連擊型)       _catNine 等',
+    '  ── BOSS AI (走 _realAiAct,v0910 watchdog 保護) ──',
+    '  - 任何 BOSS 普攻或行動 30 秒 watchdog',
+    '【本版 _burstFinish watchdog】',
+    '  - 同 endAction 邏輯:5 秒後若 G.round 沒變 + 無 modal 顯示 → 強制 resume',
+    '  - 涵蓋所有爆發技(包括 _burstFinish 結尾的 _pSetTimeout(startTurn, 600))',
+    '  - 排除誤觸發:quiz/結算/mini-result modal 顯示中不介入',
+    '【現在的三層保護】',
+    '  1) _realAiAct 開頭 (BOSS AI 30 秒 watchdog) - v0910',
+    '  2) endAction 結尾 (一般技能 5 秒 watchdog) - v0950',
+    '  3) _burstFinish 結尾 (爆發技 5 秒 watchdog) - v0960 ← 本版',
+    '【實作位置】',
+    '  - _burstFinish watchdog: line ~14260',
+  ] },
+  { ver:'v1.0.20260424.0950', brief:[
+    '🔥 重大 BUG 修復:弦樂團員→大蛇 行動切換時必卡死的根因',
+  ], items:[
+    '【根因分析】',
+    '  症狀:玩家用弦樂團員打八岐大蛇,弦樂團員「小星星變奏曲」(3~4次連擊)結束後,',
+    '       輪到大蛇行動時必卡死。',
+    '  根因:小星星變奏曲內每次 hit 用 _pSetTimeout(_doStar, 250) 排隊,',
+    '       最後一次 endAction(a, cost) 被呼叫,而 endAction 結尾用',
+    '       _pSetTimeout(startTurn, 500) 啟動下一個 actor。',
+    '       若這 500ms 內 _gamePaused 變 true(可能由其他流程觸發),',
+    '       startTurn 會被 push 進 _pendingTimers queue,',
+    '       但若 _resumeTimers 沒被呼叫(race condition),',
+    '       startTurn 永遠不執行 → 大蛇 BOSS 永不行動 → 戰鬥卡死。',
+    '【修復:endAction 加 5 秒 startTurn watchdog】',
+    '  - 用普通 setTimeout(非 _pSetTimeout)在 endAction 後設 5 秒 watchdog',
+    '  - 5 秒後檢查:G.round 沒變 + G.activeChar 仍是當前 actor + 無 modal 顯示',
+    '    → 代表卡死了',
+    '  - 強制 window._gamePaused = false',
+    '  - 強制 _resumeTimers() 釋放所有 queued timers',
+    '  - 再過 100ms 仍卡 → 直接呼叫 startTurn() 讓戰鬥流程繼續',
+    '  - 排除誤觸發:quiz overlay / 結算 overlay / mini-result 顯示中不介入',
+    '【實作位置】',
+    '  - endAction watchdog: line ~20262',
+  ] },
   { ver:'v1.0.20260424.0940', brief:[
     '🎵 新增「謝幕掌聲」爆發技專屬音效',
   ], items:[
@@ -51325,7 +51447,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0940';
+  const CURRENT_VERSION = 'v1.0.20260424.0960';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51342,7 +51464,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0940';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0960';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
