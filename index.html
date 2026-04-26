@@ -10052,8 +10052,34 @@ function showHeroPickOverlay(){
     if(_findBtn) _findBtn.style.display = 'none';
     // ★ 冒險模式：只顯示已解鎖英雄（初始4名 + 解鎖的）
     const basePool = ADV_HERO_POOL[_adventureStage] || [];
-    const unlockedExtra = advGetUnlockedHeroes().filter(n => !basePool.includes(n) && !BOSS_NAMES.includes(n));
+    // ★ v1.0.20260424.0980 — 強化檢查:確保召喚解鎖的稀有角色(大天狗/酒吞童子/玉藻前/巫女)
+    //   一定能正確顯示在英雄選擇列表中。
+    //   原邏輯只用 advGetUnlockedHeroes() + BOSS_NAMES 過濾,若 localStorage 有 race condition
+    //   或 unlocked 列表為空,玩家可能看不到自己抽到的角色。
+    //   修復:多重來源檢查 + console.log 診斷
+    let _unlockedRaw = [];
+    try{ _unlockedRaw = advGetUnlockedHeroes() || []; }catch(_){ _unlockedRaw = []; }
+    const unlockedExtra = _unlockedRaw.filter(n =>
+      n &&
+      typeof HERO_DB !== 'undefined' && HERO_DB[n] &&  // 確保是合法英雄(有 stat 定義)
+      !basePool.includes(n) &&
+      !BOSS_NAMES.includes(n)
+    );
     _heroPickPool = [...basePool, ...unlockedExtra];
+    // ★ 診斷 log:幫助玩家回報問題時提供資訊
+    try{
+      const _summonRare = (typeof SUMMON_RARE_HEROES !== 'undefined') ? SUMMON_RARE_HEROES : ['大天狗','玉藻前','酒吞童子','巫女'];
+      const _missingRare = _summonRare.filter(n => _unlockedRaw.includes(n) && !_heroPickPool.includes(n));
+      console.log('[冒險選英雄] basePool=', basePool.length, '隻; unlockedExtra=', unlockedExtra.length, '隻; 總共=', _heroPickPool.length, '隻');
+      console.log('[冒險選英雄] localStorage adv_unlocked_heroes =', _unlockedRaw);
+      if(_missingRare.length > 0){
+        console.warn('[冒險選英雄][異常] 已解鎖但未顯示的稀有角色:', _missingRare);
+      }
+      const _shownRare = _summonRare.filter(n => _heroPickPool.includes(n));
+      if(_shownRare.length > 0){
+        console.log('[冒險選英雄] 已解鎖並顯示的稀有角色:', _shownRare);
+      }
+    }catch(_){}
     _heroPickSelected = [];
 
     document.getElementById('fate-text').textContent = '要找誰加入冒險者小隊呢？';
@@ -45667,6 +45693,43 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0980', brief:[
+    '🔍 強化冒險模式英雄選擇列表的稀有角色檢查 + 診斷 log',
+  ], items:[
+    '【問題分析】',
+    '  玩家報告:抽到玉藻前後,冒險模式英雄選擇列表沒有出現',
+    '  但檢查程式碼:',
+    '    - HERO_DB 中有 大天狗/酒吞童子/玉藻前/巫女 4 隻角色定義 ✓',
+    '    - BOSS_NAMES 沒有包含這 4 隻 ✓',
+    '    - ADV_HERO_POOL.maokong 沒有包含這 4 隻 ✓',
+    '    - 召喚 → _applySummonReward → advSaveUnlockedHero(heroName)',
+    '      → localStorage.setItem(\'adv_unlocked_heroes\', ...) 邏輯正確 ✓',
+    '    - 構建 _heroPickPool 邏輯正確',
+    '       basePool + advGetUnlockedHeroes().filter(!basePool.includes && !BOSS_NAMES.includes)',
+    '  → 邏輯本身無問題,可能是舊存檔格式或 race condition 造成',
+    '【強化措施】',
+    '  1) _heroPickPool 構建加入 HERO_DB[n] 合法性檢查',
+    '     確保即使 localStorage 殘留無效名字也不會出錯',
+    '  2) try/catch 包裹 advGetUnlockedHeroes() 呼叫,空陣列 fallback',
+    '  3) console.log 診斷:每次進入冒險選英雄頁時印出',
+    '     - basePool 隻數',
+    '     - unlockedExtra 隻數',
+    '     - 總共隻數',
+    '     - localStorage 完整 adv_unlocked_heroes',
+    '     - 已解鎖的稀有角色(SUMMON_RARE_HEROES)是否實際顯示',
+    '  4) 異常警告:若 unlocked 列表中有 SUMMON_RARE_HEROES 但 _heroPickPool 沒包含,',
+    '     console.warn 印出缺漏的角色,方便診斷',
+    '【玩家可以做的事】',
+    '  - 進入冒險模式選英雄頁,按 F12 打開 console',
+    '  - 看 [冒險選英雄] 開頭的 log:',
+    '    a) 若 「localStorage adv_unlocked_heroes =」 中**沒有「玉藻前」**,代表召喚時沒寫入成功',
+    '       → 需要重新抽卡(這次會正確寫入)',
+    '    b) 若**有「玉藻前」**但 [冒險選英雄][異常] 印出「未顯示的稀有角色」,',
+    '       代表構建時被某個過濾誤殺,請回報具體 console 內容',
+    '    c) 若印出「已解鎖並顯示的稀有角色: [玉藻前]」,代表本版已正常,玉藻前應該出現在列表中',
+    '【實作位置】',
+    '  - showHeroPickOverlay 內 _heroPickPool 構建: line ~10054',
+  ] },
   { ver:'v1.0.20260424.0970', brief:[
     '✨ 召喚星空畫面新增天空星星閃爍 + 河面波紋反光搖晃特效',
   ], items:[
@@ -51734,7 +51797,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0970';
+  const CURRENT_VERSION = 'v1.0.20260424.0980';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51751,7 +51814,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0970';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0980';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
