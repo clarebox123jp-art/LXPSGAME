@@ -1637,7 +1637,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   position:relative;z-index:2;
   width:38%;display:flex;flex-direction:column;
   align-items:flex-start;justify-content:center;
-  padding:80px 20px 40px 40px;gap:16px;
+  /* ★ v1.0.20260424.0840 — padding-top 加大,避免被代表英雄條與暱稱條(在 panel 上層 absolute 定位)遮擋 */
+  padding:clamp(220px,24vw,280px) 20px 40px 40px;gap:16px;
 }
 .adv-list-title{
   font-size:28px;font-weight:700;color:#ffe8a0;
@@ -4423,8 +4424,8 @@ body.art-premium #elem-pick-overlay {
     <audio id="bgm-shop" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a" loop preload="none"></audio></audio>
     <button id="adv-back-btn" onclick="playSfx('sfx-cancel',0.5);closeAdventureOverlay()">← 返回首頁</button>
     <!-- ★ 好友系統：代表英雄顯示 -->
-    <!-- ★ v1.0.20260424.0790 — 左移代表英雄條,避免蓋到關卡視窗(原 left:clamp(290px,24vw,400px)→180px,18vw,260px) -->
-    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:28px;left:clamp(180px,18vw,260px);z-index:12;
+    <!-- ★ v1.0.20260424.0840 — 移至 back-btn 下方,左邊對齊關卡介紹視窗左側邊線(panel padding-left=40px) -->
+    <div id="adv-rep-hero-bar" style="display:none;position:absolute;top:clamp(85px,9vw,120px);left:clamp(40px,4vw,80px);z-index:12;
       display:none;align-items:center;gap:clamp(6px,0.8vw,12px);cursor:pointer;
       padding:clamp(6px,0.8vw,12px) clamp(12px,1.4vw,24px);
       background:rgba(10,15,35,0.88);border:2px solid rgba(255,200,80,0.6);border-radius:40px;
@@ -4439,7 +4440,8 @@ body.art-premium #elem-pick-overlay {
       </div>
       <span style="font-size:clamp(14px,1.6vw,24px);color:#ffcc44;">⭐</span></div>
     <!-- ★ 冒險模式帳號名稱顯示 -->
-    <div id="adv-username-bar" style="display:none;position:absolute;top:clamp(80px,9vw,130px);left:36px;z-index:11;
+    <!-- ★ v1.0.20260424.0840 — 移至 rep-hero 下方,左邊對齊關卡介紹視窗左側邊線 -->
+    <div id="adv-username-bar" style="display:none;position:absolute;top:clamp(155px,17vw,210px);left:clamp(40px,4vw,80px);z-index:11;
       align-items:center;gap:clamp(6px,1vw,10px);">
       <img id="adv-user-avatar" style="width:clamp(28px,3.5vw,44px);height:clamp(28px,3.5vw,44px);border-radius:50%;border:2px solid rgba(255,255,255,0.7);flex-shrink:0;" />
       <span id="adv-user-name" onclick="playSfx('sfx-gentle',0.3);openNicknameModal()"
@@ -6934,7 +6936,7 @@ const HERO_IMGS = {
   '聖騎士':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%81%96%E9%A8%8E%E5%A3%AB(%E7%B8%AE%E5%9C%96).png',
   '舞者':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%88%9E%E8%80%85(%E7%B8%AE%E5%9C%96).png',
   '警長':     'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%AD%A6%E9%95%B7(%E7%B8%AE%E5%9C%96).png',
-  '軍師':     'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E8%BB%8D%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '軍師':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%ABQ%E7%89%88.png',
   '雷法師':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
   '吟遊詩人':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9F%B3%E6%A8%82%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
   '吸血鬼':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%90%B8%E8%A1%80%E9%AC%BC(%E7%B8%AE%E5%9C%96).png',
@@ -7822,7 +7824,7 @@ const ITEM_DB = [
   {n:'能量噴泉',sell:3,c:3,rounds:3,d:'技能消耗能量-1(不可低於1)。',type:'field',effect:'discount',dur:99},
   {n:'疲勞煙霧筒',sell:3,c:3,rounds:3,d:'技能消耗能量+1。',type:'field',effect:'exhaust',dur:99},
   {n:'同樂會氣球堆',sell:3,c:3,rounds:3,d:'造成的傷害皆為最小值3。',type:'field',effect:'minDmg',dur:99},
-  {n:'戰爭號角',sell:3,c:3,rounds:3,d:'造成的傷害和治療效果+3。',type:'field',effect:'warhorn',dur:99},
+  {n:'戰爭號角',sell:3,c:3,rounds:3,d:'造成的傷害和治療效果+10%。',type:'field',effect:'warhorn',dur:99},
   {n:'清潔裝甲車',sell:2,c:2,d:'消除當前啟用中的戰場卡。',type:'field',effect:'clear',dur:0},
 ];
 
@@ -8023,7 +8025,7 @@ const BUFF_DESCS = {
   elemBoost:     '元素增幅：自己元素對應的不利狀態抵抗100%，相剋增減傷10%→20%',
   regen:         '持續恢復：每回合恢復12HP',
   conservation:  '守恆：使用物品卡後100%保留不消耗',
-  warhorn:       '戰意：造成傷害和治療量+3',
+  warhorn:       '戰意：造成傷害和治療量+10%',
   absorb:        '吸收：每回合恢復少量HP',
   chargeAtk:     '蓄力中：下次攻擊威力大幅提升',
   zeroCost:      '無限能量：本回合所有技能費用為0',
@@ -8631,7 +8633,7 @@ const HERO_BIO = {
   '守衛':      { role:'王城銅牆鐵壁第一守衛', trait:'沉穩厚實，以身作盾', hobby:'重量訓練，修繕盾甲', quote:'「想從我這裡過去？先過了我這關再說。」' },
   '舞者':      { role:'花都劇場頭牌表演藝術家', trait:'熱情奔放，充滿感染力', hobby:'創作舞蹈，教小孩跳舞', quote:'「來！跟著音樂一起動起來！」' },
   '警長':      { role:'荒野西境治安官', trait:'正義凜然，鐵面無私', hobby:'收集徽章，騎馬巡邏', quote:'「這裡的規矩，由我說了算。」' },
-  '軍師':      { role:'異界王國第一謀士', trait:'博學多聞，深謀遠慮', hobby:'研讀古籍，下棋', quote:'「對手的每一步，我早已料到。」' },
+  '軍師':      { role:'從中國古代穿越來的神祕智者', trait:'博學多聞，深謀遠慮', hobby:'研讀古籍，下棋', quote:'「對手的每一步，我早已料到。」' },
   '凡人':      { role:'被召喚到異世界的普通人', trait:'沒有特殊天賦,卻意外有著驚人的學習力與韌性', hobby:'觀察周遭,模仿學習其他英雄的技能', quote:'「雖然只是凡人,但既然來了,就活出自己的傳說吧!」' },
   '武士':      { role:'東方武道流浪者', trait:'守靜沉默，劍心純淨', hobby:'冥想，研究劍道哲學', quote:'「動如山嶽，靜如止水。」' },
   '學者':      { role:'古代智慧傳承學院院長', trait:'博古通今，謙遜好學', hobby:'著書立說，蒐集珍本古書', quote:'「過去的失敗，是未來最好的老師。」' },
@@ -15129,7 +15131,8 @@ function doDmg(target, rawDmg, opts={}){
   if(fieldHas('chaos')&&!opts.isChaos) { doHeal(target,dmg,{isChaos:true}); return 0; }
   // warhorn field
   // ★ v1.0.20260424.0800 — 戰爭號角(有利)只對攻擊者陣營生效(軍師卡)
-  if(fieldHas('warhorn', a&&a.side)&&!opts.noWarhorn) dmg+=3;
+  // ★ v1.0.20260424.0830 — 效果改為 +10%(原本是固定+3)
+  if(fieldHas('warhorn', a&&a.side)&&!opts.noWarhorn) dmg = Math.ceil(dmg * 1.1);
   // minDmg field
   if(fieldHas('minDmg')) dmg=Math.max(3,dmg);
 
@@ -15868,7 +15871,8 @@ function doHeal(target, rawAmt, opts={}){
   }
   if(fieldHas('chaos')&&!opts.isChaos){ doDmg(target,amt,{isChaos:true}); return 0; }
   // ★ v1.0.20260424.0800 — 戰爭號角(有利)只對治療者陣營生效(軍師卡)
-  if(fieldHas('warhorn', a&&a.side)&&!opts.noWarhorn) amt+=3;
+  // ★ v1.0.20260424.0830 — 效果改為 +10%(原本是固定+3)
+  if(fieldHas('warhorn', a&&a.side)&&!opts.noWarhorn) amt = Math.ceil(amt * 1.1);
   // 祭司長袍：治療效果+40%（寵物專家加倍）
   const aeq=a?getEquip(a):null;
   if(aeq && aeq.healBonus && opts.isHeal){
@@ -45160,6 +45164,76 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0840', brief:[
+    '🎯 玩家暱稱與代表英雄條對齊到關卡介紹視窗左側邊線',
+  ], items:[
+    '【UI 對齊優化】',
+    '  - 用戶要求: 玩家暱稱「稚氣的小畫家」與代表英雄條「電腦繪圖師」一起往右靠齊,',
+    '    對齊到關卡介紹視窗(#adv-left-panel)的左側邊線',
+    '【三處修改】',
+    '  1. 代表英雄條(#adv-rep-hero-bar)',
+    '     舊: top:28px(跟 back-btn 同行); left:clamp(180px,18vw,260px)',
+    '     新: top:clamp(85px,9vw,120px)(移到 back-btn 下方);',
+    '         left:clamp(40px,4vw,80px)(對齊 panel padding-left)',
+    '  2. 玩家暱稱條(#adv-username-bar)',
+    '     舊: top:clamp(80px,9vw,130px); left:36px',
+    '     新: top:clamp(155px,17vw,210px)(移到 rep-hero 下方);',
+    '         left:clamp(40px,4vw,80px)(對齊 panel padding-left)',
+    '  3. 關卡介紹視窗(#adv-left-panel)',
+    '     舊: padding:80px 20px 40px 40px',
+    '     新: padding:clamp(220px,24vw,280px) 20px 40px 40px',
+    '         (padding-top 加大,讓標題避開上方 rep-hero/username absolute 定位)',
+    '【視覺效果】',
+    '  四層垂直堆疊在左上角:',
+    '    ① 返回首頁按鈕 (top:28)',
+    '    ② 代表英雄條 (top:85-120)',
+    '    ③ 玩家暱稱條 (top:155-210)',
+    '    ④ 關卡介紹視窗(從 220-280 起)',
+    '  ②③④ 三者左邊都對齊到 40-80px(panel 左側邊線)',
+  ] },
+  { ver:'v1.0.20260424.0830', brief:[
+    '📯 戰爭號角效果統一:傷害和治療效果+10%(取代原本固定+3)',
+  ], items:[
+    '【戰爭號角效果一致性檢查】',
+    '  - 用戶要求: 所有角色造成的傷害和治療效果+10%',
+    '  - 原版四處都寫「+3」(固定值),全部不符要求,一併修正',
+    '【4 處修改】',
+    '  1. 卡片定義(line ~7825)',
+    '     d: \'造成的傷害和治療效果+3。\'',
+    '     → \'造成的傷害和治療效果+10%。\'',
+    '  2. buff 標籤(line ~8026)',
+    '     \'戰意：造成傷害和治療量+3\'',
+    '     → \'戰意：造成傷害和治療量+10%\'',
+    '  3. doDmg 邏輯(line ~15132)',
+    '     dmg += 3;',
+    '     → dmg = Math.ceil(dmg * 1.1);',
+    '  4. doHeal 邏輯(line ~15871)',
+    '     amt += 3;',
+    '     → amt = Math.ceil(amt * 1.1);',
+    '【影響範圍】',
+    '  - 鬥技場玩家手動使用戰場卡(對雙方生效) ✓',
+    '  - 軍師「出奇制勝」放置(僅對己方生效) ✓',
+    '  - 兩種情境效果文字、buff 提示、實際傷治計算全部一致',
+  ] },
+  { ver:'v1.0.20260424.0820', brief:[
+    '🪶 軍師圖更新:換成新版 Q 版主圖',
+    '📜 軍師背景設定修正:從中國古代穿越來的神祕智者',
+  ], items:[
+    '【1. 軍師原始 Q 版圖】',
+    '  - 舊圖檔: Q軍師(縮圖).png',
+    '  - 新圖檔: 軍師Q版.png',
+    '  - URL: https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/軍師Q版.png',
+    '【2. 軍師 LV20 圖】',
+    '  - 已使用 軍師LV20.png(LV20 切換肖像),圖檔正好就是用戶指定的版本,無需修改',
+    '【3. 軍師英雄圖鑑介紹修正】',
+    '  - 舊: role=「異界王國第一謀士」',
+    '  - 新: role=「從中國古代穿越來的神祕智者」',
+    '  - 其他欄位(trait/hobby/quote)維持原樣',
+    '【實作位置】',
+    '  - HERO_IMGS 軍師: line ~6937',
+    '  - HERO_GALLERY_INTRO 軍師: line ~8634',
+    '  - LV20 portrait 設定: line ~7197 (檔名與用戶版本相同,免改)',
+  ] },
   { ver:'v1.0.20260424.0810', brief:[
     '🐉 修復所有 BOSS 答題反應台詞錯誤(都用了九尾的)',
     '🪶 確認軍師戰場卡規則(鬥技場仍可正確分敵我)',
@@ -50832,7 +50906,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0810';
+  const CURRENT_VERSION = 'v1.0.20260424.0840';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -50849,7 +50923,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0810';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0840';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
