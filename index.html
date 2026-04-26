@@ -8782,11 +8782,21 @@ function newHero(name,side,pos){
   const b=HERO_DB[name];
   // ★ v1.0.20260421.3000f — 三大妖怪作為玩家英雄（p1）時套弱版素質
   //   side==='p2' 時不覆寫，維持 BOSS 戰強度
-  const _jpOverride = (side==='p1' && JP_BOSS_HERO_STATS[name]) ? JP_BOSS_HERO_STATS[name] : null;
+  // ★ v1.0.20260424.1000 — 強化:用 typeof 防止 JP_BOSS_HERO_STATS 載入順序問題
+  //   並加 console.log 確認套用
+  let _jpOverride = null;
+  try{
+    if(side==='p1' && typeof JP_BOSS_HERO_STATS !== 'undefined' && JP_BOSS_HERO_STATS[name]){
+      _jpOverride = JP_BOSS_HERO_STATS[name];
+    }
+  }catch(_){}
   const _hp  = _jpOverride ? _jpOverride.hp  : b.hp;
   const _atk = _jpOverride ? _jpOverride.atk : b.atk;
   const _sp  = _jpOverride ? _jpOverride.sp  : b.sp;
   const _spd = _jpOverride ? _jpOverride.spd : b.spd;
+  if(_jpOverride){
+    try{ console.log('[newHero] '+name+' (p1) 套用日本 BOSS 英雄版能力: hp='+_hp+', atk='+_atk+', sp='+_sp+', spd='+_spd); }catch(_){}
+  }
   return {
     name,side,pos,
     hp:_hp,atk:_atk,def:b.def||0,sp:_sp,spd:_spd,
@@ -11162,6 +11172,23 @@ function confirmHeroPick(){
   if(_isAdvMode){
     document.getElementById('hero-pick-overlay').style.display = 'none';
     G.p1 = _heroPickSelected.map((n,i)=>newHero(n,'p1',i));
+    // ★ v1.0.20260424.1000 — 二重保險:若任何 p1 角色有 JP_BOSS_HERO_STATS 但實際 hp 過大,
+    //   強制重新套用英雄版能力(避免 newHero 因載入順序問題沒生效)
+    try{
+      if(typeof JP_BOSS_HERO_STATS !== 'undefined'){
+        G.p1.forEach(h => {
+          const _ovr = JP_BOSS_HERO_STATS[h.name];
+          if(_ovr && h.hp >= 100){
+            console.warn('[G.p1 修正] '+h.name+' 偵測到 BOSS 版能力 hp='+h.hp+',強制套回英雄版 hp='+_ovr.hp);
+            h.hp  = _ovr.hp;
+            h.atk = _ovr.atk;
+            h.sp  = _ovr.sp;
+            h.spd = _ovr.spd;
+            h.curHp = _ovr.hp;
+          }
+        });
+      }
+    }catch(e){ console.error('[G.p1 修正]', e); }
     // ★ 冒險模式：把所有升級數據直接存進英雄物件（避免跨Script全域變數問題）
     G.p1.forEach(h => {
       // 1. 素質投資（HP/ATK/SP/SPD）
@@ -45745,6 +45772,33 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1000', brief:[
+    '🛡 強化「玉藻前/大天狗/酒吞童子」作為玩家英雄時的能力值修正',
+  ], items:[
+    '【玩家回報】',
+    '  v0992 玉藻前已能出現在邀請名單,但能力值是 BOSS 版(hp:600,atk:15,sp:23,spd:24)',
+    '  應該套用英雄版(JP_BOSS_HERO_STATS):',
+    '    大天狗  hp:58, atk:10, sp:13, spd:17',
+    '    酒吞童子 hp:72, atk:16, sp:9,  spd:6',
+    '    玉藻前  hp:56, atk:5,  sp:19, spd:11',
+    '【根因分析】',
+    '  newHero 函式內已有套 JP_BOSS_HERO_STATS 邏輯(line ~8785),',
+    '  但若 JP_BOSS_HERO_STATS 在 newHero 執行時還未定義(載入順序),',
+    '  或某處用 HERO_DB[name].hp 直接覆寫 hp,就會導致 BOSS 版能力洩漏',
+    '【修復】',
+    '  1) newHero 加 typeof 安全檢查與 try/catch,並 console.log 確認套用',
+    '  2) G.p1 建立後立即二重檢查:若 p1 中任何角色 hp >= 100 且在',
+    '     JP_BOSS_HERO_STATS 中,強制套回英雄版能力(覆寫 hp/atk/sp/spd)',
+    '  3) 加 console.warn 記錄修正過程方便診斷',
+    '【驗證】',
+    '  進入冒險選英雄頁後 console 應出現:',
+    '    [newHero] 玉藻前 (p1) 套用日本 BOSS 英雄版能力: hp=56, atk=5, sp=19, spd=11',
+    '  若仍走錯路徑,會出現:',
+    '    [G.p1 修正] 玉藻前 偵測到 BOSS 版能力 hp=600,強制套回英雄版 hp=56',
+    '【實作位置】',
+    '  - newHero 強化: line ~8781',
+    '  - G.p1 建立後二重保險: line ~11164',
+  ] },
   { ver:'v1.0.20260424.0992', brief:[
     '🎯 真正根因找到!玉藻前/大天狗/酒吞童子/巫女 在 BOSS_NAMES 列表中,被冒險選英雄頁誤過濾',
   ], items:[
@@ -51928,7 +51982,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0992';
+  const CURRENT_VERSION = 'v1.0.20260424.1000';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -51945,7 +51999,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0992';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1000';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
