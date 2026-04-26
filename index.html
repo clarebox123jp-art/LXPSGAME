@@ -21240,6 +21240,9 @@ function startTurn(){
       setTimeout(() => {
         _advMiniQuizAsk(() => {
           _gamePaused = false;
+          // ★ v1.0.20260424.0780 — 釋放 quiz 期間排隊的 _pSetTimeout 計時器
+          //   防止 _pendingTimers 中的 startTurn/aiAct 永遠卡死
+          try{ _resumeTimers(); }catch(e){}
           // 恢復後也確保清除殘留狀態
           G.pendingTarget=null; pendingCb=null;
           setTimeout(()=>{ try{ aiAct(next); }catch(e){} }, 400);
@@ -21577,12 +21580,21 @@ G.p1.concat(G.p2).forEach(h=>{
   checkWin();
   renderItems(); updateUI();
 
+  // ★ v1.0.20260424.0780 — 修復雙重 startTurn 排程
+  //   原 bug:nextRound 結尾「永遠」呼叫 _pSetTimeout(startTurn,300),
+  //   而玩家抽卡的同步路徑(一般卡入背包)也會排程一次,
+  //   導致同回合 startTurn 被排兩次 → 雙重 aiAct(BOSS) → quiz 流程卡死
+  //   (在八岐大蛇 BOSS 戰中尤其明顯,因為 BOSS quiz 會 _gamePaused=true,
+  //    第二次 aiAct 進入 _pendingTimers 卻永遠不被釋放,造成 BOSS 不行動)
+  //   修復:用 _pendingPlayerUI 旗標標記非同步路徑,確保每次 nextRound 只排一次 startTurn
+  let _pendingPlayerUI = false;
   // Always draw 1 card each new round (unless noshop)
   if(!fieldHas('noshop')){
     const newCard = drawItem();
     // 裝備卡直接進入裝備選擇，不佔背包欄位
     if(newCard.type==='equip'){
       log(`✨ 抽到寵物卡：${newCard.n}`);
+      _pendingPlayerUI = true; // 非同步:等玩家選完才排 startTurn
       showEquipUI(newCard, ()=>_pSetTimeout(startTurn, 300));
     } else {
       const heldCount = G.inv.filter(s=>s!==null).length;
@@ -21591,8 +21603,9 @@ G.p1.concat(G.p2).forEach(h=>{
         G.inv[emptyIdx] = newCard;
         log(`📦 抽到新卡：${newCard.n}`);
         renderItems();
-        _pSetTimeout(startTurn, 300);
+        // 同步路徑 — 由下方統一排 startTurn,不在此處排
       } else {
+        _pendingPlayerUI = true; // 非同步:等玩家丟棄完才排 startTurn
         showDiscardUI(newCard, ()=>_pSetTimeout(startTurn, 300));
       }
     }
@@ -21631,7 +21644,11 @@ G.p1.concat(G.p2).forEach(h=>{
       }
     }
   }
-  _pSetTimeout(startTurn, 300);
+  // ★ v1.0.20260424.0780 — 只有同步路徑(noshop / 一般卡入背包)才在這裡排 startTurn
+  //   非同步路徑(showEquipUI / showDiscardUI)的回呼會自己排
+  if(!_pendingPlayerUI){
+    _pSetTimeout(startTurn, 300);
+  }
 }
 
 // ====== AI ======
@@ -31994,6 +32011,12 @@ const _ADV_BOSS_SKIP_LINES = [
 function advOnQuizSkip() {
   // ★ 解除戰鬥暫停
   _gamePaused = false;
+  // ★ v1.0.20260424.0780 — 釋放 quiz 期間排隊的 _pSetTimeout 計時器
+  //   原 bug:advOnQuizSkip 沒有呼叫 _resumeTimers,導致 quiz 期間
+  //   (_gamePaused=true) 進入 _pendingTimers 佇列的計時器永遠卡死
+  //   症狀:八岐大蛇 BOSS 戰中 startTurn 被排兩次時,第二次 aiAct 進入佇列後,
+  //   即使答完題 _gamePaused=false 也不會被釋放,造成 BOSS 永不行動
+  try{ _resumeTimers(); }catch(e){}
   if (_advBossActionSkip) {
     // 玩家選了「封印行動」→ 跳過 BOSS 行動並讓 BOSS 生氣說話
     _advBossActionSkip = false;
@@ -44504,6 +44527,47 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.0780', brief:[
+    '🐉 修復「所有 BOSS」戰卡死 Bug (不只八岐大蛇)',
+    '✓ 修復雙重 startTurn 排程造成 BOSS 不行動',
+    '✓ 所有 quiz 結束時加入 _resumeTimers',
+  ], items:[
+    '【症狀】',
+    '  - 主 BOSS 戰中,新回合開始 BOSS 不行動',
+    '  - 弦樂團員行動結束後,右側顯示「現在是對手的回合」',
+    '  - 但 BOSS 永遠不行動,玩家也回不到自己的回合',
+    '  - 當 BOSS 攜帶寵物時更容易觸發',
+    '【影響範圍】',
+    '  ★ 所有 6 個主 BOSS 都會受影響:',
+    '    - 貓空關: 九尾空貓怪、杏花妖',
+    '    - 日本關: 大天狗、酒吞童子、玉藻前、八岐大蛇',
+    '  原因:這 6 個 BOSS 都會在 aiAct 觸發答題流程,',
+    '       而觸發 bug 的 nextRound 雙重排程 + advOnQuizSkip 沒釋放佇列',
+    '       對所有 BOSS 都生效,只是症狀觸發頻率不同',
+    '【根本原因】',
+    '  nextRound 內 _pSetTimeout(startTurn, 300) 被排了兩次:',
+    '  - Path B (玩家抽到一般卡入背包): line 21594 排一次',
+    '  - 永遠執行的最後一行: line 21634 又排一次',
+    '  → 同一回合 startTurn 觸發兩次 → aiAct(BOSS) 被叫兩次',
+    '  → 第一次進入 quiz 流程 (_gamePaused=true)',
+    '  → 第二次進入 retry 路徑,_pSetTimeout 被加入 _pendingTimers 佇列',
+    '  → advOnQuizSkip 解除暫停但沒呼叫 _resumeTimers',
+    '  → 排隊的計時器永遠卡死,造成 BOSS 不行動',
+    '【為何 BOSS 攜帶寵物時更明顯】',
+    '  - AI 抽到新寵物自動替換 BOSS 寵物的處理增加了時序視窗',
+    '  - 加上 BOSS 戰才有 quiz 流程,雙重 aiAct 才會卡死',
+    '【修復】',
+    '  1. nextRound 用 _pendingPlayerUI 旗標確保只排一次 startTurn:',
+    '     - 玩家抽到寵物/背包滿(非同步): 等 UI 結束才排',
+    '     - 玩家抽到一般卡(同步)/noshop: 統一在最後排',
+    '     - 不再有雙重排程',
+    '  2. advOnQuizSkip (BOSS quiz) 加入 _resumeTimers() 防禦性釋放',
+    '  3. 小怪戰 _advMiniQuizAsk callback 也加入 _resumeTimers() 防護',
+    '【實作位置】',
+    '  - nextRound 抽卡邏輯: line ~21580',
+    '  - 小怪戰 quiz callback: line ~21241',
+    '  - advOnQuizSkip: line ~32008',
+  ] },
   { ver:'v1.0.20260424.0770', brief:[
     '🎉 新增「近期活動與新角色」按鈕(不可思議超商下方)',
     '✓ 視窗關閉後可隨時透過此按鈕重新開啟',
@@ -49995,7 +50059,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.0770';
+  const CURRENT_VERSION = 'v1.0.20260424.0780';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -50012,7 +50076,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.0770';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.0780';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
