@@ -5407,7 +5407,7 @@ body.art-premium #summon-overlay {
       <div id="adv-dialog-next">▶▶</div>
       <!-- ★ v1.0.20260424.1070 — 跳過劇情按鈕,防止對白卡死時可直接跳到下一場戰鬥 -->
       <!-- ★ v1.0.20260424.1320 — 移到對話框外側上緣(避開 iPad/手機螢幕底部邊緣的功能列誤觸) -->
-      <div id="adv-dialog-skip-btn" onclick="event.stopPropagation();playSfx('sfx-confirm2',0.7);advSkipCurrentDialog();" style="position:absolute;top:-46px;right:12px;padding:8px 14px;font-size:18px;font-weight:700;background:rgba(80,40,40,0.92);border:2px solid rgba(255,120,120,0.75);color:#ffaaaa;border-radius:10px 10px 4px 4px;cursor:pointer;letter-spacing:1px;user-select:none;z-index:5;box-shadow:0 -2px 10px rgba(0,0,0,0.5);transition:transform 0.15s, background 0.15s;" onmouseover="this.style.background='rgba(160,60,60,0.95)';this.style.transform='scale(1.06)'" onmouseout="this.style.background='rgba(80,40,40,0.92)';this.style.transform='scale(1)'">⏭ 跳過劇情</div>
+      <div id="adv-dialog-skip-btn" onclick="event.stopPropagation();playSfx('sfx-confirm2',0.7);advSkipCurrentDialog();" style="position:absolute;top:-46px;left:12px;padding:8px 14px;font-size:18px;font-weight:700;background:rgba(80,40,40,0.92);border:2px solid rgba(255,120,120,0.75);color:#ffaaaa;border-radius:10px 10px 4px 4px;cursor:pointer;letter-spacing:1px;user-select:none;z-index:5;box-shadow:0 -2px 10px rgba(0,0,0,0.5);transition:transform 0.15s, background 0.15s;" onmouseover="this.style.background='rgba(160,60,60,0.95)';this.style.transform='scale(1.06)'" onmouseout="this.style.background='rgba(80,40,40,0.92)';this.style.transform='scale(1)'">⏭ 跳過劇情</div>
     </div>
     <div id="adv-treasure-popup">
       <div class="atp-box">
@@ -9931,9 +9931,13 @@ function _epBuildAttrPanel(){
   const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'燃燒',reflect:'反射',stubbornDebuff:'能力降低',forecast:'失明',poison:'中毒'};
   // 環狀定位參數（對應 ring-wrap 850x850, center 425,425, r_label=325）
   const cx=475, cy=475, r_label=357;
-  const keys=Object.keys(ELEMENT_DB);
+  // ★ v1.0.20260424.1370 — 同 _epBuildRing 用新循環順序
+  const _orderedKeys = ['water','fire','grass','earth','wind','light','dark'];
+  const keys = _orderedKeys.filter(k => ELEMENT_DB[k]);
   const n=keys.length;
-  Object.entries(ELEMENT_DB).map(([key,e],idx)=>{
+  // 重新映射:用排序後的 entries 處理
+  keys.forEach((key, idx) => {
+    const e = ELEMENT_DB[key];
     const bc=ECOLOR[key]||'#fff';
     const imm=(e.immune50||[]).map(s=>SN[s]||s).join('・')||'—';
     const adv=(e.vs_adv||[]).map(k=>ELEMENT_DB[k]?ELEMENT_DB[k].name:k).join('・')||'—';
@@ -9990,7 +9994,11 @@ function _epBuildAttrPanel(){
 }
 
 function _epBuildRing(){
-  const keys=Object.keys(ELEMENT_DB);
+  // ★ v1.0.20260424.1370 — 重排節點順序符合新相剋循環:水→火→草→土→風→水,光暗成對
+  //   舊順序(等距):water, fire, wind, grass, earth, light, dark
+  //   新順序(沿循環):water, fire, grass, earth, wind, light, dark
+  const _orderedKeys = ['water','fire','grass','earth','wind','light','dark'];
+  const keys = _orderedKeys.filter(k => ELEMENT_DB[k]);
   const wrap=document.getElementById('ep-ring-wrap');
   // Keep confirm btn, rebuild nodes
   const btn=document.getElementById('ep-confirm-btn');
@@ -13250,7 +13258,8 @@ const BURST_GIF_DB = {
   '禍世邪魅': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A6%8D%E4%B8%96%E9%82%AA%E9%AD%85.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-charm',0.9],['sfx-explode',0.6]],
-    tint:'rgba(255,150,80,0.18)'
+    tint:'rgba(255,150,80,0.18)',
+    scale:2.0  // ★ v1.0.20260424.1370 — 放大 100% (玩家反應特效太小)
   },
   // 八頭龍滅世：兩段接力（先火雨 → 再八龍頭滅世）
   '八頭龍滅世': {
@@ -13467,11 +13476,14 @@ function _showBurstGif(burstName){
 
     const img=document.createElement('img');
     img.src = clipUrl + '?r=' + Date.now();
+    // ★ v1.0.20260424.1370 — 支援 data.scale 倍數放大(用 transform:scale 維持中心)
+    const _scale = (typeof data.scale === 'number' && data.scale > 0) ? data.scale : 1;
     img.style.cssText=[
       'max-width:100%;max-height:100%;',
       'width:1920px;height:1080px;',
       'object-fit:contain;',
-      'image-rendering:auto;'
+      'image-rendering:auto;',
+      _scale !== 1 ? ('transform:scale(' + _scale + ');transform-origin:center center;') : ''
     ].join('');
     ov.appendChild(img);
     gc.appendChild(ov);
@@ -27642,6 +27654,7 @@ function _closeAllBattleModals(){
   const _ids = [
     'adv-reward-overlay',    // 答題獎勵(內部也用此 DOM 做「選擇爆發隊友」picker)
     'adv-quiz-overlay',      // 問題視窗
+    'adv-repick-popup',      // ★ v1.0.20260424.1360 — 重選題庫視窗(避免戰鬥結束後殘留到下個場景對白)
     'passive-prompt',        // 被動技能提示
     'burst-priority-modal',  // 多人可爆發的優先選擇
     'burst-panel',           // 單人爆發確認面板
@@ -27654,8 +27667,8 @@ function _closeAllBattleModals(){
       el.classList.remove('show');
       // (b) 強制 display:none(inline-style overlay)
       el.style.display = 'none';
-      // (c) 對於動態產生後 appendChild 的 modal(burst-priority-modal / burst-panel),直接移除
-      if(id === 'burst-priority-modal' || id === 'burst-panel' || id === 'passive-prompt'){
+      // (c) 對於動態產生後 appendChild 的 modal(burst-priority-modal / burst-panel / adv-repick-popup),直接移除
+      if(id === 'burst-priority-modal' || id === 'burst-panel' || id === 'passive-prompt' || id === 'adv-repick-popup'){
         el.remove();
       }
     }catch(_e){}
@@ -33088,6 +33101,11 @@ function advShowRePickSubject(onDone) {
         style="padding:14px 48px;font-size:28px;font-weight:900;background:linear-gradient(135deg,rgba(180,120,255,0.3),rgba(100,50,200,0.3));border:2px solid #cc88ff;color:#cc88ff;border-radius:12px;cursor:pointer;margin-top:8px;">
         ✔ 確認，繼續作答
       </button>
+      <!-- ★ v1.0.20260424.1360 — 取消按鈕(玩家若想跳過直接進對話/戰鬥) -->
+      <button onclick="window._advRePickCancel && window._advRePickCancel()"
+        style="padding:10px 28px;font-size:18px;font-weight:600;background:rgba(80,80,100,0.4);border:1.5px solid #8888aa;color:#bbbbcc;border-radius:10px;cursor:pointer;margin-top:8px;margin-left:12px;">
+        ✕ 跳過
+      </button>
     </div>`;
   document.getElementById('gc').appendChild(_pop);
   window._advRePickSubj = _advPlayerSubject || '數學';
@@ -33102,6 +33120,12 @@ function advShowRePickSubject(onDone) {
     // 重新準備題庫
     advPrepareSessionQuestions();
     log(`📚 重新選擇：${_advPlayerSubject} / ${_advPlayerDifficulty}，第${_advQuizRound}輪，繼續作答！`);
+    if(onDone) onDone();
+  };
+  // ★ v1.0.20260424.1360 — 跳過按鈕:不重選題庫,直接呼叫 onDone(讓流程繼續)
+  window._advRePickCancel = () => {
+    _pop.remove();
+    log(`📚 跳過題庫重選,繼續流程。`);
     if(onDone) onDone();
   };
 }
@@ -43907,6 +43931,12 @@ function _advMiniQuizAsk(onDone) {
       return;
     }
     // ★ 題目出完：顯示換題庫視窗，重選後重新出題，不卡死（非日本關才走此路）
+    // ★ v1.0.20260424.1360 — 防護:若小怪戰已結束就不彈視窗,避免疊到場景對白上
+    if(typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive){
+      try{ console.log('[_advMiniQuizAsk] 小怪戰已結束,跳過重選視窗,直接呼叫 onDone'); }catch(_){}
+      if(onDone) onDone();
+      return;
+    }
     advShowRePickSubject(() => {
       // 清除已用題目，重新建題庫
       if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
@@ -47581,6 +47611,56 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1370', brief:[
+    '🦊 玉藻前爆發「禍世邪魅」視覺特效放大 100%',
+    '⏭ 跳過劇情按鈕從右上移到左上(避開法寶欄遮擋)',
+    '🔄 屬性加護選擇環的元素節點重新排序符合新相剋循環',
+  ], items:[
+    '【1. 禍世邪魅特效放大】',
+    '  - BURST_GIF_DB 的「禍世邪魅」加 scale:2.0 設定',
+    '  - _showBurstGif 新增支援 data.scale 倍數放大',
+    '  - 用 transform:scale(2) 從中心放大,維持構圖',
+    '  - 不影響其他爆發技(沒設 scale 預設 1.0)',
+    '【2. 跳過劇情按鈕位置】',
+    '  - 從 right:12px 改為 left:12px',
+    '  - 原本被法寶欄(右側 z-index 高)遮擋,現在改到左側',
+    '  - 仍然在對話框外側上緣(不貼螢幕邊,iPad 友善)',
+    '【3. 屬性加護環節點順序】',
+    '  舊順序(Object.keys 自然順序):water → fire → wind → grass → earth → light → dark',
+    '  新順序(配合新循環):water → fire → grass → earth → wind → light → dark',
+    '  視覺效果:玩家可以順著環的位置直觀看到「水→火→草→土→風→水」循環',
+    '  說明卡的「⚔剋」內容本來就動態讀 ELEMENT_DB,自動套用新規則,本版只調整節點排序',
+    '【實作位置】',
+    '  - BURST_GIF_DB 禍世邪魅 scale:2.0: line ~13253',
+    '  - _showBurstGif 支援 scale: line ~13476',
+    '  - 跳過劇情按鈕改 left: line ~5410',
+    '  - _epBuildRing 排序: line ~9994',
+    '  - _epBuildAttrPanel 排序: line ~9935',
+  ] },
+  { ver:'v1.0.20260424.1360', brief:[
+    '🔧 修復「題庫重選彈窗」殘留到下個場景對白卡死',
+  ], items:[
+    '【症狀】',
+    '  貓空關第一次小怪戰結束後進入第二場景樟湖步道,',
+    '  剛好「題庫重選」彈窗(advShowRePickSubject)在戰鬥結束時觸發了,',
+    '  視窗疊在樟湖步道對白上方,玩家重選後關閉視窗,但對白卻按不動,',
+    '  要等一段時間才突然又能繼續推進對白',
+    '【根因(三個並發問題)】',
+    '  ① _closeAllBattleModals 沒包含 adv-repick-popup → 戰鬥結束沒清掉重選視窗',
+    '  ② _advMiniQuizAsk 在「戰鬥已結束」時仍可能因 onDone 殘留呼叫 advShowRePickSubject',
+    '  ③ 重選後的 onDone callback 假設「還在戰鬥中」,呼叫 _gamePaused=false; aiAct(next),',
+    '     但戰鬥已結束 → 卡住一段時間直到自然超時',
+    '【修復(三層防護)】',
+    '  ① 把 adv-repick-popup 加入 _closeAllBattleModals 的清除清單,',
+    '     戰鬥結束時自動移除',
+    '  ② _advMiniQuizAsk 入口加防護:若 _advMiniBattleActive=false 直接呼叫 onDone,',
+    '     不再彈重選視窗',
+    '  ③ advShowRePickSubject 視窗加「✕ 跳過」按鈕,玩家可手動關閉直接 onDone',
+    '【實作位置】',
+    '  - _closeAllBattleModals 加 adv-repick-popup: line ~27644',
+    '  - _advMiniQuizAsk 防護: line ~43909',
+    '  - advShowRePickSubject 跳過按鈕: line ~33089 + line ~33108',
+  ] },
   { ver:'v1.0.20260424.1350', brief:[
     '🔄 屬性相剋規則重新調整為五行循環(水→火→草→土→風→水)',
   ], items:[
@@ -55019,7 +55099,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1350';
+  const CURRENT_VERSION = 'v1.0.20260424.1370';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -55036,7 +55116,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1350';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1370';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
