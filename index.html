@@ -5267,17 +5267,25 @@ body.art-premium #summon-overlay {
       <!-- Pentagon ring (faint guide) -->
       <polygon points="100,28 164,78 140,155 60,155 36,78" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-      <!-- Cycle arrows: water->fire->wind->grass->earth->water (clockwise) -->
-      <!-- water(100,28) -> fire(164,78): midpoint-ish -->
+      <!-- ★ v1.0.20260424.1350 — 新循環箭頭:水→火→草→土→風→水
+           節點位置不變(水頂、火右上、風右下、草左下、土左上),
+           箭頭重畫成跨越的星形(穿過五邊形對角線):
+           水(100,28) → 火(164,78) [右下短邊]
+           火(164,78) → 草(60,155) [跨左下對角]
+           草(60,155) → 土(36,78)  [左上短邊]
+           土(36,78) → 風(140,155) [跨右下對角]
+           風(140,155) → 水(100,28) [上方對角]
+      -->
+      <!-- 水(100,28) -> 火(164,78): 右下短邊 -->
       <line x1="116" y1="34" x2="150" y2="68" stroke="#88ccff" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- fire(164,78) -> wind(140,155) -->
-      <line x1="162" y1="95" x2="148" y2="138" stroke="#ffaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- wind(140,155) -> grass(60,155) -->
-      <line x1="122" y1="158" x2="78" y2="158" stroke="#88ffaa" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- grass(60,155) -> earth(36,78) -->
-      <line x1="52" y1="138" x2="38" y2="95" stroke="#bbdd55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- earth(36,78) -> water(100,28) -->
-      <line x1="50" y1="68" x2="84" y2="34" stroke="#ddaa44" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 火(164,78) -> 草(60,155): 跨左下長對角 -->
+      <line x1="152" y1="86" x2="74" y2="146" stroke="#ffaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 草(60,155) -> 土(36,78): 左短邊 -->
+      <line x1="52" y1="138" x2="38" y2="95" stroke="#bbdd66" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 土(36,78) -> 風(140,155): 跨右下長對角 -->
+      <line x1="48" y1="86" x2="126" y2="146" stroke="#ddaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 風(140,155) -> 水(100,28): 上方長線 -->
+      <line x1="132" y1="138" x2="106" y2="46" stroke="#88ffaa" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
 
       <!-- Nodes - pentagon positions r=68 from center(100,95) -->
       <!-- water: top (100, 28) -->
@@ -9596,13 +9604,17 @@ function initGame(){
 // ====== HERO PICK ======
 
 // ====== ELEMENT SYSTEM ======
+// ★ v1.0.20260424.1350 — 屬性相剋規則重新調整:
+//   水剋火、火剋草、草剋土、土剋風、風剋水(五行循環)
+//   光暗互剋不變
+//   舊規則(水→火→風→草→土→水)改為新規則(水→火→草→土→風→水)
 const ELEMENT_DB = {
   water: {
     icon:'💧', name:'水', cls:'elem-water',
     desc:'50%免疫冰凍/反射，HP上限+5',
     bonus_hp:5,
     immune50:['freeze','reflect'],
-    vs_adv:['fire'], vs_dis:['earth'],
+    vs_adv:['fire'], vs_dis:['wind'],   // 水剋火,被風剋
     adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   fire: {
@@ -9610,7 +9622,7 @@ const ELEMENT_DB = {
     desc:'50%免疫封印攻擊/睡眠，攻擊+4',
     bonus_atk:4,
     immune50:['noatk','sleep'],
-    vs_adv:['wind'], vs_dis:['water'],
+    vs_adv:['grass'], vs_dis:['water'],  // 火剋草,被水剋
     adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   wind: {
@@ -9618,7 +9630,7 @@ const ELEMENT_DB = {
     desc:'50%免疫麻痺/減速，速度+4',
     bonus_spd:4,
     immune50:['para','spddown'],
-    vs_adv:['grass'], vs_dis:['fire'],
+    vs_adv:['water'], vs_dis:['earth'],  // 風剋水,被土剋
     adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   grass: {
@@ -9626,7 +9638,7 @@ const ELEMENT_DB = {
     desc:'50%免疫禁止恢復/中毒，恢復效果+5',
     bonus_healflat:5,
     immune50:['noheal_curse','poison'],
-    vs_adv:['earth'], vs_dis:['wind'],
+    vs_adv:['earth'], vs_dis:['fire'],   // 草剋土,被火剋
     adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   earth: {
@@ -9634,7 +9646,7 @@ const ELEMENT_DB = {
     desc:'50%免疫能力降低/暈眩，受傷-4',
     bonus_dmgreduce:4,
     immune50:['stubbornDebuff','stun'],
-    vs_adv:['water'], vs_dis:['grass'],
+    vs_adv:['wind'], vs_dis:['grass'],   // 土剋風,被草剋
     adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
   light: {
@@ -47569,6 +47581,37 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1350', brief:[
+    '🔄 屬性相剋規則重新調整為五行循環(水→火→草→土→風→水)',
+  ], items:[
+    '【新規則】',
+    '  水剋火 (對火屬性對手 +10% 傷害,被火屬性 -10%)',
+    '  火剋草 (對草屬性對手 +10% 傷害,被水屬性 -10%)',
+    '  草剋土 (對土屬性對手 +10% 傷害,被火屬性 -10%)',
+    '  土剋風 (對風屬性對手 +10% 傷害,被草屬性 -10%)',
+    '  風剋水 (對水屬性對手 +10% 傷害,被土屬性 -10%)',
+    '  光暗互剋(不變)',
+    '【舊規則對照】',
+    '  舊:水→火→風→草→土→水',
+    '  新:水→火→草→土→風→水',
+    '  差異:風和草、土的關係調整',
+    '【SVG 相剋圖箭頭重畫】',
+    '  五邊形節點位置不變(水頂、火右上、風右下、草左下、土左上),',
+    '  但箭頭重新繪製成「五角星」走勢:',
+    '    水(頂) → 火(右上) [短邊]',
+    '    火(右上) → 草(左下) [跨對角]',
+    '    草(左下) → 土(左上) [短邊]',
+    '    土(左上) → 風(右下) [跨對角]',
+    '    風(右下) → 水(頂) [長對角]',
+    '【未動到】',
+    '  - 屬性技能傷害計算邏輯(getElemDmgMod)→ 自動讀取新 ELEMENT_DB',
+    '  - 強制屬性技能(SKILL_FORCE_ELEMENT)→ 仍依新規則計算 ±20%',
+    '  - 元素資訊彈窗(_openElemPopup / _openAllElemPopup)→ 動態讀取,自動套用',
+    '  - 各屬性的 immune50 異常列表 / bonus 數值 → 完全保留',
+    '【實作位置】',
+    '  - ELEMENT_DB 相剋關係: line ~9605-9637',
+    '  - elem-wheel SVG 箭頭: line ~5270-5283',
+  ] },
   { ver:'v1.0.20260424.1340', brief:[
     '⚔ BOSS 中控制狀態(暈眩/魅惑等)時也能繼續出題',
     '🎉 答題解鎖小力/幼兒園後,戰鬥結束會顯示「英雄加入」畫面',
@@ -54976,7 +55019,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1340';
+  const CURRENT_VERSION = 'v1.0.20260424.1350';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54993,7 +55036,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1340';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1350';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
