@@ -9960,6 +9960,20 @@ function _epBuildAttrPanel(){
     if(_extLeft.has(key))       adjLeft = lx - (newW-baseW)/2;  // 向左延伸
     else if(_extRight.has(key)) adjLeft = lx + (newW-baseW)/2;  // 向右延伸
     else                        adjLeft = lx;                    // 水：左右均等
+    // ★ v1.0.20260424.1380 — 修正風和土的卡片 X 位置避免在底部重疊
+    //   問題:7 個元素角度等距下風(115°,左下)和土(64°,右下)都在底部,卡片 380px 寬擠在一起
+    //   修法:讓風的 X 對齊光(左側)、土的 X 對齊草(右側),只在 X 軸對齊,Y 軸保持原樣
+    if(key === 'wind'){
+      // 把風的 X 移到光卡片的 X 位置(左側)
+      const _lightAngle = (5/n) * Math.PI * 2 - Math.PI/2;
+      const _lightLx = cx + r_label * Math.cos(_lightAngle);
+      adjLeft = _lightLx - (newW-baseW)/2;
+    } else if(key === 'earth'){
+      // 把土的 X 移到草卡片的 X 位置(右側)
+      const _grassAngle = (2/n) * Math.PI * 2 - Math.PI/2;
+      const _grassLx = cx + r_label * Math.cos(_grassAngle);
+      adjLeft = _grassLx + (newW-baseW)/2;
+    }
     const cardLeft=Math.round(adjLeft), cardTop=Math.round(ly);
     const card=document.createElement('div');
     card.className='ep-attr-orbit-card'; card.id='epar-'+key;
@@ -32716,6 +32730,11 @@ function advStartBattle(){
   })();
   const gc = document.getElementById('gc');
   if(gc) gc.classList.add('adv-battle');
+  // ★ v1.0.20260424.1380 — 冒險戰鬥畫面顯示屬性相剋環按鈕(玩家可隨時點開查看相剋表)
+  try{
+    const _ewBattle = document.getElementById('elem-wheel');
+    if(_ewBattle) _ewBattle.style.display = '';
+  }catch(_){}
   try{ playBattleStartSfx(); }catch(e){}
   try{ renderField(true); }catch(e){ console.error('[renderField]',e); }
   try{ if(typeof markAdventureBossCards==='function') markAdventureBossCards(); }catch(e){}
@@ -44465,6 +44484,11 @@ function advStartMiniBattle(nextSceneIdx) {
       _advBgEl.classList.add('visible');
     }
     if(gc) gc.classList.add('adv-battle');
+    // ★ v1.0.20260424.1380 — 小怪戰也顯示屬性相剋環按鈕
+    try{
+      const _ewMini = document.getElementById('elem-wheel');
+      if(_ewMini) _ewMini.style.display = '';
+    }catch(_){}
 
     // ── BGM：先停再播戰鬥曲（loop=true 要先 pause 再設 src）
     // ★ v1.0.20260422.0100 — 日本關與稀有怪 BGM 已在上方（line ~35544-35567）正確設定，
@@ -47611,6 +47635,25 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1380', brief:[
+    '🔧 修正屬性加護環:風和土的卡片不再底部重疊',
+    '⚪ 冒險戰鬥畫面恢復顯示屬性相剋環按鈕(左側)',
+  ], items:[
+    '【1. 風和土卡片重疊修復】',
+    '  問題:7 元素角度等距下,風(115°,左下)和土(64°,右下)的說明卡片(380px 寬)在底部重疊',
+    '  修法:風的卡片 X 對齊光的位置(左)、土的卡片 X 對齊草的位置(右)',
+    '       Y 軸保持原位(節點還在環上原本的位置),只改卡片水平偏移',
+    '  結果:風卡片與光卡片同一垂直線(左側列),土卡片與草卡片同一垂直線(右側列)',
+    '【2. 戰鬥屬性相剋環按鈕復原】',
+    '  問題:冒險戰鬥畫面左側看不到屬性相剋環(玩家無法查看相剋關係)',
+    '  根因:startAdventureGame 隱藏了 elem-wheel,但 advStartBattle/advStartMiniBattle',
+    '       沒在戰鬥開始時重新顯示',
+    '  修法:advStartBattle 與 advStartMiniBattle 開頭都加上 elem-wheel 顯示',
+    '【實作位置】',
+    '  - _epBuildAttrPanel 風/土 X 對齊: line ~9963',
+    '  - advStartBattle 顯示 elem-wheel: line ~32733',
+    '  - advStartMiniBattle 顯示 elem-wheel: line ~44488',
+  ] },
   { ver:'v1.0.20260424.1370', brief:[
     '🦊 玉藻前爆發「禍世邪魅」視覺特效放大 100%',
     '⏭ 跳過劇情按鈕從右上移到左上(避開法寶欄遮擋)',
@@ -55099,7 +55142,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1370';
+  const CURRENT_VERSION = 'v1.0.20260424.1380';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -55116,7 +55159,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1370';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1380';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
