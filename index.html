@@ -8886,7 +8886,7 @@ const HERO_BIO = {
   '程式設計師':{ role:'力行小學資訊社創辦人', trait:'邏輯思維強，解決問題快', hobby:'寫程式，玩Minecraft', quote:'「Bug只是還沒被找到的Feature。」' },
   '弦樂團員':  { role:'力行小學弦樂團小提琴手', trait:'敏感細膩，富有藝術氣息', hobby:'練習協奏曲，欣賞音樂會', quote:'「音樂，是靈魂的語言。」' },
   '小劇團員':  { role:'力行小學戲劇社主角', trait:'表現力強，樂於分享', hobby:'排練話劇，模仿各種角色', quote:'「人生如戲，戲如人生！」' },
-  '小力':      { role:'力行小學愛狗人士', trait:'善良溫暖，重視友情', hobby:'遛狗，照顧流浪動物', quote:'「小黑！小黑！等我啊——！」' },
+  '小力':      { role:'力行國小校犬', trait:'非常內向,喜歡靜靜的在角落陪伴小朋友們上課學習', hobby:'趁假日沒人的時候巡視校園、到河堤散步', quote:'「汪……(微微搖尾巴)」' },
   '神偷':      { role:'影城盜賊公會頂尖成員', trait:'靈活狡猾，見機行事', hobby:'收集各種奇怪的小玩意兒', quote:'「你的，也是我的。但放心，我只拿有趣的。」' },
   '刺客':      { role:'黑夜傭兵組織精英殺手', trait:'冷酷沉著，目標導向', hobby:'磨刀，研究毒草學', quote:'「我的工作沒有失敗這兩個字。」' },
   '守衛':      { role:'王城銅牆鐵壁第一守衛', trait:'沉穩厚實，以身作盾', hobby:'重量訓練，修繕盾甲', quote:'「想從我這裡過去？先過了我這關再說。」' },
@@ -11103,7 +11103,7 @@ const HERO_LORE = {
   '吸血鬼':  '嗜血維生、於黑夜中活躍的血之一族',
   '學者':    '博學多聞、活用知識的考古學者',
   '時空法師':'操控時間、扭轉乾坤的祕法師',
-  '小力':    '我們的校犬，超內向，求呵護',
+  '小力':    '力行國小的校犬,內向害羞,喜歡靜靜陪伴小朋友',
   '籃球隊員':'全場焦點的王牌，擅長精準投射',
   '直笛團員':'悠揚的笛聲是後援也是敵人的夢魘',
   '田徑隊員':'以極致速度先發制人的疾風健將',
@@ -32649,6 +32649,8 @@ function advShowQuiz() {
 
   // 填充題目
   document.getElementById('adv-quiz-question').textContent = q.question;
+  // ★ v1.0.20260424.1240 — BOSS 戰也要更新養護專題進度條
+  try{ if(typeof _updateSpecialQuizProgressBar === 'function') _updateSpecialQuizProgressBar(); }catch(_){}
   const optDiv = document.getElementById('adv-quiz-options');
   const letters = ['A','B','C','D'];
   optDiv.innerHTML = '';
@@ -32991,6 +32993,26 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
     try{ _trackUnlockHeroProgress(_advCurrentQuestion); }catch(e){}
+    // ★ v1.0.20260424.1240 — BOSS 戰也顯示養護專題連擊浮動提示
+    try{
+      if(_advCurrentQuestion && (_advCurrentQuestion.subject === '領養與照顧狗狗' || _advCurrentQuestion.subject === '照顧與陪伴幼兒')){
+        const _isDogB = _advCurrentQuestion.subject === '領養與照顧狗狗';
+        const _streakKeyB = _isDogB ? 'dogCareStreak' : 'careInfantStreak';
+        const _fullB = _isDogB
+          ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : [])
+          : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
+        const _streakB = (_medalStats && _medalStats[_streakKeyB]) || 0;
+        const _totalB = _fullB.length || 20;
+        const _iconB = _isDogB ? '🐕' : '👶';
+        const _heroLabelB = _isDogB ? '小力' : '幼兒園小孩';
+        setTimeout(() => {
+          // 若 streak 歸零代表剛達成 20 題解鎖,_trackUnlockHeroProgress 會顯示自己的解鎖訊息
+          if(_streakB > 0){
+            bannerFX(null, `🔥${_iconB} 連擊 ${_streakB}/${_totalB} 題! 再連對 ${_totalB - _streakB} 題解鎖【${_heroLabelB}】`, '#88ff99', 2200);
+          }
+        }, 800);
+      }
+    }catch(_progE){ console.warn('[boss progress toast]', _progE); }
     _advStats.totalAnswerTime += elapsed;
     // ★ 依題目本身的年級和難度計算得分（非玩家設定，而是題目實際難度）
     const _qGrade = (_advCurrentQuestion && _advCurrentQuestion.grade) || '中年級';
@@ -38252,6 +38274,9 @@ const SUMMON_FX_SMOKE_GIF  = 'https://raw.githubusercontent.com/clarebox123jp-ar
 const SUMMON_FX_REVEAL_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.gif';
 // ★ v1.0.20260424.1130 — 新版「召喚煙火 2」特效:用於非角色/非果實的普通獎勵召喚
 const SUMMON_FX_SMOKE2_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB2.gif';
+// ★ v1.0.20260424.1230 — 區分單抽/十連抽的專屬開場特效
+const SUMMON_FX_1X_GIF  = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AF%E6%84%9B%E6%B5%81%E6%98%9F.gif';   // 單抽:可愛流星
+const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%81%E9%80%A3%E6%8A%BD.gif';            // 十連抽:豪華演出
 
 // 稀有角色池
 const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女'];
@@ -38755,6 +38780,52 @@ function _playSummonSmoke2Fx(onDone){
   }, 1800);
 }
 
+// ★ v1.0.20260424.1230 — 單抽專屬「可愛流星」開場特效
+//   音效:輕柔可愛感(gentle 主音 + heal 點綴 + coin 收尾)
+function _playSummon1xFx(onDone){
+  const fx = document.getElementById('summon-fx-layer');
+  if(!fx){ if(onDone) onDone(); return; }
+  fx.style.display = 'block';
+  fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+    + 'width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_1X_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 50px rgba(255,200,230,0.85));" alt="單抽可愛流星"/>'
+    + '</div>';
+  // 音效組合:輕柔的兩段式
+  // 0 ms - sfx-gentle 主音(柔軟召喚)
+  // 200 ms - sfx-fantasy 飛行尾韻(流星劃過)
+  try{ playSfx('sfx-gentle', 1.0); }catch(_){}
+  try{ setTimeout(()=>{ playSfx('sfx-fantasy', 0.85); }, 200); }catch(_){}
+  setTimeout(()=>{
+    if(fx) fx.innerHTML = '';
+    if(onDone) onDone();
+  }, 1800);
+}
+
+// ★ v1.0.20260424.1230 — 十連抽專屬豪華開場特效
+//   音效:震撼大氣(burst+敲鑼+powerup 三層堆疊,呼應十連抽的儀式感)
+function _playSummon10xFx(onDone){
+  const fx = document.getElementById('summon-fx-layer');
+  if(!fx){ if(onDone) onDone(); return; }
+  fx.style.display = 'block';
+  fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+    + 'width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_10X_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 80px rgba(255,180,80,1)) drop-shadow(0 0 120px rgba(255,140,40,0.7));" alt="十連抽豪華演出"/>'
+    + '</div>';
+  // 音效組合:震撼三段式
+  // 0 ms   - sfx-gong 主音(敲響召喚之鐘,儀式開始)
+  // 250 ms - sfx-burst 爆發(力量釋放)
+  // 600 ms - sfx-powerup 推升(終局氣勢)
+  try{ playSfx('sfx-gong', 1.0); }catch(_){}
+  try{ setTimeout(()=>{ playSfx('sfx-burst', 0.95); }, 250); }catch(_){}
+  try{ setTimeout(()=>{ playSfx('sfx-powerup', 0.9); }, 600); }catch(_){}
+  setTimeout(()=>{
+    if(fx) fx.innerHTML = '';
+    if(onDone) onDone();
+  }, 2000);  // 略長於單抽,展現十連抽的儀式感
+}
+
 // 主流程:執行 N 次召喚
 function doSummon(times){
   if(!times || times < 1) times = 1;
@@ -38797,22 +38868,24 @@ function doSummon(times){
   results.forEach(r => _applySummonReward(r));
   _commitSummonRewards();
 
-  // ★ v1.0.20260424.1130 — 特效選擇邏輯:
-  //   - 含「角色」(rare_hero) 或「極限爆發果實」(burst_fruit / burst_fruit_alt)
-  //     → 用原本的 reveal 特效(召喚煙火 → 召喚角色)
-  //   - 其他普通獎勵(技能書、BOSS 賣錢物、精裝經驗書等)
-  //     → 用新的「召喚煙火 2」特效
+  // ★ v1.0.20260424.1230 — 重新設計特效流程:
+  //   - 開場特效依「單抽 / 十連抽」分流(可愛流星 vs 豪華演出)
+  //   - 後續再依「是否有稀有」決定是否接續 reveal 慶祝特效
+  //   - 沒有稀有 → 開場結束直接顯示結果
+  //   - 有稀有 → 開場 → 角色 reveal(三層慶祝音) → 顯示結果
   const _hasHeroOrFruit = results.some(r =>
     r.kind === 'rare_hero' || r.kind === 'burst_fruit' || r.kind === 'burst_fruit_alt'
   );
+  // 依 times 選擇開場特效
+  const _openerFx = (times === 10) ? _playSummon10xFx : _playSummon1xFx;
   if(_hasHeroOrFruit){
-    // 原本的雙重特效:煙火 → 角色 reveal
-    _playSummonSmokeFx(()=>{
+    // 開場 → 角色 reveal(含三層慶祝音) → 結果
+    _openerFx(()=>{
       _playSummonRevealFx(()=>{ _showSummonResults(results); });
     });
   } else {
-    // 新版「召喚煙火 2」特效(取代普通獎勵的單一煙火特效)
-    _playSummonSmoke2Fx(()=>{ _showSummonResults(results); });
+    // 開場 → 直接顯示結果
+    _openerFx(()=>{ _showSummonResults(results); });
   }
 }
 
@@ -43572,31 +43645,8 @@ function _advMiniQuizAsk(onDone) {
 
   // ★ v1.0.20260424.1180 — 專屬題庫進度顯示
   // ★ v1.0.20260424.1200 — 改用 streak (連續答對) 計數,答錯歸零
-  try{
-    const _spProg = document.getElementById('adv-quiz-special-progress');
-    const _spText = document.getElementById('adv-quiz-special-progress-text');
-    if(_spProg && _spText){
-      const _isDog = (typeof _advPlayerSubject !== 'undefined' && _advPlayerSubject === '領養與照顧狗狗');
-      const _isInfant = (typeof _advPlayerSubject !== 'undefined' && _advPlayerSubject === '照顧與陪伴幼兒');
-      if(_isDog || _isInfant){
-        const _streakKey = _isDog ? 'dogCareStreak' : 'careInfantStreak';
-        const _full = _isDog ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : []) : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
-        const _streak = (_medalStats && _medalStats[_streakKey]) || 0;
-        const _total = _full.length || 20;
-        const _remain = Math.max(0, _total - _streak);
-        const _icon = _isDog ? '🐕' : '👶';
-        const _heroLabel = _isDog ? '小力' : '幼兒園小孩';
-        if(_remain === 0){
-          _spText.innerHTML = `${_icon} 連續答對達成 ${_streak}/${_total} 題! → 解鎖【${_heroLabel}】`;
-        } else {
-          _spText.innerHTML = `${_icon} 🔥連擊 <span style="color:#ffe066;font-size:24px;">${_streak}</span>/${_total} 題,再連對 <span style="color:#ff99cc;font-size:24px;">${_remain}</span> 題解鎖【${_heroLabel}】 ⚠️ 答錯歸零`;
-        }
-        _spProg.style.display = 'block';
-      } else {
-        _spProg.style.display = 'none';
-      }
-    }
-  }catch(_progE){ console.warn('[quiz progress]', _progE); }
+  // ★ v1.0.20260424.1240 — 改用共用函式 _updateSpecialQuizProgressBar
+  try{ if(typeof _updateSpecialQuizProgressBar === 'function') _updateSpecialQuizProgressBar(); }catch(_progE){ console.warn('[quiz progress]', _progE); }
 
   // 設定題目文字
   const qEl = document.getElementById('adv-quiz-question');
@@ -45793,7 +45843,26 @@ function _trackUnlockHeroProgress(q){
         if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(heroName);
       }
       log(`🎉 [成就解鎖] 連續答對 20 題「${q.subject}」 → 獲得活動英雄【${heroName}】!`);
-      try{ bannerFX(null, '🎉 解鎖新英雄:' + heroName + '!', '#ffe066', 2000); }catch(e){}
+      // ★ v1.0.20260424.1240 — 醒目通知:全螢幕慶祝 toast + 三層音效 + 紅點導航
+      try{
+        // 1) 大型金色 toast(5.5 秒,跟日本 BOSS 加入夥伴同樣顯眼)
+        if(typeof _showInGameToast === 'function'){
+          _showInGameToast(
+            `🎉🎁 解鎖新英雄!【${heroName}】加入你的夥伴! 連續答對 20 題達成!`,
+            '#ffcc44', 5500
+          );
+        } else {
+          bannerFX(null, '🎉 解鎖新英雄:' + heroName + '!', '#ffe066', 3000);
+        }
+        // 2) 三層慶祝音效(同稀有召喚)
+        try{ playSfx('sfx-summon-reveal', 1.0); }catch(_){}
+        try{ setTimeout(()=>{ playSfx('sfx-medal-unlock', 0.95); }, 250); }catch(_){}
+        try{ setTimeout(()=>{ playSfx('sfx-goddess', 0.85); }, 550); }catch(_){}
+        // 3) 設「英雄」分頁紅點,提醒玩家去看新英雄
+        try{ if(typeof _setNavDot === 'function') _setNavDot('英雄', true); }catch(_){}
+        // 4) 大型 banner 緊接著 toast,雙重保險
+        try{ setTimeout(()=>{ bannerFX(null, '🎉 解鎖新英雄:' + heroName + '!', '#ffe066', 3000); }, 600); }catch(_){}
+      }catch(eNotify){ console.warn('[解鎖通知]', eNotify); }
     }catch(e){ console.warn('解鎖英雄失敗', e); }
   };
   // ★ v1.0.20260424.1200 — 改為「連續答對」計數機制
@@ -45842,6 +45911,37 @@ function _trackUnlockHeroProgress(q){
       try { log(`🎯 [領養與照顧狗狗] 已連續答對 20 題!題庫重置,可重新挑戰。`); } catch(_e){}
     }
   }
+}
+
+// ★ v1.0.20260424.1240 — 共用函式:更新養護專題進度條(小怪戰 + BOSS 戰共用)
+//   讀取目前的 _advPlayerSubject 與對應的 streak,更新題目視窗頂部進度條
+function _updateSpecialQuizProgressBar(){
+  try{
+    const _spProg = document.getElementById('adv-quiz-special-progress');
+    const _spText = document.getElementById('adv-quiz-special-progress-text');
+    if(!_spProg || !_spText) return;
+    const _isDog = (typeof _advPlayerSubject !== 'undefined' && _advPlayerSubject === '領養與照顧狗狗');
+    const _isInfant = (typeof _advPlayerSubject !== 'undefined' && _advPlayerSubject === '照顧與陪伴幼兒');
+    if(_isDog || _isInfant){
+      const _streakKey = _isDog ? 'dogCareStreak' : 'careInfantStreak';
+      const _full = _isDog
+        ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : [])
+        : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
+      const _streak = (typeof _medalStats !== 'undefined' && _medalStats[_streakKey]) || 0;
+      const _total = _full.length || 20;
+      const _remain = Math.max(0, _total - _streak);
+      const _icon = _isDog ? '🐕' : '👶';
+      const _heroLabel = _isDog ? '小力' : '幼兒園小孩';
+      if(_remain === 0){
+        _spText.innerHTML = `${_icon} 連續答對達成 ${_streak}/${_total} 題! → 解鎖【${_heroLabel}】`;
+      } else {
+        _spText.innerHTML = `${_icon} 🔥連擊 <span style="color:#ffe066;font-size:24px;">${_streak}</span>/${_total} 題,再連對 <span style="color:#ff99cc;font-size:24px;">${_remain}</span> 題解鎖【${_heroLabel}】 ⚠️ 答錯歸零`;
+      }
+      _spProg.style.display = 'block';
+    } else {
+      _spProg.style.display = 'none';
+    }
+  }catch(e){ console.warn('[updateSpecialQuizProgressBar]', e); }
 }
 
 // ★ v1.0.20260424.1200 — 答錯時重置「連續答對」進度 + 清空已用題庫
@@ -47098,6 +47198,93 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1241', brief:[
+    '🐕 小力介紹文修改:從「愛狗人士」改為「校犬本人」設定',
+  ], items:[
+    '【角色設定統一】',
+    '  原本 HERO_PROFILES 設「力行小學愛狗人士」(操作小力的人類玩家),',
+    '  但簡短描述卻寫「我們的校犬,超內向,求呵護」(校犬本身),兩邊不一致',
+    '  本版統一為「校犬本人」設定,玩家操作的就是這隻校犬',
+    '【新介紹文(HERO_PROFILES["小力"])】',
+    '  - 身分:力行國小校犬',
+    '  - 個性:非常內向,喜歡靜靜的在角落陪伴小朋友們上課學習',
+    '  - 興趣:趁假日沒人的時候巡視校園、到河堤散步',
+    '  - 名言:「汪……(微微搖尾巴)」',
+    '【簡短描述】',
+    '  舊:「我們的校犬,超內向,求呵護」',
+    '  新:「力行國小的校犬,內向害羞,喜歡靜靜陪伴小朋友」',
+    '【實作位置】',
+    '  - HERO_PROFILES 小力: line ~8889',
+    '  - 簡短描述: line ~11106',
+  ] },
+  { ver:'v1.0.20260424.1240', brief:[
+    '🎉 解鎖小力/幼兒園小孩通知強化(全螢幕慶祝音 + 5.5 秒金色 toast + 紅點導航)',
+    '🐕 修復 BOSS 戰連擊進度條不更新的 BUG (本來停在小怪戰最後一次數值)',
+  ], items:[
+    '【BUG 1:BOSS 戰連擊進度條不更新】',
+    '  根因:進度條更新邏輯只寫在小怪戰函式 _advMiniQuizAsk 內,',
+    '       BOSS 戰的 advShowQuiz 沒呼叫,所以進度條停在小怪戰最後一次顯示的數值',
+    '  修復:抽出共用函式 _updateSpecialQuizProgressBar(),BOSS 戰與小怪戰都呼叫',
+    '【BUG 2:BOSS 戰沒有「連擊推進」浮動提示】',
+    '  根因:浮動提示只寫在小怪戰 _advMiniQuizSubmit 內',
+    '  修復:BOSS 戰 _advCurrentQuestion 答對處也加 banner 提示',
+    '       「🔥🐕 連擊 X/20 題! 再連對 Y 題解鎖【小力】」',
+    '【強化解鎖通知】',
+    '  舊版:bannerFX 2 秒小通知 → 容易被玩家錯過',
+    '  新版四重保險:',
+    '    1) 全螢幕金色 toast(5.5 秒,跟日本 BOSS 加入夥伴同樣顯眼):',
+    '       🎉🎁 解鎖新英雄!【小力】加入你的夥伴! 連續答對 20 題達成!',
+    '    2) 三層慶祝音效:',
+    '       0 ms - sfx-summon-reveal (1.0)',
+    '       250 ms - sfx-medal-unlock (0.95)',
+    '       550 ms - sfx-goddess (0.85)',
+    '    3) 「英雄」分頁紅點:_setNavDot("英雄", true) 提醒玩家去看新英雄',
+    '    4) 600 ms 後再 banner 提示:🎉 解鎖新英雄:小力!(雙重保險)',
+    '【實作位置】',
+    '  - _trackUnlockHeroProgress 強化通知: line ~45849',
+    '  - _updateSpecialQuizProgressBar 共用函式: line ~45921',
+    '  - advShowQuiz BOSS 戰呼叫共用函式: line ~32650',
+    '  - BOSS 戰 banner 提示: line ~32996',
+    '  - 小怪戰改用共用函式: line ~43626',
+  ] },
+  { ver:'v1.0.20260424.1230', brief:[
+    '🎆 單抽 / 十連抽分別有專屬開場特效 + 不同音效',
+  ], items:[
+    '【新規格】',
+    '  單抽(1x) → 「可愛流星.gif」+ 輕柔音效組合',
+    '  十連抽(10x) → 「十連抽.gif」+ 震撼音效組合',
+    '  後續若抽到稀有角色或果實 → 再接「召喚角色.gif」(原 reveal 特效) + 三層慶祝音',
+    '【單抽音效組合(輕柔可愛感)】',
+    '  0 ms - sfx-gentle (1.0): 柔軟召喚主音',
+    '  200 ms - sfx-fantasy (0.85): 流星劃過尾韻',
+    '  色調:粉紅光暈 rgba(255,200,230)',
+    '【十連抽音效組合(震撼大氣感)】',
+    '  0 ms - sfx-gong (1.0): 召喚之鐘,儀式開始',
+    '  250 ms - sfx-burst (0.95): 力量釋放',
+    '  600 ms - sfx-powerup (0.9): 終局氣勢',
+    '  色調:雙層金橘光暈 rgba(255,180,80) + rgba(255,140,40)',
+    '  時長:2000ms(略長於單抽 1800ms,展現儀式感)',
+    '【新資源】',
+    '  - SUMMON_FX_1X_GIF:可愛流星.gif',
+    '  - SUMMON_FX_10X_GIF:十連抽.gif',
+    '【新函式】',
+    '  - _playSummon1xFx(onDone): 單抽開場',
+    '  - _playSummon10xFx(onDone): 十連抽開場',
+    '【流程整合】',
+    '  doSummon(times) 內依 times 自動選擇開場:',
+    '    times === 10 → _playSummon10xFx',
+    '    其他 → _playSummon1xFx',
+    '  接著若有稀有 → 接 _playSummonRevealFx(三層慶祝音)',
+    '【舊資源狀態】',
+    '  - SUMMON_FX_SMOKE_GIF (召喚煙火.gif) → 留著(未使用,向後相容)',
+    '  - SUMMON_FX_SMOKE2_GIF (召喚煙火2.gif) → 留著(未使用,向後相容)',
+    '  - _playSummonSmokeFx / _playSummonSmoke2Fx 函式仍保留,未來若需要可重啟',
+    '【實作位置】',
+    '  - GIF 常數: line ~38255',
+    '  - _playSummon1xFx: line ~38762',
+    '  - _playSummon10xFx: line ~38786',
+    '  - doSummon 流程改造: line ~38849',
+  ] },
   { ver:'v1.0.20260424.1220', brief:[
     '🚪 修復卡死自救「脫離戰鬥」變黑屏的 BUG',
   ], items:[
@@ -54130,7 +54317,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1220';
+  const CURRENT_VERSION = 'v1.0.20260424.1241';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54147,7 +54334,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1220';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1241';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
