@@ -5397,8 +5397,9 @@ body.art-premium #summon-overlay {
       <div id="adv-dialog-text"></div>
       <div id="adv-confirm-banner" style="font-size:12px;color:#aaffaa;margin-top:6px;padding:0;letter-spacing:1px;min-height:0;line-height:1.3;"></div>
       <div id="adv-dialog-next">▶▶</div>
-      <!-- ★ v1.0.20260424.1070 — 跳過劇情按鈕(右下),防止對白卡死時可直接跳到下一場戰鬥 -->
-      <div id="adv-dialog-skip-btn" onclick="event.stopPropagation();playSfx('sfx-confirm2',0.7);advSkipCurrentDialog();" style="position:absolute;bottom:14px;right:18px;padding:8px 14px;font-size:18px;font-weight:700;background:rgba(80,40,40,0.85);border:2px solid rgba(255,120,120,0.7);color:#ffaaaa;border-radius:8px;cursor:pointer;letter-spacing:1px;user-select:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.5);transition:transform 0.15s, background 0.15s;" onmouseover="this.style.background='rgba(160,60,60,0.95)';this.style.transform='scale(1.06)'" onmouseout="this.style.background='rgba(80,40,40,0.85)';this.style.transform='scale(1)'">⏭ 跳過劇情</div>
+      <!-- ★ v1.0.20260424.1070 — 跳過劇情按鈕,防止對白卡死時可直接跳到下一場戰鬥 -->
+      <!-- ★ v1.0.20260424.1320 — 移到對話框外側上緣(避開 iPad/手機螢幕底部邊緣的功能列誤觸) -->
+      <div id="adv-dialog-skip-btn" onclick="event.stopPropagation();playSfx('sfx-confirm2',0.7);advSkipCurrentDialog();" style="position:absolute;top:-46px;right:12px;padding:8px 14px;font-size:18px;font-weight:700;background:rgba(80,40,40,0.92);border:2px solid rgba(255,120,120,0.75);color:#ffaaaa;border-radius:10px 10px 4px 4px;cursor:pointer;letter-spacing:1px;user-select:none;z-index:5;box-shadow:0 -2px 10px rgba(0,0,0,0.5);transition:transform 0.15s, background 0.15s;" onmouseover="this.style.background='rgba(160,60,60,0.95)';this.style.transform='scale(1.06)'" onmouseout="this.style.background='rgba(80,40,40,0.92)';this.style.transform='scale(1)'">⏭ 跳過劇情</div>
     </div>
     <div id="adv-treasure-popup">
       <div class="atp-box">
@@ -7967,10 +7968,10 @@ const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。'}},
   '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
   '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
-  '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'特技150%傷害1名對手+追加10必中傷害',fd:'用特技的150%傷害1名對手,並追加無視其有利狀態的10點傷害。'},s2:{n:'地獄之火',c:4,d:'特技40%全體+燃燒2回合',fd:'依特技值的40%傷害全體對手,同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
-  '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'傷害1名對手並冰凍',fd:'用特技傷害1名對手，並使其1回合內冰凍不能動'},s2:{n:'暴風雪',c:5,d:'用特技70%傷害全體對手,有50%機率冰凍1回合',fd:'用特技的70%傷害所有對手,並有50%機率使目標冰凍1回合不能動'}},
-  '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳傷害3～5次',fd:'用特技的70%傷害對手(彈跳)共3次，有50%機率多跳一次，最多5次'},s2:{n:'麻痺落雷',c:3,d:'傷害1名對手並麻痺',fd:'用特技傷害1名對手並使其1回合內麻痺不能動'}},
-  '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'傷害全體對手並治癒全隊',fd:'用特技的50%傷害全體對手，同時用特技的50%恢復全體隊友'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半'}},
+  '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'特技150%火屬性傷害1名對手+追加10必中傷害',fd:'用特技的150%對1名對手造成火屬性傷害,並追加無視其有利狀態的10點傷害。'},s2:{n:'地獄之火',c:4,d:'特技40%火屬性傷害全體+燃燒2回合',fd:'依特技值的40%對全體對手造成火屬性傷害,同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
+  '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'水屬性傷害1名對手並冰凍',fd:'用特技對1名對手造成水屬性傷害，並使其1回合內冰凍不能動。'},s2:{n:'暴風雪',c:5,d:'用特技70%水屬性傷害全體對手,有50%機率冰凍1回合',fd:'用特技的70%對所有對手造成水屬性傷害,並有50%機率使目標冰凍1回合不能動。'}},
+  '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳風屬性傷害3～5次',fd:'用特技的70%對對手造成風屬性傷害(彈跳)共3次，有50%機率多跳一次，最多5次。'},s2:{n:'麻痺落雷',c:3,d:'風屬性傷害1名對手並麻痺',fd:'用特技對1名對手造成風屬性傷害並使其1回合內麻痺不能動。'}},
+  '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'光屬性傷害全體對手並治癒全隊',fd:'用特技的50%對全體對手造成光屬性傷害，同時用特技的50%恢復全體隊友。'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半。'}},
   '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合。'}},
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中240%傷害，無法迴避',fd:'用特技的240%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'特技低者:特技傷害+禁動;特技高者:特技150%傷害',fd:'使特技比自己低的對手受到特技傷害且禁動 1 回合;特技比自己高的對手則受到特技 150% 傷害。'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'從對手身上偷取物品/寵物/狀態',fd:'發動時彈出選擇視窗,可從對手身上偷取「物品卡」、「寵物」或「有利狀態」(保護類狀態無法偷),可偷 1 次。可從不同對手或同一對手偷不同類別。'},s2:{n:'急速閃躲',c:2,d:'使速度較慢的對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下 30%。'}},
@@ -7989,7 +7990,7 @@ const HERO_DB = {
   '機械師':{hp:74,atk:14,sp:0,spd:2, s1:{n:'定時炸彈',c:4,d:'目標下回合爆炸,固定值傷害,波及鄰近',fd:'使1名對手在下1回合行動前爆炸,造成 30 + 目標 5%最大HP 的固定傷害(不受屬性、有利狀態、爆擊影響)。此傷害的 50% 波及其身旁角色。'},s2:{n:'亂槍射擊',c:5,d:'隨機攻擊3～5次',fd:'隨機發射子彈,用攻擊值造成 3~5 次傷害攻擊隨機對手目標。'}},
   '動物學家':{hp:61,atk:7,sp:10,spd:12, s1:{n:'動物召喚',c:3,d:'用特技攻擊HP最低的敵方1~2次並召喚1隻寵物',fd:'用特技對HP最低的敵方造成1~2次傷害,同時召喚出1隻寵物讓友方攜帶。'},s2:{n:'動物守護',c:3,d:'2回合內友方全體的卡片、寵物和能量受到保護，每隻寵物為動物學家減傷10%',fd:'2回合內友方全體的卡片、寵物和能量受到保護，不會被禁用、交換、奪取或破壞。且隊伍每存在1隻寵物可為動物學家減傷10%（最多40%）。'}},
   '武士':  {hp:60,atk:14,sp:10,spd:6, s1:{n:'迴避反擊',c:4,p:true,d:'(被動)被攻擊時100%閃躲並反擊150%攻擊傷害',fd:'(被動)被攻擊時觸發，有100%機率閃躲，再給對手攻擊150%的傷害。'},s2:{n:'崛起鬥志',c:4,p:true,d:'(被動)復活時各項能力+5（限用一次）',fd:'(被動)被復活時觸發，提升自己基本HP、攻擊、特技、速度各5點。只能發動一次。'}},
-  '陰陽師':{hp:58,atk:5,sp:18,spd:9, s1:{n:'朱雀召喚',c:5,d:'傷害全體對手，治療減半2回合',fd:'依特技70%使敵方全體受到傷害，並陷入治療量減半的狀態2回合。'},s2:{n:'青龍召喚',c:5,d:'傷害全體對手，受傷+50%（2回合）',fd:'依特技70%使敵方全體受到傷害，並陷入受到傷害增加50%的狀態2回合。'}},
+  '陰陽師':{hp:58,atk:5,sp:18,spd:9, s1:{n:'朱雀召喚',c:5,d:'火屬性傷害全體對手，治療減半2回合',fd:'召喚南方朱雀,依特技70%對敵方全體造成火屬性傷害，並陷入治療量減半的狀態2回合。'},s2:{n:'青龍召喚',c:5,d:'水屬性傷害全體對手，受傷+50%（2回合）',fd:'召喚東方青龍,依特技70%對敵方全體造成水屬性傷害，並陷入受到傷害增加50%的狀態2回合。'}},
   '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP未滿10%的對手',fd:'使剩餘HP未滿10%的1名任意對手強制倒下(無視有利狀態或裝備效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:4,d:'隨機攻擊對手5次，每次特技50%固定傷害',fd:'隨機攻擊對手5次，每次用特技50%造成固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
   '時空法師':{hp:59,atk:12,sp:15,spd:4, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。'}},
@@ -8920,10 +8921,10 @@ const BURST_DB = {
   '劍士':     {n:'劍神連斬',    d:'連斬6次，目標倒下轉移，末擊附加暈眩',fd:'用攻擊的120%連續傷害對手6次，目標倒下就轉去攻擊其他存活目標，最後一劍附加暈眩1回合。'},
   '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'用特技的180%使友方全體恢復HP並解除不利狀態（可復活），附加免疫不利狀態2回合。'},
   '聖騎士':   {n:'最終殿堂',    d:'全隊無敵1回合並恢復40%HP',fd:'使友方全體免疫所有傷害和不利狀態1回合，同時恢復40%HP。'},
-  '火法師':   {n:'烈焰爆發',    d:'特技150%全體+強力燃燒2回合(行動前後各-10HP)',fd:'用特技的150%傷害全體對手,目標陷入「強力燃燒」狀態2回合,行動前後各損失10HP,此傷害無視有利狀態。'},
-  '冰法師':   {n:'冰封末日',    d:'傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%傷害全體對手，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
-  '雷法師':   {n:'怒雷狂襲',    d:'彈跳傷害4次並強力麻痺（無法免疫）',fd:'用特技的150%傷害對手（彈跳）共4次，有75%機率使目標陷入「強力麻痺」不能動1回合。強力麻痺無法被免疫。'},
-  '光法師':   {n:'審判光束',    d:'傷害全體並治癒全隊，附加強力失明',fd:'用特技的150%傷害全體對手，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時恢復全體隊友。'},
+  '火法師':   {n:'烈焰爆發',    d:'特技150%火屬性傷害全體+強力燃燒2回合(行動前後各-10HP)',fd:'用特技的150%對全體對手造成火屬性傷害,目標陷入「強力燃燒」狀態2回合,行動前後各損失10HP,此傷害無視有利狀態。'},
+  '冰法師':   {n:'冰封末日',    d:'水屬性傷害全體並強力冰凍（無法免疫）',fd:'用特技的150%對全體對手造成水屬性傷害，有75%機率使目標陷入「強力冰凍」不能動1回合。強力冰凍無法被免疫。'},
+  '雷法師':   {n:'怒雷狂襲',    d:'彈跳風屬性傷害4次並強力麻痺（無法免疫）',fd:'用特技的150%對對手造成風屬性傷害（彈跳）共4次，有75%機率使目標陷入「強力麻痺」不能動1回合。強力麻痺無法被免疫。'},
+  '光法師':   {n:'審判光束',    d:'光屬性傷害全體並治癒全隊，附加強力失明',fd:'用特技的150%對全體對手造成光屬性傷害，有75%機率目標「強力失明」行動成功率剩30%（1回合）。同時恢復全體隊友。'},
   '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋200%集中傷害，75%封印',fd:'用特技的120%傷害全體對手，再對1名目標造成特技200%傷害。每個受傷目標有75%機率陷入「強力封印」無法使用技能1回合。'},
   '神射手':   {n:'流星箭雨',    d:'必中傷害全體，附加強力禁動',fd:'用特技的130%傷害全體對手，無法迴避此傷害。受到傷害的目標有75%機率陷入「強力陷阱」無法行動1回合，強力陷阱無法被免疫。'},
   '神偷':     {n:'俠盜飛梭',    d:'自己速度+10，傷害1名對手並奪取能量/寵物/有利狀態(全部)/物品',fd:'2回合內自己速度上升10，用特技的350%攻擊1名對手同時奪取3能量及其身上的寵物（此時可選擇給誰穿）和全部有利狀態（包含「不可被偷」的保護類，如 protectBuff/guard/deathimmune 等），再隨機奪取對手1張物品卡。'},
@@ -8946,7 +8947,7 @@ const BURST_DB = {
   '木靈使':   {n:'神樹恩澤',    d:'全隊「不倒再生」2回合（特技HP/回合）',fd:'使友方全體獲得「不倒再生」狀態2回合，期間HP最低為1，且每回合恢復木靈使特技值HP。'},
   '時空法師': {n:'時間壓縮',    d:'400%必中，倒下後無法復活',fd:'用特技的400%對1名敵方造成必中傷害且無視有利狀態。目標倒下時陷入2回合無法被復活的狀態，此狀態無法解除或預防。'},
   '學者':     {n:'元素智慧',    d:'元素倍率必中傷害，50%轉為治療',fd:'依特技×雙方元素屬性種類數對1名對手造成必中傷害且無視有利狀態。再將傷害值的50%轉為治療恢復我方單人HP。'},
- '陰陽師':   {n:'四聖降臨',    d:'傷害全體4次，附加強力不利狀態',fd:'依特技50%使敵方全體受到4次傷害，每次有70%機率隨機附加1個強力不利狀態。'},
+ '陰陽師':   {n:'四聖降臨',    d:'四聖獸降臨,4 次隨機元素傷害並附加強力不利狀態',fd:'召喚朱雀（火）、青龍（水）、白虎（土）、玄武（風）四聖獸降臨,依特技50%對敵方全體造成 4 次傷害,每次隨機從火屬性傷害、水屬性傷害、土屬性傷害、風屬性傷害中擇一結算,每次有70%機率隨機附加1個強力不利狀態。'},
   '小力':     {n:'夾尾皺眉',    d:'全體對手無法使用造成傷害的技能或物品（2回合）',fd:'使全體對手陷入「憐惜校犬」狀態2回合，無法使用任何會造成傷害的技能或物品。此狀態不會被免疫或解除。'},
   '籃球隊員': {n:'絕殺灌籃',    d:'400%傷害1名對手，全隊速度提升2回合',fd:'對1名對手造成特技400%傷害，並使友方全體速度提升50%共2回合。'},
   '直笛團員': {n:'天籟之音', d:'特技150%傷害全體+狂亂1回合，我方治療+持續恢復5回合',fd:'用特技的150%對敵方全體造成傷害,並使其陷入狂亂1回合。同時解除我方全體不利狀態、恢復我方全體HP(可復活),再附加持續恢復5回合。'},
@@ -8959,10 +8960,10 @@ const BURST_DB = {
   // ★ v1.0.20260421.3000o — 日本關限定角色爆發
   '巫女':      {n:'神樂舞', d:'全體友方解除所有不利狀態(含強力)，附加隨機3個強力有利狀態(不可解除)，再依特技150%恢復HP',fd:'翩翩起舞獻納祭神樂曲，為友方全體解除所有不利狀態（包含強力狀態），並附加隨機3個強力有利狀態（不會被搶奪和解除），再依特技值的150%恢復全體友方HP（可復活）。'},
   // ── BOSS 爆發技能 ──
-  '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次連擊，擊倒轉移剩餘次數，全體附加燃燒',fd:'依特技的40%對1名目標造成9次傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加燃燒2回合。'},
+  '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次火屬性連擊，擊倒轉移剩餘次數，全體附加燃燒',fd:'依特技的40%對1名目標造成9次火屬性傷害，目標倒下則剩餘次數轉移到HP最少的存活對手。所有連擊結束後，對對方全體存活角色附加燃燒2回合。'},
   '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'杏花妖展露千年養成的絕世容顏傾城一笑，以特技值的150%對全體敵人造成草屬性傷害，並有75%機率使每一名敵人陷入「魅惑」狀態1回合（下一回合自動普攻自己隊友）。'},
-  '八岐大蛇':  {n:'八頭龍滅世', d:'依特技對隨機目標造成8次必中傷害，隨機附加3種強力不利狀態(無法免疫)',fd:'八條龍頭同時吐出世界毀滅之息，以特技值對隨機存活對手造成8次必中傷害且無視有利狀態。每次命中後從「強力冰凍、強力燃燒、強力封印、強力麻痺、強力失明、強力中毒、強力減療」中隨機選出3種附加給目標，這些強力狀態無法被免疫或解除。'},
-  '大天狗':    {n:'神威風獵', d:'特技150%×5次隨機連擊，30%強力暈眩；最後全體颶風傷害並減速',fd:'張開巨翼掀起毀天狂風，以特技值的150%對隨機存活敵人連續5次打擊，每段有30%機率使該目標陷入「強力暈眩」1回合。第5段結束後額外對全體敵人造成攻擊100%颶風傷害，並使全體敵人速度-50%持續2回合。'},
+  '八岐大蛇':  {n:'八頭龍滅世', d:'依特技對隨機目標造成8次必中暗屬性傷害，隨機附加3種強力不利狀態(無法免疫)',fd:'八條龍頭同時吐出世界毀滅之息，以特技值對隨機存活對手造成8次必中暗屬性傷害且無視有利狀態。每次命中後從「強力冰凍、強力燃燒、強力封印、強力麻痺、強力失明、強力中毒、強力減療」中隨機選出3種附加給目標，這些強力狀態無法被免疫或解除。'},
+  '大天狗':    {n:'神威風獵', d:'特技150%×5次風屬性隨機連擊，30%強力暈眩；最後全體颶風傷害並減速',fd:'張開巨翼掀起毀天狂風，以特技值的150%對隨機存活敵人連續5次風屬性傷害，每段有30%機率使該目標陷入「強力暈眩」1回合。第5段結束後額外對全體敵人造成攻擊100%風屬性傷害，並使全體敵人速度-50%持續2回合。'},
   '酒吞童子':  {n:'鬼王酒宴', d:'恢復自身15%HP，500%重擊+擊倒轉移(最多3連鎖)，2回合吸血+攻擊提升',fd:'豪飲妖酒一飲而盡，自身恢復最大HP的15%。接著以攻擊值的500%重擊1名敵人，若該目標倒下則剩餘傷害轉移至下一位存活敵人，最多連鎖3次。之後自身獲得「嗜血狂潮」狀態2回合：造成傷害的100%轉化為回血，且攻擊額外提升50%。'},
   '玉藻前':    {n:'禍世邪魅', d:'特技200%幻陣全體火傷害，65%強力魅惑1回合(無法免疫)，被魅惑者傷害轉為回血給玉藻前',fd:'九條金色狐尾一齊張開形成絢爛幻陣，以特技值的200%對全體敵人造成火屬性傷害，並有65%機率使每一名敵人陷入「強力魅惑」1回合（下循環自動普攻自己隊友，無法被免疫或解除）。被強力魅惑的敵人普攻隊友造成的傷害會全部轉為玉藻前的HP恢復。'},
 
@@ -9725,21 +9726,27 @@ const SKILL_FORCE_ELEMENT = {
   '九尾狐火':     'fire',  // 玉藻前 S1(3-4次特技傷害+燃燒)
   '禍世邪魅':     'fire',  // 玉藻前爆發(特技200%全體)
   '焰尾九連擊':   'fire',  // 九尾空貓怪爆發(特技40%×9次)
+  '朱雀召喚':     'fire',  // ★ v1.0.20260424.1310 — 陰陽師 S1(特技70%全體+治療減半)
   // ── 水(含冰子屬,v1080:冰類技能歸入 water) ──
   '冰凍之矛':     'water',  // 冰法師 S1(冰=水)
   '暴風雪':       'water',  // 冰法師 S2(冰=水)
   '冰封末日':     'water',  // 冰法師爆發(冰=水)
   '幽寒吐息':     'water',  // 雪女 S2(冰=水)
+  '青龍召喚':     'water',  // ★ v1.0.20260424.1310 — 陰陽師 S2(特技70%全體+受傷+50%)
   // ── 風(含雷子屬,v1080:雷類技能歸入 wind) ──
   '疾風團扇擊':   'wind',  // 大天狗 S1
   '風捲殘雲':     'wind',  // 大天狗 S2
   '神威風獵':     'wind',  // 大天狗爆發
+  '連鎖閃電':     'wind',  // ★ v1.0.20260424.1310 — 雷法師 S1(雷=風)
+  '麻痺落雷':     'wind',  // ★ v1.0.20260424.1310 — 雷法師 S2(雷=風)
+  '怒雷狂襲':     'wind',  // ★ v1.0.20260424.1310 — 雷法師爆發(雷=風)
   // ── 草 ──
   '落英繽紛':     'grass',  // 杏花妖 S2(特技全體)
   '千年絕美·傾城一笑': 'grass',  // 杏花妖爆發
   '千年絕美・傾城一笑': 'grass',  // 全形分隔符 fallback
   // ── 光 ──
   '日月同輝':     'light',  // 光法師 S1(特技50%傷害+50%治療)
+  '審判光束':     'light',  // ★ v1.0.20260424.1310 — 光法師爆發(特技150%全體+治癒)
   '破魔矢':       'light',  // 巫女 S2(特技200%單體+日妖+100%)
   // ── 暗 ──
   '暗羽突襲':     'dark',  // 烏天狗 S1(攻擊200%單體)
@@ -9749,6 +9756,8 @@ const SKILL_FORCE_ELEMENT = {
   // '八首齊噬'     → 玩家定為無屬性
   // '鬼王酒宴'     → 玩家定為無屬性
   // '暗冰雷焰吐息' → 改用 SKILL_RANDOM_ELEMENTS 隨機屬性機制
+  // ── v1310 註:聖騎士「神聖鎚擊」是固定%HP傷害不適合相剋,維持不納入 ──
+  // ── v1310 註:光法師 S2「極限閃光」是純 debuff 無傷害,不納入 ──
 };
 
 // ★ v1.0.20260424.1080 — 隨機屬性技能(每次傷害都從多個屬性中隨機挑一個)
@@ -9759,6 +9768,9 @@ const SKILL_RANDOM_ELEMENTS = {
   // 八岐大蛇 S2 暗冰雷焰吐息:fd 寫「暗焰、冰雪、落雷、烈焰」混合,
   // 每次傷害從 4 屬性隨機選一個(冰歸 water、雷歸 wind)
   '暗冰雷焰吐息': ['dark', 'fire', 'water', 'wind'],
+  // ★ v1.0.20260424.1310 — 陰陽師爆發「四聖降臨」:朱雀(火)、青龍(水)、白虎(土)、玄武(風)四神獸,
+  //   每次傷害從 4 屬性隨機選一個
+  '四聖降臨': ['fire', 'water', 'earth', 'wind'],
 };
 
 // ★ v1.0.20260424.1060 — 計算技能強制屬性的相剋加成(疊加在角色屬性之上)
@@ -18019,6 +18031,19 @@ function _renderSurpriseFieldPickerUI(){
   _hint.textContent = '點擊任一卡片進入確認頁';
   ov.appendChild(_hint);
 
+  // ★ v1.0.20260424.1330 — 取消按鈕(讓玩家反悔不放戰場卡)
+  //   點擊「取消發動」→ 關閉視窗 + 還原能量(因為技能還沒真正生效)
+  const _cancelBtn = document.createElement('button');
+  _cancelBtn.style.cssText = 'margin-top:12px;padding:10px 32px;font-size:18px;font-weight:700;background:rgba(80,80,100,0.5);border:2px solid rgba(180,180,210,0.6);color:#ccc;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;transition:transform 0.15s, background 0.15s;';
+  _cancelBtn.textContent = '✕ 取消發動';
+  _cancelBtn.onmouseover = function(){ this.style.background='rgba(120,120,150,0.7)'; this.style.transform='scale(1.05)'; };
+  _cancelBtn.onmouseout  = function(){ this.style.background='rgba(80,80,100,0.5)'; this.style.transform='scale(1)'; };
+  _cancelBtn.onclick = function(){
+    try{ playSfx('sfx-cancel', 0.7); }catch(_){}
+    _cancelSurpriseFieldCard();
+  };
+  ov.appendChild(_cancelBtn);
+
   // ★ v1.0.20260424.0580 — 改用 #gc 容器
   const _gc = document.getElementById('gc');
   (_gc || document.body).appendChild(ov);
@@ -18079,6 +18104,16 @@ function _confirmSurpriseFieldCard(cardName, isGood, cost){
   });
   _btnBar.appendChild(_rerollBtn);
 
+  // ★ v1.0.20260424.1330 — 確認頁也加取消按鈕
+  const _cancelBtn2 = document.createElement('button');
+  _cancelBtn2.style.cssText = 'padding:14px 28px;font-size:22px;font-weight:900;background:linear-gradient(135deg,rgba(180,80,80,0.7),rgba(140,50,50,0.85));border:2.5px solid #cc6666;color:#ffeaea;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:3px;';
+  _cancelBtn2.textContent = '✕ 取消發動';
+  _cancelBtn2.addEventListener('click', function(){
+    try{ playSfx('sfx-cancel', 0.7); }catch(_){}
+    _cancelSurpriseFieldCard();
+  });
+  _btnBar.appendChild(_cancelBtn2);
+
   ov.appendChild(_btnBar);
 
   // ★ v1.0.20260424.0580 — 改用 #gc 容器
@@ -18091,6 +18126,32 @@ function _rerollSurpriseFieldCard(){
   if(_ov) _ov.remove();
   // 回到選卡頁,沿用同一批抽到的卡(不重抽)
   _renderSurpriseFieldPickerUI();
+}
+
+// ★ v1.0.20260424.1330 — 取消出奇制勝(玩家反悔)
+//   只要關閉視窗 + 清除全域變數,因為:
+//   - 能量是在 endAction 才扣(取消時不呼叫 endAction → 能量不會扣)
+//   - 出奇制勝沒有 setPending 等待目標
+//   - 玩家可繼續使用其他技能/物品
+function _cancelSurpriseFieldCard(){
+  try{
+    // 1. 關閉所有相關視窗
+    const _o1 = document.getElementById('surprise-field-ov');
+    if(_o1) _o1.remove();
+    const _o2 = document.getElementById('surprise-confirm-ov');
+    if(_o2) _o2.remove();
+    // 2. 清除全域變數
+    delete window._surpriseFieldActor;
+    delete window._surpriseFieldCost;
+    delete window._surpriseFieldGood;
+    delete window._surpriseFieldBad;
+    delete window._surpriseFieldDrawn;
+    // 3. log 訊息
+    try{ log(`🪶 [軍師] 取消發動出奇制勝,可繼續選擇其他行動`); }catch(_){}
+    try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+  }catch(e){
+    console.error('[_cancelSurpriseFieldCard]', e);
+  }
 }
 
 function _applySurpriseFieldCard(cardName, isGood, cost){
@@ -21755,14 +21816,37 @@ function startTurn(){
   const skip=['stun','freeze','sleep','para','trap'];
   const skipStatus=next.status.find(s=>skip.includes(s.type));
   if(skipStatus){
-    log(`[${next.name}] 因 ${statusName(skipStatus.type)} 跳過行動！`);
-    tickStatus(next);
-    next.acted=true;
-    // 清除所有待處理狀態避免卡住
-    G.pendingTarget=null; pendingCb=null;
-    const _skipOv=document.getElementById('immovable-prompt');
-    if(_skipOv) _skipOv.remove();
-    updateUI(); _pSetTimeout(startTurn,500); return;
+    // ★ v1.0.20260424.1340 — BOSS 即使中控制狀態也要出題(玩家還是要答 BOSS 題)
+    //   邏輯:出題完後再執行「跳過行動」流程
+    const _BOSS_NAMES_FOR_QUIZ = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+    const _isBossWithQuiz = (typeof _adventureMode !== 'undefined' && _adventureMode
+      && next && _BOSS_NAMES_FOR_QUIZ.includes(next.name)
+      && next.side === 'p2'
+      && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'
+      && G.p1 && G.p1.some(h=>h.curHp>0)
+      && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive);
+    const _doSkipAfterQuiz = () => {
+      log(`[${next.name}] 因 ${statusName(skipStatus.type)} 跳過行動！`);
+      tickStatus(next);
+      next.acted=true;
+      G.pendingTarget=null; pendingCb=null;
+      const _skipOv=document.getElementById('immovable-prompt');
+      if(_skipOv) _skipOv.remove();
+      updateUI(); _pSetTimeout(startTurn,500);
+    };
+    if(_isBossWithQuiz){
+      // 觸發 BOSS 出題,答完後再跳過行動
+      try{ log(`[${next.name}] ${statusName(skipStatus.type)}中,但仍要答題!`); }catch(_){}
+      _advQuizResolveCb = _doSkipAfterQuiz;
+      try{ advShowQuiz(); }catch(e){
+        console.error('[BOSS controlled quiz]', e);
+        _doSkipAfterQuiz();  // 出題失敗 → 直接跳過
+      }
+      return;
+    }
+    // 一般情況(小怪 / 玩家英雄):直接跳過
+    _doSkipAfterQuiz();
+    return;
   }
 
     // 警長 警示鳴槍 check
@@ -21835,6 +21919,29 @@ function startTurn(){
 
   // ── 魅惑 check — 強制普通攻擊己方隨機隊友（一般攻擊值，不加成） ──
   if(hasStatus(next,'charm')){
+    // ★ v1.0.20260424.1340 — BOSS 中魅惑也要出題
+    const _BOSS_NAMES_FOR_QUIZ_2 = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+    const _isBossWithQuiz2 = (typeof _adventureMode !== 'undefined' && _adventureMode
+      && next && _BOSS_NAMES_FOR_QUIZ_2.includes(next.name)
+      && next.side === 'p2'
+      && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'
+      && G.p1 && G.p1.some(h=>h.curHp>0)
+      && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive
+      && !window._bossQuizDoneForCharm);  // 一回合只在魅惑 path 出題一次
+    if(_isBossWithQuiz2){
+      window._bossQuizDoneForCharm = true;
+      _advQuizResolveCb = () => {
+        window._bossQuizDoneForCharm = false;
+        // 答題完後重新進入這個 startTurn(此時 _bossQuizDoneForCharm=false 不會無限遞迴,但 charm 會走魅惑邏輯)
+        startTurn();
+      };
+      try{ log(`[${next.name}] 雖被魅惑,但仍要答題!`); }catch(_){}
+      try{ advShowQuiz(); }catch(e){
+        console.error('[BOSS charm quiz]', e);
+        window._bossQuizDoneForCharm = false;
+      }
+      return;
+    }
     const _charmAllies=G[next.side].filter(h=>h.curHp>0&&h!==next);
     if(!_charmAllies.length){
       log(`💕 [${next.name}] 魅惑中但無隊友可攻擊，跳過行動！`);
@@ -22232,6 +22339,8 @@ function nextRound(){
   G.round = (G.round||1) + 1;
   // ★ 每回合結束重置小怪戰答題旗標
   if(_adventureMode && _advMiniBattleActive) window._miniQuizDoneThisRound = false;
+  // ★ v1.0.20260424.1340 — 重置 BOSS 魅惑狀態下的單次出題旗標
+  try{ window._bossQuizDoneForCharm = false; }catch(_){}
   // Tick field card durations
   fieldCards=fieldCards.map(f=>({...f,dur:f.dur-1})).filter(f=>f.dur>0);
   renderBfield(); updateFieldFX();
@@ -34433,6 +34542,27 @@ function advSaveUnlockedHero(name) {
 }
 
 function advShowUnlockHero() {
+  // ★ v1.0.20260424.1340 — 若有「答題解鎖的小力/幼兒園小孩」優先顯示這個
+  //   流程同 BOSS 戰隨機解鎖英雄的演出,只是 hero 來源不同
+  if(typeof window._pendingQuestHeroUnlock === 'string' && window._pendingQuestHeroUnlock){
+    const _qHero = window._pendingQuestHeroUnlock;
+    window._pendingQuestHeroUnlock = null;  // 消費掉,避免重複
+    try{
+      document.getElementById('adv-unlock-hero-av').textContent = (typeof AVATARS!=='undefined'&&AVATARS[_qHero])||'🗡️';
+      document.getElementById('adv-unlock-hero-name').textContent = _qHero;
+      const _qReason = (_qHero === '小力') ? '連續答對 20 題「領養與照顧狗狗」'
+                     : (_qHero === '幼兒園小孩') ? '連續答對 20 題「照顧與陪伴幼兒」'
+                     : '完成關卡題目挑戰';
+      document.getElementById('adv-unlock-desc').textContent = `🎉 ${_qReason}!【${_qHero}】加入了冒險者行列!下次選角時可以選擇他出戰。`;
+      document.getElementById('adv-result-overlay').classList.remove('show');
+      document.getElementById('adv-unlock-overlay').classList.add('show');
+      // 三層慶祝音效(同稀有召喚)
+      try{ playSfx('sfx-summon-reveal', 1.0); }catch(_){}
+      try{ setTimeout(()=>{ playSfx('sfx-medal-unlock', 0.95); }, 250); }catch(_){}
+      try{ setTimeout(()=>{ playSfx('sfx-goddess', 0.85); }, 550); }catch(_){}
+    }catch(eQ){ console.error('[advShowUnlockHero quest hero]', eQ); }
+    return;
+  }
   const unlocked = advGetUnlockedHeroes();
   // ★ v1.0.20260420.1130 — 排除商店肖像英雄 + 活動限定英雄(小力/幼兒園小孩),讓 BOSS 解鎖池乾淨
   const _shopExcl = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
@@ -45021,6 +45151,46 @@ function advMiniResultConfirm(){
     // ★ 重置場景旗標，防止進入下一場景時 ▶▶ 被 _advSceneChoiceDone 攔截導致劇情卡死
     if(typeof _advSceneChoiceDone !== 'undefined') _advSceneChoiceDone = false;
     if(typeof _advDialogIdx !== 'undefined') _advDialogIdx = 0;
+    // ★ v1.0.20260424.1340 — 若有「答題解鎖的小力/幼兒園小孩」,先播放「英雄加入畫面」再進場景
+    if(typeof window._pendingQuestHeroUnlock === 'string' && window._pendingQuestHeroUnlock){
+      const _qHeroM = window._pendingQuestHeroUnlock;
+      window._pendingQuestHeroUnlock = null;
+      try{
+        // 過場 overlay 收起
+        const _csOv2 = document.getElementById('adv-cutscene-overlay');
+        if(_csOv2) _csOv2.style.display = 'none';
+        // 顯示加入演出
+        document.getElementById('adv-unlock-hero-av').textContent = (typeof AVATARS!=='undefined'&&AVATARS[_qHeroM])||'🗡️';
+        document.getElementById('adv-unlock-hero-name').textContent = _qHeroM;
+        const _qReason = (_qHeroM === '小力') ? '連續答對 20 題「領養與照顧狗狗」'
+                       : (_qHeroM === '幼兒園小孩') ? '連續答對 20 題「照顧與陪伴幼兒」'
+                       : '完成關卡題目挑戰';
+        document.getElementById('adv-unlock-desc').textContent = `🎉 ${_qReason}!【${_qHeroM}】加入了冒險者行列!下次選角時可以選擇他出戰。`;
+        document.getElementById('adv-unlock-overlay').classList.add('show');
+        // 三層慶祝音效
+        try{ playSfx('sfx-summon-reveal', 1.0); }catch(_){}
+        try{ setTimeout(()=>{ playSfx('sfx-medal-unlock', 0.95); }, 250); }catch(_){}
+        try{ setTimeout(()=>{ playSfx('sfx-goddess', 0.85); }, 550); }catch(_){}
+        // 修改「繼續冒險」按鈕的行為:點完後才進入下個場景
+        const _continueBtn = document.querySelector('#adv-unlock-overlay button');
+        if(_continueBtn){
+          _continueBtn.onclick = () => {
+            playSfx('sfx-confirm2', 0.7);
+            document.getElementById('adv-unlock-overlay').classList.remove('show');
+            // 真正進下個場景
+            const _stageM = p.stage || _adventureStage;
+            const _nextIdxM = (p.nextScene !== undefined) ? p.nextScene : _advMiniBattleNextScene;
+            const _csOv3 = document.getElementById('adv-cutscene-overlay');
+            if(_csOv3) _csOv3.style.display = 'flex';
+            advLoadScene(_stageM, _nextIdxM);
+          };
+        }
+        return;  // 不立刻進下個場景,等玩家確認後才進
+      }catch(eMU){
+        console.error('[mini result hero unlock]', eMU);
+        // 失敗 fallback:直接進場景
+      }
+    }
     const _stage = p.stage || _adventureStage;
     const _nextIdx = (p.nextScene !== undefined) ? p.nextScene : _advMiniBattleNextScene;
     advLoadScene(_stage, _nextIdx);
@@ -46041,6 +46211,9 @@ function _trackUnlockHeroProgress(q){
         if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(heroName);
       }
       log(`🎉 [成就解鎖] 連續答對 20 題「${q.subject}」 → 獲得活動英雄【${heroName}】!`);
+      // ★ v1.0.20260424.1340 — 設旗標讓 BOSS 戰結束結算時也顯示「英雄加入畫面」
+      //   解鎖後即使本回合不會立刻結算,旗標會在 advShowBattleResult 被消費並觸發 advShowUnlockHero
+      try{ window._pendingQuestHeroUnlock = heroName; }catch(_){}
       // ★ v1.0.20260424.1240 — 醒目通知:全螢幕慶祝 toast + 三層音效 + 紅點導航
       try{
         // 1) 大型金色 toast(5.5 秒,跟日本 BOSS 加入夥伴同樣顯眼)
@@ -47396,6 +47569,107 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1340', brief:[
+    '⚔ BOSS 中控制狀態(暈眩/魅惑等)時也能繼續出題',
+    '🎉 答題解鎖小力/幼兒園後,戰鬥結束會顯示「英雄加入」畫面',
+  ], items:[
+    '【1. BOSS 中控制狀態仍能出題】',
+    '  舊版:BOSS 中暈眩/冰凍/睡眠/麻痺/陷阱 → 直接 startTurn 跳過,沒出題',
+    '       BOSS 中魅惑 → 攻擊隊友,但也沒出題',
+    '       玩家錯失答 BOSS 題的機會',
+    '  新版:BOSS(九尾空貓怪/杏花妖/大天狗/酒吞童子/玉藻前/八岐大蛇)',
+    '       中以上控制時:',
+    '       1) 先觸發 advShowQuiz 出題',
+    '       2) 答完題後再執行「跳過行動」/「攻擊隊友」邏輯',
+    '  防護:_bossQuizDoneForCharm 旗標避免魅惑循環中無限出題,nextRound 重置',
+    '【2. 解鎖小力/幼兒園後加入畫面】',
+    '  舊版:玩家連續答對 20 題解鎖小力,只看到 toast 通知,沒有「加入畫面」演出',
+    '  新版:解鎖時設 _pendingQuestHeroUnlock = "小力" / "幼兒園小孩"',
+    '  該旗標會在以下兩個時機被消費:',
+    '    a) 小怪戰結束(advMiniResultConfirm)→ 結算後顯示加入畫面 → 點擊才進下個場景',
+    '    b) BOSS 戰勝利(advShowUnlockHero)→ 優先顯示這個英雄而非隨機英雄',
+    '  畫面內容:角色 emoji + 名字 + 「🎉 連續答對 20 題「○○○」!【角色】加入了冒險者行列!」',
+    '  附帶:三層慶祝音效(sfx-summon-reveal/medal-unlock/goddess)',
+    '【實作位置】',
+    '  - BOSS 控制中出題: line ~21815 (skip 邏輯) + line ~21918 (魅惑邏輯)',
+    '  - nextRound 重置 _bossQuizDoneForCharm: line ~22341',
+    '  - _trackUnlockHeroProgress 設 _pendingQuestHeroUnlock: line ~46153',
+    '  - advShowUnlockHero 優先顯示 quest hero: line ~34547',
+    '  - advMiniResultConfirm 插入加入演出: line ~45151',
+  ] },
+  { ver:'v1.0.20260424.1330', brief:[
+    '🪶 軍師「出奇制勝」新增「取消發動」按鈕,可反悔不放戰場卡',
+  ], items:[
+    '【需求】',
+    '  軍師發動「出奇制勝」抽出 3 張戰場卡後,玩家可能想反悔(例如想留能量做其他事),',
+    '  但原本沒有取消選項,只能強制選 1 張或「換一張」(仍會發動)',
+    '【修復:兩處加取消按鈕】',
+    '  ① 抽卡選擇頁:卡片列表下方加「✕ 取消發動」灰色按鈕',
+    '  ② 確認頁:「使用 / 換一張」旁邊加「✕ 取消發動」紅色按鈕',
+    '【取消行為】',
+    '  - 關閉抽卡視窗',
+    '  - 清除全域變數(_surpriseFieldActor 等)',
+    '  - 能量「不會被扣」(因為 endAction 沒被呼叫,扣能量在 endAction 裡)',
+    '  - 玩家可繼續選其他技能/物品/普攻',
+    '  - log 顯示「🪶 [軍師] 取消發動出奇制勝,可繼續選擇其他行動」',
+    '【實作位置】',
+    '  - 抽卡頁取消按鈕: line ~18033',
+    '  - 確認頁取消按鈕: line ~18114',
+    '  - _cancelSurpriseFieldCard 函式: line ~18138',
+  ] },
+  { ver:'v1.0.20260424.1320', brief:[
+    '📱 「跳過劇情」按鈕從右下角移到對話框右上方(避開 iPad/手機底部邊緣)',
+  ], items:[
+    '【問題】',
+    '  「跳過劇情」按鈕原本放在對話框右下角(bottom:14px right:18px),',
+    '  iPad/手機玩家容易因螢幕邊緣的「Home Bar / 功能列」誤觸,',
+    '  或因系統手勢區擋住按不到',
+    '【修復】',
+    '  把按鈕移到對話框「外側上緣」(懸浮在對話框上方右側):',
+    '    舊:position:absolute;bottom:14px;right:18px (對話框內右下)',
+    '    新:position:absolute;top:-46px;right:12px (對話框外右上)',
+    '  - 圓角改為上方圓下方平(視覺融合對話框,像個「標籤」)',
+    '  - 陰影方向改為向上發散',
+    '【設計原則(往後遵守)】',
+    '  以後不再把功能按鈕放在「螢幕底部邊緣」(下緣 0~20px)或',
+    '  「螢幕左右最邊緣」,避免行動裝置玩家無法點擊',
+    '【實作位置】',
+    '  - adv-dialog-skip-btn HTML: line ~5400',
+  ] },
+  { ver:'v1.0.20260424.1310', brief:[
+    '⚡ 大量補完技能屬性說明 + 加入新的強制屬性技能(雷法師/陰陽師/光法師爆發等)',
+  ], items:[
+    '【SKILL_FORCE_ELEMENT 新增 6 個技能】',
+    '  火: 朱雀召喚(陰陽師 S1)',
+    '  水: 青龍召喚(陰陽師 S2)',
+    '  風: 連鎖閃電/麻痺落雷/怒雷狂襲(雷法師全部 3 招,雷=風)',
+    '  光: 審判光束(光法師爆發)',
+    '【SKILL_RANDOM_ELEMENTS 新增 1 個技能】',
+    '  四聖降臨(陰陽師爆發):每次傷害從 火/水/土/風 4 屬性隨機選一個',
+    '  對應 fd「朱雀(火)、青龍(水)、白虎(土)、玄武(風)」四聖獸',
+    '【fd 描述補完「○屬性傷害」字眼(讓玩家看得到屬性)】',
+    '  ✓ 火法師:火焰球、地獄之火、烈焰爆發 → 火屬性傷害',
+    '  ✓ 雷法師:連鎖閃電、麻痺落雷、怒雷狂襲 → 風屬性傷害',
+    '  ✓ 陰陽師:朱雀召喚→火、青龍召喚→水、四聖降臨→隨機',
+    '  ✓ 光法師:日月同輝、審判光束 → 光屬性傷害',
+    '  ✓ 冰法師:冰凍之矛、暴風雪、冰封末日 → 水屬性傷害',
+    '  ✓ 大天狗爆發:神威風獵 → 風屬性傷害',
+    '  ✓ 九尾空貓怪爆發:焰尾九連擊 → 火屬性傷害',
+    '  ✓ 八岐大蛇爆發:八頭龍滅世 → 暗屬性傷害',
+    '【colorizeSkillDesc 自動著色生效】',
+    '  「○屬性傷害」字眼會自動套對應屬性的彩色發光樣式:',
+    '  火=紅橘 / 水=藍 / 風=綠青 / 草=嫩綠 / 土=棕 / 光=金黃 / 暗=紫',
+    '  在「?」按鈕詳細視窗、英雄圖鑑都會看到漂亮的彩色屬性說明',
+    '【未納入的兩個技能】',
+    '  ❌ 光法師 S2 極限閃光 → 純命中率 debuff,無傷害',
+    '  ❌ 聖騎士 S1 神聖鎚擊 → 固定%HP傷害(20%/5%),套相剋會失衡',
+    '【最終強制屬性技能總數:27 條(其中 2 個是同名 fallback) + 隨機機制 2 個】',
+    '  火 7 / 水 5 / 風 6 / 草 3(含 fallback) / 光 3 / 暗 3 + 隨機:暗冰雷焰吐息、四聖降臨',
+    '【實作位置】',
+    '  - SKILL_FORCE_ELEMENT 新增 6 個: line ~9656',
+    '  - SKILL_RANDOM_ELEMENTS 新增 四聖降臨: line ~9698',
+    '  - HERO_DB / BURST_DB 各技能 fd 補屬性字眼:多處',
+  ] },
   { ver:'v1.0.20260424.1300', brief:[
     '🎯 ★ 終結篇:找到「主題問題重複跳出」真兇 — v0910 自我修復太激進',
   ], items:[
@@ -54702,7 +54976,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1300';
+  const CURRENT_VERSION = 'v1.0.20260424.1340';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54719,7 +54993,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1300';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1340';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
