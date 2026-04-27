@@ -20,7 +20,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment }
+  import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -145,14 +145,28 @@
   // 雲端讀取
   // ★ v1.0.20260419.1930: 區分「文件不存在」(return null) 與「讀取失敗」(throw)
   //   以避免呼叫端把 transient error 當成新玩家而覆蓋雲端資料
+  // ★ v1.0.20260424.1100: 改用 getDocFromServer 強制從伺服器讀取,
+  //   避免 Firestore IndexedDB 本地快取在網路不穩時回傳舊版本
+  //   (跨電腦同步時最常見的問題:B 電腦讀到自己的 IndexedDB 快取舊版本而非 A 電腦剛寫入的新版本)
   window._fbLoad = async function(uid) {
     try {
-      const snap = await getDoc(doc(_fbDb, 'players', uid));
+      // 優先用 getDocFromServer 強制走網路,確保拿到最新版本
+      const snap = await getDocFromServer(doc(_fbDb, 'players', uid));
+      console.log('[_fbLoad] 從伺服器強制取得最新資料');
       return snap.exists() ? snap.data() : null;  // null = 確認此玩家尚無文件
     } catch(e) {
-      console.error('雲端讀取失敗,將往外拋以便呼叫端處理 fallback', e);
-      e._fbLoadFailed = true;
-      throw e;  // ★ 改為 throw,呼叫端可用 try/catch 區分
+      // ★ getDocFromServer 失敗(網路斷)時,回退到允許快取的 getDoc,但要記錄
+      console.warn('[_fbLoad] 從伺服器讀取失敗,回退到允許快取的 getDoc', e);
+      try {
+        const snap = await getDoc(doc(_fbDb, 'players', uid));
+        const _fromCache = snap.metadata && snap.metadata.fromCache;
+        if(_fromCache) console.warn('[_fbLoad] ⚠ 資料來自本地快取(可能不是最新)');
+        return snap.exists() ? snap.data() : null;
+      } catch(e2) {
+        console.error('雲端讀取失敗,將往外拋以便呼叫端處理 fallback', e2);
+        e2._fbLoadFailed = true;
+        throw e2;
+      }
     }
   };
 
@@ -171,14 +185,34 @@
   };
 
   // 以 Gmail 查詢玩家資料（代表英雄 + 名稱）
+  // ★ v1.0.20260424.1100 — 強化錯誤處理:把查詢失敗從「靜默回 null」改為「拋出錯誤」,
+  //   讓上層能區分「對方真的不存在」vs「Firestore 查詢失敗」(網路/權限/索引等)
   window._fbFindByEmail = async function(email) {
+    const _emailNorm = (email || '').toLowerCase().trim();
+    if(!_emailNorm) {
+      console.warn('[_fbFindByEmail] email 為空');
+      return null;
+    }
     try {
-      const q = query(collection(_fbDb, 'players'), where('email', '==', email.toLowerCase().trim()));
+      const q = query(collection(_fbDb, 'players'), where('email', '==', _emailNorm));
       const snap = await getDocs(q);
-      if(snap.empty) return null;
+      if(snap.empty) {
+        console.log('[_fbFindByEmail] 查詢成功但找不到 email:', _emailNorm);
+        return null;
+      }
       const d = snap.docs[0];
+      console.log('[_fbFindByEmail] 找到玩家:', _emailNorm, '→ uid:', d.id);
       return { uid: d.id, ...d.data() };
-    } catch(e) { console.error('查詢好友失敗', e); return null; }
+    } catch(e) {
+      // ★ 關鍵修改:不再靜默回 null,而是 console.error + throw,讓上層 catch 顯示真正原因
+      console.error('[_fbFindByEmail] 查詢失敗:', _emailNorm, e);
+      // 把錯誤代碼包裝成可閱讀訊息
+      const _eMsg = e && (e.code || e.message) ? (e.code || e.message) : '網路或權限錯誤';
+      const _newErr = new Error('查詢玩家失敗: ' + _eMsg);
+      _newErr.code = e && e.code;
+      _newErr.original = e;
+      throw _newErr;
+    }
   };
 
   // 讀取好友完整資料
@@ -530,26 +564,55 @@
       const lgModal = document.getElementById('login-gate-modal');
       if(lgModal) lgModal.style.display = 'none';
       // 讀取雲端進度
+      // ★ v1.0.20260424.1100 — 重新調整登入時序,避免跨電腦同步資料污染:
+      //   舊版:[gameCloudLoad → createSession] 中間有空窗,A 電腦可能在 B 載入後仍能存檔覆蓋雲端
+      //   新版:[createSession → 等 A 心跳發現被踢 → gameCloudLoad] 確保載入時雲端已是最新
+      // ★ 0. 重置「被踢」flag(本電腦剛登入,自己當然不算被踢)
+      window._kickedFromSession = false;
+      // ★ 1. 先建立 session 並踢掉其他裝置(讓 A 電腦的下次心跳會發現自己被踢)
+      const _sid = localStorage.getItem('lxps_session_' + user.uid) || (Math.random().toString(36).slice(2) + Date.now().toString(36));
+      localStorage.setItem('lxps_session_' + user.uid, _sid);
+      window._mySessionId = _sid;
+      if(window._fbCreateSession) {
+        try{ await window._fbCreateSession(user.uid, _sid); }catch(_){}
+      }
+      // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1500);
-      // ★ Session 管理：登入時建立唯一 sessionId，防止多裝置同時使用
-      const _sid = localStorage.getItem('lxps_session_' + user.uid) || (Math.random().toString(36).slice(2) + Date.now().toString(36));
-      localStorage.setItem('lxps_session_' + user.uid, _sid);
-      window._mySessionId = _sid;
-      if(window._fbCreateSession) window._fbCreateSession(user.uid, _sid);
-      // 心跳：每 45 秒確認 session 仍有效
+      // ★ 3. 心跳:每 5 秒(從 15 秒再縮短)確認 session 仍有效
+      //   v1.0.20260424.1110 — 縮短到 5 秒(Firestore 寫入頻率上限是每文件每秒 1 次,
+      //   5 秒間隔遠低於限制,且能讓 A 電腦更快發現被踢)
       if(window._sessionHeartbeat) clearInterval(window._sessionHeartbeat);
-      window._sessionHeartbeat = setInterval(async () => {
+      const _checkHeartbeat = async () => {
         if(!window._gUserId || !window._mySessionId) return;
+        if(window._kickedFromSession) return;  // 已被踢就不再檢查
         const status = await window._fbHeartbeat(window._gUserId, window._mySessionId);
         if(status === 'kicked'){
-          clearInterval(window._sessionHeartbeat);
-          window._sessionHeartbeat = null;
+          // ★ v1.0.20260424.1100 — 立即設旗標阻止後續 gameCloudSave 覆蓋雲端
+          window._kickedFromSession = true;
+          console.warn('⛔ [Session] 已被其他裝置踢出,後續存檔將被拒絕');
+          if(window._sessionHeartbeat) { clearInterval(window._sessionHeartbeat); window._sessionHeartbeat = null; }
+          if(window._visibilityHeartbeatHandler){
+            document.removeEventListener('visibilitychange', window._visibilityHeartbeatHandler);
+            window._visibilityHeartbeatHandler = null;
+          }
           _showKickedNotice();
         }
-      }, 45000);
+      };
+      window._sessionHeartbeat = setInterval(_checkHeartbeat, 5000);
+      // ★ v1.0.20260424.1110 — 玩家切回頁面時立即檢查一次,不用等 5 秒輪詢
+      //   實際情境:玩家在 B 電腦操作完,切回 A 電腦頁面 → 立刻發現自己被踢
+      if(window._visibilityHeartbeatHandler){
+        document.removeEventListener('visibilitychange', window._visibilityHeartbeatHandler);
+      }
+      window._visibilityHeartbeatHandler = () => {
+        if(document.visibilityState === 'visible'){
+          _checkHeartbeat();
+        }
+      };
+      document.addEventListener('visibilitychange', window._visibilityHeartbeatHandler);
 
       // ★ 啟動即時同步：監聽暱稱/代表英雄/好友名單變更
       if(window._fbWatchProfile){
@@ -1104,6 +1167,9 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .popup.miss{color:#dddddd;font-size:36px;font-style:italic;letter-spacing:4px;text-shadow:0 0 16px rgba(220,220,220,0.9),0 0 32px rgba(180,180,180,0.5),2px 2px 0 #000;animation:floatUp 0.85s ease-out forwards;}
 .popup.elem-adv{color:#ffee44;font-size:32px;text-shadow:0 0 10px rgba(255,220,50,0.9),2px 2px 0 #000;animation:elemMod 2s ease-out forwards;}
 .popup.elem-dis{color:#66aaff;font-size:32px;text-shadow:0 0 10px rgba(80,160,255,0.9),2px 2px 0 #000;animation:elemMod 2s ease-out forwards;}
+/* ★ v1.0.20260424.1060 — 雙重屬性相剋強化版顯示(技能屬性 + 角色屬性都對應) */
+.popup.elem-adv-strong{color:#ff6622;font-size:38px;font-weight:900;text-shadow:0 0 14px rgba(255,100,30,1),0 0 28px rgba(255,140,40,0.8),2px 2px 0 #000;animation:elemMod 2.2s ease-out forwards;}
+.popup.elem-dis-strong{color:#22ddff;font-size:38px;font-weight:900;text-shadow:0 0 14px rgba(60,200,255,1),0 0 28px rgba(100,210,255,0.7),2px 2px 0 #000;animation:elemMod 2.2s ease-out forwards;}
 /* ★ v1.0.20260423.0100 — 多段傷害/治療 合計數字 視覺 */
 .popup.total-dmg, .popup.total-heal{
   font-size:80px;font-weight:900;letter-spacing:2px;z-index:220;
@@ -1852,6 +1918,17 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 @keyframes enemyTurnPulse{
   0%,100%{opacity:1;box-shadow:0 0 12px rgba(255,80,80,0.3)}
   50%{opacity:0.7;box-shadow:0 0 24px rgba(255,80,80,0.7)}
+}
+/* ★ v1.0.20260424.1120 — 卡死自救按鈕亮起時的閃爍 */
+@keyframes deadlockRescueGlow{
+  0%,100%{
+    box-shadow:0 0 20px rgba(255,60,60,0.8),0 0 40px rgba(255,60,60,0.5);
+    transform:scale(1);
+  }
+  50%{
+    box-shadow:0 0 30px rgba(255,80,80,1),0 0 60px rgba(255,100,100,0.8),0 0 90px rgba(255,150,150,0.6);
+    transform:scale(1.06);
+  }
 }
 /* SHIELD FLASH VFX */
 @keyframes shieldPop{
@@ -5205,6 +5282,8 @@ body.art-premium #summon-overlay {
       <div id="adv-dialog-text"></div>
       <div id="adv-confirm-banner" style="font-size:12px;color:#aaffaa;margin-top:6px;padding:0;letter-spacing:1px;min-height:0;line-height:1.3;"></div>
       <div id="adv-dialog-next">▶▶</div>
+      <!-- ★ v1.0.20260424.1070 — 跳過劇情按鈕(右下),防止對白卡死時可直接跳到下一場戰鬥 -->
+      <div id="adv-dialog-skip-btn" onclick="event.stopPropagation();playSfx('sfx-confirm2',0.7);advSkipCurrentDialog();" style="position:absolute;bottom:14px;right:18px;padding:8px 14px;font-size:18px;font-weight:700;background:rgba(80,40,40,0.85);border:2px solid rgba(255,120,120,0.7);color:#ffaaaa;border-radius:8px;cursor:pointer;letter-spacing:1px;user-select:none;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,0.5);transition:transform 0.15s, background 0.15s;" onmouseover="this.style.background='rgba(160,60,60,0.95)';this.style.transform='scale(1.06)'" onmouseout="this.style.background='rgba(80,40,40,0.85)';this.style.transform='scale(1)'">⏭ 跳過劇情</div>
     </div>
     <div id="adv-treasure-popup">
       <div class="atp-box">
@@ -6706,8 +6785,8 @@ function playSkillFX(skillName,actor,targets){
       zoneFlash(actor.side==='p1'?'p2':'p1','rgba(140,30,50,0.28)',700);
       flashScreen('rgba(130,20,40,0.25)',400);
       break;
-    // ── 酒吞童子 S2：酒宴（我方回血+增益） ──
-    case '酒宴':
+    // ── 酒吞童子 S2：乾杯（我方回血+增益,v1080 從「酒宴」改名避免與爆發「鬼王酒宴」混淆） ──
+    case '乾杯':
       playSfx('sfx-heal',0.9); playSfx('sfx-powerup',0.7);
       targets.forEach(function(h,i){setTimeout(function(){
         ringFX(h,'#ff9944',550);
@@ -7036,7 +7115,7 @@ const HERO_IMGS = {
 const HERO_PORTRAIT_LIBRARY = {
   '祭司': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96).png' },
-    { id:'dawn_breeze', name:'曙光微風', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%AD%E5%8F%B83.png', requiresUnlock:true },
+    { id:'dawn_breeze', name:'曙光微風', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%AD%E5%8F%B83.png', requiresUnlock:true, objPos:'center 60%' },
   ],
   // ★ v1.0.20260421.3002 — 13 位英雄新肖像
   '冰法師': [
@@ -7790,7 +7869,7 @@ const HERO_DB = {
   '陰陽師':{hp:58,atk:5,sp:18,spd:9, s1:{n:'朱雀召喚',c:5,d:'傷害全體對手，治療減半2回合',fd:'依特技70%使敵方全體受到傷害，並陷入治療量減半的狀態2回合。'},s2:{n:'青龍召喚',c:5,d:'傷害全體對手，受傷+50%（2回合）',fd:'依特技70%使敵方全體受到傷害，並陷入受到傷害增加50%的狀態2回合。'}},
   '吸血鬼':{hp:58,atk:11,sp:11,spd:10, s1:{n:'靈魂收割',c:3,d:'處決HP未滿10%的對手',fd:'使剩餘HP未滿10%的1名任意對手強制倒下(無視有利狀態或裝備效果)，並恢復施展者此HP量。'},s2:{n:'召喚蝙蝠群',c:4,d:'隨機攻擊對手5次，每次特技50%固定傷害',fd:'隨機攻擊對手5次，每次用特技50%造成固定傷害。此傷害不受屬性或有利狀態影響且必定命中。'}},
   '學者':  {hp:59,atk:9,sp:12,spd:5, s1:{n:'鑑往知來',c:4,p:true,d:'(被動)友方受傷時立即雙倍特技反擊，之後可再行動',fd:'(被動)友方受到傷害時觸發，立即用特技的兩倍威力反擊。(可以再行動1次)'},s2:{n:'歷史的教訓',c:4,d:'消除對手有利狀態並造成傷害',fd:'消除對手3個有利狀態，不足狀態數轉為特技傷害的倍數。'}},
-  '時空法師':{hp:59,atk:3,sp:13,spd:15, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。'}},
+  '時空法師':{hp:59,atk:12,sp:15,spd:4, s1:{n:'時間暫停',c:6,d:'全體對手下回合禁動',fd:'使敵方全體下一回合無法行動，身上的狀態回合數也停止計時1回合。'},s2:{n:'時間倒轉',c:6,once:true,d:'回到上一回合剛開始的狀態',fd:'使時間回上一回合剛開始的狀態。'}},
   '小力':    {hp:99,atk:1,sp:15,spd:18, s1:{n:'忠犬守護',c:2,d:'1回合內友方受傷轉移50%給自己（HP至少1）',fd:'🔷🔷1回合內將隊友受到傷害的50%轉移到自己身上，自己HP至少保留1不會倒下。每升 1 級轉移傷害+5%(Lv10 達 95%)。此技能HP為1時無法使用。'},s2:{n:'愛護校犬',c:0,p:true,d:'(被動)開場隱身10回合並每回合依特技恢復HP，時間到回去休息',fd:'0(被動)開場自動發動，進入10回合的「強力隱身」的無敵狀態，持續10回合。此狀態不會被消除或奪取，且每回合依特技值恢復自己HP（每升 1 級恢復量+5%，基礎 100%）。時間到後直接回去休息(無法戰鬥)。'}},
   '籃球隊員':{hp:54,atk:5,sp:13,spd:14, s1:{n:'三分投射',c:3,d:'特技250%傷害，暴擊時+2能量',fd:'對1名敵人造成特技250%的傷害，若觸發暴擊則立即獲得2能量。'},s2:{n:'運球',c:3,d:'友方全體普攻變2次（1回合）',fd:'使友方全體獲得「運球」狀態1回合，普通攻擊變為2次攻擊。'}},
   '直笛團員':{hp:57,atk:9,sp:18,spd:6, s1:{n:'不熟練習曲',c:4,d:'依特技70%傷害全體對手並附加「魔音」2回合',fd:'依特技的70%傷害全體對手並使其陷入「魔音」2回合，每回合減少2能量。'},s2:{n:'餘音繞樑',c:5,d:'使全體友方持續恢復5回合，同時使全體對手中毒5回合',fd:'使全體友方獲得「持續恢復」狀態5回合（每回合恢復12HP），同時使全體對手附加「中毒」狀態5回合。'}},
@@ -9115,7 +9194,7 @@ function tickStatus(h){
       h._burstMirror=false;
       log(`[${h.name}] 明鏡止水結束，攻擊值恢復正常。`);
     }
-    // ★ v1.0.20260421.0700 — 酒吞童子「酒宴」到期還原攻擊與特技
+    // ★ v1.0.20260421.0700 — 酒吞童子「乾杯」(原「酒宴」,v1080 改名)到期還原攻擊與特技
     if(b.type==='shutenBoost'){
       if(h._shutenOrigAtk !== undefined){ h.atk = h._shutenOrigAtk; delete h._shutenOrigAtk; }
       if(h._shutenOrigSp  !== undefined){ h.sp  = h._shutenOrigSp;  delete h._shutenOrigSp;  }
@@ -9491,6 +9570,154 @@ function getElemDmgMod(attacker, target){
     return _defBoost ? -0.20 : (aData.dis_dmg_pct||-0.10);
   }
   return 0;
+}
+
+// ★ v1.0.20260424.1060 — 強制屬性技能系統 (SKILL_FORCE_ELEMENT)
+//   [設計理念] 某些技能名稱或描述明確表達了元素屬性(如「火屬性傷害」),
+//   即使施放者本身不是該屬性,技能本身仍應依該屬性計算相剋。
+//   [規則]
+//   1. 技能在此清單中 → 使用「技能屬性」計算相剋 (而非角色屬性)
+//   2. 若角色屬性與技能屬性「都」相剋目標 → 雙重相剋,+30% (10%+20%)
+//   3. 若兩者都不相剋目標 → 0%
+//   4. 一者相剋一者劣勢 → 兩者抵消,+10% 或 -10% (取技能屬性方向)
+//   [納入規則]
+//   - 必須是「造成 atk/sp 比例傷害」的攻擊技 (如 200% 特技傷害)
+//   - 純治療/淨化/狀態類 → 不納入(沒有傷害,套相剋無意義)
+//   - 固定 % HP 傷害(如 20% HP)→ 不納入(傷害已固定,相剋反而失衡)
+//   [子屬性歸併規則 v1080]
+//   - 雷/閃電類 → 歸入 wind 風屬性
+//   - 冰/凍類   → 歸入 water 水屬性
+//   [v1080 玩家確認後的調整]
+//   - 八首齊噬 → 移除(玩家定為「無屬性」,fd 寫「龍屬性」非標準屬性,走角色屬性)
+//   - 八頭龍滅世 → 保留 dark(玩家確認)
+//   - 鬼王酒宴 → 移除(玩家定為「無屬性」)
+//   - 暗冰雷焰吐息 → 移到 SKILL_RANDOM_ELEMENTS(每次傷害隨機從暗/火/水/風 4 屬性挑一個)
+const SKILL_FORCE_ELEMENT = {
+  // ── 火 ──
+  '火焰球':       'fire',  // 火法師 S1(特技150%+10必中)
+  '地獄之火':     'fire',  // 火法師 S2(特技40%全體+燃燒)
+  '烈焰爆發':     'fire',  // 火法師爆發(特技150%全體)
+  '九尾狐火':     'fire',  // 玉藻前 S1(3-4次特技傷害+燃燒)
+  '禍世邪魅':     'fire',  // 玉藻前爆發(特技200%全體)
+  '焰尾九連擊':   'fire',  // 九尾空貓怪爆發(特技40%×9次)
+  // ── 水(含冰子屬,v1080:冰類技能歸入 water) ──
+  '冰凍之矛':     'water',  // 冰法師 S1(冰=水)
+  '暴風雪':       'water',  // 冰法師 S2(冰=水)
+  '冰封末日':     'water',  // 冰法師爆發(冰=水)
+  '幽寒吐息':     'water',  // 雪女 S2(冰=水)
+  // ── 風(含雷子屬,v1080:雷類技能歸入 wind) ──
+  '疾風團扇擊':   'wind',  // 大天狗 S1
+  '風捲殘雲':     'wind',  // 大天狗 S2
+  '神威風獵':     'wind',  // 大天狗爆發
+  // ── 草 ──
+  '落英繽紛':     'grass',  // 杏花妖 S2(特技全體)
+  '千年絕美·傾城一笑': 'grass',  // 杏花妖爆發
+  '千年絕美・傾城一笑': 'grass',  // 全形分隔符 fallback
+  // ── 光 ──
+  '日月同輝':     'light',  // 光法師 S1(特技50%傷害+50%治療)
+  '破魔矢':       'light',  // 巫女 S2(特技200%單體+日妖+100%)
+  // ── 暗 ──
+  '暗羽突襲':     'dark',  // 烏天狗 S1(攻擊200%單體)
+  '鬼力橫掃':     'dark',  // 酒吞童子 S1(特技150%全體)
+  '八頭龍滅世':   'dark',  // 八岐大蛇爆發(特技×8必中+強力狀態,玩家確認設為暗)
+  // ── v1080 已移除(走角色屬性或無屬性) ──
+  // '八首齊噬'     → 玩家定為無屬性
+  // '鬼王酒宴'     → 玩家定為無屬性
+  // '暗冰雷焰吐息' → 改用 SKILL_RANDOM_ELEMENTS 隨機屬性機制
+};
+
+// ★ v1.0.20260424.1080 — 隨機屬性技能(每次傷害都從多個屬性中隨機挑一個)
+//   [使用情境] 描述為「混合元素」的技能,每次命中都從候選池隨機挑一種屬性算相剋。
+//   實際運作:doDmg 內若 skillName 在此清單,每次計算屬性相剋時隨機選一個;
+//   getSkillBeamColor 也會回傳對應顏色(子彈每次顏色不同,呼應「混合」感)。
+const SKILL_RANDOM_ELEMENTS = {
+  // 八岐大蛇 S2 暗冰雷焰吐息:fd 寫「暗焰、冰雪、落雷、烈焰」混合,
+  // 每次傷害從 4 屬性隨機選一個(冰歸 water、雷歸 wind)
+  '暗冰雷焰吐息': ['dark', 'fire', 'water', 'wind'],
+};
+
+// ★ v1.0.20260424.1060 — 計算技能強制屬性的相剋加成(疊加在角色屬性之上)
+//   回傳: { elemPct: 角色屬性百分比, skillPct: 技能屬性百分比, total: 總百分比, forceElem: 實際使用的屬性 }
+// ★ v1.0.20260424.1080 — 支援 SKILL_RANDOM_ELEMENTS:每次呼叫隨機從候選池選一個屬性
+function getSkillForceElemMod(attacker, target, skillName){
+  const result = { elemPct: 0, skillPct: 0, total: 0, forceElem: null };
+  // 角色屬性相剋(原本邏輯)
+  result.elemPct = getElemDmgMod(attacker, target);
+  if(fieldHas('balance')) {
+    result.total = result.elemPct;
+    return result;
+  }
+  // ★ v1.0.20260424.1080 — 優先檢查 SKILL_RANDOM_ELEMENTS:每次呼叫都隨機選一個
+  let fe = null;
+  if(skillName && SKILL_RANDOM_ELEMENTS[skillName]){
+    const _pool = SKILL_RANDOM_ELEMENTS[skillName];
+    if(Array.isArray(_pool) && _pool.length > 0){
+      fe = _pool[Math.floor(Math.random() * _pool.length)];
+    }
+  }
+  // 沒有 RANDOM 才看 FORCE
+  if(!fe && skillName && SKILL_FORCE_ELEMENT[skillName]){
+    fe = SKILL_FORCE_ELEMENT[skillName];
+  }
+  // 兩者都沒有 → 只有角色屬性
+  if(!fe) {
+    result.total = result.elemPct;
+    return result;
+  }
+  result.forceElem = fe;
+  const te = target && target.element;
+  if(!te || fe === te) {
+    result.total = result.elemPct;
+    return result;
+  }
+  const fData = ELEMENT_DB[fe];
+  if(!fData) {
+    result.total = result.elemPct;
+    return result;
+  }
+  // 計算技能屬性相剋(技能版額外 +20%)
+  if(fData.vs_adv && fData.vs_adv.includes(te)){
+    result.skillPct = 0.20;  // 技能屬性相剋:額外 +20%
+  } else if(fData.vs_dis && fData.vs_dis.includes(te)){
+    result.skillPct = -0.20;  // 技能屬性劣勢:額外 -20%
+  }
+  result.total = result.elemPct + result.skillPct;
+  return result;
+}
+
+// ★ v1.0.20260424.1060 — 取得屬性對應顏色(供子彈/光束使用)
+//   注意:ELEMENT_DB 只有 7 種主屬性(water/fire/wind/grass/earth/light/dark),
+//   ice/thunder 不是獨立屬性,但歷史既有 elemColors 字典有定義(供文學描述用),
+//   保留是為了與遊戲其他地方既有 elemColors 字典一致(line ~16627)
+const ELEM_COLORS = {
+  fire:    '#ff6600',
+  water:   '#4488ff',
+  grass:   '#44ee44',
+  ice:     '#a8eeff',  // 同 elemColors 字典的歷史既定值
+  thunder: '#aaff00',  // 同 elemColors 字典的歷史既定值
+  light:   '#ffffaa',
+  dark:    '#9944cc',
+  wind:    '#aaffcc',
+  earth:   '#cc8844',
+};
+function getSkillBeamColor(actor, skillName){
+  // ★ v1.0.20260424.1080 — 隨機屬性技能:每次呼叫都隨機選一個顏色
+  if(skillName && SKILL_RANDOM_ELEMENTS && SKILL_RANDOM_ELEMENTS[skillName]){
+    const _pool = SKILL_RANDOM_ELEMENTS[skillName];
+    if(Array.isArray(_pool) && _pool.length > 0){
+      const _fe = _pool[Math.floor(Math.random() * _pool.length)];
+      return ELEM_COLORS[_fe] || null;
+    }
+  }
+  // 技能強制屬性優先,否則用角色屬性
+  if(skillName && SKILL_FORCE_ELEMENT[skillName]){
+    const fe = SKILL_FORCE_ELEMENT[skillName];
+    return ELEM_COLORS[fe] || null;
+  }
+  if(actor && actor.element){
+    return ELEM_COLORS[actor.element] || null;
+  }
+  return null;
 }
 
 function checkElemImmune(h, statusType){
@@ -12309,7 +12536,7 @@ function buffClass(t){
   return m[t]||'stag';
 }
 function buffName(t){
-  const m={immune:'無敵',shield:'護盾',evasion:'迴避',spdAvoid:'閃躲',hidden:'隱身',dmgup:'攻增',absorb:'吸收',deathimmune:'死亡免疫',immovable:'免疫狀態',halfDmg:'🛡減傷½',warhorn:'戰意',bigshield:'護盾',regen:'持續恢復',fieldImmune:'場地免疫',protectBuff:'狀態保護',discount:'節能',counter:'金鐘罩',misfortune:'轉禍為福',misfortune2:'轉禍為福',alchemist:'道具複製',guard:'守護',ctrlImmune:'控制免疫',divineBlessing:'神之賜福',hpRegen:'持續恢復',mercyRain:'慈悲之雨',chargeAtk:'蓄力中',zeroCost:'⚡無限能量',nioGuard:'🛡仁王挺立',doubleatk:'倍攻',strengthened:'增強',shutenBoost:'🍶酒宴+25%',conservation:'守恆',burstUndying:'不倒再生',inuInvisible:'🐕強力隱身',statusImmune:'免疫狀態',
+  const m={immune:'無敵',shield:'護盾',evasion:'迴避',spdAvoid:'閃躲',hidden:'隱身',dmgup:'攻增',absorb:'吸收',deathimmune:'死亡免疫',immovable:'免疫狀態',halfDmg:'🛡減傷½',warhorn:'戰意',bigshield:'護盾',regen:'持續恢復',fieldImmune:'場地免疫',protectBuff:'狀態保護',discount:'節能',counter:'金鐘罩',misfortune:'轉禍為福',misfortune2:'轉禍為福',alchemist:'道具複製',guard:'守護',ctrlImmune:'控制免疫',divineBlessing:'神之賜福',hpRegen:'持續恢復',mercyRain:'慈悲之雨',chargeAtk:'蓄力中',zeroCost:'⚡無限能量',nioGuard:'🛡仁王挺立',doubleatk:'倍攻',strengthened:'增強',shutenBoost:'🍶乾杯+25%',conservation:'守恆',burstUndying:'不倒再生',inuInvisible:'🐕強力隱身',statusImmune:'免疫狀態',
   inuGuard:'忠犬守護中',_relay:'接力強化',_sprint:'起跑加速',
   dribble:'運球',elemBoost:'元素增幅',trapShield:'天網護盾',_inuGuard:'忠犬守護中',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',burstVamp:'鮮血吸收',taunt:'嘲諷中',_napShield:'午睡護盾',burstVamp:'🦇嗜血'};
   return m[t]||t;
@@ -12325,6 +12552,27 @@ function colorizeSkillDesc(desc){
     '<b style="color:#ffee88;font-weight:500;white-space:nowrap;display:inline">$1</b>');
   desc = desc.replace(/(SPD|速度值|速度)/g,
     '<b style="color:#88ffaa;font-weight:500;white-space:nowrap;display:inline">$1</b>');
+  // ★ v1.0.20260424.1090 — 屬性傷害以對應屬性顏色顯示
+  //   雷=風、冰=水(子屬性歸併規則)
+  //   顏色取自 ELEM_COLORS,跟戰鬥子彈光束一致
+  desc = desc.replace(/(火屬性傷害)/g,
+    '<b style="color:#ff6600;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(255,100,0,0.6)">$1</b>');
+  desc = desc.replace(/(水屬性傷害)/g,
+    '<b style="color:#4488ff;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(80,150,255,0.6)">$1</b>');
+  desc = desc.replace(/(冰屬性傷害)/g,  // 冰=水
+    '<b style="color:#4488ff;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(150,210,255,0.7)">$1</b>');
+  desc = desc.replace(/(風屬性傷害)/g,
+    '<b style="color:#44cc66;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(80,200,120,0.6)">$1</b>');
+  desc = desc.replace(/(雷屬性傷害)/g,  // 雷=風
+    '<b style="color:#aaff00;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(180,255,80,0.7)">$1</b>');
+  desc = desc.replace(/(草屬性傷害)/g,
+    '<b style="color:#44ee44;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(80,220,80,0.6)">$1</b>');
+  desc = desc.replace(/(土屬性傷害)/g,
+    '<b style="color:#cc8844;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(190,130,80,0.6)">$1</b>');
+  desc = desc.replace(/(光屬性傷害)/g,
+    '<b style="color:#ffcc44;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(255,220,100,0.7)">$1</b>');
+  desc = desc.replace(/(暗屬性傷害)/g,
+    '<b style="color:#bb88ee;font-weight:700;white-space:nowrap;display:inline;text-shadow:0 0 6px rgba(170,100,220,0.7)">$1</b>');
   return desc;
 }
 // ★ v1.0.20260423.0100 — 吸血鬼「靈魂收割」可處決目標持續高亮
@@ -12989,7 +13237,7 @@ const BURST_GIF_DB = {
     tint:'rgba(150,120,255,0.15)'
   },
   '萬物創生': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E8%90%AC%E7%89%A9%E5%89%B5%E7%94%9F.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%90%AC%E7%89%A9%E5%89%B5%E7%94%9F.gif',
     sfx:[['sfx-powerup',1.0],['sfx-fantasy',0.85]],
     tint:'rgba(80,220,150,0.15)'
   },
@@ -13192,6 +13440,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   //   任何非神偷/軍師爆發的 消除/搶奪/交換 操作會跳過帶此旗標的 buff
   window._burstCastActive = true;
   const burstName = bd.n; // ★ 修正：burstName 從爆發資料取得
+  // ★ v1.0.20260424.1063 — 設定 _curSkillName 讓 doDmg 能正確套用 SKILL_FORCE_ELEMENT
+  //   爆發技內部呼叫 doDmg 多半是 isSkill:true,需要這個值才能找對技能屬性
+  try{ window._curSkillName = burstName; }catch(_){}
   const opp=side==='p1'?'p2':'p1';
   const enemies=G[opp].filter(x=>x.curHp>0);
   const allies=G[side].filter(x=>x.curHp>0);
@@ -15326,19 +15577,49 @@ function doDmg(target, rawDmg, opts={}){
   // ── 元素相剋傷害加成（★ v1.0.20260421.3016 改為百分比）
   //   「小數點無條件進位」：先用變化量絕對值 ceil，再依 sign 加減
   //   例：dmg=5 增傷+10% → Δ=ceil(0.5)=1 → 5+1=6；減傷-10% → Δ=ceil(0.5)=1 → 5-1=4
-  const _elemPct=getElemDmgMod(a,target);
+  // ★ v1.0.20260424.1060 — 改用 getSkillForceElemMod 同時計算「角色屬性」+「技能強制屬性」相剋
+  //   - 技能在 SKILL_FORCE_ELEMENT 中(如冰法師暴風雪)→ 額外 ±20% 屬性相剋
+  //   - 兩者疊加,最大可達 ±30% (角色屬性 ±10% + 技能屬性 ±20%)
+  // ★ v1.0.20260424.1063 — 改良:不再依賴 opts.isSkill,改用以下優先序:
+  //   1. opts.skillName(顯式傳入,最高優先)
+  //   2. opts.fixedDmg / opts.isRebound / opts.isPunishReflect → 不套技能屬性(這些是特殊傷害)
+  //   3. window._curSkillName(execSkill / _runBurst 設定,普攻 / endAction / startTurn 會清除)
+  //   這樣即使技能 doDmg 沒傳 isSkill,只要在 execSkill 內呼叫,仍能正確套用
+  let _elemPct = 0;
+  let _skillElemInfo = null;
+  let _skName = null;
+  // 優先 1:顯式 skillName
+  if(opts.skillName){
+    _skName = opts.skillName;
+  }
+  // 優先 2:排除特殊傷害(反彈、處決反擊),不套技能屬性
+  else if(!opts.isRebound && !opts.isPunishReflect && !opts.fixedDmg){
+    // 優先 3:讀全域 _curSkillName(execSkill / _runBurst 設定)
+    try{ _skName = window._curSkillName || null; }catch(_){ _skName = null; }
+  }
+  if(_skName){
+    _skillElemInfo = getSkillForceElemMod(a, target, _skName);
+    _elemPct = _skillElemInfo.total;
+  } else {
+    _elemPct = getElemDmgMod(a, target);
+  }
   if(_elemPct!==0 && dmg>0){
     const _delta = Math.ceil(dmg * Math.abs(_elemPct));
     if(_elemPct>0){
       dmg = dmg + _delta;
       const _pctDisp = Math.round(_elemPct*100);
-      log(`⚡元素相剋！傷害+${_pctDisp}% (+${_delta})`);
-      showPopup(target,'▲+'+_pctDisp+'%','elem-adv');
+      // 顯示文字:若有技能屬性疊加,加註 ⚡⚡ 雙重相剋
+      const _isDouble = _skillElemInfo && _skillElemInfo.elemPct > 0 && _skillElemInfo.skillPct > 0;
+      const _icon = _isDouble ? '⚡⚡' : '⚡';
+      log(_icon + (_isDouble ? '雙重' : '') + `元素相剋！傷害+${_pctDisp}% (+${_delta})`);
+      showPopup(target, '▲+' + _pctDisp + '%', _isDouble ? 'elem-adv-strong' : 'elem-adv');
     } else {
       dmg = Math.max(0, dmg - _delta);
       const _pctDisp = Math.round(Math.abs(_elemPct)*100);
-      log(`⚡元素劣勢！傷害-${_pctDisp}% (-${_delta})`);
-      showPopup(target,'▼-'+_pctDisp+'%','elem-dis');
+      const _isDouble = _skillElemInfo && _skillElemInfo.elemPct < 0 && _skillElemInfo.skillPct < 0;
+      const _icon = _isDouble ? '🛡🛡' : '🛡';
+      log(_icon + (_isDouble ? '雙重' : '') + `元素劣勢！傷害-${_pctDisp}% (-${_delta})`);
+      showPopup(target, '▼-' + _pctDisp + '%', _isDouble ? 'elem-dis-strong' : 'elem-dis');
     }
   }
   // ★ v1.0.20260421.3022 — 嗜血：低血增傷（血量越低增傷越高，最高+100%）
@@ -16585,6 +16866,8 @@ function clearSel(){
 }
 
 function execAtk(actor, target, dmg, opts={}){
+  // ★ v1.0.20260424.1063 — 普攻入口清除 _curSkillName 防止上一次技能污染傷害計算
+  try{ window._curSkillName = null; }catch(_){}
   log(`[${actor.name}] 普通攻擊 [${target.name}]`);
   showActionLabel(actor, '⚔ 普通攻擊', '#ffcc44');
   actor._actionLabel = '⚔ 普通攻擊！';
@@ -16623,9 +16906,16 @@ function execAtk(actor, target, dmg, opts={}){
     if(fx) fx();
     else { playSfx('sfx-normalatk',0.7); if(rc_t){flashCard(target,'rgba(255,255,255,0.35)',120);} }
     // ── 元素命中特效 ──
-    if(actor.element && rc_t){
-      var elemColors={'fire':'#ff6600','water':'#4488ff','grass':'#44ee44','ice':'#a8eeff','thunder':'#aaff00','light':'#ffffaa','dark':'#9944cc','wind':'#aaffcc','earth':'#cc8844'};
-      var ec=elemColors[actor.element];
+    // ★ v1.0.20260424.1060 — 子彈顏色:技能強制屬性優先,否則用角色屬性
+    // ★ v1.0.20260424.1063 — 普攻不應吃 _curSkillName(那是上次技能殘留),
+    //   普攻時直接用角色屬性顏色
+    if(rc_t){
+      var ec = null;
+      // 普攻就用角色屬性,不讀 _curSkillName(避免被上次技能污染)
+      if(actor.element){
+        var elemColors2={'fire':'#ff6600','water':'#4488ff','grass':'#44ee44','ice':'#a8eeff','thunder':'#aaff00','light':'#ffffaa','dark':'#9944cc','wind':'#aaffcc','earth':'#cc8844'};
+        ec = elemColors2[actor.element];
+      }
       if(ec) setTimeout(function(){spawnParticles(rc_t.x,rc_t.y,{count:6,color:ec,size:4,spread:28,duration:350,rise:true,gravity:-0.2});},150);
     }
   })();
@@ -17110,7 +17400,7 @@ function _showStealPicker(thief, victim, stealCount, cost){
     dmgup:'攻增', absorb:'吸收', halfDmg:'減傷½', warhorn:'戰意',
     bigshield:'大護盾', regen:'持續恢復', hpRegen:'持續恢復', divineBlessing:'神之賜福',
     ctrlImmune:'控制免疫', statusImmune:'狀態免疫', doubleatk:'倍攻',
-    strengthened:'增強', shutenBoost:'酒宴+25%', conservation:'守恆',
+    strengthened:'增強', shutenBoost:'乾杯+25%', conservation:'守恆',
   };
   const _buffsHtml = _stealableBuffs.length ? `
     <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:600px;">
@@ -17803,6 +18093,8 @@ function _showCharmPicker(dancer, victim, cost){
 
 function execSkill(a, sk, cost, stype){
   const n=sk.n;
+  // ★ v1.0.20260424.1060 — 追蹤目前正在執行的技能名,供 doDmg 套用 SKILL_FORCE_ELEMENT
+  try{ window._curSkillName = n; }catch(_){}
   // ★ 設定技能升級等級倍率：優先讀英雄物件上的 _skLv（冒險模式建隊時就存入），
   //   避免跨Script全域變數讀取問題；fallback 仍保留全域讀取路徑
   if(stype && a._skLv && typeof a._skLv[stype] === 'number'){
@@ -19035,13 +19327,13 @@ function execSkill(a, sk, cost, stype){
     endAction(a, cost);
   }
   // 酒吞童子 S2：恢復友方20%HP，攻擊+特技+25% 2回合
-  else if(n==='酒宴'){
+  else if(n==='乾杯'){
     // ★ v1.0.20260423.9100 — 每升 1 級 +5% 恢復量(基礎 20%,Lv5=45%)
     const _s2LvSh = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
     const _healPctSh = 0.20 + _s2LvSh * 0.05;
-    log(`👹 [${a.name}] 酒宴!豪飲妖酒振奮全隊(恢復 ${Math.round(_healPctSh*100)}% HP)!`);
+    log(`👹 [${a.name}] 乾杯!豪飲妖酒振奮全隊(恢復 ${Math.round(_healPctSh*100)}% HP)!`);
     const allies = G[a.side].filter(h => h.curHp>0);
-    playSkillFX('酒宴', a, allies);
+    playSkillFX('乾杯', a, allies);
     beginBatchTotals();
     allies.forEach(t => {
       // 恢復 20%+5%/級 最大 HP
@@ -19062,7 +19354,7 @@ function execSkill(a, sk, cost, stype){
       t.atk = Math.max(1, Math.floor(origAtk * 1.25));
       t.sp  = Math.max(1, Math.floor(origSp  * 1.25));
       t.buffs.push({type:'shutenBoost', dur:2});
-      bannerFX(t, '酒宴！', '#ff9944', 900);
+      bannerFX(t, '乾杯！', '#ff9944', 900);
       renderCard(t);
     });
     setTimeout(endBatchTotals, 100);
@@ -20343,6 +20635,10 @@ function autoUseItem(item, actor, cb){
 function endAction(a, cost, noFinish=false){
   // ★ v1.0.20260424.0910 — 正常結束行動時清除 AI watchdog,避免誤觸發
   try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
+  // ★ v1.0.20260424.1120 — 行動結束時也清除卡死偵測 watchdog
+  try{ if(typeof _clearDeadlockWatchdog === 'function') _clearDeadlockWatchdog(); }catch(_){}
+  // ★ v1.0.20260424.1063 — 行動結束時清除 _curSkillName,防止下回合誤套上次技能屬性
+  try{ window._curSkillName = null; }catch(_){}
   // ★ 重置技能升級倍率
   _activeSkLvMult = 1.0; _activeSkLv = 0;
   try {
@@ -21032,6 +21328,11 @@ function _pickWeightedTarget(pool) {
 function startTurn(){
   // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
   if(window._advMiniResultShowing) return;
+  // ★ v1.0.20260424.1120 — 開始新一個行動,清除卡死偵測 watchdog 與按鈕
+  try{ if(typeof _clearDeadlockWatchdog === 'function') _clearDeadlockWatchdog(); }catch(_){}
+  // ★ v1.0.20260424.1063 — 雙重保險:每次 startTurn 都清除 _curSkillName,
+  //   避免任何時機殘留的技能名污染下一個英雄的傷害計算
+  try{ window._curSkillName = null; }catch(_){}
   // ★ v1.0.20260423.0100 — 安全：清除可能殘留的合計計數狀態（新一回合開始時視為乾淨起點）
   try{ if(window._batchTotals){ window._batchTotals = null; } }catch(_){}
   // ★ v1.0.20260424.0910 — 保險:每回合開始時重置 BOSS 的暫態旗標,
@@ -21067,8 +21368,19 @@ function startTurn(){
   // ★ 每回合開始儲存快照（F8密技）
   try{ _saveCheatSnapshot(); }catch(e){}
   // ★ 冒險BOSS戰：每回合存 localStorage 戰鬥快照（防 iPad 崩潰）
+  // ★ v1.0.20260424.1070 — 重大 BUG 修復:原本每次 startTurn 都覆蓋快照,
+  //   但 startTurn 在同一回合內會被呼叫多次(每換一個英雄就呼叫一次),
+  //   導致 BOSS 在這回合行動後 HP 降低時,「上一回合」快照被持續用「當前 HP」覆蓋,
+  //   造成「卡死回溯」時 BOSS HP 不還原(看起來是當前狀態而非上回合開始狀態)。
+  //   修復:同 G._curRoundSnap 的邏輯,只在 round 變化的「首次」startTurn 存快照。
   if(_adventureMode && G && G.p1 && G.p2){
-    try{ _saveBattleRoundSnapshot(); }catch(e){}
+    try{
+      const _curR2 = G.round || 1;
+      if(G._lastBattleSnapRound !== _curR2){
+        _saveBattleRoundSnapshot();
+        G._lastBattleSnapRound = _curR2;
+      }
+    }catch(e){ console.error('[battleSnap]', e); }
   }
   // ★ 每5回合同步雲端存檔
   if(_adventureMode && G && G.round && G.round % 5 === 0){
@@ -21635,6 +21947,9 @@ function startTurn(){
     }
     enemyTurnNotice.style.display = 'block';
     enemyTurnNotice.textContent = `⚔ 現在是對手的回合！`;
+    // ★ v1.0.20260424.1120 — 卡死偵測:啟動 5 秒 watchdog
+    //   若 5 秒後 G.activeChar / G.round 都沒變,代表 AI 卡死,亮起「卡死自救」按鈕
+    try{ _startDeadlockWatchdog(); }catch(_){}
     // ★ 確保回溯按鈕可見（冒險模式）
     if(_adventureMode){
       const _rbBtn = document.getElementById('adv-rollback-btn');
@@ -29155,7 +29470,7 @@ Object.assign(HERO_DB, {
   },
   '酒吞童子':{hp:600,atk:15,sp:23,spd:24,exp:66,
     s1:{n:'鬼力橫掃',c:5,d:'依特技150%對全體造成1次傷害，爆擊率+50%',fd:'揮動巨大鐵棒橫掃戰場，用特技值的150%對全體存活對手造成1次暗屬性傷害，此傷害爆擊率+50%。'},
-    s2:{n:'酒宴',c:6,d:'恢復友方全體20%HP並提升25%攻擊與特技2回合',fd:'豪飲妖酒並灑向同伴，恢復我方全體最大HP的20%，同時提升我方全體攻擊與特技25%，持續2回合。'}
+    s2:{n:'乾杯',c:6,d:'恢復友方全體20%HP並提升25%攻擊與特技2回合',fd:'豪飲妖酒並灑向同伴，恢復我方全體最大HP的20%，同時提升我方全體攻擊與特技25%，持續2回合。'}
   },
   '玉藻前':{hp:600,atk:15,sp:23,spd:24,exp:66,
     s1:{n:'九尾狐火',c:4,d:'依特技對隨機目標造成3~4次傷害，附加燃燒',fd:'九條金尾噴射熾烈狐火，用特技值對隨機存活對手造成3~4次火屬性傷害，每次獨立結算暴擊；所有命中的目標追加燃燒2回合（行動前後各 -5HP）。'},
@@ -29979,6 +30294,8 @@ function advStartCutscene(stage) {
   // ★ v1.0.20260424.0910 — 新冒險開始時重置「戰鬥結算已顯示」flag,
   //   讓 _saveBattleRoundSnapshot 能正常存新一場戰鬥的快照
   try{ window._advBattleResultShown = false; }catch(_){}
+  // ★ v1.0.20260424.1070 — 重置「上次存快照的 round」,讓新冒險第一回合能正常存快照
+  try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
   _advSceneIdx = 0;
   _advDialogIdx = 0;
   _advSceneChoiceDone = false; // ★ 初始化選題旗標
@@ -30417,7 +30734,9 @@ function _renderDialogWithHighlights(txt){
 
 function advNextDialog(e) {
   // 若點到略過按鈕，不推進
-  if(e && e.target && (e.target.id === 'adv-skip-btn' || e.target.closest('#adv-skip-btn'))) return;
+  // ★ v1.0.20260424.1070 — 加入新的「跳過劇情」按鈕(對白卡死救援用)
+  if(e && e.target && (e.target.id === 'adv-skip-btn' || e.target.closest('#adv-skip-btn')
+                       || e.target.id === 'adv-dialog-skip-btn' || e.target.closest('#adv-dialog-skip-btn'))) return;
   // ★ v1.0.20260424.0920 — 強化自我修復:檢查 cutscene overlay 是否顯示中,
   //   若是且各種 flag 殘留為 true,代表流程錯誤,reset 讓對話可繼續
   const _csOv = document.getElementById('adv-cutscene-overlay');
@@ -30468,6 +30787,89 @@ function advNextDialog(e) {
   } else {
     // 對話結束，顯示選擇視窗
     advShowChoicePanel(stage, _advSceneIdx);
+  }
+}
+
+// ★ v1.0.20260424.1070 — 跳過當前劇情對白:強制清除對白殘留 flag,直接跳到下一場戰鬥
+//   注意:此函式與舊的 advSkipCutscene(line ~31511,跳過整個冒險演出)不同,
+//   此函式只跳過「當前」場景的對白,不跳整個冒險。
+//   設計考量:
+//   - 對白可能因任何 flag 殘留卡死,這個按鈕是「最後手段」
+//   - 強制 reset 所有可能殘留的 flags,然後直接呼叫 advStartMiniBattle 進入下一場
+function advSkipCurrentDialog() {
+  try{
+    const stage = _adventureStage;
+    const sceneIdx = _advSceneIdx;
+    if(!stage){
+      _showInGameToast('⚠ 沒有可跳過的劇情', '#ff8844', 1800);
+      return;
+    }
+    // ★ 確認再執行(避免誤按)
+    const _doSkip = () => {
+      try{
+        // 1) 強制清除所有對白相關 flag
+        try{ _advSceneChoiceDone = false; }catch(_){}
+        try{ _advMiniBattleActive = false; }catch(_){}
+        try{ window._advMiniResultShowing = false; }catch(_){}
+        try{ window._gamePaused = false; }catch(_){}
+        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        // 2) 清除 quiz overlay(若顯示中)
+        const _qoEl = document.getElementById('adv-quiz-overlay');
+        if(_qoEl) _qoEl.classList.remove('show');
+        // 3) 清除選擇面板
+        const _cpEl = document.getElementById('adv-choice-panel');
+        if(_cpEl) _cpEl.innerHTML = '';
+        // 4) 清除法寶彈窗
+        const _tpEl = document.getElementById('adv-treasure-popup');
+        if(_tpEl) _tpEl.classList.remove('show');
+        // 5) 隱藏對話框
+        const _dlgBox = document.getElementById('adv-dialog-box');
+        if(_dlgBox) _dlgBox.classList.remove('show');
+        // 6) 取得當前場景資料
+        const _sceneArr = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
+        const scene = _sceneArr[sceneIdx];
+        if(!scene){
+          _showInGameToast('⚠ 找不到當前場景資料', '#ff8844', 2000);
+          return;
+        }
+        // 7) 根據場景類型決定如何跳:
+        //    - 主 BOSS 場景(有 boss 字段)→ 開戰
+        //    - 其他場景 → 用 advStartMiniBattle 進下一場戰鬥
+        log('⏭ [跳過劇情] 強制跳過當前場景對白');
+        try{ console.log('[advSkipCurrentDialog] 跳過 stage='+stage+' sceneIdx='+sceneIdx, 'scene type:', scene.type||'unknown'); }catch(_){}
+        // 場景有 boss 字段 → 進 BOSS 戰
+        if(scene.boss){
+          if(typeof advStartBattle === 'function'){
+            try{ advStartBattle(); }catch(e){ console.error('[advSkipCurrentDialog] advStartBattle 失敗:', e); }
+            return;
+          }
+        }
+        // 一般場景:呼叫 advStartMiniBattle 進入下一場戰鬥
+        if(typeof advStartMiniBattle === 'function'){
+          try{ advStartMiniBattle(sceneIdx + 1); }catch(e){
+            console.error('[advSkipCurrentDialog] advStartMiniBattle 失敗:', e);
+            // fallback:直接跳場景
+            _advSceneIdx = sceneIdx + 1;
+            if(typeof advLoadScene === 'function') advLoadScene(stage, _advSceneIdx);
+          }
+          return;
+        }
+        // 最終 fallback:直接 advLoadScene
+        _advSceneIdx = sceneIdx + 1;
+        if(typeof advLoadScene === 'function') advLoadScene(stage, _advSceneIdx);
+      }catch(e){
+        console.error('[advSkipCurrentDialog] 異常:', e);
+        _showInGameToast('⚠ 跳過時發生錯誤,請重新整理', '#ff4444', 2500);
+      }
+    };
+    // 確認對話框
+    if(typeof _customConfirm === 'function'){
+      _customConfirm('確定要跳過當前劇情嗎？\n\n將直接進入下一場戰鬥。', _doSkip, () => {});
+    } else {
+      if(window.confirm('確定要跳過當前劇情？')) _doSkip();
+    }
+  }catch(eOut){
+    console.error('[advSkipCurrentDialog 外層異常]', eOut);
   }
 }
 
@@ -31587,6 +31989,8 @@ function advStartBattle(){
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
+  // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
+  try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
   // ★ v1.0.20260422.0104/0105 — 強制清除所有可能殘留的過場元素，避免「選完難度卡在場景」
   //   遊戲 overlay z-index 620 會蓋住戰場（戰場 z-index 0），所以若沒清乾淨，玩家看到的還是上一場景背景。
   //   修正：每次進入 BOSS 戰一律強制關閉這些過場 UI + visibility:hidden 雙保險。
@@ -35000,6 +35404,13 @@ async function gameCloudSave() {
     return false;
   }
 
+  // ★ v1.0.20260424.1100 — 保護層 1.5:若已被其他裝置踢出,拒絕儲存
+  //   避免 A 電腦在被 B 踢出後 (心跳尚未檢查到) 持續存檔,把 B 的進度蓋回去
+  if(window._gUserId && window._kickedFromSession) {
+    console.warn('⛔ [存檔保護] 已被其他裝置踢出,拒絕儲存');
+    return false;
+  }
+
   const data = _buildSafeData();
 
   // ★★★ v1.0.20260419.1930 CRITICAL 保護層 2：空白狀態不得覆蓋已有進度 ★★★
@@ -36423,6 +36834,221 @@ function _tutInterAfterSkillClick(hero, skillData) {
 // ══════════════════════════════════════════
 //  當機回溯：選單 + 兩種恢復方式
 // ══════════════════════════════════════════
+// ════════════════════════════════════════════
+// ★ v1.0.20260424.1120 — 卡死偵測 + 自救機制
+// ════════════════════════════════════════════
+//   設計考量:
+//   1. 「現在是對手的回合」顯示時 → 啟動 5 秒 watchdog 記錄當下狀態
+//   2. 5 秒後若 G.activeChar / G.round / 對手 HP 都完全沒變 → 判定卡死
+//   3. 亮起「🚨卡死自救」按鈕(預設隱藏)
+//   4. 玩家點擊 → 兩個選項:
+//      a) 脫離戰鬥保留獎勵(回到關卡選擇,但保留已掉的物品和知識幣)
+//      b) 換隊友重來(同 _rollbackReplaceHero)
+//   5. 玩家行動完(下一回合 startTurn)→ 自動清除 watchdog 並隱藏按鈕
+
+function _startDeadlockWatchdog(){
+  // 清除舊的 watchdog
+  _clearDeadlockWatchdog();
+  // 記錄當下狀態
+  if(typeof G === 'undefined' || !G) return;
+  const _snapRound = G.round || 0;
+  const _snapActor = G.activeChar;
+  const _snapActorName = _snapActor ? _snapActor.name : '(none)';
+  const _snapActorPos = _snapActor ? (_snapActor.side + '-' + _snapActor.pos) : '';
+  // 記錄對手 HP 總和(若 AI 真的有打玩家,HP 會變化)
+  let _snapEnemyHpSum = 0;
+  let _snapAllyHpSum = 0;
+  try{
+    if(G.p1) G.p1.forEach(h => { _snapAllyHpSum += (h.curHp||0); });
+    if(G.p2) G.p2.forEach(h => { _snapEnemyHpSum += (h.curHp||0); });
+  }catch(_){}
+  // 啟動 5 秒 watchdog (用普通 setTimeout 不受 _gamePaused 影響)
+  window._deadlockWatchdog = setTimeout(() => {
+    try{
+      if(typeof G === 'undefined' || !G) return;
+      // 1) 若回合已切換 → 不卡死
+      if((G.round || 0) !== _snapRound) return;
+      // 2) 若 activeChar 已換 → 不卡死
+      const _curActor = G.activeChar;
+      const _curName = _curActor ? _curActor.name : '(none)';
+      const _curPos = _curActor ? (_curActor.side + '-' + _curActor.pos) : '';
+      if(_curPos !== _snapActorPos) return;
+      // 3) 若對手或玩家 HP 有變化 → AI 還在打,沒卡死
+      let _curEnemyHpSum = 0;
+      let _curAllyHpSum = 0;
+      if(G.p1) G.p1.forEach(h => { _curAllyHpSum += (h.curHp||0); });
+      if(G.p2) G.p2.forEach(h => { _curEnemyHpSum += (h.curHp||0); });
+      if(_curEnemyHpSum !== _snapEnemyHpSum || _curAllyHpSum !== _snapAllyHpSum) return;
+      // 4) 排除合法的暫停場景(玩家答題、結算等)
+      const _qov = document.getElementById('adv-quiz-overlay');
+      if(_qov && _qov.classList.contains('show')) return;
+      const _resOv = document.getElementById('adv-result-overlay');
+      if(_resOv && _resOv.classList.contains('show')) return;
+      const _miniRes = document.getElementById('adv-mini-result');
+      if(_miniRes && _miniRes.classList.contains('show')) return;
+      // → 通過所有檢查,判定卡死
+      console.warn('🚨 [卡死偵測] AI 行動超過 5 秒無進展!actor=' + _snapActorName + ', round=' + _snapRound);
+      _showDeadlockRescueButton();
+    }catch(e){ console.warn('[卡死偵測] watchdog 異常', e); }
+  }, 5000);
+}
+
+function _clearDeadlockWatchdog(){
+  if(window._deadlockWatchdog){
+    clearTimeout(window._deadlockWatchdog);
+    window._deadlockWatchdog = null;
+  }
+  _hideDeadlockRescueButton();
+}
+
+function _showDeadlockRescueButton(){
+  const btn = document.getElementById('adv-deadlock-rescue-btn');
+  if(btn) btn.style.display = 'block';
+  // 順便顯示 toast 提醒玩家
+  try{ _showInGameToast('⚠️ 偵測到戰鬥可能卡死,請點左側「🚨卡死自救」按鈕脫離', '#ff6644', 5000); }catch(_){}
+}
+
+function _hideDeadlockRescueButton(){
+  const btn = document.getElementById('adv-deadlock-rescue-btn');
+  if(btn) btn.style.display = 'none';
+}
+
+// ★ 玩家點擊「卡死自救」按鈕 → 顯示選單
+function _showDeadlockRescueMenu(){
+  // 防止重複開啟
+  const old = document.getElementById('_deadlock-rescue-menu');
+  if(old){ old.remove(); return; }
+
+  const menu = document.createElement('div');
+  menu.id = '_deadlock-rescue-menu';
+  menu.style.cssText = [
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;',
+    'background:linear-gradient(160deg,rgba(40,5,5,0.98),rgba(20,2,2,0.99));',
+    'border:3px solid rgba(255,80,80,0.95);border-radius:18px;padding:22px 26px;',
+    'width:min(94vw,520px);',
+    'box-shadow:0 0 60px rgba(255,80,80,0.5);',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+  if(window.innerWidth > 1180){ menu.style.width='min(94vw,820px)'; menu.style.fontSize='180%'; }
+
+  menu.innerHTML = `
+    <div style="font-size:30px;font-weight:900;color:#ff8888;margin-bottom:6px;text-align:center;letter-spacing:2px;">
+      🚨 卡死自救
+    </div>
+    <div style="font-size:18px;color:#ffaaaa;text-align:center;margin-bottom:18px;line-height:1.6;">
+      偵測到對手回合可能卡死。<br>
+      你可以選擇以下方式脫困:
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <!-- 選項 1: 脫離戰鬥保留獎勵 -->
+      <button onclick="_deadlockRescueExitBattle()"
+        style="padding:16px 18px;text-align:left;font-size:19px;font-weight:700;cursor:pointer;
+          background:rgba(60,140,90,0.25);border:2.5px solid rgba(80,220,140,0.85);
+          color:#aaffcc;border-radius:12px;font-family:inherit;line-height:1.5;
+          transition:transform 0.12s,background 0.12s;"
+        onmouseover="this.style.background='rgba(80,180,110,0.4)';this.style.transform='scale(1.02)'"
+        onmouseout="this.style.background='rgba(60,140,90,0.25)';this.style.transform='scale(1)'">
+        🚪 脫離戰鬥(保留掉落物 & 知識幣)<br>
+        <span style="font-size:14px;font-weight:400;color:#88ddaa;">
+          目前已獲得的物品/知識幣會保留,但本場戰鬥獎勵放棄
+        </span>
+      </button>
+      <!-- 選項 2: 換隊友重來 -->
+      <button onclick="_deadlockRescueReplaceHero()"
+        style="padding:16px 18px;text-align:left;font-size:19px;font-weight:700;cursor:pointer;
+          background:rgba(140,80,40,0.25);border:2.5px solid rgba(255,170,80,0.85);
+          color:#ffcc88;border-radius:12px;font-family:inherit;line-height:1.5;
+          transition:transform 0.12s,background 0.12s;"
+        onmouseover="this.style.background='rgba(180,100,50,0.4)';this.style.transform='scale(1.02)'"
+        onmouseout="this.style.background='rgba(140,80,40,0.25)';this.style.transform='scale(1)'">
+        🔀 換隊友重新開始本場戰鬥<br>
+        <span style="font-size:14px;font-weight:400;color:#ffbb77;">
+          選擇 1 名英雄替換,本場戰鬥從第 1 回合重頭開始
+        </span>
+      </button>
+      <!-- 取消 -->
+      <button onclick="document.getElementById('_deadlock-rescue-menu').remove()"
+        style="padding:10px 14px;text-align:center;font-size:16px;font-weight:600;cursor:pointer;
+          background:rgba(60,60,80,0.5);border:1.5px solid rgba(150,150,170,0.5);
+          color:#ccc;border-radius:10px;font-family:inherit;margin-top:4px;">
+        ✕ 取消
+      </button>
+    </div>
+  `;
+  document.body.appendChild(menu);
+}
+
+// ★ 選項 1: 脫離戰鬥(保留掉落物和知識幣)
+function _deadlockRescueExitBattle(){
+  const menu = document.getElementById('_deadlock-rescue-menu');
+  if(menu) menu.remove();
+  _customConfirm(
+    '確定要脫離本場戰鬥嗎？\n\n' +
+    '✓ 已獲得的掉落物與知識幣將保留\n' +
+    '✗ 本場戰鬥的獎勵將放棄\n' +
+    '✗ 將直接回到關卡選擇頁',
+    () => {
+      try{
+        log('🚪 [卡死自救] 玩家選擇脫離戰鬥');
+        // 1) 強制清除卡死狀態 + 戰鬥旗標
+        _clearDeadlockWatchdog();
+        try{ window._gamePaused = false; }catch(_){}
+        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
+        try{ if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0; }catch(_){}
+        // 2) 清除戰鬥快照(避免下次進入又顯示「未完成戰鬥」)
+        try{ localStorage.removeItem('adv_battle_snap'); }catch(_){}
+        try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
+        try{ window._advBattleResultShown = true; }catch(_){}
+        // 3) 重置冒險戰鬥狀態
+        try{
+          _adventureMode = false;
+          _advMiniBattleActive = false;
+          window._advMiniResultShowing = false;
+          if(typeof G !== 'undefined' && G){
+            G.p1 = []; G.p2 = [];
+            G.activeChar = null;
+            G.pendingTarget = null;
+          }
+        }catch(_){}
+        // 4) 立即雲端存檔(保留現有的知識幣與背包)
+        try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
+        // 5) 隱藏戰鬥畫面 + 開啟冒險選關頁
+        try{
+          const gc = document.getElementById('gc');
+          if(gc){ gc.style.display = 'none'; gc.classList.remove('adv-battle'); }
+          const advOv = document.getElementById('adventure-overlay');
+          if(advOv){ advOv.style.display = 'flex'; }
+          // 隱藏對手回合提示
+          const _enemyN = document.getElementById('enemy-turn-notice');
+          if(_enemyN) _enemyN.style.display = 'none';
+        }catch(eUI){ console.error('[卡死自救] UI 切換失敗', eUI); }
+        _showInGameToast('✅ 已脫離戰鬥,掉落物已保留', '#44ff88', 3500);
+      }catch(eOut){
+        console.error('[卡死自救脫離] 異常', eOut);
+        _showInGameToast('⚠ 脫離時發生錯誤,請重新整理', '#ff4444', 3000);
+      }
+    },
+    () => {}
+  );
+}
+
+// ★ 選項 2: 換隊友重新開始本場戰鬥(沿用 _rollbackReplaceHero 邏輯)
+function _deadlockRescueReplaceHero(){
+  const menu = document.getElementById('_deadlock-rescue-menu');
+  if(menu) menu.remove();
+  // 清除卡死狀態
+  _clearDeadlockWatchdog();
+  // 直接呼叫既有的替換英雄邏輯
+  if(typeof _rollbackReplaceHero === 'function'){
+    try{ _rollbackReplaceHero(); }catch(e){
+      console.error('[卡死自救換英雄]', e);
+      _showInGameToast('⚠ 替換英雄失敗,請重新整理', '#ff4444', 3000);
+    }
+  }
+}
+
+// ════════════════════════════════════════════
 function _showRollbackMenu() {
   // 防止重複開啟
   const old = document.getElementById('_rollback-menu');
@@ -37404,6 +38030,8 @@ function closeShopOverlay(){
 // 召喚池資源 URL
 const SUMMON_FX_SMOKE_GIF  = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.gif';
 const SUMMON_FX_REVEAL_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.gif';
+// ★ v1.0.20260424.1130 — 新版「召喚煙火 2」特效:用於非角色/非果實的普通獎勵召喚
+const SUMMON_FX_SMOKE2_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB2.gif';
 
 // 稀有角色池
 const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女'];
@@ -37858,7 +38486,8 @@ function _playSummonSmokeFx(onDone){
     + '<img src="' + SUMMON_FX_SMOKE_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
     + 'filter:drop-shadow(0 0 60px rgba(255,180,255,0.8));" alt="召喚煙火"/>'
     + '</div>';
-  try{ playSfx('sfx-summon-smoke', 0.85); }catch(_){}
+  // ★ v1.0.20260424.1141 — 音量從 0.85 → 1.0,玩家反應原本太小聲
+  try{ playSfx('sfx-summon-smoke', 1.0); }catch(_){}
   setTimeout(()=>{
     if(fx) fx.innerHTML = '';
     if(onDone) onDone();
@@ -37876,7 +38505,30 @@ function _playSummonRevealFx(onDone){
     + '<img src="' + SUMMON_FX_REVEAL_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
     + 'filter:drop-shadow(0 0 80px rgba(255,230,120,1));" alt="召喚角色"/>'
     + '</div>';
-  try{ playSfx('sfx-summon-reveal', 0.95); }catch(_){}
+  // ★ v1.0.20260424.1140 — 稀有召喚 3 段漸進音效組合(無掌聲)
+  //   設計思路:第一段「叮~」開場 → 第二段「噹~」獎章感 → 第三段「✨~」神聖尾韻
+  //   音量從強到弱漸層,層次堆疊,聽起來像「儀式典禮獲得稀有」
+  try{ playSfx('sfx-summon-reveal', 1.0); }catch(_){}                       // 0 ms - 開場叮聲
+  try{ setTimeout(()=>{ playSfx('sfx-medal-unlock', 0.9); }, 250); }catch(_){}  // 250 ms - 獎章感
+  try{ setTimeout(()=>{ playSfx('sfx-goddess',      0.75); }, 550); }catch(_){} // 550 ms - 神聖尾韻
+  setTimeout(()=>{
+    if(fx) fx.innerHTML = '';
+    if(onDone) onDone();
+  }, 1800);
+}
+
+// ★ v1.0.20260424.1130 — 播放召喚煙火 2 特效(用於非角色/非果實的普通獎勵)
+function _playSummonSmoke2Fx(onDone){
+  const fx = document.getElementById('summon-fx-layer');
+  if(!fx){ if(onDone) onDone(); return; }
+  fx.style.display = 'block';
+  fx.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+    + 'width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;">'
+    + '<img src="' + SUMMON_FX_SMOKE2_GIF + '" style="width:100vw;height:100vh;object-fit:contain;'
+    + 'filter:drop-shadow(0 0 60px rgba(180,220,255,0.8));" alt="召喚煙火2"/>'
+    + '</div>';
+  // ★ v1.0.20260424.1141 — 音量從 0.85 → 1.0,玩家反應原本太小聲
+  try{ playSfx('sfx-summon-smoke', 1.0); }catch(_){}
   setTimeout(()=>{
     if(fx) fx.innerHTML = '';
     if(onDone) onDone();
@@ -37925,15 +38577,23 @@ function doSummon(times){
   results.forEach(r => _applySummonReward(r));
   _commitSummonRewards();
 
-  // 播放煙火特效 → 播放角色特效 → 顯示結果
-  _playSummonSmokeFx(()=>{
-    const hasRare = results.some(r => r.isRare || r.kind === 'rare_hero');
-    if(hasRare){
+  // ★ v1.0.20260424.1130 — 特效選擇邏輯:
+  //   - 含「角色」(rare_hero) 或「極限爆發果實」(burst_fruit / burst_fruit_alt)
+  //     → 用原本的 reveal 特效(召喚煙火 → 召喚角色)
+  //   - 其他普通獎勵(技能書、BOSS 賣錢物、精裝經驗書等)
+  //     → 用新的「召喚煙火 2」特效
+  const _hasHeroOrFruit = results.some(r =>
+    r.kind === 'rare_hero' || r.kind === 'burst_fruit' || r.kind === 'burst_fruit_alt'
+  );
+  if(_hasHeroOrFruit){
+    // 原本的雙重特效:煙火 → 角色 reveal
+    _playSummonSmokeFx(()=>{
       _playSummonRevealFx(()=>{ _showSummonResults(results); });
-    } else {
-      _showSummonResults(results);
-    }
-  });
+    });
+  } else {
+    // 新版「召喚煙火 2」特效(取代普通獎勵的單一煙火特效)
+    _playSummonSmoke2Fx(()=>{ _showSummonResults(results); });
+  }
 }
 
 // 顯示召喚結果(1 次或 10 次)
@@ -39565,7 +40225,7 @@ const SKILL_UPGRADE_DEF = {
   '出奇制勝':     { cat:'special_strategy', label:'抽卡張數' },                                         // 軍師 S1 Lv5/Lv10 +1
   '兵貫神速之計': { cat:'special_advisor', label:'附加效果' },                                          // 軍師 S2 Lv5/Lv10
   '鬼力橫掃':     { cat:'dmg', label:'技能傷害' },                                                     // 酒吞童子 S1 每級+5%
-  '酒宴':         { cat:'heal', label:'恢復量' },                                                       // 酒吞童子 S2 每級+5% 恢復
+  '乾杯':         { cat:'heal', label:'恢復量' },                                                       // 酒吞童子 S2 每級+5% 恢復
   // === B 類:你新設計的升級邏輯(下面會在程式碼實作) ===
   '模仿':         { cat:'special_mimic', label:'模仿+回血' },                                          // Lv5/Lv10 額外恢復 15% HP
   '隱身療傷':     { cat:'heal', label:'恢復量' },                                                       // 每級+5%
@@ -40787,7 +41447,9 @@ function _renderHeroDetail(name, box) {
             <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
           ${_heroIsUnlocked && backpackGet('hero_exp_book')>0 ? `<button onclick="playSfx('sfx-powerup',0.7);_useExpBookForHero('${name}')" style="margin-top:7px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(60,180,80,0.25);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📗 使用經驗值之書 <span style="color:#aaffcc;font-size:17px;">×${backpackGet('hero_exp_book')}</span></button>` : ''}
+          ${_heroIsUnlocked && backpackGet('hero_exp_book')>1 ? `<button onclick="playSfx('sfx-powerup',0.7);_useAllExpBookForHero('${name}', false)" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(40,140,60,0.35);border:1.5px solid #66ff99;color:#aaffcc;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">📗 全部使用</button>` : ''}
           ${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>0 ? `<button onclick="playSfx('sfx-powerup',0.75);_useExpBookDeluxeForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(255,180,60,0.22);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📕 使用精裝版經驗值之書 <span style="color:#ffe090;font-size:17px;">×${backpackGet('hero_exp_book_deluxe')}</span></button>` : ''}
+          ${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>1 ? `<button onclick="playSfx('sfx-powerup',0.75);_useAllExpBookForHero('${name}', true)" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(255,140,40,0.35);border:1.5px solid #ffaa44;color:#ffe090;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">📕 全部使用</button>` : ''}
         </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
       ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
@@ -40884,7 +41546,7 @@ function _renderHeroDetail(name, box) {
             ${_noUp?'<span style="font-size:20px;color:#ffaa77;background:rgba(255,150,80,0.15);border-radius:6px;padding:2px 10px;">🚫 不可升級</span>':''}
             ${_heroIsUnlocked && !_noUp && !maxed && backpackGet('skill_upgrade_book')>0 ? `<button onclick="playSfx('sfx-statup',0.7);upgradeSkill('${name}','${slot}')" style="padding:4px 14px;font-size:22px;background:rgba(255,200,0,0.2);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;">📖 升級</button>` : ''}
           </div>
-          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${fd}</div>
+          <div style="font-size:24px;color:#ffffff;line-height:1.5;">${typeof colorizeSkillDesc === 'function' ? colorizeSkillDesc(fd) : fd}</div>
         </div>`;
       }).join('')}
 <!-- trait moved to below stats -->
@@ -40917,7 +41579,7 @@ function _renderHeroDetail(name, box) {
           '<span style="font-size:22px;background:rgba(255,100,50,0.25);color:#ff8844;border-radius:6px;padding:3px 12px;font-weight:700;">⚡ 極限爆發</span>'+
           '<span style="font-size:28px;font-weight:800;color:#ff9966;">'+burst.n+'</span>'+
           _lvB+_maxB+_upgB+'</div>'+
-          '<div style="font-size:24px;color:#ffffff;line-height:1.5;margin-bottom:10px;">'+(burst.fd||burst.d)+'</div>'+
+          '<div style="font-size:24px;color:#ffffff;line-height:1.5;margin-bottom:10px;">'+(typeof colorizeSkillDesc === 'function' ? colorizeSkillDesc(burst.fd||burst.d||'') : (burst.fd||burst.d||''))+'</div>'+
           '<div style="background:rgba(5,8,20,0.85);border:1px solid rgba(255,120,50,0.2);border-radius:10px;padding:8px 6px;">'+
           '<div style="font-size:18px;color:#ff9966;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:2px;">── 升級效果一覽 ──</div>'+
           '<table style="width:100%;border-collapse:collapse;">'+_rows+'</table></div></div>';
@@ -41907,11 +42569,22 @@ async function _addFriendByEmail() {
       found = await window._fbFindByEmail(email);
     } catch(qErr) {
       console.error('[查詢好友]', qErr);
-      bannerFX(null, '查詢失敗：' + (qErr.code || qErr.message || '網路錯誤'), '#ff6666', 3000);
+      // ★ v1.0.20260424.1100 — 詳細錯誤訊息(網路/權限/Firestore 索引等)
+      const _msg = '查詢失敗:' + (qErr.code || qErr.message || '網路錯誤');
+      bannerFX(null, _msg, '#ff6666', 4000);
+      console.warn('[加好友] 玩家可參考 console 訊息回報問題');
       return;
     }
     if (!found) {
-      bannerFX(null, '找不到此帳號，請確認對方已登入過遊戲，且輸入完整 Gmail', '#ff6666', 3000);
+      // ★ v1.0.20260424.1100 — 找不到時提示更清楚:可能原因
+      bannerFX(null, '找不到「' + email + '」\n請確認:1) 完整 Gmail 2) 對方至少登入過一次', '#ff6666', 4500);
+      console.warn('[加好友] 找不到 email:', email,
+                    '→ 對方須登入過遊戲,且帳號的 email 欄位已寫入 players collection');
+      return;
+    }
+    if(!found.uid) {
+      bannerFX(null, '查詢結果異常(無 uid),請回報', '#ff6666', 3000);
+      console.error('[加好友] found 缺 uid:', found);
       return;
     }
     const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
@@ -42778,6 +43451,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
 function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
+  // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
+  try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
   // ★ 小怪戰答題狀態初始化
   window._miniQuizDoneThisRound = false;  // 每回合重置（startTurn時觸發）
   window._miniQuizTotalCoins = 0;         // 本場小怪戰答題累積知識幣
@@ -44210,6 +44885,82 @@ async function applyHeroExpBook(name) {
   bannerFX(null, `📗 ${name} 獲得 +50 EXP！`, '#88ff88', 1800);
 }
 
+// ★ v1.0.20260424.1070 — 一口氣使用所有經驗之書(支援普通版與精裝版)
+//   遇到角色等級到 50 上限時:跳出提醒「超出 EXP 將視同放棄」並由玩家決定是否繼續
+//   isDeluxe=true 用精裝版(每本 200 EXP),false 用普通版(每本 50 EXP)
+async function _useAllExpBookForHero(name, isDeluxe) {
+  const _bookId = isDeluxe ? 'hero_exp_book_deluxe' : 'hero_exp_book';
+  const _expPerBook = isDeluxe ? 200 : 50;
+  const _label = isDeluxe ? '📕 精裝版經驗值之書' : '📗 經驗值之書';
+  const _color = isDeluxe ? '#ffcc44' : '#88ff88';
+  const _bookCount = backpackGet(_bookId);
+  if(_bookCount <= 0){
+    _showInGameToast('背包中沒有'+_label+'!', '#ff8844', 1800);
+    return;
+  }
+  // 預先計算:總共會給多少 EXP,目前等級+EXP 加總後會升幾級、會浪費幾點
+  const _curLv = _heroLevels[name] || 1;
+  const _curExp = _heroExp[name] || 0;
+  const _totalExpToAdd = _bookCount * _expPerBook;
+  // 模擬升級:不實際改變狀態,只算最後會剩多少 EXP
+  let _simLv = _curLv, _simExp = _curExp + _totalExpToAdd;
+  while(_simLv < 50){
+    const _need = _expForLevel(_simLv);
+    if(_simExp >= _need){
+      _simExp -= _need;
+      _simLv++;
+    } else break;
+  }
+  const _willOverflow = (_simLv >= 50 && _simExp > 0);
+  // 若會在達到 50 上限後仍有剩餘 EXP,跳出確認對話框
+  if(_willOverflow){
+    const _wastedExp = _simExp;
+    // 反推:浪費的 EXP 換算為幾本書(取整,可能是部分本)
+    const _wastedBooks = (_wastedExp / _expPerBook).toFixed(1);
+    const _msg =
+      `將使用 ${_bookCount} 本 ${_label}(共 +${_totalExpToAdd} EXP)\n\n`
+    + `[${name}] Lv${_curLv} → Lv50 (MAX)\n`
+    + `達到上限後超出的 ${_wastedExp} EXP (約 ${_wastedBooks} 本書)將被放棄\n\n`
+    + `是否確認使用?`;
+    const _ok = await new Promise(resolve => {
+      if(typeof _customConfirm === 'function'){
+        _customConfirm(_msg, () => resolve(true), () => resolve(false));
+      } else {
+        resolve(window.confirm(_msg));
+      }
+    });
+    if(!_ok) return;
+  }
+  // 執行:逐本扣除 + 加 EXP,但累積 levelUp 事件一次顯示
+  let _allLevelUps = [];
+  let _booksUsed = 0;
+  for(let i = 0; i < _bookCount; i++){
+    if(backpackGet(_bookId) <= 0) break;
+    backpackRemove(_bookId);
+    _booksUsed++;
+    // addHeroExp 內部會 cap 到 Lv50,超出 EXP 會自動丟棄
+    const _ups = addHeroExp(name, _expPerBook);
+    if(_ups && _ups.length) _allLevelUps = _allLevelUps.concat(_ups);
+    // 達到上限就停止繼續用書,避免無謂浪費
+    if((_heroLevels[name]||1) >= 50){
+      // 多餘的書會被放棄(continue 把剩下的 backpackRemove 掉)
+      // 但只有 _willOverflow 模式且玩家確認過時才繼續扣
+      if(!_willOverflow) break;
+    }
+  }
+  try{ await gameCloudSave(); }catch(e){}
+  _setNavDot('英雄', true);
+  // 重繪英雄詳情(更新EXP條和按鈕數量)
+  const box = document.getElementById('hero-detail-content');
+  if(box) _renderHeroDetail(name, box);
+  if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
+  if(_allLevelUps && _allLevelUps.length){
+    setTimeout(() => _showLevelUpSequence(_allLevelUps, () => {}), 300);
+  } else {
+    _showInGameToast(`${_label} ${_booksUsed} 本已使用,[${name}] +${_booksUsed * _expPerBook} EXP!`, _color, 2400);
+  }
+}
+
 // ★ 在英雄圖鑑直接使用英雄經驗值之書
 async function _useExpBookForHero(name) {
   if(backpackGet('hero_exp_book') <= 0){
@@ -45229,13 +45980,32 @@ function _sessionReclaim(){
   localStorage.setItem('lxps_session_' + window._gUserId, newSid);
   window._mySessionId = newSid;
   if(window._fbCreateSession) window._fbCreateSession(window._gUserId, newSid);
-  // 重啟心跳
+  // ★ v1.0.20260424.1110 — 重置「被踢」flag 並重啟心跳(5 秒間隔)
+  window._kickedFromSession = false;
   if(window._sessionHeartbeat) clearInterval(window._sessionHeartbeat);
-  window._sessionHeartbeat = setInterval(async () => {
+  const _reclaimedHeartbeat = async () => {
     if(!window._gUserId || !window._mySessionId) return;
+    if(window._kickedFromSession) return;
     const status = await window._fbHeartbeat(window._gUserId, window._mySessionId);
-    if(status === 'kicked'){ clearInterval(window._sessionHeartbeat); _showKickedNotice(); }
-  }, 45000);
+    if(status === 'kicked'){
+      window._kickedFromSession = true;
+      if(window._sessionHeartbeat){ clearInterval(window._sessionHeartbeat); window._sessionHeartbeat = null; }
+      if(window._visibilityHeartbeatHandler){
+        document.removeEventListener('visibilitychange', window._visibilityHeartbeatHandler);
+        window._visibilityHeartbeatHandler = null;
+      }
+      _showKickedNotice();
+    }
+  };
+  window._sessionHeartbeat = setInterval(_reclaimedHeartbeat, 5000);
+  // 重新註冊 visibilitychange 即時檢查
+  if(window._visibilityHeartbeatHandler){
+    document.removeEventListener('visibilitychange', window._visibilityHeartbeatHandler);
+  }
+  window._visibilityHeartbeatHandler = () => {
+    if(document.visibilityState === 'visible'){ _reclaimedHeartbeat(); }
+  };
+  document.addEventListener('visibilitychange', window._visibilityHeartbeatHandler);
   const pop = document.getElementById('_kicked-notice');
   if(pop) pop.remove();
   try{ _gamePaused = false; }catch(e){}
@@ -45733,6 +46503,17 @@ window._advSystemReady = true;
     box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
     pointer-events:auto !important;
     transition:border-color 0.2s,background 0.2s;">🔄回溯</button>
+<!-- ★ v1.0.20260424.1120 — 卡死自救按鈕(預設隱藏,只在偵測到對手回合卡死時亮起) -->
+<button id="adv-deadlock-rescue-btn" onclick="playSfx('sfx-sel',0.6);_showDeadlockRescueMenu()"
+  style="display:none;position:fixed;left:8px;bottom:298px;z-index:2147483647;
+    writing-mode:vertical-rl;text-orientation:mixed;
+    padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
+    background:rgba(80,10,10,0.95);border:2.5px solid #ff4444;
+    color:#ff8888;border-radius:10px;cursor:pointer;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    box-shadow:0 0 20px rgba(255,60,60,0.8),0 0 40px rgba(255,60,60,0.5);line-height:1.4;
+    pointer-events:auto !important;
+    animation:deadlockRescueGlow 0.9s ease-in-out infinite;">🚨卡死自救</button>
 <button id="adv-tut-btn" onclick="playSfx('sfx-gentle',0.5);_advShowTutBtn()"
   style="display:none;position:fixed;left:8px;bottom:8px;z-index:2147483647;
     writing-mode:vertical-rl;text-orientation:mixed;
@@ -45850,6 +46631,455 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1141', brief:[
+    '🔊 召喚煙火音效音量加大(0.85 → 1.0,玩家反應太小聲)',
+  ], items:[
+    '【調整】',
+    '  原版召喚煙火 + 新版召喚煙火 2 兩處的 sfx-summon-smoke 播放音量',
+    '  舊:0.85(略小聲)',
+    '  新:1.0(滿音量)',
+    '【實作位置】',
+    '  - _playSummonSmokeFx (line ~38489)',
+    '  - _playSummonSmoke2Fx (line ~38530)',
+  ] },
+  { ver:'v1.0.20260424.1140', brief:[
+    '🎺 稀有召喚音效升級:3 段漸進音效組合,儀式感大幅提升',
+  ], items:[
+    '【需求】',
+    '  抽到稀有角色 / 極限爆發果實時,搭配更厲害的慶祝音效(不要掌聲)',
+    '【實作:3 段漸進音效堆疊】',
+    '  第 1 段(0 ms,音量 1.0):sfx-summon-reveal — 開場「叮~」清亮召喚音',
+    '  第 2 段(250 ms,音量 0.9):sfx-medal-unlock — 「噹~」獎章獲得感,接力推升',
+    '  第 3 段(550 ms,音量 0.75):sfx-goddess — 「✨~」神聖光芒尾韻,女神祝福',
+    '【聽感效果】',
+    '  叮叮~~噹~~~✨~~ 三層音效堆疊,有「儀式典禮·獲得稀有」的層次感',
+    '  音量由強漸弱,符合人耳對「高潮 → 餘韻」的感受',
+    '【觸發條件】',
+    '  - 召喚抽到稀有角色(rare_hero)',
+    '  - 召喚抽到超越極限果實(burst_fruit / burst_fruit_alt)',
+    '  - 一般獎勵(技能書/賣錢物等)→ 仍維持新版「召喚煙火 2」單音效',
+    '【實作位置】',
+    '  - _playSummonRevealFx 函式: line ~38497',
+  ] },
+  { ver:'v1.0.20260424.1130', brief:[
+    '🎆 召喚特效分流:角色/果實 vs 普通獎勵 兩種特效',
+  ], items:[
+    '【需求】',
+    '  區分召喚結果類型,顯示對應的特效:',
+    '  - 召喚出「稀有角色」或「極限爆發果實」 → 原本的雙重特效(煙火 → 角色 reveal)',
+    '  - 其他普通獎勵(技能書、BOSS 賣錢物、精裝經驗書等)→ 新「召喚煙火 2」特效',
+    '【實作】',
+    '  1) 新增資源:SUMMON_FX_SMOKE2_GIF',
+    '     URL: clarebox123jp-art/LXPSGAME/main/召喚煙火2.gif',
+    '  2) 新增函式:_playSummonSmoke2Fx(onDone)',
+    '     - 全螢幕播放,藍色光暈(rgba(180,220,255))呼應煙火 2 的色調',
+    '     - 沿用 sfx-summon-smoke 音效',
+    '     - 1800ms 後自動結束',
+    '  3) 改寫 doSummon 主流程的特效選擇邏輯:',
+    '     舊:無條件 _playSummonSmokeFx → 若含 rare 才接 _playSummonRevealFx',
+    '     新:檢查是否含 hero/fruit:',
+    '         - 是 → _playSummonSmokeFx → _playSummonRevealFx(原本雙重特效)',
+    '         - 否 → 只播 _playSummonSmoke2Fx(新版單一特效)',
+    '【判斷標準】',
+    '  含「角色或果實」的條件:',
+    '    r.kind === \'rare_hero\'      // 稀有角色',
+    '    r.kind === \'burst_fruit\'    // 超越極限果實',
+    '    r.kind === \'burst_fruit_alt\' // 角色全收錄時的替代果實',
+    '  其餘類型(skill_book / boss_sell / exp_book_dlx)→ 走新版煙火 2',
+    '【實作位置】',
+    '  - SUMMON_FX_SMOKE2_GIF 常數: line ~38033',
+    '  - _playSummonSmoke2Fx 函式: line ~38515',
+    '  - doSummon 流程改寫: line ~38560',
+  ] },
+  { ver:'v1.0.20260424.1120', brief:[
+    '🚨 新增 BOSS 戰卡死偵測 + 玩家自救鍵',
+    '✓ 確認:選主題/難度連點兩次的 BUG 已於 v1010 修復(4 層保護)',
+  ], items:[
+    '【1. BOSS 戰卡死偵測 + 自救鍵】',
+    '  目的:給玩家一個「最後手段」,當 AI 真的卡死時不必重整網頁、不會失去進度',
+    '【偵測機制】',
+    '  - 「現在是對手的回合」顯示時,啟動 5 秒 watchdog',
+    '  - 5 秒後檢查:G.round / G.activeChar / 全體 HP 總和 都完全沒變動 → 判定卡死',
+    '  - 排除合法暫停:答題 overlay / 結算 / mini-result 顯示中不算卡死',
+    '  - 偵測到卡死 → 亮起左側「🚨卡死自救」按鈕(紅色閃爍 + toast 提示)',
+    '【自救選單兩個選項】',
+    '  ① 🚪 脫離戰鬥(保留掉落物 + 知識幣)',
+    '     - 已獲得的物品/知識幣保留,本場戰鬥獎勵放棄',
+    '     - 強制清除戰鬥狀態 + 戰鬥快照,直接回到關卡選擇頁',
+    '     - 立即觸發 gameCloudSave 保存進度',
+    '  ② 🔀 換隊友重新開始本場戰鬥',
+    '     - 沿用既有 _rollbackReplaceHero 邏輯',
+    '     - 選 1 名英雄替換,從第 1 回合重來',
+    '【自動清除時機】',
+    '  - startTurn 開始(下一個英雄行動)→ 清除 watchdog 與按鈕',
+    '  - endAction 結束(任何行動完成)→ 清除 watchdog 與按鈕',
+    '  - 玩家點任一自救選項 → 清除',
+    '【實作位置】',
+    '  - HTML 按鈕: line ~46241(adv-deadlock-rescue-btn,預設 display:none)',
+    '  - CSS keyframe: line ~1922(deadlockRescueGlow 紅色閃爍)',
+    '  - watchdog 啟動: line ~21940(enemyTurnNotice 顯示後)',
+    '  - watchdog 清除: line ~20639(endAction)、line ~21330(startTurn)',
+    '  - 函式定義: line ~36833 之前(_startDeadlockWatchdog/_clearDeadlockWatchdog/',
+    '    _showDeadlockRescueMenu/_deadlockRescueExitBattle/_deadlockRescueReplaceHero)',
+    '【2. 選主題/難度連點 BUG 修復確認】',
+    '  ✓ 已於 v1010 修好,目前有 4 層保護:',
+    '    a) advShowChoicePanel 內 _choiceLocked 旗標',
+    '    b) _advRenderMultiStep 內 _stepLocked 旗標',
+    '    c) advConfirmChoice 開頭防重入(_advSceneChoiceDone)',
+    '    d) advConfirmChoice_multi 開頭防重入',
+    '  若仍有玩家回報這個 BUG,可能是 v1010 之前的舊快取版本,請重新整理頁面',
+  ] },
+  { ver:'v1.0.20260424.1110', brief:[
+    '⚡ 跨電腦同步間隔縮短到極限:心跳 15 秒 → 5 秒,並加 visibilitychange 即時檢查',
+  ], items:[
+    '【調整目標】',
+    '  v1100 已修了跨電腦同步問題,但心跳 15 秒仍可能造成 A 電腦在被踢後最久 15 秒內',
+    '  仍能存檔覆蓋雲端。把心跳間隔縮短到極限,讓 A 電腦更快感知被踢',
+    '【Firestore 寫入頻率上限分析】',
+    '  - 同一文件每秒最多 1 次寫入(超過會被 throttle)',
+    '  - 5 秒間隔(每分鐘 12 次)遠低於限制,長期穩定可行',
+    '  - 3 秒以下:接近邊緣,長時間連線可能被 throttle',
+    '  - 1 秒:會被 Firestore 限制,且每月用量爆增 30 倍',
+    '  → 結論:5 秒是「穩定+積極」的最佳折衷',
+    '【調整內容】',
+    '  1) 心跳間隔:15 秒 → 5 秒(主登入流程 + 搶回控制權後流程都同步)',
+    '  2) 新增 visibilitychange 即時檢查:',
+    '     - 玩家從 B 電腦切回 A 電腦時(切換頁籤/視窗回前景)',
+    '     - 立刻檢查一次心跳,不用等下次 5 秒輪詢',
+    '     - 實際情境:玩家切回 A 電腦的瞬間就看到「被踢」通知,A 電腦不會再寫雲端',
+    '  3) 補修 line 45722 漏網處:搶回控制權後的心跳原本還是 45 秒(漏改),現一併改為 5 秒',
+    '  4) 加 if(_kickedFromSession) return 守門:被踢後即使有殘留 timer 也不會再寫',
+    '【最終時間軸】',
+    '  舊版:A 寫雲端 → B 登入 → A 操作覆蓋 (最久 45 秒) → B 心跳發現被踢',
+    '  v1100:A 寫雲端 → B 登入(先 createSession 後 load) → A 最久 15 秒發現被踢',
+    '  v1110:同上,但 A 最久 5 秒發現被踢',
+    '       + 玩家切回 A 視窗時 immediate check (0 秒延遲)',
+    '【實作位置】',
+    '  - 主心跳: line ~586(setInterval 5000)',
+    '  - visibilitychange handler: line ~607',
+    '  - 搶回控制權後心跳: line ~45720(同樣 5000 + visibilitychange)',
+    '【實際情境驗證】',
+    '  ✓ A 操作 → 切到 B 登入 → A 切回視窗(0 秒立刻知道被踢)',
+    '  ✓ A 操作 → 切到 B 登入 → A 最遲 5 秒看到「被踢」通知',
+    '  ✓ A 被踢後,所有 gameCloudSave 都會被 _kickedFromSession 旗標擋住',
+  ] },
+  { ver:'v1.0.20260424.1100', brief:[
+    '🔧 修復跨電腦同步資料污染問題(知識幣/商店/打折商品復活)',
+    '👥 修復「無法加好友(顯示對方未登入)」的查詢錯誤訊息誤導',
+  ], items:[
+    '【1. 跨電腦同步問題:根因找到】',
+    '  症狀:A 電腦買完商品後切到 B 電腦,B 電腦的雲端進度回到買之前的版本',
+    '  根因(三個並發問題):',
+    '  a) Firestore 預設 getDoc 會用 IndexedDB 本地快取,B 電腦可能讀到自己的舊快取',
+    '     而不是 A 電腦剛寫入的最新版本',
+    '  b) 登入流程順序錯誤:gameCloudLoad → createSession 中間有空窗,',
+    '     A 電腦可能在 B 載入後 45 秒內仍持續存檔,把 B 寫入的進度蓋掉',
+    '  c) 心跳間隔 45 秒太長,A 電腦不知自己被踢仍持續存檔',
+    '【1. 修復方案(三層保護)】',
+    '  a) _fbLoad 改用 getDocFromServer 強制從伺服器讀取,避免讀到本地快取舊版',
+    '     若伺服器讀取失敗才退回到允許快取的 getDoc(離線備援)',
+    '  b) 登入時序顛倒:[createSession 先,再 gameCloudLoad]',
+    '     B 電腦先寫 activeSession=B 踢掉 A,再去讀雲端最新版,避免讀到 A 中間版本',
+    '  c) 心跳間隔 45 秒 → 15 秒,A 電腦最多 15 秒就會發現被踢',
+    '  d) 加 window._kickedFromSession 旗標,被踢後 gameCloudSave 立即拒絕儲存',
+    '     (即使 A 電腦下次操作觸發存檔,雲端也不會被覆蓋)',
+    '【2. 加好友顯示「未登入」誤導】',
+    '  根因:_fbFindByEmail 在 Firestore 查詢失敗時靜默回 null,',
+    '       上層接到 null 就以為「對方沒登入過」,但實際可能是查詢失敗',
+    '  修復:',
+    '  - _fbFindByEmail 在查詢失敗時改 throw 錯誤(含 code/message),',
+    '    上層 catch 顯示真正的錯誤訊息(網路/權限/Firestore 索引等)',
+    '  - 找不到時改成更明確的訊息「找不到「xxx@gmail.com」,請確認:1) 完整 Gmail 2) 對方至少登入過一次」',
+    '  - 加 console.log 診斷:成功/找不到/失敗 都印出 email 與細節,方便回報',
+    '【實作位置】',
+    '  - getDocFromServer import: line 23',
+    '  - _fbLoad 改 server-first: line ~148',
+    '  - _fbFindByEmail 強化錯誤: line ~174',
+    '  - 登入時序調整: line ~566',
+    '  - 心跳 + kicked flag: line ~582',
+    '  - gameCloudSave kicked 拒絕: line ~35351',
+    '  - 加好友錯誤訊息: line ~42228',
+    '【兩台電腦使用建議】',
+    '  v1100 之後:在 A 電腦操作完務必等到 console 顯示「☁️ 雲端已同步」,',
+    '  再切到 B 電腦登入。B 電腦登入會自動踢 A,A 電腦 15 秒內會看到「被踢」通知',
+    '  ★ 仍建議:操作完後先「重新整理 A 電腦頁面」再去 B 電腦,確保雲端寫入已完成',
+  ] },
+  { ver:'v1.0.20260424.1091', brief:[
+    '👼 修正:祭司「曙光微風」肖像才需下移,不是 Q 版祭司',
+  ], items:[
+    '【v1090 修錯地方】',
+    '  v1090 把 HERO_IMG_POS[祭司] 從 50% 改成 80%,但這影響的是「Q 版祭司」,',
+    '  玩家實際看到的是「曙光微風」(商店買來的精美畫風),不該動 HERO_IMG_POS',
+    '【正確修法】',
+    '  1) 還原 HERO_IMG_POS[祭司] 回 50%(Q 版用)',
+    '  2) 在 HERO_PORTRAIT_LIBRARY[祭司][1] 曙光微風 entry 加 objPos:\'center 60%\'',
+    '     讓「曙光微風」獨立有自己的位置設定,不影響 Q 版',
+    '【機制說明】',
+    '  _getCurPortraitObjPos 會優先讀玩家當前肖像的 objPos,沒有才 fallback 到 HERO_IMG_POS',
+    '  → 玩家選 default(Q 版) 用 HERO_IMG_POS 50%(臉部置上)',
+    '  → 玩家選 dawn_breeze(曙光微風) 用 portrait 自己的 60%(整張下移 30%顯示頭部)',
+    '【實作位置】',
+    '  - HERO_IMG_POS 祭司: line ~8437(50%)',
+    '  - HERO_PORTRAIT_LIBRARY 祭司 dawn_breeze: line ~7044 (objPos:60%)',
+  ] },
+  { ver:'v1.0.20260424.1090', brief:[
+    '🎨 技能描述「○屬性傷害」字眼以對應屬性顏色顯示',
+    '👼 祭司戰鬥角色卡 / 預覽視窗圖片再往下移 30%(從 50% → 80%)',
+  ], items:[
+    '【1. 屬性傷害字眼著色】',
+    '  在 colorizeSkillDesc 函式新增 9 種屬性的彩色標示:',
+    '  - 火屬性傷害 → 紅橙色 (#ff6600)',
+    '  - 水屬性傷害 → 藍色 (#4488ff)',
+    '  - 冰屬性傷害 → 淡藍色 (#4488ff,冰=水歸屬)',
+    '  - 風屬性傷害 → 綠青色 (#44cc66)',
+    '  - 雷屬性傷害 → 黃綠色 (#aaff00,雷=風歸屬)',
+    '  - 草屬性傷害 → 嫩綠色 (#44ee44)',
+    '  - 土屬性傷害 → 棕色 (#cc8844)',
+    '  - 光屬性傷害 → 金黃色 (#ffcc44)',
+    '  - 暗屬性傷害 → 紫色 (#bb88ee)',
+    '  並加上對應屬性的光暈 text-shadow 增加質感',
+    '【實作位置】',
+    '  - colorizeSkillDesc: line ~12472',
+    '  - 套用範圍:',
+    '    a) showSkillDetailPopup「?」按鈕詳細視窗 ✓',
+    '    b) showHeroPreview 卡片預覽視窗 ✓ (但 d 簡短描述沒「○屬性傷害」字眼)',
+    '    c) 英雄圖鑑詳情 s1/s2 ✓ (本版新加)',
+    '    d) 英雄圖鑑詳情 burst ✓ (本版新加)',
+    '【看不到顏色?】',
+    '  原因:卡片預覽顯示的是 d(簡短描述),沒寫「火屬性傷害」字眼;',
+    '  要看顏色請點技能名旁的「?」按鈕 → fd 完整描述才有屬性字眼,會顯彩色',
+    '【2. 祭司圖片位置】',
+    '  HERO_IMG_POS 由「center 50%」改為「center 80%」',
+    '  讓 Q 版祭司圖在卡片中往下移 30%,頭部完整顯示',
+    '  之前 v1010 從 35% → 50%(下移 15%),本版再下移 30%',
+  ] },
+  { ver:'v1.0.20260424.1080', brief:[
+    '🍶 酒吞童子 S2「酒宴」改名「乾杯」(避免與爆發「鬼王酒宴」混淆)',
+    '⚡ 強制屬性清單調整:八首齊噬/鬼王酒宴 改為無屬性、暗冰雷焰吐息 改隨機屬性',
+    '📐 子屬性歸併規則明確化:雷=風、冰=水',
+  ], items:[
+    '【1. 酒吞童子 S2 改名 酒宴 → 乾杯】',
+    '  原因:爆發技叫「鬼王酒宴」,S2 也叫「酒宴」造成混淆',
+    '  改名後 S2 為「乾杯」,玩法/數值不變(恢復友方20%HP+25%攻擊特技)',
+    '  改名涵蓋 5 處主要程式碼 + 2 處註解 + buff label「🍶乾杯+25%」',
+    '  歷史 changelog 中的「酒宴」字眼保留(指當時版本的功能)',
+    '【2. 強制屬性清單調整】',
+    '  ❌ 移除「八首齊噬」(玩家定為無屬性,fd 寫的「龍屬性」非標準)',
+    '  ❌ 移除「鬼王酒宴」(玩家定為無屬性,500% 重擊+連鎖只看角色屬性)',
+    '  🎲 「暗冰雷焰吐息」改為 SKILL_RANDOM_ELEMENTS 機制',
+    '     每次傷害從 暗/火/水/風 4 屬性隨機挑一個算相剋',
+    '     對應 fd「暗焰、冰雪、落雷、烈焰」混合元素感',
+    '  ✅ 「八頭龍滅世」維持 dark(玩家確認)',
+    '【3. 新機制 SKILL_RANDOM_ELEMENTS】',
+    '  - 用於混合元素技能,每次傷害都隨機從候選池選一個屬性',
+    '  - 子彈光束顏色也每次隨機(呼應視覺感)',
+    '  - 目前唯一案例:暗冰雷焰吐息 → [dark, fire, water, wind]',
+    '  - 實作位置:line ~9559(資料表) + getSkillForceElemMod (line ~9567)',
+    '【4. 子屬性歸併規則(從此固定)】',
+    '  - 雷/閃電類技能 → 歸入 wind 風屬性',
+    '  - 冰/凍類技能   → 歸入 water 水屬性',
+    '  目前已套用:幽寒吐息/冰凍之矛/暴風雪/冰封末日 → water',
+    '【最終 21 個強制屬性技能清單(+1 隨機屬性)】',
+    '  火(6): 火焰球、地獄之火、烈焰爆發、九尾狐火、禍世邪魅、焰尾九連擊',
+    '  水(4): 冰凍之矛、暴風雪、冰封末日、幽寒吐息',
+    '  風(3): 疾風團扇擊、風捲殘雲、神威風獵',
+    '  草(2): 落英繽紛、千年絕美·傾城一笑',
+    '  光(2): 日月同輝、破魔矢',
+    '  暗(3): 暗羽突襲、鬼力橫掃、八頭龍滅世',
+    '  + 隨機: 暗冰雷焰吐息(暗/火/水/風)',
+  ] },
+  { ver:'v1.0.20260424.1070', brief:[
+    '🎬 萬物創生動畫換新',
+    '⏳ 時空法師能力調整 atk/sp/spd:3/13/15 → 12/15/4',
+    '📗 經驗之書新增「全部使用」按鈕',
+    '⏭ 劇情對白新增「跳過劇情」按鈕(右下,救援卡死)',
+    '🐉 修復 BOSS 戰回溯時 BOSS HP 沒還原的根因',
+  ], items:[
+    '【1. 萬物創生 GIF 替換】',
+    '  舊:clarebox123jp-art/-/raw/main/萬物創生.gif',
+    '  新:clarebox123jp-art/LXPSGAME/main/萬物創生.gif',
+    '【2. 時空法師能力調整】',
+    '  舊:hp:59 atk:3  sp:13 spd:15',
+    '  新:hp:59 atk:12 sp:15 spd:4',
+    '【3. 經驗之書「全部使用」按鈕】',
+    '  - 在英雄詳情頁,書本數 ≥ 2 時顯示「全部使用」按鈕(普通版/精裝版各一個)',
+    '  - 點擊會預先計算:會升幾級、會浪費多少 EXP',
+    '  - 若超出 Lv50 上限會浪費 EXP,跳出確認:',
+    '    「將使用 N 本書(共 +M EXP),Lv? → Lv50 (MAX),',
+    '     達到上限後超出的 X EXP 將被放棄,是否確認使用?」',
+    '  - 確認後逐本扣除背包書本,累積升級事件一次顯示動畫',
+    '  - 新函式 _useAllExpBookForHero(name, isDeluxe) line ~44380',
+    '【4. 跳過劇情按鈕】',
+    '  - 對話框右下新增紅色「⏭ 跳過劇情」按鈕(id: adv-dialog-skip-btn)',
+    '  - 跳過邏輯:強制清除所有對白殘留 flags,直接呼叫 advStartMiniBattle 進下一場',
+    '  - 注意:與舊有「跳過演出」(line ~31511,跳整個冒險)是不同函式,新函式叫 advSkipCurrentDialog',
+    '  - 適用情境:對白卡死、玩家想加快節奏、Race condition 救援',
+    '  - 點擊會跳確認對話框,避免誤按',
+    '【5. BOSS 戰回溯 BOSS HP 沒還原 — 根因修復 ★ 重要】',
+    '  【症狀】',
+    '    BOSS 戰中卡死後選「⏪ 回到上一回合」,HP/狀態看似還原了,',
+    '    但 BOSS 的 HP 仍是當前(被打掉)的數值,而不是上一回合開始的滿血狀態',
+    '  【根因】',
+    '    _saveBattleRoundSnapshot 在 startTurn 開頭被呼叫,但 startTurn 在「同一回合」',
+    '    內會被多次呼叫(每換一個英雄行動就呼叫一次)',
+    '    第 1 次:玩家 1 行動前 → 存快照(BOSS 滿血)',
+    '    第 2 次:玩家 1 行動後,玩家 2 行動前 → 又存快照(BOSS 已被打)',
+    '    第 3 次:玩家 2 行動後,BOSS 行動前 → 又存快照(BOSS 已被打更多)',
+    '    ...',
+    '    結果「上一回合快照」被當回合進度持續覆蓋,變成「最近一次行動前」快照',
+    '  【修復】',
+    '    參照時間倒轉用的 G._curRoundSnap 邏輯,加 G._lastBattleSnapRound 旗標,',
+    '    只在 round 數值「變化」的「首次」startTurn 才存快照',
+    '    這樣才是真正的「上一回合開始」狀態(BOSS 行動前)',
+    '  【還順便修】',
+    '    - advStartCutscene、advStartBattle、advStartMiniBattle 開頭重置 _lastBattleSnapRound',
+    '      避免新戰鬥沿用舊的 round 標記而錯過第一次存快照',
+    '【實作位置】',
+    '  - 萬物創生 GIF: line ~13108',
+    '  - 時空法師能力: line ~7796',
+    '  - _useAllExpBookForHero: line ~44380',
+    '  - 跳過劇情按鈕 HTML: line ~5212',
+    '  - advSkipCurrentDialog: line ~30647',
+    '  - _saveBattleRoundSnapshot 守門: line ~21238',
+    '  - _lastBattleSnapRound 重置: line ~30161, ~31855, ~43050',
+  ] },
+  { ver:'v1.0.20260424.1064', brief:[
+    '📝 修正屬性傷害系統的 changelog 與註解錯誤',
+  ], items:[
+    '【掃描整個程式碼後找到的 BUG/不一致】',
+    '【已修正】',
+    '  ✓ v1060 changelog 寫「30 個」實際只有 24 個(後降為 23 個)',
+    '  ✓ v1060 changelog 仍列著 6 個誤列技能(救贖神光/璀璨聖光等),已替換成「正確清單請見 v1062」',
+    '  ✓ v1060 changelog 寫「普攻命中粒子改用 getSkillBeamColor」,實際 v1063 已改回直接用 actor.element',
+    '  ✓ v1063 changelog 寫「60 處」doDmg 未傳 isSkill,實際是 89 處',
+    '  ✓ ELEM_COLORS 註解寫「ice/thunder 是子屬性等同 water/wind」',
+    '    實際 ELEMENT_DB 只有 7 種主屬性,ice/thunder 是歷史既存的文學描述顏色',
+    '【需要你確認的不確定地方】',
+    '  以下技能 fd 描述沒明示屬性,我憑技能名/角色屬性「猜測」分類,請確認:',
+    '  - 焰尾九連擊 → fire (因名字有「焰」+ 角色九尾空貓怪是火)',
+    '  - 神威風獵 → wind (因名字含「風」)',
+    '  - 烈焰爆發/火焰球/地獄之火 → fire (火法師爆發/招式名)',
+    '  - 冰凍之矛/暴風雪/冰封末日 → water (冰法師招式)',
+    '  - 日月同輝 → light (光法師招式)',
+    '  - 八首齊噬 (fd 寫「龍屬性」,但無此屬性)→ 我猜 dark',
+    '  - 八頭龍滅世 → 我猜 dark',
+    '  - 暗冰雷焰吐息 → 我猜 dark (但實為混合元素:暗+冰+雷+焰)',
+    '  - 鬼王酒宴 → 我猜 dark (因鬼類屬暗)',
+    '【若你想調整任何分類,告訴我】',
+    '【千年絕美·傾城一笑 vs 千年絕美・傾城一笑】',
+    '  實際技能名是全形 ・,我之前 changelog 用了半形 ·,但 SKILL_FORCE_ELEMENT 兩種寫法都有(fallback)',
+    '  所以實際運作正確,只是 changelog 顯示文字稍微不同',
+  ] },
+  { ver:'v1.0.20260424.1063', brief:[
+    '🛡 全面修復 v1060 屬性增減傷系統的多個污染與覆蓋率 BUG',
+  ], items:[
+    '【系統性檢查發現的 5 個問題】',
+    '【BUG 1:_curSkillName 從不清除 → 普攻誤套上次技能屬性】',
+    '  症狀:玩家用「火焰球」打怪,下次普攻子彈會變紅色 + 套火屬性相剋',
+    '  修復:execAtk 入口、endAction、startTurn 三處清除',
+    '【BUG 2:跨回合污染】',
+    '  症狀:玩家技能結束 → 敵方 BOSS 行動時可能讀到上一回合殘留的 _curSkillName',
+    '  修復:startTurn 開頭強制清除',
+    '【BUG 3:爆發技完全沒設 _curSkillName】',
+    '  症狀:爆發技內部 doDmg 讀到的是上一個技能的名字(完全錯誤),',
+    '       例如「八頭龍滅世」會被誤判成上一個技能屬性',
+    '  修復:_runBurst 開頭設 window._curSkillName = burstName',
+    '【BUG 4:fallback 條件 opts.isSkill 太嚴格,將近 90 處技能未受惠】',
+    '  症狀:有約 89 處技能 doDmg 沒傳 isSkill,新系統對它們完全無效',
+    '  修復:改用更寬鬆的條件 — 只要不是「特殊傷害」就讀 _curSkillName:',
+    '    - 排除 opts.fixedDmg(燃燒/中毒持續傷害)',
+    '    - 排除 opts.isRebound(反彈傷害)',
+    '    - 排除 opts.isPunishReflect(處決反擊)',
+    '【BUG 5:普攻光束顏色被技能名污染】',
+    '  症狀:普攻時用 getSkillBeamColor(actor, _curSkillName) 會吃到上次技能的顏色',
+    '  修復:普攻直接用 actor.element 顏色,不讀 _curSkillName',
+    '【現在的執行流程】',
+    '  1. execSkill 開頭設 _curSkillName = sk.n',
+    '  2. _runBurst 開頭設 _curSkillName = bd.n',
+    '  3. execAtk 入口清除(普攻不應吃技能屬性)',
+    '  4. endAction 清除(行動結束)',
+    '  5. startTurn 雙重保險清除',
+    '  6. doDmg 內讀 _curSkillName,排除 fixedDmg/isRebound/isPunishReflect',
+    '【影響範圍評估】',
+    '  - 既有玩家普攻、技能、爆發都不受負面影響',
+    '  - 新版屬性相剋對「執行 execSkill / _runBurst 流程內」的所有 doDmg 生效',
+    '  - 燃燒、中毒、反彈、處決反擊等持續傷害 → 仍走「角色屬性」邏輯,不變',
+  ] },
+  { ver:'v1.0.20260424.1062', brief:[
+    '🔧 再次校正強制屬性清單(逐技能檢視 fd 描述)',
+  ], items:[
+    '【經系統性檢查 24 個技能,發現 2 個錯誤 + 漏掉 2 個】',
+    '【移除(沒有傷害)】',
+    '  ❌ 極限閃光(光法師 S2)→ fd:「使隨機3名對手行動成功率減半」(純命中率 debuff)',
+    '  ❌ 嗜血鬼炎 → 此技能名根本不存在!酒吞童子爆發實際叫「鬼王酒宴」',
+    '【補入(漏掉的傷害技)】',
+    '  ✅ 鬼王酒宴(酒吞童子爆發)→「攻擊500%重擊+擊倒轉移最多3連鎖」屬暗',
+    '  ✅ 暗冰雷焰吐息(八岐大蛇 S2)→「特技×2全體+隨機2狀態」屬暗',
+    '【最終 23 個技能清單】',
+    '  火(6): 火焰球、地獄之火、烈焰爆發、九尾狐火、禍世邪魅、焰尾九連擊',
+    '  水(4): 冰凍之矛、暴風雪、冰封末日、幽寒吐息',
+    '  風(3): 疾風團扇擊、風捲殘雲、神威風獵',
+    '  草(2): 落英繽紛、千年絕美·傾城一笑',
+    '  光(2): 日月同輝、破魔矢',
+    '  暗(6): 暗羽突襲、鬼力橫掃、鬼王酒宴、八首齊噬、暗冰雷焰吐息、八頭龍滅世',
+    '【註】',
+    '  日月同輝雖然只是「特技50%傷害+50%治療」,但有實質傷害,保留',
+    '  雪女 S1「冰晶凝聚」是純護盾無傷害,沒入清單(原本就沒列入)',
+  ] },
+  { ver:'v1.0.20260424.1061', brief:[
+    '🔧 修正 v1060 強制屬性清單:移除 6 個誤列技能',
+  ], items:[
+    '【問題】',
+    '  v1060 把以下技能誤列入 SKILL_FORCE_ELEMENT 清單,但它們不適合套元素相剋:',
+    '【純治療/狀態類技能 — 沒有傷害】',
+    '  ❌ 救贖神光(祭司 S1)→ 純治療 + 淨化 + 免疫,完全沒傷害',
+    '  ❌ 璀璨聖光(祭司爆發)→ 治療全隊 + 解狀態,完全沒傷害',
+    '  ❌ 黑暗封印(暗法師 S2)→ 70% 機率封印技能,完全沒傷害',
+    '  ❌ 妖狐幻惑(玉藻前 S2)→ 強力失明 + 自身護盾,完全沒傷害',
+    '【固定%HP傷害技能 — 套相剋會失衡】',
+    '  ❌ 死亡宣告(暗法師 S1)→ 對小怪設1HP/對 BOSS 20% HP,屬於宣告類',
+    '  ❌ 神聖鎚擊(聖騎士 S1)→ 對手 20% HP / BOSS 5% HP,固定%扣血',
+    '【保留的 24 個攻擊技能】',
+    '  火: 火焰球、地獄之火、烈焰爆發、九尾狐火、禍世邪魅、焰尾九連擊、嗜血鬼炎',
+    '  水: 冰凍之矛、暴風雪、冰封末日、幽寒吐息',
+    '  風: 疾風團扇擊、風捲殘雲、神威風獵',
+    '  草: 落英繽紛、千年絕美·傾城一笑',
+    '  光: 日月同輝、極限閃光、破魔矢',
+    '  暗: 暗羽突襲、鬼力橫掃、八首齊噬、八頭龍滅世',
+    '【新規則(納入條件)】',
+    '  - 必須是「造成 atk/sp 比例傷害」的攻擊技(如 200% 特技傷害)',
+    '  - 純治療/淨化/狀態 → 不納入',
+    '  - 固定 %HP 傷害 → 不納入',
+  ] },
+  { ver:'v1.0.20260424.1060', brief:[
+    '⚡ 強制屬性技能系統:元素技能技能屬性可疊加角色屬性相剋(最高 ±30%)',
+    '🌈 子彈光束顏色依技能屬性變化(技能屬性優先,沒有則用角色屬性)',
+    '※ 此版本初次推出時清單有誤,正確清單請見 v1062',
+  ], items:[
+    '【設計理念】',
+    '  某些技能名稱明確指向某種元素(如冰法師「暴風雪」屬冰=水、火法師「火焰球」屬火),',
+    '  即使施放者本身不是該屬性,技能本身仍應依該屬性計算相剋。',
+    '【新機制:雙層屬性相剋】',
+    '  - 角色屬性相剋:±10% (原有,如水屬性英雄打火屬性)',
+    '  - 技能屬性相剋:±20% (新增,如「暴風雪」打火屬性)',
+    '  - 兩者疊加:最高 ±30% (角色 +10% 與 技能 +20% 同方向)',
+    '  - 範例:水屬性冰法師用「暴風雪」打火屬性對手 → +30% (10+20)',
+    '          光屬性冰法師用「暴風雪」打火屬性對手 → +20% (僅技能屬性)',
+    '【視覺強化】',
+    '  - 子彈/光束顏色:技能屬性優先(冰法師暴風雪 = 藍色光束,即使他是光屬性)',
+    '  - 雙重相剋彈出文字升級:普通黃/藍 32px,雙重橘/青 38px+加粗光暈',
+    '  - 戰鬥 log 改為:⚡⚡雙重元素相剋!傷害+30% (vs ⚡元素相剋!傷害+10%)',
+    '【實作架構】',
+    '  - SKILL_FORCE_ELEMENT 對照表:技能名 → 元素',
+    '  - getSkillForceElemMod:計算 elemPct + skillPct + total',
+    '  - getSkillBeamColor:取得技能/角色屬性顏色',
+    '  - execSkill 開頭設 window._curSkillName 讓 doDmg 自動讀取',
+    '  - doDmg 套用 getSkillForceElemMod + 雙重相剋彈出文字',
+    '【後續還未做(Phase 2)】',
+    '  - 技能描述 d/fd 統一加「○屬性傷害」字眼',
+    '  - 卡片 UI「被剋屬性弱點」分級(普通/雙重)',
+    '  - 反向屬性免疫(水屬性技能也吃水屬性對狀態的免疫加成)',
+  ] },
   { ver:'v1.0.20260424.1050', brief:[
     '🔧 內部維護更新',
   ], items:[
@@ -52189,7 +53419,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1051';
+  const CURRENT_VERSION = 'v1.0.20260424.1141';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -52206,7 +53436,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1051';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1141';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
