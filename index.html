@@ -30931,8 +30931,23 @@ function advNextDialog(e) {
   // ★ v1.0.20260424.0910 — 自我修復:若 _advSceneChoiceDone 殘留為 true 但選擇面板無內容,
   //   代表上一個場景的選擇流程結束但 flag 未被重置,造成 dialog 卡住點不動。
   //   reset flag 讓對話可繼續推進(常見於日本關連續場景之間)。
+  // ★ v1.0.20260424.1300 — 修復誤判:該自我修復原本太激進,
+  //   會在「玩家選完主題、advConfirmChoice 等 1.2 秒進小怪戰」期間誤觸發,
+  //   把 _advSceneChoiceDone 重置 → v1280 防護失效 → 主題問題又彈出
+  //   修復:增加額外條件 — 必須是「真的卡死」才修復:
+  //     1) panel 無內容
+  //     2) 而且 banner 也是空的(advConfirmChoice 顯示「✅ 已記錄」中時 banner 有內容,代表正在過渡,別動)
+  //     3) 而且不在小怪戰過渡期
   if(typeof _advSceneChoiceDone !== 'undefined' && _advSceneChoiceDone){
     if(!_cpEl || _cpEl.children.length === 0){
+      // ★ 額外檢查:banner 是否有「已記錄」字樣或小怪戰是否啟動中(代表過渡期)
+      const _banner = document.getElementById('adv-confirm-banner');
+      const _bannerHasText = _banner && _banner.textContent && _banner.textContent.trim().length > 0;
+      const _inMiniBattleTransition = (typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive);
+      if(_bannerHasText || _inMiniBattleTransition){
+        try{ console.log('[advNextDialog] 過渡期中(banner 或小怪戰啟動),不執行自我修復,直接 return'); }catch(_){}
+        return;
+      }
       try{ console.warn('[advNextDialog 自我修復] _advSceneChoiceDone 殘留為 true 但 panel 無內容,重置 flag'); }catch(_){}
       _advSceneChoiceDone = false;
       // 繼續往下執行,不 return
@@ -31061,6 +31076,8 @@ function _advBossHpMult(){
 }
 
 function advShowChoicePanel(stage, sceneIdx) {
+  // ★ v1.0.20260424.1290 — 診斷 log:記錄誰在何時呼叫 advShowChoicePanel
+  try{ console.log('[advShowChoicePanel] 呼叫 sceneIdx=' + sceneIdx + ', _advSceneChoiceDone=' + _advSceneChoiceDone); }catch(_){}
   const _sceneArrCP = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
   const scene = _sceneArrCP[sceneIdx];
   if(!scene) return;
@@ -31141,27 +31158,113 @@ function advShowChoicePanel(stage, sceneIdx) {
   const grid = document.createElement('div');
   grid.className = 'adv-choice-grid';
   let _choiceLocked = false;  // ★ v1.0.20260424.1010 — debounce:點過第一次後鎖定整個面板
-  scene.choices.forEach(c => {
-    const btn = document.createElement('button');
-    btn.className = 'adv-choice-btn';
-    btn.textContent = c;
-    btn.onclick = () => {
-      // ★ v1.0.20260424.1010 — 防止連點/race condition 造成選擇彈兩次
-      if(_choiceLocked) return;
-      _choiceLocked = true;
-      // 鎖定所有按鈕(視覺禁用,避免再次點擊)
-      box.querySelectorAll('.adv-choice-btn').forEach(b => {
-        b.style.pointerEvents = 'none';
+
+  // ★ v1.0.20260424.1290 — 養護專題按鈕特殊渲染:NEW 標籤 + 連擊進度 + 解鎖角色提示
+  //   原本單步驟分支只用 btn.textContent = c,沒有套用 v1190 的特殊樣式
+  //   這個共用 helper 把按鈕內容做漂亮的兩行佈局
+  const _renderChoiceBtnContent = (btn, c) => {
+    if(c === '領養與照顧狗狗' || c === '照顧與陪伴幼兒'){
+      try{
+        const _isDog2 = c === '領養與照顧狗狗';
+        const _streakKey = _isDog2 ? 'dogCareStreak' : 'careInfantStreak';
+        const _full2 = _isDog2
+          ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : [])
+          : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
+        const _streak = (typeof _medalStats !== 'undefined' && _medalStats[_streakKey]) || 0;
+        const _total2 = _full2.length || 20;
+        const _heroIcon = _isDog2 ? '🐕' : '👶';
+        const _heroName = _isDog2 ? '小力' : '幼兒園小孩';
+        const _isUnlocked = _isDog2 ? (typeof _medals !== 'undefined' && _medals['unlock_xiaoli']) : (typeof _medals !== 'undefined' && _medals['unlock_kid']);
+        const _statusLine = _isUnlocked
+          ? `<span style="color:#88ddff;font-size:14px;">✅ 已解鎖,可繼續挑戰</span>`
+          : `<span style="color:#ffcc66;font-size:14px;font-weight:700;">⭐ 連續答對 ${_total2} 題解鎖【${_heroName}】</span>`;
+        const _badgeColor = _streak > 0 ? '255,200,80' : '120,255,170';
+        const _badgeBg = _streak > 0 ? '255,170,40,0.35' : '80,220,140,0.3';
+        const _badgeText = _streak > 0 ? '#ffe080' : '#aaffcc';
+        btn.innerHTML =
+          '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.3;">'
+          + '<div style="display:flex;align-items:center;gap:8px;justify-content:center;">'
+          +   (!_isUnlocked
+              ? '<span class="_new-badge-pulse" style="display:inline-block;padding:1px 7px;font-size:11px;font-weight:900;background:linear-gradient(45deg,#ff4488,#ff8844);color:#fff;border-radius:4px;letter-spacing:1px;box-shadow:0 0 8px rgba(255,100,140,0.7);">NEW</span>'
+              : '')
+          +   '<span style="font-size:1em;">' + c + '</span>'
+          +   '<span style="font-size:1.2em;">' + _heroIcon + '</span>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;gap:6px;justify-content:center;font-weight:600;">'
+          +   '<span style="display:inline-block;padding:1px 8px;font-size:13px;font-weight:700;background:rgba(' + _badgeBg + ');border:1px solid rgba(' + _badgeColor + ',0.7);color:' + _badgeText + ';border-radius:5px;letter-spacing:1px;">🔥連擊 ' + _streak + '/' + _total2 + '</span>'
+          +   _statusLine
+          + '</div>'
+          + '</div>';
+      }catch(_){
+        btn.textContent = c;
+      }
+    } else {
+      btn.textContent = c;
+    }
+  };
+
+  // ★ v1.0.20260424.1290 — subject 場景:用分組渲染(同多步驟流程的設計,5 大類分類框 + 著色)
+  if(scene.choiceType === 'subject' && typeof _advGroupSubjects === 'function'){
+    const groups = _advGroupSubjects(scene.choices);
+    groups.forEach(g => {
+      const groupWrap = document.createElement('div');
+      groupWrap.style.cssText =
+        `width:100%;padding:10px 14px 12px;border-radius:14px;margin-bottom:10px;` +
+        `border:2px dashed ${g.borderColor};background:${g.bgColor};box-sizing:border-box;`;
+      const label = document.createElement('div');
+      label.style.cssText =
+        `font-size:22px;font-weight:800;text-align:left;margin-bottom:8px;letter-spacing:3px;` +
+        `color:${g.labelColor};text-shadow:0 0 8px ${g.glow};`;
+      label.textContent = g.label;
+      groupWrap.appendChild(label);
+      const groupGrid = document.createElement('div');
+      groupGrid.className = 'adv-choice-grid';
+      groupGrid.style.cssText = 'justify-content:flex-start;';
+      g.items.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'adv-choice-btn';
+        const _styleStr = (typeof _advGetSubjectBtnStyle === 'function') ? _advGetSubjectBtnStyle(c) : '';
+        if(_styleStr) btn.style.cssText = _styleStr;
+        _renderChoiceBtnContent(btn, c);
+        btn.onclick = () => {
+          if(_choiceLocked) return;
+          _choiceLocked = true;
+          box.querySelectorAll('.adv-choice-btn').forEach(b => { b.style.pointerEvents = 'none'; });
+          box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          _advTempChoice = c;
+          playSfx('sfx-confirm2', 0.85);
+          setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
+        };
+        groupGrid.appendChild(btn);
       });
-      box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      _advTempChoice = c;
-      playSfx('sfx-confirm2', 0.85);
-      setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
-    };
-    grid.appendChild(btn);
-  });
-  box.appendChild(grid);
+      groupWrap.appendChild(groupGrid);
+      box.appendChild(groupWrap);
+    });
+  } else {
+    // 其他類型(年級/難度)→ 用原本的 flat grid
+    scene.choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'adv-choice-btn';
+      _renderChoiceBtnContent(btn, c);
+      btn.onclick = () => {
+        // ★ v1.0.20260424.1010 — 防止連點/race condition 造成選擇彈兩次
+        if(_choiceLocked) return;
+        _choiceLocked = true;
+        // 鎖定所有按鈕(視覺禁用,避免再次點擊)
+        box.querySelectorAll('.adv-choice-btn').forEach(b => {
+          b.style.pointerEvents = 'none';
+        });
+        box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        _advTempChoice = c;
+        playSfx('sfx-confirm2', 0.85);
+        setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
+      };
+      grid.appendChild(btn);
+    });
+    box.appendChild(grid);
+  }
 
   panel.innerHTML = '';
   panel.appendChild(box);
@@ -47293,6 +47396,64 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1300', brief:[
+    '🎯 ★ 終結篇:找到「主題問題重複跳出」真兇 — v0910 自我修復太激進',
+  ], items:[
+    '【玩家精準回報的關鍵情境】',
+    '  情境一:點完主題 → 進下一段對白 → 不按 → 自動進小怪戰(正常)',
+    '  情境二:點完主題 → 進下一段對白 → 按一下對白加快 → 主題問題又跳出來!',
+    '  → 關鍵差異是「按了一下對白」觸發 advNextDialog',
+    '【完整 BUG 流程】',
+    '  1) 玩家點「狗狗」→ advConfirmChoice 設 _advSceneChoiceDone=true,清空 panel,banner=「已記錄」',
+    '  2) advConfirmChoice 等 1.2s 後呼叫 advStartMiniBattle',
+    '  3) advStartMiniBattle 顯示鳥人哈維對白(2.5 秒,期間 dialog.onclick=null 暫停)',
+    '  4) 玩家不耐煩,按一下對白框',
+    '  5) advNextDialog 觸發',
+    '【真正的兇手:v0910 自我修復邏輯太激進(line 30934)】',
+    '  舊邏輯:「panel 為空 + _advSceneChoiceDone=true → 認定卡死 → reset flag」',
+    '  → 但這個情境其實是「玩家剛選完,正在過渡到小怪戰」!',
+    '  → flag 被誤 reset 成 false',
+    '  → 接著 advNextDialog 走到 line 30961 advShowChoicePanel',
+    '  → v1280 防護檢查 _advSceneChoiceDone → 已被 reset 成 false!沒擋住!',
+    '  → 主題問題又彈出來!',
+    '【修復:自我修復加更嚴格條件】',
+    '  必須同時滿足以下三個條件,才認定是「真的卡死」執行修復:',
+    '    1) panel 無內容(原條件)',
+    '    2) banner 也是空的(若有「已記錄」字樣代表過渡期,別動)',
+    '    3) 不在小怪戰啟動中(_advMiniBattleActive=true 代表過渡期)',
+    '  其中任一不滿足 → 直接 return,不推進對白也不 reset flag',
+    '【為何之前沒抓到】',
+    '  問題只在「玩家手動按對白加快」時觸發',
+    '  情境一(完全不動)時 dialog.onclick=null 期間根本不會觸發 advNextDialog → 沒問題',
+    '  我和你之前的測試大多沒按對白 → 沒重現',
+    '【實作位置】',
+    '  - advNextDialog 自我修復強化: line ~30934',
+  ] },
+  { ver:'v1.0.20260424.1290', brief:[
+    '🐕 養護專題按鈕加入分組著色 + NEW 標籤 + 連擊進度(單步驟分支)',
+    '🔍 重複彈出問題:加 console 診斷 log 找根因',
+  ], items:[
+    '【修復 1:養護專題按鈕特殊樣式】',
+    '  根因:之前 v1190 的 NEW 標籤、連擊進度、解鎖角色提示',
+    '       只加在「多步驟流程 grade_subject」(_advRenderMultiStep makeBtn),',
+    '       但目前木柵關用的是「單步驟 subject 分支」,沒有套用',
+    '  修復:把單步驟 subject 也改成「分組渲染」(同多步驟設計):',
+    '    - 5 大類分類框(一般學科 / 課堂複習 / 國際教育 / 動物園 / 養護專題)',
+    '    - 每類獨立框線 + 著色',
+    '    - 養護專題的「領養與照顧狗狗」「照顧與陪伴幼兒」按鈕:',
+    '      * 顯示「NEW」粉紅閃爍標籤',
+    '      * 角色 emoji (🐕 / 👶)',
+    '      * 連擊進度徽章 [🔥連擊 X/20] (有連擊時金色,沒有時綠色)',
+    '      * 解鎖角色提示「⭐ 連續答對 20 題解鎖【小力】」',
+    '【修復 2:重複彈出診斷 log】',
+    '  v1280 加了 _advSceneChoiceDone 防護,但你回報還在重複彈出',
+    '  代表還有未發現的觸發路徑。本版加 console.log:',
+    '    [advShowChoicePanel] 呼叫 sceneIdx=X, _advSceneChoiceDone=Y',
+    '  下次重複彈出時,F12 開 console 看每次呼叫的時機,可找出真兇',
+    '【實作位置】',
+    '  - 單步驟 subject 分組渲染 + 養護專題特殊樣式: line ~31141',
+    '  - advShowChoicePanel 診斷 log: line ~31065',
+  ] },
   { ver:'v1.0.20260424.1280', brief:[
     '🎯 真正修復「選主題/難度重複跳出」的根因(v1270 修不完整)',
   ], items:[
@@ -54541,7 +54702,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1280';
+  const CURRENT_VERSION = 'v1.0.20260424.1300';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54558,7 +54719,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1280';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1300';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
