@@ -232,6 +232,10 @@
   // 同時把 inviteCodes/{code} 寫入(uid:..)供反查
   window._fbEnsureInviteCode = async function(uid){
     if(!uid) return null;
+    // ★ v1.0.20260424.1250 — 預先計算「uid 前 8 碼大寫」當作確定性邀請碼
+    //   這樣即使 Firestore 寫入失敗(規則限制),仍有可用的邀請碼
+    //   uid 是 Firebase Auth 隨機產生的 28 碼,前 8 碼碰撞機率極低
+    const _uidCode = (uid + '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8).padEnd(8, 'X');
     try{
       // 1. 從自己的 player doc 讀取 inviteCode
       const myDoc = await getDoc(doc(_fbDb, 'players', uid));
@@ -247,24 +251,23 @@
         }catch(_){}
         return myCode;
       }
-      // 2. 沒有邀請碼 → 生成新的(嘗試最多 5 次避免碰撞)
-      for(let attempt=0; attempt<5; attempt++){
-        const newCode = _genInviteCode();
-        // 檢查碰撞
-        const codeDoc = await getDoc(doc(_fbDb, 'inviteCodes', newCode));
-        if(codeDoc.exists()) continue;  // 撞碼,重試
-        // 寫入 inviteCodes 反查表
-        await setDoc(doc(_fbDb, 'inviteCodes', newCode), { uid: uid, ts: Date.now() });
-        // 寫入自己的 player doc(merge,不影響其他欄位)
-        await setDoc(doc(_fbDb, 'players', uid), { inviteCode: newCode }, { merge: true });
-        console.log('[InviteCode] 已生成新邀請碼:', newCode);
-        return newCode;
+      // 2. 沒有邀請碼 → 直接用 uid-based 確定性邀請碼,並嘗試寫入 Firestore
+      //    若寫入失敗(規則限制),仍可使用 _uidCode 作為玩家分享碼
+      try{
+        // 嘗試寫入 inviteCodes 反查表
+        await setDoc(doc(_fbDb, 'inviteCodes', _uidCode), { uid: uid, ts: Date.now() });
+        // 寫入自己的 player doc
+        await setDoc(doc(_fbDb, 'players', uid), { inviteCode: _uidCode }, { merge: true });
+        console.log('[InviteCode] 已寫入新邀請碼(uid-based):', _uidCode);
+      }catch(eWrite){
+        // 寫入失敗(可能是 Firestore 規則限制),但仍回傳 _uidCode 給玩家用
+        console.warn('[InviteCode] Firestore 寫入失敗,但仍可使用 uid-based 邀請碼:', _uidCode, eWrite);
       }
-      console.warn('[InviteCode] 連續 5 次碰撞,放棄生成');
-      return null;
+      return _uidCode;
     }catch(e){
-      console.error('[InviteCode] 生成失敗', e);
-      return null;
+      console.error('[InviteCode] 生成過程發生錯誤,fallback 用 uid-based 邀請碼', e);
+      // 最終 fallback:即使整個流程失敗,還是回傳 _uidCode
+      return _uidCode;
     }
   };
 
@@ -30916,6 +30919,13 @@ function advNextDialog(e) {
   // 若選擇視窗或法寶彈窗開著，不推進對話
   const _cpEl = document.getElementById('adv-choice-panel');
   if(_cpEl && _cpEl.children.length > 0) return;
+  // ★ v1.0.20260424.1270 — 防止多步驟選擇流程進行中(panel 短暫清空重畫的瞬間)
+  //   被玩家不小心點對白框觸發 advNextDialog → 把對白推完 → 呼叫 advShowChoicePanel → 重置流程
+  if(typeof _advMultiStepState !== 'undefined' && _advMultiStepState
+     && typeof _advMultiStepState.stepIdx === 'number'){
+    console.warn('[advNextDialog] 多步驟選擇流程進行中,忽略對白推進');
+    return;
+  }
   const _tpEl = document.getElementById('adv-treasure-popup');
   if(_tpEl && _tpEl.classList.contains('show')) return;
   // ★ v1.0.20260424.0910 — 自我修復:若 _advSceneChoiceDone 殘留為 true 但選擇面板無內容,
@@ -31054,6 +31064,36 @@ function advShowChoicePanel(stage, sceneIdx) {
   const _sceneArrCP = (typeof window._getAdvSceneArray === 'function') ? window._getAdvSceneArray(stage) : [];
   const scene = _sceneArrCP[sceneIdx];
   if(!scene) return;
+
+  // ★ v1.0.20260424.1280 — 真正修復「選主題/難度重複跳出」的根因:
+  //   情境:玩家選了主題後,advConfirmChoice 等 1.2 秒才呼叫 advStartMiniBattle 進下一場景
+  //   這 1.2 秒內若任何路徑呼叫 advShowChoicePanel(同一 sceneIdx),會看到問題重彈
+  //   (v1270 加的「panel 已有按鈕」防護擋不住,因為 advConfirmChoice 已清空 panel)
+  //   修復:檢查 _advSceneChoiceDone flag,該 flag 在 advConfirmChoice 開頭已設 true,
+  //   只要這場景已選過,就不再重新顯示問題
+  if(typeof _advSceneChoiceDone !== 'undefined' && _advSceneChoiceDone){
+    console.warn('[advShowChoicePanel] 本場景已選過(_advSceneChoiceDone=true),忽略重複呼叫 sceneIdx=' + sceneIdx);
+    return;
+  }
+
+  // ★ v1.0.20260424.1270 — 防重複呼叫:若多步驟流程已在進行中,不再重置
+  //   防止以下情境:玩家剛點完第 1 題年級,_advRenderMultiStep 重畫第 2 題期間,
+  //   玩家不小心又按到對白框觸發 advNextDialog → 再呼叫 advShowChoicePanel
+  //   → 重置 _advMultiStepState → 又從第 1 題開始
+  if(scene.choiceType === 'grade_subject'
+     && _advMultiStepState
+     && typeof _advMultiStepState.stepIdx === 'number'
+     && _advMultiStepState.stepIdx > 0){
+    console.warn('[advShowChoicePanel] 多步驟流程進行中(已到第 ' + (_advMultiStepState.stepIdx+1) + ' 題),忽略重複呼叫');
+    return;
+  }
+  // ★ 同樣防護單步驟:若選擇面板已有內容(玩家正在選),不再重置
+  const _existingPanel = document.getElementById('adv-choice-panel');
+  if(_existingPanel && _existingPanel.children.length > 0
+     && _existingPanel.querySelector('.adv-choice-btn')){
+    console.warn('[advShowChoicePanel] 選擇面板已顯示中,忽略重複呼叫');
+    return;
+  }
 
   // ★ 日本關 japan_auto：不需選擇，直接推進到下一場小怪戰/BOSS
   if(scene.choiceType === 'japan_auto'){
@@ -32195,6 +32235,11 @@ function advStartBattle(){
   // ★ 確保冒險模式旗標正確
   _adventureMode = true;
   _advMiniBattleActive = false;
+  // ★ v1.0.20260424.1260 — 確保 row2(對手卡片區)可見(advFinishMiniBattle 可能殘留 hidden)
+  try{
+    const _row2 = document.getElementById('row2');
+    if(_row2) _row2.style.visibility = '';
+  }catch(_){}
   // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
   try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
   // ★ v1.0.20260424.1170 — 進入 BOSS 戰時顯示回溯/教學按鈕(玩家戰鬥中可用)
@@ -42800,16 +42845,47 @@ function _renderFriendPanel() {
   document.body.appendChild(panel);
 
   // ★ v1.0.20260424.1150 — 若邀請碼還沒生成,延遲取得後更新顯示
+  // ★ v1.0.20260424.1250 — 失敗時也更新 UI(不要永遠卡在「載入中...」)
   if(!window._myInviteCode && window._fbEnsureInviteCode && window._gUserId){
     (async () => {
+      const _displayEl = document.getElementById('_my-invite-code-display');
+      // ★ 5 秒 timeout 防護:若超過 5 秒還沒回應,顯示錯誤
+      let _timeoutTriggered = false;
+      const _timeoutHandle = setTimeout(() => {
+        _timeoutTriggered = true;
+        if(_displayEl) {
+          _displayEl.textContent = '⚠ 載入逾時';
+          _displayEl.style.color = '#ff8866';
+          _displayEl.style.fontSize = '18px';
+        }
+      }, 5000);
       try{
         const code = await window._fbEnsureInviteCode(window._gUserId);
+        clearTimeout(_timeoutHandle);
+        if(_timeoutTriggered) return;  // 逾時已處理,不再覆蓋
         if(code){
           window._myInviteCode = code;
-          const el = document.getElementById('_my-invite-code-display');
-          if(el) el.textContent = code;
+          if(_displayEl){
+            _displayEl.textContent = code;
+            _displayEl.style.color = '#ffe066';
+            _displayEl.style.fontSize = '24px';
+          }
+        } else {
+          if(_displayEl){
+            _displayEl.textContent = '⚠ 取得失敗';
+            _displayEl.style.color = '#ff8866';
+            _displayEl.style.fontSize = '18px';
+          }
         }
-      }catch(e){ console.warn('[InviteCode] 載入異常', e); }
+      }catch(e){
+        clearTimeout(_timeoutHandle);
+        console.warn('[InviteCode] 載入異常', e);
+        if(_displayEl && !_timeoutTriggered){
+          _displayEl.textContent = '⚠ ' + (e && e.code === 'permission-denied' ? '權限不足' : '載入失敗');
+          _displayEl.style.color = '#ff8866';
+          _displayEl.style.fontSize = '18px';
+        }
+      }
     })();
   }
 
@@ -43913,6 +43989,11 @@ function _advMiniQuizSubmit(letter, isCorrect) {
 function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
+  // ★ v1.0.20260424.1260 — 確保 row2(對手卡片區)可見(上次小怪戰結束可能殘留 hidden)
+  try{
+    const _row2 = document.getElementById('row2');
+    if(_row2) _row2.style.visibility = '';
+  }catch(_){}
   // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
   try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
   // ★ v1.0.20260424.1170 — 進入小怪戰時顯示回溯/教學按鈕(戰鬥中可用)
@@ -44250,6 +44331,15 @@ function advFinishMiniBattle(win) {
   }
   // ★ 先快照小怪陣容（用於掉落計算），再還原 BOSS 陣容
   const _miniMobSnapshot = (win && G && G.p2) ? G.p2.slice() : [];
+  // ★ v1.0.20260424.1260 — 修復視覺 BUG:小怪戰用 AOE 全滅時,
+  //   G.p2 立即還原成 BOSS 陣容,但戰鬥畫面的卡片(row2)仍存在,
+  //   結算視窗 75% 透明背景會透出「滿血 BOSS 卡片」造成玩家困惑
+  //   解法:在還原 G.p2 之前,先把戰鬥畫面的對手卡片清空(row2 設 visibility:hidden)
+  //   這樣結算視窗顯示時看到的是空白,而非 BOSS 卡片
+  try{
+    const _row2 = document.getElementById('row2');
+    if(_row2) _row2.style.visibility = 'hidden';
+  }catch(_visE){ console.warn('[hide row2]', _visE); }
   // ★ 立即還原 BOSS 陣容（讓 checkWin 看到活著的 Boss，不誤判勝利）
   if(_advBossTeamSaved && typeof G !== 'undefined' && G){
     G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));
@@ -44769,6 +44859,11 @@ function advMiniResultConfirm(){
   if(_miniResultEl){ _miniResultEl.classList.remove('show'); _miniResultEl.style.display = 'none'; }
   // ★★ 解除結算守門旗標（此後 startTurn / aiAct 可正常運作）
   window._advMiniResultShowing = false;
+  // ★ v1.0.20260424.1260 — 恢復 row2 可見性(advFinishMiniBattle 為了防視覺殘留設 hidden)
+  try{
+    const _row2 = document.getElementById('row2');
+    if(_row2) _row2.style.visibility = '';
+  }catch(_){}
 
   const p = window._advMiniResultPending || {};
   window._advMiniResultPending = null;
@@ -47198,6 +47293,135 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1280', brief:[
+    '🎯 真正修復「選主題/難度重複跳出」的根因(v1270 修不完整)',
+  ], items:[
+    '【現況】',
+    '  目前木柵關沒有「選年級」選項,只有兩個獨立場景:',
+    '  - 第 1 場景:選主題(單步驟 subject)',
+    '  - 第 2 場景:選難度(單步驟 difficulty)',
+    '  v1270 防護的是「多步驟 grade_subject 流程」,不適用於目前的單步驟場景',
+    '【真正的 BUG 場景】',
+    '  玩家點選主題按鈕後:',
+    '    1. advConfirmChoice 開頭 _advSceneChoiceDone = true',
+    '    2. line 31434: panel.innerHTML = "" (清空 panel)',
+    '    3. setTimeout 1200 ms 後才 advStartMiniBattle(進下一場景)',
+    '  在這 1.2 秒空窗期:',
+    '    - panel 是空的 → v1270 的「panel 有 .adv-choice-btn」防護無效',
+    '    - 若任何路徑呼叫 advShowChoicePanel(同一 sceneIdx)→ 重新顯示主題問題',
+    '    - 玩家選完 → 又 advConfirmChoice → 進入下一場景',
+    '    - 但下一場景對白讀完 → advShowChoicePanel → 又彈出難度問題',
+    '    → 玩家感覺像是「主題/難度都重複跳了一次」',
+    '【修復:檢查 _advSceneChoiceDone flag】',
+    '  advShowChoicePanel 開頭新增:',
+    '    if(_advSceneChoiceDone) return;  // 本場景已選過,忽略重複呼叫',
+    '  - 該 flag 在 advConfirmChoice 開頭設 true',
+    '  - 在 advLoadScene(下一場景開始)會被重置為 false',
+    '  - 完美擋住 1.2 秒空窗期的重複觸發',
+    '【完整保護層級(共 7 層)】',
+    '  1) advShowChoicePanel _advSceneChoiceDone 檢查(v1280 新加,真正治本)',
+    '  2) advShowChoicePanel 多步驟進行中防護(v1270)',
+    '  3) advShowChoicePanel panel 已有按鈕防護(v1270)',
+    '  4) advNextDialog 多步驟進行中防護(v1270)',
+    '  5) advShowChoicePanel 內 _choiceLocked debounce(v1010)',
+    '  6) advConfirmChoice 防重入(v1010)',
+    '  7) advConfirmChoice_multi 防重入(v1010)',
+    '【實作位置】',
+    '  - advShowChoicePanel _advSceneChoiceDone 檢查: line ~31068',
+  ] },
+  { ver:'v1.0.20260424.1270', brief:[
+    '🎯 真正修復「冒險選主題/年級重複跳出」的根因(v1010 修不完整)',
+  ], items:[
+    '【症狀】',
+    '  選了第一題(主題)和第二題(年級)後,有時會再彈出相同問題要玩家重選',
+    '【為何 v1010 沒修好】',
+    '  v1010 只防護「按鈕連點 → advConfirmChoice 被呼叫兩次」,',
+    '  但這次的真正根因是「advShowChoicePanel 被重複呼叫導致 _advMultiStepState 被重置」',
+    '【真正根因】',
+    '  多步驟流程(grade_subject)進行中,_advRenderMultiStep 重畫每一步時:',
+    '    line 31332:panel.innerHTML = "" (清空) → 然後 panel.appendChild(box) (加回去)',
+    '    在這一瞬間,panel 是空的!',
+    '  如果玩家剛好在這時候按到對白框觸發 advNextDialog:',
+    '    advNextDialog 的 line 30921 檢查 _cpEl.children.length > 0 → 此刻是 0 → 不擋',
+    '    → 對白推進 → 對白讀完 → line 30954 再呼叫 advShowChoicePanel',
+    '    → line 31085 _advMultiStepState = { stepIdx:0, ... } ← 重置!',
+    '    → 重新從第 1 題開始',
+    '【修復:雙層防護】',
+    '  ① advShowChoicePanel 加重複呼叫防護:',
+    '     - 若 _advMultiStepState 已存在且 stepIdx > 0 → 忽略重複呼叫',
+    '     - 若選擇面板已有 .adv-choice-btn → 忽略重複呼叫',
+    '  ② advNextDialog 加多步驟流程防護:',
+    '     - 若 _advMultiStepState 存在(代表流程進行中)→ 忽略對白推進',
+    '【完整保護層級(共 6 層)】',
+    '  1) advShowChoicePanel 重複呼叫防護(v1270 新加)',
+    '  2) advNextDialog 多步驟進行中防護(v1270 新加)',
+    '  3) advShowChoicePanel 內 _choiceLocked debounce(v1010)',
+    '  4) _advRenderMultiStep makeBtn _stepLocked debounce(v1010)',
+    '  5) advConfirmChoice 防重入(v1010)',
+    '  6) advConfirmChoice_multi 防重入(v1010)',
+    '【實作位置】',
+    '  - advShowChoicePanel 重複呼叫防護: line ~31058',
+    '  - advNextDialog 多步驟流程防護: line ~30922',
+  ] },
+  { ver:'v1.0.20260424.1260', brief:[
+    '🔍 修復小怪戰 AOE 全滅後左側出現「滿血 BOSS」視覺殘留',
+  ], items:[
+    '【症狀】',
+    '  小怪戰中用全體 AOE 一次滅掉所有小怪時,結算視窗顯示的瞬間,',
+    '  畫面左側第一隻小怪會被錯誤渲染成「滿血的該關 BOSS」,造成玩家困惑',
+    '  (但戰鬥流程本身正常,只是視覺殘留)',
+    '【根因】',
+    '  advFinishMiniBattle 內 line ~44288:',
+    '    G.p2 = JSON.parse(JSON.stringify(_advBossTeamSaved));  // 立即還原 BOSS',
+    '  - 為了讓 checkWin 不誤判勝利,小怪戰結束後 G.p2 立即還原成 BOSS 陣容',
+    '  - 但戰鬥畫面的卡片(row2)仍存在,任何 renderCard 觸發都會用 BOSS 資料畫',
+    '  - 結算視窗的背景是 rgba(0,0,0,0.75) 半透明,玩家透過背景看到底下的 BOSS 卡片',
+    '【修復】',
+    '  在還原 G.p2 之「前」就把 row2 設成 visibility:hidden,',
+    '  這樣即使有任何 renderCard 觸發,玩家也看不到 BOSS 卡片',
+    '  結算視窗顯示時,底下是空白畫面,清楚明確',
+    '【恢復時機】',
+    '  以下 3 處會把 row2 visibility 恢復:',
+    '  ① advMiniResultConfirm (玩家點繼續冒險按鈕時)',
+    '  ② advStartBattle (BOSS 戰開始時,雙重保險)',
+    '  ③ advStartMiniBattle (新一場小怪戰開始時,雙重保險)',
+    '【實作位置】',
+    '  - advFinishMiniBattle 隱藏 row2: line ~44290',
+    '  - advMiniResultConfirm 恢復: line ~44814',
+    '  - advStartBattle 恢復: line ~32200',
+    '  - advStartMiniBattle 恢復: line ~43955',
+  ] },
+  { ver:'v1.0.20260424.1250', brief:[
+    '🎫 修復邀請碼「載入中...」永遠卡住的問題',
+  ], items:[
+    '【症狀】',
+    '  打開好友面板時,「你的邀請碼」一直顯示「載入中...」不變',
+    '【根因】',
+    '  最可能的原因:Firestore 安全規則阻止寫入 inviteCodes 集合,',
+    '  _fbEnsureInviteCode 拋出 permission-denied 例外 → UI 沒處理失敗 → 永遠卡住',
+    '  v1241 之前的問題:失敗時 catch 後只 console.warn,UI 沒更新',
+    '【修復:三層改進】',
+    '  ① 改用「uid-based 確定性邀請碼」:',
+    '     從 Firebase uid 取前 8 碼大寫,直接用作邀請碼(不用隨機生成 + 防碰撞)',
+    '     每個玩家的 uid 都不同,前 8 碼碰撞機率極低',
+    '     即使 Firestore 寫入失敗,_uidCode 仍可顯示給玩家',
+    '  ② UI 失敗處理:_displayEl 在以下情況顯示具體訊息:',
+    '     - 5 秒逾時 → 「⚠ 載入逾時」',
+    '     - 函式回 null → 「⚠ 取得失敗」',
+    '     - permission-denied → 「⚠ 權限不足」',
+    '     - 其他錯誤 → 「⚠ 載入失敗」',
+    '  ③ 5 秒 timeout 防護:_fbEnsureInviteCode 卡太久也會強制顯示錯誤',
+    '【後續仍要做】',
+    '  Firestore 規則需要允許讀寫 inviteCodes 集合,範例:',
+    '    match /inviteCodes/{code} {',
+    '      allow read: if request.auth != null;',
+    '      allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid;',
+    '    }',
+    '  若沒設規則,玩家自己看得到邀請碼但其他人查不到 → 加好友失敗',
+    '【實作位置】',
+    '  - _fbEnsureInviteCode 改為 uid-based: line ~233',
+    '  - UI 失敗處理 + timeout: line ~42813',
+  ] },
   { ver:'v1.0.20260424.1241', brief:[
     '🐕 小力介紹文修改:從「愛狗人士」改為「校犬本人」設定',
   ], items:[
@@ -54317,7 +54541,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1241';
+  const CURRENT_VERSION = 'v1.0.20260424.1280';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -54334,7 +54558,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1241';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1280';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
