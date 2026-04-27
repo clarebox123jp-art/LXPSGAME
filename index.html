@@ -187,6 +187,8 @@
   // 以 Gmail 查詢玩家資料（代表英雄 + 名稱）
   // ★ v1.0.20260424.1100 — 強化錯誤處理:把查詢失敗從「靜默回 null」改為「拋出錯誤」,
   //   讓上層能區分「對方真的不存在」vs「Firestore 查詢失敗」(網路/權限/索引等)
+  // ★ v1.0.20260424.1150 — 因 Firestore 規則限制(玩家無 list 權限,where 查詢會 permission-denied),
+  //   email 查詢已改用「邀請碼」機制取代,但保留此函式做向後相容(萬一有規則放寬可用)
   window._fbFindByEmail = async function(email) {
     const _emailNorm = (email || '').toLowerCase().trim();
     if(!_emailNorm) {
@@ -204,11 +206,100 @@
       console.log('[_fbFindByEmail] 找到玩家:', _emailNorm, '→ uid:', d.id);
       return { uid: d.id, ...d.data() };
     } catch(e) {
-      // ★ 關鍵修改:不再靜默回 null,而是 console.error + throw,讓上層 catch 顯示真正原因
       console.error('[_fbFindByEmail] 查詢失敗:', _emailNorm, e);
-      // 把錯誤代碼包裝成可閱讀訊息
       const _eMsg = e && (e.code || e.message) ? (e.code || e.message) : '網路或權限錯誤';
       const _newErr = new Error('查詢玩家失敗: ' + _eMsg);
+      _newErr.code = e && e.code;
+      _newErr.original = e;
+      throw _newErr;
+    }
+  };
+
+  // ★ v1.0.20260424.1150 — 邀請碼系統(取代 email 查詢)
+  //   設計:每個玩家擁有 8 碼邀請碼,存在 inviteCodes/{code} → { uid:'xxx' }
+  //   加好友流程:輸入邀請碼 → getDoc(inviteCodes/{code}).uid → getDoc(players/{uid})
+  //   全程都是 getDoc,不會觸發 Firestore where 查詢的 permission-denied 問題
+
+  // 產生 8 碼邀請碼(大寫英數字,排除易混淆字元 0/O/1/I/L)
+  function _genInviteCode(){
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for(let i=0; i<8; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
+    return code;
+  }
+
+  // 確保自己有邀請碼:登入時呼叫,若 players/{uid}.inviteCode 不存在就生成並寫入
+  // 同時把 inviteCodes/{code} 寫入(uid:..)供反查
+  window._fbEnsureInviteCode = async function(uid){
+    if(!uid) return null;
+    try{
+      // 1. 從自己的 player doc 讀取 inviteCode
+      const myDoc = await getDoc(doc(_fbDb, 'players', uid));
+      let myCode = myDoc.exists() && myDoc.data().inviteCode ? myDoc.data().inviteCode : null;
+      if(myCode){
+        console.log('[InviteCode] 已有邀請碼:', myCode);
+        // 確保 inviteCodes 反查表也存在(以防舊資料只在 player doc)
+        try{
+          const codeDoc = await getDoc(doc(_fbDb, 'inviteCodes', myCode));
+          if(!codeDoc.exists()){
+            await setDoc(doc(_fbDb, 'inviteCodes', myCode), { uid: uid, ts: Date.now() });
+          }
+        }catch(_){}
+        return myCode;
+      }
+      // 2. 沒有邀請碼 → 生成新的(嘗試最多 5 次避免碰撞)
+      for(let attempt=0; attempt<5; attempt++){
+        const newCode = _genInviteCode();
+        // 檢查碰撞
+        const codeDoc = await getDoc(doc(_fbDb, 'inviteCodes', newCode));
+        if(codeDoc.exists()) continue;  // 撞碼,重試
+        // 寫入 inviteCodes 反查表
+        await setDoc(doc(_fbDb, 'inviteCodes', newCode), { uid: uid, ts: Date.now() });
+        // 寫入自己的 player doc(merge,不影響其他欄位)
+        await setDoc(doc(_fbDb, 'players', uid), { inviteCode: newCode }, { merge: true });
+        console.log('[InviteCode] 已生成新邀請碼:', newCode);
+        return newCode;
+      }
+      console.warn('[InviteCode] 連續 5 次碰撞,放棄生成');
+      return null;
+    }catch(e){
+      console.error('[InviteCode] 生成失敗', e);
+      return null;
+    }
+  };
+
+  // 用邀請碼查找玩家(取代 _fbFindByEmail)
+  window._fbFindByInviteCode = async function(code){
+    const _codeNorm = (code || '').toUpperCase().trim();
+    if(!_codeNorm){
+      console.warn('[_fbFindByInviteCode] 邀請碼為空');
+      return null;
+    }
+    try{
+      // 1. 從反查表 inviteCodes/{code} 取得 uid
+      const codeDoc = await getDoc(doc(_fbDb, 'inviteCodes', _codeNorm));
+      if(!codeDoc.exists()){
+        console.log('[_fbFindByInviteCode] 找不到邀請碼:', _codeNorm);
+        return null;
+      }
+      const data = codeDoc.data();
+      const targetUid = data.uid;
+      if(!targetUid){
+        console.warn('[_fbFindByInviteCode] inviteCodes 文件缺 uid 欄位:', _codeNorm);
+        return null;
+      }
+      // 2. 用 uid 讀取玩家資料
+      const playerDoc = await getDoc(doc(_fbDb, 'players', targetUid));
+      if(!playerDoc.exists()){
+        console.warn('[_fbFindByInviteCode] 邀請碼對應的玩家不存在:', targetUid);
+        return null;
+      }
+      console.log('[_fbFindByInviteCode] 找到玩家:', _codeNorm, '→ uid:', targetUid);
+      return { uid: targetUid, ...playerDoc.data() };
+    }catch(e){
+      console.error('[_fbFindByInviteCode] 查詢失敗:', _codeNorm, e);
+      const _eMsg = e && (e.code || e.message) ? (e.code || e.message) : '網路錯誤';
+      const _newErr = new Error('查詢失敗: ' + _eMsg);
       _newErr.code = e && e.code;
       _newErr.original = e;
       throw _newErr;
@@ -581,6 +672,15 @@
       console.log('✅ 已登入:', user.displayName);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1500);
+      // ★ v1.0.20260424.1150 — 登入後確保有邀請碼(沒有則生成)
+      setTimeout(async ()=>{
+        try{
+          if(window._fbEnsureInviteCode){
+            const code = await window._fbEnsureInviteCode(user.uid);
+            if(code) window._myInviteCode = code;
+          }
+        }catch(e){ console.warn('[InviteCode] 生成異常', e); }
+      }, 800);
       // ★ 3. 心跳:每 5 秒(從 15 秒再縮短)確認 session 仍有效
       //   v1.0.20260424.1110 — 縮短到 5 秒(Firestore 寫入頻率上限是每文件每秒 1 次,
       //   5 秒間隔遠低於限制,且能讓 A 電腦更快發現被踢)
@@ -1930,6 +2030,18 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
     transform:scale(1.06);
   }
 }
+/* ★ v1.0.20260424.1190 — 養護專題 NEW 標籤呼吸式發光 */
+@keyframes newBadgePulse{
+  0%,100%{
+    transform:scale(1);
+    box-shadow:0 0 8px rgba(255,100,140,0.7);
+  }
+  50%{
+    transform:scale(1.15);
+    box-shadow:0 0 18px rgba(255,140,180,1),0 0 30px rgba(255,100,140,0.7);
+  }
+}
+._new-badge-pulse{ animation:newBadgePulse 1.2s ease-in-out infinite; }
 /* SHIELD FLASH VFX */
 @keyframes shieldPop{
   0%{opacity:0;transform:translate(-50%,-50%) scale(0.5);filter:blur(4px)}
@@ -5317,6 +5429,14 @@ body.art-premium #summon-overlay {
       <div id="adv-quiz-header">
         <span id="adv-quiz-label">🐱 九尾空貓怪出題！</span>
         <span id="adv-quiz-timer">60</span>
+      </div>
+      <!-- ★ v1.0.20260424.1180 — 專屬題庫進度條(只在「領養與照顧狗狗」/「照顧與陪伴幼兒」題庫顯示) -->
+      <div id="adv-quiz-special-progress" style="display:none;margin:8px 0 4px;padding:10px 14px;
+        background:linear-gradient(90deg,rgba(60,140,90,0.25),rgba(40,80,60,0.4));
+        border:2px solid rgba(120,220,150,0.6);border-radius:10px;
+        font-size:18px;font-weight:700;color:#aaffcc;text-align:center;letter-spacing:1px;
+        box-shadow:0 0 12px rgba(80,220,140,0.3);">
+        <span id="adv-quiz-special-progress-text">進度載入中...</span>
       </div>
       <div id="adv-quiz-question"></div>
       <div id="adv-quiz-options"></div>
@@ -9144,7 +9264,9 @@ function clearGoodBuffs(h){
   if(hasBuff(h,'inuInvisible')) { h.buffs=h.buffs.filter(b=>b.type==='inuInvisible'||b.type==='immune'||['deathimmune','immovable','rebirth','misfortune','alchemist','counter'].includes(b.type)); return; }
   // ★ v1.0.20260423.2300 — 爆發技能附加的有利狀態不可被消除(神偷/軍師爆發自己呼叫時會用 {ignoreBurstGuard:true} 旁路)
   //   本函式在非「神偷/軍師爆發清除」的路徑都應保留帶 _fromBurst 的 buff
-  const PROTECTED_BUFFS=['deathimmune','immovable','rebirth','misfortune','alchemist','counter'];
+  // ★ v1.0.20260424.1170 — divineBlessing 加入 PROTECTED:因為它跟 hp 上限綁定,
+  //   若被消除而沒還原 _baseHp,會造成 hp 上限殘留(玩家以為「神之賜福沒效果」)
+  const PROTECTED_BUFFS=['deathimmune','immovable','rebirth','misfortune','alchemist','counter','divineBlessing'];
   h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type) || b._fromBurst);
   // 還原 strengthened 的能力值
   const str=h.buffs.find(b=>b.type==='strengthened');
@@ -13074,6 +13196,12 @@ function _showBurstCinematic(h, bd){
 // ── 爆發GIF特效資料庫 ──
 // URL為 GitHub raw（blob→raw 轉換），音效為 [sfxId, volume] 陣列
 const BURST_GIF_DB = {
+  // ★ v1.0.20260424.1160 — 小力爆發技「夾尾皺眉」動畫:彩色星星圍繞,可愛賣萌風格
+  '夾尾皺眉': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif',
+    sfx:[['sfx-gentle',1.0],['sfx-fantasy',0.85],['sfx-passive',0.7]],
+    tint:'rgba(255,200,255,0.18)'
+  },
   // ★ v1.0.20260424.0930 — 小劇團員爆發技「謝幕掌聲」動畫
   // ★ v1.0.20260424.0940 — 加入專屬「掌聲」音效
   '謝幕掌聲': {
@@ -15783,13 +15911,16 @@ function doDmg(target, rawDmg, opts={}){
     }
     // 清除所有狀態與增益
     target.status=[];
-    target.buffs=[];
-    if(hasBuff(target,'divineBlessing')){
+    // ★ v1.0.20260424.1170 — 修正順序 BUG:必須先檢查 divineBlessing 還原 hp,再清空 buffs
+    //   舊版邏輯先 buffs=[] 再 hasBuff(divineBlessing) → 永遠 false → hp 上限永遠不還原,
+    //   復活後再施放神之賜福會用「已被擴張的 hp」當 _baseHp,導致 hp 越加越多或無效
+    if(target.buffs.some(b => b.type === 'divineBlessing')){
       if(target._baseHp){ target.hp=target._baseHp; delete target._baseHp; }
       // 找不到 _baseHp 記錄時的 fallback：假設 +20% 反推原本 HP
       else target.hp=Math.max(1, Math.round(target.hp / 1.20));
       log(`[${target.name}] 神之賜福消失，HP上限復原至 ${target.hp}。`);
     }
+    target.buffs=[];
     playSfx('sfx-ko',0.85);
     const _dEl=document.getElementById('card-'+target.side+'-'+target.pos);
     if(_dEl){
@@ -19861,9 +19992,12 @@ function execSkill(a, sk, cost, stype){
       const _lvND = (_slotND && a._skLv) ? (a._skLv[_slotND]||0) : 0;
       if(hasBuff(t,'divineBlessing')){
         // Already blessed: only refill HP, no stacking
+        const _beforeHp = t.curHp;
         t.curHp=t.hp;
+        const _healed = t.hp - _beforeHp;
         renderCard(t); showPopup(t,'神恢復！','heal');
         playSkillFX('神之賜福',a,[t]);
+        log(`✨ [${a.name}] 神之賜福(已祝福)→ [${t.name}] 補滿 +${_healed} HP (${t.curHp}/${t.hp})`);
         // 滿級：再次附加免疫1次倒下
         if(_lvND>=9){
           addBuff(t,'deathimmune',999);
@@ -19871,10 +20005,15 @@ function execSkill(a, sk, cost, stype){
         }
         endAction(a,cost); return;
       }
-      t._baseHp=t._baseHp||t.hp;
+      // ★ v1.0.20260424.1170 — 確保 _baseHp 始終是「未提升前」的 hp
+      //   若 _baseHp 已存在但跟 t.hp 不一致(代表前次祝福殘留),用「現在的 hp 跟 baseHp 較小者」
+      //   保險寫法,不會讓 hp 上限無限擴張
+      if(!t._baseHp) t._baseHp = t.hp;
+      const _hpBefore = t.hp;
       const _blessBonus=Math.max(1, Math.round(t._baseHp * 0.20)); // v1.0.20260421.3000r HP 上限 +20%
       t.hp+=_blessBonus; t.curHp=t.hp;
       addBuff(t,'divineBlessing',999);
+      log(`✨ [${a.name}] 神之賜福 → [${t.name}] HP上限 ${_hpBefore} → ${t.hp} (+${_blessBonus}, 補滿 ${t.curHp})`);
       // 滿級：額外附加免疫1次倒下
       if(_lvND>=9){
         addBuff(t,'deathimmune',999);
@@ -29089,16 +29228,20 @@ function advGetQuizPool(grade, subject, difficulty) {
   //   不再依年級/難度過濾,全部依「科目」抽出後 Fisher-Yates 洗牌出題
   //   (跟照顧與陪伴幼兒/領養與照顧狗狗的規則一致)
   // ★ 照顧與陪伴幼兒 / 領養與照顧狗狗 專屬出題邏輯(持久化記錄已答對題目)
+  // ★ v1.0.20260424.1200 — 連續答對機制改造:
+  //   - 用 _used 集合記錄「本輪 streak 中已用過的題目」(避免重複問)
+  //   - 答錯時 _resetUnlockHeroProgressOnWrong 會清空 _used 重新洗牌
+  //   - 解鎖後也會清空 _used 重置
   if (subject === '照顧與陪伴幼兒' || subject === '領養與照顧狗狗') {
     const _full = (subject === '照顧與陪伴幼兒') ? ADV_QUIZ_CARE_INFANT : ADV_QUIZ_DOG_CARE;
-    const _key = (subject === '照顧與陪伴幼兒') ? 'careInfantPerfect' : 'dogCarePerfect';
-    let _correctSet = {};
+    const _usedKey = (subject === '照顧與陪伴幼兒') ? 'careInfantUsed' : 'dogCareUsed';
+    let _usedSet = {};
     try {
-      _correctSet = (_medalStats && _medalStats[_key]) || {};
+      _usedSet = (_medalStats && _medalStats[_usedKey]) || {};
     } catch(_e) {}
-    // 過濾出尚未答對的題目
-    const _remaining = _full.filter(q => !_correctSet[q.id]);
-    // 若全部答對 → 給全 20 題(理論上會在外部觸發解鎖,然後清除進度從頭來)
+    // 過濾出本輪 streak 尚未問過的題目
+    const _remaining = _full.filter(q => !_usedSet[q.id]);
+    // 若全部問過(理論上達 20 連對就解鎖了,這裡是 fallback)→ 給全 20 題
     const _pool = _remaining.length > 0 ? _remaining : _full.slice();
     return [..._pool].sort(() => Math.random() - 0.5);
   }
@@ -30291,6 +30434,15 @@ function _advRecordQuizSession(g, s, d){
 function advStartCutscene(stage) {
   // ★ v1.0.20260423.3400 — 防禦性清除:進入過場前強制清掉戰鬥背景
   try{ if(typeof _clearBattleBg === 'function') _clearBattleBg('advStartCutscene entry'); }catch(_){}
+  // ★ v1.0.20260424.1170 — 進入冒險過場時隱藏戰鬥用按鈕(回溯/教學/卡死自救)
+  try{
+    const _rbBtn = document.getElementById('adv-rollback-btn');
+    if(_rbBtn) _rbBtn.style.display = 'none';
+    const _tutBtn = document.getElementById('adv-tut-btn');
+    if(_tutBtn) _tutBtn.style.display = 'none';
+    const _drBtn = document.getElementById('adv-deadlock-rescue-btn');
+    if(_drBtn) _drBtn.style.display = 'none';
+  }catch(_){}
   // ★ v1.0.20260424.0910 — 新冒險開始時重置「戰鬥結算已顯示」flag,
   //   讓 _saveBattleRoundSnapshot 能正常存新一場戰鬥的快照
   try{ window._advBattleResultShown = false; }catch(_){}
@@ -30523,6 +30675,16 @@ window._getAdvSceneArray = function(stage){
 function advLoadScene(stage, idx) {
   // ★ 重置場景選題旗標（新場景可以再次顯示選擇題）
   _advSceneChoiceDone = false;
+  // ★ v1.0.20260424.1170 — 進入劇情對白場景時隱藏回溯/教學/卡死自救按鈕
+  //   這些按鈕只在戰鬥中才有意義(劇情對話頁面不該顯示)
+  try{
+    const _rbBtn = document.getElementById('adv-rollback-btn');
+    if(_rbBtn) _rbBtn.style.display = 'none';
+    const _tutBtn = document.getElementById('adv-tut-btn');
+    if(_tutBtn) _tutBtn.style.display = 'none';
+    const _drBtn = document.getElementById('adv-deadlock-rescue-btn');
+    if(_drBtn) _drBtn.style.display = 'none';
+  }catch(_){}
   // ★ v1.0.20260424.0920 — 強化重置:確保場景切換時所有可能殘留的 flag 都清掉,
   //   避免日本關 mini 戰結束後場景對白卡死(因 _advMiniResultShowing/_advMiniBattleActive 殘留為 true,
   //   或 _gamePaused 沒解除,或 _pendingTimers 還有殘留)
@@ -31021,7 +31183,7 @@ function _advGroupSubjects(choices){
       labelColor:'#4dff6a', glow:'rgba(77,255,106,0.55)',
       borderColor:'rgba(77,255,106,0.5)',   bgColor:'rgba(77,255,106,0.07)',   items:[] },
     // ★ v1.0.20260424.0670 — 養護專題群組(解鎖活動英雄)
-    { key:'care',   label:'💝 養護專題',
+    { key:'care',   label:'💝 養護專題 🎁 解鎖新角色',
       labelColor:'#ff99cc', glow:'rgba(255,153,204,0.55)',
       borderColor:'rgba(255,153,204,0.5)',  bgColor:'rgba(255,153,204,0.07)',  items:[] },
   ];
@@ -31062,7 +31224,51 @@ function _advRenderMultiStep(panel, box, stage, sceneIdx){
   const makeBtn = (c, extraStyle) => {
     const btn = document.createElement('button');
     btn.className = 'adv-choice-btn';
-    btn.textContent = c;
+    // ★ v1.0.20260424.1180 — 養護專題按鈕顯示「已答對 X/20」進度標記
+    // ★ v1.0.20260424.1190 — 強化版:加 NEW 標籤 + 解鎖角色提示 + 醒目動畫
+    // ★ v1.0.20260424.1200 — 改顯示「連續答對 X/20」(streak),答錯歸零
+    if(c === '領養與照顧狗狗' || c === '照顧與陪伴幼兒'){
+      try{
+        const _isDog2 = c === '領養與照顧狗狗';
+        const _streakKey = _isDog2 ? 'dogCareStreak' : 'careInfantStreak';
+        const _full2 = _isDog2
+          ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : [])
+          : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
+        const _streak = (typeof _medalStats !== 'undefined' && _medalStats[_streakKey]) || 0;
+        const _total2 = _full2.length || 20;
+        const _heroIcon = _isDog2 ? '🐕' : '👶';
+        const _heroName = _isDog2 ? '小力' : '幼兒園小孩';
+        const _isUnlocked = _isDog2 ? (typeof _medals !== 'undefined' && _medals['unlock_xiaoli']) : (typeof _medals !== 'undefined' && _medals['unlock_kid']);
+        // 強化版按鈕(改 innerHTML 加更多元素)
+        const _statusLine = _isUnlocked
+          ? `<span style="color:#88ddff;font-size:14px;">✅ 已解鎖,可繼續挑戰</span>`
+          : `<span style="color:#ffcc66;font-size:14px;font-weight:700;">⭐ 連續答對 ${_total2} 題解鎖【${_heroName}】</span>`;
+        // streak badge 顏色:有 streak 用金色,沒 streak 用綠色
+        const _badgeColor = _streak > 0 ? '255,200,80' : '120,255,170';
+        const _badgeBg = _streak > 0 ? '255,170,40,0.35' : '80,220,140,0.3';
+        const _badgeText = _streak > 0 ? '#ffe080' : '#aaffcc';
+        btn.innerHTML =
+          '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.3;">'
+          // 第一行:NEW 標籤 + 主題名 + 角色 emoji
+          + '<div style="display:flex;align-items:center;gap:8px;justify-content:center;">'
+          +   (!_isUnlocked
+              ? '<span class="_new-badge-pulse" style="display:inline-block;padding:1px 7px;font-size:11px;font-weight:900;background:linear-gradient(45deg,#ff4488,#ff8844);color:#fff;border-radius:4px;letter-spacing:1px;box-shadow:0 0 8px rgba(255,100,140,0.7);">NEW</span>'
+              : '')
+          +   '<span style="font-size:1em;">' + c + '</span>'
+          +   '<span style="font-size:1.2em;">' + _heroIcon + '</span>'
+          + '</div>'
+          // 第二行:連擊進度 + 解鎖提示
+          + '<div style="display:flex;align-items:center;gap:6px;justify-content:center;font-weight:600;">'
+          +   '<span style="display:inline-block;padding:1px 8px;font-size:13px;font-weight:700;background:rgba(' + _badgeBg + ');border:1px solid rgba(' + _badgeColor + ',0.7);color:' + _badgeText + ';border-radius:5px;letter-spacing:1px;">🔥連擊 ' + _streak + '/' + _total2 + '</span>'
+          +   _statusLine
+          + '</div>'
+          + '</div>';
+      }catch(_){
+        btn.textContent = c;
+      }
+    } else {
+      btn.textContent = c;
+    }
     if(extraStyle) btn.style.cssText = extraStyle;
     btn.onclick = () => {
       // ★ 防止連點/race condition 造成選擇彈兩次
@@ -31991,6 +32197,14 @@ function advStartBattle(){
   _advMiniBattleActive = false;
   // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
   try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
+  // ★ v1.0.20260424.1170 — 進入 BOSS 戰時顯示回溯/教學按鈕(玩家戰鬥中可用)
+  try{
+    const _rbBtn = document.getElementById('adv-rollback-btn');
+    if(_rbBtn) _rbBtn.style.display = '';
+    const _tutBtn = document.getElementById('adv-tut-btn');
+    if(_tutBtn) _tutBtn.style.display = '';
+    // 卡死自救按鈕仍隱藏,等真的偵測到卡死才亮
+  }catch(_){}
   // ★ v1.0.20260422.0104/0105 — 強制清除所有可能殘留的過場元素，避免「選完難度卡在場景」
   //   遊戲 overlay z-index 620 會蓋住戰場（戰場 z-index 0），所以若沒清乾淨，玩家看到的還是上一場景背景。
   //   修正：每次進入 BOSS 戰一律強制關閉這些過場 UI + visibility:hidden 雙保險。
@@ -32818,6 +33032,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     _advStats.currentStreak = 0;
     // ★ 獎章系統：答錯需通知以重置連續答對連擊（_hasExtraChance 在上方已 return，不會走到這裡）
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
+    // ★ v1.0.20260424.1200 — 養護專題答錯重置 streak (BOSS 戰路徑)
+    try{ _resetUnlockHeroProgressOnWrong(_advCurrentQuestion); }catch(e){}
     try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
     // ★ 答錯專用音效
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.63;_wsfx.play().catch(()=>{});} }catch(e){}
@@ -36904,8 +37120,8 @@ function _clearDeadlockWatchdog(){
 function _showDeadlockRescueButton(){
   const btn = document.getElementById('adv-deadlock-rescue-btn');
   if(btn) btn.style.display = 'block';
-  // 順便顯示 toast 提醒玩家
-  try{ _showInGameToast('⚠️ 偵測到戰鬥可能卡死,請點左側「🚨卡死自救」按鈕脫離', '#ff6644', 5000); }catch(_){}
+  // ★ v1.0.20260424.1210 — 修正提示訊息,口吻更柔和讓玩家自行判斷
+  try{ _showInGameToast('⚠️ 系統偵測到戰鬥停滯中,小英雄是有行動沒有完成還是遇到BUG卡死呢? 如果是遇到BUG卡死,請按左下角的卡死自救唷!', '#ff6644', 7000); }catch(_){}
 }
 
 function _hideDeadlockRescueButton(){
@@ -36990,39 +37206,43 @@ function _deadlockRescueExitBattle(){
     () => {
       try{
         log('🚪 [卡死自救] 玩家選擇脫離戰鬥');
-        // 1) 強制清除卡死狀態 + 戰鬥旗標
-        _clearDeadlockWatchdog();
+        // ★ v1.0.20260424.1220 — 改用遊戲既有的正規流程,避免漏清狀態造成黑屏
+        // 1) 強制清除卡死狀態 + 暫停旗標
+        try{ _clearDeadlockWatchdog(); }catch(_){}
         try{ window._gamePaused = false; }catch(_){}
         try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
         try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
         try{ if(typeof _pendingTimers !== 'undefined') _pendingTimers.length = 0; }catch(_){}
+        try{ if(typeof clearTurnTimer === 'function') clearTurnTimer(); }catch(_){}
         // 2) 清除戰鬥快照(避免下次進入又顯示「未完成戰鬥」)
         try{ localStorage.removeItem('adv_battle_snap'); }catch(_){}
         try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
         try{ window._advBattleResultShown = true; }catch(_){}
-        // 3) 重置冒險戰鬥狀態
-        try{
-          _adventureMode = false;
-          _advMiniBattleActive = false;
-          window._advMiniResultShowing = false;
-          if(typeof G !== 'undefined' && G){
-            G.p1 = []; G.p2 = [];
-            G.activeChar = null;
-            G.pendingTarget = null;
-          }
-        }catch(_){}
-        // 4) 立即雲端存檔(保留現有的知識幣與背包)
+        // 3) 立即雲端存檔(保留現有的知識幣與背包)
         try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(()=>{}); }catch(_){}
-        // 5) 隱藏戰鬥畫面 + 開啟冒險選關頁
+        // 4) 呼叫遊戲既有的「正規退出冒險模式」函式
+        //    它會處理:_adventureMode/_advMiniBattleActive/各種 overlay/BGM/背景等
+        try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(eExit){
+          console.error('[卡死自救] exitAdventureMode 失敗', eExit);
+        }
+        // 5) 隱藏戰鬥畫面
         try{
           const gc = document.getElementById('gc');
-          if(gc){ gc.style.display = 'none'; gc.classList.remove('adv-battle'); }
-          const advOv = document.getElementById('adventure-overlay');
-          if(advOv){ advOv.style.display = 'flex'; }
-          // 隱藏對手回合提示
+          if(gc){ gc.style.display = 'none'; gc.classList.remove('adv-battle'); gc.style.filter=''; }
           const _enemyN = document.getElementById('enemy-turn-notice');
           if(_enemyN) _enemyN.style.display = 'none';
-        }catch(eUI){ console.error('[卡死自救] UI 切換失敗', eUI); }
+          const _itemP = document.getElementById('item-panel');
+          if(_itemP) _itemP.style.display = 'none';
+          // 隱藏戰鬥中的回溯/教學/卡死自救按鈕
+          ['adv-rollback-btn','adv-tut-btn','adv-deadlock-rescue-btn'].forEach(id => {
+            const _b = document.getElementById(id);
+            if(_b) _b.style.display = 'none';
+          });
+        }catch(eUI){ console.error('[卡死自救] UI 隱藏失敗', eUI); }
+        // 6) 開啟冒險選關頁(用遊戲正規 API,會處理 BGM、UI 重置)
+        try{
+          if(typeof openAdventureOverlay === 'function') openAdventureOverlay();
+        }catch(eOpen){ console.error('[卡死自救] openAdventureOverlay 失敗', eOpen); }
         _showInGameToast('✅ 已脫離戰鬥,掉落物已保留', '#44ff88', 3500);
       }catch(eOut){
         console.error('[卡死自救脫離] 異常', eOut);
@@ -42481,13 +42701,21 @@ function _renderFriendPanel() {
     '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);border:2.5px solid rgba(255,130,200,0.6);border-radius:24px;'
     + 'padding:' + _fpPad + ';max-width:' + _fpW + ';width:100%;margin:auto;">'
     + '<div style="font-size:' + _fpFs + ';font-weight:900;color:#ff88cc;margin-bottom:4px;text-align:center;">🤝 好友英雄</div>'
-    + '<div style="font-size:' + _fpSub + ';color:#aaa;margin-bottom:20px;text-align:center;">邀請好友英雄加入你的冒險！</div>'
-    // 新增好友
+    + '<div style="font-size:' + _fpSub + ';color:#aaa;margin-bottom:16px;text-align:center;">邀請好友英雄加入你的冒險！</div>'
+    // ★ v1.0.20260424.1150 — 顯示自己的邀請碼(分享給朋友讓他加你)
+    + '<div id="_my-invite-code-box" style="background:rgba(40,20,60,0.5);border:1.5px dashed rgba(180,120,255,0.5);border-radius:10px;padding:10px 14px;margin-bottom:16px;text-align:center;">'
+    + '<div style="font-size:13px;color:#aa88cc;margin-bottom:4px;">你的邀請碼(分享給朋友)</div>'
+    + '<div id="_my-invite-code-display" style="font-size:24px;font-weight:900;color:#ffe066;letter-spacing:4px;font-family:monospace;cursor:pointer;user-select:all;" '
+    + 'onclick="_copyMyInviteCode()" title="點擊複製">' + (window._myInviteCode || '載入中...') + '</div>'
+    + '<div style="font-size:11px;color:#888;margin-top:4px;">點擊邀請碼可複製</div>'
+    + '</div>'
+    // 新增好友(改用邀請碼)
     + '<div style="display:flex;gap:8px;margin-bottom:18px;">'
-    + '<input id="_add-friend-input" type="text" inputmode="email" autocomplete="email" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="輸入好友的 Gmail 帳號" onkeydown="if(event.key===\'Enter\')_addFriendByEmail()" '
+    + '<input id="_add-friend-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" placeholder="輸入好友的 8 碼邀請碼" maxlength="8" onkeydown="if(event.key===\'Enter\')_addFriendByInviteCode()" '
+    + 'oninput="this.value=this.value.toUpperCase()" '
     + 'style="flex:1;padding:clamp(10px,1vw,14px) clamp(12px,1.2vw,18px);font-size:' + _fpInp + ';background:rgba(20,15,35,0.9);border:1.5px solid rgba(180,120,255,0.5);'
-    + 'color:#e0d0ff;border-radius:10px;font-family:inherit;outline:none;">'
-    + '<button onclick="_addFriendByEmail()" style="padding:clamp(10px,1vw,14px) clamp(16px,1.5vw,24px);font-size:' + _fpBtn + ';font-weight:700;'
+    + 'color:#e0d0ff;border-radius:10px;font-family:monospace;outline:none;letter-spacing:2px;text-align:center;">'
+    + '<button onclick="_addFriendByInviteCode()" style="padding:clamp(10px,1vw,14px) clamp(16px,1.5vw,24px);font-size:' + _fpBtn + ';font-weight:700;'
     + 'background:rgba(100,50,200,0.35);border:1.5px solid rgba(180,120,255,0.7);color:#cc88ff;'
     + 'border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;">+ 加好友</button>'
     + '</div>'
@@ -42497,6 +42725,20 @@ function _renderFriendPanel() {
     + '</div></div>';
 
   document.body.appendChild(panel);
+
+  // ★ v1.0.20260424.1150 — 若邀請碼還沒生成,延遲取得後更新顯示
+  if(!window._myInviteCode && window._fbEnsureInviteCode && window._gUserId){
+    (async () => {
+      try{
+        const code = await window._fbEnsureInviteCode(window._gUserId);
+        if(code){
+          window._myInviteCode = code;
+          const el = document.getElementById('_my-invite-code-display');
+          if(el) el.textContent = code;
+        }
+      }catch(e){ console.warn('[InviteCode] 載入異常', e); }
+    })();
+  }
 
   // 非同步讀取好友英雄資料（只更新個別列，不重建整個面板）
   _friendList.forEach(async (f, i) => {
@@ -42523,6 +42765,123 @@ function _renderFriendPanel() {
       }
     }
   });
+}
+
+// ★ v1.0.20260424.1150 — 複製自己的邀請碼到剪貼簿
+function _copyMyInviteCode(){
+  const code = window._myInviteCode;
+  if(!code){
+    bannerFX(null, '⚠ 邀請碼尚未生成,請稍候再試', '#ff9944', 1800);
+    return;
+  }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(()=>{
+        bannerFX(null, '✅ 邀請碼 ' + code + ' 已複製!', '#44ff88', 1800);
+      }).catch(()=>{
+        // fallback: 用 execCommand
+        _fallbackCopyText(code);
+      });
+    } else {
+      _fallbackCopyText(code);
+    }
+  }catch(e){
+    console.warn('[複製邀請碼]', e);
+    _fallbackCopyText(code);
+  }
+}
+
+function _fallbackCopyText(text){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    bannerFX(null, '✅ 邀請碼 ' + text + ' 已複製!', '#44ff88', 1800);
+  }catch(e){
+    bannerFX(null, '請手動複製邀請碼', '#ff9944', 2000);
+  }
+}
+
+// ★ v1.0.20260424.1150 — 用邀請碼加好友(取代 email 查詢)
+async function _addFriendByInviteCode(){
+  const input = document.getElementById('_add-friend-input');
+  if(!input){
+    bannerFX(null, '❌ 找不到輸入框,請重新開啟好友面板', '#ff6666', 2000);
+    return;
+  }
+  const code = input.value.trim().toUpperCase();
+  if(!code){
+    bannerFX(null, '請輸入好友的 8 碼邀請碼', '#ff9944', 1500);
+    input.focus();
+    return;
+  }
+  if(code.length !== 8){
+    bannerFX(null, '邀請碼必須是 8 個字元', '#ff6666', 1800);
+    return;
+  }
+  // 檢查格式(只允許英文+數字)
+  if(!/^[A-Z0-9]+$/.test(code)){
+    bannerFX(null, '邀請碼只能含英文字母和數字', '#ff6666', 1800);
+    return;
+  }
+  // 不能加自己
+  if(code === window._myInviteCode){
+    bannerFX(null, '不能加自己為好友!', '#ff6666', 1500);
+    return;
+  }
+  if(!window._gUserId){
+    bannerFX(null, '請先登入再加好友', '#ff6666', 2000);
+    return;
+  }
+  if(!window._fbFindByInviteCode){
+    bannerFX(null, '好友功能載入中,請稍後再試', '#ff9944', 2000);
+    return;
+  }
+  try{
+    bannerFX(null, '🔍 搜尋中...', '#88ccff', 2000);
+    let found = null;
+    try{
+      found = await window._fbFindByInviteCode(code);
+    } catch(qErr){
+      console.error('[查詢好友]', qErr);
+      const _msg = '查詢失敗:' + (qErr.code || qErr.message || '網路錯誤');
+      bannerFX(null, _msg, '#ff6666', 4000);
+      return;
+    }
+    if(!found){
+      bannerFX(null, '找不到邀請碼「' + code + '」\n請確認對方提供的邀請碼正確', '#ff6666', 4000);
+      return;
+    }
+    if(!found.uid){
+      bannerFX(null, '查詢結果異常,請回報', '#ff6666', 3000);
+      return;
+    }
+    // 已是好友
+    if(_friendList.some(f => f.uid === found.uid)){
+      bannerFX(null, '已是好友了!', '#ffcc44', 1500);
+      return;
+    }
+    const friendInfo = {
+      uid: found.uid,
+      email: found.email || '',  // email 雖不再用於查詢但仍存著做識別
+      name: found.displayName || found.email || ('好友 ' + code),
+      inviteCode: code
+    };
+    await window._fbAddFriend(window._gUserId, friendInfo);
+    _friendList.push(friendInfo);
+    bannerFX(null, '✅ 已加 ' + friendInfo.name + ' 為好友!', '#44ff88', 1800);
+    playSfx('sfx-confirm', 0.6);
+    input.value = '';
+    _renderFriendPanel();
+  }catch(e){
+    console.error('[加好友]', e);
+    bannerFX(null, '加好友失敗:' + (e.message || '未知錯誤'), '#ff6666', 3000);
+  }
 }
 
 async function _addFriendByEmail() {
@@ -43211,6 +43570,34 @@ function _advMiniQuizAsk(onDone) {
   const qLbl = document.getElementById('adv-quiz-label');
   if(qLbl) qLbl.textContent = '🐾 小怪出題！回答正確可獲得知識幣';
 
+  // ★ v1.0.20260424.1180 — 專屬題庫進度顯示
+  // ★ v1.0.20260424.1200 — 改用 streak (連續答對) 計數,答錯歸零
+  try{
+    const _spProg = document.getElementById('adv-quiz-special-progress');
+    const _spText = document.getElementById('adv-quiz-special-progress-text');
+    if(_spProg && _spText){
+      const _isDog = (typeof _advPlayerSubject !== 'undefined' && _advPlayerSubject === '領養與照顧狗狗');
+      const _isInfant = (typeof _advPlayerSubject !== 'undefined' && _advPlayerSubject === '照顧與陪伴幼兒');
+      if(_isDog || _isInfant){
+        const _streakKey = _isDog ? 'dogCareStreak' : 'careInfantStreak';
+        const _full = _isDog ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : []) : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
+        const _streak = (_medalStats && _medalStats[_streakKey]) || 0;
+        const _total = _full.length || 20;
+        const _remain = Math.max(0, _total - _streak);
+        const _icon = _isDog ? '🐕' : '👶';
+        const _heroLabel = _isDog ? '小力' : '幼兒園小孩';
+        if(_remain === 0){
+          _spText.innerHTML = `${_icon} 連續答對達成 ${_streak}/${_total} 題! → 解鎖【${_heroLabel}】`;
+        } else {
+          _spText.innerHTML = `${_icon} 🔥連擊 <span style="color:#ffe066;font-size:24px;">${_streak}</span>/${_total} 題,再連對 <span style="color:#ff99cc;font-size:24px;">${_remain}</span> 題解鎖【${_heroLabel}】 ⚠️ 答錯歸零`;
+        }
+        _spProg.style.display = 'block';
+      } else {
+        _spProg.style.display = 'none';
+      }
+    }
+  }catch(_progE){ console.warn('[quiz progress]', _progE); }
+
   // 設定題目文字
   const qEl = document.getElementById('adv-quiz-question');
   if(qEl) qEl.textContent = q.question;
@@ -43390,6 +43777,29 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
     try{ _trackUnlockHeroProgress(window._miniQuizCurrentQ); }catch(e){}
+    // ★ v1.0.20260424.1180 — 專屬題庫:答對後顯示進度浮動提示
+    // ★ v1.0.20260424.1200 — 改用 streak 計數
+    try{
+      const _curQ = window._miniQuizCurrentQ;
+      if(_curQ && (_curQ.subject === '領養與照顧狗狗' || _curQ.subject === '照顧與陪伴幼兒')){
+        const _isDog = _curQ.subject === '領養與照顧狗狗';
+        const _streakKey = _isDog ? 'dogCareStreak' : 'careInfantStreak';
+        const _full = _isDog ? (typeof ADV_QUIZ_DOG_CARE !== 'undefined' ? ADV_QUIZ_DOG_CARE : []) : (typeof ADV_QUIZ_CARE_INFANT !== 'undefined' ? ADV_QUIZ_CARE_INFANT : []);
+        // 注意:_trackUnlockHeroProgress 已先 +1 並可能歸零(達 20 時),所以這裡讀的是更新後的值
+        const _streak = (_medalStats && _medalStats[_streakKey]) || 0;
+        const _total = _full.length || 20;
+        const _icon = _isDog ? '🐕' : '👶';
+        const _heroLabel = _isDog ? '小力' : '幼兒園小孩';
+        setTimeout(() => {
+          // 若 streak 歸零代表剛達成 20 題解鎖(不顯示重複的提示,_trackUnlockHeroProgress 會顯示自己的解鎖訊息)
+          if(_streak === 0){
+            // 解鎖訊息已由 _trackUnlockHeroProgress 顯示,這裡不重覆
+          } else {
+            bannerFX(null, `🔥${_icon} 連擊 ${_streak}/${_total} 題! 再連對 ${_total - _streak} 題解鎖【${_heroLabel}】`, '#88ff99', 2200);
+          }
+        }, 800);
+      }
+    }catch(_progE){ console.warn('[progress toast]', _progE); }
     // ★ 答對音效：使用 boss 戰相同的 sfx-quiz-correct
     try{ beep(660,'sine',0.08,0.1); setTimeout(()=>beep(880,'sine',0.12,0.12),150); }catch(e){}
     try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.63;_csfx.play().catch(()=>{});} }catch(e){}
@@ -43428,6 +43838,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
   } else {
     // ★ 獎章系統：答錯需通知以重置連續答對連擊
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
+    // ★ v1.0.20260424.1200 — 養護專題答錯重置 streak
+    try{ _resetUnlockHeroProgressOnWrong(window._miniQuizCurrentQ); }catch(e){}
     // ★ 答錯音效：使用 boss 戰相同的 sfx-quiz-wrong
     try{ beep(200,'sawtooth',0.1,0.15); }catch(e){}
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.63;_wsfx.play().catch(()=>{});} }catch(e){}
@@ -43453,6 +43865,13 @@ function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleNextScene = nextSceneIdx;
   // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
   try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
+  // ★ v1.0.20260424.1170 — 進入小怪戰時顯示回溯/教學按鈕(戰鬥中可用)
+  try{
+    const _rbBtn = document.getElementById('adv-rollback-btn');
+    if(_rbBtn) _rbBtn.style.display = '';
+    const _tutBtn = document.getElementById('adv-tut-btn');
+    if(_tutBtn) _tutBtn.style.display = '';
+  }catch(_){}
   // ★ 小怪戰答題狀態初始化
   window._miniQuizDoneThisRound = false;  // 每回合重置（startTurn時觸發）
   window._miniQuizTotalCoins = 0;         // 本場小怪戰答題累積知識幣
@@ -43738,6 +44157,15 @@ function advStartMiniBattle(nextSceneIdx) {
 
 function advFinishMiniBattle(win) {
   _advMiniBattleActive = false;
+  // ★ v1.0.20260424.1170 — 戰鬥結束時隱藏回溯/教學/卡死自救按鈕(回到劇情對白頁時不該顯示)
+  try{
+    const _rbBtn = document.getElementById('adv-rollback-btn');
+    if(_rbBtn) _rbBtn.style.display = 'none';
+    const _tutBtn = document.getElementById('adv-tut-btn');
+    if(_tutBtn) _tutBtn.style.display = 'none';
+    const _drBtn = document.getElementById('adv-deadlock-rescue-btn');
+    if(_drBtn) _drBtn.style.display = 'none';
+  }catch(_){}
   // ★ v1.0.20260423.3700 — 小怪戰結束一律關閉所有殘留的互動視窗(獎勵/題目/被動技能/爆發選擇)
   try{ _closeAllBattleModals(); }catch(_){}
   // ★ 清除稀有怪戰的「禁用法寶」旗標，讓之後的 BOSS 戰可正常使用法寶
@@ -45308,8 +45736,13 @@ let _medalStats = {
   jpPetBattles: 0,
   jpTreasuresConsumed: false,  // 曾用過一次三神器弱化通關
   // ★ v1.0.20260424.0660 — 解鎖活動英雄成就追蹤(每個 id 答對一次就記錄)
-  careInfantPerfect: {},  // {9301:true, 9302:true, ...} 答對 20 題 → 解鎖幼兒園小孩
-  dogCarePerfect:    {},  // {9401:true, 9402:true, ...} 答對 20 題 → 解鎖小力
+  // ★ v1.0.20260424.1200 — 改為「連續答對」計數,舊欄位保留向後相容(資料載入後會自動轉換)
+  careInfantPerfect: {},  // [舊欄位] {9301:true,...} 已答對的題目 id → 已停用
+  dogCarePerfect:    {},  // [舊欄位] {9401:true,...} 已答對的題目 id → 已停用
+  careInfantStreak: 0,    // [新] 連續答對次數,需 20 才解鎖幼兒園小孩;答錯歸零
+  careInfantUsed:   {},   // [新] 本輪 streak 中已用過的題目 id (避免重複問)
+  dogCareStreak:    0,    // [新] 連續答對次數,需 20 才解鎖小力;答錯歸零
+  dogCareUsed:      {},   // [新] 本輪 streak 中已用過的題目 id
 };
 
 function _loadMedals(){
@@ -45359,47 +45792,81 @@ function _trackUnlockHeroProgress(q){
       if(!_list.includes(heroName)){
         if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(heroName);
       }
-      log(`🎉 [成就解鎖] 全題答對「${q.subject}」 → 獲得活動英雄【${heroName}】!`);
+      log(`🎉 [成就解鎖] 連續答對 20 題「${q.subject}」 → 獲得活動英雄【${heroName}】!`);
       try{ bannerFX(null, '🎉 解鎖新英雄:' + heroName + '!', '#ffe066', 2000); }catch(e){}
     }catch(e){ console.warn('解鎖英雄失敗', e); }
   };
+  // ★ v1.0.20260424.1200 — 改為「連續答對」計數機制
+  //   - 答對 → streak +1 + 記錄這題已用(避免同一輪重複問)
+  //   - 答錯(透過 _resetUnlockHeroProgressOnWrong)→ streak 歸零 + 清空已用題庫
+  //   - 連續達成 20 → 解鎖,然後 streak 歸零供下次重新挑戰
   // 照顧與陪伴幼兒 → 幼兒園小孩
   if(q.subject === '照顧與陪伴幼兒'){
-    _medalStats.careInfantPerfect = _medalStats.careInfantPerfect || {};
-    _medalStats.careInfantPerfect[q.id] = true;
+    _medalStats.careInfantStreak = (_medalStats.careInfantStreak || 0) + 1;
+    _medalStats.careInfantUsed = _medalStats.careInfantUsed || {};
+    _medalStats.careInfantUsed[q.id] = true;
     _saveMedals();
     const _total = (typeof ADV_QUIZ_CARE_INFANT !== 'undefined') ? ADV_QUIZ_CARE_INFANT.length : 20;
-    const _correct = Object.keys(_medalStats.careInfantPerfect).length;
-    if(_correct >= _total){
-      // ★ 達成 20 題全對:解鎖成就 + 解鎖英雄(只第一次)
+    const _streak = _medalStats.careInfantStreak;
+    if(_streak >= _total){
+      // ★ 達成 20 題連續答對:解鎖成就 + 解鎖英雄(只第一次)
       if(!_medals['unlock_kid']){
         _unlockMedal('unlock_kid');
         _heroUnlock('幼兒園小孩');
       }
-      // ★ v1.0.20260424.0680 — 重置進度,讓下次重玩時題庫重新洗牌可從頭再來
-      _medalStats.careInfantPerfect = {};
+      // ★ 解鎖後重置 streak 與題庫紀錄,讓玩家可重新挑戰
+      _medalStats.careInfantStreak = 0;
+      _medalStats.careInfantUsed = {};
       _saveMedals();
-      try { log(`🎯 [照顧與陪伴幼兒] 已全部答對!題庫重置,可重新挑戰。`); } catch(_e){}
+      try { log(`🎯 [照顧與陪伴幼兒] 已連續答對 20 題!題庫重置,可重新挑戰。`); } catch(_e){}
     }
   }
   // 領養與照顧狗狗 → 小力
   else if(q.subject === '領養與照顧狗狗'){
-    _medalStats.dogCarePerfect = _medalStats.dogCarePerfect || {};
-    _medalStats.dogCarePerfect[q.id] = true;
+    _medalStats.dogCareStreak = (_medalStats.dogCareStreak || 0) + 1;
+    _medalStats.dogCareUsed = _medalStats.dogCareUsed || {};
+    _medalStats.dogCareUsed[q.id] = true;
     _saveMedals();
     const _total = (typeof ADV_QUIZ_DOG_CARE !== 'undefined') ? ADV_QUIZ_DOG_CARE.length : 20;
-    const _correct = Object.keys(_medalStats.dogCarePerfect).length;
-    if(_correct >= _total){
-      // ★ 達成 20 題全對:解鎖成就 + 解鎖英雄(只第一次)
+    const _streak = _medalStats.dogCareStreak;
+    if(_streak >= _total){
+      // ★ 達成 20 題連續答對:解鎖成就 + 解鎖英雄(只第一次)
       if(!_medals['unlock_xiaoli']){
         _unlockMedal('unlock_xiaoli');
         _heroUnlock('小力');
       }
-      // ★ v1.0.20260424.0680 — 重置進度,讓下次重玩時題庫重新洗牌可從頭再來
-      _medalStats.dogCarePerfect = {};
+      // ★ 解鎖後重置 streak 與題庫紀錄,讓玩家可重新挑戰
+      _medalStats.dogCareStreak = 0;
+      _medalStats.dogCareUsed = {};
       _saveMedals();
-      try { log(`🎯 [領養與照顧狗狗] 已全部答對!題庫重置,可重新挑戰。`); } catch(_e){}
+      try { log(`🎯 [領養與照顧狗狗] 已連續答對 20 題!題庫重置,可重新挑戰。`); } catch(_e){}
     }
+  }
+}
+
+// ★ v1.0.20260424.1200 — 答錯時重置「連續答對」進度 + 清空已用題庫
+//   設計理念:玩家必須一氣呵成連續答對 20 題,才能解鎖角色;答錯就要重新開始
+function _resetUnlockHeroProgressOnWrong(q){
+  if(!q || !q.subject) return;
+  if(q.subject === '照顧與陪伴幼兒'){
+    const _wasStreak = _medalStats.careInfantStreak || 0;
+    if(_wasStreak > 0){
+      try{ log(`💧 [照顧與陪伴幼兒] 連續答對紀錄中斷! ${_wasStreak} 題進度歸零,題庫重新洗牌。`); }catch(_e){}
+      try{ bannerFX(null, '💧 連續答對中斷! 進度歸零', '#ff6688', 2200); }catch(_e){}
+    }
+    _medalStats.careInfantStreak = 0;
+    _medalStats.careInfantUsed = {};
+    _saveMedals();
+  }
+  else if(q.subject === '領養與照顧狗狗'){
+    const _wasStreak = _medalStats.dogCareStreak || 0;
+    if(_wasStreak > 0){
+      try{ log(`💧 [領養與照顧狗狗] 連續答對紀錄中斷! ${_wasStreak} 題進度歸零,題庫重新洗牌。`); }catch(_e){}
+      try{ bannerFX(null, '💧 連續答對中斷! 進度歸零', '#ff6688', 2200); }catch(_e){}
+    }
+    _medalStats.dogCareStreak = 0;
+    _medalStats.dogCareUsed = {};
+    _saveMedals();
   }
 }
 
@@ -46631,6 +47098,250 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1220', brief:[
+    '🚪 修復卡死自救「脫離戰鬥」變黑屏的 BUG',
+  ], items:[
+    '【症狀】',
+    '  玩家按下「卡死自救 → 脫離戰鬥」後,畫面變黑且仍然卡死,無法回到關卡選擇頁',
+    '【根因】',
+    '  舊版 _deadlockRescueExitBattle 自己手動操作 DOM 隱藏戰鬥畫面、開啟冒險選關,',
+    '  但漏清了:',
+    '  - 戰鬥背景圖層(_clearBattleBg)',
+    '  - 各種 overlay class(adv-result-overlay/adv-quiz-overlay 等的 .show)',
+    '  - BGM(沒呼叫 bgmStop)',
+    '  - 教學按鈕、回溯按鈕殘留',
+    '  - 各種冒險旗標未完整重置(_advBossIntroShown/_advTreasures 等)',
+    '  → 結果:UI 殘留覆蓋,看起來「黑屏卡死」',
+    '【修復:改用遊戲正規流程】',
+    '  改呼叫遊戲既有的兩個官方函式:',
+    '  ① exitAdventureMode() - 完整清理冒險狀態(line ~29003)',
+    '     負責處理:_adventureMode/_advMiniBattleActive/各 overlay/BGM/背景/旗標等',
+    '  ② openAdventureOverlay() - 開啟冒險選關頁(line ~27554)',
+    '     負責處理:_clearBattleBg、好友資料載入、UI 重建、BGM 切換',
+    '  這兩個函式遊戲其他地方都用過(如 BOSS 戰結束、F9 密技勝利後)',
+    '  改用後不會再有黑屏問題',
+    '【保留的額外清理】',
+    '  仍保留以下動作以防萬一:',
+    '  - 清除戰鬥快照(避免下次進入又看到「未完成戰鬥」)',
+    '  - 強制立即雲端存檔(保住知識幣)',
+    '  - 隱藏戰鬥中的特殊按鈕(回溯/教學/卡死自救)',
+    '【實作位置】',
+    '  - _deadlockRescueExitBattle: line ~37198',
+  ] },
+  { ver:'v1.0.20260424.1210', brief:[
+    '💬 卡死自救提示訊息口吻更柔和',
+  ], items:[
+    '【調整】',
+    '  舊文字:「⚠️ 偵測到戰鬥可能卡死,請點左側「🚨卡死自救」按鈕脫離」',
+    '  新文字:「⚠️ 系統偵測到戰鬥停滯中,小英雄是有行動沒有完成還是遇到BUG卡死呢?',
+    '          如果是遇到BUG卡死,請按左下角的卡死自救唷!」',
+    '【設計考量】',
+    '  - 不再武斷判定「卡死」,改為提供兩種可能讓玩家自行判斷',
+    '  - 留給玩家空間:可能是某英雄的多段技能還在跑(沒卡死),也可能是真 BUG',
+    '  - 顯示時間從 5 秒延長到 7 秒(訊息變長,玩家需要更多時間閱讀)',
+    '【實作位置】',
+    '  - _showDeadlockRescueButton: line ~37124',
+  ] },
+  { ver:'v1.0.20260424.1200', brief:[
+    '🔥 養護專題改造:必須「連續答對 20 題」才解鎖,答錯歸零重來',
+  ], items:[
+    '【規則改變】',
+    '  舊規則:全部 20 題答對(可累積,中間答錯不影響進度)',
+    '  新規則:必須「連續答對 20 題」才解鎖!',
+    '         任何一題答錯 → 連擊歸零 + 題庫重新洗牌,從 0 開始累積',
+    '【跨關卡進度保留】',
+    '  - 連續答對紀錄可跨多場冒險累積',
+    '  - 例:第一輪冒險打完累積到 7 連,第二輪冒險繼續從 7 連起跑',
+    '  - 但只要任一題答錯,所有累積進度立刻歸零',
+    '【出題機制】',
+    '  - 同一輪 streak 中,題庫不會重複出已問過的題目',
+    '  - 答錯歸零時:已用題庫紀錄(careInfantUsed/dogCareUsed)清空,重新洗牌',
+    '  - 達成 20 連對解鎖後也清空,可重新挑戰刷紀錄',
+    '【UI 顯示更新(三處)】',
+    '  ① 科目選擇按鈕:顯示「🔥連擊 X/20」(有連擊時金色,沒連擊時綠色)',
+    '     第二行改為「⭐ 連續答對 20 題解鎖【小力】」',
+    '  ② 出題視窗頂部進度條:',
+    '     🐕 🔥連擊 X/20 題,再連對 Y 題解鎖【小力】 ⚠️ 答錯歸零',
+    '  ③ 答對後浮動提示:',
+    '     🔥🐕 連擊 X/20 題! 再連對 Y 題解鎖【小力】',
+    '【答錯時的提示】',
+    '  - 戰鬥 log:💧 [領養與照顧狗狗] 連續答對紀錄中斷! N 題進度歸零,題庫重新洗牌',
+    '  - banner: 💧 連續答對中斷! 進度歸零(粉紅色 2.2 秒)',
+    '【資料結構變更】',
+    '  - 廢棄(保留向後相容):careInfantPerfect / dogCarePerfect (Object 形式)',
+    '  - 新增:careInfantStreak / dogCareStreak (Integer 連擊計數)',
+    '  - 新增:careInfantUsed / dogCareUsed (Object 已用題目 id)',
+    '【實作位置】',
+    '  - _trackUnlockHeroProgress (答對 +1): line ~45813',
+    '  - _resetUnlockHeroProgressOnWrong (答錯歸零): line ~45867',
+    '  - _medalStats 新欄位: line ~45724',
+    '  - 題庫過濾(用 _used): line ~29239',
+    '  - 小怪戰答錯呼叫 reset: line ~43900',
+    '  - BOSS 戰答錯呼叫 reset: line ~33034',
+    '  - 三處 UI 顯示同步改用 streak',
+  ] },
+  { ver:'v1.0.20260424.1190', brief:[
+    '🎁 養護專題按鈕大改造:醒目 NEW 標籤 + 解鎖角色提示',
+  ], items:[
+    '【強化目標】',
+    '  「領養與照顧狗狗」「照顧與陪伴幼兒」是新活動主題',
+    '  原本的按鈕看起來跟其他科目沒差別,玩家可能不知道過了能解鎖角色',
+    '  本版讓這兩個按鈕變成「明顯的活動按鈕」,主動吸引玩家挑戰',
+    '【按鈕新版面(雙行佈局)】',
+    '  第一行:[NEW 閃爍] 主題名 角色emoji',
+    '  第二行:[8/20] ⭐ 全對解鎖【小力】',
+    '  全解鎖後第二行改顯示:✅ 已解鎖,可繼續挑戰',
+    '【視覺亮點】',
+    '  - NEW 徽章:粉紅→橘色漸層,呼吸式發光動畫(1.2 秒週期 scale 1→1.15)',
+    '  - 進度徽章:綠色背景 [X/20],清楚顯示已答對題數',
+    '  - 解鎖提示:橘黃色 ⭐「全對解鎖【小力/幼兒園小孩】」直接說明獎勵',
+    '  - 角色 emoji:🐕(小力) / 👶(幼兒園小孩) 顯示在主題名旁',
+    '【群組標題強化】',
+    '  分類標題從「💝 養護專題」改為「💝 養護專題 🎁 解鎖新角色」',
+    '  讓玩家在科目選擇頁就能一眼看到獎勵類別',
+    '【已解鎖玩家的差異】',
+    '  - 沒有 NEW 徽章(因為已通關過)',
+    '  - 顯示「✅ 已解鎖,可繼續挑戰」(藍色)而非「⭐ 全對解鎖」',
+    '  - 仍可回去挑戰刷分數,但不再強推',
+    '【新增 CSS 動畫】',
+    '  ._new-badge-pulse → @keyframes newBadgePulse(粉紅光暈呼吸)',
+    '【實作位置】',
+    '  - newBadgePulse keyframe: line ~2032',
+    '  - 養護專題群組 label: line ~31170',
+    '  - makeBtn 強化按鈕: line ~31211',
+  ] },
+  { ver:'v1.0.20260424.1180', brief:[
+    '🐕 「領養與照顧狗狗」/「照顧與陪伴幼兒」加入完整進度提示',
+  ], items:[
+    '【三處新增進度顯示】',
+    '【1. 科目選擇按鈕標記】',
+    '  選擇「💝 養護專題」時,「領養與照顧狗狗」「照顧與陪伴幼兒」按鈕後方',
+    '  會顯示綠色進度徽章 [已答對 X/20]',
+    '【2. 出題視窗頂部進度條】',
+    '  每次小怪出題,題目視窗會顯示專屬進度條:',
+    '    🐕 已連續答對 8/20 題,還需答對 12 題即可解鎖【小力】',
+    '  全答對時顯示:🐕 已全部答對 20/20 題! → 解鎖【小力】',
+    '【3. 答對後浮動提示】',
+    '  每次答對後 800ms 顯示:',
+    '    🐕 進度 8/20 題,還剩 12 題即可解鎖【小力】',
+    '  讓玩家立即看到自己的進度推進',
+    '【保留原有的優先未答題機制】',
+    '  選擇養護專題時,出題邏輯為:',
+    '  1) 從 _correctSet (已答對的) 過濾出尚未答對的題目',
+    '  2) 優先出尚未答對的題目',
+    '  3) 全部答對 → 重置進度,可重新挑戰',
+    '  → 玩家中途離開或滅團都不會清除進度,下次重玩會繼續從未答過的題目挑戰',
+    '【實作位置】',
+    '  - 進度條 HTML: line ~5424',
+    '  - _advMiniQuizAsk 進度條更新: line ~43499',
+    '  - _advMiniQuizSubmit 答對後浮動提示: line ~43718',
+    '  - makeBtn 科目按鈕進度標記: line ~31212',
+    '  - 既有的優先未答題邏輯: line ~29218 (沒改,本來就有)',
+  ] },
+  { ver:'v1.0.20260424.1171', brief:[
+    '🌳 修復「神之賜福沒有效果」的 3 個潛在 BUG',
+  ], items:[
+    '【BUG 1:倒下時清空 buff 的順序錯誤】',
+    '  位置:line ~15891(角色 hp 歸 0 時的清狀態邏輯)',
+    '  原本:target.buffs=[] 然後 if(hasBuff(divineBlessing)) → 永遠 false → hp 上限永遠不還原',
+    '  修復:先檢查 buff 還原 _baseHp,再清空 buffs',
+    '  影響:角色倒下後 _baseHp 殘留,復活後再施放會用「已擴張的 hp」當基準,',
+    '       導致 hp 越加越多或玩家覺得「沒效果」',
+    '【BUG 2:clearGoodBuffs 把 divineBlessing 一起消掉但沒還原 hp】',
+    '  位置:clearGoodBuffs 函式(line ~9240)的 PROTECTED_BUFFS 列表',
+    '  原本:divineBlessing 不在 PROTECTED 清單,被驅散類技能清掉但 _baseHp 沒還原',
+    '  修復:把 divineBlessing 加入 PROTECTED_BUFFS,讓它不被消除',
+    '  理由:divineBlessing 跟 hp 上限綁定,被消除而沒還原 _baseHp 會造成數值殘留',
+    '【BUG 3 防護:神之賜福施放時加診斷 log】',
+    '  位置:line ~19962(else if(n==="神之賜福"))',
+    '  改進:施放時印出「✨ 神之賜福 → [角色] HP上限 X → Y (+Z, 補滿 N)」便於除錯',
+    '【若還是「沒效果」】',
+    '  請打開 F12 console,施放神之賜福後看 log:',
+    '  - 有「✨ 神之賜福 →」訊息 → 技能有執行,問題在他處(如某 buff 被誤清)',
+    '  - 沒有 → 技能根本沒執行(可能 setPending 沒走完、能量不足、目標選擇異常等)',
+    '【實作位置】',
+    '  - 倒下時還原 hp 上限的順序: line ~15891',
+    '  - clearGoodBuffs PROTECTED_BUFFS: line ~9248',
+    '  - 神之賜福 + 診斷 log: line ~19962',
+  ] },
+  { ver:'v1.0.20260424.1170', brief:[
+    '🔄 修復回溯/教學/卡死自救按鈕在劇情對白頁誤顯示的 BUG',
+  ], items:[
+    '【症狀】',
+    '  劇情對白進行中(樟湖步道、茶園等過場頁面),左下角仍出現「🔄回溯」按鈕。',
+    '  這些按鈕只在戰鬥中才有意義,劇情頁顯示是錯的',
+    '【根因】',
+    '  - 戰鬥中(對手回合)會顯示按鈕,但戰鬥結束 → 進劇情對白時沒有主動隱藏',
+    '  - 進入新關卡冒險時也沒有確保按鈕是隱藏狀態',
+    '【修復:4 處顯隱控制】',
+    '  ✓ advStartCutscene(進入冒險過場時)→ 隱藏 3 按鈕',
+    '  ✓ advLoadScene(載入劇情場景時)→ 隱藏 3 按鈕',
+    '  ✓ advFinishMiniBattle(戰鬥結束)→ 隱藏 3 按鈕',
+    '  ✓ advStartBattle / advStartMiniBattle(進入戰鬥)→ 顯示回溯+教學按鈕',
+    '【受影響的 3 個按鈕】',
+    '  - adv-rollback-btn(🔄回溯)',
+    '  - adv-tut-btn(❓教學)',
+    '  - adv-deadlock-rescue-btn(🚨卡死自救,本來就應隱藏直到偵測到卡死)',
+    '【實作位置】',
+    '  - advStartCutscene 隱藏: line ~30401',
+    '  - advLoadScene 隱藏: line ~30635',
+    '  - advFinishMiniBattle 隱藏: line ~44005',
+    '  - advStartBattle 顯示: line ~32119',
+    '  - advStartMiniBattle 顯示: line ~43728',
+  ] },
+  { ver:'v1.0.20260424.1160', brief:[
+    '🐕 小力爆發技「夾尾皺眉」新增彩色星星演出特效',
+  ], items:[
+    '【新增 BURST_GIF_DB 條目】',
+    '  - GIF: clarebox123jp-art/LXPSGAME/main/彩色星星.gif',
+    '  - 配音:sfx-gentle (1.0) + sfx-fantasy (0.85) + sfx-passive (0.7)',
+    '    柔和的選取音 + 奇幻飛行 + 被動觸發,呼應賣萌求饒的氛圍',
+    '  - 色調:rgba(255,200,255,0.18) 淡粉紫,夢幻系',
+    '【實作位置】',
+    '  - BURST_GIF_DB 夾尾皺眉: line ~13177',
+  ] },
+  { ver:'v1.0.20260424.1150', brief:[
+    '🎫 加好友改用「8 碼邀請碼」機制,徹底解決 permission-denied 錯誤',
+  ], items:[
+    '【根因】',
+    '  原本 _fbFindByEmail 用 where(\'email\', \'==\', xxx) 查詢整個 players collection,',
+    '  但 Firestore 安全規則只允許玩家讀「自己的」player doc,',
+    '  跨集合查詢被 list 權限擋住 → 永遠回 permission-denied',
+    '【新方案:邀請碼機制(完全避開 list 查詢)】',
+    '  - 每個玩家擁有一組 8 碼邀請碼(大寫英數字,排除易混淆 0/O/1/I/L)',
+    '  - 邀請碼存兩個地方:',
+    '    a) players/{uid}.inviteCode (自己擁有)',
+    '    b) inviteCodes/{code} → { uid: xxx } (反查表,doc 名 = 邀請碼)',
+    '  - 加好友流程(全程都是 getDoc,不需 where):',
+    '    1) 玩家輸入 8 碼邀請碼',
+    '    2) getDoc(inviteCodes/{code}) → 取得對方的 uid',
+    '    3) getDoc(players/{uid}) → 取得對方完整資料',
+    '    4) 寫入自己的 friends 列表',
+    '【UI 改造】',
+    '  - 好友面板新增「我的邀請碼」顯示區(黃色大字 + 點擊複製)',
+    '  - 輸入框改為:placeholder「輸入好友的 8 碼邀請碼」+ maxlength=8',
+    '  - 自動轉大寫(oninput)',
+    '  - 移除 email 相關提示,改為「請確認對方提供的邀請碼正確」',
+    '【新函式】',
+    '  - _genInviteCode():產生 8 碼邀請碼(31 字符 ^ 8 ≈ 8.5e11 種組合)',
+    '  - _fbEnsureInviteCode(uid):登入時自動生成或讀取自己的邀請碼',
+    '  - _fbFindByInviteCode(code):用邀請碼查找玩家',
+    '  - _addFriendByInviteCode():UI 入口,取代 _addFriendByEmail',
+    '  - _copyMyInviteCode():複製自己的邀請碼到剪貼簿',
+    '【向後相容】',
+    '  - 舊的 _fbFindByEmail 函式保留(萬一未來規則放寬可用)',
+    '  - 舊的 _addFriendByEmail 函式保留(暫不刪)',
+    '  - 既有好友列表(用 email 加的)不受影響,仍可正常使用',
+    '【實作位置】',
+    '  - _genInviteCode / _fbEnsureInviteCode / _fbFindByInviteCode: line ~228',
+    '  - 登入時生成邀請碼: line ~676',
+    '  - 好友面板 UI: line ~42495',
+    '  - _copyMyInviteCode / _addFriendByInviteCode: line ~42652',
+    '【Firestore 規則建議】',
+    '  inviteCodes 集合不需特殊規則,預設 allow read(任何登入用戶可讀)就夠用',
+    '  若安全規則嚴格限制,可加:',
+    '    match /inviteCodes/{code} { allow read: if request.auth != null; }',
+  ] },
   { ver:'v1.0.20260424.1141', brief:[
     '🔊 召喚煙火音效音量加大(0.85 → 1.0,玩家反應太小聲)',
   ], items:[
@@ -53419,7 +54130,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1141';
+  const CURRENT_VERSION = 'v1.0.20260424.1220';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -53436,7 +54147,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1141';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1220';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
