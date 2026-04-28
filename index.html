@@ -25513,6 +25513,18 @@ async function _showAdminStatsPanel(){
           🧪 套用測試數值（並雲端儲存）
         </button>
         <div id="_admin-test-result" style="margin-top:8px;font-size:13px;color:#aaddff;line-height:1.6;"></div>
+        <!-- ★ v1.0.20260428 — 清除已答對題目紀錄(讓題庫從零開始) -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(100,200,255,0.25);">
+          <div style="font-size:13px;color:#aaa;margin-bottom:6px;line-height:1.5;">
+            🗑️ 清除「跨關卡已答對題目」紀錄,讓題庫重置從零開始(會雲端儲存)
+          </div>
+          <button id="_admin-clear-correct" style="width:100%;padding:9px;font-size:14px;font-weight:700;
+            background:rgba(255,150,80,0.2);border:1.5px solid #ff9966;color:#ffbb88;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            🗑️ 清除已答對題目紀錄
+          </button>
+          <div id="_admin-clear-correct-result" style="margin-top:6px;font-size:12px;color:#ffbb88;"></div>
+        </div>
       </div>
 
       <button id="_admin-close" style="width:100%;padding:12px;font-size:16px;font-weight:700;
@@ -25910,6 +25922,37 @@ async function _showAdminStatsPanel(){
             Object.keys(HERO_DB).forEach(name => { _heroLevels[name] = lv; });
           }
         }catch(_){}
+        // ★ v1.0.20260428 — 升級後立即補發 Lv10/Lv20 自動解鎖肖像
+        try{
+          if(typeof _scanAllLvUnlockPortraits === 'function'){
+            const _newPortraits = _scanAllLvUnlockPortraits();
+            if(_newPortraits > 0){
+              console.log('[admin test] 自動解鎖 ' + _newPortraits + ' 個 Lv10/Lv20 肖像');
+            }
+          }
+        }catch(e){ console.warn('[admin test] 補發肖像失敗', e); }
+        // ★ v1.0.20260428 — 升級後補發素質點數(每升 1 級 = 1 點)
+        try{
+          if(!_heroStatPoints || typeof _heroStatPoints !== 'object') window._heroStatPoints = _heroStatPoints = {};
+          if(!_heroStatInvested || typeof _heroStatInvested !== 'object') window._heroStatInvested = _heroStatInvested = {};
+          let _statHealed = 0;
+          Object.keys(_heroLevels).forEach(name => {
+            const _lv = _heroLevels[name] || 1;
+            if(_lv <= 1) return;
+            const _expected = _lv - 1;
+            const _inv = _heroStatInvested[name] || {};
+            const _investedTotal = (_inv.hp||0) + (_inv.atk||0) + (_inv.sp||0) + (_inv.spd||0);
+            const _currFree = _heroStatPoints[name] || 0;
+            const _shouldAdd = _expected - _investedTotal - _currFree;
+            if(_shouldAdd > 0){
+              _heroStatPoints[name] = _currFree + _shouldAdd;
+              _statHealed += _shouldAdd;
+            }
+          });
+          if(_statHealed > 0){
+            console.log('[admin test] 補發 ' + _statHealed + ' 點素質點數');
+          }
+        }catch(e){ console.warn('[admin test] 補發素質點數失敗', e); }
       }
       // 2) 知識幣(絕對值)
       if(coins !== null){
@@ -25950,6 +25993,46 @@ async function _showAdminStatsPanel(){
       btn.textContent = '🧪 套用測試數值（並雲端儲存）';
     }
   };
+
+  // ★ v1.0.20260428 — 清除「跨關卡已答對題目」紀錄
+  const _clearBtn = document.getElementById('_admin-clear-correct');
+  if(_clearBtn){
+    _clearBtn.onclick = async () => {
+      const _resEl = document.getElementById('_admin-clear-correct-result');
+      // 統計目前累積數量
+      let _totalSubjects = 0, _totalQuestions = 0;
+      try{
+        if(_persistentCorrectQuestions && typeof _persistentCorrectQuestions === 'object'){
+          Object.keys(_persistentCorrectQuestions).forEach(s => {
+            const cnt = Object.keys(_persistentCorrectQuestions[s]||{}).length;
+            if(cnt > 0){ _totalSubjects++; _totalQuestions += cnt; }
+          });
+        }
+      }catch(_){}
+      if(_totalQuestions === 0){
+        _resEl.style.color = '#aaa';
+        _resEl.textContent = 'ℹ️ 目前沒有累積任何已答對紀錄,無需清除';
+        return;
+      }
+      if(!confirm('確定清除已答對題目紀錄嗎?\n\n當前共 ' + _totalSubjects + ' 個科目,累積 ' + _totalQuestions + ' 題已答對\n\n清除後下次抽題會從整個題庫重新開始(已答對的題目會再次出現)')) return;
+      _clearBtn.disabled = true;
+      _clearBtn.textContent = '清除中...';
+      try{
+        window._persistentCorrectQuestions = _persistentCorrectQuestions = {};
+        if(typeof gameCloudSave === 'function'){
+          try{ await gameCloudSave(); }catch(e){ console.warn('[admin clear correct] cloud save failed', e); }
+        }
+        _resEl.style.color = '#88ff88';
+        _resEl.textContent = '✅ 已清除 ' + _totalSubjects + ' 個科目共 ' + _totalQuestions + ' 題的答對紀錄,已雲端儲存';
+      }catch(e){
+        _resEl.style.color = '#ff6666';
+        _resEl.textContent = '❌ 清除失敗:' + (e && e.message || e);
+      }finally{
+        _clearBtn.disabled = false;
+        _clearBtn.textContent = '🗑️ 清除已答對題目紀錄';
+      }
+    };
+  }
 }
 
 // 每回合開始時儲存快照（F8密技用）
@@ -29546,6 +29629,29 @@ function advGetQuizPool(grade, subject, difficulty) {
   // ★ v1.0.20260424.0810 — 全題庫統一改用「全部不重複出完一輪才重新排序」邏輯
   //   不再依年級/難度過濾,全部依「科目」抽出後 Fisher-Yates 洗牌出題
   //   (跟照顧與陪伴幼兒/領養與照顧狗狗的規則一致)
+  // ★ v1.0.20260428 — 持久已答對題目過濾 helper(供本函式各分支共用)
+  //   - 過濾掉 _persistentCorrectQuestions[subject] 中的題目
+  //   - 若過濾後池太小(<3 題)且原池夠多,代表該科目快全答對,自動重置該科目進度
+  //   - 跨難度/跨年級因為 _persistentCorrectQuestions 只用「科目」分,本來就是同一池
+  function _filterPersistent(rawPool, subjectKey){
+    if(!subjectKey || !rawPool || !rawPool.length) return rawPool || [];
+    if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions) return rawPool;
+    const correctMap = _persistentCorrectQuestions[subjectKey];
+    if(!correctMap || typeof correctMap !== 'object') return rawPool;
+    const filtered = rawPool.filter(q => !correctMap[q.id]);
+    // 若該科目所有題目都答對了 → 重置該科目進度,讓玩家可以重新挑戰
+    if(filtered.length === 0 && rawPool.length >= 3){
+      try{
+        const _correctCount = Object.keys(correctMap).length;
+        console.log('[題庫] 🎉 ['+subjectKey+'] '+_correctCount+' 題全部答對! 自動重置進度,重新挑戰');
+        _persistentCorrectQuestions[subjectKey] = {};
+        try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+        try{ bannerFX(null, '🎉 ['+subjectKey+'] 全題庫已答對! 重置進度', '#88ff99', 2500); }catch(_){}
+      }catch(_e){}
+      return rawPool;
+    }
+    return filtered.length > 0 ? filtered : rawPool;
+  }
   // ★ 照顧與陪伴幼兒 / 領養與照顧狗狗 專屬出題邏輯(持久化記錄已答對題目)
   // ★ v1.0.20260424.1200 — 連續答對機制改造:
   //   - 用 _used 集合記錄「本輪 streak 中已用過的題目」(避免重複問)
@@ -29566,20 +29672,24 @@ function advGetQuizPool(grade, subject, difficulty) {
   }
   // ★ 五下自然第三單元「動物的生活」專屬題庫
   if (subject === '五下自然第三單元') {
-    return [...ADV_QUIZ_5S_U3_ANIMAL].sort(() => Math.random() - 0.5);
+    const _pool = _filterPersistent([...ADV_QUIZ_5S_U3_ANIMAL], subject);
+    return _pool.sort(() => Math.random() - 0.5);
   }
   // ★ 五下自然第四單元「聲音與樂器」專屬題庫
   if (subject === '五下自然第四單元') {
-    return [...ADV_QUIZ_5S_U4_SOUND].sort(() => Math.random() - 0.5);
+    const _pool = _filterPersistent([...ADV_QUIZ_5S_U4_SOUND], subject);
+    return _pool.sort(() => Math.random() - 0.5);
   }
   // ★ 期中評量
   if (subject && subject.includes('評量')) {
-    return [...ADV_QUIZ_5S_MIDTERM].sort(() => Math.random() - 0.5);
+    const _pool = _filterPersistent([...ADV_QUIZ_5S_MIDTERM], subject);
+    return _pool.sort(() => Math.random() - 0.5);
   }
   // ★ 日本關（環遊世界遠征傳說 第1關）：100 題隨機出題
   if (subject === '日本關' || (typeof _adventureStage !== 'undefined' && _adventureStage === 'japan')) {
-    const _jp = ADV_QUIZ_DB.filter(q => q.subject === '日本關').sort(() => Math.random() - 0.5);
-    console.log('[題庫] 日本關分支觸發 (BOSS戰)，共', _jp.length, '題');
+    const _jpAll = ADV_QUIZ_DB.filter(q => q.subject === '日本關');
+    const _jp = _filterPersistent(_jpAll, '日本關').sort(() => Math.random() - 0.5);
+    console.log('[題庫] 日本關分支觸發 (BOSS戰)，過濾後可用', _jp.length, '/', _jpAll.length, '題');
     return _jp;
   }
 
@@ -29587,14 +29697,20 @@ function advGetQuizPool(grade, subject, difficulty) {
   //   (移除原本依年級+難度偏好的複雜邏輯,讓所有題目同等機會出現)
   if (subject && subject !== '綜合') {
     const _all = ADV_QUIZ_DB.filter(q => q.subject === subject);
+    const _filtered = _filterPersistent(_all, subject);
     // Fisher-Yates 洗牌
-    for(let i = _all.length - 1; i > 0; i--){
+    for(let i = _filtered.length - 1; i > 0; i--){
       const j = Math.floor(Math.random() * (i + 1));
-      [_all[i], _all[j]] = [_all[j], _all[i]];
+      [_filtered[i], _filtered[j]] = [_filtered[j], _filtered[i]];
     }
-    return _all;
+    try{
+      const _correctCnt = (_persistentCorrectQuestions[subject])
+        ? Object.keys(_persistentCorrectQuestions[subject]).length : 0;
+      console.log('[題庫] ['+subject+'] 全 '+_all.length+' 題,已答對 '+_correctCnt+' 題,可用 '+_filtered.length+' 題');
+    }catch(_){}
+    return _filtered;
   }
-  // 沒選科目或選綜合 → 全題庫
+  // 沒選科目或選綜合 → 全題庫(不過濾,因為「綜合」沒有特定 subject key)
   const _all = ADV_QUIZ_DB.slice();
   for(let i = _all.length - 1; i > 0; i--){
     const j = Math.floor(Math.random() * (i + 1));
@@ -30707,6 +30823,11 @@ let _advQuizSeconds = 60;
 let _advCurrentQuestion = null;
 let _advUsedQuestionIds = new Set();
 let _advSessionQuestions = []; // 本局抽出的題目列表
+// ★ v1.0.20260428 — 跨關卡持久保存的「已答對題目」集合
+//   結構: { '科目': Set<題id>, ... }(每個 Set 用 plain object 序列化)
+//   設計: 玩家答對的題目記錄此處,下次抽題優先排除;雲端存檔保留,跨裝置繼承
+//   只區分科目(玩家換難度算同一池);全科目答對後跨難度/跨年級補題,全題庫答對才重置該科目
+let _persistentCorrectQuestions = {}; // { 科目: { 題id: true, ... } }
 let _advQuizPhase = 'idle'; // idle / asking / answered
 let _advPendingReward = null; // 保留的獎勵
 let _advContinueCount = 0; // 已接關次數
@@ -33467,6 +33588,23 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     if(_advStats.currentStreak > (_advStats.maxStreak || 0)){
       _advStats.maxStreak = _advStats.currentStreak;
     }
+    // ★ v1.0.20260428 — 跨關卡記錄已答對題目(只區分科目,跨難度跨年級共用一池)
+    try{
+      const _bSubject = (q && q.subject) || _advPlayerSubject;
+      if(q && q.id != null && _bSubject){
+        if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions){
+          window._persistentCorrectQuestions = _persistentCorrectQuestions = {};
+        }
+        if(!_persistentCorrectQuestions[_bSubject]){
+          _persistentCorrectQuestions[_bSubject] = {};
+        }
+        if(!_persistentCorrectQuestions[_bSubject][q.id]){
+          _persistentCorrectQuestions[_bSubject][q.id] = true;
+          const _totalCorrect = Object.keys(_persistentCorrectQuestions[_bSubject]).length;
+          console.log('[題庫持久-BOSS] ✅ ['+_bSubject+'] 累積已答對 '+_totalCorrect+' 題 (id='+q.id+')');
+        }
+      }
+    }catch(_persistE){ console.warn('[題庫持久-BOSS] 記錄失敗', _persistE); }
     // ★ 獎章系統：BOSS戰答題
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
@@ -35783,6 +35921,10 @@ function _buildSafeData() {
     presetTeams:     _arenaPresetTeams,       // 鬥技場預設陣容(舊欄位名,保留以相容舊版讀取)
     arenaPresetTeams: _arenaPresetTeams,      // 新欄位:鬥技場(明確命名)
     advPresetTeams:   _advPresetTeams,        // 新欄位:冒險模式
+    // ★ v1.0.20260428 — 跨關卡持久已答對題目(按科目分類)
+    //   字串版用來繞過 Firebase merge:true 不會刪除 map key 的限制
+    persistentCorrectQuestions: _persistentCorrectQuestions,
+    persistentCorrectQuestions_s: JSON.stringify(_persistentCorrectQuestions||{}),
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
     advBestScore: (typeof _advBestScore !== 'undefined') ? _advBestScore : 0,
     // ★ 英雄肖像系統（已解鎖的替代肖像 + 目前選擇）
@@ -35989,6 +36131,26 @@ function _applySafeData(raw) {
   if(typeof data.heroSkillLevels_s === 'string'){
     try{ const _v = JSON.parse(data.heroSkillLevels_s); if(_v && typeof _v==='object') _heroSkillLevels = _v; }catch(e){}
   }
+  // ★ v1.0.20260428 — 跨關卡持久已答對題目
+  //   優先讀字串版(Firebase merge 不會刪 key 的繞道),fallback 物件版
+  if(typeof data.persistentCorrectQuestions_s === 'string'){
+    try{
+      const _pq = JSON.parse(data.persistentCorrectQuestions_s);
+      if(_pq && typeof _pq === 'object') _persistentCorrectQuestions = _pq;
+    }catch(e){}
+  } else if(data.persistentCorrectQuestions && typeof data.persistentCorrectQuestions === 'object'){
+    _persistentCorrectQuestions = data.persistentCorrectQuestions;
+  }
+  // 顯示載入後的累計狀態
+  try{
+    if(_persistentCorrectQuestions && typeof _persistentCorrectQuestions === 'object'){
+      const _summary = Object.keys(_persistentCorrectQuestions).map(s => {
+        const cnt = Object.keys(_persistentCorrectQuestions[s]||{}).length;
+        return s + ':' + cnt;
+      }).join(', ');
+      if(_summary) console.log('[題庫持久] 已載入跨關卡答對紀錄: ' + _summary);
+    }
+  }catch(_){}
   // ★ v1.0.20260423.2700 — 鬥技場與冒險預設陣容分開載入
   //   新版存檔(有 arenaPresetTeams/advPresetTeams):直接讀取對應陣列
   //   舊版存檔(只有 presetTeams):視為「兩邊共用」的舊資料,同步複製到兩個新陣列
@@ -39774,6 +39936,12 @@ function _showPortraitPreview(heroName, portraitId){
   // ★ v1.0.20260423.8900 — 檢查是否已解鎖,未解鎖時顯示提示
   const _isUnlockedHere = !entry.requiresUnlock || entry.id === 'default'
     || ((_heroPortraitUnlocked[heroName]||[]).includes(entry.id));
+  // ★ v1.0.20260428 — 依 portrait id 判斷解鎖來源,顯示對應提示
+  //   _lv10 / _lv20 = 等級達標自動解鎖,其餘 = 商店購買
+  const _lvMatch = (entry.id || '').match(/_lv(10|20)$/);
+  const _lockMsg = _lvMatch
+    ? `🔒 此肖像尚未解鎖（英雄達 Lv${_lvMatch[1]} 自動解鎖）`
+    : '🔒 此肖像尚未解鎖（可至不可思議超商購買）';
   // 移除既有預覽
   const _old = document.getElementById('_portrait-preview-overlay');
   if(_old) _old.remove();
@@ -39793,7 +39961,7 @@ function _showPortraitPreview(heroName, portraitId){
       <div style="font-size:22px;font-weight:800;color:#ff8844;text-align:center;
         background:rgba(80,30,0,0.6);border:2px solid rgba(255,140,80,0.6);
         border-radius:12px;padding:8px 20px;">
-        🔒 此肖像尚未解鎖（可至不可思議超商購買）
+        ${_lockMsg}
       </div>
     `}
     <img src="${entry.url}" style="max-width:90vw;max-height:${_isUnlockedHere?72:64}vh;object-fit:contain;
@@ -41964,6 +42132,38 @@ function heroFilterClick(btn) {
 function _buildHeroGrid() {
   const grid = document.getElementById('hero-page-grid');
   if(!grid) return;
+  // ★ v1.0.20260428 — 進入英雄圖鑑時雙重補發
+  //   (1) 等級解鎖肖像:確保 Lv10/Lv20 圖在管理員工具改等級後自動解鎖
+  //   (2) 素質點數自癒:確保升級後應有的素質點數不會漏掉
+  try{
+    if(typeof _scanAllLvUnlockPortraits === 'function'){
+      _scanAllLvUnlockPortraits();
+    }
+  }catch(_){}
+  try{
+    // 素質點數自癒(同 _applySafeData 中的邏輯,搬出來重複用)
+    if(_heroLevels && typeof _heroLevels === 'object'){
+      if(!_heroStatPoints || typeof _heroStatPoints !== 'object') _heroStatPoints = {};
+      let _healed = 0;
+      Object.keys(_heroLevels).forEach(name => {
+        const lv = _heroLevels[name] || 1;
+        if(lv <= 1) return;
+        const expected = lv - 1;
+        const inv = (_heroStatInvested && _heroStatInvested[name]) || {};
+        const investedTotal = (inv.hp||0) + (inv.atk||0) + (inv.sp||0) + (inv.spd||0);
+        const currFree = _heroStatPoints[name] || 0;
+        const shouldAdd = expected - investedTotal - currFree;
+        if(shouldAdd > 0){
+          _heroStatPoints[name] = currFree + shouldAdd;
+          _healed += shouldAdd;
+        }
+      });
+      if(_healed > 0){
+        console.info('🔧 [素質點數自癒-圖鑑] 共補發 ' + _healed + ' 點');
+        try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+      }
+    }
+  }catch(_e){ console.warn('[素質點數自癒-圖鑑] 失敗', _e); }
   const unlocked = advGetUnlockedHeroes();
   const ALL_HEROES = typeof HERO_DB !== 'undefined' ? Object.keys(HERO_DB) : [];
   const advPool = typeof ADV_HERO_POOL !== 'undefined' ? (ADV_HERO_POOL.maokong || []) : [];
@@ -42135,10 +42335,15 @@ function _renderHeroDetail(name, box) {
           // ★ v1.0.20260423.8900 — 未解鎖也可點擊預覽全圖,只是無法套用為當前肖像
           //   解鎖:點擊套用 + 切換 (_onPortraitSwitcherClick)
           //   未解鎖:點擊只開預覽視窗 (_showPortraitPreview),看完關閉,不會套用
+          // ★ v1.0.20260428 — 依 portrait id 判斷:_lv10/_lv20 顯示等級達標自動解鎖
+          const _lvMatchT = (p.id || '').match(/_lv(10|20)$/);
+          const _lockTitle = _lvMatchT
+            ? `🔒 尚未解鎖（英雄達 Lv${_lvMatchT[1]} 自動解鎖）— 點擊預覽大圖`
+            : '🔒 尚未解鎖（可至不可思議超商購買）— 點擊預覽大圖';
           const clickAttr = isUnlocked
             ? `onclick="_onPortraitSwitcherClick('${name}','${p.id}')"`
             : `onclick="_showPortraitPreview('${name}','${p.id}')"
-               title="🔒 尚未解鎖（可至不可思議超商購買）— 點擊預覽大圖"`;
+               title="${_lockTitle}"`;
           return `<div ${clickAttr} title="${p.name}" style="position:relative;cursor:pointer;border:2px solid ${border};border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">`
                + `<img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>`
                + overlay + badge + `</div>`;
@@ -44025,6 +44230,26 @@ function _advMiniGetQuizPool(sceneIdx) {
   // ★ v1.0.20260420.1700 — 三個五下自然獨立題庫(不在 ADV_QUIZ_DB 內),直接從對應陣列取題
   //   修復 Bug:選這些科目時小怪戰/pet 事件瞬間彈「所有題目都出過囉」重選視窗
   if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
+  // ★ v1.0.20260428 — 持久已答對題目過濾 helper(每分支共用)
+  //   用 _persistentCorrectQuestions[科目] 過濾;若該科目都答對則重置該科目進度
+  function _filterPersistentMini(rawPool, subjectKey){
+    if(!subjectKey || !rawPool || !rawPool.length) return rawPool || [];
+    if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions) return rawPool;
+    const correctMap = _persistentCorrectQuestions[subjectKey];
+    if(!correctMap || typeof correctMap !== 'object') return rawPool;
+    const filtered = rawPool.filter(q => !correctMap[q.id]);
+    if(filtered.length === 0 && rawPool.length >= 3){
+      try{
+        const _correctCount = Object.keys(correctMap).length;
+        console.log('[題庫-mini] 🎉 ['+subjectKey+'] '+_correctCount+' 題全部答對! 自動重置進度');
+        _persistentCorrectQuestions[subjectKey] = {};
+        try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+        try{ bannerFX(null, '🎉 ['+subjectKey+'] 全題庫已答對! 重置進度', '#88ff99', 2500); }catch(_){}
+      }catch(_e){}
+      return rawPool;
+    }
+    return filtered.length > 0 ? filtered : rawPool;
+  }
   // ★ v1.0.20260424.0750 — 照顧與陪伴幼兒 / 領養與照顧狗狗 (專屬題庫,獨立記錄已答對)
   //   修復 Bug:選這兩個題庫進小怪戰跳出「所有題目都出過」重選視窗
   if(subject === '照顧與陪伴幼兒' || subject === '領養與照顧狗狗'){
@@ -44041,13 +44266,16 @@ function _advMiniGetQuizPool(sceneIdx) {
     return _full.filter(q => !window._miniQuizUsedIds.has(q.id));
   }
   if(subject === '五下自然期中評量' && typeof ADV_QUIZ_5S_MIDTERM !== 'undefined'){
-    return ADV_QUIZ_5S_MIDTERM.filter(q => !window._miniQuizUsedIds.has(q.id));
+    const _raw = ADV_QUIZ_5S_MIDTERM.filter(q => !window._miniQuizUsedIds.has(q.id));
+    return _filterPersistentMini(_raw, subject);
   }
   if(subject === '五下自然第三單元' && typeof ADV_QUIZ_5S_U3_ANIMAL !== 'undefined'){
-    return ADV_QUIZ_5S_U3_ANIMAL.filter(q => !window._miniQuizUsedIds.has(q.id));
+    const _raw = ADV_QUIZ_5S_U3_ANIMAL.filter(q => !window._miniQuizUsedIds.has(q.id));
+    return _filterPersistentMini(_raw, subject);
   }
   if(subject === '五下自然第四單元' && typeof ADV_QUIZ_5S_U4_SOUND !== 'undefined'){
-    return ADV_QUIZ_5S_U4_SOUND.filter(q => !window._miniQuizUsedIds.has(q.id));
+    const _raw = ADV_QUIZ_5S_U4_SOUND.filter(q => !window._miniQuizUsedIds.has(q.id));
+    return _filterPersistentMini(_raw, subject);
   }
   // ★ v1.0.20260421.3000 — 日本關題庫分支（不分年級難度，全 100 題池）
   //   v1.0.20260421.3000b — 改用 _adventureStage 判斷更可靠，避免 subject 被覆寫
@@ -44067,8 +44295,10 @@ function _advMiniGetQuizPool(sceneIdx) {
     // 進一步過濾掉本場已抽的(_miniQuizUsedIds,同場小怪戰不重複);
     // bag 本身已涵蓋「跨戰鬥、跨 BOSS/小怪不重複」
     const _jp = window._japanShuffleBag.filter(q => !window._miniQuizUsedIds.has(q.id));
-    console.log('[題庫] 日本關分支觸發 (小怪戰)，可用', _jp.length, '題 (bag剩', window._japanShuffleBag.length, ')');
-    return _jp;
+    // ★ v1.0.20260428 — 加上跨關卡持久已答對過濾
+    const _jpFiltered = _filterPersistentMini(_jp, '日本關');
+    console.log('[題庫] 日本關分支觸發 (小怪戰)，可用', _jpFiltered.length, '題 (bag剩', window._japanShuffleBag.length, ')');
+    return _jpFiltered;
   }
   let targetSubject, targetDiff;
   if(sceneIdx === 0){
@@ -44103,7 +44333,8 @@ function _advMiniGetQuizPool(sceneIdx) {
       !window._miniQuizUsedIds.has(q.id)
     );
   }
-  return pool;
+  // ★ v1.0.20260428 — 最後加上跨關卡持久已答對過濾
+  return _filterPersistentMini(pool, targetSubject);
 }
 
 function _advMiniQuizAsk(onDone) {
@@ -44356,6 +44587,59 @@ function _advMiniQuizSubmit(letter, isCorrect) {
     const _qDiff = (window._miniQuizCurrentQ && window._miniQuizCurrentQ.difficulty) || '普通';
     const coins = _qDiff === '沒自信' ? 3 : _qDiff === '我很會' ? 8 : 5;
     window._miniQuizTotalCoins = (window._miniQuizTotalCoins||0) + coins;
+    // ★ v1.0.20260428 — 小怪戰答對也計入 _advStats(原本只計 BOSS 戰,造成結算畫面只看到 BOSS 那 1 題)
+    try{
+      if(typeof _advStats === 'object' && _advStats){
+        _advStats.correctCount   = (_advStats.correctCount||0) + 1;
+        _advStats.totalQuestions = (_advStats.totalQuestions||0) + 1;
+        _advStats.currentStreak  = (_advStats.currentStreak||0) + 1;
+        if(_advStats.currentStreak > (_advStats.maxStreak||0)){
+          _advStats.maxStreak = _advStats.currentStreak;
+        }
+        _advStats.totalAnswerTime = (_advStats.totalAnswerTime||0) + 5; // 小怪戰沒計時,視同 5 秒
+        // 計分(同 BOSS 戰邏輯)
+        const _curQ = window._miniQuizCurrentQ;
+        const _qGrade = (_curQ && _curQ.grade) || '中年級';
+        const _qDiffA = (_curQ && _curQ.difficulty) || '普通';
+        const _baseScore = (typeof ADV_GRADE_SCORE!=='undefined' && ADV_GRADE_SCORE[_qGrade]) || 35;
+        const _mult = (typeof ADV_DIFF_MULT!=='undefined' && ADV_DIFF_MULT[_qDiffA]) || 1.0;
+        if(typeof _advStats.totalQuizScore !== 'number' || isNaN(_advStats.totalQuizScore)){
+          _advStats.totalQuizScore = 0;
+        }
+        _advStats.totalQuizScore += Math.round(_baseScore * _mult);
+        // debug: 顯示本場累積答對 / 題庫剩餘狀態
+        try{
+          const _used = (window._miniQuizUsedIds && window._miniQuizUsedIds.size) || 0;
+          console.log('[小怪題庫] ✅ 本場答對 ' + _advStats.correctCount + '/' + _advStats.totalQuestions
+            + ' 題, 連擊 ' + _advStats.currentStreak
+            + ', 本場已用題目 ' + _used + ' 題(不重複)');
+        }catch(_){}
+      }
+    }catch(_e){ console.warn('[mini stats] 更新失敗', _e); }
+    // ★ v1.0.20260428 — 跨關卡記錄已答對題目(只區分科目,跨難度跨年級共用一池)
+    try{
+      const _curQ = window._miniQuizCurrentQ;
+      const _curSubject = (_curQ && _curQ.subject) || _advPlayerSubject;
+      if(_curQ && _curQ.id != null && _curSubject){
+        if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions){
+          window._persistentCorrectQuestions = _persistentCorrectQuestions = {};
+        }
+        if(!_persistentCorrectQuestions[_curSubject]){
+          _persistentCorrectQuestions[_curSubject] = {};
+        }
+        if(!_persistentCorrectQuestions[_curSubject][_curQ.id]){
+          _persistentCorrectQuestions[_curSubject][_curQ.id] = true;
+          const _totalCorrect = Object.keys(_persistentCorrectQuestions[_curSubject]).length;
+          console.log('[題庫持久] ✅ ['+_curSubject+'] 累積已答對 '+_totalCorrect+' 題 (id='+_curQ.id+')');
+          // 雲端存檔(節流:不每次都存,5 題存一次以免過頻繁)
+          try{
+            if(_totalCorrect % 5 === 0 && typeof gameCloudSave === 'function'){
+              gameCloudSave();
+            }
+          }catch(_){}
+        }
+      }
+    }catch(_persistE){ console.warn('[題庫持久] 記錄失敗', _persistE); }
     // ★ 獎章系統：答題觸發
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
@@ -44419,6 +44703,19 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       }
     }, 1200);
   } else {
+    // ★ v1.0.20260428 — 小怪戰答錯也計入 _advStats(totalQuestions++,連擊歸零,maxStreak 保留)
+    try{
+      if(typeof _advStats === 'object' && _advStats){
+        _advStats.totalQuestions = (_advStats.totalQuestions||0) + 1;
+        _advStats.currentStreak  = 0;
+        try{
+          const _used = (window._miniQuizUsedIds && window._miniQuizUsedIds.size) || 0;
+          console.log('[小怪題庫] ❌ 本場答對 ' + (_advStats.correctCount||0) + '/' + _advStats.totalQuestions
+            + ' 題, 連擊歸零(本場最高 ' + (_advStats.maxStreak||0) + ')'
+            + ', 本場已用題目 ' + _used + ' 題(不重複)');
+        }catch(_){}
+      }
+    }catch(_e){ console.warn('[mini stats] 更新失敗', _e); }
     // ★ 獎章系統：答錯需通知以重置連續答對連擊
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.1200 — 養護專題答錯重置 streak
