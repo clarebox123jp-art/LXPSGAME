@@ -32793,53 +32793,11 @@ function _showTaiwanBossDetail(bossId){
   };
 }
 
-
-  const old = document.getElementById('japan-maint-modal');
-  if(old) old.remove();
-  const modal = document.createElement('div');
-  modal.id = 'japan-maint-modal';
-  modal.style.cssText =
-    'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
-    'background:radial-gradient(circle at center,rgba(60,30,0,0.85),rgba(0,0,0,0.92));' +
-    'backdrop-filter:blur(6px);animation:fadeIn 0.35s;';
-  modal.innerHTML =
-    '<div style="max-width:640px;width:90%;padding:40px 40px 32px;text-align:center;' +
-      'background:linear-gradient(160deg,rgba(40,20,8,0.98),rgba(20,10,4,0.98));' +
-      'border:2.5px solid rgba(255,180,80,0.55);border-radius:22px;' +
-      'box-shadow:0 0 80px rgba(255,140,40,0.35);font-family:inherit;">' +
-      '<div style="font-size:88px;margin-bottom:10px;">🔧</div>' +
-      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#ffcc66;margin-bottom:8px;letter-spacing:3px;">日本關卡維護中</div>' +
-      '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:800;color:#ffddaa;margin-bottom:22px;">🗾 第一關：日本探險 暫停開放</div>' +
-      '<div style="background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,180,80,0.3);border-radius:14px;padding:20px 24px;margin-bottom:24px;text-align:left;">' +
-        '<div style="font-size:clamp(17px,1.9vw,22px);color:#ddeeff;line-height:1.85;">' +
-          '親愛的勇者們，<br><br>' +
-          '🛠️ 日本探險目前正在進行最終調校與平衡測試，<br>' +
-          '為了提供各位更完整、更穩定的冒險體驗，<br>' +
-          '本關卡將暫時關閉，待測試完成後會再次開放。<br><br>' +
-          '📣 解鎖時間將透過 <b style="color:#ffcc66;">遊戲公告（新版本記錄）</b> 通知，<br>' +
-          '敬請期待三大妖魔的挑戰！<br><br>' +
-          '⏳ 造成不便敬請見諒，感謝您的耐心等候。' +
-        '</div>' +
-      '</div>' +
-      '<button id="japan-maint-close" style="padding:14px 44px;font-size:clamp(20px,2.3vw,28px);' +
-        'font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,rgba(255,180,80,0.28),rgba(255,140,40,0.28));' +
-        'border:2.5px solid #ffaa44;color:#ffdd99;border-radius:12px;cursor:pointer;font-family:inherit;' +
-        'box-shadow:0 4px 20px rgba(255,180,60,0.3);">✔ 我知道了</button>' +
-    '</div>';
-  (document.getElementById('gc') || document.body).appendChild(modal);
-  const btn = modal.querySelector('#japan-maint-close');
-  if(btn){
-    btn.onclick = () => {
-      try{ playSfx('sfx-sel', 0.65); }catch(_){}
-      modal.style.transition = 'opacity 0.25s';
-      modal.style.opacity = '0';
-      setTimeout(() => modal.remove(), 230);
-    };
-    btn.onmouseover = () => { btn.style.background = 'linear-gradient(135deg,rgba(255,180,80,0.5),rgba(255,140,40,0.5))'; btn.style.color = '#fff'; };
-    btn.onmouseout  = () => { btn.style.background = 'linear-gradient(135deg,rgba(255,180,80,0.28),rgba(255,140,40,0.28))'; btn.style.color = '#ffdd99'; };
-  }
-  modal.addEventListener('click', (e) => { if(e.target === modal && btn) btn.click(); });
-}
+// ★ v1.0.20260428.3600 — 修復:刪除孤立的日本維護中 modal 程式碼
+//   原本這裡有一段 modal 的程式碼,但它的 function 宣告早就遺失,
+//   導致 line 32842 的 `}` 變成 syntax error,整個 script 區塊崩潰,
+//   進而讓 openNicknameModal / showLoginGate 等函式都讀不到。
+//   檢查全檔案後發現這個 modal 沒有任何地方呼叫,是死碼,直接清除。
 
 // ★ 日本關解鎖條件提示視窗（遊戲內樣式）
 function _japanShowLockedModal(check){
@@ -50833,6 +50791,26 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3600', brief:[
+    '🚨 緊急修復:line 32842 syntax error 導致整個 script 區塊 crash',
+    '🐛 連帶修好「openNicknameModal / showLoginGate is not defined」錯誤',
+  ], items:[
+    '【根本原因】',
+    '  之前某次改動意外把「日本維護中提示視窗」函式的宣告整行吃掉了,',
+    '  剩下函式內容(const old = ...)在頂層執行,結尾的 `}` 變成 unexpected token,',
+    '  瀏覽器解析這個 <script> 區塊時直接 abort,導致該區塊內所有函式宣告失效',
+    '  → openNicknameModal / showLoginGate / _japanShowLockedModal 等都「is not defined」',
+    '  → 玩家按登入按鈕沒反應、暱稱點不開、無法遊玩',
+    '【為什麼之前沒抓到】',
+    '  我每次驗證 syntax 是用 Node 把所有 <script> 合併後 check,',
+    '  但瀏覽器是把每個 <script> 獨立 parse,所以合併後括號平衡 ≠ 各自合法',
+    '  本次改成「分別檢查每個 script 區塊」,4 個區塊全部 OK 才輸出',
+    '【修復】',
+    '  該段日本維護中 modal 已沒任何地方呼叫(死碼),直接整段刪除',
+    '  其他功能完全不受影響',
+    '【後續預防】',
+    '  之後每次驗證都會用「分割每個 script 獨立 check」的方式,避免再發生',
+  ] },
   { ver:'v1.0.20260428.3500', brief:[
     '🎵 修正台灣地圖 BGM 檔名(原本指向「台灣關卡簡介劇情BGM」實際應為「台灣地圖BGM」)',
   ], items:[
@@ -58801,7 +58779,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3500';
+  const CURRENT_VERSION = 'v1.0.20260428.3600';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -58818,7 +58796,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3500';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3600';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
