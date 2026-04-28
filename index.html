@@ -5267,27 +5267,22 @@ body.art-premium #summon-overlay {
       <!-- Pentagon ring (faint guide) -->
       <polygon points="100,28 164,78 140,155 60,155 36,78" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-      <!-- ★ v1.0.20260424.1350 — 新循環箭頭:水→火→草→土→風→水
-           節點位置不變(水頂、火右上、風右下、草左下、土左上),
-           箭頭重畫成跨越的星形(穿過五邊形對角線):
-           水(100,28) → 火(164,78) [右下短邊]
-           火(164,78) → 草(60,155) [跨左下對角]
-           草(60,155) → 土(36,78)  [左上短邊]
-           土(36,78) → 風(140,155) [跨右下對角]
-           風(140,155) → 水(100,28) [上方對角]
+      <!-- ★ v1.0.20260424.1390 — 節點重新排序遵循新循環(水→火→草→土→風→水),
+           順時針依五邊形位置排列,箭頭沿邊緣連續走完全不交錯:
+           水(100,28)頂 → 火(164,78)右上 → 草(140,155)右下 → 土(60,155)左下 → 風(36,78)左上 → 水
       -->
-      <!-- 水(100,28) -> 火(164,78): 右下短邊 -->
+      <!-- 水(100,28) -> 火(164,78): 右上短邊 -->
       <line x1="116" y1="34" x2="150" y2="68" stroke="#88ccff" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- 火(164,78) -> 草(60,155): 跨左下長對角 -->
-      <line x1="152" y1="86" x2="74" y2="146" stroke="#ffaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- 草(60,155) -> 土(36,78): 左短邊 -->
-      <line x1="52" y1="138" x2="38" y2="95" stroke="#bbdd66" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- 土(36,78) -> 風(140,155): 跨右下長對角 -->
-      <line x1="48" y1="86" x2="126" y2="146" stroke="#ddaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
-      <!-- 風(140,155) -> 水(100,28): 上方長線 -->
-      <line x1="132" y1="138" x2="106" y2="46" stroke="#88ffaa" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 火(164,78) -> 草(140,155): 右側短邊 -->
+      <line x1="161" y1="93" x2="143" y2="140" stroke="#ffaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 草(140,155) -> 土(60,155): 底邊 -->
+      <line x1="124" y1="155" x2="76" y2="155" stroke="#bbdd66" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 土(60,155) -> 風(36,78): 左側短邊 -->
+      <line x1="57" y1="140" x2="39" y2="93" stroke="#ddaa55" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
+      <!-- 風(36,78) -> 水(100,28): 左上短邊 -->
+      <line x1="50" y1="68" x2="84" y2="34" stroke="#88ffaa" stroke-width="1.8" opacity="0.8" marker-end="url(#ew-ah)"/>
 
-      <!-- Nodes - pentagon positions r=68 from center(100,95) -->
+      <!-- Nodes - pentagon positions (順時針排列符合循環) -->
       <!-- water: top (100, 28) -->
       <circle cx="100" cy="28" r="17" fill="url(#gw)" stroke="#55bbff" stroke-width="1.5"/>
       <text x="100" y="33" text-anchor="middle" font-size="15">&#x1F4A7;</text>
@@ -5298,20 +5293,20 @@ body.art-premium #summon-overlay {
       <text x="164" y="83" text-anchor="middle" font-size="15">&#x1F525;</text>
       <text x="183" y="63" text-anchor="middle" font-size="13" fill="#ffaa55" font-family="Share Tech Mono,monospace" font-weight="bold">火</text>
 
-      <!-- wind: bottom-right (140, 155) -->
-      <circle cx="140" cy="155" r="17" fill="url(#gn)" stroke="#44cc66" stroke-width="1.5"/>
-      <text x="140" y="160" text-anchor="middle" font-size="13">&#x1FAB5;</text>
-      <text x="158" y="147" text-anchor="middle" font-size="13" fill="#88ffaa" font-family="Share Tech Mono,monospace" font-weight="bold">風</text>
+      <!-- grass: bottom-right (140, 155) — v1390 移至右下 -->
+      <circle cx="140" cy="155" r="17" fill="url(#gg)" stroke="#88bb22" stroke-width="1.5"/>
+      <text x="140" y="160" text-anchor="middle" font-size="15">&#x1F33F;</text>
+      <text x="158" y="147" text-anchor="middle" font-size="13" fill="#bbdd66" font-family="Share Tech Mono,monospace" font-weight="bold">草</text>
 
-      <!-- grass: bottom-left (60, 155) -->
-      <circle cx="60" cy="155" r="17" fill="url(#gg)" stroke="#88bb22" stroke-width="1.5"/>
-      <text x="60" y="160" text-anchor="middle" font-size="15">&#x1F33F;</text>
-      <text x="42" y="147" text-anchor="middle" font-size="13" fill="#bbdd66" font-family="Share Tech Mono,monospace" font-weight="bold">草</text>
+      <!-- earth: bottom-left (60, 155) — v1390 移至左下 -->
+      <circle cx="60" cy="155" r="17" fill="url(#ge)" stroke="#aa7733" stroke-width="1.5"/>
+      <text x="60" y="160" text-anchor="middle" font-size="15">&#x1FAA8;</text>
+      <text x="42" y="147" text-anchor="middle" font-size="13" fill="#ddaa55" font-family="Share Tech Mono,monospace" font-weight="bold">土</text>
 
-      <!-- earth: top-left (36, 78) -->
-      <circle cx="36" cy="78" r="17" fill="url(#ge)" stroke="#aa7733" stroke-width="1.5"/>
-      <text x="36" y="83" text-anchor="middle" font-size="15">&#x1FAA8;</text>
-      <text x="17" y="63" text-anchor="middle" font-size="13" fill="#ddaa55" font-family="Share Tech Mono,monospace" font-weight="bold">土</text>
+      <!-- wind: top-left (36, 78) — v1390 移至左上 -->
+      <circle cx="36" cy="78" r="17" fill="url(#gn)" stroke="#44cc66" stroke-width="1.5"/>
+      <text x="36" y="83" text-anchor="middle" font-size="13">&#x1FAB5;</text>
+      <text x="17" y="63" text-anchor="middle" font-size="13" fill="#88ffaa" font-family="Share Tech Mono,monospace" font-weight="bold">風</text>
 
       <!-- Light & Dark in CENTER (互剋) -->
       <!-- light top of center, dark below -->
@@ -24816,7 +24811,10 @@ function _openAllElemPopup(cx,cy){
     spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',exhaust:'技能費+1',
     trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',
     poison:'中毒',forecast:'失明',stubbornDebuff:'怨念強化',booklock:'禁書封鎖',confused:'疑惑'};
-  var EKEYS=Object.keys(ELEMENT_DB);
+  // ★ v1.0.20260424.1390 — 顯示順序遵循新五行循環(水→火→草→土→風),光暗最後
+  //   ELEMENT_DB 物件本身順序不動(避免影響其他依賴 Object.keys 順序的程式碼),
+  //   只在這個彈窗自訂顯示順序
+  var EKEYS=['water','fire','grass','earth','wind','light','dark'];
   var rows=EKEYS.map(function(key){
     var ed=ELEMENT_DB[key];
     var bc={water:'#55bbff',fire:'#ff7733',wind:'#44cc66',grass:'#88bb22',earth:'#aa7733',light:'#ffdd22',dark:'#9944cc'}[key]||'#fff';
@@ -47635,6 +47633,24 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1390', brief:[
+    '🔄 戰鬥畫面屬性相剋環重新排序+全屬性彈窗順序對齊新循環',
+  ], items:[
+    '【1. 戰鬥畫面左下「屬性相剋環」節點重新排序】',
+    '  舊順序(順時針):水(頂)→火(右上)→風(右下)→草(左下)→土(左上)',
+    '  新順序(順時針):水(頂)→火(右上)→草(右下)→土(左下)→風(左上)',
+    '  → 箭頭沿五邊形邊緣連續走完一圈,完全不跨越對角線',
+    '  → 視覺上一目瞭然「水剋火、火剋草、草剋土、土剋風、風剋水」',
+    '【舊版 5 個箭頭 vs 新版 5 個箭頭】',
+    '  舊:1 個短邊 + 1 個跨對角 + 1 個短邊 + 1 個跨對角 + 1 個跨對角(亂)',
+    '  新:5 個短邊全沿五邊形邊緣(整齊)',
+    '【2. 戰鬥中「全屬性效果一覽」彈窗順序對齊】',
+    '  從 [水,火,風,草,土,光,暗](Object.keys 預設) 改為 [水,火,草,土,風,光,暗]',
+    '  ELEMENT_DB 物件本身順序不動,只在這個彈窗自訂顯示順序',
+    '【實作位置】',
+    '  - elem-wheel SVG: line ~5270 (節點 + 箭頭重排)',
+    '  - _openAllElemPopup EKEYS: line ~24819 (顯示順序自訂)',
+  ] },
   { ver:'v1.0.20260424.1380', brief:[
     '🔧 修正屬性加護環:風和土的卡片不再底部重疊',
     '⚪ 冒險戰鬥畫面恢復顯示屬性相剋環按鈕(左側)',
@@ -55142,7 +55158,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1380';
+  const CURRENT_VERSION = 'v1.0.20260424.1390';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -55159,7 +55175,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1380';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1390';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
