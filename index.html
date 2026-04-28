@@ -44778,41 +44778,23 @@ function _advMiniGetQuizPool(sceneIdx) {
     console.log('[題庫] 日本關分支觸發 (小怪戰)，可用', _jpFiltered.length, '題 (bag剩', window._japanShuffleBag.length, ')');
     return _jpFiltered;
   }
-  let targetSubject, targetDiff;
-  if(sceneIdx === 0){
-    targetSubject = subject; targetDiff = '沒自信';
-  } else {
-    targetSubject = subject; targetDiff = diff;
-  }
-  // 依年級對應
-  const gradeMap = {
-    '小學低年級':['低年級'], '小學中年級':['中年級'], '小學高年級':['高年級'],
-    '五年級':['高年級','五年級'], '國中':['國中','高年級']
-  };
-  const validGrades = gradeMap[grade] || ['中年級'];
+  // ★ v1.0.20260428.1500 — 移除「按年級+難度」強制過濾,改用「全科目」隨機抽題
+  //   舊邏輯:第一場小怪戰強制 difficulty='沒自信' + 玩家年級過濾
+  //   問題:自然科 中年級+沒自信 只有 9 題,已答對 5-6 題後就空了→誤觸發「全題庫已答對」重置
+  //   新邏輯:題庫早已不分年級,難度只影響戰鬥強度;小怪戰跟 BOSS 戰一致,用全科目池
+  //   只保留「本場已抽過 _miniQuizUsedIds」與「跨關卡已答對 _persistentCorrectQuestions」過濾
   let pool = ADV_QUIZ_DB.filter(q =>
-    validGrades.some(g => q.grade && q.grade.includes(g)) &&
-    q.subject === targetSubject &&
-    q.difficulty === targetDiff &&
+    q.subject === subject &&
     !window._miniQuizUsedIds.has(q.id)
   );
-  // 若 pool 太少則放寬限制（只過濾科目+難度）
-  if(pool.length < 3){
-    pool = ADV_QUIZ_DB.filter(q =>
-      q.subject === targetSubject &&
-      q.difficulty === targetDiff &&
-      !window._miniQuizUsedIds.has(q.id)
-    );
-  }
-  // 再不夠就全部此科目
+  // 套用跨關卡持久已答對過濾(會在過濾後池太小時自動重置)
+  pool = _filterPersistentMini(pool, subject);
+  // 若還是太少(本場 _miniQuizUsedIds 蓋掉太多),放寬到「全科目」
   if(pool.length < 2){
-    pool = ADV_QUIZ_DB.filter(q =>
-      q.subject === targetSubject &&
-      !window._miniQuizUsedIds.has(q.id)
-    );
+    pool = ADV_QUIZ_DB.filter(q => q.subject === subject);
+    pool = _filterPersistentMini(pool, subject);
   }
-  // ★ v1.0.20260428 — 最後加上跨關卡持久已答對過濾
-  return _filterPersistentMini(pool, targetSubject);
+  return pool;
 }
 
 function _advMiniQuizAsk(onDone) {
@@ -48580,6 +48562,7 @@ const GAME_CHANGELOG = [
     '🔥 修正火法師「地獄之火」升級確認視窗只顯示燃燒回合,沒顯示傷害%提升 +5%/級',
     '✨ 補上 22 個技能的視覺特效:軍師「出奇制勝」、程式設計師「修改代碼」+ 20 個小怪/BOSS 技能',
     '🐛 修補 BOSS 戰使用任何答題獎勵或保留至下回合都會立刻彈下一題的無限循環 bug',
+    '📚 修正小怪戰題目沒幾題就跳「全題庫已答對」的 bug:移除過時的年級+難度過濾,改用全科目池',
     '🐛 修補BOSS戰偶爾無限問答的bug',
   ], items:[
     '【難度與選項】',
@@ -48653,6 +48636,15 @@ const GAME_CHANGELOG = [
     '    寶箱怪:鎖起來、箱底抹油',
     '    小惡魔:弄壞你的玩具、讓你調皮',
     '    偷喝茶的史萊姆:舔舔治療、黏液噴濺',
+    '【小怪戰題目過早出完 bug】',
+    '  症狀:選自然科,小怪戰沒幾題就跳「🎉 全題庫已答對! 重置進度」',
+    '  根因:_advMiniGetQuizPool 仍用舊邏輯按「玩家年級+難度」過濾',
+    '       第一場小怪戰強制 difficulty=\'沒自信\',玩家年級=中年級',
+    '       自然科「中年級+沒自信」只有 9 題;答對 5-6 題後過濾完只剩 3 題',
+    '       _filterPersistentMini 偵測到 filtered.length===0 → 重置該科目進度',
+    '  修補:題庫早就不分年級,難度只影響戰鬥強度;移除年級+難度過濾',
+    '       小怪戰改跟 BOSS 戰一致,用「全科目」池(自然科 170 題)',
+    '       只保留「本場已抽過」與「跨關卡已答對」過濾,fallback 仍正常運作',
     '【BOSS 答題獎勵後無限提問 bug】',
     '  症狀:BOSS 戰答對後使用任何答題獎勵或選「保留至下回合」→',
     '       立刻又彈出下一題,沒有戰鬥操作機會,直到耗盡其他答題獎勵才能脫離',
