@@ -4328,6 +4328,10 @@ body.art-premium #summon-overlay {
 <!-- ★ v1.0.20260421.3000k — 日本小怪戰第二首 BGM（與第一首輪流播放） -->
 <audio id="bgm-japan-battle-2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E5%B0%8F%E6%80%AA%E6%88%B0BGM%202.m4a" loop></audio>
 <audio id="bgm-japan-boss"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%ACBOSS%E6%88%B0.m4a" loop></audio>
+<!-- ★ v1.0.20260428.3200 — 台灣關 BOSS 戰專屬 BGM(10 隻 BOSS 共用一首) -->
+<audio id="bgm-taiwan-boss" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS.m4a" loop></audio>
+<!-- ★ v1.0.20260428.3500 — 台灣地圖選關頁 BGM(原檔名「台灣關卡簡介劇情BGM」更正為「台灣地圖BGM」) -->
+<audio id="bgm-taiwan-intro" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a" loop></audio></audio>
 <!-- ★ v1.0.20260421.2800 — 日本關場景與 BOSS 專屬 BGM 擴充 -->
 <audio id="bgm-japan-scene2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E6%84%9F%E6%87%B7.m4a" loop></audio>
 <audio id="bgm-japan-boss-shutendoji" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90BGM.m4a" loop></audio>
@@ -4709,8 +4713,8 @@ body.art-premium #summon-overlay {
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
-      <div class="adv-stage-btn locked">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;">🔒 尚未開放，敬請期待</span></div>
-      <div class="adv-stage-btn" onclick="_japanTrySelect(this)">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffcc66;">🗾 第一關：日本探險</span></div>
+      <div class="adv-stage-btn" onclick="_taiwanTrySelect(this)">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(管理員測試中)</span></div>
+      <div class="adv-stage-btn" onclick="_japanTrySelect(this)">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffcc66;">🗾 第一關:日本探險</span></div>
     <!-- ★ 商店按鈕 + 知識幣顯示 -->
     <div id="adv-coins-bar" style="font-size:clamp(13px,1.5vw,20px);font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
       background:rgba(255,180,0,0.1);border:1px solid rgba(255,180,50,0.3);border-radius:8px;text-align:center;">
@@ -7541,6 +7545,18 @@ const HERO_IMGS = {
   '小惡魔': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94.png',
   // ★ v1.0.20260423.7700 — 大天狗/酒吞童子/玉藻前 的 HERO_IMGS 由後面的 Object.assign
   //   動態填入(用原 Q 版 BOSS 檔名:大天狗.png 等),不在此處硬編碼避免衝突
+  // ★ v1.0.20260428.2800 — 台灣關 10 BOSS 的 HERO_IMGS:用 TAIWAN_IMG_MAP 對應的 URL
+  //   檔名以 BOSS 全名命名(如「油膩魔王・滷汁大鍋.png」),載入失敗會 fallback 到 emoji
+  '油膩魔王・滷汁大鍋':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('油膩魔王・滷汁大鍋.png'),
+  '酥脆狂魔・熱浪糕師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('酥脆狂魔・熱浪糕師.png'),
+  '臭氣魔王・發酵公':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('臭氣魔王・發酵公.png'),
+  '山靈古魔・千年怒木':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('山靈古魔・千年怒木.png'),
+  '深海惡靈・觸手大蛟':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('深海惡靈・觸手大蛟.png'),
+  '染靈幻魔・藍色憂鬱':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('染靈幻魔・藍色憂鬱.png'),
+  '珍奶吸魂魔・大波霸':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('珍奶吸魂魔・大波霸.png'),
+  '水靈反魔・倒映女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水靈反魔・倒映女.png'),
+  '摩天魔將・夜空爆裂者': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('摩天魔將・夜空爆裂者.png'),
+  '山岳禁咒・崩天巨人':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('山岳禁咒・崩天巨人.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -8278,12 +8294,12 @@ function _onPortraitSwitcherClick(heroName, portraitId){
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。'}},
   '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
-  '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
+  '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%，上限=Lv×10），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP。【傷害上限：英雄等級×10】，避免在高HP BOSS戰中過於失衡。'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
   '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'特技150%火屬性傷害1名對手+追加10必中傷害',fd:'用特技的150%對1名對手造成火屬性傷害,並追加無視其有利狀態的10點傷害。'},s2:{n:'地獄之火',c:4,d:'特技40%火屬性傷害全體+燃燒2回合',fd:'依特技值的40%對全體對手造成火屬性傷害,同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'水屬性傷害1名對手並冰凍',fd:'用特技對1名對手造成水屬性傷害，並使其1回合內冰凍不能動。'},s2:{n:'暴風雪',c:5,d:'用特技70%水屬性傷害全體對手,有50%機率冰凍1回合',fd:'用特技的70%對所有對手造成水屬性傷害,並有50%機率使目標冰凍1回合不能動。'}},
   '雷法師':{hp:54,atk:7,sp:16,spd:13, s1:{n:'連鎖閃電',c:3,d:'彈跳風屬性傷害3～5次',fd:'用特技的70%對對手造成風屬性傷害(彈跳)共3次，有50%機率多跳一次，最多5次。'},s2:{n:'麻痺落雷',c:3,d:'風屬性傷害1名對手並麻痺',fd:'用特技對1名對手造成風屬性傷害並使其1回合內麻痺不能動。'}},
   '光法師':{hp:60,atk:5,sp:19,spd:6, s1:{n:'日月同輝',c:4,d:'光屬性傷害全體對手並治癒全隊',fd:'用特技的50%對全體對手造成光屬性傷害，同時用特技的50%恢復全體隊友。'},s2:{n:'極限閃光',c:3,d:'使3名對手命中率減半',fd:'1回合內使隨機3名對手行動成功率減半。'}},
-  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合。'}},
+  '暗法師':{hp:60,atk:5,sp:14,spd:11,  s1:{n:'死亡宣告',c:4,d:'2回合後使目標剩1HP；對BOSS/菁英改為20%HP傷害+禁療(上限=Lv×10)',fd:'使1名對手2回合後強制剩下1點HP（路邊小怪與鬥技場對手）。目標是BOSS或菁英小怪時，改為減少當前HP的20%並附加禁止治療2回合。【傷害上限：英雄等級×10】，避免在高HP BOSS戰中過於失衡。'},s2:{n:'黑暗封印',c:3,d:'全體對手70%封印技能1回合',fd:'使每位對手有70%機率無法使用技能1回合。'}},
   '神射手':{hp:57,atk:9,sp:15,spd:9, s1:{n:'瞄準射擊',c:3,d:'必中240%傷害，無法迴避',fd:'用特技的240%傷害1名對手，無法迴避或代替承受此傷害'},s2:{n:'天羅地網',c:4,d:'特技低者:特技傷害+禁動;特技高者:特技150%傷害',fd:'使特技比自己低的對手受到特技傷害且禁動 1 回合;特技比自己高的對手則受到特技 150% 傷害。'}},
   '神偷':  {hp:55,atk:5,sp:13,spd:17, s1:{n:'盜取',c:2,d:'從對手身上偷取物品/寵物/狀態',fd:'發動時彈出選擇視窗,可從對手身上偷取「物品卡」、「寵物」或「有利狀態」(保護類狀態無法偷),可偷 1 次。可從不同對手或同一對手偷不同類別。'},s2:{n:'急速閃躲',c:2,d:'使速度較慢的對手命中率降至30%（2回合）',fd:'2回合內使速度低於自己的對手命中自己的機率剩下 30%。'}},
   '刺客':  {hp:55,atk:10,sp:13,spd:12, s1:{n:'潛行暗殺',c:4,d:'(特技+攻擊)×200%傷害並附加出血（-10%HP/回）',fd:'用(特技+攻擊)的200%傷害任意1名對手，有60%機率額外增加50%傷害並使目標出血2回合，每回合HP-10%'},s2:{n:'隱身療傷',c:3,d:'隱身並恢復自身HP',fd:'1回合內使自己不會成為單體攻擊目標(對全體型技能無效，有25%被普攻識破)，並以特技的75%恢復自己的HP'}},
@@ -10084,6 +10100,40 @@ const SKILL_FORCE_ELEMENT = {
   // '暗冰雷焰吐息' → 改用 SKILL_RANDOM_ELEMENTS 隨機屬性機制
   // ── v1310 註:聖騎士「神聖鎚擊」是固定%HP傷害不適合相剋,維持不納入 ──
   // ── v1310 註:光法師 S2「極限閃光」是純 debuff 無傷害,不納入 ──
+  // ── ★ v1.0.20260428.3200 — 台灣關 10 BOSS 技能元素屬性 ──
+  // 火 fire (剋草、被水剋)
+  '滷汁飛濺':       'fire',  // 油膩魔王 s1
+  '糖漿轟炸':       'fire',  // 酥脆狂魔 s1
+  '熱浪烤箱':       'fire',  // 酥脆狂魔 s2
+  '真神滷肉飯!':    'fire',  // 油膩魔王 爆發
+  '金黃糕點轟炸!':  'fire',  // 酥脆狂魔 爆發
+  // 草 grass (剋土、被火剋)
+  '根鬚絞殺':       'grass', // 山靈古魔 s1
+  '神木怒火':       'grass', // 山靈古魔 s2(原誤標火,改回草)
+  '神木復仇之火!':  'grass', // 山靈古魔 爆發
+  // 水 water (剋火、被風剋)
+  '八觸手亂舞':     'water', // 深海惡靈 s1
+  '深海漩渦':       'water', // 深海惡靈 s2
+  '深海大漩渦!':    'water', // 深海惡靈 爆發
+  '鏡面分身':       'water', // 水靈反魔 s1
+  '映像撕裂':       'water', // 水靈反魔 s2
+  '萬鏡映虛獄!':    'water', // 水靈反魔 爆發
+  // 風 wind (剋水、被土剋)
+  '煙火齊射':       'wind',  // 摩天魔將 s1
+  '擎天爆閃':       'wind',  // 摩天魔將 s2
+  '摩天爆破煙火祭!':'wind',  // 摩天魔將 爆發
+  // 土 earth (剋風、被草剋)
+  '落石鐵拳':       'earth', // 山岳禁咒 s1
+  '山崩地裂':       'earth', // 山岳禁咒 s2
+  '玉山崩!天裂!':   'earth', // 山岳禁咒 爆發
+  // 暗 dark (跟光互剋)
+  '發酵臭氣彈':     'dark',  // 臭氣魔王 s1
+  '千年發酵核爆!':  'dark',  // 臭氣魔王 爆發
+  '藍染霧霾':       'dark',  // 染靈幻魔 s1
+  '永恆藍染詛咒!':  'dark',  // 染靈幻魔 爆發
+  '珍珠機關槍':     'dark',  // 珍奶吸魂魔 s1
+  '吸魂吸管':       'dark',  // 珍奶吸魂魔 s2
+  '波霸珍珠龍捲風!':'dark',  // 珍奶吸魂魔 爆發
 };
 
 // ★ v1.0.20260424.1080 — 隨機屬性技能(每次傷害都從多個屬性中隨機挑一個)
@@ -11947,6 +11997,15 @@ function confirmHeroPick(){
     } else if(_variant && _adventureStage === 'japan' && typeof window._buildJapanBossTeam === 'function'){
       // ★ v1.0.20260421.0500 — 日本關依 variant 動態組陣容
       bossTeam = window._buildJapanBossTeam(_variant);
+    } else if(_adventureStage === 'taiwan' && typeof window._buildTaiwanBossTeam === 'function'){
+      // ★ v1.0.20260428.2600 — 台灣關依玩家在地圖選的 BOSS 動態組陣容
+      const _twBossId = window._advSelectedTaiwanBoss;
+      if(_twBossId){
+        bossTeam = window._buildTaiwanBossTeam(_twBossId);
+      } else {
+        // fallback:預設第一關(滷肉飯)
+        bossTeam = window._buildTaiwanBossTeam('changhua_braised');
+      }
     } else {
       bossTeam = ADV_BOSS_TEAMS[_adventureStage];
     }
@@ -18743,14 +18802,20 @@ function execSkill(a, sk, cost, stype){
       // ★ BOSS 目標傷害為 5%，一般目標 20%
       var _isBoss = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(t.name);
       var _dmgPct = _isBoss ? 0.05 : 0.20;
-      log('['+a.name+'] 神聖鎚擊！攻擊 ['+t.name+']'+ (_isBoss?' (BOSS 5%)':' (20%)')+'！');
+      // ★ v1.0.20260428.3400 — HP比例傷害上限 = 英雄等級 ×10,避免在高HP BOSS戰中過於失衡
+      var _heroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+      var _maxDmg = _heroLv * 10;
+      var _rawDmg = Math.max(1, Math.floor(t.hp * _dmgPct));
+      var _finalDmg = Math.min(_rawDmg, _maxDmg);
+      var _capped = _rawDmg > _maxDmg;
+      log('['+a.name+'] 神聖鎚擊!攻擊 ['+t.name+']' + (_isBoss?' (BOSS 5%)':' (20%)') + (_capped?' [上限'+_maxDmg+']':'') + '!');
       playSkillFX('神聖鎚擊',a,[t]);
-      doDmg(t,Math.max(1,Math.floor(t.hp*_dmgPct)),{actor:a,isSkill:true,ignoreBuffs:false});
+      doDmg(t, _finalDmg, {actor:a,isSkill:true,ignoreBuffs:false});
       // 恢復 HP 比例最低的存活友方
       var _ha=G[a.side].filter(function(h){return h.curHp>0;});
       if(_ha.length){
         var healTgt=_ha.sort(function(x,y){return (x.curHp/x.hp)-(y.curHp/y.hp);})[0];
-        log('['+a.name+'] 神聖鎚擊治療 ['+healTgt.name+']！');
+        log('['+a.name+'] 神聖鎚擊治療 ['+healTgt.name+']!');
         playSkillFX('神聖鎚擊',a,[t,healTgt]);
         doHeal(healTgt,Math.max(1,Math.floor(healTgt.hp*0.2)),{actor:a,isHeal:true});
       }
@@ -18901,8 +18966,13 @@ function execSkill(a, sk, cost, stype){
         endAction(a,cost);
       } else {
         // BOSS / 菁英小怪：減少當前HP 20% + 禁止治療2回合
-        const _bossDmg = Math.max(1, Math.floor(t.curHp * 0.20));
-        log(`[${a.name}] 死亡宣告 → 強敵模式！[${t.name}] 受到當前HP20%傷害（${_bossDmg}），禁止治療2回合！`);
+        // ★ v1.0.20260428.3400 — HP比例傷害上限 = 英雄等級 ×10
+        const _heroLvDM = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+        const _maxDmgDM = _heroLvDM * 10;
+        const _rawBossDmg = Math.max(1, Math.floor(t.curHp * 0.20));
+        const _bossDmg = Math.min(_rawBossDmg, _maxDmgDM);
+        const _capped = _rawBossDmg > _maxDmgDM;
+        log(`[${a.name}] 死亡宣告 → 強敵模式!【${t.name}】受到當前HP20%傷害(${_bossDmg}${_capped?', 上限'+_maxDmgDM:''}),禁止治療2回合!`);
         playSkillFX('死亡宣告',a,[t]);
         doDmg(t, _bossDmg, {isSkill:true, actor:a, piercing:true});
         addStatus(t,'noheal_curse',2);
@@ -23594,7 +23664,15 @@ function aiUseSkill(a,sk,cost,pref){
       if(n==='麻痺落雷'&&t.curHp>0)addStatus(t,'para');
       if(n==='火焰球')doDmg(t, _fbExtraA, {ignoreBuffs:true, actor:a, isSkill:true});
     }
-  } else if(n==='神聖鎚擊'){if(t){var _bossHit=typeof BOSS_NAMES!=='undefined'&&BOSS_NAMES.includes(t.name);doDmg(t,Math.max(1,Math.floor(t.hp*(_bossHit?0.05:0.2))),{actor:a});doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});}}
+  } else if(n==='神聖鎚擊'){if(t){
+    var _bossHit=typeof BOSS_NAMES!=='undefined'&&BOSS_NAMES.includes(t.name);
+    // ★ v1.0.20260428.3400 — HP比例傷害上限 = 英雄等級 ×10
+    var _heroLv2 = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+    var _maxDmg2 = _heroLv2 * 10;
+    var _rawDmg2 = Math.max(1, Math.floor(t.hp*(_bossHit?0.05:0.2)));
+    doDmg(t, Math.min(_rawDmg2, _maxDmg2), {actor:a});
+    doHeal(al,Math.max(1,Math.floor(al.hp*0.2)),{actor:a,isHeal:true});
+  }}
   else if(n==='刀背擊'){if(t){t.curHp=Math.max(0,t.curHp-1);if(t.curHp>0)addStatus(t,'stun');showPopup(t,1,'dmg');}}
   else if(n==='救贖神光'){
     const dead=G[a.side].find(h=>h.curHp===0);
@@ -24282,7 +24360,14 @@ function checkWin(){
   if(typeof _adventureMode !== 'undefined' && _adventureMode && window._advSystemReady){
     // 找主 BOSS（pos=1 位置，或從 BOSS_NAMES 中查）
     // ★ v1.0.20260423.0100 — 納入日本關主 BOSS，讓主 BOSS 倒下時小怪也跟著投降
-    const _mainBossNames = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+    // ★ v1.0.20260428.2600 — 加入台灣關 10 隻主 BOSS
+    const _mainBossNames = [
+      '九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇',
+      // ─ 台灣 BOSS ─
+      '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
+      '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+      '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+    ];
     const mainBoss = G.p2.find(h=>_mainBossNames.includes(h.name));
     if(mainBoss && mainBoss.curHp <= 0){
       // 讓小怪一起倒下
@@ -24292,6 +24377,7 @@ function checkWin(){
                  : mainBoss.name==='酒吞童子' ? '👹'
                  : mainBoss.name==='玉藻前' ? '🦊'
                  : mainBoss.name==='八岐大蛇' ? '🐉'
+                 : (typeof TAIWAN_BOSSES !== 'undefined' && Object.values(TAIWAN_BOSSES).find(b => b.name === mainBoss.name)) ? (Object.values(TAIWAN_BOSSES).find(b => b.name === mainBoss.name).bossEmoji || '⚔️')
                  : '🐱';
       log(`${_icn} ${mainBoss.name}落敗！小怪們也跟著投降了！`);
       _showResultWithDrama(true); return true;
@@ -24307,7 +24393,11 @@ function checkWin(){
     //   即使 _advMiniBattleActive 為 false，若 G.p2 沒有任何 BOSS 名字，
     //   也強制走 advFinishMiniBattle，避免誤觸 advShowBattleResult 發 BOSS 獎勵
     if(typeof _adventureMode !== 'undefined' && _adventureMode && G.p2 && G.p2.length > 0){
-      const _BOSS_SET = new Set(['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇']);
+      const _BOSS_SET = new Set(['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇',
+        // ★ v1.0.20260428.2600 — 加入台灣關 10 隻主 BOSS
+        '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
+        '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+        '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人']);
       const _hasBoss = G.p2.some(h => _BOSS_SET.has(h.name));
       if(!_hasBoss){
         console.warn('[防呆] G.p2 全無 BOSS 但 _advMiniBattleActive=false，強制 mini 戰結算避免誤發 BOSS 獎勵');
@@ -24428,7 +24518,9 @@ function showResult(win){
   // ── 2.5 關閉所有可能殘留的確認視窗 ──
   // 永久性 HTML 元素：只隱藏
   const _keepIds = new Set(['discard-overlay','equip-overlay','dice-overlay',
-    'adv-hero-meet-overlay','result-overlay','adv-result-overlay']);
+    'adv-hero-meet-overlay','result-overlay','adv-result-overlay',
+    // ★ v1.0.20260428.1500 — 接關視窗也是永久 HTML,只隱藏不刪除
+    'adv-continue-overlay']);
   // 需關閉的所有視窗（靜態 HTML + 動態建立的）
   [
     // 原有
@@ -24447,6 +24539,8 @@ function showResult(win){
     'adv-treasure-confirm','adv-skip-select-box','adv-skip-confirm-btn',
     'adv-repick-popup','adv-boss-detail-pop',
     'burst-upgrade-confirm-box','invest-confirm-box','upgrade-confirm-box',
+    // ★ v1.0.20260428.1500 — 接關視窗也納入清除清單,防止勝利後仍殘留
+    'adv-continue-overlay',
   ].forEach(function(id){
     var _ov = document.getElementById(id);
     if(!_ov) return;
@@ -26547,6 +26641,10 @@ function _detectCurrentBgm(){
         if(typeof JAPAN_BATTLE_BGM_LIST !== 'undefined' && _curBgm && JAPAN_BATTLE_BGM_LIST.includes(_curBgm)) return _curBgm;
         return 'bgm-japan-battle';
       }
+      // ★ v1.0.20260428.3200 — 台灣關 BOSS 戰統一用 bgm-taiwan-boss
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        return 'bgm-taiwan-boss';
+      }
       // ★ 依 BOSS 變體決定 BOSS BGM（即使 _curBgm 為 null 從靜音切回也能正確判斷）
       if(window._currentBossVariantInfo && window._currentBossVariantInfo.id === 'apricot'){
         return 'bgm-boss-apricot';
@@ -27082,6 +27180,9 @@ window.addEventListener('load',()=>{
   if(_ob) window.beep=function(...a){if(!_sfxMuted)_ob(...a);};
   const _on=window.noise;
   if(_on) window.noise=function(...a){if(!_sfxMuted)_on(...a);};
+  // ★ v1.0.20260428.1700 — 頁面載入時嘗試從 localStorage 讀台灣至寶資料
+  //   若雲端有更新版,_applySafeData 之後會覆蓋本地版
+  try{ if(typeof _loadTaiwanTreasureData === 'function') _loadTaiwanTreasureData(); }catch(_){}
 });
 
 
@@ -28191,6 +28292,566 @@ scaleToViewport();
 // ══════════════════════════════════════
 // 冒險闖關模式 - 關卡選擇系統
 // ══════════════════════════════════════
+
+// ★ v1.0.20260428.1700 — 台灣環島歷險記:10 個地點 BOSS 與至寶資料
+//   結構說明:
+//     id          唯一識別,用於存檔
+//     name        BOSS 名稱
+//     location    地點(顯示用)
+//     stars       難度星級(1~6)
+//     suggestLv   建議玩家等級
+//     bossEmoji   BOSS 預覽 emoji(圖出來後可換為 imageUrl)
+//     desc        BOSS 介紹文字(童趣搞笑風)
+//     mainline    是否為主線 BOSS(有差異化過場)
+//     treasure    打贏掉落的至寶 id
+//
+//   裝備能力欄位待管理員自行設計填入(本框架先留空)
+const TAIWAN_TREASURES = {
+  // ─── 飾品 (Accessory) ───
+  pearl_grail: {
+    id: 'pearl_grail',
+    name: '珍珠奶茶聖杯',
+    rarity: 'legend',          // mythic / legend / epic / rare
+    slot: 'accessory',
+    icon: '🥤',                 // 待替換為實際圖片
+    iconUrl: '',                // 圖片 URL,留空使用 emoji
+    desc: '傳說中盛裝最完美珍奶的金邊聖杯,飲下能讓人精神百倍。',
+    // 基礎屬性加成(滿級時的額外加成,未滿級依 lv 比例計算)
+    baseStats: { hp: 80, atk: 0, sp: 25, spd: 12 },
+    // 至寶技能(待設計):name, desc, trigger, effect
+    ability: {
+      name: '【待設計】珍奶之力',
+      desc: '管理員可在 TAIWAN_TREASURES.pearl_grail.ability 中填入能力描述',
+    },
+  },
+  sun_moon_mirror: {
+    id: 'sun_moon_mirror',
+    name: '日月潭靈鏡',
+    rarity: 'legend',
+    slot: 'accessory',
+    icon: '🪞',
+    iconUrl: '',
+    desc: '映照真實的古老青銅鏡,持有者能洞察一切虛偽。',
+    baseStats: { hp: 60, atk: 0, sp: 30, spd: 8 },
+    ability: { name: '【待設計】靈鏡之眼', desc: '待管理員填入' },
+  },
+  pineapple_charm: {
+    id: 'pineapple_charm',
+    name: '鳳梨酥幸運符',
+    rarity: 'rare',
+    slot: 'accessory',
+    icon: '🍍',
+    iconUrl: '',
+    desc: '甜蜜鳳梨酥造型的幸運符,帶來金黃好運氣。',
+    baseStats: { hp: 40, atk: 5, sp: 5, spd: 10 },
+    ability: { name: '【待設計】鳳梨好運', desc: '待管理員填入' },
+  },
+  // ─── 武器 (Weapon) ───
+  stinky_tofu_sword: {
+    id: 'stinky_tofu_sword',
+    name: '深坑臭豆腐神劍',
+    rarity: 'epic',
+    slot: 'weapon',
+    icon: '⚔️',
+    iconUrl: '',
+    desc: '由發酵千年的深坑豆腐凝鍊而成,劍氣帶有獨特氣味。',
+    baseStats: { hp: 30, atk: 18, sp: 0, spd: 0 },
+    ability: { name: '【待設計】臭氣斬', desc: '待管理員填入' },
+  },
+  alishan_tea_staff: {
+    id: 'alishan_tea_staff',
+    name: '阿里山神木茶杖',
+    rarity: 'epic',
+    slot: 'weapon',
+    icon: '🪄',
+    iconUrl: '',
+    desc: '千年神木雕刻的法杖,杖頂的茶杯永遠冒著靈氣。',
+    baseStats: { hp: 30, atk: 0, sp: 22, spd: 0 },
+    ability: { name: '【待設計】神木靈息', desc: '待管理員填入' },
+  },
+  taipei_101_spear: {
+    id: 'taipei_101_spear',
+    name: '台北 101 擎天神槍',
+    rarity: 'legend',
+    slot: 'weapon',
+    icon: '🔱',
+    iconUrl: '',
+    desc: '汲取 101 大樓擎天能量打造的科技長槍,槍尖能量爆閃。',
+    baseStats: { hp: 50, atk: 28, sp: 0, spd: 5 },
+    ability: { name: '【待設計】擎天爆閃', desc: '待管理員填入' },
+  },
+  lanyu_bow: {
+    id: 'lanyu_bow',
+    name: '蘭嶼拼板舟神弓',
+    rarity: 'epic',
+    slot: 'weapon',
+    icon: '🏹',
+    iconUrl: '',
+    desc: '達悟族傳統拼板舟改造的神弓,弓弦發出深海藍光。',
+    baseStats: { hp: 20, atk: 15, sp: 8, spd: 12 },
+    ability: { name: '【待設計】深海之矢', desc: '待管理員填入' },
+  },
+  // ─── 防具 (Armor) ───
+  yushan_shield: {
+    id: 'yushan_shield',
+    name: '玉山巔峰之盾',
+    rarity: 'mythic',
+    slot: 'armor',
+    icon: '🛡️',
+    iconUrl: '',
+    desc: '由玉山主峰山岩凝聚的神話之盾,蘊含台灣最高峰的氣勢。',
+    baseStats: { hp: 200, atk: 0, sp: 0, spd: -3 },
+    ability: { name: '【待設計】巔峰守護', desc: '待管理員填入' },
+  },
+  braised_pork_cauldron: {
+    id: 'braised_pork_cauldron',
+    name: '滷肉飯萬用鼎',
+    rarity: 'rare',
+    slot: 'armor',
+    icon: '🍚',
+    iconUrl: '',
+    desc: '盛裝最濃郁滷汁的古鼎,披在身上充滿香氣與防禦力。',
+    baseStats: { hp: 80, atk: 3, sp: 3, spd: 0 },
+    ability: { name: '【待設計】滷汁庇護', desc: '待管理員填入' },
+  },
+  sanxia_indigo_robe: {
+    id: 'sanxia_indigo_robe',
+    name: '三峽藍染雲袖',
+    rarity: 'epic',
+    slot: 'armor',
+    icon: '🎽',
+    iconUrl: '',
+    desc: '三峽古法藍染製成的飄逸雲袖,流動的靛藍能化解攻擊。',
+    baseStats: { hp: 120, atk: 0, sp: 10, spd: 8 },
+    ability: { name: '【待設計】藍染幻影', desc: '待管理員填入' },
+  },
+};
+
+// ★ v1.0.20260428.1700 — 台灣環島 10 個 BOSS 設定
+//   每個 BOSS 對應一個地點(關卡),打贏後獲得對應的至寶
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2800 — 台灣關卡圖片資源對應表
+// ════════════════════════════════════════════════════════════════
+// 圖片 URL 來源:GitHub repo (clarebox123jp-art/LXPSGAME)
+// 命名規則參考日本關:
+//   - BOSS 圖:「{BOSS全名}.png」
+//   - 場景圖:「{地點}場景.png」
+// 使用者只要把實際檔名填進這裡,程式會自動套用。
+//
+// ⚠️ 載入失敗時會 fallback 到 emoji 立繪,不會中斷遊戲流程。
+//   若不想做某張圖片,直接填空字串 '' 即可。
+const TAIWAN_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+const TAIWAN_IMG_MAP = {
+  // ─── 關卡首頁背景(地圖頁面用,可選) ───
+  mapBg: '台灣關卡首頁背景.png',
+  // ─── 10 個關卡:每關 [boss 立繪, 場景背景圖] ───
+  changhua_braised:    { boss:'油膩魔王・滷汁大鍋.png',  scene:'彰化滷肉飯場景.png' },
+  taichung_pineapple:  { boss:'酥脆狂魔・熱浪糕師.png',  scene:'台中鳳梨酥場景.png' },
+  shenkeng_tofu:       { boss:'臭氣魔王・發酵公.png',    scene:'深坑臭豆腐場景.png' },
+  alishan_tree:        { boss:'山靈古魔・千年怒木.png',  scene:'阿里山場景.png' },
+  lanyu_octopus:       { boss:'深海惡靈・觸手大蛟.png',  scene:'蘭嶼場景.png' },
+  sanxia_indigo:       { boss:'染靈幻魔・藍色憂鬱.png',  scene:'三峽藍染場景.png' },
+  ximen_pearl:         { boss:'珍奶吸魂魔・大波霸.png',  scene:'西門珍奶場景.png' },
+  sun_moon_mirror_boss:{ boss:'水靈反魔・倒映女.png',    scene:'日月潭場景.png' },
+  taipei_101_warlord:  { boss:'摩天魔將・夜空爆裂者.png',scene:'台北101場景.png' },
+  yushan_giant:        { boss:'山岳禁咒・崩天巨人.png',  scene:'玉山場景.png' },
+};
+// 工具函式:取得指定 BOSS 的圖片 URL(自動 URL encode)
+function _getTaiwanBossImage(bossId){
+  const m = TAIWAN_IMG_MAP[bossId];
+  if(!m || !m.boss) return '';
+  return TAIWAN_IMG_BASE + encodeURIComponent(m.boss);
+}
+function _getTaiwanSceneImage(bossId){
+  const m = TAIWAN_IMG_MAP[bossId];
+  if(!m || !m.scene) return '';
+  return TAIWAN_IMG_BASE + encodeURIComponent(m.scene);
+}
+function _getTaiwanMapBgImage(){
+  if(!TAIWAN_IMG_MAP.mapBg) return '';
+  return TAIWAN_IMG_BASE + encodeURIComponent(TAIWAN_IMG_MAP.mapBg);
+}
+
+const TAIWAN_BOSSES = {
+  changhua_braised: {
+    id: 'changhua_braised',
+    name: '油膩魔王・滷汁大鍋',
+    location: '彰化・滷肉飯一條街',
+    stars: 3,
+    suggestLv: 45,
+    bossEmoji: '🍲',
+    bgImage: '',                   // 待替換為實際場景圖
+    bossImage: '',                 // 待替換為 BOSS 圖
+    desc: '自稱「真正的滷肉飯之神」,要消滅所有不照他配方做的小吃店!咕嚕嚕、咕嚕嚕,我的滷汁最香!',
+    mainline: false,
+    treasure: 'braised_pork_cauldron',
+    bossStats: { hp: 1300, atk: 14, sp: 20, spd: 14 },
+  },
+  taichung_pineapple: {
+    id: 'taichung_pineapple',
+    name: '酥脆狂魔・熱浪糕師',
+    location: '台中・微熱山丘',
+    stars: 3,
+    suggestLv: 45,
+    bossEmoji: '🥧',
+    bgImage: '',
+    bossImage: '',
+    desc: '只想把所有甜點變得更甜更甜,要讓全世界的人都蛀牙到不能吃糕點!糖糖糖!糖最重要!',
+    mainline: false,
+    treasure: 'pineapple_charm',
+    bossStats: { hp: 1300, atk: 14, sp: 20, spd: 16 },
+  },
+  shenkeng_tofu: {
+    id: 'shenkeng_tofu',
+    name: '臭氣魔王・發酵公',
+    location: '新北・深坑老街',
+    stars: 4,
+    suggestLv: 47,
+    bossEmoji: '👃',
+    bgImage: '',
+    bossImage: '',
+    desc: '奪取深坑古傳發酵秘方,要讓全島的食物都失去香味!咳咳咳,聞我的臭氣吧!',
+    mainline: false,
+    treasure: 'stinky_tofu_sword',
+    bossStats: { hp: 1600, atk: 16, sp: 22, spd: 14 },
+  },
+  alishan_tree: {
+    id: 'alishan_tree',
+    name: '山靈古魔・千年怒木',
+    location: '嘉義・阿里山',
+    stars: 4,
+    suggestLv: 47,
+    bossEmoji: '🌲',
+    bgImage: '',
+    bossImage: '',
+    desc: '原本是阿里山的守護神木,被異世界魔氣感染後變成毀滅者。沙、沙、沙……枯萎吧,人類……',
+    mainline: false,
+    treasure: 'alishan_tea_staff',
+    bossStats: { hp: 1600, atk: 16, sp: 24, spd: 12 },
+  },
+  lanyu_octopus: {
+    id: 'lanyu_octopus',
+    name: '深海惡靈・觸手大蛟',
+    location: '台東・蘭嶼',
+    stars: 4,
+    suggestLv: 47,
+    bossEmoji: '🐙',
+    bgImage: '',
+    bossImage: '',
+    desc: '被異世界吸引而來的深海生物,要把整座蘭嶼拖入海底!吼嗚嗚……海底見……',
+    mainline: false,
+    treasure: 'lanyu_bow',
+    bossStats: { hp: 1600, atk: 17, sp: 23, spd: 15 },
+  },
+  sanxia_indigo: {
+    id: 'sanxia_indigo',
+    name: '染靈幻魔・藍色憂鬱',
+    location: '新北・三峽老街',
+    stars: 4,
+    suggestLv: 48,
+    bossEmoji: '👻',
+    bgImage: '',
+    bossImage: '',
+    desc: '原是當地藍染傳承的靈魂,被詛咒後讓所有人陷入永恆憂鬱。藍藍的……一切都好憂傷……',
+    mainline: false,
+    treasure: 'sanxia_indigo_robe',
+    bossStats: { hp: 1700, atk: 17, sp: 25, spd: 14 },
+  },
+  // ─── 主線 BOSS (傳說級) ★ ───
+  ximen_pearl: {
+    id: 'ximen_pearl',
+    name: '珍奶吸魂魔・大波霸',
+    location: '台北・西門町',
+    stars: 5,
+    suggestLv: 49,
+    bossEmoji: '🧋',
+    bgImage: '',
+    bossImage: '',
+    desc: '吸取小朋友手中的珍奶汁液,越喝越大!要把全台北的甜變成苦!咕嚕嚕咕嚕嚕,給我珍珠!',
+    mainline: true,
+    treasure: 'pearl_grail',
+    bossStats: { hp: 1900, atk: 18, sp: 27, spd: 16 },
+  },
+  sun_moon_mirror_boss: {
+    id: 'sun_moon_mirror_boss',
+    name: '水靈反魔・倒映女',
+    location: '南投・日月潭',
+    stars: 5,
+    suggestLv: 49,
+    bossEmoji: '👁️',
+    bgImage: '',
+    bossImage: '',
+    desc: '篡奪靈鏡後製造「假象台灣」要讓人們忘記真實。鏡中的你,才是真正的你……',
+    mainline: true,
+    treasure: 'sun_moon_mirror',
+    bossStats: { hp: 1900, atk: 18, sp: 28, spd: 17 },
+  },
+  taipei_101_warlord: {
+    id: 'taipei_101_warlord',
+    name: '摩天魔將・夜空爆裂者',
+    location: '台北・101 跨年夜',
+    stars: 5,
+    suggestLv: 50,
+    bossEmoji: '🎆',
+    bgImage: '',
+    bossImage: '',
+    desc: '要奪取 101 的「擎天能量」毀滅整個亞洲都會!煙火綻放之時,就是你們末日!',
+    mainline: true,
+    treasure: 'taipei_101_spear',
+    bossStats: { hp: 2000, atk: 19, sp: 28, spd: 18 },
+  },
+  // ─── 最終 BOSS (神話級) ★★ ───
+  yushan_giant: {
+    id: 'yushan_giant',
+    name: '山岳禁咒・崩天巨人',
+    location: '嘉義・玉山主峰',
+    stars: 6,
+    suggestLv: 50,
+    bossEmoji: '🗻',
+    bgImage: '',
+    bossImage: '',
+    desc: '要讓玉山「下沉」,奪走台灣的脊樑!我要拳~~~碎~~~這座山!什麼?這就是我自己的山?等一下我重來……',
+    mainline: true,
+    treasure: 'yushan_shield',
+    bossStats: { hp: 2200, atk: 20, sp: 30, spd: 14 },
+  },
+};
+
+// ★ 至寶等級系統:1~10 級,每級提升 10% 基礎屬性
+//   累積經驗值需求:lv1→2 = 10 EXP, lv2→3 = 20, ...每級 +10
+const TAIWAN_TREASURE_MAX_LV = 10;
+function _getTaiwanTreasureExpForNextLv(curLv){
+  // lv1→2 需 10 EXP, lv2→3 需 20, ...
+  if(curLv >= TAIWAN_TREASURE_MAX_LV) return 0;
+  return curLv * 10;
+}
+// 取得至寶在當前等級的實際屬性加成(線性成長,lv1=10%,lv10=100%)
+function _getTaiwanTreasureStats(treasureId, lv){
+  const def = TAIWAN_TREASURES[treasureId];
+  if(!def) return { hp:0, atk:0, sp:0, spd:0 };
+  const _ratio = Math.max(0.1, Math.min(1.0, (lv||1) / TAIWAN_TREASURE_MAX_LV));
+  return {
+    hp:  Math.round((def.baseStats.hp  || 0) * _ratio),
+    atk: Math.round((def.baseStats.atk || 0) * _ratio),
+    sp:  Math.round((def.baseStats.sp  || 0) * _ratio),
+    spd: Math.round((def.baseStats.spd || 0) * _ratio),
+  };
+}
+
+// ★ 玩家擁有的至寶資料(localStorage 持久化,雲端同步)
+//   結構: { treasureId: { lv: 1, exp: 0, equippedTo: '英雄名' or null } }
+let _taiwanTreasureData = {};
+function _loadTaiwanTreasureData(){
+  try{
+    const raw = localStorage.getItem('lxps_taiwan_treasures');
+    if(raw){
+      _taiwanTreasureData = JSON.parse(raw) || {};
+    }
+  }catch(e){ console.warn('[台灣至寶] 讀取本地資料失敗', e); }
+}
+function _saveTaiwanTreasureData(){
+  try{
+    localStorage.setItem('lxps_taiwan_treasures', JSON.stringify(_taiwanTreasureData));
+  }catch(e){ console.warn('[台灣至寶] 寫入本地資料失敗', e); }
+}
+// 取得至寶經驗(若尚未獲得回傳 null)
+function _getTaiwanTreasureRecord(id){
+  return _taiwanTreasureData[id] || null;
+}
+// 玩家獲得至寶(BOSS 戰勝利後呼叫)
+function _grantTaiwanTreasure(id){
+  if(!TAIWAN_TREASURES[id]) return false;
+  if(!_taiwanTreasureData[id]){
+    _taiwanTreasureData[id] = { lv:1, exp:0, equippedTo:null };
+    _saveTaiwanTreasureData();
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+    return true;
+  }
+  return false;
+}
+// 答對題目時為當前關卡的至寶累積經驗(由戰鬥流程呼叫)
+function _addTaiwanTreasureExp(id, amount){
+  const rec = _taiwanTreasureData[id];
+  if(!rec || rec.lv >= TAIWAN_TREASURE_MAX_LV) return;
+  rec.exp = (rec.exp || 0) + (amount || 1);
+  // 檢查升級
+  let need = _getTaiwanTreasureExpForNextLv(rec.lv);
+  while(need > 0 && rec.exp >= need && rec.lv < TAIWAN_TREASURE_MAX_LV){
+    rec.exp -= need;
+    rec.lv++;
+    try{ console.log('[至寶升級] '+TAIWAN_TREASURES[id].name+' 升至 Lv'+rec.lv); }catch(_){}
+    need = _getTaiwanTreasureExpForNextLv(rec.lv);
+  }
+  _saveTaiwanTreasureData();
+}
+// 將至寶裝備到指定英雄(同 slot 至寶會自動換掉)
+function _equipTaiwanTreasure(treasureId, heroName){
+  const def = TAIWAN_TREASURES[treasureId];
+  const rec = _taiwanTreasureData[treasureId];
+  if(!def || !rec) return false;
+  // 先把所有同 slot 已裝備的至寶從該英雄身上卸下
+  Object.keys(_taiwanTreasureData).forEach(otherId => {
+    const otherDef = TAIWAN_TREASURES[otherId];
+    const otherRec = _taiwanTreasureData[otherId];
+    if(otherDef && otherRec && otherDef.slot === def.slot && otherRec.equippedTo === heroName){
+      otherRec.equippedTo = null;
+    }
+  });
+  // 卸下這個至寶在其他英雄身上的裝備(一個至寶不能同時裝兩個英雄)
+  if(rec.equippedTo && rec.equippedTo !== heroName){
+    rec.equippedTo = null;
+  }
+  rec.equippedTo = heroName;
+  _saveTaiwanTreasureData();
+  try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+  return true;
+}
+// 取得指定英雄裝備的所有至寶
+function _getHeroEquippedTreasures(heroName){
+  const result = [];
+  Object.keys(_taiwanTreasureData).forEach(id => {
+    const rec = _taiwanTreasureData[id];
+    if(rec && rec.equippedTo === heroName){
+      result.push({ id, def: TAIWAN_TREASURES[id], record: rec });
+    }
+  });
+  return result;
+}
+// 計算英雄裝備至寶後的總屬性加成
+function _calcHeroTreasureBonus(heroName){
+  const equipped = _getHeroEquippedTreasures(heroName);
+  const total = { hp:0, atk:0, sp:0, spd:0 };
+  equipped.forEach(e => {
+    const stats = _getTaiwanTreasureStats(e.id, e.record.lv);
+    total.hp  += stats.hp;
+    total.atk += stats.atk;
+    total.sp  += stats.sp;
+    total.spd += stats.spd;
+  });
+  return total;
+}
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2600 — 台灣關 BOSS 戰陣容生成 + 戰勝 hook
+// ════════════════════════════════════════════════════════════════
+// 給每個關卡指定 2 隻小怪(暫用日本關設計過的小妖,主題上勉強通用)
+// 之後可以替換為真正的台灣特色小怪
+const TAIWAN_BOSS_MINIONS = {
+  changhua_braised:    ['偷竹筍的哥布林', '偷喝茶的史萊姆'],     // 偷食物
+  taichung_pineapple:  ['偷摘花的頑皮妖精', '偷喝茶的史萊姆'],  // 偷糕點
+  shenkeng_tofu:       ['偷竹筍的哥布林', '偷鳥蛋的鳥人哈維'],   // 鄉野氣息
+  alishan_tree:        ['綠竹筍小妖', '茶葉精靈'],             // 山林味
+  lanyu_octopus:       ['偷鳥蛋的鳥人哈維', '偷喝茶的史萊姆'],  // 海邊
+  sanxia_indigo:       ['偷摘花的頑皮妖精', '偷竹筍的哥布林'],  // 染料森林
+  ximen_pearl:         ['偷喝茶的史萊姆', '偷摘花的頑皮妖精'],  // 街頭
+  sun_moon_mirror_boss:['茶葉精靈', '綠竹筍小妖'],             // 邵族山林
+  taipei_101_warlord:  ['偷鳥蛋的鳥人哈維', '偷喝茶的史萊姆'],  // 城市
+  yushan_giant:        ['綠竹筍小妖', '偷竹筍的哥布林'],        // 高山林
+};
+// 元素配置:依關卡主題自動套用
+const TAIWAN_BOSS_ELEMENT = {
+  changhua_braised:    'fire',     // 滷汁火屬
+  taichung_pineapple:  'fire',     // 烤糕點火屬
+  shenkeng_tofu:       'dark',     // 臭氣暗屬
+  alishan_tree:        'grass',    // 神木草屬
+  lanyu_octopus:       'water',    // 觸手水屬
+  sanxia_indigo:       'dark',     // 藍色憂鬱暗屬
+  ximen_pearl:         'dark',     // 吸魂暗屬
+  sun_moon_mirror_boss:'water',    // 倒映水屬
+  taipei_101_warlord:  'wind',     // 摩天風屬
+  yushan_giant:        'earth',    // 山岳土屬
+};
+// 動態生成台灣關 BOSS 陣容(供 confirmHeroPick 使用)
+// ★ v1.0.20260428.3200 — 台灣關不設小怪,只有 1 隻主 BOSS 單獨上場
+window._buildTaiwanBossTeam = function(bossId){
+  const boss = TAIWAN_BOSSES[bossId];
+  if(!boss) return [];
+  const bossElem = TAIWAN_BOSS_ELEMENT[bossId] || 'fire';
+  // 單獨 BOSS 陣容(pos=0)
+  return [
+    { name: boss.name, element: bossElem, isMainBoss: true },
+  ];
+};
+
+// 台灣關 BOSS 戰勝後的至寶發放 hook(由 advShowBattleResult 呼叫)
+window._onTaiwanBossDefeated = function(){
+  if(_adventureStage !== 'taiwan') return;
+  const bossId = window._advSelectedTaiwanBoss;
+  if(!bossId) return;
+  const boss = TAIWAN_BOSSES[bossId];
+  if(!boss || !boss.treasure) return;
+  // 呼叫至寶系統發放
+  const granted = (typeof _grantTaiwanTreasure === 'function') ? _grantTaiwanTreasure(boss.treasure) : false;
+  if(granted){
+    const treas = TAIWAN_TREASURES[boss.treasure];
+    try{
+      if(typeof log === 'function'){
+        log('🏆 戰勝 ' + boss.name + '!獲得至寶:' + (treas?treas.name:boss.treasure) + ' !');
+      }
+    }catch(_){}
+    // 顯示獲得至寶彈窗
+    setTimeout(()=>{ try{ _showTaiwanTreasureGrantedModal(boss.treasure); }catch(_){} }, 600);
+  } else {
+    // 已經擁有至寶(玩家重複挑戰),只給經驗
+    try{
+      if(typeof log === 'function'){
+        log('💎 ' + boss.name + ' 再度落敗!您已擁有至寶 ' + (TAIWAN_TREASURES[boss.treasure]?TAIWAN_TREASURES[boss.treasure].name:'') + ',獲得經驗值。');
+      }
+    }catch(_){}
+    // 重複勝利:對應至寶 +20 EXP
+    if(typeof _addTaiwanTreasureExp === 'function'){
+      _addTaiwanTreasureExp(boss.treasure, 20);
+    }
+  }
+};
+
+// 顯示獲得至寶彈窗(BOSS 戰勝利首次獲得時)
+function _showTaiwanTreasureGrantedModal(treasureId){
+  const treas = TAIWAN_TREASURES[treasureId];
+  if(!treas) return;
+  const old = document.getElementById('taiwan-treasure-granted-modal');
+  if(old) old.remove();
+  const rarityColor = {
+    mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff'
+  }[treas.rarity] || '#66ddff';
+  const rarityText = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' }[treas.rarity] || '稀有';
+  const modal = document.createElement('div');
+  modal.id = 'taiwan-treasure-granted-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:9900;background:radial-gradient(circle,rgba(0,0,0,0.9),rgba(0,0,0,0.97));' +
+    'display:flex;align-items:center;justify-content:center;animation:taiwanGrantIn 0.5s ease-out;' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+  if(!document.getElementById('_taiwan-grant-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_taiwan-grant-kf';
+    kf.textContent =
+      '@keyframes taiwanGrantIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}' +
+      '@keyframes taiwanTreasureGlow{0%,100%{filter:drop-shadow(0 0 30px '+rarityColor+');transform:scale(1)}50%{filter:drop-shadow(0 0 60px '+rarityColor+');transform:scale(1.06)}}';
+    document.head.appendChild(kf);
+  }
+  modal.innerHTML =
+    '<div style="background:linear-gradient(180deg,rgba(40,30,60,0.95),rgba(15,10,25,0.97));' +
+      'border:3px solid '+rarityColor+';border-radius:24px;padding:36px 48px;max-width:560px;text-align:center;' +
+      'box-shadow:0 0 60px '+rarityColor+'88;">' +
+      '<div style="font-size:44px;font-weight:900;color:'+rarityColor+';letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 20px '+rarityColor+';">🏆 獲得至寶!</div>' +
+      '<div style="font-size:18px;color:#ddccff;letter-spacing:3px;margin-bottom:24px;">擊敗 BOSS 的證明,加入你的收藏</div>' +
+      '<div style="font-size:200px;line-height:1;animation:taiwanTreasureGlow 2s ease-in-out infinite;margin:20px 0;">' + (treas.icon || '💎') + '</div>' +
+      '<div style="display:inline-block;padding:6px 18px;font-size:18px;font-weight:800;background:'+rarityColor+';color:#fff;border-radius:8px;margin-bottom:12px;">' + rarityText + '・' + (treas.slot==='weapon'?'武器':treas.slot==='armor'?'防具':'飾品') + '</div>' +
+      '<div style="font-size:32px;font-weight:900;color:'+rarityColor+';margin-bottom:14px;">' + treas.name + '</div>' +
+      '<div style="font-size:16px;color:#ccddee;line-height:1.7;background:rgba(0,0,0,0.4);padding:14px;border-radius:10px;border-left:4px solid '+rarityColor+';margin-bottom:24px;text-align:left;">' + treas.desc + '</div>' +
+      '<button id="taiwan-treasure-granted-ok" style="padding:14px 48px;font-size:24px;font-weight:900;letter-spacing:4px;' +
+        'background:linear-gradient(135deg,'+rarityColor+',rgba(0,0,0,0.4));color:#fff;border:2.5px solid '+rarityColor+';' +
+        'border-radius:12px;cursor:pointer;font-family:inherit;box-shadow:0 0 24px '+rarityColor+'aa;">' +
+        '✨ 收下' +
+      '</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+  setTimeout(()=>{
+    const btn = document.getElementById('taiwan-treasure-granted-ok');
+    if(btn){ btn.onclick = ()=>{ try{ playSfx('sfx-confirm2', 0.7); }catch(_){} modal.remove(); }; }
+  }, 30);
+}
+
 const ADV_STAGES = {
   maokong: {
     name: '木柵貓空大冒險',
@@ -28213,6 +28874,30 @@ const ADV_STAGES = {
       {cls:'nature', text:'🔬 自然科學'},
       {cls:'math',   text:'🔢 數學領域'},
       {cls:'lang',   text:'📖 語文領域'}
+    ]
+  },
+  // ★ v1.0.20260428.1700 — 台灣環島歷險記
+  taiwan: {
+    name: '台灣環島歷險記',
+    emoji: '🏝🚂🍵🥤',
+    desc: '台灣各地出現許多神秘時空門,來自異世界的小怪和神祕又強大的魔王們霸佔了各地的特產。力行小英雄們必須踏上環島冒險之旅,通過重重認識台灣各地人文與自然的考題,打敗魔王獲得「至寶」來進行培養,使英雄們獲得更強大的能力!',
+    stars: 5,
+    objectives: [
+      '🗺 從 10 個台灣特色地點中自由挑戰',
+      '👹 擊敗 10 位地方魔王(其中 4 位有差異化主線劇情)',
+      '💎 收集 10 個台灣特色「至寶」並培養強化',
+      '⚔ 將至寶裝備到英雄身上,獲得獨特能力',
+    ],
+    rewards: [
+      {icon:'💎', text:'10 種台灣特色至寶'},
+      {icon:'⭐', text:'大量英雄成長經驗值'},
+      {icon:'📖', text:'技能升級書 ×3'},
+      {icon:'💰', text:'豐厚知識幣'},
+    ],
+    tags: [
+      {cls:'social', text:'🌍 台灣文化'},
+      {cls:'nature', text:'🔬 在地生態'},
+      {cls:'lang',   text:'📖 鄉土知識'},
     ]
   }
 };
@@ -29016,6 +29701,9 @@ function _advRestoreBattleState(snap, bs){
         } else {
           _bossBgmId = 'bgm-japan-boss';
         }
+      } else if(_adventureStage === 'taiwan'){
+        // ★ v1.0.20260428.3200 — 台灣關 10 隻 BOSS 共用 bgm-taiwan-boss
+        _bossBgmId = 'bgm-taiwan-boss';
       } else if((_vi && _vi.id === 'apricot') || _p2Names.includes('杏花妖')){
         _bossBgmId = 'bgm-boss-apricot';
       }
@@ -29053,10 +29741,23 @@ function _advRestoreBattleState(snap, bs){
         } else {
           _bgCls = 'bg-fuji';  // 大天狗 / 酒吞童子 / 玉藻前 共用
         }
+      } else if(_adventureStage === 'taiwan'){
+        // ★ v1.0.20260428.2800 — 台灣關 BOSS 戰背景:依玩家在地圖選的 BOSS 套用對應場景圖
+        const _twBossId = window._advSelectedTaiwanBoss;
+        const _twSceneUrl = (typeof _getTaiwanSceneImage === 'function') ? _getTaiwanSceneImage(_twBossId) : '';
+        if(_twSceneUrl){
+          // 直接 inline style 設定背景圖(不用 class 系統)
+          _bb.style.backgroundImage = 'url("' + _twSceneUrl + '")';
+          _bb.style.backgroundSize = 'cover';
+          _bb.style.backgroundPosition = 'center';
+          _bgCls = ''; // 不加 class
+        } else {
+          _bgCls = 'bg-boss'; // 沒有圖時 fallback
+        }
       } else if((_vi2 && _vi2.id === 'apricot') || _p2Names2.includes('杏花妖')){
         _bgCls = 'bg-apricot';
       }
-      _bb.classList.add(_bgCls);
+      if(_bgCls) _bb.classList.add(_bgCls);
     }
     void _bb.offsetWidth; _bb.classList.add('visible');
   }
@@ -29139,6 +29840,7 @@ function selectAdvStage(key, btnEl){
       const _stageBgMap = {
         maokong: 'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92.png',
         japan:   (typeof _JP_BG !== 'undefined' && _JP_BG.opening) ? _JP_BG.opening : '',
+        taiwan:  '',  // ★ v1.0.20260428.1700 — 待補上台灣關預覽背景圖
       };
       const _url = _stageBgMap[key] || '';
       _win.style.setProperty('--stage-bg', _url ? `url("${_url}")` : 'none');
@@ -29351,6 +30053,634 @@ function _buildApricotTeam(){
 //   把每個 variant(路線)的 BOSS 圖片、名字、戰鬥特色、簡介顯示出來讓玩家先選
 //   玩家選完 → 關閉視窗 → 才進選角流程,敵方陣容也自動換成該 BOSS 變體
 //   (原本選角頁右上的「🔀 換路線」按鈕保留,玩家之後還能臨時改)
+// ═══════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2000 — 台灣環島歷險記:台灣島地圖選關介面
+// ═══════════════════════════════════════════════════════════════
+// 玩家按地圖上的 10 個圖釘選擇要挑戰的 BOSS,
+// 點擊後彈出 BOSS 預覽視窗(立繪、技能、至寶、難度),
+// 確認後設定 _advSelectedTaiwanBoss 並進入選角流程。
+window._advSelectedTaiwanBoss = null; // 儲存玩家選的 BOSS id
+
+// 台灣島上 10 個 BOSS 的座標(以 SVG 視窗 0~1000 寬, 0~1400 高為基準)
+const TAIWAN_MAP_PINS = {
+  // 北部
+  taipei_101_warlord: { x: 720, y: 245, label: '台北101' },        // 信義區
+  ximen_pearl:        { x: 668, y: 240, label: '西門町' },         // 西門
+  shenkeng_tofu:      { x: 705, y: 285, label: '深坑' },           // 新北深坑
+  sanxia_indigo:      { x: 645, y: 290, label: '三峽' },           // 新北三峽
+  // 中部
+  taichung_pineapple: { x: 540, y: 540, label: '台中' },           // 台中
+  changhua_braised:   { x: 545, y: 605, label: '彰化' },           // 彰化
+  sun_moon_mirror_boss:{ x: 615, y: 640, label: '日月潭' },        // 南投
+  // 嘉義/南部
+  alishan_tree:       { x: 562, y: 770, label: '阿里山' },         // 嘉義阿里山
+  yushan_giant:       { x: 620, y: 790, label: '玉山' },           // 嘉義玉山(主峰)
+  // 東部離島
+  lanyu_octopus:      { x: 798, y:1180, label: '蘭嶼' },           // 蘭嶼
+};
+
+function _showTaiwanMapSelector(onConfirm){
+  // 移除舊彈窗
+  const old = document.getElementById('taiwan-map-overlay');
+  if(old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'taiwan-map-overlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:9700;' +
+    'background:radial-gradient(circle at center,rgba(15,30,60,0.97),rgba(5,10,30,0.99));' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;' +
+    'padding:20px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;' +
+    'animation:taiwanMapIn 0.5s cubic-bezier(0.34,1.56,0.64,1);' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  // 注入動畫 keyframes
+  if(!document.getElementById('_taiwan-map-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_taiwan-map-kf';
+    kf.textContent =
+      '@keyframes taiwanMapIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}' +
+      '@keyframes taiwanPinPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 8px currentColor)}50%{transform:scale(1.15);filter:drop-shadow(0 0 18px currentColor)}}' +
+      '.taiwan-pin{cursor:pointer;animation:taiwanPinPulse 2.4s ease-in-out infinite;transition:transform 0.2s}' +
+      '.taiwan-pin:hover{transform:scale(1.4)!important;animation:none}' +
+      '.taiwan-pin-label{font-size:18px;font-weight:900;text-shadow:0 0 4px #000,0 0 4px #000,1px 1px 0 #000;pointer-events:none}';
+    document.head.appendChild(kf);
+  }
+
+  // 標題列
+  const header = document.createElement('div');
+  header.style.cssText = 'width:100%;max-width:1400px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 18px;';
+  header.innerHTML =
+    '<button id="taiwan-map-back-btn" style="padding:10px 22px;font-size:24px;font-weight:700;' +
+      'background:rgba(40,30,0,0.8);border:2px solid rgba(120,255,180,0.55);color:#aaffcc;' +
+      'border-radius:10px;cursor:pointer;letter-spacing:2px;font-family:inherit;">← 返回首頁</button>' +
+    '<div style="font-size:48px;font-weight:900;color:#88ffaa;letter-spacing:6px;text-shadow:0 0 20px rgba(80,255,140,0.6);">' +
+      '🏝️ 台灣環島歷險記' +
+    '</div>' +
+    '<div style="width:160px;"></div>';
+  overlay.appendChild(header);
+
+  const subtitle = document.createElement('div');
+  subtitle.style.cssText = 'font-size:22px;color:#cceeff;letter-spacing:2px;margin-bottom:20px;text-align:center;opacity:0.92;';
+  subtitle.textContent = '點擊地圖上的圖釘,選擇要挑戰的魔王,獲得當地特色至寶!';
+  overlay.appendChild(subtitle);
+
+  // 主容器 (左:地圖 / 右:BOSS 詳情面板)
+  const mainContainer = document.createElement('div');
+  mainContainer.style.cssText = 'display:flex;gap:20px;width:100%;max-width:1500px;align-items:flex-start;justify-content:center;';
+  overlay.appendChild(mainContainer);
+
+  // 左側:台灣島 SVG 地圖
+  const mapBox = document.createElement('div');
+  mapBox.style.cssText = 'flex:0 0 auto;width:560px;background:linear-gradient(180deg,rgba(80,180,220,0.15),rgba(40,80,140,0.25));border:2px solid rgba(120,200,255,0.4);border-radius:18px;padding:14px;box-shadow:0 0 30px rgba(80,180,255,0.25);';
+  mapBox.innerHTML = _buildTaiwanMapSVG();
+  mainContainer.appendChild(mapBox);
+
+  // 右側:BOSS 詳情面板(預設顯示提示)
+  const detailBox = document.createElement('div');
+  detailBox.id = 'taiwan-boss-detail';
+  detailBox.style.cssText = 'flex:1;min-width:380px;max-width:600px;background:linear-gradient(180deg,rgba(40,30,60,0.85),rgba(20,15,30,0.9));border:2px solid rgba(180,140,255,0.4);border-radius:18px;padding:22px;min-height:520px;box-shadow:0 0 30px rgba(140,80,255,0.25);';
+  detailBox.innerHTML =
+    '<div style="font-size:28px;font-weight:900;color:#ddccff;letter-spacing:2px;margin-bottom:14px;text-align:center;">⚔️ 選擇魔王</div>' +
+    '<div style="font-size:120px;text-align:center;margin:30px 0;">🗺️</div>' +
+    '<div style="font-size:18px;color:#ccddee;text-align:center;line-height:1.8;">' +
+      '點選左側台灣地圖上的圖釘,<br>' +
+      '查看魔王資料、難度、可獲得的至寶。<br><br>' +
+      '<span style="color:#ffcc66;">💡 建議玩家等級 45+ 挑戰</span>' +
+    '</div>';
+  mainContainer.appendChild(detailBox);
+
+  document.body.appendChild(overlay);
+
+  // 綁定地圖圖釘點擊事件
+  setTimeout(()=>{
+    document.querySelectorAll('.taiwan-pin').forEach(pin => {
+      pin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try{ playSfx('sfx-sel', 0.5); }catch(_){}
+        const bossId = pin.getAttribute('data-boss-id');
+        _renderTaiwanBossDetail(bossId, onConfirm);
+      });
+    });
+    // 返回按鈕
+    const backBtn = document.getElementById('taiwan-map-back-btn');
+    if(backBtn){
+      backBtn.onclick = () => {
+        try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+        overlay.remove();
+        // 回到關卡選擇視窗
+        try{
+          const advOv = document.getElementById('adventure-overlay');
+          if(advOv){ advOv.style.display = 'flex'; advOv.classList.add('show'); }
+        }catch(_){}
+        // 重置冒險模式狀態
+        try{
+          if(typeof _adventureMode !== 'undefined') _adventureMode = false;
+          if(typeof _adventureStage !== 'undefined') _adventureStage = null;
+          if(typeof window._isAdventurePickMode !== 'undefined') window._isAdventurePickMode = false;
+        }catch(_){}
+        // ★ v1.0.20260428.3400 — 切回原本選單 BGM(若先前是日本關 menu BGM 則維持,否則回 menu-01)
+        try{
+          if(typeof bgmFadeTo === 'function'){
+            bgmFadeTo('bgm-menu-01', 700);
+          }
+        }catch(_){}
+      };
+    }
+  }, 50);
+}
+
+// 建立台灣島 SVG 字串(包含 10 個圖釘)
+function _buildTaiwanMapSVG(){
+  // 台灣島輪廓 path(粗略簡化版,呈現北圓南尖的特徵)
+  // 座標系:0~1000(寬), 0~1400(高);東部離島用較小座標
+  const taiwanPath = 'M 565 105 ' +    // 北端 (基隆/台北北角)
+    'C 595 95, 685 110, 745 145 ' +     // 東北角
+    'C 780 175, 805 215, 815 270 ' +    // 宜蘭/台北東邊
+    'C 820 320, 815 380, 805 440 ' +    // 花蓮北部
+    'C 800 510, 810 590, 820 670 ' +    // 花蓮中部
+    'C 825 750, 815 830, 790 905 ' +    // 花蓮南部到台東
+    'C 770 970, 740 1020, 705 1055 ' +  // 台東
+    'C 670 1085, 630 1100, 590 1095 ' + // 屏東
+    'C 555 1090, 515 1075, 485 1045 ' + // 屏東西側
+    'C 460 1010, 445 970, 440 920 ' +   // 高雄南部
+    'C 430 870, 425 820, 430 770 ' +    // 高雄
+    'C 435 720, 445 670, 450 620 ' +    // 台南
+    'C 455 570, 460 520, 470 470 ' +    // 嘉義/雲林
+    'C 480 420, 490 370, 495 320 ' +    // 彰化/南投
+    'C 500 270, 510 220, 525 175 ' +    // 苗栗/新竹
+    'C 540 140, 550 115, 565 105 Z';    // 桃園/北端閉合
+
+  let pinHtml = '';
+  Object.keys(TAIWAN_MAP_PINS).forEach(bossId => {
+    const pin = TAIWAN_MAP_PINS[bossId];
+    const boss = TAIWAN_BOSSES[bossId];
+    if(!boss) return;
+    // 依稀有度決定圖釘顏色
+    const treas = TAIWAN_TREASURES[boss.treasure];
+    const rarityColor = {
+      mythic: '#ff44ff',
+      legend: '#ffaa44',
+      epic:   '#aa66ff',
+      rare:   '#66ddff',
+    }[treas?.rarity || 'rare'];
+    const isMainline = boss.mainline;
+    // 主線 BOSS 用大圖釘 + 王冠
+    const pinSize = isMainline ? 24 : 18;
+    const crown = isMainline ? '<text x="0" y="-32" text-anchor="middle" font-size="22">👑</text>' : '';
+    pinHtml +=
+      '<g class="taiwan-pin" data-boss-id="'+bossId+'" transform="translate('+pin.x+','+pin.y+')" style="color:'+rarityColor+'">' +
+        crown +
+        '<circle r="'+(pinSize+4)+'" fill="rgba(0,0,0,0.55)" />' +
+        '<circle r="'+pinSize+'" fill="'+rarityColor+'" stroke="#fff" stroke-width="3" />' +
+        '<text y="6" text-anchor="middle" font-size="'+(pinSize-2)+'" font-weight="900">'+boss.bossEmoji+'</text>' +
+        '<text class="taiwan-pin-label" y="'+(pinSize+24)+'" text-anchor="middle" fill="'+rarityColor+'">'+pin.label+'</text>' +
+      '</g>';
+  });
+
+  return (
+    '<svg viewBox="0 0 1000 1400" style="width:100%;height:auto;display:block;" xmlns="http://www.w3.org/2000/svg">' +
+      // 海洋紋路背景
+      '<defs>' +
+        '<radialGradient id="taiwanLand" cx="50%" cy="50%" r="60%">' +
+          '<stop offset="0%" stop-color="#5fb56a" />' +
+          '<stop offset="60%" stop-color="#3a8a47" />' +
+          '<stop offset="100%" stop-color="#235c30" />' +
+        '</radialGradient>' +
+        '<filter id="taiwanGlow"><feGaussianBlur stdDeviation="6" /></filter>' +
+      '</defs>' +
+      // 海洋背景
+      '<rect width="1000" height="1400" fill="url(#taiwanOcean)" opacity="0" />' +
+      // 台灣島陰影
+      '<path d="'+taiwanPath+'" fill="rgba(0,0,0,0.5)" transform="translate(8,10)" />' +
+      // 台灣島本體
+      '<path d="'+taiwanPath+'" fill="url(#taiwanLand)" stroke="#1a4a25" stroke-width="3" />' +
+      // 台灣島亮邊
+      '<path d="'+taiwanPath+'" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" />' +
+      // 蘭嶼小島(東南方離島)
+      '<ellipse cx="798" cy="1180" rx="32" ry="22" fill="url(#taiwanLand)" stroke="#1a4a25" stroke-width="2" />' +
+      '<text x="798" y="1228" text-anchor="middle" font-size="14" fill="#aaeebb" font-weight="700">蘭嶼</text>' +
+      // 中央山脈虛線
+      '<path d="M 590 200 Q 615 500, 605 800 Q 590 950, 580 1050" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-dasharray="6,8" />' +
+      // 標題
+      '<text x="500" y="70" text-anchor="middle" font-size="42" font-weight="900" fill="#88ffaa" letter-spacing="8" filter="url(#taiwanGlow)">台灣 Taiwan</text>' +
+      // 圖釘
+      pinHtml +
+      // 圖例
+      '<g transform="translate(50,1280)">' +
+        '<rect x="0" y="0" width="280" height="100" fill="rgba(0,0,0,0.55)" rx="10" />' +
+        '<text x="14" y="25" font-size="16" font-weight="800" fill="#fff">至寶稀有度</text>' +
+        '<circle cx="22" cy="48" r="8" fill="#66ddff" /><text x="38" y="54" font-size="14" fill="#66ddff">稀有</text>' +
+        '<circle cx="92" cy="48" r="8" fill="#aa66ff" /><text x="108" y="54" font-size="14" fill="#aa66ff">史詩</text>' +
+        '<circle cx="162" cy="48" r="8" fill="#ffaa44" /><text x="178" y="54" font-size="14" fill="#ffaa44">傳說</text>' +
+        '<circle cx="232" cy="48" r="8" fill="#ff44ff" /><text x="248" y="54" font-size="14" fill="#ff44ff">神話</text>' +
+        '<text x="14" y="84" font-size="13" fill="#ffcc66">👑 = 主線 BOSS (有差異化過場)</text>' +
+      '</g>' +
+    '</svg>'
+  );
+}
+
+// 渲染 BOSS 詳情面板
+function _renderTaiwanBossDetail(bossId, onConfirm){
+  const boss = TAIWAN_BOSSES[bossId];
+  if(!boss) return;
+  const treas = TAIWAN_TREASURES[boss.treasure];
+  const detailBox = document.getElementById('taiwan-boss-detail');
+  if(!detailBox) return;
+
+  // 是否已通關過(玩家是否已擁有對應至寶)
+  const _alreadyCleared = !!_getTaiwanTreasureRecord(boss.treasure);
+
+  // 稀有度色彩
+  const rarityColor = {
+    mythic: '#ff44ff',
+    legend: '#ffaa44',
+    epic:   '#aa66ff',
+    rare:   '#66ddff',
+  }[treas?.rarity || 'rare'];
+  const rarityText = {
+    mythic: '神話',
+    legend: '傳說',
+    epic:   '史詩',
+    rare:   '稀有',
+  }[treas?.rarity || 'rare'];
+
+  // 難度星星
+  const filledStars = '★'.repeat(boss.stars);
+  const emptyStars  = '☆'.repeat(Math.max(0, 6 - boss.stars));
+
+  // 主線 BOSS 標記
+  const mainlineBadge = boss.mainline
+    ? '<span style="display:inline-block;padding:3px 10px;font-size:14px;font-weight:800;background:linear-gradient(135deg,#ff8800,#ffcc44);color:#fff;border-radius:6px;letter-spacing:1px;margin-left:8px;">👑 主線</span>'
+    : '';
+
+  // 通關標記
+  const clearedBadge = _alreadyCleared
+    ? '<div style="position:absolute;top:14px;right:14px;background:#22aa44;color:#fff;padding:4px 12px;border-radius:8px;font-size:14px;font-weight:800;letter-spacing:1px;">✓ 已通關</div>'
+    : '';
+
+  detailBox.innerHTML =
+    clearedBadge +
+    '<div style="font-size:14px;color:#ccaaff;letter-spacing:2px;margin-bottom:4px;">📍 ' + boss.location + '</div>' +
+    '<div style="font-size:30px;font-weight:900;color:#ffeebb;letter-spacing:2px;margin-bottom:6px;line-height:1.2;">' +
+      boss.name + mainlineBadge +
+    '</div>' +
+    // BOSS 立繪區:有圖則用 <img>,失敗 fallback 到 emoji
+    (function(){
+      const _imgUrl = (typeof _getTaiwanBossImage === 'function') ? _getTaiwanBossImage(bossId) : '';
+      const _imgHtml = _imgUrl
+        ? '<img src="'+_imgUrl+'" style="max-width:90%;max-height:300px;object-fit:contain;filter:drop-shadow(0 0 24px '+rarityColor+');" onerror="this.outerHTML=\'<div style=&quot;font-size:140px;line-height:1;text-shadow:0 0 30px '+rarityColor+';&quot;>'+boss.bossEmoji+'</div>\';" />'
+        : '<div style="font-size:140px;line-height:1;text-shadow:0 0 30px '+rarityColor+';">' + boss.bossEmoji + '</div>';
+      return '<div style="background:radial-gradient(circle,'+rarityColor+'33,rgba(0,0,0,0.4));border:2px solid '+rarityColor+'66;border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;min-height:200px;display:flex;align-items:center;justify-content:center;">' +
+        _imgHtml +
+      '</div>';
+    })() +
+    // 難度與建議等級
+    '<div style="display:flex;gap:14px;margin-bottom:12px;">' +
+      '<div style="flex:1;background:rgba(255,200,80,0.12);border:1.5px solid rgba(255,200,80,0.4);border-radius:10px;padding:10px 14px;">' +
+        '<div style="font-size:13px;color:#ddccaa;">難度</div>' +
+        '<div style="font-size:22px;font-weight:800;"><span style="color:#ffcc44;">'+filledStars+'</span><span style="color:#444;">'+emptyStars+'</span></div>' +
+      '</div>' +
+      '<div style="flex:1;background:rgba(120,200,255,0.12);border:1.5px solid rgba(120,200,255,0.4);border-radius:10px;padding:10px 14px;">' +
+        '<div style="font-size:13px;color:#aacced;">建議等級</div>' +
+        '<div style="font-size:22px;font-weight:800;color:#88ddff;">Lv ' + boss.suggestLv + '+</div>' +
+      '</div>' +
+    '</div>' +
+    // ★ v1.0.20260428.3200 — BOSS 元素屬性與相剋提示
+    (function(){
+      const _bossElem = (typeof TAIWAN_BOSS_ELEMENT !== 'undefined') ? TAIWAN_BOSS_ELEMENT[bossId] : null;
+      if(!_bossElem || typeof ELEMENT_DB === 'undefined' || !ELEMENT_DB[_bossElem]) return '';
+      const _eData = ELEMENT_DB[_bossElem];
+      // 找出剋制 BOSS 屬性的元素(_bossElem 在哪個元素的 vs_adv 中)
+      const _counters = [];
+      Object.keys(ELEMENT_DB).forEach(k => {
+        const _ed = ELEMENT_DB[k];
+        if(_ed.vs_adv && _ed.vs_adv.includes(_bossElem)) _counters.push(_ed);
+      });
+      const _counterIcons = _counters.map(c => c.icon + c.name).join(' ・ ') || '無';
+      return '<div style="background:rgba(80,40,120,0.28);border:1.5px solid rgba(180,140,255,0.45);border-radius:10px;padding:10px 14px;margin-bottom:14px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">' +
+          '<div>' +
+            '<span style="font-size:13px;color:#ddccff;">BOSS 屬性 </span>' +
+            '<span style="font-size:22px;font-weight:900;color:#ffccee;">'+_eData.icon+' '+_eData.name+'</span>' +
+          '</div>' +
+          '<div>' +
+            '<span style="font-size:13px;color:#ffaadd;">建議用 </span>' +
+            '<span style="font-size:18px;font-weight:800;color:#ffeebb;">'+_counterIcons+'</span>' +
+            '<span style="font-size:13px;color:#ffaadd;"> 屬性英雄(+10%傷害)</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    })() +
+    // BOSS 介紹文字
+    '<div style="background:rgba(0,0,0,0.35);border-left:4px solid '+rarityColor+';padding:10px 14px;border-radius:8px;font-size:16px;color:#ddeeff;line-height:1.7;margin-bottom:14px;">' +
+      '"' + boss.desc + '"' +
+    '</div>' +
+    // 至寶獎勵
+    (treas ? (
+      '<div style="background:linear-gradient(135deg,'+rarityColor+'22,rgba(0,0,0,0.4));border:2px solid '+rarityColor+'88;border-radius:14px;padding:14px;margin-bottom:18px;">' +
+        '<div style="font-size:14px;color:'+rarityColor+';letter-spacing:2px;font-weight:800;margin-bottom:6px;">💎 戰勝獎勵</div>' +
+        '<div style="display:flex;align-items:center;gap:14px;">' +
+          '<div style="font-size:60px;">' + (treas.icon || '💎') + '</div>' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:22px;font-weight:900;color:'+rarityColor+';margin-bottom:4px;">' + treas.name + '</div>' +
+            '<div style="font-size:14px;color:#fff;background:'+rarityColor+';display:inline-block;padding:2px 8px;border-radius:4px;font-weight:800;">' + rarityText + ' · ' + (treas.slot==='weapon'?'武器':treas.slot==='armor'?'防具':'飾品') + '</div>' +
+            '<div style="font-size:13px;color:#ccddee;margin-top:6px;line-height:1.5;">' + treas.desc + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    ) : '') +
+    // 動作按鈕
+    '<button id="taiwan-boss-confirm-btn" style="width:100%;padding:16px;font-size:24px;font-weight:900;letter-spacing:3px;' +
+      'background:linear-gradient(135deg,'+rarityColor+',rgba(0,0,0,0.5));color:#fff;' +
+      'border:2.5px solid '+rarityColor+';border-radius:12px;cursor:pointer;font-family:inherit;' +
+      'box-shadow:0 0 24px '+rarityColor+'aa;transition:transform 0.15s;">' +
+      '⚔️ 挑戰魔王!' +
+    '</button>';
+
+  // 綁定確認按鈕
+  setTimeout(()=>{
+    const btn = document.getElementById('taiwan-boss-confirm-btn');
+    if(btn){
+      btn.onmouseover = () => { btn.style.transform = 'translateY(-2px)'; };
+      btn.onmouseout  = () => { btn.style.transform = ''; };
+      btn.onclick = () => {
+        try{ playSfx('sfx-battle-start', 0.7); }catch(_){}
+        window._advSelectedTaiwanBoss = bossId;
+        // 關閉地圖
+        const ov = document.getElementById('taiwan-map-overlay');
+        if(ov) ov.remove();
+        // ★ v1.0.20260428.2800 — 新流程:場景過場 → 對白 → 選難度 → 選角
+        // 不再直接進選角(onConfirm),而是先走過場
+        _showTaiwanCutscene(bossId, () => {
+          _showTaiwanBossDialog(bossId, () => {
+            _showTaiwanDifficultySelect(bossId, (difficulty) => {
+              // 設定難度後再進選角
+              window._advPlayerDifficulty = difficulty;
+              if(onConfirm) onConfirm();
+            });
+          });
+        });
+      };
+    }
+  }, 30);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2800 — 台灣關 進場景 → 對白 → 選難度 流程
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.3000 — 依玩家在台灣關選的難度,動態裁減題目選項
+// 沒自信:顯示 2 個 / 普通:顯示 3 個 / 我很會:顯示 4 個
+// 永遠保留正確答案,從錯誤選項中隨機抽留(若題目原始選項數不足目標,則保持原樣)
+function _trimOptionsByTaiwanDifficulty(q){
+  if(!q || !Array.isArray(q.options) || !q.answer) return q;
+  const diff = window._advPlayerDifficulty;
+  const targetCount =
+    diff === '沒自信' ? 2 :
+    diff === '普通'   ? 3 :
+    diff === '我很會' ? 4 : 4;  // 預設 4(全顯示)
+  const origLen = q.options.length;
+  if(origLen <= targetCount) return q;  // 原本就夠少,不需裁減
+  // 找出正確答案的 index(answer 是 'A'/'B'/'C'/'D')
+  const correctIdx = q.answer.charCodeAt(0) - 'A'.charCodeAt(0);
+  if(correctIdx < 0 || correctIdx >= origLen) return q;
+  const correctText = q.options[correctIdx];
+  // 收集錯誤選項
+  const wrongOptions = q.options.filter((_, i) => i !== correctIdx);
+  // 從錯誤選項中隨機選 (targetCount - 1) 個
+  const need = targetCount - 1;
+  const shuffled = wrongOptions.slice();
+  for(let i = shuffled.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const pickedWrongs = shuffled.slice(0, need);
+  // 組合新選項並隨機洗牌(確保正確答案不總在第一個)
+  const newOptions = [correctText, ...pickedWrongs];
+  for(let i = newOptions.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [newOptions[i], newOptions[j]] = [newOptions[j], newOptions[i]];
+  }
+  // 重新計算正確答案的字母
+  const newCorrectIdx = newOptions.indexOf(correctText);
+  const newAnswer = String.fromCharCode('A'.charCodeAt(0) + newCorrectIdx);
+  // 回傳「淺拷貝」並覆寫 options/answer,不影響原始題庫資料
+  return Object.assign({}, q, { options: newOptions, answer: newAnswer });
+}
+
+const TAIWAN_BOSS_DIALOGS = {
+  changhua_braised: [
+    {speaker:'BOSS', text:'咕嚕嚕嚕——!香啊!整鍋滷汁滾了三十年從沒涼過!'},
+    {speaker:'BOSS', text:'你也想嚐我的真神滷肉飯嗎?哈哈哈先過我這關再說!'},
+  ],
+  taichung_pineapple: [
+    {speaker:'BOSS', text:'嘩啦——金黃糕點熱浪襲來!太陽餅、鳳梨酥都在冒煙!'},
+    {speaker:'BOSS', text:'敢挑戰本糕師?熱浪烤箱已經 250 度了喔!'},
+  ],
+  shenkeng_tofu: [
+    {speaker:'BOSS', text:'呼——這味道...這就是千年發酵的精華!'},
+    {speaker:'BOSS', text:'你受不了我的臭氣?那就被我封印在豆腐裡吧!'},
+  ],
+  alishan_tree: [
+    {speaker:'BOSS', text:'磔磔磔——三千年的神木,守護阿里山的森林!'},
+    {speaker:'BOSS', text:'凡人膽敢闖入我的領域?根鬚絞殺!神木怒火!'},
+  ],
+  lanyu_octopus: [
+    {speaker:'BOSS', text:'呼嚕嚕嚕——太平洋深處,我在此等候多時!'},
+    {speaker:'BOSS', text:'八條觸手亂舞,你的小船怎麼可能渡得過去!'},
+  ],
+  sanxia_indigo: [
+    {speaker:'BOSS', text:'(緩緩的優雅藍霧)...悲傷...如同藍染般深沉...'},
+    {speaker:'BOSS', text:'看著我的染霧,你也會被憂鬱征服...'},
+  ],
+  ximen_pearl: [
+    {speaker:'BOSS', text:'啵啵啵啵——金屬吸管已就位,黑珍珠機關槍!'},
+    {speaker:'BOSS', text:'你準備被我吸成乾糖份了嗎?咕嚕嚕嚕嚕!'},
+  ],
+  sun_moon_mirror_boss: [
+    {speaker:'BOSS', text:'(湖水波光蕩漾)...你看,鏡中的自己...是真的還是假的?'},
+    {speaker:'BOSS', text:'走進日月潭的水鏡,你將永遠分不清真假!'},
+  ],
+  taipei_101_warlord: [
+    {speaker:'BOSS', text:'轟轟——!擎天神槍蓄勢待發!508 公尺的怒火!'},
+    {speaker:'BOSS', text:'今晚跨年,煙火秀的主角是把你炸飛!'},
+  ],
+  yushan_giant: [
+    {speaker:'BOSS', text:'(地動山搖)...玉山之靈被你驚動了...'},
+    {speaker:'BOSS', text:'你想登上 3952 公尺的巔峰?先過我這座山岳!'},
+  ],
+};
+
+function _showTaiwanCutscene(bossId, onDone){
+  const boss = TAIWAN_BOSSES[bossId];
+  if(!boss){ if(onDone) onDone(); return; }
+  const old = document.getElementById('taiwan-cutscene-overlay');
+  if(old) old.remove();
+  const sceneUrl = (typeof _getTaiwanSceneImage === 'function') ? _getTaiwanSceneImage(bossId) : '';
+  const overlay = document.createElement('div');
+  overlay.id = 'taiwan-cutscene-overlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:9750;cursor:pointer;' +
+    (sceneUrl ? ('background:url("'+sceneUrl+'") center center/cover no-repeat,') : 'background:') +
+    'linear-gradient(180deg,rgba(0,0,0,0.4),rgba(0,0,0,0.7));' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+    'animation:taiwanCutsceneIn 0.8s ease-out;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+  if(!document.getElementById('_taiwan-cutscene-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_taiwan-cutscene-kf';
+    kf.textContent =
+      '@keyframes taiwanCutsceneIn{from{opacity:0}to{opacity:1}}' +
+      '@keyframes taiwanCutsceneTitle{0%{opacity:0;transform:translateY(40px)}100%{opacity:1;transform:translateY(0)}}' +
+      '@keyframes taiwanCutscenePulse{0%,100%{opacity:0.65}50%{opacity:1}}';
+    document.head.appendChild(kf);
+  }
+  overlay.innerHTML =
+    '<div style="background:rgba(0,0,0,0.55);padding:60px 80px;border-radius:24px;backdrop-filter:blur(4px);text-align:center;animation:taiwanCutsceneTitle 1s 0.3s ease-out both;max-width:90%;">' +
+      '<div style="font-size:24px;color:#ffcc66;letter-spacing:6px;margin-bottom:14px;">📍 ' + boss.location + '</div>' +
+      '<div style="font-size:64px;font-weight:900;color:#ffeebb;letter-spacing:8px;margin-bottom:20px;text-shadow:0 0 30px rgba(255,200,80,0.7),0 4px 8px rgba(0,0,0,0.6);">' + boss.name + '</div>' +
+      '<div style="font-size:20px;color:#ddccaa;line-height:1.8;max-width:720px;margin:0 auto;font-style:italic;">「' + boss.desc + '」</div>' +
+    '</div>' +
+    '<div style="position:absolute;bottom:60px;font-size:22px;color:#fff;letter-spacing:4px;animation:taiwanCutscenePulse 1.5s ease-in-out infinite;">▶ 點擊任意處繼續</div>';
+  overlay.onclick = () => {
+    try{ playSfx('sfx-confirm2', 0.5); }catch(_){}
+    overlay.style.transition = 'opacity 0.4s';
+    overlay.style.opacity = '0';
+    setTimeout(()=>{ overlay.remove(); if(onDone) onDone(); }, 400);
+  };
+  document.body.appendChild(overlay);
+}
+
+function _showTaiwanBossDialog(bossId, onDone){
+  const boss = TAIWAN_BOSSES[bossId];
+  const lines = TAIWAN_BOSS_DIALOGS[bossId] || [{speaker:'BOSS', text:'你來了嗎?那就讓我考考你!'}];
+  if(!boss){ if(onDone) onDone(); return; }
+  const old = document.getElementById('taiwan-dialog-overlay');
+  if(old) old.remove();
+  const sceneUrl = (typeof _getTaiwanSceneImage === 'function') ? _getTaiwanSceneImage(bossId) : '';
+  const bossUrl  = (typeof _getTaiwanBossImage === 'function')  ? _getTaiwanBossImage(bossId)  : '';
+  const overlay = document.createElement('div');
+  overlay.id = 'taiwan-dialog-overlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:9760;cursor:pointer;' +
+    (sceneUrl ? ('background:url("'+sceneUrl+'") center center/cover no-repeat,') : 'background:') +
+    'linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.85));' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;' +
+    'animation:taiwanCutsceneIn 0.5s ease-out;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+  const _bossPortraitHtml = bossUrl
+    ? '<img id="taiwan-dialog-boss-img" src="'+bossUrl+'" style="position:absolute;top:8%;right:6%;max-height:60%;max-width:35%;object-fit:contain;filter:drop-shadow(0 0 30px rgba(255,100,100,0.7));animation:taiwanCutsceneTitle 0.8s ease-out both;" onerror="this.style.display=\'none\';" />'
+    : '';
+  overlay.innerHTML =
+    _bossPortraitHtml +
+    '<div id="taiwan-dialog-box" style="width:90%;max-width:1200px;margin-bottom:60px;background:linear-gradient(180deg,rgba(20,10,30,0.94),rgba(40,20,60,0.96));border:3px solid rgba(255,200,80,0.7);border-radius:18px;padding:24px 36px;box-shadow:0 0 40px rgba(255,150,80,0.4);animation:taiwanCutsceneTitle 0.5s ease-out both;">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
+        '<div style="font-size:28px;">' + boss.bossEmoji + '</div>' +
+        '<div style="font-size:24px;font-weight:900;color:#ffcc66;letter-spacing:3px;">' + boss.name + '</div>' +
+      '</div>' +
+      '<div id="taiwan-dialog-text" style="font-size:24px;color:#fff;letter-spacing:1.5px;line-height:1.8;min-height:70px;"></div>' +
+      '<div style="text-align:right;font-size:16px;color:#ffcc66;letter-spacing:3px;margin-top:10px;animation:taiwanCutscenePulse 1.2s ease-in-out infinite;">▼ 點擊繼續</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  let currentIdx = 0;
+  const showLine = () => {
+    if(currentIdx >= lines.length){
+      overlay.style.transition = 'opacity 0.4s';
+      overlay.style.opacity = '0';
+      setTimeout(()=>{ overlay.remove(); if(onDone) onDone(); }, 400);
+      return;
+    }
+    const line = lines[currentIdx];
+    const textEl = document.getElementById('taiwan-dialog-text');
+    if(textEl){
+      textEl.textContent = '';
+      let charIdx = 0;
+      const typeTimer = setInterval(()=>{
+        if(charIdx >= line.text.length){
+          clearInterval(typeTimer);
+          overlay._typing = false;
+          return;
+        }
+        textEl.textContent += line.text[charIdx];
+        charIdx++;
+      }, 30);
+      overlay._typing = true;
+      overlay._typeTimer = typeTimer;
+      overlay._currentLine = line.text;
+    }
+    currentIdx++;
+  };
+  overlay.onclick = () => {
+    try{ playSfx('sfx-tap', 0.3); }catch(_){}
+    if(overlay._typing && overlay._typeTimer && overlay._currentLine){
+      clearInterval(overlay._typeTimer);
+      const textEl = document.getElementById('taiwan-dialog-text');
+      if(textEl) textEl.textContent = overlay._currentLine;
+      overlay._typing = false;
+      return;
+    }
+    showLine();
+  };
+  showLine();
+}
+
+function _showTaiwanDifficultySelect(bossId, onSelected){
+  const boss = TAIWAN_BOSSES[bossId];
+  if(!boss){ if(onSelected) onSelected('普通'); return; }
+  const old = document.getElementById('taiwan-difficulty-overlay');
+  if(old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'taiwan-difficulty-overlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:9770;background:linear-gradient(135deg,rgba(20,10,40,0.96),rgba(40,20,60,0.97));' +
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;' +
+    'animation:taiwanCutsceneIn 0.5s ease-out;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+  const difficulties = [
+    { key:'沒自信', label:'😰 沒自信',   sub:'2 個選項', desc:'簡單模式,適合害羞的小英雄',     color:'#88ddff' },
+    { key:'普通',   label:'😎 普通',     sub:'3 個選項', desc:'中等難度,給準備好的英雄',       color:'#ffcc44' },
+    { key:'我很會', label:'🔥 我很會',   sub:'4 個選項', desc:'困難挑戰,給自信滿滿的勇者!',    color:'#ff6688' },
+  ];
+  const cardsHtml = difficulties.map(d =>
+    '<div class="taiwan-diff-card" data-key="'+d.key+'" style="flex:1;cursor:pointer;background:linear-gradient(180deg,rgba(40,30,60,0.7),rgba(20,15,30,0.85));border:3px solid '+d.color+'88;border-radius:20px;padding:30px 22px;text-align:center;transition:all 0.2s;min-width:240px;max-width:300px;">' +
+      '<div style="font-size:48px;font-weight:900;color:'+d.color+';letter-spacing:4px;margin-bottom:8px;">'+d.label+'</div>' +
+      '<div style="display:inline-block;padding:5px 14px;font-size:18px;background:'+d.color+';color:#000;border-radius:6px;font-weight:800;margin-bottom:14px;">'+d.sub+'</div>' +
+      '<div style="font-size:16px;color:#ddccee;line-height:1.6;">'+d.desc+'</div>' +
+    '</div>'
+  ).join('');
+  overlay.innerHTML =
+    '<div style="font-size:48px;font-weight:900;color:#ffeebb;letter-spacing:8px;margin-bottom:8px;text-shadow:0 0 20px rgba(255,200,80,0.6);">⚔️ 選擇難度</div>' +
+    '<div style="font-size:20px;color:#ddccaa;letter-spacing:3px;margin-bottom:30px;">挑戰 ' + boss.name + ' 之前,先決定你的考驗!</div>' +
+    '<div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:1100px;margin-bottom:30px;">' +
+      cardsHtml +
+    '</div>' +
+    '<button id="taiwan-diff-back-btn" style="padding:10px 26px;font-size:18px;background:rgba(80,60,40,0.7);border:2px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;letter-spacing:2px;font-family:inherit;">← 返回 BOSS 詳情</button>';
+  document.body.appendChild(overlay);
+  setTimeout(()=>{
+    document.querySelectorAll('.taiwan-diff-card').forEach(card => {
+      card.addEventListener('mouseover', ()=>{ card.style.transform = 'translateY(-6px) scale(1.04)'; });
+      card.addEventListener('mouseout',  ()=>{ card.style.transform = ''; });
+      card.addEventListener('click', ()=>{
+        const key = card.getAttribute('data-key');
+        try{ playSfx('sfx-confirm2', 0.7); }catch(_){}
+        overlay.style.transition = 'opacity 0.4s';
+        overlay.style.opacity = '0';
+        setTimeout(()=>{ overlay.remove(); if(onSelected) onSelected(key); }, 400);
+      });
+    });
+    const backBtn = document.getElementById('taiwan-diff-back-btn');
+    if(backBtn){
+      backBtn.onclick = () => {
+        try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+        overlay.remove();
+        if(typeof _showTaiwanMapSelector === 'function'){
+          _showTaiwanMapSelector(()=> showHeroPickOverlay());
+        }
+      };
+    }
+  }, 30);
+}
+
+// ════════════════════════════════════════════════════════════════
+// 日本/貓空關 BOSS 路線選擇器(原 _advShowBossRouteSelector 函式宣告)
+// ════════════════════════════════════════════════════════════════
 function _advShowBossRouteSelector(onConfirm){
   const stage = _adventureStage;
   const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS[stage]) || [];
@@ -29692,6 +31022,15 @@ function startAdventureGame(stage){
     _advPlayerSubject = '日本關';
     _advPlayerDifficulty = '普通';
   }
+  // ★ v1.0.20260428.1700 — 台灣環島:跟日本關類似,跳過選擇流程
+  //   題庫 subject 用 '台灣環島',難度依玩家在地圖上選的關卡決定(後續實作)
+  if(stage === 'taiwan'){
+    _advPlayerGrade = '台灣環島';
+    _advPlayerSubject = '台灣環島';
+    _advPlayerDifficulty = '普通';
+    // 載入玩家的至寶資料(localStorage)
+    try{ _loadTaiwanTreasureData(); }catch(_){}
+  }
   // ★ 日本關自動設定題庫參數（跳過年級/科目/難度選擇）
   if(stage === 'japan'){
     _advPlayerGrade = '日本關';
@@ -29739,6 +31078,13 @@ function startAdventureGame(stage){
   buildDeck();
   // ★ v1.0.20260420.2900 — 先彈 BOSS 路線選擇視窗,選完才進選角
   //   若該關只有一個 variant,selector 會直接 callback,不會卡流程
+  // ★ v1.0.20260428.2000 — 台灣關走特殊路徑:顯示台灣島地圖選關
+  if(stage === 'taiwan'){
+    fadeTransition(()=>{
+      _showTaiwanMapSelector(()=> showHeroPickOverlay());
+    }, 350);
+    return;
+  }
   fadeTransition(()=>{
     _advShowBossRouteSelector(()=> showHeroPickOverlay());
   }, 350);
@@ -29747,7 +31093,14 @@ function startAdventureGame(stage){
 // ── 標記 BOSS 卡片樣式（renderField 後呼叫）
 function markAdventureBossCards(){
   if(!_adventureMode || !G.p2) return;
-  const _mainBossNames = ['九尾空貓怪','杏花妖'];
+  // ★ v1.0.20260428.2600 — 加入台灣關 10 隻主 BOSS 與日本關 4 隻
+  const _mainBossNames = [
+    '九尾空貓怪','杏花妖',
+    '大天狗','酒吞童子','玉藻前','八岐大蛇',
+    '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
+    '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+    '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+  ];
   G.p2.forEach(h=>{
     const cardEl = document.querySelector(`.card[data-side="p2"][data-pos="${h.pos}"]`)
                 || document.querySelector(`#card-p2-${h.pos}`);
@@ -29934,6 +31287,326 @@ const ADV_QUIZ_5S_U4_SOUND = [
   {id:9228,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於噪音防治，下列哪項做法不恰當？',options:['在室內輕聲細語','搬動椅子用拉的','晚間不彈奏樂器','樂器加裝消音器'],answer:'B'},
   {id:9229,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'自製吸管笛時，若將吸管剪短，吹出的聲音會？',options:['變大聲','音調變高','音調變低','變小聲'],answer:'B'},
   {id:9230,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'醫生使用的「超音波檢查儀」是模仿哪種動物的本領？',options:['螞蟻','蝙蝠','老虎','蝴蝶'],answer:'B'},
+];
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2400 — 台灣環島歷險記 300 題題庫
+// ════════════════════════════════════════════════════════════════
+// 10 關 × 每關 30 題(10沒自信 + 10普通 + 10我很會)
+// id 範圍:30001~30300
+// subject 統一為「台灣環島」,bossId 標示對應關卡
+// ────────────────────────────────────────────────────────────────
+const TAIWAN_QUIZ_DB = [
+// ─── 關卡1:彰化滷肉飯(braised_pot)id 30001~30030 ───
+{id:30001,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'彰化縣的代表小吃是什麼？',options:['彰化肉圓','蚵仔煎'],answer:'A'},
+{id:30002,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'滷肉飯主要的肉是什麼？',options:['雞肉','豬肉'],answer:'B'},
+{id:30003,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'彰化八卦山上有什麼著名的雕像？',options:['大佛','觀音'],answer:'A'},
+{id:30004,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'彰化扇形車庫是用來做什麼的？',options:['停放火車頭','曬衣服'],answer:'A'},
+{id:30005,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'彰化在台灣的哪一邊？',options:['西部','東部'],answer:'A'},
+{id:30006,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'滷肉飯上面通常會淋什麼？',options:['滷汁','番茄醬'],answer:'A'},
+{id:30007,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'彰化的肉圓主要是用什麼做外皮？',options:['番薯粉','麵粉'],answer:'A'},
+{id:30008,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'滷肉常加什麼香料增香？',options:['八角','薄荷'],answer:'A'},
+{id:30009,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'彰化在哪個盆地的邊緣？',options:['彰化平原','台東縱谷'],answer:'A'},
+{id:30010,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'沒自信',question:'下列哪個是彰化的傳統美食？',options:['爌肉飯','北平烤鴨'],answer:'A'},
+{id:30011,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'彰化八卦山大佛的高度大約是多少公尺？',options:['10公尺','22公尺','50公尺'],answer:'B'},
+{id:30012,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'下列哪個不是彰化的著名景點？',options:['鹿港老街','八卦山','日月潭'],answer:'C'},
+{id:30013,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'鹿港的「鹿」字反映了它早期的什麼？',options:['有很多鹿出沒','是台灣鹿茸首都','一種糕餅店'],answer:'A'},
+{id:30014,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'彰化平原是台灣重要的什麼產區？',options:['稻米','茶葉','蘋果'],answer:'A'},
+{id:30015,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'滷肉飯的「滷」是哪種烹飪方式？',options:['用滷汁長時間慢煮','用大火快炒','用油快炸'],answer:'A'},
+{id:30016,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'鹿港龍山寺主祀的神明是？',options:['媽祖','觀世音菩薩','土地公'],answer:'B'},
+{id:30017,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'彰化縣境內最長的河流是？',options:['濁水溪','大甲溪','淡水河'],answer:'A'},
+{id:30018,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'下列哪一個是彰化的伴手禮？',options:['鳳眼糕','太陽餅','鳳梨酥'],answer:'A'},
+{id:30019,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'彰化扇形車庫的建造年代是？',options:['日治時期','清朝','民國以後'],answer:'A'},
+{id:30020,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'普通',question:'彰化王功的特產是什麼？',options:['蚵仔','茶葉','鳳梨'],answer:'A'},
+{id:30021,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'彰化八卦山大佛建造完成於哪一年代？',options:['1956年','1980年','2000年','1932年'],answer:'A'},
+{id:30022,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'下列哪一個不是台灣三大滷肉飯流派之一？',options:['北部南部混合派','日式醬油派','南部甜口派','北部鹹香派'],answer:'B'},
+{id:30023,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'鹿港的天后宮主祀的媽祖開光於何時？',options:['明朝萬曆','日治時期','清朝光緒','民國時期'],answer:'A'},
+{id:30024,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'濁水溪流經彰化主要的支流是？',options:['北港溪','東螺溪','曾文溪','大漢溪'],answer:'B'},
+{id:30025,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'清領時期的「一府二鹿三艋舺」中的「鹿」是指？',options:['鹿港','鹿野','鹿谷','鹿草'],answer:'A'},
+{id:30026,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'彰化扇形車庫目前還有幾個車道在使用？',options:['12線','6線','24線','8線'],answer:'A'},
+{id:30027,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'彰化北斗肉圓與彰化市肉圓的差別是？',options:['北斗用蒸的、彰化用炸的','顏色不同','大小不同','使用不同的肉'],answer:'A'},
+{id:30028,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'彰化縣的縣花是什麼？',options:['菊花','梅花','桐花','櫻花'],answer:'A'},
+{id:30029,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'下列哪一個是彰化縣最高的山？',options:['橫山','九九峰','合歡山','玉山'],answer:'A'},
+{id:30030,grade:'台灣環島',subject:'台灣環島',bossId:'changhua_braised',difficulty:'我很會',question:'彰化平原靠灌溉的是哪一條重要水圳？',options:['八堡圳','嘉南大圳','瑠公圳','曹公圳'],answer:'A'},
+// ─── 關卡2:台中鳳梨酥(taichung_pineapple)id 30031~30060 ───
+{id:30031,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'鳳梨酥的內餡傳統是用什麼水果做的？',options:['鳳梨','蘋果'],answer:'A'},
+{id:30032,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'台中的代表伴手禮之一是？',options:['太陽餅','鳳眼糕'],answer:'A'},
+{id:30033,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'台中市位於台灣的哪個位置？',options:['中部','東部'],answer:'A'},
+{id:30034,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'台中著名的觀光夜市是？',options:['逢甲夜市','士林夜市'],answer:'A'},
+{id:30035,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'鳳梨酥的「酥」是指外皮的什麼口感？',options:['酥脆','濕黏'],answer:'A'},
+{id:30036,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'下列哪一個是台中的著名景點？',options:['宮原眼科','野柳'],answer:'A'},
+{id:30037,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'太陽餅的形狀通常是？',options:['圓形扁平','長條形'],answer:'A'},
+{id:30038,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'鳳梨在台灣的台語叫什麼？',options:['旺來','蘋果'],answer:'A'},
+{id:30039,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'台中的「中」字代表？',options:['中部','重要'],answer:'A'},
+{id:30040,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'沒自信',question:'下列哪個不是台中的特產？',options:['臭豆腐','太陽餅','鳳梨酥'],answer:'A'},
+{id:30041,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'宮原眼科原本日治時期是做什麼用的？',options:['眼科診所','公賣局','圖書館'],answer:'A'},
+{id:30042,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'台中有名的湖叫什麼？',options:['日月潭','秋紅谷','澄清湖'],answer:'B'},
+{id:30043,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'鳳梨酥的「土鳳梨酥」與一般鳳梨酥差別在？',options:['用本土鳳梨','形狀不同','大小不同'],answer:'A'},
+{id:30044,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'台中盆地中央流經的主要河川是？',options:['大甲溪','濁水溪','淡水河'],answer:'A'},
+{id:30045,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'下列哪一個是台中的歷史建築？',options:['台中州廳','總統府','圓山飯店'],answer:'A'},
+{id:30046,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'台中的高鐵站位於哪一個區？',options:['烏日區','西屯區','中區'],answer:'A'},
+{id:30047,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'下列哪一個不是台中的學校特色？',options:['以海洋大學聞名','靜宜大學位於沙鹿','東海大學位於大度山'],answer:'A'},
+{id:30048,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'台中的市花是？',options:['山櫻花','玫瑰','百合'],answer:'A'},
+{id:30049,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'台中清水的著名特產是？',options:['筒仔米糕','麻油雞','滷肉飯'],answer:'A'},
+{id:30050,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'普通',question:'下列哪一年代台中升格為直轄市？',options:['2010年','2000年','1990年'],answer:'A'},
+{id:30051,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'下列哪一座國家公園位於台中市轄內？',options:['雪霸國家公園','太魯閣國家公園','陽明山國家公園','玉山國家公園'],answer:'A'},
+{id:30052,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'台灣早期種植鳳梨外銷的時期，主要的鳳梨製品是？',options:['鳳梨罐頭','新鮮鳳梨','鳳梨乾','鳳梨汁'],answer:'A'},
+{id:30053,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'台中歌劇院由日本建築大師誰設計？',options:['伊東豐雄','安藤忠雄','黑川紀章','丹下健三'],answer:'A'},
+{id:30054,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'下列哪一條鐵路曾經暱稱「集集小火車」終點站？',options:['車埕車站','二水車站','彰化車站','嘉義車站'],answer:'A'},
+{id:30055,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'台中盆地的特殊地形造成了什麼現象？',options:['冬天有逆溫層形成霾害','常常下雪','有龍捲風','常出現極光'],answer:'A'},
+{id:30056,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'下列哪一個是台中的世界文化遺產潛力點？',options:['路思義教堂','龍山寺','安平古堡','十三行遺址'],answer:'A'},
+{id:30057,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'台中的舊名「大墩」是源自？',options:['一座小丘陵','一個人名','一條河流','一棵大樹'],answer:'A'},
+{id:30058,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'下列哪一年代鳳梨酥開始在台灣大量生產為伴手禮？',options:['1970年代','1950年代','1990年代','2010年代'],answer:'A'},
+{id:30059,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'台中科學博物館展出的「植物園」溫室是什麼形狀？',options:['熱帶雨林造型','金字塔','圓柱形','圓形拱頂'],answer:'A'},
+{id:30060,grade:'台灣環島',subject:'台灣環島',bossId:'taichung_pineapple',difficulty:'我很會',question:'下列哪一座山位於台中的大坑區？',options:['頭嵙山','合歡山','大霸尖山','玉山'],answer:'A'},
+// ─── 關卡3:深坑臭豆腐(shenkeng_tofu)id 30061~30090 ───
+{id:30061,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'深坑老街最著名的食物是？',options:['臭豆腐','滷肉飯'],answer:'A'},
+{id:30062,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'臭豆腐主要是用什麼做的？',options:['豆腐','麵粉'],answer:'A'},
+{id:30063,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'深坑屬於哪個直轄市？',options:['新北市','台北市'],answer:'A'},
+{id:30064,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'臭豆腐臭臭的味道是怎麼來的？',options:['發酵','烘烤'],answer:'A'},
+{id:30065,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'豆腐主要是用哪種豆做的？',options:['黃豆','綠豆'],answer:'A'},
+{id:30066,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'臭豆腐常見的吃法是？',options:['炸的配泡菜','加冰塊'],answer:'A'},
+{id:30067,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'豆腐的英文是？',options:['tofu','milk'],answer:'A'},
+{id:30068,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'下列哪一個食物含有豆腐？',options:['麻婆豆腐','章魚燒'],answer:'A'},
+{id:30069,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'深坑老街以什麼建築風格聞名？',options:['老街古厝','摩天大樓'],answer:'A'},
+{id:30070,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'沒自信',question:'下列哪個城市與深坑相鄰？',options:['台北','高雄'],answer:'A'},
+{id:30071,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'臭豆腐發酵主要靠哪種微生物？',options:['細菌','病毒','寄生蟲'],answer:'A'},
+{id:30072,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'深坑老街的老建築多屬於哪種建築風格？',options:['清末民初閩南式','西班牙風','日式和風'],answer:'A'},
+{id:30073,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'豆腐製作中最關鍵的步驟是？',options:['加入凝固劑','加水','加糖'],answer:'A'},
+{id:30074,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'深坑早期是什麼產業聚集地？',options:['茶葉與染布','養豬','造紙'],answer:'A'},
+{id:30075,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'下列哪一個不是常見豆腐種類？',options:['玻璃豆腐','嫩豆腐','板豆腐'],answer:'A'},
+{id:30076,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'深坑屬於哪一條溪流域？',options:['景美溪','基隆河','淡水河'],answer:'A'},
+{id:30077,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'下列哪種做法可幫助臭豆腐減少臭味？',options:['搭配重口味配料','少放鹽','加冰塊'],answer:'A'},
+{id:30078,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'深坑老街的代表景點之一是？',options:['集順廟','龍山寺','行天宮'],answer:'A'},
+{id:30079,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'豆腐含有哪一類豐富營養素？',options:['植物性蛋白質','動物性脂肪','維生素C'],answer:'A'},
+{id:30080,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'普通',question:'臭豆腐的「臭」其實是哪種化學物質的氣味？',options:['含氮揮發物','二氧化碳','蛋白質直接的味道'],answer:'A'},
+{id:30081,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'臭豆腐傳統發酵的「臭滷水」基底主要包含什麼？',options:['莧菜、芥菜、豆類','米酒、糖、鹽','醋與醬油','水與油'],answer:'A'},
+{id:30082,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'豆腐的英文「tofu」源自哪個語言？',options:['日文','英文','西班牙文','法文'],answer:'A'},
+{id:30083,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'豆腐傳說最早是在哪個時代發明的？',options:['漢朝','唐朝','宋朝','明朝'],answer:'A'},
+{id:30084,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'深坑早年商貿繁盛是因為什麼地理優勢？',options:['位於茶葉運輸要道','靠近海港','有溫泉','有金礦'],answer:'A'},
+{id:30085,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'深坑「四寶」豆腐料理通常不包括下列哪一項？',options:['酥炸臭豆腐三明治','麻辣臭豆腐','紅燒豆腐','清蒸臭豆腐'],answer:'A'},
+{id:30086,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'下列哪一種微生物是豆腐發酵的主力？',options:['乳酸菌與酵母菌','黴菌','大腸桿菌','金黃葡萄球菌'],answer:'A'},
+{id:30087,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'深坑石碇地區早年種植什麼茶葉聞名？',options:['包種茶','烏龍茶','綠茶','紅茶'],answer:'A'},
+{id:30088,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'下列哪一個不是台灣著名豆腐故鄉？',options:['屏東恆春','深坑','石碇','岡山'],answer:'A'},
+{id:30089,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'豆腐凝固常用的傳統「鹽鹵」主要成分是？',options:['氯化鎂','氯化鈉','碳酸鈣','硫酸銅'],answer:'A'},
+{id:30090,grade:'台灣環島',subject:'台灣環島',bossId:'shenkeng_tofu',difficulty:'我很會',question:'深坑老街的「百年豆腐」之所以特別，與該地區的什麼有關？',options:['好山好水的水質','臭氣熏天','巨石遍布','低海拔氣候'],answer:'A'},
+// ─── 關卡4:阿里山(alishan_tree)id 30091~30120 ───
+{id:30091,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山位於台灣的哪個縣？',options:['嘉義縣','宜蘭縣'],answer:'A'},
+{id:30092,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山最有名的景觀之一是？',options:['日出與雲海','沙漠'],answer:'A'},
+{id:30093,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山小火車原本是為了什麼建造？',options:['運送木材','觀光'],answer:'A'},
+{id:30094,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山的代表花種是？',options:['櫻花','向日葵'],answer:'A'},
+{id:30095,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山的特產茶是？',options:['高山茶','普洱茶'],answer:'A'},
+{id:30096,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'住在阿里山地區的原住民是？',options:['鄒族','阿美族'],answer:'A'},
+{id:30097,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'神木是指什麼樣的樹木？',options:['年代久遠又巨大的樹','人造的樹'],answer:'A'},
+{id:30098,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山的氣候比平地涼快還是熱？',options:['涼快','炎熱'],answer:'A'},
+{id:30099,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'看日出最常去的位置是？',options:['祝山','沙崙'],answer:'A'},
+{id:30100,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'沒自信',question:'阿里山小火車屬於什麼級別的鐵道？',options:['登山鐵道','地下鐵'],answer:'A'},
+{id:30101,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山國家森林遊樂區的海拔大約在多少公尺？',options:['2200公尺','500公尺','3000公尺'],answer:'A'},
+{id:30102,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山五奇不包括下列哪一項？',options:['沙漠','日出','雲海'],answer:'A'},
+{id:30103,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山小火車從嘉義到阿里山總共多少公里？',options:['約71公里','約20公里','約200公里'],answer:'A'},
+{id:30104,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山的神木大多是哪一種樹？',options:['紅檜與台灣扁柏','榕樹','樟樹'],answer:'A'},
+{id:30105,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山小火車登山時用的特殊技術是？',options:['Z字型折返','直線快速','繞圈'],answer:'A'},
+{id:30106,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'鄒族最重要的傳統祭典是？',options:['戰祭與小米祭','豐年祭','飛魚季'],answer:'A'},
+{id:30107,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'下列哪一條河流發源自阿里山？',options:['濁水溪','淡水河','大甲溪'],answer:'A'},
+{id:30108,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山櫻花約在哪個季節盛開？',options:['春季','夏季','冬季'],answer:'A'},
+{id:30109,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'下列哪個茶區以阿里山為名？',options:['阿里山高山茶區','阿里山紅茶區','阿里山綠茶區'],answer:'A'},
+{id:30110,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'普通',question:'阿里山的「雲海」最常出現於哪個時段？',options:['清晨與傍晚','正午','深夜'],answer:'A'},
+{id:30111,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'阿里山森林鐵路興建於哪個時期？',options:['日治時期','清領時期','民國以後','荷蘭時期'],answer:'A'},
+{id:30112,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'阿里山的舊神木在哪一年被雷擊倒？',options:['1997年','2010年','1980年','2005年'],answer:'A'},
+{id:30113,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'阿里山國家森林遊樂區的「五木」之一是？',options:['台灣紅檜','榕樹','樟樹','茄苳'],answer:'A'},
+{id:30114,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'下列哪一個鐵道車站位於阿里山森林鐵路上？',options:['奮起湖車站','南港車站','花蓮車站','屏東車站'],answer:'A'},
+{id:30115,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'下列哪一座山是嘉義縣境內的最高峰？',options:['玉山','阿里山','大霸尖山','合歡山'],answer:'A'},
+{id:30116,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'鄒族的傳統飲食特色是？',options:['以小米為主食','以稻米為主食','以麵粉為主食','以馬鈴薯為主食'],answer:'A'},
+{id:30117,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'下列何者不屬於阿里山的代表景觀？',options:['野柳女王頭','日出','雲海','森林'],answer:'A'},
+{id:30118,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'下列哪一個地方位於阿里山地區？',options:['奮起湖','烏來','九份','金瓜石'],answer:'A'},
+{id:30119,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'阿里山的舊神木年齡推測約多少年？',options:['約3000年','約500年','約100年','約10000年'],answer:'A'},
+{id:30120,grade:'台灣環島',subject:'台灣環島',bossId:'alishan_tree',difficulty:'我很會',question:'阿里山森林鐵路被列為什麼級別的文化資產？',options:['國定古蹟','市定古蹟','歷史建築','登錄文化景觀'],answer:'A'},
+// ─── 關卡5:蘭嶼(lanyu_octopus)id 30121~30150 ───
+{id:30121,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'蘭嶼位於台灣的哪一邊？',options:['東南方海上','西方海上'],answer:'A'},
+{id:30122,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'蘭嶼住的原住民是？',options:['達悟族','排灣族'],answer:'A'},
+{id:30123,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'達悟族最具特色的傳統船是？',options:['拼板舟','獨木舟'],answer:'A'},
+{id:30124,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'蘭嶼最有名的海洋季節是？',options:['飛魚季','烏魚季'],answer:'A'},
+{id:30125,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'蘭嶼屬於哪一個縣？',options:['台東縣','屏東縣'],answer:'A'},
+{id:30126,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'蘭嶼的氣候屬於？',options:['熱帶','寒帶'],answer:'A'},
+{id:30127,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'前往蘭嶼最常見的交通工具是？',options:['船和飛機','火車'],answer:'A'},
+{id:30128,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'達悟族對拼板舟的態度是？',options:['視為珍貴的家族傳承','當作玩具'],answer:'A'},
+{id:30129,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'蘭嶼周圍的海水通常是？',options:['清澈湛藍','混濁黃色'],answer:'A'},
+{id:30130,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'沒自信',question:'飛魚是哪一類的魚？',options:['會在海面上滑翔','會發光'],answer:'A'},
+{id:30131,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'蘭嶼舊稱為？',options:['紅頭嶼','綠島','龜山島'],answer:'A'},
+{id:30132,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'達悟族的傳統屋稱為？',options:['地下屋','茅草屋','石板屋'],answer:'A'},
+{id:30133,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'蘭嶼的拼板舟使用幾塊木板拼接？',options:['21~27片','5片','100片'],answer:'A'},
+{id:30134,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'達悟族的傳統服飾以什麼顏色為主？',options:['白色與紅色','黑色與灰色','綠色與藍色'],answer:'A'},
+{id:30135,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'飛魚季大約在哪個月份？',options:['3~6月','11~12月','7~8月'],answer:'A'},
+{id:30136,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'下列哪一個是蘭嶼的特產？',options:['飛魚乾','烏魚子','鳳梨酥'],answer:'A'},
+{id:30137,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'蘭嶼屬於哪一個海洋群島？',options:['西太平洋','大西洋','印度洋'],answer:'A'},
+{id:30138,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'達悟族的拼板舟最特別的圖騰是？',options:['人形紋與太陽紋','十字紋','龍紋'],answer:'A'},
+{id:30139,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'下列哪一座山是蘭嶼最高峰？',options:['紅頭山','大霸尖山','合歡山'],answer:'A'},
+{id:30140,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'普通',question:'蘭嶼著名的觀光石頭叫？',options:['軍艦岩','女王頭','野柳象石'],answer:'A'},
+{id:30141,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'達悟族的語言屬於哪一個語系？',options:['南島語系','漢藏語系','印歐語系','尼羅語系'],answer:'A'},
+{id:30142,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'蘭嶼面積大約為？',options:['約45平方公里','約100平方公里','約10平方公里','約500平方公里'],answer:'A'},
+{id:30143,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'下列哪一個不是蘭嶼六個傳統部落之一？',options:['東港部落','紅頭部落','椰油部落','野銀部落'],answer:'A'},
+{id:30144,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'達悟族傳統的「招魚祭」與什麼有關？',options:['飛魚汛期開始','春耕','收割小米','婚禮'],answer:'A'},
+{id:30145,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'蘭嶼面積最大的傳統部落是？',options:['椰油村','東清村','朗島村','野銀村'],answer:'A'},
+{id:30146,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'下列哪一個是蘭嶼特有的植物？',options:['蘭嶼羅漢松','油桐','榕樹','楓樹'],answer:'A'},
+{id:30147,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'達悟族的「丁字褲」用來做什麼？',options:['傳統男性服飾','禮拜服','工作服','睡衣'],answer:'A'},
+{id:30148,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'下列哪一個稱呼是達悟族對自己的傳統名稱？',options:['Tao','Han','Yami','Bunun'],answer:'A'},
+{id:30149,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'蘭嶼最特別的鳥類是？',options:['蘭嶼角鴞','麻雀','烏鴉','喜鵲'],answer:'A'},
+{id:30150,grade:'台灣環島',subject:'台灣環島',bossId:'lanyu_octopus',difficulty:'我很會',question:'下列哪一年蘭嶼設置核廢料儲存場引發了爭議？',options:['1982年','2000年','1995年','2010年'],answer:'A'},
+// ─── 關卡6:三峽藍染(sanxia_indigo)id 30151~30180 ───
+{id:30151,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽位於哪一個直轄市？',options:['新北市','台南市'],answer:'A'},
+{id:30152,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽最有名的傳統工藝是？',options:['藍染','陶瓷'],answer:'A'},
+{id:30153,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'藍染的「藍」最常用什麼植物染色？',options:['馬藍與山藍','向日葵'],answer:'A'},
+{id:30154,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽老街最有名的廟是？',options:['祖師廟','行天宮'],answer:'A'},
+{id:30155,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'藍染染出來的顏色是？',options:['藍色','紅色'],answer:'A'},
+{id:30156,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽老街的建築風格是？',options:['日治時期紅磚拱廊','日式榻榻米屋'],answer:'A'},
+{id:30157,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'藍染主要染什麼東西？',options:['布料','木頭'],answer:'A'},
+{id:30158,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽祖師廟的主祀神是？',options:['清水祖師','關公'],answer:'A'},
+{id:30159,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽流經的主要河流是？',options:['三峽溪','淡水河'],answer:'A'},
+{id:30160,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'沒自信',question:'三峽的特產糕點是？',options:['牛角麵包','太陽餅'],answer:'A'},
+{id:30161,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽藍染的染色過程主要是？',options:['浸泡與氧化','烘烤','用顏料畫上去'],answer:'A'},
+{id:30162,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽老街的建築完工於哪個時期？',options:['日治大正時期','清朝乾隆','民國以後'],answer:'A'},
+{id:30163,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽祖師廟以何聞名？',options:['精緻木雕與石雕','現代建築','西式塔樓'],answer:'A'},
+{id:30164,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽祖師廟在民國時期重建的雕刻大師是？',options:['李梅樹','顏水龍','黃土水'],answer:'A'},
+{id:30165,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'下列哪個季節適合採集藍草？',options:['夏末秋初','冬天','春天'],answer:'A'},
+{id:30166,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽藍染常見的圖案技法是？',options:['夾染、紮染、縫染','油彩繪','打印'],answer:'A'},
+{id:30167,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽老街的「拱廊」設計目的是？',options:['遮陽避雨','防火','美觀'],answer:'A'},
+{id:30168,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'藍染中的「靛藍」是哪一類化學物質？',options:['天然色素','金屬鹽','人造化學藥品'],answer:'A'},
+{id:30169,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'三峽藍染主要的傳統市場顧客曾是？',options:['日本與中國商人','西班牙人','荷蘭人'],answer:'A'},
+{id:30170,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'普通',question:'下列哪一個是三峽鄰近的觀光景點？',options:['鶯歌陶瓷老街','九份','野柳'],answer:'A'},
+{id:30171,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'三峽藍染最早的興盛時期是？',options:['清領末期至日治初期','明朝','戰後民國','荷蘭時期'],answer:'A'},
+{id:30172,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'三峽祖師廟有「東方藝術殿堂」之稱，主要是因為？',options:['雕刻彩繪精細而聞名','建築最高','使用最多金箔','面積最大'],answer:'A'},
+{id:30173,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'下列哪一種植物不適合用來做藍染？',options:['玫瑰','馬藍','山藍','蓼藍'],answer:'A'},
+{id:30174,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'藍染傳統工藝在台灣被列為什麼？',options:['文化資產','軍事機密','體育項目','國家公園'],answer:'A'},
+{id:30175,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'三峽地名「三峽」的由來是？',options:['三條溪流交會','三座山相連','三個古鎮','三個族群'],answer:'A'},
+{id:30176,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'三峽老街最早的舊名是什麼？',options:['三角湧','大溪墘','三峽口','板橋'],answer:'A'},
+{id:30177,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'下列哪一年三峽老街進行了大規模的整修保存？',options:['2007年','1990年','2020年','1980年'],answer:'A'},
+{id:30178,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'藍染中讓藍色固定在布上的關鍵化學反應是？',options:['氧化還原反應','酸鹼中和','蒸發作用','蒸餾作用'],answer:'A'},
+{id:30179,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'下列哪一年三峽祖師廟由李梅樹開始主持重建？',options:['1947年','1900年','1980年','2000年'],answer:'A'},
+{id:30180,grade:'台灣環島',subject:'台灣環島',bossId:'sanxia_indigo',difficulty:'我很會',question:'下列哪一個區域以前是三峽藍靛染料的主要產地？',options:['滿月圓山區','野柳','澎湖','蘭嶼'],answer:'A'},
+// ─── 關卡7:西門珍奶(ximen_pearl)id 30181~30210 ───
+{id:30181,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'西門町位於哪一個直轄市？',options:['台北市','高雄市'],answer:'A'},
+{id:30182,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'珍珠奶茶的「珍珠」是什麼做的？',options:['粉圓','糯米'],answer:'A'},
+{id:30183,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'珍珠奶茶最早是哪個國家發明的？',options:['台灣','日本'],answer:'A'},
+{id:30184,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'珍珠奶茶通常用什麼喝？',options:['粗吸管','湯匙'],answer:'A'},
+{id:30185,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'西門町最有名的歷史建築是？',options:['西門紅樓','圓山飯店'],answer:'A'},
+{id:30186,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'西門町的特色是？',options:['流行文化集散地','工業區'],answer:'A'},
+{id:30187,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'珍珠的口感是？',options:['Q彈','酥脆'],answer:'A'},
+{id:30188,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'西門町的捷運站是？',options:['西門站','信義站'],answer:'A'},
+{id:30189,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'珍珠奶茶最早約何時誕生？',options:['1980年代','2000年代'],answer:'A'},
+{id:30190,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'沒自信',question:'下列哪個不是珍奶常見配料？',options:['冰糖塊','椰果','布丁'],answer:'A'},
+{id:30191,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'西門紅樓建於哪個時期？',options:['日治時期1908年','清朝','民國時期'],answer:'A'},
+{id:30192,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'珍珠奶茶最早的發源地店家位於哪裡？',options:['台中','台北','台南'],answer:'A'},
+{id:30193,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'西門町的「町」字源自哪個語言？',options:['日文','英文','閩南語'],answer:'A'},
+{id:30194,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'西門紅樓的建築風格屬於？',options:['西方古典主義','日式和風','中式古典'],answer:'A'},
+{id:30195,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'珍珠奶茶的「珍珠」基礎原料是？',options:['番薯粉','麵粉','米粒'],answer:'A'},
+{id:30196,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'西門町附近的一個著名公園是？',options:['二二八和平紀念公園','大安森林公園','陽明山公園'],answer:'A'},
+{id:30197,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'下列哪一條捷運線經過西門站？',options:['板南線與松山新店線','文湖線','信義線'],answer:'A'},
+{id:30198,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'珍珠奶茶被選入「台灣代表小吃」的排名通常是？',options:['前五名','倒數','沒上榜'],answer:'A'},
+{id:30199,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'西門町地區的文化特色是？',options:['年輕族群與次文化','傳統老街','工業區'],answer:'A'},
+{id:30200,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'普通',question:'珍珠奶茶的英文名通常是？',options:['Bubble Tea','Pearl Milk','Tapioca Drink'],answer:'A'},
+{id:30201,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'珍珠奶茶誕生時，最常見的兩家爭議性發源店是？',options:['春水堂與翰林茶館','50嵐與珍珠奶茶','清心福全與CoCo','麥當勞與肯德基'],answer:'A'},
+{id:30202,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'下列哪一年西門紅樓被指定為市定古蹟？',options:['1997年','1980年','2010年','2000年'],answer:'A'},
+{id:30203,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'西門紅樓的特殊建築造型是？',options:['八角形','十字形','圓形','五角形'],answer:'A'},
+{id:30204,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'下列哪一年代珍珠奶茶開始向海外輸出走紅全球？',options:['2000~2010年代','1970年代','1950年代','1980年代'],answer:'A'},
+{id:30205,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'西門町日治時期最早的功能是？',options:['娛樂與商業區','日本兵營','學校','圖書館'],answer:'A'},
+{id:30206,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'下列哪一個不是西門町附近的歷史古蹟？',options:['赤崁樓','西門紅樓','西本願寺廣場','撫臺街洋樓'],answer:'A'},
+{id:30207,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'西門町地區商圈在戰後曾被稱為什麼？',options:['台北的不夜城','台北西區','東區','信義特區'],answer:'A'},
+{id:30208,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'下列哪一個是西門町地區的次文化代表元素？',options:['街頭塗鴉與滑板','古典音樂演奏','漁業與牧業','種植水稻'],answer:'A'},
+{id:30209,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'珍珠奶茶最早的發明源自於春水堂哪位人物的靈感？',options:['林秀慧','張學良','邱永漢','陳澄波'],answer:'A'},
+{id:30210,grade:'台灣環島',subject:'台灣環島',bossId:'ximen_pearl',difficulty:'我很會',question:'下列哪一場全球文化現象與台灣珍珠奶茶有關？',options:['Boba Movement','櫻花現象','哈利波特熱','韓流'],answer:'A'},
+// ─── 關卡8:日月潭(sun_moon_mirror_boss)id 30211~30240 ───
+{id:30211,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭位於哪一個縣？',options:['南投縣','花蓮縣'],answer:'A'},
+{id:30212,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭的名字來源是？',options:['潭分為日輪與月鉤兩部分','一年有日月之分'],answer:'A'},
+{id:30213,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭附近的原住民族是？',options:['邵族','布農族'],answer:'A'},
+{id:30214,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭的代表特色是？',options:['風光明媚的湖泊','沙漠'],answer:'A'},
+{id:30215,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭旁有一座著名的廟，叫？',options:['文武廟','龍山寺'],answer:'A'},
+{id:30216,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭是台灣最大的什麼？',options:['天然湖泊','沙灘'],answer:'A'},
+{id:30217,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭可以搭乘什麼交通工具觀賞？',options:['遊艇與纜車','海盜船'],answer:'A'},
+{id:30218,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭的水主要用途是？',options:['發電與灌溉','養魚場'],answer:'A'},
+{id:30219,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭中央的小島叫？',options:['拉魯島','龜山島'],answer:'A'},
+{id:30220,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'沒自信',question:'日月潭旁的一個碼頭叫？',options:['水社碼頭','野柳碼頭'],answer:'A'},
+{id:30221,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'日月潭的海拔大約是多少公尺？',options:['約748公尺','100公尺','3000公尺'],answer:'A'},
+{id:30222,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'日月潭文武廟的主祀神明是？',options:['關聖帝君與孔子','媽祖','土地公'],answer:'A'},
+{id:30223,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'下列哪一年日月潭水力發電廠完工？',options:['1934年','1990年','2000年'],answer:'A'},
+{id:30224,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'日月潭原來自然湖泊是因為？',options:['火山堰塞作用','人工挖掘','板塊運動'],answer:'A'},
+{id:30225,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'邵族最重要的祭典是？',options:['豐年祭','飛魚季','聖誕節'],answer:'A'},
+{id:30226,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'下列哪一個是日月潭周邊著名步道？',options:['涵碧樓步道','陽明山步道','野柳步道'],answer:'A'},
+{id:30227,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'日月潭附近最高的山是？',options:['玉山','合歡山','陽明山'],answer:'A'},
+{id:30228,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'下列哪一個地區與日月潭相鄰？',options:['埔里鎮','九份','蘭嶼'],answer:'A'},
+{id:30229,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'下列哪一年日月潭被列為國家風景區？',options:['2000年','1980年','2020年'],answer:'A'},
+{id:30230,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'普通',question:'日月潭經由哪一條溪流補水？',options:['濁水溪上游','大甲溪','淡水河'],answer:'A'},
+{id:30231,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'下列哪一座水力發電廠位於日月潭？',options:['大觀發電廠','谷關發電廠','曾文發電廠','德基發電廠'],answer:'A'},
+{id:30232,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'邵族的傳統圖騰主要與什麼有關？',options:['白鹿傳說','飛魚','黑熊','雲豹'],answer:'A'},
+{id:30233,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'日月潭原本被稱為「水社海」是哪個族群的稱呼？',options:['邵族','客家人','閩南人','原住民'],answer:'A'},
+{id:30234,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'下列哪一種特色魚類產自日月潭？',options:['潭蝦與曲腰魚','鮭魚','石斑魚','秋刀魚'],answer:'A'},
+{id:30235,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'下列哪一年日月潭纜車正式通車？',options:['2009年','2000年','2020年','1995年'],answer:'A'},
+{id:30236,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'文武廟旁的「年梯步道」共有幾階？',options:['366階','100階','1000階','500階'],answer:'A'},
+{id:30237,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'日月潭周邊著名的茶種是？',options:['紅玉紅茶','凍頂烏龍','文山包種','金萱'],answer:'A'},
+{id:30238,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'下列哪一場大地震影響了日月潭周邊建築？',options:['921大地震','311地震','520地震','228地震'],answer:'A'},
+{id:30239,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'日月潭周邊地形特徵是？',options:['群山環繞的盆地','沙漠','平原','海岸'],answer:'A'},
+{id:30240,grade:'台灣環島',subject:'台灣環島',bossId:'sun_moon_mirror_boss',difficulty:'我很會',question:'下列哪一個碼頭不在日月潭？',options:['大稻埕碼頭','水社碼頭','朝霧碼頭','玄光碼頭'],answer:'A'},
+// ─── 關卡9:台北101(taipei_101_warlord)id 30241~30270 ───
+{id:30241,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101位於哪個直轄市？',options:['台北市','新北市'],answer:'A'},
+{id:30242,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101共有幾層樓？',options:['101層','99層'],answer:'A'},
+{id:30243,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101著名的活動是？',options:['跨年煙火','賞櫻'],answer:'A'},
+{id:30244,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101位於哪個區？',options:['信義區','中正區'],answer:'A'},
+{id:30245,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101是什麼類型的建築？',options:['摩天大樓','寺廟'],answer:'A'},
+{id:30246,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101總高度大約多少公尺？',options:['約508公尺','約100公尺'],answer:'A'},
+{id:30247,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'下列哪一個位於台北101內？',options:['百貨公司與觀景台','溜冰場'],answer:'A'},
+{id:30248,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101的主色是？',options:['翠綠色','紅色'],answer:'A'},
+{id:30249,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101的設計靈感取自？',options:['竹節','岩石'],answer:'A'},
+{id:30250,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'沒自信',question:'台北101以前曾經是什麼世界紀錄？',options:['世界第一高樓','世界最大水族館'],answer:'A'},
+{id:30251,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101完工於哪一年？',options:['2004年','2010年','2000年'],answer:'A'},
+{id:30252,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101的高速電梯時速可達？',options:['約60公里','100公里','5公里'],answer:'A'},
+{id:30253,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101內的「風阻尼器」位於哪一層？',options:['約88~92樓','1樓','地下室'],answer:'A'},
+{id:30254,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101的設計師是？',options:['李祖原','貝聿銘','安藤忠雄'],answer:'A'},
+{id:30255,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'下列哪一座建築取代台北101成為世界最高樓？',options:['杜拜哈里發塔','上海中心','東京晴空塔'],answer:'A'},
+{id:30256,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'下列哪一個不是信義商圈的特色？',options:['古蹟群聚','百貨林立','跨年人潮'],answer:'A'},
+{id:30257,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101風阻尼器主要作用是？',options:['抵抗強風與地震晃動','防火','增加美觀'],answer:'A'},
+{id:30258,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101的「101」象徵的意義不包括？',options:['星座','突破百分百','國民曆'],answer:'A'},
+{id:30259,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'下列哪一個運動賽事與台北101有關？',options:['垂直登高賽','馬拉松終點','棒球'],answer:'A'},
+{id:30260,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'普通',question:'台北101曾於哪一年保持世界第一高樓最久？',options:['2004~2010年','2000~2004年','2010~2015年'],answer:'A'},
+{id:30261,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'台北101的風阻尼器重量約為？',options:['660公噸','100公噸','1000公噸','50公噸'],answer:'A'},
+{id:30262,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'台北101頂端有一個避雷尖塔，其主要作用？',options:['避雷與裝飾','放煙火','發無線電','發送電視訊號'],answer:'A'},
+{id:30263,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'下列哪一座建築與台北101同樣以「節節高升」竹節為設計理念？',options:['信義捷運站','大巨蛋','南港車站','圓山飯店'],answer:'A'},
+{id:30264,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'台北101觀景台位於哪一層？',options:['89樓室內、91樓戶外','100樓','55樓','30樓'],answer:'A'},
+{id:30265,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'下列哪一年台北101被吉尼斯認證為世界第一高樓？',options:['2004年','2008年','2010年','2000年'],answer:'A'},
+{id:30266,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'台北101使用的耐震技術主要包括？',options:['鋼骨混凝土核心牆與調諧質量阻尼器','鋼板貼皮','磚牆','木造結構'],answer:'A'},
+{id:30267,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'下列哪一場跨年煙火秀使台北101全球知名？',options:['2005年首次','2000年','2010年','2020年'],answer:'A'},
+{id:30268,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'台北101的設計綜合了哪兩種文化元素？',options:['東方節節高升與西方摩天大樓','埃及金字塔與馬雅神廟','中國長城與羅馬鬥獸場','日本城堡與韓國宮殿'],answer:'A'},
+{id:30269,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'台北101建築外觀上的「如意紋」象徵？',options:['吉祥與好運','財富','長壽','勝利'],answer:'A'},
+{id:30270,grade:'台灣環島',subject:'台灣環島',bossId:'taipei_101_warlord',difficulty:'我很會',question:'下列哪一年台北101被超越成為世界第二高樓？',options:['2010年','2008年','2020年','2015年'],answer:'A'},
+// ─── 關卡10:玉山(yushan_giant)id 30271~30300 ───
+{id:30271,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山是台灣最高的山嗎？',options:['是','不是'],answer:'A'},
+{id:30272,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山位於哪一個國家公園內？',options:['玉山國家公園','陽明山國家公園'],answer:'A'},
+{id:30273,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山主峰冬天會下什麼？',options:['雪','雨'],answer:'A'},
+{id:30274,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山的舊稱是？',options:['新高山','烏來山'],answer:'A'},
+{id:30275,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山國家公園位於哪一個縣的範圍內？',options:['南投、嘉義、花蓮、高雄交界','台北市'],answer:'A'},
+{id:30276,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山國家公園裡有一種以玉山為名的櫻花叫？',options:['玉山假沙梨','玉山鳳仙花'],answer:'B'},
+{id:30277,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'登玉山主峰需要申請什麼？',options:['入山入園許可','護照'],answer:'A'},
+{id:30278,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山是哪一個族群的聖山？',options:['布農族與鄒族','排灣族'],answer:'A'},
+{id:30279,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山的氣候屬於？',options:['高山氣候','熱帶氣候'],answer:'A'},
+{id:30280,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'沒自信',question:'玉山的最高峰叫？',options:['玉山主峰','玉山西峰'],answer:'A'},
+{id:30281,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山的高度大約是多少公尺？',options:['約3952公尺','約2000公尺','約5000公尺'],answer:'A'},
+{id:30282,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山國家公園成立於哪一年？',options:['1985年','1990年','2000年'],answer:'A'},
+{id:30283,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山日治時期叫做什麼？',options:['新高山','八重山','北高山'],answer:'A'},
+{id:30284,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'下列哪一個是玉山國家公園的特色生態？',options:['台灣黑熊棲地','沙漠地形','熱帶雨林'],answer:'A'},
+{id:30285,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山主峰登頂前最後一個山屋是？',options:['排雲山莊','觀高山屋','八通關山屋'],answer:'A'},
+{id:30286,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'下列哪一座山屬於玉山山脈？',options:['玉山主峰','大霸尖山','合歡山'],answer:'A'},
+{id:30287,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山的英文名稱是？',options:['Mount Jade or Yushan','Mount Fuji','Mount Tai'],answer:'A'},
+{id:30288,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山國家公園也涵蓋哪一條重要古道？',options:['八通關古道','淡蘭古道','草嶺古道'],answer:'A'},
+{id:30289,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'玉山的東西南北哪邊有「玉山三尖」之一？',options:['玉山東峰、北峰、南峰','只有東峰','只有西峰'],answer:'A'},
+{id:30290,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'普通',question:'登玉山的傳統路線從哪裡上山？',options:['塔塔加','合歡山','奇萊登山口'],answer:'A'},
+{id:30291,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'玉山被列為下列哪個國際組織的「世界新七大自然奇景」候選？',options:['New 7 Wonders of Nature','UNESCO世界遺產','奧運項目','米其林指南'],answer:'A'},
+{id:30292,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'下列哪一條河川發源自玉山？',options:['濁水溪、高屏溪、秀姑巒溪等','淡水河','大甲溪','大漢溪'],answer:'A'},
+{id:30293,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'玉山主峰在世界上同緯度最高山的排名是？',options:['東北亞第一高峰','全球第一高峰','亞洲第一高峰','東南亞最高'],answer:'A'},
+{id:30294,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'玉山國家公園的主要保育對象是？',options:['台灣特有種動植物與高山生態','沙漠生態','濱海生態','溫泉資源'],answer:'A'},
+{id:30295,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'下列哪一座山的名字「秀姑巒」與玉山相關？',options:['秀姑巒山(玉山山脈)','合歡山','奇萊山','南湖大山'],answer:'A'},
+{id:30296,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'玉山的命名由來與什麼有關？',options:['冬季積雪山頭如玉','玉石礦藏','玉山之神','玉皇大帝'],answer:'A'},
+{id:30297,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'布農族稱玉山為？',options:['Tongku Saveq','Lalakaw','Tongusa','Sabaq'],answer:'A'},
+{id:30298,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'下列哪一年玉山國家公園正式開園？',options:['1985年4月','1980年','1990年','2000年'],answer:'A'},
+{id:30299,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'玉山周邊有哪些原住民族傳說的聖山？',options:['布農族與鄒族','賽夏族','卑南族','凱達格蘭族'],answer:'A'},
+{id:30300,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'下列哪一個動物被稱為玉山國家公園的「黑色守護者」？',options:['台灣黑熊','石虎','雲豹','水鹿'],answer:'A'},
 ];
 
 // ★ v1.0.20260424.0660 — 照顧與陪伴幼兒 (解鎖幼兒園小孩成就)
@@ -30447,6 +32120,116 @@ Object.assign(HERO_DB, {
   },
 });
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2000 — 台灣環島 10 BOSS 技能組(童趣搞笑風)
+// ════════════════════════════════════════════════════════════════
+//
+// 設計原則:
+//   - s1: 主要傷害技能(c=2~3),HP 較高的 BOSS 用全體攻擊,單體用爆擊
+//   - s2: 控場/減益/特殊機制(c=3~4),帶各 BOSS 主題特色
+//   - 爆發: 設計在 BURST_DB 中(本文件後方),依特技 200% 全體傷害
+//   - 天賦: 設計在 HERO_TRAITS 中(本文件後方)
+//
+// ★ v1.0.20260428.3200 — 台灣關 BOSS 重新平衡:
+//   基準:杏花妖困難版(HP 680×1.5=1020) ~ 八岐大蛇 ×1.5(HP 1500×1.5=2250)
+//   10 隻 BOSS 線性遞增 HP/ATK/SP/SPD,EXP 也成比例
+//   BOSS 單獨上場(無小怪),技能保持原有設計風格
+// ★ v1.0.20260428.3400 — HP 全部 ×2(玩家反映 BOSS 太脆,提升耐打度)
+Object.assign(HERO_DB, {
+  // ─── 稀有級 BOSS (最弱~中弱) ───
+  '油膩魔王・滷汁大鍋':{hp:2100,atk:17,sp:24,spd:12,exp:140,
+    s1:{n:'滷汁飛濺',c:2,d:'特技100%對單體火屬性傷害,30%機率「燃燒」1回合',fd:'掀開大鍋蓋,熱滾滾的滷汁飛濺!用特技值的 100% 對 1 名對手造成火屬性傷害,30% 機率陷入「燃燒」狀態 1 回合。'},
+    s2:{n:'秘製大滷',c:3,d:'回復自身HP 25%,並獲得「免疫不利狀態」1回合',fd:'從大鍋裡舀出最濃郁的秘製滷汁,自己咕嚕咕嚕喝下去!回復 25% HP,並獲得「免疫所有不利狀態」1 回合。'}
+  },
+  '酥脆狂魔・熱浪糕師':{hp:2360,atk:18,sp:26,spd:14,exp:160,
+    s1:{n:'糖漿轟炸',c:2,d:'特技110%對單體火屬性傷害,「黏住」(速度-30%)1回合',fd:'高高拋灑黃金糖漿!用特技值的 110% 對單體造成火屬性傷害,黏稠糖漿讓目標速度 -30% 持續 1 回合。'},
+    s2:{n:'熱浪烤箱',c:3,d:'特技140%對單體火屬性傷害,30%機率「強力燃燒」2回合',fd:'巨大擀麵棍敲下熱浪!用特技值的 140% 造成單體火屬性傷害,30% 機率附加「強力燃燒」(無法免疫)2 回合。'}
+  },
+  // ─── 史詩級 BOSS (中強) ───
+  '臭氣魔王・發酵公':{hp:2640,atk:19,sp:28,spd:16,exp:180,
+    s1:{n:'發酵臭氣彈',c:3,d:'特技120%對單體暗屬性傷害,40%機率「中毒」2回合',fd:'從腐爛斗篷裡抽出一罈千年臭豆腐,炸裂發酵臭氣!用特技值的 120% 造成暗屬性傷害,40% 機率「中毒」2 回合。'},
+    s2:{n:'豆腐封印',c:3,d:'指定1名對手「強力封印」2回合(無法用技能)',fd:'抓起一塊發酵到極致的豆腐塞進敵人嘴裡!使 1 名對手陷入「強力封印」(無法免疫)2 回合,完全無法使用技能。'}
+  },
+  '山靈古魔・千年怒木':{hp:2900,atk:20,sp:30,spd:18,exp:200,
+    s1:{n:'根鬚絞殺',c:2,d:'攻擊160%對單體草屬性連擊2次,每擊25%機率「禁動」1回合',fd:'地底鑽出千年根鬚,纏繞絞殺敵人!以攻擊值的 160% 連擊 2 次單體,每擊獨立 25% 機率附加「禁動」1 回合。'},
+    s2:{n:'神木怒火',c:4,d:'特技130%對全體草屬性傷害,自己「攻擊+30%」2回合',fd:'樹冠燃起復仇怒火!用特技值的 130% 對全體對手造成草屬性傷害,並讓自己進入「狂暴狀態」攻擊 +30% 持續 2 回合。'}
+  },
+  '深海惡靈・觸手大蛟':{hp:3180,atk:21,sp:32,spd:20,exp:220,
+    s1:{n:'八觸手亂舞',c:3,d:'特技65%對隨機目標水屬性傷害5次',fd:'八條紫色觸手胡亂揮舞!用特技值的 65% 對隨機存活對手造成水屬性傷害 5 次。'},
+    s2:{n:'深海漩渦',c:4,d:'特技140%對全體水屬性傷害,所有目標「強力減速」(速度-50%)2回合',fd:'從太平洋深處召喚巨大漩渦!用特技值的 140% 對全體對手造成水屬性傷害,所有目標附加「強力減速」(無法免疫)2 回合,速度 -50%。'}
+  },
+  '染靈幻魔・藍色憂鬱':{hp:3440,atk:22,sp:34,spd:23,exp:240,
+    s1:{n:'藍染霧霾',c:3,d:'特技150%對全體暗屬性傷害,40%機率「失明」2回合',fd:'飄逸藍布化作迷霧!用特技值的 150% 對全體對手造成暗屬性傷害,每人 40% 機率「失明」(命中率 -50%)2 回合。'},
+    s2:{n:'憂鬱之歌',c:4,d:'全體對手附加「魅惑」1回合(下回合普攻自己人)',fd:'用淒美藍染歌聲讓人沉浸憂鬱!使全體對手陷入「魅惑」狀態 1 回合,下回合會自動普攻自己隊友。'}
+  },
+  // ─── 傳說級 BOSS (主線★) ───
+  '珍奶吸魂魔・大波霸':{hp:3700,atk:24,sp:36,spd:25,exp:280,
+    s1:{n:'珍珠機關槍',c:2,d:'攻擊70%對隨機目標暗屬性連擊8次,每擊20%機率「無力」1回合',fd:'用粗大金屬吸管當機關槍狂射黑色珍珠!以攻擊值的 70% 連擊 8 次隨機目標,每擊 20% 機率附加「無力」(無法普攻)1 回合。'},
+    s2:{n:'吸魂吸管',c:4,d:'特技150%吸血攻擊單體,自身回復同等HP',fd:'巨大吸管插入敵人,吸取生命汁液!用特技值的 150% 對單體造成暗屬性傷害,自己回復同等 HP。'}
+  },
+  '水靈反魔・倒映女':{hp:3980,atk:26,sp:38,spd:28,exp:320,
+    s1:{n:'鏡面分身',c:3,d:'特技130%對全體水屬性傷害,本回合不易被攻擊',fd:'鏡面碎片飛舞如萬鏡映虛!用特技值的 130% 對全體對手造成水屬性傷害,本回合自身被攻擊時 30% 機率閃避。'},
+    s2:{n:'映像撕裂',c:4,d:'特技160%對全體水屬性傷害,40%機率「強力混亂」(無法免疫)1回合',fd:'從鏡中映照出敵人最深的恐懼!用特技值的 160% 對全體對手造成水屬性傷害,每人 40% 機率「強力混亂」(無法免疫)1 回合,下回合行動目標隨機。'}
+  },
+  '摩天魔將・夜空爆裂者':{hp:4240,atk:28,sp:40,spd:30,exp:360,
+    s1:{n:'煙火齊射',c:3,d:'特技90%對全體3次風屬性傷害,30%機率「燃燒」1回合',fd:'背後煙火翅膀同時點燃!用特技值的 90% 對全體對手造成 3 次風屬性傷害(無視迴避),每次 30% 機率「燃燒」1 回合。'},
+    s2:{n:'擎天爆閃',c:4,d:'攻擊300%對單體風屬性必中爆擊,使對手「眩暈」1回合',fd:'擎天神槍蓄滿能量發射!以攻擊值的 300% 對單體造成風屬性必中爆擊,目標額外陷入「眩暈」1 回合(無法行動)。'}
+  },
+  // ─── 神話級 BOSS (最終★★) ───
+  '山岳禁咒・崩天巨人':{hp:4500,atk:30,sp:42,spd:33,exp:420,
+    s1:{n:'落石鐵拳',c:2,d:'攻擊220%對單體土屬性傷害,並對相鄰位置全體傷害特技70%',fd:'巨大石拳轟向地面!對指定 1 名對手造成攻擊值 220% 土屬性傷害,並對相鄰位置全體再造成特技值 70% 的土屬性範圍傷害。'},
+    s2:{n:'山崩地裂',c:4,d:'特技180%對全體土屬性傷害,30%機率「眩暈」1回合,自身獲得「岩石護甲」(減傷40%)2回合',fd:'踏地而呼,整座山搖晃!用特技值的 180% 對全體對手造成土屬性傷害,每人 30% 機率「眩暈」1 回合,自己獲得「岩石護甲」減傷 40% 持續 2 回合。'}
+  },
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ★ v1.0.20260428.2000 — 台灣 BOSS 描述 (BURST_DB / HERO_TRAITS / HERO_LORE)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// 台灣 BOSS 的爆發技 (在 advBoss 戰中由 AI 觸發,能量滿時釋放)
+Object.assign(BURST_DB, {
+  '油膩魔王・滷汁大鍋':   {n:'真神滷肉飯!',     d:'特技200%全體火屬性傷害+全體強力燃燒2回合',fd:'撈起整鍋滾燙的滷汁朝全場潑灑!用特技值的 200% 對全體對手造成火屬性傷害,所有目標陷入「強力燃燒」(無法免疫)2 回合,每回合行動前後各損失 8% HP。'},
+  '酥脆狂魔・熱浪糕師':   {n:'金黃糕點轟炸!',   d:'特技200%全體傷害+全體「黏住」2回合(速度-50%)',fd:'從烤箱裡拋出無數金黃糕點如雨般砸下!用特技值的 200% 對全體對手造成傷害,所有目標被糖漿黏住,速度 -50% 持續 2 回合。'},
+  '臭氣魔王・發酵公':     {n:'千年發酵核爆!',   d:'特技200%全體毒屬性傷害+全體強力中毒2回合+減療50%',fd:'打開禁忌的千年發酵罈!用特技值的 200% 對全體對手造成毒屬性傷害,所有目標「強力中毒」2 回合,且治療效果減半 2 回合。'},
+  '山靈古魔・千年怒木':   {n:'神木復仇之火!',   d:'特技220%全體火屬性傷害+召喚2隻根鬚妖協戰',fd:'千年神木的復仇之火燃起!用特技值的 220% 對全體對手造成火屬性傷害,並從大地召喚 2 隻根鬚妖加入戰鬥(HP 各 40%)。'},
+  '深海惡靈・觸手大蛟':   {n:'深海大漩渦!',     d:'特技230%全體水屬性傷害+全體強力減速2回合',fd:'整個太平洋的力量灌注於八條觸手!用特技值的 230% 對全體對手造成水屬性傷害,所有目標「強力減速」2 回合,速度 -50%。'},
+  '染靈幻魔・藍色憂鬱':   {n:'永恆藍染詛咒!',   d:'特技200%全體暗屬性傷害+全體強力魅惑1回合',fd:'藍色染料化為永恆詛咒籠罩戰場!用特技值的 200% 對全體對手造成暗屬性傷害,所有目標「強力魅惑」(無法免疫)1 回合,下回合會自動普攻隊友。'},
+  '珍奶吸魂魔・大波霸':   {n:'波霸珍珠龍捲風!', d:'特技230%全體傷害+吸血50%回復HP',fd:'巨大珍珠化為龍捲風橫掃戰場!用特技值的 230% 對全體對手造成傷害,自己回復造成傷害 50% 等量的 HP。'},
+  '水靈反魔・倒映女':     {n:'萬鏡映虛獄!',     d:'特技230%全體水屬性傷害+召喚3個分身(HP各40%)',fd:'整個戰場化為鏡之地獄!用特技值的 230% 對全體對手造成水屬性傷害,並同時召喚 3 個自身的鏡像分身(HP 各 40%)圍剿玩家隊伍。'},
+  '摩天魔將・夜空爆裂者': {n:'摩天爆破煙火祭!', d:'特技250%全體風屬性傷害+全體強力燃燒2回合',fd:'整座 101 大樓的能量集中爆發!用特技值的 250% 對全體對手造成風屬性傷害,所有目標「強力燃燒」(無法免疫)2 回合,煙火持續炙烤。'},
+  '山岳禁咒・崩天巨人':   {n:'玉山崩!天裂!',    d:'特技280%全體土屬性傷害+全體強力眩暈1回合+自身全屬性+30% 2回合',fd:'整座台灣最高峰玉山的山岳之力爆發!用特技值的 280% 對全體對手造成土屬性傷害,所有目標「強力眩暈」(無法免疫)1 回合,自己全屬性 +30% 持續 2 回合。'},
+});
+
+// 台灣 BOSS 的天賦被動
+Object.assign(HERO_TRAITS, {
+  '油膩魔王・滷汁大鍋':   { name:'香氣四溢', icon:'🍯', desc:'每回合自動回復 5% HP',fd:'濃郁的滷汁香氣讓自身體質強健,每回合自動回復最大 HP 的 5%。' },
+  '酥脆狂魔・熱浪糕師':   { name:'酥脆裝甲', icon:'🍪', desc:'受到傷害減 15%',fd:'全身被酥脆糕點外殼包覆,所有受到的傷害減少 15%。' },
+  '臭氣魔王・發酵公':     { name:'發酵免疫', icon:'🦠', desc:'免疫所有「中毒」狀態,造成傷害時 25% 機率附加「中毒」',fd:'千年發酵讓他對毒素完全免疫,造成傷害時 25% 機率使目標「中毒」。' },
+  '山靈古魔・千年怒木':   { name:'古樹再生', icon:'🌲', desc:'HP 低於 50% 時,每回合回復 8% HP',fd:'千年神木的生命力,HP 低於 50% 時每回合回復最大 HP 的 8%。' },
+  '深海惡靈・觸手大蛟':   { name:'深海擾流', icon:'🌊', desc:'造成傷害時 20% 機率使目標「減速」1回合',fd:'觸手攪動海水擾亂敵人行動,造成傷害時 20% 機率附加「減速」1 回合。' },
+  '染靈幻魔・藍色憂鬱':   { name:'藍色幻影', icon:'💧', desc:'每次行動 30% 機率閃避(攻擊或技能皆可觸發)',fd:'飄逸藍染使其虛實難辨,每次受到攻擊或技能 30% 機率閃避。' },
+  '珍奶吸魂魔・大波霸':   { name:'吸魂體質', icon:'🧋', desc:'造成傷害的 15% 轉化為 HP',fd:'珍奶吸魂能量持續運轉,造成傷害的 15% 自動轉化為 HP 恢復。' },
+  '水靈反魔・倒映女':     { name:'鏡之守護', icon:'🪞', desc:'每場戰鬥首次 HP 歸零時,以 50% HP 復活一次',fd:'鏡像守護秘術,每場戰鬥首次 HP 歸零時自動以 50% HP 復活(僅限一次)。' },
+  '摩天魔將・夜空爆裂者': { name:'擎天能量', icon:'⚡', desc:'每回合自動 +1 能量',fd:'擎天神槍持續匯聚能量,每回合自動獲得 1 點額外能量。' },
+  '山岳禁咒・崩天巨人':   { name:'山岳之軀', icon:'🗻', desc:'HP 上限 +20%,但速度 -10%',fp:'山岳般堅實的軀體,HP 上限額外 +20%,但因身軀龐大速度 -10%。' },
+});
+
+// 台灣 BOSS 的 LORE(角色背景)
+Object.assign(HERO_LORE, {
+  '油膩魔王・滷汁大鍋':   '彰化巷弄裡誕生的食物精怪,沉迷於「真正的滷肉飯」執念。腰上掛著的圍裙從未洗過,鍋裡的滷汁據說已經滾了三十年。',
+  '酥脆狂魔・熱浪糕師':   '台中糕餅工廠工人沉睡多年的執念化身,認為「越甜越好吃」是宇宙真理。手上擀麵棍能擀出整片山的鳳梨酥。',
+  '臭氣魔王・發酵公':     '深坑山區傳說中守護豆腐發酵秘方的老精怪,當異世界魔氣污染水源後變得暴躁,堅信「世界上唯一好吃的東西就是臭豆腐」。',
+  '山靈古魔・千年怒木':   '阿里山一棵活了三千年的神木,被異世界邪氣感染後喪失理智,將守護森林的責任扭曲為「毀滅一切」。',
+  '深海惡靈・觸手大蛟':   '太平洋深處的古老頭足類生物,被時空門吸引浮上海面,額頭的達悟族圖騰據說是被它吞食的勇士遺物。',
+  '染靈幻魔・藍色憂鬱':   '三峽藍染老師傅臨終時的執念附在染缸中誕生的幻影,優雅卻悲傷,所到之處所有人都會莫名想哭。',
+  '珍奶吸魂魔・大波霸':   '西門町手搖飲品店裡日夜被飲用、卻又永遠賣不完的珍奶妖精,已經吸收了百萬份珍奶的精華,要把全世界的甜變成苦。',
+  '水靈反魔・倒映女':     '日月潭中存活了千年的水靈,原本守護湖水純淨,被異世界邪氣污染後沉迷於「製造完美的虛假倒影」。',
+  '摩天魔將・夜空爆裂者': '101 大樓蓋好那天就被某種未知能量召喚而來的科技魔將,平時潛伏在頂樓避雷針內,跨年夜煙火時最為活躍。',
+  '山岳禁咒・崩天巨人':   '台灣最高峰玉山主峰本身覺醒的山岳之靈,身軀由整座玉山岩石組成,胸口寶石就是台灣的脊樑核心。',
+});
+
+
+
 // ── 8. 日本寵物同步建立 HERO_IMGS（避免缺圖 bug）──
 // ★ v1.0.20260421.1200 — 用明確檔名對應表(部分檔名與角色名不一致)
 if(typeof HERO_IMGS !== 'undefined'){
@@ -30633,8 +32416,384 @@ window._japanTrySelect = function(btnEl){
   selectAdvStage('japan', btnEl);
 };
 
-// ★ v1.0.20260421.2500 — 日本關維護中提示視窗
-function _japanShowMaintenanceModal(){
+// ★ v1.0.20260428.1700 — 台灣環島歷險記:管理員測試模式
+//   非管理員會被擋下,只有白名單帳號可以進去測試
+window._TAIWAN_ADMIN_ONLY = true;       // 管理員測試開關,正式上線時改 false
+window._taiwanTrySelect = function(btnEl){
+  if(window._TAIWAN_ADMIN_ONLY && !(typeof window._isAdminUser === 'function' && window._isAdminUser())){
+    try{ playSfx('sfx-cancel', 0.6); }catch(_){}
+    _taiwanShowAdminOnlyModal();
+    return;
+  }
+  // ★ v1.0.20260428.2000 — 點擊台灣關按鈕直接進入地圖選 BOSS
+  //   不像日本關需要先 selectAdvStage(讓側欄變藍),
+  //   台灣關要先讓玩家選一個 BOSS 才進選角
+  try{ playSfx('sfx-sel', 0.6); }catch(_){}
+  // ★ v1.0.20260428.3400 — 點擊台灣關按鈕,立即切換 BGM 為「台灣關卡簡介劇情BGM」
+  try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-taiwan-intro', 700); }catch(_){}
+  // 暫時隱藏冒險選關介面,讓地圖獨佔畫面
+  try{
+    const advOv = document.getElementById('adventure-overlay');
+    if(advOv){ advOv.style.display='none'; advOv.classList.remove('show'); }
+  }catch(_){}
+  _showTaiwanMap();
+};
+
+// 管理員測試中的提示視窗(非管理員看到)
+function _taiwanShowAdminOnlyModal(){
+  const old = document.getElementById('taiwan-adminonly-modal');
+  if(old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'taiwan-adminonly-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;' +
+    'background:radial-gradient(circle at center,rgba(20,30,60,0.85),rgba(0,0,0,0.92));' +
+    'backdrop-filter:blur(6px);animation:fadeIn 0.35s;';
+  modal.innerHTML =
+    '<div style="max-width:640px;width:90%;padding:40px 40px 32px;text-align:center;' +
+      'background:linear-gradient(160deg,rgba(20,40,30,0.98),rgba(8,20,12,0.98));' +
+      'border:2.5px solid rgba(120,255,180,0.55);border-radius:22px;' +
+      'box-shadow:0 0 80px rgba(80,255,140,0.35);font-family:inherit;">' +
+      '<div style="font-size:88px;margin-bottom:10px;">🏝️</div>' +
+      '<div style="font-size:clamp(28px,3.2vw,42px);font-weight:900;color:#88ffaa;margin-bottom:8px;letter-spacing:3px;">台灣環島歷險記 開發中</div>' +
+      '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:800;color:#aaffcc;margin-bottom:22px;">🚧 即將開放,敬請期待</div>' +
+      '<div style="background:rgba(0,0,0,0.45);border:1.5px solid rgba(120,255,180,0.3);border-radius:14px;padding:20px 24px;margin-bottom:24px;text-align:left;">' +
+        '<div style="font-size:clamp(17px,1.9vw,22px);color:#ddeeff;line-height:1.85;">' +
+          '親愛的勇者們,<br><br>' +
+          '台灣環島歷險記正在熱火朝天的製作中!10 個地點 BOSS、10 種台灣特色至寶、300 道在地知識題目,即將與大家見面。<br><br>' +
+          '此版本目前僅開放 <span style="color:#ffcc66;font-weight:800;">管理員帳號</span> 進行測試。預計近期開放給所有玩家挑戰!' +
+        '</div>' +
+      '</div>' +
+      '<button onclick="document.getElementById(\'taiwan-adminonly-modal\').remove()" ' +
+        'style="padding:14px 36px;font-size:24px;font-weight:800;letter-spacing:2px;' +
+        'background:linear-gradient(135deg,#44ddaa,#22aa77);color:#fff;' +
+        'border:2px solid rgba(120,255,180,0.7);border-radius:12px;cursor:pointer;' +
+        'box-shadow:0 0 20px rgba(80,255,140,0.5);">了解 ✓</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.2000 — 台灣環島歷險記:島嶼地圖選關介面
+// ════════════════════════════════════════════════════════════════
+//
+// 設計概念:
+//   1. 一張台灣島 SVG 地圖,10 個 BOSS 圖釘標示在大致地理位置
+//   2. 點擊圖釘 → 區域放大動畫 → 彈出 BOSS 詳細視窗
+//   3. 詳細視窗顯示: BOSS 立繪/介紹/至寶預覽/難度/建議等級/開戰按鈕
+//
+// 圖釘地理座標(SVG viewBox 0 0 1000 1400, 台灣島大致比例):
+//   x 軸: 西~東 (大約 200~800)
+//   y 軸: 北~南 (大約 100~1300)
+const TAIWAN_BOSS_PIN_COORDS = {
+  taipei_101_warlord:   { x: 545, y: 165, label:'台北 101' },
+  ximen_pearl:          { x: 510, y: 195, label:'西門町' },
+  shenkeng_tofu:        { x: 575, y: 200, label:'深坑' },
+  sanxia_indigo:        { x: 470, y: 230, label:'三峽' },
+  taichung_pineapple:   { x: 405, y: 530, label:'微熱山丘' },
+  changhua_braised:     { x: 380, y: 620, label:'彰化' },
+  sun_moon_mirror_boss: { x: 470, y: 660, label:'日月潭' },
+  alishan_tree:         { x: 430, y: 770, label:'阿里山' },
+  yushan_giant:         { x: 510, y: 760, label:'玉山' },
+  lanyu_octopus:        { x: 770, y: 1180, label:'蘭嶼' },
+};
+
+// 主要的台灣島 SVG 路徑 (簡化版,捕捉台灣主要輪廓)
+const TAIWAN_ISLAND_SVG_PATH = 'M 460 80 ' +              // 台北東北角起點
+  'L 580 110 L 620 200 L 640 290 L 660 380 ' +              // 東北沿岸往南
+  'L 680 470 L 700 560 L 710 650 L 720 740 ' +              // 花蓮台東
+  'L 700 830 L 670 920 L 630 1000 L 580 1070 ' +            // 屏東
+  'L 510 1110 L 450 1100 L 410 1060 L 380 990 ' +           // 恆春半島最南端
+  'L 360 920 L 340 830 L 320 740 L 300 650 ' +              // 西南沿岸往北
+  'L 290 560 L 295 470 L 310 380 L 335 290 ' +              // 雲林、台中
+  'L 365 220 L 400 160 L 430 110 L 460 80 Z';               // 回到台北
+
+// 顯示台灣關卡選擇地圖
+window._showTaiwanMap = function(){
+  const old = document.getElementById('taiwan-map-overlay');
+  if(old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'taiwan-map-overlay';
+  ov.style.cssText =
+    'position:fixed;inset:0;z-index:9700;' +
+    'background:linear-gradient(180deg,#001a3a 0%,#003d6e 50%,#0066aa 100%);' +
+    'display:flex;flex-direction:column;align-items:center;' +
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
+    'animation:fadeIn 0.5s;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  // ── 標題列 ──
+  const header = document.createElement('div');
+  header.style.cssText = 'width:100%;padding:30px 24px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;';
+  header.innerHTML =
+    '<button id="taiwan-map-back" style="padding:14px 28px;font-size:24px;font-weight:800;background:rgba(0,30,60,0.85);' +
+      'border:2.5px solid rgba(120,200,255,0.7);color:#aaccff;border-radius:14px;cursor:pointer;letter-spacing:2px;' +
+      'box-shadow:0 4px 14px rgba(0,80,160,0.4);">← 返回</button>' +
+    '<div style="text-align:center;flex:1;">' +
+      '<div style="font-size:clamp(36px,4.5vw,58px);font-weight:900;color:#ffdd66;letter-spacing:8px;text-shadow:0 0 30px rgba(255,200,80,0.7);">🏝 台灣環島歷險記</div>' +
+      '<div style="font-size:clamp(18px,2vw,26px);color:#aaeeff;letter-spacing:3px;margin-top:6px;opacity:0.9;">點擊地圖上的圖釘,選擇要挑戰的關卡 BOSS</div>' +
+    '</div>' +
+    '<div style="width:120px;"></div>';  // 對稱佔位
+  ov.appendChild(header);
+
+  // ── 地圖容器 ──
+  const mapWrap = document.createElement('div');
+  mapWrap.style.cssText = 'flex:1;width:100%;max-width:1000px;display:flex;justify-content:center;align-items:flex-start;padding:10px 20px 40px;';
+  ov.appendChild(mapWrap);
+
+  // SVG 容器
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 1000 1400');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.style.cssText = 'width:100%;max-width:720px;max-height:80vh;height:auto;filter:drop-shadow(0 0 30px rgba(80,160,255,0.5));';
+
+  // 海洋背景紋理(SVG defs 漸層)
+  const defs = document.createElementNS(svgNS, 'defs');
+  defs.innerHTML =
+    '<linearGradient id="taiwanLandGrad" x1="0%" y1="0%" x2="0%" y2="100%">' +
+      '<stop offset="0%" stop-color="#5fb961"/>' +
+      '<stop offset="50%" stop-color="#4ca54e"/>' +
+      '<stop offset="100%" stop-color="#3d8c3f"/>' +
+    '</linearGradient>' +
+    '<radialGradient id="taiwanGlow" cx="50%" cy="50%" r="50%">' +
+      '<stop offset="0%" stop-color="rgba(255,255,200,0.3)"/>' +
+      '<stop offset="100%" stop-color="rgba(255,255,200,0)"/>' +
+    '</radialGradient>';
+  svg.appendChild(defs);
+
+  // 台灣島地形
+  const island = document.createElementNS(svgNS, 'path');
+  island.setAttribute('d', TAIWAN_ISLAND_SVG_PATH);
+  island.setAttribute('fill', 'url(#taiwanLandGrad)');
+  island.setAttribute('stroke', '#2d6e2f');
+  island.setAttribute('stroke-width', '3');
+  svg.appendChild(island);
+
+  // 中央山脈裝飾線(模擬玉山等山脈)
+  const mountain = document.createElementNS(svgNS, 'path');
+  mountain.setAttribute('d', 'M 520 280 L 540 380 L 530 480 L 545 580 L 525 680 L 540 780 L 520 880');
+  mountain.setAttribute('fill', 'none');
+  mountain.setAttribute('stroke', '#8d5a2a');
+  mountain.setAttribute('stroke-width', '8');
+  mountain.setAttribute('stroke-linecap', 'round');
+  mountain.setAttribute('opacity', '0.5');
+  svg.appendChild(mountain);
+
+  // 蘭嶼小島
+  const lanyu = document.createElementNS(svgNS, 'ellipse');
+  lanyu.setAttribute('cx', '770');
+  lanyu.setAttribute('cy', '1180');
+  lanyu.setAttribute('rx', '40');
+  lanyu.setAttribute('ry', '32');
+  lanyu.setAttribute('fill', 'url(#taiwanLandGrad)');
+  lanyu.setAttribute('stroke', '#2d6e2f');
+  lanyu.setAttribute('stroke-width', '2.5');
+  svg.appendChild(lanyu);
+
+  // ── BOSS 圖釘 ──
+  Object.keys(TAIWAN_BOSSES).forEach(bossId => {
+    const boss = TAIWAN_BOSSES[bossId];
+    const coord = TAIWAN_BOSS_PIN_COORDS[bossId];
+    if(!coord) return;
+
+    // 圖釘陰影圈(脈動效果)
+    const pulseRing = document.createElementNS(svgNS, 'circle');
+    pulseRing.setAttribute('cx', coord.x);
+    pulseRing.setAttribute('cy', coord.y);
+    pulseRing.setAttribute('r', '32');
+    pulseRing.setAttribute('fill', 'none');
+    pulseRing.setAttribute('stroke', boss.mainline ? '#ffcc44' : '#ff6644');
+    pulseRing.setAttribute('stroke-width', '3');
+    pulseRing.setAttribute('opacity', '0.7');
+    pulseRing.style.animation = 'taiwanPinPulse 2s infinite';
+    svg.appendChild(pulseRing);
+
+    // 圖釘外圈
+    const pinOuter = document.createElementNS(svgNS, 'circle');
+    pinOuter.setAttribute('cx', coord.x);
+    pinOuter.setAttribute('cy', coord.y);
+    pinOuter.setAttribute('r', '24');
+    pinOuter.setAttribute('fill', boss.mainline ? '#ffaa22' : '#cc4422');
+    pinOuter.setAttribute('stroke', '#fff');
+    pinOuter.setAttribute('stroke-width', '3.5');
+    pinOuter.style.cursor = 'pointer';
+    svg.appendChild(pinOuter);
+
+    // 圖釘 Emoji(BOSS 預覽)
+    const pinEmoji = document.createElementNS(svgNS, 'text');
+    pinEmoji.setAttribute('x', coord.x);
+    pinEmoji.setAttribute('y', coord.y + 9);
+    pinEmoji.setAttribute('text-anchor', 'middle');
+    pinEmoji.setAttribute('font-size', '26');
+    pinEmoji.style.cursor = 'pointer';
+    pinEmoji.textContent = boss.bossEmoji;
+    svg.appendChild(pinEmoji);
+
+    // 地名標籤
+    const labelBg = document.createElementNS(svgNS, 'rect');
+    const _labelW = coord.label.length * 18 + 16;
+    labelBg.setAttribute('x', coord.x - _labelW/2);
+    labelBg.setAttribute('y', coord.y + 30);
+    labelBg.setAttribute('width', _labelW);
+    labelBg.setAttribute('height', 26);
+    labelBg.setAttribute('rx', '6');
+    labelBg.setAttribute('fill', 'rgba(0,0,0,0.75)');
+    labelBg.setAttribute('stroke', boss.mainline ? '#ffcc44' : '#ff8866');
+    labelBg.setAttribute('stroke-width', '1.5');
+    svg.appendChild(labelBg);
+
+    const labelText = document.createElementNS(svgNS, 'text');
+    labelText.setAttribute('x', coord.x);
+    labelText.setAttribute('y', coord.y + 49);
+    labelText.setAttribute('text-anchor', 'middle');
+    labelText.setAttribute('font-size', '16');
+    labelText.setAttribute('font-weight', '700');
+    labelText.setAttribute('fill', '#fff');
+    labelText.textContent = coord.label;
+    svg.appendChild(labelText);
+
+    // 點擊事件(整個圖釘群組共用)
+    [pinOuter, pinEmoji].forEach(el => {
+      el.addEventListener('click', function(){
+        try{ playSfx('sfx-sel', 0.6); }catch(_){}
+        _showTaiwanBossDetail(bossId);
+      });
+    });
+  });
+
+  // 確保 keyframes 注入
+  if(!document.getElementById('_taiwan-map-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_taiwan-map-kf';
+    kf.textContent =
+      '@keyframes taiwanPinPulse{0%{r:24;opacity:0.7}50%{r:36;opacity:0.3}100%{r:24;opacity:0.7}}' +
+      '@keyframes taiwanDetailIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}';
+    document.head.appendChild(kf);
+  }
+
+  mapWrap.appendChild(svg);
+  document.body.appendChild(ov);
+
+  // 返回按鈕
+  document.getElementById('taiwan-map-back').onclick = function(){
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    ov.remove();
+    // 回到關卡選擇頁
+    try{
+      const advOv = document.getElementById('adventure-overlay');
+      if(advOv){ advOv.style.display='flex'; advOv.classList.add('show'); }
+    }catch(_){}
+  };
+};
+
+// 顯示 BOSS 詳細彈窗(玩家點圖釘後)
+function _showTaiwanBossDetail(bossId){
+  const boss = TAIWAN_BOSSES[bossId];
+  if(!boss) return;
+  const treasure = TAIWAN_TREASURES[boss.treasure];
+
+  const old = document.getElementById('taiwan-boss-detail');
+  if(old) old.remove();
+
+  // 已獲得的至寶?
+  const _got = !!_getTaiwanTreasureRecord(boss.treasure);
+
+  // 稀有度顏色映射
+  const _rarityColor = {
+    mythic: '#ff44dd', legend: '#ffaa22', epic: '#aa66ff', rare: '#44aaff',
+  };
+  const _rarityName = {
+    mythic: '神話', legend: '傳說', epic: '史詩', rare: '稀有',
+  };
+  const _rc = _rarityColor[treasure ? treasure.rarity : 'rare'] || '#44aaff';
+  const _rn = _rarityName[treasure ? treasure.rarity : 'rare'] || '稀有';
+
+  // 難度星
+  const _stars = '★'.repeat(boss.stars) + '☆'.repeat(Math.max(0, 6 - boss.stars));
+
+  const detail = document.createElement('div');
+  detail.id = 'taiwan-boss-detail';
+  detail.style.cssText =
+    'position:fixed;inset:0;z-index:9750;display:flex;align-items:center;justify-content:center;' +
+    'background:rgba(0,10,30,0.85);backdrop-filter:blur(8px);' +
+    'animation:fadeIn 0.3s;padding:20px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+
+  detail.innerHTML =
+    '<div style="max-width:680px;width:100%;max-height:88vh;overflow-y:auto;padding:32px 28px 24px;' +
+      'background:linear-gradient(160deg,rgba(20,30,60,0.98),rgba(8,15,40,0.98));' +
+      'border:3px solid '+_rc+';border-radius:22px;box-shadow:0 0 60px '+_rc+'80;animation:taiwanDetailIn 0.4s;">' +
+
+      // BOSS 名稱與地點
+      '<div style="text-align:center;margin-bottom:14px;">' +
+        (boss.mainline ? '<div style="display:inline-block;padding:4px 14px;background:linear-gradient(90deg,#ff6644,#ffaa22);color:#fff;font-weight:900;font-size:17px;letter-spacing:3px;border-radius:14px;margin-bottom:8px;box-shadow:0 0 12px rgba(255,160,40,0.6);">★ 主線 BOSS</div>' : '') +
+        '<div style="font-size:clamp(28px,3.5vw,40px);font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px '+_rc+';">'+boss.name+'</div>' +
+        '<div style="font-size:clamp(18px,2vw,24px);color:#ffcc88;margin-top:6px;letter-spacing:2px;">📍 '+boss.location+'</div>' +
+      '</div>' +
+
+      // BOSS 圖示與介紹
+      '<div style="display:flex;gap:18px;align-items:center;background:rgba(0,0,0,0.4);border:1.5px solid '+_rc+'80;border-radius:14px;padding:18px;margin-bottom:18px;">' +
+        '<div style="font-size:88px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 12px '+_rc+');">'+boss.bossEmoji+'</div>' +
+        '<div style="font-size:17px;color:#ddeeff;line-height:1.7;letter-spacing:1px;">'+boss.desc+'</div>' +
+      '</div>' +
+
+      // 難度與建議等級
+      '<div style="display:flex;gap:14px;margin-bottom:16px;">' +
+        '<div style="flex:1;background:rgba(255,180,40,0.08);border:1.5px solid rgba(255,180,40,0.4);border-radius:12px;padding:14px;text-align:center;">' +
+          '<div style="font-size:14px;color:#ffcc88;letter-spacing:2px;margin-bottom:4px;">⭐ 難度</div>' +
+          '<div style="font-size:24px;color:#ffdd66;letter-spacing:2px;">'+_stars+'</div>' +
+        '</div>' +
+        '<div style="flex:1;background:rgba(80,200,255,0.08);border:1.5px solid rgba(80,200,255,0.4);border-radius:12px;padding:14px;text-align:center;">' +
+          '<div style="font-size:14px;color:#88ddff;letter-spacing:2px;margin-bottom:4px;">💪 建議等級</div>' +
+          '<div style="font-size:24px;color:#aaeeff;font-weight:900;">Lv. '+boss.suggestLv+'</div>' +
+        '</div>' +
+      '</div>' +
+
+      // 至寶獎勵預覽
+      (treasure ? '<div style="background:rgba(0,0,0,0.5);border:2px solid '+_rc+';border-radius:14px;padding:18px;margin-bottom:18px;">' +
+        '<div style="font-size:14px;color:'+_rc+';letter-spacing:3px;margin-bottom:8px;font-weight:800;">💎 戰勝獎勵 ✦ '+_rn+'級至寶'+(_got?'  <span style="color:#88ff88;font-size:12px;">(已獲得)</span>':'')+'</div>' +
+        '<div style="display:flex;gap:14px;align-items:center;">' +
+          '<div style="font-size:60px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 10px '+_rc+');">'+treasure.icon+'</div>' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:22px;font-weight:900;color:'+_rc+';letter-spacing:2px;margin-bottom:4px;">'+treasure.name+'</div>' +
+            '<div style="font-size:14px;color:#ccddee;line-height:1.6;">'+treasure.desc+'</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' : '') +
+
+      // 按鈕
+      '<div style="display:flex;gap:14px;justify-content:center;">' +
+        '<button id="tw-boss-cancel" style="padding:14px 32px;font-size:20px;font-weight:700;letter-spacing:2px;' +
+          'background:rgba(60,80,120,0.7);border:2px solid rgba(120,160,200,0.6);color:#ccddee;border-radius:12px;cursor:pointer;">← 返回地圖</button>' +
+        '<button id="tw-boss-go" style="padding:14px 36px;font-size:22px;font-weight:900;letter-spacing:3px;' +
+          'background:linear-gradient(135deg,'+_rc+',#cc2244);color:#fff;border:2.5px solid #fff;border-radius:12px;cursor:pointer;' +
+          'box-shadow:0 0 24px '+_rc+';animation:taiwanDetailIn 0.6s;">⚔ 開戰!</button>' +
+      '</div>' +
+
+    '</div>';
+
+  document.body.appendChild(detail);
+
+  document.getElementById('tw-boss-cancel').onclick = function(){
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    detail.remove();
+  };
+  document.getElementById('tw-boss-go').onclick = function(){
+    try{ playSfx('sfx-battle-start', 0.7); }catch(_){}
+    detail.remove();
+    // 關閉地圖 → 設定當前 BOSS → 進入選角頁
+    const mapOv = document.getElementById('taiwan-map-overlay');
+    if(mapOv) mapOv.remove();
+    window._taiwanCurrentBossId = bossId;  // 戰鬥準備時讀取
+    // 進入冒險選角流程
+    try{
+      if(typeof startAdventureGame === 'function'){
+        startAdventureGame('taiwan');
+      }
+    }catch(e){ console.error('[台灣關啟動]', e); }
+  };
+}
+
+
   const old = document.getElementById('japan-maint-modal');
   if(old) old.remove();
   const modal = document.createElement('div');
@@ -31267,6 +33426,7 @@ function advStartCutscene(stage) {
   //   避免上一場冒險的「已出題目」殘留
   window._miniQuizUsedIds = new Set();
   window._japanShuffleBag = null;
+  window._taiwanShuffleBag = null;  // ★ v1.0.20260428.3000 重置台灣關洗牌池
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0,currentStreak:0,maxStreak:0};
   // ★ v1.0.20260420.3200 — 重置「BOSS HP 難度倍率已套用」旗標,讓新一輪冒險能重新根據當局難度套一次
   window._advBossHpMultApplied = false;
@@ -33359,18 +35519,31 @@ function advStartBattle(){
     const _bb=document.getElementById('adv-battle-bg');
     if(_bb){
       _bb.className='';
+      _bb.style.backgroundImage = ''; // 清掉 inline 背景
       let _bgCls;
       const _vi = window._currentBossVariantInfo;
       const _stage = (typeof _adventureStage !== 'undefined') ? _adventureStage : null;
       if(_stage === 'japan'){
         if(_vi && _vi.id === 'yamata') _bgCls = 'bg-yamata';
         else _bgCls = 'bg-fuji';  // tengu / shutendoji / tamamo 共用
+      } else if(_stage === 'taiwan'){
+        // ★ v1.0.20260428.2800 — 台灣關依玩家選的 BOSS 套用場景圖(inline style)
+        const _twBossId = window._advSelectedTaiwanBoss;
+        const _twSceneUrl = (typeof _getTaiwanSceneImage === 'function') ? _getTaiwanSceneImage(_twBossId) : '';
+        if(_twSceneUrl){
+          _bb.style.backgroundImage = 'url("' + _twSceneUrl + '")';
+          _bb.style.backgroundSize = 'cover';
+          _bb.style.backgroundPosition = 'center';
+          _bgCls = ''; // 不加 class
+        } else {
+          _bgCls = 'bg-boss'; // fallback
+        }
       } else if(_vi && _vi.id === 'apricot'){
         _bgCls = 'bg-apricot';
       } else {
         _bgCls = 'bg-boss';
       }
-      _bb.classList.add(_bgCls);
+      if(_bgCls) _bb.classList.add(_bgCls);
       void _bb.offsetWidth;
       _bb.classList.add('visible');
     }
@@ -33745,6 +35918,38 @@ function advPickQuestion() {
     }
     return window._japanShuffleBag.shift() || null;
   }
+  // ★ v1.0.20260428.3000 — 台灣關洗牌制:當前 BOSS 30 題池,依難度動態裁減選項
+  //   題目本身不分難度,玩家選的難度只影響「顯示幾個選項」+ BOSS 屬性強度
+  if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+    if(!Array.isArray(window._taiwanShuffleBag) || !window._taiwanShuffleBag.length){
+      const _twBossId = window._advSelectedTaiwanBoss;
+      const _twAll = (typeof TAIWAN_QUIZ_DB !== 'undefined' && _twBossId)
+        ? TAIWAN_QUIZ_DB.filter(q => q.bossId === _twBossId).slice()
+        : (typeof TAIWAN_QUIZ_DB !== 'undefined' ? TAIWAN_QUIZ_DB.slice() : []);
+      // 過濾跨關卡持久已答對
+      let _twPool = _twAll;
+      try{
+        if(typeof _persistentCorrectQuestions === 'object' && _persistentCorrectQuestions['台灣環島']){
+          const _correctSet = _persistentCorrectQuestions['台灣環島'];
+          const _filtered = _twAll.filter(q => !_correctSet[q.id]);
+          if(_filtered.length > 0) _twPool = _filtered;
+        }
+      }catch(_){}
+      // Fisher-Yates 洗牌
+      for(let i = _twPool.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [_twPool[i], _twPool[j]] = [_twPool[j], _twPool[i]];
+      }
+      window._taiwanShuffleBag = _twPool;
+      try{ if(window._miniQuizUsedIds) window._miniQuizUsedIds.clear(); }catch(_e){}
+      try{ log('📚 [台灣關] 題庫已重新洗牌,共 ' + _twPool.length + ' 題。'); }catch(_e){}
+    }
+    let _twQ = window._taiwanShuffleBag.shift() || null;
+    if(_twQ && typeof _trimOptionsByTaiwanDifficulty === 'function'){
+      _twQ = _trimOptionsByTaiwanDifficulty(_twQ);
+    }
+    return _twQ;
+  }
   const used = _advUsedQuestionIds;
   let pool = _advSessionQuestions.filter(q => !used.has(q.id));
   // 按科目過濾（如有）
@@ -34017,6 +36222,20 @@ function advSubmitAnswer(letter, isCorrectOverride) {
         }
       }
     }catch(_persistE){ console.warn('[題庫持久-BOSS] 記錄失敗', _persistE); }
+    // ★ v1.0.20260428.2600 — 台灣關 BOSS 戰答對:對應關卡的至寶 +5 EXP(只在已獲得至寶時生效)
+    try{
+      if(_adventureStage === 'taiwan' && window._advSelectedTaiwanBoss){
+        const _twBossId = window._advSelectedTaiwanBoss;
+        const _twBoss = (typeof TAIWAN_BOSSES !== 'undefined') ? TAIWAN_BOSSES[_twBossId] : null;
+        if(_twBoss && _twBoss.treasure){
+          const _twRec = (typeof _getTaiwanTreasureRecord === 'function') ? _getTaiwanTreasureRecord(_twBoss.treasure) : null;
+          if(_twRec && typeof _addTaiwanTreasureExp === 'function'){
+            _addTaiwanTreasureExp(_twBoss.treasure, 5);
+            console.log('[台灣至寶] BOSS戰答對 ['+_twBoss.treasure+'] +5 EXP');
+          }
+        }
+      }
+    }catch(_twE){ console.warn('[台灣至寶 EXP] 記錄失敗', _twE); }
     // ★ 獎章系統：BOSS戰答題
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
@@ -34887,6 +37106,16 @@ function advRestartBattle() {
 }
 // ════════════════════════════════
 async function advShowBattleResult(win) {
+  // ★ v1.0.20260428.1500 — 強制清除接關 overlay,防止返回首頁時殘留
+  //   bug:打贏 BOSS 回到首頁,卻看到「小隊全滅」接關視窗
+  //   根因:advCheckContinue 把 adv-continue-overlay 設為 .show,
+  //        若接關後玩家「直接打贏 BOSS 沒按接關按鈕」(例如剩下 1 隻復活了),
+  //        或某些 race condition 沒走到 advDoContinue/advGiveUp 清除路徑,
+  //        overlay 會一直 .show 殘留到下一個畫面
+  try{
+    const _co = document.getElementById('adv-continue-overlay');
+    if(_co){ _co.classList.remove('show'); _co.style.display=''; }
+  }catch(_){}
   // ★ v1.0.20260424.0910 — 嚴重 bug 修復:
   //   原本只在玩家點「✅ 確認」(advStartWinSequence)後才清除戰鬥快照,
   //   導致玩家在結算面板重新整理或回首頁,下次進入會看到「繼續戰鬥」,
@@ -35224,6 +37453,8 @@ async function advShowBattleResult(win) {
     // setTimeout(()=>advShowUnlockHero(), 1500);
     // ★ 日本關：若勝利的是前三路線 BOSS，發放對應神器
     try{ if(typeof window._onJapanBossDefeated === 'function') window._onJapanBossDefeated(); }catch(_jpE){}
+    // ★ v1.0.20260428.2600 — 台灣關:勝利後發放對應至寶
+    try{ if(typeof window._onTaiwanBossDefeated === 'function') window._onTaiwanBossDefeated(); }catch(_twE){}
   }
 }
 
@@ -36358,6 +38589,9 @@ function _buildSafeData() {
     //   字串版用來繞過 Firebase merge:true 不會刪除 map key 的限制
     persistentCorrectQuestions: _persistentCorrectQuestions,
     persistentCorrectQuestions_s: JSON.stringify(_persistentCorrectQuestions||{}),
+    // ★ v1.0.20260428.1700 — 台灣環島至寶資料(等級/經驗/裝備英雄)
+    taiwanTreasureData: _taiwanTreasureData,
+    taiwanTreasureData_s: JSON.stringify(_taiwanTreasureData||{}),
     settings: { bgmMuted: _bgmMuted, sfxMuted: _sfxMuted },
     advBestScore: (typeof _advBestScore !== 'undefined') ? _advBestScore : 0,
     // ★ 英雄肖像系統（已解鎖的替代肖像 + 目前選擇）
@@ -36573,6 +38807,23 @@ function _applySafeData(raw) {
     }catch(e){}
   } else if(data.persistentCorrectQuestions && typeof data.persistentCorrectQuestions === 'object'){
     _persistentCorrectQuestions = data.persistentCorrectQuestions;
+  }
+  // ★ v1.0.20260428.1700 — 載入台灣環島至寶資料
+  if(typeof data.taiwanTreasureData_s === 'string'){
+    try{
+      const _td = JSON.parse(data.taiwanTreasureData_s);
+      if(_td && typeof _td === 'object'){
+        _taiwanTreasureData = _td;
+        try{ _saveTaiwanTreasureData(); }catch(_){}
+        try{
+          const _cnt = Object.keys(_td).length;
+          if(_cnt > 0) console.log('[台灣至寶] 已載入 '+_cnt+' 個至寶資料');
+        }catch(_){}
+      }
+    }catch(e){}
+  } else if(data.taiwanTreasureData && typeof data.taiwanTreasureData === 'object'){
+    _taiwanTreasureData = data.taiwanTreasureData;
+    try{ _saveTaiwanTreasureData(); }catch(_){}
   }
   // 顯示載入後的累計狀態
   try{
@@ -42486,7 +44737,8 @@ const HERO_CATEGORIES_OVERRIDE = {
   '時空法師':    ['ctrl'],
   '電腦繪圖師':  ['dmg','ctrl'],
   // ★ v1.0.20260424.0710 — 小力(回復), 幼兒園小孩(控場)
-  '小力':        ['heal'],
+  // ★ v1.0.20260428.1500 — 小力職能正式調整為「回復+坦克」(忠犬守護=分擔傷害=坦克)
+  '小力':        ['heal', 'ctrl'],
   '幼兒園小孩':  ['ctrl'],
 };
 
@@ -42515,8 +44767,9 @@ const HERO_HEX_OVERRIDE = {
   '舞者':        { heal: 2, ctrl: 7 },
   '吟遊詩人':    { heal: 8, ctrl: 7 },
   // ★ v1.0.20260424.0710 — 小力(回復+坦克), 幼兒園小孩(控場)
-  '小力':        { heal: 10, ctrl: 1 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合恢復=回復)
-  '幼兒園小孩':  { heal: 2, ctrl: 10 },   // 大聲啼哭(降攻特) + 午睡時間(隱身) + 夢境時光(降攻特AOE)
+  // ★ v1.0.20260428.1500 — 小力 ctrl 1→9(坦克職能),幼兒園小孩 heal 2→1(無治療技能)
+  '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合恢復=回復)
+  '幼兒園小孩':  { heal: 1, ctrl: 10 },   // 大聲啼哭(降攻特) + 午睡時間(隱身) + 夢境時光(降攻特AOE)
 };
 
 // ★ 回傳英雄的分類陣列（可有多個）
@@ -44755,6 +47008,23 @@ function _advMiniGetQuizPool(sceneIdx) {
     const _raw = ADV_QUIZ_5S_U4_SOUND.filter(q => !window._miniQuizUsedIds.has(q.id));
     return _filterPersistentMini(_raw, subject);
   }
+  // ★ v1.0.20260428.2400 — 台灣環島題庫分支(依玩家在地圖選的 BOSS,只出該關 30 題)
+  // ★ v1.0.20260428.3000 — 移除難度篩選,題目全 30 題池;難度只影響顯示選項數(由 _trimOptionsByTaiwanDifficulty 處理)
+  if(subject === '台灣環島' || (typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan')){
+    if(typeof TAIWAN_QUIZ_DB !== 'undefined'){
+      const _bossId = window._advSelectedTaiwanBoss || null;
+      // 只挑當前選定 BOSS 的題目;若沒選 BOSS(理論不會發生)則全 300 題
+      const _twAll = _bossId
+        ? TAIWAN_QUIZ_DB.filter(q => q.bossId === _bossId)
+        : TAIWAN_QUIZ_DB.slice();
+      // 過濾掉本場已抽的(_miniQuizUsedIds)
+      const _tw = _twAll.filter(q => !window._miniQuizUsedIds.has(q.id));
+      // 加上跨關卡持久已答對過濾
+      const _twFiltered = _filterPersistentMini(_tw, '台灣環島');
+      console.log('[題庫] 台灣關分支觸發,bossId=' + _bossId + ',可用 ' + _twFiltered.length + ' 題(難度=' + (window._advPlayerDifficulty || '未設') + ',只影響顯示選項數)');
+      return _twFiltered;
+    }
+  }
   // ★ v1.0.20260421.3000 — 日本關題庫分支（不分年級難度，全 100 題池）
   //   v1.0.20260421.3000b — 改用 _adventureStage 判斷更可靠，避免 subject 被覆寫
   //   v1.0.20260423.1500 — 小怪戰改讀取共用 _japanShuffleBag:
@@ -45105,6 +47375,19 @@ function _advMiniQuizSubmit(letter, isCorrect) {
         }
       }
     }catch(_persistE){ console.warn('[題庫持久] 記錄失敗', _persistE); }
+    // ★ v1.0.20260428.2600 — 台灣關小怪戰答對:對應關卡至寶 +1 EXP(已獲得時)
+    try{
+      if(_adventureStage === 'taiwan' && window._advSelectedTaiwanBoss){
+        const _twBossId = window._advSelectedTaiwanBoss;
+        const _twBoss = (typeof TAIWAN_BOSSES !== 'undefined') ? TAIWAN_BOSSES[_twBossId] : null;
+        if(_twBoss && _twBoss.treasure){
+          const _twRec = (typeof _getTaiwanTreasureRecord === 'function') ? _getTaiwanTreasureRecord(_twBoss.treasure) : null;
+          if(_twRec && typeof _addTaiwanTreasureExp === 'function'){
+            _addTaiwanTreasureExp(_twBoss.treasure, 1);
+          }
+        }
+      }
+    }catch(_twE){ console.warn('[台灣至寶 EXP MINI] 記錄失敗', _twE); }
     // ★ 獎章系統：答題觸發
     try{ _checkMedalAnswer(true, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.0660 — 追蹤兩個專屬題庫的全題答對狀態
@@ -48550,6 +50833,214 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3500', brief:[
+    '🎵 修正台灣地圖 BGM 檔名(原本指向「台灣關卡簡介劇情BGM」實際應為「台灣地圖BGM」)',
+  ], items:[
+    'bgm-taiwan-intro 的 src 更正為 台灣地圖BGM.m4a',
+    '其他邏輯不變(觸發點、切換方式皆相同)',
+  ] },
+  { ver:'v1.0.20260428.3400', brief:[
+    '💪 台灣 10 BOSS HP 全面 ×2(從 1050~2250 提升至 2100~4500)',
+    '⚖️ HP 比例傷害技能設上限 = 英雄等級 ×10(避免高HP BOSS失衡)',
+    '🎵 台灣關卡介紹頁 + 地圖選關頁 BGM',
+  ], items:[
+    '【BOSS HP 加倍】',
+    '  ① 油膩魔王     2100  ② 酥脆狂魔   2360  ③ 臭氣魔王   2640',
+    '  ④ 山靈古魔     2900  ⑤ 深海惡靈   3180  ⑥ 染靈幻魔   3440',
+    '  ⑦ 珍奶吸魂魔   3700  ⑧ 水靈反魔   3980  ⑨ 摩天魔將   4240',
+    '  ⑩ 山岳禁咒     4500',
+    '  ATK/SP/SPD/EXP 維持原本平衡梯度不變',
+    '【HP 比例傷害上限】',
+    '  問題:聖騎士「神聖鎚擊」打 BOSS 5%、暗法師「死亡宣告」強敵模式 20%,',
+    '       在 HP 4500 的山岳禁咒身上一擊就打 225~900 傷害,壓倒性失衡',
+    '  修正:傷害上限 = 英雄等級 × 10',
+    '  例:英雄 Lv50 → 上限 500;英雄 Lv30 → 上限 300',
+    '  說明文字補充「上限=Lv×10」',
+    '  日誌會顯示是否觸發上限,例如「[聖騎士] 神聖鎚擊...[上限500]!」',
+    '【台灣 BGM 第二首】',
+    '  新增 <audio id="bgm-taiwan-intro">,src=台灣關卡簡介劇情BGM.m4a',
+    '  觸發點:點擊「台灣環島歷險記」按鈕後立即播放',
+    '  涵蓋情境:地圖選關、BOSS 詳情面板、場景過場、BOSS 對白、選難度',
+    '  進入 BOSS 戰時自動切換為 bgm-taiwan-boss',
+    '  從地圖按「返回首頁」會切回 bgm-menu-01',
+  ] },
+  { ver:'v1.0.20260428.3200', brief:[
+    '⚔️ 台灣 10 BOSS 屬性重新平衡(從弱到強漸增)',
+    '🎵 台灣 BOSS 戰統一用「台灣BOSS.m4a」配樂',
+    '🌪️ 七元素屬性相剋系統完整套用',
+    '🚫 BOSS 單獨上場(取消小怪)',
+  ], items:[
+    '【BOSS 屬性數值重設】',
+    '  最弱基準:杏花妖困難版(HP 1020 / ATK 17 / SP 24 / SPD 10)',
+    '  最強基準:八岐大蛇 ×1.5(HP 2250 / ATK 30 / SP 42 / SPD 33)',
+    '  10 隻 BOSS 線性遞增分布:',
+    '  ① 油膩魔王     1050/17/24/12  (火/稀有)',
+    '  ② 酥脆狂魔     1180/18/26/14  (火/稀有)',
+    '  ③ 臭氣魔王     1320/19/28/16  (暗/史詩)',
+    '  ④ 山靈古魔     1450/20/30/18  (草/史詩)',
+    '  ⑤ 深海惡靈     1590/21/32/20  (水/史詩)',
+    '  ⑥ 染靈幻魔     1720/22/34/23  (暗/史詩)',
+    '  ⑦ 珍奶吸魂魔   1850/24/36/25  (暗/傳說)',
+    '  ⑧ 水靈反魔     1990/26/38/28  (水/傳說)',
+    '  ⑨ 摩天魔將     2120/28/40/30  (風/傳說)',
+    '  ⑩ 山岳禁咒     2250/30/42/33  (土/神話)',
+    '  EXP 也成比例(140 → 420)',
+    '【七元素相剋設計】',
+    '  10 BOSS 屬性分配:火×2 / 暗×3 / 草×1 / 水×2 / 風×1 / 土×1',
+    '  各 BOSS 的所有攻擊技能(s1+s2+爆發)都加進 SKILL_FORCE_ELEMENT',
+    '  玩家用相剋屬性英雄攻擊 BOSS 時:傷害 +10%(元素增幅 +20%)',
+    '  反之被劣勢屬性英雄攻擊時 BOSS 傷害 -10%',
+    '  BOSS 詳情頁顯示:「BOSS 屬性 + 建議使用什麼屬性英雄對抗」',
+    '【BOSS 戰 BGM】',
+    '  新增 <audio id="bgm-taiwan-boss">,src=台灣BOSS.m4a',
+    '  BGM 切換邏輯加入 _adventureStage === \'taiwan\' 分支',
+    '  10 隻 BOSS 統一使用同一首',
+    '【陣容簡化】',
+    '  _buildTaiwanBossTeam 從 [小怪,BOSS,小怪] 改為 [BOSS]',
+    '  TAIWAN_BOSS_MINIONS 表保留(供未來擴充),目前不使用',
+    '  BOSS 單獨上場,玩家對 BOSS 的攻擊更直接',
+    '【掉落物 + 連續答題獎勵】',
+    '  既有 _advStats / _advPendingReward 系統自動套用,不需改動',
+    '  台灣關 BOSS 戰享有與其他關卡相同的獎勵機制',
+    '  另外 BOSS 勝利會獨立發放對應至寶(_onTaiwanBossDefeated)',
+  ] },
+  { ver:'v1.0.20260428.3000', brief:[
+    '🎯 台灣關難度設計修正:題目內容不變,難度只影響「選項數量」與「BOSS 強度」',
+  ], items:[
+    '【核心理念】',
+    '  難度純粹是「展示樣式」差異 + 「BOSS 屬性倍率」,題目本身共用 30 題池',
+    '【出題流程】',
+    '  進入 BOSS 戰建立 _taiwanShuffleBag(該關 30 題隨機洗牌)',
+    '  抽題時不再依難度篩選,而是 shift() 出一題,再裁減選項',
+    '【選項裁減邏輯 _trimOptionsByTaiwanDifficulty】',
+    '  沒自信 → 顯示 2 個選項(答案 + 1 個隨機錯誤選項)',
+    '  普通   → 顯示 3 個選項(答案 + 2 個隨機錯誤選項)',
+    '  我很會 → 顯示題目原始所有選項(最多 4 個)',
+    '  若題目原始選項數 < 目標,則保持原樣不裁減(不補假選項)',
+    '  選項裁減後重新洗牌,確保正確答案不總在第一個',
+    '  使用淺拷貝,不影響題庫原始資料',
+    '【BOSS 屬性倍率(沿用既有 ADV_CONFIDENCE_HP_MULT)】',
+    '  沒自信 ×1.00 / 普通 ×1.25 / 我很會 ×1.50 (套用在 BOSS HP)',
+    '  自動由 advStartBattle 處理,_advPlayerDifficulty 一設定就生效',
+    '【洗牌池重置】',
+    '  進入新一場冒險時 _taiwanShuffleBag 清空,確保新一輪 30 題隨機洗牌',
+  ] },
+  { ver:'v1.0.20260428.2800', brief:[
+    '🎬 台灣關卡新流程:進場景 → BOSS對白 → 選難度 → BOSS戰',
+    '🖼️ 圖片資源串接:BOSS 立繪、戰鬥背景、場景過場',
+    '🐛 修復 _advShowBossRouteSelector 函式宣告遺失的 syntax bug',
+  ], items:[
+    '【新流程設計】',
+    '  地圖點圖釘 → BOSS 詳情(BOSS 立繪 + 至寶預覽) → 「⚔️挑戰魔王!」',
+    '  ↓ 場景過場(全螢幕場景圖 + BOSS 名稱與介紹)',
+    '  ↓ BOSS 對白(打字機效果,2-3 句童趣搞笑台詞)',
+    '  ↓ 選難度(沒自信2選 / 普通3選 / 我很會4選)',
+    '  ↓ 選英雄 → BOSS 戰',
+    '【圖片資源系統】',
+    '  TAIWAN_IMG_MAP 對應表:統一管理 10 關的 BOSS 立繪 + 場景圖',
+    '  BOSS 詳情顯示用實際立繪(載入失敗會自動 fallback emoji)',
+    '  戰鬥背景套用對應場景圖(BOSS 戰背景動態切換)',
+    '  HERO_IMGS 加入 10 隻台灣 BOSS 條目(BOSS 卡片正面立繪)',
+    '【BOSS 對白資料】',
+    '  TAIWAN_BOSS_DIALOGS:每個 BOSS 2 句童趣搞笑台詞',
+    '  打字機效果(每字 30ms),點擊可跳過至完整顯示',
+    '【題庫難度篩選】',
+    '  之前只依 bossId 篩 30 題',
+    '  現在依玩家選的難度(沒自信/普通/我很會)只出對應 10 題',
+    '  剛好夠一場 BOSS 戰使用',
+    '【syntax bug 修復】',
+    '  上一版 v1.0.20260428.2400 改動意外刪除了 function _advShowBossRouteSelector 開頭',
+    '  造成 JS parse 錯誤,日本關 BOSS 路線選擇器無法運作',
+    '  本版補回函式宣告 + 整理結構',
+    '【⚠️ 圖片檔名待確認】',
+    '  TAIWAN_IMG_MAP 預填的檔名為「BOSS全名.png」(如「油膩魔王・滷汁大鍋.png」)',
+    '  「{地點}場景.png」(如「彰化滷肉飯場景.png」)',
+    '  若實際檔名不同,請直接修改 TAIWAN_IMG_MAP 即可,程式會自動套用',
+  ] },
+  { ver:'v1.0.20260428.2600', brief:[
+    '⚔️ 台灣環島 BOSS 戰串接完成 — 可實際開打了!',
+    '🏆 戰勝 BOSS 自動獲得對應至寶 + 答題累積經驗值',
+  ], items:[
+    '【BOSS 戰陣容生成】',
+    '  新增 _buildTaiwanBossTeam(bossId) 動態組成 3 人陣容:',
+    '    [小怪1] [主BOSS] [小怪2],主BOSS 在中間 pos=1',
+    '  10 個關卡各配置不同小怪與屬性(火/暗/水/草/風/土)',
+    '  暫用日本關小妖怪設計(綠竹筍小妖、茶葉精靈、頑皮妖精等)',
+    '【勝利結算 hook】',
+    '  新增 _onTaiwanBossDefeated:勝利後自動發放對應至寶',
+    '  首次獲得會彈出炫麗的「獲得至寶!」彈窗',
+    '  重複勝利已擁有則 +20 EXP 培養至寶',
+    '【至寶 EXP 累積】',
+    '  BOSS 戰答對:+5 EXP',
+    '  小怪戰答對:+1 EXP',
+    '  自動觸發升級(每級需 lv×10 EXP),滿級 Lv10',
+    '【checkWin 主 BOSS 名單擴充】',
+    '  10 隻台灣 BOSS 全部納入 → 主 BOSS 倒下時小怪自動投降',
+    '  防呆 _BOSS_SET 同步更新',
+    '【BOSS 卡片標記】',
+    '  markAdventureBossCards 名單擴充,主 BOSS 卡片有特殊外框',
+  ] },
+  { ver:'v1.0.20260428.2400', brief:[
+    '📚 「台灣環島歷險記」300 題在地知識題庫完成',
+  ], items:[
+    '【台灣 300 題題庫】',
+    '  10 關 × 30 題(10沒自信 + 10普通 + 10我很會)',
+    '  集中各關地點的核心知識,小學生可以學習的台灣文化',
+    '  彰化滷肉飯/台中鳳梨酥/深坑臭豆腐/阿里山/蘭嶼/三峽藍染',
+    '  西門町珍奶/日月潭/台北101/玉山',
+    '  題目涵蓋:地理、歷史、傳統文化、特產、原住民族',
+    '  跨關卡答對紀錄共用 subject「台灣環島」(同一個池子)',
+    '【題庫篩選邏輯】',
+    '  進入 BOSS 戰時依 _advSelectedTaiwanBoss 過濾',
+    '  確保只出當前選擇地點的 30 題,跟劇情匹配',
+    '  保留同戰鬥 _miniQuizUsedIds 不重複機制',
+  ] },
+  { ver:'v1.0.20260428.2200', brief:[
+    '🗺️ 「台灣環島歷險記」台灣島地圖選關介面完成(管理員測試中)',
+    '⚔️ 10 個地點魔王完整技能組設計完成(s1+s2+爆發+天賦)',
+  ], items:[
+    '【台灣島地圖選關介面】',
+    '  進入台灣關後顯示台灣島 SVG 地圖,10 個圖釘標示各地魔王',
+    '  圖釘顏色依至寶稀有度區分(稀有藍/史詩紫/傳說橘/神話粉)',
+    '  主線 BOSS 帶王冠標記(西門珍奶/日月潭/101/玉山)',
+    '  點擊圖釘顯示 BOSS 立繪、難度、建議等級、至寶預覽',
+    '  確認後進入選角流程',
+    '【10 個 BOSS 技能組完成】',
+    '  每隻 BOSS 都有獨立的 s1+s2+爆發+被動天賦',
+    '  童趣搞笑風格設計(BOSS 介紹文字、技能命名)',
+    '  數值依稀有度梯度(稀有 HP1300/史詩 HP1600/傳說 HP1900/神話 HP2200)',
+    '  BURST_DB / HERO_TRAITS / HERO_LORE 全部完成',
+  ] },
+  { ver:'v1.0.20260428.2000', brief:[
+    '🏝️ 「台灣環島歷險記」新關卡開發中,管理員測試模式啟動',
+    '💎 預告:10 個台灣特色至寶系統(可裝備到英雄,答題經驗強化)',
+  ], items:[
+    '【台灣環島歷險記 - 開發進度】',
+    '  全台 10 大特產關卡正在製作中',
+    '  10 種台灣特色至寶(滷肉飯萬用鼎/珍珠奶茶聖杯/玉山巔峰之盾...)',
+    '  目前處於管理員測試階段,正式上線後所有玩家都能挑戰',
+    '【至寶系統機制預告】',
+    '  打敗 BOSS 獲得至寶 → 答題正確累積 EXP → 升級獲得屬性加成',
+    '  每個至寶都有獨特技能(被動或觸發),可裝備到英雄身上',
+    '  分為武器/防具/飾品三種,一個英雄最多裝備 3 個至寶',
+    '【適合等級】',
+    '  此關卡為高難度挑戰,建議玩家等級 45+',
+  ] },
+  { ver:'v1.0.20260428.1700', brief:[
+    '⚔️ 調整小力職能定位:回復 → 回復+坦克(對應忠犬守護分擔傷害的核心技能)',
+    '🛡️ 英雄圖鑑與篩選器同步更新:小力現在會出現在「控場/坦克」分類',
+    '📊 六邊形向度修正:小力 ctrl 1→9,幼兒園小孩 heal 2→1(無治療技能)',
+  ], items:[
+    '【小力職能調整】',
+    '  原本只標記為「回復」,但忠犬守護(分擔傷害)是典型坦克技能',
+    '  HERO_CATEGORIES_OVERRIDE 改為 [\'heal\', \'ctrl\'],圖鑑現在會出現在「💚 回復」與「🛡 控場/坦克」兩個分類',
+    '【幼兒園小孩六邊形修正】',
+    '  原本 heal 設為 2 但牠完全沒有治療技能(只有控場技能)',
+    '  改為 heal:1, ctrl:10 反映牠純控場英雄的職能定位',
+    '【六邊形向度更新對照】',
+    '  小力:    heal 10, ctrl 1 → ctrl 9 (坦克效果具體呈現)',
+    '  幼兒園小孩: heal 2, ctrl 10 → heal 1 (無治療技能)',
+  ] },
   { ver:'v1.0.20260428.1500', brief:[
     '🎚️ 難度新增「選項數量」差異:沒自信2題/普通3題/我很會4題',
     '📚 完整題庫升級到4選項,並新增「跨關卡答對題目記錄」(同科目用過的題目下次優先不重複)',
@@ -48563,6 +51054,7 @@ const GAME_CHANGELOG = [
     '✨ 補上 22 個技能的視覺特效:軍師「出奇制勝」、程式設計師「修改代碼」+ 20 個小怪/BOSS 技能',
     '🐛 修補 BOSS 戰使用任何答題獎勵或保留至下回合都會立刻彈下一題的無限循環 bug',
     '📚 修正小怪戰題目沒幾題就跳「全題庫已答對」的 bug:移除過時的年級+難度過濾,改用全科目池',
+    '🐛 修補打贏 BOSS 回首頁卻跳出「小隊全滅」接關視窗的 bug',
     '🐛 修補BOSS戰偶爾無限問答的bug',
   ], items:[
     '【難度與選項】',
@@ -48645,6 +51137,15 @@ const GAME_CHANGELOG = [
     '  修補:題庫早就不分年級,難度只影響戰鬥強度;移除年級+難度過濾',
     '       小怪戰改跟 BOSS 戰一致,用「全科目」池(自然科 170 題)',
     '       只保留「本場已抽過」與「跨關卡已答對」過濾,fallback 仍正常運作',
+    '【打贏 BOSS 仍跳「小隊全滅」接關視窗 bug】',
+    '  症狀:打贏 BOSS 戰返回首頁後,畫面殘留「💀 小隊全滅! 是否要消耗一次接關機會?」紅框視窗',
+    '  根因:接關視窗 adv-continue-overlay 在中途接關後若沒走到 advDoContinue/advGiveUp 清除路徑',
+    '       (例如 race condition / BOSS 戰勝利同回合恰好觸發小怪全滅檢查)會殘留 .show class',
+    '       advShowBattleResult 與 _closeAllBattleModals 都沒納入它,所以勝利結算後仍可見',
+    '  修補:三層清除',
+    '    (1) advShowBattleResult 開頭強制 remove(\'show\') 接關 overlay',
+    '    (2) _closeAllBattleModals 列表加入 adv-continue-overlay (戰鬥結束慢動作前就清)',
+    '    (3) _keepIds 同步加入,避免被誤刪 (它是永久 HTML 元素)',
     '【BOSS 答題獎勵後無限提問 bug】',
     '  症狀:BOSS 戰答對後使用任何答題獎勵或選「保留至下回合」→',
     '       立刻又彈出下一題,沒有戰鬥操作機會,直到耗盡其他答題獎勵才能脫離',
@@ -56300,7 +58801,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.1500';
+  const CURRENT_VERSION = 'v1.0.20260428.3500';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -56317,7 +58818,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.1500';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3500';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
