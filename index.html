@@ -23095,6 +23095,14 @@ function aiAct(a){
     window._bossQuizInFlight = true;
     try{ console.log('[BOSS quiz] 觸發', { boss:a.name, round:(G&&G.round)||'?', acted:a.acted }); }catch(_){}
     _advQuizResolveCb = ()=>{
+      // ★ v1.0.20260428.1500 — 預先把 BOSS 標記為已行動,守住 startTurn 不重選觸發 quiz
+      //   bug 症狀:任何答題獎勵後立刻又彈下一題,沒有戰鬥操作機會
+      //   根因:advOnQuizSkip 內 _resumeTimers 釋放被 queue 的 timer (前回合 endAction 排的
+      //        _pSetTimeout(startTurn, 500))過了 50ms 觸發 → 看到 BOSS !acted、
+      //        _bossQuizInFlight=false → 又觸發 quiz → 無限循環
+      //   修補:cb 開頭先設 a.acted=true(BOSS 技能執行不依賴 acted 旗標,只 endAction 才設,
+      //        所以預先設不影響;startTurn 看到 acted=true 會跳過,不會選回這個 BOSS)
+      try{ if(a) a.acted = true; }catch(_){}
       try{ window._bossQuizInFlight = false; }catch(_){}
       _realAiAct(a);
     };
@@ -48571,7 +48579,7 @@ const GAME_CHANGELOG = [
     '⚡ 修正 6 個英雄極限爆發升級沒有提升狀態成功率的問題:冰法/雷法/光法/神射手/杏花妖/大天狗',
     '🔥 修正火法師「地獄之火」升級確認視窗只顯示燃燒回合,沒顯示傷害%提升 +5%/級',
     '✨ 補上 22 個技能的視覺特效:軍師「出奇制勝」、程式設計師「修改代碼」+ 20 個小怪/BOSS 技能',
-    '🐛 修補 BOSS 戰使用「立即發動極限爆發」獎勵後立刻又彈出問題的無限循環 bug',
+    '🐛 修補 BOSS 戰使用任何答題獎勵或保留至下回合都會立刻彈下一題的無限循環 bug',
     '🐛 修補BOSS戰偶爾無限問答的bug',
   ], items:[
     '【難度與選項】',
@@ -48645,16 +48653,24 @@ const GAME_CHANGELOG = [
     '    寶箱怪:鎖起來、箱底抹油',
     '    小惡魔:弄壞你的玩具、讓你調皮',
     '    偷喝茶的史萊姆:舔舔治療、黏液噴濺',
-    '【instant_burst 獎勵後無限提問 bug】',
-    '  症狀:BOSS 戰答對後選「立即發動極限爆發」獎勵 → 選擇隊友 →',
-    '       立刻又彈出下一題,沒有戰鬥操作機會,直到用其他答題獎勵才能脫離',
-    '  根因:選擇爆發目標的 onclick 同時呼叫 _advTriggerBurstFor (1200ms 後才開始爆發) 與 advOnQuizSkip()',
-    '       advOnQuizSkip 立即清除 _bossQuizInFlight=false 並 _resumeTimers,',
-    '       但爆發還沒開始 → 被釋放的 startTurn 看到 BOSS !acted 又重新觸發 quiz → 無限循環',
-    '  修補:三層守護',
-    '    (1) onclick 不再呼叫 advOnQuizSkip,只解除 _gamePaused/_resumeTimers 並清 _advQuizResolveCb',
-    '    (2) _advTriggerBurstFor 開頭預先標記 BOSS acted=true (1200ms 空檔內 startTurn 不會選到)',
-    '    (3) _burstFinish 結尾統一清除 _bossQuizInFlight / _advQuizPhase / _advQuizActive',
+    '【BOSS 答題獎勵後無限提問 bug】',
+    '  症狀:BOSS 戰答對後使用任何答題獎勵或選「保留至下回合」→',
+    '       立刻又彈出下一題,沒有戰鬥操作機會,直到耗盡其他答題獎勵才能脫離',
+    '  根因:advOnQuizSkip 中順序錯誤',
+    '       (1) _bossQuizInFlight = false (過早清旗標)',
+    '       (2) _resumeTimers() (釋放被 queue 的 timer,50ms+ 後執行)',
+    '       (3) _advQuizResolveCb() → _realAiAct(BOSS) (非同步啟動 BOSS 行動)',
+    '       前一回合 endAction 排的 _pSetTimeout(startTurn, 500) 在 quiz 期間被 queue',
+    '       advOnQuizSkip 釋放它後 50ms 觸發 → 看到 BOSS !acted、_bossQuizInFlight=false',
+    '       → 又觸發 quiz → 無限循環',
+    '  修補:在 _advQuizResolveCb 開頭預先把 BOSS 標記為 acted=true',
+    '       BOSS 技能執行不依賴 acted 旗標(只 endAction 才設),預先設不影響',
+    '       startTurn 看到 acted=true 會跳過,不會選回這個 BOSS 觸發 quiz',
+    '       額外在 _advTriggerBurstFor 開頭也預先標記(雙保險,涵蓋 instant_burst 路徑)',
+    '       _burstFinish 結尾統一清 _bossQuizInFlight / _advQuizPhase / _advQuizActive',
+    '【instant_burst 獎勵後無限提問 bug】(同根因,本次一併修補)',
+    '  原本 _advShowBurstTargetPicker onclick 同時呼叫 _advTriggerBurstFor 與 advOnQuizSkip(),',
+    '  本版改為:只解 _gamePaused/_resumeTimers/清 _advQuizResolveCb,不執行 cb (爆發插隊取代 BOSS 行動)',
     '【BOSS戰無限問答 bug】',
     '  4 點防禦補丁:防重入旗標 / overlay 已顯示守衛 /',
     '  答題完成清除旗標 / 戰鬥結束清除旗標',
