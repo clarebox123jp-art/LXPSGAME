@@ -18470,15 +18470,17 @@ function execSkill(a, sk, cost, stype){
   } else if(n==='地獄之火'){
     const hfFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     // ★ v1.0.20260423.6100 — 地獄之火重構:
-    //   (1) 依特技 40% 對全體造成傷害(每升 1 級基礎傷害 +5%)
+    //   (1) 依特技 40% 對全體造成傷害(每升 1 級基礎傷害 +5%, Lv10 達 85%)
     //   (2) 附加「燃燒」狀態 2 回合(行動前後各 -5HP,無視有利狀態)
     // ★ v1.0.20260423.6200 — 升級效果:每升至 4/7/10 級 +1 回合
+    // ★ v1.0.20260428.1500 — 修正條件:_s2Lv 是儲存值 0~9 (Lv1~Lv10)
+    //   原本 >=4/7/10 對應 Lv5/8/11(Lv11不存在),改為 >=3/6/9 對應 Lv4/7/10
     const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
-    const _hfMult = 0.40 + _s2Lv * 0.05; // Lv0=40%, Lv1=45%, ...
+    const _hfMult = 0.40 + _s2Lv * 0.05; // Lv1=40%, Lv10=85%
     let _hfDur = 2;
-    if(_s2Lv >= 4)  _hfDur = 3;
-    if(_s2Lv >= 7)  _hfDur = 4;
-    if(_s2Lv >= 10) _hfDur = 5;
+    if(_s2Lv >= 3)  _hfDur = 3;  // Lv4
+    if(_s2Lv >= 6)  _hfDur = 4;  // Lv7
+    if(_s2Lv >= 9)  _hfDur = 5;  // Lv10
     log(`[${a.name}] 地獄之火!特技×${Math.round(_hfMult*100)}% 全體傷害 + 附加燃燒 ${_hfDur} 回合!`);
     playSkillFX('地獄之火',a,hfFoes);
     hfFoes.forEach(t=>{
@@ -41233,7 +41235,8 @@ const SKILL_UPGRADE_DEF = {
   '花粉迷眼': { cat:'dur', base:1, perLv:5, label:'失明回合' },
   '土坑陷阱': { cat:'dur', base:1, perLv:5, label:'緩速回合' },
   '黏液噴濺': { cat:'dur', base:1, perLv:5, label:'緩速回合' },
-  '地獄之火': { cat:'dur', base:2, perLv:5, label:'燃燒回合' },
+  // ★ v1.0.20260428.1500 — 地獄之火: 主傷40%+5%/級 + 燃燒回合 (Lv4=3, Lv7=4, Lv10=5)
+  '地獄之火': { cat:'special_hellfire', label:'特技+燃燒回合' },
   '極限閃光': { cat:'dur', base:2, perLv:5, label:'閃光回合' },
   '魅惑之舞': { cat:'dur', base:1, perLv:5, label:'操控次數' },
   // ── 百分比類：每1級+2% ──
@@ -41331,6 +41334,16 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     const frzPct = 50 + skLv*3;
     fd = fd.replace(/特技的\s*70\s*%/g, '特技的 ' + HL(dmgPct + '%'))
            .replace(/有\s*50\s*%機率/g, '有 ' + HL(frzPct + '%') + ' 機率');
+  }
+  else if(cat === 'special_hellfire'){
+    // ★ v1.0.20260428.1500 — 地獄之火: 主傷 40%+5%/級, 燃燒回合 Lv4=3 / Lv7=4 / Lv10=5
+    const dmgPct = 40 + skLv*5;
+    let burnDur = 2;
+    if(skLv >= 3) burnDur = 3;
+    if(skLv >= 6) burnDur = 4;
+    if(skLv >= 9) burnDur = 5;
+    fd = fd.replace(/特技值的\s*40\s*%/g, '特技值的 ' + HL(dmgPct + '%'))
+           .replace(/「燃燒」狀態\s*2\s*回合/g, '「燃燒」狀態 ' + HL(burnDur) + ' 回合');
   }
   else if(cat === 'special_random_shot'){
     // 亂槍射擊: 3~5次/4~5次/4~6次
@@ -41754,6 +41767,15 @@ function _getSkUpgradeBadge(skillName, skLv){
     const frzPct = 50 + (skLv||0)*3;
     return '特技×' + dmgPct + '% + ' + frzPct + '%冰凍';
   }
+  if(cat==='special_hellfire'){
+    // ★ v1.0.20260428.1500 — 地獄之火:特技×(40+5*lv)% + 燃燒回合(Lv4=3/Lv7=4/Lv10=5)
+    const dmgPct = 40 + (skLv||0)*5;
+    let burnDur = 2;
+    if((skLv||0) >= 3) burnDur = 3;
+    if((skLv||0) >= 6) burnDur = 4;
+    if((skLv||0) >= 9) burnDur = 5;
+    return '特技×' + dmgPct + '% + 燃燒 ' + burnDur + ' 回合';
+  }
   if(cat==='special_random_shot'){
     // 亂槍射擊:Lv0~3=3~5, Lv4~8=4~5, Lv9=4~6
     let mn = 3, mx = 5;
@@ -41989,6 +42011,15 @@ function buildSkillLvTable(skillName, currentLv) {
       const dmgPct = 70 + lv*5;
       const frzPct = 50 + lv*3;
       effectText = '特技×' + dmgPct + '% + ' + frzPct + '% 冰凍' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_hellfire'){
+      // ★ v1.0.20260428.1500 — 地獄之火: 主傷 40%+5%/級, 燃燒回合 Lv4/7/10 +1
+      const dmgPct = 40 + lv*5;
+      let burnDur = 2;
+      if(lv >= 3) burnDur = 3;
+      if(lv >= 6) burnDur = 4;
+      if(lv >= 9) burnDur = 5;
+      effectText = '特技×' + dmgPct + '% + 燃燒 ' + burnDur + ' 回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     else if(cat==='special_random_shot'){
       let mn = 3, mx = 5;
@@ -48184,6 +48215,7 @@ const GAME_CHANGELOG = [
     '🔓 LV10/LV20 肖像解鎖文字修正:改顯示「英雄達該等級自動解鎖」',
     '🔓 修正小力 / 幼兒園小孩 升到 Lv10 沒有自動解鎖 LV10 肖像的問題',
     '⚡ 修正 6 個英雄極限爆發升級沒有提升狀態成功率的問題:冰法/雷法/光法/神射手/杏花妖/大天狗',
+    '🔥 修正火法師「地獄之火」升級確認視窗只顯示燃燒回合,沒顯示傷害%提升 +5%/級',
     '🐛 修補BOSS戰偶爾無限問答的bug',
   ], items:[
     '【難度與選項】',
@@ -48234,6 +48266,14 @@ const GAME_CHANGELOG = [
     '  大天狗 強力暈眩:Lv0 30% → Lv4 50%',
     '  原本就有實裝的:暗法師強力封印 75→95%、玉藻前強力魅惑 65→85%',
     '  火法師強力燃燒每次必然附加(無機率),不適用此規則',
+    '【地獄之火 (火法師 S2) 顯示與條件修正】',
+    '  程式碼實際有實裝主傷+5%/級(Lv1=40%, Lv10=85%),但「升級確認視窗」沒顯示',
+    '  原因:SKILL_UPGRADE_DEF 標記為 cat:dur 只渲染燃燒回合',
+    '  修補:新增 cat:special_hellfire,同時顯示傷害%與燃燒回合',
+    '  順帶修正燃燒回合判斷條件 (skLv 是 0~9 對應 Lv1~10):',
+    '    原本 _s2Lv >= 4/7/10 → Lv5/8/Lv11(不可能)才升級',
+    '    改為 _s2Lv >= 3/6/9 → Lv4/7/10 升級(對應註解描述)',
+    '  完整對照: Lv1~3 燃燒2回合 / Lv4~6 燃燒3回合 / Lv7~9 燃燒4回合 / Lv10 燃燒5回合',
     '【BOSS戰無限問答 bug】',
     '  4 點防禦補丁:防重入旗標 / overlay 已顯示守衛 /',
     '  答題完成清除旗標 / 戰鬥結束清除旗標',
