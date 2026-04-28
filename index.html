@@ -8239,7 +8239,7 @@ const STATUS_DESCS = {
   hellfire:     '燃燒：行動前後各損失5HP',
   poison:       '劇毒：每回合損失HP',
   noheal_curse: '不治詛咒：無法恢復HP',
-  stubbornDebuff:'怨念強化：不利狀態無法被解除',
+  stubbornDebuff:'怨念強化：附加之不利狀態無法被解除',
   berserk:      '狂亂：只能攻擊自己的隊友且傷害+3',
   strongTaunt:  '強力挑釁：只能普通攻擊施展者，守衛以特技減傷',
   exhaust:      '消耗：技能費用+1',
@@ -9640,7 +9640,10 @@ const ELEMENT_DB = {
     icon:'🪨', name:'土', cls:'elem-earth',
     desc:'50%免疫能力降低/暈眩，受傷-4',
     bonus_dmgreduce:4,
-    immune50:['stubbornDebuff','stun'],
+    // ★ v1.0.20260424.1420 — 土屬性正確免疫「能力降低」相關狀態:
+    //   weakened(虛弱:atk/sp/spd-50%)、_cryDebuff(啼哭弱化)、_dreamDebuff(夢境弱化)、stun(暈眩)
+    //   原本誤掛 stubbornDebuff(怨念強化:鎖住不利狀態,跟降低能力無關)已移除
+    immune50:['weakened','_cryDebuff','_dreamDebuff','stun'],
     vs_adv:['wind'], vs_dis:['grass'],   // 土剋風,被草剋
     adv_dmg_pct:0.10, dis_dmg_pct:-0.10
   },
@@ -9923,7 +9926,7 @@ function _epBuildAttrPanel(){
   const wrap=document.getElementById('ep-ring-wrap');
   if(!wrap) return;
   const ECOLOR={water:'#55bbff',fire:'#ff7733',wind:'#44cc66',grass:'#88bb22',earth:'#aa7733',light:'#ffdd22',dark:'#9944cc'};
-  const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'燃燒',reflect:'反射',stubbornDebuff:'能力降低',forecast:'失明',poison:'中毒'};
+  const SN={freeze:'冰凍',noatk:'封印攻擊',sleep:'睡眠',para:'麻痺',spddown:'遲緩',noheal_curse:'禁止恢復',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'技能費+1',trap:'禁動',seal:'封印技能',nosell:'封印物品',deathmark:'死亡宣告',stun:'暈眩',hellfire:'燃燒',reflect:'反射',stubbornDebuff:'怨念強化',forecast:'失明',poison:'中毒',weakened:'能力降低',_cryDebuff:'能力降低',_dreamDebuff:'能力降低'};
   // 環狀定位參數（對應 ring-wrap 850x850, center 425,425, r_label=325）
   const cx=475, cy=475, r_label=357;
   // ★ v1.0.20260424.1370 — 同 _epBuildRing 用新循環順序
@@ -14296,6 +14299,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       const _dmg=Math.max(1,Math.floor(t.hp*(0.10+_burstLv*0.05)));
       doDmg(t,_dmg,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true,isAoe:true});
       if(t.curHp>0){
+        // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
+        if(typeof checkElemImmune === 'function' && checkElemImmune(t, '_dreamDebuff')) return;
         const _o2a=t.atk, _o2s=t.sp;
         t.status=t.status.filter(s=>s.type!=='_dreamDebuff');
         t.status.push({type:'_dreamDebuff',dur:_dreamDur,_origAtk:_o2a,_origSp:_o2s,_owner:h});
@@ -18887,6 +18892,10 @@ function execSkill(a, sk, cost, stype){
       const _cryReducePct = 0.10 + _activeSkLv * 0.01;  // 10%~28%
       const _cryMult = 1.0 - _cryReducePct;             // 0.9 ~ 0.72
       if(h.curHp>0 && Math.random()<_cryDebuffRate){
+        // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
+        if(typeof checkElemImmune === 'function' && checkElemImmune(h, '_cryDebuff')){
+          return;  // 跳過此目標,繼續處理其他目標
+        }
         const _existCry=h.status.find(s=>s.type==='_cryDebuff');
         if(_existCry){
           // 已有啼哭弱化:只刷新回合,不重新套用數值(不可堆疊)
@@ -19811,6 +19820,11 @@ function execSkill(a, sk, cost, stype){
   // ── 虛弱咒：依特技降低對手全能力2回合 ──
   else if(n==='虛弱咒'){
     setPending('enemy',t=>{
+      // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
+      if(typeof checkElemImmune === 'function' && checkElemImmune(t, 'weakened')){
+        endAction(a, cost);
+        return;
+      }
       log(`[${a.name}] 虛弱咒 [${t.name}]！攻擊、特技、速度降低50%，2回合！`);
       // 若已有虛弱，先恢復原始數值再重新施加
       if(t._weakenOrigAtk!==undefined){ t.atk=t._weakenOrigAtk; delete t._weakenOrigAtk; }
@@ -22232,11 +22246,7 @@ function startTurn(){
     // ★ v1.0.20260424.1120 — 卡死偵測:啟動 5 秒 watchdog
     //   若 5 秒後 G.activeChar / G.round 都沒變,代表 AI 卡死,亮起「卡死自救」按鈕
     try{ _startDeadlockWatchdog(); }catch(_){}
-    // ★ 確保回溯按鈕可見（冒險模式）
-    if(_adventureMode){
-      const _rbBtn = document.getElementById('adv-rollback-btn');
-      if(_rbBtn) _rbBtn.style.display = '';
-    }
+    // ★ v1.0.20260424.1400 — 回溯按鈕已移除,不再顯示
     // ★ 小怪戰：每回合第一隻敵方行動前出問題
     if(_adventureMode && _advMiniBattleActive && !window._miniQuizDoneThisRound){
       window._miniQuizDoneThisRound = true;
@@ -23254,7 +23264,12 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='大聲啼哭'){
     enemies.forEach(h=>{
       const _dmg=Math.max(1,Math.floor(h.curHp*0.1)); doDmg(h,_dmg,{actor:a,isSkill:true});
-      if(h.curHp>0 && Math.random()<0.75){ const _ec=h.status.find(s=>s.type==='_cryDebuff'); if(_ec){ _ec.dur=2; } else { const _o=h.atk,_os=h.sp; h.status.push({type:'_cryDebuff',dur:2,_origAtk:_o,_origSp:_os}); h.atk=Math.max(1,Math.floor(h.atk*0.8)); h.sp=Math.max(0,Math.floor(h.sp*0.8)); } renderCard(h); }
+      // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
+      if(h.curHp>0 && Math.random()<0.75){
+        if(typeof checkElemImmune === 'function' && checkElemImmune(h, '_cryDebuff')) return;
+        const _ec=h.status.find(s=>s.type==='_cryDebuff');
+        if(_ec){ _ec.dur=2; } else { const _o=h.atk,_os=h.sp; h.status.push({type:'_cryDebuff',dur:2,_origAtk:_o,_origSp:_os}); h.atk=Math.max(1,Math.floor(h.atk*0.8)); h.sp=Math.max(0,Math.floor(h.sp*0.8)); } renderCard(h);
+      }
     });
   }
   else if(n==='午睡時間'){
@@ -24762,7 +24777,8 @@ function stopIllusSparkles(){
     var SN={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',para:'麻痺',trap:'禁動',seal:'封印技能',
       noatk:'封印攻擊',nosell:'封印物品',deathmark:'死亡宣告',noheal_curse:'禁止恢復',
       berserk:'狂亂',spddown:'遲緩',hellfire:'燃燒',exhaust:'技能費+1',forecast:'失明',
-      stubbornDebuff:'怨念強化',poison:'劇毒'};
+      stubbornDebuff:'怨念強化',poison:'劇毒',
+      weakened:'能力降低',_cryDebuff:'能力降低',_dreamDebuff:'能力降低'};
     var imm=(ed.immune50||[]).map(function(s){return SN[s]||s;}).join('、')||'—';
     var adv=(ed.vs_adv||[]).map(function(k){return ELEMENT_DB[k]?ELEMENT_DB[k].name:k;}).join('、')||'—';
     var dis=(ed.vs_dis||[]).map(function(k){return ELEMENT_DB[k]?ELEMENT_DB[k].name:k;}).join('、')||'—';
@@ -32491,10 +32507,9 @@ function advStartBattle(){
   }catch(_){}
   // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
   try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
-  // ★ v1.0.20260424.1170 — 進入 BOSS 戰時顯示回溯/教學按鈕(玩家戰鬥中可用)
+  // ★ v1.0.20260424.1170 — 進入 BOSS 戰時顯示教學按鈕(玩家戰鬥中可用)
+  // ★ v1.0.20260424.1400 — 回溯按鈕已移除,只顯示教學按鈕
   try{
-    const _rbBtn = document.getElementById('adv-rollback-btn');
-    if(_rbBtn) _rbBtn.style.display = '';
     const _tutBtn = document.getElementById('adv-tut-btn');
     if(_tutBtn) _tutBtn.style.display = '';
     // 卡死自救按鈕仍隱藏,等真的偵測到卡死才亮
@@ -32910,17 +32925,7 @@ function advShowQuiz() {
   }
   // ★ 題目全部出完：顯示重選視窗，確認後重新出題
   if (q && q.__needRepick) {
-    // ★ v1.0.20260422.0103 — 日本關：不顯示重選視窗，清除已用題目紀錄後直接再出題
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
-      if(typeof _advUsedQuestionIds !== 'undefined') _advUsedQuestionIds.clear();
-      _advQuizRound = (_advQuizRound || 0) + 1;
-      advPrepareSessionQuestions();
-      log(`📚 [日本關] 題目已出過一輪，循環再出（第${_advQuizRound}輪）。`);
-      setTimeout(() => {
-        try{ advShowQuiz(); }catch(e){ if(_advQuizResolveCb){ const _cb = _advQuizResolveCb; _advQuizResolveCb = null; _cb(); } }
-      }, 200);
-      return;
-    }
+    // ★ v1.0.20260424.1410 — 統一邏輯:不再分日本關自動循環,所有題庫都跳出「重選或繼續挑戰」彈窗
     const _savedCb = _advQuizResolveCb;
     _advQuizResolveCb = null;
     advShowRePickSubject(() => {
@@ -34250,7 +34255,11 @@ async function advShowBattleResult(win) {
         const _ratio = Math.min(2.0, 1.0 + correct*0.08 + Math.max(0, 20-rounds)*0.02 + (stats.totalQuizScore||0)*0.0005);
         const _confMultPanel = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
         const _maxStreakPanel = (stats && stats.maxStreak) || 0;
-        const _streakBonusPanel = 1 + _maxStreakPanel * 0.05;
+        // ★ v1.0.20260424.1410 — 連擊加成新規則:連續答對 2 題開始 +5%,每多 1 題 +5%,
+        //   連續答對 10 題達上限 +45%,11 題以上不再增加。同時影響 EXP 與知識幣
+        //   公式:bonus = clamp(maxStreak - 1, 0, 9) × 5% → 0%/5%/10%/.../45%
+        const _streakStepsPanel = Math.max(0, Math.min(9, _maxStreakPanel - 1));
+        const _streakBonusPanel = 1 + _streakStepsPanel * 0.05;
         const _totalExpEach = Math.round(Math.round(_baseBossExp * _ratio * _confMultPanel * _streakBonusPanel) * 1.5);
         // ★ 日本關獎勵 +20%
         const _jpRewardMult = (_adventureStage === 'japan' && typeof window._japanRewardMult === 'number') ? window._japanRewardMult : 1.0;
@@ -34264,7 +34273,7 @@ async function advShowBattleResult(win) {
         const _bookCount = 1 + ((stats.totalQuizScore||0) > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
         // 5) 難度倍率標示
         const _confTag = _confMultPanel > 1.00 ? ` <span style="color:#ffaa44;font-size:15px;">(×${_confMultPanel} 難度)</span>` : '';
-        const _streakTag = _maxStreakPanel > 0 ? ` <span style="color:#ff6688;font-size:15px;">(+${_maxStreakPanel*5}% 連擊)</span>` : '';
+        const _streakTag = _streakStepsPanel > 0 ? ` <span style="color:#ff6688;font-size:15px;">(+${_streakStepsPanel*5}% 連擊×${_maxStreakPanel})</span>` : '';
         // 組合 HTML
         let html = '<div class="adv-reward-panel-title">🎁 獲得獎勵</div>';
         // EXP 區
@@ -34708,7 +34717,7 @@ async function advStartWinSequence() {
     const _scoreC   = (_advStats && _advStats.totalQuizScore) || 0;
     const _ratioC = Math.min(2.0, 1.0 + _correctC*0.08 + Math.max(0,20-_roundsC)*0.02 + _scoreC*0.0005);
     const _confMultC = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
-    const _streakBonusC = 1 + ((_advStats && _advStats.maxStreak) || 0) * 0.05;
+    const _streakBonusC = 1 + Math.max(0, Math.min(9, ((_advStats && _advStats.maxStreak) || 0) - 1)) * 0.05;
     const _totalExpC = Math.round(_baseExpForCoin * _ratioC * _confMultC * _streakBonusC);
     const _battleExpC = Math.round(_totalExpC * 1.5); // 出戰英雄 ×1.5
     _bossCoins = Math.round(_battleExpC * 0.3);
@@ -36552,8 +36561,6 @@ const TUTORIAL_STEPS = [
     desc:'不想手動操作？點此開啟AI自動戰鬥！AI會幫你選最佳行動(理論上啦...?)，覺得AI不太可靠，隨時可以手動關閉恢復操作。' },
   { target:'adv-tut-btn',    side:'panel-left',   title:'❓ 教學指引',
     desc:'隨時點左下角的「❓教學」按鈕，可以重新看一遍戰鬥操作說明，帶你一步一步熟悉遊戲！' },
-  { target:'adv-rollback-btn', side:'panel-left',  title:'🔄 當機回溯',
-    desc:'遇到遊戲當機或打得很苦手嗎？點「🔄回溯」可以：① 回到最近一回合的戰場狀態（HP、能量、物品卡全部還原）② 或替換1名英雄，重新開始本場戰鬥！' },
   { target:null,             side:'center',       title:'🎉 準備好了！',
     desc:'你已瞭解戰鬥的基本操作！  隨時可以點左下角的「❓ 教學指引」按鈕重看說明。 祝你戰鬥順利，小英雄！' },
 ];
@@ -37455,6 +37462,12 @@ function _startDeadlockWatchdog(){
       if(_resOv && _resOv.classList.contains('show')) return;
       const _miniRes = document.getElementById('adv-mini-result');
       if(_miniRes && _miniRes.classList.contains('show')) return;
+      // ★ v1.0.20260424.1400 — 答題獎勵 modal 顯示中,玩家還沒選 → 不算卡死
+      const _rwdOv = document.getElementById('adv-reward-overlay');
+      if(_rwdOv && _rwdOv.classList.contains('show')) return;
+      // ★ v1.0.20260424.1400 — 寶物確認、技能升級確認等其他 modal 也視為合法暫停
+      const _trOv = document.getElementById('adv-treasure-confirm');
+      if(_trOv && _trOv.style.display !== 'none' && _trOv.offsetParent !== null) return;
       // → 通過所有檢查,判定卡死
       console.warn('🚨 [卡死偵測] AI 行動超過 5 秒無進展!actor=' + _snapActorName + ', round=' + _snapRound);
       _showDeadlockRescueButton();
@@ -37968,9 +37981,9 @@ function _rrfCancel() {
 function _advTutBtnShow(show) {
   const btn = document.getElementById('adv-tut-btn');
   if(btn) btn.style.display = show ? '' : 'none';
-  // ★ 回溯按鈕與教學按鈕同步顯示（僅限冒險BOSS戰）
+  // ★ v1.0.20260424.1400 — 回溯按鈕已移除,保留 ID 但永遠隱藏
   const rbBtn = document.getElementById('adv-rollback-btn');
-  if(rbBtn) rbBtn.style.display = (show && _adventureMode) ? '' : 'none';
+  if(rbBtn) rbBtn.style.display = 'none';
 }
 function _advShowTutBtn() {
   // 若教學已啟動中，直接略過
@@ -38292,9 +38305,10 @@ async function grantBattleExp(win, stats) {
   );
   // ★ 自信加成：沒自信+0% / 普通+25% / 我很會+50%
   const _confMult = (typeof ADV_CONFIDENCE_MULT !== 'undefined' && ADV_CONFIDENCE_MULT[_advPlayerDifficulty]) || 1.00;
-  // ★ v1.0.20260420.3100 — 連續答對連擊加成:本場最高連擊 × 5% EXP
+  // ★ v1.0.20260424.1410 — 連擊加成新規則:連續答對 2 題 +5%,每多 1 題 +5%,
+  //   連續答對 10 題達上限 +45%,11 題以上不再增加
   const _maxStreak = (stats && stats.maxStreak) || 0;
-  const _streakBonus = 1 + _maxStreak * 0.05;
+  const _streakBonus = 1 + Math.max(0, Math.min(9, _maxStreak - 1)) * 0.05;
   const totalExp = Math.round(baseExp * ratio * _confMult * _streakBonus);
   // 出戰英雄×1.5，其他英雄×0.5
   const battleHeroes = G && G.p1 ? G.p1.map(h=>h.name) : [];
@@ -43930,24 +43944,9 @@ function _advMiniQuizAsk(onDone) {
   const sceneIdx = _advSceneIdx;
   const pool = _advMiniGetQuizPool(sceneIdx);
   if(!pool || pool.length === 0){
-    // ★ v1.0.20260422.0103 — 日本關：不顯示「重新選題庫」視窗，直接循環日本題庫
-    //   用戶回報日本關小怪戰結束後若所有題目出完，重選視窗選完會卡死在場景對白中。
-    //   解法：日本關固定只出日本題，題目循環使用（清除 used set 後重新出），不彈重選視窗。
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'){
-      if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
-      log('📚 [日本關] 所有題目已出過，循環再出一次。');
-      setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 200);
-      return;
-    }
-    // ★ v1.0.20260424.0750 — 照顧/狗狗題庫:不彈重選視窗,清空 used 後循環
-    if(typeof _advPlayerSubject !== 'undefined' &&
-       (_advPlayerSubject === '照顧與陪伴幼兒' || _advPlayerSubject === '領養與照顧狗狗')){
-      if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
-      try{ log(`📚 [${_advPlayerSubject}] 本場題目已出過,自動循環再出(已答對的不會再出)。`); }catch(_e){}
-      setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 200);
-      return;
-    }
-    // ★ 題目出完：顯示換題庫視窗，重選後重新出題，不卡死（非日本關才走此路）
+    // ★ v1.0.20260424.1410 — 統一所有題庫的「題目出完」邏輯:
+    //   不再分日本關 / 照顧 / 狗狗自動循環,所有題庫都跳出「重選或繼續挑戰相同題庫」彈窗
+    //   讓玩家可以選擇:1) 換題庫 2) 重複挑戰相同題庫(把「答對過」的記憶清空,重新出題)
     // ★ v1.0.20260424.1360 — 防護:若小怪戰已結束就不彈視窗,避免疊到場景對白上
     if(typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive){
       try{ console.log('[_advMiniQuizAsk] 小怪戰已結束,跳過重選視窗,直接呼叫 onDone'); }catch(_){}
@@ -44288,10 +44287,9 @@ function advStartMiniBattle(nextSceneIdx) {
   }catch(_){}
   // ★ v1.0.20260424.1070 — 重置存快照的 round 標記,讓新戰鬥第一回合能正常存快照
   try{ if(G) G._lastBattleSnapRound = null; }catch(_){}
-  // ★ v1.0.20260424.1170 — 進入小怪戰時顯示回溯/教學按鈕(戰鬥中可用)
+  // ★ v1.0.20260424.1170 — 進入小怪戰時顯示教學按鈕(戰鬥中可用)
+  // ★ v1.0.20260424.1400 — 回溯按鈕已移除,只顯示教學按鈕
   try{
-    const _rbBtn = document.getElementById('adv-rollback-btn');
-    if(_rbBtn) _rbBtn.style.display = '';
     const _tutBtn = document.getElementById('adv-tut-btn');
     if(_tutBtn) _tutBtn.style.display = '';
   }catch(_){}
@@ -47494,17 +47492,8 @@ window._advSystemReady = true;
   </div>
 </div><!-- gc_wrapper -->
 
-<!-- ★ 回溯＋教學按鈕：移出 #gc，免受 transform/isolation 影響，確保點擊有效 -->
-<button id="adv-rollback-btn" onclick="playSfx('sfx-sel',0.6);_showRollbackMenu()"
-  style="display:none;position:fixed;left:8px;bottom:148px;z-index:2147483647;
-    writing-mode:vertical-rl;text-orientation:mixed;
-    padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
-    background:rgba(40,10,10,0.88);border:1.5px solid rgba(255,140,50,0.7);
-    color:#ffaa44;border-radius:10px;cursor:pointer;
-    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-    box-shadow:0 2px 12px rgba(0,0,0,0.5);line-height:1.4;
-    pointer-events:auto !important;
-    transition:border-color 0.2s,background 0.2s;">🔄回溯</button>
+<!-- ★ v1.0.20260424.1400 — 「回溯」功能已被「卡死自救」取代,移除按鈕(只保留 HTML 框架以防其他程式碼引用 ID) -->
+<button id="adv-rollback-btn" style="display:none !important;visibility:hidden;pointer-events:none;" aria-hidden="true">回溯</button>
 <!-- ★ v1.0.20260424.1120 — 卡死自救按鈕(預設隱藏,只在偵測到對手回合卡死時亮起) -->
 <button id="adv-deadlock-rescue-btn" onclick="playSfx('sfx-sel',0.6);_showDeadlockRescueMenu()"
   style="display:none;position:fixed;left:8px;bottom:298px;z-index:2147483647;
@@ -47633,6 +47622,113 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260424.1420', brief:[
+    '🪨 修正土屬性免疫的真實對應狀態:weakened/_cryDebuff/_dreamDebuff(真正降低能力)',
+    '↩️ 還原 stubbornDebuff 顯示為「怨念強化」(本就跟能力降低不同)',
+  ], items:[
+    '【v1410 的設計錯誤】',
+    '  我誤把「能力降低」與「怨念強化」當成同一個機制',
+    '  實際上 stubbornDebuff(怨念強化)的功能是「鎖住不利狀態」,',
+    '  跟「降低攻擊/特技/速度」的能力降低狀態完全不同',
+    '  → v1410 把 stubbornDebuff 顯示改成「能力降低」是錯誤的',
+    '【v1420 修正】',
+    '  1) 還原所有 stubbornDebuff 顯示為「怨念強化」',
+    '  2) 修正土屬性 immune50 為真正降能力的 4 個狀態:',
+    '     weakened(虛弱:atk/sp/spd-50%)、',
+    '     _cryDebuff(啼哭弱化:atk/sp 降低)、',
+    '     _dreamDebuff(夢境弱化:atk/sp -25%)、',
+    '     stun(暈眩,維持原樣)',
+    '     原本誤掛的 stubbornDebuff(怨念強化)已移除',
+    '  3) 在以下技能加入 checkElemImmune 檢查,讓土屬性 50% 免疫真正生效:',
+    '     - 虛弱咒(玩家) → 加 checkElemImmune(t, \"weakened\")',
+    '     - 大聲啼哭(玩家+AI) → 加 checkElemImmune(h, \"_cryDebuff\")',
+    '     - 夢境時光(爆發技) → 加 checkElemImmune(t, \"_dreamDebuff\")',
+    '  4) _openAllElemPopup 與 _openElemPopup 的 SN 字典:',
+    '     stubbornDebuff 顯示「怨念強化」(原樣)',
+    '     weakened/_cryDebuff/_dreamDebuff 統一顯示「能力降低」',
+    '     讓玩家在屬性彈窗看到土屬性免疫的「能力降低」對應正確的真實狀態',
+    '【實作位置】',
+    '  - ELEMENT_DB earth immune50: line ~9646',
+    '  - 虛弱咒 checkElemImmune: line ~19818',
+    '  - 大聲啼哭 玩家版: line ~18892',
+    '  - 大聲啼哭 AI 版: line ~23262',
+    '  - 夢境時光 爆發技: line ~14301',
+  ] },
+  { ver:'v1.0.20260424.1410', brief:[
+    '🪨 修正土屬性「怨念強化」誤導,統一改顯示「能力降低」',
+    '📚 統一所有題庫的「題目出完」邏輯為彈窗讓玩家選擇換主題或重複挑戰',
+    '⭐ 連續答對加成新規則:2題+5%,3題+10%,...,10題+45%(上限),同步影響知識幣',
+  ], items:[
+    '【1. 怨念強化 → 能力降低】',
+    '  原本內部代號 stubbornDebuff 顯示為「怨念強化」,但土屬性 desc 寫「免疫能力降低」',
+    '  造成兩處不一致(全屬性彈窗顯示「怨念強化」、土屬性 desc 顯示「能力降低」)',
+    '  修正:統一所有顯示為「能力降低」',
+    '【顯示文字統一更新位置】',
+    '  - BAD_STATUS_DESC stubbornDebuff 描述',
+    '  - 戰場狀態名稱顯示 statusName',
+    '  - 屬性彈窗(全屬性) _openAllElemPopup',
+    '  - 屬性彈窗(單一屬性) _openElemPopup',
+    '【2. 題庫出題邏輯統一】',
+    '  原本只有「小力 / 幼兒園小孩」與「日本關」走自動循環',
+    '  其他題庫用完則彈出「重選或繼續」視窗',
+    '  本版統一所有題庫:用完都彈出「重選或繼續挑戰相同題庫」視窗,',
+    '  讓玩家可以主動選擇是否換主題,或繼續同主題重新挑戰一輪',
+    '  - _advMiniQuizAsk(小怪戰):移除日本關 / 照顧 / 狗狗自動循環邏輯',
+    '  - advShowQuiz(BOSS 戰):移除日本關自動循環邏輯,統一彈窗',
+    '【3. 連續答對加成新規則】',
+    '  舊規則:每連擊+5% EXP,從第1題就開始累計',
+    '  新規則:從第2題才開始算+5%,每多答對1題+5%,連續10題達+45%上限',
+    '  公式:bonus = clamp(maxStreak - 1, 0, 9) × 5%',
+    '    - 連對1題:+0%(不算連擊)',
+    '    - 連對2題:+5%',
+    '    - 連對3題:+10%',
+    '    - ...',
+    '    - 連對10題:+45%(上限)',
+    '    - 連對11題以上:仍然+45%',
+    '  同時自動套用到知識幣(知識幣計算 = EXP × 0.3,所以連擊也會加分)',
+    '  顯示文字:「(+45% 連擊×10)」更清楚',
+    '【實作位置】',
+    '  - ELEMENT_DB earth desc: line ~9646',
+    '  - statusName / popup 顯示: line ~12694, ~24761, ~24809',
+    '  - _advMiniQuizAsk: line ~43928',
+    '  - advShowQuiz: line ~32907',
+    '  - 結算面板加成: line ~34237, ~34700, ~38289',
+  ] },
+  { ver:'v1.0.20260424.1400', brief:[
+    '🗑 完全移除「🔄回溯」按鈕(已被卡死自救取代,且可能讓玩家刷新戰況)',
+    '❓ 戰鬥教學按鈕邏輯確實化:過場一律隱藏、戰鬥一律顯示',
+    '🎁 修復答題獎勵視窗顯示時誤觸發卡死自救偵測',
+  ], items:[
+    '【1. 完全移除回溯按鈕】',
+    '  - HTML 按鈕保留 ID(避免其他程式碼引用報錯),但 CSS 永久隱藏',
+    '  - 移除所有「顯示回溯按鈕」的呼叫:',
+    '    a) advStartBattle BOSS 戰開始 (line ~32494)',
+    '    b) advStartMiniBattle 小怪戰開始 (line ~44290)',
+    '    c) startTurn 對手回合 (line ~22235)',
+    '    d) _advTutBtnShow 教學按鈕同步邏輯 (line ~37971)',
+    '  - 移除教學步驟中的「🔄當機回溯」說明 (line ~36550)',
+    '  - 隱藏邏輯保留(過場/結束時清隱藏舊版殘留)',
+    '【2. 戰鬥教學按鈕邏輯整理】',
+    '  確保以下時機隱藏:',
+    '    - advStartCutscene (進入新冒險過場)',
+    '    - advLoadScene (劇情對白頁)',
+    '    - advFinishMiniBattle (戰鬥結束回劇情)',
+    '    - openAdventureOverlay (回選關頁)',
+    '  確保以下時機顯示:',
+    '    - advStartBattle (BOSS 戰開始)',
+    '    - advStartMiniBattle (小怪戰開始)',
+    '【3. 答題獎勵視窗顯示時不偵測卡死】',
+    '  問題:玩家答題後出現「選獎勵」視窗時,若遲遲不選,5 秒卡死偵測會誤觸發',
+    '  修復:_startDeadlockWatchdog 內加入 modal 排除清單:',
+    '    - #adv-reward-overlay (答題獎勵)',
+    '    - #adv-treasure-confirm (寶物確認)',
+    '  這些視窗顯示中時 watchdog 會直接跳過,不亮起卡死自救按鈕',
+    '  原本已排除:#adv-quiz-overlay / #adv-result-overlay / #adv-mini-result',
+    '【實作位置】',
+    '  - 回溯按鈕 HTML 簡化: line ~47498',
+    '  - _advTutBtnShow: line ~37967',
+    '  - _startDeadlockWatchdog modal 排除: line ~37452',
+  ] },
   { ver:'v1.0.20260424.1390', brief:[
     '🔄 戰鬥畫面屬性相剋環重新排序+全屬性彈窗順序對齊新循環',
   ], items:[
@@ -55158,7 +55254,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260424.1390';
+  const CURRENT_VERSION = 'v1.0.20260424.1420';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -55175,7 +55271,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260424.1390';
+window._GAME_LOADED_VERSION = 'v1.0.20260424.1420';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
