@@ -7151,6 +7151,314 @@ function playSkillFX(skillName,actor,targets){
         bannerFX(t0,'🙈捉迷藏','#dd88cc',600);
       }
       break;
+    // ════════════════════════════════════════════════
+    // ★ v1.0.20260428.1500 — 補上 22 個缺特效的技能(玩家英雄2 + 小怪/BOSS 20)
+    // ════════════════════════════════════════════════
+    // ── 軍師 S1：出奇制勝(抽3張戰場卡) ──
+    case '出奇制勝':
+      playSfx('sfx-sel',0.6); playSfx('sfx-fantasy',0.5);
+      if(rc_a){
+        ringFX(actor,'#aa88ff',600);
+        // 紫金粒子像卡片飛舞
+        spawnParticles(rc_a.x,rc_a.y,{count:18,color:'#cc99ff',size:7,spread:60,duration:800,rise:true,gravity:-0.3});
+        spawnParticles(rc_a.x,rc_a.y,{count:8,color:'#ffcc44',size:6,spread:50,duration:700,rise:true,gravity:-0.4});
+      }
+      bannerFX(actor,'🎴 出奇制勝','#cc99ff',900);
+      break;
+    // ── 程式設計師 S1：修改代碼(被動,使用物品時觸發) ──
+    case '修改代碼':
+      playSfx('sfx-sword',0.45); playSfx('sfx-shoot',0.4);
+      if(t0){
+        beamFX(actor,t0,'#44ff88',180);
+        flashCard(t0,'rgba(80,255,150,0.7)',200);
+        var rc=cardRect(t0);
+        if(rc){
+          // 綠色像數位 0/1 的粒子
+          spawnParticles(rc.x,rc.y,{count:14,color:'#44ff88',size:5,spread:50,duration:500});
+          spawnParticles(rc.x,rc.y,{count:6,color:'#88ffaa',size:3,spread:40,duration:400});
+        }
+      }
+      break;
+    // ── 杏花妖 S1：杏林春霧(復活/治療+護盾) ──
+    case '杏林春霧':
+      playSfx('sfx-heal',0.7); playSfx('sfx-fantasy',0.5);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          var rc=cardRect(h);
+          if(rc){
+            spawnParticles(rc.x,rc.y,{count:18,color:'#ffaadd',size:6,spread:55,duration:800,rise:true,gravity:-0.35});
+            spawnParticles(rc.x,rc.y,{count:10,color:'#ff77aa',size:4,spread:45,duration:700,rise:true,gravity:-0.3});
+          }
+          ringFX(h,'#ffaadd',700);
+          flashCard(h,'rgba(255,180,220,0.45)',400);
+        },i*120);
+      });
+      zoneFlash(actor.side,'rgba(255,180,220,0.18)',600);
+      break;
+    // ── 杏花妖 S2：落英繽紛(全體草屬性傷害) ──
+    case '落英繽紛':
+      playSfx('sfx-explode',0.45); playSfx('sfx-fantasy',0.6);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          var rc=cardRect(h);
+          if(rc){
+            // 多波次花瓣
+            for(var k=0;k<3;k++){
+              (function(kk){setTimeout(function(){
+                spawnParticles(rc.x,rc.y,{count:8,color:'#ff66aa',size:7,spread:50,duration:600,rise:false,gravity:0.2});
+              },kk*100)})(k);
+            }
+            spawnParticles(rc.x,rc.y,{count:6,color:'#aaffaa',size:5,spread:40,duration:500,gravity:0.15});
+          }
+          flashCard(h,'rgba(255,140,200,0.55)',300);
+        },i*100);
+      });
+      flashScreen('rgba(255,180,220,0.5)',300);
+      break;
+    // ── 九尾空貓怪 S1：連續貓爪功 ──
+    case '連續貓爪功':
+      playSfx('sfx-sword',0.7);
+      // 多次連擊感
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          var rc=cardRect(h);
+          if(rc){
+            spawnParticles(rc.x,rc.y,{count:10,color:'#ff4400',size:6,spread:45,duration:400});
+            spawnParticles(rc.x,rc.y,{count:6,color:'#ffaa00',size:4,spread:35,duration:350});
+          }
+          flashCard(h,'rgba(255,80,40,0.7)',180);
+          if(rc_a) beamFX(actor,h,'#ff6644',150);
+        },i*150);
+      });
+      break;
+    // ── 九尾空貓怪 S2：睡覺功(自我恢復+解狀態) ──
+    case '睡覺功':
+      playSfx('sfx-heal',0.55);
+      if(rc_a){
+        ringFX(actor,'#cc88ff',700);
+        spawnParticles(rc_a.x,rc_a.y,{count:14,color:'#cc99ff',size:6,spread:50,duration:800,rise:true,gravity:-0.35});
+        spawnParticles(rc_a.x,rc_a.y,{count:6,color:'#ffffff',size:5,spread:35,duration:600,rise:true,gravity:-0.4});
+      }
+      bannerFX(actor,'💤 zzz...','#cc99ff',900);
+      break;
+    // ── 綠竹筍小妖 S1：筍之守護(護盾) ──
+    case '筍之守護':
+      playSfx('sfx-shield',0.7);
+      if(t0){
+        ringFX(t0,'#88dd66',650);
+        var rc=cardRect(t0);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:12,color:'#88dd66',size:6,spread:45,duration:600,rise:true,gravity:-0.2});
+          spawnParticles(rc.x,rc.y,{count:6,color:'#ccffaa',size:4,spread:35,duration:500,rise:true,gravity:-0.25});
+        }
+        flashCard(t0,'rgba(150,220,100,0.4)',500);
+      }
+      break;
+    // ── 綠竹筍小妖 S2：筍之刺(50%麻痺) ──
+    case '筍之刺':
+      playSfx('sfx-sword',0.6);
+      if(t0){
+        if(rc_a) beamFX(actor,t0,'#aacc55',180);
+        flashCard(t0,'rgba(170,200,80,0.7)',250);
+        var rc=cardRect(t0);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:14,color:'#aacc55',size:6,spread:45,duration:550});
+          spawnParticles(rc.x,rc.y,{count:6,color:'#ffee66',size:4,spread:35,duration:450});
+        }
+      }
+      break;
+    // ── 茶葉精靈 S1：一壺鐵觀音(全體治療) ──
+    case '一壺鐵觀音':
+      playSfx('sfx-heal',0.65);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          healParticles(h);
+          var rc=cardRect(h);
+          if(rc) spawnParticles(rc.x,rc.y,{count:8,color:'#cc8844',size:5,spread:40,duration:600,rise:true,gravity:-0.3});
+          flashCard(h,'rgba(200,140,80,0.35)',350);
+        },i*120);
+      });
+      zoneFlash(actor.side,'rgba(220,160,100,0.18)',600);
+      break;
+    // ── 茶葉精靈 S2：一壺包種茶(全體解狀態+最低 HP 恢復) ──
+    case '一壺包種茶':
+      playSfx('sfx-heal',0.6); playSfx('sfx-fantasy',0.4);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          ringFX(h,'#aaee99',600);
+          var rc=cardRect(h);
+          if(rc){
+            spawnParticles(rc.x,rc.y,{count:10,color:'#aaee99',size:5,spread:40,duration:600,rise:true,gravity:-0.3});
+            spawnParticles(rc.x,rc.y,{count:6,color:'#ffffff',size:3,spread:30,duration:500,rise:true,gravity:-0.35});
+          }
+          flashCard(h,'rgba(170,240,150,0.35)',350);
+        },i*120);
+      });
+      break;
+    // ── 偷摘花的頑皮妖精 S1：花瓣飛刀(全體傷害) ──
+    case '花瓣飛刀':
+      playSfx('sfx-sword',0.55);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          var rc=cardRect(h);
+          if(rc){
+            // 花瓣旋飛感
+            for(var k=0;k<2;k++){
+              (function(kk){setTimeout(function(){
+                spawnParticles(rc.x,rc.y,{count:8,color:'#ff77cc',size:6,spread:55,duration:500});
+              },kk*80)})(k);
+            }
+            spawnParticles(rc.x,rc.y,{count:5,color:'#ffaadd',size:4,spread:40,duration:400});
+          }
+          flashCard(h,'rgba(255,140,200,0.55)',250);
+        },i*100);
+      });
+      break;
+    // ── 偷摘花的頑皮妖精 S2：花粉迷眼(失明) ──
+    case '花粉迷眼':
+      playSfx('sfx-shoot',0.5);
+      if(t0){
+        var rc=cardRect(t0);
+        if(rc){
+          // 黃色花粉散落
+          spawnParticles(rc.x,rc.y,{count:18,color:'#ffee66',size:5,spread:60,duration:700,rise:false,gravity:0.15});
+          spawnParticles(rc.x,rc.y,{count:8,color:'#ffffaa',size:3,spread:45,duration:600,gravity:0.1});
+        }
+        flashCard(t0,'rgba(255,238,100,0.6)',400);
+        bannerFX(t0,'😵 失明','#ffee66',700);
+      }
+      break;
+    // ── 偷鳥蛋的鳥人哈維 S1：催眠之歌(睡眠) ──
+    case '催眠之歌':
+      playSfx('sfx-fantasy',0.65);
+      if(t0){
+        // 紫色音波
+        var rc=cardRect(t0);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:14,color:'#aa66dd',size:6,spread:50,duration:800,rise:true,gravity:-0.2});
+          spawnParticles(rc.x,rc.y,{count:6,color:'#ddaaff',size:4,spread:35,duration:600,rise:true,gravity:-0.25});
+        }
+        ringFX(t0,'#aa66dd',700);
+        flashCard(t0,'rgba(170,100,220,0.45)',450);
+        bannerFX(t0,'💤 zzz','#aa66dd',800);
+      }
+      break;
+    // ── 偷鳥蛋的鳥人哈維 S2：俯衝搶奪(風刀+奪卡) ──
+    case '俯衝搶奪':
+      playSfx('sfx-sword',0.55); playSfx('sfx-shoot',0.4);
+      if(t0){
+        if(rc_a) beamFX(actor,t0,'#ccddff',150);
+        flashCard(t0,'rgba(200,220,255,0.7)',250);
+        var rc=cardRect(t0);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:14,color:'#ccddff',size:5,spread:55,duration:500});
+          spawnParticles(rc.x,rc.y,{count:6,color:'#ffffff',size:3,spread:40,duration:400});
+        }
+      }
+      break;
+    // ── 偷竹筍的哥布林 S1：渾身一擊(重擊+爆擊) ──
+    case '渾身一擊':
+      playSfx('sfx-punch',0.85); playSfx('sfx-explode',0.45);
+      if(t0){
+        flashCard(t0,'rgba(255,200,80,0.85)',300);
+        var rc=cardRect(t0);
+        if(rc){
+          // 重擊衝擊波
+          spawnParticles(rc.x,rc.y,{count:20,color:'#ffaa44',size:8,spread:65,duration:700});
+          spawnParticles(rc.x,rc.y,{count:10,color:'#ffee88',size:5,spread:50,duration:600});
+          ringFX(t0,'#ffaa44',500);
+        }
+        flashScreen('rgba(255,180,80,0.6)',150);
+      }
+      break;
+    // ── 偷竹筍的哥布林 S2：土坑陷阱(緩速) ──
+    case '土坑陷阱':
+      playSfx('sfx-explode',0.4);
+      if(t0){
+        var rc=cardRect(t0);
+        if(rc){
+          // 棕色塵土
+          spawnParticles(rc.x,rc.y,{count:16,color:'#996633',size:7,spread:55,duration:600,gravity:0.3});
+          spawnParticles(rc.x,rc.y,{count:8,color:'#bb8855',size:5,spread:40,duration:500,gravity:0.25});
+        }
+        flashCard(t0,'rgba(150,100,60,0.55)',350);
+        bannerFX(t0,'🕳️ 緩速','#996633',700);
+      }
+      break;
+    // ── 寶箱怪 S1：鎖起來(自身無敵) ──
+    case '鎖起來':
+      playSfx('sfx-shield',0.75);
+      if(rc_a){
+        ringFX(actor,'#ffcc44',700);
+        spawnParticles(rc_a.x,rc_a.y,{count:14,color:'#ffcc44',size:6,spread:50,duration:700,rise:true,gravity:-0.2});
+        spawnParticles(rc_a.x,rc_a.y,{count:6,color:'#ffeebb',size:4,spread:35,duration:600,rise:true,gravity:-0.25});
+      }
+      bannerFX(actor,'🔒 鎖起來','#ffcc44',900);
+      break;
+    // ── 寶箱怪 S2:箱底抹油(逃跑) ──
+    case '箱底抹油':
+      playSfx('sfx-fantasy',0.45);
+      if(rc_a){
+        spawnParticles(rc_a.x,rc_a.y,{count:14,color:'#bb9955',size:6,spread:60,duration:700,gravity:0.2});
+        spawnParticles(rc_a.x,rc_a.y,{count:6,color:'#ddbb77',size:4,spread:45,duration:600,gravity:0.15});
+      }
+      bannerFX(actor,'💨 抹油','#bb9955',700);
+      break;
+    // ── 小惡魔 S1:弄壞你的玩具(HP 強制降至 10%) ──
+    case '弄壞你的玩具':
+      playSfx('sfx-explode',0.55); playSfx('sfx-charm',0.55);
+      if(t0){
+        flashCard(t0,'rgba(80,0,40,0.8)',400);
+        var rc=cardRect(t0);
+        if(rc){
+          // 紅黑碎片
+          spawnParticles(rc.x,rc.y,{count:20,color:'#cc2244',size:7,spread:60,duration:700,gravity:0.2});
+          spawnParticles(rc.x,rc.y,{count:10,color:'#440022',size:5,spread:45,duration:600,gravity:0.15});
+        }
+        ringFX(t0,'#cc2244',600);
+        bannerFX(t0,'💔 玩具壞了','#cc2244',800);
+      }
+      break;
+    // ── 小惡魔 S2:讓你調皮(強制普攻隊友) ──
+    case '讓你調皮':
+      playSfx('sfx-charm',0.7); playSfx('sfx-fantasy',0.5);
+      if(t0){
+        ringFX(t0,'#cc44aa',650);
+        var rc=cardRect(t0);
+        if(rc){
+          spawnParticles(rc.x,rc.y,{count:14,color:'#cc44aa',size:6,spread:55,duration:700,rise:true,gravity:-0.2});
+          spawnParticles(rc.x,rc.y,{count:6,color:'#ff77cc',size:4,spread:40,duration:600,rise:true,gravity:-0.25});
+        }
+        flashCard(t0,'rgba(200,80,180,0.5)',400);
+        bannerFX(t0,'😈 調皮','#cc44aa',800);
+      }
+      break;
+    // ── 偷喝茶的史萊姆 S1:舔舔治療 ──
+    case '舔舔治療':
+      playSfx('sfx-heal',0.55);
+      if(t0){
+        healParticles(t0);
+        var rc=cardRect(t0);
+        if(rc) spawnParticles(rc.x,rc.y,{count:8,color:'#aaccaa',size:5,spread:40,duration:600,rise:true,gravity:-0.3});
+        flashCard(t0,'rgba(170,200,170,0.35)',350);
+      }
+      break;
+    // ── 偷喝茶的史萊姆 S2:黏液噴濺(全體緩速) ──
+    case '黏液噴濺':
+      playSfx('sfx-explode',0.4);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          var rc=cardRect(h);
+          if(rc){
+            // 黏稠棕綠
+            spawnParticles(rc.x,rc.y,{count:14,color:'#88aa66',size:7,spread:55,duration:700,gravity:0.25});
+            spawnParticles(rc.x,rc.y,{count:6,color:'#aaccaa',size:5,spread:40,duration:600,gravity:0.2});
+          }
+          flashCard(h,'rgba(140,180,100,0.5)',400);
+          bannerFX(h,'🐌 緩速','#88aa66',600);
+        },i*100);
+      });
+      break;
     default:break;
   }
 }
@@ -14838,6 +15146,15 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
 function _burstFinish(h, _interrupted){
   // ★ v1.0.20260423.2300 — 清除爆發保護旗標
   window._burstCastActive = false;
+  // ★ v1.0.20260428.1500 — instant_burst 流程結束:清除 BOSS quiz 防重入旗標
+  //   (爆發插隊取代 BOSS 行動,_interrupted.acted=true 後 BOSS 不會再觸發 quiz,
+  //    但 _bossQuizInFlight 必須清掉,讓下回合 BOSS 重置 acted 後可正常觸發 quiz)
+  try{ window._bossQuizInFlight = false; }catch(_){}
+  // 同步清除 quiz phase / active 狀態 (防止下次 quiz 視覺殘留)
+  try{
+    if(typeof _advQuizPhase !== 'undefined' && _advQuizPhase !== 'idle') _advQuizPhase = 'idle';
+    if(typeof _advQuizActive !== 'undefined' && _advQuizActive) _advQuizActive = false;
+  }catch(_){}
   updateUI();
   if(checkWin()) return;
   G.passiveInterruptUsed=false;
@@ -19362,7 +19679,7 @@ function execSkill(a, sk, cost, stype){
     //   有利戰場卡只對友方有效,不利戰場卡只對敵方有效
     //   升級效果:Lv5/Lv10 抽出總數 +1 (只能選 1 張使用)
     log(`🪶 [${a.name}] 出奇制勝!抽取戰場卡!`);
-    playSkillFX('識破全局', a, []);
+    playSkillFX('出奇制勝', a, []);
     const _SURPRISE_GOOD = ['潔淨之樹','戰爭號角','醫療聖所','能量噴泉'];
     const _SURPRISE_BAD  = ['神秘商店暫停營業','封印魔法石碑','受詛咒的神像','疲勞煙霧筒'];
     const _allFieldNames = [..._SURPRISE_GOOD, ..._SURPRISE_BAD];
@@ -19510,6 +19827,7 @@ function execSkill(a, sk, cost, stype){
       const foes=liveFoes();
       if(i>=hitCount || !foes.length || checkWin()){ updateUI(); endAction(a,cost); return; }
       const t=foes[Math.floor(Math.random()*foes.length)];
+      try{ playSkillFX('連續貓爪功', a, [t]); }catch(_){}
       doDmg(t, a.atk, {actor:a, isSkill:true});
       renderCard(t);
       i++;
@@ -19520,6 +19838,7 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='睡覺功'){
     log(`😴 [${a.name}] 睡覺功！清除不利狀態並恢復HP！`);
+    try{ playSkillFX('睡覺功', a, [a]); }catch(_){}
     clearBadStatus(a);
     const healAmt = Math.floor(a.hp*0.10);
     a.curHp = Math.min(a.hp, a.curHp + healAmt);
@@ -19769,6 +20088,7 @@ function execSkill(a, sk, cost, stype){
       const ex = _target.buffs.find(b=>b.type==='bigshield');
       if(ex){ ex._hp = Math.max(ex._hp||0, 20); ex.dur = 99; }
       else { _target.buffs.push({type:'bigshield', dur:99, _hp:20}); }
+      try{ playSkillFX('筍之守護', a, [_target]); }catch(_){}
       bannerFX(_target, '🎋護盾20', '#88cc44', 800);
       renderCard(_target);
       log(`🎋 [${a.name}] 筍之守護！→ [${_target.name}] +20護盾！`);
@@ -19778,6 +20098,7 @@ function execSkill(a, sk, cost, stype){
   else if(n==='筍之刺'){
     setPending('enemy', t=>{
       log(`🌱 [${a.name}] 筍之刺！`);
+      try{ playSkillFX('筍之刺', a, [t]); }catch(_){}
       doDmg(t, a.sp, {actor:a, isSkill:true});
       // ★ 每升1級麻痺成功率+5%（基礎50%）
       const _thornRate = Math.min(1.0, 0.50 + _activeSkLv * 0.05);
@@ -19791,6 +20112,8 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='一壺鐵觀音'){
     log(`🍵 [${a.name}] 一壺鐵觀音！全體友方恢復 ${a.sp}HP！`);
+    const _aliveAlliesT = G[a.side].filter(h=>h.curHp>0);
+    try{ playSkillFX('一壺鐵觀音', a, _aliveAlliesT); }catch(_){}
     G[a.side].forEach(ally=>{
       if(ally.curHp>0){
         doHeal(ally, a.sp, {actor:a, isHeal:true});
@@ -19801,6 +20124,8 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='一壺包種茶'){
     log(`🍵 [${a.name}] 一壺包種茶！解除不利狀態並恢復友方！`);
+    const _aliveAlliesB = G[a.side].filter(h=>h.curHp>0);
+    try{ playSkillFX('一壺包種茶', a, _aliveAlliesB); }catch(_){}
     G[a.side].forEach(ally=>{ clearBadStatus(ally); }); // 包含倒下的
     // 恢復HP最低的存活友方（可復活）
     const _chaTarget = G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0]
@@ -19820,6 +20145,7 @@ function execSkill(a, sk, cost, stype){
     const _tgt = G[a.side].find(x=>x.curHp===0)
               || G[a.side].filter(x=>x.curHp>0).sort((x,y)=>(x.curHp/x.hp)-(y.curHp/y.hp))[0];
     if(_tgt){
+      try{ playSkillFX('杏林春霧', a, [_tgt]); }catch(_){}
       if(_tgt.curHp===0){ doRevive(_tgt, 0.5); }
       doHeal(_tgt, Math.floor(a.sp*1.5), {actor:a, isHeal:true});
       // ★ 附加 30 護盾（取較大值覆蓋）
@@ -19835,6 +20161,7 @@ function execSkill(a, sk, cost, stype){
   else if(n==='落英繽紛'){
     log(`🌸 [${a.name}] 落英繽紛！漫天花瓣如刀！`);
     const _foes = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    try{ playSkillFX('落英繽紛', a, _foes); }catch(_){}
     _foes.forEach(f=>{
       doDmg(f, a.sp, {actor:a, isSkill:true, elem:'grass'});
     });
@@ -20613,6 +20940,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   else if(n==='花粉迷眼'){
     setPending('enemy', t=>{
+      try{ playSkillFX('花粉迷眼', a, [t]); }catch(_){}
       addStatus(t,'blind',1);
       log(`[${a.name}] 花粉迷眼！[${t.name}] 失明1回合！`);
       bannerFX(t,'花粉迷眼！','#ffddaa',800);
@@ -20623,6 +20951,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   else if(n==='俯衝搶奪'){
     setPending('enemy', t=>{
+      try{ playSkillFX('俯衝搶奪', a, [t]); }catch(_){}
       const _dmg = Math.floor(atv(a) + (a.spd||0)*0.2);
       doDmg(t, _dmg);
       log(`[${a.name}] 俯衝搶奪！造成 ${_dmg} 傷害`);
@@ -20639,6 +20968,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   else if(n==='土坑陷阱'){
     setPending('enemy', t=>{
+      try{ playSkillFX('土坑陷阱', a, [t]); }catch(_){}
       addStatus(t,'slow',1);
       log(`[${a.name}] 土坑陷阱！[${t.name}] 緩速1回合！`);
       bannerFX(t,'陷入土坑！','#ccaa66',800);
@@ -20649,6 +20979,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   }
   else if(n==='黏液噴濺'){
     const _tgts = G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
+    try{ playSkillFX('黏液噴濺', a, _tgts); }catch(_){}
     _tgts.forEach(t=>{ addStatus(t,'slow',1); });
     log(`[${a.name}] 黏液噴濺！全體對手緩速1回合！`);
     bannerFX(a,'黏液！','#aaffaa',800);
@@ -20660,7 +20991,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   // ══ 寶箱怪 ══
   else if(n==='鎖起來'){
     log(`[${a.name}] 🔒 鎖起來！進入無敵狀態1回合！`);
-    playSkillFX('仁王挺立', a, [a]);
+    playSkillFX('鎖起來', a, [a]);
     addBuff(a, 'invincible', 1);
     bannerFX(a, '🔒 無敵！', '#ffcc44', 900);
     flashScreen('rgba(255,220,0,0.5)', 200);
@@ -20669,6 +21000,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   else if(n==='箱底抹油'){
     // 主動使用時：100%逃跑
     log(`[${a.name}] 💨 箱底抹油！成功逃跑！`);
+    try{ playSkillFX('箱底抹油', a, [a]); }catch(_){}
     bannerFX(a, '💨 逃跑！', '#aaaaff', 900);
     flashScreen('rgba(150,150,255,0.4)', 200);
     // 從敵方陣容移除
@@ -20690,7 +21022,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   else if(n==='弄壞你的玩具'){
     setPending('enemy', t=>{
       log(`😈 [${a.name}] 弄壞你的玩具！[${t.name}] HP強制降至10%！`);
-      playSkillFX('死亡宣告', a, [t]);
+      playSkillFX('弄壞你的玩具', a, [t]);
       const _toyDmg = Math.max(1, t.curHp - Math.max(1, Math.floor(t.hp * 0.10)));
       doDmg(t, _toyDmg, {actor:a, isSkill:true, ignoreBuffs:true, ignoreEvasion:true, noGuard:true});
       bannerFX(t, '😈 玩具壞了！', '#ff4444', 900);
@@ -20700,7 +21032,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   else if(n==='讓你調皮'){
     setPending('enemy', t=>{
       log(`😈 [${a.name}] 讓你調皮！[${t.name}] 下回合強制攻擊自己隊友！`);
-      playSkillFX('舞台聚光燈', a, [t]);
+      playSkillFX('讓你調皮', a, [t]);
       addStatus(t, 'berserk', 1);
       t._devilBerserk = true; // 標記為惡魔詛咒（攻擊自己隊友）
       bannerFX(t, '😈 調皮！', '#ff88ff', 900);
@@ -21288,6 +21620,7 @@ function applyItemOnTarget(it,a,t,extraOpts){
     if(_codeTarget){
       doDmg(_codeTarget,_codeDmg,{actor:_user2,isSkill:true,ignoreBuffs:false});
       showPopup(_codeTarget,_codeDmg,'dmg');
+      try{ playSkillFX('修改代碼', _user2, [_codeTarget]); }catch(_){}
       bannerFX(_user2,'修改代碼！-'+_codeDmg,'#55ffcc',800);
       log(`💻 [程式設計師] 修改代碼！對 [${_codeTarget.name}] 造成 ${_codeDmg} 傷害！`);
     }
@@ -34358,8 +34691,19 @@ function _advShowBurstTargetPicker(heroes) {
       + `</div>`;
     btn.onclick = () => {
       ov.classList.remove('show');
+      // ★ v1.0.20260428.1500 — 修正「instant_burst 後立刻又觸發 quiz」bug
+      //   原本: onclick 同時呼叫 _advTriggerBurstFor (1200ms 後才開始爆發) 與 advOnQuizSkip()
+      //   advOnQuizSkip 立刻 _bossQuizInFlight=false + _resumeTimers,
+      //   但爆發還沒開始 → 被釋放的 startTurn 看到 BOSS !acted 又重新觸發 quiz → 無限循環
+      //   修補: 只清除必要的 quiz 視覺狀態,不執行 _advQuizResolveCb (避免 BOSS 重複行動)
+      //         不清 _bossQuizInFlight,讓爆發中 BOSS quiz 觸發守衛仍生效
+      //         _burstFinish 完成後會透過 _interrupted.acted=true 把 BOSS 標記為已行動,
+      //         並由 startTurn 推進到下個未行動角色,自然清除 quiz 狀態
+      try{ _gamePaused = false; }catch(_){}
+      try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+      // 不執行 _advQuizResolveCb (爆發插隊取代 BOSS 本回合行動)
+      try{ if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null; }catch(_){}
       _advTriggerBurstFor(h);
-      advOnQuizSkip();
     };
     choicesDiv.appendChild(btn);
   });
@@ -34377,6 +34721,16 @@ function _advTriggerBurstFor(h) {
     //   （_burstFinish 會把 _interrupted 的 BOSS 標記為 acted，達到「插隊跳過 BOSS 行動」的效果）。
     if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
     _gamePaused = false;
+    // ★ v1.0.20260428.1500 — 預先把被插隊的 BOSS 標記為已行動,避免 1200ms 空檔被 startTurn 重選觸發 quiz
+    //   bug 症狀:獎勵選 instant_burst→選擇爆發目標後 1200ms 內,
+    //   若 startTurn 被呼叫(例如 _resumeTimers 釋放 queued timer),
+    //   會看到原 BOSS !acted 而再次觸發 quiz → 玩家無限答題
+    //   修補:在 _advTriggerBurstFor 一開始就標記 BOSS acted=true,讓它徹底跳過本回合
+    try{
+      if(G && G.activeChar && G.activeChar.side === 'p2' && G.activeChar.curHp > 0){
+        G.activeChar.acted = true;
+      }
+    }catch(_){}
     if (typeof BURST_DB === 'undefined' || !BURST_DB[h.name]) {
       bannerFX(h, '💥 能量爆滿！', '#ff9944', 900);
       G.energy.p1 = Math.min(10, G.energy.p1 + 5);
@@ -48216,6 +48570,8 @@ const GAME_CHANGELOG = [
     '🔓 修正小力 / 幼兒園小孩 升到 Lv10 沒有自動解鎖 LV10 肖像的問題',
     '⚡ 修正 6 個英雄極限爆發升級沒有提升狀態成功率的問題:冰法/雷法/光法/神射手/杏花妖/大天狗',
     '🔥 修正火法師「地獄之火」升級確認視窗只顯示燃燒回合,沒顯示傷害%提升 +5%/級',
+    '✨ 補上 22 個技能的視覺特效:軍師「出奇制勝」、程式設計師「修改代碼」+ 20 個小怪/BOSS 技能',
+    '🐛 修補 BOSS 戰使用「立即發動極限爆發」獎勵後立刻又彈出問題的無限循環 bug',
     '🐛 修補BOSS戰偶爾無限問答的bug',
   ], items:[
     '【難度與選項】',
@@ -48274,6 +48630,31 @@ const GAME_CHANGELOG = [
     '    原本 _s2Lv >= 4/7/10 → Lv5/8/Lv11(不可能)才升級',
     '    改為 _s2Lv >= 3/6/9 → Lv4/7/10 升級(對應註解描述)',
     '  完整對照: Lv1~3 燃燒2回合 / Lv4~6 燃燒3回合 / Lv7~9 燃燒4回合 / Lv10 燃燒5回合',
+    '【補上 22 個技能特效】',
+    '  原本許多小怪/BOSS 技能與少數玩家英雄技能沒有視覺特效,只顯示文字',
+    '  本版針對下列技能新增特效(粒子/閃光/光束/環形/音效)並掛入 AI 戰鬥邏輯:',
+    '  玩家英雄(2 個):軍師「出奇制勝」、程式設計師「修改代碼」',
+    '  小怪/BOSS(20 個):',
+    '    杏花妖:杏林春霧、落英繽紛',
+    '    九尾空貓怪:連續貓爪功、睡覺功',
+    '    綠竹筍小妖:筍之守護、筍之刺',
+    '    茶葉精靈:一壺鐵觀音、一壺包種茶',
+    '    偷摘花的頑皮妖精:花瓣飛刀、花粉迷眼',
+    '    偷鳥蛋的鳥人哈維:催眠之歌、俯衝搶奪',
+    '    偷竹筍的哥布林:渾身一擊、土坑陷阱',
+    '    寶箱怪:鎖起來、箱底抹油',
+    '    小惡魔:弄壞你的玩具、讓你調皮',
+    '    偷喝茶的史萊姆:舔舔治療、黏液噴濺',
+    '【instant_burst 獎勵後無限提問 bug】',
+    '  症狀:BOSS 戰答對後選「立即發動極限爆發」獎勵 → 選擇隊友 →',
+    '       立刻又彈出下一題,沒有戰鬥操作機會,直到用其他答題獎勵才能脫離',
+    '  根因:選擇爆發目標的 onclick 同時呼叫 _advTriggerBurstFor (1200ms 後才開始爆發) 與 advOnQuizSkip()',
+    '       advOnQuizSkip 立即清除 _bossQuizInFlight=false 並 _resumeTimers,',
+    '       但爆發還沒開始 → 被釋放的 startTurn 看到 BOSS !acted 又重新觸發 quiz → 無限循環',
+    '  修補:三層守護',
+    '    (1) onclick 不再呼叫 advOnQuizSkip,只解除 _gamePaused/_resumeTimers 並清 _advQuizResolveCb',
+    '    (2) _advTriggerBurstFor 開頭預先標記 BOSS acted=true (1200ms 空檔內 startTurn 不會選到)',
+    '    (3) _burstFinish 結尾統一清除 _bossQuizInFlight / _advQuizPhase / _advQuizActive',
     '【BOSS戰無限問答 bug】',
     '  4 點防禦補丁:防重入旗標 / overlay 已顯示守衛 /',
     '  答題完成清除旗標 / 戰鬥結束清除旗標',
