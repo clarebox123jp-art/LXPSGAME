@@ -36534,14 +36534,17 @@ function advSkipCutscene() {
   if (document.getElementById('adv-choice-panel') &&
       document.getElementById('adv-choice-panel').children.length > 0) return;
 
-  // ★ v1.0.20260420.1200 — 快速跳過路徑:若三個問題都已有答案,仍需警告剩餘法寶會放棄
+  // ★ v1.0.20260420.1200 — 快速跳過路徑:若兩個問題都已有答案,仍需警告剩餘法寶會放棄
   //   v1.0.20260420.1230 — 若從上場前 popup 進來,已在那邊警告過,這裡不再 confirm
-  if (_advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
+  // ★ v1.0.20260428.3900 — 移除年級檢查(視窗已不需選年級)
+  if (_advPlayerSubject && _advPlayerDifficulty) {
     const _unearned = _advTreasures.filter(t => !t).length;
     if (_unearned > 0 && !window._advUpfrontSkipChosen) {
       const _msg = '跳過演出會直接進入 BOSS 戰,未打的 ' + _unearned + ' 場小怪戰將會放棄其法寶獎勵,確定要跳過嗎?';
       if (!confirm(_msg)) return;
     }
+    // ★ v1.0.20260428.3900 — 確保 _advPlayerGrade 有值(其他系統如對白會用)
+    if(!_advPlayerGrade) _advPlayerGrade = '綜合';
     _advSkipGiveTreasures();
     return;
   }
@@ -36560,9 +36563,16 @@ function advSkipCutscene() {
   ].join('');
     if(window.innerWidth > 1180){ box.style.width='min(96vw,1000px)'; box.style.fontSize='170%'; }
 
-  const gradeOpts = ['低年級','中年級','高年級','五年級','國中'];
   const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','關島交流','木柵動物園','木柵動物園'];
   const diffOpts  = ['沒自信','普通','我很會'];
+
+  // ★ v1.0.20260428.3900 — 移除年級選擇:
+  //   advGetQuizPool 只用 subject 過濾題目,完全不看 grade(line 32960:filter q.subject === subject)
+  //   題目不重複機制:_persistentCorrectQuestions[subject] 已答對題目自動排除,
+  //                   全部答對才重置(line 32904)
+  //   _advPlayerGrade 仍會被對白系統用(_buildBossIntroLines 的 gradeMap fallback 到「中年級」)
+  //   所以這裡自動設成「綜合」,後續 fallback 顯示「中年級」用詞,玩家無感
+  if(!_advPlayerGrade) _advPlayerGrade = '綜合';
 
   function mkRow(label, opts, key) {
     const row = document.createElement('div');
@@ -36586,23 +36596,21 @@ function advSkipCutscene() {
         b.style.background = 'rgba(120,90,255,0.5)';
         b.style.borderColor = '#aa88ff';
         b.style.color = '#fff';
-        if (key==='grade') _advPlayerGrade = o;
-        else if (key==='subject') {
+        if (key==='subject') {
           _advPlayerSubject = o;
           // ★ 期中評量：難度自動填入「普通」，不需玩家另選
           if (o.includes('評量')) _advPlayerDifficulty = '普通';
         }
         else if (key==='diff') _advPlayerDifficulty = o;
-        // 更新確認按鈕狀態（期中評量時難度已自動填，不需等玩家選）
+        // ★ v1.0.20260428.3900 — 移除年級檢查,只需科目+難度即可確認
         const confirmBtn = document.getElementById('adv-skip-confirm-btn');
-        if (confirmBtn && _advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty) {
+        if (confirmBtn && _advPlayerSubject && _advPlayerDifficulty) {
           confirmBtn.disabled = false;
           confirmBtn.style.opacity = '1';
         }
       };
       // 若已有選擇，預先選取
-      if ((key==='grade' && _advPlayerGrade===o) ||
-          (key==='subject' && _advPlayerSubject===o) ||
+      if ((key==='subject' && _advPlayerSubject===o) ||
           (key==='diff' && _advPlayerDifficulty===o)) {
         b.style.background = 'rgba(120,90,255,0.5)';
         b.style.borderColor = '#aa88ff';
@@ -36653,13 +36661,14 @@ function advSkipCutscene() {
   headerRow.appendChild(spacer);
 
   box.appendChild(headerRow);
-  box.appendChild(mkRow('📚 年級', gradeOpts, 'grade'));
+  // ★ v1.0.20260428.3900 — 移除年級 row,只保留科目+難度
   box.appendChild(mkRow('📖 科目', subjOpts, 'subject'));
   box.appendChild(mkRow('⭐ 難度', diffOpts, 'diff'));
 
   const confirmBtn = document.createElement('button');
   confirmBtn.id = 'adv-skip-confirm-btn';
-  const _allReady = _advPlayerGrade && _advPlayerSubject && _advPlayerDifficulty;
+  // ★ v1.0.20260428.3900 — 確認條件移除 _advPlayerGrade 檢查
+  const _allReady = _advPlayerSubject && _advPlayerDifficulty;
   confirmBtn.disabled = !_allReady;
   confirmBtn.style.cssText = 'width:100%;padding:14px;font-size:24px;font-weight:900;margin-top:12px;' +
     'background:rgba(50,180,80,0.3);border:2px solid #3ec87a;color:#3ec87a;border-radius:12px;cursor:pointer;' +
@@ -37206,6 +37215,21 @@ function advShowBossIntro() {
   try{
     // ★ v1.0.20260421.3000 — 擴充日本 BOSS 識別
     const _JP_BOSS_ICONS = {'大天狗':'🪶','酒吞童子':'🍶','玉藻前':'🦊','八岐大蛇':'🐉'};
+    // ★ v1.0.20260428.3890 — 台灣 10 BOSS 名稱與 icon 對應
+    //   原本 BOSS intro 名字標籤 hardcoded 「🐱 九尾空貓怪」,因為 G.p2.find 沒比對台灣 BOSS
+    //   結果台灣關 BOSS 戰開場顯示「🐱 九尾空貓怪 說了 酥脆狂魔的對白」這種錯亂
+    const _TW_BOSS_ICONS = {
+      '油膩魔王・滷汁大鍋':'🍲',
+      '酥脆狂魔・熱浪糕師':'🥧',
+      '臭氣魔王・發酵公':'👃',
+      '山靈古魔・千年怒木':'🌳',
+      '深海惡靈・觸手大蛟':'🐙',
+      '染靈幻魔・藍色憂鬱':'💧',
+      '珍奶吸魂魔・大波霸':'🧋',
+      '水靈反魔・倒映女':'🪞',
+      '摩天魔將・夜空爆裂者':'🎆',
+      '山岳禁咒・崩天巨人':'⛰',
+    };
     // ★ v1.0.20260422.0100 — 日本關優先用 _currentBossVariantInfo.main 決定 BOSS 名稱，
     //   避免 G.p2 尚未 ready 或結構異常時 fallback 到「九尾空貓怪」預設圖示/文字。
     let _mainBoss = null;
@@ -37213,13 +37237,21 @@ function advShowBossIntro() {
        && window._currentBossVariantInfo && window._currentBossVariantInfo.main){
       _mainBoss = { name: window._currentBossVariantInfo.main };
     }
+    // ★ v1.0.20260428.3890 — 台灣關優先用 _advSelectedTaiwanBoss 對應 TAIWAN_BOSSES.name
+    if(!_mainBoss && typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'
+       && window._advSelectedTaiwanBoss && typeof TAIWAN_BOSSES !== 'undefined'
+       && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
+      _mainBoss = { name: TAIWAN_BOSSES[window._advSelectedTaiwanBoss].name };
+    }
     if(!_mainBoss){
       _mainBoss = (G && G.p2) ? G.p2.find(h =>
         h.name==='九尾空貓怪' || h.name==='杏花妖'
-        || _JP_BOSS_ICONS[h.name]) : null;
+        || _JP_BOSS_ICONS[h.name]
+        || _TW_BOSS_ICONS[h.name]) : null;
     }
     if(_mainBoss){
       const _icon = _JP_BOSS_ICONS[_mainBoss.name]
+        || _TW_BOSS_ICONS[_mainBoss.name]
         || (_mainBoss.name==='杏花妖' ? '🌸' : '🐱');
       const _n1 = document.getElementById('adv-boss-intro-name');
       const _n2 = document.getElementById('adv-boss-react-name');
@@ -38157,6 +38189,26 @@ function advApplyTreasure(id) {
 //  答對獎勵
 // ════════════════════════════════
 function advShowReward() {
+  // ★ v1.0.20260428.3890 — 防呆檢查:獎勵視窗 DOM 是否存在
+  //   bug 症狀:獎勵 overlay/choices/box 任一找不到時,advShowReward 拋例外,
+  //   玩家答對後永遠卡在 _gamePaused=true 的狀態(看到戰鬥畫面但無法操作)
+  //   修補:DOM 缺失時直接走 advOnQuizSkip 兜底,讓戰鬥繼續
+  const _rwOv = document.getElementById('adv-reward-overlay');
+  const _rwChoices = document.getElementById('adv-reward-choices');
+  const _rwBox = document.getElementById('adv-reward-box');
+  if(!_rwOv || !_rwChoices){
+    console.error('🚨 [advShowReward] 獎勵視窗 DOM 缺失:adv-reward-overlay=' + (!!_rwOv)
+      + ', adv-reward-choices=' + (!!_rwChoices) + ' → 跳過獎勵直接繼續戰鬥');
+    try{ _showInGameToast('⚠ 獎勵視窗載入異常,跳過此次獎勵', '#ff8844', 2500); }catch(_){}
+    try{ if(typeof advOnQuizSkip === 'function') advOnQuizSkip(); }catch(_skE){
+      console.error('[advShowReward 兜底] advOnQuizSkip 失敗', _skE);
+      // 最後一道防線:強制解除暫停 + startTurn
+      try{ _gamePaused = false; }catch(_){}
+      try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+      setTimeout(()=>{ try{ if(typeof startTurn === 'function') startTurn(); }catch(_){} }, 200);
+    }
+    return;
+  }
   // 組合本次可選獎勵（2選1），如有保留則加入
   // 過濾每場限1次的獎勵
   let basePool = ADV_REWARDS.filter(r => {
@@ -42295,47 +42347,98 @@ function _showDeadlockRescueMenu(){
 }
 
 // ★ v1.0.20260428.3880 — 選項 0: 強制跳過當前角色行動(最溫和的卡死自救)
+// ★ v1.0.20260428.3890 — 強化清理,避免跳過後其他英雄技能/能量計算錯亂
 window._deadlockRescueSkipTurn = function(){
   const menu = document.getElementById('_deadlock-rescue-menu');
   if(menu) menu.remove();
   try{
     log('⏭ [卡死自救] 玩家選擇強制跳過當前回合');
-    console.warn('🚨 [卡死自救] 強制跳過當前 actor');
-    // 1) 強制清除暫停 + watchdog
+    console.warn('🚨 [卡死自救] 強制跳過當前 actor + 重置戰鬥中間狀態');
+    // 1) 強制清除暫停 + 各種 watchdog
     try{ _clearDeadlockWatchdog(); }catch(_){}
     try{ window._gamePaused = false; }catch(_){}
     try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
     try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
     try{ if(window._execSkillGuard){ clearTimeout(window._execSkillGuard); window._execSkillGuard = null; } }catch(_){}
+    try{ if(window._deadlockWatchdog){ clearTimeout(window._deadlockWatchdog); window._deadlockWatchdog = null; } }catch(_){}
     try{ if(typeof clearTurnTimer === 'function') clearTurnTimer(); }catch(_){}
-    // 2) 清除可能殘留的選擇/暫停 modal/狀態
+    try{ if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; } }catch(_){}
+    // 2) 清除選擇/物品/技能執行的中間狀態
     try{ if(typeof clearSel === 'function') clearSel(); }catch(_){}
+    // ★ v1.0.20260428.3890 — 重置技能執行相關全域狀態
+    //   bug 症狀:跳過某個英雄後,下一位英雄使用九尾狐火只打 1 下而不是 3 下,且能量沒扣
+    //   根因:_curSkillName / _activeSkLvMult / lastSkill / _batchTotals 殘留前一個英雄的狀態
+    try{ window._curSkillName = null; }catch(_){}
+    try{ if(typeof _activeSkLv !== 'undefined') _activeSkLv = 0; }catch(_){}
+    try{ if(typeof _activeSkLvMult !== 'undefined') _activeSkLvMult = 1.0; }catch(_){}
+    try{ window._batchTotals = null; }catch(_){}
+    try{ window._playerAtkFlag = false; }catch(_){}
     if(typeof G !== 'undefined' && G){
       try{ G.pendingTarget = null; }catch(_){}
       try{ if(typeof pendingCb !== 'undefined') pendingCb = null; }catch(_){}
+      try{ G.lastSkill = null; }catch(_){}
+      try{ G.selMove = null; }catch(_){}
+      try{ G.selItem = null; }catch(_){}
+      try{ G.taunted = null; }catch(_){}
+      try{ G.waitFor = null; }catch(_){}
+      try{ G.gunnerTarget = null; }catch(_){}
       // 3) 強制把當前 activeChar 的 acted 設為 true,讓 startTurn 跳到下一個
       try{
         if(G.activeChar && G.activeChar.curHp > 0){
           G.activeChar.acted = true;
-          console.log('[卡死自救] 強制 ' + G.activeChar.name + '.acted = true');
+          // ★ v1.0.20260428.3890 — 同時清掉 actor 上可能殘留的暫態旗標
+          if(G.activeChar._yamataDoubleTriggered) G.activeChar._yamataDoubleTriggered = false;
+          if(G.activeChar._reActCount) G.activeChar._reActCount = 0;
+          console.log('[卡死自救] 強制 ' + G.activeChar.name + '.acted = true + 清暫態旗標');
         }
+        // ★ 把 G.activeChar 設成 null,讓 startTurn 重新選下一個
+        G.activeChar = null;
       }catch(_){}
       // 4) 清掉 BOSS quiz 相關旗標
       try{ window._bossQuizInFlight = false; }catch(_){}
+      try{ window._bossQuizDoneForCharm = false; }catch(_){}
       try{ if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle'; }catch(_){}
       try{ if(typeof _advQuizActive !== 'undefined') _advQuizActive = false; }catch(_){}
-      // 5) 關掉答題視窗 (若有)
+      try{ if(typeof _advBossActionSkip !== 'undefined') _advBossActionSkip = false; }catch(_){}
+      try{ window._advMiniResultShowing = false; }catch(_){}
+      try{ if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null; }catch(_){}
+      // 5) 關掉所有可能還開著的 modal/overlay
       try{
-        const _qOv = document.getElementById('adv-quiz-overlay');
-        if(_qOv) _qOv.classList.remove('show');
+        ['adv-quiz-overlay','adv-reward-overlay','adv-result-overlay','adv-mini-result',
+         'adv-treasure-confirm','adv-boss-intro','burst-priority-modal','burst-confirm-modal',
+         'active-passive-modal','immovable-prompt','enemy-turn-notice','item-ops'].forEach(id => {
+          const el = document.getElementById(id);
+          if(el){
+            el.classList.remove('show');
+            if(el.style.display === 'block' || el.style.display === 'flex'){
+              el.style.display = 'none';
+            }
+          }
+        });
+        // 動態產生的 modal 直接 remove
+        ['custom-confirm-overlay','burst-panel','passive-prompt','adv-repick-popup',
+         'tarot-choice-overlay','charm-ov','mimic-ov','skill-detail-popup'].forEach(id => {
+          const el = document.getElementById(id);
+          if(el && el.style.display !== 'none') el.style.display = 'none';
+        });
+      }catch(_modE){ console.warn('[卡死自救] 關閉殘留 modal 失敗', _modE); }
+      // 6) 重新顯示玩家行動面板的容器(action-panel / item-panel)
+      try{
+        const _ap = document.getElementById('action-panel');
+        if(_ap) _ap.style.display = ''; // 還原預設
+        const _ip = document.getElementById('item-panel');
+        if(_ip) _ip.style.display = '';
       }catch(_){}
     }
-    // 6) 等 200ms 後呼叫 startTurn 繼續戰鬥
+    // 7) 等 300ms 後呼叫 startTurn 繼續戰鬥(讓上面的 DOM 變更先 settle)
     setTimeout(() => {
+      try{
+        if(typeof updateUI === 'function') updateUI();
+      }catch(_){}
       try{ if(typeof startTurn === 'function') startTurn(); }catch(_e){
         console.error('[卡死自救] startTurn 失敗', _e);
       }
-    }, 200);
+    }, 300);
     try{ _showInGameToast('✅ 已強制跳過當前角色,戰鬥繼續推進', '#88ccff', 3000); }catch(_){}
   }catch(_e){
     console.error('[卡死自救] 強制跳過失敗', _e);
@@ -52870,6 +52973,40 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3900', brief:[
+    '⚡ 跳過演出視窗簡化:不用再選年級,只要選科目和難度就好',
+  ], items:[
+    '・「跳過演出 — 先選好設定」視窗中「📚 年級」選項移除',
+    '・現在只需選科目和難度就能開始,操作更快',
+    '・題目不重複機制完全保留:已答對的題目不會再出現,等該科目全部答對後才重新循環',
+    '・這個變動不影響題庫池內容,因為系統本來就是按「科目」抽題,年級只是裝飾性顯示',
+  ] },
+  { ver:'v1.0.20260428.3890', adminOnly:true, brief:[
+    '🐛 [台灣關] 修正 BOSS 戰開場 3 個嚴重 bug:對白名字錯亂、答對沒獎勵卡死、跳過後技能能量錯亂',
+  ], items:[
+    '【bug 1:BOSS 對白氣泡名字寫「九尾空貓怪」但說酥脆狂魔的話】',
+    '・原因:對白文字陣列(getAdvBossIntroLines)我已加台灣 10 BOSS,但顯示 BOSS 名字標籤的另一個函式 advShowBossIntro 沒處理台灣 BOSS',
+    '・所以對白文字是對的(酥脆狂魔的話),但上方標籤永遠顯示「🐱 九尾空貓怪」(預設)',
+    '・修復:advShowBossIntro 加入 _TW_BOSS_ICONS 字典(10 個 BOSS 各有對應 emoji),並用 TAIWAN_BOSSES[_advSelectedTaiwanBoss].name 取得正確名字',
+    '・10 BOSS icon 對應:🍲滷汁大鍋 🥧鳳梨酥 👃發酵公 🌳千年怒木 🐙觸手大蛟 💧藍色憂鬱 🧋大波霸 🪞倒映女 🎆101 ⛰崩天巨人',
+    '【bug 2:答對第 1 題沒出獎勵直接卡住】',
+    '・原因:advShowReward 函式沒檢查 DOM 是否存在,若 #adv-reward-overlay 或 #adv-reward-choices 任一找不到,函式就會拋例外',
+    '・玩家答對後 _gamePaused 仍為 true,但獎勵視窗沒顯示 → 看到戰鬥畫面但無法操作 → 卡死',
+    '・修復:advShowReward 開頭先檢查 DOM,若缺失直接呼叫 advOnQuizSkip 兜底,讓戰鬥繼續(且 toast 提示玩家)',
+    '・最後一道防線:即使 advOnQuizSkip 也失敗,也會強制 _gamePaused=false + _resumeTimers + startTurn',
+    '【bug 3:卡死自救「強制跳過當前回合」後其他英雄技能/能量計算錯亂】',
+    '・症狀:玉藻前九尾狐火只打 1 下而不是 3 下、可以無限連按九尾狐火不扣能量',
+    '・根因:之前的「強制跳過」太粗暴,只設了 G.activeChar.acted=true,但戰鬥中間狀態(window._curSkillName / _activeSkLvMult / G.lastSkill / G.selMove / G.selItem / _batchTotals 等)都殘留',
+    '・修復:強制跳過時清完整的戰鬥中間狀態:',
+    '  - window._curSkillName / _batchTotals / _playerAtkFlag = null/false',
+    '  - _activeSkLv / _activeSkLvMult 重置為 0/1.0',
+    '  - G.lastSkill / G.selMove / G.selItem / G.taunted / G.waitFor / G.gunnerTarget = null',
+    '  - 清除 actor 上的 _yamataDoubleTriggered / _reActCount 暫態旗標',
+    '  - 把 G.activeChar 設成 null,讓 startTurn 重新選下一個',
+    '  - 關掉所有可能還開著的 modal/overlay(answer/reward/burst-modal/active-passive 等)',
+    '  - 還原 action-panel / item-panel 的 display 狀態',
+    '・等 300ms 後呼叫 updateUI + startTurn 繼續戰鬥',
+  ] },
   { ver:'v1.0.20260428.3880', brief:[
     '🛡 戰鬥卡死偵測與自救機制大幅強化:多層防護 + 三段式自救選項',
     '🐛 修正台灣關 BOSS 行動前不會出題的 bug(原本只有貓空+日本關 BOSS 會出題)',
@@ -61368,7 +61505,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3880';
+  const CURRENT_VERSION = 'v1.0.20260428.3900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61385,7 +61522,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3880';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3900';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
