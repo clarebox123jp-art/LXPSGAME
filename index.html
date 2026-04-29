@@ -34849,13 +34849,29 @@ function advStartCutscene(stage) {
   // ★ v1.0.20260428.3790 — 台灣關專屬過場流程:選角後播放
   //   原本「點挑戰魔王 → 過場 → 對白 → 難度 → 選角」改成「點挑戰魔王 → 選角 → 過場 → 對白 → 難度 → 戰鬥」
   //   (避免從地圖切到過場時短暫看到首頁背景閃爍)
-  if(stage === 'taiwan' && window._advSelectedTaiwanBoss && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
+  // ★ v1.0.20260428.3850 — 加診斷 log + 強化條件檢查;若 stage 不一致時也用 _adventureStage 兜底
+  const _resolvedStage = (stage === 'taiwan') ? 'taiwan'
+    : (_adventureStage === 'taiwan') ? 'taiwan' : stage;
+  console.log('[advStartCutscene] stage 參數=' + stage
+    + ', _adventureStage=' + _adventureStage
+    + ', _resolvedStage=' + _resolvedStage
+    + ', _advSelectedTaiwanBoss=' + window._advSelectedTaiwanBoss
+    + ', TAIWAN_BOSSES 命中=' + (typeof TAIWAN_BOSSES !== 'undefined' && !!TAIWAN_BOSSES[window._advSelectedTaiwanBoss]));
+  if(_resolvedStage === 'taiwan' && window._advSelectedTaiwanBoss && typeof TAIWAN_BOSSES !== 'undefined' && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
     const _twBossId = window._advSelectedTaiwanBoss;
+    console.log('[advStartCutscene] ✓ 進入台灣關專屬流程 bossId=' + _twBossId);
+    // ★ 台灣分支:呼叫專屬 BGM(若有定義)
+    try{
+      if(typeof bgmStop === 'function') bgmStop();
+      if(typeof bgmPlay === 'function') bgmPlay('bgm-taiwan-cutscene');
+    }catch(_){}
     try{
       _showTaiwanCutscene(_twBossId, () => {
         _showTaiwanBossDialog(_twBossId, () => {
           _showTaiwanDifficultySelect(_twBossId, (difficulty) => {
             window._advPlayerDifficulty = difficulty || '普通';
+            _advPlayerDifficulty = difficulty || '普通';  // ★ 同時設區域變數,確保後續使用一致
+            console.log('[advStartCutscene] 台灣關難度設定:' + _advPlayerDifficulty);
             // 走收尾流程(advFinishCutscene 會 advPrepareSessionQuestions + advStartBattle)
             try{ advFinishCutscene(); }catch(_e){ console.error('[台灣 advFinishCutscene]', _e); }
           });
@@ -34866,6 +34882,14 @@ function advStartCutscene(stage) {
       // fallback:直接收尾啟動戰鬥
       try{ advFinishCutscene(); }catch(_){}
     }
+    return;
+  }
+  // ★ v1.0.20260428.3850 — 防禦兜底:若 stage 是台灣但 _advSelectedTaiwanBoss 不見了,
+  //   不要走貓空 _advShowUpfrontSkipDecision 流程(會放貓空對白和 BGM),直接 advFinishCutscene 進戰鬥
+  if(_resolvedStage === 'taiwan'){
+    console.warn('[advStartCutscene] stage=taiwan 但 _advSelectedTaiwanBoss 失效,直接 advFinishCutscene 兜底');
+    if(!_advPlayerDifficulty) _advPlayerDifficulty = '普通';
+    try{ advFinishCutscene(); }catch(_e){ console.error('[advFinishCutscene 兜底]', _e); }
     return;
   }
 
@@ -39716,14 +39740,16 @@ function advShowBossDetail(name){
   const existing = document.getElementById('adv-boss-detail-pop');
   if(existing) existing.remove();
   // 建立彈窗
+  // ★ v1.0.20260428.3850 — 改成 position:fixed + 高 z-index(10000),確保不被台灣 BOSS 介紹視窗(z-index:9750)擋住
+  //   原本用 absolute 掛在 #gc 內會被同層的 fixed overlay 蓋住
   const pop = document.createElement('div');
   pop.id = 'adv-boss-detail-pop';
-  pop.style.cssText = 'position:absolute;inset:0;z-index:9900;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);';
   pop.onclick = e => { if(e.target===pop) pop.remove(); };
   const box = document.createElement('div');
   box.style.cssText = 'background:linear-gradient(160deg,#0e1020,#07090e);border:2.5px solid rgba(255,100,0,0.55);border-radius:20px;padding:36px 44px 28px;max-width:760px;width:92%;max-height:88vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 0 80px rgba(255,80,0,0.35);font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;box-sizing:border-box;';
   pop.appendChild(box);
-  (document.getElementById('gc')||document.body).appendChild(pop);
+  document.body.appendChild(pop);
 
   // 頭部：圖片 + 名稱 + 數值
   const statRow = (label,val,color) =>
@@ -52536,6 +52562,32 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3850', adminOnly:true, brief:[
+    '🐛 [台灣關] 修正多項戰鬥流程 bug:詳細資料視窗被擋、對白變九尾空貓怪、最高難度只有兩個選項',
+  ], items:[
+    '【bug 1】台灣 BOSS 介紹視窗中按「📊 詳細資料」彈出的視窗層級太低被擋住',
+    '・原因:advShowBossDetail 用 position:absolute 掛在 #gc 內,z-index:9900',
+    '・但台灣 BOSS 介紹視窗(z-index:9750)是 fixed overlay,雖然 z 較低但是同層 fixed 蓋住了 absolute 子元素',
+    '・修復:改成 position:fixed + z-index:10000,並掛到 document.body,確保在所有 overlay 之上',
+    '【bug 2+3】台灣關 BOSS 對白變成九尾空貓怪、BGM 也是貓空、難度選項數量不對',
+    '・根本原因:選角結束呼叫 advStartCutscene(_adventureStage) 時,流程沒走進台灣專屬分支',
+    '  反而走了預設的 _advShowUpfrontSkipDecision → advLoadScene → 貓空場景對白',
+    '・台灣分支條件 stage===\\\'taiwan\\\' 可能因為前次冒險異常時 stage 變數狀態不一致',
+    '・修復:',
+    '  (1) 增加 _resolvedStage:同時檢查 stage 參數和 _adventureStage,任一是 taiwan 就走台灣分支',
+    '  (2) 加診斷 console log 顯示三個關鍵變數狀態,日後若再出問題容易定位',
+    '  (3) 進台灣分支時主動呼叫 bgmPlay(\\\'bgm-taiwan-cutscene\\\') 切到台灣關專屬 BGM',
+    '  (4) callback 中同時設 window._advPlayerDifficulty 和區域變數 _advPlayerDifficulty,避免不同步',
+    '  (5) 加台灣關防禦兜底:即使 _advSelectedTaiwanBoss 失效,也直接 advFinishCutscene,不走貓空流程',
+    '【bug 4】答完第一題沒出現獎勵卡死 — 連帶修復',
+    '・主因前面流程錯走貓空,導致整個冒險狀態混亂',
+    '・修了 bug 2+3 後流程能正確走完整台灣 BOSS 戰流程,獎勵視窗應正常顯示',
+    '・若仍卡死請提供 console log,advShowReward 已有 watchdog 1.5 秒保險',
+    '【已知限制】',
+    '・台灣關題庫每題目前都只有 2 個選項(設計時就只做了「沒自信」難度題目)',
+    '・即使選了「我很會」也只看到 2 個選項是題庫設計問題,不是 bug',
+    '・後續可補完中等/高階難度的 3-4 個選項題目',
+  ] },
   { ver:'v1.0.20260428.3840', brief:[
     '📊 [台灣關] BOSS 介紹視窗加「詳細資料」按鈕,可查看 BOSS 的能力數值與技能說明',
     '💎 [英雄圖鑑] 至寶裝備欄改成 2 格(主裝備+副裝備),文字加大;副裝備格將於後續開放',
@@ -60927,7 +60979,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3840';
+  const CURRENT_VERSION = 'v1.0.20260428.3850';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60944,7 +60996,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3840';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3850';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
