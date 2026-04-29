@@ -18874,6 +18874,30 @@ function _showCharmPicker(dancer, victim, cost){
 
 function execSkill(a, sk, cost, stype){
   const n=sk.n;
+  // ★ v1.0.20260428.3880 — execSkill 強制守衛 watchdog
+  //   若技能執行 12 秒後 actor 仍未進入 acted=true 狀態(表示沒呼叫 endAction),
+  //   強制呼叫 endAction 救活戰鬥流程,避免技能執行錯誤導致卡死
+  try{
+    if(window._execSkillGuard){ clearTimeout(window._execSkillGuard); window._execSkillGuard = null; }
+    const _gActor = a;
+    const _gRound = (typeof G !== 'undefined' && G) ? (G.round || 0) : 0;
+    const _gSkillName = n;
+    window._execSkillGuard = setTimeout(() => {
+      try{
+        // 檢查:仍同回合 + 同 actor + actor 還沒結束行動 → 強制 endAction
+        if(typeof G !== 'undefined' && G && (G.round || 0) === _gRound
+           && _gActor && !_gActor.acted && _gActor.curHp > 0){
+          console.warn('🚨 [execSkill 守衛] 技能 ' + _gSkillName + ' 執行 12 秒後 actor 未結束行動,強制 endAction');
+          try{ if(typeof endAction === 'function') endAction(_gActor, 0, false); }catch(_e1){
+            console.error('[execSkill 守衛] endAction 失敗,改強制 acted=true', _e1);
+            try{ _gActor.acted = true; }catch(_){}
+            try{ if(typeof startTurn === 'function') setTimeout(startTurn, 400); }catch(_){}
+          }
+        }
+      }catch(_e){ console.error('[execSkill 守衛] 異常', _e); }
+      window._execSkillGuard = null;
+    }, 12000);
+  }catch(_guardE){ console.warn('[execSkill 守衛] 安裝失敗', _guardE); }
   // ★ v1.0.20260424.1060 — 追蹤目前正在執行的技能名,供 doDmg 套用 SKILL_FORCE_ELEMENT
   try{ window._curSkillName = n; }catch(_){}
   // ★ 設定技能升級等級倍率：優先讀英雄物件上的 _skLv（冒險模式建隊時就存入），
@@ -21459,6 +21483,8 @@ function autoUseItem(item, actor, cb){
 }
 
 function endAction(a, cost, noFinish=false){
+  // ★ v1.0.20260428.3880 — 清除 execSkill 守衛(行動正常結束,不需要 watchdog 兜底)
+  try{ if(window._execSkillGuard){ clearTimeout(window._execSkillGuard); window._execSkillGuard = null; } }catch(_){}
   // ★ v1.0.20260424.0910 — 正常結束行動時清除 AI watchdog,避免誤觸發
   try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
   // ★ v1.0.20260424.1120 — 行動結束時也清除卡死偵測 watchdog
@@ -22463,9 +22489,9 @@ function startTurn(){
   if(skipStatus){
     // ★ v1.0.20260424.1340 — BOSS 即使中控制狀態也要出題(玩家還是要答 BOSS 題)
     //   邏輯:出題完後再執行「跳過行動」流程
-    const _BOSS_NAMES_FOR_QUIZ = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+    // ★ v1.0.20260428.3880 — 改用全域 ADV_QUIZ_BOSS_NAMES,涵蓋台灣 10 BOSS
     const _isBossWithQuiz = (typeof _adventureMode !== 'undefined' && _adventureMode
-      && next && _BOSS_NAMES_FOR_QUIZ.includes(next.name)
+      && next && window.ADV_QUIZ_BOSS_NAMES && window.ADV_QUIZ_BOSS_NAMES.indexOf(next.name) >= 0
       && next.side === 'p2'
       && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'
       && G.p1 && G.p1.some(h=>h.curHp>0)
@@ -22565,9 +22591,9 @@ function startTurn(){
   // ── 魅惑 check — 強制普通攻擊己方隨機隊友（一般攻擊值，不加成） ──
   if(hasStatus(next,'charm')){
     // ★ v1.0.20260424.1340 — BOSS 中魅惑也要出題
-    const _BOSS_NAMES_FOR_QUIZ_2 = ['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'];
+    // ★ v1.0.20260428.3880 — 改用全域 ADV_QUIZ_BOSS_NAMES,涵蓋台灣 10 BOSS
     const _isBossWithQuiz2 = (typeof _adventureMode !== 'undefined' && _adventureMode
-      && next && _BOSS_NAMES_FOR_QUIZ_2.includes(next.name)
+      && next && window.ADV_QUIZ_BOSS_NAMES && window.ADV_QUIZ_BOSS_NAMES.indexOf(next.name) >= 0
       && next.side === 'p2'
       && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'
       && G.p1 && G.p1.some(h=>h.curHp>0)
@@ -22823,6 +22849,10 @@ function startTurn(){
     renderItems();
     updateUI();
     startTurnTimer(next);
+    // ★ v1.0.20260428.3880 — 玩家回合也啟動卡死偵測(30 秒寬鬆模式)
+    //   原本只在 AI 回合(line 22846)啟動,玩家若卡在 action-panel 但什麼都不能點時無法自救
+    //   現在玩家回合若 30 秒沒任何進展(action-panel 隱藏 + 沒 modal),也會亮自救按鈕
+    try{ _startDeadlockWatchdog(); }catch(_){}
   } else {
     document.getElementById('action-panel').style.display='none';
     // 隱藏物品欄，顯示「對手回合」提示
@@ -23301,6 +23331,22 @@ function _aiRemoveInv(side, uid){
   if(idx>=0) arr[idx]=null;
 }
 
+// ★ v1.0.20260428.3880 — 統一管理所有「行動前需要出題」的 BOSS 名稱
+//   涵蓋:貓空(九尾空貓怪/杏花妖)+ 日本 4 BOSS + 台灣 10 BOSS
+//   原本散落在 3 處(line 22466/22568/23327)的硬編碼名單,改成統一引用此常數,
+//   避免新增 BOSS 時漏改某處導致 BOSS 戰沒出題、或出題卡死
+window.ADV_QUIZ_BOSS_NAMES = [
+  // 貓空關
+  '九尾空貓怪','杏花妖',
+  // 日本關
+  '大天狗','酒吞童子','玉藻前','八岐大蛇',
+  // 台灣關 10 個 BOSS
+  '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公',
+  '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+  '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者',
+  '山岳禁咒・崩天巨人',
+];
+
 function aiAct(a){
   // ★ 小怪結算視窗顯示中：封鎖 AI 行動，防止 Boss 戰背景推進
   if(window._advMiniResultShowing) return;
@@ -23324,9 +23370,7 @@ function aiAct(a){
   //        (2) 加 _bossQuizInFlight 防重入 flag(防短時間內 startTurn 連跑兩次)
   //        (3) 加 console log 方便定位根因
   if(typeof _adventureMode !== 'undefined' && _adventureMode &&
-     a && (a.name === '九尾空貓怪' || a.name === '杏花妖' ||
-           a.name === '大天狗' || a.name === '酒吞童子' ||
-           a.name === '玉藻前' || a.name === '八岐大蛇') &&
+     a && window.ADV_QUIZ_BOSS_NAMES && window.ADV_QUIZ_BOSS_NAMES.indexOf(a.name) >= 0 &&
      a.side === 'p2' && a.curHp > 0 && !a.acted &&
      G.p1.some(h=>h.curHp>0) &&
      typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle' &&
@@ -30926,8 +30970,8 @@ function _advRestoreBattleState(snap, bs){
     try{ !_restoreIsMini && markAdventureBossCards && markAdventureBossCards(); }catch(e){}
     try{ renderItems(); updateUI(); }catch(e){}
     try{ _advTutBtnShow(true); }catch(e){}
-
-    // ── 顯示恢復提示 ──
+    // ★ v1.0.20260428.3880 — 戰鬥還原時也讓卡死自救按鈕進入靜默可見模式
+    try{ if(typeof _hideDeadlockRescueButton === 'function') _hideDeadlockRescueButton(); }catch(_){}
     try{
       flashScreen('rgba(50,200,100,0.4)', 600);
       bannerFX(null,
@@ -32241,6 +32285,24 @@ function startAdventureGame(stage){
   // ★ v1.0.20260428.3780 — 玩家已從新版美術地圖(_showTaiwanMap)選好 BOSS,
   //   _advSelectedTaiwanBoss 已被設定,直接進選角不再彈舊版地圖選擇器(圖4)
   if(stage === 'taiwan'){
+    // ★ v1.0.20260428.3870 — 預先設定台灣背景,避免後續流程中背景閃首頁/紅藍底
+    try{
+      const _twBossId = window._advSelectedTaiwanBoss;
+      const _twSceneUrl = (typeof _getTaiwanSceneImage === 'function' && _twBossId) ? _getTaiwanSceneImage(_twBossId) : '';
+      if(_twSceneUrl){
+        const _bbEarly = document.getElementById('adv-battle-bg');
+        if(_bbEarly){
+          _bbEarly.className = '';
+          _bbEarly.style.backgroundImage = 'url("' + _twSceneUrl + '")';
+          _bbEarly.style.backgroundSize = 'cover';
+          _bbEarly.style.backgroundPosition = 'center';
+          // 不加 visible,等戰鬥真正開始才顯示;但圖片已預載入瀏覽器快取
+          // 預載入:用 Image 物件抓圖,避免後續 background-image 切換時重新下載
+          const _preImg = new Image();
+          _preImg.src = _twSceneUrl;
+        }
+      }
+    }catch(_twPreE){ console.warn('[台灣背景預載] 失敗', _twPreE); }
     if(window._advSelectedTaiwanBoss && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
       // 已從新版地圖選好 BOSS → 跳過舊版 selector,直接進選角
       fadeTransition(()=>{ showHeroPickOverlay(); }, 350);
@@ -33668,25 +33730,42 @@ function _taiwanShowAdminOnlyModal(){
 //   對應實際台灣地理位置:北部(101/西門/三峽/深坑)、中部(台中/彰化/日月潭)、
 //   南部山區(阿里山/玉山)、東南離島(蘭嶼)
 //   ※ 若用戶反映發光點與地圖位置不對齊,只要調整下方 x/y % 數值即可
-// ★ v1.0.20260428.3820 — 10 個地標座標重新校正(基於用戶截圖的建築位置)
-//   x, y: 發光點座標(相對於地圖圖片本身的%, 0~100)— 對齊建築/景觀本身
+// ★ v1.0.20260428.3860 — 10 個地標座標重新校正(參考標準台灣行政區劃地圖)
+//   ★★ 重要 ★★ 座標基於「縣市相對位置」而非地圖建築物本身,確保:
+//     - 台北/西門町在地圖最北端(右上偏中)
+//     - 新北環繞台北(三峽在西、深坑在東)
+//     - 台中/彰化在中段(彰化偏西、台中偏內陸)
+//     - 南投在中央山脈附近(日月潭)
+//     - 嘉義在中南偏西(阿里山在山區)、玉山在中央山脈最高處
+//     - 蘭嶼在台東外海右下角離島
+//   x, y: 發光點座標(相對於地圖圖片本身的%, 0~100)— 對齊縣市位置
 //   labelDx, labelDy: 文字標籤「相對於發光點」的偏移(px),避免文字重疊
-//   ※ 若實測還有偏差,只要調整下方數值即可
 const TAIWAN_BOSS_GLOW_COORDS = {
-  // 北部(地圖右上方,4 個 BOSS 較擠 → 用「下/左/左/右」分散標籤)
-  taipei_101_warlord:   { x: 60, y: 25, labelDx: 0,    labelDy: 24,  label: '台北 101' },  // 高塔下方
-  ximen_pearl:          { x: 53, y: 33, labelDx: -38,  labelDy: 0,   label: '西門町' },     // 標籤往左
-  shenkeng_tofu:        { x: 64, y: 38, labelDx: 30,   labelDy: 4,   label: '深坑' },       // 標籤往右下
-  sanxia_indigo:        { x: 47, y: 36, labelDx: -34,  labelDy: 0,   label: '三峽' },       // 標籤往左
-  // 中部(地圖中段)
-  taichung_pineapple:   { x: 44, y: 53, labelDx: -32,  labelDy: 0,   label: '台中' },       // 標籤往左
-  changhua_braised:     { x: 44, y: 67, labelDx: -34,  labelDy: 0,   label: '彰化' },       // 標籤往左
-  sun_moon_mirror_boss: { x: 58, y: 67, labelDx: 32,   labelDy: 0,   label: '日月潭' },     // 標籤往右
-  // 中南部山區
-  alishan_tree:         { x: 50, y: 78, labelDx: -36,  labelDy: 0,   label: '阿里山' },     // 標籤往左
-  yushan_giant:         { x: 62, y: 76, labelDx: 30,   labelDy: 0,   label: '玉山' },       // 標籤往右
-  // 東南離島
-  lanyu_octopus:        { x: 78, y: 89, labelDx: 0,    labelDy: 24,  label: '蘭嶼' },       // 標籤往下
+  // ── 台北市(地圖最北,2 個 BOSS 接近) ──
+  // 台北 101 在台北市信義區(南端),西門町在西邊
+  taipei_101_warlord:   { x: 56, y: 22, labelDx: 30,   labelDy: -8,  label: '台北 101' }, // 標籤往右上(避開西門町)
+  ximen_pearl:          { x: 52, y: 26, labelDx: -38,  labelDy: 0,   label: '西門町' },    // 標籤往左
+
+  // ── 新北市(環繞台北,東邊深坑、西南三峽) ──
+  shenkeng_tofu:        { x: 60, y: 30, labelDx: 32,   labelDy: 4,   label: '深坑' },      // 台北 101 東南(標籤右下)
+  sanxia_indigo:        { x: 47, y: 32, labelDx: -34,  labelDy: 0,   label: '三峽' },      // 台北西南(標籤往左)
+
+  // ── 中部:台中/彰化/南投 ──
+  // 台中市在中部偏西(內陸),微熱山丘在山腳
+  taichung_pineapple:   { x: 47, y: 50, labelDx: -34,  labelDy: 0,   label: '台中' },      // 標籤往左
+  // 彰化縣在台中正南西側(西海岸)
+  changhua_braised:     { x: 44, y: 60, labelDx: -36,  labelDy: 0,   label: '彰化' },      // 標籤往左
+  // 南投縣在中央偏東(內陸山區),日月潭在南投西側
+  sun_moon_mirror_boss: { x: 53, y: 62, labelDx: 32,   labelDy: 0,   label: '日月潭' },    // 標籤往右
+
+  // ── 中南部山區:嘉義(阿里山+玉山) ──
+  // 阿里山在嘉義縣東邊山區
+  alishan_tree:         { x: 50, y: 73, labelDx: -38,  labelDy: 0,   label: '阿里山' },    // 標籤往左
+  // 玉山在嘉義/南投/高雄三縣交界(中央山脈最高峰),比阿里山再東邊一點
+  yushan_giant:         { x: 56, y: 73, labelDx: 30,   labelDy: 0,   label: '玉山' },      // 標籤往右
+
+  // ── 東南離島:台東外海蘭嶼 ──
+  lanyu_octopus:        { x: 76, y: 88, labelDx: 0,    labelDy: 24,  label: '蘭嶼' },      // 標籤往下
 };
 
 // 左右兩側 BOSS 卡片分配(地理感:中南部 / 北部+蘭嶼)
@@ -34573,10 +34652,21 @@ function getAdvBossIntroLines(){
       _mainBossName = window._currentBossVariantInfo.main;
     }
   }catch(_eJP){}
+  // ★ v1.0.20260428.3870 — 台灣關優先用 _advSelectedTaiwanBoss + TAIWAN_BOSSES 名稱對應
+  try{
+    if(!_mainBossName && typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'
+       && window._advSelectedTaiwanBoss && typeof TAIWAN_BOSSES !== 'undefined'
+       && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
+      _mainBossName = TAIWAN_BOSSES[window._advSelectedTaiwanBoss].name;
+    }
+  }catch(_eTW){}
   if(!_mainBossName){
+    // ★ v1.0.20260428.3870 — 補上台灣 10 個 BOSS 名稱(原本只查貓空+日本關)
+    const _TW_BOSS_NAMES = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人'];
     _mainBossName = (typeof G !== 'undefined' && G && G.p2)
       ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪'
-          || h.name==='大天狗' || h.name==='酒吞童子' || h.name==='玉藻前' || h.name==='八岐大蛇') || {}).name
+          || h.name==='大天狗' || h.name==='酒吞童子' || h.name==='玉藻前' || h.name==='八岐大蛇'
+          || _TW_BOSS_NAMES.indexOf(h.name) >= 0) || {}).name
       : '九尾空貓怪';
   }
   // ★ v1.0.20260421.3000 — 日本關 BOSS 專屬對白（不套年級/科目/難度模板）
@@ -34604,6 +34694,62 @@ function getAdvBossIntroLines(){
   };
   if(_JP_BOSS_INTROS[_mainBossName]){
     return _JP_BOSS_INTROS[_mainBossName];
+  }
+  // ★ v1.0.20260428.3870 — 台灣關 10 個 BOSS 專屬戰前對白(不套貓空模板)
+  const _TW_BOSS_INTROS = {
+    '油膩魔王・滷汁大鍋': [
+      '🍲「咕嚕嚕——你也是來嫌我滷肉飯不正宗的嗎？」',
+      '「我家鍋子滷了三十年,你竟敢說配方不對？」',
+      '「來來來,讓你見識真正的滷肉飯之神,答題開戰！」',
+    ],
+    '酥脆狂魔・熱浪糕師': [
+      '🥧「哼哼～又一群嘴饞的小英雄上門了？」',
+      '「我的鳳梨酥糖份加滿,讓你們蛀牙到哭出來！」',
+      '「想阻止我？先看看你能不能答對糖糖糖的問題吧！」',
+    ],
+    '臭氣魔王・發酵公': [
+      '👃「啊哈哈！聞到了嗎？這就是深坑老街千年絕學！」',
+      '「全島的食物都該要有我的氣味,你不喜歡？沒關係,我也不喜歡你！」',
+      '「來吧～讓臭氣熏得你頭暈眼花,還能不能答題？」',
+    ],
+    '山靈古魔・千年怒木': [
+      '🌳「呀呀～是誰打擾我千年的睡眠？」',
+      '「阿里山的神木我看顧了一千年,凡人別想隨便經過！」',
+      '「想離開？先答出阿里山的祕密再說吧！」',
+    ],
+    '深海惡靈・觸手大蛟': [
+      '🐙「嗚嗷嗷～蘭嶼海底的霸主來啦！」',
+      '「我的觸手能纏住一切——包括你的腦袋！」',
+      '「想征服蘭嶼的海？答題吧,讓本王看看你的能耐！」',
+    ],
+    '染靈幻魔・藍色憂鬱': [
+      '💧「歡迎來到三峽藍染世界～」',
+      '「我會把你的心情也染成深藍色,憂鬱～憂鬱～」',
+      '「要清心？答對問題就放你走,答錯就一輩子陷在藍色的迷霧中～」',
+    ],
+    '珍奶吸魂魔・大波霸': [
+      '🧋「咕嚕咕嚕～西門町的珍奶之王在此！」',
+      '「我的大波霸珍珠會吸走你的靈魂,變成我的茶飲料～」',
+      '「來吧～想救出朋友?先答對我的問題！」',
+    ],
+    '水靈反魔・倒映女': [
+      '🪞「呵呵～歡迎來到日月潭的水鏡世界～」',
+      '「分得清哪個是真的我嗎？哪個是真的你嗎？」',
+      '「答錯就會永遠困在鏡中世界,連自己是誰都忘記～」',
+    ],
+    '摩天魔將・夜空爆裂者': [
+      '🎆「轟轟——508 公尺的怒火響徹整個跨年夜！」',
+      '「101 跨年煙火秀,本將才是真正的主角！」',
+      '「不答對我的問題,你也會變成我煙火秀的一部分——炸飛！」',
+    ],
+    '山岳禁咒・崩天巨人': [
+      '⛰「轟隆——玉山之靈被你驚動了！」',
+      '「3952 公尺的高峰,豈是凡人說登就能登的？」',
+      '「答出我的問題,證明你有資格站上玉山之巔！否則就墜落山谷吧！」',
+    ],
+  };
+  if(_TW_BOSS_INTROS[_mainBossName]){
+    return _TW_BOSS_INTROS[_mainBossName];
   }
   const _isApricot = _mainBossName === '杏花妖';
   const _tailEasy = _isApricot ? '本仙今日心情好，就手下留情一點～' : '本貓手下留情一點喵！';
@@ -34737,7 +34883,13 @@ function _advRecordQuizSession(g, s, d){
 
 function advStartCutscene(stage) {
   // ★ v1.0.20260423.3400 — 防禦性清除:進入過場前強制清掉戰鬥背景
-  try{ if(typeof _clearBattleBg === 'function') _clearBattleBg('advStartCutscene entry'); }catch(_){}
+  // ★ v1.0.20260428.3870 — 台灣關例外:不清背景(已在 startAdventureGame 預先設好台灣場景圖)
+  //   原本進過場就清,但台灣關走「選角→過場→對白→難度→戰鬥」全流程,中間沒人重設背景,
+  //   會導致看到首頁紅藍底色閃一下
+  try{
+    const _isTaiwan = (stage === 'taiwan') || (typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan');
+    if(!_isTaiwan && typeof _clearBattleBg === 'function') _clearBattleBg('advStartCutscene entry');
+  }catch(_){}
   // ★ v1.0.20260424.1170 — 進入冒險過場時隱藏戰鬥用按鈕(回溯/教學/卡死自救)
   try{
     const _rbBtn = document.getElementById('adv-rollback-btn');
@@ -34860,6 +35012,19 @@ function advStartCutscene(stage) {
   if(_resolvedStage === 'taiwan' && window._advSelectedTaiwanBoss && typeof TAIWAN_BOSSES !== 'undefined' && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
     const _twBossId = window._advSelectedTaiwanBoss;
     console.log('[advStartCutscene] ✓ 進入台灣關專屬流程 bossId=' + _twBossId);
+    // ★ v1.0.20260428.3870 — 台灣關進入過場時讓背景立即可見,避免閃首頁紅藍底色
+    try{
+      const _bbTW = document.getElementById('adv-battle-bg');
+      const _twSceneUrl = (typeof _getTaiwanSceneImage === 'function') ? _getTaiwanSceneImage(_twBossId) : '';
+      if(_bbTW && _twSceneUrl){
+        _bbTW.className = '';
+        _bbTW.style.backgroundImage = 'url("' + _twSceneUrl + '")';
+        _bbTW.style.backgroundSize = 'cover';
+        _bbTW.style.backgroundPosition = 'center';
+        void _bbTW.offsetWidth;
+        _bbTW.classList.add('visible');
+      }
+    }catch(_bgE){ console.warn('[台灣關背景顯示] 失敗', _bgE); }
     // ★ 台灣分支:呼叫專屬 BGM(若有定義)
     try{
       if(typeof bgmStop === 'function') bgmStop();
@@ -36807,6 +36972,8 @@ function advStartBattle(){
   } catch(_ymE){ console.warn('[日本關八岐大蛇弱化] 套用失敗:', _ymE); }
   // ★ 顯示戰鬥教學按鈕
   try{ _advTutBtnShow(true); }catch(e){}
+  // ★ v1.0.20260428.3880 — 戰鬥開始時讓卡死自救按鈕進入靜默可見模式,玩家任何時候都能點
+  try{ if(typeof _hideDeadlockRescueButton === 'function') _hideDeadlockRescueButton(); }catch(_){}
   // ★ 清除小怪戰殘留狀態（含守門旗標，避免iPad上startTurn第一行就return）
   window._advMiniResultShowing = false;
   if(typeof G !== 'undefined' && G){
@@ -36829,6 +36996,14 @@ function advStartBattle(){
       if(_jv && _jv.id === 'shutendoji') _bossBgmId = 'bgm-japan-boss-shutendoji';
       else if(_jv && _jv.id === 'tamamo') _bossBgmId = 'bgm-japan-boss-tamamo';
       else _bossBgmId = 'bgm-japan-boss';
+    } else if(_adventureStage === 'taiwan'){
+      // ★ v1.0.20260428.3870 — 台灣關 BOSS 戰 BGM:玉山專屬,其他輪播 boss / boss-2
+      if(window._advSelectedTaiwanBoss === 'yushan_giant'){
+        _bossBgmId = 'bgm-taiwan-boss-yushan';
+      } else {
+        window._taiwanBossBgmCount = (window._taiwanBossBgmCount || 0) + 1;
+        _bossBgmId = (window._taiwanBossBgmCount % 2 === 1) ? 'bgm-taiwan-boss' : 'bgm-taiwan-boss-2';
+      }
     } else {
       _bossBgmId = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot')
         ? 'bgm-boss-apricot' : 'bgm-boss-01';
@@ -41868,6 +42043,7 @@ function _startDeadlockWatchdog(){
   const _snapActor = G.activeChar;
   const _snapActorName = _snapActor ? _snapActor.name : '(none)';
   const _snapActorPos = _snapActor ? (_snapActor.side + '-' + _snapActor.pos) : '';
+  const _snapActorActed = _snapActor ? !!_snapActor.acted : false;
   // 記錄對手 HP 總和(若 AI 真的有打玩家,HP 會變化)
   let _snapEnemyHpSum = 0;
   let _snapAllyHpSum = 0;
@@ -41876,10 +42052,18 @@ function _startDeadlockWatchdog(){
     if(G.p2) G.p2.forEach(h => { _snapEnemyHpSum += (h.curHp||0); });
   }catch(_){}
 
+  // ★ v1.0.20260428.3880 — 判斷當前是玩家回合還是 AI 回合,套用不同 timeout
+  //   玩家回合:30 秒 (玩家可能在思考,不要太快打擾)
+  //   AI 回合:5 秒 (AI 沒理由停那麼久)
+  const _isPlayerTurn = _snapActor && _snapActor.side === 'p1';
+  const _firstTimeout = _isPlayerTurn ? 30000 : 5000;
+  const _retryTimeout = _isPlayerTurn ? 10000 : 3000;
+
   // ★ v1.0.20260428.3700 — 排除清單擴充:任何「合法暫停」的 modal/overlay 顯示中都不算卡死
   //   先前漏列項目:burst-priority-modal(玩家爆發優先)/adv-boss-intro(BOSS 對白)/
   //   adv-cutscene-overlay(過場)/adv-jp-diff-modal(日本難度)/_force-refresh-modal(強制重整)/
   //   adv-dialog-box(對白)/_changelog-modal/_pwa-guide-modal/battle-start-overlay(開戰演出)
+  // ★ v1.0.20260428.3880 — 補上更多視窗:台灣關過場/對白/難度/詳細資料、爆發確認、被動主動觸發、屬性圖、敵方資訊、教學
   const _LEGIT_PAUSE_MODALS = [
     'adv-quiz-overlay',          // 答題中
     'adv-result-overlay',        // 戰鬥結算
@@ -41896,6 +42080,27 @@ function _startDeadlockWatchdog(){
     '_changelog-modal',          // 更新日誌
     '_pwa-guide-modal',          // PWA 引導
     '_deadlock-rescue-menu',     // 自救選單已開
+    // ★ v1.0.20260428.3880 補強
+    'taiwan-cutscene-overlay',   // 台灣關 BOSS 過場
+    'taiwan-dialog-overlay',     // 台灣關 BOSS 對白
+    'taiwan-difficulty-overlay', // 台灣關難度選擇
+    'adv-boss-detail-pop',       // BOSS 詳細資料彈窗
+    'active-passive-modal',      // 主動被動技能觸發詢問
+    'burst-confirm-modal',       // 爆發技確認
+    'burst-target-pick',         // 爆發技選目標
+    'pause-overlay',             // 玩家手動暫停
+    'elem-popup',                // 屬性效果一覽
+    'enemy-info-popup',          // 敵方資訊彈窗
+    'tutorial-overlay',          // 教學引導
+    'discard-overlay',           // 棄牌選擇
+    'dice-overlay',              // 骰子動畫
+    'tarot-choice-overlay',      // 塔羅選擇
+    'charm-ov',                  // 魅惑提示
+    'mimic-ov',                  // 寶箱怪提示
+    'immovable-prompt',          // 不能行動提示
+    'skill-detail-popup',        // 技能詳細說明
+    'custom-confirm-overlay',    // 自訂確認框
+    'item-ops',                  // 物品操作面板
   ];
   const _isAnyLegitModalOpen = () => {
     for(const _id of _LEGIT_PAUSE_MODALS){
@@ -41903,7 +42108,7 @@ function _startDeadlockWatchdog(){
       if(!el) continue;
       // 1) 用 .show class 控制(主流方式)
       if(el.classList && el.classList.contains('show')) return _id;
-      // 2) 用 inline display 控制
+      // 2) 用 inline display 控制(注意:item-ops 預設可能 inline-block)
       const _disp = el.style.display;
       if(_disp && _disp !== 'none' && el.offsetParent !== null) return _id;
     }
@@ -41915,7 +42120,7 @@ function _startDeadlockWatchdog(){
   //   現在邏輯:
   //   (a) HP 有變化 → AI 還在打,重新基準計時
   //   (b) round/actor 已切換 → 自然會有新 watchdog 啟動,清掉就好
-  //   (c) 有合法 modal 顯示 → 3 秒後再檢查,不消失
+  //   (c) 有合法 modal 顯示 → retry 後再檢查,不消失
   //   (d) 全部排除條件都不成立 → 真的卡死,顯示自救按鈕
   const _check = () => {
     try{
@@ -41925,7 +42130,10 @@ function _startDeadlockWatchdog(){
       const _curActor = G.activeChar;
       const _curPos = _curActor ? (_curActor.side + '-' + _curActor.pos) : '';
       if(_curPos !== _snapActorPos) return;
-      // (a) HP 有變化 → AI 還在動作中,沒卡死,重新從現在算 5 秒
+      // ★ v1.0.20260428.3880 — actor 的 acted 狀態變化 → 已經行動完了,不算卡死
+      const _curActorActed = _curActor ? !!_curActor.acted : false;
+      if(_curActorActed !== _snapActorActed) return;
+      // (a) HP 有變化 → AI 還在動作中,沒卡死,重新從現在算
       let _curEnemyHpSum = 0;
       let _curAllyHpSum = 0;
       if(G.p1) G.p1.forEach(h => { _curAllyHpSum += (h.curHp||0); });
@@ -41934,20 +42142,32 @@ function _startDeadlockWatchdog(){
         _startDeadlockWatchdog(); // 重新基準
         return;
       }
-      // (c) 合法 modal 顯示中 → 3 秒後再檢查
+      // (c) 合法 modal 顯示中 → retry 後再檢查
       const _openModal = _isAnyLegitModalOpen();
       if(_openModal){
-        window._deadlockWatchdog = setTimeout(_check, 3000);
+        window._deadlockWatchdog = setTimeout(_check, _retryTimeout);
         return;
       }
+      // ★ v1.0.20260428.3880 — 玩家回合特例:若 action-panel 顯示中,不算卡死(玩家正在思考)
+      if(_isPlayerTurn){
+        const _ap = document.getElementById('action-panel');
+        if(_ap && _ap.style.display !== 'none' && _ap.offsetParent !== null){
+          // action-panel 可見,玩家正在思考 → 繼續等
+          window._deadlockWatchdog = setTimeout(_check, _retryTimeout);
+          return;
+        }
+      }
       // (d) 真的卡死
-      console.warn('🚨 [卡死偵測] AI 行動超過 5 秒無進展!actor=' + _snapActorName + ', round=' + _snapRound);
+      console.warn('🚨 [卡死偵測] ' + (_isPlayerTurn ? '玩家回合' : 'AI 回合')
+        + ' 行動超過 ' + (_isPlayerTurn ? '30' : '5') + ' 秒無進展!actor=' + _snapActorName
+        + ', round=' + _snapRound + ', acted=' + _snapActorActed);
       _showDeadlockRescueButton();
     }catch(e){ console.warn('[卡死偵測] watchdog 異常', e); }
   };
 
-  // 啟動 5 秒 watchdog (用普通 setTimeout 不受 _gamePaused 影響)
-  window._deadlockWatchdog = setTimeout(_check, 5000);
+  // 啟動 watchdog (用普通 setTimeout 不受 _gamePaused 影響)
+  // 玩家回合 30 秒、AI 回合 5 秒
+  window._deadlockWatchdog = setTimeout(_check, _firstTimeout);
 }
 
 function _clearDeadlockWatchdog(){
@@ -41960,14 +42180,40 @@ function _clearDeadlockWatchdog(){
 
 function _showDeadlockRescueButton(){
   const btn = document.getElementById('adv-deadlock-rescue-btn');
-  if(btn) btn.style.display = 'block';
+  if(btn){
+    btn.style.display = 'block';
+    // ★ v1.0.20260428.3880 — 真正卡死時加閃爍動畫 + 紅色發光,提醒玩家
+    btn.style.animation = 'deadlockRescueGlow 0.9s ease-in-out infinite';
+    btn.style.boxShadow = '0 0 20px rgba(255,60,60,0.9),0 0 40px rgba(255,60,60,0.6)';
+    btn.style.background = 'rgba(80,10,10,0.95)';
+    btn.style.borderColor = '#ff4444';
+    btn.style.color = '#ff8888';
+    btn.dataset.state = 'alert';
+  }
   // ★ v1.0.20260424.1210 — 修正提示訊息,口吻更柔和讓玩家自行判斷
   try{ _showInGameToast('⚠️ 系統偵測到戰鬥停滯中,小英雄是有行動沒有完成還是遇到BUG卡死呢? 如果是遇到BUG卡死,請按左下角的卡死自救唷!', '#ff6644', 7000); }catch(_){}
 }
 
 function _hideDeadlockRescueButton(){
   const btn = document.getElementById('adv-deadlock-rescue-btn');
-  if(btn) btn.style.display = 'none';
+  // ★ v1.0.20260428.3880 — 改成「靜默模式」,按鈕仍可見但不閃爍,讓玩家任何時候都能主動點擊
+  //   原本完全隱藏 → 玩家若覺得卡了但 watchdog 沒觸發,就無法自救
+  if(btn){
+    if(_adventureMode){
+      // 冒險戰鬥中:按鈕保留可見,但去掉動畫和發光,改成柔和的灰紅色
+      btn.style.display = 'block';
+      btn.style.animation = 'none';
+      btn.style.boxShadow = '0 2px 8px rgba(100,40,40,0.4)';
+      btn.style.background = 'rgba(40,15,15,0.7)';
+      btn.style.borderColor = 'rgba(180,80,80,0.5)';
+      btn.style.color = 'rgba(220,140,140,0.85)';
+      btn.dataset.state = 'idle';
+    } else {
+      // 非戰鬥:完全隱藏
+      btn.style.display = 'none';
+      btn.dataset.state = 'hidden';
+    }
+  }
 }
 
 // ★ 玩家點擊「卡死自救」按鈕 → 顯示選單
@@ -41993,10 +42239,23 @@ function _showDeadlockRescueMenu(){
       🚨 卡死自救
     </div>
     <div style="font-size:18px;color:#ffaaaa;text-align:center;margin-bottom:18px;line-height:1.6;">
-      偵測到對手回合可能卡死。<br>
-      你可以選擇以下方式脫困:
+      偵測到戰鬥可能卡住。<br>
+      由溫和到激烈,選擇適合的方式脫困:
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;">
+      <!-- ★ v1.0.20260428.3880 — 選項 0: 強制跳過當前回合(最溫和的選擇) -->
+      <button onclick="_deadlockRescueSkipTurn()"
+        style="padding:16px 18px;text-align:left;font-size:19px;font-weight:700;cursor:pointer;
+          background:rgba(80,120,180,0.25);border:2.5px solid rgba(120,180,255,0.85);
+          color:#aaccff;border-radius:12px;font-family:inherit;line-height:1.5;
+          transition:transform 0.12s,background 0.12s;"
+        onmouseover="this.style.background='rgba(100,140,200,0.4)';this.style.transform='scale(1.02)'"
+        onmouseout="this.style.background='rgba(80,120,180,0.25)';this.style.transform='scale(1)'">
+        ⏭ 強制跳過當前角色行動(最溫和)<br>
+        <span style="font-size:14px;font-weight:400;color:#88aacc;">
+          先試試這個!強制結束目前正在卡的角色行動,讓戰鬥繼續推進
+        </span>
+      </button>
       <!-- 選項 1: 脫離戰鬥保留獎勵 -->
       <button onclick="_deadlockRescueExitBattle()"
         style="padding:16px 18px;text-align:left;font-size:19px;font-weight:700;cursor:pointer;
@@ -42034,6 +42293,55 @@ function _showDeadlockRescueMenu(){
   `;
   document.body.appendChild(menu);
 }
+
+// ★ v1.0.20260428.3880 — 選項 0: 強制跳過當前角色行動(最溫和的卡死自救)
+window._deadlockRescueSkipTurn = function(){
+  const menu = document.getElementById('_deadlock-rescue-menu');
+  if(menu) menu.remove();
+  try{
+    log('⏭ [卡死自救] 玩家選擇強制跳過當前回合');
+    console.warn('🚨 [卡死自救] 強制跳過當前 actor');
+    // 1) 強制清除暫停 + watchdog
+    try{ _clearDeadlockWatchdog(); }catch(_){}
+    try{ window._gamePaused = false; }catch(_){}
+    try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+    try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
+    try{ if(window._execSkillGuard){ clearTimeout(window._execSkillGuard); window._execSkillGuard = null; } }catch(_){}
+    try{ if(typeof clearTurnTimer === 'function') clearTurnTimer(); }catch(_){}
+    // 2) 清除可能殘留的選擇/暫停 modal/狀態
+    try{ if(typeof clearSel === 'function') clearSel(); }catch(_){}
+    if(typeof G !== 'undefined' && G){
+      try{ G.pendingTarget = null; }catch(_){}
+      try{ if(typeof pendingCb !== 'undefined') pendingCb = null; }catch(_){}
+      // 3) 強制把當前 activeChar 的 acted 設為 true,讓 startTurn 跳到下一個
+      try{
+        if(G.activeChar && G.activeChar.curHp > 0){
+          G.activeChar.acted = true;
+          console.log('[卡死自救] 強制 ' + G.activeChar.name + '.acted = true');
+        }
+      }catch(_){}
+      // 4) 清掉 BOSS quiz 相關旗標
+      try{ window._bossQuizInFlight = false; }catch(_){}
+      try{ if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle'; }catch(_){}
+      try{ if(typeof _advQuizActive !== 'undefined') _advQuizActive = false; }catch(_){}
+      // 5) 關掉答題視窗 (若有)
+      try{
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        if(_qOv) _qOv.classList.remove('show');
+      }catch(_){}
+    }
+    // 6) 等 200ms 後呼叫 startTurn 繼續戰鬥
+    setTimeout(() => {
+      try{ if(typeof startTurn === 'function') startTurn(); }catch(_e){
+        console.error('[卡死自救] startTurn 失敗', _e);
+      }
+    }, 200);
+    try{ _showInGameToast('✅ 已強制跳過當前角色,戰鬥繼續推進', '#88ccff', 3000); }catch(_){}
+  }catch(_e){
+    console.error('[卡死自救] 強制跳過失敗', _e);
+    try{ _showInGameToast('⚠️ 強制跳過失敗,請改用其他選項', '#ff6644', 3000); }catch(_){}
+  }
+};
 
 // ★ 選項 1: 脫離戰鬥(保留掉落物和知識幣)
 function _deadlockRescueExitBattle(){
@@ -52562,6 +52870,87 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3880', brief:[
+    '🛡 戰鬥卡死偵測與自救機制大幅強化:多層防護 + 三段式自救選項',
+    '🐛 修正台灣關 BOSS 行動前不會出題的 bug(原本只有貓空+日本關 BOSS 會出題)',
+  ], items:[
+    '【強化 1:卡死自救按鈕永遠在戰鬥中可見】',
+    '・原本:只有 watchdog 偵測到卡死才亮起紅色按鈕',
+    '・問題:玩家若覺得卡了但 watchdog 還沒觸發,就無法自救',
+    '・現在:戰鬥中按鈕永遠可見(平時是柔和的灰紅色),真正卡死時才轉成紅色閃爍',
+    '・玩家任何時候覺得異常都可主動點擊',
+    '【強化 2:玩家回合也加卡死偵測(寬鬆 30 秒)】',
+    '・原本:只有 AI 回合(對手回合提示出現時)啟動 5 秒 watchdog',
+    '・問題:玩家回合若卡在 action-panel 但什麼都不能點時,沒有自救機制',
+    '・現在:玩家回合也啟動 30 秒寬鬆 watchdog,若 30 秒內沒任何進展且 action-panel 沒在顯示,就亮起按鈕',
+    '・條件:HP 變化、actor 切換、回合切換、有合法 modal 顯示中、action-panel 顯示中,都不算卡死',
+    '【強化 3:execSkill 12 秒守衛兜底】',
+    '・原本:技能執行卡住(如某分支邏輯錯誤沒呼叫 endAction)→ 玩家永久卡死',
+    '・現在:每次 execSkill 進入時設 12 秒 watchdog,若 actor 仍未進入 acted=true,強制呼叫 endAction',
+    '・endAction 進入時會清除這個 watchdog,避免誤觸發',
+    '【強化 4:卡死自救選單加第 3 個選項「強制跳過當前回合」】',
+    '・原本只有「脫離戰鬥」+「換隊友重來」,都比較破壞性',
+    '・新增「⏭ 強制跳過當前角色行動」(藍色按鈕,最溫和)',
+    '・做的事:把 G.activeChar.acted 設 true、清掉 quiz 旗標、關掉答題視窗、200ms 後呼叫 startTurn',
+    '・適合先試這個,再考慮脫離戰鬥或換隊友',
+    '【強化 5:卡死偵測排除清單擴充到 27 個 modal】',
+    '・原本 15 個 → 現在 27 個,涵蓋:台灣關過場/對白/難度、BOSS 詳細資料、被動觸發、',
+    '  爆發確認、爆發選目標、暫停、屬性圖、敵方資訊、教學、棄牌、骰子、塔羅、',
+    '  魅惑提示、寶箱怪、不能行動、技能說明、自訂確認、物品操作面板',
+    '・這些 modal 顯示中都不會誤判卡死',
+    '【bug 修復:台灣關 BOSS 行動前不出題】',
+    '・根因:aiAct(line 23327) 條件式只列 6 個 BOSS 名稱,沒有台灣 10 個 BOSS',
+    '・另兩個 BOSS quiz 觸發點(控制狀態 / 魅惑)也是同樣問題',
+    '・修復:統一抽出 window.ADV_QUIZ_BOSS_NAMES 全域常數(共 16 個 BOSS),3 處引用點都改成查這個常數',
+    '・以後新增 BOSS 只要更新這個常數,3 處自動同步',
+    '【判斷玩家 vs AI 回合 + actor.acted 變化也算進展】',
+    '・watchdog 改成同時看 HP、actor 位置、回合、acted 狀態,任一變化都重置基準',
+    '・玩家回合用 30 秒、AI 回合用 5 秒,觸發後 retry 間隔玩家 10 秒、AI 3 秒',
+  ] },
+  { ver:'v1.0.20260428.3870', adminOnly:true, brief:[
+    '🐛 [台灣關] 修正 3 個進階 bug:對白還是貓空 + BGM 還是貓空 + 戰鬥背景閃首頁',
+  ], items:[
+    '【bug 1:戰前對白「喵喵喵～中年級的小英雄來了～」】',
+    '・根因:_buildBossIntroLines 函式只處理貓空(九尾空貓怪/杏花妖)+ 4 個日本 BOSS,完全沒處理台灣 10 個 BOSS',
+    '・台灣 BOSS 名稱對不到任何專屬對白 → fallback 到貓空對白模板',
+    '・修復:加入 _TW_BOSS_INTROS 字典,10 個台灣 BOSS 各自有專屬戰前對白',
+    '・額外修復:_mainBossName 偵測時優先用 _advSelectedTaiwanBoss + TAIWAN_BOSSES,並把 10 個 BOSS 名稱加入 G.p2.find 比對',
+    '【bug 2:BGM 還是貓空 BGM】',
+    '・根因:advStartBattle 的 BGM 切換邏輯(line 36947)只處理 japan + 貓空,沒處理 taiwan',
+    '・所以即使前面 advStartCutscene 已經呼叫 bgmPlay(\\\'bgm-taiwan-cutscene\\\'),戰鬥開始時又被覆寫成 bgm-boss-01(貓空 BOSS BGM)',
+    '・修復:加台灣分支,玉山用 bgm-taiwan-boss-yushan,其他 9 BOSS 在 bgm-taiwan-boss / bgm-taiwan-boss-2 之間奇偶輪播',
+    '【bug 3:戰鬥背景忽隱忽現,看到首頁紅藍底色】',
+    '・根因 1:advStartCutscene 一進入就 _clearBattleBg 把背景清掉,中間沒人重設,直到戰鬥開始才設',
+    '・根因 2:台灣關走「選角→過場→對白→難度→戰鬥」全流程,中間有多次 fadeTransition 過渡空檔會看到底層',
+    '・修復 1:startAdventureGame 進入時就把台灣場景圖預先設好(用 inline backgroundImage)+ 用 new Image() 預載入瀏覽器快取',
+    '・修復 2:advStartCutscene 加台灣關例外,不清背景(_isTaiwan 判斷)',
+    '・修復 3:advStartCutscene 進入台灣分支時立即把 adv-battle-bg 加 .visible class,讓背景馬上顯示',
+    '【實測流程】',
+    '・進台灣地圖選 BOSS → 點挑戰魔王 → 立即看到 BOSS 場景圖背景(不再閃首頁)',
+    '・選完角色 → 過場 → 對白 → 難度(背景持續顯示同一張場景圖)',
+    '・進入戰鬥 → BOSS 自我介紹氣泡顯示「油膩魔王・滷汁大鍋」之類的台灣 BOSS 對白',
+    '・BGM 從台灣關卡介紹 BGM(過場用)切到台灣 BOSS 戰 BGM(玉山專屬或輪播)',
+  ] },
+  { ver:'v1.0.20260428.3860', adminOnly:true, brief:[
+    '🗺 [台灣關] 10 個地標座標再次校正,參考標準台灣行政地圖,精準對應到每個 BOSS 所屬縣市',
+  ], items:[
+    '【座標調整對照(x, y)】',
+    '・台北 101  56,22 → 標籤改往右上(避開西門町擁擠)',
+    '・西門町    52,26 → 微調往北、標籤往左',
+    '・深坑      60,30 → 縮短離 101 距離(同屬大台北)',
+    '・三峽      47,32 → 微調往北(更接近新北位置)',
+    '・台中      47,50 → 微調(內陸偏東一點)',
+    '・彰化      44,60 → 與台中正南對齊(西海岸)',
+    '・日月潭    53,62 → 微調(南投在中央偏東)',
+    '・阿里山    50,73 → 微調(嘉義縣東邊山區)',
+    '・玉山      56,73 → 大幅西調 6 個百分點(從 62→56)',
+    '  原因:玉山在中央山脈最高峰,不該畫到太靠東側',
+    '・蘭嶼      76,88 → 微調(台東外海離島)',
+    '【設計原則】',
+    '・座標不再以「地圖建築物」為基準,改以「縣市相對位置」為基準',
+    '・這樣即使將來換地圖底圖,只要新圖的縣市位置正確,座標仍然可用',
+    '・10 個地標的相對位置現在符合真實地理:台北最北、蘭嶼最南、彰化最西、玉山在中央',
+  ] },
   { ver:'v1.0.20260428.3850', adminOnly:true, brief:[
     '🐛 [台灣關] 修正多項戰鬥流程 bug:詳細資料視窗被擋、對白變九尾空貓怪、最高難度只有兩個選項',
   ], items:[
@@ -60979,7 +61368,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3850';
+  const CURRENT_VERSION = 'v1.0.20260428.3880';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60996,7 +61385,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3850';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3880';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
