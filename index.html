@@ -4381,6 +4381,8 @@ body.art-premium #summon-overlay {
 <audio id="bgm-taiwan-intro" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a" loop></audio>
 <!-- ★ v1.0.20260428.3650 — 台灣關卡介紹劇情 BGM(進台灣關後播劇情/介紹畫面用) -->
 <audio id="bgm-taiwan-cutscene" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E9%97%9C%E5%8D%A1%E7%B0%A1%E4%BB%8B%E5%8A%87%E6%83%85BGM.m4a" loop></audio>
+<!-- ★ v1.0.20260428.3800 — 至寶圖鑑頁面專屬 BGM -->
+<audio id="bgm-treasure-gallery" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%87%B3%E5%AF%B6%E5%9C%96%E9%91%91.m4a" loop></audio>
 <!-- ★ v1.0.20260421.2800 — 日本關場景與 BOSS 專屬 BGM 擴充 -->
 <audio id="bgm-japan-scene2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E6%84%9F%E6%87%B7.m4a" loop></audio>
 <audio id="bgm-japan-boss-shutendoji" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90BGM.m4a" loop></audio>
@@ -29586,6 +29588,13 @@ window.openTaiwanTreasurePage = function(){
   // 確保資料已載入
   try{ if(typeof _loadTaiwanTreasureData === 'function') _loadTaiwanTreasureData(); }catch(_){}
 
+  // ★ v1.0.20260428.3800 — 進入至寶圖鑑切換為專屬 BGM,記住原 BGM 等返回時切回
+  try{
+    const _prevBgm = (typeof _curBgm !== 'undefined' && _curBgm) ? _curBgm : null;
+    window._beforeTreasureBgm = _prevBgm;
+    if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-treasure-gallery', 700);
+  }catch(_){}
+
   const old = document.getElementById('taiwan-treasure-page');
   if(old) old.remove();
 
@@ -29657,6 +29666,14 @@ window.openTaiwanTreasurePage = function(){
   // 返回按鈕
   document.getElementById('tt-page-back').onclick = function(){
     try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    // ★ v1.0.20260428.3800 — 返回時切回原本的 BGM(進入時記憶的)
+    try{
+      const _prevBgm = window._beforeTreasureBgm;
+      if(_prevBgm && typeof bgmFadeTo === 'function'){
+        bgmFadeTo(_prevBgm, 700);
+      }
+      window._beforeTreasureBgm = null;
+    }catch(_){}
     ov.remove();
   };
 };
@@ -60677,7 +60694,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3790';
+  const CURRENT_VERSION = 'v1.0.20260428.3800';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60694,7 +60711,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3790';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3800';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
