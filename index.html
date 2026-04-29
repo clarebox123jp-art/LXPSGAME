@@ -29600,9 +29600,13 @@ window.openTaiwanTreasurePage = function(){
 
   const ov = document.createElement('div');
   ov.id = 'taiwan-treasure-page';
+  // ★ v1.0.20260428.3830 — 加上至寶背景圖片(層疊半透明深色遮罩確保文字可讀)
   ov.style.cssText =
     'position:fixed;inset:0;z-index:9050;' +
-    'background:linear-gradient(160deg,#1a0e22,#0a0612);' +
+    'background:' +
+      'linear-gradient(160deg,rgba(26,14,34,0.78),rgba(10,6,18,0.88)),' +
+      'url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('至寶背景.png') + '") center center/cover no-repeat,' +
+      'linear-gradient(160deg,#1a0e22,#0a0612);' +
     'display:flex;flex-direction:column;' +
     'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;' +
     'overflow:hidden;animation:fadeIn 0.4s;';
@@ -33664,25 +33668,25 @@ function _taiwanShowAdminOnlyModal(){
 //   對應實際台灣地理位置:北部(101/西門/三峽/深坑)、中部(台中/彰化/日月潭)、
 //   南部山區(阿里山/玉山)、東南離島(蘭嶼)
 //   ※ 若用戶反映發光點與地圖位置不對齊,只要調整下方 x/y % 數值即可
-// ★ v1.0.20260428.3790 — 10 個地標座標精準對齊地圖建築/景觀位置
-//   x, y: 發光點座標(相對於地圖圖片本身的%, 0~100)
-//   labelDx, labelDy: 文字標籤「相對於發光點」的偏移(px),用於避免文字重疊
-//                     預設 labelDx:0, labelDy:18 (= 文字在發光點正下方 18px)
+// ★ v1.0.20260428.3820 — 10 個地標座標重新校正(基於用戶截圖的建築位置)
+//   x, y: 發光點座標(相對於地圖圖片本身的%, 0~100)— 對齊建築/景觀本身
+//   labelDx, labelDy: 文字標籤「相對於發光點」的偏移(px),避免文字重疊
+//   ※ 若實測還有偏差,只要調整下方數值即可
 const TAIWAN_BOSS_GLOW_COORDS = {
-  // 北部(地圖上方,4 個 BOSS 較擠 → 用不同方向的標籤偏移錯開)
-  taipei_101_warlord:   { x: 56, y: 22, labelDx: 0,    labelDy: -22, label: '台北 101' }, // 標籤往上
-  ximen_pearl:          { x: 50, y: 26, labelDx: -36,  labelDy: 0,   label: '西門町' },    // 標籤往左
-  shenkeng_tofu:        { x: 60, y: 30, labelDx: 30,   labelDy: 4,   label: '深坑' },      // 標籤往右下
-  sanxia_indigo:        { x: 46, y: 28, labelDx: -34,  labelDy: 0,   label: '三峽' },      // 標籤往左
+  // 北部(地圖右上方,4 個 BOSS 較擠 → 用「下/左/左/右」分散標籤)
+  taipei_101_warlord:   { x: 60, y: 25, labelDx: 0,    labelDy: 24,  label: '台北 101' },  // 高塔下方
+  ximen_pearl:          { x: 53, y: 33, labelDx: -38,  labelDy: 0,   label: '西門町' },     // 標籤往左
+  shenkeng_tofu:        { x: 64, y: 38, labelDx: 30,   labelDy: 4,   label: '深坑' },       // 標籤往右下
+  sanxia_indigo:        { x: 47, y: 36, labelDx: -34,  labelDy: 0,   label: '三峽' },       // 標籤往左
   // 中部(地圖中段)
-  taichung_pineapple:   { x: 41, y: 44, labelDx: -32,  labelDy: 0,   label: '台中' },      // 標籤往左
-  changhua_braised:     { x: 38, y: 54, labelDx: -34,  labelDy: 0,   label: '彰化' },      // 標籤往左
-  sun_moon_mirror_boss: { x: 53, y: 54, labelDx: 32,   labelDy: 0,   label: '日月潭' },    // 標籤往右
-  // 中南部山區(地圖下半)
-  alishan_tree:         { x: 44, y: 67, labelDx: -36,  labelDy: 0,   label: '阿里山' },    // 標籤往左
-  yushan_giant:         { x: 54, y: 64, labelDx: 30,   labelDy: 0,   label: '玉山' },      // 標籤往右
-  // 東南離島(右下角)
-  lanyu_octopus:        { x: 73, y: 84, labelDx: 0,    labelDy: 24,  label: '蘭嶼' },      // 標籤往下
+  taichung_pineapple:   { x: 44, y: 53, labelDx: -32,  labelDy: 0,   label: '台中' },       // 標籤往左
+  changhua_braised:     { x: 44, y: 67, labelDx: -34,  labelDy: 0,   label: '彰化' },       // 標籤往左
+  sun_moon_mirror_boss: { x: 58, y: 67, labelDx: 32,   labelDy: 0,   label: '日月潭' },     // 標籤往右
+  // 中南部山區
+  alishan_tree:         { x: 50, y: 78, labelDx: -36,  labelDy: 0,   label: '阿里山' },     // 標籤往左
+  yushan_giant:         { x: 62, y: 76, labelDx: 30,   labelDy: 0,   label: '玉山' },       // 標籤往右
+  // 東南離島
+  lanyu_octopus:        { x: 78, y: 89, labelDx: 0,    labelDy: 24,  label: '蘭嶼' },       // 標籤往下
 };
 
 // 左右兩側 BOSS 卡片分配(地理感:中南部 / 北部+蘭嶼)
@@ -33708,7 +33712,14 @@ window._showTaiwanMap = function(){
       '.taiwan-boss-card{transition:transform 0.18s,border-color 0.18s,background 0.18s,box-shadow 0.18s;}' +
       '.taiwan-boss-card:hover{transform:translateX(2px) scale(1.04);background:rgba(40,80,140,0.85)!important;box-shadow:0 4px 22px rgba(255,200,80,0.5);}' +
       '.taiwan-boss-card:active{transform:scale(0.97);}' +
-      '@keyframes taiwanDetailIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}';
+      '@keyframes taiwanDetailIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}' +
+      // ★ v1.0.20260428.3830 — 雲朵飄移(往西方=往左)+ 呼吸放大縮小
+      '@keyframes twCloudDrift{from{transform:translateX(0)}to{transform:translateX(calc(-100vw - 250px))}}' +
+      '@keyframes twCloudPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.10)}}' +
+      // ★ 海浪緩慢晃動
+      '@keyframes twOceanWave{0%,100%{transform:translateY(0) scaleY(1);opacity:0.6}50%{transform:translateY(-3px) scaleY(1.04);opacity:0.9}}' +
+      // ★ 海面閃光(白色亮晶晶)
+      '@keyframes twSparkle{0%,100%{opacity:0;transform:scale(0.4) rotate(0deg)}50%{opacity:1;transform:scale(1.4) rotate(45deg)}}';
     document.head.appendChild(kf);
   }
 
@@ -33736,9 +33747,86 @@ window._showTaiwanMap = function(){
   ov.appendChild(header);
 
   // ── 主區域:左欄 / 中央地圖 / 右欄 ──
+  // ★ v1.0.20260428.3820 — 改用 position:relative + 子元素 absolute,讓地圖填滿整個區域、卡片浮在兩側
   const mainArea = document.createElement('div');
-  mainArea.style.cssText = 'flex:1;display:flex;width:100%;padding:0 16px 16px;gap:14px;align-items:stretch;overflow:hidden;min-height:0;';
+  mainArea.style.cssText = 'position:relative;flex:1;width:100%;overflow:hidden;min-height:0;';
   ov.appendChild(mainArea);
+
+  // ★ v1.0.20260428.3830 — 海洋特效層(波浪+閃光),放在 mainArea 最底層
+  //   海面波紋 + 白色亮晶晶閃光,讓兩側海面有動感
+  const oceanLayer = document.createElement('div');
+  oceanLayer.style.cssText = 'position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;';
+  // 兩層波浪疊加,不同速度產生水紋感
+  const wave1 = document.createElement('div');
+  wave1.style.cssText =
+    'position:absolute;inset:0;' +
+    'background:repeating-linear-gradient(180deg,transparent 0px,transparent 24px,rgba(255,255,255,0.05) 24px,rgba(255,255,255,0.05) 25px);' +
+    'animation:twOceanWave 9s ease-in-out infinite;';
+  oceanLayer.appendChild(wave1);
+  const wave2 = document.createElement('div');
+  wave2.style.cssText =
+    'position:absolute;inset:0;' +
+    'background:repeating-linear-gradient(180deg,transparent 0px,transparent 38px,rgba(180,220,255,0.06) 38px,rgba(180,220,255,0.06) 40px);' +
+    'animation:twOceanWave 13s ease-in-out -3s infinite;';
+  oceanLayer.appendChild(wave2);
+  // 海面閃光(亮晶晶)— 16 顆散布在兩側海面避開地圖中央
+  const _sparkleSpots = [
+    {top:10,left:6 }, {top:22,left:14}, {top:38,left:8 }, {top:55,left:16}, {top:72,left:10}, {top:86,left:18}, {top:48,left:4 }, {top:65,left:6 },
+    {top:14,left:84}, {top:28,left:92}, {top:45,left:88}, {top:60,left:94}, {top:78,left:86}, {top:35,left:96}, {top:88,left:90}, {top:52,left:82},
+  ];
+  _sparkleSpots.forEach((s, i) => {
+    const sp = document.createElement('div');
+    const _dur = 2.4 + (i % 5) * 0.4;
+    const _delay = -(i * 0.35) % _dur;
+    sp.style.cssText =
+      'position:absolute;width:8px;height:8px;' +
+      'top:' + s.top + '%;left:' + s.left + '%;' +
+      'background:radial-gradient(circle,rgba(255,255,255,1) 0%,rgba(255,255,255,0.7) 30%,rgba(255,255,255,0.2) 60%,transparent 75%);' +
+      'box-shadow:0 0 8px rgba(255,255,255,0.9),0 0 14px rgba(180,220,255,0.6);' +
+      'border-radius:50%;' +
+      'animation:twSparkle ' + _dur.toFixed(2) + 's ease-in-out ' + _delay.toFixed(2) + 's infinite;';
+    oceanLayer.appendChild(sp);
+  });
+  mainArea.appendChild(oceanLayer);
+
+  // ★ v1.0.20260428.3830 — 雲朵層:3 朵雲懸浮 + 呼吸放大縮小 + 慢慢往西方移動 + 陰影
+  //   z-index 在地圖之上但在卡片之下,讓雲朵飄過台灣島但不擋住卡片 UI
+  const cloudLayer = document.createElement('div');
+  cloudLayer.style.cssText = 'position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;';
+  // 3 朵雲不同高度、大小、速度與起始時間,看起來自然
+  const _cloudConfigs = [
+    { top: '10%', size: 95,  driftDur: 70, pulseDur: 5.0, driftDelay:   0, pulseDelay: 0    },
+    { top: '38%', size: 75,  driftDur: 95, pulseDur: 6.2, driftDelay: -28, pulseDelay: 1.6 },
+    { top: '66%', size: 110, driftDur: 80, pulseDur: 4.6, driftDelay: -55, pulseDelay: 0.8 },
+  ];
+  _cloudConfigs.forEach(cfg => {
+    // 外層 = 飄移(translateX)
+    const drift = document.createElement('div');
+    drift.style.cssText =
+      'position:absolute;top:' + cfg.top + ';left:100%;' +
+      'animation:twCloudDrift ' + cfg.driftDur + 's linear ' + cfg.driftDelay + 's infinite;';
+    // 中層 = 呼吸(scale)— 跟 translate 分開避免衝突
+    const pulse = document.createElement('div');
+    pulse.style.cssText =
+      'animation:twCloudPulse ' + cfg.pulseDur + 's ease-in-out ' + cfg.pulseDelay + 's infinite;';
+    // 內層 = 雲朵形狀(用 box-shadow 堆出多顆白圓,加 drop-shadow 陰影)
+    const w = cfg.size;
+    const h = Math.round(w * 0.42);
+    const r = Math.round(w * 0.5);
+    const shape = document.createElement('div');
+    shape.style.cssText =
+      'position:relative;width:' + w + 'px;height:' + h + 'px;' +
+      'background:rgba(255,255,255,0.95);border-radius:' + r + 'px;' +
+      'box-shadow:' +
+        Math.round(w*0.30) + 'px ' + Math.round(-h*0.55) + 'px 0 ' + Math.round(-w*0.05) + 'px rgba(255,255,255,0.95),' +
+        Math.round(w*0.62) + 'px ' + Math.round(-h*0.40) + 'px 0 ' + Math.round(-w*0.08) + 'px rgba(255,255,255,0.95),' +
+        Math.round(w*0.10) + 'px ' + Math.round(-h*0.28) + 'px 0 ' + Math.round(-w*0.10) + 'px rgba(255,255,255,0.95);' +
+      'filter:drop-shadow(3px 8px 12px rgba(0,30,80,0.45));';
+    pulse.appendChild(shape);
+    drift.appendChild(pulse);
+    cloudLayer.appendChild(drift);
+  });
+  mainArea.appendChild(cloudLayer);
 
   // ────────── BOSS 卡片建構函式 ──────────
   // ★ v1.0.20260428.3780 — 卡片整體放大,字體加大,搭配兩側欄位放大
@@ -33793,21 +33881,32 @@ window._showTaiwanMap = function(){
     return card;
   };
 
-  // ── 左側卡片欄(中南部 BOSS) ──
-  // ★ v1.0.20260428.3780 — 卡片欄放大佔更多寬度
+  // ── 左側卡片欄(中南部 BOSS) — absolute 浮層 ──
+  // ★ v1.0.20260428.3820 — 改成絕對定位浮層,讓地圖底層延伸到全螢幕邊緣
   const leftCol = document.createElement('div');
-  leftCol.style.cssText = 'flex:0 0 clamp(270px,26vw,340px);display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;justify-content:space-around;';
+  leftCol.style.cssText =
+    'position:absolute;left:8px;top:8px;bottom:8px;' +
+    'width:clamp(220px,20vw,290px);' +
+    'display:flex;flex-direction:column;gap:12px;' +
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
+    'padding:10px;border-radius:14px;' +
+    'background:linear-gradient(135deg,rgba(0,12,30,0.78),rgba(0,8,20,0.65));' +
+    'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);' +
+    'border:1.5px solid rgba(120,200,255,0.25);' +
+    'box-shadow:0 8px 24px rgba(0,0,0,0.5);' +
+    'justify-content:space-around;z-index:10;';
   TAIWAN_LEFT_BOSSES.forEach(bossId => {
     const c = buildBossCard(bossId);
     if(c) leftCol.appendChild(c);
   });
   mainArea.appendChild(leftCol);
 
-  // ── 中央地圖區 ──
-  // ★ v1.0.20260428.3790 — 用 mapInner 包住圖片,讓發光點座標精準對齊圖片本身
-  //   (mapWrap 居中,mapInner 跟圖片一樣大,發光點放在 mapInner 內)
+  // ── 中央地圖區 — absolute 滿版 ──
+  // ★ v1.0.20260428.3820 — 地圖佔滿整個 mainArea,卡片浮在兩側不再夾擠地圖
+  // ★ mapInner 包住圖片讓發光點與標籤座標精準對齊圖片本身
+  // ★ v1.0.20260428.3830 — z-index:2 讓地圖在海洋特效層(1)之上、雲朵層(5)之下
   const mapCol = document.createElement('div');
-  mapCol.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;min-width:0;position:relative;padding:4px;';
+  mapCol.style.cssText = 'position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:8px;';
   const mapWrap = document.createElement('div');
   mapWrap.style.cssText = 'position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
   // mapInner:讓發光點和文字標籤的座標精準對齊圖片本身
@@ -33874,10 +33973,20 @@ window._showTaiwanMap = function(){
   mapCol.appendChild(mapWrap);
   mainArea.appendChild(mapCol);
 
-  // ── 右側卡片欄(北部+蘭嶼) ──
-  // ★ v1.0.20260428.3780 — 卡片欄放大佔更多寬度(原 200~260 → 270~340)
+  // ── 右側卡片欄(北部+蘭嶼) — absolute 浮層 ──
+  // ★ v1.0.20260428.3820 — 改成絕對定位浮層,跟左側對稱
   const rightCol = document.createElement('div');
-  rightCol.style.cssText = 'flex:0 0 clamp(270px,26vw,340px);display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;justify-content:space-around;';
+  rightCol.style.cssText =
+    'position:absolute;right:8px;top:8px;bottom:8px;' +
+    'width:clamp(220px,20vw,290px);' +
+    'display:flex;flex-direction:column;gap:12px;' +
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
+    'padding:10px;border-radius:14px;' +
+    'background:linear-gradient(225deg,rgba(0,12,30,0.78),rgba(0,8,20,0.65));' +
+    'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);' +
+    'border:1.5px solid rgba(120,200,255,0.25);' +
+    'box-shadow:0 8px 24px rgba(0,0,0,0.5);' +
+    'justify-content:space-around;z-index:10;';
   TAIWAN_RIGHT_BOSSES.forEach(bossId => {
     const c = buildBossCard(bossId);
     if(c) rightCol.appendChild(c);
@@ -44974,8 +45083,18 @@ function _applyPresetTeam(slotIdx){
     } else if(_variant2 && _adventureStage === 'japan' && typeof window._buildJapanBossTeam === 'function'){
       // ★ v1.0.20260421.0500 — 日本關依 variant 動態組陣容
       bossTeam = window._buildJapanBossTeam(_variant2);
+    } else if(_adventureStage === 'taiwan' && typeof window._buildTaiwanBossTeam === 'function'){
+      // ★ v1.0.20260428.3810 — 台灣關依玩家在地圖上選的 BOSS 動態組陣容
+      //   (台灣關沒有固定的 ADV_BOSS_TEAMS,要用 _buildTaiwanBossTeam(bossId))
+      bossTeam = window._buildTaiwanBossTeam(window._advSelectedTaiwanBoss);
     } else {
       bossTeam = ADV_BOSS_TEAMS[_adventureStage];
+    }
+    // ★ v1.0.20260428.3810 — 防禦:bossTeam 還是空(極端情況)就拒絕套用,避免崩潰
+    if(!bossTeam || !Array.isArray(bossTeam) || !bossTeam.length){
+      console.error('[_applyPresetTeam] bossTeam 為空,stage=' + _adventureStage + ', 取消套用');
+      _showInGameToast('⚠ 此關卡尚未支援快速套用陣容,請手動選角', '#ff8844', 3000);
+      return;
     }
     G.p2 = bossTeam.map((b,i)=>{
       const h = newHero(b.name,'p2',i);
@@ -52389,6 +52508,71 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3830', brief:[
+    '✨ 至寶圖鑑頁面新增背景圖片,看起來更有質感',
+    '🌊 [台灣關] 地圖畫面新增動畫:三朵雲飄過、海面波浪晃動、白色亮晶晶閃光',
+  ], items:[
+    '【至寶圖鑑背景】',
+    '・進入至寶圖鑑時,背景換成新的「至寶背景」圖片',
+    '・背景上層疊一層半透明深紫色遮罩,讓金色的至寶卡片和文字仍然清楚可讀',
+    '【台灣地圖動畫(管理員測試中)】',
+    '・🌥 三朵白雲懸浮在地圖上空,慢慢往西方(左邊)飄移',
+    '  - 雲朵會呼吸式放大縮小,每朵雲有不同大小、高度、速度,看起來自然',
+    '  - 雲朵帶有底部陰影(drop-shadow),立體感更明顯',
+    '  - 飄過台灣島後從畫面右側回到原位重新開始',
+    '・🌊 海面波浪緩慢上下晃動(兩層紋路疊加,9 秒+13 秒不同節奏)',
+    '・✨ 海面 16 顆白色亮晶晶閃光點隨機閃爍,像陽光照在水面的波光',
+    '・所有效果都用 CSS 動畫(GPU 加速),不影響遊戲流暢度,卡片浮層仍然清楚可見',
+  ] },
+  { ver:'v1.0.20260428.3820', adminOnly:true, brief:[
+    '🗺 [台灣關] 中央航海圖滿版到全螢幕,卡片改成半透明浮層停在兩側',
+    '📍 [台灣關] 10 個地標座標重新校正,每個發光點精準對齊地圖建築/景觀',
+  ], items:[
+    '【地圖滿版佈局】',
+    '・mainArea 改成 position:relative 容器,中央地圖區用 position:absolute;inset:0 滿版',
+    '・左右兩側 BOSS 卡片改成絕對定位浮層,寬度從 270~340px → 220~290px',
+    '・卡片背景用半透明深藍 + 8px 模糊(backdrop-filter),底層地圖會隱約透出邊緣',
+    '・卡片用圓角 + 邊框 + 陰影做出「浮在地圖上方的玻璃面板」感',
+    '・地圖中央區可以延伸到接近全螢幕邊緣,圖片自然放到最大可能尺寸',
+    '【地標座標重校】',
+    '・基於最新地圖截圖逐一對齊建築位置:',
+    '  - 台北 101:塔身 (60, 25),標籤在塔下方',
+    '  - 西門町:廣場區 (53, 33),標籤往左',
+    '  - 三峽:西邊石頭建築 (47, 36),標籤往左',
+    '  - 深坑:101 東邊小村 (64, 38),標籤往右下',
+    '  - 台中:摩天輪/纜車塔 (44, 53),標籤往左',
+    '  - 彰化:大佛/村落 (44, 67),標籤往左',
+    '  - 日月潭:湖+寺廟 (58, 67),標籤往右',
+    '  - 阿里山:神木 (50, 78),標籤往左',
+    '  - 玉山:山頂 (62, 76),標籤往右',
+    '  - 蘭嶼:右下小島 (78, 89),標籤往下',
+    '・若實測還有偏差,只要調整 TAIWAN_BOSS_GLOW_COORDS 的 x/y/labelDx/labelDy 即可',
+  ] },
+  { ver:'v1.0.20260428.3810', adminOnly:true, brief:[
+    '🐛 [台灣關] 修正用「快速套用預設陣容」進台灣 BOSS 戰時整個畫面變空白、無法戰鬥的崩潰',
+  ], items:[
+    '【bug 重現】',
+    '・進台灣關 → 點挑戰魔王 → 進選角頁 → 點某個預設陣容快速套用',
+    '・畫面變空白(只剩 ENEMY/PLAYER 字樣),console 報錯 _applyPresetTeam line 44980 「Cannot read properties of undefined (reading map)」',
+    '【根本原因】',
+    '・_applyPresetTeam 在組敵方陣容時用 ADV_BOSS_TEAMS[stage]',
+    '・但台灣關沒有固定 ADV_BOSS_TEAMS,要用 _buildTaiwanBossTeam(bossId) 動態生成',
+    '・於是 bossTeam = undefined,接著 undefined.map() 就崩了,G.p2 沒建立 → 戰場空白',
+    '【修復】',
+    '・_applyPresetTeam 加台灣關分支:stage===taiwan 時用 _buildTaiwanBossTeam(_advSelectedTaiwanBoss)',
+    '・另外加防禦性檢查:bossTeam 為空時 toast 提示「此關卡尚未支援快速套用陣容」並 return,不再崩潰',
+    '【影響範圍】',
+    '・這個 bug 只在「台灣關 + 點快速套用預設陣容」這條路徑會觸發',
+    '・「台灣關 + 手動選角」路徑(走 confirmHeroPick 那邊已經正確處理 taiwan)不受影響',
+  ] },
+  { ver:'v1.0.20260428.3800', brief:[
+    '🎵 至寶圖鑑頁面新增專屬 BGM,進入時自動切換,離開時自動切回原本的音樂',
+  ], items:[
+    '【新增】',
+    '・至寶圖鑑頁面進入時播放新的「至寶圖鑑」BGM 🎶',
+    '・按「← 返回」離開圖鑑時,會自動切回進入前的音樂(例如貓空首頁/台灣地圖 BGM)',
+    '・所有切換都用 0.7 秒淡入淡出,不會突然中斷或瞬切',
+  ] },
   { ver:'v1.0.20260428.3790', adminOnly:true, brief:[
     '🗺 [台灣關] 地圖滿版+標題左移,地標位置精準對齊建築,文字錯開避免重疊',
     '⚔ [台灣關] 流程改成「選角 → 過場 → 對白 → 難度 → 戰鬥」,修正過場前看到首頁的閃爍',
@@ -60694,7 +60878,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3800';
+  const CURRENT_VERSION = 'v1.0.20260428.3830';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60711,7 +60895,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3800';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3830';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
