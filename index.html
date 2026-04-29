@@ -4328,8 +4328,12 @@ body.art-premium #summon-overlay {
 <!-- ★ v1.0.20260421.3000k — 日本小怪戰第二首 BGM（與第一首輪流播放） -->
 <audio id="bgm-japan-battle-2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E5%B0%8F%E6%80%AA%E6%88%B0BGM%202.m4a" loop></audio>
 <audio id="bgm-japan-boss"   preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%ACBOSS%E6%88%B0.m4a" loop></audio>
-<!-- ★ v1.0.20260428.3200 — 台灣關 BOSS 戰專屬 BGM(10 隻 BOSS 共用一首) -->
+<!-- ★ v1.0.20260428.3200 — 台灣關 BOSS 戰專屬 BGM(10 隻 BOSS 共用,輪播) -->
 <audio id="bgm-taiwan-boss" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS.m4a" loop></audio>
+<!-- ★ v1.0.20260428.3740 — 台灣關 BOSS 戰第二首(與第一首輪播) -->
+<audio id="bgm-taiwan-boss-2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS%E6%88%B0%E9%AC%A5BGM2.m4a" loop></audio>
+<!-- ★ v1.0.20260428.3740 — 玉山 BOSS 戰專屬 BGM(單獨,不參與輪播) -->
+<audio id="bgm-taiwan-boss-yushan" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8E%89%E5%B1%B1%E6%88%B0%E9%AC%A5BGM.m4a" loop></audio>
 <!-- ★ v1.0.20260428.3500 — 台灣地圖選關頁 BGM(原檔名「台灣關卡簡介劇情BGM」更正為「台灣地圖BGM」) -->
 <audio id="bgm-taiwan-intro" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a" loop></audio>
 <!-- ★ v1.0.20260428.3650 — 台灣關卡介紹劇情 BGM(進台灣關後播劇情/介紹畫面用) -->
@@ -5043,6 +5047,11 @@ body.art-premium #summon-overlay {
       <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);openHeroPage()">
         <span class="adv-nav-icon">⚔️</span>
         <span class="adv-nav-label">英雄</span>
+      </button>
+      <!-- ★ v1.0.20260428.3720 — 至寶圖鑑入口(位於英雄與魔物之間) -->
+      <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);window.openTaiwanTreasurePage&&window.openTaiwanTreasurePage()" style="border-color:rgba(255,200,80,0.4);">
+        <span class="adv-nav-icon">💎</span>
+        <span class="adv-nav-label">至寶</span>
       </button>
       <button class="adv-nav-btn" onclick="playSfx('sfx-gentle',0.5);window.openMonsterPage&&window.openMonsterPage()">
         <span class="adv-nav-icon">👹</span>
@@ -11991,6 +12000,8 @@ function confirmHeroPick(){
         : { s1: 0, s2: 0 };
       // 3. 爆發等級 → 直接存在英雄物件上，_runBurst 直接讀取
       h._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[h.name]) || 0;
+      // ★ v1.0.20260428.3730 — 4. 至寶加成(基礎屬性 + 投資點 + 特殊效果)
+      try{ if(typeof _applyTaiwanTreasureToHero === 'function') _applyTaiwanTreasureToHero(h); }catch(e){ console.warn('[至寶套用] 失敗', e); }
     });
     // BOSS 陣容：使用玩家在選英雄頁「換路線」選定的變體（若未選，預設第一個）
     let _variant = null;
@@ -12072,6 +12083,12 @@ function confirmHeroPick(){
   }
   // Build p1 from selected 4 heroes
   G.p1 = _heroPickSelected.map((n,i)=>newHero(n,'p1',i));
+  // ★ v1.0.20260428.3730 — 鬥技場也套用至寶加成
+  try{
+    if(typeof _applyTaiwanTreasureToHero === 'function'){
+      G.p1.forEach(h => { _applyTaiwanTreasureToHero(h); });
+    }
+  }catch(e){ console.warn('[鬥技場至寶套用] 失敗', e); }
 
   // Build p2: 使用預覽陣容保持一致，若有人被玩家選走則補充
   let p2names=(_previewEnemyNames||[]).filter(n=>!_heroPickSelected.includes(n)).slice(0,4);
@@ -15801,6 +15818,22 @@ function doDmg(target, rawDmg, opts={}){
     return 0;
   }
 
+  // ★ v1.0.20260428.3730 — 至寶閃避率(三峽藍染雲袖)+ 攻擊者命中率(蘭嶼拼板舟神弓)
+  //   先計算淨閃避機率(防禦者閃避 - 攻擊者命中),取 0~95% 區間
+  if(!opts.ignoreEvasion && !opts.piercing && !opts.isRebound && target){
+    const _tarEff = (target._treasureEff) || {};
+    const _atkEff = (a && a._treasureEff) || {};
+    const _dodge = _tarEff.dodgeRate || 0;
+    const _hit   = _atkEff.hitRate   || 0;
+    const _net = (_dodge - _hit) / 100;
+    if(_net > 0 && Math.random() < Math.min(0.95, _net)){
+      showShieldVFX(target, 'evade');
+      showPopup(target, '✨MISS', 'miss');
+      log(`✨ [${target.name}] 至寶閃避(藍染雲袖)!`);
+      return 0;
+    }
+  }
+
   // ── 速度命中/迴避：速度差影響命中率（每1點速度+1%命中/迴避）──
   if(!opts.ignoreEvasion && !opts.piercing && a && target && !opts.isSkill){
     // 普通攻擊才受速度命中影響
@@ -16250,6 +16283,22 @@ function doDmg(target, rawDmg, opts={}){
   dmg=Math.max(0,dmg);
   // ★ minDmg：特定技能的最低傷害保底（如焰尾九連擊每擊最低6傷害）
   if(opts.minDmg && dmg > 0) dmg = Math.max(opts.minDmg, dmg);
+  // ★ v1.0.20260428.3730 — 至寶傷害加成(攻擊者):
+  //   特技傷害(skillDmgBonus,阿里山神木茶杖) / 普攻傷害(normalAtkDmgBonus,台北101神槍)
+  if(dmg > 0 && a && a._treasureEff && !opts.isRebound && !opts.isTraitShare && !opts.isChaos){
+    if(opts.isSkill && a._treasureEff.skillDmgBonus){
+      const _bonus = Math.floor(dmg * (a._treasureEff.skillDmgBonus / 100));
+      if(_bonus > 0) dmg += _bonus;
+    } else if(!opts.isSkill && a._treasureEff.normalAtkDmgBonus){
+      const _bonus = Math.floor(dmg * (a._treasureEff.normalAtkDmgBonus / 100));
+      if(_bonus > 0) dmg += _bonus;
+    }
+  }
+  // ★ v1.0.20260428.3730 — 至寶受傷減免(防禦者,玉山巔峰之盾)
+  if(dmg > 0 && target && target._treasureEff && target._treasureEff.dmgReduce && !opts.isRebound){
+    const _reduceRate = Math.min(0.85, target._treasureEff.dmgReduce / 100);
+    dmg = Math.max(1, Math.floor(dmg * (1 - _reduceRate)));
+  }
   const _mercyRainActive=hasBuff(target,'mercyRain') && dmg>0;
   // ── 裝備效果：鋼鐵鎧甲
   const teq=getEquip(target);
@@ -16295,8 +16344,10 @@ function doDmg(target, rawDmg, opts={}){
     statTrack(target,'hitsReceived',1);
   }
   // 需求3：爆擊判斷（15%機率，傷害×1.8）
+  // ★ v1.0.20260428.3730 — 至寶爆擊率加成(攻擊者,深坑臭豆腐神劍):基礎 15% + critRate%
   let _isCrit=false;
-  if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random()<0.15){
+  const _critChance = 0.15 + ((a && a._treasureEff && a._treasureEff.critRate) || 0) / 100;
+  if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
     const _critExtra=Math.floor(dmg*0.3);
     dmg+=_critExtra;
     target.curHp=Math.max(0,target.curHp-_critExtra); // 補扣額外爆擊傷害
@@ -16309,6 +16360,20 @@ function doDmg(target, rawDmg, opts={}){
     playSfx('sfx-crit',1.0);
   } else {
     showPopup(target,dmg,'dmg');
+  }
+  // ★ v1.0.20260428.3730 — 至寶反彈(防禦者,日月潭靈鏡):受傷時 X% 機率反彈傷害給攻擊者
+  if(dmg > 0 && a && a !== target && a.side !== target.side && a.curHp > 0
+     && target._treasureEff && target._treasureEff.reflectChance
+     && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && !opts.noReflect){
+    const _reflectRate = Math.min(0.95, target._treasureEff.reflectChance / 100);
+    if(Math.random() < _reflectRate){
+      const _refDmg = Math.max(1, Math.floor(dmg * 0.5)); // 反彈 50% 傷害
+      try{ playSfx('sfx-reflect', 0.8); }catch(_){}
+      try{ showPopup(target, '🪞反彈', 'miss'); }catch(_){}
+      try{ log(`🪞 [${target.name}] 至寶反彈(日月潭靈鏡)!對 [${a.name}] 造成 ${_refDmg} 傷害!`); }catch(_){}
+      // 用 noReflect:true 避免無限互相反彈
+      doDmg(a, _refDmg, { noReflect:true, ignoreBuffs:true, isRebound:true, noEquip:true });
+    }
   }
   // ★ v1.0.20260423.0100 — 多段傷害合計
   try{ _batchAccum('dmg', target, dmg); }catch(_bte){}
@@ -16939,6 +17004,11 @@ function doHeal(target, rawAmt, opts={}){
   if(target && hasStatus(target,'noheal_curse')&&!opts.isChaos){ log(`🚫 不治詛咒：[${target.name}] 無法恢復HP！`); return 0; }
   // healReduced (朱雀召喚：治療量減半)
   if(target && hasStatus(target,'healReduced')){ rawAmt=Math.ceil(rawAmt*0.5); }
+  // ★ v1.0.20260428.3730 — 至寶受到治療加成(滷肉飯萬用鼎)
+  if(target && target._treasureEff && target._treasureEff.healReceived){
+    const _bonus = target._treasureEff.healReceived / 100;
+    rawAmt = Math.ceil(rawAmt * (1 + _bonus));
+  }
   const a=G.activeChar||opts.actor;
   let amt=rawAmt;
   // ★ 技能升級倍率（只對 isHeal:true 有效）
@@ -22075,6 +22145,27 @@ function startTurn(){
     if(G._lastSnapRound !== _curR){
       G._curRoundSnap = (typeof _takeRoundSnapshot === 'function') ? _takeRoundSnapshot() : null;
       G._lastSnapRound = _curR;
+      // ★ v1.0.20260428.3730 — 至寶每回合 HP regen(珍珠奶茶聖杯)
+      //   只在新回合的首次 startTurn 觸發,避免同回合內 startTurn 被多次呼叫時重複回血
+      try{
+        if(G.p1){
+          G.p1.forEach(h => {
+            if(!h || h.curHp <= 0) return;
+            const _eff = h._treasureEff;
+            if(!_eff || !_eff.hpRegenPercent) return;
+            const _amt = Math.max(1, Math.floor(h.hp * (_eff.hpRegenPercent / 100)));
+            const _before = h.curHp;
+            h.curHp = Math.min(h.hp, h.curHp + _amt);
+            const _real = h.curHp - _before;
+            if(_real > 0){
+              try{ showPopup(h, '+'+_real, 'heal'); }catch(_){}
+              try{ if(typeof healParticles === 'function') healParticles(h); }catch(_){}
+              try{ log(`🥤 [${h.name}] 至寶回復(珍奶聖杯) +${_real} HP`); }catch(_){}
+              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
+            }
+          });
+        }
+      }catch(_treRe){ console.warn('[至寶 HP regen] 失敗', _treRe); }
     }
   }catch(e){}
   // ★ 每回合開始儲存快照（F8密技）
@@ -23675,6 +23766,9 @@ function _realAiAct(a){
 }
 function aiUseSkill(a,sk,cost,pref){
   G.lastSkill={...sk,actor:a};
+  // ★ v1.0.20260428.3740 — 設定 _curSkillName 讓 doDmg 能套用 SKILL_FORCE_ELEMENT 屬性
+  //   (原本只有 execSkill 有設,aiUseSkill 沒設導致 BOSS 技能屬性套不對)
+  try{ window._curSkillName = sk.n; }catch(_){}
   const _opp=a.side==='p1'?'p2':'p1';
   const enemies=G[_opp].filter(h=>h.curHp>0);
   const allies=G[a.side].filter(h=>h.curHp>0);
@@ -24360,6 +24454,192 @@ function aiUseSkill(a,sk,cost,pref){
       bannerFX(t, '😈 惡作劇！', '#cc44ff', 900);
       renderCard(t);
     }
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260428.3740 — 台灣 10 BOSS 技能處理(20 個 s1/s2)
+  //   屬性元素由 SKILL_FORCE_ELEMENT 自動套用(已設 _curSkillName)
+  // ════════════════════════════════════════════════════════════════
+  // ─── 油膩魔王・滷汁大鍋 ───
+  else if(n==='滷汁飛濺'){
+    if(t){
+      doDmg(t, Math.floor(spv(a)*1.0), {actor:a,isSkill:true});
+      if(t.curHp>0 && Math.random()<0.30) addStatus(t,'hellfire',1);
+    }
+  }
+  else if(n==='秘製大滷'){
+    const _amt = Math.floor(a.hp * 0.25);
+    doHeal(a, _amt, {actor:a, isHeal:true});
+    addBuff(a, 'statusImmune', 1);
+    bannerFX(a, '🍲 秘製大滷!', '#ffaa44', 1000);
+  }
+  // ─── 酥脆狂魔・熱浪糕師 ───
+  else if(n==='糖漿轟炸'){
+    if(t){
+      doDmg(t, Math.floor(spv(a)*1.1), {actor:a,isSkill:true});
+      if(t.curHp>0) addStatus(t,'spddown',1);
+    }
+  }
+  else if(n==='熱浪烤箱'){
+    if(t){
+      doDmg(t, Math.floor(spv(a)*1.4), {actor:a,isSkill:true});
+      if(t.curHp>0 && Math.random()<0.30){
+        addStatus(t,'hellfire',2);
+        try{ const _hf = t.status.find(s=>s.type==='hellfire'); if(_hf) _hf._strong = true; }catch(_){}
+      }
+    }
+  }
+  // ─── 臭氣魔王・發酵公 ───
+  else if(n==='發酵臭氣彈'){
+    if(t){
+      doDmg(t, Math.floor(spv(a)*1.2), {actor:a,isSkill:true});
+      if(t.curHp>0 && Math.random()<0.40) addStatus(t,'poison',2);
+    }
+  }
+  else if(n==='豆腐封印'){
+    if(t){
+      addStatus(t, 'seal', 2);
+      try{ const _sl = t.status.find(s=>s.type==='seal'); if(_sl) _sl._strong = true; }catch(_){}
+      bannerFX(t, '🚫 強力封印!', '#aa44ff', 1100);
+    }
+  }
+  // ─── 山靈古魔・千年怒木 ───
+  else if(n==='根鬚絞殺'){
+    if(t){
+      const _dmg = Math.floor(atkv(a)*1.6);
+      doDmg(t, _dmg, {actor:a,isSkill:true});
+      if(t.curHp>0 && Math.random()<0.25) addStatus(t,'trap',1);
+      // 第 2 擊
+      _pSetTimeout(()=>{
+        if(t.curHp>0){
+          doDmg(t, _dmg, {actor:a,isSkill:true});
+          if(t.curHp>0 && Math.random()<0.25) addStatus(t,'trap',1);
+        }
+      }, 250);
+    }
+  }
+  else if(n==='神木怒火'){
+    enemies.forEach(e => { if(e.curHp>0) doDmg(e, Math.floor(spv(a)*1.3), {actor:a,isSkill:true,isAoe:true}); });
+    addBuff(a,'dmgup',2);
+    bannerFX(a,'🌲 怒火燃燒!','#88cc44',1100);
+  }
+  // ─── 深海惡靈・觸手大蛟 ───
+  else if(n==='八觸手亂舞'){
+    for(let i=0;i<5;i++){
+      _pSetTimeout(()=>{
+        const _liveEn = G[_opp].filter(h=>h.curHp>0);
+        if(_liveEn.length){
+          const _tt = _liveEn[Math.floor(Math.random()*_liveEn.length)];
+          doDmg(_tt, Math.floor(spv(a)*0.65), {actor:a,isSkill:true});
+        }
+      }, i*150);
+    }
+  }
+  else if(n==='深海漩渦'){
+    enemies.forEach(e => {
+      if(e.curHp>0){
+        doDmg(e, Math.floor(spv(a)*1.4), {actor:a,isSkill:true,isAoe:true});
+        if(e.curHp>0){
+          addStatus(e,'spddown',2);
+          try{ const _sd = e.status.find(s=>s.type==='spddown'); if(_sd) _sd._strong = true; }catch(_){}
+        }
+      }
+    });
+  }
+  // ─── 染靈幻魔・藍色憂鬱 ───
+  else if(n==='藍染霧霾'){
+    enemies.forEach(e => {
+      if(e.curHp>0){
+        doDmg(e, Math.floor(spv(a)*1.5), {actor:a,isSkill:true,isAoe:true});
+        if(e.curHp>0 && Math.random()<0.40) addStatus(e,'forecast',2);
+      }
+    });
+  }
+  else if(n==='憂鬱之歌'){
+    enemies.forEach(e => {
+      if(e.curHp>0 && !hasBuff(e,'ctrlImmune') && !hasBuff(e,'statusImmune')){
+        addStatus(e,'charm',1);
+        bannerFX(e,'💕 魅惑!','#ff88cc',900);
+      }
+    });
+  }
+  // ─── 珍奶吸魂魔・大波霸 ───
+  else if(n==='珍珠機關槍'){
+    for(let i=0;i<8;i++){
+      _pSetTimeout(()=>{
+        const _liveEn = G[_opp].filter(h=>h.curHp>0);
+        if(_liveEn.length){
+          const _tt = _liveEn[Math.floor(Math.random()*_liveEn.length)];
+          doDmg(_tt, Math.floor(atkv(a)*0.7), {actor:a,isSkill:true});
+          if(_tt.curHp>0 && Math.random()<0.20) addStatus(_tt,'noatk',1);
+        }
+      }, i*100);
+    }
+  }
+  else if(n==='吸魂吸管'){
+    if(t){
+      const _dmg = Math.floor(spv(a)*1.5);
+      const _real = doDmg(t, _dmg, {actor:a,isSkill:true});
+      if(_real > 0) doHeal(a, _real, {actor:a, isHeal:true, noDice:true});
+    }
+  }
+  // ─── 水靈反魔・倒映女 ───
+  else if(n==='鏡面分身'){
+    enemies.forEach(e => { if(e.curHp>0) doDmg(e, Math.floor(spv(a)*1.3), {actor:a,isSkill:true,isAoe:true}); });
+    addBuff(a,'evasion',1);
+    bannerFX(a,'🪞 鏡面分身!','#88ccff',1100);
+  }
+  else if(n==='映像撕裂'){
+    enemies.forEach(e => {
+      if(e.curHp>0){
+        doDmg(e, Math.floor(spv(a)*1.6), {actor:a,isSkill:true,isAoe:true});
+        if(e.curHp>0 && Math.random()<0.40) addStatus(e,'confused',1);
+      }
+    });
+  }
+  // ─── 摩天魔將・夜空爆裂者 ───
+  else if(n==='煙火齊射'){
+    for(let pass=0; pass<3; pass++){
+      _pSetTimeout(()=>{
+        enemies.forEach(e => {
+          if(e.curHp>0){
+            doDmg(e, Math.floor(spv(a)*0.9), {actor:a,isSkill:true,isAoe:true,ignoreEvasion:true});
+            if(e.curHp>0 && Math.random()<0.30) addStatus(e,'hellfire',1);
+          }
+        });
+      }, pass*250);
+    }
+  }
+  else if(n==='擎天爆閃'){
+    if(t){
+      // 必中爆擊 → ignoreEvasion + 直接放大 1.8x
+      const _dmg = Math.floor(atkv(a) * 3.0 * 1.8);
+      doDmg(t, _dmg, {actor:a,isSkill:true,ignoreEvasion:true,piercing:true});
+      if(t.curHp>0) addStatus(t,'stun',1);
+      bannerFX(a,'⚡ 擎天爆閃!','#ffee44',1200);
+    }
+  }
+  // ─── 山岳禁咒・崩天巨人 ───
+  else if(n==='落石鐵拳'){
+    if(t){
+      doDmg(t, Math.floor(atkv(a)*2.2), {actor:a,isSkill:true});
+      // 相鄰位置全體小傷害
+      const _idx = G[_opp].indexOf(t);
+      [_idx-1, _idx+1].forEach(_ai => {
+        const _adj = G[_opp][_ai];
+        if(_adj && _adj.curHp>0) doDmg(_adj, Math.floor(spv(a)*0.7), {actor:a,isSkill:true,isAoe:true});
+      });
+    }
+  }
+  else if(n==='山崩地裂'){
+    enemies.forEach(e => {
+      if(e.curHp>0){
+        doDmg(e, Math.floor(spv(a)*1.8), {actor:a,isSkill:true,isAoe:true});
+        if(e.curHp>0 && Math.random()<0.30) addStatus(e,'stun',1);
+      }
+    });
+    // 自身岩石護甲(用 halfDmg buff 模擬 40% 減傷,2 回合)
+    addBuff(a,'halfDmg',2);
+    bannerFX(a,'🗻 岩石護甲!','#ccaa88',1100);
   }
   // ★ 最後兜底：技能名未匹配任何分支。若是治療技能就治療 al，否則才對敵人造成傷害。
   //   原本這裡的 fallback 一律 doDmg(t, spv(a))，當 t 是友方（治療 pref）時會打到自己人。
@@ -26710,8 +26990,13 @@ function _detectCurrentBgm(){
         if(typeof JAPAN_BATTLE_BGM_LIST !== 'undefined' && _curBgm && JAPAN_BATTLE_BGM_LIST.includes(_curBgm)) return _curBgm;
         return 'bgm-japan-battle';
       }
-      // ★ v1.0.20260428.3200 — 台灣關 BOSS 戰統一用 bgm-taiwan-boss
+      // ★ v1.0.20260428.3740 — 台灣關 BOSS 戰:玉山專屬 + 其他輪播
       if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        if(window._advSelectedTaiwanBoss === 'yushan_giant'){
+          return 'bgm-taiwan-boss-yushan';
+        }
+        // 若目前已在播台灣 BOSS 系列任一首,保持不換(避免靜音/取消靜音來回切歌)
+        if(_curBgm === 'bgm-taiwan-boss-2' || _curBgm === 'bgm-taiwan-boss') return _curBgm;
         return 'bgm-taiwan-boss';
       }
       // ★ 依 BOSS 變體決定 BOSS BGM（即使 _curBgm 為 null 從靜音切回也能正確判斷）
@@ -28375,6 +28660,14 @@ scaleToViewport();
 //     treasure    打贏掉落的至寶 id
 //
 //   裝備能力欄位待管理員自行設計填入(本框架先留空)
+// ★ v1.0.20260428.3720 — 重寫至寶資料結構,精確對齊玩家設計需求
+//   每個至寶有:
+//   - baseStats: 基礎四屬性永久加成(裝備即生效,不依等級遞增)
+//   - specialEffects: 特殊百分比效果(爆擊/閃避/反彈/回血等),
+//     滿級會額外提升 +18% (每升一級 +2%)
+//   - 升級曲線:用 _getTaiwanTreasureExpForNextLv 取代,Lv0→1 需 10 題,
+//     1→2 需 20(累積30),2→3 需 30(累積60),... 公式 (lv+1)*10 累積等差級數
+//   - 玩家點:每升 1 級可投資 1 點到任一基礎屬性(共 10 點可分配)
 const TAIWAN_TREASURES = {
   // ─── 飾品 (Accessory) ───
   pearl_grail: {
@@ -28382,16 +28675,13 @@ const TAIWAN_TREASURES = {
     name: '珍珠奶茶聖杯',
     rarity: 'legend',          // mythic / legend / epic / rare
     slot: 'accessory',
-    icon: '🥤',                 // 待替換為實際圖片
+    icon: '🥤',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('珍珠奶茶聖杯.png'),
-    desc: '傳說中盛裝最完美珍奶的金邊聖杯,飲下能讓人精神百倍。',
-    // 基礎屬性加成(滿級時的額外加成,未滿級依 lv 比例計算)
-    baseStats: { hp: 80, atk: 0, sp: 25, spd: 12 },
-    // 至寶技能(待設計):name, desc, trigger, effect
-    ability: {
-      name: '【待設計】珍奶之力',
-      desc: '管理員可在 TAIWAN_TREASURES.pearl_grail.ability 中填入能力描述',
-    },
+    desc: '透明琉璃杯中裝著流動的金色液體與黑曜石般的珍珠。',
+    baseStats: { hp: 15, atk: 0, sp: 0, spd: 0 },
+    specialEffects: { hpRegenPercent: 10 }, // 每回合自動恢復 10% HP
+    abilityText: '基礎 HP+15、每回合自動恢復 10% HP',
+    bossId: 'ximen_pearl',
   },
   sun_moon_mirror: {
     id: 'sun_moon_mirror',
@@ -28400,9 +28690,11 @@ const TAIWAN_TREASURES = {
     slot: 'accessory',
     icon: '🪞',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('日月潭靈鏡.png'),
-    desc: '映照真實的古老青銅鏡,持有者能洞察一切虛偽。',
-    baseStats: { hp: 60, atk: 0, sp: 30, spd: 8 },
-    ability: { name: '【待設計】靈鏡之眼', desc: '待管理員填入' },
+    desc: '鑲嵌著半日半月的古銅鏡,倒映著波光粼粼的湖面。',
+    baseStats: { hp: 5, atk: 0, sp: 5, spd: 5 },
+    specialEffects: { reflectChance: 40 }, // 受到傷害時 40% 機率反彈
+    abilityText: '基礎 HP+5、特技+5、速度+5;受到傷害時 40% 機率反彈',
+    bossId: 'sun_moon_mirror_boss',
   },
   pineapple_charm: {
     id: 'pineapple_charm',
@@ -28411,9 +28703,11 @@ const TAIWAN_TREASURES = {
     slot: 'accessory',
     icon: '🍍',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鳳梨酥幸運符.png'),
-    desc: '甜蜜鳳梨酥造型的幸運符,帶來金黃好運氣。',
-    baseStats: { hp: 40, atk: 5, sp: 5, spd: 10 },
-    ability: { name: '【待設計】鳳梨好運', desc: '待管理員填入' },
+    desc: '金黃誘人的方塊狀掛飾,繫著大紅色的流蘇結。',
+    baseStats: { hp: 0, atk: 0, sp: 0, spd: 15 },
+    specialEffects: { dropRateBonus: 30 }, // 掉寶率 +30%
+    abilityText: '基礎速度+15、掉寶率 +30%',
+    bossId: 'taichung_pineapple',
   },
   // ─── 武器 (Weapon) ───
   stinky_tofu_sword: {
@@ -28423,9 +28717,11 @@ const TAIWAN_TREASURES = {
     slot: 'weapon',
     icon: '⚔️',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('深坑臭豆腐神劍.png'),
-    desc: '由發酵千年的深坑豆腐凝鍊而成,劍氣帶有獨特氣味。',
-    baseStats: { hp: 30, atk: 18, sp: 0, spd: 0 },
-    ability: { name: '【待設計】臭氣斬', desc: '待管理員填入' },
+    desc: '方正且帶有發酵紋路的重劍,劍身散發著淡黃色的瘴氣。',
+    baseStats: { hp: 0, atk: 10, sp: 5, spd: 0 },
+    specialEffects: { critRate: 30 }, // 爆擊率 +30%
+    abilityText: '基礎攻擊+10、特技+5;爆擊率 +30%',
+    bossId: 'shenkeng_tofu',
   },
   alishan_tea_staff: {
     id: 'alishan_tea_staff',
@@ -28434,9 +28730,11 @@ const TAIWAN_TREASURES = {
     slot: 'weapon',
     icon: '🪄',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('阿里山神木茶杖.png'),
-    desc: '千年神木雕刻的法杖,杖頂的茶杯永遠冒著靈氣。',
-    baseStats: { hp: 30, atk: 0, sp: 22, spd: 0 },
-    ability: { name: '【待設計】神木靈息', desc: '待管理員填入' },
+    desc: '由千年紅檜木雕琢而成,杖尖縈繞著濃郁茶香的雲霧。',
+    baseStats: { hp: 0, atk: 0, sp: 15, spd: 0 },
+    specialEffects: { skillDmgBonus: 30 }, // 特技傷害 +30%
+    abilityText: '基礎特技+15、特技傷害 +30%',
+    bossId: 'alishan_tree',
   },
   taipei_101_spear: {
     id: 'taipei_101_spear',
@@ -28445,9 +28743,11 @@ const TAIWAN_TREASURES = {
     slot: 'weapon',
     icon: '🔱',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('台北 101 擎天神槍.png'),
-    desc: '汲取 101 大樓擎天能量打造的科技長槍,槍尖能量爆閃。',
-    baseStats: { hp: 50, atk: 28, sp: 0, spd: 5 },
-    ability: { name: '【待設計】擎天爆閃', desc: '待管理員填入' },
+    desc: '節節攀升的青藍色長槍,造型參考竹子,槍尖帶有避雷針般的雷光。',
+    baseStats: { hp: 0, atk: 15, sp: 0, spd: 0 },
+    specialEffects: { normalAtkDmgBonus: 30 }, // 普攻傷害 +30%
+    abilityText: '基礎攻擊+15、普攻傷害 +30%',
+    bossId: 'taipei_101_warlord',
   },
   lanyu_bow: {
     id: 'lanyu_bow',
@@ -28456,9 +28756,11 @@ const TAIWAN_TREASURES = {
     slot: 'weapon',
     icon: '🏹',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('蘭嶼拼板舟神弓.png'),
-    desc: '達悟族傳統拼板舟改造的神弓,弓弦發出深海藍光。',
-    baseStats: { hp: 20, atk: 15, sp: 8, spd: 12 },
-    ability: { name: '【待設計】深海之矢', desc: '待管理員填入' },
+    desc: '紅白黑三色繪紋的流線型長弓,箭矢射出時帶有飛魚的幻影。',
+    baseStats: { hp: 0, atk: 5, sp: 10, spd: 0 },
+    specialEffects: { hitRate: 30 }, // 命中率 +30%
+    abilityText: '基礎攻擊+5、特技+10;命中率 +30%',
+    bossId: 'lanyu_octopus',
   },
   // ─── 防具 (Armor) ───
   yushan_shield: {
@@ -28468,9 +28770,11 @@ const TAIWAN_TREASURES = {
     slot: 'armor',
     icon: '🛡️',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉山巔峰之盾.png'),
-    desc: '由玉山主峰山岩凝聚的神話之盾,蘊含台灣最高峰的氣勢。',
-    baseStats: { hp: 200, atk: 0, sp: 0, spd: -3 },
-    ability: { name: '【待設計】巔峰守護', desc: '待管理員填入' },
+    desc: '由灰白色岩層與終年不化的積雪構成的巨盾,極其沈穩。',
+    baseStats: { hp: 15, atk: 0, sp: 0, spd: 0 },
+    specialEffects: { dmgReduce: 30 }, // 受到傷害 -30%
+    abilityText: '基礎 HP+15、受到傷害 -30%',
+    bossId: 'yushan_giant',
   },
   braised_pork_cauldron: {
     id: 'braised_pork_cauldron',
@@ -28479,9 +28783,11 @@ const TAIWAN_TREASURES = {
     slot: 'armor',
     icon: '🍚',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('滷肉飯萬用鼎.png'),
-    desc: '盛裝最濃郁滷汁的古鼎,披在身上充滿香氣與防禦力。',
-    baseStats: { hp: 80, atk: 3, sp: 3, spd: 0 },
-    ability: { name: '【待設計】滷汁庇護', desc: '待管理員填入' },
+    desc: '厚重的黑色陶罐,底部帶有永不熄滅的溫潤火光。',
+    baseStats: { hp: 15, atk: 0, sp: 0, spd: 0 },
+    specialEffects: { healReceived: 30 }, // 受到治療 +30%
+    abilityText: '基礎 HP+15、受到治療 +30%',
+    bossId: 'changhua_braised',
   },
   sanxia_indigo_robe: {
     id: 'sanxia_indigo_robe',
@@ -28490,9 +28796,11 @@ const TAIWAN_TREASURES = {
     slot: 'armor',
     icon: '🎽',
     iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('三峽藍染雲袖.png'),
-    desc: '三峽古法藍染製成的飄逸雲袖,流動的靛藍能化解攻擊。',
-    baseStats: { hp: 120, atk: 0, sp: 10, spd: 8 },
-    ability: { name: '【待設計】藍染幻影', desc: '待管理員填入' },
+    desc: '深邃如夜空的藍染綢緞,隨風飄動時會隱約顯現雲霧圖騰。',
+    baseStats: { hp: 0, atk: 0, sp: 0, spd: 15 },
+    specialEffects: { dodgeRate: 30 }, // 閃避率 +30%
+    abilityText: '基礎速度+15、閃避率 +30%',
+    bossId: 'sanxia_indigo',
   },
 };
 
@@ -28707,22 +29015,82 @@ const TAIWAN_BOSSES = {
 // ★ 至寶等級系統:1~10 級,每級提升 10% 基礎屬性
 //   累積經驗值需求:lv1→2 = 10 EXP, lv2→3 = 20, ...每級 +10
 const TAIWAN_TREASURE_MAX_LV = 10;
+
+// ★ v1.0.20260428.3720 — 至寶升級需求(累積已答對題數):
+//   Lv0→1:10, Lv1→2:20(累積30), Lv2→3:30(累積60), Lv3→4:40(累積100),
+//   Lv4→5:50(累積150), Lv5→6:60(累積210), Lv6→7:70(累積280),
+//   Lv7→8:80(累積360), Lv8→9:90(累積450), Lv9→10:100(累積550)
+//   公式:升 lv→lv+1 需要 (lv+1)*10 EXP
+const _TAIWAN_TREASURE_LV_CUMULATIVE = [0, 10, 30, 60, 100, 150, 210, 280, 360, 450, 550];
+
 function _getTaiwanTreasureExpForNextLv(curLv){
-  // lv1→2 需 10 EXP, lv2→3 需 20, ...
+  // curLv 0~9 → 回傳升到下一級需要的 EXP(差值)
   if(curLv >= TAIWAN_TREASURE_MAX_LV) return 0;
-  return curLv * 10;
+  return (curLv + 1) * 10;
 }
-// 取得至寶在當前等級的實際屬性加成(線性成長,lv1=10%,lv10=100%)
+
+// 取得至寶在當前等級的「等級加成」(目前用戶設計:基礎屬性不依等級遞增,直接固定;
+// 升級的 1 點屬性點透過 _taiwanTreasureData[id].invested 由玩家分配;
+// 特殊百分比效果則隨等級 +2%)
 function _getTaiwanTreasureStats(treasureId, lv){
   const def = TAIWAN_TREASURES[treasureId];
   if(!def) return { hp:0, atk:0, sp:0, spd:0 };
-  const _ratio = Math.max(0.1, Math.min(1.0, (lv||1) / TAIWAN_TREASURE_MAX_LV));
+  // 基礎屬性永遠是 baseStats 全值(不依等級遞增,因為新設計是固定加成)
   return {
-    hp:  Math.round((def.baseStats.hp  || 0) * _ratio),
-    atk: Math.round((def.baseStats.atk || 0) * _ratio),
-    sp:  Math.round((def.baseStats.sp  || 0) * _ratio),
-    spd: Math.round((def.baseStats.spd || 0) * _ratio),
+    hp:  (def.baseStats && def.baseStats.hp ) || 0,
+    atk: (def.baseStats && def.baseStats.atk) || 0,
+    sp:  (def.baseStats && def.baseStats.sp ) || 0,
+    spd: (def.baseStats && def.baseStats.spd) || 0,
   };
+}
+
+// ★ v1.0.20260428.3720 — 取得至寶的特殊效果加成(滿等時為 baseEffect + 18%)
+//   每升 1 級,所有特殊百分比 +2%(共 +18% at lv10)
+function _getTaiwanTreasureEffectBonus(treasureId, lv){
+  const def = TAIWAN_TREASURES[treasureId];
+  if(!def || !def.specialEffects) return {};
+  const _addPct = Math.max(0, ((lv||0) - 1)) * 2; // lv1=+0%, lv2=+2%, ..., lv10=+18%
+  const out = {};
+  Object.keys(def.specialEffects).forEach(k => {
+    out[k] = def.specialEffects[k] + _addPct;
+  });
+  return out;
+}
+
+// 取得至寶玩家投資的屬性點(每升一級可投資 1 點到任一屬性)
+function _getTaiwanTreasureInvested(treasureId){
+  const rec = _taiwanTreasureData && _taiwanTreasureData[treasureId];
+  if(!rec || !rec.invested) return { hp:0, atk:0, sp:0, spd:0 };
+  return {
+    hp:  rec.invested.hp  || 0,
+    atk: rec.invested.atk || 0,
+    sp:  rec.invested.sp  || 0,
+    spd: rec.invested.spd || 0,
+  };
+}
+
+// 取得至寶可投資的剩餘點數(已升級數 - 已投資點數)
+function _getTaiwanTreasureFreePts(treasureId){
+  const rec = _taiwanTreasureData && _taiwanTreasureData[treasureId];
+  if(!rec) return 0;
+  const inv = _getTaiwanTreasureInvested(treasureId);
+  const used = (inv.hp + inv.atk + inv.sp + inv.spd) || 0;
+  // 等級每升 1 級可投資 1 點(lv1=0點, lv2=1點, ..., lv10=9點)
+  const earned = Math.max(0, (rec.lv || 1) - 1);
+  return Math.max(0, earned - used);
+}
+
+// 玩家投資 1 點到指定屬性
+function _investTaiwanTreasurePt(treasureId, statKey){
+  if(!['hp','atk','sp','spd'].includes(statKey)) return false;
+  const rec = _taiwanTreasureData && _taiwanTreasureData[treasureId];
+  if(!rec) return false;
+  if(_getTaiwanTreasureFreePts(treasureId) <= 0) return false;
+  if(!rec.invested) rec.invested = { hp:0, atk:0, sp:0, spd:0 };
+  rec.invested[statKey] = (rec.invested[statKey] || 0) + 1;
+  if(typeof _saveTaiwanTreasureData === 'function') _saveTaiwanTreasureData();
+  try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+  return true;
 }
 
 // ★ 玩家擁有的至寶資料(localStorage 持久化,雲端同步)
@@ -28810,12 +29178,49 @@ function _calcHeroTreasureBonus(heroName){
   const total = { hp:0, atk:0, sp:0, spd:0 };
   equipped.forEach(e => {
     const stats = _getTaiwanTreasureStats(e.id, e.record.lv);
-    total.hp  += stats.hp;
-    total.atk += stats.atk;
-    total.sp  += stats.sp;
-    total.spd += stats.spd;
+    const inv = _getTaiwanTreasureInvested(e.id);
+    total.hp  += (stats.hp ||0) + (inv.hp ||0);
+    total.atk += (stats.atk||0) + (inv.atk||0);
+    total.sp  += (stats.sp ||0) + (inv.sp ||0);
+    total.spd += (stats.spd||0) + (inv.spd||0);
   });
   return total;
+}
+
+// ★ v1.0.20260428.3730 — 戰鬥開始時把至寶效果套到英雄物件上
+//   - 基礎屬性(hp/atk/sp/spd) + 玩家投資點直接加到英雄屬性
+//   - 特殊效果(critRate/dodgeRate/...)累加後存到 h._treasureEff,
+//     供戰鬥邏輯(doDmg/doHeal/startTurn)讀取觸發
+function _applyTaiwanTreasureToHero(h){
+  if(!h || typeof _getHeroEquippedTreasures !== 'function') return;
+  const equipped = _getHeroEquippedTreasures(h.name);
+  if(!equipped || !equipped.length){
+    h._treasureEff = h._treasureEff || {};
+    return;
+  }
+  const _eff = {};
+  let _addHp = 0, _addAtk = 0, _addSp = 0, _addSpd = 0;
+  equipped.forEach(e => {
+    if(!e || !e.def || !e.record) return;
+    // 基礎屬性
+    const _base = _getTaiwanTreasureStats(e.id, e.record.lv);
+    const _inv = _getTaiwanTreasureInvested(e.id);
+    _addHp  += (_base.hp  || 0) + (_inv.hp  || 0);
+    _addAtk += (_base.atk || 0) + (_inv.atk || 0);
+    _addSp  += (_base.sp  || 0) + (_inv.sp  || 0);
+    _addSpd += (_base.spd || 0) + (_inv.spd || 0);
+    // 特殊效果(累加,多件至寶可疊加)
+    const _bonus = _getTaiwanTreasureEffectBonus(e.id, e.record.lv);
+    Object.keys(_bonus).forEach(k => { _eff[k] = (_eff[k] || 0) + _bonus[k]; });
+  });
+  // 套用基礎屬性到英雄
+  if(_addHp){ h.hp  = (h.hp  || 0) + _addHp;  h.curHp = h.hp; }
+  if(_addAtk){ h.atk = (h.atk || 0) + _addAtk; }
+  if(_addSp){ h.sp  = (h.sp  || 0) + _addSp;  }
+  if(_addSpd){ h.spd = (h.spd || 0) + _addSpd; }
+  h._treasureEff = _eff;
+  try{ console.log('[至寶套用] '+h.name+' 加成:',
+    {hp:_addHp,atk:_addAtk,sp:_addSp,spd:_addSpd}, 'effects:', _eff); }catch(_){}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -28861,35 +29266,112 @@ window._buildTaiwanBossTeam = function(bossId){
 };
 
 // 台灣關 BOSS 戰勝後的至寶發放 hook(由 advShowBattleResult 呼叫)
+// ★ v1.0.20260428.3720 — 改成 10% 基礎掉落率 + 難度加成,重複掉落轉成至寶經驗卷軸
+//   掉率公式:沒自信 5% / 普通 10% / 我很會 15% / 我很強(若有) 20%
+//   未掉落時:至少給 1 個至寶經驗卷軸當安慰獎(玩家擊敗 BOSS 不會空手而歸)
+// ★ v1.0.20260428.3740 — 額外掉落:賣錢物品(按 BOSS 強度比例定價) + 超越極限果實
+//   賣錢物品:50% 機率掉落專屬物品(神話級玉山 75%);極限果實:基礎 10%(玉山 25%)
+window._TAIWAN_BOSS_DROPS = {
+  changhua_braised:    { id:'tw_braised_jar',     icon:'🍶', name:'神級滷汁瓶',  color:'#ff8844', price:800,  rate:0.50 },
+  taichung_pineapple:  { id:'tw_pineapple_glaze', icon:'🍯', name:'黃金糖霜',    color:'#ffcc44', price:950,  rate:0.50 },
+  shenkeng_tofu:       { id:'tw_fermented_block', icon:'🧱', name:'千年發酵塊',  color:'#aacc66', price:1100, rate:0.50 },
+  alishan_tree:        { id:'tw_ancient_branch',  icon:'🪵', name:'神木殘枝',    color:'#88cc44', price:1300, rate:0.50 },
+  lanyu_octopus:       { id:'tw_deep_tentacle',   icon:'🪸', name:'深海觸手晶',  color:'#44aaff', price:1500, rate:0.50 },
+  sanxia_indigo:       { id:'tw_indigo_crystal',  icon:'🔷', name:'藍憂鬱結晶',  color:'#5588ff', price:1700, rate:0.50 },
+  ximen_pearl:         { id:'tw_pearl_giant',     icon:'⚫', name:'魔化大珍珠',  color:'#aa66ff', price:2000, rate:0.50 },
+  sun_moon_mirror_boss:{ id:'tw_mirror_shard',    icon:'💎', name:'倒映幻鏡片',  color:'#88ccff', price:2400, rate:0.50 },
+  taipei_101_warlord:  { id:'tw_skybreaker_core', icon:'🌟', name:'夜空爆裂石',  color:'#ffee44', price:3000, rate:0.50 },
+  yushan_giant:        { id:'tw_yushan_core',     icon:'⛰',  name:'崩天巨人核',  color:'#cc8855', price:4000, rate:0.75 }, // 神話級 75%
+};
+
 window._onTaiwanBossDefeated = function(){
   if(_adventureStage !== 'taiwan') return;
   const bossId = window._advSelectedTaiwanBoss;
   if(!bossId) return;
   const boss = TAIWAN_BOSSES[bossId];
   if(!boss || !boss.treasure) return;
-  // 呼叫至寶系統發放
-  const granted = (typeof _grantTaiwanTreasure === 'function') ? _grantTaiwanTreasure(boss.treasure) : false;
-  if(granted){
-    const treas = TAIWAN_TREASURES[boss.treasure];
-    try{
-      if(typeof log === 'function'){
-        log('🏆 戰勝 ' + boss.name + '!獲得至寶:' + (treas?treas.name:boss.treasure) + ' !');
+
+  // 計算掉落率(以難度為基礎)
+  const _diff = (typeof _advPlayerDifficulty !== 'undefined') ? _advPlayerDifficulty : '普通';
+  let _dropRate = 0.10; // 預設 10%
+  if(_diff && _diff.indexOf('沒自信') >= 0) _dropRate = 0.05;
+  else if(_diff && (_diff.indexOf('我很會') >= 0 || _diff.indexOf('我很強') >= 0)) _dropRate = 0.15;
+  // ★ v1.0.20260428.3730 — 「鳳梨酥幸運符」掉寶率 +X%(隊伍中任何英雄裝備此至寶都生效)
+  try{
+    if(G && G.p1){
+      let _maxDropBonus = 0;
+      G.p1.forEach(h => {
+        if(h && h._treasureEff && h._treasureEff.dropRateBonus){
+          if(h._treasureEff.dropRateBonus > _maxDropBonus) _maxDropBonus = h._treasureEff.dropRateBonus;
+        }
+      });
+      if(_maxDropBonus > 0){
+        const _origRate = _dropRate;
+        _dropRate = Math.min(0.95, _dropRate * (1 + _maxDropBonus / 100));
+        try{ console.log('[掉寶率加成] 鳳梨酥幸運符 +' + _maxDropBonus + '% → ' + (Math.round(_origRate*1000)/10) + '% → ' + (Math.round(_dropRate*1000)/10) + '%'); }catch(_){}
       }
-    }catch(_){}
-    // 顯示獲得至寶彈窗
-    setTimeout(()=>{ try{ _showTaiwanTreasureGrantedModal(boss.treasure); }catch(_){} }, 600);
-  } else {
-    // 已經擁有至寶(玩家重複挑戰),只給經驗
-    try{
-      if(typeof log === 'function'){
-        log('💎 ' + boss.name + ' 再度落敗!您已擁有至寶 ' + (TAIWAN_TREASURES[boss.treasure]?TAIWAN_TREASURES[boss.treasure].name:'') + ',獲得經驗值。');
-      }
-    }catch(_){}
-    // 重複勝利:對應至寶 +20 EXP
-    if(typeof _addTaiwanTreasureExp === 'function'){
-      _addTaiwanTreasureExp(boss.treasure, 20);
     }
+  }catch(_){}
+
+  // 已擁有 → 100% 給卷軸(避免空手而歸 + 加速練等)
+  const _alreadyHas = !!_getTaiwanTreasureRecord(boss.treasure);
+  const _rolledDrop = !_alreadyHas && (Math.random() < _dropRate);
+
+  if(_rolledDrop){
+    // ★ 真的掉到至寶!誇大特效
+    const granted = _grantTaiwanTreasure(boss.treasure);
+    if(granted){
+      const treas = TAIWAN_TREASURES[boss.treasure];
+      try{ if(typeof log === 'function') log('🏆🌟 戰勝 ' + boss.name + '!掉落了至寶 [' + (treas?treas.name:boss.treasure) + ']!'); }catch(_){}
+      // 誇大音效:多層疊加
+      try{
+        playSfx('sfx-burst', 1.0);
+        setTimeout(()=>{ try{ playSfx('sfx-powerup', 1.0); }catch(_){} }, 200);
+        setTimeout(()=>{ try{ playSfx('sfx-goddess', 0.9); }catch(_){} }, 600);
+      }catch(_){}
+      // 全螢幕閃光特效
+      try{ flashScreen('rgba(255,220,80,0.8)', 800); }catch(_){}
+      setTimeout(()=>{ try{ flashScreen('rgba(255,255,255,1)', 400); }catch(_){} }, 400);
+      // 顯示獲得至寶彈窗
+      setTimeout(()=>{ try{ _showTaiwanTreasureGrantedModal(boss.treasure); }catch(_){} }, 1200);
+    }
+  } else if(_alreadyHas){
+    // 已擁有此至寶 → 給 1 個經驗卷軸
+    try{
+      if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
+      if(typeof log === 'function') log('💎 ' + boss.name + ' 再度落敗!已擁有至寶 [' + (TAIWAN_TREASURES[boss.treasure]?TAIWAN_TREASURES[boss.treasure].name:'') + '],獲得「至寶經驗卷軸」x1。');
+    }catch(_){}
+    try{ playSfx('sfx-card', 0.7); }catch(_){}
+  } else {
+    // 沒擁有 + 沒掉落 → 給 1 個經驗卷軸當安慰獎
+    try{
+      if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
+      if(typeof log === 'function') log('💧 戰勝 ' + boss.name + ' 但至寶這次沒有掉落…獲得「至寶經驗卷軸」x1 當安慰獎,下次再挑戰看看!');
+    }catch(_){}
+    try{ playSfx('sfx-card', 0.7); }catch(_){}
   }
+
+  // ★ v1.0.20260428.3740 — 賣錢物品掉落(獨立判定,跟至寶不衝突)
+  try{
+    const _dropDef = window._TAIWAN_BOSS_DROPS && window._TAIWAN_BOSS_DROPS[bossId];
+    if(_dropDef && Math.random() < _dropDef.rate){
+      if(typeof backpackAdd === 'function') backpackAdd(_dropDef.id, 1);
+      try{ if(typeof log === 'function') log(_dropDef.icon + ' [' + boss.name + '] 掉落了【' + _dropDef.name + '】!可在不可思議超商賣 ' + _dropDef.price.toLocaleString() + ' 知識幣'); }catch(_){}
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast(_dropDef.icon + ' 獲得' + _dropDef.name + '!可賣 ' + _dropDef.price.toLocaleString() + ' 知識幣', _dropDef.color, 3200); }catch(_){}
+    }
+  }catch(_dropE){ console.warn('[台灣 BOSS 賣錢物品] 失敗', _dropE); }
+
+  // ★ v1.0.20260428.3740 — 超越極限果實掉落:基礎 10% / 神話級玉山 25%
+  try{
+    const _fruitRate = (bossId === 'yushan_giant') ? 0.25 : 0.10;
+    if(Math.random() < _fruitRate){
+      if(typeof backpackAdd === 'function') backpackAdd('burst_upgrade_fruit', 1);
+      try{ if(typeof log === 'function') log('🍑🌟 [' + boss.name + '] 稀有掉落:超越極限果實 ×1!'); }catch(_){}
+      try{ if(typeof _showBurstFruitDrop === 'function') _showBurstFruitDrop(); }catch(_){}
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast('🍑 獲得超越極限果實!可幫英雄升級爆發', '#ffaa44', 3200); }catch(_){}
+      try{ playSfx('sfx-powerup', 1.0); }catch(_){}
+    }
+  }catch(_fE){ console.warn('[台灣 BOSS 極限果實] 失敗', _fE); }
 };
 
 // 顯示獲得至寶彈窗(BOSS 戰勝利首次獲得時)
@@ -28937,6 +29419,406 @@ function _showTaiwanTreasureGrantedModal(treasureId){
     const btn = document.getElementById('taiwan-treasure-granted-ok');
     if(btn){ btn.onclick = ()=>{ try{ playSfx('sfx-confirm2', 0.7); }catch(_){} modal.remove(); }; }
   }, 30);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.3720 — 至寶圖鑑頁面(主菜單入口呼叫此函式)
+// ════════════════════════════════════════════════════════════════
+window.openTaiwanTreasurePage = function(){
+  // 確保資料已載入
+  try{ if(typeof _loadTaiwanTreasureData === 'function') _loadTaiwanTreasureData(); }catch(_){}
+
+  const old = document.getElementById('taiwan-treasure-page');
+  if(old) old.remove();
+
+  const ov = document.createElement('div');
+  ov.id = 'taiwan-treasure-page';
+  ov.style.cssText =
+    'position:fixed;inset:0;z-index:9050;' +
+    'background:linear-gradient(160deg,#1a0e22,#0a0612);' +
+    'display:flex;flex-direction:column;' +
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;' +
+    'overflow:hidden;animation:fadeIn 0.4s;';
+
+  // 注入專屬 keyframes(僅一次)
+  if(!document.getElementById('_taiwan-treasure-page-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_taiwan-treasure-page-kf';
+    kf.textContent =
+      '@keyframes ttPageGlow{0%,100%{box-shadow:0 0 12px rgba(255,200,80,0.4);}50%{box-shadow:0 0 24px rgba(255,200,80,0.8);}}' +
+      '.tt-card{transition:transform 0.18s,box-shadow 0.18s,border-color 0.18s;}' +
+      '.tt-card.owned{cursor:pointer;}' +
+      '.tt-card.owned:hover{transform:translateY(-3px) scale(1.03);}' +
+      '.tt-card.locked{filter:grayscale(0.85) brightness(0.55);cursor:not-allowed;}' +
+      '.tt-stat-pos{color:#88ff88;font-weight:800;}' +
+      '.tt-stat-neg{color:#ff8888;font-weight:800;}' +
+      '.tt-stat-bonus{color:#ffcc44;font-weight:800;}';
+    document.head.appendChild(kf);
+  }
+
+  // 標題列
+  const header = document.createElement('div');
+  header.style.cssText = 'flex-shrink:0;padding:20px 28px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid rgba(255,200,80,0.3);';
+  header.innerHTML =
+    '<button id="tt-page-back" style="padding:10px 24px;font-size:22px;font-weight:800;background:rgba(40,30,0,0.8);border:2px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;">← 返回</button>' +
+    '<div style="font-size:clamp(28px,3.5vw,44px);font-weight:900;color:#ffcc44;letter-spacing:6px;text-shadow:0 0 24px rgba(255,200,80,0.6);">💎 至寶圖鑑</div>' +
+    '<div id="tt-page-scroll-info" style="font-size:18px;color:#ffcc88;letter-spacing:1px;padding:8px 16px;background:rgba(0,0,0,0.4);border:1.5px solid rgba(255,200,80,0.3);border-radius:10px;">' +
+      '📜 經驗卷軸:<b id="tt-scroll-count">0</b>' +
+    '</div>';
+  ov.appendChild(header);
+
+  // 主區域:左卡片網格 / 右詳細面板
+  const main = document.createElement('div');
+  main.style.cssText = 'flex:1;display:flex;overflow:hidden;min-height:0;';
+  ov.appendChild(main);
+
+  // 左側:10 個至寶卡片網格
+  const grid = document.createElement('div');
+  grid.id = 'tt-grid';
+  grid.style.cssText = 'flex:0 0 clamp(380px,46vw,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-content:flex-start;';
+  main.appendChild(grid);
+
+  // 右側:詳細面板(預設提示「點選至寶」)
+  const detail = document.createElement('div');
+  detail.id = 'tt-detail';
+  detail.style.cssText = 'flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 28px;color:#ddd;';
+  detail.innerHTML = '<div style="text-align:center;color:#aaa;padding:60px 0;font-size:18px;letter-spacing:2px;">點選左側已獲得的至寶,查看詳情與培育選項</div>';
+  main.appendChild(detail);
+
+  document.body.appendChild(ov);
+
+  // 渲染卡片網格
+  _renderTaiwanTreasureGrid();
+
+  // 更新卷軸數量顯示
+  try{
+    const _scrollEl = document.getElementById('tt-scroll-count');
+    if(_scrollEl) _scrollEl.textContent = (typeof backpackGet === 'function') ? (backpackGet('treasure_exp_scroll')||0) : 0;
+  }catch(_){}
+
+  // 返回按鈕
+  document.getElementById('tt-page-back').onclick = function(){
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    ov.remove();
+  };
+};
+
+// 至寶顯示順序(按獲得難度排:稀有→史詩→傳說→神話)
+const _TAIWAN_TREASURE_ORDER = [
+  'pineapple_charm', 'braised_pork_cauldron',
+  'stinky_tofu_sword', 'alishan_tea_staff', 'lanyu_bow', 'sanxia_indigo_robe',
+  'pearl_grail', 'sun_moon_mirror', 'taipei_101_spear',
+  'yushan_shield',
+];
+
+function _renderTaiwanTreasureGrid(){
+  const grid = document.getElementById('tt-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  const _RC = { mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff' };
+  const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
+
+  _TAIWAN_TREASURE_ORDER.forEach(tid => {
+    const def = TAIWAN_TREASURES[tid];
+    if(!def) return;
+    const rec = _getTaiwanTreasureRecord(tid);
+    const owned = !!rec;
+    const rc = _RC[def.rarity] || '#66ddff';
+    const rn = _RN[def.rarity] || '稀有';
+
+    const card = document.createElement('div');
+    card.className = 'tt-card ' + (owned ? 'owned' : 'locked');
+    card.style.cssText =
+      'background:linear-gradient(160deg,rgba(30,20,40,0.95),rgba(15,10,25,0.95));' +
+      'border:2.5px solid ' + (owned ? rc : 'rgba(120,120,120,0.4)') + ';' +
+      'border-radius:14px;padding:14px 12px;text-align:center;' +
+      'box-shadow:0 4px 14px rgba(0,0,0,0.5)' + (owned ? ',0 0 18px '+rc+'66' : '') + ';';
+
+    const _lvText = owned ? ('Lv.' + (rec.lv || 1) + '/10') : '???';
+    const _expText = owned
+      ? ((rec.lv >= TAIWAN_TREASURE_MAX_LV) ? 'MAX' : ((rec.exp||0) + '/' + _getTaiwanTreasureExpForNextLv(rec.lv)))
+      : '尚未獲得';
+
+    card.innerHTML =
+      '<div style="height:80px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">' +
+        (owned ? _renderTaiwanTreasureIconHtml(def, 76, rc) : '<div style="font-size:60px;line-height:1;opacity:0.5;">🔒</div>') +
+      '</div>' +
+      '<div style="font-size:13px;font-weight:900;color:' + (owned ? '#fff' : '#888') + ';letter-spacing:1px;line-height:1.25;margin-bottom:4px;min-height:32px;">' + (owned ? def.name : '???') + '</div>' +
+      '<div style="display:inline-block;padding:2px 8px;font-size:10px;font-weight:800;background:' + rc + ';color:#fff;border-radius:4px;margin-bottom:4px;letter-spacing:1px;">' + rn + '</div>' +
+      '<div style="font-size:11px;color:' + (owned ? '#ffcc88' : '#666') + ';margin-top:2px;">' + _lvText + '</div>' +
+      '<div style="font-size:10px;color:#888;margin-top:1px;">' + _expText + '</div>';
+
+    if(owned){
+      card.onclick = () => {
+        try{ playSfx('sfx-sel', 0.5); }catch(_){}
+        _renderTaiwanTreasureDetail(tid);
+      };
+    }
+    grid.appendChild(card);
+  });
+}
+
+function _renderTaiwanTreasureDetail(treasureId){
+  const detail = document.getElementById('tt-detail');
+  if(!detail) return;
+  const def = TAIWAN_TREASURES[treasureId];
+  const rec = _getTaiwanTreasureRecord(treasureId);
+  if(!def || !rec){
+    detail.innerHTML = '<div style="text-align:center;color:#888;padding:60px 0;">資料異常</div>';
+    return;
+  }
+
+  const _RC = { mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff' };
+  const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
+  const rc = _RC[def.rarity] || '#66ddff';
+  const rn = _RN[def.rarity] || '稀有';
+  const _slotName = def.slot==='weapon'?'武器':def.slot==='armor'?'防具':'飾品';
+
+  // 屬性計算
+  const _stats = _getTaiwanTreasureStats(treasureId, rec.lv);  // 基礎
+  const _inv = _getTaiwanTreasureInvested(treasureId);  // 玩家投入
+  const _free = _getTaiwanTreasureFreePts(treasureId);  // 可投資點數
+  const _eff = _getTaiwanTreasureEffectBonus(treasureId, rec.lv);  // 特殊效果(已含等級加成)
+
+  // 升級進度
+  const _isMax = rec.lv >= TAIWAN_TREASURE_MAX_LV;
+  const _need = _getTaiwanTreasureExpForNextLv(rec.lv);
+  const _progPct = _isMax ? 100 : Math.min(100, Math.round(((rec.exp||0) / Math.max(1,_need)) * 100));
+
+  // 裝備在哪個英雄
+  const _eqHero = rec.equippedTo || '';
+
+  // 屬性顯示 helper(總值 + 加成)
+  const _stRow = (key, label) => {
+    const base = _stats[key] || 0;
+    const inv = _inv[key] || 0;
+    const total = base + inv;
+    if(total === 0 && inv === 0) return '';
+    const _color = total > 0 ? '#88ff88' : (total < 0 ? '#ff8888' : '#aaa');
+    const _bonusTag = inv > 0 ? ' <span style="color:#ffcc44;font-size:13px;">(+' + inv + ' 投資)</span>' : '';
+    return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,0.1);"><span>' + label + '</span><span style="color:' + _color + ';font-weight:800;">' + (total>0?'+':'') + total + _bonusTag + '</span></div>';
+  };
+
+  // 特殊效果顯示
+  const _EFF_LABELS = {
+    hpRegenPercent: '每回合回復 HP',
+    reflectChance: '受傷反彈機率',
+    dropRateBonus: '掉寶率',
+    critRate: '爆擊率',
+    skillDmgBonus: '特技傷害',
+    normalAtkDmgBonus: '普攻傷害',
+    hitRate: '命中率',
+    dmgReduce: '受傷減免',
+    healReceived: '受到治療',
+    dodgeRate: '閃避率',
+  };
+  let _effHtml = '';
+  Object.keys(_eff).forEach(k => {
+    const _label = _EFF_LABELS[k] || k;
+    _effHtml += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed rgba(255,200,80,0.2);"><span>' + _label + '</span><span class="tt-stat-bonus">+' + _eff[k] + '%</span></div>';
+  });
+
+  // 投資按鈕
+  const _statBtn = (key, label) => {
+    const _disabled = (_free <= 0);
+    return '<button data-stat="' + key + '" class="tt-invest-btn" ' + (_disabled?'disabled':'') + ' style="padding:8px 12px;font-size:14px;font-weight:800;background:' + (_disabled?'rgba(60,60,60,0.6)':'rgba(60,180,80,0.3)') + ';border:2px solid ' + (_disabled?'#666':'#88ff88') + ';color:' + (_disabled?'#888':'#aaffaa') + ';border-radius:8px;cursor:' + (_disabled?'not-allowed':'pointer') + ';font-family:inherit;flex:1;">+1 ' + label + '</button>';
+  };
+
+  detail.innerHTML =
+    // 標題區
+    '<div style="text-align:center;margin-bottom:18px;">' +
+      '<div style="display:inline-block;padding:4px 14px;font-size:14px;font-weight:800;background:' + rc + ';color:#fff;border-radius:6px;letter-spacing:2px;margin-bottom:8px;">' + rn + '・' + _slotName + '</div>' +
+      '<div style="font-size:clamp(24px,2.8vw,32px);font-weight:900;color:' + rc + ';letter-spacing:3px;text-shadow:0 0 20px ' + rc + '88;">' + def.name + '</div>' +
+    '</div>' +
+    // 主圖
+    '<div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:20px;">' +
+      '<div style="flex:0 0 170px;">' +
+        '<div style="background:rgba(0,0,0,0.4);border:2px solid ' + rc + '88;border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:center;height:170px;">' +
+          _renderTaiwanTreasureIconHtml(def, 140, rc) +
+        '</div>' +
+      '</div>' +
+      // 介紹
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:14px;color:#ccc;line-height:1.7;background:rgba(0,0,0,0.4);padding:12px;border-radius:10px;border-left:3px solid ' + rc + ';margin-bottom:10px;">' + def.desc + '</div>' +
+        '<div style="font-size:13px;color:#ffe8a0;line-height:1.6;background:rgba(255,200,80,0.08);padding:10px 12px;border-radius:8px;border:1px solid rgba(255,200,80,0.3);">' +
+          '✨ <b>固有效果</b>:' + def.abilityText +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    // 等級進度
+    '<div style="background:rgba(0,0,0,0.4);border-radius:12px;padding:14px 16px;margin-bottom:14px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+        '<span style="font-size:18px;font-weight:900;color:#ffcc44;letter-spacing:2px;">⭐ 培育進度</span>' +
+        '<span style="font-size:16px;color:#fff;font-weight:800;">Lv.<span style="color:' + rc + ';font-size:22px;">' + (rec.lv||1) + '</span> / 10</span>' +
+      '</div>' +
+      '<div style="height:14px;background:rgba(0,0,0,0.6);border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">' +
+        '<div style="height:100%;width:' + _progPct + '%;background:linear-gradient(90deg,#ffcc44,#ffaa00);transition:width 0.3s;"></div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:#aaa;">' +
+        '<span>EXP = 該關卡累積答對題數</span>' +
+        '<span>' + (_isMax ? '<b style="color:#ffcc44;">MAX</b>' : ((rec.exp||0) + '/' + _need)) + '</span>' +
+      '</div>' +
+    '</div>' +
+    // 屬性面板(基礎+投資+特殊)
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">' +
+      // 基礎屬性
+      '<div style="background:rgba(40,80,120,0.2);border:1.5px solid rgba(80,160,255,0.3);border-radius:10px;padding:12px 14px;font-size:14px;color:#cce8ff;">' +
+        '<div style="font-size:15px;font-weight:900;color:#88ccff;margin-bottom:8px;letter-spacing:1px;">⚔ 屬性加成</div>' +
+        (_stRow('hp', 'HP') + _stRow('atk', '攻擊') + _stRow('sp', '特技') + _stRow('spd', '速度')) +
+        (((_stats.hp+_stats.atk+_stats.sp+_stats.spd) === 0 && (_inv.hp+_inv.atk+_inv.sp+_inv.spd) === 0) ? '<div style="color:#888;text-align:center;padding:8px 0;">(此至寶無基礎屬性加成)</div>' : '') +
+      '</div>' +
+      // 特殊效果
+      '<div style="background:rgba(120,80,40,0.2);border:1.5px solid rgba(255,200,80,0.3);border-radius:10px;padding:12px 14px;font-size:14px;color:#ffe8d8;">' +
+        '<div style="font-size:15px;font-weight:900;color:#ffcc44;margin-bottom:8px;letter-spacing:1px;">✨ 特殊效果</div>' +
+        (_effHtml || '<div style="color:#888;text-align:center;padding:8px 0;">(無特殊效果)</div>') +
+      '</div>' +
+    '</div>' +
+    // 投資點數區(只在有可分配點時顯示)
+    (_free > 0 ?
+      '<div style="background:rgba(60,180,80,0.15);border:2px solid rgba(80,200,120,0.5);border-radius:12px;padding:14px 16px;margin-bottom:14px;">' +
+        '<div style="font-size:16px;font-weight:900;color:#88ff88;letter-spacing:2px;margin-bottom:10px;">💪 可投資點數: <span style="color:#fff;font-size:22px;">' + _free + '</span></div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          _statBtn('hp', 'HP') + _statBtn('atk', '攻擊') + _statBtn('sp', '特技') + _statBtn('spd', '速度') +
+        '</div>' +
+        '<div style="font-size:11px;color:#aaffaa;margin-top:6px;">每升一級獲得 1 點,可投入任一屬性永久加成</div>' +
+      '</div>'
+      : ''
+    ) +
+    // 裝備區
+    '<div style="background:rgba(80,40,120,0.2);border:1.5px solid rgba(180,100,255,0.4);border-radius:12px;padding:14px 16px;margin-bottom:14px;">' +
+      '<div style="font-size:16px;font-weight:900;color:#cc88ff;letter-spacing:2px;margin-bottom:8px;">🛡 裝備英雄</div>' +
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' +
+        '<div style="font-size:14px;color:#ddd;">當前裝備於: <b style="color:' + (_eqHero?'#ffcc44':'#888') + ';">' + (_eqHero || '(未裝備)') + '</b></div>' +
+        '<button id="tt-equip-btn" style="padding:8px 16px;font-size:14px;font-weight:800;background:rgba(180,100,255,0.25);border:2px solid #cc88ff;color:#eebbff;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">' + (_eqHero?'更換英雄':'選擇英雄裝備') + '</button>' +
+        (_eqHero ? '<button id="tt-unequip-btn" style="padding:8px 14px;font-size:14px;font-weight:700;background:rgba(120,60,60,0.25);border:1.5px solid rgba(220,100,100,0.5);color:#ffaaaa;border-radius:8px;cursor:pointer;font-family:inherit;">卸下</button>' : '') +
+      '</div>' +
+      '<div style="font-size:11px;color:#bbaadd;margin-top:6px;">每位英雄同時最多裝備 1 件至寶(同一個 slot 只能裝一件)</div>' +
+    '</div>' +
+    // 卷軸使用區
+    '<div style="background:rgba(120,80,40,0.2);border:1.5px solid rgba(255,180,80,0.4);border-radius:12px;padding:14px 16px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
+        '<div>' +
+          '<div style="font-size:16px;font-weight:900;color:#ffcc88;letter-spacing:2px;">📜 至寶經驗卷軸</div>' +
+          '<div style="font-size:13px;color:#ddc;margin-top:2px;">每張 +10 EXP — 持有: <b id="tt-detail-scroll-count" style="color:#fff;font-size:18px;">' + ((typeof backpackGet === 'function')?(backpackGet('treasure_exp_scroll')||0):0) + '</b></div>' +
+        '</div>' +
+        '<button id="tt-use-scroll-btn" ' + (_isMax?'disabled':'') + ' style="padding:10px 18px;font-size:15px;font-weight:800;background:' + (_isMax?'rgba(60,60,60,0.6)':'rgba(255,200,80,0.25)') + ';border:2px solid ' + (_isMax?'#666':'#ffcc44') + ';color:' + (_isMax?'#888':'#ffe8a0') + ';border-radius:10px;cursor:' + (_isMax?'not-allowed':'pointer') + ';font-family:inherit;letter-spacing:1px;">' + (_isMax?'已達 MAX':'使用 1 張(+10 EXP)') + '</button>' +
+      '</div>' +
+    '</div>';
+
+  // 投資按鈕事件
+  detail.querySelectorAll('.tt-invest-btn').forEach(btn => {
+    btn.onclick = () => {
+      const _key = btn.dataset.stat;
+      if(_investTaiwanTreasurePt(treasureId, _key)){
+        try{ playSfx('sfx-powerup', 0.7); }catch(_){}
+        try{ bannerFX(null, '✨ 至寶屬性 +1 ' + _key.toUpperCase(), '#88ff88', 1200); }catch(_){}
+        _renderTaiwanTreasureDetail(treasureId);
+        _renderTaiwanTreasureGrid();
+      }
+    };
+  });
+
+  // 裝備按鈕
+  const _eqBtn = document.getElementById('tt-equip-btn');
+  if(_eqBtn) _eqBtn.onclick = () => _showTaiwanTreasureEquipPicker(treasureId);
+  const _uneqBtn = document.getElementById('tt-unequip-btn');
+  if(_uneqBtn) _uneqBtn.onclick = () => {
+    if(rec.equippedTo){
+      rec.equippedTo = null;
+      _saveTaiwanTreasureData();
+      try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+      try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+      _renderTaiwanTreasureDetail(treasureId);
+    }
+  };
+
+  // 卷軸按鈕
+  const _scrollBtn = document.getElementById('tt-use-scroll-btn');
+  if(_scrollBtn && !_isMax){
+    _scrollBtn.onclick = () => {
+      const _have = (typeof backpackGet === 'function') ? (backpackGet('treasure_exp_scroll')||0) : 0;
+      if(_have <= 0){
+        try{ _showInGameToast('📜 沒有至寶經驗卷軸,打台灣 BOSS 可以獲得!', '#ff8844', 2200); }catch(_){}
+        return;
+      }
+      // 扣 1 張、加 10 EXP
+      try{ if(typeof backpackRemove === 'function') backpackRemove('treasure_exp_scroll', 1); }catch(_){}
+      _addTaiwanTreasureExp(treasureId, 10);
+      try{ playSfx('sfx-powerup', 0.7); }catch(_){}
+      try{ bannerFX(null, '📜 至寶 +10 EXP', '#ffcc44', 1100); }catch(_){}
+      _renderTaiwanTreasureDetail(treasureId);
+      _renderTaiwanTreasureGrid();
+      // 同步外部卷軸數量
+      const _outer = document.getElementById('tt-scroll-count');
+      if(_outer) _outer.textContent = (typeof backpackGet === 'function')?(backpackGet('treasure_exp_scroll')||0):0;
+    };
+  }
+}
+
+// 顯示「選擇英雄裝備至寶」彈窗
+function _showTaiwanTreasureEquipPicker(treasureId){
+  const def = TAIWAN_TREASURES[treasureId];
+  if(!def) return;
+
+  const old = document.getElementById('tt-equip-picker');
+  if(old) old.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'tt-equip-picker';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s;font-family:inherit;';
+
+  // 取得已解鎖的英雄(排除 BOSS)
+  const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+  const _initial = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) ? ADV_HERO_POOL.maokong : [];
+  const _bossSet = new Set(typeof BOSS_NAMES !== 'undefined' ? BOSS_NAMES : []);
+  // 大天狗/酒吞童子/玉藻前 是可解鎖英雄
+  ['大天狗','酒吞童子','玉藻前'].forEach(n => _bossSet.delete(n));
+  const _available = [...new Set([..._unlocked, ..._initial])].filter(n => !_bossSet.has(n) && (typeof HERO_DB !== 'undefined' && HERO_DB[n]));
+
+  let _btnsHtml = '';
+  _available.forEach(name => {
+    const _img = (typeof HERO_IMGS !== 'undefined') ? HERO_IMGS[name] : '';
+    const _av  = (typeof AVATARS  !== 'undefined') ? AVATARS[name]  : '⚔';
+    // 顯示這個英雄已裝備的同 slot 至寶(會被替換)
+    const _equipped = (typeof _getHeroEquippedTreasures === 'function') ? _getHeroEquippedTreasures(name) : [];
+    const _sameSlot = _equipped.find(e => e.def && e.def.slot === def.slot);
+    const _replaceText = (_sameSlot && _sameSlot.id !== treasureId) ? '<div style="font-size:11px;color:#ff8844;margin-top:2px;">將替換: ' + _sameSlot.def.name + '</div>' : '';
+    _btnsHtml +=
+      '<button class="tt-pick-hero-btn" data-name="' + name + '" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(40,30,60,0.7);border:2px solid rgba(180,100,255,0.4);border-radius:10px;cursor:pointer;font-family:inherit;color:#eee;text-align:left;width:100%;">' +
+        (_img ? '<img src="' + _img + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.outerHTML=\'<span style=&quot;font-size:36px;flex-shrink:0;&quot;>' + _av + '</span>\'">'
+              : '<span style="font-size:36px;flex-shrink:0;">' + _av + '</span>') +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-weight:900;font-size:16px;color:#fff;letter-spacing:1px;">' + name + '</div>' +
+          _replaceText +
+        '</div>' +
+      '</button>';
+  });
+
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,rgba(40,30,60,0.97),rgba(20,10,30,0.97));border:3px solid rgba(180,100,255,0.6);border-radius:18px;padding:22px 26px;max-width:520px;width:92vw;max-height:80vh;display:flex;flex-direction:column;">' +
+      '<div style="font-size:24px;font-weight:900;color:#cc88ff;letter-spacing:3px;text-align:center;margin-bottom:6px;">🛡 選擇要裝備的英雄</div>' +
+      '<div style="font-size:13px;color:#ddccff;text-align:center;margin-bottom:14px;">「' + def.name + '」(' + (def.slot==='weapon'?'武器':def.slot==='armor'?'防具':'飾品') + ')</div>' +
+      '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;padding:4px;">' + _btnsHtml + '</div>' +
+      '<button id="tt-equip-cancel" style="margin-top:14px;padding:10px 20px;font-size:16px;font-weight:700;background:rgba(60,30,30,0.7);border:1.5px solid rgba(220,100,100,0.4);color:#ffaaaa;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:2px;">✕ 取消</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+
+  modal.querySelectorAll('.tt-pick-hero-btn').forEach(btn => {
+    btn.onclick = () => {
+      const _name = btn.dataset.name;
+      if(_equipTaiwanTreasure(treasureId, _name)){
+        try{ playSfx('sfx-confirm2', 0.6); }catch(_){}
+        try{ bannerFX(null, '✨ 已將「' + def.name + '」裝備給 ' + _name, '#cc88ff', 1500); }catch(_){}
+        modal.remove();
+        _renderTaiwanTreasureDetail(treasureId);
+      }
+    };
+  });
+  document.getElementById('tt-equip-cancel').onclick = () => {
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+    modal.remove();
+  };
 }
 
 const ADV_STAGES = {
@@ -29789,8 +30671,14 @@ function _advRestoreBattleState(snap, bs){
           _bossBgmId = 'bgm-japan-boss';
         }
       } else if(_adventureStage === 'taiwan'){
-        // ★ v1.0.20260428.3200 — 台灣關 10 隻 BOSS 共用 bgm-taiwan-boss
-        _bossBgmId = 'bgm-taiwan-boss';
+        // ★ v1.0.20260428.3740 — 玉山 BOSS 用獨立 BGM,其他 9 BOSS 在 boss / boss-2 之間輪播
+        if(window._advSelectedTaiwanBoss === 'yushan_giant' || _p2Names.includes('山岳禁咒・崩天巨人')){
+          _bossBgmId = 'bgm-taiwan-boss-yushan';
+        } else {
+          // 輪播計數器 +1,奇偶對應第 1/2 首
+          window._taiwanBossBgmCount = (window._taiwanBossBgmCount || 0) + 1;
+          _bossBgmId = (window._taiwanBossBgmCount % 2 === 1) ? 'bgm-taiwan-boss' : 'bgm-taiwan-boss-2';
+        }
       } else if((_vi && _vi.id === 'apricot') || _p2Names.includes('杏花妖')){
         _bossBgmId = 'bgm-boss-apricot';
       }
@@ -39432,6 +40320,19 @@ const BACKPACK_ITEM_DEF = {
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ v1.0.20260424.0740 — 極限重置秘藥
   'burst_reset_potion': { name:'極限重置秘藥', icon:'⚗️', desc:'神秘煉金師調配的逆轉之藥，可將1名英雄的極限爆發等級歸零，並退還曾消耗的「超越極限果實」。', type:'use', useLabel:'使用（重置爆發）' },
+  // ★ v1.0.20260428.3720 — 至寶經驗卷軸(打 BOSS 沒掉到至寶或重複掉落時獲得)
+  'treasure_exp_scroll': { name:'至寶經驗卷軸', icon:'📜', desc:'蘊含古老知識的金邊卷軸，使用後可為選定的至寶 +10 經驗值,有助於提升至寶等級。', type:'use', useLabel:'使用（選擇至寶）' },
+  // ★ v1.0.20260428.3740 — 台灣 10 BOSS 專屬賣錢物品(按強度比例定價,稀有度遞增)
+  'tw_braised_jar':   { name:'神級滷汁瓶', icon:'🍶', desc:'油膩魔王的傳家秘製滷汁,香氣縈繞百年不散,饕客夢寐以求。', type:'sell_only', sellPrice:800 },
+  'tw_pineapple_glaze':{ name:'黃金糖霜',  icon:'🍯', desc:'酥脆狂魔以日月精華煉製的黃金糖霜,糖點達人爭相高價收購。',     type:'sell_only', sellPrice:950 },
+  'tw_fermented_block':{ name:'千年發酵塊', icon:'🧱', desc:'臭氣魔王精心發酵千年的稀世毒寶,氣味濃烈但價值不菲。',         type:'sell_only', sellPrice:1100 },
+  'tw_ancient_branch':{ name:'神木殘枝',   icon:'🪵', desc:'山靈古魔本體掉落的千年神木枝,蘊含森林靈氣,可雕刻法器。',     type:'sell_only', sellPrice:1300 },
+  'tw_deep_tentacle': { name:'深海觸手晶', icon:'🪸', desc:'深海惡靈觸手凝結成的水晶,折射出深邃的太平洋藍光。',         type:'sell_only', sellPrice:1500 },
+  'tw_indigo_crystal':{ name:'藍憂鬱結晶', icon:'🔷', desc:'染靈幻魔哀愁凝聚的藍色結晶,藏家視為染料界的聖物。',           type:'sell_only', sellPrice:1700 },
+  'tw_pearl_giant':   { name:'魔化大珍珠', icon:'⚫', desc:'珍奶吸魂魔吸取無數靈魂淬鍊的巨型黑珍珠,珠光詭異絕倫。',       type:'sell_only', sellPrice:2000 },
+  'tw_mirror_shard':  { name:'倒映幻鏡片', icon:'💎', desc:'水靈反魔殘留的鏡像碎片,映照出真假難辨的幻象。',               type:'sell_only', sellPrice:2400 },
+  'tw_skybreaker_core':{name:'夜空爆裂石',icon:'🌟', desc:'摩天魔將煙火翅膀的能量核心,蓄滿了 101 大樓的擎天能量。',     type:'sell_only', sellPrice:3000 },
+  'tw_yushan_core':   { name:'崩天巨人核', icon:'⛰', desc:'山岳禁咒身軀深處的山岩核心,蘊含台灣最高峰玉山的神話之力。', type:'sell_only', sellPrice:4000 },
   // ★ 召喚水晶
   // ★ v1.0.20260424.0920 — 召喚已開放,更新描述
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，每次召喚消耗 1 顆，可獲得稀有英雄、技能升級書、BOSS 賣錢物品、超越極限果實等獎勵。', type:'use', useLabel:'前往召喚星空' },
@@ -45331,30 +46232,74 @@ function _renderHeroDetail(name, box) {
       <!-- 左欄：stats + 天賦 -->
       <div style="flex:1;max-width:52%;display:flex;flex-direction:column;gap:8px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        ${['hp','atk','sp','spd'].map(stat => {
-          const base = hd[stat]||0; const bonus = inv[stat]||0;
-          const icon = {hp:'❤️',atk:'⚔️',sp:'✨',spd:'💨'}[stat];
-          const lbl = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
-          // ★ v1.0.20260428.1500 — HP 額外顯示等級 +2%/級加成 (戰鬥時實際生效)
-          let lvBonusHtml = '';
-          if(stat === 'hp'){
-            const _curLv = (typeof lv !== 'undefined') ? lv : 1;
-            if(_curLv > 1){
-              const _lvBonus = Math.ceil((base + bonus) * 0.02 * (_curLv - 1));
-              if(_lvBonus > 0){
-                lvBonusHtml = `<span style="font-size:16px;color:#88ccff;" title="冒險模式 Lv${_curLv} 升級加成 (+2%/級, 戰鬥時生效)"> +${_lvBonus} Lv</span>`;
+        ${(()=>{
+          // ★ v1.0.20260428.3730 — 計算至寶加成(基礎+投資點)
+          const _treasureBonus = (typeof _calcHeroTreasureBonus === 'function') ? _calcHeroTreasureBonus(name) : {hp:0,atk:0,sp:0,spd:0};
+          return ['hp','atk','sp','spd'].map(stat => {
+            const base = hd[stat]||0; const bonus = inv[stat]||0;
+            const tBonus = _treasureBonus[stat] || 0;
+            const icon = {hp:'❤️',atk:'⚔️',sp:'✨',spd:'💨'}[stat];
+            const lbl = {hp:'HP',atk:'攻擊',sp:'特技',spd:'速度'}[stat];
+            // ★ HP 額外顯示等級 +2%/級加成 (戰鬥時實際生效)
+            let lvBonusHtml = '';
+            if(stat === 'hp'){
+              const _curLv = (typeof lv !== 'undefined') ? lv : 1;
+              if(_curLv > 1){
+                const _lvBonus = Math.ceil((base + bonus) * 0.02 * (_curLv - 1));
+                if(_lvBonus > 0){
+                  lvBonusHtml = `<span style="font-size:16px;color:#88ccff;" title="冒險模式 Lv${_curLv} 升級加成 (+2%/級, 戰鬥時生效)"> +${_lvBonus} Lv</span>`;
+                }
               }
             }
-          }
-          return `<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:22px;cursor:pointer;" onclick="event.stopPropagation();toggleStatPopup(this,\'${stat}\',24)">${icon} ${lbl} <span style="font-size:14px;color:#aaa;vertical-align:middle;opacity:0.7;">?</span></span>
-            <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${base+bonus}${bonus>0?`<span style="font-size:16px;color:#44ff88;"> +${bonus}</span>`:''}${lvBonusHtml}
-            </span>
-            ${_heroIsUnlocked && freeP>0&&bonus<50?`<button onclick="playSfx('sfx-statup',0.6);investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
-          </div>`;
-        }).join('')}
+            // ★ 至寶加成金色標記
+            const tBonusHtml = tBonus !== 0
+              ? `<span style="font-size:16px;color:#ffcc44;font-weight:700;" title="台灣至寶加成"> +${tBonus} 💎</span>`
+              : '';
+            const totalDisplay = base + bonus + tBonus;
+            return `<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;${tBonus>0?'border:1.5px solid rgba(255,200,80,0.35);':''}">
+              <span style="font-size:22px;cursor:pointer;" onclick="event.stopPropagation();toggleStatPopup(this,\'${stat}\',24)">${icon} ${lbl} <span style="font-size:14px;color:#aaa;vertical-align:middle;opacity:0.7;">?</span></span>
+              <span style="font-size:26px;font-weight:700;color:#ffe8a0;">${totalDisplay}${bonus>0?`<span style="font-size:16px;color:#44ff88;"> +${bonus}</span>`:''}${lvBonusHtml}${tBonusHtml}
+              </span>
+              ${_heroIsUnlocked && freeP>0&&bonus<50?`<button onclick="playSfx('sfx-statup',0.6);investStat('${name}','${stat}')" style="padding:3px 10px;font-size:18px;background:rgba(100,200,100,0.2);border:1.5px solid #44ff88;color:#44ff88;border-radius:7px;cursor:pointer;">+1</button>`:''}
+            </div>`;
+          }).join('');
+        })()}
         ${freeP>0?`<div style="grid-column:1/-1;font-size:22px;color:#44ff88;font-weight:700;padding:2px 0;">💎 素質點數：${freeP}</div>`:''}
         </div>
+        <!-- ★ v1.0.20260428.3730 — 至寶裝備欄(顯示已裝備的至寶 + 提供更換入口) -->
+        ${(()=>{
+          if(typeof _getHeroEquippedTreasures !== 'function') return '';
+          const _eqs = _getHeroEquippedTreasures(name) || [];
+          const _RC = { mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff' };
+          const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
+          let _slotsHtml = '';
+          // 顯示三個 slot:weapon / armor / accessory
+          ['weapon','armor','accessory'].forEach(_slot => {
+            const _slotName = _slot==='weapon'?'⚔ 武器':_slot==='armor'?'🛡 防具':'💍 飾品';
+            const _eq = _eqs.find(e => e.def && e.def.slot === _slot);
+            if(_eq){
+              const _rc = _RC[_eq.def.rarity] || '#66ddff';
+              const _rn = _RN[_eq.def.rarity] || '稀有';
+              _slotsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,0,0,0.4);border:1.5px solid ${_rc};border-radius:8px;margin-bottom:4px;">
+                <div style="width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);">${_renderTaiwanTreasureIconHtml(_eq.def, 36, _rc)}</div>
+                <div style="flex:1;min-width:0;font-size:14px;line-height:1.3;overflow:hidden;">
+                  <div style="font-weight:800;color:${_rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_eq.def.name}</div>
+                  <div style="font-size:11px;color:#aaa;">${_rn}・Lv.${_eq.record.lv}</div>
+                </div>
+                <span style="font-size:11px;color:#888;">${_slotName}</span>
+              </div>`;
+            } else {
+              _slotsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);border-radius:8px;margin-bottom:4px;color:#777;font-size:13px;">
+                <span style="font-size:11px;">${_slotName} (空)</span>
+              </div>`;
+            }
+          });
+          return `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:10px 12px;border:1px solid rgba(255,200,80,0.3);">
+            <div style="font-size:15px;font-weight:800;color:#ffcc44;margin-bottom:6px;letter-spacing:1px;">💎 裝備的至寶</div>
+            ${_slotsHtml}
+            <button onclick="playSfx('sfx-sel',0.5);window.openTaiwanTreasurePage&&window.openTaiwanTreasurePage()" style="margin-top:4px;width:100%;padding:6px 10px;font-size:13px;font-weight:700;background:rgba(255,200,80,0.15);border:1.5px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:6px;cursor:pointer;font-family:inherit;">🗂 前往至寶圖鑑管理</button>
+          </div>`;
+        })()}
         <!-- 天賦：緊接在特技/速度下方 -->
         ${trait ? (()=>{
           // ★ 隨天賦等級動態更新描述中的百分比
@@ -50997,6 +51942,80 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3740', brief:[
+    '🎵 玉山 BOSS 戰專屬 BGM + 一般台灣 BOSS 戰新增第二首輪播',
+    '⚔ 台灣 10 BOSS 終於會用真正的招式了!不再只是普通攻擊',
+    '💰 打台灣 BOSS 會掉專屬賣錢物品 + 偶爾掉超越極限果實',
+  ], items:[
+    '【BGM 更新】',
+    '・玉山 BOSS 戰換成專屬戰鬥 BGM(神話級壓軸獨家)🗻',
+    '・其他 9 隻台灣 BOSS 在「台灣BOSS第一首 / 第二首」之間輪播,不會聽膩 🎶',
+    '【BOSS 技能修補】',
+    '・發酵臭氣彈現在真的會中毒、糖漿轟炸真的會減速、藍染霧霾真的會失明 ✨',
+    '・八觸手亂舞 5 連擊、珍珠機關槍 8 連擊、煙火齊射 3 波 AoE 都會正確發動',
+    '・憂鬱之歌會魅惑、豆腐封印會強力封印、神木怒火會自我增益',
+    '・先前因為技能名沒對應處理,BOSS 用招都被縮水成普通攻擊,現在 20 個技能全到位',
+    '【賣錢物品(50% 機率掉落,玉山 75%)】',
+    '・滷肉飯→神級滷汁瓶 (800)、鳳梨酥→黃金糖霜 (950)',
+    '・臭豆腐→千年發酵塊 (1100)、阿里山→神木殘枝 (1300)',
+    '・蘭嶼→深海觸手晶 (1500)、三峽→藍憂鬱結晶 (1700)',
+    '・珍奶→魔化大珍珠 (2000)、日月潭→倒映幻鏡片 (2400)',
+    '・101→夜空爆裂石 (3000)、玉山→崩天巨人核 (4000)',
+    '【超越極限果實】',
+    '・打台灣 BOSS 有 10% 機率掉(神話級玉山 25%) 🍑',
+    '・配合至寶系統,可以幫英雄升極限爆發等級',
+    '至此台灣 BOSS 的獎勵齊全:至寶 / 賣錢物品 / 極限果實 / 至寶經驗卷軸 / 知識幣 ✨',
+  ] },
+  { ver:'v1.0.20260428.3730', brief:[
+    '⚔️ 至寶系統 Phase B 完成!裝備至寶後戰鬥真的會生效了',
+    '🎯 10 種特殊效果全部上線:爆擊、閃避、反彈、回血、減傷、特技傷害、普攻傷害、命中、治療加成、掉寶率',
+    '👁 英雄圖鑑顯示裝備的至寶 + 屬性加成金色標記',
+  ], items:[
+    '【戰鬥效果整合】',
+    '・基礎屬性(HP/攻擊/特技/速度)加成在戰鬥開始時直接套用 ✨',
+    '・🥤 珍奶聖杯:每回合自動回復 X% HP(每升級 +2%)',
+    '・⚔️ 臭豆腐神劍:爆擊率 +X%',
+    '・🪞 日月潭靈鏡:受傷時 X% 機率反彈 50% 傷害給對手',
+    '・🛡️ 玉山巔峰之盾:受到傷害減 X%',
+    '・🍍 鳳梨酥幸運符:打台灣 BOSS 掉寶率 +X%(隊伍中任一英雄裝備即生效)',
+    '・🪄 阿里山神木茶杖:特技傷害 +X%',
+    '・🔱 台北101擎天神槍:普攻傷害 +X%',
+    '・🏹 蘭嶼神弓:命中率 +X%(對抗對方閃避)',
+    '・🍚 滷肉飯萬用鼎:受到治療 +X%',
+    '・🎽 三峽藍染雲袖:閃避率 +X%(扣除攻擊者命中後判定)',
+    '【英雄圖鑑顯示】',
+    '・四項屬性會額外顯示來自至寶的金色 +X 💎 加成',
+    '・有至寶加成的屬性方塊會發亮金色邊框',
+    '・新增「💎 裝備的至寶」區塊,列出武器/防具/飾品三個 slot 是否有裝備',
+    '・按「🗂 前往至寶圖鑑管理」可直接跳到至寶頁更換',
+    '【鬥技場也適用】',
+    '・玩家裝備的至寶在鬥技場戰鬥中同樣有效,不只冒險模式',
+    '小提醒:這次至寶系統的核心已全部就緒!下次會做台灣 BOSS 的賣錢物品和超越極限果實掉落 📅',
+  ] },
+  { ver:'v1.0.20260428.3720', brief:[
+    '💎 全新「至寶系統」第一階段上線!打台灣 BOSS 有機會掉專屬至寶',
+    '📜 新增「至寶經驗卷軸」物品,沒掉到至寶也不會空手而歸',
+    '🗂 主菜單新增「至寶」入口,可以查看圖鑑 + 培育 + 裝備',
+  ], items:[
+    '更新內容:',
+    '【獲得至寶】',
+    '・打贏台灣 BOSS 有 10% 機率掉落對應至寶(難度提升:沒自信 5% / 普通 10% / 我很會 15%)',
+    '・掉落時有誇大特效:全螢幕金光閃爍 + 多層音效疊加 ✨',
+    '・每個至寶只能擁有一個,重複掉落會自動轉成「至寶經驗卷軸」+10 EXP',
+    '・即使沒掉到至寶,也會送 1 張卷軸當安慰獎,不會空手而歸',
+    '【至寶圖鑑(主菜單英雄與魔物之間)】',
+    '・10 個至寶卡片網格(已獲得會亮起,未獲得灰底鎖頭) 🔒',
+    '・點擊已獲得的至寶 → 詳細頁可看圖、介紹、固有效果',
+    '・培育進度條顯示等級 1~10 與目前 EXP',
+    '・每升一級可投資 1 點屬性點到 HP/攻擊/特技/速度',
+    '・特殊百分比效果(爆擊/閃避/反彈等)隨等級提升 +2%/級',
+    '・可從詳細頁裝備至寶給選定的英雄(每位英雄每個 slot 1 件)',
+    '・可使用至寶經驗卷軸幫至寶補 EXP',
+    '【升級需求】',
+    '・累積答對題數 10/30/60/100/150/210/280/360/450/550 = Lv2~10',
+    '・EXP 來源:該至寶對應關卡的累積答對題數',
+    '小提醒:這次先做完「資料 + 掉落 + 圖鑑」,下次會把至寶效果整合到實戰中(爆擊/閃避/反彈等真的會在戰鬥裡作用)📅',
+  ] },
   { ver:'v1.0.20260428.3710', brief:[
     '🎨 補上最後兩張缺少的台灣關場景圖,10 個關卡背景全部到齊!',
   ], items:[
@@ -59125,7 +60144,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3710';
+  const CURRENT_VERSION = 'v1.0.20260428.3740';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -59142,7 +60161,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3710';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3740';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
