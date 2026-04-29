@@ -4331,7 +4331,9 @@ body.art-premium #summon-overlay {
 <!-- ★ v1.0.20260428.3200 — 台灣關 BOSS 戰專屬 BGM(10 隻 BOSS 共用一首) -->
 <audio id="bgm-taiwan-boss" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS.m4a" loop></audio>
 <!-- ★ v1.0.20260428.3500 — 台灣地圖選關頁 BGM(原檔名「台灣關卡簡介劇情BGM」更正為「台灣地圖BGM」) -->
-<audio id="bgm-taiwan-intro" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a" loop></audio></audio>
+<audio id="bgm-taiwan-intro" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a" loop></audio>
+<!-- ★ v1.0.20260428.3650 — 台灣關卡介紹劇情 BGM(進台灣關後播劇情/介紹畫面用) -->
+<audio id="bgm-taiwan-cutscene" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E9%97%9C%E5%8D%A1%E7%B0%A1%E4%BB%8B%E5%8A%87%E6%83%85BGM.m4a" loop></audio>
 <!-- ★ v1.0.20260421.2800 — 日本關場景與 BOSS 專屬 BGM 擴充 -->
 <audio id="bgm-japan-scene2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%97%A5%E6%9C%AC%E9%97%9C%E5%8D%A1%E6%84%9F%E6%87%B7.m4a" loop></audio>
 <audio id="bgm-japan-boss-shutendoji" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90BGM.m4a" loop></audio>
@@ -25799,10 +25801,20 @@ async function _showAdminStatsPanel(){
         <div id="_admin-maint-status" style="font-size:14px;color:#ffcc66;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.4);border-radius:6px;">
           載入中...
         </div>
+        <!-- ★ v1.0.20260428.3660 — 預計開機時間輸入欄(替換 {TIME} 預留位置) -->
+        <div style="margin-bottom:10px;">
+          <label style="font-size:13px;color:#ffcc88;display:block;margin-bottom:4px;font-weight:700;">
+            ⏰ 預計開機時間 <span style="font-size:11px;color:#888;font-weight:400;">(會自動填入下方公告中的 {TIME})</span>
+          </label>
+          <input id="_admin-maint-time" type="text" placeholder="例: 今晚 22:00 / 明天早上 8:30 / 1 小時後"
+            style="width:100%;padding:9px 12px;font-size:14px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(255,200,100,0.5);color:#fff;border-radius:6px;font-family:inherit;
+            box-sizing:border-box;">
+        </div>
         <textarea id="_admin-maint-msg" placeholder="維修公告訊息（會顯示給被擋下的玩家）"
           style="width:100%;min-height:60px;padding:10px;font-size:14px;background:rgba(20,20,30,0.9);
           border:1.5px solid rgba(255,100,100,0.4);color:#fff;border-radius:8px;font-family:inherit;
-          box-sizing:border-box;margin-bottom:10px;resize:vertical;">系統維修中，發現重大存檔 bug 正在修復，請稍候 10~15 分鐘後再重新整理嘗試。</textarea>
+          box-sizing:border-box;margin-bottom:10px;resize:vertical;">系統維修中，正在修復重大 bug，預計 {TIME} 重新開放，請屆時再回來嘗試。</textarea>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button id="_admin-maint-on" style="flex:1;min-width:140px;padding:11px 20px;font-size:15px;font-weight:800;
             background:rgba(255,80,80,0.25);border:2px solid #ff6666;color:#ffaaaa;
@@ -26021,13 +26033,23 @@ async function _showAdminStatsPanel(){
   document.getElementById('_admin-maint-on').onclick = async () => {
     const btn = document.getElementById('_admin-maint-on');
     const res = document.getElementById('_admin-maint-result');
-    const msg = (document.getElementById('_admin-maint-msg').value || '').trim();
+    let msg = (document.getElementById('_admin-maint-msg').value || '').trim();
+    // ★ v1.0.20260428.3660 — 把 {TIME} 預留位置換成「預計開機時間」輸入值
+    const _maintTime = (document.getElementById('_admin-maint-time').value || '').trim();
+    if(msg.includes('{TIME}')){
+      if(!_maintTime){
+        res.style.color = '#ff6666';
+        res.textContent = '❌ 訊息中有 {TIME} 預留位置,請先填入「預計開機時間」(或自行從訊息中刪除 {TIME})';
+        return;
+      }
+      msg = msg.split('{TIME}').join(_maintTime);
+    }
     if(!msg) {
       res.style.color = '#ff6666';
       res.textContent = '❌ 請先輸入維修公告訊息';
       return;
     }
-    if(!confirm('確定開啟維修模式嗎？\n\n所有非管理員玩家都會：\n• 無法再登入遊戲\n• 目前正在遊戲中的也會被強制登出\n• 看到你輸入的維修訊息\n\n管理員（你）不受影響。')) return;
+    if(!confirm('確定開啟維修模式嗎？\n\n所有非管理員玩家都會：\n• 無法再登入遊戲\n• 目前正在遊戲中的也會被強制登出\n• 看到你輸入的維修訊息\n\n管理員（你）不受影響。\n\n最終訊息:\n' + msg)) return;
     btn.disabled = true;
     btn.textContent = '開啟中...';
     try {
@@ -28314,7 +28336,7 @@ const TAIWAN_TREASURES = {
     rarity: 'legend',          // mythic / legend / epic / rare
     slot: 'accessory',
     icon: '🥤',                 // 待替換為實際圖片
-    iconUrl: '',                // 圖片 URL,留空使用 emoji
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('珍珠奶茶聖杯.png'),
     desc: '傳說中盛裝最完美珍奶的金邊聖杯,飲下能讓人精神百倍。',
     // 基礎屬性加成(滿級時的額外加成,未滿級依 lv 比例計算)
     baseStats: { hp: 80, atk: 0, sp: 25, spd: 12 },
@@ -28330,7 +28352,7 @@ const TAIWAN_TREASURES = {
     rarity: 'legend',
     slot: 'accessory',
     icon: '🪞',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('日月潭靈鏡.png'),
     desc: '映照真實的古老青銅鏡,持有者能洞察一切虛偽。',
     baseStats: { hp: 60, atk: 0, sp: 30, spd: 8 },
     ability: { name: '【待設計】靈鏡之眼', desc: '待管理員填入' },
@@ -28341,7 +28363,7 @@ const TAIWAN_TREASURES = {
     rarity: 'rare',
     slot: 'accessory',
     icon: '🍍',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鳳梨酥幸運符.png'),
     desc: '甜蜜鳳梨酥造型的幸運符,帶來金黃好運氣。',
     baseStats: { hp: 40, atk: 5, sp: 5, spd: 10 },
     ability: { name: '【待設計】鳳梨好運', desc: '待管理員填入' },
@@ -28353,7 +28375,7 @@ const TAIWAN_TREASURES = {
     rarity: 'epic',
     slot: 'weapon',
     icon: '⚔️',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('深坑臭豆腐神劍.png'),
     desc: '由發酵千年的深坑豆腐凝鍊而成,劍氣帶有獨特氣味。',
     baseStats: { hp: 30, atk: 18, sp: 0, spd: 0 },
     ability: { name: '【待設計】臭氣斬', desc: '待管理員填入' },
@@ -28364,7 +28386,7 @@ const TAIWAN_TREASURES = {
     rarity: 'epic',
     slot: 'weapon',
     icon: '🪄',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('阿里山神木茶杖.png'),
     desc: '千年神木雕刻的法杖,杖頂的茶杯永遠冒著靈氣。',
     baseStats: { hp: 30, atk: 0, sp: 22, spd: 0 },
     ability: { name: '【待設計】神木靈息', desc: '待管理員填入' },
@@ -28375,7 +28397,7 @@ const TAIWAN_TREASURES = {
     rarity: 'legend',
     slot: 'weapon',
     icon: '🔱',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('台北 101 擎天神槍.png'),
     desc: '汲取 101 大樓擎天能量打造的科技長槍,槍尖能量爆閃。',
     baseStats: { hp: 50, atk: 28, sp: 0, spd: 5 },
     ability: { name: '【待設計】擎天爆閃', desc: '待管理員填入' },
@@ -28386,7 +28408,7 @@ const TAIWAN_TREASURES = {
     rarity: 'epic',
     slot: 'weapon',
     icon: '🏹',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('蘭嶼拼板舟神弓.png'),
     desc: '達悟族傳統拼板舟改造的神弓,弓弦發出深海藍光。',
     baseStats: { hp: 20, atk: 15, sp: 8, spd: 12 },
     ability: { name: '【待設計】深海之矢', desc: '待管理員填入' },
@@ -28398,7 +28420,7 @@ const TAIWAN_TREASURES = {
     rarity: 'mythic',
     slot: 'armor',
     icon: '🛡️',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉山巔峰之盾.png'),
     desc: '由玉山主峰山岩凝聚的神話之盾,蘊含台灣最高峰的氣勢。',
     baseStats: { hp: 200, atk: 0, sp: 0, spd: -3 },
     ability: { name: '【待設計】巔峰守護', desc: '待管理員填入' },
@@ -28409,7 +28431,7 @@ const TAIWAN_TREASURES = {
     rarity: 'rare',
     slot: 'armor',
     icon: '🍚',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('滷肉飯萬用鼎.png'),
     desc: '盛裝最濃郁滷汁的古鼎,披在身上充滿香氣與防禦力。',
     baseStats: { hp: 80, atk: 3, sp: 3, spd: 0 },
     ability: { name: '【待設計】滷汁庇護', desc: '待管理員填入' },
@@ -28420,7 +28442,7 @@ const TAIWAN_TREASURES = {
     rarity: 'epic',
     slot: 'armor',
     icon: '🎽',
-    iconUrl: '',
+    iconUrl: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('三峽藍染雲袖.png'),
     desc: '三峽古法藍染製成的飄逸雲袖,流動的靛藍能化解攻擊。',
     baseStats: { hp: 120, atk: 0, sp: 10, spd: 8 },
     ability: { name: '【待設計】藍染幻影', desc: '待管理員填入' },
@@ -28445,16 +28467,19 @@ const TAIWAN_IMG_MAP = {
   // ─── 關卡首頁背景(地圖頁面用,可選) ───
   mapBg: '台灣關卡首頁背景.png',
   // ─── 10 個關卡:每關 [boss 立繪, 場景背景圖] ───
-  changhua_braised:    { boss:'油膩魔王・滷汁大鍋.png',  scene:'彰化滷肉飯場景.png' },
-  taichung_pineapple:  { boss:'酥脆狂魔・熱浪糕師.png',  scene:'台中鳳梨酥場景.png' },
-  shenkeng_tofu:       { boss:'臭氣魔王・發酵公.png',    scene:'深坑臭豆腐場景.png' },
-  alishan_tree:        { boss:'山靈古魔・千年怒木.png',  scene:'阿里山場景.png' },
-  lanyu_octopus:       { boss:'深海惡靈・觸手大蛟.png',  scene:'蘭嶼場景.png' },
-  sanxia_indigo:       { boss:'染靈幻魔・藍色憂鬱.png',  scene:'三峽藍染場景.png' },
-  ximen_pearl:         { boss:'珍奶吸魂魔・大波霸.png',  scene:'西門珍奶場景.png' },
-  sun_moon_mirror_boss:{ boss:'水靈反魔・倒映女.png',    scene:'日月潭場景.png' },
-  taipei_101_warlord:  { boss:'摩天魔將・夜空爆裂者.png',scene:'台北101場景.png' },
-  yushan_giant:        { boss:'山岳禁咒・崩天巨人.png',  scene:'玉山場景.png' },
+  // ★ v1.0.20260428.3650 — 對齊 GitHub 實際存在的檔名(玩家提供新檔名)
+  //   尚未提供場景圖的關卡(changhua_braised / sanxia_indigo) scene 設為空字串,
+  //   程式會自動 fallback 到預設 BOSS 戰背景(bg-boss class)
+  changhua_braised:    { boss:'滷肉飯BOSS.png',      scene:''               },
+  taichung_pineapple:  { boss:'鳳梨酥BOSS.png',      scene:'台中鳳梨酥工廠.png' },
+  shenkeng_tofu:       { boss:'臭豆腐BOSS.png',      scene:'深坑老街.png'      },
+  alishan_tree:        { boss:'阿里山神木BOSS.png',  scene:'阿里山.png'        },
+  lanyu_octopus:       { boss:'蘭嶼BOSS.png',        scene:'蘭嶼.png'          },
+  sanxia_indigo:       { boss:'藍染BOSS.png',        scene:''               },
+  ximen_pearl:         { boss:'珍奶BOSS.png',        scene:'西門町.png'        },
+  sun_moon_mirror_boss:{ boss:'日月潭BOSS.png',      scene:'日月潭.png'        },
+  taipei_101_warlord:  { boss:'101大樓BOSS.png',     scene:'台北101.png'       },
+  yushan_giant:        { boss:'玉山BOSS.png',        scene:'玉山頂.png'        },
 };
 // 工具函式:取得指定 BOSS 的圖片 URL(自動 URL encode)
 function _getTaiwanBossImage(bossId){
@@ -28470,6 +28495,22 @@ function _getTaiwanSceneImage(bossId){
 function _getTaiwanMapBgImage(){
   if(!TAIWAN_IMG_MAP.mapBg) return '';
   return TAIWAN_IMG_BASE + encodeURIComponent(TAIWAN_IMG_MAP.mapBg);
+}
+
+// ★ v1.0.20260428.3650 — 至寶圖示渲染 helper
+//   有 iconUrl 就用 <img>(載入失敗自動 fallback emoji),沒 iconUrl 直接用 emoji
+//   sizePx: 圖片像素大小、glowColor: 可選的光暈顏色(用於 drop-shadow)
+function _renderTaiwanTreasureIconHtml(treas, sizePx, glowColor){
+  if(!treas) return '💎';
+  const _emoji = (treas.icon || '💎').replace(/"/g, '&quot;');
+  if(treas.iconUrl){
+    const _glow = glowColor ? ('filter:drop-shadow(0 0 10px ' + glowColor + ');') : '';
+    // 圖片大小用 sizePx,失敗時 fallback 成同尺寸的 emoji
+    return '<img src="' + treas.iconUrl + '" '
+         + 'style="width:' + sizePx + 'px;height:' + sizePx + 'px;object-fit:contain;display:inline-block;' + _glow + '" '
+         + 'onerror="this.outerHTML=&quot;<span style=\'font-size:' + sizePx + 'px;line-height:1;\'>' + _emoji + '</span>&quot;" />';
+  }
+  return '<span style="font-size:' + sizePx + 'px;line-height:1;">' + _emoji + '</span>';
 }
 
 const TAIWAN_BOSSES = {
@@ -28835,7 +28876,7 @@ function _showTaiwanTreasureGrantedModal(treasureId){
       'box-shadow:0 0 60px '+rarityColor+'88;">' +
       '<div style="font-size:44px;font-weight:900;color:'+rarityColor+';letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 20px '+rarityColor+';">🏆 獲得至寶!</div>' +
       '<div style="font-size:18px;color:#ddccff;letter-spacing:3px;margin-bottom:24px;">擊敗 BOSS 的證明,加入你的收藏</div>' +
-      '<div style="font-size:200px;line-height:1;animation:taiwanTreasureGlow 2s ease-in-out infinite;margin:20px 0;">' + (treas.icon || '💎') + '</div>' +
+      '<div style="font-size:200px;line-height:1;animation:taiwanTreasureGlow 2s ease-in-out infinite;margin:20px 0;">' + _renderTaiwanTreasureIconHtml(treas, 200, rarityColor) + '</div>' +
       '<div style="display:inline-block;padding:6px 18px;font-size:18px;font-weight:800;background:'+rarityColor+';color:#fff;border-radius:8px;margin-bottom:12px;">' + rarityText + '・' + (treas.slot==='weapon'?'武器':treas.slot==='armor'?'防具':'飾品') + '</div>' +
       '<div style="font-size:32px;font-weight:900;color:'+rarityColor+';margin-bottom:14px;">' + treas.name + '</div>' +
       '<div style="font-size:16px;color:#ccddee;line-height:1.7;background:rgba(0,0,0,0.4);padding:14px;border-radius:10px;border-left:4px solid '+rarityColor+';margin-bottom:24px;text-align:left;">' + treas.desc + '</div>' +
@@ -30381,7 +30422,7 @@ function _renderTaiwanBossDetail(bossId, onConfirm){
       '<div style="background:linear-gradient(135deg,'+rarityColor+'22,rgba(0,0,0,0.4));border:2px solid '+rarityColor+'88;border-radius:14px;padding:14px;margin-bottom:18px;">' +
         '<div style="font-size:14px;color:'+rarityColor+';letter-spacing:2px;font-weight:800;margin-bottom:6px;">💎 戰勝獎勵</div>' +
         '<div style="display:flex;align-items:center;gap:14px;">' +
-          '<div style="font-size:60px;">' + (treas.icon || '💎') + '</div>' +
+          '<div style="font-size:60px;">' + _renderTaiwanTreasureIconHtml(treas, 60, rarityColor) + '</div>' +
           '<div style="flex:1;">' +
             '<div style="font-size:22px;font-weight:900;color:'+rarityColor+';margin-bottom:4px;">' + treas.name + '</div>' +
             '<div style="font-size:14px;color:#fff;background:'+rarityColor+';display:inline-block;padding:2px 8px;border-radius:4px;font-weight:800;">' + rarityText + ' · ' + (treas.slot==='weapon'?'武器':treas.slot==='armor'?'防具':'飾品') + '</div>' +
@@ -31857,6 +31898,11 @@ ADV_STAGES.japan = {
 // ── 2. ADV_HERO_POOL.japan：沿用貓空力行英雄池 ──
 ADV_HERO_POOL.japan = [...(ADV_HERO_POOL.maokong || [])];
 
+// ── 2.5 ADV_HERO_POOL.taiwan：沿用貓空力行英雄池(初始 8 角色) ──
+//   v1.0.20260428.3620 — 修復:原本沒定義 taiwan 池,導致進台灣關時 basePool 為空,
+//   8 個初始角色(電腦繪圖師、程式設計師等)被誤判為「未解鎖」,套用預設陣容會被擋
+ADV_HERO_POOL.taiwan = [...(ADV_HERO_POOL.maokong || [])];
+
 // ── 3. ADV_BOSS_TEAMS.japan：預設為大天狗陣容（實際由 variant 動態決定）──
 ADV_BOSS_TEAMS.japan = [
   {name:'烏天狗',       element:'wind'},
@@ -31891,6 +31937,12 @@ window._buildJapanBossTeam = function(variant){
 };
 
 // ── 5. ADV_SCENES.japan：三場景（choiceType='japan_auto' 自動推進）──
+// （詳細場景內容在下方 line 31911 附近的 ADV_SCENES.japan = {...}）
+
+// ── 5.5 ADV_SCENES.taiwan：台灣關設計上不走 cutscene(直接進地圖選 BOSS),
+//   但 advLoadScene 仍會被呼叫,給空場景陣列讓它呼叫 advFinishCutscene 直接過。
+//   v1.0.20260428.3630 — 修復:原本沒定義導致 advLoadScene 報「無效 stage: taiwan」
+ADV_SCENES.taiwan = { scenes: [] };
 // ★ v1.0.20260421.0600 — 填入使用者提供的真實背景圖
 //   第二場景依路線 variant 不同換圖（大天狗/酒吞童子/玉藻前 各自的神社背景）
 //   第三場景若為隱藏關八岐大蛇 → 富士山火口；其他三路線 → 富士山深入
@@ -32752,7 +32804,7 @@ function _showTaiwanBossDetail(bossId){
       (treasure ? '<div style="background:rgba(0,0,0,0.5);border:2px solid '+_rc+';border-radius:14px;padding:18px;margin-bottom:18px;">' +
         '<div style="font-size:14px;color:'+_rc+';letter-spacing:3px;margin-bottom:8px;font-weight:800;">💎 戰勝獎勵 ✦ '+_rn+'級至寶'+(_got?'  <span style="color:#88ff88;font-size:12px;">(已獲得)</span>':'')+'</div>' +
         '<div style="display:flex;gap:14px;align-items:center;">' +
-          '<div style="font-size:60px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 10px '+_rc+');">'+treasure.icon+'</div>' +
+          '<div style="font-size:60px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 10px '+_rc+');">' + _renderTaiwanTreasureIconHtml(treasure, 60, _rc) + '</div>' +
           '<div style="flex:1;">' +
             '<div style="font-size:22px;font-weight:900;color:'+_rc+';letter-spacing:2px;margin-bottom:4px;">'+treasure.name+'</div>' +
             '<div style="font-size:14px;color:#ccddee;line-height:1.6;">'+treasure.desc+'</div>' +
@@ -36240,7 +36292,24 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       document.getElementById('adv-quiz-overlay').classList.remove('show');
       _advQuizPhase = 'idle';
       _advQuizActive = false;
-      advShowReward();
+      // ★ v1.0.20260428.3630 — 安全網:advShowReward 包 try-catch + watchdog,
+      //   避免獎勵視窗沒顯示就讓玩家永遠卡在 _gamePaused=true 的狀態
+      try {
+        advShowReward();
+        // watchdog:1.5 秒後檢查獎勵視窗是否真的顯示了
+        setTimeout(() => {
+          try {
+            const _rwOv = document.getElementById('adv-reward-overlay');
+            if (_rwOv && !_rwOv.classList.contains('show')) {
+              console.warn('[獎勵安全網] 獎勵視窗未成功顯示,自動解除暫停以恢復戰鬥');
+              try { advOnQuizSkip(); } catch(_skE) { console.error('[獎勵安全網] advOnQuizSkip 失敗', _skE); }
+            }
+          } catch(_wdE) { console.error('[獎勵安全網] watchdog 檢查失敗', _wdE); }
+        }, 1500);
+      } catch(_rwE) {
+        console.error('[獎勵安全網] advShowReward 拋出錯誤,自動解除暫停', _rwE);
+        try { advOnQuizSkip(); } catch(_skE2) {}
+      }
     }, 3200);
   } else {
     // ★ 幸運流星沙：答錯可再試一次
@@ -43532,12 +43601,15 @@ function _applyPresetTeam(slotIdx){
   // ★ v1.0.20260423.2600 — 防禦性檢查:套用前確認所有英雄在當前模式都可用
   //   即使儲存路徑已分流,舊雲端資料或其他邊緣案例可能仍讓未解鎖英雄流入
   //   若偵測到不可用英雄,拒絕套用並提示玩家
+  // ★ v1.0.20260428.3620 — 修復:把「初始 8 角色」(ADV_HERO_POOL.maokong) 永遠視為合法,
+  //   避免新增 stage 忘了補池子時,初始角色被誤判為未解鎖
   const isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
   if(isAdvMode){
     try{
       const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      const _initial = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) ? ADV_HERO_POOL.maokong : [];
       const _basePool = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL[_adventureStage]) || [];
-      const _allowed = new Set([..._basePool, ..._unlocked]);
+      const _allowed = new Set([..._initial, ..._basePool, ..._unlocked]);
       const _invalid = pt.heroes.filter(n => !_allowed.has(n));
       if(_invalid.length){
         _showInGameToast(
@@ -50791,6 +50863,71 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3660', adminOnly:true, brief:[
+    '🛠️ [管理員] 維修模式新增「預計開機時間」輸入欄,訊息改用 {TIME} 模板自動帶入',
+  ], items:[
+    '【UI 改動】',
+    '  Shift+F10 管理工具 → 維修模式區塊',
+    '  原本的 textarea 上方新增 ⏰ 預計開機時間 input 欄位',
+    '  textarea 預設訊息從「請稍候 10~15 分鐘」改為「預計於 {TIME} 重新開放」',
+    '【行為】',
+    '  按「開啟維修模式」時,程式自動把訊息中的 {TIME} 替換成輸入欄的時間字串',
+    '  若訊息含 {TIME} 但沒填時間 → 阻擋並提示先填',
+    '  若訊息沒有 {TIME}(管理員自己改寫了) → 直接送出,時間欄無作用',
+    '  確認對話框會顯示替換後的最終訊息預覽',
+    '【完全不影響玩家】',
+    '  此改動只在管理員 panel,玩家看到的維修訊息行為與之前一樣',
+    '  時間字串可以彈性,例如「今晚 22:00」「明天早上 8:30」「1 小時後」皆可',
+  ] },
+  { ver:'v1.0.20260428.3650', brief:[
+    '🎨 台灣關 31 個專屬圖片和音樂全部接上線了!',
+    '🎵 新增「台灣關卡介紹劇情 BGM」,進入台灣關時會聽到專屬主題曲',
+    '💎 10 個至寶圖片 (從珍奶聖杯到玉山之盾) 現在都有真正的精美插圖',
+  ], items:[
+    '更新內容:',
+    '・10 個 BOSS 立繪 ✨ (滷肉飯、鳳梨酥、臭豆腐、阿里山、蘭嶼、藍染、',
+    '  珍奶、日月潭、101 大樓、玉山,全部畫工精美)',
+    '・8 個關卡場景圖 🌄 (台中鳳梨酥工廠、深坑老街、阿里山、蘭嶼、',
+    '  西門町、日月潭、台北101、玉山頂)',
+    '・10 個至寶圖示 💎 (珍奶聖杯、日月潭靈鏡、鳳梨酥幸運符、臭豆腐神劍、',
+    '  阿里山茶杖、101 神槍、蘭嶼神弓、玉山之盾、滷肉飯萬用鼎、藍染雲袖)',
+    '・3 首專屬 BGM 🎵 (BOSS 戰、地圖選關、劇情介紹)',
+    '小提醒:還有 2 個關卡的場景圖沒準備好(彰化滷肉飯、三峽藍染),',
+    '在這兩關 BOSS 戰時會用通用戰鬥背景,等之後補上 ✏️',
+    '勇者們,台灣大冒險現在更有質感啦! 🇹🇼',
+  ] },
+  { ver:'v1.0.20260428.3640', brief:[
+    '🎵 修好台灣地圖 BGM 標籤的小錯誤,音樂播放更穩定',
+  ], items:[
+    '修好的內容:',
+    '・台灣地圖 BGM 的程式碼裡有個多餘的結束標記,雖然不影響聽音樂,',
+    '  但已經整理乾淨,讓網頁結構更工整 🎵',
+    '小提醒:如果你發現某個 BOSS 的圖片或音樂沒出現,請告訴管理員,',
+    '可能是該檔案還在準備中! 🛠',
+  ] },
+  { ver:'v1.0.20260428.3630', brief:[
+    '🐛 修好 BOSS 戰答完第一題就卡住的嚴重問題!',
+    '🛡️ 加上安全保護機制,以後就算遊戲遇到小狀況,也不會永遠卡住,可以繼續玩',
+  ], items:[
+    '修好的內容:',
+    '・台灣關進入 BOSS 戰時,不再有奇怪的紅色錯誤訊息 ✅',
+    '・答對第一題後,如果獎勵視窗沒順利出現,遊戲會自動恢復讓大家繼續戰鬥 🛡️',
+    '・以後不會再有「答完題就動不了」的窘境,戰鬥流程更穩定 ⚔️',
+    '・貓空、日本、台灣三個世界的 BOSS 戰都能正常進行了',
+    '勇者們,放心去打 BOSS 吧! 🌟',
+  ] },
+  { ver:'v1.0.20260428.3620', brief:[
+    '🛠 修好初始角色被擋住的問題,初始 8 角色現在到處都能用了!',
+    '🎨 電腦繪圖師、程式設計師等基本角色,任何冒險關卡都能正常上場',
+  ], items:[
+    '修好的內容:',
+    '・把預設陣容套用到冒險模式時,不會再誤把初始角色當成「未解鎖」 ✅',
+    '・電腦繪圖師、程式設計師、弦樂團員、小劇團員、田徑隊員、',
+    '  直笛團員、籃球隊員、動物學家 — 這 8 個基本角色任何關卡都能用 🎨',
+    '・台灣環島歷險記也補上了完整的英雄池設定 🚗',
+    '・以後新增關卡時,初始角色也會自動被視為合法,不會再有同樣問題',
+    '繼續勇闖冒險吧! ✨',
+  ] },
   { ver:'v1.0.20260428.3610', brief:[
     '🛠 修好遊戲幾個地方,讓大家可以順利遊玩!',
     '🎮 冒險選關、好友系統、知識幣顯示都恢復正常了',
@@ -58791,7 +58928,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3610';
+  const CURRENT_VERSION = 'v1.0.20260428.3660';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -58808,7 +58945,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3610';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3660';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
