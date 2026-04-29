@@ -32201,7 +32201,7 @@ Object.assign(BURST_DB, {
 });
 
 // 台灣 BOSS 的天賦被動
-Object.assign(HERO_TRAITS, {
+Object.assign(HERO_TRAIT, {
   '油膩魔王・滷汁大鍋':   { name:'香氣四溢', icon:'🍯', desc:'每回合自動回復 5% HP',fd:'濃郁的滷汁香氣讓自身體質強健,每回合自動回復最大 HP 的 5%。' },
   '酥脆狂魔・熱浪糕師':   { name:'酥脆裝甲', icon:'🍪', desc:'受到傷害減 15%',fd:'全身被酥脆糕點外殼包覆,所有受到的傷害減少 15%。' },
   '臭氣魔王・發酵公':     { name:'發酵免疫', icon:'🦠', desc:'免疫所有「中毒」狀態,造成傷害時 25% 機率附加「中毒」',fd:'千年發酵讓他對毒素完全免疫,造成傷害時 25% 機率使目標「中毒」。' },
@@ -50791,6 +50791,18 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3610', brief:[
+    '🛠 修好遊戲幾個地方,讓大家可以順利遊玩!',
+    '🎮 冒險選關、好友系統、知識幣顯示都恢復正常了',
+  ], items:[
+    '修好的內容:',
+    '・「台灣環島歷險記」按鈕現在點得到了 🚗',
+    '・「環遊世界遠征傳說」按鈕現在點得到了 ✈',
+    '・冒險頁面的知識幣數字會正常顯示 🪙',
+    '・好友系統的代表英雄圖片可以正常出現 👥',
+    '・遊戲畫面顯示更穩定,不會再有奇怪的小問題',
+    '感謝大家的耐心,繼續享受遊戲吧! ✨',
+  ] },
   { ver:'v1.0.20260428.3600', brief:[
     '🚨 緊急修復:line 32842 syntax error 導致整個 script 區塊 crash',
     '🐛 連帶修好「openNicknameModal / showLoginGate is not defined」錯誤',
@@ -58779,7 +58791,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3600';
+  const CURRENT_VERSION = 'v1.0.20260428.3610';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -58796,7 +58808,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3600';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3610';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
