@@ -7547,18 +7547,19 @@ const HERO_IMGS = {
   '小惡魔': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94.png',
   // ★ v1.0.20260423.7700 — 大天狗/酒吞童子/玉藻前 的 HERO_IMGS 由後面的 Object.assign
   //   動態填入(用原 Q 版 BOSS 檔名:大天狗.png 等),不在此處硬編碼避免衝突
-  // ★ v1.0.20260428.2800 — 台灣關 10 BOSS 的 HERO_IMGS:用 TAIWAN_IMG_MAP 對應的 URL
-  //   檔名以 BOSS 全名命名(如「油膩魔王・滷汁大鍋.png」),載入失敗會 fallback 到 emoji
-  '油膩魔王・滷汁大鍋':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('油膩魔王・滷汁大鍋.png'),
-  '酥脆狂魔・熱浪糕師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('酥脆狂魔・熱浪糕師.png'),
-  '臭氣魔王・發酵公':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('臭氣魔王・發酵公.png'),
-  '山靈古魔・千年怒木':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('山靈古魔・千年怒木.png'),
-  '深海惡靈・觸手大蛟':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('深海惡靈・觸手大蛟.png'),
-  '染靈幻魔・藍色憂鬱':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('染靈幻魔・藍色憂鬱.png'),
-  '珍奶吸魂魔・大波霸':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('珍奶吸魂魔・大波霸.png'),
-  '水靈反魔・倒映女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水靈反魔・倒映女.png'),
-  '摩天魔將・夜空爆裂者': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('摩天魔將・夜空爆裂者.png'),
-  '山岳禁咒・崩天巨人':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('山岳禁咒・崩天巨人.png'),
+  // ★ v1.0.20260428.2800 — 台灣關 10 BOSS 的 HERO_IMGS:對齊 GitHub 實際檔名
+  //   v1.0.20260428.3700 — 修正:之前用 BOSS 全名(如「油膩魔王・滷汁大鍋.png」)導致 404,
+  //   GitHub 實際檔名是簡稱版(「滷肉飯BOSS.png」等),戰鬥中 BOSS 立繪會載不出 fallback 成 emoji
+  '油膩魔王・滷汁大鍋':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('滷肉飯BOSS.png'),
+  '酥脆狂魔・熱浪糕師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鳳梨酥BOSS.png'),
+  '臭氣魔王・發酵公':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('臭豆腐BOSS.png'),
+  '山靈古魔・千年怒木':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('阿里山神木BOSS.png'),
+  '深海惡靈・觸手大蛟':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('蘭嶼BOSS.png'),
+  '染靈幻魔・藍色憂鬱':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('藍染BOSS.png'),
+  '珍奶吸魂魔・大波霸':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('珍奶BOSS.png'),
+  '水靈反魔・倒映女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('日月潭BOSS.png'),
+  '摩天魔將・夜空爆裂者': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('101大樓BOSS.png'),
+  '山岳禁咒・崩天巨人':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉山BOSS.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -11632,6 +11633,17 @@ const MONSTER_LORE = {
   // ── 2 稀有小怪 ──
   '行走的二宮尊德像': '全國小學門口常見的銅像於深夜甦醒，背著柴薪邊走邊讀書。見到懶惰的人會長聲嘆息，見到勤學的則悄悄賜福。',
   '座敷童子': '寄居於老屋和室中的童靈，身穿紅衣梳著河童頭。被牠守護的家族會興旺百年，一旦離去則家道中落，日本最被珍視的瑞祥妖怪。',
+  // ★ v1.0.20260428.3690 — 台灣關 10 大 BOSS 介紹文(內容對齊 TAIWAN_BOSSES.desc)
+  '油膩魔王・滷汁大鍋':   '自稱「真正的滷肉飯之神」,要消滅所有不照他配方做的小吃店!咕嚕嚕、咕嚕嚕,我的滷汁最香!',
+  '酥脆狂魔・熱浪糕師':   '只想把所有甜點變得更甜更甜,要讓全世界的人都蛀牙到不能吃糕點!糖糖糖!糖最重要!',
+  '臭氣魔王・發酵公':     '奪取深坑古傳發酵秘方,要讓全島的食物都失去香味!咳咳咳,聞我的臭氣吧!',
+  '山靈古魔・千年怒木':   '原本是阿里山的守護神木,被異世界魔氣感染後變成毀滅者。沙、沙、沙……枯萎吧,人類……',
+  '深海惡靈・觸手大蛟':   '被異世界吸引而來的深海生物,要把整座蘭嶼拖入海底!吼嗚嗚……海底見……',
+  '染靈幻魔・藍色憂鬱':   '原是當地藍染傳承的靈魂,被詛咒後讓所有人陷入永恆憂鬱。藍藍的……一切都好憂傷……',
+  '珍奶吸魂魔・大波霸':   '吸取小朋友手中的珍奶汁液,越喝越大!要把全台北的甜變成苦!咕嚕嚕咕嚕嚕,給我珍珠!',
+  '水靈反魔・倒映女':     '篡奪靈鏡後製造「假象台灣」要讓人們忘記真實。鏡中的你,才是真正的你……',
+  '摩天魔將・夜空爆裂者': '要奪取 101 的「擎天能量」毀滅整個亞洲都會!煙火綻放之時,就是你們末日!',
+  '山岳禁咒・崩天巨人':   '要讓玉山「下沉」,奪走台灣的脊樑!我要拳~~~碎~~~這座山!什麼?這就是我自己的山?等一下我重來……',
 };
 
 
@@ -13488,6 +13500,8 @@ function _showPlayerBurstPriority(bossHero, isRage){
         try{ playSfx('sfx-burst', 1.0); }catch(_){}
       }
       _pSetTimeout(() => {
+        // ★ v1.0.20260428.3670 — 同 rage 路徑:清 acted 避免 _canBurst 因 BOSS quiz cb 設的 acted=true 而擋下
+        try{ if(bossHero) bossHero.acted = false; }catch(_){}
         try{ execBurst(bossHero.side, bossHero.pos); }
         catch(e){ console.error('[priority skip burst]', e); _pSetTimeout(startTurn, 400); }
       }, isRage ? 800 : 200);
@@ -13924,7 +13938,24 @@ function execBurst(side, pos, expectedName){
   }catch(_){}
   hideBurstPanel();
   const h=G[side][pos];
-  if(!h||!_canBurst(h)) return;
+  if(!h||!_canBurst(h)){
+    // ★ v1.0.20260428.3670 — 加診斷 log:silent return 是「爆發點了沒反應」類 bug 的常見根因,
+    //   印出當下 _canBurst 各條件值方便追查(原本完全沒 log,卡住時無從下手)
+    try{
+      if(h){
+        console.warn('[execBurst] _canBurst 失敗 → silent return',
+          { name:h.name, side:h.side, pos:h.pos,
+            curHp:h.curHp, acted:h.acted,
+            energy:(G.energy&&G.energy[h.side]),
+            burstReady:_burstReady(h.side),
+            inBurstDB:!!(BURST_DB&&BURST_DB[h.name]),
+            burstUsed:h._burstUsed });
+      } else {
+        console.warn('[execBurst] G['+side+']['+pos+'] 無人 → silent return');
+      }
+    }catch(_){}
+    return;
+  }
   // ★ v1.0.20260424.0600 — 神偷俠盜飛梭發動前先彈預覽視窗(只玩家側)
   //   讓玩家先看「將會偷到什麼」再決定發動
   if(h.name === '神偷' && side === 'p1' && !window._stealBurstConfirmed){
@@ -23191,6 +23222,14 @@ function aiAct(a){
 function _realAiAct(a){
   // ★ 防護：若 a 無效直接跳過回合
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
+  // ★ v1.0.20260428.3680 — 卡死偵測補強:在 _realAiAct 進入時也啟動 deadlock watchdog
+  //   原本只在 startTurn 顯示「現在是對手的回合」時(line 22698)啟動 watchdog,
+  //   但 BOSS 答題後從 quiz cb 直接呼叫 _realAiAct 不會經過 startTurn → watchdog 從未啟動,
+  //   所以 BOSS 戰鬥邏輯卡死時(如 .3670 修復前的杏花妖憤怒覺醒)沒有自救按鈕亮起。
+  //   修補:這裡也呼叫一次,_startDeadlockWatchdog 內會先 clear 舊的再建新,可安全重複呼叫。
+  if(a.side === 'p2'){
+    try{ if(typeof _startDeadlockWatchdog === 'function') _startDeadlockWatchdog(); }catch(_){}
+  }
   // ★ v1.0.20260424.0910 — BOSS AI watchdog: 防止某些情況下 AI 行動卡死整場戰鬥
   //   常見場景: 八岐大蛇 S1 八首齊噬有 8 次 _pSetTimeout 連擊,
   //   若中途 _gamePaused=true(如玩家中斷或 BOSS quiz 異常),timer 被 queue 但 _resumeTimers 沒被呼叫,
@@ -23306,7 +23345,15 @@ function _realAiAct(a){
     // ★ 強制給滿能量確保 _canBurst 通過（rage burst 無視能量限制）
     G.energy[a.side] = 10;
     a._burstUsed = Math.max(0, (a._burstUsed||0) - 1); // ★ 強制允許一次爆發
-    _pSetTimeout(()=>{ execBurst(a.side, a.pos); }, 1200);
+    // ★ v1.0.20260428.3670 — 修復:BOSS quiz cb 會提前把 a.acted 設為 true(line 23177 防 quiz 無限循環),
+    //   但 _canBurst 會檢查 h.acted → 導致 execBurst 第一行就 silent return,
+    //   症狀:憤怒覺醒對話/音效有播放,但 BOSS 特寫、傷害、視覺特效全消失,遊戲卡死。
+    //   修補:在呼叫 execBurst 之前清除 a.acted,讓 _canBurst 通過;
+    //   execBurst 內部會在發動時自己再把 acted 設回 true,所以行為一致。
+    _pSetTimeout(()=>{
+      try{ if(a) a.acted = false; }catch(_){}
+      execBurst(a.side, a.pos);
+    }, 1200);
     return;
   }
 
@@ -28468,14 +28515,13 @@ const TAIWAN_IMG_MAP = {
   mapBg: '台灣關卡首頁背景.png',
   // ─── 10 個關卡:每關 [boss 立繪, 場景背景圖] ───
   // ★ v1.0.20260428.3650 — 對齊 GitHub 實際存在的檔名(玩家提供新檔名)
-  //   尚未提供場景圖的關卡(changhua_braised / sanxia_indigo) scene 設為空字串,
-  //   程式會自動 fallback 到預設 BOSS 戰背景(bg-boss class)
-  changhua_braised:    { boss:'滷肉飯BOSS.png',      scene:''               },
+  // ★ v1.0.20260428.3710 — 補上彰化老街、三峽老街兩張之前缺的場景圖
+  changhua_braised:    { boss:'滷肉飯BOSS.png',      scene:'彰化老街.png'      },
   taichung_pineapple:  { boss:'鳳梨酥BOSS.png',      scene:'台中鳳梨酥工廠.png' },
   shenkeng_tofu:       { boss:'臭豆腐BOSS.png',      scene:'深坑老街.png'      },
   alishan_tree:        { boss:'阿里山神木BOSS.png',  scene:'阿里山.png'        },
   lanyu_octopus:       { boss:'蘭嶼BOSS.png',        scene:'蘭嶼.png'          },
-  sanxia_indigo:       { boss:'藍染BOSS.png',        scene:''               },
+  sanxia_indigo:       { boss:'藍染BOSS.png',        scene:'三峽老街.png'      },
   ximen_pearl:         { boss:'珍奶BOSS.png',        scene:'西門町.png'        },
   sun_moon_mirror_boss:{ boss:'日月潭BOSS.png',      scene:'日月潭.png'        },
   taipei_101_warlord:  { boss:'101大樓BOSS.png',     scene:'台北101.png'       },
@@ -30030,6 +30076,11 @@ const BOSS_NAMES = [
   '河童','二口女','雪女','獨眼小僧',
   '行走的二宮尊德像','座敷童子',
   '八岐大蛇',
+  // ★ v1.0.20260428.3690 — 台灣關 10 BOSS:之前漏加導致出現在英雄圖鑑/鬥技場英雄選擇,現在補齊
+  //   加入後英雄圖鑑與鬥技場會自動把它們排除,改在魔物圖鑑顯示(_buildMonsterPage 內列)
+  '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
+  '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
+  '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
 ];
 // 冒險模式允許出場的英雄名單
 const ADV_HERO_POOL = {
@@ -32537,193 +32588,211 @@ function _taiwanShowAdminOnlyModal(){
 // 圖釘地理座標(SVG viewBox 0 0 1000 1400, 台灣島大致比例):
 //   x 軸: 西~東 (大約 200~800)
 //   y 軸: 北~南 (大約 100~1300)
-const TAIWAN_BOSS_PIN_COORDS = {
-  taipei_101_warlord:   { x: 545, y: 165, label:'台北 101' },
-  ximen_pearl:          { x: 510, y: 195, label:'西門町' },
-  shenkeng_tofu:        { x: 575, y: 200, label:'深坑' },
-  sanxia_indigo:        { x: 470, y: 230, label:'三峽' },
-  taichung_pineapple:   { x: 405, y: 530, label:'微熱山丘' },
-  changhua_braised:     { x: 380, y: 620, label:'彰化' },
-  sun_moon_mirror_boss: { x: 470, y: 660, label:'日月潭' },
-  alishan_tree:         { x: 430, y: 770, label:'阿里山' },
-  yushan_giant:         { x: 510, y: 760, label:'玉山' },
-  lanyu_octopus:        { x: 770, y: 1180, label:'蘭嶼' },
+// ★ v1.0.20260428.3680 — 台灣地圖重做:改用真實台灣地圖背景圖 + 左右卡片佈局
+//   各 BOSS 在地圖背景上的發光位置(% 相對於地圖圖片寬高)
+//   對應實際台灣地理位置:北部(101/西門/三峽/深坑)、中部(台中/彰化/日月潭)、
+//   南部山區(阿里山/玉山)、東南離島(蘭嶼)
+//   ※ 若用戶反映發光點與地圖位置不對齊,只要調整下方 x/y % 數值即可
+const TAIWAN_BOSS_GLOW_COORDS = {
+  // 北部
+  taipei_101_warlord:   { x: 50, y: 12, label: '台北 101' },
+  ximen_pearl:          { x: 47, y: 14, label: '西門町' },
+  shenkeng_tofu:        { x: 53, y: 15, label: '深坑' },
+  sanxia_indigo:        { x: 45, y: 17, label: '三峽' },
+  // 中部
+  taichung_pineapple:   { x: 40, y: 38, label: '台中' },
+  changhua_braised:     { x: 38, y: 45, label: '彰化' },
+  sun_moon_mirror_boss: { x: 47, y: 47, label: '日月潭' },
+  // 中南部山區
+  alishan_tree:         { x: 42, y: 57, label: '阿里山' },
+  yushan_giant:         { x: 50, y: 55, label: '玉山' },
+  // 東南離島
+  lanyu_octopus:        { x: 75, y: 84, label: '蘭嶼' },
 };
 
-// 主要的台灣島 SVG 路徑 (簡化版,捕捉台灣主要輪廓)
-const TAIWAN_ISLAND_SVG_PATH = 'M 460 80 ' +              // 台北東北角起點
-  'L 580 110 L 620 200 L 640 290 L 660 380 ' +              // 東北沿岸往南
-  'L 680 470 L 700 560 L 710 650 L 720 740 ' +              // 花蓮台東
-  'L 700 830 L 670 920 L 630 1000 L 580 1070 ' +            // 屏東
-  'L 510 1110 L 450 1100 L 410 1060 L 380 990 ' +           // 恆春半島最南端
-  'L 360 920 L 340 830 L 320 740 L 300 650 ' +              // 西南沿岸往北
-  'L 290 560 L 295 470 L 310 380 L 335 290 ' +              // 雲林、台中
-  'L 365 220 L 400 160 L 430 110 L 460 80 Z';               // 回到台北
+// 左右兩側 BOSS 卡片分配(地理感:中南部 / 北部+蘭嶼)
+const TAIWAN_LEFT_BOSSES  = ['changhua_braised', 'taichung_pineapple', 'sun_moon_mirror_boss', 'alishan_tree', 'yushan_giant'];
+const TAIWAN_RIGHT_BOSSES = ['taipei_101_warlord', 'ximen_pearl', 'sanxia_indigo', 'shenkeng_tofu', 'lanyu_octopus'];
 
 // 顯示台灣關卡選擇地圖
 window._showTaiwanMap = function(){
   const old = document.getElementById('taiwan-map-overlay');
   if(old) old.remove();
+
+  // ── 注入 CSS keyframes(只插一次) ──
+  if(!document.getElementById('_taiwan-map-kf')){
+    const kf = document.createElement('style');
+    kf.id = '_taiwan-map-kf';
+    kf.textContent =
+      '@keyframes taiwanGlowPulse{' +
+      '  0%{transform:translate(-50%,-50%) scale(1);box-shadow:0 0 20px 8px rgba(255,200,80,0.85),0 0 40px 16px rgba(255,200,80,0.5);}' +
+      '  50%{transform:translate(-50%,-50%) scale(1.4);box-shadow:0 0 32px 14px rgba(255,220,120,0.95),0 0 60px 24px rgba(255,200,80,0.75);}' +
+      '  100%{transform:translate(-50%,-50%) scale(1);box-shadow:0 0 20px 8px rgba(255,200,80,0.85),0 0 40px 16px rgba(255,200,80,0.5);}' +
+      '}' +
+      '@keyframes taiwanCardHoverGlow{0%,100%{filter:drop-shadow(0 0 6px rgba(255,200,80,0.4));}50%{filter:drop-shadow(0 0 14px rgba(255,220,100,0.9));}}' +
+      '.taiwan-boss-card{transition:transform 0.18s,border-color 0.18s,background 0.18s,box-shadow 0.18s;}' +
+      '.taiwan-boss-card:hover{transform:translateX(2px) scale(1.04);background:rgba(40,80,140,0.85)!important;box-shadow:0 4px 22px rgba(255,200,80,0.5);}' +
+      '.taiwan-boss-card:active{transform:scale(0.97);}' +
+      '@keyframes taiwanDetailIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}';
+    document.head.appendChild(kf);
+  }
+
   const ov = document.createElement('div');
   ov.id = 'taiwan-map-overlay';
   ov.style.cssText =
     'position:fixed;inset:0;z-index:9700;' +
     'background:linear-gradient(180deg,#001a3a 0%,#003d6e 50%,#0066aa 100%);' +
-    'display:flex;flex-direction:column;align-items:center;' +
-    'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
-    'animation:fadeIn 0.5s;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+    'display:flex;flex-direction:column;' +
+    'animation:fadeIn 0.5s;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;' +
+    'overflow:hidden;';
 
   // ── 標題列 ──
   const header = document.createElement('div');
-  header.style.cssText = 'width:100%;padding:30px 24px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;';
+  header.style.cssText = 'width:100%;padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;';
   header.innerHTML =
-    '<button id="taiwan-map-back" style="padding:14px 28px;font-size:24px;font-weight:800;background:rgba(0,30,60,0.85);' +
+    '<button id="taiwan-map-back" style="padding:12px 24px;font-size:22px;font-weight:800;background:rgba(0,30,60,0.85);' +
       'border:2.5px solid rgba(120,200,255,0.7);color:#aaccff;border-radius:14px;cursor:pointer;letter-spacing:2px;' +
-      'box-shadow:0 4px 14px rgba(0,80,160,0.4);">← 返回</button>' +
+      'box-shadow:0 4px 14px rgba(0,80,160,0.4);font-family:inherit;">← 返回</button>' +
     '<div style="text-align:center;flex:1;">' +
-      '<div style="font-size:clamp(36px,4.5vw,58px);font-weight:900;color:#ffdd66;letter-spacing:8px;text-shadow:0 0 30px rgba(255,200,80,0.7);">🏝 台灣環島歷險記</div>' +
-      '<div style="font-size:clamp(18px,2vw,26px);color:#aaeeff;letter-spacing:3px;margin-top:6px;opacity:0.9;">點擊地圖上的圖釘,選擇要挑戰的關卡 BOSS</div>' +
+      '<div style="font-size:clamp(28px,4vw,48px);font-weight:900;color:#ffdd66;letter-spacing:6px;text-shadow:0 0 30px rgba(255,200,80,0.7);">🏝 台灣環島歷險記</div>' +
+      '<div style="font-size:clamp(14px,1.7vw,22px);color:#aaeeff;letter-spacing:2px;margin-top:4px;opacity:0.9;">點擊 BOSS 卡片,看看牠們藏在台灣的哪個角落</div>' +
     '</div>' +
-    '<div style="width:120px;"></div>';  // 對稱佔位
+    '<div style="width:120px;flex-shrink:0;"></div>';
   ov.appendChild(header);
 
-  // ── 地圖容器 ──
-  const mapWrap = document.createElement('div');
-  mapWrap.style.cssText = 'flex:1;width:100%;max-width:1000px;display:flex;justify-content:center;align-items:flex-start;padding:10px 20px 40px;';
-  ov.appendChild(mapWrap);
+  // ── 主區域:左欄 / 中央地圖 / 右欄 ──
+  const mainArea = document.createElement('div');
+  mainArea.style.cssText = 'flex:1;display:flex;width:100%;padding:0 16px 16px;gap:14px;align-items:stretch;overflow:hidden;min-height:0;';
+  ov.appendChild(mainArea);
 
-  // SVG 容器
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('viewBox', '0 0 1000 1400');
-  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  svg.style.cssText = 'width:100%;max-width:720px;max-height:80vh;height:auto;filter:drop-shadow(0 0 30px rgba(80,160,255,0.5));';
-
-  // 海洋背景紋理(SVG defs 漸層)
-  const defs = document.createElementNS(svgNS, 'defs');
-  defs.innerHTML =
-    '<linearGradient id="taiwanLandGrad" x1="0%" y1="0%" x2="0%" y2="100%">' +
-      '<stop offset="0%" stop-color="#5fb961"/>' +
-      '<stop offset="50%" stop-color="#4ca54e"/>' +
-      '<stop offset="100%" stop-color="#3d8c3f"/>' +
-    '</linearGradient>' +
-    '<radialGradient id="taiwanGlow" cx="50%" cy="50%" r="50%">' +
-      '<stop offset="0%" stop-color="rgba(255,255,200,0.3)"/>' +
-      '<stop offset="100%" stop-color="rgba(255,255,200,0)"/>' +
-    '</radialGradient>';
-  svg.appendChild(defs);
-
-  // 台灣島地形
-  const island = document.createElementNS(svgNS, 'path');
-  island.setAttribute('d', TAIWAN_ISLAND_SVG_PATH);
-  island.setAttribute('fill', 'url(#taiwanLandGrad)');
-  island.setAttribute('stroke', '#2d6e2f');
-  island.setAttribute('stroke-width', '3');
-  svg.appendChild(island);
-
-  // 中央山脈裝飾線(模擬玉山等山脈)
-  const mountain = document.createElementNS(svgNS, 'path');
-  mountain.setAttribute('d', 'M 520 280 L 540 380 L 530 480 L 545 580 L 525 680 L 540 780 L 520 880');
-  mountain.setAttribute('fill', 'none');
-  mountain.setAttribute('stroke', '#8d5a2a');
-  mountain.setAttribute('stroke-width', '8');
-  mountain.setAttribute('stroke-linecap', 'round');
-  mountain.setAttribute('opacity', '0.5');
-  svg.appendChild(mountain);
-
-  // 蘭嶼小島
-  const lanyu = document.createElementNS(svgNS, 'ellipse');
-  lanyu.setAttribute('cx', '770');
-  lanyu.setAttribute('cy', '1180');
-  lanyu.setAttribute('rx', '40');
-  lanyu.setAttribute('ry', '32');
-  lanyu.setAttribute('fill', 'url(#taiwanLandGrad)');
-  lanyu.setAttribute('stroke', '#2d6e2f');
-  lanyu.setAttribute('stroke-width', '2.5');
-  svg.appendChild(lanyu);
-
-  // ── BOSS 圖釘 ──
-  Object.keys(TAIWAN_BOSSES).forEach(bossId => {
+  // ────────── BOSS 卡片建構函式 ──────────
+  const buildBossCard = (bossId) => {
     const boss = TAIWAN_BOSSES[bossId];
-    const coord = TAIWAN_BOSS_PIN_COORDS[bossId];
-    if(!coord) return;
+    if(!boss) return null;
+    const card = document.createElement('div');
+    card.className = 'taiwan-boss-card';
+    card.dataset.bossId = bossId;
+    const _accent = boss.mainline ? '#ffcc44' : '#ff8866';
+    card.style.cssText =
+      'display:flex;align-items:center;gap:10px;' +
+      'padding:8px 10px;background:rgba(0,30,60,0.7);' +
+      'border:2px solid ' + _accent + '88;' +
+      'border-radius:12px;cursor:pointer;flex-shrink:0;' +
+      'box-shadow:0 2px 10px rgba(0,30,80,0.5);';
 
-    // 圖釘陰影圈(脈動效果)
-    const pulseRing = document.createElementNS(svgNS, 'circle');
-    pulseRing.setAttribute('cx', coord.x);
-    pulseRing.setAttribute('cy', coord.y);
-    pulseRing.setAttribute('r', '32');
-    pulseRing.setAttribute('fill', 'none');
-    pulseRing.setAttribute('stroke', boss.mainline ? '#ffcc44' : '#ff6644');
-    pulseRing.setAttribute('stroke-width', '3');
-    pulseRing.setAttribute('opacity', '0.7');
-    pulseRing.style.animation = 'taiwanPinPulse 2s infinite';
-    svg.appendChild(pulseRing);
+    const _imgUrl = (typeof _getTaiwanBossImage === 'function') ? _getTaiwanBossImage(bossId) : '';
+    const _avatar =
+      '<div style="width:54px;height:54px;flex-shrink:0;border-radius:50%;overflow:hidden;' +
+      'background:rgba(0,0,0,0.5);border:2.5px solid ' + _accent + ';' +
+      'display:flex;align-items:center;justify-content:center;font-size:32px;line-height:1;">' +
+      (_imgUrl
+        ? '<img src="' + _imgUrl + '" style="width:100%;height:100%;object-fit:cover;display:block;" ' +
+          'onerror="this.outerHTML=\'<span style=&quot;font-size:32px;line-height:1;&quot;>' + (boss.bossEmoji||'👹') + '</span>\'">'
+        : (boss.bossEmoji||'👹')) +
+      '</div>';
+    const _stars = '★'.repeat(boss.stars||3) + '☆'.repeat(Math.max(0, 6-(boss.stars||3)));
+    card.innerHTML =
+      _avatar +
+      '<div style="flex:1;min-width:0;overflow:hidden;">' +
+        '<div style="font-size:clamp(13px,1.3vw,16px);font-weight:900;color:#fff;letter-spacing:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + boss.name + '</div>' +
+        '<div style="font-size:clamp(10px,1vw,12px);color:#aaccff;margin-top:2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ' + boss.location + '</div>' +
+        '<div style="font-size:clamp(10px,1vw,12px);color:' + _accent + ';margin-top:1px;letter-spacing:1px;line-height:1.2;">' + _stars + '</div>' +
+      '</div>';
 
-    // 圖釘外圈
-    const pinOuter = document.createElementNS(svgNS, 'circle');
-    pinOuter.setAttribute('cx', coord.x);
-    pinOuter.setAttribute('cy', coord.y);
-    pinOuter.setAttribute('r', '24');
-    pinOuter.setAttribute('fill', boss.mainline ? '#ffaa22' : '#cc4422');
-    pinOuter.setAttribute('stroke', '#fff');
-    pinOuter.setAttribute('stroke-width', '3.5');
-    pinOuter.style.cursor = 'pointer';
-    svg.appendChild(pinOuter);
-
-    // 圖釘 Emoji(BOSS 預覽)
-    const pinEmoji = document.createElementNS(svgNS, 'text');
-    pinEmoji.setAttribute('x', coord.x);
-    pinEmoji.setAttribute('y', coord.y + 9);
-    pinEmoji.setAttribute('text-anchor', 'middle');
-    pinEmoji.setAttribute('font-size', '26');
-    pinEmoji.style.cursor = 'pointer';
-    pinEmoji.textContent = boss.bossEmoji;
-    svg.appendChild(pinEmoji);
-
-    // 地名標籤
-    const labelBg = document.createElementNS(svgNS, 'rect');
-    const _labelW = coord.label.length * 18 + 16;
-    labelBg.setAttribute('x', coord.x - _labelW/2);
-    labelBg.setAttribute('y', coord.y + 30);
-    labelBg.setAttribute('width', _labelW);
-    labelBg.setAttribute('height', 26);
-    labelBg.setAttribute('rx', '6');
-    labelBg.setAttribute('fill', 'rgba(0,0,0,0.75)');
-    labelBg.setAttribute('stroke', boss.mainline ? '#ffcc44' : '#ff8866');
-    labelBg.setAttribute('stroke-width', '1.5');
-    svg.appendChild(labelBg);
-
-    const labelText = document.createElementNS(svgNS, 'text');
-    labelText.setAttribute('x', coord.x);
-    labelText.setAttribute('y', coord.y + 49);
-    labelText.setAttribute('text-anchor', 'middle');
-    labelText.setAttribute('font-size', '16');
-    labelText.setAttribute('font-weight', '700');
-    labelText.setAttribute('fill', '#fff');
-    labelText.textContent = coord.label;
-    svg.appendChild(labelText);
-
-    // 點擊事件(整個圖釘群組共用)
-    [pinOuter, pinEmoji].forEach(el => {
-      el.addEventListener('click', function(){
-        try{ playSfx('sfx-sel', 0.6); }catch(_){}
-        _showTaiwanBossDetail(bossId);
-      });
+    // 互動: hover/click → 對應地圖發光點亮
+    const _setGlow = (on) => {
+      const g = document.getElementById('taiwan-glow-' + bossId);
+      if(!g) return;
+      g.style.opacity = on ? '1' : '0';
+    };
+    card.addEventListener('mouseenter', () => _setGlow(true));
+    card.addEventListener('mouseleave', () => _setGlow(false));
+    card.addEventListener('touchstart', () => _setGlow(true), {passive:true});
+    card.addEventListener('click', () => {
+      try{ playSfx('sfx-sel', 0.6); }catch(_){}
+      // 點擊時讓對應發光點先亮 600ms 再開啟詳細視窗,給玩家視覺提示
+      _setGlow(true);
+      setTimeout(() => { _showTaiwanBossDetail(bossId); }, 200);
     });
+    return card;
+  };
+
+  // ── 左側卡片欄(中南部 BOSS) ──
+  const leftCol = document.createElement('div');
+  leftCol.style.cssText = 'flex:0 0 clamp(200px,22vw,260px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px;justify-content:space-around;';
+  TAIWAN_LEFT_BOSSES.forEach(bossId => {
+    const c = buildBossCard(bossId);
+    if(c) leftCol.appendChild(c);
+  });
+  mainArea.appendChild(leftCol);
+
+  // ── 中央地圖區 ──
+  const mapCol = document.createElement('div');
+  mapCol.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;min-width:0;position:relative;';
+  const mapWrap = document.createElement('div');
+  mapWrap.style.cssText = 'position:relative;height:100%;max-height:100%;display:flex;align-items:center;justify-content:center;';
+  // 地圖背景圖
+  const mapImg = document.createElement('img');
+  mapImg.src = (typeof TAIWAN_IMG_BASE !== 'undefined')
+    ? TAIWAN_IMG_BASE + encodeURIComponent('台灣地圖.png')
+    : 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('台灣地圖.png');
+  mapImg.alt = '台灣地圖';
+  mapImg.style.cssText = 'max-width:100%;max-height:100%;height:auto;width:auto;object-fit:contain;display:block;filter:drop-shadow(0 0 30px rgba(80,160,255,0.5));';
+  mapImg.onerror = function(){
+    // 載入失敗 fallback:藍色提示文字
+    this.style.display = 'none';
+    const _fb = document.createElement('div');
+    _fb.style.cssText = 'color:#aaccff;font-size:18px;text-align:center;padding:40px;';
+    _fb.textContent = '🗺 台灣地圖載入失敗(GitHub 圖片可能尚未上傳)';
+    mapWrap.appendChild(_fb);
+  };
+  mapWrap.appendChild(mapImg);
+
+  // ── 在地圖上疊加 10 個發光點(預設隱藏,卡片 hover/click 才亮) ──
+  // ★ 用相對於 mapWrap 的絕對定位;座標來自 TAIWAN_BOSS_GLOW_COORDS
+  Object.keys(TAIWAN_BOSSES).forEach(bossId => {
+    const coord = TAIWAN_BOSS_GLOW_COORDS[bossId];
+    if(!coord) return;
+    const glow = document.createElement('div');
+    glow.id = 'taiwan-glow-' + bossId;
+    glow.style.cssText =
+      'position:absolute;left:' + coord.x + '%;top:' + coord.y + '%;' +
+      'width:18px;height:18px;border-radius:50%;' +
+      'background:radial-gradient(circle,#fff8c0 0%,#ffcc44 35%,rgba(255,180,40,0.6) 65%,rgba(255,140,0,0) 100%);' +
+      'transform:translate(-50%,-50%);' +
+      'opacity:0;pointer-events:none;' +
+      'transition:opacity 0.25s ease-out;' +
+      'animation:taiwanGlowPulse 1.4s ease-in-out infinite;' +
+      'z-index:10;';
+    mapWrap.appendChild(glow);
+
+    // 地名小標籤(永遠顯示淡淡的,讓玩家知道地點對應)
+    const lbl = document.createElement('div');
+    lbl.style.cssText =
+      'position:absolute;left:' + coord.x + '%;top:calc(' + coord.y + '% + 14px);' +
+      'transform:translateX(-50%);' +
+      'font-size:clamp(9px,0.9vw,12px);font-weight:700;color:#fff;' +
+      'background:rgba(0,20,50,0.7);padding:1px 6px;border-radius:4px;' +
+      'border:1px solid rgba(255,200,80,0.4);' +
+      'pointer-events:none;white-space:nowrap;letter-spacing:1px;' +
+      'opacity:0.55;text-shadow:0 0 4px rgba(0,0,0,0.8);' +
+      'z-index:9;';
+    lbl.textContent = coord.label;
+    mapWrap.appendChild(lbl);
   });
 
-  // 確保 keyframes 注入
-  if(!document.getElementById('_taiwan-map-kf')){
-    const kf = document.createElement('style');
-    kf.id = '_taiwan-map-kf';
-    kf.textContent =
-      '@keyframes taiwanPinPulse{0%{r:24;opacity:0.7}50%{r:36;opacity:0.3}100%{r:24;opacity:0.7}}' +
-      '@keyframes taiwanDetailIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}';
-    document.head.appendChild(kf);
-  }
+  mapCol.appendChild(mapWrap);
+  mainArea.appendChild(mapCol);
 
-  mapWrap.appendChild(svg);
+  // ── 右側卡片欄(北部+蘭嶼) ──
+  const rightCol = document.createElement('div');
+  rightCol.style.cssText = 'flex:0 0 clamp(200px,22vw,260px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px;justify-content:space-around;';
+  TAIWAN_RIGHT_BOSSES.forEach(bossId => {
+    const c = buildBossCard(bossId);
+    if(c) rightCol.appendChild(c);
+  });
+  mainArea.appendChild(rightCol);
+
   document.body.appendChild(ov);
 
   // 返回按鈕
@@ -40477,41 +40546,79 @@ function _startDeadlockWatchdog(){
     if(G.p1) G.p1.forEach(h => { _snapAllyHpSum += (h.curHp||0); });
     if(G.p2) G.p2.forEach(h => { _snapEnemyHpSum += (h.curHp||0); });
   }catch(_){}
-  // 啟動 5 秒 watchdog (用普通 setTimeout 不受 _gamePaused 影響)
-  window._deadlockWatchdog = setTimeout(() => {
+
+  // ★ v1.0.20260428.3700 — 排除清單擴充:任何「合法暫停」的 modal/overlay 顯示中都不算卡死
+  //   先前漏列項目:burst-priority-modal(玩家爆發優先)/adv-boss-intro(BOSS 對白)/
+  //   adv-cutscene-overlay(過場)/adv-jp-diff-modal(日本難度)/_force-refresh-modal(強制重整)/
+  //   adv-dialog-box(對白)/_changelog-modal/_pwa-guide-modal/battle-start-overlay(開戰演出)
+  const _LEGIT_PAUSE_MODALS = [
+    'adv-quiz-overlay',          // 答題中
+    'adv-result-overlay',        // 戰鬥結算
+    'adv-mini-result',           // 小怪戰結算
+    'adv-reward-overlay',        // 答題獎勵選擇
+    'adv-treasure-confirm',      // 寶物確認
+    'burst-priority-modal',      // 玩家爆發優先提示
+    'adv-boss-intro',            // BOSS 開場對白
+    'adv-cutscene-overlay',      // 場景過場
+    'adv-dialog-box',            // 過場對白框
+    'adv-jp-diff-modal',         // 日本難度選擇
+    'battle-start-overlay',      // 開戰演出
+    '_force-refresh-modal',      // 強制重整提示
+    '_changelog-modal',          // 更新日誌
+    '_pwa-guide-modal',          // PWA 引導
+    '_deadlock-rescue-menu',     // 自救選單已開
+  ];
+  const _isAnyLegitModalOpen = () => {
+    for(const _id of _LEGIT_PAUSE_MODALS){
+      const el = document.getElementById(_id);
+      if(!el) continue;
+      // 1) 用 .show class 控制(主流方式)
+      if(el.classList && el.classList.contains('show')) return _id;
+      // 2) 用 inline display 控制
+      const _disp = el.style.display;
+      if(_disp && _disp !== 'none' && el.offsetParent !== null) return _id;
+    }
+    return null;
+  };
+
+  // ★ v1.0.20260428.3700 — watchdog 改成「持續監控」:
+  //   先前 5 秒後若被排除清單擋下會直接消失,玩家慢慢操作期間若有新卡死就抓不到。
+  //   現在邏輯:
+  //   (a) HP 有變化 → AI 還在打,重新基準計時
+  //   (b) round/actor 已切換 → 自然會有新 watchdog 啟動,清掉就好
+  //   (c) 有合法 modal 顯示 → 3 秒後再檢查,不消失
+  //   (d) 全部排除條件都不成立 → 真的卡死,顯示自救按鈕
+  const _check = () => {
     try{
       if(typeof G === 'undefined' || !G) return;
-      // 1) 若回合已切換 → 不卡死
+      // (b) 回合或 actor 已切換 → 不卡死(新 watchdog 會由 startTurn / _realAiAct 啟動)
       if((G.round || 0) !== _snapRound) return;
-      // 2) 若 activeChar 已換 → 不卡死
       const _curActor = G.activeChar;
-      const _curName = _curActor ? _curActor.name : '(none)';
       const _curPos = _curActor ? (_curActor.side + '-' + _curActor.pos) : '';
       if(_curPos !== _snapActorPos) return;
-      // 3) 若對手或玩家 HP 有變化 → AI 還在打,沒卡死
+      // (a) HP 有變化 → AI 還在動作中,沒卡死,重新從現在算 5 秒
       let _curEnemyHpSum = 0;
       let _curAllyHpSum = 0;
       if(G.p1) G.p1.forEach(h => { _curAllyHpSum += (h.curHp||0); });
       if(G.p2) G.p2.forEach(h => { _curEnemyHpSum += (h.curHp||0); });
-      if(_curEnemyHpSum !== _snapEnemyHpSum || _curAllyHpSum !== _snapAllyHpSum) return;
-      // 4) 排除合法的暫停場景(玩家答題、結算等)
-      const _qov = document.getElementById('adv-quiz-overlay');
-      if(_qov && _qov.classList.contains('show')) return;
-      const _resOv = document.getElementById('adv-result-overlay');
-      if(_resOv && _resOv.classList.contains('show')) return;
-      const _miniRes = document.getElementById('adv-mini-result');
-      if(_miniRes && _miniRes.classList.contains('show')) return;
-      // ★ v1.0.20260424.1400 — 答題獎勵 modal 顯示中,玩家還沒選 → 不算卡死
-      const _rwdOv = document.getElementById('adv-reward-overlay');
-      if(_rwdOv && _rwdOv.classList.contains('show')) return;
-      // ★ v1.0.20260424.1400 — 寶物確認、技能升級確認等其他 modal 也視為合法暫停
-      const _trOv = document.getElementById('adv-treasure-confirm');
-      if(_trOv && _trOv.style.display !== 'none' && _trOv.offsetParent !== null) return;
-      // → 通過所有檢查,判定卡死
+      if(_curEnemyHpSum !== _snapEnemyHpSum || _curAllyHpSum !== _snapAllyHpSum){
+        _startDeadlockWatchdog(); // 重新基準
+        return;
+      }
+      // (c) 合法 modal 顯示中 → 3 秒後再檢查
+      const _openModal = _isAnyLegitModalOpen();
+      if(_openModal){
+        window._deadlockWatchdog = setTimeout(_check, 3000);
+        return;
+      }
+      // (d) 真的卡死
       console.warn('🚨 [卡死偵測] AI 行動超過 5 秒無進展!actor=' + _snapActorName + ', round=' + _snapRound);
       _showDeadlockRescueButton();
     }catch(e){ console.warn('[卡死偵測] watchdog 異常', e); }
-  }, 5000);
+  };
+
+  // 啟動 5 秒 watchdog (用普通 setTimeout 不受 _gamePaused 影響)
+  window._deadlockWatchdog = setTimeout(_check, 5000);
 }
 
 function _clearDeadlockWatchdog(){
@@ -48672,6 +48779,13 @@ function _buildMonsterPage() {
   const JP_MOB_LIST = ['河童','二口女','雪女','獨眼小僧'];
   const JP_RARE_LIST = ['行走的二宮尊德像','座敷童子'];
 
+  // ★ v1.0.20260428.3690 — 台灣關 10 BOSS(都是主 BOSS,沒有小怪/精英分層)
+  const TW_BOSS_LIST = [
+    '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
+    '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
+    '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+  ];
+
   const MONSTER_AVTR = {
     '九尾空貓怪': '🐱', '杏花妖': '🌸', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
     '偷摘花的頑皮妖精': '🌸', '偷鳥蛋的鳥人哈維': '🐦', '偷竹筍的哥布林': '🌿', '偷喝茶的史萊姆': '🫖',
@@ -48681,6 +48795,11 @@ function _buildMonsterPage() {
     '烏天狗':'🦅','木葉天狗':'🍃','茨木童子':'👿','星熊童子':'🐻','殺生石分身':'🗿','管狐':'🦊',
     '河童':'💧','二口女':'👄','雪女':'❄️','獨眼小僧':'👁️',
     '行走的二宮尊德像':'🗿','座敷童子':'👧',
+    // ★ v1.0.20260428.3690 — 台灣 10 BOSS
+    '油膩魔王・滷汁大鍋':'🍲','酥脆狂魔・熱浪糕師':'🥧','臭氣魔王・發酵公':'👃',
+    '山靈古魔・千年怒木':'🌲','深海惡靈・觸手大蛟':'🐙','染靈幻魔・藍色憂鬱':'👻',
+    '珍奶吸魂魔・大波霸':'🧋','水靈反魔・倒映女':'👁️','摩天魔將・夜空爆裂者':'🎆',
+    '山岳禁咒・崩天巨人':'🗻',
   };
 
   function makeCard(name, tier) {
@@ -48728,11 +48847,15 @@ function _buildMonsterPage() {
     makeSection('👑 BOSS', JP_BOSS_LIST, 'boss') +
     makeSection('⚡ 精英小怪', JP_ELITE_LIST, 'elite') +
     makeSection('🌿 路邊小怪', JP_MOB_LIST, 'mob') +
-    makeSection('💜 稀有小怪', JP_RARE_LIST, 'rare');
+    makeSection('💜 稀有小怪', JP_RARE_LIST, 'rare') +
+    // ★ v1.0.20260428.3690 — 台灣關 10 大 BOSS(分布在台灣各地的特產守護魔物)
+    `<div style="font-size:40px;font-weight:900;color:#ffccaa;margin:40px 0 18px;letter-spacing:3px;border-bottom:3px solid rgba(255,180,120,0.5);padding-bottom:10px;">🏝 台灣環島</div>` +
+    makeSection('👑 BOSS', TW_BOSS_LIST, 'boss');
   // ★ 設定魔物翻頁清單
   _monsterDetailList = [
     ...BOSS_LIST, ...ELITE_LIST, ...MOB_LIST, ...RARE_MOB_LIST,
     ...JP_BOSS_LIST, ...JP_ELITE_LIST, ...JP_MOB_LIST, ...JP_RARE_LIST,
+    ...TW_BOSS_LIST,
   ];
 }
 
@@ -48766,6 +48889,17 @@ const MONSTER_ELEMENT = {
   '偷摘花的頑皮妖精':'dark', '偷鳥蛋的鳥人哈維':'wind',
   '偷竹筍的哥布林':'earth', '偷喝茶的史萊姆':'water',
   '寶箱怪':'earth', '小惡魔':'dark',
+  // ★ v1.0.20260428.3690 — 台灣 10 BOSS 屬性(對齊 SKILL_FORCE_ELEMENT line ~10107+ 的設定)
+  '油膩魔王・滷汁大鍋':'fire',
+  '酥脆狂魔・熱浪糕師':'fire',
+  '臭氣魔王・發酵公':'dark',
+  '山靈古魔・千年怒木':'grass',
+  '深海惡靈・觸手大蛟':'water',
+  '染靈幻魔・藍色憂鬱':'dark',
+  '珍奶吸魂魔・大波霸':'dark',
+  '水靈反魔・倒映女':'water',
+  '摩天魔將・夜空爆裂者':'wind',
+  '山岳禁咒・崩天巨人':'earth',
 };
 
 function openMonsterDetail(name) {
@@ -50863,6 +50997,69 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3710', brief:[
+    '🎨 補上最後兩張缺少的台灣關場景圖,10 個關卡背景全部到齊!',
+  ], items:[
+    '補完內容:',
+    '・彰化滷肉飯關卡的戰鬥背景換成「彰化老街」🏮',
+    '・三峽藍染關卡的戰鬥背景換成「三峽老街」🏯',
+    '・之前這兩關的 BOSS 戰背景是通用戰鬥圖,現在會用對應的特色場景了',
+    '・台灣環島 10 個關卡的場景圖至此全部到齊! 🇹🇼',
+  ] },
+  { ver:'v1.0.20260428.3700', brief:[
+    '🎨 修好台灣 10 BOSS 戰鬥中沒立繪只剩 emoji 的問題,現在會看到精美 BOSS 圖!',
+    '🛟 卡死自救按鈕又更可靠:玩家慢慢選獎勵期間若有新狀況,也能正常偵測到',
+  ], items:[
+    '修復內容:',
+    '・台灣 10 BOSS 進入戰鬥畫面時,終於會看到專屬立繪了 🌟',
+    '  (滷肉飯、鳳梨酥、臭豆腐、阿里山神木、蘭嶼、藍染、珍奶、日月潭、101、玉山)',
+    '・先前因為檔名對不上,戰鬥中只看得到 emoji 替代,現在已對齊 GitHub 實際檔案',
+    '・卡死自救按鈕的偵測邏輯升級:',
+    '  - 補上 BOSS 對白、過場、爆發優先、難度選擇等情境的合法排除',
+    '  - 玩家慢慢選獎勵或讀對白期間,若期間真的卡死也能繼續偵測 ✅',
+    '  - HP 有變化會自動重新計時,不會誤判正常戰鬥為卡死',
+    '答題不重複的設計檢查通過,沒問題!三層防護(永久答對紀錄 / 本場已用 / 跨戰鬥近期佇列)+ 洗牌池都正確運作 📚',
+  ] },
+  { ver:'v1.0.20260428.3690', brief:[
+    '👹 台灣 10 大 BOSS 從英雄圖鑑搬到魔物圖鑑了!分類更清楚',
+    '⚔ 鬥技場英雄選單也清乾淨了,不會再誤選到 BOSS 上場',
+  ], items:[
+    '修正內容:',
+    '・台灣的 10 隻 BOSS(滷汁大鍋、熱浪糕師、發酵公、千年怒木、觸手大蛟、',
+    '  藍色憂鬱、大波霸、倒映女、夜空爆裂者、崩天巨人)從英雄圖鑑移除 ✅',
+    '・10 隻 BOSS 改在「魔物圖鑑」最下方的「🏝 台灣環島」區段顯示 👹',
+    '・鬥技場挑選英雄的選單也不會再出現這 10 隻 BOSS,不會混淆 ⚔',
+    '・每隻 BOSS 都有專屬介紹文、屬性、與技能說明',
+    '小提醒:這 10 隻 BOSS 一直都是「魔物」,只是先前被誤分類到英雄那邊。',
+    '現在歸位後,英雄就只剩可以使用的角色,看圖鑑時更不會搞混 🌟',
+  ] },
+  { ver:'v1.0.20260428.3680', brief:[
+    '🗺 台灣地圖大改版!現在是真實的台灣地圖,看起來更有「環島」的感覺',
+    '🎯 10 個 BOSS 整齊排在地圖左右兩側,點 BOSS 卡片地圖會發光告訴你牠在哪裡',
+    '🛟 「卡死自救」按鈕現在更可靠了,BOSS 答完題還是卡住的話也會出現了',
+  ], items:[
+    '更新內容:',
+    '・台灣地圖換成真正的台灣地圖背景(原本是手繪的卡通版) 🌏',
+    '・10 個 BOSS 卡片分配在地圖左右兩側,中南部 BOSS 在左、北部+蘭嶼 BOSS 在右',
+    '・滑鼠移到 BOSS 卡片上(或在手機上點一下),地圖對應的地點會發出黃色光暈 ✨',
+    '・例如點「摩天魔將」→ 台北 101 位置會發光;點「深海惡靈」→ 蘭嶼會發光',
+    '・點 BOSS 卡片會打開挑戰視窗,跟之前一樣有「進入挑戰」按鈕 ⚔️',
+    '・卡死自救按鈕的偵測補強了一個漏洞,以後 BOSS 答完題後若不小心卡住,',
+    '  自救按鈕也會在 5 秒內出現,玩家可以選擇脫離戰鬥保留獎勵或換隊伍重來',
+    '小提醒:如果發光點的位置和地圖上實際地點對不準,請告訴管理員微調! 📐',
+  ] },
+  { ver:'v1.0.20260428.3670', brief:[
+    '🐛 修好杏花妖、九尾空貓怪 BOSS 答完題使出憤怒覺醒就卡死的問題!',
+    '⚔️ 之後 BOSS 殘血轉生氣放大招,終於可以正常打到大家了',
+  ], items:[
+    '修好的內容:',
+    '・杏花妖 HP 剩一半時的「憤怒覺醒」終於會正常顯示特寫了 🌸',
+    '・九尾空貓怪 HP 剩一半時的「憤怒覺醒」也修好了 🐱',
+    '・大招對全體玩家的傷害和魅惑/暈眩等效果現在會正常套用 💕',
+    '・以前一定卡死、得重整網頁的窘境一去不返 ✅',
+    '・順便加了診斷紀錄,如果未來還有類似問題會更容易找到原因',
+    '勇者們繼續征服 BOSS 吧! 💪',
+  ] },
   { ver:'v1.0.20260428.3660', adminOnly:true, brief:[
     '🛠️ [管理員] 維修模式新增「預計開機時間」輸入欄,訊息改用 {TIME} 模板自動帶入',
   ], items:[
@@ -58928,7 +59125,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3660';
+  const CURRENT_VERSION = 'v1.0.20260428.3710';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -58945,7 +59142,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3660';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3710';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
