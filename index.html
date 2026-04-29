@@ -34113,12 +34113,19 @@ function _showTaiwanBossDetail(bossId){
         '</div>' +
       '</div>' : '') +
 
-      // 關閉按鈕(右上角小 X)+ 主按鈕
-      '<button id="tw-boss-go" style="width:100%;padding:16px;font-size:24px;font-weight:900;letter-spacing:4px;' +
-        'background:linear-gradient(135deg,#22aaff,#5566ff);color:#fff;border:2.5px solid #88ccff;border-radius:14px;cursor:pointer;font-family:inherit;' +
-        'box-shadow:0 4px 24px rgba(80,160,255,0.6),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.15s;">' +
-        '⚔ 挑戰魔王!' +
-      '</button>' +
+      // 兩顆按鈕並排:詳細資料(左,藍紫) + 挑戰魔王(右,藍漸層)
+      '<div style="display:flex;gap:10px;">' +
+        '<button id="tw-boss-info" style="flex:0 0 auto;padding:16px 20px;font-size:18px;font-weight:900;letter-spacing:2px;' +
+          'background:linear-gradient(135deg,rgba(140,80,200,0.85),rgba(80,40,140,0.85));color:#fff;border:2.5px solid #aa88ee;border-radius:14px;cursor:pointer;font-family:inherit;' +
+          'box-shadow:0 4px 18px rgba(140,80,200,0.5),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.15s;white-space:nowrap;">' +
+          '📊 詳細資料' +
+        '</button>' +
+        '<button id="tw-boss-go" style="flex:1;padding:16px;font-size:24px;font-weight:900;letter-spacing:4px;' +
+          'background:linear-gradient(135deg,#22aaff,#5566ff);color:#fff;border:2.5px solid #88ccff;border-radius:14px;cursor:pointer;font-family:inherit;' +
+          'box-shadow:0 4px 24px rgba(80,160,255,0.6),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.15s;">' +
+          '⚔ 挑戰魔王!' +
+        '</button>' +
+      '</div>' +
 
     '</div>' +
     // 右上角關閉小 X
@@ -34139,6 +34146,18 @@ function _showTaiwanBossDetail(bossId){
       detail.remove();
     }
   });
+
+  // ★ v1.0.20260428.3840 — 詳細資料按鈕 → 呼叫貓空/日本關共用的 advShowBossDetail
+  //   會顯示完整 HP/ATK/SP/SPD/特技/爆發技能/被動天賦,跟貓空/日本關 BOSS 預覽格式一致
+  const _infoBtn = document.getElementById('tw-boss-info');
+  if(_infoBtn) _infoBtn.onclick = function(){
+    try{ playSfx('sfx-sel', 0.5); }catch(_){}
+    if(typeof advShowBossDetail === 'function'){
+      advShowBossDetail(boss.name);
+    } else {
+      _showInGameToast('⚠ 詳細資料功能尚未載入,請重新整理', '#ff8844', 2500);
+    }
+  };
 
   // 主按鈕:挑戰魔王 → 直接進入選角(過場/對白/難度移到選角後播放,避免閃爍首頁)
   document.getElementById('tw-boss-go').onclick = function(){
@@ -46659,38 +46678,47 @@ function _renderHeroDetail(name, box) {
         })()}
         ${freeP>0?`<div style="grid-column:1/-1;font-size:22px;color:#44ff88;font-weight:700;padding:2px 0;">💎 素質點數：${freeP}</div>`:''}
         </div>
-        <!-- ★ v1.0.20260428.3730 — 至寶裝備欄(顯示已裝備的至寶 + 提供更換入口) -->
+        <!-- ★ v1.0.20260428.3840 — 至寶裝備欄改成 2 格,文字加大;第二格上鎖待未來解鎖 -->
         ${(()=>{
           if(typeof _getHeroEquippedTreasures !== 'function') return '';
           const _eqs = _getHeroEquippedTreasures(name) || [];
           const _RC = { mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff' };
           const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
-          let _slotsHtml = '';
-          // 顯示三個 slot:weapon / armor / accessory
-          ['weapon','armor','accessory'].forEach(_slot => {
-            const _slotName = _slot==='weapon'?'⚔ 武器':_slot==='armor'?'🛡 防具':'💍 飾品';
-            const _eq = _eqs.find(e => e.def && e.def.slot === _slot);
-            if(_eq){
-              const _rc = _RC[_eq.def.rarity] || '#66ddff';
-              const _rn = _RN[_eq.def.rarity] || '稀有';
-              _slotsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(0,0,0,0.4);border:1.5px solid ${_rc};border-radius:8px;margin-bottom:4px;">
-                <div style="width:36px;height:36px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);">${_renderTaiwanTreasureIconHtml(_eq.def, 36, _rc)}</div>
-                <div style="flex:1;min-width:0;font-size:14px;line-height:1.3;overflow:hidden;">
-                  <div style="font-weight:800;color:${_rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_eq.def.name}</div>
-                  <div style="font-size:11px;color:#aaa;">${_rn}・Lv.${_eq.record.lv}</div>
-                </div>
-                <span style="font-size:11px;color:#888;">${_slotName}</span>
-              </div>`;
-            } else {
-              _slotsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.03);border:1.5px dashed rgba(255,255,255,0.15);border-radius:8px;margin-bottom:4px;color:#777;font-size:13px;">
-                <span style="font-size:11px;">${_slotName} (空)</span>
-              </div>`;
-            }
-          });
-          return `<div style="background:rgba(255,200,50,0.07);border-radius:12px;padding:10px 12px;border:1px solid rgba(255,200,80,0.3);">
-            <div style="font-size:15px;font-weight:800;color:#ffcc44;margin-bottom:6px;letter-spacing:1px;">💎 裝備的至寶</div>
-            ${_slotsHtml}
-            <button onclick="playSfx('sfx-sel',0.5);window.openTaiwanTreasurePage&&window.openTaiwanTreasurePage()" style="margin-top:4px;width:100%;padding:6px 10px;font-size:13px;font-weight:700;background:rgba(255,200,80,0.15);border:1.5px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:6px;cursor:pointer;font-family:inherit;">🗂 前往至寶圖鑑管理</button>
+          // 第一格:取已裝備的第一件至寶顯示;沒有則為「(尚未裝備)」
+          const _eq1 = _eqs[0] || null;
+          let _slot1Html;
+          if(_eq1){
+            const _rc = _RC[_eq1.def.rarity] || '#66ddff';
+            const _rn = _RN[_eq1.def.rarity] || '稀有';
+            _slot1Html = `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc};border-radius:10px;margin-bottom:8px;box-shadow:0 0 12px ${_rc}33;">
+              <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);">${_renderTaiwanTreasureIconHtml(_eq1.def, 56, _rc)}</div>
+              <div style="flex:1;min-width:0;line-height:1.3;overflow:hidden;">
+                <div style="font-weight:900;color:${_rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:20px;">${_eq1.def.name}</div>
+                <div style="font-size:16px;color:#cccccc;margin-top:2px;">${_rn}・Lv.${_eq1.record.lv}</div>
+              </div>
+              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">主裝備</span>
+            </div>`;
+          } else {
+            _slot1Html = `<div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:2px dashed rgba(255,255,255,0.2);border-radius:10px;margin-bottom:8px;color:#888;">
+              <div style="width:56px;height:56px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;opacity:0.5;">💎</div>
+              <div style="flex:1;font-size:18px;font-weight:700;letter-spacing:1px;">尚未裝備至寶</div>
+              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">主裝備</span>
+            </div>`;
+          }
+          // 第二格:固定上鎖(以後會解鎖)
+          const _slot2Html = `<div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(80,80,90,0.15);border:2px dashed rgba(180,180,200,0.25);border-radius:10px;color:#888;">
+            <div style="width:56px;height:56px;border-radius:8px;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;">🔒</div>
+            <div style="flex:1;font-size:18px;font-weight:800;letter-spacing:1px;line-height:1.3;">
+              <div style="color:#aaaaaa;">第二件至寶欄位</div>
+              <div style="font-size:14px;color:#777;margin-top:2px;font-weight:600;">(尚未解鎖,將於後續更新開放)</div>
+            </div>
+            <span style="font-size:14px;color:#999;font-weight:700;letter-spacing:1px;flex-shrink:0;">副裝備</span>
+          </div>`;
+          return `<div style="background:rgba(255,200,50,0.08);border-radius:14px;padding:14px 14px 12px;border:1.5px solid rgba(255,200,80,0.35);margin-top:8px;">
+            <div style="font-size:20px;font-weight:900;color:#ffcc44;margin-bottom:10px;letter-spacing:2px;">💎 裝備的至寶</div>
+            ${_slot1Html}
+            ${_slot2Html}
+            <button onclick="playSfx('sfx-sel',0.5);window.openTaiwanTreasurePage&&window.openTaiwanTreasurePage()" style="margin-top:10px;width:100%;padding:10px 12px;font-size:16px;font-weight:800;background:rgba(255,200,80,0.18);border:1.5px solid rgba(255,200,80,0.55);color:#ffe8a0;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🗂 前往至寶圖鑑管理</button>
           </div>`;
         })()}
         <!-- 天賦：緊接在特技/速度下方 -->
@@ -52508,6 +52536,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3840', brief:[
+    '📊 [台灣關] BOSS 介紹視窗加「詳細資料」按鈕,可查看 BOSS 的能力數值與技能說明',
+    '💎 [英雄圖鑑] 至寶裝備欄改成 2 格(主裝備+副裝備),文字加大;副裝備格將於後續開放',
+  ], items:[
+    '【台灣 BOSS 詳細資料】',
+    '・台灣 10 位 BOSS 的介紹視窗,在「⚔ 挑戰魔王!」按鈕左邊新增紫色「📊 詳細資料」按鈕',
+    '・點下後彈出跟貓空/日本關 BOSS 同樣格式的詳細視窗,顯示:',
+    '  - HP / 攻擊 / 特技 / 速度 4 項能力數值',
+    '  - 兩個技能(特技+被動天賦)的完整說明',
+    '  - 爆發技(若有)的描述',
+    '  - 角色背景故事(若有)',
+    '【英雄圖鑑至寶裝備欄調整】',
+    '・原本 3 格(武器/防具/飾品) → 改成 2 格(主裝備/副裝備)',
+    '・所有文字大幅放大:',
+    '  - 標題「💎 裝備的至寶」從 15px → 20px',
+    '  - 至寶名稱從 14px → 20px',
+    '  - 稀有度・等級從 11px → 16px',
+    '  - 「前往至寶圖鑑管理」按鈕從 13px → 16px',
+    '・主裝備格:顯示已裝備的第一件至寶,卡片放大、加光暈邊框',
+    '・副裝備格:🔒 鎖頭+「第二件至寶欄位(尚未解鎖,將於後續更新開放)」',
+  ] },
   { ver:'v1.0.20260428.3830', brief:[
     '✨ 至寶圖鑑頁面新增背景圖片,看起來更有質感',
     '🌊 [台灣關] 地圖畫面新增動畫:三朵雲飄過、海面波浪晃動、白色亮晶晶閃光',
@@ -60878,7 +60927,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3830';
+  const CURRENT_VERSION = 'v1.0.20260428.3840';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60895,7 +60944,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3830';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3840';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
