@@ -506,6 +506,49 @@
     }
   };
 
+  // ★ v1.0.20260428.3750 ── GM 公告系統 ──
+  //   用途:管理員可即時對所有在線玩家發送跑馬燈/彈窗公告
+  //   儲存位置:stats/global 的 gmBroadcast 欄位
+  //   結構: { id, text, color, type:'marquee'|'modal'|'banner', durationMs, sender, timestamp }
+  //   客戶端用 localStorage 記錄已看過的 broadcast id,避免重複觸發
+
+  // 發送 GM 公告
+  window._fbSendGmBroadcast = async function(payload) {
+    try {
+      const broadcastObj = {
+        id: 'gm_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+        text: (payload && payload.text) || '',
+        color: (payload && payload.color) || '#ffcc44',
+        type: (payload && payload.type) || 'marquee',
+        durationMs: (payload && payload.durationMs) || 8000,
+        sender: (payload && payload.sender) || 'admin',
+        timestamp: Date.now(),
+      };
+      await setDoc(doc(_fbDb, 'stats', 'global'), { gmBroadcast: broadcastObj }, { merge: true });
+      console.info('✅ [GM 公告] 已發送', broadcastObj);
+      return broadcastObj;
+    } catch(e) {
+      console.error('❌ [GM 公告] 發送失敗', e);
+      throw e;
+    }
+  };
+
+  // 監聽 GM 公告變更
+  window._fbWatchGmBroadcast = function(callback) {
+    try {
+      return onSnapshot(doc(_fbDb, 'stats', 'global'), (snap) => {
+        if(!snap.exists()) return;
+        const _b = snap.data().gmBroadcast;
+        if(_b && _b.id) callback(_b);
+      }, (err) => {
+        console.warn('[GM 公告] 監聽錯誤', err);
+      });
+    } catch(e) {
+      console.error('[GM 公告] 啟動監聽失敗', e);
+      return () => {};
+    }
+  };
+
   // ★ 管理員工具：手動設定 totalPlayers 絕對值（當 _fbBackfillTotalPlayers 因權限失敗時的替代方案）
   //   此函式直接寫 stats/global.totalPlayers，不需要讀取 /players 集合，可避開掃描權限問題
   window._fbSetTotalPlayers = async function(newTotal) {
@@ -8305,7 +8348,7 @@ function _onPortraitSwitcherClick(heroName, portraitId){
 
 const HERO_DB = {
   '劍士':  {hp:65,atk:11,sp:6,spd:8,  s1:{n:'迅雷連斬',c:2,d:'連續攻擊2次',fd:'用攻擊值使1名敵方受到2次傷害'},s2:{n:'刀背擊',c:2,d:'極輕微傷害1名對手並暈眩1回合',fd:'使1名對手HP-1並暈眩不能動1回合。'}},
-  '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'治癒全隊並解除不利狀態',fd:'用特技使全體友方恢復HP並解除不利狀態'}},
+  '祭司':  {hp:59,atk:6,sp:18,spd:7, s1:{n:'救贖神光',c:3,d:'治癒並淨化1名友方（可復活），附加免疫1回合',fd:'用特技的130%使任意1名友方恢復HP並解除不利狀態(可復活)，再附加免疫不利狀態1回合'},s2:{n:'治癒之風',c:5,d:'用特技100%治癒全隊並解除不利狀態',fd:'用特技的100%使全體友方恢復HP並解除不利狀態'}},
   '聖騎士':{hp:72,atk:6,sp:7,spd:5,  s1:{n:'神聖鎚擊',c:3,d:'傷害1敵20%HP（BOSS 5%，上限=Lv×10），恢復1友20%HP',fd:'使1名對手受到HP20%的傷害（目標是BOSS時傷害為5%），同時恢復1名友方HP比例最低的隊友20%HP。【傷害上限：英雄等級×10】，避免在高HP BOSS戰中過於失衡。'},s2:{n:'聖殿領域',c:4,d:'全隊減傷50%（2回合）',fd:'2回合內使所有友方受到的傷害減半'}},
   '火法師':{hp:54,atk:4,sp:20,spd:12, s1:{n:'火焰球',c:3,d:'特技150%火屬性傷害1名對手+追加10必中傷害',fd:'用特技的150%對1名對手造成火屬性傷害,並追加無視其有利狀態的10點傷害。'},s2:{n:'地獄之火',c:4,d:'特技40%火屬性傷害全體+燃燒2回合',fd:'依特技值的40%對全體對手造成火屬性傷害,同時附加「燃燒」狀態 2 回合(行動前後各損失 5 HP,無視有利狀態)。'}},
   '冰法師':{hp:59,atk:4,sp:16,spd:11, s1:{n:'冰凍之矛',c:3,d:'水屬性傷害1名對手並冰凍',fd:'用特技對1名對手造成水屬性傷害，並使其1回合內冰凍不能動。'},s2:{n:'暴風雪',c:5,d:'用特技70%水屬性傷害全體對手,有50%機率冰凍1回合',fd:'用特技的70%對所有對手造成水屬性傷害,並有50%機率使目標冰凍1回合不能動。'}},
@@ -26157,6 +26200,55 @@ async function _showAdminStatsPanel(){
         <div id="_admin-maint-result" style="margin-top:10px;font-size:14px;"></div>
       </div>
 
+      <!-- ★ v1.0.20260428.3750 — GM 公告系統(對所有在線玩家發彈幕/banner/彈窗) -->
+      <div id="_admin-gm-section" style="background:rgba(40,30,0,0.4);border:2px solid rgba(255,200,80,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#ffcc44;margin-bottom:8px;">📢 0b. GM 公告(對所有在線玩家廣播)</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          發送後,所有目前在線的玩家會立即看到。每位玩家對同一公告只會看到一次(用 localStorage 記錄)。
+        </div>
+        <textarea id="_admin-gm-text" placeholder="公告內容(例:🎉 慶祝開服一週年!登入即送 1000 知識幣!)"
+          style="width:100%;min-height:60px;padding:10px;font-size:14px;background:rgba(20,20,30,0.9);
+          border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:8px;font-family:inherit;
+          box-sizing:border-box;margin-bottom:10px;resize:vertical;"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+          <label style="font-size:13px;color:#ddd;display:flex;align-items:center;gap:4px;">
+            <span>樣式:</span>
+            <select id="_admin-gm-type" style="padding:6px 10px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:6px;font-family:inherit;">
+              <option value="marquee">跑馬燈彈幕(從右往左飄)</option>
+              <option value="banner">頂部 banner(從上滑下停留)</option>
+              <option value="modal">強制彈窗(玩家須點確認)</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:#ddd;display:flex;align-items:center;gap:4px;">
+            <span>顏色:</span>
+            <select id="_admin-gm-color" style="padding:6px 10px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:6px;font-family:inherit;">
+              <option value="#ffcc44">🟡 金色(一般公告)</option>
+              <option value="#ff6644">🔴 紅色(警告/維護)</option>
+              <option value="#88ff88">🟢 綠色(慶祝/活動)</option>
+              <option value="#88ccff">🔵 藍色(資訊)</option>
+              <option value="#ff88cc">🟣 粉色(節慶)</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:#ddd;display:flex;align-items:center;gap:4px;">
+            <span>持續秒數:</span>
+            <input id="_admin-gm-duration" type="number" min="3" max="30" value="8"
+              style="width:60px;padding:6px 8px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:6px;font-family:inherit;">
+            <span style="font-size:11px;color:#888;">(modal 樣式無此設定)</span>
+          </label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="_admin-gm-preview" style="flex:0 0 auto;padding:10px 18px;font-size:14px;font-weight:700;
+            background:rgba(80,140,200,0.25);border:2px solid #88ccff;color:#aaddff;
+            border-radius:8px;cursor:pointer;font-family:inherit;">👁 預覽(只你自己看)</button>
+          <button id="_admin-gm-send" style="flex:1;min-width:200px;padding:11px 20px;font-size:15px;font-weight:800;
+            background:rgba(255,180,40,0.25);border:2px solid #ffcc44;color:#ffe8a0;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            📢 發送給所有玩家
+          </button>
+        </div>
+        <div id="_admin-gm-result" style="margin-top:10px;font-size:14px;"></div>
+      </div>
+
       <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,200,50,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ffd966;margin-bottom:8px;">📊 1. 回填總玩家數</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
@@ -26415,6 +26507,72 @@ async function _showAdminStatsPanel(){
       btn.textContent = '🔓 解除維修模式';
     }
   };
+
+  // ★ v1.0.20260428.3750 — GM 公告:預覽
+  const _gmPreviewBtn = document.getElementById('_admin-gm-preview');
+  if(_gmPreviewBtn){
+    _gmPreviewBtn.onclick = () => {
+      const _text = (document.getElementById('_admin-gm-text').value || '').trim();
+      if(!_text){
+        const r = document.getElementById('_admin-gm-result');
+        r.style.color = '#ff6666';
+        r.textContent = '❌ 請先輸入公告內容';
+        return;
+      }
+      const _type = document.getElementById('_admin-gm-type').value;
+      const _color = document.getElementById('_admin-gm-color').value;
+      const _dur  = (parseInt(document.getElementById('_admin-gm-duration').value, 10) || 8) * 1000;
+      // 預覽用 fake id 確保只你自己看到、且每次預覽都重新顯示
+      try{
+        window._showGmBroadcast({
+          id: 'preview_' + Date.now(),
+          text: _text, color: _color, type: _type, durationMs: _dur,
+          sender: 'preview', timestamp: Date.now(),
+        });
+      }catch(e){ console.error('[GM 預覽] 失敗', e); }
+    };
+  }
+  // GM 公告:發送
+  const _gmSendBtn = document.getElementById('_admin-gm-send');
+  if(_gmSendBtn){
+    _gmSendBtn.onclick = async () => {
+      const _btn = _gmSendBtn;
+      const _res = document.getElementById('_admin-gm-result');
+      const _text = (document.getElementById('_admin-gm-text').value || '').trim();
+      if(!_text){
+        _res.style.color = '#ff6666';
+        _res.textContent = '❌ 請先輸入公告內容';
+        return;
+      }
+      const _type = document.getElementById('_admin-gm-type').value;
+      const _color = document.getElementById('_admin-gm-color').value;
+      const _dur  = (parseInt(document.getElementById('_admin-gm-duration').value, 10) || 8) * 1000;
+      const _typeName = _type === 'modal' ? '強制彈窗' : _type === 'banner' ? '頂部 banner' : '跑馬燈彈幕';
+      if(!confirm('確定要發送這則 GM 公告嗎?\n\n樣式:' + _typeName + '\n內容:\n' + _text + '\n\n所有目前在線的玩家都會立即看到。')) return;
+      if(!window._fbSendGmBroadcast){
+        _res.style.color = '#ff6666';
+        _res.textContent = '❌ Firebase 尚未就緒,請稍後再試';
+        return;
+      }
+      _btn.disabled = true;
+      _btn.textContent = '發送中...';
+      try {
+        const _email = (window._fbUser && window._fbUser.email) || 'unknown';
+        const _result = await window._fbSendGmBroadcast({
+          text: _text, color: _color, type: _type, durationMs: _dur, sender: _email,
+        });
+        _res.style.color = '#88ff88';
+        _res.textContent = '✅ 已發送!所有在線玩家會立即看到。(ID: ' + (_result.id || 'N/A') + ')';
+        // 自己也馬上看一次(因為 onSnapshot 會把自己的請求回傳,localStorage 可能會擋掉)
+      } catch(e) {
+        _res.style.color = '#ff6666';
+        _res.textContent = '❌ 發送失敗:' + (e && e.code || e.message || '未知錯誤');
+      } finally {
+        _btn.disabled = false;
+        _btn.textContent = '📢 發送給所有玩家';
+      }
+    };
+  }
 
   // 回填總玩家數
   document.getElementById('_admin-backfill-players').onclick = async () => {
@@ -32059,10 +32217,18 @@ function startAdventureGame(stage){
   // ★ v1.0.20260420.2900 — 先彈 BOSS 路線選擇視窗,選完才進選角
   //   若該關只有一個 variant,selector 會直接 callback,不會卡流程
   // ★ v1.0.20260428.2000 — 台灣關走特殊路徑:顯示台灣島地圖選關
+  // ★ v1.0.20260428.3780 — 玩家已從新版美術地圖(_showTaiwanMap)選好 BOSS,
+  //   _advSelectedTaiwanBoss 已被設定,直接進選角不再彈舊版地圖選擇器(圖4)
   if(stage === 'taiwan'){
-    fadeTransition(()=>{
-      _showTaiwanMapSelector(()=> showHeroPickOverlay());
-    }, 350);
+    if(window._advSelectedTaiwanBoss && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
+      // 已從新版地圖選好 BOSS → 跳過舊版 selector,直接進選角
+      fadeTransition(()=>{ showHeroPickOverlay(); }, 350);
+    } else {
+      // fallback:極端情況才走舊版 selector(例如直接呼叫 startAdventureGame 沒選 BOSS)
+      fadeTransition(()=>{
+        _showTaiwanMapSelector(()=> showHeroPickOverlay());
+      }, 350);
+    }
     return;
   }
   fadeTransition(()=>{
@@ -32213,7 +32379,7 @@ const ADV_QUIZ_5S_U3_ANIMAL = [
   {id:9108,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「胎生動物」的特徵，哪一項正確？',options:['小寶寶在母體外孵化','小寶寶產出時已有完整形體','一次產下的數量通常比卵生多','胚胎由卵黃提供養分'],answer:'B'},
   {id:9109,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物具有「育兒袋」來保護幼兒？',options:['狗','鱷魚','袋鼠','負子蟲'],answer:'C'},
   {id:9110,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'東方環頸鴴出現「擬傷行為」的主要目的是？',options:['練習跳舞','吸引天敵注意以保護幼鳥','尋找食物','吸引配偶'],answer:'B'},
-  {id:9111,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「社會性行為」，哪種動物的描述正確？',options:['蜜蜂各有分工，共同生活','鬥魚成群生活互相幫忙','蜘蛛會合作織網','變色龍會群體打獵'],answer:'A'},
+  {id:9111,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「社會性的行為」，哪種動物的描述正確？',options:['蜜蜂各有分工，共同生活','鬥魚成群生活互相幫忙','蜘蛛會合作織網','變色龍會群體打獵'],answer:'A'},
   {id:9112,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'蜜蜂家族中，負責「產卵」的是誰？',options:['雄蜂','工蜂','蜂后','偵查蜂'],answer:'C'},
   {id:9113,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物「傳遞訊息」的方式，哪一項錯誤？',options:['蜜蜂會跳舞','海豚靠聲音溝通','螞蟻會留下氣味','所有的動物都靠語言溝通'],answer:'D'},
   {id:9114,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'下列哪一種特徵是由父母「遺傳」給子代的？',options:['疤痕','雙眼皮','染過的髮色','騎腳踏車的技術'],answer:'B'},
@@ -33481,21 +33647,24 @@ function _taiwanShowAdminOnlyModal(){
 //   對應實際台灣地理位置:北部(101/西門/三峽/深坑)、中部(台中/彰化/日月潭)、
 //   南部山區(阿里山/玉山)、東南離島(蘭嶼)
 //   ※ 若用戶反映發光點與地圖位置不對齊,只要調整下方 x/y % 數值即可
+// ★ v1.0.20260428.3780 — 10 個地標位置精準微調(對齊新版台灣地圖 PNG)
+//   座標為相對於地圖圖片的百分比(x=橫向 0-100, y=縱向 0-100)
+//   ※ 若顯示位置仍有偏差,微調下方 x/y 數值即可
 const TAIWAN_BOSS_GLOW_COORDS = {
-  // 北部
-  taipei_101_warlord:   { x: 50, y: 12, label: '台北 101' },
-  ximen_pearl:          { x: 47, y: 14, label: '西門町' },
-  shenkeng_tofu:        { x: 53, y: 15, label: '深坑' },
-  sanxia_indigo:        { x: 45, y: 17, label: '三峽' },
-  // 中部
-  taichung_pineapple:   { x: 40, y: 38, label: '台中' },
-  changhua_braised:     { x: 38, y: 45, label: '彰化' },
-  sun_moon_mirror_boss: { x: 47, y: 47, label: '日月潭' },
-  // 中南部山區
-  alishan_tree:         { x: 42, y: 57, label: '阿里山' },
-  yushan_giant:         { x: 50, y: 55, label: '玉山' },
-  // 東南離島
-  lanyu_octopus:        { x: 75, y: 84, label: '蘭嶼' },
+  // 北部(地圖上方)
+  taipei_101_warlord:   { x: 53, y: 16, label: '台北 101' },
+  ximen_pearl:          { x: 49, y: 18, label: '西門町' },
+  shenkeng_tofu:        { x: 56, y: 19, label: '深坑' },
+  sanxia_indigo:        { x: 47, y: 20, label: '三峽' },
+  // 中部(地圖中段)
+  taichung_pineapple:   { x: 39, y: 41, label: '台中' },
+  changhua_braised:     { x: 37, y: 48, label: '彰化' },
+  sun_moon_mirror_boss: { x: 49, y: 49, label: '日月潭' },
+  // 中南部山區(地圖下半)
+  alishan_tree:         { x: 41, y: 60, label: '阿里山' },
+  yushan_giant:         { x: 50, y: 60, label: '玉山' },
+  // 東南離島(右下角)
+  lanyu_octopus:        { x: 75, y: 86, label: '蘭嶼' },
 };
 
 // 左右兩側 BOSS 卡片分配(地理感:中南部 / 北部+蘭嶼)
@@ -33554,6 +33723,7 @@ window._showTaiwanMap = function(){
   ov.appendChild(mainArea);
 
   // ────────── BOSS 卡片建構函式 ──────────
+  // ★ v1.0.20260428.3780 — 卡片整體放大,字體加大,搭配兩側欄位放大
   const buildBossCard = (bossId) => {
     const boss = TAIWAN_BOSSES[bossId];
     if(!boss) return null;
@@ -33562,29 +33732,29 @@ window._showTaiwanMap = function(){
     card.dataset.bossId = bossId;
     const _accent = boss.mainline ? '#ffcc44' : '#ff8866';
     card.style.cssText =
-      'display:flex;align-items:center;gap:10px;' +
-      'padding:8px 10px;background:rgba(0,30,60,0.7);' +
-      'border:2px solid ' + _accent + '88;' +
-      'border-radius:12px;cursor:pointer;flex-shrink:0;' +
-      'box-shadow:0 2px 10px rgba(0,30,80,0.5);';
+      'display:flex;align-items:center;gap:14px;' +
+      'padding:12px 14px;background:rgba(0,30,60,0.7);' +
+      'border:2.5px solid ' + _accent + 'aa;' +
+      'border-radius:14px;cursor:pointer;flex-shrink:0;' +
+      'box-shadow:0 3px 14px rgba(0,30,80,0.6);';
 
     const _imgUrl = (typeof _getTaiwanBossImage === 'function') ? _getTaiwanBossImage(bossId) : '';
     const _avatar =
-      '<div style="width:54px;height:54px;flex-shrink:0;border-radius:50%;overflow:hidden;' +
-      'background:rgba(0,0,0,0.5);border:2.5px solid ' + _accent + ';' +
-      'display:flex;align-items:center;justify-content:center;font-size:32px;line-height:1;">' +
+      '<div style="width:72px;height:72px;flex-shrink:0;border-radius:50%;overflow:hidden;' +
+      'background:rgba(0,0,0,0.5);border:3px solid ' + _accent + ';' +
+      'display:flex;align-items:center;justify-content:center;font-size:42px;line-height:1;">' +
       (_imgUrl
         ? '<img src="' + _imgUrl + '" style="width:100%;height:100%;object-fit:cover;display:block;" ' +
-          'onerror="this.outerHTML=\'<span style=&quot;font-size:32px;line-height:1;&quot;>' + (boss.bossEmoji||'👹') + '</span>\'">'
+          'onerror="this.outerHTML=\'<span style=&quot;font-size:42px;line-height:1;&quot;>' + (boss.bossEmoji||'👹') + '</span>\'">'
         : (boss.bossEmoji||'👹')) +
       '</div>';
     const _stars = '★'.repeat(boss.stars||3) + '☆'.repeat(Math.max(0, 6-(boss.stars||3)));
     card.innerHTML =
       _avatar +
       '<div style="flex:1;min-width:0;overflow:hidden;">' +
-        '<div style="font-size:clamp(13px,1.3vw,16px);font-weight:900;color:#fff;letter-spacing:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + boss.name + '</div>' +
-        '<div style="font-size:clamp(10px,1vw,12px);color:#aaccff;margin-top:2px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ' + boss.location + '</div>' +
-        '<div style="font-size:clamp(10px,1vw,12px);color:' + _accent + ';margin-top:1px;letter-spacing:1px;line-height:1.2;">' + _stars + '</div>' +
+        '<div style="font-size:clamp(15px,1.5vw,19px);font-weight:900;color:#fff;letter-spacing:1.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + boss.name + '</div>' +
+        '<div style="font-size:clamp(12px,1.1vw,14px);color:#aaccff;margin-top:3px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ' + boss.location + '</div>' +
+        '<div style="font-size:clamp(12px,1.1vw,15px);color:' + _accent + ';margin-top:2px;letter-spacing:2px;line-height:1.2;">' + _stars + '</div>' +
       '</div>';
 
     // 互動: hover/click → 對應地圖發光點亮
@@ -33606,8 +33776,9 @@ window._showTaiwanMap = function(){
   };
 
   // ── 左側卡片欄(中南部 BOSS) ──
+  // ★ v1.0.20260428.3780 — 卡片欄放大佔更多寬度
   const leftCol = document.createElement('div');
-  leftCol.style.cssText = 'flex:0 0 clamp(200px,22vw,260px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px;justify-content:space-around;';
+  leftCol.style.cssText = 'flex:0 0 clamp(270px,26vw,340px);display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;justify-content:space-around;';
   TAIWAN_LEFT_BOSSES.forEach(bossId => {
     const c = buildBossCard(bossId);
     if(c) leftCol.appendChild(c);
@@ -33636,7 +33807,7 @@ window._showTaiwanMap = function(){
   };
   mapWrap.appendChild(mapImg);
 
-  // ── 在地圖上疊加 10 個發光點(預設隱藏,卡片 hover/click 才亮) ──
+  // ★ v1.0.20260428.3780 — 修正地標 10 個位置(對齊新版台灣地圖 PNG)
   // ★ 用相對於 mapWrap 的絕對定位;座標來自 TAIWAN_BOSS_GLOW_COORDS
   Object.keys(TAIWAN_BOSSES).forEach(bossId => {
     const coord = TAIWAN_BOSS_GLOW_COORDS[bossId];
@@ -33645,7 +33816,7 @@ window._showTaiwanMap = function(){
     glow.id = 'taiwan-glow-' + bossId;
     glow.style.cssText =
       'position:absolute;left:' + coord.x + '%;top:' + coord.y + '%;' +
-      'width:18px;height:18px;border-radius:50%;' +
+      'width:22px;height:22px;border-radius:50%;' +
       'background:radial-gradient(circle,#fff8c0 0%,#ffcc44 35%,rgba(255,180,40,0.6) 65%,rgba(255,140,0,0) 100%);' +
       'transform:translate(-50%,-50%);' +
       'opacity:0;pointer-events:none;' +
@@ -33654,16 +33825,19 @@ window._showTaiwanMap = function(){
       'z-index:10;';
     mapWrap.appendChild(glow);
 
-    // 地名小標籤(永遠顯示淡淡的,讓玩家知道地點對應)
+    // ★ v1.0.20260428.3780 — 地標小標籤永遠顯示,字加大 + 深底白字 + 描邊讓對比清晰
     const lbl = document.createElement('div');
     lbl.style.cssText =
-      'position:absolute;left:' + coord.x + '%;top:calc(' + coord.y + '% + 14px);' +
+      'position:absolute;left:' + coord.x + '%;top:calc(' + coord.y + '% + 18px);' +
       'transform:translateX(-50%);' +
-      'font-size:clamp(9px,0.9vw,12px);font-weight:700;color:#fff;' +
-      'background:rgba(0,20,50,0.7);padding:1px 6px;border-radius:4px;' +
-      'border:1px solid rgba(255,200,80,0.4);' +
-      'pointer-events:none;white-space:nowrap;letter-spacing:1px;' +
-      'opacity:0.55;text-shadow:0 0 4px rgba(0,0,0,0.8);' +
+      'font-size:clamp(13px,1.3vw,18px);font-weight:900;color:#fffce0;' +
+      'background:linear-gradient(135deg,rgba(20,40,80,0.95),rgba(0,15,40,0.95));' +
+      'padding:4px 10px;border-radius:8px;' +
+      'border:1.5px solid rgba(255,200,80,0.85);' +
+      'pointer-events:none;white-space:nowrap;letter-spacing:2px;' +
+      'opacity:0.95;' +
+      'text-shadow:0 0 4px rgba(0,0,0,1),1px 1px 0 rgba(0,0,0,0.9),-1px -1px 0 rgba(0,0,0,0.9),1px -1px 0 rgba(0,0,0,0.9),-1px 1px 0 rgba(0,0,0,0.9);' +
+      'box-shadow:0 2px 8px rgba(0,0,0,0.7),0 0 12px rgba(255,200,80,0.3);' +
       'z-index:9;';
     lbl.textContent = coord.label;
     mapWrap.appendChild(lbl);
@@ -33673,8 +33847,9 @@ window._showTaiwanMap = function(){
   mainArea.appendChild(mapCol);
 
   // ── 右側卡片欄(北部+蘭嶼) ──
+  // ★ v1.0.20260428.3780 — 卡片欄放大佔更多寬度(原 200~260 → 270~340)
   const rightCol = document.createElement('div');
-  rightCol.style.cssText = 'flex:0 0 clamp(200px,22vw,260px);display:flex;flex-direction:column;gap:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px;justify-content:space-around;';
+  rightCol.style.cssText = 'flex:0 0 clamp(270px,26vw,340px);display:flex;flex-direction:column;gap:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;justify-content:space-around;';
   TAIWAN_RIGHT_BOSSES.forEach(bossId => {
     const c = buildBossCard(bossId);
     if(c) rightCol.appendChild(c);
@@ -33714,91 +33889,149 @@ function _showTaiwanBossDetail(bossId){
   const _rarityName = {
     mythic: '神話', legend: '傳說', epic: '史詩', rare: '稀有',
   };
+  const _slotName = { weapon:'武器', armor:'防具', accessory:'飾品' };
   const _rc = _rarityColor[treasure ? treasure.rarity : 'rare'] || '#44aaff';
   const _rn = _rarityName[treasure ? treasure.rarity : 'rare'] || '稀有';
 
   // 難度星
   const _stars = '★'.repeat(boss.stars) + '☆'.repeat(Math.max(0, 6 - boss.stars));
 
+  // ★ v1.0.20260428.3780 — BOSS 立繪 + 屬性 + 建議反制屬性
+  const _bossImg = (typeof _getTaiwanBossImage === 'function') ? _getTaiwanBossImage(bossId) : '';
+  const _bossElem = (typeof TAIWAN_BOSS_ELEMENT !== 'undefined') ? TAIWAN_BOSS_ELEMENT[bossId] : 'fire';
+  // 屬性 emoji + 名稱
+  const _ELEM_INFO = {
+    fire:  { emoji:'🔥', name:'火', counter:'water', counterEmoji:'💧', counterName:'水' },
+    water: { emoji:'💧', name:'水', counter:'grass', counterEmoji:'🌿', counterName:'草' },
+    grass: { emoji:'🌿', name:'草', counter:'fire',  counterEmoji:'🔥', counterName:'火' },
+    wind:  { emoji:'🌪', name:'風', counter:'earth', counterEmoji:'🪨', counterName:'土' },
+    earth: { emoji:'🪨', name:'土', counter:'wind',  counterEmoji:'🌪', counterName:'風' },
+    dark:  { emoji:'🌑', name:'暗', counter:'light', counterEmoji:'✨', counterName:'光' },
+    light: { emoji:'✨', name:'光', counter:'dark',  counterEmoji:'🌑', counterName:'暗' },
+  };
+  const _ei = _ELEM_INFO[_bossElem] || _ELEM_INFO.fire;
+
   const detail = document.createElement('div');
   detail.id = 'taiwan-boss-detail';
   detail.style.cssText =
     'position:fixed;inset:0;z-index:9750;display:flex;align-items:center;justify-content:center;' +
-    'background:rgba(0,10,30,0.85);backdrop-filter:blur(8px);' +
+    'background:radial-gradient(circle at center,rgba(20,30,60,0.92),rgba(0,5,20,0.97));' +
+    'backdrop-filter:blur(10px);' +
     'animation:fadeIn 0.3s;padding:20px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
 
   detail.innerHTML =
-    '<div style="max-width:680px;width:100%;max-height:88vh;overflow-y:auto;padding:32px 28px 24px;' +
+    '<div style="max-width:560px;width:100%;max-height:96vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 22px 20px;' +
       'background:linear-gradient(160deg,rgba(20,30,60,0.98),rgba(8,15,40,0.98));' +
-      'border:3px solid '+_rc+';border-radius:22px;box-shadow:0 0 60px '+_rc+'80;animation:taiwanDetailIn 0.4s;">' +
+      'border:3px solid '+_rc+';border-radius:22px;box-shadow:0 0 60px '+_rc+'88;animation:taiwanDetailIn 0.4s;">' +
 
-      // BOSS 名稱與地點
-      '<div style="text-align:center;margin-bottom:14px;">' +
-        (boss.mainline ? '<div style="display:inline-block;padding:4px 14px;background:linear-gradient(90deg,#ff6644,#ffaa22);color:#fff;font-weight:900;font-size:17px;letter-spacing:3px;border-radius:14px;margin-bottom:8px;box-shadow:0 0 12px rgba(255,160,40,0.6);">★ 主線 BOSS</div>' : '') +
-        '<div style="font-size:clamp(28px,3.5vw,40px);font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px '+_rc+';">'+boss.name+'</div>' +
-        '<div style="font-size:clamp(18px,2vw,24px);color:#ffcc88;margin-top:6px;letter-spacing:2px;">📍 '+boss.location+'</div>' +
+      // 地點 + BOSS 名稱
+      '<div style="margin-bottom:14px;">' +
+        '<div style="font-size:clamp(13px,1.5vw,16px);color:#ffcc88;letter-spacing:2px;">📍 '+boss.location+'</div>' +
+        '<div style="font-size:clamp(24px,3.2vw,34px);font-weight:900;color:#fff;letter-spacing:2px;text-shadow:0 0 16px '+_rc+';line-height:1.25;margin-top:4px;">'+boss.name+'</div>' +
       '</div>' +
 
-      // BOSS 圖示與介紹
-      '<div style="display:flex;gap:18px;align-items:center;background:rgba(0,0,0,0.4);border:1.5px solid '+_rc+'80;border-radius:14px;padding:18px;margin-bottom:18px;">' +
-        '<div style="font-size:88px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 12px '+_rc+');">'+boss.bossEmoji+'</div>' +
-        '<div style="font-size:17px;color:#ddeeff;line-height:1.7;letter-spacing:1px;">'+boss.desc+'</div>' +
+      // BOSS 立繪(大圖)
+      '<div style="background:linear-gradient(160deg,rgba(0,0,0,0.5),rgba(10,15,30,0.5));border:2px solid '+_rc+'aa;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;">' +
+        (_bossImg
+          ? '<img src="'+_bossImg+'" alt="'+boss.name+'" style="width:100%;max-width:380px;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:10px;display:block;filter:drop-shadow(0 0 20px '+_rc+'88);" onerror="this.outerHTML=\'<div style=&quot;font-size:160px;line-height:1;filter:drop-shadow(0 0 20px '+_rc+');&quot;>'+(boss.bossEmoji||'👹')+'</div>\'">'
+          : '<div style="font-size:160px;line-height:1;filter:drop-shadow(0 0 20px '+_rc+');">'+(boss.bossEmoji||'👹')+'</div>'
+        ) +
       '</div>' +
 
-      // 難度與建議等級
-      '<div style="display:flex;gap:14px;margin-bottom:16px;">' +
-        '<div style="flex:1;background:rgba(255,180,40,0.08);border:1.5px solid rgba(255,180,40,0.4);border-radius:12px;padding:14px;text-align:center;">' +
-          '<div style="font-size:14px;color:#ffcc88;letter-spacing:2px;margin-bottom:4px;">⭐ 難度</div>' +
-          '<div style="font-size:24px;color:#ffdd66;letter-spacing:2px;">'+_stars+'</div>' +
+      // 難度 + 建議等級 兩格
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+        '<div style="background:rgba(255,180,40,0.08);border:1.5px solid rgba(255,180,40,0.45);border-radius:12px;padding:10px 12px;text-align:center;">' +
+          '<div style="font-size:13px;color:#ffcc88;letter-spacing:2px;margin-bottom:2px;">⭐ 難度</div>' +
+          '<div style="font-size:22px;color:#ffdd66;letter-spacing:2px;line-height:1.2;">'+_stars+'</div>' +
         '</div>' +
-        '<div style="flex:1;background:rgba(80,200,255,0.08);border:1.5px solid rgba(80,200,255,0.4);border-radius:12px;padding:14px;text-align:center;">' +
-          '<div style="font-size:14px;color:#88ddff;letter-spacing:2px;margin-bottom:4px;">💪 建議等級</div>' +
-          '<div style="font-size:24px;color:#aaeeff;font-weight:900;">Lv. '+boss.suggestLv+'</div>' +
+        '<div style="background:rgba(80,200,255,0.08);border:1.5px solid rgba(80,200,255,0.45);border-radius:12px;padding:10px 12px;text-align:center;">' +
+          '<div style="font-size:13px;color:#88ddff;letter-spacing:2px;margin-bottom:2px;">💪 建議等級</div>' +
+          '<div style="font-size:22px;color:#aaeeff;font-weight:900;line-height:1.2;">Lv '+boss.suggestLv+'+</div>' +
         '</div>' +
       '</div>' +
 
-      // 至寶獎勵預覽
-      (treasure ? '<div style="background:rgba(0,0,0,0.5);border:2px solid '+_rc+';border-radius:14px;padding:18px;margin-bottom:18px;">' +
-        '<div style="font-size:14px;color:'+_rc+';letter-spacing:3px;margin-bottom:8px;font-weight:800;">💎 戰勝獎勵 ✦ '+_rn+'級至寶'+(_got?'  <span style="color:#88ff88;font-size:12px;">(已獲得)</span>':'')+'</div>' +
-        '<div style="display:flex;gap:14px;align-items:center;">' +
-          '<div style="font-size:60px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 10px '+_rc+');">' + _renderTaiwanTreasureIconHtml(treasure, 60, _rc) + '</div>' +
-          '<div style="flex:1;">' +
-            '<div style="font-size:22px;font-weight:900;color:'+_rc+';letter-spacing:2px;margin-bottom:4px;">'+treasure.name+'</div>' +
-            '<div style="font-size:14px;color:#ccddee;line-height:1.6;">'+treasure.desc+'</div>' +
+      // BOSS 屬性 + 建議反制屬性
+      '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.4);border:1.5px solid rgba(120,180,255,0.3);border-radius:10px;padding:9px 14px;margin-bottom:10px;font-size:14px;flex-wrap:wrap;gap:8px;">' +
+        '<div><span style="color:#aaccff;letter-spacing:2px;">BOSS 屬性</span> <span style="font-size:18px;">'+_ei.emoji+'</span> <b style="color:#fff;font-size:17px;">'+_ei.name+'</b></div>' +
+        '<div><span style="color:#aaccff;letter-spacing:2px;">建議用</span> <span style="font-size:18px;">'+_ei.counterEmoji+'</span> <b style="color:#88ff88;font-size:17px;">'+_ei.counterName+'</b> <span style="color:#aaffaa;font-size:13px;">屬性英雄(+10%傷害)</span></div>' +
+      '</div>' +
+
+      // 介紹文
+      '<div style="background:rgba(0,0,0,0.4);border-left:3px solid '+_rc+';border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:14px;color:#ddeeff;line-height:1.7;font-style:italic;">' +
+        '「'+boss.desc+'」' +
+      '</div>' +
+
+      // 戰勝獎勵 — 至寶
+      (treasure ? '<div style="background:linear-gradient(135deg,rgba(0,30,60,0.6),rgba(0,15,40,0.6));border:2px solid '+_rc+';border-radius:12px;padding:12px 14px;margin-bottom:16px;">' +
+        '<div style="font-size:13px;color:'+_rc+';letter-spacing:3px;margin-bottom:8px;font-weight:800;">💎 戰勝獎勵'+(_got?' <span style="color:#88ff88;font-size:11px;font-weight:700;">(已獲得)</span>':'')+'</div>' +
+        '<div style="display:flex;gap:12px;align-items:center;">' +
+          '<div style="width:54px;height:54px;flex-shrink:0;border:1.5px solid '+_rc+'88;border-radius:10px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">' +
+            _renderTaiwanTreasureIconHtml(treasure, 50, _rc) +
+          '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:18px;font-weight:900;color:'+_rc+';letter-spacing:1px;line-height:1.2;">'+treasure.name+'</div>' +
+            '<div style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:800;background:'+_rc+';color:#fff;border-radius:5px;letter-spacing:1px;margin-top:4px;">'+_rn+' ・ '+(_slotName[treasure.slot]||'飾品')+'</div>' +
+            '<div style="font-size:12px;color:#ccddee;line-height:1.5;margin-top:5px;">'+treasure.desc+'</div>' +
           '</div>' +
         '</div>' +
       '</div>' : '') +
 
-      // 按鈕
-      '<div style="display:flex;gap:14px;justify-content:center;">' +
-        '<button id="tw-boss-cancel" style="padding:14px 32px;font-size:20px;font-weight:700;letter-spacing:2px;' +
-          'background:rgba(60,80,120,0.7);border:2px solid rgba(120,160,200,0.6);color:#ccddee;border-radius:12px;cursor:pointer;">← 返回地圖</button>' +
-        '<button id="tw-boss-go" style="padding:14px 36px;font-size:22px;font-weight:900;letter-spacing:3px;' +
-          'background:linear-gradient(135deg,'+_rc+',#cc2244);color:#fff;border:2.5px solid #fff;border-radius:12px;cursor:pointer;' +
-          'box-shadow:0 0 24px '+_rc+';animation:taiwanDetailIn 0.6s;">⚔ 開戰!</button>' +
-      '</div>' +
+      // 關閉按鈕(右上角小 X)+ 主按鈕
+      '<button id="tw-boss-go" style="width:100%;padding:16px;font-size:24px;font-weight:900;letter-spacing:4px;' +
+        'background:linear-gradient(135deg,#22aaff,#5566ff);color:#fff;border:2.5px solid #88ccff;border-radius:14px;cursor:pointer;font-family:inherit;' +
+        'box-shadow:0 4px 24px rgba(80,160,255,0.6),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.15s;">' +
+        '⚔ 挑戰魔王!' +
+      '</button>' +
 
-    '</div>';
+    '</div>' +
+    // 右上角關閉小 X
+    '<button id="tw-boss-close" aria-label="關閉" style="position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;border:2px solid rgba(180,200,230,0.5);background:rgba(0,15,30,0.85);color:#ccddee;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">✕</button>';
 
   document.body.appendChild(detail);
 
-  document.getElementById('tw-boss-cancel').onclick = function(){
+  // 關閉按鈕(右上角)
+  const _closeBtn = document.getElementById('tw-boss-close');
+  if(_closeBtn) _closeBtn.onclick = function(){
     try{ playSfx('sfx-cancel', 0.5); }catch(_){}
     detail.remove();
   };
+  // 點背景空白處也可關閉(避免誤觸內容)
+  detail.addEventListener('click', function(e){
+    if(e.target === detail){
+      try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+      detail.remove();
+    }
+  });
+
+  // 主按鈕:挑戰魔王 → 直接進入戰鬥流程,跳過所有中介視窗
   document.getElementById('tw-boss-go').onclick = function(){
     try{ playSfx('sfx-battle-start', 0.7); }catch(_){}
+    // ★ v1.0.20260428.3780 — 同時設兩個變數確保 BOSS 陣容生成正確
+    window._advSelectedTaiwanBoss = bossId;
+    window._taiwanCurrentBossId = bossId;
     detail.remove();
-    // 關閉地圖 → 設定當前 BOSS → 進入選角頁
     const mapOv = document.getElementById('taiwan-map-overlay');
     if(mapOv) mapOv.remove();
-    window._taiwanCurrentBossId = bossId;  // 戰鬥準備時讀取
-    // 進入冒險選角流程
+    // ★ 新流程:過場 → 對白 → 選難度 → 選角(跳過舊版 _showTaiwanMapSelector)
     try{
-      if(typeof startAdventureGame === 'function'){
-        startAdventureGame('taiwan');
-      }
-    }catch(e){ console.error('[台灣關啟動]', e); }
+      _showTaiwanCutscene(bossId, () => {
+        _showTaiwanBossDialog(bossId, () => {
+          _showTaiwanDifficultySelect(bossId, (difficulty) => {
+            window._advPlayerDifficulty = difficulty;
+            // 進入冒險戰鬥(會走 startAdventureGame → showHeroPickOverlay)
+            if(typeof startAdventureGame === 'function'){
+              startAdventureGame('taiwan');
+            }
+          });
+        });
+      });
+    }catch(e){
+      console.error('[台灣 BOSS 挑戰啟動]', e);
+      // fallback:直接進冒險
+      try{
+        if(typeof startAdventureGame === 'function') startAdventureGame('taiwan');
+      }catch(_){}
+    }
   };
 }
 
@@ -51412,6 +51645,179 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
   });
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260428.3750 — GM 公告系統
+//   管理員透過 Shift+F10 panel 發送,所有在線玩家會即時看到彈幕/彈窗
+// ════════════════════════════════════════════════════════════════
+
+// 已看過的公告 ID(localStorage,跨 session 不重複觸發)
+function _gmBroadcastSeen(id){
+  if(!id) return false;
+  try{
+    const list = JSON.parse(localStorage.getItem('lxps_gm_seen') || '[]');
+    return Array.isArray(list) && list.includes(id);
+  }catch(_){ return false; }
+}
+function _gmBroadcastMarkSeen(id){
+  if(!id) return;
+  try{
+    let list = JSON.parse(localStorage.getItem('lxps_gm_seen') || '[]');
+    if(!Array.isArray(list)) list = [];
+    if(!list.includes(id)){
+      list.push(id);
+      // 只保留最近 50 個 ID,避免 localStorage 無限增長
+      if(list.length > 50) list = list.slice(-50);
+      localStorage.setItem('lxps_gm_seen', JSON.stringify(list));
+    }
+  }catch(_){}
+}
+
+// 顯示 GM 公告(依 type 分流)
+window._showGmBroadcast = function(b){
+  if(!b || !b.id) return;
+  if(_gmBroadcastSeen(b.id)) return;
+  // 過濾太舊的公告(超過 24 小時的不顯示,避免新登入時收到歷史公告)
+  if(b.timestamp && (Date.now() - b.timestamp) > 24 * 60 * 60 * 1000){
+    _gmBroadcastMarkSeen(b.id);
+    return;
+  }
+  _gmBroadcastMarkSeen(b.id);
+  const _type = b.type || 'marquee';
+  if(_type === 'modal') _showGmBroadcastModal(b);
+  else if(_type === 'banner') _showGmBroadcastBanner(b);
+  else _showGmBroadcastMarquee(b); // 預設跑馬燈
+};
+
+// 注入 GM 公告專屬 keyframes(只插一次)
+function _ensureGmBroadcastKeyframes(){
+  if(document.getElementById('_gm-broadcast-kf')) return;
+  const kf = document.createElement('style');
+  kf.id = '_gm-broadcast-kf';
+  kf.textContent =
+    '@keyframes gmMarqueeSlide{from{transform:translateX(100vw);}to{transform:translateX(-100%);}}' +
+    '@keyframes gmBannerSlideDown{from{transform:translateY(-110%);opacity:0;}to{transform:translateY(0);opacity:1;}}' +
+    '@keyframes gmBannerSlideUp{from{transform:translateY(0);opacity:1;}to{transform:translateY(-110%);opacity:0;}}' +
+    '@keyframes gmModalIn{from{opacity:0;transform:scale(0.85);}to{opacity:1;transform:scale(1);}}' +
+    '@keyframes gmGlow{0%,100%{box-shadow:0 0 24px rgba(255,200,80,0.6);}50%{box-shadow:0 0 48px rgba(255,200,80,1);}}';
+  document.head.appendChild(kf);
+}
+
+// 跑馬燈彈幕(從右往左飄,可疊加多條)
+function _showGmBroadcastMarquee(b){
+  _ensureGmBroadcastKeyframes();
+  // 容器(若不存在則建立,所有跑馬燈共用)
+  let host = document.getElementById('_gm-marquee-host');
+  if(!host){
+    host = document.createElement('div');
+    host.id = '_gm-marquee-host';
+    host.style.cssText = 'position:fixed;top:18%;left:0;right:0;z-index:99996;pointer-events:none;display:flex;flex-direction:column;gap:6px;';
+    document.body.appendChild(host);
+  }
+  const row = document.createElement('div');
+  row.style.cssText = 'width:100%;overflow:hidden;height:auto;pointer-events:none;';
+  const span = document.createElement('div');
+  const _color = b.color || '#ffcc44';
+  const _dur = Math.max(4000, Math.min(20000, b.durationMs || 8000));
+  span.style.cssText =
+    'display:inline-block;white-space:nowrap;padding:10px 28px;' +
+    'background:linear-gradient(90deg,rgba(0,0,0,0.85),rgba(40,20,0,0.85),rgba(0,0,0,0.85));' +
+    'border:2.5px solid ' + _color + ';border-radius:12px;' +
+    'font-size:clamp(20px,2.2vw,32px);font-weight:900;color:' + _color + ';' +
+    'text-shadow:0 0 12px ' + _color + ',0 2px 4px rgba(0,0,0,0.9);letter-spacing:3px;' +
+    'box-shadow:0 4px 24px rgba(0,0,0,0.6),0 0 32px ' + _color + '88;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+    'animation:gmMarqueeSlide ' + (_dur/1000) + 's linear forwards,gmGlow 1.6s ease-in-out infinite;';
+  span.innerHTML = '📢 ' + (b.text || '').replace(/[<>]/g, '');
+  row.appendChild(span);
+  host.appendChild(row);
+  try{ playSfx('sfx-confirm2', 0.7); }catch(_){}
+  setTimeout(()=>{ try{ row.remove(); }catch(_){} }, _dur + 200);
+}
+
+// 頂部 banner (從上滑下,停留 N 秒,平滑滑回)
+function _showGmBroadcastBanner(b){
+  _ensureGmBroadcastKeyframes();
+  // 移除舊的(同一時刻只一個 banner)
+  const old = document.getElementById('_gm-banner');
+  if(old) old.remove();
+  const _color = b.color || '#ffcc44';
+  const _dur = Math.max(3000, Math.min(15000, b.durationMs || 8000));
+  const banner = document.createElement('div');
+  banner.id = '_gm-banner';
+  banner.style.cssText =
+    'position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:99997;' +
+    'max-width:min(90vw,720px);padding:14px 28px;' +
+    'background:linear-gradient(135deg,rgba(40,20,0,0.95),rgba(80,40,0,0.95));' +
+    'border:3px solid ' + _color + ';border-radius:14px;' +
+    'font-size:clamp(18px,2vw,26px);font-weight:900;color:#fff;' +
+    'text-align:center;letter-spacing:2px;line-height:1.5;' +
+    'box-shadow:0 8px 30px rgba(0,0,0,0.7),0 0 32px ' + _color + 'aa;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+    'animation:gmBannerSlideDown 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;' +
+    'pointer-events:auto;';
+  banner.innerHTML =
+    '<div style="font-size:clamp(13px,1.4vw,18px);color:' + _color + ';margin-bottom:4px;letter-spacing:3px;font-weight:700;">📢 GM 廣播</div>' +
+    '<div>' + (b.text || '').replace(/[<>]/g, '') + '</div>';
+  document.body.appendChild(banner);
+  try{ playSfx('sfx-powerup', 0.8); }catch(_){}
+  // 停留 _dur 後滑回
+  setTimeout(()=>{
+    if(!banner.parentNode) return;
+    banner.style.animation = 'gmBannerSlideUp 0.5s ease-in forwards';
+    setTimeout(()=>{ try{ banner.remove(); }catch(_){} }, 600);
+  }, _dur);
+}
+
+// 強制彈窗 modal(玩家需點確認才關)
+function _showGmBroadcastModal(b){
+  _ensureGmBroadcastKeyframes();
+  const old = document.getElementById('_gm-modal');
+  if(old) old.remove();
+  const _color = b.color || '#ffcc44';
+  const modal = document.createElement('div');
+  modal.id = '_gm-modal';
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.85);' +
+    'display:flex;align-items:center;justify-content:center;padding:20px;' +
+    'animation:gmModalIn 0.4s ease-out;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  modal.innerHTML =
+    '<div style="max-width:min(90vw,560px);padding:32px 36px;' +
+      'background:linear-gradient(160deg,rgba(40,20,0,0.97),rgba(15,8,0,0.97));' +
+      'border:3.5px solid ' + _color + ';border-radius:20px;text-align:center;' +
+      'box-shadow:0 0 60px ' + _color + '66;animation:gmGlow 2s ease-in-out infinite;">' +
+      '<div style="font-size:clamp(20px,2.4vw,30px);font-weight:900;color:' + _color + ';letter-spacing:6px;margin-bottom:14px;">📢 GM 公告</div>' +
+      '<div style="font-size:clamp(18px,2vw,24px);color:#fff;line-height:1.7;letter-spacing:1px;margin-bottom:24px;white-space:pre-wrap;">' + (b.text || '').replace(/[<>]/g, '') + '</div>' +
+      '<button id="_gm-modal-ok" style="padding:12px 36px;font-size:20px;font-weight:900;letter-spacing:3px;' +
+        'background:' + _color + ';color:#1a0e00;border:none;border-radius:12px;cursor:pointer;font-family:inherit;' +
+        'box-shadow:0 4px 20px ' + _color + '88;">✅ 我知道了</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+  try{ playSfx('sfx-burst-ready', 0.9); }catch(_){}
+  document.getElementById('_gm-modal-ok').onclick = () => {
+    try{ playSfx('sfx-confirm', 0.7); }catch(_){}
+    modal.remove();
+  };
+}
+
+// 啟動 GM 公告監聽(玩家登入後啟動)
+window._startGmBroadcastWatcher = function(){
+  if(window._gmBroadcastUnsubscribe) return;  // 已啟動
+  if(!window._fbWatchGmBroadcast) return;
+  window._gmBroadcastUnsubscribe = window._fbWatchGmBroadcast((b) => {
+    try{ window._showGmBroadcast(b); }catch(e){ console.warn('[GM 公告] 顯示失敗', e); }
+  });
+  console.info('✅ [GM 公告] 監聽已啟動');
+};
+
+// 頁面載入完成後啟動監聽
+if(document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(()=>{ try{ window._startGmBroadcastWatcher(); }catch(e){} }, 3000);
+} else {
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setTimeout(()=>{ try{ window._startGmBroadcastWatcher(); }catch(e){} }, 3000);
+  });
+}
+
 
 // ══ 帳號切換安全保護（Google 重新驗證）══
 function _closeSwitchConfirm(){ var e=document.getElementById('_switch-confirm'); if(e)e.remove(); }
@@ -51942,6 +52348,87 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3780', brief:[
+    '🐛 修正台灣 BOSS 戰啟動時 BOSS 跑錯的問題',
+    '🗺 台灣地圖排版優化:卡片變大、地標文字清楚、位置更準確',
+    '⚔ 點選台灣 BOSS 的流程簡化,直接打開戰鬥詳情視窗',
+  ], items:[
+    '【BOSS 跑錯的修復】',
+    '・之前點台灣 BOSS 開戰後,系統會跳到「另一張舊版地圖」要你再選一次,',
+    '  如果跳過或選錯就會打到貓空 BOSS 而不是台灣 BOSS 😱',
+    '・現在從新版美術地圖選好 BOSS,系統會直接帶你進該 BOSS 戰,不再要求重選',
+    '【點 BOSS 卡片的新流程】',
+    '・點 BOSS 卡片 → 直接打開「魔王挑戰視窗」(全螢幕大圖,含 BOSS 立繪、屬性提示、戰勝獎勵)',
+    '・看完直接按「⚔ 挑戰魔王!」進戰鬥;若想換 BOSS,按右上角 ✕ 或點背景空白關掉',
+    '・拿掉之前多餘的「返回地圖」按鈕和舊版地圖選擇器,流程更順暢',
+    '【地圖排版優化】',
+    '・10 個地標的位置微調,跟新版台灣地圖 PNG 對齊更準確',
+    '・地標文字加大、加深背景框、白字加黑色描邊,白底底圖也看得清楚',
+    '・左右兩側的 BOSS 卡片變大,頭像 54px → 72px,字體放大,看得更清楚',
+    '【新版挑戰視窗顯示內容】',
+    '・地點(📍 彰化・滷肉飯一條街)+ BOSS 全名',
+    '・BOSS 大張立繪 ✨',
+    '・難度星星 + 建議等級',
+    '・BOSS 屬性 + 建議用什麼屬性英雄反制(例如火 BOSS 建議用 💧 水 +10% 傷害)',
+    '・介紹文(BOSS 個性對白)',
+    '・戰勝獎勵:至寶圖示 + 名稱 + 稀有度 + 簡介',
+    '・大顆「⚔ 挑戰魔王!」開戰按鈕',
+  ] },
+  { ver:'v1.0.20260428.3770', brief:[
+    '✨ 修正「治癒之風」技能說明,現在會顯示升級後的恢復量百分比',
+  ], items:[
+    '【修正】',
+    '・祭司的「治癒之風」技能,實際上每升一級恢復量 +5%(Lv.10 MAX 達 145%),',
+    '  但原本的技能說明沒寫出「100%」基底,看起來好像沒升級加成 😅',
+    '・補上「特技的100%」字樣後,英雄詳細頁會像「救贖神光」一樣',
+    '  動態顯示升級後的實際倍率(例如 Lv.10 MAX 顯示「特技的145%」)',
+    '【效果不變,只是說明更清楚】',
+    '・治癒之風的實際治療量沒有改變,程式邏輯本來就有套用升級加成',
+    '・這次只是把技能描述補完,讓玩家清楚看到升級後的數字',
+  ] },
+  { ver:'v1.0.20260428.3760', adminOnly:true, brief:[
+    '📝 [內部] 題庫敏感詞審查與修正',
+  ], items:[
+    '【修正】',
+    '・五下自然第三單元 9111 題:「社會性行為」→「社會性的行為」',
+    '  原因:單獨閱讀時容易被誤讀為「社會 + 性行為」(成人連讀),加「的」字徹底斷句',
+    '・順便清理過往 changelog 描述中的同字串',
+    '【完整審查結果】',
+    '・全 2000+ 題逐題掃描下列敏感詞:性行為/做愛/交媾/私處/陰部/陰莖/陰道/乳房/胸部/生殖器/裸/觸碰身體/不雅/猥褻/性騷/侵犯',
+    '・全題目掃描「兩XX在一起」「親密」「擁抱」「抱緊」「肢體接觸」「身體靠近」「身體碰觸」「貼身」「貼近」',
+    '・全題目掃描「XX性行為」連讀模式(去掉「的/和/或」等斷句字)',
+    '・全題目掃描「碰/摸/觸 + 私/身/敏感/乳」組合',
+    '【其他關注點(不需修改)】',
+    '・五下自然第三單元的「求偶」「雌雄」「卵生」「胎生」「子宮」「精子」「卵子」「受精卵」均為國小教材標準學術用詞,且國立編譯館原文如此,修改反而失準',
+    '・「育幼行為」「求偶行為」「散熱行為」「擬傷行為」「威嚇或敵對行為」前面有實質名詞,不會發生誤讀',
+    '・國中健康教育題目中的「避孕」「保險套」「性傳染病」「愛滋病」屬於國中正規教材,且這些題目 grade 標籤已限定為「國中」,不會抽到給國小玩家',
+    '【結論】',
+    '只有「社會性行為」這一例因前後都是兩字詞、無其他斷句線索,才有誤讀風險;改完後題庫已乾淨',
+  ] },
+  { ver:'v1.0.20260428.3750', adminOnly:true, brief:[
+    '📢 [管理員] 新增 GM 公告系統:對所有在線玩家即時發送彈幕/banner/彈窗',
+  ], items:[
+    '【UI 入口】',
+    '  Shift+F10 → 維修區塊下方新增「📢 0b. GM 公告」區塊',
+    '【三種顯示樣式】',
+    '・跑馬燈彈幕(marquee):從右往左飄,可疊加多條,最不打擾',
+    '・頂部 banner:從上滑下停留 N 秒後滑回,適合中等重要訊息',
+    '・強制彈窗(modal):玩家須點確認才關,適合維護通知/重大消息',
+    '【顏色】',
+    '  金/紅/綠/藍/粉 五色可選,對應「一般/警告/慶祝/資訊/節慶」',
+    '【持續時間】',
+    '  3~30 秒可調(modal 樣式不受此設定影響)',
+    '【去重機制】',
+    '  每位玩家對同一公告 ID 只會看到一次(localStorage 記錄最近 50 條)',
+    '  超過 24 小時的公告會自動跳過(避免新登入收到歷史公告)',
+    '【架構】',
+    '  Firebase: stats/global.gmBroadcast 欄位 + onSnapshot 即時推送',
+    '  API: window._fbSendGmBroadcast / window._fbWatchGmBroadcast',
+    '  客戶端: window._showGmBroadcast / window._startGmBroadcastWatcher',
+    '【操作流程】',
+    '  輸入文字 → 選樣式/顏色/秒數 → 點「👁 預覽」自己先看一次 → 確認後點「📢 發送給所有玩家」',
+    '  發送前會跳 confirm 對話框預覽最終內容,避免誤觸',
+  ] },
   { ver:'v1.0.20260428.3740', brief:[
     '🎵 玉山 BOSS 戰專屬 BGM + 一般台灣 BOSS 戰新增第二首輪播',
     '⚔ 台灣 10 BOSS 終於會用真正的招式了!不再只是普通攻擊',
@@ -59410,7 +59897,7 @@ const GAME_CHANGELOG = [
     '新增題庫:「五下自然第三單元 動物的生活」共 30 題',
     '新增題庫:「五下自然第四單元 聲音與樂器」共 30 題',
   ], items:[
-    '新增 ADV_QUIZ_5S_U3_ANIMAL 陣列(30 題,id 9101-9130),主題涵蓋:骨骼肌肉運動、求偶繁殖行為、卵生/胎生、社會性行為、遺傳、分類學、變溫/恆溫動物、遷徙、保護色、食性與特殊構造等',
+    '新增 ADV_QUIZ_5S_U3_ANIMAL 陣列(30 題,id 9101-9130),主題涵蓋:骨骼肌肉運動、求偶繁殖行為、卵生/胎生、社會性的行為、遺傳、分類學、變溫/恆溫動物、遷徙、保護色、食性與特殊構造等',
     '新增 ADV_QUIZ_5S_U4_SOUND 陣列(30 題,id 9201-9230),主題涵蓋:聲音三要素(音調/響度/音色)、弦樂器/管樂器/打擊樂器發聲原理、噪音與分貝、回聲與超音波、探究變因、消音吸音等',
     'advGetQuizPool 函式新增兩個明確 subject 分支,選到此兩單元時直接回傳該單元 30 題的完整隨機池(與期中評量相同模式)',
     '科目下拉選單兩處同步新增:(1) 冒險中選科目面板 (2) 跳過過場的科目選擇面板,插在「五下自然期中評量」後方以便成組',
@@ -60144,7 +60631,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3740';
+  const CURRENT_VERSION = 'v1.0.20260428.3780';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60161,7 +60648,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3740';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3780';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
