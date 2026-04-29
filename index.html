@@ -33647,24 +33647,25 @@ function _taiwanShowAdminOnlyModal(){
 //   對應實際台灣地理位置:北部(101/西門/三峽/深坑)、中部(台中/彰化/日月潭)、
 //   南部山區(阿里山/玉山)、東南離島(蘭嶼)
 //   ※ 若用戶反映發光點與地圖位置不對齊,只要調整下方 x/y % 數值即可
-// ★ v1.0.20260428.3780 — 10 個地標位置精準微調(對齊新版台灣地圖 PNG)
-//   座標為相對於地圖圖片的百分比(x=橫向 0-100, y=縱向 0-100)
-//   ※ 若顯示位置仍有偏差,微調下方 x/y 數值即可
+// ★ v1.0.20260428.3790 — 10 個地標座標精準對齊地圖建築/景觀位置
+//   x, y: 發光點座標(相對於地圖圖片本身的%, 0~100)
+//   labelDx, labelDy: 文字標籤「相對於發光點」的偏移(px),用於避免文字重疊
+//                     預設 labelDx:0, labelDy:18 (= 文字在發光點正下方 18px)
 const TAIWAN_BOSS_GLOW_COORDS = {
-  // 北部(地圖上方)
-  taipei_101_warlord:   { x: 53, y: 16, label: '台北 101' },
-  ximen_pearl:          { x: 49, y: 18, label: '西門町' },
-  shenkeng_tofu:        { x: 56, y: 19, label: '深坑' },
-  sanxia_indigo:        { x: 47, y: 20, label: '三峽' },
+  // 北部(地圖上方,4 個 BOSS 較擠 → 用不同方向的標籤偏移錯開)
+  taipei_101_warlord:   { x: 56, y: 22, labelDx: 0,    labelDy: -22, label: '台北 101' }, // 標籤往上
+  ximen_pearl:          { x: 50, y: 26, labelDx: -36,  labelDy: 0,   label: '西門町' },    // 標籤往左
+  shenkeng_tofu:        { x: 60, y: 30, labelDx: 30,   labelDy: 4,   label: '深坑' },      // 標籤往右下
+  sanxia_indigo:        { x: 46, y: 28, labelDx: -34,  labelDy: 0,   label: '三峽' },      // 標籤往左
   // 中部(地圖中段)
-  taichung_pineapple:   { x: 39, y: 41, label: '台中' },
-  changhua_braised:     { x: 37, y: 48, label: '彰化' },
-  sun_moon_mirror_boss: { x: 49, y: 49, label: '日月潭' },
+  taichung_pineapple:   { x: 41, y: 44, labelDx: -32,  labelDy: 0,   label: '台中' },      // 標籤往左
+  changhua_braised:     { x: 38, y: 54, labelDx: -34,  labelDy: 0,   label: '彰化' },      // 標籤往左
+  sun_moon_mirror_boss: { x: 53, y: 54, labelDx: 32,   labelDy: 0,   label: '日月潭' },    // 標籤往右
   // 中南部山區(地圖下半)
-  alishan_tree:         { x: 41, y: 60, label: '阿里山' },
-  yushan_giant:         { x: 50, y: 60, label: '玉山' },
+  alishan_tree:         { x: 44, y: 67, labelDx: -36,  labelDy: 0,   label: '阿里山' },    // 標籤往左
+  yushan_giant:         { x: 54, y: 64, labelDx: 30,   labelDy: 0,   label: '玉山' },      // 標籤往右
   // 東南離島(右下角)
-  lanyu_octopus:        { x: 75, y: 86, label: '蘭嶼' },
+  lanyu_octopus:        { x: 73, y: 84, labelDx: 0,    labelDy: 24,  label: '蘭嶼' },      // 標籤往下
 };
 
 // 左右兩側 BOSS 卡片分配(地理感:中南部 / 北部+蘭嶼)
@@ -33703,18 +33704,18 @@ window._showTaiwanMap = function(){
     'animation:fadeIn 0.5s;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;' +
     'overflow:hidden;';
 
-  // ── 標題列 ──
+  // ── 標題列(左對齊,跟「返回」貼齊) ──
+  // ★ v1.0.20260428.3790 — header 縮小高度+左對齊,讓中央地圖佔更多畫面
   const header = document.createElement('div');
-  header.style.cssText = 'width:100%;padding:20px 24px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;';
+  header.style.cssText = 'width:100%;padding:14px 20px 8px;display:flex;align-items:center;gap:24px;flex-shrink:0;';
   header.innerHTML =
-    '<button id="taiwan-map-back" style="padding:12px 24px;font-size:22px;font-weight:800;background:rgba(0,30,60,0.85);' +
-      'border:2.5px solid rgba(120,200,255,0.7);color:#aaccff;border-radius:14px;cursor:pointer;letter-spacing:2px;' +
-      'box-shadow:0 4px 14px rgba(0,80,160,0.4);font-family:inherit;">← 返回</button>' +
-    '<div style="text-align:center;flex:1;">' +
-      '<div style="font-size:clamp(28px,4vw,48px);font-weight:900;color:#ffdd66;letter-spacing:6px;text-shadow:0 0 30px rgba(255,200,80,0.7);">🏝 台灣環島歷險記</div>' +
-      '<div style="font-size:clamp(14px,1.7vw,22px);color:#aaeeff;letter-spacing:2px;margin-top:4px;opacity:0.9;">點擊 BOSS 卡片,看看牠們藏在台灣的哪個角落</div>' +
-    '</div>' +
-    '<div style="width:120px;flex-shrink:0;"></div>';
+    '<button id="taiwan-map-back" style="padding:10px 22px;font-size:20px;font-weight:800;background:rgba(0,30,60,0.85);' +
+      'border:2.5px solid rgba(120,200,255,0.7);color:#aaccff;border-radius:12px;cursor:pointer;letter-spacing:2px;' +
+      'box-shadow:0 4px 14px rgba(0,80,160,0.4);font-family:inherit;flex-shrink:0;">← 返回</button>' +
+    '<div style="text-align:left;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;">' +
+      '<div style="font-size:clamp(24px,3vw,38px);font-weight:900;color:#ffdd66;letter-spacing:5px;text-shadow:0 0 24px rgba(255,200,80,0.7);">🏝 台灣環島歷險記</div>' +
+      '<div style="font-size:clamp(13px,1.3vw,17px);color:#aaeeff;letter-spacing:1.5px;opacity:0.85;">點擊 BOSS 卡片,看看牠們藏在台灣的哪個角落</div>' +
+    '</div>';
   ov.appendChild(header);
 
   // ── 主區域:左欄 / 中央地圖 / 右欄 ──
@@ -33786,17 +33787,22 @@ window._showTaiwanMap = function(){
   mainArea.appendChild(leftCol);
 
   // ── 中央地圖區 ──
+  // ★ v1.0.20260428.3790 — 用 mapInner 包住圖片,讓發光點座標精準對齊圖片本身
+  //   (mapWrap 居中,mapInner 跟圖片一樣大,發光點放在 mapInner 內)
   const mapCol = document.createElement('div');
-  mapCol.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;min-width:0;position:relative;';
+  mapCol.style.cssText = 'flex:1;display:flex;align-items:center;justify-content:center;min-width:0;position:relative;padding:4px;';
   const mapWrap = document.createElement('div');
-  mapWrap.style.cssText = 'position:relative;height:100%;max-height:100%;display:flex;align-items:center;justify-content:center;';
+  mapWrap.style.cssText = 'position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+  // mapInner:讓發光點和文字標籤的座標精準對齊圖片本身
+  const mapInner = document.createElement('div');
+  mapInner.style.cssText = 'position:relative;display:inline-block;max-width:100%;max-height:100%;line-height:0;';
   // 地圖背景圖
   const mapImg = document.createElement('img');
   mapImg.src = (typeof TAIWAN_IMG_BASE !== 'undefined')
     ? TAIWAN_IMG_BASE + encodeURIComponent('台灣地圖.png')
     : 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('台灣地圖.png');
   mapImg.alt = '台灣地圖';
-  mapImg.style.cssText = 'max-width:100%;max-height:100%;height:auto;width:auto;object-fit:contain;display:block;filter:drop-shadow(0 0 30px rgba(80,160,255,0.5));';
+  mapImg.style.cssText = 'max-width:100%;max-height:100%;height:auto;width:auto;display:block;filter:drop-shadow(0 0 30px rgba(80,160,255,0.5));';
   mapImg.onerror = function(){
     // 載入失敗 fallback:藍色提示文字
     this.style.display = 'none';
@@ -33805,13 +33811,15 @@ window._showTaiwanMap = function(){
     _fb.textContent = '🗺 台灣地圖載入失敗(GitHub 圖片可能尚未上傳)';
     mapWrap.appendChild(_fb);
   };
-  mapWrap.appendChild(mapImg);
+  mapInner.appendChild(mapImg);
+  mapWrap.appendChild(mapInner);
 
-  // ★ v1.0.20260428.3780 — 修正地標 10 個位置(對齊新版台灣地圖 PNG)
-  // ★ 用相對於 mapWrap 的絕對定位;座標來自 TAIWAN_BOSS_GLOW_COORDS
+  // ★ v1.0.20260428.3790 — 10 個地標位置:發光點精準對齊圖片建築,文字用 labelDx/labelDy 個別偏移避免重疊
+  // ★ 發光點和文字都加進 mapInner(座標相對於圖片本身的%)
   Object.keys(TAIWAN_BOSSES).forEach(bossId => {
     const coord = TAIWAN_BOSS_GLOW_COORDS[bossId];
     if(!coord) return;
+    // 發光點 — 對齊建築/景觀
     const glow = document.createElement('div');
     glow.id = 'taiwan-glow-' + bossId;
     glow.style.cssText =
@@ -33823,24 +33831,27 @@ window._showTaiwanMap = function(){
       'transition:opacity 0.25s ease-out;' +
       'animation:taiwanGlowPulse 1.4s ease-in-out infinite;' +
       'z-index:10;';
-    mapWrap.appendChild(glow);
+    mapInner.appendChild(glow);
 
-    // ★ v1.0.20260428.3780 — 地標小標籤永遠顯示,字加大 + 深底白字 + 描邊讓對比清晰
+    // ★ v1.0.20260428.3790 — 地名標籤支援 labelDx/labelDy 個別偏移避免重疊
+    //   labelDx/labelDy 是文字「相對於發光點」的位移(預設下方 18px)
+    const _ldx = (typeof coord.labelDx === 'number') ? coord.labelDx : 0;
+    const _ldy = (typeof coord.labelDy === 'number') ? coord.labelDy : 18;
     const lbl = document.createElement('div');
     lbl.style.cssText =
-      'position:absolute;left:' + coord.x + '%;top:calc(' + coord.y + '% + 18px);' +
-      'transform:translateX(-50%);' +
-      'font-size:clamp(13px,1.3vw,18px);font-weight:900;color:#fffce0;' +
+      'position:absolute;left:' + coord.x + '%;top:' + coord.y + '%;' +
+      'transform:translate(calc(-50% + ' + _ldx + 'px),calc(-50% + ' + _ldy + 'px));' +
+      'font-size:clamp(11px,1.1vw,15px);font-weight:900;color:#fffce0;' +
       'background:linear-gradient(135deg,rgba(20,40,80,0.95),rgba(0,15,40,0.95));' +
-      'padding:4px 10px;border-radius:8px;' +
+      'padding:3px 9px;border-radius:7px;' +
       'border:1.5px solid rgba(255,200,80,0.85);' +
       'pointer-events:none;white-space:nowrap;letter-spacing:2px;' +
-      'opacity:0.95;' +
+      'opacity:0.95;line-height:1.2;' +
       'text-shadow:0 0 4px rgba(0,0,0,1),1px 1px 0 rgba(0,0,0,0.9),-1px -1px 0 rgba(0,0,0,0.9),1px -1px 0 rgba(0,0,0,0.9),-1px 1px 0 rgba(0,0,0,0.9);' +
       'box-shadow:0 2px 8px rgba(0,0,0,0.7),0 0 12px rgba(255,200,80,0.3);' +
       'z-index:9;';
     lbl.textContent = coord.label;
-    mapWrap.appendChild(lbl);
+    mapInner.appendChild(lbl);
   });
 
   mapCol.appendChild(mapWrap);
@@ -34003,7 +34014,7 @@ function _showTaiwanBossDetail(bossId){
     }
   });
 
-  // 主按鈕:挑戰魔王 → 直接進入戰鬥流程,跳過所有中介視窗
+  // 主按鈕:挑戰魔王 → 直接進入選角(過場/對白/難度移到選角後播放,避免閃爍首頁)
   document.getElementById('tw-boss-go').onclick = function(){
     try{ playSfx('sfx-battle-start', 0.7); }catch(_){}
     // ★ v1.0.20260428.3780 — 同時設兩個變數確保 BOSS 陣容生成正確
@@ -34012,25 +34023,15 @@ function _showTaiwanBossDetail(bossId){
     detail.remove();
     const mapOv = document.getElementById('taiwan-map-overlay');
     if(mapOv) mapOv.remove();
-    // ★ 新流程:過場 → 對白 → 選難度 → 選角(跳過舊版 _showTaiwanMapSelector)
+    // ★ v1.0.20260428.3790 — 流程改為:選角 → 過場 → 對白 → 難度 → 戰鬥
+    //   原本流程「過場 → 對白 → 難度 → 選角」會在過場播放前短暫看到首頁背景閃爍
+    //   現在改成:點挑戰魔王立即進入選角頁(穩定背景),選完角後才播台灣專屬過場/對白/難度
     try{
-      _showTaiwanCutscene(bossId, () => {
-        _showTaiwanBossDialog(bossId, () => {
-          _showTaiwanDifficultySelect(bossId, (difficulty) => {
-            window._advPlayerDifficulty = difficulty;
-            // 進入冒險戰鬥(會走 startAdventureGame → showHeroPickOverlay)
-            if(typeof startAdventureGame === 'function'){
-              startAdventureGame('taiwan');
-            }
-          });
-        });
-      });
+      if(typeof startAdventureGame === 'function'){
+        startAdventureGame('taiwan');
+      }
     }catch(e){
       console.error('[台灣 BOSS 挑戰啟動]', e);
-      // fallback:直接進冒險
-      try{
-        if(typeof startAdventureGame === 'function') startAdventureGame('taiwan');
-      }catch(_){}
     }
   };
 }
@@ -34699,6 +34700,29 @@ function advStartCutscene(stage) {
     }catch(e){}
     advLoadScene(stage, 0);
   };
+
+  // ★ v1.0.20260428.3790 — 台灣關專屬過場流程:選角後播放
+  //   原本「點挑戰魔王 → 過場 → 對白 → 難度 → 選角」改成「點挑戰魔王 → 選角 → 過場 → 對白 → 難度 → 戰鬥」
+  //   (避免從地圖切到過場時短暫看到首頁背景閃爍)
+  if(stage === 'taiwan' && window._advSelectedTaiwanBoss && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]){
+    const _twBossId = window._advSelectedTaiwanBoss;
+    try{
+      _showTaiwanCutscene(_twBossId, () => {
+        _showTaiwanBossDialog(_twBossId, () => {
+          _showTaiwanDifficultySelect(_twBossId, (difficulty) => {
+            window._advPlayerDifficulty = difficulty || '普通';
+            // 走收尾流程(advFinishCutscene 會 advPrepareSessionQuestions + advStartBattle)
+            try{ advFinishCutscene(); }catch(_e){ console.error('[台灣 advFinishCutscene]', _e); }
+          });
+        });
+      });
+    }catch(_twE){
+      console.error('[台灣關過場流程]', _twE);
+      // fallback:直接收尾啟動戰鬥
+      try{ advFinishCutscene(); }catch(_){}
+    }
+    return;
+  }
 
   _advShowUpfrontSkipDecision(
     // 選「是」
@@ -52348,6 +52372,28 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3790', adminOnly:true, brief:[
+    '🗺 [台灣關] 地圖滿版+標題左移,地標位置精準對齊建築,文字錯開避免重疊',
+    '⚔ [台灣關] 流程改成「選角 → 過場 → 對白 → 難度 → 戰鬥」,修正過場前看到首頁的閃爍',
+  ], items:[
+    '【台灣地圖佈局】',
+    '・header 標題從置中改成靠左貼齊「返回」按鈕,字體縮小,讓中央地圖佔更多畫面',
+    '・地圖圖片從 max-width 限制放寬,改用 inline-block 容器讓圖片盡量放大',
+    '・mapInner 容器:讓發光點和文字座標精準對齊圖片本身,不會因為 contain 留白而偏移',
+    '【地標座標重定】',
+    '・10 個地標重新對齊地圖建築/景觀位置(不是文字位置)',
+    '・新增 labelDx/labelDy 參數,讓每個標籤的文字可以個別偏移',
+    '・北部 4 BOSS(101/西門町/三峽/深坑)各往不同方向錯開,不再重疊',
+    '・蘭嶼往上移到地圖右下小島上(不再跑到圖外)',
+    '・座標若還有偏差只要調整 TAIWAN_BOSS_GLOW_COORDS 的 x/y/labelDx/labelDy 即可',
+    '【流程順序修正】',
+    '・舊流程:點挑戰魔王 → 過場 → 對白 → 難度 → 選角 → 戰鬥',
+    '  缺點:從地圖切到過場有短暫空檔會看到首頁背景閃一下',
+    '・新流程:點挑戰魔王 → 選角 → 過場 → 對白 → 難度 → 戰鬥',
+    '  優點:點挑戰魔王立即用 fadeTransition 接到選角頁(穩定背景),不會看到首頁',
+    '・在 advStartCutscene 中加台灣關專屬分支,呼叫 _showTaiwanCutscene/Dialog/Difficulty 後',
+    '  接到 advFinishCutscene 完成戰鬥啟動',
+  ] },
   { ver:'v1.0.20260428.3780', brief:[
     '🐛 修正台灣 BOSS 戰啟動時 BOSS 跑錯的問題',
     '🗺 台灣地圖排版優化:卡片變大、地標文字清楚、位置更準確',
@@ -60631,7 +60677,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3780';
+  const CURRENT_VERSION = 'v1.0.20260428.3790';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -60648,7 +60694,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3780';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3790';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
