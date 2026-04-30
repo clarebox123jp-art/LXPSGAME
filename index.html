@@ -5132,7 +5132,7 @@ body.art-premium #summon-overlay {
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
-      <div class="adv-stage-btn adv-stage-btn-locked" style="opacity:0.55;cursor:not-allowed;background:rgba(80,80,90,0.4);" onclick="event.stopPropagation();playSfx('sfx-cancel',0.4);_showInGameToast('🏝 台灣環島歷險記敬請期待!','#ffaa66',2200);">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(敬請期待)</span></div>
+      <div class="adv-stage-btn adv-stage-btn-locked" style="opacity:0.55;cursor:not-allowed;background:rgba(80,80,90,0.4);" onclick="event.stopPropagation();_taiwanAdminCheckEntry(this);">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(敬請期待)</span></div>
       <div class="adv-stage-btn" onclick="_japanTrySelect(this)">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffcc66;">🗾 第一關:日本探險</span></div>
     <!-- ★ 商店按鈕 + 知識幣顯示 -->
     <div id="adv-coins-bar" style="font-size:clamp(13px,1.5vw,20px);font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
@@ -30673,6 +30673,36 @@ function openAdventureOverlay(){
 
   // ★ v1.0.20260424.0790 — 召喚按鈕顯示判定(管理員限定)
   try{ _refreshSummonBtnVisibility(); }catch(_e){}
+
+  // ★ v1.1.0 — 玩家版專屬:管理員白名單帳號看到台灣關按鈕變成「橘色可點(管理員測試中)」
+  //   一般玩家看到的是「灰色敬請期待」(預設樣式)
+  //   兩者 onclick 都走 _taiwanAdminCheckEntry,但管理員視覺上會更清楚自己有權限
+  try{
+    const _twBtn = document.querySelector('.adv-stage-btn-locked');
+    if(_twBtn){
+      const _isAdmin = (typeof window._isAdminUser === 'function') && window._isAdminUser();
+      if(_isAdmin){
+        // 管理員樣式:橘色可點 + 「管理員測試中」標示
+        _twBtn.style.opacity = '1';
+        _twBtn.style.cursor = 'pointer';
+        _twBtn.style.background = ''; // 還原為預設(其他可點按鈕的樣式)
+        // 修改顯示文字
+        const _subSpan = _twBtn.querySelector('span');
+        if(_subSpan){
+          _subSpan.textContent = '🏝 全台 10 大特產關卡(管理員測試中)';
+        }
+      } else {
+        // 一般玩家樣式:灰色不可點 + 「敬請期待」
+        _twBtn.style.opacity = '0.55';
+        _twBtn.style.cursor = 'not-allowed';
+        _twBtn.style.background = 'rgba(80,80,90,0.4)';
+        const _subSpan = _twBtn.querySelector('span');
+        if(_subSpan){
+          _subSpan.textContent = '🏝 全台 10 大特產關卡(敬請期待)';
+        }
+      }
+    }
+  }catch(_twE){ console.warn('[玩家版台灣關按鈕] 樣式套用失敗', _twE); }
 }
 
 // ════════════════════════════════════════
@@ -34137,8 +34167,28 @@ window._japanTrySelect = function(btnEl){
 
 // ★ v1.0.20260428.1700 — 台灣環島歷險記:管理員測試模式
 //   非管理員會被擋下,只有白名單帳號可以進去測試
-// ★ v1.1.0 — 玩家版:旗標保持 true 鎖死,且入口按鈕在 HTML 改為「敬請期待」灰按鈕,玩家完全看不到入口
-window._TAIWAN_ADMIN_ONLY = true;       // 玩家版:鎖死(不開放白名單也擋下)
+// ★ v1.1.0 — 玩家版:旗標保持 true 鎖死,且入口按鈕在 HTML 改為「敬請期待」灰按鈕
+//   但管理員白名單帳號(_isAdminUser)點擊時,會走 _taiwanAdminCheckEntry → _taiwanTrySelect 進入測試
+window._TAIWAN_ADMIN_ONLY = true;       // 玩家版:只開放白名單管理員(一般玩家看「敬請期待」)
+
+// ★ v1.1.0 — 「敬請期待」按鈕的點擊處理
+//   一般玩家:跳「敬請期待!」toast(維持鎖死體驗)
+//   管理員:走 _taiwanTrySelect 進入台灣關測試
+window._taiwanAdminCheckEntry = function(btnEl){
+  // 檢查是不是管理員
+  const _isAdmin = (typeof window._isAdminUser === 'function') && window._isAdminUser();
+  if(_isAdmin){
+    // 管理員 → 進入台灣關
+    try{ window._taiwanTrySelect(btnEl); }catch(_e){
+      console.error('[台灣關管理員入口] _taiwanTrySelect 失敗', _e);
+    }
+  } else {
+    // 一般玩家 → 跳「敬請期待」訊息
+    try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+    try{ _showInGameToast('🏝 台灣環島歷險記敬請期待!', '#ffaa66', 2200); }catch(_){}
+  }
+};
+
 window._taiwanTrySelect = function(btnEl){
   if(window._TAIWAN_ADMIN_ONLY && !(typeof window._isAdminUser === 'function' && window._isAdminUser())){
     try{ playSfx('sfx-cancel', 0.6); }catch(_){}
@@ -53671,6 +53721,7 @@ const GAME_CHANGELOG = [
     '・數學題改回固定題目,保證題目和答案 100% 同步,不會再出現「題目和答案對不上」',
     '【期待中】',
     '・🏝 台灣環島歷險記正在開發測試中,完成後會在後續版本中正式開放,敬請期待!',
+    '・(管理員測試:登入白名單帳號後,「敬請期待」按鈕會自動變成可點擊的「管理員測試中」)',
   ] },
   { ver:'v1.0.20260428.4090', adminOnly:true, brief:[
     '✨ [台灣關] 重新調整 BOSS 介紹排版:移除建議等級、加入至寶實際效果說明',
