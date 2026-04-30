@@ -14995,7 +14995,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       // 再加 protectBuff：使這些有利狀態無法被消除/搶奪
       addBuff(t,'protectBuff',3+_lv5Extra);
       // 3. 依特技 150% × 爆發倍率 恢復 HP（可復活）
-      const _healAmt = Math.max(1, Math.round(spv(h) * 1.5 * _burstMult));
+      // ★ v1.0.20260428.3920 — 修正 bug:原本誤寫 spv(h) 把它當函式呼叫,但 _runBurst 內 spv 是「發動者 h 的 sp 計算值」(line 14102 定義為 const)
+      //   呼叫 spv(h) 會拋 TypeError: spv is not a function,導致巫女神樂舞發動後整個爆發流程中斷
+      const _healAmt = Math.max(1, Math.round(spv * 1.5 * _burstMult));
       if(t.curHp===0) doRevive(t,0);
       doHeal(t,_healAmt,{actor:h,isHeal:true});
       renderCard(t);
@@ -27596,7 +27598,9 @@ function ctrlFullscreen(){
         if(!(document.fullscreenElement||document.webkitFullscreenElement)){
           const el2 = document.documentElement;
           const fn2 = el2.requestFullscreen||el2.webkitRequestFullscreen||el2.mozRequestFullScreen;
-          if(fn2){ try{ fn2.call(el2,{navigationUI:'hide'}); }catch(e){} }
+          // ★ v1.0.20260428.3930 — 必須處理 promise rejection,
+          //   否則「API can only be initiated by a user gesture」會變成 unhandled rejection 中斷後續流程
+          if(fn2){ try{ const _p = fn2.call(el2,{navigationUI:'hide'}); if(_p && _p.catch) _p.catch(()=>{}); }catch(e){} }
           // 同時鎖橫式
           if(screen.orientation&&screen.orientation.lock){
             screen.orientation.lock('landscape').catch(()=>{});
@@ -28492,7 +28496,8 @@ document.addEventListener('visibilitychange', function(){
       if(!isFs){
         const el = document.documentElement;
         const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
-        if(fn){ try{ fn.call(el,{navigationUI:'hide'}); }catch(e){} }
+        // ★ v1.0.20260428.3930 — 處理 promise rejection
+        if(fn){ try{ const _p = fn.call(el,{navigationUI:'hide'}); if(_p && _p.catch) _p.catch(()=>{}); }catch(e){} }
       }
       // 鎖橫式方向
       if(screen.orientation && screen.orientation.lock){
@@ -28660,7 +28665,8 @@ window.addEventListener('pagehide', function(e){
           var el = document.documentElement;
           var fn = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
           if(fn && !(document.fullscreenElement || document.webkitFullscreenElement)){
-            try{ fn.call(el, {navigationUI:'hide'}); }catch(e2){}
+            // ★ v1.0.20260428.3930 — 處理 promise rejection
+            try{ var _p = fn.call(el, {navigationUI:'hide'}); if(_p && _p.catch) _p.catch(function(){}); }catch(e2){}
           }
           if(screen.orientation && screen.orientation.lock){
             screen.orientation.lock('landscape').catch(function(){});
@@ -28819,7 +28825,8 @@ window.addEventListener('orientationchange',function(){
     if(!(document.fullscreenElement||document.webkitFullscreenElement)){
       const el = document.documentElement;
       const fn = el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen;
-      if(fn){ try{ fn.call(el,{navigationUI:'hide'}); }catch(e){} }
+      // ★ v1.0.20260428.3930 — 處理 promise rejection
+      if(fn){ try{ const _p = fn.call(el,{navigationUI:'hide'}); if(_p && _p.catch) _p.catch(()=>{}); }catch(e){} }
     }
   }, 300);
 });
@@ -47631,7 +47638,8 @@ function _openInChrome() {
     setTimeout(function(){
       var el = document.documentElement;
       var fn = el.requestFullscreen || el.webkitRequestFullscreen;
-      if(fn) try{ fn.call(el, {navigationUI:'hide'}); }catch(e){}
+      // ★ v1.0.20260428.3930 — 處理 promise rejection
+      if(fn) try{ var _p = fn.call(el, {navigationUI:'hide'}); if(_p && _p.catch) _p.catch(function(){}); }catch(e){}
       if(screen.orientation && screen.orientation.lock){
         screen.orientation.lock('landscape').catch(function(){});
       }
@@ -53042,6 +53050,17 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3920', brief:[
+    '🐛 修正巫女的爆發技「神樂舞」發動後戰鬥中斷的 bug',
+  ], items:[
+    '・症狀:巫女發動爆發技「神樂舞」,翩翩起舞獻納祭神樂曲後,戰鬥就中斷了',
+    '・原因:程式內部恢復隊友 HP 的計算式寫錯,把一個變數誤當函式呼叫',
+    '・現在巫女的神樂舞可以正確發動:解除全隊不利狀態 → 附加 3 個強力有利狀態 → 依特技 150% 恢復 HP(可復活)',
+    '【技能再次審核】',
+    '・神樂舞技能描述:全體友方解除所有不利狀態(含強力)、附加隨機 3 個強力有利狀態(不可解除)、再依特技 150% 恢復 HP',
+    '・實際效果:已對齊描述,並確認 _burstMult(極限爆發倍率)+ Lv5 額外加成正確套用',
+    '・AI 使用情形:巫女是隊友(p1 角色),AI 不會用此技能,玩家手動發動',
+  ] },
   { ver:'v1.0.20260428.3910', adminOnly:true, brief:[
     '🐛 [台灣關] 修正 BOSS 答對/答錯反應對白還是貓空空貓怪的;答對沒出獎勵卡死的安全網大幅強化',
   ], items:[
@@ -61598,7 +61617,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3910';
+  const CURRENT_VERSION = 'v1.0.20260428.3920';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61613,9 +61632,26 @@ const GAME_CHANGELOG = [
   }
 })();
 
+// ★ v1.0.20260428.3930 — 全域 unhandledrejection 攔截器
+//   bug 症狀:卡死自救選保留獎勵後,console 出現多次「requestFullscreen」「Permissions check failed」
+//   錯誤,玩家進入全黑畫面卡死
+//   根因:多處自動觸發的 requestFullscreen 沒處理 promise rejection,
+//        瀏覽器抛 unhandled rejection 中斷後續流程(advFinishCutscene、回首頁等)
+//   修補:全域攔截「全螢幕 / Permissions」相關 unhandled rejection,只 console.warn 不抛例外
+window.addEventListener('unhandledrejection', function(ev){
+  try{
+    var msg = (ev && ev.reason && (ev.reason.message || String(ev.reason))) || '';
+    // 只攔截已知無害的全螢幕/方向鎖相關錯誤,不影響其他真正的錯誤
+    if(/requestFullscreen|Permissions check failed|fullscreen|user gesture|orientation/i.test(msg)){
+      console.warn('[全螢幕攔截] 已忽略 unhandled rejection:', msg);
+      ev.preventDefault();
+    }
+  }catch(_){}
+});
+
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3910';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3930';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
