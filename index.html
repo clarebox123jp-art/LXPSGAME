@@ -7293,21 +7293,27 @@ function playSkillFX(skillName,actor,targets){
       break;
     case '神樂舞':
       playSfx('sfx-burst',0.9); playSfx('sfx-heal',0.85);
-      // ★ 神樂舞 GIF 覆蓋全場（持續 2.4s）
+      // ★ v1.1.0 — 神樂舞視覺特效全面放大 150%
+      //   GIF 從 70% 放大到 100%(視覺感受 ~150%),粒子數量、大小、持續時間都成比例放大
+      // ★ 神樂舞 GIF 覆蓋全場(持續 3.6s,原本 2.4s)
       try{
         var _kgWrap = document.createElement('div');
-        _kgWrap.style.cssText = 'position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);pointer-events:none;';
+        _kgWrap.style.cssText = 'position:fixed;inset:0;z-index:9600;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);pointer-events:none;';
         var _kgImg = document.createElement('img');
         _kgImg.src = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E6%A8%82%E8%88%9E.gif';
-        _kgImg.style.cssText = 'max-width:70%;max-height:70%;object-fit:contain;filter:drop-shadow(0 0 24px rgba(255,220,120,0.9));';
+        // ★ v1.1.0 — max-width/height 從 70% 放大到 100%(實際視覺 ~150%),drop-shadow 從 24px 加到 36px
+        _kgImg.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 36px rgba(255,220,120,0.95));';
         _kgWrap.appendChild(_kgImg);
         document.body.appendChild(_kgWrap);
-        setTimeout(function(){ try{ _kgWrap.remove(); }catch(_){} }, 2400);
+        setTimeout(function(){ try{ _kgWrap.remove(); }catch(_){} }, 3600);
       }catch(_kgE){}
-      if(rc_a){ spawnParticles(rc_a.x,rc_a.y,{count:36,color:'#ffccff',size:9,spread:90,duration:900,rise:true,gravity:-0.4}); ringFX(actor,'#ffccff',900); bannerFX(actor,'神樂舞！','#ffccff',1400); }
-      (targets||[]).forEach(t=>{ var rct2=cardRect(t); if(rct2){ spawnParticles(rct2.x,rct2.y,{count:18,color:'#ffeedd',size:7,spread:70,duration:800,rise:true}); ringFX(t,'#ffeedd',700);} });
-      flashScreen('rgba(255,220,180,0.85)',500);
-      zoneFlash(actor.side,'rgba(255,200,255,0.35)',900);
+      // ★ v1.1.0 — 主粒子放大:count 36→54,size 9→14,spread 90→135,duration 900→1350,gravity -0.4→-0.6
+      if(rc_a){ spawnParticles(rc_a.x,rc_a.y,{count:54,color:'#ffccff',size:14,spread:135,duration:1350,rise:true,gravity:-0.6}); ringFX(actor,'#ffccff',1350); bannerFX(actor,'神樂舞！','#ffccff',2100); }
+      // ★ v1.1.0 — 隊友粒子放大:count 18→27,size 7→10,spread 70→105,duration 800→1200,光環 700→1050
+      (targets||[]).forEach(t=>{ var rct2=cardRect(t); if(rct2){ spawnParticles(rct2.x,rct2.y,{count:27,color:'#ffeedd',size:10,spread:105,duration:1200,rise:true}); ringFX(t,'#ffeedd',1050);} });
+      // ★ v1.1.0 — 全螢幕閃光放大:0.85→1.0、500→750ms;區域閃光:0.35→0.5、900→1350ms
+      flashScreen('rgba(255,220,180,1.0)',750);
+      zoneFlash(actor.side,'rgba(255,200,255,0.50)',1350);
       break;
     // ═══════════════════════════════════════════════════════════════
     // ★ v1.0.20260421.1400 — 日本關卡 14 個技能攻擊特效與音效
@@ -15380,8 +15386,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       doHeal(t,_healAmt,{actor:h,isHeal:true});
       renderCard(t);
     });
-    bannerFX(h,'神樂舞！','#ffccff',1200);
-    flashScreen('rgba(255,220,120,0.9)',400);
+    // ★ v1.1.0 — 神樂舞額外橫幅與閃光放大 150%(配合 playSkillFX 內主特效)
+    bannerFX(h,'✨ 神樂舞 ✨','#ffccff',1800);
+    flashScreen('rgba(255,220,120,1.0)',600);
     try{ playSkillFX('神樂舞',h,_allies); }catch(_){}
     updateUI();
     if(checkWin()) return;
@@ -53702,12 +53709,20 @@ const GAME_CHANGELOG = [
     '🎉 大版本更新!修復多個重要 bug,新增雲端同步功能,讓小英雄遊玩體驗更順暢',
     '☁ 新增「立即同步雲端」按鈕,可主動把進度上傳保存',
     '🐛 修復 BOSS 戰中多個導致卡死或畫面異常的問題',
+    '✨ 巫女爆發技「神樂舞」視覺特效全面放大 150%,更壯觀震撼',
   ], items:[
     '【新功能】',
     '・新增「☁ 立即同步雲端」按鈕(在冒險選關卡頁的「🎉 近期活動與新角色」下方)',
     '  - 按下會立即把目前進度(知識幣、英雄等級、寶物、戰績等)上傳到雲端',
     '  - 顏色顯示同步狀態:橘色同步中、綠色成功、紅色失敗',
     '  - 5 秒 cooldown 避免狂按,適合換裝置或重要戰鬥前主動存檔',
+    '【特效升級】',
+    '・巫女爆發技「神樂舞」視覺特效全面放大 150%:',
+    '  - 神樂舞 GIF 動畫從畫面 70% 放大到 100%(視覺感受 ~150%)',
+    '  - 持續時間從 2.4 秒延長到 3.6 秒,讓玩家充分欣賞',
+    '  - 主角粒子特效:數量、大小、擴散範圍全面放大',
+    '  - 隊友光環粒子也成比例放大',
+    '  - 全螢幕閃光與區域閃光更明亮持久',
     '【bug 修復】',
     '・修正 BOSS 戰中誤觸返回首頁按鈕導致戰鬥意外中斷的問題',
     '・修正答對題目後獎勵視窗看不到、戰鬥卡住的問題',
