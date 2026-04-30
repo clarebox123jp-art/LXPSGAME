@@ -37879,26 +37879,64 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     setTimeout(()=>{ try{ advShowBossReact('correct'); }catch(e){} }, 300);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
     setTimeout(() => {
-      document.getElementById('adv-quiz-overlay').classList.remove('show');
+      // ★ v1.0.20260428.3910 — 答對後流程加 console log 方便定位卡死問題
+      console.log('[答題流程] ✓ 答對處理開始,即將關閉 quiz overlay 並呼叫 advShowReward');
+      try{
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        if(_qOv) _qOv.classList.remove('show');
+      }catch(_){}
       _advQuizPhase = 'idle';
       _advQuizActive = false;
       // ★ v1.0.20260428.3630 — 安全網:advShowReward 包 try-catch + watchdog,
       //   避免獎勵視窗沒顯示就讓玩家永遠卡在 _gamePaused=true 的狀態
+      let _rewardCalled = false;
       try {
+        console.log('[答題流程] 呼叫 advShowReward()');
         advShowReward();
-        // watchdog:1.5 秒後檢查獎勵視窗是否真的顯示了
+        _rewardCalled = true;
+        // ★ v1.0.20260428.3910 — watchdog 縮短到 800ms 並加多重 fallback
+        //   1.5 秒太久,玩家以為卡死;改 800ms 更快救援
         setTimeout(() => {
           try {
             const _rwOv = document.getElementById('adv-reward-overlay');
-            if (_rwOv && !_rwOv.classList.contains('show')) {
-              console.warn('[獎勵安全網] 獎勵視窗未成功顯示,自動解除暫停以恢復戰鬥');
-              try { advOnQuizSkip(); } catch(_skE) { console.error('[獎勵安全網] advOnQuizSkip 失敗', _skE); }
+            const _isShown = _rwOv && _rwOv.classList.contains('show');
+            console.log('[答題流程] 獎勵 watchdog 檢查:overlay 存在=' + !!_rwOv
+              + ', has show class=' + _isShown
+              + ', display=' + (_rwOv ? getComputedStyle(_rwOv).display : 'N/A'));
+            if (!_rwOv || !_isShown){
+              console.warn('🚨 [獎勵安全網] 獎勵視窗未成功顯示,自動解除暫停以恢復戰鬥');
+              try { advOnQuizSkip(); } catch(_skE) {
+                console.error('[獎勵安全網] advOnQuizSkip 失敗', _skE);
+                // 最終兜底:強制解除 + startTurn
+                try{ _gamePaused = false; }catch(_){}
+                try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+                try{ window._bossQuizInFlight = false; }catch(_){}
+                if(_advQuizResolveCb){
+                  const _cb = _advQuizResolveCb; _advQuizResolveCb = null;
+                  try{ _cb(); }catch(_cbE){
+                    console.error('[獎勵安全網] cb 失敗,強制 startTurn', _cbE);
+                    setTimeout(()=>{ try{ if(typeof startTurn === 'function') startTurn(); }catch(_){} }, 200);
+                  }
+                } else {
+                  setTimeout(()=>{ try{ if(typeof startTurn === 'function') startTurn(); }catch(_){} }, 200);
+                }
+              }
             }
           } catch(_wdE) { console.error('[獎勵安全網] watchdog 檢查失敗', _wdE); }
-        }, 1500);
+        }, 800);
       } catch(_rwE) {
-        console.error('[獎勵安全網] advShowReward 拋出錯誤,自動解除暫停', _rwE);
-        try { advOnQuizSkip(); } catch(_skE2) {}
+        console.error('🚨 [獎勵安全網] advShowReward 拋出錯誤,自動解除暫停', _rwE);
+        try { advOnQuizSkip(); } catch(_skE2) {
+          // 終極兜底
+          try{ _gamePaused = false; }catch(_){}
+          try{ window._bossQuizInFlight = false; }catch(_){}
+          if(_advQuizResolveCb){
+            const _cb = _advQuizResolveCb; _advQuizResolveCb = null;
+            try{ _cb(); }catch(_){
+              setTimeout(()=>{ try{ startTurn(); }catch(_){} }, 200);
+            }
+          }
+        }
       }
     }, 3200);
   } else {
@@ -39874,8 +39912,27 @@ const BOSS_REACT_TIMEOUT_YAMATA = [
   '沉默……是爾承認失敗之意嗎?',
 ];
 
-// 顯示 Boss 反應氣泡
-// 顯示 Boss 反應氣泡
+// ★ v1.0.20260428.3910 — 台灣關 BOSS 共用反應對白(10 BOSS 共用,日後可擴展為個別)
+const BOSS_REACT_CORRECT_TAIWAN = [
+  '哼!算你有點本事,這題的答案被你猜到了!',
+  '可惡!沒想到台灣的小英雄這麼厲害!',
+  '什麼?這題我以為很難欸~你怎麼答對的!',
+  '不錯不錯,看來你對台灣這片土地真的有研究!',
+  '哼,別得意!下一題我會出更難的!',
+];
+const BOSS_REACT_WRONG_TAIWAN = [
+  '哈哈哈!答錯了吧!台灣的奧秘豈是你能猜透的?',
+  '太簡單的題目你都答錯,真是讓我失望!',
+  '錯啦錯啦!這就是你對台灣的了解嗎?',
+  '哼哼~就這點實力也想挑戰我?還早得很呢!',
+  '答錯啦!看我接下來怎麼修理你!',
+];
+const BOSS_REACT_TIMEOUT_TAIWAN = [
+  '時間到啦!連想都想不出來嗎?',
+  '哎呀,這麼簡單也要想這麼久?',
+  '哈哈,小英雄被我的氣場震懾住了嗎?',
+];
+
 let _bossReactTimer = null;
 // ★ v1.0.20260424.0810 — 對白查找表
 //   原版用 window['BOSS_REACT_'+...] 查找,但這些變數是用 const 宣告,
@@ -39900,6 +39957,10 @@ const _BOSS_REACT_MAP = {
   'CORRECT_YAMATA':  BOSS_REACT_CORRECT_YAMATA,
   'WRONG_YAMATA':    BOSS_REACT_WRONG_YAMATA,
   'TIMEOUT_YAMATA':  BOSS_REACT_TIMEOUT_YAMATA,
+  // ★ v1.0.20260428.3910 — 台灣 10 BOSS 共用反應對白
+  'CORRECT_TAIWAN':  BOSS_REACT_CORRECT_TAIWAN,
+  'WRONG_TAIWAN':    BOSS_REACT_WRONG_TAIWAN,
+  'TIMEOUT_TAIWAN':  BOSS_REACT_TIMEOUT_TAIWAN,
 };
 function advShowBossReact(type) {
   const el = document.getElementById('adv-boss-react');
@@ -39908,17 +39969,25 @@ function advShowBossReact(type) {
 
   // 取台詞（依當前主 BOSS 變體）
   // ★ v1.0.20260423.0200 — 擴充日本四大 BOSS 分流,避免用貓組預設台詞
+  // ★ v1.0.20260428.3910 — 加台灣 10 BOSS 識別,所有台灣 BOSS 共用 _TAIWAN 後綴對白
+  const _TW_BOSS_NAMES = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公',
+    '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+    '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人'];
   const _mainReactBoss = (typeof G !== 'undefined' && G && G.p2)
     ? G.p2.find(h => h && h.curHp>0 &&
-        ['杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'].includes(h.name))
+        (['杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇'].includes(h.name)
+         || _TW_BOSS_NAMES.includes(h.name)))
     : null;
-  const _reactSuffix = _mainReactBoss ? ({
-    '杏花妖':   '_APRICOT',
-    '大天狗':   '_TENGU',
-    '酒吞童子': '_SHUTEN',
-    '玉藻前':   '_TAMAMO',
-    '八岐大蛇': '_YAMATA',
-  })[_mainReactBoss.name] : '';
+  const _reactSuffix = _mainReactBoss ? (
+    _TW_BOSS_NAMES.includes(_mainReactBoss.name) ? '_TAIWAN'
+    : ({
+      '杏花妖':   '_APRICOT',
+      '大天狗':   '_TENGU',
+      '酒吞童子': '_SHUTEN',
+      '玉藻前':   '_TAMAMO',
+      '八岐大蛇': '_YAMATA',
+    })[_mainReactBoss.name] || ''
+  ) : '';
   // ★ v1.0.20260424.0810 — 改用 _BOSS_REACT_MAP 查找,不再透過 window
   const _typeKey = type === 'correct' ? 'CORRECT'
                  : type === 'timeout' ? 'TIMEOUT'
@@ -52973,6 +53042,30 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3910', adminOnly:true, brief:[
+    '🐛 [台灣關] 修正 BOSS 答對/答錯反應對白還是貓空空貓怪的;答對沒出獎勵卡死的安全網大幅強化',
+  ], items:[
+    '【bug 1:答對/答錯時 BOSS 反應對白還是空貓怪】',
+    '・症狀:答對後上方氣泡顯示「喵~連這都答對」(空貓怪台詞),不是台灣 BOSS 該說的話',
+    '・根因:advShowBossReact 函式的 BOSS 偵測名單只認 5 個 BOSS,沒包含台灣 10 個',
+    '  → fallback 到 _BOSS_REACT_MAP[\\\'CORRECT\\\'] = 貓空空貓怪預設對白',
+    '・修復:加台灣 BOSS 共用對白(BOSS_REACT_CORRECT/WRONG/TIMEOUT_TAIWAN 各 5 條)',
+    '・所有 10 個台灣 BOSS 共用同一組對白(語氣中性,適用所有 BOSS)',
+    '・後續可擴展為個別 BOSS 對白(把 _TAIWAN 改成 _PINEAPPLE / _BRAISED 等)',
+    '【bug 2:所有 BOSS 答完第一題卡死,無獎勵也不換角色 — 強化安全網】',
+    '・之前已加 1.5 秒 watchdog,但仍無法救援 → 縮短到 800ms 並加多重 fallback',
+    '・全程加 console log,下次卡死時可從 F12 console 看到完整流程:',
+    '  - [答題流程] ✓ 答對處理開始',
+    '  - [答題流程] 呼叫 advShowReward()',
+    '  - [答題流程] 獎勵 watchdog 檢查:overlay 存在=true/false, has show=true/false',
+    '  - 🚨 [獎勵安全網] 獎勵視窗未成功顯示...',
+    '・watchdog 觸發後 4 層兜底依序嘗試:',
+    '  (1) advOnQuizSkip()',
+    '  (2) 失敗 → _gamePaused=false + _resumeTimers + 觸發 _advQuizResolveCb',
+    '  (3) cb 失敗 → 強制 setTimeout startTurn',
+    '  (4) startTurn 失敗 → 至少不會永遠卡住,玩家可按卡死自救',
+    '・若仍卡死,請拍下 F12 console 截圖,新版的 log 會清楚顯示是哪一步斷掉',
+  ] },
   { ver:'v1.0.20260428.3900', brief:[
     '⚡ 跳過演出視窗簡化:不用再選年級,只要選科目和難度就好',
   ], items:[
@@ -61505,7 +61598,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3900';
+  const CURRENT_VERSION = 'v1.0.20260428.3910';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61522,7 +61615,7 @@ const GAME_CHANGELOG = [
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3900';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3910';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
