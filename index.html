@@ -29955,7 +29955,7 @@ const TAIWAN_BOSSES = {
     desc: '自稱「真正的滷肉飯之神」,要消滅所有不照他配方做的小吃店!咕嚕嚕、咕嚕嚕,我的滷汁最香!',
     mainline: false,
     treasure: 'braised_pork_cauldron',
-    bossStats: { hp: 1300, atk: 14, sp: 20, spd: 14 },
+    bossStats: { hp: 1950, atk: 21, sp: 30, spd: 21 },
   },
   taichung_pineapple: {
     id: 'taichung_pineapple',
@@ -29969,7 +29969,7 @@ const TAIWAN_BOSSES = {
     desc: '只想把所有甜點變得更甜更甜,要讓全世界的人都蛀牙到不能吃糕點!糖糖糖!糖最重要!',
     mainline: false,
     treasure: 'pineapple_charm',
-    bossStats: { hp: 1300, atk: 14, sp: 20, spd: 16 },
+    bossStats: { hp: 1950, atk: 21, sp: 30, spd: 24 },
   },
   shenkeng_tofu: {
     id: 'shenkeng_tofu',
@@ -29983,7 +29983,7 @@ const TAIWAN_BOSSES = {
     desc: '奪取深坑古傳發酵秘方,要讓全島的食物都失去香味!咳咳咳,聞我的臭氣吧!',
     mainline: false,
     treasure: 'stinky_tofu_sword',
-    bossStats: { hp: 1600, atk: 16, sp: 22, spd: 14 },
+    bossStats: { hp: 2400, atk: 24, sp: 33, spd: 21 },
   },
   alishan_tree: {
     id: 'alishan_tree',
@@ -29997,7 +29997,7 @@ const TAIWAN_BOSSES = {
     desc: '原本是阿里山的守護神木,被異世界魔氣感染後變成毀滅者。沙、沙、沙……枯萎吧,人類……',
     mainline: false,
     treasure: 'alishan_tea_staff',
-    bossStats: { hp: 1600, atk: 16, sp: 24, spd: 12 },
+    bossStats: { hp: 2400, atk: 24, sp: 36, spd: 18 },
   },
   lanyu_octopus: {
     id: 'lanyu_octopus',
@@ -30011,7 +30011,7 @@ const TAIWAN_BOSSES = {
     desc: '被異世界吸引而來的深海生物,要把整座蘭嶼拖入海底!吼嗚嗚……海底見……',
     mainline: false,
     treasure: 'lanyu_bow',
-    bossStats: { hp: 1600, atk: 17, sp: 23, spd: 15 },
+    bossStats: { hp: 2400, atk: 26, sp: 34, spd: 22 },
   },
   sanxia_indigo: {
     id: 'sanxia_indigo',
@@ -30025,7 +30025,7 @@ const TAIWAN_BOSSES = {
     desc: '原是當地藍染傳承的靈魂,被詛咒後讓所有人陷入永恆憂鬱。藍藍的……一切都好憂傷……',
     mainline: false,
     treasure: 'sanxia_indigo_robe',
-    bossStats: { hp: 1700, atk: 17, sp: 25, spd: 14 },
+    bossStats: { hp: 2550, atk: 26, sp: 38, spd: 21 },
   },
   // ─── 主線 BOSS (傳說級) ★ ───
   ximen_pearl: {
@@ -30040,7 +30040,7 @@ const TAIWAN_BOSSES = {
     desc: '吸取小朋友手中的珍奶汁液,越喝越大!要把全台北的甜變成苦!咕嚕嚕咕嚕嚕,給我珍珠!',
     mainline: true,
     treasure: 'pearl_grail',
-    bossStats: { hp: 1900, atk: 18, sp: 27, spd: 16 },
+    bossStats: { hp: 2850, atk: 27, sp: 40, spd: 24 },
   },
   sun_moon_mirror_boss: {
     id: 'sun_moon_mirror_boss',
@@ -30054,7 +30054,7 @@ const TAIWAN_BOSSES = {
     desc: '篡奪靈鏡後製造「假象台灣」要讓人們忘記真實。鏡中的你,才是真正的你……',
     mainline: true,
     treasure: 'sun_moon_mirror',
-    bossStats: { hp: 1900, atk: 18, sp: 28, spd: 17 },
+    bossStats: { hp: 2850, atk: 27, sp: 42, spd: 26 },
   },
   taipei_101_warlord: {
     id: 'taipei_101_warlord',
@@ -30068,7 +30068,7 @@ const TAIWAN_BOSSES = {
     desc: '要奪取 101 的「擎天能量」毀滅整個亞洲都會!煙火綻放之時,就是你們末日!',
     mainline: true,
     treasure: 'taipei_101_spear',
-    bossStats: { hp: 2000, atk: 19, sp: 28, spd: 18 },
+    bossStats: { hp: 3000, atk: 28, sp: 42, spd: 27 },
   },
   // ─── 最終 BOSS (神話級) ★★ ───
   yushan_giant: {
@@ -30083,7 +30083,7 @@ const TAIWAN_BOSSES = {
     desc: '要讓玉山「下沉」,奪走台灣的脊樑!我要拳~~~碎~~~這座山!什麼?這就是我自己的山?等一下我重來……',
     mainline: true,
     treasure: 'yushan_shield',
-    bossStats: { hp: 2200, atk: 20, sp: 30, spd: 14 },
+    bossStats: { hp: 3300, atk: 30, sp: 45, spd: 21 },
   },
 };
 
@@ -30347,16 +30347,16 @@ window._buildTaiwanBossTeam = function(bossId){
 // ★ v1.0.20260428.3740 — 額外掉落:賣錢物品(按 BOSS 強度比例定價) + 超越極限果實
 //   賣錢物品:50% 機率掉落專屬物品(神話級玉山 75%);極限果實:基礎 10%(玉山 25%)
 window._TAIWAN_BOSS_DROPS = {
-  changhua_braised:    { id:'tw_braised_jar',     icon:'🍶', name:'神級滷汁瓶',  color:'#ff8844', price:800,  rate:0.50 },
-  taichung_pineapple:  { id:'tw_pineapple_glaze', icon:'🍯', name:'黃金糖霜',    color:'#ffcc44', price:950,  rate:0.50 },
-  shenkeng_tofu:       { id:'tw_fermented_block', icon:'🧱', name:'千年發酵塊',  color:'#aacc66', price:1100, rate:0.50 },
-  alishan_tree:        { id:'tw_ancient_branch',  icon:'🪵', name:'神木殘枝',    color:'#88cc44', price:1300, rate:0.50 },
-  lanyu_octopus:       { id:'tw_deep_tentacle',   icon:'🪸', name:'深海觸手晶',  color:'#44aaff', price:1500, rate:0.50 },
-  sanxia_indigo:       { id:'tw_indigo_crystal',  icon:'🔷', name:'藍憂鬱結晶',  color:'#5588ff', price:1700, rate:0.50 },
-  ximen_pearl:         { id:'tw_pearl_giant',     icon:'⚫', name:'魔化大珍珠',  color:'#aa66ff', price:2000, rate:0.50 },
-  sun_moon_mirror_boss:{ id:'tw_mirror_shard',    icon:'💎', name:'倒映幻鏡片',  color:'#88ccff', price:2400, rate:0.50 },
-  taipei_101_warlord:  { id:'tw_skybreaker_core', icon:'🌟', name:'夜空爆裂石',  color:'#ffee44', price:3000, rate:0.50 },
-  yushan_giant:        { id:'tw_yushan_core',     icon:'⛰',  name:'崩天巨人核',  color:'#cc8855', price:4000, rate:0.75 }, // 神話級 75%
+  changhua_braised:    { id:'tw_braised_jar',     icon:'🍶', name:'神級滷汁瓶',  color:'#ff8844', price:1600, rate:0.50 },
+  taichung_pineapple:  { id:'tw_pineapple_glaze', icon:'🍯', name:'黃金糖霜',    color:'#ffcc44', price:1900, rate:0.50 },
+  shenkeng_tofu:       { id:'tw_fermented_block', icon:'🧱', name:'千年發酵塊',  color:'#aacc66', price:2200, rate:0.50 },
+  alishan_tree:        { id:'tw_ancient_branch',  icon:'🪵', name:'神木殘枝',    color:'#88cc44', price:2600, rate:0.50 },
+  lanyu_octopus:       { id:'tw_deep_tentacle',   icon:'🪸', name:'深海觸手晶',  color:'#44aaff', price:3000, rate:0.50 },
+  sanxia_indigo:       { id:'tw_indigo_crystal',  icon:'🔷', name:'藍憂鬱結晶',  color:'#5588ff', price:3400, rate:0.50 },
+  ximen_pearl:         { id:'tw_pearl_giant',     icon:'⚫', name:'魔化大珍珠',  color:'#aa66ff', price:4000, rate:0.50 },
+  sun_moon_mirror_boss:{ id:'tw_mirror_shard',    icon:'💎', name:'倒映幻鏡片',  color:'#88ccff', price:4800, rate:0.50 },
+  taipei_101_warlord:  { id:'tw_skybreaker_core', icon:'🌟', name:'夜空爆裂石',  color:'#ffee44', price:6000, rate:0.50 },
+  yushan_giant:        { id:'tw_yushan_core',     icon:'⛰',  name:'崩天巨人核',  color:'#cc8855', price:8000, rate:0.15 }, // 玉山改為 15%
 };
 
 window._onTaiwanBossDefeated = function(){
@@ -30411,17 +30411,32 @@ window._onTaiwanBossDefeated = function(){
       setTimeout(()=>{ try{ _showTaiwanTreasureGrantedModal(boss.treasure); }catch(_){} }, 1200);
     }
   } else if(_alreadyHas){
-    // 已擁有此至寶 → 給 1 個經驗卷軸
+    // 已擁有此至寶 → 100% 給對應 BOSS 賣錢物品(v1.1.0 取代原本卷軸)
     try{
-      if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
-      if(typeof log === 'function') log('💎 ' + boss.name + ' 再度落敗!已擁有至寶 [' + (TAIWAN_TREASURES[boss.treasure]?TAIWAN_TREASURES[boss.treasure].name:'') + '],獲得「至寶經驗卷軸」x1。');
+      const _dropDef = window._TAIWAN_BOSS_DROPS && window._TAIWAN_BOSS_DROPS[bossId];
+      if(_dropDef){
+        if(typeof backpackAdd === 'function') backpackAdd(_dropDef.id, 1);
+        if(typeof log === 'function') log('💰 ' + boss.name + ' 再度落敗!已擁有至寶,獲得【' + _dropDef.name + '】×1(可賣 ' + _dropDef.price.toLocaleString() + ' 知識幣)');
+        try{ if(typeof _showInGameToast === 'function') _showInGameToast(_dropDef.icon + ' 已擁有至寶,獲得' + _dropDef.name + '!', _dropDef.color, 3200); }catch(_){}
+      } else {
+        // fallback 給卷軸
+        if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
+        if(typeof log === 'function') log('💎 已擁有至寶,獲得「至寶經驗卷軸」x1。');
+      }
     }catch(_){}
     try{ playSfx('sfx-card', 0.7); }catch(_){}
   } else {
-    // 沒擁有 + 沒掉落 → 給 1 個經驗卷軸當安慰獎
+    // 沒擁有 + 沒掉落 → 100% 給對應 BOSS 賣錢物品(v1.1.0 取代原本卷軸)
     try{
-      if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
-      if(typeof log === 'function') log('💧 戰勝 ' + boss.name + ' 但至寶這次沒有掉落…獲得「至寶經驗卷軸」x1 當安慰獎,下次再挑戰看看!');
+      const _dropDef = window._TAIWAN_BOSS_DROPS && window._TAIWAN_BOSS_DROPS[bossId];
+      if(_dropDef){
+        if(typeof backpackAdd === 'function') backpackAdd(_dropDef.id, 1);
+        if(typeof log === 'function') log('💧 戰勝 ' + boss.name + ' 但至寶這次沒有掉落…獲得【' + _dropDef.name + '】×1 當安慰獎(可賣 ' + _dropDef.price.toLocaleString() + ' 知識幣)!');
+        try{ if(typeof _showInGameToast === 'function') _showInGameToast(_dropDef.icon + ' 至寶沒掉落,但獲得' + _dropDef.name + '!', _dropDef.color, 3200); }catch(_){}
+      } else {
+        if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
+        if(typeof log === 'function') log('💧 戰勝 ' + boss.name + ' 但至寶這次沒有掉落…獲得「至寶經驗卷軸」x1。');
+      }
     }catch(_){}
     try{ playSfx('sfx-card', 0.7); }catch(_){}
   }
@@ -39757,6 +39772,20 @@ function advRestartBattle() {
 }
 // ════════════════════════════════
 async function advShowBattleResult(win) {
+  // ★ v1.1.0 — BOSS 戰結束時強制隱藏卡死自救按鈕(避免結算/回學校時殘留)
+  try{
+    const _drBtn = document.getElementById('adv-deadlock-rescue-btn');
+    if(_drBtn){
+      _drBtn.style.display = 'none';
+      _drBtn.style.animation = 'none';
+      _drBtn.dataset.state = 'hidden';
+    }
+    // 同時隱藏教學按鈕(也是戰鬥中才該顯示)
+    const _tutBtn = document.getElementById('adv-tut-btn');
+    if(_tutBtn){
+      _tutBtn.style.display = 'none';
+    }
+  }catch(_){}
   // ★ v1.0.20260428.1500 — 強制清除接關 overlay,防止返回首頁時殘留
   //   bug:打贏 BOSS 回到首頁,卻看到「小隊全滅」接關視窗
   //   根因:advCheckContinue 把 adv-continue-overlay 設為 .show,
@@ -40284,6 +40313,13 @@ function advCloseUnlock() {
 const ADV_HERO_GREETINGS = {"劍士": "「我的劍，願為保護貓空的茶香而揮！」", "刺客": "「從暗處出手是我的風格。好，我就跟你們走！」", "光法師": "「聖光將照耀這片土地，讓我們一起前進吧！」", "冰法師": "「冷靜沉著是我的信條，你們看起來值得信賴。」", "火法師": "「嘿！熱血沸騰的旅程，我最喜歡了！算我一份！」", "雷法師": "「轟！我的雷光將劈碎一切阻礙！同行吧！」", "暗法師": "「黑暗中自有我保護你們，不必擔心。」", "祭司": "「以神明的恩典，我將守護你們的生命。」", "聖騎士": "「榮譽與勇氣是我的鎧甲，願為你們而戰！」", "武鬥家": "「好身手！算你們夠格讓我出手相助！」", "武士": "「以武士之名，我的刀將斬斷邪惡！」", "大力士": "「呼！跟我走，保證沒有搬不動的石頭！」", "守衛": "「保護夥伴是我的使命，交給我！」", "神射手": "「我的箭矢，永遠射向真正的敵人。同行吧！」", "吟遊詩人": "「讓我用歌聲，為你們的旅途增添色彩！」", "煉金術師": "「有趣，有趣！我的道具或許能幫上大忙！」", "凡人": "「就算只是凡人，也能做出非凡的事情！」", "占星師": "「星辰指引著我，你們就是我命中注定的隊友。」", "舞者": "「優雅與力量共存，這就是我的舞蹈！」", "木靈使": "「大地的生命，將為你們的旅途增添力量！」", "時空法師": "「時間與空間在我掌握中，跟我走沒錯的！」", "陰陽師": "「陰陽交錯間，我看清了你們的真心。好，算我一份！」", "學者": "「知識就是力量！讓我的學識為你們開路！」", "機械師": "「齒輪轉動，勝利就在眼前！讓我加入你們的冒險！」", "神偷": "「嘿嘿，我拿走的，都是敵人的好東西！歡迎合作！」", "軍師": "「兵法早已算定，你們的勝利盡在掌握。」", "吸血鬼": "「黑夜是我的舞台…既然如此，就讓我同行吧。」", "幼兒園小孩": "「嗚嗚…不要欺負我！我也會打人的！」", "動物學家": "「每一種生命都值得尊重，我和我的夥伴一起加入！」", "小力": "「汪！汪汪！（搖尾巴）」", "流浪者": "「到處流浪也挺無聊的，帶我一起去冒險吧！」", "警長": "「這裡的規矩，由我說了算——讓本警長護送你們一程！」"};
 
 async function advStartWinSequence() {
+  // ★ v1.1.0 — 確認回首頁時保險再隱藏一次卡死自救/教學按鈕
+  try{
+    ['adv-deadlock-rescue-btn','adv-tut-btn','adv-rollback-btn'].forEach(id => {
+      const _b = document.getElementById(id);
+      if(_b){ _b.style.display = 'none'; _b.style.animation = 'none'; }
+    });
+  }catch(_){}
   // ★ 正常勝利完成：清除崩潰快照，不再提示恢復
   try{ _advClearCrashSnapshot(); }catch(e){}
   // ★ 書放進背包
@@ -42091,17 +42127,17 @@ const BACKPACK_ITEM_DEF = {
   'burst_reset_potion': { name:'極限重置秘藥', icon:'⚗️', desc:'神秘煉金師調配的逆轉之藥，可將1名英雄的極限爆發等級歸零，並退還曾消耗的「超越極限果實」。', type:'use', useLabel:'使用（重置爆發）' },
   // ★ v1.0.20260428.3720 — 至寶經驗卷軸(打 BOSS 沒掉到至寶或重複掉落時獲得)
   'treasure_exp_scroll': { name:'至寶經驗卷軸', icon:'📜', desc:'蘊含古老知識的金邊卷軸，使用後可為選定的至寶 +10 經驗值,有助於提升至寶等級。', type:'use', useLabel:'使用（選擇至寶）' },
-  // ★ v1.0.20260428.3740 — 台灣 10 BOSS 專屬賣錢物品(按強度比例定價,稀有度遞增)
-  'tw_braised_jar':   { name:'神級滷汁瓶', icon:'🍶', desc:'油膩魔王的傳家秘製滷汁,香氣縈繞百年不散,饕客夢寐以求。', type:'sell_only', sellPrice:800 },
-  'tw_pineapple_glaze':{ name:'黃金糖霜',  icon:'🍯', desc:'酥脆狂魔以日月精華煉製的黃金糖霜,糖點達人爭相高價收購。',     type:'sell_only', sellPrice:950 },
-  'tw_fermented_block':{ name:'千年發酵塊', icon:'🧱', desc:'臭氣魔王精心發酵千年的稀世毒寶,氣味濃烈但價值不菲。',         type:'sell_only', sellPrice:1100 },
-  'tw_ancient_branch':{ name:'神木殘枝',   icon:'🪵', desc:'山靈古魔本體掉落的千年神木枝,蘊含森林靈氣,可雕刻法器。',     type:'sell_only', sellPrice:1300 },
-  'tw_deep_tentacle': { name:'深海觸手晶', icon:'🪸', desc:'深海惡靈觸手凝結成的水晶,折射出深邃的太平洋藍光。',         type:'sell_only', sellPrice:1500 },
-  'tw_indigo_crystal':{ name:'藍憂鬱結晶', icon:'🔷', desc:'染靈幻魔哀愁凝聚的藍色結晶,藏家視為染料界的聖物。',           type:'sell_only', sellPrice:1700 },
-  'tw_pearl_giant':   { name:'魔化大珍珠', icon:'⚫', desc:'珍奶吸魂魔吸取無數靈魂淬鍊的巨型黑珍珠,珠光詭異絕倫。',       type:'sell_only', sellPrice:2000 },
-  'tw_mirror_shard':  { name:'倒映幻鏡片', icon:'💎', desc:'水靈反魔殘留的鏡像碎片,映照出真假難辨的幻象。',               type:'sell_only', sellPrice:2400 },
-  'tw_skybreaker_core':{name:'夜空爆裂石',icon:'🌟', desc:'摩天魔將煙火翅膀的能量核心,蓄滿了 101 大樓的擎天能量。',     type:'sell_only', sellPrice:3000 },
-  'tw_yushan_core':   { name:'崩天巨人核', icon:'⛰', desc:'山岳禁咒身軀深處的山岩核心,蘊含台灣最高峰玉山的神話之力。', type:'sell_only', sellPrice:4000 },
+  // ★ v1.0.20260428.3740 — 台灣 10 BOSS 專屬賣錢物品(v1.1.0:價格 × 2)
+  'tw_braised_jar':   { name:'神級滷汁瓶', icon:'🍶', desc:'油膩魔王的傳家秘製滷汁,香氣縈繞百年不散,饕客夢寐以求。', type:'sell_only', sellPrice:1600 },
+  'tw_pineapple_glaze':{ name:'黃金糖霜',  icon:'🍯', desc:'酥脆狂魔以日月精華煉製的黃金糖霜,糖點達人爭相高價收購。',     type:'sell_only', sellPrice:1900 },
+  'tw_fermented_block':{ name:'千年發酵塊', icon:'🧱', desc:'臭氣魔王精心發酵千年的稀世毒寶,氣味濃烈但價值不菲。',         type:'sell_only', sellPrice:2200 },
+  'tw_ancient_branch':{ name:'神木殘枝',   icon:'🪵', desc:'山靈古魔本體掉落的千年神木枝,蘊含森林靈氣,可雕刻法器。',     type:'sell_only', sellPrice:2600 },
+  'tw_deep_tentacle': { name:'深海觸手晶', icon:'🪸', desc:'深海惡靈觸手凝結成的水晶,折射出深邃的太平洋藍光。',         type:'sell_only', sellPrice:3000 },
+  'tw_indigo_crystal':{ name:'藍憂鬱結晶', icon:'🔷', desc:'染靈幻魔哀愁凝聚的藍色結晶,藏家視為染料界的聖物。',           type:'sell_only', sellPrice:3400 },
+  'tw_pearl_giant':   { name:'魔化大珍珠', icon:'⚫', desc:'珍奶吸魂魔吸取無數靈魂淬鍊的巨型黑珍珠,珠光詭異絕倫。',       type:'sell_only', sellPrice:4000 },
+  'tw_mirror_shard':  { name:'倒映幻鏡片', icon:'💎', desc:'水靈反魔殘留的鏡像碎片,映照出真假難辨的幻象。',               type:'sell_only', sellPrice:4800 },
+  'tw_skybreaker_core':{name:'夜空爆裂石',icon:'🌟', desc:'摩天魔將煙火翅膀的能量核心,蓄滿了 101 大樓的擎天能量。',     type:'sell_only', sellPrice:6000 },
+  'tw_yushan_core':   { name:'崩天巨人核', icon:'⛰', desc:'山岳禁咒身軀深處的山岩核心,蘊含台灣最高峰玉山的神話之力。', type:'sell_only', sellPrice:8000 },
   // ★ 召喚水晶
   // ★ v1.0.20260424.0920 — 召喚已開放,更新描述
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，每次召喚消耗 1 顆，可獲得稀有英雄、技能升級書、BOSS 賣錢物品、超越極限果實等獎勵。', type:'use', useLabel:'前往召喚星空' },
@@ -42284,6 +42320,17 @@ const SHOP_SELL_ITEMS = [
   { id:'star_bear_fang',  name:'星熊童子的獠牙', icon:'🦷', sellPrice:210 },
   { id:'sessho_stone',    name:'殺生石碎片',     icon:'🗿', sellPrice:195 },
   { id:'fox_tube',        name:'管狐的竹管',     icon:'🎋', sellPrice:165 },
+  // ★ v1.1.0 — 台灣 10 BOSS 專屬賣錢物品(v1.1.0:價格 × 2,小英雄要求漲價)
+  { id:'tw_braised_jar',     name:'神級滷汁瓶', icon:'🍶', sellPrice:1600 },
+  { id:'tw_pineapple_glaze', name:'黃金糖霜',   icon:'🍯', sellPrice:1900 },
+  { id:'tw_fermented_block', name:'千年發酵塊', icon:'🧱', sellPrice:2200 },
+  { id:'tw_ancient_branch',  name:'神木殘枝',   icon:'🪵', sellPrice:2600 },
+  { id:'tw_deep_tentacle',   name:'深海觸手晶', icon:'🪸', sellPrice:3000 },
+  { id:'tw_indigo_crystal',  name:'藍憂鬱結晶', icon:'🔷', sellPrice:3400 },
+  { id:'tw_pearl_giant',     name:'魔化大珍珠', icon:'⚫', sellPrice:4000 },
+  { id:'tw_mirror_shard',    name:'倒映幻鏡片', icon:'💎', sellPrice:4800 },
+  { id:'tw_skybreaker_core', name:'夜空爆裂石', icon:'🌟', sellPrice:6000 },
+  { id:'tw_yushan_core',     name:'崩天巨人核', icon:'⛰',  sellPrice:8000 },
 ];
 
 // 背包工具函式
@@ -54281,6 +54328,65 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.4180', brief:[
+    '⚖️ 台灣關大改版:BOSS 變強、賣錢物品翻倍、保底機制重做',
+    '👹 所有台灣 BOSS 能力提升 1.5 倍(更刺激的戰鬥)',
+    '💰 賣錢物品價格翻倍、玉山機率回歸正常、沒掉到至寶 100% 給賣錢物品',
+  ], items:[
+    '【1. 玉山賣錢物品機率調整 75% → 15%】',
+    '・原本玉山的「崩天巨人核」掉落率特別高(75%),現在改成 15%',
+    '・其他 9 個 BOSS 維持 50% 賣錢物品掉落率',
+    '【2. 沒掉落保底:從卷軸改成賣錢物品】',
+    '・打贏 BOSS 但至寶沒掉落 → 100% 獲得對應 BOSS 的賣錢物品',
+    '・打贏 BOSS 但已擁有此至寶 → 100% 獲得對應 BOSS 的賣錢物品',
+    '・原本的「至寶經驗卷軸」當保底改為對應賣錢物品(更實用,可換錢買裝備)',
+    '・例:擊敗玉山沒掉到至寶 → 必拿崩天巨人核 1 顆(可賣 8,000 知識幣)',
+    '【3. 台灣賣錢物品價格全面 × 2】',
+    '・神級滷汁瓶:800 → 1,600',
+    '・黃金糖霜:950 → 1,900',
+    '・千年發酵塊:1,100 → 2,200',
+    '・神木殘枝:1,300 → 2,600',
+    '・深海觸手晶:1,500 → 3,000',
+    '・藍憂鬱結晶:1,700 → 3,400',
+    '・魔化大珍珠:2,000 → 4,000',
+    '・倒映幻鏡片:2,400 → 4,800',
+    '・夜空爆裂石:3,000 → 6,000',
+    '・崩天巨人核:4,000 → 8,000(集齊 10 顆 → 37,500 知識幣!)',
+    '【4. 所有台灣 BOSS 能力提升 1.5 倍】',
+    '・彰化滷汁:HP 1300→1950、攻 14→21、特技 20→30、速 14→21',
+    '・台中糕師:HP 1300→1950、攻 14→21、特技 20→30、速 16→24',
+    '・深坑臭豆腐:HP 1600→2400、攻 16→24、特技 22→33、速 14→21',
+    '・阿里山神木:HP 1600→2400、攻 16→24、特技 24→36、速 12→18',
+    '・蘭嶼章魚:HP 1600→2400、攻 17→26、特技 23→34、速 15→22',
+    '・三峽染靈:HP 1700→2550、攻 17→26、特技 25→38、速 14→21',
+    '・西門町珍奶:HP 1900→2850、攻 18→27、特技 27→40、速 16→24',
+    '・日月潭水靈:HP 1900→2850、攻 18→27、特技 28→42、速 17→26',
+    '・台北 101 摩天:HP 2000→3000、攻 19→28、特技 28→42、速 18→27',
+    '・玉山巨人:HP 2200→3300、攻 20→30、特技 30→45、速 14→21',
+  ] },
+  { ver:'v1.0.20260428.4170', brief:[
+    '🐛 修兩個小英雄回報的問題:一鍵賣出未包含台灣 BOSS 物品、卡死自救按鈕回學校沒清乾淨',
+    '✅ 確認台灣 BOSS 過關掉落系統運作正常(至寶/卷軸/賣錢物品/極限果實)',
+  ], items:[
+    '【1. 一鍵賣出補上 10 個台灣 BOSS 賣錢物品】',
+    '・之前 SHOP_SELL_ITEMS 清單只有貓空關和日本關物品,沒包含台灣關',
+    '・現在「💱 一鍵賣出所有賣錢物品」會包括:',
+    '  - 神級滷汁瓶(800💰)、黃金糖霜(950💰)、千年發酵塊(1,100💰)',
+    '  - 神木殘枝(1,300💰)、深海觸手晶(1,500💰)、藍憂鬱結晶(1,700💰)',
+    '  - 魔化大珍珠(2,000💰)、倒映幻鏡片(2,400💰)、夜空爆裂石(3,000💰)',
+    '  - 崩天巨人核(4,000💰,神話級)',
+    '【2. 卡死自救按鈕在 BOSS 戰結束沒清乾淨】',
+    '・症狀:打贏 BOSS 後回到學校,左下角的卡死自救按鈕沒消失',
+    '・根因:advShowBattleResult(BOSS 結算流程)沒主動隱藏這顆按鈕',
+    '・修補:在 advShowBattleResult 開頭強制隱藏卡死自救+教學按鈕',
+    '・雙保險:advStartWinSequence(回首頁確認)也再隱藏一次',
+    '【3. 台灣 BOSS 過關掉落確認】',
+    '・✅ 至寶掉落:沒自信 5% / 普通 10% / 我很會 15% / 玉山(神話)75%',
+    '・✅ 重複擁有 → 自動轉換為「至寶經驗卷軸」',
+    '・✅ 沒掉落保底:每次擊敗 BOSS 至少獲得 1 張至寶經驗卷軸',
+    '・✅ 賣錢物品:50% 機率掉(玉山 75%),價格 800~4,000',
+    '・✅ 超越極限果實:10% 機率(玉山 25%)',
+  ] },
   { ver:'v1.0.20260428.4160', adminOnly:true, brief:[
     '📚 [台灣關] 題目重複問題修正:答完一輪所有題目才會重新洗牌',
   ], items:[
@@ -63234,7 +63340,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.4160';
+  const CURRENT_VERSION = 'v1.0.20260428.4180';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63268,7 +63374,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.4160';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.4180';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
