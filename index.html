@@ -38299,12 +38299,40 @@ function advSubmitAnswer(letter, isCorrectOverride) {
         setTimeout(() => {
           try {
             const _rwOv = document.getElementById('adv-reward-overlay');
-            const _isShown = _rwOv && _rwOv.classList.contains('show');
+            const _hasShowClass = _rwOv && _rwOv.classList.contains('show');
+            // ★ v1.0.20260428.3950 — 加強檢查:不只看 class,還看實際是否可見
+            //   bug 症狀:has show class=true 但 display=none → 玩家看不到獎勵卻又不救援,卡死
+            //   根因:某些情況下 show class 加上去了,但 CSS 沒生效讓 display 變 flex
+            const _computedDisplay = _rwOv ? getComputedStyle(_rwOv).display : 'N/A';
+            const _isVisuallyVisible = _rwOv && _hasShowClass
+              && _computedDisplay !== 'none'
+              && _rwOv.offsetParent !== null;
             console.log('[答題流程] 獎勵 watchdog 檢查:overlay 存在=' + !!_rwOv
-              + ', has show class=' + _isShown
-              + ', display=' + (_rwOv ? getComputedStyle(_rwOv).display : 'N/A'));
-            if (!_rwOv || !_isShown){
-              console.warn('🚨 [獎勵安全網] 獎勵視窗未成功顯示,自動解除暫停以恢復戰鬥');
+              + ', has show class=' + _hasShowClass
+              + ', display=' + _computedDisplay
+              + ', offsetParent=' + (_rwOv ? !!_rwOv.offsetParent : 'N/A')
+              + ', 實際可見=' + _isVisuallyVisible);
+            if (!_rwOv || !_isVisuallyVisible){
+              console.warn('🚨 [獎勵安全網] 獎勵視窗未成功顯示(class=' + _hasShowClass
+                + ', display=' + _computedDisplay + ')');
+              // ★ v1.0.20260428.3950 — 先嘗試強制顯示獎勵視窗(可能只是 CSS 沒套用)
+              if(_rwOv && _hasShowClass){
+                console.log('[獎勵安全網] 嘗試用 inline style 強制顯示獎勵視窗');
+                _rwOv.style.display = 'flex';
+                _rwOv.style.zIndex = '650';
+                // 給 100ms 讓 reflow 然後再次檢查
+                setTimeout(() => {
+                  const _stillNotVisible = !_rwOv.offsetParent
+                    || getComputedStyle(_rwOv).display === 'none';
+                  if(_stillNotVisible){
+                    console.warn('[獎勵安全網] inline style 強制顯示也沒用,走 advOnQuizSkip 兜底');
+                    try { advOnQuizSkip(); } catch(_e){}
+                  } else {
+                    console.log('[獎勵安全網] ✓ 強制顯示成功,玩家可以正常選獎勵');
+                  }
+                }, 100);
+                return;
+              }
               try { advOnQuizSkip(); } catch(_skE) {
                 console.error('[獎勵安全網] advOnQuizSkip 失敗', _skE);
                 // 最終兜底:強制解除 + startTurn
@@ -38726,7 +38754,19 @@ function advShowReward() {
   //   bug 症狀:玩家選「保留至下回合」後,下次答題雖然看到 3 選項,但再下一次就變回 2 選項
   //   (因為 advShowReward 一開就把保留值清零)
   //   改正:在 advApplyReward / advRewardConfirmKeep 中精確清理/覆寫 _advPendingReward
-  document.getElementById('adv-reward-overlay').classList.add('show');
+  // ★ v1.0.20260428.3950 — 加 show class 之外,主動 inline style 強制顯示
+  //   bug 症狀:某些情況下 has show class=true 但 display=none,獎勵視窗看不到
+  //   修補:同時用 inline style 強制 display:flex,雙保險確保視窗顯示
+  const _rwShowOv = document.getElementById('adv-reward-overlay');
+  if(_rwShowOv){
+    _rwShowOv.classList.add('show');
+    // 強制 inline style(優先級最高)
+    _rwShowOv.style.display = 'flex';
+    // 確認 z-index 不被遮住
+    if(!_rwShowOv.style.zIndex || parseInt(_rwShowOv.style.zIndex) < 650){
+      _rwShowOv.style.zIndex = '650';
+    }
+  }
 }
 
 // ★ v1.0.20260423.2400 — 兩段式獎勵流程:選擇獎勵項目(高亮) → 顯示使用/保留按鈕
@@ -38988,7 +39028,12 @@ function advApplyReward(id) {
     // 立即關閉獎勵視窗(boss_skip 沒有套用動畫需求)
     try{
       const _ovS = document.getElementById('adv-reward-overlay');
-      if(_ovS) _ovS.classList.remove('show');
+      if(_ovS){
+        _ovS.classList.remove('show');
+        // ★ v1.0.20260428.3950 — 同時清掉 inline style,讓下次 CSS 規則正常生效
+        _ovS.style.display = '';
+        _ovS.style.zIndex = '';
+      }
       const _msgS = document.getElementById('_reward-applied-msg');
       if(_msgS) _msgS.remove();
     }catch(_){}
@@ -39000,7 +39045,12 @@ function advApplyReward(id) {
   setTimeout(() => {
     try{
       const _ovEnd = document.getElementById('adv-reward-overlay');
-      if(_ovEnd) _ovEnd.classList.remove('show');
+      if(_ovEnd){
+        _ovEnd.classList.remove('show');
+        // ★ v1.0.20260428.3950 — 同時清掉 inline style
+        _ovEnd.style.display = '';
+        _ovEnd.style.zIndex = '';
+      }
       const _msgEnd = document.getElementById('_reward-applied-msg');
       if(_msgEnd) _msgEnd.remove();
     }catch(_){}
@@ -53490,6 +53540,17 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3950-public', brief:[
+    '🐛 修正 BOSS 戰答對第一題後,獎勵視窗看不到、戰鬥卡住的嚴重問題',
+  ], items:[
+    '【bug 症狀】BOSS 戰開場第一題答對後,畫面停在戰場,看不到獎勵選擇視窗,戰鬥卡死',
+    '【bug 根因】某些情況下獎勵視窗的 CSS 規則沒生效,雖然程式碼把 show 標記加上了,但視窗的顯示樣式還是「隱藏」,玩家看不到也點不到',
+    '【修復方式】',
+    '・打開獎勵視窗時,除了加 show 標記,額外用 inline style 強制顯示為 flex,並提高 z-index 確保不被其他視窗蓋住',
+    '・watchdog 檢查也升級:不只看 show 標記,還會檢查實際的顯示狀態跟可見性',
+    '・若還是沒顯示,先試試強制 inline style;再不行才走兜底跳過',
+    '・關閉獎勵視窗時也清掉 inline style,讓 CSS 規則下次能正常生效',
+  ] },
   { ver:'v1.0.20260428.3940-public', brief:[
     '🎮 公開玩家版本,可以放心遊玩!',
     '🏝 台灣環島歷險記正在開發測試中,敬請期待!',
@@ -62103,7 +62164,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3940-public';
+  const CURRENT_VERSION = 'v1.0.20260428.3950-public';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62137,7 +62198,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3940-public';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3950-public';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
