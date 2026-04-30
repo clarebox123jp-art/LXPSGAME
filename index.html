@@ -10053,12 +10053,19 @@ function newHero(name,side,pos){
       _jpOverride = JP_BOSS_HERO_STATS[name];
     }
   }catch(_){}
-  const _hp  = _jpOverride ? _jpOverride.hp  : b.hp;
-  const _atk = _jpOverride ? _jpOverride.atk : b.atk;
-  const _sp  = _jpOverride ? _jpOverride.sp  : b.sp;
-  const _spd = _jpOverride ? _jpOverride.spd : b.spd;
+  let _hp  = _jpOverride ? _jpOverride.hp  : b.hp;
+  let _atk = _jpOverride ? _jpOverride.atk : b.atk;
+  let _sp  = _jpOverride ? _jpOverride.sp  : b.sp;
+  let _spd = _jpOverride ? _jpOverride.spd : b.spd;
   if(_jpOverride){
     try{ console.log('[newHero] '+name+' (p1) 套用日本 BOSS 英雄版能力: hp='+_hp+', atk='+_atk+', sp='+_sp+', spd='+_spd); }catch(_){}
+  }
+  // ★ v1.1.0 — 山岳禁咒・崩天巨人 天賦「山岳之軀」: HP+20%、速度-10%(僅 BOSS 戰)
+  if(side==='p2' && name==='山岳禁咒・崩天巨人'){
+    const _hpOld=_hp, _spdOld=_spd;
+    _hp = Math.floor(_hp * 1.2);
+    _spd = Math.max(1, Math.floor(_spd * 0.9));
+    try{ console.log('[山岳之軀] '+name+': HP '+_hpOld+'→'+_hp+'(+20%), 速度 '+_spdOld+'→'+_spd+'(-10%)'); }catch(_){}
   }
   return {
     name,side,pos,
@@ -10149,6 +10156,12 @@ function addStatus(h,t,dur=1){
   if(h.name === '八岐大蛇' && t === 'strongTaunt'){
     showShieldVFX(h,'immune');
     log(`🐉 [八岐大蛇] 八首吞天：免疫 強力挑釁！`);
+    return;
+  }
+  // ★ v1.1.0 — 臭氣魔王・發酵公 天賦「發酵免疫」: 免疫中毒
+  if(h.name === '臭氣魔王・發酵公' && t === 'poison'){
+    showShieldVFX(h,'immune');
+    log(`🦠 [${h.name}] 發酵免疫: 千年發酵體質,中毒無效!`);
     return;
   }
   // ★ strongTaunt（強力挑釁）無法被免疫技能豁免
@@ -16831,6 +16844,19 @@ function doDmg(target, rawDmg, opts={}){
     return 0;
   }
 
+  // ★ v1.1.0 — 染靈幻魔・藍色憂鬱 天賦「藍色幻影」: 30% 機率閃避(攻擊或技能皆可觸發)
+  //   不受 ignoreEvasion / piercing 影響(天生天賦,不像 evasion buff 可被穿)
+  //   排除反彈/狀態傷害/AoE 連鎖等非主動攻擊
+  if(target && target.name === '染靈幻魔・藍色憂鬱' && target.curHp > 0
+     && !opts.isRebound && !opts.isTraitShare && !opts.isChaos
+     && a && a !== target && a.side !== target.side
+     && Math.random() < 0.30){
+    try{ showShieldVFX(target, 'evade'); }catch(_){}
+    showPopup(target, '💧幻影', 'miss');
+    log(`💧 [${target.name}] 藍色幻影!飄逸藍染使其虛實難辨,完全閃避!`);
+    return 0;
+  }
+
   // ★ v1.0.20260428.3730 — 至寶閃避率(三峽藍染雲袖)+ 攻擊者命中率(蘭嶼拼板舟神弓)
   //   先計算淨閃避機率(防禦者閃避 - 攻擊者命中),取 0~95% 區間
   if(!opts.ignoreEvasion && !opts.piercing && !opts.isRebound && target){
@@ -17349,6 +17375,16 @@ function doDmg(target, rawDmg, opts={}){
   }
   // ★ 減傷保底：所有減傷效果後最低傷害為1（無敵/護盾/閃避已在上方 return，不受影響）
   if(dmg > 0) dmg = Math.max(1, dmg);
+
+  // ★ v1.1.0 — 酥脆狂魔・熱浪糕師 天賦「酥脆裝甲」: 受傷減 15%
+  //   位置:在減傷保底後、扣血前;不影響其他減傷
+  if(dmg > 0 && target && target.name === '酥脆狂魔・熱浪糕師' && !opts.ignoreBuffs){
+    const _origDmg = dmg;
+    dmg = Math.max(1, Math.floor(dmg * 0.85));
+    if(dmg < _origDmg){
+      try{ log(`🍪 [${target.name}] 酥脆裝甲: ${_origDmg}→${dmg} (減傷 15%)`); }catch(_){}
+    }
+  }
   const old=target.curHp;
   target.curHp=Math.max(0,target.curHp-dmg);
   // 統計
@@ -17388,6 +17424,59 @@ function doDmg(target, rawDmg, opts={}){
       // 用 noReflect:true 避免無限互相反彈
       doDmg(a, _refDmg, { noReflect:true, ignoreBuffs:true, isRebound:true, noEquip:true });
     }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.1.0 — 台灣 BOSS 天賦:造成傷害時觸發的效果(共 3 個)
+  // ════════════════════════════════════════════════════════════════
+  if(dmg > 0 && a && a !== target && a.side !== target.side
+     && !opts.isRebound && !opts.isTraitShare && !opts.isChaos){
+
+    // 1. 珍奶吸魂魔・大波霸 - 吸魂體質: 造成傷害的 15% 轉化為 HP
+    if(a.name === '珍奶吸魂魔・大波霸' && a.curHp > 0){
+      const _vampHeal = Math.max(1, Math.floor(dmg * 0.15));
+      try{ doHeal(a, _vampHeal, {actor:a, isHeal:true, noDice:true}); }catch(_){}
+      try{ log(`🧋 [${a.name}] 吸魂體質: 吸取 ${_vampHeal} HP`); }catch(_){}
+    }
+
+    // 2. 深海惡靈・觸手大蛟 - 深海擾流: 20% 機率對目標附加減速 1 回合
+    if(a.name === '深海惡靈・觸手大蛟' && target.curHp > 0 && Math.random() < 0.20){
+      try{
+        addStatus(target, 'spddown', 1);
+        if(typeof bannerFX === 'function') bannerFX(target, '🌊 擾流!', '#44aaff', 700);
+        log(`🌊 [${a.name}] 深海擾流: 觸手攪動海水,[${target.name}] 減速 1 回合!`);
+      }catch(_){}
+    }
+
+    // 3. 臭氣魔王・發酵公 - 發酵免疫(後半): 25% 機率附加中毒 2 回合
+    if(a.name === '臭氣魔王・發酵公' && target.curHp > 0 && Math.random() < 0.25){
+      try{
+        addStatus(target, 'poison', 2);
+        if(typeof bannerFX === 'function') bannerFX(target, '☠️ 發酵中毒!', '#88aa44', 700);
+        log(`🦠 [${a.name}] 發酵免疫: 25% 機率讓 [${target.name}] 中毒 2 回合!`);
+      }catch(_){}
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.1.0 — 台灣 BOSS 天賦:水靈反魔・倒映女「鏡之守護」首次死亡 50% HP 復活
+  // ════════════════════════════════════════════════════════════════
+  if(target && target.name === '水靈反魔・倒映女' && target.curHp <= 0
+     && !target._mirrorReviveUsed && !opts.isRebound){
+    target._mirrorReviveUsed = true; // 永久標記,本場戰鬥只能用 1 次
+    // 使用 setTimeout 讓死亡動畫先播放,再復活
+    _pSetTimeout(()=>{
+      try{
+        if(typeof doRevive === 'function'){
+          const _revived = doRevive(target, 0.5, false); // 50% HP 復活
+          if(_revived){
+            try{ if(typeof bannerFX === 'function') bannerFX(target, '🪞 鏡之守護!', '#88ccff', 1500); }catch(_){}
+            try{ playSfx('sfx-revive', 1.0); }catch(_){}
+            log(`🪞 [${target.name}] 鏡之守護: 鏡像守護秘術啟動!以 50% HP 復活!`);
+          }
+        }
+      }catch(_){}
+    }, 600);
   }
   // ★ v1.0.20260423.0100 — 多段傷害合計
   try{ _batchAccum('dmg', target, dmg); }catch(_bte){}
@@ -54671,6 +54760,21 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.4210', brief:[
+    '👹 台灣 BOSS 剩餘 7 個天賦全部實裝完成!',
+    '⚔️ 戰鬥中真的會觸發效果,不再只是文字描述',
+  ], items:[
+    '【1. 酥脆狂魔・酥脆裝甲】受到傷害減少 15%(直接套用,自動生效)',
+    '【2. 臭氣魔王・發酵免疫】免疫所有「中毒」效果 + 攻擊時 25% 機率讓對手中毒 2 回合',
+    '【3. 深海惡靈・深海擾流】攻擊時 20% 機率讓對手減速 1 回合',
+    '【4. 染靈幻魔・藍色幻影】每次受到攻擊或技能 30% 機率完全閃避(不論必中或無視閃避)',
+    '【5. 珍奶吸魂魔・吸魂體質】每次造成傷害,自動回復「傷害的 15%」HP',
+    '【6. 水靈反魔・鏡之守護】戰鬥中第一次死亡時自動以 50% HP 復活(每場戰鬥僅一次)',
+    '【7. 山岳禁咒・山岳之軀】HP 上限 +20%、速度 -10%(BOSS 戰載入時直接套用)',
+    '・玉山因山岳之軀:HP 6750→8100、速度 50→45',
+    '・這 7 個天賦會在 BOSS 介紹頁顯示為「特殊天賦」,戰鬥中也會看到 banner 提示',
+    '・反彈/AoE 連鎖等情況有保護,不會無限循環觸發',
+  ] },
   { ver:'v1.0.20260428.4200', brief:[
     '🪞 至寶「日月潭靈鏡」反彈傷害提升:從 50% → 100%(完整反彈)',
     '💰 至寶升級新增「知識幣花費」條件(經驗滿了還要花錢才能升級)',
@@ -63725,7 +63829,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.4200';
+  const CURRENT_VERSION = 'v1.0.20260428.4210';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63759,7 +63863,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.4200';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.4210';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
