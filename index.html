@@ -16002,6 +16002,252 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     yamataBurst();
     return;
   }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
+  // ════════════════════════════════════════════════════════════════
+
+  // 1. 油膩魔王・滷汁大鍋:真神滷肉飯! - 特技200%全體火屬性傷害+全體強力燃燒2回合
+  if(burstName==='真神滷肉飯!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.0*_burstMult));
+    log(`🍲 [${h.name}] 真神滷肉飯!整鍋滾燙滷汁朝全場潑灑!`);
+    bannerFX(h,'🍲 真神滷肉飯!','#ff8844',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'fire'});
+        if(f.curHp>0){
+          addStatus(f,'hellfire',2+_lv5Extra);
+          try{ const _hf=f.status.find(s=>s.type==='hellfire'); if(_hf) _hf._strong=true; }catch(_){}
+          bannerFX(f,'🔥強力燃燒!','#ff6644',800);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 2. 酥脆狂魔・熱浪糕師:金黃糕點轟炸! - 特技200%全體傷害+全體強力減速2回合(黏住)
+  if(burstName==='金黃糕點轟炸!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.0*_burstMult));
+    log(`🍪 [${h.name}] 金黃糕點轟炸!無數金黃糕點如雨般砸下!`);
+    bannerFX(h,'🍪 金黃糕點轟炸!','#ffcc44',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'fire'});
+        if(f.curHp>0){
+          addStatus(f,'spddown',2+_lv5Extra);
+          try{ const _sd=f.status.find(s=>s.type==='spddown'); if(_sd) _sd._strong=true; }catch(_){}
+          bannerFX(f,'🍯黏住!','#ffaa44',800);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 3. 臭氣魔王・發酵公:千年發酵核爆! - 特技200%全體毒屬性+全體強力中毒2回合+減療2回合
+  if(burstName==='千年發酵核爆!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.0*_burstMult));
+    log(`🦠 [${h.name}] 千年發酵核爆!打開禁忌的千年發酵罈!`);
+    bannerFX(h,'🦠 千年發酵核爆!','#aacc66',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'dark'});
+        if(f.curHp>0){
+          addStatus(f,'poison',2+_lv5Extra);
+          try{ const _ps=f.status.find(s=>s.type==='poison'); if(_ps){ _ps._strong=true; f._poisonAmt=Math.max(1,Math.floor(f.hp*0.15)); } }catch(_){}
+          addStatus(f,'healReduced',2+_lv5Extra);
+          bannerFX(f,'☠️強力中毒+減療!','#88aa44',900);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 4. 山靈古魔・千年怒木:神木復仇之火! - 特技220%全體火屬性傷害+自身攻擊大幅提升2回合
+  if(burstName==='神木復仇之火!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.2*_burstMult));
+    log(`🌲 [${h.name}] 神木復仇之火!千年神木的復仇之火燃起!`);
+    bannerFX(h,'🌲 神木復仇之火!','#88cc44',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'fire'});
+        renderCard(f);
+      }, i*150);
+    });
+    // 簡化版「召喚根鬚妖」→ 自身狂暴 buff(攻擊+30% 持續 2 回合)
+    addBuff(h,'dmgup',2+_lv5Extra);
+    bannerFX(h,'🌿 怒火加身!','#88cc44',1000);
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 5. 深海惡靈・觸手大蛟:深海大漩渦! - 特技230%全體水屬性+全體強力減速2回合
+  if(burstName==='深海大漩渦!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.3*_burstMult));
+    log(`🌊 [${h.name}] 深海大漩渦!整個太平洋的力量灌注於八條觸手!`);
+    bannerFX(h,'🌊 深海大漩渦!','#44aaff',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'water'});
+        if(f.curHp>0){
+          addStatus(f,'spddown',2+_lv5Extra);
+          try{ const _sd=f.status.find(s=>s.type==='spddown'); if(_sd) _sd._strong=true; }catch(_){}
+          bannerFX(f,'🌀強力減速!','#4488cc',800);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 6. 染靈幻魔・藍色憂鬱:永恆藍染詛咒! - 特技200%全體暗屬性+全體強力魅惑1回合
+  if(burstName==='永恆藍染詛咒!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.0*_burstMult));
+    log(`💧 [${h.name}] 永恆藍染詛咒!藍色染料化為永恆詛咒籠罩戰場!`);
+    bannerFX(h,'💧 永恆藍染詛咒!','#5588ff',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'dark'});
+        if(f.curHp>0){
+          // 強力魅惑(無法免疫,1+_lv5Extra 回合)
+          f.status=f.status.filter(s=>s.type!=='charm');
+          f.status.push({type:'charm', dur:2+_lv5Extra}); // dur:2 → 下回合生效
+          bannerFX(f,'💕強力魅惑!','#ff88cc',900);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 7. 珍奶吸魂魔・大波霸:波霸珍珠龍捲風! - 特技230%全體傷害+吸血50%回HP
+  if(burstName==='波霸珍珠龍捲風!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.3*_burstMult));
+    log(`🧋 [${h.name}] 波霸珍珠龍捲風!巨大珍珠化為龍捲風橫掃戰場!`);
+    bannerFX(h,'🧋 波霸珍珠龍捲風!','#aa66ff',1400);
+    let _totalDmg=0;
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        const _real=doDmg(f,dmg,{actor:h,isSkill:true,elem:'dark'});
+        if(_real>0) _totalDmg+=_real;
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{
+      // 全部打完後吸血 50%
+      if(_totalDmg>0){
+        const _heal=Math.floor(_totalDmg*0.5);
+        doHeal(h,_heal,{actor:h,isHeal:true,noDice:true});
+        bannerFX(h,'💚 吸魂回血 +'+_heal,'#aa66ff',1000);
+      }
+      updateUI(); _burstFinish(h,_interrupted);
+    }, foes.length*150+500);
+    return;
+  }
+
+  // 8. 水靈反魔・倒映女:萬鏡映虛獄! - 特技230%全體水屬性+自身閃避增益
+  if(burstName==='萬鏡映虛獄!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.3*_burstMult));
+    log(`🪞 [${h.name}] 萬鏡映虛獄!整個戰場化為鏡之地獄!`);
+    bannerFX(h,'🪞 萬鏡映虛獄!','#88ccff',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'water'});
+        if(f.curHp>0 && Math.random()<0.40){
+          addStatus(f,'confused',1+_lv5Extra);
+          bannerFX(f,'😵強力混亂!','#88aacc',800);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    // 簡化版「召喚分身」→ 自身強力閃避 2 回合
+    addBuff(h,'evasion',2+_lv5Extra);
+    bannerFX(h,'🪞 鏡之分身!','#88ccff',1000);
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 9. 摩天魔將・夜空爆裂者:摩天爆破煙火祭! - 特技250%全體風屬性+全體強力燃燒2回合
+  if(burstName==='摩天爆破煙火祭!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.5*_burstMult));
+    log(`🎆 [${h.name}] 摩天爆破煙火祭!整座 101 大樓的能量集中爆發!`);
+    bannerFX(h,'🎆 摩天爆破煙火祭!','#ffee44',1400);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'wind',ignoreEvasion:true});
+        if(f.curHp>0){
+          addStatus(f,'hellfire',2+_lv5Extra);
+          try{ const _hf=f.status.find(s=>s.type==='hellfire'); if(_hf) _hf._strong=true; }catch(_){}
+          bannerFX(f,'🔥強力燃燒!','#ff6644',800);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+500);
+    return;
+  }
+
+  // 10. 山岳禁咒・崩天巨人:玉山崩!天裂! - 特技280%全體土屬性+全體強力眩暈1回合+自身全屬性+30% 2回合
+  if(burstName==='玉山崩!天裂!'){
+    const _opp1=side==='p1'?'p2':'p1';
+    const foes=G[_opp1].filter(x=>x.curHp>0);
+    const dmg=Math.max(10, Math.floor(spv*2.8*_burstMult));
+    log(`🗻 [${h.name}] 玉山崩!天裂!整座台灣最高峰玉山的山岳之力爆發!`);
+    bannerFX(h,'🗻 玉山崩!天裂!','#cc8855',1500);
+    foes.forEach((f,i)=>{
+      _pSetTimeout(()=>{
+        if(f.curHp<=0) return;
+        doDmg(f,dmg,{actor:h,isSkill:true,elem:'earth'});
+        if(f.curHp>0){
+          // 強力眩暈(無法免疫)
+          f.status=f.status.filter(s=>s.type!=='stun');
+          f.status.push({type:'stun', dur:1+_lv5Extra, _strong:true});
+          bannerFX(f,'⭐強力眩暈!','#ffaa44',900);
+        }
+        renderCard(f);
+      }, i*150);
+    });
+    // 自身全屬性 +30% 持續 2 回合(用 dmgup buff 模擬)
+    addBuff(h,'dmgup',2+_lv5Extra);
+    bannerFX(h,'🗻 山岳之力!','#cc8855',1100);
+    _pSetTimeout(()=>{ updateUI(); _burstFinish(h,_interrupted); }, foes.length*150+700);
+    return;
+  }
+
   updateUI();
   if(checkWin()) return;
   // 清除殘留狀態後再推進回合
@@ -17129,15 +17375,16 @@ function doDmg(target, rawDmg, opts={}){
     showPopup(target,dmg,'dmg');
   }
   // ★ v1.0.20260428.3730 — 至寶反彈(防禦者,日月潭靈鏡):受傷時 X% 機率反彈傷害給攻擊者
+  // ★ v1.1.0 — 反彈傷害改成「相同傷害」(從 50% → 100%)
   if(dmg > 0 && a && a !== target && a.side !== target.side && a.curHp > 0
      && target._treasureEff && target._treasureEff.reflectChance
      && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && !opts.noReflect){
     const _reflectRate = Math.min(0.95, target._treasureEff.reflectChance / 100);
     if(Math.random() < _reflectRate){
-      const _refDmg = Math.max(1, Math.floor(dmg * 0.5)); // 反彈 50% 傷害
+      const _refDmg = Math.max(1, dmg); // 反彈 100% 相同傷害
       try{ playSfx('sfx-reflect', 0.8); }catch(_){}
       try{ showPopup(target, '🪞反彈', 'miss'); }catch(_){}
-      try{ log(`🪞 [${target.name}] 至寶反彈(日月潭靈鏡)!對 [${a.name}] 造成 ${_refDmg} 傷害!`); }catch(_){}
+      try{ log(`🪞 [${target.name}] 至寶反彈(日月潭靈鏡)!對 [${a.name}] 造成 ${_refDmg} 相同傷害!`); }catch(_){}
       // 用 noReflect:true 避免無限互相反彈
       doDmg(a, _refDmg, { noReflect:true, ignoreBuffs:true, isRebound:true, noEquip:true });
     }
@@ -23546,6 +23793,31 @@ function startTurn(){
     }
   }
 
+  // ★ v1.1.0 — 台灣 BOSS 天賦觸發 (3 個簡單版,影響溫和不破壞戰鬥平衡)
+  // 1. 油膩魔王・滷汁大鍋 - 香氣四溢:每回合行動前回 5% HP
+  if(next.name==='油膩魔王・滷汁大鍋' && next.curHp>0 && next.curHp < next.hp){
+    const _h1 = Math.max(1, Math.floor(next.hp * 0.05));
+    try{ doHeal(next, _h1, {actor:next, noDice:true, isHeal:true}); }catch(_){}
+    log(`🍯 [${next.name}] 天賦:香氣四溢!回 ${_h1} HP`);
+    bannerFX(next, '🍯 香氣四溢!', '#ffaa44', 700);
+  }
+  // 2. 山靈古魔・千年怒木 - 古樹再生:HP<50% 時每回合行動前回 8% HP
+  if(next.name==='山靈古魔・千年怒木' && next.curHp>0 && next.curHp < next.hp * 0.5){
+    const _h2 = Math.max(1, Math.floor(next.hp * 0.08));
+    try{ doHeal(next, _h2, {actor:next, noDice:true, isHeal:true}); }catch(_){}
+    log(`🌲 [${next.name}] 天賦:古樹再生(殘血激發)!回 ${_h2} HP`);
+    bannerFX(next, '🌲 古樹再生!', '#88cc44', 700);
+  }
+  // 3. 摩天魔將・夜空爆裂者 - 擎天能量:每回合 +1 能量
+  if(next.name==='摩天魔將・夜空爆裂者' && next.curHp>0){
+    if(G.energy && G.energy[next.side] !== undefined && G.energy[next.side] < 10){
+      G.energy[next.side] = Math.min(10, G.energy[next.side] + 1);
+      log(`⚡ [${next.name}] 天賦:擎天能量!敵方能量 +1`);
+      bannerFX(next, '⚡ 擎天能量 +1!', '#ffee44', 700);
+      try{ updateUI(); }catch(_){}
+    }
+  }
+
   updateUI();
 
   if(next.side==='p1'){
@@ -24447,6 +24719,27 @@ function _realAiAct(a){
     if(n==='暗羽突襲') return Math.floor(a.atk*2.0);
     if(n==='斷腕狂拳') return Math.floor(a.atk*1.8);
     if(n==='熊力撞擊') return Math.floor(a.atk*2.0);
+    // ★ v1.1.0 — 台灣 BOSS 20 個技能 AI 估值(讓 AI 能合理選擇)
+    if(n==='滷汁飛濺') return Math.floor(a.sp*1.0)+10;
+    if(n==='秘製大滷') return -1; // 治療+免疫,不列入攻擊
+    if(n==='糖漿轟炸') return Math.floor(a.sp*1.1)+10;
+    if(n==='熱浪烤箱') return Math.floor(a.sp*1.4)+20;
+    if(n==='發酵臭氣彈') return Math.floor(a.sp*1.2)+15;
+    if(n==='豆腐封印') return 50; // 強力封印控制
+    if(n==='根鬚絞殺') return Math.floor(a.atk*3.2); // 攻擊 1.6x 連擊 2 次
+    if(n==='神木怒火') return Math.floor(a.sp*1.3)*enemies.length;
+    if(n==='八觸手亂舞') return Math.floor(a.sp*0.65)*5;
+    if(n==='深海漩渦') return Math.floor(a.sp*1.4)*enemies.length+30;
+    if(n==='藍染霧霾') return Math.floor(a.sp*1.5)*enemies.length;
+    if(n==='憂鬱之歌') return 60; // 全體魅惑高價值控制
+    if(n==='珍珠機關槍') return Math.floor(a.atk*5.6); // 攻擊 0.7x 連擊 8 次
+    if(n==='吸魂吸管') return Math.floor(a.sp*1.5)+30; // 含吸血加值
+    if(n==='鏡面分身') return Math.floor(a.sp*1.3)*enemies.length;
+    if(n==='映像撕裂') return Math.floor(a.sp*1.6)*enemies.length+30;
+    if(n==='煙火齊射') return Math.floor(a.sp*0.9)*enemies.length*3;
+    if(n==='擎天爆閃') return Math.floor(a.atk*5.4); // 攻擊 3.0x 必中爆擊
+    if(n==='落石鐵拳') return Math.floor(a.atk*2.2)+Math.floor(a.sp*1.4); // 含相鄰傷害
+    if(n==='山崩地裂') return Math.floor(a.sp*1.8)*enemies.length+30;
     // ★ 怪物技能 & 被動技能：設定預估值或標記為不列入攻擊選擇
     if(n==='花瓣飛刀') return Math.floor((a.sp||0)*(1+(a.sp||0)*0.01)) * enemies.length * 0.9;
     if(n==='花粉迷眼') return 20; // 失明控制
@@ -29768,7 +30061,7 @@ const TAIWAN_TREASURES = {
     desc: '鑲嵌著半日半月的古銅鏡,倒映著波光粼粼的湖面。',
     baseStats: { hp: 5, atk: 0, sp: 5, spd: 5 },
     specialEffects: { reflectChance: 40 }, // 受到傷害時 40% 機率反彈
-    abilityText: '基礎 HP+5、特技+5、速度+5;受到傷害時 40% 機率反彈',
+    abilityText: '基礎 HP+5、特技+5、速度+5;受到傷害時 40% 機率讓對手受到相同的傷害',
     bossId: 'sun_moon_mirror_boss',
   },
   pineapple_charm: {
@@ -30098,6 +30391,16 @@ const TAIWAN_TREASURE_MAX_LV = 10;
 //   公式:升 lv→lv+1 需要 (lv+1)*10 EXP
 const _TAIWAN_TREASURE_LV_CUMULATIVE = [0, 10, 30, 60, 100, 150, 210, 280, 360, 450, 550];
 
+// ★ v1.1.0 — 至寶升級「知識幣花費」(除了 EXP 還要花錢)
+//   Lv0→1: 10,000;Lv1→2: 15,000;Lv2→3: 20,000;Lv3→4: 25,000;Lv4→5: 30,000
+//   Lv5→6: 35,000;Lv6→7: 40,000;Lv7→8: 45,000;Lv8→9: 50,000;Lv9→10: 55,000
+//   公式:lv→lv+1 需要 (10000 + lv*5000) 知識幣
+//   總花費(0→10):10+15+20+25+30+35+40+45+50+55 = 325,000 知識幣
+function _getTaiwanTreasureCoinForNextLv(curLv){
+  if(curLv >= TAIWAN_TREASURE_MAX_LV) return 0;
+  return 10000 + curLv * 5000;
+}
+
 function _getTaiwanTreasureExpForNextLv(curLv){
   // curLv 0~9 → 回傳升到下一級需要的 EXP(差值)
   if(curLv >= TAIWAN_TREASURE_MAX_LV) return 0;
@@ -30200,6 +30503,7 @@ function _grantTaiwanTreasure(id){
   return false;
 }
 // 答對題目時為當前關卡的至寶累積經驗(由戰鬥流程呼叫)
+// ★ v1.1.0 — 升級需要花費知識幣;若知識幣不足則 EXP 累積但不升級(等玩家湊夠錢)
 function _addTaiwanTreasureExp(id, amount){
   const rec = _taiwanTreasureData[id];
   if(!rec || rec.lv >= TAIWAN_TREASURE_MAX_LV) return;
@@ -30207,9 +30511,34 @@ function _addTaiwanTreasureExp(id, amount){
   // 檢查升級
   let need = _getTaiwanTreasureExpForNextLv(rec.lv);
   while(need > 0 && rec.exp >= need && rec.lv < TAIWAN_TREASURE_MAX_LV){
+    // ★ v1.1.0 — 升級前先檢查知識幣是否足夠
+    const _coinNeed = _getTaiwanTreasureCoinForNextLv(rec.lv);
+    const _curCoins = (typeof _knowledgeCoins !== 'undefined') ? _knowledgeCoins : 0;
+    if(_curCoins < _coinNeed){
+      try{
+        const _treasName = TAIWAN_TREASURES[id] ? TAIWAN_TREASURES[id].name : id;
+        console.log('[至寶升級暫緩] '+_treasName+' EXP 已滿(Lv'+rec.lv+'→'+(rec.lv+1)+')但知識幣不足:需 '+_coinNeed.toLocaleString()+' / 持有 '+_curCoins.toLocaleString());
+        if(typeof _showInGameToast === 'function'){
+          _showInGameToast('💎 ['+_treasName+'] 經驗已滿!需 '+_coinNeed.toLocaleString()+' 💰升級(目前 '+_curCoins.toLocaleString()+')', '#ffaa44', 4000);
+        }
+      }catch(_){}
+      break; // 跳出 while,不升級也不扣 EXP(等玩家湊夠錢再來)
+    }
+    // 扣知識幣 + 扣 EXP + 升級
+    try{
+      _knowledgeCoins = (_knowledgeCoins || 0) - _coinNeed;
+      if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay();
+    }catch(_){}
     rec.exp -= need;
     rec.lv++;
-    try{ console.log('[至寶升級] '+TAIWAN_TREASURES[id].name+' 升至 Lv'+rec.lv); }catch(_){}
+    try{
+      const _treasName2 = TAIWAN_TREASURES[id] ? TAIWAN_TREASURES[id].name : id;
+      console.log('[至寶升級] '+_treasName2+' 升至 Lv'+rec.lv+' (花費 '+_coinNeed.toLocaleString()+' 💰)');
+      if(typeof _showInGameToast === 'function'){
+        _showInGameToast('🎊 ['+_treasName2+'] 升至 Lv'+rec.lv+'!花費 '+_coinNeed.toLocaleString()+' 💰', '#88ff88', 3500);
+      }
+      if(typeof log === 'function') log('🎊 至寶 ['+_treasName2+'] 升級至 Lv'+rec.lv+'(花費 '+_coinNeed.toLocaleString()+' 知識幣)!');
+    }catch(_){}
     need = _getTaiwanTreasureExpForNextLv(rec.lv);
   }
   _saveTaiwanTreasureData();
@@ -30769,6 +31098,20 @@ function _renderTaiwanTreasureDetail(treasureId){
         '<span>EXP = 該關卡累積答對題數</span>' +
         '<span>' + (_isMax ? '<b style="color:#ffcc44;">MAX</b>' : ((rec.exp||0) + '/' + _need)) + '</span>' +
       '</div>' +
+      // ★ v1.1.0 — 顯示升級需要的知識幣
+      (_isMax ? '' : (function(){
+        const _coinNeed = _getTaiwanTreasureCoinForNextLv(rec.lv);
+        const _curCoins = (typeof _knowledgeCoins !== 'undefined') ? _knowledgeCoins : 0;
+        const _enough = _curCoins >= _coinNeed;
+        const _color = _enough ? '#88ff88' : '#ff8866';
+        return '<div style="margin-top:8px;padding:8px 10px;background:rgba(0,0,0,0.4);border-radius:6px;border:1px solid '+_color+'66;">' +
+                 '<div style="font-size:12px;color:#ccc;">升至 <b style="color:#ffcc44;">Lv.'+(rec.lv+1)+'</b> 需要:</div>' +
+                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;">' +
+                   '<span style="font-size:14px;color:#ffe8a0;">📜 EXP <b>'+_need+'</b> + 💰 <b style="color:'+_color+';">'+_coinNeed.toLocaleString()+'</b> 知識幣</span>' +
+                   '<span style="font-size:11px;color:'+_color+';">'+(_enough?'✓ 足夠':'⚠ 還差 '+(_coinNeed-_curCoins).toLocaleString())+'</span>' +
+                 '</div>' +
+               '</div>';
+      })()) +
     '</div>' +
     // 屬性面板(基礎+投資+特殊)
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">' +
@@ -34312,46 +34655,46 @@ Object.assign(HERO_DB, {
 // ★ v1.0.20260428.3400 — HP 全部 ×2(玩家反映 BOSS 太脆,提升耐打度)
 Object.assign(HERO_DB, {
   // ─── 稀有級 BOSS (最弱~中弱) ───
-  '油膩魔王・滷汁大鍋':{hp:2100,atk:17,sp:24,spd:12,exp:140,
+  '油膩魔王・滷汁大鍋':{hp:3150,atk:26,sp:36,spd:18,exp:140,
     s1:{n:'滷汁飛濺',c:2,d:'特技100%對單體火屬性傷害,30%機率「燃燒」1回合',fd:'掀開大鍋蓋,熱滾滾的滷汁飛濺!用特技值的 100% 對 1 名對手造成火屬性傷害,30% 機率陷入「燃燒」狀態 1 回合。'},
     s2:{n:'秘製大滷',c:3,d:'回復自身HP 25%,並獲得「免疫不利狀態」1回合',fd:'從大鍋裡舀出最濃郁的秘製滷汁,自己咕嚕咕嚕喝下去!回復 25% HP,並獲得「免疫所有不利狀態」1 回合。'}
   },
-  '酥脆狂魔・熱浪糕師':{hp:2360,atk:18,sp:26,spd:14,exp:160,
+  '酥脆狂魔・熱浪糕師':{hp:3540,atk:27,sp:39,spd:21,exp:160,
     s1:{n:'糖漿轟炸',c:2,d:'特技110%對單體火屬性傷害,「黏住」(速度-30%)1回合',fd:'高高拋灑黃金糖漿!用特技值的 110% 對單體造成火屬性傷害,黏稠糖漿讓目標速度 -30% 持續 1 回合。'},
     s2:{n:'熱浪烤箱',c:3,d:'特技140%對單體火屬性傷害,30%機率「強力燃燒」2回合',fd:'巨大擀麵棍敲下熱浪!用特技值的 140% 造成單體火屬性傷害,30% 機率附加「強力燃燒」(無法免疫)2 回合。'}
   },
   // ─── 史詩級 BOSS (中強) ───
-  '臭氣魔王・發酵公':{hp:2640,atk:19,sp:28,spd:16,exp:180,
+  '臭氣魔王・發酵公':{hp:3960,atk:28,sp:42,spd:24,exp:180,
     s1:{n:'發酵臭氣彈',c:3,d:'特技120%對單體暗屬性傷害,40%機率「中毒」2回合',fd:'從腐爛斗篷裡抽出一罈千年臭豆腐,炸裂發酵臭氣!用特技值的 120% 造成暗屬性傷害,40% 機率「中毒」2 回合。'},
     s2:{n:'豆腐封印',c:3,d:'指定1名對手「強力封印」2回合(無法用技能)',fd:'抓起一塊發酵到極致的豆腐塞進敵人嘴裡!使 1 名對手陷入「強力封印」(無法免疫)2 回合,完全無法使用技能。'}
   },
-  '山靈古魔・千年怒木':{hp:2900,atk:20,sp:30,spd:18,exp:200,
+  '山靈古魔・千年怒木':{hp:4350,atk:30,sp:45,spd:27,exp:200,
     s1:{n:'根鬚絞殺',c:2,d:'攻擊160%對單體草屬性連擊2次,每擊25%機率「禁動」1回合',fd:'地底鑽出千年根鬚,纏繞絞殺敵人!以攻擊值的 160% 連擊 2 次單體,每擊獨立 25% 機率附加「禁動」1 回合。'},
     s2:{n:'神木怒火',c:4,d:'特技130%對全體草屬性傷害,自己「攻擊+30%」2回合',fd:'樹冠燃起復仇怒火!用特技值的 130% 對全體對手造成草屬性傷害,並讓自己進入「狂暴狀態」攻擊 +30% 持續 2 回合。'}
   },
-  '深海惡靈・觸手大蛟':{hp:3180,atk:21,sp:32,spd:20,exp:220,
+  '深海惡靈・觸手大蛟':{hp:4770,atk:32,sp:48,spd:30,exp:220,
     s1:{n:'八觸手亂舞',c:3,d:'特技65%對隨機目標水屬性傷害5次',fd:'八條紫色觸手胡亂揮舞!用特技值的 65% 對隨機存活對手造成水屬性傷害 5 次。'},
     s2:{n:'深海漩渦',c:4,d:'特技140%對全體水屬性傷害,所有目標「強力減速」(速度-50%)2回合',fd:'從太平洋深處召喚巨大漩渦!用特技值的 140% 對全體對手造成水屬性傷害,所有目標附加「強力減速」(無法免疫)2 回合,速度 -50%。'}
   },
-  '染靈幻魔・藍色憂鬱':{hp:3440,atk:22,sp:34,spd:23,exp:240,
+  '染靈幻魔・藍色憂鬱':{hp:5160,atk:33,sp:51,spd:34,exp:240,
     s1:{n:'藍染霧霾',c:3,d:'特技150%對全體暗屬性傷害,40%機率「失明」2回合',fd:'飄逸藍布化作迷霧!用特技值的 150% 對全體對手造成暗屬性傷害,每人 40% 機率「失明」(命中率 -50%)2 回合。'},
     s2:{n:'憂鬱之歌',c:4,d:'全體對手附加「魅惑」1回合(下回合普攻自己人)',fd:'用淒美藍染歌聲讓人沉浸憂鬱!使全體對手陷入「魅惑」狀態 1 回合,下回合會自動普攻自己隊友。'}
   },
   // ─── 傳說級 BOSS (主線★) ───
-  '珍奶吸魂魔・大波霸':{hp:3700,atk:24,sp:36,spd:25,exp:280,
+  '珍奶吸魂魔・大波霸':{hp:5550,atk:36,sp:54,spd:38,exp:280,
     s1:{n:'珍珠機關槍',c:2,d:'攻擊70%對隨機目標暗屬性連擊8次,每擊20%機率「無力」1回合',fd:'用粗大金屬吸管當機關槍狂射黑色珍珠!以攻擊值的 70% 連擊 8 次隨機目標,每擊 20% 機率附加「無力」(無法普攻)1 回合。'},
     s2:{n:'吸魂吸管',c:4,d:'特技150%吸血攻擊單體,自身回復同等HP',fd:'巨大吸管插入敵人,吸取生命汁液!用特技值的 150% 對單體造成暗屬性傷害,自己回復同等 HP。'}
   },
-  '水靈反魔・倒映女':{hp:3980,atk:26,sp:38,spd:28,exp:320,
+  '水靈反魔・倒映女':{hp:5970,atk:39,sp:57,spd:42,exp:320,
     s1:{n:'鏡面分身',c:3,d:'特技130%對全體水屬性傷害,本回合不易被攻擊',fd:'鏡面碎片飛舞如萬鏡映虛!用特技值的 130% 對全體對手造成水屬性傷害,本回合自身被攻擊時 30% 機率閃避。'},
     s2:{n:'映像撕裂',c:4,d:'特技160%對全體水屬性傷害,40%機率「強力混亂」(無法免疫)1回合',fd:'從鏡中映照出敵人最深的恐懼!用特技值的 160% 對全體對手造成水屬性傷害,每人 40% 機率「強力混亂」(無法免疫)1 回合,下回合行動目標隨機。'}
   },
-  '摩天魔將・夜空爆裂者':{hp:4240,atk:28,sp:40,spd:30,exp:360,
+  '摩天魔將・夜空爆裂者':{hp:6360,atk:42,sp:60,spd:45,exp:360,
     s1:{n:'煙火齊射',c:3,d:'特技90%對全體3次風屬性傷害,30%機率「燃燒」1回合',fd:'背後煙火翅膀同時點燃!用特技值的 90% 對全體對手造成 3 次風屬性傷害(無視迴避),每次 30% 機率「燃燒」1 回合。'},
     s2:{n:'擎天爆閃',c:4,d:'攻擊300%對單體風屬性必中爆擊,使對手「眩暈」1回合',fd:'擎天神槍蓄滿能量發射!以攻擊值的 300% 對單體造成風屬性必中爆擊,目標額外陷入「眩暈」1 回合(無法行動)。'}
   },
   // ─── 神話級 BOSS (最終★★) ───
-  '山岳禁咒・崩天巨人':{hp:4500,atk:30,sp:42,spd:33,exp:420,
+  '山岳禁咒・崩天巨人':{hp:6750,atk:45,sp:63,spd:50,exp:420,
     s1:{n:'落石鐵拳',c:2,d:'攻擊220%對單體土屬性傷害,並對相鄰位置全體傷害特技70%',fd:'巨大石拳轟向地面!對指定 1 名對手造成攻擊值 220% 土屬性傷害,並對相鄰位置全體再造成特技值 70% 的土屬性範圍傷害。'},
     s2:{n:'山崩地裂',c:4,d:'特技180%對全體土屬性傷害,30%機率「眩暈」1回合,自身獲得「岩石護甲」(減傷40%)2回合',fd:'踏地而呼,整座山搖晃!用特技值的 180% 對全體對手造成土屬性傷害,每人 30% 機率「眩暈」1 回合,自己獲得「岩石護甲」減傷 40% 持續 2 回合。'}
   },
@@ -34386,7 +34729,7 @@ Object.assign(HERO_TRAIT, {
   '珍奶吸魂魔・大波霸':   { name:'吸魂體質', icon:'🧋', desc:'造成傷害的 15% 轉化為 HP',fd:'珍奶吸魂能量持續運轉,造成傷害的 15% 自動轉化為 HP 恢復。' },
   '水靈反魔・倒映女':     { name:'鏡之守護', icon:'🪞', desc:'每場戰鬥首次 HP 歸零時,以 50% HP 復活一次',fd:'鏡像守護秘術,每場戰鬥首次 HP 歸零時自動以 50% HP 復活(僅限一次)。' },
   '摩天魔將・夜空爆裂者': { name:'擎天能量', icon:'⚡', desc:'每回合自動 +1 能量',fd:'擎天神槍持續匯聚能量,每回合自動獲得 1 點額外能量。' },
-  '山岳禁咒・崩天巨人':   { name:'山岳之軀', icon:'🗻', desc:'HP 上限 +20%,但速度 -10%',fp:'山岳般堅實的軀體,HP 上限額外 +20%,但因身軀龐大速度 -10%。' },
+  '山岳禁咒・崩天巨人':   { name:'山岳之軀', icon:'🗻', desc:'HP 上限 +20%,但速度 -10%',fd:'山岳般堅實的軀體,HP 上限額外 +20%,但因身軀龐大速度 -10%。' },
 });
 
 // 台灣 BOSS 的 LORE(角色背景)
@@ -54328,6 +54671,48 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.4200', brief:[
+    '🪞 至寶「日月潭靈鏡」反彈傷害提升:從 50% → 100%(完整反彈)',
+    '💰 至寶升級新增「知識幣花費」條件(經驗滿了還要花錢才能升級)',
+  ], items:[
+    '【1. 日月潭靈鏡反彈傷害強化】',
+    '・基礎屬性:HP+5、特技+5、速度+5(維持原有)',
+    '・受傷時 40% 機率 → 讓對手受到「相同的傷害」(不再是 50%)',
+    '・例:玉山攻擊靈鏡持有者造成 500 傷害 → 40% 機率反彈 500 傷害給玉山',
+    '・反彈不會被有利狀態減免(ignoreBuffs)、不會無限互相反彈(noReflect 保護)',
+    '【2. 至寶升級新增「知識幣花費」】',
+    '・原本只要答題累積 EXP 就能自動升級',
+    '・現在 EXP 滿了還要有足夠知識幣才會升級',
+    '・若知識幣不足,EXP 會卡在當前等級(不會被吃掉),等湊夠錢就會自動升級',
+    '・每次升級花費(從 Lv1 升到 Lv10):',
+    '  - Lv1→2:10,000 💰  Lv2→3:15,000 💰',
+    '  - Lv3→4:20,000 💰  Lv4→5:25,000 💰',
+    '  - Lv5→6:30,000 💰  Lv6→7:35,000 💰',
+    '  - Lv7→8:40,000 💰  Lv8→9:45,000 💰',
+    '  - Lv9→10:50,000 💰  Lv10→MAX:55,000 💰',
+    '・滿等總花費:325,000 💰(每件至寶都要付一次)',
+    '・至寶詳情頁會顯示「下一級需要 EXP X + 知識幣 Y」並標示是否足夠',
+    '・知識幣不足會跳 toast 提醒「經驗已滿!需 X 💰升級」',
+  ] },
+  { ver:'v1.0.20260428.4190', adminOnly:true, brief:[
+    '🐛 [台灣關 BOSS 全面修復] 發現上次 × 1.5 改錯地方,還原至正確的 HERO_DB,並補上 BOSS 爆發技完全沒實作的嚴重 bug',
+  ], items:[
+    '【關鍵發現】上次 × 1.5 改在 TAIWAN_BOSSES.bossStats 但這個欄位從未被讀取!',
+    '・實際戰鬥載入用 HERO_DB,所以上次改動沒生效',
+    '・這次改 HERO_DB 中 10 個台灣 BOSS 的 hp/atk/sp/spd × 1.5(才是真正生效的數值)',
+    '【嚴重 bug】10 個台灣 BOSS 爆發技完全沒實作,玩家看到動畫卻無任何效果!',
+    '・補上 _runBurst 中 10 個 burstName 處理(真神滷肉飯/金黃糕點轟炸/玉山崩天裂...等)',
+    '・每個爆發技都按 BURST_DB 描述實作:傷害 + 屬性 + 附加狀態(燃燒/中毒/魅惑/眩暈等)',
+    '【AI 行動估值】estSkillDmg 加入 20 個台灣 BOSS 技能評估值',
+    '・原本沒列出 fallback 為 a.sp,讓 AI 不會優先使用強力技能',
+    '・現在每個技能都有準確估值(全體傷害 × 敵方數量、控制技標 50+ 高價值)',
+    '【天賦觸發】補上 3 個簡單天賦的實際邏輯',
+    '・油膩魔王「香氣四溢」:每回合行動前回 5% HP',
+    '・山靈古魔「古樹再生」:HP<50% 時每回合回 8% HP',
+    '・摩天魔將「擎天能量」:每回合敵方能量 +1',
+    '・其他 7 個天賦(減傷/閃避/吸血/復活/免毒/HP+20%/速-10%)需動 doDmg 核心,風險高暫緩',
+    '【小修】山岳禁咒天賦 fp: typo 改回 fd:(JSON 結構錯誤)',
+  ] },
   { ver:'v1.0.20260428.4180', brief:[
     '⚖️ 台灣關大改版:BOSS 變強、賣錢物品翻倍、保底機制重做',
     '👹 所有台灣 BOSS 能力提升 1.5 倍(更刺激的戰鬥)',
@@ -63340,7 +63725,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.4180';
+  const CURRENT_VERSION = 'v1.0.20260428.4200';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63374,7 +63759,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.4180';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.4200';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
