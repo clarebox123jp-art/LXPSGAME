@@ -35857,6 +35857,7 @@ function advStartCutscene(stage) {
   window._miniQuizUsedIds = new Set();
   window._japanShuffleBag = null;
   window._taiwanShuffleBag = null;  // ★ v1.0.20260428.3000 重置台灣關洗牌池
+  window._taiwanRoundUsedIds = new Set();  // ★ v1.1.0 新冒險時清空本場已出題記錄
   _advStats = {rounds:0,correctCount:0,totalAnswerTime:0,deathCount:0,continueCount:0,startTime:Date.now(),totalQuizScore:0,totalQuestions:0,itemUsedCount:0,currentStreak:0,maxStreak:0};
   // ★ v1.0.20260420.3200 — 重置「BOSS HP 難度倍率已套用」旗標,讓新一輪冒險能重新根據當局難度套一次
   window._advBossHpMultApplied = false;
@@ -38483,9 +38484,16 @@ function advPickQuestion() {
   //         我很會 → 4 選項題;普通 → 3 選項題;沒自信 → 2 選項題
   //         若該難度沒題了再 fallback 到全部
   if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+    // ★ v1.1.0 — 本場戰鬥內已出題 ID 集合,確保答完一輪才重洗
+    //   bug 症狀:用戶反映「題目重複出現,還沒答到全部就再次出現」
+    //   根因:bag 用完會自動重洗,但中間答錯/超時的題目沒記錄,重洗會再次出現
+    //   修補:用 window._taiwanRoundUsedIds 記錄本場所有出過的題目(不論對錯)
+    //         洗牌時 _twAll 改先用本場全部題目,再過濾掉已出過的;
+    //         bag 用完且全部題目都用過 → 才清空 _taiwanRoundUsedIds 重新洗
+    if(!(window._taiwanRoundUsedIds instanceof Set)) window._taiwanRoundUsedIds = new Set();
     if(!Array.isArray(window._taiwanShuffleBag) || !window._taiwanShuffleBag.length){
       const _twBossId = window._advSelectedTaiwanBoss;
-      let _twAll = (typeof TAIWAN_QUIZ_DB !== 'undefined' && _twBossId)
+      const _twAllOriginal = (typeof TAIWAN_QUIZ_DB !== 'undefined' && _twBossId)
         ? TAIWAN_QUIZ_DB.filter(q => q.bossId === _twBossId).slice()
         : (typeof TAIWAN_QUIZ_DB !== 'undefined' ? TAIWAN_QUIZ_DB.slice() : []);
       // ★ v1.0.20260428.4070 — 依玩家難度過濾出選項數合適的題目
@@ -38494,15 +38502,22 @@ function advPickQuestion() {
       if(_curDiff.indexOf('沒自信') >= 0) _wantOptCount = 2;
       else if(_curDiff.indexOf('普通') >= 0) _wantOptCount = 3;
       else _wantOptCount = 4;
-      const _byOptCount = _twAll.filter(q =>
+      const _byOptCount = _twAllOriginal.filter(q =>
         q && Array.isArray(q.options) && q.options.length === _wantOptCount);
-      if(_byOptCount.length > 0){
-        _twAll = _byOptCount;
-        try{ console.log('[台灣關抽題] 玩家難度='+_curDiff+', 過濾出 '+_wantOptCount+' 選項題,共 '+_byOptCount.length+' 題'); }catch(_){}
+      let _twAll = _byOptCount.length > 0 ? _byOptCount : _twAllOriginal;
+      // ★ v1.1.0 — 過濾「本場已出過」的題目
+      const _notUsedThisRound = _twAll.filter(q => !window._taiwanRoundUsedIds.has(q.id));
+      if(_notUsedThisRound.length > 0){
+        // 還有沒出過的題目 → 從這些挑
+        _twAll = _notUsedThisRound;
+        try{ console.log('[台灣關抽題] 難度='+_curDiff+', 過濾出 '+_wantOptCount+' 選項題,本場剩餘未出 '+_notUsedThisRound.length+' 題'); }catch(_){}
       } else {
-        try{ console.warn('[台灣關抽題] 玩家難度='+_curDiff+' 找不到 '+_wantOptCount+' 選項題,改用全部題目'); }catch(_){}
+        // 全部題目都出過了 → 清空本場記錄,重新一輪
+        try{ console.log('[台灣關抽題] 全部題目已答過一輪,清空已出記錄重新洗牌(共 '+_twAll.length+' 題)'); }catch(_){}
+        try{ log('🔄 [台灣關] 全部題目已答過一輪,重新洗牌!'); }catch(_){}
+        window._taiwanRoundUsedIds.clear();
       }
-      // 過濾跨關卡持久已答對
+      // 過濾跨關卡持久已答對(只在還有「未出+未答對」題目時才套用,避免兩個過濾把池子掏空)
       let _twPool = _twAll;
       try{
         if(typeof _persistentCorrectQuestions === 'object' && _persistentCorrectQuestions['台灣環島']){
@@ -38521,6 +38536,10 @@ function advPickQuestion() {
       try{ log('📚 [台灣關] 題庫已重新洗牌,共 ' + _twPool.length + ' 題。'); }catch(_e){}
     }
     let _twQ = window._taiwanShuffleBag.shift() || null;
+    // ★ v1.1.0 — 抽出題目後,記錄到「本場已出」集合
+    if(_twQ && _twQ.id != null && (window._taiwanRoundUsedIds instanceof Set)){
+      window._taiwanRoundUsedIds.add(_twQ.id);
+    }
     // ★ v1.0.20260428.4070 — 既然已依難度過濾選項數,這裡不用再 trim,題目原本就是對的選項數
     return _twQ;
   }
@@ -49894,6 +49913,18 @@ async function _loadFriendSystemData() {
 
 
 function showLoginGate() {
+  // ★ v1.1.0 — 標記遊戲已開始,啟動方向監聽(手機直立時自動顯示提示)
+  window._gameInitialized = true;
+  try{
+    if(typeof window._setupOrientationWatcher === 'function'){
+      window._setupOrientationWatcher();
+      if(typeof window._isMobileDevice === 'function' && window._isMobileDevice()){
+        if(typeof window._isPortrait === 'function' && window._isPortrait()){
+          window._showPortraitReminder();
+        }
+      }
+    }
+  }catch(_){}
   // 已登入 → 直接進冒險
   if(window._gUserId) { openAdventureOverlay(); return; }
   // Firebase 未載入 → 直接進（訪客）
@@ -54250,6 +54281,49 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.4160', adminOnly:true, brief:[
+    '📚 [台灣關] 題目重複問題修正:答完一輪所有題目才會重新洗牌',
+  ], items:[
+    '【bug 症狀】玩家反映台灣 BOSS 戰中題目重複出現,沒答到全部題目就再次出現',
+    '【根因分析】',
+    '・舊邏輯:bag 用完(全部 shift 出去)會自動重洗,理論上沒問題',
+    '・但是答錯/超時/跳過的題目沒有從 bag 拿出 → 下一場戰鬥又能抽到 ✓',
+    '・問題:在「同一場戰鬥」內,如果連續答錯多題,bag 中題目用光時可能跟最近的題目重複',
+    '・另外,_persistentCorrectQuestions 的全局過濾跟 bag 邏輯有時不同步',
+    '【新增「本場已出題記憶」機制】',
+    '・新加 window._taiwanRoundUsedIds (Set):記錄本場戰鬥所有出過的題目 ID(不論對錯)',
+    '・每次抽題時,優先從「本場還沒出過」的題目挑',
+    '・全部題目都出過一輪後,才清空記錄重新洗牌',
+    '・log 會印 [台灣關抽題] 本場剩餘未出 N 題 / 全部題目已答過一輪',
+    '・遊戲訊息會顯示 🔄 [台灣關] 全部題目已答過一輪,重新洗牌!',
+    '【保留既有機制】',
+    '・新冒險開始 → 清空 _taiwanRoundUsedIds(下次戰鬥從零開始)',
+    '・難度過濾、跨關卡已答對過濾都保留',
+    '・全部題目都出過後,fallback 仍會重洗(避免題目卡死)',
+  ] },
+  { ver:'v1.0.20260428.4150', brief:[
+    '📱 手機版完整適配:自動橫式全螢幕、按鈕邊緣安全區、視窗字級降級',
+  ], items:[
+    '【新功能 1:手機自動橫式全螢幕】',
+    '・小英雄用手機按「⚔ 英雄鬥技場」或「🗺 展開冒險故事」時,系統會自動:',
+    '  - 進入全螢幕模式(隱藏瀏覽器網址列)',
+    '  - 嘗試鎖定為橫式(Android 支援、iOS 不支援是 Apple 的限制)',
+    '・若手機是直立時(iOS 無法強制),會跳出「📱 請將手機橫過來」提示視窗',
+    '・小英雄把手機側轉後,提示自動消失,進入遊戲',
+    '【新功能 2:遊戲進行中持續監聽方向】',
+    '・遊戲進行中如果不小心轉成直立,會即時跳出橫式提示',
+    '・轉回橫式後立刻消失,不影響遊戲體驗',
+    '【新功能 3:手機按鈕邊緣安全區】',
+    '・戰鬥畫面在手機橫式時,整個畫面內縮 1vw(約 4-9px),確保邊緣按鈕都點得到',
+    '・iPhone 瀏海/動態島區域:卡死自救、教學等按鈕自動避開 safe-area',
+    '【新功能 4:視窗在手機自動字級降級】',
+    '・所有彈出視窗在 ≤768px 自動字級降級(例:96px→42px、80px→36px、52px→28px...)',
+    '・台灣 BOSS 詳情、過場、對白、難度視窗 — 在小螢幕也能完整顯示',
+    '・按鈕觸控目標統一最小 44×44 (Apple HIG 觸控建議)',
+    '【已知限制(Apple 不開放的部分)】',
+    '・iPhone Safari 完全不支援強制橫式 — 我們改用「提示玩家手動轉」處理',
+    '・iPad 可進全螢幕但無法強制橫式 — 同樣用提示處理',
+  ] },
   { ver:'v1.0.20260428.4140', adminOnly:true, brief:[
     '📝 [台灣關] 所有過場/對白/難度/BOSS 詳情視窗文字放大到貓空關等級',
     '🐛 [台灣關] 強化 BOSS 戰勝結算保護,徹底防止誤跑小怪結算',
@@ -63160,7 +63234,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.4140';
+  const CURRENT_VERSION = 'v1.0.20260428.4160';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63194,7 +63268,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.4140';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.4160';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
