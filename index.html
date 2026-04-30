@@ -5123,7 +5123,7 @@ body.art-premium #summon-overlay {
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
-      <div class="adv-stage-btn" onclick="_taiwanTrySelect(this)">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(管理員測試中)</span></div>
+      <div class="adv-stage-btn adv-stage-btn-locked" style="opacity:0.55;cursor:not-allowed;background:rgba(80,80,90,0.4);" onclick="event.stopPropagation();playSfx('sfx-cancel',0.4);_showInGameToast('🏝 台灣環島歷險記敬請期待!','#ffaa66',2200);">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(敬請期待)</span></div>
       <div class="adv-stage-btn" onclick="_japanTrySelect(this)">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffcc66;">🗾 第一關:日本探險</span></div>
     <!-- ★ 商店按鈕 + 知識幣顯示 -->
     <div id="adv-coins-bar" style="font-size:clamp(13px,1.5vw,20px);font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
@@ -53490,6 +53490,15 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3940-public', brief:[
+    '🎮 公開玩家版本,可以放心遊玩!',
+    '🏝 台灣環島歷險記正在開發測試中,敬請期待!',
+  ], items:[
+    '・本版本是給所有玩家的穩定版本',
+    '・台灣環島歷險記還在製作中,完成後會在新版本中正式開放',
+    '・這段時間請盡情挑戰木柵貓空大冒險和環遊世界遠征傳說(日本探險)',
+    '・若有遇到任何 bug 或建議,歡迎回報給我們!',
+  ] },
   { ver:'v1.0.20260428.3940', brief:[
     '🎁 BOSS 戰選了答題獎勵後,獎勵視窗會多停 1.5 秒並顯示「✓ 已使用獎勵」訊息,玩家清楚看到效果再進下一題',
     '🐛 修正玉藻前禍世邪魅讓 BOSS 中魅惑後,BOSS 行動時的答題流程',
@@ -62094,7 +62103,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3940';
+  const CURRENT_VERSION = 'v1.0.20260428.3940-public';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62128,7 +62137,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3940';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3940-public';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
