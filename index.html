@@ -1679,6 +1679,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 
 /* ═══ 響應式彈出視窗：防止超出螢幕邊界 ═══ */
 /* 套用到所有 position:fixed 的確認/升級視窗 */
+/* ★ v1.0.20260428.3930 — 補上所有最近新增的 overlay,讓 iPad/手機都能正確捲動與縮放 */
 #upgrade-confirm-box,
 #invest-confirm-box,
 #upgrade-confirm-box > div,
@@ -1689,6 +1690,17 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #adv-crash-recovery-box,
 .adv-boss-detail-pop,
 #bag-skill-select,
+#_deadlock-rescue-menu,
+#_changelog-modal,
+#_force-refresh-modal,
+#_pwa-guide-modal,
+#taiwan-cutscene-overlay,
+#taiwan-dialog-overlay,
+#taiwan-difficulty-overlay,
+#taiwan-treasure-page,
+#taiwan-map-overlay,
+#tw-boss-detail-overlay,
+#adv-boss-detail-pop,
 [id$="-confirm-box"],
 [class$="-confirm"] {
   max-width: min(96vw, 100%) !important;
@@ -1712,6 +1724,353 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 @media (max-width: 480px) {
   #upgrade-confirm-box {
     padding: 12px 10px !important;
+  }
+}
+
+/* ★ v1.0.20260428.3930 — 行動裝置全面適配:iPad/手機/直立模式 */
+
+/* === iPad 與大手機橫式 (≤1180px) === */
+@media (max-width: 1180px) {
+  /* 卡死自救選單 */
+  #_deadlock-rescue-menu {
+    width: min(94vw, 480px) !important;
+    padding: 24px 20px !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+  }
+  #_deadlock-rescue-menu button {
+    font-size: 16px !important;
+    padding: 12px 14px !important;
+  }
+  /* 跳過演出視窗 */
+  #adv-skip-select-box {
+    width: min(94vw, 600px) !important;
+    padding: 18px 20px !important;
+    font-size: 100% !important;
+  }
+  /* BOSS 詳細資料彈窗 */
+  #adv-boss-detail-pop > div {
+    max-width: 92vw !important;
+    width: 92vw !important;
+    padding: 24px 28px !important;
+    max-height: 85vh !important;
+  }
+  /* 台灣關過場/對白/難度視窗 */
+  #taiwan-cutscene-overlay,
+  #taiwan-dialog-overlay,
+  #taiwan-difficulty-overlay {
+    -webkit-overflow-scrolling: touch !important;
+  }
+  /* 至寶圖鑑頁面 */
+  #taiwan-treasure-page {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  /* 台灣 BOSS 介紹視窗(從 BOSS 卡片點開) */
+  #tw-boss-detail-overlay > div {
+    max-width: 92vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* === 手機橫式或大手機 (≤900px) === */
+@media (max-width: 900px) {
+  /* 卡死自救選單字級進一步縮小 */
+  #_deadlock-rescue-menu {
+    padding: 20px 16px !important;
+  }
+  #_deadlock-rescue-menu button {
+    font-size: 15px !important;
+    padding: 10px 12px !important;
+  }
+  /* 跳過演出視窗的選項按鈕縮小 */
+  #adv-skip-select-box button {
+    padding: 6px 12px !important;
+    font-size: 15px !important;
+  }
+  /* BOSS 詳細彈窗大字標題縮小 */
+  #adv-boss-detail-pop [style*="font-size:36px"],
+  #adv-boss-detail-pop [style*="font-size: 36px"] {
+    font-size: 24px !important;
+  }
+  #adv-boss-detail-pop [style*="font-size:32px"],
+  #adv-boss-detail-pop [style*="font-size: 32px"] {
+    font-size: 22px !important;
+  }
+  /* 台灣 BOSS 介紹視窗的標題與大字 */
+  #tw-boss-detail-overlay [style*="font-size:30px"],
+  #tw-boss-detail-overlay [style*="font-size: 30px"] {
+    font-size: 22px !important;
+  }
+  #tw-boss-detail-overlay [style*="font-size:24px"],
+  #tw-boss-detail-overlay [style*="font-size: 24px"] {
+    font-size: 18px !important;
+  }
+}
+
+/* === 手機直式 (≤768px) === */
+@media (max-width: 768px) {
+  /* 卡死自救選單 */
+  #_deadlock-rescue-menu {
+    width: 92vw !important;
+    padding: 16px 14px !important;
+  }
+  #_deadlock-rescue-menu > div:first-child {
+    font-size: 22px !important;
+  }
+  #_deadlock-rescue-menu button {
+    font-size: 14px !important;
+    padding: 10px !important;
+    line-height: 1.4 !important;
+  }
+  #_deadlock-rescue-menu button > span {
+    font-size: 12px !important;
+  }
+  /* 跳過演出視窗 */
+  #adv-skip-select-box {
+    width: 96vw !important;
+    padding: 14px 12px !important;
+    max-height: 92vh !important;
+  }
+  #adv-skip-select-box [style*="font-size:24px"] {
+    font-size: 18px !important;
+  }
+  #adv-skip-select-box [style*="font-size:20px"] {
+    font-size: 16px !important;
+  }
+  #adv-skip-select-box button {
+    padding: 5px 10px !important;
+    font-size: 14px !important;
+  }
+  /* BOSS 詳細彈窗 */
+  #adv-boss-detail-pop > div {
+    width: 96vw !important;
+    padding: 18px 16px !important;
+    border-radius: 14px !important;
+  }
+  /* 至寶圖鑑頁面 */
+  #taiwan-treasure-page [style*="font-size:48px"] {
+    font-size: 28px !important;
+  }
+  #taiwan-treasure-page [style*="font-size:40px"] {
+    font-size: 24px !important;
+  }
+  #taiwan-treasure-page [style*="font-size:32px"] {
+    font-size: 20px !important;
+  }
+  /* 台灣 BOSS 介紹視窗 */
+  #tw-boss-detail-overlay > div {
+    padding: 18px 16px !important;
+  }
+  #tw-boss-detail-overlay [style*="font-size:30px"] {
+    font-size: 20px !important;
+  }
+  /* 台灣關過場 BOSS 介紹文 */
+  #taiwan-cutscene-overlay [style*="font-size:36px"] {
+    font-size: 22px !important;
+  }
+  #taiwan-cutscene-overlay [style*="font-size:28px"] {
+    font-size: 18px !important;
+  }
+  #taiwan-cutscene-overlay [style*="font-size:22px"] {
+    font-size: 16px !important;
+  }
+  /* 台灣關對白文字 */
+  #taiwan-dialog-overlay [style*="font-size:28px"] {
+    font-size: 18px !important;
+    line-height: 1.5 !important;
+  }
+  #taiwan-dialog-overlay [style*="font-size:24px"] {
+    font-size: 16px !important;
+  }
+  /* 台灣關難度選擇 */
+  #taiwan-difficulty-overlay [style*="font-size:32px"] {
+    font-size: 20px !important;
+  }
+  #taiwan-difficulty-overlay [style*="font-size:24px"] {
+    font-size: 16px !important;
+  }
+  #taiwan-difficulty-overlay [style*="font-size:20px"] {
+    font-size: 14px !important;
+  }
+  /* 強制重整視窗 */
+  #_force-refresh-modal {
+    width: 92vw !important;
+    padding: 20px 16px !important;
+  }
+  #_force-refresh-modal [style*="font-size:28px"] {
+    font-size: 20px !important;
+  }
+  #_force-refresh-modal [style*="font-size:20px"] {
+    font-size: 15px !important;
+  }
+  /* 更新日誌視窗 */
+  #_changelog-modal {
+    width: 96vw !important;
+    padding: 16px 14px !important;
+    max-height: 92vh !important;
+  }
+}
+
+/* === 小手機直式 (≤480px) === */
+@media (max-width: 480px) {
+  /* 卡死自救選單 — 極窄螢幕特別調整 */
+  #_deadlock-rescue-menu {
+    padding: 12px 10px !important;
+  }
+  #_deadlock-rescue-menu > div:first-child {
+    font-size: 18px !important;
+  }
+  #_deadlock-rescue-menu button {
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+  }
+  #_deadlock-rescue-menu button > span {
+    font-size: 11px !important;
+  }
+  /* 跳過演出視窗:選項按鈕進一步縮小避免擠 */
+  #adv-skip-select-box button {
+    padding: 4px 8px !important;
+    font-size: 13px !important;
+  }
+  #adv-skip-select-box [style*="font-size:24px"] {
+    font-size: 16px !important;
+  }
+  /* BOSS 詳細彈窗:極窄螢幕全面壓縮 */
+  #adv-boss-detail-pop > div {
+    padding: 14px 12px !important;
+  }
+  #adv-boss-detail-pop [style*="font-size:36px"] {
+    font-size: 20px !important;
+  }
+  #adv-boss-detail-pop [style*="font-size:24px"] {
+    font-size: 16px !important;
+  }
+  #adv-boss-detail-pop [style*="font-size:20px"] {
+    font-size: 15px !important;
+  }
+  /* 台灣 BOSS 介紹視窗 */
+  #tw-boss-detail-overlay [style*="font-size:24px"] {
+    font-size: 15px !important;
+  }
+  #tw-boss-detail-overlay [style*="font-size:18px"] {
+    font-size: 13px !important;
+  }
+  /* 至寶圖鑑頁面 */
+  #taiwan-treasure-page [style*="font-size:48px"] {
+    font-size: 22px !important;
+  }
+  #taiwan-treasure-page [style*="font-size:40px"] {
+    font-size: 20px !important;
+  }
+  /* 台灣關過場/對白:再縮一級 */
+  #taiwan-cutscene-overlay [style*="font-size:36px"] {
+    font-size: 18px !important;
+  }
+  #taiwan-dialog-overlay [style*="font-size:28px"] {
+    font-size: 15px !important;
+  }
+}
+
+/* === 直立模式特殊處理(高>寬) === */
+@media (orientation: portrait) and (max-width: 900px) {
+  /* 直立時台灣地圖卡片欄要縮小,避免擋住地圖 */
+  .taiwan-map-side-col {
+    width: clamp(120px, 26vw, 180px) !important;
+    padding: 6px !important;
+    gap: 6px !important;
+  }
+  /* 直立時 BOSS 卡片內的文字也縮小 */
+  .taiwan-map-side-col [style*="font-size:15"],
+  .taiwan-map-side-col [style*="font-size:16"],
+  .taiwan-map-side-col [style*="font-size:17"],
+  .taiwan-map-side-col [style*="font-size:18"],
+  .taiwan-map-side-col [style*="font-size:19"] {
+    font-size: 12px !important;
+  }
+  /* 直立時 BOSS 詳細彈窗讓圖片小一點,文字才有空間 */
+  #adv-boss-detail-pop img {
+    max-height: 180px !important;
+  }
+}
+
+/* === 直立窄螢幕 (≤600px) — 卡片欄極簡 === */
+@media (orientation: portrait) and (max-width: 600px) {
+  .taiwan-map-side-col {
+    width: clamp(100px, 24vw, 140px) !important;
+  }
+  /* 卡片頭像縮小 */
+  .taiwan-map-side-col img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+/* === 至寶圖鑑頁面 RWD === */
+@media (max-width: 900px) {
+  /* 小螢幕讓圖鑑改成單欄垂直堆疊(grid+詳情) */
+  #taiwan-treasure-page > div:nth-child(2) {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  /* 圖鑑的 2 欄 grid 改用全寬 */
+  .tt-grid-rwd {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+@media (max-width: 480px) {
+  /* 小手機:至寶 grid 改成單欄 */
+  .tt-grid-rwd {
+    grid-template-columns: 1fr !important;
+    padding: 12px 10px !important;
+  }
+}
+
+/* === 橫式低高度 (≤500px 高,例如手機橫放) === */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* 確保所有彈窗高度受限,可捲動 */
+  #_deadlock-rescue-menu,
+  #adv-boss-detail-pop > div,
+  #tw-boss-detail-overlay > div,
+  #adv-skip-select-box {
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+    padding: 10px 14px !important;
+  }
+  /* 字級進一步縮小 */
+  #_deadlock-rescue-menu > div:first-child {
+    font-size: 18px !important;
+    margin-bottom: 4px !important;
+  }
+  #_deadlock-rescue-menu > div:nth-child(2) {
+    font-size: 13px !important;
+    margin-bottom: 10px !important;
+  }
+  #_deadlock-rescue-menu button {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+  }
+  /* 跳過演出視窗在低高度時各區塊間距縮小 */
+  #adv-skip-select-box [style*="margin-bottom:16px"] {
+    margin-bottom: 8px !important;
+  }
+}
+
+/* === 觸控優化:防止 iOS 雙擊放大 === */
+@media (hover: none) and (pointer: coarse) {
+  button, [onclick], .clickable {
+    touch-action: manipulation;
+  }
+  /* 觸控目標最小 44×44 (Apple HIG 建議) */
+  #_deadlock-rescue-menu button,
+  #adv-skip-select-box button,
+  #adv-boss-detail-pop button,
+  #tw-boss-detail-overlay button {
+    min-height: 44px !important;
   }
 }
 
@@ -22603,10 +22962,29 @@ function startTurn(){
       && !window._bossQuizDoneForCharm);  // 一回合只在魅惑 path 出題一次
     if(_isBossWithQuiz2){
       window._bossQuizDoneForCharm = true;
+      // ★ v1.0.20260428.3940 — 修正 BOSS 中魅惑時的無限出題循環
+      //   bug 症狀:玩家用玉藻前禍世邪魅給杏花妖魅惑後,答完題選了獎勵卻沒看到效果,直接又出下一題
+      //   舊 cb:重新呼叫 startTurn → 但 BOSS 仍 charm + !acted → 又進來觸發 quiz → 無限循環
+      //         (原本以為 _bossQuizDoneForCharm 能擋,但 cb 開頭就把它設回 false)
+      //   修補:答完題就讓 BOSS「因魅惑跳過行動」,參考 stun/freeze 的處理(line 22860 的 _doSkipAfterQuiz)
+      //         tickStatus 推進魅惑回合 + acted=true + startTurn 進下個 actor
+      const _charmedBoss = next;
       _advQuizResolveCb = () => {
-        window._bossQuizDoneForCharm = false;
-        // 答題完後重新進入這個 startTurn(此時 _bossQuizDoneForCharm=false 不會無限遞迴,但 charm 會走魅惑邏輯)
-        startTurn();
+        try{
+          window._bossQuizDoneForCharm = false;
+          if(_charmedBoss && _charmedBoss.curHp > 0){
+            log(`💕 [${_charmedBoss.name}] 因魅惑跳過本次行動!`);
+            try{ tickStatus(_charmedBoss); }catch(_){}
+            _charmedBoss.acted = true;
+          }
+          G.pendingTarget = null; pendingCb = null;
+          updateUI();
+          _pSetTimeout(startTurn, 400);
+        }catch(_e){
+          console.error('[charm quiz cb] 失敗', _e);
+          if(_charmedBoss) _charmedBoss.acted = true;
+          _pSetTimeout(startTurn, 400);
+        }
       };
       try{ log(`[${next.name}] 雖被魅惑,但仍要答題!`); }catch(_){}
       try{ advShowQuiz(); }catch(e){
@@ -29697,6 +30075,7 @@ window.openTaiwanTreasurePage = function(){
   // 左側:10 個至寶卡片網格
   const grid = document.createElement('div');
   grid.id = 'tt-grid';
+  grid.className = 'tt-grid-rwd';
   grid.style.cssText = 'flex:0 0 clamp(380px,46vw,560px);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-content:flex-start;';
   main.appendChild(grid);
 
@@ -33969,7 +34348,9 @@ window._showTaiwanMap = function(){
 
   // ── 左側卡片欄(中南部 BOSS) — absolute 浮層 ──
   // ★ v1.0.20260428.3820 — 改成絕對定位浮層,讓地圖底層延伸到全螢幕邊緣
+  // ★ v1.0.20260428.3930 — 加 class 讓 RWD CSS 可控制
   const leftCol = document.createElement('div');
+  leftCol.className = 'taiwan-map-side-col taiwan-map-left-col';
   leftCol.style.cssText =
     'position:absolute;left:8px;top:8px;bottom:8px;' +
     'width:clamp(220px,20vw,290px);' +
@@ -34061,7 +34442,9 @@ window._showTaiwanMap = function(){
 
   // ── 右側卡片欄(北部+蘭嶼) — absolute 浮層 ──
   // ★ v1.0.20260428.3820 — 改成絕對定位浮層,跟左側對稱
+  // ★ v1.0.20260428.3930 — 加 class 讓 RWD CSS 可控制
   const rightCol = document.createElement('div');
+  rightCol.className = 'taiwan-map-side-col taiwan-map-right-col';
   rightCol.style.cssText =
     'position:absolute;right:8px;top:8px;bottom:8px;' +
     'width:clamp(220px,20vw,290px);' +
@@ -53050,6 +53433,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3940', brief:[
+    '🐛 修正使用玉藻前禍世邪魅讓 BOSS 中魅惑後,答題獎勵沒效果且無限循環的 bug',
+  ], items:[
+    '【bug 症狀】玉藻前用爆發技禍世邪魅讓 BOSS 中強力魅惑,下回合 BOSS 行動時出題,玩家答對選獎勵→沒看到任何獎勵效果→直接又出下一題,反覆循環無法行動',
+    '【bug 根因】BOSS 中魅惑時的答題回呼設計錯誤:答完題後會重新呼叫 startTurn,但 BOSS 仍然處於魅惑狀態且沒被標記為已行動,結果重複進入魅惑分支又出題',
+    '【修復】改成跟暈眩、冰凍、睡眠的處理方式一致:答完題就讓 BOSS「因魅惑跳過本次行動」,標記為已行動並推進魅惑回合,讓下個角色正常行動',
+    '【技能審核】',
+    '・玉藻前爆發技「禍世邪魅」實際效果不變(對 BOSS 強力魅惑 + 持續吸血)',
+    '・所有受影響的 BOSS 中魅惑後反應符合設計:當回合跳過行動,下回合魅惑解除即可正常行動',
+    '・玩家可正常領取答題獎勵效果(滿血、能量爆發、清除狀態等)',
+  ] },
+  { ver:'v1.0.20260428.3930', brief:[
+    '📱 全面優化 iPad、手機玩家的視覺體驗,讓彈出視窗在小螢幕也清楚易讀',
+  ], items:[
+    '・所有彈出視窗(卡死自救、跳過演出、BOSS 詳細、台灣關過場/對白/難度、至寶圖鑑、強制重整、更新日誌)在 iPad/手機自動縮放',
+    '・字體在不同尺寸的螢幕自動調整大小,大螢幕大字、小螢幕小字',
+    '・所有視窗加上「捲動」功能,內容超過螢幕高度時可以滑動查看',
+    '・台灣地圖在直立的手機上,左右兩側 BOSS 卡片欄變窄,讓中央地圖更清楚',
+    '・至寶圖鑑在小手機自動改成單欄顯示,不會擠成一團',
+    '・觸控按鈕最小高度 44px,符合蘋果觸控指引,小手指也好按',
+    '・防止 iOS 雙擊放大畫面的問題',
+    '【涵蓋的螢幕尺寸】',
+    '・iPad(≤1180px):卡片欄寬度縮小,字級維持清楚',
+    '・大手機橫式(≤900px):彈窗字級全面縮小一級',
+    '・手機直式(≤768px):字級再縮一級,padding 變小',
+    '・小手機(≤480px):極簡模式,所有視窗壓縮到最小可讀',
+    '・手機橫放低高度(≤500px):確保所有彈窗能捲動',
+    '・直立模式(高>寬):特殊優化避免內容被擋',
+  ] },
   { ver:'v1.0.20260428.3920', brief:[
     '🐛 修正巫女的爆發技「神樂舞」發動後戰鬥中斷的 bug',
   ], items:[
@@ -61617,7 +62029,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3920';
+  const CURRENT_VERSION = 'v1.0.20260428.3940';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61651,7 +62063,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3930';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3940';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
