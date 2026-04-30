@@ -1694,11 +1694,6 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #_changelog-modal,
 #_force-refresh-modal,
 #_pwa-guide-modal,
-#taiwan-cutscene-overlay,
-#taiwan-dialog-overlay,
-#taiwan-difficulty-overlay,
-#taiwan-treasure-page,
-#taiwan-map-overlay,
 #tw-boss-detail-overlay,
 #adv-boss-detail-pop,
 [id$="-confirm-box"],
@@ -1707,6 +1702,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   max-height: 90vh !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
+  box-sizing: border-box !important;
+}
+
+/* ★ v1.0.20260428.3990 — 全螢幕 overlay 不限制尺寸,確保覆蓋整個畫面 */
+/* ★ v1.0.20260428.4030 — 補上 3 個台灣關全螢幕 overlay(過場/對白/難度) */
+#taiwan-treasure-page,
+#taiwan-map-overlay,
+#taiwan-cutscene-overlay,
+#taiwan-dialog-overlay,
+#taiwan-difficulty-overlay {
   box-sizing: border-box !important;
 }
 
@@ -5149,6 +5154,16 @@ body.art-premium #summon-overlay {
       font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;
       box-shadow:0 0 16px rgba(255,100,180,0.45),inset 0 0 10px rgba(255,150,200,0.2);">
       🎉 近期活動與新角色
+    </button>
+    <!-- ★ v1.0.20260428.4080 — 玩家手動同步雲端按鈕 -->
+    <button id="adv-manual-sync-btn" onclick="_manualCloudSync(this)"
+      style="width:100%;margin-top:8px;padding:11px 8px;font-size:clamp(18px,2.2vw,28px);font-weight:800;
+      background:linear-gradient(135deg,rgba(40,120,180,0.95),rgba(60,160,220,0.95),rgba(30,100,150,0.95));
+      border:2px solid rgba(120,200,255,0.85);color:#e0f4ff;border-radius:12px;cursor:pointer;
+      font-family:'M PLUS Rounded 1c','Nunito',sans-serif;letter-spacing:1px;
+      box-shadow:0 0 16px rgba(80,180,255,0.45),inset 0 0 10px rgba(120,200,255,0.2);
+      transition:all 0.2s;">
+      ☁ 立即同步雲端
     </button>
     </div>
 
@@ -21824,6 +21839,17 @@ function autoUseItem(item, actor, cb){
 }
 
 function endAction(a, cost, noFinish=false){
+  // ★ v1.0.20260428.4010 — [診斷] endAction 進入
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode
+       && typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      console.log('🎯 [台灣關診斷] endAction 進入,actor=' + (a ? a.name : 'null')
+        + '(' + (a ? a.side+'-'+a.pos : '?') + ')'
+        + ', cost=' + cost
+        + ', noFinish=' + noFinish
+        + ', curHp=' + (a ? a.curHp : '?'));
+    }
+  }catch(_){}
   // ★ v1.0.20260424.0910 — 正常結束行動時清除 AI watchdog,避免誤觸發
   try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
   // ★ v1.0.20260424.1120 — 行動結束時也清除卡死偵測 watchdog
@@ -22715,7 +22741,16 @@ function startTurn(){
   // 還原被暴風雪/擊退效果降低的spd（在排序前還原，避免永久降速）
   // 只有當該角色即將行動時才還原（已排到最後、要輪到它了）
   const alive=[...G.p1,...G.p2].filter(h=>h.curHp>0&&!h.acted);
-  if(!alive.length){ nextRound(); return; }
+  if(!alive.length){
+    // ★ v1.0.20260428.4010 — [診斷] 進入 nextRound
+    try{
+      if(typeof _adventureMode !== 'undefined' && _adventureMode
+         && typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        console.log('🎯 [台灣關診斷] alive=0 進入 nextRound, round=' + (G.round||'?'));
+      }
+    }catch(_){}
+    nextRound(); return;
+  }
 
   // 若所有存活未行動者都被pushback，代表輪到他們行動了，先還原spd
   const allPushed = alive.every(h=>h._pushBackSpd!==undefined);
@@ -22731,6 +22766,30 @@ function startTurn(){
   });
 
   const next=alive.sort(sortFn)[0];
+
+  // ★ v1.0.20260428.4010 — [診斷模式] 台灣關 BOSS 戰卡死排查專用 log
+  //   在 startTurn 選到 actor 時印出所有可能影響流程的狀態,幫助找出「卡在哪一步」
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode
+       && typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      const _aliveP1 = G.p1 ? G.p1.filter(h => h.curHp > 0).length : 0;
+      const _aliveP2 = G.p2 ? G.p2.filter(h => h.curHp > 0).length : 0;
+      const _actedP1 = G.p1 ? G.p1.filter(h => h.curHp > 0 && h.acted).length : 0;
+      const _actedP2 = G.p2 ? G.p2.filter(h => h.curHp > 0 && h.acted).length : 0;
+      console.log('🎯 [台灣關診斷] startTurn 選 actor:'
+        + ' round=' + (G.round||'?')
+        + ', next=' + next.name + '(' + next.side + '-' + next.pos + ')'
+        + ', acted=' + next.acted
+        + ', curHp=' + next.curHp
+        + ', alive=' + alive.length
+        + ', p1=' + _actedP1 + '/' + _aliveP1
+        + ', p2=' + _actedP2 + '/' + _aliveP2
+        + ', _gamePaused=' + (typeof _gamePaused !== 'undefined' ? _gamePaused : 'N/A')
+        + ', _advQuizPhase=' + (typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : 'N/A')
+        + ', _bossQuizInFlight=' + !!window._bossQuizInFlight
+        + ', _advQuizResolveCb=' + (typeof _advQuizResolveCb !== 'undefined' ? !!_advQuizResolveCb : 'N/A'));
+    }
+  }catch(_logE){}
 
   // 占星師天賦：輪到自己回合時60%機率補充1能量
   if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(next.name)*0.04)){
@@ -23739,6 +23798,14 @@ function aiAct(a){
       //        _bossQuizInFlight=false → 又觸發 quiz → 無限循環
       //   修補:cb 開頭先設 a.acted=true(BOSS 技能執行不依賴 acted 旗標,只 endAction 才設,
       //        所以預先設不影響;startTurn 看到 acted=true 會跳過,不會選回這個 BOSS)
+      // ★ v1.0.20260428.4010 — [診斷] cb 進入時印 log
+      try{
+        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+          console.log('🎯 [台灣關診斷] BOSS quiz cb 觸發,actor=' + (a ? a.name : 'null')
+            + ', curHp=' + (a ? a.curHp : '?')
+            + ', round=' + (G && G.round || '?'));
+        }
+      }catch(_){}
       try{ if(a) a.acted = true; }catch(_){}
       try{ window._bossQuizInFlight = false; }catch(_){}
       _realAiAct(a);
@@ -23756,6 +23823,15 @@ function aiAct(a){
 function _realAiAct(a){
   // ★ 防護：若 a 無效直接跳過回合
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
+  // ★ v1.0.20260428.4010 — [診斷] _realAiAct 進入
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      console.log('🎯 [台灣關診斷] _realAiAct 進入,actor=' + a.name
+        + '(' + a.side + '-' + a.pos + ')'
+        + ', curHp=' + a.curHp
+        + ', acted=' + a.acted);
+    }
+  }catch(_){}
   // ★ v1.0.20260428.3680 — 卡死偵測補強:在 _realAiAct 進入時也啟動 deadlock watchdog
   //   原本只在 startTurn 顯示「現在是對手的回合」時(line 22698)啟動 watchdog,
   //   但 BOSS 答題後從 quiz cb 直接呼叫 _realAiAct 不會經過 startTurn → watchdog 從未啟動,
@@ -31363,6 +31439,21 @@ function advNavLocked(name){
     setTimeout(()=>{ if(_tip.parentNode) _tip.remove(); }, 400); }, 1800);
 }
 function closeAdventureOverlay(){
+  // ★ v1.0.20260428.4020 — 防止戰鬥中誤觸:若正在冒險戰鬥中,拒絕關閉
+  //   bug 症狀:台灣關答對第 1 題後 closeAdventureOverlay 意外被呼叫,exitAdventureMode 中斷戰鬥
+  //   根因:adv-back-btn(返回首頁按鈕) onclick 被某個 event 誤觸發
+  //   修補:在戰鬥中(_adventureMode=true 且 row2 等戰鬥 UI 顯示中)直接 return,
+  //         不執行任何關閉動作,保護戰鬥流程
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      const _gc = document.getElementById('gc');
+      const _isInBattle = _gc && _gc.classList.contains('adv-battle');
+      if(_isInBattle){
+        console.warn('🚨 [closeAdventureOverlay] 戰鬥中拒絕關閉冒險 overlay,堆疊:', new Error().stack);
+        return;
+      }
+    }
+  }catch(_){}
   const ov = document.getElementById('adventure-overlay');
   if(!ov) return;
   ov.style.display = 'none';
@@ -31709,7 +31800,7 @@ function _showTaiwanMapSelector(onConfirm){
     '<div style="font-size:18px;color:#ccddee;text-align:center;line-height:1.8;">' +
       '點選左側台灣地圖上的圖釘,<br>' +
       '查看魔王資料、難度、可獲得的至寶。<br><br>' +
-      '<span style="color:#ffcc66;">💡 建議玩家等級 45+ 挑戰</span>' +
+      '<span style="color:#ffcc66;">🌟 每隻魔王都會掉落專屬至寶!</span>' +
     '</div>';
   mainContainer.appendChild(detailBox);
 
@@ -31898,15 +31989,12 @@ function _renderTaiwanBossDetail(bossId, onConfirm){
         _imgHtml +
       '</div>';
     })() +
-    // 難度與建議等級
-    '<div style="display:flex;gap:14px;margin-bottom:12px;">' +
-      '<div style="flex:1;background:rgba(255,200,80,0.12);border:1.5px solid rgba(255,200,80,0.4);border-radius:10px;padding:10px 14px;">' +
+    // ★ v1.0.20260428.4090 — 移除「建議等級」(玩家比較關心戰鬥強度而非等級門檻)
+    //   保留難度顯示,佔滿整行
+    '<div style="margin-bottom:12px;">' +
+      '<div style="background:rgba(255,200,80,0.12);border:1.5px solid rgba(255,200,80,0.4);border-radius:10px;padding:10px 14px;">' +
         '<div style="font-size:13px;color:#ddccaa;">難度</div>' +
         '<div style="font-size:22px;font-weight:800;"><span style="color:#ffcc44;">'+filledStars+'</span><span style="color:#444;">'+emptyStars+'</span></div>' +
-      '</div>' +
-      '<div style="flex:1;background:rgba(120,200,255,0.12);border:1.5px solid rgba(120,200,255,0.4);border-radius:10px;padding:10px 14px;">' +
-        '<div style="font-size:13px;color:#aacced;">建議等級</div>' +
-        '<div style="font-size:22px;font-weight:800;color:#88ddff;">Lv ' + boss.suggestLv + '+</div>' +
       '</div>' +
     '</div>' +
     // ★ v1.0.20260428.3200 — BOSS 元素屬性與相剋提示
@@ -31940,6 +32028,7 @@ function _renderTaiwanBossDetail(bossId, onConfirm){
       '"' + boss.desc + '"' +
     '</div>' +
     // 至寶獎勵
+    // ★ v1.0.20260428.4090 — 至寶顯示加入 abilityText(實際效果),不只外觀描述
     (treas ? (
       '<div style="background:linear-gradient(135deg,'+rarityColor+'22,rgba(0,0,0,0.4));border:2px solid '+rarityColor+'88;border-radius:14px;padding:14px;margin-bottom:18px;">' +
         '<div style="font-size:14px;color:'+rarityColor+';letter-spacing:2px;font-weight:800;margin-bottom:6px;">💎 戰勝獎勵</div>' +
@@ -31947,8 +32036,13 @@ function _renderTaiwanBossDetail(bossId, onConfirm){
           '<div style="font-size:60px;">' + _renderTaiwanTreasureIconHtml(treas, 60, rarityColor) + '</div>' +
           '<div style="flex:1;">' +
             '<div style="font-size:22px;font-weight:900;color:'+rarityColor+';margin-bottom:4px;">' + treas.name + '</div>' +
-            '<div style="font-size:14px;color:#fff;background:'+rarityColor+';display:inline-block;padding:2px 8px;border-radius:4px;font-weight:800;">' + rarityText + ' · ' + (treas.slot==='weapon'?'武器':treas.slot==='armor'?'防具':'飾品') + '</div>' +
-            '<div style="font-size:13px;color:#ccddee;margin-top:6px;line-height:1.5;">' + treas.desc + '</div>' +
+            '<div style="font-size:14px;color:#fff;background:'+rarityColor+';display:inline-block;padding:2px 8px;border-radius:4px;font-weight:800;margin-bottom:6px;">' + rarityText + ' · ' + (treas.slot==='weapon'?'武器':treas.slot==='armor'?'防具':'飾品') + '</div>' +
+            '<div style="font-size:13px;color:#bbccdd;font-style:italic;line-height:1.5;margin-bottom:6px;">「' + treas.desc + '」</div>' +
+            (treas.abilityText ? (
+              '<div style="background:rgba(0,0,0,0.4);border-left:3px solid '+rarityColor+';padding:6px 10px;border-radius:6px;font-size:14px;color:#ffeebb;line-height:1.6;font-weight:600;">' +
+                '⚡ ' + treas.abilityText +
+              '</div>'
+            ) : '') +
           '</div>' +
         '</div>' +
       '</div>'
@@ -32106,9 +32200,18 @@ function _showTaiwanCutscene(bossId, onDone){
     '<div style="position:absolute;bottom:60px;font-size:22px;color:#fff;letter-spacing:4px;animation:taiwanCutscenePulse 1.5s ease-in-out infinite;">▶ 點擊任意處繼續</div>';
   overlay.onclick = () => {
     try{ playSfx('sfx-confirm2', 0.5); }catch(_){}
+    // ★ v1.0.20260428.4060 — 修對白切換時露出戰鬥畫面紅藍底色的問題
+    //   舊邏輯:先 opacity:0 漸隱 400ms,期間 gc 戰鬥畫面露出,再 remove 後才 onDone
+    //   新邏輯:立即呼叫 onDone(下一個 overlay 立刻覆蓋上來),原本 overlay 在背景漸隱後 remove
+    //   z-index 順序仍然正確(下一個 overlay 9760 > 此 overlay 9750)
     overlay.style.transition = 'opacity 0.4s';
     overlay.style.opacity = '0';
-    setTimeout(()=>{ overlay.remove(); if(onDone) onDone(); }, 400);
+    // 立即啟動 onDone,讓下一個 overlay 同步出現覆蓋
+    if(onDone){
+      try{ onDone(); }catch(_e){ console.error('[_showTaiwanCutscene onDone]', _e); }
+    }
+    // 400ms 後再 remove 已隱藏的 overlay,清乾淨 DOM
+    setTimeout(()=>{ try{ overlay.remove(); }catch(_){} }, 400);
   };
   document.body.appendChild(overlay);
 }
@@ -32123,12 +32226,13 @@ function _showTaiwanBossDialog(bossId, onDone){
   const bossUrl  = (typeof _getTaiwanBossImage === 'function')  ? _getTaiwanBossImage(bossId)  : '';
   const overlay = document.createElement('div');
   overlay.id = 'taiwan-dialog-overlay';
+  // ★ v1.0.20260428.4060 — 移除 fadeIn 動畫,避免與上一個 overlay(過場)漸隱期間中間透明,露出 gc
   overlay.style.cssText =
     'position:fixed;inset:0;z-index:9760;cursor:pointer;' +
     (sceneUrl ? ('background:url("'+sceneUrl+'") center center/cover no-repeat,') : 'background:') +
     'linear-gradient(180deg,rgba(0,0,0,0.5),rgba(0,0,0,0.85));' +
     'display:flex;flex-direction:column;align-items:center;justify-content:flex-end;' +
-    'animation:taiwanCutsceneIn 0.5s ease-out;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
   const _bossPortraitHtml = bossUrl
     ? '<img id="taiwan-dialog-boss-img" src="'+bossUrl+'" style="position:absolute;top:8%;right:6%;max-height:60%;max-width:35%;object-fit:contain;filter:drop-shadow(0 0 30px rgba(255,100,100,0.7));animation:taiwanCutsceneTitle 0.8s ease-out both;" onerror="this.style.display=\'none\';" />'
     : '';
@@ -32146,9 +32250,14 @@ function _showTaiwanBossDialog(bossId, onDone){
   let currentIdx = 0;
   const showLine = () => {
     if(currentIdx >= lines.length){
+      // ★ v1.0.20260428.4060 — 對白結束時,先 onDone 啟動下一個 overlay(難度視窗),
+      //   再讓此 overlay 漸隱 remove,避免中間露出 gc 戰鬥背景
       overlay.style.transition = 'opacity 0.4s';
       overlay.style.opacity = '0';
-      setTimeout(()=>{ overlay.remove(); if(onDone) onDone(); }, 400);
+      if(onDone){
+        try{ onDone(); }catch(_e){ console.error('[_showTaiwanBossDialog onDone]', _e); }
+      }
+      setTimeout(()=>{ try{ overlay.remove(); }catch(_){} }, 400);
       return;
     }
     const line = lines[currentIdx];
@@ -32192,10 +32301,11 @@ function _showTaiwanDifficultySelect(bossId, onSelected){
   if(old) old.remove();
   const overlay = document.createElement('div');
   overlay.id = 'taiwan-difficulty-overlay';
+  // ★ v1.0.20260428.4060 — 移除 fadeIn 動畫,避免與上一個 overlay 漸隱期間透明露出 gc
   overlay.style.cssText =
     'position:fixed;inset:0;z-index:9770;background:linear-gradient(135deg,rgba(20,10,40,0.96),rgba(40,20,60,0.97));' +
     'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;' +
-    'animation:taiwanCutsceneIn 0.5s ease-out;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+    'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
   const difficulties = [
     { key:'沒自信', label:'😰 沒自信',   sub:'2 個選項', desc:'簡單模式,適合害羞的小英雄',     color:'#88ddff' },
     { key:'普通',   label:'😎 普通',     sub:'3 個選項', desc:'中等難度,給準備好的英雄',       color:'#ffcc44' },
@@ -32223,9 +32333,14 @@ function _showTaiwanDifficultySelect(bossId, onSelected){
       card.addEventListener('click', ()=>{
         const key = card.getAttribute('data-key');
         try{ playSfx('sfx-confirm2', 0.7); }catch(_){}
+        // ★ v1.0.20260428.4060 — 選擇難度後立即觸發 onSelected(進戰鬥流程),
+        //   原本 400ms 漸隱期間玩家會看到 gc 戰鬥背景紅藍底色閃現
         overlay.style.transition = 'opacity 0.4s';
         overlay.style.opacity = '0';
-        setTimeout(()=>{ overlay.remove(); if(onSelected) onSelected(key); }, 400);
+        if(onSelected){
+          try{ onSelected(key); }catch(_e){ console.error('[_showTaiwanDifficultySelect onSelected]', _e); }
+        }
+        setTimeout(()=>{ try{ overlay.remove(); }catch(_){} }, 400);
       });
     });
     const backBtn = document.getElementById('taiwan-diff-back-btn');
@@ -32233,8 +32348,10 @@ function _showTaiwanDifficultySelect(bossId, onSelected){
       backBtn.onclick = () => {
         try{ playSfx('sfx-cancel', 0.5); }catch(_){}
         overlay.remove();
-        if(typeof _showTaiwanMapSelector === 'function'){
-          _showTaiwanMapSelector(()=> showHeroPickOverlay());
+        // ★ v1.0.20260428.4060 — 「返回 BOSS 詳情」改成回到台灣地圖選關畫面
+        //   只用新版 window._showTaiwanMap(),完全不再呼叫舊版 _showTaiwanMapSelector
+        if(typeof window._showTaiwanMap === 'function'){
+          window._showTaiwanMap();
         }
       };
     }
@@ -32667,9 +32784,11 @@ function startAdventureGame(stage){
       // 已從新版地圖選好 BOSS → 跳過舊版 selector,直接進選角
       fadeTransition(()=>{ showHeroPickOverlay(); }, 350);
     } else {
-      // fallback:極端情況才走舊版 selector(例如直接呼叫 startAdventureGame 沒選 BOSS)
+      // ★ v1.0.20260428.4060 — fallback 改用新版 _showTaiwanMap(舊版 _showTaiwanMapSelector 已廢棄)
       fadeTransition(()=>{
-        _showTaiwanMapSelector(()=> showHeroPickOverlay());
+        if(typeof window._showTaiwanMap === 'function'){
+          window._showTaiwanMap();
+        }
       }, 350);
     }
     return;
@@ -34018,7 +34137,8 @@ window._japanTrySelect = function(btnEl){
 
 // ★ v1.0.20260428.1700 — 台灣環島歷險記:管理員測試模式
 //   非管理員會被擋下,只有白名單帳號可以進去測試
-window._TAIWAN_ADMIN_ONLY = true;       // 管理員測試開關,正式上線時改 false
+// ★ v1.1.0 — 玩家版:旗標保持 true 鎖死,且入口按鈕在 HTML 改為「敬請期待」灰按鈕,玩家完全看不到入口
+window._TAIWAN_ADMIN_ONLY = true;       // 玩家版:鎖死(不開放白名單也擋下)
 window._taiwanTrySelect = function(btnEl){
   if(window._TAIWAN_ADMIN_ONLY && !(typeof window._isAdminUser === 'function' && window._isAdminUser())){
     try{ playSfx('sfx-cancel', 0.6); }catch(_){}
@@ -34371,8 +34491,12 @@ window._showTaiwanMap = function(){
   mapInner.appendChild(mapImg);
   mapWrap.appendChild(mapInner);
 
-  // ★ v1.0.20260428.3790 — 10 個地標位置:發光點精準對齊圖片建築,文字用 labelDx/labelDy 個別偏移避免重疊
-  // ★ 發光點和文字都加進 mapInner(座標相對於圖片本身的%)
+  // ★ v1.0.20260428.4090 — 移除地圖上的發光點與地名標籤
+  //   原本每個 BOSS 在地圖上有發光圓點 + 地名文字方框,玩家可從地圖點擊
+  //   改為:左右兩側 BOSS 卡片才是點擊入口,地圖純粹作為視覺背景
+  //   優點:地圖更乾淨美觀,玩家專注卡片操作不會被視覺干擾
+  //   保留 TAIWAN_BOSS_GLOW_COORDS 常數定義(仍在 line 34224),日後若要恢復可解註此段
+  /*
   Object.keys(TAIWAN_BOSSES).forEach(bossId => {
     const coord = TAIWAN_BOSS_GLOW_COORDS[bossId];
     if(!coord) return;
@@ -34390,8 +34514,6 @@ window._showTaiwanMap = function(){
       'z-index:10;';
     mapInner.appendChild(glow);
 
-    // ★ v1.0.20260428.3790 — 地名標籤支援 labelDx/labelDy 個別偏移避免重疊
-    //   labelDx/labelDy 是文字「相對於發光點」的位移(預設下方 18px)
     const _ldx = (typeof coord.labelDx === 'number') ? coord.labelDx : 0;
     const _ldy = (typeof coord.labelDy === 'number') ? coord.labelDy : 18;
     const lbl = document.createElement('div');
@@ -34410,6 +34532,7 @@ window._showTaiwanMap = function(){
     lbl.textContent = coord.label;
     mapInner.appendChild(lbl);
   });
+  */
 
   mapCol.appendChild(mapWrap);
   mainArea.appendChild(mapCol);
@@ -34518,15 +34641,11 @@ function _showTaiwanBossDetail(bossId){
         ) +
       '</div>' +
 
-      // 難度 + 建議等級 兩格
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">' +
+      // ★ v1.0.20260428.4090 — 移除建議等級,難度改為單欄佔滿
+      '<div style="margin-bottom:10px;">' +
         '<div style="background:rgba(255,180,40,0.08);border:1.5px solid rgba(255,180,40,0.45);border-radius:12px;padding:10px 12px;text-align:center;">' +
           '<div style="font-size:13px;color:#ffcc88;letter-spacing:2px;margin-bottom:2px;">⭐ 難度</div>' +
           '<div style="font-size:22px;color:#ffdd66;letter-spacing:2px;line-height:1.2;">'+_stars+'</div>' +
-        '</div>' +
-        '<div style="background:rgba(80,200,255,0.08);border:1.5px solid rgba(80,200,255,0.45);border-radius:12px;padding:10px 12px;text-align:center;">' +
-          '<div style="font-size:13px;color:#88ddff;letter-spacing:2px;margin-bottom:2px;">💪 建議等級</div>' +
-          '<div style="font-size:22px;color:#aaeeff;font-weight:900;line-height:1.2;">Lv '+boss.suggestLv+'+</div>' +
         '</div>' +
       '</div>' +
 
@@ -34542,6 +34661,7 @@ function _showTaiwanBossDetail(bossId){
       '</div>' +
 
       // 戰勝獎勵 — 至寶
+      // ★ v1.0.20260428.4090 — 加入 abilityText 顯示至寶實際效果(不只外觀描述)
       (treasure ? '<div style="background:linear-gradient(135deg,rgba(0,30,60,0.6),rgba(0,15,40,0.6));border:2px solid '+_rc+';border-radius:12px;padding:12px 14px;margin-bottom:16px;">' +
         '<div style="font-size:13px;color:'+_rc+';letter-spacing:3px;margin-bottom:8px;font-weight:800;">💎 戰勝獎勵'+(_got?' <span style="color:#88ff88;font-size:11px;font-weight:700;">(已獲得)</span>':'')+'</div>' +
         '<div style="display:flex;gap:12px;align-items:center;">' +
@@ -34551,9 +34671,15 @@ function _showTaiwanBossDetail(bossId){
           '<div style="flex:1;min-width:0;">' +
             '<div style="font-size:18px;font-weight:900;color:'+_rc+';letter-spacing:1px;line-height:1.2;">'+treasure.name+'</div>' +
             '<div style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:800;background:'+_rc+';color:#fff;border-radius:5px;letter-spacing:1px;margin-top:4px;">'+_rn+' ・ '+(_slotName[treasure.slot]||'飾品')+'</div>' +
-            '<div style="font-size:12px;color:#ccddee;line-height:1.5;margin-top:5px;">'+treasure.desc+'</div>' +
+            '<div style="font-size:12px;color:#bbccdd;font-style:italic;line-height:1.5;margin-top:5px;">「'+treasure.desc+'」</div>' +
           '</div>' +
         '</div>' +
+        // ★ v1.0.20260428.4090 — abilityText 效果說明放在獎勵框最下方,獨立一個金色小框
+        (treasure.abilityText ? (
+          '<div style="background:rgba(0,0,0,0.45);border-left:3px solid '+_rc+';padding:8px 12px;border-radius:6px;font-size:13px;color:#ffeebb;line-height:1.6;font-weight:600;margin-top:10px;">' +
+            '⚡ ' + treasure.abilityText +
+          '</div>'
+        ) : '') +
       '</div>' : '') +
 
       // 兩顆按鈕並排:詳細資料(左,藍紫) + 挑戰魔王(右,藍漸層)
@@ -37221,6 +37347,15 @@ window._advShowJapanDifficulty = function(callback){
 };
 
 function advStartBattle(){
+  // ★ v1.0.20260428.4020 — 戰鬥開始時強制隱藏 adventure-overlay 與其內部按鈕
+  //   bug 症狀:台灣關 BOSS 戰答對第 1 題後,exitAdventureMode 被呼叫,戰鬥意外中斷
+  //   根因:adventure-overlay 沒被隱藏,「← 返回首頁」按鈕(absolute 左上角)殘留在戰鬥畫面上
+  //         當玩家答題、自動切換視窗時,event 可能誤觸到這顆按鈕導致 closeAdventureOverlay
+  //   修補:戰鬥開始時強制把 adventure-overlay 設為 display:none
+  try{
+    const _advOv = document.getElementById('adventure-overlay');
+    if(_advOv){ _advOv.style.display = 'none'; }
+  }catch(_){}
   // ★ v1.0.20260422.0105 — 日本關難度選擇已移至 advFinishCutscene。
   //   原本在此彈 modal + 遞迴呼叫 advStartBattle，PC 上偶有時序問題造成「卡在第二場景」。
   //   現在 advFinishCutscene 會在過場淡出前先彈難度 modal，選完才呼叫 advStartBattle，無遞迴。
@@ -37899,12 +38034,32 @@ function advPickQuestion() {
   }
   // ★ v1.0.20260428.3000 — 台灣關洗牌制:當前 BOSS 30 題池,依難度動態裁減選項
   //   題目本身不分難度,玩家選的難度只影響「顯示幾個選項」+ BOSS 屬性強度
+  // ★ v1.0.20260428.4070 — 修正:玩家選「我很會」卻只看到 2 個選項的 bug
+  //   舊邏輯:不論難度,從整個 BOSS 題庫隨機抽,_trimOptionsByTaiwanDifficulty 只能裁減不能增加選項
+  //         結果若抽到「沒自信」題目(2選項)就一定只看到 2 個選項
+  //   新邏輯:依玩家難度過濾合適選項數的題目池
+  //         我很會 → 4 選項題;普通 → 3 選項題;沒自信 → 2 選項題
+  //         若該難度沒題了再 fallback 到全部
   if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
     if(!Array.isArray(window._taiwanShuffleBag) || !window._taiwanShuffleBag.length){
       const _twBossId = window._advSelectedTaiwanBoss;
-      const _twAll = (typeof TAIWAN_QUIZ_DB !== 'undefined' && _twBossId)
+      let _twAll = (typeof TAIWAN_QUIZ_DB !== 'undefined' && _twBossId)
         ? TAIWAN_QUIZ_DB.filter(q => q.bossId === _twBossId).slice()
         : (typeof TAIWAN_QUIZ_DB !== 'undefined' ? TAIWAN_QUIZ_DB.slice() : []);
+      // ★ v1.0.20260428.4070 — 依玩家難度過濾出選項數合適的題目
+      const _curDiff = (typeof _advPlayerDifficulty === 'string') ? _advPlayerDifficulty : '';
+      let _wantOptCount = 4;
+      if(_curDiff.indexOf('沒自信') >= 0) _wantOptCount = 2;
+      else if(_curDiff.indexOf('普通') >= 0) _wantOptCount = 3;
+      else _wantOptCount = 4;
+      const _byOptCount = _twAll.filter(q =>
+        q && Array.isArray(q.options) && q.options.length === _wantOptCount);
+      if(_byOptCount.length > 0){
+        _twAll = _byOptCount;
+        try{ console.log('[台灣關抽題] 玩家難度='+_curDiff+', 過濾出 '+_wantOptCount+' 選項題,共 '+_byOptCount.length+' 題'); }catch(_){}
+      } else {
+        try{ console.warn('[台灣關抽題] 玩家難度='+_curDiff+' 找不到 '+_wantOptCount+' 選項題,改用全部題目'); }catch(_){}
+      }
       // 過濾跨關卡持久已答對
       let _twPool = _twAll;
       try{
@@ -37924,9 +38079,7 @@ function advPickQuestion() {
       try{ log('📚 [台灣關] 題庫已重新洗牌,共 ' + _twPool.length + ' 題。'); }catch(_e){}
     }
     let _twQ = window._taiwanShuffleBag.shift() || null;
-    if(_twQ && typeof _trimOptionsByTaiwanDifficulty === 'function'){
-      _twQ = _trimOptionsByTaiwanDifficulty(_twQ);
-    }
+    // ★ v1.0.20260428.4070 — 既然已依難度過濾選項數,這裡不用再 trim,題目原本就是對的選項數
     return _twQ;
   }
   const used = _advUsedQuestionIds;
@@ -38377,6 +38530,15 @@ const _ADV_BOSS_SKIP_LINES = [
   '竟然被小輩封印！太可恨了！',
 ];
 function advOnQuizSkip() {
+  // ★ v1.0.20260428.4010 — [診斷] advOnQuizSkip 進入
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      console.log('🎯 [台灣關診斷] advOnQuizSkip 進入'
+        + ', _advQuizResolveCb=' + !!_advQuizResolveCb
+        + ', _advBossActionSkip=' + _advBossActionSkip
+        + ', _gamePaused=' + _gamePaused);
+    }
+  }catch(_){}
   // ★ 解除戰鬥暫停
   _gamePaused = false;
   // ★ v1.0.20260428.BOSS_QUIZ_LOOP — 答題流程結束(對/錯/超時/跳過/封印),
@@ -38551,6 +38713,12 @@ function advApplyTreasure(id) {
 //  答對獎勵
 // ════════════════════════════════
 function advShowReward() {
+  // ★ v1.0.20260428.4010 — [診斷] advShowReward 進入
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      console.log('🎯 [台灣關診斷] advShowReward 進入');
+    }
+  }catch(_){}
   // 組合本次可選獎勵（2選1），如有保留則加入
   // 過濾每場限1次的獎勵
   let basePool = ADV_REWARDS.filter(r => {
@@ -38631,6 +38799,31 @@ function advShowReward() {
   //   (因為 advShowReward 一開就把保留值清零)
   //   改正:在 advApplyReward / advRewardConfirmKeep 中精確清理/覆寫 _advPendingReward
   document.getElementById('adv-reward-overlay').classList.add('show');
+  // ★ v1.0.20260428.4040 — 修復獎勵視窗 display:none 不顯示的 bug
+  //   bug 症狀:答對後 console 顯示「獎勵 add show 後狀態: display=none, offsetParent=false」
+  //   根因:.show class 的 display:flex 被某個未知 CSS 規則覆蓋了
+  //   修補:用 inline style 強制 display=flex,優先級高於 class 規則
+  try{
+    const _rwForceShow = document.getElementById('adv-reward-overlay');
+    if(_rwForceShow){
+      _rwForceShow.style.display = 'flex';
+    }
+  }catch(_){}
+  // ★ v1.0.20260428.4010 — [診斷] 獎勵視窗 add show 後檢查實際是否可見
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      const _ov = document.getElementById('adv-reward-overlay');
+      if(_ov){
+        const _comp = getComputedStyle(_ov);
+        console.log('🎯 [台灣關診斷] 獎勵 add show 後狀態:'
+          + ' display=' + _comp.display
+          + ', visibility=' + _comp.visibility
+          + ', opacity=' + _comp.opacity
+          + ', zIndex=' + _comp.zIndex
+          + ', offsetParent=' + !!_ov.offsetParent);
+      }
+    }
+  }catch(_){}
 }
 
 // ★ v1.0.20260423.2400 — 兩段式獎勵流程:選擇獎勵項目(高亮) → 顯示使用/保留按鈕
@@ -38681,7 +38874,11 @@ function advRewardConfirmUse(){
   if(window._advRewardContext === 'mini'){
     // 小怪戰路徑
     const _rewardOv = document.getElementById('adv-reward-overlay');
-    if(_rewardOv) _rewardOv.classList.remove('show');
+    if(_rewardOv){
+      _rewardOv.classList.remove('show');
+      // ★ v1.0.20260428.4040 — 清掉 inline display(advShowReward 進入時用 inline 強制顯示)
+      _rewardOv.style.display = '';
+    }
     const _keepBtn = document.getElementById('adv-reward-keep-btn');
     if(_keepBtn) _keepBtn.style.display = 'none';
     const _onDone = window._advMiniRewardOnDone;
@@ -38708,7 +38905,10 @@ function advRewardConfirmKeep(){
     const _pool = _advRewardOptions || [];
     _advPendingReward = _pool.find(r=>r.id===_id) || _pool[0] || null;
     const _rewardOv = document.getElementById('adv-reward-overlay');
-    if(_rewardOv) _rewardOv.classList.remove('show');
+    if(_rewardOv){
+      _rewardOv.classList.remove('show');
+      _rewardOv.style.display = '';
+    }
     try{ bannerFX(null, '📦 獎勵保留至下回合！', '#ffcc44', 1400); }catch(_){}
     const _onDone = window._advMiniRewardOnDone;
     window._advMiniRewardOnDone = null;
@@ -38718,7 +38918,10 @@ function advRewardConfirmKeep(){
     const _pool = _advRewardOptions || [];
     _advPendingReward = _pool.find(r=>r.id===_id) || _pool[0] || null;
     const _rewardOv = document.getElementById('adv-reward-overlay');
-    if(_rewardOv) _rewardOv.classList.remove('show');
+    if(_rewardOv){
+      _rewardOv.classList.remove('show');
+      _rewardOv.style.display = '';
+    }
     try{ bannerFX(null, '📦 獎勵保留至下回合！', '#ffcc44', 1400); }catch(_){}
     advOnQuizSkip();
   }
@@ -38727,12 +38930,20 @@ function advRewardConfirmKeep(){
 function advKeepReward() {
   // 保留所有當前選項至下次（舊版相容路徑）
   _advPendingReward = _advRewardOptions[0] || null;
-  document.getElementById('adv-reward-overlay').classList.remove('show');
+  const _rwKp = document.getElementById('adv-reward-overlay');
+  if(_rwKp){
+    _rwKp.classList.remove('show');
+    _rwKp.style.display = '';
+  }
   advOnQuizSkip(); // Boss照常行動（advOnQuizSkip 內已解除暫停）
 }
 
 function advApplyReward(id) {
-  document.getElementById('adv-reward-overlay').classList.remove('show');
+  const _rwAp = document.getElementById('adv-reward-overlay');
+  if(_rwAp){
+    _rwAp.classList.remove('show');
+    _rwAp.style.display = '';
+  }
   const r = ADV_REWARDS.find(x=>x.id===id);
   if (!r) { advOnQuizSkip(); return; }
   // ★ v1.0.20260423.4000 — 若玩家使用的獎勵就是之前保留的那個,清掉 _advPendingReward
@@ -41169,6 +41380,75 @@ async function gameCloudLoad() {
   } catch(e) { console.error('[gameCloudLoad apply error]', e); }
 }
 
+// ★ v1.0.20260428.4080 — 玩家手動立即同步雲端
+//   按下按鈕觸發,呼叫既有 gameCloudSave() 並提供視覺回饋
+//   有 5 秒 cooldown 避免狂按
+window._manualCloudSyncCooldown = 0;
+window._manualCloudSync = async function(btnEl){
+  try{ playSfx('sfx-sel', 0.6); }catch(_){}
+  const _btn = btnEl || document.getElementById('adv-manual-sync-btn');
+  if(!_btn) return;
+
+  // cooldown 檢查(5 秒內不可重複按)
+  const _now = Date.now();
+  if(_now - (window._manualCloudSyncCooldown||0) < 5000){
+    const _wait = Math.ceil((5000 - (_now - window._manualCloudSyncCooldown))/1000);
+    try{ _showInGameToast('⏰ 請等 '+_wait+' 秒後再同步', '#ffaa44', 2000); }catch(_){}
+    return;
+  }
+
+  // 必須已登入
+  if(!window._gUserId){
+    try{ _showInGameToast('⚠ 請先登入才能同步雲端', '#ff6644', 2500); }catch(_){}
+    return;
+  }
+
+  // 視覺:按鈕變橘色「同步中」
+  const _origText = _btn.innerHTML;
+  const _origBg = _btn.style.background;
+  const _origBorder = _btn.style.border;
+  _btn.disabled = true;
+  _btn.style.background = 'linear-gradient(135deg,rgba(200,140,40,0.95),rgba(240,180,60,0.95),rgba(160,100,20,0.95))';
+  _btn.style.border = '2px solid rgba(255,200,100,0.85)';
+  _btn.innerHTML = '⏳ 同步中...';
+
+  let _ok = false;
+  let _errMsg = '';
+  try{
+    _ok = await gameCloudSave();
+    if(_ok === undefined) _ok = true; // 有些路徑 return undefined,當成成功
+  }catch(e){
+    _errMsg = (e && e.message) ? e.message : String(e);
+    console.error('[手動同步雲端] 失敗', e);
+  }
+
+  // 視覺:成功 → 綠色 / 失敗 → 紅色
+  if(_ok){
+    _btn.style.background = 'linear-gradient(135deg,rgba(40,160,80,0.95),rgba(60,200,100,0.95),rgba(30,120,60,0.95))';
+    _btn.style.border = '2px solid rgba(120,255,160,0.85)';
+    _btn.innerHTML = '✓ 同步成功!';
+    try{ _showInGameToast('☁ 雲端同步成功!進度已上傳', '#44ff88', 2500); }catch(_){}
+    try{ playSfx('sfx-confirm2', 0.6); }catch(_){}
+    window._manualCloudSyncCooldown = _now;
+  } else {
+    _btn.style.background = 'linear-gradient(135deg,rgba(160,40,40,0.95),rgba(220,60,60,0.95),rgba(120,30,30,0.95))';
+    _btn.style.border = '2px solid rgba(255,140,140,0.85)';
+    _btn.innerHTML = '✗ 同步失敗';
+    try{ _showInGameToast('⚠ 同步失敗' + (_errMsg ? (': '+_errMsg) : ',請稍後再試'), '#ff6644', 3500); }catch(_){}
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}
+  }
+
+  // 2.5 秒後還原按鈕外觀
+  setTimeout(() => {
+    if(_btn){
+      _btn.disabled = false;
+      _btn.style.background = _origBg;
+      _btn.style.border = _origBorder;
+      _btn.innerHTML = _origText;
+    }
+  }, 2500);
+};
+
 function _saveKey(key) {
   return _gUserId ? 'lxps_' + _gUserId + '_' + key : 'lxps_guest_' + key;
 }
@@ -42622,10 +42902,21 @@ function _showDeadlockRescueButton(){
 function _hideDeadlockRescueButton(){
   const btn = document.getElementById('adv-deadlock-rescue-btn');
   // ★ v1.0.20260428.3880 — 改成「靜默模式」,按鈕仍可見但不閃爍,讓玩家任何時候都能主動點擊
-  //   原本完全隱藏 → 玩家若覺得卡了但 watchdog 沒觸發,就無法自救
+  // ★ v1.0.20260428.4070 — 修正顯示時機,只在「真正進入戰鬥畫面」才顯示靜默按鈕
+  //   之前只看 _adventureMode 旗標,結果在冒險選關卡、過場、對白、難度視窗都會顯示
+  //   現在改成必須同時 _adventureMode=true 且 gc 已加上 adv-battle class(代表進戰鬥畫面)
   if(btn){
-    if(_adventureMode){
-      // 冒險戰鬥中:按鈕保留可見,但去掉動畫和發光,改成柔和的灰紅色
+    let _isInBattle = false;
+    try{
+      if(typeof _adventureMode !== 'undefined' && _adventureMode){
+        const _gc = document.getElementById('gc');
+        if(_gc && _gc.classList.contains('adv-battle')){
+          _isInBattle = true;
+        }
+      }
+    }catch(_){}
+    if(_isInBattle){
+      // 戰鬥中:按鈕保留可見,但去掉動畫和發光,改成柔和的灰紅色
       btn.style.display = 'block';
       btn.style.animation = 'none';
       btn.style.boxShadow = '0 2px 8px rgba(100,40,40,0.4)';
@@ -42634,7 +42925,7 @@ function _hideDeadlockRescueButton(){
       btn.style.color = 'rgba(220,140,140,0.85)';
       btn.dataset.state = 'idle';
     } else {
-      // 非戰鬥:完全隱藏
+      // 非戰鬥(包括選關、過場、對白、難度等所有狀態):完全隱藏
       btn.style.display = 'none';
       btn.dataset.state = 'hidden';
     }
@@ -42850,10 +43141,19 @@ function _deadlockRescueExitBattle(){
         try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(eExit){
           console.error('[卡死自救] exitAdventureMode 失敗', eExit);
         }
-        // 5) 隱藏戰鬥畫面
+        // 5) 隱藏戰鬥畫面相關元素(注意!不要把整個 gc 隱藏,因為 adventure-overlay 在 gc 內)
+        // ★ v1.0.20260428.4050 — 修正卡死自救「保留獎勵回到學校」後黑畫面的真兇
+        //   原本第 5 步寫:gc.style.display = 'none' 把整個 gc 容器隱藏
+        //   但 adventure-overlay 是 gc 的子元素,父元素 display:none → 子元素再怎麼設 flex 也看不到
+        //   結果:第 6 步 openAdventureOverlay 雖然被呼叫(BGM 也切換成功),但畫面整片黑
+        //   修補:只移除戰鬥相關的 class 和個別 UI,gc 容器本身保持可見
         try{
           const gc = document.getElementById('gc');
-          if(gc){ gc.style.display = 'none'; gc.classList.remove('adv-battle'); gc.style.filter=''; }
+          if(gc){
+            gc.classList.remove('adv-battle');
+            gc.style.filter = '';
+            // ⚠️ 不要設 gc.style.display = 'none',會把 adventure-overlay 一起隱藏
+          }
           const _enemyN = document.getElementById('enemy-turn-notice');
           if(_enemyN) _enemyN.style.display = 'none';
           const _itemP = document.getElementById('item-panel');
@@ -53220,8 +53520,9 @@ window._advSystemReady = true;
 <!-- ★ v1.0.20260424.1400 — 「回溯」功能已被「卡死自救」取代,移除按鈕(只保留 HTML 框架以防其他程式碼引用 ID) -->
 <button id="adv-rollback-btn" style="display:none !important;visibility:hidden;pointer-events:none;" aria-hidden="true">回溯</button>
 <!-- ★ v1.0.20260424.1120 — 卡死自救按鈕(預設隱藏,只在偵測到對手回合卡死時亮起) -->
+<!-- ★ v1.0.20260428.4070 — 位置從 bottom:298px 改到 bottom:80px,移到教學按鈕上面,不再蓋到屬性相剋圖 -->
 <button id="adv-deadlock-rescue-btn" onclick="playSfx('sfx-sel',0.6);_showDeadlockRescueMenu()"
-  style="display:none;position:fixed;left:8px;bottom:298px;z-index:2147483647;
+  style="display:none;position:fixed;left:8px;bottom:80px;z-index:2147483647;
     writing-mode:vertical-rl;text-orientation:mixed;
     padding:10px 7px;font-size:20px;font-weight:700;letter-spacing:2px;
     background:rgba(80,10,10,0.95);border:2.5px solid #ff4444;
@@ -53347,6 +53648,205 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.1.0', brief:[
+    '🎉 大版本更新!修復多個重要 bug,新增雲端同步功能,讓小英雄遊玩體驗更順暢',
+    '☁ 新增「立即同步雲端」按鈕,可主動把進度上傳保存',
+    '🐛 修復 BOSS 戰中多個導致卡死或畫面異常的問題',
+  ], items:[
+    '【新功能】',
+    '・新增「☁ 立即同步雲端」按鈕(在冒險選關卡頁的「🎉 近期活動與新角色」下方)',
+    '  - 按下會立即把目前進度(知識幣、英雄等級、寶物、戰績等)上傳到雲端',
+    '  - 顏色顯示同步狀態:橘色同步中、綠色成功、紅色失敗',
+    '  - 5 秒 cooldown 避免狂按,適合換裝置或重要戰鬥前主動存檔',
+    '【bug 修復】',
+    '・修正 BOSS 戰中誤觸返回首頁按鈕導致戰鬥意外中斷的問題',
+    '・修正答對題目後獎勵視窗看不到、戰鬥卡住的問題',
+    '・修正卡死自救選「保留獎勵」後進入黑畫面的問題',
+    '・修正巫女爆發技「神樂舞」發動後戰鬥中斷的問題',
+    '【操作改善】',
+    '・卡死自救按鈕往下移到「教學」按鈕上面,不再蓋到屬性相剋圖',
+    '・卡死自救按鈕只在戰鬥中出現,選關卡頁、過場、對白時隱藏',
+    '・所有彈出視窗在 iPad、手機等小螢幕自動縮放,字級和外框更舒適',
+    '・進入冒險時不再彈出「是否跳過」詢問視窗(避免跳過後卡死),直接走完整劇情',
+    '・數學題改回固定題目,保證題目和答案 100% 同步,不會再出現「題目和答案對不上」',
+    '【期待中】',
+    '・🏝 台灣環島歷險記正在開發測試中,完成後會在後續版本中正式開放,敬請期待!',
+  ] },
+  { ver:'v1.0.20260428.4090', adminOnly:true, brief:[
+    '✨ [台灣關] 重新調整 BOSS 介紹排版:移除建議等級、加入至寶實際效果說明',
+    '🗺 [台灣關] 移除地圖上的地名標籤和發光標記,讓地圖更乾淨美觀',
+  ], items:[
+    '【BOSS 介紹改版】',
+    '・移除「💡 建議玩家等級 45+」資訊(玩家比較關心戰鬥強度而非等級門檻)',
+    '・「💎 戰勝獎勵」區塊大改造,現在會清楚顯示至寶的實際遊戲效果',
+    '  - 至寶名稱(稀有度顏色)',
+    '  - 稀有度等級 + 裝備類型(武器/防具/飾品)',
+    '  - 至寶外觀描述(以「」斜體小字表示)',
+    '  - ⚡ 實際效果說明(金色文字框,例:「基礎 HP+15、每回合自動恢復 10% HP」)',
+    '・10 個 BOSS 的至寶 abilityText 都已在 TAIWAN_TREASURES 字典中,直接顯示',
+    '【台灣地圖視覺簡化】',
+    '・移除 10 個 BOSS 在地圖上的「發光圓點」(原本是金黃色脈動圓點)',
+    '・移除 10 個 BOSS 的「地名文字方框」(原本是台北 101、西門町、深坑等標籤)',
+    '・地圖現在純粹作為視覺背景,沒有干擾玩家的點擊提示',
+    '・玩家從左右兩側 BOSS 卡片直接點選 BOSS(卡片本身有 BOSS 名稱+所屬縣市)',
+    '・程式邏輯保留:TAIWAN_BOSS_GLOW_COORDS 常數仍存在,日後若要恢復發光標記只要解註 line 34495 那段即可',
+  ] },
+  { ver:'v1.0.20260428.4080', brief:[
+    '☁ 新增「立即同步雲端」按鈕,小英雄想存檔就能一鍵上傳到雲端',
+  ], items:[
+    '・在冒險選關卡頁加入「☁ 立即同步雲端」按鈕(在「🎉 近期活動與新角色」按鈕下方)',
+    '・小英雄按下後,會立即把現在的進度(知識幣、英雄等級、寶物、戰績等)上傳到雲端',
+    '・按鈕會用顏色顯示同步狀態:',
+    '  - 橘色「⏳ 同步中...」 → 正在傳送',
+    '  - 綠色「✓ 同步成功!」 → 已存到雲端',
+    '  - 紅色「✗ 同步失敗」 → 傳送失敗(可能是網路問題)',
+    '・按一次後 5 秒內不能再按(避免重複上傳)',
+    '・必須已登入才能同步,否則會提示「請先登入」',
+    '【適合什麼時候用】',
+    '・玩到一個段落想換裝置繼續玩之前',
+    '・剛打完重要的戰鬥想保存進度',
+    '・擔心遊戲意外關閉,主動存檔最安心',
+  ] },
+  { ver:'v1.0.20260428.4070', adminOnly:true, brief:[
+    '🐛 修三個小英雄回報的問題:卡死自救按鈕位置、出現時機、台灣難度題目選項數',
+  ], items:[
+    '【1. 卡死自救按鈕往下移】',
+    '・原本 bottom:298px 跟戰場左下的屬性相剋圖重疊',
+    '・改成 bottom:80px,移到「❓教學」按鈕上面,與相剋圖完全錯開',
+    '【2. 卡死自救只在戰鬥中出現】',
+    '・舊邏輯:只看 _adventureMode 旗標,結果在選關卡、過場、對白、難度視窗都會顯示',
+    '・新邏輯:必須同時 _adventureMode=true 且 gc 已加上 adv-battle class(代表進戰鬥畫面)才顯示靜默按鈕',
+    '・選關、過場、對白、難度等狀態:完全隱藏',
+    '【3. 台灣關「我很會」難度卻只有 2 個選項】',
+    '・bug 根因:抽題時不依玩家難度過濾,任意抽到「沒自信」題庫題(只有 2 選項),而 _trimOptionsByTaiwanDifficulty 只能裁減不能增加選項',
+    '・修補:抽題時依玩家難度過濾選項數合適的題目',
+    '  - 我很會 → 只抽 4 選項題',
+    '  - 普通 → 只抽 3 選項題',
+    '  - 沒自信 → 只抽 2 選項題',
+    '・若該難度沒題了 fallback 到全部題目',
+    '・新增 console log:[台灣關抽題] 玩家難度=X, 過濾出 N 選項題,共 M 題',
+  ] },
+  { ver:'v1.0.20260428.4060', adminOnly:true, brief:[
+    '🐛 [台灣關] 修兩個過場銜接的問題:返回按鈕、對白切換閃紅藍底色',
+  ], items:[
+    '【bug 1:難度視窗按「返回 BOSS 詳情」跳出舊地圖畫面】',
+    '・原因:返回按鈕呼叫已廢棄的 _showTaiwanMapSelector(舊版單欄地圖介面)',
+    '・修補:改成呼叫新版 window._showTaiwanMap(),回到正確的台灣地圖選關畫面(底圖+左右卡片浮層)',
+    '・徹底移除所有 _showTaiwanMapSelector 的呼叫點',
+    '【bug 2:點對白切換到下一句時,背景閃出戰鬥畫面紅藍能量條】',
+    '・根因 1:三個過場 overlay(_showTaiwanCutscene/Dialog/DifficultySelect)的 onDone 順序錯誤',
+    '         舊邏輯:先 opacity:0 漸隱 400ms → 再呼叫 onDone 啟動下一個 overlay',
+    '         漸隱期間 gc 戰鬥畫面從底下露出,玩家看到紅藍能量條閃現',
+    '・根因 2:新建立的 overlay 都有 fadeIn 動畫(animation:taiwanCutsceneIn 0.5s)',
+    '         從 opacity:0 → 1 淡入,中間 0.5 秒透明也會露出 gc',
+    '・修補 1:onDone 改成「立即觸發」,讓下一個 overlay 同步出現覆蓋,原 overlay 在背景漸隱',
+    '・修補 2:對白和難度視窗移除 fadeIn 動畫,直接 opacity:1 出現',
+    '・這樣三個過場切換時都不會再露出 gc 的戰鬥背景',
+  ] },
+  { ver:'v1.0.20260428.4050', adminOnly:true, brief:[
+    '🐛 修正卡死自救「脫離戰鬥保留獎勵」後進入黑畫面的真兇',
+  ], items:[
+    '【bug 症狀】玩家按下「🚪 脫離戰鬥(保留掉落物 & 知識幣)」後,音樂雖切換到關卡頁但畫面整片黑',
+    '【真因】從 console 堆疊看到 _deadlockRescueExitBattle 中第 5 步「隱藏戰鬥畫面」誤把整個 gc 容器隱藏(gc.style.display=none)',
+    '・但是 adventure-overlay 是 gc 的子元素,父元素 display:none → 子元素再怎麼設 flex 也看不到',
+    '・第 6 步 openAdventureOverlay 雖然有被呼叫(所以 BGM 切換成功),但因為 gc 整個被隱藏,玩家看到一片黑',
+    '【修補】移除 gc.style.display=none,只 remove adv-battle class 與清除 filter,gc 容器保持可見',
+    '・這樣 adventure-overlay 設 display:flex 才能真正顯示,玩家正常回到關卡選擇頁',
+  ] },
+  { ver:'v1.0.20260428.4040', adminOnly:true, brief:[
+    '🐛 [台灣關] 修復答對第 1 題後獎勵視窗看不到、戰鬥卡死的真兇',
+  ], items:[
+    '【bug 真因】(這次 console 有完整數據,確診了!)',
+    '・[台灣關診斷] 獎勵 add show 後狀態:display=none, offsetParent=false',
+    '・代表:advShowReward 把 show class 加上去了,但 CSS 的 display:flex 沒生效',
+    '・最可能:某個未知 CSS 規則優先順序蓋過了 .show 的設定',
+    '【修補】用 inline style 強制顯示',
+    '・advShowReward 結尾不只 classList.add("show"),還加 style.display="flex"',
+    '・inline style 優先級高於 class 規則,確保視窗一定可見',
+    '・advApplyReward / advKeepReward / advRewardConfirmKeep 等 4 個關閉位置同步清掉 inline display=""',
+    '・避免 inline style 殘留影響下次顯示',
+    '【為什麼這次能找到】',
+    '・上一版加的 [台灣關診斷] log 顯示 display=none 的清楚證據',
+    '・之前一直懷疑是程式邏輯,看 log 後發現是 CSS layer 的問題',
+  ] },
+  { ver:'v1.0.20260428.4030', adminOnly:true, brief:[
+    '🖼 [台灣關] 過場/對白/難度視窗背景圖延展到全螢幕',
+  ], items:[
+    '【bug 症狀】進入台灣關 BOSS 過場時,鳳梨酥工廠等場景背景只填到中央,右側和下方有黑邊',
+    '【根因】跟之前至寶圖鑑同一類問題:RWD 規則把這 3 個全螢幕 overlay 限制成 96vw × 90vh',
+    '・#taiwan-cutscene-overlay(BOSS 過場介紹)',
+    '・#taiwan-dialog-overlay(BOSS 對白氣泡)',
+    '・#taiwan-difficulty-overlay(難度選擇)',
+    '【修復】把這 3 個 overlay 從 max-width 限制中移出,加進「不限制尺寸」規則',
+    '・這些 overlay 設計上就是 position:fixed; inset:0 全螢幕,不該被縮成 96vw × 90vh',
+    '・修復後背景場景圖會用 background-size:cover 完整覆蓋整個畫面',
+  ] },
+  { ver:'v1.0.20260428.4020', adminOnly:true, brief:[
+    '🐛 [台灣關卡死真兇] 戰鬥中誤觸「返回首頁」按鈕導致 exitAdventureMode 中斷戰鬥',
+  ], items:[
+    '【bug 症狀】台灣關答對第 1 題後,exitAdventureMode 被觸發,戰鬥中斷,玩家卡死',
+    '【根因】從 console 堆疊看到:onclick(line 5100,即「← 返回首頁」按鈕) → closeAdventureOverlay → exitAdventureMode',
+    '・這顆按鈕應該只在「冒險選關卡頁面」可點,但戰鬥開始時 adventure-overlay 沒被隱藏',
+    '・按鈕用 absolute 定位左上角,即使父 overlay 部分隱藏,按鈕本身還會被某個 event 誤觸發',
+    '【雙重防禦修補】',
+    '・第 1 層:advStartBattle 進入時強制 adventure-overlay.style.display = "none",讓按鈕根本不渲染',
+    '・第 2 層:closeAdventureOverlay 開頭判斷「正在戰鬥中」(_adventureMode=true 且 gc.classList.adv-battle),戰鬥中直接 return 拒絕關閉',
+    '・若還是被觸發,console 會印 🚨 [closeAdventureOverlay] 戰鬥中拒絕關閉冒險 overlay 並附 stack trace,可追蹤真兇',
+    '【為什麼這次能找到真因】',
+    '・上次 v.4010 加的診斷 log 沒看到 exitAdventureMode 的呼叫源頭,直到這次 console 顯示完整堆疊才知道',
+    '・以後類似卡死問題,先看 console 完整堆疊就能精準定位',
+  ] },
+  { ver:'v1.0.20260428.4010', adminOnly:true, brief:[
+    '🔍 [管理員測試版] 加入完整診斷 log,排查台灣關 BOSS 戰卡死問題',
+  ], items:[
+    '【加入位置】6 個關鍵流程點都會印 [台灣關診斷]:',
+    '・startTurn 選 actor 時(印 round/actor/acted 狀態/各種旗標)',
+    '・alive=0 進入 nextRound 時',
+    '・BOSS quiz cb 觸發時',
+    '・_realAiAct 進入時',
+    '・endAction 進入時',
+    '・advShowReward 進入時 + 獎勵 add show 後的 computed style',
+    '・advOnQuizSkip 進入時',
+    '【使用方式】',
+    '・進台灣關 → 重現卡死 → F12 開 Console',
+    '・全選 console 內容(Ctrl+A)→ 複製(Ctrl+C)→ 貼給開發者',
+    '・log 順序會清楚顯示「卡在哪一步」,例如:',
+    '  - 看到 startTurn 但沒看到 _realAiAct → BOSS quiz 觸發失敗',
+    '  - 看到 _realAiAct 但沒看到 endAction → BOSS 技能執行卡住',
+    '  - 看到 advShowReward 但 computed display=none → 獎勵視窗 CSS 問題',
+    '【純診斷模式,不改邏輯】',
+    '・這版只新增 console.log,沒動任何戰鬥邏輯',
+    '・若 console 都正常但仍卡死,代表 bug 不在這 6 個流程點,需要再加 log',
+  ] },
+  { ver:'v1.0.20260428.4000', adminOnly:true, brief:[
+    '🔓 [管理員測試版] 解鎖台灣關卡,本機 Live Server 環境也能直接進入測試',
+  ], items:[
+    '【改動內容】',
+    '・把 window._TAIWAN_ADMIN_ONLY 從 true 改成 false',
+    '・原本要登入管理員白名單帳號才能進,現在改成全部解鎖',
+    '・這樣本機 file:// 或 http://localhost 環境(Firebase 登入失敗時)也能直接測試',
+    '【⚠️ 重要提醒】',
+    '・這個解鎖「只在管理員測試版」設定',
+    '・玩家版的台灣關入口按鈕本來就用 CSS 鎖死(顯示「敬請期待」),所以完全不影響玩家',
+    '・之後若要部署玩家版台灣關,要做兩件事:',
+    '  (1) 把玩家版的入口按鈕從「敬請期待」恢復成可點擊',
+    '  (2) 玩家版的 _TAIWAN_ADMIN_ONLY 仍維持 true(讓白名單管理員才能玩),或設 false 全部開放',
+  ] },
+  { ver:'v1.0.20260428.3990', adminOnly:true, brief:[
+    '🔄 管理員測試版同步玩家版的所有改動,以方便共同開發',
+  ], items:[
+    '【同步玩家版的修改】',
+    '・至寶圖鑑視窗修復(背景全螢幕,不再透出主畫面)',
+    '・取消數學題即時更換數字(避免題目與答案不同步)',
+    '・暫時隱藏「跳過劇情」相關功能(避免跳過後卡死)',
+    '・還原答對流程到 v3600 簡潔版(移除過度複雜的 watchdog)',
+    '・移除 execSkill 12 秒守衛、玩家回合 30 秒卡死偵測、startTurn 診斷 log',
+    '【保留管理員測試專屬】',
+    '・台灣關入口可點擊(進入管理員測試模式)',
+    '・所有台灣關專屬程式碼仍存在',
+    '【請注意】',
+    '・若日後修台灣關 bug 影響到玩家版邏輯,請手動把「玩家版有用的修復」同步過去',
+  ] },
   { ver:'v1.0.20260428.3980-public', brief:[
     '🔢 數學題改回固定題目,確保題目和答案一定對得上',
   ], items:[
@@ -61996,7 +62496,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3980-public';
+  const CURRENT_VERSION = 'v1.1.0';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62030,7 +62530,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3980-public';
+window._GAME_LOADED_VERSION = 'v1.1.0';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
