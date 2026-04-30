@@ -4127,7 +4127,11 @@ body.art-premium #summon-overlay {
   box-shadow:0 0 24px rgba(0,0,0,0.7);
 }
 /* 略過按鈕：移至對話框內，由 CSS 控制顯示 */
+/* ★ v1.0.20260428.3970 — 暫時強制隱藏跳過按鈕(玩家版) */
+/*   原因:玩家按跳過後流程會卡死,先全面隱藏避免問題 */
+/*   日後修好跳過劇情 bug 再移除 display:none !important */
 #adv-skip-btn{
+  display:none !important;
   position:absolute;bottom:80px;right:10px;z-index:10;
   padding:10px 24px;font-size:26px;font-weight:700;
   background:rgba(0,0,0,0.72);border:1.5px solid rgba(255,255,255,0.2);
@@ -35418,6 +35422,17 @@ function advStartCutscene(stage) {
     return;
   }
 
+  // ★ v1.0.20260428.3970 — 暫時隱藏「跳過劇情」詢問視窗
+  //   原因:玩家選「直接挑 BOSS」後會卡死,先強制走完整劇情避免問題
+  //   等跳過劇情的 bug 修好再恢復(原本是呼叫 _advShowUpfrontSkipDecision 詢問玩家)
+  window._advDeclinedSkip = true;
+  const skipBtn = document.getElementById('adv-skip-btn');
+  if(skipBtn){ skipBtn.style.display = 'none'; }
+  _beginCutsceneNow();
+  return;
+
+  // 以下保留原邏輯,日後修好跳過劇情 bug 時可解註恢復
+  /*
   _advShowUpfrontSkipDecision(
     // 選「是」
     () => {
@@ -35441,6 +35456,7 @@ function advStartCutscene(stage) {
       _beginCutsceneNow();
     }
   );
+  */
 }
 
 // ★ v1.0.20260420.1230 — 冒險開始前詢問是否直接挑戰 BOSS
@@ -37769,8 +37785,11 @@ function advShowQuiz() {
     });
     return;
   }
-  // 數學題：隨機化數字避免重複感
-  if(typeof advRandomizeMathQuestion === 'function') q = advRandomizeMathQuestion(q);
+  // ★ v1.0.20260428.3980 — 取消數學題即時更換數字
+  //   原因:advRandomizeMathQuestion 雖有邏輯檢查,但仍出現「題目與答案沒同步」的錯誤
+  //   為了確保 100% 正確性,改成直接用原始題目,不做任何數字隨機化
+  //   日後若改進演算法可解註下行恢復
+  // if(typeof advRandomizeMathQuestion === 'function') q = advRandomizeMathQuestion(q);
   _advCurrentQuestion = q;
   _advQuizPhase = 'asking';
   _advQuizActive = true;
@@ -53328,6 +53347,21 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260428.3980-public', brief:[
+    '🔢 數學題改回固定題目,確保題目和答案一定對得上',
+  ], items:[
+    '・之前的版本會「即時更換數字」讓相同題目看起來不同,但偶爾會出現題目和答案沒對上的錯誤',
+    '・現在改成完全使用題庫原本的數字,保證題目跟答案 100% 同步',
+    '・寫題目時可以放心,看到的數字就是要計算的數字',
+  ] },
+  { ver:'v1.0.20260428.3970-public', brief:[
+    '🐛 暫時隱藏「跳過劇情」相關功能,避免跳過後卡死',
+  ], items:[
+    '・進入冒險時不再彈出「是否要直接挑 BOSS / 完整冒險」的詢問視窗,直接走完整冒險流程',
+    '・劇情播放中右上角的「⏭ 跳過演出」按鈕暫時隱藏,玩家無法跳過劇情',
+    '・這個調整是暫時的,等跳過劇情的卡死 bug 修好後會恢復',
+    '・劇情其實不長,可以放心欣賞每個場景的對白和故事',
+  ] },
   { ver:'v1.0.20260428.3960-public', brief:[
     '🎉 玩家版乾淨化:答題與獎勵流程恢復原始穩定版本,修復連續卡死問題',
   ], items:[
@@ -61962,7 +61996,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260428.3960-public';
+  const CURRENT_VERSION = 'v1.0.20260428.3980-public';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61996,7 +62030,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260428.3960-public';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.3980-public';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
