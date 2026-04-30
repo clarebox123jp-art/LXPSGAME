@@ -22754,6 +22754,16 @@ function startTurn(){
 
   const next=alive.sort(sortFn)[0];
 
+  // ★ v1.0.20260428.3940 — 加 turn 診斷 log,讓下次卡死容易定位每回合誰行動
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      console.log('[startTurn] round=' + (G.round||'?')
+        + ', 選到 ' + next.name + '(' + next.side + '-' + next.pos + ')'
+        + ', alive 未行動共 ' + alive.length + ' 個'
+        + ', curHp=' + next.curHp);
+    }
+  }catch(_logE){}
+
   // 占星師天賦：輪到自己回合時60%機率補充1能量
   if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(next.name)*0.04)){
     G.energy[next.side]=Math.min(10,G.energy[next.side]+1);
@@ -38818,9 +38828,40 @@ function advKeepReward() {
 }
 
 function advApplyReward(id) {
-  document.getElementById('adv-reward-overlay').classList.remove('show');
+  // ★ v1.0.20260428.3940 — 不立刻關掉獎勵視窗,改成顯示「✓ 已套用」訊息 1.5 秒
+  //   讓玩家清楚看到獎勵效果(滿血/能量+10/清狀態)動畫播完才進下一題
+  //   原本立刻 remove('show') 會讓玩家以為「沒看到任何效果就直接跳下一題」
+  const _ovApply = document.getElementById('adv-reward-overlay');
   const r = ADV_REWARDS.find(x=>x.id===id);
-  if (!r) { advOnQuizSkip(); return; }
+  if (!r) {
+    if(_ovApply) _ovApply.classList.remove('show');
+    advOnQuizSkip();
+    return;
+  }
+  // 獎勵視窗暫時保留,視覺效果播完才關閉
+  // 顯示「✓ 已套用」覆蓋訊息
+  try{
+    const _box = document.getElementById('adv-reward-box');
+    if(_box){
+      let _appliedMsg = document.getElementById('_reward-applied-msg');
+      if(!_appliedMsg){
+        _appliedMsg = document.createElement('div');
+        _appliedMsg.id = '_reward-applied-msg';
+        _appliedMsg.style.cssText =
+          'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+          'background:linear-gradient(135deg,rgba(20,80,40,0.92),rgba(0,40,20,0.95));' +
+          'border-radius:18px;z-index:100;animation:fadeIn 0.25s;';
+        _box.style.position = 'relative';
+        _box.appendChild(_appliedMsg);
+      }
+      _appliedMsg.innerHTML =
+        '<div style="text-align:center;">' +
+          '<div style="font-size:64px;margin-bottom:8px;">✓</div>' +
+          '<div style="font-size:30px;font-weight:900;color:#aaffcc;letter-spacing:3px;text-shadow:0 0 12px rgba(120,255,160,0.7);">已使用獎勵</div>' +
+          '<div style="font-size:22px;color:#ddffea;margin-top:8px;">' + (r.name || '') + '</div>' +
+        '</div>';
+    }
+  }catch(_msgE){}
   // ★ v1.0.20260423.4000 — 若玩家使用的獎勵就是之前保留的那個,清掉 _advPendingReward
   //   (若使用的是新選出的,_advPendingReward 仍保留給下次)
   if(_advPendingReward && _advPendingReward.id === id){
@@ -38944,11 +38985,27 @@ function advApplyReward(id) {
   } catch(e) { console.error('[advApplyReward]',e); }
   // ★ boss_skip 直接觸發（旗標已設，advOnQuizSkip 內處理）；其他等視覺效果完成
   if (id === 'boss_skip') {
+    // 立即關閉獎勵視窗(boss_skip 沒有套用動畫需求)
+    try{
+      const _ovS = document.getElementById('adv-reward-overlay');
+      if(_ovS) _ovS.classList.remove('show');
+      const _msgS = document.getElementById('_reward-applied-msg');
+      if(_msgS) _msgS.remove();
+    }catch(_){}
     advOnQuizSkip();
     return;
   }
+  // ★ v1.0.20260428.3940 — 套用獎勵後保留視窗 1.5 秒讓玩家看到效果,再關閉並呼叫 advOnQuizSkip
   const _rewardDelay = (id === 'instant_burst') ? 0 : 1500;
-  setTimeout(()=>{ advOnQuizSkip(); }, _rewardDelay);
+  setTimeout(() => {
+    try{
+      const _ovEnd = document.getElementById('adv-reward-overlay');
+      if(_ovEnd) _ovEnd.classList.remove('show');
+      const _msgEnd = document.getElementById('_reward-applied-msg');
+      if(_msgEnd) _msgEnd.remove();
+    }catch(_){}
+    advOnQuizSkip();
+  }, _rewardDelay);
 }
 
 // 選擇爆發目標面板
@@ -53434,15 +53491,23 @@ window._filterChangelogForDisplay = function(entries){
 
 const GAME_CHANGELOG = [
   { ver:'v1.0.20260428.3940', brief:[
-    '🐛 修正使用玉藻前禍世邪魅讓 BOSS 中魅惑後,答題獎勵沒效果且無限循環的 bug',
+    '🎁 BOSS 戰選了答題獎勵後,獎勵視窗會多停 1.5 秒並顯示「✓ 已使用獎勵」訊息,玩家清楚看到效果再進下一題',
+    '🐛 修正玉藻前禍世邪魅讓 BOSS 中魅惑後,BOSS 行動時的答題流程',
+    '🔍 加 BOSS 戰回合切換的診斷 log,方便日後找問題',
   ], items:[
-    '【bug 症狀】玉藻前用爆發技禍世邪魅讓 BOSS 中強力魅惑,下回合 BOSS 行動時出題,玩家答對選獎勵→沒看到任何獎勵效果→直接又出下一題,反覆循環無法行動',
-    '【bug 根因】BOSS 中魅惑時的答題回呼設計錯誤:答完題後會重新呼叫 startTurn,但 BOSS 仍然處於魅惑狀態且沒被標記為已行動,結果重複進入魅惑分支又出題',
-    '【修復】改成跟暈眩、冰凍、睡眠的處理方式一致:答完題就讓 BOSS「因魅惑跳過本次行動」,標記為已行動並推進魅惑回合,讓下個角色正常行動',
-    '【技能審核】',
-    '・玉藻前爆發技「禍世邪魅」實際效果不變(對 BOSS 強力魅惑 + 持續吸血)',
-    '・所有受影響的 BOSS 中魅惑後反應符合設計:當回合跳過行動,下回合魅惑解除即可正常行動',
+    '【獎勵套用視覺改善】',
+    '・之前選獎勵後獎勵視窗會「立刻消失」,玩家以為什麼都沒發生就跳下一題',
+    '・現在改成:點獎勵後視窗暫時保留,中間覆蓋「✓ 已使用獎勵」綠色訊息(顯示獎勵名稱)',
+    '・1.5 秒後才關閉視窗,讓銀幕上的滿血/能量+10/清狀態等動畫有時間播完',
+    '・即時極限爆發例外:延遲設 0(因為爆發本身有自己的演出時間)',
+    '【BOSS 中魅惑後的答題流程修正】',
+    '・bug 症狀:玉藻前用爆發技禍世邪魅讓 BOSS 中強力魅惑後,BOSS 行動時出題,玩家答完題後 BOSS 應該因魅惑跳過行動,結果有時會重複進入魅惑分支又出題',
+    '・修復:答完題就讓 BOSS「因魅惑跳過本次行動」,標記為已行動並推進魅惑回合,讓下個角色正常行動',
     '・玩家可正常領取答題獎勵效果(滿血、能量爆發、清除狀態等)',
+    '【BOSS 戰回合診斷 log】',
+    '・每次 startTurn 選到下一個行動角色時,console 會印 [startTurn] round=X, 選到 XX(p1/p2-pos), alive 未行動共 N 個',
+    '・這樣下次若再有「卡死」或「重複出題」的回報,可以從 log 看出每回合到底誰行動',
+    '・正常 BOSS 戰應該:[startTurn] BOSS → BOSS 出題 → 玩家答 → BOSS 行動 → [startTurn] 玩家英雄 → ...',
   ] },
   { ver:'v1.0.20260428.3930', brief:[
     '📱 全面優化 iPad、手機玩家的視覺體驗,讓彈出視窗在小螢幕也清楚易讀',
