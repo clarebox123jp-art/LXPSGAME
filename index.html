@@ -20,7 +20,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment }
+  import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment, deleteDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -549,6 +549,144 @@
     }
   };
 
+  // ★ v1.1.0 ── GM 公告「我知道了」回應系統 ──
+  //   玩家點「我知道了」會寫入 stats/global.gmAck.{broadcastId}.{uid} = {name, timestamp}
+  //   管理員可用 _fbGetGmAckList(broadcastId) 查詢回應名單
+  window._fbAckGmBroadcast = async function(broadcastId, uid, name) {
+    if(!broadcastId || !uid) return;
+    try {
+      const ackData = {};
+      ackData['gmAck.' + broadcastId + '.' + uid] = {
+        name: name || '匿名',
+        timestamp: Date.now(),
+      };
+      await setDoc(doc(_fbDb, 'stats', 'global'), ackData, { merge: true });
+      console.info('✅ [GM 公告回應] 已記錄 uid=' + uid + ' name=' + name);
+    } catch(e) {
+      console.warn('[GM 公告回應] 寫入失敗', e);
+    }
+  };
+
+  // 管理員查詢 GM 公告回應名單
+  window._fbGetGmAckList = async function(broadcastId) {
+    try {
+      const snap = await getDoc(doc(_fbDb, 'stats', 'global'));
+      if(!snap.exists()) return { count: 0, list: [] };
+      const ack = (snap.data().gmAck || {})[broadcastId] || {};
+      const list = Object.entries(ack).map(([uid, info]) => ({
+        uid,
+        name: info.name || '匿名',
+        timestamp: info.timestamp || 0,
+        time: new Date(info.timestamp || 0).toLocaleString('zh-TW'),
+      })).sort((a, b) => a.timestamp - b.timestamp);
+      return { count: list.length, list };
+    } catch(e) {
+      console.error('[GM 公告回應] 查詢失敗', e);
+      return { count: 0, list: [] };
+    }
+  };
+
+  // ★ v1.1.0 ── 線上人數系統(Presence)──
+  //   每位登入玩家在 presences/{uid} 寫入 {name, lastHeartbeat}
+  //   每 30 秒更新 lastHeartbeat
+  //   首頁讀取所有 presences,過濾 60 秒內活躍的計數
+  //   登出 / 關閉頁面時刪除自己的 presence
+  window._presenceHeartbeat = null;
+  window._presenceUnsubscribe = null;
+
+  // 啟動 presence(玩家登入後呼叫)
+  window._fbStartPresence = async function(uid, name) {
+    if(!uid) return;
+    try {
+      // 先寫入自己的 presence
+      await setDoc(doc(_fbDb, 'presences', uid), {
+        name: name || '匿名',
+        lastHeartbeat: Date.now(),
+      });
+      console.info('✅ [Presence] 已啟動 uid=' + uid);
+      // 30 秒心跳
+      if(window._presenceHeartbeat) clearInterval(window._presenceHeartbeat);
+      window._presenceHeartbeat = setInterval(async () => {
+        try {
+          await setDoc(doc(_fbDb, 'presences', uid), {
+            name: name || '匿名',
+            lastHeartbeat: Date.now(),
+          }, { merge: true });
+        } catch(e) { /* 靜默失敗 */ }
+      }, 30000);
+    } catch(e) {
+      console.warn('[Presence] 啟動失敗', e);
+    }
+  };
+
+  // 停止 presence(登出 / 關閉頁面)
+  window._fbStopPresence = async function(uid) {
+    try {
+      if(window._presenceHeartbeat){
+        clearInterval(window._presenceHeartbeat);
+        window._presenceHeartbeat = null;
+      }
+      if(window._presenceUnsubscribe){
+        window._presenceUnsubscribe();
+        window._presenceUnsubscribe = null;
+      }
+      if(uid){
+        // 嘗試刪除自己的 presence(可能因權限或網路失敗,沒關係)
+        await deleteDoc(doc(_fbDb, 'presences', uid));
+      }
+    } catch(e) { /* 靜默失敗 */ }
+  };
+
+  // 監聽當前線上人數(60 秒內活躍)
+  window._fbWatchOnlineCount = function(callback) {
+    try {
+      // 用 onSnapshot 監聽整個 presences 集合
+      const _q = collection(_fbDb, 'presences');
+      return onSnapshot(_q, (snap) => {
+        const _now = Date.now();
+        let _count = 0;
+        snap.forEach(d => {
+          const data = d.data();
+          if(data && data.lastHeartbeat && (_now - data.lastHeartbeat) < 60000){
+            _count++;
+          }
+        });
+        callback(_count);
+      }, (err) => {
+        console.warn('[Presence] 監聽錯誤', err);
+        callback(0);
+      });
+    } catch(e) {
+      console.error('[Presence] 啟動監聽失敗', e);
+      return () => {};
+    }
+  };
+
+  // 管理員工具:列出當前所有在線玩家
+  window._fbGetOnlineList = async function() {
+    try {
+      const _snap = await getDocs(collection(_fbDb, 'presences'));
+      const _now = Date.now();
+      const list = [];
+      _snap.forEach(d => {
+        const data = d.data();
+        if(data && data.lastHeartbeat && (_now - data.lastHeartbeat) < 60000){
+          list.push({
+            uid: d.id,
+            name: data.name || '匿名',
+            lastSeen: new Date(data.lastHeartbeat).toLocaleString('zh-TW'),
+            secAgo: Math.floor((_now - data.lastHeartbeat) / 1000),
+          });
+        }
+      });
+      list.sort((a, b) => a.secAgo - b.secAgo);
+      return { count: list.length, list };
+    } catch(e) {
+      console.error('[Presence] 查詢失敗', e);
+      return { count: 0, list: [] };
+    }
+  };
+
   // ★ 管理員工具：手動設定 totalPlayers 絕對值（當 _fbBackfillTotalPlayers 因權限失敗時的替代方案）
   //   此函式直接寫 stats/global.totalPlayers，不需要讀取 /players 集合，可避開掃描權限問題
   window._fbSetTotalPlayers = async function(newTotal) {
@@ -664,6 +802,13 @@
       window._gUserId = user.uid; // ★ 確保 _gUserId 同步
       // ★ 更新玩家統計（新玩家計數 + 今日上線計數）
       try { await window._fbTrackPlayerStats(user.uid); } catch(_e) {}
+      // ★ v1.1.0 — 啟動 Presence(目前在線追蹤)
+      try {
+        const _presenceName = (user.displayName || user.email || '匿名').slice(0, 30);
+        if(typeof window._fbStartPresence === 'function'){
+          await window._fbStartPresence(user.uid, _presenceName);
+        }
+      } catch(_e) { console.warn('[Presence] 登入時啟動失敗', _e); }
       // ★ 同步 email 到 Firestore（供好友搜尋）
       try {
         const _nick = localStorage.getItem('lxps_nickname_' + user.uid);
@@ -788,6 +933,12 @@
         });
       }
     } else {
+      // ★ v1.1.0 — 停止 Presence(避免線上人數誤計)
+      try {
+        if(typeof window._fbStopPresence === 'function' && window._gUserId){
+          await window._fbStopPresence(window._gUserId);
+        }
+      } catch(_e) { /* 靜默 */ }
       window._fbUser = null;
       // ★ 登出時清除 session + 取消監聽 + 停止心跳
       if(window._sessionHeartbeat){ clearInterval(window._sessionHeartbeat); window._sessionHeartbeat = null; }
@@ -2076,6 +2227,131 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   #adv-boss-detail-pop button,
   #tw-boss-detail-overlay button {
     min-height: 44px !important;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════
+   ★ v1.1.0 — 手機版完整適配
+   ═════════════════════════════════════════════════════════════
+   設計原則:
+   1. 手機橫式 (≤900px):戰鬥畫面內縮 1vw,留邊讓邊緣按鈕可點
+   2. 手機直式 (高 > 寬):由 scaleToViewport 強制最小縮放,避免按鈕變太小
+   3. 所有 modal 強制 max-width:92vw,字級用 clamp() 在小螢幕降級
+   4. 觸控目標統一最小 44px (Apple HIG)
+   ═════════════════════════════════════════════════════════════ */
+
+/* 手機橫式 + 平板 (≤900px) — 戰鬥畫面內縮留邊 */
+@media (max-width: 900px) and (orientation: landscape) {
+  /* gc 容器整體稍微內縮,讓邊緣按鈕觸控區域不會被螢幕邊框擋住 */
+  /* 但 scaleToViewport 會用 transform:scale,所以改成 padding 由 wrapper 處理 */
+  #_gc_wrapper {
+    padding: max(env(safe-area-inset-top), 4px) max(env(safe-area-inset-right), 4px)
+             max(env(safe-area-inset-bottom), 4px) max(env(safe-area-inset-left), 4px) !important;
+  }
+}
+
+/* 手機直式 (寬 ≤ 768px) — 所有 modal 強制適配 */
+@media (max-width: 768px) {
+  /* 通用:所有 position:fixed 的全螢幕 modal 字級用 clamp 降級 */
+  #adv-boss-detail-pop > div,
+  #tw-boss-detail-overlay > div,
+  #taiwan-boss-detail > div:first-child {
+    width: 92vw !important;
+    max-width: 92vw !important;
+    padding: 16px 14px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+  /* 台灣關 BOSS 詳情:大字級降級 */
+  #taiwan-boss-detail [style*="font-size:96px"] { font-size: 42px !important; }
+  #taiwan-boss-detail [style*="font-size:80px"] { font-size: 36px !important; }
+  #taiwan-boss-detail [style*="font-size:72px"] { font-size: 32px !important; }
+  #taiwan-boss-detail [style*="font-size:52px"] { font-size: 28px !important; }
+  #taiwan-boss-detail [style*="font-size:44px"] { font-size: 24px !important; }
+  #taiwan-boss-detail [style*="font-size:40px"] { font-size: 22px !important; }
+  #taiwan-boss-detail [style*="font-size:36px"] { font-size: 20px !important; }
+  #taiwan-boss-detail [style*="font-size:32px"] { font-size: 18px !important; }
+  #taiwan-boss-detail [style*="font-size:30px"] { font-size: 18px !important; }
+  #taiwan-boss-detail [style*="font-size:28px"] { font-size: 17px !important; }
+  #taiwan-boss-detail [style*="font-size:26px"] { font-size: 16px !important; }
+  #taiwan-boss-detail [style*="font-size:24px"] { font-size: 15px !important; }
+  #taiwan-boss-detail [style*="font-size:22px"] { font-size: 14px !important; }
+  #taiwan-boss-detail [style*="font-size:20px"] { font-size: 14px !important; }
+  /* BOSS 立繪縮小 */
+  #taiwan-boss-detail img { max-width: 220px !important; max-height: 220px !important; }
+  /* 台灣關過場/對白:大字級降級避免溢出 */
+  #taiwan-cutscene-overlay [style*="font-size:96px"],
+  #taiwan-dialog-overlay [style*="font-size:96px"] { font-size: 36px !important; }
+  #taiwan-cutscene-overlay [style*="font-size:80px"],
+  #taiwan-dialog-overlay [style*="font-size:80px"] { font-size: 32px !important; }
+  #taiwan-cutscene-overlay [style*="font-size:52px"],
+  #taiwan-dialog-overlay [style*="font-size:52px"] { font-size: 22px !important; line-height: 1.5 !important; }
+  #taiwan-cutscene-overlay [style*="font-size:48px"],
+  #taiwan-dialog-overlay [style*="font-size:48px"] { font-size: 26px !important; }
+  #taiwan-cutscene-overlay [style*="font-size:44px"],
+  #taiwan-dialog-overlay [style*="font-size:44px"] { font-size: 22px !important; }
+  #taiwan-cutscene-overlay [style*="font-size:40px"],
+  #taiwan-dialog-overlay [style*="font-size:40px"] { font-size: 20px !important; }
+  #taiwan-cutscene-overlay [style*="font-size:36px"],
+  #taiwan-dialog-overlay [style*="font-size:36px"] { font-size: 18px !important; }
+  #taiwan-cutscene-overlay [style*="font-size:32px"],
+  #taiwan-dialog-overlay [style*="font-size:32px"] { font-size: 16px !important; }
+  /* 對白容器 padding 縮小 */
+  #taiwan-dialog-box { padding: 14px 18px !important; max-width: 94vw !important; }
+  /* 難度視窗 */
+  #taiwan-difficulty-overlay [style*="font-size:80px"] { font-size: 32px !important; }
+  #taiwan-difficulty-overlay [style*="font-size:72px"] { font-size: 28px !important; }
+  #taiwan-difficulty-overlay [style*="font-size:36px"] { font-size: 16px !important; }
+  #taiwan-difficulty-overlay [style*="font-size:32px"] { font-size: 15px !important; }
+  #taiwan-difficulty-overlay [style*="font-size:28px"] { font-size: 14px !important; }
+  /* 難度卡片變窄 */
+  #taiwan-difficulty-overlay .taiwan-diff-card {
+    min-width: 0 !important;
+    max-width: 92vw !important;
+    flex-basis: 100% !important;
+    padding: 16px 14px !important;
+  }
+  /* 確保按鈕觸控目標夠大 */
+  button, .adv-stage-btn, .ibox, .abtn {
+    min-height: 44px !important;
+  }
+  /* 戰鬥內按鈕:左下角的卡死自救/教學/相剋圖避免被螢幕邊緣切掉 */
+  #adv-deadlock-rescue-btn,
+  #adv-tut-btn {
+    left: max(8px, env(safe-area-inset-left)) !important;
+  }
+}
+
+/* 小手機 (寬 ≤ 480px) — 進一步優化 */
+@media (max-width: 480px) {
+  /* 視窗 max-width 再縮小 */
+  #adv-boss-detail-pop > div,
+  #tw-boss-detail-overlay > div,
+  #taiwan-boss-detail > div:first-child {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    padding: 12px 10px !important;
+  }
+  /* 立繪再縮 */
+  #taiwan-boss-detail img { max-width: 160px !important; max-height: 160px !important; }
+  /* 按鈕更緊湊 */
+  #taiwan-boss-detail button {
+    padding: 12px 14px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* === iPhone X/11/12/13/14 系列 notch 安全區域 === */
+@supports (padding: env(safe-area-inset-left)) {
+  @media (max-width: 900px) and (orientation: landscape) {
+    /* 戰鬥畫面內所有 absolute 按鈕都考慮 safe-area */
+    #ctrl-bar,
+    #adv-deadlock-rescue-btn,
+    #adv-tut-btn,
+    #adv-rollback-btn {
+      padding-left: env(safe-area-inset-left, 0) !important;
+      padding-right: env(safe-area-inset-right, 0) !important;
+    }
   }
 }
 
@@ -4896,6 +5172,12 @@ body.art-premium #summon-overlay {
       max-width:calc(100% - 24px);
     ">
       <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:18px;">🔴</span>
+        <span style="font-size:13px;color:#ffaaaa;">目前在線</span>
+        <span id="player-stats-online" style="font-size:22px;color:#ff8866;text-shadow:0 0 8px rgba(255,136,102,0.6);min-width:24px;text-align:right;">—</span>
+      </div>
+      <div style="width:1px;height:22px;background:rgba(212,168,67,0.4);"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:18px;">🟢</span>
         <span style="font-size:13px;color:#aaddff;">今日上線</span>
         <span id="player-stats-today" style="font-size:22px;color:#66e6ff;text-shadow:0 0 8px rgba(102,230,255,0.5);min-width:24px;text-align:right;">—</span>
@@ -5039,8 +5321,8 @@ body.art-premium #summon-overlay {
 
 <!-- 版本標示 -->
 <div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260423.6000</div>
-<button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);showLoginGate()">🗺 展開冒險故事</button>
-<button id="start-btn" onclick="if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
+<button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);if(window._isMobileDevice&&window._isMobileDevice()&&window._enterMobileFullscreenLandscape){window._enterMobileFullscreenLandscape();}showLoginGate()">🗺 展開冒險故事</button>
+<button id="start-btn" onclick="if(window._isMobileDevice&&window._isMobileDevice()&&window._enterMobileFullscreenLandscape){window._enterMobileFullscreenLandscape();}else if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
 
 
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -5132,7 +5414,7 @@ body.art-premium #summon-overlay {
     <div id="adv-left-panel">
       <div class="adv-list-title">今天要去哪裡討伐<br>來自異世界的魔物呢？</div>
       <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
-      <div class="adv-stage-btn adv-stage-btn-locked" style="opacity:0.55;cursor:not-allowed;background:rgba(80,80,90,0.4);" onclick="event.stopPropagation();_taiwanAdminCheckEntry(this);">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(敬請期待)</span></div>
+      <div class="adv-stage-btn" onclick="_taiwanTrySelect(this)">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 全台 10 大特產關卡(管理員測試中)</span></div>
       <div class="adv-stage-btn" onclick="_japanTrySelect(this)">✈ 環遊世界遠征傳說<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffcc66;">🗾 第一關:日本探險</span></div>
     <!-- ★ 商店按鈕 + 知識幣顯示 -->
     <div id="adv-coins-bar" style="font-size:clamp(13px,1.5vw,20px);font-weight:700;color:#ffee88;margin-top:12px;padding:6px 12px;
@@ -10298,6 +10580,19 @@ function renderBfield(){
   if(_gc) _gc.classList.remove('adv-battle');
 // ====== INIT ======
 function initGame(){
+  // ★ v1.1.0 — 標記遊戲已開始,啟動方向監聽(手機直立時自動顯示提示)
+  window._gameInitialized = true;
+  try{
+    if(typeof window._setupOrientationWatcher === 'function'){
+      window._setupOrientationWatcher();
+      // 立刻檢查一次方向
+      if(typeof window._isMobileDevice === 'function' && window._isMobileDevice()){
+        if(typeof window._isPortrait === 'function' && window._isPortrait()){
+          window._showPortraitReminder();
+        }
+      }
+    }
+  }catch(_){}
   // ★ 防護：清除任何殘留的冒險模式狀態
   try{
     const _gcI = document.getElementById('gc');
@@ -12091,7 +12386,21 @@ let _focusedHeroName = '';
 function focusHero(idx, name){
   _focusedHeroIdx = idx;
   _focusedHeroName = name;
-  const b = HERO_DB[name];
+  let b = HERO_DB[name];
+  // ★ v1.1.0 — 大天狗/酒吞童子/玉藻前 三大解鎖 BOSS 英雄,在英雄選角畫面顯示弱化版能力
+  //   bug 症狀:HERO_DB[name] 是 BOSS 版能力(hp 600+/atk 15/sp 25/spd 24),
+  //           但作為玩家英雄出戰時其實是弱化版(hp 56-72/atk 5-16/sp 9-19/spd 6-17)
+  //   修補:覆蓋 b 的能力數值為 JP_BOSS_HERO_STATS 中的英雄版
+  if(b && typeof JP_BOSS_HERO_STATS !== 'undefined' && JP_BOSS_HERO_STATS[name]){
+    const _heroStat = JP_BOSS_HERO_STATS[name];
+    b = Object.assign({}, b, {
+      hp:  _heroStat.hp,
+      atk: _heroStat.atk,
+      sp:  _heroStat.sp,
+      spd: _heroStat.spd,
+      exp: _heroStat.exp,
+    });
+  }
   const av = AVATARS[name]||'🗡️';
   const isPicked = _heroPickSelected.includes(name);
   const full = _heroPickSelected.length>=4 && !isPicked;
@@ -13930,29 +14239,55 @@ function _showPlayerBurstPriority(bossHero, isRage){
 
   (document.getElementById('gc') || document.body).appendChild(modal);
   try{ playSfx('sfx-burst-ready', 0.9); }catch(_){}
+  // ★ v1.1.0 — modal 加閃爍動畫提醒玩家(避免錯過視窗)
+  try{
+    modal.style.animation = 'burstPanelIn 0.3s cubic-bezier(0.34,1.56,0.64,1), burstPriorityPulse 1.0s ease-in-out 0.4s infinite';
+    if(!document.getElementById('_burst-priority-pulse-kf')){
+      const _kf = document.createElement('style');
+      _kf.id = '_burst-priority-pulse-kf';
+      _kf.textContent = '@keyframes burstPriorityPulse{0%,100%{box-shadow:0 0 50px rgba(255,150,0,0.7);}50%{box-shadow:0 0 70px rgba(255,200,0,1.0),0 0 90px rgba(255,150,0,0.6);}}';
+      document.head.appendChild(_kf);
+    }
+  }catch(_){}
+
+  // ★ v1.1.0 — 8 秒自動跳過,避免玩家錯過 modal 導致 BOSS 卡住不爆發
+  let _autoSkipTimer = null;
+  const _doSkip = (_isAuto) => {
+    if(_autoSkipTimer){ clearTimeout(_autoSkipTimer); _autoSkipTimer = null; }
+    try{ modal.remove(); }catch(_){}
+    if(_isAuto){
+      try{ _showInGameToast('⏰ 8 秒未選擇,讓對手先發動爆發', '#ffaa44', 2000); }catch(_){}
+    }
+    // 跳過 → 讓敵方爆發
+    if(isRage){
+      // 憤怒爆發的原本副作用必須補上
+      _advBossRageBurstUsed = true;
+      G.energy[bossHero.side] = 10;
+      bossHero._burstUsed = Math.max(0, (bossHero._burstUsed||0) - 1);
+      try{ bannerFX(bossHero, '😾 憤怒覺醒！', '#ff2200', 1500); }catch(_){}
+      try{ flashScreen('rgba(255,0,0,0.6)', 600); }catch(_){}
+      try{ playSfx('sfx-burst', 1.0); }catch(_){}
+    }
+    _pSetTimeout(() => {
+      // ★ v1.0.20260428.3670 — 同 rage 路徑:清 acted 避免 _canBurst 因 BOSS quiz cb 設的 acted=true 而擋下
+      try{ if(bossHero) bossHero.acted = false; }catch(_){}
+      try{ execBurst(bossHero.side, bossHero.pos); }
+      catch(e){ console.error('[priority skip burst]', e); _pSetTimeout(startTurn, 400); }
+    }, isRage ? 800 : 200);
+  };
 
   const _skipBtn = document.getElementById('bpm-skip');
   if(_skipBtn){
-    _skipBtn.onclick = () => {
-      try{ modal.remove(); }catch(_){}
-      // 跳過 → 讓敵方爆發
-      if(isRage){
-        // 憤怒爆發的原本副作用必須補上
-        _advBossRageBurstUsed = true;
-        G.energy[bossHero.side] = 10;
-        bossHero._burstUsed = Math.max(0, (bossHero._burstUsed||0) - 1);
-        try{ bannerFX(bossHero, '😾 憤怒覺醒！', '#ff2200', 1500); }catch(_){}
-        try{ flashScreen('rgba(255,0,0,0.6)', 600); }catch(_){}
-        try{ playSfx('sfx-burst', 1.0); }catch(_){}
-      }
-      _pSetTimeout(() => {
-        // ★ v1.0.20260428.3670 — 同 rage 路徑:清 acted 避免 _canBurst 因 BOSS quiz cb 設的 acted=true 而擋下
-        try{ if(bossHero) bossHero.acted = false; }catch(_){}
-        try{ execBurst(bossHero.side, bossHero.pos); }
-        catch(e){ console.error('[priority skip burst]', e); _pSetTimeout(startTurn, 400); }
-      }, isRage ? 800 : 200);
-    };
+    _skipBtn.onclick = () => _doSkip(false);
   }
+
+  // 8 秒自動跳過(玩家可能沒注意右側 modal 而導致 BOSS 卡住)
+  _autoSkipTimer = setTimeout(() => {
+    if(document.getElementById('burst-priority-modal')){
+      console.log('[玩家爆發優先] 8 秒未處理,自動跳過讓 BOSS 爆發');
+      _doSkip(true);
+    }
+  }, 8000);
 }
 window._showPlayerBurstPriority = _showPlayerBurstPriority;
 
@@ -23896,7 +24231,37 @@ function _realAiAct(a){
   if(!enemies.length){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
 
   // ── AI 極限爆發：能量滿且未使用時直接發動 ──
+  // ★ v1.1.0 — 修「BOSS 爆發亮了不會釋放」的根因:
+  //   BOSS quiz cb (line ~23769) 在進入 _realAiAct 之前就把 a.acted=true,
+  //   但 _canBurst(a) 第一個檢查就是 h.acted → 直接 return false → BOSS 不爆發
+  //   修補:在判定爆發前暫時清 acted=false,讓 _canBurst 通過;
+  //         如果決定爆發,execBurst 內會再設回 acted=true(line 14439)
+  //         如果不爆發,後面流程也會處理 acted(行動完 endAction 設 acted=true)
+  try{
+    if(a && a.acted && a.side === 'p2' && BURST_DB && BURST_DB[a.name]
+       && _burstReady(a.side)){
+      try{
+        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+          console.log('[BOSS AI 爆發] '+a.name+' a.acted=true 但能量滿可爆發,清 acted 讓 _canBurst 通過');
+        }
+      }catch(_){}
+      a.acted = false;
+    }
+  }catch(_){}
   if(_canBurst(a)){
+    // ★ v1.1.0 — 加診斷 log,追查台灣 BOSS 爆發亮了卻不釋放的問題
+    try{
+      const _isTw = (typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan');
+      if(_isTw){
+        console.log('[BOSS AI 爆發] '+a.name+' _canBurst=true,準備觸發 execBurst', {
+          side: a.side, pos: a.pos,
+          energy: G.energy && G.energy[a.side],
+          inBurstDB: !!(BURST_DB && BURST_DB[a.name]),
+          burstName: BURST_DB && BURST_DB[a.name] ? BURST_DB[a.name].n : '(無)',
+          playerCanBurst: G.p1 && G.p1.some(h => _canBurst(h)),
+        });
+      }
+    }catch(_){}
     // ★ v1.0.20260422.0105 — 玩家爆發優先：
     //   若我方有任何英雄也可以爆發（_canBurst 為 true），
     //   暫緩敵方爆發，彈出提示讓玩家優先決定是否發動自己的爆發。
@@ -23904,12 +24269,22 @@ function _realAiAct(a){
     //   此時我方能量已=0 → _canBurst(p1) = false → 敵方正常爆發；
     //   玩家按「跳過」時則由 priority modal 直接呼叫 execBurst 讓敵方發動。
     if(a.side === 'p2' && G.p1 && G.p1.some(h => _canBurst(h))){
+      try{
+        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+          console.log('[BOSS AI 爆發] 玩家也可爆發,彈出優先選擇 modal');
+        }
+      }catch(_){}
       try{ _showPlayerBurstPriority(a); }catch(_bpE){
         console.error('[玩家爆發優先提示] 失敗,退回敵方直接爆發:', _bpE);
         _pSetTimeout(()=>execBurst(a.side, a.pos), 300);
       }
       return;
     }
+    try{
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        console.log('[BOSS AI 爆發] 玩家無人能爆發,300ms 後 BOSS 直接爆發');
+      }
+    }catch(_){}
     _pSetTimeout(()=>execBurst(a.side, a.pos), 300);
     return;
   }
@@ -25286,8 +25661,48 @@ function _showResultWithDrama(win){
     }, 2100); // 比慢動作 2000ms 多 100ms,確保 CSS class 已清除
     return;
   }
+  // ★ v1.1.0 — 台灣關 BOSS 戰最強保護:不論 _advMiniBattleActive 任何值,
+  //   只要 _adventureStage=taiwan 且 G.p2 含 10 BOSS 之一,都強制走 BOSS 結算
+  //   (避免 _advMiniBattleActive 被前一場小怪戰誤殘留 true,導致台灣 BOSS 戰被當小怪結算)
+  try{
+    if(win && typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'
+       && G && G.p2 && G.p2.length > 0){
+      const _TW_BOSS_SET = new Set([
+        '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
+        '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+        '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+      ]);
+      const _hasTwBoss = G.p2.some(h => h && _TW_BOSS_SET.has(h.name));
+      if(_hasTwBoss){
+        console.log('🏝 [台灣關結算判定] 強制走 BOSS 結算流程(_advMiniBattleActive='+_advMiniBattleActive+',但 G.p2 含台灣 BOSS)');
+        // 強制清掉 mini 旗標,避免後續流程錯亂
+        if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = false;
+        if(typeof advShowBattleResult === 'function'){
+          advShowBattleResult(true);
+          return;
+        }
+      }
+    }
+  }catch(_twChkE){ console.warn('[台灣關結算保護] 失敗', _twChkE); }
   // ★ 小怪戰鬥結束
+  // ★ v1.1.0 — 加 log 追蹤台灣 BOSS 戰結算誤判問題
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      console.log('🏝 [台灣關結算判定]', {
+        win: win,
+        _advMiniBattleActive: typeof _advMiniBattleActive !== 'undefined' ? _advMiniBattleActive : 'undefined',
+        p2Names: G && G.p2 ? G.p2.map(h => h && h.name) : null,
+        _adventureStage: _adventureStage,
+        _advSelectedTaiwanBoss: window._advSelectedTaiwanBoss,
+      });
+    }
+  }catch(_){}
   if(_advMiniBattleActive){
+    try{
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        console.warn('🏝 [台灣關結算判定] _advMiniBattleActive=true → 走 advFinishMiniBattle (小怪結算)');
+      }
+    }catch(_){}
     advFinishMiniBattle(win);
     return;
   }
@@ -25295,10 +25710,16 @@ function _showResultWithDrama(win){
   //   即使 _advMiniBattleActive 為 false，若是勝利且 G.p2 無任何 BOSS 名字，
   //   視為小怪戰結算而非 BOSS 結算，避免誤發 BOSS 獎勵
   if(win && typeof _adventureMode !== 'undefined' && _adventureMode && G && G.p2 && G.p2.length > 0){
-    const _BOSS_SET2 = new Set(['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇']);
+    // ★ v1.1.0 — _BOSS_SET2 補上台灣 10 BOSS(原本漏了)
+    //   bug 症狀:打贏台灣 BOSS 後跳「小怪全滅」結算畫面而不是 BOSS 評定畫面
+    //   且因為小怪結算可被重複觸發,玩家可以無限按「繼續冒險」領獎勵
+    const _BOSS_SET2 = new Set(['九尾空貓怪','杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇',
+      '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
+      '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
+      '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人']);
     const _hasBoss2 = G.p2.some(h => _BOSS_SET2.has(h.name));
     if(!_hasBoss2){
-      console.warn('[防呆] _showResultWithDrama: G.p2 無 BOSS 但走到 BOSS 結算流程，改為 mini 戰結算');
+      console.warn('[防呆] _showResultWithDrama: G.p2 無 BOSS 但走到 BOSS 結算流程,改為 mini 戰結算');
       if(typeof _advMiniBattleActive !== 'undefined') _advMiniBattleActive = true;
       if(typeof advFinishMiniBattle === 'function'){
         advFinishMiniBattle(win);
@@ -28600,16 +29021,18 @@ function scaleToViewport(){
   const gc=document.getElementById('gc');
   if(!gc) return;
   const W=1920, H=1080;
-  // ★ v1.0.20260422.0112 — 大幅簡化：不再手動計算 translate 偏移量。
-  //   新架構由 CSS 負責置中（wrapper 的 flex align/justify-center + #gc 的 center center transform-origin），
-  //   本函式只需計算 scale 倍率讓 1920×1080 的內容適配當前視口。
-  //   好處：
-  //   1. 不再依賴 visualViewport.height 的準確度（iPad Safari 全螢幕時該值不穩）
-  //   2. 即使 scale 計算略有誤差（例如 ±1%），視覺上完全看不出來
-  //   3. 置中完全交給瀏覽器 flex 佈局引擎，比任何 JS 計算都穩定
+  // ★ v1.0.20260422.0112 — 大幅簡化:不再手動計算 translate 偏移量
+  // ★ v1.1.0 — 手機適配:在小螢幕保留邊緣空間,避免按鈕被切到
   const vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || window.innerWidth;
   const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight;
-  const scale = Math.min(vw / W, vh / H);
+  // ★ v1.1.0 — 手機橫式:預留 1vw 邊緣讓按鈕觸控區不被螢幕邊框擋住
+  //   非手機(寬>900px 或縱橫比明顯不像手機)維持原本最大化縮放
+  const _isMobileLandscape = vw <= 900 && vw > vh;
+  const _padX = _isMobileLandscape ? Math.max(4, vw * 0.01) : 0;
+  const _padY = _isMobileLandscape ? Math.max(4, vh * 0.005) : 0;
+  const _availW = vw - _padX * 2;
+  const _availH = vh - _padY * 2;
+  const scale = Math.min(_availW / W, _availH / H);
   gc.style.transform = `scale(${scale})`;
   // Store scale for VFX coord calculations
   window._gcScale = scale;
@@ -28964,6 +29387,12 @@ window.addEventListener('pagehide', function(e){
       try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
     }
   } catch(e2){}
+  // ★ v1.1.0 — 頁面關閉時清掉 presence,讓在線人數即時反映
+  try{
+    if(typeof window._fbStopPresence === 'function' && window._gUserId){
+      window._fbStopPresence(window._gUserId);
+    }
+  }catch(_){}
 });
 
 // ====== MOBILE TOUCH SUPPORT ======
@@ -30680,36 +31109,6 @@ function openAdventureOverlay(){
 
   // ★ v1.0.20260424.0790 — 召喚按鈕顯示判定(管理員限定)
   try{ _refreshSummonBtnVisibility(); }catch(_e){}
-
-  // ★ v1.1.0 — 玩家版專屬:管理員白名單帳號看到台灣關按鈕變成「橘色可點(管理員測試中)」
-  //   一般玩家看到的是「灰色敬請期待」(預設樣式)
-  //   兩者 onclick 都走 _taiwanAdminCheckEntry,但管理員視覺上會更清楚自己有權限
-  try{
-    const _twBtn = document.querySelector('.adv-stage-btn-locked');
-    if(_twBtn){
-      const _isAdmin = (typeof window._isAdminUser === 'function') && window._isAdminUser();
-      if(_isAdmin){
-        // 管理員樣式:橘色可點 + 「管理員測試中」標示
-        _twBtn.style.opacity = '1';
-        _twBtn.style.cursor = 'pointer';
-        _twBtn.style.background = ''; // 還原為預設(其他可點按鈕的樣式)
-        // 修改顯示文字
-        const _subSpan = _twBtn.querySelector('span');
-        if(_subSpan){
-          _subSpan.textContent = '🏝 全台 10 大特產關卡(管理員測試中)';
-        }
-      } else {
-        // 一般玩家樣式:灰色不可點 + 「敬請期待」
-        _twBtn.style.opacity = '0.55';
-        _twBtn.style.cursor = 'not-allowed';
-        _twBtn.style.background = 'rgba(80,80,90,0.4)';
-        const _subSpan = _twBtn.querySelector('span');
-        if(_subSpan){
-          _subSpan.textContent = '🏝 全台 10 大特產關卡(敬請期待)';
-        }
-      }
-    }
-  }catch(_twE){ console.warn('[玩家版台灣關按鈕] 樣式套用失敗', _twE); }
 }
 
 // ════════════════════════════════════════
@@ -32230,11 +32629,12 @@ function _showTaiwanCutscene(bossId, onDone){
   }
   overlay.innerHTML =
     '<div style="background:rgba(0,0,0,0.55);padding:60px 80px;border-radius:24px;backdrop-filter:blur(4px);text-align:center;animation:taiwanCutsceneTitle 1s 0.3s ease-out both;max-width:90%;">' +
-      '<div style="font-size:24px;color:#ffcc66;letter-spacing:6px;margin-bottom:14px;">📍 ' + boss.location + '</div>' +
-      '<div style="font-size:64px;font-weight:900;color:#ffeebb;letter-spacing:8px;margin-bottom:20px;text-shadow:0 0 30px rgba(255,200,80,0.7),0 4px 8px rgba(0,0,0,0.6);">' + boss.name + '</div>' +
-      '<div style="font-size:20px;color:#ddccaa;line-height:1.8;max-width:720px;margin:0 auto;font-style:italic;">「' + boss.desc + '」</div>' +
+      // ★ v1.1.0 — 文字放大到貓空關等級(地點 24→40,BOSS 名 64→96,描述 20→40,點擊提示 22→36)
+      '<div style="font-size:40px;color:#ffcc66;letter-spacing:6px;margin-bottom:18px;font-weight:700;">📍 ' + boss.location + '</div>' +
+      '<div style="font-size:96px;font-weight:900;color:#ffeebb;letter-spacing:10px;margin-bottom:28px;text-shadow:0 0 40px rgba(255,200,80,0.8),0 6px 12px rgba(0,0,0,0.7);">' + boss.name + '</div>' +
+      '<div style="font-size:40px;color:#ddccaa;line-height:1.7;max-width:1200px;margin:0 auto;font-style:italic;letter-spacing:1px;">「' + boss.desc + '」</div>' +
     '</div>' +
-    '<div style="position:absolute;bottom:60px;font-size:22px;color:#fff;letter-spacing:4px;animation:taiwanCutscenePulse 1.5s ease-in-out infinite;">▶ 點擊任意處繼續</div>';
+    '<div style="position:absolute;bottom:60px;font-size:36px;color:#fff;letter-spacing:5px;font-weight:700;animation:taiwanCutscenePulse 1.5s ease-in-out infinite;">▶ 點擊任意處繼續</div>';
   overlay.onclick = () => {
     try{ playSfx('sfx-confirm2', 0.5); }catch(_){}
     // ★ v1.0.20260428.4060 — 修對白切換時露出戰鬥畫面紅藍底色的問題
@@ -32275,13 +32675,15 @@ function _showTaiwanBossDialog(bossId, onDone){
     : '';
   overlay.innerHTML =
     _bossPortraitHtml +
-    '<div id="taiwan-dialog-box" style="width:90%;max-width:1200px;margin-bottom:60px;background:linear-gradient(180deg,rgba(20,10,30,0.94),rgba(40,20,60,0.96));border:3px solid rgba(255,200,80,0.7);border-radius:18px;padding:24px 36px;box-shadow:0 0 40px rgba(255,150,80,0.4);animation:taiwanCutsceneTitle 0.5s ease-out both;">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">' +
-        '<div style="font-size:28px;">' + boss.bossEmoji + '</div>' +
-        '<div style="font-size:24px;font-weight:900;color:#ffcc66;letter-spacing:3px;">' + boss.name + '</div>' +
+    // ★ v1.1.0 — BOSS 對白文字放大到貓空關等級
+    //   BOSS emoji 28→48,BOSS 名 24→44,對白文字 24→52(最重要),點擊提示 16→32,padding 加大
+    '<div id="taiwan-dialog-box" style="width:90%;max-width:1400px;margin-bottom:60px;background:linear-gradient(180deg,rgba(20,10,30,0.94),rgba(40,20,60,0.96));border:3px solid rgba(255,200,80,0.7);border-radius:22px;padding:36px 56px;box-shadow:0 0 40px rgba(255,150,80,0.4);animation:taiwanCutsceneTitle 0.5s ease-out both;">' +
+      '<div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">' +
+        '<div style="font-size:48px;">' + boss.bossEmoji + '</div>' +
+        '<div style="font-size:44px;font-weight:900;color:#ffcc66;letter-spacing:4px;">' + boss.name + '</div>' +
       '</div>' +
-      '<div id="taiwan-dialog-text" style="font-size:24px;color:#fff;letter-spacing:1.5px;line-height:1.8;min-height:70px;"></div>' +
-      '<div style="text-align:right;font-size:16px;color:#ffcc66;letter-spacing:3px;margin-top:10px;animation:taiwanCutscenePulse 1.2s ease-in-out infinite;">▼ 點擊繼續</div>' +
+      '<div id="taiwan-dialog-text" style="font-size:52px;color:#fff;letter-spacing:2px;line-height:1.7;min-height:140px;font-weight:600;"></div>' +
+      '<div style="text-align:right;font-size:32px;color:#ffcc66;letter-spacing:4px;margin-top:18px;font-weight:700;animation:taiwanCutscenePulse 1.2s ease-in-out infinite;">▼ 點擊繼續</div>' +
     '</div>';
   document.body.appendChild(overlay);
   let currentIdx = 0;
@@ -32349,19 +32751,21 @@ function _showTaiwanDifficultySelect(bossId, onSelected){
     { key:'我很會', label:'🔥 我很會',   sub:'4 個選項', desc:'困難挑戰,給自信滿滿的勇者!',    color:'#ff6688' },
   ];
   const cardsHtml = difficulties.map(d =>
-    '<div class="taiwan-diff-card" data-key="'+d.key+'" style="flex:1;cursor:pointer;background:linear-gradient(180deg,rgba(40,30,60,0.7),rgba(20,15,30,0.85));border:3px solid '+d.color+'88;border-radius:20px;padding:30px 22px;text-align:center;transition:all 0.2s;min-width:240px;max-width:300px;">' +
-      '<div style="font-size:48px;font-weight:900;color:'+d.color+';letter-spacing:4px;margin-bottom:8px;">'+d.label+'</div>' +
-      '<div style="display:inline-block;padding:5px 14px;font-size:18px;background:'+d.color+';color:#000;border-radius:6px;font-weight:800;margin-bottom:14px;">'+d.sub+'</div>' +
-      '<div style="font-size:16px;color:#ddccee;line-height:1.6;">'+d.desc+'</div>' +
+    // ★ v1.1.0 — 難度卡片字級放大:標題 48→72,選項數 18→32,說明 16→28,padding 加大
+    '<div class="taiwan-diff-card" data-key="'+d.key+'" style="flex:1;cursor:pointer;background:linear-gradient(180deg,rgba(40,30,60,0.7),rgba(20,15,30,0.85));border:3px solid '+d.color+'88;border-radius:24px;padding:48px 32px;text-align:center;transition:all 0.2s;min-width:340px;max-width:420px;">' +
+      '<div style="font-size:72px;font-weight:900;color:'+d.color+';letter-spacing:5px;margin-bottom:14px;">'+d.label+'</div>' +
+      '<div style="display:inline-block;padding:8px 22px;font-size:32px;background:'+d.color+';color:#000;border-radius:8px;font-weight:800;margin-bottom:22px;">'+d.sub+'</div>' +
+      '<div style="font-size:28px;color:#ddccee;line-height:1.6;">'+d.desc+'</div>' +
     '</div>'
   ).join('');
   overlay.innerHTML =
-    '<div style="font-size:48px;font-weight:900;color:#ffeebb;letter-spacing:8px;margin-bottom:8px;text-shadow:0 0 20px rgba(255,200,80,0.6);">⚔️ 選擇難度</div>' +
-    '<div style="font-size:20px;color:#ddccaa;letter-spacing:3px;margin-bottom:30px;">挑戰 ' + boss.name + ' 之前,先決定你的考驗!</div>' +
-    '<div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;max-width:1100px;margin-bottom:30px;">' +
+    // ★ v1.1.0 — 標題與副標也放大:標題 48→80,副標 20→36,返回按鈕 18→32
+    '<div style="font-size:80px;font-weight:900;color:#ffeebb;letter-spacing:10px;margin-bottom:14px;text-shadow:0 0 30px rgba(255,200,80,0.7);">⚔️ 選擇難度</div>' +
+    '<div style="font-size:36px;color:#ddccaa;letter-spacing:4px;margin-bottom:46px;font-weight:600;">挑戰 ' + boss.name + ' 之前,先決定你的考驗!</div>' +
+    '<div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;max-width:1500px;margin-bottom:42px;">' +
       cardsHtml +
     '</div>' +
-    '<button id="taiwan-diff-back-btn" style="padding:10px 26px;font-size:18px;background:rgba(80,60,40,0.7);border:2px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;letter-spacing:2px;font-family:inherit;">← 返回 BOSS 詳情</button>';
+    '<button id="taiwan-diff-back-btn" style="padding:16px 40px;font-size:32px;background:rgba(80,60,40,0.7);border:2.5px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:14px;cursor:pointer;letter-spacing:3px;font-weight:700;font-family:inherit;">← 返回 BOSS 詳情</button>';
   document.body.appendChild(overlay);
   setTimeout(()=>{
     document.querySelectorAll('.taiwan-diff-card').forEach(card => {
@@ -34174,28 +34578,9 @@ window._japanTrySelect = function(btnEl){
 
 // ★ v1.0.20260428.1700 — 台灣環島歷險記:管理員測試模式
 //   非管理員會被擋下,只有白名單帳號可以進去測試
-// ★ v1.1.0 — 玩家版:旗標保持 true 鎖死,且入口按鈕在 HTML 改為「敬請期待」灰按鈕
-//   但管理員白名單帳號(_isAdminUser)點擊時,會走 _taiwanAdminCheckEntry → _taiwanTrySelect 進入測試
-window._TAIWAN_ADMIN_ONLY = true;       // 玩家版:只開放白名單管理員(一般玩家看「敬請期待」)
-
-// ★ v1.1.0 — 「敬請期待」按鈕的點擊處理
-//   一般玩家:跳「敬請期待!」toast(維持鎖死體驗)
-//   管理員:走 _taiwanTrySelect 進入台灣關測試
-window._taiwanAdminCheckEntry = function(btnEl){
-  // 檢查是不是管理員
-  const _isAdmin = (typeof window._isAdminUser === 'function') && window._isAdminUser();
-  if(_isAdmin){
-    // 管理員 → 進入台灣關
-    try{ window._taiwanTrySelect(btnEl); }catch(_e){
-      console.error('[台灣關管理員入口] _taiwanTrySelect 失敗', _e);
-    }
-  } else {
-    // 一般玩家 → 跳「敬請期待」訊息
-    try{ playSfx('sfx-cancel', 0.4); }catch(_){}
-    try{ _showInGameToast('🏝 台灣環島歷險記敬請期待!', '#ffaa66', 2200); }catch(_){}
-  }
-};
-
+// ★ v1.0.20260428.4000 — 管理員測試版:解鎖此關卡(本機 Live Server 環境 Firebase 登入失敗也能進)
+//   ⚠️ 注意:這個 false 只在管理員測試版設定,玩家版必須維持 true(目前玩家版台灣關按鈕本來就鎖)
+window._TAIWAN_ADMIN_ONLY = false;       // 管理員測試版:已解鎖
 window._taiwanTrySelect = function(btnEl){
   if(window._TAIWAN_ADMIN_ONLY && !(typeof window._isAdminUser === 'function' && window._isAdminUser())){
     try{ playSfx('sfx-cancel', 0.6); }catch(_){}
@@ -34680,82 +35065,82 @@ function _showTaiwanBossDetail(bossId){
     'animation:fadeIn 0.3s;padding:20px;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
 
   detail.innerHTML =
-    '<div style="max-width:560px;width:100%;max-height:96vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 22px 20px;' +
+    // ★ v1.1.0 — BOSS 詳情視窗文字全面放大,對齊貓空關等級
+    '<div style="max-width:780px;width:100%;max-height:96vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 30px 28px;' +
       'background:linear-gradient(160deg,rgba(20,30,60,0.98),rgba(8,15,40,0.98));' +
-      'border:3px solid '+_rc+';border-radius:22px;box-shadow:0 0 60px '+_rc+'88;animation:taiwanDetailIn 0.4s;">' +
+      'border:3px solid '+_rc+';border-radius:24px;box-shadow:0 0 60px '+_rc+'88;animation:taiwanDetailIn 0.4s;">' +
 
-      // 地點 + BOSS 名稱
-      '<div style="margin-bottom:14px;">' +
-        '<div style="font-size:clamp(13px,1.5vw,16px);color:#ffcc88;letter-spacing:2px;">📍 '+boss.location+'</div>' +
-        '<div style="font-size:clamp(24px,3.2vw,34px);font-weight:900;color:#fff;letter-spacing:2px;text-shadow:0 0 16px '+_rc+';line-height:1.25;margin-top:4px;">'+boss.name+'</div>' +
+      // 地點 + BOSS 名稱(放大:地點 16→26,名稱 34→52)
+      '<div style="margin-bottom:20px;">' +
+        '<div style="font-size:26px;color:#ffcc88;letter-spacing:3px;font-weight:600;">📍 '+boss.location+'</div>' +
+        '<div style="font-size:52px;font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px '+_rc+';line-height:1.2;margin-top:8px;">'+boss.name+'</div>' +
       '</div>' +
 
       // BOSS 立繪(大圖)
-      '<div style="background:linear-gradient(160deg,rgba(0,0,0,0.5),rgba(10,15,30,0.5));border:2px solid '+_rc+'aa;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;">' +
+      '<div style="background:linear-gradient(160deg,rgba(0,0,0,0.5),rgba(10,15,30,0.5));border:2.5px solid '+_rc+'aa;border-radius:16px;padding:18px;margin-bottom:18px;display:flex;align-items:center;justify-content:center;">' +
         (_bossImg
-          ? '<img src="'+_bossImg+'" alt="'+boss.name+'" style="width:100%;max-width:380px;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:10px;display:block;filter:drop-shadow(0 0 20px '+_rc+'88);" onerror="this.outerHTML=\'<div style=&quot;font-size:160px;line-height:1;filter:drop-shadow(0 0 20px '+_rc+');&quot;>'+(boss.bossEmoji||'👹')+'</div>\'">'
-          : '<div style="font-size:160px;line-height:1;filter:drop-shadow(0 0 20px '+_rc+');">'+(boss.bossEmoji||'👹')+'</div>'
+          ? '<img src="'+_bossImg+'" alt="'+boss.name+'" style="width:100%;max-width:520px;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:12px;display:block;filter:drop-shadow(0 0 20px '+_rc+'88);" onerror="this.outerHTML=\'<div style=&quot;font-size:200px;line-height:1;filter:drop-shadow(0 0 20px '+_rc+');&quot;>'+(boss.bossEmoji||'👹')+'</div>\'">'
+          : '<div style="font-size:200px;line-height:1;filter:drop-shadow(0 0 20px '+_rc+');">'+(boss.bossEmoji||'👹')+'</div>'
         ) +
       '</div>' +
 
-      // ★ v1.0.20260428.4090 — 移除建議等級,難度改為單欄佔滿
-      '<div style="margin-bottom:10px;">' +
-        '<div style="background:rgba(255,180,40,0.08);border:1.5px solid rgba(255,180,40,0.45);border-radius:12px;padding:10px 12px;text-align:center;">' +
-          '<div style="font-size:13px;color:#ffcc88;letter-spacing:2px;margin-bottom:2px;">⭐ 難度</div>' +
-          '<div style="font-size:22px;color:#ffdd66;letter-spacing:2px;line-height:1.2;">'+_stars+'</div>' +
+      // 難度(放大:標題 13→22,星星 22→40)
+      '<div style="margin-bottom:14px;">' +
+        '<div style="background:rgba(255,180,40,0.08);border:1.5px solid rgba(255,180,40,0.45);border-radius:14px;padding:14px 18px;text-align:center;">' +
+          '<div style="font-size:22px;color:#ffcc88;letter-spacing:3px;margin-bottom:6px;font-weight:700;">⭐ 難度</div>' +
+          '<div style="font-size:40px;color:#ffdd66;letter-spacing:3px;line-height:1.2;">'+_stars+'</div>' +
         '</div>' +
       '</div>' +
 
-      // BOSS 屬性 + 建議反制屬性
-      '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.4);border:1.5px solid rgba(120,180,255,0.3);border-radius:10px;padding:9px 14px;margin-bottom:10px;font-size:14px;flex-wrap:wrap;gap:8px;">' +
-        '<div><span style="color:#aaccff;letter-spacing:2px;">BOSS 屬性</span> <span style="font-size:18px;">'+_ei.emoji+'</span> <b style="color:#fff;font-size:17px;">'+_ei.name+'</b></div>' +
-        '<div><span style="color:#aaccff;letter-spacing:2px;">建議用</span> <span style="font-size:18px;">'+_ei.counterEmoji+'</span> <b style="color:#88ff88;font-size:17px;">'+_ei.counterName+'</b> <span style="color:#aaffaa;font-size:13px;">屬性英雄(+10%傷害)</span></div>' +
+      // BOSS 屬性 + 建議反制屬性(放大:14→24,emoji 18→30)
+      '<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.4);border:1.5px solid rgba(120,180,255,0.3);border-radius:12px;padding:14px 20px;margin-bottom:14px;font-size:24px;flex-wrap:wrap;gap:12px;font-weight:600;">' +
+        '<div><span style="color:#aaccff;letter-spacing:2px;">BOSS 屬性</span> <span style="font-size:30px;">'+_ei.emoji+'</span> <b style="color:#fff;font-size:28px;">'+_ei.name+'</b></div>' +
+        '<div><span style="color:#aaccff;letter-spacing:2px;">建議用</span> <span style="font-size:30px;">'+_ei.counterEmoji+'</span> <b style="color:#88ff88;font-size:28px;">'+_ei.counterName+'</b> <span style="color:#aaffaa;font-size:20px;">屬性英雄(+10%傷害)</span></div>' +
       '</div>' +
 
-      // 介紹文
-      '<div style="background:rgba(0,0,0,0.4);border-left:3px solid '+_rc+';border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:14px;color:#ddeeff;line-height:1.7;font-style:italic;">' +
+      // 介紹文(放大:14→26)
+      '<div style="background:rgba(0,0,0,0.4);border-left:4px solid '+_rc+';border-radius:10px;padding:16px 22px;margin-bottom:18px;font-size:26px;color:#ddeeff;line-height:1.7;font-style:italic;font-weight:500;">' +
         '「'+boss.desc+'」' +
       '</div>' +
 
-      // 戰勝獎勵 — 至寶
-      // ★ v1.0.20260428.4090 — 加入 abilityText 顯示至寶實際效果(不只外觀描述)
-      (treasure ? '<div style="background:linear-gradient(135deg,rgba(0,30,60,0.6),rgba(0,15,40,0.6));border:2px solid '+_rc+';border-radius:12px;padding:12px 14px;margin-bottom:16px;">' +
-        '<div style="font-size:13px;color:'+_rc+';letter-spacing:3px;margin-bottom:8px;font-weight:800;">💎 戰勝獎勵'+(_got?' <span style="color:#88ff88;font-size:11px;font-weight:700;">(已獲得)</span>':'')+'</div>' +
-        '<div style="display:flex;gap:12px;align-items:center;">' +
-          '<div style="width:54px;height:54px;flex-shrink:0;border:1.5px solid '+_rc+'88;border-radius:10px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">' +
-            _renderTaiwanTreasureIconHtml(treasure, 50, _rc) +
+      // 戰勝獎勵 — 至寶(放大全部字)
+      (treasure ? '<div style="background:linear-gradient(135deg,rgba(0,30,60,0.6),rgba(0,15,40,0.6));border:2.5px solid '+_rc+';border-radius:14px;padding:18px 22px;margin-bottom:20px;">' +
+        '<div style="font-size:22px;color:'+_rc+';letter-spacing:4px;margin-bottom:14px;font-weight:800;">💎 戰勝獎勵'+(_got?' <span style="color:#88ff88;font-size:18px;font-weight:700;">(已獲得)</span>':'')+'</div>' +
+        '<div style="display:flex;gap:18px;align-items:center;">' +
+          '<div style="width:80px;height:80px;flex-shrink:0;border:2px solid '+_rc+'88;border-radius:12px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;">' +
+            _renderTaiwanTreasureIconHtml(treasure, 72, _rc) +
           '</div>' +
           '<div style="flex:1;min-width:0;">' +
-            '<div style="font-size:18px;font-weight:900;color:'+_rc+';letter-spacing:1px;line-height:1.2;">'+treasure.name+'</div>' +
-            '<div style="display:inline-block;padding:2px 8px;font-size:11px;font-weight:800;background:'+_rc+';color:#fff;border-radius:5px;letter-spacing:1px;margin-top:4px;">'+_rn+' ・ '+(_slotName[treasure.slot]||'飾品')+'</div>' +
-            '<div style="font-size:12px;color:#bbccdd;font-style:italic;line-height:1.5;margin-top:5px;">「'+treasure.desc+'」</div>' +
+            '<div style="font-size:30px;font-weight:900;color:'+_rc+';letter-spacing:2px;line-height:1.2;">'+treasure.name+'</div>' +
+            '<div style="display:inline-block;padding:4px 12px;font-size:18px;font-weight:800;background:'+_rc+';color:#fff;border-radius:6px;letter-spacing:1px;margin-top:6px;">'+_rn+' ・ '+(_slotName[treasure.slot]||'飾品')+'</div>' +
+            '<div style="font-size:20px;color:#bbccdd;font-style:italic;line-height:1.5;margin-top:8px;">「'+treasure.desc+'」</div>' +
           '</div>' +
         '</div>' +
-        // ★ v1.0.20260428.4090 — abilityText 效果說明放在獎勵框最下方,獨立一個金色小框
+        // abilityText 效果說明放大(13→22)
         (treasure.abilityText ? (
-          '<div style="background:rgba(0,0,0,0.45);border-left:3px solid '+_rc+';padding:8px 12px;border-radius:6px;font-size:13px;color:#ffeebb;line-height:1.6;font-weight:600;margin-top:10px;">' +
+          '<div style="background:rgba(0,0,0,0.45);border-left:4px solid '+_rc+';padding:12px 18px;border-radius:8px;font-size:22px;color:#ffeebb;line-height:1.6;font-weight:600;margin-top:14px;">' +
             '⚡ ' + treasure.abilityText +
           '</div>'
         ) : '') +
       '</div>' : '') +
 
-      // 兩顆按鈕並排:詳細資料(左,藍紫) + 挑戰魔王(右,藍漸層)
-      '<div style="display:flex;gap:10px;">' +
-        '<button id="tw-boss-info" style="flex:0 0 auto;padding:16px 20px;font-size:18px;font-weight:900;letter-spacing:2px;' +
-          'background:linear-gradient(135deg,rgba(140,80,200,0.85),rgba(80,40,140,0.85));color:#fff;border:2.5px solid #aa88ee;border-radius:14px;cursor:pointer;font-family:inherit;' +
+      // 兩顆按鈕並排(放大:詳細資料 18→26,挑戰魔王 24→36)
+      '<div style="display:flex;gap:14px;">' +
+        '<button id="tw-boss-info" style="flex:0 0 auto;padding:20px 28px;font-size:26px;font-weight:900;letter-spacing:3px;' +
+          'background:linear-gradient(135deg,rgba(140,80,200,0.85),rgba(80,40,140,0.85));color:#fff;border:3px solid #aa88ee;border-radius:16px;cursor:pointer;font-family:inherit;' +
           'box-shadow:0 4px 18px rgba(140,80,200,0.5),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.15s;white-space:nowrap;">' +
           '📊 詳細資料' +
         '</button>' +
-        '<button id="tw-boss-go" style="flex:1;padding:16px;font-size:24px;font-weight:900;letter-spacing:4px;' +
-          'background:linear-gradient(135deg,#22aaff,#5566ff);color:#fff;border:2.5px solid #88ccff;border-radius:14px;cursor:pointer;font-family:inherit;' +
+        '<button id="tw-boss-go" style="flex:1;padding:20px;font-size:36px;font-weight:900;letter-spacing:6px;' +
+          'background:linear-gradient(135deg,#22aaff,#5566ff);color:#fff;border:3px solid #88ccff;border-radius:16px;cursor:pointer;font-family:inherit;' +
           'box-shadow:0 4px 24px rgba(80,160,255,0.6),inset 0 1px 0 rgba(255,255,255,0.2);transition:transform 0.15s;">' +
           '⚔ 挑戰魔王!' +
         '</button>' +
       '</div>' +
 
     '</div>' +
-    // 右上角關閉小 X
-    '<button id="tw-boss-close" aria-label="關閉" style="position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:50%;border:2px solid rgba(180,200,230,0.5);background:rgba(0,15,30,0.85);color:#ccddee;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">✕</button>';
+    // 右上角關閉小 X(放大 42→52)
+    '<button id="tw-boss-close" aria-label="關閉" style="position:absolute;top:18px;right:18px;width:52px;height:52px;border-radius:50%;border:2.5px solid rgba(180,200,230,0.5);background:rgba(0,15,30,0.85);color:#ccddee;font-size:28px;font-weight:900;cursor:pointer;font-family:inherit;line-height:1;display:flex;align-items:center;justify-content:center;">✕</button>';
 
   document.body.appendChild(detail);
 
@@ -48216,6 +48601,135 @@ function closeHeroPage() {
 }
 
 // ══════════════════════════════════════════════
+//  ★ v1.1.0 — 手機自動橫式全螢幕系統
+// ══════════════════════════════════════════════
+
+// 偵測是否為手機(用 UA + 螢幕大小雙重判斷)
+window._isMobileDevice = function(){
+  try{
+    const ua = navigator.userAgent || '';
+    const _uaMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const _isIPadOnMac = navigator.maxTouchPoints > 1 && /Macintosh/.test(ua); // iPadOS 偽裝成 Mac
+    const _smallScreen = (window.innerWidth || 0) <= 1024 || (window.innerHeight || 0) <= 1024;
+    return _uaMobile || _isIPadOnMac || (_smallScreen && navigator.maxTouchPoints > 0);
+  }catch(_){ return false; }
+};
+
+// 偵測當前是直立還是橫式
+window._isPortrait = function(){
+  try{
+    const _vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || 1;
+    const _vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || 1;
+    return _vh > _vw;
+  }catch(_){ return false; }
+};
+
+// 偵測是否為 iOS(Apple 不開放 orientation lock)
+window._isIOS = function(){
+  try{
+    const ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua));
+  }catch(_){ return false; }
+};
+
+// 一鍵開啟全螢幕並嘗試鎖定橫式(必須在 user gesture 內呼叫,如按鈕 click)
+window._enterMobileFullscreenLandscape = async function(){
+  try{
+    // 1. 進入全螢幕
+    const _el = document.documentElement;
+    const _fn = _el.requestFullscreen || _el.webkitRequestFullscreen
+              || _el.mozRequestFullScreen || _el.msRequestFullscreen;
+    if(_fn && !document.fullscreenElement && !document.webkitFullscreenElement){
+      try{
+        const _p = _fn.call(_el, { navigationUI: 'hide' });
+        if(_p && _p.catch) await _p.catch(() => {});
+      }catch(_){}
+    }
+    // 2. 嘗試鎖定橫式(Android 支援,iOS 會失敗 — 由 portrait reminder 處理)
+    if(screen.orientation && screen.orientation.lock){
+      try{
+        await screen.orientation.lock('landscape');
+        console.info('✅ [橫式鎖定] 成功');
+      }catch(_e){
+        console.warn('[橫式鎖定] 失敗 (iOS 不支援為正常):', _e && _e.message);
+      }
+    }
+  }catch(_e){ console.warn('[全螢幕橫式] 啟動失敗', _e); }
+};
+
+// 直立提示遮罩(iOS 鎖不住橫式時顯示)
+window._showPortraitReminder = function(){
+  // 已存在就不重建
+  if(document.getElementById('_portrait-reminder')) return;
+  const _ov = document.createElement('div');
+  _ov.id = '_portrait-reminder';
+  _ov.style.cssText = [
+    'position:fixed;inset:0;z-index:2147483646;',
+    'background:linear-gradient(135deg,rgba(20,30,60,0.98),rgba(5,10,30,0.99));',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+    'padding:24px;text-align:center;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;color:#fff;',
+    'animation:_prFadeIn 0.4s ease-out;',
+  ].join('');
+  // 旋轉動畫 keyframes
+  if(!document.getElementById('_portrait-reminder-kf')){
+    const _kf = document.createElement('style');
+    _kf.id = '_portrait-reminder-kf';
+    _kf.textContent = [
+      '@keyframes _prFadeIn{from{opacity:0}to{opacity:1}}',
+      '@keyframes _prRotate{0%,15%{transform:rotate(0deg)}40%,60%{transform:rotate(-90deg)}85%,100%{transform:rotate(0deg)}}',
+      '@keyframes _prPulse{0%,100%{opacity:0.65}50%{opacity:1}}',
+    ].join('');
+    document.head.appendChild(_kf);
+  }
+  _ov.innerHTML = [
+    '<div style="font-size:120px;margin-bottom:24px;animation:_prRotate 2.4s ease-in-out infinite;display:inline-block;">📱</div>',
+    '<div style="font-size:36px;font-weight:900;color:#ffcc66;letter-spacing:4px;margin-bottom:18px;">請將手機橫過來</div>',
+    '<div style="font-size:22px;color:#ddccaa;line-height:1.7;letter-spacing:1px;max-width:90vw;">',
+      '小英雄,這個遊戲在「橫式」下玩起來最棒!<br>',
+      '請把手機側轉一下,畫面會自動切換 ✨',
+    '</div>',
+    '<div style="font-size:18px;color:#aaccff;margin-top:32px;animation:_prPulse 1.5s ease-in-out infinite;letter-spacing:2px;">',
+      '↻ 偵測中...',
+    '</div>',
+  ].join('');
+  document.body.appendChild(_ov);
+};
+
+// 隱藏直立提示
+window._hidePortraitReminder = function(){
+  const _ov = document.getElementById('_portrait-reminder');
+  if(_ov) _ov.remove();
+};
+
+// 監聽方向變化:橫式 → 隱藏提示;直立 → 顯示提示
+window._setupOrientationWatcher = function(){
+  if(window._orientationWatcherSetup) return;
+  window._orientationWatcherSetup = true;
+
+  const _check = () => {
+    // 只在手機+遊戲已開始時做檢查
+    if(!window._isMobileDevice()) return;
+    if(!window._gameInitialized) return;  // 還沒開始遊戲就不檢查
+    if(window._isPortrait()){
+      window._showPortraitReminder();
+    } else {
+      window._hidePortraitReminder();
+    }
+  };
+
+  // 多事件監聽以涵蓋所有瀏覽器
+  window.addEventListener('resize', _check);
+  window.addEventListener('orientationchange', () => setTimeout(_check, 200));
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', _check);
+  }
+  if(screen.orientation && screen.orientation.addEventListener){
+    screen.orientation.addEventListener('change', () => setTimeout(_check, 200));
+  }
+};
+
+// ══════════════════════════════════════════════
 //  登入選擇視窗
 // ══════════════════════════════════════════════
 function _openInChrome() {
@@ -53151,6 +53665,14 @@ function _showGmBroadcastModal(b){
   try{ playSfx('sfx-burst-ready', 0.9); }catch(_){}
   document.getElementById('_gm-modal-ok').onclick = () => {
     try{ playSfx('sfx-confirm', 0.7); }catch(_){}
+    // ★ v1.1.0 — 記錄玩家回應到 Firestore,讓管理員知道誰看了
+    try{
+      const _uid = window._fbUser && window._fbUser.uid;
+      const _name = (window._fbUser && (window._fbUser.displayName || window._fbUser.email)) || '匿名';
+      if(_uid && b && b.id && typeof window._fbAckGmBroadcast === 'function'){
+        window._fbAckGmBroadcast(b.id, _uid, _name);
+      }
+    }catch(_e){ console.warn('[GM 公告回應] 失敗', _e); }
     modal.remove();
   };
 }
@@ -53534,6 +54056,29 @@ function makeRadar(dims, size) {
   }
 })();
 
+// ★ v1.1.0 — 啟動「目前在線」監聽(獨立於今日上線統計)
+(function _initOnlineWatcher(){
+  const _renderOnline = (count) => {
+    const _el = document.getElementById('player-stats-online');
+    if(_el) _el.textContent = (typeof count === 'number') ? count.toString() : '—';
+  };
+  const _start = () => {
+    if(typeof window._fbWatchOnlineCount !== 'function'){
+      setTimeout(_start, 500);
+      return;
+    }
+    try{
+      if(window._onlineCountUnsub) window._onlineCountUnsub();
+      window._onlineCountUnsub = window._fbWatchOnlineCount(_renderOnline);
+    }catch(e){ console.warn('[目前在線] 啟動失敗', e); }
+  };
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    setTimeout(_start, 500);
+  } else {
+    window.addEventListener('DOMContentLoaded', () => setTimeout(_start, 500));
+  }
+})();
+
 window._advSystemReady = true;
 </script>
 
@@ -53705,38 +54250,91 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
-  { ver:'v1.1.0', brief:[
-    '🎉 大版本更新!修復多個重要 bug,新增雲端同步功能,讓小英雄遊玩體驗更順暢',
-    '☁ 新增「立即同步雲端」按鈕,可主動把進度上傳保存',
-    '🐛 修復 BOSS 戰中多個導致卡死或畫面異常的問題',
-    '✨ 巫女爆發技「神樂舞」視覺特效全面放大 150%,更壯觀震撼',
+  { ver:'v1.0.20260428.4140', adminOnly:true, brief:[
+    '📝 [台灣關] 所有過場/對白/難度/BOSS 詳情視窗文字放大到貓空關等級',
+    '🐛 [台灣關] 強化 BOSS 戰勝結算保護,徹底防止誤跑小怪結算',
   ], items:[
-    '【新功能】',
-    '・新增「☁ 立即同步雲端」按鈕(在冒險選關卡頁的「🎉 近期活動與新角色」下方)',
-    '  - 按下會立即把目前進度(知識幣、英雄等級、寶物、戰績等)上傳到雲端',
-    '  - 顏色顯示同步狀態:橘色同步中、綠色成功、紅色失敗',
-    '  - 5 秒 cooldown 避免狂按,適合換裝置或重要戰鬥前主動存檔',
-    '【特效升級】',
-    '・巫女爆發技「神樂舞」視覺特效全面放大 150%:',
-    '  - 神樂舞 GIF 動畫從畫面 70% 放大到 100%(視覺感受 ~150%)',
-    '  - 持續時間從 2.4 秒延長到 3.6 秒,讓玩家充分欣賞',
-    '  - 主角粒子特效:數量、大小、擴散範圍全面放大',
-    '  - 隊友光環粒子也成比例放大',
-    '  - 全螢幕閃光與區域閃光更明亮持久',
-    '【bug 修復】',
-    '・修正 BOSS 戰中誤觸返回首頁按鈕導致戰鬥意外中斷的問題',
-    '・修正答對題目後獎勵視窗看不到、戰鬥卡住的問題',
-    '・修正卡死自救選「保留獎勵」後進入黑畫面的問題',
-    '・修正巫女爆發技「神樂舞」發動後戰鬥中斷的問題',
-    '【操作改善】',
-    '・卡死自救按鈕往下移到「教學」按鈕上面,不再蓋到屬性相剋圖',
-    '・卡死自救按鈕只在戰鬥中出現,選關卡頁、過場、對白時隱藏',
-    '・所有彈出視窗在 iPad、手機等小螢幕自動縮放,字級和外框更舒適',
-    '・進入冒險時不再彈出「是否跳過」詢問視窗(避免跳過後卡死),直接走完整劇情',
-    '・數學題改回固定題目,保證題目和答案 100% 同步,不會再出現「題目和答案對不上」',
-    '【期待中】',
-    '・🏝 台灣環島歷險記正在開發測試中,完成後會在後續版本中正式開放,敬請期待!',
-    '・(管理員測試:登入白名單帳號後,「敬請期待」按鈕會自動變成可點擊的「管理員測試中」)',
+    '【字級放大對照(對齊貓空關 56px 等級)】',
+    '・過場介紹:地點 24→40,BOSS 名 64→96,描述 20→40,點擊提示 22→36',
+    '・BOSS 對白:emoji 28→48,BOSS 名 24→44,對白文字 24→52,點擊提示 16→32',
+    '・難度視窗:標題 48→80,副標 20→36,難度卡片標題 48→72,選項數 18→32,說明 16→28,返回鈕 18→32',
+    '・BOSS 詳情:地點 16→26,名稱 34→52,難度標題 13→22,星星 22→40,屬性 14→24,介紹文 14→26,獎勵標題 13→22,至寶名 18→30,描述 12→20,效果 13→22,挑戰魔王鈕 24→36',
+    '・所有 BOSS 立繪也放大(380→520px)',
+    '・整體視窗加寬(560→780px),padding 加大配合更大字級',
+    '【BOSS 戰勝結算最強保護】',
+    '・上次修了 _BOSS_SET2 但 _advMiniBattleActive 旗標可能被前一場小怪戰殘留 true',
+    '・新增最高優先檢查:只要 _adventureStage=taiwan 且 G.p2 含台灣 10 BOSS 之一,強制走 advShowBattleResult(BOSS 結算)',
+    '・在 _advMiniBattleActive 檢查之前就先處理,不論該旗標狀態',
+    '・新增診斷 log [🏝 台灣關結算判定],方便追查未來的相關問題',
+  ] },
+  { ver:'v1.0.20260428.4130', brief:[
+    '🔴 首頁人數橫條新增「目前在線」即時人數',
+    '✅ GM 公告 modal 的「我知道了」按鈕現在會記錄玩家回應',
+  ], items:[
+    '【新功能 1:目前在線即時人數】',
+    '・首頁玩家人數橫條最左加入「🔴 目前在線」項目',
+    '・玩家登入時自動寫入 presences/{uid} 文件,每 30 秒心跳更新 lastHeartbeat',
+    '・登出 / 關閉頁面時自動清理 presence',
+    '・首頁即時監聽 presences 集合,過濾 60 秒內活躍的玩家計數',
+    '・所有玩家都能看到當前線上人數,小英雄可以知道有多少同學在玩',
+    '【新功能 2:GM 公告回應追蹤】',
+    '・玩家點 GM 公告 modal 的「✅ 我知道了」會把 uid + name + timestamp 寫入 stats/global.gmAck.{broadcastId}',
+    '・管理員可在 console 用 _fbGetGmAckList(broadcastId) 查詢回應名單',
+    '・回傳格式:{ count: 5, list: [{uid, name, timestamp, time}, ...] }',
+    '・這樣管理員可以知道有多少小英雄看了公告、是誰看了',
+    '【管理員工具(僅 console 可呼叫)】',
+    '・_fbGetOnlineList() — 列出當前所有線上玩家(uid, name, lastSeen, secAgo)',
+    '・_fbGetGmAckList(broadcastId) — 查詢某條公告的回應名單',
+    '・_fbStartPresence(uid, name) / _fbStopPresence(uid) — 手動控制 presence',
+  ] },
+  { ver:'v1.0.20260428.4120', adminOnly:true, brief:[
+    '🐛 修兩個重要 bug:台灣 BOSS 結算誤跑小怪畫面(可無限領獎勵)、選角顯示 BOSS 版能力',
+  ], items:[
+    '【bug 1:台灣 BOSS 戰結束跑小怪結算可無限領獎勵】',
+    '・症狀:打贏台灣 BOSS 後跳「小怪全滅」結算畫面而不是 BOSS 評定畫面',
+    '         按「繼續冒險」會再跳同樣的獎勵畫面,可以無限拿獎勵升級',
+    '・根因:_showResultWithDrama 內的 _BOSS_SET2 防呆檢查只列了貓空+日本 6 隻 BOSS,沒有台灣 10 BOSS',
+    '         結果打贏台灣 BOSS 時,系統檢查 G.p2 找不到「BOSS 名字」,誤判為小怪戰而走 advFinishMiniBattle',
+    '・修補:_BOSS_SET2 補上台灣 10 BOSS,讓系統正確識別並走 advShowBattleResult 的 BOSS 評定流程',
+    '【bug 2:大天狗/酒吞童子/玉藻前 在英雄選角顯示 BOSS 版能力】',
+    '・症狀:在「英雄召集中」畫面看大天狗,顯示 HP 600+288/攻擊 15/特技 25/速度 24(BOSS 版)',
+    '         但其實作為玩家英雄出戰時是弱化版 hp 58/atk 10/sp 13/spd 17',
+    '・根因:focusHero 函式直接讀 HERO_DB[name](BOSS 版能力),沒套用 JP_BOSS_HERO_STATS 弱化版',
+    '・修補:focusHero 內判斷若英雄在 JP_BOSS_HERO_STATS 中,用 Object.assign 覆蓋 hp/atk/sp/spd/exp',
+    '・酒吞童子和玉藻前同樣修復(三隻同時生效)',
+  ] },
+  { ver:'v1.0.20260428.4110', adminOnly:true, brief:[
+    '🐛 修台灣 BOSS 爆發圖示亮了卻不釋放的問題,並強化「玩家爆發優先」視窗',
+  ], items:[
+    '【bug 1:BOSS 爆發圖示亮了卻不發動】',
+    '・根因:BOSS quiz cb(line ~23769)在玩家答題完後會先把 a.acted=true,然後呼叫 _realAiAct',
+    '・但 _canBurst(a) 第一個檢查就是 h.acted → 直接 return false → BOSS 不爆發',
+    '・這跟 v3670 的憤怒爆發 bug 同類,但普通爆發路徑當時沒修',
+    '・修補:_realAiAct 進入時若 a.acted=true 且能量滿可爆發,先清 acted=false 讓 _canBurst 通過',
+    '         (execBurst 內部會在發動時自己再把 acted 設回 true,行為一致)',
+    '【bug 2:玩家爆發優先 modal 玩家沒注意,導致 BOSS 卡著不釋放】',
+    '・根因:當 BOSS 想爆發但玩家也能爆發時,系統會在「右側」彈個 modal 讓玩家先選',
+    '・問題:modal 在右側戰鬥 log 區域,容易被忽略',
+    '・修補 1:modal 加閃爍光暈動畫,引起玩家注意',
+    '・修補 2:加 8 秒自動跳過機制,玩家沒反應就讓 BOSS 順利爆發',
+    '・toast 提示:「⏰ 8 秒未選擇,讓對手先發動爆發」',
+    '【新增診斷 log】',
+    '・[BOSS AI 爆發] 系列 log:_canBurst=true 時印出能量、是否在 BURST_DB、玩家是否也能爆發',
+    '・下次卡死可從 console 看到流程到哪一步',
+  ] },
+  { ver:'v1.0.20260428.4100', brief:[
+    '✨ 巫女爆發技「神樂舞」視覺特效全面放大 150%',
+  ], items:[
+    '・神樂舞 GIF 從畫面 70% 放大到 100%(視覺感受 ~150%)',
+    '・GIF 持續時間 2.4 秒 → 3.6 秒,玩家有更多時間欣賞',
+    '・GIF 邊緣 drop-shadow 從 24px 加到 36px,光暈更明顯',
+    '・主角粒子:數量 36→54、大小 9→14、擴散 90→135、持續 900→1350ms、上升慣性 -0.4→-0.6',
+    '・主角光環:900→1350ms;主角橫幅:1400→2100ms',
+    '・隊友粒子:數量 18→27、大小 7→10、擴散 70→105、持續 800→1200ms;光環 700→1050ms',
+    '・全螢幕閃光:0.85→1.0 透明度、500→750ms 持續',
+    '・區域閃光:0.35→0.5 透明度、900→1350ms 持續',
+    '・額外橫幅文字加上 ✨ 標誌、持續從 1200 加到 1800ms',
+    '・額外閃光從 0.9/400 加到 1.0/600',
   ] },
   { ver:'v1.0.20260428.4090', adminOnly:true, brief:[
     '✨ [台灣關] 重新調整 BOSS 介紹排版:移除建議等級、加入至寶實際效果說明',
@@ -62562,7 +63160,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.1.0';
+  const CURRENT_VERSION = 'v1.0.20260428.4140';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62596,7 +63194,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.1.0';
+window._GAME_LOADED_VERSION = 'v1.0.20260428.4140';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
