@@ -61448,7 +61448,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5240';
+  const CURRENT_VERSION = 'v1.0.20260501.5250';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61482,7 +61482,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5240';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5250';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -61757,20 +61757,21 @@ function _preloadAllGameImages() {
   #_mobile-nav._active { display: flex; gap: 3px; }
 
   /* ────────── 鏡像 nav 顯示時,讓被蓋住的元件留空間 ──────────
-     鏡像 nav 視覺高度約 60-80px(46px 按鈕 + padding + safe-area)。
-     注意:這個避讓只在「手機尺寸 + 鏡像 nav 顯示時」才生效。
-     用 :has() 在現代瀏覽器很簡潔,但相容性要保險 — 改用 body 上的 class
-     在 JS sync 時切換。 */
+     關鍵:#gc 內部是 1920×1080,被 transform:scale 縮成螢幕大小。
+     鏡像 nav 在螢幕視覺佔約 80px,而 #gc scale ≈ 0.35(802×384 螢幕情況),
+     因此 #gc 內部的 padding-bottom 要 ≈ 80÷0.35 ≈ 230px 才能對應到視覺 80px。
+     用 vh 不對(vh 是 viewport 高,被 scale 過後失真),要用絕對 px。 */
   body._mobile-nav-active #adv-left-panel {
-    padding-bottom: 90px !important;  /* 原本 PC 上是 110px,這裡加多一點避開鏡像 nav */
+    padding-bottom: 240px !important;  /* 內部 #gc 的 px,實際視覺 ≈ 80px */
   }
   body._mobile-nav-active #adv-right-panel {
-    padding-bottom: 90px !important;
+    padding-bottom: 240px !important;
   }
-  /* 修右側介紹視窗矮扁問題:讓 info-window 在 right-panel 內撐滿可用高度 */
+  /* 修右側介紹視窗矮扁問題:讓 info-window 撐滿 right-panel 可用高度
+     #gc 內部高 1080,扣掉頂部 ~120px 背景區 + 底部 240px 鏡像 nav 留白 = 720px */
   body._mobile-nav-active #adv-info-window {
     flex: 1 1 auto !important;
-    min-height: calc(100vh - 220px) !important;  /* 100vh 減去頂部背景區 + 鏡像 nav 高度 */
+    min-height: 720px !important;
   }
   #_mobile-nav .mn-btn {
     flex: 1; min-width: 0;
@@ -61892,24 +61893,53 @@ function _preloadAllGameImages() {
       var mb = document.createElement('button');
       mb.className = 'mn-btn';
       mb.innerHTML = '<span class="mn-icon">' + icon + '</span><span class="mn-label">' + label + '</span>';
-      // 點鏡像按鈕 → 直接執行原按鈕的 onclick handler
-      // 不用 btn.click(),因為原按鈕在 transform:scale 區域被 overflow:hidden
-      // 切掉,iOS Safari 對「不可見」元素的 click() 有時會無效
+      // 點鏡像按鈕 → 多重方式嘗試觸發原按鈕邏輯
       mb.addEventListener('click', function(e){
         e.stopPropagation();
         e.preventDefault();
+        var label_t = label || icon;
+        console.log('[mirror-nav] CLICKED:', label_t);
+
+        // 方式 A:用 onclick 屬性直接呼叫(最直接,跟 inline onclick 一樣)
         try {
-          // 取得原按鈕的 onclick attribute(內聯字串)直接 eval
+          if (typeof btn.onclick === 'function') {
+            console.log('[mirror-nav] try onclick property');
+            btn.onclick.call(btn, e);
+            return;
+          }
+        } catch(err1) {
+          console.error('[mirror-nav] onclick property failed:', err1);
+        }
+
+        // 方式 B:抓 onclick 字串用 Function 執行
+        try {
           var onclickAttr = btn.getAttribute('onclick');
           if (onclickAttr) {
-            // 用 Function 建構執行,而不是 eval(較安全)
+            console.log('[mirror-nav] try Function() with attr:', onclickAttr);
             (new Function(onclickAttr)).call(btn);
-          } else {
-            // fallback:還是試 click()
-            btn.click();
+            return;
           }
-        } catch(err) {
-          console.error('[mobile-nav] click failed:', err);
+        } catch(err2) {
+          console.error('[mirror-nav] new Function failed:', err2);
+        }
+
+        // 方式 C:dispatch click event
+        try {
+          console.log('[mirror-nav] try dispatchEvent');
+          var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+          btn.dispatchEvent(clickEvent);
+          return;
+        } catch(err3) {
+          console.error('[mirror-nav] dispatchEvent failed:', err3);
+        }
+
+        // 方式 D:最後的 click()
+        try {
+          console.log('[mirror-nav] try click()');
+          btn.click();
+        } catch(err4) {
+          console.error('[mirror-nav] click() failed:', err4);
+          alert('按鈕點擊失敗: ' + label_t + '\nError: ' + err4.message);
         }
       });
       mn.appendChild(mb);
