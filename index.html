@@ -2354,6 +2354,300 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   ★ v1.0.20260501.5170 — 手機專屬修正(只命中手機,不影響 PC/iPad)
+   ────────────────────────────────────────────────────────────────
+   觸發條件:max-width:480 (手機直式) 或 max-height:500 (手機橫式)
+   排除:iPad mini 直式 768×1024、iPad mini 橫式 1024×768、
+         iPad Air/Pro 各尺寸(任一邊都 > 500),全部不會觸發。
+   修正項目:
+     1. 關卡選擇頁右側介紹視窗:填滿右側區塊
+     2. 首頁底部 9 顆按鈕:加大 padding-bottom 避開 Android 系統手勢區
+     3. 台灣地圖頁:整體縮小,左右 BOSS 卡片欄縮窄
+     4. 英雄選擇頁底部按鈕列:同樣加大 padding-bottom 避開系統手勢區
+     5. 各種文字尺寸隨手機螢幕等比例縮小
+     6. iOS 用 env(safe-area-inset-bottom) 自動避開 Home Indicator
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px), (max-height: 500px) {
+  /* ───── 1. 關卡選擇頁右側介紹視窗:填滿右側區塊 ───── */
+  #adv-right-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* 110px = 底部 nav 約 60px + 系統手勢區約 50px */
+    padding-bottom: 110px !important;
+  }
+  #adv-info-window {
+    overflow: visible !important;
+    /* 讓視窗至少撐到面板可視區滿格,視覺上不再「漂浮」 */
+    flex: 1 1 auto !important;
+    min-height: calc(100vh - 120px) !important;
+    padding: 14px 18px !important;
+    border-radius: 16px 0 0 0 !important;
+    gap: 8px !important;
+  }
+  /* 關卡介紹視窗內文字尺寸縮小 */
+  .adv-info-name {
+    font-size: 32px !important;
+    letter-spacing: 2px !important;
+  }
+  .adv-info-desc {
+    font-size: 18px !important;
+    line-height: 1.5 !important;
+    padding-left: 10px !important;
+  }
+  .adv-info-label {
+    font-size: 18px !important;
+    letter-spacing: 1px !important;
+  }
+  .adv-difficulty-stars {
+    font-size: 24px !important;
+    letter-spacing: 3px !important;
+  }
+  #adv-info-img {
+    height: 42px !important;
+    font-size: 32px !important;
+    letter-spacing: 6px !important;
+  }
+  #adv-start-game-btn {
+    font-size: 24px !important;
+    letter-spacing: 2px !important;
+    padding: 10px 0 !important;
+    margin-top: 6px !important;
+    margin-bottom: 4px !important;
+  }
+  #adv-preview-btn {
+    font-size: 18px !important;
+    padding: 8px 0 !important;
+    letter-spacing: 2px !important;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* ───── 2. 首頁底部 9 顆按鈕:避開系統手勢區 + 字體縮小 ───── */
+  #adv-bottom-nav {
+    /* 關鍵修正:max(60px, env+44px) — 把按鈕往上推離手勢區。
+       Android Chrome 即使全螢幕,畫面最底部 30~50dp 仍是系統手勢攔截區,
+       原本 padding-bottom:8px 完全不夠,造成觸碰被系統吃掉,按了沒反應。
+       60px 在手機上(scale ~0.35)實際呈現約 21 物理 px,足以推離手勢區。 */
+    padding-bottom: max(60px, env(safe-area-inset-bottom) + 44px) !important;
+    padding-top: 4px !important;
+    z-index: 100 !important;  /* 拉高 z-index,確保不被任何內容蓋住 */
+    gap: 4px !important;
+    pointer-events: auto !important;
+  }
+  #adv-bottom-nav .adv-nav-btn {
+    height: 56px !important;
+    padding: 6px 4px !important;
+    gap: 4px !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    flex-direction: column !important;  /* 圖示在上、文字在下,小螢幕較省空間 */
+  }
+  .adv-nav-icon {
+    font-size: 20px !important;
+    line-height: 1 !important;
+  }
+  .adv-nav-label {
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1 !important;
+  }
+  /* 「更新日誌」原本 80%,進一步縮小避免換行 */
+  #adv-bottom-nav .adv-nav-btn:nth-child(9) .adv-nav-label {
+    font-size: 11px !important;
+  }
+
+  /* ───── 3. 台灣地圖頁:整體縮小,卡片欄縮窄 ───── */
+  #taiwan-map-overlay .taiwan-boss-card {
+    zoom: 0.55 !important;  /* 比 iPad 的 0.8 再縮小 */
+  }
+  #taiwan-map-overlay .taiwan-map-side-col,
+  #taiwan-map-overlay .taiwan-map-left-col,
+  #taiwan-map-overlay .taiwan-map-right-col {
+    width: clamp(140px, 24vw, 200px) !important;
+    padding: 6px !important;
+    gap: 8px !important;
+  }
+  #taiwan-map-overlay #taiwan-map-svg-wrap {
+    transform: scale(0.85) !important;  /* 地圖容器縮 15% */
+    transform-origin: top center !important;
+    margin-bottom: -8% !important;
+  }
+  /* 標題列縮小,讓地圖佔更多畫面 */
+  #taiwan-map-overlay #taiwan-map-back {
+    font-size: 14px !important;
+    padding: 6px 14px !important;
+    letter-spacing: 1px !important;
+  }
+  /* 右上角控制按鈕列縮小 */
+  #taiwan-map-overlay #taiwan-map-ctrl-bar {
+    top: 6px !important;
+    right: 6px !important;
+    padding: 3px 4px !important;
+    gap: 4px !important;
+  }
+  #taiwan-map-overlay #taiwan-map-ctrl-bar button {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+
+  /* ───── 4. 英雄選擇頁底部按鈕列:避開手勢區 + 字體縮小 ───── */
+  #hero-pick-bar {
+    padding: 8px 16px max(56px, env(safe-area-inset-bottom) + 40px) 16px !important;
+    gap: 10px !important;
+    z-index: 100 !important;
+    pointer-events: auto !important;
+  }
+  #hero-pick-bar button,
+  #hero-pick-bar > div {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  /* 「尋找新英雄」按鈕縮小 */
+  #hero-pick-find-btn {
+    padding: 8px 12px !important;
+    margin-right: 4px !important;
+    gap: 2px !important;
+  }
+  #hero-pick-find-btn span:first-child {
+    font-size: 22px !important;
+  }
+  #hero-pick-find-btn span:last-child {
+    font-size: 13px !important;
+    letter-spacing: 0.5px !important;
+  }
+  /* 「常用預設陣容」「隨機編成隊伍」按鈕縮小 */
+  #hero-pick-bar > button {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    gap: 2px !important;
+  }
+  #hero-pick-bar > button > span {
+    font-size: 12px !important;
+  }
+  #hero-pick-bar > button > span:first-child {
+    font-size: 18px !important;
+  }
+  /* 「隊伍編成」標籤縮小 */
+  #hero-pick-bar > div > span:first-child {
+    font-size: 18px !important;
+  }
+  #hero-pick-bar > div > span:last-child {
+    font-size: 13px !important;
+    letter-spacing: 1px !important;
+  }
+  /* 「確認出戰」按鈕縮小 */
+  #hero-pick-confirm {
+    padding: 12px 24px !important;
+    font-size: 16px !important;
+    letter-spacing: 2px !important;
+  }
+  /* 已選頭像縮小 */
+  .picked-badge,
+  .picked-badge-empty {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 18px !important;
+    border-width: 2px !important;
+  }
+
+  /* ───── 5. 通用彈窗 / 首頁元件文字縮小 ───── */
+  /* 返回首頁按鈕 */
+  #adv-back-btn {
+    font-size: 16px !important;
+    padding: 6px 16px !important;
+    letter-spacing: 1px !important;
+    min-width: 90px !important;
+  }
+  /* 左側對話框標題 */
+  .adv-list-title {
+    font-size: 16px !important;
+    padding: 4px 0 4px 10px !important;
+  }
+  /* 左側關卡按鈕 */
+  .adv-stage-btn {
+    font-size: 18px !important;
+    padding: 9px 14px !important;
+    letter-spacing: 1px !important;
+  }
+  .adv-stage-btn span {
+    font-size: 14px !important;
+  }
+  /* 「近期活動與新角色」 */
+  .adv-event-btn {
+    font-size: 18px !important;
+    padding: 9px 14px !important;
+    letter-spacing: 1.5px !important;
+  }
+  /* 不可思議超商按鈕 */
+  #adv-shop-btn {
+    font-size: 16px !important;
+    padding: 9px 6px !important;
+    letter-spacing: 1px !important;
+  }
+  #adv-shop-coin-badge {
+    font-size: 14px !important;
+    padding: 1px 8px !important;
+  }
+  /* 立即同步雲端按鈕 */
+  #adv-manual-sync-btn {
+    font-size: 13px !important;
+    padding: 8px 6px !important;
+    letter-spacing: 0.5px !important;
+  }
+  #adv-manual-sync-help-btn {
+    width: 32px !important;
+    font-size: 16px !important;
+  }
+  /* 關卡選擇區的「🗺 關卡選擇」標籤 + 「↓ 滑動看更多」提示 */
+  #adv-stage-list-label {
+    font-size: 11px !important;
+    padding: 1px 10px !important;
+    letter-spacing: 1px !important;
+  }
+  #adv-stage-scroll-hint {
+    font-size: 11px !important;
+    padding: 4px 0 5px 0 !important;
+    letter-spacing: 1px !important;
+  }
+  /* 左側面板上方留白縮小,讓關卡選擇區有更多空間 */
+  #adv-left-panel {
+    padding: clamp(70px, 13vw, 110px) 14px 8px 18px !important;
+    gap: 6px !important;
+    width: 40% !important;  /* 手機上稍微給左側多一點空間 */
+  }
+  /* 代表英雄條 + 暱稱條縮小 */
+  #adv-rep-hero-bar {
+    padding: 5px 14px !important;
+    gap: 8px !important;
+  }
+  #adv-rep-hero-img-wrap {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 20px !important;
+  }
+  #adv-rep-hero-name {
+    font-size: 14px !important;
+  }
+  #adv-rep-hero-lv {
+    font-size: 11px !important;
+  }
+  /* 英雄選擇頁標題與計數 */
+  #hero-pick-overlay h2 {
+    font-size: 22px !important;
+    letter-spacing: 2px !important;
+    margin-bottom: 3px !important;
+  }
+  #hero-pick-count {
+    font-size: 16px !important;
+    letter-spacing: 1px !important;
+  }
+}
+
 /* ═════════════════════════════════════════════════════════════
    ★ v1.1.0 — 手機版完整適配
    ═════════════════════════════════════════════════════════════
@@ -8781,44 +9075,44 @@ const HERO_IMGS = {
 //   切換時只改 HERO_IMGS[name] 的值，其他散落各處的讀取邏輯都不用動。
 const HERO_PORTRAIT_LIBRARY = {
   '祭司': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%AD%E5%8F%B8(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('祭司Q.png') },
     { id:'dawn_breeze', name:'曙光微風', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%AD%E5%8F%B83.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   // ★ v1.0.20260421.3002 — 13 位英雄新肖像
   '冰法師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%86%B0%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('冰法師Q.png') },
     { id:'ice_frost', name:'冰封霜華', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%86%B0%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
   ],
   '刺客': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%88%BA%E5%AE%A2(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('刺客Q.png') },
     { id:'shadow_rose', name:'幻影玫瑰', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%88%BA%E5%AE%A23.png', requiresUnlock:true },
   ],
   '吸血鬼': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%90%B8%E8%A1%80%E9%AC%BC(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('吸血鬼Q.png') },
     { id:'dark_rose', name:'暗夜薔薇', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%90%B8%E8%A1%80%E9%AC%BC3.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   '大力士': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%A4%A7%E5%8A%9B%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('大力士Q.png') },
     { id:'invincible', name:'所向無敵', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A7%E5%8A%9B%E5%A3%AB3.png', requiresUnlock:true },
   ],
   '學者': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%AD%B8%E8%80%85(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('學者Q.png') },
     { id:'wisdom_light', name:'知識燈塔', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AD%B8%E8%80%853.png', requiresUnlock:true, objPos:'center 15%' },
   ],
   '機械師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%A9%9F%E6%A2%B0%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('機械師Q.png') },
     { id:'steel_innov', name:'鋼鐵革新', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A9%9F%E6%A2%B0%E5%B8%AB3.png', requiresUnlock:true },
   ],
   '武鬥家': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E9%AC%A5%E5%AE%B6(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武鬥家Q.png') },
     { id:'iron_fist', name:'鐵拳無雙', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E9%AC%A5%E5%AE%B63.png', requiresUnlock:true },
   ],
   '火法師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%81%AB%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火法師Q.png') },
     { id:'blaze_sky', name:'烈焰焚天', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%81%AB%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
   ],
   '神射手': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A5%9E%E5%B0%84%E6%89%8B(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神射手Q.png') },
     { id:'cloud_shot', name:'百步穿雲', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%B0%84%E6%89%8B3.png', requiresUnlock:true },
   ],
   '程式設計師': [
@@ -8826,7 +9120,7 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'quantum_code', name:'量子編碼', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
   ],
   '聖騎士': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E8%81%96%E9%A8%8E%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('聖騎士Q.png') },
     { id:'temple_pillar', name:'聖殿支柱', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%96%E9%A8%8E%E5%A3%AB3.png', requiresUnlock:true },
   ],
   '軍師': [
@@ -8834,27 +9128,27 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 5%' },
   ],
   '陰陽師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%99%B0%E9%99%BD%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('陰陽師Q.png') },
     { id:'four_saints', name:'天地四聖', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%99%B0%E9%99%BD%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   '雷法師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%B7%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雷法師Q.png') },
     { id:'thunder_sky', name:'雷動九霄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%B7%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 15%' },
   ],
   '武士': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%AD%A6%E5%A3%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武士Q.png') },
     { id:'shadow_slash', name:'瞬影絕斬', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E5%A3%AB3.png', requiresUnlock:true, objPos:'center 18%' },
   ],
   '占星師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%8D%A0%E6%98%9F%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('占星師Q.png') },
     { id:'star_oracle', name:'星辰天啟', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%A0%E6%98%9F%E5%B8%AB3.png', requiresUnlock:true },
   ],
   '守衛': [
-    { id:'default', name:'原始肖像', url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/Q%E5%AE%88%E8%A1%9B(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('守衛Q.png') },
     { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B3.png', requiresUnlock:true, objPos:'center 23%' },
   ],
   '時空法師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('時空法師Q.png') },
     { id:'time_corridor', name:'時光迴廊', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true },
   ],
   '電腦繪圖師': [
@@ -8870,7 +9164,7 @@ const HERO_PORTRAIT_LIBRARY = {
     // ★ v1.0.20260423.8600 — 移除舊版 strings_boy/strings_girl
   ],
   '籃球隊員': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('籃球隊員Q.png') },
     // ★ v1.0.20260423.8800 — 新增商店付費版「絕殺灌籃」(籃球隊員3.png)
     { id:'basket_clutch', name:'絕殺灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A13.png', requiresUnlock:true, objPos:'center 20%' },
     // ★ v1.0.20260423.8600 — 移除舊版 basket_boy/basket_girl
@@ -8890,7 +9184,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   // ★ v1.0.20260423.6400 — 木靈使肖像「千年神木」
   '木靈使': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E6%9C%A8%E9%9D%88%E4%BD%BF(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('木靈使Q.png') },
     { id:'ancient_tree', name:'千年神木', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BF3.png', requiresUnlock:true, objPos:'center 15%' },
     { id:'dryad_lv20', name:'木靈使 Lv20', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BFLV20.png', requiresUnlock:true },
   ],
@@ -60651,6 +60945,62 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5170', brief:[
+    '📱 手機版終於可以順暢玩了!',
+    '✅ 首頁底部 9 顆按鈕(召喚/英雄/至寶...)現在按了會有反應 🎉',
+    '✅ 英雄選擇頁下方「常用預設陣容」「隨機編成」「確認出戰」也修好了',
+    '🗺 台灣地圖頁變得更好看,左右兩邊魔王卡片不會擠出畫面外',
+    '📐 各種彈出視窗的文字大小終於配合手機螢幕變小,看起來更舒服 ✨',
+  ], items:[
+    '【為什麼之前手機版底下按鈕按不到?】',
+    '・原本底部按鈕貼著手機畫面最下緣,但 Android 系統把畫面最底下保留給「上滑回主畫面」這類手勢,',
+    '  你的手指碰到的位置被系統先吃掉了,遊戲完全收不到 → 看起來像「按了沒反應」',
+    '・上方按鈕(返回、音量)沒有這個問題,所以可以正常按',
+    '【這次修了什麼?】',
+    '・首頁底部選單往上抬了一點點,離開系統手勢區,按了就有反應 🎉',
+    '・英雄選擇頁的下方按鈕列也用同樣方式修好',
+    '・右側「木柵貓空大冒險」介紹視窗現在會把右半邊填滿,不會再縮成一小塊浮在中間',
+    '・台灣地圖左右兩排魔王卡片變窄一點,中間台灣地圖也縮小一點,整個畫面剛剛好',
+    '・首頁標題、按鈕、文字、提示等等的字體都調整成適合手機螢幕的大小',
+    '【誰會看到這次更新?】',
+    '・只有用手機玩的玩家會感受到變化(包括 Android 跟 iPhone)',
+    '・電腦、iPad 玩家完全不受影響,看起來跟之前一樣 👍',
+    '【實作位置】',
+    '・新增 @media (max-width:480px), (max-height:500px) 區塊(約 line 2358),',
+    '  條件設計:任一邊 ≤ 500px 才觸發 → 只命中手機(iPad 任一邊都 > 500,完全排除)',
+    '・bottom-nav / hero-pick-bar 加 padding-bottom: max(60px, env(safe-area-inset-bottom)+44px),',
+    '  把按鈕推離 Android 系統手勢區;iOS 透過 env() 自動避開 Home Indicator',
+    '・#adv-info-window 加 min-height: calc(100vh - 120px) + flex:1,讓視窗填滿右側',
+    '・台灣地圖 .taiwan-map-side-col 在手機上 width 改 clamp(140px,24vw,200px),',
+    '  .taiwan-boss-card 用 zoom:0.55 縮小整體',
+    '・各文字尺寸由 50px / 38px / 32px 等 → 14~22px 適合手機',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5170',
+  ] },
+  { ver:'v1.0.20260501.5160', brief:[
+    '🎨 修好 19 位英雄的 Q 版圖片!上次升級沒成功的全部換成新圖了 ✨',
+    '👀 包含祭司、火法師、武士、聖騎士…等好多帥氣的英雄重新登場',
+  ], items:[
+    '【上次發生什麼事?】',
+    '・之前一次升級了 28 位英雄的全新 Q 版圖,但有些英雄還是舊圖,看起來不一致 😅',
+    '・原因是英雄圖片放在兩個地方:一個是「主圖檔表」,另一個是「肖像庫」(放預設+商店買的肖像)',
+    '・上次只改了主圖檔表,肖像庫的「原始肖像」還是指向舊圖檔',
+    '・遊戲開啟讀存檔時,肖像庫會把舊圖蓋回主圖檔表 → 玩家看到還是舊圖',
+    '【這次修了哪些英雄?】',
+    '・祭司、冰法師、刺客、吸血鬼、大力士、學者(共 6 位)',
+    '・機械師、武鬥家、火法師、神射手、聖騎士、占星師(共 6 位)',
+    '・陰陽師、雷法師、武士、時空法師、籃球隊員、木靈使(共 6 位)',
+    '・守衛(順手把肖像庫和主圖檔表的圖片網址統一)',
+    '・總共 19 位英雄,Q 版圖現在都是全新的精美畫面了!',
+    '【哪些英雄沒被修?】',
+    '・程式設計師、電腦繪圖師、直笛團員、田徑隊員、弦樂團員、小劇團員、動物學家(共 7 位)',
+    '・這 7 位本來就沒進上次的升級批次,主圖檔表跟肖像庫都還是舊圖,維持原樣',
+    '・之後如果有新 Q 圖再一起升級',
+    '【實作位置】',
+    '・檔案:HERO_PORTRAIT_LIBRARY (約 line 8782)',
+    '・修 19 個英雄條目的 default 肖像 url,從 clarebox123jp-art/-/main/Q_xxx_(縮圖).png',
+    '  改成 LXPSGAME/main/ + encodeURIComponent(\'xxxQ.png\') 跟 HERO_IMGS 一致',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5160',
+  ] },
   { ver:'v1.0.20260501.5150', adminOnly:true, brief:[
     '🗂 後台維護:精簡更新日誌記錄',
     '📦 把 v1.0.20260501.4830 以前的舊版更新記錄(共 586 則)封存到外部檔案,主檔只保留最近 30 則',
@@ -61421,7 +61771,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5150';
+  const CURRENT_VERSION = 'v1.0.20260501.5170';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61455,7 +61805,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5150';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5170';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
