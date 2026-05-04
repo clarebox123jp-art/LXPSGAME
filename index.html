@@ -60708,6 +60708,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5200', brief:[
+    '🎯 終於找到底部按鈕按不到的真正原因了!',
+    '✅ 把底部 9 顆按鈕「搬家」到不被影響的位置,現在能按了 🎉',
+    '✅ 英雄選擇頁底部按鈕列同樣修好',
+    '🔍 移除上一版的診斷按鈕(粉紅色那顆)',
+  ], items:[
+    '【真正的兇手是誰?】',
+    '・遊戲畫面內部其實是 1920×1080 大小,手機上會被縮小顯示',
+    '・但縮小是「視覺縮小」,實際的「點擊區域」沒有跟著縮小',
+    '・底部按鈕的「實際點擊位置」算下去超出手機螢幕外,所以點不到',
+    '・這就是為什麼上方按鈕(返回、音量)能按 — 它們本來就在縮放範圍外',
+    '【怎麼修?】',
+    '・把底部 9 顆按鈕「搬家」到跟上方按鈕同樣的層級',
+    '・現在它們不會跟著遊戲畫面縮放,點哪就是哪 ✨',
+    '・英雄選擇頁底部「常用陣容/隨機編成/確認出戰」也用同樣方式修',
+    '【會看到的變化】',
+    '・底部按鈕現在會貼齊手機畫面最底部',
+    '・按鈕大小會比之前小一點點(配合手機螢幕)',
+    '・但能按了!這才是最重要的 🎯',
+    '・電腦、iPad 完全不受影響(只在 vw≤900 或 vh≤500 時觸發搬家)',
+    '【實作位置】',
+    '・JS:在 </body> 前用 (function(){...})() 立即執行',
+    '・偵測手機尺寸後,document.body.appendChild(#adv-bottom-nav)',
+    '・改 position:fixed,z-index:999999,加 ._mobile-fixed class',
+    '・MutationObserver 監聽 #adventure-overlay 顯示狀態同步顯示/隱藏',
+    '・hero-pick-bar 同樣處理',
+    '・移除 v5190 的診斷按鈕(_diag-btn 等元素)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5200',
+  ] },
   { ver:'v1.0.20260501.5190', brief:[
     '🔍 加了一個粉紅色「診斷」按鈕在右上角',
     '📐 修了關卡介紹視窗扁平的問題',
@@ -61553,7 +61582,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5190';
+  const CURRENT_VERSION = 'v1.0.20260501.5200';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61587,7 +61616,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5190';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5200';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -61840,172 +61869,179 @@ function _preloadAllGameImages() {
 </script>
 
 <!-- ════════════════════════════════════════════════════════════════
-     ★ v5190 診斷工具:抓出底部按鈕的「兇手元素」
+     ★ v1.0.20260501.5200 — 手機底部按鈕真正修復
      ────────────────────────────────────────────────────────────────
-     用法:手機開遊戲後,右上角會看到「🔍診斷」按鈕。
-       1. 點「🔍診斷」啟動偵測模式(會倒數 5 秒)
-       2. 倒數時點底部「召喚」按鈕區域
-       3. 偵測完跳出對話框,顯示那個位置上面所有元素的清單
-       4. 截圖傳給我,我就知道兇手是誰
-     PC / iPad 也看得到這個按鈕,但用不到也無害。下一版會移除。
+     診斷工具確認:#gc 是 1920x1080 layout,被 #_gc_wrapper(802x384)的
+     overflow:hidden 把超出範圍的子元素從 hit-test 中切掉。
+     底部按鈕在 #gc 內 layout 座標 y≈1020,從中心向下 480px,wrapper 只有
+     192px 高,完全在 hit 範圍外,導致無法被點擊。
+
+     修法:在手機尺寸下,動態把 #adv-bottom-nav 與 #hero-pick-bar 移到
+     <body> 直接子層,改 position:fixed,完全脫離 #gc 的 transform 影響。
+     這跟 #ctrl-bar 用同樣的方式,確保按鈕能接收觸碰。
+
+     PC / iPad 不執行此邏輯(vw>900 跳過),完全不影響。
      ════════════════════════════════════════════════════════════════ -->
 <style>
-  #_diag-btn {
-    position: fixed; top: 12px; right: 12px;
-    z-index: 999999;
-    padding: 8px 12px;
-    background: #ff4488; color: #fff; font-size: 14px;
-    font-weight: 700; border: 2px solid #fff; border-radius: 8px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-    font-family: sans-serif;
-    cursor: pointer;
-    -webkit-tap-highlight-color: rgba(255,255,255,0.3);
-    touch-action: manipulation;
+  /* 當底部按鈕被移到 body 時的樣式(覆寫原本在 #gc 內的樣式) */
+  body > #adv-bottom-nav._mobile-fixed {
+    position: fixed !important;
+    bottom: 0 !important; left: 0 !important; right: 0 !important;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
+    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85)) !important;
+    padding: 6px 8px max(8px, env(safe-area-inset-bottom)) 8px !important;
+    display: flex !important;
+    gap: 4px !important;
   }
-  #_diag-overlay {
-    position: fixed; inset: 0;
-    z-index: 999998;
-    background: rgba(255,68,136,0.18);
-    pointer-events: none;
-    display: none;
+  body > #adv-bottom-nav._mobile-fixed .adv-nav-btn {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(255,255,255,0.2) !important;
+    flex: 1 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 4px 2px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border-radius: 8px !important;
+    background: rgba(20,20,30,0.6) !important;
+    border-width: 1.5px !important;
+    border-style: solid !important;
+    color: #ddd !important;
+    cursor: pointer !important;
   }
-  #_diag-result {
-    position: fixed; inset: 5%;
-    z-index: 999999;
-    background: #fff; color: #000;
-    padding: 16px;
-    border: 3px solid #ff4488;
-    border-radius: 12px;
-    overflow: auto;
-    font-family: monospace, sans-serif;
-    font-size: 13px;
-    line-height: 1.6;
-    display: none;
-    box-shadow: 0 0 60px rgba(0,0,0,0.7);
+  body > #adv-bottom-nav._mobile-fixed .adv-nav-btn .adv-nav-icon {
+    font-size: 18px !important;
+    line-height: 1 !important;
   }
-  #_diag-result h3 { margin: 0 0 10px; font-size: 18px; color: #ff4488; }
-  #_diag-result .row { padding: 6px 8px; border-bottom: 1px solid #ddd; word-break: break-all; }
-  #_diag-result .row:nth-child(odd) { background: #fff5f8; }
-  #_diag-result .top { background: #ffebd0 !important; font-weight: 700; }
-  #_diag-result button {
-    margin-top: 12px; padding: 8px 16px;
-    background: #ff4488; color: #fff; border: none;
-    border-radius: 6px; font-weight: 700; cursor: pointer;
-    -webkit-tap-highlight-color: rgba(255,255,255,0.3);
-    touch-action: manipulation;
+  body > #adv-bottom-nav._mobile-fixed .adv-nav-btn .adv-nav-label {
+    font-size: 11px !important;
+    line-height: 1 !important;
+    letter-spacing: 0.5px !important;
+    color: #ddd !important;
+    font-weight: 700 !important;
   }
-  #_diag-countdown {
-    position: fixed; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 999999;
-    background: rgba(255,68,136,0.95); color: #fff;
-    padding: 20px 30px; border-radius: 16px;
-    font-size: 32px; font-weight: 900;
-    box-shadow: 0 0 40px #fff;
-    display: none;
-    pointer-events: none;
+  /* 英雄選擇頁底部按鈕列同樣處理 */
+  body > #hero-pick-bar._mobile-fixed {
+    position: fixed !important;
+    bottom: 0 !important; left: 0 !important; right: 0 !important;
+    z-index: 999999 !important;
+    pointer-events: auto !important;
+    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85)) !important;
+    padding: 6px 12px max(8px, env(safe-area-inset-bottom)) 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  body > #hero-pick-bar._mobile-fixed * {
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+  }
+  /* 移到 body 後,#adventure-overlay 內留下的空位需要視覺補償:
+     右側介紹視窗也要修高度 — 因為原本 padding:90px 是給 nav 留空間 */
+  body._mobile-bottom-relocated #adv-right-panel {
+    padding-bottom: 16px !important;
+  }
+  body._mobile-bottom-relocated #adv-left-panel {
+    padding-bottom: 16px !important;
   }
 </style>
-<button id="_diag-btn">🔍診斷</button>
-<div id="_diag-overlay"></div>
-<div id="_diag-countdown"></div>
-<div id="_diag-result"></div>
 <script>
 (function(){
-  var btn = document.getElementById('_diag-btn');
-  var overlay = document.getElementById('_diag-overlay');
-  var countdown = document.getElementById('_diag-countdown');
-  var result = document.getElementById('_diag-result');
-  var armed = false;
-  var countdownTimer = null;
-
-  function showResult(x, y, elements) {
-    var html = '<h3>🔍 診斷結果(座標 ' + Math.round(x) + ', ' + Math.round(y) + ')</h3>';
-    html += '<div style="font-size:13px;color:#666;margin-bottom:8px;">' +
-            '從上到下列出該座標所有重疊元素(第 1 個就是實際接收觸碰的)。' +
-            '<br>視窗大小:' + window.innerWidth + ' × ' + window.innerHeight +
-            '<br>devicePixelRatio:' + (window.devicePixelRatio || 1) +
-            '<br>觸碰類型:' + ('ontouchstart' in window ? 'touchstart 支援' : 'touchstart 不支援') +
-            '</div>';
-    if (!elements || elements.length === 0) {
-      html += '<div class="row" style="background:#ffe0e0;">⚠ 該座標沒有任何元素 — 你可能點到 viewport 外</div>';
-    } else {
-      elements.forEach(function(el, i){
-        var tag = el.tagName.toLowerCase();
-        var id = el.id ? ' #' + el.id : '';
-        var cls = el.className && typeof el.className === 'string' ? ' .' + el.className.replace(/\s+/g, '.') : '';
-        var rect = el.getBoundingClientRect();
-        var cs = window.getComputedStyle(el);
-        var pos = cs.position;
-        var z = cs.zIndex;
-        var pe = cs.pointerEvents;
-        var rowClass = i === 0 ? 'row top' : 'row';
-        html += '<div class="' + rowClass + '">' +
-                '<b>[' + (i+1) + '] &lt;' + tag + id + cls.substring(0, 80) + '&gt;</b>' +
-                '<br>position: ' + pos +
-                ' / z-index: ' + z +
-                ' / pointer-events: ' + pe +
-                '<br>位置: ' + Math.round(rect.left) + ',' + Math.round(rect.top) +
-                ' 大小: ' + Math.round(rect.width) + '×' + Math.round(rect.height) +
-                '</div>';
-      });
-    }
-    html += '<button onclick="document.getElementById(\'_diag-result\').style.display=\'none\';">關閉</button>';
-    result.innerHTML = html;
-    result.style.display = 'block';
+  // 只在手機尺寸執行(vw <= 900 或 vh <= 500)
+  function _isMobileViewport(){
+    var vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || window.innerWidth;
+    var vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight;
+    return vw <= 900 || vh <= 500;
   }
 
-  function arm() {
-    armed = true;
-    overlay.style.display = 'block';
-    var t = 5;
-    countdown.textContent = '請點底部按鈕!' + t;
-    countdown.style.display = 'block';
-    countdownTimer = setInterval(function(){
-      t--;
-      if (t > 0) {
-        countdown.textContent = '請點底部按鈕!' + t;
-      } else {
-        clearInterval(countdownTimer);
-        countdown.textContent = '逾時';
-        setTimeout(function(){ countdown.style.display = 'none'; }, 1000);
-        armed = false;
-        overlay.style.display = 'none';
+  // 會「蓋過」#adventure-overlay 的子 overlay 清單 — 這些顯示時要隱藏 bottom-nav
+  var COVERING_OVERLAY_IDS = [
+    'summon-overlay', 'backpack-overlay', 'hero-page-overlay',
+    'monster-page-overlay', 'pet-page-overlay', 'medal-page-overlay',
+    'hero-pick-overlay', 'taiwan-treasure-page', 'taiwan-map-overlay',
+    'japan-map-overlay', 'friend-panel', 'changelog-panel',
+    'shop-overlay', 'overlay'  // overlay = 主開頭頁面,在那個畫面也不該顯示 nav
+  ];
+
+  function _isAnyOverlayCoveringHome(){
+    for (var i = 0; i < COVERING_OVERLAY_IDS.length; i++) {
+      var el = document.getElementById(COVERING_OVERLAY_IDS[i]);
+      if (el && el.style.display !== 'none' && el.offsetParent !== null) {
+        return true;
       }
-    }, 1000);
-  }
-
-  btn.addEventListener('click', function(e){
-    e.stopPropagation();
-    arm();
-  });
-  btn.addEventListener('touchstart', function(e){
-    e.stopPropagation();
-    arm();
-  }, { passive: false });
-
-  // 攔截整個 document 的 touchstart 與 click(capture phase),搶在按鈕邏輯前抓座標
-  function captureAt(e) {
-    if (!armed) return;
-    var x, y;
-    if (e.touches && e.touches[0]) {
-      x = e.touches[0].clientX;
-      y = e.touches[0].clientY;
-    } else {
-      x = e.clientX;
-      y = e.clientY;
     }
-    armed = false;
-    if (countdownTimer) clearInterval(countdownTimer);
-    countdown.style.display = 'none';
-    overlay.style.display = 'none';
-    var els = document.elementsFromPoint ? document.elementsFromPoint(x, y) : [];
-    e.preventDefault();
-    e.stopPropagation();
-    setTimeout(function(){ showResult(x, y, els); }, 100);
+    return false;
   }
-  document.addEventListener('touchstart', captureAt, { capture: true, passive: false });
-  document.addEventListener('click', captureAt, { capture: true });
+
+  function _relocateForMobile(){
+    if (!_isMobileViewport()) return;
+    var bottomNav = document.getElementById('adv-bottom-nav');
+    var heroBar = document.getElementById('hero-pick-bar');
+
+    if (bottomNav && bottomNav.parentNode !== document.body) {
+      document.body.appendChild(bottomNav);
+      bottomNav.classList.add('_mobile-fixed');
+      document.body.classList.add('_mobile-bottom-relocated');
+
+      var advOverlay = document.getElementById('adventure-overlay');
+      var syncBottomNav = function(){
+        // 條件:adventure-overlay 顯示中,且沒有其他 overlay 蓋在上面
+        var advVisible = advOverlay && advOverlay.style.display !== 'none' &&
+                         advOverlay.offsetParent !== null;
+        var covered = _isAnyOverlayCoveringHome();
+        bottomNav.style.display = (advVisible && !covered) ? 'flex' : 'none';
+      };
+      syncBottomNav();
+
+      // 監聽 adventure-overlay 自身變化
+      if (advOverlay) {
+        var mo = new MutationObserver(syncBottomNav);
+        mo.observe(advOverlay, { attributes: true, attributeFilter: ['style', 'class'] });
+      }
+      // 監聽所有可能蓋上來的 overlay
+      COVERING_OVERLAY_IDS.forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) {
+          var mo2 = new MutationObserver(syncBottomNav);
+          mo2.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+      });
+      // 保險:每 500ms 重檢一次,確保 sync 不會漏
+      setInterval(syncBottomNav, 500);
+    }
+
+    if (heroBar && heroBar.parentNode !== document.body) {
+      document.body.appendChild(heroBar);
+      heroBar.classList.add('_mobile-fixed');
+      var pickOverlay = document.getElementById('hero-pick-overlay');
+      var syncHeroBar = function(){
+        var visible = pickOverlay && pickOverlay.style.display !== 'none' &&
+                      pickOverlay.offsetParent !== null;
+        heroBar.style.display = visible ? 'flex' : 'none';
+      };
+      syncHeroBar();
+      if (pickOverlay) {
+        var mo3 = new MutationObserver(syncHeroBar);
+        mo3.observe(pickOverlay, { attributes: true, attributeFilter: ['style', 'class'] });
+      }
+      setInterval(syncHeroBar, 500);
+    }
+  }
+
+  // DOM 載入完就執行
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _relocateForMobile);
+  } else {
+    _relocateForMobile();
+  }
+  // 旋轉螢幕 / resize 時重檢
+  window.addEventListener('resize', _relocateForMobile);
+  window.addEventListener('orientationchange', _relocateForMobile);
 })();
 </script>
 
