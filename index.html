@@ -61448,7 +61448,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5230';
+  const CURRENT_VERSION = 'v1.0.20260501.5240';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61482,7 +61482,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5230';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5240';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -61755,6 +61755,23 @@ function _preloadAllGameImages() {
     pointer-events: auto;
   }
   #_mobile-nav._active { display: flex; gap: 3px; }
+
+  /* ────────── 鏡像 nav 顯示時,讓被蓋住的元件留空間 ──────────
+     鏡像 nav 視覺高度約 60-80px(46px 按鈕 + padding + safe-area)。
+     注意:這個避讓只在「手機尺寸 + 鏡像 nav 顯示時」才生效。
+     用 :has() 在現代瀏覽器很簡潔,但相容性要保險 — 改用 body 上的 class
+     在 JS sync 時切換。 */
+  body._mobile-nav-active #adv-left-panel {
+    padding-bottom: 90px !important;  /* 原本 PC 上是 110px,這裡加多一點避開鏡像 nav */
+  }
+  body._mobile-nav-active #adv-right-panel {
+    padding-bottom: 90px !important;
+  }
+  /* 修右側介紹視窗矮扁問題:讓 info-window 在 right-panel 內撐滿可用高度 */
+  body._mobile-nav-active #adv-info-window {
+    flex: 1 1 auto !important;
+    min-height: calc(100vh - 220px) !important;  /* 100vh 減去頂部背景區 + 鏡像 nav 高度 */
+  }
   #_mobile-nav .mn-btn {
     flex: 1; min-width: 0;
     height: 46px;
@@ -61875,10 +61892,25 @@ function _preloadAllGameImages() {
       var mb = document.createElement('button');
       mb.className = 'mn-btn';
       mb.innerHTML = '<span class="mn-icon">' + icon + '</span><span class="mn-label">' + label + '</span>';
-      // 點鏡像按鈕 → 觸發原按鈕的 click
+      // 點鏡像按鈕 → 直接執行原按鈕的 onclick handler
+      // 不用 btn.click(),因為原按鈕在 transform:scale 區域被 overflow:hidden
+      // 切掉,iOS Safari 對「不可見」元素的 click() 有時會無效
       mb.addEventListener('click', function(e){
         e.stopPropagation();
-        try { btn.click(); } catch(_){}
+        e.preventDefault();
+        try {
+          // 取得原按鈕的 onclick attribute(內聯字串)直接 eval
+          var onclickAttr = btn.getAttribute('onclick');
+          if (onclickAttr) {
+            // 用 Function 建構執行,而不是 eval(較安全)
+            (new Function(onclickAttr)).call(btn);
+          } else {
+            // fallback:還是試 click()
+            btn.click();
+          }
+        } catch(err) {
+          console.error('[mobile-nav] click failed:', err);
+        }
       });
       mn.appendChild(mb);
     });
@@ -61891,10 +61923,13 @@ function _preloadAllGameImages() {
     var advOv = document.getElementById('adventure-overlay');
     var advVisible = _isVisibleEl(advOv);
     var covered = _anyCovering();
-    if (advVisible && !covered) {
+    var shouldShow = advVisible && !covered;
+    if (shouldShow) {
       mn.classList.add('_active');
+      document.body.classList.add('_mobile-nav-active');
     } else {
       mn.classList.remove('_active');
+      document.body.classList.remove('_mobile-nav-active');
     }
   }
 
@@ -61927,7 +61962,17 @@ function _preloadAllGameImages() {
       b.innerHTML = html;
       b.addEventListener('click', function(e){
         e.stopPropagation();
-        try { origBtn.click(); } catch(_){}
+        e.preventDefault();
+        try {
+          var onclickAttr = origBtn.getAttribute('onclick');
+          if (onclickAttr) {
+            (new Function(onclickAttr)).call(origBtn);
+          } else {
+            origBtn.click();
+          }
+        } catch(err) {
+          console.error('[mobile-pick] click failed:', err);
+        }
       });
       return b;
     }
