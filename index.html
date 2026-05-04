@@ -61448,7 +61448,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5250';
+  const CURRENT_VERSION = 'v1.0.20260501.5260';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61482,7 +61482,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5250';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5260';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -61735,76 +61735,92 @@ function _preloadAllGameImages() {
 </script>
 
 <!-- ════════════════════════════════════════════════════════════════
-     ★ v1.0.20260501.5220 — 手機底部按鈕修復(鏡像方案,不搬家)
+     ★ v1.0.20260501.5260 — 手機側邊鏡像 nav(完全重做)
      ────────────────────────────────────────────────────────────────
-     不再搬家原始按鈕,改用「鏡像按鈕」:
-       1. 在 body 直接子層建立一個全新的 #_mobile-nav 容器
-       2. 容器內 9 顆鏡像按鈕,點下去執行原始按鈕的 click()
-       3. 鏡像按鈕 position:fixed,完全脫離 #gc 的 transform
-       4. 用 CSS 在手機尺寸下顯示,PC/iPad 不顯示
-       5. 用 sync 邏輯只在 #adventure-overlay 顯示時顯示鏡像 nav
+     設計:
+       1. 鏡像 nav 改放螢幕「左側」豎直排列,利用左右黑邊空間
+       2. 不依賴原按鈕,直接 hardcode 9 個 function 名稱(避免 click event 不觸發問題)
+       3. 同時綁 click + touchstart(雙重保險)
+       4. 按下時跳出 alert 確認被點到(暫時的診斷,確認運作後再移除)
+
+     左側 nav 寬度約 70px,實際螢幕橫式 ~800px,還有 ~730px 給遊戲畫面。
      ════════════════════════════════════════════════════════════════ -->
 <style>
   #_mobile-nav {
-    display: none;  /* 預設隱藏,JS 會在合適時機切換顯示 */
+    display: none;
     position: fixed;
-    bottom: 0; left: 0; right: 0;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
     z-index: 999990;
-    padding: 4px 6px max(6px, env(safe-area-inset-bottom)) 6px;
-    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85));
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 6px;
+    background: linear-gradient(to right, rgba(0,0,10,0.92) 60%, rgba(0,0,10,0));
     pointer-events: auto;
+    max-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  #_mobile-nav._active { display: flex; gap: 3px; }
+  #_mobile-nav._active { display: flex; }
 
-  /* ────────── 鏡像 nav 顯示時,讓被蓋住的元件留空間 ──────────
-     關鍵:#gc 內部是 1920×1080,被 transform:scale 縮成螢幕大小。
-     鏡像 nav 在螢幕視覺佔約 80px,而 #gc scale ≈ 0.35(802×384 螢幕情況),
-     因此 #gc 內部的 padding-bottom 要 ≈ 80÷0.35 ≈ 230px 才能對應到視覺 80px。
-     用 vh 不對(vh 是 viewport 高,被 scale 過後失真),要用絕對 px。 */
-  body._mobile-nav-active #adv-left-panel {
-    padding-bottom: 240px !important;  /* 內部 #gc 的 px,實際視覺 ≈ 80px */
-  }
-  body._mobile-nav-active #adv-right-panel {
-    padding-bottom: 240px !important;
-  }
-  /* 修右側介紹視窗矮扁問題:讓 info-window 撐滿 right-panel 可用高度
-     #gc 內部高 1080,扣掉頂部 ~120px 背景區 + 底部 240px 鏡像 nav 留白 = 720px */
-  body._mobile-nav-active #adv-info-window {
-    flex: 1 1 auto !important;
-    min-height: 720px !important;
-  }
   #_mobile-nav .mn-btn {
-    flex: 1; min-width: 0;
-    height: 46px;
-    padding: 4px 2px;
+    width: 60px;
+    min-height: 48px;
+    padding: 6px 2px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 2px;
-    border-radius: 7px;
-    background: rgba(20,22,32,0.7);
-    border: 1.5px solid rgba(120,120,140,0.35);
+    border-radius: 8px;
+    background: rgba(20,22,32,0.85);
+    border: 1.5px solid rgba(120,120,140,0.45);
     color: #ddd;
     cursor: pointer;
     pointer-events: auto;
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+    -webkit-tap-highlight-color: rgba(255,255,255,0.3);
     font-family: 'M PLUS Rounded 1c','Nunito',sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    user-select: none;
+    -webkit-user-select: none;
   }
-  #_mobile-nav .mn-btn:active { background: rgba(60,65,85,0.95); transform: scale(0.95); }
-  #_mobile-nav .mn-icon { font-size: 17px; line-height: 1; }
-  #_mobile-nav .mn-label { font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: 0.3px; }
-  /* 各按鈕配色,跟原 nav 一致 */
-  #_mobile-nav .mn-btn:nth-child(1) { border-color: rgba(180,80,255,0.4); }
-  #_mobile-nav .mn-btn:nth-child(2) { border-color: rgba(255,100,80,0.4); }
-  #_mobile-nav .mn-btn:nth-child(3) { border-color: rgba(255,200,80,0.5); }
-  #_mobile-nav .mn-btn:nth-child(4) { border-color: rgba(200,60,60,0.4); }
-  #_mobile-nav .mn-btn:nth-child(5) { border-color: rgba(100,220,140,0.4); }
-  #_mobile-nav .mn-btn:nth-child(6) { border-color: rgba(255,150,200,0.5); }
-  #_mobile-nav .mn-btn:nth-child(7) { border-color: rgba(80,200,255,0.4); }
-  #_mobile-nav .mn-btn:nth-child(8) { border-color: rgba(255,200,50,0.5); }
-  #_mobile-nav .mn-btn:nth-child(9) { border-color: rgba(100,220,180,0.4); }
+  #_mobile-nav .mn-btn:active {
+    background: rgba(80,90,120,0.98);
+    transform: scale(0.92);
+  }
+  #_mobile-nav .mn-icon { font-size: 20px; line-height: 1; }
+  #_mobile-nav .mn-label { font-size: 11px; line-height: 1; font-weight: 800; letter-spacing: 0px; }
 
-  /* 英雄選擇頁底部按鈕鏡像 */
+  /* 各按鈕配色 */
+  #_mobile-nav .mn-btn[data-act="summon"] { border-color: rgba(180,80,255,0.55); }
+  #_mobile-nav .mn-btn[data-act="hero"] { border-color: rgba(255,100,80,0.55); }
+  #_mobile-nav .mn-btn[data-act="treasure"] { border-color: rgba(255,200,80,0.65); }
+  #_mobile-nav .mn-btn[data-act="monster"] { border-color: rgba(200,60,60,0.55); }
+  #_mobile-nav .mn-btn[data-act="pet"] { border-color: rgba(100,220,140,0.55); }
+  #_mobile-nav .mn-btn[data-act="friend"] { border-color: rgba(255,150,200,0.65); }
+  #_mobile-nav .mn-btn[data-act="bag"] { border-color: rgba(80,200,255,0.55); }
+  #_mobile-nav .mn-btn[data-act="medal"] { border-color: rgba(255,200,50,0.65); }
+  #_mobile-nav .mn-btn[data-act="changelog"] { border-color: rgba(100,220,180,0.55); }
+
+  /* 鏡像 nav 顯示時 — 修右側介紹視窗高度,讓它接近 PC 上的 10:9 比例 */
+  body._mobile-nav-active #adv-info-window {
+    flex: 1 1 auto !important;
+    height: 760px !important;       /* #gc 內部固定高度,不受 transform 影響 */
+    min-height: 760px !important;
+    max-height: none !important;
+  }
+  body._mobile-nav-active #adv-right-panel {
+    padding-bottom: 60px !important;
+    min-height: 880px !important;   /* 確保 panel 能容納 info-window */
+  }
+  /* 左側面板原本有 padding-left:40px,因為左側現在有鏡像 nav,加更多 */
+  body._mobile-nav-active #adv-left-panel {
+    padding-bottom: 60px !important;
+  }
+  /* 鏡像 nav 在左邊,但原本 PC 上的「立即同步雲端」「不可思議超商」按鈕也在左邊內,
+     不會被鏡像 nav 蓋(因為鏡像 nav 在 left:0,在螢幕黑邊上,#gc 從中央算起仍有空間) */
+
+  /* 英雄選擇頁底部按鈕鏡像(這個保留底部) */
   #_mobile-pick {
     display: none;
     position: fixed;
@@ -61812,7 +61828,6 @@ function _preloadAllGameImages() {
     z-index: 999990;
     padding: 6px 10px max(8px, env(safe-area-inset-bottom)) 10px;
     background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85));
-    pointer-events: auto;
     align-items: center;
     gap: 6px;
   }
@@ -61830,13 +61845,15 @@ function _preloadAllGameImages() {
     cursor: pointer;
     pointer-events: auto;
     touch-action: manipulation;
-    -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+    -webkit-tap-highlight-color: rgba(255,255,255,0.3);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 2px;
     line-height: 1.2;
+    user-select: none;
+    -webkit-user-select: none;
   }
-  #_mobile-pick .mp-btn:active { transform: scale(0.95); }
+  #_mobile-pick .mp-btn:active { transform: scale(0.92); background: rgba(80,90,120,0.98); }
   #_mobile-pick .mp-btn.find { border-color: #ffe066; color: #ffe066; }
   #_mobile-pick .mp-btn.preset { border-color: #ffd97a; background: rgba(80,60,20,0.9); color: #ffe8a0; }
   #_mobile-pick .mp-btn.random { border-color: #b885ff; background: rgba(50,30,80,0.9); color: #d4b3ff; }
@@ -61844,7 +61861,6 @@ function _preloadAllGameImages() {
 </style>
 <script>
 (function(){
-  // 只在手機尺寸啟用
   function _isMobileViewport(){
     var vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || window.innerWidth;
     var vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight;
@@ -61858,9 +61874,6 @@ function _preloadAllGameImages() {
     return el.offsetParent !== null || cs.position === 'fixed';
   }
 
-  // 會「蓋過」#adventure-overlay 的子 overlay 清單
-  // 注意:不要包含 'overlay'(首頁),因為首頁不會被 JS 隱藏,只會被其他 overlay 視覺蓋上
-  // 包含它會導致進冒險頁時鏡像 nav 永遠不顯示
   var COVERING_IDS = [
     'summon-overlay', 'backpack-overlay', 'hero-page-overlay',
     'monster-page-overlay', 'pet-page-overlay', 'medal-page-overlay',
@@ -61876,72 +61889,64 @@ function _preloadAllGameImages() {
     return false;
   }
 
-  // ═════════ Bottom Nav 鏡像 ═════════
+  // ═════════ 9 顆按鈕的 hardcoded 行為 ═════════
+  // 不依賴原按鈕,直接呼叫 global function
+  function _safePlaySfx(name, vol){
+    try { if (typeof playSfx === 'function') playSfx(name, vol); } catch(_){}
+  }
+  var BTN_ACTIONS = {
+    summon: { icon: '🔮', label: '召喚', fn: function(){ _safePlaySfx('sfx-sel', 0.6); if(typeof openSummonOverlay==='function') openSummonOverlay(); } },
+    hero: { icon: '⚔️', label: '英雄', fn: function(){ _safePlaySfx('sfx-gentle', 0.5); if(typeof openHeroPage==='function') openHeroPage(); } },
+    treasure: { icon: '💎', label: '至寶', fn: function(){ _safePlaySfx('sfx-gentle', 0.5); if(typeof openTaiwanTreasurePage==='function') openTaiwanTreasurePage(); } },
+    monster: { icon: '👹', label: '魔物', fn: function(){ _safePlaySfx('sfx-gentle', 0.5); if(typeof openMonsterPage==='function') openMonsterPage(); } },
+    pet: { icon: '🐾', label: '寵物', fn: function(){ _safePlaySfx('sfx-gentle', 0.5); if(typeof openPetPage==='function') openPetPage(); } },
+    friend: { icon: '🤝', label: '好友', fn: function(){ if(typeof openFriendPanel==='function') openFriendPanel(); } },
+    bag: { icon: '🎒', label: '背包', fn: function(){ _safePlaySfx('sfx-sel', 0.5); if(typeof openBackpackOverlay==='function') openBackpackOverlay(); } },
+    medal: { icon: '🏅', label: '獎章', fn: function(){ _safePlaySfx('sfx-gentle', 0.5); if(typeof openMedalPage==='function') openMedalPage(); } },
+    changelog: { icon: '📋', label: '更新日誌', fn: function(){ _safePlaySfx('sfx-gentle', 0.5); if(typeof openChangelogPanel==='function') openChangelogPanel(); } }
+  };
+  var BTN_ORDER = ['summon','hero','treasure','monster','pet','friend','bag','medal','changelog'];
+
   function _buildMobileNav(){
     if (document.getElementById('_mobile-nav')) return;
-    var origBtns = document.querySelectorAll('#adv-bottom-nav .adv-nav-btn');
-    if (origBtns.length === 0) return;
 
     var mn = document.createElement('div');
     mn.id = '_mobile-nav';
-    origBtns.forEach(function(btn){
-      var iconSpan = btn.querySelector('.adv-nav-icon');
-      var labelSpan = btn.querySelector('.adv-nav-label');
-      var icon = iconSpan ? iconSpan.textContent : '?';
-      var label = labelSpan ? labelSpan.textContent : '';
-
+    BTN_ORDER.forEach(function(act){
+      var def = BTN_ACTIONS[act];
       var mb = document.createElement('button');
       mb.className = 'mn-btn';
-      mb.innerHTML = '<span class="mn-icon">' + icon + '</span><span class="mn-label">' + label + '</span>';
-      // 點鏡像按鈕 → 多重方式嘗試觸發原按鈕邏輯
-      mb.addEventListener('click', function(e){
+      mb.setAttribute('data-act', act);
+      mb.innerHTML = '<span class="mn-icon">' + def.icon + '</span><span class="mn-label">' + def.label + '</span>';
+
+      // 用 onclick property 直接設定(最相容,不會被攔截)
+      mb.onclick = function(e){
+        e && e.stopPropagation && e.stopPropagation();
+        e && e.preventDefault && e.preventDefault();
+        try { def.fn(); } catch(err){
+          alert('[' + def.label + '] 執行失敗: ' + (err && err.message ? err.message : err));
+        }
+      };
+      // 雙重保險:同時綁 touchend(處理 click 不觸發的情況)
+      var _touchHandled = false;
+      mb.addEventListener('touchend', function(e){
         e.stopPropagation();
         e.preventDefault();
-        var label_t = label || icon;
-        console.log('[mirror-nav] CLICKED:', label_t);
-
-        // 方式 A:用 onclick 屬性直接呼叫(最直接,跟 inline onclick 一樣)
-        try {
-          if (typeof btn.onclick === 'function') {
-            console.log('[mirror-nav] try onclick property');
-            btn.onclick.call(btn, e);
-            return;
-          }
-        } catch(err1) {
-          console.error('[mirror-nav] onclick property failed:', err1);
+        _touchHandled = true;
+        try { def.fn(); } catch(err){
+          alert('[' + def.label + '] 執行失敗: ' + (err && err.message ? err.message : err));
         }
-
-        // 方式 B:抓 onclick 字串用 Function 執行
-        try {
-          var onclickAttr = btn.getAttribute('onclick');
-          if (onclickAttr) {
-            console.log('[mirror-nav] try Function() with attr:', onclickAttr);
-            (new Function(onclickAttr)).call(btn);
-            return;
-          }
-        } catch(err2) {
-          console.error('[mirror-nav] new Function failed:', err2);
+        // 100ms 後重置,避免 click 事件被誤判為重複
+        setTimeout(function(){ _touchHandled = false; }, 300);
+      }, { passive: false });
+      // 如果 touchend 已觸發,click 就跳過
+      mb.addEventListener('click', function(e){
+        if (_touchHandled) {
+          e.stopPropagation();
+          e.preventDefault();
         }
+      }, true);
 
-        // 方式 C:dispatch click event
-        try {
-          console.log('[mirror-nav] try dispatchEvent');
-          var clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
-          btn.dispatchEvent(clickEvent);
-          return;
-        } catch(err3) {
-          console.error('[mirror-nav] dispatchEvent failed:', err3);
-        }
-
-        // 方式 D:最後的 click()
-        try {
-          console.log('[mirror-nav] try click()');
-          btn.click();
-        } catch(err4) {
-          console.error('[mirror-nav] click() failed:', err4);
-          alert('按鈕點擊失敗: ' + label_t + '\nError: ' + err4.message);
-        }
-      });
       mn.appendChild(mb);
     });
     document.body.appendChild(mn);
@@ -61963,56 +61968,76 @@ function _preloadAllGameImages() {
     }
   }
 
-  // ═════════ Hero Pick 鏡像 ═════════
+  // ═════════ Hero Pick 鏡像(底部保留) ═════════
   function _buildMobilePick(){
     if (document.getElementById('_mobile-pick')) return;
-    // 找出原始按鈕引用
-    var findBtn = document.getElementById('hero-pick-find-btn');
     var pickBar = document.getElementById('hero-pick-bar');
     if (!pickBar) return;
-
-    // 從原 bar 內找出 3 顆主功能按鈕(常用陣容/隨機編成/確認)
-    // 直接抓所有可點按鈕,用 textContent 判斷
-    var allBtns = pickBar.querySelectorAll('button, [onclick]');
-    var presetBtn = null, randomBtn = null, confirmBtn = null;
-    allBtns.forEach(function(b){
-      var t = (b.textContent || '').trim();
-      if (t.indexOf('預設陣容') >= 0 || t.indexOf('常用陣容') >= 0) presetBtn = b;
-      else if (t.indexOf('隨機編成') >= 0) randomBtn = b;
-      else if (b.id === 'hero-pick-confirm' || t.indexOf('確認出戰') >= 0) confirmBtn = b;
-    });
 
     var mp = document.createElement('div');
     mp.id = '_mobile-pick';
 
-    function makeBtn(cls, html, origBtn){
-      if (!origBtn) return null;
+    // hardcoded 行為
+    function makeBtn(cls, html, fn){
       var b = document.createElement('button');
       b.className = 'mp-btn ' + cls;
       b.innerHTML = html;
-      b.addEventListener('click', function(e){
-        e.stopPropagation();
-        e.preventDefault();
-        try {
-          var onclickAttr = origBtn.getAttribute('onclick');
-          if (onclickAttr) {
-            (new Function(onclickAttr)).call(origBtn);
-          } else {
-            origBtn.click();
-          }
-        } catch(err) {
-          console.error('[mobile-pick] click failed:', err);
-        }
-      });
+      var _touched = false;
+      b.onclick = function(e){
+        e.stopPropagation(); e.preventDefault();
+        if (_touched) return;
+        try { fn(); } catch(err) { alert('執行失敗: ' + err.message); }
+      };
+      b.addEventListener('touchend', function(e){
+        e.stopPropagation(); e.preventDefault();
+        _touched = true;
+        try { fn(); } catch(err) { alert('執行失敗: ' + err.message); }
+        setTimeout(function(){ _touched = false; }, 300);
+      }, { passive: false });
       return b;
     }
 
-    var b1 = makeBtn('find', '<span style="font-size:20px;">⚔️</span><span>尋找新英雄</span>', findBtn);
-    var b2 = makeBtn('preset', '<span style="font-size:18px;">📋</span><span>常用陣容</span>', presetBtn);
-    var b3 = makeBtn('random', '<span style="font-size:18px;">🎲</span><span>隨機編成</span>', randomBtn);
-    var b4 = makeBtn('confirm', '<span>✓ 確認出戰</span>', confirmBtn);
-    [b1, b2, b3, b4].forEach(function(b){ if (b) mp.appendChild(b); });
-
+    var b1 = makeBtn('find', '<span style="font-size:20px;">⚔️</span><span>尋找新英雄</span>', function(){
+      _safePlaySfx('sfx-hero', 0.6);
+      if (typeof _refreshHeroPool === 'function') _refreshHeroPool();
+    });
+    var b2 = makeBtn('preset', '<span style="font-size:18px;">📋</span><span>常用陣容</span>', function(){
+      // 找原按鈕並執行其 onclick
+      var origBtns = document.querySelectorAll('#hero-pick-bar button, #hero-pick-bar [onclick]');
+      for (var i = 0; i < origBtns.length; i++){
+        var t = (origBtns[i].textContent || '').trim();
+        if (t.indexOf('預設陣容') >= 0 || t.indexOf('常用陣容') >= 0){
+          var oc = origBtns[i].getAttribute('onclick');
+          if (oc) (new Function(oc)).call(origBtns[i]);
+          else if (typeof origBtns[i].onclick === 'function') origBtns[i].onclick();
+          return;
+        }
+      }
+    });
+    var b3 = makeBtn('random', '<span style="font-size:18px;">🎲</span><span>隨機編成</span>', function(){
+      var origBtns = document.querySelectorAll('#hero-pick-bar button, #hero-pick-bar [onclick]');
+      for (var i = 0; i < origBtns.length; i++){
+        var t = (origBtns[i].textContent || '').trim();
+        if (t.indexOf('隨機編成') >= 0){
+          var oc = origBtns[i].getAttribute('onclick');
+          if (oc) (new Function(oc)).call(origBtns[i]);
+          else if (typeof origBtns[i].onclick === 'function') origBtns[i].onclick();
+          return;
+        }
+      }
+    });
+    var b4 = makeBtn('confirm', '<span>✓ 確認出戰</span>', function(){
+      var orig = document.getElementById('hero-pick-confirm');
+      if (orig){
+        var oc = orig.getAttribute('onclick');
+        if (oc) (new Function(oc)).call(orig);
+        else if (typeof orig.onclick === 'function') orig.onclick();
+      }
+    });
+    mp.appendChild(b1);
+    mp.appendChild(b2);
+    mp.appendChild(b3);
+    mp.appendChild(b4);
     document.body.appendChild(mp);
   }
 
@@ -62024,7 +62049,6 @@ function _preloadAllGameImages() {
     else mp.classList.remove('_active');
   }
 
-  // ═════════ 啟動 ═════════
   function _init(){
     if (!_isMobileViewport()) return;
     _buildMobileNav();
@@ -62032,7 +62056,6 @@ function _preloadAllGameImages() {
     _syncMobileNav();
     _syncMobilePick();
 
-    // 監聽相關 overlay 變化
     var watchIds = ['adventure-overlay'].concat(COVERING_IDS);
     watchIds.forEach(function(id){
       var el = document.getElementById(id);
@@ -62045,7 +62068,6 @@ function _preloadAllGameImages() {
       }
     });
 
-    // 保險:每 500ms 重檢
     setInterval(function(){
       _syncMobileNav();
       _syncMobilePick();
@@ -62055,18 +62077,16 @@ function _preloadAllGameImages() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _init);
   } else {
-    // 等一下確保原按鈕都已建立
     setTimeout(_init, 100);
   }
   window.addEventListener('resize', function(){
-    // 切換 PC/手機:重新檢查
     if (_isMobileViewport()) {
       if (!document.getElementById('_mobile-nav')) _init();
       else { _syncMobileNav(); _syncMobilePick(); }
     } else {
-      // 切回大螢幕,隱藏鏡像
       var mn = document.getElementById('_mobile-nav'); if (mn) mn.classList.remove('_active');
       var mp = document.getElementById('_mobile-pick'); if (mp) mp.classList.remove('_active');
+      document.body.classList.remove('_mobile-nav-active');
     }
   });
   window.addEventListener('orientationchange', function(){
