@@ -60708,6 +60708,31 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5220', brief:[
+    '🛠 換新方法修底部按鈕問題',
+    '・之前嘗試把按鈕「搬家」造成首頁誤顯示問題,撤除',
+    '・改用「鏡像按鈕」:在原始按鈕之外另外建一份固定在底部',
+    '・原始按鈕完全不動,所有頁面版面維持原樣',
+  ], items:[
+    '【為什麼換方法?】',
+    '・之前的搬家方案影響到原本的版面結構,即使加了同步顯示邏輯也容易誤判',
+    '・改用全新方案:不動原始按鈕,在 body 直接層建立「鏡像」',
+    '・鏡像按鈕點下去會去執行原始按鈕的點擊動作,功能完全一樣',
+    '【優點】',
+    '・原始按鈕還在原本位置,所有頁面、版面、樣式都不變',
+    '・即使鏡像按鈕邏輯有 bug,最壞也只是「鏡像沒出現」,不會破壞其他畫面',
+    '・PC、iPad 完全看不到鏡像按鈕,不影響',
+    '【鏡像按鈕運作方式】',
+    '・首頁底部 nav:9 顆鏡像按鈕(召喚/英雄/至寶/魔物/寵物/好友/背包/獎章/更新日誌)',
+    '・英雄選擇頁底部:4 顆鏡像按鈕(尋找/常用陣容/隨機編成/確認出戰)',
+    '・position:fixed,z-index:999990,完全脫離 #gc 縮放影響',
+    '・只在 #adventure-overlay 顯示且沒有其他 overlay 蓋上時才出現',
+    '【實作位置】',
+    '・新增 #_mobile-nav / #_mobile-pick 兩個 fixed 容器(在 body 直接子層)',
+    '・JS 從原 #adv-bottom-nav / #hero-pick-bar 抓按鈕資訊建立鏡像',
+    '・MutationObserver 監聽 14 個 overlay 變化',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5220',
+  ] },
   { ver:'v1.0.20260501.5210', brief:[
     '🐛 修上一版的小 bug:首頁不該出現的「常用陣容/隨機編成/編成隊伍」現在隱藏了',
     '✅ 那 3 顆按鈕只會在「英雄選擇頁」出現,首頁不會看到了',
@@ -61600,7 +61625,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5210';
+  const CURRENT_VERSION = 'v1.0.20260501.5220';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61634,7 +61659,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5210';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5220';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -61887,186 +61912,269 @@ function _preloadAllGameImages() {
 </script>
 
 <!-- ════════════════════════════════════════════════════════════════
-     ★ v1.0.20260501.5200 — 手機底部按鈕真正修復
+     ★ v1.0.20260501.5220 — 手機底部按鈕修復(鏡像方案,不搬家)
      ────────────────────────────────────────────────────────────────
-     診斷工具確認:#gc 是 1920x1080 layout,被 #_gc_wrapper(802x384)的
-     overflow:hidden 把超出範圍的子元素從 hit-test 中切掉。
-     底部按鈕在 #gc 內 layout 座標 y≈1020,從中心向下 480px,wrapper 只有
-     192px 高,完全在 hit 範圍外,導致無法被點擊。
-
-     修法:在手機尺寸下,動態把 #adv-bottom-nav 與 #hero-pick-bar 移到
-     <body> 直接子層,改 position:fixed,完全脫離 #gc 的 transform 影響。
-     這跟 #ctrl-bar 用同樣的方式,確保按鈕能接收觸碰。
-
-     PC / iPad 不執行此邏輯(vw>900 跳過),完全不影響。
+     不再搬家原始按鈕,改用「鏡像按鈕」:
+       1. 在 body 直接子層建立一個全新的 #_mobile-nav 容器
+       2. 容器內 9 顆鏡像按鈕,點下去執行原始按鈕的 click()
+       3. 鏡像按鈕 position:fixed,完全脫離 #gc 的 transform
+       4. 用 CSS 在手機尺寸下顯示,PC/iPad 不顯示
+       5. 用 sync 邏輯只在 #adventure-overlay 顯示時顯示鏡像 nav
      ════════════════════════════════════════════════════════════════ -->
 <style>
-  /* 當底部按鈕被移到 body 時的樣式(覆寫原本在 #gc 內的樣式) */
-  body > #adv-bottom-nav._mobile-fixed {
-    position: fixed !important;
-    bottom: 0 !important; left: 0 !important; right: 0 !important;
-    z-index: 999999 !important;
-    pointer-events: auto !important;
-    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85)) !important;
-    padding: 6px 8px max(8px, env(safe-area-inset-bottom)) 8px !important;
-    display: flex !important;
-    gap: 4px !important;
+  #_mobile-nav {
+    display: none;  /* 預設隱藏,JS 會在合適時機切換顯示 */
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 999990;
+    padding: 4px 6px max(6px, env(safe-area-inset-bottom)) 6px;
+    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85));
+    pointer-events: auto;
   }
-  body > #adv-bottom-nav._mobile-fixed .adv-nav-btn {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: rgba(255,255,255,0.2) !important;
-    flex: 1 !important;
-    height: 48px !important;
-    min-height: 48px !important;
-    padding: 4px 2px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 2px !important;
-    border-radius: 8px !important;
-    background: rgba(20,20,30,0.6) !important;
-    border-width: 1.5px !important;
-    border-style: solid !important;
-    color: #ddd !important;
-    cursor: pointer !important;
+  #_mobile-nav._active { display: flex; gap: 3px; }
+  #_mobile-nav .mn-btn {
+    flex: 1; min-width: 0;
+    height: 46px;
+    padding: 4px 2px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    border-radius: 7px;
+    background: rgba(20,22,32,0.7);
+    border: 1.5px solid rgba(120,120,140,0.35);
+    color: #ddd;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+    font-family: 'M PLUS Rounded 1c','Nunito',sans-serif;
   }
-  body > #adv-bottom-nav._mobile-fixed .adv-nav-btn .adv-nav-icon {
-    font-size: 18px !important;
-    line-height: 1 !important;
+  #_mobile-nav .mn-btn:active { background: rgba(60,65,85,0.95); transform: scale(0.95); }
+  #_mobile-nav .mn-icon { font-size: 17px; line-height: 1; }
+  #_mobile-nav .mn-label { font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: 0.3px; }
+  /* 各按鈕配色,跟原 nav 一致 */
+  #_mobile-nav .mn-btn:nth-child(1) { border-color: rgba(180,80,255,0.4); }
+  #_mobile-nav .mn-btn:nth-child(2) { border-color: rgba(255,100,80,0.4); }
+  #_mobile-nav .mn-btn:nth-child(3) { border-color: rgba(255,200,80,0.5); }
+  #_mobile-nav .mn-btn:nth-child(4) { border-color: rgba(200,60,60,0.4); }
+  #_mobile-nav .mn-btn:nth-child(5) { border-color: rgba(100,220,140,0.4); }
+  #_mobile-nav .mn-btn:nth-child(6) { border-color: rgba(255,150,200,0.5); }
+  #_mobile-nav .mn-btn:nth-child(7) { border-color: rgba(80,200,255,0.4); }
+  #_mobile-nav .mn-btn:nth-child(8) { border-color: rgba(255,200,50,0.5); }
+  #_mobile-nav .mn-btn:nth-child(9) { border-color: rgba(100,220,180,0.4); }
+
+  /* 英雄選擇頁底部按鈕鏡像 */
+  #_mobile-pick {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 999990;
+    padding: 6px 10px max(8px, env(safe-area-inset-bottom)) 10px;
+    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85));
+    pointer-events: auto;
+    align-items: center;
+    gap: 6px;
   }
-  body > #adv-bottom-nav._mobile-fixed .adv-nav-btn .adv-nav-label {
-    font-size: 11px !important;
-    line-height: 1 !important;
-    letter-spacing: 0.5px !important;
-    color: #ddd !important;
-    font-weight: 700 !important;
+  #_mobile-pick._active { display: flex; }
+  #_mobile-pick .mp-btn {
+    flex: 1; min-width: 0;
+    padding: 8px 6px;
+    border-radius: 8px;
+    border: 2px solid;
+    background: rgba(20,22,32,0.85);
+    color: #fff;
+    font-family: 'M PLUS Rounded 1c','Nunito',sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    line-height: 1.2;
   }
-  /* 英雄選擇頁底部按鈕列同樣處理 */
-  body > #hero-pick-bar._mobile-fixed {
-    position: fixed !important;
-    bottom: 0 !important; left: 0 !important; right: 0 !important;
-    z-index: 999999 !important;
-    pointer-events: auto !important;
-    background: linear-gradient(to top, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85)) !important;
-    padding: 6px 12px max(8px, env(safe-area-inset-bottom)) 12px !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-  }
-  body > #hero-pick-bar._mobile-fixed * {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-  }
-  /* 移到 body 後,#adventure-overlay 內留下的空位需要視覺補償:
-     右側介紹視窗也要修高度 — 因為原本 padding:90px 是給 nav 留空間 */
-  body._mobile-bottom-relocated #adv-right-panel {
-    padding-bottom: 16px !important;
-  }
-  body._mobile-bottom-relocated #adv-left-panel {
-    padding-bottom: 16px !important;
-  }
+  #_mobile-pick .mp-btn:active { transform: scale(0.95); }
+  #_mobile-pick .mp-btn.find { border-color: #ffe066; color: #ffe066; }
+  #_mobile-pick .mp-btn.preset { border-color: #ffd97a; background: rgba(80,60,20,0.9); color: #ffe8a0; }
+  #_mobile-pick .mp-btn.random { border-color: #b885ff; background: rgba(50,30,80,0.9); color: #d4b3ff; }
+  #_mobile-pick .mp-btn.confirm { border-color: #66cc88; background: rgba(20,60,30,0.95); color: #aaf0bb; flex: 1.4; font-size: 14px; letter-spacing: 1.5px; }
 </style>
 <script>
 (function(){
-  // 只在手機尺寸執行(vw <= 900 或 vh <= 500)
+  // 只在手機尺寸啟用
   function _isMobileViewport(){
     var vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || window.innerWidth;
     var vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight;
     return vw <= 900 || vh <= 500;
   }
 
-  // 用 getComputedStyle 才能正確判斷(inline style 為空時 style.display 會是 '')
-  function _isVisible(el){
+  function _isVisibleEl(el){
     if (!el) return false;
     var cs = window.getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return false;
     return el.offsetParent !== null || cs.position === 'fixed';
   }
 
-  // 會「蓋過」#adventure-overlay 的子 overlay 清單 — 這些顯示時要隱藏 bottom-nav
-  var COVERING_OVERLAY_IDS = [
+  // 會「蓋過」#adventure-overlay 的子 overlay 清單
+  var COVERING_IDS = [
     'summon-overlay', 'backpack-overlay', 'hero-page-overlay',
     'monster-page-overlay', 'pet-page-overlay', 'medal-page-overlay',
     'hero-pick-overlay', 'taiwan-treasure-page', 'taiwan-map-overlay',
     'japan-map-overlay', 'friend-panel', 'changelog-panel',
-    'shop-overlay', 'overlay'  // overlay = 主開頭頁面,在那個畫面也不該顯示 nav
+    'shop-overlay', 'overlay'
   ];
 
-  function _isAnyOverlayCoveringHome(){
-    for (var i = 0; i < COVERING_OVERLAY_IDS.length; i++) {
-      if (_isVisible(document.getElementById(COVERING_OVERLAY_IDS[i]))) return true;
+  function _anyCovering(){
+    for (var i = 0; i < COVERING_IDS.length; i++){
+      if (_isVisibleEl(document.getElementById(COVERING_IDS[i]))) return true;
     }
     return false;
   }
 
-  function _relocateForMobile(){
-    if (!_isMobileViewport()) return;
-    var bottomNav = document.getElementById('adv-bottom-nav');
-    var heroBar = document.getElementById('hero-pick-bar');
+  // ═════════ Bottom Nav 鏡像 ═════════
+  function _buildMobileNav(){
+    if (document.getElementById('_mobile-nav')) return;
+    var origBtns = document.querySelectorAll('#adv-bottom-nav .adv-nav-btn');
+    if (origBtns.length === 0) return;
 
-    if (bottomNav && bottomNav.parentNode !== document.body) {
-      document.body.appendChild(bottomNav);
-      bottomNav.classList.add('_mobile-fixed');
-      // 立即先隱藏,避免閃現
-      bottomNav.style.display = 'none';
-      document.body.classList.add('_mobile-bottom-relocated');
+    var mn = document.createElement('div');
+    mn.id = '_mobile-nav';
+    origBtns.forEach(function(btn){
+      var iconSpan = btn.querySelector('.adv-nav-icon');
+      var labelSpan = btn.querySelector('.adv-nav-label');
+      var icon = iconSpan ? iconSpan.textContent : '?';
+      var label = labelSpan ? labelSpan.textContent : '';
 
-      var advOverlay = document.getElementById('adventure-overlay');
-      var syncBottomNav = function(){
-        // 條件:adventure-overlay 顯示中,且沒有其他 overlay 蓋在上面
-        var advVisible = _isVisible(advOverlay);
-        var covered = _isAnyOverlayCoveringHome();
-        bottomNav.style.display = (advVisible && !covered) ? 'flex' : 'none';
-      };
-      syncBottomNav();
-
-      // 監聽 adventure-overlay 自身變化
-      if (advOverlay) {
-        var mo = new MutationObserver(syncBottomNav);
-        mo.observe(advOverlay, { attributes: true, attributeFilter: ['style', 'class'] });
-      }
-      // 監聽所有可能蓋上來的 overlay
-      COVERING_OVERLAY_IDS.forEach(function(id){
-        var el = document.getElementById(id);
-        if (el) {
-          var mo2 = new MutationObserver(syncBottomNav);
-          mo2.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
-        }
+      var mb = document.createElement('button');
+      mb.className = 'mn-btn';
+      mb.innerHTML = '<span class="mn-icon">' + icon + '</span><span class="mn-label">' + label + '</span>';
+      // 點鏡像按鈕 → 觸發原按鈕的 click
+      mb.addEventListener('click', function(e){
+        e.stopPropagation();
+        try { btn.click(); } catch(_){}
       });
-      // 保險:每 500ms 重檢一次,確保 sync 不會漏
-      setInterval(syncBottomNav, 500);
+      mn.appendChild(mb);
+    });
+    document.body.appendChild(mn);
+  }
+
+  function _syncMobileNav(){
+    var mn = document.getElementById('_mobile-nav');
+    if (!mn) return;
+    var advOv = document.getElementById('adventure-overlay');
+    var advVisible = _isVisibleEl(advOv);
+    var covered = _anyCovering();
+    if (advVisible && !covered) {
+      mn.classList.add('_active');
+    } else {
+      mn.classList.remove('_active');
+    }
+  }
+
+  // ═════════ Hero Pick 鏡像 ═════════
+  function _buildMobilePick(){
+    if (document.getElementById('_mobile-pick')) return;
+    // 找出原始按鈕引用
+    var findBtn = document.getElementById('hero-pick-find-btn');
+    var pickBar = document.getElementById('hero-pick-bar');
+    if (!pickBar) return;
+
+    // 從原 bar 內找出 3 顆主功能按鈕(常用陣容/隨機編成/確認)
+    // 直接抓所有可點按鈕,用 textContent 判斷
+    var allBtns = pickBar.querySelectorAll('button, [onclick]');
+    var presetBtn = null, randomBtn = null, confirmBtn = null;
+    allBtns.forEach(function(b){
+      var t = (b.textContent || '').trim();
+      if (t.indexOf('預設陣容') >= 0 || t.indexOf('常用陣容') >= 0) presetBtn = b;
+      else if (t.indexOf('隨機編成') >= 0) randomBtn = b;
+      else if (b.id === 'hero-pick-confirm' || t.indexOf('確認出戰') >= 0) confirmBtn = b;
+    });
+
+    var mp = document.createElement('div');
+    mp.id = '_mobile-pick';
+
+    function makeBtn(cls, html, origBtn){
+      if (!origBtn) return null;
+      var b = document.createElement('button');
+      b.className = 'mp-btn ' + cls;
+      b.innerHTML = html;
+      b.addEventListener('click', function(e){
+        e.stopPropagation();
+        try { origBtn.click(); } catch(_){}
+      });
+      return b;
     }
 
-    if (heroBar && heroBar.parentNode !== document.body) {
-      document.body.appendChild(heroBar);
-      heroBar.classList.add('_mobile-fixed');
-      // 立即先隱藏,避免閃現
-      heroBar.style.display = 'none';
+    var b1 = makeBtn('find', '<span style="font-size:20px;">⚔️</span><span>尋找新英雄</span>', findBtn);
+    var b2 = makeBtn('preset', '<span style="font-size:18px;">📋</span><span>常用陣容</span>', presetBtn);
+    var b3 = makeBtn('random', '<span style="font-size:18px;">🎲</span><span>隨機編成</span>', randomBtn);
+    var b4 = makeBtn('confirm', '<span>✓ 確認出戰</span>', confirmBtn);
+    [b1, b2, b3, b4].forEach(function(b){ if (b) mp.appendChild(b); });
 
-      var pickOverlay = document.getElementById('hero-pick-overlay');
-      var syncHeroBar = function(){
-        heroBar.style.display = _isVisible(pickOverlay) ? 'flex' : 'none';
-      };
-      syncHeroBar();
-      if (pickOverlay) {
-        var mo3 = new MutationObserver(syncHeroBar);
-        mo3.observe(pickOverlay, { attributes: true, attributeFilter: ['style', 'class'] });
+    document.body.appendChild(mp);
+  }
+
+  function _syncMobilePick(){
+    var mp = document.getElementById('_mobile-pick');
+    if (!mp) return;
+    var pickOv = document.getElementById('hero-pick-overlay');
+    if (_isVisibleEl(pickOv)) mp.classList.add('_active');
+    else mp.classList.remove('_active');
+  }
+
+  // ═════════ 啟動 ═════════
+  function _init(){
+    if (!_isMobileViewport()) return;
+    _buildMobileNav();
+    _buildMobilePick();
+    _syncMobileNav();
+    _syncMobilePick();
+
+    // 監聽相關 overlay 變化
+    var watchIds = ['adventure-overlay'].concat(COVERING_IDS);
+    watchIds.forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) {
+        var mo = new MutationObserver(function(){
+          _syncMobileNav();
+          _syncMobilePick();
+        });
+        mo.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
       }
-      setInterval(syncHeroBar, 500);
-    }
+    });
+
+    // 保險:每 500ms 重檢
+    setInterval(function(){
+      _syncMobileNav();
+      _syncMobilePick();
+    }, 500);
   }
 
-  // DOM 載入完就執行
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _relocateForMobile);
+    document.addEventListener('DOMContentLoaded', _init);
   } else {
-    _relocateForMobile();
+    // 等一下確保原按鈕都已建立
+    setTimeout(_init, 100);
   }
-  // 旋轉螢幕 / resize 時重檢
-  window.addEventListener('resize', _relocateForMobile);
-  window.addEventListener('orientationchange', _relocateForMobile);
+  window.addEventListener('resize', function(){
+    // 切換 PC/手機:重新檢查
+    if (_isMobileViewport()) {
+      if (!document.getElementById('_mobile-nav')) _init();
+      else { _syncMobileNav(); _syncMobilePick(); }
+    } else {
+      // 切回大螢幕,隱藏鏡像
+      var mn = document.getElementById('_mobile-nav'); if (mn) mn.classList.remove('_active');
+      var mp = document.getElementById('_mobile-pick'); if (mp) mp.classList.remove('_active');
+    }
+  });
+  window.addEventListener('orientationchange', function(){
+    setTimeout(function(){
+      _syncMobileNav();
+      _syncMobilePick();
+    }, 300);
+  });
 })();
 </script>
 
