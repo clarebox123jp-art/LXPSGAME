@@ -60708,6 +60708,24 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5210', brief:[
+    '🐛 修上一版的小 bug:首頁不該出現的「常用陣容/隨機編成/編成隊伍」現在隱藏了',
+    '✅ 那 3 顆按鈕只會在「英雄選擇頁」出現,首頁不會看到了',
+  ], items:[
+    '【上一版發生什麼事?】',
+    '・上一版把英雄選擇頁的底部按鈕「搬家」到不被遊戲畫面影響的位置',
+    '・但搬家後判斷顯示時機的邏輯有問題,結果首頁也出現了那 3 顆按鈕',
+    '・把整個首頁畫面蓋住,完全沒辦法玩 😅',
+    '【這版修了什麼?】',
+    '・改用更精準的方式判斷「英雄選擇頁是不是真的開著」',
+    '・搬家後立刻先設定隱藏,等確認該不該顯示再決定',
+    '・現在首頁、其他頁面都不會誤顯示那 3 顆按鈕',
+    '【實作位置】',
+    '・改用 getComputedStyle() 取代 style.display 直接讀(原本只看 inline style)',
+    '・搬家後立即設定 element.style.display = "none",再執行 sync 邏輯',
+    '・新增 _isVisible() helper,綜合判斷 display + visibility + offsetParent',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5210',
+  ] },
   { ver:'v1.0.20260501.5200', brief:[
     '🎯 終於找到底部按鈕按不到的真正原因了!',
     '✅ 把底部 9 顆按鈕「搬家」到不被影響的位置,現在能按了 🎉',
@@ -61582,7 +61600,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5200';
+  const CURRENT_VERSION = 'v1.0.20260501.5210';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61616,7 +61634,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5200';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5210';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -61959,6 +61977,14 @@ function _preloadAllGameImages() {
     return vw <= 900 || vh <= 500;
   }
 
+  // 用 getComputedStyle 才能正確判斷(inline style 為空時 style.display 會是 '')
+  function _isVisible(el){
+    if (!el) return false;
+    var cs = window.getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    return el.offsetParent !== null || cs.position === 'fixed';
+  }
+
   // 會「蓋過」#adventure-overlay 的子 overlay 清單 — 這些顯示時要隱藏 bottom-nav
   var COVERING_OVERLAY_IDS = [
     'summon-overlay', 'backpack-overlay', 'hero-page-overlay',
@@ -61970,10 +61996,7 @@ function _preloadAllGameImages() {
 
   function _isAnyOverlayCoveringHome(){
     for (var i = 0; i < COVERING_OVERLAY_IDS.length; i++) {
-      var el = document.getElementById(COVERING_OVERLAY_IDS[i]);
-      if (el && el.style.display !== 'none' && el.offsetParent !== null) {
-        return true;
-      }
+      if (_isVisible(document.getElementById(COVERING_OVERLAY_IDS[i]))) return true;
     }
     return false;
   }
@@ -61986,13 +62009,14 @@ function _preloadAllGameImages() {
     if (bottomNav && bottomNav.parentNode !== document.body) {
       document.body.appendChild(bottomNav);
       bottomNav.classList.add('_mobile-fixed');
+      // 立即先隱藏,避免閃現
+      bottomNav.style.display = 'none';
       document.body.classList.add('_mobile-bottom-relocated');
 
       var advOverlay = document.getElementById('adventure-overlay');
       var syncBottomNav = function(){
         // 條件:adventure-overlay 顯示中,且沒有其他 overlay 蓋在上面
-        var advVisible = advOverlay && advOverlay.style.display !== 'none' &&
-                         advOverlay.offsetParent !== null;
+        var advVisible = _isVisible(advOverlay);
         var covered = _isAnyOverlayCoveringHome();
         bottomNav.style.display = (advVisible && !covered) ? 'flex' : 'none';
       };
@@ -62018,11 +62042,12 @@ function _preloadAllGameImages() {
     if (heroBar && heroBar.parentNode !== document.body) {
       document.body.appendChild(heroBar);
       heroBar.classList.add('_mobile-fixed');
+      // 立即先隱藏,避免閃現
+      heroBar.style.display = 'none';
+
       var pickOverlay = document.getElementById('hero-pick-overlay');
       var syncHeroBar = function(){
-        var visible = pickOverlay && pickOverlay.style.display !== 'none' &&
-                      pickOverlay.offsetParent !== null;
-        heroBar.style.display = visible ? 'flex' : 'none';
+        heroBar.style.display = _isVisible(pickOverlay) ? 'flex' : 'none';
       };
       syncHeroBar();
       if (pickOverlay) {
