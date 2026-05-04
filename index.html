@@ -2354,61 +2354,6 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   }
 }
 
-/* ════════════════════════════════════════════════════════════════
-   ★ v1.0.20260501.5190 — 手機修復(加診斷工具版)
-   ────────────────────────────────────────────────────────────────
-   v5180 的 z-index:99 沒解決按鈕問題,代表「兇手不是覆蓋」。
-   這版策略:
-     1. 保留 v5180 的 z-index 提高(無害)
-     2. 修正關卡介紹視窗右側比例(問題 2:寬高比異常)
-     3. 加診斷按鈕 — 玩家點一下就能告訴我兇手是誰
-   觸發條件:max-width:480 或 max-height:500,只命中手機。
-   ════════════════════════════════════════════════════════════════ */
-@media (max-width: 480px), (max-height: 500px) {
-  /* === 底部按鈕修法(v5180 留下的,無害保留) === */
-  #adv-bottom-nav {
-    z-index: 99 !important;
-    pointer-events: auto !important;
-  }
-  #adv-bottom-nav .adv-nav-btn {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: rgba(255,255,255,0.2) !important;
-  }
-  #hero-pick-bar {
-    z-index: 99 !important;
-    pointer-events: auto !important;
-  }
-  #hero-pick-bar button,
-  #hero-pick-bar > div {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-  }
-
-  /* === 問題 2 修正:右側介紹視窗寬高比 ===
-     PC 上 right-panel 是 100% 高,info-window 在 panel 內自然撐滿。
-     手機上 right-panel 高度被 flex 容器拉滿沒問題,但 info-window
-     沒有 height:100%,所以只長到內容高度為止 → 看起來矮扁。
-     修法:讓 info-window 撐滿 panel 的可用高度,且維持 PC 一樣的內邊距比例。 */
-  #adv-info-window {
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    height: auto !important;
-    align-self: stretch !important;
-    /* PC 上 padding 是 20px 32px,手機按比例:不改 */
-  }
-  #adv-right-panel {
-    /* 確保 panel 在 flex 容器中能撐滿高度,info-window 才有空間 flex:1 */
-    height: 100% !important;
-    align-self: stretch !important;
-    /* 留底部空間給 nav */
-    padding-bottom: 70px !important;
-    overflow: hidden !important;  /* 不讓內容溢出蓋到 nav */
-    display: flex !important;
-    flex-direction: column !important;
-  }
-}
-
 
 
 /* ═════════════════════════════════════════════════════════════
@@ -60708,128 +60653,6 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260501.5220', brief:[
-    '🛠 換新方法修底部按鈕問題',
-    '・之前嘗試把按鈕「搬家」造成首頁誤顯示問題,撤除',
-    '・改用「鏡像按鈕」:在原始按鈕之外另外建一份固定在底部',
-    '・原始按鈕完全不動,所有頁面版面維持原樣',
-  ], items:[
-    '【為什麼換方法?】',
-    '・之前的搬家方案影響到原本的版面結構,即使加了同步顯示邏輯也容易誤判',
-    '・改用全新方案:不動原始按鈕,在 body 直接層建立「鏡像」',
-    '・鏡像按鈕點下去會去執行原始按鈕的點擊動作,功能完全一樣',
-    '【優點】',
-    '・原始按鈕還在原本位置,所有頁面、版面、樣式都不變',
-    '・即使鏡像按鈕邏輯有 bug,最壞也只是「鏡像沒出現」,不會破壞其他畫面',
-    '・PC、iPad 完全看不到鏡像按鈕,不影響',
-    '【鏡像按鈕運作方式】',
-    '・首頁底部 nav:9 顆鏡像按鈕(召喚/英雄/至寶/魔物/寵物/好友/背包/獎章/更新日誌)',
-    '・英雄選擇頁底部:4 顆鏡像按鈕(尋找/常用陣容/隨機編成/確認出戰)',
-    '・position:fixed,z-index:999990,完全脫離 #gc 縮放影響',
-    '・只在 #adventure-overlay 顯示且沒有其他 overlay 蓋上時才出現',
-    '【實作位置】',
-    '・新增 #_mobile-nav / #_mobile-pick 兩個 fixed 容器(在 body 直接子層)',
-    '・JS 從原 #adv-bottom-nav / #hero-pick-bar 抓按鈕資訊建立鏡像',
-    '・MutationObserver 監聽 14 個 overlay 變化',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5220',
-  ] },
-  { ver:'v1.0.20260501.5210', brief:[
-    '🐛 修上一版的小 bug:首頁不該出現的「常用陣容/隨機編成/編成隊伍」現在隱藏了',
-    '✅ 那 3 顆按鈕只會在「英雄選擇頁」出現,首頁不會看到了',
-  ], items:[
-    '【上一版發生什麼事?】',
-    '・上一版把英雄選擇頁的底部按鈕「搬家」到不被遊戲畫面影響的位置',
-    '・但搬家後判斷顯示時機的邏輯有問題,結果首頁也出現了那 3 顆按鈕',
-    '・把整個首頁畫面蓋住,完全沒辦法玩 😅',
-    '【這版修了什麼?】',
-    '・改用更精準的方式判斷「英雄選擇頁是不是真的開著」',
-    '・搬家後立刻先設定隱藏,等確認該不該顯示再決定',
-    '・現在首頁、其他頁面都不會誤顯示那 3 顆按鈕',
-    '【實作位置】',
-    '・改用 getComputedStyle() 取代 style.display 直接讀(原本只看 inline style)',
-    '・搬家後立即設定 element.style.display = "none",再執行 sync 邏輯',
-    '・新增 _isVisible() helper,綜合判斷 display + visibility + offsetParent',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5210',
-  ] },
-  { ver:'v1.0.20260501.5200', brief:[
-    '🎯 終於找到底部按鈕按不到的真正原因了!',
-    '✅ 把底部 9 顆按鈕「搬家」到不被影響的位置,現在能按了 🎉',
-    '✅ 英雄選擇頁底部按鈕列同樣修好',
-    '🔍 移除上一版的診斷按鈕(粉紅色那顆)',
-  ], items:[
-    '【真正的兇手是誰?】',
-    '・遊戲畫面內部其實是 1920×1080 大小,手機上會被縮小顯示',
-    '・但縮小是「視覺縮小」,實際的「點擊區域」沒有跟著縮小',
-    '・底部按鈕的「實際點擊位置」算下去超出手機螢幕外,所以點不到',
-    '・這就是為什麼上方按鈕(返回、音量)能按 — 它們本來就在縮放範圍外',
-    '【怎麼修?】',
-    '・把底部 9 顆按鈕「搬家」到跟上方按鈕同樣的層級',
-    '・現在它們不會跟著遊戲畫面縮放,點哪就是哪 ✨',
-    '・英雄選擇頁底部「常用陣容/隨機編成/確認出戰」也用同樣方式修',
-    '【會看到的變化】',
-    '・底部按鈕現在會貼齊手機畫面最底部',
-    '・按鈕大小會比之前小一點點(配合手機螢幕)',
-    '・但能按了!這才是最重要的 🎯',
-    '・電腦、iPad 完全不受影響(只在 vw≤900 或 vh≤500 時觸發搬家)',
-    '【實作位置】',
-    '・JS:在 </body> 前用 (function(){...})() 立即執行',
-    '・偵測手機尺寸後,document.body.appendChild(#adv-bottom-nav)',
-    '・改 position:fixed,z-index:999999,加 ._mobile-fixed class',
-    '・MutationObserver 監聽 #adventure-overlay 顯示狀態同步顯示/隱藏',
-    '・hero-pick-bar 同樣處理',
-    '・移除 v5190 的診斷按鈕(_diag-btn 等元素)',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5200',
-  ] },
-  { ver:'v1.0.20260501.5190', brief:[
-    '🔍 加了一個粉紅色「診斷」按鈕在右上角',
-    '📐 修了關卡介紹視窗扁平的問題',
-    '⚙ 底部按鈕還是按不到的話,請按右上角「🔍診斷」幫我抓兇手!',
-  ], items:[
-    '【為什麼還沒解決按鈕問題?】',
-    '・上一版猜測「z-index 太低被覆蓋」,但實測沒效',
-    '・代表兇手不是視覺覆蓋,可能是某個透明元素或 JS 攔截',
-    '・直接靠程式抓出兇手是誰,比繼續猜更快 ✨',
-    '【🔍診斷按鈕怎麼用?】',
-    '・畫面右上角紅色的「🔍診斷」按鈕,點下去開始倒數 5 秒',
-    '・倒數時點底部「召喚」「英雄」「至寶」任何一顆按鈕的位置',
-    '・會跳出白色視窗顯示那個位置上面所有重疊的元素清單',
-    '・把整張視窗截圖傳給我,我就能立刻找出兇手 🎯',
-    '【這次還修了什麼?】',
-    '・問題 2:右側關卡介紹視窗在手機上太扁的問題,改成填滿右半邊',
-    '・改法:給 #adv-info-window 加 flex:1 + align-self:stretch',
-    '【關於診斷按鈕】',
-    '・這是暫時的偵錯工具,PC/iPad 也看得到但對你們無害',
-    '・問題解決後下一版會把它移除',
-    '【實作位置】',
-    '・新增 #_diag-btn / #_diag-result 等元素(在 </body> 前)',
-    '・用 document.elementsFromPoint() 抓重疊元素清單',
-    '・用 capture phase 的 touchstart 監聽,搶在按鈕邏輯前攔截',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5190',
-  ] },
-  { ver:'v1.0.20260501.5180', brief:[
-    '📱 手機版底部按鈕修復(再嘗試版!)',
-    '⚠ 上一版(v5170)把字體弄太小了,而且按鈕還是按不到,先把那些改動全部撤除了',
-    '🎯 這版只專心做一件事:讓底部按鈕「能被按到」,字體先不動',
-  ], items:[
-    '【為什麼上一版失敗?】',
-    '・上一版猜測是 Android 系統手勢區擋住按鈕,但實際測試後發現不是',
-    '・另外也把字體一次調太小,反而讓畫面看起來不舒服',
-    '・所以這版先把上一版加的東西全部撤除,維持 v5160 的視覺',
-    '【這版做了什麼?】',
-    '・把首頁底部 9 顆按鈕的「層級」拉到最高,不會被任何元素蓋住',
-    '・強制按鈕「接受」觸碰事件,避免被父層攔截',
-    '・英雄選擇頁底部按鈕列同樣處理',
-    '・其他畫面、字體大小完全不動,維持原樣',
-    '【還沒解決的話請告訴我以下資訊】',
-    '・按底部按鈕時有沒有看到任何視覺反饋(按下去顏色變淡/亮?)',
-    '・嘗試「長按」底部按鈕看會發生什麼',
-    '・嘗試把 Chrome 切到「桌面版網站」模式,測試按鈕能不能按',
-    '【實作位置】',
-    '・撤除上一版加在 line 2358 的 280 行 CSS 區塊',
-    '・新增極簡 @media 區塊(line 2358):只 z-index:99 + pointer-events:auto',
-    '・觸發條件 max-width:480 或 max-height:500,只命中手機,iPad / PC 不變',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5180',
-  ] },
   { ver:'v1.0.20260501.5160', brief:[
     '🎨 修好 19 位英雄的 Q 版圖片!上次升級沒成功的全部換成新圖了 ✨',
     '👀 包含祭司、火法師、武士、聖騎士…等好多帥氣的英雄重新登場',
@@ -61625,7 +61448,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5220';
+  const CURRENT_VERSION = 'v1.0.20260501.5230';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61659,7 +61482,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5220';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5230';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -62018,12 +61841,14 @@ function _preloadAllGameImages() {
   }
 
   // 會「蓋過」#adventure-overlay 的子 overlay 清單
+  // 注意:不要包含 'overlay'(首頁),因為首頁不會被 JS 隱藏,只會被其他 overlay 視覺蓋上
+  // 包含它會導致進冒險頁時鏡像 nav 永遠不顯示
   var COVERING_IDS = [
     'summon-overlay', 'backpack-overlay', 'hero-page-overlay',
     'monster-page-overlay', 'pet-page-overlay', 'medal-page-overlay',
     'hero-pick-overlay', 'taiwan-treasure-page', 'taiwan-map-overlay',
     'japan-map-overlay', 'friend-panel', 'changelog-panel',
-    'shop-overlay', 'overlay'
+    'shop-overlay'
   ];
 
   function _anyCovering(){
