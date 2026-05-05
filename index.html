@@ -4567,291 +4567,314 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ★ v1.0.20260501.5300 — 手機橫式 14 項需求逐項處理
+   ★ v1.0.20260501.5310 — 14 項需求逐項處理(覆寫 v5300 錯誤的 selector)
    ──────────────────────────────────────────────────────────────────
    觸發條件:max-height: 500px(手機橫式)
-   原則:
-     ・「放大 100%」→ 雙倍 size,塞不下用 overflow:auto 捲動
-     ・「縮小 50%」→ 0.5 倍 size
-     ・在 #gc 內元件用內部 px 設定,fixed popup 用實際 px
    ══════════════════════════════════════════════════════════════════ */
 @media (max-height: 500px) {
 
-  /* ═══ 1. 貓空挑戰路線選擇頁 — 全部放大 100% ═══ */
-  /* (劇情過場的選擇視窗,使用 .adv-choice-* 類) */
-  /* 已在 v5290 處理過 .adv-choice-btn,這裡再加大 */
-  .adv-choice-panel {
+  /* ═══ 2. 挑戰路線後 BOSS 視窗(右上敵方陣容預覽) — 放大 100% ═══
+     真實元件:#hpick-enemy-preview(英雄選擇頁右上角橫排敵方圖)+ .ep-slot 內容卡 */
+  #hpick-enemy-preview {
+    transform: scale(1.6) !important;
+    transform-origin: top right !important;
+    z-index: 100 !important;
+  }
+  /* ep-slot 個別卡片 */
+  .ep-slot {
+    /* scale 由父層 hpick-enemy-preview 帶動,不重複放大 */
+  }
+
+  /* ═══ 3. 英雄選擇頁標題「英雄召集中」 — 還原原本大小 ═══
+     v5300 把 h2 設成 80px 太大,改回原本 36px(略放大成 50px) */
+  #hero-pick-overlay h2 { font-size: 50px !important; letter-spacing: 4px !important; }
+  #hero-pick-count { font-size: 36px !important; }
+  #hero-pick-topbar {
+    padding: 8px 16px 6px !important;  /* 縮小內邊距,避免 topbar 太胖 */
+  }
+
+  /* ═══ 4. 邀請好友視窗 — 高度放大,看到完整內容 ═══
+     真實元件:.hf-invite(邀請按鈕)— 玩家描述的「邀請視窗」應該是英雄選擇頁右側
+     好友邀請列。先放大 button 並讓容器有足夠高度 */
+  .hf-invite {
+    padding: 16px !important;
+    font-size: 22px !important;
+    min-height: 64px !important;
+  }
+  /* 好友邀請列容器 — 從 hf-invite 的 parent 找 */
+  /* (這裡先預留,如果還是不對再依截圖調整) */
+
+  /* ═══ 5. 元素屬性選擇頁 — 下方按鈕移到右側 ═══
+     真實元件:#elem-pick-overlay
+     從 HTML 結構看,內含 canvas + button(s),需要找出按鈕的 selector */
+  #elem-pick-overlay {
+    position: relative !important;
+  }
+  /* 強制讓 elem-pick-overlay 內所有 button 移到右側固定 */
+  #elem-pick-overlay button {
+    position: relative !important;
+    z-index: 100 !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    font-size: 28px !important;
+    padding: 14px 20px !important;
+    min-height: 64px !important;
+  }
+  /* 如果有特定 confirm/cancel button id */
+  #elem-pick-confirm, #elem-pick-cancel,
+  #elem-confirm, #elem-cancel {
+    position: fixed !important;
+    right: 20px !important;
+    z-index: 999991 !important;
+  }
+  #elem-pick-confirm, #elem-confirm {
+    bottom: 60% !important;
+  }
+  #elem-pick-cancel, #elem-cancel {
+    bottom: 30% !important;
+  }
+
+  /* ═══ 6. 常用陣容視窗 — 撤回 v5300 的 transform:scale(0.5)(會錯位)
+     改成:視窗加長,圖片縮小,確保一行 4 個角色 ═══ */
+  #preset-team-panel {
+    transform: none !important;
+    /* 加長:max-width 拉大,但視覺要寬不要太寬 */
+    max-width: 720px !important;
+    width: 720px !important;
+    max-height: 90vh !important;
+  }
+  /* 預設陣容裡的英雄縮圖 — 縮小 50% 確保一行 4 個 */
+  #preset-team-panel .preset-hero-img,
+  #preset-team-panel img,
+  #preset-team-panel [class*="hero-thumb"] {
+    width: 56px !important;
+    height: 56px !important;
+    flex: 0 0 56px !important;
+  }
+  #preset-team-panel .preset-team-row {
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+  }
+
+  /* ═══ 7. 第一問主題的外框(劇情選擇 panel) — 放大讓內容不被切 ═══
+     真實元件:#adv-choice-panel + .adv-choice-title */
+  #adv-choice-panel {
     max-width: 96vw !important;
+    width: 96vw !important;
     max-height: 92vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     padding: 24px !important;
+    box-sizing: border-box !important;
   }
-  .adv-choice-title { font-size: 60px !important; margin-bottom: 16px !important; }
-  .adv-choice-btn {
+  .adv-choice-title {
     font-size: 56px !important;
-    padding: 18px 24px !important;
-    min-height: 110px !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 16px !important;
+    line-height: 1.3 !important;
+    /* 確保不被裁切 */
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .adv-choice-btn {
+    font-size: 50px !important;
+    padding: 16px 22px !important;
+    min-height: 100px !important;
+    margin-bottom: 10px !important;
+    white-space: normal !important;
   }
   .adv-confirm-btn {
-    font-size: 56px !important;
-    padding: 20px !important;
-    min-height: 110px !important;
+    font-size: 50px !important;
+    padding: 18px !important;
+    min-height: 100px !important;
   }
 
-  /* ═══ 2. 英雄選擇頁 — 移除「尋找新英雄」+ 全部放大 100% ═══ */
-  /* 隱藏原始尋找新英雄按鈕(鏡像版本另外處理) */
-  #hero-pick-find-btn { display: none !important; }
-  #_mobile-pick .mp-btn.find { display: none !important; }
-  /* 英雄選擇頁標題 */
-  #hero-pick-overlay h2 { font-size: 80px !important; letter-spacing: 8px !important; }
-  #hero-pick-count { font-size: 56px !important; }
-  /* 英雄卡片放大 */
-  #hero-pick-arena .hpick-arena-card,
-  #hero-pick-arena-inner .hpick-node {
-    transform: scale(1.0) !important;
-  }
-  /* 已選英雄頭像列 */
-  #hpick-panel .picked-badge,
-  .picked-badge {
-    width: 110px !important;
-    height: 110px !important;
-    font-size: 48px !important;
-    border-width: 4px !important;
-  }
-  /* 英雄選擇底部鏡像按鈕(2/14 共用) */
-  #_mobile-pick {
-    padding: 12px 16px max(12px, env(safe-area-inset-bottom)) 16px !important;
-    gap: 10px !important;
-  }
-  #_mobile-pick .mp-btn {
-    font-size: 18px !important;
-    padding: 12px 10px !important;
-    min-height: 56px !important;
-  }
-  #_mobile-pick .mp-btn.confirm {
-    font-size: 20px !important;
-    letter-spacing: 2px !important;
-  }
-
-  /* ═══ 3. 常用預設陣容 panel — 字體不變,視窗+圖片縮小 50% ═══ */
-  #preset-team-panel {
-    transform: scale(0.5) !important;
-    transform-origin: top center !important;
-    /* 縮小後位置補正 */
-  }
-
-  /* ═══ 4. 套用陣容確認視窗 — 縮小 50% ═══ */
-  /* (這是套用預設陣容時跳出的確認 modal) */
-  #apply-preset-modal,
-  .apply-preset-confirm,
-  [data-modal="apply-preset"] {
-    transform: scale(0.5) !important;
-    transform-origin: center center !important;
-  }
-
-  /* ═══ 5. 劇情對話 — 對話文字 + 選擇題視窗放大 100% ═══ */
-  /* v5290 已設 #adv-dialog-text 38px,這裡放大到 76px */
-  #adv-dialog-box {
-    max-height: 90vh !important;
-    padding: 24px 100px 48px 28px !important;
-  }
-  #adv-dialog-speaker { font-size: 64px !important; margin-bottom: 12px !important; }
-  #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
-  #adv-dialog-next { font-size: 72px !important; }
-  /* 選擇題視窗(劇情中的選擇) — 已在第 1 項放大,這裡確保覆蓋 */
-
-  /* ═══ 6. 戰鬥答題視窗 — 放大 100%,不需捲動完整顯示 ═══ */
-  .adv-quiz-box,
-  #adv-quiz-box {
-    max-width: 96vw !important;
-    max-height: 96vh !important;
-    width: 96vw !important;
-    padding: 18px 24px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  .adv-quiz-title,
-  #adv-quiz-title { font-size: 56px !important; margin-bottom: 12px !important; }
-  .adv-quiz-question,
-  #adv-quiz-question { font-size: 72px !important; margin-bottom: 18px !important; line-height: 1.35 !important; }
-  .adv-quiz-option {
-    font-size: 64px !important;
-    padding: 20px 24px !important;
-    min-height: 120px !important;
-  }
-
-  /* ═══ 7. 答題獎勵視窗 — 放大 100%,不需捲動完整顯示 ═══ */
-  #adv-reward-overlay {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  #adv-reward-title,
-  .adv-reward-title { font-size: 70px !important; }
-  #adv-reward-overlay .reward-card,
-  #adv-reward-overlay .adv-reward-card {
-    transform: scale(2) !important;
-    transform-origin: center center !important;
-    margin: 60px !important;  /* 放大後留足夠間距 */
-  }
-  /* 「使用」「保留」按鈕放大 */
-  #adv-reward-overlay button {
-    font-size: 56px !important;
-    padding: 18px 32px !important;
-    min-height: 110px !important;
-  }
-
-  /* ═══ 8. 戰鬥教學指引 — 縮小 50%(覆蓋 v5290 設定) ═══ */
+  /* ═══ 8. 戰鬥教學視窗(_tut-box)— 縮小 50% ═══
+     注意:_tut-box 預設用 transform:translate(-50%,-50%) 置中,
+     所以要保留 translate 部分,僅加 scale */
   #_tut-box {
-    transform: translate(-50%, -50%) scale(0.7) !important;
-    /* 注意:_tut-box 原本就用 transform:translate(-50%,-50%) 做置中,
-       這裡覆寫成 translate + scale 一起寫 */
-    max-width: 70vw !important;
-    max-height: 70vh !important;
-  }
-  #_tut-box ._tut-step { font-size: 11px !important; }
-  #_tut-box ._tut-title { font-size: 14px !important; }
-  #_tut-box ._tut-desc { font-size: 12px !important; }
-  ._tut-next-btn { font-size: 12px !important; padding: 5px 12px !important; }
-  ._tut-skip-btn { font-size: 11px !important; padding: 4px 10px !important; }
-
-  /* ═══ 9. 戰鬥技能 ? 詳細說明小視窗 — 縮小 50% ═══ */
-  #skill-detail-popup {
-    transform: scale(0.6) !important;
-    transform-origin: top right !important;
-    max-width: 50vw !important;
-    max-height: 80vh !important;
-    overflow-y: auto !important;
-  }
-
-  /* ═══ 10. 戰鬥右側選單放大 + 物品卡改直排「川」式 ═══ */
-  /* 戰鬥右側按鈕 */
-  #b-attack, #b-skill1, #b-skill2, #b-burst, #b-auto-battle, #b-flee {
-    font-size: 36px !important;
-    padding: 16px 12px !important;
-    min-height: 80px !important;
-  }
-  /* 物品欄(z3) — 原本在底部一排,改成右側直排 */
-  #z3 {
-    flex-direction: column !important;
-    position: absolute !important;
-    right: 8px !important;
-    top: auto !important;
-    bottom: 80px !important;
-    width: auto !important;
-    height: auto !important;
-    gap: 8px !important;
-    z-index: 50 !important;
-  }
-  #z3 > * {
-    width: 90px !important;
-    height: 90px !important;
-    flex: 0 0 auto !important;
-  }
-  /* 物品文字 */
-  #z3 [class*="inv"], #z3 .item-slot, #z3 .battle-item {
-    font-size: 24px !important;
-  }
-
-  /* ═══ 11. 命運塔羅牌使用/販賣視窗 — 放大 100% ═══ */
-  #tarot-choice-overlay > div,
-  #tarot-choice-overlay .tarot-card {
-    transform: scale(2) !important;
+    transform: translate(-50%, -50%) scale(0.5) !important;
     transform-origin: center center !important;
-  }
-  #tarot-choice-overlay button {
-    font-size: 56px !important;
-    padding: 18px 32px !important;
-    min-height: 110px !important;
+    max-width: 80vw !important;
+    max-height: 80vh !important;
   }
 
-  /* ═══ 12. 戰鬥角色卡 — 文字放大 + 英雄圖片臉部特寫 ═══ */
-  /* 卡片內文字 */
-  #z1 .card, #z2 .card, #gc .card {
-    font-size: 28px !important;
-  }
-  #z1 .card .name, #z2 .card .name, #gc .card .name {
-    font-size: 32px !important;
-  }
-  #z1 .card .hp-text, #z2 .card .hp-text, #gc .card .hp-text {
-    font-size: 30px !important;
-  }
-  /* 英雄圖(玩家方)— 強制 zoom 到頭部 (object-position 大部分英雄頭部在上半 25-30%) */
-  #z1 .card img, #z1 .card .hero-img {
-    transform: scale(1.6) !important;
-    transform-origin: center 25% !important;
-  }
-  /* 小怪圖(敵方)— 維持原本不變(玩家確認比例好) */
-
-  /* ═══ 13. 極限爆發確認視窗 — 放大 100%,按鈕直接可見 ═══ */
+  /* ═══ 9. 極限爆發說明和發動視窗 — 放大 200% ═══
+     v5300 的 burst-confirm-modal selector 已對 */
   #burst-confirm-modal,
   .burst-confirm-modal {
+    max-width: 96vw !important;
+    width: 96vw !important;
     max-height: 96vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding: 24px !important;
+    padding: 32px !important;
   }
-  #burst-confirm-modal *,
-  .burst-confirm-modal * {
-    /* 內部所有文字放大 — 但避免雙重作用,用 :not 排除 */
+  #burst-confirm-modal h1,
+  #burst-confirm-modal h2,
+  #burst-confirm-modal h3,
+  .burst-confirm-modal h1,
+  .burst-confirm-modal h2,
+  .burst-confirm-modal h3 {
+    font-size: 80px !important;
   }
-  #burst-confirm-modal h1, #burst-confirm-modal h2, #burst-confirm-modal h3,
-  .burst-confirm-modal h1, .burst-confirm-modal h2, .burst-confirm-modal h3 {
-    font-size: 64px !important;
+  #burst-confirm-modal p,
+  #burst-confirm-modal div,
+  .burst-confirm-modal p,
+  .burst-confirm-modal div {
+    font-size: 56px !important;
   }
   #burst-confirm-modal button,
   .burst-confirm-modal button {
-    font-size: 56px !important;
-    padding: 20px 32px !important;
-    min-height: 110px !important;
-  }
-  #burst-confirm-modal p, #burst-confirm-modal div,
-  .burst-confirm-modal p, .burst-confirm-modal div {
-    /* 不一律設,避免破版 — 由內聯樣式決定 */
+    font-size: 64px !important;
+    padding: 24px 36px !important;
+    min-height: 130px !important;
   }
 
-  /* ═══ 14. 元素選擇頁 + 替換技能頁 — 下方按鈕移到右側 ═══ */
-  /* 元素選擇頁(火水草土風光暗) */
-  #elem-pick-overlay {
-    /* 容器本身用 flex-direction:row 讓內容 + 按鈕分左右 */
+  /* ═══ 10. 小怪全滅視窗 — 縮小 50% ═══
+     可能 selector:#enemies-cleared / .enemies-cleared / #adv-stage-clear 等
+     先用通用模糊比對 */
+  [id*="cleared"], [class*="cleared"],
+  [id*="all-clear"], [class*="all-clear"],
+  [id*="stage-clear"], [class*="stage-clear"],
+  [id*="wipe"], [class*="wipe"] {
+    transform: scale(0.5) !important;
+    transform-origin: center center !important;
   }
-  /* 找出底部按鈕區並改成右側固定 */
-  #elem-pick-overlay > .bottom-bar,
-  #elem-pick-overlay > [class*="bottom"],
-  #elem-pick-overlay > [class*="action"] {
-    position: absolute !important;
-    right: 16px !important;
-    bottom: 50% !important;
-    transform: translateY(50%) !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    width: auto !important;
-    z-index: 100 !important;
+
+  /* ═══ 11. 確定跳過劇情視窗 — 放大 100% ═══
+     可能 selector:#skip-cutscene / #skip-story-confirm 等 */
+  [id*="skip-cutscene"], [class*="skip-cutscene"],
+  [id*="skip-story"], [class*="skip-story"],
+  [id*="skip-dialog"], [class*="skip-dialog"] {
+    max-width: 90vw !important;
+    width: 90vw !important;
+    padding: 24px !important;
   }
-  /* 替換技能頁 */
-  #skill-replace-overlay > .bottom-bar,
-  #skill-replace-overlay > [class*="bottom"],
-  #skill-replace-overlay > [class*="action"] {
-    position: absolute !important;
-    right: 16px !important;
-    bottom: 50% !important;
-    transform: translateY(50%) !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    width: auto !important;
-    z-index: 100 !important;
+  [id*="skip-cutscene"] *, [class*="skip-cutscene"] *,
+  [id*="skip-story"] *, [class*="skip-story"] * {
+    font-size: 1.7em !important;
   }
-  /* 雙重保險:確認/取消 button 強制 z-index */
-  #elem-pick-overlay button,
-  #skill-replace-overlay button {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-    font-size: 36px !important;
-    padding: 16px 20px !important;
+
+  /* ═══ 12. 戰鬥問答視窗 — 整個外框放大 100% + 選項放大 100% ═══
+     真實元件:#adv-quiz-overlay > #adv-quiz-box */
+  #adv-quiz-overlay {
+    /* overlay 是 fixed 全螢幕,內部 quiz-box 才是視窗本體 */
+  }
+  #adv-quiz-box {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 96vh !important;
+    height: auto !important;
+    padding: 20px 28px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  /* 這次重要:adv-quiz-box 在 #adv-quiz-overlay 內,可能在 #gc 內被縮放
+     所以字體用較大的 px,並 !important 覆寫 */
+  #adv-quiz-header,
+  #adv-quiz-title,
+  .adv-quiz-title { font-size: 36px !important; margin-bottom: 12px !important; }
+  #adv-quiz-question,
+  .adv-quiz-question { font-size: 46px !important; margin-bottom: 18px !important; line-height: 1.4 !important; }
+  /* 選項按鈕 — 放大 100% */
+  #adv-quiz-options button,
+  #adv-quiz-options .quiz-option,
+  .adv-quiz-option {
+    font-size: 40px !important;
+    padding: 18px 24px !important;
+    min-height: 90px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* ═══ 13. 答題獎勵視窗 — 整個外框放大 100%(加高) ═══ */
+  #adv-reward-overlay {
+    /* overlay 全螢幕,但內部視窗 #adv-reward-box 才是要放大的 */
+  }
+  /* 真實的內部視窗 */
+  #adv-reward-box,
+  .adv-reward-panel {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 96vh !important;
+    padding: 20px 24px !important;
+  }
+  /* 撤回 v5300 的 scale(2)(不正確) */
+  #adv-reward-overlay .reward-card,
+  #adv-reward-overlay .adv-reward-card {
+    transform: none !important;
+    margin: 8px !important;
+  }
+  /* 改成放大整個 panel 的高度 */
+  .adv-reward-panel-title { font-size: 38px !important; }
+
+  /* ═══ 14. 戰鬥右側選單放大 + 物品卡確保直排 ═══
+     真實元件:
+       - #sb (整個右側面板,寬 560px)
+       - #action-panel (上方按鈕區)
+       - .abtn (各動作按鈕)
+       - #igrid (物品列,本來就是 column 直排)
+       - .islot (物品格)
+       - #item-ops (使用/攜帶/賣出按鈕)
+       - .iop-btn  (操作按鈕)
+       - #b-atk, #b-rest, #b-surrender, #b-auto-battle, #b-s1, #b-s2 */
+
+  /* 右側面板放大 */
+  #sb {
+    width: clamp(320px, 36vw, 560px) !important;
+  }
+  /* 戰鬥動作按鈕全部放大 */
+  .abtn {
     min-height: 80px !important;
+    padding: 8px !important;
   }
+  .abtn b,
+  .abtn > b {
+    font-size: 40px !important;
+  }
+  .abtn > span {
+    font-size: 32px !important;
+  }
+  /* 普通攻擊、休息、放棄、自動戰鬥、技能 1/2、爆發 */
+  #b-atk, #b-rest, #b-surrender, #b-auto-battle, #b-s1, #b-s2 {
+    min-height: 80px !important;
+    font-size: 36px !important;
+  }
+  #b-surrender {
+    font-size: 32px !important;
+  }
+  /* 物品列 — 確保直排「川」字(其實已經是 column 預設) */
+  .igrid {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .islot {
+    min-height: 72px !important;
+    font-size: 26px !important;
+    padding: 8px !important;
+  }
+  /* 使用/攜帶/賣出按鈕 */
+  .iop-btn {
+    font-size: 32px !important;
+    padding: 12px !important;
+    min-height: 60px !important;
+  }
+  #item-panel h4 {
+    font-size: 32px !important;
+    margin: 6px 0 !important;
+  }
+
+  /* ═══ 1 + 5(劇情對話) + v5290 已處理,這裡確保覆蓋 ═══ */
+  #adv-dialog-box {
+    max-height: 92vh !important;
+    padding: 20px 90px 36px 24px !important;
+  }
+  #adv-dialog-speaker { font-size: 56px !important; margin-bottom: 10px !important; }
+  #adv-dialog-text { font-size: 60px !important; line-height: 1.55 !important; }
+  #adv-dialog-next { font-size: 60px !important; }
 }
+
 
 
 
@@ -61910,7 +61933,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5300';
+  const CURRENT_VERSION = 'v1.0.20260501.5310';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61944,7 +61967,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5300';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5310';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
