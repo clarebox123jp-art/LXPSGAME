@@ -4397,14 +4397,25 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   手機橫式專屬(高度 ≤ 500px)— 避免 popup 過高、按鈕跑出畫面
-   既包含手機橫式,也包含直式手機(直式高度通常 > 500,不會觸發)
-   全部 popup 限制最大高度 88vh,內容過長時用內部捲動,確保 nav 按鈕一定可見
+   ★ v1.0.20260501.5290 — 手機橫式專屬適配(取代 v5280)
+   ──────────────────────────────────────────────────────────────────
+   觸發條件:max-height: 500px(手機橫式)
+   字體規則(玩家確認的基準):
+     ・在 #gc 內元件 — 用 32px(下限,對應「英雄鬥技場」)~ 42px(上限,對應關卡按鈕「木柵貓空大冒險」)
+     ・fixed 元件(教學、活動 popup) — 用 11px(下限)~ 14px(上限)
    ══════════════════════════════════════════════════════════════════ */
 @media (max-height: 500px) {
-  /* 教學視窗 */
+
+  /* ═══ 0. 修代表英雄條與返回首頁按鈕重疊 ═══
+     原本 left:clamp(190px,17vw,260px),手機 800px 寬時 17vw=136 取 190,但 back-btn
+     右緣已到 ~200px,造成重疊。手機橫式改成 left:240px+ */
+  #adv-rep-hero-bar {
+    left: max(240px, env(safe-area-inset-left) + 220px) !important;
+  }
+
+  /* ═══ A. 教學視窗(position:fixed) — 文字 11~14px ═══ */
   #_tut-box {
-    max-width: 80vw !important;
+    max-width: 75vw !important;
     max-height: 88vh !important;
     padding: 8px 12px 6px !important;
     overflow-y: auto !important;
@@ -4413,9 +4424,9 @@ body {
     flex-direction: column !important;
   }
   #_tut-box ._tut-step { font-size: 11px !important; margin-bottom: 2px !important; }
-  #_tut-box ._tut-title { font-size: 16px !important; margin-bottom: 4px !important; line-height: 1.2 !important; }
+  #_tut-box ._tut-title { font-size: 14px !important; margin-bottom: 4px !important; line-height: 1.2 !important; }
   #_tut-box ._tut-desc {
-    font-size: 13px !important; line-height: 1.4 !important; margin-bottom: 6px !important;
+    font-size: 13px !important; line-height: 1.5 !important; margin-bottom: 6px !important;
     flex: 1; min-height: 0;
     overflow-y: auto;
   }
@@ -4428,31 +4439,36 @@ body {
   ._tut-next-btn { font-size: 13px !important; padding: 5px 12px !important; }
   ._tut-skip-btn { font-size: 12px !important; padding: 4px 10px !important; }
 
-  /* 對話框 popup(過場演出) */
+  /* ═══ B. 對話框(在 #gc 內,被縮放) — 文字 32~42px(內部 px,對應視覺 11~14px) ═══ */
   #adv-dialog-box {
     max-height: 80vh !important;
-    padding: 8px 12px 24px 12px !important;
+    padding: 14px 80px 32px 18px !important;
   }
-  #adv-dialog-speaker { font-size: 14px !important; margin-bottom: 3px !important; }
-  #adv-dialog-text { font-size: 14px !important; line-height: 1.4 !important; }
-  #adv-dialog-next { font-size: 18px !important; }
+  #adv-dialog-speaker { font-size: 36px !important; margin-bottom: 6px !important; }
+  #adv-dialog-text { font-size: 38px !important; line-height: 1.55 !important; }
+  #adv-dialog-next { font-size: 40px !important; }
 
-  /* 答題 popup(小怪出題) */
+  /* ═══ C. 答題 popup — 答題視窗實作上是 fixed?用內部 px 設,看渲染結果 ═══
+     從 grep 看 question:30px 是基底值,可能在 #gc 內,我用 32-42 範圍 */
   .adv-quiz-box,
   #adv-quiz-box {
-    max-width: 88vw !important;
-    max-height: 86vh !important;
-    padding: 10px 14px !important;
+    max-width: 92vw !important;
+    max-height: 88vh !important;
+    padding: 12px 16px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
   .adv-quiz-title,
-  #adv-quiz-title { font-size: 14px !important; margin-bottom: 4px !important; }
+  #adv-quiz-title { font-size: 32px !important; margin-bottom: 6px !important; }
   .adv-quiz-question,
-  #adv-quiz-question { font-size: 16px !important; margin-bottom: 6px !important; line-height: 1.3 !important; }
-  .adv-quiz-option { font-size: 14px !important; padding: 6px 10px !important; min-height: 36px !important; }
+  #adv-quiz-question { font-size: 40px !important; margin-bottom: 10px !important; line-height: 1.35 !important; }
+  .adv-quiz-option {
+    font-size: 36px !important;
+    padding: 12px 16px !important;
+    min-height: 64px !important;  /* 觸碰熱區放大 */
+  }
 
-  /* 升級確認、自救選單、各類通用 popup */
+  /* ═══ D. 各類 confirm / 升級 / 自救選單 ═══ */
   #upgrade-confirm-box,
   #_deadlock-rescue-menu,
   #adv-skip-select-box,
@@ -4460,21 +4476,94 @@ body {
   #tw-boss-detail-overlay > div,
   .modal-box,
   .popup-box {
-    max-height: 86vh !important;
+    max-height: 88vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding: 8px 12px !important;
+    padding: 10px 14px !important;
   }
 
-  /* 選擇視窗(過場演出選擇) */
+  /* ═══ E. 選擇視窗(過場劇情選擇,在 #gc 內) ═══ */
   .adv-choice-box {
-    max-height: 80vh !important;
-    padding: 8px 10px !important;
+    max-height: 82vh !important;
+    padding: 12px 14px !important;
     overflow-y: auto !important;
   }
-  .adv-choice-title { font-size: 14px !important; margin-bottom: 4px !important; }
-  .adv-choice-btn { font-size: 13px !important; padding: 5px 10px !important; min-height: 32px !important; }
-  .adv-confirm-btn { font-size: 14px !important; padding: 6px !important; }
+  .adv-choice-title { font-size: 38px !important; margin-bottom: 8px !important; }
+  .adv-choice-btn {
+    font-size: 36px !important;
+    padding: 12px 18px !important;
+    min-height: 70px !important;
+  }
+  .adv-confirm-btn {
+    font-size: 38px !important;
+    padding: 12px !important;
+    min-height: 70px !important;
+  }
+
+  /* ═══ F. 首頁右側介紹視窗(在 #gc 內,32~42px) ═══ */
+  .adv-info-name,
+  #adv-info-name { font-size: 42px !important; letter-spacing: 3px !important; }
+  .adv-info-desc,
+  #adv-info-desc { font-size: 36px !important; line-height: 1.6 !important; }
+  .adv-info-label,
+  #adv-info-label { font-size: 36px !important; }
+  .adv-difficulty-stars,
+  #adv-difficulty-stars { font-size: 38px !important; }
+  #adv-start-game-btn { font-size: 40px !important; padding: 14px 0 !important; letter-spacing: 3px !important; }
+  #adv-preview-btn { font-size: 32px !important; padding: 10px 0 !important; }
+
+  /* ═══ G. 首頁左側按鈕區(在 #gc 內,字體 32~42px) ═══ */
+  #adv-stage-list-label,
+  .adv-stage-list-label { font-size: 32px !important; padding: 4px 16px !important; }
+  #adv-stage-scroll-hint,
+  .adv-stage-scroll-hint { font-size: 32px !important; padding: 8px 0 10px 0 !important; }
+  .adv-stage-btn { min-height: 70px !important; font-size: 42px !important; padding: 14px 18px !important; }
+  .adv-event-btn { font-size: 38px !important; padding: 14px 18px !important; }
+  #adv-shop-btn { font-size: 38px !important; padding: 14px 8px !important; }
+  #adv-shop-coin-badge { font-size: 32px !important; padding: 3px 14px !important; }
+  #adv-manual-sync-btn { font-size: 32px !important; padding: 12px 8px !important; }
+  #adv-manual-sync-help-btn { font-size: 32px !important; }
+
+  /* ═══ H. 戰鬥獎勵 / 結算標題(在 #gc 內) ═══ */
+  #adv-result-title,
+  .adv-result-title { font-size: 42px !important; }
+  #adv-reward-title,
+  .adv-reward-title { font-size: 38px !important; }
+
+  /* ═══ I. 英雄選擇頁(在 #gc 內) ═══ */
+  #hero-pick-overlay h2 { font-size: 40px !important; letter-spacing: 4px !important; }
+  #hero-pick-count { font-size: 36px !important; }
+
+  /* ═══ J. 代表英雄條(在 #gc 內) ═══ */
+  #adv-rep-hero-name { font-size: 32px !important; }
+  #adv-rep-hero-lv { font-size: 28px !important; }
+
+  /* ═══ K. 近期活動 popup(fixed,文字 11~14px) ═══
+     原本標題 clamp(30,4.5vw,46) 在 800px 寬時 = 36px,看起來太大;
+     按鈕 clamp(20,2.2vw,24) = 22px,也偏大。改成 11~14 範圍。 */
+  #_event-popup-box {
+    width: 92vw !important;
+    height: 90vh !important;
+    max-width: none !important;
+    max-height: 90vh !important;
+  }
+  /* header 內所有 span(包含 ✨ emoji 和標題) */
+  ._event-popup-header {
+    padding: 6px 14px !important;
+  }
+  ._event-popup-header > div { gap: 6px !important; }
+  ._event-popup-header span { font-size: 16px !important; }
+  /* footer 按鈕 */
+  ._event-popup-footer {
+    padding: 6px 12px !important;
+  }
+  ._event-popup-btn {
+    font-size: 13px !important;
+    padding: 6px 16px !important;
+    border-radius: 7px !important;
+  }
+  /* scrollArea 內的 hero card 跟其他內容 — 保持原本 clamp 值
+     因為玩家確認「挑戰10個高難度台灣boss...」字大小 OK */
 }
 
 
@@ -33119,6 +33208,7 @@ function _showNewHeroAnnouncement(forceShow){
 
   // 主容器(80% 螢幕)
   const box = document.createElement('div');
+  box.id = '_event-popup-box';
   box.style.cssText = [
     'width:80vw;height:80vh;',
     'max-width:1280px;max-height:900px;',
@@ -33132,6 +33222,7 @@ function _showNewHeroAnnouncement(forceShow){
 
   // 標題列(置頂、不滾動)
   const header = document.createElement('div');
+  header.className = '_event-popup-header';
   header.style.cssText = [
     'flex:0 0 auto;',
     'padding:clamp(12px,2vw,18px) clamp(16px,3vw,28px);',
@@ -33431,6 +33522,7 @@ function _showNewHeroAnnouncement(forceShow){
 
   // 底部按鈕列(固定)
   const footer = document.createElement('div');
+  footer.className = '_event-popup-footer';
   footer.style.cssText = [
     'flex:0 0 auto;',
     'padding:clamp(12px,2vw,16px) clamp(16px,3vw,24px);',
@@ -33440,6 +33532,7 @@ function _showNewHeroAnnouncement(forceShow){
   ].join('');
 
   const closeBtn = document.createElement('button');
+  closeBtn.className = '_event-popup-btn';
   closeBtn.textContent = '✕ 關閉';
   closeBtn.style.cssText = [
     'padding:14px 36px;',
@@ -33460,6 +33553,7 @@ function _showNewHeroAnnouncement(forceShow){
   };
 
   const skipTodayBtn = document.createElement('button');
+  skipTodayBtn.className = '_event-popup-btn';
   skipTodayBtn.textContent = '🌙 今日不再顯示';
   skipTodayBtn.style.cssText = [
     'padding:14px 32px;',
@@ -61529,7 +61623,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5270';
+  const CURRENT_VERSION = 'v1.0.20260501.5290';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61563,7 +61657,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5270';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5290';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
