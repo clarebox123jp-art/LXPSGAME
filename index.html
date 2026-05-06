@@ -4397,9 +4397,14 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ★ v1.0.20260501.5330 — 修正 v5320 沒命中的元件
+   ★ v1.0.20260501.5340 — 復原過度反應的設計 + 5 項微調
    ──────────────────────────────────────────────────────────────────
-   使用 zoom 直接放大整塊內容(對於 inline-style 寫死的 px 最有效)
+   重要發現:既然技能替換頁底部按鈕能按到,代表「底部邊緣按不到」是
+   特定畫面的元件問題,不是普遍問題。所以撤回:
+     - 鏡像 nav(左側豎排 + 底部 hero-pick 鏡像)
+     - 英雄選擇頁底部按鈕移右側
+     - 元素選擇頁底部按鈕移右側
+   讓底部按鈕跟 PC 版一樣保持原位。
    ══════════════════════════════════════════════════════════════════ */
 @media (max-height: 500px) {
 
@@ -4408,7 +4413,7 @@ body {
     left: max(240px, env(safe-area-inset-left) + 220px) !important;
   }
 
-  /* ═══ Phase 1. 關卡劇情挑戰主題 — 寬高 ×2 + 置中 ═══ */
+  /* ═══ Phase 1. 關卡劇情挑戰主題 ═══ */
   #adv-choice-panel {
     width: 96vw !important;
     max-width: 96vw !important;
@@ -4445,20 +4450,18 @@ body {
     min-height: 110px !important;
   }
 
-  /* ═══ Phase 2. 戰鬥問題視窗 — 用 zoom 直接放大 2 倍 ═══
-     #adv-quiz-overlay 是 position:absolute inset:0 在 #gc 內 */
+  /* ═══ Phase 2. 戰鬥問題視窗 ═══ */
   #adv-quiz-box {
-    zoom: 1.5 !important;  /* 1.5 倍視覺,避免完全 ×2 太大破版 */
+    zoom: 1.5 !important;
     max-width: 1000px !important;
-    width: 64% !important;  /* 從 96% 縮回來,因為 zoom 1.5 */
+    width: 64% !important;
   }
-  /* 確保 4 選項 grid 一定 2x2 */
   #adv-quiz-options {
     grid-template-columns: 1fr 1fr !important;
     gap: 14px !important;
   }
 
-  /* ═══ Phase 3. 答對獎勵視窗 — 用 zoom 放大,並加高 ═══ */
+  /* ═══ Phase 3. 答對獎勵視窗 ═══ */
   #adv-reward-box {
     zoom: 1.4 !important;
     max-height: 90vh !important;
@@ -4466,9 +4469,7 @@ body {
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* ═══ Phase 4. 戰鬥教學系列 ═══
-     v5320 已設 scale(0.5),但戰鬥右側 layout 沒做好導致教學引導指錯位置
-     先保留教學縮小設定,Phase 5 處理右側 */
+  /* ═══ Phase 4. 戰鬥教學系列 — 縮小 50% ═══ */
   #_tut-prompt {
     transform: translate(-50%, -50%) scale(0.5) !important;
     transform-origin: center center !important;
@@ -4478,30 +4479,25 @@ body {
     transform-origin: center center !important;
   }
 
-  /* ═══ Phase 5. 戰鬥右側選單 — 重做,確保物品卡不跑出畫面 ═══ */
+  /* ═══ Phase 5. 戰鬥右側選單 ═══ */
   #sb {
     width: clamp(420px, 32vw, 560px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
-  #action-panel {
-    padding: 16px !important;
-  }
+  #action-panel { padding: 16px !important; }
   .abtn {
     min-height: 70px !important;
     padding: 8px !important;
     font-size: 28px !important;
   }
-  .abtn b,
-  .abtn > b {
+  .abtn b, .abtn > b {
     font-size: 32px !important;
     white-space: normal !important;
     line-height: 1.2 !important;
   }
-  .abtn > span {
-    font-size: 26px !important;
-  }
-  /* 物品列改成 row(左中右)— 確保不跑出畫面 */
+  .abtn > span { font-size: 26px !important; }
+  /* 物品列改 row 左中右 */
   .igrid {
     display: flex !important;
     flex-direction: row !important;
@@ -4529,71 +4525,45 @@ body {
     margin: 6px 0 !important;
   }
 
-  /* ═══ Phase 6. 英雄選擇頁 ═══ */
+  /* ═══ Phase 6. 英雄選擇頁(撤回!不再移到右側) ═══
+     技能替換頁底部按鈕能按到,代表「底部按鈕」其實能按。
+     原本這裡把 #hero-pick-bar 移到右側 — 全部撤回 */
   #hpick-enemy-preview { transform: none !important; }
   #hero-pick-find-btn { display: none !important; }
+  /* 隱藏鏡像版的尋找新英雄 */
   #_mobile-pick .mp-btn.find { display: none !important; }
-  #hero-pick-bar {
-    position: fixed !important;
-    right: 0 !important;
-    bottom: auto !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-    left: auto !important;
-    flex-direction: column !important;
-    width: auto !important;
-    max-width: 110px !important;
-    padding: 12px 8px !important;
-    gap: 8px !important;
-    background: rgba(0,0,10,0.85) !important;
-    border-radius: 12px 0 0 12px !important;
-  }
-  #_mobile-pick {
-    flex-direction: column !important;
-    bottom: auto !important;
-    top: 50% !important;
-    right: 0 !important;
-    left: auto !important;
-    transform: translateY(-50%) !important;
-    width: auto !important;
-    max-width: 110px !important;
-    padding: 12px 8px !important;
-    gap: 8px !important;
-    border-radius: 12px 0 0 12px !important;
-  }
+  /* 不再強制把 #hero-pick-bar 移到右側 — 維持 PC 樣式 */
+  /* 也不再用鏡像 #_mobile-pick 替代 — 但維持隱藏狀態避免重複 */
+  #_mobile-pick { display: none !important; }
+  /* #_mobile-nav(首頁鏡像 nav)— 維持不變,因為首頁底部按鈕本來就確認按不到 */
+
   #hero-pick-overlay h2 { font-size: 50px !important; letter-spacing: 4px !important; }
   #hero-pick-count { font-size: 36px !important; }
   #hero-pick-topbar { padding: 8px 16px 6px !important; }
 
-  /* ═══ Phase 7. 元素屬性選擇頁 ═══ */
+  /* ═══ Phase 7. 元素屬性選擇頁(撤回!) ═══
+     既然技能替換頁底部按鈕都按得到,元素選擇頁底部按鈕應該也能按。
+     撤回 v5330 強制 fixed right 的設定 */
   #elem-pick-overlay {
-    background: rgba(0,0,10,0.95) !important;
-    z-index: 540 !important;
+    /* 不再強制改背景或 z-index */
   }
+  /* 撤回 fixed right 設定 */
   #elem-pick-overlay > div:last-child,
   #elem-pick-overlay [class*="bottom"],
   #elem-pick-overlay [class*="footer"] {
-    position: fixed !important;
-    right: 0 !important;
-    top: 50% !important;
+    position: static !important;  /* 還原成 PC 樣式 */
+    right: auto !important;
+    top: auto !important;
     bottom: auto !important;
-    left: auto !important;
-    transform: translateY(-50%) !important;
-    flex-direction: column !important;
-    width: auto !important;
-    max-width: 130px !important;
-    gap: 10px !important;
-    padding: 12px 8px !important;
-    background: rgba(0,0,10,0.85) !important;
-    border-radius: 12px 0 0 12px !important;
-    z-index: 100 !important;
+    transform: none !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    max-width: none !important;
+    background: none !important;
+    border-radius: 0 !important;
   }
   #elem-pick-overlay button {
-    font-size: 28px !important;
-    padding: 14px 16px !important;
-    min-height: 64px !important;
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
+    /* 維持原 PC 樣式,不再強制大小 */
   }
 
   /* ═══ Phase 8. 召喚星空 ═══ */
@@ -4604,29 +4574,23 @@ body {
     min-height: 110px !important;
   }
 
-  /* ═══ Phase 9. 英雄/魔物圖鑑詳情 — 用 zoom 放大整體 ═══ */
-  /* 英雄圖鑑詳情(進入英雄後的右側內容) */
-  #hero-detail-box,
-  #hero-detail-right,
-  #hero-detail-content {
+  /* ═══ Phase 9. 英雄/魔物圖鑑詳情 — zoom 放大整體 ═══ */
+  #hero-detail-box {
     zoom: 1.6 !important;
   }
-  /* 也用通用 selector 覆寫:hero-page-overlay 內顯示英雄詳情的容器 */
-  #hero-page-overlay [id*="detail"]:not([style*="display:none"]) {
-    /* 嘗試所有 detail 容器 */
+  /* 但要把頂部「返回圖鑑/上一位/下一位」3 個按鈕還原回原本大小
+     用 zoom: 0.625 (= 1/1.6) 抵消父層的 zoom */
+  #hero-detail-box > div:first-child[style*="position:sticky"],
+  #hero-detail-box > div:first-child[style*="sticky"] {
+    zoom: 0.625 !important;  /* 抵消父層 zoom 1.6,回到正常大小 */
+  }
+  /* 為了通用,直接抓 hero-detail-box 內第一個 sticky div */
+  #hero-detail-box > div[style*="sticky"]:first-child {
+    zoom: 0.625 !important;
   }
 
-  /* ═══ Phase 10. 至寶圖鑑頁 — 左側選單縮短,右側強化頁放大 ═══
-     v5320 嘗試用 zoom: 0.5 失敗(實際看到的是太大)
-     改成:左側列表縮窄,右側強化頁放大 */
-  #taiwan-treasure-page {
-    /* 假設結構是左右兩欄 — 左側是至寶選單清單,右側是強化介面
-       但實際我不確定這個結構,通用化處理 */
-  }
-  /* 撤回 v5320 的 zoom: 0.5 */
+  /* ═══ Phase 10. 至寶圖鑑頁 ═══ */
   #taiwan-treasure-page > div { zoom: unset !important; }
-
-  /* 嘗試:至寶頁的左側清單欄(左 panel)縮短到 25% 寬 */
   #taiwan-treasure-page [class*="treasure-list"],
   #taiwan-treasure-page [class*="left-panel"],
   #taiwan-treasure-page [class*="sidebar"],
@@ -4636,21 +4600,15 @@ body {
     max-width: 25% !important;
     flex: 0 0 25% !important;
   }
-  /* 至寶卡片在清單中縮小 */
   #taiwan-treasure-page [class*="treasure-card"] {
     transform: scale(0.5) !important;
     transform-origin: top left !important;
   }
-  /* 右側強化頁字體放大 100% */
   #taiwan-treasure-page [class*="detail"],
   #taiwan-treasure-page [class*="right-panel"],
   #taiwan-treasure-page [class*="upgrade"] {
     width: 75% !important;
     flex: 1 1 75% !important;
-  }
-  #taiwan-treasure-page [class*="detail"] *,
-  #taiwan-treasure-page [class*="upgrade"] * {
-    /* 字體用 zoom 放大整塊 */
   }
   #taiwan-treasure-page [class*="detail"],
   #taiwan-treasure-page [class*="upgrade-panel"] {
@@ -4675,34 +4633,35 @@ body {
     animation: tobLabelFloat 2s ease-in-out infinite;
   }
 
-  /* ═══ Phase 12. 知識預習頁 — 整體縮小 50% ═══ */
+  /* ═══ Phase 12. 知識預習頁 — 縮小 50% ═══ */
   #preview-page-overlay {
     zoom: 0.5 !important;
   }
 
-  /* ═══ Phase 13. 魔物圖鑑 — 整個 monster-page-content 用 zoom 放大 2 倍 ═══
-     真實結構:卡片 inline style width:300px,文字 22-54px。
-     用 zoom: 2 整塊放大,效果 = 卡片寬 600px、文字 ×2 */
+  /* ═══ Phase 13. 魔物圖鑑 ═══ */
   #monster-page-content {
-    zoom: 1.5 !important;  /* 1.5 倍,避免太大破版 */
+    zoom: 1.5 !important;
   }
 
-  /* ═══ Phase 14. 寵物圖鑑 — 用 zoom 放大整塊 ═══
-     真實結構:卡片 inline style width:140px。
-     zoom: 2 = 寵物卡 280px,文字字體也跟著放大 */
+  /* ═══ Phase 14. 寵物圖鑑 ═══ */
   #pet-page-content {
     zoom: 1.6 !important;
+  }
+  /* 「關於寵物系統」說明區塊再放大 100% */
+  #pet-page-content > div:first-child[style*="background"],
+  #pet-page-content > div:nth-child(1) {
+    /* 假設說明區塊是第一個 div(綠色那個 box) */
+    font-size: 1.5em !important;  /* 在 zoom:1.6 之上再 1.5,效果 = 2.4 倍 */
   }
 
   /* ═══ Phase 15. 背包 = 黃金基準,不動 ═══ */
 
-  /* ═══ Phase 16. 獎章頁 — 用 zoom 放大 ═══
-     真實結構:medal-page-content 內動態生成,inline style */
+  /* ═══ Phase 16. 獎章頁 ═══ */
   #medal-page-content {
     zoom: 1.6 !important;
   }
 
-  /* ═══ Phase 17. 不可思議超商 — 左商品寬、右背包窄 + 字體放大 ═══ */
+  /* ═══ Phase 17. 不可思議超商 ═══ */
   #shop-overlay { overflow: hidden !important; }
   #shop-main {
     width: 75% !important;
@@ -4713,11 +4672,9 @@ body {
     width: 25% !important;
     flex: 0 0 25% !important;
   }
-  /* 用 zoom 放大整個 shop 內容 */
-  /* 不能用 zoom on shop-overlay 否則 layout 全壞,只放大 main 跟 bag 的內部字體 */
   #shop-main { zoom: 1.3 !important; }
 
-  /* ═══ Phase 18. 遊戲首頁介紹視窗 — 寬度 ×2 + 字 ×2 + 可捲 ═══ */
+  /* ═══ Phase 18. 遊戲首頁介紹視窗 ═══ */
   #game-info-modal {
     width: 96vw !important;
     max-width: 96vw !important;
@@ -4726,8 +4683,33 @@ body {
     -webkit-overflow-scrolling: touch !important;
     padding: 24px 28px !important;
   }
-  /* 用 zoom 放大內容 */
   #game-info-modal { zoom: 1.4 !important; }
+
+  /* ═══ 儲存為預設陣容 popup — 圖片縮小 50% 避免卡死 ═══
+     selector 不確定,用 inline style 屬性比對和通用 modal class */
+  [id*="save-preset"],
+  [id*="preset-save"],
+  [class*="save-preset"],
+  [class*="preset-save"] {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  [id*="save-preset"] img,
+  [id*="preset-save"] img,
+  [class*="save-preset"] img,
+  [class*="preset-save"] img {
+    transform: scale(0.5) !important;
+    transform-origin: center center !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
+  }
+  /* 通用:任何 modal-like popup 內的 hero-thumb 都縮小 */
+  [class*="hero-thumb"],
+  [class*="hero-img"][style*="60px"],
+  [class*="hero-img"][style*="80px"] {
+    /* 不要全部縮小,只在儲存/套用 preset 視窗內縮 */
+  }
 
   /* ═══ 近期活動 popup ═══ */
   #_event-popup-box {
@@ -4751,6 +4733,7 @@ body {
   #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
   #adv-dialog-next { font-size: 72px !important; }
 }
+
 
 
 
@@ -6023,7 +6006,7 @@ body.art-premium #summon-overlay {
       <div><span style="color:#ffcc44;">製作團隊</span>　力行國小資訊校隊</div>
       <div style="margin-top:8px;color:#888;">
         <span>音樂：Suno AI</span>　
-        <span>繪圖：Gemini AI</span>　
+        <span>繪圖：Gemini、ChatGPT</span>　
         <span>程式：Claude AI</span>
       </div>
     </div>
@@ -61812,7 +61795,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5330';
+  const CURRENT_VERSION = 'v1.0.20260501.5340';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61846,7 +61829,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5330';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5340';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
