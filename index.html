@@ -4415,33 +4415,36 @@ body {
   }
 
   /* ═══ Phase 1. 關卡劇情挑戰主題視窗 ═══
-     ★ v1.0.20260501.5410 — 同步把 .adv-choice-box 放大,
-        否則 panel 雖大但內部 box 仍受 base max-height:520px / max-width:95vw 限制,
-        在手機上看起來文字偏小、捲軸出現 */
+     ★ v1.0.20260501.5420 — 之前 .5410 設 height:96vh 直接蓋滿,把下方劇情對白也擋掉。
+        新版改成 top:8px / bottom:30vh,讓視窗占畫面上方 70%,下方 30% 留給對白可見。
+        字體維持 64/56/56(玩家反饋字體已 OK,只是框框要再放大)。
+        位置改成中央,蓋住背景圖片沒關係,但對白固定可見 */
   #adv-choice-panel {
-    width: 96vw !important;
-    max-width: 96vw !important;
-    height: 96vh !important;
-    max-height: 96vh !important;
+    position: fixed !important;
+    top: 8px !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 30vh !important;          /* ★ 留 30% 給對白(對白 base min-height:320px × 0.35 ≈ 28% 螢幕高) */
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding: 24px 28px !important;
+    padding: 12px !important;
     box-sizing: border-box !important;
-    position: fixed !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    transform: none !important;
     z-index: 9999 !important;
-    /* ★ panel 內 box 改用 flex 居中而非 flex-start,讓大 box 視覺平衡 */
+    /* 讓 box 在 panel 中央 */
     align-items: center !important;
+    justify-content: center !important;
   }
   .adv-choice-box {
-    /* ★ 撤回 base 的 max-height:520px(那是 #gc 內部 px,在手機 fixed panel 下太小) */
-    max-height: calc(96vh - 56px) !important;
+    max-height: 100% !important;
     max-width: 100% !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    padding: 28px 32px !important;
+    padding: 24px 32px !important;
   }
   .adv-choice-title {
     font-size: 64px !important;
@@ -4537,12 +4540,15 @@ body {
   #adv-reward-title { font-size: 64px !important; margin-bottom: 12px !important; }
   #adv-reward-subtitle { font-size: 40px !important; margin-bottom: 16px !important; }
 
-  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 移到左上角 ═══
+  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 預設左上 + 普攻階段切左下 ═══
      ★ v1.0.20260501.5410 — 改放左上而非右上的原因:
        戰鬥畫面右側是 #sb 操作面板(普攻 / 技能 / 爆發 / 自動戰鬥 / 物品 全部在此),
        教學第 3 步「點普通攻擊」時,視窗在右上會整個蓋住 b-atk 按鈕無法繼續。
        左上區域只可能擋到對手卡片頂部一小塊或 turn-order 左半,但這些步驟玩家不需點按鈕。
        step 9 的 adv-tut-btn 在左下,左上視窗也不衝突。
+     ★ v1.0.20260501.5430 — 普攻階段(b-atk 高亮時)左上會擋住上方對手卡,
+       玩家若想對照敵方狀態無法看到。改成這個階段把視窗切到左下,既不擋對手卡也不擋 b-atk(右側)。
+       用 :has() 偵測 b-atk._tut-highlight,只命中那個 step,其他 step 維持左上。
      ★ 加 max-height + overflow-y:auto 解決最後一頁過長要捲動的問題 */
   #_tut-prompt {
     /* 教學確認視窗(第一次戰鬥提示)— 維持 scale 0.5,中央 */
@@ -4564,6 +4570,13 @@ body {
     -webkit-overflow-scrolling: touch !important;
     padding: 12px 14px 10px !important;
     z-index: 99999 !important;
+  }
+  /* ★ 普攻教學階段:b-atk 被高亮時,把視窗切到左下角(避開上方對手卡) */
+  body:has(#b-atk._tut-highlight) #_tut-box {
+    top: auto !important;
+    bottom: 12px !important;
+    left: 12px !important;
+    right: auto !important;
   }
   #_tut-box ._tut-step { font-size: 11px !important; margin-bottom: 3px !important; }
   #_tut-box ._tut-title { font-size: 18px !important; margin-bottom: 6px !important; line-height: 1.2 !important; }
@@ -4648,10 +4661,52 @@ body {
   #hero-pick-count { font-size: 36px !important; }
   #hero-pick-topbar { padding: 8px 16px 6px !important; }
 
-  /* ═══ Phase 7. 元素屬性選擇頁 — 底部按鈕強制移到右側 ═══
+  /* ★ v1.0.20260501.5430 — 英雄選單卡片本身放大(玩家反映目前圖跟字偏小,認不出英雄)
+     不動 grid 結構也不動右側預覽,只把每張卡的 width / 圖高 / 字體放大 ~50% */
+  #hero-pick-arena .hpick-adv-node,
+  #hero-pick-arena .hpick-arena-card {
+    width: 220px !important;       /* 155 → 220(+42%) */
+  }
+  #hero-pick-arena .hpick-adv-node img,
+  #hero-pick-arena .hpick-arena-card img {
+    height: 180px !important;      /* 120 → 180(+50%) */
+  }
+  /* 卡內名字+Lv 文字(inline style 用屬性選擇器命中) */
+  #hero-pick-arena .hpick-adv-node [style*="font-size:18px"],
+  #hero-pick-arena .hpick-arena-card [style*="font-size:18px"] {
+    font-size: 28px !important;    /* 18 → 28 */
+  }
+  #hero-pick-arena .hpick-adv-node [style*="font-size:16px"],
+  #hero-pick-arena .hpick-arena-card [style*="font-size:16px"] {
+    font-size: 24px !important;    /* 16 → 24 */
+  }
+  #hero-pick-arena .hpick-adv-node [style*="font-size:15px"],
+  #hero-pick-arena .hpick-arena-card [style*="font-size:14px"],
+  #hero-pick-arena .hpick-arena-card [style*="font-size:15px"],
+  #hero-pick-arena .hpick-adv-node [style*="font-size:14px"] {
+    font-size: 22px !important;    /* 14-15 → 22 */
+  }
+  /* 卡內 emoji(無圖時的 avatar 大圖示) */
+  #hero-pick-arena .hpick-adv-node [style*="font-size:44px"],
+  #hero-pick-arena .hpick-arena-card [style*="font-size:58px"] {
+    font-size: 72px !important;
+  }
+  /* 「已選」綠色徽章 */
+  #hero-pick-arena .hpick-adv-node [style*="font-size:13px"],
+  #hero-pick-arena .hpick-arena-card [style*="font-size:13px"] {
+    font-size: 20px !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* ═══ Phase 7. 元素屬性選擇頁 — 底部按鈕強制移到右側黑塊(參考英雄選擇頁 _mobile-pick 風格)═══
      底部按鈕區是 #elem-pick-overlay > div:last-child(無 id 無 class)
      用 inline style 屬性 [style*="border-top"] 精準命中
-     ★ v1.0.20260501.5410 — 按鈕原本太小,放大向英雄選擇頁的 .mp-btn 看齊 */
+     ★ v1.0.20260501.5430 — 改成跟英雄選擇頁(圖1)的 _mobile-pick 視覺一致:
+        - 黑色面板貼螢幕右邊(linear-gradient to left,半透明)
+        - 三個按鈕方塊垂直排列、寬度 130(略寬於 _mobile-pick 的 90,因為文字較長)
+        - 文字自動換行(white-space: normal),emoji 自然在第一個字
+        - min-height 拉到 110,觸碰熱區夠大 */
   #elem-pick-overlay > div:last-child,
   #elem-pick-overlay > div[style*="border-top"] {
     position: fixed !important;
@@ -4662,26 +4717,31 @@ body {
     transform: translateY(-50%) !important;
     flex-direction: column !important;
     width: auto !important;
-    max-width: 200px !important;
-    background: linear-gradient(to left, rgba(0,0,10,0.92), rgba(0,0,10,0.6)) !important;
+    max-width: 150px !important;
+    background: linear-gradient(to left, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85)) !important;
     border-top: none !important;
     border-radius: 12px 0 0 12px !important;
-    padding: 16px 12px !important;
-    gap: 14px !important;
+    padding: 16px 10px !important;
+    gap: 12px !important;
     z-index: 999990 !important;
     justify-content: flex-start !important;
+    align-items: stretch !important;
   }
-  /* 內部按鈕放大,觸碰熱區更友善 */
+  /* 三個按鈕統一視覺:垂直方塊 + 文字換行 + 大觸碰熱區,跟英雄選擇頁的 .mp-btn 同款 */
   #elem-pick-overlay > div:last-child button,
   #elem-pick-overlay > div[style*="border-top"] button {
-    font-size: 26px !important;
-    padding: 14px 10px !important;
-    min-height: 90px !important;
+    font-size: 20px !important;
+    padding: 14px 8px !important;
+    min-height: 110px !important;
     letter-spacing: 1px !important;
-    width: 100% !important;
+    width: 130px !important;
     box-sizing: border-box !important;
-    line-height: 1.25 !important;
+    line-height: 1.3 !important;
     white-space: normal !important;
+    word-break: break-word !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    border-width: 2px !important;
   }
 
   /* ═══ Phase 8. 召喚星空 ═══ */
@@ -4708,12 +4768,16 @@ body {
     max-width: 25% !important;
   }
 
-  /* ═══ Phase 10. 至寶圖鑑 ═══ */
+  /* ═══ Phase 10. 至寶圖鑑 ═══
+     ★ v1.0.20260501.5420 — 改成跟 PC 版一樣的 30/70 比例,並把右側 detail 字體再放大一輪。
+        左側 10 個按鈕保留現有縮放(scale 0.7)不動,只改占比。
+        base CSS 已全域放大字體(14→18 / 18→24 等),手機 detail 內再用更高 specificity 蓋過,
+        把實際渲染字體從 18~30 拉到 24~38,玩家在手機上看得清楚 */
   #taiwan-treasure-page > div { zoom: unset !important; }
   #tt-grid {
-    flex: 0 0 25% !important;
-    max-width: 25% !important;
-    width: 25% !important;
+    flex: 0 0 30% !important;
+    max-width: 30% !important;
+    width: 30% !important;
     grid-template-columns: 1fr !important;
     padding: 8px !important;
   }
@@ -4723,8 +4787,24 @@ body {
     margin-bottom: -30% !important;
   }
   #tt-detail {
-    flex: 1 1 75% !important;
-    width: 75% !important;
+    flex: 1 1 70% !important;
+    width: 70% !important;
+    padding: 18px 22px !important;
+  }
+  /* ★ 右側字體再放大一輪(高 specificity 覆寫 base 的全域放大規則) */
+  #taiwan-treasure-page #tt-detail [style*="font-size:13px"] { font-size: 22px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:14px"] { font-size: 24px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:15px"] { font-size: 25px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:16px"] { font-size: 26px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:17px"] { font-size: 27px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:18px"] { font-size: 28px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:20px"] { font-size: 30px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:22px"] { font-size: 32px !important; }
+  #taiwan-treasure-page #tt-detail [style*="font-size:24px"] { font-size: 34px !important; }
+  /* 投資/卷軸按鈕變大,觸碰熱區更友善 */
+  #taiwan-treasure-page #tt-detail .tt-invest-btn {
+    padding: 14px 16px !important;
+    min-height: 56px !important;
   }
 
   /* ═══ Phase 11. 台灣地圖 ═══ */
@@ -4832,11 +4912,14 @@ body {
      ★ v1.0.20260501.5410 — base CSS 字體偏大(name 44 / desc 28 / use 32)
         導致內容在手機橫式高度下總高 > max-height 80vh,「發動」按鈕被擠到下方需捲動。
         手機上縮字體 + 縮 padding,讓整個面板(標題/招式名/描述/能量/兩個按鈕)
-        都能塞進首屏,不需捲動就看到「發動」 */
+        都能塞進首屏,不需捲動就看到「發動」
+     ★ v1.0.20260501.5430 — 玩家反映「發動」按鈕仍貼太靠底邊容易誤按到瀏覽器手勢區。
+        把 bottom 從 60(內部 px,視覺 ≈ 21px)拉到 240(內部 px,視覺 ≈ 84px),
+        整個面板視覺上往上移 ~63px,「發動」按鈕離底邊更遠 */
   #burst-panel {
-    /* base 是 #gc 內 absolute,bottom:60px;width:96%;max-width:640px
-       不動位置邏輯,只縮尺寸/字體 */
-    max-height: 88vh !important;
+    /* base 是 #gc 內 absolute,bottom:60px;width:96%;max-width:640px */
+    bottom: 240px !important;
+    max-height: 700px !important;
     padding: 12px 16px 14px !important;
   }
   #burst-panel .bp-title {
@@ -4954,6 +5037,59 @@ body {
   .adv-result-back-title {
     font-size: 16px !important;
     padding: 10px 22px !important;
+  }
+
+  /* ═══ Phase 21. 替換技能頁(skill-replace-overlay)═══
+     ★ v1.0.20260501.5430 — 玩家反映在手機上字體小到看不清。
+        全部字體放大 ~50-70%,保持四欄(srh-block flex:1)排列不動 */
+  /* header */
+  #sro-header { padding: 8px 16px 6px !important; }
+  #sro-header h2 { font-size: 48px !important; letter-spacing: 3px !important; }
+  #sro-header p  { font-size: 30px !important; }
+  /* 上半:4 個英雄卡(維持四欄 flex:1) */
+  #sro-cards { gap: 10px !important; padding: 10px 14px 8px !important; }
+  .srh-block { padding: 12px 10px !important; }
+  .srh-header { gap: 8px !important; margin-bottom: 8px !important; padding-bottom: 6px !important; }
+  .srh-av { font-size: 60px !important; }
+  .srh-name { font-size: 38px !important; margin-bottom: 4px !important; }
+  .srh-stats-row { gap: 4px !important; margin-top: 4px !important; }
+  .srh-stat { font-size: 26px !important; padding: 3px 6px !important; }
+  .srh-stat b { font-size: 28px !important; }
+  .srh-current-label { font-size: 26px !important; margin-top: 4px !important; }
+  .srh-skill-box { padding: 6px 9px !important; margin-bottom: 4px !important; }
+  .srh-skill-box .sk-name { font-size: 32px !important; }
+  .srh-skill-box .sk-cost { font-size: 24px !important; }
+  .srh-skill-box .sk-desc { font-size: 24px !important; line-height: 1.35 !important; }
+  .srh-slot-row { gap: 4px !important; margin-top: 6px !important; }
+  .srh-slot-btn { font-size: 22px !important; padding: 6px 4px !important; }
+  .srh-replace-info { font-size: 24px !important; }
+  .srh-clear-btn { font-size: 18px !important; }
+  .srh-cancel-btn { font-size: 18px !important; padding: 2px 10px !important; }
+  /* 下半:候選技能挑選區 */
+  #sro-picker { padding: 8px 14px 0 14px !important; }
+  #sro-picker-title { font-size: 36px !important; }
+  #sro-picker-body { font-size: 100% !important; padding-bottom: 100px !important; }
+  .skcat-header { font-size: 38px !important; padding: 6px 12px !important; letter-spacing: 1px !important; }
+  .sk-pick-btn { padding: 6px 9px !important; gap: 0 8px !important; }
+  .sk-pick-name { font-size: 34px !important; }
+  .sk-pick-cost { font-size: 28px !important; }
+  .sk-pick-passive { font-size: 24px !important; }
+  .sk-pick-desc { font-size: 28px !important; line-height: 1.35 !important; }
+  /* footer 按鈕(重新編組 / 儲存陣容 / 自動推薦 / 整裝完畢)*/
+  #sro-footer { gap: 12px !important; padding: 6px 16px !important; }
+  #sro-footer button { font-size: 26px !important; padding: 10px 22px !important; }
+  #skill-replace-confirm,
+  #skill-replace-confirm-adv { font-size: 28px !important; padding: 10px 28px !important; }
+
+  /* ═══ Phase 22. 儲存為預設陣容彈窗 — 加捲動 ═══
+     ★ v1.0.20260501.5430 — 彈窗是 fixed inset:0 + flex center,內部 box 沒設 max-height,
+        手機橫式高度下 5 個欄位 + 取消按鈕會超出畫面,玩家按不到底部「取消」。
+        box 是動態建立的 inline style,沒 id 或 class,用 #preset-save-panel > div 命中 */
+  #preset-save-panel > div {
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px 22px !important;
   }
 }
 
@@ -62131,7 +62267,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5410';
+  const CURRENT_VERSION = 'v1.0.20260501.5430';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62165,7 +62301,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5410';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5430';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
