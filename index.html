@@ -4772,8 +4772,15 @@ body {
      ★ v1.0.20260501.5420 — 改成跟 PC 版一樣的 30/70 比例,並把右側 detail 字體再放大一輪。
         左側 10 個按鈕保留現有縮放(scale 0.7)不動,只改占比。
         base CSS 已全域放大字體(14→18 / 18→24 等),手機 detail 內再用更高 specificity 蓋過,
-        把實際渲染字體從 18~30 拉到 24~38,玩家在手機上看得清楚 */
+        把實際渲染字體從 18~30 拉到 24~38,玩家在手機上看得清楚
+     ★ v1.0.20260501.5440 — 修復排版錯亂:base CSS line 2293 用 @media (max-width:900px) 把 main
+        強制成 column,導致 grid 跟 detail 上下堆疊,detail 蓋住下方的 9 張卡片。
+        手機橫式畫面寬度夠左右並排,撤回那條 column 強制,改回 row */
   #taiwan-treasure-page > div { zoom: unset !important; }
+  #taiwan-treasure-page > div:nth-child(2) {
+    flex-direction: row !important;
+    overflow: hidden !important;
+  }
   #tt-grid {
     flex: 0 0 30% !important;
     max-width: 30% !important;
@@ -5041,7 +5048,18 @@ body {
 
   /* ═══ Phase 21. 替換技能頁(skill-replace-overlay)═══
      ★ v1.0.20260501.5430 — 玩家反映在手機上字體小到看不清。
-        全部字體放大 ~50-70%,保持四欄(srh-block flex:1)排列不動 */
+        全部字體放大 ~50-70%,保持四欄(srh-block flex:1)排列不動
+     ★ v1.0.20260501.5440 — 改流程:下方候選技能區隱藏,改成點英雄技能格時彈 popup
+        (見 _openMobileSkillPickerModal),點 popup 內任一技能即直接套用替換 */
+  /* 下方候選技能整區隱藏 */
+  #sro-picker { display: none !important; }
+  /* 上方 4 英雄卡區佔滿剩餘空間,可捲動 */
+  #sro-cards {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    align-items: flex-start !important;
+  }
   /* header */
   #sro-header { padding: 8px 16px 6px !important; }
   #sro-header h2 { font-size: 48px !important; letter-spacing: 3px !important; }
@@ -5090,6 +5108,20 @@ body {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     padding: 16px 22px !important;
+  }
+
+  /* ═══ Phase 23. 縮小兩側黑邊 + 黑邊改深漸層 ═══
+     ★ v1.0.20260501.5440 — 玩家詢問為什麼至寶頁能全螢幕、戰鬥/選角頁卻有黑邊。
+        原因:#gc 是 1920×1080 內部座標 + transform scale(min) 等比縮放,
+        手機橫式比例(720×384=1.875)跟 1920×1080(=1.778)有 5% 差距,等比縮放後會留黑邊。
+        至寶頁是 fixed inset:0 直接覆蓋 viewport 所以無黑邊。
+        本 phase 做法:撤回 base CSS line 2374 在手機橫式給 wrapper 的 +4px padding,
+        改成只留 safe-area(瀏海/手勢區),黑邊縮到最小;
+        並把 wrapper 純黑背景改成深漸層,跟 #gc 場景色接近,殘留邊緣看起來不那麼分明 */
+  #_gc_wrapper {
+    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
+             env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0) !important;
+    background: linear-gradient(180deg, #0a0612 0%, #050810 50%, #0a0612 100%) !important;
   }
 }
 
@@ -14553,6 +14585,13 @@ function onPickSkill(name){
 
 // Click a skill box on a hero card — apply selected skill immediately
 function onClickSkillBox(pos, slot){
+  // ★ v1.0.20260501.5440 — 手機版改成 popup 流程:點英雄技能格直接彈出技能選擇視窗,
+  //   點裡面任一技能即直接套用替換。手機橫式畫面太擠,下方候選技能區隱藏(見 Phase 21 CSS)
+  if(window.innerHeight <= 500){
+    _openMobileSkillPickerModal(pos, slot);
+    return;
+  }
+
   if(!_selectedPickSkill){
     const info = document.getElementById(`srinfo-${pos}`);
     if(info){ info.textContent='⬇ 請先在下方選擇一個候選技能'; setTimeout(()=>{if(info)info.textContent=_skillReplaceMap[pos]?'✔ '+_skillReplaceMap[pos].slot.toUpperCase()+'→【'+_skillReplaceMap[pos].skill.n+'】':''},1800); }
@@ -14600,6 +14639,120 @@ function clearSlotAssign(pos, silent){
 function refreshPickerUsed(){
   buildSkillPicker();
 }
+
+// ★ v1.0.20260501.5440 — 手機版替換技能 popup
+//   觸發:onClickSkillBox 偵測到手機(innerHeight<=500)時呼叫
+//   行為:全螢幕半透明遮罩 + 中央卡片列表(可捲動),點任一技能即套用替換並關閉
+//   已被其他英雄選用的技能 disabled(灰色不可點)
+function _openMobileSkillPickerModal(pos, slot){
+  const hero = G.p1 && G.p1[pos];
+  if(!hero) return;
+
+  // 移除任何已存在的 modal
+  const existing = document.getElementById('mobile-skill-picker-modal');
+  if(existing) existing.remove();
+
+  // 建立 modal
+  const modal = document.createElement('div');
+  modal.id = 'mobile-skill-picker-modal';
+  modal.style.cssText = [
+    'position:fixed;inset:0;z-index:99990;',
+    'background:rgba(0,0,0,0.92);',
+    'display:flex;align-items:center;justify-content:center;',
+    'padding:8px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+  ].join('');
+
+  // 已被其他英雄佔用的技能名集合(同英雄不檢查)
+  const assignedNames = new Set();
+  for(const p in _skillReplaceMap){
+    if(parseInt(p)!==pos && _skillReplaceMap[p]){
+      assignedNames.add(_skillReplaceMap[p].skill.n);
+    }
+  }
+
+  // 渲染所有候選技能(SK_CATS.all.skills 是完整 10 個)
+  const skillNames = (typeof SK_CATS!=='undefined' && SK_CATS.all && SK_CATS.all.skills) || [];
+  const _bdrMap = { heal:'#44dd66', tank:'#4a9eff', other:'#ffd966' };
+  const _bgMap  = { heal:'rgba(40,120,60,0.25)', tank:'rgba(40,80,180,0.25)', other:'rgba(120,80,0,0.25)' };
+  const items = skillNames.map(name=>{
+    const sk = NEW_SKILLS_DB.find(s=>s.n===name);
+    if(!sk) return '';
+    const isAssigned = assignedNames.has(name);
+    const colType = (typeof SK_COLOR_MAP!=='undefined' && SK_COLOR_MAP[name]) || 'other';
+    const _bdr = _bdrMap[colType] || _bdrMap.other;
+    const _bg  = _bgMap[colType] || _bgMap.other;
+    const _onclickAttr = isAssigned ? '' : `onclick="_applyMobileSkillPick(${pos},'${slot}','${name.replace(/'/g,"\\'")}')"`;
+    return `<button ${_onclickAttr} ${isAssigned?'disabled':''}
+      style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+        padding:14px 16px;background:${isAssigned?'rgba(60,60,60,0.4)':_bg};
+        border:2.5px solid ${isAssigned?'#666':_bdr};border-radius:12px;
+        color:${isAssigned?'#666':'#fff'};cursor:${isAssigned?'not-allowed':'pointer'};
+        font-family:inherit;text-align:left;width:100%;box-sizing:border-box;
+        ${isAssigned?'opacity:0.45;':''}">
+      <div style="display:flex;align-items:center;gap:10px;width:100%;">
+        <span style="font-size:26px;font-weight:900;color:${isAssigned?'#888':'#ffe8a0'};flex:1;">${name}</span>
+        <span style="font-size:22px;color:#4a9eff;flex-shrink:0;">🔷${sk.c}</span>
+      </div>
+      <div style="font-size:20px;color:${isAssigned?'#666':'#ddd'};line-height:1.4;">${sk.d}</div>
+      ${isAssigned?'<div style="font-size:16px;color:#aa6644;font-weight:700;">⚠ 已被其他英雄選用</div>':''}
+    </button>`;
+  }).join('');
+
+  modal.innerHTML =
+    '<div style="background:linear-gradient(160deg,#0d0a1e,#08061a);' +
+    'border:2.5px solid rgba(180,120,255,0.7);border-radius:18px;' +
+    'padding:18px 22px;width:96%;max-width:780px;max-height:94vh;' +
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
+    'box-shadow:0 0 50px rgba(150,80,255,0.4);">' +
+      '<div style="font-size:24px;font-weight:900;color:#cc99ff;margin-bottom:4px;text-align:center;letter-spacing:2px;">' +
+        '▸ 替換 ' + hero.name + ' 的 ' + slot.toUpperCase() + ' 技能' +
+      '</div>' +
+      '<div style="font-size:16px;color:#aaa;text-align:center;margin-bottom:14px;">點選下方任一技能即可直接替換</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px;">' + items + '</div>' +
+      '<div style="text-align:center;margin-top:14px;">' +
+        '<button onclick="_closeMobileSkillPicker()" ' +
+          'style="padding:10px 32px;font-size:22px;background:rgba(60,10,10,0.5);' +
+          'border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;' +
+          'font-family:inherit;letter-spacing:2px;">✕ 取消</button>' +
+      '</div>' +
+    '</div>';
+
+  // 點外圍空白處關閉
+  modal.onclick = function(e){
+    if(e.target === modal) _closeMobileSkillPicker();
+  };
+
+  document.body.appendChild(modal);
+  try{ playSfx && playSfx('sfx-sel', 0.5); }catch(_){}
+}
+
+function _applyMobileSkillPick(pos, slot, skillName){
+  const sk = NEW_SKILLS_DB.find(s=>s.n===skillName);
+  if(!sk) return;
+  // 雙保險:重複檢查(modal 應已 disabled)
+  for(const p in _skillReplaceMap){
+    if(parseInt(p)!==pos && _skillReplaceMap[p] && _skillReplaceMap[p].skill.n===sk.n){
+      return;
+    }
+  }
+  _skillReplaceMap[pos] = {slot, skill:{...sk}};
+  // 重新渲染英雄卡
+  const block = document.getElementById(`srh-${pos}`);
+  if(block) block.outerHTML = buildSrhBlock(G.p1[pos]);
+  // 即使下方 picker 在手機隱藏,仍重建以保資料一致(如果切回 PC)
+  try{ buildSkillPicker(); }catch(_){}
+  // 音效
+  try{ beep(660,'sine',0.06,0.1); setTimeout(()=>beep(880,'sine',0.08,0.1),80); }catch(_){}
+  _closeMobileSkillPicker();
+}
+
+function _closeMobileSkillPicker(){
+  const m = document.getElementById('mobile-skill-picker-modal');
+  if(m) m.remove();
+}
+window._openMobileSkillPickerModal = _openMobileSkillPickerModal;
+window._applyMobileSkillPick       = _applyMobileSkillPick;
+window._closeMobileSkillPicker     = _closeMobileSkillPicker;
 
 function doSlotAssign(pos, slot){ onClickSkillBox(pos,slot); }
 function onSkillSelectChange(pos){} // legacy no-op
@@ -62267,7 +62420,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5430';
+  const CURRENT_VERSION = 'v1.0.20260501.5440';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62301,7 +62454,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5430';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5440';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
