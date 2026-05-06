@@ -4397,13 +4397,15 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ★ v1.0.20260501.5390 — 5 項手機優化(取代 v5360)
+   ★ v1.0.20260501.5400 — 修正 v5390 沒命中 / 出錯的問題
    ──────────────────────────────────────────────────────────────────
-   ・項目 1:預設陣容直接用 PC 版樣式(撤回所有手機自訂)
-   ・項目 2:至寶頁,撤回 zoom 1.2,讓內容正常顯示
-   ・項目 3:英雄選擇頁底部所有 button 隱藏(右側鏡像取代),保留隊伍編成 div
-   ・項目 4:教學視窗縮極小 + 移到右下角(永遠不蓋住戰鬥畫面)
-   ・項目 5:劇情主題/戰鬥問題/答對獎勵/治療警告等視窗外框加高
+   重大發現:
+   ・#adv-quiz-overlay / #adv-reward-overlay 在 #gc 內(被 scale 0.35)
+     → 不能用 vw/vh,要用 #gc 內部 px(基於 1920×1080)
+   ・#_tut-box 是 fixed(不在 #gc 內),用 transform:scale 會跑出邊界
+     → 改用直接縮小 max-width 跟字體,避免 transform
+   ・#elem-pick-overlay 底部按鈕區在 #gc 內被 wrapper 切掉
+     → 必須強制 fixed 移到右側
    ══════════════════════════════════════════════════════════════════ */
 @media (max-height: 500px) {
 
@@ -4412,7 +4414,7 @@ body {
     left: max(240px, env(safe-area-inset-left) + 220px) !important;
   }
 
-  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 — 加高 + 內部捲動 ═══ */
+  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 ═══ */
   #adv-choice-panel {
     width: 96vw !important;
     max-width: 96vw !important;
@@ -4451,57 +4453,99 @@ body {
     min-height: 110px !important;
   }
 
-  /* ═══ Phase 2. 戰鬥問題視窗 — 加高 ═══ */
+  /* ═══ Phase 2. 戰鬥問題視窗 ═══
+     #adv-quiz-box 在 #gc 內(被 scale 0.35),用 #gc 內部 px(1920×1080)
+     目標:視覺占畫面 90% 寬 → 內部 px = 800 × 0.9 / 0.35 ≈ 2057px
+     但 #gc 寬上限 1920,所以實際設 95% width + max-width 1900px
+     視覺 = 1900 × 0.35 ≈ 665px ≈ 手機 800px 螢幕 83% 寬度 */
   #adv-quiz-box {
-    zoom: 1.5 !important;
-    width: 64vw !important;
-    max-width: 64vw !important;
-    height: auto !important;
-    min-height: 50vh !important;
-    max-height: 64vh !important;
-    padding: 20px 28px !important;
+    /* 撤回所有 vw/zoom */
+    zoom: unset !important;
+    width: 95% !important;
+    max-width: 1900px !important;
+    max-height: 1000px !important;       /* 視覺 = 1000 × 0.35 = 350px (手機 384 高的 91%) */
+    padding: 32px 40px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    /* 撤回 position:absolute + transform 強制置中(讓 base CSS 的 flex center 自然生效) */
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+  }
+  #adv-quiz-question {
+    font-size: 78px !important;          /* 視覺 = 78 × 0.35 ≈ 27px,大且清楚 */
+    line-height: 1.4 !important;
+    margin-bottom: 28px !important;
   }
   #adv-quiz-options {
     grid-template-columns: 1fr 1fr !important;
-    gap: 14px !important;
+    gap: 18px !important;
   }
+  .aqo-btn {
+    font-size: 60px !important;          /* 視覺 = 60 × 0.35 ≈ 21px */
+    padding: 24px 28px !important;
+    min-height: 130px !important;        /* 視覺 = 46px,觸碰熱區夠大 */
+  }
+  .aqo-btn .aqo-letter {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 30px !important;
+  }
+  #adv-quiz-label { font-size: 44px !important; }
+  #adv-quiz-timer { font-size: 56px !important; padding: 8px 22px !important; }
 
-  /* ═══ Phase 3. 答對獎勵視窗 — 大幅加高 ═══ */
+  /* ═══ Phase 3. 答對獎勵視窗 ═══
+     #adv-reward-overlay 在 #gc 內,position:absolute top:80px right:0 width:44%
+     #adv-reward-box 在 overlay 內,base CSS width:100%
+     用 #gc 內部 px,把整個 overlay 寬放大,box 跟著大 */
+  #adv-reward-overlay {
+    width: 60% !important;               /* 視覺 = 60% × 1920 × 0.35 ≈ 403px (手機 800 的 50%) */
+    max-height: calc(100% - 100px) !important;
+  }
   #adv-reward-box {
-    zoom: 1.4 !important;
-    width: 60vw !important;
-    max-width: 60vw !important;
-    max-height: 68vh !important;
-    padding-bottom: 80px !important;
+    zoom: unset !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 1000px !important;       /* 視覺 350px */
+    padding: 28px 32px !important;
+    padding-bottom: 60px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
   }
+  #adv-reward-title { font-size: 64px !important; margin-bottom: 12px !important; }
+  #adv-reward-subtitle { font-size: 40px !important; margin-bottom: 16px !important; }
 
-  /* ═══ Phase 4. 戰鬥教學視窗 — 縮極小 + 移到右下角 ═══ */
+  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 移到右上角 ═══
+     不用 transform:scale(會跑出邊界),改用直接縮 max-width + 字體
+     位置:撤回 base CSS 的中央,改貼右上角 */
   #_tut-prompt {
-    transform: scale(0.5) !important;
+    /* 教學確認視窗(第一次戰鬥提示)— 維持 scale 0.5,中央 */
+    transform: translate(-50%, -50%) scale(0.5) !important;
     transform-origin: center center !important;
   }
   #_tut-box {
-    transform: scale(0.5) !important;
-    transform-origin: bottom right !important;
-    top: auto !important;
-    bottom: 8px !important;
+    /* 撤回 transform 跟中央定位 */
+    transform: none !important;
+    top: 12px !important;
     left: auto !important;
-    right: 8px !important;
+    right: 12px !important;
+    bottom: auto !important;
+    /* 直接縮小視窗 */
+    max-width: 280px !important;
+    min-width: 0 !important;
+    padding: 12px 14px 10px !important;
     z-index: 99999 !important;
-    max-width: 600px !important;
   }
+  #_tut-box ._tut-step { font-size: 11px !important; margin-bottom: 3px !important; }
+  #_tut-box ._tut-title { font-size: 18px !important; margin-bottom: 6px !important; line-height: 1.2 !important; }
+  #_tut-box ._tut-desc { font-size: 14px !important; line-height: 1.5 !important; margin-bottom: 8px !important; }
+  ._tut-next-btn { font-size: 14px !important; padding: 6px 14px !important; }
+  ._tut-skip-btn { font-size: 12px !important; padding: 5px 12px !important; }
 
   /* ═══ Phase 5. 戰鬥右側選單 ═══ */
   #sb {
@@ -4551,10 +4595,8 @@ body {
   /* ═══ Phase 6. 英雄選擇頁 ═══ */
   #hpick-enemy-preview { transform: none !important; }
   #hero-pick-find-btn { display: none !important; }
-  /* 項目 3:隱藏 hero-pick-bar 內所有 button — 右側鏡像取代 */
   #hero-pick-bar > button { display: none !important; }
   #hero-pick-confirm { display: none !important; }
-  /* 鏡像 nav 樣式 */
   #_mobile-pick {
     flex-direction: column !important;
     bottom: auto !important;
@@ -4578,29 +4620,41 @@ body {
     border-radius: 8px !important;
   }
   #_mobile-pick .mp-btn.find { display: none !important; }
-
   #hero-pick-overlay h2 { font-size: 50px !important; letter-spacing: 4px !important; }
   #hero-pick-count { font-size: 36px !important; }
   #hero-pick-topbar { padding: 8px 16px 6px !important; }
 
-  /* ═══ 項目 1:預設陣容 — 完全不套手機自訂 ═══
-     PC 版的 inline style 在手機上就足夠正確顯示,撤回所有縮放限制 */
-  /* 不寫任何規則 */
-
-  /* ═══ Phase 7. 元素屬性選擇頁 ═══ */
+  /* ═══ Phase 7. 元素屬性選擇頁 — 底部按鈕強制移到右側 ═══
+     底部按鈕區是 #elem-pick-overlay > div:last-child(無 id 無 class)
+     用 inline style 屬性 [style*="border-top"] 精準命中 */
   #elem-pick-overlay > div:last-child,
-  #elem-pick-overlay [class*="bottom"],
-  #elem-pick-overlay [class*="footer"] {
-    position: static !important;
-    right: auto !important;
-    top: auto !important;
+  #elem-pick-overlay > div[style*="border-top"] {
+    position: fixed !important;
+    right: 0 !important;
+    top: 50% !important;
     bottom: auto !important;
-    transform: none !important;
-    flex-direction: row !important;
+    left: auto !important;
+    transform: translateY(-50%) !important;
+    flex-direction: column !important;
+    width: auto !important;
+    max-width: 130px !important;
+    background: linear-gradient(to left, rgba(0,0,10,0.92), rgba(0,0,10,0.6)) !important;
+    border-top: none !important;
+    border-radius: 12px 0 0 12px !important;
+    padding: 12px 8px !important;
+    gap: 10px !important;
+    z-index: 999990 !important;
+    justify-content: flex-start !important;
+  }
+  /* 內部按鈕縮小,確保塞得下 */
+  #elem-pick-overlay > div:last-child button,
+  #elem-pick-overlay > div[style*="border-top"] button {
+    font-size: 16px !important;
+    padding: 8px 6px !important;
+    min-height: 56px !important;
+    letter-spacing: 1px !important;
     width: 100% !important;
-    max-width: none !important;
-    background: none !important;
-    border-radius: 0 !important;
+    box-sizing: border-box !important;
   }
 
   /* ═══ Phase 8. 召喚星空 ═══ */
@@ -4627,8 +4681,7 @@ body {
     max-width: 25% !important;
   }
 
-  /* ═══ Phase 10. 至寶圖鑑 ═══
-     項目 2:撤回 #tt-detail 的 zoom 1.2(造成內容超出邊界) */
+  /* ═══ Phase 10. 至寶圖鑑 ═══ */
   #taiwan-treasure-page > div { zoom: unset !important; }
   #tt-grid {
     flex: 0 0 25% !important;
@@ -4645,7 +4698,6 @@ body {
   #tt-detail {
     flex: 1 1 75% !important;
     width: 75% !important;
-    /* 撤回 zoom,讓內容正常顯示 */
   }
 
   /* ═══ Phase 11. 台灣地圖 ═══ */
@@ -4685,7 +4737,7 @@ body {
     font-size: 1.5em !important;
   }
 
-  /* ═══ Phase 15. 背包 — 黃金基準,不動 ═══ */
+  /* ═══ Phase 15. 背包 — 黃金基準 ═══ */
 
   /* ═══ Phase 16. 獎章頁 ═══ */
   #medal-page-content {
@@ -4718,22 +4770,14 @@ body {
     margin: 0 auto !important;
   }
 
-  /* ═══ 項目 5:治療技能不足警告 popup — 加高 ═══ */
+  /* ═══ 治療技能不足警告 popup ═══ */
   #_heal-warn-pop > div {
     max-height: 92vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* ═══ 儲存為預設陣容 popup ═══ */
-  [id*="save-preset"],
-  [id*="preset-save"],
-  [class*="save-preset"],
-  [class*="preset-save"] {
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
+  /* ═══ 預設陣容 — 不寫,維持 PC 樣式 ═══ */
 
   /* ═══ 近期活動 popup ═══ */
   #_event-popup-box {
@@ -4757,6 +4801,7 @@ body {
   #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
   #adv-dialog-next { font-size: 72px !important; }
 }
+
 
 
 
@@ -61931,7 +61976,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5390';
+  const CURRENT_VERSION = 'v1.0.20260501.5400';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61965,7 +62010,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5390';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5400';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
