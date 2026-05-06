@@ -4414,7 +4414,10 @@ body {
     left: max(240px, env(safe-area-inset-left) + 220px) !important;
   }
 
-  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 ═══ */
+  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 ═══
+     ★ v1.0.20260501.5410 — 同步把 .adv-choice-box 放大,
+        否則 panel 雖大但內部 box 仍受 base max-height:520px / max-width:95vw 限制,
+        在手機上看起來文字偏小、捲軸出現 */
   #adv-choice-panel {
     width: 96vw !important;
     max-width: 96vw !important;
@@ -4429,6 +4432,16 @@ body {
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
     z-index: 9999 !important;
+    /* ★ panel 內 box 改用 flex 居中而非 flex-start,讓大 box 視覺平衡 */
+    align-items: center !important;
+  }
+  .adv-choice-box {
+    /* ★ 撤回 base 的 max-height:520px(那是 #gc 內部 px,在手機 fixed panel 下太小) */
+    max-height: calc(96vh - 56px) !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 28px 32px !important;
   }
   .adv-choice-title {
     font-size: 64px !important;
@@ -4439,6 +4452,9 @@ body {
     overflow: visible !important;
     text-overflow: clip !important;
     text-align: center !important;
+  }
+  .adv-choice-grid {
+    gap: 16px !important;
   }
   .adv-choice-btn {
     font-size: 56px !important;
@@ -4451,6 +4467,7 @@ body {
     font-size: 56px !important;
     padding: 20px !important;
     min-height: 110px !important;
+    margin-top: 24px !important;
   }
 
   /* ═══ Phase 2. 戰鬥問題視窗 ═══
@@ -4520,24 +4537,31 @@ body {
   #adv-reward-title { font-size: 64px !important; margin-bottom: 12px !important; }
   #adv-reward-subtitle { font-size: 40px !important; margin-bottom: 16px !important; }
 
-  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 移到右上角 ═══
-     不用 transform:scale(會跑出邊界),改用直接縮 max-width + 字體
-     位置:撤回 base CSS 的中央,改貼右上角 */
+  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 移到左上角 ═══
+     ★ v1.0.20260501.5410 — 改放左上而非右上的原因:
+       戰鬥畫面右側是 #sb 操作面板(普攻 / 技能 / 爆發 / 自動戰鬥 / 物品 全部在此),
+       教學第 3 步「點普通攻擊」時,視窗在右上會整個蓋住 b-atk 按鈕無法繼續。
+       左上區域只可能擋到對手卡片頂部一小塊或 turn-order 左半,但這些步驟玩家不需點按鈕。
+       step 9 的 adv-tut-btn 在左下,左上視窗也不衝突。
+     ★ 加 max-height + overflow-y:auto 解決最後一頁過長要捲動的問題 */
   #_tut-prompt {
     /* 教學確認視窗(第一次戰鬥提示)— 維持 scale 0.5,中央 */
     transform: translate(-50%, -50%) scale(0.5) !important;
     transform-origin: center center !important;
   }
   #_tut-box {
-    /* 撤回 transform 跟中央定位 */
+    /* 撤回 base CSS 的 transform:translate(-50%,-50%) 跟 50%/50% 中央定位 */
     transform: none !important;
     top: 12px !important;
-    left: auto !important;
-    right: 12px !important;
+    left: 12px !important;
+    right: auto !important;
     bottom: auto !important;
     /* 直接縮小視窗 */
     max-width: 280px !important;
     min-width: 0 !important;
+    max-height: calc(100vh - 24px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     padding: 12px 14px 10px !important;
     z-index: 99999 !important;
   }
@@ -4626,7 +4650,8 @@ body {
 
   /* ═══ Phase 7. 元素屬性選擇頁 — 底部按鈕強制移到右側 ═══
      底部按鈕區是 #elem-pick-overlay > div:last-child(無 id 無 class)
-     用 inline style 屬性 [style*="border-top"] 精準命中 */
+     用 inline style 屬性 [style*="border-top"] 精準命中
+     ★ v1.0.20260501.5410 — 按鈕原本太小,放大向英雄選擇頁的 .mp-btn 看齊 */
   #elem-pick-overlay > div:last-child,
   #elem-pick-overlay > div[style*="border-top"] {
     position: fixed !important;
@@ -4637,24 +4662,26 @@ body {
     transform: translateY(-50%) !important;
     flex-direction: column !important;
     width: auto !important;
-    max-width: 130px !important;
+    max-width: 200px !important;
     background: linear-gradient(to left, rgba(0,0,10,0.92), rgba(0,0,10,0.6)) !important;
     border-top: none !important;
     border-radius: 12px 0 0 12px !important;
-    padding: 12px 8px !important;
-    gap: 10px !important;
+    padding: 16px 12px !important;
+    gap: 14px !important;
     z-index: 999990 !important;
     justify-content: flex-start !important;
   }
-  /* 內部按鈕縮小,確保塞得下 */
+  /* 內部按鈕放大,觸碰熱區更友善 */
   #elem-pick-overlay > div:last-child button,
   #elem-pick-overlay > div[style*="border-top"] button {
-    font-size: 16px !important;
-    padding: 8px 6px !important;
-    min-height: 56px !important;
+    font-size: 26px !important;
+    padding: 14px 10px !important;
+    min-height: 90px !important;
     letter-spacing: 1px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
   }
 
   /* ═══ Phase 8. 召喚星空 ═══ */
@@ -4800,6 +4827,134 @@ body {
   #adv-dialog-speaker { font-size: 64px !important; margin-bottom: 12px !important; }
   #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
   #adv-dialog-next { font-size: 72px !important; }
+
+  /* ═══ Phase 19. 爆發技確認面板(burst-panel)═══
+     ★ v1.0.20260501.5410 — base CSS 字體偏大(name 44 / desc 28 / use 32)
+        導致內容在手機橫式高度下總高 > max-height 80vh,「發動」按鈕被擠到下方需捲動。
+        手機上縮字體 + 縮 padding,讓整個面板(標題/招式名/描述/能量/兩個按鈕)
+        都能塞進首屏,不需捲動就看到「發動」 */
+  #burst-panel {
+    /* base 是 #gc 內 absolute,bottom:60px;width:96%;max-width:640px
+       不動位置邏輯,只縮尺寸/字體 */
+    max-height: 88vh !important;
+    padding: 12px 16px 14px !important;
+  }
+  #burst-panel .bp-title {
+    font-size: 18px !important;
+    margin-bottom: 4px !important;
+    letter-spacing: 1px !important;
+  }
+  #burst-panel .bp-name {
+    font-size: 26px !important;
+    margin-bottom: 6px !important;
+  }
+  #burst-panel .bp-desc {
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+    margin-bottom: 8px !important;
+  }
+  #burst-panel .bp-cost {
+    font-size: 15px !important;
+    margin-bottom: 8px !important;
+  }
+  #burst-panel .bp-btns {
+    gap: 8px !important;
+  }
+  #burst-panel .bp-use {
+    font-size: 22px !important;
+    padding: 10px !important;
+    letter-spacing: 1px !important;
+  }
+  #burst-panel .bp-skip {
+    font-size: 18px !important;
+    padding: 10px 14px !important;
+  }
+
+  /* ═══ Phase 20. 小怪 / BOSS 戰勝利結算(adv-result-overlay)═══
+     ★ v1.0.20260501.5410 — base CSS 字體偏大(title 52 / grade 96 / row 22)+ padding 32px,
+        在手機橫式高度下整個 box 高度太大需捲動才看完。
+        縮字體 + 縮 padding,目標一目瞭然不需捲動 */
+  #adv-result-overlay {
+    /* overlay 是 #gc 內 absolute,維持 inset:0,只調 box */
+    align-items: flex-start !important;
+    padding-top: 8px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  #adv-result-box {
+    margin-right: auto !important;
+    margin-left: auto !important;
+    padding: 14px 18px !important;
+    width: 96% !important;
+    max-width: 96% !important;
+    border-radius: 14px !important;
+  }
+  #adv-result-title {
+    font-size: 26px !important;
+    letter-spacing: 3px !important;
+    margin-bottom: 4px !important;
+  }
+  #adv-result-grade {
+    font-size: 48px !important;
+    margin-bottom: 0 !important;
+  }
+  #adv-result-body {
+    flex-direction: row !important;
+    gap: 10px !important;
+    margin-top: 6px !important;
+  }
+  #adv-result-left {
+    flex: 1 1 50% !important;
+    min-width: 0 !important;
+  }
+  #adv-result-right {
+    flex: 0 0 48% !important;
+    min-width: 0 !important;
+  }
+  #adv-result-stats {
+    padding-top: 8px !important;
+  }
+  .adv-result-row {
+    font-size: 14px !important;
+    padding: 4px 0 !important;
+  }
+  #adv-result-score {
+    font-size: 22px !important;
+    margin: 8px 0 2px !important;
+  }
+  #adv-result-reward-panel {
+    padding: 10px 12px !important;
+    gap: 4px !important;
+  }
+  .adv-reward-panel-title {
+    font-size: 15px !important;
+    padding-bottom: 5px !important;
+  }
+  .adv-reward-row {
+    font-size: 13px !important;
+    padding: 4px 6px !important;
+    gap: 6px !important;
+  }
+  .adv-reward-row .ari {
+    font-size: 16px !important;
+  }
+  .adv-reward-empty {
+    font-size: 12px !important;
+    padding: 8px 4px !important;
+  }
+  #adv-result-btns {
+    margin-top: 10px !important;
+    gap: 10px !important;
+  }
+  .adv-result-play-again {
+    font-size: 18px !important;
+    padding: 10px 24px !important;
+    letter-spacing: 2px !important;
+  }
+  .adv-result-back-title {
+    font-size: 16px !important;
+    padding: 10px 22px !important;
+  }
 }
 
 
@@ -61976,7 +62131,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5400';
+  const CURRENT_VERSION = 'v1.0.20260501.5410';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62010,7 +62165,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5400';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5410';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
