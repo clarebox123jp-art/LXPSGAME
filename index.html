@@ -4397,17 +4397,13 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ★ v1.0.20260501.5360 — 8 項修正
+   ★ v1.0.20260501.5390 — 5 項手機優化(取代 v5360)
    ──────────────────────────────────────────────────────────────────
-   ・問題 1:天賦/至寶欄位太窄,把左欄改成 75%(原 52%)
-   ・問題 2:鏡像底部按鈕 #_mobile-pick 改用 sync 邏輯,只在英雄選擇頁顯示
-   ・問題 3:預設陣容圖片再縮小,確保一行 4 個
-   ・問題 4:劇情主題視窗位置修正
-   ・問題 5:戰鬥問題視窗外框跟著放大
-   ・問題 6:答對獎勵視窗外框跟著放大,按鈕區留進外框
-   ・問題 7:教學選擇攻擊目標視窗下移(實作:讓 _tut-box 在 max-height:500 時
-            略往下調,避開角色卡 — 用 top:65% 替代 50%)
-   ・問題 8:至寶頁正確 selector #tt-grid + #tt-detail
+   ・項目 1:預設陣容直接用 PC 版樣式(撤回所有手機自訂)
+   ・項目 2:至寶頁,撤回 zoom 1.2,讓內容正常顯示
+   ・項目 3:英雄選擇頁底部所有 button 隱藏(右側鏡像取代),保留隊伍編成 div
+   ・項目 4:教學視窗縮極小 + 移到右下角(永遠不蓋住戰鬥畫面)
+   ・項目 5:劇情主題/戰鬥問題/答對獎勵/治療警告等視窗外框加高
    ══════════════════════════════════════════════════════════════════ */
 @media (max-height: 500px) {
 
@@ -4416,17 +4412,16 @@ body {
     left: max(240px, env(safe-area-inset-left) + 220px) !important;
   }
 
-  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 — 修位置太低 ═══ */
+  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 — 加高 + 內部捲動 ═══ */
   #adv-choice-panel {
     width: 96vw !important;
     max-width: 96vw !important;
-    height: 92vh !important;
-    max-height: 92vh !important;
+    height: 96vh !important;
+    max-height: 96vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding: 28px 32px !important;
+    padding: 24px 28px !important;
     box-sizing: border-box !important;
-    /* 強制 fixed 居中 */
     position: fixed !important;
     left: 50% !important;
     top: 50% !important;
@@ -4456,22 +4451,17 @@ body {
     min-height: 110px !important;
   }
 
-  /* ═══ Phase 2. 戰鬥問題視窗 — 外框跟著放大 ═══ */
-  #adv-quiz-overlay {
-    /* overlay 是全螢幕背景 */
-  }
-  /* zoom 改成 1.5 並用 width: 96vw 確保外框完整 */
+  /* ═══ Phase 2. 戰鬥問題視窗 — 加高 ═══ */
   #adv-quiz-box {
     zoom: 1.5 !important;
-    width: 60vw !important;          /* zoom 1.5 後實際 = 90vw */
-    max-width: 60vw !important;
+    width: 64vw !important;
+    max-width: 64vw !important;
     height: auto !important;
-    min-height: 50vh !important;     /* 確保最小高度 */
-    max-height: 60vh !important;     /* zoom 1.5 後 = 90vh */
+    min-height: 50vh !important;
+    max-height: 64vh !important;
     padding: 20px 28px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    /* 確保置中 */
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
@@ -4482,16 +4472,13 @@ body {
     gap: 14px !important;
   }
 
-  /* ═══ Phase 3. 答對獎勵視窗 — 外框跟著放大,按鈕區留進外框 ═══ */
-  #adv-reward-overlay {
-    /* overlay 全螢幕,不變 */
-  }
+  /* ═══ Phase 3. 答對獎勵視窗 — 大幅加高 ═══ */
   #adv-reward-box {
     zoom: 1.4 !important;
-    width: 60vw !important;          /* zoom 1.4 後 = 84vw */
+    width: 60vw !important;
     max-width: 60vw !important;
-    max-height: 64vh !important;     /* zoom 1.4 後 = 89.6vh */
-    padding-bottom: 80px !important; /* 給下方「立即使用」3 顆按鈕留空間 */
+    max-height: 68vh !important;
+    padding-bottom: 80px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     position: absolute !important;
@@ -4500,18 +4487,20 @@ body {
     transform: translate(-50%, -50%) !important;
   }
 
-  /* ═══ Phase 4. 戰鬥教學系列 — 縮小 50% + 選擇攻擊目標時下移 ═══ */
+  /* ═══ Phase 4. 戰鬥教學視窗 — 縮極小 + 移到右下角 ═══ */
   #_tut-prompt {
-    transform: translate(-50%, -50%) scale(0.5) !important;
+    transform: scale(0.5) !important;
     transform-origin: center center !important;
   }
   #_tut-box {
-    transform: translate(-50%, -50%) scale(0.5) !important;
-    transform-origin: center center !important;
-    /* 整體往上移,避免蓋住敵方角色卡(問題 7)
-       原本 top:50% 中心,改成 top:18% 在畫面上方 */
-    top: 18% !important;
-    left: 50% !important;
+    transform: scale(0.5) !important;
+    transform-origin: bottom right !important;
+    top: auto !important;
+    bottom: 8px !important;
+    left: auto !important;
+    right: 8px !important;
+    z-index: 99999 !important;
+    max-width: 600px !important;
   }
 
   /* ═══ Phase 5. 戰鬥右側選單 ═══ */
@@ -4562,9 +4551,10 @@ body {
   /* ═══ Phase 6. 英雄選擇頁 ═══ */
   #hpick-enemy-preview { transform: none !important; }
   #hero-pick-find-btn { display: none !important; }
-  #_mobile-pick .mp-btn.find { display: none !important; }
-  /* 鏡像底部按鈕 — 樣式維持(只在英雄選擇頁顯示由 JS 控制,#_mobile-pick 預設 display:none,
-     原本 sync 邏輯會在 #hero-pick-overlay visible 時顯示) */
+  /* 項目 3:隱藏 hero-pick-bar 內所有 button — 右側鏡像取代 */
+  #hero-pick-bar > button { display: none !important; }
+  #hero-pick-confirm { display: none !important; }
+  /* 鏡像 nav 樣式 */
   #_mobile-pick {
     flex-direction: column !important;
     bottom: auto !important;
@@ -4587,36 +4577,15 @@ body {
     font-size: 16px !important;
     border-radius: 8px !important;
   }
+  #_mobile-pick .mp-btn.find { display: none !important; }
 
   #hero-pick-overlay h2 { font-size: 50px !important; letter-spacing: 4px !important; }
   #hero-pick-count { font-size: 36px !important; }
   #hero-pick-topbar { padding: 8px 16px 6px !important; }
 
-  /* 問題 3:預設陣容圖片再縮小 — 一行 4 個 */
-  #preset-team-panel {
-    /* 不再 transform:scale,改用 max-width 限縮 */
-    transform: none !important;
-    max-width: 480px !important;
-    width: 480px !important;
-  }
-  /* 預設陣容裡的角色頭像強制變小 */
-  #preset-team-panel img {
-    width: 56px !important;
-    height: 56px !important;
-    flex: 0 0 56px !important;
-  }
-  #preset-team-panel [class*="hero-thumb"],
-  #preset-team-panel [class*="hero-img"] {
-    width: 56px !important;
-    height: 56px !important;
-    flex: 0 0 56px !important;
-  }
-  /* 確保 row 內 4 個英雄不換行 */
-  #preset-team-panel [class*="team-row"],
-  #preset-team-panel [style*="display:flex"][style*="gap"] {
-    flex-wrap: nowrap !important;
-    gap: 4px !important;
-  }
+  /* ═══ 項目 1:預設陣容 — 完全不套手機自訂 ═══
+     PC 版的 inline style 在手機上就足夠正確顯示,撤回所有縮放限制 */
+  /* 不寫任何規則 */
 
   /* ═══ Phase 7. 元素屬性選擇頁 ═══ */
   #elem-pick-overlay > div:last-child,
@@ -4642,50 +4611,41 @@ body {
     min-height: 110px !important;
   }
 
-  /* ═══ Phase 9. 英雄/魔物圖鑑詳情 — 天賦/至寶欄寬度修正 ═══ */
+  /* ═══ Phase 9. 英雄/魔物圖鑑詳情 ═══ */
   #hero-detail-box {
     zoom: 1.6 !important;
   }
-  /* 還原頂部 sticky bar 大小 */
   #hero-detail-box > div[style*="sticky"]:first-child {
     zoom: 0.625 !important;
   }
-  /* 問題 1:左欄(天賦/至寶在這裡)從 max-width:52% → 75%(更寬) */
   #hero-detail-box [style*="max-width:52%"] {
     max-width: 75% !important;
     flex: 1 1 75% !important;
   }
-  /* 雷達圖右欄縮窄 */
   #hero-detail-box [style*="max-width:52%"] + div {
     flex: 0 0 25% !important;
     max-width: 25% !important;
   }
 
-  /* ═══ Phase 10. 至寶圖鑑頁 ═══
-     真實 selector:#tt-grid (左側 2 欄卡片) + #tt-detail (右側強化頁)
-     原本 #tt-grid flex 是 clamp(380,46vw,560),手機上佔 ~47%
-     改成 25% 寬,給強化頁 75% */
+  /* ═══ Phase 10. 至寶圖鑑 ═══
+     項目 2:撤回 #tt-detail 的 zoom 1.2(造成內容超出邊界) */
   #taiwan-treasure-page > div { zoom: unset !important; }
-  /* 撤回前面用 [class*="treasure-list"] 的 selector,改用真實 ID */
   #tt-grid {
     flex: 0 0 25% !important;
     max-width: 25% !important;
     width: 25% !important;
-    grid-template-columns: 1fr !important;  /* 改成 1 欄(2 欄太擠) */
+    grid-template-columns: 1fr !important;
     padding: 8px !important;
   }
-  /* 至寶卡縮小 */
   #tt-grid .tt-card {
     transform: scale(0.7) !important;
     transform-origin: top center !important;
-    margin-bottom: -30% !important;  /* 補正 scale 留下的空白 */
+    margin-bottom: -30% !important;
   }
-  /* 強化頁 75% */
   #tt-detail {
     flex: 1 1 75% !important;
     width: 75% !important;
-    /* 字體目前 OK,只放大整體一點點 */
-    zoom: 1.2 !important;
+    /* 撤回 zoom,讓內容正常顯示 */
   }
 
   /* ═══ Phase 11. 台灣地圖 ═══ */
@@ -4725,7 +4685,7 @@ body {
     font-size: 1.5em !important;
   }
 
-  /* ═══ Phase 15. 背包 = 黃金基準,不動 ═══ */
+  /* ═══ Phase 15. 背包 — 黃金基準,不動 ═══ */
 
   /* ═══ Phase 16. 獎章頁 ═══ */
   #medal-page-content {
@@ -4758,6 +4718,13 @@ body {
     margin: 0 auto !important;
   }
 
+  /* ═══ 項目 5:治療技能不足警告 popup — 加高 ═══ */
+  #_heal-warn-pop > div {
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
   /* ═══ 儲存為預設陣容 popup ═══ */
   [id*="save-preset"],
   [id*="preset-save"],
@@ -4766,15 +4733,6 @@ body {
     max-height: 90vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-  }
-  [id*="save-preset"] img,
-  [id*="preset-save"] img,
-  [class*="save-preset"] img,
-  [class*="preset-save"] img {
-    transform: scale(0.5) !important;
-    transform-origin: center center !important;
-    max-width: 60px !important;
-    max-height: 60px !important;
   }
 
   /* ═══ 近期活動 popup ═══ */
@@ -4799,6 +4757,7 @@ body {
   #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
   #adv-dialog-next { font-size: 72px !important; }
 }
+
 
 
 
@@ -61972,7 +61931,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5380';
+  const CURRENT_VERSION = 'v1.0.20260501.5390';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62006,7 +61965,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5380';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5390';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
