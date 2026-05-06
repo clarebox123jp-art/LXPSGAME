@@ -6534,7 +6534,7 @@ body.art-premium #summon-overlay {
       <img id="hero-detail-full-img" style="width:100%;height:auto;max-height:100%;object-fit:contain;object-position:top center;display:block;" src="" onerror="this.style.display='none'"/>
       <div id="hero-detail-av-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:120px;"></div>
       <!-- ★ 肖像切換浮動按鈕（僅在此英雄有多張肖像時顯示，由 _renderHeroDetail 動態控制） -->
-      <div id="hero-detail-portrait-switcher" style="display:none;position:absolute;right:12px;bottom:12px;background:rgba(10,14,30,0.92);border:2px solid rgba(212,168,67,0.6);border-radius:14px;padding:10px 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.6);z-index:5;max-width:calc(100% - 24px);">
+      <div id="hero-detail-portrait-switcher" style="display:none;position:absolute;right:12px;top:12px;background:rgba(10,14,30,0.92);border:2px solid rgba(212,168,67,0.6);border-radius:14px;padding:10px 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.6);z-index:5;max-width:calc(100% - 24px);">
         <div style="font-size:14px;color:#ffcc66;font-weight:700;margin-bottom:8px;letter-spacing:1px;text-align:center;">✨ 切換肖像</div>
         <div id="hero-detail-portrait-list" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;"></div>
       </div>
@@ -13798,6 +13798,15 @@ function confirmHeroPick(){
     }catch(e){ console.error('[G.p1 修正]', e); }
     // ★ 冒險模式：把所有升級數據直接存進英雄物件（避免跨Script全域變數問題）
     G.p1.forEach(h => {
+      // ★ v1.0.20260501.5370 — 跳過好友英雄,等 _injectFriendHeroIntoBattle 套用好友自己的數據
+      //   否則本機玩家的投資點/技能等級/爆發等級會錯誤地先套到好友英雄上
+      const _isFriendBorrowed = (typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero
+        && window._friendHeroInParty && _invitedFriendHero.name === h.name);
+      if (_isFriendBorrowed) {
+        // 只標記是好友英雄;素質/技能/爆發/至寶都由 _injectFriendHeroIntoBattle 處理
+        h._isFriendHero = true;
+        return;
+      }
       // 1. 素質投資（HP/ATK/SP/SPD）
       const _inv = (_heroStatInvested && _heroStatInvested[h.name]) || {};
       const _dHp  = _inv.hp  || 0;
@@ -32318,6 +32327,20 @@ function _calcHeroTreasureBonus(heroName){
 //     供戰鬥邏輯(doDmg/doHeal/startTurn)讀取觸發
 function _applyTaiwanTreasureToHero(h){
   if(!h || typeof _getHeroEquippedTreasures !== 'function') return;
+  // ★ v1.0.20260501.5370 — 跳過好友英雄,避免誤把本地玩家的至寶套到好友英雄上
+  //   兩個情境都要擋:
+  //   (a) 已被標為好友英雄(_injectFriendHeroIntoBattle 之後)
+  //   (b) 本場有邀請好友英雄,且 h.name 跟好友英雄同名(confirmHeroPick 時點)
+  if (h._isFriendHero) return;
+  try {
+    if (typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero
+        && window._friendHeroInParty
+        && _invitedFriendHero.name === h.name) {
+      // 這隻會被 _injectFriendHeroIntoBattle 接管,別套本地玩家的至寶
+      h._treasureEff = h._treasureEff || {};
+      return;
+    }
+  } catch(_) {}
   const equipped = _getHeroEquippedTreasures(h.name);
   if(!equipped || !equipped.length){
     h._treasureEff = h._treasureEff || {};
@@ -55017,7 +55040,34 @@ async function _selectRepHero(name) {
   const bLv = (typeof _heroBurstLevels  !== 'undefined' && _heroBurstLevels  && _heroBurstLevels[name])  || 0;
   const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
 
-  _myRepHero = { name, level: lv, statInvested: inv, skillLevels: skl, burstLevel: bLv, img };
+  // ★ v1.0.20260501.5370 — 把至寶加成數據打包進代表英雄資料
+  //   寫的是「最終加成」(基礎屬性 + 投資點 + 特殊效果),好友本機就算沒這個至寶定義也能套用
+  let treasures = [];
+  try {
+    if (typeof _getHeroEquippedTreasures === 'function') {
+      const equipped = _getHeroEquippedTreasures(name);
+      treasures = equipped.map(e => {
+        const base = (typeof _getTaiwanTreasureStats === 'function')
+          ? _getTaiwanTreasureStats(e.id, e.record.lv) : {};
+        const _inv = (typeof _getTaiwanTreasureInvested === 'function')
+          ? _getTaiwanTreasureInvested(e.id) : {};
+        const eff  = (typeof _getTaiwanTreasureEffectBonus === 'function')
+          ? _getTaiwanTreasureEffectBonus(e.id, e.record.lv) : {};
+        return {
+          id: e.id,
+          lv: e.record.lv || 1,
+          // 已合計好的數值,套用時直接相加
+          hp:  (base.hp  || 0) + (_inv.hp  || 0),
+          atk: (base.atk || 0) + (_inv.atk || 0),
+          sp:  (base.sp  || 0) + (_inv.sp  || 0),
+          spd: (base.spd || 0) + (_inv.spd || 0),
+          eff: eff || {}
+        };
+      });
+    }
+  } catch(e) { console.warn('[_selectRepHero] 至寶資料打包失敗', e); treasures = []; }
+
+  _myRepHero = { name, level: lv, statInvested: inv, skillLevels: skl, burstLevel: bLv, img, treasures };
 
   try {
     await window._fbSetRepHero(window._gUserId, _myRepHero);
@@ -55558,6 +55608,11 @@ function _injectFriendHeroIntoBattle() {
     // 套用技能等級
     if(fh.skillLevels){ existingHero._skLv = { s1: fh.skillLevels.s1||0, s2: fh.skillLevels.s2||0 }; }
     existingHero._isFriendHero = true;
+    // ★ v1.0.20260501.5370 — 套用好友自己的至寶加成(從 representativeHero.treasures 讀取)
+    //   不能用 _applyTaiwanTreasureToHero,因為它讀本地玩家裝備資料
+    try {
+      _applyFriendTreasuresToHero(existingHero, fh.treasures);
+    } catch(e){ console.warn('[好友至寶套用] 失敗', e); }
     log(`[好友英雄] ${name}（${fh._ownerName}）Lv.${friendLv} 屬性已套用！`);
     return;
   }
@@ -55583,8 +55638,41 @@ function _injectFriendHeroIntoBattle() {
   // 標記為好友英雄（UI顯示粉紅框）
   h._isFriendHero = true;
   h._friendOwner  = fh._ownerName;
+  // ★ v1.0.20260501.5370 — 套用好友自己的至寶加成
+  try {
+    _applyFriendTreasuresToHero(h, fh.treasures);
+  } catch(e){ console.warn('[好友至寶套用] 失敗', e); }
   G.p1.push(h);
   log(`🤝 [好友英雄] ${name}（${fh._ownerName}）加入戰鬥！Lv.${friendLv}`);
+}
+
+// ★ v1.0.20260501.5370 — 把好友的至寶加成套到 hero 物件上
+//   treasures 來自 _invitedFriendHero.treasures(由 _selectRepHero 預先打包好的數據)
+//   結構:[{id, lv, hp, atk, sp, spd, eff:{...}}, ...]
+function _applyFriendTreasuresToHero(h, treasures) {
+  if (!h || !treasures || !Array.isArray(treasures) || !treasures.length) {
+    h._treasureEff = h._treasureEff || {};
+    return;
+  }
+  let _addHp = 0, _addAtk = 0, _addSp = 0, _addSpd = 0;
+  const _eff = {};
+  treasures.forEach(t => {
+    if (!t) return;
+    _addHp  += (t.hp  || 0);
+    _addAtk += (t.atk || 0);
+    _addSp  += (t.sp  || 0);
+    _addSpd += (t.spd || 0);
+    if (t.eff && typeof t.eff === 'object') {
+      Object.keys(t.eff).forEach(k => { _eff[k] = (_eff[k] || 0) + t.eff[k]; });
+    }
+  });
+  if (_addHp)  { h.hp  = (h.hp  || 0) + _addHp;  h.curHp = h.hp; }
+  if (_addAtk) { h.atk = (h.atk || 0) + _addAtk; }
+  if (_addSp)  { h.sp  = (h.sp  || 0) + _addSp;  }
+  if (_addSpd) { h.spd = (h.spd || 0) + _addSpd; }
+  h._treasureEff = _eff;
+  try{ console.log('[好友至寶套用] '+h.name+' 加成:',
+    {hp:_addHp,atk:_addAtk,sp:_addSp,spd:_addSpd}, 'effects:', _eff); }catch(_){}
 }
 
 // ── 開啟選關頁時讀取雲端好友和代表英雄 ──
@@ -61068,6 +61156,27 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5370', brief:[
+    '💎 修好「裝備至寶後加成沒有套到戰鬥裡」的問題(只發生在邀請好友英雄參戰時)',
+    '✨ 現在邀請好友的代表英雄,他自己裝的至寶能力也會一起帶過來,戰鬥更合理啦!',
+  ], items:[
+    '【發生什麼事?】',
+    '・原本玩家自己英雄裝的至寶,在戰鬥裡會正常加屬性、觸發特殊效果 ✅',
+    '・但是「邀請好友的代表英雄」加入隊伍時,好友裝在那位英雄身上的至寶完全沒套用 ❌',
+    '・更糟的是:如果玩家自己也擁有同名英雄並裝了至寶,系統會錯把「玩家本機的至寶」套到好友英雄身上,造成奇怪的數值',
+    '【為什麼之前會這樣?】',
+    '・代表英雄的資料原本只記錄了:名字、等級、素質點數、技能等級、爆發等級',
+    '・沒有把「裝備的至寶」資料一起寫進去,所以好友邀請過來時,完全找不到至寶資訊',
+    '・戰鬥時套用至寶的程式只會看「玩家本機的裝備清單」,不會問好友的英雄裝了什麼',
+    '【這次怎麼修?】',
+    '・✨ 設定代表英雄時,連同「裝備的至寶」一起打包進資料(包含每個至寶的等級、加成屬性、特殊效果)',
+    '・✨ 戰鬥開始時,好友英雄會優先套用「他自己的至寶資料」,不再使用玩家本機的至寶',
+    '・✨ 玩家本機的至寶套用程式遇到「好友英雄」會自動跳過,避免錯套',
+    '・✨ 順手修了另一個小問題:之前好友英雄的素質點數會先被本機玩家的數值蓋掉,現在直接交給好友資料處理,更精準',
+    '【提醒】',
+    '・你的好友需要重新設定一次「代表英雄」,新的至寶資料才會寫到雲端,之後邀請才會生效',
+    '・自己英雄、自己戰鬥不受任何影響,規則跟之前一模一樣',
+  ] },
   { ver:'v1.0.20260501.5160', brief:[
     '🎨 修好 19 位英雄的 Q 版圖片!上次升級沒成功的全部換成新圖了 ✨',
     '👀 包含祭司、火法師、武士、聖騎士…等好多帥氣的英雄重新登場',
@@ -61863,7 +61972,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5360';
+  const CURRENT_VERSION = 'v1.0.20260501.5380';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -61897,7 +62006,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5360';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5380';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
