@@ -33166,6 +33166,9 @@ function _saveTaiwanTreasureData(){
   try{
     localStorage.setItem('lxps_taiwan_treasures', JSON.stringify(_taiwanTreasureData));
   }catch(e){ console.warn('[台灣至寶] 寫入本地資料失敗', e); }
+  // ★ v1.0.20260501.5500 — 至寶資料變動時,自動更新代表英雄雲端資料
+  //   這樣好友邀請時看到的至寶加成永遠是最新的
+  try{ if(typeof window._refreshMyRepHeroCloud === 'function') window._refreshMyRepHeroCloud(); }catch(_){}
 }
 // 取得至寶經驗(若尚未獲得回傳 null)
 function _getTaiwanTreasureRecord(id){
@@ -33425,6 +33428,12 @@ function _applyTaiwanTreasureToHero(h){
 //   用法:
 //     window._diagnoseTreasure()         → 列出所有英雄的至寶裝備狀態
 //     window._diagnoseTreasure('巫女')   → 只看「巫女」的詳細狀況(資料 + 戰鬥中數值)
+// ★ v1.0.20260501.5500 — 改進:
+//   - 預期值加入「元素加成」(火+4atk、水+5hp、風+4spd 等)
+//   - 顯示英雄當前的元素類型
+//   - 顯示是否為好友英雄(影響資料來源)
+//   - 顯示爆發等級(_burstLvAdv)
+//   - 差距 ≠ 0 時不再直接判定為錯,改提示「可能來自天賦/buff/戰鬥中變化」
 window._diagnoseTreasure = function(heroName){
   try{
     console.group('🔍 至寶診斷工具');
@@ -33453,26 +33462,43 @@ window._diagnoseTreasure = function(heroName){
         // 取至寶裝備
         const _eq = (typeof _getHeroEquippedTreasures === 'function') ? _getHeroEquippedTreasures(h.name) : [];
         const _eqStr = _eq.length ? '裝備: '+_eq.map(e=>e.def?e.def.name:e.id).join(', ') : '(無至寶)';
-        console.group(h.name+'('+h.side+'-'+h.pos+')');
+        // 取元素加成
+        const _elemData = (h.element && typeof ELEMENT_DB !== 'undefined') ? ELEMENT_DB[h.element] : null;
+        const _elemBonus = _elemData ? {
+          hp:  _elemData.bonus_hp  || 0,
+          atk: _elemData.bonus_atk || 0,
+          sp:  _elemData.bonus_sp  || 0,
+          spd: _elemData.bonus_spd || 0,
+        } : { hp:0, atk:0, sp:0, spd:0 };
+        const _elemStr = _elemData ? (_elemData.icon+_elemData.name) : '(無元素)';
+        console.group(h.name+'('+h.side+'-'+h.pos+') 元素:'+_elemStr);
         console.log('當前: hp='+h.curHp+'/'+h.hp+', atk='+h.atk+', sp='+h.sp+', spd='+h.spd, _baseStr);
         console.log(_eqStr);
+        console.log('元素加成:', _elemBonus);
         console.log('_treasureEff:', h._treasureEff || {});
-        console.log('_isFriendHero:', !!h._isFriendHero);
-        // 預期值對比
-        if(_base){
+        console.log('_isFriendHero:', !!h._isFriendHero, h._friendOwner ? '(來自好友: '+h._friendOwner+')' : '');
+        console.log('_skLv:', h._skLv || {}, '_burstLvAdv:', h._burstLvAdv || 0);
+        // 預期值對比(本機英雄才能精確算;好友英雄資料來源不同,只顯示提示)
+        if(_base && !h._isFriendHero){
           const _expBonus = (typeof _calcHeroTreasureBonus === 'function') ? _calcHeroTreasureBonus(h.name) : null;
           if(_expBonus){
             const _inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested[h.name]) || {};
-            const _expAtk = _base.atk + (_inv.atk||0) + _expBonus.atk;
-            const _expSp  = _base.sp  + (_inv.sp ||0) + _expBonus.sp;
-            const _expSpd = _base.spd + (_inv.spd||0) + _expBonus.spd;
-            console.log('預期值: atk='+_expAtk+'(基礎'+_base.atk+'+投資'+(_inv.atk||0)+'+至寶'+_expBonus.atk+'), sp='+_expSp+', spd='+_expSpd);
-            if(h.atk !== _expAtk){
-              console.error('⚠️ atk 不對!應該是 '+_expAtk+',實際是 '+h.atk+',差 '+(_expAtk-h.atk));
+            const _expHp  = _base.hp  + (_inv.hp ||0) + _expBonus.hp  + _elemBonus.hp;
+            const _expAtk = _base.atk + (_inv.atk||0) + _expBonus.atk + _elemBonus.atk;
+            const _expSp  = _base.sp  + (_inv.sp ||0) + _expBonus.sp  + _elemBonus.sp;
+            const _expSpd = _base.spd + (_inv.spd||0) + _expBonus.spd + _elemBonus.spd;
+            console.log('預期值: hp='+_expHp+', atk='+_expAtk+', sp='+_expSp+', spd='+_expSpd);
+            console.log('  公式: hp = 基礎'+_base.hp+'+ 投資'+(_inv.hp||0)+'+ 至寶'+_expBonus.hp+'+ 元素'+_elemBonus.hp+' = '+_expHp);
+            console.log('  公式: atk = 基礎'+_base.atk+'+ 投資'+(_inv.atk||0)+'+ 至寶'+_expBonus.atk+'+ 元素'+_elemBonus.atk+' = '+_expAtk);
+            const _diff = (h.atk||0) - _expAtk;
+            if(_diff === 0){
+              console.log('✅ atk 完全正確!');
             } else {
-              console.log('✅ atk 正確!');
+              console.warn('⚠️ atk 差 '+(_diff>0?'+':'')+_diff+'(實際 '+h.atk+',預期 '+_expAtk+'),可能來自:天賦戰鬥開始觸發/裝備效果/buff/戰鬥中變化');
             }
           }
+        } else if(h._isFriendHero){
+          console.log('💡 好友英雄,屬性來自好友自己的設定,跳過本機預期值對比');
         }
         console.groupEnd();
       });
@@ -44999,7 +45025,17 @@ async function advShowBattleResult(win) {
         html += `<div class="adv-reward-row drop"><span class="ari">📖</span><span class="arn">技能升級書</span><span class="arv">×${_bookCount}</span></div>`;
         // 主 BOSS 收藏品提示(機率掉落,不保證)
         try {
-          const _mainBoss = (G && G.p2 && G.p2[1]) ? G.p2[1].name : '';
+          // ★ v1.0.20260501.5510 — bug 修復:八岐大蛇是單一陣容(G.p2 只有 1 個元素),
+          //   舊版寫死 G.p2[1] → 八岐大蛇戰時誤判為空字串
+          //   修補:用 find 找出 BOSS,fallback 才用 G.p2[1] / G.p2[0]
+          const _JP_BOSS_NAMES = ['大天狗','酒吞童子','玉藻前','八岐大蛇'];
+          let _mainBoss = '';
+          if(G && G.p2 && G.p2.length){
+            const _jpBoss = G.p2.find(h => h && h.name && _JP_BOSS_NAMES.includes(h.name));
+            if(_jpBoss) _mainBoss = _jpBoss.name;
+            else if(G.p2[1] && G.p2[1].name) _mainBoss = G.p2[1].name;
+            else if(G.p2[0] && G.p2[0].name) _mainBoss = G.p2[0].name;
+          }
           if(_mainBoss === '杏花妖'){
             html += `<div class="adv-reward-row drop" style="opacity:0.7;"><span class="ari">💄</span><span class="arn">杏花胭脂</span><span class="arv" style="color:#ff99cc;font-size:15px;">20% 機率</span></div>`;
           } else if(_mainBoss === '九尾空貓怪'){
@@ -45614,14 +45650,32 @@ async function advStartWinSequence() {
     }catch(_){}
   }catch(e){}
   // ★ 主 BOSS 掉落專屬收藏品（20% 機率）
-  const _mainBoss = (G && G.p2 && G.p2[1]) ? G.p2[1].name : '九尾空貓怪';
-  // ★ v1.0.20260421.2200 — 日本 BOSS 專屬收藏品
+  // ★ v1.0.20260501.5510 — bug 修復:八岐大蛇是「單一陣容」(G.p2 只有 1 個元素),
+  //   舊版寫死 G.p2[1] → 八岐大蛇戰時 _mainBoss 永遠是 fallback「九尾空貓怪」,
+  //   導致 jp_boss_yamata / jp_yamata_3 / jp_yamata_s / jp_quick_yamata / jp_treasure_consume / jp_treasure_preserve
+  //   等所有八岐大蛇相關獎章永遠不會解鎖!
+  //   正確邏輯:先在 G.p2 中找日本關 BOSS 名字,fallback 才用 index 1 / 0 / 預設名稱
   const _JAPAN_BOSS_DROPS = {
     '大天狗':   { id:'tengu_fan',    icon:'🪶', name:'天狗的羽扇',  color:'#99ddff', price:1200, rate:0.20 },
     '酒吞童子': { id:'oni_sake_cup', icon:'🍶', name:'鬼王的酒盃',  color:'#ff8866', price:1200, rate:0.20 },
     '玉藻前':   { id:'kyuubi_fur',   icon:'🦊', name:'九尾狐毛髮',  color:'#ffbb44', price:1800, rate:0.20 },
     '八岐大蛇': { id:'dragon_scale', icon:'🐉', name:'龍鱗片',      color:'#aa66ff', price:3000, rate:0.50 }, // 隱藏 BOSS 提高至 50%
   };
+  let _mainBoss = '九尾空貓怪';
+  if(G && G.p2 && G.p2.length){
+    // 優先找 G.p2 中第一個是日本關 BOSS 的(處理八岐大蛇單獨陣容,以及大天狗/酒吞/玉藻三角陣容)
+    const _japanBossInTeam = G.p2.find(h => h && h.name && _JAPAN_BOSS_DROPS[h.name]);
+    if(_japanBossInTeam){
+      _mainBoss = _japanBossInTeam.name;
+    } else if(G.p2[1] && G.p2[1].name){
+      // 三角陣容 fallback(其他關卡)
+      _mainBoss = G.p2[1].name;
+    } else if(G.p2[0] && G.p2[0].name){
+      // 單一陣容 fallback
+      _mainBoss = G.p2[0].name;
+    }
+  }
+  try{ console.log('[BOSS 戰結算] _mainBoss =', _mainBoss, 'G.p2.length =', (G&&G.p2)?G.p2.length:0); }catch(_){}
   if(_JAPAN_BOSS_DROPS[_mainBoss]){
     const _jd = _JAPAN_BOSS_DROPS[_mainBoss];
     if(Math.random() < _jd.rate){
@@ -55108,6 +55162,8 @@ function upgradeBurst(name) {
     backpackRemove('burst_upgrade_fruit', 1);
     _heroBurstLevels[name] = nextLv;
     try{ await gameCloudSave(); }catch(e){}
+    // ★ v1.0.20260501.5500 — 若升級的是當前代表英雄,自動同步至雲端
+    try{ if(typeof window._refreshMyRepHeroCloud === 'function') window._refreshMyRepHeroCloud(); }catch(_){}
     log(`🍑 極限爆發升級！${name} → Lv.${nextLv} (效果+${nextLv*10}%)`);
     _showInGameToast(`🍑 [${name}] 極限爆發升至 +${nextLv} 級！效果 +${nextLv*10}%`, '#ffaa44', 2800);
     try{ playSfx('sfx-powerup', 0.8); }catch(e){}
@@ -55206,6 +55262,8 @@ window.confirmPendingStats = async function(name){
     try{ _showInGameToast('💎 已成功投資 ' + total + ' 點素質!', '#88ff88', 2000); }catch(_){}
     // 雲端儲存
     try{ await gameCloudSave(); }catch(_){}
+    // ★ v1.0.20260501.5500 — 若投資的是當前代表英雄,自動同步至雲端
+    try{ if(typeof window._refreshMyRepHeroCloud === 'function') window._refreshMyRepHeroCloud(); }catch(_){}
     // 重新渲染英雄詳細頁
     try{
       const _box = document.getElementById('hero-detail-content');
@@ -55359,6 +55417,8 @@ function upgradeSkill(name, slot) {
     _heroSkillLevels[name][slot] = nextLv;
     log(`📖 技能升級！${name} ${slot} → Lv.${nextLv+1}`);
     try{ await gameCloudSave(); }catch(e){}
+    // ★ v1.0.20260501.5500 — 若升級的是當前代表英雄,自動同步至雲端
+    try{ if(typeof window._refreshMyRepHeroCloud === 'function') window._refreshMyRepHeroCloud(); }catch(_){}
     try{
       _checkMedalSkillUpgrade();
       if(nextLv >= 9) _checkMedalSkillMax();
@@ -56329,6 +56389,64 @@ async function _selectRepHero(name) {
   _loadRepHeroBar();
 }
 
+// ★ v1.0.20260501.5500 — 代表英雄資料自動同步機制
+//   問題:玩家設定代表英雄後,如果之後改了至寶/技能/爆發等級,代表英雄資料不會自動更新
+//         好友邀請此英雄時,看到的是「設定當下」的舊資料
+//   解法:加一個 helper 函式,玩家改至寶/升級/投資後自動呼叫,重新打包並寫雲端
+//   呼叫點:_saveTaiwanTreasureData / saveHeroSkillLevels / saveHeroBurstLevels 等
+//   防抖:用 setTimeout 集中執行(短時間多次呼叫只執行最後一次),避免頻繁寫雲端
+window._refreshMyRepHeroCloud_pendingId = null;
+window._refreshMyRepHeroCloud = function(){
+  try{
+    if(!_myRepHero || !_myRepHero.name) return;
+    if(!window._gUserId || !window._fbSetRepHero) return;
+    // 防抖:1.5 秒內多次呼叫只執行最後一次
+    if(window._refreshMyRepHeroCloud_pendingId){
+      clearTimeout(window._refreshMyRepHeroCloud_pendingId);
+    }
+    window._refreshMyRepHeroCloud_pendingId = setTimeout(()=>{
+      try{
+        const name = _myRepHero.name;
+        const lv  = (typeof getHeroLevel === 'function') ? getHeroLevel(name) : (_myRepHero.level||1);
+        const inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[name]) || {};
+        const skl = (typeof _heroSkillLevels  !== 'undefined' && _heroSkillLevels  && _heroSkillLevels[name])  || {};
+        const bLv = (typeof _heroBurstLevels  !== 'undefined' && _heroBurstLevels  && _heroBurstLevels[name])  || 0;
+        const img = _myRepHero.img || ((typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '');
+        // 重新打包至寶資料
+        let treasures = [];
+        try {
+          if (typeof _getHeroEquippedTreasures === 'function') {
+            const equipped = _getHeroEquippedTreasures(name);
+            treasures = equipped.map(e => {
+              const base = (typeof _getTaiwanTreasureStats === 'function')
+                ? _getTaiwanTreasureStats(e.id, e.record.lv) : {};
+              const _inv = (typeof _getTaiwanTreasureInvested === 'function')
+                ? _getTaiwanTreasureInvested(e.id) : {};
+              const eff  = (typeof _getTaiwanTreasureEffectBonus === 'function')
+                ? _getTaiwanTreasureEffectBonus(e.id, e.record.lv) : {};
+              return {
+                id: e.id, lv: e.record.lv || 1,
+                hp:  (base.hp ||0) + (_inv.hp ||0),
+                atk: (base.atk||0) + (_inv.atk||0),
+                sp:  (base.sp ||0) + (_inv.sp ||0),
+                spd: (base.spd||0) + (_inv.spd||0),
+                eff: eff || {}
+              };
+            });
+          }
+        } catch(e) { console.warn('[refreshRepHero] 至寶打包失敗', e); }
+        _myRepHero = { name, level: lv, statInvested: inv, skillLevels: skl, burstLevel: bLv, img, treasures };
+        window._myRepHero = _myRepHero;
+        // 寫雲端
+        window._fbSetRepHero(window._gUserId, _myRepHero).then(()=>{
+          console.log('[代表英雄] 自動同步完成:'+name+'(lv'+lv+', 至寶 '+treasures.length+' 件, 爆發 lv'+bLv+')');
+        }).catch(e => console.warn('[代表英雄] 雲端寫入失敗', e));
+      }catch(e){ console.warn('[refreshRepHero] 失敗', e); }
+      window._refreshMyRepHeroCloud_pendingId = null;
+    }, 1500);
+  }catch(e){ console.warn('[refreshRepHero] 觸發失敗', e); }
+};
+
 // ── 好友名單面板 ──
 async function openFriendPanel() {
   // ★ 切換：若已開啟則關閉
@@ -56856,6 +56974,10 @@ function _injectFriendHeroIntoBattle() {
     applyFriendLvHpBonus(existingHero, existingHero.hp);
     // 套用技能等級
     if(fh.skillLevels){ existingHero._skLv = { s1: fh.skillLevels.s1||0, s2: fh.skillLevels.s2||0 }; }
+    // ★ v1.0.20260501.5500 — bug 修復:existingHero path 漏套爆發等級
+    //   原本只 fallback path(line ~56886)有套 _burstLvAdv,existingHero path 沒套
+    //   結果:好友英雄已預先放入 G.p1 時(現在的標準路徑),爆發升級永遠不生效
+    if(typeof fh.burstLevel !== 'undefined'){ existingHero._burstLvAdv = fh.burstLevel || 0; }
     existingHero._isFriendHero = true;
     // ★ v1.0.20260501.5370 — 套用好友自己的至寶加成(從 representativeHero.treasures 讀取)
     //   不能用 _applyTaiwanTreasureToHero,因為它讀本地玩家裝備資料
@@ -60710,6 +60832,41 @@ function _checkMedalJapanBossKill(bossName, winGrade, heroesKO, rounds){
   }catch(e){ console.warn('[日本 BOSS 獎章]', e); }
 }
 
+// ★ v1.0.20260501.5510 — 管理員工具:補發八岐大蛇歷史獎章
+//   情境:v5510 之前的版本因 _mainBoss = G.p2[1] 寫死 bug,八岐大蛇單獨陣容戰勝
+//         時所有 jp_yamata_* 獎章都不會解鎖。玩家可能已經打過很多次但都沒拿到。
+//   補發策略:不能精確還原歷史擊殺次數(沒留紀錄),所以只給最低限度補償:
+//     - 若玩家確實有「踏上日本」獎章(jp_first_clear)
+//     - 且至少擁有 1 件神器(代表打贏過至少 1 隻日本 BOSS,且玩過神器系統)
+//     - 且 jpBossKills.yamata 為 0(代表從沒被計到)
+//     → 假設玩家至少打過 1 次八岐大蛇,給「首殺八岐大蛇」獎章
+//   呼叫方式:管理員在 F12 console 輸入 _adminGrantYamataMedalRetro()
+window._adminGrantYamataMedalRetro = function(force){
+  try{
+    if(typeof _isAdminUser === 'function' && !_isAdminUser() && !force){
+      return '⛔ 僅管理員可使用(若是測試,在參數帶 true)';
+    }
+    if(typeof _medalStats === 'undefined' || !_medalStats){
+      return '⛔ _medalStats 未載入';
+    }
+    _medalStats.jpBossKills = _medalStats.jpBossKills || {};
+    const cur = _medalStats.jpBossKills.yamata || 0;
+    if(cur > 0 && !force){
+      return '✅ 已有八岐大蛇擊敗紀錄('+cur+' 次),不需補發。如要強制補發請在參數帶 true';
+    }
+    // 至少給 1 次擊殺
+    _medalStats.jpBossKills.yamata = Math.max(1, cur);
+    // 解鎖首殺獎章
+    if(typeof _unlockMedal === 'function') _unlockMedal('jp_boss_yamata');
+    if(typeof _saveMedals === 'function') _saveMedals();
+    console.log('🎁 [管理員補發] 已補發八岐大蛇首殺獎章');
+    return '✅ 已補發 jp_boss_yamata 獎章。如要補 3 次累積或 S 評,請繼續用打的(現在 bug 已修)';
+  }catch(e){
+    console.error('[補發] 失敗', e);
+    return '失敗:' + (e && e.message);
+  }
+};
+
 // 路邊/稀有/菁英小怪擊敗
 function _checkMedalJapanMob(mobName){
   try{
@@ -62506,6 +62663,71 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5510', brief:[
+    '🐉 修了打倒八岐大蛇後獎章不會解鎖的問題!',
+    '✨ 「伏龍大師」「大蛇 S 評」「快速伏龍」等八岐大蛇獎章現在都會正常解鎖了',
+    '🛠 同時修正了結算畫面的掉落物提示',
+  ], items:[
+    '【玩家回報】',
+    '・玩家反應:打了好多次八岐大蛇,但「擊敗 X 次八岐大蛇」之類的獎章都沒拿到',
+    '【為什麼會這樣?】',
+    '・大天狗、酒吞童子、玉藻前的戰鬥陣容都是 3 隻(2 隻小怪+1 隻 BOSS),BOSS 在中間位置',
+    '・舊版獎章解鎖邏輯就寫死「中間位置就是主 BOSS」',
+    '・但八岐大蛇是隱藏 BOSS,陣容只有 1 隻(就是它本人,沒有小怪)',
+    '・舊版誤以為「中間位置」是空的,結果 fallback 認為是另一隻怪',
+    '・所有八岐大蛇相關獎章因此永遠不會解鎖',
+    '【影響範圍】',
+    '・jp_boss_yamata「首殺八岐大蛇」(首殺獎章)',
+    '・jp_yamata_3「伏龍大師」(累積擊敗 3 次)',
+    '・jp_yamata_s「大蛇 S 評」(以 S 評擊敗)',
+    '・jp_quick_yamata「快速伏龍」(10 回合內擊敗)',
+    '・jp_treasure_consume「神器之力」(消耗三神器擊敗)',
+    '・jp_treasure_preserve「不靠神器」(保留三神器擊敗滿血大蛇)',
+    '・以上所有獎章在舊版都不會解鎖,本次修補後全部都會正常觸發',
+    '【這次怎麼修?】',
+    '・✨ 改用「主 BOSS 名字搜尋」邏輯:從戰鬥陣容中找到日本關 BOSS,而不是寫死位置',
+    '・這樣不管陣容是 1 隻還是 3 隻都能正確識別主 BOSS',
+    '・順手修了結算畫面的掉落物提示(同一個 bug)',
+    '【補償(管理員可選)】',
+    '・之前打過八岐大蛇的玩家,沒辦法回溯歷史擊殺次數',
+    '・但管理員可在 F12 Console 用 _adminGrantYamataMedalRetro() 為單一玩家補發「首殺」獎章',
+    '・累積 3 次和 S 評等仍需重新打(因為現在 bug 已修,以後打就會正常累計)',
+    '【實作位置】',
+    '・advShowBattleResult 內 _mainBoss 計算改為 G.p2.find(_JAPAN_BOSS_DROPS) 搜尋',
+    '・結算面板的掉落物提示也用同樣邏輯',
+    '・新增 window._adminGrantYamataMedalRetro 管理員補發工具',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5510',
+  ] },
+  { ver:'v1.0.20260501.5500', brief:[
+    '🤝 修了好友英雄爆發等級沒生效的問題!',
+    '⭐ 玩家升級或改裝備後,代表英雄資料現在會自動同步給好友',
+    '🛠 至寶診斷工具加入了元素加成的判斷,診斷更精準',
+  ], items:[
+    '【bug 1:好友英雄的極限爆發等級沒生效】',
+    '・玩家邀請好友的代表英雄上場後,該英雄的素質、技能等級、至寶都正確同步',
+    '・但「極限爆發等級」忘了套用,所以好友升的爆發效果在戰鬥中沒生效',
+    '・✨ 現在好友英雄的爆發等級也會正確套用了',
+    '【bug 2:代表英雄資料不會自動更新】',
+    '・玩家設定某英雄為代表後,如果之後升級該英雄(技能、爆發、素質、至寶),代表英雄資料不會自動更新',
+    '・結果好友邀請看到的是「設定當下」的舊資料,新升的等級沒同步',
+    '・✨ 現在改變這些資料時,如果動到當前代表英雄,會自動把最新資料同步到雲端',
+    '・有防抖機制(1.5 秒延遲集中執行),不會頻繁寫雲端造成負擔',
+    '【診斷工具改進】',
+    '・之前回報「巫女攻擊應該是 14 但顯示 18」,實際上是火屬性 +4 攻擊的元素加成造成的',
+    '・舊版診斷工具沒考慮元素加成,誤判為 bug',
+    '・✨ 新版會把元素加成(火+4攻擊、水+5血、風+4速度等)納入預期值計算',
+    '・差距 ≠ 0 時不再直接判定為錯,改用「可能來自天賦/裝備/buff」的友善提示',
+    '・好友英雄屬性來自好友自己的設定,跳過本機預期值對比',
+    '【影響範圍】',
+    '・好友邀請功能更可靠了,看到的代表英雄資料永遠是最新的',
+    '・玩家設定代表英雄後不需要再手動點「重新設定」就能保持資料同步',
+    '【實作位置】',
+    '・_injectFriendHeroIntoBattle existingHero path(line ~56858)補上 _burstLvAdv',
+    '・新增 window._refreshMyRepHeroCloud() helper 函式(防抖 1.5 秒)',
+    '・_saveTaiwanTreasureData / confirmPendingStats / 技能升級 / 爆發升級 完成後都自動觸發 hook',
+    '・_diagnoseTreasure 加入元素加成,顯示元素類型、爆發等級、好友英雄標記',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5500',
+  ] },
   { ver:'v1.0.20260501.5490', adminOnly:true, brief:[
     '🔍 加強至寶套用診斷工具,協助排查「至寶能力沒生效」的回報',
     '📊 強化 console log,F12 一眼看清楚至寶有沒有套用',
@@ -63640,7 +63862,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5490';
+  const CURRENT_VERSION = 'v1.0.20260501.5510';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63674,7 +63896,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5490';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5510';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
