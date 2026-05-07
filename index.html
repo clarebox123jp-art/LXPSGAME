@@ -4414,37 +4414,21 @@ body {
     left: max(240px, env(safe-area-inset-left) + 220px) !important;
   }
 
-  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 ═══
-     ★ v1.0.20260501.5420 — 之前 .5410 設 height:96vh 直接蓋滿,把下方劇情對白也擋掉。
-        新版改成 top:8px / bottom:30vh,讓視窗占畫面上方 70%,下方 30% 留給對白可見。
-        字體維持 64/56/56(玩家反饋字體已 OK,只是框框要再放大)。
-        位置改成中央,蓋住背景圖片沒關係,但對白固定可見 */
+  /* ═══ Phase 1. 關卡劇情挑戰主題視窗 ═══ */
   #adv-choice-panel {
-    position: fixed !important;
-    top: 8px !important;
-    left: 8px !important;
-    right: 8px !important;
-    bottom: 30vh !important;          /* ★ 留 30% 給對白(對白 base min-height:320px × 0.35 ≈ 28% 螢幕高) */
-    width: auto !important;
-    max-width: none !important;
-    height: auto !important;
-    max-height: none !important;
+    width: 96vw !important;
+    max-width: 96vw !important;
+    height: 96vh !important;
+    max-height: 96vh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding: 12px !important;
+    padding: 24px 28px !important;
     box-sizing: border-box !important;
-    transform: none !important;
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
     z-index: 9999 !important;
-    /* 讓 box 在 panel 中央 */
-    align-items: center !important;
-    justify-content: center !important;
-  }
-  .adv-choice-box {
-    max-height: 100% !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    padding: 24px 32px !important;
   }
   .adv-choice-title {
     font-size: 64px !important;
@@ -4455,9 +4439,6 @@ body {
     overflow: visible !important;
     text-overflow: clip !important;
     text-align: center !important;
-  }
-  .adv-choice-grid {
-    gap: 16px !important;
   }
   .adv-choice-btn {
     font-size: 56px !important;
@@ -4470,7 +4451,6 @@ body {
     font-size: 56px !important;
     padding: 20px !important;
     min-height: 110px !important;
-    margin-top: 24px !important;
   }
 
   /* ═══ Phase 2. 戰鬥問題視窗 ═══
@@ -4540,43 +4520,26 @@ body {
   #adv-reward-title { font-size: 64px !important; margin-bottom: 12px !important; }
   #adv-reward-subtitle { font-size: 40px !important; margin-bottom: 16px !important; }
 
-  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 預設左上 + 普攻階段切左下 ═══
-     ★ v1.0.20260501.5410 — 改放左上而非右上的原因:
-       戰鬥畫面右側是 #sb 操作面板(普攻 / 技能 / 爆發 / 自動戰鬥 / 物品 全部在此),
-       教學第 3 步「點普通攻擊」時,視窗在右上會整個蓋住 b-atk 按鈕無法繼續。
-       左上區域只可能擋到對手卡片頂部一小塊或 turn-order 左半,但這些步驟玩家不需點按鈕。
-       step 9 的 adv-tut-btn 在左下,左上視窗也不衝突。
-     ★ v1.0.20260501.5430 — 普攻階段(b-atk 高亮時)左上會擋住上方對手卡,
-       玩家若想對照敵方狀態無法看到。改成這個階段把視窗切到左下,既不擋對手卡也不擋 b-atk(右側)。
-       用 :has() 偵測 b-atk._tut-highlight,只命中那個 step,其他 step 維持左上。
-     ★ 加 max-height + overflow-y:auto 解決最後一頁過長要捲動的問題 */
+  /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 移到右上角 ═══
+     不用 transform:scale(會跑出邊界),改用直接縮 max-width + 字體
+     位置:撤回 base CSS 的中央,改貼右上角 */
   #_tut-prompt {
     /* 教學確認視窗(第一次戰鬥提示)— 維持 scale 0.5,中央 */
     transform: translate(-50%, -50%) scale(0.5) !important;
     transform-origin: center center !important;
   }
   #_tut-box {
-    /* 撤回 base CSS 的 transform:translate(-50%,-50%) 跟 50%/50% 中央定位 */
+    /* 撤回 transform 跟中央定位 */
     transform: none !important;
     top: 12px !important;
-    left: 12px !important;
-    right: auto !important;
+    left: auto !important;
+    right: 12px !important;
     bottom: auto !important;
     /* 直接縮小視窗 */
     max-width: 280px !important;
     min-width: 0 !important;
-    max-height: calc(100vh - 24px) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
     padding: 12px 14px 10px !important;
     z-index: 99999 !important;
-  }
-  /* ★ 普攻教學階段:b-atk 被高亮時,把視窗切到左下角(避開上方對手卡) */
-  body:has(#b-atk._tut-highlight) #_tut-box {
-    top: auto !important;
-    bottom: 12px !important;
-    left: 12px !important;
-    right: auto !important;
   }
   #_tut-box ._tut-step { font-size: 11px !important; margin-bottom: 3px !important; }
   #_tut-box ._tut-title { font-size: 18px !important; margin-bottom: 6px !important; line-height: 1.2 !important; }
@@ -4661,52 +4624,9 @@ body {
   #hero-pick-count { font-size: 36px !important; }
   #hero-pick-topbar { padding: 8px 16px 6px !important; }
 
-  /* ★ v1.0.20260501.5430 — 英雄選單卡片本身放大(玩家反映目前圖跟字偏小,認不出英雄)
-     不動 grid 結構也不動右側預覽,只把每張卡的 width / 圖高 / 字體放大 ~50% */
-  #hero-pick-arena .hpick-adv-node,
-  #hero-pick-arena .hpick-arena-card {
-    width: 220px !important;       /* 155 → 220(+42%) */
-  }
-  #hero-pick-arena .hpick-adv-node img,
-  #hero-pick-arena .hpick-arena-card img {
-    height: 180px !important;      /* 120 → 180(+50%) */
-  }
-  /* 卡內名字+Lv 文字(inline style 用屬性選擇器命中) */
-  #hero-pick-arena .hpick-adv-node [style*="font-size:18px"],
-  #hero-pick-arena .hpick-arena-card [style*="font-size:18px"] {
-    font-size: 28px !important;    /* 18 → 28 */
-  }
-  #hero-pick-arena .hpick-adv-node [style*="font-size:16px"],
-  #hero-pick-arena .hpick-arena-card [style*="font-size:16px"] {
-    font-size: 24px !important;    /* 16 → 24 */
-  }
-  #hero-pick-arena .hpick-adv-node [style*="font-size:15px"],
-  #hero-pick-arena .hpick-arena-card [style*="font-size:14px"],
-  #hero-pick-arena .hpick-arena-card [style*="font-size:15px"],
-  #hero-pick-arena .hpick-adv-node [style*="font-size:14px"] {
-    font-size: 22px !important;    /* 14-15 → 22 */
-  }
-  /* 卡內 emoji(無圖時的 avatar 大圖示) */
-  #hero-pick-arena .hpick-adv-node [style*="font-size:44px"],
-  #hero-pick-arena .hpick-arena-card [style*="font-size:58px"] {
-    font-size: 72px !important;
-  }
-  /* 「已選」綠色徽章 */
-  #hero-pick-arena .hpick-adv-node [style*="font-size:13px"],
-  #hero-pick-arena .hpick-arena-card [style*="font-size:13px"] {
-    font-size: 20px !important;
-    width: 28px !important;
-    height: 28px !important;
-  }
-
-  /* ═══ Phase 7. 元素屬性選擇頁 — 底部按鈕強制移到右側黑塊(參考英雄選擇頁 _mobile-pick 風格)═══
+  /* ═══ Phase 7. 元素屬性選擇頁 — 底部按鈕強制移到右側 ═══
      底部按鈕區是 #elem-pick-overlay > div:last-child(無 id 無 class)
-     用 inline style 屬性 [style*="border-top"] 精準命中
-     ★ v1.0.20260501.5430 — 改成跟英雄選擇頁(圖1)的 _mobile-pick 視覺一致:
-        - 黑色面板貼螢幕右邊(linear-gradient to left,半透明)
-        - 三個按鈕方塊垂直排列、寬度 130(略寬於 _mobile-pick 的 90,因為文字較長)
-        - 文字自動換行(white-space: normal),emoji 自然在第一個字
-        - min-height 拉到 110,觸碰熱區夠大 */
+     用 inline style 屬性 [style*="border-top"] 精準命中 */
   #elem-pick-overlay > div:last-child,
   #elem-pick-overlay > div[style*="border-top"] {
     position: fixed !important;
@@ -4717,31 +4637,24 @@ body {
     transform: translateY(-50%) !important;
     flex-direction: column !important;
     width: auto !important;
-    max-width: 150px !important;
-    background: linear-gradient(to left, rgba(0,0,10,0.96) 80%, rgba(0,0,10,0.85)) !important;
+    max-width: 130px !important;
+    background: linear-gradient(to left, rgba(0,0,10,0.92), rgba(0,0,10,0.6)) !important;
     border-top: none !important;
     border-radius: 12px 0 0 12px !important;
-    padding: 16px 10px !important;
-    gap: 12px !important;
+    padding: 12px 8px !important;
+    gap: 10px !important;
     z-index: 999990 !important;
     justify-content: flex-start !important;
-    align-items: stretch !important;
   }
-  /* 三個按鈕統一視覺:垂直方塊 + 文字換行 + 大觸碰熱區,跟英雄選擇頁的 .mp-btn 同款 */
+  /* 內部按鈕縮小,確保塞得下 */
   #elem-pick-overlay > div:last-child button,
   #elem-pick-overlay > div[style*="border-top"] button {
-    font-size: 20px !important;
-    padding: 14px 8px !important;
-    min-height: 110px !important;
+    font-size: 16px !important;
+    padding: 8px 6px !important;
+    min-height: 56px !important;
     letter-spacing: 1px !important;
-    width: 130px !important;
+    width: 100% !important;
     box-sizing: border-box !important;
-    line-height: 1.3 !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    border-width: 2px !important;
   }
 
   /* ═══ Phase 8. 召喚星空 ═══ */
@@ -4768,23 +4681,12 @@ body {
     max-width: 25% !important;
   }
 
-  /* ═══ Phase 10. 至寶圖鑑 ═══
-     ★ v1.0.20260501.5420 — 改成跟 PC 版一樣的 30/70 比例,並把右側 detail 字體再放大一輪。
-        左側 10 個按鈕保留現有縮放(scale 0.7)不動,只改占比。
-        base CSS 已全域放大字體(14→18 / 18→24 等),手機 detail 內再用更高 specificity 蓋過,
-        把實際渲染字體從 18~30 拉到 24~38,玩家在手機上看得清楚
-     ★ v1.0.20260501.5440 — 修復排版錯亂:base CSS line 2293 用 @media (max-width:900px) 把 main
-        強制成 column,導致 grid 跟 detail 上下堆疊,detail 蓋住下方的 9 張卡片。
-        手機橫式畫面寬度夠左右並排,撤回那條 column 強制,改回 row */
+  /* ═══ Phase 10. 至寶圖鑑 ═══ */
   #taiwan-treasure-page > div { zoom: unset !important; }
-  #taiwan-treasure-page > div:nth-child(2) {
-    flex-direction: row !important;
-    overflow: hidden !important;
-  }
   #tt-grid {
-    flex: 0 0 30% !important;
-    max-width: 30% !important;
-    width: 30% !important;
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+    width: 25% !important;
     grid-template-columns: 1fr !important;
     padding: 8px !important;
   }
@@ -4794,24 +4696,8 @@ body {
     margin-bottom: -30% !important;
   }
   #tt-detail {
-    flex: 1 1 70% !important;
-    width: 70% !important;
-    padding: 18px 22px !important;
-  }
-  /* ★ 右側字體再放大一輪(高 specificity 覆寫 base 的全域放大規則) */
-  #taiwan-treasure-page #tt-detail [style*="font-size:13px"] { font-size: 22px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:14px"] { font-size: 24px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:15px"] { font-size: 25px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:16px"] { font-size: 26px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:17px"] { font-size: 27px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:18px"] { font-size: 28px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:20px"] { font-size: 30px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:22px"] { font-size: 32px !important; }
-  #taiwan-treasure-page #tt-detail [style*="font-size:24px"] { font-size: 34px !important; }
-  /* 投資/卷軸按鈕變大,觸碰熱區更友善 */
-  #taiwan-treasure-page #tt-detail .tt-invest-btn {
-    padding: 14px 16px !important;
-    min-height: 56px !important;
+    flex: 1 1 75% !important;
+    width: 75% !important;
   }
 
   /* ═══ Phase 11. 台灣地圖 ═══ */
@@ -4914,215 +4800,6 @@ body {
   #adv-dialog-speaker { font-size: 64px !important; margin-bottom: 12px !important; }
   #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
   #adv-dialog-next { font-size: 72px !important; }
-
-  /* ═══ Phase 19. 爆發技確認面板(burst-panel)═══
-     ★ v1.0.20260501.5410 — base CSS 字體偏大(name 44 / desc 28 / use 32)
-        導致內容在手機橫式高度下總高 > max-height 80vh,「發動」按鈕被擠到下方需捲動。
-        手機上縮字體 + 縮 padding,讓整個面板(標題/招式名/描述/能量/兩個按鈕)
-        都能塞進首屏,不需捲動就看到「發動」
-     ★ v1.0.20260501.5430 — 玩家反映「發動」按鈕仍貼太靠底邊容易誤按到瀏覽器手勢區。
-        把 bottom 從 60(內部 px,視覺 ≈ 21px)拉到 240(內部 px,視覺 ≈ 84px),
-        整個面板視覺上往上移 ~63px,「發動」按鈕離底邊更遠 */
-  #burst-panel {
-    /* base 是 #gc 內 absolute,bottom:60px;width:96%;max-width:640px */
-    bottom: 240px !important;
-    max-height: 700px !important;
-    padding: 12px 16px 14px !important;
-  }
-  #burst-panel .bp-title {
-    font-size: 18px !important;
-    margin-bottom: 4px !important;
-    letter-spacing: 1px !important;
-  }
-  #burst-panel .bp-name {
-    font-size: 26px !important;
-    margin-bottom: 6px !important;
-  }
-  #burst-panel .bp-desc {
-    font-size: 16px !important;
-    line-height: 1.45 !important;
-    margin-bottom: 8px !important;
-  }
-  #burst-panel .bp-cost {
-    font-size: 15px !important;
-    margin-bottom: 8px !important;
-  }
-  #burst-panel .bp-btns {
-    gap: 8px !important;
-  }
-  #burst-panel .bp-use {
-    font-size: 22px !important;
-    padding: 10px !important;
-    letter-spacing: 1px !important;
-  }
-  #burst-panel .bp-skip {
-    font-size: 18px !important;
-    padding: 10px 14px !important;
-  }
-
-  /* ═══ Phase 20. 小怪 / BOSS 戰勝利結算(adv-result-overlay)═══
-     ★ v1.0.20260501.5410 — base CSS 字體偏大(title 52 / grade 96 / row 22)+ padding 32px,
-        在手機橫式高度下整個 box 高度太大需捲動才看完。
-        縮字體 + 縮 padding,目標一目瞭然不需捲動 */
-  #adv-result-overlay {
-    /* overlay 是 #gc 內 absolute,維持 inset:0,只調 box */
-    align-items: flex-start !important;
-    padding-top: 8px !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  #adv-result-box {
-    margin-right: auto !important;
-    margin-left: auto !important;
-    padding: 14px 18px !important;
-    width: 96% !important;
-    max-width: 96% !important;
-    border-radius: 14px !important;
-  }
-  #adv-result-title {
-    font-size: 26px !important;
-    letter-spacing: 3px !important;
-    margin-bottom: 4px !important;
-  }
-  #adv-result-grade {
-    font-size: 48px !important;
-    margin-bottom: 0 !important;
-  }
-  #adv-result-body {
-    flex-direction: row !important;
-    gap: 10px !important;
-    margin-top: 6px !important;
-  }
-  #adv-result-left {
-    flex: 1 1 50% !important;
-    min-width: 0 !important;
-  }
-  #adv-result-right {
-    flex: 0 0 48% !important;
-    min-width: 0 !important;
-  }
-  #adv-result-stats {
-    padding-top: 8px !important;
-  }
-  .adv-result-row {
-    font-size: 14px !important;
-    padding: 4px 0 !important;
-  }
-  #adv-result-score {
-    font-size: 22px !important;
-    margin: 8px 0 2px !important;
-  }
-  #adv-result-reward-panel {
-    padding: 10px 12px !important;
-    gap: 4px !important;
-  }
-  .adv-reward-panel-title {
-    font-size: 15px !important;
-    padding-bottom: 5px !important;
-  }
-  .adv-reward-row {
-    font-size: 13px !important;
-    padding: 4px 6px !important;
-    gap: 6px !important;
-  }
-  .adv-reward-row .ari {
-    font-size: 16px !important;
-  }
-  .adv-reward-empty {
-    font-size: 12px !important;
-    padding: 8px 4px !important;
-  }
-  #adv-result-btns {
-    margin-top: 10px !important;
-    gap: 10px !important;
-  }
-  .adv-result-play-again {
-    font-size: 18px !important;
-    padding: 10px 24px !important;
-    letter-spacing: 2px !important;
-  }
-  .adv-result-back-title {
-    font-size: 16px !important;
-    padding: 10px 22px !important;
-  }
-
-  /* ═══ Phase 21. 替換技能頁(skill-replace-overlay)═══
-     ★ v1.0.20260501.5430 — 玩家反映在手機上字體小到看不清。
-        全部字體放大 ~50-70%,保持四欄(srh-block flex:1)排列不動
-     ★ v1.0.20260501.5440 — 改流程:下方候選技能區隱藏,改成點英雄技能格時彈 popup
-        (見 _openMobileSkillPickerModal),點 popup 內任一技能即直接套用替換 */
-  /* 下方候選技能整區隱藏 */
-  #sro-picker { display: none !important; }
-  /* 上方 4 英雄卡區佔滿剩餘空間,可捲動 */
-  #sro-cards {
-    flex: 1 1 auto !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    align-items: flex-start !important;
-  }
-  /* header */
-  #sro-header { padding: 8px 16px 6px !important; }
-  #sro-header h2 { font-size: 48px !important; letter-spacing: 3px !important; }
-  #sro-header p  { font-size: 30px !important; }
-  /* 上半:4 個英雄卡(維持四欄 flex:1) */
-  #sro-cards { gap: 10px !important; padding: 10px 14px 8px !important; }
-  .srh-block { padding: 12px 10px !important; }
-  .srh-header { gap: 8px !important; margin-bottom: 8px !important; padding-bottom: 6px !important; }
-  .srh-av { font-size: 60px !important; }
-  .srh-name { font-size: 38px !important; margin-bottom: 4px !important; }
-  .srh-stats-row { gap: 4px !important; margin-top: 4px !important; }
-  .srh-stat { font-size: 26px !important; padding: 3px 6px !important; }
-  .srh-stat b { font-size: 28px !important; }
-  .srh-current-label { font-size: 26px !important; margin-top: 4px !important; }
-  .srh-skill-box { padding: 6px 9px !important; margin-bottom: 4px !important; }
-  .srh-skill-box .sk-name { font-size: 32px !important; }
-  .srh-skill-box .sk-cost { font-size: 24px !important; }
-  .srh-skill-box .sk-desc { font-size: 24px !important; line-height: 1.35 !important; }
-  .srh-slot-row { gap: 4px !important; margin-top: 6px !important; }
-  .srh-slot-btn { font-size: 22px !important; padding: 6px 4px !important; }
-  .srh-replace-info { font-size: 24px !important; }
-  .srh-clear-btn { font-size: 18px !important; }
-  .srh-cancel-btn { font-size: 18px !important; padding: 2px 10px !important; }
-  /* 下半:候選技能挑選區 */
-  #sro-picker { padding: 8px 14px 0 14px !important; }
-  #sro-picker-title { font-size: 36px !important; }
-  #sro-picker-body { font-size: 100% !important; padding-bottom: 100px !important; }
-  .skcat-header { font-size: 38px !important; padding: 6px 12px !important; letter-spacing: 1px !important; }
-  .sk-pick-btn { padding: 6px 9px !important; gap: 0 8px !important; }
-  .sk-pick-name { font-size: 34px !important; }
-  .sk-pick-cost { font-size: 28px !important; }
-  .sk-pick-passive { font-size: 24px !important; }
-  .sk-pick-desc { font-size: 28px !important; line-height: 1.35 !important; }
-  /* footer 按鈕(重新編組 / 儲存陣容 / 自動推薦 / 整裝完畢)*/
-  #sro-footer { gap: 12px !important; padding: 6px 16px !important; }
-  #sro-footer button { font-size: 26px !important; padding: 10px 22px !important; }
-  #skill-replace-confirm,
-  #skill-replace-confirm-adv { font-size: 28px !important; padding: 10px 28px !important; }
-
-  /* ═══ Phase 22. 儲存為預設陣容彈窗 — 加捲動 ═══
-     ★ v1.0.20260501.5430 — 彈窗是 fixed inset:0 + flex center,內部 box 沒設 max-height,
-        手機橫式高度下 5 個欄位 + 取消按鈕會超出畫面,玩家按不到底部「取消」。
-        box 是動態建立的 inline style,沒 id 或 class,用 #preset-save-panel > div 命中 */
-  #preset-save-panel > div {
-    max-height: 92vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 16px 22px !important;
-  }
-
-  /* ═══ Phase 23. 縮小兩側黑邊 + 黑邊改深漸層 ═══
-     ★ v1.0.20260501.5440 — 玩家詢問為什麼至寶頁能全螢幕、戰鬥/選角頁卻有黑邊。
-        原因:#gc 是 1920×1080 內部座標 + transform scale(min) 等比縮放,
-        手機橫式比例(720×384=1.875)跟 1920×1080(=1.778)有 5% 差距,等比縮放後會留黑邊。
-        至寶頁是 fixed inset:0 直接覆蓋 viewport 所以無黑邊。
-        本 phase 做法:撤回 base CSS line 2374 在手機橫式給 wrapper 的 +4px padding,
-        改成只留 safe-area(瀏海/手勢區),黑邊縮到最小;
-        並把 wrapper 純黑背景改成深漸層,跟 #gc 場景色接近,殘留邊緣看起來不那麼分明 */
-  #_gc_wrapper {
-    padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0)
-             env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0) !important;
-    background: linear-gradient(180deg, #0a0612 0%, #050810 50%, #0a0612 100%) !important;
-  }
 }
 
 
@@ -6103,6 +5780,8 @@ body.art-premium #summon-overlay {
 <audio id="sfx-tengu-strike"      preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BE%8D%E6%8D%B2%E9%A2%A8%E9%9F%B3%E6%95%88.m4a"></audio>
 <audio id="sfx-thunder-fury"      preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2%E9%9F%B3%E6%95%88.m4a"></audio>
 <audio id="sfx-paralysis-thunder" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BA%BB%E7%97%BA%E8%90%BD%E9%9B%B7%E9%9F%B3%E6%95%88.m4a"></audio>
+<!-- ★ v1.0.20260501.5420 — 學生設計英雄系列(窮奇)專屬爆發音效 -->
+<audio id="sfx-qiongqi-burst" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.mp3"></audio>
 <!-- ★ v1.0.20260424.0790 — 召喚系統 BGM/SFX -->
 <audio id="bgm-summon"        preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a" loop></audio>
 <audio id="sfx-summon-smoke"  preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
@@ -9512,6 +9191,18 @@ const HERO_IMGS = {
   '水靈反魔・倒映女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('日月潭BOSS.png'),
   '摩天魔將・夜空爆裂者': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('101大樓BOSS.png'),
   '山岳禁咒・崩天巨人':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉山BOSS.png'),
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  //   窮奇:5 年 5 班閻漢昀同學設計,2026 年
+  '窮奇':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('窮奇 5年5班閻漢昀設計.png'),
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  //   科技生化人:5 年 5 班翁嵦晏同學設計,2026 年
+  '科技生化人':           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('生化人 五年五班翁嵦晏設計.png'),
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  //   鋁合金暴龍:5 年 5 班陳品均同學設計,2026 年
+  '鋁合金暴龍':           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鋁合金暴龍 五年五班陳品均設計.png'),
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  //   超鬼神王:5 年 5 班陳睿智同學設計,2026 年
+  '超鬼神王':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('超鬼神王 五年五班陳睿智設計.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -9684,6 +9375,27 @@ const HERO_PORTRAIT_LIBRARY = {
   '劍士': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('劍士Q.png') },
     { id:'sword_master', name:'絕世劍意', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('劍士3.png'), requiresUnlock:true },
+  ],
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  //   窮奇:5 年 5 班閻漢昀同學設計,2026 年
+  //   暫時只放 default 肖像,以後再生額外商店圖
+  '窮奇': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('窮奇 5年5班閻漢昀設計.png') },
+  ],
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  //   科技生化人:5 年 5 班翁嵦晏同學設計,2026 年
+  '科技生化人': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('生化人 五年五班翁嵦晏設計.png') },
+  ],
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  //   鋁合金暴龍:5 年 5 班陳品均同學設計,2026 年
+  '鋁合金暴龍': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鋁合金暴龍 五年五班陳品均設計.png') },
+  ],
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  //   超鬼神王:5 年 5 班陳睿智同學設計,2026 年
+  '超鬼神王': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('超鬼神王 五年五班陳睿智設計.png') },
   ],
 };
 
@@ -10384,6 +10096,30 @@ const HERO_DB = {
   '小劇團員':  {hp:62,atk:11,sp:8,spd:9, s1:{n:'變臉戲法',c:2,d:'先隨機附加有利狀態1回合，再用特技+攻擊+速度造成傷害',fd:'先幫自己隨機附加一個有利狀態持續1回合，再用特技值+攻擊值+速度值的總和對1名對手造成傷害。'},s2:{n:'舞台聚光燈',c:2,d:'強迫1名敵人「被挑釁」只能攻擊施展者，並使其失明2回合',fd:'強迫1名敵人進入「被挑釁」狀態（只能普通攻擊施展者），並使其「失明」（行動成功率減半），持續2回合。'},_traitDesc:'【天賦】成為攻擊目標機率+40%；受傷時20%機率將傷害轉為治療HP'},
   // ★ v1.0.20260421.3000o — 日本關限定角色（打贏八岐大蛇後 5% 機率觸發劇情解救加入）
   '巫女':    {hp:56,atk:8,sp:16,spd:10, s1:{n:'神籤',c:4,d:'為HP比例最少的2名友方附加隨機2個有利狀態，並依特技恢復HP',fd:'搖動祭鈴抽取神籤，為HP比例最少的2名友方各附加隨機2個有利狀態（持續2回合），並依特技值恢復HP。'},s2:{n:'破魔矢',c:6,d:'特技200%傷害1名對手（日本妖怪+100%），附加易傷1回合（受傷+100%）',fd:'射出破魔神矢貫穿妖氣，用特技值的200%對1名對手造成光屬性傷害；目標若為日本妖怪則傷害提升100%。命中後為目標附加「強力易傷」狀態1回合（受到的傷害提升100%）。'}},
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得,跟原稀有角色分攤機率)
+  //   窮奇:5 年 5 班閻漢昀同學設計,2026 年。中國神話四大凶獸,翼虎之姿,專愛欺善助惡。
+  '窮奇':    {hp:74,atk:18,sp:5,spd:13,
+    s1:{n:'巨爪攻擊',c:3,d:'單體大傷害+流血2回合',fd:'用攻擊的 250% 對 1 名對手造成傷害,並使其陷入流血 2 回合(每回合 -10% HP)。'},
+    s2:{n:'死亡之吼',c:5,d:'全體傷害+低機率瀕死(對BOSS改為傷害2倍)',fd:'用攻擊的 80% 對全體對手造成傷害。每名小怪另有低機率使其 HP 降為 1;對 BOSS 與菁英小怪改為傷害變 2 倍(攻擊×160%)。'}
+  },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  //   科技生化人:5 年 5 班翁嵦晏同學設計,2026 年。未來世界的科技戰士,結合機械與生物科技。
+  '科技生化人':{hp:66,atk:13,sp:16,spd:15,
+    s1:{n:'機械爪',c:3,d:'單體攻擊兩段大傷害',fd:'用攻擊值的 130% 對 1 名對手造成 2 段傷害(共 260%)。'},
+    s2:{n:'科技能量',c:3,d:'全隊治療+全隊攻擊和特技小幅提升 2 回合',fd:'用特技的 70% 治療友方全體 HP,並使友方全體攻擊和特技各 +3,持續 2 回合。'}
+  },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  //   鋁合金暴龍:5 年 5 班陳品均同學設計,2026 年。具有古代暴龍靈魂的鋁合金機械生命體,堅固耐打、火力強大。
+  '鋁合金暴龍':{hp:85,atk:11,sp:8,spd:6,
+    s1:{n:'超能衝鋒',c:3,d:'單體中傷害,低機率瀕死(對 BOSS 改傷害 2 倍)',fd:'用攻擊的 180% 對 1 名對手造成傷害。對路邊小怪有 10% 機率直接使其 HP 降為 1;對 BOSS 與菁英小怪改為傷害變 2 倍(攻擊×360%),不會瀕死。'},
+    s2:{n:'炸彈四重奏',c:4,d:'4 段隨機目標傷害,每段機率治療最低 HP 友方',fd:'用特技值的 80% 對隨機敵方目標造成 4 段傷害(每段獨立挑目標)。每段有 50% 機率額外治療 HP% 最低的友方(治療量 = 特技 30%)。'}
+  },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  //   超鬼神王:5 年 5 班陳睿智同學設計,2026 年。來自冥界的鬼神,擁有吞噬萬物的恐怖大嘴。
+  '超鬼神王':{hp:70,atk:7,sp:19,spd:14,
+    s1:{n:'暗黑洞',c:4,d:'全體暈眩+HP-10%',fd:'打開恐怖暗黑洞穴,對全體對手各有 60% 機率使其暈眩 1 回合,並且全體對手損失最大 HP 的 10%(此傷害無視有利狀態)。'},
+    s2:{n:'鮮紅舌頭',c:3,d:'全體中毒 2 回合(每回合 -10% HP)',fd:'伸出鮮紅舌頭舔向全體對手,使其陷入中毒 2 回合,每回合損失 10% 最大 HP。'}
+  },
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -11000,6 +10736,38 @@ const BURST_UPGRADE_DEF = {
     [3,'傷害+30%'],
     [4,'傷害+40%,強力狀態+1回合(MAX)'],
   ] },
+  // ★ v1.0.20260501.5410 — 窮奇:召喚上古四凶獸
+  '窮奇':      { rows: [
+    [0,'攻擊×200% 全體傷害+隨機強力不利狀態 2 回合'],
+    [1,'攻擊×220% 全體傷害+隨機強力不利狀態 2 回合'],
+    [2,'攻擊×240% 全體傷害+隨機強力不利狀態 2 回合'],
+    [3,'攻擊×260% 全體傷害+隨機強力不利狀態 2 回合'],
+    [4,'攻擊×280% 全體傷害+隨機強力不利狀態 3 回合(MAX)'],
+  ] },
+  // ★ v1.0.20260501.5430 — 科技生化人:輻射核砲
+  '科技生化人':{ rows: [
+    [0,'特技×150% 全體傷害+全體虛弱(攻/特/速 -50%)2 回合'],
+    [1,'特技×160% 全體傷害+虛弱 2 回合'],
+    [2,'特技×170% 全體傷害+虛弱 2 回合'],
+    [3,'特技×180% 全體傷害+虛弱 2 回合'],
+    [4,'特技×190% 全體傷害+虛弱 3 回合(MAX)'],
+  ] },
+  // ★ v1.0.20260501.5440 — 鋁合金暴龍:死神龍王登場
+  '鋁合金暴龍':{ rows: [
+    [0,'特技×170% 全體傷害+收割 HP<30% 對手+死神祝福 2 回合'],
+    [1,'特技×180% 全體傷害+收割+祝福 2 回合'],
+    [2,'特技×190% 全體傷害+收割+祝福 2 回合'],
+    [3,'特技×200% 全體傷害+收割+祝福 2 回合'],
+    [4,'特技×210% 全體傷害+收割+祝福 3 回合(MAX)'],
+  ] },
+  // ★ v1.0.20260501.5450 — 超鬼神王:大嘴吸入
+  '超鬼神王':{ rows: [
+    [0,'特技×140% 全體傷害+不治詛咒 2 回合+ 1 名敵人 20% 秒殺(BOSS 改傷害 +50%)'],
+    [1,'特技×150% 全體傷害+不治詛咒 2 回合'],
+    [2,'特技×160% 全體傷害+不治詛咒 2 回合'],
+    [3,'特技×170% 全體傷害+不治詛咒 2 回合'],
+    [4,'特技×180% 全體傷害+不治詛咒 3 回合(MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -11369,6 +11137,14 @@ const BURST_DB = {
   '大天狗':    {n:'神威風獵', d:'特技150%×5次風屬性隨機連擊，30%強力暈眩；最後全體颶風傷害並減速',fd:'張開巨翼掀起毀天狂風，以特技值的150%對隨機存活敵人連續5次風屬性傷害，每段有30%機率使該目標陷入「強力暈眩」1回合。第5段結束後額外對全體敵人造成攻擊100%風屬性傷害，並使全體敵人速度-50%持續2回合。每升 1 級 +5% 暈眩率(Lv4 達 50%)。'},
   '酒吞童子':  {n:'鬼王酒宴', d:'恢復自身15%HP，500%必中重擊(無視有利狀態)+擊倒轉移(最多3連鎖)，2回合吸血+攻擊提升',fd:'豪飲妖酒一飲而盡，自身恢復最大HP的15%。接著以攻擊值的500%對1名敵人造成必中重擊（無視其有利狀態），若該目標倒下則剩餘傷害轉移至下一位存活敵人，最多連鎖3次（每次轉移傷害也保有必中與無視有利狀態效果）。之後自身獲得「嗜血狂潮」狀態2回合：造成傷害的100%轉化為回血，且攻擊額外提升50%。'},
   '玉藻前':    {n:'禍世邪魅', d:'特技200%幻陣全體火傷害，65%強力魅惑1回合(無法免疫)，被魅惑者傷害轉為回血給玉藻前',fd:'九條金色狐尾一齊張開形成絢爛幻陣，以特技值的200%對全體敵人造成火屬性傷害，並有65%機率使每一名敵人陷入「強力魅惑」1回合（下循環自動普攻自己隊友，無法被免疫或解除）。被強力魅惑的敵人普攻隊友造成的傷害會全部轉為玉藻前的HP恢復。'},
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列
+  '窮奇':      {n:'召喚上古四凶獸', d:'全體大傷害+隨機強力不利狀態2回合',fd:'召喚中國神話四大凶獸——窮奇、檮杌、混沌、饕餮——共同降臨。用攻擊的 200% 對全體對手造成傷害,並隨機附加 1 個強力不利狀態 2 回合(從強力冰凍、強力燃燒、強力封印、強力麻痺、強力失明、強力中毒中擇一,無法被免疫或解除)。每升 1 級 +20% 傷害(MAX:280%),Lv5 強力狀態 +1 回合。'},
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人':{n:'輻射核砲', d:'特技150%全體傷害+全體虛弱2回合',fd:'發射輻射核能砲彈!以特技的 150% 對敵方全體造成大傷害,並使敵方全體陷入「虛弱」狀態 2 回合(攻擊、特技、速度各降 50%)。每升 1 級傷害 +10%(LV4/MAX 達 190%),Lv4 虛弱 +1 回合(達 3 回合)。'},
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍':{n:'死神龍王登場', d:'特技170%全體傷害+收割HP<30%對手,將其能力50%附加給友方全體2回合',fd:'死神龍王降臨戰場!以特技的 170% 對敵方全體造成大傷害。接著找出 HP 比例低於 30% 的敵方對手 1 名(若有多名,選 HP 最低的),強制秒殺並吸收其能力。友方全體獲得「死神祝福」狀態 2 回合:攻擊 + 被收割對手攻擊×50%、特技 + 被收割對手特技×50%。若無 HP<30% 的對手,跳過收割與祝福,只造成主傷害。每升 1 級主傷害 +10%(LV4/MAX 達 210%),Lv4 祝福 +1 回合(達 3 回合)。'},
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':{n:'大嘴吸入', d:'特技140%全體傷害+不治詛咒2回合+20%秒殺1名小怪(BOSS改傷害+50%)',fd:'張開恐怖巨口吞噬戰場!以特技的 140% 對全體對手造成大傷害,並使全體對手陷入「不治詛咒」2 回合(無法恢復 HP,且此狀態無法被免疫或解除)。隨機選擇 1 名敵人附加額外效果:小怪有 20% 機率直接倒下;BOSS 與菁英小怪則受到主傷害 50% 的追加傷害(避免秒殺破壞 BOSS 戰平衡)。每升 1 級主傷害 +10%(LV4/MAX 達 180%),Lv4 詛咒 +1 回合(達 3 回合)。'},
 
 };
 
@@ -13671,6 +13447,14 @@ const HERO_LORE = {
   '大天狗':    '深山修行千年的天狗尊長,駕馭山風,武藝絕倫的妖中之王',
   '酒吞童子':  '大江山的鬼王,豪飲妖酒卻重情重義,鐵棒一揮可開山碎石',
   '玉藻前':    '金毛九尾化身的傾國美狐,以妖豔智慧迷惑人心,觀世間百態',
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  '窮奇':      '中國神話四大凶獸之一,長著翅膀的猛獸,專愛欺善助惡。由 5 年 5 班閻漢昀同學在 2026 年設計。',
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人': '未來世界的高科技戰士,結合機械與生物科技,擅長科技攻擊和輻射砲擊。由 5 年 5 班翁嵦晏同學在 2026 年設計。',
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍': '具有古代暴龍靈魂的鋁合金機械生命體,堅固耐打、火力強大。由 5 年 5 班陳品均同學在 2026 年設計。',
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王': '來自冥界的超級鬼神之王,擁有吞噬萬物的恐怖大嘴,專門掌管詛咒與毒霧。由 5 年 5 班陳睿智同學在 2026 年設計。',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -13720,6 +13504,14 @@ const HERO_TRAIT = {
   '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療；成為攻擊目標機率+40%',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
   // ★ v1.0.20260421.3000o — 日本關限定角色天賦
   '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方各附加1個有利狀態，能量恢復50%機率',fd:'每次自己的回合開始時，選擇有利狀態最少的友方各附加1個隨機有利狀態（持續2回合）。另有50%機率為陣營恢復1能量。' },
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  '窮奇':      { name:'凶獠', icon:'🐅',  desc:'受傷時用攻擊反擊,反擊暴擊率比平常高',fd:'受到敵方主動攻擊(普攻、技能、爆發)造成傷害時,立即用攻擊值對攻擊者反擊。反擊的暴擊率為一般的 3 倍(基礎 45%,一般攻擊 15%)。每升 1 級天賦,反擊暴擊率再 +10%(LV5 達 85% 暴擊率)。反擊不會再觸發對方的還手類天賦,也不會被連鎖出血、中毒等持續傷害觸發,避免無限循環。' },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人':{ name:'鏈鎖反應', icon:'☢️', desc:'造成傷害時機率使目標兩側鄰近角色受到 50% 濺射傷害',fd:'造成傷害時有 40% 機率引發鏈鎖反應,使目標位置兩側相鄰(左邊 1 格 + 右邊 1 格)的同陣營角色,各受到此次傷害 50% 的濺射傷害。每升 1 級天賦,觸發機率 +10%(LV5 達 80%)。濺射傷害不會再次觸發本天賦,避免無限連鎖。' },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍':{ name:'鋁鎧', icon:'🛡️', desc:'受到所有傷害減少 20%(被動,無條件,不可被消除)',fd:'受到任何傷害時,自動減少 20% 傷害量(被動,無條件觸發,不需機率判定)。每升 1 級天賦再 +10% 減傷(LV5 達 60% 減傷)。和其他減傷效果(聖騎士聖盾、聖殿領域、守衛仁王挺立等)分開計算,可疊加;不會被消除或搶奪。' },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':{ name:'吞噬', icon:'👹', desc:'造成傷害時機率吞噬目標的有利狀態',fd:'造成傷害時有 40% 機率吞噬目標身上隨機 1 個有利狀態,轉移到自己身上(保持原回合數)。每升 1 級天賦 +10% 機率(LV5 達 80%)。保護類有利狀態(死亡免疫、爆發保護等)無法被吞噬。觸發時不會無限連鎖,不會被 DOT/反擊類傷害觸發。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -14585,13 +14377,6 @@ function onPickSkill(name){
 
 // Click a skill box on a hero card — apply selected skill immediately
 function onClickSkillBox(pos, slot){
-  // ★ v1.0.20260501.5440 — 手機版改成 popup 流程:點英雄技能格直接彈出技能選擇視窗,
-  //   點裡面任一技能即直接套用替換。手機橫式畫面太擠,下方候選技能區隱藏(見 Phase 21 CSS)
-  if(window.innerHeight <= 500){
-    _openMobileSkillPickerModal(pos, slot);
-    return;
-  }
-
   if(!_selectedPickSkill){
     const info = document.getElementById(`srinfo-${pos}`);
     if(info){ info.textContent='⬇ 請先在下方選擇一個候選技能'; setTimeout(()=>{if(info)info.textContent=_skillReplaceMap[pos]?'✔ '+_skillReplaceMap[pos].slot.toUpperCase()+'→【'+_skillReplaceMap[pos].skill.n+'】':''},1800); }
@@ -14639,120 +14424,6 @@ function clearSlotAssign(pos, silent){
 function refreshPickerUsed(){
   buildSkillPicker();
 }
-
-// ★ v1.0.20260501.5440 — 手機版替換技能 popup
-//   觸發:onClickSkillBox 偵測到手機(innerHeight<=500)時呼叫
-//   行為:全螢幕半透明遮罩 + 中央卡片列表(可捲動),點任一技能即套用替換並關閉
-//   已被其他英雄選用的技能 disabled(灰色不可點)
-function _openMobileSkillPickerModal(pos, slot){
-  const hero = G.p1 && G.p1[pos];
-  if(!hero) return;
-
-  // 移除任何已存在的 modal
-  const existing = document.getElementById('mobile-skill-picker-modal');
-  if(existing) existing.remove();
-
-  // 建立 modal
-  const modal = document.createElement('div');
-  modal.id = 'mobile-skill-picker-modal';
-  modal.style.cssText = [
-    'position:fixed;inset:0;z-index:99990;',
-    'background:rgba(0,0,0,0.92);',
-    'display:flex;align-items:center;justify-content:center;',
-    'padding:8px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
-  ].join('');
-
-  // 已被其他英雄佔用的技能名集合(同英雄不檢查)
-  const assignedNames = new Set();
-  for(const p in _skillReplaceMap){
-    if(parseInt(p)!==pos && _skillReplaceMap[p]){
-      assignedNames.add(_skillReplaceMap[p].skill.n);
-    }
-  }
-
-  // 渲染所有候選技能(SK_CATS.all.skills 是完整 10 個)
-  const skillNames = (typeof SK_CATS!=='undefined' && SK_CATS.all && SK_CATS.all.skills) || [];
-  const _bdrMap = { heal:'#44dd66', tank:'#4a9eff', other:'#ffd966' };
-  const _bgMap  = { heal:'rgba(40,120,60,0.25)', tank:'rgba(40,80,180,0.25)', other:'rgba(120,80,0,0.25)' };
-  const items = skillNames.map(name=>{
-    const sk = NEW_SKILLS_DB.find(s=>s.n===name);
-    if(!sk) return '';
-    const isAssigned = assignedNames.has(name);
-    const colType = (typeof SK_COLOR_MAP!=='undefined' && SK_COLOR_MAP[name]) || 'other';
-    const _bdr = _bdrMap[colType] || _bdrMap.other;
-    const _bg  = _bgMap[colType] || _bgMap.other;
-    const _onclickAttr = isAssigned ? '' : `onclick="_applyMobileSkillPick(${pos},'${slot}','${name.replace(/'/g,"\\'")}')"`;
-    return `<button ${_onclickAttr} ${isAssigned?'disabled':''}
-      style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;
-        padding:14px 16px;background:${isAssigned?'rgba(60,60,60,0.4)':_bg};
-        border:2.5px solid ${isAssigned?'#666':_bdr};border-radius:12px;
-        color:${isAssigned?'#666':'#fff'};cursor:${isAssigned?'not-allowed':'pointer'};
-        font-family:inherit;text-align:left;width:100%;box-sizing:border-box;
-        ${isAssigned?'opacity:0.45;':''}">
-      <div style="display:flex;align-items:center;gap:10px;width:100%;">
-        <span style="font-size:26px;font-weight:900;color:${isAssigned?'#888':'#ffe8a0'};flex:1;">${name}</span>
-        <span style="font-size:22px;color:#4a9eff;flex-shrink:0;">🔷${sk.c}</span>
-      </div>
-      <div style="font-size:20px;color:${isAssigned?'#666':'#ddd'};line-height:1.4;">${sk.d}</div>
-      ${isAssigned?'<div style="font-size:16px;color:#aa6644;font-weight:700;">⚠ 已被其他英雄選用</div>':''}
-    </button>`;
-  }).join('');
-
-  modal.innerHTML =
-    '<div style="background:linear-gradient(160deg,#0d0a1e,#08061a);' +
-    'border:2.5px solid rgba(180,120,255,0.7);border-radius:18px;' +
-    'padding:18px 22px;width:96%;max-width:780px;max-height:94vh;' +
-    'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
-    'box-shadow:0 0 50px rgba(150,80,255,0.4);">' +
-      '<div style="font-size:24px;font-weight:900;color:#cc99ff;margin-bottom:4px;text-align:center;letter-spacing:2px;">' +
-        '▸ 替換 ' + hero.name + ' 的 ' + slot.toUpperCase() + ' 技能' +
-      '</div>' +
-      '<div style="font-size:16px;color:#aaa;text-align:center;margin-bottom:14px;">點選下方任一技能即可直接替換</div>' +
-      '<div style="display:flex;flex-direction:column;gap:10px;">' + items + '</div>' +
-      '<div style="text-align:center;margin-top:14px;">' +
-        '<button onclick="_closeMobileSkillPicker()" ' +
-          'style="padding:10px 32px;font-size:22px;background:rgba(60,10,10,0.5);' +
-          'border:2px solid #e84040;color:#e84040;border-radius:10px;cursor:pointer;' +
-          'font-family:inherit;letter-spacing:2px;">✕ 取消</button>' +
-      '</div>' +
-    '</div>';
-
-  // 點外圍空白處關閉
-  modal.onclick = function(e){
-    if(e.target === modal) _closeMobileSkillPicker();
-  };
-
-  document.body.appendChild(modal);
-  try{ playSfx && playSfx('sfx-sel', 0.5); }catch(_){}
-}
-
-function _applyMobileSkillPick(pos, slot, skillName){
-  const sk = NEW_SKILLS_DB.find(s=>s.n===skillName);
-  if(!sk) return;
-  // 雙保險:重複檢查(modal 應已 disabled)
-  for(const p in _skillReplaceMap){
-    if(parseInt(p)!==pos && _skillReplaceMap[p] && _skillReplaceMap[p].skill.n===sk.n){
-      return;
-    }
-  }
-  _skillReplaceMap[pos] = {slot, skill:{...sk}};
-  // 重新渲染英雄卡
-  const block = document.getElementById(`srh-${pos}`);
-  if(block) block.outerHTML = buildSrhBlock(G.p1[pos]);
-  // 即使下方 picker 在手機隱藏,仍重建以保資料一致(如果切回 PC)
-  try{ buildSkillPicker(); }catch(_){}
-  // 音效
-  try{ beep(660,'sine',0.06,0.1); setTimeout(()=>beep(880,'sine',0.08,0.1),80); }catch(_){}
-  _closeMobileSkillPicker();
-}
-
-function _closeMobileSkillPicker(){
-  const m = document.getElementById('mobile-skill-picker-modal');
-  if(m) m.remove();
-}
-window._openMobileSkillPickerModal = _openMobileSkillPickerModal;
-window._applyMobileSkillPick       = _applyMobileSkillPick;
-window._closeMobileSkillPicker     = _closeMobileSkillPicker;
 
 function doSlotAssign(pos, slot){ onClickSkillBox(pos,slot); }
 function onSkillSelectChange(pos){} // legacy no-op
@@ -16017,6 +15688,39 @@ const BURST_GIF_DB = {
     tint:'rgba(255,80,40,0.22)',
     tint2:'rgba(150,60,220,0.22)',
     dur:1800, dur2:2200
+  },
+  // ★ v1.0.20260501.5420 — 學生設計英雄系列(窮奇)爆發特效
+  //   GIF 檔名:召喚上古四凶獸.gif / 音效檔名:召喚上古四凶獸.mp3
+  '召喚上古四凶獸': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.gif',
+    sfx:[['sfx-qiongqi-burst',1.0]],
+    tint:'rgba(180,40,40,0.22)',  // 凶獸主題:暗紅色調
+    dur:2400  // 給足時間播完 GIF + 音效
+  },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列(科技生化人)爆發特效
+  //   GIF 檔名:輻射核砲.gif
+  //   音效:用現有的「發射大子彈+爆炸+餘震」組合,模擬強力砲擊感
+  '輻射核砲': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('輻射核砲.gif'),
+    sfx:[['sfx-gunshot-big',1.0],['sfx-explode',0.95],['sfx-burst',0.7]],
+    tint:'rgba(180,220,40,0.22)',  // 輻射主題:暗綠/輻射黃
+    dur:2400
+  },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列(鋁合金暴龍)爆發特效
+  //   死神龍王登場 — 直接 reuse 刺客「死神之鐮」整套(GIF + 音效 + tint)
+  //   依使用者要求:特效音效同「死神之鐮」,以節省素材製作成本
+  '死神龍王登場': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    sfx:[['sfx-ko',1.0],['sfx-sword',0.85]],
+    tint:'rgba(200,0,50,0.18)'
+  },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列(超鬼神王)爆發特效
+  //   大嘴吸入 — 暫時 reuse 軍師「真理之門」整套(GIF + 音效 + tint)
+  //   依使用者要求:特效暫用真理之門,以後再生專屬素材
+  '大嘴吸入': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%9C%9F%E7%90%86%E4%B9%8B%E9%96%80.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-powerup',0.8]],
+    tint:'rgba(50,255,200,0.12)'
   },
   '劍神連斬': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
@@ -17678,6 +17382,243 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  //   窮奇:召喚上古四凶獸 — 全體攻擊×200%(每級+20%)+ 隨機強力不利狀態 2 回合(Lv5:3 回合)
+  //   隨機池:強力冰凍/燃燒/封印/麻痺/失明/中毒(無法被免疫或解除)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='召喚上古四凶獸'){
+    const _oppQ = side==='p1'?'p2':'p1';
+    const foes = G[_oppQ].filter(x => x.curHp>0);
+    // 基礎 200% + 每級 +20%(Lv0:200%, Lv4/MAX:280%)
+    const _qqMult = 2.0 + _burstLv * 0.20;
+    const _qqDmg = Math.max(10, Math.floor((h.atk||1) * _qqMult));
+    // 強力狀態池(沿用八頭龍滅世的設計,排除減療因為窮奇主題是「凶獸」非「詛咒」)
+    const QQ_STRONG_POOL = ['freeze','hellfire','seal','para','forecast','poison'];
+    const QQ_STRONG_LABEL = {
+      freeze:'❄️ 強力冰凍', hellfire:'🔥 強力燃燒', seal:'🚫 強力封印',
+      para:'⚡ 強力麻痺', forecast:'👁️ 強力失明', poison:'☠️ 強力中毒'
+    };
+    log(`🐅 [${h.name}] 召喚上古四凶獸!窮奇、檮杌、混沌、饕餮齊降!攻擊×${Math.round(_qqMult*100)}%!`);
+    bannerFX(h, '🐅 召喚上古四凶獸!', '#ff6644', 1400);
+    // 強力狀態持續回合(Lv4/MAX 達 3 回合)
+    const _qqDur = 2 + _lv5Extra;
+    foes.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        // 主傷害(無屬性,跟玉藻前火屬性類似的處理但這邊不指定 elem)
+        doDmg(f, _qqDmg, {actor:h, isSkill:true});
+        if(f.curHp > 0){
+          // 隨機 1 個強力不利狀態(無法免疫:直接 addStatus)
+          const _pickIdx = Math.floor(Math.random() * QQ_STRONG_POOL.length);
+          const _pickType = QQ_STRONG_POOL[_pickIdx];
+          addStatus(f, _pickType, _qqDur);
+          // 強力狀態旗標(燃燒/中毒需要設特殊屬性)
+          if(_pickType === 'hellfire'){
+            const _hf = f.status.find(s => s.type === 'hellfire');
+            if(_hf){ _hf._actor = h; _hf._strong = true; }
+          } else if(_pickType === 'poison'){
+            f._poisonAmt = Math.max(1, Math.floor((f.hp||1) * 0.15));
+          }
+          try{ bannerFX(f, QQ_STRONG_LABEL[_pickType] || '強力狀態!', '#cc88ff', 800); }catch(_){}
+        }
+        renderCard(f);
+      }, i * 180);
+    });
+    _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, foes.length * 180 + 500);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列(科技生化人)
+  //   輻射核砲 — 特技×150%(每級+10%)全體傷害 + 全體虛弱(weakened)2 回合(Lv4:3 回合)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='輻射核砲'){
+    const _oppK = side==='p1'?'p2':'p1';
+    const foes = G[_oppK].filter(x => x.curHp>0);
+    // 基礎 150% + 每級 +10%(Lv0:150%, Lv4/MAX:190%)
+    const _kakuhouMult = 1.5 + _burstLv * 0.10;
+    const _kakuhouDmg = Math.max(10, Math.floor(spv * _kakuhouMult));
+    const _kakuhouDur = 2 + _lv5Extra;  // Lv4/MAX:3 回合
+    log(`☢️ [${h.name}] 輻射核砲!核能砲彈劃破天際!特技×${Math.round(_kakuhouMult*100)}%!`);
+    bannerFX(h, '☢️ 輻射核砲!', '#ccff44', 1400);
+    foes.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        // 主傷害
+        doDmg(f, _kakuhouDmg, {actor:h, isSkill:true, isAoe:true});
+        // 施加虛弱(weakened):攻擊+特技+速度各-50%(reuse 虛弱咒邏輯)
+        if(f.curHp > 0){
+          try{
+            // 若已有虛弱,先恢復原始數值再重新施加(避免疊加 bug)
+            if(f._weakenOrigAtk !== undefined){ f.atk = f._weakenOrigAtk; delete f._weakenOrigAtk; }
+            if(f._weakenOrigSp !== undefined){  f.sp  = f._weakenOrigSp;  delete f._weakenOrigSp;  }
+            if(f._weakenOrigSpd !== undefined){ f.spd = f._weakenOrigSpd; delete f._weakenOrigSpd; }
+            f.status = f.status.filter(s => s.type !== 'weakened');
+            // 記錄當前數值作為原始值
+            f._weakenOrigAtk = f.atk;
+            f._weakenOrigSp  = f.sp;
+            f._weakenOrigSpd = f.spd;
+            f.atk = Math.max(1, Math.floor(f.atk * 0.5));
+            f.sp  = Math.max(1, Math.floor(f.sp  * 0.5));
+            f.spd = Math.max(1, Math.floor(f.spd * 0.5));
+            f.status.push({type:'weakened', dur:_kakuhouDur});
+            bannerFX(f, '☢️ 虛弱!', '#ccff44', 800);
+          }catch(_){}
+        }
+        renderCard(f);
+      }, i * 180);
+    });
+    _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, foes.length * 180 + 500);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列(鋁合金暴龍)
+  //   死神龍王登場 — 特技×170%(每級+10%)全體傷害 + 收割 HP<30% 對手 + 死神祝福 2 回合
+  //   收割邏輯:強制秒殺 1 名 HP<30% 對手,將其能力 50% 附加給友方全體
+  //   若無 HP<30% 對手,跳過收割與祝福,只造成主傷害
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='死神龍王登場'){
+    const _oppL = side==='p1'?'p2':'p1';
+    const foes = G[_oppL].filter(x => x.curHp>0);
+    // 基礎 170% + 每級 +10%(Lv0:170%, Lv4/MAX:210%)
+    const _lMult = 1.7 + _burstLv * 0.10;
+    const _lDur = 2 + _lv5Extra;  // Lv4/MAX:3 回合
+    const _mainDmg = Math.max(10, Math.floor(spv * _lMult));
+    log(`💀 [${h.name}] 死神龍王登場!特技×${Math.round(_lMult*100)}%!`);
+    bannerFX(h, '💀 死神龍王登場!', '#cc0033', 1400);
+    // Step 1:對全體造成主傷害
+    foes.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        doDmg(f, _mainDmg, {actor:h, isSkill:true, isAoe:true});
+        renderCard(f);
+      }, i * 150);
+    });
+    // Step 2:主傷害結束後,進行收割(挑 HP%<30% 的對手 1 名)
+    _pSetTimeout(() => {
+      try{
+        // 重新取存活清單(因為主傷害可能讓某些倒下)
+        const _aliveFoes = G[_oppL].filter(x => x.curHp > 0);
+        // 篩選 HP%<30% 的目標
+        const _reapTargets = _aliveFoes.filter(x => x.hp > 0 && (x.curHp / x.hp) < 0.30);
+        if(_reapTargets.length > 0){
+          // 挑 HP 最低的(若多個)
+          const _reaped = _reapTargets.sort((aa, bb) => aa.curHp - bb.curHp)[0];
+          // 取被收割角色的 atk + sp 作為加成基礎
+          const _stolenAtk = Math.max(1, Math.floor((_reaped.atk || 1) * 0.5));
+          const _stolenSp = Math.max(1, Math.floor((_reaped.sp || 1) * 0.5));
+          log(`💀 [${h.name}] 收割!吸取 [${_reaped.name}] 的能力!(攻擊+${_stolenAtk}, 特技+${_stolenSp})`);
+          bannerFX(_reaped, '💀 被收割!', '#cc0033', 1000);
+          // Step 3:強制秒殺(類靈魂收割)
+          _reaped.curHp = 0;
+          _reaped.status = [];
+          _reaped.buffs = [];
+          renderCard(_reaped);
+          try{ playSfx('sfx-ko', 0.85); }catch(_){}
+          // Step 4:友方全體獲得「死神祝福(strengthened)」buff
+          const _allies = G[side].filter(x => x.curHp > 0);
+          _allies.forEach(t => {
+            try{
+              // 先清除舊的 strengthened(刷新)
+              if(t._strengthOrigAtk !== undefined){ t.atk = t._strengthOrigAtk; delete t._strengthOrigAtk; }
+              if(t._strengthOrigSp !== undefined){  t.sp = t._strengthOrigSp;  delete t._strengthOrigSp;  }
+              if(t._strengthOrigSpd !== undefined){ t.spd = t._strengthOrigSpd; delete t._strengthOrigSpd; }
+              t.buffs = t.buffs.filter(b => b.type !== 'strengthened');
+              // 記錄當前數值作為原始值
+              t._strengthOrigAtk = t.atk;
+              t._strengthOrigSp  = t.sp;
+              t._strengthOrigSpd = t.spd;
+              // 套加成(只加攻擊和特技,速度不動)
+              t.atk = t.atk + _stolenAtk;
+              t.sp  = t.sp  + _stolenSp;
+              t.buffs.push({type:'strengthened', dur: _lDur});
+              renderCard(t);
+              bannerFX(t, '💀 死神祝福!', '#cc66ff', 800);
+            }catch(_){}
+          });
+          try{ playSfx('sfx-statup', 0.7); }catch(_){}
+        } else {
+          log(`💀 [${h.name}] 沒有 HP < 30% 的目標,無法收割能力。`);
+        }
+      }catch(eL){ try{ console.error('[死神龍王登場 收割]', eL); }catch(_){}}
+      updateUI();
+      _burstFinish(h, _interrupted);
+    }, foes.length * 150 + 600);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列(超鬼神王)
+  //   大嘴吸入 — 特技×140% 全體傷害 + 全體不治詛咒 2 回合 + 隨機 1 名敵人額外效果
+  //   小怪/鬥技場 → 20% 機率秒殺;BOSS/菁英 → 主傷害 50% 追加傷害
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='大嘴吸入'){
+    const _oppB = side==='p1'?'p2':'p1';
+    const foes = G[_oppB].filter(x => x.curHp>0);
+    // 基礎 140% + 每級 +10%(Lv0:140%, Lv4/MAX:180%)
+    const _bMult = 1.4 + _burstLv * 0.10;
+    const _bDur = 2 + _lv5Extra;  // Lv4/MAX:3 回合
+    const _mainDmg = Math.max(10, Math.floor(spv * _bMult));
+    log(`👹 [${h.name}] 大嘴吸入!張開恐怖巨口吞噬戰場!特技×${Math.round(_bMult*100)}%!`);
+    bannerFX(h, '👹 大嘴吸入!', '#660033', 1400);
+    // Step 1:對全體造成主傷害 + 不治詛咒
+    foes.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        doDmg(f, _mainDmg, {actor:h, isSkill:true, isAoe:true});
+        // 不治詛咒(無視免疫,直接 push status)
+        if(f.curHp > 0){
+          f.status = f.status.filter(s => s.type !== 'noheal_curse');
+          f.status.push({type:'noheal_curse', dur:_bDur, _strong:true});
+          try{ bannerFX(f, '🚫 不治詛咒!', '#cc0044', 800); }catch(_){}
+        }
+        renderCard(f);
+      }, i * 150);
+    });
+    // Step 2:主傷害結束後,隨機選 1 名敵人額外效果
+    _pSetTimeout(() => {
+      try{
+        const _aliveFoes = G[_oppB].filter(x => x.curHp > 0);
+        if(_aliveFoes.length > 0){
+          const _pickedTarget = _aliveFoes[Math.floor(Math.random() * _aliveFoes.length)];
+          // BOSS 判定 — 跟死亡之吼用同款邏輯
+          const _miniMobs = typeof MINI_MONSTERS !== 'undefined' ? MINI_MONSTERS : [];
+          const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+          const _isPathMob = _miniMobs.includes(_pickedTarget.name);
+          const _isBossOrElite = _eliteNames.includes(_pickedTarget.name)
+            || (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(_pickedTarget.name) && !_isPathMob)
+            || (_adventureMode && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive && !_isPathMob);
+          const _isArena = !_adventureMode;
+          if(_isBossOrElite && !_isArena){
+            // BOSS / 菁英 → 不秒殺,改為主傷害 50% 追加傷害
+            const _extraDmg = Math.max(1, Math.floor(_mainDmg * 0.5));
+            log(`👹 [${_pickedTarget.name}] BOSS 模式!受到主傷害 50% 追加傷害 = ${_extraDmg}!`);
+            bannerFX(_pickedTarget, '👹 追加傷害!', '#cc0044', 900);
+            doDmg(_pickedTarget, _extraDmg, {actor:h, isSkill:true});
+          } else {
+            // 小怪 / 鬥技場 → 20% 機率秒殺
+            if(Math.random() < 0.20){
+              log(`👹 [${h.name}] 大嘴吸入!直接吞噬 [${_pickedTarget.name}]!`);
+              bannerFX(_pickedTarget, '👹 被吞噬!', '#cc0044', 1000);
+              _pickedTarget.curHp = 0;
+              _pickedTarget.status = [];
+              _pickedTarget.buffs = [];
+              try{ playSfx('sfx-ko', 0.85); }catch(_){}
+            } else {
+              log(`👹 [${h.name}] 大嘴吸入!運氣不好,沒能吞噬 [${_pickedTarget.name}]。`);
+            }
+          }
+          renderCard(_pickedTarget);
+        }
+      }catch(eB){ try{ console.error('[大嘴吸入 額外]', eB); }catch(_){}}
+      updateUI();
+      _burstFinish(h, _interrupted);
+    }, foes.length * 150 + 600);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
 
@@ -18776,6 +18717,15 @@ function doDmg(target, rawDmg, opts={}){
     rawDmg=Math.max(1,Math.ceil(rawDmg*(1-target._zoologistDmgReduce)));
     showPopup(target,'🦁-'+Math.round(target._zoologistDmgReduce*100)+'%','miss');
   }
+  // ★ v1.0.20260501.5440 — 鋁合金暴龍天賦「鋁鎧」:受到所有傷害減少 20%(每級+10%,LV5 達 60%)
+  //   被動,無條件,不可被消除;不需機率判定,直接減傷
+  //   排除:!opts.ignoreBuffs(穿透/必中傷害不減免)、!hasStatus(target,'confused')(疑惑時天賦失效)
+  if(target.name==='鋁合金暴龍' && rawDmg>0 && !opts.ignoreBuffs && !hasStatus(target,'confused')){
+    const _luTl = (typeof _getTraitLv === 'function') ? _getTraitLv('鋁合金暴龍') : 0;
+    const _luReduce = 0.20 + _luTl * 0.10;  // LV0=0.20, LV5=0.60
+    rawDmg = Math.max(1, Math.ceil(rawDmg * (1 - _luReduce)));
+    try{ showPopup(target, '🛡️-'+Math.round(_luReduce*100)+'%', 'miss'); }catch(_){}
+  }
   // halfDmg (聖殿領域) — 守衛爆發升級時改用SP×倍率減傷
   if(hasBuff(target,'halfDmg')){
     if(target._burstGuardSpMult){
@@ -18820,6 +18770,42 @@ function doDmg(target, rawDmg, opts={}){
       try{
         if(target.curHp>0 && _atkr.curHp>0){
           doDmg(_atkr, _counterDmg, {actor:target, isRebound:true, ignoreEvasion:true, noGuard:true});
+        }
+      }catch(e){}
+    }, 350);
+  }
+  // ★ v1.0.20260501.5410 — 窮奇天賦「凶獠」:受到敵方主動攻擊時用攻擊反擊,反擊暴擊率比一般高
+  //   觸發條件:
+  //     - target.name === '窮奇' 且還活著且沒被疑惑
+  //     - rawDmg > 0(必須真的有傷害)
+  //     - 有 opts.actor(代表是敵方主動造成,不是 DOT/環境傷害)
+  //     - opts.actor 還活著且不是窮奇本人
+  //     - opts.actor 是敵方陣營
+  //     - !opts.isRebound(避免對方反擊形成無限循環)
+  //     - !opts.isTraitShare、!opts.isChaos(凡人天賦/疑惑等共享傷害不觸發)
+  //   暴擊機制:
+  //     - 因為傳 isRebound:true 會關閉 doDmg 的暴擊邏輯,所以自己手動算
+  //     - 基礎暴擊率 = 0.15(一般) + 0.30(凶獠加成) + 天賦級×0.10
+  //     - LV0 = 45%, LV1 = 55%, ..., LV5(MAX) = 95%(其實 0.85 因為 +0.10×7=0.85,但 _getTraitLv 上限是 4 也就是 LV5)
+  //     - 暴擊時傷害 ×1.3(對齊 doDmg 內 _critExtra=Math.floor(dmg*0.3))
+  if(target.name==='窮奇' && !hasStatus(target,'confused') && rawDmg>0
+     && opts && opts.actor && opts.actor.curHp>0 && opts.actor!==target
+     && opts.actor.side !== target.side
+     && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && target.curHp>0){
+    const _atkr = opts.actor;
+    const _qqTl = (typeof _getTraitLv === 'function') ? _getTraitLv('窮奇') : 0;
+    const _qqCritChance = 0.15 + 0.30 + _qqTl * 0.10;  // LV0=45%, LV5(traitLv=4)=85%
+    const _isQqCrit = Math.random() < _qqCritChance;
+    const _baseAtk = target.atk || 18;
+    const _qqDmg = _isQqCrit ? Math.floor(_baseAtk * 1.3) : _baseAtk;
+    log(`🐅 [窮奇] 天賦:凶獠!對 [${_atkr.name}] 造成 ${_qqDmg} 傷害反擊!${_isQqCrit?' (暴擊!)':''}`);
+    try{ bannerFX(target, _isQqCrit ? '🐅 凶獠暴擊!' : '🐅 凶獠反擊!', '#ff8844', 900); }catch(_){}
+    if(_isQqCrit){ try{ playSfx('sfx-crit', 1.0); }catch(_){} }
+    // 用 setTimeout 等本次傷害動畫結束,並標記 isRebound 防無限循環
+    setTimeout(()=>{
+      try{
+        if(target.curHp>0 && _atkr.curHp>0){
+          doDmg(_atkr, _qqDmg, {actor:target, isRebound:true, ignoreEvasion:true, noGuard:true});
         }
       }catch(e){}
     }, 350);
@@ -19672,6 +19658,88 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     const vamp = Math.max(1, Math.ceil(dmg*0.25));
     try{ doHeal(a, vamp, {actor:a, noDice:true, noWarhorn:true, isHeal:true}); }catch(e){}
     log(`🐉 [八岐大蛇] 天賦：八首吞天！吸收 ${vamp} HP！`);
+  }
+
+  // ★ v1.0.20260501.5430 — 科技生化人天賦「鏈鎖反應」:造成傷害時 40% 機率使目標兩側相鄰角色受到 50% 濺射傷害
+  //   觸發條件:
+  //     - a (attacker) 是「科技生化人」且還活著、沒被疑惑
+  //     - dmg > 0 且攻擊者跟目標不同陣營
+  //     - !opts.isRebound(避免反擊類傷害觸發)
+  //     - !opts._techSplash(避免本次濺射再觸發濺射,無限連鎖)
+  //     - !opts.isTraitShare、!opts.isChaos(凡人天賦/疑惑等共享傷害不觸發)
+  //   濺射機制:
+  //     - target 在 G[target.side] 中找 idx
+  //     - idx-1 和 idx+1 各受到 50% 傷害(不會打到 target 自己)
+  //     - 用 _techSplash:true 旗標標記,doDmg 內遇到此旗標跳過鏈鎖反應觸發
+  //   防遞迴:濺射的 doDmg 用 isAoe:true(避免被隱身躲掉,跟落石鐵拳一致)
+  if(a && a.name==='科技生化人' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side
+     && a.curHp>0 && !opts.isRebound && !opts._techSplash
+     && !opts.isTraitShare && !opts.isChaos){
+    const _bioTl = (typeof _getTraitLv === 'function') ? _getTraitLv('科技生化人') : 0;
+    const _splashChance = 0.40 + _bioTl * 0.10;  // LV0=40%, LV5=80%
+    if(Math.random() < _splashChance){
+      const _tSide = target.side;
+      const _idx = G[_tSide].indexOf(target);
+      if(_idx !== -1){
+        const _splashDmg = Math.max(1, Math.floor(dmg * 0.5));
+        const _adjacents = [_idx - 1, _idx + 1].filter(i => i >= 0 && i < G[_tSide].length);
+        let _hitAny = false;
+        _adjacents.forEach(_adjIdx => {
+          const _adj = G[_tSide][_adjIdx];
+          if(_adj && _adj !== target && _adj.curHp > 0){
+            _hitAny = true;
+            // 用 setTimeout 讓濺射在主傷害動畫結束後發生
+            // 用 _techSplash:true 防遞迴(濺射本身不會再觸發鏈鎖)
+            setTimeout(() => {
+              try{
+                if(_adj.curHp > 0){
+                  doDmg(_adj, _splashDmg, {actor:a, _techSplash:true, isAoe:true, isSkill:opts.isSkill});
+                  log(`☢️ [${a.name}] 鏈鎖反應 → [${_adj.name}] 受到濺射 ${_splashDmg} 傷害!`);
+                }
+              }catch(e){}
+            }, 250);
+          }
+        });
+        if(_hitAny){
+          try{ bannerFX(a, '☢️ 鏈鎖反應!', '#ccff44', 800); }catch(_){}
+        }
+      }
+    }
+  }
+
+  // ★ v1.0.20260501.5450 — 超鬼神王天賦「吞噬」:造成傷害時 40% 機率吞噬目標 1 個有利狀態
+  //   觸發條件:
+  //     - a (attacker) 是「超鬼神王」且還活著、沒被疑惑
+  //     - dmg > 0 且攻擊者跟目標不同陣營
+  //     - !opts.isRebound、!opts._techSplash、!opts.isTraitShare、!opts.isChaos
+  //   吞噬機制:
+  //     - 從 target.buffs 中過濾掉 _fromBurst(爆發保護)、保護類 buff
+  //     - 隨機挑 1 個有利狀態,從 target 移除,push 到 a.buffs(保留原 dur)
+  //     - 用 _kishinDevour 旗標(目前實作中沒用到,留著以防將來需要)
+  if(a && a.name==='超鬼神王' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side
+     && a.curHp>0 && !opts.isRebound && !opts._techSplash
+     && !opts.isTraitShare && !opts.isChaos){
+    const _kishinTl = (typeof _getTraitLv === 'function') ? _getTraitLv('超鬼神王') : 0;
+    const _devourChance = 0.40 + _kishinTl * 0.10;  // LV0=40%, LV5=80%
+    if(Math.random() < _devourChance && target.buffs && target.buffs.length > 0){
+      // 過濾掉「不可被偷」的保護類 buff(類神偷順手的處理)
+      const _devourPool = target.buffs.filter(b => !b._fromBurst
+        && b.type !== 'deathimmune' && b.type !== 'protectBuff' && b.type !== 'guard'
+        && b.type !== 'rebirth' && b.type !== 'fieldImmune' && b.type !== 'inuInvisible'
+        && b.type !== 'burstUndying' && b.type !== 'conservation');
+      if(_devourPool.length > 0){
+        const _devoured = _devourPool[Math.floor(Math.random() * _devourPool.length)];
+        // 從 target 移除
+        const _idx = target.buffs.indexOf(_devoured);
+        if(_idx >= 0) target.buffs.splice(_idx, 1);
+        // 加到 a 身上(保持原回合數)
+        a.buffs.push({...(_devoured), dur: Math.max(1, _devoured.dur || 1)});
+        const _bn = (typeof buffName === 'function') ? buffName(_devoured.type) : _devoured.type;
+        log(`👹 [超鬼神王] 天賦:吞噬!吞下 [${target.name}] 的 [${_bn || _devoured.type}],化為己用!`);
+        try{ bannerFX(a, '👹 吞噬!', '#660033', 900); }catch(_){}
+        try{ renderCard(target); renderCard(a); }catch(_){}
+      }
+    }
   }
 
   // ★ v1.0.20260421.3000f — 酒吞童子天賦：受傷60%機率回復1能量
@@ -22838,6 +22906,262 @@ function execSkill(a, sk, cost, stype){
     G._mimicActor=a; G._mimicCost=cost; G._mimicStype=stype;
     return;
   }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列(科技生化人)
+  //   科技生化人:5 年 5 班翁嵦晏同學設計,2026 年
+  // ════════════════════════════════════════════════════════════════
+  // 科技生化人 S1:機械爪 — 單體攻擊×130% × 2 段(每段+5%/級)
+  else if(n==='機械爪'){
+    setPending('enemy', t => {
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _segMult = 1.3 + _s1Lv * 0.05;
+      const _segDmg = Math.floor((a.atk||1) * _segMult);
+      log(`⚙️ [${a.name}] 機械爪!攻擊×${Math.round(_segMult*100)}% × 2 段攻擊!`);
+      try{ playSkillFX('機械爪', a, [t]); }catch(_){}
+      // 用迅雷連斬同款 batch 機制,把兩段傷害合併計算顯示
+      try{ if(typeof beginBatchTotals === 'function') beginBatchTotals(); }catch(_){}
+      doDmg(t, _segDmg, {actor:a, isSkill:true});
+      setTimeout(() => {
+        try{
+          if(t.curHp > 0) doDmg(t, _segDmg, {actor:a, isSkill:true});
+          updateUI();
+        }catch(e){}
+        try{ if(typeof endBatchTotals === 'function') setTimeout(endBatchTotals, 50); }catch(_){}
+      }, 300);
+      endAction(a, cost);
+    });
+  }
+  // 科技生化人 S2:科技能量 — 全隊治療(特技 70%)+ 攻擊和特技各 +3 buff 2 回合
+  else if(n==='科技能量'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _healMult = 0.7 + _s2Lv * 0.05;
+    const _spv = Math.floor((a.sp||0) * (1 + (a.sp||0) * 0.01));
+    const _healAmt = Math.max(1, Math.floor(_spv * _healMult));
+    const aliveAllies = G[a.side].filter(h => h.curHp > 0);
+    log(`🔋 [${a.name}] 科技能量!全隊恢復 HP 並提升攻擊和特技!`);
+    try{ playSkillFX('科技能量', a, aliveAllies); }catch(_){}
+    try{ bannerFX(a, '🔋 科技能量!', '#88ddff', 1000); }catch(_){}
+    aliveAllies.forEach(t => {
+      doHeal(t, _healAmt, {actor:a, isHeal:true});
+      // strengthened buff:攻擊+3 / 特技+3 / 2 回合(不動速度,跟虛弱的全降不一樣,這是輔助型)
+      try{
+        // 先清除舊的 strengthened(刷新)
+        if(t._strengthOrigAtk !== undefined){ t.atk = t._strengthOrigAtk; delete t._strengthOrigAtk; }
+        if(t._strengthOrigSp !== undefined){ t.sp = t._strengthOrigSp; delete t._strengthOrigSp; }
+        if(t._strengthOrigSpd !== undefined){ t.spd = t._strengthOrigSpd; delete t._strengthOrigSpd; }
+        t.buffs = t.buffs.filter(b => b.type !== 'strengthened');
+        t._strengthOrigAtk = t.atk;
+        t._strengthOrigSp = t.sp;
+        t._strengthOrigSpd = t.spd;
+        // 只 +3 攻擊和特技(不動速度,輔助型 buff)
+        t.atk = t.atk + 3;
+        t.sp = t.sp + 3;
+        t.buffs.push({type:'strengthened', dur:2});
+        renderCard(t);
+      }catch(_){}
+    });
+    try{ playSfx('sfx-statup', 0.7); }catch(_){}
+    endAction(a, cost);
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列(超鬼神王)
+  //   超鬼神王:5 年 5 班陳睿智同學設計,2026 年
+  // ════════════════════════════════════════════════════════════════
+  // 超鬼神王 S1:暗黑洞 — 全體 60% stun(每級+3%)+ 全體 HP-10%(固定)
+  else if(n==='暗黑洞'){
+    const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _stunChance = Math.min(1, 0.60 + _s1Lv * 0.03);
+    const _opp = a.side==='p1'?'p2':'p1';
+    const foes = G[_opp].filter(h => h.curHp > 0);
+    log(`🕳️ [${a.name}] 暗黑洞!對全體對手有 ${Math.round(_stunChance*100)}% 機率暈眩 1 回合並損失 10% 最大 HP!`);
+    try{ playSkillFX('暗黑洞', a, foes); }catch(_){}
+    try{ bannerFX(a, '🕳️ 暗黑洞!', '#440066', 1000); }catch(_){}
+    foes.forEach((t, i) => {
+      _pSetTimeout(() => {
+        if(t.curHp <= 0) return;
+        // HP-10% 最大 HP(無視有利狀態,類似大聲啼哭做法)
+        const _hpDmg = Math.max(1, Math.floor((t.hp || 1) * 0.10));
+        doDmg(t, _hpDmg, {actor:a, isSkill:true, isAoe:true, ignoreBuffs:true, piercing:true});
+        // 60% 機率(可升級)暈眩 1 回合
+        if(t.curHp > 0 && Math.random() < _stunChance){
+          if(typeof addStatus === 'function') addStatus(t, 'stun', 1);
+          try{ bannerFX(t, '😵 暈眩!', '#aa44ff', 700); }catch(_){}
+        }
+        renderCard(t);
+      }, i * 130);
+    });
+    _pSetTimeout(() => { updateUI(); endAction(a, cost); }, foes.length * 130 + 300);
+    return;
+  }
+  // 超鬼神王 S2:鮮紅舌頭 — 全體中毒 2 回合(可升級到 4 回合)
+  else if(n==='鮮紅舌頭'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _poisonDur = 2 + Math.floor(_s2Lv / 4);  // LV0~3:2, LV4~7:3, LV8~9:4
+    const _opp = a.side==='p1'?'p2':'p1';
+    const foes = G[_opp].filter(h => h.curHp > 0);
+    log(`👅 [${a.name}] 鮮紅舌頭!全體對手中毒 ${_poisonDur} 回合!`);
+    try{ playSkillFX('鮮紅舌頭', a, foes); }catch(_){}
+    try{ bannerFX(a, '👅 鮮紅舌頭!', '#cc0044', 1000); }catch(_){}
+    foes.forEach(t => {
+      addStatus(t, 'poison', _poisonDur);
+      // 中毒每回合 -10% 最大 HP
+      t._poisonAmt = Math.max(1, Math.floor((t.hp || 1) * 0.10));
+      try{ bannerFX(t, '☠️ 中毒!', '#88ff44', 700); }catch(_){}
+      renderCard(t);
+    });
+    endAction(a, cost);
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列(鋁合金暴龍)
+  //   鋁合金暴龍:5 年 5 班陳品均同學設計,2026 年
+  // ════════════════════════════════════════════════════════════════
+  // 鋁合金暴龍 S1:超能衝鋒 — 攻擊×180% 單體(每級+5%)+ 10% 瀕死(BOSS 改傷害 2 倍)
+  else if(n==='超能衝鋒'){
+    setPending('enemy', t => {
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _mainMult = 1.8 + _s1Lv * 0.05;
+      // BOSS 判定 — 跟死亡之吼用同款邏輯
+      const _miniMobs = typeof MINI_MONSTERS !== 'undefined' ? MINI_MONSTERS : [];
+      const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+      const _isPathMob = _miniMobs.includes(t.name);
+      const _isBossOrElite = _eliteNames.includes(t.name)
+        || (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t.name) && !_isPathMob)
+        || (_adventureMode && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive && !_isPathMob);
+      const _isArena = !_adventureMode;
+      log(`⚡ [${a.name}] 超能衝鋒!對 [${t.name}] 發動衝鋒!`);
+      try{ playSkillFX('超能衝鋒', a, [t]); }catch(_){}
+      try{ bannerFX(a, '⚡ 超能衝鋒!', '#ffaa44', 900); }catch(_){}
+      if(_isBossOrElite && !_isArena){
+        // BOSS / 菁英 → 攻擊×360%(主傷害 ×2)
+        const _bossDmg = Math.floor((a.atk||1) * _mainMult * 2);
+        log(`💪 [${t.name}] BOSS 模式!攻擊×${Math.round(_mainMult*200)}% = ${_bossDmg} 傷害!`);
+        doDmg(t, _bossDmg, {actor:a, isSkill:true});
+      } else {
+        // 路邊小怪 / 鬥技場 → 攻擊×180% 主傷害,10% 機率瀕死(HP=1)
+        const _normDmg = Math.floor((a.atk||1) * _mainMult);
+        log(`💥 攻擊×${Math.round(_mainMult*100)}% = ${_normDmg} 傷害!`);
+        doDmg(t, _normDmg, {actor:a, isSkill:true});
+        if(t.curHp > 0 && Math.random() < 0.10){
+          t.curHp = 1;
+          log(`💀 [${t.name}] 瀕死!HP 降為 1!`);
+          try{ bannerFX(t, '💀 瀕死!', '#cc44ff', 900); }catch(_){}
+          try{ showPopup(t, '💀瀕死', 'dmg-crit'); }catch(_){}
+        }
+      }
+      endAction(a, cost);
+    });
+  }
+  // 鋁合金暴龍 S2:炸彈四重奏 — 4 段隨機目標傷害,每段 50% 治療最低 HP 友方
+  else if(n==='炸彈四重奏'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _segMult = 0.8 + _s2Lv * 0.05;
+    const _spv = Math.floor((a.sp||0) * (1 + (a.sp||0) * 0.01));
+    const _segDmg = Math.max(1, Math.floor(_spv * _segMult));
+    const _healAmt = Math.max(1, Math.floor(_spv * 0.3));  // 治療量固定 30%
+    const _opp = a.side==='p1'?'p2':'p1';
+    log(`💣 [${a.name}] 炸彈四重奏!4 段炸彈隨機轟炸!`);
+    try{ playSkillFX('炸彈四重奏', a, []); }catch(_){}
+    try{ bannerFX(a, '💣 炸彈四重奏!', '#ff8844', 900); }catch(_){}
+    // 用「亂槍射擊」同款 batch 機制
+    try{ if(typeof beginBatchTotals === 'function') beginBatchTotals(); }catch(_){}
+    let _qIdx = 0;
+    const _doQuartet = () => {
+      if(_qIdx >= 4){
+        try{ if(typeof endBatchTotals === 'function') setTimeout(endBatchTotals, 50); }catch(_){}
+        endAction(a, cost);
+        return;
+      }
+      const _liveFoes = G[_opp].filter(h => h.curHp > 0);
+      if(!_liveFoes.length){
+        try{ if(typeof endBatchTotals === 'function') setTimeout(endBatchTotals, 50); }catch(_){}
+        endAction(a, cost);
+        return;
+      }
+      const _t = _liveFoes[Math.floor(Math.random() * _liveFoes.length)];
+      doDmg(_t, _segDmg, {actor:a, isSkill:true});
+      // 50% 機率治療 HP% 最低的友方
+      if(Math.random() < 0.5){
+        const _allies = G[a.side].filter(h => h.curHp > 0);
+        if(_allies.length){
+          // 找 HP% 最低的友方
+          const _healTarget = _allies.sort((x, y) => (x.curHp/(x.hp||1)) - (y.curHp/(y.hp||1)))[0];
+          doHeal(_healTarget, _healAmt, {actor:a, isHeal:true});
+          log(`💖 第 ${_qIdx+1} 段觸發治療 → [${_healTarget.name}] +${_healAmt} HP`);
+        }
+      }
+      updateUI();
+      _qIdx++;
+      setTimeout(_doQuartet, 200);
+    };
+    setTimeout(_doQuartet, 100);
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  //   窮奇:5 年 5 班閻漢昀同學設計,2026 年
+  // ════════════════════════════════════════════════════════════════
+  // 窮奇 S1:巨爪攻擊 — 單體攻擊×250%(每級+5%)+ 流血 2 回合(每回合 -10% HP)
+  else if(n==='巨爪攻擊'){
+    setPending('enemy', t => {
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _mult = 2.5 + _s1Lv * 0.05;
+      const _dmg = Math.floor((a.atk||1) * _mult);
+      log(`🐅 [${a.name}] 巨爪攻擊!攻擊×${Math.round(_mult*100)}% = ${_dmg} 傷害,並施加流血!`);
+      try{ playSkillFX('巨爪攻擊', a, [t]); }catch(_){}
+      doDmg(t, _dmg, {actor:a, isSkill:true});
+      // 流血 2 回合,每回合 -10% HP(用 poison 系統,_poisonAmt 自訂為 10% HP)
+      if(t.curHp > 0){
+        addStatus(t, 'poison', 2);
+        t._poisonAmt = Math.max(1, Math.floor((t.hp||1) * 0.1));
+        log(`🩸 [${t.name}] 流血 2 回合,每回合損失 ${t._poisonAmt} HP!`);
+        try{ bannerFX(t, '🩸 流血!', '#cc2244', 800); }catch(_){}
+      }
+      endAction(a, cost);
+    });
+  }
+  // 窮奇 S2:死亡之吼 — 全體攻擊×80%(每級+5%)+ 15% 瀕死(BOSS 改為攻擊×160%)
+  else if(n==='死亡之吼'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _normMult = 0.8 + _s2Lv * 0.05;
+    const _bossMult = 1.6 + _s2Lv * 0.05;  // BOSS 模式:基礎 160% + 每級 +5%
+    let _opp = a.side==='p1'?'p2':'p1';
+    const foes = G[_opp].filter(h => h.curHp>0);
+    log(`🐅 [${a.name}] 死亡之吼!全體覆蓋恐怖之聲!`);
+    try{ playSkillFX('死亡之吼', a, foes); }catch(_){}
+    try{ bannerFX(a, '💀 死亡之吼!', '#cc44ff', 1000); }catch(_){}
+    // BOSS 判定參考暗法師「死亡宣告」邏輯
+    const _miniMobs = typeof MINI_MONSTERS !== 'undefined' ? MINI_MONSTERS : [];
+    const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+    const _isArena = !_adventureMode;
+    foes.forEach((t, i) => {
+      _pSetTimeout(() => {
+        if(t.curHp <= 0) return;
+        const _isPathMob = _miniMobs.includes(t.name);
+        const _isBossOrElite = _eliteNames.includes(t.name)
+          || (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t.name) && !_isPathMob)
+          || (_adventureMode && !_advMiniBattleActive && !_isPathMob);
+        if(_isBossOrElite && !_isArena){
+          // BOSS / 菁英 → 攻擊×160% 傷害(不會瀕死)
+          const _bossDmg = Math.floor((a.atk||1) * _bossMult);
+          log(`💀 [${t.name}] BOSS 模式:攻擊×${Math.round(_bossMult*100)}% = ${_bossDmg} 傷害!`);
+          doDmg(t, _bossDmg, {actor:a, isSkill:true});
+        } else {
+          // 路邊小怪/鬥技場 → 攻擊×80% 傷害 + 15% 瀕死(HP=1)
+          const _normDmg = Math.floor((a.atk||1) * _normMult);
+          doDmg(t, _normDmg, {actor:a, isSkill:true});
+          if(t.curHp > 0 && Math.random() < 0.15){
+            t.curHp = 1;
+            log(`💀 [${t.name}] 瀕死!HP 降為 1!`);
+            try{ bannerFX(t, '💀 瀕死!', '#cc44ff', 900); }catch(_){}
+            try{ showPopup(t, '💀瀕死', 'dmg-crit'); }catch(_){}
+          }
+        }
+        renderCard(t);
+      }, i * 150);
+    });
+    _pSetTimeout(() => { updateUI(); endAction(a, cost); }, foes.length * 150 + 400);
+    return;
+  }
+  // ════════════════════════════════════════════════════════════════
   // ====== 冒險模式 BOSS 技能 ======
   else if(n==='連續貓爪功'){
     const hitCount = 2 + Math.floor(Math.random()*2); // 2~3次
@@ -27168,6 +27492,167 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='道具複製'){addBuff(a,'alchemist',99);log('['+a.name+'] 道具複製！啟動！');}
   else if(n==='賢者之石'){const full_target=al;if(full_target){if(full_target.curHp===0)doRevive(full_target,1,true);else doHeal(full_target,full_target.hp,{actor:a,isHeal:true});addBuff(full_target,'deathimmune',9999);log('['+a.name+'] 賢者之石！['+full_target.name+'] 完全恢復！免疫倒下！');} a.s2used=true;}
   else if(n==='忠犬守護'){ a.buffs=a.buffs.filter(b=>b.type!=='_inuGuard'); addBuff(a,'_inuGuard',1); a._inuGuardActive=true; log('['+a.name+'] 忠犬守護！本回合代替隊友承受50%傷害！'); bannerFX(a,'忠犬守護！','#ffaacc',900); }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列(科技生化人,AI 版,跟玩家版同步)
+  // ════════════════════════════════════════════════════════════════
+  // 科技生化人 S1:機械爪 — 單體 2 段傷害
+  else if(n==='機械爪'){
+    if(t){
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _segMult = 1.3 + _s1Lv * 0.05;
+      const _segDmg = Math.floor((a.atk||1) * _segMult);
+      log(`⚙️ [${a.name}] 機械爪!攻擊×${Math.round(_segMult*100)}% × 2 段!`);
+      doDmg(t, _segDmg, {actor:a, isSkill:true});
+      if(t.curHp > 0){
+        doDmg(t, _segDmg, {actor:a, isSkill:true});
+      }
+    }
+  }
+  // 科技生化人 S2:科技能量 — 全隊治療 + 攻擊和特技 +3 buff
+  else if(n==='科技能量'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _healMult = 0.7 + _s2Lv * 0.05;
+    const _healAmt = Math.max(1, Math.floor(spv(a) * _healMult));
+    log(`🔋 [${a.name}] 科技能量!全隊恢復+提升能力!`);
+    allies.forEach(t2 => {
+      doHeal(t2, _healAmt, {actor:a, isHeal:true});
+      try{
+        if(t2._strengthOrigAtk !== undefined){ t2.atk = t2._strengthOrigAtk; delete t2._strengthOrigAtk; }
+        if(t2._strengthOrigSp !== undefined){ t2.sp = t2._strengthOrigSp; delete t2._strengthOrigSp; }
+        if(t2._strengthOrigSpd !== undefined){ t2.spd = t2._strengthOrigSpd; delete t2._strengthOrigSpd; }
+        t2.buffs = t2.buffs.filter(b => b.type !== 'strengthened');
+        t2._strengthOrigAtk = t2.atk;
+        t2._strengthOrigSp = t2.sp;
+        t2._strengthOrigSpd = t2.spd;
+        t2.atk = t2.atk + 3;
+        t2.sp = t2.sp + 3;
+        t2.buffs.push({type:'strengthened', dur:2});
+      }catch(_){}
+    });
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列(鋁合金暴龍,AI 版,跟玩家版同步)
+  // ════════════════════════════════════════════════════════════════
+  // 鋁合金暴龍 S1:超能衝鋒 — 單體攻擊+10% 瀕死(BOSS 模式 ×2 傷害)
+  else if(n==='超能衝鋒'){
+    if(t){
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _mainMult = 1.8 + _s1Lv * 0.05;
+      const _miniMobs = typeof MINI_MONSTERS !== 'undefined' ? MINI_MONSTERS : [];
+      const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+      const _isPathMob = _miniMobs.includes(t.name);
+      const _isBossOrElite = _eliteNames.includes(t.name)
+        || (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t.name) && !_isPathMob)
+        || (_adventureMode && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive && !_isPathMob);
+      const _isArena = !_adventureMode;
+      log(`⚡ [${a.name}] 超能衝鋒!`);
+      if(_isBossOrElite && !_isArena){
+        const _bossDmg = Math.floor((a.atk||1) * _mainMult * 2);
+        doDmg(t, _bossDmg, {actor:a, isSkill:true});
+      } else {
+        const _normDmg = Math.floor((a.atk||1) * _mainMult);
+        doDmg(t, _normDmg, {actor:a, isSkill:true});
+        if(t.curHp > 0 && Math.random() < 0.10){
+          t.curHp = 1;
+          log(`💀 [${t.name}] 瀕死!HP 降為 1!`);
+        }
+      }
+    }
+  }
+  // 鋁合金暴龍 S2:炸彈四重奏 — 4 段隨機目標傷害,每段 50% 治療
+  else if(n==='炸彈四重奏'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _segMult = 0.8 + _s2Lv * 0.05;
+    const _segDmg = Math.max(1, Math.floor(spv(a) * _segMult));
+    const _healAmt = Math.max(1, Math.floor(spv(a) * 0.3));
+    log(`💣 [${a.name}] 炸彈四重奏!`);
+    for(let _ii = 0; _ii < 4; _ii++){
+      const _liveFoes = enemies.filter(h => h.curHp > 0);
+      if(!_liveFoes.length) break;
+      const _tt = _liveFoes[Math.floor(Math.random() * _liveFoes.length)];
+      doDmg(_tt, _segDmg, {actor:a, isSkill:true});
+      if(Math.random() < 0.5){
+        const _liveAllies = G[a.side].filter(h => h.curHp > 0);
+        if(_liveAllies.length){
+          const _healTarget = _liveAllies.sort((x, y) => (x.curHp/(x.hp||1)) - (y.curHp/(y.hp||1)))[0];
+          doHeal(_healTarget, _healAmt, {actor:a, isHeal:true});
+        }
+      }
+    }
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列(超鬼神王,AI 版,跟玩家版同步)
+  // ════════════════════════════════════════════════════════════════
+  // 超鬼神王 S1:暗黑洞 — 全體 60% stun + HP-10%
+  else if(n==='暗黑洞'){
+    const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _stunChance = Math.min(1, 0.60 + _s1Lv * 0.03);
+    log(`🕳️ [${a.name}] 暗黑洞!`);
+    enemies.forEach(t2 => {
+      if(t2.curHp <= 0) return;
+      const _hpDmg = Math.max(1, Math.floor((t2.hp || 1) * 0.10));
+      doDmg(t2, _hpDmg, {actor:a, isSkill:true, isAoe:true, ignoreBuffs:true, piercing:true});
+      if(t2.curHp > 0 && Math.random() < _stunChance){
+        addStatus(t2, 'stun', 1);
+      }
+    });
+  }
+  // 超鬼神王 S2:鮮紅舌頭 — 全體中毒
+  else if(n==='鮮紅舌頭'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _poisonDur = 2 + Math.floor(_s2Lv / 4);
+    log(`👅 [${a.name}] 鮮紅舌頭!全體中毒 ${_poisonDur} 回合!`);
+    enemies.forEach(t2 => {
+      addStatus(t2, 'poison', _poisonDur);
+      t2._poisonAmt = Math.max(1, Math.floor((t2.hp || 1) * 0.10));
+    });
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(AI 版,跟玩家版同步)
+  // ════════════════════════════════════════════════════════════════
+  // 窮奇 S1:巨爪攻擊
+  else if(n==='巨爪攻擊'){
+    if(t){
+      const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _mult = 2.5 + _s1Lv * 0.05;
+      const _dmg = Math.floor((a.atk||1) * _mult);
+      log(`🐅 [${a.name}] 巨爪攻擊!攻擊×${Math.round(_mult*100)}% = ${_dmg}!`);
+      doDmg(t, _dmg, {actor:a, isSkill:true});
+      if(t.curHp > 0){
+        addStatus(t, 'poison', 2);
+        t._poisonAmt = Math.max(1, Math.floor((t.hp||1) * 0.1));
+      }
+    }
+  }
+  // 窮奇 S2:死亡之吼
+  else if(n==='死亡之吼'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _normMult = 0.8 + _s2Lv * 0.05;
+    const _bossMult = 1.6 + _s2Lv * 0.05;
+    const _miniMobs = typeof MINI_MONSTERS !== 'undefined' ? MINI_MONSTERS : [];
+    const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+    const _isArena = !_adventureMode;
+    log(`🐅 [${a.name}] 死亡之吼!全體覆蓋恐怖之聲!`);
+    enemies.forEach(t2 => {
+      if(t2.curHp <= 0) return;
+      const _isPathMob = _miniMobs.includes(t2.name);
+      const _isBossOrElite = _eliteNames.includes(t2.name)
+        || (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(t2.name) && !_isPathMob)
+        || (_adventureMode && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive && !_isPathMob);
+      if(_isBossOrElite && !_isArena){
+        const _bossDmg = Math.floor((a.atk||1) * _bossMult);
+        doDmg(t2, _bossDmg, {actor:a, isSkill:true, isAoe:true});
+      } else {
+        const _normDmg = Math.floor((a.atk||1) * _normMult);
+        doDmg(t2, _normDmg, {actor:a, isSkill:true, isAoe:true});
+        if(t2.curHp > 0 && Math.random() < 0.15){
+          t2.curHp = 1;
+          log(`💀 [${t2.name}] 瀕死!HP 降為 1!`);
+        }
+      }
+    });
+  }
+  // ════════════════════════════════════════════════════════════════
   else if(n==='連續貓爪功'){
     // ★ 多段攻擊：4~6次隨機命中存活目標
     const _ccOpp = a.side==='p1'?'p2':'p1';
@@ -50034,7 +50519,11 @@ const SUMMON_FX_1X_GIF  = 'https://raw.githubusercontent.com/clarebox123jp-art/L
 const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%81%E9%80%A3%E6%8A%BD.gif';            // 十連抽:豪華演出
 
 // 稀有角色池
-const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女'];
+// ★ v1.0.20260501.5410 — 學生設計英雄系列(窮奇)加進稀有英雄池,跟原 4 隻分攤 5% 機率
+// ★ v1.0.20260501.5430 — 加進科技生化人,共 6 隻分攤 5% 機率
+// ★ v1.0.20260501.5440 — 加進鋁合金暴龍,共 7 隻分攤 5% 機率
+// ★ v1.0.20260501.5450 — 加進超鬼神王,共 8 隻分攤 5% 機率
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王'];
 
 // BOSS 賣錢物品池(召喚也可獲得)
 // ★ v1.1.0 — 台灣 10 BOSS 賣錢物品也加入召喚池
@@ -50068,7 +50557,7 @@ const SUMMON_RANDOM_TREASURES = [
 //   5% 超越極限果實 ×1(維持)
 const SUMMON_RATES = [
   { kind:'random_treasure',pct: 2, label:'🏆 隨機台灣至寶',         desc:'極稀有!10 種台灣至寶任 1 件;若已擁有自動轉換為至寶經驗卷軸 ×5' },
-  { kind:'rare_hero',      pct: 5, label:'⭐ 稀有角色',              desc:'大天狗 / 玉藻前 / 酒吞童子 / 巫女(已收錄則轉為超越極限果實 ×1)' },
+  { kind:'rare_hero',      pct: 5, label:'⭐ 稀有角色',              desc:'大天狗 / 玉藻前 / 酒吞童子 / 巫女 / 窮奇 / 科技生化人 / 鋁合金暴龍 / 超鬼神王(已收錄則轉為超越極限果實 ×1)' },
   { kind:'burst_fruit',    pct: 5, label:'🍑 超越極限果實 ×1',       desc:'極限爆發升 1 級' },
   { kind:'treasure_scroll',pct:10, label:'📜 至寶經驗卷軸 ×1',       desc:'幫台灣至寶累積經驗(+10 EXP)' },
   { kind:'skill_book',     pct:15, label:'📖 技能升級書 ×2',         desc:'升級英雄技能用' },
@@ -52590,6 +53079,30 @@ const SKILL_UPGRADE_DEF = {
   '變臉戲法': { cat:'dmg',    label:'技能傷害' },
   '破魔矢':   { cat:'dmg',    label:'技能傷害' },
   '舞台聚光燈':{ cat:'special_spotlight', label:'嘲諷＋失明目標數' },
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(窮奇)
+  //   巨爪攻擊:單體攻擊 250% + 流血 2 回合,每級 +5% 傷害(LV10:295%)
+  '巨爪攻擊': { cat:'dmg',    label:'技能傷害' },
+  //   死亡之吼:全體攻擊 80% + 15% 瀕死(BOSS 模式攻擊×160%),每級 +5% 主傷害,瀕死率固定不升級
+  '死亡之吼': { cat:'special_qiongqi_roar', label:'攻擊+瀕死率' },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列(科技生化人)
+  //   機械爪:單體攻擊 130%×2 段(共 260%),每級每段 +5%(LV10:每段 155%,共 310%)
+  //   用自訂類別精確替換 130% 與 260%,避免兩個 % 互相干擾
+  '機械爪':   { cat:'special_kikai_claw', label:'每段傷害' },
+  //   科技能量:全體治療(特技 70%)+ 攻擊和特技各 +3 buff 2 回合,只升治療量
+  '科技能量': { cat:'heal',   label:'治療量' },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列(鋁合金暴龍)
+  //   超能衝鋒:單體攻擊 180%(BOSS 模式 360%)+ 10% 瀕死,每級主傷害 +5%
+  //   用自訂類別精確替換 180% 和 360%(BOSS 模式 = 主傷害×2),10% 瀕死率固定不升級
+  '超能衝鋒': { cat:'special_alloy_charge', label:'主傷害' },
+  //   炸彈四重奏:每段特技 80%×4 段(每段獨立目標)+ 50% 機率治療最低 HP 友方
+  //   每級每段 +5%(LV10 每段 130%);治療量(30%)和觸發機率(50%)固定不升級
+  '炸彈四重奏':{ cat:'special_alloy_quartet', label:'每段傷害' },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列(超鬼神王)
+  //   暗黑洞:全體 60% stun + HP-10%,每級 +3% stun 機率
+  //   用自訂類別精確替換 60%(暈眩機率),10% HP 扣血固定不升級
+  '暗黑洞':   { cat:'special_kishin_dark_hole', label:'暈眩機率' },
+  //   鮮紅舌頭:全體中毒 2 回合,每 4 級 +1 回合(LV5:3, LV10:4)
+  '鮮紅舌頭': { cat:'dur', base:2, perLv:4, label:'中毒回合' },
   // ── 治療類：每級治療+10% ──
   '救贖神光': { cat:'heal',   label:'治療量' },
   // ★ v1.0.20260424.0560 — 神聖鎚擊: 固定 HP% 傷害(BOSS 5%/一般 20%) 不升級
@@ -52753,6 +53266,40 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     // 降龍伏虎拳/潛行暗殺: (攻擊+特技) × 200% → +5%/級
     const pct = 200 + skLv*5;
     fd = fd.replace(/200\s*%/g, HL(pct + '%'));
+  }
+  else if(cat === 'special_qiongqi_roar'){
+    // ★ v1.0.20260501.5410 — 死亡之吼:主傷害 80%+5%/級,瀕死率與 BOSS 倍率固定不升級
+    //   fd 中只替換「攻擊的 80%」這個 pattern,不動 160%(BOSS 模式) 與其他文字
+    const dmgPct = 80 + skLv*5;
+    fd = fd.replace(/攻擊的\s*80\s*%/g, '攻擊的 ' + HL(dmgPct + '%'));
+  }
+  else if(cat === 'special_kikai_claw'){
+    // ★ v1.0.20260501.5430 — 機械爪:每段 130%+5%/級,總計 260%+10%/級
+    //   精確替換「130%」與「260%」兩個 pattern,避免 dmg cat 把所有 % 一起套乘數出問題
+    const segPct = 130 + skLv*5;
+    const totalPct = 260 + skLv*10;
+    fd = fd.replace(/攻擊值的\s*130\s*%/g, '攻擊值的 ' + HL(segPct + '%'))
+           .replace(/共\s*260\s*%/g, '共 ' + HL(totalPct + '%'));
+  }
+  else if(cat === 'special_alloy_charge'){
+    // ★ v1.0.20260501.5440 — 超能衝鋒:主傷害 180%+5%/級,BOSS 模式 360%+10%/級(=主傷害×2)
+    //   精確替換「180%」與「360%」,「10%」(瀕死率)固定不變
+    const mainPct = 180 + skLv*5;
+    const bossPct = mainPct * 2;
+    fd = fd.replace(/攻擊的\s*180\s*%/g, '攻擊的 ' + HL(mainPct + '%'))
+           .replace(/攻擊×360\s*%/g, '攻擊×' + HL(bossPct + '%'));
+  }
+  else if(cat === 'special_alloy_quartet'){
+    // ★ v1.0.20260501.5440 — 炸彈四重奏:每段 80%+5%/級
+    //   精確替換「80%」(每段傷害),「50%」(觸發機率) 和「30%」(治療量) 固定不變
+    const segPct = 80 + skLv*5;
+    fd = fd.replace(/特技值的\s*80\s*%/g, '特技值的 ' + HL(segPct + '%'));
+  }
+  else if(cat === 'special_kishin_dark_hole'){
+    // ★ v1.0.20260501.5450 — 暗黑洞:暈眩 60%+3%/級(LV10:90%),HP-10% 固定不變
+    //   精確替換「60% 機率」(暈眩機率),不動「10%」(HP 扣血)
+    const stunPct = Math.min(100, 60 + skLv*3);
+    fd = fd.replace(/60\s*%\s*機率/g, HL(stunPct + '%') + ' 機率');
   }
   else if(cat === 'special_kuyou_fox'){
     // 九尾狐火: 特技% +5/級, 燃燒 2→3
@@ -53167,6 +53714,33 @@ function _getSkUpgradeBadge(skillName, skLv){
     const pct = 200 + (skLv||0)*5;
     return '(攻擊+特技)×' + pct + '%';
   }
+  if(cat==='special_qiongqi_roar'){
+    // ★ v1.0.20260501.5410 — 死亡之吼:全體攻擊×(80+5*lv)%,15% 瀕死(BOSS 模式攻擊×160%)
+    const dmgPct = 80 + (skLv||0)*5;
+    return '全體攻擊×' + dmgPct + '% + 15% 瀕死(BOSS 模式 ×160%)';
+  }
+  if(cat==='special_kikai_claw'){
+    // ★ v1.0.20260501.5430 — 機械爪:每段 (130+5*lv)%, 共 (260+10*lv)%
+    const segPct = 130 + (skLv||0)*5;
+    const totalPct = 260 + (skLv||0)*10;
+    return '每段攻擊×' + segPct + '% × 2 段(共 ' + totalPct + '%)';
+  }
+  if(cat==='special_alloy_charge'){
+    // ★ v1.0.20260501.5440 — 超能衝鋒:主傷害 (180+5*lv)%, BOSS (360+10*lv)%, 10% 瀕死(固定)
+    const mainPct = 180 + (skLv||0)*5;
+    const bossPct = mainPct * 2;
+    return '攻擊×' + mainPct + '% + 10% 瀕死(BOSS ×' + bossPct + '%)';
+  }
+  if(cat==='special_alloy_quartet'){
+    // ★ v1.0.20260501.5440 — 炸彈四重奏:每段 (80+5*lv)% × 4 段, 50% 機率治療(固定 30%)
+    const segPct = 80 + (skLv||0)*5;
+    return '每段特技×' + segPct + '% × 4 段 + 50% 治療';
+  }
+  if(cat==='special_kishin_dark_hole'){
+    // ★ v1.0.20260501.5450 — 暗黑洞:全體 (60+3*lv)% stun + HP-10%(固定)
+    const stunPct = Math.min(100, 60 + (skLv||0)*3);
+    return '全體 ' + stunPct + '% 暈眩 1 回合 + HP-10%';
+  }
   if(cat==='special_blizzard'){
     // 暴風雪:特技×(70+5*lv)% + (50+3*lv)%冰凍
     const dmgPct = 70 + (skLv||0)*5;
@@ -53413,6 +53987,34 @@ function buildSkillLvTable(skillName, currentLv) {
     else if(cat==='special_assassin'){
       const pct = 200 + lv*5;
       effectText = '(攻擊+特技)×' + pct + '%, 60% 出血+50%傷害' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_qiongqi_roar'){
+      // ★ v1.0.20260501.5410 — 死亡之吼:全體攻擊×(80+5*lv)% + 15% 瀕死(BOSS 模式 ×160%)
+      const dmgPct = 80 + lv*5;
+      effectText = '全體攻擊×' + dmgPct + '% + 15% 瀕死(BOSS 改 ×160%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_kikai_claw'){
+      // ★ v1.0.20260501.5430 — 機械爪:每段 (130+5*lv)%,共 (260+10*lv)%
+      const segPct = 130 + lv*5;
+      const totalPct = 260 + lv*10;
+      effectText = '每段×' + segPct + '% × 2 段(共 ' + totalPct + '%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_alloy_charge'){
+      // ★ v1.0.20260501.5440 — 超能衝鋒:主傷害 (180+5*lv)%, BOSS 模式 (360+10*lv)%
+      const mainPct = 180 + lv*5;
+      const bossPct = mainPct * 2;
+      effectText = '攻擊×' + mainPct + '% + 10% 瀕死(BOSS 改 ×' + bossPct + '%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_alloy_quartet'){
+      // ★ v1.0.20260501.5440 — 炸彈四重奏:每段 (80+5*lv)% × 4 段
+      const segPct = 80 + lv*5;
+      const totalPct = segPct * 4;
+      effectText = '每段×' + segPct + '% × 4 段(共 ' + totalPct + '%) + 50% 治療' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_kishin_dark_hole'){
+      // ★ v1.0.20260501.5450 — 暗黑洞:全體 (60+3*lv)% stun + HP-10%(固定)
+      const stunPct = Math.min(100, 60 + lv*3);
+      effectText = '全體 ' + stunPct + '% 暈眩 1 回合 + HP-10%' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     else if(cat==='special_blizzard'){
       const dmgPct = 70 + lv*5;
@@ -58806,6 +59408,14 @@ const _TRAIT_LV_INFO = {
   '大天狗':  { base:'60% 速度+2', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'每次行動前有機率使自身速度+2（可累積）' },
   '酒吞童子':{ base:'60% 受傷回1能量', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受到傷害時有機率立即恢復1能量' },
   '玉藻前':  { base:'60% 無視有利', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'造成傷害時有機率無視目標身上的有利狀態' },
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列
+  '窮奇':    { base:'反擊暴擊率 45%(一般 15%)', bonus:'+10% 暴擊率/天賦級', max:'85% 暴擊率(Lv5)', effect:'受傷時用攻擊反擊,反擊暴擊率比一般攻擊高' },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人':{ base:'40% 鏈鎖機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'造成傷害時有機率使兩側相鄰目標受到 50% 濺射傷害' },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍':{ base:'20% 減傷', bonus:'+10%/天賦級', max:'60% 減傷(Lv5)', effect:'受到所有傷害減少(被動,無條件)' },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':{ base:'40% 吞噬機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'造成傷害時有機率吞噬目標 1 個有利狀態' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -61604,6 +62214,220 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5450', brief:[
+    '👹 全新角色登場:「超鬼神王」加入冒險!來自冥界的恐怖鬼神 ✨',
+    '🎨 由 5 年 5 班陳睿智同學在 2026 年設計,只能在召喚池抽到喔!',
+    '🕳 三大恐怖技能:暗黑洞(全體暈眩)、鮮紅舌頭(全體中毒)、大嘴吸入(全體+秒殺)',
+    '👅 天賦「吞噬」:打到敵人有機率吞噬他們的好處變成自己的!',
+  ], items:[
+    '【新角色超鬼神王是誰?】',
+    '・超鬼神王是來自冥界的超級鬼神,擁有吞噬萬物的恐怖大嘴',
+    '・由 5 年 5 班陳睿智同學在 2026 年設計,圖鑑也會標明設計者喔!',
+    '・他的素質非常極端:HP 中等(70)、攻擊極低(7)、特技超高(19)、速度普通(14) — 純粹的特技流魔法系角色',
+    '【天賦:吞噬 👹】',
+    '・造成傷害時有 40% 機率吞噬目標身上隨機 1 個有利狀態',
+    '・吞噬下來的有利狀態會立刻轉到自己身上,持續回合數保持不變',
+    '・每升 1 級天賦 +10% 機率(LV5/MAX 達 80%)',
+    '・保護類有利狀態(死亡免疫、爆發保護等)無法被吞噬,維持遊戲平衡',
+    '・觸發時不會無限連鎖,持續傷害(中毒、燃燒)和反擊類傷害不會誤觸發',
+    '【S1 暗黑洞 🕳️】',
+    '・能量消耗:4',
+    '・打開恐怖暗黑洞穴,全體對手各有 60% 機率暈眩 1 回合',
+    '・並且全體對手損失 10% 最大 HP(此傷害無視有利狀態)',
+    '・每升 1 級暈眩機率 +3%(LV10/MAX 達 90%)',
+    '・全體控制+小傷害,讓對手無法反抗',
+    '【S2 鮮紅舌頭 👅】',
+    '・能量消耗:3',
+    '・伸出鮮紅舌頭舔向全體對手,使其中毒 2 回合',
+    '・中毒每回合損失 10% 最大 HP',
+    '・每 4 級 +1 回合(LV5 達 3 回合,LV10/MAX 達 4 回合)',
+    '・能量便宜的全體 DOT 技能,搭配其他輸出英雄一直磨血',
+    '【極限爆發:大嘴吸入 👹】',
+    '・張開恐怖巨口吞噬戰場',
+    '・用特技的 140% 對全體對手造成大傷害',
+    '・並使全體對手陷入「不治詛咒」2 回合(無法恢復 HP,且此狀態無法被免疫或解除)',
+    '・隨機選擇 1 名敵人附加額外效果:小怪有 20% 機率直接倒下;BOSS 與菁英則受到主傷害 50% 的追加傷害',
+    '・每升 1 級主傷害 +10%(LV4/MAX 達 180%),Lv4 詛咒 +1 回合(達 3 回合)',
+    '・特效暫用軍師「真理之門」(青綠色魔法門),以後可能換新素材',
+    '【怎麼獲得超鬼神王?】',
+    '・學生設計的英雄系列只能在召喚池獲得,不會出現在 BOSS 戰勝利解鎖池',
+    '・現在召喚池的「⭐ 稀有角色」(5% 機率)從原本 7 隻擴充到 8 隻(加入超鬼神王)',
+    '・大家公平地分攤這 5% 機率',
+    '【實作位置】',
+    '・HERO_DB / HERO_TRAIT / HERO_LORE / HERO_IMGS / HERO_PORTRAIT_LIBRARY 都新增超鬼神王條目',
+    '・BURST_DB / BURST_UPGRADE_DEF 加入「大嘴吸入」與其升級表',
+    '・SKILL_UPGRADE_DEF 加入「暗黑洞」(special_kishin_dark_hole 自訂類別) 與「鮮紅舌頭」(dur 持續類)',
+    '・_TRAIT_LV_INFO 加入超鬼神王天賦升級資訊',
+    '・SUMMON_RARE_HEROES 加入「超鬼神王」(會自動分攤稀有角色 5% 機率)',
+    '・execSkill / aiUseSkill 同步加入暗黑洞(全體 stun + HP-10%)與鮮紅舌頭(全體中毒)分支',
+    '・_runBurst 加入「大嘴吸入」實作(全體傷害+不治詛咒+ 1 名敵人額外處理)',
+    '・doDmg 內鏈鎖反應後加入吞噬天賦邏輯(過濾保護類 buff,參考神偷順手實作)',
+    '・BURST_GIF_DB 加入「大嘴吸入」條目(reuse 真理之門 GIF + 音效 + tint)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5450',
+  ] },
+  { ver:'v1.0.20260501.5440', brief:[
+    '🦖 全新角色登場:「鋁合金暴龍」加入冒險!古代暴龍靈魂的鋁合金機械生命體 ✨',
+    '🎨 由 5 年 5 班陳品均同學在 2026 年設計,只能在召喚池抽到喔!',
+    '⚡ 三大強力技能:超能衝鋒(瀕死)、炸彈四重奏(4 段+治療)、死神龍王登場(收割+附加能力)',
+    '🛡 天賦「鋁鎧」:被動減傷 20% 起跳,堅固如山!',
+  ], items:[
+    '【新角色鋁合金暴龍是誰?】',
+    '・鋁合金暴龍是具有古代暴龍靈魂的鋁合金機械生命體,堅固耐打、火力強大',
+    '・由 5 年 5 班陳品均同學在 2026 年設計,圖鑑也會標明設計者喔!',
+    '・他的素質很坦克:HP 超高(85)、攻擊普通(11)、特技低(8)、速度慢(6) — 純粹的硬坦克型角色',
+    '【天賦:鋁鎧 🛡️】',
+    '・受到任何傷害時,自動減少 20% 傷害量(被動,無條件,不需機率判定)',
+    '・每升 1 級天賦再 +10% 減傷(LV5/MAX 達 60% 減傷,幾乎砍半再砍半!)',
+    '・和其他減傷效果(聖騎士聖盾、聖殿領域、守衛仁王挺立等)分開計算,可疊加',
+    '・不會被消除或搶奪,堅如磐石',
+    '【S1 超能衝鋒 ⚡】',
+    '・能量消耗:3',
+    '・用攻擊的 180% 對 1 名對手造成傷害',
+    '・對路邊小怪有 10% 機率直接使其 HP 降為 1(瀕死!)',
+    '・對 BOSS 與菁英小怪改為傷害變 2 倍(攻擊×360%),不會瀕死',
+    '・每升 1 級主傷害 +5%(LV10/MAX 達 230%,BOSS 模式 460%)',
+    '【S2 炸彈四重奏 💣】',
+    '・能量消耗:4',
+    '・用特技值的 80% 對隨機敵方目標造成 4 段傷害(每段獨立挑目標)',
+    '・每段有 50% 機率額外治療 HP% 最低的友方(治療量 = 特技 30%)',
+    '・每升 1 級每段傷害 +5%(LV10/MAX 每段 130%,共 520%)',
+    '・打傷害+治療輔助二合一,4 段都觸發治療時超強!',
+    '【極限爆發:死神龍王登場 💀】',
+    '・死神龍王降臨戰場',
+    '・用特技的 170% 對全體對手造成大傷害',
+    '・接著找出 HP 比例低於 30% 的對手 1 名(挑 HP 最低的)強制秒殺,並吸收其能力',
+    '・友方全體獲得「死神祝福」狀態 2 回合:攻擊 + 被收割對手攻擊×50%、特技 + 被收割對手特技×50%',
+    '・若無 HP<30% 的對手,跳過收割與祝福,只造成主傷害',
+    '・每升 1 級主傷害 +10%(LV4/MAX 達 210%),Lv4 祝福 +1 回合(達 3 回合)',
+    '・特效與音效沿用刺客的「死神之鐮」(暗紅色調),呼應死神主題',
+    '【怎麼獲得鋁合金暴龍?】',
+    '・學生設計的英雄系列只能在召喚池獲得,不會出現在 BOSS 戰勝利解鎖池',
+    '・現在召喚池的「⭐ 稀有角色」(5% 機率)從原本 6 隻擴充到 7 隻(加入鋁合金暴龍)',
+    '・大家公平地分攤這 5% 機率',
+    '【實作位置】',
+    '・HERO_DB / HERO_TRAIT / HERO_LORE / HERO_IMGS / HERO_PORTRAIT_LIBRARY 都新增鋁合金暴龍條目',
+    '・BURST_DB / BURST_UPGRADE_DEF 加入「死神龍王登場」與其升級表',
+    '・SKILL_UPGRADE_DEF 加入「超能衝鋒」(special_alloy_charge) 與「炸彈四重奏」(special_alloy_quartet)',
+    '・_TRAIT_LV_INFO 加入鋁合金暴龍天賦升級資訊',
+    '・SUMMON_RARE_HEROES 加入「鋁合金暴龍」(會自動分攤稀有角色 5% 機率)',
+    '・execSkill / aiUseSkill 同步加入超能衝鋒與炸彈四重奏分支',
+    '・_runBurst 加入「死神龍王登場」實作(全體傷害 + 收割 HP<30% + strengthened buff)',
+    '・doDmg 內動物學家獸盟後加入鋁鎧減傷邏輯(無條件被動 -20%~-60%)',
+    '・BURST_GIF_DB 加入「死神龍王登場」條目(reuse 死神之鐮 GIF + 音效 + tint)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5440',
+  ] },
+  { ver:'v1.0.20260501.5430', brief:[
+    '🤖 全新角色登場:「科技生化人」加入冒險!未來世界的高科技戰士 ✨',
+    '🎨 由 5 年 5 班翁嵦晏同學在 2026 年設計,只能在召喚池抽到喔!',
+    '⚙ 三大強力技能:機械爪(雙段)、科技能量(全隊回復+強化)、輻射核砲(全體+虛弱)',
+    '☢ 天賦「鏈鎖反應」:打到一個敵人,可能引發鏈鎖讓他兩邊隊友也受傷!',
+  ], items:[
+    '【新角色科技生化人是誰?】',
+    '・科技生化人是來自未來世界的高科技戰士,結合機械與生物科技',
+    '・由 5 年 5 班翁嵦晏同學在 2026 年設計,圖鑑也會標明設計者喔!',
+    '・他的素質很均衡:HP 適中(66)、攻擊普通(13)、特技高(16)、速度快(15) — 攻防雙修的多功能型角色',
+    '【天賦:鏈鎖反應 ☢️】',
+    '・造成傷害時有 40% 機率引發鏈鎖反應',
+    '・觸發時:目標位置「兩側相鄰」(左邊一格 + 右邊一格)的敵人,各受到此次傷害 50% 的濺射',
+    '・每升 1 級天賦,觸發機率 +10%(LV5/MAX 達 80%,接近百分百觸發!)',
+    '・濺射傷害不會再次觸發本天賦,不會無限連鎖',
+    '【S1 機械爪 ⚙】',
+    '・能量消耗:3',
+    '・用攻擊值的 130% 對 1 名對手連續造成 2 段傷害(總共 260% 傷害)',
+    '・每升 1 級每段 +5%(LV10/MAX 每段 155%,共 310%)',
+    '・打單體很猛,搭配天賦還能濺射到旁邊的敵人',
+    '【S2 科技能量 🔋】',
+    '・能量消耗:3',
+    '・用特技的 70% 治療友方全體 HP',
+    '・並使友方全體攻擊和特技各 +3,持續 2 回合',
+    '・每升 1 級治療量 +5%(LV10/MAX 達 120%)',
+    '・治療+強化二合一,團隊輔助技能',
+    '【極限爆發:輻射核砲 ☢】',
+    '・發射輻射核能砲彈',
+    '・用特技的 150% 對全體對手造成大傷害',
+    '・並使敵方全體陷入「虛弱」狀態 2 回合(攻擊、特技、速度全降 50%)',
+    '・每升 1 級傷害 +10%(LV4/MAX 達 190%),Lv4 虛弱 +1 回合(達 3 回合)',
+    '・全螢幕播放輻射核砲動畫,搭配發射+爆炸+餘震三段音效,氣勢磅礡!',
+    '【怎麼獲得科技生化人?】',
+    '・學生設計的英雄系列只能在召喚池獲得,不會出現在 BOSS 戰勝利解鎖池',
+    '・現在召喚池的「⭐ 稀有角色」(5% 機率)從原本 5 隻擴充到 6 隻(加入科技生化人)',
+    '・大家公平地分攤這 5% 機率',
+    '【實作位置】',
+    '・HERO_DB / HERO_TRAIT / HERO_LORE / HERO_IMGS / HERO_PORTRAIT_LIBRARY 都新增科技生化人條目',
+    '・BURST_DB / BURST_UPGRADE_DEF 加入「輻射核砲」與其升級表',
+    '・SKILL_UPGRADE_DEF 加入「機械爪」(special_kikai_claw 自訂類別) 和「科技能量」(heal)',
+    '・_TRAIT_LV_INFO 加入科技生化人天賦升級資訊',
+    '・SUMMON_RARE_HEROES 加入「科技生化人」(會自動分攤稀有角色 5% 機率)',
+    '・execSkill / aiUseSkill 同步加入機械爪(2 段)與科技能量(治療+strengthened buff)分支',
+    '・_runBurst 加入「輻射核砲」實作(全體傷害 + 全體 weakened 狀態)',
+    '・doDmg 內八岐大蛇天賦後緊鄰加入鏈鎖反應邏輯(用 _techSplash 防遞迴,參考落石鐵拳的相鄰位置實作)',
+    '・BURST_GIF_DB 加入「輻射核砲」條目(用現有音效 sfx-gunshot-big + sfx-explode + sfx-burst 組合)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5430',
+  ] },
+  { ver:'v1.0.20260501.5420', brief:[
+    '🎬 窮奇的極限爆發「召喚上古四凶獸」加上專屬動畫和音效啦!',
+    '🐅 發動爆發時,全螢幕會播放四凶獸降臨的震撼動畫 + 凶獸怒吼音效 ✨',
+    '📝 順手把爆發名從「四大凶獸召喚」改成「召喚上古四凶獸」(更有古風氣勢)',
+  ], items:[
+    '【這次做了什麼?】',
+    '・窮奇的極限爆發新增專屬全螢幕 GIF 動畫:四隻上古凶獸從天而降,氣勢磅礡',
+    '・新增專屬音效:凶獸怒吼般的低沉爆音,搭配畫面震撼感更強',
+    '・畫面色調設成暗紅色,呼應凶獸主題',
+    '・爆發名從「四大凶獸召喚」改成「召喚上古四凶獸」,跟動畫檔案統一',
+    '【實作位置】',
+    '・新增 audio 元素 sfx-qiongqi-burst(召喚上古四凶獸.mp3)',
+    '・BURST_GIF_DB 加入「召喚上古四凶獸」key,設 url + sfx + tint(rgba(180,40,40,0.22)) + dur:2400',
+    '・全檔案把「四大凶獸召喚」字串換成「召喚上古四凶獸」(BURST_DB / BURST_UPGRADE_DEF / _runBurst / 註解)',
+    '・GIF 與 MP3 檔名走 raw.githubusercontent + encodeURIComponent(中文檔名標準處理)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5420',
+  ] },
+  { ver:'v1.0.20260501.5410', brief:[
+    '🐅 全新角色登場:「窮奇」加入冒險!中國神話四大凶獸,翼虎之姿 ✨',
+    '🎨 由 5 年 5 班閻漢昀同學在 2026 年設計,只能在召喚池抽到喔!',
+    '⚔ 三大強力技能:巨爪攻擊(流血)、死亡之吼(瀕死)、召喚上古四凶獸(全體強力狀態)',
+    '💥 天賦「凶獠」:被打到立刻反擊,反擊還超容易暴擊!',
+  ], items:[
+    '【新角色窮奇是誰?】',
+    '・窮奇是中國神話「四大凶獸」之一,長著翅膀的巨大猛獸,專愛欺善助惡',
+    '・由 5 年 5 班閻漢昀同學在 2026 年設計,圖鑑也會標明設計者喔!',
+    '・他的素質很特別:HP 高(74)、攻擊超強(18)、特技很低(5)、速度普通(13) — 是純粹的物理攻擊型角色',
+    '【天賦:凶獠 🐅】',
+    '・受到敵方主動攻擊(普攻、技能、爆發)時,立刻用攻擊值反擊對方',
+    '・特別的是:反擊的暴擊率比一般攻擊高很多!基礎達 45%(一般攻擊只有 15%)',
+    '・每升 1 級天賦,反擊暴擊率再 +10%(LV5/MAX 達 85% 暴擊率,幾乎每次都暴擊!)',
+    '・只有「直接被攻擊」會觸發,流血、中毒、燃燒等持續傷害不會觸發,避免無限循環',
+    '【S1 巨爪攻擊 ⚔】',
+    '・能量消耗:3',
+    '・用攻擊的 250% 對 1 名對手造成大傷害',
+    '・並使目標流血 2 回合,每回合損失 10% 最大 HP',
+    '・每升 1 級傷害 +5%(LV10/MAX 達 295%)',
+    '【S2 死亡之吼 💀】',
+    '・能量消耗:5',
+    '・用攻擊的 80% 對全體對手造成傷害',
+    '・每名小怪另有 15% 機率瀕死(HP 直接降為 1!)',
+    '・對 BOSS 與菁英小怪改為傷害變 2 倍(攻擊×160%),不會瀕死',
+    '・每升 1 級主傷害 +5%(LV10/MAX 達 130% / BOSS 模式 210%)',
+    '【極限爆發:召喚上古四凶獸 🌟】',
+    '・召喚中國神話四大凶獸——窮奇、檮杌、混沌、饕餮——共同降臨',
+    '・用攻擊的 200% 對全體對手造成傷害',
+    '・並隨機附加 1 個強力不利狀態 2 回合(從強力冰凍、燃燒、封印、麻痺、失明、中毒中擇一)',
+    '・這些強力狀態無法被免疫或解除!',
+    '・每升 1 級傷害 +20%(LV5/MAX 達 280%),Lv5 強力狀態持續 +1 回合(共 3 回合)',
+    '【怎麼獲得窮奇?】',
+    '・學生設計的英雄系列只能在召喚池獲得,不會出現在 BOSS 戰勝利解鎖池',
+    '・現在召喚池的「⭐ 稀有角色」(5% 機率)從原本 4 隻(大天狗 / 玉藻前 / 酒吞童子 / 巫女)變成 5 隻(加入窮奇)',
+    '・大家公平地分攤這 5% 機率',
+    '【實作位置】',
+    '・HERO_DB / HERO_TRAIT / HERO_LORE / HERO_IMGS / HERO_PORTRAIT_LIBRARY 都新增窮奇條目',
+    '・BURST_DB / BURST_UPGRADE_DEF 加入「召喚上古四凶獸」與其升級表',
+    '・SKILL_UPGRADE_DEF 加入「巨爪攻擊」(cat:dmg) 和「死亡之吼」(cat:special_qiongqi_roar)',
+    '・_TRAIT_LV_INFO 加入窮奇天賦升級資訊',
+    '・SUMMON_RARE_HEROES 加入「窮奇」(會自動分攤稀有角色 5% 機率)',
+    '・execSkill / aiUseSkill 同步加入巨爪攻擊與死亡之吼分支',
+    '・_runBurst 加入「召喚上古四凶獸」實作',
+    '・doDmg 內小惡魔還手後緊鄰加入凶獠反擊邏輯(用 isRebound 防 loop,手動算暴擊)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5410',
+  ] },
   { ver:'v1.0.20260501.5370', brief:[
     '💎 修好「裝備至寶後加成沒有套到戰鬥裡」的問題(只發生在邀請好友英雄參戰時)',
     '✨ 現在邀請好友的代表英雄,他自己裝的至寶能力也會一起帶過來,戰鬥更合理啦!',
@@ -62420,7 +63244,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5440';
+  const CURRENT_VERSION = 'v1.0.20260501.5450';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -62454,7 +63278,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5440';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5450';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
