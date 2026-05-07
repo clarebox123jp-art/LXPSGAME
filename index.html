@@ -33334,38 +33334,72 @@ function _calcHeroTreasureBonus(heroName){
 //   - 基礎屬性(hp/atk/sp/spd) + 玩家投資點直接加到英雄屬性
 //   - 特殊效果(critRate/dodgeRate/...)累加後存到 h._treasureEff,
 //     供戰鬥邏輯(doDmg/doHeal/startTurn)讀取觸發
+// ★ v1.0.20260501.5490 — 強化診斷:
+//   1. 開頭主動 reload _taiwanTreasureData,避免時序問題(資料還沒載完就套用)
+//   2. console.log 改用 group 分組,印出 equipped 內容、每件至寶加成、套用前後的屬性對比
+//   3. 增加多個關鍵點的詳細 log,幫助玩家在 F12 console 一眼看出問題在哪
 function _applyTaiwanTreasureToHero(h){
   if(!h || typeof _getHeroEquippedTreasures !== 'function') return;
+  // 防禦性 reload:確保 _taiwanTreasureData 已載入(避免戰鬥前資料還沒 ready 的時序 bug)
+  try{
+    if(typeof _loadTaiwanTreasureData === 'function'
+       && (!_taiwanTreasureData || Object.keys(_taiwanTreasureData).length === 0)){
+      console.warn('[至寶套用] _taiwanTreasureData 為空,主動 reload');
+      _loadTaiwanTreasureData();
+    }
+  }catch(_){}
   // ★ v1.0.20260501.5370 — 跳過好友英雄,避免誤把本地玩家的至寶套到好友英雄上
   //   兩個情境都要擋:
   //   (a) 已被標為好友英雄(_injectFriendHeroIntoBattle 之後)
   //   (b) 本場有邀請好友英雄,且 h.name 跟好友英雄同名(confirmHeroPick 時點)
-  if (h._isFriendHero) return;
+  if (h._isFriendHero){
+    try{ console.log('[至寶套用] '+h.name+' 是好友英雄,跳過(等 _injectFriendHeroIntoBattle 處理)'); }catch(_){}
+    return;
+  }
   try {
     if (typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero
         && window._friendHeroInParty
         && _invitedFriendHero.name === h.name) {
       // 這隻會被 _injectFriendHeroIntoBattle 接管,別套本地玩家的至寶
       h._treasureEff = h._treasureEff || {};
+      try{ console.log('[至寶套用] '+h.name+' 是借來的好友英雄,跳過'); }catch(_){}
       return;
     }
   } catch(_) {}
   const equipped = _getHeroEquippedTreasures(h.name);
   if(!equipped || !equipped.length){
     h._treasureEff = h._treasureEff || {};
+    try{ console.log('[至寶套用] '+h.name+' 無裝備至寶 (equipped='+JSON.stringify(equipped)+')'); }catch(_){}
     return;
   }
+  const _atkBefore = h.atk;
+  const _spBefore  = h.sp;
+  const _spdBefore = h.spd;
+  const _hpBefore  = h.hp;
   const _eff = {};
   let _addHp = 0, _addAtk = 0, _addSp = 0, _addSpd = 0;
+  const _detailLog = [];
   equipped.forEach(e => {
-    if(!e || !e.def || !e.record) return;
+    if(!e || !e.def || !e.record){
+      try{ console.warn('[至寶套用] '+h.name+' 跳過異常記錄', e); }catch(_){}
+      return;
+    }
     // 基礎屬性
     const _base = _getTaiwanTreasureStats(e.id, e.record.lv);
     const _inv = _getTaiwanTreasureInvested(e.id);
-    _addHp  += (_base.hp  || 0) + (_inv.hp  || 0);
-    _addAtk += (_base.atk || 0) + (_inv.atk || 0);
-    _addSp  += (_base.sp  || 0) + (_inv.sp  || 0);
-    _addSpd += (_base.spd || 0) + (_inv.spd || 0);
+    const _itemHp  = (_base.hp  || 0) + (_inv.hp  || 0);
+    const _itemAtk = (_base.atk || 0) + (_inv.atk || 0);
+    const _itemSp  = (_base.sp  || 0) + (_inv.sp  || 0);
+    const _itemSpd = (_base.spd || 0) + (_inv.spd || 0);
+    _addHp  += _itemHp;
+    _addAtk += _itemAtk;
+    _addSp  += _itemSp;
+    _addSpd += _itemSpd;
+    _detailLog.push({
+      treasure: e.def.name + '('+e.id+', lv'+(e.record.lv||1)+')',
+      base: _base, invested: _inv,
+      total: { hp:_itemHp, atk:_itemAtk, sp:_itemSp, spd:_itemSpd }
+    });
     // 特殊效果(累加,多件至寶可疊加)
     const _bonus = _getTaiwanTreasureEffectBonus(e.id, e.record.lv);
     Object.keys(_bonus).forEach(k => { _eff[k] = (_eff[k] || 0) + _bonus[k]; });
@@ -33376,9 +33410,83 @@ function _applyTaiwanTreasureToHero(h){
   if(_addSp){ h.sp  = (h.sp  || 0) + _addSp;  }
   if(_addSpd){ h.spd = (h.spd || 0) + _addSpd; }
   h._treasureEff = _eff;
-  try{ console.log('[至寶套用] '+h.name+' 加成:',
-    {hp:_addHp,atk:_addAtk,sp:_addSp,spd:_addSpd}, 'effects:', _eff); }catch(_){}
+  // 強化 log:印 group 方便 F12 一眼看清楚
+  try{
+    console.group('[至寶套用] '+h.name+' (裝備 '+equipped.length+' 件)');
+    console.log('每件至寶加成:', _detailLog);
+    console.log('總加成:', {hp:_addHp, atk:_addAtk, sp:_addSp, spd:_addSpd});
+    console.log('特殊效果:', _eff);
+    console.log('屬性變化: HP '+_hpBefore+'→'+h.hp+', ATK '+_atkBefore+'→'+h.atk+', SP '+_spBefore+'→'+h.sp+', SPD '+_spdBefore+'→'+h.spd);
+    console.groupEnd();
+  }catch(_){}
 }
+
+// ★ v1.0.20260501.5490 — 至寶診斷工具(玩家可在 F12 console 隨時叫)
+//   用法:
+//     window._diagnoseTreasure()         → 列出所有英雄的至寶裝備狀態
+//     window._diagnoseTreasure('巫女')   → 只看「巫女」的詳細狀況(資料 + 戰鬥中數值)
+window._diagnoseTreasure = function(heroName){
+  try{
+    console.group('🔍 至寶診斷工具');
+    // 1. 顯示 _taiwanTreasureData 全部記錄
+    console.log('--- _taiwanTreasureData(已記錄的至寶) ---');
+    if(typeof _taiwanTreasureData === 'undefined' || !_taiwanTreasureData
+       || Object.keys(_taiwanTreasureData).length === 0){
+      console.warn('  (空,沒有任何至寶記錄!可能是資料還沒載入)');
+    } else {
+      Object.keys(_taiwanTreasureData).forEach(id => {
+        const rec = _taiwanTreasureData[id];
+        const def = (typeof TAIWAN_TREASURES !== 'undefined') ? TAIWAN_TREASURES[id] : null;
+        const _name = def ? def.name : '(未知)';
+        console.log('  '+id+' = '+_name+' | 裝備在: '+(rec.equippedTo || '(未裝備)')+' | lv='+(rec.lv||1)+' | invested:', rec.invested||{});
+      });
+    }
+    // 2. 顯示 G.p1 戰鬥中數值
+    console.log('--- 戰鬥中 G.p1 屬性 ---');
+    if(typeof G !== 'undefined' && G && G.p1){
+      G.p1.forEach(h => {
+        if(!h) return;
+        if(heroName && h.name !== heroName) return;
+        // 取基礎值(從 HERO_DB)
+        const _base = (typeof HERO_DB !== 'undefined') ? HERO_DB[h.name] : null;
+        const _baseStr = _base ? '(基礎 hp='+_base.hp+', atk='+_base.atk+', sp='+_base.sp+', spd='+_base.spd+')' : '';
+        // 取至寶裝備
+        const _eq = (typeof _getHeroEquippedTreasures === 'function') ? _getHeroEquippedTreasures(h.name) : [];
+        const _eqStr = _eq.length ? '裝備: '+_eq.map(e=>e.def?e.def.name:e.id).join(', ') : '(無至寶)';
+        console.group(h.name+'('+h.side+'-'+h.pos+')');
+        console.log('當前: hp='+h.curHp+'/'+h.hp+', atk='+h.atk+', sp='+h.sp+', spd='+h.spd, _baseStr);
+        console.log(_eqStr);
+        console.log('_treasureEff:', h._treasureEff || {});
+        console.log('_isFriendHero:', !!h._isFriendHero);
+        // 預期值對比
+        if(_base){
+          const _expBonus = (typeof _calcHeroTreasureBonus === 'function') ? _calcHeroTreasureBonus(h.name) : null;
+          if(_expBonus){
+            const _inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested[h.name]) || {};
+            const _expAtk = _base.atk + (_inv.atk||0) + _expBonus.atk;
+            const _expSp  = _base.sp  + (_inv.sp ||0) + _expBonus.sp;
+            const _expSpd = _base.spd + (_inv.spd||0) + _expBonus.spd;
+            console.log('預期值: atk='+_expAtk+'(基礎'+_base.atk+'+投資'+(_inv.atk||0)+'+至寶'+_expBonus.atk+'), sp='+_expSp+', spd='+_expSpd);
+            if(h.atk !== _expAtk){
+              console.error('⚠️ atk 不對!應該是 '+_expAtk+',實際是 '+h.atk+',差 '+(_expAtk-h.atk));
+            } else {
+              console.log('✅ atk 正確!');
+            }
+          }
+        }
+        console.groupEnd();
+      });
+    } else {
+      console.warn('  G.p1 未初始化(需要進入戰鬥後才有資料)');
+    }
+    console.groupEnd();
+    return '診斷完成,請查看上方 console group';
+  }catch(e){
+    console.error('[_diagnoseTreasure] 失敗', e);
+    return '診斷失敗:' + (e && e.message);
+  }
+};
+
 
 // ════════════════════════════════════════════════════════════════
 // ★ v1.0.20260428.2600 — 台灣關 BOSS 戰陣容生成 + 戰勝 hook
@@ -62398,6 +62506,32 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5490', adminOnly:true, brief:[
+    '🔍 加強至寶套用診斷工具,協助排查「至寶能力沒生效」的回報',
+    '📊 強化 console log,F12 一眼看清楚至寶有沒有套用',
+    '🛠 新增 window._diagnoseTreasure() 診斷函式',
+  ], items:[
+    '【玩家回報】',
+    '・玩家反應:巫女基礎攻擊 8,裝備至寶後應該有 14,但戰鬥中只顯示 8',
+    '・初步推測可能是時序問題、好友英雄誤判、或資料未正確記錄',
+    '【這次加什麼?】',
+    '・_applyTaiwanTreasureToHero 開頭加防禦性 reload(避免 _taiwanTreasureData 還沒載入時套用)',
+    '・每件至寶的明細(基礎、投資、總計)都印到 console.group,F12 一眼看清楚',
+    '・好友英雄判斷時也印 log(明確標示「跳過,因為是好友英雄」)',
+    '・無裝備至寶時也印 log(equipped=[])',
+    '【新增診斷指令】',
+    '・在 F12 → Console 輸入 _diagnoseTreasure() 查看所有英雄狀態',
+    '・輸入 _diagnoseTreasure("巫女") 只看單一英雄詳細(資料 + 戰鬥中 + 預期值對比)',
+    '・會自動比對「應該是多少」 vs「實際是多少」,差距會用紅色 ⚠️ 標示',
+    '【請玩家協助】',
+    '・遇到至寶沒生效時:F12 開 Console → 輸入 _diagnoseTreasure("巫女") 截圖',
+    '・另外可以截圖戰鬥開始時 console 自動印的 [至寶套用] group',
+    '・這樣管理員能直接判斷是時序、資料、還是套用流程的問題',
+    '【實作位置】',
+    '・_applyTaiwanTreasureToHero (line ~33337) 強化版',
+    '・新增 window._diagnoseTreasure 全域函式',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5490',
+  ] },
   { ver:'v1.0.20260501.5480', brief:[
     '🛠 進一步修了「BOSS 是玉藻前時卡死」的問題!',
     '💕 玉藻前 BOSS 用爆發魅惑玩家全體後,輪到玩家英雄行動時整場戰鬥凍結',
@@ -63506,7 +63640,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5480';
+  const CURRENT_VERSION = 'v1.0.20260501.5490';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63540,7 +63674,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5480';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5490';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
