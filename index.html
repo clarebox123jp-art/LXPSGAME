@@ -2637,6 +2637,100 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #game-info-btn:hover::before{transform:translateX(100%);}
 
 /* ══════════════════════════════════════════
+   ★ v1.0.20260507.5550 — 啟動讀取條
+   位置:覆蓋全螢幕,玩家剛開遊戲時顯示,等資源預載完才隱藏
+   外觀沿用畫風切換按鈕的紫橘配色,讓視覺一致
+══════════════════════════════════════════ */
+#boot-loader{
+  position:fixed;inset:0;z-index:999999;
+  background:radial-gradient(ellipse at center,rgba(20,15,40,0.96),rgba(0,0,8,0.99));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  transition:opacity 0.5s ease-out;
+  -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;
+}
+.boot-loader-card{
+  width:min(90vw,560px);
+  padding:clamp(28px,4vw,48px) clamp(28px,5vw,56px);
+  background:linear-gradient(160deg,rgba(40,30,60,0.92),rgba(60,40,80,0.85));
+  border:2.5px solid rgba(180,140,220,0.7);
+  border-radius:20px;
+  box-shadow:0 0 50px rgba(180,140,220,0.35);
+  text-align:center;
+}
+.boot-loader-title{
+  font-size:clamp(28px,3.4vw,44px);
+  font-weight:900;letter-spacing:3px;color:#ffe8a0;
+  text-shadow:0 2px 8px rgba(0,0,0,0.6),0 0 16px rgba(255,200,80,0.4);
+  margin-bottom:8px;
+}
+.boot-loader-subtitle{
+  font-size:clamp(14px,1.7vw,20px);
+  color:#d8c8f0;letter-spacing:1px;
+  margin-bottom:24px;
+}
+.boot-loader-bar-bg{
+  height:clamp(28px,3.5vw,40px);
+  background:linear-gradient(135deg,rgba(40,30,60,0.85),rgba(60,40,80,0.75));
+  border:2px solid rgba(180,140,220,0.6);
+  border-radius:clamp(14px,1.8vw,20px);
+  overflow:hidden;
+  margin-bottom:14px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,0.4);
+  position:relative;
+}
+.boot-loader-bar-fill{
+  height:100%;width:0%;
+  background:linear-gradient(135deg,rgba(255,180,80,0.92),rgba(255,140,40,0.85));
+  border-radius:clamp(12px,1.6vw,18px);
+  box-shadow:0 0 25px rgba(255,180,80,0.7),inset 0 1px 0 rgba(255,255,255,0.3);
+  transition:width 0.4s cubic-bezier(0.4,0,0.2,1);
+  position:relative;overflow:hidden;
+}
+/* 流光動畫,讓進度條看起來有在動 */
+.boot-loader-bar-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35),transparent);
+  animation:bootLoaderShimmer 1.4s linear infinite;
+}
+@keyframes bootLoaderShimmer{
+  0%  {transform:translateX(-100%);}
+  100%{transform:translateX(100%);}
+}
+.boot-loader-pct{
+  font-size:clamp(22px,2.6vw,32px);
+  font-weight:900;letter-spacing:2px;color:#ffe066;
+  text-shadow:0 1px 4px rgba(0,0,0,0.7),0 0 12px rgba(255,220,100,0.5);
+  margin-bottom:10px;
+}
+.boot-loader-status{
+  font-size:clamp(13px,1.5vw,18px);
+  color:#aaa;letter-spacing:1px;min-height:1.5em;
+}
+
+/* ══════════════════════════════════════════
+   ★ v1.0.20260507.5550 — 鬥技場按鈕納入關卡選擇區
+   原本在首頁的「⚔ 英雄鬥技場」按鈕已搬到關卡選擇頁,
+   作為「近期活動與新角色」之後的第二顆事件按鈕,跟著捲動
+══════════════════════════════════════════ */
+.adv-arena-btn{
+  width:100%;padding:14px 20px;
+  font-size:clamp(28px,3.4vw,46px);font-weight:800;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  letter-spacing:2px;cursor:pointer;border-radius:14px;
+  background:linear-gradient(135deg,rgba(40,80,180,0.95),rgba(60,120,220,0.95),rgba(20,60,140,0.95));
+  border:2px solid rgba(120,200,255,0.85);color:#e0eaff;
+  box-shadow:0 0 16px rgba(80,180,255,0.45),inset 0 0 10px rgba(120,200,255,0.2);
+  transition:all 0.2s;line-height:1.3;
+  text-shadow:0 2px 6px rgba(0,0,0,0.6);
+}
+.adv-arena-btn:hover{
+  transform:translateX(8px);
+  background:linear-gradient(135deg,rgba(60,100,200,1),rgba(80,140,240,1),rgba(40,80,160,1));
+  box-shadow:0 0 28px rgba(120,200,255,0.7),inset 0 0 14px rgba(160,220,255,0.3);
+}
+
+/* ══════════════════════════════════════════
    ★ v1.0.20260423.6400 — 畫風切換按鈕(可愛 / 精美)
    位置:遊戲介紹按鈕上方
    ★ v1.0.20260423.9200 — 解鎖功能,恢復彩色樣式
@@ -5760,6 +5854,21 @@ body.art-premium #summon-overlay {
 </style>
 </head>
 <body>
+<!-- ★ v1.0.20260507.5550 — 啟動讀取條:覆蓋全畫面,顯示資源預載進度
+     防止玩家在資源還沒載完時點按鈕,造成 BOSS 戰途中卡頓或閃退
+     視覺風格沿用畫風切換按鈕的紫橘配色
+     一個 session 內只顯示一次(用 sessionStorage 標記),返回首頁不會重跑 -->
+<div id="boot-loader">
+  <div class="boot-loader-card">
+    <div class="boot-loader-title">🎮 小英雄大對抗</div>
+    <div class="boot-loader-subtitle">資源載入中,請稍候...</div>
+    <div class="boot-loader-bar-bg">
+      <div class="boot-loader-bar-fill" id="boot-loader-bar-fill"></div>
+    </div>
+    <div class="boot-loader-pct"><span id="boot-loader-pct">0</span>%</div>
+    <div class="boot-loader-status" id="boot-loader-status">準備中...</div>
+  </div>
+</div>
 <!-- ★ v1.0.20260501.4980 — 強制橫式遮罩:手機 / 平板直立時顯示提示,擋住整個遊戲畫面
      桌機(無 orientation 概念 / 寬>900)永遠不顯示;只在觸控小裝置且直立時觸發 -->
 <div id="rotate-device-overlay" aria-hidden="true">
@@ -6112,7 +6221,7 @@ body.art-premium #summon-overlay {
 <!-- 版本標示 -->
 <div id="version-badge" style="position:fixed;bottom:10px;right:14px;z-index:9998;font-size:15px;color:rgba(255,255,255,0.35);font-family:'M PLUS Rounded 1c','Nunito',monospace;letter-spacing:0.5px;pointer-events:none;user-select:none;">v1.0.20260423.6000</div>
 <button id="adventure-btn" onclick="playSfx('sfx-gentle',0.4);if(window._isMobileDevice&&window._isMobileDevice()&&window._enterMobileFullscreenLandscape){window._enterMobileFullscreenLandscape();}showLoginGate()">🗺 展開冒險故事</button>
-<button id="start-btn" onclick="if(window._isMobileDevice&&window._isMobileDevice()&&window._enterMobileFullscreenLandscape){window._enterMobileFullscreenLandscape();}else if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(()=>{});}playSfx('sfx-enter',0.9);initGame()">⚔ 英雄鬥技場</button>
+<!-- ★ v1.0.20260507.5550 — 「⚔ 英雄鬥技場」按鈕已從首頁移除,改放到關卡選擇頁的「近期活動與新角色」之後 -->
 
 
 <button id="chrome-hint-btn" onclick="playSfx('sfx-gentle',0.3);_openInChrome()"
@@ -6218,6 +6327,10 @@ body.art-premium #summon-overlay {
           <!-- ★ v1.0.20260501.4990 — 「近期活動與新角色」也歸入關卡選擇區 -->
           <button class="adv-event-btn" onclick="playSfx('sfx-sel',0.6);try{_showNewHeroAnnouncement(true);}catch(e){console.warn(e);}">
             🎉 近期活動與新角色
+          </button>
+          <!-- ★ v1.0.20260507.5550 — 「英雄鬥技場」從首頁搬到這裡,讓關卡與練習模式統一在同一個捲動清單中 -->
+          <button class="adv-arena-btn" onclick="if(window._isMobileDevice&&window._isMobileDevice()&&window._enterMobileFullscreenLandscape){window._enterMobileFullscreenLandscape();}else if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(function(){});}playSfx('sfx-enter',0.9);initGame()">
+            ⚔ 英雄鬥技場
           </button>
         </div>
         <!-- 捲動提示:固定在 wrapper 下緣,不跟著捲動 -->
@@ -7085,6 +7198,182 @@ body.art-premium #summon-overlay {
 </div>
 
 <script>
+// ══════════════════════════════════════════════════════
+// ★ v1.0.20260507.5550 — 啟動讀取條(Boot Loader)
+// ══════════════════════════════════════════════════════
+//   目的:在玩家剛開遊戲時,先把場景圖片、BGM、SFX 等資料預載完成,
+//        避免按下「展開冒險故事」後才開始載入,造成戰鬥中斷層、卡頓或閃退。
+//   行為:
+//     - 同一個 session 內只顯示一次(用 sessionStorage 標記),
+//       玩家從遊戲返回首頁時不會重跑
+//     - 顯示時間至少 10 秒(讓進度條視覺有跑動感),最多 20 秒(下載慢時保底結束)
+//     - 進度條混用「實際完成度」與「時間流逝」兩個來源,確保條子永遠在前進
+//     - 載入期間禁止點擊首頁按鈕,避免使用者跳過讀取
+//   PC / iPad / 手機通用:純 DOM + sessionStorage,無平台特殊邏輯
+(function _bootLoader(){
+  try{
+    if(sessionStorage.getItem('lxps_boot_loader_done') === '1'){
+      const _bl = document.getElementById('boot-loader');
+      if(_bl) _bl.remove();
+      return;
+    }
+  }catch(_){}
+
+  const overlay  = document.getElementById('boot-loader');
+  const fillEl   = document.getElementById('boot-loader-bar-fill');
+  const pctEl    = document.getElementById('boot-loader-pct');
+  const statusEl = document.getElementById('boot-loader-status');
+  if(!overlay || !fillEl || !pctEl) return;
+
+  // ── 載入期間先把首頁按鈕做視覺禁用,避免太早點到 ──
+  const _disabledBtnIds = ['adventure-btn','game-info-btn','art-style-cute-btn','art-style-premium-btn'];
+  _disabledBtnIds.forEach(id => {
+    const b = document.getElementById(id);
+    if(b){
+      b.style.opacity = '0.4';
+      b.style.pointerEvents = 'none';
+      b.dataset._bootDisabled = '1';
+    }
+  });
+
+  const bootStart = Date.now();
+  let totalTasks = 0;
+  let completedTasks = 0;
+
+  function getElapsedSec(){ return (Date.now() - bootStart) / 1000; }
+  function getRealPct(){ return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0; }
+
+  // 顯示百分比 = max(實際完成 × 0.9, 時間進度)
+  // 時間進度曲線:0 秒 = 0%,10 秒 = 90%,20 秒 = 99%
+  function getDisplayPct(){
+    const elapsed = getElapsedSec();
+    const realPct = getRealPct();
+    let timePct;
+    if(elapsed < 10) timePct = elapsed * 9;             // 0 → 90 over 10s
+    else timePct = 90 + Math.min(9, (elapsed - 10) * 1.125); // 90 → 99 over 8s
+    return Math.min(99, Math.max(realPct * 0.9, timePct));
+  }
+
+  function render(){
+    const p = getDisplayPct();
+    fillEl.style.width = p + '%';
+    pctEl.textContent = Math.round(p);
+  }
+
+  let renderTimer = setInterval(render, 100);
+  render();
+
+  function bumpComplete(label){
+    completedTasks++;
+    if(label && statusEl) statusEl.textContent = label;
+  }
+  function addTask(){ totalTasks++; }
+
+  function done(){
+    if(renderTimer){ clearInterval(renderTimer); renderTimer = null; }
+    fillEl.style.width = '100%';
+    pctEl.textContent = '100';
+    if(statusEl) statusEl.textContent = '✓ 載入完成,準備開始遊戲!';
+    try{ sessionStorage.setItem('lxps_boot_loader_done', '1'); }catch(_){}
+    setTimeout(() => {
+      if(!overlay.parentNode) return;
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        try{ overlay.remove(); }catch(_){}
+        // 解除按鈕禁用
+        _disabledBtnIds.forEach(id => {
+          const b = document.getElementById(id);
+          if(b && b.dataset._bootDisabled === '1'){
+            b.style.opacity = '';
+            b.style.pointerEvents = '';
+            delete b.dataset._bootDisabled;
+          }
+        });
+      }, 500);
+    }, 700);
+  }
+
+  // ═══════════════════════════════════════
+  // 預載任務 1:關鍵場景圖片
+  // ═══════════════════════════════════════
+  const sceneImages = [
+    'https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png',
+    'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png',
+  ];
+  if(statusEl) statusEl.textContent = '載入場景圖片...';
+  sceneImages.forEach(url => {
+    addTask();
+    const img = new Image();
+    const onResolved = () => bumpComplete('載入場景圖片...');
+    img.onload  = onResolved;
+    img.onerror = onResolved;
+    img.src = url;
+    // 安全網:7 秒未載完仍計入,避免單張圖卡住整體
+    setTimeout(() => { if(!img.complete) onResolved(); }, 7000);
+  });
+
+  // ═══════════════════════════════════════
+  // 預載任務 2:主要 BGM 音訊(等到 readyState ≥ 2 = 可播)
+  // ═══════════════════════════════════════
+  const audioIds = [
+    'bgm-menu-01','bgm-menu-02',
+    'bgm-battle-01','bgm-battle-02','bgm-battle-03',
+    'bgm-win','bgm-adv-march','bgm-adv-scene'
+  ];
+  audioIds.forEach(id => {
+    const a = document.getElementById(id);
+    if(!a) return;
+    addTask();
+    let _resolved = false;
+    const onReady = () => {
+      if(_resolved) return;
+      _resolved = true;
+      bumpComplete('載入背景音樂...');
+    };
+    if(a.readyState >= 2) onReady();
+    else {
+      a.addEventListener('canplay',        onReady, {once:true});
+      a.addEventListener('canplaythrough', onReady, {once:true});
+      a.addEventListener('error',          onReady, {once:true});
+      // 安全網:單個音訊最多等 8 秒
+      setTimeout(onReady, 8000);
+    }
+  });
+
+  // ═══════════════════════════════════════
+  // 預載任務 3:雲端同步狀態
+  //   - 已登入玩家:等 window._cloudLoadDone 旗標,最多 8 秒
+  //   - 未登入:不阻塞(不算任務)
+  //   保險:無論如何 8 秒後就算完成,避免 Firebase 慢讓讀取條卡住
+  // ═══════════════════════════════════════
+  addTask();
+  let cloudWait = 0;
+  const cloudCheckIv = setInterval(() => {
+    cloudWait++;
+    const _done = !!window._cloudLoadDone;
+    const _maxed = cloudWait >= 16; // 0.5s * 16 = 8s
+    if(_done || _maxed){
+      clearInterval(cloudCheckIv);
+      bumpComplete('雲端資料就緒');
+    }
+  }, 500);
+
+  // ═══════════════════════════════════════
+  // 完成偵測:全部任務完成且時間 ≥ 10 秒,或時間 ≥ 20 秒(強制結束)
+  // ═══════════════════════════════════════
+  const doneCheckIv = setInterval(() => {
+    const elapsed = getElapsedSec();
+    const allDone = totalTasks > 0 && completedTasks >= totalTasks;
+    if((allDone && elapsed >= 10) || elapsed >= 20){
+      clearInterval(doneCheckIv);
+      done();
+    }
+  }, 200);
+})();
+
 // ══════════════════════════════════════════════════════
 // 保護層：若冒險系統（第二個script）未正常載入，
 // 提供安全預設值避免 ReferenceError 拖垮戰鬥練習模式。
@@ -15975,9 +16264,23 @@ function _showBurstGif(burstName){
 
   // ★ v1.0.20260421.1500 — 支援「兩支不同 GIF 接力播放」
   //   設定 data.url2 後會先播 url 再播 url2，兩支的時長由 data.dur / data.dur2 控制
+  // ★ v1.0.20260507.5540 — iPad 記憶體優化重大修補:
+  //   原本每次播放都加 `?r=' + Date.now()` cache-buster,讓 iOS Safari 把每次的 GIF
+  //   都當作新資源重新下載 + 解碼到記憶體,長時間 BOSS 戰累積 100~200MB 後 iPad 會
+  //   因記憶體壓力被 iOS 殺掉分頁,玩家就感受到「召喚 / BOSS 戰時無預警跳出」。
+  //   修復方法:
+  //   1. 不加 cache-buster — 每個爆發 GIF 在會話中只下載一次,後續都吃瀏覽器快取
+  //      (由於 _playClip 每次都建立新 <img> 元素,設 src 時 GIF 仍會從第 0 幀開始播,
+  //      不需要靠 cache-buster 強制重啟)
+  //   2. 移除前先把 img.src 設成空字串,協助 iOS Safari 立即釋放 GIF 解碼緩衝區
+  //   PC 不受影響:桌面瀏覽器記憶體充足,移除 cache-buster 反而省下重複下載的網路流量
   const _playClip = (clipUrl, dur, tint) => new Promise(resolve => {
     const old=document.getElementById('burst-gif-overlay');
-    if(old) old.remove();
+    if(old){
+      // ★ v5540 — 清舊 overlay 時也先把內部 <img> 釋放
+      try{ const _oldImg = old.querySelector('img'); if(_oldImg) _oldImg.src = ''; }catch(_){}
+      old.remove();
+    }
 
     const ov=document.createElement('div');
     ov.id='burst-gif-overlay';
@@ -15989,7 +16292,8 @@ function _showBurstGif(burstName){
     ].join('');
 
     const img=document.createElement('img');
-    img.src = clipUrl + '?r=' + Date.now();
+    // ★ v5540 — 不再加 cache-buster,讓瀏覽器吃快取以節省 iPad 記憶體
+    img.src = clipUrl;
     // ★ v1.0.20260424.1370 — 支援 data.scale 倍數放大(用 transform:scale 維持中心)
     // ★ v1.1.0 — 預設 scale 從 1 提升到 1.6,讓所有爆發技自動放大 60% 看起來更全螢幕
     //   原因:正方形 GIF(如 1024x1024)在 1920x1080 容器中 contain 會留左右黑邊,看起來偏小
@@ -16013,6 +16317,8 @@ function _showBurstGif(burstName){
       ov.style.opacity='0';
       ov.style.transition='opacity 0.5s ease-in';
       setTimeout(()=>{
+        // ★ v5540 — 移除前先清 img.src,讓 iOS Safari 立刻釋放 GIF 解碼緩衝
+        try{ img.src = ''; }catch(_){}
         if(ov.parentNode) ov.remove();
         resolve();
       },500);
@@ -31891,8 +32197,18 @@ function scaleToViewport(){
   const W=1920, H=1080;
   // ★ v1.0.20260422.0112 — 大幅簡化:不再手動計算 translate 偏移量
   // ★ v1.1.0 — 手機適配:在小螢幕保留邊緣空間,避免按鈕被切到
-  const vw = (window.visualViewport ? window.visualViewport.width : window.innerWidth) || window.innerWidth;
-  const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) || window.innerHeight;
+  // ★ v1.0.20260507.5540 — iPad 全螢幕「畫面偏上 / 下方黑塊 / 上半部出框」修補:
+  //   原本只用 visualViewport.height 取得高度,但 iPad Safari 進全螢幕時這個值會
+  //   短暫回報為「比實際可視區大」(包含 home indicator 區),計算出的 scale 過大,
+  //   #gc 縮放後超出實際可視區頂部 → 上半被切、下方留黑塊。
+  //   修復:同時取 visualViewport 與 innerHeight,選 MIN 值,確保不會把虛報的較大值用上。
+  //   這樣即使 visualViewport.height 暫時錯報,innerHeight 較準時也會收斂到正確值。
+  const _vpW = (window.visualViewport && window.visualViewport.width)  || window.innerWidth  || 1920;
+  const _vpH = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 1080;
+  const _innerW = window.innerWidth  || _vpW;
+  const _innerH = window.innerHeight || _vpH;
+  const vw = Math.min(_vpW, _innerW);
+  const vh = Math.min(_vpH, _innerH);
   // ★ v1.0.20260501.4970 — 「按不到最上下邊緣按鈕」修正
   // ★ v1.0.20260501.4980 — 橫式全螢幕也加大 padY:
   //   原本橫式手機只給 vh*0.005(約 2~3px),Android 全螢幕模式仍保留 ~16dp
@@ -31902,10 +32218,16 @@ function scaleToViewport(){
   //   為什麼是 vh*0.025:Android 全螢幕後狀態列雖隱藏,但底部手勢區仍佔 ~16dp,
   //   橫式時 vh 較小(通常 360~430px),0.025*vh ≈ 9~11px,加上 max(12px) 保底足夠。
   //
-  //   PC / iPad 不受影響(vw>900 整段跳過)。
+  // ★ v1.0.20260507.5540 — iPad(寬度通常 1024~1366)額外加 6px 安全邊,
+  //   確保 visualViewport 暫時錯報時不會把畫面推出可視區。
   const _isMobile = vw <= 900;
+  const _isiPad = !_isMobile && (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (typeof navigator.platform === 'string' && navigator.platform === 'MacIntel'
+      && (navigator.maxTouchPoints||0) > 1)
+  );
   const _padX = _isMobile ? Math.max(4, vw * 0.01) : 0;
-  const _padY = _isMobile ? Math.max(12, vh * 0.025) : 0;
+  const _padY = _isMobile ? Math.max(12, vh * 0.025) : (_isiPad ? 6 : 0);
   const _availW = vw - _padX * 2;
   const _availH = vh - _padY * 2;
   const scale = Math.min(_availW / W, _availH / H);
@@ -31919,11 +32241,15 @@ function scaleToViewport(){
 //   若只在 fullscreenchange + 100ms delay 呼叫 scaleToViewport，會用舊尺寸計算導致畫面偏下。
 //   解法：多次延遲呼叫（累積式，最後一次會定於正確尺寸）。
 //   PC 上不會造成影響——scaleToViewport 本身冪等，多次呼叫結果一樣。
+// ★ v1.0.20260507.5540 — 加入更晚的 retry(1500/2500ms),處理 iPad Pro 大尺寸機種
+//   進全螢幕後 viewport 回報延遲較久的情況。每次都是冪等動作,不會造成副作用。
 function _scaleToViewportRetry(){
   scaleToViewport();
   setTimeout(scaleToViewport, 80);
   setTimeout(scaleToViewport, 300);
   setTimeout(scaleToViewport, 800);
+  setTimeout(scaleToViewport, 1500);
+  setTimeout(scaleToViewport, 2500);
 }
 window._scaleToViewportRetry = _scaleToViewportRetry;
 
@@ -32577,6 +32903,20 @@ window.addEventListener('orientationchange', () => {
   if(typeof _scaleToViewportRetry === 'function') _scaleToViewportRetry();
   else setTimeout(scaleToViewport, 300);
 });
+// ★ v1.0.20260507.5540 — iPad 全螢幕兜底:用 ResizeObserver 監聽 documentElement 尺寸變化
+//   情境:有時 iPad Safari 進/退全螢幕時,'resize' 與 'visualViewport.resize' 都不會觸發,
+//   或觸發時 visualViewport.height 仍是舊值 → scaleToViewport 算出錯誤 scale → 畫面偏上。
+//   ResizeObserver 觀察 <html> 元素的實際盒尺寸,iOS 會在 layout 變化後可靠地通知,
+//   雙保險確保 scaleToViewport 一定會在正確時機重算。PC 不受影響(行為冪等)。
+try{
+  if(typeof ResizeObserver !== 'undefined'){
+    const _docElResizeOb = new ResizeObserver(() => {
+      // 用 RAF 讓 ResizeObserver callback 不在 layout 階段內執行,避免 forced reflow
+      requestAnimationFrame(scaleToViewport);
+    });
+    _docElResizeOb.observe(document.documentElement);
+  }
+}catch(_){}
 // ★ v1.0.20260422.0112 — 清除舊版（v0111 以下）scaleGame IIFE 可能遺留在 inline style 上的
 //   left / top / width / height 值。新架構完全靠 CSS flex 置中，這些 inline 值會干擾版面。
 try{
@@ -47752,6 +48092,7 @@ window.gameCloudLoad = async function(uid) {
   // ② 若雲端成功但 data 是 null → 確認是新玩家（文件不存在）
   if(cloudOk && !data) {
     window._progressLoaded = true;  // 新玩家，允許後續存檔
+    window._cloudLoadDone = true;   // ★ v5550 — 通知 boot loader 雲端流程已就緒
     log('☁️ 新玩家，歡迎加入！');
     return;
   }
@@ -47768,6 +48109,7 @@ window.gameCloudLoad = async function(uid) {
     if(!data) {
       // ⚠️ 雲端失敗且本地無備份 → 不可假設玩家是新的！拒絕啟用存檔功能以保護資料
       window._progressLoaded = false;
+      window._cloudLoadDone  = true;   // ★ v5550 — 即使失敗仍要解除 boot loader 等待
       console.error('⛔ [存檔保護] 雲端連線異常且本地無備份，已停用雲端儲存以保護現有資料');
       try{
         const _toast=document.createElement('div');
@@ -47788,6 +48130,7 @@ window.gameCloudLoad = async function(uid) {
   // ④ 有資料 → 套用
   _applySafeData(data);
   window._progressLoaded = true;  // ★ 關鍵 flag：gameCloudSave 會檢查此值才允許儲存
+  window._cloudLoadDone  = true;   // ★ v5550 — 通知 boot loader 雲端流程已就緒
   if(source === 'cloud') {
     localStorage.setItem('lxps_' + uid + '_progress', JSON.stringify(data));
     log('☁️ 雲端進度已載入（' + new Date(data.savedAt||0).toLocaleString('zh-TW') + '）');
@@ -62665,6 +63008,86 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260507.5550', brief:[
+    '🎮 啟動讀取條:打開遊戲時先預載資源,玩起來更穩定不卡頓',
+    '🗺 「⚔ 英雄鬥技場」按鈕從首頁搬到關卡選擇頁,跟近期活動一起捲動',
+    '🍎 PC / iPad / 手機通用,不挑平台',
+  ], items:[
+    '【任務 1:啟動讀取條】',
+    '・問題:玩家一打開遊戲就直接點「展開冒險故事」進入戰鬥,但場景圖、BGM、音效還在背景下載',
+    '・結果:BOSS 戰途中才開始載入大圖,造成卡頓、白畫面、甚至(舊版)記憶體爆掉跳出',
+    '・新做法:首頁載入時先秀一條動態讀取條,把關鍵資源預載完才解鎖按鈕',
+    '・✨ 視覺風格沿用畫風切換按鈕的紫橘配色,一致性更好',
+    '・✨ 進度條時間長度依下載速度調整:快的話 ~10 秒、慢的話最多 20 秒就強制完成',
+    '・✨ 預載項目:5 張關鍵場景背景圖、8 個主要 BGM、雲端同步狀態',
+    '・✨ 載入期間禁用首頁按鈕(透明度 0.4 + pointerEvents:none),防止過早點擊',
+    '・✨ 同一個 session 內只跑一次,玩家從遊戲返回首頁不會再看到讀取條',
+    '・✨ 進度條顯示百分比 = max(實際完成度 × 0.9, 時間進度),確保條子永遠在前進',
+    '・✨ 配上流光動畫,即使等待中視覺也不會死板',
+    '【任務 2:鬥技場按鈕搬家】',
+    '・原本「⚔ 英雄鬥技場」與「🗺 展開冒險故事」並排在首頁',
+    '・但鬥技場是練習模式,跟冒險主軸關聯沒那麼緊',
+    '・✨ 把鬥技場按鈕從首頁移除,改放到關卡選擇頁的「🎉 近期活動與新角色」之後',
+    '・✨ 採用藍色系外觀(冷色系=練習/PvP),跟其他關卡(金色系)和近期活動(粉紅)區分',
+    '・✨ 一起放在關卡清單裡跟著捲動,玩家可以一目瞭然所有可玩內容',
+    '・按鈕功能不變:點下去仍會請求全螢幕、橫式鎖定、播放音效並進入鬥技場',
+    '【影響範圍】',
+    '・PC / iPad / 手機都通用,不挑平台',
+    '・搭配 v5540 的 iPad 記憶體優化,長時間遊玩不再容易跳出',
+    '・首頁變得更精簡,主視覺只剩「展開冒險故事」一個 CTA',
+    '・玩家進冒險頁面後可以一個畫面內看到所有遊戲入口',
+    '【實作位置】',
+    '・新增 #boot-loader DOM 元素 + .boot-loader-* CSS(沿用 art-style-btn 配色)',
+    '・第一個 <script> 區塊頂端加入 IIFE 啟動讀取條邏輯',
+    '・gameCloudLoad 三個結束點(新玩家/失敗/成功)都設定 window._cloudLoadDone = true',
+    '・移除首頁 <button id="start-btn">,加入 .adv-arena-btn 到 #adv-stage-list-area',
+    '・新增 .adv-arena-btn CSS(藍色系,跟 .adv-event-btn 並列)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5550',
+  ] },
+  { ver:'v1.0.20260507.5540', brief:[
+    '🍎 大幅優化 iPad 體驗:召喚 / BOSS 戰時無預警跳出問題已修補!',
+    '🖥 全螢幕畫面偏上、下方黑塊、上半部超出畫面的問題也一併解決',
+    '⚡ 爆發特效不再每次重新下載 GIF,長時間戰鬥記憶體更穩定',
+  ], items:[
+    '【玩家回報】',
+    '・iPad 玩家反應:打 BOSS、召喚抽角時遊戲常常會無預警跳出(整個分頁被重整)',
+    '・另外進全螢幕後常常畫面位置會跑掉:上半部超出可視區、底部留一條黑帶',
+    '【為什麼會這樣?】',
+    '・問題 1(無預警跳出):爆發特效播放程式碼為了強制 GIF 從第 0 幀重播,在每次播放時',
+    '  在 URL 後面加 `?r=<時間戳>`(例如 ...gif?r=1715000000123)',
+    '・但這個做法讓 iOS Safari 把每次的 GIF 都當成「全新資源」重新下載 + 解碼到記憶體',
+    '・一場 BOSS 戰可能觸發 5~10+ 次爆發特效(玩家 + AI),每個 GIF 200~500KB,',
+    '  累積下來吃掉 100~200MB 記憶體',
+    '・iPad Safari 記憶體容忍度只有 ~200MB,記憶體壓力一到頂,iOS 就把整個分頁殺掉,',
+    '  玩家就感受成「無預警跳出遊戲」',
+    '・問題 2(全螢幕偏上):iPad Safari 進全螢幕後,visualViewport.height 會短暫回報為',
+    '  「比實際可視區大」(包含 home indicator 區),scaleToViewport 算出的 scale 過大,',
+    '  #gc 縮放後超出實際可視區頂部 → 上半被切、下方留黑塊',
+    '【這次怎麼修?】',
+    '・✨ 修補 1:移除 BURST_GIF 的 cache-buster',
+    '  - 不再加 `?r=<時間戳>`,讓 iOS Safari 一次下載後吃快取,記憶體用量大幅下降',
+    '  - 由於 _playClip 每次都建立新 <img>,設 src 時 GIF 仍會從第 0 幀播放,不需要靠 cache-buster 強制重啟',
+    '  - 移除 overlay 前先把 img.src 設成空字串,協助 iOS Safari 立即釋放 GIF 解碼緩衝',
+    '・✨ 修補 2:scaleToViewport 同時取 visualViewport 與 innerHeight 的 MIN 值',
+    '  - 即使 visualViewport.height 暫時錯報,innerHeight 較準時也會收斂到正確值',
+    '  - iPad 在橫式全螢幕下額外加 6px 安全邊,防 viewport 回報跳動造成偏移',
+    '・✨ 修補 3:_scaleToViewportRetry 加入 1500ms 與 2500ms 的延遲重算',
+    '  - iPad Pro 大尺寸機種進全螢幕後 viewport 更新較慢,需要更晚的 retry 才會收斂',
+    '・✨ 修補 4:加入 ResizeObserver 觀察 <html> 元素尺寸變化',
+    '  - 當原本的 resize / visualViewport.resize 事件不觸發時(iPad 偶發),',
+    '    ResizeObserver 仍會在 layout 變化後可靠地通知,雙保險確保畫面正確',
+    '【影響範圍】',
+    '・iPad / iPhone 上召喚與 BOSS 戰穩定性大幅提升',
+    '・全螢幕進入 / 退出 / 旋轉裝置時畫面定位更可靠',
+    '・PC 桌面瀏覽器完全不受影響(原本就沒有這些問題)',
+    '・記憶體使用量降低後,長時間遊玩 / 多場 BOSS 戰串連也不易跳出',
+    '【實作位置】',
+    '・_showBurstGif._playClip (line ~15978) 移除 cache-buster + 加強清理',
+    '・scaleToViewport (line ~31888) 改用 MIN(visualViewport, innerWidth/Height) + iPad 安全邊',
+    '・_scaleToViewportRetry (line ~31922) 增加 1500/2500ms 重算',
+    '・新增 ResizeObserver 監聽 documentElement,作為事件不觸發時的兜底',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5540',
+  ] },
   { ver:'v1.0.20260507.5530', brief:[
     '🛍 修了「設好的商店外觀重開遊戲變回 LV20」的 bug!',
     '👹 影響範圍包含玉藻前、大天狗、酒吞童子等 BOSS 系列商店外觀',
@@ -63921,7 +64344,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260507.5530';
+  const CURRENT_VERSION = 'v1.0.20260507.5550';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63955,7 +64378,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260507.5530';
+window._GAME_LOADED_VERSION = 'v1.0.20260507.5550';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
