@@ -938,6 +938,14 @@
       // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
+      // ★ v1.0.20260501.5460 — 學生設計者英雄自動補發
+      //   時序:gameCloudLoad 完成後 1.8 秒(讓 UI 穩定 + 獎章補發跑完)
+      //   去重:advSaveUnlockedHero 內部有保護,每次登入都呼叫也安全
+      setTimeout(()=>{
+        try{
+          if(window._grantStudentDesignerHero) window._grantStudentDesignerHero(user.email);
+        }catch(e){ console.warn('[設計者英雄補發] 觸發失敗', e); }
+      }, 1800);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(e){} }, 1500);
       // ★ v1.0.20260501.4780 — 補發 v4750 之前已解鎖獎章的水晶 / 知識幣獎勵
@@ -62182,6 +62190,99 @@ window._isAdminUser = function(){
   } catch(e){ return false; }
 };
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260501.5460 — 學生設計者英雄自動補發機制
+//   功能:登入後自動檢查 email,若是學生設計者 → 補發其設計的英雄
+//   流程:登入 + 雲端載入完成後呼叫 _grantStudentDesignerHero(email)
+//   去重:advSaveUnlockedHero 內部會去重,即使每次登入都呼叫也安全
+//   歡迎訊息:第一次登入用 localStorage flag 判斷,只顯示 1 次
+// ════════════════════════════════════════════════════════════════
+const STUDENT_DESIGNER_HEROES = {
+  'lsps110137@stu.lsps.tp.edu.tw': { hero:'窮奇',       name:'閻漢昀', flagId:'qiongqi' },
+  'lsps110033@stu.lsps.tp.edu.tw': { hero:'科技生化人', name:'翁嵦晏', flagId:'kishin_bionic' },
+  'lsps110115@stu.lsps.tp.edu.tw': { hero:'鋁合金暴龍', name:'陳品均', flagId:'alloy_dino' },
+  'lsps110006@stu.lsps.tp.edu.tw': { hero:'超鬼神王',   name:'陳睿智', flagId:'kishin_king' },
+};
+
+window._grantStudentDesignerHero = function(email){
+  if(!email) return;
+  try{
+    const _e = (email || '').toLowerCase();
+    const _info = STUDENT_DESIGNER_HEROES[_e];
+    if(!_info) return;  // 不是設計者,跳過
+    const _heroName = _info.hero;
+    // 檢查是否已解鎖(用 advGetUnlockedHeroes,不會錯誤觸發 cloudSave)
+    let _alreadyUnlocked = false;
+    try{
+      const _list = (typeof advGetUnlockedHeroes === 'function') ? (advGetUnlockedHeroes() || []) : [];
+      _alreadyUnlocked = _list.includes(_heroName);
+    }catch(_){}
+    // 解鎖(advSaveUnlockedHero 內部有去重保護,重複呼叫也 OK)
+    if(typeof advSaveUnlockedHero === 'function'){
+      advSaveUnlockedHero(_heroName);
+    }
+    // 觸發雲端存檔(讓跨裝置都同步)
+    if(typeof gameCloudSave === 'function'){
+      try{ gameCloudSave(); }catch(_){}
+    }
+    console.log('🎁 [設計者英雄補發] ' + _info.name + ' 已獲得「' + _heroName + '」(原已解鎖:' + _alreadyUnlocked + ')');
+    // 第一次登入顯示歡迎訊息(用 localStorage flag,後續登入不再顯示)
+    const _flagKey = 'lxps_designer_welcome_' + _info.flagId;
+    let _hasShown = false;
+    try{ _hasShown = !!localStorage.getItem(_flagKey); }catch(_){}
+    if(!_hasShown){
+      try{ localStorage.setItem(_flagKey, '1'); }catch(_){}
+      // 延遲 800ms 顯示彈窗(避免跟其他登入歡迎訊息衝突)
+      setTimeout(()=>{
+        try{ _showStudentDesignerWelcome(_info.name, _heroName); }catch(_){}
+      }, 800);
+    }
+  }catch(e){
+    console.warn('[設計者英雄補發] 失敗', e);
+  }
+};
+
+/**
+ * 顯示「學生設計者歡迎」彈窗(只在第一次登入觸發)
+ */
+function _showStudentDesignerWelcome(designerName, heroName){
+  try{
+    // 移除舊彈窗(若有)
+    const _old = document.getElementById('_designer-welcome-overlay');
+    if(_old) _old.remove();
+    const _ov = document.createElement('div');
+    _ov.id = '_designer-welcome-overlay';
+    _ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99998;display:flex;align-items:center;justify-content:center;animation:_designerFadeIn 0.5s ease-out;';
+    // 加入動畫關鍵影格(若還沒加)
+    if(!document.getElementById('_designer-welcome-style')){
+      const _st = document.createElement('style');
+      _st.id = '_designer-welcome-style';
+      _st.textContent = '@keyframes _designerFadeIn{from{opacity:0}to{opacity:1}}@keyframes _designerPop{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}@keyframes _designerSparkle{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.2) rotate(180deg)}}';
+      document.head.appendChild(_st);
+    }
+    _ov.innerHTML = ''
+      + '<div style="background:linear-gradient(135deg,#1a1a3e,#3e1a3e,#1a3e3e);padding:48px 40px;border-radius:24px;border:4px solid #ffd700;text-align:center;max-width:520px;box-shadow:0 0 60px rgba(255,215,0,0.6),inset 0 0 30px rgba(255,170,68,0.15);position:relative;animation:_designerPop 0.6s ease-out;">'
+        + '<div style="position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:60px;animation:_designerSparkle 2s ease-in-out infinite;">✨</div>'
+        + '<div style="font-size:88px;margin-bottom:16px;line-height:1;">🎉</div>'
+        + '<div style="color:#ffd700;font-size:32px;font-weight:900;margin-bottom:20px;text-shadow:0 0 20px rgba(255,215,0,0.5);">歡迎你,' + designerName + ' 設計師!</div>'
+        + '<div style="color:#fff;font-size:22px;margin-bottom:8px;line-height:1.5;">你親手設計的英雄</div>'
+        + '<div style="color:#aaff88;font-size:48px;font-weight:900;margin:12px 0;text-shadow:0 0 24px rgba(170,255,136,0.6);letter-spacing:2px;">「' + heroName + '」</div>'
+        + '<div style="color:#fff;font-size:22px;margin-bottom:32px;line-height:1.5;">已經加入你的隊伍!🦸</div>'
+        + '<div style="color:#ccc;font-size:16px;margin-bottom:24px;line-height:1.6;">感謝你為《忠順英雄聯盟》的創作貢獻!<br>你的英雄會出現在「英雄圖鑑」中可以使用喔 ✨</div>'
+        + '<button onclick="document.getElementById(\'_designer-welcome-overlay\').remove()" style="background:linear-gradient(135deg,#ffaa44,#ff6644);color:#000;font-size:24px;font-weight:900;padding:16px 48px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.4);transition:transform 0.2s;" onmouseover="this.style.transform=\'scale(1.05)\'" onmouseout="this.style.transform=\'scale(1)\'">太棒了!</button>'
+      + '</div>';
+    document.body.appendChild(_ov);
+    // 點擊背景也可關閉
+    _ov.addEventListener('click', function(e){ if(e.target === _ov) _ov.remove(); });
+    // 播音效(若可用)
+    try{ if(typeof playSfx === 'function') playSfx('sfx-fantasy', 0.85); }catch(_){}
+  }catch(e){
+    console.warn('[設計者歡迎彈窗]', e);
+    // fallback:純文字通知
+    try{ if(typeof bannerFX === 'function') bannerFX(null, '🎉 歡迎你,' + designerName + ' 設計師!你的英雄「' + heroName + '」已加入隊伍!', '#ffd700', 4000); }catch(_){}
+  }
+}
+
 // 機密關鍵字:含此詞的 changelog 行會對非管理員隱藏
 const _ADMIN_KEYWORD_RE = /管理員|Shift\s*\+\s*F10|\bF10\b|維修模式|急救工具|救援工具|玩家資料急救|帳號救援|資料救援|人數統計(管理|工具|面板|診斷)|手動設定.*(總玩家|冒險次數)|回填(總|玩家|冒險)|totalPlayers|totalAdventures|stats\/global|_fbDiagnose|_fbRestore|_fbGetMaintenance|_fbSetMaintenance|_fbSetTotalPlayers|_showAdminStatsPanel|permission-denied|設計者帳號|GM\s*面板|非管理員|封鎖.*登入|onAuthStateChanged|onSnapshot.*擋|_advApricotPreviewTeam/i;
 
@@ -62214,6 +62315,29 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5460', brief:[
+    '🎁 學生設計者專屬禮物:設計師登入後自動獲得自己設計的英雄!✨',
+    '🦸 4 位 5 年 5 班的設計師:閻漢昀、翁嵦晏、陳品均、陳睿智',
+    '🎉 第一次登入會看到專屬歡迎彈窗,給設計師驚喜!',
+  ], items:[
+    '【這次做了什麼?】',
+    '・4 位學生設計師用自己的學校帳號登入後,會自動獲得他們設計的英雄',
+    '・閻漢昀同學會獲得「窮奇」🐅、翁嵦晏同學會獲得「科技生化人」🤖',
+    '・陳品均同學會獲得「鋁合金暴龍」🦖、陳睿智同學會獲得「超鬼神王」👹',
+    '・第一次登入會跳出專屬歡迎彈窗,顯示「歡迎你,XXX 設計師!」',
+    '・以後登入都會自動補發,即使換手機/電腦也能看到自己設計的英雄',
+    '【其他玩家影響】',
+    '・其他玩家不受影響,4 隻學生設計英雄仍可在召喚池抽到',
+    '・召喚池機率(5%)由 8 隻稀有角色平均分擔,跟原本一樣',
+    '【實作位置】',
+    '・新增 STUDENT_DESIGNER_HEROES 對照表(email → 設計師資訊)',
+    '・新增 _grantStudentDesignerHero(email) 函式(自動解鎖+雲端存檔)',
+    '・新增 _showStudentDesignerWelcome 函式(專屬歡迎彈窗)',
+    '・在 onAuthStateChanged 的雲端載入完成後 1.8 秒呼叫補發函式',
+    '・用 localStorage flag (lxps_designer_welcome_*) 確保歡迎彈窗只顯示 1 次',
+    '・advSaveUnlockedHero 內部有去重保護,即使每次登入都呼叫也不會出錯',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5460',
+  ] },
   { ver:'v1.0.20260501.5450', brief:[
     '👹 全新角色登場:「超鬼神王」加入冒險!來自冥界的恐怖鬼神 ✨',
     '🎨 由 5 年 5 班陳睿智同學在 2026 年設計,只能在召喚池抽到喔!',
@@ -63244,7 +63368,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5450';
+  const CURRENT_VERSION = 'v1.0.20260501.5460';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63278,7 +63402,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5450';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5460';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
