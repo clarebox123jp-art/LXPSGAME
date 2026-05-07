@@ -25787,9 +25787,53 @@ function startTurn(){
         }
       };
       try{ log(`[${next.name}] 雖被魅惑,但仍要答題!`); }catch(_){}
-      try{ advShowQuiz(); }catch(e){
-        console.error('[BOSS charm quiz]', e);
-        window._bossQuizDoneForCharm = false;
+      // ★ v1.0.20260501.5470 — bug 修復:charm path 的 advShowQuiz 失敗或 early return 時必須走 fallback,
+      //   否則 _advQuizResolveCb 設了但沒人呼叫 → BOSS 永遠 acted=false → 卡死!
+      //   參考 stun/freeze path(line ~25670)的 _doSkipAfterQuiz 完整 fallback 設計
+      const _doCharmFallback = () => {
+        try{
+          window._bossQuizDoneForCharm = false;
+          if(_charmedBoss && _charmedBoss.curHp > 0){
+            log(`💕 [${_charmedBoss.name}] 因魅惑跳過本次行動!(備援路徑)`);
+            try{ tickStatus(_charmedBoss); }catch(_){}
+            _charmedBoss.acted = true;
+          }
+          _advQuizResolveCb = null;
+          G.pendingTarget = null; pendingCb = null;
+          updateUI();
+          _pSetTimeout(startTurn, 400);
+        }catch(_){}
+      };
+      let _quizCalled = false;
+      try{
+        // 先檢查 advShowQuiz 會不會 early return(常見原因:_advQuizPhase 不是 idle、overlay 已顯示)
+        const _qOvCheck = document.getElementById('adv-quiz-overlay');
+        const _alreadyShowing = _qOvCheck && _qOvCheck.classList.contains('show');
+        if(_advQuizPhase !== 'idle' || _alreadyShowing){
+          // advShowQuiz 內部會 early return 不開 overlay,我們直接走 fallback
+          console.warn('[BOSS charm quiz] advShowQuiz 會 early return,改走 fallback', {
+            phase: _advQuizPhase, alreadyShowing: _alreadyShowing
+          });
+          _doCharmFallback();
+          return;
+        }
+        advShowQuiz();
+        _quizCalled = true;
+        // 額外保險:1.5 秒後檢查 overlay 是否真的顯示了,沒有就走 fallback
+        setTimeout(() => {
+          try{
+            const _qOv2 = document.getElementById('adv-quiz-overlay');
+            const _isShowing = _qOv2 && _qOv2.classList.contains('show');
+            // 若 cb 還在(沒被執行)且 overlay 沒顯示 → 卡住了,走 fallback
+            if(_advQuizResolveCb && !_isShowing && _charmedBoss && _charmedBoss.curHp > 0 && !_charmedBoss.acted){
+              console.warn('[BOSS charm quiz] advShowQuiz 後 1.5s 仍無 overlay,走 fallback');
+              _doCharmFallback();
+            }
+          }catch(_){}
+        }, 1500);
+      }catch(e){
+        console.error('[BOSS charm quiz] advShowQuiz 拋例外', e);
+        if(!_quizCalled) _doCharmFallback();
       }
       return;
     }
@@ -25808,7 +25852,31 @@ function startTurn(){
       : null;
     log(`💕 [${next.name}] 被魅惑！自動普攻隊友 [${_ct.name}]！`);
     bannerFX(next,'💕 魅惑中！','#ff88cc',900);
+    // ★ v1.0.20260501.5480 — 玩家英雄被 charm 路徑加 watchdog
+    //   bug 修復:玩家反應「BOSS 是玉藻前時卡死」
+    //   原因:_pSetTimeout(600) 內的 doDmg + acted=true 若被 _gamePaused 卡住,
+    //         charm 玩家英雄永遠不結束行動,startTurn 永遠選同一個 next → 整場戰鬥凍結
+    //   修補:用獨立的 setTimeout(不是 _pSetTimeout)作 3 秒 watchdog,
+    //         若主流程沒順利 acted=true,強制走 fallback 跳過行動
+    const _charmedHero = next;
+    const _charmWatchdogId = setTimeout(()=>{
+      try{
+        if(_charmedHero && _charmedHero.curHp > 0 && !_charmedHero.acted){
+          console.warn('[charm watchdog] 玩家英雄被魅惑後 3 秒未結束行動,強制走 fallback', _charmedHero.name);
+          // 釋放可能卡住的 _gamePaused
+          try{ window._gamePaused = false; }catch(_){}
+          try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+          // 強制結束行動
+          _charmedHero.acted = true;
+          G.pendingTarget = null; pendingCb = null;
+          updateUI();
+          setTimeout(()=>{ try{ startTurn(); }catch(_){} }, 300);
+        }
+      }catch(_){}
+    }, 3000);
     _pSetTimeout(()=>{
+      // 主流程執行成功時清除 watchdog
+      try{ clearTimeout(_charmWatchdogId); }catch(_){}
       const _hpBefore = _ct.curHp;
       doDmg(_ct,next.atk,{actor:next});
       const _actualDmg = Math.max(0, _hpBefore - _ct.curHp);
@@ -42836,13 +42904,28 @@ function advShowQuiz() {
   // ★ 確保法寶確認視窗已關閉
   const _tcEl = document.getElementById('adv-treasure-confirm');
   if(_tcEl) _tcEl.remove();
-  if (!_adventureMode || _advQuizPhase !== 'idle') return;
+  // ★ v1.0.20260501.5470 — bug 修復:early return 也要先 fire 已設的 _advQuizResolveCb,
+  //   否則 charm/stun 等 path 設了 cb 但 advShowQuiz 沒實際開 overlay → cb 永遠卡住 → BOSS 卡死
+  if (!_adventureMode || _advQuizPhase !== 'idle') {
+    if(_advQuizResolveCb){
+      console.warn('[advShowQuiz] early return(phase 非 idle),fire 已設的 cb 避免卡死');
+      const _cb = _advQuizResolveCb; _advQuizResolveCb = null;
+      try{ _cb(); }catch(_){}
+    }
+    return;
+  }
   // ★ v1.0.20260428.BOSS_QUIZ_LOOP — 防重入:若 quiz overlay 已在顯示中,跳過此次呼叫
   //   (避免 startTurn 短時間連續觸發兩次 aiAct,第二次又進來開新題)
+  // ★ v1.0.20260501.5470 — 防重入也要先 fire 已設的 cb,避免卡死
   try{
     const _qOv = document.getElementById('adv-quiz-overlay');
     if(_qOv && _qOv.classList.contains('show')){
       console.warn('[advShowQuiz] 防重入:overlay 已顯示,跳過此次呼叫');
+      if(_advQuizResolveCb){
+        console.warn('[advShowQuiz] 防重入時 fire 已設的 cb 避免卡死');
+        const _cb = _advQuizResolveCb; _advQuizResolveCb = null;
+        try{ _cb(); }catch(_){}
+      }
       return;
     }
   }catch(_){}
@@ -62315,6 +62398,61 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260501.5480', brief:[
+    '🛠 進一步修了「BOSS 是玉藻前時卡死」的問題!',
+    '💕 玉藻前 BOSS 用爆發魅惑玩家全體後,輪到玩家英雄行動時整場戰鬥凍結',
+    '✨ 現在加入了完整的安全網,3 秒沒推進就自動跳過,不會再卡死!',
+  ], items:[
+    '【發生什麼事?】',
+    '・玩家反應:打日本關 BOSS 玉藻前時,玉藻前發動「禍世邪魅」爆發後',
+    '・玩家全體陷入「強力魅惑」,輪到玩家英雄行動時(應該自動普攻隊友),畫面凍結',
+    '・上次(v5470)修了 BOSS 自己被魅惑的卡死,但「玩家英雄被魅惑」這條路徑還沒涵蓋',
+    '【為什麼會這樣?】',
+    '・玩家英雄被魅惑時,系統會在 600 毫秒後自動執行「攻擊隊友 + 結束行動」',
+    '・但若這 600 毫秒內,有其他事件讓遊戲暫停(_gamePaused 為 true),這個排程會進入等待佇列',
+    '・等待佇列若沒被釋放,「結束行動」永遠不會執行',
+    '・系統永遠選同一個英雄做 next → 整場戰鬥凍結',
+    '【這次怎麼修?】',
+    '・✨ 為「玩家英雄被魅惑」路徑加 3 秒安全網 watchdog',
+    '・若 3 秒後英雄還沒結束行動,系統自動釋放 _gamePaused、強制設定 acted=true、推進到下一個角色',
+    '・watchdog 用獨立的 setTimeout(不是 _pSetTimeout),確保不會被 _gamePaused 卡住',
+    '・主流程順利執行時 watchdog 會被取消,不影響正常流程',
+    '【影響範圍】',
+    '・這個修補保護所有「玩家英雄被魅惑」的場景',
+    '・不只玉藻前 BOSS,任何讓玩家英雄陷入魅惑(舞者敵方版、染靈魔等)都受保護',
+    '・搭配上次 v5470 的「BOSS 被魅惑」fallback,所有魅惑相關卡死路徑現在都有完整 watchdog',
+    '【實作位置】',
+    '・startTurn 內 charm path 玩家英雄分支(line ~25855)加 _charmWatchdogId(3 秒)',
+    '・主流程的 _pSetTimeout 開頭呼叫 clearTimeout(_charmWatchdogId) 取消 watchdog',
+    '・watchdog 觸發後:釋放 _gamePaused → _resumeTimers → acted=true → setTimeout(startTurn, 300)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5480',
+  ] },
+  { ver:'v1.0.20260501.5470', brief:[
+    '🛠 修了 BOSS 戰卡死的問題!',
+    '💕 玩家用玉藻前對 BOSS 強力魅惑後,有時候 BOSS 會不行動也不答題,整場戰鬥就卡住了',
+    '✨ 現在不會再卡住了,即使遇到罕見情境也會自動跳過 BOSS 行動,讓戰鬥繼續',
+  ], items:[
+    '【發生什麼事?】',
+    '・玩家反應:用玉藻前的爆發「禍世邪魅」對 BOSS 強力魅惑後,BOSS 變得無行動也不答題',
+    '・整場戰鬥畫面凍結,玩家只能放棄重來,非常崩潰',
+    '【為什麼會這樣?】',
+    '・BOSS 被強力魅惑後,系統正常情況下會「開啟答題視窗」讓玩家答題,答完題 BOSS 跳過行動',
+    '・但在某些罕見情況(答題視窗被佔用、其他狀態先觸發、開啟失敗等),答題視窗沒開成功',
+    '・舊版的處理:如果開答題視窗失敗,只在 console 印錯誤訊息,但沒有「跳過 BOSS 行動」的備用流程',
+    '・結果就是 BOSS 永遠不行動、戰鬥永遠不結束 → 卡死',
+    '【這次怎麼修?】',
+    '・✨ 為「BOSS 中強力魅惑」路徑加入完整的備援流程(跟既有的暈眩、冰凍處理一致)',
+    '・若答題視窗無法開啟,系統會自動讓 BOSS「因魅惑跳過本次行動」並推進到下一回合',
+    '・額外保險:答題視窗開啟後 1.5 秒檢查,若仍未顯示,自動走備援流程',
+    '・順手修了 advShowQuiz 函式的兩個 early return:現在即使「答題系統還在忙」也會先處理已排隊的回呼,避免回呼永遠卡住',
+    '【影響範圍】',
+    '・這個 bug 不只影響玉藻前的爆發,任何讓 BOSS 進入「強力魅惑」的方式都可能觸發',
+    '・所以修補後對所有相關情境都有保護,包括染靈幻魔・藍色憂鬱、舞者技能等也會魅惑 BOSS 的場景',
+    '【實作位置】',
+    '・startTurn 內 charm path(line ~25789)加 _doCharmFallback 完整備援',
+    '・advShowQuiz 內 2 個 early return(phase 非 idle、防重入)都加 _advQuizResolveCb fire 邏輯',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5470',
+  ] },
   { ver:'v1.0.20260501.5460', brief:[
     '🎁 學生設計者專屬禮物:設計師登入後自動獲得自己設計的英雄!✨',
     '🦸 4 位 5 年 5 班的設計師:閻漢昀、翁嵦晏、陳品均、陳睿智',
@@ -63368,7 +63506,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260501.5460';
+  const CURRENT_VERSION = 'v1.0.20260501.5480';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63402,7 +63540,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260501.5460';
+window._GAME_LOADED_VERSION = 'v1.0.20260501.5480';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
