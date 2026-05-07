@@ -9966,28 +9966,31 @@ function _applyHeroPortraitChoices(){
   // ★ v1.0.20260501.4680 — 修正:嚴格區分「玩家從未選擇」(key 不存在) 和「玩家明確選某 portrait」
   //   舊版用 `_heroPortraitChoice[name] || 'default'` 把 undefined 跟 'miko_shrine' 變 'default' 處理,
   //   結果在精美畫風下只要 _heroPortraitChoice[name] 是 falsy(包括 undefined / null / 空字串),
-  //   就被自動換成 LV20。這就是「設定商店外觀後重開變 LV20」的根因。
-  //   新邏輯:
-  //     - 若 _heroPortraitChoice[name] 是非空字串 → 玩家明確選擇,絕對尊重(包括選 'default' 想看 Q 版)
-  //     - 若 _heroPortraitChoice[name] 不存在或是 falsy → 玩家從未選擇,精美畫風下自動套 LV20
+  //   就被自動換成 LV20。
+  // ★ v1.0.20260507.5520 — 進一步修正:商店外觀(尤其是 BOSS 系列如玉藻前/大天狗/酒吞童子)
+  //   的玩家選擇在精美畫風下被忽略的問題。原因:這些角色同時在 HERO_PORTRAIT_LIBRARY 與
+  //   _PREMIUM_ART_OVERRIDE.mob 中,舊版本只要在 mob 表中就直接 return 跳過,連玩家明確選的
+  //   商店外觀也一起略過,讓 _applyArtStyle 設的 LV20 永遠覆蓋。
+  //   新邏輯:先計算「是否有明確選擇」,只有「未選擇」時才為了精美 BOSS 跳過;
+  //   有明確選擇時,讓玩家的 shop 外觀套用上去(此時 lib 內的 url 已被 _applyArtStyle line ~9670
+  //   更新為對應的精美版,所以套用的會是精美版的 shop 外觀,不會掉回 Q 版)。
   const _isPrem = (typeof _artStyle !== 'undefined' && _artStyle === 'premium');
   Object.keys(HERO_PORTRAIT_LIBRARY).forEach(name => {
-    // 精美畫風:跳過 _PREMIUM_ART_OVERRIDE.mob 中的角色(已由 _applyArtStyle 套用 mob 精美版)
-    if(_isPrem && typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
+    // ★ v5520 — 先判斷「玩家是否明確選擇過此英雄的肖像」
+    const _hasExplicitChoice = Object.prototype.hasOwnProperty.call(_heroPortraitChoice, name)
+                            && typeof _heroPortraitChoice[name] === 'string'
+                            && _heroPortraitChoice[name].length > 0;
+    // 精美畫風 + 玩家未選擇 + 在 mob 精美覆蓋表中 → 跳過,讓 _applyArtStyle 設好的精美 BOSS 留著
+    if(_isPrem && !_hasExplicitChoice && typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
        && _PREMIUM_ART_OVERRIDE.mob && _PREMIUM_ART_OVERRIDE.mob[name]){
       return;
     }
-    // 同樣跳過 hero 精美版(避免精美英雄圖被 default 覆蓋)
-    if(_isPrem && typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
+    // 同樣條件:精美畫風 + 未選擇 + hero 精美覆蓋表中 → 跳過
+    if(_isPrem && !_hasExplicitChoice && typeof _PREMIUM_ART_OVERRIDE !== 'undefined'
        && _PREMIUM_ART_OVERRIDE.hero && _PREMIUM_ART_OVERRIDE.hero[name]){
       return;
     }
     const lib = HERO_PORTRAIT_LIBRARY[name];
-    // ★ v4680 — 用 hasOwnProperty 偵測「玩家是否明確做過選擇」
-    //   注意:不能用 `name in _heroPortraitChoice` 因為包含 prototype chain;用 hasOwnProperty 較嚴謹
-    const _hasExplicitChoice = Object.prototype.hasOwnProperty.call(_heroPortraitChoice, name)
-                            && typeof _heroPortraitChoice[name] === 'string'
-                            && _heroPortraitChoice[name].length > 0;
     let choice;
     if(_hasExplicitChoice){
       // 玩家明確選了某個肖像(包括選 'default' 想看原始 Q 版) → 絕對尊重
@@ -62662,6 +62665,35 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260507.5530', brief:[
+    '🛍 修了「設好的商店外觀重開遊戲變回 LV20」的 bug!',
+    '👹 影響範圍包含玉藻前、大天狗、酒吞童子等 BOSS 系列商店外觀',
+    '✨ 雲端確實有同步,只是套用時被舊版 LV20 邏輯蓋掉,本次徹底修補',
+  ], items:[
+    '【玩家回報】',
+    '・玩家反應:在英雄圖鑑切換到買來的商店外觀(尤其是玉藻前/大天狗等 BOSS 角色)',
+    '・但只要重開遊戲,商店外觀就會被換回 LV20 版本',
+    '・聽起來像是雲端沒同步,但實際檢查後發現「資料是有同步的,只是套用時被覆蓋」',
+    '【為什麼會這樣?】',
+    '・流程上 _applyArtStyle 會先把所有英雄圖換成精美版(LV20),然後 _applyHeroPortraitChoices 才套玩家選擇',
+    '・但 v4680 修補時為了「BOSS 在精美畫風下不要被 default Q 版蓋掉」,加了「BOSS 角色直接 return 跳過」',
+    '・這個跳過太粗暴 — 連玩家「明確選了 tamamo_shrine」這種商店外觀也一起略過',
+    '・結果:雲端 / localStorage 都正確存著 tamamo_shrine,但套用時被 LV20 蓋了',
+    '・尤其玉藻前、大天狗、酒吞童子這些「同時是 BOSS 又有商店外觀」的角色受影響最大',
+    '【這次怎麼修?】',
+    '・✨ 在「為精美畫風跳過」之前,先檢查玩家是否有明確選擇',
+    '・有明確選擇 → 一定要套用上去(無論是 default、商店外觀或 LV20)',
+    '・沒選擇 + 精美畫風 + 在 _PREMIUM_ART_OVERRIDE 中 → 才跳過,讓 _applyArtStyle 設的 LV20 留著',
+    '・這樣 BOSS 在精美畫風下未選擇時依然顯示精美 LV20,但玩家選了商店外觀就會正確顯示',
+    '【影響範圍】',
+    '・所有「同時被精美畫風覆蓋過」的英雄(主要是 BOSS):玉藻前、大天狗、酒吞童子、九尾空貓怪、杏花妖、八岐大蛇',
+    '・其他英雄(凡人、巫女、火法師等)若有買商店外觀,也會更穩定地顯示自己選的版本',
+    '・玩家現有的雲端資料無需任何遷移,直接套用本版即可恢復商店外觀',
+    '【實作位置】',
+    '・_applyHeroPortraitChoices (line ~9961) 重構:改成「先看玩家有無明確選擇,再決定要不要為精美畫風跳過」',
+    '・移除原本「無條件跳過 mob/hero 精美覆蓋表中角色」的邏輯',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5530',
+  ] },
   { ver:'v1.0.20260507.5520', brief:[
     '📚 把所有國中程度的考題都換成國小程度的不重複題目了!',
     '👹 超鬼神王「大嘴吸入」極限爆發換上專屬視覺特效!',
@@ -63889,7 +63921,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260507.5520';
+  const CURRENT_VERSION = 'v1.0.20260507.5530';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -63923,7 +63955,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260507.5520';
+window._GAME_LOADED_VERSION = 'v1.0.20260507.5530';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
