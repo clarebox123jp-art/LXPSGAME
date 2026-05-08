@@ -1816,7 +1816,7 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 
 /* vignette removed */
 #overlay .title-wrap,#overlay .subtitle{position:relative;z-index:2}
-#overlay #game-info-btn{position:absolute;z-index:2;top:55%;left:50%;transform:translateX(-50%);white-space:nowrap;}
+#overlay #game-info-btn{position:absolute;z-index:2;top:78%;left:50%;transform:translateX(-50%);white-space:nowrap;}
 #overlay #adventure-btn{position:absolute;z-index:2;top:67%;left:50%;transform:translateX(-50%)}
 #overlay #start-btn{position:absolute;z-index:2;top:79%;left:50%;transform:translateX(-50%)}
 #overlay #chrome-hint-btn{position:absolute;z-index:2;top:91%;left:50%;transform:translateX(-50%);white-space:nowrap;}
@@ -2613,13 +2613,16 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #adventure-btn:hover::before{transform:translateX(100%);}
 
 #game-info-btn{
-  padding:15px 52px;font-size:45px;
+  /* ★ v1.0.20260507.5630 — 縮小並移到展開冒險故事下方:
+     原 padding:15px 52px / font-size:45px / letter-spacing:6px
+     縮小為 padding:9px 30px / font-size:24px / letter-spacing:3px */
+  padding:9px 30px;font-size:24px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
-  letter-spacing:6px;cursor:pointer;
+  letter-spacing:3px;cursor:pointer;
   background:linear-gradient(135deg,rgba(0,55,110,0.88),rgba(0,100,190,0.78));
-  border:2.5px solid rgba(120,200,255,0.95);
+  border:2px solid rgba(120,200,255,0.95);
   color:#d8f0ff;border-radius:8px;
-  text-shadow:0 2px 0 rgba(0,0,0,1),0 4px 10px rgba(0,0,0,0.9);
+  text-shadow:0 1px 0 rgba(0,0,0,1),0 2px 6px rgba(0,0,0,0.9);
   transition:transform 0.25s,background 0.25s,border-color 0.25s;
   overflow:hidden;z-index:2;white-space:nowrap;position:relative;
 }
@@ -2736,7 +2739,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
    ★ v1.0.20260423.9200 — 解鎖功能,恢復彩色樣式
 ══════════════════════════════════════════ */
 #art-style-bar{
-  position:absolute;z-index:2;top:47%;left:50%;transform:translateX(-50%);
+  /* ★ v1.0.20260507.5630 — 從 top:47% 改為 top:55%(吃掉原本遊戲介紹按鈕位置) */
+  position:absolute;z-index:2;top:55%;left:50%;transform:translateX(-50%);
   display:flex;gap:14px;align-items:center;
 }
 .art-style-btn{
@@ -9414,7 +9418,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   // ★ v1.0.20260501.5010 — 28 個英雄圖一次性升級為 LXPSGAME repo 的 Q.png 新版圖檔
@@ -9500,6 +9504,9 @@ const HERO_IMGS = {
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   //   超鬼神王:5 年 5 班陳睿智同學設計,2026 年
   '超鬼神王':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('超鬼神王 五年五班陳睿智設計.png'),
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田歆雅同學設計,2026 年。光星妹妹(治療型)與暗星姊姊(輸出型)雙型態切換
+  '雙星姊妹':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙星姊妹 五年五班田歆雅設計.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -9693,6 +9700,11 @@ const HERO_PORTRAIT_LIBRARY = {
   //   超鬼神王:5 年 5 班陳睿智同學設計,2026 年
   '超鬼神王': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('超鬼神王 五年五班陳睿智設計.png') },
+  ],
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田歆雅同學設計,2026 年
+  '雙星姊妹': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙星姊妹 五年五班田歆雅設計.png') },
   ],
 };
 
@@ -10420,6 +10432,14 @@ const HERO_DB = {
     s1:{n:'暗黑洞',c:4,d:'全體暈眩+HP-10%',fd:'打開恐怖暗黑洞穴,對全體對手各有 60% 機率使其暈眩 1 回合,並且全體對手損失最大 HP 的 10%(此傷害無視有利狀態)。'},
     s2:{n:'鮮紅舌頭',c:3,d:'全體中毒 2 回合(每回合 -10% HP)',fd:'伸出鮮紅舌頭舔向全體對手,使其陷入中毒 2 回合,每回合損失 10% 最大 HP。'}
   },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田歆雅同學設計,2026 年。
+  //   光暗雙生雙型態:HP > 50% = 光星妹妹(治療型)、HP ≤ 50% = 暗星姊姊(輸出型),戰鬥每次傷害/治療後即時切換。
+  //   進戰鬥強制重置為光星滿血。S1 / 爆發 都會根據型態做不同事情。
+  '雙星姊妹':{hp:58,atk:5,sp:24,spd:13,
+    s1:{n:'星手保護',c:5,d:'光星:特技150%治療單體+40護盾;暗星:特技75%治療全體+20護盾(可復活)',fd:'光星妹妹型態時:用特技 150% 治療 1 名友方(可復活),並給予 40 點護盾。暗星姊姊型態時:用特技 75% 治療全體友方(可復活),並給予全體 20 點護盾。'},
+    s2:{n:'流星降雨',c:4,d:'特技250%單體傷害+追擊3回合(每回合受特技50%額外傷害)',fd:'用特技的 250% 對 1 名對手造成傷害,並使其陷入「追擊」狀態 3 回合(每回合開始時額外受到特技 50% 傷害)。'}
+  },
   // ══ 冒險闖關 BOSS 角色 ══
 '九尾空貓怪':{hp:500,atk:12,sp:19,spd:20,exp:55,
   s1:{n:'連續貓爪功',c:2,d:'依攻擊對隨機目標造成2~3次傷害',fd:'用攻擊值對隨機存活的對手造成2到3次傷害，每次各自結算暴擊與傷害。'},
@@ -11068,6 +11088,15 @@ const BURST_UPGRADE_DEF = {
     [3,'特技×170% 全體傷害+不治詛咒 2 回合'],
     [4,'特技×180% 全體傷害+不治詛咒 3 回合(MAX)'],
   ] },
+  // ★ v1.0.20260507.5600 — 雙星姊妹:同生共死
+  //   光星態:HP 變 1,失去的 HP × N 倍對單體;暗星態:特技 N% 全體分攤
+  '雙星姊妹':{ rows: [
+    [0,'光星:失去 HP × 10 倍對單體;暗星:特技×900% 全體分攤(無視有利狀態且必中)'],
+    [1,'光星:失去 HP × 11 倍;暗星:特技×1000% 全體分攤'],
+    [2,'光星:失去 HP × 12 倍;暗星:特技×1100% 全體分攤'],
+    [3,'光星:失去 HP × 13 倍;暗星:特技×1200% 全體分攤'],
+    [4,'光星:失去 HP × 14 倍;暗星:特技×1300% 全體分攤(MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -11113,6 +11142,9 @@ const HERO_IMG_POS = {
   '程式設計師':['90% auto','center 30%'],
   '弦樂團員':  ['90% auto','center 30%'],
   '小劇團員':  ['90% auto','center 20%'],  // v1.0.20260420.1100 整張往下移 10%(30→20),同步影響原始/銀冕王子/琉璃公主三張肖像
+  // ★ v1.0.20260507.5610 — 雙星姊妹:邀請視窗右側預覽圖,設計者要求 y +20%
+  //   原預設 'center 30%' 往下移 20% → 'center 50%'
+  '雙星姊妹':['100% auto','center 50%'],
 };
 
 function _getCurPortraitObjPos(name){
@@ -11182,6 +11214,8 @@ const HERO_THUMB_POS = {
   '火法師':'center 40%',   '時空法師':'center 40%','警長':'center 40%',
   // 下移 20%（預設 50% - 20% = 30%）
   '武士':'center 30%', '凡人':'center 30%', '雷法師':'center 30%',
+  // ★ v1.0.20260507.5600 — 雙星姊妹:設計者指定 70%(下移 20%,展現姊妹臉部)
+  '雙星姊妹':'center 70%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -11407,6 +11441,15 @@ const HERO_BIO = {
     quote:'「你那個 buff 不錯,給我吧。」',
     designer:{ class:'5年5班', name:'陳睿智', year:2026 }
   },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田歆雅同學設計,2026 年。光暗雙生雙型態切換
+  '雙星姊妹':{
+    role:'光與暗的雙生星宿,棲身於同一具身軀的形影不離姊妹',
+    trait:'光星妹妹開朗陽光、樂於照顧友方;暗星姊姊冷酷沉著、精準狙擊敵人',
+    hobby:'光星愛守護隊友、暗星愛收集流星;姊妹倆會在不同處境下無聲輪換',
+    quote:'光星:「姊姊我來保護大家!」暗星:「該收手了。」',
+    designer:{ class:'5年5班', name:'田歆雅', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -11476,6 +11519,8 @@ const BURST_DB = {
   '鋁合金暴龍':{n:'死神龍王登場', d:'特技170%全體傷害+收割HP<30%對手,將其能力50%附加給友方全體2回合',fd:'死神龍王降臨戰場!以特技的 170% 對敵方全體造成大傷害。接著找出 HP 比例低於 30% 的敵方對手 1 名(多名時選 HP 最低者),強制秒殺並吸收其能力 — 友方全體獲得「死神祝福」2 回合:攻擊 + 被收割對手攻擊的 50%、特技 + 被收割對手特技的 50%。若沒有 HP 低於 30% 的對手,只造成主傷害。'},
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   '超鬼神王':{n:'大嘴吸入', d:'特技140%全體傷害+不治詛咒2回合+20%秒殺1名小怪(BOSS改傷害+50%)',fd:'張開恐怖巨口吞噬戰場!以特技的 140% 對全體對手造成大傷害,並使全體對手陷入「不治詛咒」2 回合(無法恢復 HP,此狀態無法被免疫或解除)。隨機選擇 1 名敵人附加額外效果:小怪有 20% 機率直接倒下;BOSS 與菁英小怪則受到主傷害 50% 的追加傷害。'},
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  '雙星姊妹':{n:'同生共死', d:'光星:HP變1,失去HP×10倍對單體;暗星:特技900%全體分攤傷害',fd:'光星妹妹型態時:自己 HP 變成 1,將失去的 HP 數值 × 10 倍對隨機 1 名對手造成傷害(無視有利狀態且必中)。暗星姊姊型態時:用特技的 900% 對敵方全體造成分攤傷害(總傷害平均分給每個存活敵人,無視有利狀態且必中)。'},
 
 };
 
@@ -11487,10 +11532,14 @@ let G = {};
 //   作為玩家英雄加入隊伍（p1 方）時，用此弱版數據覆寫，與一般英雄平衡
 //   技能 s1/s2 保留原 BOSS 技能（使用者要求）
 //   exp 也降成一般英雄水準（55~65 區間）
+// ★ v1.0.20260507.5620 — 平衡調整(田歆雅同學測試後):
+//   玉藻前 弱化版能力提升(原 91 → 100):全面強化(攻 +4、速 +3 最明顯)
+//   酒吞童子 弱化版微調(原 103 → 100):HP -2、速 -1
+//   大天狗 弱化版微調(原 98 → 100):特技 +2
 const JP_BOSS_HERO_STATS = {
-  '大天狗':   { hp:58, atk:10, sp:13, spd:17, exp:55 },
-  '酒吞童子': { hp:72, atk:16, sp:9,  spd:6,  exp:60 },
-  '玉藻前':   { hp:56, atk:5,  sp:19, spd:11, exp:58 },
+  '大天狗':   { hp:58, atk:10, sp:15, spd:17, exp:55 },
+  '酒吞童子': { hp:70, atk:16, sp:9,  spd:5,  exp:60 },
+  '玉藻前':   { hp:57, atk:9,  sp:20, spd:14, exp:58 },
 };
 
 function newHero(name,side,pos){
@@ -11533,7 +11582,10 @@ function newHero(name,side,pos){
     equip:null,   // equipped item {n, ...}
     av: AVATARS[name]||'🗡️',
     _mimicUsed: false,      // 臨摹大師本場只能用一次
-    _mimicInProgress: false // 臨摹選擇視窗開啟中
+    _mimicInProgress: false, // 臨摹選擇視窗開啟中
+    // ★ v1.0.20260507.5600 — 雙星姊妹進戰鬥強制重置為「光星妹妹滿血」型態
+    //   這個欄位只對「雙星姊妹」有意義,其他英雄忽略
+    _dualStarForm: (name === '雙星姊妹') ? 'light' : null,
   };
 }
 
@@ -13787,6 +13839,8 @@ const HERO_LORE = {
   '鋁合金暴龍': '古代暴龍靈魂寄宿的鋁合金機械生命體。被動「鋁鎧」無條件減傷,加上爆發「死神龍王登場」可收割瀕死敵人能力,堅固又恐怖。',
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   '超鬼神王':   '來自冥界的鬼神之王,擁有吞噬萬物的大嘴。天賦「吞噬」可奪走目標的有利狀態,爆發「大嘴吸入」附加無法解除的不治詛咒。',
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  '雙星姊妹':   '形影不離的姊妹,光與暗的雙生星宿。光星妹妹治療隊友、暗星姊姊精準狙擊,HP 不足 1/4 時切換暗星型態,爆發「同生共死」捨命給敵人致命一擊。',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -13844,6 +13898,8 @@ const HERO_TRAIT = {
   '鋁合金暴龍':{ name:'鋁鎧', icon:'🛡️', desc:'受到所有傷害減少 20%(被動,無條件,不可被消除)',fd:'受到任何傷害時自動減少 20% 傷害量,被動觸發、不需機率判定。和其他減傷效果分開計算,可疊加,不會被消除或搶奪。' },
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   '超鬼神王':{ name:'吞噬', icon:'👹', desc:'造成傷害時機率吞噬目標的有利狀態',fd:'造成傷害時有 40% 機率吞噬目標身上隨機 1 個有利狀態,轉移到自己身上(保持原回合數)。保護類有利狀態(死亡免疫、爆發保護等)無法被吞噬。' },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  '雙星姊妹':{ name:'雙星轉換', icon:'🌟', desc:'光暗雙生型態,HP 過 1/4 變光星(治療強化)、低於 1/4 變暗星(輸出強化)',fd:'戰鬥開始為「光星妹妹」型態(治療技能效果 +30%)。當 HP 比例 ≤ 25% 時切換為「暗星姊姊」型態(技能傷害 +30%);HP 比例回到 > 25% 時又切換回光星型態。型態切換可逆。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -15388,7 +15444,7 @@ function renderCard(h){
   el.addEventListener('click', el._previewClickBound);
 }
 function statusName(t){
-  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',
+  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',pursuit:'追擊',
   booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾'
 };
   return m[t]||t;
@@ -16052,6 +16108,13 @@ const BURST_GIF_DB = {
     url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%90%B8%E5%85%A5%E6%BC%A9%E6%B8%A6%E9%96%80.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-powerup',0.8]],
     tint:'rgba(50,255,200,0.12)'
+  },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列(雙星姊妹)爆發特效
+  //   同生共死 — 金色閃光炸開 GIF(田歆雅同學提供,2026)
+  '同生共死': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E9%87%91%E8%89%B2%E9%96%83%E5%85%89%E7%82%B8%E9%96%8B.gif',
+    sfx:[['sfx-explode',1.0],['sfx-powerup',0.8]],
+    tint:'rgba(255,220,80,0.22)'
   },
   '劍神連斬': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
@@ -17964,6 +18027,65 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       _burstFinish(h, _interrupted);
     }, foes.length * 150 + 600);
     return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260507.5600 — 雙星姊妹「同生共死」爆發
+  //   光星態(_dualStarForm='light' 或 HP 比 > 50%):HP 變 1,失去 HP × N 倍對隨機 1 對手
+  //   暗星態(_dualStarForm='dark' 或 HP 比 ≤ 50%):特技 N% 對全體分攤
+  //   N 隨爆發等級遞增(光星 10/11/12/13/14;暗星 9.0/10.0/11.0/12.0/13.0)
+  //   兩種都「無視有利狀態且必中」
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='同生共死'){
+    const _opp1 = side==='p1' ? 'p2' : 'p1';
+    const foes = G[_opp1].filter(x => x.curHp > 0);
+    if(foes.length === 0){
+      log(`🌟 [${h.name}] 沒有可攻擊的對手,爆發落空。`);
+      _burstFinish(h, _interrupted);
+      return;
+    }
+    const _form = h._dualStarForm || (h.curHp / h.hp > 0.25 ? 'light' : 'dark');
+    if(_form === 'light'){
+      // 光星:HP 變 1,失去 HP × (10 + 等級) 倍對 1 個對手
+      const _multByLv = [10, 11, 12, 13, 14];
+      const _hpMult = _multByLv[Math.min(_burstLv, 4)];
+      const _lostHp = Math.max(0, h.curHp - 1);
+      h.curHp = 1;
+      const _dmg = Math.max(10, _lostHp * _hpMult);
+      const _target = foes[Math.floor(Math.random() * foes.length)];
+      log(`🌟 [${h.name}] 同生共死(光星)!HP 變 1,捨命一擊!失去 HP ${_lostHp} × ${_hpMult} = ${_dmg} 傷害給 [${_target.name}]!`);
+      bannerFX(h, '🌟 光星捨命!', '#ffcc44', 1400);
+      renderCard(h);
+      _pSetTimeout(() => {
+        if(_target.curHp <= 0){ _burstFinish(h, _interrupted); return; }
+        doDmg(_target, _dmg, { actor:h, isBurst:true, ignoreBuffs:true, mustHit:true });
+        renderCard(_target);
+        renderCard(h);
+        try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(h); }catch(_){}
+        _burstFinish(h, _interrupted);
+      }, 600);
+      return;
+    } else {
+      // 暗星:特技 (900 + 等級*100)% 對全體分攤
+      const _multByLv = [9.0, 10.0, 11.0, 12.0, 13.0];
+      const _spMult = _multByLv[Math.min(_burstLv, 4)];
+      const _totalDmg = Math.max(foes.length, Math.floor(spv * _spMult));
+      const _perDmg = Math.max(1, Math.floor(_totalDmg / foes.length));
+      log(`🌟 [${h.name}] 同生共死(暗星)!特技×${Math.round(_spMult*100)}% = ${_totalDmg} 全體分攤(每隻 ${_perDmg})!`);
+      bannerFX(h, '🌟 暗星審判!', '#aa44ff', 1400);
+      foes.forEach((f, i) => {
+        _pSetTimeout(() => {
+          if(f.curHp <= 0) return;
+          doDmg(f, _perDmg, { actor:h, isBurst:true, isAoe:true, ignoreBuffs:true, mustHit:true });
+          renderCard(f);
+        }, i * 150);
+      });
+      _pSetTimeout(() => {
+        try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(h); }catch(_){}
+        _burstFinish(h, _interrupted);
+      }, foes.length * 150 + 400);
+      return;
+    }
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -20171,6 +20293,8 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
 
   // ★ v1.0.20260423.0100 — HP 改變後刷新吸血鬼收割高亮
   try{ _updateReapEligibleHighlight(); }catch(_){}
+  // ★ v1.0.20260507.5600 — 受擊後檢查雙星姊妹型態切換(target 自己)
+  try{ if(target && target.name === '雙星姊妹' && typeof _checkDualStarForm === 'function') _checkDualStarForm(target); }catch(_){}
   return dmg;
 }
 function doHeal(target, rawAmt, opts={}){
@@ -20268,6 +20392,8 @@ function doHeal(target, rawAmt, opts={}){
   if(actual>0){ try{ _healGifOnCard(target); }catch(e){} }
   // ★ v1.0.20260423.0100 — HP 改變後刷新吸血鬼收割高亮
   try{ _updateReapEligibleHighlight(); }catch(_){}
+  // ★ v1.0.20260507.5600 — 治療後檢查雙星姊妹型態切換(target 自己)
+  try{ if(target && target.name === '雙星姊妹' && typeof _checkDualStarForm === 'function') _checkDualStarForm(target); }catch(_){}
   return actual;
 }
 function _reviveFX(h){
@@ -23510,6 +23636,128 @@ function execSkill(a, sk, cost, stype){
     return;
   }
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260507.5600 — 雙星姊妹 S1「星手保護」(雙形態)
+  //   光星態:特技 150%(每級 +10%)治療單體 + 40 護盾(可復活)
+  //   暗星態:特技 75%(每級 +5%)治療全體 + 20 護盾(可復活)
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='星手保護'){
+    const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    // 同步取得最新型態(以免剛剛切換)
+    try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
+    const _form = a._dualStarForm || (a.curHp / a.hp > 0.25 ? 'light' : 'dark');
+    const _spv = spv(a);
+
+    if(_form === 'light'){
+      // 光星態:單體治療 — 用特技 150% × (1+10%/級) × 1.3(光星天賦 +30% 治療)
+      const _baseMult = 1.5 + _s1Lv * 0.10;
+      const _talentBoost = 1.3;
+      const _shield = 40 + _s1Lv * 5;
+      // 目標:可選任何活著或剛倒下的友方(可復活)
+      setPending('ally_or_dead', t => {
+        if(!t){ endAction(a, cost); return; }
+        // 復活:若 HP=0,先設為 1 再治療
+        const _wasDead = (t.curHp <= 0);
+        if(_wasDead){
+          t.curHp = 1;
+          // 移除死亡標記
+          try{ if(t._dead) t._dead = false; }catch(_){}
+          log(`🌟 [${a.name}] 光星治療復活了 [${t.name}]!`);
+          try{ bannerFX(t, '✨ 復活!', '#ffeebb', 1000); }catch(_){}
+        }
+        const _heal = Math.max(1, Math.floor(_spv * _baseMult * _talentBoost));
+        log(`🌟 [${a.name}] 星手保護(光星)!特技×${Math.round(_baseMult*_talentBoost*100)}% = ${_heal} HP 治療 [${t.name}] + ${_shield} 護盾!`);
+        try{ playSkillFX('星手保護', a, [t]); }catch(_){}
+        try{ bannerFX(t, '💖 光星治療!', '#ffcc44', 900); }catch(_){}
+        doHeal(t, _heal, { actor:a, isHeal:true });
+        // 加 40 護盾(可復活意味即使原本是 0 HP 治療回來後也帶護盾)
+        if(t.curHp > 0){
+          // 沿用既有 shield 機制 — 找看 buffs 系統
+          if(!Array.isArray(t.buffs)) t.buffs = [];
+          // 移除舊有的星手護盾
+          t.buffs = t.buffs.filter(b => !(b._fromStarHand));
+          t.buffs.push({ type:'shield', amt:_shield, dur:99, _fromStarHand:true, src:a.name });
+          try{ if(typeof _renderBuffsBar === 'function') _renderBuffsBar(t); }catch(_){}
+        }
+        renderCard(t);
+        // 治療後可能會切回光星(沒事),但保險起見再檢查
+        try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
+        endAction(a, cost);
+      });
+    } else {
+      // 暗星態:全體治療 — 特技 75% × (1+5%/級),不吃 +30% 治療 buff(暗星 buff 是傷害)
+      const _baseMult = 0.75 + _s1Lv * 0.05;
+      const _shield = 20 + _s1Lv * 3;
+      const _allies = G[a.side].slice();  // 包含倒下的可復活
+      const _heal = Math.max(1, Math.floor(_spv * _baseMult));
+      log(`🌟 [${a.name}] 星手保護(暗星)!特技×${Math.round(_baseMult*100)}% = ${_heal} 全體治療 + ${_shield} 全體護盾!`);
+      try{ playSkillFX('星手保護', a, _allies); }catch(_){}
+      try{ bannerFX(a, '🌙 暗星全體治療!', '#aa44ff', 1000); }catch(_){}
+      _allies.forEach((t, i) => {
+        _pSetTimeout(() => {
+          if(!t) return;
+          const _wasDead = (t.curHp <= 0);
+          if(_wasDead){
+            t.curHp = 1;
+            try{ if(t._dead) t._dead = false; }catch(_){}
+            log(`🌟 [${a.name}] 暗星治療復活了 [${t.name}]!`);
+            try{ bannerFX(t, '✨ 復活!', '#ddbbff', 800); }catch(_){}
+          }
+          doHeal(t, _heal, { actor:a, isHeal:true });
+          if(t.curHp > 0){
+            if(!Array.isArray(t.buffs)) t.buffs = [];
+            t.buffs = t.buffs.filter(b => !(b._fromStarHand));
+            t.buffs.push({ type:'shield', amt:_shield, dur:99, _fromStarHand:true, src:a.name });
+            try{ if(typeof _renderBuffsBar === 'function') _renderBuffsBar(t); }catch(_){}
+          }
+          renderCard(t);
+        }, i * 150);
+      });
+      _pSetTimeout(() => {
+        try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
+        updateUI();
+        endAction(a, cost);
+      }, _allies.length * 150 + 300);
+    }
+    return;
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260507.5600 — 雙星姊妹 S2「流星降雨」
+  //   特技 200%(每級 +10%) 對 1 目標傷害,附加「追擊」3 回合
+  //   暗星態傷害 +30%(天賦 buff)
+  //   追擊狀態:每回合開始時額外受到特技 50% 傷害,持續 3 回合
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='流星降雨'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _baseMult = 2.5 + _s2Lv * 0.10;
+    // 取得最新型態
+    try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
+    const _form = a._dualStarForm || (a.curHp / a.hp > 0.25 ? 'light' : 'dark');
+    const _talentBoost = (_form === 'dark') ? 1.3 : 1.0;
+    const _spv = spv(a);
+    setPending('enemy', t => {
+      if(!t){ endAction(a, cost); return; }
+      const _dmg = Math.max(1, Math.floor(_spv * _baseMult * _talentBoost));
+      log(`🌠 [${a.name}] 流星降雨!特技×${Math.round(_baseMult*_talentBoost*100)}% = ${_dmg} 傷害給 [${t.name}],附加追擊 3 回合!`);
+      try{ playSkillFX('流星降雨', a, [t]); }catch(_){}
+      try{ bannerFX(a, '🌠 流星降雨!', _form==='dark'?'#aa44ff':'#ffcc44', 1000); }catch(_){}
+      doDmg(t, _dmg, { actor:a, isSkill:true });
+      // 附加「追擊」狀態 3 回合(新狀態 type:'pursuit')
+      if(t.curHp > 0){
+        if(!Array.isArray(t.status)) t.status = [];
+        // 只保留最新的追擊
+        t.status = t.status.filter(s => s.type !== 'pursuit');
+        // 記下「來源 actor 的特技值快照」與「來源 side」,讓 startTurn 能算 DOT 量
+        t.status.push({ type:'pursuit', dur:3, _srcSide:a.side, _srcSp:_spv, _srcName:a.name });
+        try{ bannerFX(t, '☄️ 追擊!', '#ff8866', 800); }catch(_){}
+        log(`☄️ [${t.name}] 陷入追擊狀態 3 回合!`);
+      }
+      // 觸發雙星型態檢查
+      try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
+      endAction(a, cost);
+    });
+    return;
+  }
+  // ════════════════════════════════════════════════════════════════
   // ====== 冒險模式 BOSS 技能 ======
   else if(n==='連續貓爪功'){
     const hitCount = 2 + Math.floor(Math.random()*2); // 2~3次
@@ -25646,6 +25894,52 @@ function _pickWeightedTarget(pool) {
   return pool[pool.length - 1];
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260507.5600 — 雙星姊妹型態切換檢查函式
+//   每次 doDmg / doHeal / S1 / S2 / 爆發 結束後呼叫
+//   HP 比 > 50% → 'light' 光星(治療強化)
+//   HP 比 ≤ 50% → 'dark' 暗星(輸出強化)
+//   型態切換可逆,治療回去也會切回光星
+// ════════════════════════════════════════════════════════════════
+window._checkDualStarForm = function(h){
+  try{
+    if(!h || h.name !== '雙星姊妹') return;
+    if(h.curHp <= 0){
+      // 倒下時不處理(留下原型態,讓復活後 _initDualStar 重新設定)
+      return;
+    }
+    const _ratio = h.curHp / h.hp;
+    const _newForm = (_ratio > 0.25) ? 'light' : 'dark';
+    const _oldForm = h._dualStarForm || 'light';
+    if(_newForm !== _oldForm){
+      h._dualStarForm = _newForm;
+      // 視覺提示
+      try{
+        if(_newForm === 'light'){
+          if(typeof bannerFX === 'function') bannerFX(h, '🌟 光星妹妹!', '#ffcc44', 1100);
+          if(typeof log === 'function') log(`🌟 [${h.name}] HP 過 1/4,切換為「光星妹妹」型態(治療技能 +30%)!`);
+        } else {
+          if(typeof bannerFX === 'function') bannerFX(h, '🌙 暗星姊姊!', '#aa44ff', 1100);
+          if(typeof log === 'function') log(`🌙 [${h.name}] HP 不足 1/4,切換為「暗星姊姊」型態(技能傷害 +30%)!`);
+        }
+      }catch(_){}
+      try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
+    } else if(typeof h._dualStarForm === 'undefined'){
+      // 第一次設定
+      h._dualStarForm = _newForm;
+    }
+  }catch(e){ try{ console.error('[雙星型態切換] 失敗', e); }catch(_){}}
+};
+
+// 戰鬥開始強制重置雙星姊妹為「光星妹妹滿血」型態
+window._initDualStarBattle = function(h){
+  try{
+    if(!h || h.name !== '雙星姊妹') return;
+    h.curHp = h.hp;
+    h._dualStarForm = 'light';
+  }catch(_){}
+};
+
 function startTurn(){
   // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
   if(window._advMiniResultShowing) return;
@@ -26282,6 +26576,24 @@ function startTurn(){
     log(`🔥 ${_isStrongHF?'強力':''}燃燒行動前灼燒 [${next.name}]!(${_hfDmgPre}固定傷害)`);
     renderCard(next);
     if(next.curHp<=0){ next.acted=true; updateUI(); _pSetTimeout(startTurn,300); return; }
+  }
+
+  // ★ v1.0.20260507.5600 — 「追擊」狀態 DOT(雙星姊妹 S2 流星降雨附加)
+  //   每回合行動前受到「來源者特技 50%」傷害(用 _srcSp 快照,即使來源者倒下也照算)
+  //   3 回合後自動消失(由通用 status dur 機制處理)
+  if(hasStatus(next,'pursuit') && next.curHp > 0){
+    try{
+      const _ps = next.status.find(s => s.type === 'pursuit');
+      if(_ps){
+        const _srcSpSnap = _ps._srcSp || 0;
+        const _pDmg = Math.max(1, Math.floor(_srcSpSnap * 0.5));
+        log(`☄️ [${next.name}] 追擊狀態!受到 ${_pDmg} 流星傷害(${_ps._srcName||'流星'} 特技 50%)`);
+        try{ bannerFX(next, '☄️ 追擊!', '#ff8866', 700); }catch(_){}
+        doDmg(next, _pDmg, { fixedDmg:true });
+        renderCard(next);
+        if(next.curHp <= 0){ next.acted = true; updateUI(); _pSetTimeout(startTurn, 300); return; }
+      }
+    }catch(_pe){ try{ console.error('[追擊 DOT]', _pe); }catch(_){} }
   }
 
   // ★ 寶箱怪：從第3回合開始每回合30%機率自動逃跑；第10回合起強制逃跑（被動）
@@ -45848,7 +46160,29 @@ function _showBurstFruitDrop() {
 // ════════════════════════════════
 const ADV_UNLOCKABLE_HEROES = ['幼兒園小孩','動物學家','凡人','占星師','軍師','神偷','吸血鬼','武士','陰陽師','時空法師','學者','木靈使','機械師','大力士','守衛','刺客','舞者','劍士','祭司','聖騎士','煉金術師','吟遊詩人','火法師','冰法師','雷法師','光法師','暗法師','神射手','武鬥家','警長','小力'];
 
+// ★ v1.0.20260507.5610 — 管理員測試專用「全部可玩英雄」清單(47 隻)
+//   除了 ADV_UNLOCKABLE_HEROES 31 隻基礎可解鎖,還有:
+//   - 校園 7 隻(籃球隊員、直笛團員、田徑隊員、電腦繪圖師、程式設計師、弦樂團員、小劇團員)
+//   - 召喚池稀有 9 隻(大天狗、玉藻前、酒吞童子、巫女、窮奇、科技生化人、鋁合金暴龍、超鬼神王、雙星姊妹)
+const ADMIN_ALL_HEROES = [
+  // 31 隻基礎可解鎖
+  '幼兒園小孩','動物學家','凡人','占星師','軍師','神偷','吸血鬼','武士','陰陽師','時空法師',
+  '學者','木靈使','機械師','大力士','守衛','刺客','舞者','劍士','祭司','聖騎士',
+  '煉金術師','吟遊詩人','火法師','冰法師','雷法師','光法師','暗法師','神射手','武鬥家','警長','小力',
+  // 7 隻校園
+  '籃球隊員','直笛團員','田徑隊員','電腦繪圖師','程式設計師','弦樂團員','小劇團員',
+  // 9 隻召喚池稀有(含學生設計 5 隻 + 日本 BOSS 解鎖 3 隻 + 巫女)
+  '巫女','大天狗','玉藻前','酒吞童子','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹',
+];
+
 function advGetUnlockedHeroes() {
+  // ★ v1.0.20260507.5610 — 管理員直接擁有所有 47 隻英雄
+  //   寫到 localStorage 中,讓每個依賴此 list 的其他系統都能讀到
+  try {
+    if(typeof window._isAdminUser === 'function' && window._isAdminUser()){
+      return ADMIN_ALL_HEROES.slice();
+    }
+  } catch(_){}
   try {
     const data = localStorage.getItem('adv_unlocked_heroes');
     return data ? JSON.parse(data) : [];
@@ -51193,7 +51527,7 @@ const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/L
 // ★ v1.0.20260501.5430 — 加進科技生化人,共 6 隻分攤 5% 機率
 // ★ v1.0.20260501.5440 — 加進鋁合金暴龍,共 7 隻分攤 5% 機率
 // ★ v1.0.20260501.5450 — 加進超鬼神王,共 8 隻分攤 5% 機率
-const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王'];
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹'];
 
 // BOSS 賣錢物品池(召喚也可獲得)
 // ★ v1.1.0 — 台灣 10 BOSS 賣錢物品也加入召喚池
@@ -54836,6 +55170,8 @@ const HERO_HEX_OVERRIDE = {
   // ★ v1.0.20260428.1500 — 小力 ctrl 1→9(坦克職能),幼兒園小孩 heal 2→1(無治療技能)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合恢復=回復)
   '幼兒園小孩':  { heal: 1, ctrl: 10 },   // 大聲啼哭(降攻特) + 午睡時間(隱身) + 夢境時光(降攻特AOE)
+  // ★ v1.0.20260507.5600 — 雙星姊妹:光星妹妹擅長治療(可復活),暗星姊姊擅長輸出與追擊狀態
+  '雙星姊妹':    { heal: 9, ctrl: 6 },   // S1 雙形態治療都可復活 → 強治療;S2 追擊狀態 → 中等控制
   // ★ v1.0.20260501.4760 — 台灣 3 BOSS 雷達圖手動覆寫(自動判定有誤)
   '山岳禁咒・崩天巨人': { heal: 1,  ctrl: 10 }, // S2 山崩地裂 30% 眩暈 + 範圍打擊;爆發大範圍控制 → 控制至滿
   '臭氣魔王・發酵公':   { heal: 1,  ctrl: 9 },  // S1 中毒 + S2 強力封印 + 爆發強力中毒;無治療技(原本因爆發描述含「治療效果減半」被自動判定為有治療,強制覆寫為 1)
@@ -62968,6 +63304,8 @@ const STUDENT_DESIGNER_HEROES = {
   'lsps110033@stu.lsps.tp.edu.tw': { hero:'科技生化人', name:'翁嵦晏', flagId:'kishin_bionic' },
   'lsps110115@stu.lsps.tp.edu.tw': { hero:'鋁合金暴龍', name:'陳品均', flagId:'alloy_dino' },
   'lsps110006@stu.lsps.tp.edu.tw': { hero:'超鬼神王',   name:'陳睿智', flagId:'kishin_king' },
+  // ★ v1.0.20260507.5600 — 5 年 5 班田歆雅(雙星姊妹)
+  'lsps110097@stu.lsps.tp.edu.tw': { hero:'雙星姊妹',   name:'田歆雅', flagId:'twin_star_sisters' },
 };
 
 window._grantStudentDesignerHero = function(email){
@@ -63081,6 +63419,153 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260507.5630', brief:[
+    '🎨 首頁三顆按鈕重新排列',
+    '可愛/精美畫風移到正中間,展開冒險故事保持位置,遊戲介紹縮小放到最下面',
+  ], items:[
+    '【調整內容】',
+    '・🎨 可愛畫風 / ✨ 精美畫風 兩顆畫風切換鈕:從 top:47% 移到 top:55%(原遊戲介紹位置)',
+    '・🗺 展開冒險故事按鈕:位置不動(top:67%),仍是首頁最顯眼的金色主鈕',
+    '・📖 遊戲介紹按鈕:從 top:55% 移到 top:78%(展開冒險故事下方),並縮小為:',
+    '   - font-size 45px → 24px(縮小近一半)',
+    '   - padding 15px 52px → 9px 30px',
+    '   - letter-spacing 6px → 3px',
+    '   - border 2.5px → 2px',
+    '   - text-shadow 縮短',
+    '【視覺邏輯】',
+    '・之前:畫風切換在最上(47%)、遊戲介紹在中(55%)、展開冒險在下(67%)',
+    '   問題:遊戲介紹太大太搶眼,讓玩家分心',
+    '・現在:畫風切換在中(55%)、展開冒險在中下(67% 主鈕),遊戲介紹小小放下方(78%)',
+    '   主鈕展開冒險故事在視覺中心仍最大、最金光燦爛',
+    '   遊戲介紹按鈕變成輔助選單(像「關於」連結),不搶主鈕風頭',
+    '【實作位置】',
+    '・#art-style-bar 的 top:47% 改 top:55%',
+    '・#overlay #game-info-btn 的 top:55% 改 top:78%',
+    '・#game-info-btn CSS:font-size / padding / letter-spacing / border 全部縮小',
+    '・其他元素不動(adventure-btn / 標題 / 副標題 / 版本標示等)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5630',
+  ] },
+  { ver:'v1.0.20260507.5620', brief:[
+    '⚖ 4 隻英雄平衡調整(田歆雅同學第一次測試後)',
+    '玉藻前 / 酒吞童子 / 大天狗 能力微調,雙星姊妹型態切換閾值改成 1/4',
+  ], items:[
+    '【為什麼要調整】',
+    '・🦊 玉藻前:能力總和 91 偏低(其他英雄都接近 100),造成戰場上 underpowered',
+    '・🍶 酒吞童子:總和 103 略高,稍微壓回 100',
+    '・👺 大天狗:總和 98 微低,特技再 +2 補上',
+    '・🌟 雙星姊妹:HP 過半就變暗星太容易,實際遊玩很少看到光星型態',
+    '【調整明細】',
+    '🦊 玉藻前(總和 91 → 100):',
+    '   - HP 56 → 57(+1)',
+    '   - 攻擊 5 → 9(+4)← 主要強化',
+    '   - 特技 19 → 20(+1)',
+    '   - 速度 11 → 14(+3)',
+    '🍶 酒吞童子(總和 103 → 100):',
+    '   - HP 72 → 70(-2)',
+    '   - 速度 6 → 5(-1)',
+    '   - 攻擊 / 特技不變',
+    '👺 大天狗(總和 98 → 100):',
+    '   - 特技 13 → 15(+2)',
+    '   - 其他能力不變',
+    '🌟 雙星姊妹:',
+    '   - 天賦切換閾值:HP 過半 50% → 過 1/4 (25%)',
+    '     (光星型態時間延長,暗星型態變得更稀有但更強烈)',
+    '   - S2 流星降雨:能量 6 → 4(中間 v5610 改過 3,現以平衡單為定案 4)',
+    '   - S2 流星降雨主公式:特技 200% → 250%(補償型態切換變難)',
+    '【實作位置】',
+    '・JP_BOSS_HERO_STATS:重設 3 隻日本 BOSS 英雄玩家版能力',
+    '・HERO_DB.雙星姊妹.s2:c 從 3 改為 4、d/fd 中 200% 改為 250%',
+    '・HERO_TRAIT.雙星姊妹.fd:50% 改為 25%',
+    '・HERO_LORE.雙星姊妹:文字描述同步改用「不足 1/4」',
+    '・execSkill 流星降雨基礎倍率:_baseMult 2.0 改為 2.5',
+    '・_checkDualStarForm:閾值 0.5 改為 0.25,banner 文字「過半」改「過 1/4」',
+    '・_runBurst 同生共死:fallback 0.5 改 0.25',
+    '・execSkill S1 星手保護 / S2 流星降雨:fallback 0.5 改 0.25',
+    '・⚠ 順便修 bug:S1/S2 內 fallback 用了不存在的 a.maxHp 屬性,改為 a.hp(實際遊戲中,該物件用 hp 當最大 HP)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5620',
+  ] },
+  { ver:'v1.0.20260507.5610', brief:[
+    '🌟 雙星姊妹微調:右側預覽圖往下移,流星降雨能量降到 3',
+    '🔓 管理員測試帳號自動解鎖全部 47 隻英雄,免去測試前要先解鎖的麻煩',
+  ], items:[
+    '【雙星姊妹 微調】',
+    '・🖼 英雄選擇頁右側「邀請視窗」的雙星姊妹預覽圖,y 位置 +20%',
+    '   原本人物頭頂偏上,現在頭部對齊視窗中央更好看',
+    '   實作位置:HERO_IMG_POS 加入「雙星姊妹: center 50%」(原預設 30%)',
+    '   縮圖位置 (HERO_THUMB_POS center 70%) 不動,只動「右側大圖」',
+    '・⚔ S2 流星降雨:能量消耗 6 → 3 顆能量',
+    '   原本 6 顆能量太貴,跟雙星姊妹特技 24 的快速循環角色不搭',
+    '   降到 3 顆後玩家可以更頻繁地打追擊狀態',
+    '・效果完全不變:特技 200% 對 1 目標 + 追擊 3 回合(特技 50% 每回合)',
+    '【管理員自動解鎖所有英雄】',
+    '・新增常數 ADMIN_ALL_HEROES:列出全部 47 隻可玩英雄',
+    '   = 31 隻基礎可解鎖 + 7 隻校園 + 9 隻召喚池稀有(含 5 隻學生設計、3 隻日本 BOSS、1 隻巫女)',
+    '・修改 advGetUnlockedHeroes() 函式',
+    '   - 開頭判斷:if window._isAdminUser() === true → 直接回傳 ADMIN_ALL_HEROES',
+    '   - 一般玩家不受影響,仍從 localStorage adv_unlocked_heroes 讀取',
+    '・效益:管理員測試版啟動就能用任何英雄組隊,不需要先打 BOSS、答題或召喚',
+    '・正式版發布時把 window._IS_ADMIN_TEST_BUILD 改為 false 即可恢復一般玩家邏輯',
+    '【實作位置】',
+    '・HERO_IMG_POS:加入「雙星姊妹」預覽圖位置設定',
+    '・HERO_DB:雙星姊妹 s2.c 從 6 改為 3',
+    '・新常數 ADMIN_ALL_HEROES:緊接在 ADV_UNLOCKABLE_HEROES 之後',
+    '・函式 advGetUnlockedHeroes:加入管理員早返路徑',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5610',
+  ] },
+  { ver:'v1.0.20260507.5600', brief:[
+    '🌟 全新學生設計英雄登場:雙星姊妹!',
+    '光與暗的雙生姊妹,HP 過半切換型態,治療 / 輸出兩種玩法',
+    '5年5班田歆雅同學設計,2026 年',
+  ], items:[
+    '【設計者】',
+    '・由力行國小 5 年 5 班田歆雅同學設計(2026 年)',
+    '・第 5 隻學生設計英雄,加入後召喚池稀有英雄共 9 隻分攤 5%',
+    '【角色概念 — 全新「雙型態」機制】',
+    '・🌟 光星妹妹型態:HP 過半時的型態,治療技能效果 +30%',
+    '・🌙 暗星姊姊型態:HP 不足半時的型態,技能傷害 +30%',
+    '・型態切換可逆 — 受傷掉到 50% 以下變暗星,治療回去又變光星',
+    '・每場戰鬥開始強制重置為「光星妹妹滿血」型態',
+    '【基礎能力】HP 58 / 攻擊 5 / 特技 24 / 速度 13(總和 100,純特技型)',
+    '【天賦:雙星轉換 🌟】',
+    '・戰鬥開始為光星妹妹型態(治療技能 +30%)',
+    '・HP ≤ 50% 切換為暗星姊姊型態(技能傷害 +30%)',
+    '・HP > 50% 又切換回光星型態,可逆',
+    '【S1:星手保護(能量 5)】',
+    '・光星態:特技 150% 治療 1 名友方(可復活)+ 40 護盾',
+    '・暗星態:特技 75% 治療全體友方(可復活)+ 全體 20 護盾',
+    '・兩種形態的治療都能讓倒下友方復活,是強力後援技能',
+    '【S2:流星降雨(能量 6)】',
+    '・特技 200% 對 1 目標傷害,附加全新「追擊」狀態 3 回合',
+    '・追擊狀態:每回合行動前額外受到「來源者特技 50%」傷害',
+    '・暗星態時主傷害 +30%(天賦加成)',
+    '【爆發:同生共死】',
+    '・光星態:HP 變成 1,將失去的 HP × 10 倍對隨機 1 對手造成傷害',
+    '   (例:滿血 58 爆發 = 失去 57 HP × 10 = 570 單體傷害,捨命一擊)',
+    '・暗星態:特技 900% 對全體分攤傷害(總傷害平均給每個存活敵人)',
+    '   (例:24 特技 × 9 = 216,1 隻敵人就 216,3 隻就各 72)',
+    '・兩種型態的爆發都「無視有利狀態且必中」',
+    '・升級:光星倍率 10/11/12/13/14、暗星倍率 9.0/10.0/11.0/12.0/13.0',
+    '【新增的「追擊」狀態】',
+    '・由 S2「流星降雨」附加,持續 3 回合',
+    '・每回合受擊者行動前,自動受到「來源者特技 50%」固定傷害',
+    '・即使來源者倒下,追擊也會繼續觸發(用快照特技值)',
+    '・在狀態欄會顯示「☄️ 追擊!」',
+    '【實作位置】',
+    '・AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / HERO_DB / HERO_TRAIT 加入雙星姊妹',
+    '・HERO_BIO 含 designer:{class:5年5班, name:田歆雅, year:2026}',
+    '・BURST_DB / BURST_UPGRADE_DEF / BURST_GIF_DB 加入「同生共死」與升級表',
+    '・SUMMON_RARE_HEROES 加入(共 9 隻),HERO_HEX_OVERRIDE / HERO_THUMB_POS 加雷達 / 縮圖位置',
+    '・STUDENT_DESIGNER_HEROES 加入田歆雅同學的 email 對照',
+    '・新函式 window._checkDualStarForm:每次 doDmg / doHeal / S1 / S2 / 爆發 後呼叫',
+    '・新函式 window._initDualStarBattle:戰鬥開始強制重置(預留給未來戰場初始化)',
+    '・newHero return 物件加入 _dualStarForm:雙星姊妹預設 light,其他英雄為 null',
+    '・execSkill 加入「星手保護」「流星降雨」分支邏輯',
+    '・_runBurst 加入「同生共死」分支邏輯(光暗各自處理)',
+    '・startTurn 加入「追擊」狀態 DOT 處理(行動前固定傷害)',
+    '・statusName 加入「追擊」中文對照',
+    '・GIF 來源:金色閃光炸開.gif(田歆雅同學提供,/raw/main/ 路徑)',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5600',
+  ] },
   { ver:'v1.0.20260507.5590', brief:[
     '✂️ 學生設計 4 隻英雄的技能說明變得更乾淨!',
     '只留下技能效果和關鍵規則,移除了升級數值、設計用語等多餘訊息',
@@ -64549,7 +65034,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260507.5590';
+  const CURRENT_VERSION = 'v1.0.20260507.5630';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -64583,7 +65068,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260507.5590';
+window._GAME_LOADED_VERSION = 'v1.0.20260507.5630';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
