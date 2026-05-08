@@ -49558,7 +49558,47 @@ function _showDeadlockRescueButton(){
     btn.dataset.state = 'alert';
   }
   // ★ v1.0.20260424.1210 — 修正提示訊息,口吻更柔和讓玩家自行判斷
-  try{ _showInGameToast('⚠️ 系統偵測到戰鬥停滯中,小英雄是有行動沒有完成還是遇到BUG卡死呢? 如果是遇到BUG卡死,請按左下角的卡死自救唷!', '#ff6644', 7000); }catch(_){}
+  // ★ v1.0.20260507.5560 — 卡死偵測訊息改善:
+  //   1. 縮小 50%(字 44→22px,寬 600→300px,內距 12/28→6/14px),不再喧賓奪主
+  //   2. 點擊任意位置可立即關閉,不必等 7 秒倒數結束
+  //   不沿用 _showInGameToast(那個是 pointer-events:none,不能點)
+  try{
+    const _stuckMsg = '⚠️ 系統偵測到戰鬥停滯中,小英雄是有行動沒有完成還是遇到BUG卡死呢? 如果是遇到BUG卡死,請按左下角的卡死自救唷!(點擊任意位置關閉)';
+    // 同時存在多個提示時先清掉前一個,避免堆疊
+    const _oldStuck = document.getElementById('_stuck-detection-toast');
+    if(_oldStuck) _oldStuck.remove();
+    const _stuckToast = document.createElement('div');
+    _stuckToast.id = '_stuck-detection-toast';
+    _stuckToast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;'+
+      'background:rgba(10,15,30,0.95);border:1.5px solid #ff6644;color:#ff6644;'+
+      'font-size:22px;font-weight:700;padding:6px 14px;border-radius:6px;'+
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;text-align:center;max-width:300px;'+
+      'box-shadow:0 0 10px rgba(255,102,68,0.27);'+
+      'pointer-events:auto;cursor:pointer;line-height:1.4;'+
+      'transition:opacity 0.3s ease-out;';
+    _stuckToast.textContent = _stuckMsg;
+    document.body.appendChild(_stuckToast);
+
+    // 點擊任意位置(包含訊息本身)關閉
+    let _stuckDismissed = false;
+    const _dismissStuck = () => {
+      if(_stuckDismissed) return;
+      _stuckDismissed = true;
+      try{ document.removeEventListener('click', _onAnyClickStuck, true); }catch(_){}
+      try{ document.removeEventListener('touchend', _onAnyClickStuck, true); }catch(_){}
+      _stuckToast.style.opacity = '0';
+      setTimeout(() => { if(_stuckToast.parentNode) _stuckToast.remove(); }, 350);
+    };
+    const _onAnyClickStuck = () => { _dismissStuck(); };
+    // 延遲 100ms 才綁 listener,避免「觸發 toast 那一下的 click 事件」立刻把它關掉
+    setTimeout(() => {
+      if(_stuckDismissed) return;
+      document.addEventListener('click', _onAnyClickStuck, true);
+      document.addEventListener('touchend', _onAnyClickStuck, true);
+    }, 100);
+    // 7 秒倒數仍存在,作為保底自動關閉
+    setTimeout(_dismissStuck, 7000);
+  }catch(_){}
 }
 
 function _hideDeadlockRescueButton(){
@@ -63008,6 +63048,33 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260507.5560', brief:[
+    '⚠️ 卡死偵測訊息縮小 50%,不再占滿畫面正中央',
+    '👆 點擊任意位置即可立即關閉提示,不必等 7 秒倒數結束',
+    '🚨 卡死自救選單(按下按鈕跳出的視窗)維持原樣不動',
+  ], items:[
+    '【玩家回饋】',
+    '・原本系統偵測到戰鬥停滯時,會跳出一條 44px 大字、最寬 600px 的紅色橫幅',
+    '・這條訊息蓋在戰鬥畫面正中央,看了 7 秒才會自動消失,期間擋住戰鬥資訊',
+    '・大部分情況下卡死提示是「誤判」(玩家正在思考),沒必要強迫看完 7 秒',
+    '【這次怎麼修?】',
+    '・✨ 訊息字級縮小 50%(44→22px),最大寬度 600→300px,內距 12/28→6/14px',
+    '・✨ 點擊畫面上任意位置可立即關閉(包括訊息本身、戰鬥畫面、按鈕都會觸發關閉)',
+    '・延遲 100ms 才綁 click listener,避免「觸發訊息出現那一下的點擊」立刻把它關掉',
+    '・支援 click 與 touchend 雙事件,iPad / 手機觸控直接點也能關閉',
+    '・7 秒自動倒數仍存在作為保底(玩家沒注意 / 沒手點時會自動消失)',
+    '・同時存在多個訊息時會先清掉前一個,避免堆疊',
+    '【不變動的部分】',
+    '・卡死自救選單視窗(點左下角 🚨 按鈕跳出來的選擇視窗)維持原本大小',
+    '・選單仍是 30px 標題 + 19px 按鈕字 + 18px 說明,各式螢幕響應式 CSS 不變',
+    '・選單按鈕的功能(強制跳過 / 脫離戰鬥 / 換隊友重來)完全不變',
+    '・_showInGameToast 通用 toast 函式不變(其他遊戲訊息不受影響)',
+    '【實作位置】',
+    '・移除原本對 _showInGameToast 的呼叫,改為 inline 自製 toast 元件',
+    '・新元件 id="_stuck-detection-toast",不再用 pointer-events:none',
+    '・document.addEventListener click / touchend 一次性監聽',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5560',
+  ] },
   { ver:'v1.0.20260507.5550', brief:[
     '🎮 啟動讀取條:打開遊戲時先預載資源,玩起來更穩定不卡頓',
     '🗺 「⚔ 英雄鬥技場」按鈕從首頁搬到關卡選擇頁,跟近期活動一起捲動',
@@ -64344,7 +64411,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260507.5550';
+  const CURRENT_VERSION = 'v1.0.20260507.5560';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -64378,7 +64445,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260507.5550';
+window._GAME_LOADED_VERSION = 'v1.0.20260507.5560';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
