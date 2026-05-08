@@ -419,13 +419,42 @@ function fromSnapshot(name) {
 // 計算英雄填寫完成度 0~100
 function completion(h) {
   let total = 0, filled = 0;
-  // 必填欄位列表
-  const requiredFields = ['name','emoji','img','designerClass','designerName','designerEmail','lore','bioRole','bioTrait','bioHobby','bioQuote','traitName','traitDesc','traitFd','s1Name','s1Fd','s2Name','s2Fd','burstName','burstFd'];
-  for (const f of requiredFields) {
+  // 真正必填的 5 個欄位
+  const trulyRequired = ['name','img','designerClass','designerName','designerEmail'];
+  for (const f of trulyRequired) {
     total++;
     if (h[f] && String(h[f]).trim()) filled++;
   }
+  // 每個技能至少要有 1 個線索
+  const skillHints = [
+    ['天賦', [h.traitDesc, h.traitFd, h.traitTrigger !== TRIGGER_TYPES[0] ? '1' : '']],
+    ['S1', [h.s1D, h.s1Fd, h.s1EffectType !== EFFECT_TYPES[0] ? '1' : '', h.s1Formula]],
+    ['S2', [h.s2D, h.s2Fd, h.s2EffectType !== EFFECT_TYPES[0] ? '1' : '', h.s2Formula]],
+    ['爆發', [h.burstD, h.burstFd, h.burstFormula, (h.burstExtras||[]).length ? '1' : '']],
+  ];
+  skillHints.forEach(([_, hints]) => {
+    total++;
+    if (hints.some(v => v && String(v).trim())) filled++;
+  });
   return Math.round(filled / total * 100);
+}
+
+// 取得未填的「真正必填欄位」列表(用於送出前提示)
+function getMissingRequired(h) {
+  const missing = [];
+  const map = {
+    name: '角色名稱', img: '圖片檔名',
+    designerClass: '設計者班級', designerName: '設計者姓名', designerEmail: '登入 email'
+  };
+  for (const [f, lab] of Object.entries(map)) {
+    if (!h[f] || !String(h[f]).trim()) missing.push(lab);
+  }
+  // 技能線索
+  if (!h.traitDesc && !h.traitFd && h.traitTrigger === TRIGGER_TYPES[0]) missing.push('天賦(至少給 1 個線索)');
+  if (!h.s1D && !h.s1Fd && h.s1EffectType === EFFECT_TYPES[0] && !h.s1Formula) missing.push('S1(至少給 1 個線索)');
+  if (!h.s2D && !h.s2Fd && h.s2EffectType === EFFECT_TYPES[0] && !h.s2Formula) missing.push('S2(至少給 1 個線索)');
+  if (!h.burstD && !h.burstFd && !h.burstFormula && !(h.burstExtras||[]).length) missing.push('爆發(至少給 1 個線索)');
+  return missing;
 }
 
 // 計算修改數量(只在 edit mode 用)
@@ -760,7 +789,11 @@ function renderEditor() {
       </div>
     </div>
 
-    ${isEdit ? `<div class="help-block">⚖ <b>平衡調整模式</b> — 你只需要改要動的欄位,沒改的會保持原樣不顯示。提交後我只會應用「已修改」的部分。</div>` : ''}
+    ${isEdit ? `<div class="help-block">⚖ <b>平衡調整模式</b> — 你只需要改要動的欄位,沒改的會保持原樣不顯示。提交後我只會應用「已修改」的部分。</div>` : `<div class="help-block">
+      💡 <b>必填的只有 5 個欄位</b>(基本資料區的 角色名 / 圖片檔名 / 班級 / 姓名 / email)— 都是學生本人才知道的真實資訊。<br>
+      其他標 <span style="color:var(--ai);font-weight:500;">💭</span> 的欄位 <b>空白都可以</b>,我會根據角色概念幫你想。<br>
+      唯一例外:<b>每個技能(天賦/S1/S2/爆發)請至少給我 1 個線索</b>(短描述、完整描述、效果類型 任一個),不然我猜不到效果是什麼。
+    </div>`}
 
     ${section(1, '🪪 基本資料', renderBasicSection(h, idx, orig))}
     ${section(2, '💪 基礎能力', renderStatsSection(h, idx, orig))}
@@ -897,10 +930,10 @@ function renderBasicSection(h, idx, orig) {
         <input type="text" value="${esc(h.name)}" oninput="updateField(${idx},'name',this.value)" ${isEdit ? 'disabled title="修改模式下不可改名"' : ''}>
         ${isEdit ? '<div class="help">修改模式下無法改名,要改名請另作新角色</div>' : ''}
       </div>
-      ${fieldText('emoji 圖示', idx, 'emoji', h.emoji, { required: true, placeholder: '🐅' })}
+      ${fieldText('emoji 圖示', idx, 'emoji', h.emoji, { placeholder: '🐅', help: '💭 空白:我會根據角色概念配' })}
       <div class="field full"><label>圖片檔名<span class="required">*</span></label>
         <input type="text" value="${esc(h.img)}" oninput="updateField(${idx},'img',this.value)" placeholder="窮奇 5年5班閻漢昀設計.png">
-        <div class="help">已上傳到 GitHub LXPSGAME 倉庫的檔名(中文檔名 OK,我會自動 encodeURIComponent)</div>
+        <div class="help">⚠ 必填:已上傳到 GitHub LXPSGAME 倉庫的檔名(中文檔名 OK,我會自動 encodeURIComponent)</div>
       </div>
       ${isEdit ? '' : fieldText('設計者班級', idx, 'designerClass', h.designerClass, { required: true, placeholder: '5年5班' })}
       ${isEdit ? '' : fieldText('設計者姓名', idx, 'designerName', h.designerName, { required: true, placeholder: '閻漢昀' })}
@@ -941,12 +974,12 @@ function renderStatsSection(h, idx, orig) {
 function renderIntroSection(h, idx, orig) {
   return `
     <div class="field-grid">
-      ${fieldText('一句話簡介(英雄圖鑑首頁)', idx, 'lore', h.lore, { full: true, required: true, placeholder: '中國神話四大凶獸之一,長著翅膀的猛獸' })}
+      ${fieldText('一句話簡介(英雄圖鑑首頁)', idx, 'lore', h.lore, { full: true, placeholder: '中國神話四大凶獸之一,長著翅膀的猛獸', help: '💭 空白:我會根據角色概念寫' })}
       ${orig ? `<div class="field-orig full">原值:${esc(orig.lore || '')}</div>` : ''}
-      ${fieldText('身分(role)', idx, 'bioRole', h.bioRole, { required: true, placeholder: '中國神話四大凶獸之一,專愛欺善助惡' })}
-      ${fieldText('性格(trait)', idx, 'bioTrait', h.bioTrait, { required: true, placeholder: '兇猛狡詐,卻意外講究反擊禮節' })}
-      ${fieldText('興趣(hobby)', idx, 'bioHobby', h.bioHobby, { required: true, placeholder: '潛伏山林暗中觀察人類' })}
-      ${fieldText('口頭禪(quote)', idx, 'bioQuote', h.bioQuote, { required: true, placeholder: '「你先動的手,可別怪我反咬一口。」' })}
+      ${fieldText('身分(role)', idx, 'bioRole', h.bioRole, { placeholder: '💭 空白可,我幫想' })}
+      ${fieldText('性格(trait)', idx, 'bioTrait', h.bioTrait, { placeholder: '💭 空白可,我幫想' })}
+      ${fieldText('興趣(hobby)', idx, 'bioHobby', h.bioHobby, { placeholder: '💭 空白可,我幫想' })}
+      ${fieldText('口頭禪(quote)', idx, 'bioQuote', h.bioQuote, { placeholder: '💭 空白可,我幫想' })}
     </div>
     ${orig && orig.bio ? `<div class="field-orig">原 BIO 值:身分=${esc((orig.bio.role||'').slice(0,40))}... / 性格=${esc((orig.bio.trait||'').slice(0,30))}... / 興趣=${esc((orig.bio.hobby||'').slice(0,30))}... / 口頭禪=${esc((orig.bio.quote||'').slice(0,30))}...</div>` : ''}
   `;
@@ -954,13 +987,14 @@ function renderIntroSection(h, idx, orig) {
 
 function renderTraitSection(h, idx, orig) {
   return `
+    <div class="help-block">💡 <b>我需要的最少資訊</b>:在「短描述」、「完整描述」、「觸發類型」三個欄位中至少填 1 個,讓我知道天賦做什麼。其他空白都可以,我幫想。</div>
     <div class="field-grid">
-      ${fieldText('天賦名稱', idx, 'traitName', h.traitName, { required: true, placeholder: '凶獠' })}
-      ${fieldText('天賦圖示 (emoji)', idx, 'traitIcon', h.traitIcon, { placeholder: '🐅' })}
-      <div class="full">${fieldText('短描述 desc(20 字內)', idx, 'traitDesc', h.traitDesc, { required: true, placeholder: '受傷時用攻擊反擊' })}</div>
-      <div class="full">${fieldText('完整描述 fd', idx, 'traitFd', h.traitFd, { required: true, textarea: true, placeholder: '受到敵方主動攻擊造成傷害時,立即用攻擊值對攻擊者反擊...(只寫效果,不要寫升級數值或設計理由)' })}</div>
+      ${fieldText('天賦名稱', idx, 'traitName', h.traitName, { placeholder: '💭 空白:我會根據效果取名' })}
+      ${fieldText('天賦圖示 (emoji)', idx, 'traitIcon', h.traitIcon, { placeholder: '💭 空白可' })}
+      <div class="full">${fieldText('短描述 desc(20 字內)', idx, 'traitDesc', h.traitDesc, { placeholder: '受傷時用攻擊反擊', help: '💭 至少給一個線索:這個或下面的完整描述任填一個' })}</div>
+      <div class="full">${fieldText('完整描述 fd', idx, 'traitFd', h.traitFd, { textarea: true, placeholder: '受到敵方主動攻擊造成傷害時,立即用攻擊值對攻擊者反擊...(只寫效果,不要寫升級數值或設計理由)', help: '💭 我會根據短描述/觸發類型自動寫,但你寫得越詳細我猜得越準' })}</div>
       ${fieldSelect('觸發類型', idx, 'traitTrigger', h.traitTrigger, TRIGGER_TYPES)}
-      ${fieldText('觸發機率(若需要)', idx, 'traitChance', h.traitChance, { placeholder: '45% 暴擊率 / 40% / N/A' })}
+      ${fieldText('觸發機率(若需要)', idx, 'traitChance', h.traitChance, { placeholder: '💭 空白:我幫定' })}
       <div class="full">${fieldSelect('升級加成模式', idx, 'traitUpgrade', h.traitUpgrade, [
         '🤖 由 AI 幫我決定(用同類英雄標準)',
         '每級 +10% 機率,LV5 達 85%',
@@ -979,15 +1013,16 @@ function renderSkillSection(h, idx, orig, sNum) {
   const cap = sNum.toUpperCase();
   const origS = orig ? orig[sNum] : null;
   return `
+    <div class="help-block">💡 <b>我需要的最少資訊</b>:在「短描述」、「完整描述」、「效果類型 + 主公式」三組任選 1 組填,讓我知道技能做什麼。其他空白可。</div>
     <div class="field-grid">
-      ${fieldText(cap + ' 名稱', idx, prefix + 'Name', h[prefix + 'Name'], { required: true, placeholder: '巨爪攻擊' })}
+      ${fieldText(cap + ' 名稱', idx, prefix + 'Name', h[prefix + 'Name'], { placeholder: '💭 空白:我會根據效果取名' })}
       ${fieldNum('能量消耗', idx, prefix + 'Cost', h[prefix + 'Cost'], { min: 0, max: 10 })}
-      <div class="full">${fieldText('短描述 d(20 字內)', idx, prefix + 'D', h[prefix + 'D'], { required: true, placeholder: '單體大傷害+流血2回合' })}</div>
-      <div class="full">${fieldText('完整描述 fd', idx, prefix + 'Fd', h[prefix + 'Fd'], { required: true, textarea: true, placeholder: '用攻擊的 250% 對 1 名對手造成傷害,並使其流血 2 回合(只寫效果)' })}</div>
+      <div class="full">${fieldText('短描述 d(20 字內)', idx, prefix + 'D', h[prefix + 'D'], { placeholder: '單體大傷害+流血2回合', help: '💭 至少給一個線索' })}</div>
+      <div class="full">${fieldText('完整描述 fd', idx, prefix + 'Fd', h[prefix + 'Fd'], { textarea: true, placeholder: '用攻擊的 250% 對 1 名對手造成傷害,並使其流血 2 回合(只寫效果)', help: '💭 我會根據短描述/類型自動寫,但你寫得越詳細我猜得越準' })}</div>
       ${fieldSelect('效果類型', idx, prefix + 'EffectType', h[prefix + 'EffectType'], EFFECT_TYPES)}
-      ${fieldText('主公式', idx, prefix + 'Formula', h[prefix + 'Formula'], { placeholder: '攻擊 250% / 特技 80% 全體 / 攻擊 130% ×2 段' })}
+      ${fieldText('主公式', idx, prefix + 'Formula', h[prefix + 'Formula'], { placeholder: '💭 空白:我幫定。例:攻擊 250% / 特技 80% 全體' })}
       <div class="full">${fieldCheckboxList('附加狀態(可複選)', idx, prefix + 'Statuses', h[prefix + 'Statuses'], STATUS_OPTIONS)}</div>
-      ${fieldText('狀態持續回合', idx, prefix + 'StatusDur', h[prefix + 'StatusDur'], { placeholder: '2' })}
+      ${fieldText('狀態持續回合', idx, prefix + 'StatusDur', h[prefix + 'StatusDur'], { placeholder: '💭 空白:預設 2 回合' })}
       ${fieldSelect('升級加成', idx, prefix + 'Upgrade', h[prefix + 'Upgrade'], [
         '🤖 由 AI 幫我決定',
         '每級主傷害 +5%',
@@ -1004,13 +1039,14 @@ function renderSkillSection(h, idx, orig, sNum) {
 function renderBurstSection(h, idx, orig) {
   const origB = orig ? orig.burst : null;
   return `
+    <div class="help-block">💡 <b>我需要的最少資訊</b>:在「短描述」、「完整描述」、「主公式」、「動畫風格(下拉選擇)」四項中至少給 1~2 個,讓我知道爆發效果與視覺風格。其他空白可。</div>
     <div class="field-grid">
-      ${fieldText('爆發技名稱', idx, 'burstName', h.burstName, { required: true, placeholder: '召喚上古四凶獸' })}
+      ${fieldText('爆發技名稱', idx, 'burstName', h.burstName, { placeholder: '💭 空白:我會根據效果取名' })}
       <div></div>
-      <div class="full">${fieldText('短描述 d(25 字內)', idx, 'burstD', h.burstD, { required: true, placeholder: '全體大傷害+隨機強力不利狀態2回合' })}</div>
-      <div class="full">${fieldText('完整描述 fd', idx, 'burstFd', h.burstFd, { required: true, textarea: true, placeholder: '召喚四大凶獸降臨,用攻擊的 200% 對全體對手造成傷害,並隨機附加 1 個強力不利狀態 2 回合...' })}</div>
-      ${fieldText('主公式', idx, 'burstFormula', h.burstFormula, { placeholder: '攻擊 200% 全體 / 特技 150% 全體 + 虛弱' })}
-      ${fieldText('升級數值表(LV0~4)', idx, 'burstUpgradeTable', h.burstUpgradeTable, { placeholder: '200/220/240/260/280 (% 主傷害)' })}
+      <div class="full">${fieldText('短描述 d(25 字內)', idx, 'burstD', h.burstD, { placeholder: '全體大傷害+隨機強力不利狀態2回合', help: '💭 至少給一個線索' })}</div>
+      <div class="full">${fieldText('完整描述 fd', idx, 'burstFd', h.burstFd, { textarea: true, placeholder: '召喚四大凶獸降臨,用攻擊的 200% 對全體對手造成傷害,並隨機附加 1 個強力不利狀態 2 回合...', help: '💭 我會根據短描述自動寫,但你寫得越詳細越好' })}</div>
+      ${fieldText('主公式', idx, 'burstFormula', h.burstFormula, { placeholder: '💭 空白:我幫定' })}
+      ${fieldText('升級數值表(LV0~4)', idx, 'burstUpgradeTable', h.burstUpgradeTable, { placeholder: '💭 空白:我幫定。例:200/220/240/260/280' })}
       <div class="full">${fieldCheckboxList('額外效果(可複選)', idx, 'burstExtras', h.burstExtras, [
         '隨機強力不利狀態(冰凍/燃燒/封印/麻痺/失明/中毒擇一)',
         '治療全隊',
@@ -1025,9 +1061,9 @@ function renderBurstSection(h, idx, orig) {
       ])}</div>
       <div class="full">${fieldSelect('爆發動畫來源', idx, 'burstGifSrc', h.burstGifSrc, BURST_GIF_OPTIONS)}</div>
       ${h.burstGifSrc === '🎨 自訂 GIF(填 URL)' ? `<div class="full">${fieldText('自訂 GIF URL', idx, 'burstGifUrl', h.burstGifUrl, { placeholder: 'https://github.com/.../raw/main/xxx.gif' })}</div>` : ''}
-      ${fieldText('染色 tint', idx, 'burstTint', h.burstTint, { placeholder: 'rgba(180,40,40,0.22) 暗紅 / 留空交給 AI' })}
-      ${fieldText('持續秒數', idx, 'burstDur', h.burstDur, { placeholder: '2.4' })}
-      <div class="full">${fieldText('音效組合', idx, 'burstSfx', h.burstSfx, { placeholder: 'sfx-qiongqi-burst / sfx-ko + sfx-sword / 留空交給 AI' })}</div>
+      ${fieldText('染色 tint', idx, 'burstTint', h.burstTint, { placeholder: '💭 空白:我幫想' })}
+      ${fieldText('持續秒數', idx, 'burstDur', h.burstDur, { placeholder: '💭 空白:預設 2.4' })}
+      <div class="full">${fieldText('音效組合', idx, 'burstSfx', h.burstSfx, { placeholder: '💭 空白:我幫挑' })}</div>
     </div>
     ${origB ? `<div class="field-orig">原值:${esc(origB.n||'')}・原 fd: ${esc((origB.fd||'').slice(0,150))}...</div>` : ''}
   `;
@@ -1225,6 +1261,19 @@ function lineBottom(w) {
 // 新增英雄 → 設計單
 // ════════════════════════════════════════════════════
 function generateAddOutput() {
+  // 檢查必填
+  const allMissing = [];
+  state.heroes.forEach((h, idx) => {
+    const m = getMissingRequired(h);
+    if (m.length) allMissing.push({ idx, name: h.name || '未命名', missing: m });
+  });
+  if (allMissing.length > 0) {
+    const lines = allMissing.map(x => `  英雄 ${x.idx+1}「${x.name}」:缺 ${x.missing.join('、')}`);
+    if (!confirm(`以下英雄有真正必填的欄位空白:\n\n${lines.join('\n')}\n\n要繼續產生設計單嗎?(我會提示哪些是空白讓 AI 決定)`)) {
+      return null;
+    }
+  }
+
   const ts = new Date().toLocaleString('zh-TW', { hour12: false });
   let lines = [];
   lines.push('═'.repeat(78));
@@ -1232,64 +1281,70 @@ function generateAddOutput() {
   lines.push('  產生時間:' + ts);
   lines.push('═'.repeat(78));
 
+  // 把空字串/undefined 顯示為標示「🤖 由 AI 決定」
+  const ai = (v) => {
+    if (v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0)) return '🤖 (留空,請 AI 決定)';
+    return v;
+  };
+
   state.heroes.forEach((h, idx) => {
     lines.push('');
-    lines.push(`【英雄 ${idx+1} / ${state.heroes.length}】${h.name || '未命名'} ${h.emoji || ''}`);
+    lines.push(`【英雄 ${idx+1} / ${state.heroes.length}】${h.name || '🤖 (留空,請 AI 決定)'} ${h.emoji || '🤖'}`);
     lines.push('');
     lines.push(lineTop());
     lines.push(row('區段', '欄位', '值'));
     lines.push(lineSep(undefined, '═'));
 
     const rows = [
-      ['基本', '角色名', h.name],
-      ['基本', 'emoji', h.emoji],
-      ['基本', '圖片檔名', h.img],
-      ['基本', '班級', h.designerClass],
-      ['基本', '姓名', h.designerName],
-      ['基本', 'email', h.designerEmail],
-      ['基本', '年份', h.designerYear],
+      ['基本', '角色名', h.name || '⚠️ 未填(必填)'],
+      ['基本', 'emoji', ai(h.emoji)],
+      ['基本', '圖片檔名', h.img || '⚠️ 未填(必填)'],
+      ['基本', '班級', h.designerClass || '⚠️ 未填(必填)'],
+      ['基本', '姓名', h.designerName || '⚠️ 未填(必填)'],
+      ['基本', 'email', h.designerEmail || '⚠️ 未填(必填)'],
+      ['基本', '年份', h.designerYear || 2026],
       ['能力', 'HP', h.hp],
       ['能力', '攻擊', h.atk],
       ['能力', '特技', h.sp],
       ['能力', '速度', h.spd],
-      ['介紹', '一句話', h.lore],
-      ['介紹', '身分', h.bioRole],
-      ['介紹', '性格', h.bioTrait],
-      ['介紹', '興趣', h.bioHobby],
-      ['介紹', '口頭禪', h.bioQuote],
-      ['天賦', '名稱', `${h.traitName} ${h.traitIcon || ''}`],
-      ['天賦', '短描述', h.traitDesc],
-      ['天賦', '完整描述', h.traitFd],
+      ['介紹', '一句話', ai(h.lore)],
+      ['介紹', '身分', ai(h.bioRole)],
+      ['介紹', '性格', ai(h.bioTrait)],
+      ['介紹', '興趣', ai(h.bioHobby)],
+      ['介紹', '口頭禪', ai(h.bioQuote)],
+      ['天賦', '名稱', ai(h.traitName) + (h.traitIcon ? ' ' + h.traitIcon : '')],
+      ['天賦', '短描述', ai(h.traitDesc)],
+      ['天賦', '完整描述', ai(h.traitFd)],
       ['天賦', '觸發類型', h.traitTrigger],
-      ['天賦', '觸發機率', h.traitChance],
+      ['天賦', '觸發機率', ai(h.traitChance)],
       ['天賦', '升級', h.traitUpgrade],
-      ['S1', '名稱', h.s1Name],
+      ['S1', '名稱', ai(h.s1Name)],
       ['S1', '能量', h.s1Cost],
-      ['S1', '短描述', h.s1D],
-      ['S1', '完整描述', h.s1Fd],
+      ['S1', '短描述', ai(h.s1D)],
+      ['S1', '完整描述', ai(h.s1Fd)],
       ['S1', '效果類型', h.s1EffectType],
-      ['S1', '主公式', h.s1Formula],
-      ['S1', '附加狀態', (h.s1Statuses || []).join('、') + (h.s1StatusDur ? ` ${h.s1StatusDur} 回合` : '')],
+      ['S1', '主公式', ai(h.s1Formula)],
+      ['S1', '附加狀態', (h.s1Statuses && h.s1Statuses.length) ? (h.s1Statuses.join('、') + (h.s1StatusDur ? ` ${h.s1StatusDur} 回合` : '')) : '🤖 (留空,請 AI 決定)'],
       ['S1', '升級', h.s1Upgrade],
-      ['S2', '名稱', h.s2Name],
+      ['S2', '名稱', ai(h.s2Name)],
       ['S2', '能量', h.s2Cost],
-      ['S2', '短描述', h.s2D],
-      ['S2', '完整描述', h.s2Fd],
+      ['S2', '短描述', ai(h.s2D)],
+      ['S2', '完整描述', ai(h.s2Fd)],
       ['S2', '效果類型', h.s2EffectType],
-      ['S2', '主公式', h.s2Formula],
-      ['S2', '附加狀態', (h.s2Statuses || []).join('、') + (h.s2StatusDur ? ` ${h.s2StatusDur} 回合` : '')],
+      ['S2', '主公式', ai(h.s2Formula)],
+      ['S2', '附加狀態', (h.s2Statuses && h.s2Statuses.length) ? (h.s2Statuses.join('、') + (h.s2StatusDur ? ` ${h.s2StatusDur} 回合` : '')) : '🤖 (留空,請 AI 決定)'],
       ['S2', '升級', h.s2Upgrade],
-      ['爆發', '名稱', h.burstName],
-      ['爆發', '短描述', h.burstD],
-      ['爆發', '完整描述', h.burstFd],
-      ['爆發', '主公式', h.burstFormula],
-      ['爆發', '額外效果', (h.burstExtras || []).join('、')],
-      ['爆發', '升級數值表', h.burstUpgradeTable],
+      ['爆發', '名稱', ai(h.burstName)],
+      ['爆發', '短描述', ai(h.burstD)],
+      ['爆發', '完整描述', ai(h.burstFd)],
+      ['爆發', '主公式', ai(h.burstFormula)],
+      ['爆發', '額外效果', (h.burstExtras && h.burstExtras.length) ? h.burstExtras.join('、') : '🤖 (留空,請 AI 決定)'],
+      ['爆發', '升級數值表', ai(h.burstUpgradeTable)],
       ['爆發', '動畫來源', h.burstGifSrc],
-      ['爆發', '自訂 URL', h.burstGifUrl],
-      ['爆發', '染色 tint', h.burstTint],
-      ['爆發', '持續秒數', h.burstDur],
-      ['爆發', '音效組合', h.burstSfx],
+      ['爆發', '自訂 URL', ai(h.burstGifUrl)],
+      ['爆發', '染色 tint', ai(h.burstTint)],
+      ['爆發', '持續秒數', ai(h.burstDur)],
+      ['爆發', '音效組合', ai(h.burstSfx)],
       ['雷達', '由 AI 決定', h.radarAi ? '✓' : '✗'],
       ['雷達', '攻擊力', h.radarAi ? '🤖 由 AI 決定' : h.radarAtk],
       ['雷達', '速度', h.radarAi ? '🤖 由 AI 決定' : h.radarSpd],
@@ -1298,18 +1353,16 @@ function generateAddOutput() {
       ['雷達', '控制力', h.radarAi ? '🤖 由 AI 決定' : h.radarCtrl],
       ['雷達', '技巧性', h.radarAi ? '🤖 由 AI 決定' : h.radarSkill],
       ['圖片', 'AI 決定', h.imgPosAi ? '✓' : '✗'],
-      ['圖片', '縮圖位置', h.imgPosAi ? '🤖 由 AI 決定' : h.thumbPos],
-      ['圖片', '縮圖縮放', h.imgPosAi ? '🤖 由 AI 決定' : h.thumbScale],
-      ['圖片', '大圖位置', h.imgPosAi ? '🤖 由 AI 決定' : h.imgPos],
+      ['圖片', '縮圖位置', h.imgPosAi ? '🤖 由 AI 決定' : ai(h.thumbPos)],
+      ['圖片', '縮圖縮放', h.imgPosAi ? '🤖 由 AI 決定' : ai(h.thumbScale)],
+      ['圖片', '大圖位置', h.imgPosAi ? '🤖 由 AI 決定' : ai(h.imgPos)],
       ['稀有', '召喚池', h.inSummon ? '✓ 加入稀有英雄池' : '✗ 不加入'],
       ['備註', '自由欄', h.notes || '(無)'],
     ];
 
     rows.forEach(r => {
-      // 處理長文字 — 超過寬度的就截斷加 ...
       const v = String(r[2] == null ? '' : r[2]);
       if (v.length > 60) {
-        // 多行斷
         const chunks = [];
         let s = v;
         while (s.length > 0) {
@@ -1325,6 +1378,15 @@ function generateAddOutput() {
     });
 
     lines.push(lineBottom());
+
+    // 列出哪些欄位是「🤖 留空」的,讓 AI 一眼掃完
+    const aiFields = [];
+    rows.forEach(r => {
+      if (String(r[2]).startsWith('🤖')) aiFields.push(`${r[0]}.${r[1]}`);
+    });
+    if (aiFields.length > 0) {
+      lines.push(`🤖 待 AI 決定的欄位(${aiFields.length} 項):${aiFields.join(' / ')}`);
+    }
   });
 
   // 設計者統計
