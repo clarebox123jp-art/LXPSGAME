@@ -7619,18 +7619,34 @@ body.art-premium #summon-overlay {
 
 <script>
 // ══════════════════════════════════════════════════════
-// ★ v1.0.20260507.5550 — 啟動讀取條(Boot Loader)
+// ★ v1.0.20260510.5750 — 啟動讀取條(Boot Loader)v2:智慧持久化快取
 // ══════════════════════════════════════════════════════
 //   目的:在玩家剛開遊戲時,先把場景圖片、BGM、SFX 等資料預載完成,
 //        避免按下「展開冒險故事」後才開始載入,造成戰鬥中斷層、卡頓或閃退。
+//
+//   v5750 改進(解決「重整又要重抓圖」、「跑完讀取條還有圖沒載完」):
+//     ① 雙模式設計:
+//        - 「首次模式」(localStorage 沒紀錄,或版本變更):預載完整清單 30+ 張,
+//          最長等到 60 秒,真的全部載完才算完成。
+//        - 「快速模式」(localStorage 有紀錄且版本相符):圖已在瀏覽器 HTTP 快取裡,
+//          只需要短短 5 秒驗證讀取條,秒過進首頁。
+//     ② 預載清單擴大:從 5 張 → 30+ 張(冒險首頁、力行校門、貓空 4 圖、日本關 5 圖、
+//        台灣關 11 圖、精美畫風 8 圖、首頁封面、召喚星空、商店、背包等)
+//     ③ 持久化紀錄:成功跑完一次完整載入後,localStorage 寫入版本標記,
+//        下次直接走快速模式(瀏覽器自然會用 HTTP cache)
+//     ④ 版本變更失效:GAME_LOADED_VERSION 變動時(玩家更新到新版),
+//        快取紀錄自動失效,重跑完整流程
+//     ⑤ 背景補載:讀取條結束後,英雄 Q 版頭像、其他次要圖在背景繼續載,不阻塞
+//
 //   行為:
-//     - 同一個 session 內只顯示一次(用 sessionStorage 標記),
-//       玩家從遊戲返回首頁時不會重跑
-//     - 顯示時間至少 10 秒(讓進度條視覺有跑動感),最多 20 秒(下載慢時保底結束)
-//     - 進度條混用「實際完成度」與「時間流逝」兩個來源,確保條子永遠在前進
-//     - 載入期間禁止點擊首頁按鈕,避免使用者跳過讀取
-//   PC / iPad / 手機通用:純 DOM + sessionStorage,無平台特殊邏輯
+//     - 同一個 session 內只顯示一次(用 sessionStorage 標記)
+//     - 首次模式:最少 10 秒(視覺感),最多 60 秒(讓慢網路也能載完);
+//       若所有任務完成則立即進入收尾(不再硬等)
+//     - 快速模式:固定 ~5 秒,快速驗證
+//     - 載入期間禁止點擊首頁按鈕
+//   PC / iPad / 手機通用
 (function _bootLoader(){
+  // sessionStorage:同一個 session(分頁未關)只跑一次 → 從遊戲回首頁不會重跑
   try{
     if(sessionStorage.getItem('lxps_boot_loader_done') === '1'){
       const _bl = document.getElementById('boot-loader');
@@ -7645,6 +7661,18 @@ body.art-premium #summon-overlay {
   const statusEl = document.getElementById('boot-loader-status');
   if(!overlay || !fillEl || !pctEl) return;
 
+  // ── 判斷模式:首次 vs 快速 ──
+  // localStorage 紀錄上次成功完整載入的版本;若與當前 BOOT 版本相符 → 快速模式
+  // 注意:此處版本號需與檔案底部的 CURRENT_VERSION / _GAME_LOADED_VERSION 同步
+  //      因為 boot loader 在檔頭執行,當下 window._GAME_LOADED_VERSION 還沒被設定
+  const PRELOAD_KEY = 'lxps_boot_preload_done_ver';
+  const CURRENT_BOOT_VER = 'v1.0.20260510.5750';
+  let _isFirstTime = true;
+  try{
+    const _saved = localStorage.getItem(PRELOAD_KEY);
+    if(_saved && _saved === CURRENT_BOOT_VER) _isFirstTime = false;
+  }catch(_){}
+
   // ── 載入期間先把首頁按鈕做視覺禁用,避免太早點到 ──
   const _disabledBtnIds = ['adventure-btn','game-info-btn','art-style-cute-btn','art-style-premium-btn'];
   _disabledBtnIds.forEach(id => {
@@ -7656,22 +7684,44 @@ body.art-premium #summon-overlay {
     }
   });
 
+  // 副標題提示(讓玩家知道在做什麼,降低焦慮感)
+  try{
+    const _sub = overlay.querySelector('.boot-loader-subtitle');
+    if(_sub){
+      _sub.textContent = _isFirstTime
+        ? '首次載入需較長時間,完成後下次會很快...'
+        : '驗證資源中,馬上就好...';
+    }
+  }catch(_){}
+
   const bootStart = Date.now();
   let totalTasks = 0;
   let completedTasks = 0;
 
+  // 模式參數
+  const MIN_DURATION_SEC  = _isFirstTime ? 10 : 3;   // 至少跑多少秒(視覺感)
+  const MAX_DURATION_SEC  = _isFirstTime ? 60 : 8;   // 最多多少秒強制結束
+  const TIME_TO_90_SEC    = _isFirstTime ? 30 : 4;   // 時間進度條跑到 90% 用幾秒
+  const PER_IMG_TIMEOUT   = _isFirstTime ? 30000 : 6000;  // 單張圖最多等多久(ms)
+
   function getElapsedSec(){ return (Date.now() - bootStart) / 1000; }
   function getRealPct(){ return totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0; }
 
-  // 顯示百分比 = max(實際完成 × 0.9, 時間進度)
-  // 時間進度曲線:0 秒 = 0%,10 秒 = 90%,20 秒 = 99%
+  // 顯示百分比 = max(實際完成度, 時間進度);時間進度提供「條子永遠在動」的視覺感
+  // 首次模式時間曲線:0→90% 用 30 秒,90→99% 用剩下的時間
+  // 快速模式時間曲線:0→90% 用 4 秒,90→99% 用剩下的時間
   function getDisplayPct(){
     const elapsed = getElapsedSec();
     const realPct = getRealPct();
     let timePct;
-    if(elapsed < 10) timePct = elapsed * 9;             // 0 → 90 over 10s
-    else timePct = 90 + Math.min(9, (elapsed - 10) * 1.125); // 90 → 99 over 8s
-    return Math.min(99, Math.max(realPct * 0.9, timePct));
+    if(elapsed < TIME_TO_90_SEC){
+      timePct = (elapsed / TIME_TO_90_SEC) * 90;
+    } else {
+      const _extra = (MAX_DURATION_SEC - TIME_TO_90_SEC);
+      timePct = 90 + Math.min(9, ((elapsed - TIME_TO_90_SEC) / Math.max(1, _extra)) * 9);
+    }
+    // 取「實際完成度 × 0.95」與「時間進度」較大者,確保條子永遠在前進
+    return Math.min(99, Math.max(realPct * 0.95, timePct));
   }
 
   function render(){
@@ -7689,12 +7739,20 @@ body.art-premium #summon-overlay {
   }
   function addTask(){ totalTasks++; }
 
-  function done(){
+  // 是否成功完整載入(用來決定要不要寫入 localStorage 標記)
+  let _allTasksLoadedOk = true;
+  let _loadFailures = 0;
+
+  function done(savePreloadFlag){
     if(renderTimer){ clearInterval(renderTimer); renderTimer = null; }
     fillEl.style.width = '100%';
     pctEl.textContent = '100';
     if(statusEl) statusEl.textContent = '✓ 載入完成,準備開始遊戲!';
     try{ sessionStorage.setItem('lxps_boot_loader_done', '1'); }catch(_){}
+    // 只有首次模式且任務真的全部完成(沒太多失敗),才寫入持久化標記
+    if(savePreloadFlag){
+      try{ localStorage.setItem(PRELOAD_KEY, CURRENT_BOOT_VER); }catch(_){}
+    }
     setTimeout(() => {
       if(!overlay.parentNode) return;
       overlay.style.opacity = '0';
@@ -7709,30 +7767,91 @@ body.art-premium #summon-overlay {
             delete b.dataset._bootDisabled;
           }
         });
+        // 啟動背景補載(英雄 Q 版頭像等次要資源)
+        try{ _startBackgroundPreload(); }catch(_){}
       }, 500);
     }, 700);
   }
 
   // ═══════════════════════════════════════
-  // 預載任務 1:關鍵場景圖片
+  // 預載任務 1:關鍵場景圖片(完整清單)
   // ═══════════════════════════════════════
-  const sceneImages = [
-    'https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png',
-    'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80.png',
-    'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png',
-    'https://github.com/clarebox123jp-art/-/raw/main/%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png',
-    'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png',
+  // 首次模式:全部 30+ 張都載
+  // 快速模式:只驗證 5 張代表性圖(已在 HTTP cache,瞬間 onload)
+  const _githubBase1 = 'https://github.com/clarebox123jp-art/-/raw/main/';
+  const _githubBase2 = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+
+  const _criticalImages = [
+    // 首頁、選單(必載)
+    _githubBase1 + '%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png',                  // 遊戲封面
+    _githubBase1 + '%E5%8A%9B%E8%A1%8C%E6%A0%A1%E9%96%80.png',                  // 力行校門
+    _githubBase1 + '%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png',                  // 力行操場(鬥技場)
+    _githubBase1 + '%E5%85%83%E7%B4%A0%E9%81%B8%E6%93%87%E8%83%8C%E6%99%AF.png', // 元素選擇背景
+    // 貓空 4 場景
+    _githubBase1 + '%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png',          // 景美溪河堤
+    _githubBase1 + '%E6%A8%9F%E6%B9%96%E6%AD%A5%E9%81%93.png',                  // 樟湖步道
+    _githubBase1 + '%E8%B2%93%E7%A9%BA%E8%8C%B6%E5%9C%92.png',                  // 貓空茶園
+    _githubBase1 + '%E8%B2%93%E7%A9%BABOSS%E6%88%B0%E8%83%8C%E6%99%AF.png',      // 貓空BOSS
+    _githubBase2 + '%E6%9D%8F%E8%8A%B1%E5%A6%96%E5%A0%B4%E6%99%AF.png',          // 杏花妖場景
+    // 日本關 5 場景
+    _githubBase2 + '%E5%AF%8C%E5%A3%AB%E5%B1%B1%E6%B7%B1%E5%85%A5%20%E7%AC%AC%E4%B8%89%E5%A0%B4%E6%99%AF%20%E4%B8%89%E8%B7%AF%E7%B7%9A%E5%85%B1%E9%80%9ABOSS%E6%88%B0%E5%89%8D.png',
+    _githubBase2 + '%E5%AF%8C%E5%A3%AB%E5%B1%B1%E7%81%AB%E5%8F%A3%20%E9%9A%B1%E8%97%8FBOSS%20%E5%85%AB%E5%B2%90%E5%A4%A7%E8%9B%87.png',
+    _githubBase2 + '%E8%A1%A8%E5%8F%83%E9%81%93%E7%A5%AD%E5%85%B8%20%E7%AC%AC%E4%B8%80%E5%A0%B4%E6%99%AF%20%E5%85%B1%E9%80%9A%E9%96%8B%E5%A0%B4.png',
+    _githubBase2 + '%E5%8F%A4%E8%80%81%E7%A5%9E%E7%A4%BE%20%E7%AC%AC%E4%BA%8C%E5%A0%B4%E6%99%AF%20%E5%A4%A7%E5%A4%A9%E7%8B%97%E8%B7%AF%E7%B7%9A.png',
+    // 台灣關 11 場景(10 個 BOSS 場景 + 地圖背景)
+    _githubBase2 + encodeURIComponent('台灣關卡首頁背景.png'),
+    _githubBase2 + encodeURIComponent('彰化老街.png'),
+    _githubBase2 + encodeURIComponent('台中鳳梨酥工廠.png'),
+    _githubBase2 + encodeURIComponent('深坑老街.png'),
+    _githubBase2 + encodeURIComponent('阿里山.png'),
+    _githubBase2 + encodeURIComponent('蘭嶼.png'),
+    _githubBase2 + encodeURIComponent('三峽老街.png'),
+    _githubBase2 + encodeURIComponent('西門町.png'),
+    _githubBase2 + encodeURIComponent('日月潭.png'),
+    _githubBase2 + encodeURIComponent('台北101.png'),
+    _githubBase2 + encodeURIComponent('玉山頂.png'),
+    // 精美畫風場景圖
+    _githubBase2 + encodeURIComponent('景美溪河堤(精美版).png'),
+    _githubBase2 + encodeURIComponent('樟湖步道(精美版).png'),
+    _githubBase2 + encodeURIComponent('貓空茶園(精美版).png'),
+    _githubBase2 + encodeURIComponent('遊戲首頁(精美版).png'),
+    _githubBase2 + encodeURIComponent('力行校門口(精美版).png'),
+    _githubBase2 + encodeURIComponent('自然教室(精美版).png'),
+    _githubBase2 + encodeURIComponent('召喚星空(精美版).png'),
+    // 商店、背包、召喚等共用 UI 圖
+    _githubBase2 + encodeURIComponent('召喚星空(可愛版).png'),
+    _githubBase2 + '%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86.png', // 不可思議超商
+    _githubBase2 + '%E8%83%8C%E5%8C%85.png',                                    // 背包
   ];
-  if(statusEl) statusEl.textContent = '載入場景圖片...';
-  sceneImages.forEach(url => {
+
+  // 快速模式只驗證 5 張代表性圖(已在 HTTP cache,瞬間 onload)
+  const _imagesToLoad = _isFirstTime ? _criticalImages : _criticalImages.slice(0, 5);
+
+  if(statusEl){
+    statusEl.textContent = _isFirstTime
+      ? ('載入場景圖片(0/' + _imagesToLoad.length + ')...')
+      : '驗證快取...';
+  }
+  let _imgDone = 0;
+  _imagesToLoad.forEach(url => {
     addTask();
     const img = new Image();
-    const onResolved = () => bumpComplete('載入場景圖片...');
-    img.onload  = onResolved;
-    img.onerror = onResolved;
+    let _resolved = false;
+    const onResolved = (ok) => {
+      if(_resolved) return;
+      _resolved = true;
+      _imgDone++;
+      if(!ok) _loadFailures++;
+      const _msg = _isFirstTime
+        ? ('載入場景圖片(' + _imgDone + '/' + _imagesToLoad.length + ')...')
+        : '驗證快取...';
+      bumpComplete(_msg);
+    };
+    img.onload  = () => onResolved(true);
+    img.onerror = () => onResolved(false);
     img.src = url;
-    // 安全網:7 秒未載完仍計入,避免單張圖卡住整體
-    setTimeout(() => { if(!img.complete) onResolved(); }, 7000);
+    // 安全網:單張圖最多等 PER_IMG_TIMEOUT,避免單張卡住整體
+    setTimeout(() => { if(!img.complete) onResolved(false); }, PER_IMG_TIMEOUT);
   });
 
   // ═══════════════════════════════════════
@@ -7782,16 +7901,56 @@ body.art-premium #summon-overlay {
   }, 500);
 
   // ═══════════════════════════════════════
-  // 完成偵測:全部任務完成且時間 ≥ 10 秒,或時間 ≥ 20 秒(強制結束)
+  // 完成偵測:
+  //   首次模式:全部任務完成且時間 ≥ 10 秒 → 結束;或 60 秒強制結束
+  //   快速模式:全部任務完成且時間 ≥ 3 秒 → 結束;或 8 秒強制結束
+  //   只有首次模式 + 失敗率 < 30% 才寫入持久化標記
   // ═══════════════════════════════════════
   const doneCheckIv = setInterval(() => {
     const elapsed = getElapsedSec();
     const allDone = totalTasks > 0 && completedTasks >= totalTasks;
-    if((allDone && elapsed >= 10) || elapsed >= 20){
+    const _force  = elapsed >= MAX_DURATION_SEC;
+    if((allDone && elapsed >= MIN_DURATION_SEC) || _force){
       clearInterval(doneCheckIv);
-      done();
+      // 判斷是否寫入持久化標記:
+      //   - 首次模式才需要寫(快速模式本來就有紀錄)
+      //   - 失敗率太高(超過 30% 圖片載失敗)就不寫,讓下次再來一次完整載
+      //   - 強制結束(時間到)且還沒全部完成,也不寫
+      const _failureRate = _imagesToLoad.length > 0 ? (_loadFailures / _imagesToLoad.length) : 0;
+      const _shouldSave = _isFirstTime && allDone && _failureRate < 0.3;
+      done(_shouldSave);
     }
   }, 200);
+
+  // ═══════════════════════════════════════
+  // 背景補載:讀取條結束後,在背景繼續載入次要資源
+  //   - 英雄 Q 版頭像(30+ 張,但戰鬥才會用,不阻塞首頁)
+  //   - 不顯示進度,失敗也不影響遊戲(原本就有 fallback 到 emoji)
+  //   只在首次模式跑(快速模式表示已經跑過一次了)
+  // ═══════════════════════════════════════
+  function _startBackgroundPreload(){
+    if(!_isFirstTime) return;
+    // 英雄 Q 版頭像清單(從 HERO_IMGS 推導出來,但 HERO_IMGS 此時可能還沒定義)
+    const _bgUrls = [];
+    try{
+      if(typeof HERO_IMGS === 'object' && HERO_IMGS){
+        Object.values(HERO_IMGS).forEach(u => { if(typeof u === 'string' && u) _bgUrls.push(u); });
+      }
+    }catch(_){}
+    // 用 requestIdleCallback 在瀏覽器空閒時載,不影響玩家操作
+    const _loadOne = (i) => {
+      if(i >= _bgUrls.length) return;
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        const _next = () => _loadOne(i + 1);
+        if(window.requestIdleCallback) requestIdleCallback(_next, {timeout:2000});
+        else setTimeout(_next, 200);
+      };
+      img.src = _bgUrls[i];
+    };
+    if(window.requestIdleCallback) requestIdleCallback(() => _loadOne(0), {timeout:3000});
+    else setTimeout(() => _loadOne(0), 1500);
+  }
 })();
 
 // ══════════════════════════════════════════════════════
@@ -64674,6 +64833,48 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260510.5750', brief:[
+    '⚡ 啟動讀取條全面升級!第一次載完之後,日後重新整理或重開遊戲都能秒進首頁',
+    '🎨 預載清單從 5 張擴大到 30+ 張,包含貓空、日本、台灣三大關所有場景圖+精美畫風版',
+    '🔁 不會再有「跑完讀取條結果還有圖沒載完」的問題了',
+    '🍎 PC / iPad / 手機通用,不挑平台',
+  ], items:[
+    '【問題與背景】',
+    '・舊版讀取條只預載 5 張關鍵圖,但遊戲實際用到 30+ 張',
+    '・結果:讀取條跑完玩家進入戰鬥,場景圖、BOSS 圖才開始下載 → 卡頓、白畫面',
+    '・另一個問題:重新整理時 sessionStorage 重置 → 又從頭跑一次讀取條,但圖實際上瀏覽器已經 cache',
+    '【新版雙模式設計】',
+    '・✨ 「首次模式」(localStorage 沒紀錄,或玩家更新到新版):',
+    '   - 預載完整 30+ 張清單(包含所有冒險場景、BOSS 戰背景、精美畫風覆蓋)',
+    '   - 等待時間:最少 10 秒、最多 60 秒(讓慢網路也能真的載完)',
+    '   - 全部完成才寫入 localStorage 標記',
+    '・✨ 「快速模式」(localStorage 有紀錄且版本相符):',
+    '   - 圖已在瀏覽器 HTTP cache,只要驗證 5 張代表性圖',
+    '   - 等待時間:最少 3 秒、最多 8 秒,基本秒過',
+    '・✨ 副標題會提示玩家當下是「首次載入」還是「驗證資源中」',
+    '【智慧版本失效】',
+    '・當 _GAME_LOADED_VERSION 變動時(玩家更新到新版),localStorage 標記自動失效',
+    '・確保有新圖資源時,玩家會重跑一次完整載入',
+    '・若失敗率太高(超過 30% 圖載失敗),不寫入標記 → 下次再來一次完整載',
+    '【背景補載(讀取條結束後)】',
+    '・✨ 讀取條結束後,在背景繼續載入 30+ 張英雄 Q 版頭像',
+    '・用 requestIdleCallback,只在瀏覽器空閒時載,不影響玩家操作',
+    '・載失敗也沒關係,原本就有 fallback 到 emoji 立繪',
+    '・只在「首次模式」跑一次',
+    '【影響範圍】',
+    '・PC / iPad / 手機都通用',
+    '・第一次載入會比舊版久一些(可能 15~30 秒,視網速),但之後幾乎瞬開',
+    '・搭配既有的 sessionStorage 機制,從遊戲返回首頁仍不會重跑讀取條',
+    '【實作位置】',
+    '・改寫第一個 <script> 區塊頂端的 _bootLoader IIFE(line ~7620)',
+    '・新增 PRELOAD_KEY = "lxps_boot_preload_done_ver" 用 localStorage 持久化',
+    '・新增 CURRENT_BOOT_VER 寫死當前版本(避免在 _GAME_LOADED_VERSION 設定前讀到 undefined)',
+    '・新增 _criticalImages(30+ 張)取代原本 sceneImages(5 張)',
+    '・新增 _isFirstTime 旗標 + 動態調整 MIN/MAX_DURATION_SEC、TIME_TO_90_SEC、PER_IMG_TIMEOUT',
+    '・新增 _startBackgroundPreload 用 requestIdleCallback 補載英雄頭像',
+    '・新增 _loadFailures 計失敗數,失敗率 > 30% 不寫持久化',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5750',
+  ] },
   { ver:'v1.0.20260509.5740', brief:[
     '👑 知識王挑戰按鈕大改造!按鈕往右靠齊+放大 50%,上面浮現「🔔 今天還可以參加」泡泡提示',
     '🎵 知識王進行期間換上專屬 BGM!兩首隨機輪流播放,挑戰結束自動切回關卡選擇 BGM',
@@ -65507,7 +65708,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260509.5740';
+  const CURRENT_VERSION = 'v1.0.20260510.5750';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -65541,7 +65742,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260509.5740';
+window._GAME_LOADED_VERSION = 'v1.0.20260510.5750';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
