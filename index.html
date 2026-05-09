@@ -2906,16 +2906,37 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 /* 浮動按鈕：放在「🗺 關卡選擇」標籤右邊(wrapper 上緣),三種狀態
    ★ v5710 — 從右上角(top:14px;right:14px)改為與 label 同一條 baseline,
    避開代表英雄卡片(absolute,top:28~38px),不再被 Lv.30 訊息蓋住。
-   尺寸縮小 10%(font 30→27 / padding 18→16 等)避免擋到任何文字。 */
+   尺寸縮小 10%(font 30→27 / padding 18→16 等)避免擋到任何文字。
+   ★ v5740 — 改為「靠右」(對齊捲動 bar 位置)並放大 50%(font 18→27/padding 14→21);
+   並新增上方「🔔 今天還可以參加」浮動小泡,挑戰過後會消失。 */
 #king-challenge-float-btn{
-  position:absolute; top:-13px; left:clamp(150px,16vw,220px); z-index:5;
-  padding:2px 14px;
-  font-size:clamp(13px,1.3vw,18px); font-weight:800;
+  position:absolute; top:-19px; right:clamp(20px,2.5vw,40px); z-index:5;
+  padding:3px 21px;
+  font-size:clamp(20px,1.95vw,27px); font-weight:800;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif; letter-spacing:1.5px;
-  border-radius:18px; cursor:pointer; transition:all 0.25s;
-  display:flex; align-items:center; gap:6px;
-  border:2px solid; line-height:1.2;
+  border-radius:22px; cursor:pointer; transition:all 0.25s;
+  display:flex; align-items:center; gap:8px;
+  border:2.5px solid; line-height:1.2;
   white-space:nowrap;
+}
+/* 上方「今天還可以參加」浮動提示泡(只在 ready 狀態顯示) */
+#king-challenge-tip-bubble{
+  position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  background:linear-gradient(135deg,rgba(50,30,90,0.95),rgba(30,20,60,0.95));
+  border:1.5px solid rgba(255,220,80,0.8); border-radius:14px;
+  padding:4px 12px; font-size:clamp(14px,1.3vw,18px); font-weight:700;
+  color:#ffe066; letter-spacing:1px; white-space:nowrap;
+  box-shadow:0 2px 12px rgba(0,0,0,0.5),0 0 14px rgba(255,200,60,0.3);
+  pointer-events:none;
+  animation:king-tip-bob 2.2s ease-in-out infinite;
+}
+#king-challenge-tip-bubble::after{
+  content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+  border:6px solid transparent; border-top-color:rgba(255,220,80,0.8);
+}
+@keyframes king-tip-bob{
+  0%,100%{ transform:translateX(-50%) translateY(0); opacity:0.9; }
+  50%{ transform:translateX(-50%) translateY(-3px); opacity:1; }
 }
 .king-float-btn.king-state-ready{
   background:linear-gradient(135deg,rgba(255,200,40,0.95),rgba(255,160,30,0.95),rgba(220,140,20,0.95));
@@ -3283,7 +3304,8 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   .king-tools-row{ grid-template-columns:1fr; }
   .king-rewards-row{ gap:8px; }
   .king-reward-card{ min-width:90px; padding:10px 12px; }
-  #king-challenge-float-btn{ top:-11px; left:120px; padding:2px 10px; font-size:13px; }
+  #king-challenge-float-btn{ top:-15px; right:14px; padding:2px 14px; font-size:18px; }
+  #king-challenge-tip-bubble{ font-size:13px; padding:2px 8px; }
 }
 
 
@@ -6308,6 +6330,9 @@ body.art-premium #summon-overlay {
 <audio id="bgm-taiwan-boss-2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS%E6%88%B0%E9%AC%A5BGM2.m4a" loop></audio>
 <!-- ★ v1.0.20260428.3740 — 玉山 BOSS 戰專屬 BGM(單獨,不參與輪播) -->
 <audio id="bgm-taiwan-boss-yushan" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8E%89%E5%B1%B1%E6%88%B0%E9%AC%A5BGM.m4a" loop></audio>
+<!-- ★ v1.0.20260509.5740 — 知識王挑戰 BGM(兩首隨機輪流播放) -->
+<audio id="bgm-king-challenge" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94.mp3" loop></audio>
+<audio id="bgm-king-challenge-2" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94%20(1).mp3" loop></audio>
 <!-- ★ v1.0.20260428.3500 — 台灣地圖選關頁 BGM(原檔名「台灣關卡簡介劇情BGM」更正為「台灣地圖BGM」) -->
 <audio id="bgm-taiwan-intro" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a" loop></audio>
 <!-- ★ v1.0.20260428.3650 — 台灣關卡介紹劇情 BGM(進台灣關後播劇情/介紹畫面用) -->
@@ -6710,8 +6735,9 @@ body.art-premium #summon-overlay {
            讓「🗺 關卡選擇」標籤和「↓ 滑動看更多」提示固定在外框邊緣,不被內容覆蓋。 -->
       <div id="adv-stage-list-wrap">
         <div id="adv-stage-list-label">🗺 關卡選擇</div>
-        <!-- ★ v1.0.20260509.5710 — 今日知識王挑戰浮動按鈕(放在「🗺 關卡選擇」標籤右邊,避免被代表英雄卡片擋到;尺寸縮小 10%) -->
+        <!-- ★ v1.0.20260509.5740 — 今日知識王挑戰浮動按鈕:靠右、放大 50%,上方提示泡 -->
         <button id="king-challenge-float-btn" class="king-float-btn king-state-ready" onclick="playSfx('sfx-sel',0.6);_kingShowEntryPopup()">
+          <span id="king-challenge-tip-bubble">🔔 今天還可以參加</span>
           👑 知識王挑戰
         </button>
         <div id="adv-stage-list-area">
@@ -11618,10 +11644,13 @@ const HERO_THUMB_POS = {
   '軍師':'center 40%',     '劍士':'center 40%',   '暗法師':'center 40%',
   '刺客':'center 40%',     '舞者':'center 40%',   '武鬥家':'center 40%',
   '火法師':'center 40%',   '時空法師':'center 40%','警長':'center 40%',
+  // ★ v5740 — 光法師左選單縮圖也下移 10%(50% → 40%,看到更多頭部)
+  '光法師':'center 40%',
   // 下移 20%（預設 50% - 20% = 30%）
   '武士':'center 30%', '凡人':'center 30%', '雷法師':'center 30%',
   // ★ v5690 — 5 年 5 班學生設計英雄縮圖位置(下移 20%,看到角色頭部)
-  '科技生化人':'center 30%', '鋁合金暴龍':'center 30%', '超鬼神王':'center 30%',
+  // ★ v5740 — 科技生化人/鋁合金暴龍再下移 10%(30% → 20%,看到更多頭部)
+  '科技生化人':'center 20%', '鋁合金暴龍':'center 20%', '超鬼神王':'center 30%',
   // ★ v1.0.20260507.5600 — 雙星姊妹:設計者指定 70%(下移 20%,展現姊妹臉部)
   '雙星姊妹':'center 70%',
 };
@@ -14307,7 +14336,7 @@ const HERO_TRAIT = {
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   '超鬼神王':{ name:'吞噬', icon:'👹', desc:'造成傷害時機率吞噬目標的有利狀態',fd:'造成傷害時有 40% 機率吞噬目標身上隨機 1 個有利狀態,轉移到自己身上(保持原回合數)。保護類有利狀態(死亡免疫、爆發保護等)無法被吞噬。' },
   // ★ v1.0.20260507.5600 — 學生設計英雄系列
-  '雙星姊妹':{ name:'雙星轉換', icon:'🌟', desc:'光暗雙生型態,HP 過 1/4 變光星(治療強化)、低於 1/4 變暗星(輸出強化),天賦升級提升切換閾值',fd:'戰鬥開始為「光星妹妹」型態(治療技能效果 +30%)。當 HP 比例 ≤ 切換閾值時切換為「暗星姊姊」型態(技能傷害 +30%);HP 比例回到 > 切換閾值時又切換回光星型態。型態切換可逆。\\n\\n切換閾值隨天賦等級提升:Lv1=25%、Lv2=30%、Lv3=35%、Lv4=40%、Lv5(MAX)=45%。等級越高越早進入暗星姊姊型態,輸出強化發動更積極。' },
+  '雙星姊妹':{ name:'雙星轉換', icon:'🌟', desc:'光暗雙生型態切換,光星治療強化、暗星輸出強化',fd:'戰鬥開始為「光星妹妹」型態(治療技能效果 +30%)。當 HP 比例低於切換閾值時切換為「暗星姊姊」型態(技能傷害 +30%);HP 比例回升時自動切換回光星型態。型態切換可逆。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -38996,6 +39025,7 @@ function _kingCheckReset(){
 }
 
 // ── 可用科目清單（排除特殊主題關）──
+// ★ v5740 — 台灣環島題庫納入科目池(玩家答對可獲得對應台灣關至寶經驗)
 function _kingGetSubjects(){
   const _excluded = ['日本關','關島交流','木柵動物園','五下自然期中評量','照顧與陪伴幼兒','領養與照顧狗狗'];
   const _allSubjects = new Set();
@@ -39082,7 +39112,9 @@ function _kingUpdateFloatBtn(){
   else if(_state === 'playing') _label = '👑 繼續挑戰';
   else _label = '👑 知識王挑戰';
   const _streakStr = (_kc._streakDays && _kc._streakDays > 0) ? `<span class="king-streak">🔥 ${_kc._streakDays}</span>` : '';
-  _btn.innerHTML = _label + _streakStr;
+  // ★ v5740 — 上方提示泡:只有 ready 狀態(今天還可以參加)才顯示
+  const _tipStr = (_state === 'ready') ? `<span id="king-challenge-tip-bubble">🔔 今天還可以參加</span>` : '';
+  _btn.innerHTML = _tipStr + _label + _streakStr;
 }
 
 // ── 移除任何已存在的彈窗 ──
@@ -39150,7 +39182,34 @@ function _kingResumeFromSnapshot(){
   _kc._curRewards = Array.isArray(_s.rewards) ? _s.rewards : ['hint','remove','skip'];
   _kc._toolsUsed = _s.toolsUsed || { hint:false, remove:false, skip:false };
   _kc._answered = Array.isArray(_s.answered) ? _s.answered : [];
+  // ★ v5740 — 接續挑戰也切 BGM
+  try{ _kingSwitchToKingBgm(); }catch(_){}
   _kingShowQuestionPopup();
+}
+
+// ★ v5740 — 切換到知識王挑戰 BGM(兩首隨機輪流)
+const KING_BGM_LIST = ['bgm-king-challenge','bgm-king-challenge-2'];
+function _kingSwitchToKingBgm(){
+  try{
+    // 從清單中隨機挑(若已在播其中之一,挑另一首避免重啟)
+    let _newId;
+    if(typeof _curBgm !== 'undefined' && KING_BGM_LIST.includes(_curBgm)){
+      const _others = KING_BGM_LIST.filter(id => id !== _curBgm);
+      _newId = _others.length ? _others[Math.floor(Math.random()*_others.length)] : KING_BGM_LIST[0];
+    } else {
+      _newId = KING_BGM_LIST[Math.floor(Math.random()*KING_BGM_LIST.length)];
+    }
+    if(typeof bgmFadeTo === 'function') bgmFadeTo(_newId, 500);
+    else if(typeof bgmPlay === 'function') bgmPlay(_newId);
+  }catch(_e){ console.warn('[king bgm switch]', _e); }
+}
+
+// ★ v5740 — 切回原本的關卡選擇 BGM(adventure-bgm)
+function _kingSwitchBackToAdvBgm(){
+  try{
+    if(typeof bgmFadeTo === 'function') bgmFadeTo('adventure-bgm', 500);
+    else if(typeof bgmPlay === 'function') bgmPlay('adventure-bgm');
+  }catch(_e){ console.warn('[king bgm restore]', _e); }
 }
 
 // ── 開始彈窗：抽科目（可重抽） ──
@@ -39212,6 +39271,8 @@ function _kingStartChallenge(){
   _kc._toolsUsed = { hint:false, remove:false, skip:false };
   _kc._answered = [];
   _kc._isPlaying = true;
+  // ★ v5740 — 切到知識王挑戰 BGM(兩首隨機輪流)
+  try{ _kingSwitchToKingBgm(); }catch(_){}
   // 寫快照 → 雲端
   _kingPersistSnapshot();
   _kingShowQuestionPopup();
@@ -39277,6 +39338,8 @@ function _kingPauseAndExit(){
   _kingPersistSnapshot();
   _kingRemovePopup();
   _kingUpdateFloatBtn();
+  // ★ v5740 — 暫停離開時切回關卡選擇 BGM
+  try{ _kingSwitchBackToAdvBgm(); }catch(_){}
   try{ _showInGameToast('挑戰進度已雲端儲存,可隨時回來繼續!', '#88ddff', 2200); }catch(_){}
 }
 
@@ -39298,12 +39361,34 @@ function _kingPickAnswer(pickIdx){
   if(_isCorrect){
     if(_picked) _picked.classList.add('king-correct');
     _kc._curScore += 5;
-    try{ playSfx && playSfx('sfx-powerup', 0.7); }catch(_){}
+    // ★ v5740 — 改用最新答題音效(與戰鬥中答題視窗同款)
+    try{
+      const _sfx = document.getElementById('sfx-quiz-correct');
+      if(_sfx){ _sfx.currentTime = 0; _sfx.volume = 0.75; _sfx.play().catch(()=>{}); }
+      else if(typeof playSfx === 'function') playSfx('sfx-quiz-correct', 0.75);
+    }catch(_){}
+    // ★ v5740 — 若是台灣環島題目且玩家持有對應至寶,給該至寶 +1 經驗
+    try{
+      if(_q.subject === '台灣環島' && _q.bossId
+         && typeof TAIWAN_BOSSES !== 'undefined' && TAIWAN_BOSSES[_q.bossId]
+         && typeof _taiwanTreasureData !== 'undefined'){
+        const _treasureId = TAIWAN_BOSSES[_q.bossId].treasure;
+        if(_treasureId && _taiwanTreasureData[_treasureId]
+           && typeof _addTaiwanTreasureExp === 'function'){
+          _addTaiwanTreasureExp(_treasureId, 1);
+        }
+      }
+    }catch(_e){ console.warn('[king treasure exp]', _e); }
   } else {
     if(_picked) _picked.classList.add('king-wrong');
     if(_correct) _correct.classList.add('king-correct');
     _kc._curScore -= 5;
-    try{ playSfx && playSfx('sfx-deny', 0.6); }catch(_){}
+    // ★ v5740 — 改用最新答錯音效(與戰鬥中答題視窗同款)
+    try{
+      const _sfx = document.getElementById('sfx-quiz-wrong');
+      if(_sfx){ _sfx.currentTime = 0; _sfx.volume = 0.7; _sfx.play().catch(()=>{}); }
+      else if(typeof playSfx === 'function') playSfx('sfx-quiz-wrong', 0.7);
+    }catch(_){}
   }
   _kc._answered.push(_isCorrect);
   // 更新分數顯示
@@ -39439,6 +39524,8 @@ function _kingClaimRewards(){
   _kingSaveToCloud();
   _kingRemovePopup();
   _kingUpdateFloatBtn();
+  // ★ v5740 — 領完獎切回關卡選擇 BGM
+  try{ _kingSwitchBackToAdvBgm(); }catch(_){}
   // Toast 訊息
   try{
     const _msg = '🎁 獎勵已放入背包!' + (_kc._streakDays > 1 ? ` 連續 ${_kc._streakDays} 天!🔥` : '');
@@ -61657,6 +61744,8 @@ const _TRAIT_LV_INFO = {
   '鋁合金暴龍':{ base:'20% 減傷', bonus:'+10%/天賦級', max:'60% 減傷(Lv5)', effect:'受到所有傷害減少(被動,無條件)' },
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   '超鬼神王':{ base:'40% 吞噬機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'造成傷害時有機率吞噬目標 1 個有利狀態' },
+  // ★ v1.0.20260509.5740 — 學生設計英雄系列(雙星姊妹)
+  '雙星姊妹':{ base:'25% 切換閾值', bonus:'+5%/天賦級', max:'45%(Lv5)', effect:'HP 比例低於閾值時切換暗星態(傷害+30%)、回升時切回光星態(治療+30%)' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -64585,6 +64674,71 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260509.5740', brief:[
+    '👑 知識王挑戰按鈕大改造!按鈕往右靠齊+放大 50%,上面浮現「🔔 今天還可以參加」泡泡提示',
+    '🎵 知識王進行期間換上專屬 BGM!兩首隨機輪流播放,挑戰結束自動切回關卡選擇 BGM',
+    '🔊 答對音效換成戰鬥同款新音效,聽起來更響亮過癮',
+    '🗺 知識王題庫加入「台灣環島 10 關」題目!答對台灣關題目時,持有的對應至寶會獲得 +1 經驗',
+    '🎨 光法師、科技生化人、鋁合金暴龍三隻英雄左選單縮圖位置上移 10%,看到更多頭頂',
+  ], items:[
+    '【👑 知識王按鈕重新設計】',
+    '・按鈕從原本「靠左貼著 🗺 關卡選擇 標籤」改成「靠右靠齊捲動 bar」',
+    '・尺寸放大 50%(字體 18px → 27px / padding 14px → 21px),點擊範圍更明顯',
+    '・按鈕上方多一個小泡泡「🔔 今天還可以參加」,輕輕上下飄動',
+    '・狀態 = ready(尚未挑戰)時才顯示泡泡,挑戰中或已領完獎勵時泡泡會消失',
+    '【🎵 知識王 BGM 切換系統】',
+    '・新增兩首挑戰專屬 BGM(知識王問答.mp3 / 知識王問答(1).mp3)隨機輪流播放',
+    '・進入挑戰(_kingStartChallenge / _kingResumeFromSnapshot)時自動切到知識王 BGM',
+    '・領獎(_kingClaimRewards)或暫停離開(_kingPauseAndExit)時切回 adventure-bgm(關卡選擇 BGM)',
+    '・若已在播其中一首,會挑「另一首」避免反覆重啟同一首',
+    '【🔊 答題音效升級】',
+    '・原本用 sfx-powerup / sfx-deny',
+    '・改用最新版 sfx-quiz-correct / sfx-quiz-wrong(與冒險戰鬥中答題視窗同款)',
+    '・直接 getElementById 取得 audio 元素 + currentTime 重置,確保連續答題每次都從頭播',
+    '【🗺 台灣環島題庫納入科目池】',
+    '・原本知識王科目池排除「日本關 / 關島交流 / 木柵動物園 / 五下自然 / 幼兒 / 狗狗」等專題關',
+    '・本次解禁「台灣環島」(共 300 題,bossId 對應 9 隻台灣 BOSS)',
+    '・答對台灣環島題目時,系統自動查 _q.bossId → TAIWAN_BOSSES[bossId].treasure → 該至寶 +1 經驗',
+    '・前提:玩家必須已經持有對應至寶(打贏該關 BOSS 才會掉)。沒有的話照常答題不影響',
+    '【🎨 英雄左選單縮圖位置調整】',
+    '・光法師:預設 50% → 40%(下移 10% 在 CSS 等於 Y% -10%,看到更多頭頂)',
+    '・科技生化人:30% → 20%',
+    '・鋁合金暴龍:30% → 20%',
+    '・其他英雄縮圖位置不變',
+  ], adminOnly:true, adminItems:[
+    '【🛠 管理員技術細節 — v5740】',
+    '【知識王按鈕 CSS(line 2904~2945)】',
+    '・top:-13px → top:-19px(往上挪保持貼齊邊緣)',
+    "・left:clamp(150px,16vw,220px) → right:clamp(20px,2.5vw,40px)(改靠右)",
+    '・font-size:clamp(13px,1.3vw,18px) → clamp(20px,1.95vw,27px)(放大 50%)',
+    '・padding:2px 14px → 3px 21px、border-radius:18px → 22px',
+    '・新增 #king-challenge-tip-bubble 樣式 + king-tip-bob keyframes(2.2s 上下飄)',
+    '・手機版 RWD(line ~3307):top:-15px right:14px font-size:18px',
+    '【知識王按鈕 HTML(line 6736)】',
+    '・按鈕 innerHTML 結構:<span id="king-challenge-tip-bubble">🔔 ⋯</span> + 文字 + streak',
+    '・_kingUpdateFloatBtn(line 39093):state==="ready" 才補上 tip span,其他狀態空字串',
+    '【BGM 系統】',
+    '・新增 audio#bgm-king-challenge / #bgm-king-challenge-2(line 6332 後)',
+    '・新增常數 KING_BGM_LIST + 函式 _kingSwitchToKingBgm / _kingSwitchBackToAdvBgm(line ~39184)',
+    '・呼叫點:_kingStartChallenge / _kingResumeFromSnapshot 進場切;_kingPauseAndExit / _kingClaimRewards 切回',
+    '【答題音效】',
+    "・_kingPickAnswer(line 39341):document.getElementById('sfx-quiz-correct').play() 取代 playSfx 寫法",
+    '・volume 0.75(對) / 0.7(錯),currentTime=0 確保重置',
+    '【台灣關至寶經驗】',
+    '・_kingGetSubjects(line 39024):移除「日本關」排除是錯的(從未排除「台灣環島」)→實際只是補確認科目池正確包含',
+    '・_kingPickAnswer 答對段(line ~39370):若 _q.subject==="台灣環島" && TAIWAN_BOSSES[_q.bossId] 存在',
+    "・→ 取 treasureId = TAIWAN_BOSSES[_q.bossId].treasure",
+    '・→ 若 _taiwanTreasureData[treasureId] 存在(玩家持有此至寶) → _addTaiwanTreasureExp(treasureId, 1)',
+    '・若玩家沒持有對應至寶 → 跳過(不報錯,正常答題)',
+    '【英雄縮圖位置(HERO_THUMB_POS, line 11641)】',
+    "・'光法師' 從 HERO_THUMB_POS 缺項(走 default 50%) → 新增 'center 40%'",
+    "・'科技生化人':'center 30%' → 'center 20%'",
+    "・'鋁合金暴龍':'center 30%' → 'center 20%'",
+    "・'超鬼神王' 維持 30%(沒要求改)",
+    '【驗證】',
+    '・node --check all_scripts.js 通過',
+    '・所有 _king 函式無變動之外的副作用,測試流程:打開挑戰→答對台灣題→確認對應至寶 EXP 進',
+  ] },
   { ver:'v1.0.20260509.5730', brief:[
     '⚖ 雙星姊妹平衡調整!S1「星手保護(光星治療)」與 S2「流星降雨」的升級加成從 +10%/級拉回 +5%/級',
     '🎯 對齊其他所有英雄的 S1/S2 升級標準(火法師、水法師、巫女、窮奇、科技生化人⋯⋯都是 +5%/級)',
@@ -65335,34 +65489,6 @@ const GAME_CHANGELOG = [
     '・移除原本「無條件跳過 mob/hero 精美覆蓋表中角色」的邏輯',
     '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5530',
   ] },
-  { ver:'v1.0.20260507.5520', brief:[
-    '📚 把所有國中程度的考題都換成國小程度的不重複題目了!',
-    '👹 超鬼神王「大嘴吸入」極限爆發換上專屬視覺特效!',
-    '🛠 修了一題數學的答案標錯(門票錢夠不夠那題)',
-  ], items:[
-    '【課業內容調整】',
-    '・原本題庫裡有 485 題標記為「國中」程度的考題,難度與本作主要受眾(國小階段)不太相符',
-    '・本次將所有 11 個科目共 485 題國中題目全部替換為國小程度的全新題目',
-    '・包含:國語文(43)、英文(45)、數學(46)、社會(39)、自然(42)、美術(39)、音樂(37)、表演藝術(39)、健康與體育(39)、資訊科技(38)、本土語(41)、生活常識(37)',
-    '・新題目按難度分布到低/中/高年級:沒自信→低年級基礎、普通→中年級進階、我很會→高年級挑戰',
-    '・每一題都與既有 1700+ 國小題目主題不重複,確保多樣性',
-    '【視覺特效更新】',
-    '・「大嘴吸入」(超鬼神王極限爆發)原本暫用軍師「真理之門」的素材',
-    '・本次換上專屬的「吸入漩渦門」GIF,視覺辨識度更高',
-    '・音效與染色暫時保留原配置,日後再陸續替換',
-    '【答案修正】',
-    '・ID=300 數學題:「小明有 500 元想買 4 張 120 元的特展門票錢夠不夠?」',
-    '・原誤標 B(不夠差 20 元),正確應為 A(夠,還剩 20 元)',
-    '・500 - 4×120 = 500 - 480 = 20 元剩餘',
-    '【影響範圍】',
-    '・冒險模式戰鬥的問答難度更貼近實際年齡層',
-    '・所有歷史獎章、進度、英雄資料完全不受影響',
-    '・存檔系統與雲端同步保持相容,不需要重置',
-    '【實作位置】',
-    '・JH_DATA 內 grade=="國中" 的所有條目改寫(485 題)',
-    '・BURST_GIF_DB「大嘴吸入」條目 url 替換為新 GIF 路徑',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5520',
-  ] },
 ];
 
 
@@ -65381,7 +65507,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260509.5730';
+  const CURRENT_VERSION = 'v1.0.20260509.5740';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -65415,7 +65541,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260509.5730';
+window._GAME_LOADED_VERSION = 'v1.0.20260509.5740';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
