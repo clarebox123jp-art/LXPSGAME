@@ -2901,6 +2901,392 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   box-shadow:0 0 28px rgba(255,140,220,0.7),inset 0 0 14px rgba(255,180,220,0.3);
 }
 
+/* ★ v5700 — 今日知識王挑戰浮動按鈕 + 彈窗系統 ════════════════════ */
+
+/* 浮動按鈕：放在「🗺 關卡選擇」標籤右邊(wrapper 上緣),三種狀態
+   ★ v5710 — 從右上角(top:14px;right:14px)改為與 label 同一條 baseline,
+   避開代表英雄卡片(absolute,top:28~38px),不再被 Lv.30 訊息蓋住。
+   尺寸縮小 10%(font 30→27 / padding 18→16 等)避免擋到任何文字。 */
+#king-challenge-float-btn{
+  position:absolute; top:-13px; left:clamp(150px,16vw,220px); z-index:5;
+  padding:2px 14px;
+  font-size:clamp(13px,1.3vw,18px); font-weight:800;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif; letter-spacing:1.5px;
+  border-radius:18px; cursor:pointer; transition:all 0.25s;
+  display:flex; align-items:center; gap:6px;
+  border:2px solid; line-height:1.2;
+  white-space:nowrap;
+}
+.king-float-btn.king-state-ready{
+  background:linear-gradient(135deg,rgba(255,200,40,0.95),rgba(255,160,30,0.95),rgba(220,140,20,0.95));
+  border-color:#ffe066; color:#3a2400;
+  box-shadow:0 0 14px rgba(255,200,60,0.65),inset 0 0 8px rgba(255,235,150,0.4);
+  animation:king-glow 1.6s ease-in-out infinite alternate;
+}
+.king-float-btn.king-state-playing{
+  background:linear-gradient(135deg,rgba(255,140,40,0.95),rgba(255,90,40,0.95),rgba(220,80,20,0.95));
+  border-color:#ffaa44; color:#fff8dc;
+  box-shadow:0 0 14px rgba(255,140,60,0.65),inset 0 0 8px rgba(255,200,120,0.3);
+  animation:king-glow-orange 1.4s ease-in-out infinite alternate;
+}
+.king-float-btn.king-state-done{
+  background:linear-gradient(135deg,rgba(120,120,120,0.85),rgba(80,80,80,0.85),rgba(60,60,60,0.85));
+  border-color:#888; color:#ccc; cursor:default;
+  box-shadow:none; opacity:0.8;
+}
+.king-float-btn.king-state-done:hover{ transform:none; }
+.king-float-btn:hover{ transform:scale(1.05) translateX(-3px); }
+.king-streak{
+  font-size:0.85em; padding:2px 8px;
+  background:rgba(255,80,40,0.85); color:#fff;
+  border-radius:10px; letter-spacing:0;
+  margin-left:4px; font-weight:900;
+  text-shadow:0 1px 2px rgba(0,0,0,0.5);
+}
+@keyframes king-glow{
+  0%{ box-shadow:0 0 14px rgba(255,200,60,0.65),inset 0 0 8px rgba(255,235,150,0.4); }
+  100%{ box-shadow:0 0 22px rgba(255,220,80,0.9),inset 0 0 12px rgba(255,245,180,0.6); }
+}
+@keyframes king-glow-orange{
+  0%{ box-shadow:0 0 14px rgba(255,140,60,0.65),inset 0 0 8px rgba(255,200,120,0.3); }
+  100%{ box-shadow:0 0 22px rgba(255,160,80,0.9),inset 0 0 12px rgba(255,210,150,0.5); }
+}
+
+/* 彈窗遮罩 */
+.king-popup-mask{
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.7);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; box-sizing:border-box;
+  animation:king-fade-in 0.2s ease-out;
+}
+@keyframes king-fade-in{
+  0%{ opacity:0; }
+  100%{ opacity:1; }
+}
+
+/* 彈窗主框 */
+.king-box{
+  background:linear-gradient(135deg,rgba(40,30,80,0.97),rgba(60,40,100,0.97),rgba(40,20,70,0.97));
+  border:2px solid #ffd700;
+  border-radius:18px;
+  padding:24px 28px;
+  max-width:600px; width:100%;
+  max-height:90vh; overflow:auto;
+  box-shadow:0 0 32px rgba(255,215,0,0.45),inset 0 0 16px rgba(255,200,80,0.15);
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  color:#fff8dc;
+}
+.king-box-question{ max-width:680px; }
+.king-box-result{ max-width:560px; text-align:center; }
+
+.king-title{
+  font-size:clamp(28px,3vw,40px); font-weight:900;
+  text-align:center; color:#ffd700;
+  text-shadow:0 0 8px rgba(255,200,60,0.6);
+  margin-bottom:8px; letter-spacing:2px;
+}
+.king-subtitle{
+  text-align:center; color:#ffe066;
+  font-size:clamp(16px,1.7vw,22px);
+  margin-bottom:18px; letter-spacing:1px;
+}
+
+/* 規則段 */
+.king-rules{
+  background:rgba(0,0,0,0.3);
+  border:1px solid rgba(255,215,0,0.3);
+  border-radius:12px;
+  padding:14px 18px; margin-bottom:18px;
+  font-size:clamp(15px,1.6vw,20px); line-height:1.55;
+}
+.king-rule-row{ margin:5px 0; color:#ffe9b3; }
+.king-rule-row b{ color:#ffd700; }
+.king-rule-detail{
+  font-size:clamp(13px,1.4vw,17px);
+  color:#ddccaa; margin-top:6px; padding-left:12px;
+  line-height:1.7;
+}
+
+/* 科目卡片 */
+.king-subject-card{
+  background:linear-gradient(135deg,rgba(255,200,60,0.2),rgba(255,160,40,0.18));
+  border:2px solid #ffd700;
+  border-radius:14px;
+  padding:18px; margin:14px 0;
+  text-align:center;
+  box-shadow:inset 0 0 12px rgba(255,200,80,0.2);
+}
+.king-subject-name{
+  font-size:clamp(28px,3vw,42px); font-weight:900;
+  color:#ffd700; letter-spacing:3px;
+  text-shadow:0 0 6px rgba(255,200,60,0.5);
+}
+.king-subject-tag{
+  font-size:clamp(14px,1.5vw,18px); color:#ddccaa;
+  margin-top:6px; letter-spacing:1px;
+}
+
+/* 法寶預覽 */
+.king-tools-preview{
+  background:rgba(0,0,0,0.3);
+  border:1px solid rgba(180,140,255,0.4);
+  border-radius:12px; padding:12px;
+  margin-bottom:14px;
+}
+.king-tools-title{
+  font-size:clamp(14px,1.5vw,18px);
+  color:#dccfff; margin-bottom:10px;
+  letter-spacing:1px;
+}
+.king-tools-row{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+}
+.king-tool-preview{
+  background:rgba(80,40,140,0.4);
+  border:1px solid rgba(180,140,255,0.5);
+  border-radius:10px;
+  padding:10px 6px; text-align:center;
+}
+.king-tool-icon{ font-size:clamp(24px,2.6vw,32px); }
+.king-tool-name{
+  font-size:clamp(13px,1.4vw,16px); font-weight:700;
+  color:#fff8dc; margin-top:2px;
+}
+.king-tool-desc{
+  font-size:clamp(11px,1.2vw,13px); color:#bbaadd;
+  margin-top:2px; line-height:1.3;
+}
+
+/* 進度條 */
+.king-progress-bar{
+  width:100%; height:8px;
+  background:rgba(0,0,0,0.45);
+  border:1px solid rgba(255,215,0,0.4);
+  border-radius:6px; overflow:hidden;
+  margin-bottom:14px;
+}
+.king-progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,#ffd700,#ff9c40);
+  transition:width 0.4s ease;
+  box-shadow:0 0 8px rgba(255,200,60,0.6);
+}
+
+/* 答題標頭 */
+.king-question-header{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:14px; flex-wrap:wrap; gap:8px;
+  font-size:clamp(14px,1.5vw,18px);
+}
+.king-q-num{ color:#ffd700; font-weight:800; }
+.king-q-subject{ color:#ddccaa; }
+.king-q-score{ color:#fff8dc; }
+.king-q-score b{ color:#ffd700; font-size:1.2em; }
+
+/* 題目本文 */
+.king-question-text{
+  font-size:clamp(18px,2vw,26px); font-weight:700;
+  color:#fff8dc; line-height:1.5;
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(255,215,0,0.3);
+  border-radius:12px;
+  padding:16px 18px; margin-bottom:14px;
+}
+
+/* 選項 */
+.king-options{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  margin-bottom:14px;
+}
+.king-option{
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px;
+  background:linear-gradient(135deg,rgba(60,50,120,0.85),rgba(80,60,140,0.85));
+  border:2px solid rgba(180,150,255,0.5);
+  border-radius:12px;
+  color:#fff8dc; cursor:pointer;
+  transition:all 0.18s; text-align:left;
+  font-family:inherit;
+  font-size:clamp(15px,1.6vw,20px);
+}
+.king-option:hover:not(:disabled){
+  background:linear-gradient(135deg,rgba(80,60,150,0.95),rgba(100,75,170,0.95));
+  border-color:#ffd700; transform:translateX(3px);
+}
+.king-option:disabled{ cursor:default; }
+.king-option-letter{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:32px; height:32px; flex-shrink:0;
+  background:rgba(255,215,0,0.25); color:#ffd700;
+  border:1.5px solid #ffd700;
+  border-radius:50%; font-weight:900;
+  font-size:clamp(15px,1.6vw,20px);
+}
+.king-option-text{ flex:1; line-height:1.4; }
+.king-option.king-correct{
+  background:linear-gradient(135deg,rgba(60,200,100,0.85),rgba(40,170,80,0.85));
+  border-color:#80ff80; box-shadow:0 0 14px rgba(80,255,120,0.5);
+}
+.king-option.king-correct .king-option-letter{
+  background:rgba(80,255,120,0.3); color:#80ff80; border-color:#80ff80;
+}
+.king-option.king-wrong{
+  background:linear-gradient(135deg,rgba(220,60,60,0.85),rgba(180,40,50,0.85));
+  border-color:#ff7070; box-shadow:0 0 14px rgba(255,80,80,0.5);
+}
+.king-option.king-wrong .king-option-letter{
+  background:rgba(255,100,100,0.3); color:#ff7070; border-color:#ff7070;
+}
+.king-option.king-hint-glow{
+  border-color:#ffd700;
+  box-shadow:0 0 18px rgba(255,215,0,0.7),inset 0 0 8px rgba(255,235,150,0.3);
+  animation:king-hint-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes king-hint-pulse{
+  0%{ box-shadow:0 0 14px rgba(255,215,0,0.5),inset 0 0 6px rgba(255,235,150,0.2); }
+  100%{ box-shadow:0 0 24px rgba(255,235,80,0.95),inset 0 0 12px rgba(255,245,180,0.5); }
+}
+.king-option.king-option-removed{
+  opacity:0.25; pointer-events:none;
+  text-decoration:line-through;
+}
+.king-option.king-option-locked{ pointer-events:none; }
+
+/* 法寶按鈕區 */
+.king-tools{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+  margin-bottom:12px;
+}
+.king-tool-btn{
+  padding:8px 6px;
+  background:linear-gradient(135deg,rgba(80,40,160,0.85),rgba(110,60,200,0.85));
+  border:1.5px solid rgba(180,140,255,0.6);
+  border-radius:10px; color:#fff8dc; cursor:pointer;
+  font-family:inherit; font-weight:700;
+  font-size:clamp(13px,1.4vw,17px);
+  transition:all 0.15s;
+}
+.king-tool-btn:hover:not(:disabled){
+  background:linear-gradient(135deg,rgba(100,50,180,0.95),rgba(140,80,240,0.95));
+  border-color:#dccfff; transform:translateY(-2px);
+}
+.king-tool-btn.king-tool-used,
+.king-tool-btn:disabled{
+  opacity:0.35; cursor:not-allowed;
+  background:rgba(40,30,60,0.7);
+}
+
+/* 底部按鈕列 */
+.king-btn-row{
+  display:flex; gap:10px; justify-content:center;
+  margin-top:14px; flex-wrap:wrap;
+}
+.king-btn{
+  padding:12px 22px;
+  font-size:clamp(15px,1.7vw,21px); font-weight:800;
+  font-family:inherit; letter-spacing:1px;
+  border-radius:12px; cursor:pointer;
+  transition:all 0.18s; border:2px solid;
+}
+.king-btn-cancel{
+  background:rgba(80,80,100,0.7); border-color:#aaa; color:#ddd;
+}
+.king-btn-cancel:hover{ background:rgba(100,100,120,0.85); }
+.king-btn-go{
+  background:linear-gradient(135deg,rgba(255,180,40,1),rgba(255,140,30,1));
+  border-color:#ffe066; color:#3a2400;
+  box-shadow:0 0 12px rgba(255,200,60,0.55);
+}
+.king-btn-go:hover{
+  background:linear-gradient(135deg,rgba(255,200,60,1),rgba(255,160,40,1));
+  box-shadow:0 0 18px rgba(255,220,80,0.85);
+}
+.king-btn-reroll{
+  background:linear-gradient(135deg,rgba(80,150,220,0.9),rgba(60,120,200,0.9));
+  border-color:#aaccff; color:#fff8dc;
+}
+.king-btn-reroll:hover{
+  background:linear-gradient(135deg,rgba(100,170,240,1),rgba(80,140,220,1));
+}
+.king-btn-disabled{
+  background:rgba(60,60,80,0.6); border-color:#666; color:#888;
+  cursor:not-allowed; opacity:0.5;
+}
+
+/* 暫停離開列 */
+.king-bottom-bar{
+  text-align:center; margin-top:8px;
+}
+
+/* 結算頁分數顯示 */
+.king-score-display{
+  margin:18px 0; padding:18px;
+  border-radius:16px; border:2px solid;
+}
+.king-score-display.king-score-good{
+  background:linear-gradient(135deg,rgba(60,200,100,0.25),rgba(40,170,80,0.18));
+  border-color:#80ff80; box-shadow:0 0 16px rgba(80,255,120,0.35);
+}
+.king-score-display.king-score-mid{
+  background:linear-gradient(135deg,rgba(255,200,60,0.25),rgba(220,160,40,0.18));
+  border-color:#ffd700; box-shadow:0 0 16px rgba(255,200,60,0.35);
+}
+.king-score-display.king-score-low{
+  background:linear-gradient(135deg,rgba(180,180,180,0.18),rgba(140,140,140,0.12));
+  border-color:#aaa;
+}
+.king-score-num{
+  font-size:clamp(64px,7vw,96px); font-weight:900;
+  line-height:1; color:#ffd700;
+  text-shadow:0 0 12px rgba(255,200,60,0.6);
+}
+.king-score-detail{
+  font-size:clamp(15px,1.6vw,20px); color:#ddccaa;
+  margin-top:6px;
+}
+.king-new-best{
+  font-size:clamp(20px,2.2vw,28px); font-weight:900;
+  color:#ffd700; letter-spacing:2px;
+  margin:8px 0 14px;
+  text-shadow:0 0 10px rgba(255,200,60,0.6);
+  animation:king-glow 1s ease-in-out infinite alternate;
+}
+
+/* 結算獎勵卡片 */
+.king-rewards-row{
+  display:flex; gap:12px; justify-content:center;
+  flex-wrap:wrap; margin:14px 0;
+}
+.king-reward-card{
+  background:linear-gradient(135deg,rgba(255,200,60,0.22),rgba(220,160,40,0.18));
+  border:1.5px solid #ffd700;
+  border-radius:12px; padding:12px 16px;
+  min-width:110px; text-align:center;
+  box-shadow:inset 0 0 8px rgba(255,200,80,0.2);
+}
+.king-reward-icon{ font-size:clamp(32px,3.5vw,46px); }
+.king-reward-name{
+  font-size:clamp(13px,1.4vw,17px); color:#fff8dc;
+  margin-top:4px; font-weight:700;
+}
+.king-reward-qty{
+  font-size:clamp(20px,2.2vw,28px); font-weight:900;
+  color:#ffd700; margin-top:2px;
+  text-shadow:0 0 6px rgba(255,200,60,0.5);
+}
+
+/* 手機適配 */
+@media (max-width: 600px){
+  .king-box{ padding:18px 16px; }
+  .king-options{ grid-template-columns:1fr; }
+  .king-tools-row{ grid-template-columns:1fr; }
+  .king-rewards-row{ gap:8px; }
+  .king-reward-card{ min-width:90px; padding:10px 12px; }
+  #king-challenge-float-btn{ top:-11px; left:120px; padding:2px 10px; font-size:13px; }
+}
+
+
 /* ★ v1.0.20260501.4990 — 底部 sticky 工具列:不可思議超商(內含知識幣) + 立即同步雲端 + ? */
 #adv-bottom-tools{
   flex-shrink:0;
@@ -6324,6 +6710,10 @@ body.art-premium #summon-overlay {
            讓「🗺 關卡選擇」標籤和「↓ 滑動看更多」提示固定在外框邊緣,不被內容覆蓋。 -->
       <div id="adv-stage-list-wrap">
         <div id="adv-stage-list-label">🗺 關卡選擇</div>
+        <!-- ★ v1.0.20260509.5710 — 今日知識王挑戰浮動按鈕(放在「🗺 關卡選擇」標籤右邊,避免被代表英雄卡片擋到;尺寸縮小 10%) -->
+        <button id="king-challenge-float-btn" class="king-float-btn king-state-ready" onclick="playSfx('sfx-sel',0.6);_kingShowEntryPopup()">
+          👑 知識王挑戰
+        </button>
         <div id="adv-stage-list-area">
           <div class="adv-stage-btn selected" onclick="selectAdvStage('maokong',this)">🚲 木柵貓空大冒險</div>
           <div class="adv-stage-btn" onclick="_taiwanTrySelect(this)">🚗 台灣環島歷險記<br><span style="font-size:clamp(20px,2.5vw,36px);letter-spacing:1px;color:#ffaa66;">🏝 走訪台灣各地風情</span></div>
@@ -11145,7 +11535,23 @@ const HERO_IMG_POS = {
   // ★ v1.0.20260507.5610 — 雙星姊妹:邀請視窗右側預覽圖,設計者要求 y +20%
   //   原預設 'center 30%' 往下移 20% → 'center 50%'
   '雙星姊妹':['100% auto','center 50%'],
+  // ★ v5690 — 窮奇邀請預覽圖:設計者要求 Y +30%(從預設 12% 改為 42%)
+  '窮奇':['160% auto','center 42%'],
 };
+
+// ★ v5690 — 戰鬥卡片專屬圖片位置表
+//   邀請預覽 vs 戰鬥卡片的容器寬高比不同,同樣的 center 42% 在邀請預覽好看,
+//   但戰鬥卡片容器更窄會顯得太低,所以分開設定。
+//   未列入此表者 fallback 到 getHeroObjPos 取通用位置。
+const HERO_BATTLE_CARD_POS = {
+  '窮奇':'center 32%',  // 戰鬥卡片只要 +20%(比邀請預覽 +30% 少一些)
+};
+
+function getHeroBattleCardObjPos(name){
+  // 戰鬥卡片優先用 HERO_BATTLE_CARD_POS,沒覆寫時 fallback 到 getHeroObjPos
+  if(HERO_BATTLE_CARD_POS[name]) return HERO_BATTLE_CARD_POS[name];
+  return (typeof getHeroObjPos === 'function') ? getHeroObjPos(name) : 'center 20%';
+}
 
 function _getCurPortraitObjPos(name){
   try{
@@ -11214,6 +11620,8 @@ const HERO_THUMB_POS = {
   '火法師':'center 40%',   '時空法師':'center 40%','警長':'center 40%',
   // 下移 20%（預設 50% - 20% = 30%）
   '武士':'center 30%', '凡人':'center 30%', '雷法師':'center 30%',
+  // ★ v5690 — 5 年 5 班學生設計英雄縮圖位置(下移 20%,看到角色頭部)
+  '科技生化人':'center 30%', '鋁合金暴龍':'center 30%', '超鬼神王':'center 30%',
   // ★ v1.0.20260507.5600 — 雙星姊妹:設計者指定 70%(下移 20%,展現姊妹臉部)
   '雙星姊妹':'center 70%',
 };
@@ -13899,7 +14307,7 @@ const HERO_TRAIT = {
   // ★ v1.0.20260501.5450 — 學生設計英雄系列
   '超鬼神王':{ name:'吞噬', icon:'👹', desc:'造成傷害時機率吞噬目標的有利狀態',fd:'造成傷害時有 40% 機率吞噬目標身上隨機 1 個有利狀態,轉移到自己身上(保持原回合數)。保護類有利狀態(死亡免疫、爆發保護等)無法被吞噬。' },
   // ★ v1.0.20260507.5600 — 學生設計英雄系列
-  '雙星姊妹':{ name:'雙星轉換', icon:'🌟', desc:'光暗雙生型態,HP 過 1/4 變光星(治療強化)、低於 1/4 變暗星(輸出強化)',fd:'戰鬥開始為「光星妹妹」型態(治療技能效果 +30%)。當 HP 比例 ≤ 25% 時切換為「暗星姊姊」型態(技能傷害 +30%);HP 比例回到 > 25% 時又切換回光星型態。型態切換可逆。' },
+  '雙星姊妹':{ name:'雙星轉換', icon:'🌟', desc:'光暗雙生型態,HP 過 1/4 變光星(治療強化)、低於 1/4 變暗星(輸出強化),天賦升級提升切換閾值',fd:'戰鬥開始為「光星妹妹」型態(治療技能效果 +30%)。當 HP 比例 ≤ 切換閾值時切換為「暗星姊姊」型態(技能傷害 +30%);HP 比例回到 > 切換閾值時又切換回光星型態。型態切換可逆。\\n\\n切換閾值隨天賦等級提升:Lv1=25%、Lv2=30%、Lv3=35%、Lv4=40%、Lv5(MAX)=45%。等級越高越早進入暗星姊姊型態,輸出強化發動更積極。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -15382,7 +15790,7 @@ function renderCard(h){
       const _imgNew = document.createElement('img');
       _imgNew.src = imgUrl;
       _imgNew.alt = h.name;
-      _imgNew.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:'+getHeroObjPos(h.name)+';display:block;opacity:0.92;';
+      _imgNew.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:'+getHeroBattleCardObjPos(h.name)+';display:block;opacity:0.92;';
       _imgNew.onerror = function(){ this.style.display='none'; };
       _illusNew.appendChild(_imgNew);
     }
@@ -18057,7 +18465,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       _burstFinish(h, _interrupted);
       return;
     }
-    const _form = h._dualStarForm || (h.curHp / h.hp > 0.25 ? 'light' : 'dark');
+    // ★ v5720 — fallback 也用天賦感應閾值(原寫死 0.25)
+    const _threshold = (typeof window._getDualStarThreshold === 'function') ? window._getDualStarThreshold(h) : 0.25;
+    const _form = h._dualStarForm || (h.curHp / h.hp > _threshold ? 'light' : 'dark');
     if(_form === 'light'){
       // 光星:HP 變 1,失去 HP × (10 + 等級) 倍對 1 個對手
       const _multByLv = [10, 11, 12, 13, 14];
@@ -23664,12 +24074,15 @@ function execSkill(a, sk, cost, stype){
     const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
     // 同步取得最新型態(以免剛剛切換)
     try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
-    const _form = a._dualStarForm || (a.curHp / a.hp > 0.25 ? 'light' : 'dark');
+    // ★ v5720 — fallback 也用天賦感應閾值(原寫死 0.25)
+    const _threshold = (typeof window._getDualStarThreshold === 'function') ? window._getDualStarThreshold(a) : 0.25;
+    const _form = a._dualStarForm || (a.curHp / a.hp > _threshold ? 'light' : 'dark');
     const _spv = spv(a);
 
     if(_form === 'light'){
-      // 光星態:單體治療 — 用特技 150% × (1+10%/級) × 1.3(光星天賦 +30% 治療)
-      const _baseMult = 1.5 + _s1Lv * 0.10;
+      // 光星態:單體治療 — 用特技 150% × (1+5%/級) × 1.3(光星天賦 +30% 治療)
+      // ★ v5730 — +10%/級 改回 +5%/級(對齊其他英雄治療技標準,例如巫女隱遁 +5%/級、暗法師死亡宣告 +5%/級)
+      const _baseMult = 1.5 + _s1Lv * 0.05;
       const _talentBoost = 1.3;
       const _shield = 40 + _s1Lv * 5;
       // 目標:可選任何活著或剛倒下的友方(可復活)
@@ -23748,10 +24161,13 @@ function execSkill(a, sk, cost, stype){
   // ════════════════════════════════════════════════════════════════
   else if(n==='流星降雨'){
     const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
-    const _baseMult = 2.5 + _s2Lv * 0.10;
+    // ★ v5730 — +10%/級 改回 +5%/級(對齊其他英雄單體攻擊技標準,例如火法師火球 +5%/級、窮奇巨爪 +5%/級)
+    const _baseMult = 2.5 + _s2Lv * 0.05;
     // 取得最新型態
     try{ if(typeof _checkDualStarForm === 'function') _checkDualStarForm(a); }catch(_){}
-    const _form = a._dualStarForm || (a.curHp / a.hp > 0.25 ? 'light' : 'dark');
+    // ★ v5720 — fallback 也用天賦感應閾值(原寫死 0.25)
+    const _thresholdFR = (typeof window._getDualStarThreshold === 'function') ? window._getDualStarThreshold(a) : 0.25;
+    const _form = a._dualStarForm || (a.curHp / a.hp > _thresholdFR ? 'light' : 'dark');
     const _talentBoost = (_form === 'dark') ? 1.3 : 1.0;
     const _spv = spv(a);
     setPending('enemy', t => {
@@ -25922,6 +26338,22 @@ function _pickWeightedTarget(pool) {
 //   HP 比 ≤ 50% → 'dark' 暗星(輸出強化)
 //   型態切換可逆,治療回去也會切回光星
 // ════════════════════════════════════════════════════════════════
+
+// ★ v5720 — 取得雙星姊妹「光暗切換」閾值(會隨天賦等級提升 +5%)
+//   Lv1=0.25、Lv2=0.30、Lv3=0.35、Lv4=0.40、Lv5(MAX)=0.45
+//   _getTraitLv 內部值 0~4(對應顯示 Lv1~Lv5)
+window._getDualStarThreshold = function(h){
+  let _traitLv = 0;
+  try{
+    if(typeof _getTraitLv === 'function' && h && h.name){
+      _traitLv = _getTraitLv(h.name) || 0;
+    } else if(typeof _heroTraitLevel !== 'undefined' && h && h.name && _heroTraitLevel[h.name]){
+      _traitLv = _heroTraitLevel[h.name];
+    }
+  }catch(_){}
+  return 0.25 + _traitLv * 0.05;
+};
+
 window._checkDualStarForm = function(h){
   try{
     if(!h || h.name !== '雙星姊妹') return;
@@ -25929,19 +26361,27 @@ window._checkDualStarForm = function(h){
       // 倒下時不處理(留下原型態,讓復活後 _initDualStar 重新設定)
       return;
     }
+    // ★ v5690 — 天賦升級會提升「光暗切換」的閾值
+    //   舊版閾值寫死 0.25,不管天賦升幾級都一樣 → 升等沒感
+    //   新版:base 0.25 + traitLv*0.05
+    //   Lv1=25%、Lv2=30%、Lv3=35%、Lv4=40%、Lv5=45%(MAX)
+    //   傳承記憶 v5670 既有規劃,本版實作
     const _ratio = h.curHp / h.hp;
-    const _newForm = (_ratio > 0.25) ? 'light' : 'dark';
+    // ★ v5720 — 改用 _getDualStarThreshold 共享 helper
+    const _threshold = window._getDualStarThreshold(h);
+    const _newForm = (_ratio > _threshold) ? 'light' : 'dark';
     const _oldForm = h._dualStarForm || 'light';
     if(_newForm !== _oldForm){
       h._dualStarForm = _newForm;
       // 視覺提示
+      const _thresholdPct = Math.round(_threshold * 100);
       try{
         if(_newForm === 'light'){
           if(typeof bannerFX === 'function') bannerFX(h, '🌟 光星妹妹!', '#ffcc44', 1100);
-          if(typeof log === 'function') log(`🌟 [${h.name}] HP 過 1/4,切換為「光星妹妹」型態(治療技能 +30%)!`);
+          if(typeof log === 'function') log(`🌟 [${h.name}] HP 過 ${_thresholdPct}%,切換為「光星妹妹」型態(治療技能 +30%)!`);
         } else {
           if(typeof bannerFX === 'function') bannerFX(h, '🌙 暗星姊姊!', '#aa44ff', 1100);
-          if(typeof log === 'function') log(`🌙 [${h.name}] HP 不足 1/4,切換為「暗星姊姊」型態(技能傷害 +30%)!`);
+          if(typeof log === 'function') log(`🌙 [${h.name}] HP 不足 ${_thresholdPct}%,切換為「暗星姊姊」型態(技能傷害 +30%)!`);
         }
       }catch(_){}
       try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
@@ -35196,6 +35636,8 @@ function openAdventureOverlay(){
   // ★ 更新知識幣顯示
   const _acv = document.getElementById('adv-coins-val');
   if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
+  // ★ v5700 — 更新今日知識王挑戰按鈕狀態
+  try{ if(typeof _kingUpdateFloatBtn === 'function') _kingUpdateFloatBtn(); }catch(_e){}
   // ★ 同步帳號名稱到冒險頁
   const _advUBar = document.getElementById('adv-username-bar');
   const _advUName = document.getElementById('adv-user-name');
@@ -38497,6 +38939,511 @@ function exitAdventureMode(){
   if(bsOv) bsOv.classList.remove('show');
   // 停止所有 adv BGM
   try{ bgmStop(); }catch(e){}
+}
+
+
+// ════════════════════════════════════════════════════════════
+//  ★ v5700 — 今日知識王挑戰系統
+// ════════════════════════════════════════════════════════════
+// 設計目標：每天 08:00（本地）重置，挑戰 20 題拿水晶與經驗書
+// 排除題庫：日本關 / 關島交流 / 木柵動物園 / 五下自然期中評量
+// 分數：每題 5 分（滿分 100），答錯 -5 分
+
+// 全域狀態：每日重置 + 進行中快照
+window._kingChallenge = window._kingChallenge || {
+  _todayClaimed: false,         // 今日是否已領獎
+  _todayDateStr: '',            // 今日日期字串（_kingGetTodayStr 計算結果）
+  _snapshot: null,              // 進行中快照
+  _bestScore: 0,                // 歷史最高分
+  _streakDays: 0,               // 連續挑戰天數
+  _lastClaimDateStr: '',        // 上次領獎日期（用於 streak 判斷）
+  _isPlaying: false,            // 是否正在挑戰中
+  _curSubject: '',              // 當前科目
+  _curQuestions: [],            // 當前題目陣列
+  _curIdx: 0,                   // 當前第幾題（0-based）
+  _curScore: 0,                 // 當前分數
+  _curRewards: ['hint','remove','skip'],   // 本場獲得的法寶
+  _toolsUsed: { hint:false, remove:false, skip:false },  // 法寶使用狀態
+  _answered: [],                // 每題作答紀錄（true=對、false=錯、null=略過）
+  _rerollCount: 0,              // 開始前科目重抽次數
+};
+
+// ── 取得「今日」字串（08:00 為界）──
+function _kingGetTodayStr(){
+  const _now = new Date();
+  // 若小時 < 8，視為昨天
+  if(_now.getHours() < 8){
+    _now.setDate(_now.getDate() - 1);
+  }
+  const _y = _now.getFullYear();
+  const _m = String(_now.getMonth()+1).padStart(2,'0');
+  const _d = String(_now.getDate()).padStart(2,'0');
+  return _y + '-' + _m + '-' + _d;
+}
+
+// ── 跨日檢查：若今日字串 ≠ _todayDateStr，重置每日狀態 ──
+function _kingCheckReset(){
+  const _today = _kingGetTodayStr();
+  const _kc = window._kingChallenge;
+  if(_kc._todayDateStr !== _today){
+    // 跨日，重置
+    _kc._todayClaimed = false;
+    _kc._todayDateStr = _today;
+    _kc._snapshot = null;
+    _kc._isPlaying = false;
+  }
+  return _today;
+}
+
+// ── 可用科目清單（排除特殊主題關）──
+function _kingGetSubjects(){
+  const _excluded = ['日本關','關島交流','木柵動物園','五下自然期中評量','照顧與陪伴幼兒','領養與照顧狗狗'];
+  const _allSubjects = new Set();
+  try{
+    if(Array.isArray(ADV_QUIZ_DB)){
+      ADV_QUIZ_DB.forEach(q => {
+        if(q && q.subject && !_excluded.includes(q.subject) && !q.subject.startsWith('五下自然')){
+          _allSubjects.add(q.subject);
+        }
+      });
+    }
+  }catch(_e){}
+  return Array.from(_allSubjects);
+}
+
+// ── 隨機抽科目 ──
+function _kingRandomSubject(excludeSubject){
+  const _list = _kingGetSubjects();
+  const _filtered = excludeSubject ? _list.filter(s => s !== excludeSubject) : _list;
+  if(_filtered.length === 0) return _list[0] || '國語文';
+  return _filtered[Math.floor(Math.random() * _filtered.length)];
+}
+
+// ── 從指定科目抽 20 題 ──
+function _kingDrawQuestions(subject, count){
+  count = count || 20;
+  let _pool = [];
+  try{
+    if(Array.isArray(ADV_QUIZ_DB)){
+      _pool = ADV_QUIZ_DB.filter(q => q && q.subject === subject);
+    }
+  }catch(_e){}
+  // Fisher–Yates shuffle 取前 count 題
+  const _arr = _pool.slice();
+  for(let i = _arr.length - 1; i > 0; i--){
+    const _j = Math.floor(Math.random() * (i + 1));
+    [_arr[i], _arr[_j]] = [_arr[_j], _arr[i]];
+  }
+  return _arr.slice(0, Math.min(count, _arr.length));
+}
+
+// ── 隨機抽 3 個法寶（可重複；總是抽 3 個獨立隨機） ──
+function _kingDrawRewards(){
+  const _all = ['hint','remove','skip'];
+  // 簡化版：每場固定送 3 個法寶各 1，每個限用 1 次（之前規格說「隨機」但實質固定 3 種已足夠平衡）
+  return _all.slice();
+}
+
+// ── 計算最終獎勵 ──
+function _kingCalcRewards(score){
+  // 根據分數區間發獎
+  if(score >= 100) return { crystal: 4, premium: 5, deluxe: 0, msg: '🏆 滿分！知識王中王！' };
+  if(score >= 90)  return { crystal: 3, premium: 4, deluxe: 0, msg: '🥇 超神級表現！' };
+  if(score >= 80)  return { crystal: 2, premium: 3, deluxe: 0, msg: '🥈 優秀！' };
+  if(score >= 70)  return { crystal: 1, premium: 2, deluxe: 0, msg: '🥉 不錯哦！' };
+  if(score >= 60)  return { crystal: 0, premium: 1, deluxe: 0, msg: '👍 再接再厲！' };
+  return            { crystal: 0, premium: 0, deluxe: 5, msg: '💪 別灰心，明天再來！' };
+}
+
+// ── 雲端同步（呼叫 gameCloudSave） ──
+function _kingSaveToCloud(){
+  try{
+    if(typeof gameCloudSave === 'function'){ gameCloudSave(); }
+  }catch(_e){}
+}
+
+// ════════════════════════════════════════════════════════════
+//  ★ v5700 — 今日知識王挑戰 UI 流程
+// ════════════════════════════════════════════════════════════
+
+// ── 浮動按鈕狀態更新 ──
+function _kingUpdateFloatBtn(){
+  const _btn = document.getElementById('king-challenge-float-btn');
+  if(!_btn) return;
+  _kingCheckReset();
+  const _kc = window._kingChallenge;
+  // 三種狀態：可挑戰（金）/ 進行中（橘）/ 已領完（灰）
+  let _state = 'ready';
+  if(_kc._todayClaimed){ _state = 'done'; }
+  else if(_kc._snapshot){ _state = 'playing'; }
+  _btn.className = 'king-float-btn king-state-' + _state;
+  let _label;
+  if(_state === 'done') _label = '👑 明天再戰';
+  else if(_state === 'playing') _label = '👑 繼續挑戰';
+  else _label = '👑 知識王挑戰';
+  const _streakStr = (_kc._streakDays && _kc._streakDays > 0) ? `<span class="king-streak">🔥 ${_kc._streakDays}</span>` : '';
+  _btn.innerHTML = _label + _streakStr;
+}
+
+// ── 移除任何已存在的彈窗 ──
+function _kingRemovePopup(){
+  ['king-challenge-popup','king-start-popup','king-question-popup','king-result-popup'].forEach(id => {
+    const _el = document.getElementById(id);
+    if(_el && _el.parentNode) _el.parentNode.removeChild(_el);
+  });
+}
+
+// ── 入口彈窗：說明規則 + 進入按鈕 ──
+function _kingShowEntryPopup(){
+  _kingRemovePopup();
+  _kingCheckReset();
+  const _kc = window._kingChallenge;
+  // 已領完
+  if(_kc._todayClaimed){
+    try{ _showInGameToast('今日挑戰已完成,明天 08:00 再來!', '#aaaaff', 2000); }catch(_){}
+    return;
+  }
+  // 進行中 → 直接還原
+  if(_kc._snapshot){
+    try{ _kingResumeFromSnapshot(); }catch(_e){ console.warn(_e); _kingShowStartPopup(true); }
+    return;
+  }
+  // 全新挑戰
+  const _wrap = document.createElement('div');
+  _wrap.id = 'king-challenge-popup';
+  _wrap.className = 'king-popup-mask';
+  _wrap.innerHTML = `
+    <div class="king-box">
+      <div class="king-title">👑 今日知識王挑戰</div>
+      <div class="king-subtitle">每天 08:00 重置 / 一天一次</div>
+      <div class="king-rules">
+        <div class="king-rule-row">📚 連續 <b>20 題</b>,每題 <b>5 分</b>(滿分 <b>100</b>)</div>
+        <div class="king-rule-row">❌ 答錯 <b>-5 分</b>,可使用 3 種法寶各 1 次</div>
+        <div class="king-rule-row">🎁 領獎組距:</div>
+        <div class="king-rule-detail">
+          • 100 分 → 4 顆召喚水晶 + 5 本豪華典藏版書<br>
+          • 90+ → 3 顆水晶 + 4 本典藏<br>
+          • 80+ → 2 顆水晶 + 3 本典藏<br>
+          • 70+ → 1 顆水晶 + 2 本典藏<br>
+          • 60+ → 1 本典藏 / &lt;60 → 5 本精裝版書
+        </div>
+        ${_kc._bestScore > 0 ? `<div class="king-rule-row" style="color:#ffd700;">🏆 歷史最高分:${_kc._bestScore}</div>` : ''}
+      </div>
+      <div class="king-btn-row">
+        <button class="king-btn king-btn-cancel" onclick="_kingRemovePopup()">取消</button>
+        <button class="king-btn king-btn-go" onclick="_kingShowStartPopup(false)">🚀 開始抽科目</button>
+      </div>
+    </div>`;
+  document.body.appendChild(_wrap);
+}
+
+// ── 從快照繼續挑戰 ──
+function _kingResumeFromSnapshot(){
+  const _kc = window._kingChallenge;
+  if(!_kc._snapshot){ _kingShowStartPopup(false); return; }
+  const _s = _kc._snapshot;
+  _kc._isPlaying = true;
+  _kc._curSubject = _s.subject || '';
+  _kc._curQuestions = Array.isArray(_s.questions) ? _s.questions : [];
+  _kc._curIdx = (typeof _s.idx === 'number') ? _s.idx : 0;
+  _kc._curScore = (typeof _s.score === 'number') ? _s.score : 0;
+  _kc._curRewards = Array.isArray(_s.rewards) ? _s.rewards : ['hint','remove','skip'];
+  _kc._toolsUsed = _s.toolsUsed || { hint:false, remove:false, skip:false };
+  _kc._answered = Array.isArray(_s.answered) ? _s.answered : [];
+  _kingShowQuestionPopup();
+}
+
+// ── 開始彈窗：抽科目（可重抽） ──
+function _kingShowStartPopup(isResume){
+  _kingRemovePopup();
+  const _kc = window._kingChallenge;
+  if(!isResume){
+    _kc._curSubject = _kingRandomSubject();
+    _kc._rerollCount = 0;
+  }
+  const _wrap = document.createElement('div');
+  _wrap.id = 'king-start-popup';
+  _wrap.className = 'king-popup-mask';
+  const _rerollLeft = 3 - _kc._rerollCount;
+  _wrap.innerHTML = `
+    <div class="king-box">
+      <div class="king-title">🎲 今日科目</div>
+      <div class="king-subject-card">
+        <div class="king-subject-name">${_kc._curSubject}</div>
+        <div class="king-subject-tag">隨機抽 20 題</div>
+      </div>
+      <div class="king-tools-preview">
+        <div class="king-tools-title">🎁 本場獲得 3 個法寶(各限用 1 次):</div>
+        <div class="king-tools-row">
+          <div class="king-tool-preview"><div class="king-tool-icon">💡</div><div class="king-tool-name">提示之光</div><div class="king-tool-desc">正確選項發光</div></div>
+          <div class="king-tool-preview"><div class="king-tool-icon">🗑</div><div class="king-tool-name">刪除錯誤</div><div class="king-tool-desc">消去 1 個錯選項</div></div>
+          <div class="king-tool-preview"><div class="king-tool-icon">🔄</div><div class="king-tool-name">換題重抽</div><div class="king-tool-desc">換題,總題數+1</div></div>
+        </div>
+      </div>
+      <div class="king-btn-row">
+        <button class="king-btn king-btn-cancel" onclick="_kingRemovePopup()">取消</button>
+        <button class="king-btn ${_rerollLeft<=0?'king-btn-disabled':'king-btn-reroll'}" ${_rerollLeft<=0?'disabled':'onclick="_kingRerollSubject()"'}>🎲 換科目${_rerollLeft>0?` (剩 ${_rerollLeft})`:''}</button>
+        <button class="king-btn king-btn-go" onclick="_kingStartChallenge()">⚔ 開始挑戰</button>
+      </div>
+    </div>`;
+  document.body.appendChild(_wrap);
+}
+
+// ── 重抽科目 ──
+function _kingRerollSubject(){
+  const _kc = window._kingChallenge;
+  if(_kc._rerollCount >= 3) return;
+  _kc._rerollCount++;
+  _kc._curSubject = _kingRandomSubject(_kc._curSubject);
+  _kingShowStartPopup(true);
+}
+
+// ── 開始挑戰：抽 20 題、重置狀態 ──
+function _kingStartChallenge(){
+  const _kc = window._kingChallenge;
+  _kc._curQuestions = _kingDrawQuestions(_kc._curSubject, 20);
+  if(_kc._curQuestions.length === 0){
+    try{ _showInGameToast('該科目題目不足,請換科目!', '#ff8844', 2200); }catch(_){}
+    return;
+  }
+  _kc._curIdx = 0;
+  _kc._curScore = 0;
+  _kc._curRewards = _kingDrawRewards();
+  _kc._toolsUsed = { hint:false, remove:false, skip:false };
+  _kc._answered = [];
+  _kc._isPlaying = true;
+  // 寫快照 → 雲端
+  _kingPersistSnapshot();
+  _kingShowQuestionPopup();
+}
+
+// ── 將當前狀態寫入 _snapshot ──
+function _kingPersistSnapshot(){
+  const _kc = window._kingChallenge;
+  _kc._snapshot = {
+    subject: _kc._curSubject,
+    questions: _kc._curQuestions,
+    idx: _kc._curIdx,
+    score: _kc._curScore,
+    rewards: _kc._curRewards,
+    toolsUsed: _kc._toolsUsed,
+    answered: _kc._answered,
+  };
+  _kingSaveToCloud();
+}
+
+// ── 答題彈窗 ──
+function _kingShowQuestionPopup(){
+  _kingRemovePopup();
+  const _kc = window._kingChallenge;
+  const _q = _kc._curQuestions[_kc._curIdx];
+  if(!_q){ _kingShowResultPopup(); return; }
+  const _total = _kc._curQuestions.length;
+  const _curNum = _kc._curIdx + 1;
+  const _progressPct = Math.floor((_kc._curIdx / _total) * 100);
+  const _wrap = document.createElement('div');
+  _wrap.id = 'king-question-popup';
+  _wrap.className = 'king-popup-mask';
+  _wrap.innerHTML = `
+    <div class="king-box king-box-question">
+      <div class="king-progress-bar"><div class="king-progress-fill" style="width:${_progressPct}%;"></div></div>
+      <div class="king-question-header">
+        <div class="king-q-num">第 ${_curNum} / ${_total} 題</div>
+        <div class="king-q-subject">📚 ${_kc._curSubject}</div>
+        <div class="king-q-score">分數:<b>${_kc._curScore}</b></div>
+      </div>
+      <div class="king-question-text">${_q.question}</div>
+      <div class="king-options" id="king-options-area">
+        ${['A','B','C','D'].map((letter,idx) => {
+          const _txt = (_q.options && _q.options[idx]) || '';
+          if(!_txt) return '';
+          return `<button class="king-option" data-letter="${letter}" data-idx="${idx}" onclick="_kingPickAnswer(${idx})"><span class="king-option-letter">${letter}</span><span class="king-option-text">${_txt}</span></button>`;
+        }).join('')}
+      </div>
+      <div class="king-tools">
+        <button class="king-tool-btn ${_kc._toolsUsed.hint?'king-tool-used':''}" onclick="_kingUseTool('hint')" ${_kc._toolsUsed.hint?'disabled':''}>💡 提示之光</button>
+        <button class="king-tool-btn ${_kc._toolsUsed.remove?'king-tool-used':''}" onclick="_kingUseTool('remove')" ${_kc._toolsUsed.remove?'disabled':''}>🗑 刪除錯誤</button>
+        <button class="king-tool-btn ${_kc._toolsUsed.skip?'king-tool-used':''}" onclick="_kingUseTool('skip')" ${_kc._toolsUsed.skip?'disabled':''}>🔄 換題重抽</button>
+      </div>
+      <div class="king-bottom-bar">
+        <button class="king-btn king-btn-cancel" onclick="_kingPauseAndExit()">⏸ 暫停離開</button>
+      </div>
+    </div>`;
+  document.body.appendChild(_wrap);
+}
+
+// ── 暫停離開 ──
+function _kingPauseAndExit(){
+  _kingPersistSnapshot();
+  _kingRemovePopup();
+  _kingUpdateFloatBtn();
+  try{ _showInGameToast('挑戰進度已雲端儲存,可隨時回來繼續!', '#88ddff', 2200); }catch(_){}
+}
+
+// ── 選答案 ──
+function _kingPickAnswer(pickIdx){
+  const _kc = window._kingChallenge;
+  const _q = _kc._curQuestions[_kc._curIdx];
+  if(!_q) return;
+  // 答案字母→索引
+  const _ansLetter = (_q.answer || '').toString().trim().toUpperCase();
+  const _correctIdx = ['A','B','C','D'].indexOf(_ansLetter);
+  const _isCorrect = (pickIdx === _correctIdx);
+  // 鎖定所有選項，避免連點
+  const _opts = document.querySelectorAll('#king-options-area .king-option');
+  _opts.forEach(b => { b.disabled = true; b.classList.add('king-option-locked'); });
+  // 視覺回饋
+  const _picked = document.querySelector(`#king-options-area .king-option[data-idx="${pickIdx}"]`);
+  const _correct = document.querySelector(`#king-options-area .king-option[data-idx="${_correctIdx}"]`);
+  if(_isCorrect){
+    if(_picked) _picked.classList.add('king-correct');
+    _kc._curScore += 5;
+    try{ playSfx && playSfx('sfx-powerup', 0.7); }catch(_){}
+  } else {
+    if(_picked) _picked.classList.add('king-wrong');
+    if(_correct) _correct.classList.add('king-correct');
+    _kc._curScore -= 5;
+    try{ playSfx && playSfx('sfx-deny', 0.6); }catch(_){}
+  }
+  _kc._answered.push(_isCorrect);
+  // 更新分數顯示
+  const _scoreEl = document.querySelector('#king-question-popup .king-q-score b');
+  if(_scoreEl) _scoreEl.textContent = String(_kc._curScore);
+  // 1.2 秒後下一題
+  setTimeout(() => {
+    _kc._curIdx++;
+    _kingPersistSnapshot();
+    if(_kc._curIdx >= _kc._curQuestions.length){
+      _kingShowResultPopup();
+    } else {
+      _kingShowQuestionPopup();
+    }
+  }, 1200);
+}
+
+// ── 使用法寶 ──
+function _kingUseTool(toolName){
+  const _kc = window._kingChallenge;
+  if(_kc._toolsUsed[toolName]) return;
+  const _q = _kc._curQuestions[_kc._curIdx];
+  if(!_q) return;
+  _kc._toolsUsed[toolName] = true;
+  const _ansLetter = (_q.answer || '').toString().trim().toUpperCase();
+  const _correctIdx = ['A','B','C','D'].indexOf(_ansLetter);
+  if(toolName === 'hint'){
+    const _correct = document.querySelector(`#king-options-area .king-option[data-idx="${_correctIdx}"]`);
+    if(_correct) _correct.classList.add('king-hint-glow');
+    try{ playSfx && playSfx('sfx-sel', 0.6); }catch(_){}
+  } else if(toolName === 'remove'){
+    // 隨機刪除 1 個錯選項
+    const _wrongs = [];
+    for(let i = 0; i < (_q.options||[]).length; i++){
+      if(i !== _correctIdx) _wrongs.push(i);
+    }
+    if(_wrongs.length){
+      const _toRemove = _wrongs[Math.floor(Math.random() * _wrongs.length)];
+      const _btn = document.querySelector(`#king-options-area .king-option[data-idx="${_toRemove}"]`);
+      if(_btn){ _btn.classList.add('king-option-removed'); _btn.disabled = true; }
+      try{ playSfx && playSfx('sfx-sel', 0.6); }catch(_){}
+    }
+  } else if(toolName === 'skip'){
+    // 換題：抽一題新的，總題數 +1（最末再加一題）
+    const _used = new Set(_kc._curQuestions.map(q => q.id));
+    const _pool = ADV_QUIZ_DB.filter(q => q && q.subject === _kc._curSubject && !_used.has(q.id));
+    if(_pool.length === 0){
+      try{ _showInGameToast('該科目題目用完了,無法換題', '#ff8844', 1800); }catch(_){}
+      _kc._toolsUsed[toolName] = false; // 退還
+      return;
+    }
+    const _newQ = _pool[Math.floor(Math.random() * _pool.length)];
+    // 把當前題替換掉，並在末尾再加一題保持總題數 +1
+    _kc._curQuestions[_kc._curIdx] = _newQ;
+    // 抽多 1 題加在最後（總題數 +1）
+    const _pool2 = ADV_QUIZ_DB.filter(q => q && q.subject === _kc._curSubject && !_used.has(q.id) && q.id !== _newQ.id);
+    if(_pool2.length){
+      _kc._curQuestions.push(_pool2[Math.floor(Math.random() * _pool2.length)]);
+    }
+    try{ playSfx && playSfx('sfx-sel', 0.6); }catch(_){}
+    _kingPersistSnapshot();
+    _kingShowQuestionPopup();
+    return;
+  }
+  // 更新工具按鈕外觀
+  const _btn = document.querySelector(`#king-question-popup .king-tool-btn[onclick*="${toolName}"]`);
+  if(_btn){ _btn.classList.add('king-tool-used'); _btn.disabled = true; }
+  _kingPersistSnapshot();
+}
+
+// ── 結算彈窗 ──
+function _kingShowResultPopup(){
+  _kingRemovePopup();
+  const _kc = window._kingChallenge;
+  const _score = _kc._curScore;
+  const _rewards = _kingCalcRewards(_score);
+  const _correctCount = (_kc._answered || []).filter(a => a === true).length;
+  const _totalQ = _kc._curQuestions.length;
+  const _isNewBest = _score > (_kc._bestScore || 0);
+  const _wrap = document.createElement('div');
+  _wrap.id = 'king-result-popup';
+  _wrap.className = 'king-popup-mask';
+  _wrap.innerHTML = `
+    <div class="king-box king-box-result">
+      <div class="king-title">${_rewards.msg}</div>
+      <div class="king-score-display ${_score>=80?'king-score-good':(_score>=60?'king-score-mid':'king-score-low')}">
+        <div class="king-score-num">${_score}</div>
+        <div class="king-score-detail">答對 ${_correctCount} / ${_totalQ} 題</div>
+      </div>
+      ${_isNewBest ? '<div class="king-new-best">🌟 創新紀錄！</div>' : ''}
+      <div class="king-rewards-row">
+        ${_rewards.crystal > 0 ? `<div class="king-reward-card"><div class="king-reward-icon">🔮</div><div class="king-reward-name">召喚水晶</div><div class="king-reward-qty">×${_rewards.crystal}</div></div>` : ''}
+        ${_rewards.premium > 0 ? `<div class="king-reward-card"><div class="king-reward-icon">📚</div><div class="king-reward-name">豪華典藏版書</div><div class="king-reward-qty">×${_rewards.premium}</div></div>` : ''}
+        ${_rewards.deluxe > 0 ? `<div class="king-reward-card"><div class="king-reward-icon">📕</div><div class="king-reward-name">精裝版書</div><div class="king-reward-qty">×${_rewards.deluxe}</div></div>` : ''}
+      </div>
+      <div class="king-btn-row">
+        <button class="king-btn king-btn-go" onclick="_kingClaimRewards()">🎁 領取獎勵</button>
+      </div>
+    </div>`;
+  document.body.appendChild(_wrap);
+}
+
+// ── 領獎：發物品 + 雲端清理 + streak 計算 ──
+function _kingClaimRewards(){
+  const _kc = window._kingChallenge;
+  const _score = _kc._curScore;
+  const _rewards = _kingCalcRewards(_score);
+  // 發獎到背包
+  try{
+    if(_rewards.crystal > 0) backpackAdd('summon_crystal', _rewards.crystal);
+    if(_rewards.premium > 0) backpackAdd('hero_exp_book_premium', _rewards.premium);
+    if(_rewards.deluxe > 0)  backpackAdd('hero_exp_book_deluxe', _rewards.deluxe);
+    // ★ 同步左下角召喚水晶顯示
+    if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
+  }catch(_e){ console.warn('[king] backpackAdd fail', _e); }
+  // 更新最高分
+  if(_score > (_kc._bestScore || 0)) _kc._bestScore = _score;
+  // 更新連續挑戰天數
+  const _today = _kingGetTodayStr();
+  // 算「昨天」字串
+  const _yesterdayDate = new Date();
+  if(_yesterdayDate.getHours() < 8) _yesterdayDate.setDate(_yesterdayDate.getDate() - 2);
+  else _yesterdayDate.setDate(_yesterdayDate.getDate() - 1);
+  const _yesterdayStr = _yesterdayDate.getFullYear() + '-' + String(_yesterdayDate.getMonth()+1).padStart(2,'0') + '-' + String(_yesterdayDate.getDate()).padStart(2,'0');
+  if(_kc._lastClaimDateStr === _yesterdayStr) _kc._streakDays = (_kc._streakDays || 0) + 1;
+  else if(_kc._lastClaimDateStr === _today) { /* 同日再領（不應發生但保險）*/ }
+  else _kc._streakDays = 1;
+  _kc._lastClaimDateStr = _today;
+  _kc._todayClaimed = true;
+  _kc._todayDateStr = _today;
+  _kc._snapshot = null;
+  _kc._isPlaying = false;
+  _kingSaveToCloud();
+  _kingRemovePopup();
+  _kingUpdateFloatBtn();
+  // Toast 訊息
+  try{
+    const _msg = '🎁 獎勵已放入背包!' + (_kc._streakDays > 1 ? ` 連續 ${_kc._streakDays} 天!🔥` : '');
+    _showInGameToast(_msg, '#ffd700', 2400);
+  }catch(_){}
 }
 
 // ════════════════════════════════════════════════════════════
@@ -47655,6 +48602,20 @@ function _buildSafeData() {
           maokongBestRank:    localStorage.getItem('adv_maokong_best_rank') || '',
         };
       }catch(_e){ return null; }
+    })(),
+    // ★ v5700 — 今日知識王挑戰：每日狀態 + 進行中快照
+    _kingChallenge: (function(){
+      try{
+        const _k = window._kingChallenge || {};
+        return {
+          _todayClaimed: !!_k._todayClaimed,
+          _todayDateStr: _k._todayDateStr || '',
+          _snapshot: _k._snapshot || null,
+          _bestScore: (typeof _k._bestScore === 'number') ? _k._bestScore : 0,
+          _streakDays: (typeof _k._streakDays === 'number') ? _k._streakDays : 0,
+          _lastClaimDateStr: _k._lastClaimDateStr || ''
+        };
+      }catch(_e){ return null; }
     })()
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
@@ -47943,6 +48904,21 @@ function _applySafeData(raw) {
   // ★ 個人最高分（用於SABC評分）
   if(typeof data.advBestScore === 'number' && data.advBestScore > 0)
     _advBestScore = Math.max(_advBestScore || 0, data.advBestScore);
+  // ★ v5700 — 今日知識王挑戰雲端還原
+  if(data._kingChallenge && typeof data._kingChallenge === 'object'){
+    try{
+      window._kingChallenge = window._kingChallenge || {};
+      const _kc = data._kingChallenge;
+      window._kingChallenge._todayClaimed = !!_kc._todayClaimed;
+      window._kingChallenge._todayDateStr = _kc._todayDateStr || '';
+      window._kingChallenge._snapshot = _kc._snapshot || null;
+      window._kingChallenge._bestScore = (typeof _kc._bestScore === 'number') ? _kc._bestScore : 0;
+      window._kingChallenge._streakDays = (typeof _kc._streakDays === 'number') ? _kc._streakDays : 0;
+      window._kingChallenge._lastClaimDateStr = _kc._lastClaimDateStr || '';
+      // 應用每日重置檢查（跨日後 _todayClaimed 重置）
+      if(typeof window._kingCheckReset === 'function') window._kingCheckReset();
+    }catch(_e){ console.warn('[knight] cloud restore fail', _e); }
+  }
   // ★ 冒險快照：還原到 localStorage，供重新開啟時恢復冒險進度
   // ★ v1.0.20260424.1030 — 強化驗證:只有快照含「完整戰鬥資料」(p1/p2 陣列)才寫回,
   //   避免雲端殘留的「無戰鬥資料 fallback」造成下次進遊戲看到假的「未完成戰鬥」
@@ -48640,7 +49616,9 @@ const BACKPACK_ITEM_DEF = {
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）' },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
   'apricot_rouge':    { name:'杏花胭脂',       icon:'💄', desc:'杏花妖以千年花蕊與月光淬煉的絕品胭脂，香氣能勾魂攝魄，富商夫人爭相收藏。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1500 },
-  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加200點經驗值。', type:'use', useLabel:'使用（+200EXP）' },
+  'hero_exp_book_deluxe': { name:'英雄經驗值之書(精裝版)', icon:'📕', desc:'精裝版的英雄成長之書，使用後可為選定英雄增加500點經驗值。', type:'use', useLabel:'使用（+500EXP）' },
+  // ★ v5690 — 豪華典藏版英雄經驗值之書(主要從知識王挑戰高分獎勵獲得)
+  'hero_exp_book_premium': { name:'英雄經驗值之書(豪華典藏版)', icon:'📚', desc:'金黃光芒環繞的稀世珍本,蘊含驚人的英雄成長能量。使用後可為選定英雄增加5000點經驗值。', type:'use', useLabel:'使用（+5000EXP）' },
   'burst_upgrade_fruit': { name:'超越極限果實', icon:'🍑', desc:'傳說中的靈果，蘊含突破極限的能量。使用後可為選定英雄的極限爆發升1級（最高+4級）。', type:'use', useLabel:'使用（升級爆發）' },
   // ★ v1.0.20260424.0740 — 極限重置秘藥
   'burst_reset_potion': { name:'極限重置秘藥', icon:'⚗️', desc:'神秘煉金師調配的逆轉之藥，可將1名英雄的極限爆發等級歸零，並退還曾消耗的「超越極限果實」。', type:'use', useLabel:'使用（重置爆發）' },
@@ -48847,7 +49825,7 @@ const SHOP_PRODUCTS = [
 ];
 // 可販賣品（在商店賣掉換知識幣）
 // ★ v1.0.20260421.2100 — 排除經驗值/技能/爆發技相關物品
-//   hero_exp_book / hero_exp_book_deluxe / skill_upgrade_book / burst_upgrade_fruit 不可賣
+//   hero_exp_book / hero_exp_book_deluxe / hero_exp_book_premium / skill_upgrade_book / burst_upgrade_fruit 不可賣 (v5690)
 const SHOP_SELL_ITEMS = [
   { id:'antique_teacup',  name:'骨董茶杯',       icon:'🍵', sellPrice:1000 },
   { id:'apricot_rouge',   name:'杏花胭脂',       icon:'💄', sellPrice:1500 },
@@ -53105,24 +54083,23 @@ async function shopSellItem(id, qty){
 }
 
 // ★ v1.0.20260421.2000 — 一鍵賣出所有可賣物品
+// ★ v1.0.20260509.5710 — 確認訊息不再列出每件物品(物品多時視窗過長按鈕被擠出畫面卡死),
+//   改成只顯示「N 種物品 + 總收益」一行簡潔資訊。
 async function shopSellAllItems(){
   const sellable = SHOP_SELL_ITEMS.filter(si => backpackGet(si.id) > 0);
   if(!sellable.length){
     _showInGameToast('背包中沒有可賣出的物品', '#ff8844', 1800);
     return;
   }
-  // 計算總賣價和摘要
+  // 計算總賣價(不再產生 _summary 物品清單)
   let _totalCoins = 0;
-  const _summary = [];
   sellable.forEach(si => {
     const have = backpackGet(si.id);
     const def = BACKPACK_ITEM_DEF[si.id]||{};
-    const coins = (def.sellPrice||0) * have;
-    _totalCoins += coins;
-    _summary.push(`${def.icon||''} ${def.name} ×${have}`);
+    _totalCoins += (def.sellPrice||0) * have;
   });
-  const _msg = `確認要一鍵賣出以下 ${sellable.length} 種物品？\n\n${_summary.join('\n')}\n\n總收益：${_totalCoins.toLocaleString()} 💰`;
-  // ★ v1.0.20260421.2600 — 改用遊戲內確認視窗（不再用瀏覽器原生 confirm）
+  const _msg = `確認要一鍵賣出 ${sellable.length} 種賣錢物品嗎?\n\n💰 總收益:${_totalCoins.toLocaleString()} 知識幣`;
+  // ★ v1.0.20260421.2600 — 改用遊戲內確認視窗(不再用瀏覽器原生 confirm)
   _customConfirm(_msg, async () => {
     // 批次賣出（不觸發個別 toast，最後統一一個提示）
     let _hasTaiwanItem = false;
@@ -53350,16 +54327,39 @@ function useBackpackItem(id){
     closeBackpackOverlay();
     openHeroPage();
     setTimeout(() => {
-      _backpackOpenHeroSelect('📕 英雄經驗值之書(精裝版)', '選擇要增加200EXP的英雄', async name=>{
+      _backpackOpenHeroSelect('📕 英雄經驗值之書(精裝版)', '選擇要增加500EXP的英雄', async name=>{
         if(window._invitedFriendHero && window._invitedFriendHero.name === name){
           _showInGameToast('好友英雄無法使用升級物品。', '#ff8844', 2000);
           return;
         }
         backpackRemove('hero_exp_book_deluxe');
-        addHeroExp(name, 200);
+        addHeroExp(name, 500);
         try{ await gameCloudSave(); }catch(e){}
         _setNavDot('英雄', true);
-        _showInGameToast(`📕 [${name}] 獲得200點經驗值！`, '#ffaa88', 2500);
+        _showInGameToast(`📕 [${name}] 獲得500點經驗值！`, '#ffaa88', 2500);
+        _renderBackpackMain();
+      }, true);
+    }, 200);
+
+  // ★ v5690 — 豪華典藏版英雄經驗值之書(+5000 EXP)派發邏輯
+  } else if(id==='hero_exp_book_premium'){
+    closeBackpackOverlay();
+    openHeroPage();
+    setTimeout(() => {
+      _backpackOpenHeroSelect('📚 英雄經驗值之書(豪華典藏版)', '選擇要增加5000EXP的英雄', async name=>{
+        if(window._invitedFriendHero && window._invitedFriendHero.name === name){
+          _showInGameToast('好友英雄無法使用升級物品。', '#ff8844', 2000);
+          return;
+        }
+        backpackRemove('hero_exp_book_premium');
+        const lvUps = addHeroExp(name, 5000);
+        try{ await gameCloudSave(); }catch(e){}
+        _setNavDot('英雄', true);
+        if(lvUps && lvUps.length){
+          setTimeout(() => _showLevelUpSequence(lvUps, () => {}), 300);
+        } else {
+          _showInGameToast(`📚 [${name}] 獲得5000點經驗值！`, '#ffd700', 2500);
+        }
         _renderBackpackMain();
       }, true);
     }, 200);
@@ -55176,39 +56176,74 @@ const HERO_CATEGORIES_OVERRIDE = {
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
+// ★ v5680 — 全英雄雷達圖六維重新檢核
+//   ▶ 控制 = 給予不利狀態(暈眩/睡眠/封印/麻痺/失明/中毒/魅惑/詛咒/燃燒/減速⋯)的多寡
+//   ▶ 回復 = 恢復HP、護盾、有利狀態(治癒/buff/免疫/再生/補能量⋯)的效果多寡
+//   依此定義對全 47 隻英雄重新評分,所有英雄都納入手動覆寫表,
+//   避免關鍵字自動判定誤差(例如「治療效果減半」會誤判為治療)。
 const HERO_HEX_OVERRIDE = {
-  '占星師':      { heal: 9, ctrl: 2 },
-  '武鬥家':      { heal: 1, ctrl: 1 },
-  '陰陽師':      { heal: 1, ctrl: 8 },
-  '學者':        { heal: 1, ctrl: 8 },
-  '光法師':      { heal: 8, ctrl: 6 },
-  '吸血鬼':      { heal: 7, ctrl: 2 },
-  '弦樂團員':    { heal: 8, ctrl: 2 },
-  '動物學家':    { heal: 2, ctrl: 9 },
-  '神射手':      { heal: 1, ctrl: 7 },
-  '大力士':      { heal: 1, ctrl: 7 },
-  '軍師':        { heal: 2, ctrl: 9 },
-  '直笛團員':    { heal: 7, ctrl: 7 },
-  '程式設計師':  { heal: 6, ctrl: 6 },
-  '時空法師':    { heal: 1, ctrl: 10 },
-  '電腦繪圖師':  { heal: 1, ctrl: 7 },
-  '冰法師':      { heal: 1, ctrl: 10 },
-  '警長':        { heal: 1, ctrl: 10 },
+  // 純輸出型(回復低、控制低)
+  '劍士':        { heal: 1, ctrl: 2 },   // 純輸出,僅暈眩1回合
+  '武鬥家':      { heal: 2, ctrl: 2 },   // 反擊為主,死鬥自救但不算治療給隊友
+  '武士':        { heal: 1, ctrl: 2 },   // 反擊+追擊,純輸出
+  '凡人':        { heal: 4, ctrl: 4 },   // 模仿型,不固定
+  '籃球隊員':    { heal: 4, ctrl: 2 },   // 暴擊+多次+全隊速度50%
+
+  // 高回復型(治療+護盾+buff+復活)
+  '祭司':        { heal: 10, ctrl: 1 },   // 治癒+淨化+復活+免疫
+  '聖騎士':      { heal: 9, ctrl: 2 },    // S1治癒+S2全隊減傷+爆發無敵+40%HP
+  '木靈使':      { heal: 10, ctrl: 2 },   // HP+20%+全治癒+不倒再生
+  '煉金術師':    { heal: 9, ctrl: 1 },    // 賢者之石完全治癒+免疫倒下+物品強化
+  '吸血鬼':      { heal: 9, ctrl: 2 },    // 嗜血+轉化+鮮血契約
+  '占星師':      { heal: 9, ctrl: 1 },    // 補能量+星空祝福不消耗+轉禍為福
+  '酒吞童子':    { heal: 9, ctrl: 1 },    // 乾杯40%全隊回血+鬼王酒宴吸血+回血
+  '弦樂團員':    { heal: 10, ctrl: 4 },   // 雙小提琴回血+流浪者必中+弦護消不利
+  '吟遊詩人':    { heal: 9, ctrl: 8 },    // 治癒+復活+護盾+全體睡眠
+  '光法師':      { heal: 8, ctrl: 7 },    // 日月同輝雙效+失明+審判
+  '電腦繪圖師':  { heal: 9, ctrl: 7 },    // 護盾+隨機buff+消有利狀態+萬物創生
+  '程式設計師':  { heal: 9, ctrl: 4 },    // 邏輯優化清debuff+回血+免疫+全體+3
+  '雙星姊妹':    { heal: 10, ctrl: 1 },   // 雙形態治療(可復活)+護盾,追擊狀態算傷害向不算控制 → 控制重新評為 1
+  '巫女':        { heal: 9, ctrl: 6 },    // 神籤回血+神樂舞解控+破魔矢易傷
+
+  // 高控制型(不利狀態給滿)
+  '冰法師':      { heal: 1, ctrl: 10 },   // 冰凍/緩速/強力冰凍
+  '雷法師':      { heal: 1, ctrl: 9 },    // 麻痺/強力麻痺/雷鏈
+  '暗法師':      { heal: 1, ctrl: 10 },   // 封印/死亡宣告/禁療
+  '火法師':      { heal: 1, ctrl: 8 },    // 燃燒+消buff+強力燃燒
+  '神射手':      { heal: 1, ctrl: 8 },    // 必中+禁動陷阱+強力陷阱
+  '警長':        { heal: 1, ctrl: 10 },   // 物品查封+延後+反彈+強力查封
+  '時空法師':    { heal: 1, ctrl: 10 },   // 全體禁動+時間倒轉+禁療+禁復活
+  '陰陽師':      { heal: 1, ctrl: 9 },    // 治療減半+受傷+50%+四聖獸
+  '大力士':      { heal: 2, ctrl: 8 },    // 暈眩+強力昏迷+怒火
+  '軍師':        { heal: 3, ctrl: 8 },    // 補能量+疑惑+不利戰場卡+逆轉
+  '學者':        { heal: 2, ctrl: 8 },    // 消buff+雙倍特技反擊+奪能量
+  '舞者':        { heal: 7, ctrl: 8 },    // 增傷buff+省能buff+魅惑+操控
+  '神偷':        { heal: 1, ctrl: 6 },    // 偷狀態+命中降低(非強控制)
+  '大天狗':      { heal: 1, ctrl: 7 },    // 強力暈眩+減速
+  '玉藻前':      { heal: 6, ctrl: 10 },   // 強力失明+魅惑+被魅惑傷害轉回血
+  '超鬼神王':    { heal: 1, ctrl: 10 },   // 暈眩+中毒+不治詛咒+吞噬buff+秒殺
+  '窮奇':        { heal: 1, ctrl: 9 },    // 流血+隨機強力不利+四凶獸+反擊
+  '科技生化人':  { heal: 7, ctrl: 1 },    // 70%治療+全隊+3,鏈鎖反應與虛弱算傷害向不算控制 → 控制重新評為 1
+
+  // 中等型 / 特殊型
+  '刺客':        { heal: 6, ctrl: 6 },    // 隱身療傷+出血+中毒+劇毒
+  '守衛':        { heal: 7, ctrl: 7 },    // 代替承傷+減傷=回復向 + 強力挑釁
+  '機械師':      { heal: 7, ctrl: 4 },    // 負荷超載50%回血+觸電麻痺+爆炸範圍
+  '動物學家':    { heal: 7, ctrl: 3 },    // 寵物保護+減傷+召喚(無不利狀態)
+  '小劇團員':    { heal: 4, ctrl: 7 },    // 隨機buff+挑釁+失明+被攻擊機率高
+  '直笛團員':    { heal: 7, ctrl: 9 },    // 持續恢復5回+魔音(減能量)+中毒+狂亂
+  '幼兒園小孩':  { heal: 7, ctrl: 9 },    // 護盾+睡眠每回25%回血+攻特降-25%+持續恢復
+  '田徑隊員':    { heal: 5, ctrl: 5 },    // 速度+50%buff+免疫減速+傷害提升50%
+  '鋁合金暴龍':  { heal: 8, ctrl: 5 },    // 鋁鎧減傷+炸彈四重奏附帶治療+死神祝福buff
+
+  // 校犬(特殊雙滿)
+  '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
+
+  // 台灣 3 BOSS(維持原本的覆寫不動)
   '杏花妖':      { heal: 7, ctrl: 10 },
-  '木靈使':      { heal: 10, ctrl: 2 },
-  '神偷':        { heal: 1, ctrl: 7 },
-  '舞者':        { heal: 2, ctrl: 7 },
-  '吟遊詩人':    { heal: 8, ctrl: 7 },
-  // ★ v1.0.20260424.0710 — 小力(回復+坦克), 幼兒園小孩(控場)
-  // ★ v1.0.20260428.1500 — 小力 ctrl 1→9(坦克職能),幼兒園小孩 heal 2→1(無治療技能)
-  '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合恢復=回復)
-  '幼兒園小孩':  { heal: 1, ctrl: 10 },   // 大聲啼哭(降攻特) + 午睡時間(隱身) + 夢境時光(降攻特AOE)
-  // ★ v1.0.20260507.5600 — 雙星姊妹:光星妹妹擅長治療(可復活),暗星姊姊擅長輸出與追擊狀態
-  '雙星姊妹':    { heal: 9, ctrl: 6 },   // S1 雙形態治療都可復活 → 強治療;S2 追擊狀態 → 中等控制
-  // ★ v1.0.20260501.4760 — 台灣 3 BOSS 雷達圖手動覆寫(自動判定有誤)
-  '山岳禁咒・崩天巨人': { heal: 1,  ctrl: 10 }, // S2 山崩地裂 30% 眩暈 + 範圍打擊;爆發大範圍控制 → 控制至滿
-  '臭氣魔王・發酵公':   { heal: 1,  ctrl: 9 },  // S1 中毒 + S2 強力封印 + 爆發強力中毒;無治療技(原本因爆發描述含「治療效果減半」被自動判定為有治療,強制覆寫為 1)
-  '油膩魔王・滷汁大鍋': { heal: 9,  ctrl: 5 },  // S2 秘製大滷回 25% HP + 天賦香氣四溢每回合 +5% HP → 強力回復
+  '山岳禁咒・崩天巨人': { heal: 1,  ctrl: 10 },
+  '臭氣魔王・發酵公':   { heal: 1,  ctrl: 9 },
+  '油膩魔王・滷汁大鍋': { heal: 9,  ctrl: 5 },
 };
 
 // ★ 回傳英雄的分類陣列（可有多個）
@@ -55537,12 +56572,22 @@ function _renderHeroDetail(name, box) {
   const bio   = typeof HERO_BIO !== 'undefined' ? HERO_BIO[name] : null;
 
   // 計算治療力和控場力（智慧版）
+  // ★ v5680 — 重新定義「控制」與「回復」(雷達圖六維)
+  //   控制 = 給予不利狀態(暈眩/睡眠/封印/麻痺/失明/中毒/魅惑/詛咒/燃燒/減速⋯)的多寡
+  //   回復 = 恢復HP、護盾、有利狀態(治癒/buff/免疫/再生/補能量⋯)的效果多寡
+  //   舊版關鍵字過窄(只看「治療」「控制」),漏了「護盾/buff/有利狀態/魅惑/減速⋯」
   // 檢測描述中是否含有不利狀態關鍵字 → 控場
   const _CTRL_KW = ['緩速','暈眩','睡眠','封印','麻痺','失明','中毒','混亂','嘲諷','挑釁',
-    '禁錮','石化','燃燒','凍結','詛咒','弱化','虛弱','恐懼','禁止','催眠','失去','不能行動',
-    '被動:','強迫','強制','禁止','沉默'];
-  // 檢測描述中是否含有治療關鍵字 → 治療
-  const _HEAL_KW = ['恢復','治癒','治療','復活','再生','治癒','療癒','補血'];
+    '禁錮','石化','燃燒','凍結','冰凍','詛咒','弱化','虛弱','恐懼','禁止','催眠','失去','不能行動',
+    '被動:','強迫','強制','沉默','禁動','魅惑','迷戀','黏住','減速','禁療','奪取','吞噬',
+    '消除有利','失效','易傷','流血','出血','操控','受傷+','受傷增加','受到傷害+','受到傷害增加',
+    '無法行動','無法使用','放棄','跳過','延後','行動順序退','降低','下降','-50%','-25%',
+    '攻擊降','特技降','速度降','疑惑','疲勞','瀕死','倒下','秒殺'];
+  // 檢測描述中是否含有治療關鍵字 → 治療(回復)
+  const _HEAL_KW = ['恢復','治癒','治療','復活','再生','療癒','補血','回血','回復',
+    '護盾','免疫','增傷','補能量','減傷','格擋','保護','守護','分擔','嗜血','吸血',
+    '不倒再生','HP+','HP 上限','最大HP','上升','提升','+5%','+10%','+25%','+50%',
+    '增加','獲得有利','隨機有利','有利狀態','buff','+1能量','+2能量','+3能量','+4能量'];
 
   function _skillHeal(sk) {
     if(!sk) return 0;
@@ -55629,6 +56674,9 @@ function _renderHeroDetail(name, box) {
           ${_heroIsUnlocked && backpackGet('hero_exp_book')>1 ? `<button onclick="playSfx('sfx-powerup',0.7);_useAllExpBookForHero('${name}', false)" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(40,140,60,0.35);border:1.5px solid #66ff99;color:#aaffcc;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">📗 全部使用</button>` : ''}
           ${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>0 ? `<button onclick="playSfx('sfx-powerup',0.75);_useExpBookDeluxeForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(255,180,60,0.22);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📕 使用精裝版經驗值之書 <span style="color:#ffe090;font-size:17px;">×${backpackGet('hero_exp_book_deluxe')}</span></button>` : ''}
           ${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>1 ? `<button onclick="playSfx('sfx-powerup',0.75);_useAllExpBookForHero('${name}', true)" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(255,140,40,0.35);border:1.5px solid #ffaa44;color:#ffe090;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">📕 全部使用</button>` : ''}
+          ${/* ★ v5690 — 豪華典藏版按鈕(金黃光芒) */ ''}
+          ${_heroIsUnlocked && backpackGet('hero_exp_book_premium')>0 ? `<button onclick="playSfx('sfx-powerup',0.75);_useExpBookPremiumForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(255,210,80,0.28);border:1.5px solid #ffd700;color:#ffd700;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 10px rgba(255,215,0,0.4);">📚 使用豪華典藏版 <span style="color:#fff0a0;font-size:17px;">×${backpackGet('hero_exp_book_premium')}</span></button>` : ''}
+          ${_heroIsUnlocked && backpackGet('hero_exp_book_premium')>1 ? `<button onclick="playSfx('sfx-powerup',0.75);_useAllExpBookPremiumForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(255,180,60,0.45);border:1.5px solid #ffd700;color:#fff0a0;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 0 8px rgba(255,215,0,0.5);">📚 全部使用</button>` : ''}
         </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
       ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
@@ -59997,10 +61045,18 @@ function openMonsterDetail(name) {
   //   且「守護/挺立/護盾」其實不是控制(是防禦),容易誤判。
   //   新版讀技能完整描述(fd/d),用更全面的關鍵字 + 機率加權計算,
   //   與英雄頁(line 50735+)完全一致,避免「同一個概念兩套標準」。
+  // ★ v5680 — 與英雄詳細頁(line 55540+) 關鍵字保持一致
+  //   控制 = 給予不利狀態多寡;回復 = 恢復HP/護盾/有利狀態效果多寡
   const _CTRL_KW_M = ['緩速','暈眩','睡眠','封印','麻痺','失明','中毒','混亂','嘲諷','挑釁',
-    '禁錮','石化','燃燒','凍結','詛咒','弱化','虛弱','恐懼','禁止','催眠','失去','不能行動',
-    '被動:','強迫','強制','沉默','禁動','魅惑','黏住','減速'];
-  const _HEAL_KW_M = ['恢復','治癒','治療','復活','再生','療癒','補血','回復','回血'];
+    '禁錮','石化','燃燒','凍結','冰凍','詛咒','弱化','虛弱','恐懼','禁止','催眠','失去','不能行動',
+    '被動:','強迫','強制','沉默','禁動','魅惑','迷戀','黏住','減速','禁療','奪取','吞噬',
+    '消除有利','失效','易傷','流血','出血','操控','受傷+','受傷增加','受到傷害+','受到傷害增加',
+    '無法行動','無法使用','放棄','跳過','延後','行動順序退','降低','下降','-50%','-25%',
+    '攻擊降','特技降','速度降','疑惑','疲勞','瀕死','倒下','秒殺'];
+  const _HEAL_KW_M = ['恢復','治癒','治療','復活','再生','療癒','補血','回血','回復',
+    '護盾','免疫','增傷','補能量','減傷','格擋','保護','守護','分擔','嗜血','吸血',
+    '不倒再生','HP+','HP 上限','最大HP','上升','提升','+5%','+10%','+25%','+50%',
+    '增加','獲得有利','隨機有利','有利狀態','buff','+1能量','+2能量','+3能量','+4能量'];
   function _skillHealM(sk){
     if(!sk) return 0;
     const d = (sk.fd || sk.d || '').replace(/HP/g,'hp');
@@ -60331,10 +61387,10 @@ async function applyHeroExpBook(name) {
 
 // ★ v1.0.20260424.1070 — 一口氣使用所有經驗之書(支援普通版與精裝版)
 //   遇到角色等級到 50 上限時:跳出提醒「超出 EXP 將視同放棄」並由玩家決定是否繼續
-//   isDeluxe=true 用精裝版(每本 200 EXP),false 用普通版(每本 50 EXP)
+//   isDeluxe=true 用精裝版(每本 500 EXP),false 用普通版(每本 50 EXP)  ← v5690 精裝版 200→500
 async function _useAllExpBookForHero(name, isDeluxe) {
   const _bookId = isDeluxe ? 'hero_exp_book_deluxe' : 'hero_exp_book';
-  const _expPerBook = isDeluxe ? 200 : 50;
+  const _expPerBook = isDeluxe ? 500 : 50;
   const _label = isDeluxe ? '📕 精裝版經驗值之書' : '📗 經驗值之書';
   const _color = isDeluxe ? '#ffcc44' : '#88ff88';
   const _bookCount = backpackGet(_bookId);
@@ -60426,14 +61482,14 @@ async function _useExpBookForHero(name) {
   }
 }
 
-// ★ v1.0.20260423.5300 — 精裝版經驗值之書:在英雄詳細頁也能使用(+200 EXP)
+// ★ v1.0.20260423.5300 — 精裝版經驗值之書:在英雄詳細頁也能使用(+500 EXP)  ← v5690 200→500
 async function _useExpBookDeluxeForHero(name) {
   if(backpackGet('hero_exp_book_deluxe') <= 0){
     _showInGameToast('背包中沒有精裝版英雄經驗值之書！', '#ff8844', 1800);
     return;
   }
   backpackRemove('hero_exp_book_deluxe');
-  const lvUps = addHeroExp(name, 200);
+  const lvUps = addHeroExp(name, 500);
   try{ await gameCloudSave(); }catch(e){}
   _setNavDot('英雄', true);
   const box = document.getElementById('hero-detail-content');
@@ -60442,7 +61498,84 @@ async function _useExpBookDeluxeForHero(name) {
   if(lvUps && lvUps.length){
     setTimeout(() => _showLevelUpSequence(lvUps, () => {}), 300);
   } else {
-    _showInGameToast(`📕 [${name}] 獲得 200 EXP!`, '#ffcc44', 2000);
+    _showInGameToast(`📕 [${name}] 獲得 500 EXP!`, '#ffcc44', 2000);
+  }
+}
+
+// ★ v5690 — 豪華典藏版英雄經驗值之書:單發版本(+5000 EXP)
+async function _useExpBookPremiumForHero(name) {
+  if(backpackGet('hero_exp_book_premium') <= 0){
+    _showInGameToast('背包中沒有豪華典藏版英雄經驗值之書！', '#ff8844', 1800);
+    return;
+  }
+  backpackRemove('hero_exp_book_premium');
+  const lvUps = addHeroExp(name, 5000);
+  try{ await gameCloudSave(); }catch(e){}
+  _setNavDot('英雄', true);
+  const box = document.getElementById('hero-detail-content');
+  if(box) _renderHeroDetail(name, box);
+  if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
+  if(lvUps && lvUps.length){
+    setTimeout(() => _showLevelUpSequence(lvUps, () => {}), 300);
+  } else {
+    _showInGameToast(`📚 [${name}] 獲得 5000 EXP!`, '#ffd700', 2000);
+  }
+}
+
+// ★ v5690 — 豪華典藏版:一口氣使用所有的「全部使用」版本
+//   完全比照 _useAllExpBookForHero 的邏輯,只是每本 5000 EXP
+async function _useAllExpBookPremiumForHero(name) {
+  const _bookCount = backpackGet('hero_exp_book_premium');
+  if(_bookCount <= 0){
+    _showInGameToast('背包中沒有豪華典藏版英雄經驗值之書!', '#ff8844', 1800);
+    return;
+  }
+  const _expPerBook = 5000;
+  const _curLv = _heroLevels[name] || 1;
+  const _curExp = _heroExp[name] || 0;
+  const _totalExpToAdd = _bookCount * _expPerBook;
+  // 模擬升級
+  let _simLv = _curLv, _simExp = _curExp + _totalExpToAdd;
+  while(_simLv < 50){
+    const _need = _expForLevel(_simLv);
+    if(_simExp >= _need){
+      _simExp -= _need;
+      _simLv++;
+    } else break;
+  }
+  const _willOverflow = (_simLv >= 50 && _simExp > 0);
+  // 若會在達到 50 上限後仍有剩餘 EXP,跳出確認對話框
+  if(_willOverflow){
+    const _wastedExp = _simExp;
+    const _wastedBooks = (_wastedExp / _expPerBook).toFixed(2);
+    const _msg =
+      `將使用 ${_bookCount} 本 📚 豪華典藏版經驗值之書(共 +${_totalExpToAdd} EXP)\n\n`
+    + `[${name}] Lv${_curLv} → Lv50 (MAX)\n`
+    + `達到上限後超出的 ${_wastedExp} EXP (約 ${_wastedBooks} 本書)將被放棄\n\n`
+    + `確定要繼續嗎?`;
+    _customConfirm(_msg, async () => {
+      await _doApplyAllPremiumExp(name, _bookCount, _expPerBook);
+    });
+    return;
+  }
+  // 不溢出 → 直接套用
+  await _doApplyAllPremiumExp(name, _bookCount, _expPerBook);
+}
+
+async function _doApplyAllPremiumExp(name, bookCount, expPerBook){
+  const _totalExp = bookCount * expPerBook;
+  // 一次扣掉所有書
+  for(let i=0;i<bookCount;i++) backpackRemove('hero_exp_book_premium');
+  const lvUps = addHeroExp(name, _totalExp);
+  try{ await gameCloudSave(); }catch(e){}
+  _setNavDot('英雄', true);
+  const box = document.getElementById('hero-detail-content');
+  if(box) _renderHeroDetail(name, box);
+  if(typeof _buildHeroGrid === 'function') _buildHeroGrid();
+  if(lvUps && lvUps.length){
+    setTimeout(() => _showLevelUpSequence(lvUps, () => {}), 300);
+  } else {
+    _showInGameToast(`📚 [${name}] 獲得 ${_totalExp} EXP!`, '#ffd700', 2200);
   }
 }
 
@@ -63452,6 +64585,302 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260509.5730', brief:[
+    '⚖ 雙星姊妹平衡調整!S1「星手保護(光星治療)」與 S2「流星降雨」的升級加成從 +10%/級拉回 +5%/級',
+    '🎯 對齊其他所有英雄的 S1/S2 升級標準(火法師、水法師、巫女、窮奇、科技生化人⋯⋯都是 +5%/級)',
+    '✨ 雙星姊妹依然是強力角色,但跟同袍英雄站在同一條起跑線,不再特別強',
+  ], items:[
+    '【⚖ 雙星姊妹平衡調整原因】',
+    '・檢查發現雙星姊妹是「全英雄唯一」S1/S2 升級給 +10%/級 的英雄',
+    '・其他所有英雄(包含學生設計的窮奇、科技生化人、鋁合金暴龍、超鬼神王)都是 +5%/級',
+    '・這讓雙星姊妹在 Lv9 滿技後比其他英雄高出一截,違反平衡原則',
+    '【📊 改前 vs 改後(光星 S1 治療)】',
+    '・改前:Lv0=150% / Lv4=190% / Lv9=240% (天賦 ×1.3 後 195%~312%)',
+    '・改後:Lv0=150% / Lv4=170% / Lv9=195% (天賦 ×1.3 後 195%~253%)',
+    '・低等級時治療力一樣,高等級時不會無限暴衝',
+    '【📊 改前 vs 改後(流星降雨 S2 傷害)】',
+    '・改前:Lv0=250% / Lv4=290% / Lv9=340% (暗星 ×1.3 後 250%~442%)',
+    '・改後:Lv0=250% / Lv4=270% / Lv9=295% (暗星 ×1.3 後 250%~383%)',
+    '・基礎傷害不變,但每升 1 級的曲線比較緩',
+    '【其他學生英雄技能升級驗證】',
+    '・窮奇 S1 巨爪攻擊:250% + 5%/級 ✅',
+    '・窮奇 S2 死亡之吼:80%/160% + 5%/級 ✅',
+    '・科技生化人 S1 機械爪:130%×2 + 5%/級 ✅',
+    '・科技生化人 S2 科技能量:70% + 5%/級 ✅',
+    '・鋁合金暴龍 S1 超能衝鋒:180% + 5%/級 ✅',
+    '・鋁合金暴龍 S2 炸彈四重奏:80%×4 + 5%/級 ✅',
+    '・超鬼神王 S1 暗黑洞:暈眩率 +3%/級(機率類,非倍率) ✅',
+    '・超鬼神王 S2 鮮紅舌頭:中毒回合數階梯升 ✅',
+    '・雙星姊妹 S1 暗星治療:75% + 5%/級(原本就正確) ✅',
+    '・雙星姊妹 S1 護盾:40+5/級(光) / 20+3/級(暗) ✅',
+    '・其他角色全部沒問題',
+  ], adminOnly:true, adminItems:[
+    '【🛠 管理員技術細節 — v5730】',
+    '【修改位置】',
+    '・line 24084 星手保護光星:_baseMult = 1.5 + _s1Lv * 0.10 → 1.5 + _s1Lv * 0.05',
+    '・line 24163 流星降雨:_baseMult = 2.5 + _s2Lv * 0.10 → 2.5 + _s2Lv * 0.05',
+    '【為何只動這兩處】',
+    '・grep _s[12]Lv \\* 0\\.10 整份 game.html,僅這 2 處(玩家版 line 22000~24500)',
+    '・其他 +10%/級 都是 _burstLv(爆發等級),不是 S1/S2 等級',
+    '・BOSS 版(line 28000+)沒有「星手保護/流星降雨」,因為雙星姊妹只玩家用,BOSS 不用',
+    '【沒動的學生英雄技能(全部正確)】',
+    '・line 23821 機械爪 1.3 + 0.05 ✅',
+    '・line 23841 科技能量 0.7 + 0.05 ✅',
+    '・line 23877 暗黑洞 stunChance 0.60 + 0.03(機率類用 +3%/級是標準)',
+    '・line 23926 超能衝鋒 1.8 + 0.05 ✅',
+    '・line 23961 炸彈四重奏 0.8 + 0.05 ✅',
+    '・line 24010 巨爪攻擊 2.5 + 0.05 ✅',
+    '・line 24028~29 死亡之吼 0.8/1.6 + 0.05 ✅',
+    '・line 24120 星手保護暗星 0.75 + 0.05 ✅',
+  ] },
+  { ver:'v1.0.20260509.5720', brief:[
+    '🌟 雙星姊妹「雙星轉換」天賦現在可以升級了!天賦每升 1 級,光暗切換閾值 +5%(Lv1=25%、Lv5(MAX)=45%)',
+    '📖 雙星姊妹的天賦說明補上「升級提升閾值」的詳細描述,英雄圖鑑點開就看得到',
+    '🔧 順手把 3 處戰鬥邏輯的 fallback 也改成天賦感應(原本寫死 0.25)',
+  ], items:[
+    '【🌟 雙星姊妹 天賦升級】',
+    '・天賦「雙星轉換」原本寫死 25% 閾值,不管升幾級都一樣',
+    '・現在改成:每升 1 級閾值 +5%',
+    '   Lv1 = 25%(初始)',
+    '   Lv2 = 30%(英雄 Lv10)',
+    '   Lv3 = 35%(英雄 Lv20)',
+    '   Lv4 = 40%(英雄 Lv30)',
+    '   Lv5 = 45%(英雄 Lv40,MAX)',
+    '・等級越高,雙星姊妹越早進入「暗星姊姊」型態(技能傷害 +30% 強化)',
+    '・也讓玩家把雙星姊妹練到滿等更有感',
+    '【📖 天賦說明補強】',
+    '・原描述只寫「HP 比例 ≤ 25% 切換」,玩家不知道天賦可以升級',
+    '・新描述加上完整 5 階閾值說明,並標明「等級越高越早進入暗星態」',
+    '【🔧 戰鬥邏輯補強】',
+    '・3 處 fallback(爆發、星手保護 S1、流星降雨 S2)原本寫死 0.25,改成讀天賦感應閾值',
+    '・正常情況下這個 fallback 不會被觸發(因為前面都會先呼叫 _checkDualStarForm),',
+    '  但保險起見統一,避免某些罕見時序下用到舊的 25% 數值',
+  ], adminOnly:true, adminItems:[
+    '【🛠 管理員技術細節 — v5720】',
+    '【新增 helper 函式】',
+    '・window._getDualStarThreshold(h) — 取得雙星姊妹當前閾值(0.25 + traitLv*0.05)',
+    '・位置:line ~26333,_checkDualStarForm 上方',
+    '・內部用 _getTraitLv(h.name) 取得內部值 0~4(對應顯示 Lv1~Lv5)',
+    '【天賦說明 fd 更新】',
+    '・HERO_TRAIT 雙星姊妹(line ~14310)desc + fd 全改寫',
+    '・desc 新增「天賦升級提升切換閾值」',
+    '・fd 新增完整 5 階閾值表',
+    '【戰鬥邏輯 fallback 改造】',
+    '・line ~18470 同生共死爆發:用 _getDualStarThreshold(h)',
+    '・line ~24079 星手保護 S1:用 _getDualStarThreshold(a)',
+    '・line ~24168 流星降雨 S2:用 _getDualStarThreshold(a)(變數名 _thresholdFR 避免和 _threshold 衝突)',
+    '・原 _checkDualStarForm 內部也改用 _getDualStarThreshold(消除重複邏輯)',
+    '【學生新角色 5 隻技能驗證(2026-05-09)】',
+    '・窮奇 S1 巨爪攻擊:250% + 每級 +5%(line 24010) ✅',
+    '・窮奇 S2 死亡之吼:80%/160% + 每級 +5%(line 24028~29) ✅',
+    '・窮奇爆發 召喚上古四凶獸:200% + 每級 +20%、Lv5 狀態 3 回合(line 18225) ✅',
+    '・科技生化人 S1 機械爪:130%×2 + 每級 +5%(line 23821) ✅',
+    '・科技生化人 S2 科技能量:70% + 每級 +5%(line 23841) ✅',
+    '・科技生化人爆發 輻射核砲:150% + 每級 +10%(line 18271) ✅',
+    '・鋁合金暴龍 S1 超能衝鋒:180% + 每級 +5%(line 23926) ✅',
+    '・鋁合金暴龍 S2 炸彈四重奏:80%×4 + 每級 +5%(line 23961) ✅',
+    '・鋁合金暴龍爆發 死神龍王登場:170% + 每級 +10%(line 18317) ✅',
+    '・超鬼神王 S1 暗黑洞:60% + 每級 +3% 暈眩(line 23877) ✅',
+    '・超鬼神王 S2 鮮紅舌頭:中毒 2 → Lv4+:3 → Lv8+:4 回合(line 23903) ✅',
+    '・超鬼神王爆發 大嘴吸入:140% + 每級 +10%(line 18392) ✅',
+    '・雙星姊妹 S1 星手保護:光 150%/+10%、暗 75%/+5%(line 24084/24120) ✅',
+    '・雙星姊妹 S2 流星降雨:250% + 每級 +10%(line 24163) ✅',
+    '・雙星姊妹爆發 同生共死:光 ×10~14、暗 900%~1300%(line 18473/18493) ✅',
+    '【fd 描述限制】',
+    '・5 隻學生英雄的 S1/S2/爆發 fd 全部只寫 Lv0 數值,沒提「每級 +X%」',
+    '・這跟既有英雄(火法師、水法師、占星師等)的 fd 風格一致(只描述基礎)',
+    '・若日後玩家想看升級數值,可在英雄詳情頁的「技能等級加成」區另外顯示',
+  ] },
+  { ver:'v1.0.20260509.5710', brief:[
+    '👑 知識王挑戰按鈕搬家!從右上角(被代表英雄擋住)→ 移到「🗺 關卡選擇」標籤右邊,並縮小 10% 不再卡到任何文字',
+    '💱 一鍵賣出確認視窗大瘦身!以前物品多會超出畫面點不到按鈕導致卡死,現在只顯示「N 種 + 總收益」一行清爽訊息',
+  ], items:[
+    '【👑 今日知識王挑戰 — 按鈕位置調整】',
+    '・原位置:首頁關卡選擇區「右上角」→ 會被代表英雄卡片(Lv.30 那個圓形大頭)擋住',
+    '・新位置:「🗺 關卡選擇」標籤的「右邊」(同一條 baseline)',
+    '・尺寸縮小 10%(font:30→27、padding 收緊),貼齊金色框線上緣的氣泡形樣式',
+    '・避免擋到「今天要去哪裡討伐魔物呢?」對話、避免擋到代表英雄、避免擋到「↓ 滑動看更多」提示',
+    '・三狀態顏色不變(金色可挑戰 / 橘色進行中 / 灰色已領完)',
+    '【💱 一鍵賣出 — 確認視窗精簡】',
+    '・舊版:會列出每件物品(💎 神秘水晶 ×3 / 🦴 大鬼神王骨 ×7 / ⋯)',
+    '・新版:只顯示「確認要一鍵賣出 N 種賣錢物品嗎?💰 總收益:X 知識幣」',
+    '・原因:物品多時清單超出視窗高度 → 確認/取消按鈕被擠出畫面 → 點不到按鈕 → 畫面卡死',
+    '・不影響賣出邏輯,音效、台灣關獎章、雲端同步全部照常運作',
+  ], adminOnly:true, adminItems:[
+    '【🛠 管理員技術細節 — v5710】',
+    '【👑 知識王挑戰按鈕重新定位】',
+    '・HTML 移動:從 #adv-left-panel 直屬子元素(line 6726)移進 #adv-stage-list-wrap 內(line 6708 之後)',
+    '・這樣 position:absolute 會錨定 wrapper(原本錨定 panel,所以才會跑到右上角被代表英雄擋)',
+    '・CSS 改動(line 2906~2918):',
+    '  - top: 14px → -13px(貼 wrapper 上緣,跟 #adv-stage-list-label 同 baseline)',
+    '  - right:14px → 改為 left:clamp(150px,16vw,220px)(避開 label 寬度)',
+    '  - z-index: 50 → 5(與 label z-index:5 同層,不再蓋住其他 absolute)',
+    '  - padding: 10px 18px → 2px 14px(縮 10%,模仿 label 氣泡狀)',
+    '  - font-size: clamp(20px,2.4vw,30px) → clamp(13px,1.3vw,18px)(縮 10% + 視覺融入 label)',
+    '  - border-radius: 14px → 18px(與 label 同樣的氣泡形)',
+    '・手機版 RWD(line 3282)同步:top:-11px / left:120px / padding:2px 10px / font:13px',
+    '【💱 shopSellAllItems 確認訊息精簡】',
+    '・函式位置:line 54064~,async function shopSellAllItems',
+    '・移除 _summary 陣列建構(原 line 54073~54080)',
+    '・_msg 從多行清單改為兩行簡潔訊息',
+    '・其他邏輯(背包扣除、知識幣加總、台灣關獎章、雲端同步)完全不動',
+  ] },
+  { ver:'v1.0.20260509.5700', brief:[
+    '👑 全新功能:今日知識王挑戰!每天 08:00 重置,挑戰 20 題拿水晶與經驗書',
+    '🎁 三大法寶可選:💡 提示之光、🗑 刪除錯誤、🔄 換題重抽(每場限用 1 次)',
+    '📊 滿分 100 還能拿 4 顆召喚水晶 + 5 本豪華典藏版書(英雄一口氣升 25000 EXP)',
+    '🏆 連勝紀錄、最高分顯示;隨時可中斷,雲端會記住進度,回來繼續挑戰',
+    '🎯 每天隨機指定一個科目,從現有 2144 題題庫中精選 20 題',
+  ], items:[
+    '【👑 今日知識王挑戰 完整功能】',
+    '・每天 08:00(本地時間)重置,當天領完後按鈕變灰色「明天再戰」',
+    '・每日抽 1 個科目當挑戰主題(可重抽,上限 3 次)',
+    '・連續 20 題,每題 5 分(滿分 100),答錯 -5 分(分數可負,影響獎勵)',
+    '・3 個隨機法寶開場可選(每個限用 1 次):',
+    '   💡 提示之光:正確選項發光提示',
+    '   🗑 刪除錯誤:消去 1 個錯選項',
+    '   🔄 換題重抽:換掉這題,總題數 +1',
+    '・中途離開 → 雲端快照(每答完一題自動同步),回來能接續',
+    '【🎁 領獎組距(分數越高拿越多)】',
+    '・100 分 → 4 顆召喚水晶 + 5 本豪華典藏版書(超神配置)',
+    '・90+ → 3 顆水晶 + 4 本豪華典藏版',
+    '・80+ → 2 顆水晶 + 3 本豪華典藏版',
+    '・70+ → 1 顆水晶 + 2 本豪華典藏版',
+    '・60+ → 1 本豪華典藏版',
+    '・<60 → 5 本精裝版書(沒拿到典藏版仍有獎)',
+    '【📊 連勝與紀錄】',
+    '・連續挑戰天數會顯示在按鈕上(🔥 X 天)',
+    '・歷史最高分會記錄,新紀錄會跳通知',
+    '・首頁關卡選擇區右上角浮動按鈕,金色發光(可挑戰)/橘色(進行中)/灰色(已領完)',
+    '【🎯 題庫設計】',
+    '・科目池:國語文 / 數學 / 自然 / 社會 / 英文 / 本土語 / 健康與體育 / 生活常識 / 美術 / 音樂 / 表演藝術 / 資訊科技(共 12 科)',
+    '・排除「日本關 / 關島交流 / 木柵動物園」等特殊主題關題庫',
+    '・五下自然期中評量題庫獨立,不納入挑戰',
+    '・難度:同一科目混抽「沒自信 / 普通 / 我很會」三檔',
+    '【實作位置】',
+    '・新增 _kingChallenge 核心模組(line ~38500 ADV_QUIZ_DB 之前)',
+    '・新增 #king-challenge-float-btn 浮動按鈕 + 完整彈窗 CSS(line ~2900)',
+    '・新增 HTML 浮動按鈕(line ~6342 #adv-stage-list-wrap 後)',
+    '・_buildSafeData / _applySafeData 加入 _kingChallenge 雲端欄位(line ~47585 / ~47974)',
+    '・selectAdvStage 等進關卡頁地方呼叫 _kingUpdateFloatBtn() 更新按鈕狀態',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5700',
+  ] },
+  { ver:'v1.0.20260509.5690', brief:[
+    '📕 精裝版英雄經驗書:每本 +200 EXP → 每本 +500 EXP(2.5 倍升級)',
+    '📚 新道具:豪華典藏版英雄經驗書(每本 +5000 EXP,主要從未來知識王挑戰高分獲得)',
+    '🌟 雙星姊妹「雙星轉換」天賦升級終於有感:Lv1=25%、Lv2=30%、Lv3=35%、Lv4=40%、Lv5=45%',
+    '🎨 學生設計英雄圖片位置調整(科技生化人/鋁合金暴龍/超鬼神王縮圖,窮奇邀請預覽)',
+    '🐛 火法師 changelog 文字修正(Lv10 達 275%,原文寫 280% 是算錯)',
+  ], items:[
+    '【📕 精裝版英雄經驗書 EXP 升級(5 處全改)】',
+    '・每本 EXP:200 → 500(2.5 倍)',
+    '・背包描述、useLabel、英雄選擇彈窗標題、Toast 提示、單發/全部使用函式 全部同步',
+    '・舊存檔背包裡的精裝版書直接享受新效果(不用重買)',
+    '【📚 新道具:豪華典藏版英雄經驗值之書】',
+    '・物品 ID:hero_exp_book_premium',
+    '・圖示:📚(金黃光芒、有發光特效)',
+    '・效果:每本給選定英雄 +5000 EXP(=10 本精裝版)',
+    '・不可賣(加入經驗書類不可賣清單)',
+    '・英雄詳情頁加 2 顆按鈕:「📚 使用豪華典藏版」「📚 全部使用」(與精裝版按鈕並排)',
+    '・主要從未來的「今日知識王挑戰」高分獎勵獲得(下版實作)',
+    '【🌟 雙星姊妹「雙星轉換」天賦升級閾值修正】',
+    '・原 bug:閾值寫死 0.25,不管天賦升幾級切換點都一樣 → 升等沒感',
+    '・修法:閾值 = 0.25 + 天賦等級 × 0.05',
+    '   Lv1 = 25%(不變)、Lv2 = 30%、Lv3 = 35%、Lv4 = 40%、Lv5(MAX) = 45%',
+    '・天賦等級越高,光暗切換越早觸發 → 暗星狙擊型態更容易出來',
+    '・切換時 banner 文字「過 1/4」改為實際百分比(過 30%、過 35% 等),較易理解',
+    '【🎨 學生設計英雄圖片位置微調】',
+    '・HERO_THUMB_POS 加入科技生化人/鋁合金暴龍/超鬼神王 = center 30%',
+    '   讓左側英雄選擇格的縮圖能看到角色頭部(原預設 50% 常被截掉)',
+    '・HERO_IMG_POS 窮奇邀請預覽圖 = center 42%(Y +30%,完整看到老虎臉)',
+    '・新增 HERO_BATTLE_CARD_POS 戰鬥卡片專屬位置表',
+    '   窮奇戰鬥卡片 = center 32%(Y +20%,比邀請預覽少 10%,適合戰鬥窄卡片)',
+    '・新增 getHeroBattleCardObjPos() 函式:戰鬥卡片優先用此函式,無覆寫時 fallback 到 getHeroObjPos',
+    '・教訓:邀請預覽 vs 戰鬥卡片的容器寬高比不同,以後每位新英雄都應該分別調這兩個值',
+    '【🐛 火法師 changelog 字面修正】',
+    '・v5650 條目「S1 火焰球 主傷害 特技×230%(每升 1 級 +5%, Lv10 達 280%)」',
+    '・230 + 5×9 = 275,不是 280 → 修正為「Lv10 達 275%」',
+    '・實際遊戲中傷害值正確,只是 changelog 文字算錯',
+    '【實作位置】',
+    '・BACKPACK_ITEM_DEF(line ~48643)精裝版描述 + 豪華典藏版新項目',
+    '・SHOP_SELL_ITEMS 不可賣註解(line ~48852)補上 hero_exp_book_premium',
+    '・_useItem 派發(line ~53349~)精裝版 200→500 + 豪華典藏版新分支',
+    '・_useExpBookDeluxeForHero(line ~60508)200→500',
+    '・_useAllExpBookForHero(line ~60412)精裝版 _expPerBook 200→500',
+    '・_useExpBookPremiumForHero / _useAllExpBookPremiumForHero / _doApplyAllPremiumExp(line ~60530+ 新增)',
+    '・英雄詳情頁(line ~55700)加 2 顆豪華典藏版按鈕(金黃光芒)',
+    '・_checkDualStarForm(line ~25925)閾值 0.25 → 0.25 + traitLv*0.05',
+    '・HERO_THUMB_POS(line ~11215)加 3 隻 5 年 5 班學生英雄',
+    '・HERO_IMG_POS(line ~11148)加窮奇邀請預覽',
+    '・HERO_BATTLE_CARD_POS + getHeroBattleCardObjPos(line ~11150 新增)',
+    '・renderCard(line ~15403)圖片改用 getHeroBattleCardObjPos',
+    '・GAME_CHANGELOG v5650 火法師 280%→275%',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5690',
+  ] },
+  { ver:'v1.0.20260509.5680', brief:[
+    '🎯 雷達圖六維重新定義(全英雄重算):「控制」依不利狀態多寡,「回復」依治癒/護盾/buff多寡',
+    '✏ 英雄編輯器:特殊備註輸入後會顯示在左側變更計數,並寫入平衡調整單對照表',
+    '📐 編輯器六維欄位改名:「支援力 → 回復」、「控制力 → 控制」、「防禦力 → HP」、「技巧性 → 特技」、「攻擊力 → 攻擊」',
+  ], items:[
+    '【🎯 雷達圖六維重新定義】',
+    '・控制 = 給予不利狀態(暈眩/睡眠/封印/麻痺/失明/中毒/魅惑/詛咒/燃燒/減速⋯)的多寡',
+    '・回復 = 恢復HP、護盾、有利狀態(治癒/buff/免疫/再生/補能量⋯)的效果多寡',
+    '・HP/攻擊/特技/速度仍從基礎能力數值算出,算法不變',
+    '【🔄 全 47 隻英雄雷達圖重新評分】',
+    '・回復滿值(10):祭司、木靈使、弦樂團員、雙星姊妹、小力',
+    '・控制滿值(10):冰法師、暗法師、警長、時空法師、玉藻前、超鬼神王',
+    '・調整較大的英雄:',
+    '   神射手 ctrl 7 → 8(必中+強力陷阱)',
+    '   軍師 heal 2→3、ctrl 9→8(補能量算回復向)',
+    '   弦樂團員 ctrl 2→4、heal 8→10(雙小提琴+流浪者)',
+    '   電腦繪圖師 heal 1→9(護盾+隨機buff+萬物創生)',
+    '   程式設計師 heal 6→9、ctrl 6→4(邏輯優化清debuff+免疫=強回復)',
+    '   舞者 heal 2→7(增傷buff+省能buff)',
+    '   雙星姊妹 heal 9→10(雙形態治療都可復活)',
+    '   神偷 ctrl 7→6(偷狀態非主控制)',
+    '   動物學家 ctrl 9→3、heal 2→7(寵物保護=回復向,無不利狀態)',
+    '   大力士 ctrl 7→8(強力昏迷加成)',
+    '   學者 heal 1→2(元素智慧傷害50%轉治療)',
+    '   守衛 heal 0→7(代替承傷與減傷=回復向)',
+    '   煉金術師 heal 0→9(賢者之石+免疫倒下)',
+    '   酒吞童子 heal 0→9(乾杯40%+鬼王酒宴吸血)',
+    '   吸血鬼 heal 7→9(嗜血+鮮血契約)',
+    '   占星師 heal 9 維持(補能量+星空祝福省能)',
+    '   武鬥家 heal 1→2(死鬥自救)',
+    '   籃球隊員 heal 4(暴擊獲能量+全隊速度=中等回復向)',
+    '   機械師 heal 7、ctrl 4(負荷超載+觸電麻痺)',
+    '   小劇團員 heal 4、ctrl 7(隨機buff+挑釁失明)',
+    '   直笛團員 ctrl 7→9(中毒+魔音+狂亂)',
+    '   幼兒園小孩 heal 1→7(午睡每回25%回血+持續恢復)',
+    '   科技生化人 ctrl 5→7、heal 5→7(70%治療+全隊+3+虛弱)',
+    '   鋁合金暴龍 heal 5→8(炸彈四重奏附帶治療+死神祝福)',
+    '   玉藻前 heal 5→6(被魅惑傷害轉回血是強回復)',
+    '【✏ 英雄編輯器:特殊備註(notes)修正】',
+    '・原 bug:輸入特殊備註後沒任何反應,左側角色變更計數不變,平衡調整單也沒寫',
+    '・修正:modifiedCount 函式加入 notes 比較,任何輸入都會 +1 變動數',
+    '・修正:平衡調整單的 compareList 加入 notes 比對,寫進「修改現有英雄」差異對照表',
+    '・新增單(generateAddOutput)的備註輸出維持不變,本來就有寫',
+    '【📐 編輯器六維欄位標籤改名】',
+    '・「攻擊力」→「攻擊」、「速度」維持、「防禦力」→「HP」',
+    '・「支援力」→「回復」、「控制力」→「控制」、「技巧性」→「特技」',
+    '・新增說明:控制 = 不利狀態多寡;回復 = 治癒/護盾/buff多寡',
+    '・新增單與平衡調整單的雷達區段標籤同步改名',
+    '【🔧 引擎/關鍵字擴充】',
+    '・game.html line ~55540 _CTRL_KW / _HEAL_KW 大幅擴充:',
+    '   控制加入「魅惑/迷戀/減速/禁療/奪取/吞噬/消除有利/失效/易傷/流血/操控⋯」',
+    '   回復加入「護盾/免疫/減傷/補能量/嗜血/吸血/不倒再生/有利狀態/buff⋯」',
+    '・game.html line ~60000 _CTRL_KW_M / _HEAL_KW_M 怪物頁同步擴充',
+    '・game.html line ~55179 HERO_HEX_OVERRIDE 表全英雄(47 隻)重新覆寫',
+    '【實作位置】',
+    '・game.html HERO_HEX_OVERRIDE(line ~55179) 全表重寫',
+    '・game.html 英雄詳細頁雷達圖計算(line ~55540) _CTRL_KW/_HEAL_KW 擴充',
+    '・game.html 怪物頁雷達圖計算(line ~60000) _CTRL_KW_M/_HEAL_KW_M 擴充',
+    '・hero_input.html modifiedCount(line ~488) 加入 notes 比較',
+    '・hero_input.html generateEditOutput compareList(line ~1471) 加入 notes 比對',
+    '・hero_input.html 雷達圖六維 UI(line ~1085) 標籤改名',
+    '・hero_input.html generateAddOutput 雷達區段(line ~1349) 標籤改名',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5680',
+  ] },
   { ver:'v1.0.20260508.5650', brief:[
     '⚖ 平衡調整:火法師全面強化、酒吞童子治癒/爆發升級',
     '🔥 火法師 S1/S2/爆發傷害大幅提升,新增「無視減傷/反射/無敵」的追加傷害',
@@ -63459,7 +64888,7 @@ const GAME_CHANGELOG = [
   ], items:[
     '【🔥 火法師調整(8 處欄位)】',
     '・S1 火焰球:能量 3 → 4',
-    '   主傷害 特技×150% → 特技×230%(每升 1 級 +5%, Lv10 達 280%)',
+    '   主傷害 特技×150% → 特技×230%(每升 1 級 +5%, Lv10 達 275%)',
     '   追加傷害 固定 10 點 → 主傷害的 10%(無視無敵/反射/減傷)',
     '・S2 地獄之火:能量 4 → 5',
     '   特技×40% → 特技×120%(每升 1 級 +5%, Lv10 達 165%)',
@@ -63934,175 +65363,6 @@ const GAME_CHANGELOG = [
     '・BURST_GIF_DB「大嘴吸入」條目 url 替換為新 GIF 路徑',
     '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5520',
   ] },
-  { ver:'v1.0.20260501.5510', brief:[
-    '🐉 修了打倒八岐大蛇後獎章不會解鎖的問題!',
-    '✨ 「伏龍大師」「大蛇 S 評」「快速伏龍」等八岐大蛇獎章現在都會正常解鎖了',
-    '🛠 同時修正了結算畫面的掉落物提示',
-  ], items:[
-    '【玩家回報】',
-    '・玩家反應:打了好多次八岐大蛇,但「擊敗 X 次八岐大蛇」之類的獎章都沒拿到',
-    '【為什麼會這樣?】',
-    '・大天狗、酒吞童子、玉藻前的戰鬥陣容都是 3 隻(2 隻小怪+1 隻 BOSS),BOSS 在中間位置',
-    '・舊版獎章解鎖邏輯就寫死「中間位置就是主 BOSS」',
-    '・但八岐大蛇是隱藏 BOSS,陣容只有 1 隻(就是它本人,沒有小怪)',
-    '・舊版誤以為「中間位置」是空的,結果 fallback 認為是另一隻怪',
-    '・所有八岐大蛇相關獎章因此永遠不會解鎖',
-    '【影響範圍】',
-    '・jp_boss_yamata「首殺八岐大蛇」(首殺獎章)',
-    '・jp_yamata_3「伏龍大師」(累積擊敗 3 次)',
-    '・jp_yamata_s「大蛇 S 評」(以 S 評擊敗)',
-    '・jp_quick_yamata「快速伏龍」(10 回合內擊敗)',
-    '・jp_treasure_consume「神器之力」(消耗三神器擊敗)',
-    '・jp_treasure_preserve「不靠神器」(保留三神器擊敗滿血大蛇)',
-    '・以上所有獎章在舊版都不會解鎖,本次修補後全部都會正常觸發',
-    '【這次怎麼修?】',
-    '・✨ 改用「主 BOSS 名字搜尋」邏輯:從戰鬥陣容中找到日本關 BOSS,而不是寫死位置',
-    '・這樣不管陣容是 1 隻還是 3 隻都能正確識別主 BOSS',
-    '・順手修了結算畫面的掉落物提示(同一個 bug)',
-    '【補償(管理員可選)】',
-    '・之前打過八岐大蛇的玩家,沒辦法回溯歷史擊殺次數',
-    '・但管理員可在 F12 Console 用 _adminGrantYamataMedalRetro() 為單一玩家補發「首殺」獎章',
-    '・累積 3 次和 S 評等仍需重新打(因為現在 bug 已修,以後打就會正常累計)',
-    '【實作位置】',
-    '・advShowBattleResult 內 _mainBoss 計算改為 G.p2.find(_JAPAN_BOSS_DROPS) 搜尋',
-    '・結算面板的掉落物提示也用同樣邏輯',
-    '・新增 window._adminGrantYamataMedalRetro 管理員補發工具',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5510',
-  ] },
-  { ver:'v1.0.20260501.5500', brief:[
-    '🤝 修了好友英雄爆發等級沒生效的問題!',
-    '⭐ 玩家升級或改裝備後,代表英雄資料現在會自動同步給好友',
-    '🛠 至寶診斷工具加入了元素加成的判斷,診斷更精準',
-  ], items:[
-    '【bug 1:好友英雄的極限爆發等級沒生效】',
-    '・玩家邀請好友的代表英雄上場後,該英雄的素質、技能等級、至寶都正確同步',
-    '・但「極限爆發等級」忘了套用,所以好友升的爆發效果在戰鬥中沒生效',
-    '・✨ 現在好友英雄的爆發等級也會正確套用了',
-    '【bug 2:代表英雄資料不會自動更新】',
-    '・玩家設定某英雄為代表後,如果之後升級該英雄(技能、爆發、素質、至寶),代表英雄資料不會自動更新',
-    '・結果好友邀請看到的是「設定當下」的舊資料,新升的等級沒同步',
-    '・✨ 現在改變這些資料時,如果動到當前代表英雄,會自動把最新資料同步到雲端',
-    '・有防抖機制(1.5 秒延遲集中執行),不會頻繁寫雲端造成負擔',
-    '【診斷工具改進】',
-    '・之前回報「巫女攻擊應該是 14 但顯示 18」,實際上是火屬性 +4 攻擊的元素加成造成的',
-    '・舊版診斷工具沒考慮元素加成,誤判為 bug',
-    '・✨ 新版會把元素加成(火+4攻擊、水+5血、風+4速度等)納入預期值計算',
-    '・差距 ≠ 0 時不再直接判定為錯,改用「可能來自天賦/裝備/buff」的友善提示',
-    '・好友英雄屬性來自好友自己的設定,跳過本機預期值對比',
-    '【影響範圍】',
-    '・好友邀請功能更可靠了,看到的代表英雄資料永遠是最新的',
-    '・玩家設定代表英雄後不需要再手動點「重新設定」就能保持資料同步',
-    '【實作位置】',
-    '・_injectFriendHeroIntoBattle existingHero path(line ~56858)補上 _burstLvAdv',
-    '・新增 window._refreshMyRepHeroCloud() helper 函式(防抖 1.5 秒)',
-    '・_saveTaiwanTreasureData / confirmPendingStats / 技能升級 / 爆發升級 完成後都自動觸發 hook',
-    '・_diagnoseTreasure 加入元素加成,顯示元素類型、爆發等級、好友英雄標記',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5500',
-  ] },
-  { ver:'v1.0.20260501.5490', adminOnly:true, brief:[
-    '🔍 加強至寶套用診斷工具,協助排查「至寶能力沒生效」的回報',
-    '📊 強化 console log,F12 一眼看清楚至寶有沒有套用',
-    '🛠 新增 window._diagnoseTreasure() 診斷函式',
-  ], items:[
-    '【玩家回報】',
-    '・玩家反應:巫女基礎攻擊 8,裝備至寶後應該有 14,但戰鬥中只顯示 8',
-    '・初步推測可能是時序問題、好友英雄誤判、或資料未正確記錄',
-    '【這次加什麼?】',
-    '・_applyTaiwanTreasureToHero 開頭加防禦性 reload(避免 _taiwanTreasureData 還沒載入時套用)',
-    '・每件至寶的明細(基礎、投資、總計)都印到 console.group,F12 一眼看清楚',
-    '・好友英雄判斷時也印 log(明確標示「跳過,因為是好友英雄」)',
-    '・無裝備至寶時也印 log(equipped=[])',
-    '【新增診斷指令】',
-    '・在 F12 → Console 輸入 _diagnoseTreasure() 查看所有英雄狀態',
-    '・輸入 _diagnoseTreasure("巫女") 只看單一英雄詳細(資料 + 戰鬥中 + 預期值對比)',
-    '・會自動比對「應該是多少」 vs「實際是多少」,差距會用紅色 ⚠️ 標示',
-    '【請玩家協助】',
-    '・遇到至寶沒生效時:F12 開 Console → 輸入 _diagnoseTreasure("巫女") 截圖',
-    '・另外可以截圖戰鬥開始時 console 自動印的 [至寶套用] group',
-    '・這樣管理員能直接判斷是時序、資料、還是套用流程的問題',
-    '【實作位置】',
-    '・_applyTaiwanTreasureToHero (line ~33337) 強化版',
-    '・新增 window._diagnoseTreasure 全域函式',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5490',
-  ] },
-  { ver:'v1.0.20260501.5480', brief:[
-    '🛠 進一步修了「BOSS 是玉藻前時卡死」的問題!',
-    '💕 玉藻前 BOSS 用爆發魅惑玩家全體後,輪到玩家英雄行動時整場戰鬥凍結',
-    '✨ 現在加入了完整的安全網,3 秒沒推進就自動跳過,不會再卡死!',
-  ], items:[
-    '【發生什麼事?】',
-    '・玩家反應:打日本關 BOSS 玉藻前時,玉藻前發動「禍世邪魅」爆發後',
-    '・玩家全體陷入「強力魅惑」,輪到玩家英雄行動時(應該自動普攻隊友),畫面凍結',
-    '・上次(v5470)修了 BOSS 自己被魅惑的卡死,但「玩家英雄被魅惑」這條路徑還沒涵蓋',
-    '【為什麼會這樣?】',
-    '・玩家英雄被魅惑時,系統會在 600 毫秒後自動執行「攻擊隊友 + 結束行動」',
-    '・但若這 600 毫秒內,有其他事件讓遊戲暫停(_gamePaused 為 true),這個排程會進入等待佇列',
-    '・等待佇列若沒被釋放,「結束行動」永遠不會執行',
-    '・系統永遠選同一個英雄做 next → 整場戰鬥凍結',
-    '【這次怎麼修?】',
-    '・✨ 為「玩家英雄被魅惑」路徑加 3 秒安全網 watchdog',
-    '・若 3 秒後英雄還沒結束行動,系統自動釋放 _gamePaused、強制設定 acted=true、推進到下一個角色',
-    '・watchdog 用獨立的 setTimeout(不是 _pSetTimeout),確保不會被 _gamePaused 卡住',
-    '・主流程順利執行時 watchdog 會被取消,不影響正常流程',
-    '【影響範圍】',
-    '・這個修補保護所有「玩家英雄被魅惑」的場景',
-    '・不只玉藻前 BOSS,任何讓玩家英雄陷入魅惑(舞者敵方版、染靈魔等)都受保護',
-    '・搭配上次 v5470 的「BOSS 被魅惑」fallback,所有魅惑相關卡死路徑現在都有完整 watchdog',
-    '【實作位置】',
-    '・startTurn 內 charm path 玩家英雄分支(line ~25855)加 _charmWatchdogId(3 秒)',
-    '・主流程的 _pSetTimeout 開頭呼叫 clearTimeout(_charmWatchdogId) 取消 watchdog',
-    '・watchdog 觸發後:釋放 _gamePaused → _resumeTimers → acted=true → setTimeout(startTurn, 300)',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5480',
-  ] },
-  { ver:'v1.0.20260501.5470', brief:[
-    '🛠 修了 BOSS 戰卡死的問題!',
-    '💕 玩家用玉藻前對 BOSS 強力魅惑後,有時候 BOSS 會不行動也不答題,整場戰鬥就卡住了',
-    '✨ 現在不會再卡住了,即使遇到罕見情境也會自動跳過 BOSS 行動,讓戰鬥繼續',
-  ], items:[
-    '【發生什麼事?】',
-    '・玩家反應:用玉藻前的爆發「禍世邪魅」對 BOSS 強力魅惑後,BOSS 變得無行動也不答題',
-    '・整場戰鬥畫面凍結,玩家只能放棄重來,非常崩潰',
-    '【為什麼會這樣?】',
-    '・BOSS 被強力魅惑後,系統正常情況下會「開啟答題視窗」讓玩家答題,答完題 BOSS 跳過行動',
-    '・但在某些罕見情況(答題視窗被佔用、其他狀態先觸發、開啟失敗等),答題視窗沒開成功',
-    '・舊版的處理:如果開答題視窗失敗,只在 console 印錯誤訊息,但沒有「跳過 BOSS 行動」的備用流程',
-    '・結果就是 BOSS 永遠不行動、戰鬥永遠不結束 → 卡死',
-    '【這次怎麼修?】',
-    '・✨ 為「BOSS 中強力魅惑」路徑加入完整的備援流程(跟既有的暈眩、冰凍處理一致)',
-    '・若答題視窗無法開啟,系統會自動讓 BOSS「因魅惑跳過本次行動」並推進到下一回合',
-    '・額外保險:答題視窗開啟後 1.5 秒檢查,若仍未顯示,自動走備援流程',
-    '・順手修了 advShowQuiz 函式的兩個 early return:現在即使「答題系統還在忙」也會先處理已排隊的回呼,避免回呼永遠卡住',
-    '【影響範圍】',
-    '・這個 bug 不只影響玉藻前的爆發,任何讓 BOSS 進入「強力魅惑」的方式都可能觸發',
-    '・所以修補後對所有相關情境都有保護,包括染靈幻魔・藍色憂鬱、舞者技能等也會魅惑 BOSS 的場景',
-    '【實作位置】',
-    '・startTurn 內 charm path(line ~25789)加 _doCharmFallback 完整備援',
-    '・advShowQuiz 內 2 個 early return(phase 非 idle、防重入)都加 _advQuizResolveCb fire 邏輯',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5470',
-  ] },
-  { ver:'v1.0.20260501.5460', brief:[
-    '🎁 學生設計者專屬禮物:設計師登入後自動獲得自己設計的英雄!✨',
-    '🦸 4 位 5 年 5 班的設計師:閻漢昀、翁嵦晏、陳品均、陳睿智',
-    '🎉 第一次登入會看到專屬歡迎彈窗,給設計師驚喜!',
-  ], items:[
-    '【這次做了什麼?】',
-    '・4 位學生設計師用自己的學校帳號登入後,會自動獲得他們設計的英雄',
-    '・閻漢昀同學會獲得「窮奇」🐅、翁嵦晏同學會獲得「科技生化人」🤖',
-    '・陳品均同學會獲得「鋁合金暴龍」🦖、陳睿智同學會獲得「超鬼神王」👹',
-    '・第一次登入會跳出專屬歡迎彈窗,顯示「歡迎你,XXX 設計師!」',
-    '・以後登入都會自動補發,即使換手機/電腦也能看到自己設計的英雄',
-    '【其他玩家影響】',
-    '・其他玩家不受影響,4 隻學生設計英雄仍可在召喚池抽到',
-    '・召喚池機率(5%)由 8 隻稀有角色平均分擔,跟原本一樣',
-    '【實作位置】',
-    '・新增 STUDENT_DESIGNER_HEROES 對照表(email → 設計師資訊)',
-    '・新增 _grantStudentDesignerHero(email) 函式(自動解鎖+雲端存檔)',
-    '・新增 _showStudentDesignerWelcome 函式(專屬歡迎彈窗)',
-    '・在 onAuthStateChanged 的雲端載入完成後 1.8 秒呼叫補發函式',
-    '・用 localStorage flag (lxps_designer_welcome_*) 確保歡迎彈窗只顯示 1 次',
-    '・advSaveUnlockedHero 內部有去重保護,即使每次登入都呼叫也不會出錯',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5460',
-  ] },
 ];
 
 
@@ -64121,7 +65381,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260508.5650';
+  const CURRENT_VERSION = 'v1.0.20260509.5730';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -64155,7 +65415,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260508.5650';
+window._GAME_LOADED_VERSION = 'v1.0.20260509.5730';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
