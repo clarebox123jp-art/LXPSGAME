@@ -47,8 +47,37 @@ header.app-header{display:flex;align-items:center;justify-content:space-between;
 .intro-banner ol{padding-left:20px;margin-top:6px;}
 .intro-banner code{background:#fff;padding:1px 5px;border-radius:3px;font-size:12px;}
 
+/* ── 折疊式提示列(預設只看到一條,需要時展開) ── */
+.intro-collapsed{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  background:var(--info-soft);border:1px solid #b9d4ee;border-radius:10px;
+  padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--info-text);
+}
+.intro-collapsed .ic-text{flex:1;min-width:240px;line-height:1.55;}
+.intro-collapsed .ic-text strong{color:#11365e;}
+.intro-collapsed .ic-text .accent{color:#a04020;font-weight:700;}
+.intro-collapsed .ic-text .ic-welcome{font-size:13.5px;color:#1c4985;margin-bottom:5px;letter-spacing:0.3px;}
+.intro-collapsed .ic-text .ic-welcome strong{color:#0a4a8c;font-weight:700;}
+.intro-collapsed .ic-text .ic-key{font-size:13px;color:#3a5878;}
+.intro-collapsed button.ic-toggle{
+  border:1px solid #6f9bd1;background:#fff;color:#1c4985;
+  font-size:13px;font-weight:600;padding:6px 14px;border-radius:6px;
+  cursor:pointer;transition:all .12s;flex-shrink:0;white-space:nowrap;
+}
+.intro-collapsed button.ic-toggle:hover{background:#e8f0fb;border-color:#3a78c0;}
+.intro-collapsed button.ic-toggle:active{transform:scale(.97);}
+
+/* 展開時的「收起」按鈕(浮在 guide-pack 右上角) */
+.guide-collapse-btn{
+  position:absolute;top:-1px;right:-1px;
+  border:1px solid var(--border);background:var(--bg-card);color:var(--text-soft);
+  font-size:12px;padding:5px 11px;border-radius:0 12px 0 8px;
+  cursor:pointer;transition:all .12s;z-index:2;
+}
+.guide-collapse-btn:hover{background:var(--bg-soft);color:var(--text);}
+
 /* ── 出題說明懶人包(5 分區彩色) ── */
-.guide-pack{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.guide-pack{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;position:relative;}
 .guide-pack .gcard{border-radius:12px;padding:12px 14px 13px;border:1px solid;font-size:13px;line-height:1.7;position:relative;}
 .guide-pack .gcard h4{font-size:14.5px;margin-bottom:6px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .guide-pack .gcard ul{padding-left:18px;margin-top:4px;}
@@ -114,6 +143,10 @@ aside.sidebar{background:var(--bg-card);border:1px solid var(--border);border-ra
 .q-item.active{border:2px solid var(--primary);background:var(--bg-card);padding:6px 8px;}
 .q-item.has-error{border-color:var(--danger);background:var(--danger-soft);}
 .q-item.has-error.active{border-width:2px;}
+/* ★ v1.0.20260510.5860 — 黃色警告(可送出但管理員核對) */
+.q-item.has-warn{border-color:#e6a800;background:#fff8db;}
+.q-item.has-warn.active{border-width:2px;}
+.q-item.has-error.has-warn{border-color:var(--danger);background:var(--danger-soft);} /* 同時有錯誤時以紅色為主 */
 .q-item-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .q-item-no{font-size:11px;color:var(--text-muted);font-weight:500;flex-shrink:0;}
 .q-item-text{font-size:12px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;}
@@ -203,6 +236,35 @@ main.editor{background:var(--bg-card);border:1px solid var(--border);border-radi
   .generate-cta button.btn-generate-big{font-size:22px;padding:14px 24px;letter-spacing:2px;}
 }
 
+/* ── 「複製成功 + 傳送方式引導」彈窗 ── */
+.send-overlay{position:fixed;inset:0;background:rgba(20,18,14,0.55);z-index:9991;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px);}
+.send-overlay.show{display:flex;}
+.send-modal{background:var(--bg-card);border-radius:14px;width:100%;max-width:520px;box-shadow:0 12px 48px rgba(0,0,0,0.35);overflow:hidden;}
+.send-modal .sm-header{padding:16px 22px;background:linear-gradient(180deg, #ddf1e8 0%, #c6e8d5 100%);border-bottom:1px solid #88c8a8;}
+.send-modal .sm-header h3{font-size:17px;font-weight:700;color:#15583e;display:flex;align-items:center;gap:8px;margin:0;}
+.send-modal .sm-header .sm-sub{font-size:12.5px;color:#236a51;margin-top:4px;}
+.send-modal .sm-body{padding:18px 22px 12px;}
+.send-modal .sm-prompt{font-size:14px;color:var(--text);margin-bottom:14px;font-weight:500;}
+.send-modal .send-card{
+  display:flex;flex-direction:column;
+  border:1.5px solid var(--border);background:var(--bg-soft);
+  border-radius:10px;padding:13px 15px;margin-bottom:10px;cursor:pointer;
+  transition:all .15s;text-decoration:none;color:inherit;
+}
+.send-modal .send-card:hover{border-color:var(--primary);background:#f0f9f4;transform:translateY(-1px);box-shadow:0 4px 12px rgba(45,136,102,0.12);}
+.send-modal .send-card .sc-title{font-size:14.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.send-modal .send-card .sc-target{font-size:13px;color:var(--primary-text);font-weight:600;font-family:Consolas,Monaco,monospace;background:rgba(45,136,102,0.08);padding:3px 8px;border-radius:5px;display:inline-block;margin-bottom:5px;word-break:break-all;}
+.send-modal .send-card .sc-desc{font-size:12px;color:var(--text-soft);line-height:1.55;}
+.send-modal .sm-footer{padding:10px 22px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.send-modal .sm-footer .sm-tip{font-size:11.5px;color:var(--text-muted);flex:1;min-width:200px;}
+.send-modal .sm-footer button{padding:8px 18px;font-size:13px;}
+
+@media (max-width:480px){
+  .send-modal .sm-header h3{font-size:15px;}
+  .send-modal .send-card .sc-title{font-size:13.5px;}
+  .send-modal .send-card .sc-target{font-size:12px;}
+}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c2a26;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:10000;opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -279,6 +341,18 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
     </div>
   </header>
 
+  <!-- ====== 收起時看到的精簡提示列 ====== -->
+  <div class="intro-collapsed" id="intro-collapsed" style="display:none;">
+    <div class="ic-text">
+      <div class="ic-welcome">🎮 歡迎老師加入「<strong>小英雄大對抗</strong>」出題行列,您的題庫會被整合進遊戲關卡,讓孩子邊玩邊學!</div>
+      <div class="ic-key">📋 <strong>只收 4 選 1 單選題</strong>,建議 20~50 題　·　<span class="accent">設「加強複習提醒區間」可獲玩家加成獎勵</span></div>
+    </div>
+    <button class="ic-toggle" id="btn-show-guide">📖 詳細說明</button>
+  </div>
+
+  <!-- ====== 詳細說明區(展開時看得到) ====== -->
+  <div id="intro-full">
+
   <!-- ====== 簡介說明 ====== -->
   <div class="intro-banner">
     <h3>👋 歡迎使用！這是給老師、家長、設計者填寫題庫的工具</h3>
@@ -293,12 +367,13 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
 
   <!-- ====== 出題說明懶人包(5 分區彩色) ====== -->
   <div class="guide-pack">
+    <button class="guide-collapse-btn" id="btn-hide-guide" title="收起詳細說明">✕ 收起</button>
 
     <!-- 1. 藍 — 出題格式重點 -->
     <div class="gcard c-blue">
       <h4>📝 出題格式重點(必看)</h4>
       <ul>
-        <li>每題需要:<span class="em">題目 + 4 個選項 + 1 個正確答案</span>(目前以 <code>4 選 1 單選題</code> 為主)</li>
+        <li>每題需要:<span class="em">題目 + 4 個選項</span>,答案可填可不填(不填會由管理員核對)</li>
         <li>答案標記方式很彈性:可寫 <code>A/B/C/D</code>、<code>1/2/3/4</code>,或直接寫選項全文,系統都會自動辨識</li>
         <li>4 個選項<span class="em">不能重複</span>,題目和選項都不能空白</li>
         <li>建議題庫量:<span class="em">20~50 題</span>(差不多一個單元的份量,玩家不會太快重複)</li>
@@ -308,6 +383,7 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
         <div class="detail-body">
           <strong>關於題型:</strong>遊戲目前以 4 選 1 單選為主,複選題、填空題、是非題暫時無法直接匯入。<br>
           <strong>關於選項數:</strong>請固定提供 4 個選項。少於 4 個會被退件,多於 4 個系統只會取前 4 個。<br>
+          <strong>關於答案:</strong>建議盡量填上,但<span class="em">不確定時可以留空</span>,系統會在題庫單上標記「⚠ 待核對」,管理員整合進遊戲前會幫忙核對。<br>
           <strong>關於提示(Hint):</strong>選填欄位,會在玩家「使用提示法寶」時顯示,可寫一句小線索幫助答題,留空也沒關係。
         </div>
       </details>
@@ -326,7 +402,7 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
         <summary>支援哪些檔案格式?</summary>
         <div class="detail-body">
           <strong>📊 試算表格式(自動匯入,直接變成題目):</strong><br>
-          <code>.csv</code>(Excel 可開、最推薦)、<code>.xlsx</code>(Excel 原生格式)、<code>.json</code>、<code>.txt</code><br><br>
+          <code>.csv</code>(Excel 可開、最推薦)、<code>.xlsx</code>(Excel 原生格式)、<code>.json</code>、<code>.txt</code>(支援 CSV 內容,也支援「題目+選項+答案分行寫」的自由格式)<br><br>
           <strong>📄 文件格式(抽出純文字,需手動整理):</strong><br>
           <code>.pdf</code>、<code>.docx</code>(Word)、<code>.pptx</code>(PowerPoint)<br>
           上傳這類檔案會跳出「📄 解析預覽」視窗,老師可以複製抽出的純文字,再自己改寫成 CSV 或一題一題用「➕ 新增題目」貼進來。<br><br>
@@ -361,15 +437,15 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
       </details>
     </div>
 
-    <!-- 4. 橘 — ★ 加強複習提醒區間 -->
+    <!-- 4. 橘 — 加強複習提醒區間 -->
     <div class="gcard c-orange">
-      <span class="pin">★ 別漏填</span>
-      <h4>📅 加強複習提醒區間是什麼?</h4>
+      <span class="pin">🎁 加分項</span>
+      <h4>📅 加強複習提醒區間(選填)</h4>
       <ul>
         <li>這是<span class="em">玩家會獲得加倍獎勵</span>的日期區間,例如「下週要月考的那 5 天」</li>
         <li>在這區間內答對你的題目,玩家會多拿經驗值與知識幣,鼓勵他們認真複習</li>
         <li>建議區間 <span class="em">3~14 天</span>,太長提醒效果會弱化</li>
-        <li>這欄<span class="em">必填</span>,詳細用法寫在下方欄位旁的提示</li>
+        <li><span class="em">不填也可以</span> — 不填代表這份題庫無時段加成,玩家平時做題仍會獲得基本獎勵</li>
       </ul>
     </div>
 
@@ -384,6 +460,8 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
     </div>
 
   </div>
+
+  </div><!-- /#intro-full -->
 
   <!-- ====== 基本資訊 ====== -->
   <div class="meta-bar">
@@ -407,9 +485,12 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
         <label>對應年級 <span class="required">*</span></label>
         <select id="meta-grade">
           <option value="">— 請選擇 —</option>
-          <option value="低年級">低年級(一、二年級)</option>
-          <option value="中年級">中年級(三、四年級)</option>
-          <option value="高年級">高年級(五、六年級)</option>
+          <option value="一年級">一年級</option>
+          <option value="二年級">二年級</option>
+          <option value="三年級">三年級</option>
+          <option value="四年級">四年級</option>
+          <option value="五年級">五年級</option>
+          <option value="六年級">六年級</option>
           <option value="不分年級">不分年級(全校通用)</option>
         </select>
       </div>
@@ -432,35 +513,31 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
           <option value="其他自訂">其他(請在下面備註說明)</option>
         </select>
       </div>
-      <div class="field">
-        <label>建議難度</label>
-        <select id="meta-difficulty">
-          <option value="普通" selected>普通</option>
-          <option value="沒自信">沒自信(基礎題)</option>
-          <option value="我很會">我很會(進階題)</option>
-        </select>
-        <div class="help">玩家會在符合難度的關卡裡看到這些題目</div>
-      </div>
 
-      <!-- 提醒區間 - 重點! -->
+      <!-- 提醒區間 - 加分項 -->
       <div class="full">
         <div class="reminder-box">
-          <div class="title">📅 加強複習提醒區間(重要!玩家在這段時間做題會獲得獎勵)</div>
-          <div class="row">
+          <div class="title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;">
+              <input type="checkbox" id="meta-reminder-enable" style="width:16px;height:16px;cursor:pointer;">
+              <span>📅 加強複習提醒區間(選填)</span>
+            </label>
+            <span style="font-size:11px;font-weight:400;color:#7a4310;">勾選此項才會啟用,並可設定日期</span>
+          </div>
+          <div class="row" id="reminder-date-row" style="display:none;margin-top:10px;">
             <div class="field">
-              <label>開始日期 <span class="required">*</span></label>
+              <label>開始日期</label>
               <input type="date" id="meta-reminder-start">
             </div>
             <div class="sep">→</div>
             <div class="field">
-              <label>結束日期 <span class="required">*</span></label>
+              <label>結束日期</label>
               <input type="date" id="meta-reminder-end">
             </div>
           </div>
           <div class="help-text">
-            <strong>用途:</strong>例如下週要小考,可以設「下週一到下週五」,讓玩家收到「加強複習」提醒,
-            在這段期間答對你的題目會額外加金幣/經驗,鼓勵他們積極複習。
-            建議區間 3~14 天,太長提醒效果會弱化。
+            <strong>用途:</strong>例如下週要小考,可以設「下週一到下週五」,讓玩家在這段期間答對你的題目會額外加金幣/經驗,鼓勵積極複習。建議區間 3~14 天,太長提醒效果會弱化。
+            <br><strong>不啟用也沒關係</strong> — 此題庫無時段加成,玩家平時做題仍會正常獲得基本獎勵。
           </div>
         </div>
       </div>
@@ -552,7 +629,6 @@ const state = {
     bankName: '',
     grade: '',
     subject: '',
-    difficulty: '普通',
     reminderStart: '',
     reminderEnd: '',
     note: '',
@@ -568,7 +644,7 @@ function newQuestion(){
     id: 'q' + (nextId++),
     question: '',
     options: ['', '', '', ''],
-    answer: 'A',
+    answer: '',  // ★ v1.0.20260510.5860 — 預設無答案,老師明確選了才填上
     hint: '',
   };
 }
@@ -576,17 +652,26 @@ function newQuestion(){
 // ════════════════════════════════════════════════════════════════════
 // 驗證:回傳每題的錯誤陣列
 // ════════════════════════════════════════════════════════════════════
+// ★ v1.0.20260510.5860 — 區分「紅色錯誤」(擋輸出) 跟「黃色警告」(可送出但管理員核對)
+//   為了向下相容,validateQuestion 回傳的還是錯誤陣列(只含真正阻擋的),
+//   另加 validateQuestionWarnings 回傳警告陣列。
 function validateQuestion(q){
   const errs = [];
   if (!q.question || !q.question.trim()) errs.push('題目空白');
   const opts = q.options || ['','','',''];
   if (opts.some(o => !o || !String(o).trim())) errs.push('有選項空白');
-  if (!['A','B','C','D'].includes(q.answer)) errs.push('沒指定答案');
   // 重複選項
   const trimmed = opts.map(o => String(o||'').trim());
   const uniq = new Set(trimmed.filter(Boolean));
   if (trimmed.filter(Boolean).length !== uniq.size) errs.push('選項有重複');
   return errs;
+}
+
+// ★ v1.0.20260510.5860 — 警告(可送出但提醒管理員核對)
+function validateQuestionWarnings(q){
+  const warns = [];
+  if (!['A','B','C','D'].includes(q.answer)) warns.push('未指定答案');
+  return warns;
 }
 
 function validateMeta(){
@@ -595,8 +680,14 @@ function validateMeta(){
   if (!state.meta.bankName.trim()) errs.push('請填題庫名稱');
   if (!state.meta.grade) errs.push('請選擇年級');
   if (!state.meta.subject) errs.push('請選擇科目');
-  if (!state.meta.reminderStart) errs.push('請選擇提醒開始日期');
-  if (!state.meta.reminderEnd) errs.push('請選擇提醒結束日期');
+  // ★ v1.0.20260510.5852 — 加強複習提醒區間改為選填
+  //   只在「兩個日期都填」或「只填一個」時做合理性驗證,完全不填視為「無加成」
+  if (state.meta.reminderStart && !state.meta.reminderEnd){
+    errs.push('已填提醒開始日期,請補上結束日期(或兩個都清空表示不設提醒)');
+  }
+  if (!state.meta.reminderStart && state.meta.reminderEnd){
+    errs.push('已填提醒結束日期,請補上開始日期(或兩個都清空表示不設提醒)');
+  }
   if (state.meta.reminderStart && state.meta.reminderEnd
       && state.meta.reminderStart > state.meta.reminderEnd){
     errs.push('結束日期不能早於開始日期');
@@ -612,12 +703,22 @@ function renderList(){
   list.innerHTML = '';
   state.questions.forEach((q, idx) => {
     const errs = validateQuestion(q);
+    const warns = (typeof validateQuestionWarnings === 'function') ? validateQuestionWarnings(q) : [];
     const item = document.createElement('div');
-    item.className = 'q-item' + (state.selectedId === q.id ? ' active' : '') + (errs.length ? ' has-error' : '');
+    item.className = 'q-item'
+      + (state.selectedId === q.id ? ' active' : '')
+      + (errs.length ? ' has-error' : '')
+      + (warns.length ? ' has-warn' : '');
     const text = (q.question || '').trim().slice(0, 40) || '(尚未輸入)';
 
     const row = document.createElement('div');
     row.className = 'q-item-row';
+
+    // 顯示提示:錯誤優先、其次警告、再來才是答案
+    let metaInfo = '';
+    if(errs.length){ metaInfo = '⚠ ' + errs[0]; }
+    else if(warns.length){ metaInfo = '⚠ ' + warns[0]; }
+    else { metaInfo = '答案 ' + (q.answer || '?'); }
 
     const main = document.createElement('div');
     main.style.flex = '1';
@@ -628,7 +729,7 @@ function renderList(){
       </div>
       <div class="q-item-text">${escapeHtml(text)}</div>
       <div class="q-item-meta">
-        <span>${errs.length ? '⚠ ' + errs[0] : '答案 ' + q.answer}</span>
+        <span>${metaInfo}</span>
         <span>${q.options.filter(o => o && o.trim()).length}/4 選項</span>
       </div>
     `;
@@ -650,11 +751,20 @@ function renderList(){
   });
 
   document.getElementById('stat-total').textContent = '共 ' + state.questions.length + ' 題';
+  // ★ v1.0.20260510.5860 — 統計區同時顯示紅色錯誤 + 黃色待核對
   const errCount = state.questions.filter(q => validateQuestion(q).length).length;
+  const warnCount = state.questions.filter(q =>
+    !validateQuestion(q).length
+    && (typeof validateQuestionWarnings === 'function')
+    && validateQuestionWarnings(q).length
+  ).length;
   const errEl = document.getElementById('stat-error');
   if (errCount > 0){
-    errEl.textContent = '⚠ ' + errCount + ' 題有錯';
+    errEl.textContent = '⚠ ' + errCount + ' 題有錯' + (warnCount > 0 ? ' · ' + warnCount + ' 題待核對' : '');
     errEl.style.color = '#832217';
+  } else if (warnCount > 0) {
+    errEl.textContent = '⚠ ' + warnCount + ' 題未指定答案 (管理員會核對)';
+    errEl.style.color = '#7a5d10';
   } else if (state.questions.length > 0) {
     errEl.textContent = '✓ 都正確';
     errEl.style.color = '#15583e';
@@ -811,14 +921,18 @@ function selectQuestion(id){
 
 function clearAll(){
   if (!confirm('確定全部清空?基本資訊跟所有題目都會清掉')) return;
-  state.meta = {author:'',contact:'',bankName:'',grade:'',subject:'',difficulty:'普通',reminderStart:'',reminderEnd:'',note:''};
+  state.meta = {author:'',contact:'',bankName:'',grade:'',subject:'',reminderStart:'',reminderEnd:'',note:''};
   state.questions = [];
   state.selectedId = null;
   // 同步 UI
   ['meta-author','meta-contact','meta-bank-name','meta-grade','meta-subject',
-   'meta-difficulty','meta-reminder-start','meta-reminder-end','meta-note']
+   'meta-reminder-start','meta-reminder-end','meta-note']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('meta-difficulty').value = '普通';
+  // ★ 重置提醒區間勾選框 + 隱藏日期欄位
+  const $cbReset = document.getElementById('meta-reminder-enable');
+  const $rowReset = document.getElementById('reminder-date-row');
+  if($cbReset) $cbReset.checked = false;
+  if($rowReset) $rowReset.style.display = 'none';
   document.getElementById('output-area').style.display = 'none';
   document.getElementById('btn-copy').disabled = true;
   renderList();
@@ -838,10 +952,36 @@ async function handleFile(file){
       const data = JSON.parse(text);
       const arr = Array.isArray(data) ? data : (data.questions || []);
       importRows(arr.map(normalizeRow));
-    } else if (name.endsWith('.csv') || name.endsWith('.txt')){
+    } else if (name.endsWith('.csv')){
       const text = await file.text();
       const rows = parseCSV(text);
       importRows(rows);
+    } else if (name.endsWith('.txt')){
+      // ★ v1.0.20260510.5840 — TXT 智慧解析三段式:
+      //   1) 先當 CSV 試(老師可能把 CSV 內容存成 .txt)
+      //   2) 沒題目 → 改用自由格式解析(題目+選項+答案分行寫)
+      //   3) 還是沒 → 開啟解析預覽 modal,讓老師看純文字後自己整理
+      const text = await file.text();
+      let rows = [];
+      try{ rows = parseCSV(text); }catch(_){ rows = []; }
+      const csvHasQuestions = (rows || []).some(r => r && r.question);
+      if(csvHasQuestions){
+        importRows(rows);
+      } else {
+        const freeRows = parseFreeFormText(text);
+        if(freeRows.length){
+          importRows(freeRows);
+        } else {
+          // 完全無法解析 → 走預覽 modal
+          if(typeof window._parseDocAndPreview === 'function'){
+            showToast('TXT 內容格式無法自動匯入,改用預覽視窗','warning');
+            // 把 file 轉成「假 PDF」走 modal 顯示也不適合,直接呼叫顯示文字的版本
+            window._showRawTextPreview(file.name, text);
+          } else {
+            showToast('檔案中沒有解析到題目','danger');
+          }
+        }
+      }
     } else if (name.endsWith('.xlsx') || name.endsWith('.xls')){
       // 動態載入 SheetJS
       showToast('正在載入 Excel 解析模組...');
@@ -986,6 +1126,206 @@ function normalizeAnswer(raw, opts){
   return 'A'; // fallback
 }
 
+// ════════════════════════════════════════════════════════════════════
+// ★ v1.0.20260510.5840 — 自由格式 TXT 解析器
+// ════════════════════════════════════════════════════════════════════
+// 支援多種常見題庫格式:
+//   範例 1(逐行式):
+//     1. 臺灣最高峰?
+//     (A) 阿里山
+//     (B) 玉山
+//     (C) 雪山
+//     (D) 合歡山
+//     答案:B
+//   範例 2(緊湊式):
+//     1. 臺灣最高峰? (A)阿里山 (B)玉山 (C)雪山 (D)合歡山 答案:B
+//   範例 3(全形/數字選項):
+//     1、臺灣最高峰?  ①阿里山 ②玉山 ③雪山 ④合歡山  答:②
+function parseFreeFormText(text){
+  if(!text) return [];
+  // 統一全形括號→半形,並把 ①②③④ 轉成 (A)(B)(C)(D) 方便正則
+  let normalized = String(text)
+    .replace(/[（]/g, '(').replace(/[）]/g, ')')
+    .replace(/[【]/g, '[').replace(/[】]/g, ']')
+    .replace(/①/g, '(A)').replace(/②/g, '(B)').replace(/③/g, '(C)').replace(/④/g, '(D)')
+    .replace(/[Ａ-Ｄ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)) // 全形 A-D 轉半形
+    .replace(/\r\n?/g, '\n');
+
+  // 把整段文字切成「題目區塊」:用「題號開頭的行」當分隔
+  // 題號樣式:1. / 1、 / 1) / (1) / 第1題 / Q1. / 第一題
+  // ★ v1.0.20260510.5841 — 新增「( ) 1.」這種前帶答案空格的常見學校考卷格式
+  //   也接受「(  ) 1.」(括號內可能有多個空格)、「(O) 1.」、「(╳) 1.」等
+  const qNumRe = /^(?:\(\s*[OoX╳✓✗vV]?\s*\)\s*)?(?:第\s*\d+\s*題|Q\s*\d+[.、:)]\s*|\(\s*\d+\s*\)\s*|\d+\s*[.、)]\s*)/;
+  const lines = normalized.split('\n');
+  const blocks = [];
+  let cur = null;
+  lines.forEach(rawLine => {
+    const line = rawLine.trim();
+    if(!line){
+      if(cur) cur.push('');
+      return;
+    }
+    if(qNumRe.test(line)){
+      if(cur && cur.length) blocks.push(cur);
+      cur = [line];
+    } else if(cur){
+      cur.push(line);
+    }
+    // 第一個題號還沒出現之前,丟棄(可能是標題、說明)
+  });
+  if(cur && cur.length) blocks.push(cur);
+
+  if(!blocks.length) return [];
+
+  // 解析單個題目區塊
+  const results = [];
+  blocks.forEach(block => {
+    // 把 block 的所有行接成一段字串,移除前置題號
+    let blockText = block.join('\n');
+    // 移除題號開頭(允許前面有「( ) 1.」這種答案空格)
+    blockText = blockText.replace(qNumRe, '');
+
+    // ★ v1.0.20260510.5842 — 改用「先找標記位置 → 切片」的方式,徹底避開 multi-line $ 陷阱
+    // 步驟:
+    //   1) 找出題目區塊中,4 個選項標記 (A) (B) (C) (D)(或 A. B. C. D.)的位置
+    //   2) 找出答案標記「答:X」「答案:X」等的位置
+    //   3) 第 i 個選項的內容 = 從自己 markEnd 開始,到下個選項 markStart(或答案標記、結尾)為止
+    //   4) 題目 = 從區塊開頭到第一個選項標記之前
+    const optKeys = ['A','B','C','D'];
+    const opts = ['','','',''];
+    // 用 d 旗標(indices)拿位置,fallback:沒 d 旗標就用 exec 的 .index
+    function findOptionMark(text, key){
+      // 樣式 1: (A)
+      const re1 = new RegExp('\\(\\s*' + key + '\\s*\\)', 'g');
+      const m1 = re1.exec(text);
+      if(m1) return { start: m1.index, end: m1.index + m1[0].length };
+      // 樣式 2: A. / A、 / A: / A:(全形)  (要求行首或前面是空白/換行,避免誤抓題目中的 A)
+      const re2 = new RegExp('(?:^|[\\s\\n])(' + key + '\\s*[.、:：])', 'g');
+      const m2 = re2.exec(text);
+      if(m2) return { start: m2.index + m2[0].indexOf(key), end: m2.index + m2[0].length };
+      return null;
+    }
+    // 答案標記位置
+    const ansRe = /(?:答案|正解|解答|Ans|答)\s*[:：]\s*\(?\s*([A-D1-4])\s*\)?/i;
+    const ansMatch = ansRe.exec(blockText);
+    const ansMarkStart = ansMatch ? ansMatch.index : -1;
+    const ansLetterRaw = ansMatch ? ansMatch[1].toUpperCase() : '';
+
+    // 找 4 個選項位置
+    const marks = [];
+    optKeys.forEach((k) => {
+      const pos = findOptionMark(blockText, k);
+      marks.push(pos); // 可能是 null
+    });
+
+    // 把選項位置依 start 排序(但保留原本 A/B/C/D 對應)
+    // 計算每個選項內容的結束位置
+    // 結束位置 = 後面所有「選項或答案」標記中,start > 自己 end 的最小值
+    const allBoundaries = [];
+    marks.forEach((m) => { if(m) allBoundaries.push(m.start); });
+    if(ansMarkStart >= 0) allBoundaries.push(ansMarkStart);
+    allBoundaries.push(blockText.length); // 末端
+
+    optKeys.forEach((k, i) => {
+      const m = marks[i];
+      if(!m) return;
+      // 找出比 m.end 大的最小 boundary 當結束
+      let endPos = blockText.length;
+      allBoundaries.forEach(b => {
+        if(b > m.end && b < endPos) endPos = b;
+      });
+      // 切出原始內容
+      let raw = blockText.slice(m.end, endPos);
+      // ★ v1.0.20260510.5842 + 5870 — 智慧空白處理:
+      //   1) 中文字之間的換行/空白直接合併(避免「教 室 的 面 北 窗 邊」)
+      //   2) 英文/數字之間的換行才轉成空格,以免破壞單字分隔
+      raw = raw.replace(/\r/g, '');
+      // 中文字 + 換行 → 中文字(直接連起來)
+      const CJK_RE = '[\\u3400-\\u9fff\\u3000-\\u303f\\uff00-\\uffef]';
+      // 多輪迭代,確保連續多個中文字之間的空白都清乾淨
+      let prevRaw = '';
+      let iter = 0;
+      while(raw !== prevRaw && iter < 5){
+        prevRaw = raw;
+        // 中文字 + (一個或多個換行/空白) + 中文字 → 直接合併
+        raw = raw.replace(new RegExp('(' + CJK_RE + ')[ \\t\\n]+(' + CJK_RE + ')', 'g'), '$1$2');
+        iter++;
+      }
+      // 剩餘的換行(英數場景)轉空格
+      raw = raw.replace(/\n+/g, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+      opts[i] = raw;
+    });
+
+    // 題目:從 blockText 開頭到「第一個有效標記」之前
+    let firstMarkStart = blockText.length;
+    marks.forEach(m => { if(m && m.start < firstMarkStart) firstMarkStart = m.start; });
+    if(ansMarkStart >= 0 && ansMarkStart < firstMarkStart) firstMarkStart = ansMarkStart;
+    let questionText = blockText.slice(0, firstMarkStart).replace(/\r/g, '');
+    // ★ v1.0.20260510.5870 — 多輪迭代清理中文字間多餘空白
+    const CJK_RE_Q = '[\\u3400-\\u9fff\\u3000-\\u303f\\uff00-\\uffef]';
+    let prevQ = '';
+    let iterQ = 0;
+    while(questionText !== prevQ && iterQ < 5){
+      prevQ = questionText;
+      questionText = questionText.replace(new RegExp('(' + CJK_RE_Q + ')[ \\t\\n]+(' + CJK_RE_Q + ')', 'g'), '$1$2');
+      iterQ++;
+    }
+    questionText = questionText.replace(/\n+/g, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+
+    // 把答案數字 1-4 轉成 A-D
+    let ansLetter = ansLetterRaw;
+    if(/^[1-4]$/.test(ansLetter)){
+      ansLetter = ['A','B','C','D'][parseInt(ansLetter,10)-1];
+    }
+    // ★ v1.0.20260510.5860 — 沒抓到答案就回傳空字串(讓系統標為「未指定」由管理員核對)
+    if(!['A','B','C','D'].includes(ansLetter)) ansLetter = '';
+
+    // 至少要有題目 + 任 1 個選項才當作有效
+    const validOptCount = opts.filter(o => o).length;
+    if(questionText && validOptCount >= 1){
+      results.push({
+        question: questionText,
+        options: opts,
+        answer: ansLetter,
+        hint: '',
+      });
+    }
+  });
+
+  return results;
+}
+
+// ★ v1.0.20260510.5840 — 純文字預覽(TXT 完全無法解析時的最後 fallback)
+// 利用既有的 modal,讓老師看到內容後手動整理
+window._showRawTextPreview = function(filename, text){
+  try{
+    const $overlay = document.getElementById('parse-overlay');
+    const $loading = document.getElementById('pm-loading');
+    const $content = document.getElementById('pm-content');
+    const $filenameEl = document.getElementById('pm-filename');
+    const $textArea = document.getElementById('pm-text');
+    const $btnCopy = document.getElementById('pm-copy');
+    const $statChars = document.getElementById('pm-stat-chars');
+    const $statLines = document.getElementById('pm-stat-lines');
+    const $statPages = document.getElementById('pm-stat-pages');
+    if(!$overlay || !$textArea) return;
+    $filenameEl.textContent = filename;
+    $loading.classList.remove('show');
+    $content.style.display = 'flex';
+    $textArea.value = text || '';
+    $statChars.textContent = (text||'').length + ' 字';
+    $statLines.textContent = (text ? text.split('\n').length : 0) + ' 行';
+    $statPages.style.display = 'none';
+    $btnCopy.disabled = !text;
+    $overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => $textArea.focus(), 50);
+  } catch(e){
+    console.error('[showRawTextPreview]', e);
+    if(typeof showToast === 'function') showToast('無法開啟預覽視窗','danger');
+  }
+};
+
 function importRows(rows){
   const valid = (rows || []).filter(r => r && (r.question || r.options.some(o => o)));
   if (!valid.length){
@@ -997,7 +1337,8 @@ function importRows(rows){
     q.question = r.question || '';
     q.options = (r.options || ['','','','']).slice(0,4);
     while (q.options.length < 4) q.options.push('');
-    q.answer = r.answer || 'A';
+    // ★ v1.0.20260510.5860 — 沒提供答案時保持空字串(會在 UI 標黃色,管理員核對)
+    q.answer = ['A','B','C','D'].includes(r.answer) ? r.answer : '';
     q.hint = r.hint || '';
     state.questions.push(q);
   });
@@ -1067,6 +1408,18 @@ function generateOutput(){
   if (qErrs.length){
     if (!confirm('有 ' + qErrs.length + ' 題還有錯誤,確定要繼續產生?\n(管理員會幫你修正,但建議先處理掉再送出)')) return;
   }
+  // ★ v1.0.20260510.5860 — 警告題不擋輸出,只跳提示讓老師確認
+  const qWarns = state.questions.filter(q =>
+    !validateQuestion(q).length
+    && (typeof validateQuestionWarnings === 'function')
+    && validateQuestionWarnings(q).length
+  );
+  if (qWarns.length){
+    const _msg = '有 ' + qWarns.length + ' 題未指定答案,題庫單會標記「⚠ 待管理員核對」。\n\n' +
+                 '管理員整合進遊戲前會幫忙核對正確答案,確定要這樣送出嗎?\n' +
+                 '(若你想自己填答案,請先取消、回到編輯區指定每題的正解)';
+    if (!confirm(_msg)) return;
+  }
 
   const lines = [];
   const sep = '═'.repeat(72);
@@ -1082,10 +1435,19 @@ function generateOutput(){
   lines.push('  題庫名稱       : ' + state.meta.bankName);
   lines.push('  對應年級       : ' + state.meta.grade);
   lines.push('  對應科目       : ' + state.meta.subject);
-  lines.push('  建議難度       : ' + state.meta.difficulty);
-  lines.push('  ★ 加強提醒區間 : ' + state.meta.reminderStart + '  →  ' + state.meta.reminderEnd
-    + dayRangeHint(state.meta.reminderStart, state.meta.reminderEnd));
+  // ★ v1.0.20260510.5852 — 提醒區間是選填,沒填要清楚標示
+  if (state.meta.reminderStart && state.meta.reminderEnd){
+    lines.push('  ★ 加強提醒區間 : ' + state.meta.reminderStart + '  →  ' + state.meta.reminderEnd
+      + dayRangeHint(state.meta.reminderStart, state.meta.reminderEnd));
+  } else {
+    lines.push('  加強提醒區間   : (未設定 — 此題庫無時段加成,玩家平時做題仍會獲得基本獎勵)');
+  }
   lines.push('  題目總數       : ' + state.questions.length + ' 題');
+  // ★ v1.0.20260510.5860 — 題庫單頭部加總計待核對題目數量
+  const _unansweredCount = state.questions.filter(q => !['A','B','C','D'].includes(q.answer)).length;
+  if (_unansweredCount > 0){
+    lines.push('  ⚠ 待核對     : ' + _unansweredCount + ' 題未指定答案 (老師未填,請管理員核對後再上線)');
+  }
   if (state.meta.note){
     lines.push('');
     lines.push('  【備註 / 給管理員的話】');
@@ -1098,15 +1460,25 @@ function generateOutput(){
 
   state.questions.forEach((q, i) => {
     const errs = validateQuestion(q);
+    const warns = (typeof validateQuestionWarnings === 'function') ? validateQuestionWarnings(q) : [];
     lines.push('');
-    lines.push('  第 ' + (i+1) + ' 題' + (errs.length ? '   ⚠ ' + errs.join('、') : ''));
+    // ★ v1.0.20260510.5860 — 標題列同時顯示錯誤(紅)與警告(黃)
+    let title = '  第 ' + (i+1) + ' 題';
+    if(errs.length) title += '   ⚠ ' + errs.join('、');
+    if(warns.length) title += '   ⚠ ' + warns.join('、') + ' (請管理員核對)';
+    lines.push(title);
     lines.push(sep2);
     lines.push('  Q : ' + (q.question || '(空白)'));
     ['A','B','C','D'].forEach((letter, idx) => {
       const mark = q.answer === letter ? '★' : ' ';
       lines.push('  ' + mark + ' ' + letter + ' : ' + (q.options[idx] || '(空白)'));
     });
-    lines.push('  答案: ' + q.answer);
+    // ★ v1.0.20260510.5860 — 答案沒指定時清楚標示
+    if(['A','B','C','D'].includes(q.answer)){
+      lines.push('  答案: ' + q.answer);
+    } else {
+      lines.push('  答案: ⚠ 未指定,請管理員核對');
+    }
     if (q.hint) lines.push('  提示: ' + q.hint);
   });
 
@@ -1116,10 +1488,21 @@ function generateOutput(){
   lines.push(sep);
   lines.push('  1. 把上面題目接到 ADV_QUIZ_DB / 對應專屬題庫陣列尾端,id 接續往下排');
   lines.push('     格式:{id, grade, subject, difficulty, question, options:[A,B,C,D], answer, hint}');
-  lines.push('  2. 提醒區間 ' + state.meta.reminderStart + ' → ' + state.meta.reminderEnd
-    + ' 內,玩家答對這批題目可額外加金幣/經驗(獎勵倍率自訂)');
-  lines.push('  3. 區間結束後,題目仍保留在題庫,只是不再額外加成');
-  lines.push('  4. 上線前請順手檢查:答案是否合理、有無錯字、是否符合年級程度');
+  lines.push('     ★ difficulty 欄位由管理員決定(可填「普通」或依題庫適性給定),老師端不指定');
+  // ★ v1.0.20260510.5860 — 提示管理員核對未指定答案題目
+  if (_unansweredCount > 0){
+    lines.push('  ★ 注意:有 ' + _unansweredCount + ' 題未指定答案(標記「⚠ 未指定,請管理員核對」)');
+    lines.push('     上線前務必逐題核對正確答案,否則玩家答題會出現錯誤判定');
+  }
+  if (state.meta.reminderStart && state.meta.reminderEnd){
+    lines.push('  2. 提醒區間 ' + state.meta.reminderStart + ' → ' + state.meta.reminderEnd
+      + ' 內,玩家答對這批題目可額外加金幣/經驗(獎勵倍率自訂)');
+    lines.push('  3. 區間結束後,題目仍保留在題庫,只是不再額外加成');
+    lines.push('  4. 上線前請順手檢查:答案是否合理、有無錯字、是否符合年級程度');
+  } else {
+    lines.push('  2. 此題庫未設定提醒區間,玩家平時做題會獲得基本獎勵,不會額外加成');
+    lines.push('  3. 上線前請順手檢查:答案是否合理、有無錯字、是否符合年級程度');
+  }
   lines.push(sep);
 
   const txt = lines.join('\n');
@@ -1146,7 +1529,7 @@ function copyOutput(){
   if (!txt){ showToast('還沒產生題庫單','danger'); return; }
   if (navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(
-      () => showToast('✓ 已複製,可以貼給管理員了','success'),
+      () => { showToast('✓ 已複製','success'); openSendModal(); },
       () => fallbackCopy(txt),
     );
   } else fallbackCopy(txt);
@@ -1155,9 +1538,23 @@ function fallbackCopy(t){
   const ta = document.createElement('textarea');
   ta.value = t; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); showToast('✓ 已複製','success'); }
+  try { document.execCommand('copy'); showToast('✓ 已複製','success'); openSendModal(); }
   catch(e){ showToast('複製失敗,請手動選取','danger'); }
   document.body.removeChild(ta);
+}
+
+// ★ v1.0.20260510.5880 — 複製成功後彈出「傳送方式選擇」視窗
+function openSendModal(){
+  const $ov = document.getElementById('send-overlay');
+  if(!$ov) return;
+  $ov.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSendModal(){
+  const $ov = document.getElementById('send-overlay');
+  if(!$ov) return;
+  $ov.classList.remove('show');
+  document.body.style.overflow = '';
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1202,10 +1599,31 @@ window.addEventListener('DOMContentLoaded', () => {
   bind('meta-bank-name', 'bankName');
   bind('meta-grade', 'grade');
   bind('meta-subject', 'subject');
-  bind('meta-difficulty', 'difficulty');
   bind('meta-reminder-start', 'reminderStart');
   bind('meta-reminder-end', 'reminderEnd');
   bind('meta-note', 'note');
+
+  // ★ v1.0.20260510.5853 — 加強複習提醒區間「啟用」開關
+  //   預設不勾選,日期欄位也預設隱藏,避免瀏覽器自動顯示今日日期讓老師誤會
+  (function setupReminderToggle(){
+    const $cb = document.getElementById('meta-reminder-enable');
+    const $row = document.getElementById('reminder-date-row');
+    const $start = document.getElementById('meta-reminder-start');
+    const $end = document.getElementById('meta-reminder-end');
+    if(!$cb || !$row) return;
+    function apply(){
+      if($cb.checked){
+        $row.style.display = '';
+      } else {
+        $row.style.display = 'none';
+        // 取消勾選時清空日期 + state
+        if($start){ $start.value = ''; state.meta.reminderStart = ''; }
+        if($end){ $end.value = ''; state.meta.reminderEnd = ''; }
+      }
+    }
+    $cb.addEventListener('change', apply);
+    apply();
+  })();
 
   // 上傳
   const ua = document.getElementById('upload-area');
@@ -1236,6 +1654,60 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-download-sample-csv').onclick = downloadSampleCSV;
   document.getElementById('btn-download-sample-json').onclick = downloadSampleJSON;
 
+  // ★ v1.0.20260510.5880 — 「複製成功 + 傳送方式」彈窗關閉事件
+  (function setupSendModal(){
+    const $ov = document.getElementById('send-overlay');
+    const $btn = document.getElementById('sm-close');
+    if(!$ov || !$btn) return;
+    $btn.addEventListener('click', closeSendModal);
+    $ov.addEventListener('click', (e) => { if(e.target === $ov) closeSendModal(); });
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && $ov.classList.contains('show')) closeSendModal();
+    });
+  })();
+
+  // ★ v1.0.20260510.5850 — 詳細說明區折疊控制(localStorage 記憶)
+  // ★ v1.0.20260510.5851 — 改成預設收起,讓老師畫面更乾淨
+  //   邏輯:
+  //   - 首次造訪 → 預設「收起」(只看到歡迎+關鍵提示+詳細說明按鈕)
+  //   - 老師點過「📖 詳細說明」展開 → localStorage 記住,下次自動展開
+  //   - 老師點「✕ 收起」 → localStorage 記住,下次自動收起
+  (function setupGuideCollapse(){
+    const STORAGE_KEY = 'quiz_input_guide_collapsed_v1';
+    const $full = document.getElementById('intro-full');
+    const $collapsed = document.getElementById('intro-collapsed');
+    const $btnShow = document.getElementById('btn-show-guide');
+    const $btnHide = document.getElementById('btn-hide-guide');
+    if(!$full || !$collapsed || !$btnShow || !$btnHide) return;
+
+    function applyState(isCollapsed){
+      if(isCollapsed){
+        $full.style.display = 'none';
+        $collapsed.style.display = '';
+      } else {
+        $full.style.display = '';
+        $collapsed.style.display = 'none';
+      }
+    }
+
+    // 讀取狀態(預設收起;localStorage 為 '0' 才視為展開)
+    let isCollapsed = true;
+    try{
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(saved === '0') isCollapsed = false;
+    } catch(_){}
+    applyState(isCollapsed);
+
+    $btnHide.addEventListener('click', () => {
+      applyState(true);
+      try{ localStorage.setItem(STORAGE_KEY, '1'); }catch(_){}
+    });
+    $btnShow.addEventListener('click', () => {
+      applyState(false);
+      try{ localStorage.setItem(STORAGE_KEY, '0'); }catch(_){}
+    });
+  })();
+
   renderList();
   renderEditor();
 });
@@ -1261,7 +1733,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <!-- 主內容(解析完成後顯示) -->
       <div id="pm-content" style="display:none;flex-direction:column;gap:10px;flex:1;">
         <div class="pm-tip">
-          <strong>💡 怎麼用:</strong>下方是從你的檔案抽出的純文字。請對照<strong>📐 排版範例</strong>(畫面上方黃色區塊)的格式,把題目改寫成 CSV 或一題一題用「➕ 新增題目」貼進編輯區。文字可以在這裡先編輯整理,改完按下方「📎 複製全文」即可。
+          <strong>💡 怎麼用:</strong>下方是從你的檔案抽出的純文字。文字可以直接編輯整理,改完後有兩個選擇:<br>
+          <strong style="color:#15583e;">🚀 嘗試自動匯入題目</strong>(綠色按鈕,推薦) — 系統會自動抓出題目、選項、答案直接加進編輯區
+          ,<br>或 <strong>📎 複製全文</strong>後到下方手動貼進編輯區。
+          <br><br>
+          <strong style="color:#a04020;">⚠ 重要提醒:</strong>遊戲目前只支援 <strong>4 選 1 單選題</strong>。若你的檔案包含<strong>是非題、填充題、連連看、配合題、問答題</strong>等其他題型,請在下方文字框中<strong>手動刪除那些段落</strong>,只保留選擇題後再匯入。
         </div>
         <div class="pm-stat">
           <span class="stat-pill" id="pm-stat-chars">0 字</span>
@@ -1276,8 +1752,43 @@ window.addEventListener('DOMContentLoaded', () => {
       <span style="font-size:11px;color:var(--text-muted);">檔案完全在你的瀏覽器處理,不會上傳到任何伺服器</span>
       <div class="pm-actions">
         <button id="pm-cancel" class="ghost">取消</button>
-        <button id="pm-copy" class="primary" disabled>📎 複製全文</button>
+        <button id="pm-copy" disabled>📎 複製全文</button>
+        <button id="pm-import" class="primary" disabled style="background:#2d8866;border-color:#2d8866;">🚀 嘗試自動匯入題目</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 「複製成功 + 傳送方式引導」彈窗 ====== -->
+<div class="send-overlay" id="send-overlay">
+  <div class="send-modal" role="dialog" aria-modal="true" aria-labelledby="sm-title">
+    <div class="sm-header">
+      <h3 id="sm-title">✅ 已複製到剪貼簿!</h3>
+      <div class="sm-sub">題庫單已準備好,請選擇傳送方式給管理員</div>
+    </div>
+    <div class="sm-body">
+      <div class="sm-prompt">📨 請選擇傳送方式給<strong>祈宏老師</strong>:</div>
+
+      <a href="mailto:clarebox123@lsps.tp.edu.tw?subject=%E3%80%90%E5%B0%8F%E8%8B%B1%E9%9B%84%E5%A4%A7%E5%B0%8D%E6%8A%97%E3%80%91%E9%A1%8C%E5%BA%AB%E6%8F%90%E4%BA%A4&body=%E8%AB%8B%E5%9C%A8%E6%AD%A4%E8%B2%BC%E4%B8%8A%E5%89%9B%E5%89%9B%E8%A4%87%E8%A3%BD%E7%9A%84%E9%A1%8C%E5%BA%AB%E5%96%AE(Ctrl%2BV)%E2%86%93%0A%0A" class="send-card" id="sm-email">
+        <div class="sc-title">📧 寄 Email</div>
+        <div class="sc-target">clarebox123@lsps.tp.edu.tw</div>
+        <div class="sc-desc">點擊會開啟你電腦的郵件 App,收件人/主旨會自動填好,只要在內文按 <strong>Ctrl+V</strong>(Mac:<strong>⌘+V</strong>)貼上題庫單,然後按「寄出」即可。</div>
+      </a>
+
+      <div class="send-card" id="sm-line">
+        <div class="sc-title">💬 用 Line 貼給<strong style="color:#2d8866;margin-left:2px;">陳小克</strong></div>
+        <div class="sc-desc">
+          剪貼簿內容已備好,請依下列步驟操作:<br>
+          1️⃣ 打開 <strong>Line</strong> App<br>
+          2️⃣ 找到聯絡人「<strong>陳小克</strong>」(管理員本人)<br>
+          3️⃣ 在對話框裡按 <strong>Ctrl+V</strong>(Mac:<strong>⌘+V</strong>)貼上 → 送出
+        </div>
+      </div>
+
+    </div>
+    <div class="sm-footer">
+      <span class="sm-tip">💡 兩種方式擇一即可,不用都做</span>
+      <button id="sm-close" class="primary" style="background:#2d8866;border-color:#2d8866;color:#fff;">關閉</button>
     </div>
   </div>
 </div>
@@ -1315,6 +1826,35 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ★ v1.0.20260510.5870 — CJK 字元清理(解決 PDF/DOCX/PPTX 解析出的中文字間多餘空白)
+  //   PDF 解析器把每個文字 item 之間都加了空格,中文場景下會變成「自然教室的 面 北窗邊」這種怪格式
+  //   規則:
+  //   1) 中文字 + 一個或多個空白 + 中文字 → 直接合併
+  //   2) 中文字 + 空白 + 中文標點 → 合併
+  //   3) 中文標點 + 空白 + 中文字 → 合併
+  //   4) 多個連續空白 → 一個空白
+  //   5) 多個連續換行 → 兩個換行(段落分隔)
+  //   英文/數字之間的空白保留(因為單字需要分隔)
+  function cleanCJKSpaces(text){
+    if(!text) return text;
+    // CJK 字元範圍:\u3400-\u9fff(漢字) + \u3000-\u303f(中日韓符號) + \uff00-\uffef(全形)
+    const CJK = '\\u3400-\\u9fff\\u3000-\\u303f\\uff00-\\uffef';
+    let s = String(text);
+    // 多次套用:處理連續中文字之間的空白(重複到不再變化為止)
+    let prev = '';
+    let iter = 0;
+    while(s !== prev && iter < 5){
+      prev = s;
+      s = s.replace(new RegExp('([' + CJK + '])[ \\t]+([' + CJK + '])', 'g'), '$1$2');
+      iter++;
+    }
+    // 多個連續空白(非換行)→ 一個空白
+    s = s.replace(/[ \t]{2,}/g, ' ');
+    // 3 個以上連續換行 → 兩個(保留段落分隔)
+    s = s.replace(/\n{3,}/g, '\n\n');
+    return s;
+  }
+
   // ── 解析 PDF ──
   async function parsePdf(file, onProgress){
     onProgress && onProgress('下載 PDF 解析套件...');
@@ -1347,7 +1887,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
       pages.push('───── 第 ' + i + ' 頁 ─────\n' + pageText.trim());
     }
-    return { text: pages.join('\n\n'), pages: pageCount };
+    return { text: cleanCJKSpaces(pages.join('\n\n')), pages: pageCount };
   }
 
   // ── 解析 DOCX ──
@@ -1359,7 +1899,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const buf = await readArrayBuffer(file);
     onProgress && onProgress('擷取純文字...');
     const result = await mammoth.extractRawText({arrayBuffer: buf});
-    return { text: (result.value || '').trim(), pages: null };
+    return { text: cleanCJKSpaces((result.value || '').trim()), pages: null };
   }
 
   // ── 解析 PPTX(用 JSZip 解開後讀每張投影片的 XML) ──
@@ -1395,7 +1935,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       slides.push('───── 投影片 ' + sf.num + ' ─────\n' + texts.join('\n'));
     }
-    return { text: slides.join('\n\n'), pages: slideFiles.length };
+    return { text: cleanCJKSpaces(slides.join('\n\n')), pages: slideFiles.length };
   }
 
   // ── 舊版 .doc / .ppt 警告 ──
@@ -1422,12 +1962,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const $btnCopy = document.getElementById('pm-copy');
   const $btnCancel = document.getElementById('pm-cancel');
   const $btnClose = document.getElementById('pm-close');
+  const $btnImport = document.getElementById('pm-import');
 
   function openModal(file){
     $filename.textContent = file.name + '  ·  ' + Math.round(file.size / 1024) + ' KB';
     $loading.classList.add('show');
     $content.style.display = 'none';
     $btnCopy.disabled = true;
+    if($btnImport) $btnImport.disabled = true;
     $textArea.value = '';
     $statPages.style.display = 'none';
     $overlay.classList.add('show');
@@ -1448,6 +1990,7 @@ window.addEventListener('DOMContentLoaded', () => {
       $statPages.style.display = '';
     }
     $btnCopy.disabled = !result.text;
+    if($btnImport) $btnImport.disabled = !result.text;
     setTimeout(() => $textArea.focus(), 50);
   }
   function showError(msg){
@@ -1455,11 +1998,15 @@ window.addEventListener('DOMContentLoaded', () => {
     $content.style.display = 'flex';
     $textArea.value = '⚠ 解析失敗:' + msg + '\n\n可能原因:\n  • 檔案損壞或加密\n  • PDF 是掃描圖片(沒有實際文字,需要 OCR 辨識)\n  • 網路無法連到解析套件 CDN\n\n建議改用 .docx 或手動填寫題目。';
     $btnCopy.disabled = false;
+    if($btnImport) $btnImport.disabled = true;
   }
   function updateStats(){
     const txt = $textArea.value || '';
     $statChars.textContent = txt.length + ' 字';
     $statLines.textContent = (txt ? txt.split('\n').length : 0) + ' 行';
+    // 同步開關 import / copy 按鈕
+    if($btnImport) $btnImport.disabled = !txt;
+    $btnCopy.disabled = !txt;
   }
   $textArea.addEventListener('input', updateStats);
 
@@ -1483,6 +2030,36 @@ window.addEventListener('DOMContentLoaded', () => {
       catch(_e){ if(typeof showToast === 'function') showToast('複製失敗,請手動選取後 Ctrl+C','danger'); }
     }
   });
+
+  // ★ v1.0.20260510.5841 — 「嘗試自動匯入題目」按鈕
+  //   讓老師在預覽視窗整理完文字,直接按按鈕匯入,不用走「複製→貼到編輯區」的繞路
+  if($btnImport){
+    $btnImport.addEventListener('click', () => {
+      const txt = $textArea.value || '';
+      if(!txt){
+        if(typeof showToast === 'function') showToast('沒有可匯入的文字','danger');
+        return;
+      }
+      if(typeof parseFreeFormText !== 'function'){
+        if(typeof showToast === 'function') showToast('解析模組未就緒','danger');
+        return;
+      }
+      const rows = parseFreeFormText(txt);
+      if(!rows || !rows.length){
+        if(typeof showToast === 'function'){
+          showToast('沒有抓到任何題目,請繼續整理文字後再試一次','warning');
+        }
+        return;
+      }
+      // 匯入(importRows 會自己 push 到 state.questions、renderList、showToast)
+      if(typeof importRows === 'function'){
+        importRows(rows);
+        closeModal();
+      } else {
+        if(typeof showToast === 'function') showToast('匯入函式未就緒','danger');
+      }
+    });
+  }
 
   // ── 對外接口:從 handleFile 呼叫 ──
   window._parseDocAndPreview = async function(file){
