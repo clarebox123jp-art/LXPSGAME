@@ -47,6 +47,32 @@ header.app-header{display:flex;align-items:center;justify-content:space-between;
 .intro-banner ol{padding-left:20px;margin-top:6px;}
 .intro-banner code{background:#fff;padding:1px 5px;border-radius:3px;font-size:12px;}
 
+/* ── 出題說明懶人包(5 分區彩色) ── */
+.guide-pack{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.guide-pack .gcard{border-radius:12px;padding:12px 14px 13px;border:1px solid;font-size:13px;line-height:1.7;position:relative;}
+.guide-pack .gcard h4{font-size:14.5px;margin-bottom:6px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.guide-pack .gcard ul{padding-left:18px;margin-top:4px;}
+.guide-pack .gcard ul li{margin-bottom:2px;}
+.guide-pack .gcard code{background:rgba(255,255,255,0.7);padding:1px 6px;border-radius:3px;font-size:12.5px;border:1px solid rgba(0,0,0,0.06);}
+.guide-pack .gcard .em{font-weight:600;}
+.guide-pack .gcard.span2{grid-column:1 / -1;}
+.guide-pack .gcard.c-blue   {background:#e1edfa;border-color:#9ec3eb;color:#1c4985;}
+.guide-pack .gcard.c-green  {background:#ddf1e8;border-color:#88c8a8;color:#15583e;}
+.guide-pack .gcard.c-yellow {background:#fff6dc;border-color:#e6c945;color:#7a5d10;}
+.guide-pack .gcard.c-orange {background:#fef3e8;border-color:#f0a050;color:#8a4810;}
+.guide-pack .gcard.c-purple {background:#f0e8fa;border-color:#b59ad8;color:#4f3782;}
+.guide-pack .gcard.c-orange .pin{position:absolute;top:-9px;right:12px;background:#f0a050;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:1px;}
+.guide-pack details{margin-top:6px;}
+.guide-pack details summary{cursor:pointer;font-size:12.5px;font-weight:600;opacity:0.85;user-select:none;list-style:none;}
+.guide-pack details summary::-webkit-details-marker{display:none;}
+.guide-pack details summary::before{content:'▶ ';font-size:10px;display:inline-block;transition:transform .15s;}
+.guide-pack details[open] summary::before{transform:rotate(90deg);}
+.guide-pack details .detail-body{margin-top:6px;padding:8px 10px;background:rgba(255,255,255,0.55);border-radius:6px;font-size:12.5px;line-height:1.65;}
+.guide-pack .codeblock{display:block;background:rgba(255,255,255,0.75);border:1px dashed rgba(0,0,0,0.15);border-radius:5px;padding:6px 9px;margin-top:5px;font-family:Consolas,Monaco,monospace;font-size:12px;line-height:1.55;white-space:pre-wrap;color:#333;}
+@media (max-width:720px){
+  .guide-pack{grid-template-columns:1fr;}
+}
+
 /* 上半段:基本資訊 + 上傳區 */
 .meta-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:12px;}
 .meta-bar h3{font-size:13px;color:var(--text-soft);margin-bottom:10px;font-weight:500;letter-spacing:.5px;}
@@ -66,14 +92,15 @@ header.app-header{display:flex;align-items:center;justify-content:space-between;
 .reminder-box .help-text{font-size:11px;color:#7a4310;margin-top:6px;line-height:1.6;}
 
 /* 上傳區 */
-.upload-area{background:var(--info-soft);border:2px dashed #b9d4ee;border-radius:10px;padding:18px;margin-bottom:12px;text-align:center;transition:all .15s;cursor:pointer;}
+.upload-area{display:block;width:100%;box-sizing:border-box;background:var(--info-soft);border:2px dashed #b9d4ee;border-radius:10px;padding:18px;margin-bottom:12px;text-align:center;transition:all .15s;cursor:pointer;outline:none;}
 .upload-area:hover{background:#cfdff5;border-color:var(--info);}
+.upload-area:focus{box-shadow:0 0 0 3px var(--primary-soft);border-color:var(--primary);}
 .upload-area.dragover{background:#cfdff5;border-color:var(--info);transform:scale(1.01);}
 .upload-area .icon{font-size:32px;margin-bottom:6px;}
 .upload-area .title{font-size:14px;color:var(--info-text);font-weight:600;margin-bottom:4px;}
 .upload-area .desc{font-size:12px;color:var(--info-text);}
 .upload-area .desc code{background:#fff;padding:1px 5px;border-radius:3px;}
-.upload-area input{display:none;}
+.upload-area input[type=file]{display:none;}
 
 /* 主內容區 */
 .main-area{display:grid;grid-template-columns:240px 1fr;gap:12px;margin-bottom:12px;}
@@ -132,6 +159,50 @@ main.editor{background:var(--bg-card);border:1px solid var(--border);border-radi
 .output-title{font-size:14px;font-weight:600;}
 .output-pre{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:7px;padding:12px 14px;font-family:'Menlo','Consolas','Courier New',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:480px;overflow-y:auto;color:#3a382f;}
 
+/* ── 大型「產生題庫單」按鈕區(放在編輯區下方) ── */
+.generate-cta{
+  margin:24px 0 16px;
+  padding:24px 18px 28px;
+  text-align:center;
+  background:linear-gradient(180deg, #fff8e6 0%, #fef0d2 100%);
+  border:2px dashed #e6b94a;
+  border-radius:14px;
+}
+.generate-cta .lead{
+  font-size:13px;
+  color:#7a5d10;
+  margin-bottom:14px;
+  letter-spacing:0.5px;
+}
+.generate-cta .lead .em{font-weight:700;}
+.generate-cta button.btn-generate-big{
+  font-size:30px;
+  font-weight:800;
+  letter-spacing:3px;
+  padding:18px 40px;
+  background:linear-gradient(180deg, #ffc846 0%, #f0a020 100%);
+  border:1px solid #c98410;
+  color:#fff;
+  border-radius:12px;
+  box-shadow:0 4px 0 #b87a0c, 0 6px 16px rgba(240,160,32,0.35);
+  cursor:pointer;
+  transition:all .12s;
+  text-shadow:0 1px 2px rgba(0,0,0,0.18);
+}
+.generate-cta button.btn-generate-big:hover{
+  background:linear-gradient(180deg, #ffd255 0%, #f5ad28 100%);
+  transform:translateY(-1px);
+  box-shadow:0 5px 0 #b87a0c, 0 8px 20px rgba(240,160,32,0.45);
+}
+.generate-cta button.btn-generate-big:active{
+  transform:translateY(3px);
+  box-shadow:0 1px 0 #b87a0c, 0 2px 6px rgba(240,160,32,0.35);
+}
+@media (max-width:600px){
+  .generate-cta{padding:18px 12px 22px;}
+  .generate-cta button.btn-generate-big{font-size:22px;padding:14px 24px;letter-spacing:2px;}
+}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c2a26;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:10000;opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -151,6 +222,45 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
 .sample-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-soft);margin-top:8px;}
 .sample-row a{color:var(--info-text);cursor:pointer;text-decoration:underline;}
 .sample-row a:hover{color:var(--info);}
+
+/* ── 解析預覽 modal ── */
+.parse-overlay{position:fixed;inset:0;background:rgba(20,18,14,0.55);z-index:9990;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px);}
+.parse-overlay.show{display:flex;}
+.parse-modal{background:var(--bg-card);border-radius:14px;width:100%;max-width:920px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,0.35);overflow:hidden;}
+.parse-modal .pm-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#fff8e6,#fef0d2);}
+.parse-modal .pm-header h3{font-size:16px;font-weight:700;color:#7a5d10;display:flex;align-items:center;gap:8px;}
+.parse-modal .pm-header .filename{font-size:12px;color:var(--text-muted);margin-top:2px;font-weight:400;}
+.parse-modal .pm-close{background:transparent;border:none;font-size:22px;color:#7a5d10;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.parse-modal .pm-close:hover{background:rgba(0,0,0,0.08);}
+.parse-modal .pm-body{padding:14px 20px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:10px;}
+.parse-modal .pm-tip{background:#e1edfa;border:1px solid #b9d4ee;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#1c4985;line-height:1.65;}
+.parse-modal .pm-tip strong{color:#11365e;}
+.parse-modal .pm-stat{display:flex;gap:14px;font-size:12px;color:var(--text-soft);align-items:center;flex-wrap:wrap;}
+.parse-modal .pm-stat .stat-pill{background:var(--bg-soft);border:1px solid var(--border-soft);padding:2px 9px;border-radius:10px;}
+.parse-modal textarea.pm-text{flex:1;min-height:340px;resize:vertical;font-family:'Menlo','Consolas','Microsoft JhengHei',monospace;font-size:13px;line-height:1.7;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-soft);color:#3a382f;white-space:pre-wrap;word-break:break-word;}
+.parse-modal textarea.pm-text:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);outline:none;}
+.parse-modal .pm-footer{padding:12px 20px;border-top:1px solid var(--border);background:var(--bg-soft);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.parse-modal .pm-footer .pm-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.parse-modal .pm-footer button{padding:8px 14px;font-size:13px;}
+.parse-modal .pm-footer button.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.parse-modal .pm-footer button.primary:hover:not(:disabled){background:#236a51;}
+.parse-modal .pm-empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:13px;}
+
+/* 解析中載入 */
+.parse-loading{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center;}
+.parse-loading.show{display:flex;}
+.parse-loading .spinner{width:36px;height:36px;border:3px solid var(--border-soft);border-top-color:var(--primary);border-radius:50%;animation:pm-spin 0.8s linear infinite;}
+@keyframes pm-spin{to{transform:rotate(360deg);}}
+.parse-loading .label{font-size:13px;color:var(--text-soft);}
+.parse-loading .sublabel{font-size:11px;color:var(--text-muted);}
+
+@media (max-width:600px){
+  .parse-modal{max-height:96vh;}
+  .parse-modal .pm-header h3{font-size:14px;}
+  .parse-modal textarea.pm-text{font-size:12px;min-height:260px;}
+  .parse-modal .pm-footer{flex-direction:column;align-items:stretch;}
+  .parse-modal .pm-footer .pm-actions{justify-content:space-between;}
+}
 </style>
 </head>
 <body>
@@ -165,7 +275,6 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
     </div>
     <div class="actions">
       <button id="btn-clear-all" class="ghost">🗑 全部清空</button>
-      <button id="btn-generate" class="primary">📋 產生題庫單</button>
       <button id="btn-copy" disabled>📎 複製到剪貼簿</button>
     </div>
   </header>
@@ -176,10 +285,104 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
     填好的題目交給管理員後,管理員會把題庫整合進遊戲,讓全校玩家都能挑戰你出的題目。流程很簡單:
     <ol>
       <li>填寫「基本資訊」(出題者姓名、科目、想加強複習的日期區間⋯)</li>
-      <li>上傳檔案匯入(支援 <code>.csv</code> / <code>.xlsx</code> / <code>.json</code> / <code>.txt</code>),或在右下方一題一題手動新增</li>
-      <li>檢查左側列表沒有紅色錯誤,按右上「📋 產生題庫單」</li>
+      <li>上傳檔案匯入(<code>.csv</code> / <code>.xlsx</code> / <code>.json</code> / <code>.txt</code> 自動匯入;<code>.pdf</code> / <code>.docx</code> / <code>.pptx</code> 抽純文字後手動整理),或在右下方一題一題手動新增</li>
+      <li>檢查左側列表沒有紅色錯誤,拉到最下方按金色大按鈕「📋 產生題庫單」</li>
       <li>按「📎 複製到剪貼簿」,把整段文字貼給管理員(或老師代為轉交)</li>
     </ol>
+  </div>
+
+  <!-- ====== 出題說明懶人包(5 分區彩色) ====== -->
+  <div class="guide-pack">
+
+    <!-- 1. 藍 — 出題格式重點 -->
+    <div class="gcard c-blue">
+      <h4>📝 出題格式重點(必看)</h4>
+      <ul>
+        <li>每題需要:<span class="em">題目 + 4 個選項 + 1 個正確答案</span>(目前以 <code>4 選 1 單選題</code> 為主)</li>
+        <li>答案標記方式很彈性:可寫 <code>A/B/C/D</code>、<code>1/2/3/4</code>,或直接寫選項全文,系統都會自動辨識</li>
+        <li>4 個選項<span class="em">不能重複</span>,題目和選項都不能空白</li>
+        <li>建議題庫量:<span class="em">20~50 題</span>(差不多一個單元的份量,玩家不會太快重複)</li>
+      </ul>
+      <details>
+        <summary>展開看更多細節</summary>
+        <div class="detail-body">
+          <strong>關於題型:</strong>遊戲目前以 4 選 1 單選為主,複選題、填空題、是非題暫時無法直接匯入。<br>
+          <strong>關於選項數:</strong>請固定提供 4 個選項。少於 4 個會被退件,多於 4 個系統只會取前 4 個。<br>
+          <strong>關於提示(Hint):</strong>選填欄位,會在玩家「使用提示法寶」時顯示,可寫一句小線索幫助答題,留空也沒關係。
+        </div>
+      </details>
+    </div>
+
+    <!-- 2. 綠 — 強推:範例檔最快 -->
+    <div class="gcard c-green">
+      <h4>⚡ 最快上手:用範例檔修改</h4>
+      <ul>
+        <li>不知道該怎麼準備檔案?<span class="em">直接下載範例檔修改最快</span>(本頁最下方有連結)</li>
+        <li>會用 Excel → 下載 <code>CSV 範例</code>,直接覆蓋成自己的題目</li>
+        <li>會用程式 / 想要乾淨格式 → 下載 <code>JSON 範例</code></li>
+        <li>什麼都不會 → 點下方的 <code>➕ 新增題目</code>,一題一題填,有檢查機制不會出錯</li>
+      </ul>
+      <details>
+        <summary>支援哪些檔案格式?</summary>
+        <div class="detail-body">
+          <strong>📊 試算表格式(自動匯入,直接變成題目):</strong><br>
+          <code>.csv</code>(Excel 可開、最推薦)、<code>.xlsx</code>(Excel 原生格式)、<code>.json</code>、<code>.txt</code><br><br>
+          <strong>📄 文件格式(抽出純文字,需手動整理):</strong><br>
+          <code>.pdf</code>、<code>.docx</code>(Word)、<code>.pptx</code>(PowerPoint)<br>
+          上傳這類檔案會跳出「📄 解析預覽」視窗,老師可以複製抽出的純文字,再自己改寫成 CSV 或一題一題用「➕ 新增題目」貼進來。<br><br>
+          <strong>⚠ 不支援:</strong><code>.doc</code> / <code>.ppt</code>(舊版 Office 格式),請先在 Word / PowerPoint 中按「另存新檔」存成 <code>.docx</code> / <code>.pptx</code> 再上傳。<br><br>
+          <span class="em">檔案完全在你的瀏覽器處理,不會上傳到任何伺服器</span>,可以放心使用。
+        </div>
+      </details>
+    </div>
+
+    <!-- 3. 黃 — 排版範例(跨兩欄) -->
+    <div class="gcard c-yellow span2">
+      <h4>📐 排版範例:CSV 寫法(用 Excel 編輯最常用)</h4>
+      第 1 列填欄位名稱,從第 2 列開始填題目。可直接複製下方範例貼到 Excel 起始格(A1)使用:
+      <span class="codeblock">題目,選項A,選項B,選項C,選項D,答案,提示
+臺灣最高峰是哪一座山?,阿里山,玉山,雪山,合歡山,B,位於南投與嘉義交界
+15 + 27 = ?,32,42,52,62,B,從個位開始算
+光合作用主要發生在?,根部,葉片葉綠體,花瓣,樹皮,B,需要陽光的地方</span>
+      <details>
+        <summary>JSON 格式範例(給技術人員)</summary>
+        <div class="detail-body">
+          <span class="codeblock">{
+  "questions": [
+    {
+      "question": "臺灣最高峰是哪一座山?",
+      "options": ["阿里山", "玉山", "雪山", "合歡山"],
+      "answer": "B",
+      "hint": "位於南投與嘉義交界"
+    }
+  ]
+}</span>
+        </div>
+      </details>
+    </div>
+
+    <!-- 4. 橘 — ★ 加強複習提醒區間 -->
+    <div class="gcard c-orange">
+      <span class="pin">★ 別漏填</span>
+      <h4>📅 加強複習提醒區間是什麼?</h4>
+      <ul>
+        <li>這是<span class="em">玩家會獲得加倍獎勵</span>的日期區間,例如「下週要月考的那 5 天」</li>
+        <li>在這區間內答對你的題目,玩家會多拿經驗值與知識幣,鼓勵他們認真複習</li>
+        <li>建議區間 <span class="em">3~14 天</span>,太長提醒效果會弱化</li>
+        <li>這欄<span class="em">必填</span>,詳細用法寫在下方欄位旁的提示</li>
+      </ul>
+    </div>
+
+    <!-- 5. 紫 — 常見問題 -->
+    <div class="gcard c-purple">
+      <h4>💡 常見問題</h4>
+      <ul>
+        <li><span class="em">Q:題目可以放圖片嗎?</span><br>目前不支援圖片,可改用文字描述。題目可包含簡單符號(<code>√ π × ÷ ≧ ≦ °C ²</code> 等),都能正常顯示</li>
+        <li><span class="em">Q:複選題、填空題、是非題?</span><br>暫時不支援,請改寫成 4 選 1 單選題</li>
+        <li><span class="em">Q:題目裡可以換行嗎?</span><br>可以,但 CSV 格式請避免使用換行容易解析錯誤,建議用 JSON 或手動填</li>
+      </ul>
+    </div>
+
   </div>
 
   <!-- ====== 基本資訊 ====== -->
@@ -272,15 +475,18 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
   </div>
 
   <!-- ====== 上傳區 ====== -->
-  <label class="upload-area" id="upload-area">
+  <div class="upload-area" id="upload-area" tabindex="0" role="button" aria-label="上傳題庫檔案">
     <div class="icon">📤</div>
     <div class="title">點這裡上傳題庫檔案,或將檔案拖曳到這裡</div>
     <div class="desc">
-      支援格式:<code>.csv</code> / <code>.xlsx</code>(Excel) / <code>.json</code> / <code>.txt</code>
-      <br>檔案內容會自動匯入到下方,你還能再編輯
+      <strong>📊 試算表格式(自動匯入題目):</strong><code>.csv</code> / <code>.xlsx</code>(Excel) / <code>.json</code> / <code>.txt</code>
+      <br>
+      <strong>📄 文件格式(抽出純文字後手動整理):</strong><code>.pdf</code> / <code>.docx</code>(Word) / <code>.pptx</code>(PowerPoint)
+      <br>
+      <span style="color:var(--text-muted);">檔案完全在你的瀏覽器處理,不會上傳到任何伺服器</span>
     </div>
-    <input type="file" id="upload-input" accept=".csv,.xlsx,.xls,.json,.txt">
-  </label>
+    <input type="file" id="upload-input" accept=".csv,.xlsx,.xls,.json,.txt,.pdf,.docx,.pptx,.doc,.ppt" style="display:none;">
+  </div>
   <div class="sample-row">
     <span>🤔 不知道該怎麼準備檔案?</span>
     <a id="btn-download-sample-csv">下載 CSV 範例檔</a>
@@ -310,6 +516,14 @@ input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--da
     <!-- 右側:單題編輯 -->
     <main class="editor" id="editor"></main>
 
+  </div>
+
+  <!-- ====== 大型「產生題庫單」按鈕(主要 CTA) ====== -->
+  <div class="generate-cta">
+    <div class="lead">
+      檢查左側列表沒有<span class="em">紅色錯誤</span>後,按下方按鈕產生題庫單
+    </div>
+    <button id="btn-generate" class="btn-generate-big">📋 產生題庫單</button>
   </div>
 
   <!-- ====== 輸出區 ====== -->
@@ -639,8 +853,16 @@ async function handleFile(file){
       const json = XLSX.utils.sheet_to_json(ws, {defval:''});
       const rows = json.map(row => normalizeRow(row));
       importRows(rows);
+    } else if (name.endsWith('.pdf') || name.endsWith('.docx') || name.endsWith('.pptx')
+            || name.endsWith('.doc') || name.endsWith('.ppt')){
+      // ★ 文件格式 → 開啟解析預覽 modal,讓老師看純文字後自行整理
+      if(typeof window._parseDocAndPreview === 'function'){
+        window._parseDocAndPreview(file);
+      } else {
+        showToast('解析模組未就緒,請重新整理頁面','danger');
+      }
     } else {
-      showToast('不支援的檔案格式,請上傳 csv / xlsx / json / txt','danger');
+      showToast('不支援的檔案格式,請上傳 csv / xlsx / json / txt / pdf / docx / pptx','danger');
       return;
     }
   } catch(e){
@@ -1018,5 +1240,273 @@ window.addEventListener('DOMContentLoaded', () => {
   renderEditor();
 });
 </script>
+
+<!-- ====== 解析預覽 Modal(PDF/DOCX/PPTX 用) ====== -->
+<div class="parse-overlay" id="parse-overlay">
+  <div class="parse-modal" role="dialog" aria-modal="true" aria-labelledby="pm-title">
+    <div class="pm-header">
+      <div>
+        <h3 id="pm-title">📄 解析預覽</h3>
+        <div class="filename" id="pm-filename">—</div>
+      </div>
+      <button class="pm-close" id="pm-close" aria-label="關閉">✕</button>
+    </div>
+    <div class="pm-body">
+      <!-- 載入中狀態 -->
+      <div class="parse-loading" id="pm-loading">
+        <div class="spinner"></div>
+        <div class="label" id="pm-loading-label">正在解析檔案...</div>
+        <div class="sublabel" id="pm-loading-sub">首次使用該格式時會下載解析套件,請稍候</div>
+      </div>
+      <!-- 主內容(解析完成後顯示) -->
+      <div id="pm-content" style="display:none;flex-direction:column;gap:10px;flex:1;">
+        <div class="pm-tip">
+          <strong>💡 怎麼用:</strong>下方是從你的檔案抽出的純文字。請對照<strong>📐 排版範例</strong>(畫面上方黃色區塊)的格式,把題目改寫成 CSV 或一題一題用「➕ 新增題目」貼進編輯區。文字可以在這裡先編輯整理,改完按下方「📎 複製全文」即可。
+        </div>
+        <div class="pm-stat">
+          <span class="stat-pill" id="pm-stat-chars">0 字</span>
+          <span class="stat-pill" id="pm-stat-lines">0 行</span>
+          <span class="stat-pill" id="pm-stat-pages" style="display:none;">0 頁</span>
+          <span style="color:var(--text-muted);font-size:11px;">↓ 文字可以直接編輯,改完再複製</span>
+        </div>
+        <textarea class="pm-text" id="pm-text" spellcheck="false" placeholder="(解析後的純文字會顯示在這裡)"></textarea>
+      </div>
+    </div>
+    <div class="pm-footer">
+      <span style="font-size:11px;color:var(--text-muted);">檔案完全在你的瀏覽器處理,不會上傳到任何伺服器</span>
+      <div class="pm-actions">
+        <button id="pm-cancel" class="ghost">取消</button>
+        <button id="pm-copy" class="primary" disabled>📎 複製全文</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 文件解析模組(PDF / DOCX / PPTX 純文字抽取) ====== -->
+<script>
+(function(){
+  // ── CDN 來源(動態載入,首次使用該格式才會下載) ──
+  const CDN = {
+    pdfjs:    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    pdfjsWk:  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+    mammoth:  'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',
+    jszip:    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  };
+  const _loaded = {};
+  function loadScript(url){
+    if(_loaded[url]) return _loaded[url];
+    _loaded[url] = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = url; s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('載入失敗:' + url));
+      document.head.appendChild(s);
+    });
+    return _loaded[url];
+  }
+
+  // ── readAsArrayBuffer 包裝 ──
+  function readArrayBuffer(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error('讀取檔案失敗'));
+      r.readAsArrayBuffer(file);
+    });
+  }
+
+  // ── 解析 PDF ──
+  async function parsePdf(file, onProgress){
+    onProgress && onProgress('下載 PDF 解析套件...');
+    await loadScript(CDN.pdfjs);
+    if(typeof pdfjsLib === 'undefined') throw new Error('PDF.js 未正確載入');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = CDN.pdfjsWk;
+    onProgress && onProgress('讀取檔案內容...');
+    const buf = await readArrayBuffer(file);
+    onProgress && onProgress('解析 PDF 結構...');
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    const pageCount = pdf.numPages;
+    const pages = [];
+    for(let i = 1; i <= pageCount; i++){
+      onProgress && onProgress('擷取第 ' + i + ' / ' + pageCount + ' 頁文字...');
+      const page = await pdf.getPage(i);
+      const tc = await page.getTextContent();
+      // 把同一頁的所有 item 用空格 / 換行串起來
+      // pdf.js 的 item 帶 transform[5]=y 座標,可以用來偵測換行,但簡化版直接每個 item 後加空格
+      let pageText = '';
+      let lastY = null;
+      tc.items.forEach(it => {
+        const y = it.transform ? it.transform[5] : null;
+        if(lastY !== null && y !== null && Math.abs(y - lastY) > 2){
+          pageText += '\n';
+        } else if(pageText && !/\s$/.test(pageText)){
+          pageText += ' ';
+        }
+        pageText += it.str || '';
+        lastY = y;
+      });
+      pages.push('───── 第 ' + i + ' 頁 ─────\n' + pageText.trim());
+    }
+    return { text: pages.join('\n\n'), pages: pageCount };
+  }
+
+  // ── 解析 DOCX ──
+  async function parseDocx(file, onProgress){
+    onProgress && onProgress('下載 Word 解析套件...');
+    await loadScript(CDN.mammoth);
+    if(typeof mammoth === 'undefined') throw new Error('mammoth.js 未正確載入');
+    onProgress && onProgress('讀取檔案內容...');
+    const buf = await readArrayBuffer(file);
+    onProgress && onProgress('擷取純文字...');
+    const result = await mammoth.extractRawText({arrayBuffer: buf});
+    return { text: (result.value || '').trim(), pages: null };
+  }
+
+  // ── 解析 PPTX(用 JSZip 解開後讀每張投影片的 XML) ──
+  async function parsePptx(file, onProgress){
+    onProgress && onProgress('下載 PowerPoint 解析套件...');
+    await loadScript(CDN.jszip);
+    if(typeof JSZip === 'undefined') throw new Error('JSZip 未正確載入');
+    onProgress && onProgress('讀取檔案內容...');
+    const buf = await readArrayBuffer(file);
+    onProgress && onProgress('解開 PowerPoint 結構...');
+    const zip = await JSZip.loadAsync(buf);
+    // 取得所有 ppt/slides/slideN.xml 並依數字排序
+    const slideFiles = [];
+    zip.forEach((path, entry) => {
+      const m = path.match(/^ppt\/slides\/slide(\d+)\.xml$/);
+      if(m) slideFiles.push({path, num: parseInt(m[1], 10)});
+    });
+    slideFiles.sort((a, b) => a.num - b.num);
+    const slides = [];
+    for(let i = 0; i < slideFiles.length; i++){
+      const sf = slideFiles[i];
+      onProgress && onProgress('擷取第 ' + (i + 1) + ' / ' + slideFiles.length + ' 張投影片文字...');
+      const xml = await zip.file(sf.path).async('string');
+      // 抽出所有 <a:t>...</a:t> 內的文字(每個文字框)
+      const texts = [];
+      const reText = /<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
+      let m;
+      while((m = reText.exec(xml)) !== null){
+        const t = m[1]
+          .replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+          .replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
+        if(t.trim()) texts.push(t);
+      }
+      slides.push('───── 投影片 ' + sf.num + ' ─────\n' + texts.join('\n'));
+    }
+    return { text: slides.join('\n\n'), pages: slideFiles.length };
+  }
+
+  // ── 舊版 .doc / .ppt 警告 ──
+  function showOldFormatWarning(ext){
+    const fmt = ext === 'doc' ? 'Word (.doc)' : 'PowerPoint (.ppt)';
+    const newFmt = ext === 'doc' ? '.docx' : '.pptx';
+    if(typeof showToast === 'function'){
+      showToast('舊版 ' + fmt + ' 格式無法解析,請另存為 ' + newFmt + ' 後重新上傳', 'danger');
+    } else {
+      alert('舊版 ' + fmt + ' 格式無法在瀏覽器解析。\n\n請先用 Word / PowerPoint 開啟檔案,按「另存新檔」存成 ' + newFmt + ' 格式,再重新上傳。');
+    }
+  }
+
+  // ── Modal 控制 ──
+  const $overlay = document.getElementById('parse-overlay');
+  const $loading = document.getElementById('pm-loading');
+  const $content = document.getElementById('pm-content');
+  const $loadLbl = document.getElementById('pm-loading-label');
+  const $filename = document.getElementById('pm-filename');
+  const $textArea = document.getElementById('pm-text');
+  const $statChars = document.getElementById('pm-stat-chars');
+  const $statLines = document.getElementById('pm-stat-lines');
+  const $statPages = document.getElementById('pm-stat-pages');
+  const $btnCopy = document.getElementById('pm-copy');
+  const $btnCancel = document.getElementById('pm-cancel');
+  const $btnClose = document.getElementById('pm-close');
+
+  function openModal(file){
+    $filename.textContent = file.name + '  ·  ' + Math.round(file.size / 1024) + ' KB';
+    $loading.classList.add('show');
+    $content.style.display = 'none';
+    $btnCopy.disabled = true;
+    $textArea.value = '';
+    $statPages.style.display = 'none';
+    $overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(){
+    $overlay.classList.remove('show');
+    $loading.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  function showResult(result){
+    $loading.classList.remove('show');
+    $content.style.display = 'flex';
+    $textArea.value = result.text || '';
+    updateStats();
+    if(result.pages != null){
+      $statPages.textContent = result.pages + ' ' + (result.pages === 1 ? '頁/張' : '頁/張');
+      $statPages.style.display = '';
+    }
+    $btnCopy.disabled = !result.text;
+    setTimeout(() => $textArea.focus(), 50);
+  }
+  function showError(msg){
+    $loading.classList.remove('show');
+    $content.style.display = 'flex';
+    $textArea.value = '⚠ 解析失敗:' + msg + '\n\n可能原因:\n  • 檔案損壞或加密\n  • PDF 是掃描圖片(沒有實際文字,需要 OCR 辨識)\n  • 網路無法連到解析套件 CDN\n\n建議改用 .docx 或手動填寫題目。';
+    $btnCopy.disabled = false;
+  }
+  function updateStats(){
+    const txt = $textArea.value || '';
+    $statChars.textContent = txt.length + ' 字';
+    $statLines.textContent = (txt ? txt.split('\n').length : 0) + ' 行';
+  }
+  $textArea.addEventListener('input', updateStats);
+
+  $btnClose.addEventListener('click', closeModal);
+  $btnCancel.addEventListener('click', closeModal);
+  $overlay.addEventListener('click', (e) => { if(e.target === $overlay) closeModal(); });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && $overlay.classList.contains('show')) closeModal();
+  });
+
+  $btnCopy.addEventListener('click', async () => {
+    const txt = $textArea.value || '';
+    if(!txt){ if(typeof showToast === 'function') showToast('沒有可複製的文字','danger'); return; }
+    try{
+      await navigator.clipboard.writeText(txt);
+      if(typeof showToast === 'function') showToast('已複製 ' + txt.length + ' 字到剪貼簿','success');
+    } catch(_){
+      // fallback
+      $textArea.select();
+      try{ document.execCommand('copy'); if(typeof showToast === 'function') showToast('已複製','success'); }
+      catch(_e){ if(typeof showToast === 'function') showToast('複製失敗,請手動選取後 Ctrl+C','danger'); }
+    }
+  });
+
+  // ── 對外接口:從 handleFile 呼叫 ──
+  window._parseDocAndPreview = async function(file){
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if(ext === 'doc' || ext === 'ppt'){
+      showOldFormatWarning(ext);
+      return;
+    }
+    if(['pdf','docx','pptx'].indexOf(ext) === -1) return;
+    openModal(file);
+    const onProgress = (msg) => { $loadLbl.textContent = msg; };
+    try{
+      let result;
+      if(ext === 'pdf')       result = await parsePdf(file, onProgress);
+      else if(ext === 'docx') result = await parseDocx(file, onProgress);
+      else if(ext === 'pptx') result = await parsePptx(file, onProgress);
+      showResult(result);
+    } catch(err){
+      console.error('[文件解析失敗]', err);
+      showError(err && err.message || String(err));
+    }
+  };
+})();
+</script>
+
 </body>
 </html>
