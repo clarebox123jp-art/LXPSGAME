@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📚 LXPSGAME 題庫編輯器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f5f3ee; --bg-card:#ffffff; --bg-soft:#faf9f5;
+  --border:#d8d4c8; --border-soft:#e6e2d6;
+  --text:#2c2a26; --text-soft:#6e6a60; --text-muted:#9b968a;
+  --primary:#2d8866; --primary-soft:#ddf1e8; --primary-text:#15583e;
+  --info:#2d70c4; --info-soft:#e1edfa; --info-text:#1c4985;
+  --success:#2d8866; --success-soft:#ddf1e8; --success-text:#15583e;
+  --warning:#c47a14; --warning-soft:#fcecd2; --warning-text:#6f4304;
+  --danger:#c4382c; --danger-soft:#fbe3df; --danger-text:#832217;
+  --highlight:#fff6dc; --highlight-border:#e6c945;
+  --reminder:#fef3e8; --reminder-border:#f0a050;
+}
+html,body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.5;min-height:100vh;}
+input,select,textarea,button{font-family:inherit;font-size:inherit;color:inherit;}
+input[type=text],input[type=number],input[type=date],select,textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);transition:border-color .12s,box-shadow .12s;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);}
+textarea{resize:vertical;min-height:60px;line-height:1.6;}
+button{border:1px solid var(--border);background:var(--bg-card);padding:7px 13px;border-radius:6px;cursor:pointer;transition:all .12s;}
+button:hover{background:var(--bg-soft);border-color:var(--text-soft);}
+button:active{transform:scale(.98);}
+button:disabled{opacity:.5;cursor:not-allowed;}
+button.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+button.primary:hover:not(:disabled){background:#236a51;}
+button.danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+button.danger:hover:not(:disabled){background:#a32f24;}
+button.warning{background:var(--warning);border-color:var(--warning);color:#fff;}
+button.warning:hover:not(:disabled){background:#a06410;}
+button.ghost{background:transparent;}
+
+.app{max-width:1280px;margin:0 auto;padding:16px;}
+header.app-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;flex-wrap:wrap;gap:12px;}
+.app-title{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:600;}
+.app-title .badge{font-size:11px;padding:3px 8px;background:var(--primary-soft);color:var(--primary-text);border-radius:4px;font-weight:500;}
+.actions{display:flex;gap:8px;flex-wrap:wrap;}
+.actions button{font-size:13px;padding:8px 14px;}
+
+.intro-banner{background:var(--info-soft);border:1px solid #b9d4ee;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:var(--info-text);line-height:1.7;}
+.intro-banner h3{font-size:14px;margin-bottom:4px;}
+.intro-banner ol{padding-left:20px;margin-top:6px;}
+.intro-banner code{background:#fff;padding:1px 5px;border-radius:3px;font-size:12px;}
+
+/* 上半段:基本資訊 + 上傳區 */
+.meta-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:12px;}
+.meta-bar h3{font-size:13px;color:var(--text-soft);margin-bottom:10px;font-weight:500;letter-spacing:.5px;}
+.meta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+@media (max-width:768px){.meta-grid{grid-template-columns:1fr;}}
+.meta-grid > .full{grid-column:1 / -1;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;color:var(--text-soft);}
+.field label .required{color:var(--danger);margin-left:2px;}
+.help{font-size:11px;color:var(--text-muted);margin-top:2px;}
+
+/* 提醒日期區塊 - 特別樣式 */
+.reminder-box{background:var(--reminder);border:1px solid var(--reminder-border);border-radius:8px;padding:12px 14px;margin-top:10px;}
+.reminder-box .title{font-size:13px;font-weight:600;color:#7a4310;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.reminder-box .row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;}
+.reminder-box .row .sep{color:#7a4310;font-weight:600;text-align:center;}
+.reminder-box .help-text{font-size:11px;color:#7a4310;margin-top:6px;line-height:1.6;}
+
+/* 上傳區 */
+.upload-area{background:var(--info-soft);border:2px dashed #b9d4ee;border-radius:10px;padding:18px;margin-bottom:12px;text-align:center;transition:all .15s;cursor:pointer;}
+.upload-area:hover{background:#cfdff5;border-color:var(--info);}
+.upload-area.dragover{background:#cfdff5;border-color:var(--info);transform:scale(1.01);}
+.upload-area .icon{font-size:32px;margin-bottom:6px;}
+.upload-area .title{font-size:14px;color:var(--info-text);font-weight:600;margin-bottom:4px;}
+.upload-area .desc{font-size:12px;color:var(--info-text);}
+.upload-area .desc code{background:#fff;padding:1px 5px;border-radius:3px;}
+.upload-area input{display:none;}
+
+/* 主內容區 */
+.main-area{display:grid;grid-template-columns:240px 1fr;gap:12px;margin-bottom:12px;}
+@media (max-width:768px){.main-area{grid-template-columns:1fr;}}
+aside.sidebar{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;height:fit-content;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;}
+.sidebar h3{font-size:12px;color:var(--text-soft);letter-spacing:.5px;margin-bottom:8px;padding-left:4px;font-weight:500;}
+.sidebar-stats{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);padding:0 4px 8px;border-bottom:1px solid var(--border-soft);margin-bottom:10px;}
+.q-list{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.q-item{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:7px;padding:7px 9px;cursor:pointer;transition:all .12s;}
+.q-item:hover{border-color:var(--border);background:var(--bg-card);}
+.q-item.active{border:2px solid var(--primary);background:var(--bg-card);padding:6px 8px;}
+.q-item.has-error{border-color:var(--danger);background:var(--danger-soft);}
+.q-item.has-error.active{border-width:2px;}
+.q-item-row{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.q-item-no{font-size:11px;color:var(--text-muted);font-weight:500;flex-shrink:0;}
+.q-item-text{font-size:12px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;}
+.q-item-meta{font-size:10px;color:var(--text-muted);margin-top:2px;display:flex;justify-content:space-between;}
+.q-item.has-error .q-item-meta{color:var(--danger-text);font-weight:600;}
+.q-item-remove{background:transparent;border:none;color:var(--text-muted);font-size:14px;padding:0 3px;cursor:pointer;line-height:1;flex-shrink:0;}
+.q-item-remove:hover{color:var(--danger);background:transparent;border-color:transparent;}
+
+.add-btn-bar{display:flex;flex-direction:column;gap:6px;}
+.add-btn-bar button{width:100%;font-size:12px;padding:8px;}
+.warnings{margin-top:10px;padding:8px 10px;background:var(--warning-soft);border-radius:6px;font-size:11px;color:var(--warning-text);line-height:1.6;}
+.warnings.hidden{display:none;}
+.warnings.error{background:var(--danger-soft);color:var(--danger-text);}
+
+/* 編輯區 */
+main.editor{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;min-height:500px;}
+.editor-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:400px;text-align:center;color:var(--text-muted);}
+.editor-empty .icon{font-size:48px;margin-bottom:12px;opacity:.5;}
+.editor-empty .hint{font-size:13px;max-width:400px;line-height:1.7;}
+.editor-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border-soft);margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.editor-title{font-size:15px;font-weight:600;}
+.editor-title .emoji{margin-right:6px;}
+.editor-subtitle{font-size:12px;color:var(--text-soft);font-weight:400;}
+.editor-section{margin-bottom:14px;}
+.editor-section h4{font-size:12px;color:var(--text-soft);margin-bottom:8px;font-weight:500;letter-spacing:.5px;}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media (max-width:600px){.row-2{grid-template-columns:1fr;}}
+
+/* 選項列 */
+.option-list{display:flex;flex-direction:column;gap:8px;}
+.option-row{display:grid;grid-template-columns:36px 1fr 36px;gap:8px;align-items:center;}
+.option-letter{display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:var(--text-soft);background:var(--bg-soft);border-radius:6px;height:32px;border:1px solid var(--border-soft);}
+.option-row.is-answer .option-letter{background:#fff5cc;color:#7a5500;border-color:var(--highlight-border);}
+.option-row input{height:32px;}
+.option-row.is-answer input{background:var(--highlight);border-color:var(--highlight-border);}
+.option-mark{display:flex;align-items:center;justify-content:center;height:32px;cursor:pointer;border-radius:6px;border:1px solid var(--border-soft);background:#fff;font-size:11px;color:var(--text-soft);user-select:none;}
+.option-mark:hover{background:var(--highlight);border-color:var(--highlight-border);color:#7a5500;}
+.option-mark.active{background:var(--highlight);border-color:var(--highlight-border);color:#7a5500;font-weight:600;}
+
+/* 底部輸出 */
+.output-area{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-top:12px;}
+.output-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.output-title{font-size:14px;font-weight:600;}
+.output-pre{background:var(--bg-soft);border:1px solid var(--border-soft);border-radius:7px;padding:12px 14px;font-family:'Menlo','Consolas','Courier New',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:480px;overflow-y:auto;color:#3a382f;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c2a26;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:10000;opacity:0;pointer-events:none;transition:all .25s;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{background:#2d8866;}
+.toast.danger{background:#c4382c;}
+
+.error-text{font-size:11px;color:var(--danger-text);margin-top:3px;}
+.success-text{font-size:11px;color:var(--success-text);margin-top:3px;}
+input.error,select.error,textarea.error{background:#fff5f3;border-color:var(--danger);}
+.muted{color:var(--text-muted);}
+.tag{display:inline-block;background:var(--bg-soft);color:var(--text-soft);padding:2px 8px;border-radius:10px;font-size:11px;border:1px solid var(--border-soft);margin-right:4px;}
+.tag.ok{background:var(--success-soft);color:var(--success-text);border-color:#9bd4ba;}
+.tag.warn{background:var(--warning-soft);color:var(--warning-text);border-color:#e8c993;}
+.tag.danger{background:var(--danger-soft);color:var(--danger-text);border-color:#e6a8a0;}
+
+/* 範例下載 */
+.sample-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--text-soft);margin-top:8px;}
+.sample-row a{color:var(--info-text);cursor:pointer;text-decoration:underline;}
+.sample-row a:hover{color:var(--info);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ====== 標題列 ====== -->
+  <header class="app-header">
+    <div class="app-title">
+      📚 LXPSGAME 題庫編輯器
+      <span class="badge">老師上傳專用 v1.0</span>
+    </div>
+    <div class="actions">
+      <button id="btn-clear-all" class="ghost">🗑 全部清空</button>
+      <button id="btn-generate" class="primary">📋 產生題庫單</button>
+      <button id="btn-copy" disabled>📎 複製到剪貼簿</button>
+    </div>
+  </header>
+
+  <!-- ====== 簡介說明 ====== -->
+  <div class="intro-banner">
+    <h3>👋 歡迎使用！這是給老師、家長、設計者填寫題庫的工具</h3>
+    填好的題目交給管理員後,管理員會把題庫整合進遊戲,讓全校玩家都能挑戰你出的題目。流程很簡單:
+    <ol>
+      <li>填寫「基本資訊」(出題者姓名、科目、想加強複習的日期區間⋯)</li>
+      <li>上傳檔案匯入(支援 <code>.csv</code> / <code>.xlsx</code> / <code>.json</code> / <code>.txt</code>),或在右下方一題一題手動新增</li>
+      <li>檢查左側列表沒有紅色錯誤,按右上「📋 產生題庫單」</li>
+      <li>按「📎 複製到剪貼簿」,把整段文字貼給管理員(或老師代為轉交)</li>
+    </ol>
+  </div>
+
+  <!-- ====== 基本資訊 ====== -->
+  <div class="meta-bar">
+    <h3>📋 基本資訊</h3>
+    <div class="meta-grid">
+      <div class="field">
+        <label>出題者姓名 <span class="required">*</span></label>
+        <input type="text" id="meta-author" placeholder="例:王小明老師、五年三班張同學的爸爸">
+        <div class="help">會印在題庫單上,讓管理員知道這份題庫是誰提供的</div>
+      </div>
+      <div class="field">
+        <label>聯絡方式(選填)</label>
+        <input type="text" id="meta-contact" placeholder="例:Email、班級、line ID(方便管理員回覆問題)">
+      </div>
+      <div class="field">
+        <label>題庫名稱 <span class="required">*</span></label>
+        <input type="text" id="meta-bank-name" placeholder="例:五下社會第二單元家鄉產業">
+        <div class="help">這份題庫的整體主題,玩家答題時會看到</div>
+      </div>
+      <div class="field">
+        <label>對應年級 <span class="required">*</span></label>
+        <select id="meta-grade">
+          <option value="">— 請選擇 —</option>
+          <option value="低年級">低年級(一、二年級)</option>
+          <option value="中年級">中年級(三、四年級)</option>
+          <option value="高年級">高年級(五、六年級)</option>
+          <option value="不分年級">不分年級(全校通用)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>對應科目 <span class="required">*</span></label>
+        <select id="meta-subject">
+          <option value="">— 請選擇 —</option>
+          <option>國語文</option>
+          <option>英文</option>
+          <option>數學</option>
+          <option>社會</option>
+          <option>自然</option>
+          <option>美術</option>
+          <option>音樂</option>
+          <option>表演藝術</option>
+          <option>健康與體育</option>
+          <option>資訊科技</option>
+          <option>本土語</option>
+          <option>生活常識</option>
+          <option value="其他自訂">其他(請在下面備註說明)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>建議難度</label>
+        <select id="meta-difficulty">
+          <option value="普通" selected>普通</option>
+          <option value="沒自信">沒自信(基礎題)</option>
+          <option value="我很會">我很會(進階題)</option>
+        </select>
+        <div class="help">玩家會在符合難度的關卡裡看到這些題目</div>
+      </div>
+
+      <!-- 提醒區間 - 重點! -->
+      <div class="full">
+        <div class="reminder-box">
+          <div class="title">📅 加強複習提醒區間(重要!玩家在這段時間做題會獲得獎勵)</div>
+          <div class="row">
+            <div class="field">
+              <label>開始日期 <span class="required">*</span></label>
+              <input type="date" id="meta-reminder-start">
+            </div>
+            <div class="sep">→</div>
+            <div class="field">
+              <label>結束日期 <span class="required">*</span></label>
+              <input type="date" id="meta-reminder-end">
+            </div>
+          </div>
+          <div class="help-text">
+            <strong>用途:</strong>例如下週要小考,可以設「下週一到下週五」,讓玩家收到「加強複習」提醒,
+            在這段期間答對你的題目會額外加金幣/經驗,鼓勵他們積極複習。
+            建議區間 3~14 天,太長提醒效果會弱化。
+          </div>
+        </div>
+      </div>
+
+      <div class="full">
+        <div class="field">
+          <label>備註 / 給管理員的話</label>
+          <textarea id="meta-note" placeholder="例如:這份題庫對應翰林版第二單元,題型偏重時事;或:第 3、5 題答案我不太確定,請幫忙核對"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 上傳區 ====== -->
+  <label class="upload-area" id="upload-area">
+    <div class="icon">📤</div>
+    <div class="title">點這裡上傳題庫檔案,或將檔案拖曳到這裡</div>
+    <div class="desc">
+      支援格式:<code>.csv</code> / <code>.xlsx</code>(Excel) / <code>.json</code> / <code>.txt</code>
+      <br>檔案內容會自動匯入到下方,你還能再編輯
+    </div>
+    <input type="file" id="upload-input" accept=".csv,.xlsx,.xls,.json,.txt">
+  </label>
+  <div class="sample-row">
+    <span>🤔 不知道該怎麼準備檔案?</span>
+    <a id="btn-download-sample-csv">下載 CSV 範例檔</a>
+    <span class="muted">|</span>
+    <a id="btn-download-sample-json">下載 JSON 範例檔</a>
+    <span class="muted">|</span>
+    <span>或者直接點下方右側「➕ 新增題目」開始一題一題填</span>
+  </div>
+
+  <!-- ====== 主編輯區 ====== -->
+  <div class="main-area">
+
+    <!-- 左側:題目列表 -->
+    <aside class="sidebar">
+      <h3>題目列表</h3>
+      <div class="sidebar-stats">
+        <span id="stat-total">共 0 題</span>
+        <span id="stat-error" class="muted"></span>
+      </div>
+      <div class="q-list" id="q-list"></div>
+      <div class="add-btn-bar">
+        <button id="btn-add-question" class="primary">➕ 新增題目</button>
+      </div>
+      <div class="warnings hidden" id="warnings"></div>
+    </aside>
+
+    <!-- 右側:單題編輯 -->
+    <main class="editor" id="editor"></main>
+
+  </div>
+
+  <!-- ====== 輸出區 ====== -->
+  <div class="output-area" id="output-area" style="display:none;">
+    <div class="output-header">
+      <div class="output-title">📋 題庫單預覽(複製整段給管理員)</div>
+      <button id="btn-copy-2" class="primary">📎 複製到剪貼簿</button>
+    </div>
+    <pre class="output-pre" id="output-pre"></pre>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- xlsx 解析支援(僅在使用者上傳 xlsx 時透過 dynamic import 載入,避免一開啟就拖累載入時間) -->
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// 狀態與資料模型
+// ════════════════════════════════════════════════════════════════════
+const state = {
+  meta: {
+    author: '',
+    contact: '',
+    bankName: '',
+    grade: '',
+    subject: '',
+    difficulty: '普通',
+    reminderStart: '',
+    reminderEnd: '',
+    note: '',
+  },
+  questions: [],     // [{id, question, options:['','','',''], answer:'A', hint:''}]
+  selectedId: null,
+};
+
+let nextId = 1;
+
+function newQuestion(){
+  return {
+    id: 'q' + (nextId++),
+    question: '',
+    options: ['', '', '', ''],
+    answer: 'A',
+    hint: '',
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 驗證:回傳每題的錯誤陣列
+// ════════════════════════════════════════════════════════════════════
+function validateQuestion(q){
+  const errs = [];
+  if (!q.question || !q.question.trim()) errs.push('題目空白');
+  const opts = q.options || ['','','',''];
+  if (opts.some(o => !o || !String(o).trim())) errs.push('有選項空白');
+  if (!['A','B','C','D'].includes(q.answer)) errs.push('沒指定答案');
+  // 重複選項
+  const trimmed = opts.map(o => String(o||'').trim());
+  const uniq = new Set(trimmed.filter(Boolean));
+  if (trimmed.filter(Boolean).length !== uniq.size) errs.push('選項有重複');
+  return errs;
+}
+
+function validateMeta(){
+  const errs = [];
+  if (!state.meta.author.trim()) errs.push('請填出題者姓名');
+  if (!state.meta.bankName.trim()) errs.push('請填題庫名稱');
+  if (!state.meta.grade) errs.push('請選擇年級');
+  if (!state.meta.subject) errs.push('請選擇科目');
+  if (!state.meta.reminderStart) errs.push('請選擇提醒開始日期');
+  if (!state.meta.reminderEnd) errs.push('請選擇提醒結束日期');
+  if (state.meta.reminderStart && state.meta.reminderEnd
+      && state.meta.reminderStart > state.meta.reminderEnd){
+    errs.push('結束日期不能早於開始日期');
+  }
+  return errs;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 渲染:題目列表
+// ════════════════════════════════════════════════════════════════════
+function renderList(){
+  const list = document.getElementById('q-list');
+  list.innerHTML = '';
+  state.questions.forEach((q, idx) => {
+    const errs = validateQuestion(q);
+    const item = document.createElement('div');
+    item.className = 'q-item' + (state.selectedId === q.id ? ' active' : '') + (errs.length ? ' has-error' : '');
+    const text = (q.question || '').trim().slice(0, 40) || '(尚未輸入)';
+
+    const row = document.createElement('div');
+    row.className = 'q-item-row';
+
+    const main = document.createElement('div');
+    main.style.flex = '1';
+    main.style.minWidth = '0';
+    main.innerHTML = `
+      <div class="q-item-row">
+        <span class="q-item-no">第 ${idx+1} 題</span>
+      </div>
+      <div class="q-item-text">${escapeHtml(text)}</div>
+      <div class="q-item-meta">
+        <span>${errs.length ? '⚠ ' + errs[0] : '答案 ' + q.answer}</span>
+        <span>${q.options.filter(o => o && o.trim()).length}/4 選項</span>
+      </div>
+    `;
+    main.onclick = () => selectQuestion(q.id);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'q-item-remove';
+    removeBtn.innerHTML = '×';
+    removeBtn.title = '刪除這題';
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeQuestion(q.id);
+    };
+
+    row.appendChild(main);
+    row.appendChild(removeBtn);
+    item.appendChild(row);
+    list.appendChild(item);
+  });
+
+  document.getElementById('stat-total').textContent = '共 ' + state.questions.length + ' 題';
+  const errCount = state.questions.filter(q => validateQuestion(q).length).length;
+  const errEl = document.getElementById('stat-error');
+  if (errCount > 0){
+    errEl.textContent = '⚠ ' + errCount + ' 題有錯';
+    errEl.style.color = '#832217';
+  } else if (state.questions.length > 0) {
+    errEl.textContent = '✓ 都正確';
+    errEl.style.color = '#15583e';
+  } else {
+    errEl.textContent = '';
+  }
+
+  // 警告區塊
+  const warnEl = document.getElementById('warnings');
+  const allErrs = [];
+  state.questions.forEach((q, i) => {
+    const e = validateQuestion(q);
+    if (e.length) allErrs.push('第 ' + (i+1) + ' 題: ' + e.join('、'));
+  });
+  if (allErrs.length){
+    warnEl.classList.remove('hidden');
+    warnEl.classList.add('error');
+    warnEl.innerHTML = '<strong>需要修正:</strong><br>' + allErrs.slice(0, 5).map(escapeHtml).join('<br>')
+      + (allErrs.length > 5 ? '<br>...等共 ' + allErrs.length + ' 個問題' : '');
+  } else {
+    warnEl.classList.add('hidden');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 渲染:單題編輯區
+// ════════════════════════════════════════════════════════════════════
+function renderEditor(){
+  const el = document.getElementById('editor');
+  if (!state.selectedId){
+    el.innerHTML = `
+      <div class="editor-empty">
+        <div class="icon">📝</div>
+        <div class="hint">
+          ${state.questions.length === 0
+            ? '左下方點「➕ 新增題目」開始填寫第一題,<br>或上傳檔案讓系統自動匯入'
+            : '從左邊列表挑一題來編輯'}
+        </div>
+      </div>`;
+    return;
+  }
+  const q = state.questions.find(x => x.id === state.selectedId);
+  if (!q){ state.selectedId = null; renderEditor(); return; }
+  const idx = state.questions.indexOf(q);
+
+  el.innerHTML = `
+    <div class="editor-header">
+      <div class="editor-title">
+        <span class="emoji">📝</span>第 ${idx+1} 題
+        <span class="editor-subtitle">(共 ${state.questions.length} 題)</span>
+      </div>
+      <div class="actions">
+        <button id="ed-prev" ${idx===0?'disabled':''}>← 上一題</button>
+        <button id="ed-next" ${idx===state.questions.length-1?'disabled':''}>下一題 →</button>
+      </div>
+    </div>
+
+    <div class="editor-section">
+      <h4>題目內容</h4>
+      <div class="field">
+        <textarea id="ed-question" rows="3" placeholder="請輸入題目,例如:下列哪一個是台灣最高的山?">${escapeHtml(q.question)}</textarea>
+        <div class="help">建議 10~80 字。題目愈具體愈好,避免一次問太多事</div>
+      </div>
+    </div>
+
+    <div class="editor-section">
+      <h4>四個選項(點右邊「正解」按鈕標記正確答案)</h4>
+      <div class="option-list" id="ed-options"></div>
+      <div class="help">四個選項都必須填,且不能完全相同</div>
+    </div>
+
+    <div class="editor-section">
+      <h4>提示(選填)</h4>
+      <div class="field">
+        <input type="text" id="ed-hint" value="${escapeHtml(q.hint||'')}" placeholder="玩家答錯時看到的提示,例如「想想山的高度」">
+      </div>
+    </div>
+  `;
+
+  // 渲染選項
+  const optList = document.getElementById('ed-options');
+  ['A','B','C','D'].forEach((letter, i) => {
+    const isAnswer = q.answer === letter;
+    const row = document.createElement('div');
+    row.className = 'option-row' + (isAnswer ? ' is-answer' : '');
+    row.innerHTML = `
+      <div class="option-letter">${letter}</div>
+      <input type="text" data-letter="${letter}" value="${escapeHtml(q.options[i]||'')}" placeholder="選項 ${letter} 的內容">
+      <div class="option-mark ${isAnswer?'active':''}" data-letter="${letter}" title="設為正確答案">${isAnswer?'✓ 正解':'設為正解'}</div>
+    `;
+    optList.appendChild(row);
+  });
+
+  // 綁定事件
+  document.getElementById('ed-question').addEventListener('input', e => {
+    q.question = e.target.value;
+    renderList();
+  });
+  document.getElementById('ed-hint').addEventListener('input', e => {
+    q.hint = e.target.value;
+  });
+  optList.querySelectorAll('input[data-letter]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const letter = e.target.dataset.letter;
+      const i = ['A','B','C','D'].indexOf(letter);
+      q.options[i] = e.target.value;
+      renderList();
+    });
+  });
+  optList.querySelectorAll('.option-mark').forEach(mark => {
+    mark.addEventListener('click', () => {
+      q.answer = mark.dataset.letter;
+      renderEditor();
+      renderList();
+    });
+  });
+  document.getElementById('ed-prev').onclick = () => {
+    if (idx > 0) selectQuestion(state.questions[idx-1].id);
+  };
+  document.getElementById('ed-next').onclick = () => {
+    if (idx < state.questions.length-1) selectQuestion(state.questions[idx+1].id);
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 動作
+// ════════════════════════════════════════════════════════════════════
+function addQuestion(){
+  const q = newQuestion();
+  state.questions.push(q);
+  state.selectedId = q.id;
+  renderList();
+  renderEditor();
+}
+
+function removeQuestion(id){
+  if (!confirm('確定刪除這一題?')) return;
+  const idx = state.questions.findIndex(q => q.id === id);
+  if (idx < 0) return;
+  state.questions.splice(idx, 1);
+  if (state.selectedId === id){
+    if (state.questions.length === 0) state.selectedId = null;
+    else state.selectedId = state.questions[Math.min(idx, state.questions.length-1)].id;
+  }
+  renderList();
+  renderEditor();
+}
+
+function selectQuestion(id){
+  state.selectedId = id;
+  renderList();
+  renderEditor();
+}
+
+function clearAll(){
+  if (!confirm('確定全部清空?基本資訊跟所有題目都會清掉')) return;
+  state.meta = {author:'',contact:'',bankName:'',grade:'',subject:'',difficulty:'普通',reminderStart:'',reminderEnd:'',note:''};
+  state.questions = [];
+  state.selectedId = null;
+  // 同步 UI
+  ['meta-author','meta-contact','meta-bank-name','meta-grade','meta-subject',
+   'meta-difficulty','meta-reminder-start','meta-reminder-end','meta-note']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('meta-difficulty').value = '普通';
+  document.getElementById('output-area').style.display = 'none';
+  document.getElementById('btn-copy').disabled = true;
+  renderList();
+  renderEditor();
+  showToast('已全部清空','success');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 上傳檔案處理
+// ════════════════════════════════════════════════════════════════════
+async function handleFile(file){
+  if (!file) return;
+  const name = file.name.toLowerCase();
+  try {
+    if (name.endsWith('.json')){
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const arr = Array.isArray(data) ? data : (data.questions || []);
+      importRows(arr.map(normalizeRow));
+    } else if (name.endsWith('.csv') || name.endsWith('.txt')){
+      const text = await file.text();
+      const rows = parseCSV(text);
+      importRows(rows);
+    } else if (name.endsWith('.xlsx') || name.endsWith('.xls')){
+      // 動態載入 SheetJS
+      showToast('正在載入 Excel 解析模組...');
+      await loadScript('https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js');
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, {type:'array'});
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(ws, {defval:''});
+      const rows = json.map(row => normalizeRow(row));
+      importRows(rows);
+    } else {
+      showToast('不支援的檔案格式,請上傳 csv / xlsx / json / txt','danger');
+      return;
+    }
+  } catch(e){
+    console.error(e);
+    showToast('檔案解析失敗:' + (e.message || e),'danger');
+  }
+}
+
+function loadScript(url){
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)){ resolve(); return; }
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('載入失敗:' + url));
+    document.head.appendChild(s);
+  });
+}
+
+// 簡易 CSV 解析(支援 "包圍" 與雙引號跳脫)
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/, ''); // 去 BOM
+  // 偵測分隔符:CSV 用 , 、TXT 可能用 tab
+  const firstLine = text.split(/\r?\n/, 1)[0];
+  const delim = firstLine.includes('\t') && !firstLine.includes(',') ? '\t' : ',';
+  const lines = [];
+  let cur = '', row = [], inQ = false;
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if (inQ){
+      if (ch === '"' && text[i+1] === '"'){ cur += '"'; i++; }
+      else if (ch === '"'){ inQ = false; }
+      else cur += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === delim){ row.push(cur); cur = ''; }
+      else if (ch === '\n' || ch === '\r'){
+        if (ch === '\r' && text[i+1] === '\n') i++;
+        row.push(cur); cur = '';
+        if (row.some(x => x !== '')) lines.push(row);
+        row = [];
+      } else cur += ch;
+    }
+  }
+  if (cur !== '' || row.length){ row.push(cur); if (row.some(x=>x!=='')) lines.push(row); }
+  if (lines.length === 0) return [];
+
+  // 第一行視為表頭
+  const headers = lines[0].map(h => normalizeHeader(h));
+  return lines.slice(1).map(line => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = line[i] !== undefined ? line[i] : '');
+    return normalizeRow(obj);
+  });
+}
+
+// 把表頭名稱對應到我們的欄位 key
+function normalizeHeader(h){
+  const s = String(h||'').trim().toLowerCase();
+  if (/題目|問題|question|q$/i.test(s)) return 'question';
+  if (/答案|正解|answer|ans/i.test(s)) return 'answer';
+  if (/提示|hint/i.test(s)) return 'hint';
+  if (/^選?\s*a$|選項a|optiona|opt_a|optionA/i.test(s) || s === 'a') return 'optA';
+  if (/^選?\s*b$|選項b|optionb|opt_b/i.test(s) || s === 'b') return 'optB';
+  if (/^選?\s*c$|選項c|optionc|opt_c/i.test(s) || s === 'c') return 'optC';
+  if (/^選?\s*d$|選項d|optiond|opt_d/i.test(s) || s === 'd') return 'optD';
+  return s;
+}
+
+// 把一筆記錄(物件或陣列)正規化成 {question, options[4], answer, hint}
+function normalizeRow(r){
+  if (!r || typeof r !== 'object') return null;
+  // 陣列形式:[題目, A, B, C, D, 答案, 提示]
+  if (Array.isArray(r)){
+    return {
+      question: String(r[0]||'').trim(),
+      options: [String(r[1]||'').trim(), String(r[2]||'').trim(), String(r[3]||'').trim(), String(r[4]||'').trim()],
+      answer: normalizeAnswer(r[5], [r[1],r[2],r[3],r[4]]),
+      hint: String(r[6]||'').trim(),
+    };
+  }
+  // 物件形式
+  const q = r.question || r.題目 || r.問題 || r.q || '';
+  let opts;
+  if (Array.isArray(r.options)){
+    opts = r.options.slice(0,4).map(x => String(x||'').trim());
+    while (opts.length < 4) opts.push('');
+  } else {
+    opts = [
+      r.optA || r.A || r['選項A'] || r['選A'] || '',
+      r.optB || r.B || r['選項B'] || r['選B'] || '',
+      r.optC || r.C || r['選項C'] || r['選C'] || '',
+      r.optD || r.D || r['選項D'] || r['選D'] || '',
+    ].map(x => String(x||'').trim());
+  }
+  const rawAns = r.answer || r.答案 || r.正解 || r.ans || '';
+  return {
+    question: String(q||'').trim(),
+    options: opts,
+    answer: normalizeAnswer(rawAns, opts),
+    hint: String(r.hint || r.提示 || '').trim(),
+  };
+}
+
+// 把答案欄轉成 'A'/'B'/'C'/'D'
+function normalizeAnswer(raw, opts){
+  let s = String(raw||'').trim();
+  if (!s) return 'A';
+  // 如果是 1/2/3/4
+  if (/^[1-4]$/.test(s)) return ['A','B','C','D'][parseInt(s)-1];
+  const upper = s.toUpperCase();
+  if (['A','B','C','D'].includes(upper)) return upper;
+  // 取首字母
+  if (/^[A-D]/.test(upper)) return upper[0];
+  // 如果跟某個選項文字完全相同
+  if (opts){
+    for (let i = 0; i < 4; i++){
+      if (opts[i] && String(opts[i]).trim() === s) return ['A','B','C','D'][i];
+    }
+  }
+  return 'A'; // fallback
+}
+
+function importRows(rows){
+  const valid = (rows || []).filter(r => r && (r.question || r.options.some(o => o)));
+  if (!valid.length){
+    showToast('檔案中沒有解析到題目','danger');
+    return;
+  }
+  valid.forEach(r => {
+    const q = newQuestion();
+    q.question = r.question || '';
+    q.options = (r.options || ['','','','']).slice(0,4);
+    while (q.options.length < 4) q.options.push('');
+    q.answer = r.answer || 'A';
+    q.hint = r.hint || '';
+    state.questions.push(q);
+  });
+  if (!state.selectedId && state.questions.length) state.selectedId = state.questions[0].id;
+  renderList();
+  renderEditor();
+  showToast('成功匯入 ' + valid.length + ' 題','success');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 範例檔下載
+// ════════════════════════════════════════════════════════════════════
+function downloadFile(filename, content, type='text/plain;charset=utf-8'){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const SAMPLE_QUESTIONS = [
+  { question:'下列哪一座是台灣最高的山?', A:'阿里山', B:'玉山', C:'陽明山', D:'觀音山', answer:'B', hint:'位於南投與嘉義交界' },
+  { question:'光合作用主要發生在植物的哪個構造?', A:'根部', B:'葉片葉綠體', C:'花瓣', D:'樹皮', answer:'B', hint:'需要陽光的地方' },
+  { question:'15 + 27 = ?', A:'32', B:'42', C:'52', D:'62', answer:'B', hint:'從個位開始算' },
+];
+
+function downloadSampleCSV(){
+  const head = ['題目','選項A','選項B','選項C','選項D','答案','提示'];
+  const lines = [head.join(',')];
+  SAMPLE_QUESTIONS.forEach(q => {
+    const row = [q.question, q.A, q.B, q.C, q.D, q.answer, q.hint]
+      .map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',');
+    lines.push(row);
+  });
+  // 加 BOM 以避免 Excel 開啟亂碼
+  downloadFile('題庫範例.csv', '\uFEFF' + lines.join('\n'), 'text/csv;charset=utf-8');
+  showToast('已下載 CSV 範例,可用 Excel 開啟編輯','success');
+}
+
+function downloadSampleJSON(){
+  const data = SAMPLE_QUESTIONS.map(q => ({
+    question: q.question,
+    options: [q.A, q.B, q.C, q.D],
+    answer: q.answer,
+    hint: q.hint,
+  }));
+  downloadFile('題庫範例.json', JSON.stringify({questions:data}, null, 2), 'application/json;charset=utf-8');
+  showToast('已下載 JSON 範例','success');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 產生輸出單(純文字,給管理員看)
+// ════════════════════════════════════════════════════════════════════
+function generateOutput(){
+  const metaErrs = validateMeta();
+  if (metaErrs.length){
+    showToast('基本資訊有缺:' + metaErrs[0],'danger');
+    return;
+  }
+  if (state.questions.length === 0){
+    showToast('還沒有題目,請先新增或上傳','danger');
+    return;
+  }
+  const qErrs = state.questions.map((q,i) => ({i, errs: validateQuestion(q)})).filter(x => x.errs.length);
+  if (qErrs.length){
+    if (!confirm('有 ' + qErrs.length + ' 題還有錯誤,確定要繼續產生?\n(管理員會幫你修正,但建議先處理掉再送出)')) return;
+  }
+
+  const lines = [];
+  const sep = '═'.repeat(72);
+  const sep2 = '─'.repeat(72);
+
+  lines.push(sep);
+  lines.push('  📚 LXPSGAME 題庫提交單');
+  lines.push(sep);
+  lines.push('');
+  lines.push('【基本資訊】');
+  lines.push('  出題者         : ' + state.meta.author);
+  if (state.meta.contact) lines.push('  聯絡方式       : ' + state.meta.contact);
+  lines.push('  題庫名稱       : ' + state.meta.bankName);
+  lines.push('  對應年級       : ' + state.meta.grade);
+  lines.push('  對應科目       : ' + state.meta.subject);
+  lines.push('  建議難度       : ' + state.meta.difficulty);
+  lines.push('  ★ 加強提醒區間 : ' + state.meta.reminderStart + '  →  ' + state.meta.reminderEnd
+    + dayRangeHint(state.meta.reminderStart, state.meta.reminderEnd));
+  lines.push('  題目總數       : ' + state.questions.length + ' 題');
+  if (state.meta.note){
+    lines.push('');
+    lines.push('  【備註 / 給管理員的話】');
+    state.meta.note.split('\n').forEach(l => lines.push('    ' + l));
+  }
+  lines.push('');
+  lines.push(sep);
+  lines.push('  📝 題目內容(共 ' + state.questions.length + ' 題)');
+  lines.push(sep);
+
+  state.questions.forEach((q, i) => {
+    const errs = validateQuestion(q);
+    lines.push('');
+    lines.push('  第 ' + (i+1) + ' 題' + (errs.length ? '   ⚠ ' + errs.join('、') : ''));
+    lines.push(sep2);
+    lines.push('  Q : ' + (q.question || '(空白)'));
+    ['A','B','C','D'].forEach((letter, idx) => {
+      const mark = q.answer === letter ? '★' : ' ';
+      lines.push('  ' + mark + ' ' + letter + ' : ' + (q.options[idx] || '(空白)'));
+    });
+    lines.push('  答案: ' + q.answer);
+    if (q.hint) lines.push('  提示: ' + q.hint);
+  });
+
+  lines.push('');
+  lines.push(sep);
+  lines.push('  📤 給管理員的整合提示');
+  lines.push(sep);
+  lines.push('  1. 把上面題目接到 ADV_QUIZ_DB / 對應專屬題庫陣列尾端,id 接續往下排');
+  lines.push('     格式:{id, grade, subject, difficulty, question, options:[A,B,C,D], answer, hint}');
+  lines.push('  2. 提醒區間 ' + state.meta.reminderStart + ' → ' + state.meta.reminderEnd
+    + ' 內,玩家答對這批題目可額外加金幣/經驗(獎勵倍率自訂)');
+  lines.push('  3. 區間結束後,題目仍保留在題庫,只是不再額外加成');
+  lines.push('  4. 上線前請順手檢查:答案是否合理、有無錯字、是否符合年級程度');
+  lines.push(sep);
+
+  const txt = lines.join('\n');
+  document.getElementById('output-pre').textContent = txt;
+  document.getElementById('output-area').style.display = 'block';
+  document.getElementById('btn-copy').disabled = false;
+  document.getElementById('output-area').scrollIntoView({behavior:'smooth', block:'start'});
+  showToast('題庫單已產生,請按「複製到剪貼簿」貼給管理員','success');
+}
+
+function dayRangeHint(s, e){
+  if (!s || !e) return '';
+  const ds = new Date(s), de = new Date(e);
+  if (isNaN(ds) || isNaN(de)) return '';
+  const days = Math.round((de - ds) / 86400000) + 1;
+  return '  (共 ' + days + ' 天)';
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 複製
+// ════════════════════════════════════════════════════════════════════
+function copyOutput(){
+  const txt = document.getElementById('output-pre').textContent;
+  if (!txt){ showToast('還沒產生題庫單','danger'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(
+      () => showToast('✓ 已複製,可以貼給管理員了','success'),
+      () => fallbackCopy(txt),
+    );
+  } else fallbackCopy(txt);
+}
+function fallbackCopy(t){
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('✓ 已複製','success'); }
+  catch(e){ showToast('複製失敗,請手動選取','danger'); }
+  document.body.removeChild(ta);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 工具
+// ════════════════════════════════════════════════════════════════════
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+let toastTimer = null;
+function showToast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 初始化
+// ════════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // 預設提醒日期:今天 ~ 兩週後
+  const today = new Date();
+  const future = new Date(today.getTime() + 14*86400000);
+  const fmt = d => d.toISOString().slice(0,10);
+  document.getElementById('meta-reminder-start').value = fmt(today);
+  document.getElementById('meta-reminder-end').value = fmt(future);
+  state.meta.reminderStart = fmt(today);
+  state.meta.reminderEnd = fmt(future);
+
+  // 綁定基本資訊輸入
+  const bind = (id, key) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => state.meta[key] = el.value);
+    el.addEventListener('change', () => state.meta[key] = el.value);
+  };
+  bind('meta-author', 'author');
+  bind('meta-contact', 'contact');
+  bind('meta-bank-name', 'bankName');
+  bind('meta-grade', 'grade');
+  bind('meta-subject', 'subject');
+  bind('meta-difficulty', 'difficulty');
+  bind('meta-reminder-start', 'reminderStart');
+  bind('meta-reminder-end', 'reminderEnd');
+  bind('meta-note', 'note');
+
+  // 上傳
+  const ua = document.getElementById('upload-area');
+  const ui = document.getElementById('upload-input');
+  ua.addEventListener('click', () => ui.click());
+  ui.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) handleFile(f);
+    ui.value = '';
+  });
+  ['dragenter','dragover'].forEach(ev => {
+    ua.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); ua.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(ev => {
+    ua.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); ua.classList.remove('dragover'); });
+  });
+  ua.addEventListener('drop', e => {
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  // 按鈕
+  document.getElementById('btn-add-question').onclick = addQuestion;
+  document.getElementById('btn-clear-all').onclick = clearAll;
+  document.getElementById('btn-generate').onclick = generateOutput;
+  document.getElementById('btn-copy').onclick = copyOutput;
+  document.getElementById('btn-copy-2').onclick = copyOutput;
+  document.getElementById('btn-download-sample-csv').onclick = downloadSampleCSV;
+  document.getElementById('btn-download-sample-json').onclick = downloadSampleJSON;
+
+  renderList();
+  renderEditor();
+});
+</script>
+</body>
+</html>
