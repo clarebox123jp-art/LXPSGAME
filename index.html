@@ -69499,6 +69499,30 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260513.6470', brief:[
+    '🚨 修掉嚴重語法錯誤:更新日誌 v6410 條目中 typeof HERO_DB 那段字串轉義寫壞,造成整個 script 從 line 69800 起停止執行',
+    '🔁 連鎖效應修復:版本檢查 / 強制重整提醒 / 5 分鐘輪詢這幾天通通失效,本次修好',
+  ], items:[
+    '【🐛 bug 症狀】',
+    '・玩家反映「我怎麼更新都沒有出現重整提醒」',
+    '・console 紅字:Uncaught SyntaxError: Invalid or unexpected token (at LXPSGAME 開頭的 69800:68)',
+    '【根因】',
+    '・v6410 那則 changelog 在 items 第一行描述「typeof HERO_DB 不等於 undefined」時,把 undefined 兩邊塞了「反斜線+單引號」想轉義',
+    '・但因外層字串本來就是用單引號包,內層那組「反斜線+單引號」會被當成「轉義反斜線+字串結束」,字串提前結束,造成 SyntaxError',
+    '・SyntaxError 出現在 GAME_CHANGELOG 陣列初始化中(line 69800),整個 script 區塊從此停擺',
+    '・後面 line 71305 的 CURRENT_VERSION、line 71339 的 _GAME_LOADED_VERSION、_checkNewVersionOnServer、setInterval 註冊全部都來不及執行',
+    '・所以版本檢查機制完全沒被建起來,玩家當然不會收到強制重整提示',
+    '【修補】',
+    '・把那行 undefined 兩邊的轉義單引號文字直接改寫成中文描述「不等於 undefined」,純文字、沒有任何轉義雷',
+    '・整段 changelog 文案語意不變,仍然準確描述 v6410 拆檔工作',
+    '【未來預防】',
+    '・changelog items 內若要描述 JS 程式片段,優先用中文「不等於」「等於」「null」等文字描述,別寫真實的字串轉義',
+    '・推檔前先在 console 看一遍有沒有紅字,有紅字代表 script 部分停擺,版本檢查必失效',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260513.6470',
+    '・window._GAME_LOADED_VERSION → v1.0.20260513.6470',
+    '・CURRENT_BOOT_VER 不動(維持 v6050)',
+  ] },
   { ver:'v1.0.20260513.6460', brief:[
     '🦜 新英雄登場:布奶鳥獸(5 年 5 班高同學設計)— 兩隻可愛小鳥「布丁」與「奶茶」聯手作戰!',
     '💥 天賦「布丁奶茶連擊」:普攻保證 2 次,30% 機率追加第 3 次(每級 +10%,Lv5 達 80%)',
@@ -69797,7 +69821,7 @@ const GAME_CHANGELOG = [
     '・新增英雄/魔物的格式範例請看 LXPSGAME_新增內容完整手冊.md(章節「新增英雄」)',
   ], items:[
     '【受影響的引用點(沒動,維持原樣)】',
-    '・index.html 中共 107 處引用 HERO_DB,其中 35 處用 typeof HERO_DB !== \\'undefined\\' 防呆檢查',
+    '・index.html 中共 107 處引用 HERO_DB,其中 35 處用 typeof HERO_DB 不等於 undefined 防呆檢查',
     '・全部引用都是讀取(HERO_DB[name].hp 之類),沒有任何寫入',
     '・拆檔後因 hero_db.js 把 HERO_DB 宣告成全域變數,所有引用照舊運作',
     '【grep 驗證(拆檔前)】',
@@ -69871,13 +69895,13 @@ const GAME_CHANGELOG = [
     '・index.html 第 42471 行原本是「const ADV_QUIZ_DB = [{id:1,...},{id:2,...},...{id:3120,...}];」一行 49 萬字元',
     '・現在替換成 5 行說明註解,正體向後相容說明',
     '・index.html L6835(原 </head> 前一行)新增 <script src="adv_quiz_db.js?v=20260513"><\/script>',
-    '・新檔 adv_quiz_db.js 為「全域變數宣告」格式(非 ES module),確保 typeof ADV_QUIZ_DB !== \'undefined\' 等所有檢查照舊運作',
+    '・新檔 adv_quiz_db.js 為「全域變數宣告」格式(非 ES module),確保 typeof ADV_QUIZ_DB 不等於 undefined 等所有檢查照舊運作',
     '【受影響的引用點(沒動,維持原樣)】',
     '・_kingGetReviewSubjects(line ~45960):掃 ADV_QUIZ_DB 取課堂複習科目',
     '・_kingDrawQuestions(line ~45995):從 ADV_QUIZ_DB 抽 20 題知識王挑戰',
     '・_kingGetSubjects(line ~45933):掃 ADV_QUIZ_DB 取所有可用科目',
     '・_advMiniGetQuizPool:小怪戰題庫池(過濾 ADV_QUIZ_DB)',
-    '・以上全部繼續用 typeof ADV_QUIZ_DB !== \'undefined\' 檢查,改成外部載入後依然成立',
+    '・以上全部繼續用 typeof ADV_QUIZ_DB 不等於 undefined 檢查,改成外部載入後依然成立',
     '【版本同步】',
     '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260513.6390',
     '・CURRENT_BOOT_VER 不動(若改會強制全玩家重抓預載圖,得不償失)',
@@ -71302,7 +71326,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260513.6460';
+  const CURRENT_VERSION = 'v1.0.20260513.6470';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71336,7 +71360,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260513.6460';
+window._GAME_LOADED_VERSION = 'v1.0.20260513.6470';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
