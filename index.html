@@ -6884,7 +6884,7 @@ body.art-premium #summon-overlay {
 }
 
 </style>
-<script src="adv_quiz_db.js?v=20260513"></script>
+<script src="adv_quiz_db.js?v=20260514"></script>
 <script src="hero_db.js?v=20260513c"></script>
 </head>
 <body>
@@ -43007,111 +43007,10 @@ function _kingClaimRewards(){
 //   注意:adv_quiz_db.js 仍以 const ADV_QUIZ_DB = [...] 全域變數形式宣告,
 //   不是 ES module,所以下方所有 typeof ADV_QUIZ_DB !== 'undefined' 的檢查都繼續成立。
 
-// ── 依玩家難度選出本次答題池 ──
-// 沒自信：低年級(70%) + 中年級(30%)
-// 普通：中年級(60%) + 低年級(20%) + 高年級(20%)
-// 我很會：高年級(50%) + 國中(50%)
-// ── 五下自然期中評量專屬題庫 ──
-const ADV_QUIZ_5S_MIDTERM = [
-  {id:9001,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'晚上觀星時，如果我們沒有指北針，可以利用哪一顆星星來辨別正北方？',options:['織女星','北極星','天狼星','牛郎星'],answer:'B'},
-  {id:9002,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'使用星座盤觀測星空時，關於星座盤上的「透明片」功能，下列敘述何者正確？',options:['用來遮住看不見的星星','標示日期與月分','對照高度角和方位線','增加星星的亮度'],answer:'C'},
-  {id:9003,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於星星在天空中的移動規律，下列哪一項敘述是正確的？',options:['由西向東移動','由東向西移動','由北向南移動','隨機移動沒有規律'],answer:'B'},
-  {id:9004,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'春、夏季的夜晚，我們通常會利用哪一個星座來尋找北極星？',options:['仙后座','獵戶座','北斗七星','獅子座'],answer:'C'},
-  {id:9005,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'使用「北斗七星」尋找北極星時，要將勺口兩顆星的連線延長約幾倍距離？',options:['2倍','3倍','5倍','10倍'],answer:'C'},
-  {id:9006,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'住在臺灣的小明發現，北極星在空中的高度角大約是多少度？',options:['0度','23.5度','90度','隨季節大幅改變'],answer:'B'},
-  {id:9007,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'星座盤上的「天頂」是指高度角幾度的地方？',options:['0度','45度','90度','180度'],answer:'C'},
-  {id:9008,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'為什麼在都市觀測星星比在郊區困難？',options:['都市的星星比較少','都市建築物會發出吸引星星的光','受到嚴重光害影響','都市的雲層永遠比較厚'],answer:'C'},
-  {id:9009,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於「仙后座」的特徵，下列描述何者正確？',options:['形狀像一個大勺子','只出現在夏季','形狀像英文字母 W 或 M','是由三顆亮星組成的三角形'],answer:'C'},
-  {id:9010,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'觀星時，為了不影響眼睛對暗光的適應，手電筒應該要做什麼處理？',options:['換成大瓦數燈泡','套上紅色玻璃紙','套上藍色玻璃紙','直接關掉不准使用'],answer:'B'},
-  {id:9011,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'進行「蠟燭燃燒需要空氣」實驗時，蓋上廣口瓶的蠟燭會熄滅，這證明燃燒需要空氣中的哪種氣體？',options:['氮氣','氧氣','二氧化碳','氬氣'],answer:'B'},
-  {id:9012,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'空氣中含量最多的氣體是哪一種？',options:['氧氣','二氧化碳','氮氣','水蒸氣'],answer:'C'},
-  {id:9013,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於氧氣的特性，下列何者正確？',options:['有臭味','具有助燃性','會讓點燃的線香熄滅','是空氣中含量最多的氣體'],answer:'B'},
-  {id:9014,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'製造氧氣實驗中，在雙氧水裡加入「金針菇」或「胡蘿蔔」的目的為何？',options:['改變氧氣的味道','作為催化劑加速反應','作為可燃物','讓溶液變色方便觀察'],answer:'B'},
-  {id:9015,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'燃燒三要素不包括下列哪一項？',options:['可燃物','助燃物','達到燃點','二氧化碳'],answer:'D'},
-  {id:9016,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'製造二氧化碳實驗中，通常使用哪兩種材料混合？',options:['雙氧水與金針菇','醋與小蘇打粉','水與砂糖','酒精與食鹽'],answer:'B'},
-  {id:9017,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'下列哪一種做法是利用「移除可燃物」來滅火？',options:['用蓋子蓋住油鍋','消防員灑水降溫','森林火災時開闢防火線','使用二氧化碳滅火器'],answer:'C'},
-  {id:9018,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於二氧化碳的性質，下列何者「錯誤」？',options:['無色無味','不具助燃性','比空氣輕','可以裝入滅火器中'],answer:'C'},
-  {id:9019,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'鋼棉生鏽實驗中，哪一組鋼棉生鏽的速度會最快？',options:['乾燥的鋼棉','沾水的鋼棉','沾醋（酸性溶液）的鋼棉','塗了油的鋼棉'],answer:'C'},
-  {id:9020,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'鐵生鏽主要是因為鐵和空氣中的哪些物質產生作用？',options:['氮氣和二氧化碳','氧氣和水','氬氣和陽光','二氧化碳和灰塵'],answer:'B'},
-  {id:9021,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'下列哪一種防鏽方法是利用「隔絕空氣與水」的原理？',options:['在腳踏車鏈條塗油','在鐵窗上塗油漆','將鐵製品電鍍','以上皆是'],answer:'D'},
-  {id:9022,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於「不鏽鋼」的敘述，下列何者正確？',options:['在鐵中加入其他金屬製成合金','完全不需要保養','是一種噴在鐵上面的油漆','只要擦乾就不會生鏽'],answer:'A'},
-  {id:9023,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'點燃的線香放入充滿二氧化碳的瓶中，會有什麼現象？',options:['燃燒得更旺盛','立刻熄滅','產生爆炸','顏色變藍'],answer:'B'},
-  {id:9024,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'廚師炒菜時油鍋起火，立刻蓋上鍋蓋是利用什麼原理滅火？',options:['降低溫度','移走可燃物','隔絕助燃物（空氣）','改變燃點'],answer:'C'},
-  {id:9025,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'下列何種氣體可用來填充食品包裝以保持新鮮，且不可燃也不助燃？',options:['氧氣','氮氣','二氧化碳','氯氣'],answer:'B'},
-  {id:9026,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'關於「燃點」的敘述，下列何者正確？',options:['所有物質的燃點都一樣','溫度只要達到燃點，沒有氧氣也能燃燒','物質燃燒時需要的最低溫度','只要有火源，任何東西都會立刻達到燃點'],answer:'C'},
-  {id:9027,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'滅火器使用口訣「拉、瞄、壓、掃」，其中的「掃」是指什麼？',options:['向火源頂部橫向掃射','向火源底部左右掃射','將火場周邊垃圾掃乾淨','對著空氣隨便掃'],answer:'B'},
-  {id:9028,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'如果電器產品起火，絕對不能使用哪一種滅火方式，以免觸電？',options:['乾粉滅火器','二氧化碳滅火器','直接用水潑灑','切斷電源'],answer:'C'},
-  {id:9029,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'鋼棉生鏽實驗後，將點燃的線香放入生鏽鋼棉的廣口瓶中會熄滅，這代表生鏽過程消耗了什麼？',options:['氧氣','水蒸氣','二氧化碳','氮氣'],answer:'A'},
-  {id:9030,grade:'五年級',subject:'五下自然期中評量',difficulty:'普通',question:'在戶外觀星，當我們發現獵戶座在晚上 8 點位於東南方，到了晚上 10 點，它大約會移動到哪個方向？',options:['東北方','正南方','正北方','原地不動'],answer:'B'},
-];
+// ★ v1.0.20260514 — ADV_QUIZ_5S_MIDTERM（五下自然期中評量）已搬到 adv_quiz_db.js 末尾。
+// ★ v1.0.20260514 — ADV_QUIZ_5S_U3_ANIMAL（五下自然第三單元動物的生活）已搬到 adv_quiz_db.js 末尾。
+// ★ v1.0.20260514 — ADV_QUIZ_5S_U4_SOUND（五下自然第四單元聲音與樂器）已搬到 adv_quiz_db.js 末尾。
 
-// ── 五下自然第三單元「動物的生活」專屬題庫 ──
-const ADV_QUIZ_5S_U3_ANIMAL = [
-  {id:9101,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於人類手臂運動的敘述，哪一項正確？',options:['只要有肌肉就能動','彎曲時內側肌肉舒張','伸直時外側肌肉收縮','骨骼會主動收縮帶動肌肉'],answer:'C'},
-  {id:9102,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物的運動器官主要是「鰭」？',options:['鴨子','魚','候鳥','蜘蛛'],answer:'B'},
-  {id:9103,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'蚯蚓沒有骨骼，牠主要是靠什麼方式在土裡活動？',options:['腹足','翅膀','肌肉與剛毛','八隻腕'],answer:'C'},
-  {id:9104,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'人體骨骼與骨骼的連接處稱為什麼？',options:['關節','肌肉','韌帶','纖維'],answer:'A'},
-  {id:9105,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物「求偶」的敘述，哪一項錯誤？',options:['為了吸引異性','為了繁衍後代','每一種動物求偶方式都一樣','螢火蟲會利用發光求偶'],answer:'C'},
-  {id:9106,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'雄孔雀展開鮮豔的尾羽是為了什麼？',options:['嚇跑敵人','捕食獵物','吸引雌孔雀','準備飛行'],answer:'C'},
-  {id:9107,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'「卵生動物」胚胎發育所需的養分主要來源為何？',options:['母體的血液','卵黃與蛋白','胎盤','外界的水分'],answer:'B'},
-  {id:9108,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「胎生動物」的特徵，哪一項正確？',options:['小寶寶在母體外孵化','小寶寶產出時已有完整形體','一次產下的數量通常比卵生多','胚胎由卵黃提供養分'],answer:'B'},
-  {id:9109,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物具有「育兒袋」來保護幼兒？',options:['狗','鱷魚','袋鼠','負子蟲'],answer:'C'},
-  {id:9110,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'東方環頸鴴出現「擬傷行為」的主要目的是？',options:['練習跳舞','吸引天敵注意以保護幼鳥','尋找食物','吸引配偶'],answer:'B'},
-  {id:9111,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「社會性的行為」，哪種動物的描述正確？',options:['蜜蜂各有分工，共同生活','鬥魚成群生活互相幫忙','蜘蛛會合作織網','變色龍會群體打獵'],answer:'A'},
-  {id:9112,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'蜜蜂家族中，負責「產卵」的是誰？',options:['雄蜂','工蜂','蜂后','偵查蜂'],answer:'C'},
-  {id:9113,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物「傳遞訊息」的方式，哪一項錯誤？',options:['蜜蜂會跳舞','海豚靠聲音溝通','螞蟻會留下氣味','所有的動物都靠語言溝通'],answer:'D'},
-  {id:9114,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'下列哪一種特徵是由父母「遺傳」給子代的？',options:['疤痕','雙眼皮','染過的髮色','騎腳踏車的技術'],answer:'B'},
-  {id:9115,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「二分法」分類動物，下列敘述何者正確？',options:['只能用腳的數量分類','標準必須是「是與不是」或「有與沒有」','每一層則分出三類','只有科學家才能使用'],answer:'B'},
-  {id:9116,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'變溫動物（外溫動物）在天冷時通常會怎麼做？',options:['吹風散熱','曬太陽增加體溫','拼命流汗','扇動耳朵'],answer:'B'},
-  {id:9117,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於恆溫動物（內溫動物）的散熱行為，哪項正確？',options:['狗靠吐舌頭喘氣','大象縮小耳朵','烏龜躲進洞穴','蛇在太陽下取暖'],answer:'A'},
-  {id:9118,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'黑面琵鷺每年秋、冬季節遷移到臺灣，這種行為稱為什麼？',options:['避敵','覓食','遷移','育幼'],answer:'C'},
-  {id:9119,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪種動物利用「保護色」來避敵或覓食？',options:['枯葉蝶','穿山甲','河豚','刺蝟'],answer:'A'},
-  {id:9120,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'鬥魚看到鏡中的自己會展開鰓蓋，這是什麼行為？',options:['求偶行為','威嚇或敵對行為','社交行為','覓食行為'],answer:'B'},
-  {id:9121,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'肉食性動物的牙齒通常具有什麼特徵？',options:['臼齒發達平整','犬齒長而尖銳','沒有門齒','牙齒數量極少'],answer:'B'},
-  {id:9122,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'哪一種動物是「雜食性」的？',options:['獅子','斑馬','人類','鯊魚'],answer:'C'},
-  {id:9123,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'變色龍利用什麼器官來捕捉昆蟲？',options:['爪子','翅膀','具黏性的長舌頭','尾巴'],answer:'C'},
-  {id:9124,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'「胎兒在母體子宮內發育，透過臍帶吸收養分」，這是描述哪類動物？',options:['卵生','胎生','卵胎生','無性生殖'],answer:'B'},
-  {id:9125,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'下列哪一項不是育幼行為？',options:['鳥類餵食雛鳥','獅子訓練小獅子打獵','狗媽媽分泌乳汁','雄孔雀開屏'],answer:'D'},
-  {id:9126,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於動物行為與環境適應，哪項錯誤？',options:['紫斑蝶會南下度冬','螞蟻分工可增加生存機會','鯨魚利用腮在水中呼吸','貓在黑暗中瞳孔會放大'],answer:'C'},
-  {id:9127,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'穿山甲遇到危險會縮成球狀，是利用身體什麼構造？',options:['刺','堅硬的外殼與鱗片','臭氣','毒液'],answer:'B'},
-  {id:9128,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於「回聲定位」，下列哪種動物具備此能力？',options:['蚯蚓','蝙蝠','蝸牛','蝴蝶'],answer:'B'},
-  {id:9129,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'人類消化系統中，主要負責吸收養分的器官是？',options:['胃','食道','小腸','大腸'],answer:'C'},
-  {id:9130,grade:'五年級',subject:'五下自然第三單元',difficulty:'普通',question:'關於親代與子代的敘述，哪項正確？',options:['子代一定跟父親長得一模一樣','子代與親代間只有相似性沒有相異性','子代會繼承親代所有的性狀','受精卵是由精子與卵子結合而成'],answer:'D'},
-];
-
-// ── 五下自然第四單元「聲音與樂器」專屬題庫 ──
-const ADV_QUIZ_5S_U4_SOUND = [
-  {id:9201,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音的大小在科學上稱為什麼？',options:['音調','響度','音色','頻率'],answer:'B'},
-  {id:9202,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'想要讓同一個鼓發出較大的聲音，應該怎麼做？',options:['用力敲打','輕輕敲打','換一個小鼓','換一根鼓棒'],answer:'A'},
-  {id:9203,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'物體振動「大」時，發出的聲音會如何？',options:['較高','較小','較大','較低'],answer:'C'},
-  {id:9204,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音的高低在科學上稱為什麼？',options:['音量','響度','音調','音色'],answer:'C'},
-  {id:9205,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'敲擊鐵琴時，哪一種琴鍵發出的音調較「高」？',options:['較長的琴鍵','較厚的琴鍵','較短的琴鍵','較寬的琴鍵'],answer:'C'},
-  {id:9206,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'彈撥烏克麗麗時，哪種弦發出的聲音較「低」？',options:['較細的弦','較短的弦','較緊的弦','較粗的弦'],answer:'D'},
-  {id:9207,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於弦樂器發聲的敘述，哪項正確？',options:['弦愈鬆音調愈高','弦愈長音調愈低','弦愈細音調愈低','與弦的粗細無關'],answer:'B'},
-  {id:9208,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'吹奏直笛時，是什麼東西振動產生聲音？',options:['笛子的外殼','吹口','空氣柱','手指頭'],answer:'C'},
-  {id:9209,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'按住直笛的笛孔愈多，空氣柱會如何變化？',options:['愈短，音愈高','愈長，音愈低','愈短，音愈低','愈長，音愈高'],answer:'B'},
-  {id:9210,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'我們能分辨鋼琴聲與小提琴聲的不同，是因為它們的什麼性質不同？',options:['響度','音調','音色','節奏'],answer:'C'},
-  {id:9211,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音三要素是指哪三項？',options:['高低、大小、長短','音調、響度、音色','頻率、分貝、波長','音量、大小、音質'],answer:'B'},
-  {id:9212,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於「噪音」的定義，下列何者較準確？',options:['只要是音樂就不是噪音','聽起來吵雜刺耳、影響生活安寧的聲音','分貝數低於 10 的聲音','只有施工聲才是噪音'],answer:'B'},
-  {id:9213,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'測量音量大小的單位是什麼？',options:['公分','公斤','分貝','秒'],answer:'C'},
-  {id:9214,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'長期處於多少分貝以上的環境，可能會使聽力受損？',options:['30','50','85','10'],answer:'C'},
-  {id:9215,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'下列哪一項不是防治噪音的方法？',options:['安裝氣密窗','戴隔音耳罩','道路旁架設隔音牆','加強室內的燈光'],answer:'D'},
-  {id:9216,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'為什麼電影院的牆壁常鋪設海綿或絨布？',options:['為了美觀','為了吸收聲音減少回聲','為了保暖','為了讓牆壁變軟'],answer:'B'},
-  {id:9217,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音在傳播過程中碰到障礙物反射回來的現象稱為什麼？',options:['超音波','回聲','噪音','音色'],answer:'B'},
-  {id:9218,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'倒車雷達是應用什麼原理來測量距離？',options:['聲波反射（超音波）','磁鐵吸力','紅外線照射','壓力感應'],answer:'A'},
-  {id:9219,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'製作簡易「紙盒烏克麗麗」時，挖洞的主要功能是？',options:['為了拿取方便','作為音箱放大聲音','為了減輕重量','為了裝飾'],answer:'B'},
-  {id:9220,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'在「探究與實作」實驗中，為了實驗目的而改變的因素稱為什麼？',options:['控制變因','操縱變因','應變變因','固定變因'],answer:'B'},
-  {id:9221,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'想要降低鬧鐘的音量，哪種方法有效？',options:['用毛巾包裹鬧鐘','把鬧鐘放在金屬盤上','拿掉鬧鐘的電池','對著鬧鐘大叫'],answer:'A'},
-  {id:9222,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'敲擊裝水的玻璃杯，水量愈多，敲出的音調會？',options:['愈高','愈低','不變','消失'],answer:'B'},
-  {id:9223,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於人聲的產生，主要是靠哪個部位振動？',options:['嘴唇','牙齒','聲帶','舌頭'],answer:'C'},
-  {id:9224,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'哪一種樂器屬於「打擊樂器」？',options:['長笛','爵士鼓','吉他','小提琴'],answer:'B'},
-  {id:9225,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'在簡易樂器實驗中，若想研究「橡皮筋粗細對音高的影響」，哪項應作為控制變因？',options:['橡皮筋的粗細','橡皮筋的長短與鬆緊','發出的聲音高低','撥彈的人'],answer:'B'},
-  {id:9226,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'下列哪種材質的隔音效果通常較佳？',options:['鐵片','透明塑膠片','具細小孔洞的海綿','玻璃'],answer:'C'},
-  {id:9227,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'聲音在空氣中是以什麼形式傳遞？',options:['直線跑動','波的形式','圓圈形式','顆粒形式'],answer:'B'},
-  {id:9228,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'關於噪音防治，下列哪項做法不恰當？',options:['在室內輕聲細語','搬動椅子用拉的','晚間不彈奏樂器','樂器加裝消音器'],answer:'B'},
-  {id:9229,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'自製吸管笛時，若將吸管剪短，吹出的聲音會？',options:['變大聲','音調變高','音調變低','變小聲'],answer:'B'},
-  {id:9230,grade:'五年級',subject:'五下自然第四單元',difficulty:'普通',question:'醫生使用的「超音波檢查儀」是模仿哪種動物的本領？',options:['螞蟻','蝙蝠','老虎','蝴蝶'],answer:'B'},
-];
 
 // ════════════════════════════════════════════════════════════════
 // ★ v1.0.20260428.2400 — 台灣環島歷險記 300 題題庫
@@ -43433,53 +43332,9 @@ const TAIWAN_QUIZ_DB = [
 {id:30300,grade:'台灣環島',subject:'台灣環島',bossId:'yushan_giant',difficulty:'我很會',question:'下列哪一個動物被稱為玉山國家公園的「黑色守護者」？',options:['台灣黑熊','石虎','雲豹','水鹿'],answer:'A'},
 ];
 
-// ★ v1.0.20260424.0660 — 照顧與陪伴幼兒 (解鎖幼兒園小孩成就)
-const ADV_QUIZ_CARE_INFANT = [
-  {id:9301,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'照顧小弟弟、小妹妹時，哪種行為最安全？',options:['給他們玩很小的積木','讓他們去廚房','陪在旁邊看著玩','教他們用火柴'],answer:'C'},
-  {id:9302,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'如果看到幼兒不小心燙傷了，正確做法是？',options:['塗牙膏','先沖冷水降溫','用手刺破水泡','塗香油'],answer:'B'},
-  {id:9303,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'為什麼不能給一歲以下的嬰兒吃「蜂蜜」？',options:['太甜會胖','蜂蜜很貴','可能含有致命細菌','會長不高'],answer:'C'},
-  {id:9304,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'跟幼兒說話時，怎樣的方式比較體貼？',options:['大聲吼叫','蹲下來與眼睛平齊對談','不理會哭鬧','一直捏臉'],answer:'B'},
-  {id:9305,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'哪一種食物對幼兒來說最容易發生噎到危險？',options:['稀飯','布丁','整顆葡萄或硬糖果','蘋果泥'],answer:'C'},
-  {id:9306,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'照顧幼兒時，哪樣物品應該收好不讓他們摸？',options:['乾淨毛巾','塑膠袋和打火機','布娃娃','繪本'],answer:'B'},
-  {id:9307,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'當小寶寶在哭的時候，我們應該怎麼做？',options:['做鬼臉嚇他','觀察是否餓了或尿布濕了','用力搖晃','玩手機'],answer:'B'},
-  {id:9308,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'陪幼兒玩玩具後，應該教導他們什麼？',options:['全部丟掉','等媽媽收','練習把玩具收回原位','直接去睡覺'],answer:'C'},
-  {id:9309,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'為什麼要幫幼兒剪指甲？',options:['變漂亮','怕抓傷自己或藏汙納垢','指甲會發光','老師規定'],answer:'B'},
-  {id:9310,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'過馬路時，應該怎麼牽著幼兒最安全？',options:['牽手指','讓他們走前面','緊緊牽住手腕','叫他們跑過去'],answer:'C'},
-  {id:9311,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'幼兒發燒時，照顧者正確的處理是？',options:['穿厚外套出汗','吃大人藥','補充水分並看醫生','去跑步'],answer:'C'},
-  {id:9312,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'什麼時候一定要提醒幼兒洗手？',options:['玩遊戲前','看電視時','吃東西前和上廁所後','睡覺醒來'],answer:'C'},
-  {id:9313,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'陪幼兒看繪本有什麼好處？',options:['變超人','增進感情並學習說話','不用吃午餐','變愛買書'],answer:'B'},
-  {id:9314,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'幼兒在玩溜滑梯時，我們應該提醒他？',options:['從下面爬上去','排隊並坐好滑下','頭朝下溜','在上面推人'],answer:'B'},
-  {id:9315,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'為什麼家裡插座要裝上安全防護蓋？',options:['怕灰塵','防止幼兒亂摳導致觸電','裝飾牆壁','插座很醜'],answer:'B'},
-  {id:9316,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'看到幼兒亂發脾氣時，我們可以？',options:['一起大吼','冷靜等平復再溝通','給糖果堵嘴','嘲笑他'],answer:'B'},
-  {id:9317,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'如果幼兒流鼻血了，應該怎麼辦？',options:['頭用力後仰','低頭並輕壓鼻翼止血','塞衛生紙跑步','一直挖鼻孔'],answer:'B'},
-  {id:9318,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'測量幼兒洗澡水溫最好的方法是？',options:['用手背或手肘試溫','直接丟進去','看顏色','看熱氣'],answer:'A'},
-  {id:9319,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'帶幼兒坐車時，一定要讓他們坐？',options:['副駕駛座','駕駛大腿上','後座安全座椅','後車廂'],answer:'C'},
-  {id:9320,subject:'照顧與陪伴幼兒',difficulty:'普通',question:'如果要離開照顧幼兒的房間時應該？',options:['獨自留下他們','請大人幫忙看著','叫他們看電視','鎖門'],answer:'B'},
-];
+// ★ v1.0.20260514 — ADV_QUIZ_CARE_INFANT（照顧與陪伴幼兒）已搬到 adv_quiz_db.js 末尾。
+// ★ v1.0.20260514 — ADV_QUIZ_DOG_CARE（領養與照顧狗狗）已搬到 adv_quiz_db.js 末尾。
 
-// ★ v1.0.20260424.0660 — 領養與照顧狗狗 (解鎖小力成就)
-const ADV_QUIZ_DOG_CARE = [
-  {id:9401,subject:'領養與照顧狗狗',difficulty:'普通',question:'領養狗狗最重要的事情是？',options:['長得漂亮','買名牌衣','有時間陪伴照顧','會表演雜耍'],answer:'C'},
-  {id:9402,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗吃到哪種零食會中毒有生命危險？',options:['水煮蛋','巧克力或洋蔥','燙青菜','白飯'],answer:'B'},
-  {id:9403,subject:'領養與照顧狗狗',difficulty:'普通',question:'帶狗狗散步時，哪件物品是絕對必備的？',options:['墨鏡','牽繩與清便袋','玩具車','香水'],answer:'B'},
-  {id:9404,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗不小心在門口尿尿了，你該怎麼辦？',options:['跑走','拿水射牠','立刻清乾淨並沖水','大聲責罵'],answer:'C'},
-  {id:9405,subject:'領養與照顧狗狗',difficulty:'普通',question:'當狗狗正在睡覺或吃東西時，我們應該？',options:['尖叫嚇牠','搶牠的碗','安靜不要打擾','用力抱住'],answer:'C'},
-  {id:9406,subject:'領養與照顧狗狗',difficulty:'普通',question:'想要親近不認識的狗，正確做法是？',options:['衝去抱牠','尖叫','問主人並伸出手讓牠聞','丟石頭'],answer:'C'},
-  {id:9407,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗「搖尾巴」代表的意思是？',options:['絕對很開心','不一定，要看整體表情','生病了','想洗澡'],answer:'B'},
-  {id:9408,subject:'領養與照顧狗狗',difficulty:'普通',question:'夏天帶狗狗散步，應該避免什麼時間？',options:['清晨','晚上','中午太陽大路面燙時','隨時都行'],answer:'C'},
-  {id:9409,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗不斷抓耳朵或甩頭，可能是？',options:['在跳舞','耳朵發炎或有寄生蟲','覺得帥','練脖子'],answer:'B'},
-  {id:9410,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗最喜歡的獎勵方式通常是？',options:['穿重衣服','稱讚並給健康小零食','大吼大叫','關籠子'],answer:'B'},
-  {id:9411,subject:'領養與照顧狗狗',difficulty:'普通',question:'為什麼要定期幫狗狗打預防針？',options:['讓毛變長','預防傳染病健康','增加體重','想見醫生'],answer:'B'},
-  {id:9412,subject:'領養與照顧狗狗',difficulty:'普通',question:'如果你領養的是老狗狗，你應該？',options:['嫌慢拉扯','有耐心並定期檢查','送走','逼牠跑步'],answer:'B'},
-  {id:9413,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗如果一直舔自己的腳趾，可能是？',options:['好吃','受傷或過敏發癢','練洗臉','無聊'],answer:'B'},
-  {id:9414,subject:'領養與照顧狗狗',difficulty:'普通',question:'植入晶片是為了？',options:['變聰明','走丟時找回主人','控制行動','讀取想法'],answer:'B'},
-  {id:9415,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗不能吃太鹹的食物，是因為？',options:['變太黑','造成腎臟負擔','想唱歌','變貓咪'],answer:'B'},
-  {id:9416,subject:'領養與照顧狗狗',difficulty:'普通',question:'發現狗狗亂咬鞋子時，應該？',options:['打牠頭','當場制止並給對的玩具','不給飯吃','鞋子塞嘴裡'],answer:'B'},
-  {id:9417,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗一直喘氣、流口水、沒精神，可能是？',options:['想唱歌','中暑了','太開心','想吃冰'],answer:'B'},
-  {id:9418,subject:'領養與照顧狗狗',difficulty:'普通',question:'為什麼要幫狗狗梳毛？',options:['像獅子','檢查身體蟲子減少掉毛','變大隻','會飛起來'],answer:'B'},
-  {id:9419,subject:'領養與照顧狗狗',difficulty:'普通',question:'狗狗最需要的運動是？',options:['看電視','關籠子','適當散步與奔跑','玩手機'],answer:'C'},
-  {id:9420,subject:'領養與照顧狗狗',difficulty:'普通',question:'「領養代替購買」的意思是？',options:['不花錢','給流浪狗一個溫暖家','買貴的狗','不用吃飯'],answer:'B'},
-];
 
 function advGetQuizPool(grade, subject, difficulty) {
   // ★ v1.0.20260424.0810 — 全題庫統一改用「全部不重複出完一輪才重新排序」邏輯
@@ -70234,7 +70089,7 @@ const GAME_CHANGELOG = [
     '【這次怎麼做?】',
     '・把整段 const ADV_QUIZ_DB = [...] 從 index.html 第 42471 行剪下',
     '・存到同資料夾的 adv_quiz_db.js(共 491 KB,2164 題完整無遺漏)',
-    '・在 index.html 的 <head> 加一行 <script src="adv_quiz_db.js?v=20260513"><\/script>',
+    '・在 index.html 的 <head> 加一行 <script src="adv_quiz_db.js?v=20260514"><\/script>',
     '・讀檔順序:adv_quiz_db.js 先載完(把 ADV_QUIZ_DB 變成全域變數),主程式所有用到它的地方就跟之前一樣',
     '【未來怎麼維護?】',
     '・新增/修改題目只動 adv_quiz_db.js,index.html 完全不必碰',
@@ -70244,7 +70099,7 @@ const GAME_CHANGELOG = [
     '【實作細節】',
     '・index.html 第 42471 行原本是「const ADV_QUIZ_DB = [{id:1,...},{id:2,...},...{id:3120,...}];」一行 49 萬字元',
     '・現在替換成 5 行說明註解,正體向後相容說明',
-    '・index.html L6835(原 </head> 前一行)新增 <script src="adv_quiz_db.js?v=20260513"><\/script>',
+    '・index.html L6835(原 </head> 前一行)新增 <script src="adv_quiz_db.js?v=20260514"><\/script>',
     '・新檔 adv_quiz_db.js 為「全域變數宣告」格式(非 ES module),確保 typeof ADV_QUIZ_DB 不等於 undefined 等所有檢查照舊運作',
     '【受影響的引用點(沒動,維持原樣)】',
     '・_kingGetReviewSubjects(line ~45960):掃 ADV_QUIZ_DB 取課堂複習科目',
@@ -70263,7 +70118,7 @@ const GAME_CHANGELOG = [
   ], adminItems:[
     '【🧪 部署步驟】',
     '・把新的 index.html 和新檔 adv_quiz_db.js 都 push 到 GitHub 同一資料夾',
-    '・玩家瀏覽器會自動從 <script src="adv_quiz_db.js?v=20260513"> 抓題庫',
+    '・玩家瀏覽器會自動從 <script src="adv_quiz_db.js?v=20260514"> 抓題庫',
     '・若忘了上傳 adv_quiz_db.js,玩家進遊戲會看到 console 報「ADV_QUIZ_DB is not defined」',
     '【🧪 驗證方式】',
     '・進入【冒險挑戰】任一關 → 答題 → 題目應該跟之前一樣正常出現',
