@@ -34109,14 +34109,23 @@ async function _showAdminStatsPanel(){
     // 補償用的英雄清單(可被補的):用 HERO_DB 全部,排除 BOSS_NAMES、寶箱怪、小惡魔、特定 EVENT_ONLY
     // ★ v1.0.20260512.6210 — 加分組:基本/校園/日本/學生設計/校犬與幼兒園,讓老師更好找
     //   並把「巫女」放行(原本被 EVENT_ONLY_HEROES 過濾掉,但巫女是學生可獲得的稀有英雄,應該能補)
+    // ★ v1.0.20260514.6520 — 修補:日本三主 BOSS(大天狗/酒吞童子/玉藻前)是「可解鎖夥伴英雄」,
+    //   但因日本關擴充把它們塞進 BOSS_NAMES(line 10821),被 BOSS 過濾錯殺,
+    //   導致補償工具的「🗾 日本主 BOSS 解鎖系」分組空空(_members.length===0 整組消失)。
+    //   現在用 JAPAN_BOSS_HEROES 白名單放行,讓老師可以正常補償這三隻夥伴英雄版。
+    //   觸發回報:lsps110051 補償 Lv14 大天狗/酒吞童子後,下次再點開清單就找不到它們了。
     const _getCompensatableHeroes = function(){
       try {
         if(typeof HERO_DB !== 'object' || !HERO_DB) return [];
         const _bossSet = new Set(typeof BOSS_NAMES !== 'undefined' ? BOSS_NAMES : []);
         // ★ 巫女例外:雖在 EVENT_ONLY_HEROES,但補償清單要含;'小力'/'幼兒園小孩'也是學生可獲得,放最後
         const _eventOnly = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
+        // ★ v6520 — 日本三主 BOSS 夥伴英雄白名單(雖在 BOSS_NAMES,但要放行給補償用)
+        const _japanBossHeroes = (typeof JAPAN_BOSS_HEROES !== 'undefined') ? JAPAN_BOSS_HEROES : new Set();
         // 注意:這裡不再用 _eventOnly 排除,而是用「分組排序」的方式呈現
         return Object.keys(HERO_DB).filter(name => {
+          // ★ v6520 — 日本三主 BOSS(大天狗/酒吞童子/玉藻前)是夥伴英雄,白名單優先放行
+          if(_japanBossHeroes.has(name)) return true;
           if(_bossSet.has(name)) return false;
           // BOSS_NAMES 排除掉的就是所有冒險 BOSS(含八岐大蛇),不會出現
           return true;
@@ -69674,6 +69683,38 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260514.6520', brief:[
+    '🩹 修補學生補償工具找不到日本三主 BOSS(大天狗/酒吞童子/玉藻前)的 bug',
+    '🗾 補償清單的「🗾 日本主 BOSS 解鎖系」分組現在正常顯示三隻夥伴英雄',
+  ], adminItems:[
+    '【🐛 老師回報】',
+    '・lsps110051@stu.lsps.tp.edu.tw:5/13 補償 Lv14 大天狗/酒吞童子後,學生那邊角色仍是灰色未解鎖',
+    '・回去 3.5 學生補償工具想再補一次,發現補償清單裡完全找不到日本三主 BOSS 可選',
+    '【🔍 根因分析】',
+    '・_getCompensatableHeroes (line ~34112) 用 BOSS_NAMES 作為過濾名單',
+    '・但日本關擴充區塊(line ~10821)把大天狗/酒吞童子/玉藻前/八岐大蛇都 push 進 BOSS_NAMES',
+    '・原因:這四隻在日本關確實是 BOSS,需要被 BOSS 系統認得',
+    '・副作用:三主 BOSS 同時也是「可解鎖夥伴英雄」(JAPAN_BOSS_HEROES),被 BOSS 過濾錯殺',
+    '・結果:_HERO_GROUPS 裡的「🗾 日本主 BOSS 解鎖系」整組 _members.length===0 → 整組消失',
+    '・對應到 5/13 補償可能失敗的另一個假說:當時也是用 console 直接補或舊版本路徑,沒走 unlockedHeroes 寫入',
+    '【🩹 v6520 修補】',
+    '・_getCompensatableHeroes 加 JAPAN_BOSS_HEROES 白名單優先放行',
+    '・順序:先檢查 if(_japanBossHeroes.has(name)) return true → 再檢查 _bossSet.has → 其餘 return true',
+    '・這樣大天狗/酒吞童子/玉藻前 三隻不會被 BOSS_NAMES 過濾掉,但八岐大蛇仍被擋(不在 JAPAN_BOSS_HEROES)',
+    '・分組顯示邏輯不動(_HERO_GROUPS 早就把這三隻列在「🗾 日本主 BOSS 解鎖系」)',
+    '【🔧 對舊有受影響學生的處置】',
+    '・lsps110051 的補償可用本次修補後重新走 3.5 學生補償工具:',
+    '  email lsps110051@stu.lsps.tp.edu.tw → 加入「大天狗 Lv14」「酒吞童子 Lv14」→ 執行',
+    '・補償後檢查該學生補償歷史新筆 diff 應有「🆕 新解鎖 2 位」+「⬆ 升級 2 位」',
+    '・若 diff 顯示新解鎖數 ≠ 2,代表 _fbCompensatePlayer 的 union 寫入路徑也有問題,需進一步追查',
+    '【影響範圍】',
+    '・只影響管理員 3.5 學生補償工具的英雄下拉清單',
+    '・遊戲玩家路徑(BOSS 戰 S 評解鎖、英雄圖鑑顯示)完全不變,維持原本 JAPAN_BOSS_HEROES 邏輯',
+    '・補償寫入後端 _fbCompensatePlayer 不需要動,合併邏輯本來就支援這三隻',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260514.6520',
+    '・window._GAME_LOADED_VERSION → v1.0.20260514.6520',
+  ] },
   { ver:'v1.0.20260513.6510', brief:[
     '🩹 修補 v6470 木柵關 BOSS 戰回報的潛在重觸發 bug:獎勵視窗開太久不會再導致同 BOSS 第二次出題',
     '🛡 _pSetTimeout fallback 兜底保護擴充:玩家答題或選獎勵視窗顯示中,不再被 20 秒兜底強制打斷',
@@ -71635,7 +71676,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260513.6510';
+  const CURRENT_VERSION = 'v1.0.20260514.6520';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71669,7 +71710,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260513.6510';
+window._GAME_LOADED_VERSION = 'v1.0.20260514.6520';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
