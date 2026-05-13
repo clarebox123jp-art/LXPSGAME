@@ -21267,20 +21267,38 @@ function doDmg(target, rawDmg, opts={}){
   }
    
   // 武鬥家 金鐘罩 reflect（被動：受傷時直接觸發，不需buff）
+  // ★ v1.0.20260513.6450 — 平衡調整:能量 2→3;順序改為「先反彈相同傷害,再用特技 200% 減傷」
+  //   反彈量 = 原本受到的傷害(dmg) × (1 + lv×5%)
+  //   減傷量 = min(dmg, sp×2×(1 + lv×5%)),把多扣的 HP 補回
+  //   升級加成:每升 1 級反彈傷害 +5%、減傷量 +5%(Lv10 達 +50%)
   if(target.name==='武鬥家' && old>0 && target.curHp<old && a && a!==target && a.side!==target.side && !opts.isRebound && !['stun','freeze','sleep','para','trap'].some(t=>hasStatus(target,t))){
-    const reflected=Math.max(0,dmg-target.sp);
+    // 取得金鐘罩技能等級(s1 或 s2 都檢查,保險)
+    const _kjSlot = target.s1.n==='金鐘罩' ? 's1' : (target.s2.n==='金鐘罩' ? 's2' : 's1');
+    const _kjLv   = (target._skLv && target._skLv[_kjSlot]) || 0;
+    const _kjMult = 1 + _kjLv * 0.05;                                          // 每級 +5%
+    const reflected = Math.max(0, Math.floor(dmg * _kjMult));                  // 反彈「相同的傷害」×等級加成
+    const mitigated = Math.min(dmg, Math.floor((target.sp||0) * 2 * _kjMult)); // 特技 200% 減傷(上限為實際受傷)×等級加成
     if(reflected>0){
       const _doKinjako=()=>{
-        log(`👊 [${target.name}] 金鐘罩！自動反彈 ${reflected} 傷害！`);
+        // 先反彈相同傷害給對手
+        const _lvTag = _kjLv>0 ? ` (Lv${_kjLv} +${_kjLv*5}%)` : '';
+        log(`👊 [${target.name}] 金鐘罩！反彈 ${reflected} 傷害給 [${a.name}]${_lvTag}！`);
         bannerFX(target,'金鐘罩！','#ffaa00',800);
         playSfx('sfx-reflect',0.7);
         doDmg(a,reflected,{noGuard:true,ignoreEvasion:true,noHidden:true,isRebound:true});
+        // 再用特技 200% 減輕自己受到的傷害(補回多扣的 HP)
+        if(mitigated>0 && target.curHp>0){
+          target.curHp = Math.min(target.hp, target.curHp + mitigated);
+          log(`👊 [${target.name}] 金鐘罩減傷！特技200%(${mitigated}點)抵消傷害${_lvTag}！`);
+          try{ showPopup(target,'+'+mitigated,'heal'); }catch(_){}
+          try{ renderCard(target); }catch(_){}
+        }
       };
       if(target.side==='p2'||_autoBattle){ _doKinjako(); }
       else {
         _showPassivePrompt({
           hero:target, skillName:'金鐘罩', color:'#ffaa00', cost:0,
-          desc:`用特技減傷後，反彈 <span style="color:#ff9966">${reflected}</span> 傷害給攻擊者`,
+          desc:`反彈 <span style="color:#ff9966">${reflected}</span> 傷害給攻擊者，再用特技 200% 減輕 <span style="color:#66ff99">${mitigated}</span> 傷害`,
           onUse(){ _doKinjako(); },
           onSkip(){}
         });
@@ -29189,11 +29207,15 @@ function aiAct(a){
       //   修補:cb 開頭先設 a.acted=true(BOSS 技能執行不依賴 acted 旗標,只 endAction 才設,
       //        所以預先設不影響;startTurn 看到 acted=true 會跳過,不會選回這個 BOSS)
       // ★ v1.0.20260428.4010 — [診斷] cb 進入時印 log
+      // ★ v1.0.20260513.6440 — 從「只台灣關」擴充到「任何冒險模式」,
+      //   原本只有 stage='taiwan' 才印,木柵關(maokong)的 BOSS 卡死回報完全沒 trace,
+      //   改成 _adventureMode 都印,讓未來卡死回報能直接從 console 看出走到哪一支。
       try{
-        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
-          console.log('🎯 [台灣關診斷] BOSS quiz cb 觸發,actor=' + (a ? a.name : 'null')
+        if(typeof _adventureMode !== 'undefined' && _adventureMode){
+          console.log('🎯 [BOSS 戰診斷] BOSS quiz cb 觸發,actor=' + (a ? a.name : 'null')
             + ', curHp=' + (a ? a.curHp : '?')
-            + ', round=' + (G && G.round || '?'));
+            + ', round=' + (G && G.round || '?')
+            + ', stage=' + (typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef'));
         }
       }catch(_){}
       // ★ v1.0.20260511.6120 — 死角 1 修補:BOSS quiz cb 觸發時若 a 已被其他流程處理掉
@@ -29232,8 +29254,9 @@ function _realAiAct(a){
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
   // ★ v1.0.20260428.4010 — [診斷] _realAiAct 進入
   try{
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
-      console.log('🎯 [台灣關診斷] _realAiAct 進入,actor=' + a.name
+    // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      console.log('🎯 [BOSS 戰診斷] _realAiAct 進入,actor=' + a.name
         + '(' + a.side + '-' + a.pos + ')'
         + ', curHp=' + a.curHp
         + ', acted=' + a.acted);
@@ -29318,7 +29341,8 @@ function _realAiAct(a){
     if(a && a.acted && a.side === 'p2' && BURST_DB && BURST_DB[a.name]
        && _burstReady(a.side)){
       try{
-        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan
+        if(typeof _adventureMode !== 'undefined' && _adventureMode){
           console.log('[BOSS AI 爆發] '+a.name+' a.acted=true 但能量滿可爆發,清 acted 讓 _canBurst 通過');
         }
       }catch(_){}
@@ -29327,9 +29351,9 @@ function _realAiAct(a){
   }catch(_){}
   if(_canBurst(a)){
     // ★ v1.1.0 — 加診斷 log,追查台灣 BOSS 爆發亮了卻不釋放的問題
+    // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan
     try{
-      const _isTw = (typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan');
-      if(_isTw){
+      if(typeof _adventureMode !== 'undefined' && _adventureMode){
         console.log('[BOSS AI 爆發] '+a.name+' _canBurst=true,準備觸發 execBurst', {
           side: a.side, pos: a.pos,
           energy: G.energy && G.energy[a.side],
@@ -29347,7 +29371,8 @@ function _realAiAct(a){
     //   玩家按「跳過」時則由 priority modal 直接呼叫 execBurst 讓敵方發動。
     if(a.side === 'p2' && G.p1 && G.p1.some(h => _canBurst(h))){
       try{
-        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+        // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan
+        if(typeof _adventureMode !== 'undefined' && _adventureMode){
           console.log('[BOSS AI 爆發] 玩家也可爆發,彈出優先選擇 modal');
         }
       }catch(_){}
@@ -29358,7 +29383,8 @@ function _realAiAct(a){
       return;
     }
     try{
-      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+      // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan
+      if(typeof _adventureMode !== 'undefined' && _adventureMode){
         console.log('[BOSS AI 爆發] 玩家無人能爆發,300ms 後 BOSS 直接爆發');
       }
     }catch(_){}
@@ -48793,12 +48819,15 @@ function advOnQuizSkip() {
     }
   }catch(_){}
   // ★ v1.0.20260428.4010 — [診斷] advOnQuizSkip 進入
+  // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
   try{
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
-      console.log('🎯 [台灣關診斷] advOnQuizSkip 進入'
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      console.log('🎯 [BOSS 戰診斷] advOnQuizSkip 進入'
         + ', _advQuizResolveCb=' + !!_advQuizResolveCb
         + ', _advBossActionSkip=' + _advBossActionSkip
-        + ', _gamePaused=' + _gamePaused);
+        + ', _gamePaused=' + _gamePaused
+        + ', _bossQuizInFlight=' + !!window._bossQuizInFlight
+        + ', stage=' + (typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef'));
     }
   }catch(_){}
   // ★ 解除戰鬥暫停
@@ -49048,9 +49077,11 @@ function advApplyTreasure(id) {
 // ════════════════════════════════
 function advShowReward() {
   // ★ v1.0.20260428.4010 — [診斷] advShowReward 進入
+  // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
   try{
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
-      console.log('🎯 [台灣關診斷] advShowReward 進入');
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
+      console.log('🎯 [BOSS 戰診斷] advShowReward 進入,stage='
+        + (typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef'));
     }
   }catch(_){}
   // 組合本次可選獎勵（2選1），如有保留則加入
@@ -49144,12 +49175,13 @@ function advShowReward() {
     }
   }catch(_){}
   // ★ v1.0.20260428.4010 — [診斷] 獎勵視窗 add show 後檢查實際是否可見
+  // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
   try{
-    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan'){
+    if(typeof _adventureMode !== 'undefined' && _adventureMode){
       const _ov = document.getElementById('adv-reward-overlay');
       if(_ov){
         const _comp = getComputedStyle(_ov);
-        console.log('🎯 [台灣關診斷] 獎勵 add show 後狀態:'
+        console.log('🎯 [BOSS 戰診斷] 獎勵 add show 後狀態:'
           + ' display=' + _comp.display
           + ', visibility=' + _comp.visibility
           + ', opacity=' + _comp.opacity
@@ -49553,6 +49585,10 @@ function _advShowBurstTargetPicker(heroes) {
       try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
       // 不執行 _advQuizResolveCb (爆發插隊取代 BOSS 本回合行動)
       try{ if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null; }catch(_){}
+      // ★ v1.0.20260513.6440 — onclick 也要把 inline display 清掉,
+      //   advShowReward 進入時用 v6420.4040 修補強制 display='flex',
+      //   不清掉的話下次重新 add('show') 時 inline 優先級可能讓視窗看不到
+      try{ ov.style.display = ''; }catch(_){}
       _advTriggerBurstFor(h);
     };
     choicesDiv.appendChild(btn);
@@ -49755,6 +49791,16 @@ function _advTriggerBurstFor(h) {
     //   讓「下個 BOSS / 下個回合」可以正常觸發 quiz。
     try{ window._bossQuizInFlight = false; }catch(_){}
     if (typeof BURST_DB === 'undefined' || !BURST_DB[h.name]) {
+      // ★ v1.0.20260513.6440 — trace log:這條 fallback 容易與 advOnQuizSkip 內 cb=null 早期清除互相影響,
+      //   留下「BOSS acted=false / _bossQuizInFlight=false / _advQuizResolveCb=null」的狀態組合,
+      //   接下來如果沒人推 startTurn 就會卡 5 秒進 deadlock watchdog。先把整段狀態快照下來,
+      //   下次同樣 case 從 console log 回看就能直接定位走到了哪一支分支。
+      try{
+        console.log('[極限爆發獎勵] 無爆發 fallback 進入:hero=' + h.name
+          + ', _bossQuizInFlight=' + !!window._bossQuizInFlight
+          + ', _advQuizResolveCb=' + (typeof _advQuizResolveCb !== 'undefined' && !!_advQuizResolveCb)
+          + ', G.activeChar=' + ((G && G.activeChar) ? G.activeChar.name + '(acted=' + G.activeChar.acted + ')' : 'null'));
+      }catch(_){}
       bannerFX(h, '💥 能量爆滿！', '#ff9944', 900);
       G.energy.p1 = Math.min(10, G.energy.p1 + 5);
       log(`[極限爆發獎勵] ${h.name} 無爆發技，能量+5`);
@@ -55284,6 +55330,31 @@ window._deadlockRescueSkipTurn = function(){
       try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
       try{ if(typeof clearTurnTimer === 'function') clearTurnTimer(); }catch(_){}
       try{ if(typeof clearSel === 'function') clearSel(); }catch(_){}
+      // ★ v1.0.20260513.6440 — 敵方回合 path 也要清掉 BOSS quiz 相關旗標,
+      //   與正常路徑(下方 line ~55361)對齊,避免「玩家自救過一次後同回合內又卡死」連環 bug。
+      //   原本只清 _aiWatchdog + _gamePaused,但 _bossQuizInFlight / _advQuizResolveCb / _advQuizPhase
+      //   等旗標若殘留,接下來的 startTurn 又走進 BOSS 時會踩到不一致狀態。
+      try{ window._bossQuizInFlight = false; }catch(_){}
+      try{ window._bossQuizDoneForCharm = false; }catch(_){}
+      try{ if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle'; }catch(_){}
+      try{ if(typeof _advQuizActive !== 'undefined') _advQuizActive = false; }catch(_){}
+      try{ if(typeof _advBossActionSkip !== 'undefined') _advBossActionSkip = false; }catch(_){}
+      try{ window._advMiniResultShowing = false; }catch(_){}
+      try{ if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null; }catch(_){}
+      try{ window._advQuizBoss = null; }catch(_){}
+      // ★ 同步關掉可能殘留的 reward overlay / quiz overlay,讓畫面跟邏輯狀態一致
+      try{
+        ['adv-quiz-overlay','adv-reward-overlay','adv-treasure-confirm',
+         'burst-priority-modal','immovable-prompt'].forEach(id => {
+          const el = document.getElementById(id);
+          if(el){
+            el.classList.remove('show');
+            if(el.style.display === 'block' || el.style.display === 'flex'){
+              el.style.display = 'none';
+            }
+          }
+        });
+      }catch(_){}
       // 強制 BOSS 對玩家一名活著的隨機英雄普攻(用 atk,不用技能避免複雜)
       try{
         const _alive = (G && G.p1) ? G.p1.filter(h => h && h.curHp > 0) : [];
@@ -59356,6 +59427,8 @@ function _skLvDur(baseDur, perLv=2) {
 const SKILL_UPGRADE_DEF = {
   // ── 挺身守護：觸發機率 40% + 5%/級 ──
   '挺身守護': { cat:'pct_buff', base:50, perLv:1, step:5, label:'特技減傷%' }, // 基礎50%+每升1級+5%
+  // ★ v1.0.20260513.6450 — 金鐘罩：反彈傷害+5%/級、減傷量+5%/級(Lv10 達 +50%)
+  '金鐘罩':   { cat:'special_kinjako', label:'反彈+減傷' },
   // ── 傷害類：每級傷害+10% ──
   '迅雷連斬': { cat:'dmg',    label:'技能傷害' },
   '瞄準射擊': { cat:'dmg',    label:'技能傷害' },
@@ -59590,6 +59663,16 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     // 降龍伏虎拳/潛行暗殺: (攻擊+特技) × 200% → +5%/級
     const pct = 200 + skLv*5;
     fd = fd.replace(/200\s*%/g, HL(pct + '%'));
+  }
+  else if(cat === 'special_kinjako'){
+    // ★ v1.0.20260513.6450 — 金鐘罩:反彈傷害 +5%/級、減傷量 +5%/級(Lv10 達 +50%)
+    //   描述「使對手受到相同的傷害」→「相同的傷害×105%」(Lv1 起);「特技的200%」→「特技的 210%」(Lv1 起)
+    const reflectPct = 100 + skLv*5;   // 反彈倍率
+    const mitigatePct = 200 + skLv*5;  // 減傷係數
+    if(skLv > 0){
+      fd = fd.replace(/使對手受到相同的傷害/g, '使對手受到相同的傷害的 ' + HL(reflectPct + '%'));
+    }
+    fd = fd.replace(/特技的\s*200\s*%/g, '特技的 ' + HL(mitigatePct + '%'));
   }
   else if(cat === 'special_qiongqi_roar'){
     // ★ v1.0.20260501.5410 — 死亡之吼:主傷害 80%+5%/級,瀕死率與 BOSS 倍率固定不升級
@@ -60051,6 +60134,12 @@ function _getSkUpgradeBadge(skillName, skLv){
     // 降龍伏虎拳:(攻擊+特技)×(200+5*lv)%
     const pct = 200 + (skLv||0)*5;
     return '(攻擊+特技)×' + pct + '%';
+  }
+  if(cat==='special_kinjako'){
+    // ★ v1.0.20260513.6450 — 金鐘罩:反彈傷害 (100+5*lv)%、特技減傷 (200+5*lv)%
+    const reflectPct = 100 + (skLv||0)*5;
+    const mitigatePct = 200 + (skLv||0)*5;
+    return '反彈×' + reflectPct + '% + 特技×' + mitigatePct + '%減傷';
   }
   if(cat==='special_assassin'){
     // 潛行暗殺:(特技+攻擊)×(200+5*lv)%, 60%觸發出血+50%傷害
@@ -69161,6 +69250,114 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260513.6450', brief:[
+    '⚖ 平衡調整:武鬥家「金鐘罩」能量 2→3、效果順序改為「先反彈相同傷害,再用特技 200% 減傷」',
+    '👊 反彈量從「dmg - sp」改為「等同實際受到的傷害」,大幅提升對高傷對手的回敬能力',
+    '🛡 新增升級加成:每升 1 級反彈傷害 +5%、減傷量 +5%(Lv10 達 +50%)',
+    '🧾 老師補償:新增 diff 稽核(實際生效項 vs 想補的項)+ 歷史紀錄人話摘要',
+  ], playerItems:[
+    '【武鬥家平衡調整目的】',
+    '・原版描述為「先用特技減輕,再使對手受到與此相同的傷害」,但程式實作是 `reflected = max(0, dmg - sp)`',
+    '  └ 高 ATK 對手會把反彈值吃乾,武鬥家反擊力被壓制,描述與實作雙雙偏弱',
+    '・本次依新規格重做:',
+    '  ① 先反彈「相同的傷害」=實際受到的完整傷害量(不再扣 sp)',
+    '  ② 再用「特技×200%」減輕自己受到的傷害(把多扣的 HP 補回)',
+    '・能量成本 2→3,反映效果增強後的平衡',
+    '・新增升級線:每升 1 級反彈傷害 +5%、減傷量 +5%(Lv10:反彈×150% + 特技×250% 減傷)',
+    '【實戰影響】',
+    '・面對高 ATK 重擊型對手(大力士泰山壓頂、刺客潛行暗殺、神射手瞄準射擊):反彈值不再被特技壓縮,攻擊者更容易自爆',
+    '・武鬥家本體承傷:基礎特技 8 × 200% = 16 點減傷,面對中低傷害可全額抵消',
+    '・能量壓力上升 1 點,在能量緊張的戰鬥中需要更謹慎調度',
+    '・升級線最大化(Lv10)時:反彈 1.5 倍 + 特技 250% 減傷,可單體承擔並反殺前排兜底位',
+    '【老師補償系統】',
+    '・補償執行時計算「真的有變」的 diff(被 max 規則擋住的不算),寫入歷史紀錄',
+    '・補償後彈窗從「補償成功」改為對照表:你想補的 vs 系統實際變動,事後可逐筆稽核',
+    '・歷史紀錄最近 3 筆會把 diff 攤成人話摘要(🆕 新解鎖 N 位 / ⬆ 升級 N 位 / 💰 知識幣 +N / 🎒 背包 N 種)',
+    '【測試建議】',
+    '・對戰一個高 ATK 對手(如大力士),觀察金鐘罩是否「先 popup 反彈 → 再 popup HP 補回」',
+    '・觀察 console log 是否正確印出反彈量與減傷量',
+    '・把武鬥家 s1 升到 Lv5、Lv10,觀察反彈和減傷數值是否依公式遞增',
+    '・老師後台執行補償後,觀察彈窗對照表與歷史紀錄人話摘要是否正確顯示',
+  ], items:[
+    '【武鬥家平衡調整 - 程式變動】',
+    '・hero_db.js 武鬥家 s1:c:2→3,d/fd 改為新描述',
+    '・index.html ~L21270 金鐘罩被動觸發邏輯整段改寫:',
+    '  └ 反彈量 = floor(dmg × (1 + lv×5%));減傷量 = min(dmg, floor(sp×2×(1 + lv×5%)))',
+    '  └ 流程:doDmg 反彈 → curHp += mitigated 補回 HP → showPopup heal + renderCard',
+    '・index.html ~L59431 SKILL_UPGRADE_DEF 加入「金鐘罩」條目(cat:special_kinjako)',
+    '・index.html ~L59668 升級預覽 fd 渲染加入 special_kinjako 分支',
+    '・index.html ~L60139 升級短摘要渲染加入 special_kinjako 分支',
+    '【老師補償 diff 稽核 - 程式變動】',
+    '・index.html ~L1109 補償執行時計算 diff(unlockedHeroesAdded / heroLevelsRaised / coinsDelta / backpackAdded)',
+    '・index.html ~L1152 把 diff 連同補償紀錄一併寫入歷史',
+    '・index.html ~L1184 補償回傳值包含 diff + 「想補但被擋下」資訊,UI 取用做對照表',
+    '・index.html ~L34205 歷史紀錄最近 3 筆攤出人話摘要',
+    '・index.html ~L34387 補償成功彈窗改為對照表',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260513.6450',
+    '・window._GAME_LOADED_VERSION → v1.0.20260513.6450',
+    '・CURRENT_BOOT_VER 不動(維持 v6050)',
+    '【驗證】',
+    '・grep "金鐘罩" hero_db.js → 應該看到新描述含「特技的200%」',
+    '・grep -c "v1.0.20260513.6450" index.html → 應有 10 處(原 5 + 新 5)',
+    '・遊戲內進入英雄圖鑑 → 武鬥家 → s1 升級預覽,確認 Lv0~Lv10 數值漸增',
+  ]},
+  { ver:'v1.0.20260513.6440', brief:[
+    '🩹 修補木柵關 BOSS 戰「答題後卡死」回報案:_deadlockRescueSkipTurn 敵方回合 path 補清旗標',
+    '🔍 BOSS 戰診斷 log 從「只台灣關」擴充到「所有冒險模式」,木柵/日本關也有完整 trace',
+    '⚡ 極限爆發獎勵的無爆發 fallback 補 trace log,下次同樣 case 能直接定位',
+    '🛡 _advShowBurstTargetPicker 選擇器 onclick 補清 inline display,避免下次 add show 看不見',
+  ], playerItems:[
+    '【問題發現經過】',
+    '・學生回報:木柵關打九尾空貓怪 round 5 BOSS 戰,答對第二題後卡死',
+    '・診斷快照:BOSS acted=false / isActive=true,但 _bossQuizInFlight=true 殘留',
+    '・modal 全空,_advQuizPhase=idle,_gamePaused=false,看起來「什麼狀態都對,但 BOSS 沒動」',
+    '・敵方陣容「綠竹筍小妖 / 九尾空貓怪 / 茶葉精靈」+「木柵浮動加成」確認是木柵關',
+    '・本案問題的關鍵診斷 log 都只在 stage="taiwan" 才印,木柵關完全沒 trace 可用',
+    '【修補內容】',
+    '・修補 1:_deadlockRescueSkipTurn 敵方回合 path 補清 _bossQuizInFlight / _advQuizResolveCb / _advQuizPhase 等旗標',
+    '  - 原本只清 _aiWatchdog + _gamePaused,留下殘留旗標讓玩家自救後同回合再卡死',
+    '  - 與下方「正常路徑」(line ~55361)的清理動作對齊,確保自救後狀態乾淨',
+    '  - 同步關掉 adv-reward-overlay / adv-quiz-overlay 等可能殘留的彈窗',
+    '・修補 2:_advTriggerBurstFor 無 BURST_DB fallback 補 trace log',
+    '  - 印出 hero / _bossQuizInFlight / _advQuizResolveCb / G.activeChar 的瞬間狀態',
+    '  - 下次同樣案例從 console 就能看出走到哪一支分支、為何後續沒推進',
+    '・修補 3:_advShowBurstTargetPicker btn.onclick 補一行 ov.style.display = "" 清掉 inline',
+    '  - advShowReward 進入時用 v6420.4040 修補強制 display="flex",這裡不清掉的話',
+    '  - 下次 add("show") 時 inline 優先於 class,視窗可能看不見',
+    '・修補 4(最重要):BOSS 戰診斷 log 條件從「stage==="taiwan"」改成「_adventureMode」',
+    '  - 共 6 處診斷 log 受惠,前綴從「🎯 [台灣關診斷]」改成「🎯 [BOSS 戰診斷]」',
+    '  - 涉及:BOSS quiz cb 觸發 / _realAiAct 進入 / advOnQuizSkip 進入 / advShowReward 進入',
+    '         / 獎勵 add show 後狀態 / BOSS AI 爆發判定 (3 處)',
+    '  - 同時把 stage 名稱印進 log,任何冒險關卡都能看到完整 trace',
+    '・修補 5:advOnQuizSkip / BOSS quiz cb 等 log 補印 _bossQuizInFlight 與 stage,加強可診斷性',
+    '【為什麼木柵關沒診斷 log?】',
+    '・v6420 加診斷時 stage="taiwan" 是因為當時集中追台灣關卡死問題',
+    '・但 _adventureStage 的 maokong / japan / taiwan 三關的 BOSS 戰邏輯共用同一套程式',
+    '・stage 限制把 maokong 跟 japan 的卡死案完全擋在 log 系統外,等於沒有 trace',
+    '・這次學到:診斷 log 條件要選擇邏輯共用的最大邊界(_adventureMode),而不是特定 stage',
+    '【測試建議】',
+    '・玩家可嘗試:木柵關 BOSS 戰 → 答對題 → 獎勵選「⚡ 立即爆發」→ 選沒有 BURST_DB 的英雄發爆發',
+    '・(目前田徑隊員、籃球隊員等貓空英雄是否有 BURST_DB 可從 hero_db.js 確認)',
+    '・若上述步驟仍出現卡死,新版 console 會印「[極限爆發獎勵] 無爆發 fallback 進入」這行 + 完整狀態',
+    '・若同回合內按了「⏭ 強制跳過當前角色行動」自救後又卡死,新版會避免此情境',
+  ], items:[
+    '【程式變動】',
+    '・index.html ~L55296 _deadlockRescueSkipTurn 敵方回合 path 補 11 行旗標清理 + modal 關閉',
+    '・index.html ~L49775 _advTriggerBurstFor 無爆發 fallback 內補 8 行 trace console.log',
+    '・index.html ~L49542 _advShowBurstTargetPicker onclick 補 1 行 ov.style.display=""',
+    '・index.html 6 處診斷 log 條件改 _adventureStage==="taiwan" → _adventureMode',
+    '  └ 受影響行:~L29193 / 29239 / 29325 / 29335 / 29354 / 29365 / 48804 / 49062 / 49160',
+    '・index.html 診斷 log 前綴「🎯 [台灣關診斷]」→「🎯 [BOSS 戰診斷]」',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260513.6440',
+    '・window._GAME_LOADED_VERSION → v1.0.20260513.6440',
+    '・CURRENT_BOOT_VER 不動(維持 v6050)',
+    '【驗證】',
+    '・grep "🎯 \\[台灣關診斷\\]" index.html → 應該還有,因為非診斷 log 的部分不改(如業務邏輯)',
+    '・grep "🎯 \\[BOSS 戰診斷\\]" index.html → 新增 6 處',
+    '・grep "_adventureMode && _adventureMode" index.html → 不應有(typo 檢查)',
+  ] },
   { ver:'v1.0.20260513.6430', brief:[
     '🚨 緊急修補:v6410 拆 HERO_DB 時遺漏了「日本怪物 16 個」+「台灣 BOSS 10 個」共 26 個敵人',
     '👹 大天狗/酒吞童子/玉藻前/八岐大蛇 + 河童/雪女/二口女等日本小怪全部消失過,現已補回',
@@ -70784,7 +70981,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260513.6430';
+  const CURRENT_VERSION = 'v1.0.20260513.6450';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -70818,7 +71015,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260513.6430';
+window._GAME_LOADED_VERSION = 'v1.0.20260513.6450';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
