@@ -34005,6 +34005,158 @@ async function _showAdminStatsPanel(){
           + '</div>'
           + (_lastComp ? '<div style="color:#aaa;font-size:12px;">最近一次:' + _lastComp + '</div>' : '');
 
+        // ★ v1.0.20260513.6440 — 補上「詳細持有清單」摺疊區
+        //   讓老師補發前可看到學生實際持有:已解鎖角色 / 至寶 / 背包 / 代表英雄 / 最近補償紀錄
+        //   預設摺疊(避免畫面太擠),點按鈕才展開
+        try {
+          const _esc = function(s){
+            return String(s == null ? '' : s)
+              .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+          };
+
+          // (A) 代表英雄
+          const _rep = _foundData.representativeHero;
+          let _repHtml;
+          if(_rep && _rep.name){
+            _repHtml = '<div style="margin:4px 0 8px;">'
+              + '<b>🏆 代表英雄:</b> ' + _esc(_rep.name)
+              + (_rep.level ? ' <span style="color:#ffcc88;">Lv' + _rep.level + '</span>' : '')
+              + (_rep.portrait ? ' <span style="color:#888;font-size:11px;">(肖像:' + _esc(_rep.portrait) + ')</span>' : '')
+              + '</div>';
+          } else {
+            _repHtml = '<div style="margin:4px 0 8px;color:#888;"><b>🏆 代表英雄:</b> (未設定)</div>';
+          }
+
+          // (B) 已解鎖角色清單(unlockedHeroes ∪ heroLevels 的所有 key)
+          const _hLv = (_foundData.heroLevels && typeof _foundData.heroLevels === 'object') ? _foundData.heroLevels : {};
+          const _unlSet = new Set([
+            ...((Array.isArray(_foundData.unlockedHeroes) ? _foundData.unlockedHeroes : [])),
+            ...Object.keys(_hLv)
+          ]);
+          const _heroes = Array.from(_unlSet).map(name => ({
+            name: name,
+            lv: parseInt(_hLv[name], 10) || 1
+          })).sort((a,b) => b.lv - a.lv || a.name.localeCompare(b.name, 'zh-Hant'));
+          let _heroHtml;
+          if(_heroes.length === 0){
+            _heroHtml = '<div style="color:#888;margin:6px 0;">(無)</div>';
+          } else {
+            _heroHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px 8px;margin:6px 0;max-height:200px;overflow-y:auto;'
+              + 'padding:6px;background:rgba(0,0,0,0.3);border-radius:4px;">'
+              + _heroes.map(h => '<span style="display:inline-block;padding:2px 8px;background:rgba(120,80,40,0.5);'
+                  + 'border:1px solid rgba(255,200,100,0.3);border-radius:10px;font-size:12px;">'
+                  + _esc(h.name) + ' <b style="color:#ffcc88;">Lv' + h.lv + '</b></span>').join('')
+              + '</div>'
+              + '<div style="color:#aaa;font-size:11px;">共 <b>' + _heroes.length + '</b> 位</div>';
+          }
+
+          // (C) 至寶清單(從 taiwanTreasureData 讀)
+          const _ttd = (_foundData.taiwanTreasureData && typeof _foundData.taiwanTreasureData === 'object') ? _foundData.taiwanTreasureData : {};
+          const _treasIds = Object.keys(_ttd);
+          let _treasHtml;
+          if(_treasIds.length === 0){
+            _treasHtml = '<div style="color:#888;margin:6px 0;">(無)</div>';
+          } else {
+            _treasHtml = '<div style="display:flex;flex-direction:column;gap:3px;margin:6px 0;max-height:180px;overflow-y:auto;'
+              + 'padding:6px;background:rgba(0,0,0,0.3);border-radius:4px;">'
+              + _treasIds.map(id => {
+                  const rec = _ttd[id] || {};
+                  let _name = id;
+                  let _icon = '💎';
+                  try {
+                    if(typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[id]){
+                      _name = TAIWAN_TREASURES[id].name || id;
+                      _icon = TAIWAN_TREASURES[id].icon || '💎';
+                    }
+                  } catch(_){}
+                  const _equip = rec.equippedTo
+                    ? '<span style="color:#88ccff;">裝於 ' + _esc(rec.equippedTo) + '</span>'
+                    : '<span style="color:#888;">未裝備</span>';
+                  return '<div style="font-size:12px;">' + _icon + ' ' + _esc(_name)
+                    + ' <b style="color:#ffcc88;">Lv' + (rec.lv || 1) + '</b>'
+                    + ' <span style="color:#888;">·</span> ' + _equip
+                    + '</div>';
+                }).join('')
+              + '</div>'
+              + '<div style="color:#aaa;font-size:11px;">共 <b>' + _treasIds.length + '</b> 件</div>';
+          }
+
+          // (D) 背包清單(從 playerBackpack 讀)
+          const _bp = (_foundData.playerBackpack && typeof _foundData.playerBackpack === 'object') ? _foundData.playerBackpack : {};
+          const _bpEntries = Object.keys(_bp)
+            .filter(k => k && (_bp[k]|0) > 0)
+            .map(k => ({ id:k, qty: _bp[k]|0 }))
+            .sort((a,b) => b.qty - a.qty || a.id.localeCompare(b.id));
+          let _bpHtml;
+          if(_bpEntries.length === 0){
+            _bpHtml = '<div style="color:#888;margin:6px 0;">(無)</div>';
+          } else {
+            _bpHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px 6px;margin:6px 0;max-height:180px;overflow-y:auto;'
+              + 'padding:6px;background:rgba(0,0,0,0.3);border-radius:4px;">'
+              + _bpEntries.map(e => {
+                  let _name = e.id;
+                  let _icon = '📦';
+                  try {
+                    if(typeof BACKPACK_ITEM_DEF !== 'undefined' && BACKPACK_ITEM_DEF[e.id]){
+                      _name = BACKPACK_ITEM_DEF[e.id].name || e.id;
+                      _icon = BACKPACK_ITEM_DEF[e.id].icon || '📦';
+                    }
+                  } catch(_){}
+                  return '<span style="display:inline-block;padding:2px 8px;background:rgba(40,60,40,0.5);'
+                    + 'border:1px solid rgba(120,200,120,0.3);border-radius:10px;font-size:12px;">'
+                    + _icon + ' ' + _esc(_name) + ' <b style="color:#aaffaa;">×' + e.qty + '</b></span>';
+                }).join('')
+              + '</div>'
+              + '<div style="color:#aaa;font-size:11px;">共 <b>' + _bpEntries.length + '</b> 種</div>';
+          }
+
+          // (E) 最近補償歷史(取最後 3 筆,倒序)
+          const _hist = Array.isArray(_foundData._compensationHistory) ? _foundData._compensationHistory : [];
+          let _histHtml;
+          if(_hist.length === 0){
+            _histHtml = '<div style="color:#888;margin:6px 0;">(無補償紀錄)</div>';
+          } else {
+            const _last3 = _hist.slice(-3).reverse();
+            _histHtml = '<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0;">'
+              + _last3.map((h, idx) => {
+                  const _t = h.at ? new Date(h.at).toLocaleString('zh-TW') : '(時間不詳)';
+                  const _by = h.by || '(不詳)';
+                  const _reason = h.reason || '(無)';
+                  const _summary = h.summary || '';
+                  return '<div style="padding:6px 8px;background:rgba(0,0,0,0.3);border-left:3px solid #ffaa66;border-radius:0 4px 4px 0;font-size:12px;">'
+                    + '<div style="color:#ffcc88;font-weight:700;">#' + (_hist.length - idx) + ' · ' + _esc(_t) + '</div>'
+                    + '<div style="color:#aaa;">老師:' + _esc(_by) + '</div>'
+                    + '<div>原因:' + _esc(_reason) + '</div>'
+                    + (_summary ? '<div style="color:#bbb;white-space:pre-wrap;margin-top:2px;font-size:11px;">摘要:' + _esc(_summary) + '</div>' : '')
+                    + '</div>';
+                }).join('')
+              + '</div>'
+              + (_hist.length > 3 ? '<div style="color:#888;font-size:11px;">(只顯示最近 3 筆,總共 ' + _hist.length + ' 筆)</div>' : '');
+          }
+
+          // 拼成可摺疊區塊(用 <details>,不需要額外綁 JS)
+          info.innerHTML += ''
+            + '<hr style="border:none;border-top:1px solid rgba(255,200,100,0.25);margin:8px 0;">'
+            + '<details style="margin-top:4px;">'
+            + '<summary style="cursor:pointer;color:#ffcc88;font-weight:700;padding:6px;background:rgba(80,50,30,0.5);'
+            + 'border-radius:4px;user-select:none;">📋 展開詳細持有清單(角色 / 至寶 / 背包 / 補償歷史)</summary>'
+            + '<div style="padding:8px 4px 4px;">'
+              + _repHtml
+              + '<div style="color:#ffcc88;font-weight:700;margin-top:10px;">🦸 已解鎖角色:</div>'
+              + _heroHtml
+              + '<div style="color:#ffcc88;font-weight:700;margin-top:10px;">💎 已獲得至寶:</div>'
+              + _treasHtml
+              + '<div style="color:#ffcc88;font-weight:700;margin-top:10px;">🎒 背包物品:</div>'
+              + _bpHtml
+              + '<div style="color:#ffcc88;font-weight:700;margin-top:10px;">📜 最近補償歷史:</div>'
+              + _histHtml
+            + '</div>'
+            + '</details>';
+        } catch(eDetail){
+          console.warn('[admin compensate find] 詳細清單組裝失敗(不影響主功能)', eDetail);
+        }
+
         // 清空之前的補償清單 + 展開表單
         _compHeroes = {};
         _renderHeroList();
