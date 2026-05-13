@@ -1106,6 +1106,39 @@
       });
     }
 
+    // ★ v1.0.20260513.6450 — 計算「實際生效」diff(讓老師事後可逐筆稽核)
+    //   原則:只記錄「規則保護後真的有變」的項目,被 max 規則擋住的不會進來
+    const _existUnlockedSet = new Set(_existUnlocked);
+    const _diff = {
+      // 真的新解鎖的角色(原本沒有的才會進來)
+      unlockedHeroesAdded: _newUnlocked.filter(n => !_existUnlockedSet.has(n)),
+      // 實際升級的角色 {name: {from, to}}(原本等級已 >= 補償等級者不會進來)
+      heroLevelsRaised: {},
+      // 知識幣變化前後值
+      coinsBefore: existing.knowledgeCoins || 0,
+      coinsAfter: _newCoins,
+      coinsDelta: _newCoins - (existing.knowledgeCoins || 0),
+      // 背包物品實際加上的數量 {itemId: addedQty}(命中 99 上限的會以實際加上的為準)
+      backpackAdded: {}
+    };
+    // 算出每個英雄真的升了幾級
+    Object.keys(_newLevels).forEach(name => {
+      const _was = _existLevels[name] || 0;
+      const _now2 = _mergedLevels[name] || 0;
+      if(_now2 > _was){
+        _diff.heroLevelsRaised[name] = { from: _was, to: _now2 };
+      }
+    });
+    // 算出背包物品真的加上幾個(被 99 上限擋掉的會用實際差值)
+    if(compensation.backpack && typeof compensation.backpack === 'object'){
+      Object.keys(compensation.backpack).forEach(itemId => {
+        const _was = _existBp[itemId] || 0;
+        const _now3 = _newBp[itemId] || 0;
+        const _delta = _now3 - _was;
+        if(_delta > 0) _diff.backpackAdded[itemId] = _delta;
+      });
+    }
+
     // 7) 寫入補償歷史
     const _now = Date.now();
     const _existHistory = Array.isArray(existing._compensationHistory) ? existing._compensationHistory : [];
@@ -1115,7 +1148,9 @@
       by: compensation.by || 'admin',
       reason: (compensation.reason || '').slice(0, 500),
       summary: (compensation.summary || '').slice(0, 1000),
-      heroes: _newUnlocked.slice(0, 50)  // 只記補償的英雄名單,避免超大
+      heroes: _newUnlocked.slice(0, 50),  // 只記補償的英雄名單,避免超大
+      // ★ v1.0.20260513.6450 — 把 diff 一併寫入,讓事後翻歷史也能看到「真的補了什麼」
+      diff: _diff
     };
     const _newHistory = [..._existHistory, _entry].slice(-30);  // 最多保留最近 30 筆
 
@@ -1145,7 +1180,24 @@
       count: _existCount + 1,
       mergedUnlocked: _mergedUnlocked,
       mergedLevels: _mergedLevels,
-      mergedCoins: _newCoins
+      mergedCoins: _newCoins,
+      // ★ v1.0.20260513.6450 — 回傳 diff 與「補了什麼但被規則擋下沒生效」的資訊,UI 拿來做對照表
+      diff: _diff,
+      // 「想補但沒生效」:讓 UI 提示老師「這隻其實本來就比較高,沒升」
+      requested: {
+        unlockedHeroes: _newUnlocked,
+        heroLevels: _newLevels,
+        coins: (typeof compensation.coins === 'number') ? compensation.coins : 0,
+        coinsMode: compensation.coinsMode || 'add',
+        backpack: compensation.backpack || {}
+      },
+      // 補償前的舊值,UI 對照表會用到
+      before: {
+        unlockedHeroes: _existUnlocked,
+        heroLevels: _existLevels,
+        coins: existing.knowledgeCoins || 0,
+        backpack: _existBp
+      }
     };
   };
 
@@ -34124,11 +34176,62 @@ async function _showAdminStatsPanel(){
                   const _by = h.by || '(不詳)';
                   const _reason = h.reason || '(無)';
                   const _summary = h.summary || '';
+                  // ★ v1.0.20260513.6450 — 把 diff 攤成人話摘要(舊資料沒 diff 就略過)
+                  let _diffHtml = '';
+                  if(h.diff && typeof h.diff === 'object'){
+                    const _hd = h.diff;
+                    const _parts = [];
+                    const _added = Array.isArray(_hd.unlockedHeroesAdded) ? _hd.unlockedHeroesAdded.length : 0;
+                    const _raised = (_hd.heroLevelsRaised && typeof _hd.heroLevelsRaised === 'object')
+                                      ? Object.keys(_hd.heroLevelsRaised).length : 0;
+                    if(_added > 0)  _parts.push('🆕 新解鎖 <b>' + _added + '</b> 位');
+                    if(_raised > 0) _parts.push('⬆ 升級 <b>' + _raised + '</b> 位');
+                    if(typeof _hd.coinsDelta === 'number' && _hd.coinsDelta > 0){
+                      _parts.push('💰 知識幣 <b>+' + _hd.coinsDelta + '</b>');
+                    }
+                    const _bpAdded = (_hd.backpackAdded && typeof _hd.backpackAdded === 'object')
+                                       ? Object.keys(_hd.backpackAdded).length : 0;
+                    if(_bpAdded > 0) _parts.push('🎒 背包 <b>' + _bpAdded + '</b> 種');
+                    if(_parts.length > 0){
+                      _diffHtml = '<div style="color:#88ff88;margin-top:3px;font-size:11px;">'
+                        + '實際生效:' + _parts.join(' · ')
+                        + '</div>';
+                      // 列出實際新解鎖/升級的角色名(讓老師可看到具體是誰)
+                      const _names = [];
+                      if(Array.isArray(_hd.unlockedHeroesAdded)){
+                        _hd.unlockedHeroesAdded.forEach(n => _names.push('🆕 ' + n));
+                      }
+                      if(_hd.heroLevelsRaised && typeof _hd.heroLevelsRaised === 'object'){
+                        Object.keys(_hd.heroLevelsRaised).forEach(n => {
+                          // 已在「新解鎖」清單的就不重複顯示
+                          if(!_names.includes('🆕 ' + n)){
+                            const r = _hd.heroLevelsRaised[n] || {};
+                            _names.push('⬆ ' + n + ' Lv' + (r.from || 0) + '→' + (r.to || 0));
+                          } else {
+                            // 同時新解鎖 + 升級:把等級資訊塞進原 tag
+                            const _idx = _names.indexOf('🆕 ' + n);
+                            const r = _hd.heroLevelsRaised[n] || {};
+                            _names[_idx] = '🆕 ' + n + ' Lv' + (r.to || 0);
+                          }
+                        });
+                      }
+                      if(_names.length > 0){
+                        _diffHtml += '<div style="color:#aaffaa;font-size:11px;margin-top:2px;">'
+                          + _names.map(s => _esc(s)).join(' · ')
+                          + '</div>';
+                      }
+                    } else {
+                      _diffHtml = '<div style="color:#ffaa66;margin-top:3px;font-size:11px;">'
+                        + '⚠ 實際生效:無(所有項目都被「保留高等級」規則擋下)'
+                        + '</div>';
+                    }
+                  }
                   return '<div style="padding:6px 8px;background:rgba(0,0,0,0.3);border-left:3px solid #ffaa66;border-radius:0 4px 4px 0;font-size:12px;">'
                     + '<div style="color:#ffcc88;font-weight:700;">#' + (_hist.length - idx) + ' · ' + _esc(_t) + '</div>'
                     + '<div style="color:#aaa;">老師:' + _esc(_by) + '</div>'
                     + '<div>原因:' + _esc(_reason) + '</div>'
                     + (_summary ? '<div style="color:#bbb;white-space:pre-wrap;margin-top:2px;font-size:11px;">摘要:' + _esc(_summary) + '</div>' : '')
+                    + _diffHtml
                     + '</div>';
                 }).join('')
               + '</div>'
@@ -34254,12 +34357,114 @@ async function _showAdminStatsPanel(){
         });
 
         res.style.color = '#88ff88';
-        res.innerHTML = '✅ 補償成功!<br>'
-          + '・帳號:' + (_compTarget.email || _compTarget.uid) + '<br>'
-          + '・此玩家累計補償次數:<b style="color:#ffcc88;">' + result.count + '</b> 次<br>'
-          + '・補發角色:' + heroNames.length + ' 位 (合併後共 ' + result.mergedUnlocked.length + ' 位已解鎖)<br>'
-          + '・現有知識幣:' + result.mergedCoins + '<br>'
-          + '<span style="color:#ffee88;">請該學生重新整理頁面或重新登入以載入新資料</span>';
+
+        // ★ v1.0.20260513.6450 — 把「補償成功」改成完整對照表:你想補的 vs 系統實際變動
+        //   讓老師立刻看出哪些有生效、哪些被「保留高等級」規則擋下沒升級
+        const _diff = (result && result.diff) || {};
+        const _req = (result && result.requested) || {};
+        const _before = (result && result.before) || {};
+        const _esc2 = function(s){
+          return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        };
+
+        // 組對照表的列
+        const _rows = [];
+
+        // (A) 角色列:每位想補的角色一行
+        const _reqHeroes = Array.isArray(_req.unlockedHeroes) ? _req.unlockedHeroes : [];
+        const _reqLevels = (_req.heroLevels && typeof _req.heroLevels === 'object') ? _req.heroLevels : {};
+        const _raised = (_diff.heroLevelsRaised && typeof _diff.heroLevelsRaised === 'object') ? _diff.heroLevelsRaised : {};
+        const _added = new Set(Array.isArray(_diff.unlockedHeroesAdded) ? _diff.unlockedHeroesAdded : []);
+        const _beforeLv = (_before.heroLevels && typeof _before.heroLevels === 'object') ? _before.heroLevels : {};
+
+        _reqHeroes.forEach(name => {
+          const _wantLv = _reqLevels[name] || 1;
+          const _oldLv = _beforeLv[name] || 0;
+          const _isNewlyAdded = _added.has(name);
+          const _isRaised = !!_raised[name];
+          let _status;
+          if(_isNewlyAdded && _isRaised){
+            _status = '<span style="color:#88ff88;">✅ 新解鎖,Lv ' + _oldLv + '→' + _raised[name].to + '</span>';
+          } else if(_isRaised){
+            _status = '<span style="color:#88ff88;">✅ 升級 Lv ' + _oldLv + '→' + _raised[name].to + '</span>';
+          } else if(_isNewlyAdded){
+            _status = '<span style="color:#88ff88;">✅ 新解鎖 Lv ' + _wantLv + '</span>';
+          } else {
+            // 想補但完全沒變(原本等級已 >= 補償等級)
+            _status = '<span style="color:#ffaa66;">⚠ 已存在 Lv' + _oldLv + ',未變動(保留較高等級)</span>';
+          }
+          _rows.push('<tr><td style="padding:3px 6px;color:#fff;">' + _esc2(name) + ' Lv' + _wantLv + '</td><td style="padding:3px 6px;">' + _status + '</td></tr>');
+        });
+
+        // (B) 知識幣列
+        if(typeof _req.coins === 'number' && _req.coins > 0){
+          const _coinsDelta = (typeof _diff.coinsDelta === 'number') ? _diff.coinsDelta : 0;
+          const _coinsBefore = (typeof _diff.coinsBefore === 'number') ? _diff.coinsBefore : 0;
+          const _coinsAfter = (typeof _diff.coinsAfter === 'number') ? _diff.coinsAfter : 0;
+          let _coinsStatus;
+          if(_coinsDelta > 0){
+            _coinsStatus = '<span style="color:#88ff88;">✅ ' + _coinsBefore + ' → ' + _coinsAfter + '(+' + _coinsDelta + ')</span>';
+          } else {
+            _coinsStatus = '<span style="color:#ffaa66;">⚠ 未變動(' + _coinsBefore + ')</span>';
+          }
+          _rows.push('<tr><td style="padding:3px 6px;color:#fff;">知識幣 +' + _req.coins + '</td><td style="padding:3px 6px;">' + _coinsStatus + '</td></tr>');
+        }
+
+        // (C) 背包列
+        const _reqBp = (_req.backpack && typeof _req.backpack === 'object') ? _req.backpack : {};
+        const _addedBp = (_diff.backpackAdded && typeof _diff.backpackAdded === 'object') ? _diff.backpackAdded : {};
+        const _beforeBp = (_before.backpack && typeof _before.backpack === 'object') ? _before.backpack : {};
+        Object.keys(_reqBp).forEach(itemId => {
+          const _want = _reqBp[itemId] || 0;
+          if(_want <= 0) return;
+          const _wasQty = _beforeBp[itemId] || 0;
+          const _addedQty = _addedBp[itemId] || 0;
+          let _itemName = itemId;
+          try {
+            if(typeof BACKPACK_ITEM_DEF !== 'undefined' && BACKPACK_ITEM_DEF[itemId]){
+              _itemName = (BACKPACK_ITEM_DEF[itemId].icon || '') + ' ' + (BACKPACK_ITEM_DEF[itemId].name || itemId);
+            }
+          } catch(_){}
+          let _bpStatus;
+          if(_addedQty >= _want){
+            _bpStatus = '<span style="color:#88ff88;">✅ ' + _wasQty + ' → ' + (_wasQty + _addedQty) + '(+' + _addedQty + ')</span>';
+          } else if(_addedQty > 0){
+            _bpStatus = '<span style="color:#ffaa66;">⚠ ' + _wasQty + ' → ' + (_wasQty + _addedQty) + '(+' + _addedQty + ',被 99 上限擋)</span>';
+          } else {
+            _bpStatus = '<span style="color:#ff8888;">❌ 未變動(已達 99 上限)</span>';
+          }
+          _rows.push('<tr><td style="padding:3px 6px;color:#fff;">' + _esc2(_itemName) + ' ×' + _want + '</td><td style="padding:3px 6px;">' + _bpStatus + '</td></tr>');
+        });
+
+        // 統計:幾項生效、幾項沒生效
+        const _heroEffective = _reqHeroes.filter(n => _added.has(n) || _raised[n]).length;
+        const _heroBlocked = _reqHeroes.length - _heroEffective;
+        const _coinsEffective = (typeof _diff.coinsDelta === 'number' && _diff.coinsDelta > 0) ? 1 : 0;
+        const _bpEffective = Object.keys(_addedBp).length;
+
+        res.innerHTML = '<div style="font-weight:700;font-size:15px;margin-bottom:6px;">✅ 補償執行完畢</div>'
+          + '<div style="font-size:12px;color:#ddd;margin-bottom:8px;">'
+          + '・帳號:' + _esc2(_compTarget.email || _compTarget.uid) + '<br>'
+          + '・此玩家累計補償次數:<b style="color:#ffcc88;">' + result.count + '</b> 次'
+          + (_heroBlocked > 0 ? ' <span style="color:#ffaa66;">(⚠ 有 ' + _heroBlocked + ' 項想補但被規則擋下未變動)</span>' : '')
+          + '</div>'
+          + (_rows.length > 0
+              ? '<table style="width:100%;border-collapse:collapse;font-size:12px;background:rgba(0,0,0,0.3);border-radius:4px;overflow:hidden;">'
+                + '<thead><tr style="background:rgba(80,50,30,0.7);">'
+                + '<th style="padding:5px 6px;text-align:left;color:#ffcc88;border-bottom:1px solid rgba(255,200,100,0.3);">你想補的</th>'
+                + '<th style="padding:5px 6px;text-align:left;color:#ffcc88;border-bottom:1px solid rgba(255,200,100,0.3);">系統實際變動</th>'
+                + '</tr></thead>'
+                + '<tbody>' + _rows.join('') + '</tbody>'
+                + '</table>'
+              : '<div style="color:#aaa;font-size:12px;">(沒有任何補償項目)</div>')
+          + '<div style="margin-top:8px;color:#ffee88;font-size:12px;">'
+          + '📊 生效統計:角色 ' + _heroEffective + '/' + _reqHeroes.length
+          + ' · 知識幣 ' + (typeof _req.coins === 'number' && _req.coins > 0 ? _coinsEffective + '/1' : '0/0')
+          + ' · 背包 ' + _bpEffective + '/' + Object.keys(_reqBp).length
+          + '</div>'
+          + '<div style="margin-top:6px;color:#ffee88;font-size:12px;">請該學生重新整理頁面或重新登入以載入新資料</div>';
 
         // 重置補償清單方便下次使用
         _compHeroes = {};
