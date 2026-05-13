@@ -6885,7 +6885,7 @@ body.art-premium #summon-overlay {
 
 </style>
 <script src="adv_quiz_db.js?v=20260513"></script>
-<script src="hero_db.js?v=20260513b"></script>
+<script src="hero_db.js?v=20260513c"></script>
 </head>
 <body>
 <!-- ★ v1.0.20260507.5550 — 啟動讀取條:覆蓋全畫面,顯示資源預載進度
@@ -10745,7 +10745,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   // ★ v1.0.20260501.5010 — 28 個英雄圖一次性升級為 LXPSGAME repo 的 Q.png 新版圖檔
@@ -10840,6 +10840,9 @@ const HERO_IMGS = {
   // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
   //   死靈法師:5 年 2 班許同學設計,2026 年。天生陰陽眼,能與死靈溝通並操控他們的少年
   '死靈法師':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('5年2班許同學設計 死靈法師.png'),
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布奶鳥獸:5 年 5 班高同學設計,2026 年。兩隻可愛小鳥布丁&奶茶,被人類飼養
+  '布奶鳥獸':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('布丁奶茶獸.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -11048,6 +11051,11 @@ const HERO_PORTRAIT_LIBRARY = {
   //   死靈法師:5 年 2 班許同學設計,2026 年
   '死靈法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('5年2班許同學設計 死靈法師.png') },
+  ],
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布奶鳥獸:5 年 5 班高同學設計,2026 年
+  '布奶鳥獸': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('布丁奶茶獸.png') },
   ],
 };
 
@@ -12351,6 +12359,16 @@ const BURST_UPGRADE_DEF = {
     [3,'特技×156%×倒下總次數 全體傷害 → 轉治療平均分友方'],
     [4,'特技×168%×倒下總次數 全體傷害 → 轉治療平均分友方 + 額外 20% HP(MAX)'],
   ] },
+  // ★ v1.0.20260513.6460 — 布奶鳥獸:生氣的布丁&奶茶
+  //   特技×100% 連續攻擊隨機目標 9 次,目標倒下自動轉移,必中且無視有利狀態
+  //   走通用 _burstMult = 1.0 + _burstLv*0.10 公式;攻擊次數固定 9 次(設計者要求)
+  '布奶鳥獸':{ rows: [
+    [0,'特技×100%×9次 隨機目標連擊(必中+無視有利狀態,倒下轉移)'],
+    [1,'特技×110%×9次 隨機目標連擊'],
+    [2,'特技×120%×9次 隨機目標連擊'],
+    [3,'特技×130%×9次 隨機目標連擊'],
+    [4,'特技×140%×9次 隨機目標連擊(MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -12403,6 +12421,8 @@ const HERO_IMG_POS = {
   '窮奇':['160% auto','center 42%'],
   // ★ v1.0.20260512.6210 — 死靈法師:設計者圖頭部偏上,Y 略上拉
   '死靈法師':['160% auto','center 25%'],
+  // ★ v1.0.20260513.6460 — 布奶鳥獸:兩隻小鳥的圖,通用置中
+  '布奶鳥獸':['120% auto','center 30%'],
 };
 
 // ★ v5690 — 戰鬥卡片專屬圖片位置表
@@ -12493,6 +12513,8 @@ const HERO_THUMB_POS = {
   '科技生化人':'center 20%', '鋁合金暴龍':'center 20%', '超鬼神王':'center 30%',
   // ★ v1.0.20260507.5600 — 雙星姊妹:設計者指定 70%(下移 20%,展現姊妹臉部)
   '雙星姊妹':'center 70%',
+  // ★ v1.0.20260513.6460 — 布奶鳥獸:稍微下移看到兩隻小鳥
+  '布奶鳥獸':'center 40%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -12745,6 +12767,15 @@ const HERO_BIO = {
     quote:'「別怕,我會聽你的話。」',
     designer:{ class:'5年2班', name:'許同學', year:2026 }
   },
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布奶鳥獸:5 年 5 班高同學設計,2026 年。兩隻可愛小鳥布丁&奶茶
+  '布奶鳥獸':{
+    role:'兩隻可愛的小鳥「布丁」與「奶茶」,被人類飼養長大,感情形影不離',
+    trait:'平時溫順乖巧、撒嬌討食;但只要看到家被弄亂或主人被欺負就會聯手暴走',
+    hobby:'啄食小米、整理彼此的羽毛、把家裡的衛生紙拆得到處都是',
+    quote:'「啾啾!(別惹我們生氣!)」',
+    designer:{ class:'5年5班', name:'高同學', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -12820,6 +12851,8 @@ const BURST_DB = {
   '暗魔將·血':{n:'血劍·爆破', d:'特技150%全體+隨機1名額外300%(暴擊+60%);同時友方全體免疫傷害2回合',fd:'血劍化作幽冥爆破席捲全戰場!以特技的 150% 對敵方全體造成暗屬性傷害,再隨機選 1 名敵人額外承受特技 300% 傷害且本次暴擊率 +60%。同時友方全體獲得「血劍護壁」2 回合,免疫所有傷害(仍可被附加不利狀態)。'},
   // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
   '死靈法師':{n:'亡靈怨念一擊', d:'用特技120%×倒下總次數對全體傷害,再將傷害總和轉化為治療平均分給友方',fd:'死靈法師在場時計算倒下角色(包括敵我雙方)的次數,用特技的 120% × 當前倒下總次數對敵方全體造成傷害,再將此傷害總和轉化為治療平均分攤給友方全員(可復活)。若場上無倒下角色,則用特技的 120% 對敵方全體造成傷害並等量治療友方全體。'},
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  '布奶鳥獸':{n:'生氣的布丁&奶茶', d:'特技100%×9次 隨機目標連擊,倒下轉移,必中且無視有利狀態',fd:'布丁和奶茶徹底生氣了!用特技的 100% 連續攻擊隨機目標 9 次,當目標倒下時自動轉移到其他存活對手繼續攻擊。此傷害無視有利狀態且必中,無法被迴避或代替承受。'},
 
 };
 
@@ -15124,6 +15157,8 @@ const HERO_LORE = {
   '暗魔將·血': '被黑化的貓神化身,源自古代日本的血劍將軍。一手「血劍·防」護同伴於不敗、一手「血劍·攻」單點狙殺敵方核心,爆發「血劍·爆破」攻防合一。',
   // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
   '死靈法師': '天生陰陽眼的少年,能與死靈溝通並操控他們。S1「冥佑」隱形護身與持續療癒、S2「死者轉生」讓倒下友方化身死靈型態歸來,爆發「亡靈怨念一擊」用倒下次數疊乘大傷害並轉化為全隊治療。天賦「亡魂庇佑」整場一次,致命傷時化身死靈無敵反擊。',
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  '布奶鳥獸': '兩隻可愛的小鳥「布丁」與「奶茶」,被人類飼養長大。天賦「布丁奶茶連擊」普攻保證 2 次並有機率追加第 3 次,S1「拆家」全體傷害+吸血轉護盾,S2「布奶的保護」200% 治療復活隊友,爆發「生氣的布丁&奶茶」必中 9 連擊轉移到底。',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -15189,6 +15224,11 @@ const HERO_TRAIT = {
   //   亡魂庇佑:整場戰鬥僅 1 次,致命傷化身死靈型態。
   //   一次性「自救+反擊」型,類似武士「崛起鬥志」的進階版(once + 強力效果)。
   '死靈法師':{ name:'亡魂庇佑', icon:'👻', desc:'致命傷時化身死靈型態 2 回合(整場 1 次):HP 固定 1+無敵+免疫不利,能力 200%,傷害轉治療最低HP友方',fd:'受到致命傷害即將倒下時觸發(整場戰鬥僅 1 次):化身「死靈」狀態 2 回合,HP 固定為 1 且無敵 + 免疫所有不利狀態,攻擊、特技、速度都提升為 200%。期間每次造成傷害都會將該傷害量轉化為治療,恢復友方 HP 最低的隊友。每升 1 級天賦延長 0.4 回合(Lv5 MAX 達 4 回合)。' },
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布丁奶茶連擊:普通攻擊保證 2 次,並有 30% 機率追加第 3 次。
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 80%。
+  //   走通用 HERO_TRAIT_LV[heroName].rows 升級表(設計者要求「每級 +10%,Lv5 達 80%」)
+  '布奶鳥獸':{ name:'布丁奶茶連擊', icon:'🤝', desc:'普通攻擊為 2 次,30% 機率多 1 次傷害',fd:'布丁和奶茶兩隻小鳥輪流啄擊!普通攻擊保證攻擊 2 次,並有 30% 機率追加第 3 次攻擊。每升 1 級追加機率 +10%,Lv5 MAX 達 80%。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -19574,6 +19614,55 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260513.6460 — 布奶鳥獸(5 年 5 班高同學設計)爆發實作
+  //   生氣的布丁&奶茶:特技×100%(每級+10%)連續攻擊隨機目標 9 次,
+  //   目標倒下時自動轉移到其他存活對手繼續攻擊。必中且無視有利狀態。
+  //   攻擊次數固定 9 次,Lv5 MAX 只提升傷害倍率(_lv5Extra 不增加次數)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='生氣的布丁&奶茶'){
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _baseHits = 9;  // 攻擊次數固定 9 次(設計者要求)
+    let _remainHits = _baseHits;
+    const _perDmg = Math.max(6, Math.floor(spv * 1.0 * _burstMult));
+    log(`🦜 [${h.name}] 生氣的布丁&奶茶!特技×${Math.round(_burstMult*100)}% × ${_baseHits} 次必中連擊!`);
+    bannerFX(h, '🦜 布丁&奶茶暴走!', '#ffaa66', 1400);
+    beginBatchTotals();
+    function _bunaiAttack(){
+      if(_remainHits <= 0 || checkWin()){
+        updateUI();
+        setTimeout(endBatchTotals, 50);
+        _burstFinish(h, _interrupted);
+        return;
+      }
+      const liveFoes = G[_opp].filter(x => x.curHp > 0);
+      if(!liveFoes.length){
+        _remainHits = 0;
+        _bunaiAttack();
+        return;
+      }
+      // 隨機挑一個存活目標
+      const target = liveFoes[Math.floor(Math.random() * liveFoes.length)];
+      // 必中且無視有利狀態:ignoreBuffs:true + mustHit:true(若該系統有的話,先用 ignoreBuffs)
+      doDmg(target, _perDmg, { actor:h, isSkill:true, ignoreBuffs:true, minDmg:6 });
+      _remainHits--;
+      renderCard(target);
+      // 目標倒下時繼續攻擊其他存活對手(因為下次迴圈會再次篩選 liveFoes)
+      if(target.curHp <= 0 && _remainHits > 0){
+        bannerFX(h, '✨ 轉移!', '#ff8844', 500);
+      }
+      _pSetTimeout(_bunaiAttack, 250);
+    }
+    const startFoes = G[_opp].filter(x => x.curHp > 0);
+    if(!startFoes.length){
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+      return;
+    }
+    _bunaiAttack();
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
 
@@ -22703,6 +22792,45 @@ function execAtk(actor, target, dmg, opts={}){
     }, 350);
   }
 
+  // ★ v1.0.20260513.6460 — 布奶鳥獸天賦：布丁奶茶連擊
+  //   普通攻擊保證 2 次,30% 機率追加第 3 次(每升 1 級 +10%,Lv5 MAX 達 80%)
+  //   參考八岐大蛇的「普攻 2 下」模式,但邏輯更複雜:
+  //     - 第 2 擊:必中,不再觸發本天賦
+  //     - 第 3 擊:依機率,僅在第 2 擊命中存活後觸發
+  //   旗標 _bunaiMultiTriggered 防止遞迴;每次普攻結束會重置
+  if(name==='布奶鳥獸' && target && target.curHp>0 && !actor._bunaiMultiTriggered){
+    actor._bunaiMultiTriggered = true;
+    const _bunaiTl = (typeof _getTraitLv === 'function') ? _getTraitLv('布奶鳥獸') : 0;
+    const _bunaiRate3 = Math.min(1, 0.30 + _bunaiTl * 0.10);  // Lv0=30%, Lv5=80%
+    log(`🦜 [布奶鳥獸] 天賦：布丁奶茶連擊！追加第二次普攻！`);
+    bannerFX(actor,'布丁奶茶連擊！','#ffcc88',800);
+    // 第 2 擊:保證命中
+    _pSetTimeout(()=>{
+      try{
+        if(target && target.curHp>0 && actor.curHp>0){
+          const _dmg2 = Math.max(1, actor.atk||1);
+          doDmg(target, _dmg2, {actor:actor});
+          // 第 3 擊:依機率
+          if(target.curHp>0 && actor.curHp>0 && Math.random() < _bunaiRate3){
+            _pSetTimeout(()=>{
+              try{
+                if(target && target.curHp>0 && actor.curHp>0){
+                  log(`🦜 [布奶鳥獸] 連擊追加！第 3 次攻擊!`);
+                  bannerFX(actor,'追加！','#ffaa44',600);
+                  const _dmg3 = Math.max(1, actor.atk||1);
+                  doDmg(target, _dmg3, {actor:actor});
+                }
+              }catch(e){}
+              actor._bunaiMultiTriggered = false;
+            }, 350);
+            return;
+          }
+        }
+      }catch(e){}
+      actor._bunaiMultiTriggered = false;
+    }, 350);
+  }
+
   // 祭司：60%恢復HP最低隊友25%HP
   if(name==='祭司' && Math.random()<Math.min(1,0.60+_tl*0.04) && target.curHp>0){
     const allies=G[actor.side].filter(h=>h.curHp>0);
@@ -25555,6 +25683,91 @@ function execSkill(a, sk, cost, stype){
     try{ clearBadStatus(_t); }catch(_){}
     try{ renderCard(_t); }catch(_){}
     endAction(a, cost);
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260513.6460 — 布奶鳥獸(5 年 5 班高同學設計)技能實作
+  // ════════════════════════════════════════════════════════════════
+  // S1 拆家:用特技 150% 對全體對手造成傷害(無視有利狀態),
+  //   傷害總量轉化為自己的 HP 恢復,溢出的治療轉為護盾值。
+  //   升級:每級傷害 +5%(Lv0=150%,Lv10=195%)
+  else if(n==='拆家'){
+    const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _dmgMult = 1.5 + _s1Lv * 0.05;  // Lv0=150% / Lv10=195%
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    const foes = G[opp].filter(h => h.curHp > 0);
+    if(!foes.length){ endAction(a, cost); return; }
+    const _spv = spv(a);
+    const _perDmg = Math.max(1, Math.floor(_spv * _dmgMult));
+    log(`🦜 [${a.name}] 拆家!布丁和奶茶聯手攻擊!特技×${Math.round(_dmgMult*100)}% 全體傷害(無視有利狀態)!`);
+    try{ playSkillFX('拆家', a, foes); }catch(_){}
+    try{ bannerFX(a, '🦜 拆家!', '#ffaa66', 1000); }catch(_){}
+    // 第一波:全體傷害,累積總傷害量(無視有利狀態 → ignoreBuffs:true)
+    let _totalDmg = 0;
+    beginBatchTotals();
+    foes.forEach(t => {
+      const _hpBefore = t.curHp;
+      doDmg(t, _perDmg, { actor:a, isSkill:true, isAoe:true, ignoreBuffs:true });
+      const _actualDmg = Math.max(0, _hpBefore - t.curHp);
+      _totalDmg += _actualDmg;
+      renderCard(t);
+    });
+    // 第二波:傷害總量轉化為自己 HP 恢復,溢出護盾
+    _pSetTimeout(() => {
+      if(_totalDmg > 0 && a.curHp > 0){
+        const _hpMissing = Math.max(0, a.hp - a.curHp);
+        const _healPart = Math.min(_totalDmg, _hpMissing);
+        const _shieldPart = Math.max(0, _totalDmg - _hpMissing);
+        if(_healPart > 0){
+          doHeal(a, _healPart, { actor:a, isHeal:true });
+          log(`🦜 [${a.name}] 拆家回收!傷害 ${_totalDmg} 轉為 HP +${_healPart}!`);
+        }
+        if(_shieldPart > 0){
+          // ★ v1.0.20260513.6460 — 護盾上限為自己 HP 的 200%(設計者要求)
+          const _shieldCap = Math.floor(a.hp * 2.0);
+          const _shieldFinal = Math.min(_shieldPart, _shieldCap);
+          if(!Array.isArray(a.buffs)) a.buffs = [];
+          // 移除舊有的拆家護盾,避免疊加無限制
+          a.buffs = a.buffs.filter(b => !(b._fromBunaiShield));
+          a.buffs.push({ type:'shield', amt:_shieldFinal, dur:99, _fromBunaiShield:true, src:a.name });
+          try{ if(typeof _renderBuffsBar === 'function') _renderBuffsBar(a); }catch(_){}
+          if(_shieldFinal < _shieldPart){
+            log(`🦜 [${a.name}] 溢出治療 ${_shieldPart} → 護盾 ${_shieldFinal}(達上限 HP×200%)`);
+          } else {
+            log(`🦜 [${a.name}] 溢出治療轉為 ${_shieldFinal} 護盾!`);
+          }
+          try{ bannerFX(a, '🛡️ 護盾 +'+_shieldFinal, '#ffeeaa', 800); }catch(_){}
+        }
+        renderCard(a);
+      }
+      setTimeout(endBatchTotals, 50);
+      endAction(a, cost);
+    }, 400);
+    return;  // 非同步,由 setTimeout 結尾呼叫 endAction
+  }
+  // S2 布奶的保護:用特技 200% 治療 1 名隊友(可復活)
+  //   升級:每級治療量 +5%(Lv0=200%,Lv10=245%)
+  else if(n==='布奶的保護'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _healMult = 2.0 + _s2Lv * 0.05;
+    const _spv = spv(a);
+    // 可選任何活著或剛倒下的友方(可復活)
+    setPending('ally_or_dead', t => {
+      if(!t){ endAction(a, cost); return; }
+      const _wasDead = (t.curHp <= 0);
+      if(_wasDead){
+        t.curHp = 1;
+        try{ if(t._dead) t._dead = false; }catch(_){}
+        log(`🦜 [${a.name}] 布奶的保護!以柔軟羽毛喚醒 [${t.name}]!`);
+        try{ bannerFX(t, '✨ 復活!', '#ffeebb', 1000); }catch(_){}
+      }
+      const _heal = Math.max(1, Math.floor(_spv * _healMult));
+      log(`🦜 [${a.name}] 布奶的保護!特技×${Math.round(_healMult*100)}% = ${_heal} HP 治療 [${t.name}]!`);
+      try{ playSkillFX('布奶的保護', a, [t]); }catch(_){}
+      try{ bannerFX(t, '💗 布奶治療!', '#ffccaa', 900); }catch(_){}
+      doHeal(t, _heal, { actor:a, isHeal:true });
+      renderCard(t);
+      endAction(a, cost);
+    });
   }
   // ════════════════════════════════════════════════════════════════
   // ====== 冒險模式 BOSS 技能 ======
@@ -33884,7 +34097,7 @@ async function _showAdminStatsPanel(){
       },
       {
         label: '🎨 學生設計英雄',
-        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師']
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸']
       },
     ];
 
@@ -50673,6 +50886,8 @@ const ADMIN_ALL_HEROES = [
   '暗魔將·血',
   // ★ v1.0.20260512.6210 — 5 年 2 班許同學設計
   '死靈法師',
+  // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
+  '布奶鳥獸',
 ];
 
 function advGetUnlockedHeroes() {
@@ -56862,7 +57077,8 @@ const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/L
 // ★ v1.0.20260501.5440 — 加進鋁合金暴龍,共 7 隻分攤 5% 機率
 // ★ v1.0.20260501.5450 — 加進超鬼神王,共 8 隻分攤 5% 機率
 // ★ v1.0.20260512.6210 — 加進死靈法師(5 年 2 班許同學設計),共 11 隻分攤 5% 機率(每隻 ≈ 0.455%)
-const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師'];
+// ★ v1.0.20260513.6460 — 加進布奶鳥獸(5 年 5 班高同學設計),共 12 隻分攤 5% 機率(每隻 ≈ 0.417%)
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸'];
 
 // BOSS 賣錢物品池(召喚也可獲得)
 // ★ v1.1.0 — 台灣 10 BOSS 賣錢物品也加入召喚池
@@ -59500,6 +59716,12 @@ const SKILL_UPGRADE_DEF = {
   '冥佑':     { cat:'heal',   base:1.5, label:'治療量' },
   //   S2 死者轉生:復活+免疫 2 回合,每 5 級 +1 回合(Lv5:3 回合, Lv10:4 回合)
   '死者轉生': { cat:'dur', base:2, perLv:5, label:'死靈型態回合' },
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學「布奶鳥獸」)
+  //   S1 拆家:全體 150%+5%/級(Lv10 達 195%),fd 中還有「護盾上限 HP 的 200%」固定不升級
+  //   → 用自訂類別精確替換「150%」傷害,不動「200%」護盾上限
+  '拆家':     { cat:'special_bunai_chai', label:'全體傷害' },
+  //   S2 布奶的保護:特技 200% 治療,每級 +5%(Lv10 達 245%);走標準 heal 類別(fd 只有一個 %)
+  '布奶的保護':{ cat:'heal',   label:'治療量' },
   // ── 治療類：每級治療+10% ──
   '救贖神光': { cat:'heal',   label:'治療量' },
   // ★ v1.0.20260424.0560 — 神聖鎚擊: 固定 HP% 傷害(BOSS 5%/一般 20%) 不升級
@@ -59726,6 +59948,13 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     const focusPct = 200 + skLv*5;
     fd = fd.replace(/特技的\s*100\s*%/g, '特技的 ' + HL(mainPct + '%'))
            .replace(/特技\s*200\s*%/g, '特技 ' + HL(focusPct + '%'));
+  }
+  else if(cat === 'special_bunai_chai'){
+    // ★ v1.0.20260513.6460 — 拆家:全體 150%+5%/級(Lv10 達 195%)
+    //   fd 中有兩個 %:「特技的 150%」(主傷害,升級)與「自己 HP 的 200%」(護盾上限,固定不升級)
+    //   精確替換「150%」傷害,不動「200%」護盾上限,避免標準 dmg cat 把所有 % 一起套乘
+    const dmgPct = 150 + skLv*5;
+    fd = fd.replace(/特技的\s*150\s*%/g, '特技的 ' + HL(dmgPct + '%'));
   }
   else if(cat === 'special_kuyou_fox'){
     // 九尾狐火: 特技% +5/級, 燃燒 2→3
@@ -60185,6 +60414,11 @@ function _getSkUpgradeBadge(skillName, skLv){
     const focusPct = 200 + (skLv||0)*5;
     return '全體 ' + mainPct + '% + 集火 ' + focusPct + '%';
   }
+  if(cat==='special_bunai_chai'){
+    // ★ v1.0.20260513.6460 — 拆家:全體傷害 (150+5*lv)%(護盾上限 HP×200% 固定不升級)
+    const dmgPct = 150 + (skLv||0)*5;
+    return '全體 ' + dmgPct + '% (護盾≤HP×200%)';
+  }
   if(cat==='special_blizzard'){
     // 暴風雪:特技×(70+5*lv)% + (50+3*lv)%冰凍
     const dmgPct = 70 + (skLv||0)*5;
@@ -60472,6 +60706,11 @@ function buildSkillLvTable(skillName, currentLv) {
       const focusPct = 200 + lv*5;
       effectText = '全體 ' + mainPct + '% + 集火 ' + focusPct + '%(暴擊+30%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
+    else if(cat==='special_bunai_chai'){
+      // ★ v1.0.20260513.6460 — 拆家:全體 (150+5*lv)%(護盾上限 HP×200% 固定不升級)
+      const dmgPct = 150 + lv*5;
+      effectText = '全體 ' + dmgPct + '% + 吸血/護盾(≤HP×200%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
     else if(cat==='special_blizzard'){
       const dmgPct = 70 + lv*5;
       const frzPct = 50 + lv*3;
@@ -60609,6 +60848,8 @@ const HERO_CATEGORIES_OVERRIDE = {
   '暗魔將·血':  ['dmg','heal'],    // 血劍·防全免疫、血劍·攻全體+集火爆擊
   // ★ v1.0.20260512.6210 — 5 年 2 班許同學設計
   '死靈法師':    ['dmg','heal'],    // S1隱形+持續療癒、S2復活、爆發倒下次數疊乘傷害+轉治療
+  // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
+  '布奶鳥獸':    ['dmg','heal'],    // S1全體傷害+吸血+護盾、S2 200%治療復活、爆發 9 連擊;天賦普攻雙倍
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -60677,6 +60918,10 @@ const HERO_HEX_OVERRIDE = {
 
   // ★ v1.0.20260512.6210 — 5 年 2 班許同學設計
   '死靈法師':    { heal: 9, ctrl: 1 },    // S1+S2+爆發+天賦皆強治療/復活向(隱形+持續療癒+復活死靈型態+傷害轉治療);控制極低
+
+  // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
+  //   傷害向中高(S1全體+爆發9連擊+天賦雙倍普攻),回復中(S2 200%治療+S1吸血溢護盾),控制極低
+  '布奶鳥獸':    { heal: 7, ctrl: 1 },
 
   // 校犬(特殊雙滿)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
@@ -66251,6 +66496,8 @@ const _TRAIT_LV_INFO = {
   '暗魔將·血':{ base:'50% 雙 DoT 機率', bonus:'+10%/天賦級', max:'90%(Lv5)', effect:'造成傷害時機率使目標同時燃燒+出血 2 回合' },
   // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
   '死靈法師':{ base:'整場 1 次 + 2 回合死靈型態', bonus:'+0.4 回合/天賦級', max:'4 回合(Lv5)', effect:'致命傷時化身死靈:無敵+200%能力+傷害轉治療給HP最低友方' },
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  '布奶鳥獸':{ base:'30% 第 3 擊機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'普通攻擊保證 2 次,並依機率追加第 3 次攻擊' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -69078,6 +69325,8 @@ const STUDENT_DESIGNER_HEROES = {
   'lsps110051@stu.lsps.tp.edu.tw': { hero:'暗魔將·血', name:'鐘同學', class:'5年2班', flagId:'kishin_blood',    isFirstOfClass:true },
   // ★ v1.0.20260512.6210 — 5 年 2 班第二位設計師(死靈法師設計者)
   'lsps110081@stu.lsps.tp.edu.tw': { hero:'死靈法師',   name:'許同學', class:'5年2班', flagId:'necromancer'      },
+  // ★ v1.0.20260513.6460 — 5 年 5 班(布奶鳥獸設計者)
+  'lsps110043@stu.lsps.tp.edu.tw': { hero:'布奶鳥獸',   name:'高同學', class:'5年5班', flagId:'bunai_birds'      },
 };
 
 window._grantStudentDesignerHero = function(email){
@@ -69250,6 +69499,78 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260513.6460', brief:[
+    '🦜 新英雄登場:布奶鳥獸(5 年 5 班高同學設計)— 兩隻可愛小鳥「布丁」與「奶茶」聯手作戰!',
+    '💥 天賦「布丁奶茶連擊」:普攻保證 2 次,30% 機率追加第 3 次(每級 +10%,Lv5 達 80%)',
+    '🩹 S1「拆家」全體傷害+吸血溢護盾;S2「布奶的保護」200% 治療復活;爆發「生氣的布丁&奶茶」9 連擊轉移必中',
+    '🎰 加入稀有召喚池(共 12 隻學生設計英雄分攤 5% 機率,每隻 ≈ 0.417%)',
+  ], playerItems:[
+    '【🦜 布奶鳥獸:5 年 5 班高同學設計】',
+    '・能力值:HP 54 / 攻擊 12 / 特技 13 / 速度 21(高速雙打型)',
+    '・定位:傷害+回復雙修型 — 又能打又能治,擅長靠普攻天賦輸出和爆發收割',
+    '【天賦「布丁奶茶連擊」🤝】',
+    '・普通攻擊保證攻擊 2 次',
+    '・並有 30% 機率追加第 3 次攻擊(每升 1 級 +10%,Lv5 MAX 達 80%)',
+    '・布丁啄一下、奶茶再啄一下,兩隻小鳥輪流瘋狂啄擊!',
+    '【S1「拆家」(6 能量)】',
+    '・用特技的 150% 對全體對手造成傷害,無視有利狀態',
+    '・把造成的傷害總量全部轉化為自己的 HP 恢復',
+    '・若 HP 已滿,溢出的治療會轉為護盾值,保護自己',
+    '・護盾上限為自己 HP 的 200%',
+    '・每升 1 級傷害 +5%(Lv10 達 195%)',
+    '【S2「布奶的保護」(3 能量)】',
+    '・用特技的 200% 治療 1 名隊友',
+    '・目標 HP 為 0 也可復活(以柔軟羽毛喚醒!)',
+    '・每升 1 級治療量 +5%(Lv10 達 245%)',
+    '【爆發「生氣的布丁&奶茶」🦜】',
+    '・用特技的 100% 連續攻擊隨機目標 9 次',
+    '・當目標倒下時自動轉移到其他存活對手繼續攻擊',
+    '・此傷害無視有利狀態且必中,無法迴避或代替承受',
+    '・每升 1 級傷害 +10%(Lv5 MAX 達 140%,攻擊次數固定 9 次)',
+    '【設計背景】',
+    '・兩隻可愛的小鳥「布丁」與「奶茶」被人類飼養長大,感情形影不離',
+    '・平時溫順乖巧、撒嬌討食;但只要看到家被弄亂或主人被欺負就會聯手暴走',
+    '・口頭禪:「啾啾!(別惹我們生氣!)」',
+    '【取得方式】',
+    '・加入「稀有英雄召喚池」,共 12 隻學生設計英雄分攤 5% 機率,每隻 ≈ 0.417%',
+  ], items:[
+    '【布奶鳥獸新增 - 程式變動】',
+    '・hero_db.js 新增「布奶鳥獸」條目(HP 54/攻 12/特 13/速 21 + S1拆家 + S2布奶的保護)',
+    '・index.html ~L10748 AVATARS 加入 「布奶鳥獸:🦜」',
+    '・index.html ~L10845 HERO_IMGS 加入 布丁奶茶獸.png',
+    '・index.html ~L11055 HERO_PORTRAIT_LIBRARY 加入 default 肖像',
+    '・index.html ~L12356 BURST_LV_TABLE 加入 5 級升級表',
+    '・index.html ~L12410 HERO_IMG_POS 加入 ["120% auto","center 30%"]',
+    '・index.html ~L12499 HERO_THUMB_POS 加入 "center 40%"',
+    '・index.html ~L12750 HERO_BIO 加入 role/trait/hobby/quote/designer 五欄',
+    '・index.html ~L12826 BURST_DB 加入「生氣的布丁&奶茶」',
+    '・index.html ~L15129 角色簡介字串加入',
+    '・index.html ~L15194 HERO_TRAIT 加入「布丁奶茶連擊」(每級 +10% 觸發率)',
+    '・index.html ~L22708 普通攻擊 hook 加入布奶鳥獸天賦觸發邏輯(仿八岐大蛇,但邏輯為「保證 2 擊 + 機率第 3 擊」)',
+    '・index.html ~L19574 爆發實作分支 burstName===\'生氣的布丁&奶茶\'(仿九尾空貓怪 9 連擊,改為必中+ignoreBuffs)',
+    '・index.html ~L25638 S1/S2 實作分支(拆家:全體傷害+傷害總量轉自身HP+護盾;布奶的保護:200% 治療 ally_or_dead)',
+    '・index.html ~L50676 ADMIN_ALL_HEROES 加入',
+    '・index.html ~L33887 班級設計表「學生設計英雄」群組加入',
+    '・index.html ~L56865 SUMMON_RARE_HEROES 加入(從 11 隻→12 隻)',
+    '・index.html ~L60611 HERO_CATEGORIES_OVERRIDE 加入 ["dmg","heal"]',
+    '・index.html ~L60680 HERO_HEX_OVERRIDE 加入 { heal:7, ctrl:1 }',
+    '・index.html ~L59719 SKILL_UPGRADE_DEF 加入 拆家(special_bunai_chai 自訂類別)+ 布奶的保護(heal)',
+    '・index.html ~L59952 fd renderer 加入 special_bunai_chai case(精確只升 150%,不動護盾上限 200%)',
+    '・index.html ~L60416 升級短摘要 + L60703 升級表格皆加入 special_bunai_chai case',
+    '・index.html ~L66498 _TRAIT_LV_INFO 加入「布奶鳥獸」天賦升級資訊(base 30% / +10% per Lv / Lv5 MAX 80%)',
+    '・index.html ~L69328 STUDENT_DESIGNER_HEROES 加入高同學 email 自動補發英雄',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260513.6460',
+    '・window._GAME_LOADED_VERSION → v1.0.20260513.6460',
+    '・hero_db.js?v= → 20260513c(破快取)',
+    '・CURRENT_BOOT_VER 不動(維持 v6050)',
+    '【測試建議】',
+    '・召喚池抽中後檢查 HERO_BIO/AVATARS/雷達圖六維是否正確',
+    '・對戰中普攻看是否出現「保證 2 擊 + 機率第 3 擊」連擊',
+    '・S1 拆家對全體對手出傷害並檢查吸血/護盾結算',
+    '・S2 布奶的保護可選倒下隊友復活',
+    '・爆發 9 次連擊隨機目標,目標倒下時順利轉移',
+  ] },
   { ver:'v1.0.20260513.6450', brief:[
     '⚖ 平衡調整:武鬥家「金鐘罩」能量 2→3、效果順序改為「先反彈相同傷害,再用特技 200% 減傷」',
     '👊 反彈量從「dmg - sp」改為「等同實際受到的傷害」,大幅提升對高傷對手的回敬能力',
@@ -70981,7 +71302,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260513.6450';
+  const CURRENT_VERSION = 'v1.0.20260513.6460';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71015,7 +71336,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260513.6450';
+window._GAME_LOADED_VERSION = 'v1.0.20260513.6460';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
