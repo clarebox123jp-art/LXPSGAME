@@ -350,7 +350,13 @@
   };
 
   // 雲端儲存
+  // ★ v1.0.20260514.6550 — 入口加 uid 守衛,防止 undefined 進入 doc() 造成 Firestore SDK 報
+  //   "Cannot read properties of undefined (reading 'indexOf')" 紅色錯誤
   window._fbSave = async function(uid, data) {
+    if(!uid || typeof uid !== 'string'){
+      console.warn('[_fbSave] 收到無效 uid,跳過儲存:', uid);
+      return false;
+    }
     try {
       // ★ merge:true 保留 representativeHero / friends 等欄位不被覆蓋
       await setDoc(doc(_fbDb, 'players', uid), data, { merge: true });
@@ -378,6 +384,15 @@
   //   避免 Firestore IndexedDB 本地快取在網路不穩時回傳舊版本
   //   (跨電腦同步時最常見的問題:B 電腦讀到自己的 IndexedDB 快取舊版本而非 A 電腦剛寫入的新版本)
   window._fbLoad = async function(uid) {
+    // ★ v1.0.20260514.6550 — 入口加 uid 守衛
+    //   原問題:登入流程剛啟動時若 user.uid 還沒就緒就被呼叫,Firestore 的 doc() 會在
+    //          ResourcePath.fromString 內讀 undefined.indexOf 拋 TypeError,
+    //          gameCloudLoad 接到 throw 後誤判為雲端異常,觸發「⚠️ 雲端連線異常」紅框
+    //   修法:直接擋在外面,回 null(視同新玩家無雲端文件),交由呼叫端正常流程處理
+    if(!uid || typeof uid !== 'string'){
+      console.warn('[_fbLoad] 收到無效 uid,跳過讀取(視同無雲端文件):', uid);
+      return null;
+    }
     try {
       // 優先用 getDocFromServer 強制走網路,確保拿到最新版本
       const snap = await getDocFromServer(doc(_fbDb, 'players', uid));
@@ -452,6 +467,11 @@
   // 寫 live 槽(高頻,無保護,純覆蓋)
   // 維持與舊 _fbSave 同樣寫法:setDoc + merge,讓 Firebase merge 規則一致
   window._fbSaveLive = async function(uid, data) {
+    // ★ v1.0.20260514.6550 — uid 守衛
+    if(!uid || typeof uid !== 'string'){
+      console.warn('[_fbSaveLive] 收到無效 uid,跳過儲存:', uid);
+      return false;
+    }
     try {
       await setDoc(doc(_fbDb, 'players', uid, 'saves', 'live'), data, { merge: true });
       return true;
@@ -461,6 +481,11 @@
   // 讀 live / safe 任一槽(強制從伺服器抓最新版,網路斷時 fallback 到快取)
   window._fbLoadSlot = async function(uid, slot) {
     if(slot !== 'live' && slot !== 'safe') throw new Error('slot must be live or safe');
+    // ★ v1.0.20260514.6550 — uid 守衛(同 _fbLoad)
+    if(!uid || typeof uid !== 'string'){
+      console.warn('[_fbLoadSlot] 收到無效 uid,跳過讀取(視同無雲端文件):', uid, 'slot:', slot);
+      return null;
+    }
     const _ref = doc(_fbDb, 'players', uid, 'saves', slot);
     try {
       const snap = await getDocFromServer(_ref);
@@ -39135,8 +39160,16 @@ function openAdventureOverlay(){
   // ★ 回到關卡選擇頁時，若有待處理的版本更新通知（來自戰鬥中偵測到的），現在跳出
   try{ if(window._flushPendingUpdateIfAny) setTimeout(window._flushPendingUpdateIfAny, 500); }catch(e){}
   // ★ 更新知識幣顯示
-  const _acv = document.getElementById('adv-coins-val');
-  if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
+  // ★ v1.0.20260514.6550 — 改用 _syncCoinsDisplay 統一同步所有知識幣 DOM
+  //   原問題:只更新 #adv-coins-val 一處,且時序上若雲端還沒載完 _knowledgeCoins 仍為 0,
+  //          會顯示 0,需要進商店時 _syncCoinsDisplay() 被呼叫到才會修正
+  try{ if(typeof _syncCoinsDisplay === 'function'){ _syncCoinsDisplay(); } else {
+    const _acv = document.getElementById('adv-coins-val');
+    if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
+  } }catch(_){
+    const _acv = document.getElementById('adv-coins-val');
+    if(_acv) _acv.textContent = (_knowledgeCoins||0).toLocaleString();
+  }
   // ★ v5700 — 更新今日知識王挑戰按鈕狀態
   try{ if(typeof _kingUpdateFloatBtn === 'function') _kingUpdateFloatBtn(); }catch(_e){}
   // ★ 同步帳號名稱到冒險頁
@@ -52293,7 +52326,14 @@ window._clearAccountLocalData = function(reason){
     'adv_medal_stats',
     'adv_medals',
     // 個人偏好/解鎖類
-    'lxps_art_style',
+    // ★ v1.0.20260514.6541 — 移除 'lxps_art_style' 從清單中
+    //   原因:畫風是「裝置層視覺偏好」,跟學生個人進度/帳號無關
+    //   舊行為:玩家設精美畫風 → 閒置 5 分鐘自動登出 → _clearAccountLocalData
+    //          把 lxps_art_style 一起清掉 → reload 後讀不到 → 預設回 'cute'
+    //          再次登入也救不回(_artStyle 從未上雲端)
+    //   新行為:保留 lxps_art_style,登出/換帳號不動它
+    //          畫風偏好是裝置層的,讓共用平板上每個學生可以在登入前看到上次設定
+    //          (若要改成跟帳號綁定,須改成上雲同步,目前不採用此方案)
     'lxps_daily_free_summon_date',
     'lxps_guest_progress',
     'lxps_hero_portrait_choice',
@@ -52360,19 +52400,20 @@ window._clearAccountLocalData = function(reason){
 };
 
 // ════════════════════════════════════════════════════════════════
-// ★ v1.0.20260514.6530 — 5 分鐘無操作自動登出(學校平板共用情境)
+// ★ v1.0.20260514.6530 — 閒置無操作自動登出(學校平板共用情境)
+//   v1.0.20260514.6542 — 閒置時間從 5 分鐘調整為 30 分鐘
 //
 // 【規格】
 //   - 觸發:user 已登入(window._gUserId 有值)
 //   - 偵測:mousedown / touchstart / keydown / pointerdown / wheel
 //          (不偵測 mousemove,避免太敏感;且觸控裝置 mousemove 是 touchmove 模擬)
-//   - 4 分 30 秒(270 秒)無操作 → 彈出 30 秒倒數視窗
+//   - 29 分 30 秒(1770 秒)無操作 → 彈出 30 秒倒數視窗
 //   - 倒數視窗有「繼續遊戲」按鈕,按下 = 重置計時 + 關閉彈窗
-//   - 倒數結束(共 300 秒)→ 自動 gSignOut 流程
+//   - 倒數結束(共 1800 秒 = 30 分鐘)→ 自動 gSignOut 流程
 //   - 倒數彈窗本身的點擊不算「操作」(會用 stopPropagation),否則就永遠不會登出
 // ════════════════════════════════════════════════════════════════
 (function(){
-  const IDLE_TIMEOUT_MS    = 5 * 60 * 1000;  // 5 分鐘
+  const IDLE_TIMEOUT_MS    = 30 * 60 * 1000; // 30 分鐘(v6542 從 5 分鐘調整為 30 分鐘)
   const WARNING_BEFORE_MS  = 30 * 1000;       // 倒數 30 秒
   const TICK_MS            = 1000;            // 每秒檢查
   let   _lastActivityTs    = Date.now();
@@ -52434,7 +52475,7 @@ window._clearAccountLocalData = function(reason){
       '<div style="font-size:60px;margin-bottom:14px;">⏰</div>' +
       '<div style="font-size:28px;font-weight:900;color:#ffaa44;margin-bottom:10px;">閒置太久,即將自動登出</div>' +
       '<div style="font-size:18px;color:#ccc;line-height:1.6;margin-bottom:14px;">' +
-        '為了保護你的帳號(尤其是和同學共用平板時),<br>系統偵測到 5 分鐘沒有操作。</div>' +
+        '為了保護你的帳號(尤其是和同學共用平板時),<br>系統偵測到 30 分鐘沒有操作。</div>' +
       '<div id="_idle-logout-countdown" style="font-size:54px;font-weight:900;color:#ff8844;margin:10px 0 20px;text-shadow:0 0 18px rgba(255,140,60,0.6);">30</div>' +
       '<div style="font-size:16px;color:#888;margin-bottom:24px;">秒後將自動登出並儲存進度</div>' +
       '<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">' +
@@ -52507,7 +52548,7 @@ window._clearAccountLocalData = function(reason){
           '<div style="font-size:60px;margin-bottom:14px;">⏰</div>' +
           '<div style="font-size:28px;font-weight:900;color:#aaccff;margin-bottom:14px;">閒置過久,已登出</div>' +
           '<div style="font-size:17px;color:#ccc;line-height:1.7;">' +
-            '5 分鐘沒有操作,系統已自動登出並儲存進度。<br>' +
+            '30 分鐘沒有操作,系統已自動登出並儲存進度。<br>' +
             '畫面 3 秒後會自動回到首頁。' +
           '</div>' +
         '</div>';
@@ -52544,7 +52585,7 @@ window._clearAccountLocalData = function(reason){
     _attachListeners();
     if(_tickHandle) clearInterval(_tickHandle);
     _tickHandle = setInterval(_tick, TICK_MS);
-    console.log('⏰ [閒置自動登出] 已啟動(5 分鐘無操作 → 自動登出,登出前 30 秒倒數提示)');
+    console.log('⏰ [閒置自動登出] 已啟動(30 分鐘無操作 → 自動登出,登出前 30 秒倒數提示)');
   };
 
   window._idleAutoLogoutStop = function(){
@@ -53481,6 +53522,10 @@ async function gameCloudLoad() {
     localStorage.setItem('lxps_' + _gUserId + '_progress', JSON.stringify(data));
     const saved = data.savedAt ? new Date(data.savedAt).toLocaleString('zh-TW') : '';
     log('☁️ 進度已載入' + (saved ? '（' + saved + '）' : ''));
+    // ★ v1.0.20260514.6550 — 雲端載入完立即同步知識幣到 UI
+    //   原問題:openAdventureOverlay 在登入瞬間就執行,當時 _knowledgeCoins 還是 0,
+    //          雲端載完後沒人廣播,#adv-coins-val 一直停在 0 直到進商店才修正
+    try{ if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay(); }catch(_){}
     // ★★★ v1.0.20260512.6160 — 若偵測到雲端可疑(摘要比對失敗),載入完立即補寫雲端 ★★★
     //   時序:_applySafeData 已套用本地(較完整)的版本進記憶體
     //        → 立刻 gameCloudSave 把這個完整版寫回雲端,修正雲端的瘦版資料
@@ -53823,13 +53868,25 @@ window.gameCloudLoad = async function(uid) {
   let data = null;
 
   // ① 嘗試雲端（新版 _fbLoad 在讀取異常時會 throw，文件不存在才回傳 null）
+  // ★ v1.0.20260514.6550 — 失敗時重試一次(等 800ms),避免登入剛完成時 SDK race condition 誤判
+  //   原問題:第一次 _fbLoad 偶爾因為 Firebase Auth 內部還沒就緒拋 TypeError,
+  //          但程式立刻當「雲端異常」彈「⚠️ 雲端連線異常」紅框嚇到玩家,
+  //          實際上下一次心跳/讀取就成功了(從 console 可看到後續所有讀取都正常)
   let cloudOk = false;
   try {
     data = await window._fbLoad(uid);
     cloudOk = true;  // 即使 data===null 也算成功（只代表文件不存在）
   } catch(e) {
-    console.error('[gameCloudLoad] 雲端讀取失敗，將嘗試本地備份', e);
-    cloudOk = false;
+    console.warn('[gameCloudLoad] 第一次雲端讀取失敗,等 800ms 後重試一次', e && e.message);
+    await new Promise(r => setTimeout(r, 800));
+    try {
+      data = await window._fbLoad(uid);
+      cloudOk = true;
+      console.info('[gameCloudLoad] ✅ 重試成功');
+    } catch(e2) {
+      console.error('[gameCloudLoad] 重試後仍失敗,將嘗試本地備份', e2);
+      cloudOk = false;
+    }
   }
 
   // ② 若雲端成功但 data 是 null → 確認是新玩家（文件不存在）
@@ -53855,14 +53912,17 @@ window.gameCloudLoad = async function(uid) {
       window._cloudLoadDone  = true;   // ★ v5550 — 即使失敗仍要解除 boot loader 等待
       console.error('⛔ [存檔保護] 雲端連線異常且本地無備份，已停用雲端儲存以保護現有資料');
       try{
+        // ★ v1.0.20260514.6550 — 改溫和的橘色提示,避免嚇到玩家
+        //   此時是「雲端讀取重試 2 次都失敗 + 本地沒備份」,但仍可繼續玩(只是暫時不存雲端)
+        //   舊版紅色警告會讓小朋友/老師誤以為資料壞了,實際上只要重整就好
         const _toast=document.createElement('div');
         _toast.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;'+
-          'background:rgba(120,30,30,0.95);border:2px solid #ff6666;color:#ffcccc;'+
-          'font-size:18px;padding:12px 24px;border-radius:10px;max-width:90vw;text-align:center;';
-        _toast.innerHTML='⚠️ 雲端連線異常，進度未載入<br>為保護您的資料，存檔功能已暫時停用<br>請檢查網路後<b>重新整理頁面</b>';
+          'background:rgba(80,50,20,0.95);border:2px solid #ffaa44;color:#ffe0aa;'+
+          'font-size:16px;padding:12px 24px;border-radius:10px;max-width:90vw;text-align:center;line-height:1.6;';
+        _toast.innerHTML='☁️ 暫時連不上雲端<br><span style="font-size:13px;color:#ffd699;">資料安全,但這次的進度暫時不會自動上傳<br>可以繼續玩,或下拉刷新頁面重試</span>';
         document.body.appendChild(_toast);
         setTimeout(()=>{ _toast.style.opacity='0'; _toast.style.transition='opacity 0.5s';
-          setTimeout(()=>{ if(_toast.parentNode)_toast.remove(); },600); }, 8000);
+          setTimeout(()=>{ if(_toast.parentNode)_toast.remove(); },600); }, 6000);
       }catch(e){}
       return;
     }
@@ -53874,6 +53934,8 @@ window.gameCloudLoad = async function(uid) {
   _applySafeData(data);
   window._progressLoaded = true;  // ★ 關鍵 flag：gameCloudSave 會檢查此值才允許儲存
   window._cloudLoadDone  = true;   // ★ v5550 — 通知 boot loader 雲端流程已就緒
+  // ★ v1.0.20260514.6550 — 載入完立即同步知識幣到 UI(修「知識幣顯示 0」bug)
+  try{ if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay(); }catch(_){}
   if(source === 'cloud') {
     localStorage.setItem('lxps_' + uid + '_progress', JSON.stringify(data));
     log('☁️ 雲端進度已載入（' + new Date(data.savedAt||0).toLocaleString('zh-TW') + '）');
@@ -63404,7 +63466,32 @@ function _renderFriendPanelImpl() {
     + 'display:flex;align-items:flex-start;justify-content:center;'
     + 'overflow-y:auto;-webkit-overflow-scrolling:touch;padding:clamp(20px,3vw,40px) 16px;'
     + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-  panel.onclick = e => { if (e.target === panel) panel.remove(); };
+  // ★ v1.0.20260514.6541 — iPad 誤觸關閉修補
+  //   舊版:panel.onclick = e => { if (e.target === panel) panel.remove(); };
+  //   問題 1:點「+ 加好友」字數不足時跳「邀請碼必須是 8 個字元」banner,
+  //          banner 蓋住按鈕觸發 click 事件冒泡到 panel → 整個面板關掉
+  //   問題 2:iPad 點輸入框準備打字時,iOS 觸控行為把 click 事件冒泡到 panel,
+  //          鍵盤彈出時 iOS 重新計算佈局,touchend 落在 panel 區域 → 整個面板關掉
+  //   修補:改用 pointerdown + pointerup 兩階段驗證,
+  //         必須「按下」與「放開」都在 panel 背景上,才視為點外面關閉
+  //         單一冒泡事件(banner / 鍵盤彈出造成的)不會觸發關閉
+  let _fpMouseDownOnBg = false;
+  panel.addEventListener('pointerdown', e => {
+    _fpMouseDownOnBg = (e.target === panel);
+  });
+  panel.addEventListener('pointerup', e => {
+    if (_fpMouseDownOnBg && e.target === panel) {
+      panel.remove();
+    }
+    _fpMouseDownOnBg = false;
+  });
+  // ★ 額外保護:iPad 上 input / button 的 touchend 不要冒泡到 panel
+  panel.addEventListener('touchend', e => {
+    const _tag = e.target && e.target.tagName;
+    if (_tag === 'INPUT' || _tag === 'BUTTON') {
+      e.stopPropagation();
+    }
+  }, true);
 
   let friendRows = '';
   if (_friendList.length === 0) {
