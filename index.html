@@ -1256,6 +1256,29 @@
         } catch(_e) { console.warn('[維修模式] 檢查失敗,放行以避免全體鎖死', _e); }
       }
 
+      // ════════════════════════════════════════════════════════════════
+      // ★ v1.0.20260514.6530 — 多人共用平板:換帳號自動清掉前一位的本機殘留
+      //   問題:adv_unlocked_heroes、adv_medals、lxps_hero_portrait_* 等
+      //         全域鍵沒帳號前綴,前一位學生登出後殘留在本機
+      //         下一位學生登入時,_applySafeData 的 union 合併會把這些
+      //         「本地殘留」當作「本人資料」寫進新帳號的雲端 → 資料污染
+      //   修補:登入時比對 lxps_last_active_uid,uid 不同就先清掉這些全域鍵
+      //         + 重置記憶體裡的全域遊戲狀態(再走 gameCloudLoad 從雲端重灌)
+      // ════════════════════════════════════════════════════════════════
+      try {
+        const _lastUid = localStorage.getItem('lxps_last_active_uid') || '';
+        if(_lastUid && _lastUid !== user.uid){
+          console.log('🔄 [換帳號清理] 偵測到不同帳號(前次=' + _lastUid.slice(0,8)
+            + '..., 本次=' + user.uid.slice(0,8) + '...),清除本機殘留');
+          // 不需 await,本地清理是同步的
+          if(typeof window._clearAccountLocalData === 'function'){
+            window._clearAccountLocalData('switch_account');
+          }
+        }
+        // 不論是否同帳號,都更新「本次活躍 uid」
+        localStorage.setItem('lxps_last_active_uid', user.uid);
+      } catch(_e) { console.warn('[換帳號清理] 失敗', _e); }
+
       window._fbUser = user;
       window._gUserId = user.uid; // ★ 確保 _gUserId 同步
       // ★ 更新玩家統計（新玩家計數 + 今日上線計數）
@@ -1343,6 +1366,9 @@
       // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
+      // ★ v1.0.20260514.6530 — 啟動「5 分鐘無操作自動登出」系統(學校平板共用情境)
+      try { if(typeof window._idleAutoLogoutStart === 'function') window._idleAutoLogoutStart(); }
+      catch(_e) { console.warn('[閒置自動登出] 啟動失敗', _e); }
       // ★ v1.0.20260501.5460 — 學生設計者英雄自動補發
       //   時序:gameCloudLoad 完成後 1.8 秒(讓 UI 穩定 + 獎章補發跑完)
       //   去重:advSaveUnlockedHero 內部有保護,每次登入都呼叫也安全
@@ -1522,6 +1548,16 @@
         window._fbClearSession(window._gUserId, window._mySessionId);
       window._mySessionId = null;
       if(window._profileUnsubscribe){ window._profileUnsubscribe(); window._profileUnsubscribe = null; }
+      // ★ v1.0.20260514.6530 — 登出時清掉本機殘留 + 停閒置自動登出計時器
+      try {
+        if(typeof window._clearAccountLocalData === 'function'){
+          window._clearAccountLocalData('sign_out');
+        }
+      } catch(_e) {}
+      try { if(typeof window._idleAutoLogoutStop === 'function') window._idleAutoLogoutStop(); } catch(_e) {}
+      // 清掉「上次活躍 uid」(避免下次匿名訪客誤觸發換帳號清理 — 不過反正都清過了不影響)
+      try { localStorage.removeItem('lxps_last_active_uid'); } catch(_e) {}
+      window._gUserId = null;
       const btnWrap = document.getElementById('google-login-btn-wrap');
       const userInfo = document.getElementById('google-user-info');
       if(btnWrap) btnWrap.style.display = '';
@@ -51925,6 +51961,274 @@ async function gSignOut() {
   log('已登出 Google 帳號');
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260514.6530 — 換帳號/登出時清除本機殘留(學校平板共用情境)
+//
+// 【問題】許多 localStorage 鍵是「全域」(沒帳號前綴),前一位學生登出後資料殘留。
+//        下一位學生登入時,_applySafeData 的 union 合併會把殘留視為「本人資料」,
+//        混入新主人的雲端 → 雲端資料污染。
+//
+// 【清掉哪些】只清「全域」(非帳號專屬)的鍵 + 重置記憶體裡的遊戲狀態。
+//   保留:lxps_session_{uid}、lxps_nickname_{uid}、lxps_{uid}_progress
+//        (帳號專屬鍵不會跨帳號污染,而且雲端載入會自然刷新)
+//        以及 lxps_game_version / lxps_maintenance_local / lxps_gm_seen
+//        / newHeroAnnounce_skipUntil(這些是「裝置/系統層」,跟個人進度無關)
+// ════════════════════════════════════════════════════════════════
+window._clearAccountLocalData = function(reason){
+  const _GLOBAL_KEYS_TO_CLEAR = [
+    // 冒險模式相關
+    'adv_unlocked_heroes',
+    'adv_battle_snap',
+    'adv_crash_snapshot',
+    'adv_japan_treasures',
+    'adv_maokong_best_rank',
+    'adv_maokong_legacy_clear_confirmed',
+    'adv_maokong_legacy_clear_date',
+    'adv_maokong_s_full_clear',
+    'adv_medal_stats',
+    'adv_medals',
+    // 個人偏好/解鎖類
+    'lxps_art_style',
+    'lxps_daily_free_summon_date',
+    'lxps_guest_progress',
+    'lxps_hero_portrait_choice',
+    'lxps_hero_portrait_unlocked',
+    'lxps_hero_slot2_unlocked',
+    'lxps_taiwan_treasures',
+  ];
+  let _removed = 0;
+  try {
+    _GLOBAL_KEYS_TO_CLEAR.forEach(function(k){
+      if(localStorage.getItem(k) !== null){
+        localStorage.removeItem(k); _removed++;
+      }
+    });
+    // 前綴掃描:設計者歡迎彈窗 flag(lxps_designer_welcome_*) — 也是「全域」的
+    const _toRemove = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const _k = localStorage.key(i);
+      if(_k && _k.indexOf('lxps_designer_welcome_') === 0) _toRemove.push(_k);
+    }
+    _toRemove.forEach(function(k){ localStorage.removeItem(k); _removed++; });
+  } catch(_e) { console.warn('[換帳號清理] localStorage 清除失敗', _e); }
+
+  // 重置記憶體裡的遊戲狀態(避免雲端載入合併時被當「本地真相」)
+  try {
+    if(typeof _heroLevels       !== 'undefined') _heroLevels       = {};
+    if(typeof _heroExp          !== 'undefined') _heroExp          = {};
+    if(typeof _heroStatPoints   !== 'undefined') _heroStatPoints   = {};
+    if(typeof _heroStatInvested !== 'undefined') _heroStatInvested = {};
+    if(typeof _heroSkillLevels  !== 'undefined') _heroSkillLevels  = {};
+    if(typeof _heroBurstLevels  !== 'undefined') _heroBurstLevels  = {};
+    if(typeof _heroTraitLevel   !== 'undefined') _heroTraitLevel   = {};
+    if(typeof _knowledgeCoins   !== 'undefined') _knowledgeCoins   = 0;
+    if(typeof _playerBackpack   !== 'undefined') _playerBackpack   = {};
+    if(typeof _shopDailyData    !== 'undefined') _shopDailyData    = {};
+    if(typeof _medals           !== 'undefined') _medals           = {};
+    if(typeof _heroPortraitUnlocked !== 'undefined') _heroPortraitUnlocked = {};
+    if(typeof _heroPortraitChoice   !== 'undefined') _heroPortraitChoice   = {};
+    if(typeof _heroSlot2Unlocked!== 'undefined' && Array.isArray(_heroSlot2Unlocked)) _heroSlot2Unlocked.length = 0;
+    if(typeof _taiwanTreasureData !== 'undefined') _taiwanTreasureData = {};
+    if(typeof _arenaPresetTeams !== 'undefined' && Array.isArray(_arenaPresetTeams)) {
+      for(let i=0; i<_arenaPresetTeams.length; i++) _arenaPresetTeams[i] = null;
+    }
+    if(typeof _advPresetTeams   !== 'undefined' && Array.isArray(_advPresetTeams)) {
+      for(let i=0; i<_advPresetTeams.length; i++) _advPresetTeams[i] = null;
+    }
+    if(typeof _petsEverCollected!== 'undefined' && _petsEverCollected && typeof _petsEverCollected.clear === 'function')
+      _petsEverCollected.clear();
+    // medalStats 是物件(_loadMedals 用 Object.assign),逐 key 刪
+    if(typeof _medalStats !== 'undefined' && _medalStats && typeof _medalStats === 'object'){
+      Object.keys(_medalStats).forEach(function(k){
+        const _v = _medalStats[k];
+        if(typeof _v === 'number') _medalStats[k] = 0;
+        else if(typeof _v === 'boolean') _medalStats[k] = false;
+        else if(Array.isArray(_v)) _medalStats[k] = [];
+        else if(_v && typeof _v === 'object') _medalStats[k] = {};
+      });
+    }
+    // 進度載入旗標 — 強制重新走 gameCloudLoad 流程
+    window._progressLoaded = false;
+  } catch(_e) { console.warn('[換帳號清理] 記憶體重置失敗', _e); }
+
+  console.log('🧹 [換帳號清理] 已清除 ' + _removed + ' 筆全域 localStorage(原因:' + reason + ')');
+};
+
+// ════════════════════════════════════════════════════════════════
+// ★ v1.0.20260514.6530 — 5 分鐘無操作自動登出(學校平板共用情境)
+//
+// 【規格】
+//   - 觸發:user 已登入(window._gUserId 有值)
+//   - 偵測:mousedown / touchstart / keydown / pointerdown / wheel
+//          (不偵測 mousemove,避免太敏感;且觸控裝置 mousemove 是 touchmove 模擬)
+//   - 4 分 30 秒(270 秒)無操作 → 彈出 30 秒倒數視窗
+//   - 倒數視窗有「繼續遊戲」按鈕,按下 = 重置計時 + 關閉彈窗
+//   - 倒數結束(共 300 秒)→ 自動 gSignOut 流程
+//   - 倒數彈窗本身的點擊不算「操作」(會用 stopPropagation),否則就永遠不會登出
+// ════════════════════════════════════════════════════════════════
+(function(){
+  const IDLE_TIMEOUT_MS    = 5 * 60 * 1000;  // 5 分鐘
+  const WARNING_BEFORE_MS  = 30 * 1000;       // 倒數 30 秒
+  const TICK_MS            = 1000;            // 每秒檢查
+  let   _lastActivityTs    = Date.now();
+  let   _tickHandle        = null;
+  let   _warningShown      = false;
+  let   _isStopped         = true;
+
+  function _now(){ return Date.now(); }
+
+  // 任何使用者操作都呼叫此函式
+  function _markActivity(){
+    _lastActivityTs = _now();
+    // 若倒數視窗開著,使用者卻是在「視窗外」操作 → 視為要繼續玩,關掉視窗
+    if(_warningShown){
+      _closeWarning('user_active');
+    }
+  }
+
+  function _attachListeners(){
+    // 用 capture 階段,以免戰鬥內某些 stopPropagation 把訊號吃掉
+    document.addEventListener('mousedown',  _markActivity, true);
+    document.addEventListener('touchstart', _markActivity, true);
+    document.addEventListener('keydown',    _markActivity, true);
+    document.addEventListener('pointerdown',_markActivity, true);
+    document.addEventListener('wheel',      _markActivity, { capture:true, passive:true });
+  }
+  function _detachListeners(){
+    document.removeEventListener('mousedown',  _markActivity, true);
+    document.removeEventListener('touchstart', _markActivity, true);
+    document.removeEventListener('keydown',    _markActivity, true);
+    document.removeEventListener('pointerdown',_markActivity, true);
+    document.removeEventListener('wheel',      _markActivity, { capture:true, passive:true });
+  }
+
+  function _showWarning(){
+    if(_warningShown) return;
+    _warningShown = true;
+    const old = document.getElementById('_idle-logout-warn');
+    if(old) old.remove();
+    const pop = document.createElement('div');
+    pop.id = '_idle-logout-warn';
+    // 用 capture-phase 攔在最上層,並阻擋事件向下傳遞,使「彈窗外不被當作活動」
+    pop.style.cssText =
+      'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.85);' +
+      'display:flex;align-items:center;justify-content:center;' +
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+    // 彈窗自己的點擊不算「使用者活動」(否則永遠不會登出) — 但「繼續遊戲」按鈕仍要能按
+    pop.addEventListener('mousedown',  function(e){ e.stopPropagation(); }, true);
+    pop.addEventListener('touchstart', function(e){ e.stopPropagation(); }, true);
+    pop.addEventListener('pointerdown',function(e){ e.stopPropagation(); }, true);
+
+    const card = document.createElement('div');
+    card.style.cssText =
+      'background:linear-gradient(135deg,#1a0820,#0d0515);' +
+      'border:3px solid #ffaa44;border-radius:24px;' +
+      'padding:40px 48px;max-width:min(92vw,520px);text-align:center;' +
+      'box-shadow:0 0 50px rgba(255,170,68,0.45);';
+    card.innerHTML =
+      '<div style="font-size:60px;margin-bottom:14px;">⏰</div>' +
+      '<div style="font-size:28px;font-weight:900;color:#ffaa44;margin-bottom:10px;">閒置太久,即將自動登出</div>' +
+      '<div style="font-size:18px;color:#ccc;line-height:1.6;margin-bottom:14px;">' +
+        '為了保護你的帳號(尤其是和同學共用平板時),<br>系統偵測到 5 分鐘沒有操作。</div>' +
+      '<div id="_idle-logout-countdown" style="font-size:54px;font-weight:900;color:#ff8844;margin:10px 0 20px;text-shadow:0 0 18px rgba(255,140,60,0.6);">30</div>' +
+      '<div style="font-size:16px;color:#888;margin-bottom:24px;">秒後將自動登出並儲存進度</div>' +
+      '<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">' +
+        '<button id="_idle-stay-btn" style="padding:14px 36px;font-size:22px;font-weight:900;' +
+          'background:linear-gradient(135deg,rgba(80,200,120,0.3),rgba(40,160,80,0.3));' +
+          'border:2px solid #66cc88;color:#aaffcc;border-radius:14px;cursor:pointer;">✅ 我還在 繼續遊戲</button>' +
+        '<button id="_idle-logout-now-btn" style="padding:14px 36px;font-size:20px;' +
+          'background:rgba(60,60,80,0.5);border:2px solid #555;color:#aaa;border-radius:14px;cursor:pointer;">立即登出</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#555;margin-top:14px;opacity:0.6;">v6530</div>';
+    pop.appendChild(card);
+    document.body.appendChild(pop);
+
+    document.getElementById('_idle-stay-btn').onclick = function(){
+      _closeWarning('stay_button');
+      _lastActivityTs = _now();
+    };
+    document.getElementById('_idle-logout-now-btn').onclick = function(){
+      _closeWarning('logout_now_button');
+      _doAutoLogout('manual_immediate');
+    };
+  }
+
+  function _closeWarning(reason){
+    _warningShown = false;
+    const el = document.getElementById('_idle-logout-warn');
+    if(el) el.remove();
+  }
+
+  function _updateCountdownDisplay(secLeft){
+    const el = document.getElementById('_idle-logout-countdown');
+    if(el) el.textContent = String(Math.max(0, secLeft));
+  }
+
+  async function _doAutoLogout(reason){
+    console.log('🚪 [閒置自動登出] 觸發,原因:' + reason);
+    _closeWarning('auto_logout');
+    window._idleAutoLogoutStop();
+    // 跑正常 gSignOut 流程(會 save → signOut → onAuthStateChanged else 分支再清本機)
+    try {
+      if(typeof gSignOut === 'function') await gSignOut();
+      else if(window._fbSignOut) await window._fbSignOut();
+    } catch(e) { console.warn('[閒置自動登出] gSignOut 失敗', e); }
+    // 顯示提示給玩家看(下次他回來看到時可知道為什麼登出了)
+    try {
+      const _t = document.createElement('div');
+      _t.style.cssText =
+        'position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:99998;' +
+        'background:rgba(40,50,80,0.95);border:2px solid #88aaff;color:#cce0ff;' +
+        'font-size:16px;padding:14px 24px;border-radius:12px;max-width:90vw;' +
+        'box-shadow:0 4px 20px rgba(0,0,0,0.5);font-family:"M PLUS Rounded 1c",sans-serif;';
+      _t.innerHTML = '⏰ 你已因為 5 分鐘沒操作而被自動登出<br>進度已存到雲端,下次登入會繼續';
+      document.body.appendChild(_t);
+      setTimeout(function(){ if(_t.parentNode) _t.remove(); }, 6000);
+    } catch(_){}
+  }
+
+  function _tick(){
+    if(_isStopped) return;
+    if(!window._gUserId) return;  // 訪客模式不啟用(沒帳號可登出)
+    const elapsed = _now() - _lastActivityTs;
+    if(elapsed >= IDLE_TIMEOUT_MS){
+      // 5 分鐘到 → 自動登出
+      _doAutoLogout('idle_timeout');
+      return;
+    }
+    if(elapsed >= IDLE_TIMEOUT_MS - WARNING_BEFORE_MS){
+      // 進入最後 30 秒倒數區間
+      if(!_warningShown) _showWarning();
+      const secLeft = Math.ceil((IDLE_TIMEOUT_MS - elapsed) / 1000);
+      _updateCountdownDisplay(secLeft);
+    }
+  }
+
+  window._idleAutoLogoutStart = function(){
+    if(!_isStopped) return;  // 已啟動就不重複
+    _isStopped = false;
+    _lastActivityTs = _now();
+    _warningShown = false;
+    _attachListeners();
+    if(_tickHandle) clearInterval(_tickHandle);
+    _tickHandle = setInterval(_tick, TICK_MS);
+    console.log('⏰ [閒置自動登出] 已啟動(5 分鐘無操作 → 自動登出,登出前 30 秒倒數提示)');
+  };
+
+  window._idleAutoLogoutStop = function(){
+    _isStopped = true;
+    if(_tickHandle){ clearInterval(_tickHandle); _tickHandle = null; }
+    _detachListeners();
+    _closeWarning('stop');
+  };
+
+  // 重置計時器(供外部呼叫,例如其他互動完成後想刷新)
+  window._idleAutoLogoutReset = function(){
+    _lastActivityTs = _now();
+    if(_warningShown) _closeWarning('reset');
+  };
+})();
+
 // 雲端儲存
 // ★ 版本號：每次大改遊戲內容結構時 +1
 const SAVE_DATA_VERSION = 2; // v2: 知識幣+背包系統
@@ -69219,6 +69523,50 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260514.6530', brief:[
+    '🛡 修補:同平板換帳號時,前一位同學的進度殘留會污染新同學雲端的問題',
+    '⏰ 新增:閒置 5 分鐘自動登出(學校共用平板情境),登出前 30 秒倒數提示',
+  ], items:[
+    '【🎯 老師回報的兩個需求】',
+    '・問題一:同一台平板上,A 同學玩完直接登出 → B 同學登入後,B 的雲端會多出 A 的英雄/物品/進度',
+    '・問題二:學校場域常見學生玩到一半離開沒登出 → 下一位學生拿到平板直接接著玩,進度混在一起',
+    '【🔍 問題一根因(可確證)】',
+    '・許多 localStorage 鍵是「全域」(無帳號前綴),例如:',
+    '  adv_unlocked_heroes、adv_medals、adv_medal_stats、adv_japan_treasures、',
+    '  adv_maokong_*、adv_battle_snap、adv_crash_snapshot、',
+    '  lxps_hero_portrait_*、lxps_hero_slot2_unlocked、lxps_taiwan_treasures、lxps_art_style 等',
+    '・A 同學玩完登出 → 這些 key 仍留在本機 localStorage',
+    '・B 同學登入 → _applySafeData 用「Set union 合併本地 + 雲端」(v6160 為了防雲端缺失而加的)',
+    '・union 邏輯把 A 殘留的英雄當作「B 本地有的」→ 寫進 B 的雲端 → B 的雲端就被污染了',
+    '・這個 union 邏輯本身是對的(跨裝置保險),只是沒考慮「同裝置不同帳號」的情境',
+    '【🩹 問題一修補:換帳號自動清本機】',
+    '・新增 localStorage 鍵 lxps_last_active_uid 記錄「上一次活躍的帳號 uid」',
+    '・onAuthStateChanged 登入時比對:若此次 user.uid 與 lxps_last_active_uid 不同 → 換人了',
+    '・換人時自動呼叫 window._clearAccountLocalData,清掉前列 16 個全域 key + lxps_designer_welcome_* 系列',
+    '・同時重置記憶體裡的全域變數(_heroLevels、_knowledgeCoins、_medals、_medalStats 等)',
+    '・清完才走 gameCloudLoad → 從雲端讀回真正屬於本帳號的資料 → union 合併不會誤抓',
+    '・保留:帳號專屬鍵(lxps_{uid}_progress、lxps_session_{uid}、lxps_nickname_{uid})不清',
+    '・登出時(onAuthStateChanged 的 else 分支)也呼叫 _clearAccountLocalData,雙保險',
+    '【⏰ 問題二修補:5 分鐘無操作自動登出】',
+    '・新增 window._idleAutoLogoutStart / Stop / Reset 全域 API',
+    '・登入後(gameCloudLoad 完成後)自動啟動,登出後自動停止',
+    '・監聽:mousedown / touchstart / keydown / pointerdown / wheel(capture 階段,不會被 stopPropagation 吃掉)',
+    '・不監聽 mousemove(會太敏感,且觸控裝置 mousemove 是 touchmove 模擬,不準)',
+    '・4 分 30 秒無操作 → 彈出 30 秒倒數視窗(z-index 99997,內含「✅ 我還在 繼續遊戲」+ 立即登出兩鈕)',
+    '・倒數視窗本身的點擊用 stopPropagation 攔在 capture 階段,不會被視為「使用者活動」(否則永遠不會登出)',
+    '・倒數結束(共 5 分鐘)→ 呼叫 gSignOut 走完整登出流程(會 cloudSave + 寫 safe + 清本機)',
+    '・登出後右上彈跳提示「⏰ 你已因為 5 分鐘沒操作而被自動登出,進度已存到雲端」6 秒後自動消失',
+    '・訪客模式(window._gUserId 為 null)不啟動 — 沒帳號可登出',
+    '【影響範圍】',
+    '・全體玩家:換帳號 + 閒置登出兩個新行為,行為完全可預期',
+    '・原本沒換帳號的家用情境:不會察覺差異(lxps_last_active_uid 不變,清理不會觸發)',
+    '・學校平板共用情境:每位學生登入前自動清乾淨,雲端不再被前一位污染',
+    '・閒置自動登出:離開超過 5 分鐘,下次回來要重新登入(用 Google 一鍵就行)',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260514.6530',
+    '・window._GAME_LOADED_VERSION → v1.0.20260514.6530',
+    '・CURRENT_BOOT_VER 不動(維持 v6050)',
+  ] },
   { ver:'v1.0.20260514.6520', brief:[
     '🩹 修補學生補償工具找不到日本三主 BOSS(大天狗/酒吞童子/玉藻前)的 bug',
     '🗾 補償清單的「🗾 日本主 BOSS 解鎖系」分組現在正常顯示三隻夥伴英雄',
@@ -70046,1154 +70394,6 @@ const GAME_CHANGELOG = [
     '・_bonusExp 變數宣告保留(設成 0),避免下游引用炸開',
     '・通用獎勵倍率(課堂 +25%、期間 +25%、日本 +20%)獨立於評分倍率,仍可疊加',
   ] },
-  { ver:'v1.0.20260512.6320', brief:[
-    '🐛 重大 bug 修補:英雄全收齊的玩家,打 BOSS 終於拿得到完整經驗值了!',
-    '⭐ 之前只有拿到評分獎勵 EXP(100~150),主獎勵的數千 EXP 被吃掉',
-    '🔧 並非實際數值改動,而是把原本沒發出去的獎勵正確發給玩家',
-  ], playerItems:[
-    '【影響玩家】',
-    '・所有「可解鎖英雄已全部收齊」的高進度玩家',
-    '・症狀:打完 BOSS 戰只看到「+125 EXP」這種小數字,而不是該有的「+4000 EXP」',
-    '【修了什麼?】',
-    '・之前打 BOSS 勝利後,系統會依「是否有新英雄要登場」分兩條路:',
-    '  → 有新英雄 → 走茶園相見過場 → 過場結束發主獎勵 EXP ✅',
-    '  → 沒新英雄(全收齊) → 直接回選關頁 → 主獎勵 EXP 被跳過 ❌',
-    '・✨ 現在「全收齊」捷徑也會正確發放主獎勵 EXP 和升級演出',
-    '【補償建議】',
-    '・已被吞掉的 EXP 沒辦法回溯計算(沒留 log),建議受影響玩家回報',
-    '・老師可在管理員面板用補償功能補發相應 EXP',
-  ], items:[
-    '【根因】',
-    '・grantBattleExp(true, _advStats) 只寫在 advHeroMeetDone (line ~51043)',
-    '・advStartWinSequence 在 "!available.length" 分支(line ~50912)直接 openAdventureOverlay 短路返回',
-    '・→ advHeroMeetDone 永遠不會被觸發,主獎勵 EXP 完全沒發',
-    '・玩家只拿到 advStartWinSequence 內的 _bonusExp(S=100/A=70/B=50/C=30 × 倍率)',
-    '【修補】',
-    '・在 "!available.length" 捷徑內補呼叫 grantBattleExp + _showLevelUpSequence',
-    '・與正常 advHeroMeetDone 路徑邏輯對齊(同樣的 try/catch、_lastBossLevelUps 取用、_goAdv 收尾)',
-    '・正常路徑(有新英雄)不動,避免時序問題',
-    '【為何今天才發現?】',
-    '・玩家用 v6210 自動診斷送出回報,但 content 被截到 200 字,看不到 grantBattleExp log 是否觸發',
-    '・v6310 把 content 上限提到 8000 字後,console 順序完整保留 → 一眼看出 grantBattleExp 沒跑',
-    '・這條 bug 估計從「全英雄收錄成就」上線後就存在(line 50762 附近的 summon_crystal 邏輯顯示這條捷徑很早就有)',
-    '【實作位置】',
-    '・index.html line ~50912 advStartWinSequence "!available.length" 分支補 grantBattleExp',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v6320',
-  ] },
-  { ver:'v1.0.20260512.6310', adminOnly:true, brief:[
-    '🔧 修補:卡死自動診斷報告不再被截掉',
-    '📖 後台「接收錯誤回報」加入展開全文、複製內容按鈕',
-    '🧪 文字內容上限從 200 字提高到 8000 字,完整快照可保存',
-  ], items:[
-    '【根因】',
-    '・v6210 在 BOSS 卡死時自動送出診斷快照(戰鬥狀態 + 旗標 + modal + console 最後 20 行),',
-    '  但 _fbSubmitBugReport 寫入 Firestore 前 content.slice(0, 200) 把報告截掉了',
-    '・收到的回報通常斷在 UA 那行,真正有診斷價值的戰鬥狀態、旗標、console 完全沒進雲端',
-    '【修補 A:寫入端】',
-    '・content 上限由 200 → 8000 字(Firestore 單欄位 1MB 上限,8000 字遠低於上限)',
-    '・email / uid 維持 200 字不動',
-    '【修補 B:後台顯示】',
-    '・卡片預設只顯示前 280 字,超過自動加「📖 展開全文」按鈕',
-    '・新增「📋 複製」按鈕,可一鍵把完整內容複製到剪貼簿(方便貼給 AI 分析)',
-    '・卡片頭顯示總字數,診斷報告會用等寬字型(可讀性更好)',
-    '【實作位置】',
-    '・_fbSubmitBugReport(line ~688)content slice(0, 200) → slice(0, 8000)',
-    '・_renderBugList(line ~33276)重寫,加入 _fullContentMap、_PREVIEW_LEN、toggle/copy handlers',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v6310',
-  ] },
-  { ver:'v1.0.20260512.6210', brief:[
-    '👻 新英雄「死靈法師」加入召喚池!5 年 2 班許同學設計,2026 年',
-    '🎁 許同學登入有禮:自動獲得死靈法師,跳出歡迎彈窗',
-    '⭐ 召喚池從 10 隻擴為 11 隻稀有英雄,每隻機率 ≈ 0.455%',
-  ], playerItems:[
-    '【🎮 新英雄登場 — 死靈法師】',
-    '・5 年 2 班許同學設計的新英雄,2026 年',
-    '・「天生具有陰陽眼,能與死靈溝通並操控他們的靈能力少年」',
-    '・能力值:HP 59 / 攻擊 5 / 特技 21 / 速度 15(治療+特技向)',
-    '・👻 emoji,治療/復活型定位,雷達圖回復值 9 滿格附近',
-    '【🩻 技能組合 — 隱身、復活、亡靈反擊】',
-    '・S1「冥佑」(c5):自己隱形 2 回合,期間用特技 150% 持續療癒。',
-    '  → 隱形時受到範圍傷害減半,但會解除;隱形時友方受傷會立即被治療',
-    '・S2「死者轉生」(c4):復活 1 名倒下友方為「強化死靈型態」2 回合。',
-    '  → HP 固定為 1、無敵 + 免疫不利、攻擊/特技 +50%。時間到自動倒下。',
-    '・天賦「亡魂庇佑」(整場 1 次):致命傷時化身死靈型態 2 回合。',
-    '  → HP 固定 1、無敵 + 免疫不利、攻擊/特技/速度全部變成 2 倍。',
-    '  → 期間每次造成的傷害都會轉化為治療,恢復 HP 比例最低的友方(可復活)。',
-    '・爆發「亡靈怨念一擊」:用特技 120% × 場上倒下總次數 對敵方全體造成傷害,',
-    '  → 再把傷害總和轉化為治療平均分給友方全員(可復活)。',
-    '  → 倒下越多人爆發越強,並能即時把場面化為治療反擊!',
-    '【🎁 許同學登入有禮】',
-    '・許同學用學校 email 登入後會自動獲得「死靈法師」',
-    '・第一次登入會跳出專屬歡迎彈窗:「歡迎回來,設計師!」',
-    '・(5 年 2 班「首位設計師」榮譽仍保留給鐘同學:他是第一位,許同學是第二位)',
-    '【🔮 其他玩家】',
-    '・召喚池可抽到!原本 10 隻稀有英雄變 11 隻,共用 5% 機率',
-    '・每隻稀有英雄機率約 0.455%(從 0.5% 微降)',
-  ], items:[
-    '【新角色資料總覽】',
-    '・HERO_DB 新增「死靈法師」條目(HP59/ATK5/SP21/SPD15,治療型)',
-    '・S1 冥佑(c5):自己隱形 2 回合,觸發時與隱形期友方受傷立即用特技 150% 治療',
-    '・S2 死者轉生(c4):復活 1 名倒下友方為強化死靈型態 2 回合',
-    '・天賦 亡魂庇佑:整場 1 次,致命傷化身死靈 2 回合,全能力 200% + 傷害轉治療',
-    '・爆發 亡靈怨念一擊:特技 120%×倒下次數 全體傷害,再轉治療平均分給友方',
-    '【技能實作】',
-    '・S1 在 execSkill 加 case,addBuff hidden 2 回合,記錄 _necromancerHealMult 給 hook 用',
-    '・S2 復活+標記 _necromancerSpirit + _necromancerSpiritTurns,攻特各 +50%',
-    '・天賦在 doDmg 致命傷段加攔截:_necromancerSpiritUsed 旗標確保整場僅 1 次',
-    '・爆發計算 G.p1+G.p2 的 curHp<=0 數量,當倍率;倍率最少 1(避免雙陣容滿員時失能)',
-    '【死靈型態回合計時】',
-    '・tickStatus 內每回合 _necromancerSpiritTurns -= 1,歸 0 時還原能力 + 強制倒下',
-    '・倒下時主動移除 immune/protectBuff,讓「死靈散去」生效',
-    '【傷害轉治療 hook(天賦)】',
-    '・doDmg attacker 視角加新分支:a 是死靈法師且 _necromancerSpiritSelf=true 時',
-    '・傷害量 = 治療量,給 HP 比例最低的友方(含自己,可復活倒下友方)',
-    '・用 _necromancerHealBack 旗標防止 doHeal 再觸發 doDmg 進入無限遞迴',
-    '【友方受傷 hook(S1)】',
-    '・doDmg 在受傷者陣營掃描 hidden 中的死靈法師,觸發 doHeal',
-    '・用 _necromancerS1Heal 旗標防止 doHeal 再觸發本 hook 遞迴',
-    '【雷達圖與分類】',
-    '・HERO_CATEGORIES_OVERRIDE: ["dmg","heal"]',
-    '・HERO_HEX_OVERRIDE: heal:9, ctrl:1(高治療向,控制極低)',
-    '【動畫與音效】',
-    '・BURST_GIF_DB 新增「亡靈怨念一擊」條目',
-    '・GIF URL 來自設計單:靈魂收割.gif(blob 轉 raw)',
-    '・音效組合:sfx-summon-smoke(1.0) + sfx-explode(0.85) + sfx-heal(0.8)',
-    '・染色 tint:rgba(180,180,220,0.22) 幽冥灰紫白',
-    '【召喚池調整】',
-    '・SUMMON_RARE_HEROES 從 10 隻擴為 11 隻',
-    '・召喚機率分母改變:5% / 10 = 0.5% 每隻 → 5% / 11 ≈ 0.455% 每隻',
-    '・ADMIN_ALL_HEROES 同步加一隻(從 48 增為 49 隻)',
-    '【設計者自動補發】',
-    '・STUDENT_DESIGNER_HEROES 加入許同學的 email 對照(lsps110081)',
-    '・flagId 為 necromancer(localStorage 歡迎彈窗去重 key)',
-    '・★ 凍結鐘同學首班設計師榮譽:加 isFirstOfClass:true 顯式標記',
-    '  原邏輯「同班 entry count===1」會在許同學加入後讓鐘同學失去稱號',
-    '  改為優先讀 isFirstOfClass:true,再 fallback 到動態 count',
-    '【圖鑑與圖檔】',
-    '・HERO_IMGS / HERO_PORTRAIT_LIBRARY 新增「死靈法師」條目',
-    '・檔名「5年2班許同學設計 死靈法師.png」(經許同學家長同意,保留命名)',
-    '・GIF 檔名「靈魂收割.gif」,需上傳到 LXPSGAME 倉庫 main 分支',
-    '・HERO_BIO 寫入 role/trait/hobby/quote/designer,英雄詳情頁會顯示「✏️ 5年2班 許同學 設計(2026)」',
-    '【天賦升級資訊】',
-    '・_TRAIT_LV_INFO 新增條目:base 整場 1 次 + 2 回合 / +0.4 回合/級 / Lv5 MAX 4 回合',
-    '【SKILL_LV_DB 條目】',
-    '・冥佑:heal 類,base 1.5(150% 治療),每級 +5%(Lv10 達 200%)',
-    '・死者轉生:dur 類,base 2 回合,每 5 級 +1 回合(Lv5:3, Lv10:4)',
-    '【版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260512.6210',
-    '【🎁 補償英雄清單同步擴充】',
-    '・原清單按 unicode 字典序混排,46 隻英雄找不到組別',
-    '・現改成 4 個 optgroup 分組:基本(31) / 校園(7) / 日本系(4) / 學生設計(7)',
-    '・「巫女」原本被 EVENT_ONLY_HEROES 過濾掉,現在加進日本系分組(學生確實會獲得)',
-    '・新角色「死靈法師」自動列入學生設計分組',
-    '・未來新增英雄若沒被列入任何分組,自動歸到「💼 其他」末段(向前相容)',
-    '【📋 補償去重保護(既有,提醒老師)】',
-    '・學生若當下已有該英雄,advSaveUnlockedHero 內部有 _isNew 檢查',
-    '・→ 不會重複加進 adv_unlocked_heroes 清單',
-    '・→ 不會重複觸發解鎖獎章/音效',
-    '・→ heroLevels 用「逐英雄取 max」(v6160 機制),補等級 ≤ 現有等級時保留現有不降級',
-    '・→ 唯一副作用:稽核歷史 _compensationHistory 會多記一筆(這正是預期行為)',
-    '【🛡 死靈狀態無效治療守衛(死靈法師關聯修補)】',
-    '・死靈型態下 HP 鎖在 1,自動找最低 HP 友方治療時會浪費治療量',
-    '・修補策略:不擋 doHeal 通用層(避免影響其他英雄主動治療死靈友方的設計自由)',
-    '・改在「自動找最低 HP 目標」的選擇邏輯上跳過死靈狀態的角色,找下一個目標',
-    '・S1 冥佑:自己若處於死靈狀態跳過自療(避免無效治療)',
-    '・S1 友方受傷 hook:target 為死靈狀態時跳過(不浪費治療給 HP 鎖 1 的角色)',
-    '・S2 死者轉生:排除已是死靈狀態的友方,改 log「找不到可轉生的友方」',
-    '・天賦傷害轉治療:排除自己+存活的死靈狀態者(倒下者仍可被選中復活)',
-    '・爆發亡靈怨念一擊:治療除數用「有效目標數」,跳過存活死靈狀態者,避免治療被稀釋',
-    '・倒下者仍可被「復活」(不走 doHeal,直接設 curHp,脫離死靈狀態)',
-  ], adminItems:[
-    '【🛡 個資保護檢查清單(v5810 慣例 — 本次有例外)】',
-    '・程式碼 STUDENT_DESIGNER_HEROES.name = 「許同學」(假名,不含全名)',
-    '・HERO_BIO.designer.name = 「許同學」(同樣假名)',
-    '・GitHub 圖檔名 = 「5年2班許同學設計 死靈法師.png」',
-    '  ★ 此圖檔名包含班級與「許同學」字樣,與其他學生英雄(純角色名)不同',
-    '  ★ 經設計者本人(許同學)確認,家長已知悉並同意此命名,故不套個資保護替換',
-    '・GIF 檔名 = 「靈魂收割.gif」(純技能名,符合慣例)',
-    '【email 對照】',
-    '・lsps110081@stu.lsps.tp.edu.tw → 許同學(5 年 2 班)',
-    '【首班設計師榮譽凍結機制】',
-    '・新增 isFirstOfClass:true 欄位給已成為「該班首位」的 entry',
-    '・_showStudentDesignerWelcome 內判定邏輯改為「優先讀此標記」',
-    '・5 年 5 班閻同學(窮奇)和 5 年 2 班鐘同學(暗魔將·血)兩位被加上此標記',
-    '・未來該班加入第 2、3 位設計師時,原首位的稱號不會消失',
-    '【實作位置】',
-    '・HERO_DB.死靈法師(在暗魔將·血之後)',
-    '・HERO_IMGS / HERO_PORTRAIT_LIBRARY 加 死靈法師',
-    '・HERO_IMG_POS 加 死靈法師 (160% auto / center 25%)',
-    '・AVATARS 加 👻 emoji',
-    '・HERO_BIO / HERO_LORE / HERO_TRAIT / BURST_DB 各加一條',
-    '・_TRAIT_LV_INFO.死靈法師(天賦升級面板)',
-    '・SKILL_LV_DB 加冥佑(heal) + 死者轉生(dur)',
-    '・BURST_GIF_DB.亡靈怨念一擊(爆發 GIF)',
-    '・HERO_HEX_OVERRIDE.死靈法師(雷達圖 heal:9/ctrl:1)',
-    '・HERO_CATEGORIES_OVERRIDE.死靈法師(篩選分類 dmg+heal)',
-    '・SUMMON_RARE_HEROES / ADMIN_ALL_HEROES 加 死靈法師',
-    '・STUDENT_DESIGNER_HEROES.lsps110081 + 凍結鐘同學/閻同學首班榮譽',
-    '・doDmg attacker hook 加死靈型態傷害轉治療 + S1 冥佑友方治療',
-    '・doDmg 致命傷段加亡魂庇佑攔截(整場 1 次)',
-    '・tickStatus 加 _necromancerSpiritTurns 倒數 + 死靈散去處理',
-    '・execSkill 加冥佑 + 死者轉生兩個 else if 分支',
-    '・爆發實作加亡靈怨念一擊(倒下次數疊乘 + 轉治療平均分)',
-    '【🎁 補償清單實作細節】',
-    '・_getCompensatableHeroes:不再用 EVENT_ONLY_HEROES 排除(改由分組控制顯示)',
-    '・_HERO_GROUPS 常數列出 4 個 optgroup + 自動 fallback「💼 其他」',
-    '・_populateHeroSelect 改寫:用 <optgroup label="..."> 取代純 <option>',
-    '・分組內 hero 順序依 _HERO_GROUPS 寫死(不再字典序),老師熟悉的順序優先',
-    '・八岐大蛇仍在 BOSS_NAMES 內,自動排除(隱藏 BOSS 不適合補償)',
-    '・寶箱怪/小惡魔仍在 BOSS_NAMES 內,自動排除',
-  ] },
-  { ver:'v1.0.20260512.6200', brief:[
-    '🏷 補齊 11 隻新角色的選角篩選分類(田徑、巫女、日本關 3 BOSS、學生設計 6 隻)',
-    '🛠 英雄編輯器新增「篩選分類」勾選欄位(傷害/回復/控場,可複選)',
-    '📐 選角頁面左下英雄列底部加 180px 留白,最後一排不再被「預設陣容」「隨機」按鈕擋住',
-  ], playerItems:[
-    '【🏷 選角頁面「篩選」按鈕現在認得所有新角色了】',
-    '・以前點「⚔ 傷害 / 💚 回復 / 🛡 控場」按鈕篩選時,新角色因為沒被歸類,',
-    '  會被預設規則猜分類,結果有些角色篩選後沒出現,或出現在錯的類別',
-    '・這次補齊 11 隻新角色的分類(依 s1/s2/爆發/天賦 整體特色判定):',
-    '  - 田徑隊員:⚔ 傷害 + 💚 回復(全體傷害+傳遞下位友方加成)',
-    '  - 巫女:💚 回復 + 🛡 控場(神籤回血、神樂舞解控、破魔矢易傷)',
-    '  - 大天狗:⚔ 傷害 + 🛡 控場(5連擊+暈眩+全體減速)',
-    '  - 酒吞童子:⚔ 傷害 + 💚 回復(鬼王酒宴大傷害+回血+轉移)',
-    '  - 玉藻前:⚔ 傷害 + 🛡 控場(全體火傷+強力魅惑)',
-    '  - 窮奇:⚔ 傷害 + 🛡 控場(流血+全體+強力不利狀態)',
-    '  - 科技生化人:⚔ 傷害 + 💚 回復 + 🛡 控場(治療+全體傷害+全體虛弱)',
-    '  - 鋁合金暴龍:⚔ 傷害 + 💚 回復(炸彈四重奏附帶治療+死神龍王秒殺)',
-    '  - 超鬼神王:⚔ 傷害 + 🛡 控場(全體暈眩+中毒+不治詛咒)',
-    '  - 雙星姊妹:⚔ 傷害 + 💚 回復(光暗雙形態:治療/輸出)',
-    '  - 暗魔將·血:⚔ 傷害 + 💚 回復(全免疫+全體傷害)',
-    '【📐 選角頁左下英雄列不再被按鈕擋住】',
-    '・以前捲到底時,最後一排英雄會被「📋 常用預設陣容」和「🎲 隨機編成隊伍」這兩顆按鈕擋住',
-    '・尤其英雄多時(冒險模式 30+ 隻、鬥技場全英雄)最末排幾乎完全看不到',
-    '・這次給英雄滾動區下方加 180px 留白,最後一排可以完整露出來再讓你點選',
-    '【🛠 給設計者:英雄編輯器更新】',
-    '・進入「基礎能力」區段後,4 維數值下面多了「🏷 篩選分類」勾選欄位',
-    '・3 個選項:⚔ 傷害 / 💚 回復 / 🛡 控場,可複選',
-    '・修改現有角色時會自動載入它目前的分類,改動會用黃底標示',
-    '・新增角色時可以空白(空白則由系統依關鍵字自動判定)',
-    '・送出設計單時會把分類欄位包進去,讓 AI 一次寫入 HERO_CATEGORIES_OVERRIDE',
-  ], items:[
-    '【任務 1:HERO_CATEGORIES_OVERRIDE 補齊新角色】',
-    '・原本 _heroSkillType() 只看 s1/s2 名字判斷,新角色技能名沒在 HEAL_SK/CTRL_SK 名單中',
-    '  → 一律落入 dmg,造成篩選「回復/控場」時新角色不會出現',
-    '・改用 HERO_CATEGORIES_OVERRIDE 手動覆寫(原架構已支援多選 array)',
-    '・補齊 11 隻:田徑、巫女、大天狗、酒吞、玉藻前、窮奇、科技生化人、鋁合金暴龍、超鬼、雙星、暗魔將',
-    '・判定原則:s1 + s2 + 爆發 + 天賦,任一項主要做什麼就歸該類',
-    '・檔案位置:index.html 約 59668 行 HERO_CATEGORIES_OVERRIDE 區塊末尾',
-    '【任務 2:hero_input.html 英雄編輯器更新】',
-    '・emptyHero() 加 categories:[] 欄位',
-    '・內嵌 HERO_CATEGORIES_INITIAL 對照表(複製自 index.html 的 OVERRIDE)',
-    '・fromSnapshot() edit 模式時從 INITIAL 載入既有分類',
-    '・renderStatsSection() 加 fieldCategoryChecks() 渲染 3 顆 checkbox(三色標示)',
-    '・modifiedCount() 加分類變更偵測(排序後字串比對)',
-    '・generateAddOutput / generateEditOutput 把 categories 加進輸出表格',
-    '【任務 3:#hero-pick-arena 加 padding-bottom:180px】',
-    '・原本:position:relative;flex:1;min-width:600px;overflow-y:auto;overflow-x:hidden',
-    '・現在:多 padding-bottom:180px,讓 absolute 定位的 #hero-pick-bar 不會擋住內容尾端',
-    '・180px 是估算值(按鈕區 padding:18px×2 + 內部 36px icon + 22px 文字 + 兩行 + 邊距)',
-    '・捲到底時最後一排英雄完整露出,使用者仍可點選',
-    '【版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260512.6200',
-  ] },
-  { ver:'v1.0.20260512.6190', brief:[
-    '🐛 修復「打完小怪戰按繼續冒險後,同一個結算視窗又自己跳出來」的真兇',
-    '🛡 advFinishMiniBattle 加重入守衛 + advMiniResultConfirm 修還原時序',
-    '✅ 玩家不會再看到結算視窗連續重複跳出',
-  ], playerItems:[
-    '【🐛 結算視窗重彈的真兇終於抓到】',
-    '・玩家回報:打完小怪戰按「✔ 繼續冒險」,結算視窗(顯示 EXP / 知識幣 / 掉落物)關掉後,',
-    '  過幾秒同一個視窗又自己跳出來,要再按一次「繼續冒險」才能真的進下一場景',
-    '・原因:程式碼裡有一個微妙的時序 bug — 按確認的瞬間,程式先把「結算中」旗標清掉,',
-    '  幾行之後才把對手陣容從「小怪屍體」還原成「滿血 BOSS」。中間這段空窗期,',
-    '  如果背景有任何 watchdog/動畫 callback 觸發勝負判定,就會看到「對手全死光」',
-    '  → 誤判為小怪全滅 → 強制再走一次結算流程 → 視窗又跳出來',
-    '【修法】',
-    '・把「還原 BOSS 陣容」搬到「清旗標」之前,徹底關閉這個空窗期',
-    '・另外在小怪結算入口加重入守衛:即使有別的 race 觸發,本函式只跑一次',
-    '・雙重保險,確保結算視窗只會彈一次',
-    '【之前的 6180 升級視窗合併保留】',
-    '・單一英雄一次升多級時,還是會合併成一個視窗顯示「Lv. 5 → Lv. 12」',
-    '・素質點數實際發放數量不變(每升一級還是 1 點)',
-  ], items:[
-    '【根因(advMiniResultConfirm line ~64223)】',
-    '・原流程:',
-    '  ① _miniResultEl.classList.remove("show")  ← 視窗關閉',
-    '  ② window._advMiniResultShowing = false    ← 守門旗標清掉',
-    '  ③ const p = _advMiniResultPending || {}',
-    '  ④ G.p2 = JSON.parse(JSON.stringify(p.savedBossTeam))  ← 還原 BOSS',
-    '  ⑤ G._resultShown = false',
-    '・② → ④ 之間 G.p2 還是「全屍小怪 curHp 都 0」,所有守門旗標已清',
-    '・若 watchdog(line ~26830 endAction watchdog setTimeout 5000)、動畫 callback、',
-    '  音效播完 callback 等在這個瞬間呼叫 checkWin:',
-    '  → checkWin line 30657 `G.p2.every(h=>h.curHp<=0)` = true → 進入結算分支',
-    '  → line 30659 `if(_advMiniBattleActive)` = false(早就清了),跳過第一道防呆',
-    '  → line 30666 第二道防呆「_adventureMode && G.p2 無 BOSS」 = true',
-    '  → line 30675 強制 _advMiniBattleActive=true 並 advFinishMiniBattle(true)',
-    '  → 整個結算流程又跑一次,視窗又彈出來',
-    '・「過幾秒」=這些 callback 的延遲時間(動畫 400~600ms / watchdog 5s 等)',
-    '【修法(三道防線)】',
-    '・(1) advMiniResultConfirm 把 G.p2 還原搬到清旗標之前,徹底消滅 race window',
-    '・(2) advFinishMiniBattle 入口加重入守衛 window._advFinishingMini:',
-    '       第二次呼叫立即 return + console.warn 記錄',
-    '・(3) advMiniResultConfirm 末尾(setTimeout 內,進新場景前)清守衛旗標,',
-    '     讓下一場小怪戰的 advFinishMiniBattle 能正常觸發',
-    '・advMiniResultGoHome 與 _advRestoreFromSnapshot 也同步清旗標,避免狀態殘留',
-    '【涵蓋路徑】',
-    '・✓ 按「✔ 繼續冒險」→ advMiniResultConfirm:race window 關閉 + 旗標清理',
-    '・✓ 按「🏫 先回學校」→ advMiniResultGoHome:旗標清理(避免下次冒險被擋)',
-    '・✓ 接關/回溯快照恢復戰鬥 → _advRestoreFromSnapshot:旗標清理',
-    '・✓ 即使有未知路徑也觸發 advFinishMiniBattle:重入守衛攔截',
-    '【版本印記】',
-    '・所有相關修法都加 v1.0.20260512.6190 註解,方便後續除錯追溯',
-    '・三個版本常數同步升級為 v1.0.20260512.6190',
-  ] },
-  { ver:'v1.0.20260512.6180', brief:[
-    '🎉 升級視窗合併:單場戰鬥同一英雄連跳多級時,只彈一個視窗',
-    '📊 視窗顯示「Lv. 起 → 終」與「✨ 獲得 N 點素質點數」,一次看完',
-    '🐛 修復玩家回報:「打小怪獲得獎勵經驗後,確認升級又連續跳視窗,持續升級」',
-  ], playerItems:[
-    '【🎉 升級視窗終於不再連環跳了】',
-    '・之前打贏小惡魔/座敷童子或大量加成 EXP 時,如果一個英雄一次升 5 級,',
-    '  就會接連跳出 5 個視窗要你按 5 次確認,看起來像「視窗一直跳出來」的 bug,很煩',
-    '・現在改成「同一英雄連續升的等級合併成一個視窗」,顯示 Lv5 → Lv10,',
-    '  告訴你「✨ 獲得 5 點素質點數」,按一次確認就好',
-    '・素質點數實際獲得數量不變(每升一級還是 1 點),只是視窗合併顯示',
-    '【📊 顯示範例】',
-    '・單級升級:顯示「Lv. 7」+「✨ 獲得 1 點素質點數」(跟以前一樣)',
-    '・連跳多級:顯示「Lv. 5 → Lv. 12」+「✨ 獲得 7 點素質點數」',
-    '・不同英雄分別彈窗(維持原順序),每個英雄一個視窗',
-  ], items:[
-    '【根因】',
-    '・玩家回報:「打小怪獲得獎勵經驗後,確認升級,又重複連續跳出獎勵視窗,持續升級」',
-    '・原因:小惡魔/座敷童子掉落 _devilExp 1000~2000 EXP × 全隊,',
-    '  加上場景結算 baseExp × 倍率(課堂+25%、複習+25%、日本+20%)疊加,',
-    '  一次戰鬥單英雄常累積 1500~3500 EXP,低等英雄可一次升 5~10 級',
-    '・addHeroExp 內部 while 迴圈每升一級 push 一個事件 {name, lv} 到回傳陣列,',
-    '  _showLevelUpSequence 收到 N 個事件就遞迴彈 N 個視窗',
-    '・玩家視角:同英雄同款視窗連跳 5+ 次,主觀感受=「bug 重複跳出」',
-    '【修法】(_showLevelUpSequence 入口,line ~55282)',
-    '・進入函式時先做合併:',
-    '  for 迴圈掃 levelUps,若 cur.name === last.name && cur.lv === last.lv + 1',
-    '  → 把 last.lv 更新為 cur.lv、last.gain++',
-    '  否則 push 新條目 { name, lv, fromLv: cur.lv-1, gain: 1 }',
-    '・UI 顯示:item.gain > 1 → 「Lv. fromLv → lv」,否則 「Lv. lv」',
-    '・素質點數提示:「✨ 獲得 ${item.gain} 點素質點數!」',
-    '【為什麼不在 addHeroExp 改】',
-    '・addHeroExp 每升一級 _heroStatPoints[name]++ 是對的(實際點數要每級給)',
-    '・若改 addHeroExp 只在最後 push 一次,_heroStatPoints 行為要連動改,風險擴散',
-    '・在 UI 層合併最安全:邏輯不動、玩家拿到的點數總數一致,只是視窗少了',
-    '【版本印記】',
-    '・升級視窗右下角加 v6180 小印記(動態 UI 規則,方便玩家截圖時識別)',
-  ] },
-  { ver:'v1.0.20260512.6170', brief:[
-    '💾 雙槽存檔系統登場:每位玩家在雲端有「即時槽」+「安全備份槽」兩份資料',
-    '🛡 即使本次遊玩過程出狀況,下次登入仍可從安全備份還原',
-    '⏱ 每 5 分鐘自動檢查,只在資料「健康」時才更新安全備份槽,絕不會用瘦版蓋過胖版',
-    '🔄 登出、被踢、關閉頁面時都會做最後一次健康備份',
-  ], playerItems:[
-    '【💾 你的存檔現在有「主檔」+「保險檔」兩份】',
-    '・以前雲端只有一份存檔,若任何一次寫入出問題,就可能弄丟進度',
-    '・現在改成兩份:',
-    '  - 「主檔(live)」:你遊玩時不斷更新的最新進度',
-    '  - 「保險檔(safe)」:每 5 分鐘自動檢查,確認資料健康才更新',
-    '・登入時系統會自動讀兩份,選比較豐富的那份載入,絕不會弄丟你的英雄',
-    '【⏱ 保險檔的更新時機】',
-    '・每 5 分鐘自動檢查一次',
-    '・只有當「主檔」的英雄數量、最高等級、知識幣等都沒倒退,才會更新保險檔',
-    '・若主檔倒退了(可能本次遊玩有 bug),保險檔保持不動,等下次登入用',
-    '・登出、被別的裝置踢出、關閉頁面時都會做一次最後備份',
-    '【🛡 雙保險效果】',
-    '・假設你在 A 電腦練到 14 等大天狗,然後到 B 電腦登入',
-    '・若 B 電腦因任何原因把主檔寫成 1 等(以前發生過),保險檔還是 14 等',
-    '・你重新整理 / 重新登入,系統會自動讀到比較豐富的保險檔,英雄回來了',
-  ], items:[
-    '【架構】',
-    '・Firestore 雙文件:',
-    '  - players/{uid}/saves/live  ← 即時槽,gameCloudSave 每次都寫',
-    '  - players/{uid}/saves/safe  ← 安全槽,只在條件式檢查通過時寫',
-    '  - players/{uid}             ← 既有 profile 文件維持(暱稱/代表英雄/邀請碼),向後相容',
-    '【新增 4 個 Firebase API】',
-    '・_fbSaveLive(uid, data) — 寫 live 槽(無保護純覆蓋)',
-    '・_fbLoadSlot(uid, slot) — 讀任一槽(getDocFromServer 強制最新)',
-    '・_fbWriteSafeIfHealthier(uid, data) — 用 Firestore transaction 做 read-then-write,',
-    '  讀當前雲端 safe 摘要→比對候選→只有候選 ≥ 雲端 safe(所有 5 項都不倒退)才允許覆蓋',
-    '・_summaryIsHealthierOrEqual / _summaryRichnessScore — 兩個摘要比對 helper',
-    '【gameCloudLoad 改為並行讀三槽】',
-    '・並行讀 live + safe + legacy(舊單槽)→ 計算 richnessScore → 取分數最高',
-    '・權重:unlockedCount × 1000 + totalHeroLv × 10 + maxHeroLv × 5 + coins + bagItems × 20',
-    '・若 safe 比 live 強,標記 window._safeRescuedLive=true(視為「上次遊玩 live 被汙染」)',
-    '・若三槽全部讀取失敗才走 localStorage fallback(維持 v6160 邏輯)',
-    '【gameCloudSave 改為雙寫】',
-    '・Promise.allSettled([_fbSaveLive, _fbSave]) — 同步寫 live 與 legacy 兩份',
-    '・任一失敗不擋另一份,確保向後相容期間任何依賴 players/{uid} 的系統都能讀到',
-    '【_trySaveSafeIfHealthier 觸發時機(共 4 種)】',
-    '・onAuthStateChanged 載入完 90 秒:initial(讓補發流程跑完再開始)',
-    '・每 5 分鐘:5min_tick',
-    '・心跳偵測到被踢時(進設旗標前):about_to_be_kicked',
-    '・登出時:sign_out',
-    '・beforeunload / pagehide:unload(fire-and-forget,不 await)',
-    '【Race condition 防護】',
-    '・safe 寫入完全用 runTransaction(原子 read-then-write),不可能兩裝置同時把更新的 safe 弄壞',
-    '・候選 < 雲端 safe → transaction 跳過寫入,console 顯示「雲端 safe 更豐富」',
-    '【未來如果還有「角色消失」回報】',
-    '・log 順序會清楚顯示:',
-    '  [雙槽載入] 三槽分數: {live, safe, legacy}',
-    '  [雙槽載入] 選用: live/safe/legacy 分數=N',
-    '  🛡️ [safe 槽] 已備份 (reason): unlocked=N maxLv=N',
-    '  🛡️ [safe 槽] 跳過 (reason) — 雲端 safe 更豐富',
-    '【版本同步】',
-    '・三個版本常數同步升級為 v1.0.20260512.6170',
-    '・Firestore imports 新增 runTransaction',
-  ], adminItems:[
-    '【向後相容策略】',
-    '・既有玩家第一次跑 v6170 時:',
-    '  ① 三槽讀取:live/safe 都不存在(null) + legacy 存在 → 用 legacy 載入',
-    '  ② 90 秒後 _trySaveSafeIfHealthier(initial) 把當前資料寫進 safe',
-    '  ③ 同次 autosave 把當前資料寫進 live',
-    '  ④ 之後三槽都存在,進入正常雙槽循環',
-    '・即使 saves 子集合 collection 從未存在,Firestore 會在第一次 setDoc 時自動建立',
-    '【Firestore Security Rules 注意】',
-    '・原本規則只覆蓋 players/{uid} 文件;saves/{slot} 子集合需要同樣的「玩家本人才能讀寫」規則',
-    '・若上線後玩家 console 看到 permission-denied,要去 Firestore Rules 加:',
-    '    match /players/{uid}/saves/{slot} {',
-    '      allow read, write: if request.auth.uid == uid;',
-    '    }',
-    '【成本】',
-    '・每位玩家多 1 個文件儲存(saves/safe),寫入頻率 5min/次,在 Firestore 免費額度內可忽略',
-    '・transaction 每次算 1 read + 1 write,5 分鐘一次,單玩家每日約 288 次,200 玩家 = 5.7 萬/日',
-    '・Firestore 免費額度:50K reads/day + 20K writes/day per project — 需要關注',
-    '・若超出可改為 15 分鐘 tick,或只在登出時觸發',
-  ] },
-  { ver:'v1.0.20260512.6160', brief:[
-    '🛡 重大資料保護:登入時若雲端資料明顯比本地少,自動拒絕覆蓋並用本地版修復雲端',
-    '💪 已解鎖英雄改為「只增不減」合併,絕對不會在登入時弄丟稀有角色',
-    '📊 每次存檔附上資料摘要指紋,下次登入比對發現倒退就強制保護',
-  ], playerItems:[
-    '【🛡 角色資料保護大升級】',
-    '・之前有同學回報:「之前有全部角色,可是剛剛登入我變 1 等,14 等大天狗都不見了」',
-    '・這次徹底修補:登入時系統會自動比對「雲端版」vs「本地版」的資料豐富度',
-    '・如果雲端版資料明顯比本地少(解鎖英雄變少、最高等級倒退等),系統會:',
-    '  ① 自動改用本地較完整版,絕不讓你的進度被弄丟',
-    '  ② 把完整版自動寫回雲端,修復異常的雲端資料',
-    '  ③ 在畫面上顯示「資料保護啟動」的紅色通知,讓你看到保護有在運作',
-    '【🦸 已解鎖英雄不會再弄丟】',
-    '・以前登入時是「雲端蓋過本地」,如果雲端有問題就會弄丟',
-    '・現在改為「合併」:雲端的 + 本地的全部保留,只會多不會少',
-    '・所有英雄等級也改為「逐個取較高值」,絕對不會降級',
-    '【📊 資料摘要指紋】',
-    '・每次自動存檔時順便記錄一份「資料指紋」(解鎖英雄數、最高等級、知識幣等)',
-    '・下次登入時可以快速判斷雲端版本是否異常,類似存檔的健康檢查',
-    '【💡 為什麼這次能徹底修好?】',
-    '・之前只擋「空白狀態」覆蓋,但「雲端有資料但比本地少」這種狀況沒擋住',
-    '・這次補上「資料豐富度比對」這道全新防線,任何倒退都會被偵測到',
-  ], items:[
-    '【根因分析:雲端瘦版蓋過本地完整版】',
-    '・玩家回報:「登入後變 1 等,14 等大天狗不見了」',
-    '・在 _applySafeData 找到問題點(L51280):',
-    '・→ unlockedHeroes 用 setItem 直接覆蓋,heroLevels 用 = 直接賦值',
-    '・若雲端因任何理由(跨裝置 race、之前壞版本寫入、轉檔失敗)存著瘦版,',
-    '  登入端就會把本地完整 localStorage 直接覆蓋,玩家進度瞬間蒸發',
-    '【三道修補】',
-    '・(1) _buildSafeData 加 _dataSummary 欄位:每次存檔附 unlockedCount/maxHeroLv/',
-    '     totalHeroLv/coins/bagItems/ts 摘要,作為「資料豐富度指紋」',
-    '・(2) _applySafeData 改為 union 合併:',
-    '     - unlockedHeroes:本地 Set 與雲端 Set 取聯集,只增不減',
-    '     - heroLevels:逐英雄取 max(_localLv, _cloudLv),雲端缺的英雄保留本地',
-    '     - heroExp:同樣逐英雄取 max',
-    '・(3) gameCloudLoad 加摘要比對(L51850 附近):',
-    '     - cloudOk && data && 本地有摘要時,逐項比對 5 個關鍵指標',
-    '     - 任一倒退超過容忍門檻(unlockedCount 不可倒退、maxLv 倒退>2、',
-    '       totalLv 倒退>20、coins 倒退>100、bagItems 倒退>5)→ 拒絕雲端,改用本地',
-    '     - 標記 window._suspiciousCloudDetected,_applySafeData 後 3 秒主動 gameCloudSave',
-    '       把本地完整版寫回雲端,修復雲端瘦版',
-    '     - 同時彈出 v6160 印記紅色通知 + 用 _fbSubmitBugReport 自動回報老師',
-    '【為什麼這是「引擎層根因」修補】',
-    '・舊保護只擋「空白狀態覆蓋」(L51651):currLooksEmpty 必須四項都成立才擋',
-    '・但「雲端有少量資料但比本地少很多」這類部分倒退的情境完全沒擋',
-    '・本次補上「資料豐富度摘要 + union 合併」,涵蓋所有部分倒退情境',
-    '・未來任何因 race / 轉檔失敗 / 跨裝置時序問題造成的雲端瘦版,登入端都會自動處理',
-  ], adminItems:[
-    '【觸發回報的學生(2 筆)】',
-    '・lsps110051@stu.lsps.tp.edu.tw:「之前有全部腳色,可是剛剛登入我1等,14等大天狗都不見了」',
-    '・(另一位匿名回報類似情況)',
-    '【自動回報機制】',
-    '・偵測到雲端摘要弱於本地時,會用 _fbSubmitBugReport 自動寫一筆 [v6160 自動回報] 到回報清單',
-    '・內容含:差異項目、雲端摘要、本地摘要,方便日後追查到底是雲端哪一筆寫入造成的',
-    '【若日後還有回報】',
-    '・可從 console 找 🚨 [存檔保護][摘要比對] 雲端明顯弱於本地 開頭的訊息',
-    '・能看到完整的 cloud summary / local summary 對照',
-    '・也能從 [存檔保護][unlockedHeroes union] / [heroLevels merge] 訊息看到具體哪些被保留',
-    '【版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260512.6160',
-  ] },
-  { ver:'v1.0.20260512.6150', brief:[
-    '🛡 永久修復「題目出完→重選題庫→打完小怪戰後對白卡 30 秒」的老 bug!',
-    '💪 cutscene 對白頁面顯示中時,任何殘留的戰鬥邏輯都不會在背景偷跑',
-    '🔧 戰鬥結束清 timer 時連同 fallback 一起清,避免 20 秒後殭屍 timer 跳出來作怪',
-    '✨ 這次是引擎層的根因修補,不是針對單一路徑的補丁,所有類似情境都自動受惠',
-  ], playerItems:[
-    '【🛡 卡死問題終於徹底解決】',
-    '・症狀:題目出完彈窗→重選題庫→打完小怪→進場景對白,按下面對話框無效,卡 30 秒才能動',
-    '・這個問題從 5 月初就存在,嘗試過幾次都沒能完全修好',
-    '・本次找到根因:小怪戰結束後殘留的「endAction watchdog」5 秒後啟動,在劇情對白裡背景跑戰鬥邏輯,把對白卡住',
-    '・修補:加入「劇情對白顯示中時,所有戰鬥推進函式都直接 return」的全域保護',
-    '【💡 為什麼這次能徹底修好?】',
-    '・之前是看哪邊卡死就在那邊加 watchdog(治標),這次直接在引擎層擋:',
-    '・「進場景對白後絕不能背景跑戰鬥」是不可違反的原則,把它寫進 startTurn、aiAct 的入口',
-    '・未來任何路徑、新技能、新狀態如果不小心觸發這條,都會被自動擋下',
-    '【🎯 影響範圍】',
-    '・修復的是「卡 30 秒才能繼續」的劇情卡住,玩家體感最有感',
-    '・順便也把 9 處「直接清 timer 陣列但漏清 fallback」的潛在殭屍 timer 問題一併修了',
-    '・正常戰鬥流程完全不受影響(cutscene 不顯示時行為跟過去一樣)',
-  ], items:[
-    '【根因分析:題目出完→重選題庫→打完小怪→cutscene 卡 30 秒】',
-    '・路徑:小怪戰最後 p1 英雄 endAction → _pSetTimeout(startTurn,500) 排入 _pendingTimers',
-    '・同時設了 5 秒 endAction watchdog(普通 setTimeout,不受 _pendingTimers 清空影響)',
-    '・小怪戰結束 advFinishMiniBattle → _pendingTimers.length=0 → 但 fallback timer 還在跑',
-    '・進 cutscene 對白(_csOv.display=\'flex\')',
-    '・5 秒後 endAction watchdog 觸發 → 強制 _gamePaused=false + 100ms 後 startTurn()',
-    '・startTurn 在 cutscene 對白頁面背景啟動 BOSS 戰邏輯 → 對白點擊被卡',
-    '・20 秒後 fallback timer 再觸發過期的 fn → 流程再度被搞亂',
-    '【根因修補(4 處)】',
-    '・(1) startTurn 開頭 (~L27223):cutscene overlay 顯示中時 return',
-    '・(2) aiAct 開頭 (~L28586):cutscene overlay 顯示中時 return',
-    '・(3) endAction watchdog (~L26566):cutscene 顯示中或 actor 不在 G.p2 時放棄介入',
-    '・(4) _pSetTimeout fallback (~L8347):cutscene 顯示中時跳過 fn 執行,不動 _gamePaused',
-    '【新增 helper:_clearPendingTimers(reason)】',
-    '・舊版 10 處用 `_pendingTimers.length = 0` 清陣列,但漏清每個 record 的 _fallbackId',
-    '・→ fallback timer 在 20 秒後仍會觸發,執行已過期/已被遺棄的 fn',
-    '・新 helper 先 forEach 設 _fired=true + clearTimeout(_fallbackId),再清陣列',
-    '・10 處全部改用 _clearPendingTimers(原因):時間倒轉、卡死自救、advLoadScene、',
-    '  接關、投降、戰鬥結算、戰鬥退出、卡死正規流程、回溯快照、advFinishMiniBattle',
-    '【為什麼這次屬於「引擎層根因」修補】',
-    '・v6120 已修補「_pendingTimers queue 永不消化」(永久修復 1)',
-    '・v6120 已修補「_gamePaused 永久卡 true」(永久修復 2)',
-    '・v6150 補上第三道「cutscene 顯示中時戰鬥邏輯不該推進」的引擎層保證',
-    '・三道引擎層保護加起來:不論哪個 timer/watchdog 殘留、不論 _gamePaused 卡在哪,',
-    '  cutscene 對白期間都絕對不會被戰鬥邏輯干擾,對白可順暢推進',
-    '【版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260512.6150',
-  ], adminItems:[
-    '【🧪 驗證方式】',
-    '・觸發路徑:任何「題庫剩 < 小怪戰回合數」的情境(例如打完 20 題後再進小怪戰)',
-    '・舊版:題目出完彈窗→選新題庫→答題→打完小怪→進劇情對白,「下一句對白」按不動,30 秒後才能繼續',
-    '・新版:同樣路徑下,小怪戰結束→cutscene 對白立即可點擊推進',
-    '・F12 console 會看到:[startTurn] cutscene overlay 顯示中,跳過 startTurn(可能來自過期的 watchdog/fallback)',
-    '・F12 console 也會看到:[endAction watchdog] cutscene 顯示中,放棄介入(actor:電腦繪圖師)',
-    '・若 fallback 殘留:[_pSetTimeout fallback] cutscene 顯示中,跳過 fn 執行',
-    '【🎯 涵蓋的延伸場景(免費受惠)】',
-    '・所有「戰鬥結束→cutscene」過渡都更安全,日本關、台灣關同樣受惠',
-    '・玩家中途離開分頁回來時,殘留 timer 觸發到 cutscene 也會被擋下',
-    '・新技能/新狀態未來不小心在 cutscene 觸發 startTurn 也會被擋',
-  ] },
-  { ver:'v1.0.20260511.6140', brief:[
-    '🐱 木柵貓空關 BOSS 浮動加成!九尾空貓怪、杏花妖及兩組陣容的小怪都會依玩家隊伍平均等級提升',
-    '📈 公式:每級 +2%(Lv1 為基準不加成,Lv10 +18%,Lv30 +58%,Lv50 +98%)',
-    '💪 浮動範圍涵蓋:HP / 攻擊 / 特技 / 速度,經驗值與知識幣也照比例提升',
-    '🎯 難度倍率分開計算:「我很會 +50% HP」是疊在浮動後的 HP 上,不互相吃掉',
-  ], playerItems:[
-    '【🐱 木柵浮動加成 — 設計理念】',
-    '・新手玩家(Lv1~Lv5):BOSS 維持原本血量,不會被秒殺也不會打不過',
-    '・中階玩家(Lv10~Lv20):BOSS +18%~+38%,維持挑戰性',
-    '・高階玩家(Lv30+):BOSS +58% 以上,讓老手也覺得「還是有挑戰」',
-    '・公式:scale = 1 + ((平均 Lv - 1) × 0.02),Lv1=×1.00、Lv30=×1.58、Lv50=×1.98',
-    '【📊 套用範圍】',
-    '・🐱 九尾空貓怪陣容:九尾空貓怪、綠竹筍小妖、茶葉精靈(全部加成)',
-    '・🌸 杏花妖陣容:杏花妖、2 名被魅惑的英雄(全部加成)',
-    '・加成項:hp / atk / sp / spd(全能力提升),EXP 與知識幣自動跟著提升',
-    '【🎯 難度倍率關係】',
-    '・浮動加成「先」套(影響全能力)→ 難度 HP 倍率「後」套(只影響 HP)',
-    '・例:Lv30 玩家選「我很會」打杏花妖 → HP 680 × 1.58 × 1.5 ≈ 1612(atk/sp/spd 只乘 1.58)',
-    '・沒自信(×1.00)、普通(×1.25)、我很會(×1.50)的 HP 倍率邏輯不變',
-    '【💡 為什麼這樣設計?】',
-    '・玩家等級越高,英雄越強 → BOSS 也要跟著進化,否則挑戰變敷衍',
-    '・但小新手不該被高難度勸退 → Lv1 起算不加成,Lv1 第一場 BOSS 戰仍是原始體驗',
-    '・EXP 跟著加成提升 → 升級獎勵與努力成正比,不會「越強打 BOSS 反而拿越少」',
-  ], items:[
-    '【新增 helper 函式】',
-    '・_advMaokongLvScale():計算 G.p1 出戰隊伍平均等級,回傳 scale 倍率',
-    '・公式:scale = 1 + Math.max(0, _avg - 1) × 0.02,Lv1 基準不加成',
-    '・只在 _adventureStage === \'maokong\' 時啟用,其他關卡回傳 1.00',
-    '・例外處理:G/p1/_heroLevels 任何一個未定義都安全回傳 1.00',
-    '【套用點 — advStartBattle 內難度 HP 倍率之前】',
-    '・對 G.p2 全成員的 hp / atk / sp / spd / exp 各自 × scale 並取整',
-    '・h.curHp = h.hp 同步(讓血條顯示對齊)',
-    '・_advBossTeamSaved 快照同步更新(避免之後 restore 復原成未加成值)',
-    '・新增 flag window._advMaokongLvScaleApplied 避免重複套用',
-    '【EXP / 知識幣自動跟漲機制】',
-    '・_calcMobExp(h) = Math.round((hp+atk+sp+spd) × 0.5),讀「當下 stat」',
-    '・h.hp/atk/sp/spd 都已 × scale → _baseBossExp 自動 × scale',
-    '・_bossCoins = _totalExpEachFinal × 0.3 → coins 也自動 × scale',
-    '・無需修改任何 reward 結算邏輯',
-    '【旗標重置點(4 處 — 與 _advBossHpMultApplied 同位)】',
-    '・startAdventureGame 內冒險重置區塊',
-    '・exitAdventureMode 內冒險重置區塊',
-    '・advStartCutscene 內冒險重置區塊',
-    '・戰鬥結束(advShowBattleResult / 回學校) 路徑',
-    '・⚠ 例外:advChangeDifficulty 切換難度時「不」重置(否則切難度會重複套加成)',
-    '【版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260511.6140',
-  ], adminItems:[
-    '【🧪 驗證方式】',
-    '・進木柵關 → 開 F12 console → 開 BOSS 戰',
-    '・應看到 log:[木柵浮動加成] 套用 — 出戰隊伍平均 Lv=X.XX, scale=×X.XXXX',
-    '・每隻 G.p2 成員會印出:[木柵浮動加成] <name>: hp A→B, atk A→B, sp A→B, spd A→B, exp A→B',
-    '・接著 [BOSS HP 難度倍率] 才會在浮動後的 HP 上再套 ×1.5(若選我很會)',
-    '【🎯 邊界情況檢查】',
-    '・玩家全 Lv1 → scale=1.00 → log 顯示「跳過」,不變動 stat',
-    '・小數平均等級(例 Lv 5.33)→ Math.round 取整,各 stat 取最近整數',
-    '・接關/重開戰(advRestartBattle)→ flag 仍為 true → 不會重複套加成',
-    '・切換難度(advChangeDifficulty)→ flag 不重置 → 浮動加成保持',
-  ] },
-  { ver:'v1.0.20260511.6130', brief:[
-    '🩸 全新學生設計英雄登場:暗魔將·血!5 年 2 班鐘同學設計,2026 年',
-    '📚 5 年 2 班首位設計師加入!過去都是 5 年 5 班學長姐,現在 5 年 2 班學弟妹也來了',
-    '⚔ 攻防一體的暗屬性英雄:S1 護全隊免疫、S2 全體+集火爆擊、爆發攻防合一',
-    '🎉 新增「首班設計師」禮讚:該班第一位設計師會看到彩虹徽章 + 額外音效',
-    '📖 修補「題目出完」彈窗:加入「課堂複習」選項!選課堂複習挑戰打完小怪後可繼續複習',
-    '🛡 修補劇情卡死 bug:選完重選彈窗後,場景能正常推進到下一場戰鬥',
-  ], playerItems:[
-    '【🩸 暗魔將·血 是誰?】',
-    '・被黑化的貓神化身,來自古代日本的血劍將軍',
-    '・身披幽冥之鎧,手執一把赤紅長劍',
-    '・信條是「先護住身後的人,然後讓敵人流盡最後一滴血」',
-    '【⚔ 能力一覽】',
-    '・HP 60 / 攻擊 11 / 特技 15 / 速度 14',
-    '・暗屬性,攻擊+輸出型(類似刺客但有防護能力)',
-    '【🎯 技能效果】',
-    '・💠 血劍·防(能量 6):1 回合內友方全體免疫任何傷害(包括必中、無視防禦)',
-    '・💠 血劍·攻(能量 6):特技 100% 對全體傷害,隨機 1 名額外被打 200% 而且暴擊率 +30%',
-    '・🌟 天賦「血焰雙噬」:造成傷害時 50% 機率讓目標同時陷入「燃燒」和「出血」2 回合',
-    '・⚡ 爆發「血劍·爆破」:全體 150% 大傷害 + 隨機 1 名 300% 暴擊狙殺,再給全隊 2 回合免疫!',
-    '【🎁 鐘同學登入有禮】',
-    '・鐘同學用學校 email 登入後會自動獲得「暗魔將·血」',
-    '・第一次登入會跳出專屬歡迎彈窗:「歡迎回來,設計師!」',
-    '・身為 5 年 2 班首位設計師,還會看到彩虹徽章「🌟 5年2班首位設計師 🌟」',
-    '【🔮 其他玩家】',
-    '・召喚池可抽到!原本 9 隻稀有英雄變 10 隻,共用 5% 機率',
-    '・每隻稀有英雄機率約 0.5%(從 0.55% 微降)',
-  ], items:[
-    '【新角色資料總覽】',
-    '・HERO_DB 新增「暗魔將·血」條目(HP60/ATK11/SP15/SPD14,暗屬性)',
-    '・S1 血劍·防(c6):全友方免疫 1 回合(免疫傷害,不免疫不利狀態)',
-    '・S2 血劍·攻(c6):特技 100% 全體 + 隨機 1 名 200% 集火且暴擊率 +30%',
-    '・天賦 血焰雙噬:50% 機率附加燃燒+出血 2 回合',
-    '・爆發 血劍·爆破:特技 150% 全體 + 隨機 1 名 300%(暴擊+60%) + 友方全免 2 回合',
-    '【屬性與雷達圖】',
-    '・SKILL_FORCE_ELEMENT 加入「血劍·攻」與「血劍·爆破」為 dark 屬性(剋光、被光剋)',
-    '・S1 純防無傷害,不納入強制屬性表(規則:純治療/淨化/狀態類不納入)',
-    '・HERO_HEX_OVERRIDE 設定 heal:5(雙重免疫=中強回復向)、ctrl:4(雙 DoT+暴擊=中度控制)',
-    '【動畫與音效】',
-    '・BURST_GIF_DB 新增「血劍·爆破」條目',
-    '・GIF URL 來自設計單:飛劍.gif(blob 轉 raw 完成)',
-    '・音效組合:sfx-sword-slash(1.0) + sfx-explode(0.9) + sfx-crit(0.85)',
-    '・染色 tint:rgba(180,30,30,0.20) 血紅色(配合「血」主題)',
-    '【召喚池調整】',
-    '・SUMMON_RARE_HEROES 從 9 隻擴為 10 隻(暗魔將·血加入)',
-    '・召喚機率分母改變:5% / 9 ≈ 0.555% 每隻 → 5% / 10 = 0.5% 每隻',
-    '・ADMIN_ALL_HEROES 同步加一隻(從 47 增為 48 隻)',
-    '【設計者自動補發】',
-    '・STUDENT_DESIGNER_HEROES 加入鐘同學的 email 對照',
-    '・所有 entry 新增 class 欄位(讓「首班設計師」邏輯能自動判斷)',
-    '・flagId 為 kishin_blood(localStorage 歡迎彈窗去重 key)',
-    '【歡迎彈窗升級】',
-    '・_showStudentDesignerWelcome 升級為 3 參數版,多收 designerClass',
-    '・自動偵測「首班設計師」:同班只有自己一個 entry → 彩虹徽章浮現',
-    '・首班設計師多播兩道音效(sfx-statup + sfx-crit)增加儀式感',
-    '・未來 6 年 3 班、4 年 1 班…任何新班別首位設計師都自動適用,不用再改函式',
-    '【圖鑑與圖檔】',
-    '・HERO_IMGS / HERO_PORTRAIT_LIBRARY 新增「暗魔將·血」條目',
-    '・檔名為「暗魔將之血.png」(GitHub URL,需單獨上傳)',
-    '・GIF 檔名為「飛劍.gif」(同樣需上傳到 LXPSGAME 倉庫 main 分支)',
-    '・HERO_BIO 寫入 role/trait/hobby/quote/designer,英雄詳情頁會顯示「✏️ 5年2班 鐘同學 設計(2026)」',
-    '【天賦升級資訊】',
-    '・_TRAIT_LV_INFO 新增條目:base 50% / +10% per Lv / Lv5 MAX 90%',
-    '【英雄編輯器 hero_input.html 同步】',
-    '・HEROES_DB JSON 新增暗魔將·血條目(完整 emoji/img/能力值/技能/天賦/爆發/lore/bio)',
-    '・順便修正 5 隻 5 年 5 班學生英雄的 designer.name 從全名改為「X同學」假名',
-    '・對齊主遊戲 v5810 個資保護慣例,編輯器原始碼不再外洩學生全名',
-    '【版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v1.0.20260511.6130',
-  ], adminItems:[
-    '【🛡 個資保護檢查清單(v5810 慣例)】',
-    '・程式碼 STUDENT_DESIGNER_HEROES.name = 「鐘同學」(假名,不含全名)',
-    '・HERO_BIO.designer.name = 「鐘同學」(同樣假名)',
-    '・GitHub 圖檔名 = 「暗魔將之血.png」(不含「五年二班」、不含「鐘XX」)',
-    '・GIF 檔名 = 「飛劍.gif」(設計單原檔名,不含學生資訊)',
-    '・鐘同學的完整姓名僅保留在班級線下名冊,程式碼與 GitHub raw URL 都查不到',
-    '・F12 開 Network 也只看得到「暗魔將之血.png」這種角色名稱',
-    '【email 對照】',
-    '・lsps110051@stu.lsps.tp.edu.tw → 鐘同學(5 年 2 班)',
-    '【實作位置】',
-    '・HERO_DB.暗魔將·血(在雙星姊妹之後,line ~11459)',
-    '・HERO_IMGS / HERO_PORTRAIT_LIBRARY 加 暗魔將·血',
-    '・HEROES Q版圖示對照表 加 🩸 emoji',
-    '・HERO_BIO / HERO_LORE / HERO_TRAIT / BURST_DB 各加一條暗魔將·血條目',
-    '・_TRAIT_LV_INFO.暗魔將·血(天賦升級面板)',
-    '・SKILL_FORCE_ELEMENT 暗屬性區新增 2 條(血劍·攻 / 血劍·爆破)',
-    '・BURST_GIF_DB.血劍·爆破(爆發 GIF)',
-    '・HERO_HEX_OVERRIDE.暗魔將·血(雷達圖 heal:5/ctrl:4)',
-    '・STUDENT_DESIGNER_HEROES.lsps110051@... + 全表加 class 欄位',
-    '・ADMIN_ALL_HEROES 陣列尾部加一條',
-    '・SUMMON_RARE_HEROES 加一條',
-    '・_showStudentDesignerWelcome 函式升級為 3 參數版',
-    '・_grantStudentDesignerHero 呼叫 _showStudentDesignerWelcome 時多傳 _info.class',
-    '【需手動上傳的 GitHub 資源】',
-    '・暗魔將之血.png(角色主圖,放 LXPSGAME 倉庫 main 分支根目錄)',
-    '・飛劍.gif(爆發技動畫,同上)',
-    '・若兩個檔案未上傳,遊戲會顯示 404 圖,角色仍可正常戰鬥(只是圖片載不到)',
-    '【後續注意】',
-    '・5 年 2 班是第一個非 5 年 5 班的設計者,以後若有更多其他班別,沿用同樣流程',
-    '・STUDENT_DESIGNER_HEROES 現在有 class 欄位,「首班設計師」禮讚邏輯會自動偵測',
-    '【🐛 v6130 修補:題目出完彈窗 + 劇情卡死】',
-    '・症狀:玩家選課堂複習挑戰打完小怪戰,跳出「題目出完」彈窗,但選項沒有「課堂複習」',
-    '・症狀延伸:即使選了一般科目,彈窗關掉後劇情對白卡死、不進下一場,後台仍有戰鬥音效',
-    '・根因 A:advShowRePickSubject 硬編碼科目陣列只有 9 個普通科目,沒有 課堂複習 入口',
-    '・根因 B:玩家若選的科目對應不到題庫 → 再次空 pool → 又彈一次 → callback 鏈深處中斷',
-    '・根因 B 後果:_gamePaused 永遠 true、UI 停在小怪戰但場景對白模組以為已結束,'
-      + '聽得到 G 物件內 AI 嘗試動作的音效',
-    '・修補 A:彈窗加入「📖 課堂複習」按鈕(金色閃爍,對齊木柵防衛戰按鈕視覺)',
-    '・修補 A:_advRePickConfirm 偵測 __REVIEW__ 標記,從 _kingRandomReviewSubject 抽真實複習主題,'
-      + '同步 _kc._isReviewMode=true + _kc._curSubjectReview',
-    '・修補 A:玩家若這場原本就是課堂複習,彈窗預設高亮課堂複習按鈕',
-    '・修補 A:玩家明確切到非複習科目時,自動取消 _isReviewMode(避免一般題誤拿 +25% 加成)',
-    '・修補 B:_advMiniQuizAsk 加 _miniQuizRepickAttempts 計數器,重選 2 次仍空就直接走 onDone,'
-      + '避免無限彈窗 / callback 鏈中斷導致 _gamePaused 永久 true',
-    '・修補 B:成功抽到題目時自動重置計數器',
-    '・實作位置:advShowRePickSubject(line ~47323), _advMiniQuizAsk(line ~62106)',
-  ] },
-  { ver:'v1.0.20260511.6120', brief:[
-    '🏆 BOSS 卡死問題終極解決!根因層修復雙保險,從此理論上不該再有卡死!',
-    '🔧 過去每次新卡死都要 patch 一個 watchdog,現在從引擎底層直接拔掉根因',
-    '🌸 順便把杏花妖等 16 隻 BOSS 戰已知 5 個死角全部修補',
-    '🛡 從此貓空/日本/台灣全部 16 隻 BOSS 都不會因為這些罕見路徑而永久凍結',
-    '✅ 配合既有 v5470/v5480 的魅惑卡死修補,所有已知 BOSS 卡死路徑全數封鎖',
-  ], items:[
-    '【根因揭露:過去所有 BOSS 卡死的共同點】',
-    '・回顧 v5470/v5480/v5640/v6120 所有 BOSS 卡死 bug,根因全部指向同一個地方:',
-    '  「_pSetTimeout 在 _gamePaused=true 時把 timer push 到佇列,若 _resumeTimers 永遠沒被呼叫,timer 永遠不執行」',
-    '・每次出現新卡死,都要為「該特定路徑」加一個獨立 watchdog(charm/berserk/burstFinish/endAction/quiz...)',
-    '・但這是補不完的,因為:每加一個新技能、新狀態、新 modal,都可能是新的死角',
-    '・舊修補就像在水管沿線一直貼補漏,水源頭才是真正要修的地方',
-    '【🏆 永久修復 1:_pSetTimeout 自帶安全保險】',
-    '・每個被 push 到 _pendingTimers 的 timer 都自帶獨立 setTimeout 兜底(20 秒)',
-    '・即使 _resumeTimers 永遠沒被呼叫(因為 modal 被擋、cb 拋例外、advShowQuiz early return...),',
-    '  20 秒後 timer 也會自己跳出來執行 → 戰鬥流程一定推進',
-    '・兜底時 console.warn + 同時釋放 _gamePaused,確保後續 timer 都能正常排程',
-    '・正常 _resumeTimers 被呼叫時會 clearTimeout 兜底 + 設 _fired=true,絕不會重複執行',
-    '【🏆 永久修復 2:全局 _gamePaused heartbeat】',
-    '・每 10 秒檢查 _gamePaused 狀態,若 _gamePaused=true 持續超過 20 秒且沒有任何合法 modal 顯示,',
-    '  視為異常卡死 → 自動釋放 _gamePaused + 呼叫 _resumeTimers',
-    '・這是第二道防線:即使根本沒有 timer 在佇列裡(只是 _gamePaused 卡在 true),也能恢復',
-    '・合法 modal 清單沿用 _startDeadlockWatchdog 的 _LEGIT_PAUSE_MODALS,避免誤觸正常等待',
-    '【🌸 順帶修補:杏花妖檢查時發現的 5 個死角】',
-    '・檢查杏花妖 BOSS 戰時順便掃了所有 BOSS,找到 5 個過去沒被涵蓋的死角',
-    '・雖然兩道永久修復理論上已能涵蓋,但這些邊角邏輯仍補上讓行為更乾淨',
-    '・死角 1:BOSS quiz 完成 cb 沒檢查 BOSS 當下是否還能行動',
-    '  - 若 cb 被 advShowQuiz early return 自動 fire 時,BOSS 可能已被「玩家爆發優先」插隊處理或秒殺',
-    '・死角 2:題庫出完彈「重選科目/難度」視窗時沒超時 → 加 90 秒 watchdog',
-    '・死角 3:狂亂(berserk)路徑沒有 watchdog → 加 3 秒 watchdog(仿 charm path v5480)',
-    '・死角 4:BOSS AI setPending 找不到合法目標時會 fall through 到等玩家 → 直接結束行動',
-    '・死角 5:杏花妖 S1「杏林春霧」找不到治療目標時跳過 endAction → 補防呆',
-    '【為什麼這次的修復是「永久性」?】',
-    '・舊版修補是「事件驅動」:看到 bug 才打補丁,每次都要為新場景加新 watchdog',
-    '・新版修補是「根因驅動」:直接在引擎層保證「_gamePaused 不可能永久卡住」',
-    '・未來新增的技能、狀態、modal,只要沒改 _pSetTimeout / _gamePaused 機制,理論上都不會再卡死',
-    '・如果還是卡死,那一定是更深層的 JS 拋例外或 DOM 異常,不是時序/暫停問題',
-    '【影響範圍】',
-    '・所有 BOSS 戰(貓空 2 + 日本 4 + 台灣 10 共 16 隻)的卡死防護徹底重構',
-    '・小怪戰、鬥技場、PVP 等所有用到 _pSetTimeout 的場景都受益',
-    '・現存 6 道 watchdog(charm/berserk/burstFinish/endAction/aiWatchdog/quizDeadlock)變成「補強」而非「必需」',
-    '・正常戰鬥流程零影響(_resumeTimers 仍是主路徑,兜底永遠不會在正常情境觸發)',
-    '【實作位置】',
-    '・_pSetTimeout 加自帶 fallback (line ~8322)',
-    '・_resumeTimers 配合新結構清 fallbackId (line ~8443)',
-    '・全局 _gpHeartbeat (line ~31272 _gamePaused 宣告下方)',
-    '・aiAct BOSS quiz cb 加 a 有效性檢查 (line ~28378)',
-    '・advShowRePickSubject 加 90 秒 watchdog (line ~47034)',
-    '・startTurn berserk path 加 3 秒 watchdog (line ~27410)',
-    '・setPending p2 端找不到目標補退路 (line ~19820)',
-    '・杏林春霧 _tgt null fallback (line ~25106)',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 維持 v6120',
-  ] },
-  { ver:'v1.0.20260511.6110', adminOnly:true, brief:[
-    '🎁 管理員面板新增「3.5 學生補償工具」:輸入學生 email 或 uid 即可指定補發角色與資源',
-    '📊 每次補償自動記錄到該帳號的 _compensationHistory,看得到累計次數與最近一次時間',
-    '🔒 採「保留現有資料再覇上去」策略 — 取最大值合併,不會弄丟任何學生現有進度',
-  ], adminItems:[
-    '【🐛 需求來源】',
-    '・老師回報:lsps110176@stu.lsps.tp.edu.tw 學生雲端資料異常,所有角色不見',
-    '・既有「3. 玩家資料急救工具」只接受 uid 輸入,且為「還原式」要先診斷可疑欄位',
-    '・老師需要:憑學生口述補發特定角色 + 特定等級,直接用 email 找學生',
-    '・順帶需求:記錄每位學生被補償的次數,避免被學生重複申請濫用',
-    '【🛠 新工具實作】',
-    '・✨ 後端:新增 window._fbAdminFindPlayerByEmail(email)',
-    '  - 用 where("email","==",norm) 查 players 集合,管理員身分執行',
-    '  - permission-denied 時拋特殊錯誤 _isPermissionDenied=true,UI 會給 fallback 指引',
-    '・✨ 後端:新增 window._fbCompensatePlayer(uid, compensation)',
-    '  - 先 getDocFromServer 讀現有資料(避免本地快取)',
-    '  - unlockedHeroes:Set union,絕不弄丟原有解鎖',
-    '  - heroLevels:逐欄取 Math.max(現有, 補償),學生 Lv30 不會被補償 Lv10 蓋掉',
-    '  - heroStatPoints:依新等級自動補(每升 1 級 = 1 點,扣掉 invested 與 freePoints)',
-    '  - knowledgeCoins:支援 add(累加)或 set(取較大值)兩種模式',
-    '  - playerBackpack:逐物品 += 補償數量,上限 99',
-    '  - _compensationCount:每次 +1',
-    '  - _compensationHistory:陣列追加 {at, by, reason, summary, heroes},最多保留 30 筆',
-    '  - _lastCompensatedAt / _lastCompensatedBy:方便快速看上次補償',
-    '・✨ UI:管理員面板新增「🎁 3.5 學生補償工具(指定信箱)」橘色框',
-    '  - email 或 uid 擇一輸入 → 「🔍 查找學生」',
-    '  - 找到後展開資訊卡:現有資料 + 補償紀錄(0 次綠/1-2 次黃/3+ 次紅)',
-    '  - 補償面板:select 選英雄 + 等級 input + 「+ 加入清單」',
-    '  - 已加入的英雄顯示成 tag,每個有 × 移除按鈕',
-    '  - 資源欄位:知識幣 / 經驗書 / 技能書 / 素質書 / 爆發果 / 爆發秘藥',
-    '  - 補償原因(必填,寫稽核紀錄)',
-    '  - 執行前 confirm 顯示完整摘要,避免誤觸',
-    '・✨ 智慧型 fallback:若 Firestore 規則拒絕 email 查詢',
-    '  - 不只是失敗,而是顯示替代方案:「請學生先登入一次」或「改用 uid 欄位」',
-    '【📦 影響範圍】',
-    '・只影響管理員面板,一般玩家看不到也用不到',
-    '・所有寫入都是 merge:true,絕不破壞任何欄位',
-    '・寫入時若 setDoc 被 Firestore 規則擋,會跳錯而非靜默失敗',
-    '・補償歷史最多保留 30 筆,超過會 FIFO 丟掉最舊的(避免文件 1MB 上限)',
-    '【📍 實作位置】',
-    '・_fbAdminFindPlayerByEmail / _fbCompensatePlayer (line ~866)',
-    '・HTML 區塊 #_admin-comp-* (line ~31878)',
-    '・JS 綁定 _initStudentCompensationTool IIFE (line ~32773)',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v6110',
-  ] },
-  { ver:'v1.0.20260511.6100', brief:[
-    '🍎 iPad 體驗大補強:剩下的 6 個 GIF 特效全面修記憶體洩漏',
-    '🌀 元素選擇粒子離開後一定清乾淨,進戰鬥不再背景燒 CPU',
-    '🖥 全螢幕位置加固:旋轉 / 全螢幕重算次數加倍,iPad Pro 12.9 也能定位',
-  ], items:[
-    '【🐛 玩家回報】',
-    '・「v5540 修了爆發 GIF,但學生 iPad 用一段時間還是會跳出」',
-    '・「iPad Pro 在橫豎切換後畫面跑掉,要重新進全螢幕才會正常」',
-    '・「打 BOSS 時偶爾會卡頓掉幀,尤其在連續治療或爆發時」',
-    '【🔍 根因分析】',
-    '・v5540 只清掉 _showBurstGif 一個函式的 cache-buster',
-    '・但戰鬥中還有 6 個 GIF 函式照樣每次重新下載:',
-    '  ① _healGifOnCard(治療,每次治療都觸發,高頻!)',
-    '  ② _blessGifOnCard(神樹恩澤,木靈使爆發,每個目標一張)',
-    '  ③ _levelUpGifOverlay(升級)',
-    '  ④ _treasureLevelUpGifOverlay(至寶升級)',
-    '  ⑤ _judgmentGifOnCard(審判光束,光法師爆發,每個目標一張!)',
-    '  ⑥ _showVictoryBurstGif(勝利結算)',
-    '・這些累積起來,1 場 BOSS 戰多打幾次治療 + 審判光束就會吃 50~100MB',
-    '・iPad Safari 約 ~200MB 上限,加上 boot loader 預載資源 + 戰鬥場景圖 → 容易爆',
-    '・另一個小坑:_epGlowTimers 是元素選擇頁每 400ms 噴粒子的 setInterval,',
-    '  finishElemPick 只把 overlay display:none,沒清 setInterval,進戰鬥還在背景跑',
-    '・iPad Pro 12.9" 旋轉時 visualViewport 收斂可拖到 3500ms+,原本 retry 只到 2500ms',
-    '【🛠 修補內容】',
-    '・✨ 修補 1:6 個 GIF 函式全部移除 cache-buster + 強化清理',
-    '  - 不再加 ?t=Date.now(),讓瀏覽器吃 HTTP 快取',
-    '  - 因為每次都新建 <img> 並設 src,GIF 仍會從第 0 幀播放,視覺不變',
-    '  - 移除前先設 img.src = "",協助 iOS Safari 立即釋放 GIF 解碼緩衝',
-    '  - 進入函式時若有殘留舊節點,也先清 src 再 remove(雙重保險)',
-    '・✨ 修補 2:finishElemPick 加入完整 timer 清理',
-    '  - 離開元素選擇頁時迭代 _epGlowTimers 清掉所有 setInterval',
-    '  - 順手清掉 #ep-ring-wrap 內殘留的粒子節點',
-    '  - 進入戰鬥後 iPad CPU 負載明顯降低,掉幀減少',
-    '・✨ 修補 3:_scaleToViewportRetry 延長到 5 秒 + 加入穩定性提早退出',
-    '  - 原本 [80, 300, 800, 1500, 2500]ms → 新增 3500ms 與 5000ms 兩道兜底',
-    '  - 加入穩定性檢查:連續兩次 scale 一致(差距 < 0.0001)就視為已收斂',
-    '  - PC 上 80ms 後就會穩定,後續 retry 變 no-op,完全不浪費',
-    '  - iPad Pro 12.9" 旋轉 / 全螢幕切換時的「畫面跑掉」徹底修復',
-    '・✨ 修補 4:orientationchange 改用 retry 版而非單次 setTimeout',
-    '  - 原本只用 setTimeout(scaleToViewport, 200) 在 iPad Pro 上常常還沒收斂',
-    '  - 改走 _scaleToViewportRetry 後,旋轉到任何角度都能正確定位',
-    '【📦 影響範圍】',
-    '・iPad / iPhone 召喚 + BOSS 戰穩定性大幅提升(預估記憶體佔用 -30~40%)',
-    '・橫豎切換 / 全螢幕進退 / 多工切回前景時畫面定位更可靠',
-    '・PC 桌面瀏覽器完全不受影響(原本就沒這些問題,改動冪等)',
-    '・現有玩家無需任何遷移或清快取,更新後立即生效',
-    '【📍 實作位置】',
-    '・_healGifOnCard (line ~8651)',
-    '・_blessGifOnCard (line ~8681)',
-    '・_levelUpGifOverlay (line ~8706)',
-    '・_treasureLevelUpGifOverlay (line ~8724)',
-    '・_judgmentGifOnCard (line ~8741)',
-    '・_showVictoryBurstGif (line ~8761)',
-    '・finishElemPick (line ~13924) 新增 _epGlowTimers 清理',
-    '・_scaleToViewportRetry (line ~33833) 延長 retry 時程 + 穩定性檢查',
-    '・orientationchange listener (line ~34489) 改用 retry 版',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v6100',
-  ] },
-  { ver:'v1.0.20260511.6090', brief:[
-    '⌨️ 修復 iPad 輸入好友邀請碼時鍵盤狂跳出消失、無法輸入的問題',
-    '🎯 額外加強:iOS 鍵盤右下角顯示「完成」,大小寫轉換不再讓游標跳到結尾',
-  ], items:[
-    '【🐛 問題描述】',
-    '・iPad 開啟好友面板,點擊邀請碼輸入框 → 鍵盤跳出 → 還沒打字鍵盤又縮回 → 反覆',
-    '・嚴重時完全無法輸入,使用者無法加好友',
-    '【🔍 根因】',
-    '・Firestore onSnapshot 在背景持續推送 player doc 更新(線上狀態/好友變動等)',
-    '・每次推送都觸發 _renderFriendPanel() → panel.remove() → 整個面板重建',
-    '・重建後新 <input> 雖然被自動 focus,但 iPad 浮動鍵盤在 input 被銷毀的瞬間已縮回',
-    '・→ 從使用者角度看就是「鍵盤一直跳出消失」',
-    '【🛠 修復策略(三道防線)】',
-    '・防線 1:_renderFriendPanel 加守門,若 _add-friend-input 正獲得焦點則延後 500ms 重渲',
-    '  (持續打字會持續延後,直到失焦才真正重渲)',
-    '・防線 2:onSnapshot 路徑改呼叫新增的 _refreshFriendListInner(),只更新好友列表內容,',
-    '  完全不動 input 與按鈕區塊 → 治本',
-    '・把原 _renderFriendPanel 拆分為「守門層 + _renderFriendPanelImpl 實作層」',
-    '【🎯 順手加強的 iPad 輸入體驗】',
-    '・input 加 enterkeyhint="done" → iOS 鍵盤右下角顯示「完成」而非「換行」',
-    '・onkeydown 處理 Enter 時先 this.blur() 收起鍵盤再送出,操作流暢度提升',
-    '・oninput 的 toUpperCase 改為保留游標位置版本:',
-    '  原本 this.value=this.value.toUpperCase() 會讓游標跳到結尾',
-    '  新版用 setSelectionRange 保留輸入位置,讓中間插入字元時不會亂跳',
-    '【📦 影響範圍】',
-    '・修改:openFriendPanel onSnapshot 回呼、_renderFriendPanel 結構、input 屬性',
-    '・新增:_refreshFriendListInner() 函式(line ~60106)',
-    '・add/delete 好友後的重渲不受影響(那時 input 已失焦)',
-    '・桌面 PC 行為完全不變(沒有浮動鍵盤問題)',
-  ] },
-  { ver:'v1.0.20260511.6080', brief:[
-    '🎮 鬥技場改為「全英雄 Lv1 完全公平戰」,所有英雄一次列出,移除養成加成',
-    '🗑 「⚔️ 尋找新英雄」按鈕全面下架(冒險不該有、鬥技場改全 Lv1 也不需要)',
-    '🔒 順帶修復:iPad Safari 上原本可透過此按鈕意外解鎖未獲得的英雄',
-  ], items:[
-    '【🎯 鬥技場改造】',
-    '・原本只隨機顯示 10 個英雄,需按「尋找新英雄」輪替才能看到其他',
-    '・新版直接列出所有可選英雄(扣除 BOSS 與日本關角色),按 HERO_DB 順序穩定顯示',
-    '・取消「小力 50% 機率替換」隨機邏輯',
-    '・confirmHeroPick 鬥技場分支:移除至寶套用(原 v3730),不套屬性投資/技能升級/爆發等級/HP加成',
-    '・雙方都從 newHero 純基礎值出戰,結果只看陣容搭配與操作,不看養成程度',
-    '・天賦原本就在 _adventureMode=false 時回 0,自動失效不用動',
-    '【🗑 「尋找新英雄」全面下架】',
-    '・移除 HTML 上 #hero-pick-find-btn 主按鈕(line ~7443)',
-    '・移除手機鏡像底欄 _mobile-pick 的 b1「尋找新英雄」與對應 appendChild',
-    '・JS 兩處 hero-pick-find-btn DOM 操作改為容錯保留(if 取到才執行)',
-    '・_refreshHeroPool 函式改為 no-op + console.warn,避免歷史程式碼誤觸 ReferenceError',
-    '・冒險選角頁底部按鈕區從 4 顆變 3 顆(常用陣容/隨機編成/確認出戰)',
-    '【🔒 順帶修復的 iPad 漏洞】',
-    '・iPad Safari 上,原手機版鏡像底欄「⚔️ 尋找新英雄」呼叫 _refreshHeroPool 時',
-    '  若時序錯亂導致 _adventureMode 或 _adventureStage 暫時失效,會走入「正常模式分支」',
-    '  把 Object.keys(HERO_DB) 全英雄塞進 _heroPickPool 且沒打鎖定樣式',
-    '  玩家可直接點選未解鎖角色出戰 → 完全失去解鎖機制意義',
-    '・本次直接拔掉此按鈕,洩漏路徑徹底消失',
-    '【🛡 防作弊強化(v6070)】',
-    '・inviteHero 入口加白名單檢查:冒險模式下若 name 不在合法解鎖清單,直接擋下',
-    '・擋下任何透過 console 直接呼叫 inviteHero("大天狗") 的繞 UI 嘗試',
-    '・被擋下時顯示 toast「⚠ 此英雄尚未解鎖」,console.warn 記錄供追蹤',
-    '【📦 版本同步】',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v6080',
-  ] },
-  { ver:'v1.0.20260511.6060', adminOnly:true, brief:[
-    '📱 行動裝置(iPad/手機)現在可以呼喚管理員面板了',
-    '🤫 觸發方式:雙指長按右上角熱區 2 秒,安靜開啟、無任何提示',
-  ], items:[
-    '【背景】',
-    '・原本管理員面板只能用 Shift+F10 開啟,iPad/手機沒有實體鍵盤無法呼叫',
-    '・需要支援平板裝置上的管理員操作',
-    '【新觸發手勢:雙指長按右上角】',
-    '・熱區位置:fixed top:0 right:60px,50x50px,完全透明',
-    '・避開 #ctrl-bar(全螢幕/音樂/暫停等)按鈕,不影響原有控制列',
-    '・嚴格條件:必須「起手就是雙指」+ 全程不放開 + 移動 < 20px + 持續 2 秒',
-    '・觸發後安靜開啟,無震動、無閃光、無音效,避免被學生注意到',
-    '・權限檢查:即使誤觸,非管理員身分不會看到面板',
-    '【實作位置】',
-    '・在 Shift+F10 keydown handler 之後新增 _setupMobileAdminTrigger IIFE',
-    '・建立 #_admin-mobile-trigger 透明熱區元素(z-index 99988)',
-    '・原 Shift+F10 路徑保留,PC 體驗不變',
-  ] },
-  { ver:'v1.0.20260510.6050', brief:[
-    '🔮 召喚水晶機率調整:精裝英雄經驗之書 30% → 23%,新增豪華典藏版英雄經驗之書 7%',
-    '📚 玩家現在可從召喚水晶中獲得稀有的豪華典藏版書(單本 +5000 EXP),總機率維持 100%',
-  ], items:[
-    '【🔧 user 提案 — 平衡調整】',
-    '・原本召喚水晶池 30% 都是精裝書(×5),產出單調',
-    '・拆出 7% 給豪華典藏版(×1),增加召喚的驚喜感與多樣性',
-    '【📊 新舊機率對照】',
-    '・🏆 隨機台灣至寶:2%(不變)',
-    '・⭐ 稀有角色:5%(不變)',
-    '・🍑 超越極限果實 ×1:5%(不變)',
-    '・📚 豪華典藏版英雄經驗之書 ×1:7%(新增)— 標 isRare 觸發稀有特效',
-    '・📜 至寶經驗卷軸 ×1:10%(不變)',
-    '・📖 技能升級書 ×2:15%(不變)',
-    '・📗 精裝英雄經驗之書 ×5:23%(從 30% 降)',
-    '・💰 BOSS 賣錢物品 ×1:33%(不變)',
-    '・總和:2+5+5+7+10+15+23+33 = 100% ✅',
-    '【🔧 實作細節】',
-    '・SUMMON_RATES 表(line ~54118)新增 exp_book_prm 條目,排序按機率由低到高',
-    '・_rollOneSummon 函式(line ~54711)在 exp_book_dlx 後加 exp_book_prm case',
-    '・回傳 { kind:exp_book_prm, id:hero_exp_book_premium, qty:1, isRare:true }',
-    '・_applySummonReward 是 generic 的(只認 id+qty),不用改',
-    '・hero_exp_book_premium 物品 BACKPACK_ITEM_DEF 已存在(line ~50881),直接複用',
-    '【⚠️ 命名陷阱記錄】',
-    '・「精裝」對應 id 是 hero_exp_book_deluxe(+500 EXP)',
-    '・「豪華典藏版」對應 id 是 hero_exp_book_premium(+5000 EXP)',
-    '・命名跟直覺反向(deluxe=精裝,premium=豪華典藏版),改 code 時要再三確認',
-    '【🔧 版本同步】',
-    '・三個版本常數(CURRENT_BOOT_VER / CURRENT_VERSION / _GAME_LOADED_VERSION)同步 v6050',
-    '・「今日科目」popup 印記 v6040 → v6050',
-  ] },
-  { ver:'v1.0.20260510.6040', brief:[
-    '🐛 修正「台灣環島歷險記」按鈕的「至寶」兩字消失問題:外層按鈕 nowrap+ellipsis 把過長的副標截掉了',
-    '✂️ 雙保險修法:副標文案縮短(走訪台灣獲取神級裝備 → 獲取神級裝備)+ treasure-flash 字距/padding 收斂',
-  ], items:[
-    '【🐛 user 回報】',
-    '・截圖顯示「🏝 走訪台灣獲取神級裝備…」後面變成省略號(三個點),「至寶」兩字看不到',
-    '【🔍 root cause 分析】',
-    '・外層 .adv-stage-btn 設定 white-space:nowrap; overflow:hidden; text-overflow:ellipsis(line ~3470)',
-    '・原本副標「走訪台灣各地風情」(7 字)順順流;v5990 改成「走訪台灣獲取神級裝備『至寶』」(13 字)寬度撐爆',
-    '・v6020 又把 .treasure-flash 加上 letter-spacing:6px + padding:0 4px,inline-block 自身寬度再撐大',
-    '・字級 clamp(20px,2.5vw,36px),在小螢幕上更早觸發 ellipsis,把整個 inline-block 「至寶」span 整塊截掉',
-    '【✂️ 修法:雙保險】',
-    '・① HTML 副標文案縮短(line ~6921):',
-    '    「🏝 走訪台灣獲取神級裝備『至寶』」→「🏝 獲取神級裝備『至寶』」',
-    '    從 13 字 + emoji 縮到 9 字 + emoji,實際寬度減少約 30%',
-    '・② treasure-flash 字距/padding 收斂(line ~3522):',
-    '    letter-spacing:6px → 4px(實際寬度減 ~4px)',
-    '    padding:0 4px → 0 2px(實際寬度減 4px)',
-    '    4px 字距搭配最大 16px 光暈半徑(36 / 16 = 44%),仍在「光暈/字級 < 100%」安全閾值內,字形清晰',
-    '【📚 教訓 — 寫進設計守則】',
-    '・外層元素若有 nowrap+overflow:hidden+ellipsis,內層加 inline-block 元素時必須注意整行寬度',
-    '・修文案時記得測試「所有可能的字級」(clamp 在不同視窗寬度下會切到不同字級),小螢幕特別容易爆',
-    '・inline-block + padding + letter-spacing 三者疊加會放大實際寬度,要保守用',
-    '【🔧 細節】',
-    '・三個版本常數(CURRENT_BOOT_VER / CURRENT_VERSION / _GAME_LOADED_VERSION)同步 v6040',
-    '・popup 標題印記與 console.log 版本字串同步 v6040',
-    '・這是新主題「布局截斷修正」,獨立成條,不合併進 v6020 的「至寶閃光樣式」',
-  ] },
-  { ver:'v1.0.20260510.6030', brief:[
-    '🔍 全專案文字光暈盤點修正:筆畫多的中文字在大半徑光暈下會糊掉看不清,逐個收斂',
-    '✂️ 4 處光暈半徑大幅縮小:角色名/戰鬥提示/升級標題/天賦強化,字形回到清晰可辨',
-  ], items:[
-    '【🔍 user 提案】',
-    '・延伸 v6020 的「至寶字糊」修正,user 要求檢查所有光暈字是否也有同樣問題',
-    '・特別關注筆畫多的中文字(如「賦」15 畫、「暫」15 畫、「強」11 畫)',
-    '【📊 盤點方法 — 光暈半徑 vs 字級比例(危險閾值:>150%)】',
-    '・低於 100%:光暈不會超過字本身高度,基本安全',
-    '・100-150%:邊界,要看字距是否夠寬',
-    '・超過 150%:筆畫多的中文字必糊',
-    '・字距(letter-spacing)夠寬可救:6-7px 字距能容納大半徑光暈',
-    '【✂️ 修正清單(4 處)】',
-    '・#actor-info(角色名,24px,光暈 167%):text-shadow peak 20+40px → 8+16px',
-    '・#ep-center-hint(戰鬥提示,38px,光暈 158%):text-shadow 28+60px → 12+22px',
-    '・._lu-title(🎉 升 級 !,36px,光暈 333%):_luGlow keyframe peak 40+80+120px → 12+22+30px',
-    '・🌟 天賦強化 !(28px,光暈 229%):_traitPulse keyframe peak 32+64px → 8+16px',
-    '【🛡 不動的 — 已經安全】',
-    '・.adv-stage-flash(20-36px / 12px max / 50%):安全',
-    '・.treasure-flash(v6020 已修):安全',
-    '・.pause-title(56px / 40px / 71% + letter-spacing:6px):字大字距夠,安全',
-    '・summonTitleGlow(36-60px / 56px + letter-spacing:6px):字距夠寬,救回',
-    '・#fate-text(44px / 80px / 182% + letter-spacing:7px):字距夠寬,邊界但能接受',
-    '【🔧 細節】',
-    '・三個版本常數(CURRENT_BOOT_VER / CURRENT_VERSION / _GAME_LOADED_VERSION)同步 v6030',
-    '・popup 標題印記與 console.log 版本字串同步 v6030',
-    '・_luGlow 在 code 中注入兩次(line 53464 / 53596),用 sed 同步修正',
-    '・這次不是同主題合併 — 是新增「全專案光暈盤點修正」主題,獨立成條',
-  ] },
-  { ver:'v1.0.20260510.6020', brief:[
-    '🏝 「台灣環島歷險記」副標改為「走訪台灣獲取神級裝備『至寶』」,「至寶」兩字淡藍紫色脈動發光',
-    '✨ 新增 .treasure-flash 通用 class:單色系白紫光暈呼吸閃爍,字體不粗、字距加大確保字形清晰',
-  ], items:[
-    '【🏝 user 提案 + 多次微調】',
-    '・「台灣環島歷險記」第二行從「走訪台灣各地風情」改成「走訪台灣獲取神級裝備『至寶』」',
-    '・「至寶」兩字要閃光發亮,提升玩家點擊欲望',
-    '・首版彩虹七色 → user 反映深紫背景下不夠亮,改為淡藍紫單色',
-    '・字體不要加粗 → 移除 font-weight,且須明寫 normal 才能蓋掉外層 .adv-stage-btn 繼承的 700',
-    '・字糊在一起 → 光暈半徑縮小、字距加大、加 padding 給光暈空間,字形回到清晰',
-    '【✨ 實作 — .treasure-flash class(line ~3520)】',
-    '・font-weight:normal(明寫;否則繼承外層 700)',
-    '・letter-spacing:6px + padding:0 4px 讓兩字之間有足夠空隙容納光暈不互相覆蓋',
-    '・文字主色 #f0e6ff(淡紫白) ↔ #ffffff(純白)在 1.4 秒內 ease-in-out 循環,看起來像呼吸',
-    '・三層 text-shadow:內層白光 #ffffff(2px)做核心、中層淡紫 #c9b3ff(6px)、外層深紫 #9b7dff(10px)',
-    '・峰值(50% 影格)再多一層淡藍 #b9e2ff(8px)+ #7ec4ff(14px),讓藍紫色相在白光中流動',
-    '・原版本光暈半徑(18px / 26px / 36px)被縮成(10px / 14px / 16px),光暈不再大過字本身,字形清晰可辨',
-    '【🛠 HTML(line ~6891)】',
-    '・台灣環島那行的 inline span 結構保留(顏色 #ffaa66 / 字級 clamp(20px,2.5vw,36px))',
-    '・「至寶」兩字外層包 <span class="treasure-flash">「至寶」</span>,只覆蓋這兩個字',
-    '・其他文字「🏝 走訪台灣獲取神級裝備」維持橘色,跟淡紫的「至寶」形成暖橘 vs 冷紫對比,神器感更強',
-    '【🔧 細節】',
-    '・三個版本常數(CURRENT_BOOT_VER / CURRENT_VERSION / _GAME_LOADED_VERSION)同步 v6020',
-    '・popup 標題印記與 console.log 版本字串同步 v6020',
-    '・木柵與環遊世界遠征兩行不動,僅修台灣環島這一行',
-    '・依 v5980 鐵律,本則合併了 v5990 / v6000 / v6010 / v6020 共 4 個關於「至寶閃光樣式」的同主題版本',
-  ] },
-  { ver:'v1.0.20260510.5980', brief:[
-    '🎨 「木柵防衛戰」副標「📖 課堂複習獎勵增加中!」改為換行樣式,對齊「台灣環島→走訪台灣各地風情」副標位置與字級',
-    '📍 「今日科目」popup 左下「🎁 獎勵 +25%」金色浮籤再往下推,完全脫離「⚔ 挑戰課堂複習」按鈕本體',
-    '📚 更新日誌大整理:同主題的多版本演進合併成一則(僅保留最新累積版),以後 changelog 都按此原則維護',
-    '👑 課堂複習挑戰系統(累積版):本則包含 v5870 起所有相關功能與修復',
-  ], items:[
-    '【🎨 木柵防衛戰按鈕副標換行樣式】',
-    '・舊版(v5960):副標用 inline-block + margin-left:8px,擠在按鈕右側,字小且容易被截',
-    '・新版(v5980):改為 display:block + 換行(<br>),對齊「🚗 台灣環島歷險記 → 🏝 走訪台灣各地風情」的格式',
-    '・字級 clamp(11px,1.1vw,14px) → clamp(20px,2.5vw,36px),letter-spacing 0.3px → 1px',
-    '・保留金色閃爍動畫(advStageFlash 1.2s 循環),不會搶風頭但更醒目',
-    '・實作:.adv-stage-flash CSS(line ~3495)+ HTML 加 <br>(line ~6891)',
-    '【📍 popup 浮籤再下移避開按鈕】',
-    '・舊版(v5960):浮籤 bottom:-20px,外層 padding-bottom:24px,實際還是會切到按鈕字',
-    '・新版(v5980):浮籤 bottom:-44px,外層 padding-bottom:48px,字級 1.1em → 1em(略縮以省空間)',
-    '・現在浮籤完全位於按鈕下方間距外,玩家點按鈕不會誤觸,「⚔ 挑戰課堂複習」字也完整可見',
-    '・實作位置:_kingShowStartPopup(line ~40197 / 40201)',
-    '【📚 更新日誌維護新規則】',
-    '・舊做法:每次小改都加一則新 changelog,演進到 33 則,玩家難以閱讀',
-    '・新做法:同主題的多版本(如「課堂複習挑戰」從 v5870 演進到 v5980,共 10 個版本)',
-    '  合併成一則「累積版」,版本號用最新的、items 改寫成「現況描述」+「最後一次更動的差異」',
-    '・本次合併砍掉的版本:v5870 / v5880 / v5890 / v5900 / v5910 / v5920 / v5930 / v5950 / v5960 / v5970',
-    '・「以後都這樣」:加新 changelog 前先檢查是否與既有條目同主題,若是則合併並升版號',
-    '【👑 課堂複習挑戰系統 — 完整功能(含過往演進累積)】',
-    '・「今日知識王挑戰」popup 左右並排兩張卡:左 = 📖 課堂複習(金色)、右 = 🎨 一般科目(紫色)',
-    '・「📖 課堂複習」隨機抽自所有「年級+上/下」格式主題,涵蓋 4 個題庫陣列(ADV_QUIZ_DB / ADV_QUIZ_5S_MIDTERM / ADV_QUIZ_5S_U3_ANIMAL / ADV_QUIZ_5S_U4_SOUND)',
-    '・「🎲 換科目」剩 3 次共享,點一次同時重滾左右兩邊;手機版(<600px)切回上下並排',
-    '・課堂複習科目挑戰額外 +25% 獎勵加成:每項物品(召喚水晶 / 經驗書)25% 機率多送 1 份(期望值 +25%,避免小數,有「中獎驚喜感」)',
-    '・結算彈窗:金色 banner「📖 課堂複習挑戰｜每項獎勵都有 25% 機會多獲得 1 份」、有抽到綠燈、加成物品多顯示「📖 複習加成 +1」金色 badge',
-    '・「加強複習提醒區間」(KING_DOUBLED_REVIEW_TOPICS,目前為「五下自然第三單元」):卡片底部多金色閃爍「⭐ 加強複習期間獎勵再 +25%」',
-    '・冒險戰前選題:「📖 課堂複習」群組移到最上方,標題顯示「🎁 獎勵 +25%!」金色閃爍 badge',
-    '・popup 右上角小灰字版本印記(v5970 → v5980),協助偵測瀏覽器是否載到新版',
-    '【🛠 同主題重要修復沿革(僅留結論,不再列各版細節)】',
-    '・課堂複習卡渲染:_kingGetReviewSubjects() 必須掃 4 個題庫陣列(否則五下自然系列科目永遠不出現)',
-    '・課堂複習抽題:_kingDrawQuestions() 同樣必須掃 4 個題庫陣列(否則卡渲染得出來但抽到 0 題,toast「題目不足」)',
-    '・課堂複習加成:整數獎勵不直接 ×1.25(會出 3.75 小數),改用「每項 25% 機率 +1」的擲骰方式',
-    '・所有戰鬥(冒險戰小怪 / BOSS 勝利 / BOSS 戰敗)的 EXP / 知識幣都共用 _advCalcRewardMult(subject) 計算倍率',
-    '【🔧 細節】',
-    '・三個版本常數(CURRENT_BOOT_VER / CURRENT_VERSION / _GAME_LOADED_VERSION)同步 v5980',
-    '・popup 標題印記與 console.log 版本字串同步 v5980',
-  ] },
-  { ver:'v1.0.20260510.5850', brief:[
-    '📚 新增 20 題「五上自然第一二單元」題庫(老師提供)',
-  ], items:[
-    '【📚 五上自然第一二單元 20 題上架】',
-    '・題目對應五年級自然(光、影子、太陽軌跡、放大鏡、植物器官、繁殖、傳播…)',
-    '・歸類為高年級自然題庫,id 3101~3120,接續在 ADV_QUIZ_DB 尾端',
-    '・此題庫未指定加強複習提醒區間,玩家做題照基本獎勵發放',
-    '・本次只新增題目,玩法與其他系統皆未動',
-  ] },
-  { ver:'v1.0.20260510.5840', brief:[
-    '🐾 寵物頁面上端說明文字放大、更醒目好讀',
-    '🎯 今日知識王挑戰新增「加倍複習主題」直接選功能,其他主題仍隨機',
-    '⚡ 戰鬥時 AI 對手「思考延遲」由 1~1.2 秒縮短為 0.5 秒,節奏更明快',
-  ], items:[
-    '【🐾 寵物頁面說明文字放大】',
-    '・寵物圖鑑頁面最上方「🌿 關於寵物系統」說明區塊整體放大',
-    '・標題字 22px → 30px、letter-spacing +1px,更醒目',
-    '・說明本文 17px → 22px,行高 1.7 → 1.75,padding 加大,讀起來不擠',
-    '・整體視覺更接近主題說明區的標準大小,小朋友一眼就看到',
-    '【🎯 知識王挑戰：加倍複習主題直接選 / 其他主題隨機】',
-    '・原流程:點「開始抽科目」→ 系統隨機抽一個科目(可重抽 3 次) → 開始挑戰',
-    '・新流程:點「開始挑戰」→ 進入「選擇挑戰主題」彈窗',
-    '   - ⭐ 加倍複習課程主題:老師指定的加強複習科目,做為按鈕直接點選即開始',
-    '   - 🎲 其他課程主題(隨機):點下後走原本隨機抽科目+重抽流程',
-    '・若管理員當下沒設定任何加倍複習主題,會自動跳過選擇彈窗,玩家流程跟以前一樣',
-    '・加倍複習主題清單由管理員依老師(透過題庫編輯器)填寫的「加強複習提醒區間」整合',
-    '・主題名稱必須對應 ADV_QUIZ_DB 內的 subject 欄位才會出現,避免按下去抽不到題',
-    '【⚡ AI 對手思考延遲縮短】',
-    '・原本 AI 對手回合開始時會等 1.0~1.2 秒「思考」才行動,小朋友等得不耐煩',
-    '・本版全部改成 0.5 秒,戰鬥節奏明顯變快但仍保留切換感、不會一閃而過',
-    '・對 BOSS 爆發、技能動畫、台詞等其他延遲完全沒影響,只縮 AI 行動前的思考間隔',
-    '【實作位置】',
-    '・寵物頁面說明區 _renderPetCollection 內 const intro(line ~61911)字級調整',
-    '・新增常數 KING_DOUBLED_REVIEW_TOPICS(line ~39927)+ 函式 _kingGetDoubledReviewTopics / _kingStartWithSubject / _kingShowSubjectChoice',
-    '・_kingShowEntryPopup「開始抽科目」按鈕改呼叫 _kingShowSubjectChoice(line ~39878)',
-    '・aiAct 觸發點 1200ms → 500ms(line ~27568)、跳過插隊兩處 1000ms → 500ms(line ~26449/~26497)',
-    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v5840',
-  ] },
 ];
 
 
@@ -71212,7 +70412,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260514.6520';
+  const CURRENT_VERSION = 'v1.0.20260514.6530';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71246,7 +70446,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260514.6520';
+window._GAME_LOADED_VERSION = 'v1.0.20260514.6530';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
