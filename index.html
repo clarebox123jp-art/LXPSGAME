@@ -6884,7 +6884,7 @@ body.art-premium #summon-overlay {
 }
 
 </style>
-<script src="adv_quiz_db.js?v=20260514c"></script>
+<script src="adv_quiz_db.js?v=20260514b"></script>
 <script src="hero_db.js?v=20260513c"></script>
 </head>
 <body>
@@ -17740,15 +17740,6 @@ const BURST_GIF_DB = {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9D%88%E9%AD%82%E6%94%B6%E5%89%B2.gif',
     sfx:[['sfx-summon-smoke',1.0],['sfx-explode',0.85],['sfx-heal',0.8]],
     tint:'rgba(180,180,220,0.22)'
-  },
-  // ★ v1.0.20260514.6490 — 學生設計英雄系列(5 年 5 班高同學)
-  //   布奶鳥獸 爆發「生氣的布丁&奶茶」:暖橘奶茶染色 + 連擊節奏 + 可愛收尾
-  //   GIF 檔名:生氣的布丁奶茶.gif (檔名不含「&」,但 burstName key 保留「&」)
-  //   參數設計理念:tint 用奶茶橘呼應角色又傳達「生氣」暖色;sfx 走「連擊感+爆發感+可愛收尾」
-  '生氣的布丁&奶茶': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%94%9F%E6%B0%A3%E7%9A%84%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6.gif',
-    sfx:[['sfx-punch',1.0],['sfx-burst',0.85],['sfx-fantasy',0.7]],
-    tint:'rgba(255,170,90,0.20)'
   },
 };
 
@@ -69228,43 +69219,6 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260514.6530', brief:[
-    '🦜 新增「布奶鳥獸」極限爆發專屬動畫:暖橘奶茶染色 + 連擊節奏音效 + 可愛收尾(設計單檔名「生氣的布丁奶茶.gif」)',
-    '📚 主程式減肥第三招完成:把 index.html 殘存的 5 個專題題庫(五下自然期中評量/第三單元/第四單元/照顧與陪伴幼兒/領養與照顧狗狗)全部搬到 adv_quiz_db.js,index.html 內已無任何題庫陣列',
-    '📝 五下自然第三/第四單元各補 20 題南一版進階題(觀察、假設、實驗設計、生活應用導向)',
-    '🏝 主程式減肥第四招完成:TAIWAN_QUIZ_DB(台灣環島 300 題,10 關×30 題)從 index.html 搬到 adv_quiz_db.js 末尾,index.html 累計減量達 -527 KB / -11.7%(對比 v6300)',
-  ], items:[
-    '【🦜 布奶鳥獸爆發特效(本次新增)】',
-    '・BURST_GIF_DB 新增 `\'生氣的布丁&奶茶\'` 條目,指向 GitHub raw GIF URL',
-    '・參數:tint=`rgba(255,170,90,0.20)`(奶茶橘呼應角色又傳達「生氣」暖色)',
-    '・音效:sfx-punch(連擊節奏) + sfx-burst(爆發感) + sfx-fantasy(可愛收尾)',
-    '・scale 用預設值 1.6(與大多數爆發特效一致)',
-    '・取題邏輯零修改:`_showBurstCinematic` 結尾呼叫 `_showBurstGif(bd.n)`,bd.n 就是「生氣的布丁&奶茶」自動觸發',
-    '・GIF 檔名 `生氣的布丁奶茶.gif` 不含「&」,但 burstName key 保留「&」,完全相容',
-    '【📚 拆 5 個專題題庫(同批)】',
-    '・變數名保留:ADV_QUIZ_5S_MIDTERM / ADV_QUIZ_5S_U3_ANIMAL / ADV_QUIZ_5S_U4_SOUND / ADV_QUIZ_CARE_INFANT / ADV_QUIZ_DOG_CARE 全保留為全域 const,只是定義位置從 index.html 搬到 adv_quiz_db.js',
-    '・取題邏輯零修改:`advGetQuizPool()` 裡 `if (subject === \'五下自然第三單元\') ... [...ADV_QUIZ_5S_U3_ANIMAL]` 完全不用動',
-    '・持久化答對進度 `_persistentCorrectQuestions[subject]` 完全不影響(key 是 subject 字串,跟陣列定義在哪檔案無關)',
-    '・五下自然 U3:30 題 → 50 題(新增 9131-9150,難度標 進階)',
-    '・五下自然 U4:30 題 → 50 題(新增 9231-9250,難度標 進階)',
-    '【🏝 拆 TAIWAN_QUIZ_DB(同批)】',
-    '・教科書級外部化範例:1 個主宣告,0 個 Object.assign / push / 索引賦值,9 處讀取點全有 typeof !== \'undefined\' 防呆',
-    '・連同前置註解區(「═══ 台灣環島歷險記 300 題題庫 ═══」橫線框)一起搬走,共 67 KB',
-    '・bossId 分佈 10 關 × 30 題完美保留:彰化滷肉飯 / 雲林布袋戲 / 嘉義雞肉飯 / 台南担仔麵 / 高雄美術 / 屏東黑鮪魚 / 台東熱氣球 / 花蓮太魯閣 / 宜蘭蘭陽博物館 / 玉山國家公園',
-    '【📊 檔案大小變化】',
-    '・index.html: 4,063,793 → 3,965,574 bytes(淨減 98 KB / 2.4%)',
-    '・adv_quiz_db.js: 491,919 → 605,125 bytes(增 113 KB,含新增 40 題 + 5 個專題 170 題 + TAIWAN_QUIZ_DB 300 題)',
-    '・v8 起點(v6300)累積:4.49 MB → 3.78 MB,**累積減量 -11.7%**',
-    '【🔒 鐵律 1.22 同步立規(老師明確指示)】',
-    '・「以後有新題目都這樣做」 — 永遠加到 adv_quiz_db.js,不要動 index.html',
-    '・index.html 內已完全沒有任何題庫陣列定義,所有題庫 100% 統一在 adv_quiz_db.js(7 個全域陣列共 2,634 題)',
-    '【🆕 鐵律 1.21 同步立規】',
-    '・跨檔搬資料表時採「保留變數名」策略 — 只動定義位置,不動取用程式碼,把測試成本降到最低',
-    '【版本同步】',
-    '・CURRENT_VERSION → v1.0.20260514.6530',
-    '・window._GAME_LOADED_VERSION → v1.0.20260514.6530',
-    '・adv_quiz_db.js?v= → 20260514c(同日第三次更新)',
-  ] },
   { ver:'v1.0.20260514.6520', brief:[
     '🩹 修補學生補償工具找不到日本三主 BOSS(大天狗/酒吞童子/玉藻前)的 bug',
     '🗾 補償清單的「🗾 日本主 BOSS 解鎖系」分組現在正常顯示三隻夥伴英雄',
@@ -69816,7 +69770,7 @@ const GAME_CHANGELOG = [
     '【這次怎麼做?】',
     '・把整段 const ADV_QUIZ_DB = [...] 從 index.html 第 42471 行剪下',
     '・存到同資料夾的 adv_quiz_db.js(共 491 KB,2164 題完整無遺漏)',
-    '・在 index.html 的 <head> 加一行 <script src="adv_quiz_db.js?v=20260514c"><\/script>',
+    '・在 index.html 的 <head> 加一行 <script src="adv_quiz_db.js?v=20260514b"><\/script>',
     '・讀檔順序:adv_quiz_db.js 先載完(把 ADV_QUIZ_DB 變成全域變數),主程式所有用到它的地方就跟之前一樣',
     '【未來怎麼維護?】',
     '・新增/修改題目只動 adv_quiz_db.js,index.html 完全不必碰',
@@ -69826,7 +69780,7 @@ const GAME_CHANGELOG = [
     '【實作細節】',
     '・index.html 第 42471 行原本是「const ADV_QUIZ_DB = [{id:1,...},{id:2,...},...{id:3120,...}];」一行 49 萬字元',
     '・現在替換成 5 行說明註解,正體向後相容說明',
-    '・index.html L6835(原 </head> 前一行)新增 <script src="adv_quiz_db.js?v=20260514c"><\/script>',
+    '・index.html L6835(原 </head> 前一行)新增 <script src="adv_quiz_db.js?v=20260514b"><\/script>',
     '・新檔 adv_quiz_db.js 為「全域變數宣告」格式(非 ES module),確保 typeof ADV_QUIZ_DB 不等於 undefined 等所有檢查照舊運作',
     '【受影響的引用點(沒動,維持原樣)】',
     '・_kingGetReviewSubjects(line ~45960):掃 ADV_QUIZ_DB 取課堂複習科目',
@@ -69845,7 +69799,7 @@ const GAME_CHANGELOG = [
   ], adminItems:[
     '【🧪 部署步驟】',
     '・把新的 index.html 和新檔 adv_quiz_db.js 都 push 到 GitHub 同一資料夾',
-    '・玩家瀏覽器會自動從 <script src="adv_quiz_db.js?v=20260514c"> 抓題庫',
+    '・玩家瀏覽器會自動從 <script src="adv_quiz_db.js?v=20260514b"> 抓題庫',
     '・若忘了上傳 adv_quiz_db.js,玩家進遊戲會看到 console 報「ADV_QUIZ_DB is not defined」',
     '【🧪 驗證方式】',
     '・進入【冒險挑戰】任一關 → 答題 → 題目應該跟之前一樣正常出現',
@@ -71258,7 +71212,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260514.6530';
+  const CURRENT_VERSION = 'v1.0.20260514.6520';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71292,7 +71246,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260514.6530';
+window._GAME_LOADED_VERSION = 'v1.0.20260514.6520';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
