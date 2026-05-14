@@ -18,7 +18,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment, deleteDoc, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -37,49 +37,278 @@
   const _fbDb   = getFirestore(_fbApp);
   const _fbProvider = new GoogleAuthProvider();
 
-  // 暴露給全域
-  window._fbSignIn = async function() {
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6540 — 平板帳號切換穩定版
+  //
+  // 【需求】學生用座號平板,需要快速切換到自己/別人的帳號,不要互相污染。
+  // 【舊版問題】
+  //   1. signInWithPopup 在 iOS Safari / 學校受限環境會跳空白頁就關掉,
+  //      錯誤被 _silentCodes 吃掉 → 玩家以為「點了沒反應」
+  //   2. 切換帳號沒先登出,popup 失敗時還是停在舊帳號 → 看不出有切換
+  //   3. 沒有「最近登入過的帳號」記憶,每次都要重打/重選 Google 帳號
+  //
+  // 【新版設計】
+  //   - 先做 signOut 等清乾淨,再開 signInWithPopup
+  //   - popup 失敗(被擋/不支援) → 自動 fallback 到 signInWithRedirect
+  //   - redirect 回來時用 getRedirectResult 接續登入(onAuthStateChanged 也會跑)
+  //   - 真的失敗才彈窗給使用者看明確錯誤訊息 + 教學
+  //   - 新增「最近登入帳號」清單 API,座號平板上只記本機 localStorage
+  //   - 新增 _fbSignInWithHint(email):一鍵登入指定 email(Google 通常會自動完成)
+  // ════════════════════════════════════════════════════════════════
+
+  // 顯示登入錯誤的友善訊息(被擋 / 網路 / 無權限等)
+  function _showLoginErrorTip(title, hint){
     try {
-      const result = await signInWithPopup(_fbAuth, _fbProvider);
-      // onAuthStateChanged 會自動觸發
-    } catch(e) {
-      // ★ 忽略使用者主動取消 / 彈窗關閉 / 跨域重定向等暫時性錯誤
-      const _silentCodes = new Set([
-        'auth/cancelled-by-user',
-        'auth/popup-closed-by-user',
-        'auth/popup-blocked',
-        'auth/unauthorized-domain',  // 第一次載入時 Firebase 可能誤報，實際已設定
-        'auth/operation-not-allowed',
-        'auth/network-request-failed',
-      ]);
-      if(_silentCodes.has(e.code)){
-        console.warn('Google 登入被靜默忽略:', e.code);
-        return; // 不顯示 alert
-      }
-      console.error('Google 登入失敗', e);
-      // 只在真正未知的錯誤時才提示
-      // alert('登入失敗，請確認已在 Firebase 設定授權網域。');
+      // 避免重複疊加
+      const old = document.getElementById('_login-error-tip');
+      if(old) old.remove();
+      const pop = document.createElement('div');
+      pop.id = '_login-error-tip';
+      pop.style.cssText =
+        'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.85);' +
+        'display:flex;align-items:center;justify-content:center;' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      const card = document.createElement('div');
+      card.style.cssText =
+        'background:linear-gradient(135deg,#1a0820,#0d0515);' +
+        'border:3px solid #ff6688;border-radius:24px;' +
+        'padding:36px 40px;max-width:min(92vw,520px);text-align:center;' +
+        'box-shadow:0 0 50px rgba(255,80,120,0.4);';
+      card.innerHTML =
+        '<div style="font-size:54px;margin-bottom:14px;">⚠️</div>' +
+        '<div style="font-size:24px;font-weight:900;color:#ff88aa;margin-bottom:10px;">' + title + '</div>' +
+        '<div style="font-size:16px;color:#ddd;line-height:1.7;margin-bottom:22px;text-align:left;">' + hint + '</div>' +
+        '<button id="_login-error-close" style="padding:12px 32px;font-size:18px;font-weight:900;' +
+          'background:linear-gradient(135deg,rgba(80,150,255,0.3),rgba(40,100,200,0.3));' +
+          'border:2px solid #6688ff;color:#aaccff;border-radius:12px;cursor:pointer;">我知道了</button>';
+      pop.appendChild(card);
+      document.body.appendChild(pop);
+      pop.addEventListener('click', function(e){ if(e.target===pop) pop.remove(); });
+      document.getElementById('_login-error-close').onclick = function(){ pop.remove(); };
+    } catch(_) { /* 連 DOM 都不行就 alert */
+      try { alert(title + '\n\n' + hint.replace(/<[^>]+>/g,'')); } catch(__) {}
     }
+  }
+
+  // 偵測「環境很可能不支援 popup」→ 直接走 redirect 比較順
+  function _shouldPreferRedirect(){
+    try {
+      const ua = (navigator.userAgent || '').toLowerCase();
+      // iPad/iPhone Safari(非 Chrome 內核)→ popup 第三方 Cookie 容易壞
+      const isIOS = /iphone|ipad|ipod/.test(ua);
+      // Android 內嵌瀏覽器(WebView)→ popup 經常被擋
+      const isAndroidWebView = /wv\)/.test(ua) || /; wv\b/.test(ua);
+      // 顯示模式為 standalone(PWA / 加到主畫面)→ popup 多半失效
+      let isStandalone = false;
+      try {
+        isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                      || (window.navigator.standalone === true);
+      } catch(_) {}
+      return isIOS || isAndroidWebView || isStandalone;
+    } catch(_) { return false; }
+  }
+
+  // 核心:嘗試 popup,失敗 fallback redirect,redirect 也失敗才彈錯誤
+  async function _doSignInFlow(provider, opts){
+    opts = opts || {};
+    const _preferRedirect = _shouldPreferRedirect();
+
+    // ── 路徑 A:行動裝置 / PWA / 受限環境 → 直接走 redirect ──
+    if(_preferRedirect){
+      try {
+        // 記下「正在 redirect 中」旗標,讓 getRedirectResult 知道要處理
+        localStorage.setItem('lxps_pending_redirect_signin', String(Date.now()));
+        await signInWithRedirect(_fbAuth, provider);
+        return null; // redirect 不會在此處 resolve,頁面已經跳走
+      } catch(e){
+        localStorage.removeItem('lxps_pending_redirect_signin');
+        console.error('[登入] signInWithRedirect 失敗', e);
+        _showLoginErrorTip(
+          '無法開啟 Google 登入',
+          '<b>可能原因:</b><br>' +
+          '・網路連線不穩定<br>' +
+          '・學校網路擋了 Google 登入服務<br><br>' +
+          '<b>請試試:</b><br>' +
+          '① 確認網路有連上<br>' +
+          '② 重新整理頁面再點登入<br>' +
+          '③ 換 Chrome 瀏覽器開遊戲'
+        );
+        return null;
+      }
+    }
+
+    // ── 路徑 B:桌機 → 先試 popup ──
+    try {
+      const result = await signInWithPopup(_fbAuth, provider);
+      return result;
+    } catch(e){
+      // popup 失敗的處理
+      const code = e && e.code;
+
+      // 使用者主動取消 → 完全安靜(不算錯誤)
+      if(code === 'auth/cancelled-by-user' || code === 'auth/popup-closed-by-user'){
+        console.log('[登入] 使用者取消');
+        return null;
+      }
+
+      // popup 被擋 / 環境不支援 → 自動 fallback 到 redirect
+      if(code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'){
+        console.warn('[登入] popup 失敗,改用 redirect:', code);
+        try {
+          localStorage.setItem('lxps_pending_redirect_signin', String(Date.now()));
+          await signInWithRedirect(_fbAuth, provider);
+          return null;
+        } catch(e2){
+          localStorage.removeItem('lxps_pending_redirect_signin');
+          console.error('[登入] redirect fallback 也失敗', e2);
+          _showLoginErrorTip(
+            '瀏覽器擋住了 Google 登入',
+            '<b>請先允許彈出視窗:</b><br>' +
+            '・電腦:點網址列右側的 🚫 / 🔒 圖示,選擇「永遠允許」<br>' +
+            '・iPad:設定 → Safari → 關閉「阻擋彈出式視窗」<br>' +
+            '・Android:Chrome 設定 → 網站設定 → 彈出式視窗 → 允許<br><br>' +
+            '允許後請重新整理頁面再點登入。'
+          );
+          return null;
+        }
+      }
+
+      // 網路錯誤 → 友善訊息
+      if(code === 'auth/network-request-failed'){
+        _showLoginErrorTip(
+          '網路連線有問題',
+          '無法連到 Google 登入伺服器。<br><br>' +
+          '<b>請確認:</b><br>' +
+          '① Wi-Fi / 行動網路有連上<br>' +
+          '② 過 10 秒後再點一次登入<br>' +
+          '③ 如果重複失敗,請告訴老師'
+        );
+        return null;
+      }
+
+      // 未授權網域(理論上不會發生,但保險)
+      if(code === 'auth/unauthorized-domain'){
+        _showLoginErrorTip(
+          '網域未授權',
+          '目前的網址未授權使用 Google 登入。<br><br>' +
+          '請告訴老師,將網址加入 Firebase 授權清單。'
+        );
+        return null;
+      }
+
+      // 其他未知錯誤 → 顯示原始錯誤碼,方便回報
+      console.error('[登入] 未預期錯誤', code, e);
+      _showLoginErrorTip(
+        '登入時發生未預期錯誤',
+        '<b>錯誤代碼:</b> <code style="color:#ffaa66;">' + (code || 'unknown') + '</code><br><br>' +
+        '請重新整理頁面再試一次。<br>如果重複失敗,請把這個錯誤代碼告訴老師。'
+      );
+      return null;
+    }
+  }
+
+  // 暴露給全域:標準登入
+  window._fbSignIn = async function() {
+    const provider = new GoogleAuthProvider();
+    return await _doSignInFlow(provider);
+  };
+
+  // 暴露給全域:用 email 提示登入(快速切換用)
+  // Google 通常會自動跳過帳號選擇器,直接以該 email 完成登入
+  window._fbSignInWithHint = async function(email){
+    const provider = new GoogleAuthProvider();
+    if(email && typeof email === 'string'){
+      provider.setCustomParameters({ login_hint: email });
+    }
+    return await _doSignInFlow(provider);
+  };
+
+  // 暴露給全域:強制顯示帳號選擇器(用於「加入其他帳號」)
+  window._fbSignInPickAccount = async function(){
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return await _doSignInFlow(provider);
   };
 
   window._fbSignOut = async function() {
     await signOut(_fbAuth);
   };
 
-  // ★ 切換帳號：強制顯示 Google 帳號選擇器（不先登出，避免彈窗被瀏覽器封鎖）
-  window._fbSwitchAccount = async function() {
+  // ★ 切換帳號:先 signOut 等乾淨 → 再 signIn,避免 race condition
+  //   舊版直接呼叫 signInWithPopup 不先登出,popup 失敗時還是停在舊帳號,
+  //   而且 _applySafeData 的 union 合併在「短暫雙帳號狀態」可能誤把舊資料寫入新帳號雲端。
+  window._fbSwitchAccount = async function(email) {
+    // 先記下要切到哪個 email(供登出後重新登入用)
+    const _hint = email || null;
     try {
-      const switchProvider = new GoogleAuthProvider();
-      switchProvider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(_fbAuth, switchProvider);
-      // signInWithPopup 完成後 onAuthStateChanged 會自動更新 UI
-    } catch(e) {
-      const _silentSwitch = ['auth/cancelled-by-user','auth/popup-closed-by-user',
-        'auth/popup-blocked','auth/unauthorized-domain'];
-      if (!_silentSwitch.includes(e.code)) {
-        console.error('切換帳號失敗', e.code, e);
-      }
+      // 1) 立刻登出當前帳號,讓 onAuthStateChanged 跑完 else 分支
+      //    (會清掉 session、停心跳、停閒置計時、清本機殘留)
+      await signOut(_fbAuth);
+      // 2) 等一拍讓 onAuthStateChanged 完成清理
+      await new Promise(r => setTimeout(r, 300));
+    } catch(e){
+      console.warn('[切換帳號] 先登出失敗(繼續嘗試新登入)', e);
     }
+    // 3) 再開新登入(若有 hint 就帶,讓 Google 直接認得)
+    const provider = new GoogleAuthProvider();
+    if(_hint){
+      provider.setCustomParameters({ login_hint: _hint });
+    } else {
+      provider.setCustomParameters({ prompt: 'select_account' });
+    }
+    return await _doSignInFlow(provider);
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ 最近登入過的帳號清單(只存本機 localStorage,每台平板各自記憶)
+  //   結構:[{ uid, email, displayName, photoURL, lastLoginAt }]
+  //   上限 6 個,LRU 排序(最近登入的在最前面)
+  // ════════════════════════════════════════════════════════════════
+  const RECENT_ACCOUNTS_KEY = 'lxps_recent_accounts';
+  const RECENT_ACCOUNTS_MAX = 6;
+
+  window._getRecentAccounts = function(){
+    try {
+      const raw = localStorage.getItem(RECENT_ACCOUNTS_KEY);
+      if(!raw) return [];
+      const list = JSON.parse(raw);
+      if(!Array.isArray(list)) return [];
+      // 過濾掉空項目
+      return list.filter(a => a && a.uid && a.email);
+    } catch(e) {
+      console.warn('[最近帳號] 讀取失敗', e);
+      return [];
+    }
+  };
+
+  window._addRecentAccount = function(user){
+    if(!user || !user.uid) return;
+    try {
+      let list = window._getRecentAccounts();
+      // 移除既有同 uid(等下放回最前面)
+      list = list.filter(a => a.uid !== user.uid);
+      // 把新的放最前面
+      list.unshift({
+        uid: user.uid,
+        email: (user.email || '').toLowerCase(),
+        displayName: user.displayName || user.email || '玩家',
+        photoURL: user.photoURL || '',
+        lastLoginAt: Date.now(),
+      });
+      // 限制長度
+      if(list.length > RECENT_ACCOUNTS_MAX) list = list.slice(0, RECENT_ACCOUNTS_MAX);
+      localStorage.setItem(RECENT_ACCOUNTS_KEY, JSON.stringify(list));
+    } catch(e) {
+      console.warn('[最近帳號] 寫入失敗', e);
+    }
+  };
+
+  window._removeRecentAccount = function(uid){
+    if(!uid) return;
+    try {
+      const list = window._getRecentAccounts().filter(a => a.uid !== uid);
+      localStorage.setItem(RECENT_ACCOUNTS_KEY, JSON.stringify(list));
+    } catch(e) { console.warn('[最近帳號] 移除失敗', e); }
   };
 
   // ══ Session 管理 API ══
@@ -1231,6 +1460,39 @@
     }
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6540 — 處理 redirect 登入回傳
+  //   若上一次是用 signInWithRedirect 登入(平板環境),頁面會被導去 Google
+  //   完成驗證後再導回本頁。此時 getRedirectResult 會拿到登入結果,
+  //   並觸發 onAuthStateChanged。我們不需要做特別事情,但要清掉 pending 旗標,
+  //   並在錯誤時告訴使用者。
+  // ════════════════════════════════════════════════════════════════
+  (async function _handlePendingRedirect(){
+    try {
+      const pending = localStorage.getItem('lxps_pending_redirect_signin');
+      if(!pending) return; // 沒有 redirect 進行中
+      const result = await getRedirectResult(_fbAuth);
+      localStorage.removeItem('lxps_pending_redirect_signin');
+      if(result && result.user){
+        console.log('✅ [redirect 登入] 成功', result.user.email);
+        // onAuthStateChanged 會自動接手後續流程
+      }
+    } catch(e){
+      localStorage.removeItem('lxps_pending_redirect_signin');
+      console.error('[redirect 登入] 失敗', e);
+      const code = e && e.code;
+      // 使用者在 Google 那邊取消 → 安靜處理
+      if(code === 'auth/cancelled-by-user' || code === 'auth/user-cancelled'){
+        return;
+      }
+      _showLoginErrorTip(
+        '登入未完成',
+        '<b>錯誤代碼:</b> <code style="color:#ffaa66;">' + (code || 'unknown') + '</code><br><br>' +
+        '可能是在 Google 那邊取消了,或網路不穩。<br>請重新點登入再試一次。'
+      );
+    }
+  })();
+
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
     if(user) {
@@ -1347,6 +1609,19 @@
       if(nm){ nm.textContent = _dispName; nm.title = '點擊修改暱稱'; nm.style.cursor='pointer'; nm.onclick = openNicknameModal; }
       if(btnWrap) btnWrap.style.display = 'none';
       if(userInfo) userInfo.style.display = 'flex';
+      // ★ v1.0.20260514.6540 — 把這個帳號加進「最近登入過的帳號」(本機 localStorage)
+      //   供下次「快速切換帳號」UI 直接點選,不用每次都重打 Google 登入
+      //   優先用本地保存的暱稱(玩家自己改過的),否則用 Google 名稱
+      try {
+        if(typeof window._addRecentAccount === 'function'){
+          window._addRecentAccount({
+            uid: user.uid,
+            email: user.email,
+            displayName: _dispName,
+            photoURL: user.photoURL || '',
+          });
+        }
+      } catch(_e) { console.warn('[最近帳號] 寫入失敗', _e); }
       // ★ 關閉登入選擇視窗（若還開著）
       const lgModal = document.getElementById('login-gate-modal');
       if(lgModal) lgModal.style.display = 'none';
@@ -1562,6 +1837,36 @@
       const userInfo = document.getElementById('google-user-info');
       if(btnWrap) btnWrap.style.display = '';
       if(userInfo) userInfo.style.display = 'none';
+      // ════════════════════════════════════════════════════════════════
+      // ★ v1.0.20260514.6540 — 登出時清乾淨「玩家資訊類」UI 殘留
+      //   舊版只清了 google-login-btn-wrap / google-user-info 的顯示切換,
+      //   但 _myRepHero / _playerNickname / 各畫面玩家欄位都還掛著前一位的資料,
+      //   登出後若停留在冒險選關頁,還會看到舊代表英雄與暱稱,造成困惑。
+      // ════════════════════════════════════════════════════════════════
+      try {
+        window._myRepHero = null;
+        window._playerNickname = null;
+        // 頂部玩家欄
+        const _avEl = document.getElementById('google-avatar');
+        if(_avEl) _avEl.src = '';
+        const _nmEl = document.getElementById('google-name');
+        if(_nmEl) _nmEl.textContent = '';
+        // 冒險畫面玩家名字
+        const _advUName = document.getElementById('adv-user-name');
+        if(_advUName) _advUName.textContent = '';
+        // 代表英雄欄(冒險選關頁頂端)
+        const _rhName = document.getElementById('adv-rep-hero-name');
+        if(_rhName) _rhName.textContent = '';
+        const _rhLv   = document.getElementById('adv-rep-hero-lv');
+        if(_rhLv)   _rhLv.textContent = '';
+        const _rhWrap = document.getElementById('adv-rep-hero-img-wrap');
+        if(_rhWrap) _rhWrap.innerHTML = '';
+        const _rhBar  = document.getElementById('adv-rep-hero-bar');
+        if(_rhBar)  _rhBar.style.display = 'none';
+        // 好友面板若還開著就關掉(避免顯示前一位的好友)
+        const _fp = document.getElementById('_friend-panel');
+        if(_fp) _fp.remove();
+      } catch(_e) { console.warn('[登出 UI 清理] 失敗', _e); }
     }
   });
 </script>
@@ -52168,23 +52473,50 @@ window._clearAccountLocalData = function(reason){
     console.log('🚪 [閒置自動登出] 觸發,原因:' + reason);
     _closeWarning('auto_logout');
     window._idleAutoLogoutStop();
-    // 跑正常 gSignOut 流程(會 save → signOut → onAuthStateChanged else 分支再清本機)
+    // ★ v1.0.20260514.6540 — 先存檔再 reload(不依賴 onAuthStateChanged 清 UI)
+    //   舊版只呼叫 gSignOut 但畫面停在原處,_myRepHero / _playerNickname 等
+    //   全域變數可能還沒被清乾淨,造成「點不到」的鬼畫面。
+    //   新版:存檔 → 顯示全螢幕「閒置過久已登出」訊息 3 秒 → location.reload()
+    //   reload 後一切歸零,玩家回到「未登入的首頁」乾淨狀態。
     try {
-      if(typeof gSignOut === 'function') await gSignOut();
-      else if(window._fbSignOut) await window._fbSignOut();
-    } catch(e) { console.warn('[閒置自動登出] gSignOut 失敗', e); }
-    // 顯示提示給玩家看(下次他回來看到時可知道為什麼登出了)
+      // 1) 先把進度寫到雲端(safe 槽 + 完整雲端存檔)
+      if(window._trySaveSafeIfHealthier && window._gUserId){
+        await window._trySaveSafeIfHealthier('idle_auto_logout');
+      }
+      if(typeof gameCloudSave === 'function' && window._gUserId){
+        try { await gameCloudSave(); } catch(_) {}
+      }
+    } catch(e) { console.warn('[閒置自動登出] 存檔失敗', e); }
+    // 2) 直接 signOut(不走 gSignOut 全套,因為等下會 reload,跑半套就好)
     try {
-      const _t = document.createElement('div');
-      _t.style.cssText =
-        'position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:99998;' +
-        'background:rgba(40,50,80,0.95);border:2px solid #88aaff;color:#cce0ff;' +
-        'font-size:16px;padding:14px 24px;border-radius:12px;max-width:90vw;' +
-        'box-shadow:0 4px 20px rgba(0,0,0,0.5);font-family:"M PLUS Rounded 1c",sans-serif;';
-      _t.innerHTML = '⏰ 你已因為 5 分鐘沒操作而被自動登出<br>進度已存到雲端,下次登入會繼續';
-      document.body.appendChild(_t);
-      setTimeout(function(){ if(_t.parentNode) _t.remove(); }, 6000);
+      if(window._fbSignOut) await window._fbSignOut();
+    } catch(e) { console.warn('[閒置自動登出] signOut 失敗', e); }
+    // 3) 顯示全螢幕提示(避免被各種 modal 蓋住)
+    try {
+      const pop = document.createElement('div');
+      pop.id = '_idle-logout-done';
+      pop.style.cssText =
+        'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);' +
+        'display:flex;align-items:center;justify-content:center;' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      pop.innerHTML =
+        '<div style="background:linear-gradient(135deg,#0a0e20,#060810);' +
+          'border:3px solid #88aaff;border-radius:24px;' +
+          'padding:40px 48px;max-width:min(92vw,520px);text-align:center;' +
+          'box-shadow:0 0 50px rgba(80,140,255,0.4);">' +
+          '<div style="font-size:60px;margin-bottom:14px;">⏰</div>' +
+          '<div style="font-size:28px;font-weight:900;color:#aaccff;margin-bottom:14px;">閒置過久,已登出</div>' +
+          '<div style="font-size:17px;color:#ccc;line-height:1.7;">' +
+            '5 分鐘沒有操作,系統已自動登出並儲存進度。<br>' +
+            '畫面 3 秒後會自動回到首頁。' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(pop);
     } catch(_){}
+    // 4) 3 秒後強制重整(這樣才會回到「未登入的乾淨首頁」)
+    setTimeout(function(){
+      try { window.location.reload(); } catch(_) {}
+    }, 3000);
   }
 
   function _tick(){
@@ -52760,18 +53092,37 @@ function _applySafeData(raw) {
   // ★ 冒險快照：還原到 localStorage，供重新開啟時恢復冒險進度
   // ★ v1.0.20260424.1030 — 強化驗證:只有快照含「完整戰鬥資料」(p1/p2 陣列)才寫回,
   //   避免雲端殘留的「無戰鬥資料 fallback」造成下次進遊戲看到假的「未完成戰鬥」
+  // ★ v1.0.20260514.6540 — 修正:
+  //   1) p1/p2 實際是巢狀在 advSnapshot.battleState 裡(_saveBattleRoundSnapshot 的結構),
+  //      舊版驗證 data.advSnapshot.p1 永遠是 undefined → 跨裝置接續戰鬥永遠失敗
+  //   2) 寫回的 key 應該是 adv_battle_snap(不是 adv_crash_snapshot),
+  //      因為 _advRestoreBattleState 是優先讀 adv_battle_snap
   if(data.advSnapshot && data.advSnapshot.stage) {
-    const _hasBattleData = data.advSnapshot.p1 && Array.isArray(data.advSnapshot.p1) && data.advSnapshot.p1.length > 0
-                          && data.advSnapshot.p2 && Array.isArray(data.advSnapshot.p2) && data.advSnapshot.p2.length > 0;
+    // 兼容兩種格式:(a) 新版 battleState 包住 / (b) 舊版 p1/p2 在頂層
+    const _bs = data.advSnapshot.battleState;
+    const _hasBattleData =
+      ( _bs && Array.isArray(_bs.p1) && _bs.p1.length > 0
+            && Array.isArray(_bs.p2) && _bs.p2.length > 0 )
+      ||
+      ( Array.isArray(data.advSnapshot.p1) && data.advSnapshot.p1.length > 0
+        && Array.isArray(data.advSnapshot.p2) && data.advSnapshot.p2.length > 0 );
     // 還要檢查時效性:超過 24 小時的快照不應再用
     const _isFresh = data.advSnapshot.ts && (Date.now() - data.advSnapshot.ts) < 24*60*60*1000;
     if(_hasBattleData && _isFresh){
-      try { localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot)); } catch(e) {}
+      try {
+        // 寫回戰鬥快照 key(_advRestoreBattleState 會優先讀這個)
+        localStorage.setItem('adv_battle_snap', JSON.stringify(data.advSnapshot));
+        // 同時寫一份到舊版 key,以防有舊路徑讀它
+        localStorage.setItem('adv_crash_snapshot', JSON.stringify(data.advSnapshot));
+        console.log('[雲端載入] ✅ 已還原戰鬥快照(stage=' + data.advSnapshot.stage
+          + ', round=' + (data.advSnapshot.round||'?')
+          + ', ts=' + new Date(data.advSnapshot.ts).toLocaleString() + ')');
+      } catch(e) { console.warn('[雲端載入] 戰鬥快照寫回失敗', e); }
     } else {
       // 雲端有殘留但不完整/過期 → 主動清除本地殘留,避免疑似「未完成戰鬥」
       try{ localStorage.removeItem('adv_crash_snapshot'); }catch(e){}
       try{ localStorage.removeItem('adv_battle_snap'); }catch(e){}
-      try{ console.log('[雲端載入] advSnapshot 不含完整戰鬥資料(可能是已通關殘留),已清除本地快照'); }catch(_){}
+      try{ console.log('[雲端載入] advSnapshot 不含完整戰鬥資料(已通關殘留或過期 >24h),已清除本地快照'); }catch(_){}
     }
   } else {
     // 雲端沒有 advSnapshot → 確保本地也沒有殘留
@@ -68774,29 +69125,164 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
 function _closeSwitchConfirm(){ var e=document.getElementById('_switch-confirm'); if(e)e.remove(); }
 function _closeLogoutConfirm(){ var e=document.getElementById('_logout-confirm'); if(e)e.remove(); }
 
+// ══════════════════════════════════════════════════════════════════
+// ★ v1.0.20260514.6540 — 快速切換帳號(學生座號平板情境)
+//   每位學生有自己座號的平板,但偶爾會借同學的平板。
+//   舊版每次切換都得開 Google 帳號選擇器,還常常彈不出來。
+//   新版:顯示「最近登入過的帳號」清單(本機 localStorage),
+//        點一下就走 _fbSwitchAccount(email) 帶 login_hint,
+//        Google 通常直接認得、一鍵完成,不會再開選擇器。
+// ══════════════════════════════════════════════════════════════════
 async function _showSwitchAccountPin(){
   const curName = (window._playerNickname || (window._fbUser && window._fbUser.displayName) || '目前帳號');
+  const curEmail = (window._fbUser && window._fbUser.email) || '';
+  const curUid = (window._fbUser && window._fbUser.uid) || window._gUserId || '';
+  const recents = (typeof window._getRecentAccounts === 'function') ? window._getRecentAccounts() : [];
+  // 把「自己」(目前登入帳號)從清單中拿掉
+  const others = recents.filter(a => a.uid !== curUid);
+
   const pop = document.createElement('div');
   pop.id = '_switch-confirm';
-  pop.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  pop.style.cssText =
+    'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.88);' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+    'padding:20px;overflow-y:auto;';
+
+  // 帳號卡片 HTML 工廠
+  function _accountCardHTML(a, isCurrent){
+    const _img = a.photoURL
+      ? '<img src="' + a.photoURL + '" referrerpolicy="no-referrer" ' +
+        'style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#222;">'
+      : '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4a9eff,#9b6dff);' +
+        'display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:900;flex-shrink:0;">' +
+        ((a.displayName||'?').slice(0,1).toUpperCase()) + '</div>';
+    const _badge = isCurrent
+      ? '<div style="position:absolute;top:6px;right:8px;background:#44cc88;color:#000;' +
+        'font-size:11px;font-weight:900;padding:2px 8px;border-radius:8px;">使用中</div>'
+      : '';
+    const _action = isCurrent
+      ? '' // 自己不可點
+      : '<button class="_acct-remove" data-uid="' + a.uid + '" ' +
+        'style="position:absolute;bottom:6px;right:8px;background:rgba(60,60,80,0.6);' +
+        'border:1px solid #555;color:#888;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;" ' +
+        'title="從清單移除這個帳號">✕ 移除</button>';
+    const _clickable = isCurrent ? '' : 'data-switch-email="' + (a.email||'') + '" class="_acct-row"';
+    const _cursor = isCurrent ? 'default' : 'pointer';
+    const _hover = isCurrent
+      ? 'background:rgba(255,255,255,0.04);'
+      : 'background:rgba(80,140,255,0.10);transition:0.15s;';
+    return '<div ' + _clickable + ' style="position:relative;display:flex;align-items:center;gap:14px;' +
+      'padding:14px 18px;border:1.5px solid ' + (isCurrent?'#44cc88':'#3a5a8a') + ';' +
+      'border-radius:14px;cursor:' + _cursor + ';' + _hover + '">' +
+      _img +
+      '<div style="flex:1;min-width:0;text-align:left;">' +
+        '<div style="font-size:17px;font-weight:700;color:#ffeeaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+          (a.displayName || a.email || '未命名') +
+        '</div>' +
+        '<div style="font-size:13px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+          (a.email || '') +
+        '</div>' +
+      '</div>' +
+      _badge + _action +
+    '</div>';
+  }
+
+  // 目前帳號(若有)
+  let _curCardHTML = '';
+  if(curUid){
+    _curCardHTML = _accountCardHTML({
+      uid: curUid,
+      email: curEmail,
+      displayName: curName,
+      photoURL: (window._fbUser && window._fbUser.photoURL) || '',
+    }, true);
+  }
+
+  // 其他最近帳號
+  let _othersHTML = '';
+  if(others.length > 0){
+    _othersHTML = '<div style="font-size:14px;color:#88aaff;margin:14px 0 8px;font-weight:700;">最近登入過的帳號(點一下切換)</div>' +
+      others.map(a => _accountCardHTML(a, false)).join('');
+  }
+
   const card = document.createElement('div');
-  card.style.cssText = 'background:linear-gradient(135deg,#0a0e20,#060810);border:2.5px solid #ffaa44;border-radius:20px;padding:40px 48px;max-width:min(90vw,500px);text-align:center;';
-  card.innerHTML = '<div style="font-size:50px;margin-bottom:12px;">🔄</div>'
-    + '<div style="font-size:26px;font-weight:900;color:#ffaa44;margin-bottom:10px;">切換帳號</div>'
-    + '<div style="font-size:18px;color:#ccc;margin-bottom:8px;">目前登入：<span style="color:#ffee88;font-weight:700;">' + curName + '</span></div>'
-    + '<div style="font-size:16px;color:#888;margin-bottom:28px;">將開啟 Google 登入視窗，<br>請選擇或輸入其他帳號。</div>'
-    + '<div style="display:flex;gap:12px;justify-content:center;">'
-    + '<button id="_switch-go" style="padding:12px 36px;font-size:20px;font-weight:900;background:rgba(255,160,50,0.25);border:2px solid #ffaa44;color:#ffaa44;border-radius:12px;cursor:pointer;">繼續切換</button>'
-    + '<button id="_switch-cancel" style="padding:12px 36px;font-size:20px;background:rgba(60,60,80,0.5);border:1px solid #444;color:#888;border-radius:12px;cursor:pointer;">取消</button>'
-    + '</div>';
+  card.style.cssText =
+    'background:linear-gradient(135deg,#0a0e20,#060810);' +
+    'border:2.5px solid #ffaa44;border-radius:22px;' +
+    'padding:28px 32px;max-width:min(94vw,560px);width:100%;' +
+    'box-shadow:0 0 50px rgba(255,170,68,0.3);';
+  card.innerHTML =
+    '<div style="text-align:center;margin-bottom:18px;">' +
+      '<div style="font-size:46px;">🔄</div>' +
+      '<div style="font-size:24px;font-weight:900;color:#ffaa44;margin-top:4px;">切換帳號</div>' +
+    '</div>' +
+    (_curCardHTML ? '<div style="font-size:14px;color:#888;margin-bottom:6px;font-weight:700;">目前使用中</div>' + _curCardHTML : '') +
+    _othersHTML +
+    '<div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">' +
+      '<button id="_acct-add-new" style="flex:1;min-width:140px;padding:14px 18px;font-size:16px;font-weight:900;' +
+        'background:linear-gradient(135deg,rgba(80,200,120,0.25),rgba(40,150,80,0.25));' +
+        'border:2px solid #66cc88;color:#aaffcc;border-radius:12px;cursor:pointer;">➕ 加入其他帳號</button>' +
+      '<button id="_acct-cancel" style="flex:1;min-width:100px;padding:14px 18px;font-size:16px;' +
+        'background:rgba(60,60,80,0.5);border:1px solid #444;color:#aaa;border-radius:12px;cursor:pointer;">取消</button>' +
+    '</div>' +
+    '<div style="font-size:11px;color:#555;margin-top:14px;text-align:center;opacity:0.7;">' +
+      '小提醒:切換時系統會自動儲存進度,清掉本機暫存,避免帳號互相影響。' +
+    '</div>';
   pop.appendChild(card);
   document.body.appendChild(pop);
-  document.getElementById('_switch-cancel').onclick = _closeSwitchConfirm;
-  document.getElementById('_switch-go').onclick = async () => {
+
+  // 點背景關閉
+  pop.addEventListener('click', function(e){ if(e.target === pop) _closeSwitchConfirm(); });
+
+  // 取消
+  document.getElementById('_acct-cancel').onclick = _closeSwitchConfirm;
+
+  // 加入其他帳號
+  document.getElementById('_acct-add-new').onclick = async () => {
     _closeSwitchConfirm();
-    try{ gameCloudSave(); }catch(e){}
-    if(window._fbSwitchAccount) await window._fbSwitchAccount();
+    // 先存檔(safe + cloud),避免切換途中遺失
+    try { if(typeof gameCloudSave === 'function') await gameCloudSave(); } catch(_) {}
+    // 走完整登入流程(強制顯示帳號選擇器)
+    try {
+      // 先 signOut 才不會有 race
+      if(window._fbUser){
+        try { await window._fbSignOut(); } catch(_) {}
+        await new Promise(r => setTimeout(r, 300));
+      }
+      if(window._fbSignInPickAccount){
+        await window._fbSignInPickAccount();
+      }
+    } catch(e) { console.error('[加入其他帳號] 失敗', e); }
   };
+
+  // 點某個最近帳號 → 直接切換
+  Array.from(pop.querySelectorAll('._acct-row')).forEach(row => {
+    row.addEventListener('click', async (e) => {
+      // 點到「✕ 移除」按鈕不算切換
+      if(e.target && e.target.classList && e.target.classList.contains('_acct-remove')) return;
+      const _email = row.getAttribute('data-switch-email') || '';
+      if(!_email) return;
+      _closeSwitchConfirm();
+      try { if(typeof gameCloudSave === 'function') await gameCloudSave(); } catch(_) {}
+      if(window._fbSwitchAccount){
+        await window._fbSwitchAccount(_email);
+      }
+    });
+  });
+
+  // 移除某個帳號(從本機最近清單拿掉,不影響雲端)
+  Array.from(pop.querySelectorAll('._acct-remove')).forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const _uid = btn.getAttribute('data-uid');
+      if(!_uid) return;
+      try { if(typeof window._removeRecentAccount === 'function') window._removeRecentAccount(_uid); } catch(_) {}
+      // 重新渲染面板
+      _closeSwitchConfirm();
+      setTimeout(() => _showSwitchAccountPin(), 50);
+    });
+  });
 }
 
 async function _showLogoutPin(){
@@ -69523,6 +70009,69 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260514.6540', brief:[
+    '🔄 新增:快速切換帳號面板(顯示最近登入過的帳號清單,一鍵切換)',
+    '⏰ 修補:閒置 5 分鐘自動登出後,3 秒提示完成自動回到乾淨首頁(不再殘留前一位玩家資訊)',
+    '🌐 修補:平板登入「跳出空白頁就關掉」的問題(popup 失敗自動 fallback 到 redirect)',
+    '🎮 修補:跨裝置接續戰鬥失效的 bug(學校玩到一半,回家可以接續)',
+    '⚠️ 改善:登入錯誤現在會清楚告訴玩家,不再「點了沒反應」',
+  ], items:[
+    '【🎯 老師回報的需求】',
+    '・學生用座號平板,需要在自己跟同學帳號間快速切換,常常切不過去',
+    '・跳出 Google 帳號選擇器只看到空白頁,然後就被關掉',
+    '・閒置自動登出後畫面停在原地,還看得到前一位玩家的代表英雄與暱稱',
+    '・在學校玩到一半的戰鬥,回家裝置打開後接不回去',
+    '【🔍 問題一:平板登入空白頁】',
+    '・舊版用 signInWithPopup 在 iOS Safari / 學校 Chromebook / PWA 等環境經常失敗',
+    '・失敗碼(popup-blocked / cancelled-by-user / operation-not-supported)被 _silentCodes 全吃掉',
+    '・玩家看到的是:點了登入 → 跳出空白頁 → 關掉 → 完全沒提示,以為是 bug',
+    '【🩹 問題一修補:popup → redirect 自動切換】',
+    '・新增 _shouldPreferRedirect():偵測 iOS / Android WebView / PWA → 直接走 redirect',
+    '・桌機環境照舊用 popup(快),失敗(popup-blocked / not-supported)自動 fallback 到 redirect',
+    '・新增 _handlePendingRedirect():頁面載入時用 getRedirectResult 接續 redirect 登入結果',
+    '・新增 _showLoginErrorTip():明確錯誤彈窗 + 教學「允許彈出視窗 / 重整頁面 / 換 Chrome」',
+    '・網路錯誤、未授權網域、未預期錯誤都有對應友善訊息(含錯誤代碼供回報)',
+    '【🔄 問題二:快速切換帳號】',
+    '・新增 lxps_recent_accounts localStorage 鍵記錄最近登入過的 6 個帳號',
+    '・結構:[{uid, email, displayName, photoURL, lastLoginAt}]',
+    '・每次 onAuthStateChanged 登入成功時自動把當前帳號 push 到清單前面(LRU)',
+    '・新增 window._getRecentAccounts / _addRecentAccount / _removeRecentAccount API',
+    '・改寫 _showSwitchAccountPin:不再只是「確認 → 開 Google 視窗」',
+    '  → 顯示「目前使用中」+「最近登入過的帳號」清單 + 「➕ 加入其他帳號」按鈕',
+    '・點清單裡的帳號 → 走 _fbSwitchAccount(email),帶 login_hint 讓 Google 直接認得',
+    '・點「加入其他帳號」→ 走 _fbSignInPickAccount(prompt:select_account)強制顯示帳號選擇器',
+    '・帳號卡片右下角有「✕ 移除」可從本機清單拿掉(只清本機,不影響雲端)',
+    '【🩹 修補 _fbSwitchAccount 的 race condition】',
+    '・舊版直接呼叫 signInWithPopup,沒先登出 → 短暫雙帳號狀態,_applySafeData union 合併可能誤把舊資料寫進新帳號雲端',
+    '・新版:先 signOut → 等 onAuthStateChanged else 分支跑完(300ms) → 再 signIn',
+    '・避免帳號間相互污染,搭配 v6530 的換帳號清理機制更穩',
+    '【⏰ 問題三修補:閒置自動登出後乾淨回首頁】',
+    '・舊版 _doAutoLogout 只呼叫 gSignOut,但畫面停在原處',
+    '・全域變數 _myRepHero / _playerNickname 雖然在 onAuthStateChanged else 分支清掉,',
+    '  但畫面上的 adv-rep-hero-bar / adv-user-name 等 DOM 內容沒一起清,玩家還看得到舊資料',
+    '・新版:存檔(safe + cloudSave)→ signOut → 顯示全螢幕「⏰ 閒置過久已登出」提示 3 秒 → location.reload()',
+    '・reload 後所有記憶體變數、DOM、UI 全部歸零,玩家回到「未登入的乾淨首頁」',
+    '・順手加強 onAuthStateChanged else 分支:即使不 reload(別處呼叫 signOut 的情境),也清掉以下 UI:',
+    '  _myRepHero、_playerNickname、google-avatar.src、google-name、adv-user-name、adv-rep-hero-*、好友面板',
+    '【🎮 問題四修補:跨裝置接續戰鬥】',
+    '・症狀:在學校平板戰鬥到第 5 回合 → 登出 → 回家裝置登入 → 戰鬥快照消失,要從頭打',
+    '・根因:_buildSafeData 把 adv_battle_snap 包進 advSnapshot 上雲(結構是 {stage,...,battleState:{p1,p2,...}}),',
+    '  但 gameCloudLoad 載入時驗證 data.advSnapshot.p1 — p1 在 battleState 巢狀層內,頂層沒有這個欄位',
+    '・結果:跨裝置載入時 _hasBattleData 永遠是 false,雲端的戰鬥快照永遠被當成「不完整」而清除',
+    '・修補:驗證條件改為 (battleState.p1 || advSnapshot.p1) 兼容兩種格式',
+    '・寫回的 key 從 adv_crash_snapshot 改為 adv_battle_snap(_advRestoreBattleState 是優先讀這個)',
+    '・同時寫一份到 adv_crash_snapshot 以防有舊路徑讀它',
+    '・log 加 stage / round / ts 方便除錯',
+    '【影響範圍】',
+    '・全體玩家:登入體驗大幅改善,平板/手機/PWA 都能穩定登入',
+    '・學生座號平板:切換帳號從「常常失敗」變成「點一下完成」',
+    '・跨裝置玩家:在學校玩到一半,回家可以無縫接軌',
+    '・閒置自動登出:回到乾淨首頁,不再殘留前一位資料',
+    '【版本同步】',
+    '・CURRENT_VERSION → v1.0.20260514.6540',
+    '・window._GAME_LOADED_VERSION → v1.0.20260514.6540',
+    '・CURRENT_BOOT_VER 不動(維持 v6050)',
+  ] },
   { ver:'v1.0.20260514.6530', brief:[
     '🛡 修補:同平板換帳號時,前一位同學的進度殘留會污染新同學雲端的問題',
     '⏰ 新增:閒置 5 分鐘自動登出(學校共用平板情境),登出前 30 秒倒數提示',
@@ -70412,7 +70961,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260514.6530';
+  const CURRENT_VERSION = 'v1.0.20260514.6540';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -70446,7 +70995,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260514.6530';
+window._GAME_LOADED_VERSION = 'v1.0.20260514.6540';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
