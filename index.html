@@ -7250,8 +7250,8 @@ body.art-premium #summon-overlay {
 }
 
 </style>
-<script src="adv_quiz_db.js?v=20260514b"></script>
-<script src="hero_db.js?v=20260513c"></script>
+<script src="adv_quiz_db.js?v=20260514c"></script>
+<script src="hero_db.js?v=20260514c"></script>
 </head>
 <body>
 <!-- ★ v1.0.20260507.5550 — 啟動讀取條:覆蓋全畫面,顯示資源預載進度
@@ -11135,7 +11135,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   // ★ v1.0.20260501.5010 — 28 個英雄圖一次性升級為 LXPSGAME repo 的 Q.png 新版圖檔
@@ -11233,6 +11233,15 @@ const HERO_IMGS = {
   // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
   //   布奶鳥獸:5 年 5 班高同學設計,2026 年。兩隻可愛小鳥布丁&奶茶,被人類飼養
   '布奶鳥獸':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('布丁奶茶獸.png'),
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師)
+  //   炸彈客:5 年 4 班劉同學設計,2026 年。製造炸彈的天才,認為爆炸就是藝術
+  '炸彈客':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('炸彈客.png'),
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班第 2 位設計師)
+  //   紅色玩家:5 年 4 班陳同學設計,2026 年。身處虛擬世界的神祕高手玩家,代表色是紅色
+  '紅色玩家':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('紅色玩家.png'),
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
+  //   地府酋長:5 年 4 班黃同學設計,2026 年。來自地府的獄卒首領,負責看管受刑的亡靈
+  '地府酋長':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地府酋長.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -11446,6 +11455,21 @@ const HERO_PORTRAIT_LIBRARY = {
   //   布奶鳥獸:5 年 5 班高同學設計,2026 年
   '布奶鳥獸': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('布丁奶茶獸.png') },
+  ],
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師)
+  //   炸彈客:5 年 4 班劉同學設計,2026 年
+  '炸彈客': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('炸彈客.png') },
+  ],
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班第 2 位設計師)
+  //   紅色玩家:5 年 4 班陳同學設計,2026 年
+  '紅色玩家': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('紅色玩家.png') },
+  ],
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
+  //   地府酋長:5 年 4 班黃同學設計,2026 年
+  '地府酋長': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地府酋長.png') },
   ],
 };
 
@@ -12373,6 +12397,11 @@ const BUFF_DESCS = {
   _inuGuard:     '忠犬守護：本回合代替隊友承受50%傷害',
   _slamSpd:      '灌籃加速：速度暫時大幅提升',
   _napShield:   '午睡護盾：累積吸收最多50點傷害，受擊有40%機率驚醒',
+  // ★ v1.0.20260514.6660 — 紅色玩家技能狀態
+  reverseDomain: '反域：受到傷害時 50% 反彈給攻擊者並減傷 50%，HP 至少保留 1 點不會倒下',
+  overclock:     '超頻爆發：自身造成傷害大幅提升，並免疫所有傷害和不利狀態',
+  // ★ v1.0.20260514.6770 — 地府酋長技能狀態
+  judgmentEnd:   '審判終結：2 回合後非 BOSS 直接倒下，BOSS 則受到當前 HP 20% 的固定必中傷害。不可疊加、預防或消除',
 };
 
 // Per-hero image positioning: [background-size, background-position]
@@ -12759,6 +12788,37 @@ const BURST_UPGRADE_DEF = {
     [3,'特技×130%×9次 隨機目標連擊'],
     [4,'特技×140%×9次 隨機目標連擊(MAX)'],
   ] },
+  // ★ v1.0.20260514.6550 — 炸彈客:超級大爆炸
+  //   全體固定值 200+目標30%HP(上限 Lv×20),自損至 10% HP(不會倒下)
+  //   固定值類爆發,跟「定時炸彈」走相同 cat:special_bomber_burst 自訂升級
+  //   ⚠ 爆發上限是 Lv×20(S1/S2 仍維持 Lv×10,爆發享有兩倍上限作為威力差異)
+  '炸彈客':{ rows: [
+    [0,'固定 200+目標30%HP 全體傷害(上限=Lv×20),自損至 10%'],
+    [1,'固定 250+目標32%HP 全體傷害'],
+    [2,'固定 300+目標34%HP 全體傷害'],
+    [3,'固定 350+目標36%HP 全體傷害'],
+    [4,'固定 400+目標40%HP 全體傷害(MAX)'],
+  ] },
+  // ★ v1.0.20260514.6660 — 紅色玩家:超頻爆發
+  //   自身傷害提升至 300% 持續 2 回合,同時免疫所有傷害和不利狀態
+  //   Lv5 MAX 升為 400% 並持續 3 回合,捨命爆殺型大絕
+  '紅色玩家':{ rows: [
+    [0,'自身傷害 300% + 2 回合無敵 + 免疫不利'],
+    [1,'自身傷害 320% + 2 回合無敵 + 免疫不利'],
+    [2,'自身傷害 340% + 2 回合無敵 + 免疫不利'],
+    [3,'自身傷害 360% + 2 回合無敵 + 免疫不利'],
+    [4,'自身傷害 400% + 3 回合無敵 + 免疫不利(MAX)'],
+  ] },
+  // ★ v1.0.20260514.6770 — 地府酋長:刀山火海
+  //   全體特技 200% + 指定 1 名額外 100% + 強制禁動 1 回合
+  //   升級:全體主傷 200→260%、追加 100→140%、Lv5 MAX 禁動 +1 回合
+  '地府酋長':{ rows: [
+    [0,'特技 200% 全體 + 指定追加 100% + 禁動 1 回合'],
+    [1,'特技 215% 全體 + 指定追加 110% + 禁動 1 回合'],
+    [2,'特技 230% 全體 + 指定追加 120% + 禁動 1 回合'],
+    [3,'特技 245% 全體 + 指定追加 130% + 禁動 1 回合'],
+    [4,'特技 260% 全體 + 指定追加 140% + 禁動 2 回合(MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -12813,6 +12873,12 @@ const HERO_IMG_POS = {
   '死靈法師':['160% auto','center 25%'],
   // ★ v1.0.20260513.6460 — 布奶鳥獸:兩隻小鳥的圖,通用置中
   '布奶鳥獸':['120% auto','center 30%'],
+  // ★ v1.0.20260514.6550 — 炸彈客:通用置中,稍微放大露出炸彈客全身
+  '炸彈客':['130% auto','center 25%'],
+  // ★ v1.0.20260514.6660 — 紅色玩家:稍微放大顯示紅衣玩家全身
+  '紅色玩家':['150% auto','center 18%'],
+  // ★ v1.0.20260514.6770 — 地府酋長:稍微放大露出酋長威嚴上半身
+  '地府酋長':['140% auto','center 22%'],
 };
 
 // ★ v5690 — 戰鬥卡片專屬圖片位置表
@@ -12905,6 +12971,12 @@ const HERO_THUMB_POS = {
   '雙星姊妹':'center 70%',
   // ★ v1.0.20260513.6460 — 布奶鳥獸:稍微下移看到兩隻小鳥
   '布奶鳥獸':'center 40%',
+  // ★ v1.0.20260514.6550 — 炸彈客:中央偏上,露出臉部與手中炸彈
+  '炸彈客':'center 35%',
+  // ★ v1.0.20260514.6660 — 紅色玩家:標準位置,露出頭部與紅衣
+  '紅色玩家':'center 30%',
+  // ★ v1.0.20260514.6770 — 地府酋長:中央偏上,展現酋長威嚴頭部
+  '地府酋長':'center 32%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -13166,6 +13238,33 @@ const HERO_BIO = {
     quote:'「啾啾!(別惹我們生氣!)」',
     designer:{ class:'5年5班', name:'高同學', year:2026 }
   },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師)
+  //   炸彈客:5 年 4 班劉同學設計,2026 年。製造炸彈的天才,認為爆炸就是藝術
+  '炸彈客':{
+    role:'地下爆破工坊的瘋狂工程師,腰間掛滿自製炸彈、雙眼總映著火光',
+    trait:'熱情奔放、爽快直接,堅信「爆炸即藝術」,出手前總要先笑一聲',
+    hobby:'研發新型炸藥配方、欣賞火光與煙塵的瞬間美學、收集各式引信',
+    quote:'「BOOM!看吧——這才是真正的藝術!」',
+    designer:{ class:'5年4班', name:'劉同學', year:2026 }
+  },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班第 2 位設計師)
+  //   紅色玩家:5 年 4 班陳同學設計,2026 年。身處虛擬世界的神祕高手玩家
+  '紅色玩家':{
+    role:'身處虛擬世界深處的神祕高手玩家,代表色是耀眼的赤紅',
+    trait:'沉著冷靜、操作精準到像開外掛;鍵盤一響就是要收人頭',
+    hobby:'通宵打副本、研究高難度速通路線、把訓練場木樁拆到冒煙',
+    quote:'「P1 已就位——準備被我瞬殺吧。」',
+    designer:{ class:'5年4班', name:'陳同學', year:2026 }
+  },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
+  //   地府酋長:5 年 4 班黃同學設計,2026 年。來自地府的獄卒首領,負責看管受刑的亡靈
+  '地府酋長':{
+    role:'來自地府的獄卒首領,負責看管刀山火海中受刑的亡靈',
+    trait:'冷峻威嚴、鐵面無私,執法絕不講情面,看一眼便能審判功過',
+    hobby:'巡視十八層地獄、磨利鎖鍊與審判杖、記錄受刑亡靈的怨念',
+    quote:'「亡魂啊——你的審判,由我宣告。」',
+    designer:{ class:'5年4班', name:'黃同學', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -13243,6 +13342,12 @@ const BURST_DB = {
   '死靈法師':{n:'亡靈怨念一擊', d:'用特技120%×倒下總次數對全體傷害,再將傷害總和轉化為治療平均分給友方',fd:'死靈法師在場時計算倒下角色(包括敵我雙方)的次數,用特技的 120% × 當前倒下總次數對敵方全體造成傷害,再將此傷害總和轉化為治療平均分攤給友方全員(可復活)。若場上無倒下角色,則用特技的 120% 對敵方全體造成傷害並等量治療友方全體。'},
   // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
   '布奶鳥獸':{n:'生氣的布丁&奶茶', d:'特技100%×9次 隨機目標連擊,倒下轉移,必中且無視有利狀態',fd:'布丁和奶茶徹底生氣了!用特技的 100% 連續攻擊隨機目標 9 次,當目標倒下時自動轉移到其他存活對手繼續攻擊。此傷害無視有利狀態且必中,無法被迴避或代替承受。'},
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班劉同學)
+  '炸彈客':{n:'超級大爆炸', d:'全體固定值傷害(基礎200+目標30%HP,上限=Lv×20),自損至10%HP',fd:'把工坊裡所有炸彈一次點燃、笑著看著火光蔓延!對全體對手造成固定值 200 + 最大 HP 30% 的傷害(上限是炸彈客 LV 的 20 倍),此傷害無視有利狀態、不受屬性影響、不會暴擊。炸彈客自己也被炸到 HP 剩下 10%(不會倒下,保底 1 HP)。'},
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  '紅色玩家':{n:'超頻爆發', d:'自身造成傷害提升至300%持續2回合,免疫所有傷害和不利狀態',fd:'鍵盤滴答狂響、紅色光暈衝破螢幕——「Overclock — Engaged!」自己造成的所有傷害提升至 300%(主要技能傷害、普攻、附加效果皆套用),持續 2 回合,期間同時免疫所有傷害和不利狀態。'},
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  '地府酋長':{n:'刀山火海', d:'特技200%全體傷害,指定1名追加100%且強制禁動1回合',fd:'喚出地獄刀山火海席捲整個戰場!以特技的 200% 對全體對手造成傷害,並從中指定 1 名目標額外承受特技 100% 的追加傷害,該目標被強制「禁動」1 回合(無法行動)。'},
 
 };
 
@@ -13426,6 +13531,12 @@ function addStatus(h,t,dur=1){
   }
   // 小力：強力隱身狀態下，不利狀態無法施加
   if(h.name==='小力' && hasBuff(h,'inuInvisible')){ log(`🐕 [小力] 強力隱身中，${statusName(t)} 無法施加！`); return; }
+  // ★ v1.0.20260514.6660 — 紅色玩家爆發「超頻爆發」期間免疫所有不利狀態
+  if(h.name==='紅色玩家' && (h._overclockImmune || hasBuff(h,'overclock'))){
+    log(`🟥 [紅色玩家] 超頻爆發中，${statusName(t)} 無法施加！`);
+    showPopup(h,'🟥 OC 免疫','miss');
+    return;
+  }
   // 元素屬性50%免疫
   if(checkElemImmune(h, t)){ return; }
   playSfx('sfx-powerdown',0.55);
@@ -13655,6 +13766,13 @@ function tickStatus(h){
       if(h._shutenOrigAtk !== undefined){ h.atk = h._shutenOrigAtk; delete h._shutenOrigAtk; }
       if(h._shutenOrigSp  !== undefined){ h.sp  = h._shutenOrigSp;  delete h._shutenOrigSp;  }
     }
+    // ★ v1.0.20260514.6660 — 紅色玩家「超頻爆發」到期清除傷害強化+免疫旗標
+    if(b.type==='overclock'){
+      delete h._overclockDmgMult;
+      delete h._overclockImmune;
+      log(`🟥 [${h.name}] 超頻爆發結束,系統回歸正常輸出。`);
+      try{ bannerFX(h, '🟥 OC 結束', '#888888', 800); }catch(_){}
+    }
   });
   // ★ v1.0.20260512.6210 — 死靈法師「死靈型態」回合計時(S2 死者轉生 / 天賦 亡魂庇佑 共用)
   //   每次 tickStatus(每回合開始)時減 1,歸 0 時:
@@ -13689,6 +13807,39 @@ function tickStatus(h){
       try{ renderCard(h); }catch(_){}
     }
   }
+  // ★ v1.0.20260514.6770 — 地府酋長 S1「審判終結」到期處理
+  //   每次 tickStatus(每回合開始)前先檢查 dur===1 的 judgmentEnd:
+  //     - 非 BOSS:強制 curHp = 0,移除 immune/protectBuff(無視一切保護)
+  //     - BOSS:當前 HP 20% 必中傷害
+  //   注意:此區段在 status dur 衰減(13812 行)之前執行,確保最後一回合會觸發
+  try{
+    const _jEnd = h.status && h.status.find(s => s.type === 'judgmentEnd' && s.dur === 1);
+    if(_jEnd && h.curHp > 0){
+      const _isBoss = (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.has(h.name));
+      if(_isBoss){
+        // BOSS:當前 HP 20% 必中傷害
+        const _bossDmg = Math.max(1, Math.floor(h.curHp * 0.20));
+        log(`⚖️ [${h.name}] 審判終結降臨!BOSS 受 20% 當前 HP 必中傷害(${_bossDmg})!`);
+        try{ bannerFX(h, '⚖️ 審判終結!', '#aa0033', 1100); }catch(_){}
+        try{ flashCard(h, 'rgba(150,0,40,0.65)', 800); }catch(_){}
+        try{ playSfx('sfx-burst', 0.9); }catch(_){}
+        const _jSource = _jEnd._source || null;
+        doDmg(h, _bossDmg, { actor:_jSource, isSkill:true, ignoreBuffs:true, fixedDmg:true, noHidden:true });
+      } else {
+        // 非 BOSS:直接倒下(無視一切保護)
+        log(`⚖️ [${h.name}] 審判終結降臨!靈魂被押向幽冥之門——倒下!`);
+        try{ bannerFX(h, '⚖️ 審判終結!', '#770022', 1300); }catch(_){}
+        try{ flashCard(h, 'rgba(120,0,40,0.75)', 1000); }catch(_){}
+        try{ playSfx('sfx-burst', 0.9); }catch(_){}
+        // 主動移除無敵/保護類 buff,讓倒下生效
+        try{ h.buffs = h.buffs.filter(b => b.type !== 'immune' && b.type !== 'protectBuff' && b.type !== 'deathimmune'); }catch(_){}
+        try{ h.status = h.status.filter(s => s.type !== 'deathimmune'); }catch(_){}
+        h.curHp = 0;
+        log(`💀 [${h.name}] 倒下!`);
+        try{ renderCard(h); }catch(_){}
+      }
+    }
+  }catch(_e){ console.warn('[地府酋長] 審判終結結算失敗', _e); }
   // ★ strongTaunt 到期時清除 _burstTauntTarget
   const _hadStrongTaunt = hasStatus(h, 'strongTaunt');
   h.status=h.status.map(s=>({...s,dur:s.dur-1})).filter(s=>s.dur>0);
@@ -15488,50 +15639,50 @@ function _refreshHeroPool(){
 
 // ====== HERO LORE DB ======
 const HERO_LORE = {
-  '劍士':    '獨當一面、出奇制勝的俠客',
-  '祭司':    '保障夥伴生命安全的治療專家',
-  '聖騎士':  '用聖光保護夥伴並制裁敵人',
-  '火法師':  '支配火焰系魔法的攻擊咒術高手',
-  '冰法師':  '支配寒冰系魔法的控場咒術高手',
-  '雷法師':  '支配雷電系魔法的廣域咒術高手',
-  '光法師':  '支配聖光系魔法的攻防咒術高手',
-  '暗法師':  '支配黑暗系魔法的邪惡咒術高手',
-  '神射手':  '擅用狙擊與陷阱的狩獵專家',
-  '神偷':    '神出鬼沒、善於躲藏的盜寶高手',
-  '刺客':    '身懷絕技、攻其不備的專業殺手',
-  '守衛':    '守護夥伴、銅牆鐵壁般的可靠坦克',
-  '吟遊詩人':  '演奏音樂、歌頌傳奇的音樂藝人',
-  '舞者':    '展現舞姿、迷惑對手的舞蹈藝人',
-  '警長':    '依法行事、正氣凌人的歹徒剋星',
-  '煉金術師':'活用道具、點石成金的發明家',
-  '武鬥家':  '攻守兼備、武術全能的格鬥專家',
-  '軍師':    '足智多謀、掌握戰局的專業指揮',
-  '占星師':  '用占卜術預知未來命運的祕法師',
-  '大力士':  '力大無比、穩重如山的勇士',
-  '凡人':    '從異世界跨界而來的普通人,憑著模仿之力闖蕩奇幻大陸',
-  '木靈使':  '世界樹的子嗣、守護自然的神使',
-  '機械師':  '精通機械科技與機關術的高手',
-  '動物學家':'能和動物溝通、與動物為友的專家',
-  '武士':    '秉持武士道在江湖闖蕩的反擊高手',
-  '陰陽師':  '使役式神、降妖除魔的宮廷術士',
-  '吸血鬼':  '嗜血維生、於黑夜中活躍的血之一族',
-  '學者':    '博學多聞、活用知識的考古學者',
-  '時空法師':'操控時間、扭轉乾坤的祕法師',
-  '小力':    '力行國小的校犬,內向害羞,喜歡靜靜陪伴小朋友',
-  '籃球隊員':'全場焦點的王牌，擅長精準投射',
-  '直笛團員':'悠揚的笛聲是後援也是敵人的夢魘',
-  '田徑隊員':'以極致速度先發制人的疾風健將',
-  '幼兒園小孩':'單純的小天使，想像力無限',
-  '電腦繪圖師':'以色彩渲染戰場的魔術師',
-  '程式設計師':'自由修改遊戲數據的專家',
-  '弦樂團員':  '指尖流淌夢幻旋律，弦音定勝負',
-  '小劇團員':  '活躍在戲劇中的千面藝人',
+  '劍士':    '異世界劍聖學徒,沉默寡言的行動派俠客。一劍出鞘只往前砍,爆發「劍神連斬」六連如雷、目標倒下劍光便轉——純粹而凜冽。',
+  '祭司':    '聖光神殿的見習治療師,溫柔細心、敬重每一條生命。一道「救贖神光」喚回垂死同伴,爆發「璀璨聖光」普照戰場——只要她還在,隊伍就不會散。',
+  '聖騎士':  '王國聖騎士團副隊長,以聖光行公義。「神聖鎚擊」一擊兩用——傷敵的痛苦化為同伴的生機,爆發「最終殿堂」更讓全隊在神域中無敵——守護弱小,是騎士的天職。',
+  '火法師':  '紅塔魔法學院火焰系助教,熱情衝動如焰。掌心一團「火焰球」便能轟碎強敵的防禦,爆發「烈焰爆發」更讓全場陷入無法熄滅的強力燃燒——燃燒吧!比我更強的傢伙快出來!',
+  '冰法師':  '冰河神殿術士,冷靜理性、毫無多餘情緒。一矛「冰凍之矛」凝結瞬間時光,爆發「冰封末日」覆下無法解凍的強力寒霜——情緒是多餘的,計算才是一切。',
+  '雷法師':  '雷暴峽谷守護者,活潑好動、反應快如電。「連鎖閃電」在敵陣間跳躍嬉鬧,爆發「怒雷狂襲」更帶來無法掙脫的強力麻痺——嘿嘿!來不及反應了吧?',
+  '光法師':  '日輪聖域的光明使者,開朗鼓舞人心。「日月同輝」一道光既懲敵也慰友,爆發「審判光束」全體沐光、同伴重生而仇敵失明——只要有光,就沒有走不出的黑暗。',
+  '暗法師':  '暗影議會特使,謀略深遠、城府頗深。一句「死亡宣告」便為敵人寫下倒數計時,爆發「毀滅禁咒」更讓魔法之口集體噤聲——一切盡在掌握之中,呵呵。',
+  '神射手':  '荒野獵人公會精英,獨立自主、精準果斷。「瞄準射擊」屏息一發必中、無人能擋,爆發「流星箭雨」更如天網落下、敵陣陷入強力禁動——瞄準,屏息,放。',
+  '神偷':    '影城盜賊公會頂尖成員,靈活狡猾、見機行事。「盜取」一伸手,物品、寵物、增益隨他挑,爆發「俠盜飛梭」更一次奪走對手身上全部寶物——你的,也是我的。',
+  '刺客':    '黑夜傭兵組織的精英殺手,冷酷沉著、目標導向。爆發「死神之鐮」是訃聞般的一擊——500% 重傷收割、隱身退場、強力出血揮之不去——我的工作沒有失敗這兩個字。',
+  '守衛':    '王城銅牆鐵壁第一守衛,以身作盾。被動「挺身守護」隨時擋在隊友身前承擔傷害,爆發「最後之盾」全體敵方被強力挑釁——想從我這裡過去?先過了我這關再說。',
+  '吟遊詩人':  '異世界知名旅行歌手,浪漫多情。一曲「搖籃曲」讓敵陣同時沉睡,爆發「無盡長眠」更讓敵人睡得越久、我方回血越多——這首歌,就獻給你了。',
+  '舞者':    '花都劇場頭牌表演藝術家,熱情奔放、富感染力。「熱情之舞」點燃全隊鬥志,爆發「激戰之舞」讓全隊強力增攻、敵方增益盡失——來!跟著音樂一起動起來!',
+  '警長':    '荒野西境治安官,正義凜然、鐵面無私。「物品查封」一聲令下封住敵人所有道具,爆發「正義制裁」更讓對手的傷害全數反彈回去——這裡的規矩,由我說了算。',
+  '煉金術師':'皇家煉金研究所所長,好奇心旺盛、鑽研不懈。被動「道具複製」用過的物品居然還在,爆發「真理之門」更讓全隊使用物品 100% 保留——失敗了?那再試五百次就好了!',
+  '武鬥家':  '拳聖流派傳人,豪爽直接、敢作敢為。被動「金鐘罩」氣勁護體、傷害原封奉還,爆發「明鏡止水」2 回合刀槍不入、攻擊翻倍——拳頭說話,廢話少說!',
+  '軍師':    '從中國古代穿越而來的神祕智者,博學多聞、深謀遠慮。羽扇一揮便能左右戰局,爆發「逆轉神計」更直接交換雙方氣勢、我方再動一次——對手的每一步,我早已料到。',
+  '占星師':  '星象觀測台台長,深思熟慮、洞悉未來。「命運塔羅牌」一張便能扭轉局勢,爆發「星空祝福」更讓全隊技能 2 回合無需能量——星象早已預示,你的勝利或失敗。',
+  '大力士':  '競技場常勝冠軍,樂天知命、力大無比。一招「泰山壓頂」便能將敵人壓得暈眩,爆發「地球上投」更是 500% 必中、強力昏迷 2 回合——嗯哼?我輸過嗎?想不起來耶!',
+  '凡人':    '被召喚到異世界的普通人,沒有天賦卻學習力驚人。「模仿」場上任意角色的技能皆能上手,爆發「臨摹大師」更能臨摹任何角色的爆發——既然來了,就活出自己的傳說吧!',
+  '木靈使':  '古森林精靈守護者,溫和寧靜、親近自然。「神之賜福」讓同伴 HP 上限暴漲,爆發「神樹恩澤」更賜下不倒再生 2 回合——每一棵樹都有它的故事。',
+  '機械師':  '蒸汽城邦首席工程師,邏輯清晰、創意無限。一枚「定時炸彈」滴答倒數、波及鄰近,爆發「負荷超載」更把全隊兩回合的痛苦平均回敬敵方——理論上行得通,試了再說!',
+  '動物學家':'力行小學自然老師,熱愛動物、滿懷好奇心。一聲口哨便有森林朋友趕來助陣,爆發「動物大軍」更一次召喚 4 隻寵物加入隊伍——哇!這隻好稀有!快來看!',
+  '武士':    '東方武道流浪者,守靜沉默、劍心純淨。被動「迴避反擊」被攻擊時必閃且反擊,爆發「神鬼盡滅」一刀 700% 必中、溢出傷害自動轉移——動如山嶽,靜如止水。',
+  '陰陽師':  '東方靈術師,謹慎沉穩、敬天畏地。一張符咒便能召喚朱雀青龍降臨戰場,爆發「四聖降臨」更引天地四聖獸齊出、附加強力不利狀態——天地有靈,萬物有序。',
+  '吸血鬼':  '古老血族末裔,優雅神秘、略顯孤傲。「靈魂收割」鎖定垂死者一口飲盡,爆發「鮮血契約」更讓全隊共飲嗜血、血越少越凶猛——永恆?聽起來挺無聊的。',
+  '學者':    '古代智慧傳承學院院長,博古通今、謙遜好學。被動「鑑往知來」隊友被傷時雙倍反擊並再行動,爆發「元素智慧」更依雙方元素種類數疊乘必中傷害——過去的失敗,是未來最好的老師。',
+  '時空法師':'時空裂隙研究者,哲學思辨、超然物外。「時間暫停」凝固敵方時間 1 回合,「時間倒轉」更可直接回到上一回合(整場僅一次)——這個結果,我早就見過了。',
+  '小力':    '力行國小校犬,非常內向、喜歡靜靜陪伴小朋友。開場便躲到校園角落「強力隱身」十回合,卻在隊友受傷時悄悄擋下一半傷害——汪……(微微搖尾巴)。',
+  '籃球隊員':'力行小學籃球隊隊長,積極主動、重視團隊。「三分投射」刷網入框換來陣營能量,爆發「絕殺灌籃」400% 重擊後全隊加速兩回合——Team work makes the dream work!',
+  '直笛團員':'力行小學直笛合奏團首席,認真細膩、追求完美。一曲「不熟練習曲」便能擾亂敵心,爆發「天籟之音」更同時讓敵陣狂亂、我方治療復活又持續恢復——再來一次,這小節不夠準!',
+  '田徑隊員':'力行小學田徑隊短跑選手,不服輸、自律嚴格。被動「起跑衝刺」開場便領先全場,爆發「極速閃燃」更依速度傷敵、附加閃燃並立即再行動——每一秒都要比昨天快!',
+  '幼兒園小孩':'力行小學附設幼兒園小朋友,天真無邪、想像力無限。一聲「大聲啼哭」便讓全敵束手無策,爆發「夢境時光」必須睡眠中才能發動、卻是最甜美的反擊——我要蓋一個超高的積木塔!',
+  '電腦繪圖師':'力行小學美術社社長,富有創意、觀察力強。「圖層隱藏」一鍵隱去敵方所有增益,爆發「萬物創生」更以 600% 必中分攤、外加抽 3 張物品卡——顏色不夠,再加一層!',
+  '程式設計師':'力行小學資訊社創辦人,邏輯思維強、解決問題快。一行「修改代碼」就能讓物品爆出十倍威力,爆發「BUG 修復」更把全隊不利狀態直接 commit 成增益——Bug 只是還沒被找到的 Feature。',
+  '弦樂團員':  '力行小學弦樂團小提琴手,敏感細膩、富藝術氣息。「小星星變奏曲」音符化作銳箭無視防禦,爆發「流浪者之歌」更是必中連擊與全隊復活的雙重旋律——音樂,是靈魂的語言。',
+  '小劇團員':  '力行小學戲劇社主角,表現力強、樂於分享。「變臉戲法」每張臉譜換一個增益,爆發「謝幕掌聲」更讓全場倒下者的能量化為己方永久強化——人生如戲,戲如人生!',
   // ★ v1.0.20260421.3000o — 日本關限定
-  '巫女':      '守護境內安寧，以祭鈴驅散晦暗的神職',
+  '巫女':      '古老神社的見習巫女,敬天畏神、純淨堅毅。一搖「神籤」便為脆弱同伴抽出隨機庇佑,爆發「神樂舞」更獻納神聖樂曲、為全隊解除一切並附加強力庇佑——神靈雖無形,卻護佑著善良之心。',
   // ★ v1.0.20260424.0490 — 補上 3 隻日本可解鎖 BOSS 英雄的簡介
-  '大天狗':    '深山修行千年的天狗尊長,駕馭山風,武藝絕倫的妖中之王',
-  '酒吞童子':  '大江山的鬼王,豪飲妖酒卻重情重義,鐵棒一揮可開山碎石',
-  '玉藻前':    '金毛九尾化身的傾國美狐,以妖豔智慧迷惑人心,觀世間百態',
+  '大天狗':    '深山天狗一族尊長,威嚴沉著、武藝超群。一搧巨大羽扇便能掀起山嵐狂風,爆發「神威風獵」更是 5 段風屬性連擊+全體颶風+強力暈眩——山中千年修行,只為一刻除魔。',
+  '酒吞童子':  '昔日大江山鬼王,豪邁不羈、重情重義。一招「乾杯」便能讓全隊回血又提升攻特,爆發「鬼王酒宴」更是 600% 必中重擊、目標倒下還能連鎖轉移三次——好酒跟好對手,我都不會放過!',
+  '玉藻前':    '金毛九尾化身的傾世美狐,妖豔狡黠、智慧深沉。「九尾狐火」連連附加燃燒於敵陣,爆發「禍世邪魅」更撒下強力魅惑、被惑者的攻擊全轉為她的回血——人心比妖術更難捉摸,卻也更有趣。',
   // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
   // ★ v1.0.20260507.5580 — 簡介擴充更完整,設計者資訊改在 HERO_BIO.designer 欄位呈現
   '窮奇':      '中國神話「四大凶獸」之一,長著翅膀的猛獸。誰先攻擊就被牠用「凶獠」華麗反擊,專愛以惡制惡的兇猛存在。',
@@ -15546,9 +15697,15 @@ const HERO_LORE = {
   // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班鐘同學)
   '暗魔將·血': '被黑化的貓神化身,源自古代日本的血劍將軍。一手「血劍·防」護同伴於不敗、一手「血劍·攻」單點狙殺敵方核心,爆發「血劍·爆破」攻防合一。',
   // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
-  '死靈法師': '天生陰陽眼的少年,能與死靈溝通並操控他們。S1「冥佑」隱形護身與持續療癒、S2「死者轉生」讓倒下友方化身死靈型態歸來,爆發「亡靈怨念一擊」用倒下次數疊乘大傷害並轉化為全隊治療。天賦「亡魂庇佑」整場一次,致命傷時化身死靈無敵反擊。',
+  '死靈法師': '天生陰陽眼的少年,沉靜內斂、不畏死亡。「冥佑」隱形護身、隊友每受一次傷他便施一次治療,爆發「亡靈怨念一擊」更以倒下次數疊乘大傷害、再轉為全隊治療——別怕,我會聽你的話。',
   // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
-  '布奶鳥獸': '兩隻可愛的小鳥「布丁」與「奶茶」,被人類飼養長大。天賦「布丁奶茶連擊」普攻保證 2 次並有機率追加第 3 次,S1「拆家」全體傷害+吸血轉護盾,S2「布奶的保護」200% 治療復活隊友,爆發「生氣的布丁&奶茶」必中 9 連擊轉移到底。',
+  '布奶鳥獸': '兩隻可愛的小鳥「布丁」與「奶茶」,平時溫順、惹怒便聯手暴走。「拆家」全體傷害換來自己 HP+護盾,爆發「生氣的布丁&奶茶」更是必中 9 連擊、目標倒下就轉移到底——啾啾!(別惹我們生氣!)',
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師劉同學)
+  '炸彈客': '地下爆破工坊的瘋狂工程師,堅信「爆炸即藝術」的爽朗派。一發接一發固定值炸彈無視所有護盾與屬性,爆發「超級大爆炸」更把自己也炸到只剩 10% HP——BOOM!這才是真正的藝術!',
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  '紅色玩家': '虛擬世界深處的紅衣神級玩家,沉默操作如外掛般精準。「瞬殺」一發必中收人頭、爆發「超頻爆發」更開外掛兩回合三倍輸出兼免疫一切——P1 已就位,等你出招。',
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  '地府酋長': '看管刀山火海受刑亡靈的地府獄卒首領,鐵面冷峻、執法不講情面。「支配鎖鍊」拋出黑鐵鎖鍊宣告終結審判、爆發「刀山火海」喚出地獄烈焰席捲全場——亡魂啊,你的審判,由我宣告。',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -15619,6 +15776,23 @@ const HERO_TRAIT = {
   //   每升 1 級觸發機率 +10%,Lv5 MAX 達 80%。
   //   走通用 HERO_TRAIT_LV[heroName].rows 升級表(設計者要求「每級 +10%,Lv5 達 80%」)
   '布奶鳥獸':{ name:'布丁奶茶連擊', icon:'🤝', desc:'普通攻擊為 2 次,30% 機率多 1 次傷害',fd:'布丁和奶茶兩隻小鳥輪流啄擊!普通攻擊保證攻擊 2 次,並有 30% 機率追加第 3 次攻擊。每升 1 級追加機率 +10%,Lv5 MAX 達 80%。' },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師劉同學)
+  //   無視防禦:使用技能造成傷害時 40% 機率無視目標所有有利狀態。
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 80%。
+  //   ⚠ S1/S2/爆發已內建「無視有利狀態」,此天賦對它們不疊加;對普攻或未來新技能才會額外觸發
+  '炸彈客':{ name:'無視防禦', icon:'💣', desc:'使用技能造成傷害時 40% 機率無視目標有利狀態',fd:'炸彈客的炸藥配方專門針對護盾與結界!使用技能造成傷害時有 40% 機率無視目標身上的所有有利狀態(包含護盾、減傷、無敵、保護類等),讓爆炸直接命中本體。S1/S2/爆發本身已內建無視有利狀態,此天賦對它們無效果疊加;對普攻或未來新增技能才會額外觸發。每升 1 級觸發機率 +10%,Lv5 MAX 達 80%。' },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  //   閃避:受到普通攻擊時 30% 機率完全迴避傷害。
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 70%。
+  //   ⚠ 只對「普通攻擊」生效,技能/爆發/AoE/狀態DOT/反彈傷害不會觸發
+  //   差異化:武士「迴避反擊」要消能量並反擊、染靈幻魔「藍色幻影」對所有攻擊生效
+  //   紅色玩家走「無能量消耗 + 只擋普攻」的中庸路線
+  '紅色玩家':{ name:'閃避', icon:'💨', desc:'受到普通攻擊時 30% 機率完全迴避傷害',fd:'操作精準如同開外掛般敏捷!受到敵方普通攻擊時有 30% 機率完全迴避,本次不受傷害。技能、爆發、AoE、狀態 DOT、固定值傷害、反彈傷害不會觸發此天賦。每升 1 級觸發機率 +10%,Lv5 MAX 達 70%。' },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  //   亡魂積怨:場上任意一方有目標倒下時,地府酋長特技 +4(最多疊 5 層,Lv5 滿層 = +20)
+  //   每升 1 級每層加成 +1(Lv5 達每層 +8,滿層 = +40)
+  //   ⚠ 加成只在地府酋長還活著時生效;自身倒下會清空已疊加成,進入新戰鬥時也會重置
+  '地府酋長':{ name:'亡魂積怨', icon:'⚖️', desc:'場上任意目標倒下時自身特技 +4,最多疊 5 層',fd:'每一個亡魂的怨氣都灌注到地府酋長的審判杖上!場上任意一方有目標倒下時,地府酋長自身的特技值 +4,最多可疊加 5 層(Lv1 滿層 = 特技 +20)。自身倒下會清空已疊加成,進入新戰鬥時也會重置為 0 層。每升 1 級每層加成 +1,Lv5 MAX 每層 +8,滿層 = 特技 +40。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -17188,7 +17362,9 @@ function renderCard(h){
 }
 function statusName(t){
   const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',pursuit:'追擊',
-  booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾'
+  booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾',
+  // ★ v1.0.20260514.6770 — 地府酋長 S1「審判終結」狀態中文名
+  judgmentEnd:'⚖️ 審判終結'
 };
   return m[t]||t;
 }
@@ -17858,6 +18034,36 @@ const BURST_GIF_DB = {
     url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E9%87%91%E8%89%B2%E9%96%83%E5%85%89%E7%82%B8%E9%96%8B.gif',
     sfx:[['sfx-explode',1.0],['sfx-powerup',0.8]],
     tint:'rgba(255,220,80,0.22)'
+  },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(炸彈客)爆發特效
+  //   超級大爆炸 — 設計者指定沿用「八龍頭滅世」GIF(節省素材製作成本)
+  //   音效:三層爆炸組合(主爆炸+爆裂餘震+蓄力預警),呼應「BOOM!」設計概念
+  //   tint:橘紅爆炸色,跟「鬼王酒宴」「火雨」同調
+  '超級大爆炸': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%85%AB%E9%BE%8D%E9%A0%AD%E6%BB%85%E4%B8%96.gif',
+    sfx:[['sfx-explode',1.0],['sfx-burst',0.9],['sfx-powerup',0.7]],
+    tint:'rgba(255,100,40,0.22)',
+    dur:2400
+  },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(紅色玩家)爆發特效
+  //   超頻爆發 — 設計者指定使用「數位數字飛舞.gif」呈現程式碼/數據爆衝感
+  //   音效:充能+奇幻+爆發三層,呼應 Overclock(超頻)的「電腦加速啟動」效果
+  //   tint:純紅電競色,呼應角色代表色「紅色」
+  '超頻爆發': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%95%B8%E4%BD%8D%E6%95%B8%E5%AD%97%E9%A3%9B%E8%88%9E.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-fantasy',0.85],['sfx-burst',0.9]],
+    tint:'rgba(255,40,40,0.22)',
+    dur:2400
+  },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(地府酋長)爆發特效
+  //   刀山火海 — 選用「神鬼盡滅.gif」,跟地獄審判的氛圍最契合
+  //   音效:爆發+爆裂+奇幻三層,展現地獄烈焰刀山席捲全場的感覺
+  //   tint:幽冥血色,呼應角色「地府」「血色風暴」設定
+  '刀山火海': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
+    sfx:[['sfx-burst',1.0],['sfx-explode',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(120,0,40,0.25)',
+    dur:2400
   },
   '劍神連斬': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
@@ -20063,6 +20269,171 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6550 — 炸彈客(5 年 4 班劉同學設計)爆發實作
+  //   超級大爆炸:對全體對手造成固定值 200+目標30%HP(上限 Lv×20),自損至 10% HP(保底 1)
+  //   升級表(_burstLv 0~4):固定值 200/250/300/350/400、HP% 30%/32%/34%/36%/40%
+  //   ⚠ fixedDmg:true 跳過屬性/buff/暴擊;ignoreBuffs:true 穿透有利狀態
+  //   ⚠ 自損公式:a.curHp = max(1, floor(a.maxHp × 0.10)),不會倒下(保底 1 HP)
+  //   ⚠ 爆發上限是 Lv×20(S1/S2 仍維持 Lv×10,爆發享有兩倍上限作為威力差異)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='超級大爆炸'){
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _bombLvIdx = Math.min(4, _burstLv);
+    const _fixedBaseTable = [200, 250, 300, 350, 400];
+    const _hpPctTable = [0.30, 0.32, 0.34, 0.36, 0.40];
+    const _fixedBase = _fixedBaseTable[_bombLvIdx];
+    const _hpPct = _hpPctTable[_bombLvIdx];
+    const _lvCap = (h.lv || 1) * 20;
+    log(`💥 [${h.name}] 超級大爆炸!整個工坊的炸彈一次點燃!固定 ${_fixedBase}+目標 ${Math.round(_hpPct*100)}%HP(上限 Lv×20=${_lvCap})`);
+    bannerFX(h, '💥 超級大爆炸!', '#ff3322', 1400);
+    beginBatchTotals();
+    const _foes = G[_opp].filter(x => x.curHp > 0);
+    if(!_foes.length){
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+      return;
+    }
+    // 全體爆破(每隻間隔 120ms,視覺有層次)
+    _foes.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        const _raw = _fixedBase + Math.floor(f.hp * _hpPct);
+        const _finalDmg = Math.min(_raw, _lvCap);
+        log(`💥 → [${f.name}] 受 ${_finalDmg} 固定傷害(${_fixedBase}+${Math.floor(f.hp * _hpPct)},上限 ${_lvCap})`);
+        try{ bannerFX(f, `💥 ${_finalDmg}!`, '#ff4422', 900); }catch(_){}
+        doDmg(f, _finalDmg, { fixedDmg:true, actor:h, isSkill:true, ignoreBuffs:true });
+        renderCard(f);
+      }, i * 120);
+    });
+    // 全體爆破結束後處理自損
+    _pSetTimeout(() => {
+      // 自損至 10% HP(保底 1,不會倒下)
+      const _selfTargetHp = Math.max(1, Math.floor(h.hp * 0.10));
+      const _selfLoss = Math.max(0, h.curHp - _selfTargetHp);
+      if(_selfLoss > 0){
+        h.curHp = _selfTargetHp;
+        log(`💣 [${h.name}] 自爆反震!HP ${h.curHp + _selfLoss} → ${_selfTargetHp}(剩 10%)`);
+        try{ bannerFX(h, '💣 自損 10% HP!', '#ff8844', 1200); }catch(_){}
+        try{ flashCard(h, 'rgba(255,80,0,0.7)', 800); }catch(_){}
+        try{ playSfx('sfx-explode', 0.6); }catch(_){}
+        renderCard(h);
+      }
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+    }, _foes.length * 120 + 400);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學):紅色玩家
+  //   超頻爆發:自己造成傷害提升至 300%(乘上自身造成的所有傷害)持續 2 回合
+  //                同時免疫所有傷害和不利狀態
+  //   升級表(_burstLv 0~4):傷害 300/320/340/360/400%、回合 2/2/2/2/3
+  //   實作方式:
+  //     - 對 h 加上 buff 'overclock'(2~3 回合) — 由 doDmg / doStatus 讀取
+  //     - h._overclockDmgMult = 倍率 — doDmg 在「a 是 h」的時候乘上去
+  //     - h._overclockImmune = true — doDmg 開頭、doStatus(不利)開頭判斷直接擋掉
+  //     - 爆發本身不造成主傷害,只設置 buff(類似聖騎士「最終殿堂」風格)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='超頻爆發'){
+    const _ocMultTable = [3.0, 3.2, 3.4, 3.6, 4.0];
+    const _ocDurTable = [2, 2, 2, 2, 3];
+    const _ocLvIdx = Math.min(4, _burstLv);
+    const _ocMult = _ocMultTable[_ocLvIdx];
+    const _ocDur = _ocDurTable[_ocLvIdx];
+    log(`🟥 [${h.name}] 超頻爆發!紅色光暈衝破螢幕——「Overclock — Engaged!」`);
+    log(`🟥 [${h.name}] 接下來 ${_ocDur} 回合造成傷害 ${Math.round(_ocMult*100)}%、免疫所有傷害和不利狀態!`);
+    bannerFX(h, '🟥 超頻爆發!', '#ff2233', 1400);
+    try{ flashCard(h, 'rgba(255,40,40,0.6)', 1200); }catch(_){}
+    try{ playSfx('sfx-powerup', 1.0); }catch(_){}
+    // 加上 overclock buff(2~3 回合)
+    try{
+      if(h.buffs && h.buffs.length){
+        h.buffs = h.buffs.filter(b => b.type !== 'overclock');
+      }
+      addBuff(h, 'overclock', _ocDur);
+      const _ocB = h.buffs && h.buffs.find(x => x.type === 'overclock');
+      if(_ocB){
+        _ocB._dmgMult = _ocMult;
+        _ocB._immune = true;
+        _ocB._fromBurst = true;
+      }
+      // 把 flags 也直接存到 hero 物件,讓 doDmg/addStatus 快速判斷
+      h._overclockDmgMult = _ocMult;
+      h._overclockImmune = true;
+      renderCard(h);
+    }catch(e){
+      console.warn('[紅色玩家] 超頻爆發 buff 設定失敗', e);
+    }
+    _burstFinish(h, _interrupted);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學):地府酋長
+  //   刀山火海:全體特技 200% 傷害,並指定 1 名目標額外受 100% 且禁動 1 回合
+  //   升級表(_burstLv 0~4):全體主傷 200/215/230/245/260%、追加 100/110/120/130/140%、禁動 1/1/1/1/2 回合
+  //   實作方式:
+  //     - 全體先吃主傷害(走 spv 標準特技傷害)
+  //     - 從存活對手中隨機/挑 HP 最高者作為「指定目標」追加傷害並附加 stun
+  //     - 禁動走標準 addStatus(t,'stun',_stunDur),可被免疫或強力狀態抗性擋
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='刀山火海'){
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _hellLvIdx = Math.min(4, _burstLv);
+    const _mainPctTable = [2.00, 2.15, 2.30, 2.45, 2.60];
+    const _addPctTable = [1.00, 1.10, 1.20, 1.30, 1.40];
+    const _stunDurTable = [1, 1, 1, 1, 2];
+    const _mainPct = _mainPctTable[_hellLvIdx];
+    const _addPct = _addPctTable[_hellLvIdx];
+    const _stunDur = _stunDurTable[_hellLvIdx];
+    const _foes = G[_opp].filter(x => x.curHp > 0);
+    if(!_foes.length){
+      _burstFinish(h, _interrupted);
+      return;
+    }
+    // spv = 取得地府酋長加成後的特技值
+    const _spv = Math.floor((h.sp || 0) * (1 + (h.sp || 0) * 0.01));
+    const _mainDmg = Math.max(1, Math.floor(_spv * _mainPct * _burstMult));
+    const _addDmg = Math.max(1, Math.floor(_spv * _addPct * _burstMult));
+    log(`⚖️ [${h.name}] 刀山火海!喚出地獄烈焰席捲全場!特技 ${Math.round(_mainPct*100)}% 全體 + 指定 ${Math.round(_addPct*100)}% 追加`);
+    bannerFX(h, '⚖️ 刀山火海!', '#cc1144', 1400);
+    beginBatchTotals();
+    // 全體主傷害(每隻間隔 120ms,視覺有層次)
+    _foes.forEach((f, i) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        doDmg(f, _mainDmg, { actor:h, isSkill:true });
+        renderCard(f);
+      }, i * 120);
+    });
+    // 全體結算後選 1 名指定目標追加(挑當前 HP 最高的存活者,避免追擊到已倒下)
+    _pSetTimeout(() => {
+      const _aliveAfter = G[_opp].filter(x => x.curHp > 0);
+      if(_aliveAfter.length){
+        // 挑 HP 最多的存活者(最有可能存活到下回合,讓禁動最有效)
+        const _picked = _aliveAfter.slice().sort((x, y) => y.curHp - x.curHp)[0];
+        if(_picked){
+          log(`⚖️ → [${h.name}] 指定 [${_picked.name}] 額外承受 ${Math.round(_addPct*100)}% 追加 + 禁動 ${_stunDur} 回合!`);
+          try{ bannerFX(_picked, '⚖️ 指定追擊!', '#ff3355', 1000); }catch(_){}
+          try{ flashCard(_picked, 'rgba(180,0,40,0.65)', 800); }catch(_){}
+          try{ playSfx('sfx-explode', 0.85); }catch(_){}
+          doDmg(_picked, _addDmg, { actor:h, isSkill:true });
+          if(_picked.curHp > 0){
+            addStatus(_picked, 'stun', _stunDur);
+          }
+          renderCard(_picked);
+        }
+      }
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+    }, _foes.length * 120 + 400);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
 
@@ -20885,11 +21256,39 @@ function doDmg(target, rawDmg, opts={}){
   //   但仍走最後的「curHp 扣減 + 倒下檢查」流程,讓系統感知到傷害
   if(opts.fixedDmg){
     if(!target || target.curHp <= 0) return 0;
+    // ★ v1.0.20260514.6660 — 紅色玩家爆發「超頻爆發」期間:即使是 fixedDmg 也吃強化
+    //   (例如:超頻爆發 buff 期間用 S1 瞬殺,固定值傷害也要受 ×3.0 提升)
+    try{
+      const _aFx = G.activeChar || opts.actor;
+      if(_aFx && _aFx.name === '紅色玩家' && _aFx !== target
+         && (_aFx._overclockDmgMult || hasBuff(_aFx, 'overclock'))){
+        const _ocMult = _aFx._overclockDmgMult || 3.0;
+        rawDmg = Math.max(1, Math.floor(rawDmg * _ocMult));
+      }
+    }catch(_){}
     target.curHp = Math.max(0, target.curHp - rawDmg);
     try{ showPopup(target, '-'+rawDmg, 'dmg'); }catch(_){}
     return rawDmg;
   }
   const a=G.activeChar||opts.actor;
+
+  // ★ v1.0.20260514.6660 — 紅色玩家爆發「超頻爆發」期間:攻擊者造成傷害提升至 300%(或更高)
+  //   觸發條件:
+  //     - a 是紅色玩家、有 overclock buff(或 _overclockDmgMult flag)
+  //     - !opts.isRebound(反彈不算自己造的)
+  //     - !opts._overclockApplied(避免疊加)
+  //   實作:把 rawDmg ×倍率(預設 3.0,Lv5 達 4.0),用 flag 避免重複套用
+  if(a && a.name === '紅色玩家' && a !== target
+     && (a._overclockDmgMult || hasBuff(a, 'overclock'))
+     && !opts.isRebound && !opts._overclockApplied){
+    const _ocMult = a._overclockDmgMult || 3.0;
+    const _origDmg = rawDmg;
+    rawDmg = Math.max(1, Math.floor(rawDmg * _ocMult));
+    opts._overclockApplied = true;
+    if(_origDmg !== rawDmg){
+      try{ log(`🟥 [${a.name}] 超頻強化!傷害 ${_origDmg} → ${rawDmg}(×${_ocMult.toFixed(1)})`); }catch(_){}
+    }
+  }
 
   // ★ v1.0.20260421.3000f — 玉藻前天賦：造成傷害時60%機率無視有利狀態
   // ★ v1.0.20260423.8100 — 改為可升級:每升 1 級 +4%(Lv0=60%, Lv5=80%)
@@ -20909,6 +21308,19 @@ function doDmg(target, rawDmg, opts={}){
     return 0;
   }
 
+  // ★ v1.0.20260514.6660 — 紅色玩家爆發「超頻爆發」期間免疫所有傷害
+  //   target 是紅色玩家、有 overclock buff 時(_overclockImmune flag)
+  //   絕對免疫,跟小力強力隱身同等級(在 ignoreBuffs / AoE / 必中之前判定)
+  //   排除自損傷害(opts.actor === target 時是自己造的不擋,例如反彈)
+  if(target && target.name === '紅色玩家'
+     && (target._overclockImmune || hasBuff(target, 'overclock'))
+     && a && a !== target){
+    showPopup(target, '🟥 OC 免疫', 'miss');
+    log(`🟥 [${target.name}] 超頻爆發中,完全免疫傷害!`);
+    try{ flashCard(target, 'rgba(255,40,40,0.5)', 400); }catch(_){}
+    return 0;
+  }
+
   // ★ v1.1.0 — 染靈幻魔・藍色憂鬱 天賦「藍色幻影」: 30% 機率閃避(攻擊或技能皆可觸發)
   //   不受 ignoreEvasion / piercing 影響(天生天賦,不像 evasion buff 可被穿)
   //   排除反彈/狀態傷害/AoE 連鎖等非主動攻擊
@@ -20920,6 +21332,34 @@ function doDmg(target, rawDmg, opts={}){
     showPopup(target, '💧幻影', 'miss');
     log(`💧 [${target.name}] 藍色幻影!飄逸藍染使其虛實難辨,完全閃避!`);
     return 0;
+  }
+
+  // ★ v1.0.20260514.6660 — 紅色玩家天賦「閃避」: 30% 機率閃避(只擋普通攻擊)
+  //   設計差異化:
+  //     - 染靈幻魔「藍色幻影」:對所有攻擊生效(攻擊或技能皆可)
+  //     - 武士「迴避反擊」:消能量且反擊,是被動技能
+  //     - 紅色玩家「閃避」:無能量消耗、僅擋普攻,Lv5 MAX 達 70%
+  //   觸發條件:
+  //     - target 是紅色玩家、還活著、沒被疑惑
+  //     - !opts.isSkill(只擋普通攻擊,技能不算)
+  //     - !opts.isRebound、!opts.isTraitShare、!opts.isChaos(反彈/共享/混亂不擋)
+  //     - !opts.piercing(穿透類傷害不擋)
+  //     - !opts.fixedDmg(固定值傷害如炸彈客系列不擋,對齊「藍色幻影也擋不住」設計)
+  //     - 有攻擊者且來自敵方陣營
+  if(target && target.name === '紅色玩家' && target.curHp > 0
+     && !hasStatus(target, 'confused')
+     && !opts.isSkill && !opts.isRebound && !opts.isTraitShare && !opts.isChaos
+     && !opts.piercing && !opts.fixedDmg
+     && a && a !== target && a.side !== target.side){
+    const _redPlayerTl = (typeof _getTraitLv === 'function') ? _getTraitLv('紅色玩家') : 0;
+    const _dodgeRate = Math.min(1, 0.30 + _redPlayerTl * 0.10);  // Lv0=30%, Lv5(traitLv=4)=70%
+    if(Math.random() < _dodgeRate){
+      try{ showShieldVFX(target, 'evade'); }catch(_){}
+      showPopup(target, '💨閃避', 'miss');
+      log(`💨 [${target.name}] 天賦：閃避！操作精準如同開外掛，完全迴避傷害！`);
+      try{ bannerFX(target, '💨 閃避!', '#ff3344', 800); }catch(_){}
+      return 0;
+    }
   }
 
   // ★ v1.0.20260428.3730 — 至寶閃避率(三峽藍染雲袖)+ 攻擊者命中率(蘭嶼拼板舟神弓)
@@ -21015,6 +21455,42 @@ function doDmg(target, rawDmg, opts={}){
     const _reflDmg=Math.floor(rawDmg*(a._burstReflectMult||1.0));
     log(`[${a.name}] 正義制裁！傷害反彈 ${_reflDmg}（×${(a._burstReflectMult||1.0).toFixed(1)}）給自己！`);
     doDmg(a,_reflDmg,{actor:target,noGuard:true,ignoreEvasion:true,isRebound:true});
+  }
+  // ★ v1.0.20260514.6660 — 紅色玩家 S2「反域」buff 處理:反彈 + 減傷 + 保底 1HP
+  //   觸發條件:
+  //     - target 身上有 reverseDomain buff
+  //     - 來自敵方陣營(a 存在,且 a.side !== target.side)
+  //     - !opts.isRebound(避免反彈再觸發反域,無限循環)
+  //     - !opts.isReverseDomain(避免反域自己再觸發)
+  //   效果:
+  //     1. 先反彈(rebPct,預設 50%)給攻擊者 — 走 isRebound:true 避免遞迴
+  //     2. 再對 target 套用減傷(redPct,預設 50%)
+  //     3. 計算後若 target.curHp - 最終傷害 <= 0,保底為 1(不會倒下)
+  //   注意:reverseDomain 不會被 ignoreBuffs 穿透(屬戰場效果類保護,跟 hidden 同邏輯)
+  if(hasBuff(target,'reverseDomain') && a && a.side !== target.side
+     && !opts.isRebound && !opts.isReverseDomain && rawDmg > 0){
+    const _revB = target.buffs && target.buffs.find(b => b.type === 'reverseDomain');
+    const _rebPct = (_revB && _revB._rebPct) || 0.50;
+    const _redPct = (_revB && _revB._redPct) || 0.50;
+    const _noKO = (_revB && _revB._noKO) || true;
+    // 1. 反彈
+    const _reboundDmg = Math.max(1, Math.floor(rawDmg * _rebPct));
+    log(`🪞 [${target.name}] 反域!傷害反彈 ${Math.round(_rebPct*100)}% (${_reboundDmg}) 給 [${a.name}]!`);
+    try{ bannerFX(a, `🪞 反域反彈!`, '#ff5566', 700); }catch(_){}
+    try{ doDmg(a, _reboundDmg, { actor:target, noGuard:true, ignoreEvasion:true, isRebound:true, isReverseDomain:true }); }catch(e){}
+    // 2. 減傷
+    const _reducedDmg = Math.max(1, Math.floor(rawDmg * (1 - _redPct)));
+    // 3. 保底 1HP — 若會倒下,改為剩 1 點 HP
+    if(_noKO && target.curHp - _reducedDmg <= 0){
+      const _safeDmg = Math.max(0, target.curHp - 1);
+      log(`🪞 [${target.name}] 反域保底!HP 至少保留 1 點(本來會受 ${_reducedDmg},改為 ${_safeDmg})`);
+      try{ bannerFX(target, `🪞 反域保底!`, '#ff5566', 700); }catch(_){}
+      rawDmg = _safeDmg;
+    } else {
+      log(`🪞 [${target.name}] 反域減傷 ${Math.round(_redPct*100)}% (受傷 ${rawDmg}→${_reducedDmg})`);
+      rawDmg = _reducedDmg;
+    }
+    // 繼續往下執行,讓護盾、buff 等其他保護機制有機會繼續處理
   }
   // Shield
   if(hasBuff(target,'shield')&&!opts.ignoreBuffs){
@@ -21726,6 +22202,32 @@ function doDmg(target, rawDmg, opts={}){
       // ★ v1.0.20260423.5500 — 移除戰鬥中即時掉金幣的 popup/log,改為只在戰鬥結算時一次發放
       //   設計理念:戰鬥中專注於戰鬥本身,所有獎勵(EXP/金幣/掉落物)在結算畫面一次顯示總和
       //   每隻怪的金幣值仍以 _calcMobExp × 0.5 計算,但只在 grantBattleExp/advFinishMiniBattle 結算時加總
+      // ★ v1.0.20260514.6770 — 地府酋長天賦「亡魂積怨」: 場上任意目標倒下時,所有存活的地府酋長特技+疊層
+      //   - 每層特技 +4(每升 1 級每層 +1, Lv5 每層 +8)
+      //   - 最多疊 5 層
+      //   - 地府酋長自己倒下不會給自己疊(但其他地府酋長倒下會;同隊有 2 隻時兩隻都吃)
+      //   - 用 hero._hellChieftainStack 記錄當前層數,_hellChieftainStackBonus 記錄累計特技加成(便於戰鬥結束/復活清除)
+      try{
+        const _sides = ['p1','p2'];
+        _sides.forEach(_s => {
+          if(!G[_s]) return;
+          G[_s].forEach(_hc => {
+            if(!_hc || _hc.name !== '地府酋長' || _hc.curHp <= 0) return;
+            if(_hc === target) return; // 自己倒下不疊自己(已在 curHp<=0 被排除,雙保險)
+            const _curStack = _hc._hellChieftainStack || 0;
+            if(_curStack >= 5) return;  // 已滿層
+            const _tl = (typeof _getTraitLv === 'function') ? _getTraitLv('地府酋長') : 0;
+            const _perStack = 4 + _tl;  // Lv1=4, Lv5=8
+            _hc._hellChieftainStack = _curStack + 1;
+            _hc._hellChieftainStackBonus = (_hc._hellChieftainStackBonus || 0) + _perStack;
+            _hc.sp = (_hc.sp || 0) + _perStack;
+            log(`⚖️ [${_hc.name}] 亡魂積怨!吸納 [${target.name}] 的怨氣,特技 +${_perStack}(第 ${_hc._hellChieftainStack} 層,共 +${_hc._hellChieftainStackBonus})`);
+            try{ bannerFX(_hc, `⚖️ 亡魂積怨 ${_hc._hellChieftainStack}/5`, '#aa2244', 900); }catch(_){}
+            try{ flashCard(_hc, 'rgba(120,0,40,0.45)', 600); }catch(_){}
+            try{ renderCard(_hc); }catch(_){}
+          });
+        });
+      }catch(_hce){ console.warn('[地府酋長] 亡魂積怨疊層失敗', _hce); }
     }
     // 清除所有狀態與增益
     target.status=[];
@@ -21745,6 +22247,17 @@ function doDmg(target, rawDmg, opts={}){
       _dEl.classList.remove('dead-anim');
       void _dEl.offsetWidth;
       _dEl.classList.add('dead-anim');
+    }
+    // ★ v1.0.20260514.6770 — 地府酋長自己倒下時清除「亡魂積怨」疊層加成
+    //   避免復活後或重新進戰鬥還保有臨時加成(_hellChieftainStackBonus)
+    //   注意:此處在「target.curHp===0」分支內,只處理倒下者本身
+    if(target.name === '地府酋長' && target._hellChieftainStackBonus){
+      try{
+        target.sp = Math.max(0, (target.sp || 0) - target._hellChieftainStackBonus);
+        log(`⚖️ [${target.name}] 倒下,亡魂積怨清零(特技 -${target._hellChieftainStackBonus})`);
+        delete target._hellChieftainStack;
+        delete target._hellChieftainStackBonus;
+      }catch(_hce2){ console.warn('[地府酋長] 倒下清層失敗', _hce2); }
     }
   }
   renderCard(target);
@@ -23229,6 +23742,41 @@ function execAtk(actor, target, dmg, opts={}){
       }catch(e){}
       actor._bunaiMultiTriggered = false;
     }, 350);
+  }
+
+  // ★ v1.0.20260514.6550 — 炸彈客天賦:無視防禦
+  //   使用技能造成傷害時 40% 機率無視目標所有有利狀態(+10%/級, Lv5 達 80%)
+  //   ⚠ S1/S2/爆發已內建「無視有利狀態」,此天賦對它們不疊加;
+  //     對普攻才會觸發 — 機率觸發後立即清除目標 1 個有利狀態(類似火法師「消除有利狀態」邏輯)
+  //   設計依據:設計者敘述「使用技能造成傷害時觸發」,但 S1/S2/爆發已內建,實質作用點在普攻
+  if(name==='炸彈客' && target && target.curHp>0 && target.buffs && target.buffs.length>0){
+    const _bomberTl = (typeof _getTraitLv === 'function') ? _getTraitLv('炸彈客') : 0;
+    const _bomberRate = Math.min(1, 0.40 + _bomberTl * 0.10);  // Lv0=40%, Lv5=90% (capped 100%)
+    if(Math.random() < _bomberRate){
+      // 清除目標 1 個非保護類有利狀態(模擬「無視」的視覺效果)
+      try{
+        // 跟「神偷·盜取」「火法師·消除有利」一樣的清除邏輯
+        // 優先清除護盾、減傷、無敵、隱身等
+        const _priorityBuffs = ['shield','immune','reduceDmg','hidden','dodge','reflect','buffAtk','buffSp'];
+        let _cleared = null;
+        for(const _bkey of _priorityBuffs){
+          const _idx = target.buffs.findIndex(b => b && b.k === _bkey);
+          if(_idx >= 0){
+            _cleared = target.buffs.splice(_idx, 1)[0];
+            break;
+          }
+        }
+        // 若優先清單裡沒有,就清除第一個非「保護類絕對禁清」的
+        if(!_cleared && target.buffs.length > 0){
+          _cleared = target.buffs.shift();
+        }
+        if(_cleared){
+          log(`💣 [炸彈客] 天賦:無視防禦!炸藥穿透 [${target.name}] 的「${_cleared.k}」!`);
+          bannerFX(target,'💣 無視防禦!','#ff8844',800);
+          try{ playSfx('sfx-explode', 0.4); }catch(_){}
+        }
+      }catch(_bomberE){ /* 防呆:不影響主普攻流程 */ }
+    }
   }
 
   // 祭司：60%恢復HP最低隊友25%HP
@@ -26168,6 +26716,246 @@ function execSkill(a, sk, cost, stype){
       renderCard(t);
       endAction(a, cost);
     });
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6550 — 炸彈客(5 年 4 班劉同學設計)技能實作
+  //   S1 炸彈投擲:固定 20+目標 15%HP,上限=Lv×10,無視有利狀態、不受屬性影響、不會暴擊
+  //     升級表:Lv1~5 固定值 20/25/30/35/40、HP% 15/16/17/18/20
+  //   S2 炸彈連續投擲:同 S1 公式 ×2 次(Lv5 升為 3 次),每發獨立挑目標
+  //   ⚠ doDmg 用 fixedDmg:true 跳過屬性/buff/暴擊計算,搭配 ignoreBuffs:true 穿透有利狀態
+  //   ⚠ LV 上限 = a.lv * 10(沒有 a.lv 時 fallback 1,Lv1 玩家上限 = 10/發)
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='炸彈投擲'){
+    const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _bomberLvIdx = Math.min(4, _s1Lv);
+    const _fixedBaseTable = [20, 25, 30, 35, 40];
+    const _hpPctTable = [0.15, 0.16, 0.17, 0.18, 0.20];
+    const _fixedBase = _fixedBaseTable[_bomberLvIdx];
+    const _hpPct = _hpPctTable[_bomberLvIdx];
+    const _lvCap = (a.lv || 1) * 10;
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    const _liveFoes = G[opp].filter(h => h.curHp > 0);
+    if(!_liveFoes.length){ endAction(a, cost); return; }
+    // 由玩家挑目標(若隨機則挑 HP 最高,讓 HP% 那段傷害最大化)
+    setPending('enemy', t => {
+      if(!t || t.curHp <= 0){ endAction(a, cost); return; }
+      const _raw = _fixedBase + Math.floor(t.hp * _hpPct);
+      const _finalDmg = Math.min(_raw, _lvCap);
+      log(`💣 [${a.name}] 炸彈投擲 → [${t.name}]!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% = ${_raw}(上限 Lv×10=${_lvCap},實際 ${_finalDmg})`);
+      try{ playSkillFX('炸彈投擲', a, [t]); }catch(_){}
+      try{ bannerFX(t, '💣 BOOM!', '#ff6622', 900); }catch(_){}
+      try{ playSfx('sfx-explode', 0.85); }catch(_){}
+      doDmg(t, _finalDmg, { fixedDmg:true, actor:a, isSkill:true, ignoreBuffs:true });
+      renderCard(t);
+      endAction(a, cost);
+    });
+  }
+  else if(n==='炸彈連續投擲'){
+    const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _bomberLvIdx = Math.min(4, _s2Lv);
+    const _fixedBaseTable = [20, 25, 30, 35, 40];
+    const _hpPctTable = [0.15, 0.16, 0.17, 0.18, 0.20];
+    const _hitsTable = [2, 2, 2, 2, 3];
+    const _fixedBase = _fixedBaseTable[_bomberLvIdx];
+    const _hpPct = _hpPctTable[_bomberLvIdx];
+    const _hits = _hitsTable[_bomberLvIdx];
+    const _lvCap = (a.lv || 1) * 10;
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
+    log(`💣 [${a.name}] 炸彈連續投擲!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% × ${_hits} 次(上限 Lv×10=${_lvCap})`);
+    beginBatchTotals();
+    let _bombI = 0;
+    const _doBomb = () => {
+      const _alive = G[opp].filter(h => h.curHp > 0);
+      if(_bombI >= _hits || !_alive.length){
+        setTimeout(endBatchTotals, 50);
+        endAction(a, cost);
+        return;
+      }
+      const _t = _alive[Math.floor(Math.random() * _alive.length)];
+      const _raw = _fixedBase + Math.floor(_t.hp * _hpPct);
+      const _finalDmg = Math.min(_raw, _lvCap);
+      log(`💣 [${a.name}] 連投第 ${_bombI+1} 發 → [${_t.name}] 固定 ${_finalDmg}`);
+      try{ bannerFX(_t, `💣 BOOM × ${_bombI+1}!`, '#ff6622', 600); }catch(_){}
+      try{ playSfx('sfx-explode', 0.7); }catch(_){}
+      doDmg(_t, _finalDmg, { fixedDmg:true, actor:a, isSkill:true, ignoreBuffs:true });
+      renderCard(_t);
+      _bombI++;
+      _pSetTimeout(_doBomb, 350);
+    };
+    try{ playSkillFX('炸彈連續投擲', a, G[opp].filter(h => h.curHp > 0)); }catch(_){}
+    _pSetTimeout(_doBomb, 200);
+    return;  // 非同步,由 _doBomb 結尾呼叫 endAction
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學):紅色玩家
+  //   S1 瞬殺:特技 450% 必中傷害 1 名對手(每升 1 級 +20%, Lv10 達 630%)
+  //   S2 反域:設置戰場效果「反域」3 回合,友方受傷反彈 50% + 減傷 50%(不會倒下)
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='瞬殺'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _alive = G[opp].filter(h => h.curHp > 0);
+    if(!_alive.length){ endAction(a, cost); return; }
+    // S1 升級:每升 1 級 +20%(走通用 dmg cat 慣例,基礎 450%,Lv10 MAX 達 630%)
+    const _skLv = (a._skLv && a._skLv.s1) || 0;
+    const _baseMult = 4.5 + _skLv * 0.20;
+    // 目標選擇:走標準 chooseTarget(同時支援 AI 與玩家選擇)
+    const _doSnipe = (t) => {
+      if(!t || t.curHp <= 0){
+        // 找個候選:HP 最低的
+        const _sortedFoes = G[opp].filter(h => h.curHp > 0).sort((x,y) => (x.curHp/x.hp) - (y.curHp/y.hp));
+        t = _sortedFoes[0];
+        if(!t){ endAction(a, cost); return; }
+      }
+      const _spv = Math.floor((a.sp||0) * (1 + (a.sp||0) * 0.01));
+      const _dmg = Math.max(1, Math.floor(_spv * _baseMult));
+      log(`🟥 [${a.name}] 瞬殺 → [${t.name}]!特技 ${Math.round(_baseMult*100)}% 必中(${_dmg})!`);
+      try{ bannerFX(a, '🟥 瞬殺!', '#ff2233', 900); }catch(_){}
+      try{ playSfx('sfx-crit', 0.9); }catch(_){}
+      try{ playSkillFX('瞬殺', a, [t]); }catch(_){}
+      doDmg(t, _dmg, { actor:a, isSkill:true, ignoreEvasion:true, noHidden:true });
+      renderCard(t);
+      endAction(a, cost);
+    };
+    if(targets && targets.length > 0 && targets[0] && targets[0].curHp > 0){
+      _doSnipe(targets[0]);
+    } else {
+      // AI 路徑:挑 HP% 最低的對手
+      const _sorted = _alive.slice().sort((x,y) => (x.curHp/x.hp) - (y.curHp/y.hp));
+      _doSnipe(_sorted[0]);
+    }
+    return;
+  }
+  else if(n==='反域'){
+    // S2 設置戰場效果:友方陣營全體獲得「reverseDomain」buff 3 回合
+    // 升級:Lv1~7 反彈 50→80%、Lv8~9 減傷 +5%、Lv10 回合 +1
+    const _skLv = (a._skLv && a._skLv.s2) || 0;
+    let _reboundPct = 0.50 + Math.min(6, _skLv) * 0.05;  // Lv1=50%, Lv7=80%
+    let _reducePct = 0.50;
+    if(_skLv >= 7) _reducePct = 0.55;
+    if(_skLv >= 8) _reducePct = 0.60;
+    let _dur = 3;
+    if(_skLv >= 9) _dur = 4;  // Lv10 MAX 回合 +1
+    const _allies = G[a.side].filter(h => h.curHp > 0);
+    log(`🟥 [${a.name}] 反域!設置 ${_dur} 回合反射防火牆(反彈 ${Math.round(_reboundPct*100)}% + 減傷 ${Math.round(_reducePct*100)}% + 不會倒下)!`);
+    try{ bannerFX(a, '🪞 反域 ON!', '#ff5566', 1000); }catch(_){}
+    try{ playSfx('sfx-fantasy', 0.85); }catch(_){}
+    try{ playSkillFX('反域', a, _allies); }catch(_){}
+    _allies.forEach(_ally => {
+      try{
+        // 移除舊的 reverseDomain(避免疊加),再加新的
+        if(_ally.buffs && _ally.buffs.length){
+          _ally.buffs = _ally.buffs.filter(b => b.type !== 'reverseDomain');
+        }
+        addBuff(_ally, 'reverseDomain', _dur);
+        // 把反彈/減傷/保底參數存到 buff 物件上,讓 doDmg hook 讀取
+        const _b = _ally.buffs && _ally.buffs.find(x => x.type === 'reverseDomain');
+        if(_b){
+          _b._rebPct = _reboundPct;
+          _b._redPct = _reducePct;
+          _b._noKO = true;  // 不會倒下,HP 保留 1
+          _b._source = a;   // 反域施展者(反彈傷害的施加者)
+        }
+        renderCard(_ally);
+      }catch(e){}
+    });
+    endAction(a, cost);
+    return;
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學):地府酋長
+  //   S1 支配鎖鍊:對 1 名目標造成當前 HP 30% 必中傷害(上限=特技×20),
+  //                並陷入「審判終結」2 回合(回合結束後非 BOSS 直接倒下,BOSS 受 20% 當前 HP 必中傷害)
+  //   S2 血色風暴:全體特技 100% 傷害 + 流血 2 回合(走標準 dmg + bleed)
+  //   ⚠ 審判終結是新狀態 'judgmentEnd',不可疊加、預防或消除
+  //   ⚠ S1 升級:每升 1 級 +2% HP 傷害(Lv10 達 50%),上限隨升級放寬至特技×30
+  //   ⚠ S2 走標準 dmg cat
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='支配鎖鍊'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _alive = G[opp].filter(h => h.curHp > 0);
+    if(!_alive.length){ endAction(a, cost); return; }
+    const _doChain = (t) => {
+      if(!t || t.curHp <= 0){
+        // fallback:挑 HP 最高
+        const _sortedFoes = G[opp].filter(h => h.curHp > 0).sort((x, y) => y.curHp - x.curHp);
+        t = _sortedFoes[0];
+        if(!t){ endAction(a, cost); return; }
+      }
+      const _skLv = (a._skLv && a._skLv.s1) || 0;
+      // Lv1 30%, +2%/級, Lv10 達 50%
+      const _hpPct = 0.30 + _skLv * 0.02;
+      // Lv1 上限 特技×20, +1/級, Lv10 達 特技×30(配合 HP% 升級)
+      const _capMult = 20 + _skLv;
+      const _spv = Math.floor((a.sp || 0) * (1 + (a.sp || 0) * 0.01));
+      const _cap = _spv * _capMult;
+      const _raw = Math.floor(t.curHp * _hpPct);
+      const _dmg = Math.max(1, Math.min(_raw, _cap));
+      log(`⚖️ [${a.name}] 支配鎖鍊 → [${t.name}]!當前 HP ${Math.round(_hpPct*100)}% 必中(${_dmg}; 上限 特技×${_capMult}=${_cap})!`);
+      try{ bannerFX(a, '⚖️ 支配鎖鍊!', '#aa2244', 1000); }catch(_){}
+      try{ playSfx('sfx-fantasy', 0.85); }catch(_){}
+      try{ playSkillFX('支配鎖鍊', a, [t]); }catch(_){}
+      doDmg(t, _dmg, { actor:a, isSkill:true, ignoreEvasion:true, ignoreBuffs:true, fixedDmg:true, noHidden:true });
+      // 附加「審判終結」狀態 2 回合(不可預防/免疫/消除 → 強制 push,不走 addStatus)
+      if(t.curHp > 0){
+        try{
+          // 移除舊的 judgmentEnd(避免疊加),再 push 新的
+          if(t.status && t.status.length){
+            t.status = t.status.filter(s => s.type !== 'judgmentEnd');
+          }
+          // 強制 push 不走 addStatus(避免被免疫類狀態擋掉)
+          t.status = t.status || [];
+          t.status.push({ type:'judgmentEnd', dur:2, _strong:true, _source:a });
+          log(`⚖️ → [${t.name}] 陷入「審判終結」2 回合!(2 回合後${(typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.has(t.name)) ? '受當前 HP 20% 必中傷害' : '直接倒下'})`);
+          try{ bannerFX(t, '⚖️ 審判終結!', '#770022', 900); }catch(_){}
+          try{ flashCard(t, 'rgba(120,0,40,0.55)', 700); }catch(_){}
+        }catch(e){ console.warn('[地府酋長] 審判終結附加失敗', e); }
+      }
+      renderCard(t);
+      endAction(a, cost);
+    };
+    if(targets && targets.length > 0 && targets[0] && targets[0].curHp > 0){
+      _doChain(targets[0]);
+    } else {
+      // AI 路徑:優先挑 HP 高的對手(% HP 傷害威力最大)
+      const _sorted = _alive.slice().sort((x, y) => y.curHp - x.curHp);
+      _doChain(_sorted[0]);
+    }
+    return;
+  }
+  else if(n==='血色風暴'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _foes = G[opp].filter(h => h.curHp > 0);
+    if(!_foes.length){ endAction(a, cost); return; }
+    // S2 升級:每升 1 級 +5% 主傷害(Lv10 達 145%)
+    const _skLv = (a._skLv && a._skLv.s2) || 0;
+    const _mult = 1.00 + _skLv * 0.05;
+    const _spv = Math.floor((a.sp || 0) * (1 + (a.sp || 0) * 0.01));
+    const _dmg = Math.max(1, Math.floor(_spv * _mult));
+    log(`🩸 [${a.name}] 血色風暴!掀起鮮紅血霧席捲全場!特技 ${Math.round(_mult*100)}% (${_dmg})`);
+    try{ bannerFX(a, '🩸 血色風暴!', '#cc0033', 1100); }catch(_){}
+    try{ playSfx('sfx-burst', 0.85); }catch(_){}
+    try{ playSkillFX('血色風暴', a, _foes); }catch(_){}
+    beginBatchTotals();
+    _foes.forEach((t, i) => {
+      _pSetTimeout(() => {
+        if(t.curHp <= 0) return;
+        doDmg(t, _dmg, { actor:a, isSkill:true });
+        if(t.curHp > 0){
+          // 流血 2 回合,每回合 -10% HP(沿用窮奇的 poison + _poisonAmt 系統)
+          addStatus(t, 'poison', 2);
+          t._poisonAmt = Math.max(1, Math.floor((t.hp||1) * 0.10));
+          try{ bannerFX(t, '🩸 流血!', '#cc2244', 700); }catch(_){}
+        }
+        renderCard(t);
+      }, i * 120);
+    });
+    _pSetTimeout(() => {
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      endAction(a, cost);
+    }, _foes.length * 120 + 300);
+    return;
   }
   // ════════════════════════════════════════════════════════════════
   // ====== 冒險模式 BOSS 技能 ======
@@ -34522,7 +35310,7 @@ async function _showAdminStatsPanel(){
       },
       {
         label: '🎨 學生設計英雄',
-        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸']
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長']
       },
     ];
 
@@ -50872,6 +51660,12 @@ const ADMIN_ALL_HEROES = [
   '死靈法師',
   // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
   '布奶鳥獸',
+  // ★ v1.0.20260514.6550 — 5 年 4 班劉同學設計
+  '炸彈客',
+  // ★ v1.0.20260514.6660 — 5 年 4 班陳同學設計
+  '紅色玩家',
+  // ★ v1.0.20260514.6770 — 5 年 4 班黃同學設計
+  '地府酋長',
 ];
 
 function advGetUnlockedHeroes() {
@@ -57490,7 +58284,10 @@ const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/L
 // ★ v1.0.20260501.5450 — 加進超鬼神王,共 8 隻分攤 5% 機率
 // ★ v1.0.20260512.6210 — 加進死靈法師(5 年 2 班許同學設計),共 11 隻分攤 5% 機率(每隻 ≈ 0.455%)
 // ★ v1.0.20260513.6460 — 加進布奶鳥獸(5 年 5 班高同學設計),共 12 隻分攤 5% 機率(每隻 ≈ 0.417%)
-const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸'];
+// ★ v1.0.20260514.6550 — 加進炸彈客(5 年 4 班劉同學設計,5 年 4 班首位設計師),共 13 隻分攤 5% 機率(每隻 ≈ 0.385%)
+// ★ v1.0.20260514.6660 — 加進紅色玩家(5 年 4 班陳同學設計,5 年 4 班第 2 位設計師),共 14 隻分攤 5% 機率(每隻 ≈ 0.357%)
+// ★ v1.0.20260514.6770 — 加進地府酋長(5 年 4 班黃同學設計,5 年 4 班第 3 位設計師),共 15 隻分攤 5% 機率(每隻 ≈ 0.333%)
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長'];
 
 // BOSS 賣錢物品池(召喚也可獲得)
 // ★ v1.1.0 — 台灣 10 BOSS 賣錢物品也加入召喚池
@@ -60134,6 +60931,20 @@ const SKILL_UPGRADE_DEF = {
   '拆家':     { cat:'special_bunai_chai', label:'全體傷害' },
   //   S2 布奶的保護:特技 200% 治療,每級 +5%(Lv10 達 245%);走標準 heal 類別(fd 只有一個 %)
   '布奶的保護':{ cat:'heal',   label:'治療量' },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班劉同學「炸彈客」)
+  //   S1 炸彈投擲:固定 20+目標 15%HP+LV×10 上限,fd 有 2 個 %(15% 和 LV×10 隱含上限),不能用通用 dmg cat
+  //   S2 炸彈連續投擲:同 S1 公式 ×2 次(Lv5 升為 3 次),Lv 上限對齊
+  //   → 用自訂類別精確替換「20」基礎值和「15%」HP%,不動「LV×10」上限規則
+  '炸彈投擲':     { cat:'special_bomber_s1', label:'固定值傷害' },
+  '炸彈連續投擲': { cat:'special_bomber_s2', label:'固定值傷害 ×2 次' },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學「地府酋長」)
+  //   S1 支配鎖鍊:當前 HP 30%+2%/級(Lv10 達 50%),上限 特技×20+1/級(Lv10 達 ×30)
+  //   fd 中有多個 % 數值:30%(主傷害,升級)、特技×20(上限,升級)、20%(BOSS 追加,固定不升級)、2 回合(回合,固定)
+  //   → 用自訂類別精確替換,避免標準 dmg cat 把所有 % 一起套乘
+  '支配鎖鍊':     { cat:'special_hell_chain', label:'當前 HP%+上限倍數' },
+  //   S2 血色風暴:全體 100%+5%/級(Lv10 達 145%),fd 有「特技的 100%」(升)與「10% 最大 HP」(流血量,固定不升級)
+  //   → 用自訂類別精確替換,避免標準 dmg cat 把 10% 也升級
+  '血色風暴':     { cat:'special_blood_storm', label:'全體傷害' },
   // ── 治療類：每級治療+10% ──
   '救贖神光': { cat:'heal',   label:'治療量' },
   // ★ v1.0.20260424.0560 — 神聖鎚擊: 固定 HP% 傷害(BOSS 5%/一般 20%) 不升級
@@ -60367,6 +61178,37 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     //   精確替換「150%」傷害,不動「200%」護盾上限,避免標準 dmg cat 把所有 % 一起套乘
     const dmgPct = 150 + skLv*5;
     fd = fd.replace(/特技的\s*150\s*%/g, '特技的 ' + HL(dmgPct + '%'));
+  }
+  // ★ v1.0.20260514.6550 — 炸彈客 S1/S2 升級:固定值 20→40 / HP% 15→20%
+  //   fd 中有 2 個關鍵數字:「固定值 20」「最大 HP 15%」皆需升級;「LV 的 10 倍」是上限規則不升
+  else if(cat === 'special_bomber_s1' || cat === 'special_bomber_s2'){
+    // Lv1~5(skLv=0~4):固定值 20/25/30/35/40、HP% 15/16/17/18/20
+    const fixedBase = 20 + skLv*5;
+    const hpPctTable = [15, 16, 17, 18, 20];
+    const hpPct = hpPctTable[Math.min(4, skLv)] || 15;
+    fd = fd.replace(/固定值\s*20/g, '固定值 ' + HL(fixedBase))
+           .replace(/最大\s*HP\s*15\s*%/g, '最大 HP ' + HL(hpPct + '%'));
+    // S2 在 Lv5(skLv=4)從 2 次升為 3 次
+    if(cat === 'special_bomber_s2' && skLv >= 4){
+      fd = fd.replace(/共\s*2\s*次/g, '共 ' + HL('3') + ' 次');
+    }
+  }
+  // ★ v1.0.20260514.6770 — 地府酋長 S1 升級:當前 HP 30%+2%/級(Lv10 達 50%)、上限 特技×20+1/級(Lv10 達 ×30)
+  //   fd 中有「當前 HP 30%」(主傷,升級)、「特技 ×20」(上限,升級)、「20% 的固定必中傷害」(BOSS,固定不升級)
+  //   注意:「20%」會同時匹配「特技 ×20」結尾的 0% 嗎?不會,因為 20 後面接的是「)」或「,」,正則用「20%」搭配上下文限定
+  else if(cat === 'special_hell_chain'){
+    const hpPct = 30 + skLv*2;
+    const capMult = 20 + skLv;
+    fd = fd.replace(/當前\s*HP\s*30\s*%/g, '當前 HP ' + HL(hpPct + '%'))
+           .replace(/特技\s*×20\)/g, '特技 ×' + HL(capMult) + ')')
+           .replace(/上限為特技\s*×20/g, '上限為特技 ×' + HL(capMult));
+  }
+  // ★ v1.0.20260514.6770 — 地府酋長 S2 升級:全體 100%+5%/級(Lv10 達 145%)
+  //   fd 中有「特技的 100%」(升級)、「2 回合」(固定)、「10% 最大 HP」(流血量,固定)
+  //   → 只替換「特技的 100%」這個獨特字串,不會誤動其它 %
+  else if(cat === 'special_blood_storm'){
+    const dmgPct = 100 + skLv*5;
+    fd = fd.replace(/特技的\s*100\s*%/g, '特技的 ' + HL(dmgPct + '%'));
   }
   else if(cat === 'special_kuyou_fox'){
     // 九尾狐火: 特技% +5/級, 燃燒 2→3
@@ -60831,6 +61673,30 @@ function _getSkUpgradeBadge(skillName, skLv){
     const dmgPct = 150 + (skLv||0)*5;
     return '全體 ' + dmgPct + '% (護盾≤HP×200%)';
   }
+  // ★ v1.0.20260514.6550 — 炸彈客 S1/S2:固定值 + 目標 HP%(LV×10 上限固定不升)
+  if(cat==='special_bomber_s1'){
+    const fixedBase = 20 + (skLv||0)*5;
+    const hpPctTable = [15, 16, 17, 18, 20];
+    const hpPct = hpPctTable[Math.min(4, skLv||0)] || 15;
+    return '固定 ' + fixedBase + '+目標' + hpPct + '%HP (≤Lv×10)';
+  }
+  if(cat==='special_bomber_s2'){
+    const fixedBase = 20 + (skLv||0)*5;
+    const hpPctTable = [15, 16, 17, 18, 20];
+    const hpPct = hpPctTable[Math.min(4, skLv||0)] || 15;
+    const hits = ((skLv||0) >= 4) ? 3 : 2;
+    return '固定 ' + fixedBase + '+目標' + hpPct + '%HP × ' + hits + '次';
+  }
+  // ★ v1.0.20260514.6770 — 地府酋長 S1:當前HP%必中+審判終結 / S2:全體+流血
+  if(cat==='special_hell_chain'){
+    const hpPct = 30 + (skLv||0)*2;
+    const capMult = 20 + (skLv||0);
+    return '當前HP ' + hpPct + '% (≤特技×' + capMult + ') + 審判終結 2 回合';
+  }
+  if(cat==='special_blood_storm'){
+    const dmgPct = 100 + (skLv||0)*5;
+    return '全體 ' + dmgPct + '% + 流血 2 回合';
+  }
   if(cat==='special_blizzard'){
     // 暴風雪:特技×(70+5*lv)% + (50+3*lv)%冰凍
     const dmgPct = 70 + (skLv||0)*5;
@@ -61123,6 +61989,34 @@ function buildSkillLvTable(skillName, currentLv) {
       const dmgPct = 150 + lv*5;
       effectText = '全體 ' + dmgPct + '% + 吸血/護盾(≤HP×200%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
+    // ★ v1.0.20260514.6550 — 炸彈客 S1/S2:固定值 + 目標 HP%(LV×10 上限固定不升)
+    //   遊戲內技能升級表只取 lv 0~4 顯示 5 級(Lv1~5),對齊「布奶鳥獸 lv 0~4」風格
+    //   炸彈客升級只有 5 級(Lv1~5),不像舊角色到 Lv10
+    else if(cat==='special_bomber_s1'){
+      const lvClamped = Math.min(4, lv);
+      const fixedBase = 20 + lvClamped*5;
+      const hpPctTable = [15, 16, 17, 18, 20];
+      const hpPct = hpPctTable[lvClamped];
+      effectText = '固定 ' + fixedBase + '+目標 ' + hpPct + '%HP (≤Lv×10)' + (lvClamped===4?'（MAX）':(lvClamped===0?'（基礎）':''));
+    }
+    else if(cat==='special_bomber_s2'){
+      const lvClamped = Math.min(4, lv);
+      const fixedBase = 20 + lvClamped*5;
+      const hpPctTable = [15, 16, 17, 18, 20];
+      const hpPct = hpPctTable[lvClamped];
+      const hits = (lvClamped >= 4) ? 3 : 2;
+      effectText = '固定 ' + fixedBase + '+目標 ' + hpPct + '%HP × ' + hits + '次' + (lvClamped===4?'（MAX）':(lvClamped===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260514.6770 — 地府酋長 S1:當前HP%+特技上限 / S2:全體傷害+流血(走 10 級升級)
+    else if(cat==='special_hell_chain'){
+      const hpPct = 30 + lv*2;
+      const capMult = 20 + lv;
+      effectText = '當前HP ' + hpPct + '% 必中(≤特技×' + capMult + ') + 審判終結 2 回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    else if(cat==='special_blood_storm'){
+      const dmgPct = 100 + lv*5;
+      effectText = '全體 ' + dmgPct + '% + 流血 2 回合(每回合 -10%HP)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
     else if(cat==='special_blizzard'){
       const dmgPct = 70 + lv*5;
       const frzPct = 50 + lv*3;
@@ -61262,6 +62156,12 @@ const HERO_CATEGORIES_OVERRIDE = {
   '死靈法師':    ['dmg','heal'],    // S1隱形+持續療癒、S2復活、爆發倒下次數疊乘傷害+轉治療
   // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
   '布奶鳥獸':    ['dmg','heal'],    // S1全體傷害+吸血+護盾、S2 200%治療復活、爆發 9 連擊;天賦普攻雙倍
+  // ★ v1.0.20260514.6550 — 5 年 4 班劉同學設計
+  '炸彈客':      ['dmg'],           // S1/S2/爆發全是固定值傷害+目標HP%,純輸出型(無治療、無控制)
+  // ★ v1.0.20260514.6660 — 5 年 4 班陳同學設計
+  '紅色玩家':    ['dmg','ctrl'],    // S1必中爆殺、S2反域(全隊保護+反彈控場)、爆發無敵+3倍輸出
+  // ★ v1.0.20260514.6770 — 5 年 4 班黃同學設計
+  '地府酋長':    ['dmg','ctrl'],    // S1審判終結秒殺(非BOSS)+BOSS%HP傷害、S2全體+流血、爆發全體+指定追擊+禁動;天賦疊層特技
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -61334,6 +62234,21 @@ const HERO_HEX_OVERRIDE = {
   // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
   //   傷害向中高(S1全體+爆發9連擊+天賦雙倍普攻),回復中(S2 200%治療+S1吸血溢護盾),控制極低
   '布奶鳥獸':    { heal: 7, ctrl: 1 },
+
+  // ★ v1.0.20260514.6550 — 5 年 4 班劉同學設計
+  //   純爆破手:S1/S2/爆發全是固定值+目標HP%傷害(無視有利、不受屬性、不暴擊);無治療無控制
+  '炸彈客':      { heal: 1, ctrl: 1 },
+
+  // ★ v1.0.20260514.6660 — 5 年 4 班陳同學設計
+  //   高速爆殺型:S1 必中爆殺(高傷害)、S2 反域(全隊保護+反彈,中度控場)、爆發無敵+3倍輸出
+  //   天賦閃避擋普攻(高速保命),雷達:高攻擊+高速度+高特技;回復 0(無治療);控制 5(反域反彈)
+  '紅色玩家':    { heal: 0, ctrl: 5 },
+
+  // ★ v1.0.20260514.6770 — 5 年 4 班黃同學設計
+  //   極致控場處決型:S1 審判終結(非 BOSS 直接秒殺、BOSS HP%必中傷害)、S2 全體流血、
+  //   爆發全體大傷害 + 指定追擊 + 禁動;天賦倒下疊層特技(滾雪球)
+  //   雷達:極高特技(21,全英雄頂尖)+ 中等控制(審判終結+流血+禁動);無治療;速度極慢(6)
+  '地府酋長':    { heal: 0, ctrl: 8 },
 
   // 校犬(特殊雙滿)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
@@ -66941,6 +67856,12 @@ const _TRAIT_LV_INFO = {
   '死靈法師':{ base:'整場 1 次 + 2 回合死靈型態', bonus:'+0.4 回合/天賦級', max:'4 回合(Lv5)', effect:'致命傷時化身死靈:無敵+200%能力+傷害轉治療給HP最低友方' },
   // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
   '布奶鳥獸':{ base:'30% 第 3 擊機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'普通攻擊保證 2 次,並依機率追加第 3 次攻擊' },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班劉同學)
+  '炸彈客':{ base:'40% 無視有利', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'使用技能造成傷害時有機率無視目標所有有利狀態(S1/S2/爆發已內建無視,此天賦對普攻和未來新技能才疊加)' },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  '紅色玩家':{ base:'30% 普攻迴避', bonus:'+10%/天賦級', max:'70%(Lv5)', effect:'受到普通攻擊時有機率完全迴避傷害(技能/爆發/AoE/狀態DOT/反彈不會觸發)' },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  '地府酋長':{ base:'每層 +4 特技,最多 5 層', bonus:'+1/天賦級每層加成', max:'每層 +8 特技(Lv5),滿層 = +40', effect:'場上任意目標倒下時自身特技疊加(地府酋長倒下會清空自己的加成)' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -69924,6 +70845,12 @@ const STUDENT_DESIGNER_HEROES = {
   'lsps110081@stu.lsps.tp.edu.tw': { hero:'死靈法師',   name:'許同學', class:'5年2班', flagId:'necromancer'      },
   // ★ v1.0.20260513.6460 — 5 年 5 班(布奶鳥獸設計者)
   'lsps110043@stu.lsps.tp.edu.tw': { hero:'布奶鳥獸',   name:'高同學', class:'5年5班', flagId:'bunai_birds'      },
+  // ★ v1.0.20260514.6550 — 5 年 4 班首位設計師(炸彈客設計者)
+  'lsps110014@stu.lsps.tp.edu.tw': { hero:'炸彈客',     name:'劉同學', class:'5年4班', flagId:'bomber_artist',   isFirstOfClass:true },
+  // ★ v1.0.20260514.6660 — 5 年 4 班第 2 位設計師(紅色玩家設計者)
+  'lsps110104@stu.lsps.tp.edu.tw': { hero:'紅色玩家',   name:'陳同學', class:'5年4班', flagId:'red_player'       },
+  // ★ v1.0.20260514.6770 — 5 年 4 班第 3 位設計師(地府酋長設計者)
+  'lsps110061@stu.lsps.tp.edu.tw': { hero:'地府酋長',   name:'黃同學', class:'5年4班', flagId:'hell_chieftain'   },
 };
 
 window._grantStudentDesignerHero = function(email){
@@ -70096,6 +71023,159 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260514.6770', brief:[
+    '⚖️ 新英雄登場:地府酋長(5 年 4 班黃同學設計)— 審判終結處決 + 流血風暴 + 倒下疊層特技!',
+    '👹 天賦「亡魂積怨」:場上任意目標倒下時自身特技 +4,最多疊 5 層(Lv5 每層 +8)',
+    '✏️ 5 年 4 班第 3 位設計師作品,加入後召喚池共 15 隻稀有英雄分攤 5% 機率',
+  ], items:[
+    '【⚖️ 地府酋長 — 角色概念(5 年 4 班黃同學設計,2026 年)】',
+    '・身分:來自地府的獄卒首領,負責看管刀山火海中受刑的亡靈',
+    '・性格:冷峻威嚴、鐵面無私,執法絕不講情面,看一眼便能審判功過',
+    '・口頭禪:「亡魂啊——你的審判,由我宣告。」',
+    '・5 年 4 班第 3 位學生設計師(炸彈客劉同學、紅色玩家陳同學之後)',
+    '【⚙️ 基礎能力】HP 64 / 攻擊 9 / 特技 21 / 速度 6(總和 100,學生英雄標準)',
+    '・極端配置:特技 21(全英雄頂尖)+ 速度 6(很慢)— 純後排控場處決手',
+    '【⚖️ 核心定位 — 處決控場 + 滾雪球疊層】',
+    '・S1 審判終結(秒殺機制)、S2 全體流血、爆發全體 + 指定追擊 + 禁動',
+    '・天賦倒下疊層讓地府酋長越打越強,後期單局可達特技 +40 暴力滾雪球',
+    '【🌟 天賦:亡魂積怨 ⚖️】',
+    '・場上任意一方有目標倒下時,自身特技 +4(最多疊 5 層,Lv1 滿層 = +20 特技)',
+    '・每升 1 級每層加成 +1,Lv5 MAX 每層 +8,滿層 = 特技 +40',
+    '・自身倒下會清空已疊的加成,進入新戰鬥時自動重置為 0 層',
+    '【⚖️ S1:支配鎖鍊(能量 6)】',
+    '・對 1 名目標造成當前 HP 30% 的必中傷害(上限 = 特技 ×20,Lv1 ≈ 420)',
+    '・命中後陷入「審判終結」2 回合(此狀態不可疊加、預防或消除)',
+    '・回合結束後:非 BOSS 直接倒下;BOSS 受到當前 HP 20% 的固定必中傷害',
+    '・升級:Lv1~10 主傷 30→50% / 上限 特技×20→×30',
+    '【🩸 S2:血色風暴(能量 5)】',
+    '・以特技 100% 對全體對手造成傷害,並附加「流血」2 回合(每回合 -10% 最大 HP)',
+    '・走標準 dmg 邏輯 + poison 系統的「流血」(沿用窮奇實作)',
+    '・升級:Lv1~10 全體傷害 100→145%',
+    '【💥 爆發:刀山火海】',
+    '・全體對手受到特技 200% 傷害,從中指定 1 名追加 100% 傷害並強制「禁動」1 回合',
+    '・升級表(_burstLv 0~4):全體 200/215/230/245/260%、追加 100/110/120/130/140%、禁動 1/1/1/1/2 回合',
+    '・GIF:「神鬼盡滅.gif」+ 三層音效(爆發+爆裂+奇幻)+ 幽冥血色 tint + 2400ms',
+    '【🎰 召喚池調整】',
+    '・SUMMON_RARE_HEROES 加入地府酋長,從 14 隻 → 15 隻分攤 5% 機率',
+    '・每隻稀有英雄從 0.357% → 0.333% 抽中機率',
+    '・5 年 4 班黃同學用學校 email(lsps110061@stu.lsps.tp.edu.tw)登入會自動補發',
+    '・管理員測試清單 ADMIN_ALL_HEROES 也同步加入(可直接擁有測試)',
+    '【📋 鐵律 1.20 — 26 點覆蓋清單實作位置】',
+    '・A 核心資料:hero_db.js 新增地府酋長條目 + index.html ?v=20260514c 破快取',
+    '・B 圖鑑顯示(10 處):AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / BURST_UPGRADE_DEF / HERO_IMG_POS / HERO_THUMB_POS / HERO_BIO(含 designer) / BURST_DB / HERO_LORE(對齊鐵律 1.26 詩意風格) / HERO_TRAIT',
+    '・C 升級系統(5 處):SKILL_UPGRADE_DEF 新增 special_hell_chain / special_blood_storm(因 fd 有多個 % 需精確替換)+ fd renderer / 短摘要 / 升級表格逐列 + _TRAIT_LV_INFO',
+    '・D 戰鬥邏輯(5 處):execSkill 加 S1/S2 客製分支(審判終結 push status + ignoreEvasion+ignoreBuffs;血色風暴用 poison+_poisonAmt 沿用窮奇實作)+ _runBurst 加爆發實作 + tickStatus 加 judgmentEnd dur===1 結算 + doDmg 倒下中央點加亡魂積怨疊層 hook + doDmg 倒下分支加自損清層',
+    '・E 解鎖/補發(6 處):STUDENT_DESIGNER_HEROES(黃同學 email + flagId:hell_chieftain)+ SUMMON_RARE_HEROES + ADMIN_ALL_HEROES + 補償英雄分組 + HERO_CATEGORIES_OVERRIDE + HERO_HEX_OVERRIDE',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6770 + GAME_CHANGELOG 記錄',
+    '・BURST_GIF_DB 加入刀山火海 GIF(神鬼盡滅)+ 三層音效 + 幽冥血色 tint + 2400ms 持續',
+    '・buffName 表加入 judgmentEnd 中文「⚖️ 審判終結」+ tooltip 說明',
+    '・statusName 加入 judgmentEnd 對應中文(顯示在受影響角色的狀態圖示上)',
+    '【⚖️ 平衡性自我檢視】',
+    '・強處:S1 對非 BOSS 直接秒殺(無視所有保護)+ 倒下疊層滾雪球 + 爆發全體 + 控場',
+    '・弱處:速度極慢(6)、能量需求高(S1=6+S2=5=11)、無治療手段、HP 中等(64)',
+    '・S1 對 BOSS 改為 20% HP 必中傷害(不會直接秒殺 BOSS),保持平衡',
+    '・整體強度落在「雙星姊妹級的 S+」,符合學生英雄排序;天賦疊層彌補慢速劣勢',
+  ] },
+  { ver:'v1.0.20260514.6660', brief:[
+    '🟥 新英雄登場:紅色玩家(5 年 4 班陳同學設計)— 必中爆殺 + 反域反彈 + 無敵爆發三段奏!',
+    '💨 天賦「閃避」:受到普通攻擊時 30% 機率完全迴避,Lv5 達 70%',
+    '✏️ 5 年 4 班第 2 位設計師作品,加入後召喚池共 14 隻稀有英雄分攤 5% 機率',
+  ], items:[
+    '【🟥 紅色玩家 — 角色概念(5 年 4 班陳同學設計,2026 年)】',
+    '・身分:身處虛擬世界深處的神祕高手玩家,代表色是耀眼的赤紅',
+    '・性格:沉著冷靜、操作精準到像開外掛;鍵盤一響就是要收人頭',
+    '・口頭禪:「P1 已就位——準備被我瞬殺吧。」',
+    '・5 年 4 班第 2 位學生設計師(炸彈客劉同學之後)',
+    '【⚙️ 基礎能力】HP 60 / 攻擊 9 / 特技 19 / 速度 12(總和 100,學生英雄標準)',
+    '【💨 核心定位 — 高速爆殺 + 戰場反彈 + 無敵爆發】',
+    '・S1 必中爆殺、S2 全隊保護 + 反彈、爆發三倍輸出 + 雙重免疫',
+    '・天賦「閃避」專擋普攻,跟「武士・迴避反擊」(消能量+反擊)、「染靈幻魔・藍色幻影」(全攻擊都擋)做差異化',
+    '【🌟 天賦:閃避 💨】',
+    '・受到普通攻擊時有 30% 機率完全迴避,本次不受傷害',
+    '・每升 1 級觸發機率 +10%,Lv5 MAX 達 70%',
+    '・⚠ 只擋普攻 — 技能/爆發/AoE/狀態 DOT/固定值/反彈都會正常吃傷害',
+    '【🟥 S1:瞬殺(能量 4)】',
+    '・特技 450% 必中對 1 名對手造成傷害',
+    '・必中、無法迴避或代替承受(走 ignoreEvasion+noHidden)',
+    '・走通用 dmg 升級類別:每升 1 級 +20%,Lv10 MAX 達 630%',
+    '【🪞 S2:反域(能量 7)】',
+    '・設置戰場效果「反域」3 回合(套用整個友方陣營,類似 buff)',
+    '・期間友方受傷時 50% 反彈給攻擊者 → 再使受傷減少 50% → HP 保底 1 點不會倒下',
+    '・三重保護 + 反彈控場 + 不會倒下,稀有英雄中最強保命技之一',
+    '・升級:Lv1~7 反彈 50→80%、Lv8~9 減傷 50→60%、Lv10 MAX 持續 4 回合',
+    '【💥 爆發:超頻爆發】',
+    '・自己造成的所有傷害提升至 300% 持續 2 回合(普攻、技能、爆發、附加效果都套用)',
+    '・期間同時免疫所有傷害和不利狀態(類似聖騎士「最終殿堂」但少治療換 3 倍輸出)',
+    '・升級表(_burstLv 0~4):300%/320%/340%/360%/400%、回合 2/2/2/2/3',
+    '・GIF:「數位數字飛舞.gif」+ 三層音效(充能+奇幻+爆發)+ 純紅 tint + 2400ms',
+    '【🎰 召喚池調整】',
+    '・SUMMON_RARE_HEROES 加入紅色玩家,從 13 隻 → 14 隻分攤 5% 機率',
+    '・每隻稀有英雄從 0.385% → 0.357% 抽中機率',
+    '・5 年 4 班陳同學用學校 email 登入會自動補發(不必抽)',
+    '・管理員測試清單 ADMIN_ALL_HEROES 也同步加入(可直接擁有測試)',
+    '【📋 鐵律 1.20 — 26 點覆蓋清單實作位置】',
+    '・A 核心資料:hero_db.js 新增紅色玩家條目 + index.html ?v=20260514b 破快取',
+    '・B 圖鑑顯示(10 處):AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / BURST_LV_TABLE / HERO_IMG_POS / HERO_THUMB_POS / HERO_BIO(含 designer) / BURST_DB / HERO_LORE(對齊鐵律 1.26 詩意風格) / HERO_TRAIT',
+    '・C 升級系統(3 處):S1/S2 走通用 dmg / protect cat,只需加 _TRAIT_LV_INFO',
+    '・D 戰鬥邏輯(5 處):doDmg 開頭加閃避天賦(普攻 only) + doDmg 加反域 buff 處理(反彈+減傷+保底1HP) + doDmg 加超頻爆發傷害強化 + addStatus 加超頻免疫 + execSkill 加 S1/S2 客製分支 + _runBurst 加爆發實作',
+    '・E 解鎖/補發(6 處):STUDENT_DESIGNER_HEROES(陳同學 email)+ SUMMON_RARE_HEROES + ADMIN_ALL_HEROES + 班級設計表 + HERO_CATEGORIES_OVERRIDE + HERO_HEX_OVERRIDE',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6660 + GAME_CHANGELOG 記錄',
+    '・BURST_GIF_DB 加入超頻爆發 GIF + 三層音效 + 純紅 tint + 2400ms 持續',
+    '・buffName 表加入 reverseDomain 與 overclock 中文說明',
+    '・每回合 dur===1 區段加入 overclock 過期清除 _overclockDmgMult / _overclockImmune flag',
+    '【⚖️ 平衡性自我檢視】',
+    '・強處:S1 必中爆殺 + S2 全隊保護網 + 爆發雙重免疫,在 BOSS 戰特別強',
+    '・弱處:HP 60 中等、能量需求高(S1=4+S2=7=11)、無治療手段、天賦只擋普攻',
+    '・整體強度落在「雙星姊妹級的 S+ 但不到鋁合金暴龍級的 SS」,符合學生英雄排序',
+  ] },
+  { ver:'v1.0.20260514.6550', brief:[
+    '💣 新英雄登場:炸彈客(5 年 4 班首位設計師劉同學設計)— 純爆破手,專剋肉盾 BOSS!',
+    '🎨 英雄文字統整大工程:38 隻舊角色 s1/s2 fd 補上施展情境描繪句、44 隻紫色簡介改寫成詩意風格',
+    '✏️ 5 年 4 班首位設計師作品,圖鑑詳情頁可看到「✏️ 由 5年4班 劉同學 設計(2026 年)」紀念藍框',
+  ], items:[
+    '【💣 炸彈客 — 角色概念(5 年 4 班劉同學設計,2026 年)】',
+    '・身分:地下爆破工坊的瘋狂工程師,堅信「爆炸即藝術」',
+    '・口頭禪:「BOOM! 看吧——這才是真正的藝術!」',
+    '・5 年 4 班第一位學生設計師,特別給紀念藍框',
+    '【⚙️ 基礎能力】HP 64 / 攻擊 10 / 特技 10 / 速度 16(總和 100,學生英雄標準)',
+    '【💥 核心定位 — 純固定值爆破手】',
+    '・S1/S2/爆發 全走「固定值 + 目標 HP%」公式,完全跳過攻擊/特技倍率、屬性克制、暴擊系統',
+    '・所有傷害「無視有利狀態、不受屬性影響、不會暴擊」— 是肉盾 BOSS、有利狀態堆疊敵人的天然剋星',
+    '・S1/S2 受「LV × 10」上限保護,爆發享有「LV × 20」雙倍上限(威力差異),避免低等爆 BOSS、高等對巨型 BOSS 過度失衡',
+    '【🔧 天賦:無視防禦 💣】',
+    '・使用技能造成傷害時 40% 機率無視目標所有有利狀態(每升 1 級 +10%,Lv5 MAX 達 80%)',
+    '・⚠ S1/S2/爆發已內建「無視有利」,此天賦對它們不疊加;對普攻才會額外觸發(清除目標 1 個有利狀態)',
+    '【💣 S1:炸彈投擲(能量 3)】',
+    '・對 1 名對手造成固定值 20 + 目標最大 HP 15% 的傷害(上限 Lv×10)',
+    '・升級表(Lv1~5):固定值 20/25/30/35/40、HP% 15/16/17/18/20%',
+    '【💣 S2:炸彈連續投擲(能量 6)】',
+    '・對隨機對手造成固定值 20 + 目標最大 HP 15% 的傷害 × 2 次(每次獨立挑目標)',
+    '・升級表(Lv1~5):同 S1 數值,Lv5 命中次數從 2 升為 3',
+    '【💥 爆發:超級大爆炸】',
+    '・對全體對手造成固定值 200 + 目標最大 HP 30% 的傷害(上限 Lv×20,比 S1/S2 多一倍)',
+    '・炸彈客自己也被炸到 HP 剩下 10%(保底 1,不會倒下)',
+    '・升級表(_burstLv 0~4):固定值 200/250/300/350/400、HP% 30%/32%/34%/36%/40%',
+    '・捨命爆發,跟「雙星姊妹 同生共死」(光星態 HP 變 1)形成「捨命爆發」家族風格',
+    '・爆發 GIF 設計者指定沿用「八龍頭滅世」(節省素材成本),三層爆炸音效:主爆炸 100%+爆裂餘震 90%+蓄力預警 70%',
+    '【🎰 召喚池調整】',
+    '・SUMMON_RARE_HEROES 加入炸彈客,從 12 隻 → 13 隻分攤 5% 機率',
+    '・每隻稀有英雄從 0.417% → 0.385% 抽中機率',
+    '・5 年 4 班劉同學用學校 email 登入會自動補發(不必抽)',
+    '・管理員測試清單 ADMIN_ALL_HEROES 也同步加入(可直接擁有測試)',
+    '【📋 鐵律 1.20 — 26 點覆蓋清單實作位置】',
+    '・A 核心資料:hero_db.js 新增炸彈客條目 + index.html ?v=20260514a 破快取',
+    '・B 圖鑑顯示(10 處):AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / BURST_LV_TABLE / HERO_IMG_POS / HERO_THUMB_POS / HERO_BIO(含 designer) / BURST_DB / HERO_LORE(對齊鐵律 1.26 詩意風格) / HERO_TRAIT',
+    '・C 升級系統(5 處):SKILL_UPGRADE_DEF 新增 special_bomber_s1/s2(因 fd 有 2 個 % 不能用通用 dmg)+ fd renderer / 短摘要 / 升級表格逐列 3 個 case + _TRAIT_LV_INFO',
+    '・D 戰鬥邏輯(3 處):普攻 hook 加無視防禦天賦 + execSkill 加 S1/S2 客製分支 + _runBurst 加爆發實作',
+    '・E 解鎖/補發(6 處,E7 不適用):STUDENT_DESIGNER_HEROES(劉同學 email)+ SUMMON_RARE_HEROES + ADMIN_ALL_HEROES + 班級設計表 + HERO_CATEGORIES_OVERRIDE + HERO_HEX_OVERRIDE',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6550 + GAME_CHANGELOG 記錄',
+    '・BURST_GIF_DB 加入超級大爆炸 GIF + 三層爆炸音效 + 橘紅 tint + 2400ms 持續',
+    '【🎨 v6550 同步進行的英雄文字統整(本對話前已套用,本次保留)】',
+    '・38 隻舊角色 s1/s2 的 fd 補上「動作描繪句!+ 機制描述」風格(例:劍士「拔劍如電,劍光一閃即收!」)',
+    '・44 隻角色 HERO_LORE 紫色簡介改寫成「身分+1~2 招牌技+詩意收尾」格式(50~95 字)',
+    '・對齊圖 1 鋁合金暴龍標準,催生鐵律 1.26「遊戲文字要有重點與詩意,不是機械列舉」',
+    '・催生鐵律 1.27「使用者換了檔案後 AI 要重新讀並驗證上輪修改是否還在」',
+  ] },
   { ver:'v1.0.20260514.6540', brief:[
     '🔄 新增:快速切換帳號面板(顯示最近登入過的帳號清單,一鍵切換)',
     '⏰ 修補:閒置 5 分鐘自動登出後,3 秒提示完成自動回到乾淨首頁(不再殘留前一位玩家資訊)',
@@ -71048,7 +72128,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260514.6540';
+  const CURRENT_VERSION = 'v1.0.20260514.6770';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -71082,7 +72162,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260514.6540';
+window._GAME_LOADED_VERSION = 'v1.0.20260514.6770';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
@@ -71708,417 +72788,4 @@ function _preloadAllGameImages() {
 <!--   非戰鬥場景觸發?)。本面板在 watchdog 觸發 _showDeadlockRescueButton -->
 <!--   的同時,順便捕捉當下完整戰鬥狀態快照,提供給學生/老師複製貼回報。    -->
 <!--                                                                       -->
-<!-- 觸發範圍: 全部 BOSS(不限杏花妖),涵蓋 ADV_QUIZ_BOSS_NAMES 16 個 BOSS   -->
-<!--           其實只要 _showDeadlockRescueButton 被呼叫就抓快照。         -->
-<!--                                                                       -->
-<!-- 設計原則:                                                             -->
-<!--   1. 完全獨立,不動既有任何函式(用 wrap/hook 方式)                     -->
-<!--   2. console 攔截只暫存最後 20 行,不影響原本 console 行為             -->
-<!--   3. 自動回報用獨立 storage key (_diagAutoReportLastTs),不吃掉玩家    -->
-<!--      手動回報的 1 小時冷卻額度                                        -->
-<!--   4. 診斷面板冷卻 10 分鐘(同一次卡死不會送好幾筆)                     -->
-<!--   5. 失敗都吞,絕不丟出例外影響遊戲                                    -->
-<!-- ===================================================================== -->
-<script>
-(function _initBossStuckDiagPanel(){
-  'use strict';
-
-  // ── 1. console 攔截:暫存最近 20 行 ────────────────────────────────
-  // 注意:用 push + shift 維持環形,絕不阻斷原本的 console
-  const _DIAG_LOG_BUF = [];
-  const _DIAG_LOG_MAX = 20;
-  const _diagPushLog = (level, args) => {
-    try{
-      const _ts = new Date().toISOString().substr(11, 12); // HH:MM:SS.mmm
-      let _msg = '';
-      for(let i = 0; i < args.length; i++){
-        const a = args[i];
-        if(typeof a === 'string') _msg += a;
-        else if(a instanceof Error) _msg += a.message + (a.stack ? '\n' + a.stack.split('\n').slice(0,3).join('\n') : '');
-        else{
-          try{ _msg += JSON.stringify(a); }catch(_){ _msg += String(a); }
-        }
-        if(i < args.length - 1) _msg += ' ';
-      }
-      // 截斷單行,避免一行 log 把整個 buffer 撐爆
-      if(_msg.length > 300) _msg = _msg.substr(0, 297) + '...';
-      _DIAG_LOG_BUF.push('[' + _ts + '][' + level + '] ' + _msg);
-      while(_DIAG_LOG_BUF.length > _DIAG_LOG_MAX) _DIAG_LOG_BUF.shift();
-    }catch(_){}
-  };
-  // wrap console.log / warn / error(保留原本行為)
-  try{
-    const _origLog = console.log.bind(console);
-    const _origWarn = console.warn.bind(console);
-    const _origError = console.error.bind(console);
-    console.log = function(){ _diagPushLog('LOG', arguments); _origLog.apply(null, arguments); };
-    console.warn = function(){ _diagPushLog('WARN', arguments); _origWarn.apply(null, arguments); };
-    console.error = function(){ _diagPushLog('ERR', arguments); _origError.apply(null, arguments); };
-  }catch(_){}
-
-  // ── 2. 攔截全域未處理錯誤 + Promise rejection ───────────────────────
-  try{
-    window.addEventListener('error', function(e){
-      try{
-        _diagPushLog('UNCAUGHT', [
-          (e.message || 'unknown error'),
-          (e.filename ? '@' + e.filename.split('/').pop() : ''),
-          (e.lineno ? ':' + e.lineno : '')
-        ]);
-      }catch(_){}
-    }, true);
-    window.addEventListener('unhandledrejection', function(e){
-      try{
-        const _r = e && e.reason;
-        _diagPushLog('PROMISE_REJ', [_r && _r.message ? _r.message : String(_r)]);
-      }catch(_){}
-    });
-  }catch(_){}
-
-  // ── 3. 建立診斷快照 ────────────────────────────────────────────────
-  function _buildBossDiagSnapshot(){
-    const _snap = {
-      ts: new Date().toISOString(),
-      ver: (window._GAME_LOADED_VERSION || 'unknown'),
-      ua: (navigator.userAgent || '').substr(0, 200),
-      vp: (window.innerWidth || 0) + 'x' + (window.innerHeight || 0),
-      // 戰鬥狀態
-      battle: {},
-      // 旗標
-      flags: {},
-      // 開啟中的 modal/overlay
-      modals: [],
-      // 最近 console log
-      logs: _DIAG_LOG_BUF.slice(),
-    };
-    // 戰鬥狀態
-    try{
-      if(typeof G !== 'undefined' && G){
-        _snap.battle.round = G.round || 0;
-        _snap.battle.turn = G.turn || 0;
-        if(G.activeChar){
-          _snap.battle.activeChar = {
-            name: G.activeChar.name || '',
-            side: G.activeChar.side || '',
-            pos: G.activeChar.pos,
-            curHp: G.activeChar.curHp,
-            acted: !!G.activeChar.acted,
-            statuses: (G.activeChar.statuses || []).map(s => (s && s.type) || String(s)).slice(0, 10),
-          };
-        }
-        // p1 / p2 摘要
-        if(G.p1){
-          _snap.battle.p1 = G.p1.filter(h => h).map(h => h.name + '(' + (h.curHp||0) + '/' + (h.maxHp||0) + (h.acted?' ✓':'') + ')');
-        }
-        if(G.p2){
-          _snap.battle.p2 = G.p2.filter(h => h).map(h => h.name + '(' + (h.curHp||0) + '/' + (h.maxHp||0) + (h.acted?' ✓':'') + ')');
-        }
-        // 偵測 BOSS
-        const _bossNames = window.ADV_QUIZ_BOSS_NAMES || [];
-        if(G.p2){
-          const _boss = G.p2.find(h => h && _bossNames.indexOf(h.name) >= 0 && h.curHp > 0);
-          if(_boss){
-            _snap.battle.bossName = _boss.name;
-            _snap.battle.bossActed = !!_boss.acted;
-            _snap.battle.bossIsActive = (G.activeChar && G.activeChar === _boss);
-          }
-        }
-      }
-    }catch(e){ _snap.battle.err = String(e && e.message || e); }
-    // 旗標
-    try{
-      _snap.flags.adventureMode = (typeof _adventureMode !== 'undefined') ? !!_adventureMode : 'undef';
-      _snap.flags.advQuizPhase = (typeof _advQuizPhase !== 'undefined') ? _advQuizPhase : 'undef';
-      _snap.flags.bossQuizInFlight = !!window._bossQuizInFlight;
-      _snap.flags.gamePaused = !!window._gamePaused;
-      _snap.flags.advMiniResultShowing = !!window._advMiniResultShowing;
-      _snap.flags.aiWatchdogPresent = !!window._aiWatchdog;
-      _snap.flags.deadlockWatchdogPresent = !!window._deadlockWatchdog;
-      _snap.flags.advQuizBoss = window._advQuizBoss ? (window._advQuizBoss.name || 'unnamed') : null;
-    }catch(e){ _snap.flags.err = String(e && e.message || e); }
-    // modal/overlay (沿用既有清單,但只列出實際顯示的)
-    try{
-      const _modalIds = [
-        'adv-quiz-overlay','adv-result-overlay','adv-mini-result','adv-reward-overlay',
-        'adv-treasure-confirm','burst-priority-modal','adv-boss-intro','adv-cutscene-overlay',
-        'adv-dialog-box','adv-jp-diff-modal','battle-start-overlay','_force-refresh-modal',
-        '_changelog-modal','_pwa-guide-modal','_deadlock-rescue-menu',
-        'taiwan-cutscene-overlay','taiwan-dialog-overlay','taiwan-difficulty-overlay',
-        'adv-boss-detail-pop','active-passive-modal','burst-confirm-modal','burst-target-pick',
-        'pause-overlay','elem-popup','enemy-info-popup','tutorial-overlay','discard-overlay',
-        'dice-overlay','tarot-choice-overlay','charm-ov','mimic-ov','immovable-prompt',
-        'skill-detail-popup','custom-confirm-overlay','item-ops',
-      ];
-      for(const id of _modalIds){
-        const el = document.getElementById(id);
-        if(!el) continue;
-        const _isShow = (el.classList && el.classList.contains('show'));
-        const _disp = el.style.display;
-        const _visibleByDisp = _disp && _disp !== 'none' && el.offsetParent !== null;
-        if(_isShow || _visibleByDisp){
-          _snap.modals.push(id + (_isShow ? '[.show]' : '[' + (_disp||'?') + ']'));
-        }
-      }
-    }catch(e){ _snap.modals.push('err: ' + String(e && e.message || e)); }
-    return _snap;
-  }
-
-  // 把快照轉成人類可讀的純文字(複製貼到回報用)
-  function _diagSnapshotToText(snap){
-    const lines = [];
-    lines.push('=== BOSS 卡死診斷報告 ===');
-    lines.push('時間: ' + snap.ts);
-    lines.push('版本: ' + snap.ver);
-    lines.push('視窗: ' + snap.vp);
-    lines.push('UA: ' + snap.ua);
-    lines.push('');
-    lines.push('── 戰鬥狀態 ──');
-    if(snap.battle.bossName){
-      lines.push('BOSS: ' + snap.battle.bossName + ' (acted=' + snap.battle.bossActed + ', isActive=' + snap.battle.bossIsActive + ')');
-    }
-    lines.push('round=' + snap.battle.round + ', turn=' + snap.battle.turn);
-    if(snap.battle.activeChar){
-      const a = snap.battle.activeChar;
-      lines.push('activeChar: ' + a.name + ' [' + a.side + '-' + a.pos + '] hp=' + a.curHp + ' acted=' + a.acted);
-      if(a.statuses && a.statuses.length) lines.push('  狀態: ' + a.statuses.join(', '));
-    } else {
-      lines.push('activeChar: (none)');
-    }
-    if(snap.battle.p1) lines.push('我方: ' + snap.battle.p1.join(' / '));
-    if(snap.battle.p2) lines.push('敵方: ' + snap.battle.p2.join(' / '));
-    if(snap.battle.err) lines.push('battle 抓取錯誤: ' + snap.battle.err);
-    lines.push('');
-    lines.push('── 旗標 ──');
-    for(const k of Object.keys(snap.flags)){
-      lines.push('  ' + k + ' = ' + snap.flags[k]);
-    }
-    lines.push('');
-    lines.push('── 顯示中的 modal/overlay ──');
-    if(snap.modals.length === 0) lines.push('  (無)');
-    else for(const m of snap.modals) lines.push('  ' + m);
-    lines.push('');
-    lines.push('── 最近 ' + snap.logs.length + ' 行 console ──');
-    for(const l of snap.logs) lines.push(l);
-    lines.push('=== 報告結束 ===');
-    return lines.join('\n');
-  }
-
-  // ── 4. 全域變數: 保存最新一次的快照 ───────────────────────────────
-  window._lastBossDiagSnapshot = null;
-  window._lastBossDiagText = null;
-
-  // ── 5. hook _showDeadlockRescueButton: 在原本顯示按鈕的同時抓快照 ──
-  // 等 DOM ready 後再 hook,確保 _showDeadlockRescueButton 已定義
-  const _tryHook = () => {
-    if(typeof window._showDeadlockRescueButton !== 'function'){
-      // 既有實作是 function declaration,不在 window 上;直接 wrap _startDeadlockWatchdog
-      // 不行,因為 watchdog 內部直接 call _showDeadlockRescueButton (不經過 window)
-      // 改用 MutationObserver 監聽 toast 出現
-      _hookByMutationObserver();
-      return;
-    }
-    const _orig = window._showDeadlockRescueButton;
-    window._showDeadlockRescueButton = function(){
-      try{ _captureAndAttachUI(); }catch(_){}
-      return _orig.apply(this, arguments);
-    };
-    console.log('[診斷面板] hook _showDeadlockRescueButton 成功');
-  };
-
-  // ── 5b. 備援: 用 MutationObserver 監聽 _stuck-detection-toast 出現 ──
-  function _hookByMutationObserver(){
-    try{
-      const _mo = new MutationObserver(muts => {
-        for(const m of muts){
-          for(const n of m.addedNodes){
-            if(n && n.id === '_stuck-detection-toast'){
-              try{ _captureAndAttachUI(); }catch(_){}
-              return;
-            }
-          }
-        }
-      });
-      _mo.observe(document.body, { childList: true, subtree: false });
-      console.log('[診斷面板] MutationObserver 監聽 _stuck-detection-toast 啟動');
-    }catch(e){
-      console.warn('[診斷面板] MutationObserver 啟動失敗', e);
-    }
-  }
-
-  // ── 6. 觸發時: 抓快照 + 在原 toast 旁加「複製診斷」按鈕 ──────────
-  // ★ v1.0.20260513.6420 — 拿掉這裡的自動回報,只保留抓快照
-  //   原因:卡死偵測 toast 出現往往是玩家「思考太久」造成的誤判,
-  //         不應該每次都自動回報給老師(會被洗版,影響真實 BUG 的辨識)。
-  //   改成:只在玩家「主動點下卡死自救按鈕、打開自救選單」時才送自動回報,
-  //         因為那才代表玩家確認自己真的遇到卡死,而不是還在思考。
-  //   見 _showDeadlockRescueMenu() 開頭的 _maybeAutoReport 呼叫。
-  function _captureAndAttachUI(){
-    // 抓快照(仍要做,讓 window._lastBossDiagText 隨時可用)
-    const _snap = _buildBossDiagSnapshot();
-    const _text = _diagSnapshotToText(_snap);
-    window._lastBossDiagSnapshot = _snap;
-    window._lastBossDiagText = _text;
-    console.warn('[診斷面板] 已捕捉診斷快照,可呼叫 window._lastBossDiagText 取得');
-
-    // ❌ v6420 移除:不再於 toast 顯示時自動回報
-    // _maybeAutoReport(_snap, _text);
-
-    // 在 toast 上加診斷按鈕
-    // 延遲 200ms 確保 toast 已 append 到 DOM
-    setTimeout(() => { _attachDiagButtonToToast(_text); }, 200);
-  }
-
-  // ── 7. 自動回報(獨立冷卻,不吃玩家手動回報額度) ──────────────────
-  function _maybeAutoReport(snap, text){
-    try{
-      const _DIAG_COOLDOWN_MS = 10 * 60 * 1000; // 10 分鐘
-      const _last = parseInt(localStorage.getItem('_diagAutoReportLastTs') || '0', 10);
-      const _now = Date.now();
-      if(_now - _last < _DIAG_COOLDOWN_MS){
-        console.log('[診斷面板] 自動回報冷卻中,剩餘 ' + Math.ceil((_DIAG_COOLDOWN_MS - (_now-_last))/1000) + ' 秒');
-        return;
-      }
-      if(typeof window._fbSubmitBugReport !== 'function'){
-        console.warn('[診斷面板] _fbSubmitBugReport 不存在,跳過自動回報');
-        return;
-      }
-      // 自動回報
-      const _content = '[v6210 自動診斷] BOSS 卡死偵測觸發\n\n' + text;
-      const _pageCtx = 'adventure/' + (snap.battle.bossName || 'unknownBoss');
-      window._fbSubmitBugReport({ content: _content, page: _pageCtx })
-        .then(() => {
-          localStorage.setItem('_diagAutoReportLastTs', String(_now));
-          console.log('[診斷面板] 自動回報已送出');
-        })
-        .catch(e => {
-          console.warn('[診斷面板] 自動回報失敗', e);
-        });
-    }catch(e){
-      console.warn('[診斷面板] _maybeAutoReport 異常', e);
-    }
-  }
-
-  // ── 8. 在 toast 上加「複製診斷」按鈕 ──────────────────────────────
-  function _attachDiagButtonToToast(text){
-    try{
-      const _toast = document.getElementById('_stuck-detection-toast');
-      if(!_toast) return;
-      // 防止重複加
-      if(_toast.querySelector('._diag-copy-btn')) return;
-      const _btn = document.createElement('button');
-      _btn.className = '_diag-copy-btn';
-      _btn.textContent = '📋 複製診斷資訊';
-      _btn.style.cssText =
-        'display:block;margin:6px auto 0;padding:4px 12px;' +
-        'background:#3a4a6a;color:#fff;border:1px solid #6688aa;' +
-        'border-radius:4px;font-size:14px;cursor:pointer;' +
-        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-      _btn.onclick = function(ev){
-        ev.stopPropagation(); // 避免觸發 toast 自身的 dismiss
-        _copyDiagText(text, _btn);
-      };
-      _toast.appendChild(_btn);
-    }catch(e){ console.warn('[診斷面板] 加按鈕失敗', e); }
-  }
-
-  // ── 9. 複製功能(navigator.clipboard + fallback) ───────────────────
-  function _copyDiagText(text, btn){
-    const _ok = () => {
-      if(btn){
-        const _orig = btn.textContent;
-        btn.textContent = '✅ 已複製!';
-        setTimeout(() => { try{ btn.textContent = _orig; }catch(_){} }, 1500);
-      }
-    };
-    const _fail = (msg) => {
-      if(btn){
-        btn.textContent = '❌ 複製失敗,請手動';
-        setTimeout(() => {
-          try{ btn.textContent = '📋 複製診斷資訊'; }catch(_){}
-        }, 2000);
-      }
-      // fallback: 開 prompt 讓玩家自己 copy
-      try{ window.prompt('請按 Ctrl+C 或長按複製:', text); }catch(_){}
-    };
-    try{
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(_ok).catch(() => _fallbackCopy(text, _ok, _fail));
-      } else {
-        _fallbackCopy(text, _ok, _fail);
-      }
-    }catch(e){ _fail(e && e.message); }
-  }
-  function _fallbackCopy(text, onOk, onFail){
-    try{
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
-      document.body.appendChild(ta);
-      ta.select();
-      const r = document.execCommand('copy');
-      ta.remove();
-      if(r) onOk(); else onFail('execCommand failed');
-    }catch(e){ onFail(e && e.message); }
-  }
-
-  // ── 10. 提供 console 手動取用介面(老師用 console 看時超方便) ──────
-  window._getBossDiagText = function(){
-    if(window._lastBossDiagText) return window._lastBossDiagText;
-    // 沒被觸發過,即時抓一份
-    const s = _buildBossDiagSnapshot();
-    return _diagSnapshotToText(s);
-  };
-  window._copyBossDiag = function(){
-    _copyDiagText(window._getBossDiagText(), null);
-    return 'see console for status';
-  };
-
-  // ★ v1.0.20260513.6420 — 給「卡死自救選單」呼叫的回報觸發點
-  //   只在玩家「實際採取脫困動作」時呼叫:
-  //     - skip_turn:強制跳過當前角色行動
-  //     - exit_battle:脫離戰鬥(確認後才送)
-  //     - replace_hero:換隊友重新開始
-  //   不送出的情境:
-  //     - toast 自動顯示(可能只是玩家思考太久)
-  //     - 玩家打開選單但只是看看就關掉
-  //     - 玩家選「🐛 卡死或 BUG 回報」(那會送一份玩家手打的文字,自動回報重複)
-  //   仍套用 _maybeAutoReport 內建的 10 分鐘冷卻。
-  window._triggerDeadlockRescueAutoReport = function(action){
-    try{
-      let _snap = window._lastBossDiagSnapshot;
-      let _text = window._lastBossDiagText;
-      if(!_snap || !_text){
-        _snap = _buildBossDiagSnapshot();
-        _text = _diagSnapshotToText(_snap);
-        window._lastBossDiagSnapshot = _snap;
-        window._lastBossDiagText = _text;
-      }
-      // 把玩家的動作標籤前綴到 text,讓老師後台一眼看出玩家做了什麼自救
-      const _actionLabel = ({
-        'skip_turn':    '⏭ 強制跳過當前角色行動',
-        'exit_battle':  '🚪 脫離戰鬥',
-        'replace_hero': '🔄 換隊友重新開始',
-      })[action] || ('其他自救動作:' + (action || 'unknown'));
-      const _textWithAction = '[卡死自救觸發] 玩家動作:' + _actionLabel + '\n\n' + _text;
-      _maybeAutoReport(_snap, _textWithAction);
-    }catch(e){
-      console.warn('[診斷面板] _triggerDeadlockRescueAutoReport 失敗', e);
-    }
-  };
-
-  // ── 11. 啟動 hook ──────────────────────────────────────────────────
-  // 等 DOM ready
-  if(document.readyState === 'complete' || document.readyState === 'interactive'){
-    setTimeout(_tryHook, 500);
-  } else {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(_tryHook, 500));
-  }
-
-  console.log('[診斷面板 v6210] 已載入,等待 _showDeadlockRescueButton 觸發');
-})();
-</script>
-<!-- ===================================================================== -->
-<!-- ★ v6210 通用 BOSS 卡死診斷面板 — 結束                                  -->
-<!-- ===================================================================== -->
-</body>
-</html>
+<!-- 觸發範圍: 全部 BOSS(不限杏花妖),涵蓋 ADV_QUIZ_BOS
