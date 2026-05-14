@@ -26723,18 +26723,18 @@ function execSkill(a, sk, cost, stype){
   // ════════════════════════════════════════════════════════════════
   // ★ v1.0.20260514.6550 — 炸彈客(5 年 4 班劉同學設計)技能實作
   //   S1 炸彈投擲:固定 20+目標 15%HP,上限=Lv×10,無視有利狀態、不受屬性影響、不會暴擊
-  //     升級表:Lv1~5 固定值 20/25/30/35/40、HP% 15/16/17/18/20
+  //     升級表:Lv1~10 固定值 20/25/30/35/40/45/50/55/60/65、HP% 15/16/17/18/19/20/21/22/23/24
+  //     (★ v1.0.20260514.6XXX 修正:從 5 級擴成 10 級,每級+5/+1%,跟舊角色一致)
   //   S2 炸彈連續投擲:同 S1 公式 ×2 次(Lv5 升為 3 次),每發獨立挑目標
   //   ⚠ doDmg 用 fixedDmg:true 跳過屬性/buff/暴擊計算,搭配 ignoreBuffs:true 穿透有利狀態
   //   ⚠ LV 上限 = a.lv * 10(沒有 a.lv 時 fallback 1,Lv1 玩家上限 = 10/發)
   // ════════════════════════════════════════════════════════════════
   else if(n==='炸彈投擲'){
     const _s1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
-    const _bomberLvIdx = Math.min(4, _s1Lv);
-    const _fixedBaseTable = [20, 25, 30, 35, 40];
-    const _hpPctTable = [0.15, 0.16, 0.17, 0.18, 0.20];
-    const _fixedBase = _fixedBaseTable[_bomberLvIdx];
-    const _hpPct = _hpPctTable[_bomberLvIdx];
+    // ★ v1.0.20260514.6XXX — 修正:升級級數從 5 級擴成 10 級,每級+5 固定/+1% HP
+    //   Lv1~10(skLv=0~9):固定值 20→65、HP% 15→24%、上限維持 Lv×10
+    const _fixedBase = 20 + _s1Lv*5;
+    const _hpPct = (15 + _s1Lv) / 100;
     // ★ v1.0.20260514.6700 — 修正:用 _heroLevels[a.name] 取代不存在的 a.lv 屬性
     //   原 bug:戰鬥英雄物件沒有 lv 屬性,(a.lv||1)*10 恆為 10,「怎麼丟都只打 10」
     const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
@@ -26758,13 +26758,12 @@ function execSkill(a, sk, cost, stype){
   }
   else if(n==='炸彈連續投擲'){
     const _s2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
-    const _bomberLvIdx = Math.min(4, _s2Lv);
-    const _fixedBaseTable = [20, 25, 30, 35, 40];
-    const _hpPctTable = [0.15, 0.16, 0.17, 0.18, 0.20];
-    const _hitsTable = [2, 2, 2, 2, 3];
-    const _fixedBase = _fixedBaseTable[_bomberLvIdx];
-    const _hpPct = _hpPctTable[_bomberLvIdx];
-    const _hits = _hitsTable[_bomberLvIdx];
+    // ★ v1.0.20260514.6XXX — 修正:升級級數從 5 級擴成 10 級,每級+5 固定/+1% HP
+    //   Lv1~10(skLv=0~9):固定值 20→65、HP% 15→24%、上限維持 Lv×10
+    //   命中次數:Lv1~4(skLv=0~3)=2 次、Lv5+(skLv≥4)=3 次(保留 Lv5 里程碑)
+    const _fixedBase = 20 + _s2Lv*5;
+    const _hpPct = (15 + _s2Lv) / 100;
+    const _hits = (_s2Lv >= 4) ? 3 : 2;
     // ★ v1.0.20260514.6700 — 修正:用 _heroLevels[a.name] 取代不存在的 a.lv 屬性
     //   原 bug:戰鬥英雄物件沒有 lv 屬性,(a.lv||1)*10 恆為 10,「怎麼丟都只打 10」
     const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
@@ -61194,15 +61193,15 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     fd = fd.replace(/特技的\s*150\s*%/g, '特技的 ' + HL(dmgPct + '%'));
   }
   // ★ v1.0.20260514.6550 — 炸彈客 S1/S2 升級:固定值 20→40 / HP% 15→20%
+  // ★ v1.0.20260514.6XXX — 修正:升級級數從 5 級擴成 10 級,每級+5 固定/+1% HP
+  //   Lv1~10(skLv=0~9):固定值 20/25/30/35/40/45/50/55/60/65、HP% 15/16/17/18/19/20/21/22/23/24
   //   fd 中有 2 個關鍵數字:「固定值 20」「最大 HP 15%」皆需升級;「LV 的 10 倍」是上限規則不升
   else if(cat === 'special_bomber_s1' || cat === 'special_bomber_s2'){
-    // Lv1~5(skLv=0~4):固定值 20/25/30/35/40、HP% 15/16/17/18/20
     const fixedBase = 20 + skLv*5;
-    const hpPctTable = [15, 16, 17, 18, 20];
-    const hpPct = hpPctTable[Math.min(4, skLv)] || 15;
+    const hpPct = 15 + skLv;
     fd = fd.replace(/固定值\s*20/g, '固定值 ' + HL(fixedBase))
            .replace(/最大\s*HP\s*15\s*%/g, '最大 HP ' + HL(hpPct + '%'));
-    // S2 在 Lv5(skLv=4)從 2 次升為 3 次
+    // S2 在 Lv5(skLv=4)從 2 次升為 3 次(保留原 Lv5 里程碑節點)
     if(cat === 'special_bomber_s2' && skLv >= 4){
       fd = fd.replace(/共\s*2\s*次/g, '共 ' + HL('3') + ' 次');
     }
@@ -61688,16 +61687,15 @@ function _getSkUpgradeBadge(skillName, skLv){
     return '全體 ' + dmgPct + '% (護盾≤HP×200%)';
   }
   // ★ v1.0.20260514.6550 — 炸彈客 S1/S2:固定值 + 目標 HP%(LV×10 上限固定不升)
+  // ★ v1.0.20260514.6XXX — 修正:升級級數擴成 10 級,每級+5 固定/+1% HP
   if(cat==='special_bomber_s1'){
     const fixedBase = 20 + (skLv||0)*5;
-    const hpPctTable = [15, 16, 17, 18, 20];
-    const hpPct = hpPctTable[Math.min(4, skLv||0)] || 15;
+    const hpPct = 15 + (skLv||0);
     return '固定 ' + fixedBase + '+目標' + hpPct + '%HP (≤Lv×10)';
   }
   if(cat==='special_bomber_s2'){
     const fixedBase = 20 + (skLv||0)*5;
-    const hpPctTable = [15, 16, 17, 18, 20];
-    const hpPct = hpPctTable[Math.min(4, skLv||0)] || 15;
+    const hpPct = 15 + (skLv||0);
     const hits = ((skLv||0) >= 4) ? 3 : 2;
     return '固定 ' + fixedBase + '+目標' + hpPct + '%HP × ' + hits + '次';
   }
@@ -62004,22 +62002,19 @@ function buildSkillLvTable(skillName, currentLv) {
       effectText = '全體 ' + dmgPct + '% + 吸血/護盾(≤HP×200%)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     // ★ v1.0.20260514.6550 — 炸彈客 S1/S2:固定值 + 目標 HP%(LV×10 上限固定不升)
-    //   遊戲內技能升級表只取 lv 0~4 顯示 5 級(Lv1~5),對齊「布奶鳥獸 lv 0~4」風格
-    //   炸彈客升級只有 5 級(Lv1~5),不像舊角色到 Lv10
+    // ★ v1.0.20260514.6XXX — 修正:升級級數從 5 級擴成 10 級,跟舊角色一致
+    //   每升 1 級固定+5、HP%+1%(LV10 達 65+24%HP);S1/S2 上限保持 Lv×10
+    //   S2 命中次數:Lv1~4=2 次、Lv5+ = 3 次(保留原 Lv5 升級節點作為里程碑)
     else if(cat==='special_bomber_s1'){
-      const lvClamped = Math.min(4, lv);
-      const fixedBase = 20 + lvClamped*5;
-      const hpPctTable = [15, 16, 17, 18, 20];
-      const hpPct = hpPctTable[lvClamped];
-      effectText = '固定 ' + fixedBase + '+目標 ' + hpPct + '%HP (≤Lv×10)' + (lvClamped===4?'（MAX）':(lvClamped===0?'（基礎）':''));
+      const fixedBase = 20 + lv*5;
+      const hpPct = 15 + lv;
+      effectText = '固定 ' + fixedBase + '+目標 ' + hpPct + '%HP (≤Lv×10)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     else if(cat==='special_bomber_s2'){
-      const lvClamped = Math.min(4, lv);
-      const fixedBase = 20 + lvClamped*5;
-      const hpPctTable = [15, 16, 17, 18, 20];
-      const hpPct = hpPctTable[lvClamped];
-      const hits = (lvClamped >= 4) ? 3 : 2;
-      effectText = '固定 ' + fixedBase + '+目標 ' + hpPct + '%HP × ' + hits + '次' + (lvClamped===4?'（MAX）':(lvClamped===0?'（基礎）':''));
+      const fixedBase = 20 + lv*5;
+      const hpPct = 15 + lv;
+      const hits = (lv >= 4) ? 3 : 2;
+      effectText = '固定 ' + fixedBase + '+目標 ' + hpPct + '%HP × ' + hits + '次' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     // ★ v1.0.20260514.6770 — 地府酋長 S1:當前HP%+特技上限 / S2:全體傷害+流血(走 10 級升級)
     else if(cat==='special_hell_chain'){
@@ -71037,7 +71032,31 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
-  { ver:'v1.0.20260514.6770', brief:[
+  { ver:'v1.0.20260514.6780', brief:[
+    '💣 炸彈客 S1/S2 升級表修正:從 5 級擴成 10 級,跟舊角色一致',
+    '⚖️ 每升 1 級固定傷害 +5、目標 HP 傷害 +1%,LV10 達固定 65+目標 24%HP',
+    '🎯 LV×10 上限規則維持不動;S2 命中次數仍在 Lv5 從 2 → 3(保留里程碑)',
+  ], items:[
+    '【💣 炸彈客 S1/S2 升級表修正】',
+    '・問題:原本 S1/S2 升級只到 Lv5(MAX),跟其他舊角色到 Lv10 不一致',
+    '・修正後升級表(Lv1~10):',
+    '  - 固定值:20 / 25 / 30 / 35 / 40 / 45 / 50 / 55 / 60 / 65',
+    '  - 目標 HP%:15 / 16 / 17 / 18 / 19 / 20 / 21 / 22 / 23 / 24 %',
+    '  - 上限:Lv×10(不升,跟原設定一致)',
+    '・S2 命中次數仍是「Lv5(skLv=4)以上 3 次,否則 2 次」(保留原 Lv5 里程碑)',
+    '・舊版 Lv5 是 40+20%(直接跳到 +5%),新版改成線性 +1%(Lv5=40+19%、Lv6=45+20%)',
+    '【📋 實作位置(5 處全部對齊新公式)】',
+    '・C1 升級表格 fd renderer:special_bomber_s1/s2 case,從 hpPctTable[lvClamped] 改線性公式',
+    '・C2 fd 動態替換:同上,fixedBase=20+skLv*5、hpPct=15+skLv',
+    '・C3 短摘要 renderer:同上線性公式',
+    '・D1 execSkill 戰鬥邏輯(S1 炸彈投擲):移除 _bomberLvIdx 截斷,改 _fixedBase=20+_s1Lv*5',
+    '・D2 execSkill 戰鬥邏輯(S2 炸彈連續投擲):同上 + _hits=(_s2Lv>=4)?3:2',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6780 + GAME_CHANGELOG 記錄',
+    '【⚖️ 平衡性檢視】',
+    '・Lv10 MAX 數值 65+24%HP 對中等 BOSS(HP 500)= 65+120 = 185,受 Lv×10 上限(玩家 Lv10 = 100)壓制為 100',
+    '・對巨型 BOSS(HP 2000)= 65+480 = 545,受 Lv×10 上限(Lv10=100)壓制為 100;Lv30 玩家上限 300、Lv50 上限 500',
+    '・固定+HP% 公式 + LV×10 上限保證低等不爆 BOSS、高等也不會單發毀天滅地,維持炸彈客「穩定爆破手」定位',
+  ] },
     '⚖️ 新英雄登場:地府酋長(5 年 4 班黃同學設計)— 審判終結處決 + 流血風暴 + 倒下疊層特技!',
     '👹 天賦「亡魂積怨」:場上任意目標倒下時自身特技 +4,最多疊 5 層(Lv5 每層 +8)',
     '✏️ 5 年 4 班第 3 位設計師作品,加入後召喚池共 15 隻稀有英雄分攤 5% 機率',
@@ -72142,7 +72161,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260514.6770';
+  const CURRENT_VERSION = 'v1.0.20260514.6780';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -72176,7 +72195,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260514.6770';
+window._GAME_LOADED_VERSION = 'v1.0.20260514.6780';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
