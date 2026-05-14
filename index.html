@@ -20283,7 +20283,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _hpPctTable = [0.30, 0.32, 0.34, 0.36, 0.40];
     const _fixedBase = _fixedBaseTable[_bombLvIdx];
     const _hpPct = _hpPctTable[_bombLvIdx];
-    const _lvCap = (h.lv || 1) * 20;
+    // ★ v1.0.20260514.6700 — 修正:用 _heroLevels[h.name] 取代不存在的 h.lv 屬性
+    //   原 bug:newHero() 回傳的英雄物件沒有 lv 屬性,(h.lv||1)*20 恆為 20,爆發上限永遠卡 20
+    const _bombHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[h.name]) ? _heroLevels[h.name] : 1;
+    const _lvCap = _bombHeroLv * 20;
     log(`💥 [${h.name}] 超級大爆炸!整個工坊的炸彈一次點燃!固定 ${_fixedBase}+目標 ${Math.round(_hpPct*100)}%HP(上限 Lv×20=${_lvCap})`);
     bannerFX(h, '💥 超級大爆炸!', '#ff3322', 1400);
     beginBatchTotals();
@@ -26732,7 +26735,10 @@ function execSkill(a, sk, cost, stype){
     const _hpPctTable = [0.15, 0.16, 0.17, 0.18, 0.20];
     const _fixedBase = _fixedBaseTable[_bomberLvIdx];
     const _hpPct = _hpPctTable[_bomberLvIdx];
-    const _lvCap = (a.lv || 1) * 10;
+    // ★ v1.0.20260514.6700 — 修正:用 _heroLevels[a.name] 取代不存在的 a.lv 屬性
+    //   原 bug:戰鬥英雄物件沒有 lv 屬性,(a.lv||1)*10 恆為 10,「怎麼丟都只打 10」
+    const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+    const _lvCap = _bomberHeroLv * 10;
     const opp = a.side==='p1' ? 'p2' : 'p1';
     const _liveFoes = G[opp].filter(h => h.curHp > 0);
     if(!_liveFoes.length){ endAction(a, cost); return; }
@@ -26759,7 +26765,10 @@ function execSkill(a, sk, cost, stype){
     const _fixedBase = _fixedBaseTable[_bomberLvIdx];
     const _hpPct = _hpPctTable[_bomberLvIdx];
     const _hits = _hitsTable[_bomberLvIdx];
-    const _lvCap = (a.lv || 1) * 10;
+    // ★ v1.0.20260514.6700 — 修正:用 _heroLevels[a.name] 取代不存在的 a.lv 屬性
+    //   原 bug:戰鬥英雄物件沒有 lv 屬性,(a.lv||1)*10 恆為 10,「怎麼丟都只打 10」
+    const _bomberHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+    const _lvCap = _bomberHeroLv * 10;
     const opp = a.side==='p1' ? 'p2' : 'p1';
     if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
     log(`💣 [${a.name}] 炸彈連續投擲!固定 ${_fixedBase}+HP ${Math.round(_hpPct*100)}% × ${_hits} 次(上限 Lv×10=${_lvCap})`);
@@ -26799,7 +26808,6 @@ function execSkill(a, sk, cost, stype){
     // S1 升級:每升 1 級 +20%(走通用 dmg cat 慣例,基礎 450%,Lv10 MAX 達 630%)
     const _skLv = (a._skLv && a._skLv.s1) || 0;
     const _baseMult = 4.5 + _skLv * 0.20;
-    // 目標選擇:走標準 chooseTarget(同時支援 AI 與玩家選擇)
     const _doSnipe = (t) => {
       if(!t || t.curHp <= 0){
         // 找個候選:HP 最低的
@@ -26817,12 +26825,18 @@ function execSkill(a, sk, cost, stype){
       renderCard(t);
       endAction(a, cost);
     };
+    // ★ v1.0.20260514.6700 — 修正:改用 setPending('enemy', ...) 讓玩家能點選目標
+    //   原 bug:targets 通常為空,所有路徑都走「自動挑 HP% 最低」,玩家無法選目標
+    //   修法:對齊「瞄準射擊」「死亡宣告」等其他單體攻擊技的標準做法
     if(targets && targets.length > 0 && targets[0] && targets[0].curHp > 0){
+      // 既有指定目標(如 AI 預先傳入或特殊邏輯)→ 直接執行
       _doSnipe(targets[0]);
     } else {
-      // AI 路徑:挑 HP% 最低的對手
-      const _sorted = _alive.slice().sort((x,y) => (x.curHp/x.hp) - (y.curHp/y.hp));
-      _doSnipe(_sorted[0]);
+      // 沒指定目標 → 走 setPending:玩家會跳出選目標 UI,AI 會自動挑 HP% 最低
+      setPending('enemy', t => {
+        G.pendingTarget = null; pendingCb = null;
+        _doSnipe(t);
+      });
     }
     return;
   }
