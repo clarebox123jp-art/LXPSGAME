@@ -3701,6 +3701,66 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   white-space:nowrap;
 }
 
+/* ★ v1.0.20260515.6810 — 「有可強化英雄 / 有可升級至寶」標籤(在「關卡選擇」標籤上方右側,呼吸光暈) */
+#adv-stage-enhance-badges{
+  position:absolute;top:-15px;right:14px;z-index:6;
+  display:flex;gap:6px;align-items:center;
+  pointer-events:auto;
+}
+.stage-enhance-badge{
+  display:none;align-items:center;gap:4px;
+  padding:3px 12px;font-size:clamp(12px,1.2vw,17px);font-weight:800;
+  border-radius:18px;cursor:pointer;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  letter-spacing:1px;white-space:nowrap;
+  transition:transform 0.15s;
+  animation:stageBadgeBreath 1.6s ease-in-out infinite alternate;
+}
+.stage-enhance-badge:hover{ transform:scale(1.06); }
+.stage-enhance-badge.show{ display:inline-flex; }
+.stage-enhance-badge.badge-hero{
+  background:linear-gradient(180deg,rgba(80,40,140,0.95),rgba(50,20,100,0.95));
+  border:2px solid rgba(200,140,255,0.85);
+  color:#e8ccff;
+}
+.stage-enhance-badge.badge-treasure{
+  background:linear-gradient(180deg,rgba(140,80,20,0.95),rgba(100,55,10,0.95));
+  border:2px solid rgba(255,200,100,0.85);
+  color:#ffe8a0;
+}
+@keyframes stageBadgeBreath{
+  0%   { box-shadow:0 0 4px rgba(255,220,140,0.4), 0 0 8px rgba(200,140,255,0.3); filter:brightness(1); }
+  100% { box-shadow:0 0 14px rgba(255,220,140,0.85), 0 0 22px rgba(200,140,255,0.7); filter:brightness(1.18); }
+}
+.stage-enhance-badge.badge-hero{ animation-name:stageBadgeBreathHero; }
+.stage-enhance-badge.badge-treasure{ animation-name:stageBadgeBreathTreasure; }
+@keyframes stageBadgeBreathHero{
+  0%   { box-shadow:0 0 4px rgba(200,140,255,0.4), 0 0 8px rgba(180,120,255,0.3); filter:brightness(1); }
+  100% { box-shadow:0 0 14px rgba(200,140,255,0.9), 0 0 22px rgba(180,120,255,0.7); filter:brightness(1.18); }
+}
+@keyframes stageBadgeBreathTreasure{
+  0%   { box-shadow:0 0 4px rgba(255,200,100,0.4), 0 0 8px rgba(255,180,80,0.3); filter:brightness(1); }
+  100% { box-shadow:0 0 14px rgba(255,200,100,0.9), 0 0 22px rgba(255,180,80,0.7); filter:brightness(1.18); }
+}
+
+/* ★ v1.0.20260515.6810 — 英雄圖鑑卡片「✨ 可升級」呼吸提醒(常駐,有技能升級書且該英雄有技能 < Lv9) */
+.hero-card-upgradable-tag{
+  position:absolute;bottom:8px;left:8px;
+  display:inline-flex;align-items:center;gap:3px;
+  padding:3px 10px;font-size:clamp(14px,1.5vw,20px);font-weight:800;
+  background:linear-gradient(180deg,rgba(255,200,0,0.95),rgba(220,160,0,0.95));
+  border:2px solid rgba(255,230,120,0.95);
+  color:#5a3000;border-radius:14px;letter-spacing:1px;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  pointer-events:none;
+  animation:heroUpgradableBreath 1.4s ease-in-out infinite alternate;
+  z-index:5;
+}
+@keyframes heroUpgradableBreath{
+  0%   { box-shadow:0 0 6px rgba(255,220,80,0.55); filter:brightness(1); transform:scale(1); }
+  100% { box-shadow:0 0 18px rgba(255,230,120,0.95), 0 0 28px rgba(255,200,0,0.55); filter:brightness(1.15); transform:scale(1.04); }
+}
+
 #adv-stage-list-area{
   flex:1 1 0;
   min-height:0;
@@ -7723,6 +7783,17 @@ body.art-premium #summon-overlay {
            讓「🗺 關卡選擇」標籤和「↓ 滑動看更多」提示固定在外框邊緣,不被內容覆蓋。 -->
       <div id="adv-stage-list-wrap">
         <div id="adv-stage-list-label">🗺 關卡選擇</div>
+        <!-- ★ v1.0.20260515.6810 — 「有可強化英雄 / 有可升級至寶」呼吸光暈提醒,點擊直接開啟對應圖鑑 -->
+        <div id="adv-stage-enhance-badges">
+          <button class="stage-enhance-badge badge-hero" id="badge-enhance-hero"
+            onclick="playSfx('sfx-sel',0.5);openHeroPage()" title="有英雄可投資素質點數">
+            ✨ 有可強化英雄
+          </button>
+          <button class="stage-enhance-badge badge-treasure" id="badge-enhance-treasure"
+            onclick="playSfx('sfx-sel',0.5);window.openTaiwanTreasurePage&&window.openTaiwanTreasurePage()" title="有至寶可用經驗卷軸升級">
+            💎 有可升級至寶
+          </button>
+        </div>
         <!-- ★ v1.0.20260509.5740 — 今日知識王挑戰浮動按鈕:靠右、放大 50%,上方提示泡 -->
         <button id="king-challenge-float-btn" class="king-float-btn king-state-ready" onclick="playSfx('sfx-sel',0.6);_kingShowEntryPopup()">
           <span id="king-challenge-tip-bubble">🔔 今天還可以參加</span>
@@ -39440,6 +39511,8 @@ window.openTaiwanTreasurePage = function(){
       window._beforeTreasureBgm = null;
     }catch(_){}
     ov.remove();
+    // ★ v1.0.20260515.6810 — 關閉至寶圖鑑後刷新關卡頁徽章
+    try{ if(typeof _updateStageEnhanceBadges === 'function') _updateStageEnhanceBadges(); }catch(_){}
   };
 };
 
@@ -40100,6 +40173,60 @@ function _setAdventureOverlayBg(ov){
   _tryNext();
 }
 
+// ★ v1.0.20260515.6810 — 關卡選擇頁「有可強化英雄 / 有可升級至寶」徽章更新
+//   - 有可強化英雄:任一已解鎖英雄有未投資的素質點(_heroStatPoints[name] > 0)
+//   - 有可升級至寶:手上的「至寶經驗卷軸」+ 已累積經驗 ≥ 下一級所需經驗,且至寶未滿級
+//   觸發時機:
+//     openAdventureOverlay()、closeHeroPage()、至寶頁返回、投資素質點後、使用經驗卷軸後
+function _updateStageEnhanceBadges(){
+  try{
+    // ─── 1. 有可強化英雄 ───
+    const _heroBadge = document.getElementById('badge-enhance-hero');
+    if(_heroBadge){
+      let _hasEnhanceHero = false;
+      try{
+        const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+        for(let i = 0; i < _unlocked.length; i++){
+          const _n = _unlocked[i];
+          if((_heroStatPoints && _heroStatPoints[_n]) > 0){
+            _hasEnhanceHero = true;
+            break;
+          }
+        }
+      }catch(_){}
+      if(_hasEnhanceHero) _heroBadge.classList.add('show');
+      else _heroBadge.classList.remove('show');
+    }
+
+    // ─── 2. 有可升級至寶 ───
+    const _treasureBadge = document.getElementById('badge-enhance-treasure');
+    if(_treasureBadge){
+      let _hasUpgradableTreasure = false;
+      try{
+        const _scrollCnt = (typeof backpackGet === 'function') ? (backpackGet('treasure_exp_scroll') || 0) : 0;
+        if(_scrollCnt > 0 && typeof _taiwanTreasureData === 'object' && _taiwanTreasureData){
+          const _SCROLL_EXP = 10; // 每張至寶經驗卷軸 +10 EXP
+          const _ids = Object.keys(_taiwanTreasureData);
+          for(let i = 0; i < _ids.length; i++){
+            const _rec = _taiwanTreasureData[_ids[i]];
+            if(!_rec) continue;
+            if(_rec.lv >= TAIWAN_TREASURE_MAX_LV) continue;
+            const _need = _getTaiwanTreasureExpForNextLv(_rec.lv);
+            const _curExp = _rec.exp || 0;
+            const _afterUse = _curExp + _scrollCnt * _SCROLL_EXP;
+            if(_afterUse >= _need){
+              _hasUpgradableTreasure = true;
+              break;
+            }
+          }
+        }
+      }catch(_){}
+      if(_hasUpgradableTreasure) _treasureBadge.classList.add('show');
+      else _treasureBadge.classList.remove('show');
+    }
+  }catch(_e){ console.warn('[_updateStageEnhanceBadges]', _e); }
+}
+
 function openAdventureOverlay(){
   // ★ v1.0.20260423.3400 — 進選關頁時立即再次清除戰鬥背景,防止從戰鬥直接返回時殘留
   _clearBattleBg('openAdventureOverlay');
@@ -40160,6 +40287,9 @@ function openAdventureOverlay(){
 
   // ★ v1.0.20260424.0790 — 召喚按鈕顯示判定(管理員限定)
   try{ _refreshSummonBtnVisibility(); }catch(_e){}
+
+  // ★ v1.0.20260515.6810 — 更新「有可強化英雄 / 有可升級至寶」徽章
+  try{ _updateStageEnhanceBadges(); }catch(_e){}
 }
 
 // ════════════════════════════════════════
@@ -63096,6 +63226,29 @@ function _buildHeroGrid() {
         ${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name)) ? `<div style="margin-top:6px;display:inline-block;font-size:20px;color:#ffcc44;background:rgba(255,180,50,0.15);border:1.5px solid rgba(255,200,60,0.55);border-radius:8px;padding:2px 10px;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</div>` : ''}
       </div>
       ${isUnlocked && _heroStatPoints[name] > 0 ? `<div style="position:absolute;top:8px;right:8px;background:#ff3333;color:#fff;font-size:22px;font-weight:900;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">${_heroStatPoints[name]}</div>` : ''}
+      ${(() => {
+        // ★ v1.0.20260515.6810 — 卡片「✨ 可升級」呼吸提醒(常駐)
+        //   條件:已解鎖 + 有技能升級書 + 該英雄有技能 < Lv9 且非 no_upgrade 類
+        if(!isUnlocked) return '';
+        try{
+          if((typeof backpackGet !== 'function') || backpackGet('skill_upgrade_book') <= 0) return '';
+          const _hd = (typeof HERO_DB !== 'undefined') ? HERO_DB[name] : null;
+          if(!_hd) return '';
+          const _sl = (_heroSkillLevels && _heroSkillLevels[name]) || {};
+          const _slots = ['s1','s2'];
+          for(let _i = 0; _i < _slots.length; _i++){
+            const _slot = _slots[_i];
+            const _sk = _hd[_slot];
+            if(!_sk) continue;
+            const _lv = _sl[_slot] || 0;
+            if(_lv >= 9) continue;
+            const _def = (typeof SKILL_UPGRADE_DEF !== 'undefined') ? SKILL_UPGRADE_DEF[_sk.n] : null;
+            if(_def && _def.cat === 'no_upgrade') continue;
+            return '<div class="hero-card-upgradable-tag">✨ 可升級</div>';
+          }
+        }catch(_){}
+        return '';
+      })()}
     </div>`;
   }).join('');
 }
@@ -63857,6 +64010,8 @@ function investStat(name, stat) {
     try{ await gameCloudSave(); }catch(e){}
     _renderHeroDetail(name, document.getElementById('hero-detail-content'));
     try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+    // ★ v1.0.20260515.6810 — 投資素質點後刷新關卡頁徽章(可能該英雄沒剩素質點了)
+    try{ if(typeof _updateStageEnhanceBadges === 'function') _updateStageEnhanceBadges(); }catch(_){}
   };
   document.getElementById('_invest_no').onclick = () => box.remove();
 }
@@ -63954,6 +64109,8 @@ function closeHeroPage() {
   if(ov) ov.style.display = 'none';
   _buildHeroGrid();
   document.getElementById('hero-page-book-count').textContent = _skillBookCount;
+  // ★ v1.0.20260515.6810 — 關閉英雄圖鑑後刷新關卡頁徽章
+  try{ if(typeof _updateStageEnhanceBadges === 'function') _updateStageEnhanceBadges(); }catch(_){}
 }
 
 // ══════════════════════════════════════════════
