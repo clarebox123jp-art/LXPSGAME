@@ -1,0 +1,1417 @@
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ────────────────────────────────────────────────────────────────────── -->
+<!-- 本檔由 world-boss.js 在玩家第一次點「🌍 世界 BOSS 討伐戰」按鈕時          -->
+<!-- 透過 fetch() 載入,然後將整段 HTML 注入到 <body> 末端。                  -->
+<!--                                                                       -->
+<!-- 內含:                                                                 -->
+<!--   <style>   - 世界 BOSS UI 的 CSS                                       -->
+<!--   <div>     - 入口 overlay / 大廳 overlay / 戰鬥 overlay / 結算 overlay  -->
+<!--   <script>  - 上述 overlay 的初始化/互動邏輯 (依賴 world-boss.js 的     -->
+<!--               WORLD_BOSS_LINEUP / _WORLD_BOSS_TEAM_REWARDS 等資料)      -->
+<!--                                                                       -->
+<!-- 注意:                                                                 -->
+<!--   1. 這個檔案必須跟 index.html 放在「同一個目錄」,fetch 才找得到。      -->
+<!--   2. 因為用 fetch() 載入,本地開啟 file:// 會被瀏覽器擋(CORS),需要    -->
+<!--      用 http server (例如 python3 -m http.server) 或部署到網路。       -->
+<!--   3. 點按鈕 → 第一次載入會稍微等待 (~100~300ms),之後快取就秒開。        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+
+<!-- ★ v2.0 — 世界 BOSS 討伐戰 UI Overlay 群組             -->
+<!-- ════════════════════════════════════════════════════ -->
+<style>
+  #wb-entry-overlay, #wb-lobby-overlay, #wb-result-overlay {
+    display:none; position:fixed; inset:0; z-index:9000;
+    background:rgba(8,10,24,0.94);
+    padding:40px 20px; overflow-y:auto;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  .wb-card{
+    max-width:900px; margin:0 auto;
+    background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
+    border:3px solid #a884ff; border-radius:18px; padding:32px;
+    box-shadow:0 0 48px rgba(168,132,255,0.55),0 8px 40px rgba(0,0,0,0.9);
+    color:#ffe8a0;
+  }
+  .wb-title{
+    font-size:42px; color:#c8a8ff; letter-spacing:3px; text-align:center;
+    font-weight:800; text-shadow:0 0 20px rgba(168,132,255,0.55);
+    margin-bottom:14px;
+  }
+  .wb-subtitle{
+    font-size:16px; color:#aaa; text-align:center; letter-spacing:2px;
+    margin-bottom:28px;
+  }
+  .wb-entry-btn-row{display:flex; gap:18px; margin-top:24px; flex-wrap:wrap; justify-content:center;}
+  .wb-entry-big-btn{
+    flex:1; min-width:220px; padding:24px 18px;
+    border-radius:14px; cursor:pointer; font-family:inherit;
+    border:2.5px solid #a884ff;
+    background:linear-gradient(160deg,rgba(168,132,255,0.18) 0%,rgba(168,132,255,0.05) 100%);
+    color:#ffe8a0; text-align:center; transition:all 0.25s;
+  }
+  .wb-entry-big-btn:hover{transform:translateY(-3px); box-shadow:0 8px 32px rgba(168,132,255,0.55);}
+  .wb-entry-big-btn .ico{font-size:42px; margin-bottom:8px; display:block;}
+  .wb-entry-big-btn .ttl{font-size:20px; font-weight:700; color:#c8a8ff; letter-spacing:2px; margin-bottom:4px;}
+  .wb-entry-big-btn .desc{font-size:13px; color:#aaa; line-height:1.5;}
+  .wb-code-input{
+    font-size:32px; letter-spacing:12px; text-align:center; font-weight:700;
+    background:rgba(8,10,24,0.8); border:2px solid #a884ff; color:#ffe8a0;
+    padding:12px 18px; border-radius:10px; width:300px;
+    font-family:'Courier New',monospace; text-transform:uppercase;
+  }
+  .wb-submit-btn{
+    margin-top:14px; padding:10px 32px; font-size:16px; font-weight:700; letter-spacing:2px;
+    background:#a884ff; border:none; color:#fff; border-radius:10px; cursor:pointer;
+    font-family:inherit; transition:all 0.2s;
+  }
+  .wb-submit-btn:hover{background:#c8a8ff; box-shadow:0 0 20px rgba(168,132,255,0.55);}
+  .wb-close-btn{
+    position:absolute; top:14px; right:14px;
+    background:rgba(168,132,255,0.15); border:1.5px solid #a884ff; color:#c8a8ff;
+    width:42px; height:42px; border-radius:50%; cursor:pointer;
+    font-size:20px; font-family:inherit;
+  }
+  .wb-info-box{
+    background:rgba(74,158,255,0.1); border-left:3px solid #4a9eff;
+    padding:12px 16px; margin-top:20px; font-size:13px; color:#ffe8a0;
+    border-radius:0 8px 8px 0; line-height:1.7;
+  }
+  .wb-boss-preview{
+    background:linear-gradient(135deg,rgba(232,64,64,0.15) 0%,rgba(232,64,64,0.02) 100%);
+    border:2px solid #e84040; border-radius:14px; padding:18px;
+    margin-top:24px; display:flex; gap:16px; align-items:center;
+  }
+  .wb-boss-portrait{
+    width:96px; height:96px; border-radius:12px; flex-shrink:0;
+    background:linear-gradient(135deg,#ff6644 0%,#883322 100%);
+    display:flex; align-items:center; justify-content:center; font-size:54px;
+    border:2px solid #e84040; box-shadow:0 0 24px rgba(232,64,64,0.5);
+  }
+  .wb-boss-portrait img{width:100%; height:100%; object-fit:cover; border-radius:10px;}
+  .wb-boss-info{flex:1;}
+  .wb-boss-name{font-size:24px; font-weight:800; color:#e84040; letter-spacing:2px; margin-bottom:4px;}
+  .wb-boss-stats{display:flex; gap:14px; font-size:13px; color:#ffd; margin-top:6px; flex-wrap:wrap;}
+</style>
+
+<!-- 入口 overlay -->
+<div id="wb-entry-overlay">
+  <div class="wb-card" style="position:relative;">
+    <button class="wb-close-btn" onclick="_closeWorldBossEntry()">✕</button>
+    <div class="wb-title">🌍 世界 BOSS 討伐戰</div>
+    <div class="wb-subtitle">4 人合作 ✦ 一人一隻英雄 ✦ 挑戰超大型 BOSS</div>
+
+    <!-- ★ v2.0 — 龍王祝福橫幅(active 時才顯示) -->
+    <div id="wb-blessing-banner" style="display:none;
+         background:linear-gradient(135deg,rgba(255,224,102,0.4) 0%,rgba(168,132,255,0.3) 100%);
+         border:3px solid #ffe066;border-radius:14px;padding:14px 20px;margin-bottom:18px;
+         animation:wb-blessing-glow 3s ease-in-out infinite;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:42px;">🐉✨</div>
+        <div style="flex:1;">
+          <div style="font-size:18px;font-weight:800;color:#ffe066;letter-spacing:2px;">
+            🏆 龍王祝福啟動中!
+          </div>
+          <div id="wb-blessing-bossname" style="font-size:13px;color:#fff;margin-top:4px;">
+            玉山火龍王已被全伺服器擊敗!
+            所有玩家 EXP / 知識幣 / 掉寶率 +10%
+          </div>
+          <div id="wb-blessing-countdown" style="font-size:13px;color:#c8a8ff;margin-top:6px;">
+            剩餘 ⏳ —
+          </div>
+        </div>
+      </div>
+    </div>
+    <style>
+      @keyframes wb-blessing-glow {
+        0%, 100% { box-shadow: 0 0 16px rgba(255,224,102,0.4); }
+        50%      { box-shadow: 0 0 32px rgba(255,224,102,0.7), 0 0 48px rgba(168,132,255,0.4); }
+      }
+    </style>
+
+    <!-- BOSS 預覽 -->
+    <div class="wb-boss-preview">
+      <div class="wb-boss-portrait">
+        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/玉山火龍王.png"
+             onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
+             alt="玉山火龍王">
+      </div>
+      <div class="wb-boss-info">
+        <div class="wb-boss-name">⚔️ 玉山火龍王</div>
+        <div style="font-size:13px;color:#aaa;line-height:1.5;">
+          沉睡於玉山火口的古老火龍。HP 過半時啟動四元素護盾,需要 4 種屬性攻擊才能打破!
+        </div>
+        <div class="wb-boss-stats">
+          <span>❤️ 28,000 HP</span>
+          <span>⚔️ 攻擊 42</span>
+          <span>🛡️ 特技 55</span>
+          <span>🔥 火屬性</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按鈕 -->
+    <div class="wb-entry-btn-row">
+      <div class="wb-entry-big-btn" onclick="_wbUiCreateRoom()">
+        <span class="ico">🏰</span>
+        <div class="ttl">開新房間</div>
+        <div class="desc">自己當房主<br>產生 6 碼房號<br>分享給朋友來加入</div>
+      </div>
+      <div class="wb-entry-big-btn" onclick="document.getElementById('wb-join-area').scrollIntoView({behavior:'smooth'})">
+        <span class="ico">🔑</span>
+        <div class="ttl">輸入房號加入</div>
+        <div class="desc">朋友開好房後<br>告訴你 6 碼房號<br>輸入就能進去</div>
+      </div>
+      <div class="wb-entry-big-btn" onclick="_wbUiSoloTest()" style="border-color:#5dcaa5;background:linear-gradient(160deg,rgba(93,202,165,0.18) 0%,rgba(93,202,165,0.05) 100%);">
+        <span class="ico">🧪</span>
+        <div class="ttl" style="color:#5dcaa5;">單人離線測試</div>
+        <div class="desc">不需要房間/不連 Firebase<br>立刻打玉山火龍王<br>(測試戰鬥用)</div>
+      </div>
+    </div>
+
+    <!-- 房號輸入區 -->
+    <div id="wb-join-area" style="margin-top:24px;text-align:center;padding:18px;background:rgba(0,0,0,0.5);border-radius:12px;border:2px solid rgba(168,132,255,0.4);">
+      <div style="font-size:16px;color:#c8a8ff;margin-bottom:12px;letter-spacing:2px;">🔑 輸入 6 碼房號加入朋友的房間</div>
+      <input id="wb-code-input" class="wb-code-input" placeholder="A3KM9X" maxlength="6"
+             oninput="this.value=this.value.toUpperCase().replace(/[^A-Z2-9]/g,'')"
+             onkeypress="if(event.key==='Enter') _wbUiJoinRoom()">
+      <br><button class="wb-submit-btn" onclick="_wbUiJoinRoom()" style="margin-top:14px;">加入房間</button>
+    </div>
+
+    <div class="wb-info-box">
+      ⚠️ <b>v2.0 測試版說明</b>:這是世界 BOSS 系統的第一個可玩版本,功能完整可開戰。<br>
+      💡 <b>使用方式</b>:創房間 → 把房號分享給朋友 → 全員選角 → 按準備 → 房主開戰<br>
+      🐛 <b>已知限制</b>:單人模式時 3 個空位由 AI 替補(預設劍士),戰鬥邏輯為簡化版
+    </div>
+
+    <!-- ★ v2.0 — 隊伍排名獎勵預告 -->
+    <div style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(212,168,67,0.4);">
+      <div style="font-size:18px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:8px;">
+        🏆 隊伍排名獎勵(BOSS 倒下時依累積傷害名次發獎)
+      </div>
+      <div style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.6;">
+        每隊伍由「同電組合的玩家」識別。打贏越多場、傷害越高,排名越前面。
+        <br>同一隻 BOSS 期間,你跟同電隊友打過的所有場次傷害會累積計算。
+      </div>
+      <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;"></div>
+    </div>
+
+    <!-- ★ v2.0 — 8 隻元素龍預告 -->
+    <div style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(168,132,255,0.4);">
+      <div style="font-size:18px;color:#c8a8ff;letter-spacing:2px;font-weight:700;margin-bottom:10px;">
+        🐉 元素龍系列(全伺服器輪流挑戰)
+      </div>
+      <div style="font-size:12px;color:#aaa;margin-bottom:14px;line-height:1.5;">
+        全伺服器玩家共同對抗,擊敗後全體 EXP/知識幣/掉寶率 +10% 持續 24 小時,祝福結束後出現下一隻龍。
+      </div>
+      <div id="wb-lineup-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 初始化元素龍預告清單
+(function _wbRenderLineup(){
+  if(!window.WORLD_BOSS_LINEUP) return;
+  const el = document.getElementById('wb-lineup-list');
+  if(!el) return;
+  const elemColor = {
+    fire:'#ff6644', water:'#3296ff', wind:'#88ff88', earth:'#cc8855',
+    dark:'#aa66ff', light:'#ffee44', grass:'#66cc66', omni:'#ffffff'
+  };
+  const elemIcon = {
+    fire:'🔥', water:'💧', wind:'🌪', earth:'🌍',
+    dark:'⚫', light:'☀', grass:'🌿', omni:'🌌'
+  };
+  el.innerHTML = window.WORLD_BOSS_LINEUP.map((b, i) => `
+    <div style="background:linear-gradient(160deg,rgba(${i===0?'212,168,67':'30,30,40'},0.3) 0%,rgba(0,0,0,0.5) 100%);
+                border:1.5px solid ${i===0 ? '#d4a843' : 'rgba(168,132,255,0.3)'};
+                border-radius:10px;padding:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:11px;color:#aaa;">#${i+1}</span>
+        ${i===0 ? '<span style="font-size:10px;background:#d4a843;color:#000;padding:1px 6px;border-radius:8px;">當前</span>' : ''}
+      </div>
+      <div style="font-size:32px;text-align:center;margin:4px 0;color:${elemColor[b.element]||'#fff'};">
+        ${elemIcon[b.element] || '🐉'}
+      </div>
+      <div style="font-size:14px;font-weight:700;color:${elemColor[b.element]||'#ffe066'};text-align:center;">
+        ${b.name}
+      </div>
+      <div style="font-size:10px;color:#aaa;text-align:center;margin-top:2px;">
+        📍 ${b.scene} ✦ ❤️ ${(b.maxHp/10000).toFixed(0)}萬
+      </div>
+    </div>
+  `).join('');
+})();
+
+// ★ v2.0 — 渲染隊伍排名獎勵分級表
+(function _wbRenderRewardTiers(){
+  if(!window._WORLD_BOSS_TEAM_REWARDS) return;
+  const el = document.getElementById('wb-reward-tier-list');
+  if(!el) return;
+  const tierColor = {
+    legendary:'#ffe066', epic:'#c8a8ff', rare:'#ff9eb5',
+    normal:'#5dcaa5', memorial:'#888'
+  };
+  const tiers = ['legendary','epic','rare','normal','memorial'];
+  el.innerHTML = tiers.map(t => {
+    const r = window._WORLD_BOSS_TEAM_REWARDS[t];
+    if(!r) return '';
+    const items = [];
+    items.push(`💰 ${r.coins.toLocaleString()} 幣`);
+    if(r.treasureChance === 1.0) items.push(`✨ ${r.treasureRarity === 'mythical' ? '神話' : '傳說'}至寶 ×1`);
+    else if(r.treasureChance > 0) items.push(`✨ 至寶 (${Math.round(r.treasureChance*100)}%)`);
+    if(r.treasureFragments) items.push(`💠 至寶碎片 ×${r.treasureFragments}`);
+    if(r.summonCrystals) items.push(`💎 召喚水晶 ×${r.summonCrystals}`);
+    if(r.expScrolls) items.push(`📜 EXP 卷軸 ×${r.expScrolls}`);
+    if(r.titleTemplate) items.push(`🎖 限定稱號`);
+    return `
+      <div style="background:rgba(${tierColor[t].replace('#','').match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.15);
+                  border:1.5px solid ${tierColor[t]};border-radius:8px;padding:8px 10px;">
+        <div style="font-size:14px;font-weight:700;color:${tierColor[t]};letter-spacing:1px;">
+          ${r.tier}
+        </div>
+        <div style="font-size:11px;color:#aaa;margin-top:2px;">名次 ${r.rankRange}</div>
+        <div style="font-size:11px;color:#ffe8a0;margin-top:4px;line-height:1.5;">
+          ${items.join('<br>')}
+        </div>
+      </div>
+    `;
+  }).join('');
+})();
+</script>
+
+<!-- ═════════════════════════════════════════════════════════════════ -->
+<!-- ★ v2.0 — 大廳/選角/戰鬥/結算 overlay -->
+<!-- ═════════════════════════════════════════════════════════════════ -->
+
+<style>
+  #wb-lobby-overlay{
+    display:none;position:fixed;inset:0;z-index:9000;
+    background:rgba(8,10,24,0.97);padding:20px;overflow-y:auto;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
+  }
+  .wb-lobby-card{
+    max-width:1200px;margin:0 auto;
+    background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
+    border:3px solid #a884ff;border-radius:18px;padding:24px;
+    box-shadow:0 0 48px rgba(168,132,255,0.55);
+    position:relative;
+  }
+  .wb-room-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .wb-room-code-badge{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(168,132,255,0.18);padding:8px 14px;border-radius:10px;border:2px dashed #a884ff;
+  }
+  .wb-code-lbl{font-size:12px;color:#aaa;}
+  .wb-code-val{font-size:24px;font-weight:800;letter-spacing:5px;color:#c8a8ff;font-family:'Courier New',monospace;}
+  .wb-copy-btn,.wb-leave-btn{
+    padding:6px 12px;font-size:12px;background:transparent;border:1px solid #a884ff;color:#c8a8ff;
+    border-radius:6px;cursor:pointer;font-family:inherit;
+  }
+  .wb-copy-btn:hover{background:#a884ff;color:#fff;}
+  .wb-leave-btn{border-color:#ff6644;color:#ff9966;}
+  .wb-leave-btn:hover{background:#ff6644;color:#fff;}
+
+  .wb-boss-preview-small{
+    background:linear-gradient(135deg,rgba(232,64,64,0.15) 0%,rgba(232,64,64,0.02) 100%);
+    border:2px solid #e84040;border-radius:12px;padding:14px;margin-bottom:18px;
+    display:flex;gap:14px;align-items:center;
+  }
+  .wb-boss-mini-portrait{
+    width:80px;height:80px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(135deg,#ff6644 0%,#883322 100%);
+    display:flex;align-items:center;justify-content:center;font-size:48px;
+    border:2px solid #e84040;overflow:hidden;
+  }
+  .wb-boss-mini-portrait img{width:100%;height:100%;object-fit:cover;}
+
+  .wb-player-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .wb-player-slot{
+    background:rgba(8,10,24,0.6);border:2px dashed rgba(212,168,67,0.4);
+    border-radius:12px;padding:12px;text-align:center;min-height:200px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.2s;
+  }
+  .wb-player-slot.filled{border-style:solid;border-color:#d4a843;background:rgba(212,168,67,0.08);}
+  .wb-player-slot.ready{border-color:#3ec87a;background:rgba(62,200,122,0.1);box-shadow:0 0 16px rgba(62,200,122,0.3);}
+  .wb-player-slot.me{box-shadow:0 0 16px rgba(212,168,67,0.55);}
+  .wb-slot-num{font-size:11px;color:#aaa;letter-spacing:2px;}
+  .wb-slot-name{font-size:15px;font-weight:700;color:#ffe066;}
+  .wb-host-badge{font-size:10px;background:#ff6644;color:#fff;padding:1px 6px;border-radius:8px;margin-left:4px;}
+  .wb-me-badge{font-size:10px;background:#d4a843;color:#000;padding:1px 6px;border-radius:8px;margin-left:4px;}
+  .wb-slot-portrait{
+    width:64px;height:64px;border-radius:8px;
+    background:linear-gradient(135deg,#3a4858,#1a2030);
+    display:flex;align-items:center;justify-content:center;font-size:36px;
+    border:1.5px solid rgba(212,168,67,0.4);
+  }
+  .wb-slot-portrait.empty{background:rgba(0,0,0,0.3);border-style:dashed;color:#aaa;font-size:28px;}
+  .wb-slot-hero-name{font-size:13px;font-weight:700;color:#ffe066;}
+  .wb-slot-element{font-size:11px;color:#aaa;}
+  .wb-ready-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;margin-top:auto;}
+  .wb-ready-status.waiting{background:rgba(170,170,170,0.2);color:#aaa;}
+  .wb-ready-status.ready{background:rgba(62,200,122,0.3);color:#3ec87a;}
+
+  /* 選角區 */
+  .wb-pick-area{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+  .wb-hero-pick-panel{background:rgba(8,10,24,0.6);border:1.5px solid #d4a843;border-radius:10px;padding:14px;}
+  .wb-panel-title{font-size:14px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:10px;}
+  .wb-hero-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:6px;max-height:300px;overflow-y:auto;padding-right:6px;}
+  .wb-hero-card{
+    aspect-ratio:1;border-radius:6px;cursor:pointer;
+    background:linear-gradient(135deg,#2a3340,#15191f);
+    border:1.5px solid rgba(212,168,67,0.3);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:10px;color:#ffe8a0;transition:all 0.15s;padding:4px;text-align:center;
+  }
+  .wb-hero-card .em{font-size:22px;}
+  .wb-hero-card:hover{border-color:#d4a843;transform:translateY(-2px);}
+  .wb-hero-card.picked{border-color:#3ec87a;background:linear-gradient(135deg,#3a4d2a,#2a3520);box-shadow:0 0 10px rgba(62,200,122,0.5);}
+  .wb-hero-card.taken{opacity:0.35;cursor:not-allowed;}
+
+  .wb-side-controls{display:flex;flex-direction:column;gap:12px;}
+  .wb-element-panel{background:rgba(8,10,24,0.6);border:1.5px solid #d4a843;border-radius:10px;padding:12px;}
+  .wb-element-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .wb-element-btn{
+    flex:1;min-width:48px;padding:8px 4px;font-size:11px;cursor:pointer;
+    background:rgba(0,0,0,0.4);border:1.5px solid rgba(212,168,67,0.3);color:#ffe8a0;
+    border-radius:6px;font-family:inherit;text-align:center;transition:all 0.15s;
+  }
+  .wb-element-btn .em-ico{font-size:18px;display:block;}
+  .wb-element-btn:hover{border-color:#d4a843;}
+  .wb-element-btn.active{background:rgba(212,168,67,0.25);border-color:#ffe066;color:#ffe066;}
+
+  .wb-action-btn-big{
+    padding:14px;font-size:18px;font-weight:800;letter-spacing:2px;
+    border:none;color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;transition:all 0.2s;
+  }
+  .wb-ready-btn{background:linear-gradient(135deg,#3ec87a,#2a9858);}
+  .wb-ready-btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(62,200,122,0.5);}
+  .wb-ready-btn.cancel{background:linear-gradient(135deg,#ff8844,#cc6622);}
+  .wb-start-btn{background:linear-gradient(135deg,#d4a843,#b88a30);color:#000;}
+  .wb-start-btn:disabled{background:#444;color:#888;cursor:not-allowed;}
+
+  /* 戰鬥畫面 */
+  .wb-battle-screen{display:none;}
+  .wb-battle-screen.show{display:block;}
+  .wb-battle-boss-zone{
+    background:linear-gradient(135deg,rgba(232,64,64,0.18) 0%,rgba(0,0,0,0.5) 100%);
+    border:2px solid #e84040;border-radius:14px;padding:18px;margin-bottom:14px;
+    display:flex;gap:18px;align-items:center;
+  }
+  .wb-battle-boss-portrait{
+    width:140px;height:140px;border-radius:12px;flex-shrink:0;
+    background:linear-gradient(135deg,#ff6644 0%,#552010 100%);
+    display:flex;align-items:center;justify-content:center;font-size:72px;
+    border:3px solid #e84040;box-shadow:0 0 24px rgba(232,64,64,0.55);overflow:hidden;
+  }
+  .wb-battle-boss-portrait img{width:100%;height:100%;object-fit:cover;}
+  .wb-battle-boss-info{flex:1;}
+  .wb-boss-big-name{font-size:24px;font-weight:800;color:#e84040;letter-spacing:2px;}
+  .wb-boss-big-hp-bar{
+    height:24px;background:rgba(0,0,0,0.7);border-radius:12px;overflow:hidden;
+    border:2px solid #e84040;position:relative;margin-top:8px;
+  }
+  .wb-boss-big-hp-fill{height:100%;background:linear-gradient(90deg,#e84040,#ff6644);transition:width 0.6s;}
+  .wb-boss-big-hp-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 4px #000;}
+
+  .wb-heroes-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+  .wb-hero-battle-card{
+    background:linear-gradient(160deg,#1a1d2e 0%,#0d0f1a 100%);
+    border:2px solid #d4a843;border-radius:10px;padding:10px;
+    display:flex;flex-direction:column;gap:6px;position:relative;
+  }
+  .wb-hero-battle-card.acting{
+    border-color:#ffe066;box-shadow:0 0 16px rgba(255,224,102,0.55);
+    animation:wb-pulse 1.4s ease-in-out infinite;
+  }
+  .wb-hero-battle-card.dead{opacity:0.4;filter:grayscale(0.7);}
+  @keyframes wb-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.02);}}
+  .wb-hbc-name{font-size:12px;font-weight:700;color:#ffe066;}
+  .wb-hbc-portrait{
+    width:100%;aspect-ratio:1;border-radius:8px;
+    background:linear-gradient(135deg,#3a4858,#1a2030);
+    display:flex;align-items:center;justify-content:center;font-size:42px;
+  }
+  .wb-hbc-hero-name{font-size:11px;color:#ffe066;text-align:center;font-weight:700;}
+  .wb-hp-bar{height:8px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;}
+  .wb-hp-fill{height:100%;background:linear-gradient(90deg,#3ec87a,#5cd896);transition:width 0.5s;}
+  .wb-hp-fill.low{background:linear-gradient(90deg,#e84040,#ff6644);}
+  .wb-hp-text{font-size:10px;color:#aaa;text-align:center;}
+
+  .wb-action-panel{
+    background:rgba(8,10,24,0.8);border:2px solid #d4a843;border-radius:12px;padding:12px;
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;
+  }
+  .wb-action-btn{
+    flex:1;min-width:80px;padding:12px 8px;font-size:13px;font-weight:700;cursor:pointer;
+    background:rgba(212,168,67,0.15);border:1.5px solid #d4a843;color:#ffe066;
+    border-radius:8px;font-family:inherit;transition:all 0.15s;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+  }
+  .wb-action-btn:hover:not(:disabled){background:rgba(212,168,67,0.3);transform:translateY(-2px);}
+  .wb-action-btn:disabled{opacity:0.3;cursor:not-allowed;}
+  .wb-action-btn .ic{font-size:20px;}
+
+  .wb-wait-banner{
+    background:rgba(74,158,255,0.15);border:2px solid #4a9eff;
+    border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:12px;
+  }
+  .wb-spinner{
+    width:20px;height:20px;border:3px solid rgba(74,158,255,0.3);border-top-color:#4a9eff;
+    border-radius:50%;animation:wb-spin 1s linear infinite;
+  }
+  @keyframes wb-spin{to{transform:rotate(360deg);}}
+
+  .wb-battle-log{
+    background:rgba(0,0,0,0.6);border:1px solid rgba(212,168,67,0.3);border-radius:8px;
+    padding:8px 12px;margin-top:10px;max-height:120px;overflow-y:auto;
+    font-size:12px;line-height:1.7;color:#ffe8a0;
+  }
+
+  .wb-emoji-popup{
+    position:fixed;background:rgba(168,132,255,0.95);color:#fff;padding:8px 14px;
+    border-radius:12px;font-size:13px;font-weight:700;z-index:9060;
+    animation:wb-emoji-fly 2.4s ease-out forwards;pointer-events:none;
+    box-shadow:0 4px 16px rgba(168,132,255,0.5);
+  }
+  @keyframes wb-emoji-fly{
+    0%{transform:translateY(20px) scale(0.5);opacity:0;}
+    15%{transform:translateY(0) scale(1.1);opacity:1;}
+    85%{opacity:1;}
+    100%{transform:translateY(-40px) scale(0.8);opacity:0;}
+  }
+</style>
+
+<!-- 大廳 / 選角 / 戰鬥 overlay -->
+<div id="wb-lobby-overlay">
+  <div class="wb-lobby-card">
+    <!-- 房間頭 -->
+    <div class="wb-room-header">
+      <div>
+        <div style="font-size:24px;font-weight:800;color:#c8a8ff;letter-spacing:2px;">🌍 世界 BOSS 房間</div>
+        <div id="wb-room-status-text" style="font-size:12px;color:#aaa;margin-top:4px;">等候玩家</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="wb-room-code-badge">
+          <div>
+            <div class="wb-code-lbl">🔑 房號</div>
+            <div class="wb-code-val" id="wb-room-code-val">------</div>
+          </div>
+          <button class="wb-copy-btn" onclick="_wbUiCopyCode()">複製</button>
+        </div>
+        <button class="wb-leave-btn" onclick="_wbUiLeaveRoom()">離開</button>
+      </div>
+    </div>
+
+    <!-- BOSS 預覽 -->
+    <div class="wb-boss-preview-small">
+      <div class="wb-boss-mini-portrait">
+        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/玉山火龍王.png"
+             onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
+             alt="玉山火龍王">
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 玉山火龍王</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
+          HP 28,000 ✦ 火屬性 ✦ 雙階段戰鬥<br>
+          🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 個玩家槽位 -->
+    <div class="wb-player-slots" id="wb-player-slots-grid"></div>
+
+    <!-- 選角階段:選英雄與元素 -->
+    <div id="wb-picking-area" class="wb-pick-area">
+      <div class="wb-hero-pick-panel">
+        <div class="wb-panel-title">🎴 選你的英雄</div>
+        <div id="wb-hero-grid" class="wb-hero-grid"></div>
+      </div>
+      <div class="wb-side-controls">
+        <div class="wb-element-panel">
+          <div class="wb-panel-title">🎨 選元素</div>
+          <div class="wb-element-row" id="wb-element-row-1"></div>
+          <div class="wb-element-row" id="wb-element-row-2" style="margin-top:6px;"></div>
+        </div>
+        <button id="wb-ready-btn" class="wb-action-btn-big wb-ready-btn" onclick="_wbUiToggleReady()">
+          ⏳ 我準備好了
+        </button>
+        <button id="wb-start-btn" class="wb-action-btn-big wb-start-btn" onclick="_wbUiStartBattle()" disabled style="display:none;">
+          ⚔ 開戰!
+        </button>
+      </div>
+    </div>
+
+    <!-- 戰鬥階段 -->
+    <div id="wb-battle-area" class="wb-battle-screen">
+      <div class="wb-battle-boss-zone">
+        <div class="wb-battle-boss-portrait">
+          <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/玉山火龍王.png"
+               onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
+               alt="玉山火龍王">
+        </div>
+        <div class="wb-battle-boss-info">
+          <div class="wb-boss-big-name" id="wb-battle-boss-name">玉山火龍王</div>
+          <div id="wb-battle-turn-info" style="font-size:13px;color:#ffe066;margin-top:4px;letter-spacing:1px;">回合 1</div>
+          <div class="wb-boss-big-hp-bar">
+            <div class="wb-boss-big-hp-fill" id="wb-battle-boss-hp-fill" style="width:100%;"></div>
+            <div class="wb-boss-big-hp-text" id="wb-battle-boss-hp-text">28000 / 28000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wb-heroes-row" id="wb-battle-heroes-row"></div>
+
+      <div id="wb-battle-action-area">
+        <!-- 動態填入:輪到我 → action panel;不是我 → wait banner -->
+      </div>
+
+      <div class="wb-battle-log" id="wb-battle-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 表情貼圖快捷列(戰鬥時顯示) -->
+<div id="wb-emoji-bar-real" style="display:none;position:fixed;bottom:14px;right:14px;
+     background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:30px;padding:6px;z-index:9050;">
+  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('cheer')" title="加油">💪</button>
+  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('burst')" title="用爆發">💥</button>
+  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('heal')" title="補我血">🩹</button>
+  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('wait')" title="等一下">⏸</button>
+  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('strong')" title="太強了">🔥</button>
+  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('gg')" title="GG">😭</button>
+</div>
+<style>
+  .wb-emoji-btn{
+    width:38px;height:38px;border-radius:50%;cursor:pointer;border:none;
+    background:rgba(168,132,255,0.15);color:#fff;font-size:16px;
+    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;margin:0 2px;
+  }
+  .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.15);}
+</style>
+
+<!-- 結算 overlay -->
+<div id="wb-result-overlay" style="display:none;position:fixed;inset:0;z-index:9100;
+     background:radial-gradient(ellipse at center,rgba(40,30,80,0.96) 0%,rgba(8,10,24,0.99) 80%);
+     align-items:center;justify-content:center;padding:20px;overflow-y:auto;
+     font-family:'M PLUS Rounded 1c',sans-serif;">
+  <div style="max-width:780px;width:100%;background:linear-gradient(160deg,#1a1d2e 0%,#0d0f1a 100%);
+       border:3px solid #d4a843;border-radius:18px;padding:28px;color:#ffe8a0;
+       box-shadow:0 0 60px rgba(212,168,67,0.5);">
+    <div id="wb-result-title" style="font-size:42px;font-weight:800;text-align:center;letter-spacing:6px;margin-bottom:8px;"></div>
+    <div id="wb-result-subtitle" style="font-size:14px;text-align:center;color:#aaa;letter-spacing:2px;margin-bottom:20px;"></div>
+
+    <div id="wb-result-contributions" style="margin-bottom:20px;"></div>
+
+    <div id="wb-result-rewards" style="background:rgba(0,0,0,0.4);border:1.5px solid rgba(212,168,67,0.4);
+         border-radius:10px;padding:14px;margin-bottom:20px;">
+      <div style="font-size:14px;color:#ffe066;letter-spacing:2px;margin-bottom:8px;">🎁 本場獎勵</div>
+      <div id="wb-result-reward-list" style="font-size:13px;color:#ffd;line-height:1.9;"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button onclick="_wbUiResultClose()" style="flex:1;padding:14px;font-size:16px;font-weight:700;
+              background:rgba(168,132,255,0.25);color:#c8a8ff;border:2px solid #a884ff;border-radius:10px;
+              cursor:pointer;font-family:inherit;letter-spacing:2px;">🏠 回首頁</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 連線層的 UI 連動 JS ─── -->
+<script>
+(function _wbUiInit(){
+  if(typeof window._wbNet === 'undefined'){
+    console.warn('[WB-UI] _wbNet 還沒載入,延後初始化');
+    setTimeout(_wbUiInit, 500);
+    return;
+  }
+
+  // 對應現有英雄系統:取得所有可用英雄
+  function _wbGetAvailableHeroes(){
+    if(typeof HERO_DB === 'undefined') return [];
+    // 過濾掉 BOSS / 怪物,只保留玩家可用英雄
+    return Object.keys(HERO_DB).filter(name => {
+      const h = HERO_DB[name];
+      if(!h || h.isBoss || h.isWorldBoss) return false;
+      // 簡單規則:HP < 1000 視為玩家英雄
+      if(h.hp >= 1000) return false;
+      return true;
+    });
+  }
+
+  // === 入口操作 ===
+  window._wbUiCreateRoom = async function(){
+    const roomId = await window._wbNet.createRoom({ bossId: 'yushan_fire_dragon' });
+    if(roomId){
+      _wbCloseEntry();
+      _wbOpenLobby();
+    }
+  };
+  window._wbUiJoinRoom = async function(){
+    const code = (document.getElementById('wb-code-input').value || '').toUpperCase().trim();
+    if(code.length !== 6){ alert('請輸入 6 碼房號'); return; }
+    const ok = await window._wbNet.joinRoom(code);
+    if(ok){
+      _wbCloseEntry();
+      _wbOpenLobby();
+    }
+  };
+  function _wbCloseEntry(){
+    const ov = document.getElementById('wb-entry-overlay');
+    if(ov) ov.style.display = 'none';
+  }
+  function _wbOpenLobby(){
+    const ov = document.getElementById('wb-lobby-overlay');
+    if(ov) ov.style.display = 'block';
+    _wbRenderHeroGrid();
+    _wbRenderElementButtons();
+  }
+  window._wbUiCopyCode = function(){
+    const code = document.getElementById('wb-room-code-val').textContent;
+    if(navigator.clipboard) navigator.clipboard.writeText(code);
+    alert('已複製房號:' + code);
+  };
+  window._wbUiLeaveRoom = async function(){
+    if(!confirm('確定要離開房間嗎?')) return;
+    await window._wbNet.leaveRoom();
+    document.getElementById('wb-lobby-overlay').style.display = 'none';
+    document.getElementById('wb-emoji-bar-real').style.display = 'none';
+  };
+
+  // === 渲染英雄選擇格 ===
+  function _wbRenderHeroGrid(){
+    const grid = document.getElementById('wb-hero-grid');
+    if(!grid) return;
+    const heroes = _wbGetAvailableHeroes();
+    grid.innerHTML = heroes.map(name => {
+      const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[name]) || '⚔';
+      return `<div class="wb-hero-card" data-hero="${name}" onclick="_wbUiPickHero('${name.replace(/'/g,"\\'")}')">
+        <span class="em">${av}</span>${name.length > 4 ? name.substring(0,4) : name}
+      </div>`;
+    }).join('');
+  }
+  function _wbRenderElementButtons(){
+    const elements = [
+      { id:'fire',  ic:'🔥', name:'火' },
+      { id:'water', ic:'💧', name:'水' },
+      { id:'earth', ic:'🌍', name:'土' },
+      { id:'wind',  ic:'🌪', name:'風' },
+      { id:'light', ic:'☀',  name:'光' },
+      { id:'dark',  ic:'⚫', name:'暗' },
+    ];
+    const r1 = document.getElementById('wb-element-row-1');
+    const r2 = document.getElementById('wb-element-row-2');
+    if(!r1 || !r2) return;
+    r1.innerHTML = elements.slice(0,4).map(e =>
+      `<button class="wb-element-btn" data-elem="${e.id}" onclick="_wbUiPickElement('${e.id}')">
+        <span class="em-ico">${e.ic}</span>${e.name}
+      </button>`).join('');
+    r2.innerHTML = elements.slice(4).map(e =>
+      `<button class="wb-element-btn" data-elem="${e.id}" onclick="_wbUiPickElement('${e.id}')">
+        <span class="em-ico">${e.ic}</span>${e.name}
+      </button>`).join('');
+  }
+  window._wbUiPickHero = async function(heroName){
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.find(p => p.uid === window._gUserId);
+    const elem = me?.element || null;
+    await window._wbNet.setMyHero(heroName, elem);
+  };
+  window._wbUiPickElement = async function(elemId){
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.find(p => p.uid === window._gUserId);
+    if(!me || !me.heroName){ alert('請先選一隻英雄'); return; }
+    await window._wbNet.setMyHero(me.heroName, elemId);
+  };
+  window._wbUiToggleReady = async function(){
+    await window._wbNet.toggleReady();
+  };
+
+  // === 渲染玩家槽位 ===
+  function _wbRenderPlayerSlots(players){
+    const grid = document.getElementById('wb-player-slots-grid');
+    if(!grid) return;
+    let html = '';
+    for(let i = 0; i < 4; i++){
+      const p = players[i];
+      if(p){
+        const isMe = (p.uid === window._gUserId);
+        const isHost = (window._wbNet.getSnapshot()?.meta?.hostUid === p.uid);
+        const cls = 'wb-player-slot filled' + (p.ready ? ' ready' : '') + (isMe ? ' me' : '');
+        const av = p.heroName ? ((typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[p.heroName]) || '⚔') : '?';
+        const elemMap = { fire:'🔥火', water:'💧水', earth:'🌍土', wind:'🌪風', light:'☀光', dark:'⚫暗' };
+        const elemDisp = elemMap[p.element] || '— 未選元素 —';
+        html += `<div class="${cls}">
+          <div class="wb-slot-num">槽位 ${i+1}</div>
+          <div class="wb-slot-name">${p.name}
+            ${isHost ? '<span class="wb-host-badge">房主</span>' : ''}
+            ${isMe ? '<span class="wb-me-badge">你</span>' : ''}
+          </div>
+          <div class="wb-slot-portrait">${av}</div>
+          <div class="wb-slot-hero-name">${p.heroName || '— 選角中 —'}</div>
+          <div class="wb-slot-element">${elemDisp}</div>
+          <div class="wb-ready-status ${p.ready ? 'ready' : 'waiting'}">${p.ready ? '✅ 已準備' : '⏳ 選角中'}</div>
+        </div>`;
+      }else{
+        html += `<div class="wb-player-slot">
+          <div class="wb-slot-num">槽位 ${i+1}</div>
+          <div class="wb-slot-portrait empty">+</div>
+          <div style="font-size:11px;color:#aaa;margin-top:auto;line-height:1.4;text-align:center;">
+            空位<br>(分享房號邀請,<br>或開戰時 AI 接管)
+          </div>
+        </div>`;
+      }
+    }
+    grid.innerHTML = html;
+  }
+
+  function _wbRefreshPickStatus(players){
+    const me = players.find(p => p.uid === window._gUserId);
+    if(!me) return;
+    // 高亮我選的英雄
+    document.querySelectorAll('#wb-hero-grid .wb-hero-card').forEach(c => {
+      const h = c.dataset.hero;
+      c.classList.remove('picked','taken');
+      if(me.heroName === h) c.classList.add('picked');
+      else if(players.find(p => p.uid !== me.uid && p.heroName === h)) c.classList.add('taken');
+    });
+    // 高亮我選的元素
+    document.querySelectorAll('.wb-element-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.elem === me.element);
+    });
+    // 準備按鈕狀態
+    const rb = document.getElementById('wb-ready-btn');
+    if(rb){
+      rb.textContent = me.ready ? '⏸ 取消準備' : '⏳ 我準備好了';
+      rb.classList.toggle('cancel', me.ready);
+    }
+    // 開戰按鈕(只有房主看得到 + 至少 2 人 + 全員 ready)
+    const sb = document.getElementById('wb-start-btn');
+    if(sb){
+      const isHost = window._wbNet.isHost();
+      sb.style.display = isHost ? '' : 'none';
+      const readyCount = players.filter(p => p.ready).length;
+      const canStart = readyCount >= 1 && readyCount === players.length && readyCount >= 1;
+      sb.disabled = !canStart;
+      sb.textContent = canStart ? `⚔ 開戰! (${players.length} 人)` : `⏳ 等候準備 ${readyCount}/${players.length}`;
+    }
+  }
+
+  // === 開戰 ===
+  window._wbUiStartBattle = async function(){
+    const snap = window._wbNet.getSnapshot();
+    const players = snap.players || [];
+    if(players.length < 1){ alert('至少要 1 人'); return; }
+
+    // 建立 G.p1 (4 個玩家槽) + G.p2 (玉山火龍王)
+    // 檢查戰鬥引擎依賴(world-boss 用自己的迷你引擎,只需要 newHero 來建英雄物件)
+    if(typeof newHero !== 'function'){
+      alert('戰鬥引擎未就緒 — newHero 函式找不到,請確認主程式 index.html 已完整載入'); return;
+    }
+
+    // 初始化 4 槽英雄陣容(沒人的槽位填 AI 預設)
+    const p1 = [];
+    for(let i = 0; i < 4; i++){
+      const p = players[i];
+      const heroName = p?.heroName || '劍士';  // AI 預設
+      const h = newHero(heroName, 'p1', i);
+      // 給滿能量讓玩家可以馬上用技能
+      h.burst = 0; h.burstMax = h.burstMax || 10;
+      p1.push(h);
+    }
+    // BOSS:玉山火龍王
+    const boss = newHero('玉山火龍王', 'p2', 0);
+    const p2 = [boss, null, null, null];
+
+    // 計算行動順序(依速度)
+    const all = [];
+    p1.forEach((h, i) => { if(h) all.push({ side:'p1', pos:i, spd: h.spd || 0 }); });
+    if(boss) all.push({ side:'p2', pos:0, spd: boss.spd || 0 });
+    all.sort((a, b) => b.spd - a.spd);
+
+    // 把這個戰鬥狀態存到全域(本場主 G,房主才用)
+    window._wbHostG = { p1: p1, p2: p2, turn: 1, turnOrder: all, currentActorIdx: 0 };
+    window._wbInWorldBossMode = true;
+
+    await window._wbNet.startBattle({
+      p1: p1, p2: p2,
+      turnOrder: all,
+      currentActorIdx: 0
+    });
+
+    // 如果第一個是 BOSS,馬上代打
+    if(all[0] && all[0].side === 'p2'){
+      setTimeout(() => _wbHostExecuteBossTurn(all[0].pos), 800);
+    }
+  };
+
+  // === 房主戰鬥執行器 ===
+  window._wbHostExecuteAction = function(actorPos, action){
+    if(!window._wbHostG) return;
+    const G = window._wbHostG;
+    const actor = G.p1[actorPos];
+    if(!actor || actor.curHp <= 0){
+      console.warn('[WB-Host] 角色不存在或已倒下');
+      _wbHostAdvanceTurn();
+      return;
+    }
+    const boss = G.p2[0];
+    if(!boss) return;
+
+    const oldBossHp = boss.curHp;
+    const oldActorHp = actor.curHp;
+    let logEntry = '';
+
+    // 簡化戰鬥邏輯:
+    // - atk: 普攻,造成 actor.atk * 100% 傷害
+    // - s1: 技能 1,造成 actor.sp * 90% 傷害 (BOSS 全體 → 對 BOSS 直接 1.5x)
+    // - s2: 技能 2,造成 actor.atk * 110% + 50% 機率減速
+    // - burst: 滿能量時用,造成 3x 傷害
+    // - skip: 跳過,自動 +3 burst
+    let dmg = 0;
+    if(action.type === 'atk'){
+      dmg = Math.floor(actor.atk * (1 + Math.random()*0.2));
+      logEntry = `⚔ ${actor.name} 普攻造成 ${dmg} 傷害`;
+      actor.burst = Math.min(actor.burstMax, (actor.burst||0) + 2);
+    }else if(action.type === 's1'){
+      dmg = Math.floor(actor.sp * 1.5);
+      logEntry = `✨ ${actor.name} 使用技能造成 ${dmg} 傷害`;
+      actor.burst = Math.min(actor.burstMax, (actor.burst||0) + 3);
+    }else if(action.type === 's2'){
+      dmg = Math.floor(actor.atk * 1.8);
+      logEntry = `🌟 ${actor.name} 強力一擊造成 ${dmg} 傷害`;
+      actor.burst = Math.min(actor.burstMax, (actor.burst||0) + 3);
+    }else if(action.type === 'burst'){
+      if((actor.burst||0) >= actor.burstMax){
+        dmg = Math.floor(actor.atk * 3.5);
+        logEntry = `💥 ${actor.name} 極限爆發!造成 ${dmg} 巨大傷害`;
+        actor.burst = 0;
+      }else{
+        logEntry = `⚠ ${actor.name} 能量不足,改為普攻`;
+        dmg = Math.floor(actor.atk * (1 + Math.random()*0.2));
+        actor.burst = Math.min(actor.burstMax, (actor.burst||0) + 2);
+      }
+    }else if(action.type === 'skip'){
+      logEntry = `⏭ ${actor.name} 跳過行動`;
+      actor.burst = Math.min(actor.burstMax, (actor.burst||0) + 3);
+    }
+
+    // 套用傷害到 BOSS
+    if(dmg > 0){
+      // BOSS 天賦:單次傷害不超過最大 HP 4%
+      const cap = Math.floor(boss.hp * 0.04);
+      const finalDmg = Math.min(dmg, cap);
+      if(finalDmg < dmg) logEntry += `(炎之意志吸收,實際 ${finalDmg})`;
+      boss.curHp = Math.max(0, boss.curHp - finalDmg);
+
+      // 記錄貢獻
+      const players = window._wbNet.getSnapshot()?.players || [];
+      const player = players.find(p => p.slotIdx === actorPos);
+      if(player){
+        window._wbNet.addContribution(player.uid, 'dmgDealt', finalDmg);
+      }
+    }
+
+    // 廣播狀態
+    _wbHostBroadcast([logEntry]);
+
+    // 檢查結束
+    if(boss.curHp <= 0){
+      _wbHostFinishBattle('p1');
+      return;
+    }
+
+    // 下個角色
+    _wbHostAdvanceTurn();
+  };
+
+  function _wbHostExecuteBossTurn(bossPos){
+    if(!window._wbHostG) return;
+    const G = window._wbHostG;
+    const boss = G.p2[bossPos];
+    if(!boss || boss.curHp <= 0){ _wbHostAdvanceTurn(); return; }
+
+    // BOSS AI:隨機選技能
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    if(alive.length === 0){ _wbHostFinishBattle('p2'); return; }
+
+    const r = Math.random();
+    let logEntry = '';
+    let dmgPerTarget = 0;
+    let targets = [];
+
+    if(r < 0.35 && boss.curHp < boss.hp * 0.5){
+      // 第二階段:天崩之炎(當前 HP 30% 傷害)
+      targets = alive;
+      logEntry = `⚡ 玉山火龍王發動「天崩之炎」!`;
+      targets.forEach(t => {
+        const d = Math.floor(t.curHp * 0.3);
+        t.curHp = Math.max(0, t.curHp - d);
+        logEntry += ` ${t.name}-${d}`;
+      });
+    }else if(r < 0.5){
+      // 業火灼燒:全體
+      targets = alive;
+      dmgPerTarget = Math.floor(boss.sp * 0.9);
+      logEntry = `🔥 玉山火龍王「業火灼燒」全體 ${dmgPerTarget} 傷害`;
+      targets.forEach(t => { t.curHp = Math.max(0, t.curHp - dmgPerTarget); });
+    }else if(r < 0.7){
+      // 龍吼震懾:全體
+      targets = alive;
+      dmgPerTarget = Math.floor(boss.atk * 1.1);
+      logEntry = `🐉 玉山火龍王「龍吼震懾」全體 ${dmgPerTarget} 傷害`;
+      targets.forEach(t => { t.curHp = Math.max(0, t.curHp - dmgPerTarget); });
+    }else{
+      // 普攻單體
+      const tgt = alive[Math.floor(Math.random() * alive.length)];
+      const d = Math.floor(boss.atk * (1 + Math.random()*0.3));
+      tgt.curHp = Math.max(0, tgt.curHp - d);
+      targets = [tgt];
+      logEntry = `🦷 玉山火龍王炎爪攻擊 ${tgt.name} 造成 ${d} 傷害`;
+    }
+
+    _wbHostBroadcast([logEntry]);
+
+    // 檢查全員是否陣亡
+    const stillAlive = G.p1.filter(h => h && h.curHp > 0);
+    if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
+
+    _wbHostAdvanceTurn();
+  }
+
+  function _wbHostAdvanceTurn(){
+    const G = window._wbHostG;
+    if(!G) return;
+    const order = G.turnOrder;
+    let next = (G.currentActorIdx + 1) % order.length;
+    let safety = 0;
+    while(safety++ < 20){
+      const sl = order[next];
+      const arr = sl.side === 'p1' ? G.p1 : G.p2;
+      if(arr[sl.pos] && arr[sl.pos].curHp > 0) break;
+      next = (next + 1) % order.length;
+    }
+    // 一輪完 → turn +1
+    if(next <= G.currentActorIdx) G.turn += 1;
+    G.currentActorIdx = next;
+
+    _wbHostBroadcast([]);
+
+    // 若下一個是 BOSS,自動代打
+    const cur = order[next];
+    if(cur && cur.side === 'p2'){
+      setTimeout(() => _wbHostExecuteBossTurn(cur.pos), 1200);
+    }
+  }
+
+  function _wbHostBroadcast(logEntries){
+    const G = window._wbHostG;
+    if(!G) return;
+    window._wbNet.hostPushBattleState({
+      p1: G.p1, p2: G.p2,
+      turn: G.turn,
+      currentActorIdx: G.currentActorIdx,
+      turnOrder: G.turnOrder,
+      logEntries: logEntries
+    });
+  }
+
+  function _wbHostFinishBattle(winner){
+    const G = window._wbHostG;
+    if(!G) return;
+    window._wbNet.hostPushBattleState({
+      p1: G.p1, p2: G.p2,
+      turn: G.turn,
+      currentActorIdx: G.currentActorIdx,
+      turnOrder: G.turnOrder,
+      logEntries: [winner === 'p1' ? '🏆 玉山火龍王被擊敗!' : '💀 全員陣亡...'],
+      ended: true,
+      winner: winner,
+      endedReason: 'battle_complete'
+    });
+    window._wbHostG = null;
+    window._wbInWorldBossMode = false;
+  }
+
+  // === 事件回呼 ===
+  window._wbNet.on('onRoomUpdate', function(data){
+    if(!data || !data.players) return;
+    document.getElementById('wb-room-code-val').textContent = window._wbNet.getRoomId() || '------';
+    _wbRenderPlayerSlots(data.players);
+    const status = data.meta?.status || 'waiting';
+    document.getElementById('wb-room-status-text').textContent =
+      status === 'fighting' ? '⚔ 戰鬥中' : (status === 'waiting' || status === 'picking') ? '等候選角' : '已結束';
+    if(status === 'fighting'){
+      document.getElementById('wb-picking-area').style.display = 'none';
+      document.getElementById('wb-battle-area').classList.add('show');
+      document.getElementById('wb-emoji-bar-real').style.display = 'flex';
+    }else{
+      document.getElementById('wb-picking-area').style.display = 'grid';
+      document.getElementById('wb-battle-area').classList.remove('show');
+      document.getElementById('wb-emoji-bar-real').style.display = 'none';
+      _wbRefreshPickStatus(data.players);
+    }
+  });
+
+  window._wbNet.on('onBattleUpdate', function(battle){
+    _wbRenderBattleScreen(battle);
+  });
+
+  function _wbRenderBattleScreen(battle){
+    if(!battle) return;
+    const boss = battle.p2[0];
+    if(boss){
+      const pct = boss.hp ? (boss.curHp / boss.hp * 100) : 0;
+      document.getElementById('wb-battle-boss-hp-fill').style.width = pct + '%';
+      document.getElementById('wb-battle-boss-hp-text').textContent =
+        `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()}`;
+    }
+    document.getElementById('wb-battle-turn-info').textContent =
+      `回合 ${battle.turn} ✦ ${battle.p2[0] && battle.p2[0].curHp < battle.p2[0].hp*0.5 ? '⚠ 第二階段' : '第一階段'}`;
+
+    // 4 個英雄
+    const players = window._wbNet.getSnapshot()?.players || [];
+    const curOrder = battle.turnOrder[battle.currentActorIdx];
+    const heroRow = document.getElementById('wb-battle-heroes-row');
+    heroRow.innerHTML = battle.p1.map((h, i) => {
+      if(!h) return '<div></div>';
+      const p = players[i];
+      const isMe = (p && p.uid === window._gUserId);
+      const acting = curOrder && curOrder.side === 'p1' && curOrder.pos === i;
+      const dead = h.curHp <= 0;
+      const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[h.name]) || '⚔';
+      const cls = 'wb-hero-battle-card' + (acting ? ' acting' : '') + (dead ? ' dead' : '');
+      const hpPct = h.hp ? (h.curHp / h.hp * 100) : 0;
+      return `<div class="${cls}">
+        <div class="wb-hbc-name">${p ? p.name : 'AI'} ${isMe ? '★' : ''}</div>
+        <div class="wb-hbc-portrait">${av}</div>
+        <div class="wb-hbc-hero-name">${h.name}</div>
+        <div class="wb-hp-bar"><div class="wb-hp-fill ${hpPct<30?'low':''}" style="width:${hpPct}%;"></div></div>
+        <div class="wb-hp-text">HP ${h.curHp}/${h.hp}</div>
+        <div class="wb-hp-text" style="color:#88ddff;">⚡ ${h.burst||0}/${h.burstMax||10}</div>
+      </div>`;
+    }).join('');
+
+    // 行動區 / 等候區
+    const actionArea = document.getElementById('wb-battle-action-area');
+    const myTurn = curOrder && curOrder.side === 'p1' && players[curOrder.pos]?.uid === window._gUserId;
+    const isBossTurn = curOrder && curOrder.side === 'p2';
+    if(myTurn){
+      const myHero = battle.p1[curOrder.pos];
+      const burstReady = myHero && (myHero.burst||0) >= (myHero.burstMax||10);
+      actionArea.innerHTML = `
+        <div class="wb-action-panel">
+          <button class="wb-action-btn" onclick="_wbUiSendAction('atk')"><span class="ic">⚔</span>普攻</button>
+          <button class="wb-action-btn" onclick="_wbUiSendAction('s1')"><span class="ic">✨</span>技能 1</button>
+          <button class="wb-action-btn" onclick="_wbUiSendAction('s2')"><span class="ic">🌟</span>技能 2</button>
+          <button class="wb-action-btn" onclick="_wbUiSendAction('burst')" ${burstReady?'':'disabled'}>
+            <span class="ic">💥</span>爆發 ${burstReady?'':'(未滿)'}</button>
+          <button class="wb-action-btn" onclick="_wbUiSendAction('skip')"><span class="ic">⏭</span>跳過</button>
+        </div>`;
+    }else{
+      const actorName = isBossTurn ? '🐉 玉山火龍王' :
+        (players[curOrder?.pos]?.name || '未知玩家') + ' 的 ' + (battle.p1[curOrder?.pos]?.name || '英雄');
+      actionArea.innerHTML = `
+        <div class="wb-wait-banner">
+          <div class="wb-spinner"></div>
+          <div style="flex:1;">⏳ 輪到 <b>${actorName}</b> 行動...</div>
+        </div>`;
+    }
+
+    // 戰鬥 log
+    const logEl = document.getElementById('wb-battle-log');
+    if(battle.log && battle.log.length){
+      logEl.innerHTML = battle.log.slice(-8).map(l => `<div>${l}</div>`).join('');
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+  }
+
+  window._wbUiSendAction = async function(type){
+    await window._wbNet.sendAction({ type: type });
+  };
+
+  window._wbNet.on('onChatMessage', function(msg){
+    const popup = document.createElement('div');
+    popup.className = 'wb-emoji-popup';
+    popup.textContent = msg.name + ': ' + msg.text;
+    popup.style.left = (10 + Math.random()*70) + '%';
+    popup.style.bottom = (160 + Math.random()*100) + 'px';
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 2400);
+  });
+
+  window._wbNet.on('onError', function(err){
+    if(err && err.msg) alert('⚠ ' + err.msg);
+  });
+
+  window._wbNet.on('onRoomClosed', function(info){
+    document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    if(info.reason === 'battle_complete' || info.winner){
+      _wbShowResult(info);
+    }else{
+      // 房主中離等其他情況
+      document.getElementById('wb-lobby-overlay').style.display = 'none';
+      if(info.reason !== 'kicked_or_left' && info.reason !== 'doc_deleted'){
+        alert('房間已關閉: ' + (info.reason || '未知'));
+      }
+    }
+  });
+
+  function _wbShowResult(info){
+    document.getElementById('wb-lobby-overlay').style.display = 'none';
+    const ov = document.getElementById('wb-result-overlay');
+    if(!ov) return;
+    ov.style.display = 'flex';
+    const winner = info.winner;
+    const isWin = (winner === 'p1');
+    const titleEl = document.getElementById('wb-result-title');
+    titleEl.textContent = isWin ? '✨ 討伐成功! ✨' : '💀 全員陣亡';
+    titleEl.style.color = isWin ? '#ffe066' : '#ff6644';
+    const elapsed = info.elapsed || 0;
+    const m = Math.floor(elapsed/60000);
+    const s = Math.floor((elapsed%60000)/1000);
+    document.getElementById('wb-result-subtitle').textContent =
+      `耗時 ${m}分${s}秒 ✦ 共 ${info.finalBattle?.turn || 0} 回合`;
+
+    // 貢獻
+    const contributions = info.contributions || {};
+    const players = window._wbNet.getSnapshot()?.players || [];
+    const contribHtml = players.map(p => {
+      const c = contributions[p.uid] || {};
+      const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[p.heroName]) || '⚔';
+      return `<div style="display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;
+                          padding:10px 14px;border-radius:8px;background:rgba(0,0,0,0.4);
+                          border:1px solid rgba(212,168,67,0.3);margin-bottom:8px;">
+        <div style="font-size:28px;">${av}</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#ffe066;">${p.name}</div>
+          <div style="font-size:11px;color:#aaa;">${p.heroName} ✦ ${p.element || '-'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px;color:#88ddff;">⚔ ${(c.dmgDealt||0).toLocaleString()}</div>
+          <div style="font-size:10px;color:#aaa;">傷害輸出</div>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('wb-result-contributions').innerHTML = contribHtml;
+
+    // 獎勵(簡單版:給知識幣)
+    const myContribution = contributions[window._gUserId] || {};
+    let coinsEarned = 0;
+    let rewards = [];
+    if(isWin){
+      coinsEarned = 3000;
+      rewards.push(`✅ 擊敗玉山火龍王: +3000 知識幣`);
+      const dmgBonus = Math.min(2000, Math.floor((myContribution.dmgDealt||0) / 10));
+      if(dmgBonus > 0){
+        coinsEarned += dmgBonus;
+        rewards.push(`⚔ 傷害貢獻: +${dmgBonus} 知識幣`);
+      }
+    }else{
+      coinsEarned = 500;
+      rewards.push(`💔 雖敗猶榮: +500 知識幣`);
+    }
+    // 實際發給玩家
+    if(typeof _knowledgeCoins !== 'undefined'){
+      _knowledgeCoins += coinsEarned;
+      if(typeof saveGameState === 'function') try{ saveGameState(); }catch(_){}
+      if(typeof renderTopBar === 'function') try{ renderTopBar(); }catch(_){}
+    }
+    document.getElementById('wb-result-reward-list').innerHTML = rewards.join('<br>');
+
+    // 寫獎章統計
+    if(typeof _medalStats !== 'undefined'){
+      _medalStats.wbClears = (_medalStats.wbClears || 0) + 1;
+      if(isWin){
+        _medalStats.wbWins = (_medalStats.wbWins || 0) + 1;
+        _medalStats.wbBossKills = _medalStats.wbBossKills || {};
+        _medalStats.wbBossKills['yushan_fire_dragon'] = (_medalStats.wbBossKills['yushan_fire_dragon'] || 0) + 1;
+      }
+      // 嘗試解鎖獎章
+      try{
+        if(typeof _unlockMedal === 'function'){
+          if(isWin){
+            _unlockMedal('wb_first_clear');
+            _unlockMedal('wb_yushan_kill');
+            if(elapsed < 180000) _unlockMedal('wb_yushan_speedrun');
+          }
+        }
+      }catch(_){}
+    }
+  }
+
+  window._wbUiResultClose = function(){
+    document.getElementById('wb-result-overlay').style.display = 'none';
+    if(typeof location !== 'undefined') location.reload();  // 簡單重置回首頁
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // 單人離線測試模式 — 不連 Firebase 直接打 BOSS
+  // ────────────────────────────────────────────────────────────────────
+  // 用途:確認戰鬥引擎能跑、技能能用、結算能跳。完全不需要房間/網路。
+  // 流程:
+  //   1. 跳過大廳/選角,直接給玩家「劍士」當主角,3 個 AI 替補
+  //   2. 進入戰鬥畫面,玩家可以普攻/技能/爆發
+  //   3. 戰鬥結束跳結算
+  // ════════════════════════════════════════════════════════════════════
+  window._wbUiSoloTest = function(){
+    if(typeof newHero !== 'function'){
+      alert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始測試');
+      return;
+    }
+    if(typeof HERO_DB === 'undefined' || !HERO_DB['玉山火龍王']){
+      alert('⚠ HERO_DB 中找不到玉山火龍王 — world-boss.js 可能還沒掛載資料\n請等 1 秒後再試,或重新整理頁面');
+      return;
+    }
+
+    // 建立 4 個玩家槽(全部 AI),BOSS 是玉山火龍王
+    const heroPool = ['劍士','祭司','聖騎士','火法師'];  // 簡單組合:輸出+補+坦+輸出
+    const p1 = [];
+    for(let i = 0; i < 4; i++){
+      const h = newHero(heroPool[i], 'p1', i);
+      h.burst = 0;
+      h.burstMax = h.burstMax || 10;
+      p1.push(h);
+    }
+    const boss = newHero('玉山火龍王', 'p2', 0);
+    const p2 = [boss, null, null, null];
+
+    const all = [];
+    p1.forEach((h, i) => { if(h) all.push({ side:'p1', pos:i, spd: h.spd || 0 }); });
+    all.push({ side:'p2', pos:0, spd: boss.spd || 0 });
+    all.sort((a, b) => b.spd - a.spd);
+
+    window._wbHostG = { p1: p1, p2: p2, turn: 1, turnOrder: all, currentActorIdx: 0 };
+    window._wbInWorldBossMode = true;
+
+    // 模擬 _wbNet snapshot(讓 UI 渲染能讀到「玩家」資料)
+    const fakePlayers = heroPool.map((name, i) => ({
+      uid: i === 0 ? (window._gUserId || 'solo_user') : 'ai_' + i,
+      name: i === 0 ? (window._userName || '你') : 'AI 替補',
+      slotIdx: i, heroName: name, element: 'fire', ready: true
+    }));
+
+    // 偽造 _wbNet (只 mock 必要的方法,讓 UI 能讀)
+    const realWbNet = window._wbNet;
+    window._wbNet = {
+      getSnapshot: () => ({ players: fakePlayers, meta: { hostUid: fakePlayers[0].uid, status: 'fighting' } }),
+      getRoomId:   () => 'SOLO',
+      isHost:      () => true,
+      getMySlot:   () => 0,
+      hostPushBattleState: function(newState){
+        // 直接觸發 onBattleUpdate
+        if(newState.ended){
+          this._listeners.onRoomClosed && this._listeners.onRoomClosed({
+            reason: 'battle_complete',
+            winner: newState.winner,
+            finalBattle: { p1: newState.p1, p2: newState.p2, turn: newState.turn,
+                           currentActorIdx: newState.currentActorIdx, turnOrder: newState.turnOrder },
+            elapsed: Date.now() - window._wbSoloStartTs,
+            contributions: window._wbSoloContrib || {},
+          });
+        }else{
+          this._listeners.onBattleUpdate && this._listeners.onBattleUpdate({
+            p1: newState.p1, p2: newState.p2, turn: newState.turn,
+            currentActorIdx: newState.currentActorIdx, turnOrder: newState.turnOrder,
+            logEntries: newState.logEntries
+          });
+        }
+      },
+      sendAction: async function(action){
+        // 房主自己 → 直接呼叫本地
+        if(typeof window._wbHostExecuteAction === 'function'){
+          window._wbHostExecuteAction(0, action);
+        }
+      },
+      addContribution: function(uid, key, val){
+        window._wbSoloContrib = window._wbSoloContrib || {};
+        window._wbSoloContrib[uid] = window._wbSoloContrib[uid] || {};
+        window._wbSoloContrib[uid][key] = (window._wbSoloContrib[uid][key] || 0) + val;
+      },
+      _listeners: {},
+      on: function(e, cb){ this._listeners[e] = cb; },
+      off: function(e){ this._listeners[e] = null; },
+      sendQuickEmoji: () => {},
+      QUICK_EMOJI: realWbNet ? realWbNet.QUICK_EMOJI : {},
+      leaveRoom: async function(){
+        // 還原 _wbNet
+        window._wbNet = realWbNet;
+        window._wbHostG = null;
+        window._wbInWorldBossMode = false;
+        document.getElementById('wb-lobby-overlay').style.display = 'none';
+      },
+    };
+
+    // 觸發 UI 顯示
+    _wbCloseEntry();
+    _wbOpenLobby();
+    // 直接跳到戰鬥畫面
+    document.getElementById('wb-picking-area').style.display = 'none';
+    document.getElementById('wb-battle-area').classList.add('show');
+    document.getElementById('wb-emoji-bar-real').style.display = 'flex';
+    document.getElementById('wb-room-status-text').textContent = '🧪 單人測試';
+
+    // 渲染初始畫面
+    window._wbSoloStartTs = Date.now();
+    window._wbSoloContrib = {};
+    _wbRenderBattleScreen({
+      p1: p1, p2: p2, turn: 1, currentActorIdx: 0, turnOrder: all, logEntries: []
+    });
+    _wbRenderPlayerSlots(fakePlayers);
+
+    // 如果第一個是 BOSS,代打;否則等玩家操作
+    if(all[0].side === 'p2'){
+      setTimeout(() => _wbHostExecuteBossTurn(0), 1000);
+    }else if(all[0].side === 'p1' && all[0].pos !== 0){
+      // AI 隊友自動行動(輪到我以外的玩家)
+      _wbSoloAutoAct();
+    }
+    console.log('[WB-Solo] ✅ 單人測試啟動,你的角色是「劍士」(0 號槽)');
+  };
+
+  // AI 替補自動行動 (每 1.2s 自動進行)
+  function _wbSoloAutoAct(){
+    if(!window._wbInWorldBossMode || !window._wbHostG) return;
+    const G = window._wbHostG;
+    const cur = G.turnOrder[G.currentActorIdx];
+    if(!cur) return;
+    if(cur.side === 'p1' && cur.pos !== 0){
+      // AI 行動 — 隨機選技能/普攻
+      const actions = ['atk', 'atk', 's1', 's2'];
+      const action = { type: actions[Math.floor(Math.random()*actions.length)] };
+      setTimeout(() => {
+        if(typeof window._wbHostExecuteAction === 'function'){
+          window._wbHostExecuteAction(cur.pos, action);
+          // 鏈式繼續判斷下一個
+          setTimeout(_wbSoloAutoAct, 1200);
+        }
+      }, 800);
+    }
+  }
+  // 玩家送出 action 後也要繼續推進 AI 行動
+  // 攔截 sendAction (在迷你 _wbNet 內已直接呼叫,我們在 _wbHostAdvanceTurn 後加一個 hook)
+  const _origAdvance = window._wbHostAdvanceTurn;
+  // (注意:_wbHostAdvanceTurn 是 function _wbHostAdvanceTurn() 不會掛 window,要靠 IIFE 內呼叫)
+  // 改用 setTimeout 輪詢方式檢查
+  setInterval(() => {
+    if(!window._wbInWorldBossMode || !window._wbHostG) return;
+    const G = window._wbHostG;
+    const cur = G.turnOrder[G.currentActorIdx];
+    if(cur && cur.side === 'p1' && cur.pos !== 0){
+      // 輪到 AI 但沒在執行中,啟動
+      if(!window._wbSoloAutoTimer){
+        window._wbSoloAutoTimer = true;
+        setTimeout(() => {
+          window._wbSoloAutoTimer = false;
+          _wbSoloAutoAct();
+        }, 1500);
+      }
+    }
+  }, 500);
+
+  console.log('[WB-UI] ✅ UI 連動層已初始化');
+})();
+</script>
+
