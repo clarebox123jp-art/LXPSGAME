@@ -7318,7 +7318,7 @@ body.art-premium #summon-overlay {
 
 </style>
 <script src="adv_quiz_db.js?v=20260514c"></script>
-<script src="hero_db.js?v=20260514c"></script>
+<script src="hero_db.js?v=20260515c"></script>
 </head>
 <body>
 <!-- ★ v1.0.20260507.5550 — 啟動讀取條:覆蓋全畫面,顯示資源預載進度
@@ -7366,6 +7366,8 @@ body.art-premium #summon-overlay {
 <audio id="sfx-paralysis-thunder" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BA%BB%E7%97%BA%E8%90%BD%E9%9B%B7%E9%9F%B3%E6%95%88.m4a"></audio>
 <!-- ★ v1.0.20260501.5420 — 學生設計英雄系列(窮奇)專屬爆發音效 -->
 <audio id="sfx-qiongqi-burst" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.mp3"></audio>
+<!-- ★ v1.0.20260515.6890 — 學生設計英雄系列(水狐)專屬爆發音效 -->
+<audio id="sfx-waterfox-burst" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.mp3"></audio>
 <!-- ★ v1.0.20260424.0790 — 召喚系統 BGM/SFX -->
 <audio id="bgm-summon"        preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a" loop></audio>
 <audio id="sfx-summon-smoke"  preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
@@ -9221,7 +9223,7 @@ function _clearPendingTimers(reason){
   }
 }
 // ====== GLOBAL CONSTANTS (must be declared before any function that references them) ======
-const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm'];
+const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm','breakDef'];
 const GOOD_STATUS=[];
 
 // ====== AUDIO ENGINE ======
@@ -11206,7 +11208,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   // ★ v1.0.20260501.5010 — 28 個英雄圖一次性升級為 LXPSGAME repo 的 Q.png 新版圖檔
@@ -11313,6 +11315,13 @@ const HERO_IMGS = {
   // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
   //   地府酋長:5 年 4 班黃同學設計,2026 年。來自地府的獄卒首領,負責看管受刑的亡靈
   '地府酋長':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地府酋長.png'),
+  '救醫馬':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('救醫馬.png'),
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學「水狐」)
+  //   水狐:6 年 2 班林同學設計,2026 年。上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸
+  '水狐':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水狐.png'),
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  //   米鈴:6 年 5 班董同學設計,2026 年。胸前掛鈴鐺的貓女僕,溫柔守護隊友
+  '米鈴':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('女僕貓 米鈴.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -11541,6 +11550,22 @@ const HERO_PORTRAIT_LIBRARY = {
   //   地府酋長:5 年 4 班黃同學設計,2026 年
   '地府酋長': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地府酋長.png') },
+  ],
+  '救醫馬': [
+    { id:'pony_nurse_default', name:'救醫馬',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('救醫馬.png') }
+  ],
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(水狐)
+  //   水狐:6 年 2 班林同學設計,2026 年
+  '水狐': [
+    { id:'water_fox_default', name:'水狐',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水狐.png') }
+  ],
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(米鈴)
+  //   米鈴:6 年 5 班董同學設計,2026 年
+  '米鈴': [
+    { id:'maid_cat_default', name:'貓女僕米鈴',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('女僕貓 米鈴.png') }
   ],
 };
 
@@ -12407,6 +12432,7 @@ const STATUS_DESCS = {
   burstReflect: '反彈：造成傷害時100%反彈給自己',
   confused:     '疑惑：天賦暫時失效',
   dmgVuln:      '承傷+50%：受到的傷害增加50%',
+  breakDef:     '破防：受到的傷害+25%且該傷害暴擊率+50%',
   healReduced:  '治療減半：受到的治療效果減半',
   weakened:     '虛弱：攻擊和特技降低50%',
   traitSlow:    '緩速（特質）：速度-50%',
@@ -12890,6 +12916,32 @@ const BURST_UPGRADE_DEF = {
     [3,'特技 245% 全體 + 指定追加 130% + 禁動 1 回合'],
     [4,'特技 260% 全體 + 指定追加 140% + 禁動 2 回合(MAX)'],
   ] },
+  // ★ v1.0.20260515.6880 — 救醫馬爆發升級表(治療倍率/最大HP加成/狀態持續)
+  '救醫馬':{ rows: [
+    [0,'特技×200% 全隊治療(可復活)+全隊最大HP+10+免疫不利 2 回合'],
+    [1,'特技×220% 全隊治療(可復活)+全隊最大HP+15+免疫不利 2 回合'],
+    [2,'特技×240% 全隊治療(可復活)+全隊最大HP+20+免疫不利 2 回合'],
+    [3,'特技×260% 全隊治療(可復活)+全隊最大HP+25+免疫不利 2 回合'],
+    [4,'特技×280% 全隊治療(可復活)+全隊最大HP+30+免疫不利 3 回合(MAX)'],
+  ] },
+  // ★ v1.0.20260515.6890 — 水狐爆發升級表(全體傷害/全體治療/MAX 附加水之祝福)
+  '水狐':{ rows: [
+    [0,'特技×250% 全體水傷害(必中無視有利)+特技×100% 全隊治療(可復活,解不利)'],
+    [1,'特技×270% 全體水傷害+特技×110% 全隊治療(可復活,解不利)'],
+    [2,'特技×290% 全體水傷害+特技×120% 全隊治療(可復活,解不利)'],
+    [3,'特技×310% 全體水傷害+特技×130% 全隊治療(可復活,解不利)'],
+    [4,'特技×330% 全體水傷害+特技×150% 全隊治療+水之祝福 2 回合(水傷害+20%) (MAX)'],
+  ] },
+  // ★ v1.0.20260515.6900 — 米鈴爆發升級表(全體治療倍率/茶會反擊倍率/茶會持續)
+  //   爆發「夢幻的茶會」:特技 175% 全體治療 + 全隊「茶會」buff 2 回合
+  //   茶會 buff:友方即將被附加不利狀態時自動解除並由米鈴用特技 X% 反擊來源
+  '米鈴':{ rows: [
+    [0,'特技×175% 全隊治療+茶會 2 回合(受不利→解除並用特技 100% 反擊來源)'],
+    [1,'特技×190% 全隊治療+茶會 2 回合(反擊倍率 110%)'],
+    [2,'特技×205% 全隊治療+茶會 2 回合(反擊倍率 120%)'],
+    [3,'特技×220% 全隊治療+茶會 2 回合(反擊倍率 130%)'],
+    [4,'特技×240% 全隊治療+茶會 3 回合(反擊倍率 150%) (MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -12950,6 +13002,11 @@ const HERO_IMG_POS = {
   '紅色玩家':['150% auto','center 18%'],
   // ★ v1.0.20260514.6770 — 地府酋長:稍微放大露出酋長威嚴上半身
   '地府酋長':['140% auto','center 22%'],
+  '救醫馬':['140% auto','center 20%'],
+  // ★ v1.0.20260515.6890 — 水狐:神獸全身圖(狐頭+獨角+魚尾),頭頂獨角偏上,Y 略往下偏顯示頭部與身軀
+  '水狐':['140% auto','center 35%'],
+  // ★ v1.0.20260515.6900 — 米鈴:貓女僕全身,頭部+鈴鐺需在框內可見
+  '米鈴':['180% auto','center 25%'],
 };
 
 // ★ v5690 — 戰鬥卡片專屬圖片位置表
@@ -13048,6 +13105,11 @@ const HERO_THUMB_POS = {
   '紅色玩家':'center 30%',
   // ★ v1.0.20260514.6770 — 地府酋長:中央偏上,展現酋長威嚴頭部
   '地府酋長':'center 32%',
+  '救醫馬':'center 25%',
+  // ★ v1.0.20260515.6890 — 水狐:夢幻神獸全身(下半身魚尾),縮圖上移露出狐頭與獨角
+  '水狐':'center 30%',
+  // ★ v1.0.20260515.6900 — 米鈴:貓女僕,縮圖上移露出頭部+鈴鐺
+  '米鈴':'center 25%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -13336,6 +13398,33 @@ const HERO_BIO = {
     quote:'「亡魂啊——你的審判,由我宣告。」',
     designer:{ class:'5年4班', name:'黃同學', year:2026 }
   },
+  // ★ v1.0.20260515.6880 — 學生設計英雄系列(5 年 4 班吳同學)
+  //   救醫馬:純後援王,馬醫生帶醫藥箱穿梭戰場救夥伴
+  '救醫馬':{
+    role:'力行小學保健室助理護士,騎著醫療馬車穿梭戰場救人',
+    trait:'活潑開朗、溫暖體貼,戰場上永遠優先衝向傷得最重的夥伴',
+    hobby:'打電動、整理醫藥箱,把急救小知識編成口訣背給同學聽',
+    quote:'「馬醫生,救夥伴一生!」',
+    designer:{ class:'5年4班', name:'吳同學', year:2026 }
+  },
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班首位設計師 林同學)
+  //   水狐:夢幻水神獸,召喚水精靈與水龍接力作戰
+  '水狐':{
+    role:'上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸,海與淡水皆奉其為主',
+    trait:'高冷神秘,卻對受傷的小生命特別溫柔;不愛動手,只在水鏡中觀察,出手前已備好千軍',
+    hobby:'在月光下吹奏海螺呼喚水精靈,養著一窩剛孵化的小水龍,陪牠們練習吐水泡',
+    quote:'「來吧,我的孩子們——讓他們嚐嚐汪洋的滋味。」',
+    designer:{ class:'6年2班', name:'林同學', year:2026 }
+  },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班首位設計師 董同學)
+  //   米鈴:私人莊園的貓族女僕,以鈴鐺淨化隊友、召喚女僕同伴打掃戰場
+  '米鈴':{
+    role:'私人莊園裡的貓族女僕,胸口別著鈴鐺,輕步穿梭於戰場守護每一位夥伴',
+    trait:'溫柔細膩、心思體貼,看見夥伴受苦會立刻撲上去守護,把每件不愉快都化成微笑',
+    hobby:'照顧每一位夥伴、為大家煮熱湯、和女僕同伴們一起把戰場打掃得乾乾淨淨',
+    quote:'「喵～這點難題,米鈴一個眨眼就解決囉♪」',
+    designer:{ class:'6年5班', name:'董同學', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -13419,6 +13508,14 @@ const BURST_DB = {
   '紅色玩家':{n:'超頻爆發', d:'自身造成傷害提升至300%持續2回合,免疫所有傷害和不利狀態',fd:'鍵盤滴答狂響、紅色光暈衝破螢幕——「Overclock — Engaged!」自己造成的所有傷害提升至 300%(主要技能傷害、普攻、附加效果皆套用),持續 2 回合,期間同時免疫所有傷害和不利狀態。'},
   // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
   '地府酋長':{n:'刀山火海', d:'特技200%全體傷害,指定1名追加100%且強制禁動1回合',fd:'喚出地獄刀山火海席捲整個戰場!以特技的 200% 對全體對手造成傷害,並從中指定 1 名目標額外承受特技 100% 的追加傷害,該目標被強制「禁動」1 回合(無法行動)。'},
+  // ★ v1.0.20260515.6880 — 救醫馬爆發
+  '救醫馬':{n:'救救昏倒夥', d:'全隊治療(可復活)+最大HP+10+免疫不利(2回合)',fd:'將急救包傾倒全場——所有夥伴沐浴在溫暖醫療光中重新站起!用特技的 200% 治療全體友方(可復活),全隊獲得「最大 HP +10」 2 回合,並進入「免疫狀態」 2 回合,期間免疫所有不利狀態。'},
+  // ★ v1.0.20260515.6890 — 水狐爆發(6 年 2 班林同學設計)
+  '水狐':{n:'萬流歸宗·神龍降臨', d:'特技250%全體水傷害(必中無視有利)+特技100%全隊治療(可復活,解不利)',fd:'水狐振翅升空,以獨角刺破天幕引動萬流匯聚——召喚水龍王降臨!對敵方全體造成特技 250% 的水屬性傷害(必中、無視有利狀態),洪流順勢沖刷我方全體,解除全體不利狀態並依特技 100% 回復 HP(可復活)。'},
+  // ★ v1.0.20260515.6900 — 米鈴爆發(6 年 5 班董同學設計)
+  //   夢幻的茶會:特技 175% 全體治療 + 全隊獲得「茶會」buff 2 回合
+  //   茶會:友方即將受不利狀態時自動解除,並由米鈴用特技 100% 反擊來源者
+  '米鈴':{n:'夢幻的茶會', d:'特技175%全隊治療+全隊茶會2回合(受不利時自動解除並用特技100%反擊來源)',fd:'米鈴擺開銀色茶具、邀請夥伴們進入夢幻茶會——以特技的 175% 治療我方全體 HP(可復活)。同時我方全體獲得「茶會」狀態 2 回合,期間每當友方即將受到不利狀態時,自動立即解除該狀態,並由米鈴用特技的 100% 對來源對手反擊 1 次(必中、無視有利狀態、不會引發還手類天賦)。茶會狀態不會被消除或搶奪。'},
 
 };
 
@@ -13688,6 +13785,69 @@ function addStatus(h,t,dur=1){
       renderCard(h);
     }
   }
+
+  // ★ v1.0.20260515.6900 — 木靈使天賦「淨化」: 友方受不利狀態時60%機率解除並依特技50%恢復HP
+  //   觸發條件:
+  //     - h.curHp > 0(目標還活著)
+  //     - t 為不利狀態 (BAD_STATUS.includes(t))
+  //     - 同陣營有木靈使存活、未被疑惑、且不是 h 本人
+  //     - 機率 = 60% + 天賦級 × 4% (Lv0=60%, Lv5=80%)
+  //   執行邏輯:
+  //     - 找到剛剛 push 進去的同類型不利狀態,移除最後一個
+  //     - 依木靈使特技值 × 50% 治療該友方(可+復活,但這裡只給活的)
+  //     - 顯示 banner FX + log
+  if(BAD_STATUS.includes(t) && h.curHp>0){
+    const _dryad=G[h.side].find(x=>x!==h&&x.curHp>0&&x.name==='木靈使'&&!hasStatus(x,'confused'));
+    if(_dryad && Math.random()<Math.min(1,0.6+_getTraitLv(_dryad.name)*0.04)){
+      const _lastIdx=h.status.map(s=>s.type).lastIndexOf(t);
+      if(_lastIdx!==-1){ h.status.splice(_lastIdx,1); }
+      // 依木靈使特技 50% 治療
+      const _healAmt = Math.max(1, Math.floor((_dryad.sp || 13) * 0.5));
+      try{ doHeal(h, _healAmt, {actor:_dryad, isHeal:true, noDice:true, noWarhorn:true}); }catch(_){}
+      sfxPassive(_dryad,0.7,'木靈使天賦');
+      showPopup(h,'🌿淨化','miss');
+      bannerFX(h,'自然淨化！','#44ee44',900);
+      healParticles(h);
+      log(`🌿 [木靈使] 天賦：自然淨化！解除 [${h.name}] 的 [${statusName(t)}] 並恢復 ${_healAmt} HP！`);
+      renderCard(h);
+    }
+  }
+
+  // ★ v1.0.20260515.6900 — 米鈴爆發「夢幻的茶會」buff 觸發點:
+  //   若友方陣營有「茶會」(_teaParty) buff,則該友方受到不利狀態時自動解除並反擊來源者
+  //   反擊倍率隨米鈴爆發等級提升(100%/110%/120%/130%/150%)
+  //   實作:檢查 h.buffs 中是否有 _teaParty (個體 buff,每位友方都有),若有則:
+  //     1) 移除剛剛 push 的不利狀態
+  //     2) 用米鈴特技 X% 對 G.activeChar (或最近攻擊者)反擊
+  //     3) buff 持續時間不變,直到 tickStatus 自然過期
+  //   強力類不利狀態(strongTaunt 等)仍可附加,茶會擋不住
+  if(BAD_STATUS.includes(t) && h.curHp>0 && hasBuff(h,'_teaParty')){
+    // 找到場上的米鈴(用快照特技),即使倒下也使用快照值
+    const _milinBuff = h.buffs.find(b=>b.type==='_teaParty');
+    const _mlSp = (_milinBuff && _milinBuff._milinSp) ? _milinBuff._milinSp : 9;
+    const _mlMult = (_milinBuff && _milinBuff._counterMult) ? _milinBuff._counterMult : 1.0;
+    // 1) 移除剛剛 push 的這個狀態
+    const _lastIdx = h.status.map(s=>s.type).lastIndexOf(t);
+    if(_lastIdx !== -1){ h.status.splice(_lastIdx, 1); }
+    // 2) 反擊來源者(優先 G.activeChar,fallback 隨機敵方)
+    const _opp = h.side==='p1' ? 'p2' : 'p1';
+    let _atkr = (G.activeChar && G.activeChar.side===_opp && G.activeChar.curHp>0) ? G.activeChar : null;
+    if(!_atkr){
+      const _alive = G[_opp].filter(x=>x.curHp>0);
+      if(_alive.length) _atkr = _alive[Math.floor(Math.random()*_alive.length)];
+    }
+    if(_atkr){
+      const _dmg = Math.max(1, Math.floor(_mlSp * _mlMult));
+      try{ doDmg(_atkr, _dmg, {actor:_milinBuff._owner||null, isRebound:true, ignoreEvasion:true, noGuard:true}); }catch(_){}
+      log(`☕ [米鈴] 茶會反擊！替 [${h.name}] 擋下 [${statusName(t)}] 並對 [${_atkr.name}] 造成 ${_dmg} 傷害!`);
+    } else {
+      log(`☕ [米鈴] 茶會!替 [${h.name}] 擋下 [${statusName(t)}]!`);
+    }
+    showPopup(h, '☕ 茶會', 'miss');
+    bannerFX(h, '夢幻茶會！', '#ffaadd', 900);
+    try{ playSfx('sfx-gentle', 0.7); }catch(_){}
+    renderCard(h);
+  }
 }
 function addBuff(h,t,dur=1){
   if(!h||h.curHp<=0) return;
@@ -13826,6 +13986,21 @@ function tickStatus(h){
   // 增強術到期恢復
   h.buffs.filter(b=>b.dur===1).forEach(b=>{
     if(b.type==='strengthened' && b._origAtk!==undefined){ h.atk=b._origAtk; h.sp=b._origSp; h.spd=b._origSpd; }
+    // ★ v1.0.20260515.6880 — 救醫馬爆發「最大HP+X」結束清算
+    //   把暫時加上的最大 HP 收回(curHp 對齊上限,不會超過原 HP 上限太多)
+    if(b.type==='_ponyMaxHpBuff' && typeof b._hpBonus === 'number'){
+      h.hp = Math.max(1, h.hp - b._hpBonus);
+      h.curHp = Math.min(h.curHp, h.hp);
+      delete h._ponyHpBonus;
+      delete h._ponyMaxHpBaseline;
+      try{ log(`💉 [${h.name}] 救醫馬最大 HP 加成結束,HP上限恢復為 ${h.hp}。`); }catch(_){}
+      try{ renderCard(h); }catch(_){}
+    }
+    // ★ v1.0.20260515.6900 — 米鈴爆發「茶會」狀態結束:純清除標記,無數值還原
+    if(b.type==='_teaParty'){
+      try{ log(`☕ [${h.name}] 茶會狀態結束,鈴音不再守護。`); }catch(_){}
+      try{ renderCard(h); }catch(_){}
+    }
     if(b.type==='doubleatk' && h._mirrorOrigAtk!==undefined){
       h.atk=h._mirrorOrigAtk;
       delete h._mirrorOrigAtk;
@@ -14338,6 +14513,13 @@ const SKILL_FORCE_ELEMENT = {
   '冰封末日':     'water',  // 冰法師爆發(冰=水)
   '幽寒吐息':     'water',  // 雪女 S2(冰=水)
   '青龍召喚':     'water',  // ★ v1.0.20260424.1310 — 陰陽師 S2(特技70%全體+受傷+50%)
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學「水狐」)
+  //   水狐 S1「水精靈合奏」雖然有水傷害分支,但混合治療類技能不納入(規則:純治療/淨化/狀態類不納入)
+  //   水狐 S2「蛟龍出海」走標準 dmg 邏輯,水龍全體傷害,屬於攻擊技,納入水屬性
+  //   水狐 爆發「萬流歸宗·神龍降臨」全體水傷害+全隊治療,主傷害走 dmg,納入水屬性
+  '蛟龍出海':           'water',  // 水狐 S2(特技80%×2 全體水屬性)
+  '萬流歸宗·神龍降臨':  'water',  // 水狐 爆發(特技250%全體必中無視有利+特技100%全隊治療)
+  '萬流歸宗・神龍降臨':  'water',  // 全形分隔符 fallback
   // ── 風(含雷子屬,v1080:雷類技能歸入 wind) ──
   '疾風團扇擊':   'wind',  // 大天狗 S1
   '風捲殘雲':     'wind',  // 大天狗 S2
@@ -15777,6 +15959,11 @@ const HERO_LORE = {
   '紅色玩家': '虛擬世界深處的紅衣神級玩家,沉默操作如外掛般精準。「瞬殺」一發必中收人頭、爆發「超頻爆發」更開外掛兩回合三倍輸出兼免疫一切——P1 已就位,等你出招。',
   // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
   '地府酋長': '看管刀山火海受刑亡靈的地府獄卒首領,鐵面冷峻、執法不講情面。「支配鎖鍊」拋出黑鐵鎖鍊宣告終結審判、爆發「刀山火海」喚出地獄烈焰席捲全場——亡魂啊,你的審判,由我宣告。',
+  '救醫馬': '蹄聲噠噠如鼓點,白衣在硝煙中翻飛——「馬上救你一命」幫夥伴穿上守護光,爆發「救救昏倒夥」傾倒急救包讓全隊滿血再戰。倒下的夥伴啊,馬醫生來了!',
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學)
+  '水狐': '上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸。一聲長嘯,水精靈如雨點落下治癒傷者;再一揮獨角,蛟龍破浪而出橫掃千軍。萬流匯於一身,溫柔與洶湧同在。',
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學)
+  '米鈴': '私人莊園裡的貓族女僕,胸口別著鈴鐺,輕步穿梭於戰場。鈴音一響,夥伴身上的不利狀態便化為流光散去;一聲呼喚,女僕同伴們手持掃帚、抹布湧入打掃整個戰場——鈴鈴,主人的痛苦由米鈴來承擔。',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -15807,7 +15994,7 @@ const HERO_TRAIT = {
   '占星師':  { name:'星語', icon:'🌟',  desc:'自己行動時有機率補充能量',fd:'輪到自己的行動時有60%機率補充1能量' },
   '大力士':  { name:'怒炎', icon:'💪',  desc:'受不利狀態時有機率轉化怒火',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
   '凡人':    { name:'節省', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
-  '木靈使':  { name:'淨化', icon:'🌿',  desc:'行動時有機率解除我方不利狀態',fd:'輪到自己的行動時有60%機率解除我方1個不利狀態' },
+  '木靈使':  { name:'淨化', icon:'🌿',  desc:'友方受不利狀態時60%機率解除並依特技50%恢復HP',fd:'友方受到不利狀態時有60%機率立即解除該不利狀態,並依木靈使特技值的50%恢復該友方HP。' },
   '機械師':  { name:'觸電', icon:'⚙️',  desc:'受傷時有機率觸電反擊',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
   '動物學家':{ name:'獸盟', icon:'🦁',  desc:'存活時友方寵物效果提升100%',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
   '武士':    { name:'追擊', icon:'🗾',  desc:'隊友普攻時機率協同攻擊',fd:'隊友進行普通攻擊時,有 50% 機率觸發武士協同攻擊,以相同比例的攻擊力對同一目標進行追擊。' },
@@ -15847,11 +16034,12 @@ const HERO_TRAIT = {
   //   每升 1 級觸發機率 +10%,Lv5 MAX 達 80%。
   //   走通用 HERO_TRAIT_LV[heroName].rows 升級表(設計者要求「每級 +10%,Lv5 達 80%」)
   '布奶鳥獸':{ name:'布丁奶茶連擊', icon:'🤝', desc:'普通攻擊為 2 次,30% 機率多 1 次傷害',fd:'布丁和奶茶兩隻小鳥輪流啄擊!普通攻擊保證攻擊 2 次,並有 30% 機率追加第 3 次攻擊。' },
-  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師劉同學)
-  //   無視防禦:使用技能造成傷害時 40% 機率無視目標所有有利狀態。
-  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 80%。
-  //   ⚠ S1/S2/爆發已內建「無視有利狀態」,此天賦對它們不疊加;對普攻或未來新技能才會額外觸發
-  '炸彈客':{ name:'無視防禦', icon:'💣', desc:'使用技能造成傷害時 40% 機率無視目標有利狀態',fd:'炸彈客的炸藥配方專門針對護盾與結界!使用技能造成傷害時有 40% 機率無視目標身上的所有有利狀態(包含護盾、減傷、無敵、保護類等),讓爆炸直接命中本體。S1/S2/爆發本身已內建無視有利狀態,此天賦對它們無效果疊加;對普攻或未來新增技能才會額外觸發。' },
+  // ★ v1.0.20260515.6890 — 炸彈客天賦改造:無視防禦 → 破防(學生設計者要求改版)
+  //   破防:使用技能造成傷害時 30% 機率使目標陷入「破防」1 回合
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 70%
+  //   破防效果:受到的傷害 +25%,且該傷害的暴擊率 +50%
+  //   ⚠ 「破防」是新狀態 (breakDef),需在 BAD_STATUS、傷害計算、爆擊計算三處同步處理
+  '炸彈客':{ name:'破防', icon:'💣', desc:'使用技能造成傷害時 30% 機率使目標破防 1 回合',fd:'炸彈客的爆破衝擊波會撕裂對手的防禦結構!使用技能造成傷害時有 30% 機率使目標陷入「破防」狀態 1 回合 — 破防中的目標受到的傷害 +25%,且該傷害的暴擊率 +50%。' },
   // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
   //   閃避:受到普通攻擊時 30% 機率完全迴避傷害。
   //   每升 1 級觸發機率 +10%,Lv5 MAX 達 70%。
@@ -15864,6 +16052,14 @@ const HERO_TRAIT = {
   //   每升 1 級每層加成 +1(Lv5 達每層 +8,滿層 = +40)
   //   ⚠ 加成只在地府酋長還活著時生效;自身倒下會清空已疊加成,進入新戰鬥時也會重置
   '地府酋長':{ name:'亡魂積怨', icon:'⚖️', desc:'場上任意目標倒下時自身特技 +4,最多疊 5 層',fd:'每一個亡魂的怨氣都灌注到地府酋長的審判杖上!場上任意一方有目標倒下時,地府酋長自身的特技值 +4,最多可疊加 5 層(滿層 = 特技 +20)。自身倒下會清空已疊加成,進入新戰鬥時也會重置為 0 層。' },
+  // ★ v1.0.20260515.6880 — 救醫馬天賦(機率類,鐵律 1.28:fd 只寫 Lv1 基礎,升級替換由 _renderTraitFdWithLv)
+  '救醫馬':{ name:'救馬本能', icon:'🐎', desc:'回合開始時HP最低友方<50%機率自動治療',fd:'戰場上看到任何夥伴受傷,馬醫生立刻衝過去救援!回合開始時若有友方 HP 比例低於 50%,有 40% 機率自動用特技的 80% 治療該友方(可復活)。' },
+  // ★ v1.0.20260515.6890 — 水狐天賦(機率類,鐵律 1.28:fd 只寫 Lv1 基礎)
+  //   水之眷顧:受傷時 40% 機率召喚 1 隻小水精靈為 HP 最低友方治療(特技 60%)
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 80%
+  '水狐':{ name:'水之眷顧', icon:'💧', desc:'受傷時機率召喚水精靈為HP最低友方治療',fd:'水狐溫柔的眼神俯瞰戰場,只要看到夥伴受傷就召喚水精靈守護!受到傷害時有 40% 機率召喚 1 隻小水精靈,為 HP 比例最低的友方治療特技的 60% HP(可復活)。' },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  '米鈴':{ name:'守護鈴音', icon:'🔔', desc:'友方行動前清除其1個不利狀態並用特技80%反擊來源',fd:'米鈴隨身鈴鐺輕響、守護隊友!隊伍中任一友方行動前,米鈴會清除該友方身上 1 個不利狀態(隨機 1 個,無法解除強力類)。若成功清除,立即用特技的 80% 對該不利狀態的來源對手反擊(必中,不會引發對方還手類天賦)。每升 1 級反擊倍率 +10%,Lv5 MAX 達 120%。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -17432,7 +17628,7 @@ function renderCard(h){
   el.addEventListener('click', el._previewClickBound);
 }
 function statusName(t){
-  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',pursuit:'追擊',
+  const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',pursuit:'追擊',breakDef:'💣 破防',
   booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾',
   // ★ v1.0.20260514.6770 — 地府酋長 S1「審判終結」狀態中文名
   judgmentEnd:'⚖️ 審判終結'
@@ -17447,7 +17643,13 @@ function buffClass(t){
 function buffName(t){
   const m={immune:'無敵',shield:'護盾',evasion:'迴避',spdAvoid:'閃躲',hidden:'隱身',dmgup:'攻增',absorb:'吸收',deathimmune:'死亡免疫',immovable:'免疫狀態',halfDmg:'🛡減傷½',warhorn:'戰意',bigshield:'護盾',regen:'持續恢復',fieldImmune:'場地免疫',protectBuff:'狀態保護',discount:'節能',counter:'金鐘罩',misfortune:'轉禍為福',misfortune2:'轉禍為福',alchemist:'道具複製',guard:'守護',ctrlImmune:'控制免疫',divineBlessing:'神之賜福',hpRegen:'持續恢復',mercyRain:'慈悲之雨',chargeAtk:'蓄力中',zeroCost:'⚡無限能量',nioGuard:'🛡仁王挺立',doubleatk:'倍攻',strengthened:'增強',shutenBoost:'🍶乾杯+25%',conservation:'守恆',burstUndying:'不倒再生',inuInvisible:'🐕強力隱身',statusImmune:'免疫狀態',
   inuGuard:'忠犬守護中',_relay:'接力強化',_sprint:'起跑加速',
-  dribble:'運球',elemBoost:'元素增幅',trapShield:'天網護盾',_inuGuard:'忠犬守護中',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',burstVamp:'鮮血吸收',taunt:'嘲諷中',_napShield:'午睡護盾',burstVamp:'🦇嗜血'};
+  dribble:'運球',elemBoost:'元素增幅',trapShield:'天網護盾',_inuGuard:'忠犬守護中',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',burstVamp:'鮮血吸收',taunt:'嘲諷中',_napShield:'午睡護盾',burstVamp:'🦇嗜血',
+  // ★ v1.0.20260515.6880 — 救醫馬爆發附加 buff
+  _ponyMaxHpBuff:'🐎最大HP+',
+  // ★ v1.0.20260515.6890 — 水狐爆發 MAX 附加 buff(我方水傷害 +20%)
+  _waterFoxBless:'💧水之祝福',
+  // ★ v1.0.20260515.6900 — 米鈴爆發 buff(友方受不利時自動解除並反擊)
+  _teaParty:'☕茶會'};
   return m[t]||t;
 }
 
@@ -18134,6 +18336,47 @@ const BURST_GIF_DB = {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
     sfx:[['sfx-burst',1.0],['sfx-explode',0.9],['sfx-fantasy',0.7]],
     tint:'rgba(120,0,40,0.25)',
+    dur:2400
+  },
+  // ★ v1.0.20260515.6880 — 學生設計英雄系列(救醫馬)爆發特效
+  //   救救昏倒夥 — 設計者吳同學提供 GIF
+  //   音效:治療+強化雙層,呼應「全隊大治療+全隊增益」的後援王感
+  //   tint:暖色醫療光暈,跟治療系英雄同調但偏橘暖
+  '救救昏倒夥': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%95%91%E6%95%91%E6%98%8F%E5%80%92%E5%A4%A5.gif',
+    sfx:[['sfx-heal',1.0],['sfx-powerup',0.85]],
+    tint:'rgba(255,220,180,0.22)',
+    dur:2400
+  },
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(水狐)爆發特效
+  //   萬流歸宗·神龍降臨 — 設計者林同學提供 GIF「水龍攻擊.gif」
+  //   音效:奇幻召喚為主 + 水龍衝擊爆發 + 治癒餘韻,呼應「水神獸召喚水龍王」感
+  //   tint:深海藍(80,180,255),呼應水屬性+神獸氣場
+  //   scale:1.5(設計者註明特效尺寸太小,放大顯示)
+  '萬流歸宗·神龍降臨': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.gif',
+    sfx:[['sfx-waterfox-burst',1.0],['sfx-fantasy',0.85],['sfx-heal',0.7]],
+    tint:'rgba(80,180,255,0.22)',
+    scale:1.5,
+    dur:2400
+  },
+  // 全形分隔符 fallback(避免「·」與「・」混用造成 key 對不到)
+  '萬流歸宗・神龍降臨': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.gif',
+    sfx:[['sfx-waterfox-burst',1.0],['sfx-fantasy',0.85],['sfx-heal',0.7]],
+    tint:'rgba(80,180,255,0.22)',
+    scale:1.5,
+    dur:2400
+  },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(米鈴)爆發特效
+  //   夢幻的茶會 — 設計者董同學指定使用「彩色星星.gif」呈現夢幻茶會的浪漫氛圍
+  //   音效:治療為主+柔和為輔+奇幻餘韻,呼應「貓女僕的溫柔茶會」感
+  //   tint:粉嫩茶會色(255,200,230),呼應貓女僕+鈴鐺+茶會主題
+  //   ⚠ 注意 GIF 與小力「夾尾皺眉」共用,但 key 不同(米鈴專屬「夢幻的茶會」)
+  '夢幻的茶會': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif',
+    sfx:[['sfx-heal',1.0],['sfx-gentle',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(255,200,230,0.22)',
     dur:2400
   },
   '劍神連斬': {
@@ -20514,6 +20757,211 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260515.6880 — 救醫馬爆發「救救昏倒夥」(5 年 4 班吳同學設計)
+  //   定位:純後援王三效合一爆發(治療+最大HP暫加+免疫不利)
+  //   升級表(_burstLv 0~4):
+  //     治療倍率 200/220/240/260/280%
+  //     最大HP 加成 +10/+15/+20/+25/+30
+  //     狀態持續 2/2/2/2/3 回合(MAX +1)
+  //   實作機制:
+  //     1) 對全體友方(含倒下)逐一:倒下者先復活 50%
+  //     2) 加最大 HP(走自訂 _ponyMaxHpBuff,2 回合後 tickStatus 自動收回)
+  //     3) 走標準 doHeal 治療(可復活)
+  //     4) 加 statusImmune buff 免疫不利
+  //   特殊處理:_ponyMaxHpBuff 同英雄已有就不重複加 HP,只刷新時間
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='救救昏倒夥'){
+    const _ponyLvIdx = Math.min(4, _burstLv);
+    const _healMultTable = [2.0, 2.2, 2.4, 2.6, 2.8];
+    const _hpBonusTable  = [10, 15, 20, 25, 30];
+    const _ponyDurTable  = [2, 2, 2, 2, 3];
+    const _healMult = _healMultTable[_ponyLvIdx];
+    const _hpBonus  = _hpBonusTable[_ponyLvIdx];
+    const _ponyDur  = _ponyDurTable[_ponyLvIdx];
+    const _ponySpv  = Math.floor((h.sp || 0) * (1 + (h.sp || 0) * 0.01));
+    const _healAmt  = Math.max(1, Math.floor(_ponySpv * _healMult * _burstMult));
+    log(`🚑 [${h.name}] 救救昏倒夥!將急救包傾倒全場!治療 ${Math.round(_healMult*100)}% + 最大HP+${_hpBonus} + 免疫不利 ${_ponyDur} 回合`);
+    bannerFX(h, '🚑 救救昏倒夥!', '#ffcc88', 1400);
+    beginBatchTotals();
+    // 對全體友方(含倒下)逐一處理,每隻間隔 100ms 視覺有層次
+    const _allies = G[side];
+    _allies.forEach((ally, i) => {
+      _pSetTimeout(() => {
+        // 1) 倒下友方先復活 50%
+        if(ally.curHp <= 0){
+          try{ doRevive(ally, 0.5); }catch(_){}
+        }
+        // 2) 最大 HP +X(若已有救醫馬增益就只刷新時間,不重複疊加)
+        const _hasPonyBuff = ally.buffs && ally.buffs.some(b => b.type === '_ponyMaxHpBuff');
+        if(!_hasPonyBuff){
+          if(!ally._ponyMaxHpBaseline) ally._ponyMaxHpBaseline = ally.hp;
+          ally.hp += _hpBonus;
+          ally.curHp += _hpBonus;
+          ally._ponyHpBonus = _hpBonus;
+        }
+        // 用自訂 buff 標記(_fromBurst 讓搶奪/解除無法針對它)
+        ally.buffs = ally.buffs.filter(b => b.type !== '_ponyMaxHpBuff');
+        ally.buffs.push({ type:'_ponyMaxHpBuff', dur:_ponyDur, _hpBonus:_hpBonus, _fromBurst:true });
+
+        // 3) 標準治療(可復活,鎖 noDice 不受占卜水晶影響)
+        try{ doHeal(ally, _healAmt, {actor:h, isHeal:true, noDice:true}); }catch(_){}
+
+        // 4) 免疫不利狀態
+        addBuff(ally, 'statusImmune', _ponyDur);
+
+        try{ renderCard(ally); }catch(_){}
+      }, i * 100);
+    });
+    _pSetTimeout(() => {
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+    }, _allies.length * 100 + 400);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260515.6890 — 水狐爆發「萬流歸宗·神龍降臨」(6 年 2 班林同學設計)
+  //   定位:水之召喚輸出+治療雙線爆發(全體巨傷+全體治療+解不利)
+  //   升級表(_burstLv 0~4):
+  //     全體傷害倍率 250/270/290/310/330%
+  //     全隊治療倍率 100/110/120/130/150%
+  //     Lv4 MAX 附加「水之祝福」狀態 2 回合(我方水屬性傷害 +20%)
+  //   實作機制:
+  //     1) 對全體對手:特技 250%~330% 水傷害(必中、無視有利狀態)
+  //     2) 對全體友方:解除所有不利狀態
+  //     3) 對全體友方:特技 100%~150% 治療(可復活)
+  //     4) Lv4 MAX 附加我方全體「水之祝福」buff 2 回合
+  //   屬性走 SKILL_FORCE_ELEMENT 強制水屬性(剋火、被風剋)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='萬流歸宗·神龍降臨' || burstName==='萬流歸宗・神龍降臨'){
+    const _wfLvIdx = Math.min(4, _burstLv);
+    const _wfDmgTable  = [2.5, 2.7, 2.9, 3.1, 3.3];
+    const _wfHealTable = [1.0, 1.1, 1.2, 1.3, 1.5];
+    const _wfDmgMult  = _wfDmgTable[_wfLvIdx];
+    const _wfHealMult = _wfHealTable[_wfLvIdx];
+    const _wfHasBless = (_wfLvIdx >= 4);  // MAX 附加水之祝福
+    const _wfSpv = Math.floor((h.sp || 0) * (1 + (h.sp || 0) * 0.01));
+    const _wfDmgAmt  = Math.max(1, Math.floor(_wfSpv * _wfDmgMult * _burstMult));
+    const _wfHealAmt = Math.max(1, Math.floor(_wfSpv * _wfHealMult * _burstMult));
+    log(`🌊 [${h.name}] 萬流歸宗·神龍降臨!水龍王應召破海而出!`);
+    bannerFX(h, '🌊 神龍降臨!', '#44aaff', 1400);
+    beginBatchTotals();
+
+    // 1) 全體敵方水屬性巨傷(必中、無視有利)
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _foes = G[_opp].filter(x => x.curHp > 0);
+    _foes.forEach((f, idx) => {
+      _pSetTimeout(() => {
+        if(f.curHp <= 0) return;
+        doDmg(f, _wfDmgAmt, {
+          actor:h, isSkill:true, elem:'water',
+          ignoreEvasion:true, ignoreBuffs:true
+        });
+        renderCard(f);
+      }, idx * 120);
+    });
+
+    // 2) 全體友方:解除不利 + 治療 + (MAX) 水之祝福
+    const _allies = G[side];
+    _pSetTimeout(() => {
+      _allies.forEach((ally, i) => {
+        _pSetTimeout(() => {
+          // 倒下友方先復活 50%
+          if(ally.curHp <= 0){
+            try{ doRevive(ally, 0.5); }catch(_){}
+          }
+          // 解除所有不利狀態(走 status 過濾,跟「神樂舞」、「BUG修復」同邏輯)
+          if(ally.status && ally.status.length){
+            ally.status = ally.status.filter(s => {
+              // 保留有利狀態(這裡 status 主要是不利,有利在 buffs)
+              // 注意:某些 status 例如 shield 可能放在 status 內,但水狐解的是「不利」
+              // 既有「不利狀態」清單由 _STATUS_BAD 或內建判斷,這裡用穩定的「全部 status 清空」做最強解除
+              return false;
+            });
+          }
+          // 標準治療(可復活)
+          try{ doHeal(ally, _wfHealAmt, {actor:h, isHeal:true, noDice:true}); }catch(_){}
+          // MAX 才附加水之祝福(走自訂 buff,_fromBurst 防搶奪)
+          if(_wfHasBless){
+            if(!ally.buffs) ally.buffs = [];
+            ally.buffs = ally.buffs.filter(b => b.type !== '_waterFoxBless');
+            ally.buffs.push({ type:'_waterFoxBless', dur:2, _fromBurst:true });
+          }
+          try{ renderCard(ally); }catch(_){}
+        }, i * 100);
+      });
+    }, _foes.length * 120 + 200);
+
+    _pSetTimeout(() => {
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+    }, _foes.length * 120 + _allies.length * 100 + 600);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260515.6900 — 米鈴爆發「夢幻的茶會」(6 年 5 班董同學設計)
+  //   定位:全隊治療 + 全隊「茶會」buff 持續反制不利狀態
+  //   升級表(_burstLv 0~4):
+  //     全體治療倍率 175/190/205/220/240%
+  //     茶會反擊倍率 100/110/120/130/150%
+  //     茶會持續    2/2/2/2/3 回合 (MAX 延長)
+  //   實作機制:
+  //     1) 對全體友方:特技 175%~240% 治療(可復活)
+  //     2) 對全體友方:附加「_teaParty」buff(個體 buff,記錄米鈴特技+反擊倍率)
+  //     3) 茶會 buff 在 addStatus 中觸發:友方即將受不利狀態時自動解除並反擊來源
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='夢幻的茶會'){
+    const _mlLvIdx = Math.min(4, _burstLv);
+    const _mlHealTable    = [1.75, 1.90, 2.05, 2.20, 2.40];
+    const _mlCounterTable = [1.00, 1.10, 1.20, 1.30, 1.50];
+    const _mlDurTable     = [2, 2, 2, 2, 3];
+    const _mlHealMult = _mlHealTable[_mlLvIdx];
+    const _mlCounterMult = _mlCounterTable[_mlLvIdx];
+    const _mlDur = _mlDurTable[_mlLvIdx];
+    const _mlSpv = Math.floor((h.sp || 0) * (1 + (h.sp || 0) * 0.01));
+    const _mlHealAmt = Math.max(1, Math.floor(_mlSpv * _mlHealMult * _burstMult));
+
+    log(`☕ [${h.name}] 夢幻的茶會!擺開銀色茶具邀請夥伴入席!`);
+    bannerFX(h, '☕ 夢幻茶會!', '#ffaadd', 1400);
+    beginBatchTotals();
+
+    // 1) 全體友方:治療 + 附加茶會 buff
+    const _mlAllies = G[side];
+    _mlAllies.forEach((ally, i) => {
+      _pSetTimeout(() => {
+        // 倒下友方先復活 50%
+        if(ally.curHp <= 0){
+          try{ doRevive(ally, 0.5); }catch(_){}
+        }
+        // 治療
+        try{ doHeal(ally, _mlHealAmt, {actor:h, isHeal:true, noDice:true}); }catch(_){}
+        // 附加茶會 buff (個體 buff,但記錄米鈴特技值與反擊倍率快照)
+        if(!ally.buffs) ally.buffs = [];
+        ally.buffs = ally.buffs.filter(b => b.type !== '_teaParty');
+        ally.buffs.push({
+          type:'_teaParty',
+          dur:_mlDur,
+          _fromBurst:true,
+          _milinSp: _mlSpv,            // 米鈴特技值快照(米鈴倒下也保留)
+          _counterMult: _mlCounterMult, // 反擊倍率(隨爆發等級)
+          _owner: h                     // 米鈴本人引用(反擊歸功)
+        });
+        try{ renderCard(ally); }catch(_){}
+      }, i * 100);
+    });
+
+    _pSetTimeout(() => {
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+    }, _mlAllies.length * 100 + 600);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
 
@@ -21370,6 +21818,25 @@ function doDmg(target, rawDmg, opts={}){
     }
   }
 
+  // ★ v1.0.20260515.6890 — 水狐爆發 MAX 附加狀態「水之祝福」:我方水屬性傷害 +20%
+  //   觸發條件:
+  //     - a(攻擊者)有 _waterFoxBless buff
+  //     - 傷害是水屬性(opts.elem === 'water' 或施放者本身是水屬性)
+  //     - !opts._waterFoxBlessApplied(避免疊加)
+  //   實作:把 rawDmg ×1.2,用 flag 避免重複套用
+  if(a && a !== target && !opts._waterFoxBlessApplied
+     && a.buffs && a.buffs.some(b => b.type === '_waterFoxBless')){
+    const _isWaterDmg = (opts.elem === 'water') || (a.element === 'water');
+    if(_isWaterDmg){
+      const _origDmg = rawDmg;
+      rawDmg = Math.max(1, Math.floor(rawDmg * 1.2));
+      opts._waterFoxBlessApplied = true;
+      if(_origDmg !== rawDmg){
+        try{ log(`💧 [${a.name}] 水之祝福!水傷害 ${_origDmg} → ${rawDmg}(×1.2)`); }catch(_){}
+      }
+    }
+  }
+
   // ★ v1.0.20260421.3000f — 玉藻前天賦：造成傷害時60%機率無視有利狀態
   // ★ v1.0.20260423.8100 — 改為可升級:每升 1 級 +4%(Lv0=60%, Lv5=80%)
   if(a && a.name==='玉藻前' && !opts.ignoreBuffs && target && a.side!==target.side){
@@ -21768,6 +22235,8 @@ function doDmg(target, rawDmg, opts={}){
   }
   // dmgVuln (青龍召喚：受傷+50%)
   if(hasStatus(target,'dmgVuln')){ rawDmg=Math.ceil(rawDmg * (target._vulnStrong ? 2.0 : 1.5)); }
+  // ★ v1.0.20260515.6890 — 炸彈客天賦「破防」:受傷 +25%(該傷害暴擊率 +50% 在下面 critChance 處理)
+  if(hasStatus(target,'breakDef')){ rawDmg=Math.ceil(rawDmg * 1.25); }
   // 綠竹筍小妖天賦：受到傷害時50%機率減少40%
   if(_adventureMode && target.name==='綠竹筍小妖' && !hasStatus(target,'confused') && rawDmg>0 && Math.random()<0.5){
     rawDmg = Math.max(1, Math.floor(rawDmg * 0.6));
@@ -21840,7 +22309,52 @@ function doDmg(target, rawDmg, opts={}){
       }catch(e){}
     }, 350);
   }
-  // 土屬性：受傷-2
+  // ★ v1.0.20260515.6890 — 水狐天賦「水之眷顧」:受傷時機率召喚水精靈為 HP 最低友方治療
+  //   觸發條件:
+  //     - target.name === '水狐' 且還活著且沒被疑惑
+  //     - rawDmg > 0(真的有傷害,DOT 也算 — 因為水狐的設計就是「看到夥伴受傷就救」)
+  //     - !opts.isTraitShare、!opts.isChaos(避免共享傷害誤觸發)
+  //   機率:Lv1 40%,每升 1 級 +10%,Lv5 MAX 80%(對齊既有機率類天賦)
+  //   治療:用水狐特技 60% 治療 HP 比例最低的友方(可復活)
+  if(target.name==='水狐' && !hasStatus(target,'confused') && rawDmg>0
+     && opts && !opts.isTraitShare && !opts.isChaos && target.curHp>0){
+    const _wfTl = (typeof _getTraitLv === 'function') ? _getTraitLv('水狐') : 0;
+    const _wfChance = 0.40 + _wfTl * 0.10;  // Lv1=40%, Lv5(traitLv=4)=80%
+    if(Math.random() < _wfChance){
+      try{
+        const _ourSide = target.side;
+        const _allies = (G[_ourSide] || []).slice();
+        // 找 HP 比例最低的友方(包含倒下的,因為治療可復活)
+        let _lowestAlly = null;
+        let _lowestRatio = Infinity;
+        _allies.forEach(a => {
+          if(!a) return;
+          const _maxHp = a.hp || 1;
+          const _curHp = (a.curHp == null) ? _maxHp : a.curHp;
+          const _ratio = _curHp / _maxHp;
+          if(_ratio < _lowestRatio){
+            _lowestRatio = _ratio;
+            _lowestAlly = a;
+          }
+        });
+        if(_lowestAlly){
+          const _spv = target.sp || 14;
+          const _wfHeal = Math.max(1, Math.floor(_spv * 0.60));
+          log(`💧 [水狐] 天賦:水之眷顧!召喚水精靈為 [${_lowestAlly.name}] 治療 ${_wfHeal} HP!`);
+          try{ bannerFX(target, '💧 水之眷顧!', '#44aaff', 900); }catch(_){}
+          try{ playSfx('sfx-heal', 0.8); }catch(_){}
+          // 延遲一點讓本次傷害動畫先播完
+          setTimeout(()=>{
+            try{
+              doHeal(_lowestAlly, _wfHeal, {actor:target, isHeal:true, noDice:true, allowRevive:true});
+              renderCard(_lowestAlly);
+            }catch(_){}
+          }, 350);
+        }
+      }catch(e){}
+    }
+  }
+  // 土屬性:受傷-2
   { const _te=getElemData(target.element); if(_te&&_te.bonus_dmgreduce) rawDmg=Math.max(0,rawDmg-_te.bonus_dmgreduce); }
   // 聖騎士天賦：40%格擋，減少50%受傷
   if(target.name==='聖騎士' && target.curHp>0 && !hasStatus(target,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(target.name)*0.04)){
@@ -22099,7 +22613,8 @@ function doDmg(target, rawDmg, opts={}){
   //   用法:doDmg(t, dmg, {actor:a, isSkill:true, critBoost:0.30})  // 暴擊率 +30%
   let _isCrit=false;
   const _critChance = 0.15 + ((a && a._treasureEff && a._treasureEff.critRate) || 0) / 100
-                           + (typeof opts.critBoost === 'number' ? opts.critBoost : 0);
+                           + (typeof opts.critBoost === 'number' ? opts.critBoost : 0)
+                           + (hasStatus(target,'breakDef') ? 0.50 : 0);  // ★ 破防:該傷害暴擊率 +50%
   if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
     const _critExtra=Math.floor(dmg*0.3);
     dmg+=_critExtra;
@@ -23822,37 +24337,29 @@ function execAtk(actor, target, dmg, opts={}){
     }, 350);
   }
 
-  // ★ v1.0.20260514.6550 — 炸彈客天賦:無視防禦
-  //   使用技能造成傷害時 40% 機率無視目標所有有利狀態(+10%/級, Lv5 達 80%)
-  //   ⚠ S1/S2/爆發已內建「無視有利狀態」,此天賦對它們不疊加;
-  //     對普攻才會觸發 — 機率觸發後立即清除目標 1 個有利狀態(類似火法師「消除有利狀態」邏輯)
-  //   設計依據:設計者敘述「使用技能造成傷害時觸發」,但 S1/S2/爆發已內建,實質作用點在普攻
-  if(name==='炸彈客' && target && target.curHp>0 && target.buffs && target.buffs.length>0){
+  // ★ v1.0.20260515.6890 — 炸彈客天賦改造:無視防禦 → 破防
+  //   使用技能造成傷害時 30% 機率使目標陷入「破防」狀態 1 回合
+  //   破防效果:受到的傷害 +25%,且該傷害的暴擊率 +50%
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 70%
+  //   ⚠ 此 hook 在普攻 post-process 階段觸發。破防為新狀態 breakDef,
+  //     在 BAD_STATUS、傷害計算 (+25%)、暴擊率計算 (+50%) 三處同步處理。
+  if(name==='炸彈客' && target && target.curHp>0){
     const _bomberTl = (typeof _getTraitLv === 'function') ? _getTraitLv('炸彈客') : 0;
-    const _bomberRate = Math.min(1, 0.40 + _bomberTl * 0.10);  // Lv0=40%, Lv5=90% (capped 100%)
+    const _bomberRate = Math.min(1, 0.30 + _bomberTl * 0.10);  // Lv0=30%, Lv4=70%
     if(Math.random() < _bomberRate){
-      // 清除目標 1 個非保護類有利狀態(模擬「無視」的視覺效果)
       try{
-        // 跟「神偷·盜取」「火法師·消除有利」一樣的清除邏輯
-        // 優先清除護盾、減傷、無敵、隱身等
-        const _priorityBuffs = ['shield','immune','reduceDmg','hidden','dodge','reflect','buffAtk','buffSp'];
-        let _cleared = null;
-        for(const _bkey of _priorityBuffs){
-          const _idx = target.buffs.findIndex(b => b && b.k === _bkey);
-          if(_idx >= 0){
-            _cleared = target.buffs.splice(_idx, 1)[0];
-            break;
-          }
+        // 附加破防 1 回合(同名 debuff 覆蓋更新)
+        if(typeof addStatus === 'function'){
+          addStatus(target, 'breakDef', 1);
+        } else {
+          target.status = target.status || [];
+          target.status = target.status.filter(s=>s.type!=='breakDef');
+          target.status.push({type:'breakDef', dur:1});
         }
-        // 若優先清單裡沒有,就清除第一個非「保護類絕對禁清」的
-        if(!_cleared && target.buffs.length > 0){
-          _cleared = target.buffs.shift();
-        }
-        if(_cleared){
-          log(`💣 [炸彈客] 天賦:無視防禦!炸藥穿透 [${target.name}] 的「${_cleared.k}」!`);
-          bannerFX(target,'💣 無視防禦!','#ff8844',800);
-          try{ playSfx('sfx-explode', 0.4); }catch(_){}
-        }
+        log(`💣 [炸彈客] 天賦:破防!爆破衝擊撕裂 [${target.name}] 的防禦!受傷+25%且該傷害暴擊率+50% 1 回合!`);
+        if(typeof bannerFX === 'function') bannerFX(target,'💣 破防!','#ff4422',900);
+        try{ if(typeof playSfx === 'function') playSfx('sfx-explode', 0.4); }catch(_){}
+        if(typeof renderCard === 'function') renderCard(target);
       }catch(_bomberE){ /* 防呆:不影響主普攻流程 */ }
     }
   }
@@ -27044,6 +27551,229 @@ function execSkill(a, sk, cost, stype){
     }, _foes.length * 120 + 300);
     return;
   }
+  // ★ v1.0.20260515.6880 — 救醫馬 S1「馬上救你一命」(第一處 execSkill)
+  //   為 1 名友方附加「不倒再生」(burstUndying) + 「免疫狀態」(statusImmune) 雙重保護
+  //   持續時間:基礎 3 回合,Lv10 (MAX) 延長為 4 回合
+  //   能量在 Lv5 起自動 -1(7→6),由 skillCost 自動處理(讀 baseEnergy/discount)
+  else if(n==='馬上救你一命'){
+    setPending('ally', t => {
+      const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='馬上救你一命') ? a._skLv.s1
+                  : (a._skLv && a._skLv.s2 && a.s2.n==='馬上救你一命') ? a._skLv.s2
+                  : 0;
+      const _dur = _skLv >= 9 ? 4 : 3;
+      addBuff(t, 'burstUndying', _dur);
+      addBuff(t, 'statusImmune', _dur);
+      log(`💉 [${a.name}] 馬上救你一命!保護 [${t.name}] ${_dur} 回合(不倒再生 + 免疫狀態)!`);
+      try{ bannerFX(t, '不倒+免疫', '#ffdda0', 1200); }catch(_){}
+      try{ playSfx('sfx-heal', 0.9); playSfx('sfx-powerup', 0.7); }catch(_){}
+      try{ playSkillFX('馬上救你一命', a, [t]); }catch(_){}
+      try{ renderCard(t); }catch(_){}
+      endAction(a, cost); return;
+    });
+  }
+  // ★ v1.0.20260515.6880 — 救醫馬 S2「等死不救」(第一處 execSkill)
+  //   特技 180% 單體傷害 + 不治詛咒(noheal_curse) + 流血(poison) 2 回合
+  //   升級:每級 +8%(Lv10 達 260%),MAX(Lv10)詛咒延長為 3 回合
+  //   流血量:固定 5%(不升級)
+  else if(n==='等死不救'){
+    setPending('enemy', t => {
+      const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='等死不救') ? a._skLv.s1
+                  : (a._skLv && a._skLv.s2 && a.s2.n==='等死不救') ? a._skLv.s2
+                  : 0;
+      const _mult = 1.80 + _skLv * 0.08;  // Lv0=1.80, Lv10=2.60
+      const _dur = _skLv >= 9 ? 3 : 2;
+      const _dmg = Math.floor(spv(a) * _mult);
+      doDmg(t, _dmg, {actor:a, isSkill:true});
+      if(t.curHp > 0){
+        // 不治詛咒
+        addStatus(t, 'noheal_curse', _dur);
+        // 加 5% 流血(poison 系統,_poisonAmt = 最大HP×5%)— 跟 fd 描述對齊
+        t._poisonAmt = Math.max(1, Math.floor(t.hp * 0.05));
+        addStatus(t, 'poison', _dur);
+        log(`💀 [${a.name}] 等死不救!使 [${t.name}] 陷入不治詛咒 ${_dur} 回合(每回合 -5%HP)!`);
+        try{ bannerFX(t, '不治詛咒', '#cc44aa', 900); }catch(_){}
+      }
+      try{ playSkillFX('等死不救', a, [t]); }catch(_){}
+      endAction(a, cost); return;
+    });
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260515.6890 — 水狐技能(5 年 5 班 6 年 2 班林同學設計)
+  //   S1 水精靈合奏:召喚 3 隻水精靈,每隻特技 50% 治療 HP 比例最低友方(可復活)
+  //                  + 特技 40% 對隨機 1 名對手造成水傷害(共 3 次治療 + 3 次傷害)
+  //   S2 蛟龍出海:召喚 2 條水龍,特技 80% 對全體水屬性傷害共 2 次,命中後 60% 機率減速 2 回合
+  //   ⚠ S1 升級:治療 50→58% / 傷害 40→48% (Lv5),MAX(Lv10) 召喚次數 3→4
+  //   ⚠ S2 升級:倍率 80→125%(每級+5%),MAX(Lv10) 減速 2→3 回合
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='水精靈合奏'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='水精靈合奏') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='水精靈合奏') ? a._skLv.s2
+                : 0;
+    const _healPct = 0.50 + Math.min(_skLv, 4) * 0.02 + Math.max(0, _skLv-5) * 0.02; // Lv1=50% Lv5=58% Lv10=68%
+    const _dmgPct  = 0.40 + Math.min(_skLv, 4) * 0.02 + Math.max(0, _skLv-5) * 0.02; // Lv1=40% Lv5=48% Lv10=58%
+    const _times   = _skLv >= 9 ? 4 : 3;  // Lv10 (MAX) 召喚 4 隻
+    const _spv = spv(a);
+    log(`💧 [${a.name}] 水精靈合奏!召喚 ${_times} 隻水精靈降臨戰場!`);
+    try{ bannerFX(a, '💧 水精靈合奏!', '#44aaff', 1000); }catch(_){}
+    try{ playSfx('sfx-heal', 0.85); }catch(_){}
+    try{ playSkillFX('水精靈合奏', a, []); }catch(_){}
+    let i = 0;
+    function _waterSpirit(){
+      if(i >= _times || checkWin()){ updateUI(); endAction(a, cost); return; }
+      // 治療部分:挑 HP 比例最低的友方(可復活)
+      const _allies = (G[a.side] || []).slice();
+      let _lowestAlly = null, _lowestRatio = Infinity;
+      _allies.forEach(ally => {
+        if(!ally) return;
+        const _maxHp = ally.hp || 1;
+        const _curHp = (ally.curHp == null) ? _maxHp : ally.curHp;
+        const _ratio = _curHp / _maxHp;
+        if(_ratio < _lowestRatio){ _lowestRatio = _ratio; _lowestAlly = ally; }
+      });
+      if(_lowestAlly){
+        const _healAmt = Math.max(1, Math.floor(_spv * _healPct));
+        doHeal(_lowestAlly, _healAmt, {actor:a, isHeal:true, noDice:true, allowRevive:true});
+        renderCard(_lowestAlly);
+      }
+      // 傷害部分:挑隨機存活對手
+      const _foes = G[opp].filter(h => h.curHp > 0);
+      if(_foes.length){
+        const _t = _foes[Math.floor(Math.random() * _foes.length)];
+        const _dmg = Math.max(1, Math.floor(_spv * _dmgPct));
+        doDmg(_t, _dmg, {actor:a, isSkill:true, elem:'water'});
+      }
+      i++;
+      _pSetTimeout(_waterSpirit, 250);
+    }
+    _waterSpirit();
+    return;
+  }
+  else if(n==='蛟龍出海'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='蛟龍出海') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='蛟龍出海') ? a._skLv.s2
+                : 0;
+    const _mult = 0.80 + _skLv * 0.05;  // Lv1=80% Lv10=125%
+    const _slowDur = _skLv >= 9 ? 3 : 2;  // Lv10 (MAX) 減速 3 回合
+    const _spv = spv(a);
+    log(`🐉 [${a.name}] 蛟龍出海!揮動獨角召喚 2 條水龍橫掃戰場!`);
+    try{ bannerFX(a, '🐉 蛟龍出海!', '#44aaff', 1000); }catch(_){}
+    try{ playSfx('sfx-fantasy', 0.85); }catch(_){}
+    try{ playSkillFX('蛟龍出海', a, G[opp].filter(h=>h.curHp>0)); }catch(_){}
+    let wave = 0;
+    function _dragonWave(){
+      if(wave >= 2 || checkWin()){ updateUI(); endAction(a, cost); return; }
+      const foes = G[opp].filter(h => h.curHp > 0);
+      if(!foes.length){ updateUI(); endAction(a, cost); return; }
+      foes.forEach((f, idx) => {
+        _pSetTimeout(() => {
+          if(f.curHp <= 0) return;
+          const _dmg = Math.max(1, Math.floor(_spv * _mult));
+          doDmg(f, _dmg, {actor:a, isSkill:true, elem:'water'});
+          if(f.curHp > 0 && Math.random() < 0.60){
+            addStatus(f, 'spddown', _slowDur);
+            try{ bannerFX(f, '減速', '#4488cc', 700); }catch(_){}
+          }
+          renderCard(f);
+        }, idx * 100);
+      });
+      wave++;
+      _pSetTimeout(_dragonWave, foes.length * 100 + 400);
+    }
+    _dragonWave();
+    return;
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260515.6900 — 米鈴技能(6 年 5 班董同學設計)
+  //   S1 鈴音淨化:特技 150% 治療單體 + 解除全部不利,每解 1 個用特技 90% 反擊隨機對手
+  //   S2 女僕們的整潔活動:解除我方全體不利狀態,依解除總數 N 用特技 75% 反擊隨機對手 N 次
+  //   ⚠ S1 升級:治療 150→195%(每級+5%),Lv10 (MAX) 不提升反擊上限
+  //   ⚠ S2 升級:反擊倍率 75→120%(每級+5%),Lv10 (MAX) 保底打掃 1→3 次
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='鈴音淨化'){
+    setPending('ally_or_dead', t => {
+      const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='鈴音淨化') ? a._skLv.s1
+                  : (a._skLv && a._skLv.s2 && a.s2.n==='鈴音淨化') ? a._skLv.s2
+                  : 0;
+      const _healMult = 1.50 + _skLv * 0.05;  // Lv0=150%, Lv10=200%(顯示 195%)
+      const _spv = spv(a);
+      const _healAmt = Math.max(1, Math.floor(_spv * _healMult));
+      // 1) 治療單體(可復活)
+      if(t.curHp <= 0){ try{ doRevive(t, 0.5); }catch(_){} }
+      try{ doHeal(t, _healAmt, {actor:a, isHeal:true, noDice:true, allowRevive:true}); }catch(_){}
+      // 2) 計算可解除的不利狀態數
+      const _badBefore = (t.status || []).filter(s => BAD_STATUS.includes(s.type));
+      const _removed = _badBefore.length;
+      if(_removed > 0){
+        // 解除所有不利狀態
+        t.status = t.status.filter(s => !BAD_STATUS.includes(s.type));
+      }
+      log(`🔔 [${a.name}] 鈴音淨化!治療 [${t.name}] ${_healAmt} HP,解除 ${_removed} 個不利狀態!`);
+      try{ bannerFX(t, '🔔 鈴音淨化', '#ffaadd', 1100); }catch(_){}
+      try{ playSfx('sfx-heal', 0.9); playSfx('sfx-gentle', 0.7); }catch(_){}
+      try{ renderCard(t); }catch(_){}
+      // 3) 每解除 1 個就用特技 90% 反擊隨機對手
+      const _counterMult = 0.90;  // 不隨等級提升
+      const _opp = a.side==='p1'?'p2':'p1';
+      let _ci = 0;
+      function _counterStep(){
+        if(_ci >= _removed){ endAction(a, cost); return; }
+        const _foes = G[_opp].filter(x => x.curHp > 0);
+        if(!_foes.length){ endAction(a, cost); return; }
+        const _tgt = _foes[Math.floor(Math.random() * _foes.length)];
+        const _dmg = Math.max(1, Math.floor(_spv * _counterMult));
+        try{ doDmg(_tgt, _dmg, {actor:a, isSkill:true, ignoreEvasion:true, ignoreBuffs:true, isRebound:true}); }catch(_){}
+        _ci++;
+        _pSetTimeout(_counterStep, 200);
+      }
+      if(_removed > 0){
+        _pSetTimeout(_counterStep, 300);
+      } else {
+        endAction(a, cost);
+      }
+    });
+  }
+  else if(n==='女僕們的整潔活動'){
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='女僕們的整潔活動') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='女僕們的整潔活動') ? a._skLv.s2
+                : 0;
+    const _counterMult = 0.75 + _skLv * 0.05;  // Lv0=75%, Lv10=125% (顯示 120%)
+    const _fallbackHits = _skLv >= 9 ? 3 : 1;  // MAX 保底 3 次
+    const _spv = spv(a);
+    log(`🧹 [${a.name}] 女僕們的整潔活動!召喚女僕同伴打掃戰場!`);
+    try{ bannerFX(a, '🧹 整潔活動', '#ffccff', 1100); }catch(_){}
+    try{ playSfx('sfx-gentle', 0.9); playSfx('sfx-fantasy', 0.6); }catch(_){}
+    // 1) 解除全體友方不利狀態 + 計數
+    const _allies = G[a.side];
+    let _totalRemoved = 0;
+    _allies.forEach(ally => {
+      if(!ally) return;
+      const _bad = (ally.status || []).filter(s => BAD_STATUS.includes(s.type));
+      if(_bad.length > 0){
+        _totalRemoved += _bad.length;
+        ally.status = ally.status.filter(s => !BAD_STATUS.includes(s.type));
+        try{ renderCard(ally); }catch(_){}
+      }
+    });
+    log(`🧹 共解除 ${_totalRemoved} 個不利狀態!`);
+    // 2) 依 N 反擊
+    const _hits = _totalRemoved > 0 ? _totalRemoved : _fallbackHits;
+    const _opp = a.side==='p1'?'p2':'p1';
+    let _ci = 0;
+    function _cleanStep(){
+      if(_ci >= _hits || checkWin()){ endAction(a, cost); return; }
+      const _foes = G[_opp].filter(x => x.curHp > 0);
+      if(!_foes.length){ endAction(a, cost); return; }
+      const _tgt = _foes[Math.floor(Math.random() * _foes.length)];
+      const _dmg = Math.max(1, Math.floor(_spv * _counterMult));
+      try{ doDmg(_tgt, _dmg, {actor:a, isSkill:true, ignoreEvasion:true, ignoreBuffs:true, isRebound:true}); }catch(_){}
+      _ci++;
+      _pSetTimeout(_cleanStep, 180);
+    }
+    _pSetTimeout(_cleanStep, 250);
+    return;
+  }
   // ════════════════════════════════════════════════════════════════
   // ====== 冒險模式 BOSS 技能 ======
   else if(n==='連續貓爪功'){
@@ -30045,19 +30775,38 @@ function startTurn(){
     log(`🌟 [占星師] 天賦：星命指引！補充1能量！`);
   }
 
-  // 木靈使天賦：行動開始時60%解除我方1個不利狀態
-  if(next.name==='木靈使' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(next.name)*0.04)){
-    const allAllies=G[next.side].filter(h=>h.curHp>0&&h.status.some(s=>BAD_STATUS.includes(s.type)));
-    if(allAllies.length){
-      const lucky=allAllies[Math.floor(Math.random()*allAllies.length)];
-      const badSts=lucky.status.filter(s=>BAD_STATUS.includes(s.type));
-      if(badSts.length){
-        const removed=badSts[Math.floor(Math.random()*badSts.length)];
-        lucky.status=lucky.status.filter(s=>s!==removed);
-        renderCard(lucky);
-        log(`🌿 [木靈使] 天賦：自然淨化！解除 [${lucky.name}] 的 [${statusName(removed.type)}]！`);
-        bannerFX(lucky,'自然淨化！','#44ee44',900);
-        healParticles(lucky);
+  // ★ v1.0.20260515.6900 — 木靈使天賦改為「友方受不利狀態時觸發」(在 addStatus 函式中實作),
+  //   舊版「行動時解除」邏輯已移除,改成在 addStatus 中 hook 處理(類似弦樂團員)
+
+  // ★ v1.0.20260515.6900 — 米鈴天賦「守護鈴音」: 任一友方行動前,若同隊有米鈴存活,
+  //   隨機清除該友方身上 1 個不利狀態(優先 BAD_STATUS 中的 type),若成功清除,
+  //   則用米鈴攻擊的 80%(每級+10%, Lv5 MAX 120%) 對隨機 1 名敵方反擊(必中)。
+  //   觸發條件:
+  //     - 同陣營有米鈴存活、未被疑惑、且不是 next 本人
+  //     - next 還活著且身上有 BAD_STATUS
+  //     - 每回合 1 次(對單一友方)
+  //   反擊不會引發對方還手類天賦(isRebound:true)。
+  if(next.curHp>0){
+    const _milin = G[next.side].find(x=>x!==next&&x.curHp>0&&x.name==='米鈴'&&!hasStatus(x,'confused'));
+    if(_milin){
+      const _badSts = next.status.filter(s=>BAD_STATUS.includes(s.type));
+      if(_badSts.length){
+        const _removed = _badSts[Math.floor(Math.random()*_badSts.length)];
+        next.status = next.status.filter(s=>s!==_removed);
+        log(`🔔 [米鈴] 天賦：守護鈴音！清除 [${next.name}] 的 [${statusName(_removed.type)}]！`);
+        bannerFX(next,'守護鈴音！','#ffaadd',800);
+        try{ sfxPassive(_milin,0.7,'米鈴天賦'); }catch(_){}
+        // 反擊:用米鈴攻擊的 80% 對隨機 1 名敵方
+        const _mlTl = (typeof _getTraitLv === 'function') ? _getTraitLv('米鈴') : 0;
+        const _mlMult = 0.8 + _mlTl * 0.1;  // 80%+10%/lv, Lv5 MAX = 130% (4*0.1=0.4, but _getTraitLv max ~4)
+        const _enemies = G[next.side==='p1'?'p2':'p1'].filter(x=>x.curHp>0);
+        if(_enemies.length){
+          const _tgt = _enemies[Math.floor(Math.random()*_enemies.length)];
+          const _dmg = Math.max(1, Math.floor((_milin.atk||9) * _mlMult));
+          try{ doDmg(_tgt, _dmg, {actor:_milin, isRebound:true, ignoreEvasion:true, noGuard:true}); }catch(_){}
+          log(`🔔 [米鈴] 守護鈴音反擊！對 [${_tgt.name}] 造成 ${_dmg} 傷害!`);
+        }
+        renderCard(next);
       }
     }
   }
@@ -31970,6 +32719,216 @@ function aiUseSkill(a,sk,cost,pref){
     });
   }
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260515.6880 — 救醫馬 S1「馬上救你一命」(第二處 execSkill — AI/直接執行)
+  //   target 已決定(由 _target 變數提供),不走 setPending
+  else if(n==='馬上救你一命'){
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='馬上救你一命') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='馬上救你一命') ? a._skLv.s2
+                : 0;
+    const _dur = _skLv >= 9 ? 4 : 3;
+    // 找一個血量最低的友方(若 _target 未提供)
+    const _t = _target || (G[a.side].filter(x=>x.curHp>0).sort((x,y)=>x.curHp/x.hp - y.curHp/y.hp)[0]);
+    if(_t){
+      addBuff(_t, 'burstUndying', _dur);
+      addBuff(_t, 'statusImmune', _dur);
+      log(`💉 [${a.name}] 馬上救你一命!保護 [${_t.name}] ${_dur} 回合!`);
+      try{ bannerFX(_t, '不倒+免疫', '#ffdda0', 1200); }catch(_){}
+      try{ playSkillFX('馬上救你一命', a, [_t]); }catch(_){}
+      try{ renderCard(_t); }catch(_){}
+    }
+    endAction(a, cost); return;
+  }
+  // ★ v1.0.20260515.6880 — 救醫馬 S2「等死不救」(第二處 execSkill — AI/直接執行)
+  else if(n==='等死不救'){
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='等死不救') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='等死不救') ? a._skLv.s2
+                : 0;
+    const _mult = 1.80 + _skLv * 0.08;
+    const _dur = _skLv >= 9 ? 3 : 2;
+    const _t = _target || enemies[0];
+    if(_t){
+      const _dmg = Math.floor(spv(a) * _mult);
+      doDmg(_t, _dmg, {actor:a, isSkill:true});
+      if(_t.curHp > 0){
+        addStatus(_t, 'noheal_curse', _dur);
+        _t._poisonAmt = Math.max(1, Math.floor(_t.hp * 0.05));
+        addStatus(_t, 'poison', _dur);
+        log(`💀 [${a.name}] 等死不救![${_t.name}] 不治詛咒 ${_dur} 回合!`);
+        try{ bannerFX(_t, '不治詛咒', '#cc44aa', 900); }catch(_){}
+      }
+      try{ playSkillFX('等死不救', a, [_t]); }catch(_){}
+    }
+    endAction(a, cost); return;
+  }
+  // ★ v1.0.20260515.6890 — 水狐 S1「水精靈合奏」(第二處 execSkill — AI/直接執行)
+  else if(n==='水精靈合奏'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='水精靈合奏') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='水精靈合奏') ? a._skLv.s2
+                : 0;
+    const _healPct = 0.50 + Math.min(_skLv, 4) * 0.02 + Math.max(0, _skLv-5) * 0.02;
+    const _dmgPct  = 0.40 + Math.min(_skLv, 4) * 0.02 + Math.max(0, _skLv-5) * 0.02;
+    const _times   = _skLv >= 9 ? 4 : 3;
+    const _spv = spv(a);
+    log(`💧 [${a.name}] 水精靈合奏!召喚 ${_times} 隻水精靈降臨!`);
+    try{ bannerFX(a, '💧 水精靈合奏!', '#44aaff', 1000); }catch(_){}
+    try{ playSfx('sfx-heal', 0.85); }catch(_){}
+    let i = 0;
+    function _waterSpiritAI(){
+      if(i >= _times || checkWin()){
+        a.acted=true; updateUI(); _pSetTimeout(startTurn, 400); return;
+      }
+      const _allies = (G[a.side] || []).slice();
+      let _lowestAlly = null, _lowestRatio = Infinity;
+      _allies.forEach(ally => {
+        if(!ally) return;
+        const _maxHp = ally.hp || 1;
+        const _curHp = (ally.curHp == null) ? _maxHp : ally.curHp;
+        const _ratio = _curHp / _maxHp;
+        if(_ratio < _lowestRatio){ _lowestRatio = _ratio; _lowestAlly = ally; }
+      });
+      if(_lowestAlly){
+        const _healAmt = Math.max(1, Math.floor(_spv * _healPct));
+        doHeal(_lowestAlly, _healAmt, {actor:a, isHeal:true, noDice:true, allowRevive:true});
+        renderCard(_lowestAlly);
+      }
+      const _foes = G[opp].filter(h => h.curHp > 0);
+      if(_foes.length){
+        const _t = _foes[Math.floor(Math.random() * _foes.length)];
+        const _dmg = Math.max(1, Math.floor(_spv * _dmgPct));
+        doDmg(_t, _dmg, {actor:a, isSkill:true, elem:'water'});
+      }
+      i++;
+      _pSetTimeout(_waterSpiritAI, 250);
+    }
+    _waterSpiritAI();
+    return;
+  }
+  // ★ v1.0.20260515.6890 — 水狐 S2「蛟龍出海」(第二處 execSkill — AI/直接執行)
+  else if(n==='蛟龍出海'){
+    const opp = a.side==='p1'?'p2':'p1';
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='蛟龍出海') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='蛟龍出海') ? a._skLv.s2
+                : 0;
+    const _mult = 0.80 + _skLv * 0.05;
+    const _slowDur = _skLv >= 9 ? 3 : 2;
+    const _spv = spv(a);
+    log(`🐉 [${a.name}] 蛟龍出海!2 條水龍橫掃戰場!`);
+    try{ bannerFX(a, '🐉 蛟龍出海!', '#44aaff', 1000); }catch(_){}
+    try{ playSfx('sfx-fantasy', 0.85); }catch(_){}
+    let wave = 0;
+    function _dragonWaveAI(){
+      if(wave >= 2 || checkWin()){
+        a.acted=true; updateUI(); _pSetTimeout(startTurn, 400); return;
+      }
+      const foes = G[opp].filter(h => h.curHp > 0);
+      if(!foes.length){
+        a.acted=true; updateUI(); _pSetTimeout(startTurn, 400); return;
+      }
+      foes.forEach((f, idx) => {
+        _pSetTimeout(() => {
+          if(f.curHp <= 0) return;
+          const _dmg = Math.max(1, Math.floor(_spv * _mult));
+          doDmg(f, _dmg, {actor:a, isSkill:true, elem:'water'});
+          if(f.curHp > 0 && Math.random() < 0.60){
+            addStatus(f, 'spddown', _slowDur);
+            try{ bannerFX(f, '減速', '#4488cc', 700); }catch(_){}
+          }
+          renderCard(f);
+        }, idx * 100);
+      });
+      wave++;
+      _pSetTimeout(_dragonWaveAI, foes.length * 100 + 400);
+    }
+    _dragonWaveAI();
+    return;
+  }
+  // ★ v1.0.20260515.6900 — 米鈴 S1/S2 (第二處 execSkill — AI/直接執行)
+  else if(n==='鈴音淨化'){
+    // AI 自動挑 HP 比例最低的友方(可包含倒下)
+    const _allies = (G[a.side] || []).slice().filter(x => !!x);
+    let _target = null, _lowestRatio = Infinity;
+    _allies.forEach(ally => {
+      const _maxHp = ally.hp || 1;
+      const _curHp = (ally.curHp == null) ? _maxHp : ally.curHp;
+      const _ratio = _curHp / _maxHp;
+      if(_ratio < _lowestRatio){ _lowestRatio = _ratio; _target = ally; }
+    });
+    if(!_target){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='鈴音淨化') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='鈴音淨化') ? a._skLv.s2
+                : 0;
+    const _healMult = 1.50 + _skLv * 0.05;
+    const _spv = spv(a);
+    const _healAmt = Math.max(1, Math.floor(_spv * _healMult));
+    if(_target.curHp <= 0){ try{ doRevive(_target, 0.5); }catch(_){} }
+    try{ doHeal(_target, _healAmt, {actor:a, isHeal:true, noDice:true, allowRevive:true}); }catch(_){}
+    const _badBefore = (_target.status || []).filter(s => BAD_STATUS.includes(s.type));
+    const _removed = _badBefore.length;
+    if(_removed > 0){ _target.status = _target.status.filter(s => !BAD_STATUS.includes(s.type)); }
+    log(`🔔 [${a.name}] 鈴音淨化!治療 [${_target.name}] ${_healAmt} HP,解除 ${_removed} 個不利狀態!`);
+    try{ bannerFX(_target, '🔔 鈴音淨化', '#ffaadd', 1100); }catch(_){}
+    try{ playSfx('sfx-heal', 0.9); playSfx('sfx-gentle', 0.7); }catch(_){}
+    try{ renderCard(_target); }catch(_){}
+    // 反擊
+    const _opp = a.side==='p1'?'p2':'p1';
+    const _counterMult = 0.90;
+    let _ci = 0;
+    function _milinCounterAI(){
+      if(_ci >= _removed){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
+      const _foes = G[_opp].filter(x => x.curHp > 0);
+      if(!_foes.length){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
+      const _tgt = _foes[Math.floor(Math.random() * _foes.length)];
+      const _dmg = Math.max(1, Math.floor(_spv * _counterMult));
+      try{ doDmg(_tgt, _dmg, {actor:a, isSkill:true, ignoreEvasion:true, ignoreBuffs:true, isRebound:true}); }catch(_){}
+      _ci++;
+      _pSetTimeout(_milinCounterAI, 200);
+    }
+    if(_removed > 0){
+      _pSetTimeout(_milinCounterAI, 300);
+    } else {
+      a.acted=true; updateUI(); _pSetTimeout(startTurn,400);
+    }
+    return;
+  }
+  else if(n==='女僕們的整潔活動'){
+    const _skLv = (a._skLv && a._skLv.s1 && a.s1.n==='女僕們的整潔活動') ? a._skLv.s1
+                : (a._skLv && a._skLv.s2 && a.s2.n==='女僕們的整潔活動') ? a._skLv.s2
+                : 0;
+    const _counterMult = 0.75 + _skLv * 0.05;
+    const _fallbackHits = _skLv >= 9 ? 3 : 1;
+    const _spv = spv(a);
+    log(`🧹 [${a.name}] 女僕們的整潔活動!召喚女僕同伴打掃戰場!`);
+    try{ bannerFX(a, '🧹 整潔活動', '#ffccff', 1100); }catch(_){}
+    try{ playSfx('sfx-gentle', 0.9); playSfx('sfx-fantasy', 0.6); }catch(_){}
+    const _allies = G[a.side];
+    let _totalRemoved = 0;
+    _allies.forEach(ally => {
+      if(!ally) return;
+      const _bad = (ally.status || []).filter(s => BAD_STATUS.includes(s.type));
+      if(_bad.length > 0){
+        _totalRemoved += _bad.length;
+        ally.status = ally.status.filter(s => !BAD_STATUS.includes(s.type));
+        try{ renderCard(ally); }catch(_){}
+      }
+    });
+    log(`🧹 共解除 ${_totalRemoved} 個不利狀態!`);
+    const _hits = _totalRemoved > 0 ? _totalRemoved : _fallbackHits;
+    const _opp = a.side==='p1'?'p2':'p1';
+    let _ci = 0;
+    function _cleanStepAI(){
+      if(_ci >= _hits || checkWin()){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
+      const _foes = G[_opp].filter(x => x.curHp > 0);
+      if(!_foes.length){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
+      const _tgt = _foes[Math.floor(Math.random() * _foes.length)];
+      const _dmg = Math.max(1, Math.floor(_spv * _counterMult));
+      try{ doDmg(_tgt, _dmg, {actor:a, isSkill:true, ignoreEvasion:true, ignoreBuffs:true, isRebound:true}); }catch(_){}
+      _ci++;
+      _pSetTimeout(_cleanStepAI, 180);
+    }
+    _pSetTimeout(_cleanStepAI, 250);
+    return;
+  }
   else if(n==='連續貓爪功'){
     // ★ 多段攻擊：4~6次隨機命中存活目標
     const _ccOpp = a.side==='p1'?'p2':'p1';
@@ -35552,7 +36511,7 @@ async function _showAdminStatsPanel(){
       },
       {
         label: '🎨 學生設計英雄',
-        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長']
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐']
       },
     ];
 
@@ -51992,6 +52951,11 @@ const ADMIN_ALL_HEROES = [
   '紅色玩家',
   // ★ v1.0.20260514.6770 — 5 年 4 班黃同學設計
   '地府酋長',
+  '救醫馬',
+  // ★ v1.0.20260515.6890 — 6 年 2 班林同學設計(首位 6 年級設計師)
+  '水狐',
+  // ★ v1.0.20260515.6900 — 6 年 5 班董同學設計(6 年 5 班首位設計師)
+  '米鈴',
 ];
 
 function advGetUnlockedHeroes() {
@@ -58650,7 +59614,7 @@ const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/L
 // ★ v1.0.20260514.6550 — 加進炸彈客(5 年 4 班劉同學設計,5 年 4 班首位設計師),共 13 隻分攤 5% 機率(每隻 ≈ 0.385%)
 // ★ v1.0.20260514.6660 — 加進紅色玩家(5 年 4 班陳同學設計,5 年 4 班第 2 位設計師),共 14 隻分攤 5% 機率(每隻 ≈ 0.357%)
 // ★ v1.0.20260514.6770 — 加進地府酋長(5 年 4 班黃同學設計,5 年 4 班第 3 位設計師),共 15 隻分攤 5% 機率(每隻 ≈ 0.333%)
-const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長'];
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴'];
 
 // BOSS 賣錢物品池(召喚也可獲得)
 // ★ v1.1.0 — 台灣 10 BOSS 賣錢物品也加入召喚池
@@ -61308,7 +62272,27 @@ const SKILL_UPGRADE_DEF = {
   //   S2 血色風暴:全體 100%+5%/級(Lv10 達 145%),fd 有「特技的 100%」(升)與「10% 最大 HP」(流血量,固定不升級)
   //   → 用自訂類別精確替換,避免標準 dmg cat 把 10% 也升級
   '血色風暴':     { cat:'special_blood_storm', label:'全體傷害' },
-  // ── 治療類：每級治療+10% ──
+  // ★ v1.0.20260515.6880 — 學生設計英雄系列(5 年 4 班吳同學「救醫馬」)
+  //   S1 馬上救你一命:能量 7,3 回合不倒+免疫不利;Lv5 能量 -1(7→6),Lv10 (MAX) 回合 +1(3→4)
+  //   → 用自訂類別精確替換,因為升級不是「%」也不是「次數」,而是能量與回合
+  '馬上救你一命': { cat:'special_pony_save', label:'能量+不倒/免疫回合' },
+  //   S2 等死不救:特技 180% + 不治詛咒 2 回合,每級 +8%(Lv10 達 260%);MAX 詛咒延長為 3 回合
+  //   → fd 有「特技的 180%」(升)與「2 回合」(固定/MAX 延長 1)、「5%」(流血量,固定不升級)
+  //   → 用自訂類別精確替換,避免 dmg cat 把 5% 也升級
+  '等死不救':     { cat:'special_pony_curse', label:'特技+詛咒回合' },
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學「水狐」)
+  //   S1 水精靈合奏:治療 50% + 傷害 40%(每級各 +2%),Lv10 (MAX) 召喚次數 3→4
+  //   → fd 有 2 個 % 和 1 個次數,用自訂類別精確替換
+  '水精靈合奏': { cat:'special_water_fox_s1', label:'治療%+傷害%+次數' },
+  //   S2 蛟龍出海:特技 80%×2 條龍 全體(每級 +5%),Lv10 (MAX) 減速 2→3 回合
+  //   → fd 有 1 個 %、固定 60% 機率(不升級)、回合數(MAX 延長)
+  '蛟龍出海':   { cat:'special_water_fox_s2', label:'特技%+減速回合' },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  //   S1 鈴音淨化:治療 150% + 反擊倍率 90%(固定),每級治療 +5%,MAX 不提升反擊
+  '鈴音淨化':           { cat:'special_milin_s1', label:'治療%' },
+  //   S2 女僕們的整潔活動:反擊倍率 75%(每級 +5%),MAX 保底打掃 1→3 次
+  '女僕們的整潔活動':   { cat:'special_milin_s2', label:'反擊%+保底次數' },
+  // ── 治療類:每級治療+10% ──
   '救贖神光': { cat:'heal',   label:'治療量' },
   // ★ v1.0.20260424.0560 — 神聖鎚擊: 固定 HP% 傷害(BOSS 5%/一般 20%) 不升級
   '神聖鎚擊': { cat:'no_upgrade', label:'固定 HP% 傷害(BOSS 5%/一般 20%)' },
@@ -61572,6 +62556,59 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
   else if(cat === 'special_blood_storm'){
     const dmgPct = 100 + skLv*5;
     fd = fd.replace(/特技的\s*100\s*%/g, '特技的 ' + HL(dmgPct + '%'));
+  }
+  // ★ v1.0.20260515.6880 — 救醫馬 S1:能量 7→6(Lv5),回合 3→4(Lv10)
+  //   fd 中要替換「3 回合」這個獨特字串(指不倒+免疫的持續時間)
+  //   能量改變不在 fd 顯示(走 skillCost 自動讀 baseEnergy);這裡只處理回合
+  else if(cat === 'special_pony_save'){
+    const dur = skLv >= 9 ? 4 : 3;
+    fd = fd.replace(/「免疫狀態」\s*3\s*回合/g, '「免疫狀態」 ' + HL(dur) + ' 回合');
+  }
+  // ★ v1.0.20260515.6880 — 救醫馬 S2:特技 180%+8%/級(Lv10 達 260%),詛咒 2→3(Lv10)
+  //   fd 有「特技的 180%」(升)、「2 回合」(MAX +1)、「5%」(固定流血量,不升)
+  //   只替換「180%」和「2 回合」,5% 留下
+  else if(cat === 'special_pony_curse'){
+    const dmgPct = 180 + skLv*8;
+    const dur = skLv >= 9 ? 3 : 2;
+    fd = fd.replace(/特技的\s*180\s*%/g, '特技的 ' + HL(dmgPct + '%'))
+           .replace(/「不治詛咒」\s*狀態\s*2\s*回合/g, '「不治詛咒」 狀態 ' + HL(dur) + ' 回合');
+  }
+  // ★ v1.0.20260515.6890 — 水狐 S1:治療 50% +2%/級、傷害 40% +2%/級、Lv10 (MAX) 召喚次數 3→4
+  //   fd 中「特技的 50%」(治療升)、「特技的 40%」(傷害升)、「3 隻水精靈」(MAX 升 4)
+  else if(cat === 'special_water_fox_s1'){
+    const healPct = 50 + Math.min(skLv, 4)*2 + Math.max(0, skLv-5)*2;
+    const dmgPct  = 40 + Math.min(skLv, 4)*2 + Math.max(0, skLv-5)*2;
+    const times   = skLv >= 9 ? 4 : 3;
+    fd = fd.replace(/特技的\s*50\s*%\s*治療/g, '特技的 ' + HL(healPct + '%') + ' 治療')
+           .replace(/特技的\s*40\s*%\s*對隨機/g, '特技的 ' + HL(dmgPct + '%') + ' 對隨機')
+           .replace(/召喚\s*3\s*隻水精靈/g, '召喚 ' + HL(times) + ' 隻水精靈')
+           .replace(/共\s*3\s*次治療/g, '共 ' + HL(times) + ' 次治療')
+           .replace(/3\s*次傷害/g, HL(times) + ' 次傷害');
+  }
+  // ★ v1.0.20260515.6890 — 水狐 S2:特技 80% +5%/級(Lv10 達 125%)、減速 2→3(Lv10)
+  //   fd 中「特技的 80%」(升)、「合計 160%」(顯示用,改一致)、「2 回合」(MAX 升)
+  //   60% 機率固定不升級
+  else if(cat === 'special_water_fox_s2'){
+    const mult = 80 + skLv*5;
+    const total = mult * 2;
+    const slowDur = skLv >= 9 ? 3 : 2;
+    fd = fd.replace(/特技的\s*80\s*%/g, '特技的 ' + HL(mult + '%'))
+           .replace(/合計\s*160\s*%/g, '合計 ' + HL(total + '%'))
+           .replace(/減速\s*2\s*回合/g, '減速 ' + HL(slowDur) + ' 回合');
+  }
+  // ★ v1.0.20260515.6900 — 米鈴 S1「鈴音淨化」:治療 150% +5%/級(Lv10 達 200%,顯示 195%)
+  //   反擊倍率 90% 固定不升級
+  else if(cat === 'special_milin_s1'){
+    const healPct = 150 + skLv * 5;
+    fd = fd.replace(/特技的\s*150\s*%/g, '特技的 ' + HL(healPct + '%'));
+  }
+  // ★ v1.0.20260515.6900 — 米鈴 S2「女僕們的整潔活動」:反擊倍率 75% +5%/級(Lv10 達 125%)
+  //   MAX(Lv10) 保底打掃 1→3 次
+  else if(cat === 'special_milin_s2'){
+    const counterPct = 75 + skLv * 5;
+    const fallback = skLv >= 9 ? 3 : 1;
+    fd = fd.replace(/特技的\s*75\s*%/g, '特技的 ' + HL(counterPct + '%'))
+           .replace(/保底打掃\s*1\s*次/g, '保底打掃 ' + HL(fallback) + ' 次');
   }
   else if(cat === 'special_kuyou_fox'){
     // 九尾狐火: 特技% +5/級, 燃燒 2→3
@@ -62017,6 +63054,27 @@ function _renderTraitFdWithLv(heroName, originalFd, traitLv){
              .replace(/滿層\s*=\s*特技\s*\+20/g, '滿層 = 特技 +' + HL(maxStack));
       break;
     }
+    // ★ v1.0.20260515.6880 — 救醫馬天賦升級規則
+    //   觸發機率類:40% + 10%/級 → Lv5 80%
+    case '救醫馬': {
+      const pct = Math.min(100, 40 + traitLv * 10);
+      fd = fd.replace(/有\s*40\s*%\s*機率/g, '有 ' + HL(pct + '%') + ' 機率');
+      break;
+    }
+    // ★ v1.0.20260515.6890 — 水狐天賦升級規則
+    //   觸發機率類:40% + 10%/級 → Lv5 80%
+    case '水狐': {
+      const pct = Math.min(100, 40 + traitLv * 10);
+      fd = fd.replace(/有\s*40\s*%\s*機率/g, '有 ' + HL(pct + '%') + ' 機率');
+      break;
+    }
+    // ★ v1.0.20260515.6900 — 米鈴天賦升級規則
+    //   反擊倍率類:80% + 10%/級 → Lv5 120%
+    case '米鈴': {
+      const pct = 80 + traitLv * 10;
+      fd = fd.replace(/特技的\s*80\s*%/g, '特技的 ' + HL(pct + '%'));
+      break;
+    }
     // 八岐大蛇、寶箱怪等 BOSS 不升級,直接返回
   }
 
@@ -62198,6 +63256,55 @@ function _renderBurstFdWithLv(burstName, originalFd, burstLv){
       const extraPct = Math.round(100 * _mult);
       fd = fd.replace(/特技的\s*200\s*%/g, '特技的 ' + HL(aoePct + '%'))
              .replace(/特技\s*100\s*%/g, '特技 ' + HL(extraPct + '%'));
+      _customHandled = true; break;
+    }
+    // ★ v1.0.20260515.6880 — 救醫馬爆發「救救昏倒夥」升級規則
+    //   治療倍率:200/220/240/260/280%(+20%/級)
+    //   最大HP加成:+10/+15/+20/+25/+30(+5/級)
+    //   狀態持續:2/2/2/2/3 回合(MAX 延長)
+    case '救救昏倒夥': {
+      const healPct = 200 + burstLv * 20;
+      const hpBonus = 10 + burstLv * 5;
+      const dur = burstLv >= 4 ? 3 : 2;
+      fd = fd.replace(/特技的\s*200\s*%/g, '特技的 ' + HL(healPct + '%'))
+             .replace(/最大\s*HP\s*\+10/g, '最大 HP +' + HL(hpBonus))
+             .replace(/「免疫狀態」\s*2\s*回合/g, '「免疫狀態」 ' + HL(dur) + ' 回合');
+      _customHandled = true; break;
+    }
+    // ★ v1.0.20260515.6890 — 水狐爆發「萬流歸宗·神龍降臨」升級規則
+    //   全體傷害倍率:250/270/290/310/330%(+20%/級)
+    //   全隊治療倍率:100/110/120/130/150%(MAX +20)
+    //   Lv4 MAX 附加「水之祝福」狀態 2 回合(我方水傷害 +20%)
+    case '萬流歸宗·神龍降臨':
+    case '萬流歸宗・神龍降臨': {
+      const dmgTable  = [250, 270, 290, 310, 330];
+      const healTable = [100, 110, 120, 130, 150];
+      const dmgPct  = dmgTable[Math.min(4, burstLv)];
+      const healPct = healTable[Math.min(4, burstLv)];
+      fd = fd.replace(/特技\s*250\s*%/g, '特技 ' + HL(dmgPct + '%'))
+             .replace(/特技的\s*250\s*%/g, '特技的 ' + HL(dmgPct + '%'))
+             .replace(/特技\s*100\s*%\s*回復/g, '特技 ' + HL(healPct + '%') + ' 回復')
+             .replace(/特技的\s*100\s*%\s*回復/g, '特技的 ' + HL(healPct + '%') + ' 回復');
+      if(burstLv >= 4){
+        // MAX 在原 fd 結尾加上水之祝福說明
+        fd = fd + ' <span style="color:#88ccff;">+ 我方全體獲得「💧 水之祝福」 2 回合(水傷害 +20%)</span>';
+      }
+      _customHandled = true; break;
+    }
+    // ★ v1.0.20260515.6900 — 米鈴爆發「夢幻的茶會」升級規則
+    //   全體治療倍率:175/190/205/220/240%
+    //   茶會反擊倍率:100/110/120/130/150%
+    //   茶會持續    :2/2/2/2/3 回合 (MAX 延長)
+    case '夢幻的茶會': {
+      const healTable    = [175, 190, 205, 220, 240];
+      const counterTable = [100, 110, 120, 130, 150];
+      const durTable     = [2, 2, 2, 2, 3];
+      const healPct    = healTable[Math.min(4, burstLv)];
+      const counterPct = counterTable[Math.min(4, burstLv)];
+      const dur        = durTable[Math.min(4, burstLv)];
+      fd = fd.replace(/特技的\s*175\s*%/g, '特技的 ' + HL(healPct + '%'))
+             .replace(/特技的\s*100\s*%\s*對來源/g, '特技的 ' + HL(counterPct + '%') + ' 對來源')
+             .replace(/「茶會」狀態\s*2\s*回合/g, '「茶會」狀態 ' + HL(dur) + ' 回合');
       _customHandled = true; break;
     }
     // ── BOSS 解鎖英雄 ──
@@ -62482,6 +63589,43 @@ function _getSkUpgradeBadge(skillName, skLv){
   if(cat==='special_blood_storm'){
     const dmgPct = 100 + (skLv||0)*5;
     return '全體 ' + dmgPct + '% + 流血 2 回合';
+  }
+  // ★ v1.0.20260515.6880 — 救醫馬 S1/S2 升級短摘要
+  if(cat==='special_pony_save'){
+    const energy = (skLv||0) >= 4 ? 6 : 7;
+    const dur = (skLv||0) >= 9 ? 4 : 3;
+    return '能量 ' + energy + ' · ' + dur + ' 回合不倒+免疫';
+  }
+  if(cat==='special_pony_curse'){
+    const dmgPct = 180 + (skLv||0)*8;
+    const dur = (skLv||0) >= 9 ? 3 : 2;
+    return '特技×' + dmgPct + '% + 不治詛咒 ' + dur + ' 回合';
+  }
+  // ★ v1.0.20260515.6890 — 水狐 S1/S2 升級短摘要
+  if(cat==='special_water_fox_s1'){
+    const lv = skLv || 0;
+    const healPct = 50 + Math.min(lv, 4)*2 + Math.max(0, lv-5)*2;
+    const dmgPct  = 40 + Math.min(lv, 4)*2 + Math.max(0, lv-5)*2;
+    const times   = lv >= 9 ? 4 : 3;
+    return '召喚 ' + times + ' 隻 · 治療×' + healPct + '% + 傷害×' + dmgPct + '%';
+  }
+  if(cat==='special_water_fox_s2'){
+    const lv = skLv || 0;
+    const mult = 80 + lv*5;
+    const slowDur = lv >= 9 ? 3 : 2;
+    return '特技×' + mult + '%×2 全體 + 60% 減速 ' + slowDur + ' 回合';
+  }
+  // ★ v1.0.20260515.6900 — 米鈴 S1/S2 升級短摘要
+  if(cat==='special_milin_s1'){
+    const lv = skLv || 0;
+    const healPct = 150 + lv * 5;
+    return '治療×' + healPct + '% + 每解1個用特技×90%反擊';
+  }
+  if(cat==='special_milin_s2'){
+    const lv = skLv || 0;
+    const counterPct = 75 + lv * 5;
+    const fallback = lv >= 9 ? 3 : 1;
+    return '解我方全體不利 + 反擊×' + counterPct + '% (保底×' + fallback + ')';
   }
   if(cat==='special_blizzard'){
     // 暴風雪:特技×(70+5*lv)% + (50+3*lv)%冰凍
@@ -62800,6 +63944,49 @@ function buildSkillLvTable(skillName, currentLv) {
       const dmgPct = 100 + lv*5;
       effectText = '全體 ' + dmgPct + '% + 流血 2 回合(每回合 -10%HP)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
+    // ★ v1.0.20260515.6880 — 救醫馬 S1:能量 Lv5 -1、回合 Lv10 +1
+    else if(cat==='special_pony_save'){
+      const energy = lv >= 4 ? 6 : 7;
+      const dur = lv >= 9 ? 4 : 3;
+      let _label = '能量 ' + energy + ' · ' + dur + ' 回合「不倒再生」+「免疫狀態」';
+      if(lv === 4)  _label += ' ← 能量 -1';
+      if(lv === 9)  _label += '（MAX 回合 +1）';
+      else if(lv === 0) _label += '（基礎）';
+      effectText = _label;
+    }
+    // ★ v1.0.20260515.6880 — 救醫馬 S2:特技+8%/級、詛咒 Lv10 +1
+    else if(cat==='special_pony_curse'){
+      const dmgPct = 180 + lv*8;
+      const dur = lv >= 9 ? 3 : 2;
+      effectText = '特技×' + dmgPct + '% + 不治詛咒 ' + dur + ' 回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260515.6890 — 水狐 S1:治療+2%/級、傷害+2%/級、Lv10 召喚次數 3→4
+    else if(cat==='special_water_fox_s1'){
+      const healPct = 50 + Math.min(lv, 4)*2 + Math.max(0, lv-5)*2;
+      const dmgPct  = 40 + Math.min(lv, 4)*2 + Math.max(0, lv-5)*2;
+      const times   = lv >= 9 ? 4 : 3;
+      let _label = '召喚 ' + times + ' 隻 · 治療×' + healPct + '% + 傷害×' + dmgPct + '%';
+      if(lv === 9) _label += '（MAX 召喚次數 +1）';
+      else if(lv === 0) _label += '（基礎）';
+      effectText = _label;
+    }
+    // ★ v1.0.20260515.6890 — 水狐 S2:特技+5%/級、Lv10 減速 2→3
+    else if(cat==='special_water_fox_s2'){
+      const mult = 80 + lv*5;
+      const slowDur = lv >= 9 ? 3 : 2;
+      effectText = '特技×' + mult + '%×2 全體 + 60% 減速 ' + slowDur + ' 回合' + (lv===9?'（MAX 減速 +1）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260515.6900 — 米鈴 S1:治療+5%/級、反擊倍率 90% 不升級
+    else if(cat==='special_milin_s1'){
+      const healPct = 150 + lv * 5;
+      effectText = '治療×' + healPct + '% + 每解1個用特技×90%反擊' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260515.6900 — 米鈴 S2:反擊+5%/級、Lv10 保底打掃 1→3 次
+    else if(cat==='special_milin_s2'){
+      const counterPct = 75 + lv * 5;
+      const fallback = lv >= 9 ? 3 : 1;
+      effectText = '解我方全體不利 + 反擊×' + counterPct + '% (保底×' + fallback + ')' + (lv===9?'（MAX 保底×3）':(lv===0?'（基礎）':''));
+    }
     else if(cat==='special_blizzard'){
       const dmgPct = 70 + lv*5;
       const frzPct = 50 + lv*3;
@@ -62945,6 +64132,11 @@ const HERO_CATEGORIES_OVERRIDE = {
   '紅色玩家':    ['dmg','ctrl'],    // S1必中爆殺、S2反域(全隊保護+反彈控場)、爆發無敵+3倍輸出
   // ★ v1.0.20260514.6770 — 5 年 4 班黃同學設計
   '地府酋長':    ['dmg','ctrl'],    // S1審判終結秒殺(非BOSS)+BOSS%HP傷害、S2全體+流血、爆發全體+指定追擊+禁動;天賦疊層特技
+  '救醫馬':      ['heal','ctrl'],   // ★ v6880 — 純後援王:S1 三回合不倒+免疫不利、S2 不治詛咒、爆發三效合一全隊治療
+  // ★ v1.0.20260515.6890 — 6 年 2 班林同學設計
+  '水狐':        ['dmg','heal'],    // S1 召喚水精靈雙線(治療+傷害)、S2 蛟龍出海全體 2 段、爆發全體巨傷+全隊治療+解不利
+  // ★ v1.0.20260515.6900 — 6 年 5 班董同學設計
+  '米鈴':        ['heal'],          // 純後援:三層淨化+反擊輸出,爆發「茶會」buff 持續反制不利狀態
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -63032,6 +64224,15 @@ const HERO_HEX_OVERRIDE = {
   //   爆發全體大傷害 + 指定追擊 + 禁動;天賦倒下疊層特技(滾雪球)
   //   雷達:極高特技(21,全英雄頂尖)+ 中等控制(審判終結+流血+禁動);無治療;速度極慢(6)
   '地府酋長':    { heal: 0, ctrl: 8 },
+  '救醫馬':      { heal: 10, ctrl: 6 },  // ★ v6880 — 三大效果合一爆發+S1強保護=回復滿值;S1免疫+S2禁療=中度控場
+  // ★ v1.0.20260515.6890 — 6 年 2 班林同學設計
+  //   水狐:S1 召喚水精靈雙線(治療+傷害)、S2 蛟龍出海全體 2 段、爆發全體巨傷+全隊治療+解不利+Lv4 水之祝福
+  //   雷達:高回復(天賦+S1+爆發三層)+中等控制(S2 60% 減速+爆發解不利)
+  '水狐':        { heal: 9, ctrl: 5 },
+  // ★ v1.0.20260515.6900 — 6 年 5 班董同學設計
+  //   米鈴:三層淨化(天賦/S1/S2)+反擊輸出+爆發「茶會」buff 反制不利;速度 22 全英雄頂尖
+  //   雷達:滿值回復(淨化+治療)+低控制(無附加不利狀態)
+  '米鈴':        { heal: 10, ctrl: 2 },
 
   // 校犬(特殊雙滿)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
@@ -68654,7 +69855,7 @@ const _TRAIT_LV_INFO = {
   '占星師':  { base:'60%星語', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'自己行動時補充1能量的機率' },
   '大力士':  { base:'40%怒炎', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'受不利狀態時轉化怒火提升攻擊25%的機率' },
   '凡人':    { base:'40%節省', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'使用技能時不消耗能量的機率' },
-  '木靈使':  { base:'60%淨化', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'自己行動時解除我方1個不利狀態的機率' },
+  '木靈使':  { base:'60%解除+50%治療', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'友方受到不利狀態時解除並用特技50%治療的機率' },
   '機械師':  { base:'20%觸電', bonus:'+5%/天賦級', max:'45%（Lv5）', effect:'受傷時麻痺攻擊者1回合的機率' },
   '武士':    { base:'50% 追擊', bonus:'+5%/天賦級(機率與傷害同步)', max:'75%(Lv5)', effect:'隊友普攻時觸發協同攻擊機率與傷害' },
   '陰陽師':  { base:'60%替身', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受技能傷害時由式神代替承傷的機率' },
@@ -68699,6 +69900,12 @@ const _TRAIT_LV_INFO = {
   '紅色玩家':{ base:'30% 普攻迴避', bonus:'+10%/天賦級', max:'70%(Lv5)', effect:'受到普通攻擊時有機率完全迴避傷害(技能/爆發/AoE/狀態DOT/反彈不會觸發)' },
   // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
   '地府酋長':{ base:'每層 +4 特技,最多 5 層', bonus:'+1/天賦級每層加成', max:'每層 +8 特技(Lv5),滿層 = +40', effect:'場上任意目標倒下時自身特技疊加(地府酋長倒下會清空自己的加成)' },
+  // ★ v1.0.20260515.6880 — 學生設計英雄系列
+  '救醫馬':  { base:'40% 機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'回合開始時若有友方 HP 低於 50%,機率用特技 80% 自動治療該友方(可復活)' },
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學「水狐」)
+  '水狐':    { base:'40% 機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'受傷時機率召喚 1 隻小水精靈為 HP 比例最低友方治療特技 60% HP(可復活)' },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  '米鈴':    { base:'反擊倍率 80%', bonus:'+10%/天賦級', max:'120%(Lv5)', effect:'友方行動前清除其 1 個不利狀態,若成功清除則用特技反擊狀態來源對手' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -71688,6 +72895,12 @@ const STUDENT_DESIGNER_HEROES = {
   'lsps110104@stu.lsps.tp.edu.tw': { hero:'紅色玩家',   name:'陳同學', class:'5年4班', flagId:'red_player'       },
   // ★ v1.0.20260514.6770 — 5 年 4 班第 3 位設計師(地府酋長設計者)
   'lsps110061@stu.lsps.tp.edu.tw': { hero:'地府酋長',   name:'黃同學', class:'5年4班', flagId:'hell_chieftain'   },
+  // ★ v1.0.20260515.6880 — 5 年 4 班第 4 位設計師(救醫馬設計者)
+  'lsps110021@stu.lsps.tp.edu.tw': { hero:'救醫馬',     name:'吳同學', class:'5年4班', flagId:'pony_nurse'       },
+  // ★ v1.0.20260515.6890 — 6 年 2 班首位設計師(水狐設計者)
+  'lsps109166@stu.lsps.tp.edu.tw': { hero:'水狐',       name:'林同學', class:'6年2班', flagId:'water_fox',        isFirstOfClass:true },
+  // ★ v1.0.20260515.6900 — 6 年 5 班首位設計師(米鈴設計者)
+  'lsps109101@stu.lsps.tp.edu.tw': { hero:'米鈴',       name:'董同學', class:'6年5班', flagId:'maid_cat_milin',   isFirstOfClass:true },
 };
 
 window._grantStudentDesignerHero = function(email){
@@ -71860,6 +73073,195 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260515.6900', brief:[
+    '🐱 全新學生設計英雄登場:米鈴(6 年 5 班董同學設計)— 淨化王 + 反擊輸出二合一!',
+    '🔔 天賦 守護鈴音:友方行動前清除其 1 個不利狀態並用米鈴攻擊的 80% 反擊敵方(必中)',
+    '🎀 S1 鈴音淨化:特技 150% 治療 1 友方並解除其全部不利,每解 1 個用特技 90% 反擊隨機對手',
+    '🧹 S2 女僕們的整潔活動:解除我方全體不利狀態,依解除總數 N 用特技 75% 對隨機對手反擊 N 次',
+    '☕ 爆發 夢幻的茶會:特技 175% 全隊治療+全隊「茶會」buff 2 回合(受不利時自動解除並用特技 100% 反擊來源)',
+    '🌿 同步調整:木靈使天賦改為「友方受不利狀態時 60% 機率解除並依特技 50% 恢復 HP」',
+    '✏️ 6 年 5 班首位學生設計師作品,圖鑑詳情頁可看到「✏️ 由 6年5班 董同學 設計(2026 年)」紀念彩虹禮讚',
+  ], items:[
+    '【🐱 米鈴 — 角色概念(6 年 5 班董同學設計,2026 年)】',
+    '・身分:私人莊園裡的貓族女僕,胸口別著鈴鐺,輕步穿梭於戰場守護每一位夥伴',
+    '・性格:溫柔細膩、心思體貼,看見夥伴受苦會立刻撲上去守護,把每件不愉快都化成微笑',
+    '・興趣:照顧每一位夥伴、為大家煮熱湯、和女僕同伴們一起把戰場打掃得乾乾淨淨',
+    '・口頭禪:「喵～這點難題,米鈴一個眨眼就解決囉♪」',
+    '・6 年 5 班第 1 位學生設計師(全校第 13 位),特別給彩虹禮讚紀念藍框',
+    '【⚙️ 基礎能力】HP 60 / 攻擊 9 / 特技 9 / 速度 22(總和 100,學生英雄標準)',
+    '・配置:極限速度(22 並列全英雄頂尖),搭配反擊天賦每回合都能搶先行動',
+    '【🌟 天賦:守護鈴音 🔔】',
+    '・隊伍中任一友方行動前,米鈴清除該友方身上 1 個不利狀態(隨機 1 個)',
+    '・若成功清除,立即用米鈴攻擊的 80% 對隨機 1 名敵方反擊(必中、不會引發還手類天賦)',
+    '・每升 1 級反擊倍率 +10%,Lv5 MAX 達 120%',
+    '【🎀 S1:鈴音淨化(能量 4)】',
+    '・用特技 150% 治療 1 名友方(可復活),並解除其身上所有不利狀態',
+    '・每解除 1 個不利狀態,就用特技 90% 對隨機 1 名對手反擊(必中、無視有利狀態)',
+    '・升級:Lv1~10 治療 150→200%(每級 +5%),反擊倍率固定不升級',
+    '【🧹 S2:女僕們的整潔活動(能量 6)】',
+    '・米鈴召喚女僕同伴打掃戰場,解除我方全體所有不利狀態',
+    '・依解除的總狀態數 N,用特技 75% 對隨機對手造成 N 次反擊(必中、無視有利狀態)',
+    '・若 N = 0,則改為對 1 名對手保底打掃 1 次',
+    '・升級:Lv1~10 反擊倍率 75→125%(每級 +5%),Lv10 (MAX) 保底打掃 1→3 次',
+    '【☕ 爆發:夢幻的茶會】',
+    '・米鈴擺開銀色茶具邀請夥伴入席——以特技 175% 治療我方全體 HP(可復活)',
+    '・我方全體獲得「☕ 茶會」狀態 2 回合,期間友方即將受到不利狀態時自動解除',
+    '・並由米鈴用特技 100% 對來源對手反擊 1 次(必中、無視有利狀態)',
+    '・升級表(_burstLv 0~4):',
+    '  全體治療倍率 175/190/205/220/240%',
+    '  茶會反擊倍率 100/110/120/130/150%',
+    '  茶會持續    2/2/2/2/3 回合 (MAX 延長)',
+    '・GIF:「彩色星星.gif」(設計者董同學指定提供)+ 治療+柔和+奇幻三層音效 + 粉嫩茶會 tint',
+    '【🌿 同步調整:木靈使天賦改寫】',
+    '・舊版:「輪到自己行動時 60% 機率解除我方 1 個不利狀態」(只在自己行動觸發)',
+    '・新版:「友方受到不利狀態時 60% 機率立即解除並依特技 50% 恢復 HP」(即時觸發)',
+    '・觸發點從 startTurn(行動前)改到 addStatus(狀態被附加時),反應更即時',
+    '・每升 1 級觸發機率 +4%,Lv5 MAX 達 80%',
+    '・跟弦樂團員「弦護」差異化:弦樂只解、木靈使解+治',
+    '【🎰 召喚池調整】',
+    '・SUMMON_RARE_HEROES 加入米鈴,從 17 隻 → 18 隻分攤 5% 機率',
+    '・每隻稀有英雄從 0.294% → 0.278% 抽中機率',
+    '・6 年 5 班董同學用學校 email(lsps109101@stu.lsps.tp.edu.tw)登入會自動補發',
+    '・管理員測試清單 ADMIN_ALL_HEROES 也同步加入(可直接擁有測試)',
+    '【🌈 6 年 5 班首位設計師禮讚】',
+    '・STUDENT_DESIGNER_HEROES 中 isFirstOfClass:true 凍結「6 年 5 班首位設計師」榮譽',
+    '・未來該班即使有第 2、3 位設計師加入,董同學的首位稱號永不消失',
+    '・董同學登入時會看到專屬彩虹禮讚紀念藍框,跟 5 年 5 班閻同學、5 年 2 班鐘同學、5 年 4 班劉同學、6 年 2 班林同學同等待遇',
+    '【📋 鐵律 1.20 — 26 點覆蓋清單實作位置】',
+    '・A 核心資料:hero_db.js 新增米鈴條目 + index.html ?v=20260515c 破快取',
+    '・B 圖鑑顯示(11 處):AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / BURST_UPGRADE_DEF / HERO_IMG_POS / HERO_THUMB_POS / HERO_BIO(含 designer) / BURST_DB / HERO_LORE / HERO_TRAIT / BURST_GIF_DB',
+    '・C 升級系統(6 處):SKILL_UPGRADE_DEF 新增 special_milin_s1/s2(因 fd 多 % 不能用通用 heal/dmg) + fd renderer / _renderTraitFdWithLv / _renderBurstFdWithLv / 短摘要 / 升級表格逐列 + _TRAIT_LV_INFO',
+    '・D 戰鬥邏輯(5 處):startTurn 加米鈴天賦「守護鈴音」hook(友方行動前清不利+反擊) + addStatus 加「茶會」buff hook(友方受不利自動解除+反擊) + execSkill 兩處(setPending 流程 + AI 直接執行)加 S1/S2 客製分支 + _runBurst 加爆發實作(全隊治療+附加 _teaParty buff) + tickStatus 加 _teaParty 過期 hook + buffName 加 _teaParty 中文對照',
+    '・E 解鎖/補發(6 處):STUDENT_DESIGNER_HEROES(董同學 email + flagId:maid_cat_milin + isFirstOfClass:true)+ SUMMON_RARE_HEROES + ADMIN_ALL_HEROES + 補償英雄分組 + HERO_CATEGORIES_OVERRIDE + HERO_HEX_OVERRIDE',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6900 + hero_db.js?v=20260515c + GAME_CHANGELOG 記錄',
+    '【🌿 木靈使同步調整實作位置】',
+    '・HERO_TRAIT[木靈使] 描述與 fd 改寫',
+    '・_TRAIT_LV_INFO[木靈使] 升級資訊改寫',
+    '・startTurn 中舊版「行動時解除」邏輯移除',
+    '・addStatus 中新增 hook:友方受不利狀態時觸發解除+治療(類似弦樂團員寫法)',
+    '【⚖️ 平衡性自我檢視】',
+    '・強處:三層淨化(天賦/S1/S2)+ 爆發「茶會」buff 持續 2 回合反制不利+速度 22 全英雄頂尖,對狀態堆疊型 BOSS 剋星',
+    '・弱處:HP 60 偏脆、攻擊 9 普攻不痛、爆發無立即傷害、面對純爆破型敵人(炸彈客、鋁合金暴龍)輸出疲弱',
+    '・整體強度:T1 後援,跟救醫馬、雙星姊妹、水狐同階,茶會 buff 為未來「反制不利狀態」角色開拓新方向',
+  ] },
+  { ver:'v1.0.20260515.6890', brief:[
+    '🐉 全新學生設計英雄登場:水狐(6 年 2 班林同學設計)— 水之召喚輸出+治療雙線王!',
+    '💧 天賦 水之眷顧:受傷時 40% 機率召喚水精靈為 HP 最低友方治療(特技 60%)',
+    '🌊 S1 水精靈合奏:召喚 3 隻水精靈每隻治療最低 HP 友方+傷害隨機對手',
+    '🐉 S2 蛟龍出海:召喚 2 條水龍對全體 80% 水傷害共 2 次,附加減速 2 回合',
+    '🌊 爆發 萬流歸宗·神龍降臨:特技 250% 全體水傷害(必中無視有利)+特技 100% 全隊治療+解不利',
+    '✏️ 6 年 2 班首位學生設計師作品(也是首位 6 年級設計師),圖鑑詳情頁可看到「✏️ 由 6年2班 林同學 設計(2026 年)」紀念彩虹禮讚',
+  ], items:[
+    '【🐉 水狐 — 角色概念(6 年 2 班林同學設計,2026 年)】',
+    '・身分:上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸,海與淡水皆奉其為主',
+    '・性格:高冷神秘,卻對受傷的小生命特別溫柔;不愛動手,只在水鏡中觀察,出手前已備好千軍',
+    '・興趣:在月光下吹奏海螺呼喚水精靈,養著一窩剛孵化的小水龍,陪牠們練習吐水泡',
+    '・口頭禪:「來吧,我的孩子們——讓他們嚐嚐汪洋的滋味。」',
+    '・6 年 2 班第 1 位學生設計師(全校第 12 位),特別給彩虹禮讚紀念藍框',
+    '【⚙️ 基礎能力】HP 65 / 攻擊 11 / 特技 14 / 速度 10(總和 100,學生英雄標準)',
+    '・配置:中庸偏向特技,以「召喚倍化輸出」為核心 — 一次技能多次治療+多次傷害',
+    '【🌟 天賦:水之眷顧 💧】',
+    '・受到傷害時 40% 機率召喚 1 隻小水精靈,為 HP 比例最低的友方治療特技 60% HP(可復活)',
+    '・每升 1 級觸發機率 +10%,Lv5 MAX 達 80%',
+    '・觸發條件寬鬆:DOT(中毒/流血)也算受傷會觸發,讓水狐能持續產出治療',
+    '【💧 S1:水精靈合奏(能量 3)】',
+    '・召喚 3 隻水精靈降臨!每隻依特技 50% 治療 HP 比例最低的友方(可復活)',
+    '・每隻同時依特技 40% 對隨機 1 名對手造成水屬性傷害',
+    '・共 3 次治療 + 3 次傷害,每次獨立挑目標',
+    '・升級:Lv1~10 治療 50→68%、傷害 40→58% (每級各 +2%),Lv10 (MAX) 召喚 4 隻',
+    '【🐉 S2:蛟龍出海(能量 5)】',
+    '・揮動獨角破浪,召喚 2 條水龍橫掃戰場!',
+    '・每條龍以特技 80% 對敵方全體造成水屬性傷害(共 160% 全體)',
+    '・命中後 60% 機率使目標減速 2 回合',
+    '・升級:Lv1~10 倍率 80→125%(每級 +5%),Lv10 (MAX) 減速延長為 3 回合',
+    '・走 SKILL_FORCE_ELEMENT 強制水屬性(剋火、被風剋)',
+    '【🌊 爆發:萬流歸宗·神龍降臨】',
+    '・水狐振翅升空,以獨角刺破天幕引動萬流匯聚——召喚水龍王降臨!',
+    '・對敵方全體造成特技 250% 的水屬性傷害(必中、無視有利狀態)',
+    '・洪流順勢沖刷我方全體,解除全體不利狀態並依特技 100% 回復 HP(可復活)',
+    '・升級表(_burstLv 0~4):',
+    '  全體傷害倍率 250/270/290/310/330%',
+    '  全隊治療倍率 100/110/120/130/150%',
+    '  Lv4 MAX 附加「💧 水之祝福」狀態 2 回合(我方水傷害 +20%,可與其他元素增幅疊加)',
+    '・GIF:「水龍攻擊.gif」(設計者林同學提供,scale 1.5 放大特效)+ 專屬音效 sfx-waterfox-burst + 奇幻召喚+治癒餘韻三層音效 + 深海藍 tint + 2400ms',
+    '【🎰 召喚池調整】',
+    '・SUMMON_RARE_HEROES 加入水狐,從 16 隻 → 17 隻分攤 5% 機率',
+    '・每隻稀有英雄從 0.313% → 0.294% 抽中機率',
+    '・6 年 2 班林同學用學校 email(lsps109166@stu.lsps.tp.edu.tw)登入會自動補發',
+    '・管理員測試清單 ADMIN_ALL_HEROES 也同步加入(可直接擁有測試)',
+    '【🌈 6 年級首位設計師禮讚】',
+    '・STUDENT_DESIGNER_HEROES 中 isFirstOfClass:true 凍結「6 年 2 班首位設計師」榮譽',
+    '・未來該班即使有第 2、3 位設計師加入,林同學的首位稱號永不消失',
+    '・林同學登入時會看到專屬彩虹禮讚紀念藍框,跟 5 年 5 班閻同學、5 年 2 班鐘同學、5 年 4 班劉同學同等待遇',
+    '【📋 鐵律 1.20 — 26 點覆蓋清單實作位置(+鐵律 1.28:fd 不含升級資訊)】',
+    '・A 核心資料:hero_db.js 新增水狐條目 + index.html ?v=20260515b 破快取',
+    '・B 圖鑑顯示(12 處):AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / BURST_UPGRADE_DEF / HERO_IMG_POS / HERO_THUMB_POS / HERO_BIO(含 designer) / BURST_DB / HERO_LORE(對齊鐵律 1.26 詩意風格) / HERO_TRAIT / SKILL_FORCE_ELEMENT(S2+爆發強制水屬性) / BURST_GIF_DB(+專屬音效 sfx-waterfox-burst)',
+    '・C 升級系統(7 處):SKILL_UPGRADE_DEF 新增 special_water_fox_s1/s2(因 fd 多 % 不能用通用 dmg)+ fd renderer / _renderTraitFdWithLv / _renderBurstFdWithLv / 短摘要 / 升級表格逐列 + _TRAIT_LV_INFO',
+    '・D 戰鬥邏輯(5 處):doDmg 加水之眷顧受傷觸發 hook(機率類)+ doDmg 加水之祝福水傷害 +20% 加成 + execSkill 兩處(setPending 流程 + AI 直接執行)加 S1/S2 客製分支 + _runBurst 加爆發實作(全體巨傷+全隊治療+解不利+Lv4 水之祝福) + buffName 加 _waterFoxBless 中文對照',
+    '・E 解鎖/補發(6 處):STUDENT_DESIGNER_HEROES(林同學 email + flagId:water_fox + isFirstOfClass:true)+ SUMMON_RARE_HEROES + ADMIN_ALL_HEROES + 補償英雄分組 + HERO_CATEGORIES_OVERRIDE + HERO_HEX_OVERRIDE',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6890 + hero_db.js?v=20260515b + GAME_CHANGELOG 記錄',
+    '【⚖️ 平衡性自我檢視】',
+    '・強處:三層治療(天賦/S1/爆發)+ S1 一招同時治療+傷害雙線、爆發全體巨傷+全隊治療+解不利三效合一,後援能力 T1 級',
+    '・弱處:特技只有 14 中等 — 所有治療/傷害數值靠倍率撐起來;速度 10 普通,搶不到先發優勢;HP 65 中等',
+    '・反向制衡:S2 能量 5 偏貴、攻擊 11 普攻不痛、爆發走特技 250% 但實值約 35 × 2.5 = 87.5 全體傷,不會破表',
+    '・整體強度落在「雙星姊妹、救醫馬同階」,符合學生英雄排序;水之祝福 buff 留下「未來水系角色串連」的伏筆',
+  ] },
+  { ver:'v1.0.20260515.6880', brief:[
+    '🐎 新英雄登場:救醫馬(5 年 4 班吳同學設計)— 終極後援王!',
+    '💉 S1 馬上救你一命:1 名友方 3 回合「不倒再生」+「免疫狀態」雙重保護',
+    '🚑 爆發 救救昏倒夥:全隊治療(可復活)+全隊最大HP+10+免疫不利(2回合)三效合一',
+    '✏️ 5 年 4 班第 4 位設計師作品,加入後召喚池共 16 隻稀有英雄分攤 5% 機率',
+  ], items:[
+    '【🐎 救醫馬 — 角色概念(5 年 4 班吳同學設計,2026 年)】',
+    '・身分:力行小學保健室助理護士,騎著醫療馬車穿梭戰場救人',
+    '・性格:活潑開朗、溫暖體貼,戰場上永遠優先衝向傷得最重的夥伴',
+    '・興趣:打電動、整理醫藥箱,把急救小知識編成口訣背給同學聽',
+    '・口頭禪:「馬醫生,救夥伴一生!」',
+    '・5 年 4 班第 4 位學生設計師(炸彈客劉同學、紅色玩家陳同學、地府酋長黃同學之後)',
+    '【⚙️ 基礎能力】HP 60 / 攻擊 10 / 特技 23 / 速度 7(總和 100,純後援標準)',
+    '・特技 23 為全英雄頂尖(僅次於雙星 24)— 治療量超強,但能量需求也高',
+    '【🌟 天賦:救馬本能 🐎】',
+    '・回合開始時若有友方 HP 比例低於 50%,40% 機率自動用特技 80% 治療該友方(可復活)',
+    '・每升 1 級觸發機率 +10%,Lv5 達 80%',
+    '【💉 S1:馬上救你一命(能量 7)】',
+    '・1 名友方獲得「不倒再生」+「免疫狀態」3 回合雙重保護',
+    '・期間 HP 最低保留 1 不會倒下,且免疫所有不利狀態(冰凍/燃燒/麻痺等全擋)',
+    '・升級:Lv5 起能量消耗 7→6,Lv10 (MAX) 持續回合 3→4',
+    '【💀 S2:等死不救(能量 4)】',
+    '・特技 180% 對 1 名對手造成傷害',
+    '・附加「不治詛咒」狀態 2 回合(治療效果無效,每回合 -5% HP)',
+    '・升級:Lv1~10 倍率 180→260%,MAX 詛咒延長為 3 回合',
+    '【🚑 爆發:救救昏倒夥】',
+    '・特技 200% 治療全體友方(可復活)',
+    '・全隊獲得「最大 HP +10」 2 回合(到期自動收回)',
+    '・全隊進入「免疫狀態」 2 回合(免疫所有不利狀態)',
+    '・升級表(_burstLv 0~4):',
+    '  治療倍率 200/220/240/260/280%',
+    '  最大HP +10/+15/+20/+25/+30',
+    '  狀態持續 2/2/2/2/3 回合(MAX 延長)',
+    '・GIF:「救救昏倒夥.gif」+ 雙層音效(治療+強化)+ 暖色醫療光暈 + 2400ms',
+    '【🎰 召喚池調整】',
+    '・SUMMON_RARE_HEROES 加入救醫馬,從 15 隻 → 16 隻分攤 5% 機率',
+    '・每隻稀有英雄從 0.333% → 0.313% 抽中機率',
+    '・5 年 4 班吳同學用學校 email(lsps110021@stu.lsps.tp.edu.tw)登入會自動補發',
+    '・管理員測試清單 ADMIN_ALL_HEROES 也同步加入(可直接擁有測試)',
+    '【📋 鐵律 1.20 — 26 點覆蓋清單實作位置(+鐵律 1.28:fd 不含升級資訊)】',
+    '・A 核心資料:hero_db.js 新增救醫馬條目 + index.html ?v=20260515a 破快取',
+    '・B 圖鑑顯示(10 處):AVATARS / HERO_IMGS / HERO_PORTRAIT_LIBRARY / BURST_UPGRADE_DEF / HERO_IMG_POS / HERO_THUMB_POS / HERO_BIO(含 designer) / BURST_DB / HERO_LORE(對齊鐵律 1.26 詩意風格) / HERO_TRAIT',
+    '・C 升級系統(6 處):SKILL_UPGRADE_DEF 新增 special_pony_save(S1 升級邏輯特殊:Lv5 能量-1、Lv10 回合+1) + special_pony_curse(S2 特技%+詛咒回合) + fd renderer / 短摘要 / 升級表格逐列 + _TRAIT_LV_INFO',
+    '・D 戰鬥邏輯(6 處):execSkill 兩處(setPending 流程 + AI 直接執行)加 S1/S2 客製分支 + _runBurst 加爆發實作(全隊治療+復活+最大HP暫加+免疫不利) + tickStatus buff 過期 hook 加 _ponyMaxHpBuff 收回最大 HP + _renderTraitFdWithLv 加 case + _renderBurstFdWithLv 加 case + BURST_GIF_DB 加入救救昏倒夥 GIF',
+    '・E 解鎖/補發(6 處):STUDENT_DESIGNER_HEROES(吳同學 email + flagId:pony_nurse)+ SUMMON_RARE_HEROES + ADMIN_ALL_HEROES + 補償英雄分組 + HERO_CATEGORIES_OVERRIDE + HERO_HEX_OVERRIDE',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6880 + hero_db.js?v=20260515a + GAME_CHANGELOG 記錄',
+    '【⚖️ 平衡性自我檢視】',
+    '・強處:S1 三回合不倒+免疫不利幾乎無法被擊破單體 + 爆發三合一最強後援 + 天賦每回合白嫖治療',
+    '・弱處:速度 7 偏慢、能量需求最高(S1=7,光放 1 次保護就要 7 能量) + 攻擊 10 無真正輸出',
+    '・S1 能量 7 比祭司爆發(類似全隊免疫)還高,反覆使用門檻拉高,平衡單體強保護的威力',
+    '・整體強度落在「祭司、煉金術師、雙星姊妹級 T1 後援」,跟既有後援王同階',
+    '【🎯 預期效果】',
+    '・玩家戰隊多一個頂級後援選擇,跟祭司/煉金術師形成「淨化型 vs 保護型 vs 護盾型」三足鼎立',
+    '・吳同學登入會看到「✏️ 5年4班 吳同學 設計(2026 年)」的設計者徽章',
+    '・新爆發機制「最大HP暫時+X」為未來英雄留下範例(_ponyMaxHpBuff 可重用)',
+  ] },
   { ver:'v1.0.20260515.6810', brief:[
     '🚨 修正杏花妖(及其他 BOSS)行動時卡 30 秒不亮卡死警報的根因',
     '🐛 根因:孤兒 _advQuizResolveCb 殘留 → deadlock watchdog 防線 3 永遠 retry,警報永不亮',
@@ -73082,7 +74484,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260515.6810';
+  const CURRENT_VERSION = 'v1.0.20260515.6900';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -73116,7 +74518,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260515.6810';
+window._GAME_LOADED_VERSION = 'v1.0.20260515.6900';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
