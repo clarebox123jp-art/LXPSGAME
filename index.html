@@ -29229,6 +29229,50 @@ function startTurn(){
   try{ window._curSkillName = null; }catch(_){}
   // ★ v1.0.20260423.0100 — 安全：清除可能殘留的合計計數狀態（新一回合開始時視為乾淨起點）
   try{ if(window._batchTotals){ window._batchTotals = null; } }catch(_){}
+  // ★ v1.0.20260515.6810 — 孤兒 quiz 殘留清理（杏花妖卡 30 秒不亮警報根因)
+  //   症狀:杏花妖卡片亮光暈、顯示「現在是對手回合」但 BOSS 完全不動 30 秒,卡死警報不亮。
+  //   根因:上一回合某 path(charm cb / burst priority skip / 玩家爆發插隊 / quiz early return)
+  //         留下「孤兒狀態組合」:_advQuizResolveCb 非 null,但 _bossQuizInFlight=false +
+  //         _advQuizPhase='idle' + adv-quiz-overlay 沒顯示 — 也就是「實際沒在 quiz 流程,但 cb 還掛著」。
+  //   後果 1:deadlock watchdog 的「保險 3」看到 _advQuizResolveCb 非空就無限 retry → 警報永不亮。
+  //   後果 2:_gamePaused 若也被殘留(burst priority modal 的 advOnQuizSkip 路徑漏清),
+  //          line 30120 的 _pSetTimeout(()=>aiAct(next),500) 會被 push 進 _pendingTimers,
+  //          直到 _pSetTimeout fallback 20 秒兜底才強制執行 → 30 秒卡死體驗。
+  //   修補:每次 startTurn 開頭就主動偵測「孤兒組合」並清掉。判定條件全部符合才清:
+  //         (1) _advQuizResolveCb 非空(殘留 cb)
+  //         (2) _advQuizPhase === 'idle'(實際沒在出題)
+  //         (3) _bossQuizInFlight 為假
+  //         (4) adv-quiz-overlay 沒顯示
+  //         → 這代表 cb 是真的孤兒(被某條 path 設了但沒消費),清掉不會破壞正在進行的 quiz。
+  //         同時順手把 _gamePaused 設回 false + _resumeTimers(若沒 modal 顯示),避免 timer 卡住。
+  try{
+    if(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb){
+      const _isQuizPhaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle');
+      const _quizInFlight = !!window._bossQuizInFlight;
+      const _qOvShow = (function(){
+        try{
+          const _q = document.getElementById('adv-quiz-overlay');
+          return !!(_q && _q.classList && _q.classList.contains('show'));
+        }catch(_){ return false; }
+      })();
+      if(_isQuizPhaseIdle && !_quizInFlight && !_qOvShow){
+        console.warn('[startTurn] 偵測到孤兒 _advQuizResolveCb 殘留(phase=idle/inFlight=false/overlay 隱藏),清除以避免卡死警報失靈');
+        _advQuizResolveCb = null;
+        try{ window._advQuizBoss = null; }catch(_){}
+        // 若 _gamePaused 也被卡在 true 且沒任何合法 modal,順手釋放
+        try{
+          if(typeof _gamePaused !== 'undefined' && _gamePaused){
+            const _anyLegit = (typeof _gpIsAnyLegitModalOpen === 'function') ? _gpIsAnyLegitModalOpen() : false;
+            if(!_anyLegit){
+              console.warn('[startTurn] 孤兒 cb 清理時同時釋放卡住的 _gamePaused');
+              _gamePaused = false;
+              try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+            }
+          }
+        }catch(_){}
+      }
+    }
+  }catch(_orphanE){ console.warn('[startTurn 孤兒清理] 例外', _orphanE); }
   // ★ v1.0.20260424.0910 — 保險:每回合開始時重置 BOSS 的暫態旗標,
   //   避免上回合殘留(例如 _yamataDoubleTriggered 因 _gamePaused queue 沒 reset)
   //   導致下回合 BOSS 行為異常(雙擊跳過、AI 邏輯錯亂等)
@@ -56306,8 +56350,35 @@ function _startDeadlockWatchdog(){
       }catch(_){}
       try{
         if(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb){
-          window._deadlockWatchdog = setTimeout(_check, _retryTimeout);
-          return;
+          // ★ v1.0.20260515.6810 — 防線 3 強化:cb 非空不等於「真的在 quiz 流程中」
+          //   舊版只要 _advQuizResolveCb 非空就 retry,但「孤兒 cb 殘留」(_bossQuizInFlight=false +
+          //   _advQuizPhase=idle + quiz overlay 沒顯示)會讓 watchdog 永遠 retry,警報永不亮 →
+          //   杏花妖卡 30 秒不亮警報的根因之一。
+          //   修補:cb 非空時還要交叉確認「quiz 流程真的還在進行」,只有以下其中一個為真才 retry:
+          //         (a) _advQuizPhase 是 asking/answered (但上面保險 1 已抓,這裡剩 idle)
+          //         (b) _bossQuizInFlight=true (但上面保險 2 已抓)
+          //         (c) adv-quiz-overlay 顯示中(玩家正在看題目)
+          //         (d) adv-reward-overlay 顯示中(答完獎勵選擇中)
+          //   如果 cb 非空但這四個都不成立 → 孤兒殘留,清掉並照常進入卡死判定,讓警報能亮起來。
+          let _quizActuallyInProgress = false;
+          try{
+            const _qOv = document.getElementById('adv-quiz-overlay');
+            if(_qOv && _qOv.classList && _qOv.classList.contains('show')) _quizActuallyInProgress = true;
+            const _rwOv = document.getElementById('adv-reward-overlay');
+            if(_rwOv && ((_rwOv.classList && _rwOv.classList.contains('show')) ||
+                          (_rwOv.style && _rwOv.style.display && _rwOv.style.display !== 'none'))){
+              _quizActuallyInProgress = true;
+            }
+          }catch(_){}
+          if(_quizActuallyInProgress){
+            window._deadlockWatchdog = setTimeout(_check, _retryTimeout);
+            return;
+          } else {
+            // 孤兒 cb 殘留 — 主動清掉避免後續 path 誤觸發,然後 fall through 到真卡死判定
+            console.warn('[卡死偵測] 偵測到孤兒 _advQuizResolveCb 殘留(quiz overlay 隱藏 + phase=idle + inFlight=false),清除並繼續判定');
+            try{ _advQuizResolveCb = null; }catch(_){}
+            try{ window._advQuizBoss = null; }catch(_){}
+          }
         }
       }catch(_){}
       // ★ v1.0.20260428.3880 — 玩家回合特例:若 action-panel 顯示中,不算卡死(玩家正在思考)
@@ -71623,6 +71694,68 @@ window._filterChangelogForDisplay = function(entries){
 };
 
 const GAME_CHANGELOG = [
+  { ver:'v1.0.20260515.6810', brief:[
+    '🚨 修正杏花妖(及其他 BOSS)行動時卡 30 秒不亮卡死警報的根因',
+    '🐛 根因:孤兒 _advQuizResolveCb 殘留 → deadlock watchdog 防線 3 永遠 retry,警報永不亮',
+    '🛡 兩道修補:startTurn 開頭主動清孤兒 cb + watchdog 防線 3 加交叉驗證(必須真有 quiz overlay 才 retry)',
+  ], items:[
+    '【🚨 症狀 — 杏花妖卡 30 秒不亮警報】',
+    '・玩家回報:杏花妖卡片亮起光暈、行動順序顯示她是下一位、底部顯示「現在是對手的回合」,但 BOSS 30 秒都不行動',
+    '・期間「卡死自救」紅色閃爍按鈕完全沒亮起,玩家只能乾等 30 秒後 _aiWatchdog 或 _gpHeartbeat 兜底強制推進',
+    '・iPad 玩家更慘 — 看不到 F12 console 完全沒線索,而且按下「自救」按鈕之前根本沒提示',
+    '【🐛 根因鏈】',
+    '・上一回合某條路徑(可能是 charm cb、burst priority skip、玩家爆發插隊、quiz early return)留下「孤兒狀態組合」:',
+    '  - _advQuizResolveCb 非 null (cb 殘留)',
+    '  - 但 _bossQuizInFlight = false (quiz 流程已結束)',
+    '  - _advQuizPhase = "idle" (沒在出題)',
+    '  - adv-quiz-overlay 沒顯示 (玩家沒在看題目)',
+    '・後果 1:deadlock watchdog 的「保險 3」只看 _advQuizResolveCb 非空就 retry,無限循環 → 警報永不亮',
+    '・後果 2:若 _gamePaused 也被卡在 true (連帶殘留),line 30120 的 _pSetTimeout(aiAct, 500) 會被 push 到 _pendingTimers,直到 _pSetTimeout 20 秒 fallback 才強制推進 → 加上後續處理就是 30 秒總卡死體驗',
+    '【🛡 修補 A — startTurn 開頭主動清孤兒(預防)】',
+    '・在 startTurn 入口(line ~29232)加孤兒偵測:四個條件全符合就清掉 _advQuizResolveCb',
+    '  - _advQuizResolveCb 非空 + _advQuizPhase=idle + _bossQuizInFlight=false + adv-quiz-overlay 隱藏',
+    '・同時順手:若 _gamePaused 也卡住且沒任何合法 modal 顯示,釋放 + _resumeTimers',
+    '・這層保證每次行動切換都是乾淨起點,孤兒 cb 不會跨回合存活',
+    '【🛡 修補 B — watchdog 防線 3 加交叉驗證(兜底)】',
+    '・即使修補 A 漏抓某個 path,watchdog 自己也能識別孤兒情境',
+    '・防線 3 改成:_advQuizResolveCb 非空時還要交叉確認「quiz overlay 或 reward overlay 真的在顯示」',
+    '  - 真的在顯示 → 玩家在操作中,retry 不算卡死',
+    '  - 都沒顯示 → 孤兒殘留,主動清掉 + fall through 到「真卡死」分支亮警報',
+    '・這層保證即使有未知 path 留下孤兒 cb,卡死警報照樣會亮起,玩家不用乾等 30 秒',
+    '【📋 修改位置】',
+    '・A1 startTurn 開頭(line ~29232):新增孤兒清理邏輯,含 try/catch',
+    '・B1 _startDeadlockWatchdog 的 _check 防線 3(line ~56351):改成有交叉驗證的 retry 判定',
+    '・F 版本同步:CURRENT_VERSION + _GAME_LOADED_VERSION 升 v6810',
+    '【🎯 預期效果】',
+    '・主要:杏花妖(及任何 BOSS)的「孤兒 cb 殘留型」卡死從根本消失,startTurn 自動清掉',
+    '・備援:即使未來新增 BOSS 或新狀態路徑漏清 cb,watchdog 也會在 5 秒內亮警報(不再無限 retry)',
+    '・玩家(尤其 iPad 用戶)再也不會經歷「30 秒乾等不知道是不是真卡死」',
+  ] },
+  { ver:'v1.0.20260515.6800', brief:[
+    '🎨 圖鑑英雄天賦/技能/爆發 fd 文字升級資訊全面清理(共 30 處)',
+    '✨ 新增 _renderTraitFdWithLv / _renderBurstFdWithLv 動態渲染,升級後數字會自動標紅',
+    '📜 催生鐵律 1.28:fd 只寫 Lv1 基礎,升級資訊由 renderer 替換',
+  ], items:[
+    '【🎨 動機 — fd 文字升級資訊清理】',
+    '・老師需求:英雄圖鑑天賦/技能/爆發說明中,凡寫到「每升 1 級+X%、Lv5 達 Y%」這類升級資訊都該移除',
+    '・原因 1:升級面板本來就會完整顯示升級表,fd 重複是反模式',
+    '・原因 2:玩家在戰鬥中看 fd 主要是快速理解技能效果,不是看升級表',
+    '・原因 3:渲染時自動依當前等級替換成「升級後數字 + 紅色 highlight」,玩家一眼看到當前威力',
+    '【✨ 新增 renderer】',
+    '・_renderTraitFdWithLv(heroName, fd, traitLv):處理 HERO_TRAIT.fd,switch(heroName) 內各英雄專屬替換規則',
+    '・_renderBurstFdWithLv(burstName, fd, burstLv):處理 BURST_DB.fd,case + fallback 通用替換',
+    '・顏色 #ff8866 (紅橘色),Lv 標籤:trait 紫色 #cc88ff / burst 橘色 #ff9955',
+    '【📋 清理位置】',
+    '・hero_db.js 中 s1/s2 fd 清升級文字(11 處)',
+    '・index.html HERO_TRAIT fd 清升級文字(9 處)',
+    '・index.html BURST_DB fd 清升級文字(10 處)',
+    '・各圖鑑/邀請/詳情頁渲染 fd 改用新函數(6 處 trait renderer / 7 處 burst renderer)',
+    '【📜 鐵律 1.28 — fd 寫作的鐵則】',
+    '・fd 只寫 Lv1 基礎效果,不寫「每升 1 級+X%、Lv5 達 Y%、Lv10 MAX」這類升級資訊',
+    '・升級資訊由渲染層 _render(Skill|Trait|Burst)FdWithLv 動態替換並標紅',
+    '・加新英雄時必須在三個對應 renderer 內加 case',
+    '・寫完 fd 後跑 grep -E "每升|每級|Lv[0-9]|MAX|滿級|滿等" 確認沒殘留升級文字',
+  ] },
   { ver:'v1.0.20260514.6790', brief:[
     '🚨 修正紅色玩家「瞬殺」與地府酋長「支配鎖鍊」點下技能跳出選目標 UI 但點不到 BUG',
     '🐛 根因 1:execSkill 沒有 targets 參數,`if(targets && ...)` 丟 ReferenceError',
@@ -72783,7 +72916,7 @@ const GAME_CHANGELOG = [
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v1.0.20260515.6800';
+  const CURRENT_VERSION = 'v1.0.20260515.6810';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -72817,7 +72950,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v1.0.20260515.6800';
+window._GAME_LOADED_VERSION = 'v1.0.20260515.6810';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
