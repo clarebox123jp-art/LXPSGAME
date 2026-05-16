@@ -23,127 +23,8 @@
   #wb-entry-overlay, #wb-lobby-overlay, #wb-result-overlay {
     display:none; position:fixed; inset:0; z-index:9000;
     background:rgba(8,10,24,0.94);
-    padding:20px; overflow:hidden;
+    padding:40px 20px; overflow-y:auto;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
-  }
-  /* ★ FIX 20260516 v10 — 入口頁改成左半面板/右半龍王圖佈局 */
-  #wb-entry-overlay.wb-entry-split-layout{
-    display:flex !important;
-    align-items:stretch;
-    justify-content:flex-start;
-    padding:0;
-    gap:0;
-  }
-  /* 左半面板 */
-  .wb-entry-left-panel{
-    flex:0 0 50%;
-    max-width:50%;
-    height:100vh;
-    overflow-y:auto;
-    padding:24px 28px;
-    box-sizing:border-box;
-  }
-  /* 右半 BOSS 圖 */
-  .wb-entry-right-img{
-    flex:1;
-    position:relative;
-    overflow:hidden;
-    background:
-      radial-gradient(ellipse at center, rgba(255,80,40,0.18) 0%, rgba(40,15,10,0.6) 60%, rgba(0,0,0,0.95) 100%),
-      url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B6%AD%E8%98%87%E5%A8%81%E7%81%AB%E5%B1%B1%E9%BE%8D%E7%8E%8B.png') center/contain no-repeat,
-      #1a0a08;
-  }
-  .wb-entry-right-img::after{
-    content:'';position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%);
-  }
-  /* 在右半圖上方撒粒子 */
-  .wb-entry-particles{
-    position:absolute;inset:0;pointer-events:none;overflow:hidden;
-  }
-  .wb-entry-particles .wb-flame-particle{
-    position:absolute;
-    width:18px;height:24px;
-    pointer-events:none;
-    background:radial-gradient(ellipse at center bottom,
-      #ffeb3b 0%, #ffa726 30%, #ff5722 60%, #b71c1c 90%, transparent 100%);
-    border-radius:50% 50% 20% 20% / 60% 60% 40% 40%;
-    filter:blur(0.5px) drop-shadow(0 0 8px rgba(255,140,40,0.85));
-    animation:wbEntryFlameRise 2.8s ease-out infinite;
-    opacity:0;
-    z-index:1;
-    transform-origin:center bottom;
-    bottom:-10px;
-    left:var(--x);
-    animation-delay:var(--delay);
-  }
-  @keyframes wbEntryFlameRise{
-    0%   {transform:translateY(0)   scale(0.5) rotate(-3deg);opacity:0;}
-    10%  {opacity:1;}
-    55%  {transform:translateY(-65vh) scale(1.2) rotate(4deg);opacity:0.85;}
-    100% {transform:translateY(-100vh) scale(0.3) rotate(-5deg);opacity:0;}
-  }
-  /* 火星(較小的) */
-  .wb-entry-particles .wb-flame-spark{
-    position:absolute;
-    width:6px;height:6px;border-radius:50%;
-    background:radial-gradient(circle, #ffeb88 0%, #ffaa44 60%, transparent 100%);
-    box-shadow:0 0 8px rgba(255,180,80,0.9);
-    animation:wbEntrySparkFly 3.5s ease-out infinite;
-    animation-delay:var(--delay);
-    opacity:0;
-    bottom:-6px;
-    left:var(--x);
-  }
-  @keyframes wbEntrySparkFly{
-    0%   {transform:translateY(0) translateX(0) scale(0.4);opacity:0;}
-    15%  {opacity:1;}
-    50%  {transform:translateY(-50vh) translateX(var(--xshift,10px)) scale(1);opacity:0.9;}
-    100% {transform:translateY(-100vh) translateX(calc(var(--xshift,10px) * 2)) scale(0.2);opacity:0;}
-  }
-  /* 卡片在左半時不需要中心置中 */
-  .wb-entry-split-layout .wb-card{
-    max-width:none;margin:0;width:100%;
-    background:rgba(15,10,30,0.62);
-    backdrop-filter:blur(4px);
-    padding:24px 26px;
-  }
-  /* ★ 整個入口頁字體 200% 放大(內文,不含標題) */
-  .wb-entry-split-layout .wb-card{font-size:200%;}
-  .wb-entry-split-layout .wb-title{font-size:56px;}
-  .wb-entry-split-layout .wb-subtitle{font-size:24px;}
-  .wb-entry-split-layout .wb-ceasefire-banner h3,
-  .wb-entry-split-layout .wb-ceasefire-banner .wb-ceasefire-title{font-size:34px !important;}
-  .wb-entry-split-layout .wb-ceasefire-msg,
-  .wb-entry-split-layout .wb-ceasefire-banner p{font-size:22px !important;}
-  .wb-entry-split-layout .wb-admin-ctrl-panel h4{font-size:30px !important;}
-  .wb-entry-split-layout .wb-admin-ctrl-panel,
-  .wb-entry-split-layout .wb-admin-ctrl-panel label,
-  .wb-entry-split-layout .wb-admin-state-row,
-  .wb-entry-split-layout .wb-admin-ctrl-panel input,
-  .wb-entry-split-layout .wb-admin-ctrl-panel textarea,
-  .wb-entry-split-layout .wb-admin-ctrl-panel button{font-size:22px !important;}
-  .wb-entry-split-layout .wb-boss-name{font-size:32px !important;}
-  .wb-entry-split-layout .wb-boss-info > div{font-size:22px !important;}
-  .wb-entry-split-layout .wb-boss-stats span{font-size:22px !important;}
-  .wb-entry-split-layout .wb-entry-big-btn .ico{font-size:64px !important;}
-  .wb-entry-split-layout .wb-entry-big-btn .ttl{font-size:30px !important;}
-  .wb-entry-split-layout .wb-entry-big-btn .desc{font-size:18px !important;line-height:1.55 !important;}
-  .wb-entry-split-layout .wb-code-input{font-size:42px !important;}
-  .wb-entry-split-layout .wb-submit-btn{font-size:26px !important;}
-  .wb-entry-split-layout .wb-info-box{font-size:20px !important;line-height:1.7 !important;}
-  .wb-entry-split-layout #wb-blessing-banner{font-size:20px !important;}
-  .wb-entry-split-layout #wb-reward-tier-list,
-  .wb-entry-split-layout #wb-lineup-list{font-size:18px !important;}
-  .wb-entry-split-layout #wb-lineup-list > div{padding:16px !important;}
-  .wb-entry-split-layout .wb-close-btn{font-size:36px;width:56px;height:56px;}
-  .wb-entry-split-layout #wb-join-area > div:first-child{font-size:26px !important;}
-  .wb-entry-split-layout #wb-join-area > div{font-size:22px !important;letter-spacing:2px;}
-  /* 響應式:窄畫面回退到單欄 */
-  @media (max-width:900px){
-    .wb-entry-split-layout{flex-direction:column;}
-    .wb-entry-left-panel{flex:none;max-width:none;height:auto;}
-    .wb-entry-right-img{flex:none;height:40vh;}
   }
   .wb-card{
     max-width:900px; margin:0 auto;
@@ -453,9 +334,7 @@
 </style>
 
 <!-- 入口 overlay -->
-<div id="wb-entry-overlay" class="wb-entry-split-layout">
-  <!-- 左半:面板 -->
-  <div class="wb-entry-left-panel">
+<div id="wb-entry-overlay">
   <div class="wb-card" style="position:relative;">
     <button class="wb-close-btn" onclick="_closeWorldBossEntry()">✕</button>
     <div class="wb-title">🌍 世界 BOSS 討伐戰</div>
@@ -510,7 +389,7 @@
           </div>
           <div id="wb-blessing-bossname" style="font-size:13px;color:#fff;margin-top:4px;">
             維蘇威火山龍王已被全伺服器擊敗!
-            所有玩家 EXP / 知識幣 / 掉寶率 +10%
+            所有玩家 EXP / 知識幣 / 掉寶率 +50%
           </div>
           <div id="wb-blessing-countdown" style="font-size:13px;color:#c8a8ff;margin-top:6px;">
             剩餘 ⏳ —
@@ -587,81 +466,33 @@
       🐛 <b>已知限制</b>:單人模式時 3 個空位由 AI 替補(預設劍士),戰鬥邏輯為簡化版
     </div>
 
+    <!-- ★ FIX 20260516 — 隊伍排名獎勵 + 元素龍系列 整段字體放大 100%(class: wb-bigtext-block) -->
     <!-- ★ v2.0 — 隊伍排名獎勵預告 -->
-    <div style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(212,168,67,0.4);">
-      <div style="font-size:18px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:8px;">
+    <div class="wb-bigtext-block" style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(212,168,67,0.4);">
+      <div style="font-size:36px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:8px;">
         🏆 隊伍排名獎勵(BOSS 倒下時依累積傷害名次發獎)
       </div>
-      <div style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.6;">
+      <div style="font-size:24px;color:#aaa;margin-bottom:12px;line-height:1.6;">
         每隊伍由「同電組合的玩家」識別。打贏越多場、傷害越高,排名越前面。
         <br>同一隻 BOSS 期間,你跟同電隊友打過的所有場次傷害會累積計算。
       </div>
-      <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;"></div>
+      <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;font-size:24px;"></div>
     </div>
 
     <!-- ★ v2.0 — 8 隻元素龍預告 -->
-    <div style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(168,132,255,0.4);">
-      <div style="font-size:18px;color:#c8a8ff;letter-spacing:2px;font-weight:700;margin-bottom:10px;">
+    <div class="wb-bigtext-block" style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(168,132,255,0.4);">
+      <div style="font-size:36px;color:#c8a8ff;letter-spacing:2px;font-weight:700;margin-bottom:10px;">
         🐉 元素龍系列(全伺服器輪流挑戰)
       </div>
-      <div style="font-size:12px;color:#aaa;margin-bottom:14px;line-height:1.5;">
-        全伺服器玩家共同對抗,擊敗後全體 EXP/知識幣/掉寶率 +10% 持續 24 小時,祝福結束後出現下一隻龍。
+      <div style="font-size:24px;color:#aaa;margin-bottom:14px;line-height:1.5;">
+        全伺服器玩家共同對抗,擊敗後全體 EXP/知識幣/掉寶率 +50% 持續 48 小時,祝福結束後出現下一隻龍(每隻 BOSS 至少間隔 48 小時)。
       </div>
-      <div id="wb-lineup-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;"></div>
-    </div>
-  </div>
-  </div>
-  <!-- 右半:龍王全圖 + 粒子特效 -->
-  <div class="wb-entry-right-img">
-    <div class="wb-entry-particles" id="wb-entry-particles-host">
-      <!-- JS 動態填入火焰粒子 -->
+      <div id="wb-lineup-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
     </div>
   </div>
 </div>
 
 <script>
-// ★ FIX 20260516 v10 — 入口頁右半 BOSS 圖上的火焰粒子
-// 用 MutationObserver 監測 wb-entry-overlay 顯示變化,顯示時生成粒子
-(function _wbEntryParticleManager(){
-  const host = document.getElementById('wb-entry-particles-host');
-  const ov = document.getElementById('wb-entry-overlay');
-  if(!host || !ov) return;
-
-  function buildParticles(){
-    // 防止重複生成
-    if(host.dataset.built === '1') return;
-    host.dataset.built = '1';
-    let html = '';
-    // 12 個大火焰 + 24 個小火星
-    for(let i = 0; i < 12; i++){
-      const x = (i * 8.5 + Math.random() * 6) + '%';
-      const delay = (Math.random() * 2.5).toFixed(2) + 's';
-      html += `<span class="wb-flame-particle" style="--x:${x};--delay:${delay};"></span>`;
-    }
-    for(let i = 0; i < 24; i++){
-      const x = (Math.random() * 100) + '%';
-      const delay = (Math.random() * 3.5).toFixed(2) + 's';
-      const xshift = (Math.random() * 30 - 15).toFixed(1) + 'px';
-      html += `<span class="wb-flame-spark" style="--x:${x};--delay:${delay};--xshift:${xshift};"></span>`;
-    }
-    host.innerHTML = html;
-  }
-  function clearParticles(){
-    host.dataset.built = '0';
-    host.innerHTML = '';
-  }
-
-  // 監測 display 變化(透過 style + class 兩種途徑)
-  const obs = new MutationObserver(() => {
-    const visible = (ov.style.display && ov.style.display !== 'none');
-    if(visible) buildParticles();
-    else clearParticles();
-  });
-  obs.observe(ov, { attributes:true, attributeFilter:['style','class'] });
-  // 首次 — 若已可見就立刻建構
-  if(ov.style.display && ov.style.display !== 'none') buildParticles();
-})();
-
 // 初始化元素龍預告清單
 (function _wbRenderLineup(){
   if(!window.WORLD_BOSS_LINEUP) return;
@@ -678,21 +509,35 @@
   el.innerHTML = window.WORLD_BOSS_LINEUP.map((b, i) => {
     // ★ FIX 20260516 v7 — 除了當前 BOSS,其他龍王地點先顯示「未知地點」(未實作完成)
     const sceneText = (i === 0) ? b.scene : '未知地點';
+    // ★ FIX 20260516 — 預留每隻龍王的立繪位置;之後在 raw.githubusercontent 對應檔名上傳即可
+    //   檔案找不到時 → fallback 顯示對應元素 emoji
+    const imgUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(b.name)}.png`;
+    const fallbackIcon = elemIcon[b.element] || '🐉';
+    const portraitHtml =
+      `<div style="width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;`
+      + `background:linear-gradient(135deg,rgba(${i===0?'80,30,15':'30,20,40'},0.9),rgba(10,5,10,0.95));`
+      + `border:1.5px solid ${i===0 ? '#d4a843' : 'rgba(168,132,255,0.3)'};`
+      + `display:flex;align-items:center;justify-content:center;margin-bottom:8px;position:relative;">`
+      + `<img src="${imgUrl}" alt="${b.name}" loading="lazy"`
+      + ` style="width:100%;height:100%;object-fit:cover;"`
+      + ` onerror="this.style.display='none';this.parentElement.querySelector('.wb-lineup-fallback').style.display='flex';">`
+      + `<div class="wb-lineup-fallback" style="display:none;position:absolute;inset:0;`
+      + `align-items:center;justify-content:center;font-size:84px;color:${elemColor[b.element]||'#fff'};">`
+      + `${fallbackIcon}</div>`
+      + `</div>`;
     return `
     <div style="background:linear-gradient(160deg,rgba(${i===0?'212,168,67':'30,30,40'},0.3) 0%,rgba(0,0,0,0.5) 100%);
                 border:1.5px solid ${i===0 ? '#d4a843' : 'rgba(168,132,255,0.3)'};
-                border-radius:10px;padding:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-size:11px;color:#aaa;">#${i+1}</span>
-        ${i===0 ? '<span style="font-size:10px;background:#d4a843;color:#000;padding:1px 6px;border-radius:8px;">當前</span>' : ''}
+                border-radius:10px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:22px;color:#aaa;font-weight:700;">#${i+1}</span>
+        ${i===0 ? '<span style="font-size:20px;background:#d4a843;color:#000;padding:2px 12px;border-radius:8px;font-weight:700;">當前</span>' : ''}
       </div>
-      <div style="font-size:32px;text-align:center;margin:4px 0;color:${elemColor[b.element]||'#fff'};">
-        ${elemIcon[b.element] || '🐉'}
-      </div>
-      <div style="font-size:14px;font-weight:700;color:${elemColor[b.element]||'#ffe066'};text-align:center;">
+      ${portraitHtml}
+      <div style="font-size:28px;font-weight:800;color:${elemColor[b.element]||'#ffe066'};text-align:center;letter-spacing:1px;">
         ${b.name}
       </div>
-      <div style="font-size:10px;color:#aaa;text-align:center;margin-top:2px;">
+      <div style="font-size:20px;color:#aaa;text-align:center;margin-top:4px;">
         📍 ${sceneText} ✦ ❤️ ${(b.maxHp/10000).toFixed(0)}萬
       </div>
     </div>
@@ -723,12 +568,12 @@
     if(r.titleTemplate) items.push(`🎖 限定稱號`);
     return `
       <div style="background:rgba(${tierColor[t].replace('#','').match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.15);
-                  border:1.5px solid ${tierColor[t]};border-radius:8px;padding:8px 10px;">
-        <div style="font-size:14px;font-weight:700;color:${tierColor[t]};letter-spacing:1px;">
+                  border:1.5px solid ${tierColor[t]};border-radius:8px;padding:12px 14px;">
+        <div style="font-size:28px;font-weight:700;color:${tierColor[t]};letter-spacing:1px;">
           ${r.tier}
         </div>
-        <div style="font-size:11px;color:#aaa;margin-top:2px;">名次 ${r.rankRange}</div>
-        <div style="font-size:11px;color:#ffe8a0;margin-top:4px;line-height:1.5;">
+        <div style="font-size:22px;color:#aaa;margin-top:4px;">名次 ${r.rankRange}</div>
+        <div style="font-size:22px;color:#ffe8a0;margin-top:6px;line-height:1.5;">
           ${items.join('<br>')}
         </div>
       </div>
@@ -761,6 +606,12 @@
   }
   /* 戰鬥階段:把擋住背景的紅色/藍色遮罩拿掉,讓 BOSS 全圖透出來 */
   #wb-lobby-overlay.wb-in-battle .wb-battle-boss-zone{display:none !important;}
+  /* ★ FIX 20260516 — 戰鬥階段:BOSS 血條上方那塊全部移除,讓 mega-hp-zone 直接置頂,露出 BOSS 立繪背景 */
+  #wb-lobby-overlay.wb-in-battle .wb-room-header{display:none !important;}
+  #wb-lobby-overlay.wb-in-battle .wb-boss-preview-small{display:none !important;}
+  #wb-lobby-overlay.wb-in-battle .wb-player-slots{display:none !important;}
+  /* lobby card 戰鬥時把外層 padding 拿掉,讓 mega-hp-zone 真正貼到上方 */
+  #wb-lobby-overlay.wb-in-battle .wb-lobby-card{padding-top:8px;}
   #wb-lobby-overlay.wb-in-battle .wb-wait-banner{
     background:rgba(20,30,60,0.55) !important;
     border-color:rgba(120,180,255,0.7) !important;
@@ -4033,12 +3884,17 @@
       const isMe = (p && p.uid === window._gUserId);
       const acting = curOrder && curOrder.side === 'p1' && curOrder.pos === i;
       const dead = h.curHp <= 0;
-      const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[h.name]) || '⚔';
+      // ★ FIX 20260516 — 英雄頭像優先吃 HERO_IMGS(真實圖檔);沒有再 fallback 到 MONSTER_AVTR 的 emoji
+      const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[h.name]) || '';
+      const heroEmoji = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[h.name]) || '⚔';
+      const portraitInner = heroImg
+        ? `<img src="${heroImg}" alt="${h.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.style.display='none';this.parentElement.dataset.fallback='1';this.parentElement.innerHTML='${heroEmoji}';">`
+        : heroEmoji;
       const cls = 'wb-hero-battle-card' + (acting ? ' acting' : '') + (dead ? ' dead' : '');
       const hpPct = h.hp ? (h.curHp / h.hp * 100) : 0;
       return `<div class="${cls}">
         <div class="wb-hbc-name">${p ? p.name : 'AI'} ${isMe ? '★' : ''}</div>
-        <div class="wb-hbc-portrait">${av}</div>
+        <div class="wb-hbc-portrait">${portraitInner}</div>
         <div class="wb-hbc-hero-name">${h.name}</div>
         <div class="wb-hp-bar"><div class="wb-hp-fill ${hpPct<30?'low':''}" style="width:${hpPct}%;"></div></div>
         <div class="wb-hp-text">HP ${h.curHp}/${h.hp}</div>
@@ -5028,18 +4884,17 @@
     document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
     document.getElementById('wb-room-status-text').textContent = '🧪 練習模式';
 
-    // 練習模式即時傷害顯示橫條
-    const battleArea = document.getElementById('wb-battle-area');
-    if(battleArea && !document.getElementById('wb-solo-cur-dmg-bar')){
+    // ★ FIX 20260516 — 練習模式即時傷害顯示改成「內嵌在 mega-hp-zone 上方」(不再浮在頂部蓋住血條)
+    const megaZone = document.querySelector('#wb-battle-area .wb-mega-hp-zone');
+    if(megaZone && !document.getElementById('wb-solo-cur-dmg-bar')){
       const dmgBar = document.createElement('div');
       dmgBar.id = 'wb-solo-cur-dmg-bar';
-      dmgBar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);'
-        + 'z-index:10000;background:rgba(20,40,30,0.95);border:2px solid #5dcaa5;'
-        + 'border-radius:14px;padding:8px 18px;display:flex;align-items:center;gap:12px;'
-        + 'box-shadow:0 0 24px rgba(93,202,165,0.5);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      dmgBar.style.cssText = 'background:rgba(20,40,30,0.85);border:2px solid #5dcaa5;'
+        + 'border-radius:10px;padding:6px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;'
+        + 'box-shadow:0 0 16px rgba(93,202,165,0.35);justify-content:center;';
       dmgBar.innerHTML = '<span style="font-size:14px;color:#5dcaa5;font-weight:700;letter-spacing:1px;">🧪 練習模式・本場總傷</span>'
-        + '<span id="wb-solo-cur-dmg-display" style="font-size:22px;color:#ffe066;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
-      document.body.appendChild(dmgBar);
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:20px;color:#ffe066;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
+      megaZone.parentElement.insertBefore(dmgBar, megaZone);
     }
 
     window._wbSoloStartTs = Date.now();
@@ -5240,5 +5095,429 @@
       try{ window._wbSyncStartButtonGate && window._wbSyncStartButtonGate(); }catch(_){}
     });
   }catch(_){}
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- ★ 批次 A (2026-05-16) — 世界 BOSS 對接主程式戰鬥引擎(B2 路線 1 第一步) -->
+<!--                                                                              -->
+<!-- 目標:                                                                        -->
+<!--   1. 啟動時主動觸發 _wbInstallHeroData(),把維蘇威火山龍王資料寫進 HERO_DB    -->
+<!--   2. monkey-patch execSkill,讓 _wbExecSkillFallback 真的接到維蘇威 3 招     -->
+<!--   3. 提供 _wbEnterMainBattle(): 借用主程式 #gc/#field/#sb 顯示戰場           -->
+<!--   4. 提供 _wbExitMainBattle(): 結束戰鬥後關掉主程式戰場、回到世界 BOSS 大廳   -->
+<!--                                                                              -->
+<!-- 後續批次 B/C/D/E 會在這基礎上補:Firebase 同步、行動權鎖、結算、斷線重連    -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+(function _wbBatchA(){
+  'use strict';
+
+  // ─────────────────────────────────────────────────────────────────
+  // A-1. 確保維蘇威資料已掛進主程式 HERO_DB
+  //      原 world-boss.js 的 _wbBootstrap 啟動時會 try install,但因 race
+  //      條件可能在 HERO_DB 還沒準備好時就跑了。這裡用一個 retry loop 強保。
+  // ─────────────────────────────────────────────────────────────────
+  function _wbEnsureHeroDataInstalled(){
+    try{
+      // 主程式 HERO_DB 必須存在
+      if(typeof HERO_DB === 'undefined' || !HERO_DB){
+        console.warn('[WB-BatchA] HERO_DB 尚未就緒,延後重試');
+        setTimeout(_wbEnsureHeroDataInstalled, 500);
+        return;
+      }
+      // 維蘇威已掛 → 直接過
+      if(HERO_DB['維蘇威火山龍王']){
+        console.log('[WB-BatchA] ✅ 維蘇威火山龍王已存在於 HERO_DB(hp='+HERO_DB['維蘇威火山龍王'].hp+')');
+        return;
+      }
+      // 沒掛 → 觸發 world-boss.js 既有的 _wbInstallHeroData
+      //  注意:_wbInstallHeroData 是 IIFE 內部函式,沒掛 window,無法外部呼叫
+      //  但 _wbBootstrap 內的 tryInstall 會自動跑;若還沒跑就再等一下
+      if(window._cachedGlobalStats !== undefined){
+        // _wbBootstrap 已啟動 → 應該很快就會掛上
+        setTimeout(_wbEnsureHeroDataInstalled, 200);
+      }else{
+        // 還沒啟動 → 等久一點
+        setTimeout(_wbEnsureHeroDataInstalled, 500);
+      }
+    }catch(e){
+      console.error('[WB-BatchA] _wbEnsureHeroDataInstalled 失敗', e);
+    }
+  }
+  _wbEnsureHeroDataInstalled();
+
+  // ─────────────────────────────────────────────────────────────────
+  // A-2. monkey-patch execSkill — 讓 _wbExecSkillFallback 真的生效
+  //      原 world-boss.js 設計是「在 execSkill 加個 hook 點」,但主程式從沒加,
+  //      所以維蘇威 3 招目前根本沒被執行 → 用 wrapper 模式補上
+  // ─────────────────────────────────────────────────────────────────
+  function _wbInstallExecSkillHook(){
+    // 等主程式 execSkill 出現
+    if(typeof window.execSkill !== 'function'){
+      setTimeout(_wbInstallExecSkillHook, 300);
+      return;
+    }
+    // 避免重複 patch
+    if(window.execSkill.__wbPatched){
+      console.log('[WB-BatchA] execSkill 已被 patch,跳過');
+      return;
+    }
+    const _origExecSkill = window.execSkill;
+    window.execSkill = function _wbWrappedExecSkill(a, sk, cost, stype){
+      try{
+        const n = sk && sk.n;
+        // 是維蘇威 3 招 → 走 fallback,完成後扣能量、endAction
+        const wbSkills = ['業火灼燒','龍吼震懾','天崩之炎'];
+        if(n && wbSkills.indexOf(n) >= 0 && typeof window._wbExecSkillFallback === 'function'){
+          try{ window._curSkillName = n; }catch(_){}
+          try{
+            const allies  = (typeof G !== 'undefined' && G && G[a.side]) ? G[a.side].filter(h=>h.curHp>0) : [];
+            const enemies = (typeof G !== 'undefined' && G && G[a.side==='p1'?'p2':'p1'])
+              ? G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0) : [];
+            const handled = window._wbExecSkillFallback(n, a, null, allies, enemies);
+            if(handled){
+              // _wbExecSkillFallback 已處理傷害,接著扣能量 + 收尾 endAction
+              try{
+                if(typeof G !== 'undefined' && G && G.energy && a && a.side){
+                  G.energy[a.side] = Math.max(0, (G.energy[a.side]||0) - (cost||0));
+                }
+              }catch(_){}
+              try{ if(typeof endAction === 'function') endAction(a, cost||0); }catch(_){}
+              return;
+            }
+          }catch(eFb){
+            console.error('[WB-BatchA] _wbExecSkillFallback 執行失敗,退回主程式 execSkill', eFb);
+          }
+        }
+      }catch(eHook){
+        console.warn('[WB-BatchA] execSkill hook 前置檢查失敗,退回主程式', eHook);
+      }
+      // 不是維蘇威招 → 走主程式原 execSkill
+      return _origExecSkill.apply(this, arguments);
+    };
+    window.execSkill.__wbPatched = true;
+    console.log('[WB-BatchA] ✅ execSkill 已被 wrap,維蘇威 3 招 hook 生效');
+  }
+  _wbInstallExecSkillHook();
+
+  // ─────────────────────────────────────────────────────────────────
+  // A-3. _wbEnterMainBattle — 借用主程式 #gc/#field/#sb 顯示戰場
+  //
+  //   參數:
+  //     opts.heroes:    array of 4 hero names (G.p1 用)
+  //     opts.bossName:  維蘇威火山龍王(預設)
+  //     opts.isHost:    是否為房主(批次 B 才用,這次只儲存)
+  //     opts.elements:  4 個玩家英雄的元素(對應 heroes[i])
+  //
+  //   做的事:
+  //     1. 隱藏所有世界 BOSS overlay(wb-lobby-overlay、wb-battle-area、emoji-bar)
+  //     2. 把主程式戰場 #gc 顯示出來(unhide)
+  //     3. 用 newHero 建立 G.p1(4 個玩家英雄)+ G.p2[0](維蘇威)
+  //     4. 設置 _wbInWorldBossMode = true 旗標 → 之後批次 C 給 monkey-patch 識別
+  //     5. 呼叫主程式 startTurn() 開始第一回合
+  // ─────────────────────────────────────────────────────────────────
+  window._wbEnterMainBattle = function(opts){
+    opts = opts || {};
+    try{
+      // 0. 前置檢查
+      if(typeof G === 'undefined' || !G){
+        console.error('[WB-BatchA] G 未就緒,無法進戰鬥');
+        alert('主程式戰鬥引擎未就緒,請重新整理頁面');
+        return false;
+      }
+      if(typeof newHero !== 'function'){
+        console.error('[WB-BatchA] newHero 未就緒,無法進戰鬥');
+        return false;
+      }
+      if(!HERO_DB || !HERO_DB['維蘇威火山龍王']){
+        console.error('[WB-BatchA] 維蘇威資料尚未掛入 HERO_DB');
+        alert('世界 BOSS 資料載入失敗,請重新整理頁面');
+        return false;
+      }
+      const heroes = opts.heroes || [];
+      if(heroes.length !== 4){
+        console.error('[WB-BatchA] 必須提供 4 個英雄', heroes);
+        return false;
+      }
+      // 防呆:確認 4 個英雄都在 HERO_DB
+      for(let i=0; i<4; i++){
+        if(!HERO_DB[heroes[i]]){
+          console.error('[WB-BatchA] 英雄 '+heroes[i]+' 不在 HERO_DB');
+          alert('英雄 '+heroes[i]+' 資料異常');
+          return false;
+        }
+      }
+
+      console.log('[WB-BatchA] 🏟 進入主程式戰場 — 英雄:', heroes, 'BOSS: 維蘇威火山龍王');
+
+      // 1. 收掉所有世界 BOSS overlay
+      try{
+        const lobby = document.getElementById('wb-lobby-overlay');
+        if(lobby){
+          lobby.style.display = 'none';
+          lobby.classList.remove('wb-in-battle');
+        }
+        const emojiBar = document.getElementById('wb-emoji-bar-real');
+        if(emojiBar) emojiBar.style.display = 'none';
+        const battleArea = document.getElementById('wb-battle-area');
+        if(battleArea) battleArea.classList.remove('show');
+        const soloDmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+        if(soloDmgBar) soloDmgBar.remove();
+      }catch(eHide){
+        console.warn('[WB-BatchA] 隱藏 wb-overlay 失敗(可忽略)', eHide);
+      }
+
+      // 2. 把主程式戰場 unhide
+      try{
+        const gc = document.getElementById('gc');
+        if(gc){
+          gc.style.display = '';
+          gc.style.visibility = 'visible';
+        }
+        const gcWrap = document.getElementById('_gc_wrapper');
+        if(gcWrap){
+          gcWrap.style.display = '';
+        }
+        // 主程式可能有 #overlay 標題畫面遮住,把它收掉
+        const ov = document.getElementById('overlay');
+        if(ov && ov.style.display !== 'none') ov.style.display = 'none';
+        // 清空 row1/row2,避免上一場殘留卡片
+        const r1 = document.getElementById('row1'); if(r1) r1.innerHTML = '';
+        const r2 = document.getElementById('row2'); if(r2) r2.innerHTML = '';
+        const lg = document.getElementById('log'); if(lg) lg.innerHTML = '';
+      }catch(eShow){
+        console.warn('[WB-BatchA] unhide 主程式戰場失敗', eShow);
+      }
+
+      // 3. 設置 G 物件
+      //    完全重建(避免上一場殘留 buff/旗標)
+      try{
+        // 用主程式既有的 G 結構模式(從 rematchArena 抄)
+        const _newG = {
+          p1: [], p2: [],
+          energy: { p1: 2, p2: 2 },
+          inv: [null, null, null],
+          inv2: [null, null, null],
+          deck: [],
+          activeChar: null,
+          selMove: null, selItem: null,
+          pendingTarget: null,
+          taunted: null,
+          lastSkill: null,
+          lastSkillByHero: {},
+          comboFatigueByHero: {},
+          dmgUp: [],
+          guardFor: null,
+          gunnerTarget: null,
+          alchemist_s2_used: false,
+          waitFor: null,
+          passiveInterruptUsed: false,
+          interruptTarget: null,
+          sellUsed: new Set(),
+          battleStats: {},
+          lastSkillName: null,
+          comboFatigue: 0,
+        };
+        // 寫回主程式的 G(它是 var/let 宣告的,直接賦值就能換掉,但要透過 window)
+        //   主程式 G 沒掛 window;不過所有 function 都從 global lexical scope 讀
+        //   因此這裡用 Object.assign 覆寫既有 G 的所有欄位(保留參考)
+        try{
+          if(typeof G === 'object' && G){
+            // 清掉舊欄位
+            Object.keys(G).forEach(k => { try{ delete G[k]; }catch(_){} });
+            // 寫入新欄位
+            Object.assign(G, _newG);
+          }
+        }catch(eGAssign){
+          console.error('[WB-BatchA] 寫回 G 失敗', eGAssign);
+        }
+
+        // 4 個玩家英雄
+        G.p1 = heroes.map((n, i) => {
+          const h = newHero(n, 'p1', i);
+          // 套用該玩家選的元素(如果有提供)
+          if(opts.elements && opts.elements[i]){
+            h.element = opts.elements[i];
+            try{ if(typeof applyElemBonus === 'function') applyElemBonus(h); }catch(_){}
+          }
+          return h;
+        });
+
+        // BOSS = 維蘇威
+        const bossHero = newHero('維蘇威火山龍王', 'p2', 0);
+        bossHero.element = 'fire';
+        try{ if(typeof applyElemBonus === 'function') applyElemBonus(bossHero); }catch(_){}
+        G.p2 = [bossHero];
+
+        console.log('[WB-BatchA] G 已設置:', {
+          p1: G.p1.map(h => h.name+'('+h.curHp+'/'+h.hp+')'),
+          p2: G.p2.map(h => h.name+'('+h.curHp+'/'+h.hp+')'),
+        });
+      }catch(eG){
+        console.error('[WB-BatchA] 設置 G 失敗', eG);
+        return false;
+      }
+
+      // 4. 設置世界 BOSS 模式旗標
+      window._wbInWorldBossMode = true;
+      window._wbCurrentBossId = 'vesuvius_fire_dragon';
+      window._wbBattleStartTs = Date.now();
+      window._wbIsHost = !!opts.isHost;
+      // 記錄 BOSS 進戰前的 HP(算傷害用)
+      window._wbBossInitialHp = G.p2[0].curHp;
+      // 個人傷害累計(批次 D 結算用)
+      window._wbMyDamageDealt = 0;
+      // 確保不會誤入冒險模式
+      try{
+        window._adventureMode = false;
+        window._adventureStage = null;
+        if(typeof _adventureMode !== 'undefined') _adventureMode = false;
+        if(typeof _adventureStage !== 'undefined') _adventureStage = null;
+      }catch(_){}
+
+      // 5. 渲染 + 開戰
+      try{
+        // 主程式 render 函式可能叫 updateUI / renderAll / renderBoard
+        if(typeof updateUI === 'function') updateUI();
+      }catch(eU){
+        console.warn('[WB-BatchA] updateUI 失敗', eU);
+      }
+
+      // BGM
+      try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+
+      // 第一回合
+      try{
+        if(typeof startTurn === 'function'){
+          setTimeout(() => {
+            try{ startTurn(); }catch(eST){ console.error('[WB-BatchA] startTurn 失敗', eST); }
+          }, 200);
+        }else{
+          console.error('[WB-BatchA] startTurn 未定義');
+        }
+      }catch(eS){
+        console.error('[WB-BatchA] 開戰失敗', eS);
+      }
+
+      return true;
+    }catch(eAll){
+      console.error('[WB-BatchA] _wbEnterMainBattle 整體失敗', eAll);
+      alert('進入世界 BOSS 戰鬥失敗:' + (eAll.message || eAll));
+      return false;
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────
+  // A-4. _wbExitMainBattle — 收掉主程式戰場、回到世界 BOSS 大廳
+  //      呼叫時機:批次 D 結算後、玩家點放棄、BOSS 倒下
+  // ─────────────────────────────────────────────────────────────────
+  window._wbExitMainBattle = function(reason){
+    try{
+      console.log('[WB-BatchA] 🚪 退出主程式戰場,原因:', reason||'未指定');
+      // 清旗標
+      window._wbInWorldBossMode = false;
+      window._wbCurrentBossId = null;
+      window._wbIsHost = false;
+      // 隱藏主程式戰場
+      try{
+        const gc = document.getElementById('gc');
+        if(gc) gc.style.display = 'none';
+        const ap = document.getElementById('action-panel');
+        if(ap) ap.style.display = 'none';
+      }catch(_){}
+      // 顯示回世界 BOSS 大廳
+      try{
+        const lobby = document.getElementById('wb-lobby-overlay');
+        if(lobby){
+          lobby.style.display = 'block';
+        }
+      }catch(_){}
+      // BGM
+      try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-menu', 600); }catch(_){}
+    }catch(e){
+      console.error('[WB-BatchA] _wbExitMainBattle 失敗', e);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────
+  // A-5. 把 _wbEnterMainBattle 接到既有「開戰」按鈕路徑
+  //
+  //   既有的「⚔ 開戰!」流程(wb-start-btn / wb-tc-start-btn)會 call
+  //   _wbUiPrepareStartBattle() / _wbTcHostStartBattle()。
+  //   這裡用 wrapper 攔截:在它們呼叫原本的世界 BOSS 戰鬥引擎前,
+  //   改成走 _wbEnterMainBattle(借用主程式)。
+  //
+  //   注意:批次 A 還沒做 Firebase 同步,這次先支援「單人練習模式」走主程式戰場;
+  //         多人房間繼續走舊的世界 BOSS 引擎,等批次 B 再切換。
+  // ─────────────────────────────────────────────────────────────────
+  function _wbInstallStartBattleHook(){
+    // 等 _wbUiSoloTest 出現(練習模式入口)
+    if(typeof window._wbUiSoloTest !== 'function'){
+      setTimeout(_wbInstallStartBattleHook, 300);
+      return;
+    }
+    if(window._wbUiSoloTest.__wbBatchAPatched){
+      console.log('[WB-BatchA] _wbUiSoloTest 已 patch,跳過');
+      return;
+    }
+    const _origSoloTest = window._wbUiSoloTest;
+    window._wbUiSoloTest = function _wbBatchA_SoloTest(){
+      try{
+        // 從 _heroPickSelected 拿玩家選的 4 個英雄(練習模式可能沒選 → 用預設)
+        let heroes = (typeof _heroPickSelected !== 'undefined' && _heroPickSelected && _heroPickSelected.length === 4)
+          ? _heroPickSelected.slice()
+          : null;
+        if(!heroes){
+          // 沒選 → 用 4 個基礎職業作預設
+          heroes = ['劍士','祭司','聖騎士','黑騎士'];
+          console.log('[WB-BatchA] 練習模式未選角,使用預設 4 英雄:', heroes);
+        }
+        const ok = window._wbEnterMainBattle({
+          heroes: heroes,
+          bossName: '維蘇威火山龍王',
+          isHost: true,  // 練習模式自己當房主
+        });
+        if(ok){
+          console.log('[WB-BatchA] ✅ 練習模式已切換為主程式戰場');
+          return;
+        }
+        // 失敗 → fallback 到舊引擎
+        console.warn('[WB-BatchA] _wbEnterMainBattle 失敗,fallback 到舊練習模式引擎');
+        return _origSoloTest.apply(this, arguments);
+      }catch(e){
+        console.error('[WB-BatchA] _wbUiSoloTest hook 失敗,fallback', e);
+        return _origSoloTest.apply(this, arguments);
+      }
+    };
+    window._wbUiSoloTest.__wbBatchAPatched = true;
+    console.log('[WB-BatchA] ✅ _wbUiSoloTest 已切換為「進主程式戰場」');
+  }
+  _wbInstallStartBattleHook();
+
+  // ─────────────────────────────────────────────────────────────────
+  // A-6. 暴露 debug 工具給 console
+  // ─────────────────────────────────────────────────────────────────
+  window._wbDebugBatchA = {
+    enterBattle: window._wbEnterMainBattle,
+    exitBattle:  window._wbExitMainBattle,
+    checkInstall: function(){
+      console.log('=== 批次 A 安裝檢查 ===');
+      console.log('HERO_DB[維蘇威火山龍王]:', (typeof HERO_DB !== 'undefined' && HERO_DB['維蘇威火山龍王']) ? '✅' : '❌');
+      console.log('execSkill.__wbPatched:', (window.execSkill && window.execSkill.__wbPatched) ? '✅' : '❌');
+      console.log('_wbExecSkillFallback:', typeof window._wbExecSkillFallback === 'function' ? '✅' : '❌');
+      console.log('_wbUiSoloTest.__wbBatchAPatched:', (window._wbUiSoloTest && window._wbUiSoloTest.__wbBatchAPatched) ? '✅' : '❌');
+      console.log('_wbInWorldBossMode:', window._wbInWorldBossMode);
+    },
+    forceEnter: function(){
+      return window._wbEnterMainBattle({
+        heroes: ['劍士','祭司','聖騎士','黑騎士'],
+        isHost: true,
+      });
+    },
+  };
+
+  console.log('[WB-BatchA] ✅ 批次 A 載入完成(在 console 跑 _wbDebugBatchA.checkInstall() 驗證)');
+
 })();
 </script>
