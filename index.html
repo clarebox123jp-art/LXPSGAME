@@ -34032,6 +34032,113 @@ document.addEventListener('visibilitychange', function(){
         screen.lockOrientation('landscape');
       }
     }, 500);
+    // ★ v1.0.20260517.6500 — iPad 切 App 回來「卡死在王的行動」根因修補
+    //   問題:學生在 BOSS 戰中切到 LINE/課本/字典 App,再回來時 BOSS 永遠不行動
+    //   根因:iOS Safari 把背景分頁的所有 setTimeout 完全凍結(不像 PC 只是節流到 1Hz),
+    //         _pSetTimeout 排程的 startTurn / aiAct、_aiWatchdog、endAction watchdog 全部凍結。
+    //         回前台後 iOS 雖然會解凍 timer,但時序錯亂(舊 timer 一次擠出來、新計時又從 0 開始),
+    //         加上 _turnTimerPaused=true 從未還原,_pendingTimers 也可能有殘留的 stale timer,
+    //         結果就是 BOSS 永遠不出手,玩家看到「王的行動」階段卡死。
+    //   PC 不會卡:PC 切到背景分頁的 setTimeout 只被節流到 1Hz,回前台立刻恢復原速,
+    //             timer 排程關係不會斷,所以同樣的程式碼在 PC 上不會出現此 bug。
+    //   修補:回前台後延遲 800ms(讓 fullscreen/scale 先 settle),檢查戰鬥狀態:
+    //     (1) 還原 _turnTimerPaused = false
+    //     (2) 若 _gamePaused=true 但沒有任何合法 modal 顯示 → 強制 resume
+    //     (3) 若是 BOSS 回合且 BOSS 還活著、未行動 → 主動 nudge aiAct(完整重啟流程)
+    //     (4) 若是玩家回合但 action-panel 被藏了 → 還原(讓玩家能繼續操作)
+    setTimeout(function(){
+      try{
+        // 不在冒險戰鬥中 → 不需要 nudge
+        if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
+        if(typeof G === 'undefined' || !G || !G.activeChar) return;
+        // 戰鬥已結束(結算面板顯示中) → 不要介入
+        const _resOv = document.getElementById('adv-result-overlay');
+        if(_resOv && _resOv.classList.contains('show')) return;
+        const _miniRes = document.getElementById('adv-mini-result');
+        if(_miniRes && _miniRes.classList.contains('show')) return;
+        // 合法暫停中的 overlay 顯示 → 玩家自己操作中,不要介入
+        const _legitIds = [
+          'adv-quiz-overlay','adv-reward-overlay','adv-cutscene-overlay',
+          'adv-dialog-box','burst-priority-modal','adv-boss-intro',
+          'taiwan-cutscene-overlay','taiwan-dialog-overlay','taiwan-difficulty-overlay',
+          'adv-boss-detail-pop','active-passive-modal','burst-confirm-modal',
+          'burst-target-pick','pause-overlay','tutorial-overlay','discard-overlay',
+          'dice-overlay','tarot-choice-overlay','charm-ov','mimic-ov',
+          'immovable-prompt','custom-confirm-overlay','_deadlock-rescue-menu',
+          'battle-start-overlay','adv-jp-diff-modal','adv-skip-select-box'
+        ];
+        for(const _id of _legitIds){
+          const _el = document.getElementById(_id);
+          if(!_el) continue;
+          const _shown = (_el.classList && _el.classList.contains('show'))
+                        || (_el.style && _el.style.display && _el.style.display !== 'none' && _el.offsetParent !== null);
+          if(_shown){
+            console.log('[iPad 回前台 nudge] 偵測到合法 overlay 顯示中(' + _id + '),不介入');
+            return;
+          }
+        }
+
+        const _actor = G.activeChar;
+        console.log('[iPad 回前台 nudge] 開始檢查,actor=' + (_actor && _actor.name)
+          + '(' + (_actor && _actor.side) + ')'
+          + ', acted=' + (_actor && _actor.acted)
+          + ', _gamePaused=' + (typeof _gamePaused !== 'undefined' ? _gamePaused : '?')
+          + ', _pendingTimers.length=' + ((typeof _pendingTimers !== 'undefined' && _pendingTimers) ? _pendingTimers.length : '?'));
+
+        // (1) 還原 _turnTimerPaused
+        try{
+          if(typeof _turnTimerPaused !== 'undefined' && _turnTimerPaused){
+            _turnTimerPaused = false;
+            console.log('[iPad 回前台 nudge] 還原 _turnTimerPaused=false');
+          }
+        }catch(_){}
+
+        // (2) 強制釋放卡住的 _gamePaused + 消化 _pendingTimers
+        try{
+          if(typeof _gamePaused !== 'undefined' && _gamePaused){
+            console.warn('[iPad 回前台 nudge] _gamePaused=true 但無合法 modal,強制釋放');
+            window._gamePaused = false;
+            if(typeof _resumeTimers === 'function') _resumeTimers();
+          }
+        }catch(_){}
+
+        // (3) BOSS 回合卡住 → 主動 nudge
+        if(_actor && _actor.side === 'p2' && _actor.curHp > 0 && !_actor.acted){
+          console.warn('[iPad 回前台 nudge] BOSS 回合卡住,主動呼叫 aiAct(' + _actor.name + ')');
+          // 清掉舊的 aiWatchdog,讓 _realAiAct 重建
+          try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
+          // 清掉 BOSS quiz inFlight(可能是被凍結時殘留的)
+          try{
+            const _qOv = document.getElementById('adv-quiz-overlay');
+            const _qShown = _qOv && _qOv.classList.contains('show');
+            if(!_qShown){
+              if(window._bossQuizInFlight){
+                console.log('[iPad 回前台 nudge] 清除孤兒 _bossQuizInFlight');
+                window._bossQuizInFlight = false;
+              }
+              if(window._advQuizBoss){ window._advQuizBoss = null; }
+            }
+          }catch(_){}
+          try{
+            if(typeof aiAct === 'function') aiAct(_actor);
+            else if(typeof startTurn === 'function') startTurn();
+          }catch(_eN){ console.error('[iPad 回前台 nudge] aiAct 失敗', _eN); }
+          return;
+        }
+
+        // (4) 玩家回合但 action-panel 被藏 → 還原
+        if(_actor && _actor.side === 'p1' && _actor.curHp > 0 && !_actor.acted){
+          const _ap = document.getElementById('action-panel');
+          if(_ap && (_ap.style.display === 'none' || _ap.offsetParent === null)){
+            console.warn('[iPad 回前台 nudge] 玩家回合但 action-panel 被藏,還原顯示');
+            try{ if(typeof hidePassiveBtns === 'function') hidePassiveBtns(); }catch(_){}
+            try{ if(typeof restoreActionBtns === 'function') restoreActionBtns(); }catch(_){}
+            _ap.style.display = 'block';
+            try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+          }
+        }
+      }catch(_eOuter){ console.warn('[iPad 回前台 nudge] 整體異常', _eOuter); }
+    }, 800);
   }
 });
 
@@ -68643,7 +68750,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v3.2.5';
+  const CURRENT_VERSION = 'v3.2.6';
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -68677,7 +68784,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v3.2.5';
+window._GAME_LOADED_VERSION = 'v3.2.6';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
