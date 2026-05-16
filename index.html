@@ -40521,7 +40521,7 @@ function _kingShowStartPopup(isResume){
            並排寬度自適應(flex:1),手機窄螢幕仍保持並排 -->
       <div class="king-btn-row" style="flex-wrap:wrap;justify-content:center;gap:8px;">
         <button class="king-btn king-btn-cancel" onclick="playSfx('sfx-cancel',0.4);_kingRemovePopup()">取消</button>
-        <button class="king-btn ${_rerollLeft<=0?'king-btn-disabled':'king-btn-reroll'}" ${_rerollLeft<=0?'disabled':'onclick="playSfx('sfx-sel',0.5);_kingRerollSubject()"'}>🎲 換科目${_rerollLeft>0?` (剩 ${_rerollLeft})`:''}</button>
+        <button class="king-btn ${_rerollLeft<=0?'king-btn-disabled':'king-btn-reroll'}" ${_rerollLeft<=0?'disabled':'onclick="playSfx(&#39;sfx-sel&#39;,0.5);_kingRerollSubject()"'}>🎲 換科目${_rerollLeft>0?` (剩 ${_rerollLeft})`:''}</button>
       </div>
       <div class="king-go-row" style="display:flex;gap:10px;margin-top:10px;padding-bottom:48px;align-items:stretch;">
         ${_hasReview ? `
