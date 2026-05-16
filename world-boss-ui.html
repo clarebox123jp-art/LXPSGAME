@@ -720,6 +720,8 @@
       #1a0a08;
     overflow:hidden;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
+    /* ★ FIX 20260516 v5 — overlay 右上挖洞 120x70 給瀏覽器全螢幕快捷鍵點到 */
+    clip-path:polygon(0 0, calc(100% - 120px) 0, calc(100% - 120px) 70px, 100% 70px, 100% 100%, 0 100%);
   }
   #wb-team-confirm-overlay.show{display:flex;align-items:center;justify-content:center;padding:10px 16px;}
   .wb-tc-card{
@@ -2329,8 +2331,13 @@
         ${p.ready ? '↶ 取消準備' : '✓ 我準備好了'}
       </button>` : '';
 
-    // 點卡片預覽(目前簡化為 alert,未來可改 popup)
-    const previewClick = `onclick="_wbTcPreviewHero('${heroName.replace(/'/g,"\\\\'")}')"`;
+    // ★ FIX 20260516 v5 — 點卡片行為:單人模式=換英雄(更直覺);多人模式=看英雄詳情
+    let previewClick;
+    if(window._wbSoloPracticeMode && isMe){
+      previewClick = `onclick="_wbTcOpenSwapHero(${idx})"`;
+    }else{
+      previewClick = `onclick="_wbTcPreviewHero('${heroName.replace(/'/g,"\\\\'")}')"`;
+    }
 
     // 槽 CSS class
     let slotCls = 'wb-tc-slot';
@@ -2389,13 +2396,12 @@
   }
 
   // ★ FIX 20260516 v4 — 技能列渲染:整列可點 + 右側 ? 按鈕都跳主程式 showSkillDetailPopup
-  // 用 data-skname/skmeta/skdesc(跟主程式戰鬥卡格式一致)
+  // ★ FIX 20260516 v5 — 改用 _wbTcShowSkill 包裝(會 hide 隊伍頁讓 popup 浮在最上層)
   function _wbTcRenderSkillRow(sk, isMe){
     if(!sk) return '';
     const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const meta = `🔷${sk.cost}${sk.isPassive ? ' [被動]' : ''}`;
-    const onclick = `event.stopPropagation();showSkillDetailPopup(this);`;
-    // 整列點擊 → popup;右側 ? 也綁同樣 onclick
+    const onclick = `event.stopPropagation();_wbTcShowSkill(this);`;
     return `<div class="wb-tc-bc-skill-row"
       data-skname="${_esc(sk.name)}"
       data-skmeta="${_esc(meta)}"
@@ -2410,25 +2416,23 @@
     </div>`;
   }
 
-  // ★ FIX 20260516 v4 — 點英雄卡預覽:改用主程式 openMonsterDetail
-  //   (跟點 BOSS 預覽用同一套 popup,完全不用瀏覽器 alert)
+  // ★ FIX 20260516 v5 — 技能 popup 包裝(讓 popup 浮在最上層)
+  window._wbTcShowSkill = function(btn){
+    if(typeof showSkillDetailPopup !== 'function'){
+      console.warn('[WB-TC] showSkillDetailPopup 找不到');
+      return;
+    }
+    _wbTcShowMainPopup(() => showSkillDetailPopup(btn));
+  };
+
+  // ★ FIX 20260516 v4/v5 — 點英雄卡預覽:走統一 popup helper
   window._wbTcPreviewHero = function(heroName){
     if(!heroName || heroName === '?') return;
     if(typeof openMonsterDetail !== 'function'){
       console.warn('[WB-TC] openMonsterDetail 找不到');
       return;
     }
-    try{
-      // 拉高 z-index(同 BOSS 預覽)
-      const _hdo = document.getElementById('hero-detail-overlay');
-      if(_hdo){
-        _hdo.style.zIndex = '9700';
-        _hdo.style.position = 'fixed';
-      }
-      openMonsterDetail(heroName);
-    }catch(e){
-      console.warn('[WB-TC] preview hero error', e);
-    }
+    _wbTcShowMainPopup(() => openMonsterDetail(heroName));
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -2594,28 +2598,94 @@
     document.getElementById('wb-tc-swap-modal').classList.remove('show');
   };
 
-  // ★ FIX 20260516 v3/v4 — 開啟主程式 BOSS 圖鑑詳情頁
-  // 修正:hero-detail-overlay z-index 是 9200,被我們的確認頁(9500)蓋住,
-  //       開啟前暫時把它拉高到 9700;關閉時(主程式關 popup 會把 display 設 none)會自然消失
-  window._wbTcOpenBossDetail = function(){
-    if(typeof openMonsterDetail !== 'function'){
-      alert('找不到 BOSS 圖鑑功能');
+  // ★ FIX 20260516 v5 — 統一 popup helper
+  //   原因:wb-team-confirm-overlay (z-index 9500) 蓋住所有主程式 popup,
+  //         包含 hero-detail-overlay (9200)、skill-detail-popup (9999 但有時被父容器切掉)
+  //   解法:開啟主程式 popup 前,暫時 hide 隊伍確認頁,popup 關閉時(用 MutationObserver 偵測)
+  //         自動 show 回來,完全不會閃爍
+  let _wbTcWatcherTarget = null;
+  let _wbTcWatcherObserver = null;
+  function _wbTcShowMainPopup(openFn){
+    const tcOv = document.getElementById('wb-team-confirm-overlay');
+    if(!tcOv) return;
+    // 暫存隊伍確認頁可見狀態,先 hide
+    tcOv.dataset.wasShown = tcOv.classList.contains('show') ? '1' : '0';
+    tcOv.classList.remove('show');
+    tcOv.style.display = 'none';
+    // 呼叫主程式 popup
+    try{
+      openFn();
+    }catch(e){
+      console.warn('[WB-TC] popup 開啟失敗', e);
+      // 失敗時把確認頁 show 回來
+      _wbTcRestoreOverlay();
       return;
     }
-    try{
-      // 拉高 z-index 讓 popup 蓋在確認頁上方
-      const _hdo = document.getElementById('hero-detail-overlay');
-      if(_hdo){
-        _hdo.style.zIndex = '9700';
-        // 同時保證它脫離原本 position:absolute 容器(部分情況下會被 parent overflow:hidden 切掉)
-        _hdo.style.position = 'fixed';
-      }
-      openMonsterDetail('維蘇威火山龍王');
-    }catch(e){
-      console.warn('[WB-TC] 開啟 BOSS 圖鑑失敗', e);
-      alert('開啟 BOSS 圖鑑失敗:' + (e.message || e));
+    // 監聽主程式 popup 關閉(display:none 或 element 移除)
+    _wbTcAttachPopupWatcher();
+  }
+
+  function _wbTcRestoreOverlay(){
+    const tcOv = document.getElementById('wb-team-confirm-overlay');
+    if(!tcOv) return;
+    if(tcOv.dataset.wasShown === '1'){
+      tcOv.style.display = '';
+      tcOv.classList.add('show');
+      // re-render 確保最新
+      try{ _wbTcRenderTeamConfirm(); }catch(_){}
     }
+    tcOv.dataset.wasShown = '';
+  }
+
+  function _wbTcAttachPopupWatcher(){
+    // 清除舊監聽
+    if(_wbTcWatcherObserver){
+      try{ _wbTcWatcherObserver.disconnect(); }catch(_){}
+      _wbTcWatcherObserver = null;
+    }
+    // 用輪詢(MutationObserver 對 style 變動有點麻煩,輪詢更穩)
+    const checkClose = () => {
+      const hdo  = document.getElementById('hero-detail-overlay');
+      const sdp  = document.getElementById('skill-detail-popup');
+      const hdoOpen = hdo && hdo.style.display && hdo.style.display !== 'none';
+      const sdpOpen = sdp && sdp.style.display && sdp.style.display !== 'none';
+      if(!hdoOpen && !sdpOpen){
+        // 主程式 popup 都關了 → 恢復隊伍頁
+        clearInterval(timer);
+        _wbTcRestoreOverlay();
+      }
+    };
+    // 給主程式一點時間把 popup display 設成 flex/block
+    let started = false;
+    let probe = 0;
+    const timer = setInterval(() => {
+      probe++;
+      if(!started){
+        const hdo  = document.getElementById('hero-detail-overlay');
+        const sdp  = document.getElementById('skill-detail-popup');
+        const hdoOpen = hdo && hdo.style.display && hdo.style.display !== 'none';
+        const sdpOpen = sdp && sdp.style.display && sdp.style.display !== 'none';
+        if(hdoOpen || sdpOpen) started = true;
+      }else{
+        checkClose();
+      }
+      // 保險:30 秒後不管怎樣都恢復
+      if(probe > 300){
+        clearInterval(timer);
+        _wbTcRestoreOverlay();
+      }
+    }, 100);
+  }
+
+  // ★ FIX 20260516 v5 — BOSS 詳情(走統一 helper)
+  window._wbTcOpenBossDetail = function(){
+    if(typeof openMonsterDetail !== 'function'){
+      console.warn('[WB-TC] openMonsterDetail 找不到');
+      return;
+    }
+    _wbTcShowMainPopup(() => openMonsterDetail('維蘇威火山龍王'));
   };
+
   // 切換元素:即時同步給隊友
   window._wbTcToggleElement = async function(elemId){
     const snap = window._wbNet.getSnapshot();
@@ -4317,9 +4387,40 @@
     if(backBtn){
       backBtn.textContent = '← 取消練習';
       backBtn.onclick = function(){
+        // ★ FIX 20260516 v5 — 完整離開:關確認頁 + 關 lobby + 切回首頁 BGM + 清狀態
         document.getElementById('wb-team-confirm-overlay').classList.remove('show');
+        document.getElementById('wb-team-confirm-overlay').style.display = '';
         // 還原 _wbNet
         if(window._wbSoloRealWbNet){ window._wbNet = window._wbSoloRealWbNet; }
+        // 還原 _gUserId(如果單人模式有切過編輯槽)
+        if(window._wbSoloEditUidBackup){
+          window._gUserId = window._wbSoloEditUidBackup;
+          window._wbSoloEditUidBackup = null;
+        }
+        _wbSoloEditingSlot = 0;
+        _wbSoloFakePlayers = null;
+        // 關 lobby + 表情按鈕
+        const lobby = document.getElementById('wb-lobby-overlay');
+        if(lobby){
+          lobby.style.display = 'none';
+          lobby.classList.remove('wb-in-battle');
+        }
+        const emojiBar = document.getElementById('wb-emoji-bar-real');
+        if(emojiBar) emojiBar.style.display = 'none';
+        // 清練習用即時傷害條
+        const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+        if(dmgBar) dmgBar.remove();
+        // 清世界 BOSS 模式 flag
+        window._wbInWorldBossMode = false;
+        window._wbSoloPracticeMode = false;
+        window._wbHostG = null;
+        // 切回原本 BGM(如果有備份;否則用 bgm-home)
+        try{
+          if(typeof bgmFadeTo === 'function'){
+            const prevBgm = window._wbPrevBgm || 'bgm-home';
+            bgmFadeTo(prevBgm, 600);
+          }
+        }catch(_){}
       };
     }
   }
