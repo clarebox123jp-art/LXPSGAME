@@ -709,8 +709,8 @@
   .wb-start-btn:disabled{background:#444;color:#888;cursor:not-allowed;}
 
   /* ════════════════════════════════════════════════════════════════ */
-  /* ★ FIX 20260516 — 隊伍確認頁(進戰鬥前讓玩家確認元素 + 至寶 + 準備) */
-  /* 設計風格參考圖2,4 個角色全身大圖橫排,即時同步                 */
+  /* ★ FIX 20260516 v2 — 隊伍確認頁(緊湊版,1920x1080 不捲動)        */
+  /* 設計:卡片仿主程式戰鬥卡樣式;每張卡上有「替換英雄」「替換至寶」 */
   /* ════════════════════════════════════════════════════════════════ */
   #wb-team-confirm-overlay{
     display:none;position:fixed;inset:0;z-index:9500;
@@ -718,41 +718,44 @@
       linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
       url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
       #1a0a08;
-    overflow-y:auto;padding:20px;
+    overflow:hidden;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
   }
-  #wb-team-confirm-overlay.show{display:block;}
+  #wb-team-confirm-overlay.show{display:flex;align-items:center;justify-content:center;padding:10px 16px;}
   .wb-tc-card{
-    max-width:1400px;margin:0 auto;
-    background:rgba(8,10,24,0.55);
+    width:100%;max-width:1880px;
+    max-height:calc(100vh - 20px);
+    background:rgba(8,10,24,0.62);
     backdrop-filter:blur(6px);
-    border:3px solid rgba(255,170,80,0.65);
-    border-radius:18px;padding:20px 24px;
+    border:2.5px solid rgba(255,170,80,0.65);
+    border-radius:14px;padding:10px 16px 12px;
     box-shadow:0 0 48px rgba(255,140,40,0.45);
     position:relative;
+    display:flex;flex-direction:column;
   }
   .wb-tc-title{
-    font-size:30px;font-weight:900;letter-spacing:4px;
+    font-size:22px;font-weight:900;letter-spacing:3px;
     color:#ffcc66;text-align:center;
-    text-shadow:0 0 18px rgba(255,170,80,0.7),0 2px 6px rgba(0,0,0,0.85);
-    margin-bottom:6px;
+    text-shadow:0 0 14px rgba(255,170,80,0.7),0 2px 4px rgba(0,0,0,0.85);
+    margin-bottom:2px;line-height:1.1;
   }
   .wb-tc-sub{
-    text-align:center;font-size:14px;color:#cfb89e;
-    letter-spacing:2px;margin-bottom:14px;
+    text-align:center;font-size:12px;color:#cfb89e;
+    letter-spacing:1.5px;margin-bottom:8px;
   }
+  /* 護盾提示橫條(精簡) */
   .wb-tc-boss-shield-hint{
-    text-align:center;margin-bottom:18px;
-    padding:10px 14px;background:rgba(255,80,40,0.12);
-    border:1.5px solid rgba(255,120,80,0.55);border-radius:10px;
-    font-size:14px;color:#ffd699;letter-spacing:1px;
+    text-align:center;margin-bottom:8px;
+    padding:6px 12px;background:rgba(255,80,40,0.12);
+    border:1.5px solid rgba(255,120,80,0.55);border-radius:8px;
+    font-size:13px;color:#ffd699;letter-spacing:0.5px;line-height:1.35;
   }
   .wb-tc-boss-shield-hint b{color:#ffaa66;}
-  .wb-tc-shield-icons{display:inline-flex;gap:8px;margin-left:10px;}
+  .wb-tc-shield-icons{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle;}
   .wb-tc-shield-icon{
-    display:inline-flex;align-items:center;gap:4px;
-    padding:3px 10px;border-radius:8px;
-    font-size:13px;font-weight:800;
+    display:inline-flex;align-items:center;gap:3px;
+    padding:2px 8px;border-radius:7px;
+    font-size:12px;font-weight:800;
     background:rgba(0,0,0,0.55);border:1.5px solid;
   }
   .wb-tc-shield-icon.fire {color:#ff7755;border-color:rgba(255,110,80,0.85);}
@@ -760,34 +763,35 @@
   .wb-tc-shield-icon.wind {color:#aaffdd;border-color:rgba(150,240,200,0.85);}
   .wb-tc-shield-icon.earth{color:#ddbb88;border-color:rgba(220,180,120,0.85);}
   .wb-tc-shield-icon.miss{opacity:0.35;filter:grayscale(0.7);}
-  .wb-tc-shield-icon.cover{box-shadow:0 0 12px currentColor;}
+  .wb-tc-shield-icon.cover{box-shadow:0 0 10px currentColor;}
 
-  /* 4 個玩家槽橫排 */
+  /* 4 卡橫排:用 flex 讓他們等寬不會超出 */
   .wb-tc-slots{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
-    margin-bottom:16px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    flex:1;min-height:0;overflow:hidden;
+    margin-bottom:8px;
   }
-  @media (max-width:1100px){.wb-tc-slots{grid-template-columns:repeat(2,1fr);}}
-  @media (max-width:640px){.wb-tc-slots{grid-template-columns:1fr;}}
   .wb-tc-slot{
     background:linear-gradient(180deg,rgba(20,15,10,0.85),rgba(8,5,3,0.92));
-    border:2px solid rgba(212,168,67,0.4);border-radius:14px;
-    padding:14px 12px;display:flex;flex-direction:column;gap:10px;
+    border:2px solid rgba(212,168,67,0.45);border-radius:12px;
+    padding:8px 8px 10px;
+    display:flex;flex-direction:column;gap:6px;
     transition:all 0.25s;position:relative;
+    min-height:0;
   }
-  .wb-tc-slot.me{border-color:#ffe066;box-shadow:0 0 20px rgba(255,224,102,0.45);}
+  .wb-tc-slot.me{border-color:#ffe066;box-shadow:0 0 16px rgba(255,224,102,0.4);}
   .wb-tc-slot.ready{
     border-color:#3ec87a;
-    box-shadow:0 0 22px rgba(62,200,122,0.55);
+    box-shadow:0 0 18px rgba(62,200,122,0.55);
   }
   .wb-tc-slot.ready::after{
-    content:'✓';position:absolute;top:-8px;right:-8px;
-    width:36px;height:36px;border-radius:50%;
+    content:'✓';position:absolute;top:-7px;right:-7px;
+    width:30px;height:30px;border-radius:50%;
     background:linear-gradient(135deg,#3ec87a,#2a9858);
-    border:3px solid #0d0a1f;
-    color:#fff;font-size:22px;font-weight:900;
+    border:2.5px solid #0d0a1f;
+    color:#fff;font-size:18px;font-weight:900;
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 16px rgba(62,200,122,0.85);
+    box-shadow:0 0 12px rgba(62,200,122,0.85);
     animation:wbTcCheckPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
   }
   @keyframes wbTcCheckPop{0%{transform:scale(0);}100%{transform:scale(1);}}
@@ -795,158 +799,240 @@
     border-style:dashed;border-color:rgba(180,180,180,0.3);
     background:rgba(20,20,30,0.45);opacity:0.6;
   }
+  .wb-tc-slot.editing{
+    border-color:#ffaa44;
+    box-shadow:0 0 20px rgba(255,170,68,0.5);
+  }
+
+  /* 卡片頂部 — 槽位 + 替換英雄按鈕 */
   .wb-tc-slot-head{
     display:flex;align-items:center;justify-content:space-between;
-    font-size:12px;color:#aaa;letter-spacing:1px;
+    font-size:11px;color:#aaa;letter-spacing:1px;
+    flex-shrink:0;gap:6px;
   }
   .wb-tc-slot-tag{
-    padding:2px 8px;border-radius:6px;font-weight:800;font-size:11px;
+    padding:2px 7px;border-radius:5px;font-weight:800;font-size:10px;
+    flex-shrink:0;
   }
   .wb-tc-slot-tag.me{background:#ffe066;color:#000;}
   .wb-tc-slot-tag.ai{background:#88ccff;color:#000;}
   .wb-tc-slot-tag.peer{background:rgba(168,132,255,0.4);color:#e0d0ff;}
   .wb-tc-slot-tag.host{background:#ff6644;color:#fff;}
-  .wb-tc-slot-player-name{
-    font-size:14px;font-weight:700;color:#ffe066;text-align:center;
-    letter-spacing:1px;margin-bottom:-2px;
+
+  /* 替換英雄按鈕 */
+  .wb-tc-swap-hero-btn{
+    padding:3px 8px;font-size:11px;font-weight:700;
+    background:rgba(168,132,255,0.18);color:#c8a8ff;
+    border:1.5px solid rgba(168,132,255,0.55);border-radius:6px;
+    cursor:pointer;font-family:inherit;letter-spacing:0.5px;
+    transition:all 0.15s;flex-shrink:0;
   }
-  /* 角色全身大圖區 */
-  .wb-tc-hero-portrait{
-    width:100%;aspect-ratio:3/4;border-radius:10px;overflow:hidden;
-    background:linear-gradient(160deg,#2a3340,#15191f);
-    border:2px solid rgba(212,168,67,0.5);
-    position:relative;display:flex;align-items:center;justify-content:center;
+  .wb-tc-swap-hero-btn:hover{background:rgba(168,132,255,0.35);}
+  .wb-tc-swap-hero-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+  /* 戰鬥卡樣式(仿主程式 .card) */
+  .wb-tc-battle-card{
+    flex:1;min-height:0;
+    background:linear-gradient(160deg,#1a1d28 0%,#0d0f18 100%);
+    border-radius:10px;
+    overflow:hidden;
+    position:relative;
+    display:flex;flex-direction:column;
+    cursor:pointer;
+    border:1.5px solid rgba(255,255,255,0.06);
   }
-  .wb-tc-hero-portrait img{
+  .wb-tc-battle-card:hover{border-color:rgba(255,224,102,0.45);}
+  /* 卡頂 header:Lv + 名稱 + 屬性 */
+  .wb-tc-bc-header{
+    position:relative;z-index:6;
+    display:flex;align-items:center;gap:5px;
+    padding:5px 7px 3px;
+    background:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0) 100%);
+  }
+  .wb-tc-bc-lv{
+    display:inline-flex;align-items:center;
+    font-size:13px;font-weight:900;color:#ffcc44;letter-spacing:1px;
+    background:rgba(80,50,0,0.7);border:1.5px solid rgba(255,200,60,0.65);
+    border-radius:5px;padding:1px 5px;line-height:1.15;flex-shrink:0;
+    text-shadow:0 0 5px rgba(255,200,0,0.5);
+  }
+  .wb-tc-bc-name{
+    font-size:16px;font-weight:700;color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,1),0 0 6px rgba(0,0,0,0.85);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    flex:1;letter-spacing:0.3px;min-width:0;
+  }
+  .wb-tc-bc-elem{
+    font-size:14px;flex-shrink:0;
+  }
+  /* HP 條 */
+  .wb-tc-bc-hp-wrap{
+    position:relative;z-index:6;
+    margin:0 8px 4px;height:18px;background:rgba(0,0,0,0.7);
+    border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);
+    flex-shrink:0;
+  }
+  .wb-tc-bc-hp-fill{height:100%;background:linear-gradient(90deg,#3ec87a,#5cd896);transition:width 0.5s;}
+  .wb-tc-bc-hp-txt{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;color:#fff;text-shadow:1px 1px 2px #000;
+    letter-spacing:0.5px;pointer-events:none;
+  }
+  /* 立繪空間 */
+  .wb-tc-bc-illus{
+    flex:1;min-height:0;background:transparent;
+    pointer-events:none;position:relative;z-index:1;overflow:hidden;
+  }
+  .wb-tc-bc-illus img{
     width:100%;height:100%;object-fit:cover;object-position:top center;
     display:block;
   }
-  .wb-tc-hero-portrait .wb-tc-hero-emoji{
-    font-size:72px;color:rgba(212,168,67,0.6);
+  .wb-tc-bc-illus .wb-tc-bc-emoji{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    font-size:56px;color:rgba(212,168,67,0.6);
   }
-  .wb-tc-hero-portrait .wb-tc-hero-lv{
-    position:absolute;top:6px;left:6px;
-    background:rgba(255,224,102,0.92);color:#000;
-    padding:2px 9px;border-radius:8px;
-    font-size:13px;font-weight:900;letter-spacing:1px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.6);
+  .wb-tc-bc-illus::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:30px;
+    background:linear-gradient(to bottom,transparent,rgba(8,10,18,0.85));
+    pointer-events:none;z-index:2;
   }
-  .wb-tc-hero-name{
-    font-size:16px;font-weight:800;color:#ffe066;text-align:center;
-    letter-spacing:1px;line-height:1.2;
+  /* 卡底:stats + 技能列 */
+  .wb-tc-bc-bottom{
+    position:relative;z-index:6;
+    background:rgba(8,10,18,0.92);border-top:1px solid rgba(255,255,255,0.08);
+    display:flex;flex-direction:column;gap:2px;padding:4px 5px;
+    border-radius:0 0 8px 8px;flex-shrink:0;
   }
-  .wb-tc-stat-row{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
-    font-size:11px;color:#cfb89e;
+  .wb-tc-bc-stats{
+    display:flex;justify-content:space-between;
+    padding:1px 2px;gap:1px;
   }
-  .wb-tc-stat-row > div{
-    background:rgba(0,0,0,0.4);border-radius:5px;
-    padding:4px 2px;text-align:center;
+  .wb-tc-bc-stats > div{
+    flex:1;font-size:11px;font-weight:500;text-align:center;
+    white-space:nowrap;line-height:1.1;
   }
-  .wb-tc-stat-row > div > b{color:#ffe066;font-size:13px;display:block;}
-  /* 元素 chips(玩家挑選) */
+  .wb-tc-bc-stats .s-atk{color:#ff9966;}
+  .wb-tc-bc-stats .s-atk b{font-size:15px;color:#ff7744;font-weight:700;}
+  .wb-tc-bc-stats .s-sp{color:#ffee88;}
+  .wb-tc-bc-stats .s-sp b{font-size:15px;color:#ffdd55;font-weight:700;}
+  .wb-tc-bc-stats .s-spd{color:#88ffaa;}
+  .wb-tc-bc-stats .s-spd b{font-size:15px;color:#44ee77;font-weight:700;}
+  .wb-tc-bc-skill-row{
+    display:flex;align-items:center;gap:3px;padding:2px 4px;
+    background:rgba(255,255,255,0.04);border-radius:4px;
+    border:1px solid rgba(255,255,255,0.07);
+    font-size:12px;
+  }
+  .wb-tc-bc-skill-name{
+    color:#e8d88a;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;
+  }
+  .wb-tc-bc-skill-lv{
+    color:#ffe066;font-weight:800;font-size:11px;
+    background:rgba(255,224,102,0.15);
+    border-radius:4px;padding:1px 5px;flex-shrink:0;
+  }
+  .wb-tc-bc-skill-cost{color:#4a9eff;font-weight:700;flex-shrink:0;font-size:11px;}
+
+  /* 元素 chips(縮小) */
   .wb-tc-section-lbl{
-    font-size:11px;color:#ffcc88;letter-spacing:1.5px;font-weight:700;
-    margin-top:6px;margin-bottom:3px;
-    display:flex;align-items:center;gap:6px;
+    font-size:10px;color:#ffcc88;letter-spacing:1px;font-weight:700;
+    margin-top:2px;
+    display:flex;align-items:center;gap:5px;justify-content:space-between;
   }
   .wb-tc-section-lbl .wb-tc-req{
     background:rgba(255,80,80,0.25);color:#ffaa88;
-    padding:1px 6px;border-radius:5px;font-size:10px;
+    padding:0 5px;border-radius:4px;font-size:9px;
   }
   .wb-tc-elem-chips{
-    display:flex;flex-wrap:wrap;gap:4px;
+    display:grid;grid-template-columns:repeat(7,1fr);gap:3px;
   }
   .wb-tc-elem-chip{
-    flex:1 1 calc(25% - 4px);min-width:42px;
-    padding:5px 4px;border-radius:7px;cursor:pointer;
+    padding:3px 1px;border-radius:5px;cursor:pointer;
     background:rgba(0,0,0,0.45);
-    border:1.5px solid rgba(212,168,67,0.25);
-    color:#aaa;font-size:11px;
-    display:flex;flex-direction:column;align-items:center;gap:1px;
-    transition:all 0.15s;font-family:inherit;
+    border:1.5px solid rgba(212,168,67,0.22);
+    color:#888;font-size:9px;
+    display:flex;flex-direction:column;align-items:center;
+    transition:all 0.15s;font-family:inherit;line-height:1;
   }
-  .wb-tc-elem-chip .em-ic{font-size:16px;line-height:1;}
+  .wb-tc-elem-chip .em-ic{font-size:13px;}
   .wb-tc-elem-chip:hover{border-color:rgba(212,168,67,0.55);}
   .wb-tc-elem-chip:disabled{opacity:0.3;cursor:not-allowed;}
   .wb-tc-elem-chip.on{
     background:rgba(255,224,102,0.22);
     border-color:#ffe066;color:#ffe066;
-    box-shadow:0 0 10px rgba(255,224,102,0.5);
+    box-shadow:0 0 8px rgba(255,224,102,0.5);
   }
-  .wb-tc-elem-chip.on.fire {background:rgba(255,110,80,0.25);border-color:#ff7755;color:#ffa88f;box-shadow:0 0 10px rgba(255,110,80,0.5);}
-  .wb-tc-elem-chip.on.water{background:rgba(120,180,255,0.25);border-color:#88cfff;color:#aae0ff;box-shadow:0 0 10px rgba(120,180,255,0.5);}
-  .wb-tc-elem-chip.on.wind {background:rgba(150,240,200,0.25);border-color:#aaffdd;color:#caffee;box-shadow:0 0 10px rgba(150,240,200,0.5);}
-  .wb-tc-elem-chip.on.earth{background:rgba(220,180,120,0.28);border-color:#ddbb88;color:#f0d8a8;box-shadow:0 0 10px rgba(220,180,120,0.5);}
+  .wb-tc-elem-chip.on.fire {background:rgba(255,110,80,0.25);border-color:#ff7755;color:#ffa88f;box-shadow:0 0 8px rgba(255,110,80,0.5);}
+  .wb-tc-elem-chip.on.water{background:rgba(120,180,255,0.25);border-color:#88cfff;color:#aae0ff;box-shadow:0 0 8px rgba(120,180,255,0.5);}
+  .wb-tc-elem-chip.on.wind {background:rgba(150,240,200,0.25);border-color:#aaffdd;color:#caffee;box-shadow:0 0 8px rgba(150,240,200,0.5);}
+  .wb-tc-elem-chip.on.earth{background:rgba(220,180,120,0.28);border-color:#ddbb88;color:#f0d8a8;box-shadow:0 0 8px rgba(220,180,120,0.5);}
   .wb-tc-elem-chip.readonly{cursor:default;pointer-events:none;}
-  /* 至寶選擇 */
-  .wb-tc-treasure-list{
-    display:flex;flex-direction:column;gap:4px;
+
+  /* 至寶區 — 帶替換按鈕 */
+  .wb-tc-treasure-area{
+    display:flex;flex-direction:column;gap:3px;
   }
-  .wb-tc-treasure-chip{
-    background:rgba(0,0,0,0.5);
+  .wb-tc-treasure-row{
+    display:flex;align-items:center;gap:3px;
+    background:rgba(168,132,255,0.12);
     border:1.5px solid rgba(168,132,255,0.4);
-    border-radius:7px;padding:5px 8px;
-    display:flex;align-items:center;gap:6px;
-    font-size:11px;color:#c8a8ff;
-    cursor:pointer;transition:all 0.15s;
-    font-family:inherit;text-align:left;
+    border-radius:6px;padding:3px 5px;
+    font-size:11px;
+    min-height:24px;
   }
-  .wb-tc-treasure-chip:hover{border-color:#a884ff;}
-  .wb-tc-treasure-chip.on{
-    background:rgba(168,132,255,0.25);
-    border-color:#a884ff;color:#e0d0ff;
-    box-shadow:0 0 10px rgba(168,132,255,0.5);
+  .wb-tc-treasure-row.empty{
+    background:rgba(0,0,0,0.4);
+    border-style:dashed;color:#777;font-style:italic;
+    justify-content:center;
+    font-size:10px;
   }
-  .wb-tc-treasure-chip .wb-tc-tr-ic{font-size:18px;flex-shrink:0;}
-  .wb-tc-treasure-chip .wb-tc-tr-info{flex:1;min-width:0;}
-  .wb-tc-treasure-chip .wb-tc-tr-name{
-    font-weight:700;letter-spacing:0.5px;font-size:12px;
+  .wb-tc-treasure-row .wb-tc-tr-ic{font-size:14px;flex-shrink:0;}
+  .wb-tc-treasure-row .wb-tc-tr-name{
+    flex:1;font-weight:700;color:#c8a8ff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-size:11px;letter-spacing:0.3px;
   }
-  .wb-tc-treasure-chip .wb-tc-tr-lv{
-    font-size:10px;color:#999;
+  .wb-tc-treasure-row .wb-tc-tr-lv{
+    color:#999;font-size:9px;flex-shrink:0;
   }
-  .wb-tc-treasure-chip.locked{opacity:0.35;cursor:not-allowed;}
-  .wb-tc-treasure-chip.taken-by-peer{
-    opacity:0.5;cursor:not-allowed;
-    background:rgba(80,30,30,0.4);border-color:rgba(255,100,100,0.5);
+  .wb-tc-swap-tr-btn{
+    padding:5px 8px;font-size:11px;font-weight:700;
+    background:rgba(168,132,255,0.2);color:#c8a8ff;
+    border:1.5px solid rgba(168,132,255,0.55);border-radius:6px;
+    cursor:pointer;font-family:inherit;letter-spacing:0.5px;
+    transition:all 0.15s;
+    width:100%;
   }
-  .wb-tc-treasure-chip.readonly{cursor:default;pointer-events:none;}
-  .wb-tc-no-treasure{
-    background:rgba(0,0,0,0.45);
-    border:1.5px dashed rgba(168,132,255,0.4);
-    border-radius:7px;padding:8px;
-    font-size:11px;color:#888;text-align:center;
-    font-style:italic;
-  }
-  /* 底部準備按鈕 */
-  .wb-tc-ready-zone{
-    display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;
-  }
+  .wb-tc-swap-tr-btn:hover{background:rgba(168,132,255,0.35);}
+  .wb-tc-swap-tr-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+  /* 準備按鈕(在卡片內) */
   .wb-tc-ready-btn{
-    flex:1;padding:12px 16px;font-size:16px;font-weight:900;letter-spacing:2px;
-    border:none;color:#fff;border-radius:10px;cursor:pointer;
+    width:100%;padding:7px 8px;font-size:13px;font-weight:900;letter-spacing:2px;
+    border:none;color:#fff;border-radius:7px;cursor:pointer;
     font-family:inherit;transition:all 0.2s;
     background:linear-gradient(135deg,#3ec87a,#2a9858);
-    box-shadow:0 4px 14px rgba(62,200,122,0.4);
+    box-shadow:0 3px 10px rgba(62,200,122,0.4);
+    margin-top:2px;
   }
-  .wb-tc-ready-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(62,200,122,0.65);}
+  .wb-tc-ready-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 14px rgba(62,200,122,0.65);}
   .wb-tc-ready-btn.cancel{
     background:linear-gradient(135deg,#ff8844,#cc6622);
-    box-shadow:0 4px 14px rgba(255,136,68,0.4);
+    box-shadow:0 3px 10px rgba(255,136,68,0.4);
   }
   .wb-tc-ready-btn:disabled{
     background:#444;cursor:not-allowed;box-shadow:none;opacity:0.5;
   }
-  /* 底部開戰按鈕(只有房主看到) */
+
+  /* 底部:返回 + 覆蓋率 + 開戰 */
   .wb-tc-start-zone{
-    display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0;
   }
   .wb-tc-coverage{
-    flex:1;min-width:200px;padding:10px 14px;
-    background:rgba(0,0,0,0.45);border-radius:10px;
-    font-size:13px;color:#cfb89e;letter-spacing:0.5px;
+    flex:1;min-width:200px;padding:8px 12px;
+    background:rgba(0,0,0,0.45);border-radius:8px;
+    font-size:13px;color:#cfb89e;letter-spacing:0.5px;line-height:1.3;
   }
   .wb-tc-coverage.ok{
     background:rgba(62,200,122,0.18);color:#a8f0ce;
@@ -957,22 +1043,94 @@
     border:1.5px solid rgba(255,200,100,0.55);
   }
   .wb-tc-start-btn{
-    padding:14px 28px;font-size:18px;font-weight:900;letter-spacing:3px;
-    border:none;color:#000;border-radius:10px;cursor:pointer;
+    padding:10px 24px;font-size:16px;font-weight:900;letter-spacing:3px;
+    border:none;color:#000;border-radius:8px;cursor:pointer;
     font-family:inherit;transition:all 0.2s;
     background:linear-gradient(135deg,#ffcc44,#cc8822);
-    box-shadow:0 0 24px rgba(255,200,80,0.55);
+    box-shadow:0 0 20px rgba(255,200,80,0.55);
   }
-  .wb-tc-start-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 36px rgba(255,200,80,0.85);}
+  .wb-tc-start-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 32px rgba(255,200,80,0.85);}
   .wb-tc-start-btn:disabled{
     background:#444;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.55;
   }
   .wb-tc-back-btn{
-    padding:10px 18px;font-size:13px;font-weight:700;letter-spacing:1px;
+    padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:1px;
     border:1.5px solid #a884ff;background:transparent;color:#c8a8ff;
-    border-radius:8px;cursor:pointer;font-family:inherit;
+    border-radius:7px;cursor:pointer;font-family:inherit;
   }
   .wb-tc-back-btn:hover{background:rgba(168,132,255,0.2);}
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* 共用:替換英雄/至寶 modal */
+  /* ════════════════════════════════════════════════════════════════ */
+  .wb-tc-swap-modal{
+    display:none;position:fixed;inset:0;z-index:9700;
+    background:rgba(0,0,0,0.85);
+    align-items:center;justify-content:center;padding:20px;
+    backdrop-filter:blur(6px);
+  }
+  .wb-tc-swap-modal.show{display:flex;}
+  .wb-tc-swap-card{
+    max-width:880px;width:100%;max-height:90vh;
+    background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
+    border:3px solid #a884ff;border-radius:16px;
+    padding:18px 22px;display:flex;flex-direction:column;
+    box-shadow:0 0 48px rgba(168,132,255,0.55);
+    color:#ffe8a0;
+  }
+  .wb-tc-swap-title{
+    font-size:20px;font-weight:900;color:#c8a8ff;letter-spacing:2px;
+    text-align:center;margin-bottom:6px;
+  }
+  .wb-tc-swap-sub{
+    text-align:center;font-size:12px;color:#aaa;
+    letter-spacing:1px;margin-bottom:12px;
+  }
+  .wb-tc-swap-grid{
+    flex:1;overflow-y:auto;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+    gap:8px;padding:6px;
+    background:rgba(0,0,0,0.35);border-radius:8px;
+  }
+  .wb-tc-swap-item{
+    background:linear-gradient(160deg,rgba(40,45,60,0.85),rgba(20,22,32,0.92));
+    border:1.5px solid rgba(212,168,67,0.4);
+    border-radius:8px;padding:8px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    transition:all 0.15s;font-family:inherit;
+    text-align:center;
+  }
+  .wb-tc-swap-item:hover{
+    border-color:#ffe066;transform:translateY(-2px);
+    box-shadow:0 4px 14px rgba(255,224,102,0.4);
+  }
+  .wb-tc-swap-item.disabled{opacity:0.4;cursor:not-allowed;pointer-events:none;}
+  .wb-tc-swap-item.disabled:hover{transform:none;}
+  .wb-tc-swap-item.current{
+    border-color:#3ec87a;background:linear-gradient(160deg,rgba(40,80,55,0.85),rgba(20,40,28,0.92));
+  }
+  .wb-tc-swap-item .wb-tc-si-img{
+    width:100%;aspect-ratio:1;border-radius:6px;
+    background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;font-size:32px;
+    overflow:hidden;
+  }
+  .wb-tc-swap-item .wb-tc-si-img img{width:100%;height:100%;object-fit:cover;}
+  .wb-tc-swap-item .wb-tc-si-name{
+    font-size:12px;font-weight:700;color:#ffe066;letter-spacing:0.3px;
+    line-height:1.15;
+  }
+  .wb-tc-swap-item .wb-tc-si-meta{font-size:10px;color:#aaa;}
+  .wb-tc-swap-item .wb-tc-si-note{
+    font-size:9px;color:#ff8866;
+  }
+  .wb-tc-swap-close{
+    margin-top:10px;padding:8px 18px;font-size:13px;font-weight:700;
+    background:rgba(168,132,255,0.18);color:#c8a8ff;
+    border:1.5px solid #a884ff;border-radius:7px;cursor:pointer;
+    font-family:inherit;letter-spacing:1px;align-self:center;
+  }
+  .wb-tc-swap-close:hover{background:rgba(168,132,255,0.35);}
   /* ════════════════════════════════════════════════════════════════ */
 
   /* 戰鬥畫面 */
@@ -1579,6 +1737,16 @@
   </div>
 </div>
 
+<!-- ★ FIX 20260516 v2 — 替換英雄/至寶 modal -->
+<div id="wb-tc-swap-modal" class="wb-tc-swap-modal">
+  <div class="wb-tc-swap-card">
+    <div class="wb-tc-swap-title" id="wb-tc-swap-title">替換</div>
+    <div class="wb-tc-swap-sub" id="wb-tc-swap-sub">選擇一個項目</div>
+    <div class="wb-tc-swap-grid" id="wb-tc-swap-grid"></div>
+    <button class="wb-tc-swap-close" onclick="_wbTcCloseSwapModal()">關閉</button>
+  </div>
+</div>
+
 <!-- ★ v3.2 — 出戰前元素確認 modal -->
 <div id="wb-elem-confirm-overlay">
   <div class="wb-ec-card">
@@ -1978,149 +2146,362 @@
     }
   }
 
-  // 渲染單一玩家槽
+  // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含等級加成 — 自己才知道)
+  function _wbTcGetHeroStats(heroName, isMe){
+    try{
+      if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
+      const base = HERO_DB[heroName];
+      const lv = isMe ? _wbTcGetHeroLv(heroName, true) : null;
+      // 簡化:不套等級加成,直接顯示 baseStats(主程式公式複雜),lv 只顯示在徽章
+      return {
+        hp: base.hp || 0,
+        atk: base.atk || 0,
+        sp: base.sp || 0,
+        spd: base.spd || 0,
+      };
+    }catch(_){ return null; }
+  }
+
+  // 取得英雄技能 + 技能等級(自己看得到)
+  function _wbTcGetHeroSkills(heroName, isMe){
+    try{
+      if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return { s1: null, s2: null };
+      const h = HERO_DB[heroName];
+      let s1Lv = 1, s2Lv = 1;
+      if(isMe){
+        try{
+          if(typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[heroName]){
+            s1Lv = (_heroSkillLevels[heroName].s1 || 0) + 1;
+            s2Lv = (_heroSkillLevels[heroName].s2 || 0) + 1;
+          }
+        }catch(_){}
+      }
+      return {
+        s1: h.s1 ? { name: h.s1.n || '技能 1', cost: h.s1.c || 0, lv: s1Lv } : null,
+        s2: h.s2 ? { name: h.s2.n || '技能 2', cost: h.s2.c || 0, lv: s2Lv } : null,
+      };
+    }catch(_){ return { s1: null, s2: null }; }
+  }
+
+  // 元素 emoji 對應
+  function _wbTcElemIcon(elemId){
+    const m = _WB_TC_ALL_ELEMS.find(x => x.id === elemId);
+    return m ? m.ic : '';
+  }
+
+  // ★ FIX 20260516 v2 — 新版緊湊戰鬥卡片渲染
   function _wbTcRenderOneSlot(p, idx, myUid, treasureTakenByPeer, meIsHost){
     const isMe = (p.uid === myUid);
     const isHost = (window._wbNet.getSnapshot()?.meta?.hostUid === p.uid);
     const ext = _wbTcParsePlayerExt(p);
     const heroName = p.heroName || '?';
-    const heroDef = (typeof HERO_DB !== 'undefined' && HERO_DB[heroName]) || null;
     const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
     const lv = _wbTcGetHeroLv(heroName, isMe);
-    // 計算 stats(只有自己看得到精準等級加成,隊友看到基礎值)
-    const stats = heroDef ? {
-      hp: heroDef.hp || 0,
-      atk: heroDef.atk || 0,
-      sp: heroDef.sp || 0,
-      spd: heroDef.spd || 0,
-    } : { hp:0, atk:0, sp:0, spd:0 };
+    const stats = _wbTcGetHeroStats(heroName, isMe) || { hp:0, atk:0, sp:0, spd:0 };
+    const skills = _wbTcGetHeroSkills(heroName, isMe);
+    // 主元素(取 ext.es 第一個);用於 header 右上角顯示元素 icon
+    const mainElem = ext.es[0] || null;
 
+    // 標籤
     const tagHtml = isHost
       ? '<span class="wb-tc-slot-tag host">房主</span>'
       : (isMe ? '<span class="wb-tc-slot-tag me">你</span>' : '<span class="wb-tc-slot-tag peer">隊友</span>');
-    const playerLabel = isMe ? (window._userName || '我') : (p.name || '玩家');
+
+    // 替換英雄按鈕(只有我看得到,只有單人練習可用 — 多人房不允許在這頁換英雄)
+    const allowSwapHero = isMe && window._wbSoloPracticeMode;
+    const swapHeroBtn = allowSwapHero
+      ? `<button class="wb-tc-swap-hero-btn" onclick="_wbTcOpenSwapHero(${idx})">🔄 替換英雄</button>`
+      : '';
 
     // 元素 chips
     const elemChipsHtml = _WB_TC_ALL_ELEMS.map(el => {
       const on = ext.es.includes(el.id);
-      const cls = 'wb-tc-elem-chip ' + (on ? ('on ' + el.id) : '')
-                + (!el.isReq ? ' wb-tc-non-req' : '')
-                + (isMe ? '' : ' readonly');
-      // 只有「我」才有 onclick
+      const cls = 'wb-tc-elem-chip ' + (on ? ('on ' + el.id) : '') + (isMe ? '' : ' readonly');
       const click = isMe ? `onclick="_wbTcToggleElement('${el.id}')"` : '';
       return `<button class="${cls}" ${click}>
         <span class="em-ic">${el.ic}</span>${el.name}
       </button>`;
     }).join('');
 
-    // 至寶選擇(只有自己看得到完整選單,隊友只看到名字)
-    let treasureHtml = '';
-    if(isMe){
-      const myTreasures = _wbTcGetMyTreasures();
-      // 篩選此英雄可裝的:槽位限制,1 或 2 件
-      const maxSlots = _wbTcIsHeroSlot2Unlocked(heroName) ? 2 : 1;
-      const selectedIds = ext.t || [];
-      if(myTreasures.length === 0){
-        treasureHtml = '<div class="wb-tc-no-treasure">尚未解鎖任何至寶</div>';
-      }else{
-        // 把已選的排前面
-        myTreasures.sort((a,b) => {
-          const aSel = selectedIds.includes(a.id) ? -1 : 0;
-          const bSel = selectedIds.includes(b.id) ? -1 : 0;
-          return aSel - bSel;
-        });
-        treasureHtml = myTreasures.slice(0, 8).map(t => {
-          const on = selectedIds.includes(t.id);
-          const takenByPeer = !on && treasureTakenByPeer.has(t.id);
-          // 同 slot 衝突:如果我已選一件 weapon,新選的也是 weapon → 不允許
-          const slotConflict = !on && selectedIds.some(sid => {
-            const sdef = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[sid]);
-            return sdef && sdef.slot === t.slot;
-          });
-          // 達到上限:已選滿(且不是這件)
-          const overLimit = !on && selectedIds.length >= maxSlots;
-          const locked = takenByPeer || slotConflict || overLimit;
-          const cls = 'wb-tc-treasure-chip' + (on ? ' on' : '')
-                    + (takenByPeer ? ' taken-by-peer' : '')
-                    + (locked && !takenByPeer ? ' locked' : '');
-          const safeId = t.id.replace(/'/g,"\\'");
-          const click = locked ? '' : `onclick="_wbTcToggleTreasure('${safeId}')"`;
-          const note = takenByPeer ? '(隊友裝了)'
-                    : slotConflict ? '(同類已選)'
-                    : overLimit ? '(已滿)' : '';
-          return `<button class="${cls}" ${click} title="${t.abilityText.replace(/"/g,'&quot;')}">
-            <span class="wb-tc-tr-ic">${t.icon}</span>
-            <div class="wb-tc-tr-info">
-              <div class="wb-tc-tr-name">${t.name}${note ? ' <span style="color:#888;font-size:10px;">'+note+'</span>' : ''}</div>
-              <div class="wb-tc-tr-lv">Lv.${t.lv} ${t.slot === 'weapon' ? '⚔ 武器' : t.slot === 'armor' ? '🛡 防具' : '💎 飾品'}</div>
-            </div>
-          </button>`;
-        }).join('');
-        // 提示:第二格鎖定
-        if(maxSlots === 1){
-          treasureHtml += '<div style="font-size:10px;color:#888;text-align:center;margin-top:4px;">最多 1 件(用此英雄打敗玉山 BOSS 解鎖第二件)</div>';
-        }
-      }
+    // 至寶顯示(展示已選的最多 2 件)
+    let treasureRowsHtml = '';
+    const selTreasures = (ext.t || []).slice(0, 2);
+    if(selTreasures.length === 0){
+      treasureRowsHtml = '<div class="wb-tc-treasure-row empty">未配戴至寶</div>';
     }else{
-      // 隊友視角:只顯示已選的至寶名稱(無互動)
-      const peerSel = ext.t || [];
-      if(peerSel.length === 0){
-        treasureHtml = '<div class="wb-tc-no-treasure">未配戴至寶</div>';
-      }else{
-        treasureHtml = peerSel.map(tid => {
-          const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]) || null;
-          if(!def) return '';
-          return `<div class="wb-tc-treasure-chip on readonly">
-            <span class="wb-tc-tr-ic">${def.icon || '💎'}</span>
-            <div class="wb-tc-tr-info">
-              <div class="wb-tc-tr-name">${def.name}</div>
-            </div>
-          </div>`;
-        }).join('');
-      }
+      treasureRowsHtml = selTreasures.map(tid => {
+        const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]) || null;
+        if(!def) return '';
+        const rec = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData[tid]) || {};
+        const slotName = def.slot === 'weapon' ? '武器' : def.slot === 'armor' ? '防具' : '飾品';
+        return `<div class="wb-tc-treasure-row">
+          <span class="wb-tc-tr-ic">${def.icon || '💎'}</span>
+          <span class="wb-tc-tr-name">${def.name}</span>
+          <span class="wb-tc-tr-lv">Lv.${rec.lv || 1} ${slotName}</span>
+        </div>`;
+      }).join('');
     }
+    const swapTrBtn = isMe
+      ? `<button class="wb-tc-swap-tr-btn" onclick="_wbTcOpenSwapTreasure(${idx})">💎 替換至寶</button>`
+      : '';
 
-    // 準備按鈕(只有自己看到)
+    // 準備按鈕
     const readyBtnHtml = isMe ? `
-      <div class="wb-tc-ready-zone">
-        <button class="wb-tc-ready-btn ${p.ready ? 'cancel' : ''}" onclick="_wbTcToggleReady()">
-          ${p.ready ? '↶ 取消準備' : '✓ 我準備好了'}
-        </button>
-      </div>
-    ` : '';
+      <button class="wb-tc-ready-btn ${p.ready ? 'cancel' : ''}" onclick="_wbTcToggleReady()">
+        ${p.ready ? '↶ 取消準備' : '✓ 我準備好了'}
+      </button>` : '';
 
-    // 槽位 CSS class
-    const slotCls = 'wb-tc-slot' + (isMe ? ' me' : '') + (p.ready ? ' ready' : '');
+    // 點卡片預覽(目前簡化為 alert,未來可改 popup)
+    const previewClick = `onclick="_wbTcPreviewHero('${heroName.replace(/'/g,"\\\\'")}')"`;
+
+    // 槽 CSS class
+    let slotCls = 'wb-tc-slot';
+    if(isMe) slotCls += ' me';
+    if(p.ready) slotCls += ' ready';
+    // 單人模式:標示正在編輯的槽
+    if(window._wbSoloPracticeMode && idx === (window._wbSoloEditingSlot ?? 0)) slotCls += ' editing';
 
     return `<div class="${slotCls}">
+      <!-- 槽位 + 替換英雄按鈕 -->
       <div class="wb-tc-slot-head">
         <span>槽位 ${idx+1}</span>
         ${tagHtml}
+        ${swapHeroBtn}
       </div>
-      <div class="wb-tc-slot-player-name">${playerLabel}</div>
-      <div class="wb-tc-hero-portrait">
-        ${heroImg
-          ? `<img src="${heroImg}" alt="${heroName}" onerror="this.style.display='none';this.parentElement.innerHTML+='<span class=\\'wb-tc-hero-emoji\\'>⚔</span>';">`
-          : '<span class="wb-tc-hero-emoji">⚔</span>'}
-        ${lv ? `<span class="wb-tc-hero-lv">Lv.${lv}</span>` : ''}
+      <!-- 戰鬥卡片(可點預覽技能) -->
+      <div class="wb-tc-battle-card" ${previewClick}>
+        <div class="wb-tc-bc-header">
+          ${lv ? `<span class="wb-tc-bc-lv">Lv.${lv}</span>` : '<span class="wb-tc-bc-lv">Lv.?</span>'}
+          <span class="wb-tc-bc-name">${heroName}</span>
+          ${mainElem ? `<span class="wb-tc-bc-elem">${_wbTcElemIcon(mainElem)}</span>` : ''}
+        </div>
+        <div class="wb-tc-bc-hp-wrap">
+          <div class="wb-tc-bc-hp-fill" style="width:100%;"></div>
+          <div class="wb-tc-bc-hp-txt">HP ${stats.hp}/${stats.hp}</div>
+        </div>
+        <div class="wb-tc-bc-illus">
+          ${heroImg
+            ? `<img src="${heroImg}" alt="${heroName}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'wb-tc-bc-emoji\\'>⚔</div>';">`
+            : '<div class="wb-tc-bc-emoji">⚔</div>'}
+        </div>
+        <div class="wb-tc-bc-bottom">
+          <div class="wb-tc-bc-stats">
+            <div class="s-atk">攻<b>${stats.atk}</b></div>
+            <div class="s-sp">特<b>${stats.sp}</b></div>
+            <div class="s-spd">速<b>${stats.spd}</b></div>
+          </div>
+          ${skills.s1 ? `<div class="wb-tc-bc-skill-row">
+            <span class="wb-tc-bc-skill-name">${skills.s1.name}</span>
+            ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${skills.s1.lv}</span>` : ''}
+            <span class="wb-tc-bc-skill-cost">⬥${skills.s1.cost}</span>
+          </div>` : ''}
+          ${skills.s2 ? `<div class="wb-tc-bc-skill-row">
+            <span class="wb-tc-bc-skill-name">${skills.s2.name}</span>
+            ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${skills.s2.lv}</span>` : ''}
+            <span class="wb-tc-bc-skill-cost">⬥${skills.s2.cost}</span>
+          </div>` : ''}
+        </div>
       </div>
-      <div class="wb-tc-hero-name">${heroName}</div>
-      <div class="wb-tc-stat-row">
-        <div>HP<b>${stats.hp}</b></div>
-        <div>攻<b>${stats.atk}</b></div>
-        <div>特<b>${stats.sp}</b></div>
-        <div>速<b>${stats.spd}</b></div>
-      </div>
+      <!-- 元素 chips -->
       <div class="wb-tc-section-lbl">
-        🎨 屬性 ${isMe ? '<span class="wb-tc-req">(火/水/風/土必選)</span>' : ''}
+        🎨 屬性
+        ${isMe ? '<span class="wb-tc-req">必選破盾</span>' : ''}
       </div>
       <div class="wb-tc-elem-chips">${elemChipsHtml}</div>
+      <!-- 至寶 + 替換按鈕 -->
       <div class="wb-tc-section-lbl">💎 至寶</div>
-      <div class="wb-tc-treasure-list">${treasureHtml}</div>
+      <div class="wb-tc-treasure-area">
+        ${treasureRowsHtml}
+        ${swapTrBtn}
+      </div>
       ${readyBtnHtml}
     </div>`;
   }
 
+  // 點英雄卡預覽(暫用 alert,後續可擴成 popup)
+  window._wbTcPreviewHero = function(heroName){
+    if(!heroName || heroName === '?') return;
+    try{
+      const h = HERO_DB[heroName];
+      if(!h){ alert('找不到此英雄資料'); return; }
+      const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[heroName]) || null;
+      const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[heroName]) || null;
+      let msg = `📋 ${heroName} 詳情\n\n`;
+      msg += `HP ${h.hp} ｜ 攻 ${h.atk} ｜ 特 ${h.sp} ｜ 速 ${h.spd}\n`;
+      if(trait){ msg += `\n🌟 天賦:${trait.name}\n  ${trait.desc || ''}\n`; }
+      if(h.s1){ msg += `\n✨ 技能 1:${h.s1.n} (⬥${h.s1.c})\n  ${h.s1.d || ''}\n`; }
+      if(h.s2){ msg += `\n🌟 技能 2:${h.s2.n} (⬥${h.s2.c})\n  ${h.s2.d || ''}\n`; }
+      if(burst){ msg += `\n💥 爆發:${burst.n}\n  ${burst.d || ''}\n`; }
+      alert(msg);
+    }catch(e){
+      console.warn('[WB-TC] preview hero error', e);
+    }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260516 v2 — 替換英雄 modal
+  // ════════════════════════════════════════════════════════════════════
+  window._wbTcOpenSwapHero = function(targetSlotIdx){
+    // 取得所有可選英雄(不在 BOSS 名單裡的、且玩家已解鎖的)
+    let heroes = [];
+    try{
+      if(typeof HERO_DB !== 'undefined'){
+        const allNames = Object.keys(HERO_DB);
+        const isBoss = (n) => (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n));
+        // 玩家解鎖英雄(從 _heroLevels 有紀錄的)
+        let unlocked = null;
+        try{
+          if(typeof _heroLevels !== 'undefined' && _heroLevels){
+            unlocked = new Set(Object.keys(_heroLevels));
+          }
+        }catch(_){}
+        heroes = allNames.filter(n => !isBoss(n) && (!unlocked || unlocked.has(n)));
+      }
+    }catch(e){ console.warn('[WB-TC] 讀取英雄列表失敗', e); }
+    if(heroes.length === 0){
+      alert('沒有可選的英雄');
+      return;
+    }
+    // 已被隊友選走的英雄
+    const snap = window._wbNet.getSnapshot();
+    const taken = new Set();
+    (snap?.players || []).forEach((p, i) => {
+      if(i !== targetSlotIdx && p && p.heroName) taken.add(p.heroName);
+    });
+
+    document.getElementById('wb-tc-swap-title').textContent = '🔄 替換英雄(槽位 ' + (targetSlotIdx+1) + ')';
+    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;灰色=被隊友選走;綠框=當前';
+    const grid = document.getElementById('wb-tc-swap-grid');
+    const curHero = snap?.players?.[targetSlotIdx]?.heroName;
+    grid.innerHTML = heroes.map(name => {
+      const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+      const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[name]) || '⚔';
+      const lv = (typeof _heroLevels !== 'undefined' && _heroLevels[name]) || 1;
+      const dis = taken.has(name);
+      const cur = (name === curHero);
+      const cls = 'wb-tc-swap-item' + (dis ? ' disabled' : '') + (cur ? ' current' : '');
+      const safeName = name.replace(/'/g,"\\'");
+      const click = dis ? '' : `onclick="_wbTcConfirmSwapHero(${targetSlotIdx}, '${safeName}')"`;
+      return `<button class="${cls}" ${click}>
+        <div class="wb-tc-si-img">
+          ${img
+            ? `<img src="${img}" alt="${name}" onerror="this.style.display='none';this.parentElement.innerHTML='${av}';">`
+            : av}
+        </div>
+        <div class="wb-tc-si-name">${name}</div>
+        <div class="wb-tc-si-meta">Lv.${lv}</div>
+        ${dis ? '<div class="wb-tc-si-note">已被選走</div>' : (cur ? '<div class="wb-tc-si-note">當前</div>' : '')}
+      </button>`;
+    }).join('');
+    document.getElementById('wb-tc-swap-modal').classList.add('show');
+  };
+
+  window._wbTcConfirmSwapHero = async function(targetSlotIdx, heroName){
+    // 單人模式:切到該槽再 setMyHero
+    if(window._wbSoloPracticeMode){
+      window._wbSoloEditingSlot = targetSlotIdx;
+      // 拿目前該槽的 ext(保留元素/至寶)
+      const snap = window._wbNet.getSnapshot();
+      const me = snap?.players?.[targetSlotIdx];
+      const ext = _wbTcParsePlayerExt(me);
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
+    }else{
+      // 多人:不允許在這頁換英雄(按鈕應該不會出現)
+      alert('多人房請在選角頁切換英雄');
+    }
+    _wbTcCloseSwapModal();
+    _wbTcRenderTeamConfirm();
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260516 v2 — 替換至寶 modal
+  // ════════════════════════════════════════════════════════════════════
+  window._wbTcOpenSwapTreasure = function(targetSlotIdx){
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.[targetSlotIdx];
+    if(!me){ alert('槽位不存在'); return; }
+    const ext = _wbTcParsePlayerExt(me);
+    const heroName = me.heroName;
+    const maxSlots = _wbTcIsHeroSlot2Unlocked(heroName) ? 2 : 1;
+    const myTreasures = _wbTcGetMyTreasures();
+    if(myTreasures.length === 0){
+      alert('尚未解鎖任何至寶');
+      return;
+    }
+
+    // 隊友已裝
+    const takenByPeer = new Set();
+    (snap?.players || []).forEach((p, i) => {
+      if(i === targetSlotIdx) return;
+      const ext2 = _wbTcParsePlayerExt(p);
+      (ext2.t || []).forEach(tid => takenByPeer.add(tid));
+    });
+
+    const selected = ext.t || [];
+
+    document.getElementById('wb-tc-swap-title').textContent = '💎 替換至寶(槽位 ' + (targetSlotIdx+1) + ')';
+    document.getElementById('wb-tc-swap-sub').textContent = `最多選 ${maxSlots} 件;紅字=隊友已裝;綠框=已選`;
+    const grid = document.getElementById('wb-tc-swap-grid');
+    grid.innerHTML = myTreasures.map(t => {
+      const on = selected.includes(t.id);
+      const peer = takenByPeer.has(t.id) && !on;
+      // 同 slot 衝突
+      const slotConflict = !on && selected.some(sid => {
+        const sdef = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[sid]);
+        return sdef && sdef.slot === t.slot;
+      });
+      const overLimit = !on && selected.length >= maxSlots;
+      const dis = peer || slotConflict || overLimit;
+      const cls = 'wb-tc-swap-item' + (dis ? ' disabled' : '') + (on ? ' current' : '');
+      const note = peer ? '隊友已裝' : slotConflict ? '同類已選' : overLimit ? '已滿' : (on ? '已選' : '');
+      const safeId = t.id.replace(/'/g,"\\'");
+      const click = dis ? '' : `onclick="_wbTcConfirmSwapTreasure(${targetSlotIdx}, '${safeId}')"`;
+      const slotName = t.slot === 'weapon' ? '武器' : t.slot === 'armor' ? '防具' : '飾品';
+      return `<button class="${cls}" ${click}>
+        <div class="wb-tc-si-img">${t.icon || '💎'}</div>
+        <div class="wb-tc-si-name">${t.name}</div>
+        <div class="wb-tc-si-meta">Lv.${t.lv} ${slotName}</div>
+        ${note ? '<div class="wb-tc-si-note">'+note+'</div>' : ''}
+      </button>`;
+    }).join('');
+    document.getElementById('wb-tc-swap-modal').classList.add('show');
+  };
+
+  window._wbTcConfirmSwapTreasure = async function(targetSlotIdx, treasureId){
+    // 把這個 treasure 加入(若已在則移除)
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.[targetSlotIdx];
+    if(!me){ return; }
+    const ext = _wbTcParsePlayerExt(me);
+    const idx = ext.t.indexOf(treasureId);
+    if(idx >= 0){
+      ext.t.splice(idx, 1);
+    }else{
+      // 同 slot 衝突檢查
+      const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[treasureId]) || null;
+      if(def){
+        ext.t = ext.t.filter(tid => {
+          const old = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]);
+          return !(old && old.slot === def.slot);
+        });
+      }
+      // 達到上限就移除最舊的
+      const maxSlots = _wbTcIsHeroSlot2Unlocked(me.heroName) ? 2 : 1;
+      if(ext.t.length >= maxSlots) ext.t.shift();
+      ext.t.push(treasureId);
+    }
+    // 同步:單人模式切到該槽再 setMyHero;多人模式自己槽才允許
+    if(window._wbSoloPracticeMode){
+      window._wbSoloEditingSlot = targetSlotIdx;
+    }
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    _wbTcCloseSwapModal();
+    _wbTcRenderTeamConfirm();
+  };
+
+  window._wbTcCloseSwapModal = function(){
+    document.getElementById('wb-tc-swap-modal').classList.remove('show');
+  };
   // 切換元素:即時同步給隊友
   window._wbTcToggleElement = async function(elemId){
     const snap = window._wbNet.getSnapshot();
