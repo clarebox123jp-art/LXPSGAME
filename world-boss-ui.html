@@ -23,8 +23,127 @@
   #wb-entry-overlay, #wb-lobby-overlay, #wb-result-overlay {
     display:none; position:fixed; inset:0; z-index:9000;
     background:rgba(8,10,24,0.94);
-    padding:40px 20px; overflow-y:auto;
+    padding:20px; overflow:hidden;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  /* ★ FIX 20260516 v10 — 入口頁改成左半面板/右半龍王圖佈局 */
+  #wb-entry-overlay.wb-entry-split-layout{
+    display:flex !important;
+    align-items:stretch;
+    justify-content:flex-start;
+    padding:0;
+    gap:0;
+  }
+  /* 左半面板 */
+  .wb-entry-left-panel{
+    flex:0 0 50%;
+    max-width:50%;
+    height:100vh;
+    overflow-y:auto;
+    padding:24px 28px;
+    box-sizing:border-box;
+  }
+  /* 右半 BOSS 圖 */
+  .wb-entry-right-img{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse at center, rgba(255,80,40,0.18) 0%, rgba(40,15,10,0.6) 60%, rgba(0,0,0,0.95) 100%),
+      url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B6%AD%E8%98%87%E5%A8%81%E7%81%AB%E5%B1%B1%E9%BE%8D%E7%8E%8B.png') center/contain no-repeat,
+      #1a0a08;
+  }
+  .wb-entry-right-img::after{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%);
+  }
+  /* 在右半圖上方撒粒子 */
+  .wb-entry-particles{
+    position:absolute;inset:0;pointer-events:none;overflow:hidden;
+  }
+  .wb-entry-particles .wb-flame-particle{
+    position:absolute;
+    width:18px;height:24px;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center bottom,
+      #ffeb3b 0%, #ffa726 30%, #ff5722 60%, #b71c1c 90%, transparent 100%);
+    border-radius:50% 50% 20% 20% / 60% 60% 40% 40%;
+    filter:blur(0.5px) drop-shadow(0 0 8px rgba(255,140,40,0.85));
+    animation:wbEntryFlameRise 2.8s ease-out infinite;
+    opacity:0;
+    z-index:1;
+    transform-origin:center bottom;
+    bottom:-10px;
+    left:var(--x);
+    animation-delay:var(--delay);
+  }
+  @keyframes wbEntryFlameRise{
+    0%   {transform:translateY(0)   scale(0.5) rotate(-3deg);opacity:0;}
+    10%  {opacity:1;}
+    55%  {transform:translateY(-65vh) scale(1.2) rotate(4deg);opacity:0.85;}
+    100% {transform:translateY(-100vh) scale(0.3) rotate(-5deg);opacity:0;}
+  }
+  /* 火星(較小的) */
+  .wb-entry-particles .wb-flame-spark{
+    position:absolute;
+    width:6px;height:6px;border-radius:50%;
+    background:radial-gradient(circle, #ffeb88 0%, #ffaa44 60%, transparent 100%);
+    box-shadow:0 0 8px rgba(255,180,80,0.9);
+    animation:wbEntrySparkFly 3.5s ease-out infinite;
+    animation-delay:var(--delay);
+    opacity:0;
+    bottom:-6px;
+    left:var(--x);
+  }
+  @keyframes wbEntrySparkFly{
+    0%   {transform:translateY(0) translateX(0) scale(0.4);opacity:0;}
+    15%  {opacity:1;}
+    50%  {transform:translateY(-50vh) translateX(var(--xshift,10px)) scale(1);opacity:0.9;}
+    100% {transform:translateY(-100vh) translateX(calc(var(--xshift,10px) * 2)) scale(0.2);opacity:0;}
+  }
+  /* 卡片在左半時不需要中心置中 */
+  .wb-entry-split-layout .wb-card{
+    max-width:none;margin:0;width:100%;
+    background:rgba(15,10,30,0.62);
+    backdrop-filter:blur(4px);
+    padding:24px 26px;
+  }
+  /* ★ 整個入口頁字體 200% 放大(內文,不含標題) */
+  .wb-entry-split-layout .wb-card{font-size:200%;}
+  .wb-entry-split-layout .wb-title{font-size:56px;}
+  .wb-entry-split-layout .wb-subtitle{font-size:24px;}
+  .wb-entry-split-layout .wb-ceasefire-banner h3,
+  .wb-entry-split-layout .wb-ceasefire-banner .wb-ceasefire-title{font-size:34px !important;}
+  .wb-entry-split-layout .wb-ceasefire-msg,
+  .wb-entry-split-layout .wb-ceasefire-banner p{font-size:22px !important;}
+  .wb-entry-split-layout .wb-admin-ctrl-panel h4{font-size:30px !important;}
+  .wb-entry-split-layout .wb-admin-ctrl-panel,
+  .wb-entry-split-layout .wb-admin-ctrl-panel label,
+  .wb-entry-split-layout .wb-admin-state-row,
+  .wb-entry-split-layout .wb-admin-ctrl-panel input,
+  .wb-entry-split-layout .wb-admin-ctrl-panel textarea,
+  .wb-entry-split-layout .wb-admin-ctrl-panel button{font-size:22px !important;}
+  .wb-entry-split-layout .wb-boss-name{font-size:32px !important;}
+  .wb-entry-split-layout .wb-boss-info > div{font-size:22px !important;}
+  .wb-entry-split-layout .wb-boss-stats span{font-size:22px !important;}
+  .wb-entry-split-layout .wb-entry-big-btn .ico{font-size:64px !important;}
+  .wb-entry-split-layout .wb-entry-big-btn .ttl{font-size:30px !important;}
+  .wb-entry-split-layout .wb-entry-big-btn .desc{font-size:18px !important;line-height:1.55 !important;}
+  .wb-entry-split-layout .wb-code-input{font-size:42px !important;}
+  .wb-entry-split-layout .wb-submit-btn{font-size:26px !important;}
+  .wb-entry-split-layout .wb-info-box{font-size:20px !important;line-height:1.7 !important;}
+  .wb-entry-split-layout #wb-blessing-banner{font-size:20px !important;}
+  .wb-entry-split-layout #wb-reward-tier-list,
+  .wb-entry-split-layout #wb-lineup-list{font-size:18px !important;}
+  .wb-entry-split-layout #wb-lineup-list > div{padding:16px !important;}
+  .wb-entry-split-layout .wb-close-btn{font-size:36px;width:56px;height:56px;}
+  .wb-entry-split-layout #wb-join-area > div:first-child{font-size:26px !important;}
+  .wb-entry-split-layout #wb-join-area > div{font-size:22px !important;letter-spacing:2px;}
+  /* 響應式:窄畫面回退到單欄 */
+  @media (max-width:900px){
+    .wb-entry-split-layout{flex-direction:column;}
+    .wb-entry-left-panel{flex:none;max-width:none;height:auto;}
+    .wb-entry-right-img{flex:none;height:40vh;}
   }
   .wb-card{
     max-width:900px; margin:0 auto;
@@ -334,7 +453,9 @@
 </style>
 
 <!-- 入口 overlay -->
-<div id="wb-entry-overlay">
+<div id="wb-entry-overlay" class="wb-entry-split-layout">
+  <!-- 左半:面板 -->
+  <div class="wb-entry-left-panel">
   <div class="wb-card" style="position:relative;">
     <button class="wb-close-btn" onclick="_closeWorldBossEntry()">✕</button>
     <div class="wb-title">🌍 世界 BOSS 討伐戰</div>
@@ -489,9 +610,58 @@
       <div id="wb-lineup-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;"></div>
     </div>
   </div>
+  </div>
+  <!-- 右半:龍王全圖 + 粒子特效 -->
+  <div class="wb-entry-right-img">
+    <div class="wb-entry-particles" id="wb-entry-particles-host">
+      <!-- JS 動態填入火焰粒子 -->
+    </div>
+  </div>
 </div>
 
 <script>
+// ★ FIX 20260516 v10 — 入口頁右半 BOSS 圖上的火焰粒子
+// 用 MutationObserver 監測 wb-entry-overlay 顯示變化,顯示時生成粒子
+(function _wbEntryParticleManager(){
+  const host = document.getElementById('wb-entry-particles-host');
+  const ov = document.getElementById('wb-entry-overlay');
+  if(!host || !ov) return;
+
+  function buildParticles(){
+    // 防止重複生成
+    if(host.dataset.built === '1') return;
+    host.dataset.built = '1';
+    let html = '';
+    // 12 個大火焰 + 24 個小火星
+    for(let i = 0; i < 12; i++){
+      const x = (i * 8.5 + Math.random() * 6) + '%';
+      const delay = (Math.random() * 2.5).toFixed(2) + 's';
+      html += `<span class="wb-flame-particle" style="--x:${x};--delay:${delay};"></span>`;
+    }
+    for(let i = 0; i < 24; i++){
+      const x = (Math.random() * 100) + '%';
+      const delay = (Math.random() * 3.5).toFixed(2) + 's';
+      const xshift = (Math.random() * 30 - 15).toFixed(1) + 'px';
+      html += `<span class="wb-flame-spark" style="--x:${x};--delay:${delay};--xshift:${xshift};"></span>`;
+    }
+    host.innerHTML = html;
+  }
+  function clearParticles(){
+    host.dataset.built = '0';
+    host.innerHTML = '';
+  }
+
+  // 監測 display 變化(透過 style + class 兩種途徑)
+  const obs = new MutationObserver(() => {
+    const visible = (ov.style.display && ov.style.display !== 'none');
+    if(visible) buildParticles();
+    else clearParticles();
+  });
+  obs.observe(ov, { attributes:true, attributeFilter:['style','class'] });
+  // 首次 — 若已可見就立刻建構
+  if(ov.style.display && ov.style.display !== 'none') buildParticles();
+})();
+
 // 初始化元素龍預告清單
 (function _wbRenderLineup(){
   if(!window.WORLD_BOSS_LINEUP) return;
