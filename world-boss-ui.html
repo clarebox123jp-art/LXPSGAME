@@ -721,8 +721,9 @@
     background:transparent;
     overflow:hidden;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
-    /* ★ FIX 20260516 v7 — overlay 右上挖 220x90 洞,確保整個瀏覽器控制列都能點 */
-    clip-path:polygon(0 0, calc(100% - 220px) 0, calc(100% - 220px) 90px, 100% 90px, 100% 100%, 0 100%);
+    /* ★ FIX 20260516 v8 — 不再用 clip-path 挖洞;瀏覽器全螢幕指示器是 native UI,
+       本來就在所有網頁元素之上,不需要特別處理。如果還是被擋,改用 position:fixed
+       搭配 z-index 控制 */
   }
   /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖 */
   #wb-team-confirm-overlay::before{
@@ -807,6 +808,9 @@
   .wb-tc-shield-icon.water{color:#88cfff;border-color:rgba(120,180,255,0.85);}
   .wb-tc-shield-icon.wind {color:#aaffdd;border-color:rgba(150,240,200,0.85);}
   .wb-tc-shield-icon.earth{color:#ddbb88;border-color:rgba(220,180,120,0.85);}
+  .wb-tc-shield-icon.light{color:#ffee88;border-color:rgba(255,230,120,0.85);}
+  .wb-tc-shield-icon.dark {color:#cc99ff;border-color:rgba(190,140,255,0.85);}
+  .wb-tc-shield-icon.grass{color:#aaff77;border-color:rgba(170,255,120,0.85);}
   .wb-tc-shield-icon.miss{opacity:0.35;filter:grayscale(0.7);}
   .wb-tc-shield-icon.cover{box-shadow:0 0 10px currentColor;}
 
@@ -1860,15 +1864,12 @@
     <div class="wb-tc-title">⚔ 出戰前隊伍確認</div>
     <div class="wb-tc-sub">確認元素覆蓋 BOSS 護盾 + 裝備至寶 ✦ 4 人都打勾才能開戰</div>
 
-    <!-- BOSS 護盾提示 -->
-    <div class="wb-tc-boss-shield-hint">
-      <b>🐉 維蘇威火山龍王護盾(HP 50% 啟動):</b>
-      需要 <b>火 / 水 / 風 / 土</b> 屬性各打 3 次破盾
+    <!-- BOSS 護盾提示(動態渲染:每隻龍王不同) -->
+    <div class="wb-tc-boss-shield-hint" id="wb-tc-boss-shield-hint">
+      <b>🐉 維蘇威火山龍王護盾(HP 80/60/40/20/1% 啟動):</b>
+      需要 <b id="wb-tc-shield-elem-text">火 / 風 / 土 / 暗</b> 屬性各打 3 次破盾
       <span class="wb-tc-shield-icons" id="wb-tc-shield-icons">
-        <span class="wb-tc-shield-icon fire miss">🔥 火</span>
-        <span class="wb-tc-shield-icon water miss">💧 水</span>
-        <span class="wb-tc-shield-icon wind miss">🌪 風</span>
-        <span class="wb-tc-shield-icon earth miss">🌍 土</span>
+        <!-- JS 動態填入 -->
       </span>
     </div>
 
@@ -2108,17 +2109,36 @@
   // 5. 4 人都按「準備」(ready=true) → 房主可按開戰
   // ════════════════════════════════════════════════════════════════════
 
-  // BOSS 護盾需要的 4 種元素(維蘇威)
-  const _WB_TC_REQ_ELEMS = ['fire','water','wind','earth'];
-  // 7 元素配置(渲染用)
+  // ★ FIX 20260516 v8 — BOSS 護盾元素改成從 WORLD_BOSS_LINEUP 動態讀
+  //   每隻龍王在 world-boss.js 內已設定自己的 shieldElements,自動跟著變
+  //   維蘇威 = 火/風/土/暗、深海冰龍王 = 水/風/光/草 等
+  //   預設(找不到時) = 火/水/風/土
+  function _wbTcGetReqElems(bossId){
+    try{
+      const lineup = window.WORLD_BOSS_LINEUP || [];
+      const targetId = bossId || 'vesuvius_fire_dragon';
+      const boss = lineup.find(b => b.id === targetId) || lineup[0];
+      if(boss && Array.isArray(boss.shieldElements) && boss.shieldElements.length > 0){
+        return boss.shieldElements.slice();
+      }
+    }catch(_){}
+    return ['fire','water','wind','earth'];
+  }
+  // 動態取得當前 BOSS 的護盾元素;呼叫 getter 而非用常數
+  // (保留變數名相容,但實際上每次都重新算)
+  let _WB_TC_REQ_ELEMS = _wbTcGetReqElems();
+  function _wbTcRefreshReqElems(){ _WB_TC_REQ_ELEMS = _wbTcGetReqElems(); return _WB_TC_REQ_ELEMS; }
+
+  // ★ FIX 20260516 v8 — 七元素 icon 與主程式 ELEMENT_DB 統一
+  //   主程式:火🔥 水💧 風🪽 土🪨 光⭐ 暗🌙 草🌿
   const _WB_TC_ALL_ELEMS = [
-    { id:'fire',  ic:'🔥', name:'火', isReq:true  },
-    { id:'water', ic:'💧', name:'水', isReq:true  },
-    { id:'wind',  ic:'🌪', name:'風', isReq:true  },
-    { id:'earth', ic:'🌍', name:'土', isReq:true  },
-    { id:'light', ic:'☀',  name:'光', isReq:false },
-    { id:'dark',  ic:'⚫', name:'暗', isReq:false },
-    { id:'grass', ic:'🌿', name:'草', isReq:false },
+    { id:'fire',  ic:'🔥', name:'火' },
+    { id:'water', ic:'💧', name:'水' },
+    { id:'wind',  ic:'🪽', name:'風' },
+    { id:'earth', ic:'🪨', name:'土' },
+    { id:'light', ic:'⭐', name:'光' },
+    { id:'dark',  ic:'🌙', name:'暗' },
+    { id:'grass', ic:'🌿', name:'草' },
   ];
 
   // 解析 player.element 欄位:
@@ -2239,6 +2259,8 @@
   function _wbTcRenderTeamConfirm(){
     const ov = document.getElementById('wb-team-confirm-overlay');
     if(!ov || !ov.classList.contains('show')) return;
+    // ★ FIX 20260516 v8 — 每次渲染都從 WORLD_BOSS_LINEUP 同步當前破盾元素
+    _wbTcRefreshReqElems();
     const snap = window._wbNet.getSnapshot();
     const players = snap?.players || [];
     const myUid = window._gUserId;
@@ -2265,15 +2287,25 @@
     }
     slotsEl.innerHTML = html;
 
-    // 護盾圖示同步狀態
+    // ★ FIX 20260516 v8 — 護盾 chip 動態渲染(每隻龍王不同元素)
     const cov = _wbTcCalcCoverage(players);
-    _WB_TC_REQ_ELEMS.forEach(e => {
-      const el = document.querySelector('#wb-tc-shield-icons .wb-tc-shield-icon.' + e);
-      if(el){
-        el.classList.toggle('miss',  !cov.covered.includes(e));
-        el.classList.toggle('cover',  cov.covered.includes(e));
-      }
-    });
+    const shieldIconsEl = document.getElementById('wb-tc-shield-icons');
+    if(shieldIconsEl){
+      shieldIconsEl.innerHTML = _WB_TC_REQ_ELEMS.map(e => {
+        const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+        if(!m) return '';
+        const stateCls = cov.covered.includes(e) ? 'cover' : 'miss';
+        return `<span class="wb-tc-shield-icon ${e} ${stateCls}">${m.ic} ${m.name}</span>`;
+      }).join('');
+    }
+    // 同步上方「需要 X / Y / Z 屬性」文字
+    const shieldTextEl = document.getElementById('wb-tc-shield-elem-text');
+    if(shieldTextEl){
+      shieldTextEl.textContent = _WB_TC_REQ_ELEMS.map(e => {
+        const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+        return m ? m.name : e;
+      }).join(' / ');
+    }
 
     // 底部覆蓋率提示 + 開戰按鈕
     const covEl = document.getElementById('wb-tc-coverage');
@@ -2403,27 +2435,39 @@
       </button>`;
     }).join('');
 
-    // 至寶顯示(展示已選的最多 2 件)
+    // ★ FIX 20260516 v8 — 至寶區根據 maxSlots 渲染固定槽位
+    //   解鎖第二格的英雄(用此英雄打過玉山 BOSS) → 顯示 2 個槽
+    //   未解鎖 → 顯示 1 個槽
+    //   每個槽位獨立點 → 開替換 modal 並指定要換的槽位
+    const heroMaxSlots = isMe ? (_wbTcIsHeroSlot2Unlocked(heroName) ? 2 : 1) : 1;
     let treasureRowsHtml = '';
-    const selTreasures = (ext.t || []).slice(0, 2);
-    if(selTreasures.length === 0){
-      treasureRowsHtml = '<div class="wb-tc-treasure-row empty">未配戴至寶</div>';
-    }else{
-      treasureRowsHtml = selTreasures.map(tid => {
+    const selTreasures = ext.t || [];
+    for(let slotI = 0; slotI < heroMaxSlots; slotI++){
+      const tid = selTreasures[slotI];
+      if(tid){
         const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]) || null;
-        if(!def) return '';
         const rec = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData[tid]) || {};
-        const slotName = def.slot === 'weapon' ? '武器' : def.slot === 'armor' ? '防具' : '飾品';
-        return `<div class="wb-tc-treasure-row">
-          <span class="wb-tc-tr-ic">${def.icon || '💎'}</span>
-          <span class="wb-tc-tr-name">${def.name}</span>
-          <span class="wb-tc-tr-lv">Lv.${rec.lv || 1} ${slotName}</span>
-        </div>`;
-      }).join('');
+        if(def){
+          const slotName = def.slot === 'weapon' ? '武器' : def.slot === 'armor' ? '防具' : '飾品';
+          const clickAttr = isMe ? `onclick="_wbTcOpenSwapTreasureSlot(${idx}, ${slotI})" style="cursor:pointer;"` : '';
+          treasureRowsHtml += `<div class="wb-tc-treasure-row" ${clickAttr}>
+            <span class="wb-tc-tr-ic">${def.icon || '💎'}</span>
+            <span class="wb-tc-tr-name">${def.name}</span>
+            <span class="wb-tc-tr-lv">Lv.${rec.lv || 1} ${slotName}</span>
+          </div>`;
+        }
+      }else{
+        // 空槽
+        const clickAttr = isMe ? `onclick="_wbTcOpenSwapTreasureSlot(${idx}, ${slotI})" style="cursor:pointer;"` : '';
+        const slotLabel = heroMaxSlots === 2 ? `第 ${slotI+1} 件・點擊裝備` : '點擊裝備至寶';
+        treasureRowsHtml += `<div class="wb-tc-treasure-row empty" ${clickAttr}>+ ${slotLabel}</div>`;
+      }
     }
-    const swapTrBtn = isMe
-      ? `<button class="wb-tc-swap-tr-btn" onclick="_wbTcOpenSwapTreasure(${idx})">💎 替換至寶</button>`
-      : '';
+    const swapTrBtn = (isMe && heroMaxSlots === 2 && selTreasures.length >= 2)
+      ? `<button class="wb-tc-swap-tr-btn" onclick="_wbTcOpenSwapTreasure(${idx})">💎 管理至寶</button>`
+      : (isMe && selTreasures.length === 0
+          ? `<button class="wb-tc-swap-tr-btn" onclick="_wbTcOpenSwapTreasure(${idx})">💎 裝備至寶</button>`
+          : '');
 
     // 準備按鈕
     const readyBtnHtml = isMe ? `
@@ -2617,6 +2661,15 @@
   // ════════════════════════════════════════════════════════════════════
   // ★ FIX 20260516 v2 — 替換至寶 modal
   // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260516 v8 — 開啟「指定槽位的至寶替換」modal
+  //   targetSlotIdx = 玩家槽 0~3,treasureSlotIdx = 第幾件至寶(0 or 1)
+  //   點到至寶會精確放到 treasureSlotIdx 位置,不會被擠掉
+  let _wbTcPendingTreasureSlot = 0;  // 記錄要放到哪個至寶槽
+  window._wbTcOpenSwapTreasureSlot = function(targetSlotIdx, treasureSlotIdx){
+    _wbTcPendingTreasureSlot = treasureSlotIdx || 0;
+    window._wbTcOpenSwapTreasure(targetSlotIdx);
+  };
+
   window._wbTcOpenSwapTreasure = function(targetSlotIdx){
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.[targetSlotIdx];
@@ -2634,8 +2687,11 @@
     //   每人有自己的至寶 inventory,不會跟隊友衝突
     const selected = ext.t || [];
 
-    document.getElementById('wb-tc-swap-title').textContent = '💎 替換至寶(槽位 ' + (targetSlotIdx+1) + ')';
-    document.getElementById('wb-tc-swap-sub').textContent = `最多選 ${maxSlots} 件;點同類至寶會自動取代`;
+    const slotLabel = maxSlots === 2 ? `(第 ${_wbTcPendingTreasureSlot+1} 件)` : '';
+    document.getElementById('wb-tc-swap-title').textContent = '💎 裝備至寶(槽位 ' + (targetSlotIdx+1) + ')' + slotLabel;
+    document.getElementById('wb-tc-swap-sub').textContent = maxSlots === 2
+      ? `這位英雄已解鎖 2 件至寶位,點任一件裝備到目前槽位`
+      : `點一件至寶裝備上`;
     const grid = document.getElementById('wb-tc-swap-grid');
     grid.innerHTML = myTreasures.map(t => {
       const on = selected.includes(t.id);
@@ -2655,31 +2711,34 @@
   };
 
   window._wbTcConfirmSwapTreasure = async function(targetSlotIdx, treasureId){
-    // ★ FIX 20260516 v4 — 點到就「直接裝上」,不是切換
-    //   行為:
-    //   1. 點到已裝的 → 不做事(或可改成卸下,但現在玩家覺得切換很麻煩,維持「點等於裝」)
-    //   2. 點到新的同 slot 至寶 → 直接取代(舊的自動卸下)
-    //   3. 槽位已滿(已解鎖第二格) → 取代最舊的
+    // ★ FIX 20260516 v8 — 精確放到 _wbTcPendingTreasureSlot 位置
+    //   如果是已裝的且要放到同槽,直接關 modal(視為取消)
+    //   否則:把這個 treasure 放到 _wbTcPendingTreasureSlot 位置,如果該槽原本有東西就取代
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.[targetSlotIdx];
     if(!me){ return; }
     const ext = _wbTcParsePlayerExt(me);
-    if(ext.t.includes(treasureId)){
-      // 已裝,直接關 modal(不做切換)
-      _wbTcCloseSwapModal();
-      return;
-    }
     const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[treasureId]) || null;
     if(!def){ _wbTcCloseSwapModal(); return; }
-    // 移除同 slot 的(直接取代)
-    ext.t = ext.t.filter(tid => {
-      const old = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]);
-      return !(old && old.slot === def.slot);
-    });
-    // 達到上限就移除最舊的
     const maxSlots = _wbTcIsHeroSlot2Unlocked(me.heroName) ? 2 : 1;
-    while(ext.t.length >= maxSlots) ext.t.shift();
-    ext.t.push(treasureId);
+    const targetTrSlot = Math.min(_wbTcPendingTreasureSlot, maxSlots - 1);
+
+    // 確保 ext.t 是長度 maxSlots 的陣列(用 null 填空)
+    while(ext.t.length < maxSlots) ext.t.push(null);
+
+    // 如果這件至寶已在另一槽,從那邊移除(避免重複)
+    for(let i = 0; i < ext.t.length; i++){
+      if(i !== targetTrSlot && ext.t[i] === treasureId){
+        ext.t[i] = null;
+      }
+    }
+    // 放到目標槽
+    ext.t[targetTrSlot] = treasureId;
+    // 移掉 null 還是保留?保留以維持「兩個槽」概念,但儲存時去掉 null
+    ext.t = ext.t.filter(x => x);
+    // 截到 maxSlots
+    while(ext.t.length > maxSlots) ext.t.pop();
+
     // 同步:單人模式切到該槽再 setMyHero;多人模式自己槽才允許
     if(window._wbSoloPracticeMode){
       window._wbSoloEditingSlot = targetSlotIdx;
@@ -4546,6 +4605,14 @@
         const slot = _wbSoloEditingSlot;
         if(_wbSoloFakePlayers[slot]){
           _wbSoloFakePlayers[slot].ready = !_wbSoloFakePlayers[slot].ready;
+        }
+        // ★ FIX 20260516 v8 — 單人模式:當玩家(槽 0)準備好,3 位 NPC 也自動準備
+        //   讓玩家不用切換槽位點 4 次,直接可以開戰
+        if(slot === 0 && _wbSoloFakePlayers[0]){
+          const meReady = _wbSoloFakePlayers[0].ready;
+          for(let i = 1; i < _wbSoloFakePlayers.length; i++){
+            if(_wbSoloFakePlayers[i]) _wbSoloFakePlayers[i].ready = meReady;
+          }
         }
         _wbTcRenderTeamConfirm();
         return true;
