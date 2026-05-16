@@ -32,28 +32,30 @@
   // 1. 元素龍清單 (8 隻輪替,全伺服器共享 HP)
   // ───────────────────────────────────────────────────────────────────
   window.WORLD_BOSS_LINEUP = [
+    // ★ FIX 20260516 — 測試版階段:8 隻龍王 HP 全部統一設為 50 萬作為基準,
+    //   等真實平衡測試後再個別調整。
     { id:'vesuvius_fire_dragon',     name:'維蘇威火山龍王',    element:'fire',  maxHp:500000,  scene:'維蘇威火山口',
       shieldElements:['fire','wind','earth','dark'],
       desc:'沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」,西元 79 年龐貝大爆發即是牠的甦醒' },
-    { id:'shenhai_water_dragon',   name:'深海冰龍王',    element:'water', maxHp:900000,  scene:'太平洋深淵',
+    { id:'shenhai_water_dragon',   name:'深海冰龍王',    element:'water', maxHp:500000,  scene:'太平洋深淵',
       shieldElements:['water','wind','light','grass'],
       desc:'蛰伏於馬里亞納海溝的冰龍,以絕對零度凍結整片海洋' },
-    { id:'taifeng_wind_dragon',    name:'風雷雲龍王',    element:'wind',  maxHp:850000,  scene:'颱風眼',
+    { id:'taifeng_wind_dragon',    name:'風雷雲龍王',    element:'wind',  maxHp:500000,  scene:'颱風眼',
       shieldElements:['wind','fire','water','dark'],
       desc:'颱風中央誕生的雷雲龍,捲起整座島嶼的氣流' },
-    { id:'shanyue_earth_dragon',   name:'山岳土龍王',    element:'earth', maxHp:1000000, scene:'地核深處',
+    { id:'shanyue_earth_dragon',   name:'山岳土龍王',    element:'earth', maxHp:500000, scene:'地核深處',
       shieldElements:['earth','fire','dark','grass'],
       desc:'盤據於地核的古老土龍,一動就引發強震' },
-    { id:'bushi_dark_dragon',      name:'不死骨龍王',    element:'dark',  maxHp:1100000, scene:'黃泉之門',
+    { id:'bushi_dark_dragon',      name:'不死骨龍王',    element:'dark',  maxHp:500000, scene:'黃泉之門',
       shieldElements:['dark','earth','water','grass'],
       desc:'從黃泉之門爬出的骨龍,擊敗一次後會以半血復活再戰' },
-    { id:'shensheng_light_dragon', name:'神聖光龍王',    element:'light', maxHp:1200000, scene:'高天原',
+    { id:'shensheng_light_dragon', name:'神聖光龍王',    element:'light', maxHp:500000, scene:'高天原',
       shieldElements:['light','fire','wind','grass'],
       desc:'天界派遣的審判龍,僅暗系英雄能對其造成完整傷害' },
-    { id:'cuiyu_grass_dragon',     name:'翠玉草龍王',    element:'grass', maxHp:1300000, scene:'太魯閣',
+    { id:'cuiyu_grass_dragon',     name:'翠玉草龍王',    element:'grass', maxHp:500000, scene:'太魯閣',
       shieldElements:['grass','water','wind','light'],
       desc:'守護太魯閣峽谷的翠玉龍,藤蔓束縛全場' },
-    { id:'xingchen_omni_dragon',   name:'星辰幻龍王',    element:'omni',  maxHp:1500000, scene:'銀河',
+    { id:'xingchen_omni_dragon',   name:'星辰幻龍王',    element:'omni',  maxHp:500000, scene:'銀河',
       shieldElements:['fire','water','wind','earth','light','dark','grass'],  // ★ 終極龍:7 元素全開
       desc:'集八元素之力於一身的終極龍,每階段切換屬性' },
   ];
@@ -159,7 +161,7 @@
     try{
       if(typeof BURST_DB === 'object' && BURST_DB){
         Object.assign(BURST_DB, {
-          '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 90%傷害(可被無敵/免疫擋下,護盾減半),附加燃燒3回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 90% 的火屬性傷害(無視防禦,可被「無敵」/「免疫」完全擋下,「護盾」減半),並對全體存活對手附加「燃燒」狀態 3 回合。'},
+          '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 90%火傷(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 90% 的火屬性傷害,完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
         });
         window.BURST_DB = BURST_DB;
       }
@@ -255,34 +257,73 @@
     }
     if(n === '天崩之炎'){
       try{
-        // 全體當前 HP 90% 火傷害(無敵/免疫完全擋下,護盾減半) + 燃燒 3 回合
+        // ★ FIX 20260516 — 規則更新:
+        //   1. 全體當前 HP 90% 火傷(無視有利狀態 → 無敵/免疫/護盾/反射全部打穿)
+        //   2. 全體強力燃燒 3 回合(主程式 type='hellfire' + _strong:true,行動前後各 -10HP)
+        //      註:原版用 'burn' 是無效 type,實際從未生效;這次改為正確的 'hellfire'+_strong
+        //   3. 隨機 1 名存活敵人:強力暈眩 + 強力易傷 各 1 回合
         enemies.forEach(e => {
           if(e.curHp <= 0) return;
-          if(typeof hasStatus === 'function'){
-            if(hasStatus(e, 'invincible')){
-              log(`✨ ${e.name} 的無敵狀態擋下了天崩之炎!`);
-              if(typeof removeStatus === 'function') removeStatus(e, 'invincible');
-              return;
+          const _dmg = Math.floor(e.curHp * 0.90);
+          doDmg(e, _dmg, {
+            actor: a,
+            isSkill: true,
+            isAoe: true,
+            ignoreBuffs: true,    // 無視有利狀態(無敵/免疫/護盾/保護/閃避全失效)
+            ignoreEvasion: true,  // 必中
+            noReflect: true,      // 不被反射
+            noHalfDmg: true,      // 不受減傷
+            piercing: true,       // 無視防禦
+            element: 'fire'
+          });
+          // 強力燃燒 3 回合(行動前後各 -10HP,死了就不附加)
+          if(e.curHp > 0){
+            if(typeof addStatus === 'function') addStatus(e, 'hellfire', 3);
+            const _hs = (e.status || []).find(s => s.type === 'hellfire');
+            if(_hs){
+              _hs._actor = a;
+              _hs._strong = true;
             }
-            if(hasStatus(e, 'immune')){
-              log(`🛡 ${e.name} 的免疫狀態擋下了天崩之炎!`);
-              if(typeof removeStatus === 'function') removeStatus(e, 'immune');
-              return;
+            if(typeof bannerFX === 'function'){
+              bannerFX(e, '🔥 強力燃燒', '#ff2200', 900);
             }
           }
-          let dmgPct = 0.90;
-          if(typeof hasStatus === 'function' && hasStatus(e, 'shield')){
-            dmgPct = 0.45;
-            if(typeof removeStatus === 'function') removeStatus(e, 'shield');
-            log(`🛡 ${e.name} 的護盾將傷害減半...`);
-          }
-          const _dmg = Math.floor(e.curHp * dmgPct);
-          doDmg(e, _dmg, {actor:a, isSkill:true, isAoe:true, ignoreEvasion:true, piercing:true, element:'fire'});
-          // 附加燃燒 3 回合(即使打死也不附加)
-          if(e.curHp > 0) addStatus(e, 'burn', 3);
         });
-        bannerFX(a, '⚡ 天崩之炎降臨!', '#ee2222', 1800);
+        if(typeof bannerFX === 'function') bannerFX(a, '⚡ 天崩之炎降臨!', '#ee2222', 1800);
         if(typeof flashScreen === 'function') flashScreen('rgba(255,80,40,0.8)', 700);
+
+        // ─── 追加效果:隨機 1 名存活敵人陷入「強力暈眩」+「強力易傷」各 1 回合 ───
+        //   強力暈眩 = clearStatus(['stun']) + push 新 stun + _burstStun:true 旗標 + banner「強力昏迷」
+        //   強力易傷 = addStatus('dmgVuln', 1) + _vulnStrong=true + banner「💥 強力易傷」
+        try{
+          const _survivors = enemies.filter(e => e && e.curHp > 0);
+          if(_survivors.length > 0){
+            const _target = _survivors[Math.floor(Math.random() * _survivors.length)];
+            // 強力暈眩
+            if(typeof clearStatus === 'function') clearStatus(_target, ['stun']);
+            if(_target.status && Array.isArray(_target.status)){
+              _target.status.push({ type:'stun', dur:1, _burstStun:true });
+            }else if(typeof addStatus === 'function'){
+              addStatus(_target, 'stun', 1);
+            }
+            if(typeof bannerFX === 'function') bannerFX(_target, '💫 強力昏迷!', '#cc8800', 1000);
+            log(`💫 [${_target.name}] 被天崩之炎震懾,陷入強力暈眩 1 回合!`);
+            // 強力易傷(banner 稍延遲避免跟強力昏迷撞)
+            if(typeof addStatus === 'function') addStatus(_target, 'dmgVuln', 1);
+            _target._vulnStrong = true;
+            log(`💥 [${_target.name}] 體質虛弱,受傷增加 1 回合!`);
+            if(typeof bannerFX === 'function'){
+              setTimeout(() => {
+                try{ bannerFX(_target, '💥 強力易傷!', '#ff6644', 900); }catch(_){}
+              }, 600);
+            }
+            if(typeof renderCard === 'function'){
+              try{ renderCard(_target); }catch(_){}
+            }
+          }
+        }catch(eExtra){
+          console.warn('[WB] 天崩之炎追加暈眩/易傷失敗', eExtra);
+        }
       }catch(e){ console.warn('[WB] 天崩之炎執行失敗', e); }
       return true;
     }
@@ -769,8 +810,9 @@
     banner.style.display = 'block';
     const nameEl = document.getElementById('wb-blessing-bossname');
     if(nameEl){
+      // ★ FIX 20260516 — 祝福加成 fallback 從 10% 提升到 50%(48 小時版本)
       nameEl.textContent = (blessing.bossName || '世界 BOSS') +
-        ' 已被全伺服器擊敗!所有玩家 EXP / 知識幣 / 掉寶率 +' + (blessing.bonusPct || 10) + '%';
+        ' 已被全伺服器擊敗!所有玩家 EXP / 知識幣 / 掉寶率 +' + (blessing.bonusPct || 50) + '%';
     }
     const countdownEl = document.getElementById('wb-blessing-countdown');
     if(countdownEl){
