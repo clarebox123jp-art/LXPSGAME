@@ -33,20 +33,28 @@
   // ───────────────────────────────────────────────────────────────────
   window.WORLD_BOSS_LINEUP = [
     { id:'vesuvius_fire_dragon',     name:'維蘇威火山龍王',    element:'fire',  maxHp:500000,  scene:'維蘇威火山口',
+      shieldElements:['fire','wind','earth','dark'],
       desc:'沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」,西元 79 年龐貝大爆發即是牠的甦醒' },
     { id:'shenhai_water_dragon',   name:'深海冰龍王',    element:'water', maxHp:900000,  scene:'太平洋深淵',
+      shieldElements:['water','wind','light','grass'],
       desc:'蛰伏於馬里亞納海溝的冰龍,以絕對零度凍結整片海洋' },
     { id:'taifeng_wind_dragon',    name:'風雷雲龍王',    element:'wind',  maxHp:850000,  scene:'颱風眼',
+      shieldElements:['wind','fire','water','dark'],
       desc:'颱風中央誕生的雷雲龍,捲起整座島嶼的氣流' },
     { id:'shanyue_earth_dragon',   name:'山岳土龍王',    element:'earth', maxHp:1000000, scene:'地核深處',
+      shieldElements:['earth','fire','dark','grass'],
       desc:'盤據於地核的古老土龍,一動就引發強震' },
     { id:'bushi_dark_dragon',      name:'不死骨龍王',    element:'dark',  maxHp:1100000, scene:'黃泉之門',
+      shieldElements:['dark','earth','water','grass'],
       desc:'從黃泉之門爬出的骨龍,擊敗一次後會以半血復活再戰' },
     { id:'shensheng_light_dragon', name:'神聖光龍王',    element:'light', maxHp:1200000, scene:'高天原',
+      shieldElements:['light','fire','wind','grass'],
       desc:'天界派遣的審判龍,僅暗系英雄能對其造成完整傷害' },
     { id:'cuiyu_grass_dragon',     name:'翠玉草龍王',    element:'grass', maxHp:1300000, scene:'太魯閣',
+      shieldElements:['grass','water','wind','light'],
       desc:'守護太魯閣峽谷的翠玉龍,藤蔓束縛全場' },
     { id:'xingchen_omni_dragon',   name:'星辰幻龍王',    element:'omni',  maxHp:1500000, scene:'銀河',
+      shieldElements:['fire','water','wind','earth','light','dark','grass'],  // ★ 終極龍:7 元素全開
       desc:'集八元素之力於一身的終極龍,每階段切換屬性' },
   ];
 
@@ -132,60 +140,82 @@
   //    (主程式啟動完成後才掛,避免初始化順序問題)
   // ───────────────────────────────────────────────────────────────────
   function _wbInstallHeroData(){
-    // HERO_DB:基礎屬性(★5 BOSS,總和 124,符合世界 BOSS 規格)
-    if(typeof window.HERO_DB === 'object' && window.HERO_DB){
-      Object.assign(window.HERO_DB, {
-        '維蘇威火山龍王':{hp:500000,atk:49,sp:50,spd:25,exp:1500,star:5,isWorldBoss:true,
-          s1:{n:'業火灼燒',c:4,d:'特技100%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 100% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
-          s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
-        },
-      });
-    }
+    // ★ v3.1.1 — 鐵律 2.40 修補:
+    //   HERO_DB / BURST_DB / HERO_TRAIT 等是 const 宣告,不掛 window
+    //   必須用 typeof 直接讀全域 lexical scope,寫入時改它原物件(因為是物件參考)
+    //   同時把參考也掛到 window,讓 UI 端(world-boss-ui.html)能讀
+    try{
+      if(typeof HERO_DB === 'object' && HERO_DB){
+        Object.assign(HERO_DB, {
+          '維蘇威火山龍王':{hp:500000,atk:49,sp:50,spd:25,exp:1500,star:5,isWorldBoss:true,
+            s1:{n:'業火灼燒',c:4,d:'特技100%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 100% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
+            s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
+          },
+        });
+        window.HERO_DB = HERO_DB;  // ★ 暴露給 UI script 用
+      }
+    }catch(e){ console.warn('[WB] HERO_DB 掛載失敗', e); }
 
-    // BURST_DB:爆發技
-    if(typeof window.BURST_DB === 'object' && window.BURST_DB){
-      Object.assign(window.BURST_DB, {
-        '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 90%傷害(可被無敵/免疫擋下,護盾減半),附加燃燒3回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 90% 的火屬性傷害(無視防禦,可被「無敵」/「免疫」完全擋下,「護盾」減半),並對全體存活對手附加「燃燒」狀態 3 回合。'},
-      });
-    }
+    try{
+      if(typeof BURST_DB === 'object' && BURST_DB){
+        Object.assign(BURST_DB, {
+          '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 90%傷害(可被無敵/免疫擋下,護盾減半),附加燃燒3回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 90% 的火屬性傷害(無視防禦,可被「無敵」/「免疫」完全擋下,「護盾」減半),並對全體存活對手附加「燃燒」狀態 3 回合。'},
+        });
+        window.BURST_DB = BURST_DB;
+      }
+    }catch(_){}
 
-    // HERO_TRAIT:天賦
-    if(typeof window.HERO_TRAIT === 'object' && window.HERO_TRAIT){
-      Object.assign(window.HERO_TRAIT, {
-        '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限為最大 HP 的 1%;HP 過半啟動四元素護盾(減傷 80%,無視有利狀態的攻擊也無法打穿)', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。HP 降至 50% 時進入第二階段,身上浮現四元素護盾:所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 水 / 土 / 風)的攻擊各打 3 次裂痕,才能完整破除護盾恢復正常傷害。' },
-      });
-    }
+    try{
+      if(typeof HERO_TRAIT === 'object' && HERO_TRAIT){
+        Object.assign(HERO_TRAIT, {
+          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限為最大 HP 的 1%;HP 過半啟動四元素護盾(減傷 80%,無視有利狀態的攻擊也無法打穿)', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。HP 降至 50% 時進入第二階段,身上浮現四元素護盾:所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 水 / 土 / 風)的攻擊各打 3 次裂痕,才能完整破除護盾恢復正常傷害。' },
+        });
+        window.HERO_TRAIT = HERO_TRAIT;
+      }
+    }catch(_){}
 
-    // HERO_LORE:背景(義大利那不勒斯/龐貝史實版)
-    if(typeof window.HERO_LORE === 'object' && window.HERO_LORE){
-      Object.assign(window.HERO_LORE, {
-        '維蘇威火山龍王': '沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」。西元 79 年 8 月 24 日,牠首次甦醒咆哮,使整座火山噴發兩天兩夜,將山下的羅馬古城「龐貝」與「赫庫蘭尼姆」完全掩埋於火山灰下,並造成兩萬餘人喪命。中世紀的 1631 年牠再度被驚醒,造成 3,000 人罹難。20 世紀最後一次是 1944 年二戰末期,美軍轟炸鄰近地區時意外驚動,牠咆哮三日後返回火山口。2026 年,因近年地殼活動頻繁,火龍王第四度甦醒,需要四位英雄遠渡重洋前往那不勒斯封印,以免人類再蒙浩劫。',
-      });
-    }
+    try{
+      if(typeof HERO_LORE === 'object' && HERO_LORE){
+        Object.assign(HERO_LORE, {
+          '維蘇威火山龍王': '沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」。西元 79 年 8 月 24 日,牠首次甦醒咆哮,使整座火山噴發兩天兩夜,將山下的羅馬古城「龐貝」與「赫庫蘭尼姆」完全掩埋於火山灰下,並造成兩萬餘人喪命。中世紀的 1631 年牠再度被驚醒,造成 3,000 人罹難。20 世紀最後一次是 1944 年二戰末期,美軍轟炸鄰近地區時意外驚動,牠咆哮三日後返回火山口。2026 年,因近年地殼活動頻繁,火龍王第四度甦醒,需要四位英雄遠渡重洋前往那不勒斯封印,以免人類再蒙浩劫。',
+        });
+        window.HERO_LORE = HERO_LORE;
+      }
+    }catch(_){}
 
-    // HERO_BIO:簡介 (給卡片用)
-    if(typeof window.HERO_BIO === 'object' && window.HERO_BIO){
-      Object.assign(window.HERO_BIO, {
-        '維蘇威火山龍王': '沉睡於義大利維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。需要 4 位英雄聯手才能封印的世界 BOSS。',
-      });
-    }
+    try{
+      if(typeof HERO_BIO === 'object' && HERO_BIO){
+        Object.assign(HERO_BIO, {
+          '維蘇威火山龍王': '沉睡於義大利維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。需要 4 位英雄聯手才能封印的世界 BOSS。',
+        });
+        window.HERO_BIO = HERO_BIO;
+      }
+    }catch(_){}
 
-    // HERO_IMGS:立繪
-    if(typeof window.HERO_IMGS === 'object' && window.HERO_IMGS){
-      window.HERO_IMGS['維蘇威火山龍王'] =
-        'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
-        encodeURIComponent('維蘇威火山龍王.png');
-    }
+    try{
+      if(typeof HERO_IMGS === 'object' && HERO_IMGS){
+        HERO_IMGS['維蘇威火山龍王'] =
+          'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
+          encodeURIComponent('維蘇威火山龍王.png');
+        window.HERO_IMGS = HERO_IMGS;
+      }
+    }catch(_){}
 
-    // MONSTER_AVTR / MONSTER_ELEMENT (用於圖鑑頁面)
-    if(typeof window.MONSTER_AVTR === 'object' && window.MONSTER_AVTR){
-      window.MONSTER_AVTR['維蘇威火山龍王'] = '🐉';
-    }
-    if(typeof window.MONSTER_ELEMENT === 'object' && window.MONSTER_ELEMENT){
-      window.MONSTER_ELEMENT['維蘇威火山龍王'] = 'fire';
-    }
+    try{
+      if(typeof MONSTER_AVTR === 'object' && MONSTER_AVTR){
+        MONSTER_AVTR['維蘇威火山龍王'] = '🐉';
+        window.MONSTER_AVTR = MONSTER_AVTR;
+      }
+    }catch(_){}
 
-    console.log('[WB] ✅ 維蘇威火山龍王資料已掛載');
+    try{
+      if(typeof MONSTER_ELEMENT === 'object' && MONSTER_ELEMENT){
+        MONSTER_ELEMENT['維蘇威火山龍王'] = 'fire';
+        window.MONSTER_ELEMENT = MONSTER_ELEMENT;
+      }
+    }catch(_){}
+
+    console.log('[WB] ✅ 維蘇威火山龍王資料已掛載(HP 500000 / 攻 49 / 特 50 / 速 25)');
   }
 
   // ───────────────────────────────────────────────────────────────────
@@ -311,7 +341,7 @@
         <div style="font-size:16px;color:#ffe;line-height:1.85;text-align:left;
           background:rgba(255,80,40,0.12);padding:14px 18px;border-radius:10px;
           border-left:4px solid rgba(255,120,80,0.7);margin-bottom:14px;">
-          維蘇威火山龍王 HP 降至 50% 以下,身上浮現由<b>火 / 水 / 土 / 風</b>四種元素構成的護盾!
+          維蘇威火山龍王 HP 降至 50% 以下,身上浮現由<b>火 / 風 / 土 / 暗</b>四種元素構成的護盾!
           <br><br>
           <b style="color:#ff8866;">護盾效果:</b><br>
           ・所有傷害額外 <b style="color:#ffaa66;">減 80%</b><br>
@@ -323,10 +353,10 @@
           border-left:4px solid rgba(80,180,255,0.7);margin-bottom:18px;">
           <b style="color:#88ddff;">💡 破解方法:</b><br>
           使用對應屬性的攻擊各打 <b>3 次裂痕</b>,即可破除護盾:<br>
-          🔥 火 / 💧 水 / 🌍 土 / 🌪 風 各 3 次,共 12 次屬性裂痕
+          🔥 火 / 🌪 風 / ⛰ 土 / 🌑 暗 各 3 次,共 12 次屬性裂痕
           <br><br>
           <b style="color:#aaffaa;">🎯 戰術建議:</b><br>
-          換上含 4 種屬性的英雄陣容(火法師/水妖精/土靈使/風行者⋯),
+          換上含 4 種屬性的英雄陣容(火法師/風行者/山岳禁咒/暗法師⋯),
           專心普攻 + S1/S2 配合 BOSS 弱點屬性破盾!
         </div>
         <button onclick="document.getElementById('wb-shield-hint-modal').remove()"
@@ -382,25 +412,30 @@
   };
 
   function _wbInstallMedals(){
-    // 把獎章 push 進主程式既有的 ALL_MEDALS (如果存在)
-    if(Array.isArray(window.ALL_MEDALS)){
-      const existingIds = new Set(window.ALL_MEDALS.map(m => m.id));
-      WB_MEDALS.forEach(m => {
-        if(!existingIds.has(m.id)) window.ALL_MEDALS.push(m);
-      });
-    }
-    // 把統計欄位安全補齊到 _medalStats (如果存在)
-    if(window._medalStats && typeof window._medalStats === 'object'){
-      Object.keys(WB_MEDAL_STAT_DEFAULTS).forEach(k => {
-        if(typeof window._medalStats[k] === 'undefined'){
-          // 物件用 deep copy 防止共用引用
-          const def = WB_MEDAL_STAT_DEFAULTS[k];
-          window._medalStats[k] = (typeof def === 'object' && def !== null)
-            ? (Array.isArray(def) ? [] : {})
-            : def;
-        }
-      });
-    }
+    // ★ v3.1.1 — 鐵律 2.40 修補:ALL_MEDALS / _medalStats 都是主程式的 let/const,不掛 window
+    try{
+      if(typeof ALL_MEDALS !== 'undefined' && Array.isArray(ALL_MEDALS)){
+        const existingIds = new Set(ALL_MEDALS.map(m => m.id));
+        WB_MEDALS.forEach(m => {
+          if(!existingIds.has(m.id)) ALL_MEDALS.push(m);
+        });
+        window.ALL_MEDALS = ALL_MEDALS;
+      }
+    }catch(e){ console.warn('[WB] ALL_MEDALS 掛載失敗', e); }
+
+    try{
+      if(typeof _medalStats !== 'undefined' && _medalStats && typeof _medalStats === 'object'){
+        Object.keys(WB_MEDAL_STAT_DEFAULTS).forEach(k => {
+          if(typeof _medalStats[k] === 'undefined'){
+            const def = WB_MEDAL_STAT_DEFAULTS[k];
+            _medalStats[k] = (typeof def === 'object' && def !== null)
+              ? (Array.isArray(def) ? [] : {})
+              : def;
+          }
+        });
+        window._medalStats = _medalStats;
+      }
+    }catch(_){}
     console.log('[WB] ✅ ' + WB_MEDALS.length + ' 枚世界 BOSS 獎章已掛載');
   }
 
@@ -457,6 +492,224 @@
   // ───────────────────────────────────────────────────────────────────
   // 9. 入口函式 — 按鈕 onclick 呼叫
   // ───────────────────────────────────────────────────────────────────
+  // ★ v3.2 — 休戰期狀態工具:從 window._wbCeasefireState 讀,若未載入則預設休戰
+  function _wbIsCeasefire(){
+    const st = window._wbCeasefireState || {};
+    // 文件未載入時 → 採保守策略,維持「休戰期」直到 Firestore 同步完成
+    if(!st._loaded) return true;
+    return !!st.ceasefire;
+  }
+  function _wbGetNextOpenText(){
+    const st = window._wbCeasefireState || {};
+    return st.nextOpenTime || '';
+  }
+  window._wbIsCeasefire = _wbIsCeasefire;
+  window._wbGetNextOpenText = _wbGetNextOpenText;
+
+  // ★ v3.2 — 同步「世界 BOSS 討伐戰」按鈕外觀(灰色/紅色 + 浮水印 + 預告時間)
+  //   隨 Firestore 狀態即時刷新;管理員仍可進入(進去看到「強制開戰」測試按鈕)
+  function _wbSyncStageButton(){
+    const stage = document.getElementById('adv-worldboss-stage');
+    if(!stage) return;
+    const wm = document.getElementById('adv-worldboss-stage-watermark');
+    const nextOpenBox = document.getElementById('adv-worldboss-stage-nextopen');
+    const nextOpenTime = document.getElementById('adv-worldboss-stage-nextopen-time');
+    const isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+    if(_wbIsCeasefire()){
+      stage.classList.add('is-ceasefire');
+      if(wm){
+        wm.style.display = '';
+        wm.textContent = isAdmin ? '休戰期(管理員可進)' : '休戰期';
+      }
+      const txt = _wbGetNextOpenText();
+      if(nextOpenTime) nextOpenTime.textContent = txt || '尚未公告 — 請等管理員通知';
+      if(nextOpenBox) nextOpenBox.style.display = 'block';
+    }else{
+      stage.classList.remove('is-ceasefire');
+      if(wm) wm.style.display = 'none';
+      if(nextOpenBox) nextOpenBox.style.display = 'none';
+    }
+  }
+  window._wbSyncStageButton = _wbSyncStageButton;
+
+  // Firestore 狀態變更時自動刷新按鈕外觀
+  try{
+    document.addEventListener('wbCeasefireStateChanged', () => {
+      try{ _wbSyncStageButton(); }catch(_){}
+      try{ _wbSyncCeasefireBanner(); }catch(_){}
+      try{ _wbSyncStartButtonGate(); }catch(_){}
+    });
+  }catch(_){}
+
+  // ★ v3.2 — 點按鈕的入口包裝器(取代直接呼叫 _openWorldBossEntry)
+  //   休戰期 → 玩家仍可進去看 BOSS 預覽 + 預告時間,但開新房間/加入房間/單人練習都鎖
+  //   管理員 → 不受限,任何狀態都可以全功能進入(用於測試 & 切換開關)
+  window._wbTrySelect = async function(){
+    // 確保訂閱已啟動(萬一玩家先於連線層載入點到按鈕)
+    try{ if(window._wbControl && window._wbControl.subscribe) window._wbControl.subscribe(); }catch(_){}
+    // 直接走原入口流程(內部會根據 ceasefire 狀態鎖開戰按鈕,並顯示狀態看板)
+    return window._openWorldBossEntry();
+  };
+
+  // 入口 overlay 內的「狀態看板」(休戰中/開放中 + 預告時間)即時刷新
+  function _wbSyncCeasefireBanner(){
+    const banner = document.getElementById('wb-ceasefire-banner');
+    if(!banner) return;
+    const isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+    const st = window._wbCeasefireState || {};
+    if(_wbIsCeasefire()){
+      banner.className = 'wb-ceasefire-banner is-ceasefire';
+      banner.innerHTML =
+        '<div class="wb-cf-row">' +
+          '<span class="wb-cf-ico">⏸</span>' +
+          '<div class="wb-cf-main">' +
+            '<div class="wb-cf-title">目前為休戰期</div>' +
+            '<div class="wb-cf-sub">' +
+              (_wbGetNextOpenText()
+                ? ('📅 下次開戰:<b>' + _escapeHtml(_wbGetNextOpenText()) + '</b>')
+                : '尚未公告下次開戰時間,請等管理員預告') +
+            '</div>' +
+            (st.message ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(st.message) + '</div>' : '') +
+          '</div>' +
+        '</div>';
+    }else{
+      banner.className = 'wb-ceasefire-banner is-open';
+      banner.innerHTML =
+        '<div class="wb-cf-row">' +
+          '<span class="wb-cf-ico">⚔</span>' +
+          '<div class="wb-cf-main">' +
+            '<div class="wb-cf-title">挑戰開放中!</div>' +
+            '<div class="wb-cf-sub">隨時可以開房間 / 加入房間 / 練習模式</div>' +
+            (st.message ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(st.message) + '</div>' : '') +
+          '</div>' +
+        '</div>';
+    }
+    // 管理員控制面板(僅 admin 看到)
+    const ctrl = document.getElementById('wb-admin-ctrl-panel');
+    if(ctrl){
+      ctrl.style.display = isAdmin ? '' : 'none';
+      if(isAdmin){
+        // 把現有預告時間填回輸入框
+        const inp = document.getElementById('wb-admin-nextopen-input');
+        if(inp && document.activeElement !== inp){ inp.value = st.nextOpenTime || ''; }
+        const msgInp = document.getElementById('wb-admin-msg-input');
+        if(msgInp && document.activeElement !== msgInp){ msgInp.value = st.message || ''; }
+        const stateLab = document.getElementById('wb-admin-cur-state');
+        if(stateLab){
+          stateLab.innerHTML = _wbIsCeasefire()
+            ? '<span style="color:#888;font-weight:900;">🔒 休戰中</span>'
+            : '<span style="color:#5dcaa5;font-weight:900;">🔓 開放挑戰</span>';
+        }
+        const byLab = document.getElementById('wb-admin-cur-updatedby');
+        if(byLab){
+          if(st.updatedAt){
+            const d = new Date(st.updatedAt);
+            byLab.textContent = '最後更新:' + d.toLocaleString() + ' (by ' + (st.updatedBy || '?') + ')';
+          }else{
+            byLab.textContent = '尚未有人設定過 — 目前為預設值';
+          }
+        }
+      }
+    }
+  }
+  window._wbSyncCeasefireBanner = _wbSyncCeasefireBanner;
+
+  // 入口 overlay 三大按鈕(開新房/加入房/單人練習)休戰時禁用
+  function _wbSyncStartButtonGate(){
+    const isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+    const locked = _wbIsCeasefire() && !isAdmin;
+    // 找按鈕(透過 onclick attribute 識別,避免改動原有 HTML 結構)
+    const btnRow = document.querySelector('#wb-entry-overlay .wb-entry-btn-row');
+    if(!btnRow) return;
+    const btns = btnRow.querySelectorAll('.wb-entry-big-btn');
+    btns.forEach(b => {
+      if(locked){
+        b.classList.add('wb-locked');
+        b.dataset._origOnclick = b.dataset._origOnclick || b.getAttribute('onclick') || '';
+        b.setAttribute('onclick',
+          "if(typeof _wbShowCeasefireToast==='function'){_wbShowCeasefireToast();}");
+      }else{
+        if(b.dataset._origOnclick){
+          b.setAttribute('onclick', b.dataset._origOnclick);
+        }
+        b.classList.remove('wb-locked');
+      }
+    });
+    // 房號輸入區也鎖
+    const joinArea = document.getElementById('wb-join-area');
+    if(joinArea){
+      joinArea.style.opacity = locked ? '0.4' : '1';
+      joinArea.style.pointerEvents = locked ? 'none' : '';
+    }
+  }
+  window._wbSyncStartButtonGate = _wbSyncStartButtonGate;
+
+  // 休戰期點按鈕的提示(短暫 toast)
+  window._wbShowCeasefireToast = function(){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.5); }catch(_){}
+    const txt = _wbGetNextOpenText();
+    const msg = '⏸ 目前為休戰期,無法開戰\n\n' +
+      (txt ? ('📅 下次開戰時間:' + txt) : '管理員尚未公告下次開戰時間,請耐心等候。') +
+      '\n\n你還是可以點 BOSS 預覽看看下一隻 BOSS 的資料喔!';
+    alert(msg);
+  };
+
+  // 小工具:HTML escape
+  function _escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  window._wbEscapeHtml = _escapeHtml;
+
+  // 管理員 toggle 開放/休戰
+  window._wbAdminToggleCeasefire = async function(forceState){
+    if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())){
+      alert('⚠ 你不是管理員,無法切換開放/休戰');
+      return;
+    }
+    if(!window._wbControl || !window._wbControl.set){
+      alert('⚠ 控制模組未載入,請重新整理頁面');
+      return;
+    }
+    const st = window._wbCeasefireState || {};
+    const newCeasefire = (typeof forceState === 'boolean') ? forceState : !st.ceasefire;
+    const nextOpenInput = document.getElementById('wb-admin-nextopen-input');
+    const msgInput = document.getElementById('wb-admin-msg-input');
+    const nextOpenTime = nextOpenInput ? nextOpenInput.value.trim() : (st.nextOpenTime || '');
+    const message = msgInput ? msgInput.value.trim() : (st.message || '');
+    try{
+      const newState = await window._wbControl.set({
+        ceasefire: newCeasefire,
+        nextOpenTime: nextOpenTime,
+        message: message,
+      });
+      console.log('[WB-Admin] 已寫入新狀態', newState);
+      // Firestore onSnapshot 會自動觸發 UI 刷新
+      try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(_){}
+      const fb = document.getElementById('wb-admin-result-feedback');
+      if(fb){
+        fb.style.display = 'block';
+        fb.style.color = '#5dcaa5';
+        fb.textContent = '✅ 已寫入:' + (newCeasefire ? '🔒 休戰' : '🔓 開放') +
+          (nextOpenTime ? '(預告:' + nextOpenTime + ')' : '');
+        setTimeout(() => { fb.style.display = 'none'; }, 3500);
+      }
+    }catch(e){
+      console.error('[WB-Admin] 寫入失敗', e);
+      const fb = document.getElementById('wb-admin-result-feedback');
+      if(fb){
+        fb.style.display = 'block';
+        fb.style.color = '#ff8866';
+        fb.textContent = '❌ 寫入失敗:' + (e.message || e);
+      }
+    }
+  };
+  // 只儲存預告時間/訊息(不切換狀態)
+  window._wbAdminSavePreview = async function(){
+    const st = window._wbCeasefireState || {};
+    return window._wbAdminToggleCeasefire(st.ceasefire);
+  };
+
   window._openWorldBossEntry = async function(){
     // 檢查登入
     if(!window._gUserId){
@@ -474,6 +727,21 @@
     if(ov){
       ov.style.display = 'flex';
       try{ _wbRefreshBlessingBanner(); }catch(_){}
+      // ★ v3.2 — 進入後立即同步休戰狀態看板 + 開戰按鈕鎖
+      try{ _wbSyncCeasefireBanner(); }catch(_){}
+      try{ _wbSyncStartButtonGate(); }catch(_){}
+      // 確保訂閱已啟動(背景持續同步)
+      try{ if(window._wbControl && window._wbControl.subscribe) window._wbControl.subscribe(); }catch(_){}
+      // ★ v3.1.2 — 切換到世界 BOSS 主頁面 BGM
+      try{
+        // 記下原 BGM 以便離開時還原
+        if(typeof _curBgm !== 'undefined' && _curBgm && _curBgm !== 'bgm-wb-menu' && _curBgm !== 'bgm-wb-vesuvius-battle'){
+          window._wbPrevBgm = _curBgm;
+        }
+        if(typeof bgmFadeTo === 'function'){
+          bgmFadeTo('bgm-wb-menu', 600);
+        }
+      }catch(_){}
     }else{
       alert('🌍 世界 BOSS 討伐戰功能即將開放,敬請期待!\n\n首發 BOSS:維蘇威火山龍王 🐉');
     }
@@ -482,6 +750,12 @@
   window._closeWorldBossEntry = function(){
     const ov = document.getElementById('wb-entry-overlay');
     if(ov) ov.style.display = 'none';
+    // ★ v3.1.2 — 關閉入口時恢復原 BGM
+    try{
+      if(window._wbPrevBgm && typeof bgmFadeTo === 'function'){
+        bgmFadeTo(window._wbPrevBgm, 600);
+      }
+    }catch(_){}
   };
 
   window._wbRefreshBlessingBanner = function(){
@@ -514,15 +788,18 @@
     let tries = 0;
     function tryInstall(){
       tries++;
-      // 等 HERO_DB 和 ALL_MEDALS 都準備好
-      const dbReady = (typeof window.HERO_DB === 'object' && window.HERO_DB &&
-                       typeof window.BURST_DB === 'object' && window.BURST_DB);
-      const medalsReady = Array.isArray(window.ALL_MEDALS);
+      // ★ v3.1.1 — 鐵律 2.40:HERO_DB 是 const 宣告,不會掛 window
+      //   必須用 typeof 檢查全域 lexical scope,而非 window.HERO_DB
+      let dbReady = false;
+      try{
+        dbReady = (typeof HERO_DB === 'object' && HERO_DB &&
+                   typeof BURST_DB === 'object' && BURST_DB);
+      }catch(_){ dbReady = false; }
+      const medalsReady = (typeof ALL_MEDALS !== 'undefined' && Array.isArray(ALL_MEDALS));
 
       if(dbReady){
         _wbInstallHeroData();
       }else if(tries < 30){
-        // 主程式還在初始化,500ms 後再試
         return setTimeout(tryInstall, 500);
       }else{
         console.warn('[WB] HERO_DB 未就緒 — 維蘇威火山龍王資料未掛載');
@@ -531,11 +808,10 @@
       if(medalsReady){
         _wbInstallMedals();
       }else if(tries < 30){
-        // 獎章可能更晚才初始化,單獨重試
         let medalTries = 0;
         const medalTimer = setInterval(() => {
           medalTries++;
-          if(Array.isArray(window.ALL_MEDALS)){
+          if(typeof ALL_MEDALS !== 'undefined' && Array.isArray(ALL_MEDALS)){
             _wbInstallMedals();
             clearInterval(medalTimer);
           }else if(medalTries > 30){
@@ -545,14 +821,15 @@
         }, 500);
       }
 
-      console.log('[WB] ✅ world-boss.js 啟動完成 (v3.0)');
+      console.log('[WB] ✅ world-boss.js 啟動完成 (v3.2 — 元素確認 + 休戰期)');
 
-      // ★ v3.0 — 同步首頁的 BOSS HP 條
-      //   資料來源:_cachedGlobalStats.worldBossHp (Firebase 同步)
-      //   若還沒有資料,顯示預設 100% (500000/500000)
       _wbSyncStageHpBar();
-      // 每 30 秒重新讀一次(避免一直查 Firebase)
       setInterval(_wbSyncStageHpBar, 30000);
+      // ★ v3.2 — 啟動時刷一次按鈕外觀(狀態若已從 Firestore 同步好就會立即顯示;
+      //          若尚未同步,Firestore 載入後會透過 wbCeasefireStateChanged 事件自動再刷)
+      try{ _wbSyncStageButton(); }catch(_){}
+      // 退而求其次:每 60 秒檢查一次(避免事件機制失效時按鈕外觀過期)
+      setInterval(() => { try{ _wbSyncStageButton(); }catch(_){} }, 60000);
     }
 
     // DOM ready 後開始嘗試
@@ -761,19 +1038,45 @@
   //     風盾 → 被 earth 屬性攻擊 -1
   //     土盾 → 被 wind 屬性攻擊 -1
   // ───────────────────────────────────────────────────────────────────
-  const WB_SHIELD_ELEMENTS = ['fire','water','wind','earth'];
-  const WB_SHIELD_COUNTER = {
-    fire:  'water',  // 火盾被水攻擊削減
-    water: 'fire',
-    wind:  'earth',
-    earth: 'wind',
+  // ═══════════════════════════════════════════════════════════════════
+  // v3.1.2 — 護盾元素系統(7 元素池 + 個別 BOSS 指定)
+  // ───────────────────────────────────────────────────────────────────
+  // 設計理念:
+  //   1. 全部 7 種候選元素:火/水/風/土/光/暗/草 (WB_SHIELD_ALL_ELEMENTS)
+  //   2. 每隻 BOSS 在 WORLD_BOSS_LINEUP 內透過 shieldElements 指定自己的 4 個
+  //      (維蘇威火山龍王:火/風/土/暗;未來深海冰龍王:水/草/風/光 等)
+  //   3. 屬性剋制用標準雙向(火↔水、土↔風、光↔暗、草克水土等)
+  // ───────────────────────────────────────────────────────────────────
+
+  const WB_SHIELD_ALL_ELEMENTS = ['fire','water','wind','earth','light','dark','grass'];
+
+  // 元素 icon / label / 顏色(統一表)
+  const WB_ELEMENT_META = {
+    fire:  {icon:'🔥', label:'火盾', color:'#ff7755', borderColor:'rgba(255,110,80,0.85)', bg:'rgba(80,20,10,0.7)'},
+    water: {icon:'💧', label:'水盾', color:'#88cfff', borderColor:'rgba(120,180,255,0.85)', bg:'rgba(15,30,70,0.7)'},
+    wind:  {icon:'🌪', label:'風盾', color:'#aaffdd', borderColor:'rgba(150,240,200,0.85)', bg:'rgba(10,50,40,0.7)'},
+    earth: {icon:'⛰', label:'土盾', color:'#ddbb88', borderColor:'rgba(220,180,120,0.85)', bg:'rgba(55,35,15,0.7)'},
+    light: {icon:'☀', label:'光盾', color:'#fff5aa', borderColor:'rgba(255,245,170,0.85)', bg:'rgba(70,65,30,0.7)'},
+    dark:  {icon:'🌑', label:'暗盾', color:'#bb88dd', borderColor:'rgba(190,140,230,0.85)', bg:'rgba(40,20,55,0.7)'},
+    grass: {icon:'🌿', label:'草盾', color:'#88ee88', borderColor:'rgba(140,220,140,0.85)', bg:'rgba(20,50,20,0.7)'},
   };
-  const WB_SHIELD_ICON = {
-    fire:'🔥', water:'💧', wind:'🌪', earth:'⛰',
+  window._WB_ELEMENT_META = WB_ELEMENT_META;
+
+  // 元素剋制表:攻擊元素 → 能削減哪個護盾元素
+  // ★ v3.1.2 老師指定剋制鏈:
+  //   主循環(五元素單向循環剋):水→火→草→土→風→水
+  //     水 克 火 / 火 克 草 / 草 克 土 / 土 克 風 / 風 克 水
+  //   光暗互剋(獨立成對):光 ↔ 暗
+  const WB_ELEMENT_COUNTER = {
+    water: ['fire'],     // 水克火
+    fire:  ['grass'],    // 火克草
+    grass: ['earth'],    // 草克土
+    earth: ['wind'],     // 土克風
+    wind:  ['water'],    // 風克水
+    light: ['dark'],     // 光克暗
+    dark:  ['light'],    // 暗克光
   };
-  const WB_SHIELD_LABEL = {
-    fire:'火盾', water:'水盾', wind:'風盾', earth:'土盾',
-  };
+  window._WB_ELEMENT_COUNTER = WB_ELEMENT_COUNTER;
   const WB_SHIELD_TRIGGERS = [
     { pct: 0.80, label:'80%' },
     { pct: 0.60, label:'60%' },
@@ -784,7 +1087,7 @@
 
   // 檢查並啟動護盾(每次 BOSS 受傷後呼叫)
   window._wbCheckShieldTrigger = function(boss){
-    if(!boss || boss.name !== '維蘇威火山龍王') return null;
+    if(!boss) return null;
     boss._wbShieldHistory = boss._wbShieldHistory || {};
     const hpRatio = boss.curHp / (boss.hp || 500000);
     let triggered = null;
@@ -792,8 +1095,21 @@
       if(hpRatio <= t.pct && !boss._wbShieldHistory[t.label]){
         boss._wbShieldHistory[t.label] = true;
         triggered = t.label;
-        // 重置 4 元素護盾各 3 層
-        boss._wbShields = {fire:3, water:3, wind:3, earth:3};
+        // ★ v3.1.2 — 用 BOSS 自己的 shieldElements 初始化護盾
+        //   從 WORLD_BOSS_LINEUP 找該 BOSS 的設定;若找不到,fallback 用 fire/water/wind/earth
+        let myElements = ['fire','water','wind','earth'];
+        try{
+          const lineup = window.WORLD_BOSS_LINEUP || [];
+          const config = lineup.find(b => b.name === boss.name);
+          if(config && Array.isArray(config.shieldElements) && config.shieldElements.length > 0){
+            myElements = config.shieldElements;
+          }
+        }catch(_){}
+        // 初始化護盾物件,每個元素 3 層
+        boss._wbShields = {};
+        myElements.forEach(el => { boss._wbShields[el] = 3; });
+        // 同時記錄這次護盾的元素清單(給 UI 渲染用)
+        boss._wbShieldElements = myElements.slice();
         break;
       }
     }
@@ -808,10 +1124,12 @@
 
   // 屬性攻擊削減對應元素護盾(每次攻擊 -1 層)
   window._wbConsumeShield = function(boss, attackElement){
-    if(!boss || !boss._wbShields) return false;
-    // 找哪個盾被剋
-    for(const shieldEl of WB_SHIELD_ELEMENTS){
-      if(WB_SHIELD_COUNTER[shieldEl] === attackElement && boss._wbShields[shieldEl] > 0){
+    if(!boss || !boss._wbShields || !attackElement) return null;
+    // ★ v3.1.2 — 用 WB_ELEMENT_COUNTER 查 attackElement 能克哪些元素
+    //   遍歷 BOSS 身上現有的盾,看哪個盾「被剋」且還有層數
+    const counterables = WB_ELEMENT_COUNTER[attackElement] || [];
+    for(const shieldEl of counterables){
+      if(boss._wbShields[shieldEl] > 0){
         boss._wbShields[shieldEl]--;
         return shieldEl;
       }
@@ -828,28 +1146,65 @@
     const ov = document.createElement('div');
     ov.id = 'wb-shield-hint-modal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
+
+    // ★ v3.1.2 — 用 BOSS 自己的元素 + 反查剋制邏輯,完全動態生成 modal 內容
+    const elements = (boss && boss._wbShieldElements) ? boss._wbShieldElements : ['fire','water','wind','earth'];
+    const bossName = (boss && boss.name) || '世界 BOSS';
+
+    // 為每個護盾元素反查:哪個屬性能克它?
+    function _whichCountersIt(shieldEl){
+      const out = [];
+      for(const atkEl of Object.keys(WB_ELEMENT_COUNTER)){
+        if(WB_ELEMENT_COUNTER[atkEl].includes(shieldEl)) out.push(atkEl);
+      }
+      return out;
+    }
+
+    const iconRow = elements.map(el => WB_ELEMENT_META[el]?.icon || '?').join('');
+    const ruleRows = elements.map(el => {
+      const meta = WB_ELEMENT_META[el] || {icon:'?', label:el, color:'#fff'};
+      const counters = _whichCountersIt(el);
+      let counterText = '';
+      if(counters.length){
+        counterText = counters.map(c => {
+          const cmeta = WB_ELEMENT_META[c] || {label:c};
+          return `<b>${cmeta.label.replace('盾','')}</b>`;
+        }).join(' / ');
+      }else{
+        counterText = '<i style="color:#999;">(無剋制元素 — 此盾無法被打破!)</i>';
+      }
+      return `${meta.icon} <b style="color:${meta.color};">${meta.label}</b>:被 ${counterText} 屬性攻擊 -1 層`;
+    }).join('<br>');
+
+    const elementListForTactic = elements.map(el => {
+      const counters = _whichCountersIt(el);
+      if(!counters.length) return null;
+      const c = counters[0];
+      const cmeta = WB_ELEMENT_META[c] || {label:c, color:'#fff'};
+      return `<b style="color:${cmeta.color};">${cmeta.label.replace('盾','')}</b>`;
+    }).filter(x => x !== null).join(' / ');
+
     ov.innerHTML = `
       <div style="max-width:560px;background:linear-gradient(160deg,#2a1818,#1a0a0a);
         border:3px solid rgba(255,120,80,0.85);border-radius:18px;padding:24px 22px;
         box-shadow:0 0 60px rgba(255,80,40,0.6);text-align:center;color:#ffeecc;">
-        <div style="font-size:32px;margin-bottom:8px;">🔥💧🌪⛰</div>
+        <div style="font-size:32px;margin-bottom:8px;letter-spacing:6px;">${iconRow}</div>
         <div style="font-size:24px;color:#ff8866;font-weight:900;letter-spacing:2px;margin-bottom:10px;
           text-shadow:0 0 14px rgba(255,100,60,0.6);">
-          ⚠ HP ${pctLabel} — 四元素護盾啟動!
+          ⚠ HP ${pctLabel} — 元素護盾啟動!
         </div>
         <div style="font-size:15px;color:#ffe;line-height:1.85;text-align:left;
           background:rgba(255,80,40,0.12);padding:13px 16px;border-radius:10px;
           border-left:4px solid rgba(255,120,80,0.7);margin-bottom:12px;">
-          維蘇威火山龍王身上浮現 <b style="color:#ff8866;">四元素護盾各 3 層</b>:
+          ${bossName}身上浮現 <b style="color:#ff8866;">${elements.length} 種護盾各 3 層</b>:
           <br>
-          🔥 <b style="color:#ff7755;">火盾</b>:被 <b>水屬性</b>攻擊 -1 層<br>
-          💧 <b style="color:#88cfff;">水盾</b>:被 <b>火屬性</b>攻擊 -1 層<br>
-          🌪 <b style="color:#aaffdd;">風盾</b>:被 <b>土屬性</b>攻擊 -1 層<br>
-          ⛰ <b style="color:#ddbb88;">土盾</b>:被 <b>風屬性</b>攻擊 -1 層
+          ${ruleRows}
           <br><br>
           <b style="color:#ffcc66;">護盾期間所有傷害再減 80%</b>,
           即使「無視有利狀態」的攻擊也無法穿透。<br>
-          打破對應屬性 3 層才能解除該盾。
+          打破對應屬性 3 層才能解除該盾。<br>
+          <br>
+          💡 戰術:準備 ${elementListForTactic} 屬性英雄輪流破盾!
         </div>
         <button onclick="document.getElementById('wb-shield-hint-modal').remove()"
           style="background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;

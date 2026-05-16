@@ -92,6 +92,245 @@
   .wb-boss-info{flex:1;}
   .wb-boss-name{font-size:24px; font-weight:800; color:#e84040; letter-spacing:2px; margin-bottom:4px;}
   .wb-boss-stats{display:flex; gap:14px; font-size:13px; color:#ffd; margin-top:6px; flex-wrap:wrap;}
+
+  /* ★ v3.2 — 休戰期狀態看板 */
+  .wb-ceasefire-banner{
+    border-radius:14px;padding:14px 18px;margin-bottom:18px;
+    border:2.5px solid;
+    box-shadow:0 4px 18px rgba(0,0,0,0.4);
+  }
+  .wb-ceasefire-banner.is-ceasefire{
+    background:linear-gradient(135deg,rgba(80,80,90,0.55) 0%,rgba(120,100,80,0.35) 100%);
+    border-color:#aa9966;
+  }
+  .wb-ceasefire-banner.is-open{
+    background:linear-gradient(135deg,rgba(93,202,165,0.25) 0%,rgba(168,132,255,0.18) 100%);
+    border-color:#5dcaa5;
+    animation:wb-cf-open-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes wb-cf-open-pulse{
+    0%,100%{box-shadow:0 0 14px rgba(93,202,165,0.4);}
+    50%    {box-shadow:0 0 28px rgba(93,202,165,0.75),0 0 50px rgba(93,202,165,0.35);}
+  }
+  .wb-ceasefire-banner .wb-cf-row{display:flex;align-items:center;gap:14px;}
+  .wb-ceasefire-banner .wb-cf-ico{font-size:42px;line-height:1;}
+  .wb-ceasefire-banner .wb-cf-main{flex:1;line-height:1.45;}
+  .wb-ceasefire-banner .wb-cf-title{
+    font-size:20px;font-weight:900;letter-spacing:2px;
+    color:#ffeec8;margin-bottom:3px;
+  }
+  .wb-ceasefire-banner.is-ceasefire .wb-cf-title{color:#e8d8b0;}
+  .wb-ceasefire-banner.is-open .wb-cf-title{color:#a0e6c8;}
+  .wb-ceasefire-banner .wb-cf-sub{font-size:14px;color:#cfcfc4;letter-spacing:0.5px;}
+  .wb-ceasefire-banner.is-open .wb-cf-sub{color:#cfe8dc;}
+  .wb-ceasefire-banner .wb-cf-msg{
+    margin-top:6px;font-size:13px;color:#ffe066;
+    background:rgba(0,0,0,0.35);padding:6px 10px;border-radius:6px;
+    border-left:3px solid #ffe066;
+  }
+
+  /* ★ v3.2 — 管理員控制面板 */
+  .wb-admin-ctrl-panel{
+    margin-top:18px;padding:16px 18px;
+    background:rgba(40,40,60,0.55);
+    border:2px solid rgba(255,200,80,0.6);
+    border-radius:12px;
+    box-shadow:0 0 22px rgba(255,200,80,0.18);
+  }
+  .wb-admin-ctrl-panel h4{
+    margin:0 0 10px;color:#ffcc44;letter-spacing:2px;
+    font-size:17px;font-weight:800;display:flex;align-items:center;gap:6px;
+  }
+  .wb-admin-ctrl-panel .wb-admin-state-row{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:10px;font-size:14px;color:#ddd;
+    flex-wrap:wrap;
+  }
+  .wb-admin-ctrl-panel label{
+    display:block;font-size:13px;color:#ffcc88;
+    margin:8px 0 4px;font-weight:700;letter-spacing:1px;
+  }
+  .wb-admin-ctrl-panel input, .wb-admin-ctrl-panel textarea{
+    width:100%;padding:9px 12px;
+    background:rgba(20,20,30,0.9);
+    border:1.5px solid rgba(255,200,100,0.5);
+    color:#fff;border-radius:6px;
+    font-family:inherit;font-size:14px;
+    box-sizing:border-box;
+  }
+  .wb-admin-ctrl-panel textarea{min-height:48px;resize:vertical;}
+  .wb-admin-ctrl-btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .wb-admin-ctrl-btn{
+    flex:1;min-width:130px;padding:10px 16px;
+    font-size:14px;font-weight:800;letter-spacing:1px;
+    border-radius:8px;cursor:pointer;font-family:inherit;
+    border:2px solid;transition:all 0.2s;
+  }
+  .wb-admin-ctrl-btn.wb-btn-cf{
+    background:rgba(200,160,80,0.22);border-color:#cc9944;color:#ffd699;
+  }
+  .wb-admin-ctrl-btn.wb-btn-cf:hover{background:rgba(200,160,80,0.4);}
+  .wb-admin-ctrl-btn.wb-btn-open{
+    background:rgba(80,200,140,0.22);border-color:#5dcaa5;color:#a8f0ce;
+  }
+  .wb-admin-ctrl-btn.wb-btn-open:hover{background:rgba(80,200,140,0.4);}
+  .wb-admin-ctrl-btn.wb-btn-save{
+    background:rgba(120,160,220,0.22);border-color:#88aadd;color:#cce0ff;
+  }
+  .wb-admin-ctrl-btn.wb-btn-save:hover{background:rgba(120,160,220,0.4);}
+  .wb-admin-ctrl-feedback{
+    margin-top:8px;font-size:13px;font-weight:700;display:none;
+    padding:6px 10px;border-radius:6px;background:rgba(0,0,0,0.4);
+  }
+  .wb-admin-cur-updatedby{
+    font-size:11px;color:#888;margin-top:6px;font-style:italic;
+  }
+
+  /* ★ v3.2 — 入口三大按鈕休戰時的鎖樣式 */
+  .wb-entry-big-btn.wb-locked{
+    filter:grayscale(0.7) brightness(0.65);
+    cursor:not-allowed !important;
+    position:relative;
+  }
+  .wb-entry-big-btn.wb-locked::after{
+    content:'🔒 休戰期 — 無法使用';
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.55);border-radius:12px;
+    font-size:16px;font-weight:900;color:#ffcc66;
+    letter-spacing:2px;
+    text-shadow:0 1px 4px rgba(0,0,0,0.85);
+    backdrop-filter:blur(1px);
+  }
+
+  /* ★ v3.2 — 出戰前元素確認 modal */
+  #wb-elem-confirm-overlay{
+    display:none;position:fixed;inset:0;z-index:10500;
+    background:rgba(0,0,0,0.88);
+    align-items:center;justify-content:center;padding:20px;
+    backdrop-filter:blur(6px);
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  #wb-elem-confirm-overlay.show{display:flex;}
+  .wb-ec-card{
+    max-width:680px;width:100%;
+    background:linear-gradient(160deg,#1a1530 0%,#0a0820 100%);
+    border:3px solid #a884ff;border-radius:18px;
+    padding:24px 26px;color:#ffe8a0;
+    box-shadow:0 0 60px rgba(168,132,255,0.55);
+    max-height:90vh;overflow-y:auto;
+  }
+  .wb-ec-title{
+    font-size:24px;font-weight:900;color:#c8a8ff;letter-spacing:2px;
+    margin-bottom:6px;text-align:center;
+    text-shadow:0 0 12px rgba(168,132,255,0.55);
+  }
+  .wb-ec-sub{
+    font-size:13px;color:#aaa;text-align:center;
+    margin-bottom:16px;letter-spacing:1px;
+  }
+  .wb-ec-slots{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;margin-bottom:16px;
+  }
+  .wb-ec-slot{
+    background:rgba(20,20,40,0.7);
+    border:2px solid rgba(120,120,160,0.5);
+    border-radius:10px;padding:10px;
+    text-align:center;
+  }
+  .wb-ec-slot.is-ai{border-color:#88ccff;background:rgba(20,30,60,0.7);}
+  .wb-ec-slot.is-me{border-color:#ffe066;background:rgba(60,50,20,0.7);}
+  .wb-ec-slot-num{font-size:11px;color:#aaa;letter-spacing:1px;}
+  .wb-ec-slot-hero{
+    font-size:15px;font-weight:800;color:#ffe8a0;
+    margin:4px 0;letter-spacing:1px;line-height:1.3;
+  }
+  .wb-ec-slot-tag{
+    display:inline-block;font-size:10px;
+    padding:1px 6px;border-radius:5px;
+    margin-bottom:4px;letter-spacing:1px;
+  }
+  .wb-ec-slot-tag.tag-ai{background:#88ccff;color:#000;}
+  .wb-ec-slot-tag.tag-me{background:#ffe066;color:#000;}
+  .wb-ec-slot-elems{
+    font-size:11px;color:#aac;line-height:1.5;
+    background:rgba(0,0,0,0.4);padding:4px 6px;border-radius:6px;
+    margin-top:4px;
+  }
+  .wb-ec-shield-row{
+    display:flex;gap:8px;flex-wrap:wrap;
+    background:rgba(255,80,40,0.1);
+    border:1.5px solid rgba(255,120,80,0.5);
+    border-radius:10px;padding:12px;
+    margin-bottom:14px;
+  }
+  .wb-ec-shield-chip{
+    flex:1;min-width:110px;
+    text-align:center;padding:8px 6px;
+    border-radius:8px;
+    border:2px solid;
+    font-size:14px;font-weight:800;
+    letter-spacing:1px;
+    transition:all 0.25s;
+  }
+  .wb-ec-shield-chip.is-covered{
+    background:rgba(80,220,140,0.18);
+    border-color:#5dcaa5;
+    color:#a8f0ce;
+  }
+  .wb-ec-shield-chip.is-covered::after{content:' ✅';}
+  .wb-ec-shield-chip.is-missing{
+    background:rgba(255,80,80,0.18);
+    border-color:#ff6666;
+    color:#ffaaaa;
+    animation:wb-ec-missing-pulse 1.2s ease-in-out infinite;
+  }
+  .wb-ec-shield-chip.is-missing::after{content:' ⚠';}
+  @keyframes wb-ec-missing-pulse{
+    0%,100%{box-shadow:0 0 8px rgba(255,80,80,0.4);}
+    50%    {box-shadow:0 0 18px rgba(255,80,80,0.85);}
+  }
+  .wb-ec-shield-chip .wb-ec-shield-counter{
+    display:block;font-size:11px;color:#ddd;margin-top:3px;
+  }
+  .wb-ec-status-box{
+    text-align:center;padding:12px;border-radius:10px;
+    margin-bottom:16px;font-size:15px;font-weight:800;
+    letter-spacing:1px;
+  }
+  .wb-ec-status-box.is-ok{
+    background:rgba(80,220,140,0.18);
+    border:2px solid #5dcaa5;color:#a8f0ce;
+  }
+  .wb-ec-status-box.is-bad{
+    background:rgba(255,200,80,0.18);
+    border:2px solid #ffcc66;color:#ffe6a8;
+  }
+  .wb-ec-btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .wb-ec-btn{
+    flex:1;min-width:140px;padding:12px 18px;
+    border-radius:10px;cursor:pointer;font-family:inherit;
+    font-size:16px;font-weight:800;letter-spacing:2px;
+    border:2.5px solid;transition:all 0.2s;
+  }
+  .wb-ec-btn.wb-ec-cancel{
+    background:rgba(60,60,80,0.6);border-color:#888;color:#ccc;
+  }
+  .wb-ec-btn.wb-ec-cancel:hover{background:rgba(80,80,100,0.7);}
+  .wb-ec-btn.wb-ec-go{
+    background:linear-gradient(135deg,#3ec87a 0%,#2a9858 100%);
+    border-color:#5dcaa5;color:#fff;
+    box-shadow:0 0 18px rgba(93,202,165,0.5);
+  }
+  .wb-ec-btn.wb-ec-go:hover{
+    transform:translateY(-1px);
+    box-shadow:0 0 28px rgba(93,202,165,0.85);
+  }
+  .wb-ec-btn.wb-ec-go.is-disabled{
+    background:#555;border-color:#777;color:#aaa;
+    cursor:not-allowed;box-shadow:none;opacity:0.6;
+  }
 </style>
 
 <!-- 入口 overlay -->
@@ -100,6 +339,42 @@
     <button class="wb-close-btn" onclick="_closeWorldBossEntry()">✕</button>
     <div class="wb-title">🌍 世界 BOSS 討伐戰</div>
     <div class="wb-subtitle">4 人合作 ✦ 一人一隻英雄 ✦ 挑戰超大型 BOSS</div>
+
+    <!-- ★ v3.2 — 休戰期狀態看板(所有人都看得到) -->
+    <div id="wb-ceasefire-banner" class="wb-ceasefire-banner is-ceasefire">
+      <!-- 內容由 _wbSyncCeasefireBanner() 動態填入 -->
+    </div>
+
+    <!-- ★ v3.2 — 管理員控制面板(僅 admin 帳號看得到) -->
+    <div id="wb-admin-ctrl-panel" class="wb-admin-ctrl-panel" style="display:none;">
+      <h4>🛠 管理員控制面板</h4>
+      <div class="wb-admin-state-row">
+        <span>目前狀態:</span>
+        <span id="wb-admin-cur-state">—</span>
+      </div>
+      <label for="wb-admin-nextopen-input">📅 下次開戰時間預告(顯示給所有玩家)</label>
+      <input id="wb-admin-nextopen-input" type="text"
+             placeholder="例:今晚 22:00 / 明天上午 8:00 / 5/16 週六 14:00 開放挑戰">
+      <label for="wb-admin-msg-input">📢 公告訊息(可空)</label>
+      <textarea id="wb-admin-msg-input"
+                placeholder="例:本週末舉辦『屠龍祭』,擊敗 BOSS 獎勵加倍!"></textarea>
+      <div class="wb-admin-ctrl-btn-row">
+        <button class="wb-admin-ctrl-btn wb-btn-cf"
+                onclick="if(typeof _wbAdminToggleCeasefire==='function')_wbAdminToggleCeasefire(true);">
+          🔒 切換為休戰
+        </button>
+        <button class="wb-admin-ctrl-btn wb-btn-open"
+                onclick="if(typeof _wbAdminToggleCeasefire==='function')_wbAdminToggleCeasefire(false);">
+          🔓 切換為開放
+        </button>
+        <button class="wb-admin-ctrl-btn wb-btn-save"
+                onclick="if(typeof _wbAdminSavePreview==='function')_wbAdminSavePreview();">
+          💾 只儲存預告/訊息
+        </button>
+      </div>
+      <div id="wb-admin-result-feedback" class="wb-admin-ctrl-feedback"></div>
+      <div id="wb-admin-cur-updatedby" class="wb-admin-cur-updatedby"></div>
+    </div>
 
     <!-- ★ v2.0 — 龍王祝福橫幅(active 時才顯示) -->
     <div id="wb-blessing-banner" style="display:none;
@@ -137,14 +412,15 @@
              alt="維蘇威火山龍王">
       </div>
       <div class="wb-boss-info">
-        <div class="wb-boss-name">⚔️ 維蘇威火山龍王</div>
+        <div class="wb-boss-name">⚔️ 維蘇威火山龍王 <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
         <div style="font-size:13px;color:#aaa;line-height:1.5;">
-          沉睡於玉山火口的古老火龍。HP 過半時啟動四元素護盾,需要 4 種屬性攻擊才能打破!
+          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。HP 80/60/40/20/1% 啟動四元素護盾,需要火/水/風/土屬性各攻擊 3 次才能打破!
         </div>
         <div class="wb-boss-stats">
-          <span>❤️ 28,000 HP</span>
-          <span>⚔️ 攻擊 42</span>
-          <span>🛡️ 特技 55</span>
+          <span>❤️ 500,000 HP</span>
+          <span>⚔️ 攻擊 49</span>
+          <span>🛡️ 特技 50</span>
+          <span>💨 速度 25</span>
           <span>🔥 火屬性</span>
         </div>
       </div>
@@ -460,9 +736,11 @@
     animation:wbShieldPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
   }
   .wb-shield-fire {color:#ff7755;border-color:rgba(255,110,80,0.85);background:rgba(80,20,10,0.7);box-shadow-color:rgba(255,80,40,0.5);}
-  .wb-shield-water{color:#88cfff;border-color:rgba(120,180,255,0.85);background:rgba(15,30,70,0.7);}
   .wb-shield-wind {color:#aaffdd;border-color:rgba(150,240,200,0.85);background:rgba(10,50,40,0.7);}
   .wb-shield-earth{color:#ddbb88;border-color:rgba(220,180,120,0.85);background:rgba(55,35,15,0.7);}
+  .wb-shield-dark {color:#bb88dd;border-color:rgba(190,140,230,0.85);background:rgba(40,20,55,0.7);}
+  /* 舊版水盾保留供既有引用,但 v3.1.2 起未使用 */
+  .wb-shield-water{color:#88cfff;border-color:rgba(120,180,255,0.85);background:rgba(15,30,70,0.7);}
   .wb-shield-num{font-size:14px;color:#fff;background:rgba(255,255,255,0.18);border-radius:5px;padding:1px 6px;margin-left:2px;}
   @keyframes wbShieldPop{
     0%{opacity:0;transform:scale(0.4) translateY(-6px);}
@@ -834,7 +1112,7 @@
       <div>
         <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 維蘇威火山龍王</div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
-          HP 28,000 ✦ 火屬性 ✦ 雙階段戰鬥<br>
+          HP 500,000 ✦ 火屬性 ✦ 5 段護盾<br>
           🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
         </div>
       </div>
@@ -858,7 +1136,7 @@
         <button id="wb-ready-btn" class="wb-action-btn-big wb-ready-btn" onclick="_wbUiToggleReady()">
           ⏳ 我準備好了
         </button>
-        <button id="wb-start-btn" class="wb-action-btn-big wb-start-btn" onclick="_wbUiStartBattle()" disabled style="display:none;">
+        <button id="wb-start-btn" class="wb-action-btn-big wb-start-btn" onclick="_wbUiPrepareStartBattle()" disabled style="display:none;">
           ⚔ 開戰!
         </button>
       </div>
@@ -905,6 +1183,33 @@
       </div>
 
       <div class="wb-battle-log" id="wb-battle-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ★ v3.2 — 出戰前元素確認 modal -->
+<div id="wb-elem-confirm-overlay">
+  <div class="wb-ec-card">
+    <div class="wb-ec-title">⚔ 出戰前元素確認</div>
+    <div class="wb-ec-sub">確認隊伍元素能完整覆蓋 BOSS 的破盾屬性</div>
+
+    <!-- BOSS 護盾元素列(由 JS 動態填充) -->
+    <div id="wb-ec-shield-row" class="wb-ec-shield-row"></div>
+
+    <!-- 隊伍 4 槽預覽 -->
+    <div id="wb-ec-slots" class="wb-ec-slots"></div>
+
+    <!-- 整體狀態 -->
+    <div id="wb-ec-status" class="wb-ec-status-box is-ok"></div>
+
+    <!-- 操作按鈕 -->
+    <div class="wb-ec-btn-row">
+      <button class="wb-ec-btn wb-ec-cancel" onclick="_wbUiCloseElemConfirm()">
+        ← 回去調整
+      </button>
+      <button id="wb-ec-go-btn" class="wb-ec-btn wb-ec-go" onclick="_wbUiConfirmAndStart()">
+        🚀 出發迎戰!
+      </button>
     </div>
   </div>
 </div>
@@ -1014,6 +1319,12 @@
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
     document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    // ★ v3.1.2 — 離開房間恢復原 BGM
+    try{
+      if(window._wbPrevBgm && typeof bgmFadeTo === 'function'){
+        bgmFadeTo(window._wbPrevBgm, 600);
+      }
+    }catch(_){}
   };
 
   // === 渲染英雄選擇格 ===
@@ -1135,6 +1446,260 @@
     }
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.2 — 出戰前元素確認系統
+  // ────────────────────────────────────────────────────────────────────
+  // 流程:房主按「⚔ 開戰!」→ 跑 _wbUiPrepareStartBattle()
+  //   1. 拿玩家槽位 (snap.players)
+  //   2. 模擬產出 4 槽:人類 + AI 替補(預設劍士)
+  //   3. 對每槽計算「英雄推測屬性 + 玩家選的元素」聯集
+  //   4. 對照 BOSS shieldElements,找出缺哪些
+  //   5. 對 AI 槽位「自動分配缺的元素」(覆寫 AI 槽位的元素)
+  //   6. 顯示確認 modal,玩家可以「回去調整」或「出發迎戰」
+  //   7. 確認後才真正呼叫 _wbUiStartBattle(把 AI 元素覆寫塞進去)
+  // ════════════════════════════════════════════════════════════════════
+  // 取得當前 BOSS 的 shieldElements (從 WORLD_BOSS_LINEUP)
+  function _wbEcGetBossShields(){
+    try{
+      const lineup = window.WORLD_BOSS_LINEUP || [];
+      // 目前只有維蘇威可開戰,直接抓第 1 隻
+      const boss = lineup.find(b => b.id === 'vesuvius_fire_dragon') || lineup[0];
+      return (boss && boss.shieldElements) || ['fire','wind','earth','dark'];
+    }catch(_){
+      return ['fire','wind','earth','dark'];
+    }
+  }
+  // 7 元素 meta(跟主程式 WB_ELEMENT_META 對齊,顯示用)
+  const _WB_EC_ELEM_META = {
+    fire:  { ic:'🔥', name:'火', color:'#ff7755' },
+    water: { ic:'💧', name:'水', color:'#88cfff' },
+    wind:  { ic:'🌪', name:'風', color:'#aaffdd' },
+    earth: { ic:'⛰', name:'土', color:'#ddbb88' },
+    light: { ic:'☀', name:'光', color:'#fff5aa' },
+    dark:  { ic:'🌑', name:'暗', color:'#bb88dd' },
+    grass: { ic:'🌿', name:'草', color:'#88ee88' },
+  };
+  // 從英雄名推測元素(跟 world-boss-ui.html 內 _wbInferHeroElement 一致)
+  function _wbEcInferHeroElement(heroName){
+    if(!heroName) return null;
+    const name = heroName;
+    if(name.includes('火') || name.includes('炎') || name.includes('熱')) return 'fire';
+    if(name.includes('暗') || name.includes('影') || name.includes('夜') || name.includes('血') || name.includes('死靈') || name.includes('小惡魔') || name.includes('鬼')) return 'dark';
+    if(name.includes('光') || name.includes('聖') || name.includes('神') || name.includes('天')) return 'light';
+    if(name.includes('草') || name.includes('木') || name.includes('葉') || name.includes('花') || name.includes('竹') || name.includes('茶') || name.includes('森')) return 'grass';
+    if(name.includes('水') || name.includes('冰') || name.includes('河') || name.includes('海') || name.includes('雪')) return 'water';
+    if(name.includes('風') || name.includes('雷') || name.includes('鳥') || name.includes('哈維') || name.includes('翼') || name.includes('飛')) return 'wind';
+    if(name.includes('土') || name.includes('石') || name.includes('岩') || name.includes('山')) return 'earth';
+    try{
+      if(typeof MONSTER_ELEMENT !== 'undefined' && MONSTER_ELEMENT[name]) return MONSTER_ELEMENT[name];
+      if(window.MONSTER_ELEMENT && window.MONSTER_ELEMENT[name]) return window.MONSTER_ELEMENT[name];
+    }catch(_){}
+    return null;
+  }
+
+  // 給定隊伍,算每個槽的覆蓋元素集合,並回傳整體缺失
+  // 規則(老師指定):兩個都算 — 英雄推測屬性 + 玩家選的元素,union
+  function _wbEcComputeCoverage(team /* [{heroName, element, isAi}] */, shieldElements){
+    const slots = team.map((p, i) => {
+      const inferred = _wbEcInferHeroElement(p.heroName);
+      const picked   = p.element || null;
+      const covered = new Set();
+      if(inferred) covered.add(inferred);
+      if(picked) covered.add(picked);
+      return { ...p, slotIdx:i, inferred, picked, covered: [...covered] };
+    });
+    const allCovered = new Set();
+    slots.forEach(s => s.covered.forEach(e => allCovered.add(e)));
+    const missing = shieldElements.filter(e => !allCovered.has(e));
+    return { slots, allCovered:[...allCovered], missing };
+  }
+
+  // 自動把 missing 元素分配給 AI 槽位(覆寫該 AI 的 picked element)
+  function _wbEcAutoAssignToAi(slots, missing){
+    // 找出 AI 槽位(isAi=true),把缺的元素分給它們
+    const aiSlots = slots.filter(s => s.isAi);
+    const assigned = []; // 紀錄分配給哪些 AI 槽位(顯示用)
+    let aiIdx = 0;
+    for(const elem of missing){
+      if(aiIdx >= aiSlots.length) break;
+      const target = aiSlots[aiIdx];
+      target.picked = elem;
+      // 同步更新 covered
+      const cov = new Set(target.covered);
+      cov.add(elem);
+      target.covered = [...cov];
+      target._autoAssigned = elem; // 標記(UI 顯示「⚙ AI 自動分配」)
+      assigned.push({ slotIdx: target.slotIdx, elem });
+      aiIdx++;
+    }
+    return assigned;
+  }
+
+  // 從 snap.players 產出 4 槽完整 team(含 AI 替補)
+  function _wbEcBuildFullTeam(players){
+    const team = [];
+    for(let i = 0; i < 4; i++){
+      const p = players[i];
+      if(p){
+        team.push({
+          slotIdx:i, isAi:false, isMe:(p.uid === window._gUserId),
+          heroName: p.heroName || '劍士',
+          element: p.element || null,
+          name: p.name || ('玩家 ' + (i+1)),
+        });
+      }else{
+        // AI 替補(預設劍士,沒元素)
+        team.push({
+          slotIdx:i, isAi:true, isMe:false,
+          heroName: '劍士',
+          element: null,
+          name: 'AI 替補',
+        });
+      }
+    }
+    return team;
+  }
+
+  // 房主按「⚔ 開戰!」→ 彈出元素確認 modal
+  window._wbUiPrepareStartBattle = function(){
+    const snap = window._wbNet.getSnapshot();
+    const players = snap?.players || [];
+    if(players.length < 1){ alert('至少要 1 人'); return; }
+    const shields = _wbEcGetBossShields();
+    // 1. 先建 4 槽完整 team(人類 + AI 替補)
+    const team = _wbEcBuildFullTeam(players);
+    // 2. 第一次計算覆蓋
+    let cov = _wbEcComputeCoverage(team, shields);
+    // 3. 若缺元素 → AI 自動補齊
+    let assigned = [];
+    if(cov.missing.length > 0){
+      assigned = _wbEcAutoAssignToAi(cov.slots, cov.missing);
+      // 重算(用更新後的 picked element)
+      cov = _wbEcComputeCoverage(cov.slots, shields);
+    }
+    // 4. 把覆寫結果存起來,確認後傳給 _wbUiStartBattle
+    window._wbEcPendingTeam = cov.slots;
+    window._wbEcPendingShields = shields;
+    window._wbEcPendingAssigned = assigned;
+    // 5. 顯示 modal
+    _wbEcRenderModal(cov.slots, shields, cov.missing, assigned);
+    document.getElementById('wb-elem-confirm-overlay').classList.add('show');
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.55); }catch(_){}
+  };
+
+  // 渲染元素確認 modal 內容
+  function _wbEcRenderModal(slots, shields, missing, assigned){
+    // 護盾元素列(每個元素顯示是否被覆蓋)
+    const allCovered = new Set();
+    slots.forEach(s => s.covered.forEach(e => allCovered.add(e)));
+    const shieldHtml = shields.map(e => {
+      const m = _WB_EC_ELEM_META[e] || { ic:'?', name:e, color:'#fff' };
+      const covered = allCovered.has(e);
+      // 找出哪些槽提供這個元素
+      const providers = slots.filter(s => s.covered.includes(e));
+      const provText = providers.length
+        ? providers.map(p => {
+            const tag = p.isAi ? '🤖' : (p.isMe ? '⭐' : '👤');
+            return tag + ' 槽' + (p.slotIdx+1);
+          }).join('、')
+        : '— 無人提供 —';
+      return '<div class="wb-ec-shield-chip ' + (covered ? 'is-covered' : 'is-missing') + '" ' +
+             'style="color:' + m.color + ';border-color:' + m.color + ';">' +
+        '<div style="font-size:22px;line-height:1;">' + m.ic + '</div>' +
+        m.name + '盾' +
+        '<span class="wb-ec-shield-counter">' + provText + '</span>' +
+        '</div>';
+    }).join('');
+    document.getElementById('wb-ec-shield-row').innerHTML = shieldHtml;
+
+    // 4 槽預覽
+    const slotsHtml = slots.map(s => {
+      const tag = s.isAi
+        ? '<span class="wb-ec-slot-tag tag-ai">🤖 AI 替補</span>'
+        : (s.isMe ? '<span class="wb-ec-slot-tag tag-me">⭐ 你</span>' : '');
+      const inferredM = s.inferred ? _WB_EC_ELEM_META[s.inferred] : null;
+      const pickedM   = s.picked   ? _WB_EC_ELEM_META[s.picked]   : null;
+      const inferredHtml = inferredM
+        ? ('<span style="color:' + inferredM.color + ';">' + inferredM.ic + inferredM.name + '</span>')
+        : '<span style="color:#888;">無</span>';
+      const pickedHtml = pickedM
+        ? ('<span style="color:' + pickedM.color + ';">' + pickedM.ic + pickedM.name + '</span>' +
+           (s._autoAssigned ? ' <span style="color:#88ccff;">(⚙自動)</span>' : ''))
+        : '<span style="color:#888;">未選</span>';
+      return '<div class="wb-ec-slot ' + (s.isAi ? 'is-ai' : '') + (s.isMe ? ' is-me' : '') + '">' +
+        '<div class="wb-ec-slot-num">槽位 ' + (s.slotIdx+1) + '</div>' +
+        tag +
+        '<div class="wb-ec-slot-hero">' + _escapeEc(s.heroName) + '</div>' +
+        '<div class="wb-ec-slot-elems">' +
+          '英雄推測:' + inferredHtml + '<br>' +
+          '玩家選:' + pickedHtml +
+        '</div>' +
+      '</div>';
+    }).join('');
+    document.getElementById('wb-ec-slots').innerHTML = slotsHtml;
+
+    // 整體狀態
+    const stEl = document.getElementById('wb-ec-status');
+    const goBtn = document.getElementById('wb-ec-go-btn');
+    if(missing.length === 0){
+      stEl.className = 'wb-ec-status-box is-ok';
+      if(assigned.length > 0){
+        // AI 自動補齊過
+        const assignedTxt = assigned.map(a => {
+          const m = _WB_EC_ELEM_META[a.elem] || { ic:'?', name:a.elem };
+          return '槽' + (a.slotIdx+1) + ' ' + m.ic + m.name;
+        }).join('、');
+        stEl.innerHTML = '✅ 元素齊全!(AI 替補自動補上:' + assignedTxt + ')';
+      }else{
+        stEl.innerHTML = '✅ 元素齊全!隊伍能完整破除 BOSS 的所有護盾';
+      }
+      goBtn.classList.remove('is-disabled');
+      goBtn.disabled = false;
+    }else{
+      stEl.className = 'wb-ec-status-box is-bad';
+      // 這種情況理論上不會發生(AI 槽位通常夠補),但若有 4 個玩家全選錯且重複,可能還是缺
+      const missTxt = missing.map(e => {
+        const m = _WB_EC_ELEM_META[e] || { ic:'?', name:e };
+        return m.ic + m.name;
+      }).join('、');
+      stEl.innerHTML = '⚠ 還缺元素:<b>' + missTxt + '</b><br>' +
+        '<span style="font-size:13px;color:#ffcc88;">' +
+        '請回去調整玩家元素,或減少玩家數讓 AI 替補來補。</span>';
+      goBtn.classList.add('is-disabled');
+      goBtn.disabled = true;
+    }
+  }
+
+  // 小工具
+  function _escapeEc(s){
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // 關閉 modal
+  window._wbUiCloseElemConfirm = function(){
+    document.getElementById('wb-elem-confirm-overlay').classList.remove('show');
+    try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.5); }catch(_){}
+  };
+
+  // 確認 → 真正呼叫原 _wbUiStartBattle(把 AI 元素覆寫塞給 _wbNet 之前傳給 startBattle)
+  window._wbUiConfirmAndStart = async function(){
+    const goBtn = document.getElementById('wb-ec-go-btn');
+    if(goBtn.classList.contains('is-disabled')) return;
+    // 把 AI 槽的元素覆寫應用到 window 全域,讓 _wbUiStartBattle 能讀到
+    window._wbEcAiOverrideElements = {};
+    (window._wbEcPendingTeam || []).forEach(s => {
+      if(s.isAi && s.picked){
+        window._wbEcAiOverrideElements[s.slotIdx] = s.picked;
+      }
+    });
+    // 關 modal
+    document.getElementById('wb-elem-confirm-overlay').classList.remove('show');
+    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.7); }catch(_){}
+    // 真正開戰
+    await window._wbUiStartBattle();
+  };
+
   // === 開戰 ===
   window._wbUiStartBattle = async function(){
     const snap = window._wbNet.getSnapshot();
@@ -1152,6 +1717,21 @@
       const heroName = p?.heroName || '劍士';
       const h = newHero(heroName, 'p1', i);
       h.burst = 0; h.burstMax = h.burstMax || 10;
+      // ★ v3.2 — 把玩家選的元素塞進英雄物件,讓戰鬥引擎 _wbInferHeroElement 透過 action.element 讀到
+      //   - 有玩家:用玩家選的 element
+      //   - AI 替補:讀 _wbEcAiOverrideElements[i] (元素確認 modal 自動分配的)
+      let assignedElem = null;
+      if(p && p.element){
+        assignedElem = p.element;
+      }else{
+        const ov = window._wbEcAiOverrideElements || {};
+        if(ov[i]) assignedElem = ov[i];
+      }
+      if(assignedElem){
+        h._wbPickedElement = assignedElem;
+        // 也填到主英雄 element 欄(若戰鬥引擎讀 h.element)
+        if(!h.element) h.element = assignedElem;
+      }
       p1.push(h);
     }
     // BOSS:維蘇威火山龍王
@@ -1182,6 +1762,13 @@
       currentActorIdx: 0
     });
 
+    // ★ v3.1.2 — 切到維蘇威戰鬥專屬 BGM
+    try{
+      if(typeof bgmFadeTo === 'function'){
+        bgmFadeTo('bgm-wb-vesuvius-battle', 800);
+      }
+    }catch(_){}
+
     // ★ v3.1 — BOSS 咆哮 → 開戰題 → 進入戰鬥
     if(typeof window._wbStartBossOpening === 'function'){
       await window._wbStartBossOpening();
@@ -1195,24 +1782,37 @@
 
   // === 房主戰鬥執行器 ===
   // ★ v3.1 — 推測英雄屬性(從英雄名、技能名)
-  function _wbInferHeroElement(actor, action){
-    if(!actor) return null;
+  // ★ v3.2 — 擴充為回傳「全部可能元素陣列」(英雄推測屬性 + 玩家選的元素,union)
+  //          舊呼叫處仍可接受單一元素(取第一個);新呼叫處可拿全部
+  function _wbInferHeroElementAll(actor, action){
+    if(!actor) return [];
+    const out = new Set();
     const name = actor.name || '';
-    // 從英雄名推測
-    if(name.includes('火') || name.includes('炎')) return 'fire';
-    if(name.includes('水') || name.includes('冰') || name.includes('河')) return 'water';
-    if(name.includes('風') || name.includes('雷') || name.includes('鳥') || name.includes('哈維')) return 'wind';
-    if(name.includes('土') || name.includes('石') || name.includes('岩')) return 'earth';
-    // 從技能 ID 推測(如果有元素標記)
-    if(action && action.element) return action.element;
-    // 從主程式 MONSTER_ELEMENT 查
+    // 從英雄名推測 7 屬性
+    if(name.includes('火') || name.includes('炎') || name.includes('熱')) out.add('fire');
+    else if(name.includes('暗') || name.includes('影') || name.includes('夜') || name.includes('血') || name.includes('死靈') || name.includes('小惡魔') || name.includes('鬼')) out.add('dark');
+    else if(name.includes('光') || name.includes('聖') || name.includes('神') || name.includes('天')) out.add('light');
+    else if(name.includes('草') || name.includes('木') || name.includes('葉') || name.includes('花') || name.includes('竹') || name.includes('茶') || name.includes('森')) out.add('grass');
+    else if(name.includes('水') || name.includes('冰') || name.includes('河') || name.includes('海') || name.includes('雪')) out.add('water');
+    else if(name.includes('風') || name.includes('雷') || name.includes('鳥') || name.includes('哈維') || name.includes('翼') || name.includes('飛')) out.add('wind');
+    else if(name.includes('土') || name.includes('石') || name.includes('岩') || name.includes('山')) out.add('earth');
+    // 從 MONSTER_ELEMENT 查
     try{
-      if(window.MONSTER_ELEMENT && window.MONSTER_ELEMENT[name]){
-        return window.MONSTER_ELEMENT[name];
-      }
+      if(typeof MONSTER_ELEMENT !== 'undefined' && MONSTER_ELEMENT[name]) out.add(MONSTER_ELEMENT[name]);
+      else if(window.MONSTER_ELEMENT && window.MONSTER_ELEMENT[name]) out.add(window.MONSTER_ELEMENT[name]);
     }catch(_){}
-    return null;  // 無屬性
+    // ★ v3.2 — 玩家在選角階段選的元素(union)
+    if(actor._wbPickedElement) out.add(actor._wbPickedElement);
+    if(actor.element) out.add(actor.element);
+    // 技能 ID 內的 element 標記
+    if(action && action.element) out.add(action.element);
+    return [...out];
   }
+  function _wbInferHeroElement(actor, action){
+    const arr = _wbInferHeroElementAll(actor, action);
+    return arr.length ? arr[0] : null;
+  }
+  window._wbInferHeroElementAll = _wbInferHeroElementAll;
 
   window._wbHostExecuteAction = function(actorPos, action){
     if(!window._wbHostG) return;
@@ -1282,8 +1882,9 @@
       if(typeof window._wbConsumeShield === 'function' && heroElement){
         const consumed = window._wbConsumeShield(boss, heroElement);
         if(consumed){
-          const ICONS = {fire:'🔥',water:'💧',wind:'🌪',earth:'⛰'};
-          shieldNote = ` (${ICONS[consumed]}${consumed}盾-1)`;
+          const META = window._WB_ELEMENT_META || {};
+          const meta = META[consumed] || {icon:'?', label:consumed+'盾'};
+          shieldNote = ` (${meta.icon}${meta.label}-1)`;
         }
       }
 
@@ -1616,23 +2217,25 @@
         megaTurn.textContent = `回合 ${battle.turn} / 20 ✦ ${phase}`;
       }
 
-      // ★ v3.1 — 護盾 + 不利狀態 chip
+      // ★ v3.1.2 — 護盾 + 不利狀態 chip(完全動態,讀 BOSS._wbShieldElements + WB_ELEMENT_META)
       const shieldsRow = document.getElementById('wb-mega-shields-row');
       if(shieldsRow){
         const chips = [];
         const shields = boss._wbShields || {};
-        const ELS = [
-          {el:'fire',  cls:'wb-shield-fire',  icon:'🔥', label:'火盾'},
-          {el:'water', cls:'wb-shield-water', icon:'💧', label:'水盾'},
-          {el:'wind',  cls:'wb-shield-wind',  icon:'🌪', label:'風盾'},
-          {el:'earth', cls:'wb-shield-earth', icon:'⛰', label:'土盾'},
-        ];
-        for(const s of ELS){
-          if(shields[s.el] > 0){
-            chips.push(`<span class="wb-shield-chip ${s.cls}">${s.icon} ${s.label}<span class="wb-shield-num">×${shields[s.el]}</span></span>`);
+        const elementList = boss._wbShieldElements || Object.keys(shields);
+        const META = (typeof window._WB_ELEMENT_META === 'object' && window._WB_ELEMENT_META) ? window._WB_ELEMENT_META : null;
+
+        for(const el of elementList){
+          if(shields[el] > 0){
+            const meta = (META && META[el]) ? META[el] : {icon:'?', label:el, color:'#aaa', borderColor:'rgba(150,150,150,0.7)', bg:'rgba(40,40,40,0.6)'};
+            chips.push(
+              `<span class="wb-shield-chip" style="color:${meta.color};border-color:${meta.borderColor};background:${meta.bg};">` +
+              `${meta.icon} ${meta.label}` +
+              `<span class="wb-shield-num">×${shields[el]}</span>` +
+              `</span>`
+            );
           }
         }
-        // 不利狀態(若需要 — BOSS 通常不會中,但留接口)
         if(boss._wbBurn > 0){
           chips.push(`<span class="wb-boss-status-chip burn">🔥 燃燒 ${boss._wbBurn}</span>`);
         }
@@ -2317,8 +2920,12 @@
       alert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始練習');
       return;
     }
-    if(typeof HERO_DB === 'undefined' || !HERO_DB['維蘇威火山龍王']){
-      alert('⚠ HERO_DB 中找不到維蘇威火山龍王 — world-boss.js 可能還沒掛載資料\n請等 1 秒後再試,或重新整理頁面');
+    // ★ v3.1.1 — 同時查 HERO_DB (typeof) 和 window.HERO_DB (world-boss.js 已暴露)
+    let _heroDb = null;
+    try{ if(typeof HERO_DB !== 'undefined') _heroDb = HERO_DB; }catch(_){}
+    if(!_heroDb && window.HERO_DB) _heroDb = window.HERO_DB;
+    if(!_heroDb || !_heroDb['維蘇威火山龍王']){
+      alert('⚠ HERO_DB 中找不到維蘇威火山龍王\n\n可能原因:\n1. hero_db.js 沒載入 — 請檢查 F12 Network 看是否 404\n2. world-boss.js 啟動失敗 — 請按 F12 Console 看是否有 [WB] 開頭的錯誤訊息\n3. 順序問題 — 請重新整理頁面再試');
       return;
     }
 
@@ -2462,6 +3069,13 @@
       p1: p1, p2: p2, turn: 1, currentActorIdx: 0, turnOrder: all, logEntries: []
     });
     _wbRenderPlayerSlots(fakePlayers);
+
+    // ★ v3.1.2 — 切到維蘇威戰鬥專屬 BGM
+    try{
+      if(typeof bgmFadeTo === 'function'){
+        bgmFadeTo('bgm-wb-vesuvius-battle', 800);
+      }
+    }catch(_){}
 
     // ★ v3.1 — 練習模式也跑咆哮 + 開戰題
     if(typeof window._wbStartBossOpening === 'function'){
@@ -2633,6 +3247,18 @@
   }, 500);
 
   console.log('[WB-UI] ✅ UI 連動層已初始化');
+
+  // ★ v3.2 — UI 注入完成後立即同步休戰期狀態看板 + 鎖按鈕,並對 Firestore 變更綁監聽
+  try{
+    if(typeof window._wbSyncCeasefireBanner === 'function') window._wbSyncCeasefireBanner();
+    if(typeof window._wbSyncStartButtonGate === 'function') window._wbSyncStartButtonGate();
+  }catch(_){}
+  try{
+    document.addEventListener('wbCeasefireStateChanged', () => {
+      try{ window._wbSyncCeasefireBanner && window._wbSyncCeasefireBanner(); }catch(_){}
+      try{ window._wbSyncStartButtonGate && window._wbSyncStartButtonGate(); }catch(_){}
+    });
+  }catch(_){}
 })();
 </script>
 
