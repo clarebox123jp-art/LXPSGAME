@@ -708,6 +708,309 @@
   .wb-start-btn{background:linear-gradient(135deg,#d4a843,#b88a30);color:#000;}
   .wb-start-btn:disabled{background:#444;color:#888;cursor:not-allowed;}
 
+  /* ════════════════════════════════════════════════════════════════ */
+  /* ★ FIX 20260516 — 隊伍確認頁(進戰鬥前讓玩家確認元素 + 至寶 + 準備) */
+  /* 設計風格參考圖2,4 個角色全身大圖橫排,即時同步                 */
+  /* ════════════════════════════════════════════════════════════════ */
+  #wb-team-confirm-overlay{
+    display:none;position:fixed;inset:0;z-index:9500;
+    background:
+      linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
+      url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
+      #1a0a08;
+    overflow-y:auto;padding:20px;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
+  }
+  #wb-team-confirm-overlay.show{display:block;}
+  .wb-tc-card{
+    max-width:1400px;margin:0 auto;
+    background:rgba(8,10,24,0.55);
+    backdrop-filter:blur(6px);
+    border:3px solid rgba(255,170,80,0.65);
+    border-radius:18px;padding:20px 24px;
+    box-shadow:0 0 48px rgba(255,140,40,0.45);
+    position:relative;
+  }
+  .wb-tc-title{
+    font-size:30px;font-weight:900;letter-spacing:4px;
+    color:#ffcc66;text-align:center;
+    text-shadow:0 0 18px rgba(255,170,80,0.7),0 2px 6px rgba(0,0,0,0.85);
+    margin-bottom:6px;
+  }
+  .wb-tc-sub{
+    text-align:center;font-size:14px;color:#cfb89e;
+    letter-spacing:2px;margin-bottom:14px;
+  }
+  .wb-tc-boss-shield-hint{
+    text-align:center;margin-bottom:18px;
+    padding:10px 14px;background:rgba(255,80,40,0.12);
+    border:1.5px solid rgba(255,120,80,0.55);border-radius:10px;
+    font-size:14px;color:#ffd699;letter-spacing:1px;
+  }
+  .wb-tc-boss-shield-hint b{color:#ffaa66;}
+  .wb-tc-shield-icons{display:inline-flex;gap:8px;margin-left:10px;}
+  .wb-tc-shield-icon{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:3px 10px;border-radius:8px;
+    font-size:13px;font-weight:800;
+    background:rgba(0,0,0,0.55);border:1.5px solid;
+  }
+  .wb-tc-shield-icon.fire {color:#ff7755;border-color:rgba(255,110,80,0.85);}
+  .wb-tc-shield-icon.water{color:#88cfff;border-color:rgba(120,180,255,0.85);}
+  .wb-tc-shield-icon.wind {color:#aaffdd;border-color:rgba(150,240,200,0.85);}
+  .wb-tc-shield-icon.earth{color:#ddbb88;border-color:rgba(220,180,120,0.85);}
+  .wb-tc-shield-icon.miss{opacity:0.35;filter:grayscale(0.7);}
+  .wb-tc-shield-icon.cover{box-shadow:0 0 12px currentColor;}
+
+  /* 4 個玩家槽橫排 */
+  .wb-tc-slots{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+    margin-bottom:16px;
+  }
+  @media (max-width:1100px){.wb-tc-slots{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:640px){.wb-tc-slots{grid-template-columns:1fr;}}
+  .wb-tc-slot{
+    background:linear-gradient(180deg,rgba(20,15,10,0.85),rgba(8,5,3,0.92));
+    border:2px solid rgba(212,168,67,0.4);border-radius:14px;
+    padding:14px 12px;display:flex;flex-direction:column;gap:10px;
+    transition:all 0.25s;position:relative;
+  }
+  .wb-tc-slot.me{border-color:#ffe066;box-shadow:0 0 20px rgba(255,224,102,0.45);}
+  .wb-tc-slot.ready{
+    border-color:#3ec87a;
+    box-shadow:0 0 22px rgba(62,200,122,0.55);
+  }
+  .wb-tc-slot.ready::after{
+    content:'✓';position:absolute;top:-8px;right:-8px;
+    width:36px;height:36px;border-radius:50%;
+    background:linear-gradient(135deg,#3ec87a,#2a9858);
+    border:3px solid #0d0a1f;
+    color:#fff;font-size:22px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 16px rgba(62,200,122,0.85);
+    animation:wbTcCheckPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes wbTcCheckPop{0%{transform:scale(0);}100%{transform:scale(1);}}
+  .wb-tc-slot.empty{
+    border-style:dashed;border-color:rgba(180,180,180,0.3);
+    background:rgba(20,20,30,0.45);opacity:0.6;
+  }
+  .wb-tc-slot-head{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:12px;color:#aaa;letter-spacing:1px;
+  }
+  .wb-tc-slot-tag{
+    padding:2px 8px;border-radius:6px;font-weight:800;font-size:11px;
+  }
+  .wb-tc-slot-tag.me{background:#ffe066;color:#000;}
+  .wb-tc-slot-tag.ai{background:#88ccff;color:#000;}
+  .wb-tc-slot-tag.peer{background:rgba(168,132,255,0.4);color:#e0d0ff;}
+  .wb-tc-slot-tag.host{background:#ff6644;color:#fff;}
+  .wb-tc-slot-player-name{
+    font-size:14px;font-weight:700;color:#ffe066;text-align:center;
+    letter-spacing:1px;margin-bottom:-2px;
+  }
+  /* 角色全身大圖區 */
+  .wb-tc-hero-portrait{
+    width:100%;aspect-ratio:3/4;border-radius:10px;overflow:hidden;
+    background:linear-gradient(160deg,#2a3340,#15191f);
+    border:2px solid rgba(212,168,67,0.5);
+    position:relative;display:flex;align-items:center;justify-content:center;
+  }
+  .wb-tc-hero-portrait img{
+    width:100%;height:100%;object-fit:cover;object-position:top center;
+    display:block;
+  }
+  .wb-tc-hero-portrait .wb-tc-hero-emoji{
+    font-size:72px;color:rgba(212,168,67,0.6);
+  }
+  .wb-tc-hero-portrait .wb-tc-hero-lv{
+    position:absolute;top:6px;left:6px;
+    background:rgba(255,224,102,0.92);color:#000;
+    padding:2px 9px;border-radius:8px;
+    font-size:13px;font-weight:900;letter-spacing:1px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.6);
+  }
+  .wb-tc-hero-name{
+    font-size:16px;font-weight:800;color:#ffe066;text-align:center;
+    letter-spacing:1px;line-height:1.2;
+  }
+  .wb-tc-stat-row{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+    font-size:11px;color:#cfb89e;
+  }
+  .wb-tc-stat-row > div{
+    background:rgba(0,0,0,0.4);border-radius:5px;
+    padding:4px 2px;text-align:center;
+  }
+  .wb-tc-stat-row > div > b{color:#ffe066;font-size:13px;display:block;}
+  /* 元素 chips(玩家挑選) */
+  .wb-tc-section-lbl{
+    font-size:11px;color:#ffcc88;letter-spacing:1.5px;font-weight:700;
+    margin-top:6px;margin-bottom:3px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .wb-tc-section-lbl .wb-tc-req{
+    background:rgba(255,80,80,0.25);color:#ffaa88;
+    padding:1px 6px;border-radius:5px;font-size:10px;
+  }
+  .wb-tc-elem-chips{
+    display:flex;flex-wrap:wrap;gap:4px;
+  }
+  .wb-tc-elem-chip{
+    flex:1 1 calc(25% - 4px);min-width:42px;
+    padding:5px 4px;border-radius:7px;cursor:pointer;
+    background:rgba(0,0,0,0.45);
+    border:1.5px solid rgba(212,168,67,0.25);
+    color:#aaa;font-size:11px;
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    transition:all 0.15s;font-family:inherit;
+  }
+  .wb-tc-elem-chip .em-ic{font-size:16px;line-height:1;}
+  .wb-tc-elem-chip:hover{border-color:rgba(212,168,67,0.55);}
+  .wb-tc-elem-chip:disabled{opacity:0.3;cursor:not-allowed;}
+  .wb-tc-elem-chip.on{
+    background:rgba(255,224,102,0.22);
+    border-color:#ffe066;color:#ffe066;
+    box-shadow:0 0 10px rgba(255,224,102,0.5);
+  }
+  .wb-tc-elem-chip.on.fire {background:rgba(255,110,80,0.25);border-color:#ff7755;color:#ffa88f;box-shadow:0 0 10px rgba(255,110,80,0.5);}
+  .wb-tc-elem-chip.on.water{background:rgba(120,180,255,0.25);border-color:#88cfff;color:#aae0ff;box-shadow:0 0 10px rgba(120,180,255,0.5);}
+  .wb-tc-elem-chip.on.wind {background:rgba(150,240,200,0.25);border-color:#aaffdd;color:#caffee;box-shadow:0 0 10px rgba(150,240,200,0.5);}
+  .wb-tc-elem-chip.on.earth{background:rgba(220,180,120,0.28);border-color:#ddbb88;color:#f0d8a8;box-shadow:0 0 10px rgba(220,180,120,0.5);}
+  .wb-tc-elem-chip.readonly{cursor:default;pointer-events:none;}
+  /* 至寶選擇 */
+  .wb-tc-treasure-list{
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .wb-tc-treasure-chip{
+    background:rgba(0,0,0,0.5);
+    border:1.5px solid rgba(168,132,255,0.4);
+    border-radius:7px;padding:5px 8px;
+    display:flex;align-items:center;gap:6px;
+    font-size:11px;color:#c8a8ff;
+    cursor:pointer;transition:all 0.15s;
+    font-family:inherit;text-align:left;
+  }
+  .wb-tc-treasure-chip:hover{border-color:#a884ff;}
+  .wb-tc-treasure-chip.on{
+    background:rgba(168,132,255,0.25);
+    border-color:#a884ff;color:#e0d0ff;
+    box-shadow:0 0 10px rgba(168,132,255,0.5);
+  }
+  .wb-tc-treasure-chip .wb-tc-tr-ic{font-size:18px;flex-shrink:0;}
+  .wb-tc-treasure-chip .wb-tc-tr-info{flex:1;min-width:0;}
+  .wb-tc-treasure-chip .wb-tc-tr-name{
+    font-weight:700;letter-spacing:0.5px;font-size:12px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .wb-tc-treasure-chip .wb-tc-tr-lv{
+    font-size:10px;color:#999;
+  }
+  .wb-tc-treasure-chip.locked{opacity:0.35;cursor:not-allowed;}
+  .wb-tc-treasure-chip.taken-by-peer{
+    opacity:0.5;cursor:not-allowed;
+    background:rgba(80,30,30,0.4);border-color:rgba(255,100,100,0.5);
+  }
+  .wb-tc-treasure-chip.readonly{cursor:default;pointer-events:none;}
+  .wb-tc-no-treasure{
+    background:rgba(0,0,0,0.45);
+    border:1.5px dashed rgba(168,132,255,0.4);
+    border-radius:7px;padding:8px;
+    font-size:11px;color:#888;text-align:center;
+    font-style:italic;
+  }
+  /* 底部準備按鈕 */
+  .wb-tc-ready-zone{
+    display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;
+  }
+  .wb-tc-ready-btn{
+    flex:1;padding:12px 16px;font-size:16px;font-weight:900;letter-spacing:2px;
+    border:none;color:#fff;border-radius:10px;cursor:pointer;
+    font-family:inherit;transition:all 0.2s;
+    background:linear-gradient(135deg,#3ec87a,#2a9858);
+    box-shadow:0 4px 14px rgba(62,200,122,0.4);
+  }
+  .wb-tc-ready-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(62,200,122,0.65);}
+  .wb-tc-ready-btn.cancel{
+    background:linear-gradient(135deg,#ff8844,#cc6622);
+    box-shadow:0 4px 14px rgba(255,136,68,0.4);
+  }
+  .wb-tc-ready-btn:disabled{
+    background:#444;cursor:not-allowed;box-shadow:none;opacity:0.5;
+  }
+  /* 底部開戰按鈕(只有房主看到) */
+  .wb-tc-start-zone{
+    display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap;
+  }
+  .wb-tc-coverage{
+    flex:1;min-width:200px;padding:10px 14px;
+    background:rgba(0,0,0,0.45);border-radius:10px;
+    font-size:13px;color:#cfb89e;letter-spacing:0.5px;
+  }
+  .wb-tc-coverage.ok{
+    background:rgba(62,200,122,0.18);color:#a8f0ce;
+    border:1.5px solid rgba(62,200,122,0.55);
+  }
+  .wb-tc-coverage.warn{
+    background:rgba(255,200,80,0.15);color:#ffd699;
+    border:1.5px solid rgba(255,200,100,0.55);
+  }
+  .wb-tc-start-btn{
+    padding:14px 28px;font-size:18px;font-weight:900;letter-spacing:3px;
+    border:none;color:#000;border-radius:10px;cursor:pointer;
+    font-family:inherit;transition:all 0.2s;
+    background:linear-gradient(135deg,#ffcc44,#cc8822);
+    box-shadow:0 0 24px rgba(255,200,80,0.55);
+  }
+  .wb-tc-start-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 36px rgba(255,200,80,0.85);}
+  .wb-tc-start-btn:disabled{
+    background:#444;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.55;
+  }
+  .wb-tc-back-btn{
+    padding:10px 18px;font-size:13px;font-weight:700;letter-spacing:1px;
+    border:1.5px solid #a884ff;background:transparent;color:#c8a8ff;
+    border-radius:8px;cursor:pointer;font-family:inherit;
+  }
+  .wb-tc-back-btn:hover{background:rgba(168,132,255,0.2);}
+  /* ════════════════════════════════════════════════════════════════ */
+
+  /* 戰鬥畫面 */
+  .wb-bg-flame-layer{
+    position:absolute;inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:1;
+  }
+  .wb-bg-flame{
+    position:absolute;
+    bottom:-20px;left:var(--x);
+    width:18px;height:24px;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center bottom,
+      #ffeb3b 0%,
+      #ffa726 30%,
+      #ff5722 60%,
+      #b71c1c 90%,
+      transparent 100%);
+    border-radius:50% 50% 20% 20% / 60% 60% 40% 40%;
+    filter:blur(0.5px) drop-shadow(0 0 8px rgba(255,140,40,0.85));
+    animation:wbBgFlameRise 3.5s ease-out infinite;
+    animation-delay:var(--delay);
+    opacity:0;
+    transform-origin:center bottom;
+  }
+  @keyframes wbBgFlameRise{
+    0%   {transform:translateY(0)     scale(0.5) rotate(-3deg);opacity:0;}
+    10%  {opacity:0.95;}
+    50%  {transform:translateY(-45vh) scale(1.1) rotate(4deg);opacity:0.85;}
+    100% {transform:translateY(-90vh) scale(0.3) rotate(-5deg);opacity:0;}
+  }
+  /* 戰鬥階段才顯示粒子層 */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-bg-flame-layer{display:none;}
+  /* 確保戰鬥內容浮在粒子層之上 */
+  #wb-lobby-overlay.wb-in-battle .wb-lobby-card{position:relative;z-index:2;}
+
   /* 戰鬥畫面 */
   /* ★ v3.1 — BOSS HP 改成「畫面頂部特大條」,佔滿戰鬥區域寬度 */
   .wb-battle-screen{display:none;}
@@ -1118,6 +1421,23 @@
 
 <!-- 大廳 / 選角 / 戰鬥 overlay -->
 <div id="wb-lobby-overlay">
+  <!-- ★ FIX 20260516 — 戰鬥背景火焰粒子層(只在 wb-in-battle 時顯示) -->
+  <div class="wb-bg-flame-layer" aria-hidden="true">
+    <span class="wb-bg-flame" style="--x:5%;--delay:0s;"></span>
+    <span class="wb-bg-flame" style="--x:14%;--delay:0.5s;"></span>
+    <span class="wb-bg-flame" style="--x:23%;--delay:1.1s;"></span>
+    <span class="wb-bg-flame" style="--x:31%;--delay:0.3s;"></span>
+    <span class="wb-bg-flame" style="--x:42%;--delay:1.8s;"></span>
+    <span class="wb-bg-flame" style="--x:50%;--delay:0.8s;"></span>
+    <span class="wb-bg-flame" style="--x:58%;--delay:2.2s;"></span>
+    <span class="wb-bg-flame" style="--x:66%;--delay:1.4s;"></span>
+    <span class="wb-bg-flame" style="--x:75%;--delay:0.6s;"></span>
+    <span class="wb-bg-flame" style="--x:83%;--delay:2.0s;"></span>
+    <span class="wb-bg-flame" style="--x:90%;--delay:0.9s;"></span>
+    <span class="wb-bg-flame" style="--x:96%;--delay:1.6s;"></span>
+    <span class="wb-bg-flame" style="--x:38%;--delay:2.5s;"></span>
+    <span class="wb-bg-flame" style="--x:71%;--delay:3.0s;"></span>
+  </div>
   <div class="wb-lobby-card">
     <!-- 房間頭 -->
     <div class="wb-room-header">
@@ -1168,8 +1488,9 @@
           <div class="wb-element-row" id="wb-element-row-1"></div>
           <div class="wb-element-row" id="wb-element-row-2" style="margin-top:6px;"></div>
         </div>
-        <button id="wb-ready-btn" class="wb-action-btn-big wb-ready-btn" onclick="_wbUiToggleReady()">
-          ⏳ 我準備好了
+        <!-- ★ FIX 20260516 — 把「我準備好了」改成「設定元素/至寶」入口 -->
+        <button id="wb-ready-btn" class="wb-action-btn-big wb-ready-btn" onclick="_wbTcOpenTeamConfirm()">
+          ⚔ 設定元素 / 至寶 → 準備
         </button>
         <button id="wb-start-btn" class="wb-action-btn-big wb-start-btn" onclick="_wbUiPrepareStartBattle()" disabled style="display:none;">
           ⚔ 開戰!
@@ -1218,6 +1539,42 @@
       </div>
 
       <div class="wb-battle-log" id="wb-battle-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ★ FIX 20260516 — 隊伍確認頁(進戰鬥前最後一道) -->
+<!-- 觸發點:玩家在選角頁按「設定元素/至寶」按鈕後出現 -->
+<!-- 4 個玩家槽橫排,各自選自己的元素 + 至寶,即時同步,4 人都打勾才能開戰 -->
+<div id="wb-team-confirm-overlay">
+  <div class="wb-tc-card">
+    <div class="wb-tc-title">⚔ 出戰前隊伍確認</div>
+    <div class="wb-tc-sub">確認元素覆蓋 BOSS 護盾 + 裝備至寶 ✦ 4 人都打勾才能開戰</div>
+
+    <!-- BOSS 護盾提示 -->
+    <div class="wb-tc-boss-shield-hint">
+      <b>🐉 維蘇威火山龍王護盾(HP 50% 啟動):</b>
+      需要 <b>火 / 水 / 風 / 土</b> 屬性各打 3 次破盾
+      <span class="wb-tc-shield-icons" id="wb-tc-shield-icons">
+        <span class="wb-tc-shield-icon fire miss">🔥 火</span>
+        <span class="wb-tc-shield-icon water miss">💧 水</span>
+        <span class="wb-tc-shield-icon wind miss">🌪 風</span>
+        <span class="wb-tc-shield-icon earth miss">🌍 土</span>
+      </span>
+    </div>
+
+    <!-- 4 個玩家槽 -->
+    <div class="wb-tc-slots" id="wb-tc-slots">
+      <!-- 由 JS 動態渲染 -->
+    </div>
+
+    <!-- 底部:房主開戰 + 元素覆蓋進度 -->
+    <div class="wb-tc-start-zone">
+      <button class="wb-tc-back-btn" onclick="_wbTcCloseTeamConfirm()">← 回去選角</button>
+      <div id="wb-tc-coverage" class="wb-tc-coverage">⏳ 等待全員確認...</div>
+      <button id="wb-tc-start-btn" class="wb-tc-start-btn" onclick="_wbTcHostStartBattle()" disabled>
+        ⚔ 開戰!
+      </button>
     </div>
   </div>
 </div>
@@ -1410,6 +1767,415 @@
   window._wbUiToggleReady = async function(){
     await window._wbNet.toggleReady();
   };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260516 — 隊伍確認頁(Team Confirm)
+  // ────────────────────────────────────────────────────────────────────
+  // 設計:
+  // 1. 從選角頁按「設定元素/至寶 → 準備」進入此頁
+  // 2. 4 個玩家槽橫排,每位玩家顯示:全身大圖、Lv、HP/攻擊/特技/速度、技能
+  // 3. 我可以選自己的 4 元素(必須是火/水/風/土)+ 至寶(只能選自己解鎖的)
+  // 4. 元素/至寶用 JSON 包進 player.element 欄位同步給隊友:
+  //      {"e":"<主元素>","es":["fire","water"],"t":["pearl_grail"]}
+  //    這樣主程式的 setMyHero(name, element) API 不用改
+  // 5. 4 人都按「準備」(ready=true) → 房主可按開戰
+  // ════════════════════════════════════════════════════════════════════
+
+  // BOSS 護盾需要的 4 種元素(維蘇威)
+  const _WB_TC_REQ_ELEMS = ['fire','water','wind','earth'];
+  // 7 元素配置(渲染用)
+  const _WB_TC_ALL_ELEMS = [
+    { id:'fire',  ic:'🔥', name:'火', isReq:true  },
+    { id:'water', ic:'💧', name:'水', isReq:true  },
+    { id:'wind',  ic:'🌪', name:'風', isReq:true  },
+    { id:'earth', ic:'🌍', name:'土', isReq:true  },
+    { id:'light', ic:'☀',  name:'光', isReq:false },
+    { id:'dark',  ic:'⚫', name:'暗', isReq:false },
+    { id:'grass', ic:'🌿', name:'草', isReq:false },
+  ];
+
+  // 解析 player.element 欄位:
+  //   - 純字串 'fire' → 舊資料,當作 { e:'fire', es:['fire'], t:[] }
+  //   - JSON       → 解析後回傳
+  function _wbTcParsePlayerExt(playerOrElemStr){
+    const raw = (typeof playerOrElemStr === 'string') ? playerOrElemStr
+              : (playerOrElemStr && playerOrElemStr.element) || '';
+    if(!raw) return { e:null, es:[], t:[] };
+    if(raw.startsWith('{')){
+      try{
+        const obj = JSON.parse(raw);
+        return {
+          e:  obj.e  || null,
+          es: Array.isArray(obj.es) ? obj.es : (obj.e ? [obj.e] : []),
+          t:  Array.isArray(obj.t)  ? obj.t  : [],
+        };
+      }catch(_){}
+    }
+    // 舊資料:單純元素字串
+    return { e: raw, es: [raw], t: [] };
+  }
+
+  // 包裝成 JSON 字串(供 setMyHero 用)
+  function _wbTcStringifyExt(ext){
+    return JSON.stringify({
+      e:  ext.es && ext.es[0] || ext.e || null,  // 第一個元素當主元素(舊邏輯相容)
+      es: ext.es || [],
+      t:  ext.t  || [],
+    });
+  }
+
+  // 取得玩家英雄的 LV(從主程式 _heroLevels,只有 me 才有,peer/AI 取得不到回傳 null)
+  function _wbTcGetHeroLv(heroName, isMe){
+    if(!isMe) return null;  // 隊友的等級不知道
+    try{
+      if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
+        return _heroLevels[heroName];
+      }
+    }catch(_){}
+    return null;
+  }
+
+  // 取得玩家已解鎖的至寶列表(只在 me 端可呼叫)
+  // 回傳:[ {id, name, icon, lv, rarity, slot, abilityText}, ... ]
+  function _wbTcGetMyTreasures(){
+    const out = [];
+    try{
+      if(typeof TAIWAN_TREASURES === 'undefined') return out;
+      if(typeof _taiwanTreasureData === 'undefined' || !_taiwanTreasureData) return out;
+      Object.keys(_taiwanTreasureData).forEach(id => {
+        const rec = _taiwanTreasureData[id];
+        const def = TAIWAN_TREASURES[id];
+        if(!rec || !def) return;
+        // 解鎖 = _taiwanTreasureData 有此 id 紀錄(等級至少 1)
+        if((rec.lv || 0) < 1) return;
+        out.push({
+          id: id,
+          name: def.name,
+          icon: def.icon || '💎',
+          lv: rec.lv,
+          rarity: def.rarity,
+          slot: def.slot,
+          abilityText: def.abilityText || '',
+        });
+      });
+    }catch(e){ console.warn('[WB-TC] 讀取至寶失敗', e); }
+    return out;
+  }
+
+  // 取得英雄是否解鎖第二格(打玉山 BOSS 過)
+  function _wbTcIsHeroSlot2Unlocked(heroName){
+    try{
+      if(typeof _isHeroSlot2Unlocked === 'function'){
+        return _isHeroSlot2Unlocked(heroName);
+      }
+    }catch(_){}
+    return false;
+  }
+
+  // 開啟隊伍確認頁(從選角頁的按鈕觸發)
+  window._wbTcOpenTeamConfirm = function(){
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.find(p => p.uid === window._gUserId);
+    if(!me || !me.heroName){
+      alert('請先選一隻英雄');
+      return;
+    }
+    document.getElementById('wb-team-confirm-overlay').classList.add('show');
+    // 把當前主元素灌進 ext(若還沒設過)
+    const ext = _wbTcParsePlayerExt(me);
+    if(ext.es.length === 0 && me.element && !me.element.startsWith('{')){
+      ext.es = [me.element];
+    }
+    _wbTcRenderTeamConfirm();
+  };
+
+  window._wbTcCloseTeamConfirm = function(){
+    document.getElementById('wb-team-confirm-overlay').classList.remove('show');
+  };
+
+  // 計算「整隊元素覆蓋率」
+  function _wbTcCalcCoverage(players){
+    const coveredSet = new Set();
+    (players || []).forEach(p => {
+      if(!p || !p.heroName) return;
+      const ext = _wbTcParsePlayerExt(p);
+      ext.es.forEach(e => { if(_WB_TC_REQ_ELEMS.includes(e)) coveredSet.add(e); });
+    });
+    return {
+      covered: [..._WB_TC_REQ_ELEMS].filter(e => coveredSet.has(e)),
+      missing: [..._WB_TC_REQ_ELEMS].filter(e => !coveredSet.has(e)),
+      pct: Math.round(coveredSet.size / _WB_TC_REQ_ELEMS.length * 100),
+    };
+  }
+
+  // 渲染整個隊伍確認頁
+  function _wbTcRenderTeamConfirm(){
+    const ov = document.getElementById('wb-team-confirm-overlay');
+    if(!ov || !ov.classList.contains('show')) return;
+    const snap = window._wbNet.getSnapshot();
+    const players = snap?.players || [];
+    const myUid = window._gUserId;
+    const meIsHost = (snap?.meta?.hostUid === myUid);
+    // 預先計算「哪些至寶已被其他隊友選走」(避免重複)
+    const treasureTakenByPeer = new Set();
+    players.forEach(p => {
+      if(p.uid === myUid) return;
+      const ext = _wbTcParsePlayerExt(p);
+      ext.t.forEach(tid => treasureTakenByPeer.add(tid));
+    });
+
+    // 渲染 4 個玩家槽
+    const slotsEl = document.getElementById('wb-tc-slots');
+    let html = '';
+    for(let i = 0; i < 4; i++){
+      const p = players[i];
+      if(!p || !p.uid){
+        html += `<div class="wb-tc-slot empty">
+          <div class="wb-tc-slot-head"><span>槽位 ${i+1}</span></div>
+          <div class="wb-tc-hero-portrait">
+            <span class="wb-tc-hero-emoji">⌛</span>
+          </div>
+          <div style="text-align:center;color:#888;font-size:13px;letter-spacing:2px;">等待隊友...</div>
+        </div>`;
+        continue;
+      }
+      html += _wbTcRenderOneSlot(p, i, myUid, treasureTakenByPeer, meIsHost);
+    }
+    slotsEl.innerHTML = html;
+
+    // 護盾圖示同步狀態
+    const cov = _wbTcCalcCoverage(players);
+    _WB_TC_REQ_ELEMS.forEach(e => {
+      const el = document.querySelector('#wb-tc-shield-icons .wb-tc-shield-icon.' + e);
+      if(el){
+        el.classList.toggle('miss',  !cov.covered.includes(e));
+        el.classList.toggle('cover',  cov.covered.includes(e));
+      }
+    });
+
+    // 底部覆蓋率提示 + 開戰按鈕
+    const covEl = document.getElementById('wb-tc-coverage');
+    const startBtn = document.getElementById('wb-tc-start-btn');
+    const filledPlayers = players.filter(p => p && p.uid && p.heroName);
+    const allReady = filledPlayers.length >= 1 && filledPlayers.every(p => p.ready);
+    const slotsFull = filledPlayers.length === 4;
+    if(cov.missing.length === 0){
+      covEl.className = 'wb-tc-coverage ok';
+      covEl.innerHTML = '✅ 4 元素全部覆蓋!護盾可順利擊破';
+    }else{
+      covEl.className = 'wb-tc-coverage warn';
+      covEl.innerHTML = '⚠ 還缺 ' + cov.missing.map(e => {
+        const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+        return m ? (m.ic + m.name) : e;
+      }).join(' / ') + ' 屬性,無法破盾';
+    }
+    if(startBtn){
+      startBtn.style.display = meIsHost ? 'inline-block' : 'none';
+      startBtn.disabled = !(allReady && slotsFull);
+      startBtn.textContent = !slotsFull ? '⌛ 等候隊員(' + filledPlayers.length + '/4)'
+                          : !allReady ? '⌛ 等候全員準備(' + filledPlayers.filter(p=>p.ready).length + '/4)'
+                          : '⚔ 開戰!';
+    }
+  }
+
+  // 渲染單一玩家槽
+  function _wbTcRenderOneSlot(p, idx, myUid, treasureTakenByPeer, meIsHost){
+    const isMe = (p.uid === myUid);
+    const isHost = (window._wbNet.getSnapshot()?.meta?.hostUid === p.uid);
+    const ext = _wbTcParsePlayerExt(p);
+    const heroName = p.heroName || '?';
+    const heroDef = (typeof HERO_DB !== 'undefined' && HERO_DB[heroName]) || null;
+    const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
+    const lv = _wbTcGetHeroLv(heroName, isMe);
+    // 計算 stats(只有自己看得到精準等級加成,隊友看到基礎值)
+    const stats = heroDef ? {
+      hp: heroDef.hp || 0,
+      atk: heroDef.atk || 0,
+      sp: heroDef.sp || 0,
+      spd: heroDef.spd || 0,
+    } : { hp:0, atk:0, sp:0, spd:0 };
+
+    const tagHtml = isHost
+      ? '<span class="wb-tc-slot-tag host">房主</span>'
+      : (isMe ? '<span class="wb-tc-slot-tag me">你</span>' : '<span class="wb-tc-slot-tag peer">隊友</span>');
+    const playerLabel = isMe ? (window._userName || '我') : (p.name || '玩家');
+
+    // 元素 chips
+    const elemChipsHtml = _WB_TC_ALL_ELEMS.map(el => {
+      const on = ext.es.includes(el.id);
+      const cls = 'wb-tc-elem-chip ' + (on ? ('on ' + el.id) : '')
+                + (!el.isReq ? ' wb-tc-non-req' : '')
+                + (isMe ? '' : ' readonly');
+      // 只有「我」才有 onclick
+      const click = isMe ? `onclick="_wbTcToggleElement('${el.id}')"` : '';
+      return `<button class="${cls}" ${click}>
+        <span class="em-ic">${el.ic}</span>${el.name}
+      </button>`;
+    }).join('');
+
+    // 至寶選擇(只有自己看得到完整選單,隊友只看到名字)
+    let treasureHtml = '';
+    if(isMe){
+      const myTreasures = _wbTcGetMyTreasures();
+      // 篩選此英雄可裝的:槽位限制,1 或 2 件
+      const maxSlots = _wbTcIsHeroSlot2Unlocked(heroName) ? 2 : 1;
+      const selectedIds = ext.t || [];
+      if(myTreasures.length === 0){
+        treasureHtml = '<div class="wb-tc-no-treasure">尚未解鎖任何至寶</div>';
+      }else{
+        // 把已選的排前面
+        myTreasures.sort((a,b) => {
+          const aSel = selectedIds.includes(a.id) ? -1 : 0;
+          const bSel = selectedIds.includes(b.id) ? -1 : 0;
+          return aSel - bSel;
+        });
+        treasureHtml = myTreasures.slice(0, 8).map(t => {
+          const on = selectedIds.includes(t.id);
+          const takenByPeer = !on && treasureTakenByPeer.has(t.id);
+          // 同 slot 衝突:如果我已選一件 weapon,新選的也是 weapon → 不允許
+          const slotConflict = !on && selectedIds.some(sid => {
+            const sdef = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[sid]);
+            return sdef && sdef.slot === t.slot;
+          });
+          // 達到上限:已選滿(且不是這件)
+          const overLimit = !on && selectedIds.length >= maxSlots;
+          const locked = takenByPeer || slotConflict || overLimit;
+          const cls = 'wb-tc-treasure-chip' + (on ? ' on' : '')
+                    + (takenByPeer ? ' taken-by-peer' : '')
+                    + (locked && !takenByPeer ? ' locked' : '');
+          const safeId = t.id.replace(/'/g,"\\'");
+          const click = locked ? '' : `onclick="_wbTcToggleTreasure('${safeId}')"`;
+          const note = takenByPeer ? '(隊友裝了)'
+                    : slotConflict ? '(同類已選)'
+                    : overLimit ? '(已滿)' : '';
+          return `<button class="${cls}" ${click} title="${t.abilityText.replace(/"/g,'&quot;')}">
+            <span class="wb-tc-tr-ic">${t.icon}</span>
+            <div class="wb-tc-tr-info">
+              <div class="wb-tc-tr-name">${t.name}${note ? ' <span style="color:#888;font-size:10px;">'+note+'</span>' : ''}</div>
+              <div class="wb-tc-tr-lv">Lv.${t.lv} ${t.slot === 'weapon' ? '⚔ 武器' : t.slot === 'armor' ? '🛡 防具' : '💎 飾品'}</div>
+            </div>
+          </button>`;
+        }).join('');
+        // 提示:第二格鎖定
+        if(maxSlots === 1){
+          treasureHtml += '<div style="font-size:10px;color:#888;text-align:center;margin-top:4px;">最多 1 件(用此英雄打敗玉山 BOSS 解鎖第二件)</div>';
+        }
+      }
+    }else{
+      // 隊友視角:只顯示已選的至寶名稱(無互動)
+      const peerSel = ext.t || [];
+      if(peerSel.length === 0){
+        treasureHtml = '<div class="wb-tc-no-treasure">未配戴至寶</div>';
+      }else{
+        treasureHtml = peerSel.map(tid => {
+          const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]) || null;
+          if(!def) return '';
+          return `<div class="wb-tc-treasure-chip on readonly">
+            <span class="wb-tc-tr-ic">${def.icon || '💎'}</span>
+            <div class="wb-tc-tr-info">
+              <div class="wb-tc-tr-name">${def.name}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // 準備按鈕(只有自己看到)
+    const readyBtnHtml = isMe ? `
+      <div class="wb-tc-ready-zone">
+        <button class="wb-tc-ready-btn ${p.ready ? 'cancel' : ''}" onclick="_wbTcToggleReady()">
+          ${p.ready ? '↶ 取消準備' : '✓ 我準備好了'}
+        </button>
+      </div>
+    ` : '';
+
+    // 槽位 CSS class
+    const slotCls = 'wb-tc-slot' + (isMe ? ' me' : '') + (p.ready ? ' ready' : '');
+
+    return `<div class="${slotCls}">
+      <div class="wb-tc-slot-head">
+        <span>槽位 ${idx+1}</span>
+        ${tagHtml}
+      </div>
+      <div class="wb-tc-slot-player-name">${playerLabel}</div>
+      <div class="wb-tc-hero-portrait">
+        ${heroImg
+          ? `<img src="${heroImg}" alt="${heroName}" onerror="this.style.display='none';this.parentElement.innerHTML+='<span class=\\'wb-tc-hero-emoji\\'>⚔</span>';">`
+          : '<span class="wb-tc-hero-emoji">⚔</span>'}
+        ${lv ? `<span class="wb-tc-hero-lv">Lv.${lv}</span>` : ''}
+      </div>
+      <div class="wb-tc-hero-name">${heroName}</div>
+      <div class="wb-tc-stat-row">
+        <div>HP<b>${stats.hp}</b></div>
+        <div>攻<b>${stats.atk}</b></div>
+        <div>特<b>${stats.sp}</b></div>
+        <div>速<b>${stats.spd}</b></div>
+      </div>
+      <div class="wb-tc-section-lbl">
+        🎨 屬性 ${isMe ? '<span class="wb-tc-req">(火/水/風/土必選)</span>' : ''}
+      </div>
+      <div class="wb-tc-elem-chips">${elemChipsHtml}</div>
+      <div class="wb-tc-section-lbl">💎 至寶</div>
+      <div class="wb-tc-treasure-list">${treasureHtml}</div>
+      ${readyBtnHtml}
+    </div>`;
+  }
+
+  // 切換元素:即時同步給隊友
+  window._wbTcToggleElement = async function(elemId){
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.find(p => p.uid === window._gUserId);
+    if(!me) return;
+    const ext = _wbTcParsePlayerExt(me);
+    const idx = ext.es.indexOf(elemId);
+    if(idx >= 0){
+      ext.es.splice(idx, 1);
+    }else{
+      ext.es.push(elemId);
+    }
+    // 透過 setMyHero 同步(把 JSON 字串塞進 element)
+    // ★ 改動 element 會把 ready 重設為 false(主程式邏輯),避免「沒選完元素就準備」
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    // 立即 re-render(等 onRoomUpdate 也會 re-render,但先給玩家視覺回饋)
+    _wbTcRenderTeamConfirm();
+  };
+
+  // 切換至寶:即時同步
+  window._wbTcToggleTreasure = async function(treasureId){
+    const snap = window._wbNet.getSnapshot();
+    const me = snap?.players?.find(p => p.uid === window._gUserId);
+    if(!me) return;
+    const ext = _wbTcParsePlayerExt(me);
+    const idx = ext.t.indexOf(treasureId);
+    if(idx >= 0){
+      ext.t.splice(idx, 1);
+    }else{
+      ext.t.push(treasureId);
+    }
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    _wbTcRenderTeamConfirm();
+  };
+
+  // 切換準備
+  window._wbTcToggleReady = async function(){
+    await window._wbNet.toggleReady();
+  };
+
+  // 房主開戰(在隊伍確認頁的「⚔ 開戰!」按鈕)
+  window._wbTcHostStartBattle = function(){
+    const snap = window._wbNet.getSnapshot();
+    const meIsHost = (snap?.meta?.hostUid === window._gUserId);
+    if(!meIsHost){ alert('只有房主可以開戰'); return; }
+    // 關閉確認頁,呼叫原本的開戰流程
+    _wbTcCloseTeamConfirm();
+    if(typeof window._wbUiPrepareStartBattle === 'function'){
+      window._wbUiPrepareStartBattle();
+    }
+  };
+
+  // 房間狀態變動時,如果隊伍確認頁開著,re-render
+  // (透過 hook onRoomUpdate 既有監聽,避免雙重觸發)
+  // ════════════════════════════════════════════════════════════════════
 
   // === 渲染玩家槽位 ===
   function _wbRenderPlayerSlots(players){
@@ -2209,6 +2975,9 @@
       document.getElementById('wb-emoji-bar-real').style.display = 'flex';
       // ★ FIX 20260516 — 戰鬥階段套 BOSS 全圖背景
       document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
+      // 戰鬥開始時自動關掉隊伍確認頁
+      const _tc = document.getElementById('wb-team-confirm-overlay');
+      if(_tc) _tc.classList.remove('show');
     }else{
       document.getElementById('wb-picking-area').style.display = 'grid';
       document.getElementById('wb-battle-area').classList.remove('show');
@@ -2216,6 +2985,8 @@
       document.getElementById('wb-lobby-overlay').classList.remove('wb-in-battle');
       _wbRefreshPickStatus(data.players);
     }
+    // ★ FIX 20260516 — 房間任何變動都同步重繪隊伍確認頁(若它開著)
+    try{ if(typeof _wbTcRenderTeamConfirm === 'function') _wbTcRenderTeamConfirm(); }catch(_){}
   });
 
   window._wbNet.on('onBattleUpdate', function(battle){
@@ -2974,13 +3745,180 @@
       return;
     }
 
-    // 建立 4 個玩家槽(全部 AI),BOSS 是維蘇威火山龍王
-    const heroPool = ['劍士','祭司','聖騎士','火法師'];  // 簡單組合:輸出+補+坦+輸出
+    // ★ FIX 20260516 — 單人練習改成:先進隊伍確認頁讓玩家挑 4 英雄/元素/至寶,再開戰
+    _wbSoloOpenTeamConfirm();
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260516 — 單人練習:隊伍確認頁(4 隻英雄都由玩家自選)
+  // ────────────────────────────────────────────────────────────────────
+  // 跟多人模式共用隊伍確認頁 UI,差別是:
+  //   - 4 個槽都是「我」(可編輯任一槽的英雄/元素/至寶)
+  //   - 用一份本地 mock 的 _wbNet,setMyHero 把指定槽位的資料寫到 fakePlayers
+  //   - 「開戰」直接呼叫原本的單人戰鬥啟動流程
+  // ════════════════════════════════════════════════════════════════════
+  let _wbSoloFakePlayers = null;   // 4 個槽的玩家資料(全部 me 視角)
+  let _wbSoloEditingSlot = 0;      // 目前在編輯哪個槽(0~3)
+
+  function _wbSoloOpenTeamConfirm(){
+    // 用玩家「代表英雄」+ 3 個預設英雄當初始陣容
+    const repHero = window._myRepHero || '劍士';
+    const defaultPool = ['劍士','祭司','聖騎士','火法師'];
+    // 把代表英雄放在第一格
+    const heroes = [repHero];
+    for(const n of defaultPool){
+      if(heroes.length >= 4) break;
+      if(!heroes.includes(n) && _heroDbHas(n)) heroes.push(n);
+    }
+    // 若代表英雄是怪物/不可用,改用 defaultPool
+    if(!_heroDbHas(heroes[0])) heroes[0] = '劍士';
+
+    _wbSoloFakePlayers = heroes.map((name, i) => ({
+      uid: i === 0 ? (window._gUserId || 'solo_user') : ('solo_slot_' + i),
+      name: i === 0 ? (window._userName || '你') : ('槽位' + (i+1)),
+      slotIdx: i, heroName: name,
+      // 初始元素:第 i 個指派一個破盾元素,讓覆蓋一開始就有 4 元素提示
+      element: JSON.stringify({ e: _WB_TC_REQ_ELEMS[i], es: [_WB_TC_REQ_ELEMS[i]], t: [] }),
+      ready: false,
+    }));
+
+    // 建立 mock _wbNet(只有開隊伍確認頁時用,確認後會還原)
+    const realWbNet = window._wbNet;
+    window._wbSoloRealWbNet = realWbNet;  // 備份待還原
+    window._wbNet = _wbSoloMakeMockNet();
+
+    // 把現有 lobby overlay 顯示出來但不渲染選角頁;直接顯示隊伍確認頁
+    document.getElementById('wb-entry-overlay').style.display = 'none';
+    // 直接打開隊伍確認頁(此 overlay 獨立於 lobby)
+    document.getElementById('wb-team-confirm-overlay').classList.add('show');
+    // 改寫底部「開戰」按鈕為呼叫單人開戰
+    _wbTcRenderTeamConfirm();
+    _wbSoloHookStartButton();
+  }
+
+  function _heroDbHas(name){
+    try{ if(typeof HERO_DB !== 'undefined' && HERO_DB[name]) return true; }catch(_){}
+    return !!(window.HERO_DB && window.HERO_DB[name]);
+  }
+
+  // 把「⚔ 開戰!」改成觸發單人戰鬥
+  function _wbSoloHookStartButton(){
+    const btn = document.getElementById('wb-tc-start-btn');
+    if(!btn) return;
+    btn.style.display = 'inline-block';
+    btn.onclick = function(){
+      // 檢查 4 元素都覆蓋(若沒覆蓋仍允許,但提示)
+      const cov = _wbTcCalcCoverage(_wbSoloFakePlayers);
+      if(cov.missing.length > 0){
+        const proceed = confirm('⚠ 還缺 ' + cov.missing.length + ' 個破盾屬性(' + cov.missing.join(',') + '),確定要開戰嗎?');
+        if(!proceed) return;
+      }
+      // 關閉隊伍確認頁,進入戰鬥
+      document.getElementById('wb-team-confirm-overlay').classList.remove('show');
+      _wbSoloBeginBattle();
+    };
+    // 加一個「換英雄」提示(編輯模式)
+    const backBtn = document.querySelector('#wb-team-confirm-overlay .wb-tc-back-btn');
+    if(backBtn){
+      backBtn.textContent = '← 取消練習';
+      backBtn.onclick = function(){
+        document.getElementById('wb-team-confirm-overlay').classList.remove('show');
+        // 還原 _wbNet
+        if(window._wbSoloRealWbNet){ window._wbNet = window._wbSoloRealWbNet; }
+      };
+    }
+  }
+
+  // Mock _wbNet:讓隊伍確認頁的 setMyHero / toggleReady 都直接改 _wbSoloFakePlayers
+  function _wbSoloMakeMockNet(){
+    return {
+      getSnapshot: () => ({
+        players: _wbSoloFakePlayers,
+        meta: { hostUid: _wbSoloFakePlayers[0].uid, status: 'picking' }
+      }),
+      getRoomId: () => '練習',
+      isHost: () => true,
+      getMySlot: () => _wbSoloEditingSlot,
+      // 單人模式:setMyHero 改的是「目前編輯中的槽」(預設槽 0),其他槽透過下方 UI 切換編輯
+      setMyHero: async function(heroName, elementStr){
+        const slot = _wbSoloEditingSlot;
+        if(_wbSoloFakePlayers[slot]){
+          _wbSoloFakePlayers[slot].heroName = heroName;
+          _wbSoloFakePlayers[slot].element = elementStr || null;
+          _wbSoloFakePlayers[slot].ready = false;
+        }
+        // 觸發 UI 重繪
+        _wbTcRenderTeamConfirm();
+        return true;
+      },
+      toggleReady: async function(){
+        const slot = _wbSoloEditingSlot;
+        if(_wbSoloFakePlayers[slot]){
+          _wbSoloFakePlayers[slot].ready = !_wbSoloFakePlayers[slot].ready;
+        }
+        _wbTcRenderTeamConfirm();
+        return true;
+      },
+      on: function(){},
+      off: function(){},
+      sendQuickEmoji: function(){},
+      QUICK_EMOJI: {},
+    };
+  }
+
+  // 為了在單人模式下能「編輯任一槽」,把全域 _gUserId 暫時改成該槽的 uid 是危險的。
+  // 改用另一個方式:在隊伍確認頁的「槽位 N」頭部加上「← 換我編輯」按鈕。
+  // 簡化做法:直接讓玩家點任一槽就把「正在編輯的槽位」切換過去。
+  // 用 click 事件代理(在 wb-tc-slots 容器層)
+  document.addEventListener('click', function(ev){
+    if(!window._wbSoloPracticeMode && !document.getElementById('wb-team-confirm-overlay').classList.contains('show')) return;
+    if(!_wbSoloFakePlayers) return;  // 不在單人練習設定階段
+    // 找到被點到的槽位
+    const slot = ev.target.closest('.wb-tc-slot');
+    if(!slot) return;
+    const slots = Array.from(document.querySelectorAll('.wb-tc-slot'));
+    const idx = slots.indexOf(slot);
+    if(idx < 0 || idx === _wbSoloEditingSlot) return;
+    // 切換前提:點到的是 slot 頭部空白區、玩家名、或英雄圖,不是 chip/按鈕
+    if(ev.target.closest('button.wb-tc-elem-chip') || ev.target.closest('button.wb-tc-treasure-chip') || ev.target.closest('button.wb-tc-ready-btn')) return;
+    // 把正在編輯的槽切到 idx
+    _wbSoloEditingSlot = idx;
+    // 同步 mock 的 _gUserId 行為:把 uid 視為「目前正在編輯的槽」
+    // (這樣 _wbTcRenderTeamConfirm 的 "isMe" 判定才會跟著切)
+    const newUid = _wbSoloFakePlayers[idx].uid;
+    window._wbSoloEditUidBackup = window._wbSoloEditUidBackup || window._gUserId;
+    window._gUserId = newUid;
+    _wbTcRenderTeamConfirm();
+  }, true);
+
+  // 單人模式正式進戰鬥(把確認頁的設定套到 newHero,然後跑原本流程)
+  function _wbSoloBeginBattle(){
+    // 還原 _wbNet 的 _gUserId(單人模式只記第一格的真實 uid)
+    if(window._wbSoloEditUidBackup){
+      window._gUserId = window._wbSoloEditUidBackup;
+      window._wbSoloEditUidBackup = null;
+    }
+    _wbSoloEditingSlot = 0;
+    // 還原 _wbNet
+    if(window._wbSoloRealWbNet){ window._wbNet = window._wbSoloRealWbNet; }
+
+    // 把 _wbSoloFakePlayers 的 heroName 抽出來建立戰鬥用陣容
+    const heroPool = _wbSoloFakePlayers.map(p => p.heroName);
     const p1 = [];
     for(let i = 0; i < 4; i++){
       const h = newHero(heroPool[i], 'p1', i);
       h.burst = 0;
       h.burstMax = h.burstMax || 10;
+      // 把玩家選的元素塞到 _wbPickedElement(供後續破盾推算用)
+      const ext = _wbTcParsePlayerExt(_wbSoloFakePlayers[i]);
+      if(ext.es && ext.es.length){
+        h._wbPickedElement = ext.es[0];   // 主元素
+        h._wbAllPickedElements = ext.es;  // 全部元素
+      }
+      // 把至寶 ID 塞到 _wbTreasureIds(供戰鬥邏輯讀,目前只記不計入戰鬥)
+      if(ext.t && ext.t.length){
+        h._wbTreasureIds = ext.t;
+      }
       p1.push(h);
     }
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
@@ -2988,7 +3926,7 @@
     boss._wbShields = null;
     const p2 = [boss, null, null, null];
 
-    // ★ v3.1 — BOSS 永遠優先
+    // BOSS 永遠優先
     const all = [];
     all.push({ side:'p2', pos:0, spd: 999 });
     p1.forEach((h, i) => { if(h) all.push({ side:'p1', pos:i, spd: h.spd || 0 }); });
@@ -3002,15 +3940,19 @@
     window._wbQuizState = {};
     window._wbCorrectCnt = {};
 
-    // 模擬 _wbNet snapshot(讓 UI 渲染能讀到「玩家」資料)
-    const fakePlayers = heroPool.map((name, i) => ({
-      uid: i === 0 ? (window._gUserId || 'solo_user') : 'ai_' + i,
+    // 建立進入戰鬥階段的 fakePlayers(uid 全部都用 _gUserId,讓「我」永遠是槽 0)
+    const fakePlayers = _wbSoloFakePlayers.map((p, i) => ({
+      uid: i === 0 ? (window._gUserId || 'solo_user') : ('ai_' + i),
       name: i === 0 ? (window._userName || '你') : 'AI 替補',
-      slotIdx: i, heroName: name, element: 'fire', ready: true
+      slotIdx: i,
+      heroName: p.heroName,
+      element: p.element,
+      ready: true,
     }));
+    _wbSoloFakePlayers = null;  // 清掉設定階段的引用
 
-    // 偽造 _wbNet (只 mock 必要的方法,讓 UI 能讀)
-    const realWbNet = window._wbNet;
+    // 偽造 _wbNet for 戰鬥階段(復用原本的設計)
+    const realWbNet = window._wbSoloRealWbNet || window._wbNet;
     window._wbNet = {
       getSnapshot: () => ({ players: fakePlayers, meta: { hostUid: fakePlayers[0].uid, status: 'fighting' } }),
       getRoomId:   () => '練習',
@@ -3018,16 +3960,13 @@
       getMySlot:   () => 0,
       hostPushBattleState: function(newState){
         if(newState.ended){
-          // 結束:儲存紀錄
           const myUid = fakePlayers[0].uid;
           const myDmg = (window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
           const isWin = newState.winner === 'players';
-          const isNewRec = _wbSaveSoloBest(myDmg, heroPool, Date.now() - window._wbSoloStartTs, isWin);
-
-          // 顯示練習模式專屬結算
+          const isNewRec = _wbSaveSoloBest(myDmg, fakePlayers.map(p=>p.heroName), Date.now() - window._wbSoloStartTs, isWin);
           _wbShowSoloPracticeResult({
             dmg: myDmg,
-            heroes: heroPool,
+            heroes: fakePlayers.map(p=>p.heroName),
             elapsed: Date.now() - window._wbSoloStartTs,
             killed: isWin,
             isNewRecord: isNewRec,
@@ -3041,7 +3980,6 @@
         }
       },
       sendAction: async function(action){
-        // 房主自己 → 直接呼叫本地
         if(typeof window._wbHostExecuteAction === 'function'){
           window._wbHostExecuteAction(0, action);
         }
@@ -3050,7 +3988,6 @@
         window._wbSoloContrib = window._wbSoloContrib || {};
         window._wbSoloContrib[uid] = window._wbSoloContrib[uid] || {};
         window._wbSoloContrib[uid][key] = (window._wbSoloContrib[uid][key] || 0) + val;
-        // ★ 練習模式:即時更新傷害顯示
         if(window._wbSoloPracticeMode && uid === fakePlayers[0].uid && key === 'dmgDealt'){
           const dmgDisplay = document.getElementById('wb-solo-cur-dmg-display');
           if(dmgDisplay){
@@ -3064,33 +4001,28 @@
       sendQuickEmoji: () => {},
       QUICK_EMOJI: realWbNet ? realWbNet.QUICK_EMOJI : {},
       leaveRoom: async function(){
-        // 練習模式:中途離開也記錄當下傷害
         if(window._wbSoloPracticeMode){
           const myUid = fakePlayers[0].uid;
           const myDmg = (window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
           if(myDmg > 0){
-            _wbSaveSoloBest(myDmg, heroPool, Date.now() - window._wbSoloStartTs, false);
+            _wbSaveSoloBest(myDmg, fakePlayers.map(p=>p.heroName), Date.now() - window._wbSoloStartTs, false);
           }
         }
-        // 還原
         window._wbNet = realWbNet;
         window._wbHostG = null;
         window._wbInWorldBossMode = false;
         window._wbSoloPracticeMode = false;
         document.getElementById('wb-lobby-overlay').style.display = 'none';
-        // ★ FIX 20260516 — 離開練習時清掉殘留的傷害橫條 + 表情列
+        // 清掉殘留 UI
         try{
           const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
           if(_dmgBar) _dmgBar.remove();
           const _emojiBar = document.getElementById('wb-emoji-bar-real');
           if(_emojiBar) _emojiBar.style.display = 'none';
-          // 同時清掉可能殘留的開戰題彈窗
           const _openingQuiz = document.getElementById('wb-boss-opening-quiz');
           if(_openingQuiz) _openingQuiz.remove();
-          // 還原 lobby 背景(把 BOSS 全圖背景拿掉)
           const _lobby = document.getElementById('wb-lobby-overlay');
           if(_lobby) _lobby.classList.remove('wb-in-battle');
-          // 還原 BGM
           if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-home', 600);
         }catch(_){}
       },
@@ -3099,48 +4031,34 @@
     // 觸發 UI 顯示
     _wbCloseEntry();
     _wbOpenLobby();
-    // 直接跳到戰鬥畫面
     document.getElementById('wb-picking-area').style.display = 'none';
     document.getElementById('wb-battle-area').classList.add('show');
     document.getElementById('wb-emoji-bar-real').style.display = 'flex';
-    // ★ FIX 20260516 — 練習模式也套 BOSS 全圖背景
     document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
     document.getElementById('wb-room-status-text').textContent = '🧪 練習模式';
 
-    // ★ 加上「練習模式」即時傷害顯示橫條
+    // 練習模式即時傷害顯示橫條
     const battleArea = document.getElementById('wb-battle-area');
     if(battleArea && !document.getElementById('wb-solo-cur-dmg-bar')){
       const dmgBar = document.createElement('div');
       dmgBar.id = 'wb-solo-cur-dmg-bar';
-      dmgBar.style.cssText = `
-        position:fixed;top:14px;left:50%;transform:translateX(-50%);
-        z-index:10000;background:rgba(20,40,30,0.95);border:2px solid #5dcaa5;
-        border-radius:14px;padding:8px 18px;display:flex;align-items:center;gap:12px;
-        box-shadow:0 0 24px rgba(93,202,165,0.5);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;`;
-      dmgBar.innerHTML = `
-        <span style="font-size:14px;color:#5dcaa5;font-weight:700;letter-spacing:1px;">🧪 練習模式・本場總傷</span>
-        <span id="wb-solo-cur-dmg-display" style="font-size:22px;color:#ffe066;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>
-      `;
+      dmgBar.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);'
+        + 'z-index:10000;background:rgba(20,40,30,0.95);border:2px solid #5dcaa5;'
+        + 'border-radius:14px;padding:8px 18px;display:flex;align-items:center;gap:12px;'
+        + 'box-shadow:0 0 24px rgba(93,202,165,0.5);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      dmgBar.innerHTML = '<span style="font-size:14px;color:#5dcaa5;font-weight:700;letter-spacing:1px;">🧪 練習模式・本場總傷</span>'
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:22px;color:#ffe066;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
       document.body.appendChild(dmgBar);
     }
 
-    // 渲染初始畫面
     window._wbSoloStartTs = Date.now();
     window._wbSoloContrib = {};
-    _wbRenderBattleScreen({
-      p1: p1, p2: p2, turn: 1, currentActorIdx: 0, turnOrder: all, logEntries: []
-    });
+    _wbRenderBattleScreen({ p1: p1, p2: p2, turn: 1, currentActorIdx: 0, turnOrder: all, logEntries: [] });
     _wbRenderPlayerSlots(fakePlayers);
 
-    // ★ v3.1.2 — 切到維蘇威戰鬥專屬 BGM
-    try{
-      if(typeof bgmFadeTo === 'function'){
-        bgmFadeTo('bgm-wb-vesuvius-battle', 800);
-      }
-    }catch(_){}
+    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
-    // ★ v3.1 — 練習模式也跑咆哮 + 開戰題
-    // ★ FIX 20260516 — 加 try/catch + 5 秒最後保險 timer,避免開戰題 Promise 永遠 pending
+    // 練習模式也跑咆哮 + 開戰題,加 try/catch + 30 秒保險 timer
     const _wbSoloKickoff = () => {
       console.log('[WB-Solo] 開場結束 → BOSS 第一回合');
       if(all[0].side === 'p2'){
@@ -3156,20 +4074,19 @@
         _wbSoloKickedOff = true;
         _wbSoloKickoff();
       };
-      // 主路徑:正常等開戰題答完
       window._wbStartBossOpening()
         .then(_wbSoloKickoffOnce)
         .catch(e => {
           console.warn('[WB-Solo] 開戰題流程錯誤,直接開打', e);
           _wbSoloKickoffOnce();
         });
-      // 保險路徑:30 秒後就算還在開戰題畫面也強制開打
       setTimeout(_wbSoloKickoffOnce, 30000);
     }else{
       _wbSoloKickoff();
     }
-    console.log('[WB-Solo] ✅ 練習模式啟動,你的角色是「劍士」(0 號槽)');
-  };
+    console.log('[WB-Solo] ✅ 練習模式啟動,4 個槽位:', fakePlayers.map(p=>p.heroName));
+  }
+
 
   // 練習模式結算彈窗
   function _wbShowSoloPracticeResult(info){
@@ -3334,4 +4251,3 @@
   }catch(_){}
 })();
 </script>
-
