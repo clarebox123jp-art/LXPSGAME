@@ -728,34 +728,66 @@
     background:rgba(8,10,24,0.62);
     backdrop-filter:blur(6px);
     border:2.5px solid rgba(255,170,80,0.65);
-    border-radius:14px;padding:10px 16px 12px;
+    border-radius:14px;padding:6px 14px 8px;
     box-shadow:0 0 48px rgba(255,140,40,0.45);
     position:relative;
     display:flex;flex-direction:column;
   }
   .wb-tc-title{
-    font-size:22px;font-weight:900;letter-spacing:3px;
+    font-size:44px;font-weight:900;letter-spacing:3px;
     color:#ffcc66;text-align:center;
     text-shadow:0 0 14px rgba(255,170,80,0.7),0 2px 4px rgba(0,0,0,0.85);
-    margin-bottom:2px;line-height:1.1;
+    margin-bottom:1px;line-height:1.05;
+  }
+  /* ★ FIX 20260516 v3 — BOSS 預覽小視窗(右上角) */
+  .wb-tc-boss-preview-mini{
+    position:absolute;top:8px;right:10px;
+    width:84px;height:108px;
+    border-radius:10px;
+    background:linear-gradient(135deg,#ff6644,#552010);
+    border:2.5px solid #ff8866;
+    cursor:pointer;
+    padding:0;overflow:hidden;
+    display:flex;flex-direction:column;
+    box-shadow:0 0 16px rgba(255,100,60,0.55);
+    font-family:inherit;
+    transition:all 0.2s;
+    z-index:10;
+  }
+  .wb-tc-boss-preview-mini:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 28px rgba(255,140,80,0.85);
+    border-color:#ffaa66;
+  }
+  .wb-tc-boss-preview-mini img{
+    width:100%;flex:1;min-height:0;
+    object-fit:cover;object-position:top center;
+    display:block;
+  }
+  .wb-tc-boss-preview-label{
+    display:block;background:rgba(0,0,0,0.75);
+    color:#ffe066;font-size:13px;font-weight:800;
+    letter-spacing:1px;text-align:center;
+    padding:3px 4px;
+    border-top:1px solid rgba(255,200,80,0.5);
   }
   .wb-tc-sub{
-    text-align:center;font-size:12px;color:#cfb89e;
-    letter-spacing:1.5px;margin-bottom:8px;
+    text-align:center;font-size:24px;color:#cfb89e;
+    letter-spacing:1.5px;margin-bottom:4px;
   }
   /* 護盾提示橫條(精簡) */
   .wb-tc-boss-shield-hint{
-    text-align:center;margin-bottom:8px;
-    padding:6px 12px;background:rgba(255,80,40,0.12);
+    text-align:center;margin-bottom:5px;
+    padding:4px 10px;background:rgba(255,80,40,0.12);
     border:1.5px solid rgba(255,120,80,0.55);border-radius:8px;
-    font-size:13px;color:#ffd699;letter-spacing:0.5px;line-height:1.35;
+    font-size:26px;color:#ffd699;letter-spacing:0.5px;line-height:1.35;
   }
   .wb-tc-boss-shield-hint b{color:#ffaa66;}
   .wb-tc-shield-icons{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle;}
   .wb-tc-shield-icon{
     display:inline-flex;align-items:center;gap:3px;
     padding:2px 8px;border-radius:7px;
-    font-size:12px;font-weight:800;
+    font-size:24px;font-weight:800;
     background:rgba(0,0,0,0.55);border:1.5px solid;
   }
   .wb-tc-shield-icon.fire {color:#ff7755;border-color:rgba(255,110,80,0.85);}
@@ -767,15 +799,15 @@
 
   /* 4 卡橫排:用 flex 讓他們等寬不會超出 */
   .wb-tc-slots{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
     flex:1;min-height:0;overflow:hidden;
-    margin-bottom:8px;
+    margin-bottom:5px;
   }
   .wb-tc-slot{
     background:linear-gradient(180deg,rgba(20,15,10,0.85),rgba(8,5,3,0.92));
     border:2px solid rgba(212,168,67,0.45);border-radius:12px;
-    padding:8px 8px 10px;
-    display:flex;flex-direction:column;gap:6px;
+    padding:5px 6px 6px;
+    display:flex;flex-direction:column;gap:3px;
     transition:all 0.25s;position:relative;
     min-height:0;
   }
@@ -789,7 +821,7 @@
     width:30px;height:30px;border-radius:50%;
     background:linear-gradient(135deg,#3ec87a,#2a9858);
     border:2.5px solid #0d0a1f;
-    color:#fff;font-size:18px;font-weight:900;
+    color:#fff;font-size:36px;font-weight:900;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 0 12px rgba(62,200,122,0.85);
     animation:wbTcCheckPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
@@ -807,11 +839,11 @@
   /* 卡片頂部 — 槽位 + 替換英雄按鈕 */
   .wb-tc-slot-head{
     display:flex;align-items:center;justify-content:space-between;
-    font-size:11px;color:#aaa;letter-spacing:1px;
+    font-size:22px;color:#aaa;letter-spacing:1px;
     flex-shrink:0;gap:6px;
   }
   .wb-tc-slot-tag{
-    padding:2px 7px;border-radius:5px;font-weight:800;font-size:10px;
+    padding:2px 7px;border-radius:5px;font-weight:800;font-size:20px;
     flex-shrink:0;
   }
   .wb-tc-slot-tag.me{background:#ffe066;color:#000;}
@@ -821,7 +853,7 @@
 
   /* 替換英雄按鈕 */
   .wb-tc-swap-hero-btn{
-    padding:3px 8px;font-size:11px;font-weight:700;
+    padding:3px 8px;font-size:22px;font-weight:700;
     background:rgba(168,132,255,0.18);color:#c8a8ff;
     border:1.5px solid rgba(168,132,255,0.55);border-radius:6px;
     cursor:pointer;font-family:inherit;letter-spacing:0.5px;
@@ -846,36 +878,36 @@
   .wb-tc-bc-header{
     position:relative;z-index:6;
     display:flex;align-items:center;gap:5px;
-    padding:5px 7px 3px;
+    padding:3px 5px 2px;
     background:linear-gradient(to bottom,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0) 100%);
   }
   .wb-tc-bc-lv{
     display:inline-flex;align-items:center;
-    font-size:13px;font-weight:900;color:#ffcc44;letter-spacing:1px;
+    font-size:26px;font-weight:900;color:#ffcc44;letter-spacing:1px;
     background:rgba(80,50,0,0.7);border:1.5px solid rgba(255,200,60,0.65);
     border-radius:5px;padding:1px 5px;line-height:1.15;flex-shrink:0;
     text-shadow:0 0 5px rgba(255,200,0,0.5);
   }
   .wb-tc-bc-name{
-    font-size:16px;font-weight:700;color:#fff;
+    font-size:32px;font-weight:700;color:#fff;
     text-shadow:0 1px 4px rgba(0,0,0,1),0 0 6px rgba(0,0,0,0.85);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     flex:1;letter-spacing:0.3px;min-width:0;
   }
   .wb-tc-bc-elem{
-    font-size:14px;flex-shrink:0;
+    font-size:28px;flex-shrink:0;
   }
   /* HP 條 */
   .wb-tc-bc-hp-wrap{
     position:relative;z-index:6;
-    margin:0 8px 4px;height:18px;background:rgba(0,0,0,0.7);
+    margin:0 6px 2px;height:18px;background:rgba(0,0,0,0.7);
     border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);
     flex-shrink:0;
   }
   .wb-tc-bc-hp-fill{height:100%;background:linear-gradient(90deg,#3ec87a,#5cd896);transition:width 0.5s;}
   .wb-tc-bc-hp-txt{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:14px;font-weight:700;color:#fff;text-shadow:1px 1px 2px #000;
+    font-size:28px;font-weight:700;color:#fff;text-shadow:1px 1px 2px #000;
     letter-spacing:0.5px;pointer-events:none;
   }
   /* 立繪空間 */
@@ -884,12 +916,15 @@
     pointer-events:none;position:relative;z-index:1;overflow:hidden;
   }
   .wb-tc-bc-illus img{
-    width:100%;height:100%;object-fit:cover;object-position:top center;
+    /* ★ FIX 20260516 v3 — 圖下方 30% 裁掉:height 放大 + 上對齊讓底部 overflow */
+    width:100%;height:142.857%;
+    object-fit:cover;object-position:top center;
     display:block;
+    transform-origin:top center;
   }
   .wb-tc-bc-illus .wb-tc-bc-emoji{
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-    font-size:56px;color:rgba(212,168,67,0.6);
+    font-size:112px;color:rgba(212,168,67,0.6);
   }
   .wb-tc-bc-illus::after{
     content:'';position:absolute;bottom:0;left:0;right:0;height:30px;
@@ -900,7 +935,7 @@
   .wb-tc-bc-bottom{
     position:relative;z-index:6;
     background:rgba(8,10,18,0.92);border-top:1px solid rgba(255,255,255,0.08);
-    display:flex;flex-direction:column;gap:2px;padding:4px 5px;
+    display:flex;flex-direction:column;gap:1px;padding:3px 4px;
     border-radius:0 0 8px 8px;flex-shrink:0;
   }
   .wb-tc-bc-stats{
@@ -908,54 +943,54 @@
     padding:1px 2px;gap:1px;
   }
   .wb-tc-bc-stats > div{
-    flex:1;font-size:11px;font-weight:500;text-align:center;
+    flex:1;font-size:22px;font-weight:500;text-align:center;
     white-space:nowrap;line-height:1.1;
   }
   .wb-tc-bc-stats .s-atk{color:#ff9966;}
-  .wb-tc-bc-stats .s-atk b{font-size:15px;color:#ff7744;font-weight:700;}
+  .wb-tc-bc-stats .s-atk b{font-size:30px;color:#ff7744;font-weight:700;}
   .wb-tc-bc-stats .s-sp{color:#ffee88;}
-  .wb-tc-bc-stats .s-sp b{font-size:15px;color:#ffdd55;font-weight:700;}
+  .wb-tc-bc-stats .s-sp b{font-size:30px;color:#ffdd55;font-weight:700;}
   .wb-tc-bc-stats .s-spd{color:#88ffaa;}
-  .wb-tc-bc-stats .s-spd b{font-size:15px;color:#44ee77;font-weight:700;}
+  .wb-tc-bc-stats .s-spd b{font-size:30px;color:#44ee77;font-weight:700;}
   .wb-tc-bc-skill-row{
     display:flex;align-items:center;gap:3px;padding:2px 4px;
     background:rgba(255,255,255,0.04);border-radius:4px;
     border:1px solid rgba(255,255,255,0.07);
-    font-size:12px;
+    font-size:24px;
   }
   .wb-tc-bc-skill-name{
     color:#e8d88a;flex:1;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;
   }
   .wb-tc-bc-skill-lv{
-    color:#ffe066;font-weight:800;font-size:11px;
+    color:#ffe066;font-weight:800;font-size:22px;
     background:rgba(255,224,102,0.15);
     border-radius:4px;padding:1px 5px;flex-shrink:0;
   }
-  .wb-tc-bc-skill-cost{color:#4a9eff;font-weight:700;flex-shrink:0;font-size:11px;}
+  .wb-tc-bc-skill-cost{color:#4a9eff;font-weight:700;flex-shrink:0;font-size:22px;}
 
   /* 元素 chips(縮小) */
   .wb-tc-section-lbl{
-    font-size:10px;color:#ffcc88;letter-spacing:1px;font-weight:700;
+    font-size:20px;color:#ffcc88;letter-spacing:1px;font-weight:700;
     margin-top:2px;
     display:flex;align-items:center;gap:5px;justify-content:space-between;
   }
   .wb-tc-section-lbl .wb-tc-req{
     background:rgba(255,80,80,0.25);color:#ffaa88;
-    padding:0 5px;border-radius:4px;font-size:9px;
+    padding:0 5px;border-radius:4px;font-size:18px;
   }
   .wb-tc-elem-chips{
     display:grid;grid-template-columns:repeat(7,1fr);gap:3px;
   }
   .wb-tc-elem-chip{
-    padding:3px 1px;border-radius:5px;cursor:pointer;
+    padding:2px 1px;border-radius:5px;cursor:pointer;
     background:rgba(0,0,0,0.45);
     border:1.5px solid rgba(212,168,67,0.22);
-    color:#888;font-size:9px;
+    color:#888;font-size:18px;
     display:flex;flex-direction:column;align-items:center;
     transition:all 0.15s;font-family:inherit;line-height:1;
   }
-  .wb-tc-elem-chip .em-ic{font-size:13px;}
+  .wb-tc-elem-chip .em-ic{font-size:26px;}
   .wb-tc-elem-chip:hover{border-color:rgba(212,168,67,0.55);}
   .wb-tc-elem-chip:disabled{opacity:0.3;cursor:not-allowed;}
   .wb-tc-elem-chip.on{
@@ -977,27 +1012,27 @@
     display:flex;align-items:center;gap:3px;
     background:rgba(168,132,255,0.12);
     border:1.5px solid rgba(168,132,255,0.4);
-    border-radius:6px;padding:3px 5px;
-    font-size:11px;
+    border-radius:6px;padding:2px 4px;
+    font-size:22px;
     min-height:24px;
   }
   .wb-tc-treasure-row.empty{
     background:rgba(0,0,0,0.4);
     border-style:dashed;color:#777;font-style:italic;
     justify-content:center;
-    font-size:10px;
+    font-size:20px;
   }
-  .wb-tc-treasure-row .wb-tc-tr-ic{font-size:14px;flex-shrink:0;}
+  .wb-tc-treasure-row .wb-tc-tr-ic{font-size:28px;flex-shrink:0;}
   .wb-tc-treasure-row .wb-tc-tr-name{
     flex:1;font-weight:700;color:#c8a8ff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    font-size:11px;letter-spacing:0.3px;
+    font-size:22px;letter-spacing:0.3px;
   }
   .wb-tc-treasure-row .wb-tc-tr-lv{
-    color:#999;font-size:9px;flex-shrink:0;
+    color:#999;font-size:18px;flex-shrink:0;
   }
   .wb-tc-swap-tr-btn{
-    padding:5px 8px;font-size:11px;font-weight:700;
+    padding:4px 6px;font-size:22px;font-weight:700;
     background:rgba(168,132,255,0.2);color:#c8a8ff;
     border:1.5px solid rgba(168,132,255,0.55);border-radius:6px;
     cursor:pointer;font-family:inherit;letter-spacing:0.5px;
@@ -1009,7 +1044,7 @@
 
   /* 準備按鈕(在卡片內) */
   .wb-tc-ready-btn{
-    width:100%;padding:7px 8px;font-size:13px;font-weight:900;letter-spacing:2px;
+    width:100%;padding:5px 6px;font-size:26px;font-weight:900;letter-spacing:2px;
     border:none;color:#fff;border-radius:7px;cursor:pointer;
     font-family:inherit;transition:all 0.2s;
     background:linear-gradient(135deg,#3ec87a,#2a9858);
@@ -1027,12 +1062,12 @@
 
   /* 底部:返回 + 覆蓋率 + 開戰 */
   .wb-tc-start-zone{
-    display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0;
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;
   }
   .wb-tc-coverage{
-    flex:1;min-width:200px;padding:8px 12px;
+    flex:1;min-width:200px;padding:5px 10px;
     background:rgba(0,0,0,0.45);border-radius:8px;
-    font-size:13px;color:#cfb89e;letter-spacing:0.5px;line-height:1.3;
+    font-size:26px;color:#cfb89e;letter-spacing:0.5px;line-height:1.3;
   }
   .wb-tc-coverage.ok{
     background:rgba(62,200,122,0.18);color:#a8f0ce;
@@ -1043,7 +1078,7 @@
     border:1.5px solid rgba(255,200,100,0.55);
   }
   .wb-tc-start-btn{
-    padding:10px 24px;font-size:16px;font-weight:900;letter-spacing:3px;
+    padding:7px 20px;font-size:32px;font-weight:900;letter-spacing:3px;
     border:none;color:#000;border-radius:8px;cursor:pointer;
     font-family:inherit;transition:all 0.2s;
     background:linear-gradient(135deg,#ffcc44,#cc8822);
@@ -1054,7 +1089,7 @@
     background:#444;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.55;
   }
   .wb-tc-back-btn{
-    padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:1px;
+    padding:6px 12px;font-size:24px;font-weight:700;letter-spacing:1px;
     border:1.5px solid #a884ff;background:transparent;color:#c8a8ff;
     border-radius:7px;cursor:pointer;font-family:inherit;
   }
@@ -1079,11 +1114,11 @@
     color:#ffe8a0;
   }
   .wb-tc-swap-title{
-    font-size:20px;font-weight:900;color:#c8a8ff;letter-spacing:2px;
+    font-size:40px;font-weight:900;color:#c8a8ff;letter-spacing:2px;
     text-align:center;margin-bottom:6px;
   }
   .wb-tc-swap-sub{
-    text-align:center;font-size:12px;color:#aaa;
+    text-align:center;font-size:24px;color:#aaa;
     letter-spacing:1px;margin-bottom:12px;
   }
   .wb-tc-swap-grid{
@@ -1112,20 +1147,20 @@
   .wb-tc-swap-item .wb-tc-si-img{
     width:100%;aspect-ratio:1;border-radius:6px;
     background:rgba(0,0,0,0.5);
-    display:flex;align-items:center;justify-content:center;font-size:32px;
+    display:flex;align-items:center;justify-content:center;font-size:64px;
     overflow:hidden;
   }
   .wb-tc-swap-item .wb-tc-si-img img{width:100%;height:100%;object-fit:cover;}
   .wb-tc-swap-item .wb-tc-si-name{
-    font-size:12px;font-weight:700;color:#ffe066;letter-spacing:0.3px;
+    font-size:24px;font-weight:700;color:#ffe066;letter-spacing:0.3px;
     line-height:1.15;
   }
-  .wb-tc-swap-item .wb-tc-si-meta{font-size:10px;color:#aaa;}
+  .wb-tc-swap-item .wb-tc-si-meta{font-size:20px;color:#aaa;}
   .wb-tc-swap-item .wb-tc-si-note{
-    font-size:9px;color:#ff8866;
+    font-size:18px;color:#ff8866;
   }
   .wb-tc-swap-close{
-    margin-top:10px;padding:8px 18px;font-size:13px;font-weight:700;
+    margin-top:10px;padding:8px 18px;font-size:26px;font-weight:700;
     background:rgba(168,132,255,0.18);color:#c8a8ff;
     border:1.5px solid #a884ff;border-radius:7px;cursor:pointer;
     font-family:inherit;letter-spacing:1px;align-self:center;
@@ -1706,6 +1741,13 @@
 <!-- 4 個玩家槽橫排,各自選自己的元素 + 至寶,即時同步,4 人都打勾才能開戰 -->
 <div id="wb-team-confirm-overlay">
   <div class="wb-tc-card">
+    <!-- ★ FIX 20260516 v3 — 右上角 BOSS 預覽小視窗,點開叫主程式的圖鑑詳情頁 -->
+    <button class="wb-tc-boss-preview-mini" onclick="_wbTcOpenBossDetail()" title="查看維蘇威火山龍王詳細資料">
+      <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
+           alt="維蘇威火山龍王"
+           onerror="this.style.display='none';this.parentElement.innerHTML='🐉';">
+      <span class="wb-tc-boss-preview-label">點看 BOSS</span>
+    </button>
     <div class="wb-tc-title">⚔ 出戰前隊伍確認</div>
     <div class="wb-tc-sub">確認元素覆蓋 BOSS 護盾 + 裝備至寶 ✦ 4 人都打勾才能開戰</div>
 
@@ -2501,6 +2543,20 @@
 
   window._wbTcCloseSwapModal = function(){
     document.getElementById('wb-tc-swap-modal').classList.remove('show');
+  };
+
+  // ★ FIX 20260516 v3 — 開啟主程式 BOSS 圖鑑詳情頁
+  window._wbTcOpenBossDetail = function(){
+    if(typeof openMonsterDetail !== 'function'){
+      alert('找不到 BOSS 圖鑑功能');
+      return;
+    }
+    try{
+      openMonsterDetail('維蘇威火山龍王');
+    }catch(e){
+      console.warn('[WB-TC] 開啟 BOSS 圖鑑失敗', e);
+      alert('開啟 BOSS 圖鑑失敗:' + (e.message || e));
+    }
   };
   // 切換元素:即時同步給隊友
   window._wbTcToggleElement = async function(elemId){
