@@ -714,14 +714,20 @@
   /* ════════════════════════════════════════════════════════════════ */
   #wb-team-confirm-overlay{
     display:none;position:fixed;inset:0;z-index:9500;
+    background:transparent;
+    overflow:hidden;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
+    /* ★ FIX 20260516 v6 — overlay 右上挖 160x80 洞,讓底層 UI 可點 */
+    clip-path:polygon(0 0, calc(100% - 160px) 0, calc(100% - 160px) 80px, 100% 80px, 100% 100%, 0 100%);
+  }
+  /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖 */
+  #wb-team-confirm-overlay::before{
+    content:'';position:absolute;inset:0;z-index:-1;
     background:
       linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
       url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
       #1a0a08;
-    overflow:hidden;
-    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
-    /* ★ FIX 20260516 v5 — overlay 右上挖洞 120x70 給瀏覽器全螢幕快捷鍵點到 */
-    clip-path:polygon(0 0, calc(100% - 120px) 0, calc(100% - 120px) 70px, 100% 70px, 100% 100%, 0 100%);
+    pointer-events:none;
   }
   #wb-team-confirm-overlay.show{display:flex;align-items:center;justify-content:center;padding:10px 16px;}
   .wb-tc-card{
@@ -1111,10 +1117,10 @@
   /* 共用:替換英雄/至寶 modal */
   /* ════════════════════════════════════════════════════════════════ */
   .wb-tc-swap-modal{
-    display:none;position:fixed;inset:0;z-index:9700;
-    background:rgba(0,0,0,0.85);
+    display:none;position:fixed;inset:0;z-index:10000;
+    background:rgba(0,0,8,0.9);
     align-items:center;justify-content:center;padding:20px;
-    backdrop-filter:blur(6px);
+    backdrop-filter:blur(8px);
   }
   .wb-tc-swap-modal.show{display:flex;}
   .wb-tc-swap-card{
@@ -1178,6 +1184,93 @@
     font-family:inherit;letter-spacing:1px;align-self:center;
   }
   .wb-tc-swap-close:hover{background:rgba(168,132,255,0.35);}
+
+  /* ★ FIX 20260516 v6 — 自製 info popup(BOSS / 英雄詳情通用) */
+  .wb-tc-info-popup{
+    display:none;position:fixed;inset:0;z-index:10000;
+    background:rgba(0,0,8,0.88);
+    backdrop-filter:blur(8px);
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .wb-tc-info-popup.show{display:flex;}
+  .wb-tc-info-card{
+    max-width:680px;width:100%;max-height:92vh;overflow-y:auto;
+    background:linear-gradient(160deg,#1a1d2e 0%,#0d0f1a 100%);
+    border:3px solid rgba(255,200,80,0.7);border-radius:18px;
+    padding:24px 30px;
+    box-shadow:0 0 60px rgba(255,170,80,0.4),0 12px 50px rgba(0,0,0,0.9);
+    color:#ffe8a0;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    position:relative;
+    animation:wbTcInfoIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes wbTcInfoIn{from{opacity:0;transform:scale(0.85);}to{opacity:1;transform:scale(1);}}
+  .wb-tc-info-close{
+    position:absolute;top:14px;right:14px;
+    width:40px;height:40px;border-radius:50%;
+    background:transparent;border:2px solid #888;
+    color:#aaa;font-size:22px;font-weight:700;
+    cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.15s;line-height:1;
+  }
+  .wb-tc-info-close:hover{color:#fff;border-color:#fff;}
+  .wb-tc-info-body{padding-right:30px;}
+  /* BOSS popup 元素 */
+  .wb-tc-info-head{
+    display:flex;align-items:center;gap:18px;margin-bottom:14px;
+  }
+  .wb-tc-info-head-img{
+    width:110px;height:110px;border-radius:14px;flex-shrink:0;
+    background:linear-gradient(135deg,#ff6644,#552010);
+    border:3px solid #ff8866;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;font-size:60px;
+  }
+  .wb-tc-info-head-img img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+  .wb-tc-info-head-info{flex:1;min-width:0;}
+  .wb-tc-info-name{
+    font-size:38px;font-weight:900;color:#ffaa44;letter-spacing:2px;
+    text-shadow:0 0 12px rgba(255,170,80,0.5);
+    line-height:1.1;margin-bottom:8px;
+  }
+  .wb-tc-info-stats{
+    display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;
+    font-size:18px;
+  }
+  .wb-tc-info-stats > div{font-size:18px;}
+  .wb-tc-info-stats .s-label{color:#ccc;}
+  .wb-tc-info-stats .s-hp b{color:#5cd896;font-size:24px;font-weight:900;}
+  .wb-tc-info-stats .s-atk b{color:#ff7744;font-size:24px;font-weight:900;}
+  .wb-tc-info-stats .s-sp b{color:#ffdd55;font-size:24px;font-weight:900;}
+  .wb-tc-info-stats .s-spd b{color:#44ee77;font-size:24px;font-weight:900;}
+  .wb-tc-info-stats .s-hp::before{content:'❤ ';color:#5cd896;}
+  .wb-tc-info-stats .s-atk::before{content:'⚔ ';color:#ff7744;}
+  .wb-tc-info-stats .s-sp::before{content:'✨ ';color:#ffdd55;}
+  .wb-tc-info-stats .s-spd::before{content:'💨 ';color:#44ee77;}
+  .wb-tc-info-lore{
+    background:rgba(0,0,0,0.45);border-left:4px solid #ff8866;
+    padding:12px 16px;border-radius:8px;margin-bottom:14px;
+    font-size:18px;line-height:1.7;color:#ddccaa;font-style:italic;
+  }
+  .wb-tc-info-block{
+    background:rgba(255,200,80,0.08);border:1.5px solid rgba(255,200,80,0.4);
+    border-radius:10px;padding:12px 14px;margin-bottom:10px;
+  }
+  .wb-tc-info-block.skill{
+    background:rgba(74,158,255,0.08);border-color:rgba(74,158,255,0.4);
+  }
+  .wb-tc-info-block.burst{
+    background:rgba(255,130,80,0.08);border-color:rgba(255,150,80,0.5);
+  }
+  .wb-tc-info-block .b-title{
+    font-size:20px;font-weight:900;color:#ffe066;margin-bottom:4px;
+    letter-spacing:1px;
+  }
+  .wb-tc-info-block.skill .b-title{color:#88ccff;}
+  .wb-tc-info-block.burst .b-title{color:#ff9966;}
+  .wb-tc-info-block .b-desc{
+    font-size:16px;color:#ffeebb;line-height:1.65;
+  }
+
   /* ════════════════════════════════════════════════════════════════ */
 
   /* 戰鬥畫面 */
@@ -1801,6 +1894,14 @@
   </div>
 </div>
 
+<!-- ★ FIX 20260516 v6 — 自製獨立 popup,完全不依賴主程式 z-index -->
+<div id="wb-tc-info-popup" class="wb-tc-info-popup">
+  <div class="wb-tc-info-card">
+    <button class="wb-tc-info-close" onclick="_wbTcCloseInfoPopup()">✕</button>
+    <div class="wb-tc-info-body" id="wb-tc-info-body"></div>
+  </div>
+</div>
+
 <!-- ★ v3.2 — 出戰前元素確認 modal -->
 <div id="wb-elem-confirm-overlay">
   <div class="wb-ec-card">
@@ -2396,43 +2497,52 @@
   }
 
   // ★ FIX 20260516 v4 — 技能列渲染:整列可點 + 右側 ? 按鈕都跳主程式 showSkillDetailPopup
-  // ★ FIX 20260516 v5 — 改用 _wbTcShowSkill 包裝(會 hide 隊伍頁讓 popup 浮在最上層)
+  // ★ FIX 20260516 v6 — 改用真實函式 onclick 而非 inline event,避免 event 隱式變數問題
   function _wbTcRenderSkillRow(sk, isMe){
     if(!sk) return '';
     const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const meta = `🔷${sk.cost}${sk.isPassive ? ' [被動]' : ''}`;
-    const onclick = `event.stopPropagation();_wbTcShowSkill(this);`;
     return `<div class="wb-tc-bc-skill-row"
       data-skname="${_esc(sk.name)}"
       data-skmeta="${_esc(meta)}"
       data-skdesc="${_esc(sk.desc)}"
-      onclick="${onclick}"
+      onclick="_wbTcStopAndShowSkill(event, this);"
       style="cursor:pointer;">
       <span class="wb-tc-bc-skill-name">${_esc(sk.name)}</span>
       ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${sk.lv}</span>` : ''}
       <span class="wb-tc-bc-skill-cost">⬥${sk.cost}</span>
       <span class="csk-detail-btn" data-skname="${_esc(sk.name)}" data-skmeta="${_esc(meta)}" data-skdesc="${_esc(sk.desc)}"
-            onclick="${onclick}">?</span>
+            onclick="_wbTcStopAndShowSkill(event, this);">?</span>
     </div>`;
   }
 
-  // ★ FIX 20260516 v5 — 技能 popup 包裝(讓 popup 浮在最上層)
-  window._wbTcShowSkill = function(btn){
-    if(typeof showSkillDetailPopup !== 'function'){
-      console.warn('[WB-TC] showSkillDetailPopup 找不到');
-      return;
+  // ★ FIX 20260516 v6 — 統一的「stop event + show skill」處理器
+  //   inline onclick="event.stopPropagation()" 在某些瀏覽器 / strict mode 不可靠
+  //   改成具名函式,event 明確當參數傳入
+  window._wbTcStopAndShowSkill = function(ev, el){
+    if(ev){
+      try{ ev.stopPropagation(); }catch(_){}
+      try{ ev.preventDefault();  }catch(_){}
     }
-    _wbTcShowMainPopup(() => showSkillDetailPopup(btn));
+    if(typeof showSkillDetailPopup === 'function'){
+      // 主程式 popup z-index 9999,在我們 9500 之上,直接呼叫即可
+      // 但保險把它拉高到 10000,避免某些情況被擋
+      const sdp = document.getElementById('skill-detail-popup');
+      if(sdp){
+        sdp.style.zIndex = '10001';
+        sdp.style.position = 'fixed';
+      }
+      showSkillDetailPopup(el);
+    }else{
+      console.warn('[WB-TC] showSkillDetailPopup 找不到');
+    }
   };
 
-  // ★ FIX 20260516 v4/v5 — 點英雄卡預覽:走統一 popup helper
+  // ★ FIX 20260516 v6 — 點英雄卡預覽:用自製 info popup,完全不會被擋
   window._wbTcPreviewHero = function(heroName){
     if(!heroName || heroName === '?') return;
-    if(typeof openMonsterDetail !== 'function'){
-      console.warn('[WB-TC] openMonsterDetail 找不到');
-      return;
-    }
-    _wbTcShowMainPopup(() => openMonsterDetail(heroName));
+    const html = _wbTcBuildInfoHtml(heroName);
+    _wbTcShowInfoPopup(html);
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -2598,93 +2708,91 @@
     document.getElementById('wb-tc-swap-modal').classList.remove('show');
   };
 
-  // ★ FIX 20260516 v5 — 統一 popup helper
-  //   原因:wb-team-confirm-overlay (z-index 9500) 蓋住所有主程式 popup,
-  //         包含 hero-detail-overlay (9200)、skill-detail-popup (9999 但有時被父容器切掉)
-  //   解法:開啟主程式 popup 前,暫時 hide 隊伍確認頁,popup 關閉時(用 MutationObserver 偵測)
-  //         自動 show 回來,完全不會閃爍
-  let _wbTcWatcherTarget = null;
-  let _wbTcWatcherObserver = null;
-  function _wbTcShowMainPopup(openFn){
-    const tcOv = document.getElementById('wb-team-confirm-overlay');
-    if(!tcOv) return;
-    // 暫存隊伍確認頁可見狀態,先 hide
-    tcOv.dataset.wasShown = tcOv.classList.contains('show') ? '1' : '0';
-    tcOv.classList.remove('show');
-    tcOv.style.display = 'none';
-    // 呼叫主程式 popup
-    try{
-      openFn();
-    }catch(e){
-      console.warn('[WB-TC] popup 開啟失敗', e);
-      // 失敗時把確認頁 show 回來
-      _wbTcRestoreOverlay();
-      return;
-    }
-    // 監聽主程式 popup 關閉(display:none 或 element 移除)
-    _wbTcAttachPopupWatcher();
-  }
-
-  function _wbTcRestoreOverlay(){
-    const tcOv = document.getElementById('wb-team-confirm-overlay');
-    if(!tcOv) return;
-    if(tcOv.dataset.wasShown === '1'){
-      tcOv.style.display = '';
-      tcOv.classList.add('show');
-      // re-render 確保最新
-      try{ _wbTcRenderTeamConfirm(); }catch(_){}
-    }
-    tcOv.dataset.wasShown = '';
-  }
-
-  function _wbTcAttachPopupWatcher(){
-    // 清除舊監聽
-    if(_wbTcWatcherObserver){
-      try{ _wbTcWatcherObserver.disconnect(); }catch(_){}
-      _wbTcWatcherObserver = null;
-    }
-    // 用輪詢(MutationObserver 對 style 變動有點麻煩,輪詢更穩)
-    const checkClose = () => {
-      const hdo  = document.getElementById('hero-detail-overlay');
-      const sdp  = document.getElementById('skill-detail-popup');
-      const hdoOpen = hdo && hdo.style.display && hdo.style.display !== 'none';
-      const sdpOpen = sdp && sdp.style.display && sdp.style.display !== 'none';
-      if(!hdoOpen && !sdpOpen){
-        // 主程式 popup 都關了 → 恢復隊伍頁
-        clearInterval(timer);
-        _wbTcRestoreOverlay();
-      }
-    };
-    // 給主程式一點時間把 popup display 設成 flex/block
-    let started = false;
-    let probe = 0;
-    const timer = setInterval(() => {
-      probe++;
-      if(!started){
-        const hdo  = document.getElementById('hero-detail-overlay');
-        const sdp  = document.getElementById('skill-detail-popup');
-        const hdoOpen = hdo && hdo.style.display && hdo.style.display !== 'none';
-        const sdpOpen = sdp && sdp.style.display && sdp.style.display !== 'none';
-        if(hdoOpen || sdpOpen) started = true;
-      }else{
-        checkClose();
-      }
-      // 保險:30 秒後不管怎樣都恢復
-      if(probe > 300){
-        clearInterval(timer);
-        _wbTcRestoreOverlay();
-      }
-    }, 100);
-  }
-
-  // ★ FIX 20260516 v5 — BOSS 詳情(走統一 helper)
-  window._wbTcOpenBossDetail = function(){
-    if(typeof openMonsterDetail !== 'function'){
-      console.warn('[WB-TC] openMonsterDetail 找不到');
-      return;
-    }
-    _wbTcShowMainPopup(() => openMonsterDetail('維蘇威火山龍王'));
+  // ★ FIX 20260516 v6 — 自製 info popup(z-index 10000 完全不會被擋)
+  //   不再依賴主程式 popup 也不用 hide 隊伍頁,直接顯示在最上層
+  window._wbTcShowInfoPopup = function(html){
+    const pop = document.getElementById('wb-tc-info-popup');
+    if(!pop) return;
+    const body = document.getElementById('wb-tc-info-body');
+    if(body) body.innerHTML = html;
+    pop.classList.add('show');
   };
+  window._wbTcCloseInfoPopup = function(){
+    const pop = document.getElementById('wb-tc-info-popup');
+    if(pop) pop.classList.remove('show');
+  };
+
+  // 共用:組裝英雄/BOSS 資料 HTML(圖 2 風格)
+  function _wbTcBuildInfoHtml(name){
+    if(typeof HERO_DB === 'undefined' || !HERO_DB[name]) return '<div style="color:#aaa;padding:30px;text-align:center;">找不到資料</div>';
+    const h = HERO_DB[name];
+    const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+    const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
+    const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
+    const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[name]) || null;
+    const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+    // 標題 + 立繪縮圖 + 4 維屬性
+    let html = `<div class="wb-tc-info-head">
+      <div class="wb-tc-info-head-img">
+        ${img ? `<img src="${img}" alt="${_esc(name)}" onerror="this.style.display='none';this.parentElement.innerHTML='⚔';">` : '⚔'}
+      </div>
+      <div class="wb-tc-info-head-info">
+        <div class="wb-tc-info-name">${_esc(name)}</div>
+        <div class="wb-tc-info-stats">
+          <div class="s-hp"><span class="s-label">HP </span><b>${h.hp}</b></div>
+          <div class="s-atk"><span class="s-label">ATK </span><b>${h.atk}</b></div>
+          <div class="s-sp"><span class="s-label">SP </span><b>${h.sp}</b></div>
+          <div class="s-spd"><span class="s-label">SPD </span><b>${h.spd}</b></div>
+        </div>
+      </div>
+    </div>`;
+
+    // 描述文字
+    if(lore){
+      html += `<div class="wb-tc-info-lore">${_esc(lore)}</div>`;
+    }
+
+    // 天賦
+    if(trait){
+      html += `<div class="wb-tc-info-block">
+        <div class="b-title">${trait.icon || '🌟'} 天賦 — ${_esc(trait.name||'')}</div>
+        <div class="b-desc">${_esc(trait.fd || trait.desc || '')}</div>
+      </div>`;
+    }
+
+    // 技能 S1
+    if(h.s1){
+      html += `<div class="wb-tc-info-block skill">
+        <div class="b-title">S1 ${_esc(h.s1.n)}  🔷${h.s1.c}${h.s1.p ? ' [被動]' : ''}</div>
+        <div class="b-desc">${_esc(h.s1.fd || h.s1.d || '')}</div>
+      </div>`;
+    }
+    // 技能 S2
+    if(h.s2){
+      html += `<div class="wb-tc-info-block skill">
+        <div class="b-title">S2 ${_esc(h.s2.n)}  🔷${h.s2.c}${h.s2.p ? ' [被動]' : ''}</div>
+        <div class="b-desc">${_esc(h.s2.fd || h.s2.d || '')}</div>
+      </div>`;
+    }
+
+    // 爆發
+    if(burst){
+      html += `<div class="wb-tc-info-block burst">
+        <div class="b-title">💥 極限爆發 — ${_esc(burst.n)}</div>
+        <div class="b-desc">${_esc(burst.fd || burst.d || '')}</div>
+      </div>`;
+    }
+
+    return html;
+  }
+
+  // ★ FIX 20260516 v6 — 點 BOSS 預覽:顯示維蘇威詳情
+  window._wbTcOpenBossDetail = function(){
+    const html = _wbTcBuildInfoHtml('維蘇威火山龍王');
+    _wbTcShowInfoPopup(html);
+  };
+
 
   // 切換元素:即時同步給隊友
   window._wbTcToggleElement = async function(elemId){
@@ -4326,6 +4434,8 @@
   let _wbSoloEditingSlot = 0;      // 目前在編輯哪個槽(0~3)
 
   function _wbSoloOpenTeamConfirm(){
+    // ★ FIX 20260516 v6 — 提前設旗標,讓卡片邏輯(點卡=換英雄)能識別單人模式
+    window._wbSoloPracticeMode = true;
     // 用玩家「代表英雄」+ 3 個預設英雄當初始陣容
     const repHero = window._myRepHero || '劍士';
     const defaultPool = ['劍士','祭司','聖騎士','火法師'];
