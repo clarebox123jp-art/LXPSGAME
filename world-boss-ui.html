@@ -573,6 +573,41 @@
     background:rgba(8,10,24,0.97);padding:20px;overflow-y:auto;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
   }
+  /* ★ FIX 20260516 — 戰鬥階段:整個 lobby 背景換成 BOSS 全圖,蓋掉預設的紫黑色 */
+  #wb-lobby-overlay.wb-in-battle{
+    background:
+      linear-gradient(180deg,rgba(8,10,24,0.55) 0%,rgba(8,10,24,0.35) 40%,rgba(8,10,24,0.85) 100%),
+      url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat fixed,
+      #1a0a08;
+  }
+  #wb-lobby-overlay.wb-in-battle .wb-lobby-card{
+    background:rgba(8,10,24,0.45);
+    backdrop-filter:blur(2px);
+    border-color:rgba(255,140,80,0.5);
+  }
+  /* 戰鬥階段:把擋住背景的紅色/藍色遮罩拿掉,讓 BOSS 全圖透出來 */
+  #wb-lobby-overlay.wb-in-battle .wb-battle-boss-zone{display:none !important;}
+  #wb-lobby-overlay.wb-in-battle .wb-wait-banner{
+    background:rgba(20,30,60,0.55) !important;
+    border-color:rgba(120,180,255,0.7) !important;
+    backdrop-filter:blur(4px);
+  }
+  #wb-lobby-overlay.wb-in-battle .wb-discussion-panel{
+    background:linear-gradient(160deg,rgba(40,30,60,0.55),rgba(20,20,40,0.55)) !important;
+    backdrop-filter:blur(4px);
+  }
+  #wb-lobby-overlay.wb-in-battle .wb-action-panel{
+    background:rgba(8,10,24,0.55) !important;
+    backdrop-filter:blur(4px);
+  }
+  #wb-lobby-overlay.wb-in-battle .wb-hero-battle-card{
+    background:linear-gradient(160deg,rgba(26,29,46,0.85),rgba(13,15,26,0.85)) !important;
+    backdrop-filter:blur(3px);
+  }
+  #wb-lobby-overlay.wb-in-battle .wb-battle-log{
+    background:rgba(0,0,0,0.55) !important;
+    backdrop-filter:blur(3px);
+  }
   .wb-lobby-card{
     max-width:1200px;margin:0 auto;
     background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
@@ -2172,10 +2207,13 @@
       document.getElementById('wb-picking-area').style.display = 'none';
       document.getElementById('wb-battle-area').classList.add('show');
       document.getElementById('wb-emoji-bar-real').style.display = 'flex';
+      // ★ FIX 20260516 — 戰鬥階段套 BOSS 全圖背景
+      document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
     }else{
       document.getElementById('wb-picking-area').style.display = 'grid';
       document.getElementById('wb-battle-area').classList.remove('show');
       document.getElementById('wb-emoji-bar-real').style.display = 'none';
+      document.getElementById('wb-lobby-overlay').classList.remove('wb-in-battle');
       _wbRefreshPickStatus(data.players);
     }
   });
@@ -2607,12 +2645,17 @@
       console.warn('[WB] 開戰題無法取得,跳過');
       return;
     }
-    _wbShowBossOpeningQuiz(q);
+    // ★ FIX 20260516 — 真的等玩家答完開戰題才回傳 Promise,
+    //   否則 _wbUiSoloTest 的 .then() 會在玩家還沒按按鈕時就觸發 BOSS 第一回合,
+    //   導致畫面卡在「BOSS 的回合」永遠輪不到玩家
+    return new Promise(resolve => {
+      _wbShowBossOpeningQuiz(q, resolve);
+    });
   };
 
-  function _wbShowBossOpeningQuiz(q){
+  function _wbShowBossOpeningQuiz(q, onDone){
     const G = window._wbHostG;
-    if(!G) return;
+    if(!G){ if(typeof onDone==='function') onDone(); return; }
     const ov = document.createElement('div');
     ov.className = 'wb-quiz-overlay';
     ov.id = 'wb-boss-opening-quiz';
@@ -2685,6 +2728,8 @@
         setTimeout(() => {
           ov.remove();
           _wbHostBroadcast([isCorrect ? '🎯 開戰題答對!全員能量 +1' : '💔 開戰題答錯,全員受傷']);
+          // ★ FIX 20260516 — 通知外部 Promise resolve,讓 BOSS 第一回合才真的開始
+          if(typeof onDone === 'function') onDone();
         }, 2200);
       });
     });
@@ -3033,6 +3078,21 @@
         window._wbInWorldBossMode = false;
         window._wbSoloPracticeMode = false;
         document.getElementById('wb-lobby-overlay').style.display = 'none';
+        // ★ FIX 20260516 — 離開練習時清掉殘留的傷害橫條 + 表情列
+        try{
+          const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+          if(_dmgBar) _dmgBar.remove();
+          const _emojiBar = document.getElementById('wb-emoji-bar-real');
+          if(_emojiBar) _emojiBar.style.display = 'none';
+          // 同時清掉可能殘留的開戰題彈窗
+          const _openingQuiz = document.getElementById('wb-boss-opening-quiz');
+          if(_openingQuiz) _openingQuiz.remove();
+          // 還原 lobby 背景(把 BOSS 全圖背景拿掉)
+          const _lobby = document.getElementById('wb-lobby-overlay');
+          if(_lobby) _lobby.classList.remove('wb-in-battle');
+          // 還原 BGM
+          if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-home', 600);
+        }catch(_){}
       },
     };
 
@@ -3043,6 +3103,8 @@
     document.getElementById('wb-picking-area').style.display = 'none';
     document.getElementById('wb-battle-area').classList.add('show');
     document.getElementById('wb-emoji-bar-real').style.display = 'flex';
+    // ★ FIX 20260516 — 練習模式也套 BOSS 全圖背景
+    document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
     document.getElementById('wb-room-status-text').textContent = '🧪 練習模式';
 
     // ★ 加上「練習模式」即時傷害顯示橫條
@@ -3078,22 +3140,33 @@
     }catch(_){}
 
     // ★ v3.1 — 練習模式也跑咆哮 + 開戰題
-    if(typeof window._wbStartBossOpening === 'function'){
-      window._wbStartBossOpening().then(() => {
-        // 開場結束 → BOSS 第一回合
-        if(all[0].side === 'p2'){
-          setTimeout(() => _wbHostExecuteBossTurn(0), 1000);
-        }else if(all[0].side === 'p1' && all[0].pos !== 0){
-          _wbSoloAutoAct();
-        }
-      });
-    }else{
-      // Fallback:直接開戰
+    // ★ FIX 20260516 — 加 try/catch + 5 秒最後保險 timer,避免開戰題 Promise 永遠 pending
+    const _wbSoloKickoff = () => {
+      console.log('[WB-Solo] 開場結束 → BOSS 第一回合');
       if(all[0].side === 'p2'){
         setTimeout(() => _wbHostExecuteBossTurn(0), 1000);
       }else if(all[0].side === 'p1' && all[0].pos !== 0){
         _wbSoloAutoAct();
       }
+    };
+    if(typeof window._wbStartBossOpening === 'function'){
+      let _wbSoloKickedOff = false;
+      const _wbSoloKickoffOnce = () => {
+        if(_wbSoloKickedOff) return;
+        _wbSoloKickedOff = true;
+        _wbSoloKickoff();
+      };
+      // 主路徑:正常等開戰題答完
+      window._wbStartBossOpening()
+        .then(_wbSoloKickoffOnce)
+        .catch(e => {
+          console.warn('[WB-Solo] 開戰題流程錯誤,直接開打', e);
+          _wbSoloKickoffOnce();
+        });
+      // 保險路徑:30 秒後就算還在開戰題畫面也強制開打
+      setTimeout(_wbSoloKickoffOnce, 30000);
+    }else{
+      _wbSoloKickoff();
     }
     console.log('[WB-Solo] ✅ 練習模式啟動,你的角色是「劍士」(0 號槽)');
   };
