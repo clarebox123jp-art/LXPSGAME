@@ -1866,11 +1866,21 @@
 
     <!-- BOSS 護盾提示(動態渲染:每隻龍王不同) -->
     <div class="wb-tc-boss-shield-hint" id="wb-tc-boss-shield-hint">
-      <b>🐉 維蘇威火山龍王護盾(HP 80/60/40/20/1% 啟動):</b>
-      需要 <b id="wb-tc-shield-elem-text">火 / 風 / 土 / 暗</b> 屬性各打 3 次破盾
-      <span class="wb-tc-shield-icons" id="wb-tc-shield-icons">
-        <!-- JS 動態填入 -->
-      </span>
+      <div style="margin-bottom:6px;">
+        <b>🐉 維蘇威火山龍王護盾(HP 80/60/40/20/1% 啟動):</b>
+        <span style="color:#ff9966;">
+          BOSS 護盾元素 = <b id="wb-tc-shield-boss-text">火 / 風 / 土 / 暗</b>
+        </span>
+        <span class="wb-tc-shield-icons" id="wb-tc-shield-boss-icons" style="opacity:0.6;">
+          <!-- BOSS 護盾元素 chips (僅顯示, 灰底) -->
+        </span>
+      </div>
+      <div>
+        ⚔ 隊伍需要 <b id="wb-tc-shield-elem-text">水 / 土 / 草 / 光</b> 屬性各打 3 次破盾
+        <span class="wb-tc-shield-icons" id="wb-tc-shield-icons">
+          <!-- 破盾屬性 chips (可同步覆蓋狀態) -->
+        </span>
+      </div>
     </div>
 
     <!-- 4 個玩家槽 -->
@@ -2110,10 +2120,14 @@
   // ════════════════════════════════════════════════════════════════════
 
   // ★ FIX 20260516 v8 — BOSS 護盾元素改成從 WORLD_BOSS_LINEUP 動態讀
+  // ★ FIX 20260516 v9 — 重大邏輯修正:
+  //   shieldElements = BOSS 身上的「護盾元素」(火/風/土/暗)
+  //   玩家需要的破盾屬性 = 「剋制護盾元素」(水/土/草/光)
+  //   反查方式:對每個護盾元素 e,找出哪些 ELEMENT_DB[?].vs_adv 含 e
+  //   例:fire 被 water 剋 → water 在「破盾屬性」中
   //   每隻龍王在 world-boss.js 內已設定自己的 shieldElements,自動跟著變
-  //   維蘇威 = 火/風/土/暗、深海冰龍王 = 水/風/光/草 等
-  //   預設(找不到時) = 火/水/風/土
-  function _wbTcGetReqElems(bossId){
+  //   預設(找不到時) = 火/水/風/土(fallback)
+  function _wbTcGetShieldElems(bossId){
     try{
       const lineup = window.WORLD_BOSS_LINEUP || [];
       const targetId = bossId || 'vesuvius_fire_dragon';
@@ -2122,12 +2136,37 @@
         return boss.shieldElements.slice();
       }
     }catch(_){}
-    return ['fire','water','wind','earth'];
+    return ['fire','wind','earth','dark'];
   }
-  // 動態取得當前 BOSS 的護盾元素;呼叫 getter 而非用常數
-  // (保留變數名相容,但實際上每次都重新算)
-  let _WB_TC_REQ_ELEMS = _wbTcGetReqElems();
-  function _wbTcRefreshReqElems(){ _WB_TC_REQ_ELEMS = _wbTcGetReqElems(); return _WB_TC_REQ_ELEMS; }
+  // 從護盾元素反查「破盾元素」— 走 ELEMENT_DB 的 vs_adv 關係
+  function _wbTcGetReqElems(bossId){
+    const shieldElems = _wbTcGetShieldElems(bossId);
+    try{
+      if(typeof ELEMENT_DB !== 'undefined'){
+        const counters = new Set();
+        shieldElems.forEach(shieldE => {
+          // 找出哪個元素剋制 shieldE
+          Object.keys(ELEMENT_DB).forEach(k => {
+            const ed = ELEMENT_DB[k];
+            if(ed && Array.isArray(ed.vs_adv) && ed.vs_adv.includes(shieldE)){
+              counters.add(k);
+            }
+          });
+        });
+        if(counters.size > 0) return Array.from(counters);
+      }
+    }catch(_){}
+    // fallback:若 ELEMENT_DB 不可用,直接返回護盾元素本身(舊邏輯)
+    return shieldElems;
+  }
+  // 動態:每次都重新算
+  let _WB_TC_SHIELD_ELEMS = _wbTcGetShieldElems();   // BOSS 護盾元素(火風土暗)
+  let _WB_TC_REQ_ELEMS    = _wbTcGetReqElems();      // 玩家破盾屬性(水土草光)
+  function _wbTcRefreshReqElems(){
+    _WB_TC_SHIELD_ELEMS = _wbTcGetShieldElems();
+    _WB_TC_REQ_ELEMS    = _wbTcGetReqElems();
+    return _WB_TC_REQ_ELEMS;
+  }
 
   // ★ FIX 20260516 v8 — 七元素 icon 與主程式 ELEMENT_DB 統一
   //   主程式:火🔥 水💧 風🪽 土🪨 光⭐ 暗🌙 草🌿
@@ -2287,8 +2326,29 @@
     }
     slotsEl.innerHTML = html;
 
-    // ★ FIX 20260516 v8 — 護盾 chip 動態渲染(每隻龍王不同元素)
+    // ★ FIX 20260516 v8/v9 — 同時渲染兩排 chip:
+    //   1. BOSS 護盾元素 chips(僅顯示,沒有覆蓋狀態)
+    //   2. 玩家需要的破盾屬性 chips(會跟玩家選的元素同步亮起)
     const cov = _wbTcCalcCoverage(players);
+
+    // BOSS 護盾元素 chips
+    const bossShieldText = document.getElementById('wb-tc-shield-boss-text');
+    if(bossShieldText){
+      bossShieldText.textContent = _WB_TC_SHIELD_ELEMS.map(e => {
+        const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+        return m ? m.name : e;
+      }).join(' / ');
+    }
+    const bossShieldIconsEl = document.getElementById('wb-tc-shield-boss-icons');
+    if(bossShieldIconsEl){
+      bossShieldIconsEl.innerHTML = _WB_TC_SHIELD_ELEMS.map(e => {
+        const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+        if(!m) return '';
+        return `<span class="wb-tc-shield-icon ${e}">${m.ic} ${m.name}</span>`;
+      }).join('');
+    }
+
+    // 玩家破盾屬性 chips
     const shieldIconsEl = document.getElementById('wb-tc-shield-icons');
     if(shieldIconsEl){
       shieldIconsEl.innerHTML = _WB_TC_REQ_ELEMS.map(e => {
@@ -2298,7 +2358,7 @@
         return `<span class="wb-tc-shield-icon ${e} ${stateCls}">${m.ic} ${m.name}</span>`;
       }).join('');
     }
-    // 同步上方「需要 X / Y / Z 屬性」文字
+    // 同步「需要 X / Y / Z 屬性」文字
     const shieldTextEl = document.getElementById('wb-tc-shield-elem-text');
     if(shieldTextEl){
       shieldTextEl.textContent = _WB_TC_REQ_ELEMS.map(e => {
@@ -4492,11 +4552,14 @@
     // 若代表英雄是怪物/不可用,改用 defaultPool
     if(!_heroDbHas(heroes[0])) heroes[0] = '劍士';
 
+    // ★ FIX 20260516 v9 — 先 refresh 一次,確保 _WB_TC_REQ_ELEMS 是當前 BOSS 的破盾屬性
+    _wbTcRefreshReqElems();
+
     _wbSoloFakePlayers = heroes.map((name, i) => ({
       uid: i === 0 ? (window._gUserId || 'solo_user') : ('solo_slot_' + i),
       name: i === 0 ? (window._userName || '你') : ('槽位' + (i+1)),
       slotIdx: i, heroName: name,
-      // 初始元素:第 i 個指派一個破盾元素,讓覆蓋一開始就有 4 元素提示
+      // 初始元素:第 i 個指派一個破盾屬性(水/土/草/光),讓覆蓋一開始就有 4 元素提示
       element: JSON.stringify({ e: _WB_TC_REQ_ELEMS[i], es: [_WB_TC_REQ_ELEMS[i]], t: [] }),
       ready: false,
     }));
