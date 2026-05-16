@@ -113,7 +113,7 @@
             🏆 龍王祝福啟動中!
           </div>
           <div id="wb-blessing-bossname" style="font-size:13px;color:#fff;margin-top:4px;">
-            玉山火龍王已被全伺服器擊敗!
+            維蘇威火山龍王已被全伺服器擊敗!
             所有玩家 EXP / 知識幣 / 掉寶率 +10%
           </div>
           <div id="wb-blessing-countdown" style="font-size:13px;color:#c8a8ff;margin-top:6px;">
@@ -132,12 +132,12 @@
     <!-- BOSS 預覽 -->
     <div class="wb-boss-preview">
       <div class="wb-boss-portrait">
-        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/玉山火龍王.png"
+        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
              onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
-             alt="玉山火龍王">
+             alt="維蘇威火山龍王">
       </div>
       <div class="wb-boss-info">
-        <div class="wb-boss-name">⚔️ 玉山火龍王</div>
+        <div class="wb-boss-name">⚔️ 維蘇威火山龍王</div>
         <div style="font-size:13px;color:#aaa;line-height:1.5;">
           沉睡於玉山火口的古老火龍。HP 過半時啟動四元素護盾,需要 4 種屬性攻擊才能打破!
         </div>
@@ -164,8 +164,14 @@
       </div>
       <div class="wb-entry-big-btn" onclick="_wbUiSoloTest()" style="border-color:#5dcaa5;background:linear-gradient(160deg,rgba(93,202,165,0.18) 0%,rgba(93,202,165,0.05) 100%);">
         <span class="ico">🧪</span>
-        <div class="ttl" style="color:#5dcaa5;">單人離線測試</div>
-        <div class="desc">不需要房間/不連 Firebase<br>立刻打玉山火龍王<br>(測試戰鬥用)</div>
+        <div class="ttl" style="color:#5dcaa5;">單人練習模式</div>
+        <div class="desc">沒有獎勵,純粹練習陣容<br>記錄最高總傷害紀錄<br>協助調整正式陣容</div>
+        <div id="wb-solo-best-record" style="margin-top:8px;padding:6px 10px;
+          background:rgba(0,0,0,0.4);border:1.5px solid rgba(93,202,165,0.5);
+          border-radius:8px;font-size:14px;color:#a0e6c8;font-weight:700;
+          display:none;letter-spacing:0.5px;">
+          🏅 你的最高紀錄:<span id="wb-solo-best-dmg">--</span>
+        </div>
       </div>
     </div>
 
@@ -392,28 +398,117 @@
   .wb-start-btn:disabled{background:#444;color:#888;cursor:not-allowed;}
 
   /* 戰鬥畫面 */
+  /* ★ v3.1 — BOSS HP 改成「畫面頂部特大條」,佔滿戰鬥區域寬度 */
   .wb-battle-screen{display:none;}
   .wb-battle-screen.show{display:block;}
+
+  /* 頂部 BOSS HP 大條(完整貫穿戰場上方) */
+  .wb-mega-hp-zone{
+    position:relative;width:100%;
+    background:linear-gradient(180deg,rgba(40,10,10,0.95),rgba(20,5,5,0.95));
+    border:2.5px solid #e84040;border-radius:14px;
+    padding:12px 16px 10px;margin-bottom:12px;
+    box-shadow:0 0 24px rgba(232,64,64,0.55),inset 0 1px 0 rgba(255,150,100,0.2);
+  }
+  .wb-mega-hp-header{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;margin-bottom:6px;flex-wrap:wrap;
+  }
+  .wb-mega-hp-name{
+    font-size:clamp(20px,2.4vw,26px);font-weight:900;color:#ff8866;letter-spacing:2px;
+    text-shadow:0 0 12px rgba(255,100,60,0.7),0 2px 4px rgba(0,0,0,0.85);
+    display:flex;align-items:center;gap:8px;
+  }
+  .wb-mega-hp-turn{
+    font-size:14px;color:#ffe066;font-weight:700;letter-spacing:1px;
+    background:rgba(255,224,102,0.12);
+    border:1.5px solid rgba(255,224,102,0.5);
+    border-radius:8px;padding:4px 12px;
+  }
+  /* 大 HP 條 */
+  .wb-mega-hp-bar{
+    position:relative;
+    height:38px;background:linear-gradient(180deg,rgba(0,0,0,0.85),rgba(20,5,5,0.95));
+    border:2px solid rgba(255,120,80,0.7);border-radius:10px;overflow:hidden;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,0.7);
+  }
+  .wb-mega-hp-fill{
+    position:absolute;left:0;top:0;height:100%;
+    background:linear-gradient(90deg,#ff3322 0%,#ff6644 30%,#ff9966 70%,#ffcc88 100%);
+    box-shadow:0 0 14px rgba(255,80,40,0.85),inset 0 1px 4px rgba(255,200,150,0.5);
+    transition:width 0.7s cubic-bezier(0.4,0,0.2,1);
+    animation:wbHpbarPulse 2s ease-in-out infinite;
+  }
+  .wb-mega-hp-text{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:clamp(15px,1.8vw,19px);font-weight:900;color:#fff;letter-spacing:1.5px;
+    text-shadow:0 1px 3px rgba(0,0,0,0.95),0 0 8px rgba(0,0,0,0.85),-1px -1px 0 rgba(0,0,0,0.7),1px 1px 0 rgba(0,0,0,0.7);
+    z-index:2;pointer-events:none;
+  }
+  /* 護盾 + 狀態列(HP 條下方) */
+  .wb-mega-shields-row{
+    display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;
+    min-height:28px;
+  }
+  .wb-shield-chip{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 10px;border-radius:8px;
+    font-size:13px;font-weight:800;letter-spacing:0.5px;
+    background:rgba(0,0,0,0.55);
+    border:1.5px solid;
+    box-shadow:0 0 8px;
+    animation:wbShieldPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .wb-shield-fire {color:#ff7755;border-color:rgba(255,110,80,0.85);background:rgba(80,20,10,0.7);box-shadow-color:rgba(255,80,40,0.5);}
+  .wb-shield-water{color:#88cfff;border-color:rgba(120,180,255,0.85);background:rgba(15,30,70,0.7);}
+  .wb-shield-wind {color:#aaffdd;border-color:rgba(150,240,200,0.85);background:rgba(10,50,40,0.7);}
+  .wb-shield-earth{color:#ddbb88;border-color:rgba(220,180,120,0.85);background:rgba(55,35,15,0.7);}
+  .wb-shield-num{font-size:14px;color:#fff;background:rgba(255,255,255,0.18);border-radius:5px;padding:1px 6px;margin-left:2px;}
+  @keyframes wbShieldPop{
+    0%{opacity:0;transform:scale(0.4) translateY(-6px);}
+    60%{opacity:1;transform:scale(1.12) translateY(0);}
+    100%{opacity:1;transform:scale(1) translateY(0);}
+  }
+  /* BOSS 不利狀態 chip */
+  .wb-boss-status-chip{
+    display:inline-flex;align-items:center;gap:3px;
+    padding:3px 8px;border-radius:7px;
+    font-size:12px;font-weight:700;
+    background:rgba(160,80,200,0.25);
+    border:1.5px solid rgba(200,150,255,0.7);
+    color:#e0c8ff;
+  }
+  .wb-boss-status-chip.burn{background:rgba(255,80,40,0.25);border-color:rgba(255,140,80,0.75);color:#ffcc99;}
+  .wb-boss-status-chip.stun{background:rgba(220,180,80,0.25);border-color:rgba(255,220,100,0.75);color:#ffe080;}
+
+  /* 第 9 / 18 回合警告橫幅 */
+  .wb-turn-warning{
+    position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+    z-index:10500;pointer-events:none;
+    font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:5px;
+    color:#fff;text-shadow:0 0 18px #ff3322,0 0 36px #ff3322,0 4px 12px rgba(0,0,0,0.95);
+    animation:wbWarningPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes wbWarningPulse{
+    0%,100%{opacity:0.8;transform:translate(-50%,-50%) scale(1);}
+    50%    {opacity:1;transform:translate(-50%,-50%) scale(1.08);}
+  }
+
+  /* 舊版小 BOSS HP zone 還是保留(只是放縮)。改成把 BOSS 立繪放在 mega bar 旁邊 */
   .wb-battle-boss-zone{
     background:linear-gradient(135deg,rgba(232,64,64,0.18) 0%,rgba(0,0,0,0.5) 100%);
-    border:2px solid #e84040;border-radius:14px;padding:18px;margin-bottom:14px;
-    display:flex;gap:18px;align-items:center;
+    border:2px solid #e84040;border-radius:14px;padding:14px;margin-bottom:14px;
+    display:flex;gap:14px;align-items:center;
   }
   .wb-battle-boss-portrait{
-    width:140px;height:140px;border-radius:12px;flex-shrink:0;
+    width:120px;height:120px;border-radius:12px;flex-shrink:0;
     background:linear-gradient(135deg,#ff6644 0%,#552010 100%);
-    display:flex;align-items:center;justify-content:center;font-size:72px;
+    display:flex;align-items:center;justify-content:center;font-size:64px;
     border:3px solid #e84040;box-shadow:0 0 24px rgba(232,64,64,0.55);overflow:hidden;
   }
   .wb-battle-boss-portrait img{width:100%;height:100%;object-fit:cover;}
   .wb-battle-boss-info{flex:1;}
-  .wb-boss-big-name{font-size:24px;font-weight:800;color:#e84040;letter-spacing:2px;}
-  .wb-boss-big-hp-bar{
-    height:24px;background:rgba(0,0,0,0.7);border-radius:12px;overflow:hidden;
-    border:2px solid #e84040;position:relative;margin-top:8px;
-  }
-  .wb-boss-big-hp-fill{height:100%;background:linear-gradient(90deg,#e84040,#ff6644);transition:width 0.6s;}
-  .wb-boss-big-hp-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 4px #000;}
+  .wb-boss-big-name{font-size:22px;font-weight:800;color:#e84040;letter-spacing:2px;}
 
   .wb-heroes-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
   .wb-hero-battle-card{
@@ -427,6 +522,48 @@
   }
   .wb-hero-battle-card.dead{opacity:0.4;filter:grayscale(0.7);}
   @keyframes wb-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.02);}}
+  /* ★ v3.0 — 角色卡頂端對話泡泡 (字體與角色卡名稱同尺寸) */
+  .wb-hero-battle-card{position:relative;}
+  .wb-card-bubble{
+    position:absolute;
+    bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    font-size:12px;  /* ★ 與 wb-hbc-name 同尺寸 12px */
+    font-weight:700;
+    color:#fff;
+    background:linear-gradient(135deg,rgba(60,80,140,0.97),rgba(40,60,110,0.97));
+    border:1.5px solid rgba(150,200,255,0.85);
+    border-radius:10px;
+    padding:6px 10px;
+    white-space:nowrap;
+    max-width:180px;
+    min-width:90px;
+    text-align:center;
+    box-shadow:0 4px 14px rgba(0,0,0,0.5),0 0 14px rgba(100,160,255,0.5);
+    z-index:50;
+    animation:wbBubbleIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    text-shadow:0 1px 2px rgba(0,0,0,0.7);
+  }
+  /* 泡泡尾巴指向卡片 */
+  .wb-card-bubble::after{
+    content:'';position:absolute;
+    bottom:-7px;left:50%;transform:translateX(-50%);
+    width:0;height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-top:8px solid rgba(150,200,255,0.85);
+  }
+  .wb-card-bubble.fade-out{
+    animation:wbBubbleOut 0.4s ease-in forwards;
+  }
+  @keyframes wbBubbleIn{
+    0%{transform:translateX(-50%) scale(0.4) translateY(8px);opacity:0;}
+    60%{transform:translateX(-50%) scale(1.08) translateY(-2px);opacity:1;}
+    100%{transform:translateX(-50%) scale(1) translateY(0);opacity:1;}
+  }
+  @keyframes wbBubbleOut{
+    0%{opacity:1;}
+    100%{opacity:0;transform:translateX(-50%) scale(0.9) translateY(-4px);}
+  }
   .wb-hbc-name{font-size:12px;font-weight:700;color:#ffe066;}
   .wb-hbc-portrait{
     width:100%;aspect-ratio:1;border-radius:8px;
@@ -463,6 +600,53 @@
   }
   @keyframes wb-spin{to{transform:rotate(360deg);}}
 
+  /* ★ v3.0 — 答題討論面板(隊友/BOSS 回合時顯示在 wait banner 下方) */
+  .wb-discussion-panel{
+    margin-top:10px;
+    background:linear-gradient(160deg,rgba(40,30,60,0.6),rgba(20,20,40,0.7));
+    border:1.5px solid rgba(168,132,255,0.55);
+    border-radius:12px;padding:12px 14px;
+  }
+  .wb-discussion-title{
+    font-size:13px;color:#d4a8ff;font-weight:700;letter-spacing:1px;
+    margin-bottom:10px;text-align:center;
+  }
+  .wb-discussion-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+  }
+  @media (max-width:540px){
+    .wb-discussion-grid{grid-template-columns:repeat(2,1fr);}
+  }
+  .wb-disc-btn{
+    padding:9px 6px;
+    font-size:13px;font-weight:700;cursor:pointer;
+    background:rgba(168,132,255,0.15);
+    border:1.5px solid rgba(168,132,255,0.55);
+    color:#e0d4ff;border-radius:8px;
+    font-family:inherit;transition:all 0.15s;
+    letter-spacing:0.5px;line-height:1.3;
+  }
+  .wb-disc-btn:hover{
+    background:rgba(168,132,255,0.3);
+    transform:translateY(-2px);
+    box-shadow:0 4px 12px rgba(168,132,255,0.4);
+  }
+  .wb-disc-btn:active{transform:translateY(0);}
+  .wb-disc-a{border-color:rgba(255,150,150,0.55);color:#ffcccc;background:rgba(255,150,150,0.12);}
+  .wb-disc-a:hover{background:rgba(255,150,150,0.25);}
+  .wb-disc-b{border-color:rgba(150,200,255,0.55);color:#ccddff;background:rgba(150,200,255,0.12);}
+  .wb-disc-b:hover{background:rgba(150,200,255,0.25);}
+  .wb-disc-c{border-color:rgba(150,255,180,0.55);color:#ccffdd;background:rgba(150,255,180,0.12);}
+  .wb-disc-c:hover{background:rgba(150,255,180,0.25);}
+  .wb-disc-d{border-color:rgba(255,200,140,0.55);color:#ffddbb;background:rgba(255,200,140,0.12);}
+  .wb-disc-d:hover{background:rgba(255,200,140,0.25);}
+  .wb-disc-idk{border-color:rgba(180,180,200,0.55);color:#ddddee;background:rgba(180,180,200,0.12);}
+  .wb-disc-idk:hover{background:rgba(180,180,200,0.25);}
+  .wb-disc-cheer{border-color:rgba(255,220,100,0.55);color:#ffeeaa;background:rgba(255,220,100,0.12);}
+  .wb-disc-cheer:hover{background:rgba(255,220,100,0.25);}
+
   .wb-battle-log{
     background:rgba(0,0,0,0.6);border:1px solid rgba(212,168,67,0.3);border-radius:8px;
     padding:8px 12px;margin-top:10px;max-height:120px;overflow-y:auto;
@@ -480,6 +664,142 @@
     15%{transform:translateY(0) scale(1.1);opacity:1;}
     85%{opacity:1;}
     100%{transform:translateY(-40px) scale(0.8);opacity:0;}
+  }
+
+  /* ═════════════════════════════════════════════════════════════════ */
+  /* ★ v3.1 — 戰鬥特效 / 動畫                                          */
+  /* ═════════════════════════════════════════════════════════════════ */
+  /* 螢幕震動(BOSS 大招命中時) */
+  .wb-screen-shake{
+    animation:wbShake 0.55s cubic-bezier(0.36,0.07,0.19,0.97);
+  }
+  @keyframes wbShake{
+    10%,90%{transform:translate3d(-2px,0,0);}
+    20%,80%{transform:translate3d( 4px,0,0);}
+    30%,50%,70%{transform:translate3d(-6px,0,0);}
+    40%,60%{transform:translate3d( 6px,0,0);}
+  }
+  /* 全螢幕特效淡入 */
+  .wb-fullscreen-fx{
+    animation:wbFxIn 0.3s ease-out;
+  }
+  @keyframes wbFxIn{
+    0%{opacity:0;}
+    50%{opacity:1;}
+    100%{opacity:0.85;}
+  }
+  /* BOSS 咆哮動畫 */
+  @keyframes wbRoarPulse{
+    0%,100%{transform:scale(1);text-shadow:0 0 24px #ff3322;}
+    50%    {transform:scale(1.18);text-shadow:0 0 60px #ff3322,0 0 100px #ff6644;}
+  }
+  @keyframes wbRoarTextFade{
+    0%  {opacity:0;transform:translateY(20px);}
+    20% {opacity:1;transform:translateY(0);}
+    80% {opacity:1;}
+    100%{opacity:0;transform:translateY(-10px);}
+  }
+  /* 爆發技動畫 */
+  @keyframes wbBurstFx{
+    0%  {opacity:0;}
+    15% {opacity:1;}
+    85% {opacity:1;}
+    100%{opacity:0;}
+  }
+  @keyframes wbBurstText{
+    0%  {transform:scale(0.4) rotate(-3deg);opacity:0;}
+    20% {transform:scale(1.18) rotate(2deg);opacity:1;}
+    80% {transform:scale(1) rotate(0deg);opacity:1;}
+    100%{transform:scale(0.9) rotate(0deg);opacity:0;}
+  }
+
+  /* 答題面板 */
+  .wb-quiz-overlay{
+    position:fixed;inset:0;z-index:10700;
+    background:radial-gradient(ellipse at center,rgba(20,30,60,0.95),rgba(8,10,24,0.98));
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    backdrop-filter:blur(8px);
+  }
+  .wb-quiz-card{
+    max-width:680px;width:100%;
+    background:linear-gradient(160deg,#1e2540 0%,#0d1228 100%);
+    border:3px solid #4a9eff;border-radius:18px;padding:24px 22px;
+    box-shadow:0 0 48px rgba(74,158,255,0.55);
+    color:#cce8ff;text-align:center;
+  }
+  .wb-quiz-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;gap:14px;flex-wrap:wrap;
+  }
+  .wb-quiz-who{font-size:16px;color:#88ccff;font-weight:800;letter-spacing:1px;}
+  .wb-quiz-timer{
+    font-size:16px;color:#ffe066;font-weight:900;
+    background:rgba(255,224,102,0.12);
+    border:1.5px solid rgba(255,224,102,0.55);
+    border-radius:8px;padding:4px 14px;
+  }
+  .wb-quiz-subject{
+    font-size:13px;color:#88ddff;letter-spacing:1px;margin-bottom:6px;
+    background:rgba(74,158,255,0.15);border-radius:6px;padding:3px 10px;
+    display:inline-block;
+  }
+  .wb-quiz-q-text{
+    font-size:clamp(18px,2.2vw,24px);font-weight:800;color:#fff;
+    line-height:1.7;margin:14px 0 22px;
+    text-shadow:0 2px 6px rgba(0,0,0,0.7);
+  }
+  .wb-quiz-options{
+    display:grid;gap:10px;
+    grid-template-columns:repeat(2,1fr);
+  }
+  @media (max-width:560px){.wb-quiz-options{grid-template-columns:1fr;}}
+  .wb-quiz-opt-btn{
+    padding:14px 16px;text-align:left;
+    background:rgba(74,158,255,0.12);
+    border:2px solid rgba(120,180,255,0.6);
+    color:#cce8ff;border-radius:10px;
+    font-size:16px;font-weight:700;cursor:pointer;
+    font-family:inherit;letter-spacing:1px;
+    transition:all 0.2s;
+  }
+  .wb-quiz-opt-btn:hover{
+    background:rgba(74,158,255,0.25);transform:translateX(4px);
+    box-shadow:0 4px 14px rgba(74,158,255,0.4);
+  }
+  .wb-quiz-opt-btn.correct{
+    background:rgba(80,220,140,0.3) !important;border-color:#5cd896 !important;
+    color:#aaffcc !important;
+    animation:wbQuizCorrect 0.6s ease-out;
+  }
+  .wb-quiz-opt-btn.wrong{
+    background:rgba(232,64,64,0.3) !important;border-color:#ff6644 !important;
+    color:#ffbbaa !important;
+    animation:wbQuizWrong 0.5s ease-out;
+  }
+  @keyframes wbQuizCorrect{
+    0%,100%{transform:scale(1);}50%{transform:scale(1.05);}
+  }
+  @keyframes wbQuizWrong{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px);}
+    75%{transform:translateX(6px);}
+  }
+  .wb-quiz-result{
+    font-size:20px;font-weight:900;letter-spacing:2px;
+    padding:12px 18px;border-radius:10px;margin-top:14px;
+  }
+  .wb-quiz-result.correct{
+    background:rgba(80,220,140,0.2);color:#aaffcc;
+    border:2px solid #5cd896;
+  }
+  .wb-quiz-result.wrong{
+    background:rgba(232,64,64,0.2);color:#ffbbaa;
+    border:2px solid #ff6644;
+  }
+  /* 答題獎勵閃光 */
+  @keyframes wbQuizRewardPulse{
+    0%,100%{box-shadow:0 0 24px rgba(255,217,102,0.5);}
+    50%    {box-shadow:0 0 48px rgba(255,217,102,0.95),0 0 80px rgba(255,217,102,0.5);}
   }
 </style>
 
@@ -507,12 +827,12 @@
     <!-- BOSS 預覽 -->
     <div class="wb-boss-preview-small">
       <div class="wb-boss-mini-portrait">
-        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/玉山火龍王.png"
+        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
              onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
-             alt="玉山火龍王">
+             alt="維蘇威火山龍王">
       </div>
       <div>
-        <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 玉山火龍王</div>
+        <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 維蘇威火山龍王</div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
           HP 28,000 ✦ 火屬性 ✦ 雙階段戰鬥<br>
           🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
@@ -546,19 +866,35 @@
 
     <!-- 戰鬥階段 -->
     <div id="wb-battle-area" class="wb-battle-screen">
+      <!-- ★ v3.1 — 畫面最上方:特大 BOSS HP 條 + 護盾 + 不利狀態 -->
+      <div class="wb-mega-hp-zone">
+        <div class="wb-mega-hp-header">
+          <div class="wb-mega-hp-name">
+            <span style="font-size:1.3em;">🐉</span>
+            <span id="wb-mega-boss-name">維蘇威火山龍王</span>
+          </div>
+          <div class="wb-mega-hp-turn" id="wb-mega-turn-info">回合 1 / 20 ✦ 第一階段</div>
+        </div>
+        <div class="wb-mega-hp-bar">
+          <div class="wb-mega-hp-fill" id="wb-mega-hp-fill" style="width:100%;"></div>
+          <div class="wb-mega-hp-text" id="wb-mega-hp-text">500,000 / 500,000 (100%)</div>
+        </div>
+        <div class="wb-mega-shields-row" id="wb-mega-shields-row">
+          <!-- 護盾 chip 動態填入 -->
+        </div>
+      </div>
+
+      <!-- BOSS 立繪小區(維持原本 layout 但 HP 條已移走) -->
       <div class="wb-battle-boss-zone">
         <div class="wb-battle-boss-portrait">
-          <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/玉山火龍王.png"
+          <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
                onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
-               alt="玉山火龍王">
+               alt="維蘇威火山龍王">
         </div>
         <div class="wb-battle-boss-info">
-          <div class="wb-boss-big-name" id="wb-battle-boss-name">玉山火龍王</div>
+          <div class="wb-boss-big-name" id="wb-battle-boss-name">維蘇威火山龍王</div>
           <div id="wb-battle-turn-info" style="font-size:13px;color:#ffe066;margin-top:4px;letter-spacing:1px;">回合 1</div>
-          <div class="wb-boss-big-hp-bar">
-            <div class="wb-boss-big-hp-fill" id="wb-battle-boss-hp-fill" style="width:100%;"></div>
-            <div class="wb-boss-big-hp-text" id="wb-battle-boss-hp-text">28000 / 28000</div>
-          </div>
+          <div id="wb-boss-burst-warn" style="display:none;margin-top:6px;font-size:14px;font-weight:800;color:#ffaa66;letter-spacing:1px;text-shadow:0 0 10px rgba(255,140,60,0.8);"></div>
         </div>
       </div>
 
@@ -643,7 +979,7 @@
 
   // === 入口操作 ===
   window._wbUiCreateRoom = async function(){
-    const roomId = await window._wbNet.createRoom({ bossId: 'yushan_fire_dragon' });
+    const roomId = await window._wbNet.createRoom({ bossId: 'vesuvius_fire_dragon' });
     if(roomId){
       _wbCloseEntry();
       _wbOpenLobby();
@@ -805,8 +1141,6 @@
     const players = snap.players || [];
     if(players.length < 1){ alert('至少要 1 人'); return; }
 
-    // 建立 G.p1 (4 個玩家槽) + G.p2 (玉山火龍王)
-    // 檢查戰鬥引擎依賴(world-boss 用自己的迷你引擎,只需要 newHero 來建英雄物件)
     if(typeof newHero !== 'function'){
       alert('戰鬥引擎未就緒 — newHero 函式找不到,請確認主程式 index.html 已完整載入'); return;
     }
@@ -815,25 +1149,32 @@
     const p1 = [];
     for(let i = 0; i < 4; i++){
       const p = players[i];
-      const heroName = p?.heroName || '劍士';  // AI 預設
+      const heroName = p?.heroName || '劍士';
       const h = newHero(heroName, 'p1', i);
-      // 給滿能量讓玩家可以馬上用技能
       h.burst = 0; h.burstMax = h.burstMax || 10;
       p1.push(h);
     }
-    // BOSS:玉山火龍王
-    const boss = newHero('玉山火龍王', 'p2', 0);
+    // BOSS:維蘇威火山龍王
+    const boss = newHero('維蘇威火山龍王', 'p2', 0);
+    boss._wbShieldHistory = {};
+    boss._wbShields = null;
     const p2 = [boss, null, null, null];
 
-    // 計算行動順序(依速度)
+    // ★ v3.1 — BOSS 永遠優先行動 — 把 BOSS 速度設為 999 強制第一
+    //   原本依速度排序,現在 BOSS 必排第一
     const all = [];
+    all.push({ side:'p2', pos:0, spd: 999 });  // BOSS 永遠第一
     p1.forEach((h, i) => { if(h) all.push({ side:'p1', pos:i, spd: h.spd || 0 }); });
-    if(boss) all.push({ side:'p2', pos:0, spd: boss.spd || 0 });
-    all.sort((a, b) => b.spd - a.spd);
+    // p1 內部依速度排序
+    const p1Order = all.slice(1).sort((a, b) => b.spd - a.spd);
+    all.length = 1;
+    all.push(...p1Order);
 
-    // 把這個戰鬥狀態存到全域(本場主 G,房主才用)
     window._wbHostG = { p1: p1, p2: p2, turn: 1, turnOrder: all, currentActorIdx: 0 };
     window._wbInWorldBossMode = true;
+    // 重置答題狀態
+    window._wbQuizState = {};
+    window._wbCorrectCnt = {};
 
     await window._wbNet.startBattle({
       p1: p1, p2: p2,
@@ -841,13 +1182,38 @@
       currentActorIdx: 0
     });
 
-    // 如果第一個是 BOSS,馬上代打
+    // ★ v3.1 — BOSS 咆哮 → 開戰題 → 進入戰鬥
+    if(typeof window._wbStartBossOpening === 'function'){
+      await window._wbStartBossOpening();
+    }
+
+    // 之後第一個是 BOSS,自動代打
     if(all[0] && all[0].side === 'p2'){
       setTimeout(() => _wbHostExecuteBossTurn(all[0].pos), 800);
     }
   };
 
   // === 房主戰鬥執行器 ===
+  // ★ v3.1 — 推測英雄屬性(從英雄名、技能名)
+  function _wbInferHeroElement(actor, action){
+    if(!actor) return null;
+    const name = actor.name || '';
+    // 從英雄名推測
+    if(name.includes('火') || name.includes('炎')) return 'fire';
+    if(name.includes('水') || name.includes('冰') || name.includes('河')) return 'water';
+    if(name.includes('風') || name.includes('雷') || name.includes('鳥') || name.includes('哈維')) return 'wind';
+    if(name.includes('土') || name.includes('石') || name.includes('岩')) return 'earth';
+    // 從技能 ID 推測(如果有元素標記)
+    if(action && action.element) return action.element;
+    // 從主程式 MONSTER_ELEMENT 查
+    try{
+      if(window.MONSTER_ELEMENT && window.MONSTER_ELEMENT[name]){
+        return window.MONSTER_ELEMENT[name];
+      }
+    }catch(_){}
+    return null;  // 無屬性
+  }
+
   window._wbHostExecuteAction = function(actorPos, action){
     if(!window._wbHostG) return;
     const G = window._wbHostG;
@@ -900,11 +1266,52 @@
 
     // 套用傷害到 BOSS
     if(dmg > 0){
-      // BOSS 天賦:單次傷害不超過最大 HP 4%
-      const cap = Math.floor(boss.hp * 0.04);
-      const finalDmg = Math.min(dmg, cap);
-      if(finalDmg < dmg) logEntry += `(炎之意志吸收,實際 ${finalDmg})`;
+      // ★ v3.1 — 推測攻擊屬性(從英雄名 + 技能名)
+      const heroElement = _wbInferHeroElement(actor, action);
+
+      // BOSS 天賦「炎之意志」:單次受傷上限 1% + 護盾減傷 80%
+      let finalDmg = dmg;
+      if(typeof window._wbApplyBossDmgCap === 'function'){
+        finalDmg = window._wbApplyBossDmgCap(boss, dmg, { actor: actor, action: action });
+      }else{
+        finalDmg = Math.min(dmg, Math.floor(boss.hp * 0.01));
+      }
+
+      // 護盾削減處理 — 屬性剋制(火攻擊削水盾、水攻擊削火盾、土攻擊削風盾、風攻擊削土盾)
+      let shieldNote = '';
+      if(typeof window._wbConsumeShield === 'function' && heroElement){
+        const consumed = window._wbConsumeShield(boss, heroElement);
+        if(consumed){
+          const ICONS = {fire:'🔥',water:'💧',wind:'🌪',earth:'⛰'};
+          shieldNote = ` (${ICONS[consumed]}${consumed}盾-1)`;
+        }
+      }
+
+      if(finalDmg < dmg){
+        const hpRatio = boss.curHp / boss.hp;
+        const totalShield = (typeof window._wbGetTotalShield === 'function') ? window._wbGetTotalShield(boss) : 0;
+        if(totalShield > 0){
+          logEntry += `(🛡 護盾減傷,實際 ${finalDmg}${shieldNote})`;
+        }else{
+          logEntry += `(炎之意志吸收,實際 ${finalDmg})`;
+        }
+      }else if(shieldNote){
+        logEntry += shieldNote;
+      }
+
       boss.curHp = Math.max(0, boss.curHp - finalDmg);
+
+      // ★ v3.1 — 護盾觸發檢查(HP 80/60/40/20/1% 自動啟動護盾)
+      if(typeof window._wbCheckShieldTrigger === 'function'){
+        const triggered = window._wbCheckShieldTrigger(boss);
+        if(triggered){
+          setTimeout(() => {
+            if(typeof window._wbShowShieldTriggerHint === 'function'){
+              window._wbShowShieldTriggerHint(triggered, boss);
+            }
+          }, 400);
+        }
+      }
 
       // 記錄貢獻
       const players = window._wbNet.getSnapshot()?.players || [];
@@ -933,57 +1340,154 @@
     const boss = G.p2[bossPos];
     if(!boss || boss.curHp <= 0){ _wbHostAdvanceTurn(); return; }
 
-    // BOSS AI:隨機選技能
+    // ★ v3.1 — 第 20 回合到 = 強制全員滅絕
+    if(G.turn >= 20){
+      _wbHostBroadcast(['💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!']);
+      setTimeout(() => {
+        const alive = G.p1.filter(h => h && h.curHp > 0);
+        alive.forEach(t => { t.curHp = 0; });
+        if(typeof window._wbPlayBurstAnimation === 'function'){
+          window._wbPlayBurstAnimation();
+        }
+        _wbHostBroadcast(['☠ 全員陣亡 — 戰場已被火山灰掩埋']);
+        setTimeout(() => _wbHostFinishBattle('p2'), 2500);
+      }, 800);
+      return;
+    }
+
+    // ★ v3.1 — 第 10 回合固定爆發技
+    if(G.turn === 10 && !G._wbBurstUsed){
+      G._wbBurstUsed = true;
+      _wbExecBossBurst(boss);
+      return;
+    }
+
+    // BOSS AI:隨機選 S1 / S2 / 普攻 (沒有爆發,爆發固定第 10 回合)
     const alive = G.p1.filter(h => h && h.curHp > 0);
     if(alive.length === 0){ _wbHostFinishBattle('p2'); return; }
 
     const r = Math.random();
-    let logEntry = '';
-    let dmgPerTarget = 0;
-    let targets = [];
 
-    if(r < 0.35 && boss.curHp < boss.hp * 0.5){
-      // 第二階段:天崩之炎(當前 HP 30% 傷害)
-      targets = alive;
-      logEntry = `⚡ 玉山火龍王發動「天崩之炎」!`;
-      targets.forEach(t => {
-        const d = Math.floor(t.curHp * 0.3);
-        t.curHp = Math.max(0, t.curHp - d);
-        logEntry += ` ${t.name}-${d}`;
-      });
-    }else if(r < 0.5){
-      // 業火灼燒:全體
-      targets = alive;
-      dmgPerTarget = Math.floor(boss.sp * 0.9);
-      logEntry = `🔥 玉山火龍王「業火灼燒」全體 ${dmgPerTarget} 傷害`;
-      targets.forEach(t => { t.curHp = Math.max(0, t.curHp - dmgPerTarget); });
-    }else if(r < 0.7){
-      // 龍吼震懾:全體
-      targets = alive;
-      dmgPerTarget = Math.floor(boss.atk * 1.1);
-      logEntry = `🐉 玉山火龍王「龍吼震懾」全體 ${dmgPerTarget} 傷害`;
-      targets.forEach(t => { t.curHp = Math.max(0, t.curHp - dmgPerTarget); });
+    if(r < 0.45){
+      // S1 業火灼燒 — 全畫面火雨特效
+      _wbExecBossS1(boss);
+    }else if(r < 0.80){
+      // S2 龍吼震懾 — 全畫面集中線特效
+      _wbExecBossS2(boss);
     }else{
-      // 普攻單體
-      const tgt = alive[Math.floor(Math.random() * alive.length)];
-      const d = Math.floor(boss.atk * (1 + Math.random()*0.3));
-      tgt.curHp = Math.max(0, tgt.curHp - d);
-      targets = [tgt];
-      logEntry = `🦷 玉山火龍王炎爪攻擊 ${tgt.name} 造成 ${d} 傷害`;
+      // 普攻
+      _wbExecBossNormalAtk(boss, alive);
     }
+  }
 
-    _wbHostBroadcast([logEntry]);
+  // BOSS S1:業火灼燒 (特技 100% 全體火傷 + 全體燃燒 2 回合)
+  function _wbExecBossS1(boss){
+    const G = window._wbHostG;
+    if(typeof window._wbPlayFullscreenFx === 'function'){
+      window._wbPlayFullscreenFx('s1', {duration:1600, shake:true});
+    }
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 1.00);
+    alive.forEach(t => {
+      t.curHp = Math.max(0, t.curHp - dmg);
+      // 標記燃燒 2 回合(用簡化方式存在 t._wbBurn)
+      t._wbBurn = 2;
+    });
+    _wbHostBroadcast([`🔥 維蘇威火山龍王「業火灼燒」!全體 -${dmg} HP,並附加燃燒 2 回合`]);
+    setTimeout(() => {
+      const stillAlive = G.p1.filter(h => h && h.curHp > 0);
+      if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
+      _wbHostAdvanceTurn();
+    }, 1500);
+  }
 
-    // 檢查全員是否陣亡
-    const stillAlive = G.p1.filter(h => h && h.curHp > 0);
-    if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
+  // BOSS S2:龍吼震懾 (特技 75% 全體無屬性 + 50% 眩暈)
+  function _wbExecBossS2(boss){
+    const G = window._wbHostG;
+    if(typeof window._wbPlayFullscreenFx === 'function'){
+      window._wbPlayFullscreenFx('s2', {duration:1600, shake:true});
+    }
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 0.75);
+    let stunNames = [];
+    alive.forEach(t => {
+      t.curHp = Math.max(0, t.curHp - dmg);
+      if(t.curHp > 0 && Math.random() < 0.50){
+        t._wbStun = 1;
+        stunNames.push(t.name);
+      }
+    });
+    const stunMsg = stunNames.length ? `,${stunNames.join('/')} 眩暈 1 回合` : '';
+    _wbHostBroadcast([`🐉 維蘇威火山龍王「龍吼震懾」!全體 -${dmg} HP${stunMsg}`]);
+    setTimeout(() => {
+      const stillAlive = G.p1.filter(h => h && h.curHp > 0);
+      if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
+      _wbHostAdvanceTurn();
+    }, 1500);
+  }
 
-    _wbHostAdvanceTurn();
+  // BOSS 爆發:天崩之炎(全體當前 HP 90%)
+  function _wbExecBossBurst(boss){
+    const G = window._wbHostG;
+    if(typeof window._wbPlayBurstAnimation === 'function'){
+      window._wbPlayBurstAnimation();
+    }
+    setTimeout(() => {
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      let logEntry = `⚡ 維蘇威火山龍王爆發「天崩之炎」!`;
+      alive.forEach(t => {
+        // 無敵/免疫狀態檢查(簡化)
+        if(t._wbInvincible){
+          logEntry += ` ${t.name} 無敵擋下!`;
+          t._wbInvincible = 0;
+          return;
+        }
+        let dmgPct = 0.90;
+        if(t._wbShield){
+          dmgPct = 0.45;
+          t._wbShield = 0;
+          logEntry += ` ${t.name} 護盾減半...`;
+        }
+        const d = Math.floor(t.curHp * dmgPct);
+        t.curHp = Math.max(0, t.curHp - d);
+        t._wbBurn = 3;
+      });
+      _wbHostBroadcast([logEntry, '🔥 全體附加燃燒 3 回合']);
+      setTimeout(() => {
+        const stillAlive = G.p1.filter(h => h && h.curHp > 0);
+        if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
+        _wbHostAdvanceTurn();
+      }, 1800);
+    }, 2200);  // 等爆發動畫播完
+  }
+
+  // BOSS 普攻
+  function _wbExecBossNormalAtk(boss, alive){
+    const G = window._wbHostG;
+    const tgt = alive[Math.floor(Math.random() * alive.length)];
+    const d = Math.floor((boss.atk || 49) * (1 + Math.random()*0.3));
+    tgt.curHp = Math.max(0, tgt.curHp - d);
+    _wbHostBroadcast([`🦷 維蘇威炎爪攻擊 ${tgt.name} -${d} HP`]);
+    setTimeout(() => {
+      const stillAlive = G.p1.filter(h => h && h.curHp > 0);
+      if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
+      _wbHostAdvanceTurn();
+    }, 1200);
   }
 
   function _wbHostAdvanceTurn(){
     const G = window._wbHostG;
     if(!G) return;
+
+    // 結算燃燒傷害(每位角色行動前)
+    G.p1.forEach(h => {
+      if(h && h.curHp > 0 && h._wbBurn > 0){
+        const burnDmg = 6;
+        h.curHp = Math.max(0, h.curHp - burnDmg);
+        h._wbBurn--;
+      }
+    });
+
     const order = G.turnOrder;
     let next = (G.currentActorIdx + 1) % order.length;
     let safety = 0;
@@ -994,7 +1498,18 @@
       next = (next + 1) % order.length;
     }
     // 一輪完 → turn +1
-    if(next <= G.currentActorIdx) G.turn += 1;
+    if(next <= G.currentActorIdx){
+      G.turn += 1;
+      // ★ v3.1 — 回合警告
+      if(G.turn === 9 && !G._wbBurstWarned){
+        G._wbBurstWarned = true;
+        _wbShowTurnWarning('⚠ 下一回合 BOSS 將施展爆發技!');
+      }
+      if(G.turn === 18 && !G._wbCollapseWarned){
+        G._wbCollapseWarned = true;
+        _wbShowTurnWarning('⚠ 戰場即將崩毀!剩 2 回合 BOSS 將強制滅絕!');
+      }
+    }
     G.currentActorIdx = next;
 
     _wbHostBroadcast([]);
@@ -1004,6 +1519,15 @@
     if(cur && cur.side === 'p2'){
       setTimeout(() => _wbHostExecuteBossTurn(cur.pos), 1200);
     }
+  }
+
+  // 回合警告橫幅
+  function _wbShowTurnWarning(text){
+    const warn = document.createElement('div');
+    warn.className = 'wb-turn-warning';
+    warn.textContent = text;
+    document.body.appendChild(warn);
+    setTimeout(() => { try{ warn.remove(); }catch(_){} }, 2800);
   }
 
   function _wbHostBroadcast(logEntries){
@@ -1026,7 +1550,7 @@
       turn: G.turn,
       currentActorIdx: G.currentActorIdx,
       turnOrder: G.turnOrder,
-      logEntries: [winner === 'p1' ? '🏆 玉山火龍王被擊敗!' : '💀 全員陣亡...'],
+      logEntries: [winner === 'p1' ? '🏆 維蘇威火山龍王被擊敗!' : '💀 全員陣亡...'],
       ended: true,
       winner: winner,
       endedReason: 'battle_complete'
@@ -1064,12 +1588,81 @@
     const boss = battle.p2[0];
     if(boss){
       const pct = boss.hp ? (boss.curHp / boss.hp * 100) : 0;
-      document.getElementById('wb-battle-boss-hp-fill').style.width = pct + '%';
-      document.getElementById('wb-battle-boss-hp-text').textContent =
-        `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()}`;
+      // ★ v3.1 — 同時更新「舊版小條」和「新版頂部大條」
+      const oldFill = document.getElementById('wb-battle-boss-hp-fill');
+      const oldText = document.getElementById('wb-battle-boss-hp-text');
+      if(oldFill) oldFill.style.width = pct + '%';
+      if(oldText) oldText.textContent = `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()}`;
+      // 新版 mega HP
+      const megaFill = document.getElementById('wb-mega-hp-fill');
+      const megaText = document.getElementById('wb-mega-hp-text');
+      if(megaFill){
+        megaFill.style.width = pct + '%';
+        // HP 顏色階段
+        if(pct > 50){
+          megaFill.style.background = 'linear-gradient(90deg,#ff3322 0%,#ff6644 30%,#ff9966 70%,#ffcc88 100%)';
+        }else if(pct > 25){
+          megaFill.style.background = 'linear-gradient(90deg,#cc2222 0%,#ee4422 50%,#ff8855 100%)';
+        }else{
+          megaFill.style.background = 'linear-gradient(90deg,#770000 0%,#aa1111 50%,#dd3322 100%)';
+        }
+      }
+      if(megaText){
+        megaText.textContent = `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()} (${pct.toFixed(1)}%)`;
+      }
+      const megaTurn = document.getElementById('wb-mega-turn-info');
+      if(megaTurn){
+        const phase = pct < 50 ? '⚠ 第二階段' : '第一階段';
+        megaTurn.textContent = `回合 ${battle.turn} / 20 ✦ ${phase}`;
+      }
+
+      // ★ v3.1 — 護盾 + 不利狀態 chip
+      const shieldsRow = document.getElementById('wb-mega-shields-row');
+      if(shieldsRow){
+        const chips = [];
+        const shields = boss._wbShields || {};
+        const ELS = [
+          {el:'fire',  cls:'wb-shield-fire',  icon:'🔥', label:'火盾'},
+          {el:'water', cls:'wb-shield-water', icon:'💧', label:'水盾'},
+          {el:'wind',  cls:'wb-shield-wind',  icon:'🌪', label:'風盾'},
+          {el:'earth', cls:'wb-shield-earth', icon:'⛰', label:'土盾'},
+        ];
+        for(const s of ELS){
+          if(shields[s.el] > 0){
+            chips.push(`<span class="wb-shield-chip ${s.cls}">${s.icon} ${s.label}<span class="wb-shield-num">×${shields[s.el]}</span></span>`);
+          }
+        }
+        // 不利狀態(若需要 — BOSS 通常不會中,但留接口)
+        if(boss._wbBurn > 0){
+          chips.push(`<span class="wb-boss-status-chip burn">🔥 燃燒 ${boss._wbBurn}</span>`);
+        }
+        if(boss._wbStun > 0){
+          chips.push(`<span class="wb-boss-status-chip stun">⚡ 眩暈 ${boss._wbStun}</span>`);
+        }
+        shieldsRow.innerHTML = chips.length ? chips.join('') :
+          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(HP 80% 啟動)</span>';
+      }
+
+      // 第 9 回合提示爆發即將釋放(只在還沒提示過時)
+      const burstWarn = document.getElementById('wb-boss-burst-warn');
+      if(burstWarn){
+        if(battle.turn === 9){
+          burstWarn.style.display = 'block';
+          burstWarn.textContent = '⚠ 下回合 BOSS 將釋放爆發技!';
+        }else if(battle.turn === 17){
+          burstWarn.style.display = 'block';
+          burstWarn.textContent = '⚠ 剩 3 回合戰場將崩毀!';
+        }else if(battle.turn === 18 || battle.turn === 19){
+          burstWarn.style.display = 'block';
+          burstWarn.style.color = '#ff4422';
+          burstWarn.textContent = `⚠ 戰場崩毀倒數 ${20-battle.turn} 回合!`;
+        }else{
+          burstWarn.style.display = 'none';
+        }
+      }
     }
-    document.getElementById('wb-battle-turn-info').textContent =
-      `回合 ${battle.turn} ✦ ${battle.p2[0] && battle.p2[0].curHp < battle.p2[0].hp*0.5 ? '⚠ 第二階段' : '第一階段'}`;
+    const oldTurnEl = document.getElementById('wb-battle-turn-info');
+    if(oldTurnEl) oldTurnEl.textContent = `回合 ${battle.turn} / 20`;
 
     // 4 個英雄
     const players = window._wbNet.getSnapshot()?.players || [];
@@ -1101,22 +1694,66 @@
     if(myTurn){
       const myHero = battle.p1[curOrder.pos];
       const burstReady = myHero && (myHero.burst||0) >= (myHero.burstMax||10);
-      actionArea.innerHTML = `
-        <div class="wb-action-panel">
-          <button class="wb-action-btn" onclick="_wbUiSendAction('atk')"><span class="ic">⚔</span>普攻</button>
-          <button class="wb-action-btn" onclick="_wbUiSendAction('s1')"><span class="ic">✨</span>技能 1</button>
-          <button class="wb-action-btn" onclick="_wbUiSendAction('s2')"><span class="ic">🌟</span>技能 2</button>
-          <button class="wb-action-btn" onclick="_wbUiSendAction('burst')" ${burstReady?'':'disabled'}>
-            <span class="ic">💥</span>爆發 ${burstReady?'':'(未滿)'}</button>
-          <button class="wb-action-btn" onclick="_wbUiSendAction('skip')"><span class="ic">⏭</span>跳過</button>
-        </div>`;
+
+      // ★ v3.1 — 答題流程:先檢查是否已答過該回合的題,沒答先答題
+      const qKey = '__q_t' + battle.turn + '_p' + curOrder.pos;
+      const alreadyAnswered = window._wbQuizState && window._wbQuizState[qKey];
+
+      // 眩暈中強制跳過
+      if(myHero && myHero._wbStun > 0){
+        myHero._wbStun = 0;
+        actionArea.innerHTML = `
+          <div class="wb-wait-banner" style="border-color:#ffaa66;background:rgba(255,170,100,0.15);">
+            <div style="font-size:18px;color:#ffcc99;">⚡ 你被眩暈了,本回合無法行動...</div>
+          </div>`;
+        setTimeout(() => _wbUiSendAction('skip'), 1500);
+      }else if(!alreadyAnswered){
+        // 顯示「答題」入口
+        actionArea.innerHTML = `
+          <div class="wb-action-panel" style="border-color:#4a9eff;background:rgba(74,158,255,0.1);">
+            <div style="flex:1 1 100%;text-align:center;font-size:17px;color:#cce8ff;
+              font-weight:700;letter-spacing:1px;margin-bottom:8px;">
+              📚 輪到你了!先答對題目才能行動 →
+            </div>
+            <button class="wb-action-btn" onclick="_wbUiOpenQuiz()" style="flex:0 1 200px;
+              background:rgba(74,158,255,0.25);border-color:#4a9eff;color:#cce8ff;font-size:16px;">
+              <span class="ic">📖</span>開始答題
+            </button>
+          </div>`;
+      }else{
+        // 已答對 → 顯示行動按鈕
+        actionArea.innerHTML = `
+          <div class="wb-action-panel">
+            <button class="wb-action-btn" onclick="_wbUiSendAction('atk')"><span class="ic">⚔</span>普攻</button>
+            <button class="wb-action-btn" onclick="_wbUiSendAction('s1')"><span class="ic">✨</span>技能 1</button>
+            <button class="wb-action-btn" onclick="_wbUiSendAction('s2')"><span class="ic">🌟</span>技能 2</button>
+            <button class="wb-action-btn" onclick="_wbUiSendAction('burst')" ${burstReady?'':'disabled'}>
+              <span class="ic">💥</span>爆發 ${burstReady?'':'(未滿)'}</button>
+            <button class="wb-action-btn" onclick="_wbUiSendAction('skip')"><span class="ic">⏭</span>跳過</button>
+          </div>`;
+      }
     }else{
-      const actorName = isBossTurn ? '🐉 玉山火龍王' :
+      const actorName = isBossTurn ? '🐉 維蘇威火山龍王' :
         (players[curOrder?.pos]?.name || '未知玩家') + ' 的 ' + (battle.p1[curOrder?.pos]?.name || '英雄');
+      // ★ v3.0 — 隊友回合 / BOSS 回合都顯示「當前是 XXX 的回合!」+ 6 個討論選項
+      //    即使玩家倒下也能用(不依賴存活狀態)
       actionArea.innerHTML = `
         <div class="wb-wait-banner">
           <div class="wb-spinner"></div>
-          <div style="flex:1;">⏳ 輪到 <b>${actorName}</b> 行動...</div>
+          <div style="flex:1;font-size:18px;letter-spacing:1px;">
+            ⏳ 當前是 <b style="color:#ffd966;">${actorName}</b> 的回合!
+          </div>
+        </div>
+        <div class="wb-discussion-panel">
+          <div class="wb-discussion-title">💬 討論答案 / 給隊友鼓勵</div>
+          <div class="wb-discussion-grid">
+            <button class="wb-disc-btn wb-disc-a" onclick="_wbUiSendDiscussion('ans_a')">🅰 我覺得答案是 A</button>
+            <button class="wb-disc-btn wb-disc-b" onclick="_wbUiSendDiscussion('ans_b')">🅱 我覺得答案是 B</button>
+            <button class="wb-disc-btn wb-disc-c" onclick="_wbUiSendDiscussion('ans_c')">🅲 我覺得答案是 C</button>
+            <button class="wb-disc-btn wb-disc-d" onclick="_wbUiSendDiscussion('ans_d')">🅳 我覺得答案是 D</button>
+            <button class="wb-disc-btn wb-disc-idk" onclick="_wbUiSendDiscussion('ans_idk')">🤔 我也不確定答案...</button>
+            <button class="wb-disc-btn wb-disc-cheer" onclick="_wbUiSendDiscussion('cheerup')">💪 加油你可以的!</button>
+          </div>
         </div>`;
     }
 
@@ -1132,7 +1769,382 @@
     await window._wbNet.sendAction({ type: type });
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.1 — 答題系統
+  // ────────────────────────────────────────────────────────────────────
+  // 答對才能行動;答錯自己受 5% max HP 傷害(無視免傷,強制扣血)+ 跳過此回合
+  // 累積答對第 10/25/50 次 → 答題獎勵:對 BOSS 1% maxHp 傷害(原本是 20%)
+  // 倒下角色跳過答題
+  // ════════════════════════════════════════════════════════════════════
+
+  // 全域答題狀態:記錄每個玩家在每回合是否答過題
+  window._wbQuizState  = window._wbQuizState  || {};
+  // 全域累積答對次數(本場戰鬥內)
+  window._wbCorrectCnt = window._wbCorrectCnt || {};
+
+  // 標記題目答對/答錯到 quiz state(key 含 turn+pos)
+  function _wbMarkQuiz(turn, pos, ok){
+    const qKey = '__q_t' + turn + '_p' + pos;
+    window._wbQuizState[qKey] = { ok: ok, ts: Date.now() };
+  }
+
+  // 玩家按「開始答題」
+  window._wbUiOpenQuiz = function(){
+    if(!window._wbHostG) return;
+    const G = window._wbHostG;
+    const order = G.turnOrder[G.currentActorIdx];
+    if(!order || order.side !== 'p1') return;
+    const myHero = G.p1[order.pos];
+    if(!myHero || myHero.curHp <= 0){ _wbUiSendAction('skip'); return; }
+
+    // 取一題
+    const q = (typeof window._wbPickRandomQuestion === 'function')
+              ? window._wbPickRandomQuestion()
+              : null;
+    if(!q){
+      alert('⚠ 題庫尚未載入,本回合直接行動');
+      _wbMarkQuiz(G.turn, order.pos, true);
+      _wbRenderBattleScreen(window._wbNet.getSnapshot()?.battle || _wbCurrentBattleSnap());
+      return;
+    }
+
+    // 答題 UI
+    _wbShowQuizUi(q, order.pos, G.turn, /*isPunishOnWrong=*/true);
+  };
+
+  // 回憶當前 battle 給 _wbRenderBattleScreen 用
+  function _wbCurrentBattleSnap(){
+    const G = window._wbHostG;
+    if(!G) return null;
+    return {
+      p1: G.p1, p2: G.p2, turn: G.turn,
+      currentActorIdx: G.currentActorIdx, turnOrder: G.turnOrder,
+      logEntries: []
+    };
+  }
+
+  // 抽象答題 UI(可重用給玩家答題、BOSS 回合前出題)
+  function _wbShowQuizUi(q, actorPos, turnNum, isPunishOnWrong){
+    // 過濾掉已有的
+    const old = document.getElementById('wb-quiz-overlay-active');
+    if(old) old.remove();
+
+    const ov = document.createElement('div');
+    ov.id = 'wb-quiz-overlay-active';
+    ov.className = 'wb-quiz-overlay';
+
+    // 取題目資料(主程式題庫格式:q.q / q.a / q.options / q.subject)
+    const qText = q.q || q.question || '(題目缺失)';
+    const subject = q.subject || q.cat || '隨機題目';
+    let options = q.options || q.opts;
+    let correctIdx = -1;
+    if(Array.isArray(options) && options.length > 0){
+      // 已是陣列形式
+      correctIdx = options.indexOf(q.a || q.answer);
+      if(correctIdx < 0 && typeof q.correct === 'number') correctIdx = q.correct;
+    }else{
+      // 單一答案(a 字串)+ 沒選項 → 簡化成「對 / 錯」
+      options = ['是', '否'];
+      correctIdx = (q.a === '是' || q.a === true || q.a === 'true') ? 0 : 1;
+    }
+
+    const G = window._wbHostG;
+    const myHero = G && G.p1[actorPos];
+    const heroName = myHero ? myHero.name : '英雄';
+    const players = window._wbNet.getSnapshot()?.players || [];
+    const playerName = players[actorPos]?.name || '玩家';
+
+    ov.innerHTML = `
+      <div class="wb-quiz-card">
+        <div class="wb-quiz-header">
+          <div class="wb-quiz-who">📚 ${playerName} 的 ${heroName} 答題中...</div>
+        </div>
+        <span class="wb-quiz-subject">${subject}</span>
+        <div class="wb-quiz-q-text">${qText}</div>
+        <div class="wb-quiz-options" id="wb-quiz-options"></div>
+        <div id="wb-quiz-result-box"></div>
+      </div>
+    `;
+    document.body.appendChild(ov);
+
+    const optsEl = document.getElementById('wb-quiz-options');
+    optsEl.innerHTML = options.map((opt, i) => {
+      const label = String.fromCharCode(65 + i);  // A B C D
+      return `<button class="wb-quiz-opt-btn" data-idx="${i}">
+        <b style="color:#88ccff;margin-right:8px;">${label}.</b>${opt}
+      </button>`;
+    }).join('');
+
+    // 監聽答題
+    optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const isCorrect = (idx === correctIdx);
+        // disable 所有按鈕
+        optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(b => {
+          b.disabled = true;
+          if(parseInt(b.dataset.idx) === correctIdx) b.classList.add('correct');
+        });
+        if(!isCorrect) btn.classList.add('wrong');
+
+        const resBox = document.getElementById('wb-quiz-result-box');
+        if(isCorrect){
+          resBox.innerHTML = `<div class="wb-quiz-result correct">✅ 答對!能量 +1</div>`;
+          _wbOnQuizCorrect(actorPos, turnNum);
+        }else{
+          const punishMsg = isPunishOnWrong ? `,扣 ${Math.floor((myHero?.hp||0) * 0.05)} HP(無視免傷)` : '';
+          resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯了${punishMsg}</div>`;
+          _wbOnQuizWrong(actorPos, turnNum, isPunishOnWrong);
+        }
+
+        // 2 秒後關閉
+        setTimeout(() => {
+          ov.remove();
+          // 答題完更新畫面 — 答對顯示行動按鈕、答錯自動跳過
+          if(isCorrect){
+            _wbRenderBattleScreen(_wbCurrentBattleSnap());
+          }else{
+            // 自動跳過
+            _wbUiSendAction('skip');
+          }
+        }, 2000);
+      });
+    });
+  }
+  window._wbShowQuizUi = _wbShowQuizUi;
+
+  // 答對處理
+  function _wbOnQuizCorrect(actorPos, turnNum){
+    const G = window._wbHostG;
+    if(!G) return;
+    const myHero = G.p1[actorPos];
+    if(!myHero) return;
+    // 能量 +1
+    myHero.burst = Math.min(myHero.burstMax || 10, (myHero.burst||0) + 1);
+    _wbMarkQuiz(turnNum, actorPos, true);
+
+    // 累計答對次數
+    const uid = window._gUserId || ('slot_' + actorPos);
+    window._wbCorrectCnt[uid] = (window._wbCorrectCnt[uid] || 0) + 1;
+    const cnt = window._wbCorrectCnt[uid];
+
+    // 答題獎勵:第 10 / 25 / 50 次 → BOSS 受 1% maxHp 傷害
+    const triggers = [10, 25, 50];
+    if(triggers.includes(cnt)){
+      const boss = G.p2[0];
+      if(boss){
+        const rewardDmg = Math.floor((boss.hp || 500000) * 0.01);
+        boss.curHp = Math.max(0, boss.curHp - rewardDmg);
+        // 答題獎勵不受護盾/天賦影響(這是「外部」傷害)
+        _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!答題獎勵對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
+        // 顯示獎勵 banner
+        _wbShowQuizRewardBanner(cnt, rewardDmg);
+        // 護盾觸發檢查
+        if(typeof window._wbCheckShieldTrigger === 'function'){
+          const triggered = window._wbCheckShieldTrigger(boss);
+          if(triggered) window._wbShowShieldTriggerHint(triggered, boss);
+        }
+      }
+    }
+  }
+
+  // 答錯處理
+  function _wbOnQuizWrong(actorPos, turnNum, isPunish){
+    const G = window._wbHostG;
+    if(!G) return;
+    const myHero = G.p1[actorPos];
+    if(!myHero) return;
+    if(isPunish){
+      // 強制扣 5% max HP(無視免傷)
+      const dmg = Math.floor((myHero.hp || 100) * 0.05);
+      myHero.curHp = Math.max(0, myHero.curHp - dmg);
+      _wbHostBroadcast([`❌ ${myHero.name} 答錯,受 ${dmg} HP 火山反噬(無視免傷)`]);
+    }
+    _wbMarkQuiz(turnNum, actorPos, false);
+
+    // 檢查是否全員陣亡
+    const stillAlive = G.p1.filter(h => h && h.curHp > 0);
+    if(stillAlive.length === 0){
+      _wbHostFinishBattle('p2');
+    }
+  }
+
+  // 答題獎勵橫幅
+  function _wbShowQuizRewardBanner(cnt, dmg){
+    const banner = document.createElement('div');
+    banner.style.cssText = `
+      position:fixed;top:30%;left:50%;transform:translate(-50%,-50%);z-index:10800;
+      background:linear-gradient(135deg,#ffd966 0%,#cc9933 100%);
+      color:#3a1a05;padding:18px 32px;border-radius:14px;
+      font-size:22px;font-weight:900;letter-spacing:2px;text-align:center;
+      box-shadow:0 0 36px rgba(255,217,102,0.9);
+      animation:wbQuizRewardPulse 1.2s ease-in-out infinite;
+      border:3px solid #fff;pointer-events:none;
+    `;
+    banner.innerHTML = `🎖 答題獎勵 × ${cnt}<br><span style="font-size:18px;">對 BOSS 造成 ${dmg.toLocaleString()} 傷害!</span>`;
+    document.body.appendChild(banner);
+    setTimeout(() => { try{ banner.remove(); }catch(_){} }, 2500);
+  }
+
+  // BOSS 開戰前先給全員出題(只在回合 1 開戰時跑一次)
+  window._wbStartBossOpening = async function(){
+    // 1. 咆哮
+    if(typeof window._wbBossOpeningRoar === 'function'){
+      window._wbBossOpeningRoar();
+    }
+    // 等咆哮播完 3.5 秒
+    await new Promise(r => setTimeout(r, 3500));
+
+    // 2. BOSS 給全員出 1 題(集體答)
+    // 為了簡化,只跑一題給「房主」答,代表全體
+    //   答對 → 全體 burst+1
+    //   答錯 → 全體受 5% maxHp 傷害(無視免傷,強制扣血)
+    const q = (typeof window._wbPickRandomQuestion === 'function') ? window._wbPickRandomQuestion() : null;
+    if(!q){
+      console.warn('[WB] 開戰題無法取得,跳過');
+      return;
+    }
+    _wbShowBossOpeningQuiz(q);
+  };
+
+  function _wbShowBossOpeningQuiz(q){
+    const G = window._wbHostG;
+    if(!G) return;
+    const ov = document.createElement('div');
+    ov.className = 'wb-quiz-overlay';
+    ov.id = 'wb-boss-opening-quiz';
+
+    const qText = q.q || q.question || '(題目缺失)';
+    const subject = q.subject || q.cat || '隨機題目';
+    let options = q.options || q.opts;
+    let correctIdx = -1;
+    if(Array.isArray(options) && options.length > 0){
+      correctIdx = options.indexOf(q.a || q.answer);
+      if(correctIdx < 0 && typeof q.correct === 'number') correctIdx = q.correct;
+    }else{
+      options = ['是', '否'];
+      correctIdx = (q.a === '是' || q.a === true || q.a === 'true') ? 0 : 1;
+    }
+
+    ov.innerHTML = `
+      <div class="wb-quiz-card" style="border-color:#ff8866;">
+        <div style="font-size:24px;color:#ff8866;font-weight:900;letter-spacing:2px;
+          text-align:center;margin-bottom:14px;">
+          🐉 BOSS 開戰挑戰題!
+        </div>
+        <div style="font-size:14px;color:#ffcc99;text-align:center;margin-bottom:14px;">
+          答對:全體能量 +1  /  答錯:全體受 5% maxHp 傷害(無視免傷)
+        </div>
+        <span class="wb-quiz-subject">${subject}</span>
+        <div class="wb-quiz-q-text">${qText}</div>
+        <div class="wb-quiz-options" id="wb-boss-opening-options"></div>
+        <div id="wb-boss-opening-result"></div>
+      </div>
+    `;
+    document.body.appendChild(ov);
+
+    const optsEl = document.getElementById('wb-boss-opening-options');
+    optsEl.innerHTML = options.map((opt, i) => {
+      const label = String.fromCharCode(65 + i);
+      return `<button class="wb-quiz-opt-btn" data-idx="${i}">
+        <b style="color:#ff8866;margin-right:8px;">${label}.</b>${opt}
+      </button>`;
+    }).join('');
+
+    optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const isCorrect = (idx === correctIdx);
+        optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(b => {
+          b.disabled = true;
+          if(parseInt(b.dataset.idx) === correctIdx) b.classList.add('correct');
+        });
+        if(!isCorrect) btn.classList.add('wrong');
+
+        const resBox = document.getElementById('wb-boss-opening-result');
+        if(isCorrect){
+          resBox.innerHTML = `<div class="wb-quiz-result correct">✅ 全員能量 +1!</div>`;
+          G.p1.forEach(h => {
+            if(h){
+              h.burst = Math.min(h.burstMax || 10, (h.burst||0) + 1);
+            }
+          });
+        }else{
+          resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯!全員受 5% HP 傷害</div>`;
+          G.p1.forEach(h => {
+            if(h && h.curHp > 0){
+              const dmg = Math.floor((h.hp || 100) * 0.05);
+              h.curHp = Math.max(0, h.curHp - dmg);
+            }
+          });
+        }
+
+        setTimeout(() => {
+          ov.remove();
+          _wbHostBroadcast([isCorrect ? '🎯 開戰題答對!全員能量 +1' : '💔 開戰題答錯,全員受傷']);
+        }, 2200);
+      });
+    });
+  }
+
+  // ★ v3.0 — 答題討論泡泡發送(隊友回合/BOSS回合都可用,即使玩家倒下也能用)
+  //   1.5 秒內只能發一次(避免洗版)
+  window._wbUiSendDiscussion = async function(key){
+    const now = Date.now();
+    if(window._wbLastDiscussionTs && (now - window._wbLastDiscussionTs) < 1500) return;
+    window._wbLastDiscussionTs = now;
+    if(window._wbNet && window._wbNet.sendQuickEmoji){
+      window._wbNet.sendQuickEmoji(key);
+    }
+    // 練習模式:沒有真連線,直接本地顯示自己的氣泡
+    if(window._wbSoloPracticeMode){
+      _wbShowCardBubble(0, _wbDiscussionTextLocal(key));
+    }
+  };
+
+  // 練習模式用 — 自己看到自己的氣泡
+  function _wbDiscussionTextLocal(key){
+    const MAP = {
+      ans_a:   '🅰 我覺得答案是 A',
+      ans_b:   '🅱 我覺得答案是 B',
+      ans_c:   '🅲 我覺得答案是 C',
+      ans_d:   '🅳 我覺得答案是 D',
+      ans_idk: '🤔 我也不確定答案...',
+      cheerup: '💪 加油你可以的!',
+    };
+    return MAP[key] || key;
+  }
+
+  // 在指定 slot 的角色卡頂端浮現對話泡泡(3.5 秒後消失)
+  function _wbShowCardBubble(slotIdx, text){
+    const heroRow = document.getElementById('wb-battle-heroes-row');
+    if(!heroRow) return;
+    const cards = heroRow.querySelectorAll('.wb-hero-battle-card');
+    const card = cards[slotIdx];
+    if(!card) return;
+    // 移除舊泡泡
+    const oldBubble = card.querySelector('.wb-card-bubble');
+    if(oldBubble) oldBubble.remove();
+    // 加新泡泡
+    const bubble = document.createElement('div');
+    bubble.className = 'wb-card-bubble';
+    bubble.textContent = text;
+    card.appendChild(bubble);
+    // 3.5 秒後淡出
+    setTimeout(() => {
+      bubble.classList.add('fade-out');
+      setTimeout(() => { try{ bubble.remove(); }catch(_){} }, 400);
+    }, 3500);
+  }
+  window._wbShowCardBubble = _wbShowCardBubble;
+
   window._wbNet.on('onChatMessage', function(msg){
+    // ★ v3.0 — 答題討論訊息:浮現在發送者的角色卡頂端
+    if(msg.isDiscussion && typeof msg.slotIdx === 'number'){
+      _wbShowCardBubble(msg.slotIdx, msg.text);
+      return;
+    }
+    // 一般快捷表情:維持右下浮現
     const popup = document.createElement('div');
     popup.className = 'wb-emoji-popup';
     popup.textContent = msg.name + ': ' + msg.text;
@@ -1203,7 +2215,7 @@
     let rewards = [];
     if(isWin){
       coinsEarned = 3000;
-      rewards.push(`✅ 擊敗玉山火龍王: +3000 知識幣`);
+      rewards.push(`✅ 擊敗維蘇威火山龍王: +3000 知識幣`);
       const dmgBonus = Math.min(2000, Math.floor((myContribution.dmgDealt||0) / 10));
       if(dmgBonus > 0){
         coinsEarned += dmgBonus;
@@ -1227,7 +2239,7 @@
       if(isWin){
         _medalStats.wbWins = (_medalStats.wbWins || 0) + 1;
         _medalStats.wbBossKills = _medalStats.wbBossKills || {};
-        _medalStats.wbBossKills['yushan_fire_dragon'] = (_medalStats.wbBossKills['yushan_fire_dragon'] || 0) + 1;
+        _medalStats.wbBossKills['vesuvius_fire_dragon'] = (_medalStats.wbBossKills['vesuvius_fire_dragon'] || 0) + 1;
       }
       // 嘗試解鎖獎章
       try{
@@ -1248,25 +2260,69 @@
   };
 
   // ════════════════════════════════════════════════════════════════════
-  // 單人離線測試模式 — 不連 Firebase 直接打 BOSS
+  // 單人練習模式 — 不連 Firebase 直接打 BOSS,沒有獎勵但記錄最高總傷害
   // ────────────────────────────────────────────────────────────────────
-  // 用途:確認戰鬥引擎能跑、技能能用、結算能跳。完全不需要房間/網路。
-  // 流程:
-  //   1. 跳過大廳/選角,直接給玩家「劍士」當主角,3 個 AI 替補
-  //   2. 進入戰鬥畫面,玩家可以普攻/技能/爆發
-  //   3. 戰鬥結束跳結算
+  // 用途:讓玩家測試陣容、技能、了解戰鬥節奏。每次練習結束記錄該場玩家
+  //       (0 號槽)的總傷害,如果換陣容嘗試破紀錄則保留最高傷害紀錄。
+  // 紀錄存在 localStorage,key = wbSoloBest_{bossId}
   // ════════════════════════════════════════════════════════════════════
+
+  // 讀取最高紀錄並更新按鈕顯示
+  function _wbUpdateSoloBestDisplay(){
+    try{
+      const bossId = 'vesuvius_fire_dragon';
+      const raw = localStorage.getItem('wbSoloBest_' + bossId);
+      if(!raw) return;
+      const rec = JSON.parse(raw);
+      if(!rec || !rec.dmg) return;
+      const box = document.getElementById('wb-solo-best-record');
+      const dmgSpan = document.getElementById('wb-solo-best-dmg');
+      if(box && dmgSpan){
+        box.style.display = 'block';
+        const heroLabel = rec.heroes ? `(${rec.heroes.join('・')})` : '';
+        dmgSpan.innerHTML = `<span style="color:#ffd966;font-weight:900;">${rec.dmg.toLocaleString()}</span> 點 ${heroLabel}`;
+      }
+    }catch(_){}
+  }
+  // 進入主程式時就刷一次
+  setTimeout(_wbUpdateSoloBestDisplay, 200);
+  // 暴露給其他地方手動觸發更新
+  window._wbUpdateSoloBestDisplay = _wbUpdateSoloBestDisplay;
+
+  // 儲存紀錄(只儲存比原本高的)
+  function _wbSaveSoloBest(dmg, heroes, elapsed, killed){
+    try{
+      const bossId = 'vesuvius_fire_dragon';
+      const key = 'wbSoloBest_' + bossId;
+      const oldRaw = localStorage.getItem(key);
+      const old = oldRaw ? JSON.parse(oldRaw) : null;
+      // 只有比原本高才寫入
+      if(old && old.dmg >= dmg) return false;
+      const rec = {
+        dmg: dmg,
+        heroes: heroes,
+        elapsed: elapsed,
+        killed: killed,
+        ts: Date.now(),
+      };
+      localStorage.setItem(key, JSON.stringify(rec));
+      _wbUpdateSoloBestDisplay();
+      return true;
+    }catch(e){ console.warn('[WB-Solo] 儲存紀錄失敗', e); return false; }
+  }
+  window._wbSaveSoloBest = _wbSaveSoloBest;
+
   window._wbUiSoloTest = function(){
     if(typeof newHero !== 'function'){
-      alert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始測試');
+      alert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始練習');
       return;
     }
-    if(typeof HERO_DB === 'undefined' || !HERO_DB['玉山火龍王']){
-      alert('⚠ HERO_DB 中找不到玉山火龍王 — world-boss.js 可能還沒掛載資料\n請等 1 秒後再試,或重新整理頁面');
+    if(typeof HERO_DB === 'undefined' || !HERO_DB['維蘇威火山龍王']){
+      alert('⚠ HERO_DB 中找不到維蘇威火山龍王 — world-boss.js 可能還沒掛載資料\n請等 1 秒後再試,或重新整理頁面');
       return;
     }
 
-    // 建立 4 個玩家槽(全部 AI),BOSS 是玉山火龍王
+    // 建立 4 個玩家槽(全部 AI),BOSS 是維蘇威火山龍王
     const heroPool = ['劍士','祭司','聖騎士','火法師'];  // 簡單組合:輸出+補+坦+輸出
     const p1 = [];
     for(let i = 0; i < 4; i++){
@@ -1275,16 +2331,24 @@
       h.burstMax = h.burstMax || 10;
       p1.push(h);
     }
-    const boss = newHero('玉山火龍王', 'p2', 0);
+    const boss = newHero('維蘇威火山龍王', 'p2', 0);
+    boss._wbShieldHistory = {};
+    boss._wbShields = null;
     const p2 = [boss, null, null, null];
 
+    // ★ v3.1 — BOSS 永遠優先
     const all = [];
+    all.push({ side:'p2', pos:0, spd: 999 });
     p1.forEach((h, i) => { if(h) all.push({ side:'p1', pos:i, spd: h.spd || 0 }); });
-    all.push({ side:'p2', pos:0, spd: boss.spd || 0 });
-    all.sort((a, b) => b.spd - a.spd);
+    const p1OrderSolo = all.slice(1).sort((a, b) => b.spd - a.spd);
+    all.length = 1;
+    all.push(...p1OrderSolo);
 
     window._wbHostG = { p1: p1, p2: p2, turn: 1, turnOrder: all, currentActorIdx: 0 };
     window._wbInWorldBossMode = true;
+    window._wbSoloPracticeMode = true;
+    window._wbQuizState = {};
+    window._wbCorrectCnt = {};
 
     // 模擬 _wbNet snapshot(讓 UI 渲染能讀到「玩家」資料)
     const fakePlayers = heroPool.map((name, i) => ({
@@ -1297,19 +2361,24 @@
     const realWbNet = window._wbNet;
     window._wbNet = {
       getSnapshot: () => ({ players: fakePlayers, meta: { hostUid: fakePlayers[0].uid, status: 'fighting' } }),
-      getRoomId:   () => 'SOLO',
+      getRoomId:   () => '練習',
       isHost:      () => true,
       getMySlot:   () => 0,
       hostPushBattleState: function(newState){
-        // 直接觸發 onBattleUpdate
         if(newState.ended){
-          this._listeners.onRoomClosed && this._listeners.onRoomClosed({
-            reason: 'battle_complete',
-            winner: newState.winner,
-            finalBattle: { p1: newState.p1, p2: newState.p2, turn: newState.turn,
-                           currentActorIdx: newState.currentActorIdx, turnOrder: newState.turnOrder },
+          // 結束:儲存紀錄
+          const myUid = fakePlayers[0].uid;
+          const myDmg = (window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
+          const isWin = newState.winner === 'players';
+          const isNewRec = _wbSaveSoloBest(myDmg, heroPool, Date.now() - window._wbSoloStartTs, isWin);
+
+          // 顯示練習模式專屬結算
+          _wbShowSoloPracticeResult({
+            dmg: myDmg,
+            heroes: heroPool,
             elapsed: Date.now() - window._wbSoloStartTs,
-            contributions: window._wbSoloContrib || {},
+            killed: isWin,
+            isNewRecord: isNewRec,
           });
         }else{
           this._listeners.onBattleUpdate && this._listeners.onBattleUpdate({
@@ -1329,6 +2398,13 @@
         window._wbSoloContrib = window._wbSoloContrib || {};
         window._wbSoloContrib[uid] = window._wbSoloContrib[uid] || {};
         window._wbSoloContrib[uid][key] = (window._wbSoloContrib[uid][key] || 0) + val;
+        // ★ 練習模式:即時更新傷害顯示
+        if(window._wbSoloPracticeMode && uid === fakePlayers[0].uid && key === 'dmgDealt'){
+          const dmgDisplay = document.getElementById('wb-solo-cur-dmg-display');
+          if(dmgDisplay){
+            dmgDisplay.textContent = window._wbSoloContrib[uid][key].toLocaleString();
+          }
+        }
       },
       _listeners: {},
       on: function(e, cb){ this._listeners[e] = cb; },
@@ -1336,10 +2412,19 @@
       sendQuickEmoji: () => {},
       QUICK_EMOJI: realWbNet ? realWbNet.QUICK_EMOJI : {},
       leaveRoom: async function(){
-        // 還原 _wbNet
+        // 練習模式:中途離開也記錄當下傷害
+        if(window._wbSoloPracticeMode){
+          const myUid = fakePlayers[0].uid;
+          const myDmg = (window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
+          if(myDmg > 0){
+            _wbSaveSoloBest(myDmg, heroPool, Date.now() - window._wbSoloStartTs, false);
+          }
+        }
+        // 還原
         window._wbNet = realWbNet;
         window._wbHostG = null;
         window._wbInWorldBossMode = false;
+        window._wbSoloPracticeMode = false;
         document.getElementById('wb-lobby-overlay').style.display = 'none';
       },
     };
@@ -1351,7 +2436,24 @@
     document.getElementById('wb-picking-area').style.display = 'none';
     document.getElementById('wb-battle-area').classList.add('show');
     document.getElementById('wb-emoji-bar-real').style.display = 'flex';
-    document.getElementById('wb-room-status-text').textContent = '🧪 單人測試';
+    document.getElementById('wb-room-status-text').textContent = '🧪 練習模式';
+
+    // ★ 加上「練習模式」即時傷害顯示橫條
+    const battleArea = document.getElementById('wb-battle-area');
+    if(battleArea && !document.getElementById('wb-solo-cur-dmg-bar')){
+      const dmgBar = document.createElement('div');
+      dmgBar.id = 'wb-solo-cur-dmg-bar';
+      dmgBar.style.cssText = `
+        position:fixed;top:14px;left:50%;transform:translateX(-50%);
+        z-index:10000;background:rgba(20,40,30,0.95);border:2px solid #5dcaa5;
+        border-radius:14px;padding:8px 18px;display:flex;align-items:center;gap:12px;
+        box-shadow:0 0 24px rgba(93,202,165,0.5);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;`;
+      dmgBar.innerHTML = `
+        <span style="font-size:14px;color:#5dcaa5;font-weight:700;letter-spacing:1px;">🧪 練習模式・本場總傷</span>
+        <span id="wb-solo-cur-dmg-display" style="font-size:22px;color:#ffe066;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>
+      `;
+      document.body.appendChild(dmgBar);
+    }
 
     // 渲染初始畫面
     window._wbSoloStartTs = Date.now();
@@ -1361,15 +2463,111 @@
     });
     _wbRenderPlayerSlots(fakePlayers);
 
-    // 如果第一個是 BOSS,代打;否則等玩家操作
-    if(all[0].side === 'p2'){
-      setTimeout(() => _wbHostExecuteBossTurn(0), 1000);
-    }else if(all[0].side === 'p1' && all[0].pos !== 0){
-      // AI 隊友自動行動(輪到我以外的玩家)
-      _wbSoloAutoAct();
+    // ★ v3.1 — 練習模式也跑咆哮 + 開戰題
+    if(typeof window._wbStartBossOpening === 'function'){
+      window._wbStartBossOpening().then(() => {
+        // 開場結束 → BOSS 第一回合
+        if(all[0].side === 'p2'){
+          setTimeout(() => _wbHostExecuteBossTurn(0), 1000);
+        }else if(all[0].side === 'p1' && all[0].pos !== 0){
+          _wbSoloAutoAct();
+        }
+      });
+    }else{
+      // Fallback:直接開戰
+      if(all[0].side === 'p2'){
+        setTimeout(() => _wbHostExecuteBossTurn(0), 1000);
+      }else if(all[0].side === 'p1' && all[0].pos !== 0){
+        _wbSoloAutoAct();
+      }
     }
-    console.log('[WB-Solo] ✅ 單人測試啟動,你的角色是「劍士」(0 號槽)');
+    console.log('[WB-Solo] ✅ 練習模式啟動,你的角色是「劍士」(0 號槽)');
   };
+
+  // 練習模式結算彈窗
+  function _wbShowSoloPracticeResult(info){
+    document.getElementById('wb-lobby-overlay').style.display = 'none';
+    document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+    if(dmgBar) dmgBar.remove();
+
+    const minutes = Math.floor(info.elapsed / 60000);
+    const seconds = Math.floor((info.elapsed % 60000) / 1000);
+    const timeStr = `${minutes}:${String(seconds).padStart(2,'0')}`;
+
+    const ov = document.createElement('div');
+    ov.id = 'wb-solo-practice-result';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);';
+    ov.innerHTML = `
+      <div style="max-width:520px;width:100%;
+        background:linear-gradient(160deg,#162825,#0a1a18);
+        border:3px solid ${info.isNewRecord ? '#ffd966' : '#5dcaa5'};border-radius:18px;padding:28px 24px;
+        box-shadow:0 0 60px ${info.isNewRecord ? 'rgba(255,217,102,0.5)' : 'rgba(93,202,165,0.4)'};
+        text-align:center;color:#e8ffd8;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
+        ${info.isNewRecord ?
+          `<div style="font-size:28px;margin-bottom:10px;animation:newHeroSparkle 1s ease-in-out infinite;">🏆✨🏆</div>
+           <div style="font-size:24px;color:#ffd966;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+             text-shadow:0 0 12px rgba(255,217,102,0.7);">新紀錄!</div>` :
+          `<div style="font-size:28px;margin-bottom:10px;">🧪</div>
+           <div style="font-size:22px;color:#5dcaa5;font-weight:900;letter-spacing:2px;margin-bottom:6px;">練習結束</div>`}
+
+        <div style="font-size:14px;color:#aac;margin-bottom:20px;">
+          ${info.killed ? '✅ 成功擊敗維蘇威火山龍王!' : '⚔ 戰鬥結束(未擊敗 BOSS)'}
+        </div>
+
+        <div style="background:rgba(255,217,102,0.12);border:2px solid rgba(255,217,102,0.5);
+          border-radius:12px;padding:18px;margin-bottom:18px;">
+          <div style="font-size:14px;color:#dda;letter-spacing:1px;margin-bottom:6px;">本場你的總傷害</div>
+          <div style="font-size:42px;color:#ffe066;font-weight:900;letter-spacing:2px;
+            text-shadow:0 0 14px rgba(255,220,80,0.7);">
+            ${info.dmg.toLocaleString()}
+          </div>
+          <div style="font-size:13px;color:#aaa;margin-top:6px;">用時 ${timeStr}</div>
+        </div>
+
+        <div style="background:rgba(40,60,80,0.4);border-left:3px solid rgba(120,180,255,0.6);
+          border-radius:8px;padding:12px 14px;margin-bottom:18px;text-align:left;">
+          <div style="font-size:13px;color:#aaccff;font-weight:700;margin-bottom:6px;">⚙ 本場陣容</div>
+          <div style="font-size:14px;color:#ccd;line-height:1.7;">
+            ${info.heroes.map(h => `<b style="color:#ffe;">${h}</b>`).join('・')}
+          </div>
+        </div>
+
+        <div style="background:rgba(40,30,60,0.4);border-left:3px solid rgba(200,160,255,0.6);
+          border-radius:8px;padding:12px 14px;margin-bottom:20px;text-align:left;font-size:13px;
+          color:#ddc;line-height:1.7;">
+          💡 練習模式沒有獎勵也不會發獎章,但會幫你記錄最高傷害紀錄。<br>
+          換不同陣容組合再試一次,挑戰自己的紀錄!
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button onclick="document.getElementById('wb-solo-practice-result').remove();_wbUiSoloTest();"
+            style="background:linear-gradient(135deg,#5dcaa5,#3a8a72);color:#fff;
+            border:2px solid rgba(140,230,200,0.7);border-radius:10px;padding:10px 22px;
+            font-size:16px;font-weight:800;cursor:pointer;letter-spacing:1px;
+            box-shadow:0 4px 14px rgba(93,202,165,0.4);">
+            🔄 再來一場
+          </button>
+          <button onclick="document.getElementById('wb-solo-practice-result').remove();
+            if(typeof location!=='undefined') location.reload();"
+            style="background:rgba(60,60,80,0.6);color:#fff;
+            border:2px solid rgba(150,150,180,0.6);border-radius:10px;padding:10px 22px;
+            font-size:16px;font-weight:800;cursor:pointer;letter-spacing:1px;">
+            🏠 返回首頁
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(ov);
+
+    // 還原 _wbNet
+    if(window._wbSoloPracticeMode){
+      window._wbInWorldBossMode = false;
+      window._wbSoloPracticeMode = false;
+    }
+  }
+  window._wbShowSoloPracticeResult = _wbShowSoloPracticeResult;
+
 
   // AI 替補自動行動 (每 1.2s 自動進行)
   function _wbSoloAutoAct(){
@@ -1378,16 +2576,39 @@
     const cur = G.turnOrder[G.currentActorIdx];
     if(!cur) return;
     if(cur.side === 'p1' && cur.pos !== 0){
-      // AI 行動 — 隨機選技能/普攻
-      const actions = ['atk', 'atk', 's1', 's2'];
-      const action = { type: actions[Math.floor(Math.random()*actions.length)] };
-      setTimeout(() => {
-        if(typeof window._wbHostExecuteAction === 'function'){
-          window._wbHostExecuteAction(cur.pos, action);
-          // 鏈式繼續判斷下一個
-          setTimeout(_wbSoloAutoAct, 1200);
+      // ★ v3.1 — AI 模擬答題:70% 機率答對行動,30% 答錯跳過 + 受 5% 傷害
+      const qKey = '__q_t' + G.turn + '_p' + cur.pos;
+      window._wbQuizState = window._wbQuizState || {};
+      if(!window._wbQuizState[qKey]){
+        // 還沒「答過題」 — 模擬答題
+        const aiCorrect = Math.random() < 0.70;
+        if(aiCorrect){
+          // 答對:能量 +1,跑答題獎勵
+          if(typeof _wbOnQuizCorrect === 'function'){
+            _wbOnQuizCorrect(cur.pos, G.turn);
+          }
+          // 等 300ms 再行動
+          setTimeout(() => {
+            const actions = ['atk', 'atk', 's1', 's2'];
+            const action = { type: actions[Math.floor(Math.random()*actions.length)] };
+            if(typeof window._wbHostExecuteAction === 'function'){
+              window._wbHostExecuteAction(cur.pos, action);
+              setTimeout(_wbSoloAutoAct, 1200);
+            }
+          }, 300);
+        }else{
+          // 答錯 — 受 5% 傷害 + 跳過
+          if(typeof _wbOnQuizWrong === 'function'){
+            _wbOnQuizWrong(cur.pos, G.turn, true);
+          }
+          setTimeout(() => {
+            if(typeof window._wbHostExecuteAction === 'function'){
+              window._wbHostExecuteAction(cur.pos, { type: 'skip' });
+              setTimeout(_wbSoloAutoAct, 1200);
+            }
+          }, 600);
         }
-      }, 800);
+      }
     }
   }
   // 玩家送出 action 後也要繼續推進 AI 行動

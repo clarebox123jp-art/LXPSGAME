@@ -9,12 +9,12 @@
  *
  * 載入後本檔會「自動」做以下事情:
  *   1. 把元素龍清單、掉落、隊伍排名獎勵掛到 window 上
- *   2. 把玉山火龍王的 HERO_DB / BURST_DB / HERO_TRAIT / HERO_LORE
+ *   2. 把維蘇威火山龍王的 HERO_DB / BURST_DB / HERO_TRAIT / HERO_LORE
  *      用 Object.assign 合併到主程式既有的全域物件
- *   3. 把玉山火龍王立繪 URL 補進 HERO_IMGS
+ *   3. 把維蘇威火山龍王立繪 URL 補進 HERO_IMGS
  *   4. 把 16 枚世界 BOSS 獎章 + 13 個統計欄位安全地合併到 ALL_MEDALS /
  *      _medalStats (用「補齊」模式,不會覆蓋既有資料)
- *   5. 攔截 execSkill 處理玉山火龍王 3 招(透過 window._wbHookExecSkill)
+ *   5. 攔截 execSkill 處理維蘇威火山龍王 3 招(透過 window._wbHookExecSkill)
  *   6. 提供 _openWorldBossEntry / _wbRefreshBlessingBanner 入口函式
  *      (按鈕 onclick 會呼叫到)
  *   7. 點按鈕時才 fetch('world-boss-ui.html') 注入 UI Overlay
@@ -32,8 +32,8 @@
   // 1. 元素龍清單 (8 隻輪替,全伺服器共享 HP)
   // ───────────────────────────────────────────────────────────────────
   window.WORLD_BOSS_LINEUP = [
-    { id:'yushan_fire_dragon',     name:'玉山火龍王',    element:'fire',  maxHp:800000,  scene:'玉山火口',
-      desc:'沉睡於玉山火口的古老火龍「炎之翼」,每三百年甦醒一次' },
+    { id:'vesuvius_fire_dragon',     name:'維蘇威火山龍王',    element:'fire',  maxHp:500000,  scene:'維蘇威火山口',
+      desc:'沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」,西元 79 年龐貝大爆發即是牠的甦醒' },
     { id:'shenhai_water_dragon',   name:'深海冰龍王',    element:'water', maxHp:900000,  scene:'太平洋深淵',
       desc:'蛰伏於馬里亞納海溝的冰龍,以絕對零度凍結整片海洋' },
     { id:'taifeng_wind_dragon',    name:'風雷雲龍王',    element:'wind',  maxHp:850000,  scene:'颱風眼',
@@ -54,7 +54,7 @@
   // 2. 掉落物 (依個人傷害%分級)
   // ───────────────────────────────────────────────────────────────────
   window._WORLD_BOSS_DROPS = {
-    yushan_fire_dragon: {
+    vesuvius_fire_dragon: {
       treasure: { id:'wb_dragon_scale_fire',  icon:'🔥', name:'火龍鱗甲',  color:'#ff6644', price:12000, rarity:'mythical' },
       bonusItems: [
         { id:'wb_dragon_fang_fire',  icon:'🦷', name:'火龍獠牙', price:4500, rate:0.30 },
@@ -90,34 +90,35 @@
   window._WORLD_BOSS_TEAM_REWARDS = {
     legendary: {
       rankRange: '1', tier: '🏆 傳奇',
-      coins: 50000, treasureChance: 1.0, treasureRarity: 'mythical',
-      summonCrystals: 5, titleTemplate: '屠龍者・{bossName}', expScrolls: 5,
+      coins: 100000, treasureChance: 1.0, treasureRarity: 'mythical',
+      summonCrystals: 10, titleTemplate: '屠龍者・{bossName}', expScrolls: 5,
     },
     epic: {
-      rankRange: '2-10', tier: '🥈 史詩',
-      coins: 25000, treasureChance: 1.0, treasureRarity: 'mythical',
-      summonCrystals: 3, expScrolls: 3,
+      rankRange: '2-5', tier: '🥈 史詩',
+      coins: 60000, treasureChance: 1.0, treasureRarity: 'mythical',
+      summonCrystals: 7, expScrolls: 3,
     },
     rare: {
-      rankRange: '11-50', tier: '🥉 稀有',
-      coins: 12000, treasureChance: 1.0, treasureRarity: 'legendary',
-      summonCrystals: 1, expScrolls: 2,
+      rankRange: '6-10', tier: '🥉 稀有',
+      coins: 30000, treasureChance: 0.60, treasureRarity: 'legendary',
+      summonCrystals: 5, expScrolls: 2,
     },
     normal: {
-      rankRange: '51-200', tier: '📦 普通',
-      coins: 6000, treasureChance: 0.30, treasureFragments: 3, expScrolls: 1,
+      rankRange: '11-20', tier: '📦 普通',
+      coins: 15000, treasureChance: 0.30, treasureRarity: 'legendary',
+      summonCrystals: 3, expScrolls: 1,
     },
     memorial: {
-      rankRange: '200+', tier: '🎁 紀念',
-      coins: 2000, expScrolls: 1,
+      rankRange: '21+', tier: '🎁 參加獎',
+      coins: 7000, summonCrystals: 1, expScrolls: 1,
     },
   };
 
   window._wbGetRewardTier = function(rank){
     if(rank === 1)        return 'legendary';
-    if(rank <= 10)        return 'epic';
-    if(rank <= 50)        return 'rare';
-    if(rank <= 200)       return 'normal';
+    if(rank <= 5)         return 'epic';
+    if(rank <= 10)        return 'rare';
+    if(rank <= 20)        return 'normal';
     return 'memorial';
   };
 
@@ -127,16 +128,16 @@
   };
 
   // ───────────────────────────────────────────────────────────────────
-  // 5. 玉山火龍王資料 — 自動 Object.assign 掛到主程式既有 DB
+  // 5. 維蘇威火山龍王資料 — 自動 Object.assign 掛到主程式既有 DB
   //    (主程式啟動完成後才掛,避免初始化順序問題)
   // ───────────────────────────────────────────────────────────────────
   function _wbInstallHeroData(){
-    // HERO_DB:基礎屬性
+    // HERO_DB:基礎屬性(★5 BOSS,總和 124,符合世界 BOSS 規格)
     if(typeof window.HERO_DB === 'object' && window.HERO_DB){
       Object.assign(window.HERO_DB, {
-        '玉山火龍王':{hp:28000,atk:42,sp:55,spd:12,exp:600,
-          s1:{n:'業火灼燒',c:5,d:'特技90%全體火屬性傷害,對HP最低2人附加燃燒3回合',fd:'噴出無盡業火灼燒全場!用特技值的 90% 對全體對手造成火屬性傷害,並對 HP 最低的 2 名對手附加「燃燒」狀態 3 回合(行動前後各損失 6 HP)。'},
-          s2:{n:'龍吼震懾',c:6,d:'攻擊110%全體火屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用攻擊值的 110% 對全體對手造成火屬性傷害,每名對手有 50% 機率「眩暈」1 回合不能動。'}
+        '維蘇威火山龍王':{hp:500000,atk:49,sp:50,spd:25,exp:1500,star:5,isWorldBoss:true,
+          s1:{n:'業火灼燒',c:4,d:'特技100%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 100% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
+          s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
         },
       });
     }
@@ -144,76 +145,77 @@
     // BURST_DB:爆發技
     if(typeof window.BURST_DB === 'object' && window.BURST_DB){
       Object.assign(window.BURST_DB, {
-        '玉山火龍王': {n:'天崩之炎', d:'全體當前HP 80%傷害(可被無敵/免疫/盾減免),自身回血5%', fd:'三百年怒火一次釋放!對全體對手造成當前 HP 80% 的火屬性傷害(無視防禦,可被「無敵」/「免疫」完全擋下,「護盾」減半),並消耗目標身上的盾;自身回復最大 HP 的 5%。'},
+        '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 90%傷害(可被無敵/免疫擋下,護盾減半),附加燃燒3回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 90% 的火屬性傷害(無視防禦,可被「無敵」/「免疫」完全擋下,「護盾」減半),並對全體存活對手附加「燃燒」狀態 3 回合。'},
       });
     }
 
     // HERO_TRAIT:天賦
     if(typeof window.HERO_TRAIT === 'object' && window.HERO_TRAIT){
       Object.assign(window.HERO_TRAIT, {
-        '玉山火龍王': { name:'炎之意志', icon:'🐉', desc:'單次受到的傷害不超過最大 HP 的 4%;HP 過半啟動四元素護盾', fd:'三百年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 4%。HP 降至 50% 時進入第二階段,身上浮現四元素護盾,需要對應屬性(火/水/土/風)的攻擊各打 3 次裂痕才能打破。' },
+        '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限為最大 HP 的 1%;HP 過半啟動四元素護盾(減傷 80%,無視有利狀態的攻擊也無法打穿)', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。HP 降至 50% 時進入第二階段,身上浮現四元素護盾:所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 水 / 土 / 風)的攻擊各打 3 次裂痕,才能完整破除護盾恢復正常傷害。' },
       });
     }
 
-    // HERO_LORE:背景
+    // HERO_LORE:背景(義大利那不勒斯/龐貝史實版)
     if(typeof window.HERO_LORE === 'object' && window.HERO_LORE){
       Object.assign(window.HERO_LORE, {
-        '玉山火龍王': '沉睡於玉山火口的古老火龍「炎之翼」,每三百年甦醒一次。日治時期最後一次出現是 1923 年關東大地震當晚,牠在玉山頂端長嘯三聲後鑽回火口。學者認為牠的火焰是台灣造山運動的能量源。近年地殼活動頻繁,火龍王再度甦醒,需要四位英雄前往封印。',
+        '維蘇威火山龍王': '沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」。西元 79 年 8 月 24 日,牠首次甦醒咆哮,使整座火山噴發兩天兩夜,將山下的羅馬古城「龐貝」與「赫庫蘭尼姆」完全掩埋於火山灰下,並造成兩萬餘人喪命。中世紀的 1631 年牠再度被驚醒,造成 3,000 人罹難。20 世紀最後一次是 1944 年二戰末期,美軍轟炸鄰近地區時意外驚動,牠咆哮三日後返回火山口。2026 年,因近年地殼活動頻繁,火龍王第四度甦醒,需要四位英雄遠渡重洋前往那不勒斯封印,以免人類再蒙浩劫。',
       });
     }
 
     // HERO_BIO:簡介 (給卡片用)
     if(typeof window.HERO_BIO === 'object' && window.HERO_BIO){
       Object.assign(window.HERO_BIO, {
-        '玉山火龍王': '沉睡於玉山火口的古老火龍,需要 4 位英雄聯手才能封印的世界 BOSS。',
+        '維蘇威火山龍王': '沉睡於義大利維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。需要 4 位英雄聯手才能封印的世界 BOSS。',
       });
     }
 
     // HERO_IMGS:立繪
     if(typeof window.HERO_IMGS === 'object' && window.HERO_IMGS){
-      window.HERO_IMGS['玉山火龍王'] =
+      window.HERO_IMGS['維蘇威火山龍王'] =
         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
-        encodeURIComponent('玉山火龍王.png');
+        encodeURIComponent('維蘇威火山龍王.png');
     }
 
     // MONSTER_AVTR / MONSTER_ELEMENT (用於圖鑑頁面)
     if(typeof window.MONSTER_AVTR === 'object' && window.MONSTER_AVTR){
-      window.MONSTER_AVTR['玉山火龍王'] = '🐉';
+      window.MONSTER_AVTR['維蘇威火山龍王'] = '🐉';
     }
     if(typeof window.MONSTER_ELEMENT === 'object' && window.MONSTER_ELEMENT){
-      window.MONSTER_ELEMENT['玉山火龍王'] = 'fire';
+      window.MONSTER_ELEMENT['維蘇威火山龍王'] = 'fire';
     }
 
-    console.log('[WB] ✅ 玉山火龍王資料已掛載');
+    console.log('[WB] ✅ 維蘇威火山龍王資料已掛載');
   }
 
   // ───────────────────────────────────────────────────────────────────
-  // 6. 玉山火龍王技能邏輯 (透過 hook 接到 execSkill 末端)
+  // 6. 維蘇威火山龍王技能邏輯 (透過 hook 接到 execSkill 末端)
   //    在 execSkill 函式裡找一個適合的位置呼叫:
   //      if(window._wbHookExecSkill && window._wbHookExecSkill(n,a,t,al,enemies)) return;
   //    但因為侵入式修改 execSkill 風險高,改用「監聽技能名」方式:
   //      window._wbExecSkillFallback(n, a, t, al, enemies) → true 表示已處理
   // ───────────────────────────────────────────────────────────────────
   window._wbExecSkillFallback = function(n, a, t, al, enemies){
-    // 只處理玉山火龍王的 3 招
+    // 只處理維蘇威火山龍王的 3 招
     if(n === '業火灼燒'){
       try{
+        // 特技 100% 全體火傷害 + 全體燃燒 2 回合
         enemies.forEach(e => {
           if(e.curHp > 0){
-            doDmg(e, Math.floor(spv(a) * 0.9), {actor:a, isSkill:true, isAoe:true, element:'fire'});
+            doDmg(e, Math.floor(spv(a) * 1.00), {actor:a, isSkill:true, isAoe:true, element:'fire'});
+            if(e.curHp > 0) addStatus(e, 'burn', 2);
           }
         });
-        const sorted = enemies.filter(e => e.curHp > 0).sort((x, y) => x.curHp - y.curHp);
-        sorted.slice(0, 2).forEach(e => addStatus(e, 'burn', 3));
         bannerFX(a, '🔥 業火灼燒!', '#ff6644', 1200);
       }catch(e){ console.warn('[WB] 業火灼燒執行失敗', e); }
       return true;
     }
     if(n === '龍吼震懾'){
       try{
+        // 特技 75% 全體無屬性傷害(element:'none' 不吃屬性抗性) + 50% 眩暈 1 回合
         enemies.forEach(e => {
           if(e.curHp > 0){
-            doDmg(e, Math.floor(atkv(a) * 1.1), {actor:a, isSkill:true, isAoe:true, element:'fire'});
+            doDmg(e, Math.floor(spv(a) * 0.75), {actor:a, isSkill:true, isAoe:true, element:'none'});
             if(e.curHp > 0 && Math.random() < 0.50) addStatus(e, 'stun', 1);
           }
         });
@@ -223,6 +225,7 @@
     }
     if(n === '天崩之炎'){
       try{
+        // 全體當前 HP 90% 火傷害(無敵/免疫完全擋下,護盾減半) + 燃燒 3 回合
         enemies.forEach(e => {
           if(e.curHp <= 0) return;
           if(typeof hasStatus === 'function'){
@@ -237,16 +240,17 @@
               return;
             }
           }
-          let dmgPct = 0.80;
+          let dmgPct = 0.90;
           if(typeof hasStatus === 'function' && hasStatus(e, 'shield')){
-            dmgPct = 0.40;
+            dmgPct = 0.45;
             if(typeof removeStatus === 'function') removeStatus(e, 'shield');
             log(`🛡 ${e.name} 的護盾將傷害減半...`);
           }
           const _dmg = Math.floor(e.curHp * dmgPct);
           doDmg(e, _dmg, {actor:a, isSkill:true, isAoe:true, ignoreEvasion:true, piercing:true, element:'fire'});
+          // 附加燃燒 3 回合(即使打死也不附加)
+          if(e.curHp > 0) addStatus(e, 'burn', 3);
         });
-        if(typeof doHeal === 'function') doHeal(a, Math.floor(a.hp * 0.05), {actor:a, isHeal:true});
         bannerFX(a, '⚡ 天崩之炎降臨!', '#ee2222', 1800);
         if(typeof flashScreen === 'function') flashScreen('rgba(255,80,40,0.8)', 700);
       }catch(e){ console.warn('[WB] 天崩之炎執行失敗', e); }
@@ -256,12 +260,98 @@
   };
 
   // ───────────────────────────────────────────────────────────────────
+  // 6b. 天賦「炎之意志」傷害計算 hook
+  //     戰鬥引擎在「BOSS 受傷時」呼叫,回傳調整後的傷害值
+  //     1) 單次受傷上限 = 最大 HP 的 1% (即 500000 * 1% = 5000)
+  //     2) HP < 50% 啟動四元素護盾:傷害再減 80%
+  //        (即使是無視有利狀態的攻擊也擋,因為這不是 buff,是天賦)
+  //     3) 護盾首次出現時跳訊息提醒玩家
+  // ───────────────────────────────────────────────────────────────────
+  window._wbApplyBossDmgCap = function(boss, rawDmg, opts){
+    if(!boss || !boss.name || boss.name !== '維蘇威火山龍王') return rawDmg;
+    if(rawDmg <= 0) return rawDmg;
+    opts = opts || {};
+
+    const maxHp = boss.hp || 500000;
+    // 1) 單次受傷上限 1%
+    const cap1pct = Math.floor(maxHp * 0.01);
+    let dmg = Math.min(rawDmg, cap1pct);
+
+    // 2) HP < 50% 時 四元素護盾減傷 80%
+    const hpRatio = boss.curHp / maxHp;
+    const shieldActive = hpRatio < 0.50;
+    if(shieldActive){
+      // 護盾首次啟動提示
+      if(!boss._wbShieldNotified){
+        boss._wbShieldNotified = true;
+        // 用 setTimeout 確保畫面已渲染
+        setTimeout(_wbShowShieldHint, 200);
+      }
+      // 受傷減 80%
+      dmg = Math.floor(dmg * 0.20);
+    }
+    return Math.max(1, dmg);
+  };
+
+  function _wbShowShieldHint(){
+    // 跳提示 modal,告訴玩家:護盾啟動,需破解
+    if(document.getElementById('wb-shield-hint-modal')) return;
+    const ov = document.createElement('div');
+    ov.id = 'wb-shield-hint-modal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
+    ov.innerHTML = `
+      <div style="max-width:560px;background:linear-gradient(160deg,#2a1818,#1a0a0a);
+        border:3px solid rgba(255,120,80,0.8);border-radius:18px;padding:28px 24px;
+        box-shadow:0 0 60px rgba(255,80,40,0.5);text-align:center;">
+        <div style="font-size:38px;margin-bottom:12px;">🛡⚡🔥</div>
+        <div style="font-size:26px;color:#ff8866;font-weight:900;letter-spacing:2px;margin-bottom:14px;
+          text-shadow:0 0 14px rgba(255,100,60,0.6);">
+          ⚠ 第二階段啟動!四元素護盾
+        </div>
+        <div style="font-size:16px;color:#ffe;line-height:1.85;text-align:left;
+          background:rgba(255,80,40,0.12);padding:14px 18px;border-radius:10px;
+          border-left:4px solid rgba(255,120,80,0.7);margin-bottom:14px;">
+          維蘇威火山龍王 HP 降至 50% 以下,身上浮現由<b>火 / 水 / 土 / 風</b>四種元素構成的護盾!
+          <br><br>
+          <b style="color:#ff8866;">護盾效果:</b><br>
+          ・所有傷害額外 <b style="color:#ffaa66;">減 80%</b><br>
+          ・即使是無視有利狀態的攻擊也<b style="color:#ff6644;">無法打穿</b><br>
+          ・單次受傷上限 1% 仍然有效(<b style="color:#ffcc66;">每擊最多 5000 傷害</b>)
+        </div>
+        <div style="font-size:15px;color:#ffd;line-height:1.85;text-align:left;
+          background:rgba(60,180,255,0.12);padding:14px 18px;border-radius:10px;
+          border-left:4px solid rgba(80,180,255,0.7);margin-bottom:18px;">
+          <b style="color:#88ddff;">💡 破解方法:</b><br>
+          使用對應屬性的攻擊各打 <b>3 次裂痕</b>,即可破除護盾:<br>
+          🔥 火 / 💧 水 / 🌍 土 / 🌪 風 各 3 次,共 12 次屬性裂痕
+          <br><br>
+          <b style="color:#aaffaa;">🎯 戰術建議:</b><br>
+          換上含 4 種屬性的英雄陣容(火法師/水妖精/土靈使/風行者⋯),
+          專心普攻 + S1/S2 配合 BOSS 弱點屬性破盾!
+        </div>
+        <button onclick="document.getElementById('wb-shield-hint-modal').remove()"
+          style="background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;
+          border:2px solid rgba(255,160,140,0.7);border-radius:10px;padding:10px 28px;
+          font-size:18px;font-weight:800;cursor:pointer;letter-spacing:2px;
+          box-shadow:0 4px 16px rgba(255,80,40,0.5);">
+          ⚔ 開戰!
+        </button>
+      </div>
+    `;
+    document.body.appendChild(ov);
+    // 8 秒後自動關閉(讓沒注意的玩家也能繼續)
+    setTimeout(() => { try{ ov.remove(); }catch(_){} }, 12000);
+  }
+  // 暴露給外部呼叫
+  window._wbShowShieldHint = _wbShowShieldHint;
+
+  // ───────────────────────────────────────────────────────────────────
   // 7. 獎章定義 + 統計欄位 — 自動補進主程式既有 ALL_MEDALS / _medalStats
   // ───────────────────────────────────────────────────────────────────
   const WB_MEDALS = [
     { id:'wb_first_clear',      icon:'🌍', name:'首次討伐',  desc:'第一次參與並擊敗任何世界 BOSS',                  cat:'世界BOSS' },
-    { id:'wb_yushan_kill',      icon:'🐉', name:'屠龍勇者',  desc:'擊敗玉山火龍王',                                 cat:'世界BOSS' },
-    { id:'wb_yushan_speedrun',  icon:'⚡', name:'三分速通',  desc:'3 分鐘內擊敗玉山火龍王',                        cat:'世界BOSS' },
+    { id:'wb_yushan_kill',      icon:'🐉', name:'屠龍勇者',  desc:'擊敗維蘇威火山龍王',                                 cat:'世界BOSS' },
+    { id:'wb_yushan_speedrun',  icon:'⚡', name:'三分速通',  desc:'3 分鐘內擊敗維蘇威火山龍王',                        cat:'世界BOSS' },
     { id:'wb_mvp_first',        icon:'👑', name:'首次 MVP',  desc:'在一場世界 BOSS 戰中取得 MVP',                   cat:'世界BOSS' },
     { id:'wb_mvp_3',            icon:'👑', name:'三冠王',    desc:'累積 3 次世界 BOSS MVP',                         cat:'世界BOSS' },
     { id:'wb_no_ko',            icon:'🛡', name:'銅牆鐵壁',  desc:'擊敗世界 BOSS 時全員無人倒下',                   cat:'世界BOSS' },
@@ -385,7 +475,7 @@
       ov.style.display = 'flex';
       try{ _wbRefreshBlessingBanner(); }catch(_){}
     }else{
-      alert('🌍 世界 BOSS 討伐戰功能即將開放,敬請期待!\n\n首發 BOSS:玉山火龍王 🐉');
+      alert('🌍 世界 BOSS 討伐戰功能即將開放,敬請期待!\n\n首發 BOSS:維蘇威火山龍王 🐉');
     }
   };
 
@@ -435,7 +525,7 @@
         // 主程式還在初始化,500ms 後再試
         return setTimeout(tryInstall, 500);
       }else{
-        console.warn('[WB] HERO_DB 未就緒 — 玉山火龍王資料未掛載');
+        console.warn('[WB] HERO_DB 未就緒 — 維蘇威火山龍王資料未掛載');
       }
 
       if(medalsReady){
@@ -455,7 +545,14 @@
         }, 500);
       }
 
-      console.log('[WB] ✅ world-boss.js 啟動完成 (v2.0)');
+      console.log('[WB] ✅ world-boss.js 啟動完成 (v3.0)');
+
+      // ★ v3.0 — 同步首頁的 BOSS HP 條
+      //   資料來源:_cachedGlobalStats.worldBossHp (Firebase 同步)
+      //   若還沒有資料,顯示預設 100% (500000/500000)
+      _wbSyncStageHpBar();
+      // 每 30 秒重新讀一次(避免一直查 Firebase)
+      setInterval(_wbSyncStageHpBar, 30000);
     }
 
     // DOM ready 後開始嘗試
@@ -466,6 +563,369 @@
       setTimeout(tryInstall, 100);
     }
   }
+
+  // ★ v3.0 — 同步首頁 BOSS HP 條
+  function _wbSyncStageHpBar(){
+    const bar = document.getElementById('adv-worldboss-stage-hpbar');
+    const curEl = document.getElementById('adv-wb-hp-cur');
+    const maxEl = document.getElementById('adv-wb-hp-max');
+    const pctEl = document.getElementById('adv-wb-hp-pct');
+    if(!bar) return;  // 還沒到關卡選擇頁
+
+    // 取得當前 BOSS 的 maxHp
+    const lineup = window.WORLD_BOSS_LINEUP || [];
+    const curBoss = lineup.find(b => b.id === 'vesuvius_fire_dragon') || lineup[0];
+    const maxHp = (curBoss && curBoss.maxHp) || 500000;
+
+    // 取得當前 HP — 從 _cachedGlobalStats.worldBossHp 讀
+    let curHp = maxHp;  // 預設 100%
+    try{
+      const gs = window._cachedGlobalStats;
+      if(gs && gs.worldBossHp && typeof gs.worldBossHp[curBoss.id] === 'number'){
+        curHp = Math.max(0, Math.min(maxHp, gs.worldBossHp[curBoss.id]));
+      }
+    }catch(_){}
+
+    const pct = Math.max(0, Math.min(100, (curHp / maxHp) * 100));
+
+    bar.style.width = pct + '%';
+
+    // 顏色隨 HP 變化(高 HP 紅橙、低 HP 暗紅)
+    if(pct > 50){
+      bar.style.background = 'linear-gradient(90deg,#ff3322 0%,#ff6644 30%,#ff9966 70%,#ffcc88 100%)';
+    }else if(pct > 25){
+      bar.style.background = 'linear-gradient(90deg,#cc2222 0%,#ee4422 50%,#ff8855 100%)';
+    }else{
+      bar.style.background = 'linear-gradient(90deg,#770000 0%,#aa1111 50%,#dd3322 100%)';
+    }
+
+    if(curEl) curEl.textContent = Math.round(curHp).toLocaleString();
+    if(maxEl) maxEl.textContent = maxHp.toLocaleString();
+    if(pctEl) pctEl.textContent = `(${pct.toFixed(1)}%)`;
+  }
+  window._wbSyncStageHpBar = _wbSyncStageHpBar;
+
+  // ───────────────────────────────────────────────────────────────────
+  // 11. 世界 BOSS 戰用題目 — 從「所有題庫」隨機抽取
+  //     (而非綁定某一個關卡的題庫,這樣難度才有挑戰性)
+  // ───────────────────────────────────────────────────────────────────
+  function _wbGetAllQuestionPool(){
+    // 嘗試從這些全域陣列收集題目
+    const sources = [
+      'ADV_QUIZ_DB',
+      'TAIWAN_QUIZ_DB',
+      'ADV_QUIZ_5S_MIDTERM',
+      'ADV_QUIZ_5S_U3_ANIMAL',
+      'ADV_QUIZ_5S_U4_SOUND',
+      'ADV_QUIZ_DOG_CARE',
+      'ADV_QUIZ_CARE_INFANT',
+    ];
+    const pool = [];
+    for(const name of sources){
+      try{
+        const arr = window[name];
+        if(Array.isArray(arr)){
+          for(const q of arr){
+            // 只收有 q 跟 a 欄位的題目(過濾掉設定資料)
+            if(q && (q.q || q.question) && (q.a || q.answer || q.options)){
+              pool.push(q);
+            }
+          }
+        }
+      }catch(_){}
+    }
+    return pool;
+  }
+  window._wbGetAllQuestionPool = _wbGetAllQuestionPool;
+
+  // 隨機抽 N 題(不重複)
+  window._wbPickRandomQuestions = function(count){
+    count = count || 1;
+    const pool = _wbGetAllQuestionPool();
+    if(pool.length === 0) return [];
+    const out = [];
+    const used = new Set();
+    const max = Math.min(count, pool.length);
+    let tries = 0;
+    while(out.length < max && tries < max * 5){
+      tries++;
+      const idx = Math.floor(Math.random() * pool.length);
+      if(used.has(idx)) continue;
+      used.add(idx);
+      out.push(pool[idx]);
+    }
+    return out;
+  };
+
+  // 抽 1 題的便捷函式
+  window._wbPickRandomQuestion = function(){
+    const arr = window._wbPickRandomQuestions(1);
+    return arr[0] || null;
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v3.1 — 全畫面特效系統 (S1 火雨 / S2 集中線 / 爆發技動畫)
+  // ───────────────────────────────────────────────────────────────────
+  const _WB_FX_URLS = {
+    s1:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火雨.gif'),
+    s2:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('集中效果線.gif'),
+  };
+
+  // 播放全畫面 GIF 特效 (持續 1.6 秒後淡出)
+  window._wbPlayFullscreenFx = function(fxKey, opts){
+    opts = opts || {};
+    const url = _WB_FX_URLS[fxKey];
+    if(!url){
+      console.warn('[WB-FX] 未知特效 key:', fxKey);
+      return;
+    }
+    const dur = opts.duration || 1600;
+    const ov = document.createElement('div');
+    ov.className = 'wb-fullscreen-fx wb-fx-' + fxKey;
+    ov.style.cssText = `
+      position:fixed;inset:0;z-index:10300;pointer-events:none;
+      background-image:url('${url}');
+      background-size:cover;background-position:center;background-repeat:no-repeat;
+      mix-blend-mode:screen;
+      opacity:0;
+      transition:opacity 0.25s;
+    `;
+    document.body.appendChild(ov);
+    // 強制觸發動畫
+    requestAnimationFrame(() => { ov.style.opacity = '1'; });
+    setTimeout(() => {
+      ov.style.opacity = '0';
+      setTimeout(() => { try{ ov.remove(); }catch(_){} }, 320);
+    }, dur);
+
+    // 同時播放螢幕震動效果
+    if(opts.shake){
+      const battleArea = document.getElementById('wb-battle-area');
+      if(battleArea){
+        battleArea.classList.add('wb-screen-shake');
+        setTimeout(() => battleArea.classList.remove('wb-screen-shake'), 600);
+      }
+    }
+  };
+
+  // 爆發技動畫(沿用主程式既有的 BURST 動畫,呼叫 playBurstAnimation 或 fallback)
+  window._wbPlayBurstAnimation = function(){
+    try{
+      // 主程式有自己的爆發動畫(playBurstAnimation 或 _showBurstCutscene),嘗試呼叫
+      if(typeof playBurstAnimation === 'function'){
+        playBurstAnimation('維蘇威火山龍王', '天崩之炎');
+        return;
+      }
+      if(typeof _showBurstCutscene === 'function'){
+        _showBurstCutscene('維蘇威火山龍王', '天崩之炎');
+        return;
+      }
+    }catch(_){}
+    // Fallback:用全螢幕火光 + 文字
+    const ov = document.createElement('div');
+    ov.style.cssText = `
+      position:fixed;inset:0;z-index:10400;pointer-events:none;
+      background:radial-gradient(circle at center,rgba(255,100,40,0.85) 0%,rgba(160,30,20,0.95) 50%,rgba(0,0,0,0.95) 100%);
+      display:flex;align-items:center;justify-content:center;flex-direction:column;
+      animation:wbBurstFx 2.4s ease-out forwards;
+    `;
+    ov.innerHTML = `
+      <div style="font-size:clamp(40px,7vw,80px);font-weight:900;color:#ffeecc;letter-spacing:8px;
+        text-shadow:0 0 30px #ff3322,0 0 60px #ff3322,0 0 90px #ff6644;
+        animation:wbBurstText 2.4s ease-out forwards;">
+        ⚡ 天崩之炎 ⚡
+      </div>
+      <div style="font-size:clamp(20px,2.5vw,32px);font-weight:700;color:#ffaa66;letter-spacing:4px;
+        margin-top:14px;animation:wbBurstText 2.4s ease-out 0.3s both;">
+        兩千年怒火,一次釋放
+      </div>
+    `;
+    document.body.appendChild(ov);
+    setTimeout(() => { try{ ov.remove(); }catch(_){} }, 2400);
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v3.1 — 維蘇威護盾系統
+  // ───────────────────────────────────────────────────────────────────
+  // 在 HP 80% / 60% / 40% / 20% / 1% 時自動啟動護盾(從未啟動過才啟動)
+  // 啟動時 4 個元素護盾各 3 層,被剋的屬性 -1 層
+  //   剋制關係(用主程式既有規則):
+  //     fire ← water(水克火)
+  //     water ← grass(草克水)  ※ 但只有 4 元素護盾(火水風土),所以草不在內
+  //     wind  ← earth(土克風)
+  //     earth ← grass / wind?
+  //     用更直接:火-水互剋、土-風互剋(對稱)
+  //   實際採用:
+  //     火盾 → 被 water 屬性攻擊 -1
+  //     水盾 → 被 fire 屬性攻擊 -1
+  //     風盾 → 被 earth 屬性攻擊 -1
+  //     土盾 → 被 wind 屬性攻擊 -1
+  // ───────────────────────────────────────────────────────────────────
+  const WB_SHIELD_ELEMENTS = ['fire','water','wind','earth'];
+  const WB_SHIELD_COUNTER = {
+    fire:  'water',  // 火盾被水攻擊削減
+    water: 'fire',
+    wind:  'earth',
+    earth: 'wind',
+  };
+  const WB_SHIELD_ICON = {
+    fire:'🔥', water:'💧', wind:'🌪', earth:'⛰',
+  };
+  const WB_SHIELD_LABEL = {
+    fire:'火盾', water:'水盾', wind:'風盾', earth:'土盾',
+  };
+  const WB_SHIELD_TRIGGERS = [
+    { pct: 0.80, label:'80%' },
+    { pct: 0.60, label:'60%' },
+    { pct: 0.40, label:'40%' },
+    { pct: 0.20, label:'20%' },
+    { pct: 0.01, label:'1%'  },
+  ];
+
+  // 檢查並啟動護盾(每次 BOSS 受傷後呼叫)
+  window._wbCheckShieldTrigger = function(boss){
+    if(!boss || boss.name !== '維蘇威火山龍王') return null;
+    boss._wbShieldHistory = boss._wbShieldHistory || {};
+    const hpRatio = boss.curHp / (boss.hp || 500000);
+    let triggered = null;
+    for(const t of WB_SHIELD_TRIGGERS){
+      if(hpRatio <= t.pct && !boss._wbShieldHistory[t.label]){
+        boss._wbShieldHistory[t.label] = true;
+        triggered = t.label;
+        // 重置 4 元素護盾各 3 層
+        boss._wbShields = {fire:3, water:3, wind:3, earth:3};
+        break;
+      }
+    }
+    return triggered;
+  };
+
+  // 取得 BOSS 當前護盾總層數(0 表示沒護盾)
+  window._wbGetTotalShield = function(boss){
+    if(!boss || !boss._wbShields) return 0;
+    return Object.values(boss._wbShields).reduce((s,v) => s + Math.max(0,v), 0);
+  };
+
+  // 屬性攻擊削減對應元素護盾(每次攻擊 -1 層)
+  window._wbConsumeShield = function(boss, attackElement){
+    if(!boss || !boss._wbShields) return false;
+    // 找哪個盾被剋
+    for(const shieldEl of WB_SHIELD_ELEMENTS){
+      if(WB_SHIELD_COUNTER[shieldEl] === attackElement && boss._wbShields[shieldEl] > 0){
+        boss._wbShields[shieldEl]--;
+        return shieldEl;
+      }
+    }
+    return null;
+  };
+
+  // 護盾啟動時的提示 modal
+  window._wbShowShieldTriggerHint = function(pctLabel, boss){
+    // 換掉舊版「第二階段啟動」單次提示,改成每次都提示
+    const old = document.getElementById('wb-shield-hint-modal');
+    if(old) old.remove();
+
+    const ov = document.createElement('div');
+    ov.id = 'wb-shield-hint-modal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
+    ov.innerHTML = `
+      <div style="max-width:560px;background:linear-gradient(160deg,#2a1818,#1a0a0a);
+        border:3px solid rgba(255,120,80,0.85);border-radius:18px;padding:24px 22px;
+        box-shadow:0 0 60px rgba(255,80,40,0.6);text-align:center;color:#ffeecc;">
+        <div style="font-size:32px;margin-bottom:8px;">🔥💧🌪⛰</div>
+        <div style="font-size:24px;color:#ff8866;font-weight:900;letter-spacing:2px;margin-bottom:10px;
+          text-shadow:0 0 14px rgba(255,100,60,0.6);">
+          ⚠ HP ${pctLabel} — 四元素護盾啟動!
+        </div>
+        <div style="font-size:15px;color:#ffe;line-height:1.85;text-align:left;
+          background:rgba(255,80,40,0.12);padding:13px 16px;border-radius:10px;
+          border-left:4px solid rgba(255,120,80,0.7);margin-bottom:12px;">
+          維蘇威火山龍王身上浮現 <b style="color:#ff8866;">四元素護盾各 3 層</b>:
+          <br>
+          🔥 <b style="color:#ff7755;">火盾</b>:被 <b>水屬性</b>攻擊 -1 層<br>
+          💧 <b style="color:#88cfff;">水盾</b>:被 <b>火屬性</b>攻擊 -1 層<br>
+          🌪 <b style="color:#aaffdd;">風盾</b>:被 <b>土屬性</b>攻擊 -1 層<br>
+          ⛰ <b style="color:#ddbb88;">土盾</b>:被 <b>風屬性</b>攻擊 -1 層
+          <br><br>
+          <b style="color:#ffcc66;">護盾期間所有傷害再減 80%</b>,
+          即使「無視有利狀態」的攻擊也無法穿透。<br>
+          打破對應屬性 3 層才能解除該盾。
+        </div>
+        <button onclick="document.getElementById('wb-shield-hint-modal').remove()"
+          style="background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;
+          border:2px solid rgba(255,160,140,0.7);border-radius:10px;padding:9px 24px;
+          font-size:16px;font-weight:800;cursor:pointer;letter-spacing:2px;
+          box-shadow:0 4px 14px rgba(255,80,40,0.5);">
+          ⚔ 繼續戰鬥!
+        </button>
+      </div>
+    `;
+    document.body.appendChild(ov);
+    setTimeout(() => { try{ ov.remove(); }catch(_){} }, 8000);
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v3.1 — 答題系統 (取代「直接點普攻就打」,改成「答對才能行動」)
+  // ───────────────────────────────────────────────────────────────────
+  // 流程:
+  //   開戰    → BOSS 咆哮 (display once)
+  //   回合 1  → BOSS 先出題給玩家答 → 全員一題 → 答對 burst+1 / 答錯受 5% 傷害
+  //   回合 N  → BOSS 行動 → 玩家依速度順序答題 → 答對才能行動,答錯跳過
+  //   答對累積 第10/25/50次 觸發答題獎勵(以前是 BOSS 受 20% HP 傷害,現改為 1%)
+  //   倒下角色跳過答題
+  //   回合 10 → BOSS 必放爆發 (第9回合警告)
+  //   回合 18 → 系統警告「戰場即將崩毀」
+  //   回合 20 → BOSS 強制全員滅絕,結算
+  // ───────────────────────────────────────────────────────────────────
+  window._wbConstants = {
+    MAX_TURNS: 20,
+    BURST_TURN: 10,
+    BURST_WARN_TURN: 9,
+    COLLAPSE_WARN_TURN: 18,
+    PUNISH_HP_PCT: 0.05,      // 答錯扣 5% 自己 max HP
+    QUIZ_REWARD_DMG_PCT: 0.01, // 答題獎勵 1% 傷害
+    QUIZ_REWARD_TRIGGERS: [10, 25, 50], // 第幾次答對觸發
+  };
+
+  // BOSS 開戰咆哮
+  window._wbBossOpeningRoar = function(){
+    const lines = [
+      '⚡ 兩千年的沉睡終結...',
+      '🔥 渺小的凡人們,竟敢驚擾我的安眠?',
+      '🐉 維蘇威之怒,將再次掩埋人類的世界!',
+    ];
+    const ov = document.createElement('div');
+    ov.id = 'wb-boss-roar';
+    ov.style.cssText = `
+      position:fixed;inset:0;z-index:10600;
+      background:radial-gradient(ellipse at center,rgba(80,20,10,0.9),rgba(20,5,5,0.97));
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      pointer-events:none;
+    `;
+    ov.innerHTML = `
+      <div style="font-size:clamp(60px,9vw,120px);margin-bottom:20px;animation:wbRoarPulse 0.6s ease-out infinite;">🐉</div>
+      <div id="wb-roar-text" style="font-size:clamp(22px,3vw,36px);font-weight:900;color:#ff8866;letter-spacing:6px;
+        text-align:center;line-height:1.8;text-shadow:0 0 20px #ff3322,0 0 40px #ff3322,0 4px 8px rgba(0,0,0,0.95);
+        padding:0 30px;"></div>
+    `;
+    document.body.appendChild(ov);
+    let i = 0;
+    function nextLine(){
+      const el = document.getElementById('wb-roar-text');
+      if(!el) return;
+      el.style.animation = 'none';
+      el.offsetHeight; // reflow
+      el.textContent = lines[i] || '';
+      el.style.animation = 'wbRoarTextFade 1.2s ease-in-out';
+      i++;
+      if(i < lines.length){
+        setTimeout(nextLine, 1100);
+      }else{
+        setTimeout(() => { try{ ov.remove(); }catch(_){} }, 1500);
+      }
+    }
+    nextLine();
+  };
 
   _wbBootstrap();
 })();
