@@ -505,7 +505,10 @@
     fire:'🔥', water:'💧', wind:'🌪', earth:'🌍',
     dark:'⚫', light:'☀', grass:'🌿', omni:'🌌'
   };
-  el.innerHTML = window.WORLD_BOSS_LINEUP.map((b, i) => `
+  el.innerHTML = window.WORLD_BOSS_LINEUP.map((b, i) => {
+    // ★ FIX 20260516 v7 — 除了當前 BOSS,其他龍王地點先顯示「未知地點」(未實作完成)
+    const sceneText = (i === 0) ? b.scene : '未知地點';
+    return `
     <div style="background:linear-gradient(160deg,rgba(${i===0?'212,168,67':'30,30,40'},0.3) 0%,rgba(0,0,0,0.5) 100%);
                 border:1.5px solid ${i===0 ? '#d4a843' : 'rgba(168,132,255,0.3)'};
                 border-radius:10px;padding:10px;">
@@ -520,10 +523,11 @@
         ${b.name}
       </div>
       <div style="font-size:10px;color:#aaa;text-align:center;margin-top:2px;">
-        📍 ${b.scene} ✦ ❤️ ${(b.maxHp/10000).toFixed(0)}萬
+        📍 ${sceneText} ✦ ❤️ ${(b.maxHp/10000).toFixed(0)}萬
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 })();
 
 // ★ v2.0 — 渲染隊伍排名獎勵分級表
@@ -717,8 +721,8 @@
     background:transparent;
     overflow:hidden;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
-    /* ★ FIX 20260516 v6 — overlay 右上挖 160x80 洞,讓底層 UI 可點 */
-    clip-path:polygon(0 0, calc(100% - 160px) 0, calc(100% - 160px) 80px, 100% 80px, 100% 100%, 0 100%);
+    /* ★ FIX 20260516 v7 — overlay 右上挖 220x90 洞,確保整個瀏覽器控制列都能點 */
+    clip-path:polygon(0 0, calc(100% - 220px) 0, calc(100% - 220px) 90px, 100% 90px, 100% 100%, 0 100%);
   }
   /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖 */
   #wb-team-confirm-overlay::before{
@@ -2239,13 +2243,8 @@
     const players = snap?.players || [];
     const myUid = window._gUserId;
     const meIsHost = (snap?.meta?.hostUid === myUid);
-    // 預先計算「哪些至寶已被其他隊友選走」(避免重複)
-    const treasureTakenByPeer = new Set();
-    players.forEach(p => {
-      if(p.uid === myUid) return;
-      const ext = _wbTcParsePlayerExt(p);
-      ext.t.forEach(tid => treasureTakenByPeer.add(tid));
-    });
+    // ★ FIX 20260516 v7 — 至寶各自分開裝,不再計算「隊友佔用」
+    const treasureTakenByPeer = new Set();  // 維持函式簽名,內容永遠空
 
     // 渲染 4 個玩家槽
     const slotsEl = document.getElementById('wb-tc-slots');
@@ -2569,26 +2568,21 @@
       alert('沒有可選的英雄');
       return;
     }
-    // 已被隊友選走的英雄
+    // ★ FIX 20260516 v7 — 英雄可重複選擇,移除「被隊友選走」disable
     const snap = window._wbNet.getSnapshot();
-    const taken = new Set();
-    (snap?.players || []).forEach((p, i) => {
-      if(i !== targetSlotIdx && p && p.heroName) taken.add(p.heroName);
-    });
 
     document.getElementById('wb-tc-swap-title').textContent = '🔄 替換英雄(槽位 ' + (targetSlotIdx+1) + ')';
-    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;灰色=被隊友選走;綠框=當前';
+    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;綠框=當前';
     const grid = document.getElementById('wb-tc-swap-grid');
     const curHero = snap?.players?.[targetSlotIdx]?.heroName;
     grid.innerHTML = heroes.map(name => {
       const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
       const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[name]) || '⚔';
       const lv = (typeof _heroLevels !== 'undefined' && _heroLevels[name]) || 1;
-      const dis = taken.has(name);
       const cur = (name === curHero);
-      const cls = 'wb-tc-swap-item' + (dis ? ' disabled' : '') + (cur ? ' current' : '');
+      const cls = 'wb-tc-swap-item' + (cur ? ' current' : '');
       const safeName = name.replace(/'/g,"\\'");
-      const click = dis ? '' : `onclick="_wbTcConfirmSwapHero(${targetSlotIdx}, '${safeName}')"`;
+      const click = `onclick="_wbTcConfirmSwapHero(${targetSlotIdx}, '${safeName}')"`;
       return `<button class="${cls}" ${click}>
         <div class="wb-tc-si-img">
           ${img
@@ -2597,7 +2591,7 @@
         </div>
         <div class="wb-tc-si-name">${name}</div>
         <div class="wb-tc-si-meta">Lv.${lv}</div>
-        ${dis ? '<div class="wb-tc-si-note">已被選走</div>' : (cur ? '<div class="wb-tc-si-note">當前</div>' : '')}
+        ${cur ? '<div class="wb-tc-si-note">當前</div>' : ''}
       </button>`;
     }).join('');
     document.getElementById('wb-tc-swap-modal').classList.add('show');
@@ -2636,14 +2630,8 @@
       return;
     }
 
-    // 隊友已裝
-    const takenByPeer = new Set();
-    (snap?.players || []).forEach((p, i) => {
-      if(i === targetSlotIdx) return;
-      const ext2 = _wbTcParsePlayerExt(p);
-      (ext2.t || []).forEach(tid => takenByPeer.add(tid));
-    });
-
+    // ★ FIX 20260516 v7 — 組隊模式下至寶各自分開裝,移除「隊友已裝」限制
+    //   每人有自己的至寶 inventory,不會跟隊友衝突
     const selected = ext.t || [];
 
     document.getElementById('wb-tc-swap-title').textContent = '💎 替換至寶(槽位 ' + (targetSlotIdx+1) + ')';
@@ -2651,13 +2639,10 @@
     const grid = document.getElementById('wb-tc-swap-grid');
     grid.innerHTML = myTreasures.map(t => {
       const on = selected.includes(t.id);
-      const peer = takenByPeer.has(t.id) && !on;
-      // ★ FIX 20260516 v4 — 移除 slotConflict / overLimit disable,允許「點同 slot」直接取代
-      const dis = peer;
-      const cls = 'wb-tc-swap-item' + (dis ? ' disabled' : '') + (on ? ' current' : '');
-      const note = peer ? '隊友已裝' : (on ? '裝備中' : '');
+      const cls = 'wb-tc-swap-item' + (on ? ' current' : '');
+      const note = on ? '裝備中' : '';
       const safeId = t.id.replace(/'/g,"\\'");
-      const click = dis ? '' : `onclick="_wbTcConfirmSwapTreasure(${targetSlotIdx}, '${safeId}')"`;
+      const click = `onclick="_wbTcConfirmSwapTreasure(${targetSlotIdx}, '${safeId}')"`;
       const slotName = t.slot === 'weapon' ? '武器' : t.slot === 'armor' ? '防具' : '飾品';
       return `<button class="${cls}" ${click}>
         <div class="wb-tc-si-img">${t.icon || '💎'}</div>
