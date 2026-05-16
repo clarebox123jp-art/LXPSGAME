@@ -739,37 +739,38 @@
     text-shadow:0 0 14px rgba(255,170,80,0.7),0 2px 4px rgba(0,0,0,0.85);
     margin-bottom:1px;line-height:1.05;
   }
-  /* ★ FIX 20260516 v3 — BOSS 預覽小視窗(右上角) */
+  /* ★ FIX 20260516 v3/v4 — BOSS 預覽小視窗(左上角,寬 4 倍,降低高度) */
   .wb-tc-boss-preview-mini{
-    position:absolute;top:8px;right:10px;
-    width:84px;height:108px;
+    position:absolute;top:8px;left:10px;
+    width:336px;height:64px;
     border-radius:10px;
     background:linear-gradient(135deg,#ff6644,#552010);
     border:2.5px solid #ff8866;
     cursor:pointer;
     padding:0;overflow:hidden;
-    display:flex;flex-direction:column;
+    display:flex;flex-direction:row;align-items:center;
     box-shadow:0 0 16px rgba(255,100,60,0.55);
     font-family:inherit;
     transition:all 0.2s;
     z-index:10;
   }
   .wb-tc-boss-preview-mini:hover{
-    transform:scale(1.05);
+    transform:scale(1.03);
     box-shadow:0 0 28px rgba(255,140,80,0.85);
     border-color:#ffaa66;
   }
   .wb-tc-boss-preview-mini img{
-    width:100%;flex:1;min-height:0;
+    width:60px;height:60px;flex-shrink:0;
     object-fit:cover;object-position:top center;
+    border-radius:8px;
+    margin:0 6px;
     display:block;
   }
   .wb-tc-boss-preview-label{
-    display:block;background:rgba(0,0,0,0.75);
-    color:#ffe066;font-size:13px;font-weight:800;
-    letter-spacing:1px;text-align:center;
-    padding:3px 4px;
-    border-top:1px solid rgba(255,200,80,0.5);
+    flex:1;color:#ffe066;font-size:22px;font-weight:800;
+    letter-spacing:1.5px;text-align:center;
+    padding:0 8px 0 0;line-height:1.15;
+    text-shadow:0 1px 3px rgba(0,0,0,0.85);
   }
   .wb-tc-sub{
     text-align:center;font-size:24px;color:#cfb89e;
@@ -968,6 +969,15 @@
     border-radius:4px;padding:1px 5px;flex-shrink:0;
   }
   .wb-tc-bc-skill-cost{color:#4a9eff;font-weight:700;flex-shrink:0;font-size:22px;}
+  /* ★ FIX 20260516 v4 — 在隊伍確認頁的技能列裡放大 ? 按鈕,跟翻倍字體匹配 */
+  .wb-tc-bc-skill-row .csk-detail-btn{
+    width:22px;height:22px;line-height:22px;font-size:18px;
+    border-radius:50%;flex-shrink:0;cursor:pointer;
+    background:rgba(74,158,255,0.18);border:1px solid rgba(74,158,255,0.4);
+    color:#4a9eff;font-weight:500;text-align:center;
+    margin-left:2px;
+  }
+  .wb-tc-bc-skill-row .csk-detail-btn:hover{background:rgba(74,158,255,0.4);border-color:#4a9eff;}
 
   /* 元素 chips(縮小) */
   .wb-tc-section-lbl{
@@ -2188,23 +2198,49 @@
     }
   }
 
-  // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含等級加成 — 自己才知道)
-  function _wbTcGetHeroStats(heroName, isMe){
+  // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含至寶加成)
+  // ★ FIX 20260516 v3 — 改:接受 player 物件,從 ext.t 讀已選至寶並加上 baseStats + invested
+  function _wbTcGetHeroStats(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
       const base = HERO_DB[heroName];
-      const lv = isMe ? _wbTcGetHeroLv(heroName, true) : null;
-      // 簡化:不套等級加成,直接顯示 baseStats(主程式公式複雜),lv 只顯示在徽章
-      return {
-        hp: base.hp || 0,
-        atk: base.atk || 0,
-        sp: base.sp || 0,
-        spd: base.spd || 0,
-      };
+      // 起始:HERO_DB 的 baseStats
+      let hp  = base.hp  || 0;
+      let atk = base.atk || 0;
+      let sp  = base.sp  || 0;
+      let spd = base.spd || 0;
+      // 加至寶 baseStats + invested(只有我能算,因為至寶資料只有我這端有)
+      if(isMe && playerObj){
+        try{
+          const ext = _wbTcParsePlayerExt(playerObj);
+          const treasureIds = ext.t || [];
+          treasureIds.forEach(tid => {
+            const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]) || null;
+            const rec = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData[tid]) || null;
+            if(!def || !rec) return;
+            // baseStats(固定值,不依等級)
+            if(def.baseStats){
+              hp  += def.baseStats.hp  || 0;
+              atk += def.baseStats.atk || 0;
+              sp  += def.baseStats.sp  || 0;
+              spd += def.baseStats.spd || 0;
+            }
+            // invested 點數(玩家自選分配)
+            if(typeof _getTaiwanTreasureInvested === 'function'){
+              const inv = _getTaiwanTreasureInvested(tid);
+              hp  += inv.hp  || 0;
+              atk += inv.atk || 0;
+              sp  += inv.sp  || 0;
+              spd += inv.spd || 0;
+            }
+          });
+        }catch(e){ console.warn('[WB-TC] 計算至寶 stats 失敗', e); }
+      }
+      return { hp, atk, sp, spd };
     }catch(_){ return null; }
   }
 
-  // 取得英雄技能 + 技能等級(自己看得到)
+  // 取得英雄技能 + 技能等級(自己看得到)+ 描述(供 popup 用)
   function _wbTcGetHeroSkills(heroName, isMe){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return { s1: null, s2: null };
@@ -2219,8 +2255,8 @@
         }catch(_){}
       }
       return {
-        s1: h.s1 ? { name: h.s1.n || '技能 1', cost: h.s1.c || 0, lv: s1Lv } : null,
-        s2: h.s2 ? { name: h.s2.n || '技能 2', cost: h.s2.c || 0, lv: s2Lv } : null,
+        s1: h.s1 ? { name: h.s1.n || '技能 1', cost: h.s1.c || 0, lv: s1Lv, desc: h.s1.d || '', isPassive: !!h.s1.p } : null,
+        s2: h.s2 ? { name: h.s2.n || '技能 2', cost: h.s2.c || 0, lv: s2Lv, desc: h.s2.d || '', isPassive: !!h.s2.p } : null,
       };
     }catch(_){ return { s1: null, s2: null }; }
   }
@@ -2239,7 +2275,7 @@
     const heroName = p.heroName || '?';
     const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
     const lv = _wbTcGetHeroLv(heroName, isMe);
-    const stats = _wbTcGetHeroStats(heroName, isMe) || { hp:0, atk:0, sp:0, spd:0 };
+    const stats = _wbTcGetHeroStats(heroName, isMe, p) || { hp:0, atk:0, sp:0, spd:0 };
     const skills = _wbTcGetHeroSkills(heroName, isMe);
     // 主元素(取 ext.es 第一個);用於 header 右上角顯示元素 icon
     const mainElem = ext.es[0] || null;
@@ -2332,16 +2368,8 @@
             <div class="s-sp">特<b>${stats.sp}</b></div>
             <div class="s-spd">速<b>${stats.spd}</b></div>
           </div>
-          ${skills.s1 ? `<div class="wb-tc-bc-skill-row">
-            <span class="wb-tc-bc-skill-name">${skills.s1.name}</span>
-            ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${skills.s1.lv}</span>` : ''}
-            <span class="wb-tc-bc-skill-cost">⬥${skills.s1.cost}</span>
-          </div>` : ''}
-          ${skills.s2 ? `<div class="wb-tc-bc-skill-row">
-            <span class="wb-tc-bc-skill-name">${skills.s2.name}</span>
-            ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${skills.s2.lv}</span>` : ''}
-            <span class="wb-tc-bc-skill-cost">⬥${skills.s2.cost}</span>
-          </div>` : ''}
+          ${skills.s1 ? _wbTcRenderSkillRow(skills.s1, isMe) : ''}
+          ${skills.s2 ? _wbTcRenderSkillRow(skills.s2, isMe) : ''}
         </div>
       </div>
       <!-- 元素 chips -->
@@ -2360,21 +2388,44 @@
     </div>`;
   }
 
-  // 點英雄卡預覽(暫用 alert,後續可擴成 popup)
+  // ★ FIX 20260516 v4 — 技能列渲染:整列可點 + 右側 ? 按鈕都跳主程式 showSkillDetailPopup
+  // 用 data-skname/skmeta/skdesc(跟主程式戰鬥卡格式一致)
+  function _wbTcRenderSkillRow(sk, isMe){
+    if(!sk) return '';
+    const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const meta = `🔷${sk.cost}${sk.isPassive ? ' [被動]' : ''}`;
+    const onclick = `event.stopPropagation();showSkillDetailPopup(this);`;
+    // 整列點擊 → popup;右側 ? 也綁同樣 onclick
+    return `<div class="wb-tc-bc-skill-row"
+      data-skname="${_esc(sk.name)}"
+      data-skmeta="${_esc(meta)}"
+      data-skdesc="${_esc(sk.desc)}"
+      onclick="${onclick}"
+      style="cursor:pointer;">
+      <span class="wb-tc-bc-skill-name">${_esc(sk.name)}</span>
+      ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${sk.lv}</span>` : ''}
+      <span class="wb-tc-bc-skill-cost">⬥${sk.cost}</span>
+      <span class="csk-detail-btn" data-skname="${_esc(sk.name)}" data-skmeta="${_esc(meta)}" data-skdesc="${_esc(sk.desc)}"
+            onclick="${onclick}">?</span>
+    </div>`;
+  }
+
+  // ★ FIX 20260516 v4 — 點英雄卡預覽:改用主程式 openMonsterDetail
+  //   (跟點 BOSS 預覽用同一套 popup,完全不用瀏覽器 alert)
   window._wbTcPreviewHero = function(heroName){
     if(!heroName || heroName === '?') return;
+    if(typeof openMonsterDetail !== 'function'){
+      console.warn('[WB-TC] openMonsterDetail 找不到');
+      return;
+    }
     try{
-      const h = HERO_DB[heroName];
-      if(!h){ alert('找不到此英雄資料'); return; }
-      const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[heroName]) || null;
-      const burst = (typeof BURST_DB !== 'undefined' && BURST_DB[heroName]) || null;
-      let msg = `📋 ${heroName} 詳情\n\n`;
-      msg += `HP ${h.hp} ｜ 攻 ${h.atk} ｜ 特 ${h.sp} ｜ 速 ${h.spd}\n`;
-      if(trait){ msg += `\n🌟 天賦:${trait.name}\n  ${trait.desc || ''}\n`; }
-      if(h.s1){ msg += `\n✨ 技能 1:${h.s1.n} (⬥${h.s1.c})\n  ${h.s1.d || ''}\n`; }
-      if(h.s2){ msg += `\n🌟 技能 2:${h.s2.n} (⬥${h.s2.c})\n  ${h.s2.d || ''}\n`; }
-      if(burst){ msg += `\n💥 爆發:${burst.n}\n  ${burst.d || ''}\n`; }
-      alert(msg);
+      // 拉高 z-index(同 BOSS 預覽)
+      const _hdo = document.getElementById('hero-detail-overlay');
+      if(_hdo){
+        _hdo.style.zIndex = '9700';
+        _hdo.style.position = 'fixed';
+      }
+      openMonsterDetail(heroName);
     }catch(e){
       console.warn('[WB-TC] preview hero error', e);
     }
@@ -2482,20 +2533,15 @@
     const selected = ext.t || [];
 
     document.getElementById('wb-tc-swap-title').textContent = '💎 替換至寶(槽位 ' + (targetSlotIdx+1) + ')';
-    document.getElementById('wb-tc-swap-sub').textContent = `最多選 ${maxSlots} 件;紅字=隊友已裝;綠框=已選`;
+    document.getElementById('wb-tc-swap-sub').textContent = `最多選 ${maxSlots} 件;點同類至寶會自動取代`;
     const grid = document.getElementById('wb-tc-swap-grid');
     grid.innerHTML = myTreasures.map(t => {
       const on = selected.includes(t.id);
       const peer = takenByPeer.has(t.id) && !on;
-      // 同 slot 衝突
-      const slotConflict = !on && selected.some(sid => {
-        const sdef = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[sid]);
-        return sdef && sdef.slot === t.slot;
-      });
-      const overLimit = !on && selected.length >= maxSlots;
-      const dis = peer || slotConflict || overLimit;
+      // ★ FIX 20260516 v4 — 移除 slotConflict / overLimit disable,允許「點同 slot」直接取代
+      const dis = peer;
       const cls = 'wb-tc-swap-item' + (dis ? ' disabled' : '') + (on ? ' current' : '');
-      const note = peer ? '隊友已裝' : slotConflict ? '同類已選' : overLimit ? '已滿' : (on ? '已選' : '');
+      const note = peer ? '隊友已裝' : (on ? '裝備中' : '');
       const safeId = t.id.replace(/'/g,"\\'");
       const click = dis ? '' : `onclick="_wbTcConfirmSwapTreasure(${targetSlotIdx}, '${safeId}')"`;
       const slotName = t.slot === 'weapon' ? '武器' : t.slot === 'armor' ? '防具' : '飾品';
@@ -2510,28 +2556,31 @@
   };
 
   window._wbTcConfirmSwapTreasure = async function(targetSlotIdx, treasureId){
-    // 把這個 treasure 加入(若已在則移除)
+    // ★ FIX 20260516 v4 — 點到就「直接裝上」,不是切換
+    //   行為:
+    //   1. 點到已裝的 → 不做事(或可改成卸下,但現在玩家覺得切換很麻煩,維持「點等於裝」)
+    //   2. 點到新的同 slot 至寶 → 直接取代(舊的自動卸下)
+    //   3. 槽位已滿(已解鎖第二格) → 取代最舊的
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.[targetSlotIdx];
     if(!me){ return; }
     const ext = _wbTcParsePlayerExt(me);
-    const idx = ext.t.indexOf(treasureId);
-    if(idx >= 0){
-      ext.t.splice(idx, 1);
-    }else{
-      // 同 slot 衝突檢查
-      const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[treasureId]) || null;
-      if(def){
-        ext.t = ext.t.filter(tid => {
-          const old = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]);
-          return !(old && old.slot === def.slot);
-        });
-      }
-      // 達到上限就移除最舊的
-      const maxSlots = _wbTcIsHeroSlot2Unlocked(me.heroName) ? 2 : 1;
-      if(ext.t.length >= maxSlots) ext.t.shift();
-      ext.t.push(treasureId);
+    if(ext.t.includes(treasureId)){
+      // 已裝,直接關 modal(不做切換)
+      _wbTcCloseSwapModal();
+      return;
     }
+    const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[treasureId]) || null;
+    if(!def){ _wbTcCloseSwapModal(); return; }
+    // 移除同 slot 的(直接取代)
+    ext.t = ext.t.filter(tid => {
+      const old = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]);
+      return !(old && old.slot === def.slot);
+    });
+    // 達到上限就移除最舊的
+    const maxSlots = _wbTcIsHeroSlot2Unlocked(me.heroName) ? 2 : 1;
+    while(ext.t.length >= maxSlots) ext.t.shift();
+    ext.t.push(treasureId);
     // 同步:單人模式切到該槽再 setMyHero;多人模式自己槽才允許
     if(window._wbSoloPracticeMode){
       window._wbSoloEditingSlot = targetSlotIdx;
@@ -2545,13 +2594,22 @@
     document.getElementById('wb-tc-swap-modal').classList.remove('show');
   };
 
-  // ★ FIX 20260516 v3 — 開啟主程式 BOSS 圖鑑詳情頁
+  // ★ FIX 20260516 v3/v4 — 開啟主程式 BOSS 圖鑑詳情頁
+  // 修正:hero-detail-overlay z-index 是 9200,被我們的確認頁(9500)蓋住,
+  //       開啟前暫時把它拉高到 9700;關閉時(主程式關 popup 會把 display 設 none)會自然消失
   window._wbTcOpenBossDetail = function(){
     if(typeof openMonsterDetail !== 'function'){
       alert('找不到 BOSS 圖鑑功能');
       return;
     }
     try{
+      // 拉高 z-index 讓 popup 蓋在確認頁上方
+      const _hdo = document.getElementById('hero-detail-overlay');
+      if(_hdo){
+        _hdo.style.zIndex = '9700';
+        // 同時保證它脫離原本 position:absolute 容器(部分情況下會被 parent overflow:hidden 切掉)
+        _hdo.style.position = 'fixed';
+      }
       openMonsterDetail('維蘇威火山龍王');
     }catch(e){
       console.warn('[WB-TC] 開啟 BOSS 圖鑑失敗', e);
