@@ -749,8 +749,9 @@
   #wb-public-rooms-overlay .wb-pr-player .wb-pr-empty-slot{ color:#666; }
 
   /* ─── 邀請好友面板 (lobby 內彈出) ───────────────────────── */
+  /* ★ FIX 20260517(u) — z-index 從 9400 提到 9700,要蓋過隊伍確認頁(9500) */
   #wb-invite-friends-overlay{
-    display:none; position:fixed; inset:0; z-index:9400;
+    display:none; position:fixed; inset:0; z-index:9700;
     background:rgba(8,10,24,0.85); padding:30px 20px;
     overflow-y:auto; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   }
@@ -1602,6 +1603,18 @@
     cursor:pointer;font-family:inherit;letter-spacing:0.5px;
   }
   .wb-tc-roomcode-badge .wb-tc-rc-copy:hover{background:rgba(168,132,255,0.35);}
+  /* ★ FIX 20260517(v) — 單人練習模式:房號徽章用淡色 + 複製按鈕灰掉 */
+  .wb-tc-roomcode-badge.wb-tc-solo-mode{
+    border-color:rgba(150,150,150,0.4);
+    background:rgba(40,40,50,0.4);
+  }
+  .wb-tc-roomcode-badge.wb-tc-solo-mode .wb-tc-rc-label{color:#888;}
+  .wb-tc-roomcode-badge.wb-tc-solo-mode .wb-tc-rc-val{
+    color:#aaa;text-shadow:none;font-size:22px;letter-spacing:1px;
+  }
+  .wb-tc-roomcode-badge.wb-tc-solo-mode .wb-tc-rc-copy{
+    display:none; /* 練習模式沒有房號可複製 */
+  }
   .wb-tc-invite-btn{
     padding:7px 14px;font-size:20px;font-weight:800;letter-spacing:1px;
     background:linear-gradient(135deg,#5dcaa5,#3aa580);color:#fff;
@@ -3812,6 +3825,53 @@
     _wbGameAlert('已複製房號:' + code);
   };
   window._wbUiLeaveRoom = async function(){
+    // ★ FIX 20260517(v) — 單人練習模式特殊處理:不走真正的 leaveRoom
+    if(window._wbSoloPracticeMode){
+      const _msg = window._wbInWorldBossMode ? '確定要離開戰鬥嗎?' : '確定要取消練習嗎?';
+      if(!(await _wbGameConfirm(_msg))) return;
+      try{
+        // 還原真實 _wbNet
+        if(window._wbSoloRealWbNet){
+          window._wbNet = window._wbSoloRealWbNet;
+          window._wbSoloRealWbNet = null;
+        }
+        // 還原 _gUserId(如果單人模式有切過編輯槽 — 舊版邏輯,保留以防萬一)
+        if(window._wbSoloEditUidBackup){
+          window._gUserId = window._wbSoloEditUidBackup;
+          window._wbSoloEditUidBackup = null;
+        }
+        _wbSoloEditingSlot = 0;
+        _wbSoloFakePlayers = null;
+        window._wbHostAssignedSlots = {};
+        // 關閉所有 overlay
+        const _tc = document.getElementById('wb-team-confirm-overlay');
+        if(_tc){ _tc.classList.remove('show'); _tc.style.display = ''; }
+        const _lobby = document.getElementById('wb-lobby-overlay');
+        if(_lobby){ _lobby.style.display = 'none'; _lobby.classList.remove('wb-in-battle'); _lobby.style.background = ''; }
+        const _eb = document.getElementById('wb-emoji-bar-real');
+        if(_eb) _eb.classList.remove('wb-eb-show');
+        const _entry = document.getElementById('wb-entry-overlay');
+        if(_entry) _entry.style.display = 'none';
+        // 清練習用即時傷害條
+        const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+        if(dmgBar) dmgBar.remove();
+        // 清 flag
+        window._wbInWorldBossMode = false;
+        window._wbSoloPracticeMode = false;
+        window._wbHostG = null;
+        // 切回原本 BGM
+        try{
+          if(typeof bgmFadeTo === 'function'){
+            const prevBgm = window._wbPrevBgm || 'bgm-home';
+            bgmFadeTo(prevBgm, 600);
+          }
+        }catch(_){}
+      }catch(eSolo){
+        console.warn('[WB-Solo] 離開練習時例外', eSolo);
+      }
+      return;
+    }
+    // ── 連線房間流程 ─────────────────────────────────────────
     if(!(await _wbGameConfirm('確定要離開房間嗎?'))) return;
     // ★ FIX 20260517(m) — 停掉房主端的 outgoing invite 訂閱
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
@@ -4116,44 +4176,132 @@
     }, true); // capture phase,在原 onclick 之前先收到
   })();
 
+  // ★ FIX 20260517(v) — 取得「我的預設裝備」(用於房主預設或玩家進房預設)
+  //   回傳:{ heroName, recommendedElement, equippedTreasureIds: [id1, id2?] }
+  //   來源:
+  //     - heroName: window._myRepHero.name(代表英雄)→ fallback 已解鎖英雄第一隻
+  //     - recommendedElement: 從代表英雄推測屬性 → 若是破盾屬性就用,否則挑一個破盾屬性
+  //     - equippedTreasureIds: 從 _taiwanTreasureData 撈 equippedTo === 此英雄名 的至寶 id
+  function _wbTcGetMyDefaultLoadout(){
+    let heroName = null;
+    try{
+      if(window._myRepHero && window._myRepHero.name) heroName = window._myRepHero.name;
+    }catch(_){}
+    if(!heroName){
+      // fallback:用第一個已解鎖英雄
+      try{
+        const heroes = (typeof _wbGetAvailableHeroes === 'function') ? _wbGetAvailableHeroes() : [];
+        heroName = heroes[0] || '劍士';
+      }catch(_){ heroName = '劍士'; }
+    }
+    // 推薦屬性:先看推測屬性是不是破盾屬性
+    let recommendedElement = null;
+    try{
+      const inferred = (typeof _wbEcInferHeroElement === 'function') ? _wbEcInferHeroElement(heroName) : null;
+      if(inferred && _WB_TC_REQ_ELEMS.includes(inferred)){
+        recommendedElement = inferred;
+      }else{
+        // 從破盾屬性中挑一個(用 hash 散開,讓不同英雄分到不同)
+        const seed = heroName.charCodeAt(0) || 0;
+        recommendedElement = _WB_TC_REQ_ELEMS[seed % _WB_TC_REQ_ELEMS.length] || _WB_TC_REQ_ELEMS[0];
+      }
+    }catch(_){
+      recommendedElement = _WB_TC_REQ_ELEMS[0] || 'water';
+    }
+    // 已裝備到此英雄的至寶
+    const equippedTreasureIds = [];
+    try{
+      if(typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
+        Object.keys(_taiwanTreasureData).forEach(id => {
+          const rec = _taiwanTreasureData[id];
+          if(rec && rec.equippedTo === heroName && (rec.lv || 0) >= 1){
+            equippedTreasureIds.push(id);
+          }
+        });
+        // 至多 2 件(主程式上限)
+        if(equippedTreasureIds.length > 2) equippedTreasureIds.length = 2;
+      }
+    }catch(_){}
+    return { heroName, recommendedElement, equippedTreasureIds };
+  }
+  window._wbTcGetMyDefaultLoadout = _wbTcGetMyDefaultLoadout;
+
   // 開啟隊伍確認頁(從選角頁的按鈕觸發)
   window._wbTcOpenTeamConfirm = function(){
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.find(p => p.uid === window._gUserId);
-    // ★ FIX 20260517(r) — 房主第一次開房時還沒選英雄,允許進來;
-    //   原本要求 me.heroName 才能進來,改成在隊伍確認頁內預設選擇第一個英雄。
-    //   主程式呼叫此函式分兩種情境:
-    //     a) 從 createRoom/joinRoom 直接進來 → me 可能還沒選英雄
-    //     b) 從選角頁(舊版,已棄用)按「準備」進來 → 確定有 heroName
-    if(me && !me.heroName){
-      // 預設選一隻可用英雄(沿用主程式 _wbGetAvailableHeroes 的第一個)
+    // ★ FIX 20260517(v) — 第一次進來時,用「代表英雄 + 至寶 + 推薦屬性」當預設值
+    //   讓房主看到的不再是 Lv.? HP 0/0,而是自己的代表英雄
+    //   觸發條件:
+    //   (a) me 存在但沒 heroName(已進 firestore,但還沒選角)
+    //   (b) me 不存在(剛 createRoom,onSnapshot 還沒回來)→ 仍呼叫 setMyHero,
+    //       firestore 寫入會把 heroName 補上 + 下次 onSnapshot 帶 me 回來
+    const needSetDefault = !me || !me.heroName;
+    if(needSetDefault){
       try{
-        const heroes = (typeof _wbGetAvailableHeroes === 'function') ? _wbGetAvailableHeroes() : [];
-        const defaultHero = heroes[0] || '劍士';
+        const loadout = _wbTcGetMyDefaultLoadout();
+        const ext = {
+          e: loadout.recommendedElement,
+          es: loadout.recommendedElement ? [loadout.recommendedElement] : [],
+          t: loadout.equippedTreasureIds || []
+        };
         // 同步進房間(setMyHero,等下會被 onRoomUpdate 觸發 re-render)
         if(window._wbNet && window._wbNet.setMyHero){
-          window._wbNet.setMyHero(defaultHero, null);
+          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExt(ext));
         }
-      }catch(_){}
+        console.log('[WB-TC] 預設英雄/屬性/至寶:', loadout);
+      }catch(eDef){
+        console.warn('[WB-TC] 預設裝備設定失敗,fallback', eDef);
+        // fallback:純預設英雄
+        try{
+          const heroes = (typeof _wbGetAvailableHeroes === 'function') ? _wbGetAvailableHeroes() : [];
+          const defaultHero = heroes[0] || '劍士';
+          if(window._wbNet && window._wbNet.setMyHero){
+            window._wbNet.setMyHero(defaultHero, null);
+          }
+        }catch(_){}
+      }
     }
     document.getElementById('wb-team-confirm-overlay').classList.add('show');
     // ★ FIX 20260517(r) — 同步右上角房號與邀請好友按鈕
     try{
       const roomId = (window._wbNet && window._wbNet.getRoomId) ? window._wbNet.getRoomId() : null;
       const isHost = !!(window._wbNet && window._wbNet.isHost && window._wbNet.isHost());
+      // ★ FIX 20260517(v) — 單人練習模式也顯示這頁,但隱藏房號(沒意義),邀請好友按鈕灰掉
+      const isSolo = !!window._wbSoloPracticeMode;
       const roomcodeBadge = document.getElementById('wb-tc-roomcode-badge');
       const roomcodeVal   = document.getElementById('wb-tc-roomcode-val');
       const inviteBtn     = document.getElementById('wb-tc-invite-btn');
-      if(roomId && roomcodeBadge && roomcodeVal){
-        roomcodeBadge.style.display = '';
-        roomcodeVal.textContent = roomId;
+      if(roomcodeBadge && roomcodeVal){
+        if(isSolo){
+          // 單人練習:房號徽章顯示「單人練習」字樣,複製按鈕灰掉
+          roomcodeBadge.style.display = '';
+          roomcodeVal.textContent = '練習';
+          roomcodeBadge.classList.add('wb-tc-solo-mode');
+        }else if(roomId){
+          roomcodeBadge.style.display = '';
+          roomcodeVal.textContent = roomId;
+          roomcodeBadge.classList.remove('wb-tc-solo-mode');
+        }else{
+          roomcodeBadge.style.display = 'none';
+        }
       }
       if(inviteBtn){
-        // 只有房主才看得到邀請好友按鈕
-        inviteBtn.style.display = isHost ? '' : 'none';
+        // 房主才看得到邀請好友按鈕;單人練習則灰掉禁用
+        if(isSolo){
+          inviteBtn.style.display = '';
+          inviteBtn.disabled = true;
+          inviteBtn.title = '單人練習無法邀請好友';
+        }else if(isHost){
+          inviteBtn.style.display = '';
+          inviteBtn.disabled = false;
+          inviteBtn.title = '';
+        }else{
+          inviteBtn.style.display = 'none';
+        }
       }
       // 房主第一次進來啟動 outgoing invite 訂閱(讓邀請好友面板能 reactive)
-      if(isHost && typeof _wbStartOutgoingInviteSub === 'function'){
+      if(!isSolo && isHost && typeof _wbStartOutgoingInviteSub === 'function'){
         try{ _wbStartOutgoingInviteSub(); }catch(_){}
       }
     }catch(_){}
@@ -4533,6 +4681,27 @@
     // ★ FIX 20260516 v7 — 至寶各自分開裝,不再計算「隊友佔用」
     const treasureTakenByPeer = new Set();  // 維持函式簽名,內容永遠空
 
+    // ★ FIX 20260517(v) — 若 me 還沒選英雄(剛開房 setMyHero 尚未 round-trip),
+    //   先在記憶體裡注入預設 loadout(代表英雄 + 至寶 + 推薦屬性),
+    //   讓 UI 第一次 render 就有正確的英雄資料,不會閃「Lv.? HP 0/0」。
+    //   注意:這只改本地 snap 拿到的 player 物件,setMyHero 的 firestore 寫入
+    //         仍然在 _wbTcOpenTeamConfirm 中已經發出,寫成功後 onRoomUpdate
+    //         會再次 render(屆時 heroName 已正式存在,不會再走這個 fallback)。
+    try{
+      const _me = players.find(p => p && p.uid === myUid);
+      if(_me && !_me.heroName){
+        const _loadout = _wbTcGetMyDefaultLoadout();
+        _me.heroName = _loadout.heroName;
+        const _ext = {
+          e:  _loadout.recommendedElement,
+          es: _loadout.recommendedElement ? [_loadout.recommendedElement] : [],
+          t:  _loadout.equippedTreasureIds || []
+        };
+        _me.element = _wbTcStringifyExt(_ext);
+        console.log('[WB-TC] me 暫無 heroName,本地注入預設 loadout:', _loadout);
+      }
+    }catch(_){}
+
     // ★ FIX 20260517(q) — 計算覆蓋率時要把缺的元素「預先分配給 NPC 替補槽」,
     //   讓 UI 顯示「✅ 已覆蓋(NPC 將補上)」而不是「⚠ 還缺」。
     //   分配邏輯:遇到空槽 → 依序把 missing 元素塞進去。
@@ -4644,6 +4813,15 @@
         }
         // ── 初始空槽:顯示兩個動作按鈕(只有房主能用) ─────────────
         if(meIsHost){
+          // ★ FIX 20260517(v) — 單人練習模式:邀請隊友按鈕灰掉禁用
+          const _isSoloLocal = !!window._wbSoloPracticeMode;
+          const _inviteBtnHtml = _isSoloLocal
+            ? `<button class="wb-tc-slot-action-btn invite" disabled title="單人練習無法邀請好友">
+                📧 邀請隊友(練習模式不可用)
+              </button>`
+            : `<button class="wb-tc-slot-action-btn invite" onclick="_wbUiOpenInviteFriends()">
+                📧 邀請隊友
+              </button>`;
           html += `<div class="wb-tc-slot empty wb-tc-slot-npc">
             <div class="wb-tc-slot-head">
               <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
@@ -4652,12 +4830,10 @@
             </div>
             <div class="wb-tc-slot-empty-hint">
               <span class="wb-tc-empty-icon">👤</span>
-              <div>等待隊員加入<br>或由房主指派</div>
+              <div>${_isSoloLocal ? '練習模式・<br>由房主指派 NPC' : '等待隊員加入<br>或由房主指派'}</div>
             </div>
             <div class="wb-tc-slot-actions">
-              <button class="wb-tc-slot-action-btn invite" onclick="_wbUiOpenInviteFriends()">
-                📧 邀請隊友
-              </button>
+              ${_inviteBtnHtml}
               <button class="wb-tc-slot-action-btn assign" onclick="_wbTcAssignedSlotOpenSwap(${i})">
                 🎮 房主指派
               </button>
@@ -4873,10 +5049,12 @@
     const _displayName = _esc(p.name || '玩家');
     const playerNameHtml = `<span class="wb-tc-slot-player-name" title="${_displayName}">👤 ${_displayName}</span>`;
 
-    // 替換英雄按鈕(只有我看得到,只有單人練習可用 — 多人房不允許在這頁換英雄)
-    const allowSwapHero = isMe && window._wbSoloPracticeMode;
+    // ★ FIX 20260517(u) — 替換英雄按鈕:單人練習 或 多人房自己槽位都可以
+    //   原本只在 _wbSoloPracticeMode 才能換,但新流程已移除選角頁,
+    //   多人房房主/玩家必須能在隊伍確認頁換自己的英雄。
+    const allowSwapHero = isMe;
     const swapHeroBtn = allowSwapHero
-      ? `<button class="wb-tc-swap-hero-btn" onclick="_wbTcOpenSwapHero(${idx})">🔄 替換英雄</button>`
+      ? `<button class="wb-tc-swap-hero-btn" onclick="_wbTcOpenSwapHero(${idx})">🔄 換英雄</button>`
       : '';
 
     // 元素 chips
@@ -4929,9 +5107,10 @@
         ${p.ready ? '↶ 取消準備' : '✓ 我準備好了'}
       </button>` : '';
 
-    // ★ FIX 20260516 v5 — 點卡片行為:單人模式=換英雄(更直覺);多人模式=看英雄詳情
+    // ★ FIX 20260517(u) — 點卡片行為:自己的卡片任何模式都觸發換英雄;
+    //                       其他玩家卡片則看英雄詳情
     let previewClick;
-    if(window._wbSoloPracticeMode && isMe){
+    if(isMe){
       previewClick = `onclick="_wbTcOpenSwapHero(${idx})"`;
     }else{
       previewClick = `onclick="_wbTcPreviewHero('${heroName.replace(/'/g,"\\\\'")}')"`;
@@ -5145,19 +5324,24 @@
       try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.55); }catch(_){}
       return;
     }
-    // 單人模式:切到該槽再 setMyHero
+    // ★ FIX 20260517(u) — 自己的槽位 → 走 setMyHero(原本只支援單人練習,現在多人房也支援)
+    const isMyOwnSlot = slotPlayer && slotPlayer.uid === window._gUserId;
     if(window._wbSoloPracticeMode){
+      // 單人練習模式:切編輯槽
       window._wbSoloEditingSlot = targetSlotIdx;
-      // 拿目前該槽的 ext(保留元素/至寶)
-      const me = snap?.players?.[targetSlotIdx];
-      const ext = _wbTcParsePlayerExt(me);
+      const ext = _wbTcParsePlayerExt(slotPlayer);
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
+    }else if(isMyOwnSlot){
+      // 多人房:換自己的英雄(保留原本的元素/至寶 ext)
+      const ext = _wbTcParsePlayerExt(slotPlayer);
       await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
     }else{
-      // 多人:不允許在這頁換真人玩家的英雄(按鈕應該不會出現)
+      // 多人房試圖換別人的英雄 → 拒絕
       _wbGameAlert('只能替自己的槽位換英雄');
     }
     _wbTcCloseSwapModal();
     _wbTcRenderTeamConfirm();
+    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.55); }catch(_){}
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -5794,8 +5978,9 @@
     const _origStartTurn = window.startTurn;
     window.startTurn = function(){
       const ret = _origStartTurn.apply(this, arguments);
-      // 只在連線房主模式下接管
-      if(!window._wbConnectedHostMode) return ret;
+      // ★ FIX 20260517(v) — 連線房主模式 或 單人練習模式 + 在世界 BOSS 戰中都接管
+      const _wbActive = !!(window._wbConnectedHostMode || (window._wbSoloPracticeMode && window._wbInWorldBossMode));
+      if(!_wbActive) return ret;
       try{
         const _G = (typeof window._wbGetG === 'function') ? window._wbGetG()
                    : (typeof G !== 'undefined' ? G : null);
@@ -5811,7 +5996,8 @@
         setTimeout(function(){
           try{
             // 二次檢查:可能已被別的路徑處理(例如插隊被動)
-            if(!window._wbConnectedHostMode) return;
+            const _stillActive = !!(window._wbConnectedHostMode || (window._wbSoloPracticeMode && window._wbInWorldBossMode));
+            if(!_stillActive) return;
             const _G2 = (typeof window._wbGetG === 'function') ? window._wbGetG() : G;
             if(!_G2 || _G2.activeChar !== active) return;
             if(active.acted || active.curHp <= 0) return;
@@ -7716,43 +7902,55 @@
   let _wbSoloEditingSlot = 0;      // 目前在編輯哪個槽(0~3)
 
   function _wbSoloOpenTeamConfirm(){
-    // ★ FIX 20260516 v6 — 提前設旗標,讓卡片邏輯(點卡=換英雄)能識別單人模式
+    // ★ FIX 20260517(v) — 提前設旗標,讓卡片邏輯(點卡=換英雄)能識別單人模式
     window._wbSoloPracticeMode = true;
-    // 用玩家「代表英雄」+ 3 個預設英雄當初始陣容
-    const repHero = window._myRepHero || '劍士';
-    const defaultPool = ['劍士','祭司','聖騎士','火法師'];
-    // 把代表英雄放在第一格
-    const heroes = [repHero];
-    for(const n of defaultPool){
-      if(heroes.length >= 4) break;
-      if(!heroes.includes(n) && _heroDbHas(n)) heroes.push(n);
-    }
-    // 若代表英雄是怪物/不可用,改用 defaultPool
-    if(!_heroDbHas(heroes[0])) heroes[0] = '劍士';
+    // ★ FIX 20260517(v) — 新流程:單人練習也跟開房模式一樣,只有「房主」一個玩家,
+    //   其他 3 個槽空,房主可用「房主指派」按鈕補位(就跟開房模式完全一樣)
+    //   邀請好友按鈕灰掉(單人模式無法邀請)
 
     // ★ FIX 20260516 v9 — 先 refresh 一次,確保 _WB_TC_REQ_ELEMS 是當前 BOSS 的破盾屬性
     _wbTcRefreshReqElems();
 
-    _wbSoloFakePlayers = heroes.map((name, i) => ({
-      uid: i === 0 ? (window._gUserId || 'solo_user') : ('solo_slot_' + i),
-      name: i === 0 ? (window._userName || '你') : ('槽位' + (i+1)),
-      slotIdx: i, heroName: name,
-      // 初始元素:第 i 個指派一個破盾屬性(水/土/草/光),讓覆蓋一開始就有 4 元素提示
-      element: JSON.stringify({ e: _WB_TC_REQ_ELEMS[i], es: [_WB_TC_REQ_ELEMS[i]], t: [] }),
-      ready: false,
-    }));
+    // 預設用代表英雄 + 至寶 + 推薦屬性
+    let _defaultLoadout = { heroName: '劍士', recommendedElement: null, equippedTreasureIds: [] };
+    try{
+      _defaultLoadout = _wbTcGetMyDefaultLoadout();
+    }catch(_){}
+    const _initExt = {
+      e:  _defaultLoadout.recommendedElement,
+      es: _defaultLoadout.recommendedElement ? [_defaultLoadout.recommendedElement] : [],
+      t:  _defaultLoadout.equippedTreasureIds || []
+    };
+    const _myName = (window._playerNickname || window._userName || '你');
+    // ★ 只放房主一個玩家,其他 3 個槽留空
+    _wbSoloFakePlayers = [
+      {
+        uid: window._gUserId || 'solo_user',
+        name: _myName,
+        slotIdx: 0,
+        heroName: _defaultLoadout.heroName,
+        element: _wbTcStringifyExt(_initExt),
+        ready: false,
+        online: true,
+        lastSeen: Date.now(),
+      },
+      // 其他 3 個槽位:null(表示空槽)
+      null, null, null
+    ];
+
+    // 清掉舊的本地指派(每次進來都重置)
+    window._wbHostAssignedSlots = {};
 
     // 建立 mock _wbNet(只有開隊伍確認頁時用,確認後會還原)
     const realWbNet = window._wbNet;
     window._wbSoloRealWbNet = realWbNet;  // 備份待還原
     window._wbNet = _wbSoloMakeMockNet();
 
-    // 把現有 lobby overlay 顯示出來但不渲染選角頁;直接顯示隊伍確認頁
+    // 關閉入口頁
     document.getElementById('wb-entry-overlay').style.display = 'none';
-    // 直接打開隊伍確認頁(此 overlay 獨立於 lobby)
-    document.getElementById('wb-team-confirm-overlay').classList.add('show');
+    // ★ 走標準流程,不直接 add show class,讓 _wbTcOpenTeamConfirm 處理房號徽章/邀請按鈕
+    _wbTcOpenTeamConfirm();
     // 改寫底部「開戰」按鈕為呼叫單人開戰
-    _wbTcRenderTeamConfirm();
     _wbSoloHookStartButton();
   }
 
@@ -7766,59 +7964,39 @@
     const btn = document.getElementById('wb-tc-start-btn');
     if(!btn) return;
     btn.style.display = 'inline-block';
+    btn.disabled = false;
     btn.onclick = async function(){
-      // 檢查 4 元素都覆蓋(若沒覆蓋仍允許,但提示)
-      const cov = _wbTcCalcCoverage(_wbSoloFakePlayers);
+      // ★ FIX 20260517(v) — _wbSoloFakePlayers 現在是 [me, null, null, null],
+      //   過濾掉 null 才能算覆蓋率;且要算上房主指派的 NPC 元素
+      const _hostAssign = window._wbHostAssignedSlots || {};
+      const _coverPool = [];
+      for(let i = 0; i < 4; i++){
+        if(_wbSoloFakePlayers && _wbSoloFakePlayers[i] && _wbSoloFakePlayers[i].heroName){
+          _coverPool.push(_wbSoloFakePlayers[i]);
+        }else if(_hostAssign[i] && _hostAssign[i].heroName){
+          // 把指派的 NPC 也納入覆蓋計算
+          const a = _hostAssign[i];
+          _coverPool.push({
+            heroName: a.heroName,
+            element: a.element ? JSON.stringify({ e: a.element, es: [a.element], t: [] }) : null,
+          });
+        }
+      }
+      const cov = _wbTcCalcCoverage(_coverPool);
       if(cov.missing.length > 0){
-        const proceed = await _wbGameConfirm('⚠ 還缺 ' + cov.missing.length + ' 個破盾屬性(' + cov.missing.join(',') + '),確定要開戰嗎?');
+        const _missTxt = cov.missing.map(e => {
+          const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+          return m ? (m.ic + m.name) : e;
+        }).join(' / ');
+        const proceed = await _wbGameConfirm('⚠ 還缺 ' + _missTxt + ' 屬性,自動 NPC 會嘗試補位。確定要開戰嗎?');
         if(!proceed) return;
       }
       // 關閉隊伍確認頁,進入戰鬥
       document.getElementById('wb-team-confirm-overlay').classList.remove('show');
       _wbSoloBeginBattle();
     };
-    // 加一個「換英雄」提示(編輯模式)
-    const backBtn = document.querySelector('#wb-team-confirm-overlay .wb-tc-back-btn');
-    if(backBtn){
-      backBtn.textContent = '← 取消練習';
-      backBtn.onclick = function(){
-        // ★ FIX 20260516 v5 — 完整離開:關確認頁 + 關 lobby + 切回首頁 BGM + 清狀態
-        document.getElementById('wb-team-confirm-overlay').classList.remove('show');
-        document.getElementById('wb-team-confirm-overlay').style.display = '';
-        // 還原 _wbNet
-        if(window._wbSoloRealWbNet){ window._wbNet = window._wbSoloRealWbNet; }
-        // 還原 _gUserId(如果單人模式有切過編輯槽)
-        if(window._wbSoloEditUidBackup){
-          window._gUserId = window._wbSoloEditUidBackup;
-          window._wbSoloEditUidBackup = null;
-        }
-        _wbSoloEditingSlot = 0;
-        _wbSoloFakePlayers = null;
-        // 關 lobby + 表情按鈕
-        const lobby = document.getElementById('wb-lobby-overlay');
-        if(lobby){
-          lobby.style.display = 'none';
-          lobby.classList.remove('wb-in-battle');
-          lobby.style.background = '';  // ★ FIX 20260517
-        }
-        const emojiBar = document.getElementById('wb-emoji-bar-real');
-        if(emojiBar){ emojiBar.classList.remove('wb-eb-show'); }
-        // 清練習用即時傷害條
-        const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
-        if(dmgBar) dmgBar.remove();
-        // 清世界 BOSS 模式 flag
-        window._wbInWorldBossMode = false;
-        window._wbSoloPracticeMode = false;
-        window._wbHostG = null;
-        // 切回原本 BGM(如果有備份;否則用 bgm-home)
-        try{
-          if(typeof bgmFadeTo === 'function'){
-            const prevBgm = window._wbPrevBgm || 'bgm-home';
-            bgmFadeTo(prevBgm, 600);
-          }
-        }catch(_){}
-      };
-    }
+    // ★ FIX 20260517(v) — 舊的 wb-tc-back-btn(取消練習)已在 (r) 改動移除,
+    //   單人練習現在用右上角「離開房間」按鈕(走 _wbUiLeaveRoom 的單人分支)
   }
 
   // Mock _wbNet:讓隊伍確認頁的 setMyHero / toggleReady 都直接改 _wbSoloFakePlayers
@@ -7826,35 +8004,24 @@
     return {
       getSnapshot: () => ({
         players: _wbSoloFakePlayers,
-        meta: { hostUid: _wbSoloFakePlayers[0].uid, status: 'picking' }
+        meta: { hostUid: _wbSoloFakePlayers[0] ? _wbSoloFakePlayers[0].uid : 'solo_user', status: 'picking' }
       }),
       getRoomId: () => '練習',
       isHost: () => true,
-      getMySlot: () => _wbSoloEditingSlot,
-      // 單人模式:setMyHero 改的是「目前編輯中的槽」(預設槽 0),其他槽透過下方 UI 切換編輯
+      getMySlot: () => 0,  // ★ 單人模式:玩家永遠在槽 0
+      // ★ FIX 20260517(v) — 單人模式只改槽 0(房主),其他槽用「房主指派」操作(走 _wbHostAssignedSlots)
       setMyHero: async function(heroName, elementStr){
-        const slot = _wbSoloEditingSlot;
-        if(_wbSoloFakePlayers[slot]){
-          _wbSoloFakePlayers[slot].heroName = heroName;
-          _wbSoloFakePlayers[slot].element = elementStr || null;
-          _wbSoloFakePlayers[slot].ready = false;
+        if(_wbSoloFakePlayers[0]){
+          _wbSoloFakePlayers[0].heroName = heroName;
+          _wbSoloFakePlayers[0].element = elementStr || null;
+          _wbSoloFakePlayers[0].ready = false;
         }
-        // 觸發 UI 重繪
         _wbTcRenderTeamConfirm();
         return true;
       },
       toggleReady: async function(){
-        const slot = _wbSoloEditingSlot;
-        if(_wbSoloFakePlayers[slot]){
-          _wbSoloFakePlayers[slot].ready = !_wbSoloFakePlayers[slot].ready;
-        }
-        // ★ FIX 20260516 v8 — 單人模式:當玩家(槽 0)準備好,3 位 NPC 也自動準備
-        //   讓玩家不用切換槽位點 4 次,直接可以開戰
-        if(slot === 0 && _wbSoloFakePlayers[0]){
-          const meReady = _wbSoloFakePlayers[0].ready;
-          for(let i = 1; i < _wbSoloFakePlayers.length; i++){
-            if(_wbSoloFakePlayers[i]) _wbSoloFakePlayers[i].ready = meReady;
-          }
+        if(_wbSoloFakePlayers[0]){
+          _wbSoloFakePlayers[0].ready = !_wbSoloFakePlayers[0].ready;
         }
         _wbTcRenderTeamConfirm();
         return true;
@@ -7866,30 +8033,9 @@
     };
   }
 
-  // 為了在單人模式下能「編輯任一槽」,把全域 _gUserId 暫時改成該槽的 uid 是危險的。
-  // 改用另一個方式:在隊伍確認頁的「槽位 N」頭部加上「← 換我編輯」按鈕。
-  // 簡化做法:直接讓玩家點任一槽就把「正在編輯的槽位」切換過去。
-  // 用 click 事件代理(在 wb-tc-slots 容器層)
-  document.addEventListener('click', function(ev){
-    if(!window._wbSoloPracticeMode && !document.getElementById('wb-team-confirm-overlay').classList.contains('show')) return;
-    if(!_wbSoloFakePlayers) return;  // 不在單人練習設定階段
-    // 找到被點到的槽位
-    const slot = ev.target.closest('.wb-tc-slot');
-    if(!slot) return;
-    const slots = Array.from(document.querySelectorAll('.wb-tc-slot'));
-    const idx = slots.indexOf(slot);
-    if(idx < 0 || idx === _wbSoloEditingSlot) return;
-    // 切換前提:點到的是 slot 頭部空白區、玩家名、或英雄圖,不是 chip/按鈕
-    if(ev.target.closest('button.wb-tc-elem-chip') || ev.target.closest('button.wb-tc-treasure-chip') || ev.target.closest('button.wb-tc-ready-btn')) return;
-    // 把正在編輯的槽切到 idx
-    _wbSoloEditingSlot = idx;
-    // 同步 mock 的 _gUserId 行為:把 uid 視為「目前正在編輯的槽」
-    // (這樣 _wbTcRenderTeamConfirm 的 "isMe" 判定才會跟著切)
-    const newUid = _wbSoloFakePlayers[idx].uid;
-    window._wbSoloEditUidBackup = window._wbSoloEditUidBackup || window._gUserId;
-    window._gUserId = newUid;
-    _wbTcRenderTeamConfirm();
-  }, true);
+  // ★ FIX 20260517(v) — 舊的「點任一槽切換編輯」邏輯移除,
+  //   單人模式現在跟開房模式一樣只有「槽 0(房主)」是真人,
+  //   其他 3 槽走「房主指派」(_wbHostAssignedSlots)
 
   // ════════════════════════════════════════════════════════════════════
   // ★ v4.0 (2026-05-17) — 單人練習模式接主程式 advStartBattle()
@@ -7929,23 +8075,50 @@
       return;
     }
 
-    // 把 _wbSoloFakePlayers 的 heroName 抽出來建立戰鬥用陣容
-    const heroPool = _wbSoloFakePlayers.map(p => p.heroName);
+    // ★ FIX 20260517(v) — 新流程:_wbSoloFakePlayers 只有槽 0 是 me,
+    //   其他槽是 null。要從 _wbHostAssignedSlots 讀房主指派的 NPC,
+    //   沒指派的槽位用房主英雄當 fallback(跟連線房主模式邏輯一致)
+    const _myFakeP = _wbSoloFakePlayers[0];
+    const _myExt = _myFakeP ? _wbTcParsePlayerExt(_myFakeP) : { e:null, es:[], t:[] };
+    const _myHeroName = (_myFakeP && _myFakeP.heroName) || '劍士';
+    const _hostAssignSolo = window._wbHostAssignedSlots || {};
     const p1 = [];
     for(let i = 0; i < 4; i++){
-      const h = newHero(heroPool[i], 'p1', i);
+      let _heroName, _ext;
+      if(i === 0){
+        // 槽 0:房主本人
+        _heroName = _myHeroName;
+        _ext = _myExt;
+      }else{
+        // 其他槽位:讀房主指派
+        const _assigned = _hostAssignSolo[i];
+        if(_assigned && _assigned.heroName){
+          _heroName = _assigned.heroName;
+          _ext = {
+            e: _assigned.element || null,
+            es: _assigned.element ? [_assigned.element] : [],
+            t: []
+          };
+        }else{
+          // 沒指派 → 沿用房主英雄(讓 NPC AI 自動)
+          _heroName = _myHeroName;
+          _ext = { e:null, es:[], t:[] };
+        }
+      }
+      const h = newHero(_heroName, 'p1', i);
       h.burst = 0;
       h.burstMax = h.burstMax || 10;
-      // 把玩家選的元素塞到 _wbPickedElement(供後續破盾推算用)
-      const ext = _wbTcParsePlayerExt(_wbSoloFakePlayers[i]);
-      if(ext.es && ext.es.length){
-        h._wbPickedElement = ext.es[0];   // 主元素
-        h._wbAllPickedElements = ext.es;  // 全部元素
+      if(_ext.es && _ext.es.length){
+        h._wbPickedElement = _ext.es[0];
+        h._wbAllPickedElements = _ext.es;
+        if(!h.element) h.element = _ext.es[0];
       }
-      // 把至寶 ID 塞到 _wbTreasureIds(供戰鬥邏輯讀,目前只記不計入戰鬥)
-      if(ext.t && ext.t.length){
-        h._wbTreasureIds = ext.t;
+      if(_ext.t && _ext.t.length){
+        h._wbTreasureIds = _ext.t;
       }
+      // ★ 標記 NPC 類型
+      h._wbIsNpc     = (i !== 0) && !(_hostAssignSolo[i] && _hostAssignSolo[i].heroName);
+      h._wbIsHostNpc = (i !== 0) && !!(_hostAssignSolo[i] && _hostAssignSolo[i].heroName);
       p1.push(h);
     }
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
@@ -7978,13 +8151,21 @@
     window._wbSoloStartTs = Date.now();
     window._wbSoloContrib = {};
 
+    // ★ FIX 20260517(v) — 安裝 NPC auto-act hook(單人練習也用)
+    //   未指派的 NPC 槽位(_wbIsNpc=true)會被 AI 自動操作,
+    //   房主指派的(_wbIsHostNpc=true)則由房主自己操作
+    try{ if(typeof _wbInstallNpcAutoActHook === 'function') _wbInstallNpcAutoActHook(); }catch(_){}
+
     // ── 偽造 _wbNet for 世界戰專屬 UI(表情列/即時傷害條會用) ──────
-    const fakePlayers = _wbSoloFakePlayers.map((p, i) => ({
+    // ★ FIX 20260517(v) — 用 p1 陣容(剛建好的)生成 fakePlayers,
+    //   避免讀 _wbSoloFakePlayers(只有槽 0 是真實玩家,其他是 null)
+    const fakePlayers = p1.map((h, i) => ({
       uid: i === 0 ? (window._gUserId || 'solo_user') : ('ai_' + i),
-      name: i === 0 ? (window._userName || '你') : 'AI 替補',
+      name: i === 0 ? (window._playerNickname || window._userName || '你')
+                    : (h._wbIsHostNpc ? '房主代打' : 'AI 替補'),
       slotIdx: i,
-      heroName: p.heroName,
-      element: p.element,
+      heroName: h.name,
+      element: h._wbPickedElement || null,
       ready: true,
     }));
     _wbSoloFakePlayers = null;
