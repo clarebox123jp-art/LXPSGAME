@@ -2173,6 +2173,18 @@
     // ── G → wire ──────────────────────────────────────────────────────
     function _GToWire(G){
       if(!G) return null;
+      // ★ FIX 20260517(dd) — 直接從 G.activeChar 推導「目前是誰的回合」
+      //   原因:主程式 startTurn() 動態用 alive.sort()[0] 挑下一位寫到 G.activeChar,
+      //   完全不維護 G.currentActorIdx / G.turnOrder 這兩個欄位 → wire 上的 currentActorIdx
+      //   永遠停在 0 → client 用 turnOrder[0]=BOSS 重建 activeChar → 不顯示 action-panel。
+      //   修法:多帶一個 _activeSidePos:{side,pos} 給 client 端優先採用,不依賴 currentActorIdx。
+      let _activeSidePos = null;
+      try{
+        const _ac = G.activeChar;
+        if(_ac && _ac.side && typeof _ac.pos === 'number'){
+          _activeSidePos = { side: _ac.side, pos: _ac.pos };
+        }
+      }catch(_){}
       const out = {
         // 戰鬥節奏
         turn: G.turn || 1,
@@ -2180,6 +2192,8 @@
         turnOrder: Array.isArray(G.turnOrder)
           ? G.turnOrder.map(o => ({ side: o.side, pos: o.pos, spd: o.spd }))
           : [],
+        // ★ FIX 20260517(dd) — 直接帶 activeChar 的 side+pos(主程式真實狀態)
+        _activeSidePos: _activeSidePos,
         // 兩邊陣容
         p1: Array.isArray(G.p1) ? G.p1.map(_heroToWireV6) : [],
         p2: Array.isArray(G.p2) ? G.p2.map(_heroToWireV6) : [],
@@ -2225,6 +2239,8 @@
       G.turn = wire.turn || 1;
       G.currentActorIdx = wire.currentActorIdx || 0;
       G.turnOrder = Array.isArray(wire.turnOrder) ? wire.turnOrder.slice() : [];
+      // ★ FIX 20260517(dd) — 帶過來給 client 端重建 activeChar 用
+      G._activeSidePos = wire._activeSidePos || null;
       // 英雄陣容 — 用 _wireToHeroV6 還原成完整 hero 物件
       G.p1 = Array.isArray(wire.p1) ? wire.p1.map(_wireToHeroV6) : [];
       G.p2 = Array.isArray(wire.p2) ? wire.p2.map(_wireToHeroV6) : [];

@@ -1641,9 +1641,27 @@
         if(!window._wbConnectedHostMode && !window._wbConnectedClientMode) return ret;
         const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
         if(!G) return ret;
+
+        // ★ FIX 20260517(dd) — 還原工具:把藏起來的 item-panel + 等候 banner 還原。
+        //   任何 early return(BOSS 回合 / actor 行動完 / 沒 activeChar)前都要呼叫,
+        //   否則上一輪藏的狀態會卡死,造成「BOSS 回合時隊友還在等候畫面」之類錯亂。
+        const _wbRestoreUI = function(){
+          try{
+            const banner = document.getElementById('_wb-wait-banner');
+            if(banner && banner.style.display !== 'none') banner.style.display = 'none';
+          }catch(_){}
+          try{
+            const ip = document.getElementById('item-panel');
+            if(ip && ip.style.display === 'none'){
+              ip.style.display = (typeof ip.dataset._wbOrigDisplay !== 'undefined')
+                ? ip.dataset._wbOrigDisplay : '';
+            }
+          }catch(_){}
+        };
+
         const actor = G.activeChar;
-        if(!actor || actor.side !== 'p1') return ret;
-        if(actor.acted || actor.curHp <= 0) return ret;
+        if(!actor || actor.side !== 'p1'){ _wbRestoreUI(); return ret; }
+        if(actor.acted || actor.curHp <= 0){ _wbRestoreUI(); return ret; }
 
         // 判斷 actor 是否屬於「我」操作
         const myUid = window._gUserId;
@@ -1671,23 +1689,66 @@
         }
 
         if(!isMine){
-          // ── 不是我操作:藏 action-panel,顯示「等候 XX」 ──
+          // ── 不是我操作:藏 action-panel + item-panel,顯示「等候 XX」獨立 banner ──
+          // ★ FIX 20260517(dd) — 同時藏 #item-panel(非自己回合不能用物品),
+          //                       用獨立 banner DIV(放在 #sb 內)顯示等候提示,
+          //                       原本只改 #actor-info 但 action-panel 被藏 → 提示看不到。
           try{
             const panel = document.getElementById('action-panel');
             if(panel) panel.style.display = 'none';
           }catch(_){}
-          // actor-info 改成等候字樣
           try{
-            const ai = document.getElementById('actor-info');
-            if(ai){
-              const waitName = (playerAtSlot && playerAtSlot.name)
-                || ('槽 ' + (pos + 1));
-              const heroName = actor.name || '英雄';
-              ai.innerHTML = '<div style="font-size:38px;font-weight:700;line-height:1.4;'
-                + 'animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;'
-                + 'letter-spacing:1px;">⏳ 等候 <span style="color:#ffd966;text-shadow:0 0 16px '
-                + 'rgba(255,220,0,0.9)">' + _escAi(waitName) + '</span> 的 '
-                + _escAi(heroName) + ' 操作中...</div>';
+            const ip = document.getElementById('item-panel');
+            if(ip){
+              // 記住原本的 display(可能是 ''/block/flex 等),還原時用
+              if(typeof ip.dataset._wbOrigDisplay === 'undefined'){
+                ip.dataset._wbOrigDisplay = ip.style.display || '';
+              }
+              ip.style.display = 'none';
+            }
+          }catch(_){}
+          // 等候 banner — 放在 #sb 內 #log 之後、#action-panel 之前的獨立 DIV
+          try{
+            const waitName = (playerAtSlot && playerAtSlot.name)
+              || ('槽 ' + (pos + 1));
+            const heroName = actor.name || '英雄';
+            let banner = document.getElementById('_wb-wait-banner');
+            if(!banner){
+              banner = document.createElement('div');
+              banner.id = '_wb-wait-banner';
+              banner.style.cssText = 'margin:8px 0;padding:14px 12px;border-radius:14px;'
+                + 'background:linear-gradient(135deg,rgba(60,40,90,0.55),rgba(40,30,70,0.45));'
+                + 'border:2px solid rgba(255,217,102,0.55);'
+                + 'box-shadow:0 0 18px rgba(255,217,102,0.25),inset 0 0 12px rgba(255,217,102,0.12);';
+              // 嘗試插在 #log 之後;若失敗就 append 到 #sb
+              const sb = document.getElementById('sb');
+              const logEl = document.getElementById('log');
+              if(logEl && logEl.parentNode){
+                logEl.parentNode.insertBefore(banner, logEl.nextSibling);
+              }else if(sb){
+                sb.appendChild(banner);
+              }
+            }
+            banner.innerHTML = '<div style="font-size:30px;font-weight:700;line-height:1.4;'
+              + 'animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;'
+              + 'letter-spacing:1px;color:#fff;">⏳ 現在是 <span style="color:#ffd966;'
+              + 'text-shadow:0 0 16px rgba(255,220,0,0.9)">' + _escAi(waitName)
+              + '</span> 的<br><span style="color:#9be4ff;font-size:26px;">'
+              + _escAi(heroName) + '</span> 回合中...</div>';
+            banner.style.display = 'block';
+          }catch(_){}
+        }else{
+          // ── 是我操作:確保 banner 移除、item-panel 還原 ──
+          try{
+            const banner = document.getElementById('_wb-wait-banner');
+            if(banner) banner.style.display = 'none';
+          }catch(_){}
+          try{
+            const ip = document.getElementById('item-panel');
+            if(ip && ip.style.display === 'none'){
+              // 還原為原本 display(空字串等同預設值)
+              ip.style.display = (typeof ip.dataset._wbOrigDisplay !== 'undefined')
+                ? ip.dataset._wbOrigDisplay : '';
             }
           }catch(_){}
         }

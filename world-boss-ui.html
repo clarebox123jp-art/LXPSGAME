@@ -7094,15 +7094,33 @@
       // ★ FIX 20260517(bb) — applyWireToG 會把 G.activeChar reset 成 null,
       //   client 端 updateUI 沒了 activeChar 就不顯示 action-panel。
       //   依照 G.turnOrder[G.currentActorIdx] 重建 activeChar reference。
+      // ★ FIX 20260517(dd) — 主程式 startTurn() 動態挑下一位但不維護 currentActorIdx,
+      //   原本只用 turnOrder[currentActorIdx] 重建會永遠拿到 BOSS(turnOrder[0])。
+      //   現在 wire 多帶 _activeSidePos(房主從 G.activeChar 直接讀),優先採用此欄位。
       try{
-        const _ord = G.turnOrder || [];
-        const _idx = G.currentActorIdx || 0;
-        const _cur = _ord[_idx];
-        if(_cur){
-          if(_cur.side === 'p1' && Array.isArray(G.p1) && G.p1[_cur.pos]){
-            G.activeChar = G.p1[_cur.pos];
-          }else if(_cur.side === 'p2' && Array.isArray(G.p2) && G.p2[_cur.pos]){
-            G.activeChar = G.p2[_cur.pos];
+        let _resolved = false;
+        // 第一優先:wire._activeSidePos (主程式 G.activeChar 真實狀態)
+        const _asp = G._activeSidePos;
+        if(_asp && _asp.side && typeof _asp.pos === 'number'){
+          if(_asp.side === 'p1' && Array.isArray(G.p1) && G.p1[_asp.pos]){
+            G.activeChar = G.p1[_asp.pos];
+            _resolved = true;
+          }else if(_asp.side === 'p2' && Array.isArray(G.p2) && G.p2[_asp.pos]){
+            G.activeChar = G.p2[_asp.pos];
+            _resolved = true;
+          }
+        }
+        // Fallback:turnOrder[currentActorIdx] (舊邏輯,給沒帶 _activeSidePos 的舊 host)
+        if(!_resolved){
+          const _ord = G.turnOrder || [];
+          const _idx = G.currentActorIdx || 0;
+          const _cur = _ord[_idx];
+          if(_cur){
+            if(_cur.side === 'p1' && Array.isArray(G.p1) && G.p1[_cur.pos]){
+              G.activeChar = G.p1[_cur.pos];
+            }else if(_cur.side === 'p2' && Array.isArray(G.p2) && G.p2[_cur.pos]){
+              G.activeChar = G.p2[_cur.pos];
+            }
           }
         }
       }catch(eAct){
