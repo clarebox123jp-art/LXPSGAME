@@ -162,6 +162,30 @@
   }catch(_){}
 
   _fbDiag('boot:_fbApp 已建立, UA=' + (navigator.userAgent || '').slice(0, 80));
+  // ★ FIX 20260517(gg) — 印 URL/origin/authDomain,協助診斷 redirect 回不來
+  try{
+    const _loc = window.location;
+    _fbDiag('boot:origin=' + _loc.origin);
+    _fbDiag('boot:href=' + _loc.href.slice(0, 200));
+    _fbDiag('boot:hash長度=' + (_loc.hash || '').length + (_loc.hash ? ' (有 hash,可能含 OAuth credential)' : ''));
+    _fbDiag('boot:search=' + (_loc.search || '(無)').slice(0, 120));
+    _fbDiag('boot:authDomain=' + (firebaseConfig && firebaseConfig.authDomain));
+    // 是否同 origin
+    try{
+      const _authOrigin = 'https://' + (firebaseConfig && firebaseConfig.authDomain || '');
+      _fbDiag('boot:authOrigin=' + _authOrigin + ' (同 origin? ' + (_loc.origin === _authOrigin ? '是' : '否 — 跨域') + ')');
+    }catch(_){}
+    // referrer(可看是否從 accounts.google.com 跳回)
+    try{
+      _fbDiag('boot:referrer=' + ((document.referrer || '(無)').slice(0, 120)));
+    }catch(_){}
+    // sessionStorage 裡 firebase 的 pendingRedirect key(直接看 Firebase 內部有沒有)
+    try{
+      const _ssKeys = Object.keys(sessionStorage || {});
+      const _fbKeys = _ssKeys.filter(k => k.indexOf('firebase') >= 0);
+      _fbDiag('boot:sessionStorage 內 firebase keys=' + (_fbKeys.length ? _fbKeys.join(',').slice(0, 160) : '(無)'));
+    }catch(_){}
+  }catch(_eDiag){}
 
   // ── A. 不再呼叫 setPersistence ───────────────────────────────────
   // ★ FIX 20260517(ff) — iPad Chrome 登入回不來的真正根因(用診斷面板抓到)!
@@ -1712,6 +1736,26 @@
         try{
           _fbDiag('redirect:currentUser=' + (_fbAuth.currentUser ? _fbAuth.currentUser.email : 'null'));
         }catch(_){}
+        // ★ FIX 20260517(gg) — 細部診斷:為什麼 getRedirectResult 沒拿到結果
+        try{
+          // 整個 result 物件(看 result 本身結構)
+          _fbDiag('redirect:result 物件=' + (result === null ? 'null' : (result === undefined ? 'undefined' : JSON.stringify(Object.keys(result || {})))));
+          // sessionStorage 裡 Firebase 的 key(處理過程後還剩什麼)
+          const _ssAfter = Object.keys(sessionStorage || {}).filter(k => k.indexOf('firebase') >= 0);
+          _fbDiag('redirect:sessionStorage firebase keys(after)=' + (_ssAfter.length ? _ssAfter.join(',').slice(0, 160) : '(無)'));
+          // URL 是否還含 hash 跟 search
+          _fbDiag('redirect:現在 URL hash 長度=' + (window.location.hash || '').length + ' search=' + (window.location.search || '(無)').slice(0, 80));
+          // 訪問 Firebase Auth 內部狀態(若可讀)
+          try{
+            const _ar = _fbAuth && _fbAuth._authStateReady;
+            if(typeof _ar === 'function'){
+              _fbDiag('redirect:_fbAuth._authStateReady 是 function,試呼叫');
+              _ar.call(_fbAuth).then(() => {
+                _fbDiag('redirect:authStateReady resolved, currentUser=' + (_fbAuth.currentUser ? _fbAuth.currentUser.email : 'null'));
+              }).catch(eR => _fbDiag('redirect:authStateReady reject ' + (eR && eR.code), 'warn'));
+            }
+          }catch(_){}
+        }catch(_){}
         return null;
       }
     } catch(e){
@@ -1734,6 +1778,24 @@
       return null;
     }
   })();
+
+  // ★ FIX 20260517(gg) — 1.5 秒後也印一次 Firebase 內部狀態,看是否異步補上
+  setTimeout(() => {
+    try{
+      _fbDiag('delayed[1.5s]:currentUser=' + (_fbAuth.currentUser ? _fbAuth.currentUser.email : 'null'));
+      const _ssLater = Object.keys(sessionStorage || {}).filter(k => k.indexOf('firebase') >= 0);
+      _fbDiag('delayed[1.5s]:sessionStorage firebase keys=' + (_ssLater.length ? _ssLater.join(',').slice(0, 160) : '(無)'));
+      // 也看 IndexedDB(粗略)
+      try{
+        if(window.indexedDB && indexedDB.databases){
+          indexedDB.databases().then(dbs => {
+            const _fbDbs = (dbs || []).filter(d => (d.name || '').indexOf('firebase') >= 0);
+            _fbDiag('delayed[1.5s]:IndexedDB firebase=' + (_fbDbs.length ? _fbDbs.map(d=>d.name).join(',') : '(無)'));
+          }).catch(eDb => _fbDiag('delayed[1.5s]:indexedDB.databases() err ' + (eDb && eDb.message || ''), 'warn'));
+        }
+      }catch(_){}
+    }catch(_){}
+  }, 1500);
 
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
