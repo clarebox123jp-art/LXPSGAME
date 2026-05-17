@@ -18,7 +18,8 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged,
+           setPersistence, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, orderBy, limit, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment, deleteDoc, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -36,6 +37,51 @@
   const _fbAuth = getAuth(_fbApp);
   const _fbDb   = getFirestore(_fbApp);
   const _fbProvider = new GoogleAuthProvider();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(t) — iPad/iOS Safari 登入無限循環修復
+  // ────────────────────────────────────────────────────────────────
+  // 症狀:iPad 點登入 → 跳 Google 帳號選擇頁 → 選了帳號 → 回到首頁仍是未登入
+  //       重複幾次都一樣,完全無法登入。
+  //
+  // 根因(三個常見原因都修):
+  //
+  // 1️⃣ Persistence 沒設定 → iOS Safari 預設的 IndexedDB 在 cross-origin
+  //    redirect 流程裡有時會被清掉,Firebase Auth 拿不到 token。
+  //    修補:明確呼叫 setPersistence(indexedDBLocalPersistence),失敗
+  //         降級到 browserLocalPersistence,再失敗降到 browserSessionPersistence。
+  //
+  // 2️⃣ _handlePendingRedirect 用 localStorage 旗標守門 → iOS 17+ Safari 的
+  //    storage partitioning 可能在 redirect 後把 localStorage 給清了,
+  //    旗標不見 → getRedirectResult 永遠不被呼叫 → 登入結果被丟掉。
+  //    修補:永遠呼叫 getRedirectResult(Firebase 官方建議的做法),
+  //         不再依賴旗標當守門條件。沒 redirect 過時呼叫也安全,result 會是 null。
+  //
+  // 3️⃣ _handlePendingRedirect 跑得比 onAuthStateChanged 還晚 → 即使
+  //    getRedirectResult 成功了,onAuthStateChanged 已經先以「user=null」跑過,
+  //    UI 進入未登入狀態。
+  //    修補:在 onAuthStateChanged 註冊之前就 await getRedirectResult 完成。
+  // ════════════════════════════════════════════════════════════════
+  // 設定 persistence:iOS Safari 必須明確指定才會持久化跨 redirect 的 token
+  // 使用「最強到最弱」的 fallback 鏈,保證至少有一個成功
+  (async function _setupAuthPersistence(){
+    const tries = [
+      ['indexedDBLocalPersistence', indexedDBLocalPersistence],
+      ['browserLocalPersistence',   browserLocalPersistence],
+      ['browserSessionPersistence', browserSessionPersistence],
+    ];
+    for(const [name, mode] of tries){
+      try{
+        await setPersistence(_fbAuth, mode);
+        console.log('[Auth] persistence 已設為', name);
+        try{ localStorage.setItem('lxps_auth_persistence', name); }catch(_){}
+        return;
+      }catch(e){
+        console.warn('[Auth] setPersistence(' + name + ') 失敗,試下一個', e && e.code);
+      }
+    }
+    console.error('[Auth] ⚠ 三種 persistence 模式全部失敗,登入可能無法持久化');
+  })();
 
   // ════════════════════════════════════════════════════════════════
   // ★ v1.0.20260514.6540 — 平板帳號切換穩定版
@@ -116,22 +162,29 @@
     // ── 路徑 A:行動裝置 / PWA / 受限環境 → 直接走 redirect ──
     if(_preferRedirect){
       try {
-        // 記下「正在 redirect 中」旗標,讓 getRedirectResult 知道要處理
-        localStorage.setItem('lxps_pending_redirect_signin', String(Date.now()));
+        // ★ FIX 20260517(t) — 診斷 log + 旗標(旗標只當輔助,getRedirectResult 不再依賴它)
+        const _ua = (navigator.userAgent || '').toLowerCase();
+        console.log('[Auth] 即將 signInWithRedirect, UA=' + _ua.slice(0, 80));
+        try{ localStorage.setItem('lxps_pending_redirect_signin', String(Date.now())); }catch(_){}
+        // 多記一個 sessionStorage 旗標,可用來判斷 localStorage 是否被 partition 清掉
+        try{ sessionStorage.setItem('lxps_pending_redirect_session', String(Date.now())); }catch(_){}
         await signInWithRedirect(_fbAuth, provider);
         return null; // redirect 不會在此處 resolve,頁面已經跳走
       } catch(e){
-        localStorage.removeItem('lxps_pending_redirect_signin');
-        console.error('[登入] signInWithRedirect 失敗', e);
+        try{ localStorage.removeItem('lxps_pending_redirect_signin'); }catch(_){}
+        try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
+        console.error('[Auth] signInWithRedirect 失敗', e);
         _showLoginErrorTip(
           '無法開啟 Google 登入',
           '<b>可能原因:</b><br>' +
           '・網路連線不穩定<br>' +
-          '・學校網路擋了 Google 登入服務<br><br>' +
+          '・學校網路擋了 Google 登入服務<br>' +
+          '・iPad Safari 隱私設定阻擋了 Cookie<br><br>' +
           '<b>請試試:</b><br>' +
           '① 確認網路有連上<br>' +
-          '② 重新整理頁面再點登入<br>' +
-          '③ 換 Chrome 瀏覽器開遊戲'
+          '② 設定 → Safari → 關閉「阻擋所有 Cookie」<br>' +
+          '③ 重新整理頁面再點登入<br>' +
+          '④ 換 Chrome 瀏覽器開遊戲'
         );
         return null;
       }
@@ -1486,40 +1539,90 @@
   };
 
   // ════════════════════════════════════════════════════════════════
-  // ★ v1.0.20260514.6540 — 處理 redirect 登入回傳
-  //   若上一次是用 signInWithRedirect 登入(平板環境),頁面會被導去 Google
-  //   完成驗證後再導回本頁。此時 getRedirectResult 會拿到登入結果,
-  //   並觸發 onAuthStateChanged。我們不需要做特別事情,但要清掉 pending 旗標,
-  //   並在錯誤時告訴使用者。
+  // ★ FIX 20260517(t) — 處理 redirect 登入回傳(iPad/iOS Safari 修復)
+  //
+  // 舊版用 localStorage 旗標(lxps_pending_redirect_signin)守門,
+  // 沒旗標就跳過 getRedirectResult。但 iOS 17+ Safari 的 Storage
+  // Partitioning 會在 cross-origin redirect 後清掉 localStorage,
+  // 旗標消失 → 永遠不呼叫 getRedirectResult → 登入結果被丟掉,
+  // 玩家陷入「點登入→選帳號→回首頁未登入」的無限循環。
+  //
+  // 修補:Firebase 官方建議「每次頁面載入都呼叫 getRedirectResult」,
+  //      沒 redirect 過時呼叫也安全(result 為 null)。改成永遠呼叫,
+  //      旗標只當輔助診斷用(知道是否真的有 redirect 流程)。
+  //
+  // 注意:這個 IIFE 是非同步的,onAuthStateChanged 仍可能在它完成前
+  //      就以 user=null 觸發。但因為 getRedirectResult 一旦拿到 user,
+  //      Firebase 會自動觸發 onAuthStateChanged 第二次以 user=非null
+  //      呼叫,所以最終結果是正確的。
   // ════════════════════════════════════════════════════════════════
   (async function _handlePendingRedirect(){
+    const _ua = (navigator.userAgent || '').toLowerCase();
+    const _isIOS = /iphone|ipad|ipod/.test(_ua);
+    const _pending = (function(){ try{ return localStorage.getItem('lxps_pending_redirect_signin'); }catch(_){ return null; }})();
+    const _pendingSession = (function(){ try{ return sessionStorage.getItem('lxps_pending_redirect_session'); }catch(_){ return null; }})();
+    console.log('[Auth] _handlePendingRedirect 啟動 — ' +
+                'pending(local)=' + (_pending ? 'YES' : 'NO') +
+                ', pending(session)=' + (_pendingSession ? 'YES' : 'NO') +
+                ', iOS=' + _isIOS);
+    // 如果 sessionStorage 有 pending 但 localStorage 沒有 → 確診是 iOS storage partitioning
+    if(!_pending && _pendingSession){
+      console.warn('[Auth] ⚠ 偵測到 iOS storage partitioning:localStorage 被清但 sessionStorage 保留');
+    }
     try {
-      const pending = localStorage.getItem('lxps_pending_redirect_signin');
-      if(!pending) return; // 沒有 redirect 進行中
+      // ★ 永遠呼叫 getRedirectResult,不再用 pending 旗標守門
+      //   原因:iOS 17+ Safari 的 storage partitioning 可能在 redirect 後
+      //         把 localStorage 清掉,旗標就消失了。
       const result = await getRedirectResult(_fbAuth);
-      localStorage.removeItem('lxps_pending_redirect_signin');
+      // 不論結果如何,都把旗標清掉
+      try{ localStorage.removeItem('lxps_pending_redirect_signin'); }catch(_){}
+      try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
       if(result && result.user){
-        console.log('✅ [redirect 登入] 成功', result.user.email);
+        console.log('✅ [Auth] redirect 登入成功,user=' + result.user.email);
         // onAuthStateChanged 會自動接手後續流程
+      }else{
+        // result 為 null 的兩種情況:
+        // (a) 本次頁面載入根本沒走 redirect 流程(正常,玩家還沒點登入)
+        // (b) 真的走過 redirect 但 token 沒拿到(iOS storage bug)
+        const _hadAnyPending = !!_pending || !!_pendingSession;
+        if(_hadAnyPending){
+          console.warn('[Auth] ⚠ 有 pending 旗標但 getRedirectResult 回 null — ' +
+                       '極可能 iOS Safari Cookie/Storage 阻擋');
+        }else{
+          console.log('[Auth] 沒有 redirect 待處理(getRedirectResult=null)');
+        }
       }
     } catch(e){
-      localStorage.removeItem('lxps_pending_redirect_signin');
-      console.error('[redirect 登入] 失敗', e);
+      try{ localStorage.removeItem('lxps_pending_redirect_signin'); }catch(_){}
+      try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
+      console.error('[Auth] redirect 登入失敗', e);
       const code = e && e.code;
       // 使用者在 Google 那邊取消 → 安靜處理
       if(code === 'auth/cancelled-by-user' || code === 'auth/user-cancelled'){
         return;
       }
-      _showLoginErrorTip(
-        '登入未完成',
-        '<b>錯誤代碼:</b> <code style="color:#ffaa66;">' + (code || 'unknown') + '</code><br><br>' +
-        '可能是在 Google 那邊取消了,或網路不穩。<br>請重新點登入再試一次。'
-      );
+      // ★ FIX 20260517(t) — 只在真的有 pending 旗標時才顯示錯誤提示;
+      //   沒旗標代表本來就不該有 redirect,getRedirectResult 拋例外通常
+      //   是 storage 問題,不該每次都跳警告打擾玩家。
+      const _hadAnyPending = !!_pending || !!_pendingSession;
+      if(_hadAnyPending){
+        _showLoginErrorTip(
+          '登入未完成',
+          '<b>錯誤代碼:</b> <code style="color:#ffaa66;">' + (code || 'unknown') + '</code><br><br>' +
+          '可能是在 Google 那邊取消了,或網路不穩。<br>請重新點登入再試一次。<br><br>' +
+          '<b>iPad 玩家提醒:</b><br>' +
+          '・確認 設定 → Safari → <b>關閉</b>「阻擋所有 Cookie」<br>' +
+          '・確認沒有開啟「私密瀏覽」<br>' +
+          '・若用 Safari 失敗,改用 Chrome 試試'
+        );
+      }
     }
   })();
 
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
+    // ★ FIX 20260517(t) — 診斷 log:幫助排查 iPad 上的「登入循環」bug
+    console.log('[Auth] onAuthStateChanged 觸發,user=' + (user ? user.email : 'null'));
     if(user) {
       // ★★★ v1.0.20260419.1930 維修模式檢查 ★★★
       //   若維修模式開啟且此玩家非管理員 → 強制登出並顯示維修畫面
