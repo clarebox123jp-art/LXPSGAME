@@ -148,18 +148,13 @@
       if(el) el.querySelector('#_fb-diag-copy').textContent = '✓ 已複製';
     }catch(_){}
   }
-  // 自動啟動:UA 偵測到 iPad/iPhone 就自動打開面板,讓玩家不必額外操作
-  try{
-    const _autoUA = (navigator.userAgent || '').toLowerCase();
-    if(/iphone|ipad|ipod|crios/.test(_autoUA)){
-      // 等 DOM ready 再開
-      if(document.body){
-        window._fbShowDiag();
-      }else{
-        document.addEventListener('DOMContentLoaded', () => window._fbShowDiag(), { once:true });
-      }
-    }
-  }catch(_){}
+  // ★ FIX 20260517(hh) — 登入問題已解(FIX gg),不再自動跳出診斷面板
+  //   仍然保留:
+  //     - window._fbDiagLogs(底層日誌陣列)
+  //     - window._fbShowDiag()(需要時手動叫出面板)
+  //     - _fbDiag(msg) 內部呼叫(繼續寫入日誌跟 console)
+  //   如果之後又遇到登入問題,可在 console / 網址列 javascript: 呼叫
+  //     `_fbShowDiag()` 把面板叫回來
 
   _fbDiag('boot:_fbApp 已建立, UA=' + (navigator.userAgent || '').slice(0, 80));
   // ★ FIX 20260517(gg) — 印 URL/origin/authDomain,協助診斷 redirect 回不來
