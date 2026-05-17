@@ -1394,6 +1394,61 @@
     background:#444;cursor:not-allowed;box-shadow:none;opacity:0.5;
   }
 
+  /* ★ FIX 20260517(f) — 戰前定型文按鈕區 */
+  .wb-tc-quickmsg-zone{
+    flex-shrink:0;
+    background:rgba(40,28,60,0.55);
+    border:1.5px solid rgba(168,132,255,0.35);
+    border-radius:10px;
+    padding:8px 10px 10px;
+    margin-bottom:6px;
+  }
+  .wb-tc-quickmsg-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:6px;
+  }
+  .wb-tc-quickmsg-title{
+    font-size:15px;color:#c8a8ff;font-weight:700;letter-spacing:1.5px;
+  }
+  .wb-tc-quickmsg-cd{
+    font-size:13px;color:#ffaa66;font-weight:700;letter-spacing:1px;
+    background:rgba(80,40,20,0.5);padding:2px 8px;border-radius:6px;
+    border:1px solid rgba(255,140,80,0.5);
+  }
+  .wb-tc-quickmsg-grid{
+    display:grid;grid-template-columns:repeat(6, 1fr);gap:6px;
+  }
+  @media (max-width: 900px){
+    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(4, 1fr); }
+  }
+  @media (max-width: 600px){
+    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(3, 1fr); }
+  }
+  .wb-tc-qmsg-btn{
+    padding:7px 4px;font-size:13px;font-weight:700;letter-spacing:0.5px;
+    border:1.5px solid;border-radius:8px;cursor:pointer;
+    font-family:inherit;transition:all 0.15s;
+    background:rgba(20,15,40,0.7);color:#e0d4ff;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .wb-tc-qmsg-btn.role{ border-color:rgba(120,200,255,0.55);color:#a8d8ff; }
+  .wb-tc-qmsg-btn.status{ border-color:rgba(255,200,100,0.55);color:#ffd699; }
+  .wb-tc-qmsg-btn.need{ border-color:rgba(255,120,120,0.55);color:#ffaaaa; }
+  .wb-tc-qmsg-btn.leave{ border-color:rgba(180,180,200,0.55);color:#ccccdd; }
+  .wb-tc-qmsg-btn:hover:not(:disabled){
+    background:rgba(60,40,100,0.85);
+    transform:translateY(-1px);
+    box-shadow:0 4px 12px rgba(168,132,255,0.35);
+  }
+  .wb-tc-qmsg-btn:active:not(:disabled){
+    transform:translateY(0);
+  }
+  .wb-tc-qmsg-btn:disabled{
+    opacity:0.4;cursor:not-allowed;
+    background:rgba(20,15,30,0.4);
+    transform:none;
+  }
+
   /* 底部:返回 + 覆蓋率 + 開戰 */
   .wb-tc-start-zone{
     display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;
@@ -1785,6 +1840,20 @@
     z-index:50;
     animation:wbBubbleIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
     text-shadow:0 1px 2px rgba(0,0,0,0.7);
+  }
+  /* ★ FIX 20260517(h) — fixed 模式覆寫:從 absolute 改 fixed + z-index 極高(9999),
+     避免被 BOSS HP bar(z:600) / emoji bar(z:9050) / 順序條 等任何 UI 蓋住 */
+  .wb-card-bubble-fixed{
+    position:fixed !important;
+    bottom:auto !important;
+    transform:none !important;  /* 改用 JS 算 left,不再用 transform:translateX(-50%) */
+    z-index:9999 !important;
+  }
+  /* fixed 模式時,氣泡尾巴依 placement 顯示在底部或頂部 */
+  .wb-card-bubble-fixed[data-placement="bottom"]::after{
+    bottom:auto;top:-7px;
+    border-top:none;
+    border-bottom:8px solid rgba(150,200,255,0.85);
   }
   /* 泡泡尾巴指向卡片 */
   .wb-card-bubble::after{
@@ -2224,6 +2293,29 @@
       <!-- 由 JS 動態渲染 -->
     </div>
 
+    <!-- ★ FIX 20260517(f) — 戰前定型文按鈕區(12 顆,共同 5 秒冷卻) -->
+    <!--   訊息會冒泡到對應 slot 卡的頂端,讓隊友看見 -->
+    <div class="wb-tc-quickmsg-zone" id="wb-tc-quickmsg-zone">
+      <div class="wb-tc-quickmsg-header">
+        <span class="wb-tc-quickmsg-title">💬 戰前溝通</span>
+        <span class="wb-tc-quickmsg-cd" id="wb-tc-quickmsg-cd" style="display:none;">⏱ 冷卻 <span id="wb-tc-quickmsg-cd-sec">5</span> 秒</span>
+      </div>
+      <div class="wb-tc-quickmsg-grid">
+        <button class="wb-tc-qmsg-btn role" data-qmsg="role_dps"   onclick="_wbTcSendQuickMsg('role_dps')">⚔ 我負責輸出</button>
+        <button class="wb-tc-qmsg-btn role" data-qmsg="role_heal"  onclick="_wbTcSendQuickMsg('role_heal')">✨ 我負責治療</button>
+        <button class="wb-tc-qmsg-btn role" data-qmsg="role_tank"  onclick="_wbTcSendQuickMsg('role_tank')">🛡 我負責當坦克</button>
+        <button class="wb-tc-qmsg-btn role" data-qmsg="role_ctrl"  onclick="_wbTcSendQuickMsg('role_ctrl')">🌀 我負責控場</button>
+        <button class="wb-tc-qmsg-btn role" data-qmsg="role_quiz"  onclick="_wbTcSendQuickMsg('role_quiz')">📖 我負責答題</button>
+        <button class="wb-tc-qmsg-btn status" data-qmsg="brb"      onclick="_wbTcSendQuickMsg('brb')">⏸ 等我一下</button>
+        <button class="wb-tc-qmsg-btn status" data-qmsg="back"     onclick="_wbTcSendQuickMsg('back')">🙋 我回來了</button>
+        <button class="wb-tc-qmsg-btn need" data-qmsg="need_dps"   onclick="_wbTcSendQuickMsg('need_dps')">⚠ 缺輸出</button>
+        <button class="wb-tc-qmsg-btn need" data-qmsg="need_heal"  onclick="_wbTcSendQuickMsg('need_heal')">⚠ 缺治療</button>
+        <button class="wb-tc-qmsg-btn need" data-qmsg="need_tank"  onclick="_wbTcSendQuickMsg('need_tank')">⚠ 缺坦克</button>
+        <button class="wb-tc-qmsg-btn need" data-qmsg="need_ctrl"  onclick="_wbTcSendQuickMsg('need_ctrl')">⚠ 缺控場</button>
+        <button class="wb-tc-qmsg-btn leave" data-qmsg="leaving"   onclick="_wbTcSendQuickMsg('leaving')">🙏 我先離開</button>
+      </div>
+    </div>
+
     <!-- 底部:房主開戰 + 元素覆蓋進度 -->
     <div class="wb-tc-start-zone">
       <button class="wb-tc-back-btn" onclick="_wbTcCloseTeamConfirm()">← 回去選角</button>
@@ -2290,13 +2382,15 @@
      gap:6px;
      max-height:calc(100vh - 320px);overflow-y:auto;
      display:grid;grid-template-columns:repeat(2,auto);grid-auto-flow:row;align-items:center;justify-items:center;">
-  <!-- 表情區(快速貼圖) — 第一直行 + 第二直行交錯排列(grid-auto-flow:row → 從左到右、由上而下) -->
-  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('cheer')" title="加油">💪</button>
-  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('burst')" title="用爆發">💥</button>
-  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('heal')" title="補我血">🩹</button>
-  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('wait')" title="等一下">⏸</button>
-  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('strong')" title="太強了">🔥</button>
-  <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('gg')" title="GG">😭</button>
+  <!-- ★ FIX 20260517(h) — 戰鬥中快捷表情重新規劃:6 個實戰常用訊息,改走確認視窗(平板友善) -->
+  <!--   圖示在上、文字在下,iPad 也能直接看出意思 -->
+  <!--   圖示對應:⭐=用爆發(對應角色卡爆發星星) / ➕=先補血(綠十字) / 🙏=先復活 -->
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('burst_now')"><span class="wb-emoji-icon wb-icon-burst">⭐</span><span class="wb-emoji-label">用爆發</span></button>
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('heal_first')"><span class="wb-emoji-icon wb-icon-heal">➕</span><span class="wb-emoji-label">先補血</span></button>
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('revive_first')"><span class="wb-emoji-icon">🙏</span><span class="wb-emoji-label">先復活</span></button>
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('ctrl_boss')"><span class="wb-emoji-icon">🌀</span><span class="wb-emoji-label">控住王</span></button>
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('awesome')"><span class="wb-emoji-icon">🔥</span><span class="wb-emoji-label">太棒啦</span></button>
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('sorry_wait')"><span class="wb-emoji-icon">😅</span><span class="wb-emoji-label">等我一下</span></button>
   <!-- 分隔線(grid 內橫跨兩欄) -->
   <div style="grid-column:1 / span 2;width:90%;height:1px;background:rgba(168,132,255,0.4);margin:2px 0;"></div>
   <!-- 討論發話區(直排小按鈕) -->
@@ -2308,14 +2402,39 @@
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('cheerup')" title="加油你可以的">💪🏼</button>
 </div>
 <style>
-  /* ★ FIX 20260517(b) — 兩直行按鈕尺寸縮小:從 57 → 44(節省左側橫向空間,不蓋到中央龍王) */
+  /* ★ FIX 20260517(h) — 改為直立 icon + label 雙行,iPad 友善(寬 60px,高自適) */
   .wb-emoji-btn{
-    width:44px;height:44px;border-radius:50%;cursor:pointer;border:none;
-    background:rgba(168,132,255,0.15);color:#fff;font-size:20px;
+    width:60px;min-height:50px;
+    border-radius:10px;cursor:pointer;border:none;
+    background:rgba(168,132,255,0.15);color:#fff;
     font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;
     flex-shrink:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:4px 2px;gap:1px;
   }
-  .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.15);}
+  .wb-emoji-btn .wb-emoji-icon{
+    font-size:22px;line-height:1;
+  }
+  .wb-emoji-btn .wb-emoji-label{
+    font-size:11px;font-weight:700;letter-spacing:0;color:#e0d4ff;
+    white-space:nowrap;line-height:1.2;
+  }
+  /* 用爆發 ⭐ → 金黃色 */
+  .wb-emoji-btn .wb-icon-burst{
+    color:#ffd966;
+    text-shadow:0 0 6px rgba(255,210,80,0.7);
+  }
+  /* 先補血 ➕ → 鮮綠色十字 */
+  .wb-emoji-btn .wb-icon-heal{
+    color:#5dd87a;
+    text-shadow:0 0 6px rgba(80,220,120,0.7);
+    font-weight:900;
+  }
+  .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.08);}
+  .wb-emoji-btn:disabled{
+    opacity:0.4;cursor:not-allowed;
+    background:rgba(20,15,30,0.4);transform:none;
+  }
   /* ★ FIX 20260517(b) — 直排討論按鈕也縮小:50 → 40 */
   .wb-disc-btn-vert{
     width:40px;height:40px;border-radius:10px;cursor:pointer;
@@ -2435,6 +2554,13 @@
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
     document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    // ★ FIX 20260517(h) — 順手清戰鬥中表情列冷卻 timer
+    try{
+      if(window._wbBattleQmsgCdTimer){
+        clearInterval(window._wbBattleQmsgCdTimer);
+        window._wbBattleQmsgCdTimer = null;
+      }
+    }catch(_){}
     // ★ v3.1.2 — 離開房間恢復原 BGM
     try{
       if(window._wbPrevBgm && typeof bgmFadeTo === 'function'){
@@ -2741,7 +2867,307 @@
 
   window._wbTcCloseTeamConfirm = function(){
     document.getElementById('wb-team-confirm-overlay').classList.remove('show');
+    // ★ FIX 20260517(f) — 關閉時清掉冷卻倒數 timer
+    try{
+      if(window._wbTcQmsgCdTimer){
+        clearInterval(window._wbTcQmsgCdTimer);
+        window._wbTcQmsgCdTimer = null;
+      }
+    }catch(_){}
+    // ★ FIX 20260517(g) — 一併清掉可能還開著的定型文確認視窗
+    try{
+      const _qc = document.getElementById('wb-tc-qmsg-confirm');
+      if(_qc) _qc.remove();
+    }catch(_){}
   };
+
+  // ★ FIX 20260517(f) — 戰前定型文發送 + 共同 5 秒冷卻
+  //   設計:
+  //     (1) 所有 12 顆按鈕共用 1 個冷卻計時器(共同 cooldown,避免洗版)
+  //     (2) 玩家點任一按鈕 → 透過 _wbNet.sendQuickEmoji 廣播到房內 chat
+  //     (3) 訊息會冒泡到對應 slot 卡的頂端(走既有 isDiscussion=true → _wbShowCardBubble)
+  //     (4) 但隊伍確認頁的 slot 不是戰鬥畫面的英雄卡,需要單獨找對應的 .wb-tc-slot,
+  //         所以這邊也加上自己看到自己訊息的 fallback(立即在自己 slot 顯示氣泡)
+  //   冷卻:5 秒(QMSG_CD_MS),用 timestamp + setInterval 倒數顯示
+  //   ★ FIX 20260517(g) — 平板/手機沒 hover 看不懂圖案,點按鈕先彈確認視窗顯示完整文字,
+  //                        按「✅ 確認發送」才真發訊+啟動冷卻;按「✕ 取消」就關掉,
+  //                        確認視窗開著期間不算冷卻、可改按別顆
+  const QMSG_CD_MS = 5000;
+  const QMSG_TEXT_MAP = {
+    role_dps:'⚔ 我負責輸出', role_heal:'✨ 我負責治療',
+    role_tank:'🛡 我負責當坦克保護大家', role_ctrl:'🌀 我負責控場',
+    role_quiz:'📖 我負責回答問題',
+    brb:'⏸ 等我一下', back:'🙋 我回來了',
+    need_dps:'⚠ 我們缺輸出', need_heal:'⚠ 我們缺治療',
+    need_tank:'⚠ 我們缺坦克', need_ctrl:'⚠ 我們缺控場',
+    leaving:'🙏 我有事要先退出了,謝謝邀請',
+    // ★ FIX 20260517(h) — 戰鬥中快捷表情(共用確認視窗機制,獨立冷卻 timer)
+    burst_now:'⭐ 用爆發!', heal_first:'➕ 先補血!',
+    revive_first:'🙏 先復活!', ctrl_boss:'🌀 先控住王!',
+    awesome:'🔥 太棒啦!', sorry_wait:'😅 抱歉先等我一下',
+  };
+  window._wbTcQmsgCdTimer = null;
+
+  // ★ FIX 20260517(g) — 點按鈕:先彈確認視窗(取代原本的「直接發送」)
+  window._wbTcSendQuickMsg = function(key){
+    // 1. 檢查冷卻中:冷卻中不彈視窗(避免玩家以為點得到)
+    const now = Date.now();
+    const cooldownUntil = window._wbTcQmsgCdUntil || 0;
+    if(now < cooldownUntil) return;
+    // 2. 文字表沒有對應 key:忽略
+    const text = QMSG_TEXT_MAP[key];
+    if(!text) return;
+    // 3. 開確認視窗(context = 'tc' 表示隊伍確認頁)
+    _wbTcOpenQmsgConfirm(key, text, 'tc');
+  };
+
+  // ★ FIX 20260517(h) — 戰鬥中快捷表情:跟隊伍頁同樣彈確認視窗,但 context='battle'
+  //   冷卻獨立(window._wbBattleQmsgCdUntil),避免跟隊伍頁互相干擾
+  window._wbBattleSendQuickMsg = function(key){
+    const now = Date.now();
+    const cooldownUntil = window._wbBattleQmsgCdUntil || 0;
+    if(now < cooldownUntil) return;  // 冷卻中,不彈視窗
+    const text = QMSG_TEXT_MAP[key];
+    if(!text) return;
+    _wbTcOpenQmsgConfirm(key, text, 'battle');
+  };
+
+  // 確認視窗:顯示完整文字 + 確認/取消按鈕
+  // ★ FIX 20260517(g) / (h) — 確認視窗:接受 context 參數('tc' 隊伍頁 / 'battle' 戰鬥中)
+  //   OK 按鈕依 context 分流到 _wbTcDoSendQuickMsg 或 _wbBattleDoSendQuickMsg
+  function _wbTcOpenQmsgConfirm(key, text, context){
+    context = context || 'tc';
+    // 先關掉舊的(避免疊兩個)
+    const old = document.getElementById('wb-tc-qmsg-confirm');
+    if(old) old.remove();
+
+    const ov = document.createElement('div');
+    ov.id = 'wb-tc-qmsg-confirm';
+    ov.style.cssText =
+      'position:fixed;inset:0;z-index:2147483646;'
+      + 'background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);'
+      + 'display:flex;align-items:center;justify-content:center;padding:20px;'
+      + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+    ov.innerHTML =
+      '<div style="max-width:420px;width:100%;'
+      +   'background:linear-gradient(160deg,#1e1530 0%,#0d0820 100%);'
+      +   'border:2.5px solid rgba(168,132,255,0.7);border-radius:16px;'
+      +   'padding:24px 26px;color:#e0d4ff;'
+      +   'box-shadow:0 0 48px rgba(168,132,255,0.45),0 10px 32px rgba(0,0,0,0.6);">'
+      // 標題
+      +   '<div style="font-size:15px;color:#a884ff;font-weight:700;letter-spacing:2px;text-align:center;margin-bottom:12px;">'
+      +     '💬 確認發送這則訊息?'
+      +   '</div>'
+      // 訊息預覽
+      +   '<div style="font-size:22px;font-weight:800;color:#fff;text-align:center;'
+      +     'padding:18px 14px;margin:8px 0 20px;letter-spacing:1.5px;line-height:1.5;'
+      +     'background:rgba(40,28,70,0.6);border-radius:10px;'
+      +     'border:1.5px solid rgba(168,132,255,0.4);">'
+      +     _wbTcEscapeHtml(text)
+      +   '</div>'
+      // 按鈕區
+      +   '<div style="display:flex;gap:10px;">'
+      +     '<button id="wb-tc-qmsg-cancel" style="'
+      +       'flex:1;padding:14px;font-size:18px;font-weight:700;letter-spacing:2px;'
+      +       'background:rgba(80,60,100,0.5);color:#ccccdd;'
+      +       'border:2px solid rgba(160,160,180,0.55);border-radius:10px;'
+      +       'cursor:pointer;font-family:inherit;transition:all 0.15s;">'
+      +       '✕ 取消'
+      +     '</button>'
+      +     '<button id="wb-tc-qmsg-ok" style="'
+      +       'flex:1.4;padding:14px;font-size:18px;font-weight:800;letter-spacing:2px;'
+      +       'background:linear-gradient(135deg,#a884ff,#7755dd);color:#fff;'
+      +       'border:2px solid rgba(200,160,255,0.85);border-radius:10px;'
+      +       'cursor:pointer;font-family:inherit;transition:all 0.15s;'
+      +       'box-shadow:0 0 16px rgba(168,132,255,0.5);">'
+      +       '✅ 確認發送'
+      +     '</button>'
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(ov);
+
+    // 點背景空白處 = 取消
+    ov.addEventListener('click', function(ev){
+      if(ev.target === ov) _wbTcCloseQmsgConfirm();
+    });
+    document.getElementById('wb-tc-qmsg-cancel').addEventListener('click', _wbTcCloseQmsgConfirm);
+    document.getElementById('wb-tc-qmsg-ok').addEventListener('click', function(){
+      _wbTcCloseQmsgConfirm();
+      if(context === 'battle'){
+        _wbBattleDoSendQuickMsg(key);
+      }else{
+        _wbTcDoSendQuickMsg(key);
+      }
+    });
+  }
+  function _wbTcCloseQmsgConfirm(){
+    const ov = document.getElementById('wb-tc-qmsg-confirm');
+    if(ov) ov.remove();
+  }
+  // HTML escape:防止訊息文字內含 < > 等被當 HTML
+  function _wbTcEscapeHtml(s){
+    return String(s||'').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ★ 實際發送:走主程式 _wbNet.sendQuickEmoji + 啟動共同冷卻
+  async function _wbTcDoSendQuickMsg(key){
+    // 二次防呆:萬一冷卻時被觸發
+    const now = Date.now();
+    const cooldownUntil = window._wbTcQmsgCdUntil || 0;
+    if(now < cooldownUntil) return;
+    // 啟動冷卻
+    window._wbTcQmsgCdUntil = now + QMSG_CD_MS;
+    _wbTcApplyQmsgCdUi();
+    // 發送
+    try{
+      if(window._wbNet && window._wbNet.sendQuickEmoji){
+        await window._wbNet.sendQuickEmoji(key);
+      }
+    }catch(eMsg){
+      console.warn('[WB-Tc] 定型文發送失敗', eMsg);
+    }
+    // 自己立即看到自己 slot 上的氣泡(onChatMessage 不會回傳自己的訊息給自己)
+    try{
+      const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+      const mySlot = (snap && snap.players)
+        ? snap.players.findIndex(p => p && p.uid === window._gUserId)
+        : -1;
+      if(mySlot >= 0 && QMSG_TEXT_MAP[key]){
+        _wbTcShowSlotBubble(mySlot, QMSG_TEXT_MAP[key]);
+      }
+    }catch(_){}
+  }
+
+  // ★ FIX 20260517(h) — 戰鬥中實際發送函式
+  //   差異:
+  //     (1) 冷卻變數獨立 _wbBattleQmsgCdUntil(不跟隊伍頁混用)
+  //     (2) 用 _wbBattleApplyQmsgCdUi 套到戰鬥中的 .wb-emoji-btn(不是隊伍頁的 .wb-tc-qmsg-btn)
+  //     (3) 自己看到自己用 _wbShowCardBubble(找戰鬥中的英雄卡,不是隊伍 slot)
+  window._wbBattleQmsgCdTimer = null;
+  async function _wbBattleDoSendQuickMsg(key){
+    const now = Date.now();
+    const cooldownUntil = window._wbBattleQmsgCdUntil || 0;
+    if(now < cooldownUntil) return;
+    window._wbBattleQmsgCdUntil = now + QMSG_CD_MS;
+    _wbBattleApplyQmsgCdUi();
+    try{
+      if(window._wbNet && window._wbNet.sendQuickEmoji){
+        await window._wbNet.sendQuickEmoji(key);
+      }
+    }catch(eMsg){
+      console.warn('[WB-Battle] 快捷表情發送失敗', eMsg);
+    }
+    // 自己立即看到自己角色卡上的氣泡
+    try{
+      const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+      const mySlot = (snap && snap.players)
+        ? snap.players.findIndex(p => p && p.uid === window._gUserId)
+        : -1;
+      const realSlot = (mySlot >= 0) ? mySlot : 0;  // 練習模式 fallback
+      if(QMSG_TEXT_MAP[key] && typeof _wbShowCardBubble === 'function'){
+        _wbShowCardBubble(realSlot, QMSG_TEXT_MAP[key]);
+      }
+    }catch(_){}
+  }
+
+  // 戰鬥中 emoji bar 冷卻 UI(獨立 timer)
+  function _wbBattleApplyQmsgCdUi(){
+    const bar = document.getElementById('wb-emoji-bar-real');
+    if(bar){
+      bar.querySelectorAll('.wb-emoji-btn').forEach(function(b){ b.disabled = true; });
+    }
+    if(window._wbBattleQmsgCdTimer) clearInterval(window._wbBattleQmsgCdTimer);
+    window._wbBattleQmsgCdTimer = setInterval(function(){
+      const remain = (window._wbBattleQmsgCdUntil || 0) - Date.now();
+      if(remain <= 0){
+        clearInterval(window._wbBattleQmsgCdTimer);
+        window._wbBattleQmsgCdTimer = null;
+        const bar2 = document.getElementById('wb-emoji-bar-real');
+        if(bar2){
+          bar2.querySelectorAll('.wb-emoji-btn').forEach(function(b){ b.disabled = false; });
+        }
+      }
+    }, 250);
+  }
+
+  // 套用冷卻 UI:disable 所有按鈕 + 倒數顯示
+  function _wbTcApplyQmsgCdUi(){
+    const grid = document.querySelector('.wb-tc-quickmsg-grid');
+    if(grid){
+      grid.querySelectorAll('.wb-tc-qmsg-btn').forEach(b => { b.disabled = true; });
+    }
+    const cdLabel = document.getElementById('wb-tc-quickmsg-cd');
+    const cdSec = document.getElementById('wb-tc-quickmsg-cd-sec');
+    if(cdLabel) cdLabel.style.display = 'inline-block';
+    // 啟動 250ms 倒數 timer
+    if(window._wbTcQmsgCdTimer) clearInterval(window._wbTcQmsgCdTimer);
+    window._wbTcQmsgCdTimer = setInterval(function(){
+      const remain = (window._wbTcQmsgCdUntil || 0) - Date.now();
+      if(remain <= 0){
+        // 冷卻結束:解鎖按鈕、隱藏倒數
+        clearInterval(window._wbTcQmsgCdTimer);
+        window._wbTcQmsgCdTimer = null;
+        const grid2 = document.querySelector('.wb-tc-quickmsg-grid');
+        if(grid2){
+          grid2.querySelectorAll('.wb-tc-qmsg-btn').forEach(b => { b.disabled = false; });
+        }
+        if(cdLabel) cdLabel.style.display = 'none';
+        return;
+      }
+      if(cdSec) cdSec.textContent = Math.ceil(remain / 1000);
+    }, 250);
+  }
+
+  // 在指定 slot(隊伍確認頁的 .wb-tc-slot)頂端浮現對話泡泡(3.5 秒淡出)
+  // 跟戰鬥畫面的 _wbShowCardBubble 邏輯類似,但找的是 .wb-tc-slot
+  function _wbTcShowSlotBubble(slotIdx, text){
+    try{
+      const slots = document.querySelectorAll('#wb-tc-slots .wb-tc-slot');
+      const slot = slots[slotIdx];
+      if(!slot) return;
+      // 確保 slot 是 relative
+      const cs = getComputedStyle(slot);
+      if(cs.position === 'static') slot.style.position = 'relative';
+      // 移除舊泡泡
+      const oldBubble = slot.querySelector('.wb-tc-slot-bubble');
+      if(oldBubble) oldBubble.remove();
+      // 加新泡泡
+      const bubble = document.createElement('div');
+      bubble.className = 'wb-tc-slot-bubble';
+      bubble.textContent = text;
+      bubble.style.cssText =
+        'position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%);'
+        + 'background:rgba(20,15,40,0.96);color:#e0d4ff;'
+        + 'padding:6px 12px;border-radius:10px;'
+        + 'border:1.5px solid rgba(168,132,255,0.7);'
+        + 'box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 12px rgba(168,132,255,0.4);'
+        + 'font-size:13px;font-weight:700;letter-spacing:0.5px;white-space:nowrap;'
+        + 'z-index:9999;pointer-events:none;'  /* ★ FIX 20260517(h) — 100 → 9999,確保不被任何 UI 蓋 */
+        + 'animation:wbTcBubbleIn 0.25s ease-out;';
+      slot.appendChild(bubble);
+      // 3.5 秒後淡出移除
+      setTimeout(() => {
+        bubble.style.transition = 'opacity 0.4s';
+        bubble.style.opacity = '0';
+        setTimeout(() => { try{ bubble.remove(); }catch(_){} }, 400);
+      }, 3500);
+    }catch(_){}
+  }
+  window._wbTcShowSlotBubble = _wbTcShowSlotBubble;
+
+  // 注入 bubble 進場動畫(只一次)
+  (function _wbTcInjectBubbleStyle(){
+    if(document.getElementById('wb-tc-bubble-style')) return;
+    const _s = document.createElement('style');
+    _s.id = 'wb-tc-bubble-style';
+    _s.textContent =
+      '@keyframes wbTcBubbleIn{'
+      + '0%{opacity:0;transform:translate(-50%,-80%) scale(0.7);}'
+      + '100%{opacity:1;transform:translate(-50%,-100%) scale(1);}}';
+    document.head.appendChild(_s);
+  })();
 
   // 計算「整隊元素覆蓋率」
   function _wbTcCalcCoverage(players){
@@ -4858,6 +5284,11 @@
   //   (1) 舊版自製戰鬥畫面:#wb-battle-heroes-row .wb-hero-battle-card[slotIdx]
   //   (2) v4 主程式 #gc 戰鬥畫面:#z1 #row1 .card[slotIdx](世界 BOSS v4 走這條)
   //   原本只支援 (1),v4 模式下泡泡完全顯示不出來 → 按表情按鈕沒反應
+  // ★ FIX 20260517(h) — 改為 position:fixed 浮在 body,z-index 設極高(9999)
+  //   原因:之前 z-index:50 + 附在英雄卡內 → 會被 BOSS HP bar(z:600)、emoji bar(z:9050)、
+  //         順序條(z:5) 等覆蓋。改 fixed 後直接以視口座標定位,不再受卡的容器限制
+  //   做法:用 card.getBoundingClientRect() 算出卡的位置,氣泡顯示在卡正上方 12px
+  //         並做 viewport 邊緣防護:太靠頂 → 顯示在卡下方
   function _wbShowCardBubble(slotIdx, text){
     let card = null;
     // (1) 舊版自製戰鬥畫面
@@ -4872,30 +5303,55 @@
       card = z1Cards[slotIdx] || null;
     }
     if(!card) return;
-    // 確保 card 是 relative,泡泡才能用 absolute 定位
-    try{
-      const cs = getComputedStyle(card);
-      if(cs.position === 'static') card.style.position = 'relative';
-    }catch(_){}
-    // 移除舊泡泡
-    const oldBubble = card.querySelector('.wb-card-bubble');
+    const rect = card.getBoundingClientRect();
+    // 移除舊泡泡(同 slot 重發時)
+    const oldBubble = document.querySelector('.wb-card-bubble[data-slot="' + slotIdx + '"]');
     if(oldBubble) oldBubble.remove();
-    // 加新泡泡
+    // 建新氣泡 (fixed,直接掛 body,z-index 極高)
     const bubble = document.createElement('div');
-    bubble.className = 'wb-card-bubble';
+    bubble.className = 'wb-card-bubble wb-card-bubble-fixed';
+    bubble.setAttribute('data-slot', String(slotIdx));
     bubble.textContent = text;
-    card.appendChild(bubble);
+    // 預設掛 body 計算尺寸,先讓它 visibility:hidden 量寬高
+    bubble.style.cssText = 'visibility:hidden;left:0;top:0;';
+    document.body.appendChild(bubble);
+    // 計算位置:卡正上方,水平中心對齊卡中心
+    const bw = bubble.offsetWidth;
+    const bh = bubble.offsetHeight;
+    let left = rect.left + rect.width / 2 - bw / 2;
+    let top = rect.top - bh - 12;
+    let placement = 'top';
+    // 邊緣防護:水平超出視口
+    if(left < 8) left = 8;
+    if(left + bw > window.innerWidth - 8) left = window.innerWidth - bw - 8;
+    // 太靠頂 → 改顯示在卡下方
+    if(top < 8){
+      top = rect.bottom + 12;
+      placement = 'bottom';
+    }
+    bubble.style.left = left + 'px';
+    bubble.style.top = top + 'px';
+    bubble.style.visibility = 'visible';
+    bubble.setAttribute('data-placement', placement);
     // 3.5 秒後淡出
-    setTimeout(() => {
+    setTimeout(function(){
       bubble.classList.add('fade-out');
-      setTimeout(() => { try{ bubble.remove(); }catch(_){} }, 400);
+      setTimeout(function(){ try{ bubble.remove(); }catch(_){} }, 400);
     }, 3500);
   }
   window._wbShowCardBubble = _wbShowCardBubble;
 
   window._wbNet.on('onChatMessage', function(msg){
     // ★ v3.0 — 答題討論訊息:浮現在發送者的角色卡頂端
+    // ★ FIX 20260517(f) — 隊伍確認頁開著時優先顯示在隊伍 slot 卡頂端
+    //   (戰前定型文也走 isDiscussion=true,但發送時還沒進戰場,要找 .wb-tc-slot 而非 #z1 .card)
     if(msg.isDiscussion && typeof msg.slotIdx === 'number'){
+      const tcOpen = document.getElementById('wb-team-confirm-overlay');
+      if(tcOpen && tcOpen.classList.contains('show')
+         && typeof window._wbTcShowSlotBubble === 'function'){
+        window._wbTcShowSlotBubble(msg.slotIdx, msg.text);
+        return;
+      }
       _wbShowCardBubble(msg.slotIdx, msg.text);
       return;
     }

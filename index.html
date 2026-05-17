@@ -2194,23 +2194,59 @@
       // 既有 6 個快捷表情(右下角浮現)
       cheer: '💪 加油!', gg: '😭 GG', burst: '💥 用爆發!',
       heal: '🩹 補我血!', wait: '⏸ 等一下', strong: '🔥 太強了!',
+      // ★ FIX 20260517(h) — 戰鬥中表情列重新規劃,6 個新 key 對應實戰需求
+      //   (原本的 cheer/gg/heal/wait/strong 保留供舊版相容,但戰鬥中 emoji bar 改用下列 6 個)
+      burst_now:    '💥 用爆發!',
+      heal_first:   '🩹 先補血!',
+      revive_first: '✨ 先復活!',
+      ctrl_boss:    '🌀 先控住王!',
+      awesome:      '🔥 太棒啦!',
+      sorry_wait:   '😅 抱歉先等我一下',
       // ★ v3.0 — 新增 6 個答題討論選項(在角色卡頂端泡泡顯示)
       ans_a:    '🅰 我覺得答案是 A',
       ans_b:    '🅱 我覺得答案是 B',
       ans_c:    '🅲 我覺得答案是 C',
       ans_d:    '🅳 我覺得答案是 D',
       ans_idk:  '🤔 我也不確定答案...',
-      cheerup:  '💪 加油你可以的!'
+      cheerup:  '💪 加油你可以的!',
+      // ★ FIX 20260517(f) — 新增 12 個隊伍確認頁戰前定型文
+      //   類別:角色分工(5)+ 進出狀態(2)+ 缺位呼叫(4)+ 退出告辭(1)
+      //   顯示位置:隊伍確認頁時,在發送者的 slot 卡頂端冒泡(共用 _wbShowCardBubble)
+      role_dps:    '⚔ 我負責輸出',
+      role_heal:   '✨ 我負責治療',
+      role_tank:   '🛡 我負責當坦克保護大家',
+      role_ctrl:   '🌀 我負責控場',
+      role_quiz:   '📖 我負責回答問題',
+      brb:         '⏸ 等我一下',
+      back:        '🙋 我回來了',
+      need_dps:    '⚠ 我們缺輸出',
+      need_heal:   '⚠ 我們缺治療',
+      need_tank:   '⚠ 我們缺坦克',
+      need_ctrl:   '⚠ 我們缺控場',
+      leaving:     '🙏 我有事要先退出了,謝謝邀請',
     };
     // ★ v3.0 — 標記哪些 key 是「答題討論」類(在角色卡頂端泡泡顯示而非右下浮現)
     const DISCUSSION_KEYS = new Set(['ans_a','ans_b','ans_c','ans_d','ans_idk','cheerup']);
+    // ★ FIX 20260517(f) — 隊伍確認頁定型文 key 集合(用 isDiscussion 旗標讓泡泡顯示在卡上)
+    const TEAM_SETUP_KEYS = new Set([
+      'role_dps','role_heal','role_tank','role_ctrl','role_quiz',
+      'brb','back','need_dps','need_heal','need_tank','need_ctrl','leaving'
+    ]);
+    // ★ FIX 20260517(h) — 戰鬥中快捷表情 6 個 key,也走「角色卡頂泡泡」顯示
+    //   (原本舊版 cheer/burst/heal/wait/strong/gg 是右下角浮現「玩家:訊息」,
+    //    新版改為發送者卡上冒泡,所有戰友看誰說了什麼更直覺)
+    const BATTLE_QUICK_KEYS = new Set([
+      'burst_now','heal_first','revive_first','ctrl_boss','awesome','sorry_wait'
+    ]);
     async function sendQuickEmoji(key){
       if(!WB.roomId || !QUICK_EMOJI[key]) return false;
       try{
         const myName = WB.lastSeenSnap?.players?.find(p => p.uid === window._gUserId)?.name || '玩家';
         const existing = WB.lastSeenSnap?.chat || [];
         // ★ v3.0 — 把 isDiscussion 旗標 + slotIdx 一起廣播,讓客戶端決定顯示位置
-        const isDiscussion = DISCUSSION_KEYS.has(key);
+        //   ★ FIX 20260517(f) — 隊伍確認頁定型文也走 isDiscussion=true(卡上冒泡顯示)
+        //   ★ FIX 20260517(h) — 戰鬥中快捷表情同樣走卡上冒泡
+        const isDiscussion = DISCUSSION_KEYS.has(key) || TEAM_SETUP_KEYS.has(key) || BATTLE_QUICK_KEYS.has(key);
         const newChat = existing.concat([{
           uid: window._gUserId, name: myName, key: key,
           text: QUICK_EMOJI[key], ts: Date.now(),
