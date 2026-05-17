@@ -1515,6 +1515,102 @@
   // 思路:主程式 aiAct(actor) 看到 actor 是 worldboss stage 的 BOSS 時,
   //   不走主程式答題流程,改呼叫 _wbAdvBossTurn() 執行世界戰 BOSS AI。
   //   行動完後設 actor.acted=true 並呼叫 endAction 進入下一回合。
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v6 Phase 3 (2026-05-17) — 房主端 G 同步機制
+  // ────────────────────────────────────────────────────────────────────
+  // 連線模式房主跑主程式 advStartBattle() 後,主程式 G 被改動時(玩家 / BOSS
+  // 行動結算、回合開始等),要把完整 G 序列化推到 Firestore 給非房主玩家。
+  //
+  // 設計重點:
+  //   1. 節流:同一 tick 多次呼叫只發一次 push(用 microtask 合併)
+  //   2. 守門:只在 window._wbConnectedHostMode === true 才 push,
+  //            單人練習 / 非房主端不會誤觸
+  //   3. 呼叫 window._wbNet.hostPushBattleState({fullWireG, _syncReason})
+  //   4. fullWireG 由 window._wbWireUtils.GToWire(G) 產生(Phase 1 已安裝)
+  // ════════════════════════════════════════════════════════════════════
+  let _wbHostSyncPending = false;
+  let _wbHostSyncPushCount = 0;
+  window._wbHostSyncG = function(reason){
+    if(!window._wbConnectedHostMode) return;       // 守門:只連線房主跑
+    if(!window._wbNet || typeof window._wbNet.hostPushBattleState !== 'function') return;
+    if(!window._wbWireUtils || typeof window._wbWireUtils.GToWire !== 'function'){
+      console.warn('[WB-Sync v6] _wbWireUtils.GToWire 未就緒,跳過 push');
+      return;
+    }
+    // 節流:同 tick 內多次呼叫合併
+    if(_wbHostSyncPending) return;
+    _wbHostSyncPending = true;
+    const _r = reason || 'unknown';
+    Promise.resolve().then(() => {
+      _wbHostSyncPending = false;
+      try{
+        const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+        if(!G){ console.warn('[WB-Sync v6] G 不存在,跳過 push'); return; }
+        const fullWireG = window._wbWireUtils.GToWire(G);
+        const curOrder = (G.turnOrder && G.turnOrder[G.currentActorIdx]) || null;
+        _wbHostSyncPushCount++;
+        console.log(`[WB-Sync v6] push #${_wbHostSyncPushCount} reason=${_r} turn=${G.round||G.turn||'?'} actorIdx=${G.currentActorIdx}`);
+        window._wbNet.hostPushBattleState({
+          fullWireG: fullWireG,
+          _syncReason: _r,
+          // 兼容欄位(舊接收端可能讀)
+          turn: G.round || G.turn || 1,
+          currentActorIdx: G.currentActorIdx || 0,
+          turnOrder: G.turnOrder || [],
+          p1: G.p1 || [],
+          p2: G.p2 || [],
+          logEntries: [],  // log 已在 fullWireG 內
+        });
+      }catch(e){
+        console.error('[WB-Sync v6] push 失敗', e);
+      }
+    });
+  };
+
+  // ─ 安裝 endAction sync hook ───────────────────────────────────
+  function _wbInstallEndActionSyncHook(){
+    if(typeof window.endAction !== 'function') return false;
+    if(window._wbEndActionSyncPatched) return true;
+    const _origEndAction = window.endAction;
+    window.endAction = function(a, cost, noFinish){
+      const ret = _origEndAction.apply(this, arguments);
+      try{
+        if(window._wbConnectedHostMode){
+          window._wbHostSyncG('after_endAction');
+        }
+      }catch(e){ console.warn('[WB-Sync v6] endAction hook 例外', e); }
+      return ret;
+    };
+    window._wbEndActionSyncPatched = true;
+    console.log('[WB-Sync v6] ✅ endAction sync hook 已安裝');
+    return true;
+  }
+
+  // ─ 安裝 startTurn sync hook ───────────────────────────────────
+  function _wbInstallStartTurnSyncHook(){
+    if(typeof window.startTurn !== 'function') return false;
+    if(window._wbStartTurnSyncPatched) return true;
+    const _origStartTurn = window.startTurn;
+    window.startTurn = function(){
+      // ★ Phase 4 預留:client mode early return
+      //   (client mode 旗標還沒做時,這個 if 不會生效)
+      if(window._wbClientMode){
+        // 非房主端 — 不在本機推進 turn,等房主 sync 過來
+        return;
+      }
+      const ret = _origStartTurn.apply(this, arguments);
+      try{
+        if(window._wbConnectedHostMode){
+          window._wbHostSyncG('after_startTurn');
+        }
+      }catch(e){ console.warn('[WB-Sync v6] startTurn hook 例外', e); }
+      return ret;
+    };
+    window._wbStartTurnSyncPatched = true;
+    console.log('[WB-Sync v6] ✅ startTurn sync hook 已安裝');
+    return true;
+  }
+
   function _wbInstallAiActHook(){
     if(typeof window.aiAct !== 'function'){
       // aiAct 尚未載入,延後
@@ -1523,15 +1619,16 @@
     if(window._wbAiActPatched) return true;
     const _origAiAct = window.aiAct;
     window.aiAct = function(a){
+      // ★ v6 Phase 4 — client mode 攔截:非房主端 BOSS 行動等房主廣播,本機不跑 AI
+      if(window._wbClientMode){
+        try{
+          if(a && a.side === 'p2' && window._wbIsBossName && window._wbIsBossName(a.name)){
+            console.log('[WB-Client v6] aiAct 被攔截(BOSS 行動等房主廣播)');
+            return;
+          }
+        }catch(_){}
+      }
       try{
-        // ★ v6 Phase 4 — 非房主端攔截:本機絕對不能跑 BOSS AI
-        //   原因:房主端跑 BOSS AI 算出來的傷害會 sync 回來,非房主只要等廣播。
-        //         如果本機也跑一遍,會跟房主算出不同結果(隨機數不同),G 永久分歧。
-        if(window._wbClientMode && typeof window._wbGetAdvStage === 'function'
-           && window._wbGetAdvStage() === 'worldboss'){
-          console.log('[WB-Client v6] aiAct 被攔截(BOSS 行動等房主廣播)');
-          return;
-        }
         // 偵測:是否處於世界戰 stage + 是否為 BOSS
         if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
            && a && a.side === 'p2' && typeof a.name === 'string'
@@ -1748,6 +1845,316 @@
     }, 1200);
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v6 Phase 5 (2026-05-17) — 玩家行動同步
+  // ────────────────────────────────────────────────────────────────────
+  // 連線模式下,非房主玩家點按鈕後送 pendingAction 給房主,房主這邊要
+  // 「代執行」該玩家的動作(透過主程式 execSkill / execAtk / 爆發)。
+  //
+  // 難點:主程式 execSkill 內部會用 setPending('enemy', t => ...) 等玩家選目標,
+  //       但「代執行其他玩家」時,被代執行的人不在房主面前,沒辦法叫他選。
+  //       世界 BOSS 戰只有 BOSS 一個敵人,所以只要敵方目標都自動鎖定 BOSS,
+  //       友方目標自動選 HP 最低的隊友(主程式 _autoBattle 邏輯一樣)。
+  //
+  // 設計:
+  //   1. patch window.setPending,在 _wbAutoTargetForOtherPlayer=true 時
+  //      自動選目標(enemy→BOSS, ally→HP 最低隊友, self→自己)
+  //   2. window._wbExecPlayerAction(actorPos, action) — 代執行入口
+  //      - action.type:'atk' | 's1' | 's2' | 'burst' | 'rest' | 'skip'
+  //      - 先把 G.activeChar 設為 actor,打開 _wbAutoTargetForOtherPlayer
+  //      - 呼叫對應入口:execAtk / execSkill / execBurst / doRest
+  //      - 跑完後關掉 flag(execSkill 內 setTimeout 走完才關)
+  // ════════════════════════════════════════════════════════════════════
+  window._wbAutoTargetForOtherPlayer = false;
+
+  // ─ setPending patch:auto-target 模式下自動選 BOSS / 隊友 ─────────
+  function _wbInstallSetPendingPatch(){
+    if(typeof window.setPending !== 'function') return false;
+    if(window._wbSetPendingPatched) return true;
+    const _origSetPending = window.setPending;
+    window.setPending = function(type, cb){
+      if(window._wbAutoTargetForOtherPlayer){
+        try{
+          const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+          const a = G && G.activeChar;
+          if(!a){ return _origSetPending.apply(this, arguments); }
+          const opp = a.side === 'p1' ? 'p2' : 'p1';
+          let autoT = null;
+          if(type === 'enemy' || type === 'any_e'){
+            const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
+            // 世界戰只有 BOSS,但保險還是用 sort
+            autoT = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
+          }else if(type === 'ally' || type === 'self_or_ally'){
+            const al = (G[a.side] || []).filter(h => h && h.curHp > 0);
+            autoT = al.sort((x, y) => x.curHp - y.curHp)[0] || null;
+          }else if(type === 'ally_dead' || type === 'ally_or_dead'){
+            const dead = (G[a.side] || []).filter(h => h && h.curHp === 0);
+            autoT = dead[0] || null;
+          }else if(type === 'any'){
+            const all = (G.p1 || []).concat(G.p2 || []).filter(h => h && h.curHp > 0);
+            autoT = all.sort((x, y) => x.curHp - y.curHp)[0] || null;
+          }
+          if(autoT && cb){
+            // 延 50ms 模擬玩家點擊延遲(讓主程式內部 state 收歛)
+            setTimeout(() => { try{ cb(autoT); }catch(eC){ console.error('[WB-Action v6] setPending cb 例外', eC); } }, 50);
+            return;
+          }
+          // 找不到目標:主程式 _autoBattle 路徑會直接結束行動
+          if(a && !a.acted){
+            a.acted = true;
+            try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+            setTimeout(() => { try{ if(typeof window.startTurn === 'function') window.startTurn(); }catch(_){} }, 400);
+          }
+          return;
+        }catch(eP){
+          console.warn('[WB-Action v6] setPending auto-target 例外,fallback', eP);
+        }
+      }
+      return _origSetPending.apply(this, arguments);
+    };
+    window._wbSetPendingPatched = true;
+    console.log('[WB-Action v6] ✅ setPending patch 已安裝(auto-target 給代執行用)');
+    return true;
+  }
+
+  // ─ 代執行玩家動作 ───────────────────────────────────────────────
+  //   主要呼叫者:index.html 內房主收到 pendingAction 時
+  //   actorPos: 0~3
+  //   action: { type:'atk'|'s1'|'s2'|'burst'|'rest'|'skip' }
+  window._wbExecPlayerAction = function(actorPos, action){
+    const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+    if(!G || !G.p1){
+      console.warn('[WB-Action v6] G 不存在或無 p1');
+      return false;
+    }
+    const actor = G.p1[actorPos];
+    if(!actor){
+      console.warn('[WB-Action v6] actor 不存在 pos=' + actorPos);
+      return false;
+    }
+    if(actor.curHp <= 0){
+      console.warn('[WB-Action v6] actor 已倒下,跳過');
+      // 推進到下一個 actor
+      setTimeout(() => { try{ if(typeof window.startTurn === 'function') window.startTurn(); }catch(_){} }, 200);
+      return false;
+    }
+    if(actor.acted){
+      console.warn('[WB-Action v6] actor 已行動過,忽略重複行動');
+      return false;
+    }
+    const type = action && action.type;
+    if(!type){
+      console.warn('[WB-Action v6] action.type 為空');
+      return false;
+    }
+
+    // 設 G.activeChar 給主程式各路徑讀(execSkill 內部會讀)
+    G.activeChar = actor;
+
+    // 打開 auto-target 旗標
+    window._wbAutoTargetForOtherPlayer = true;
+
+    let ok = false;
+    try{
+      if(type === 'atk'){
+        // 普攻:目標自動選 BOSS
+        const opp = actor.side === 'p1' ? 'p2' : 'p1';
+        const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
+        const tgt = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
+        if(tgt){
+          try{
+            if(typeof window.execAtk === 'function'){
+              window.execAtk(actor, tgt, actor.atk);
+              // execAtk 不會自己呼叫 endAction,要手動接(對照主程式 selMove)
+              if(typeof window.endAction === 'function'){
+                window.endAction(actor, 0);
+              }
+              ok = true;
+            }
+          }catch(eA){ console.error('[WB-Action v6] execAtk 例外', eA); }
+        }else{
+          console.warn('[WB-Action v6] 找不到敵方目標');
+          actor.acted = true;
+          setTimeout(() => { try{ if(typeof window.startTurn === 'function') window.startTurn(); }catch(_){} }, 200);
+        }
+      }
+      else if(type === 's1' || type === 's2'){
+        const sk = (type === 's1') ? actor.s1 : actor.s2;
+        if(!sk || sk.p){
+          console.warn('[WB-Action v6] 技能不存在或是被動 type=' + type);
+        }else{
+          const cost = (typeof window.skillCost === 'function') ? window.skillCost(sk, actor, true) : (sk.c || 0);
+          // 檢查能量
+          if(G.energy && G.energy[actor.side] != null && G.energy[actor.side] < cost){
+            console.warn('[WB-Action v6] ' + actor.name + ' 能量不足,改普攻');
+            // 能量不足 → 自動降級為普攻
+            const opp = actor.side === 'p1' ? 'p2' : 'p1';
+            const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
+            const tgt = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
+            if(tgt && typeof window.execAtk === 'function'){
+              window.execAtk(actor, tgt, actor.atk);
+              if(typeof window.endAction === 'function') window.endAction(actor, 0);
+              ok = true;
+            }
+          }else{
+            try{
+              if(typeof window.execSkill === 'function'){
+                window.execSkill(actor, sk, cost, type);
+                // 注意:execSkill 內部用 setPending 等目標 → patch 會自動選
+                //       setPending cb 內會呼叫 endAction,不用手動呼叫
+                ok = true;
+              }
+            }catch(eS){ console.error('[WB-Action v6] execSkill 例外', eS); }
+          }
+        }
+      }
+      else if(type === 'burst'){
+        // 爆發
+        try{
+          if(typeof window._canBurst === 'function' && typeof window.execBurst === 'function'){
+            if(window._canBurst(actor)){
+              window.execBurst(actor.side, actor.pos);
+              ok = true;
+            }else{
+              console.warn('[WB-Action v6] ' + actor.name + ' 爆發未滿,改普攻');
+              // 爆發沒滿 → 改普攻
+              const opp = actor.side === 'p1' ? 'p2' : 'p1';
+              const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
+              const tgt = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
+              if(tgt && typeof window.execAtk === 'function'){
+                window.execAtk(actor, tgt, actor.atk);
+                if(typeof window.endAction === 'function') window.endAction(actor, 0);
+                ok = true;
+              }
+            }
+          }
+        }catch(eB){ console.error('[WB-Action v6] execBurst 例外', eB); }
+      }
+      else if(type === 'rest'){
+        try{
+          if(typeof window.doRest === 'function'){
+            window.doRest();
+            ok = true;
+          }
+        }catch(eR){ console.error('[WB-Action v6] doRest 例外', eR); }
+      }
+      else if(type === 'skip'){
+        // 跳過 = 設 acted + 推到下一個
+        actor.acted = true;
+        // 答錯懲罰才會送 skip,burst+3 之類由送 action 的客戶端先處理
+        try{ if(typeof window.endAction === 'function') window.endAction(actor, 0); }catch(_){}
+        ok = true;
+      }
+      else{
+        console.warn('[WB-Action v6] 未知 action.type=' + type);
+      }
+    }finally{
+      // setTimeout 延後關 flag,讓 setPending 內部 setTimeout cb 有機會跑(50ms)
+      setTimeout(() => { window._wbAutoTargetForOtherPlayer = false; }, 200);
+    }
+
+    return ok;
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v6 Phase 5.2 (2026-05-17) — 非房主端攔截 selMove/doRest/execBurst
+  // ────────────────────────────────────────────────────────────────────
+  // 非房主玩家在主程式 #gc 戰場上點按鈕(b-atk / b-s1 / b-s2 / 爆發 / 休息)
+  // → 主程式走 confirmAction → selMove(s1/s2/atk) / doRest / execBurst
+  //
+  // 我們在 client mode 下攔截這三個入口,改為:
+  //   1. 本機跑 _wbExecPlayerAction(actor.pos, {type})  ← 樂觀更新,本機立即播動畫
+  //   2. 同時送 _wbNet.sendAction({type}) → Firestore → 房主收到走 5.1 路徑
+  //   3. 設 window._wbClientAnimEndTs = Date.now() + 1500,給 5.3 動畫競態緩衝用
+  //
+  // ⚠ 樂觀更新本機跑 execSkill 會改 G.curHp / G.energy 等,房主算完廣播
+  //   _applyWireToG 過來時會覆蓋本機。中間可能有畫面跳動 → 5.3 解決
+  // ════════════════════════════════════════════════════════════════════
+  function _wbClientSendOptimisticAndSync(type){
+    const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+    const a = G && G.activeChar;
+    if(!a || a.acted){
+      console.warn('[WB-Client v6] 樂觀:actor 不存在或已行動,跳過');
+      return false;
+    }
+    // 設動畫結束時間戳(供 5.3 用,sync 進來時若還沒到此時間就延後 apply)
+    window._wbClientAnimEndTs = Date.now() + 1500;
+    window._wbClientOptimistic = true;
+    // 本機代執行(走跟房主一樣的 _wbExecPlayerAction 路徑)
+    try{
+      if(typeof window._wbExecPlayerAction === 'function'){
+        window._wbExecPlayerAction(a.pos, { type: type });
+      }
+    }catch(eOp){ console.warn('[WB-Client v6] 樂觀更新失敗', eOp); }
+    // 同時送 Firestore 給房主
+    try{
+      if(window._wbNet && typeof window._wbNet.sendAction === 'function'){
+        // 注意:sendAction 在 isHost 端會直接走本地引擎,非房主端會走 pendingAction
+        window._wbNet.sendAction({ type: type });
+      }
+    }catch(eSd){ console.warn('[WB-Client v6] sendAction 失敗', eSd); }
+    window._wbClientOptimistic = false;
+    return true;
+  }
+
+  function _wbInstallSelMovePatch(){
+    if(typeof window.selMove !== 'function') return false;
+    if(window._wbSelMovePatched) return true;
+    const _origSelMove = window.selMove;
+    window.selMove = function(type){
+      if(window._wbClientMode){
+        // type ∈ {'atk','s1','s2'}
+        if(_wbClientSendOptimisticAndSync(type)) return;
+      }
+      return _origSelMove.apply(this, arguments);
+    };
+    window._wbSelMovePatched = true;
+    console.log('[WB-Client v6] ✅ selMove patch 已安裝');
+    return true;
+  }
+
+  function _wbInstallDoRestPatch(){
+    if(typeof window.doRest !== 'function') return false;
+    if(window._wbDoRestPatched) return true;
+    const _origDoRest = window.doRest;
+    window.doRest = function(){
+      if(window._wbClientMode){
+        if(_wbClientSendOptimisticAndSync('rest')) return;
+      }
+      return _origDoRest.apply(this, arguments);
+    };
+    window._wbDoRestPatched = true;
+    console.log('[WB-Client v6] ✅ doRest patch 已安裝');
+    return true;
+  }
+
+  function _wbInstallExecBurstPatch(){
+    if(typeof window.execBurst !== 'function') return false;
+    if(window._wbExecBurstPatched) return true;
+    const _origExecBurst = window.execBurst;
+    window.execBurst = function(side, pos, _safeName){
+      if(window._wbClientMode){
+        // 只攔截 p1(玩家)爆發 — p2 BOSS 爆發走 BOSS AI,本機不會跑(client mode 已擋)
+        if(side === 'p1'){
+          // 確認是「我自己」的爆發(非房主只能控制自己的英雄)
+          const mySlot = (window._wbNet && typeof window._wbNet.getMySlot === 'function')
+            ? window._wbNet.getMySlot() : -1;
+          if(mySlot >= 0 && pos === mySlot){
+            if(_wbClientSendOptimisticAndSync('burst')) return;
+          }else{
+            // 不是自己的爆發按鈕(理論上 UI 不該讓 client 端能按),靜默忽略
+            console.warn('[WB-Client v6] 嘗試替別人按爆發(pos=' + pos + ' mySlot=' + mySlot + '),忽略');
+            return;
+          }
+        }
+      }
+      return _origExecBurst.apply(this, arguments);
+    };
+    window._wbExecBurstPatched = true;
+    console.log('[WB-Client v6] ✅ execBurst patch 已安裝');
+    return true;
+  }
+
   // ── D. checkWin 攔截:worldboss stage 時走自製結算 ──────────────────
   // ─────────────────────────────────────────────────────────────────
   function _wbInstallCheckWinHook(){
@@ -1755,18 +2162,12 @@
     if(window._wbCheckWinPatched) return true;
     const _origCheckWin = window.checkWin;
     window.checkWin = function(){
+      // ★ v6 Phase 4 — client mode:本機不判勝敗,等房主廣播 ended sync
+      //   例外:_wbClientForceCheckWin=true 時(收到 ended sync 後)放行
+      if(window._wbClientMode && !window._wbClientForceCheckWin){
+        return false;
+      }
       try{
-        // ★ v6 Phase 4 — 非房主端攔截:本機絕對不能自己判勝敗
-        //   勝敗由房主 sync 過來,本機 G 是經過 round-trip 的,
-        //   curHp 等可能有微小延遲,自己判可能誤觸發結算頁。
-        //   例外:如果 _wbClientForceCheckWin = true(房主廣播 ended 後設的),
-        //         讓本機跑一次原本的結算流程。
-        if(window._wbClientMode && !window._wbClientForceCheckWin
-           && typeof window._wbGetAdvStage === 'function'
-           && window._wbGetAdvStage() === 'worldboss'){
-          return false;   // 假裝戰鬥未結束,等房主廣播
-        }
-
         const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
         if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
            && _G && _G.p1 && _G.p2){
@@ -1894,119 +2295,26 @@
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = false;
-    // ★ v6 Phase 4 — 結算後清掉 client/host mode 旗標
-    //   下一場戰鬥(不論單人或連線)從乾淨狀態開始
+    // ★ v6 Phase 4 — 清理連線模式 / client mode 旗標
     window._wbConnectedHostMode = false;
     window._wbConnectedClientMode = false;
     window._wbClientMode = false;
     window._wbClientForceCheckWin = false;
-    window._wbClientFirstBattleUpdate = true;
+    window._wbClientFirstBattleUpdate = true;  // 重設供下一場
     window._wbClientLastVersion = 0;
+    // ★ v6 Phase 5.3 — 清理動畫競態緩衝
+    window._wbClientAnimEndTs = 0;
+    window._wbClientOptimistic = false;
+    if(window._wbClientPendingApplyTimer){
+      try{ clearTimeout(window._wbClientPendingApplyTimer); }catch(_){}
+      window._wbClientPendingApplyTimer = null;
+    }
+    // ★ v6 Phase 5 — 清理 auto-target 旗標
+    window._wbAutoTargetForOtherPlayer = false;
   }
   window._wbShowAdvBattleResult = _wbShowAdvBattleResult;
 
-  // ════════════════════════════════════════════════════════════════════
-  // ★ v6 Phase 3 — 房主端 G 同步機制
-  // ────────────────────────────────────────────────────────────────────
-  // 目的:房主端跑主程式 advStartBattle() 後,G 在每次行動結算後改變,
-  //      需要把整個 G 序列化推到 Firestore,讓非房主端的 onBattleUpdate
-  //      收到並還原本機 G(Phase 4 做)。
-  //
-  // 安裝點:hook 進主程式 endAction(玩家/AI 行動結束)+ startTurn
-  //        (新回合開始),涵蓋所有 G 改變的「結算後最終狀態」時機。
-  //
-  // 限制:只在「連線模式 + 房主」時運作,單人練習不會影響(_wbConnectedHostMode 旗標)。
-  // ════════════════════════════════════════════════════════════════════
-
-  // 判斷目前是不是「連線模式房主」
-  function _wbIsConnectedHost(){
-    if(!window._wbConnectedHostMode) return false;
-    if(!window._wbNet || typeof window._wbNet.isHost !== 'function') return false;
-    if(!window._wbNet.isHost()) return false;
-    return true;
-  }
-
-  // 主同步函式 — 由 hook / 外部呼叫
-  let _wbSyncCounter = 0;
-  let _wbLastSyncTs = 0;
-  let _wbSyncPending = false;
-  window._wbHostSyncG = function(reason){
-    if(!_wbIsConnectedHost()) return false;
-    const G = window._wbGetG ? window._wbGetG() : window.G;
-    if(!G) return false;
-    if(!window._wbWireUtils || typeof window._wbWireUtils.GToWire !== 'function'){
-      console.warn('[WB-Sync v6] _wbWireUtils.GToWire 不存在,sync 跳過');
-      return false;
-    }
-    // 節流:同一個 tick 內多次呼叫只 sync 一次(用 microtask 延後)
-    if(_wbSyncPending) return false;
-    _wbSyncPending = true;
-    Promise.resolve().then(() => {
-      _wbSyncPending = false;
-      try{
-        const wire = window._wbWireUtils.GToWire(G);
-        if(!wire) return;
-        _wbSyncCounter++;
-        const now = Date.now();
-        const dt = now - _wbLastSyncTs;
-        _wbLastSyncTs = now;
-        console.log('[WB-Sync v6] push #' + _wbSyncCounter
-          + ' reason=' + (reason || 'unknown')
-          + ' turn=' + (wire.turn || 0)
-          + ' actorIdx=' + (wire.currentActorIdx || 0)
-          + ' (dt=' + dt + 'ms)');
-        window._wbNet.hostPushBattleState({
-          fullWireG: wire,
-          _syncReason: reason || 'unknown',
-          logEntries: [],  // log 已在 wire.battleStats 處理,這裡不重複加
-        });
-      }catch(e){ console.warn('[WB-Sync v6] sync 失敗', e); }
-    });
-    return true;
-  };
-
-  // hook 進 endAction(每次行動結算完最自然的 sync 時機)
-  function _wbInstallSyncHook(){
-    if(window._wbSyncHookPatched) return true;
-    if(typeof window.endAction !== 'function') return false;
-    const _origEndAction = window.endAction;
-    window.endAction = function(){
-      const r = _origEndAction.apply(this, arguments);
-      // 只有連線模式房主會真的 sync,單人練習這裡是 no-op
-      try{ window._wbHostSyncG('after_endAction'); }catch(e){ console.warn('[WB-Sync] hook err', e); }
-      return r;
-    };
-    window._wbSyncHookPatched = true;
-    console.log('[WB-Sync v6] ✅ endAction sync hook 已安裝');
-    return true;
-  }
-
-  // hook 進 startTurn(回合開始時也 sync 一次,確保 turnOrder/currentActorIdx 同步)
-  function _wbInstallStartTurnSyncHook(){
-    if(window._wbStartTurnSyncHookPatched) return true;
-    if(typeof window.startTurn !== 'function') return false;
-    const _origStartTurn = window.startTurn;
-    window.startTurn = function(){
-      // ★ v6 Phase 4 — 非房主端攔截:本機不能自己推進 turn
-      //   原因:turn / currentActorIdx 完全由房主控制,本機自己跑會跟房主分歧
-      //   只在 worldboss + client mode 才擋,其他關卡正常跑
-      if(window._wbClientMode && typeof window._wbGetAdvStage === 'function'
-         && window._wbGetAdvStage() === 'worldboss'){
-        // 不呼叫 _origStartTurn,也不 sync(client 不能 push)
-        return;
-      }
-      const r = _origStartTurn.apply(this, arguments);
-      try{ window._wbHostSyncG('after_startTurn'); }catch(e){ console.warn('[WB-Sync] hook err', e); }
-      return r;
-    };
-    window._wbStartTurnSyncHookPatched = true;
-    console.log('[WB-Sync v6] ✅ startTurn sync hook 已安裝');
-    return true;
-  }
-
-  // BOSS 出招 hook(_wbAdvBossTurn 內 doDmg / 加 buff 後立刻 sync,但
-  //   實際上跟 endAction 重複,所以這裡先不裝額外的 sync — 由 endAction 兜底)
-
+  // ── E. 安裝所有 hooks(等主程式 ready) ──────────────────────────────
   function _wbInstallAllAdvHooks(){
     let tries = 0;
     function tryInstall(){
@@ -2015,9 +2323,15 @@
       try{ if(!_wbInstallAdvStage())     allOk = false; }catch(e){ console.warn('[WB-Adv] stage', e); allOk = false; }
       try{ if(!_wbInstallAiActHook())    allOk = false; }catch(e){ console.warn('[WB-Adv] aiAct', e); allOk = false; }
       try{ if(!_wbInstallCheckWinHook()) allOk = false; }catch(e){ console.warn('[WB-Adv] checkWin', e); allOk = false; }
-      // ★ v6 Phase 3 — 連線同步 hook(只在 hook 成功後生效於連線模式)
-      try{ if(!_wbInstallSyncHook())           allOk = false; }catch(e){ console.warn('[WB-Sync] endAction', e); allOk = false; }
-      try{ if(!_wbInstallStartTurnSyncHook())  allOk = false; }catch(e){ console.warn('[WB-Sync] startTurn', e); allOk = false; }
+      // ★ v6 Phase 3 — sync hooks(連線房主端 G 同步)
+      try{ if(!_wbInstallEndActionSyncHook()) allOk = false; }catch(e){ console.warn('[WB-Sync v6] endAction', e); allOk = false; }
+      try{ if(!_wbInstallStartTurnSyncHook()) allOk = false; }catch(e){ console.warn('[WB-Sync v6] startTurn', e); allOk = false; }
+      // ★ v6 Phase 5 — setPending patch(代執行其他玩家行動時用)
+      try{ if(!_wbInstallSetPendingPatch()) allOk = false; }catch(e){ console.warn('[WB-Action v6] setPending', e); allOk = false; }
+      // ★ v6 Phase 5.2 — client mode 攔截:玩家點按鈕改走樂觀更新 + sendAction
+      try{ if(!_wbInstallSelMovePatch())   allOk = false; }catch(e){ console.warn('[WB-Client v6] selMove', e); allOk = false; }
+      try{ if(!_wbInstallDoRestPatch())    allOk = false; }catch(e){ console.warn('[WB-Client v6] doRest', e); allOk = false; }
+      try{ if(!_wbInstallExecBurstPatch()) allOk = false; }catch(e){ console.warn('[WB-Client v6] execBurst', e); allOk = false; }
       if(!allOk && tries < 40){
         setTimeout(tryInstall, 500);
       }else if(allOk){

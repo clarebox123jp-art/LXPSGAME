@@ -5300,16 +5300,17 @@
 
   // === 開戰 ===
   // ════════════════════════════════════════════════════════════════════
-  // ★ v6 Phase 2 — 連線模式房主端啟動戰鬥
+  // ★ v6 Phase 2 (2026-05-17) — 連線房主端 _wbUiStartBattle 改走主程式
   // ────────────────────────────────────────────────────────────────────
-  // 舊版(已停用):建 window._wbHostG → 走自製戰鬥引擎(_wbHostExecuteBossTurn)
-  // 新版(v6)  :呼叫 window._wbSetupAdvForBattle + window.advStartBattle()
-  //               跟單人練習走同一套主程式戰鬥引擎,並透過 _wbHostSyncG()
-  //               (world-boss.js Phase 3 hook)即時把 G 推到 Firestore。
-  //
-  // ⚠ 舊版函式 _wbHostExecuteAction / _wbHostExecuteBossTurn /
-  //   _wbRenderBattleScreen 暫時保留(不刪),作為 fallback 與對照用,
-  //   等 Phase 4/5 跑通後再一次清掉死碼。
+  // 改動:
+  //   - 不再建 window._wbHostG 跑自製戰鬥引擎
+  //   - 改走 window._wbSetupAdvForBattle({stage:'worldboss',p1,p2}) + window.advStartBattle()
+  //   - 設 window._wbConnectedHostMode = true → 讓 world-boss.js 的 endAction / startTurn
+  //     hook 自動 push G 到 Firestore(_wbHostSyncG,Phase 3 安裝)
+  //   - 先呼叫 _wbNet.startBattle({}) 寫初始 battle 給其他玩家(讓他們收到 onBattleUpdate),
+  //     接著馬上 hostPushBattleState({fullWireG, _syncReason:'battle_started'}) 寫完整 G
+  //   - 舊版自製戰鬥引擎(_wbHostExecuteAction、_wbHostExecuteBossTurn、_wbRenderBattleScreen)
+  //     保留作 fallback,等 Phase E 收尾時一次清掉
   // ════════════════════════════════════════════════════════════════════
   window._wbUiStartBattle = async function(){
     const snap = window._wbNet.getSnapshot();
@@ -5319,10 +5320,8 @@
     if(typeof newHero !== 'function'){
       _wbGameAlert('戰鬥引擎未就緒 — newHero 函式找不到,請確認主程式 index.html 已完整載入'); return;
     }
-
-    // 檢查主程式入口
     if(typeof window.advStartBattle !== 'function'){
-      _wbGameAlert('⚠ 主程式 advStartBattle 函式找不到,世界戰無法啟動');
+      _wbGameAlert('⚠ 主程式 advStartBattle 函式找不到,連線世界戰無法啟動');
       console.error('[WB-Host v6] advStartBattle 不存在');
       return;
     }
@@ -5332,14 +5331,16 @@
       return;
     }
 
-    // 建立 4 槽英雄陣容
+    // 初始化 4 槽英雄陣容(沒人的槽位填 AI 預設)
     const p1 = [];
     for(let i = 0; i < 4; i++){
       const p = players[i];
       const heroName = p?.heroName || '劍士';
       const h = newHero(heroName, 'p1', i);
       h.burst = 0; h.burstMax = h.burstMax || 10;
-      // 玩家選的元素塞進 _wbPickedElement(供破盾邏輯讀)
+      // ★ v3.2 — 把玩家選的元素塞進英雄物件,讓戰鬥引擎 _wbInferHeroElement 透過 action.element 讀到
+      //   - 有玩家:用玩家選的 element
+      //   - AI 替補:讀 _wbEcAiOverrideElements[i] (元素確認 modal 自動分配的)
       let assignedElem = null;
       if(p && p.element){
         assignedElem = p.element;
@@ -5349,16 +5350,17 @@
       }
       if(assignedElem){
         h._wbPickedElement = assignedElem;
+        // 也填到主英雄 element 欄(若戰鬥引擎讀 h.element)
         if(!h.element) h.element = assignedElem;
       }
       p1.push(h);
     }
-    // BOSS
+    // BOSS:維蘇威火山龍王
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
 
-    // ── 透過主程式對外入口設定 G ────────────────────────────────────
+    // ★ v6 Phase 2 — 透過主程式對外入口設定 _adventureStage 與 G ─────────
     const _setupOk = window._wbSetupAdvForBattle({
       stage: 'worldboss',
       p1: p1,
@@ -5369,40 +5371,37 @@
       return;
     }
 
-    // ── 世界戰專屬旗標(跟單人練習一致) ──────────────────────────────
+    // ── 世界戰專屬旗標 ────────────────────────────────────────────
     window._wbInWorldBossMode = true;
-    window._wbSoloPracticeMode = false;   // ← 連線模式不是練習
-    window._wbConnectedHostMode = true;   // ← 新旗標:房主連線模式
+    window._wbConnectedHostMode = true;    // ★ 連線房主旗標 → 讓 sync hooks 啟用
+    window._wbSoloPracticeMode = false;
     window._wbQuizState = {};
     window._wbCorrectCnt = {};
     window._wbAdvBattleEnded = false;
 
-    // ── 通知所有玩家「戰鬥開始」(寫 meta.status='fighting' + 初始 wire G) ──
-    //   使用 Phase 1 的 _GToWire 序列化目前 G 狀態,非房主端 onBattleUpdate
-    //   首次收到就會看到完整初始陣容
-    let initialWireG = null;
-    try{
-      if(window._wbWireUtils && typeof window._wbWireUtils.GToWire === 'function' && window.G){
-        initialWireG = window._wbWireUtils.GToWire(window.G);
-      }
-    }catch(eW){ console.warn('[WB-Host v6] 初始 wire G 失敗', eW); }
+    // ── 廣播初始 battle 給其他玩家(舊 schema, version=1) ───────────
+    // 用 turnOrder 計算(BOSS 永遠第一,接著 p1 按速度)
+    const all = [];
+    all.push({ side:'p2', pos:0, spd: 999 });
+    p1.forEach((h, i) => { if(h) all.push({ side:'p1', pos:i, spd: h.spd || 0 }); });
+    const p1Order = all.slice(1).sort((a, b) => b.spd - a.spd);
+    all.length = 1;
+    all.push(...p1Order);
+
     try{
       await window._wbNet.startBattle({
-        // 舊 schema(相容用)
-        p1: window.G ? window.G.p1 : p1,
-        p2: window.G ? window.G.p2 : [boss],
-        turnOrder: window.G && window.G.turnOrder ? window.G.turnOrder : [],
-        currentActorIdx: window.G ? (window.G.currentActorIdx || 0) : 0,
-        // 新增:完整 G wire(Phase 4 非房主端會用這個還原)
-        fullWireG: initialWireG,
+        p1: p1, p2: [boss, null, null, null],
+        turnOrder: all,
+        currentActorIdx: 0
       });
-    }catch(eS){
-      console.error('[WB-Host v6] _wbNet.startBattle 失敗', eS);
-      _wbGameAlert('⚠ 通知房間開戰失敗:' + (eS.message || eS));
+      console.log('[WB-Host v6] ✅ _wbNet.startBattle() 完成,初始 battle 已廣播');
+    }catch(eSt){
+      console.error('[WB-Host v6] _wbNet.startBattle 失敗', eSt);
+      _wbGameAlert('⚠ 廣播初始戰局失敗:' + (eSt.message || eSt));
       return;
     }
 
-    // ── 關閉選角 UI,讓主程式 #gc 戰場露出 ────────────────────────────
+    // ── 關閉世界戰自製戰鬥 overlay(讓主程式 #gc 露出來) ────────────
     try{
       const _entry = document.getElementById('wb-entry-overlay');
       if(_entry) _entry.style.display = 'none';
@@ -5413,11 +5412,17 @@
       }
       const _battleArea = document.getElementById('wb-battle-area');
       if(_battleArea) _battleArea.classList.remove('show');
-      // 關掉主程式可能擋住戰場的 overlay
+    }catch(_){}
+
+    // ── 關閉所有會擋住戰場的主程式 overlay ────────────────────────
+    try{
       const _homeOv = document.getElementById('overlay');
       if(_homeOv) _homeOv.style.display = 'none';
       const _advOv = document.getElementById('adventure-overlay');
-      if(_advOv){ _advOv.style.display = 'none'; _advOv.classList.remove('show'); }
+      if(_advOv){
+        _advOv.style.display = 'none';
+        _advOv.classList.remove('show');
+      }
       const _resOv = document.getElementById('result-overlay');
       if(_resOv) _resOv.style.display = 'none';
       const _gcEl = document.getElementById('gc');
@@ -5425,24 +5430,24 @@
         _gcEl.style.display = 'flex';
         _gcEl.classList.add('adv-battle');
       }
-      console.log('[WB-Host v6] ✅ 已關閉選角頁/首頁封面,確保 #gc 戰場露出');
+      console.log('[WB-Host v6] ✅ 已關閉首頁封面/冒險頁,確保 #gc 戰場露出');
     }catch(_e){
       console.warn('[WB-Host v6] 關閉主程式 overlay 失敗', _e);
     }
 
-    // ── 建立世界戰專屬 overlay(表情列/即時傷害條/BOSS 半身像) ───────
-    if(typeof window._wbBuildAdvBattleOverlay === 'function'){
-      try{ window._wbBuildAdvBattleOverlay(); }catch(_){}
-    }
+    // ── 建立世界戰專屬 overlay(fixed 疊在 #gc 上面) ─────────────────
+    if(typeof _wbBuildAdvBattleOverlay === 'function') _wbBuildAdvBattleOverlay();
+
+    // ── 維持世界戰專屬 UI(表情列) ──────────────────────────────────
     try{
       const emojiBar = document.getElementById('wb-emoji-bar-real');
       if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
     }catch(_){}
 
-    // ── BGM 切換(advStartBattle 前先切,advStartBattle 後再切一次兜底) ──
+    // ★ BGM 預先切到世界戰專屬 BGM(advStartBattle 內 bgmStop 後再兜底重啟)
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
-    // ── BOSS 咆哮 → 開戰題 → 進入戰鬥(Phase 6 會改成全員獨立答題,先沿用) ──
+    // ── BOSS 開戰題流程 ──────────────────────────────────────────
     try{
       if(typeof window._wbStartBossOpening === 'function'){
         console.log('[WB-Host v6] 進入開戰題流程…');
@@ -5453,10 +5458,9 @@
       console.warn('[WB-Host v6] 開戰題流程失敗,跳過直接進戰鬥', eOp);
     }
 
-    // ── 呼叫主程式 advStartBattle() ───────────────────────────────────
+    // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
-      console.log('[WB-Host v6] 呼叫主程式 advStartBattle(),陣容:',
-        p1.map(h => h.name), 'BOSS:', boss.name);
+      console.log('[WB-Host v6] 呼叫主程式 advStartBattle(),陣容:', p1.map(h=>h.name), 'BOSS:', boss.name);
       window.advStartBattle();
     }catch(e){
       console.error('[WB-Host v6] advStartBattle 失敗', e);
@@ -5464,7 +5468,7 @@
       return;
     }
 
-    // ── advStartBattle 後重新啟動世界戰 BGM(advStartBattle 內 bgmStop 會關) ──
+    // ── advStartBattle 後重新啟動世界戰 BGM(兜底) ────────────────
     setTimeout(() => {
       try{
         const _wbBgm = document.getElementById('bgm-wb-vesuvius-battle');
@@ -5473,24 +5477,41 @@
           if(typeof bgmFadeTo === 'function'){
             bgmFadeTo('bgm-wb-vesuvius-battle', 600);
             console.log('[WB-Host v6] ✅ BGM 重新啟動: bgm-wb-vesuvius-battle');
+          }else{
+            _wbBgm.currentTime = 0;
+            _wbBgm.volume = (typeof _bgmMuted !== 'undefined' && _bgmMuted) ? 0
+                          : (typeof BGM_VOLUME !== 'undefined' ? BGM_VOLUME : 0.5);
+            _wbBgm.play().catch(()=>{});
+            if(typeof window !== 'undefined') window._curBgm = 'bgm-wb-vesuvius-battle';
           }
         }
-      }catch(_){}
+      }catch(eBgm){
+        console.warn('[WB-Host v6] BGM 重啟例外(忽略)', eBgm);
+      }
     }, 50);
 
-    // ── 立刻 sync 一次,讓非房主端收到「戰鬥真的開始」的訊號 ──────────
+    // ── 立即推送一次完整 G 給非房主玩家(讓他們拿到 fullWireG) ──────
+    //   _wbHostSyncG(reason) 由 Phase 3 安裝,如果還沒裝就 fallback 到舊路徑
     setTimeout(() => {
-      if(typeof window._wbHostSyncG === 'function'){
-        window._wbHostSyncG('battle_started');
+      try{
+        if(typeof window._wbHostSyncG === 'function'){
+          window._wbHostSyncG('battle_started');
+        }else{
+          console.warn('[WB-Host v6] _wbHostSyncG 未就緒(Phase 3 可能還沒裝)');
+        }
+      }catch(eSync){
+        console.warn('[WB-Host v6] 初始 sync 失敗(忽略)', eSync);
       }
-    }, 100);
+    }, 200);
+
+    console.log('[WB-Host v6] ✅ 連線房主啟動完成,主程式接管戰鬥');
   };
 
-  // ════════════════════════════════════════════════════════════════════
-  // ★ v6 — 舊版自製戰鬥引擎(以下函式保留作為 fallback / 對照用)
-  //   _wbHostExecuteAction / _wbHostExecuteBossTurn / _wbRenderBattleScreen
-  //   等等。新版流程下這些不會被呼叫,等 Phase 4/5 跑通後一次清掉。
-  // ════════════════════════════════════════════════════════════════════
+  // ★ v6 Phase 2 — 舊版自製戰鬥引擎入口保留,但連線模式不會走進來
+  //   只有極端 fallback(advStartBattle 缺失等情境)會用到,Phase E 收尾時刪
+  window._wbUiStartBattle_legacy_v3 = async function(){
+    console.warn('[WB-Host v6] ⚠ 走到 legacy v3 路徑 — 不應該發生,請檢查主程式版本');
+  };
 
   // === 房主戰鬥執行器 ===
   // ★ v3.1 — 推測英雄屬性(從英雄名、技能名)
@@ -5920,206 +5941,265 @@
   });
 
   // ════════════════════════════════════════════════════════════════════
-  // ★ v6 Phase 4 — 非房主端接收 onBattleUpdate
+  // ★ v6 Phase 4 (2026-05-17) — onBattleUpdate 重寫為 client mode + 主程式 UI
   // ────────────────────────────────────────────────────────────────────
-  // 行為分流:
-  //   - 房主端:跳過(自己 push 的 G 不需要再 apply 一次,主程式已是最新)
-  //   - 非房主+第一次:呼叫主程式 _wbSetupAdvForBattle + advStartBattle
-  //     起出 #gc 戰場 + 全套 UI(背景/火焰粒子/順序條)
-  //     之後設 window._wbClientMode = true,讓 aiAct/startTurn/checkWin 等
-  //     被 client hooks 攔截(world-boss.js Phase 4 hooks 加 early return)
-  //   - 非房主+後續:用 _wbWireUtils.applyWireToG 覆蓋本機 G,呼叫 updateUI
-  //
-  // 舊版 _wbRenderBattleScreen(舊版自製 UI)保留作 fallback,但新流程
-  // 完全不走它。
+  // 改動:
+  //   - 房主端(_wbNet.isHost()=true):自己 push 的 wire 不再 apply,
+  //     只更新世界戰專屬 overlay(BOSS 大血條/護盾/警告)
+  //   - 非房主端首次:_wbSetupAdvForBattle + advStartBattle() 起出主程式 #gc 戰場,
+  //     設 _wbClientMode=true 鎖死本機戰鬥引擎
+  //   - 非房主端後續:_applyWireToG 覆蓋本機 G + updateUI/renderField + 世界戰 overlay
+  //   - Version 比對防舊事件覆蓋
+  //   - 結束 sync(meta.status='ended')→ 設 _wbClientForceCheckWin 並補跑 checkWin
   // ════════════════════════════════════════════════════════════════════
-  // 用 window 屬性方便 onRoomClosed reset
-  if(typeof window._wbClientFirstBattleUpdate === 'undefined') window._wbClientFirstBattleUpdate = true;
-  if(typeof window._wbClientLastVersion === 'undefined')       window._wbClientLastVersion = 0;
+  // 對外旗標(let 變數,跨檔讀寫走 window setter/getter)
+  window._wbClientFirstBattleUpdate = (window._wbClientFirstBattleUpdate !== false);  // 預設 true
+  window._wbClientLastVersion = window._wbClientLastVersion || 0;
 
   window._wbNet.on('onBattleUpdate', function(battle){
     if(!battle) return;
+    try{
+      const isHost = (window._wbNet && typeof window._wbNet.isHost === 'function') ? window._wbNet.isHost() : false;
 
-    const isHost = !!(window._wbNet.isHost && window._wbNet.isHost());
-
-    // ─── 房主端:跳過自己的廣播 ──────────────────────────────────────
-    //   原因:房主跑主程式戰鬥引擎,G 本來就是真實狀態的權威。把房主的
-    //         廣播再 apply 回 G 不只多餘,還可能因為 wire round-trip 損失
-    //         function reference 等資訊。
-    //   保留 lastSeenSnap 給 hostPushBattleState 讀(version 累加用)。
-    if(isHost){
-      return;
-    }
-
-    // ─── 非房主端:走 v6 流程 ─────────────────────────────────────────
-    if(!battle.fullWireG){
-      // 還是舊 schema(p1/p2 在 battle 根層)— 用舊版 fallback 渲染
-      //   這情境發生在:其他客戶端版本還沒升級就跟 v6 房主進同一房。
-      //   v6 房主應該都會送 fullWireG,所以走這裡是異常,留個 warning。
-      console.warn('[WB-Client v6] 收到舊 schema battle(無 fullWireG),fallback 到舊版渲染');
-      try{ _wbRenderBattleScreen(battle); }catch(_){}
-      return;
-    }
-
-    const wire = battle.fullWireG;
-    const reason = battle._syncReason || 'unknown';
-    const version = battle.version || 0;
-
-    // 防舊事件覆蓋(理論上 onSnapshot 已保證順序,但保險)
-    if(version > 0 && version < window._wbClientLastVersion){
-      console.warn('[WB-Client v6] 收到舊版本 sync(' + version + ' < ' + window._wbClientLastVersion + '),跳過');
-      return;
-    }
-    window._wbClientLastVersion = version;
-
-    if(window._wbClientFirstBattleUpdate){
-      // ─── 第一次收到:啟動主程式 #gc 戰場 ────────────────────────────
-      window._wbClientFirstBattleUpdate = false;
-      console.log('[WB-Client v6] 首次收到 onBattleUpdate,啟動主程式 #gc 戰場');
-
-      // 檢查主程式入口
-      if(typeof window._wbSetupAdvForBattle !== 'function' || typeof window.advStartBattle !== 'function'){
-        console.error('[WB-Client v6] 主程式入口不完整,fallback 舊版渲染');
-        try{ _wbRenderBattleScreen(battle); }catch(_){}
-        return;
-      }
-      if(!window._wbWireUtils || typeof window._wbWireUtils.wireToHero !== 'function'){
-        console.error('[WB-Client v6] _wbWireUtils 不存在,fallback 舊版渲染');
-        try{ _wbRenderBattleScreen(battle); }catch(_){}
+      // ── 房主端:只更新世界戰 overlay,不 apply ────────────────────
+      if(isHost){
+        try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Host v6] renderBattleScreen 例外', eR); }
         return;
       }
 
-      // 從 wire 還原英雄陣容(用主程式 newHero 起底再覆蓋)
-      const p1 = (wire.p1 || []).map(window._wbWireUtils.wireToHero).filter(Boolean);
-      const p2 = (wire.p2 || []).map(window._wbWireUtils.wireToHero).filter(Boolean);
-      if(!p1.length || !p2.length){
-        console.error('[WB-Client v6] wire 還原 p1/p2 為空,fallback');
-        try{ _wbRenderBattleScreen(battle); }catch(_){}
+      // ── 非房主端 ────────────────────────────────────────────────
+      // Version 比對(防舊事件覆蓋新 G)
+      const ver = battle.version || 0;
+      if(ver > 0 && ver <= window._wbClientLastVersion){
+        // 舊事件,跳過
         return;
       }
+      if(ver > 0) window._wbClientLastVersion = ver;
 
-      // ★ 關鍵:設 _wbClientMode 旗標,world-boss.js 內 hook 會 early return
-      //   必須在 _wbSetupAdvForBattle 之前設,否則主程式起初的 startTurn 會炸
-      window._wbClientMode = true;
-      window._wbInWorldBossMode = true;
-      window._wbConnectedClientMode = true;   // 對稱 _wbConnectedHostMode
-      window._wbAdvBattleEnded = false;
-      window._wbQuizState = {};
-      window._wbCorrectCnt = {};
+      // 首次:啟動主程式 #gc 戰場 + advStartBattle()
+      if(window._wbClientFirstBattleUpdate){
+        window._wbClientFirstBattleUpdate = false;
+        console.log('[WB-Client v6] 首次收到 onBattleUpdate,啟動主程式 #gc 戰場');
 
-      // 透過主程式對外入口設定 G
-      const _setupOk = window._wbSetupAdvForBattle({
-        stage: 'worldboss',
-        p1: p1,
-        p2: p2,
-      });
-      if(!_setupOk){
-        console.error('[WB-Client v6] _wbSetupAdvForBattle 失敗');
-        window._wbClientMode = false;
-        try{ _wbRenderBattleScreen(battle); }catch(_){}
-        return;
-      }
-
-      // ── 關閉選角 UI,讓主程式 #gc 戰場露出 ────────────────────────
-      try{
-        const _entry = document.getElementById('wb-entry-overlay');
-        if(_entry) _entry.style.display = 'none';
-        const _lobby = document.getElementById('wb-lobby-overlay');
-        if(_lobby){
-          _lobby.style.display = 'none';
-          _lobby.classList.remove('wb-in-battle');
+        if(typeof window.advStartBattle !== 'function'){
+          console.error('[WB-Client v6] ⚠ 主程式 advStartBattle 找不到');
+          return;
         }
-        const _battleArea = document.getElementById('wb-battle-area');
-        if(_battleArea) _battleArea.classList.remove('show');
-        const _homeOv = document.getElementById('overlay');
-        if(_homeOv) _homeOv.style.display = 'none';
-        const _advOv = document.getElementById('adventure-overlay');
-        if(_advOv){ _advOv.style.display = 'none'; _advOv.classList.remove('show'); }
-        const _resOv = document.getElementById('result-overlay');
-        if(_resOv) _resOv.style.display = 'none';
-        const _gcEl = document.getElementById('gc');
-        if(_gcEl){
-          _gcEl.style.display = 'flex';
-          _gcEl.classList.add('adv-battle');
+        if(typeof window._wbSetupAdvForBattle !== 'function'){
+          console.error('[WB-Client v6] ⚠ 主程式 _wbSetupAdvForBattle 找不到');
+          return;
         }
-      }catch(_e){
-        console.warn('[WB-Client v6] 關閉 overlay 失敗', _e);
-      }
 
-      // ── 建立世界戰專屬 overlay(表情列/BOSS 半身像) ─────────────
-      if(typeof window._wbBuildAdvBattleOverlay === 'function'){
-        try{ window._wbBuildAdvBattleOverlay(); }catch(_){}
-      }
-      try{
-        const emojiBar = document.getElementById('wb-emoji-bar-real');
-        if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
-      }catch(_){}
+        // 從 battle.p1/p2 反序列化還原 hero 物件
+        const wireUtils = window._wbWireUtils;
+        let p1, p2;
+        if(wireUtils && typeof wireUtils.wireToHero === 'function'){
+          p1 = (battle.p1 || []).map(h => h ? wireUtils.wireToHero(h) : null);
+          p2 = (battle.p2 || []).map(h => h ? wireUtils.wireToHero(h) : null);
+        }else{
+          // fallback:newHero 重建
+          p1 = (battle.p1 || []).map((h, i) => {
+            if(!h) return null;
+            const nh = newHero(h.name, 'p1', i);
+            if(h.curHp != null) nh.curHp = h.curHp;
+            if(h.burst != null) nh.burst = h.burst;
+            return nh;
+          });
+          p2 = (battle.p2 || []).map((h, i) => h ? newHero(h.name, 'p2', i) : null);
+        }
+        // 至少要有 BOSS
+        if(!p2[0]){
+          console.error('[WB-Client v6] ⚠ battle.p2[0] 為空,無法啟動戰場');
+          return;
+        }
 
-      // ── BGM 切換 ────────────────────────────────────────────────
-      try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+        // 設定主程式戰場
+        const _setupOk = window._wbSetupAdvForBattle({
+          stage: 'worldboss',
+          p1: p1,
+          p2: p2.filter(h => h),  // 只放 BOSS 那個
+        });
+        if(!_setupOk){
+          console.error('[WB-Client v6] ⚠ _wbSetupAdvForBattle 失敗');
+          return;
+        }
 
-      // ── 呼叫主程式 advStartBattle() 起出戰場 UI ─────────────────
-      //   ★ _wbClientMode = true 時,world-boss.js 的 hooks 會攔截
-      //      startTurn / aiAct / checkWin,確保本機不會跑戰鬥引擎邏輯
-      try{
-        console.log('[WB-Client v6] 呼叫主程式 advStartBattle()(client mode,只繪畫面不跑邏輯)');
-        window.advStartBattle();
-      }catch(e){
-        console.error('[WB-Client v6] advStartBattle 失敗', e);
-      }
+        // ── 世界戰旗標 ──────────────────────────────────────────────
+        window._wbInWorldBossMode = true;
+        window._wbConnectedClientMode = true;
+        window._wbClientMode = true;      // ★ 鎖死本機戰鬥引擎
+        window._wbConnectedHostMode = false;
+        window._wbSoloPracticeMode = false;
+        window._wbAdvBattleEnded = false;
+        window._wbQuizState = {};
+        window._wbCorrectCnt = {};
 
-      // ── advStartBattle 後切回世界戰 BGM ─────────────────────────
-      setTimeout(() => {
+        // ── 關閉首頁封面 / 冒險頁 / 結算頁,確保 #gc 露出 ─────────────
         try{
-          const _wbBgm = document.getElementById('bgm-wb-vesuvius-battle');
-          const _cur = (typeof _curBgm !== 'undefined') ? _curBgm : null;
-          if(_wbBgm && _cur !== 'bgm-wb-vesuvius-battle'){
-            if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 600);
+          const _homeOv = document.getElementById('overlay');
+          if(_homeOv) _homeOv.style.display = 'none';
+          const _advOv = document.getElementById('adventure-overlay');
+          if(_advOv){
+            _advOv.style.display = 'none';
+            _advOv.classList.remove('show');
           }
-        }catch(_){}
-      }, 50);
-
-      // 第一次的 wire 也立刻 apply 一次(advStartBattle 內可能改了 G)
-      try{
-        if(window.G && window._wbWireUtils.applyWireToG){
-          window._wbWireUtils.applyWireToG(window.G, wire);
-          if(typeof window.updateUI === 'function') window.updateUI();
-          if(typeof window.renderField === 'function') window.renderField(false);
+          const _resOv = document.getElementById('result-overlay');
+          if(_resOv) _resOv.style.display = 'none';
+          const _entry = document.getElementById('wb-entry-overlay');
+          if(_entry) _entry.style.display = 'none';
+          const _lobby = document.getElementById('wb-lobby-overlay');
+          if(_lobby){
+            _lobby.style.display = 'none';
+            _lobby.classList.remove('wb-in-battle');
+          }
+          const _gcEl = document.getElementById('gc');
+          if(_gcEl){
+            _gcEl.style.display = 'flex';
+            _gcEl.classList.add('adv-battle');
+          }
+        }catch(_eOv){
+          console.warn('[WB-Client v6] 關 overlay 失敗', _eOv);
         }
-      }catch(eA){ console.warn('[WB-Client v6] 首次 apply 失敗', eA); }
 
-      console.log('[WB-Client v6] ✅ 首次 onBattleUpdate 處理完成,等待後續 sync');
+        // 切 BGM
+        try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+
+        // 呼叫主程式 advStartBattle(client mode 下不會跑 AI / startTurn / checkWin)
+        try{
+          console.log('[WB-Client v6] 呼叫主程式 advStartBattle()(client mode,只繪畫面不跑邏輯)');
+          window.advStartBattle();
+        }catch(eAdv){
+          console.error('[WB-Client v6] advStartBattle 失敗', eAdv);
+        }
+
+        // 建世界戰專屬 overlay(BOSS 大血條等)
+        try{ if(typeof _wbBuildAdvBattleOverlay === 'function') _wbBuildAdvBattleOverlay(); }catch(_){}
+        try{
+          const emojiBar = document.getElementById('wb-emoji-bar-real');
+          if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
+        }catch(_){}
+
+        // 第一次也要把 fullWireG 套上去(防 wire 跟 newHero 重建不一致)
+        if(battle.fullWireG || battle.p1){
+          _wbClientApplyWire(battle);
+        }
+        // 重繪世界戰專屬 overlay
+        try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Client v6] renderBattleScreen 例外', eR); }
+        console.log('[WB-Client v6] ✅ 首次 onBattleUpdate 處理完成,等待後續 sync');
+
+        // 檢查是否一次就 ended(極端情況)
+        _wbClientCheckEnded(battle);
+        return;
+      }
+
+      // 後續:套 fullWireG → 重繪
+      console.log(`[WB-Client v6] sync v=${ver} reason=${battle._syncReason||'?'} turn=${battle.turn} actorIdx=${battle.currentActorIdx}`);
+      // ★ v6 Phase 5.3 — 動畫競態緩衝
+      //   若樂觀更新動畫還沒播完(_wbClientAnimEndTs 還沒到),延後 apply
+      //   多筆 sync 進來時用 _wbClientPendingApply 記最新一筆,中間的丟掉
+      const now = Date.now();
+      const animEnd = window._wbClientAnimEndTs || 0;
+      if(animEnd > now){
+        const wait = animEnd - now + 50;  // 多 50ms 緩衝
+        console.log(`[WB-Client v6] 樂觀動畫未播完,延後 ${wait}ms apply sync v=${ver}`);
+        // 取消前一筆延後 apply
+        if(window._wbClientPendingApplyTimer){
+          clearTimeout(window._wbClientPendingApplyTimer);
+        }
+        window._wbClientPendingApplyTimer = setTimeout(() => {
+          window._wbClientPendingApplyTimer = null;
+          _wbClientApplyWire(battle);
+          try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Client v6] renderBattleScreen 例外', eR); }
+          _wbClientCheckEnded(battle);
+        }, wait);
+        return;
+      }
+
+      // 立即 apply
+      _wbClientApplyWire(battle);
+      try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Client v6] renderBattleScreen 例外', eR); }
+
+      // 結束處理
+      _wbClientCheckEnded(battle);
+
+    }catch(eOuter){
+      console.error('[WB-BattleUpdate v6] 例外', eOuter);
+    }
+  });
+
+  // ★ v6 Phase 4 — 套 wire 到主程式 G,並重繪主程式 UI
+  function _wbClientApplyWire(battle){
+    const wireUtils = window._wbWireUtils;
+    if(!wireUtils || typeof wireUtils.applyWireToG !== 'function'){
+      console.warn('[WB-Client v6] _wbWireUtils.applyWireToG 不存在,跳過 apply');
       return;
     }
-
-    // ─── 非房主+後續更新:覆蓋 G + 重繪 ──────────────────────────────
-    if(!window.G){
-      console.warn('[WB-Client v6] 後續 sync 收到但 window.G 不存在,可能 cleanup 過了');
+    const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+    if(!G){
+      console.warn('[WB-Client v6] G 不存在,跳過 apply');
       return;
     }
     try{
-      window._wbWireUtils.applyWireToG(window.G, wire);
-      // 重繪
-      if(typeof window.updateUI === 'function') window.updateUI();
-      if(typeof window.renderField === 'function') window.renderField(false);
-      // 戰鬥結束 → 觸發本機結算頁
-      if(battle.ended || (battle.fullWireG && battle.fullWireG._battleEnded)){
-        console.log('[WB-Client v6] 收到結算 sync,觸發本機結算頁');
-        // Phase 5/E 會做完整結算流程,這裡先用主程式 checkWin hook 路徑
+      if(battle.fullWireG){
+        wireUtils.applyWireToG(G, battle.fullWireG);
+      }else{
+        // 舊 schema 相容:只套 p1/p2/turn/currentActorIdx/turnOrder
+        console.warn('[WB-Client v6] 收到舊 schema battle(無 fullWireG)');
+        wireUtils.applyWireToG(G, {
+          p1: battle.p1 || G.p1,
+          p2: battle.p2 || G.p2,
+          turn: battle.turn,
+          round: battle.turn,
+          currentActorIdx: battle.currentActorIdx,
+          turnOrder: battle.turnOrder,
+        });
+      }
+      // 重繪主程式 UI
+      try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+      try{ if(typeof renderField === 'function') renderField(); }catch(_){}
+    }catch(eA){
+      console.error('[WB-Client v6] applyWireToG 失敗', eA);
+    }
+  }
+
+  // ★ v6 Phase 4 — 檢查 ended 狀態,觸發結算
+  function _wbClientCheckEnded(battle){
+    try{
+      const snap = (window._wbNet && typeof window._wbNet.getSnapshot === 'function')
+        ? window._wbNet.getSnapshot() : null;
+      const meta = snap && snap.meta;
+      if(meta && meta.status === 'ended' && !window._wbAdvBattleEnded){
+        // 房主已宣告結束:本機補跑一次 checkWin(用 _wbClientForceCheckWin 旗標放行)
+        console.log('[WB-Client v6] 收到 ended sync,觸發本機結算');
         window._wbClientForceCheckWin = true;
-        try{
-          if(typeof window._wbShowAdvBattleResult === 'function'){
-            const won = battle.winner === 'p1';
-            setTimeout(() => { try{ window._wbShowAdvBattleResult(won); }catch(_){} }, 300);
-          }
-        }catch(_){}
+        setTimeout(() => {
+          try{
+            if(typeof window.checkWin === 'function'){
+              window.checkWin();
+            }
+          }catch(eC){ console.warn('[WB-Client v6] checkWin 例外', eC); }
+        }, 300);
       }
-      // debug
-      if(reason !== 'after_endAction'){  // 太多了,只 log 重要的
-        console.log('[WB-Client v6] sync v=' + version + ' reason=' + reason
-          + ' turn=' + (wire.turn || 0) + ' actorIdx=' + (wire.currentActorIdx || 0));
+    }catch(_eEd){}
+  }
+
+  // ★ v6 Phase 4 — onRoomClosed:清旗標 + 重設 first update 旗標(供下一場)
+  window._wbNet.on('onRoomClosed', function(){
+    try{
+      window._wbConnectedHostMode = false;
+      window._wbConnectedClientMode = false;
+      window._wbClientMode = false;
+      window._wbClientForceCheckWin = false;
+      window._wbClientFirstBattleUpdate = true;
+      window._wbClientLastVersion = 0;
+      // ★ v6 Phase 5.3 — 清理動畫競態緩衝
+      window._wbClientAnimEndTs = 0;
+      window._wbClientOptimistic = false;
+      if(window._wbClientPendingApplyTimer){
+        clearTimeout(window._wbClientPendingApplyTimer);
+        window._wbClientPendingApplyTimer = null;
       }
-    }catch(e){ console.warn('[WB-Client v6] applyWireToG 失敗', e); }
+    }catch(_){}
   });
 
   function _wbRenderBattleScreen(battle){
@@ -6320,6 +6400,12 @@
   }
 
   window._wbUiSendAction = async function(type){
+    // ★ v6 Phase 5 — 此函式僅供舊版自製戰鬥 UI 按鈕用 fallback。
+    //   Phase 4 後,真正的按鈕走主程式 #gc 戰場 → confirmAction → selMove(patched)。
+    //   萬一誤觸到此 fallback,_wbNet.sendAction 內部已有正確 routing:
+    //     - 房主 → _wbExecPlayerAction (連線模式)
+    //     - 非房主 → Firestore pendingAction → 房主收到走相同入口
+    console.log('[WB-Action v6] _wbUiSendAction fallback type=' + type + '(理論上不該走到這裡)');
     await window._wbNet.sendAction({ type: type });
   };
 
@@ -6835,23 +6921,6 @@
   window._wbNet.on('onRoomClosed', function(info){
     // ★ FIX 20260517(o-4) — 改用 class 控制
     try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
-
-    // ★ v6 Phase 4 — 房間關閉時清掉 client mode 旗標
-    //   不然下次再進新房,startTurn/aiAct/checkWin 還在 client mode 被擋
-    try{
-      window._wbClientMode = false;
-      window._wbConnectedClientMode = false;
-      window._wbConnectedHostMode = false;
-      window._wbClientFirstBattleUpdate = true;   // reset 給 next room
-      window._wbClientLastVersion = 0;
-      window._wbClientForceCheckWin = false;
-      window._wbInWorldBossMode = false;
-      // 主程式 G 清理(讓 _adventureStage 歸位)
-      if(typeof window._wbCleanupAdvAfterBattle === 'function'){
-        try{ window._wbCleanupAdvAfterBattle(); }catch(_){}
-      }
-    }catch(_){}
-
     if(info.reason === 'battle_complete' || info.winner){
       _wbShowResult(info);
     }else{

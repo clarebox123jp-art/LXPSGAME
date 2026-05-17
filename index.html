@@ -2372,8 +2372,13 @@
     async function sendAction(action){
       if(!WB.roomId) return false;
       if(WB.isHost){
-        // 房主直接呼叫本地引擎
-        if(typeof window._wbHostExecuteAction === 'function'){
+        // ★ v6 Phase 5 — 房主端在連線模式下,自己玩走主程式 UI,
+        //   _wbUiSendAction 的舊路徑根本不會走進來。但保險還是攔截,
+        //   走 _wbExecPlayerAction 代執行(若有舊路徑誤呼叫到)
+        if(window._wbConnectedHostMode && typeof window._wbExecPlayerAction === 'function'){
+          try{ window._wbExecPlayerAction(WB.mySlot, action); }catch(e){ console.error('[WBNet] _wbExecPlayerAction', e); }
+        }else if(typeof window._wbHostExecuteAction === 'function'){
+          // 舊版自製戰鬥引擎 fallback(單人練習等不會走進來,但保留)
           try{ window._wbHostExecuteAction(WB.mySlot, action); }catch(e){ console.error(e); }
         }
         return true;
@@ -2562,7 +2567,17 @@
             if(cur && cur.side === 'p1'){
               const expectedPlayer = (data.players || []).find(p => p.slotIdx === cur.pos);
               if(expectedPlayer && expectedPlayer.uid === pa.actorUid){
-                if(typeof window._wbHostExecuteAction === 'function'){
+                // ★ v6 Phase 5 — 連線房主用主程式 execSkill / execAtk / execBurst
+                if(window._wbConnectedHostMode && typeof window._wbExecPlayerAction === 'function'){
+                  try{
+                    window._wbExecPlayerAction(cur.pos, pa.action);
+                    // 處理後清掉 pendingAction(避免下次 snapshot 再觸發)
+                    try{
+                      updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
+                    }catch(_eClr){}
+                  }catch(e){ console.error('[WBNet] _wbExecPlayerAction', e); }
+                }else if(typeof window._wbHostExecuteAction === 'function'){
+                  // 舊版自製戰鬥引擎 fallback
                   try{ window._wbHostExecuteAction(cur.pos, pa.action); }catch(e){ console.error(e); }
                 }
               }
