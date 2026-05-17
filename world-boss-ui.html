@@ -4830,7 +4830,9 @@
             </div>
             <div class="wb-tc-slot-empty-hint">
               <span class="wb-tc-empty-icon">👤</span>
-              <div>${_isSoloLocal ? '練習模式・<br>由房主指派 NPC' : '等待隊員加入<br>或由房主指派'}</div>
+              <div>${_isSoloLocal
+                ? '練習模式<br>(未指派則房主<br>用代表英雄代打)'
+                : '等待隊員加入<br>或由房主指派<br>(未指派則房主代打)'}</div>
             </div>
             <div class="wb-tc-slot-actions">
               ${_inviteBtnHtml}
@@ -4920,7 +4922,8 @@
           const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
           return m ? (m.ic + m.name) : e;
         }).join(' / ');
-        covEl.innerHTML = '✅ 元素齊全!其中 ' + _npcCovTxt + ' 由 NPC 補上';
+        // ★ FIX 20260517(w) — 不再有 AI NPC,改稱「房主代打」
+        covEl.innerHTML = '✅ 元素齊全!其中 ' + _npcCovTxt + ' 由房主代打補上';
       }else{
         covEl.innerHTML = '✅ 4 元素全部覆蓋!護盾可順利擊破';
       }
@@ -4940,17 +4943,9 @@
           ? '⌛ 等候有人選角'
           : ('⌛ 等候全員準備(' + _readyCnt + '/' + humanCount + ')');
       }else{
-        // ★ FIX 20260517(r) — 可開戰文字:區分房主代打 vs 自動 NPC
-        let _hostNpcCount = 0;
-        for(let _i = 0; _i < 4; _i++){
-          if(!players[_i] && _hostAssign[_i] && _hostAssign[_i].heroName) _hostNpcCount++;
-        }
-        const _autoNpcCount = npcCount - _hostNpcCount;
-        const parts = [humanCount + ' 真人'];
-        if(_hostNpcCount > 0) parts.push('🎮' + _hostNpcCount + ' 代打');
-        if(_autoNpcCount > 0) parts.push('🤖' + _autoNpcCount + ' NPC');
+        // ★ FIX 20260517(w) — 取消 AI 替補,所有空槽都是「房主代打」
         startBtn.textContent = npcCount > 0
-          ? ('⚔ 開戰!(' + parts.join(' + ') + ')')
+          ? ('⚔ 開戰!(' + humanCount + ' 真人 + 🎮' + npcCount + ' 代打)')
           : '⚔ 開戰!';
       }
     }
@@ -5954,19 +5949,20 @@
   };
 
   // ════════════════════════════════════════════════════════════════════
-  // ★ FIX 20260517(q) — NPC 自動接管 hook
+  // ★ FIX 20260517(q) — NPC 自動接管 hook 【★ FIX 20260517(w) 已停用】
   // ────────────────────────────────────────────────────────────────────
-  // 連線房主端開戰後,主程式 startTurn 結尾會把 p1 行動權交給玩家
-  // (action-panel 顯示)。但 NPC 替補槽位沒有玩家對應,沒人會按按鈕,戰鬥會卡住。
+  // 【現狀】此 hook 已停用(_wbIsNpc 永遠是 false,守門條件永遠不通過)。
+  //   原因:取消 AI 替補,所有空槽都改成「房主代打」(_wbIsHostNpc=true),
+  //         由房主自己操作,等同單人挑戰 BOSS 多打幾隻角色。
+  //   保留 hook 程式碼當 dead code,未來若要恢復 AI 替補可重新啟用。
+  //
+  // 【舊邏輯】連線房主端開戰後,主程式 startTurn 結尾會把 p1 行動權交給玩家
+  //   (action-panel 顯示)。但 NPC 替補槽位沒有玩家對應,沒人會按按鈕,戰鬥會卡住。
   //
   // 修補:wrap window.startTurn,在跑完原邏輯後檢查 G.activeChar:
   //   - 是 p1 + 標 _wbIsNpc=true → 200ms 後自動跑 aiAct() 讓 AI 接管
   //   - 是 p1 但沒標 _wbIsNpc → 走原本玩家行動流程(不動)
   //   - 是 p2 → 不動(BOSS AI 已正常)
-  //
-  // 安裝時機:_wbUiStartBattle 設好 _wbConnectedHostMode 旗標後立刻呼叫。
-  // 守門:只在 _wbConnectedHostMode=true 時生效,避免污染其他模式。
-  // 冪等:_wbNpcAutoActHookInstalled flag 防重複安裝。
   // ════════════════════════════════════════════════════════════════════
   function _wbInstallNpcAutoActHook(){
     if(window._wbNpcAutoActHookInstalled) return true;
@@ -6055,31 +6051,30 @@
       return;
     }
 
-    // ★ FIX 20260517(q+r) — NPC 補位的優先順序:
-    //   1. 房主明確指派的角色(_wbHostAssignedSlots[i]) → 標 _wbIsHostNpc=true (戰鬥時房主操控)
-    //   2. 否則用房主英雄當 fallback → 標 _wbIsNpc=true (戰鬥時 AI 自動操作)
-    //   找出房主資料:players 陣列中 uid 等於 meta.hostUid 的那一個
+    // ★ FIX 20260517(w) — 取消 AI 替補,所有空槽都由房主操控(視同房主多打幾隻)
+    //   - 真實玩家:照原樣
+    //   - 房主指派的空槽:用指派的英雄,房主操控
+    //   - 未指派的空槽:用房主自己的英雄補位,房主操控
+    //   全部走「玩家行動」流程,不啟用任何 AI auto-act
     const _hostUid = snap?.meta?.hostUid;
     const _hostPlayer = players.find(p => p && p.uid === _hostUid);
     const _hostHeroName = (_hostPlayer && _hostPlayer.heroName) || '劍士';
     const _hostElement = _hostPlayer && _hostPlayer.element;
     const _hostAssign = window._wbHostAssignedSlots || {};
 
-    // 初始化 4 槽英雄陣容(沒人的槽位 = NPC 用房主角色補,或讀房主指派的)
+    // 初始化 4 槽英雄陣容
     const p1 = [];
     for(let i = 0; i < 4; i++){
       const p = players[i];
       const assigned = (!p && _hostAssign[i] && _hostAssign[i].heroName) ? _hostAssign[i] : null;
-      // ★ 三種來源:1. 真實玩家  2. 房主指派的 NPC(代打)  3. 自動 NPC(沿用房主英雄)
+      // 三種來源:1. 真實玩家  2. 房主指派  3. 沒指派 → 沿用房主英雄
       const heroName = p?.heroName || (assigned ? assigned.heroName : _hostHeroName);
       const h = newHero(heroName, 'p1', i);
       h.burst = 0; h.burstMax = h.burstMax || 10;
-      // ★ 標記:_wbIsHostNpc 跟 _wbIsNpc 不一樣
-      //   _wbIsHostNpc=true: 戰鬥時房主自己操控(就像房主多打一隻,要答題)
-      //   _wbIsNpc=true:     戰鬥時 AI 自動操作
-      h._wbIsNpc     = !p && !assigned;       // 沒玩家也沒指派 → AI 自動
-      h._wbIsHostNpc = !p &&  !!assigned;     // 沒玩家但有指派 → 房主操控
-      // 元素來源優先序:玩家選 > 房主指派 > _wbEcAiOverrideElements > 房主元素
+      // ★ 標記:全部空槽都是「房主代打」(房主操控),不再有 AI 自動
+      h._wbIsNpc     = false;           // ★ 永不啟用 AI auto-act
+      h._wbIsHostNpc = !p;              // 任何沒玩家的槽位都是房主代打
+      // 元素來源:玩家選 > 房主指派 > _wbEcAiOverrideElements > 房主元素
       let assignedElem = null;
       if(p && p.element){
         assignedElem = p.element;
@@ -8090,7 +8085,7 @@
         _heroName = _myHeroName;
         _ext = _myExt;
       }else{
-        // 其他槽位:讀房主指派
+        // 其他槽位:讀房主指派,沒指派 → 沿用房主英雄
         const _assigned = _hostAssignSolo[i];
         if(_assigned && _assigned.heroName){
           _heroName = _assigned.heroName;
@@ -8100,7 +8095,7 @@
             t: []
           };
         }else{
-          // 沒指派 → 沿用房主英雄(讓 NPC AI 自動)
+          // ★ FIX 20260517(w) — 沒指派 → 用房主英雄補位,房主操控(不再 AI)
           _heroName = _myHeroName;
           _ext = { e:null, es:[], t:[] };
         }
@@ -8116,9 +8111,9 @@
       if(_ext.t && _ext.t.length){
         h._wbTreasureIds = _ext.t;
       }
-      // ★ 標記 NPC 類型
-      h._wbIsNpc     = (i !== 0) && !(_hostAssignSolo[i] && _hostAssignSolo[i].heroName);
-      h._wbIsHostNpc = (i !== 0) && !!(_hostAssignSolo[i] && _hostAssignSolo[i].heroName);
+      // ★ FIX 20260517(w) — 取消 AI 替補:所有非玩家槽位都是「房主代打」,房主操控
+      h._wbIsNpc     = false;            // ★ 永不啟用 AI auto-act
+      h._wbIsHostNpc = (i !== 0);        // 槽 0 是房主本人,其他全是房主代打
       p1.push(h);
     }
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
@@ -8151,18 +8146,17 @@
     window._wbSoloStartTs = Date.now();
     window._wbSoloContrib = {};
 
-    // ★ FIX 20260517(v) — 安裝 NPC auto-act hook(單人練習也用)
-    //   未指派的 NPC 槽位(_wbIsNpc=true)會被 AI 自動操作,
-    //   房主指派的(_wbIsHostNpc=true)則由房主自己操作
+    // ★ FIX 20260517(w) — 已停用 AI auto-act hook(_wbIsNpc 永遠 false,
+    //   呼叫此 hook 安裝後也不會接管任何槽位,等於空操作。
+    //   保留呼叫是為了讓未來想恢復 AI 替補的維護者比較好接手。
     try{ if(typeof _wbInstallNpcAutoActHook === 'function') _wbInstallNpcAutoActHook(); }catch(_){}
 
     // ── 偽造 _wbNet for 世界戰專屬 UI(表情列/即時傷害條會用) ──────
-    // ★ FIX 20260517(v) — 用 p1 陣容(剛建好的)生成 fakePlayers,
-    //   避免讀 _wbSoloFakePlayers(只有槽 0 是真實玩家,其他是 null)
+    // ★ FIX 20260517(w) — 戰鬥階段:非槽 0 都是「房主代打」
+    const _myNickname = (window._playerNickname || window._userName || '你');
     const fakePlayers = p1.map((h, i) => ({
-      uid: i === 0 ? (window._gUserId || 'solo_user') : ('ai_' + i),
-      name: i === 0 ? (window._playerNickname || window._userName || '你')
-                    : (h._wbIsHostNpc ? '房主代打' : 'AI 替補'),
+      uid: i === 0 ? (window._gUserId || 'solo_user') : ('host_npc_' + i),
+      name: i === 0 ? _myNickname : (_myNickname + '・代打'),
       slotIdx: i,
       heroName: h.name,
       element: h._wbPickedElement || null,
