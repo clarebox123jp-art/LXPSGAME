@@ -45930,8 +45930,12 @@ function advStartBattle(){
         // ★ FIX 20260517(e) — BOSS 圖往上移 15%(50% → 35%)+ 放大 20%(高 100% → 120%)
         //   兩層 backgroundSize/backgroundPosition 用逗號分隔分別套到漸層層和龍王圖層
         //   ★ FIX 20260517(i) — 再往上(35% → 22%),臉部不被順序條擋住
+        //   ★ FIX 20260517(j) — 仍被擋:再往上 14%(22% → 8%),讓眼睛/嘴巴落在順序條之上
+        //   ★ FIX 20260517(l) — 8% 太上面臉部跑出螢幕了,拉回 25%:讓臉部落在
+        //                        「定型文列下沿(33%) ~ 行動條上沿(55%)」夾層中心(44%)
+        //   ⚠ 使用者的「往上移」= 螢幕視覺往上 = CSS Y% 數值「減少」(兩者方向相反!)
         _bb.style.backgroundSize = 'auto 100%, auto 120%';
-        _bb.style.backgroundPosition = 'center, center 22%';
+        _bb.style.backgroundPosition = 'center, center 25%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標

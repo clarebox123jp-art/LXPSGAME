@@ -2040,46 +2040,47 @@
     display:flex;align-items:center;justify-content:center;padding:20px;
     backdrop-filter:blur(8px);
   }
+  /* ★ FIX 20260517(l) — BOSS 開戰題視窗 + 字體放大 50% */
   .wb-quiz-card{
-    max-width:680px;width:100%;
+    max-width:1020px;width:100%;  /* 680 → 1020 */
     background:linear-gradient(160deg,#1e2540 0%,#0d1228 100%);
-    border:3px solid #4a9eff;border-radius:18px;padding:24px 22px;
+    border:3px solid #4a9eff;border-radius:18px;padding:36px 33px;  /* 24/22 → 36/33 */
     box-shadow:0 0 48px rgba(74,158,255,0.55);
     color:#cce8ff;text-align:center;
   }
   .wb-quiz-header{
     display:flex;justify-content:space-between;align-items:center;
-    margin-bottom:16px;gap:14px;flex-wrap:wrap;
+    margin-bottom:24px;gap:21px;flex-wrap:wrap;  /* 16/14 → 24/21 */
   }
-  .wb-quiz-who{font-size:16px;color:#88ccff;font-weight:800;letter-spacing:1px;}
+  .wb-quiz-who{font-size:24px;color:#88ccff;font-weight:800;letter-spacing:1.5px;}  /* 16 → 24 */
   .wb-quiz-timer{
-    font-size:16px;color:#ffe066;font-weight:900;
+    font-size:24px;color:#ffe066;font-weight:900;  /* 16 → 24 */
     background:rgba(255,224,102,0.12);
     border:1.5px solid rgba(255,224,102,0.55);
-    border-radius:8px;padding:4px 14px;
+    border-radius:8px;padding:6px 21px;  /* 4/14 → 6/21 */
   }
   .wb-quiz-subject{
-    font-size:13px;color:#88ddff;letter-spacing:1px;margin-bottom:6px;
-    background:rgba(74,158,255,0.15);border-radius:6px;padding:3px 10px;
+    font-size:20px;color:#88ddff;letter-spacing:1.5px;margin-bottom:9px;  /* 13 → 20 */
+    background:rgba(74,158,255,0.15);border-radius:6px;padding:5px 15px;
     display:inline-block;
   }
   .wb-quiz-q-text{
-    font-size:clamp(18px,2.2vw,24px);font-weight:800;color:#fff;
-    line-height:1.7;margin:14px 0 22px;
+    font-size:clamp(27px,3.3vw,36px);font-weight:800;color:#fff;  /* 18-24 → 27-36 */
+    line-height:1.7;margin:21px 0 33px;  /* 14/22 → 21/33 */
     text-shadow:0 2px 6px rgba(0,0,0,0.7);
   }
   .wb-quiz-options{
-    display:grid;gap:10px;
+    display:grid;gap:15px;  /* 10 → 15 */
     grid-template-columns:repeat(2,1fr);
   }
   @media (max-width:560px){.wb-quiz-options{grid-template-columns:1fr;}}
   .wb-quiz-opt-btn{
-    padding:14px 16px;text-align:left;
+    padding:21px 24px;text-align:left;  /* 14/16 → 21/24 */
     background:rgba(74,158,255,0.12);
     border:2px solid rgba(120,180,255,0.6);
     color:#cce8ff;border-radius:10px;
-    font-size:16px;font-weight:700;cursor:pointer;
-    font-family:inherit;letter-spacing:1px;
+    font-size:24px;font-weight:700;cursor:pointer;  /* 16 → 24 */
+    font-family:inherit;letter-spacing:1.5px;
     transition:all 0.2s;
   }
   .wb-quiz-opt-btn:hover{
@@ -2105,8 +2106,8 @@
     75%{transform:translateX(6px);}
   }
   .wb-quiz-result{
-    font-size:20px;font-weight:900;letter-spacing:2px;
-    padding:12px 18px;border-radius:10px;margin-top:14px;
+    font-size:30px;font-weight:900;letter-spacing:3px;  /* 20 → 30 */
+    padding:18px 27px;border-radius:10px;margin-top:21px;  /* 12/18/14 → 18/27/21 */
   }
   .wb-quiz-result.correct{
     background:rgba(80,220,140,0.2);color:#aaffcc;
@@ -2377,7 +2378,7 @@
 <!-- ★ FIX 20260517(b) — 從單直行改為兩直行 grid,並把位置調到不會蓋住 BOSS HP 條(top 130 → 145) -->
 <!--   原 left:8px, top:120px, flex-direction:column → 改為 grid 2 行(每行 6 顆) -->
 <!--   寬度 ≈ 120px(2×54px + gap),不會蓋到中央龍王 -->
-<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:6px;top:145px;
+<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:6px;top:200px;
      background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:14px;
      padding:8px 6px;z-index:9050;
      gap:6px;
@@ -3133,36 +3134,53 @@
 
   // 在指定 slot(隊伍確認頁的 .wb-tc-slot)頂端浮現對話泡泡(3.5 秒淡出)
   // 跟戰鬥畫面的 _wbShowCardBubble 邏輯類似,但找的是 .wb-tc-slot
+  // ★ FIX 20260517(k) — 改為 position:fixed 掛 body,繞過 .wb-tc-slots 的 overflow:hidden
+  //   原本 position:absolute 附在 slot 內、top:-8px transform:translate(-50%,-100%)
+  //   → 氣泡顯示在 slot 上方,但 .wb-tc-slots 容器有 overflow:hidden 把溢出部分截掉
+  //   → 結果氣泡看起來「完全沒出現」(其實只是被裁掉)
+  //   修法:用 slot.getBoundingClientRect() 算位置,fixed 掛 body,跟戰鬥畫面 _wbShowCardBubble 同套
   function _wbTcShowSlotBubble(slotIdx, text){
     try{
       const slots = document.querySelectorAll('#wb-tc-slots .wb-tc-slot');
       const slot = slots[slotIdx];
       if(!slot) return;
-      // 確保 slot 是 relative
-      const cs = getComputedStyle(slot);
-      if(cs.position === 'static') slot.style.position = 'relative';
-      // 移除舊泡泡
-      const oldBubble = slot.querySelector('.wb-tc-slot-bubble');
+      // 移除舊泡泡(同 slot 重發時)
+      const oldBubble = document.querySelector('.wb-tc-slot-bubble[data-slot="' + slotIdx + '"]');
       if(oldBubble) oldBubble.remove();
-      // 加新泡泡
+      const rect = slot.getBoundingClientRect();
+      // 建氣泡:先 visibility:hidden 量寬高,再算位置
       const bubble = document.createElement('div');
       bubble.className = 'wb-tc-slot-bubble';
+      bubble.setAttribute('data-slot', String(slotIdx));
       bubble.textContent = text;
       bubble.style.cssText =
-        'position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%);'
+        'position:fixed;visibility:hidden;left:0;top:0;'
         + 'background:rgba(20,15,40,0.96);color:#e0d4ff;'
-        + 'padding:12px 22px;border-radius:14px;'  /* ★ FIX 20260517(i) — padding 6/12 → 12/22 配合字體 */
+        + 'padding:12px 22px;border-radius:14px;'
         + 'border:2px solid rgba(168,132,255,0.75);'
         + 'box-shadow:0 6px 22px rgba(0,0,0,0.65),0 0 18px rgba(168,132,255,0.5);'
-        + 'font-size:26px;font-weight:800;letter-spacing:1px;white-space:nowrap;'  /* ★ FIX 20260517(i) — 13 → 26 */
-        + 'z-index:9999;pointer-events:none;'
+        + 'font-size:26px;font-weight:800;letter-spacing:1px;white-space:nowrap;'
+        + 'z-index:2147483640;pointer-events:none;'  /* 比確認視窗(2147483646)略低,但比其他 UI 都高 */
         + 'animation:wbTcBubbleIn 0.25s ease-out;';
-      slot.appendChild(bubble);
+      document.body.appendChild(bubble);
+      // 計算位置:slot 卡頂端正中央上方 14px
+      const bw = bubble.offsetWidth;
+      const bh = bubble.offsetHeight;
+      let left = rect.left + rect.width / 2 - bw / 2;
+      let top = rect.top - bh - 14;
+      // 邊緣防護
+      if(left < 8) left = 8;
+      if(left + bw > window.innerWidth - 8) left = window.innerWidth - bw - 8;
+      // 太靠頂 → 改顯示在 slot 內部頂端(slot 本身夠高)
+      if(top < 8) top = rect.top + 8;
+      bubble.style.left = left + 'px';
+      bubble.style.top = top + 'px';
+      bubble.style.visibility = 'visible';
       // 3.5 秒後淡出移除
-      setTimeout(() => {
+      setTimeout(function(){
         bubble.style.transition = 'opacity 0.4s';
         bubble.style.opacity = '0';
-        setTimeout(() => { try{ bubble.remove(); }catch(_){} }, 400);
+        setTimeout(function(){ try{ bubble.remove(); }catch(_){} }, 400);
       }, 3500);
     }catch(_){}
   }
@@ -5189,11 +5207,11 @@
 
     ov.innerHTML = `
       <div class="wb-quiz-card" style="border-color:#ff8866;">
-        <div style="font-size:28px;color:#ff8866;font-weight:900;letter-spacing:2px;
-          text-align:center;margin-bottom:16px;">
+        <div style="font-size:42px;color:#ff8866;font-weight:900;letter-spacing:3px;
+          text-align:center;margin-bottom:24px;">
           🐉 BOSS 開戰挑戰題!
         </div>
-        <div style="font-size:18px;color:#ffcc99;text-align:center;margin-bottom:18px;line-height:1.55;">
+        <div style="font-size:27px;color:#ffcc99;text-align:center;margin-bottom:27px;line-height:1.55;">
           答對:全體能量 +1  /  答錯:全體受 5% maxHp 傷害(無視免傷)
         </div>
         <span class="wb-quiz-subject">${subject}</span>
@@ -5227,14 +5245,55 @@
         const resBox = document.getElementById('wb-boss-opening-result');
         if(isCorrect){
           try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-correct', 0.6); }catch(_){}
-          resBox.innerHTML = `<div class="wb-quiz-result correct">✅ 全員能量 +1!</div>`;
-          // ★ 在主程式 G.p1 內加 burst,並呼叫 renderCard 讓畫面同步
+          // ★ FIX 20260517(l) — 答對改走主程式答題獎勵 UI(advShowReward),取代原本的「burst+1」直接生效
+          //   原:resBox 顯示「全員能量 +1」+ 直接修改 h.burst
+          //   新:resBox 顯示「答對!請選擇獎勵」→ 關開戰題 → 呼叫 advShowReward()
+          //      → polling #adv-reward-overlay 關閉 → 呼叫 onDone() 啟動戰鬥
+          //   ★ FIX 20260517(l) v2 — 世界 BOSS 戰專屬:答對「額外」全員能量 +1
+          //      在開啟 advShowReward 前就先給 burst+1,獎勵 UI 是「再額外的好處」
+          resBox.innerHTML = `<div class="wb-quiz-result correct">✅ 答對了!全員能量 +1,並選擇額外獎勵</div>`;
+          // 世界 BOSS 戰專屬:全員 burst +1
           G.p1.forEach(h => {
             if(h){
               h.burst = Math.min(h.burstMax || 10, (h.burst||0) + 1);
               try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
             }
           });
+
+          setTimeout(function(){
+            ov.remove();  // 先關掉開戰題視窗
+            try{
+              if(typeof log === 'function') log('🎯 開戰題答對!全員能量 +1,並請選擇額外獎勵');
+              // 走主程式答題獎勵流程
+              if(typeof advShowReward === 'function'){
+                // 標記 context = boss(主程式 advShowReward 內會讀)
+                window._advRewardContext = 'boss';
+                advShowReward();
+                // Polling 監聽獎勵 overlay 關閉 → 呼叫 onDone() 啟動戰鬥
+                const _checkClosed = setInterval(function(){
+                  const _rw = document.getElementById('adv-reward-overlay');
+                  if(!_rw){ clearInterval(_checkClosed); if(typeof onDone==='function') onDone(); return; }
+                  const _disp = getComputedStyle(_rw).display;
+                  // overlay 被關閉(display 變 none)→ 獎勵已領取
+                  if(_disp === 'none'){
+                    clearInterval(_checkClosed);
+                    if(typeof onDone === 'function') onDone();
+                  }
+                }, 200);
+                // 安全 fallback:30 秒內沒關掉就強制 onDone(避免玩家卡住)
+                setTimeout(function(){
+                  clearInterval(_checkClosed);
+                }, 30000);
+              }else{
+                // advShowReward 不存在 → fallback(burst+1 上面已給)
+                console.warn('[WB] advShowReward 不存在,跳過獎勵 UI');
+                if(typeof onDone === 'function') onDone();
+              }
+            }catch(eRw){
+              console.warn('[WB] 開戰題答對流程出錯', eRw);
+              if(typeof onDone === 'function') onDone();
+            }
+          }, 1800);  // 1.8 秒讓玩家看到 ✅ 結果再切到獎勵 UI
         }else{
           try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-wrong', 0.5); }catch(_){}
           resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯!全員受 5% HP 傷害</div>`;
@@ -5245,19 +5304,15 @@
               try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
             }
           });
-        }
 
-        setTimeout(() => {
-          ov.remove();
-          // 開戰題結束時用主程式 log 顯示結果(舊版用 _wbHostBroadcast,主程式接管後已廢)
-          try{
-            if(typeof log === 'function'){
-              log(isCorrect ? '🎯 開戰題答對!全員能量 +1' : '💔 開戰題答錯,全員受 5% HP 傷害');
-            }
-          }catch(_){}
-          // ★ FIX 20260516 — 通知外部 Promise resolve,讓 BOSS 第一回合才真的開始
-          if(typeof onDone === 'function') onDone();
-        }, 2200);
+          setTimeout(() => {
+            ov.remove();
+            try{
+              if(typeof log === 'function') log('💔 開戰題答錯,全員受 5% HP 傷害');
+            }catch(_){}
+            if(typeof onDone === 'function') onDone();
+          }, 2200);
+        }
       });
     });
   }
@@ -5974,12 +6029,14 @@
       //   做法:dmgBar 也 append 到 #gc 內,用 absolute 同樣對齊 top:50%,水平錨左邊 160px
       //         如此 #gc 縮放時 dmgBar 也跟著縮,跟順序條/元素環相對位置始終一致
       //   ★ FIX 20260517(i) — 字體放大 100%(12→24, 20→40),改一行水平排「📜 本場總傷:836」
-      dmgBar.style.cssText = 'position:absolute;left:160px;top:50%;'
-        + 'transform:translateY(-50%);'
-        + 'z-index:6;'  // 比順序條 z:5 稍高,避免被順序條的 chip 蓋住
+      //   ★ FIX 20260517(l) — 移到元素環「上方」貼左邊緣,避免蓋到順序條
+      //                        元素環 top:50% height:140 → 中心線 - 90px 為 dmgBar bottom
+      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 95px);'
+        + 'transform:none;'  /* 不再用 translateY,改直接 top 精確控位 */
+        + 'z-index:6;'
         + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
         + 'border-radius:14px;padding:12px 20px;'
-        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'  /* column→row,gap 4→12 */
+        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
         + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
         + 'pointer-events:auto;'
         + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
@@ -6180,7 +6237,9 @@
              這張隱形卡也從 42% 跟著移到 35% 才會繼續對齊龍王中心 */
           position: fixed !important;
           /* ★ FIX 20260517(i) — left:50%→38%(龍王身體偏左中央)、top:35%→30%(配合 BG 上移) */
-          left: 38% !important; top: 30% !important;
+          /* ★ FIX 20260517(j) — top:30%→22%(BG 再上移 14% 後,身體中心也跟著上移) */
+          /* ★ FIX 20260517(l) — BG 拉回 25% 後,身體中心也跟著回到 32% */
+          left: 38% !important; top: 32% !important;
         }
         /* ★ FIX 20260517(b) — 英雄卡貼底:#z1 改 flex-end + brow align-items:flex-end + 透明背景讓龍王透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 {
