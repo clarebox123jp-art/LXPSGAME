@@ -18,8 +18,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged,
-           setPersistence, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence }
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, orderBy, limit, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment, deleteDoc, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -164,28 +163,43 @@
 
   _fbDiag('boot:_fbApp 已建立, UA=' + (navigator.userAgent || '').slice(0, 80));
 
-  // ── A. setPersistence:回傳 Promise 暴露給後續流程 await ──────────
-  window._fbAuthReady = (async function _setupAuthPersistence(){
-    _fbDiag('persistence:開始設定...');
-    const tries = [
-      ['indexedDBLocalPersistence', indexedDBLocalPersistence],
-      ['browserLocalPersistence',   browserLocalPersistence],
-      ['browserSessionPersistence', browserSessionPersistence],
-    ];
-    for(const [name, mode] of tries){
-      const t0 = Date.now();
-      try{
-        await setPersistence(_fbAuth, mode);
-        _fbDiag('persistence:✅ ' + name + ' OK (耗時 ' + (Date.now()-t0) + 'ms)');
-        try{ localStorage.setItem('lxps_auth_persistence', name); }catch(_){}
-        return name;
-      }catch(e){
-        _fbDiag('persistence:❌ ' + name + ' 失敗 (耗時 ' + (Date.now()-t0) + 'ms, code=' + (e && e.code) + ')', 'warn');
-      }
-    }
-    _fbDiag('persistence:⚠ 三種模式全部失敗', 'error');
-    return null;
-  })();
+  // ── A. 不再呼叫 setPersistence ───────────────────────────────────
+  // ★ FIX 20260517(ff) — iPad Chrome 登入回不來的真正根因(用診斷面板抓到)!
+  //
+  // 從 iPad 端診斷面板 log 看到:
+  //   [07:07:50.117] persistence:✅ indexedDBLocalPersistence OK (耗時 759ms)
+  //   [07:07:50.119] redirect:getRedirectResult 完成 (耗時 0ms)
+  //   [07:07:50.119] redirect:⚠ 有 pending 旗標但 getRedirectResult 回 null
+  //   [07:07:50.121] redirect:currentUser=null
+  //
+  // getRedirectResult 在 0ms 內回 null + currentUser=null
+  // → Firebase 內部 OAuth credential 完全沒處理到。
+  //
+  // 對照 Firebase issue #6827 + 官方文件:
+  //   1. getAuth() 觸發內部 initializeCurrentUser 異步任務,該任務會去
+  //      解析 URL hash 裡的 OAuth credential、寫 sessionStorage key
+  //      `firebase:pendingRedirect:...`。
+  //   2. setPersistence() 切換 persistence 時會清掉舊 persistence 上的
+  //      暫存資料 → 在 initializeCurrentUser 還沒完成時就被清。
+  //   3. Firebase 官方文件:「當 signInWithRedirect 被呼叫,目前的 persistence
+  //      會被保留並套用到回來時新登入的 user」→ 發起跟回來時的 persistence
+  //      必須一致;setPersistence 切換會破壞這個機制。
+  //
+  // 比對「三天前的版本」(用戶上傳到 /mnt/user-data/uploads/index.html):
+  //   - 三天前完全沒呼叫 setPersistence,也沒 import 那幾個 persistence 模式
+  //   - 為了世界 BOSS 連線新功能改 auth 區塊時誤加 setPersistence
+  //   - 在 iPad Chrome 慢 IndexedDB 環境下觸發 race condition → 登入回不來
+  //
+  // 修法:回到三天前的做法,完全不呼叫 setPersistence。Firebase 預設
+  //       persistence 就是 browserLocalPersistence(有 IndexedDB 自動用),
+  //       對我們完全夠用。連線世界 BOSS 跟 auth persistence 沒任何關聯,
+  //       那段 v10 (t) 的修補是誤判導致的迴歸。
+  //
+  // _fbAuthReady 保留為立即就緒 Promise,讓其他地方的 `await _fbAuthReady`
+  // 不會出錯(向後相容,不需要全檔改)。
+  // ────────────────────────────────────────────────────────────────
+  window._fbAuthReady = Promise.resolve('default');
+  _fbDiag('persistence:跳過 setPersistence(FIX ff),沿用 Firebase 預設 — 避免跟 redirect 流程競態');
 
   // ════════════════════════════════════════════════════════════════
   // ★ v1.0.20260514.6540 — 平板帳號切換穩定版
@@ -266,12 +280,9 @@
     // ── 路徑 A:行動裝置 / PWA / 受限環境 → 直接走 redirect ──
     if(_preferRedirect){
       try {
-        // ★ FIX 20260517(ee) — 發起 redirect 前先 await persistence,
-        //   否則 iPad 上 setPersistence 可能還沒完成就跳走頁面 → 回來時 token 寫不進
-        try{
-          const _pName = await window._fbAuthReady;
-          _fbDiag('signIn:persistence 已就緒 (' + _pName + ')');
-        }catch(_){}
+        // ★ FIX 20260517(ff) — _fbAuthReady 已改為 instant Promise(不再呼叫
+        //   setPersistence),此 await 留作向後相容,不會延遲流程
+        try{ await window._fbAuthReady; }catch(_){}
         const _ua = (navigator.userAgent || '').toLowerCase();
         _fbDiag('signIn:即將 signInWithRedirect (preferRedirect=true)');
         try{ localStorage.setItem('lxps_pending_redirect_signin', String(Date.now())); }catch(_){}
@@ -1666,51 +1677,41 @@
   //      Firebase 會自動觸發 onAuthStateChanged 第二次以 user=非null
   //      呼叫,所以最終結果是正確的。
   // ════════════════════════════════════════════════════════════════
-  // ★ FIX 20260517(ee) — _handlePendingRedirect 改為 _fbRedirectReady Promise
-  //   先 await _fbAuthReady 確保 persistence 設好,再 getRedirectResult
-  //   onAuthStateChanged 開頭也 await 這個 Promise 才處理 user
+  // ★ FIX 20260517(ff) — _handlePendingRedirect 回到「沒 pending 旗標就 return」
+  //   理由:三天前的版本就是這樣做,iPad Chrome 正常運作。
+  //   永遠呼叫 getRedirectResult 反而會在沒 redirect 時觸發 Firebase 內部
+  //   pendingRedirect key race condition,把後續真的 redirect 回來的處理打亂。
+  //   保留 _fbRedirectReady Promise(向後相容,讓 onAuthStateChanged 能 await)
   window._fbRedirectReady = (async function _handlePendingRedirect(){
     const _ua = (navigator.userAgent || '').toLowerCase();
     const _isIOS = /iphone|ipad|ipod/.test(_ua);
-    const _isCriOS = /crios/.test(_ua); // iPad/iPhone 上的 Chrome
+    const _isCriOS = /crios/.test(_ua);
     const _pending = (function(){ try{ return localStorage.getItem('lxps_pending_redirect_signin'); }catch(_){ return null; }})();
     const _pendingSession = (function(){ try{ return sessionStorage.getItem('lxps_pending_redirect_session'); }catch(_){ return null; }})();
     _fbDiag('redirect:啟動 pending(local)=' + (_pending?'Y':'N') + ' pending(session)=' + (_pendingSession?'Y':'N') + ' iOS=' + _isIOS + ' CrIOS=' + _isCriOS);
-    // 如果 sessionStorage 有 pending 但 localStorage 沒有 → 確診是 iOS storage partitioning
-    if(!_pending && _pendingSession){
-      _fbDiag('redirect:⚠ iOS storage partitioning(localStorage 被清/sessionStorage 保留)', 'warn');
+    // ★ FIX 20260517(ff) — 三天前正常版本的關鍵:沒 pending 旗標就早退
+    //   不要永遠呼叫 getRedirectResult(會跟 Firebase 內部初始化 race)
+    if(!_pending && !_pendingSession){
+      _fbDiag('redirect:本次頁面載入沒有 pending 旗標 → 不呼叫 getRedirectResult');
+      return null;
     }
-    // ★ 關鍵:先 await persistence 設好,再呼叫 getRedirectResult
-    //   否則 iPad WebKit 上 getRedirectResult 可能在還沒設好 persistence
-    //   時就拿到 user,token 寫到預設(in-memory)persistence 後 race condition
-    try{
-      const _pName = await window._fbAuthReady;
-      _fbDiag('redirect:persistence 已就緒 (' + _pName + '),準備 getRedirectResult');
-    }catch(eAw){
-      _fbDiag('redirect:⚠ await _fbAuthReady 失敗(忽略繼續)', 'warn');
+    if(!_pending && _pendingSession){
+      _fbDiag('redirect:⚠ iOS storage partitioning(localStorage 被清/sessionStorage 保留),仍嘗試 getRedirectResult', 'warn');
     }
     try {
       const t0 = Date.now();
       const result = await getRedirectResult(_fbAuth);
       _fbDiag('redirect:getRedirectResult 完成 (耗時 ' + (Date.now()-t0) + 'ms)');
-      // 不論結果如何,都把旗標清掉
       try{ localStorage.removeItem('lxps_pending_redirect_signin'); }catch(_){}
       try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
       if(result && result.user){
         _fbDiag('redirect:✅ 登入成功,user=' + result.user.email);
-        // onAuthStateChanged 會自動接手後續流程
         return result.user;
       }else{
-        const _hadAnyPending = !!_pending || !!_pendingSession;
-        if(_hadAnyPending){
-          _fbDiag('redirect:⚠ 有 pending 旗標但 getRedirectResult 回 null — 極可能 cookie/storage 阻擋', 'warn');
-          // 把 currentUser 印出來,看看 Firebase 內部是不是其實有 user
-          try{
-            _fbDiag('redirect:currentUser=' + (_fbAuth.currentUser ? _fbAuth.currentUser.email : 'null'));
-          }catch(_){}
-        }else{
-          _fbDiag('redirect:沒有 redirect 待處理(getRedirectResult=null)');
-        }
+        _fbDiag('redirect:⚠ 有 pending 旗標但 getRedirectResult 回 null', 'warn');
+        try{
+          _fbDiag('redirect:currentUser=' + (_fbAuth.currentUser ? _fbAuth.currentUser.email : 'null'));
+        }catch(_){}
         return null;
       }
     } catch(e){
@@ -1718,22 +1719,18 @@
       try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
       const code = e && e.code;
       _fbDiag('redirect:❌ 失敗 code=' + (code || 'unknown') + ' msg=' + (e && e.message || ''), 'error');
-      // 使用者在 Google 那邊取消 → 安靜處理
       if(code === 'auth/cancelled-by-user' || code === 'auth/user-cancelled'){
         return null;
       }
-      const _hadAnyPending = !!_pending || !!_pendingSession;
-      if(_hadAnyPending){
-        _showLoginErrorTip(
-          '登入未完成',
-          '<b>錯誤代碼:</b> <code style="color:#ffaa66;">' + (code || 'unknown') + '</code><br><br>' +
-          '可能是在 Google 那邊取消了,或網路不穩。<br>請重新點登入再試一次。<br><br>' +
-          '<b>iPad 玩家提醒:</b><br>' +
-          '・確認 設定 → Safari → <b>關閉</b>「阻擋所有 Cookie」<br>' +
-          '・確認沒有開啟「私密瀏覽」<br>' +
-          '・若用 Safari 失敗,改用 Chrome 試試'
-        );
-      }
+      _showLoginErrorTip(
+        '登入未完成',
+        '<b>錯誤代碼:</b> <code style="color:#ffaa66;">' + (code || 'unknown') + '</code><br><br>' +
+        '可能是在 Google 那邊取消了,或網路不穩。<br>請重新點登入再試一次。<br><br>' +
+        '<b>iPad 玩家提醒:</b><br>' +
+        '・確認 設定 → Safari → <b>關閉</b>「阻擋所有 Cookie」<br>' +
+        '・確認沒有開啟「私密瀏覽」<br>' +
+        '・若用 Safari 失敗,改用 Chrome 試試'
+      );
       return null;
     }
   })();
