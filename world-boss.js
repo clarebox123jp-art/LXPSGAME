@@ -827,9 +827,10 @@
     banner.style.display = 'block';
     const nameEl = document.getElementById('wb-blessing-bossname');
     if(nameEl){
-      // ★ FIX 20260516 — 祝福加成 fallback 從 10% 提升到 50%(48 小時版本)
+      // ★ FIX 20260517(c) — 全服祝福加成統一定案:+25% / 72 小時
+      //   (歷史:20260516 從 +10%/24h → +50%/48h,本輪改為 +25%/72h 折中)
       nameEl.textContent = (blessing.bossName || '世界 BOSS') +
-        ' 已被全伺服器擊敗!所有玩家 EXP / 知識幣 / 掉寶率 +' + (blessing.bonusPct || 50) + '%';
+        ' 已被全伺服器擊敗!所有玩家 EXP / 知識幣 / 掉寶率 +' + (blessing.bonusPct || 25) + '%';
     }
     const countdownEl = document.getElementById('wb-blessing-countdown');
     if(countdownEl){
