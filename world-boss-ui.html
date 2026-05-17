@@ -600,6 +600,316 @@
   #wb-entry-overlay [style*="font-size: 42px"]{ font-size: 84px !important; }
 </style>
 
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ★ FIX 20260517(m) — 公開房 + 邀請好友 UI 樣式                            -->
+<!-- ──────────────────────────────────────────────────────────────────── -->
+<style>
+  /* ─── 可見性選擇彈窗 ─────────────────────────────────────── */
+  #wb-visibility-overlay{
+    display:none; position:fixed; inset:0; z-index:9300;
+    background:rgba(8,10,24,0.92); padding:40px 20px;
+    overflow-y:auto; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  #wb-visibility-overlay .wb-vis-card{
+    max-width:720px; margin:60px auto;
+    background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
+    border:3px solid #a884ff; border-radius:18px; padding:32px;
+    box-shadow:0 0 48px rgba(168,132,255,0.55),0 8px 40px rgba(0,0,0,0.9);
+    color:#ffe8a0; position:relative;
+  }
+  #wb-visibility-overlay .wb-vis-title{
+    font-size:30px; color:#c8a8ff; text-align:center; letter-spacing:3px;
+    font-weight:800; margin-bottom:8px;
+  }
+  #wb-visibility-overlay .wb-vis-sub{
+    font-size:14px; color:#aaa; text-align:center; letter-spacing:1px;
+    margin-bottom:24px;
+  }
+  #wb-visibility-overlay .wb-vis-opt{
+    display:block; width:100%; padding:18px 22px; margin-bottom:14px;
+    border-radius:14px; cursor:pointer; transition:all 0.2s;
+    background:linear-gradient(160deg,rgba(168,132,255,0.15),rgba(168,132,255,0.04));
+    border:2.5px solid #a884ff; text-align:left; color:#ffe8a0;
+    font-family:inherit;
+  }
+  #wb-visibility-overlay .wb-vis-opt:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 24px rgba(168,132,255,0.5);
+    background:linear-gradient(160deg,rgba(168,132,255,0.25),rgba(168,132,255,0.08));
+  }
+  #wb-visibility-overlay .wb-vis-opt .wb-vis-opt-ico{
+    font-size:28px; margin-right:12px; vertical-align:middle;
+  }
+  #wb-visibility-overlay .wb-vis-opt .wb-vis-opt-ttl{
+    font-size:18px; font-weight:700; color:#c8a8ff;
+    letter-spacing:2px; display:inline-block; vertical-align:middle;
+  }
+  #wb-visibility-overlay .wb-vis-opt .wb-vis-opt-desc{
+    font-size:12px; color:#aaa; line-height:1.5; margin-top:6px;
+    margin-left:40px;
+  }
+  #wb-visibility-overlay .wb-vis-cancel{
+    margin-top:8px; padding:10px 24px; font-size:15px; font-weight:700;
+    background:transparent; border:2px solid #777; color:#aaa;
+    border-radius:10px; cursor:pointer; font-family:inherit;
+    display:block; margin-left:auto; margin-right:auto;
+  }
+  #wb-visibility-overlay .wb-vis-cancel:hover{
+    background:rgba(255,255,255,0.05); color:#fff; border-color:#aaa;
+  }
+
+  /* ─── 公開房列表 overlay ─────────────────────────────────── */
+  #wb-public-rooms-overlay{
+    display:none; position:fixed; inset:0; z-index:9200;
+    background:rgba(8,10,24,0.94); padding:30px 20px;
+    overflow-y:auto; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  #wb-public-rooms-overlay .wb-pr-card{
+    max-width:960px; margin:0 auto;
+    background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
+    border:3px solid #a884ff; border-radius:18px; padding:28px;
+    box-shadow:0 0 48px rgba(168,132,255,0.55),0 8px 40px rgba(0,0,0,0.9);
+    color:#ffe8a0; position:relative;
+  }
+  #wb-public-rooms-overlay .wb-pr-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:18px; flex-wrap:wrap; gap:10px;
+  }
+  #wb-public-rooms-overlay .wb-pr-title{
+    font-size:26px; color:#c8a8ff; letter-spacing:2px; font-weight:800;
+  }
+  #wb-public-rooms-overlay .wb-pr-btns{display:flex; gap:8px;}
+  #wb-public-rooms-overlay .wb-pr-refresh,
+  #wb-public-rooms-overlay .wb-pr-close{
+    padding:8px 18px; font-size:14px; font-weight:700; letter-spacing:1px;
+    border-radius:8px; cursor:pointer; font-family:inherit;
+    border:2px solid #a884ff; background:rgba(168,132,255,0.15);
+    color:#c8a8ff; transition:all 0.2s;
+  }
+  #wb-public-rooms-overlay .wb-pr-refresh:hover,
+  #wb-public-rooms-overlay .wb-pr-close:hover{
+    background:rgba(168,132,255,0.3); transform:translateY(-1px);
+  }
+  #wb-public-rooms-overlay .wb-pr-loading,
+  #wb-public-rooms-overlay .wb-pr-empty{
+    text-align:center; padding:60px 20px; color:#888;
+    font-size:15px; letter-spacing:1px;
+  }
+  #wb-public-rooms-overlay .wb-pr-list{
+    display:grid; grid-template-columns:1fr; gap:14px;
+  }
+  #wb-public-rooms-overlay .wb-pr-room{
+    background:rgba(8,10,24,0.6);
+    border:2px solid rgba(168,132,255,0.4); border-radius:12px;
+    padding:14px 18px; transition:all 0.2s;
+  }
+  #wb-public-rooms-overlay .wb-pr-room:hover{
+    border-color:#c8a8ff; box-shadow:0 4px 18px rgba(168,132,255,0.3);
+  }
+  #wb-public-rooms-overlay .wb-pr-room-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    flex-wrap:wrap; gap:10px;
+  }
+  #wb-public-rooms-overlay .wb-pr-room-host{
+    font-size:18px; color:#ffe066; font-weight:700; letter-spacing:1px;
+  }
+  #wb-public-rooms-overlay .wb-pr-room-meta{
+    font-size:12px; color:#aaa; margin-top:4px; letter-spacing:0.5px;
+  }
+  #wb-public-rooms-overlay .wb-pr-room-meta .wb-pr-time{ color:#88ccff; }
+  #wb-public-rooms-overlay .wb-pr-room-meta .wb-pr-cnt{ color:#ffaa88; margin-left:8px; }
+  #wb-public-rooms-overlay .wb-pr-room-meta .wb-pr-cnt.full{ color:#ff6666; }
+  #wb-public-rooms-overlay .wb-pr-join-btn{
+    padding:10px 22px; font-size:14px; font-weight:700; letter-spacing:1.5px;
+    border-radius:10px; cursor:pointer; font-family:inherit;
+    background:linear-gradient(135deg,#a884ff,#7958d6); color:#fff;
+    border:none; transition:all 0.2s;
+    box-shadow:0 4px 14px rgba(168,132,255,0.4);
+  }
+  #wb-public-rooms-overlay .wb-pr-join-btn:hover{
+    transform:translateY(-2px); box-shadow:0 6px 20px rgba(168,132,255,0.6);
+  }
+  #wb-public-rooms-overlay .wb-pr-join-btn:disabled{
+    background:#444; color:#888; cursor:not-allowed; box-shadow:none;
+    transform:none;
+  }
+  #wb-public-rooms-overlay .wb-pr-players{
+    margin-top:10px; padding-top:10px;
+    border-top:1px dashed rgba(168,132,255,0.25);
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  #wb-public-rooms-overlay .wb-pr-player{
+    background:rgba(168,132,255,0.12);
+    border:1px solid rgba(168,132,255,0.35); border-radius:8px;
+    padding:6px 10px; font-size:12px; color:#ffe8a0;
+    display:flex; align-items:center; gap:4px;
+  }
+  #wb-public-rooms-overlay .wb-pr-player .wb-pr-elem{ font-size:14px; }
+  #wb-public-rooms-overlay .wb-pr-player .wb-pr-hero{ color:#c8a8ff; }
+  #wb-public-rooms-overlay .wb-pr-player .wb-pr-empty-slot{ color:#666; }
+
+  /* ─── 邀請好友面板 (lobby 內彈出) ───────────────────────── */
+  #wb-invite-friends-overlay{
+    display:none; position:fixed; inset:0; z-index:9400;
+    background:rgba(8,10,24,0.85); padding:30px 20px;
+    overflow-y:auto; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  #wb-invite-friends-overlay .wb-if-card{
+    max-width:600px; margin:60px auto;
+    background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
+    border:3px solid #a884ff; border-radius:18px; padding:28px;
+    box-shadow:0 0 48px rgba(168,132,255,0.55),0 8px 40px rgba(0,0,0,0.9);
+    color:#ffe8a0; position:relative;
+  }
+  #wb-invite-friends-overlay .wb-if-title{
+    font-size:22px; color:#c8a8ff; text-align:center; letter-spacing:2px;
+    font-weight:800; margin-bottom:6px;
+  }
+  #wb-invite-friends-overlay .wb-if-sub{
+    font-size:12px; color:#aaa; text-align:center; letter-spacing:1px;
+    margin-bottom:18px;
+  }
+  #wb-invite-friends-overlay .wb-if-list{
+    display:flex; flex-direction:column; gap:10px; max-height:55vh;
+    overflow-y:auto; padding:4px;
+  }
+  #wb-invite-friends-overlay .wb-if-friend{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 14px;
+    background:rgba(168,132,255,0.1);
+    border:1.5px solid rgba(168,132,255,0.35); border-radius:10px;
+    transition:all 0.2s;
+  }
+  #wb-invite-friends-overlay .wb-if-friend:hover{
+    background:rgba(168,132,255,0.18);
+    border-color:rgba(168,132,255,0.6);
+  }
+  #wb-invite-friends-overlay .wb-if-friend-name{
+    font-size:15px; color:#ffe8a0; font-weight:700; letter-spacing:0.5px;
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn{
+    padding:7px 16px; font-size:13px; font-weight:700; letter-spacing:1px;
+    border-radius:8px; cursor:pointer; font-family:inherit;
+    background:linear-gradient(135deg,#5dcaa5,#3aa580); color:#fff;
+    border:none; transition:all 0.2s;
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn:hover{
+    transform:translateY(-1px); box-shadow:0 4px 14px rgba(93,202,165,0.4);
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn.sent{
+    background:#444; color:#888; cursor:not-allowed;
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn.accepted{
+    background:linear-gradient(135deg,#88ccff,#5588cc); color:#fff;
+    cursor:default;
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn.busy{
+    background:#aa6644; color:#fff; cursor:not-allowed;
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn.declined{
+    background:#664444; color:#aaa; cursor:not-allowed;
+  }
+  #wb-invite-friends-overlay .wb-if-empty{
+    text-align:center; padding:40px 20px; color:#888;
+    font-size:14px; line-height:1.7;
+  }
+  #wb-invite-friends-overlay .wb-if-close{
+    margin-top:18px; padding:10px 24px; font-size:14px; font-weight:700;
+    background:#a884ff; border:none; color:#fff; border-radius:10px;
+    cursor:pointer; font-family:inherit;
+    display:block; margin-left:auto; margin-right:auto;
+  }
+
+  /* ─── 左側邀請通知 (全站常駐) ───────────────────────────── */
+  #wb-invite-notif-stack{
+    position:fixed; left:14px; top:50%; transform:translateY(-50%);
+    z-index:2147483640; display:flex; flex-direction:column; gap:12px;
+    pointer-events:none; max-width:320px;
+  }
+  #wb-invite-notif-stack .wb-inv-notif{
+    pointer-events:auto;
+    background:linear-gradient(160deg,#2a1545 0%,#150a25 100%);
+    border:2.5px solid #ffe066; border-radius:14px;
+    padding:14px 16px;
+    box-shadow:0 0 24px rgba(255,224,102,0.5),0 6px 20px rgba(0,0,0,0.7);
+    color:#ffe8a0; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+    animation:wbInvSlideIn 0.4s ease-out;
+    position:relative; min-width:260px;
+  }
+  @keyframes wbInvSlideIn{
+    from { transform:translateX(-120%); opacity:0; }
+    to   { transform:translateX(0);     opacity:1; }
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-hdr{
+    font-size:12px; color:#ffe066; letter-spacing:1px;
+    text-shadow:0 0 8px rgba(255,224,102,0.6);
+    margin-bottom:4px; font-weight:800;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-from{
+    font-size:15px; color:#fff; font-weight:700; letter-spacing:0.5px;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-room{
+    font-size:11px; color:#aaa; margin-top:3px; letter-spacing:0.5px;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar-wrap{
+    height:5px; background:rgba(0,0,0,0.5); border-radius:3px;
+    margin:8px 0; overflow:hidden;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar{
+    height:100%; background:linear-gradient(90deg,#ffe066,#ff8855);
+    border-radius:3px;
+    transition:width 0.3s linear;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar.danger{
+    background:linear-gradient(90deg,#ff6644,#cc2200);
+    animation:wbInvBarPulse 0.6s ease-in-out infinite;
+  }
+  @keyframes wbInvBarPulse{
+    0%,100% { box-shadow:0 0 4px rgba(255,80,40,0.5); }
+    50%     { box-shadow:0 0 14px rgba(255,80,40,1); }
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btns{
+    display:flex; gap:8px; margin-top:6px;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn{
+    flex:1; padding:8px 6px; font-size:13px; font-weight:700;
+    border-radius:8px; cursor:pointer; font-family:inherit;
+    border:none; transition:all 0.15s; letter-spacing:1px;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept{
+    background:linear-gradient(135deg,#5dcaa5,#3aa580); color:#fff;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept:disabled{
+    background:#444; color:#888; cursor:not-allowed;
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.decline{
+    background:rgba(255,80,80,0.25); color:#ffaaaa;
+    border:1.5px solid rgba(255,100,100,0.4);
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept:not(:disabled):hover{
+    transform:translateY(-1px); box-shadow:0 4px 14px rgba(93,202,165,0.4);
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.decline:hover{
+    background:rgba(255,80,80,0.4);
+  }
+  #wb-invite-notif-stack .wb-inv-notif .wb-inv-busy-msg{
+    font-size:11px; color:#ffaa88; margin-top:4px; letter-spacing:0.5px;
+    text-align:center;
+  }
+
+  /* ─── lobby 內邀請好友按鈕 ────────────────────────────────── */
+  .wb-invite-friends-btn{
+    padding:8px 16px; font-size:13px; font-weight:700; letter-spacing:1px;
+    border-radius:8px; cursor:pointer; font-family:inherit;
+    background:linear-gradient(135deg,#5dcaa5,#3aa580); color:#fff;
+    border:none; transition:all 0.2s;
+    box-shadow:0 3px 12px rgba(93,202,165,0.4);
+  }
+  .wb-invite-friends-btn:hover{
+    transform:translateY(-1px); box-shadow:0 5px 16px rgba(93,202,165,0.6);
+  }
+</style>
+
 <!-- 入口 overlay -->
 <div id="wb-entry-overlay">
   <div class="wb-card" style="position:relative;">
@@ -708,11 +1018,17 @@
     </div>
 
     <!-- 操作按鈕 -->
+    <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
     <div class="wb-entry-btn-row">
-      <div class="wb-entry-big-btn" onclick="_wbUiCreateRoom()">
+      <div class="wb-entry-big-btn" onclick="_wbUiOpenVisibilityChoice()">
         <span class="ico">🏰</span>
         <div class="ttl">開新房間</div>
-        <div class="desc">自己當房主<br>產生 6 碼房號<br>分享給朋友來加入</div>
+        <div class="desc">自己當房主<br>可選私人 / 公開 / 邀好友<br>產生 6 碼房號</div>
+      </div>
+      <div class="wb-entry-big-btn" onclick="_wbUiOpenPublicRooms()" style="border-color:#ffaa66;background:linear-gradient(160deg,rgba(255,170,100,0.18) 0%,rgba(255,170,100,0.05) 100%);">
+        <span class="ico">🌐</span>
+        <div class="ttl" style="color:#ffaa66;">瀏覽公開房</div>
+        <div class="desc">看其他玩家開的公開房<br>沒朋友也能組隊<br>隨時加入</div>
       </div>
       <div class="wb-entry-big-btn" onclick="document.getElementById('wb-join-area').scrollIntoView({behavior:'smooth'})">
         <span class="ico">🔑</span>
@@ -2124,6 +2440,64 @@
   }
 </style>
 
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ★ FIX 20260517(m) — 公開房 + 邀請好友 系列 overlay                      -->
+<!-- ──────────────────────────────────────────────────────────────────── -->
+
+<!-- (1) 可見性選擇彈窗:按「開新房間」會先跳這個,選 3 種房間類型 -->
+<div id="wb-visibility-overlay">
+  <div class="wb-vis-card">
+    <div class="wb-vis-title">🏰 開新房間</div>
+    <div class="wb-vis-sub">選擇房間類型</div>
+
+    <div class="wb-vis-opt" onclick="_wbUiConfirmCreate('private')">
+      <span class="wb-vis-opt-ico">🔒</span><span class="wb-vis-opt-ttl">私人房</span>
+      <div class="wb-vis-opt-desc">只能用 6 碼房號加入,分享給誰才有人知道。適合跟認識的朋友打。</div>
+    </div>
+
+    <div class="wb-vis-opt" onclick="_wbUiConfirmCreate('public')" style="border-color:#ffaa66;background:linear-gradient(160deg,rgba(255,170,100,0.18),rgba(255,170,100,0.04));">
+      <span class="wb-vis-opt-ico">🌐</span><span class="wb-vis-opt-ttl" style="color:#ffaa66;">公開房</span>
+      <div class="wb-vis-opt-desc">任何登入玩家都看得到、可直接加入。沒朋友也能組隊!</div>
+    </div>
+
+    <div class="wb-vis-opt" onclick="_wbUiConfirmCreate('private_invite')" style="border-color:#5dcaa5;background:linear-gradient(160deg,rgba(93,202,165,0.18),rgba(93,202,165,0.04));">
+      <span class="wb-vis-opt-ico">👥</span><span class="wb-vis-opt-ttl" style="color:#5dcaa5;">私人房 + 邀請好友</span>
+      <div class="wb-vis-opt-desc">建立私人房後,直接從好友清單發出邀請,對方左側會跳通知。</div>
+    </div>
+
+    <button class="wb-vis-cancel" onclick="_wbUiCloseVisibilityChoice()">取消</button>
+  </div>
+</div>
+
+<!-- (2) 公開房瀏覽列表 -->
+<div id="wb-public-rooms-overlay">
+  <div class="wb-pr-card">
+    <div class="wb-pr-header">
+      <div class="wb-pr-title">🌐 公開房列表</div>
+      <div class="wb-pr-btns">
+        <button class="wb-pr-refresh" onclick="_wbUiRefreshPublicRooms()">🔄 重整</button>
+        <button class="wb-pr-close" onclick="_wbUiClosePublicRooms()">關閉</button>
+      </div>
+    </div>
+    <div id="wb-pr-content">
+      <div class="wb-pr-loading">⏳ 載入中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- (3) 邀請好友面板 (lobby 內彈出) -->
+<div id="wb-invite-friends-overlay">
+  <div class="wb-if-card">
+    <div class="wb-if-title">📧 邀請好友來打 BOSS</div>
+    <div class="wb-if-sub">點「邀請」按鈕,對方左側會收到 30 秒倒數通知</div>
+    <div id="wb-if-list" class="wb-if-list"></div>
+    <button class="wb-if-close" onclick="_wbUiCloseInviteFriends()">關閉</button>
+  </div>
+</div>
+
+<!-- (4) 左側邀請通知 stack 容器(全站常駐,沒邀請時不渲染) -->
+<div id="wb-invite-notif-stack"></div>
+
 <!-- 大廳 / 選角 / 戰鬥 overlay -->
 <div id="wb-lobby-overlay">
   <!-- ★ FIX 20260516 — 戰鬥背景火焰粒子層(只在 wb-in-battle 時顯示) -->
@@ -2158,6 +2532,11 @@
           </div>
           <button class="wb-copy-btn" onclick="_wbUiCopyCode()">複製</button>
         </div>
+        <!-- ★ FIX 20260517(m) — 邀請好友按鈕(只在房主+有空位時顯示) -->
+        <button id="wb-invite-friends-btn" class="wb-invite-friends-btn"
+                onclick="_wbUiOpenInviteFriends()" style="display:none;">
+          📧 邀請好友
+        </button>
         <button class="wb-leave-btn" onclick="_wbUiLeaveRoom()">離開</button>
       </div>
     </div>
@@ -2378,7 +2757,8 @@
 <!-- ★ FIX 20260517(b) — 從單直行改為兩直行 grid,並把位置調到不會蓋住 BOSS HP 條(top 130 → 145) -->
 <!--   原 left:8px, top:120px, flex-direction:column → 改為 grid 2 行(每行 6 顆) -->
 <!--   寬度 ≈ 120px(2×54px + gap),不會蓋到中央龍王 -->
-<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:6px;top:200px;
+<!--   ★ FIX 20260517(n) — top 200→172,貼到 BOSS HP 紅框下沿(原本中間有 28px 空白) -->
+<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:6px;top:172px;
      background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:14px;
      padding:8px 6px;z-index:9050;
      gap:6px;
@@ -2508,13 +2888,43 @@
   }
 
   // === 入口操作 ===
-  window._wbUiCreateRoom = async function(){
-    const roomId = await window._wbNet.createRoom({ bossId: 'vesuvius_fire_dragon' });
+  // ★ FIX 20260517(m) — _wbUiCreateRoom 現在是內部函式,外部要透過可見性選擇彈窗呼叫
+  //   參數 visibility:'private' (預設) | 'public' | 'private_invite' (建後自動開邀請好友面板)
+  window._wbUiCreateRoom = async function(visibility){
+    const vis = (visibility === 'public') ? 'public' : 'private';
+    const roomId = await window._wbNet.createRoom({
+      bossId: 'vesuvius_fire_dragon',
+      visibility: vis
+    });
     if(roomId){
       _wbCloseEntry();
       _wbOpenLobby();
+      // private_invite 變體:開房後自動展開邀請好友面板
+      if(visibility === 'private_invite'){
+        setTimeout(() => { try{ _wbUiOpenInviteFriends(); }catch(_){} }, 250);
+      }
     }
   };
+
+  // ★ FIX 20260517(m) — 可見性選擇彈窗(按「開新房間」按鈕會跳這個)
+  window._wbUiOpenVisibilityChoice = function(){
+    // 登入檢查(跟 createRoom 同套)
+    if(!window._gUserId){
+      alert('請先 Google 登入才能開房');
+      return;
+    }
+    const ov = document.getElementById('wb-visibility-overlay');
+    if(ov) ov.style.display = 'block';
+  };
+  window._wbUiCloseVisibilityChoice = function(){
+    const ov = document.getElementById('wb-visibility-overlay');
+    if(ov) ov.style.display = 'none';
+  };
+  window._wbUiConfirmCreate = async function(visibility){
+    _wbUiCloseVisibilityChoice();
+    await window._wbUiCreateRoom(visibility);
+  };
+
   window._wbUiJoinRoom = async function(){
     const code = (document.getElementById('wb-code-input').value || '').toUpperCase().trim();
     if(code.length !== 6){ alert('請輸入 6 碼房號'); return; }
@@ -2524,6 +2934,530 @@
       _wbOpenLobby();
     }
   };
+
+  // ════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(m) — 公開房瀏覽列表 UI
+  // ────────────────────────────────────────────────────────────
+  // 元素 icon mapping (跟 _wbRenderElementButtons 對齊)
+  const _wbElemIconMap = {
+    fire:'🔥', water:'💧', earth:'🌍', wind:'🌪',
+    light:'☀', dark:'⚫'
+  };
+  // 簡單的「多久前」字串
+  function _wbTimeAgo(ts){
+    if(!ts) return '剛剛';
+    const sec = Math.floor((Date.now() - ts) / 1000);
+    if(sec < 10)   return '剛剛';
+    if(sec < 60)   return sec + ' 秒前';
+    if(sec < 3600) return Math.floor(sec/60) + ' 分鐘前';
+    return Math.floor(sec/3600) + ' 小時前';
+  }
+  window._wbUiOpenPublicRooms = async function(){
+    if(!window._gUserId){
+      alert('請先 Google 登入才能瀏覽公開房');
+      return;
+    }
+    const ov = document.getElementById('wb-public-rooms-overlay');
+    if(!ov) return;
+    ov.style.display = 'block';
+    await _wbUiRefreshPublicRooms();
+  };
+  window._wbUiClosePublicRooms = function(){
+    const ov = document.getElementById('wb-public-rooms-overlay');
+    if(ov) ov.style.display = 'none';
+  };
+  window._wbUiRefreshPublicRooms = async function(){
+    const box = document.getElementById('wb-pr-content');
+    if(!box) return;
+    box.innerHTML = '<div class="wb-pr-loading">⏳ 載入中...</div>';
+    let rooms = [];
+    try{
+      if(window._wbNet && window._wbNet.listPublicRooms){
+        rooms = await window._wbNet.listPublicRooms();
+      }
+    }catch(e){
+      console.error('[WB-UI] 載入公開房失敗', e);
+    }
+    _wbRenderPublicRoomList(rooms);
+  };
+  function _wbRenderPublicRoomList(rooms){
+    const box = document.getElementById('wb-pr-content');
+    if(!box) return;
+    if(!Array.isArray(rooms) || rooms.length === 0){
+      box.innerHTML =
+        '<div class="wb-pr-empty">' +
+        '😴 目前沒有公開房<br><br>' +
+        '<span style="font-size:13px;">回去自己開一間吧!</span>' +
+        '</div>';
+      return;
+    }
+    const html = rooms.map(r => _wbRenderPublicRoomCard(r)).join('');
+    box.innerHTML = '<div class="wb-pr-list">' + html + '</div>';
+  }
+  function _wbRenderPublicRoomCard(r){
+    const players = Array.isArray(r.players) ? r.players : [];
+    const cnt = players.length;
+    const isFull = (cnt >= 4);
+    const cntCls = isFull ? 'wb-pr-cnt full' : 'wb-pr-cnt';
+    const timeStr = _wbTimeAgo(r.createdAt);
+
+    // 玩家清單(角色 + 元素)
+    const slots = [];
+    for(let i = 0; i < 4; i++){
+      const p = players[i];
+      if(p){
+        const elemIco = (p.element && _wbElemIconMap[p.element]) || '❔';
+        const heroName = p.heroName || '<未選角>';
+        const isHost = (p.uid === r.hostUid);
+        const hostMark = isHost ? '👑 ' : '';
+        // 等級資訊:玩家清單沒帶等級欄位,先顯示角色名 (後續若 _wbNet 補等級就會顯示)
+        const lvl = (p.level != null) ? (' Lv.' + p.level) : '';
+        slots.push(
+          '<div class="wb-pr-player">' +
+          '<span class="wb-pr-elem">' + elemIco + '</span>' +
+          '<span>' + hostMark + (p.name || '玩家') + '</span>' +
+          '<span class="wb-pr-hero">/ ' + heroName + lvl + '</span>' +
+          '</div>'
+        );
+      }else{
+        slots.push(
+          '<div class="wb-pr-player">' +
+          '<span class="wb-pr-empty-slot">⬚ 空位</span>' +
+          '</div>'
+        );
+      }
+    }
+    const slotsHtml = slots.join('');
+
+    const joinBtnHtml = isFull
+      ? '<button class="wb-pr-join-btn" disabled>滿員</button>'
+      : ('<button class="wb-pr-join-btn" onclick="_wbUiJoinPublicRoom(\'' + r.roomId + '\')">加入</button>');
+
+    return (
+      '<div class="wb-pr-room">' +
+        '<div class="wb-pr-room-head">' +
+          '<div>' +
+            '<div class="wb-pr-room-host">👑 ' + (r.hostName || '房主') + '</div>' +
+            '<div class="wb-pr-room-meta">' +
+              '<span class="wb-pr-time">⏱ ' + timeStr + '</span>' +
+              '<span class="' + cntCls + '">👥 ' + cnt + '/4</span>' +
+            '</div>' +
+          '</div>' +
+          joinBtnHtml +
+        '</div>' +
+        '<div class="wb-pr-players">' + slotsHtml + '</div>' +
+      '</div>'
+    );
+  }
+  window._wbUiJoinPublicRoom = async function(roomId){
+    if(!roomId) return;
+    const ok = await window._wbNet.joinRoom(roomId);
+    if(ok){
+      _wbUiClosePublicRooms();
+      _wbCloseEntry();
+      _wbOpenLobby();
+    }
+  };
+
+  // ════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(m) — 邀請好友面板 (lobby 內)
+  // ────────────────────────────────────────────────────────────
+  // 房主用:從好友清單發出邀請。每次發 = 新一筆 worldBossInvites/{id}
+  // 30 秒內不能重發給同一好友
+  // ────────────────────────────────────────────────────────────
+  // 暫存「我發出的邀請」狀態 mapping: { friendUid: { inviteId, status, sentAt } }
+  // (用 subscribeMyOutgoingInvites 訂閱更新,即時反映被邀請者按了什麼)
+  let _wbIfOutgoingByUid = {};
+  let _wbIfOutgoingUnsub = null;
+
+  function _wbStartOutgoingInviteSub(){
+    if(_wbIfOutgoingUnsub) return;
+    if(!window._wbNet || !window._wbNet.subscribeMyOutgoingInvites) return;
+    _wbIfOutgoingUnsub = window._wbNet.subscribeMyOutgoingInvites(function(list){
+      // 只取每個好友最新一筆
+      const map = {};
+      const now = Date.now();
+      list.forEach(function(inv){
+        const cur = map[inv.toUid];
+        if(!cur || inv.createdAt > cur.createdAt){
+          let realStatus = inv.status;
+          // 客戶端標記過期 (server 還沒寫 expired 就先當 expired)
+          if(realStatus === 'pending' && inv.expiresAt && inv.expiresAt < now){
+            realStatus = 'expired';
+          }
+          map[inv.toUid] = {
+            inviteId: inv.inviteId,
+            status: realStatus,
+            createdAt: inv.createdAt,
+            expiresAt: inv.expiresAt
+          };
+        }
+      });
+      _wbIfOutgoingByUid = map;
+      // 如果邀請好友面板正開著,即時刷新
+      const ov = document.getElementById('wb-invite-friends-overlay');
+      if(ov && ov.style.display !== 'none'){
+        _wbRenderInviteFriendsList();
+      }
+    });
+  }
+  function _wbStopOutgoingInviteSub(){
+    if(_wbIfOutgoingUnsub){
+      try{ _wbIfOutgoingUnsub(); }catch(_){}
+      _wbIfOutgoingUnsub = null;
+    }
+    _wbIfOutgoingByUid = {};
+  }
+
+  window._wbUiOpenInviteFriends = function(){
+    if(!window._wbNet || !window._wbNet.isHost()){
+      alert('只有房主可以邀請好友');
+      return;
+    }
+    _wbStartOutgoingInviteSub();
+    const ov = document.getElementById('wb-invite-friends-overlay');
+    if(ov) ov.style.display = 'block';
+    _wbRenderInviteFriendsList();
+  };
+  window._wbUiCloseInviteFriends = function(){
+    const ov = document.getElementById('wb-invite-friends-overlay');
+    if(ov) ov.style.display = 'none';
+  };
+
+  function _wbRenderInviteFriendsList(){
+    const box = document.getElementById('wb-if-list');
+    if(!box) return;
+    // 讀主程式的 _friendList (它是 module 內 let,但有掛 window._friendList)
+    const friends = (typeof window._friendList !== 'undefined' && Array.isArray(window._friendList))
+                    ? window._friendList : [];
+    // 排除已在房內的玩家(不能再邀)
+    const snap = (window._wbNet && window._wbNet.getSnapshot) ? window._wbNet.getSnapshot() : null;
+    const inRoomUids = {};
+    if(snap && Array.isArray(snap.players)){
+      snap.players.forEach(function(p){ if(p && p.uid) inRoomUids[p.uid] = true; });
+    }
+
+    if(friends.length === 0){
+      box.innerHTML =
+        '<div class="wb-if-empty">' +
+        '😶 你還沒有好友<br><br>' +
+        '<span style="font-size:12px;">回首頁加好友後再回來邀請吧</span>' +
+        '</div>';
+      return;
+    }
+
+    const html = friends.map(function(f){
+      const name = f.name || f.email || '好友';
+      const uid = f.uid;
+      const alreadyInRoom = !!inRoomUids[uid];
+      const outgoing = _wbIfOutgoingByUid[uid];
+
+      let btnHtml;
+      if(alreadyInRoom){
+        btnHtml = '<button class="wb-if-friend-btn accepted" disabled>已在房內</button>';
+      }else if(outgoing){
+        if(outgoing.status === 'pending'){
+          btnHtml = '<button class="wb-if-friend-btn sent" disabled>📨 已邀請</button>';
+        }else if(outgoing.status === 'accepted'){
+          btnHtml = '<button class="wb-if-friend-btn accepted" disabled>✓ 已接受</button>';
+        }else if(outgoing.status === 'declined'){
+          btnHtml = '<button class="wb-if-friend-btn declined" disabled>已拒絕</button>';
+        }else if(outgoing.status === 'busy' || outgoing.status === 'expired'){
+          // busy / expired:30 秒後可重邀
+          const elapsed = Date.now() - outgoing.createdAt;
+          if(elapsed < 30000){
+            const sec = Math.ceil((30000 - elapsed) / 1000);
+            btnHtml = '<button class="wb-if-friend-btn busy" disabled>忙碌 (' + sec + 's)</button>';
+          }else{
+            btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(\'' +
+                      uid + '\',' + JSON.stringify(name) + ')">邀請</button>';
+          }
+        }else{
+          btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(\'' +
+                    uid + '\',' + JSON.stringify(name) + ')">邀請</button>';
+        }
+      }else{
+        btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(\'' +
+                  uid + '\',' + JSON.stringify(name) + ')">邀請</button>';
+      }
+
+      return (
+        '<div class="wb-if-friend">' +
+          '<div class="wb-if-friend-name">👤 ' + name + '</div>' +
+          btnHtml +
+        '</div>'
+      );
+    }).join('');
+    box.innerHTML = html;
+  }
+
+  window._wbUiSendInvite = async function(toUid, toName){
+    if(!toUid) return;
+    if(!window._wbNet || !window._wbNet.sendInvite) return;
+    const ret = await window._wbNet.sendInvite(toUid, toName);
+    if(ret){
+      // sendInvite 寫入後,subscribeMyOutgoingInvites 會自動觸發,UI 自動刷新
+      // 但 firestore 通常有 100~300ms 延遲,先樂觀更新 + 強制刷新
+      _wbIfOutgoingByUid[toUid] = {
+        inviteId: ret, status: 'pending',
+        createdAt: Date.now(), expiresAt: Date.now() + 30000
+      };
+      _wbRenderInviteFriendsList();
+    }else{
+      // sendInvite 已透過 onError 廣播失敗訊息(用 alert 一致對待)
+    }
+  };
+
+  // 離開房間/關閉 lobby 時要停掉訂閱
+  window._wbStopOutgoingInviteSubExternal = _wbStopOutgoingInviteSub;
+
+  // ════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(m) — 左側邀請通知系統 (全站常駐)
+  // ────────────────────────────────────────────────────────────
+  // 規格:
+  // - 受邀者畫面左方邊緣顯示,常駐於整個遊戲
+  // - 30 秒讀條,沒按完自動回報「busy」+ 移除通知
+  // - 戰鬥中(_adventureStage 任一非 null,或 _wbIsInWbBattle 為 true)按鈕灰
+  // - 戰鬥結束回到關卡首頁才能按
+  // - 一個玩家可同時收到多個邀請,垂直排列
+  // ────────────────────────────────────────────────────────────
+  let _wbInvitesNotifList = [];   // 目前畫面上的邀請: [{inviteId, fromName, roomId, createdAt, expiresAt, timer}]
+  let _wbInvitesUnsub = null;
+  const _wbInvNotifTimers = {};   // 倒數計時器: { inviteId: intervalId }
+
+  // 判斷玩家「現在能不能接受邀請」
+  // 條件:不在戰鬥中(主程式 _adventureStage 為 null 才算「在關卡首頁」)
+  function _wbCanAcceptInvite(){
+    try{
+      const stage = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : null;
+      if(stage) return false;   // 在任何冒險戰鬥中(含 worldboss)
+      // 還要檢查:是否正在世界 BOSS 戰鬥畫面(body.wb-in-worldboss-battle)
+      if(document.body && document.body.classList && document.body.classList.contains('wb-in-worldboss-battle')){
+        return false;
+      }
+      return true;
+    }catch(_){
+      return true;
+    }
+  }
+
+  // 啟動訂閱(玩家登入後自動啟動)
+  function _wbStartInviteNotifSub(){
+    if(_wbInvitesUnsub) return;
+    if(!window._wbNet || !window._wbNet.subscribeInvites){
+      console.warn('[WB-Notif] _wbNet.subscribeInvites 尚未載入,500ms 後重試');
+      setTimeout(_wbStartInviteNotifSub, 500);
+      return;
+    }
+    if(!window._gUserId){
+      console.warn('[WB-Notif] 尚未登入,延後訂閱');
+      return;
+    }
+    _wbInvitesUnsub = window._wbNet.subscribeInvites(function(list){
+      _wbInvitesNotifList = list || [];
+      _wbRenderInviteNotifs();
+    });
+    console.log('[WB-Notif] ✅ 邀請通知訂閱已啟動');
+  }
+  window._wbStartInviteNotifSub = _wbStartInviteNotifSub;
+
+  function _wbStopInviteNotifSub(){
+    if(_wbInvitesUnsub){
+      try{ _wbInvitesUnsub(); }catch(_){}
+      _wbInvitesUnsub = null;
+    }
+    // 清所有倒數 timer
+    Object.keys(_wbInvNotifTimers).forEach(function(id){
+      try{ clearInterval(_wbInvNotifTimers[id]); }catch(_){}
+      delete _wbInvNotifTimers[id];
+    });
+    _wbInvitesNotifList = [];
+    const stack = document.getElementById('wb-invite-notif-stack');
+    if(stack) stack.innerHTML = '';
+  }
+  window._wbStopInviteNotifSub = _wbStopInviteNotifSub;
+
+  function _wbRenderInviteNotifs(){
+    const stack = document.getElementById('wb-invite-notif-stack');
+    if(!stack) return;
+
+    // 清除舊的 timer 但保留 DOM,稍後重渲染
+    Object.keys(_wbInvNotifTimers).forEach(function(id){
+      // 如果此邀請已不在列表中 → 清掉 timer
+      const stillExists = _wbInvitesNotifList.some(function(inv){ return inv.inviteId === id; });
+      if(!stillExists){
+        try{ clearInterval(_wbInvNotifTimers[id]); }catch(_){}
+        delete _wbInvNotifTimers[id];
+      }
+    });
+
+    // 重渲染整個 stack(簡單但對 < 10 個元素不會卡)
+    if(!_wbInvitesNotifList || _wbInvitesNotifList.length === 0){
+      stack.innerHTML = '';
+      return;
+    }
+    const html = _wbInvitesNotifList.map(function(inv){
+      return _wbBuildInviteNotifHtml(inv);
+    }).join('');
+    stack.innerHTML = html;
+
+    // 重新掛 timer
+    _wbInvitesNotifList.forEach(function(inv){
+      _wbInstallInviteNotifTimer(inv);
+    });
+  }
+
+  function _wbBuildInviteNotifHtml(inv){
+    const total = 30000;
+    const left = Math.max(0, inv.expiresAt - Date.now());
+    const pct = Math.max(0, Math.min(100, (left / total) * 100));
+    const sec = Math.ceil(left / 1000);
+    const barCls = (sec <= 5) ? 'wb-inv-bar danger' : 'wb-inv-bar';
+    const canAccept = _wbCanAcceptInvite();
+    const acceptDisabled = canAccept ? '' : 'disabled';
+    const busyMsg = canAccept ? '' :
+      '<div class="wb-inv-busy-msg">⚔ 戰鬥中,結束後才能接受</div>';
+    const fromName = (inv.fromName || '玩家').replace(/[<>&"']/g, function(c){
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+
+    return (
+      '<div class="wb-inv-notif" data-inv-id="' + inv.inviteId + '">' +
+        '<div class="wb-inv-hdr">🌍 世界 BOSS 邀請</div>' +
+        '<div class="wb-inv-from">👤 ' + fromName + '</div>' +
+        '<div class="wb-inv-room">房號 ' + inv.roomId + ' · ' + sec + ' 秒內回應</div>' +
+        '<div class="wb-inv-bar-wrap">' +
+          '<div class="' + barCls + '" data-bar-id="' + inv.inviteId +
+          '" style="width:' + pct.toFixed(1) + '%;"></div>' +
+        '</div>' +
+        '<div class="wb-inv-btns">' +
+          '<button class="wb-inv-btn accept" ' + acceptDisabled +
+            ' onclick="_wbInviteAccept(\'' + inv.inviteId + '\',\'' + inv.roomId + '\')">✓ 接受</button>' +
+          '<button class="wb-inv-btn decline"' +
+            ' onclick="_wbInviteDecline(\'' + inv.inviteId + '\')">✕ 拒絕</button>' +
+        '</div>' +
+        busyMsg +
+      '</div>'
+    );
+  }
+
+  function _wbInstallInviteNotifTimer(inv){
+    if(_wbInvNotifTimers[inv.inviteId]) return;  // 已有
+    const total = 30000;
+    _wbInvNotifTimers[inv.inviteId] = setInterval(function(){
+      const left = inv.expiresAt - Date.now();
+      if(left <= 0){
+        // 自動 busy
+        clearInterval(_wbInvNotifTimers[inv.inviteId]);
+        delete _wbInvNotifTimers[inv.inviteId];
+        _wbInviteAutoBusy(inv.inviteId);
+        return;
+      }
+      // 更新該則的進度條 + 秒數 + 戰鬥按鈕鎖狀態
+      const dom = document.querySelector('[data-inv-id="' + inv.inviteId + '"]');
+      if(!dom) return;
+      const bar = dom.querySelector('.wb-inv-bar');
+      const sec = Math.ceil(left / 1000);
+      if(bar){
+        bar.style.width = ((left / total) * 100).toFixed(1) + '%';
+        if(sec <= 5) bar.classList.add('danger');
+        else bar.classList.remove('danger');
+      }
+      const roomLbl = dom.querySelector('.wb-inv-room');
+      if(roomLbl) roomLbl.textContent = '房號 ' + inv.roomId + ' · ' + sec + ' 秒內回應';
+      // 戰鬥中/結束的鎖狀態切換
+      const acceptBtn = dom.querySelector('.wb-inv-btn.accept');
+      const busyEl = dom.querySelector('.wb-inv-busy-msg');
+      const canAccept = _wbCanAcceptInvite();
+      if(acceptBtn){
+        if(canAccept){
+          acceptBtn.disabled = false;
+          if(busyEl) busyEl.remove();
+        }else{
+          acceptBtn.disabled = true;
+          if(!busyEl){
+            const msg = document.createElement('div');
+            msg.className = 'wb-inv-busy-msg';
+            msg.textContent = '⚔ 戰鬥中,結束後才能接受';
+            dom.appendChild(msg);
+          }
+        }
+      }
+    }, 500);
+  }
+
+  function _wbInviteAutoBusy(inviteId){
+    if(!inviteId) return;
+    if(window._wbNet && window._wbNet.respondInvite){
+      window._wbNet.respondInvite(inviteId, 'busy').catch(function(_){});
+    }
+    // 從畫面上立即移除這則(等 subscribe 更新時也會自動移除,但先即時拿掉)
+    _wbInvitesNotifList = _wbInvitesNotifList.filter(function(i){ return i.inviteId !== inviteId; });
+    const dom = document.querySelector('[data-inv-id="' + inviteId + '"]');
+    if(dom) dom.remove();
+  }
+
+  window._wbInviteAccept = async function(inviteId, roomId){
+    if(!_wbCanAcceptInvite()){
+      alert('⚔ 你正在戰鬥中,結束戰鬥後才能接受邀請');
+      return;
+    }
+    if(!inviteId || !roomId) return;
+    // 先標記 accepted 給邀請者看
+    if(window._wbNet && window._wbNet.respondInvite){
+      try{ await window._wbNet.respondInvite(inviteId, 'accepted'); }catch(_){}
+    }
+    // 清掉這則通知
+    if(_wbInvNotifTimers[inviteId]){
+      clearInterval(_wbInvNotifTimers[inviteId]);
+      delete _wbInvNotifTimers[inviteId];
+    }
+    _wbInvitesNotifList = _wbInvitesNotifList.filter(function(i){ return i.inviteId !== inviteId; });
+    const dom = document.querySelector('[data-inv-id="' + inviteId + '"]');
+    if(dom) dom.remove();
+
+    // 加入房間 + 開 lobby
+    // 如果目前已經在另一間房 → 先 leaveRoom
+    try{
+      if(window._wbNet && window._wbNet.getRoomId && window._wbNet.getRoomId()){
+        if(window._wbNet.leaveRoom){
+          await window._wbNet.leaveRoom();
+        }
+      }
+    }catch(_){}
+    // 開啟世界 BOSS 入口 UI(如果還沒開) + 自動 joinRoom
+    try{
+      // 如果 UI 沒注入過,先初始化
+      if(typeof _wbEnsureUi === 'function'){
+        const ok = await _wbEnsureUi();
+        if(!ok){ alert('UI 載入失敗,請重新整理頁面'); return; }
+      }
+    }catch(_){}
+    const ok = await window._wbNet.joinRoom(roomId);
+    if(ok){
+      // 進房成功 → 關 entry(若開著)、開 lobby
+      const entryOv = document.getElementById('wb-entry-overlay');
+      if(entryOv) entryOv.style.display = 'none';
+      _wbOpenLobby();
+    }else{
+      alert('加入房間失敗,可能房間已關閉或滿員');
+    }
+  };
+
+  window._wbInviteDecline = async function(inviteId){
+    if(!inviteId) return;
+    if(window._wbNet && window._wbNet.respondInvite){
+      try{ await window._wbNet.respondInvite(inviteId, 'declined'); }catch(_){}
+    }
+    if(_wbInvNotifTimers[inviteId]){
+      clearInterval(_wbInvNotifTimers[inviteId]);
+      delete _wbInvNotifTimers[inviteId];
+    }
+    _wbInvitesNotifList = _wbInvitesNotifList.filter(function(i){ return i.inviteId !== inviteId; });
+    const dom = document.querySelector('[data-inv-id="' + inviteId + '"]');
+    if(dom) dom.remove();
+  };
+
   function _wbCloseEntry(){
     const ov = document.getElementById('wb-entry-overlay');
     if(ov) ov.style.display = 'none';
@@ -2553,6 +3487,8 @@
   };
   window._wbUiLeaveRoom = async function(){
     if(!confirm('確定要離開房間嗎?')) return;
+    // ★ FIX 20260517(m) — 停掉房主端的 outgoing invite 訂閱
+    try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
     document.getElementById('wb-emoji-bar-real').style.display = 'none';
@@ -4696,6 +5632,18 @@
     const status = data.meta?.status || 'waiting';
     document.getElementById('wb-room-status-text').textContent =
       status === 'fighting' ? '⚔ 戰鬥中' : (status === 'waiting' || status === 'picking') ? '等候選角' : '已結束';
+
+    // ★ FIX 20260517(m) — 房主+未開戰+未滿時顯示「邀請好友」按鈕
+    try{
+      const inviteBtn = document.getElementById('wb-invite-friends-btn');
+      if(inviteBtn){
+        const isHost = !!(window._wbNet.isHost && window._wbNet.isHost());
+        const notFull = (data.players.length < 4);
+        const inLobby = (status === 'waiting' || status === 'picking');
+        inviteBtn.style.display = (isHost && notFull && inLobby) ? '' : 'none';
+      }
+    }catch(_){}
+
     if(status === 'fighting'){
       document.getElementById('wb-picking-area').style.display = 'none';
       document.getElementById('wb-battle-area').classList.add('show');
@@ -6743,6 +7691,15 @@
   }, 500);
 
   console.log('[WB-UI] ✅ UI 連動層已初始化');
+
+  // ★ FIX 20260517(m) — UI 注入完成 → 立即嘗試啟動邀請通知訂閱
+  //   情境:玩家已登入但是第一次點 BOSS 入口(此時 UI 才被注入)
+  //   登入鉤子那邊的 retry 可能已經停了,所以這裡兜底再 call 一次
+  try{
+    if(window._gUserId && typeof window._wbStartInviteNotifSub === 'function'){
+      window._wbStartInviteNotifSub();
+    }
+  }catch(_){}
 
   // ★ v3.2 — UI 注入完成後立即同步休戰期狀態看板 + 鎖按鈕,並對 Firestore 變更綁監聽
   try{

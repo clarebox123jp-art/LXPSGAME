@@ -20,7 +20,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment, deleteDoc, runTransaction }
+  import { getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocs, collection, query, where, orderBy, limit, updateDoc, arrayUnion, arrayRemove, onSnapshot, increment, deleteDoc, runTransaction }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -1577,6 +1577,28 @@
           await window._fbStartPresence(user.uid, _presenceName);
         }
       } catch(_e) { console.warn('[Presence] 登入時啟動失敗', _e); }
+      // ★ FIX 20260517(m) — 啟動世界 BOSS 邀請通知訂閱
+      //   函式在 world-boss-ui.html 載入後才存在,所以包成 retry:
+      //   - 已載入 → 立即啟動
+      //   - 還沒載入(玩家還沒點過 BOSS 入口) → 1 秒後重試,最多重試 30 次
+      //   也支援延後啟動:當玩家第一次點 BOSS 入口、UI 載入完後會自動呼叫
+      try {
+        let _retry = 0;
+        const _tryStartInviteSub = function(){
+          if(typeof window._wbStartInviteNotifSub === 'function'){
+            try{ window._wbStartInviteNotifSub(); }catch(_){}
+            return true;
+          }
+          return false;
+        };
+        if(!_tryStartInviteSub()){
+          const _h = setInterval(function(){
+            _retry++;
+            if(_retry > 30){ clearInterval(_h); return; }
+            if(_tryStartInviteSub()) clearInterval(_h);
+          }, 1000);
+        }
+      } catch(_e) { console.warn('[WB-Notif] 登入時啟動邀請訂閱失敗', _e); }
       // ★ 同步 email 到 Firestore（供好友搜尋）
       try {
         const _nick = localStorage.getItem('lxps_nickname_' + user.uid);
@@ -1841,6 +1863,12 @@
           await window._fbStopPresence(window._gUserId);
         }
       } catch(_e) { /* 靜默 */ }
+      // ★ FIX 20260517(m) — 登出時停掉世界 BOSS 邀請通知訂閱(避免切帳號後仍收到舊帳號邀請)
+      try {
+        if(typeof window._wbStopInviteNotifSub === 'function'){
+          window._wbStopInviteNotifSub();
+        }
+      } catch(_e) { /* 靜默 */ }
       window._fbUser = null;
       // ★ 登出時清除 session + 取消監聽 + 停止心跳
       if(window._sessionHeartbeat){ clearInterval(window._sessionHeartbeat); window._sessionHeartbeat = null; }
@@ -1948,9 +1976,13 @@
     function _heroesToWire(arr){ return Array.isArray(arr) ? arr.map(_heroToWire) : []; }
 
     // ─── A. 房間生命週期 ──────────────────────────────────────────
+    // ★ FIX 20260517(m) — createRoom 加 visibility 參數
+    //   opts.visibility: 'private' (預設,舊行為) | 'public' (新,進大廳列表)
+    //   公開房 meta 多存 hostName 給大廳列表顯示用,省一次玩家檔讀取
     async function createRoom(opts){
       if(!_requireLogin()) return null;
       const bossId = (opts && opts.bossId) || 'vesuvius_fire_dragon';
+      const visibility = (opts && opts.visibility === 'public') ? 'public' : 'private';
       let roomId = null;
       for(let attempt = 0; attempt < 5; attempt++){
         const c = _genRoomCode();
@@ -1965,7 +1997,15 @@
                      localStorage.getItem('lxps_nickname_' + window._gUserId) || '房主';
 
       const initial = {
-        meta: { hostUid: window._gUserId, bossId: bossId, status: 'waiting', createdAt: Date.now(), version: 1 },
+        meta: {
+          hostUid: window._gUserId,
+          hostName: myName,           // ★ 新:公開房列表用
+          bossId: bossId,
+          status: 'waiting',
+          visibility: visibility,     // ★ 新:'private' | 'public'
+          createdAt: Date.now(),
+          version: 1
+        },
         players: [{
           uid: window._gUserId, name: myName, slotIdx: 0,
           heroName: null, element: null, ready: false, online: true, lastSeen: Date.now()
@@ -2355,12 +2395,228 @@
       if(WB.heartbeatTimer){ clearInterval(WB.heartbeatTimer); WB.heartbeatTimer = null; }
     }
 
+    // ─── G. 公開房列表 + 邀請好友(FIX 20260517(m)) ─────────────────
+    // ★ Firestore schema:
+    //   worldBossRooms/{code} 加 meta.visibility ('private'|'public') + meta.hostName
+    //   worldBossInvites/{inviteId} = {
+    //     fromUid, fromName, toUid, roomId, bossId,
+    //     createdAt, expiresAt (createdAt + 30000ms),
+    //     status: 'pending'|'accepted'|'declined'|'expired'|'busy'
+    //   }
+
+    // ─── G-1. 列出目前公開且還在 waiting/picking 階段的房間 ─────────
+    //   開戰後 status 變 fighting → 自動從列表消失(query 過濾)
+    //   依 createdAt 降冪、最多 20 筆
+    async function listPublicRooms(){
+      try{
+        // ★ Firestore 上 meta.status 是巢狀欄位,可用點字串 query
+        const q = query(
+          collection(_fbDb, 'worldBossRooms'),
+          where('meta.visibility', '==', 'public'),
+          where('meta.status', 'in', ['waiting', 'picking']),
+          orderBy('meta.createdAt', 'desc'),
+          limit(20)
+        );
+        const snap = await getDocs(q);
+        const rooms = [];
+        snap.forEach(s => {
+          const d = s.data() || {};
+          rooms.push({
+            roomId: s.id,
+            hostUid: d.meta?.hostUid,
+            hostName: d.meta?.hostName || '房主',
+            bossId: d.meta?.bossId,
+            status: d.meta?.status,
+            createdAt: d.meta?.createdAt || 0,
+            players: Array.isArray(d.players) ? d.players.map(p => ({
+              uid: p.uid, name: p.name, slotIdx: p.slotIdx,
+              heroName: p.heroName, element: p.element,
+              ready: !!p.ready, online: !!p.online,
+            })) : []
+          });
+        });
+        return rooms;
+      }catch(e){
+        console.error('[WBNet] listPublicRooms 失敗', e);
+        // ★ 如果 query 報「需要建立 index」, 給友善訊息
+        if(e && e.code === 'failed-precondition'){
+          _emit('onError', { msg: '公開房列表需要建立 Firestore 索引,請聯絡管理員' });
+        }else{
+          _emit('onError', { msg: '讀取公開房失敗:' + (e.code || e.message) });
+        }
+        return [];
+      }
+    }
+
+    // ─── G-2. 發出邀請(房主用) ─────────────────────────────────
+    //   每次發 = 寫一筆 worldBossInvites/{id}, 30 秒過期
+    //   同一房主對同一好友若 30 秒內已發過 pending 邀請, 不重發
+    async function sendInvite(toUid, toName){
+      if(!_requireLogin()) return false;
+      if(!WB.roomId || !WB.isHost){
+        _emit('onError', { msg: '只有房主可以邀請好友' });
+        return false;
+      }
+      if(!toUid || toUid === window._gUserId){
+        _emit('onError', { msg: '邀請對象無效' });
+        return false;
+      }
+      const myName = (window._fbUser && (window._fbUser.displayName || window._fbUser.email)) ||
+                     localStorage.getItem('lxps_nickname_' + window._gUserId) || '玩家';
+      const now = Date.now();
+      const TTL_MS = 30 * 1000;  // ★ 30 秒過期
+      try{
+        // 檢查最近是否有未過期的 pending 邀請給同一好友
+        const dupQ = query(
+          collection(_fbDb, 'worldBossInvites'),
+          where('fromUid', '==', window._gUserId),
+          where('toUid', '==', toUid),
+          where('status', '==', 'pending')
+        );
+        const dupSnap = await getDocs(dupQ);
+        let hasPending = false;
+        dupSnap.forEach(s => {
+          const d = s.data() || {};
+          if(d.expiresAt && d.expiresAt > now) hasPending = true;
+        });
+        if(hasPending){
+          _emit('onError', { msg: '已邀請過此玩家,請等待對方回應或 30 秒後再試' });
+          return false;
+        }
+        // 用客戶端產 id (timestamp + random) 寫入
+        const inviteId = 'inv_' + now + '_' + Math.random().toString(36).slice(2, 8);
+        const payload = {
+          fromUid: window._gUserId,
+          fromName: myName,
+          toUid: toUid,
+          toName: toName || '',
+          roomId: WB.roomId,
+          bossId: WB.lastSeenSnap?.meta?.bossId || 'vesuvius_fire_dragon',
+          createdAt: now,
+          expiresAt: now + TTL_MS,
+          status: 'pending'
+        };
+        await setDoc(doc(_fbDb, 'worldBossInvites', inviteId), payload);
+        return inviteId;
+      }catch(e){
+        console.error('[WBNet] sendInvite 失敗', e);
+        _emit('onError', { msg: '邀請失敗:' + (e.code || e.message) });
+        return false;
+      }
+    }
+
+    // ─── G-3. 訂閱「我」收到的待處理邀請 ────────────────────────
+    //   組件:左側邊邀請通知 UI 用,onSnapshot 即時跟進
+    //   回傳 unsubscribe fn
+    function subscribeInvites(onUpdate){
+      if(!window._gUserId) return null;
+      try{
+        const q = query(
+          collection(_fbDb, 'worldBossInvites'),
+          where('toUid', '==', window._gUserId),
+          where('status', '==', 'pending')
+        );
+        const unsub = onSnapshot(q, (snap) => {
+          const now = Date.now();
+          const list = [];
+          snap.forEach(s => {
+            const d = s.data() || {};
+            // 客戶端再過濾過期 (server 可能晚一步寫 'expired')
+            if(d.expiresAt && d.expiresAt > now){
+              list.push({
+                inviteId: s.id,
+                fromUid: d.fromUid,
+                fromName: d.fromName || '玩家',
+                roomId: d.roomId,
+                bossId: d.bossId,
+                createdAt: d.createdAt || 0,
+                expiresAt: d.expiresAt
+              });
+            }
+          });
+          // 由舊到新排(舊的先過期、先顯示先處理)
+          list.sort((a, b) => a.createdAt - b.createdAt);
+          if(typeof onUpdate === 'function') onUpdate(list);
+        }, (err) => {
+          console.warn('[WBNet] subscribeInvites 訂閱失敗', err);
+          if(typeof onUpdate === 'function') onUpdate([]);
+        });
+        return unsub;
+      }catch(e){
+        console.error('[WBNet] subscribeInvites 例外', e);
+        return null;
+      }
+    }
+
+    // ─── G-4. 回應邀請(接受/拒絕/忙碌) ─────────────────────────
+    //   action: 'accepted' | 'declined' | 'busy' | 'expired'
+    //   被邀請者按受/拒/沒按超時 → 寫對應狀態,邀請者端會收到 onSnapshot 更新
+    async function respondInvite(inviteId, action){
+      if(!inviteId) return false;
+      const validActions = ['accepted', 'declined', 'busy', 'expired'];
+      if(!validActions.includes(action)) return false;
+      try{
+        await updateDoc(doc(_fbDb, 'worldBossInvites', inviteId), {
+          status: action,
+          respondedAt: Date.now()
+        });
+        return true;
+      }catch(e){
+        console.warn('[WBNet] respondInvite 失敗', e);
+        return false;
+      }
+    }
+
+    // ─── G-5. 訂閱「我」發出的邀請(看對方回應) ──────────────
+    //   房主用:被邀請者按受/拒/超時時即時得知
+    function subscribeMyOutgoingInvites(onUpdate){
+      if(!window._gUserId) return null;
+      try{
+        const q = query(
+          collection(_fbDb, 'worldBossInvites'),
+          where('fromUid', '==', window._gUserId)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+          const now = Date.now();
+          const list = [];
+          snap.forEach(s => {
+            const d = s.data() || {};
+            list.push({
+              inviteId: s.id,
+              toUid: d.toUid,
+              toName: d.toName || '',
+              roomId: d.roomId,
+              status: d.status || 'pending',
+              createdAt: d.createdAt || 0,
+              expiresAt: d.expiresAt || 0,
+              respondedAt: d.respondedAt || 0,
+              expired: !!(d.expiresAt && d.expiresAt < now && d.status === 'pending')
+            });
+          });
+          list.sort((a, b) => b.createdAt - a.createdAt);
+          if(typeof onUpdate === 'function') onUpdate(list);
+        }, (err) => {
+          console.warn('[WBNet] subscribeMyOutgoingInvites 失敗', err);
+        });
+        return unsub;
+      }catch(e){
+        console.error('[WBNet] subscribeMyOutgoingInvites 例外', e);
+        return null;
+      }
+    }
+
     // ─── F. 對外 API ────────────────────────────────────────────
     window._wbNet = {
       createRoom, joinRoom, leaveRoom,
       setMyHero, toggleReady, startBattle,
       sendAction, hostPushBattleState, addContribution,
       sendQuickEmoji, QUICK_EMOJI,
+      // ★ FIX 20260517(m) — 公開房 + 邀請好友
+      listPublicRooms,
+      sendInvite,
+      subscribeInvites,
+      subscribeMyOutgoingInvites,
+      respondInvite,
       on: (e, cb) => { if(e in WB.listeners) WB.listeners[e] = cb; },
       off: (e) => { if(e in WB.listeners) WB.listeners[e] = null; },
       getRoomId:   () => WB.roomId,
@@ -45933,9 +46189,13 @@ function advStartBattle(){
         //   ★ FIX 20260517(j) — 仍被擋:再往上 14%(22% → 8%),讓眼睛/嘴巴落在順序條之上
         //   ★ FIX 20260517(l) — 8% 太上面臉部跑出螢幕了,拉回 25%:讓臉部落在
         //                        「定型文列下沿(33%) ~ 行動條上沿(55%)」夾層中心(44%)
+        //   ★ FIX 20260517(n) — 25% 還是被行動順序條擋住眼睛/嘴巴,再往上 15%(25% → 10%)
+        //                        ⚠ 之前(l) 抱怨臉「跑出螢幕外」其實是「BOSS 隱形卡定位偏」造成
+        //                        傷害跳出位置跑掉,實際背景圖在 8% 時眼睛/嘴巴是有露出的。
+        //                        本次:背景往上但隱形 BOSS 卡 top:32% 維持不動,讓傷害跳出位置不變
         //   ⚠ 使用者的「往上移」= 螢幕視覺往上 = CSS Y% 數值「減少」(兩者方向相反!)
         _bb.style.backgroundSize = 'auto 100%, auto 120%';
-        _bb.style.backgroundPosition = 'center, center 25%';
+        _bb.style.backgroundPosition = 'center, center 10%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標
