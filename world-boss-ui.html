@@ -407,6 +407,197 @@
     background:#555;border-color:#777;color:#aaa;
     cursor:not-allowed;box-shadow:none;opacity:0.6;
   }
+
+  /* ════════════════════════════════════════════════════════════════════
+   * ★ FIX 20260517 — 世界 BOSS 討伐戰首頁:全寬框架 + 字體放大 200%
+   * ────────────────────────────────────────────────────────────────────
+   * 只針對 #wb-entry-overlay (討伐戰首頁),不影響其他 overlay (lobby/result)
+   * ────────────────────────────────────────────────────────────────────
+   *   1) .wb-card 寬度從 max-width:900px 改為全畫面寬 (100% - 邊距)
+   *   2) 所有文字尺寸 ×2 (用 !important 覆蓋原規則)
+   *   3) padding / gap 適度同步放大,避免內容太擠
+   * ════════════════════════════════════════════════════════════════════ */
+  #wb-entry-overlay { padding: 40px 24px; }
+  #wb-entry-overlay > .wb-card{
+    max-width: none !important;
+    width: calc(100% - 8px);
+    margin: 0 auto;
+    padding: 48px 56px;
+    border-radius: 22px;
+  }
+  /* 標題群 ──────────────────────────────── */
+  #wb-entry-overlay .wb-title{
+    font-size: 84px !important;      /* 42 → 84 */
+    letter-spacing: 6px;
+    margin-bottom: 24px;
+  }
+  #wb-entry-overlay .wb-subtitle{
+    font-size: 32px !important;      /* 16 → 32 */
+    letter-spacing: 4px;
+    margin-bottom: 44px;
+  }
+  /* 關閉按鈕 (✕) 同步放大 ──────────────── */
+  #wb-entry-overlay .wb-close-btn{
+    width: 64px; height: 64px;
+    font-size: 36px;
+    top: 20px; right: 20px;
+  }
+  /* 休戰期狀態看板 ─────────────────────── */
+  #wb-entry-overlay .wb-ceasefire-banner{
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    border-radius: 20px;
+  }
+  #wb-entry-overlay .wb-ceasefire-banner .wb-cf-ico{ font-size: 72px !important; }
+  #wb-entry-overlay .wb-ceasefire-banner .wb-cf-title{
+    font-size: 40px !important;      /* 20 → 40 */
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+  #wb-entry-overlay .wb-ceasefire-banner .wb-cf-sub{
+    font-size: 28px !important;      /* 14 → 28 */
+  }
+  /* 管理員控制面板 ─────────────────────── */
+  #wb-entry-overlay .wb-admin-ctrl-panel{
+    padding: 28px 32px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+  }
+  #wb-entry-overlay .wb-admin-ctrl-panel h4{
+    font-size: 36px !important;
+    margin-bottom: 18px;
+    letter-spacing: 2px;
+  }
+  #wb-entry-overlay .wb-admin-state-row{
+    font-size: 28px !important;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  #wb-entry-overlay .wb-admin-ctrl-panel label{
+    font-size: 26px !important;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  #wb-entry-overlay .wb-admin-ctrl-panel input,
+  #wb-entry-overlay .wb-admin-ctrl-panel textarea{
+    font-size: 26px !important;
+    padding: 12px 16px;
+  }
+  #wb-entry-overlay .wb-admin-ctrl-btn{
+    font-size: 28px !important;
+    padding: 14px 20px;
+    letter-spacing: 2px;
+  }
+  #wb-entry-overlay .wb-admin-ctrl-feedback{ font-size: 24px !important; }
+  #wb-entry-overlay .wb-admin-cur-updatedby{ font-size: 22px !important; }
+  /* 龍王祝福橫幅 ───────────────────────── */
+  #wb-entry-overlay #wb-blessing-banner{
+    padding: 24px 32px;
+    margin-bottom: 28px;
+    border-radius: 20px;
+  }
+  #wb-entry-overlay #wb-blessing-banner > div > div:first-child{
+    font-size: 84px !important;      /* 🐉✨ 42 → 84 */
+  }
+  #wb-entry-overlay #wb-blessing-banner > div > div:nth-child(2) > div{
+    font-size: 36px !important;      /* 18 → 36 */
+  }
+  /* BOSS 預覽卡 ─────────────────────────── */
+  #wb-entry-overlay .wb-boss-preview{
+    padding: 48px 56px;
+    min-height: 480px;
+    border-radius: 20px;
+    margin-top: 36px;
+  }
+  #wb-entry-overlay .wb-boss-name{
+    font-size: 64px !important;      /* 32 → 64 */
+    letter-spacing: 4px;
+    margin-bottom: 24px;
+  }
+  #wb-entry-overlay .wb-boss-preview .wb-boss-name + div{
+    font-size: 36px !important;      /* 18 → 36 */
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  #wb-entry-overlay .wb-boss-stats{
+    font-size: 32px !important;      /* 16 → 32 */
+    gap: 18px;
+  }
+  #wb-entry-overlay .wb-boss-stats span{
+    padding: 10px 22px;
+    border-radius: 12px;
+  }
+  /* 大按鈕區 (4 人連線 / 單人練習 等) ────── */
+  #wb-entry-overlay .wb-entry-btn-row{
+    gap: 28px;
+    margin-top: 40px;
+  }
+  #wb-entry-overlay .wb-entry-big-btn{
+    padding: 40px 28px;
+    min-width: 360px;
+    border-radius: 20px;
+  }
+  #wb-entry-overlay .wb-entry-big-btn .ico{
+    font-size: 84px !important;      /* 42 → 84 */
+    margin-bottom: 14px;
+  }
+  #wb-entry-overlay .wb-entry-big-btn .ttl{
+    font-size: 40px !important;      /* 20 → 40 */
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  #wb-entry-overlay .wb-entry-big-btn .desc{
+    font-size: 26px !important;      /* 13 → 26 */
+    line-height: 1.55;
+  }
+  /* 邀請碼輸入區 ────────────────────────── */
+  #wb-entry-overlay .wb-code-input{
+    font-size: 64px !important;      /* 32 → 64 */
+    letter-spacing: 18px;
+    width: 480px;
+    padding: 18px 24px;
+  }
+  #wb-entry-overlay .wb-submit-btn{
+    font-size: 32px !important;      /* 16 → 32 */
+    padding: 16px 48px;
+    letter-spacing: 3px;
+    margin-top: 22px;
+  }
+  /* 說明資訊框 ─────────────────────────── */
+  #wb-entry-overlay .wb-info-box{
+    font-size: 26px !important;      /* 13 → 26 */
+    padding: 22px 28px;
+    margin-top: 32px;
+    line-height: 1.7;
+  }
+  /* 通用:任何沒明確設 font-size 的小段文字也跟著放大 (兜底) */
+  #wb-entry-overlay > .wb-card > * { font-size: 26px; }
+
+  /* ★ 進一步兜底:用屬性選擇器把 inline style 的小字 (10-18px) 強制放大 ×2
+     因為 inline style 比 CSS class 優先,必須用 !important 才能覆蓋 */
+  #wb-entry-overlay [style*="font-size:10px"],
+  #wb-entry-overlay [style*="font-size: 10px"]{ font-size: 20px !important; }
+  #wb-entry-overlay [style*="font-size:11px"],
+  #wb-entry-overlay [style*="font-size: 11px"]{ font-size: 22px !important; }
+  #wb-entry-overlay [style*="font-size:12px"],
+  #wb-entry-overlay [style*="font-size: 12px"]{ font-size: 24px !important; }
+  #wb-entry-overlay [style*="font-size:13px"],
+  #wb-entry-overlay [style*="font-size: 13px"]{ font-size: 26px !important; }
+  #wb-entry-overlay [style*="font-size:14px"],
+  #wb-entry-overlay [style*="font-size: 14px"]{ font-size: 28px !important; }
+  #wb-entry-overlay [style*="font-size:15px"],
+  #wb-entry-overlay [style*="font-size: 15px"]{ font-size: 30px !important; }
+  #wb-entry-overlay [style*="font-size:16px"],
+  #wb-entry-overlay [style*="font-size: 16px"]{ font-size: 32px !important; }
+  #wb-entry-overlay [style*="font-size:18px"],
+  #wb-entry-overlay [style*="font-size: 18px"]{ font-size: 36px !important; }
+  #wb-entry-overlay [style*="font-size:20px"],
+  #wb-entry-overlay [style*="font-size: 20px"]{ font-size: 40px !important; }
+  #wb-entry-overlay [style*="font-size:32px"],
+  #wb-entry-overlay [style*="font-size: 32px"]{ font-size: 64px !important; }
+  #wb-entry-overlay [style*="font-size:42px"],
+  #wb-entry-overlay [style*="font-size: 42px"]{ font-size: 84px !important; }
 </style>
 
 <!-- 入口 overlay -->
@@ -5085,6 +5276,35 @@
       const _battleArea = document.getElementById('wb-battle-area');
       if(_battleArea) _battleArea.classList.remove('show');
     }catch(_){}
+
+    // ★ FIX 20260517 — 關閉所有會擋住戰場的主程式 overlay
+    //   原本 bug:advStartBattle() 被呼叫後 #gc 應該露出,但 #overlay (首頁封面)
+    //   z-index:500 inset:0 蓋在 #gc 內部,把整個戰場(玩家英雄卡/操作按鈕)擋掉
+    //   主程式正常路徑會由 _heroPickSelected → openHeroPickOverlay 先隱藏 #overlay,
+    //   世界 BOSS 單人練習不走那條路徑,所以這裡必須手動關
+    try{
+      // 1. 首頁封面(「小英雄大對抗」橫幅)
+      const _homeOv = document.getElementById('overlay');
+      if(_homeOv) _homeOv.style.display = 'none';
+      // 2. 冒險選關頁
+      const _advOv = document.getElementById('adventure-overlay');
+      if(_advOv){
+        _advOv.style.display = 'none';
+        _advOv.classList.remove('show');
+      }
+      // 3. 結算 overlay 防殘留
+      const _resOv = document.getElementById('result-overlay');
+      if(_resOv) _resOv.style.display = 'none';
+      // 4. 確保 #gc 戰場容器可見並標記為戰鬥模式
+      const _gcEl = document.getElementById('gc');
+      if(_gcEl){
+        _gcEl.style.display = 'flex';
+        _gcEl.classList.add('adv-battle');
+      }
+      console.log('[WB-Solo v4] ✅ 已關閉首頁封面/冒險頁,確保 #gc 戰場露出');
+    }catch(_e){
+      console.warn('[WB-Solo v4] 關閉主程式 overlay 失敗', _e);
+    }
 
     // ── 建立世界戰專屬 overlay(fixed 疊在 #gc 上面) ─────────────────
     _wbBuildAdvBattleOverlay();
