@@ -2329,19 +2329,11 @@
     background:rgba(168,132,255,0.35);transform:translateX(2px);
     box-shadow:0 0 12px rgba(168,132,255,0.5);
   }
-  /* ★ FIX 20260517(b) — BUG 回報 / 教學按鈕在世界 BOSS 戰時靠近 emoji bar 旁邊(第二欄),不擋住中央 */
+  /* ★ FIX 20260517(d) — 世界 BOSS 戰時:教學鈕隱藏(打到世界 BOSS 已不需要教學),
+                          BUG 回報維持主程式預設位置(不再強制 left:60) */
   /*   只在 worldboss 戰時生效:body.wb-in-worldboss-battle */
-  body.wb-in-worldboss-battle #adv-bug-report-battle-btn{
-    left: 60px !important;  /* 8 → 60,挪到 emoji bar 右側 */
-    bottom: 60px !important; /* 152 → 60,更靠下 */
-    font-size: 13px !important;
-    padding: 6px 4px !important;
-  }
   body.wb-in-worldboss-battle #adv-tut-btn{
-    left: 60px !important;  /* 同上 */
-    bottom: 8px !important;
-    font-size: 16px !important;
-    padding: 8px 5px !important;
+    display: none !important;
   }
 </style>
 
@@ -4698,27 +4690,42 @@
 
   // BOSS 開戰前先給全員出題(只在回合 1 開戰時跑一次)
   window._wbStartBossOpening = async function(){
+    console.log('[WB-Opening] 進入開戰流程');
     // 1. 咆哮
     if(typeof window._wbBossOpeningRoar === 'function'){
+      console.log('[WB-Opening] 播放咆哮');
       window._wbBossOpeningRoar();
+    }else{
+      console.warn('[WB-Opening] _wbBossOpeningRoar 不存在,跳過咆哮');
     }
     // 等咆哮播完 3.5 秒
     await new Promise(r => setTimeout(r, 3500));
+    console.log('[WB-Opening] 咆哮結束,準備開戰題');
 
     // 2. BOSS 給全員出 1 題(集體答)
     // 為了簡化,只跑一題給「房主」答,代表全體
     //   答對 → 全體 burst+1
     //   答錯 → 全體受 5% maxHp 傷害(無視免傷,強制扣血)
-    const q = (typeof window._wbPickRandomQuestion === 'function') ? window._wbPickRandomQuestion() : null;
+    let q = (typeof window._wbPickRandomQuestion === 'function') ? window._wbPickRandomQuestion() : null;
+    // ★ FIX 20260517(d) — 題庫抽不到時的 fallback,確保開戰題一定能顯示
     if(!q){
-      console.warn('[WB] 開戰題無法取得,跳過');
-      return;
+      console.warn('[WB-Opening] 題庫無法取得(可能 adv_quiz_db.js 未載入),用 fallback 題');
+      q = {
+        q: '🐉 維蘇威火山龍王曾在公元 79 年掩埋哪座古城?',
+        options: ['龐貝城', '亞特蘭提斯', '巴比倫', '特洛伊'],
+        a: '龐貝城',
+        subject: '歷史常識(備用題)',
+      };
     }
+    console.log('[WB-Opening] 顯示開戰題:', q.q || q.question);
     // ★ FIX 20260516 — 真的等玩家答完開戰題才回傳 Promise,
     //   否則 _wbUiSoloTest 的 .then() 會在玩家還沒按按鈕時就觸發 BOSS 第一回合,
     //   導致畫面卡在「BOSS 的回合」永遠輪不到玩家
     return new Promise(resolve => {
-      _wbShowBossOpeningQuiz(q, resolve);
+      _wbShowBossOpeningQuiz(q, function(){
+        console.log('[WB-Opening] 玩家已答完開戰題,進入戰鬥');
+        resolve();
+      });
     });
   };
 
@@ -4847,12 +4854,29 @@
   }
 
   // 在指定 slot 的角色卡頂端浮現對話泡泡(3.5 秒後消失)
+  // ★ FIX 20260517(d) — 雙路徑支援:
+  //   (1) 舊版自製戰鬥畫面:#wb-battle-heroes-row .wb-hero-battle-card[slotIdx]
+  //   (2) v4 主程式 #gc 戰鬥畫面:#z1 #row1 .card[slotIdx](世界 BOSS v4 走這條)
+  //   原本只支援 (1),v4 模式下泡泡完全顯示不出來 → 按表情按鈕沒反應
   function _wbShowCardBubble(slotIdx, text){
+    let card = null;
+    // (1) 舊版自製戰鬥畫面
     const heroRow = document.getElementById('wb-battle-heroes-row');
-    if(!heroRow) return;
-    const cards = heroRow.querySelectorAll('.wb-hero-battle-card');
-    const card = cards[slotIdx];
+    if(heroRow){
+      const cards = heroRow.querySelectorAll('.wb-hero-battle-card');
+      card = cards[slotIdx] || null;
+    }
+    // (2) v4 主程式 #gc:用 body.wb-in-worldboss-battle 判斷
+    if(!card && document.body.classList.contains('wb-in-worldboss-battle')){
+      const z1Cards = document.querySelectorAll('#gc.adv-battle #z1 #row1 .card');
+      card = z1Cards[slotIdx] || null;
+    }
     if(!card) return;
+    // 確保 card 是 relative,泡泡才能用 absolute 定位
+    try{
+      const cs = getComputedStyle(card);
+      if(cs.position === 'static') card.style.position = 'relative';
+    }catch(_){}
     // 移除舊泡泡
     const oldBubble = card.querySelector('.wb-card-bubble');
     if(oldBubble) oldBubble.remove();
@@ -5369,7 +5393,23 @@
       _listeners: {},
       on: function(e, cb){ this._listeners[e] = cb; },
       off: function(e){ this._listeners[e] = null; },
-      sendQuickEmoji: () => {},
+      // ★ FIX 20260517(d) — 練習模式快捷表情:在自己 slot(idx 0)顯示氣泡
+      //   原本是 no-op,玩家按按鈕完全沒反應
+      sendQuickEmoji: function(key){
+        const TEXT = {
+          cheer: '💪 加油!', burst: '💥 用爆發!', heal: '🩹 補我血!',
+          wait: '⏸ 等一下', strong: '🔥 太強了!', gg: '😭 GG',
+          ans_a: '🅰 我覺得答案是 A', ans_b: '🅱 我覺得答案是 B',
+          ans_c: '🅲 我覺得答案是 C', ans_d: '🅳 我覺得答案是 D',
+          ans_idk: '🤔 我也不確定...', cheerup: '💪 加油你可以的!',
+        };
+        const text = TEXT[key] || ('💬 ' + key);
+        try{
+          if(typeof window._wbShowCardBubble === 'function'){
+            window._wbShowCardBubble(0, text);
+          }
+        }catch(_){}
+      },
       QUICK_EMOJI: realWbNet ? realWbNet.QUICK_EMOJI : {},
       leaveRoom: async function(){
         if(window._wbSoloPracticeMode){
@@ -5460,21 +5500,32 @@
     if(!document.getElementById('wb-solo-cur-dmg-bar')){
       const dmgBar = document.createElement('div');
       dmgBar.id = 'wb-solo-cur-dmg-bar';
-      // ★ FIX 20260517 — 從「上方置中(top:90px;left:50%)」改為「左側、相剋盤之上」
-      //   相剋盤 #elem-wheel 是 #gc 內 left:8px;top:50%,實際螢幕位置因 #gc 縮放而變
-      //   保險作法:固定 left:8px + 約 60% viewport 高(剛好在縮放後相剋盤上方一點)
-      //   寬度收斂為直排小尺寸,不再橫向 200px+ 撐開
-      dmgBar.style.cssText = 'position:fixed;left:8px;top:calc(50% - 110px);'
-        + 'z-index:601;background:rgba(20,40,30,0.95);border:2px solid #5dcaa5;'
-        + 'border-radius:12px;padding:8px 10px;'
+      // ★ FIX 20260517(d) — 移到 #gc 內,貼在順序條左邊(元素環右邊夾層)
+      //   原因:#turn-order-bar 是 #gc 內 absolute,left:50%/top:50%/translate(-50%,-50%) → 畫面正中
+      //         #elem-wheel    是 #gc 內 absolute,left:8px/top:50% width:140px → 左中
+      //         所以「元素環右邊、順序條左邊」的夾層 ≈ left:160px, top:50% translateY(-50%)
+      //   做法:dmgBar 也 append 到 #gc 內,用 absolute 同樣對齊 top:50%,水平錨左邊 160px
+      //         如此 #gc 縮放時 dmgBar 也跟著縮,跟順序條/元素環相對位置始終一致
+      dmgBar.style.cssText = 'position:absolute;left:160px;top:50%;'
+        + 'transform:translateY(-50%);'
+        + 'z-index:6;'  // 比順序條 z:5 稍高,避免被順序條的 chip 蓋住
+        + 'background:rgba(20,40,30,0.92);border:2px solid #5dcaa5;'
+        + 'border-radius:12px;padding:8px 12px;'
         + 'display:flex;flex-direction:column;align-items:center;gap:4px;'
-        + 'width:78px;'  // 與直排 emoji bar 寬度相近
-        + 'box-shadow:0 0 24px rgba(93,202,165,0.5);'
+        + 'min-width:78px;'
+        + 'box-shadow:0 0 18px rgba(93,202,165,0.45);'
+        + 'pointer-events:auto;'
         + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
       dmgBar.innerHTML =
-        '<span style="font-size:11px;color:#5dcaa5;font-weight:700;letter-spacing:0.5px;line-height:1.2;text-align:center;">🧪 本場<br>總傷</span>'
-        + '<span id="wb-solo-cur-dmg-display" style="font-size:18px;color:#ffe066;font-weight:900;letter-spacing:0.5px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
-      document.body.appendChild(dmgBar);
+        '<span style="font-size:12px;color:#5dcaa5;font-weight:700;letter-spacing:0.5px;line-height:1.2;text-align:center;">📜 本場<br>總傷</span>'
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:20px;color:#ffe066;font-weight:900;letter-spacing:0.5px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
+      // ★ append 到 #gc(若存在),否則退回 body
+      const _gcForDmg = document.getElementById('gc');
+      if(_gcForDmg){
+        _gcForDmg.appendChild(dmgBar);
+      }else{
+        document.body.appendChild(dmgBar);
+      }
     }
 
     // ★ FIX 20260517(b) — BGM 切換從 advStartBattle 前移到後
@@ -5653,7 +5704,14 @@
           opacity: 0 !important; pointer-events: auto !important;
           transform: scale(0.001) !important;
           margin: 0 !important; padding: 0 !important;
-          position: absolute !important; left: 50% !important; top: 0 !important;
+          /* ★ FIX 20260517(e) — 從 absolute top:0 改 fixed top:35% left:50%
+             理由:cardRect(boss) 會用這張隱形 1px 卡的 getBoundingClientRect 算特效位置,
+             原本 top:0 → 傷害數字/banner/粒子全跑到畫面最頂端被 HP 條蓋掉,
+             改成視口中央偏上(對應龍王胸口位置)後,bannerFX/spawnParticles/flashCard 全部自動對齊
+             ★ FIX 20260517(e) v2 — BOSS 圖上移到 backgroundPosition center 35% 後,
+             這張隱形卡也從 42% 跟著移到 35% 才會繼續對齊龍王中心 */
+          position: fixed !important;
+          left: 50% !important; top: 35% !important;
         }
         /* ★ FIX 20260517(b) — 英雄卡貼底:#z1 改 flex-end + brow align-items:flex-end + 透明背景讓龍王透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 {
@@ -5669,6 +5727,20 @@
         }
         /* z1 的 zone-label(背景大字 "你方")也隱藏,讓龍王全圖透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 .zone-label { display: none !important; }
+
+        /* ★ FIX 20260517(d) — 行動順序條改成不透明,加深背景與邊框,讓玩家看清楚 */
+        body.wb-in-worldboss-battle #turn-order-bar {
+          background: rgba(10,8,20,0.92) !important;
+          border: 2px solid rgba(180,140,255,0.55) !important;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.7),
+                      0 0 18px rgba(140,100,220,0.35) !important;
+          backdrop-filter: blur(8px) !important;
+        }
+        /* 順序條內部各 chip 也加底,免得文字疊到龍王背景看不清 */
+        body.wb-in-worldboss-battle #turn-order-bar .tob-item,
+        body.wb-in-worldboss-battle #turn-order-bar .tob-chip {
+          background: rgba(20,15,40,0.88) !important;
+        }
       `;
       document.head.appendChild(_hideStyle);
     }
@@ -5789,96 +5861,99 @@
       + 'display:flex;align-items:center;justify-content:center;padding:20px;'
       + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
       + 'cursor:pointer;';
+    // ★ FIX 20260517(d) — 字體全部放大 200%(13/14/15/17→26/28/30/34px,標題 26→52px),
+    //   彈窗可捲動(max-height:88vh + overflow-y:auto 本來就有),max-width 680→900px,
+    //   讓字大了之後不會擠到一團
     ov.innerHTML = `
       <div style="
-        max-width:680px;width:100%;max-height:88vh;overflow-y:auto;
+        max-width:900px;width:100%;max-height:88vh;overflow-y:auto;
         background:linear-gradient(180deg,#1a0a08 0%,#280f08 50%,#1a0a08 100%);
-        border:3px solid #ff6644;border-radius:18px;padding:24px 28px;
+        border:3px solid #ff6644;border-radius:18px;padding:32px 36px;
         box-shadow:0 0 60px rgba(255,80,40,0.5);color:#ffd6c2;
         cursor:auto;">
 
-        <div style="display:flex;gap:20px;align-items:center;margin-bottom:20px;
-          padding-bottom:16px;border-bottom:2px solid rgba(255,100,60,0.3);">
+        <div style="display:flex;gap:28px;align-items:center;margin-bottom:24px;
+          padding-bottom:20px;border-bottom:2px solid rgba(255,100,60,0.3);">
           <img src="${bossUrl}" alt="${bossName}"
-            style="width:120px;height:120px;object-fit:cover;border-radius:50%;
-            border:3px solid #ff8855;box-shadow:0 0 20px rgba(255,120,60,0.6);flex-shrink:0;"
+            style="width:180px;height:180px;object-fit:cover;border-radius:50%;
+            border:4px solid #ff8855;box-shadow:0 0 20px rgba(255,120,60,0.6);flex-shrink:0;"
             onerror="this.style.display='none';">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:26px;font-weight:900;color:#ffaa66;letter-spacing:2px;
+            <div style="font-size:52px;font-weight:900;color:#ffaa66;letter-spacing:3px;
               text-shadow:0 0 12px rgba(255,140,60,0.7);">${bossName}</div>
-            <div style="font-size:13px;color:#aac;margin-top:6px;letter-spacing:1px;">
+            <div style="font-size:26px;color:#aac;margin-top:10px;letter-spacing:1.5px;">
               地心深處沉睡千年的炎之巨龍
             </div>
-            <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;">
-              <span style="font-size:13px;color:#ff8855;">❤ HP ${bossHp.toLocaleString()}</span>
-              <span style="font-size:13px;color:#ff8855;">⚔ ATK ${bossAtk}</span>
-              <span style="font-size:13px;color:#ff8855;">✨ SP ${bossSp}</span>
-              <span style="font-size:13px;color:#ff8855;">💨 SPD ${bossSpd}</span>
+            <div style="display:flex;gap:22px;margin-top:14px;flex-wrap:wrap;">
+              <span style="font-size:26px;color:#ff8855;">❤ HP ${bossHp.toLocaleString()}</span>
+              <span style="font-size:26px;color:#ff8855;">⚔ ATK ${bossAtk}</span>
+              <span style="font-size:26px;color:#ff8855;">✨ SP ${bossSp}</span>
+              <span style="font-size:26px;color:#ff8855;">💨 SPD ${bossSpd}</span>
             </div>
           </div>
         </div>
 
-        <h3 style="font-size:17px;color:#ffd966;margin:14px 0 8px;letter-spacing:1.5px;">
+        <h3 style="font-size:34px;color:#ffd966;margin:18px 0 12px;letter-spacing:2px;">
           🛡 HP 階段護盾(每階啟動 4 元素護盾)
         </h3>
-        <ul style="font-size:14px;line-height:1.8;padding-left:22px;color:#e8d0b8;">
+        <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>HP 80%:第 1 層護盾啟動(火 / 風 / 土 / 暗)</li>
           <li>HP 60%:第 2 層護盾啟動</li>
           <li>HP 40%:第 3 層護盾啟動</li>
           <li>HP 20%:第 4 層護盾啟動</li>
           <li>HP 1%:最終護盾啟動(最後一道防線)</li>
         </ul>
-        <p style="font-size:13px;color:#aac;margin-top:6px;">
+        <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
           用<b style="color:#5dcaa5;">破盾元素(水 / 草 / 土 / 光)</b>攻擊可削減對應護盾,
           炎之意志減傷至單次最多 1% HP。
         </p>
 
-        <h3 style="font-size:17px;color:#ffd966;margin:18px 0 8px;letter-spacing:1.5px;">
+        <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
           🔥 BOSS 技能
         </h3>
-        <div style="display:grid;grid-template-columns:1fr;gap:10px;">
-          <div style="background:rgba(80,30,20,0.5);padding:10px 14px;border-radius:10px;
-            border-left:4px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:15px;">🔥 S1 業火灼燒</div>
-            <div style="font-size:13px;color:#e8d0b8;margin-top:4px;line-height:1.6;">
+        <div style="display:grid;grid-template-columns:1fr;gap:14px;">
+          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
+            border-left:6px solid #ff8855;">
+            <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               對全體玩家造成 SP × 100% 火焰傷害,並附加燃燒 2 回合(每回合受 6 點固定傷害)
             </div>
           </div>
-          <div style="background:rgba(80,30,20,0.5);padding:10px 14px;border-radius:10px;
-            border-left:4px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:15px;">🐉 S2 龍吼震懾</div>
-            <div style="font-size:13px;color:#e8d0b8;margin-top:4px;line-height:1.6;">
+          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
+            border-left:6px solid #ff8855;">
+            <div style="font-weight:800;color:#ff9966;font-size:30px;">🐉 S2 龍吼震懾</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               對全體玩家造成 SP × 75% 無屬性傷害,50% 機率眩暈 1 回合
             </div>
           </div>
-          <div style="background:rgba(80,30,20,0.5);padding:10px 14px;border-radius:10px;
-            border-left:4px solid #ff4422;">
-            <div style="font-weight:800;color:#ff4422;font-size:15px;">⚡ 爆發 天崩之炎(第 10 回合固定釋放)</div>
-            <div style="font-size:13px;color:#e8d0b8;margin-top:4px;line-height:1.6;">
+          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
+            border-left:6px solid #ff4422;">
+            <div style="font-weight:800;color:#ff4422;font-size:30px;">⚡ 爆發 天崩之炎(第 10 回合固定釋放)</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               對全體玩家造成<b style="color:#ff5544;">當前 HP 90%</b>的傷害,並附加燃燒 3 回合。
               有護盾者傷害減半,無敵者擋下。<b>務必在第 9 回合補滿血!</b>
             </div>
           </div>
-          <div style="background:rgba(80,30,20,0.5);padding:10px 14px;border-radius:10px;
-            border-left:4px solid #aa3322;">
-            <div style="font-weight:800;color:#ff4422;font-size:15px;">💥 第 20 回合戰場崩毀</div>
-            <div style="font-size:13px;color:#e8d0b8;margin-top:4px;line-height:1.6;">
+          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
+            border-left:6px solid #aa3322;">
+            <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 第 20 回合戰場崩毀</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               戰場被火山灰掩埋,全員強制陣亡。<b>必須在 19 回合內擊敗 BOSS!</b>
             </div>
           </div>
         </div>
 
-        <h3 style="font-size:17px;color:#ffd966;margin:18px 0 8px;letter-spacing:1.5px;">
+        <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
           ⚔ 攻略提示
         </h3>
-        <ul style="font-size:14px;line-height:1.8;padding-left:22px;color:#e8d0b8;">
+        <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 草 / 土 / 光</b>全部 4 種破盾屬性</li>
           <li>BOSS 單次受傷最多 1% HP,要靠累積打掉</li>
           <li>第 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
           <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息</li>
         </ul>
 
-        <div style="text-align:center;margin-top:22px;font-size:12px;color:#888;letter-spacing:1px;">
+        <div style="text-align:center;margin-top:28px;font-size:24px;color:#888;letter-spacing:2px;">
           點任意位置關閉
         </div>
       </div>

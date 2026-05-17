@@ -17855,6 +17855,46 @@ function doDmg(target, rawDmg, opts={}){
   const old=target.curHp;
   target.curHp=Math.max(0,target.curHp-dmg);
 
+  // ★ FIX 20260517(e) — 維蘇威 BOSS 受傷震動:對 #adv-battle-bg 套一個短促 shake 動畫
+  //   時機:剛扣完血,實際傷害 dmg>0(炎之意志可能削成 0 — 不震)
+  //   做法:加 .wb-boss-bg-shake class 300ms 後自動移除,
+  //         同時注入 keyframes(若還沒注入過)
+  //   要點:震動是 transform-based,所以暫時關閉與 hover 光暈的 filter 衝突 — 用 will-change 提示
+  if(target && target.name === '維蘇威火山龍王' && dmg > 0
+     && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+    try{
+      const _bbEl = document.getElementById('adv-battle-bg');
+      if(_bbEl){
+        // 注入 keyframes(只一次)
+        if(!document.getElementById('wb-boss-bg-shake-style')){
+          const _sks = document.createElement('style');
+          _sks.id = 'wb-boss-bg-shake-style';
+          _sks.textContent =
+            '@keyframes wbBossBgShake{'
+            + '0%,100%{transform:translate(0,0);}'
+            + '15%{transform:translate(-6px,3px);}'
+            + '30%{transform:translate(5px,-4px);}'
+            + '45%{transform:translate(-4px,2px);}'
+            + '60%{transform:translate(4px,-2px);}'
+            + '75%{transform:translate(-2px,1px);}'
+            + '}'
+            + '#adv-battle-bg.wb-boss-bg-shake{'
+            + 'animation:wbBossBgShake 0.32s ease-out;'
+            + 'will-change:transform;'
+            + '}';
+          document.head.appendChild(_sks);
+        }
+        // 重啟動畫:先移再加(forces reflow 才能重播)
+        _bbEl.classList.remove('wb-boss-bg-shake');
+        void _bbEl.offsetWidth;
+        _bbEl.classList.add('wb-boss-bg-shake');
+        setTimeout(function(){
+          try{ _bbEl.classList.remove('wb-boss-bg-shake'); }catch(_){}
+        }, 350);
+      }
+    }catch(_wbShakeErr){}
+  }
+
   // ★ v1.0.20260517 — 維蘇威火山龍王扣血後觸發護盾啟動檢查
   if(target && target.name === '維蘇威火山龍王'
      && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
@@ -40334,6 +40374,15 @@ function exitAdventureMode(){
     // ★ FIX 20260517(b) — 移除 BOSS 點擊 layer
     const _wbClickLayer = document.getElementById('wb-boss-click-layer');
     if(_wbClickLayer) _wbClickLayer.remove();
+    // ★ FIX 20260517(e) — 清 click layer 的 sync timer + BOSS 圖光暈 class
+    try{
+      if(window._wbBossClkSyncTimer){
+        clearInterval(window._wbBossClkSyncTimer);
+        window._wbBossClkSyncTimer = null;
+      }
+      const _bgEl = document.getElementById('adv-battle-bg');
+      if(_bgEl) _bgEl.classList.remove('wb-boss-bg-glow');
+    }catch(_){}
     // 7. 移除 worldboss body class(讓主程式 BOSS 卡顯示規則還原)
     document.body.classList.remove('wb-in-worldboss-battle');
     // 8. 清世界 BOSS 模式旗標 (避免下次進冒險誤判為世界 BOSS)
@@ -45842,8 +45891,11 @@ function advStartBattle(){
           + ' rgba(0,0,0,0) 88%, rgba(0,0,0,0.4) 96%, #000 100%),'
           // 維蘇威龍王主圖(等比 contain,高度填滿視口)
           + `url("${_wbBgUrl}")`;
-        _bb.style.backgroundSize = 'auto 100%, auto 100%';
-        _bb.style.backgroundPosition = 'center, center';
+        // ★ FIX 20260517(e) — BOSS 圖往上移 15%(50% → 35%)+ 放大 20%(高 100% → 120%)
+        //   兩層 backgroundSize/backgroundPosition 用逗號分隔分別套到漸層層和龍王圖層
+        //   漸層維持 100%+center,龍王圖 120% + center 35%
+        _bb.style.backgroundSize = 'auto 100%, auto 120%';
+        _bb.style.backgroundPosition = 'center, center 35%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標
@@ -45854,12 +45906,27 @@ function advStartBattle(){
         try{ const _oldCl = document.getElementById('wb-boss-click-layer'); if(_oldCl) _oldCl.remove(); }catch(_){}
         const _clk = document.createElement('div');
         _clk.id = 'wb-boss-click-layer';
-        // 範圍涵蓋畫面中央的龍王(避開左右兩側英雄卡與 UI sidebar),
-        // 用 left:15% right:25% top:5% bottom:25% 大致對應龍王圖中央區域
+        // ★ FIX 20260517(e) — 改用 SVG 劍游標(data URI),hover 時觸發 BOSS 圖紅色呼吸光暈
+        //   劍圖示:32x32 視口,劍尖朝左上(類似攻擊光標),熱點 (4,4) 對齊劍尖
+        //   注意:游標 SVG 必須含 fill/stroke 否則某些瀏覽器不顯示
+        const _swordCursorSvg =
+          '%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22 viewBox=%220 0 36 36%22%3E'
+          + '%3Cdefs%3E%3Cfilter id=%22s%22%3E%3CfeDropShadow dx=%220%22 dy=%220%22 stdDeviation=%221.5%22 flood-color=%22%23ff3322%22/%3E%3C/filter%3E%3C/defs%3E'
+          // 劍刃(銀白)
+          + '%3Cpath d=%22M3 3 L8 3 L26 21 L21 26 L3 8 Z%22 fill=%22%23e0e8f0%22 stroke=%22%23222%22 stroke-width=%221%22 filter=%22url(%23s)%22/%3E'
+          // 劍刃中線
+          + '%3Cline x1=%225%22 y1=%225%22 x2=%2223%22 y2=%2223%22 stroke=%22%2399aabb%22 stroke-width=%220.8%22/%3E'
+          // 握把(紅+金)
+          + '%3Crect x=%2222%22 y=%2222%22 width=%229%22 height=%224%22 transform=%22rotate(45 26.5 24)%22 fill=%22%23b8860b%22 stroke=%22%23222%22 stroke-width=%221%22/%3E'
+          + '%3Crect x=%2226%22 y=%2226%22 width=%226%22 height=%223%22 transform=%22rotate(45 29 27.5)%22 fill=%22%23dd2222%22 stroke=%22%23222%22 stroke-width=%221%22/%3E'
+          + '%3C/svg%3E';
+        // 範圍涵蓋畫面中央的龍王(避開左右兩側英雄卡與 UI sidebar)
+        // ★ FIX 20260517(e) — pointer-events 預設 none,只在「等待選 BOSS 目標」時動態打開,
+        //   避免攻擊完還佔據點擊區把背包道具點擊吃掉
         _clk.style.cssText =
           'position:fixed;left:15%;right:25%;top:5%;bottom:30%;'
-          + 'z-index:2;cursor:crosshair;'
-          + 'background:transparent;pointer-events:auto;';
+          + 'z-index:2;cursor:url("data:image/svg+xml;utf8,' + _swordCursorSvg + '") 4 4, crosshair;'
+          + 'background:transparent;pointer-events:none;';  // ← 預設 none
         _clk.title = '🐉 點擊攻擊維蘇威火山龍王';
         _clk.addEventListener('click', function(ev){
           try{
@@ -45888,7 +45955,43 @@ function advStartBattle(){
             console.warn('[WB] BOSS 點擊轉發失敗', eClk);
           }
         });
+        // ★ FIX 20260517(e) — hover 時讓 BOSS 圖外框紅色呼吸光暈
+        _clk.addEventListener('mouseenter', function(){
+          try{
+            const _bgEl = document.getElementById('adv-battle-bg');
+            if(_bgEl) _bgEl.classList.add('wb-boss-bg-glow');
+          }catch(_){}
+        });
+        _clk.addEventListener('mouseleave', function(){
+          try{
+            const _bgEl = document.getElementById('adv-battle-bg');
+            if(_bgEl) _bgEl.classList.remove('wb-boss-bg-glow');
+          }catch(_){}
+        });
         document.body.appendChild(_clk);
+
+        // ★ FIX 20260517(e) — 動態切換 pointer-events:只在 G.pendingTarget==='enemy' 時打開
+        //   原本永遠 pointer-events:auto → 攻擊完還擋住底下的背包/物品卡點擊
+        //   現在用 setInterval 250ms 檢查,需要選敵人時才啟用,選完立刻關閉
+        try{ if(window._wbBossClkSyncTimer) clearInterval(window._wbBossClkSyncTimer); }catch(_){}
+        window._wbBossClkSyncTimer = setInterval(function(){
+          try{
+            const _clkEl = document.getElementById('wb-boss-click-layer');
+            if(!_clkEl){ clearInterval(window._wbBossClkSyncTimer); return; }
+            const _gNow = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+            const _pending = _gNow && _gNow.pendingTarget;
+            const _needTarget = (_pending === 'enemy');  // 只在等選敵方目標時啟用
+            const _cur = _clkEl.style.pointerEvents;
+            if(_needTarget && _cur !== 'auto'){
+              _clkEl.style.pointerEvents = 'auto';
+            }else if(!_needTarget && _cur !== 'none'){
+              _clkEl.style.pointerEvents = 'none';
+              // 順手把光暈也關掉(避免 mouseleave 沒觸發到的殘留狀態)
+              const _bgEl = document.getElementById('adv-battle-bg');
+              if(_bgEl) _bgEl.classList.remove('wb-boss-bg-glow');
+            }
+          }catch(_){}
+        }, 250);
         // 注入點擊漣漪動畫(只注入一次)
         if(!document.getElementById('wb-boss-click-ripple-style')){
           const _rsty = document.createElement('style');
@@ -45896,25 +45999,43 @@ function advStartBattle(){
           _rsty.textContent =
             '@keyframes wbBossClickRipple{'
             + '0%{transform:scale(0.5);opacity:1;}'
-            + '100%{transform:scale(2.5);opacity:0;}}';
+            + '100%{transform:scale(2.5);opacity:0;}}'
+            // ★ FIX 20260517(e) — BOSS 圖紅色呼吸光暈(hover 時加 .wb-boss-bg-glow class)
+            //   做法:對 #adv-battle-bg 加 inset box-shadow + outline,呼吸動畫 1.4s 循環
+            //   重點:用 inset shadow 才能讓光暈看起來像「BOSS 圖被紅光包圍」而不是擴散到外面
+            + '@keyframes wbBossBgPulse{'
+            + '0%,100%{box-shadow:inset 0 0 40px 12px rgba(255,40,30,0.55),inset 0 0 100px 24px rgba(255,80,40,0.25);}'
+            + '50%{box-shadow:inset 0 0 70px 24px rgba(255,60,40,0.85),inset 0 0 140px 40px rgba(255,100,60,0.45);}'
+            + '}'
+            + '#adv-battle-bg.wb-boss-bg-glow{'
+            + 'animation:wbBossBgPulse 1.4s ease-in-out infinite;'
+            + 'transition:filter 0.3s;'
+            + 'filter:brightness(1.08) saturate(1.15);'
+            + '}';
           document.head.appendChild(_rsty);
         }
         _bgCls = '';
-        // ★ FIX 20260517(b) — 火焰粒子改為上半部(讓龍王持續冒火光),沿用首頁 .wb-flame-particle CSS
-        //   原 bottom:8px → 改 top:15% 以上(龍王頭部位置),粒子從上往上飄
-        //   粒子用 fixed 定位 + z-index:1(在背景圖之上,在 #gc 戰場之下)
+        // ★ FIX 20260517(d) — 火焰粒子完全照抄首頁 #adv-worldboss-stage 的版本
+        //   做法:容器 position:fixed 撐滿視口,內部 8 顆 <span> 完全照抄首頁,
+        //         不蓋 inline style → CSS 內 .wb-flame-particle 的 bottom:-6px 才會生效,
+        //         粒子從容器底邊往上飛 58px(animation wbFlameRise),
+        //         其中 .wb-flame-top 兩顆從容器頂邊往下飛(動畫 wbFlameRiseTop)
+        //   結果:畫面底部會持續有小火光從底部冒出向上飛(類似首頁 BOSS 入口 hover 時的效果)
         try{ const _old = document.getElementById('wb-battle-flame-layer'); if(_old) _old.remove(); }catch(_){}
         const _fl = document.createElement('div');
         _fl.id = 'wb-battle-flame-layer';
+        // position:fixed inset:0 → 撐滿視口,粒子內部用 absolute 才能對齊容器底邊
+        // 重點:容器要 relative(absolute 子元素的定位錨)— fixed 也算 positioned,OK
         _fl.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1;';
-        // 上半部冒火光:top:10%~30% 之間分佈
         _fl.innerHTML = ''
-          + '<span class="wb-flame-particle" style="--x:18%;--delay:0s;position:fixed;top:12%;left:18%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:28%;--delay:0.6s;position:fixed;top:22%;left:28%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:42%;--delay:1.2s;position:fixed;top:8%;left:42%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:55%;--delay:0.3s;position:fixed;top:18%;left:55%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:68%;--delay:0.9s;position:fixed;top:14%;left:68%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:80%;--delay:1.5s;position:fixed;top:26%;left:80%;"></span>';
+          + '<span class="wb-flame-particle" style="--i:0;--x:-8%;--delay:0s;"></span>'
+          + '<span class="wb-flame-particle" style="--i:1;--x:18%;--delay:0.3s;"></span>'
+          + '<span class="wb-flame-particle" style="--i:2;--x:38%;--delay:0.6s;"></span>'
+          + '<span class="wb-flame-particle" style="--i:3;--x:62%;--delay:0.9s;"></span>'
+          + '<span class="wb-flame-particle" style="--i:4;--x:82%;--delay:1.2s;"></span>'
+          + '<span class="wb-flame-particle" style="--i:5;--x:108%;--delay:1.5s;"></span>'
+          + '<span class="wb-flame-particle wb-flame-top" style="--i:6;--x:25%;--delay:0.45s;"></span>'
+          + '<span class="wb-flame-particle wb-flame-top" style="--i:7;--x:70%;--delay:1.05s;"></span>';
         document.body.appendChild(_fl);
       } else if(_stage === 'taiwan'){
         // ★ v1.0.20260428.2800 — 台灣關依玩家選的 BOSS 套用場景圖(inline style)
