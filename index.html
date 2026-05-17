@@ -278,93 +278,82 @@
     }
   }
 
-  // 偵測「環境很可能不支援 popup」→ 直接走 redirect 比較順
+  // ★ FIX 20260517(gg) — 三天前能用、現在壞掉的真正根因
+  //
+  // 從 iPad 端診斷面板 log 看到:
+  //   boot:authOrigin=https://lxpsgame.firebaseapp.com (同 origin? 否 — 跨域)
+  //   boot:referrer=(無)
+  //   boot:sessionStorage 內 firebase keys=firebase:pendingRedirect:xxx ← 進去有
+  //   redirect:getRedirectResult 完成 (耗時 535ms)
+  //   redirect:result 物件=null
+  //   redirect:sessionStorage firebase keys(after)=(無)  ← 處理完被清掉
+  //   redirect:現在 URL hash 長度=0 search=(無)  ← URL 沒帶 OAuth credential
+  //
+  // 對照 Firebase 官方 issue #8329 + #9366(2025年11月仍在燒) + #9108:
+  //   「Starting June 24, 2024, if you're using Firebase Auth signInWithRedirect
+  //    without implementing one of the options in best practices guide, end users
+  //    will not be able to authenticate when using browsers that block third-party
+  //    cookies. This is already required on Chrome M115+, Firefox 109+, Safari 16.1+」
+  //
+  // 真正根因:
+  //   1. 我們的網頁載入 origin 不是 firebaseapp.com(用了非 Firebase Hosting,
+  //      像 GitHub Pages),signInWithRedirect 需要跨域 iframe 跟 firebaseapp.com
+  //      傳遞 credential,iPad Chrome 第三方 cookie 被擋 → 整個傳遞鏈失效。
+  //   2. 三天前能用是巧合 — Chrome iOS 最近幾版加強了第三方 cookie 攔截,
+  //      跟我們改 setPersistence 是巧合,不是根因。
+  //
+  // 修法:改成「所有環境都先試 popup,popup 失敗才 fallback redirect」。
+  //   - popup 不靠第三方 cookie,iPad Chrome 上可用
+  //   - 若 popup 被瀏覽器擋,使用者會看到瀏覽器自帶的「允許彈出視窗」提示,
+  //     fallback redirect 雖然壞但至少有路徑
+  //   - 三天前 _shouldPreferRedirect 對 iPad 一律走 redirect 是過時的策略
+  //
+  // 已不再需要 _shouldPreferRedirect,但保留函式防外部誤呼叫
   function _shouldPreferRedirect(){
-    try {
-      const ua = (navigator.userAgent || '').toLowerCase();
-      // iPad/iPhone Safari(非 Chrome 內核)→ popup 第三方 Cookie 容易壞
-      const isIOS = /iphone|ipad|ipod/.test(ua);
-      // Android 內嵌瀏覽器(WebView)→ popup 經常被擋
-      const isAndroidWebView = /wv\)/.test(ua) || /; wv\b/.test(ua);
-      // 顯示模式為 standalone(PWA / 加到主畫面)→ popup 多半失效
-      let isStandalone = false;
-      try {
-        isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
-                      || (window.navigator.standalone === true);
-      } catch(_) {}
-      return isIOS || isAndroidWebView || isStandalone;
-    } catch(_) { return false; }
+    // ★ FIX 20260517(gg) — 永遠回傳 false:都先試 popup
+    return false;
   }
 
-  // 核心:嘗試 popup,失敗 fallback redirect,redirect 也失敗才彈錯誤
+  // 核心:先試 popup,popup 失敗 fallback redirect,redirect 也失敗才彈錯誤
   async function _doSignInFlow(provider, opts){
     opts = opts || {};
-    const _preferRedirect = _shouldPreferRedirect();
+    const _ua = (navigator.userAgent || '').toLowerCase();
+    _fbDiag('signIn:開始 (UA=' + _ua.slice(0, 60) + ')');
 
-    // ── 路徑 A:行動裝置 / PWA / 受限環境 → 直接走 redirect ──
-    if(_preferRedirect){
-      try {
-        // ★ FIX 20260517(ff) — _fbAuthReady 已改為 instant Promise(不再呼叫
-        //   setPersistence),此 await 留作向後相容,不會延遲流程
-        try{ await window._fbAuthReady; }catch(_){}
-        const _ua = (navigator.userAgent || '').toLowerCase();
-        _fbDiag('signIn:即將 signInWithRedirect (preferRedirect=true)');
-        try{ localStorage.setItem('lxps_pending_redirect_signin', String(Date.now())); }catch(_){}
-        // 多記一個 sessionStorage 旗標,可用來判斷 localStorage 是否被 partition 清掉
-        try{ sessionStorage.setItem('lxps_pending_redirect_session', String(Date.now())); }catch(_){}
-        await signInWithRedirect(_fbAuth, provider);
-        _fbDiag('signIn:signInWithRedirect 返回(理論上頁面應已跳走)');
-        return null; // redirect 不會在此處 resolve,頁面已經跳走
-      } catch(e){
-        try{ localStorage.removeItem('lxps_pending_redirect_signin'); }catch(_){}
-        try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
-        _fbDiag('signIn:❌ signInWithRedirect 失敗 code=' + (e && e.code) + ' msg=' + (e && e.message || ''), 'error');
-        _showLoginErrorTip(
-          '無法開啟 Google 登入',
-          '<b>可能原因:</b><br>' +
-          '・網路連線不穩定<br>' +
-          '・學校網路擋了 Google 登入服務<br>' +
-          '・iPad Safari 隱私設定阻擋了 Cookie<br><br>' +
-          '<b>請試試:</b><br>' +
-          '① 確認網路有連上<br>' +
-          '② 設定 → Safari → 關閉「阻擋所有 Cookie」<br>' +
-          '③ 重新整理頁面再點登入<br>' +
-          '④ 換 Chrome 瀏覽器開遊戲'
-        );
-        return null;
-      }
-    }
-
-    // ── 路徑 B:桌機 → 先試 popup ──
+    // ── 先試 popup(所有環境一致)──────────────────────────────
     try {
+      _fbDiag('signIn:嘗試 signInWithPopup');
       const result = await signInWithPopup(_fbAuth, provider);
+      _fbDiag('signIn:✅ signInWithPopup 成功 user=' + (result && result.user && result.user.email));
       return result;
     } catch(e){
-      // popup 失敗的處理
       const code = e && e.code;
+      _fbDiag('signIn:popup 失敗 code=' + (code || 'unknown'), 'warn');
 
       // 使用者主動取消 → 完全安靜(不算錯誤)
       if(code === 'auth/cancelled-by-user' || code === 'auth/popup-closed-by-user'){
-        console.log('[登入] 使用者取消');
+        _fbDiag('signIn:使用者取消(popup-closed-by-user)');
         return null;
       }
 
       // popup 被擋 / 環境不支援 → 自動 fallback 到 redirect
-      if(code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment'){
-        console.warn('[登入] popup 失敗,改用 redirect:', code);
+      if(code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment' || code === 'auth/popup-closed-by-user'){
+        _fbDiag('signIn:popup 被擋,fallback signInWithRedirect', 'warn');
         try {
-          localStorage.setItem('lxps_pending_redirect_signin', String(Date.now()));
+          try{ localStorage.setItem('lxps_pending_redirect_signin', String(Date.now())); }catch(_){}
+          try{ sessionStorage.setItem('lxps_pending_redirect_session', String(Date.now())); }catch(_){}
           await signInWithRedirect(_fbAuth, provider);
           return null;
         } catch(e2){
-          localStorage.removeItem('lxps_pending_redirect_signin');
-          console.error('[登入] redirect fallback 也失敗', e2);
+          try{ localStorage.removeItem('lxps_pending_redirect_signin'); }catch(_){}
+          try{ sessionStorage.removeItem('lxps_pending_redirect_session'); }catch(_){}
+          _fbDiag('signIn:redirect fallback 也失敗 code=' + (e2 && e2.code), 'error');
           _showLoginErrorTip(
             '瀏覽器擋住了 Google 登入',
             '<b>請先允許彈出視窗:</b><br>' +
-            '・電腦:點網址列右側的 🚫 / 🔒 圖示,選擇「永遠允許」<br>' +
-            '・iPad:設定 → Safari → 關閉「阻擋彈出式視窗」<br>' +
-            '・Android:Chrome 設定 → 網站設定 → 彈出式視窗 → 允許<br><br>' +
+            '・iPad Chrome:網址列點圖示 → 「永遠允許彈出視窗」<br>' +
+            '・iPad Safari:設定 → Safari → 關閉「阻擋彈出式視窗」<br>' +
+            '・桌機 Chrome:網址列右側 🚫 → 「永遠允許」<br><br>' +
             '允許後請重新整理頁面再點登入。'
           );
           return null;
