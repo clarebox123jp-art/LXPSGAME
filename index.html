@@ -40641,47 +40641,103 @@ function exitAdventureMode(){
   //   修補:在 exitAdventureMode 結尾統一清掉這些世界 BOSS 專屬元素 +
   //         呼叫 _wbAdvStopBattleSync() 停 250ms 血條同步 timer +
   //         清世界 BOSS 旗標 (_wbInWorldBossMode / _wbSoloPracticeMode 等)
+  //   ★ FIX 20260517(q) — 大幅擴充清理範圍。原本只清 8 項元素,但戰鬥中還會動態建立:
+  //     答題視窗、護盾提示、回合警告、答題獎勵橫幅、表情飄字氣泡、遊戲內彈窗、定型文橫式列、
+  //     CSS style 標籤等等。這些只要使用者中途按結束/離開房間/網路斷線,通通要清掉,
+  //     不能在下次進主畫面 / 重進世界 BOSS / 重進其他冒險關時還看到殘影。
   try{
-    // 1. 停止世界 BOSS 戰鬥同步 timer (避免 setInterval 還在跑)
+    // === A. 停止所有 timer ===
+    // 1. BOSS 血條同步 timer (250ms 更新血量/護盾/回合)
     if(typeof window._wbAdvStopBattleSync === 'function'){
       window._wbAdvStopBattleSync();
     }
-    // 2. 移除戰鬥畫面 fixed overlay (BOSS 血條 + 護盾 chip + 介紹鈕)
-    const _wbAdvOv = document.getElementById('wb-adv-battle-overlay');
-    if(_wbAdvOv) _wbAdvOv.remove();
-    // 3. 移除單人練習傷害條 (左上「本場總傷」)
-    const _wbDmgBar = document.getElementById('wb-solo-cur-dmg-bar');
-    if(_wbDmgBar) _wbDmgBar.remove();
-    // 4. 隱藏表情/定型文列 (右下表情按鈕列)
-    const _wbEmojiBar = document.getElementById('wb-emoji-bar-real');
-    if(_wbEmojiBar) _wbEmojiBar.style.display = 'none';
-    // 5. 移除可能殘留的開戰題視窗 / BOSS 能力介紹彈窗
-    const _wbOpQuiz = document.getElementById('wb-boss-opening-quiz');
-    if(_wbOpQuiz) _wbOpQuiz.remove();
-    const _wbInfoPop = document.getElementById('wb-adv-boss-info-popup');
-    if(_wbInfoPop) _wbInfoPop.remove();
-    // ★ FIX 20260517 — 6. 移除火焰粒子層(戰鬥背景特效)
-    const _wbFlameLayer = document.getElementById('wb-battle-flame-layer');
-    if(_wbFlameLayer) _wbFlameLayer.remove();
-    // ★ FIX 20260517(b) — 移除 BOSS 點擊 layer
-    const _wbClickLayer = document.getElementById('wb-boss-click-layer');
-    if(_wbClickLayer) _wbClickLayer.remove();
-    // ★ FIX 20260517(e) — 清 click layer 的 sync timer + BOSS 圖光暈 class
+    // 2. BOSS 點擊層 sync timer (250ms 切換 pointer-events)
     try{
       if(window._wbBossClkSyncTimer){
         clearInterval(window._wbBossClkSyncTimer);
         window._wbBossClkSyncTimer = null;
       }
-      const _bgEl = document.getElementById('adv-battle-bg');
-      if(_bgEl) _bgEl.classList.remove('wb-boss-bg-glow');
     }catch(_){}
-    // 7. 移除 worldboss body class(讓主程式 BOSS 卡顯示規則還原)
+    // 3. 戰鬥中表情冷卻 timer
+    try{
+      if(window._wbBattleQmsgCdTimer){
+        clearInterval(window._wbBattleQmsgCdTimer);
+        window._wbBattleQmsgCdTimer = null;
+      }
+    }catch(_){}
+
+    // === B. 移除所有戰鬥中動態建立的 overlay / popup / banner ===
+    // 一次清掉所有 wb- 開頭的「戰鬥中臨時 UI」(用 ID 對應表,好維護)
+    [
+      'wb-adv-battle-overlay',      // BOSS 血條 + 護盾 chip + 介紹鈕 (主血條)
+      'wb-solo-cur-dmg-bar',        // 單人練習傷害條 (左上「本場總傷」)
+      'wb-boss-opening-quiz',       // 開戰題視窗 (回合 1 那題)
+      'wb-adv-boss-info-popup',     // BOSS 能力介紹彈窗
+      'wb-battle-flame-layer',      // 火焰粒子層 (戰鬥背景特效)
+      'wb-boss-click-layer',        // BOSS 透明點擊層
+      'wb-shield-hint-modal',       // 護盾啟動提示視窗 (8 秒自動消但保險清掉)
+      'wb-quiz-overlay-active',     // 每回合答題視窗
+      'wb-quiz-reward-banner',      // 答題獎勵橫幅 (10/25/50 次)
+      'wb-game-popup',              // ★ FIX 20260517 新增的遊戲內彈窗 (_wbGameAlert/_wbGameConfirm)
+      'wb-emoji-popup',             // 表情飄字氣泡 (上方雲狀)
+      'wb-tc-qmsg-confirm-ov',      // 定型文發送確認視窗
+    ].forEach(id => {
+      try{
+        const el = document.getElementById(id);
+        if(el) el.remove();
+      }catch(_){}
+    });
+    // 也清掉所有「會自動消失但可能還沒消」的 class 元素
+    try{
+      document.querySelectorAll('.wb-turn-warning, .wb-emoji-popup').forEach(el => {
+        try{ el.remove(); }catch(_){}
+      });
+    }catch(_){}
+
+    // === C. 隱藏 (不刪除) HTML 內固定存在的元素 ===
+    // 4. 表情/定型文列 (右下表情按鈕列) — 用 class 控制顯示,所以 remove class
+    try{
+      const _wbEmojiBar = document.getElementById('wb-emoji-bar-real');
+      if(_wbEmojiBar){
+        _wbEmojiBar.classList.remove('wb-eb-show');
+        _wbEmojiBar.style.display = 'none';  // 雙保險
+      }
+    }catch(_){}
+
+    // === D. 清掉戰鬥背景圖光暈 + click layer 狀態 ===
+    try{
+      const _bgEl = document.getElementById('adv-battle-bg');
+      if(_bgEl){
+        _bgEl.classList.remove('wb-boss-bg-glow');
+        _bgEl.classList.remove('wb-boss-bg-shake');
+      }
+    }catch(_){}
+
+    // === E. 移除戰鬥中動態注入的 <style> 標籤 ===
+    //   這些 style 留著本身無害,但保險起見一起清,讓下次進場時用最新規則
+    [
+      'wb-adv-overlay-width-style',  // ★ FIX 20260517(p) BOSS 血條寬度響應式
+      'wb-boss-click-ripple-style',  // BOSS 點擊漣漪 + 紅光暈動畫
+      'wb-hide-boss-card-style',     // 隱藏主程式 BOSS 卡的 CSS
+    ].forEach(id => {
+      try{
+        const el = document.getElementById(id);
+        if(el) el.remove();
+      }catch(_){}
+    });
+
+    // === F. 還原 body class + 旗標 ===
     document.body.classList.remove('wb-in-worldboss-battle');
-    // 8. 清世界 BOSS 模式旗標 (避免下次進冒險誤判為世界 BOSS)
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = true;
-    console.log('[exitAdventureMode] ✅ 已清理世界 BOSS 戰鬥殘留 UI');
+    // 清答題相關狀態 (避免下次重進時殘留答對次數)
+    try{
+      window._wbQuizState = {};
+      window._wbCorrectCnt = {};
+    }catch(_){}
+
+    console.log('[exitAdventureMode] ✅ 已清理世界 BOSS 戰鬥殘留 UI (含 timer / overlay / style / 旗標)');
   }catch(_wbCleanE){
     console.warn('[exitAdventureMode] 清理世界 BOSS UI 失敗(忽略)', _wbCleanE);
   }
@@ -46187,27 +46243,27 @@ function advStartBattle(){
         //   兩層 backgroundSize/backgroundPosition 用逗號分隔分別套到漸層層和龍王圖層
         //   ★ FIX 20260517(i) — 再往上(35% → 22%),臉部不被順序條擋住
         //   ★ FIX 20260517(j) — 仍被擋:再往上 14%(22% → 8%),讓眼睛/嘴巴落在順序條之上
-        //   ★ FIX 20260517(l) — 8% 太上面臉部跑出螢幕了,拉回 25%:讓臉部落在
-        //                        「定型文列下沿(33%) ~ 行動條上沿(55%)」夾層中心(44%)
+        //   ★ FIX 20260517(l) — 8% 太上面臉部跑出螢幕了,拉回 25%
         //   ★ FIX 20260517(n) — 25% 還是被行動順序條擋住眼睛/嘴巴,再往上 15%(25% → 10%)
-        //                        ⚠ 之前(l) 抱怨臉「跑出螢幕外」其實是「BOSS 隱形卡定位偏」造成
-        //                        傷害跳出位置跑掉,實際背景圖在 8% 時眼睛/嘴巴是有露出的。
-        //                        本次:背景往上但隱形 BOSS 卡 top:32% 維持不動,讓傷害跳出位置不變
-        //   ⚠ 使用者的「往上移」= 螢幕視覺往上 = CSS Y% 數值「減少」(兩者方向相反!)
-        //   ★ FIX 20260517(p) — 根本性修復:臉還是被擋的真正原因是「圖片只比容器高 20%,
-        //                        Y% 微調空間太小」。改成圖片放大到容器 160% 高 + 從頂端開始
-        //                        (center top),龍王臉部落在容器 0-30% 區域,完全避開中央 50%
-        //                        的行動順序條。
-        //                        計算:160% 高的圖片,Y% 0(top) 時圖片頂部與容器頂部對齊,
-        //                              假設臉部在圖片本身的 15-35% 位置,在容器中即落在
-        //                              160% × 15% = 24% ~ 160% × 35% = 56% — 不對,還是會
-        //                              碰到中央 50%。
-        //                        修正:再進一步用 'center -15%' 把圖片往上拉,容器高 100% 但
-        //                              圖片 160%,負 15% 表示圖片頂部在容器頂部上方 15%(160%
-        //                              - 100%) × (-15%) = 等同往上偏移 9% 容器高,臉部落在
-        //                              容器 15% ~ 47% 區域 — 剛好避開 50% 順序條
-        _bb.style.backgroundSize = 'auto 100%, auto 160%';
-        _bb.style.backgroundPosition = 'center, center top';
+        //   ★ FIX 20260517(p) — 160% + center top 反而讓臉跑到頂端被血條切掉
+        //   ★ FIX 20260517(q) — 重新檢視:從使用者圖中看到的是龍王腹部+翅膀+下半身,
+        //                        代表臉部在圖片本身大約 40-55% 位置(不是上半部)。
+        //                        正確策略:把圖片放大到容器 200% 高 + 用負值 Y% 把圖片
+        //                        往上「頂出」容器頂部。
+        //                        計算:auto 200% → 圖片高度 = 容器 × 2
+        //                              backgroundPosition Y% 的解析:
+        //                              對 200% 的圖片,Y% 範圍是 -100% ~ 0% 才有效
+        //                              (CSS 公式:圖片 top 偏移 = (容器高-圖片高) × Y%
+        //                                       = (100% - 200%) × Y% = -100% × Y%)
+        //                              Y% = 0  → 圖片頂對齊容器頂(下半部跑出容器)
+        //                              Y% = -50% → 圖片頂跑出容器頂 50%(中間半部顯示)
+        //                              Y% = -100% → 圖片底對齊容器底(上半部跑出容器)
+        //                        想讓龍王臉部(圖片 40-55%)落在容器 10-30%:
+        //                              容器內顯示的圖片範圍 = (-Y%, -Y%+50%)  ← 因為圖比容器大 1 倍
+        //                              想讓圖片 40% 對應容器 10% → -Y% = 40% - 5% = 35%
+        //                              即 Y% = -35%  ← 用這個值
+        _bb.style.backgroundSize = 'auto 100%, auto 200%';
+        _bb.style.backgroundPosition = 'center, center -35%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標
@@ -47677,6 +47733,19 @@ function advShowReward() {
   // 過濾每場限1次的獎勵
   let basePool = ADV_REWARDS.filter(r => {
     if (r._once && r.id === 'instant_burst' && _advBurstRewardUsed) return false;
+    // ★ FIX 20260517(q) — 世界 BOSS 戰排除 20% HP 失衡獎勵
+    //   dmg_one (竹筍突刺):對 1 對手 20% 剩餘 HP 傷害
+    //   dmg_all (焰尾橫掃):對全體對手 20% 剩餘 HP 傷害
+    //   問題:世界 BOSS 戰是「累積答對 10/25/50 次 → 答題獎勵」+「每次答對也跑獎勵」的
+    //         高頻機制,若再拿 20% HP 砸 50 萬 HP 的 BOSS 等於 10 萬,2~3 次就秒了 BOSS,
+    //         平衡崩壞。本來世界 BOSS 答題獎勵的 PUNISH/REWARD 都已大幅縮到 1%,但通用獎勵
+    //         池(advShowReward) 卻沒同步過濾,在這裡補上。
+    //   台灣關 / 日本關 / 木柵關等小怪量級不需此限,維持不變
+    try{
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+        if(r.id === 'dmg_one' || r.id === 'dmg_all') return false;
+      }
+    }catch(_){}
     return true;
   });
   let pool = [...basePool].sort(()=>Math.random()-0.5).slice(0,2);

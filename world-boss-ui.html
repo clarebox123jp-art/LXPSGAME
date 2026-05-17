@@ -2811,20 +2811,38 @@
        改用 class .wb-eb-show 控制顯示,預設 display:none。
        所有 'flex'/'grid' 顯示處改成切換 class. -->
 <style>
+  /* ★ FIX 20260517(q) — 定型文列從「左側 4×2 直立」改為「HP 條下方一排橫式」
+     原因:使用者反映直立列遮擋左側英雄卡,且 4×2 排列在 iPad 上佔太多左邊空間。
+     新設計:fixed 在畫面上方、HP 條正下方(top 隨 HP 條高度自動接續);
+            水平 flex 一排,12 顆按鈕從左到右排;
+            視窗窄時(iPad)自動 wrap 成兩排,確保不超出 BOSS 血條寬度範圍。
+     位置計算:
+       - HP 條 overlay top:8px,內部 padding 16+10+36+12+30 ≈ 100px → 整體高約 140-160px
+       - 定型文列 top:160px 開始,加 8px 間距,離 HP 條剛好一點點
+  */
   #wb-emoji-bar-real{ display:none !important; }
   #wb-emoji-bar-real.wb-eb-show{
-    display:grid !important;
-    grid-template-columns:repeat(2,auto);
-    grid-auto-flow:row;
-    align-items:center;
-    justify-items:center;
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    gap:6px !important;
+  }
+  /* ★ FIX 20260517(q) — iPad(≤1180px) 定型文列寬度跟 BOSS 血條一致縮短 40% */
+  @media (max-width:1180px){
+    #wb-emoji-bar-real{
+      width:min(648px,calc(100vw - 80px)) !important;
+    }
   }
 </style>
-<div id="wb-emoji-bar-real" style="position:fixed;left:6px;top:172px;
+<div id="wb-emoji-bar-real" style="position:fixed;left:8px;top:160px;
      background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:14px;
-     padding:8px 6px;z-index:9050;
+     padding:8px 10px;z-index:9050;
      gap:6px;
-     max-height:calc(100vh - 320px);overflow-y:auto;">
+     /* 寬度跟 BOSS 血條 overlay 對齊(桌機 1080px / iPad 648px),由 CSS 媒體查詢控制 */
+     width:min(1080px,calc(100vw - 100px));
+     max-height:none;overflow:visible;">
   <!-- ★ FIX 20260517(h) — 戰鬥中快捷表情重新規劃:6 個實戰常用訊息,改走確認視窗(平板友善) -->
   <!--   圖示在上、文字在下,iPad 也能直接看出意思 -->
   <!--   圖示對應:⭐=用爆發(對應角色卡爆發星星) / ➕=先補血(綠十字) / 🙏=先復活 -->
@@ -2834,8 +2852,8 @@
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('ctrl_boss')"><span class="wb-emoji-icon">🌀</span><span class="wb-emoji-label">控住王</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('awesome')"><span class="wb-emoji-icon">🔥</span><span class="wb-emoji-label">太棒啦</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('sorry_wait')"><span class="wb-emoji-icon">😅</span><span class="wb-emoji-label">等我一下</span></button>
-  <!-- 分隔線(grid 內橫跨兩欄) -->
-  <div style="grid-column:1 / span 2;width:90%;height:1px;background:rgba(168,132,255,0.4);margin:2px 0;"></div>
+  <!-- 分隔線(flex 內豎直分隔,改為 1px 寬、高度跟按鈕齊) -->
+  <div style="width:1px;height:36px;background:rgba(168,132,255,0.4);margin:0 4px;flex-shrink:0;"></div>
   <!-- 討論發話區(直排小按鈕) -->
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_a')" title="我覺得答案是 A">🅰</button>
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_b')" title="我覺得答案是 B">🅱</button>
@@ -7325,8 +7343,12 @@
           /* ★ FIX 20260517(l) — BG 拉回 25% 後,身體中心也跟著回到 32% */
           /* ★ FIX 20260517(p) — 背景圖改 160% + center top 後,龍王臉部從容器
              ~32% 上移到 ~22%,隱形 BOSS 卡 top 也跟著從 32% 改為 22%,
-             讓傷害跳字/banner/粒子特效對齊新的龍王頭部位置 */
-          left: 38% !important; top: 22% !important;
+             讓傷害跳字/banner/粒子特效對齊新的龍王頭部位置
+             ★ FIX 20260517(q) — 22% 太高了,使用者反映傷害數字位置變高。
+             配合新的背景設定 (auto 200% + center -35%),龍王臉部落在容器 ~25-30%,
+             隱形卡 top 改為 28%,讓傷害數字落在臉部中央偏下(脖子位置)。
+             這也離中央 50% 順序條尚有 22% 距離,不會被順序條擋住。*/
+          left: 38% !important; top: 28% !important;
         }
         /* ★ FIX 20260517(b) — 英雄卡貼底:#z1 改 flex-end + brow align-items:flex-end + 透明背景讓龍王透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 {
