@@ -8700,6 +8700,8 @@ const BURST_DB = {
 
 // ====== GAME STATE ======
 let G = {};
+// ★ v1.0.20260517 — 把 G 暴露到 window,讓 world-boss.js / world-boss-ui.html 能讀
+try{ window.G = G; }catch(_){}
 
 // ★ v1.0.20260421.3000f — 三大妖怪作為「玩家英雄」時使用的弱版素質
 //   BOSS 戰時（p2 方）仍使用 HERO_DB 的強版數據（hp:600 等）
@@ -17809,8 +17811,67 @@ function doDmg(target, rawDmg, opts={}){
       try{ if(typeof bannerFX === 'function') bannerFX(target, '🗻 山岳之軀!', '#cc8855', 700); }catch(_){}
     }
   }
+
+  // ★ v1.0.20260517 — 維蘇威火山龍王「炎之意志」+ 護盾削減(僅在 worldboss stage)
+  //   單次受傷上限 1% HP,並按攻擊屬性削減對應元素護盾
+  //   實作:呼叫 world-boss.js 暴露的 window._wbApplyBossDmgCap + _wbConsumeShield
+  if(dmg > 0 && target && target.name === '維蘇威火山龍王'
+     && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+    try{
+      const _origDmg = dmg;
+      // 1. 炎之意志:單次受傷上限 1% HP
+      if(typeof window._wbApplyBossDmgCap === 'function'){
+        dmg = window._wbApplyBossDmgCap(target, dmg, { actor: a, action: opts });
+      }else{
+        dmg = Math.min(dmg, Math.floor(target.hp * 0.01));
+      }
+      // 2. 護盾削減:依攻擊者元素(優先攻擊者 _wbPickedElement,fallback 取 a.element)
+      let _atkElem = null;
+      if(a){
+        _atkElem = a._wbPickedElement || a.element || null;
+      }
+      if(_atkElem && typeof window._wbConsumeShield === 'function'){
+        const consumed = window._wbConsumeShield(target, _atkElem);
+        if(consumed){
+          const META = window._WB_ELEMENT_META || {};
+          const meta = META[consumed] || {icon:'?', label:consumed+'盾'};
+          try{ log(`🛡 [${target.name}] ${meta.icon}${meta.label} -1`); }catch(_){}
+        }
+      }
+      // 3. 護盾觸發檢查(HP 80/60/40/20/1% 自動啟動護盾)
+      // 注意:此時 target.curHp 還沒扣,要在扣 dmg 之後才能 trigger,放在扣血後再呼叫
+      if(_origDmg !== dmg){
+        try{ log(`🐉 [${target.name}] 炎之意志:傷害減至 ${dmg}(原 ${_origDmg})`); }catch(_){}
+      }
+    }catch(_wbDmgErr){
+      console.warn('[WB] 維蘇威傷害處理失敗', _wbDmgErr);
+    }
+  }
+
   const old=target.curHp;
   target.curHp=Math.max(0,target.curHp-dmg);
+
+  // ★ v1.0.20260517 — 維蘇威火山龍王扣血後觸發護盾啟動檢查
+  if(target && target.name === '維蘇威火山龍王'
+     && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+     && typeof window._wbCheckShieldTrigger === 'function'){
+    try{
+      const triggered = window._wbCheckShieldTrigger(target);
+      if(triggered && typeof window._wbShowShieldTriggerHint === 'function'){
+        setTimeout(() => { try{ window._wbShowShieldTriggerHint(triggered, target); }catch(_){} }, 400);
+      }
+    }catch(_){}
+  }
+
+  // ★ v1.0.20260517 — 世界戰貢獻記錄(玩家對 BOSS 造成傷害)
+  if(target && target.name === '維蘇威火山龍王' && dmg > 0
+     && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+     && window._wbNet && typeof window._wbNet.addContribution === 'function'){
+    try{
+      const myUid = window._gUserId || 'solo_user';
+      window._wbNet.addContribution(myUid, 'dmgDealt', dmg);
+    }catch(_){}
+  }
   // 統計
   if(dmg>0){
     if(a && a.side !== target.side) statTrack(a,'dmg',dmg);
@@ -26643,6 +26704,21 @@ window.ADV_QUIZ_BOSS_NAMES = [
 ];
 
 function aiAct(a){
+  // ★ v1.0.20260517 — 世界 BOSS 戰守門:若處於 worldboss stage 且 a 是世界戰 BOSS,
+  //   走 world-boss.js 提供的世界戰 BOSS AI(_wbAdvBossTurn)
+  //   設計目的:雙保險。一保險是 world-boss.js 內 window.aiAct = function override;
+  //   二保險是這裡直接判斷。確保即使 override 失效也能正確分流。
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && a && a.side === 'p2' && typeof a.name === 'string'
+       && typeof window._wbIsBossName === 'function' && window._wbIsBossName(a.name)
+       && typeof window._wbAdvBossTurn === 'function'){
+      console.log('[aiAct→WB] 世界戰 BOSS 行動:' + a.name);
+      return window._wbAdvBossTurn(a);
+    }
+  }catch(_wbAiActErr){
+    console.warn('[aiAct→WB] 守門例外,fallback 主程式 aiAct', _wbAiActErr);
+  }
   // ★ 小怪結算視窗顯示中：封鎖 AI 行動，防止 Boss 戰背景推進
   if(window._advMiniResultShowing) return;
   // ★ v1.0.20260512.6150 — 根因防護:cutscene 對白顯示中時 aiAct 也 return
@@ -28777,6 +28853,32 @@ function doSurrender(){
   }
 }
 function checkWin(){
+  // ★ v1.0.20260517 — 世界 BOSS 戰守門:若處於 worldboss stage,
+  //   走 world-boss.js 提供的世界戰結算流程,不發冒險獎勵 / 不彈台灣關結算
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && G && G.p1 && G.p2){
+      const _wbBoss = G.p2.find(h => h && typeof window._wbIsBossName === 'function' && window._wbIsBossName(h.name));
+      if(_wbBoss && _wbBoss.curHp <= 0){
+        if(!window._wbAdvBattleEnded && typeof window._wbShowAdvBattleResult === 'function'){
+          window._wbAdvBattleEnded = true;
+          setTimeout(() => { try{ window._wbShowAdvBattleResult(true); }catch(e){ console.error('[wbResult]', e); } }, 200);
+        }
+        return true;
+      }
+      if(G.p1.every(h => !h || h.curHp <= 0)){
+        if(!window._wbAdvBattleEnded && typeof window._wbShowAdvBattleResult === 'function'){
+          window._wbAdvBattleEnded = true;
+          setTimeout(() => { try{ window._wbShowAdvBattleResult(false); }catch(e){ console.error('[wbResult]', e); } }, 200);
+        }
+        return true;
+      }
+      // worldboss stage 但勝負未定 — 不走下面冒險結算路徑,直接 return false
+      return false;
+    }
+  }catch(_wbCheckWinErr){
+    console.warn('[checkWin→WB] 守門例外,fallback 主程式 checkWin', _wbCheckWinErr);
+  }
   if(G.p1.every(h=>h.curHp<=0)){ _showResultWithDrama(false); return true; }
   // 冒險模式：主BOSS被打倒時，小怪立即投降
   if(typeof _adventureMode !== 'undefined' && _adventureMode && window._advSystemReady){
@@ -36283,6 +36385,8 @@ const ADV_STAGES = {
     ]
   }
 };
+// ★ v1.0.20260517 — 把 ADV_STAGES 暴露到 window,讓 world-boss.js 能加 worldboss 關卡
+try{ window.ADV_STAGES = ADV_STAGES; }catch(_){}
 
 function _requestFullscreenAll(){
   // 支援各平台全螢幕：標準、webkit（iOS/Safari）、moz（Firefox）、ms（舊Edge）
@@ -38811,6 +38915,106 @@ function hideSkillDetailPopup(){
 // ══════════════════════════════════════════════════════════════════
 let _adventureMode = false;
 let _adventureStage = null;
+
+// ════════════════════════════════════════════════════════════════════
+// ★ v1.0.20260517 — 世界 BOSS 戰專用對外入口
+// ────────────────────────────────────────────────────────────────────
+// 提供給 world-boss-ui.html 從外部 script 設定 _adventureStage 等 let 變數
+// (let 宣告在 global scope 不會自動掛到 window,所以外部檔案必須透過此函式)
+//
+// 使用情境:單人練習 / 連線世界戰要進戰鬥前,從外部呼叫
+//   window._wbSetupAdvForBattle({ stage:'worldboss', p1:[...], p2:[...] })
+// 設好內部變數後再呼叫 advStartBattle()
+//
+// 也提供清理用的 window._wbCleanupAdvAfterBattle()
+// ════════════════════════════════════════════════════════════════════
+window._wbSetupAdvForBattle = function(opts){
+  opts = opts || {};
+  try{
+    _adventureMode  = true;
+    _adventureStage = opts.stage || 'worldboss';
+    _advBossIntroShown = true;     // 跳過主程式 BOSS 介紹(世界戰有自己的開場)
+    _advBossIntroActive = false;
+    _advMiniBattleActive = false;
+    if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+    if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+    if(typeof _bossQuizInFlight !== 'undefined') window._bossQuizInFlight = false;
+    // _currentBossVariantInfo 清空(避免被當成 apricot 等變體)
+    window._currentBossVariantInfo = null;
+    // 設定 G.p1 / G.p2
+    if(opts.p1 && Array.isArray(opts.p1)) G.p1 = opts.p1;
+    if(opts.p2 && Array.isArray(opts.p2)) G.p2 = opts.p2;
+    G.round = 1;
+    G.turn = 0;
+    // ★ G.energy 是主程式的物件結構 {p1:N, p2:N},不是純數字
+    //   記憶傳承說「從 0 開始」 — 對應 G.energy.p1 = 0
+    G.energy = { p1: 0, p2: 0 };
+    G.energyMax = 10;
+    G._resultShown = false;
+    // ★ 同步 window.G(主程式有些路徑會重新賦值 G,確保外部能讀最新)
+    try{ window.G = G; }catch(_){}
+    console.log('[WB] _wbSetupAdvForBattle 完成,stage=' + _adventureStage
+      + ', p1=' + (G.p1 ? G.p1.length : 0)
+      + ', p2=' + (G.p2 ? G.p2.length : 0));
+    return true;
+  }catch(e){
+    console.error('[WB] _wbSetupAdvForBattle 失敗', e);
+    return false;
+  }
+};
+
+// ★ 對外提供 G 的 getter(外部檔案讀 window.G 可能是舊 reference)
+window._wbGetG = function(){
+  return (typeof G !== 'undefined') ? G : null;
+};
+
+window._wbCleanupAdvAfterBattle = function(){
+  try{
+    _adventureMode  = false;
+    _adventureStage = null;
+    _advBossIntroShown = false;
+    _advMiniBattleActive = false;
+    if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+    if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
+    if(typeof _bossQuizInFlight !== 'undefined') window._bossQuizInFlight = false;
+    window._currentBossVariantInfo = null;
+    if(G){ G._resultShown = false; }
+    console.log('[WB] _wbCleanupAdvAfterBattle 完成');
+  }catch(e){
+    console.warn('[WB] _wbCleanupAdvAfterBattle 例外', e);
+  }
+};
+
+// ★ 讓外部能讀到目前的 _adventureStage(checkWin hook 等需要判斷)
+window._wbGetAdvStage = function(){
+  return (typeof _adventureStage !== 'undefined') ? _adventureStage : null;
+};
+
+// ★ v1.0.20260517 — 把主程式戰鬥相關函式明確暴露到 window
+//   讓 world-boss.js / world-boss-ui.html 跨檔呼叫穩定
+//   (function declaration 雖然理論上掛 window,但顯式 attach 更安全)
+(function _wbExposeMainFnsToWindow(){
+  function _tryAttach(name, fn){
+    try{
+      if(typeof fn === 'function' && !window[name]){
+        window[name] = fn;
+      }
+    }catch(_){}
+  }
+  // 主程式戰鬥流程函式 — world-boss.js 的 BOSS AI 會呼叫
+  if(typeof endAction === 'function') _tryAttach('endAction', endAction);
+  if(typeof log === 'function') _tryAttach('log', log);
+  if(typeof renderCard === 'function') _tryAttach('renderCard', renderCard);
+  if(typeof doDmg === 'function') _tryAttach('doDmg', doDmg);
+  if(typeof startTurn === 'function') _tryAttach('startTurn', startTurn);
+  if(typeof advStartBattle === 'function') _tryAttach('advStartBattle', advStartBattle);
+  if(typeof newHero === 'function') _tryAttach('newHero', newHero);
+  if(typeof aiAct === 'function') _tryAttach('aiAct', aiAct);
+  if(typeof checkWin === 'function') _tryAttach('checkWin', checkWin);
+  if(typeof bannerFX === 'function') _tryAttach('bannerFX', bannerFX);
+})();
+
+
 // BOSS 角色名單：永遠排除在選角色池之外
 const BOSS_NAMES = [
   // 貓空關
@@ -45464,6 +45668,10 @@ function advStartBattle(){
       if(_jv && _jv.id === 'shutendoji') _bossBgmId = 'bgm-japan-boss-shutendoji';
       else if(_jv && _jv.id === 'tamamo') _bossBgmId = 'bgm-japan-boss-tamamo';
       else _bossBgmId = 'bgm-japan-boss';
+    } else if(_adventureStage === 'worldboss'){
+      // ★ v1.0.20260517 — 世界 BOSS 戰 BGM 由 _wbSoloBeginBattle 自己切(bgm-wb-vesuvius-battle)
+      //   不在這裡切,避免被主程式輪播覆蓋
+      _bossBgmId = null;
     } else if(_adventureStage === 'taiwan'){
       // ★ v1.0.20260428.3870 — 台灣關 BOSS 戰 BGM:玉山專屬,其他輪播 boss / boss-2
       if(window._advSelectedTaiwanBoss === 'yushan_giant'){
@@ -45476,21 +45684,26 @@ function advStartBattle(){
       _bossBgmId = (window._currentBossVariantInfo && window._currentBossVariantInfo.id==='apricot')
         ? 'bgm-boss-apricot' : 'bgm-boss-01';
     }
-    const _bossBgmList = [_bossBgmId];
-    let _advBgmIndex = 0;
-    function _playAdvBossBgm(){
-      bgmStop();
-      const id = _bossBgmList[_advBgmIndex % _bossBgmList.length];
-      _advBgmIndex++;
-      const el = document.getElementById(id);
-      if(!el) return;
-      el.volume = _bgmMuted ? 0 : BGM_VOLUME;
-      el.currentTime = 0;
-      el.onended = function(){ if(typeof _adventureMode !== 'undefined' && _adventureMode){ _playAdvBossBgm(); } };
-      el.play().catch(()=>{});
-      _curBgm = id;
+    // ★ v1.0.20260517 — 世界 BOSS 戰不在這裡放 BGM(由外部切)
+    if(_bossBgmId !== null){
+      const _bossBgmList = [_bossBgmId];
+      let _advBgmIndex = 0;
+      const _playAdvBossBgm = function(){
+        bgmStop();
+        const id = _bossBgmList[_advBgmIndex % _bossBgmList.length];
+        _advBgmIndex++;
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.volume = _bgmMuted ? 0 : BGM_VOLUME;
+        el.currentTime = 0;
+        el.onended = function(){ if(typeof _adventureMode !== 'undefined' && _adventureMode){ _playAdvBossBgm(); } };
+        el.play().catch(()=>{});
+        _curBgm = id;
+      };
+      _playAdvBossBgm();
+    } else {
+      console.log('[advStartBattle] worldboss stage:跳過 BGM 切換,交給世界戰處理');
     }
-    _playAdvBossBgm();
   }catch(e){}
   // ★ BOSS戰前玩家HP全滿 + 重置極限爆發次數 + 重置技能疲勞（小怪戰累積的疲勞/爆發到BOSS戰完全歸零）
   if(typeof G !== 'undefined' && G && G.p1){
@@ -45562,6 +45775,15 @@ function advStartBattle(){
       if(_stage === 'japan'){
         if(_vi && _vi.id === 'yamata') _bgCls = 'bg-yamata';
         else _bgCls = 'bg-fuji';  // tengu / shutendoji / tamamo 共用
+      } else if(_stage === 'worldboss'){
+        // ★ v1.0.20260517 — 世界 BOSS 戰用維蘇威火山龍王圖當背景
+        const _wbBossName = (G && G.p2 && G.p2[0] && G.p2[0].name) || '維蘇威火山龍王';
+        const _wbBgUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(_wbBossName)}.png`;
+        _bb.style.backgroundImage = `linear-gradient(180deg,rgba(8,4,2,0.55) 0%,rgba(20,8,4,0.45) 50%,rgba(8,4,2,0.85) 100%), url("${_wbBgUrl}")`;
+        _bb.style.backgroundSize = 'cover';
+        _bb.style.backgroundPosition = 'center 30%';
+        _bb.style.backgroundColor = '#1a0a08';
+        _bgCls = '';
       } else if(_stage === 'taiwan'){
         // ★ v1.0.20260428.2800 — 台灣關依玩家選的 BOSS 套用場景圖(inline style)
         const _twBossId = window._advSelectedTaiwanBoss;

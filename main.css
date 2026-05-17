@@ -3685,10 +3685,12 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 }
 .ehb-peek-btn:hover{background:rgba(110,80,220,0.4);border-color:#aa88ff;color:#fff}
 /* b-auto-battle 在冒險模式由JS控制顯示 */
+/* ★ FIX 20260517 — #ctrl-bar 必須永遠在最高層,所有 overlay(包括世界 BOSS 介紹頁/隊伍確認頁/戰鬥畫面)都不能蓋住它 */
 #ctrl-bar{
-  position:fixed;top:16px;right:16px;z-index:99999;
+  position:fixed;top:16px;right:16px;z-index:2147483647;
   display:flex;align-items:center;gap:10px;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  isolation:isolate;
 }
 .ctrl-btn{
   width:54px;height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.18);

@@ -767,6 +767,13 @@
     const ov = document.getElementById('wb-entry-overlay');
     if(ov){
       ov.style.display = 'flex';
+      // ★ FIX 20260517 — entry 開啟時把 #ctrl-bar 推到 body 最後,確保最高層
+      try{
+        const _bar = document.getElementById('ctrl-bar');
+        if(_bar && _bar.parentNode === document.body){
+          document.body.appendChild(_bar);
+        }
+      }catch(_){}
       try{ _wbRefreshBlessingBanner(); }catch(_){}
       // ★ v3.2 — 進入後立即同步休戰狀態看板 + 開戰按鈕鎖
       try{ _wbSyncCeasefireBanner(); }catch(_){}
@@ -1323,6 +1330,404 @@
     }
     nextLine();
   };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v4.0 (2026-05-17) — 世界 BOSS 戰接入主程式 advStartBattle() 系統
+  // ────────────────────────────────────────────────────────────────────
+  // 設計理念(來自記憶傳承):
+  //   世界 BOSS 戰共用主程式 #gc 戰場 + 台灣關 UI(英雄卡、能量條、順序條、
+  //   相剋盤、log)。本檔提供:
+  //   (1) ADV_STAGES.worldboss 關卡定義(讓主程式認得這個 stage)
+  //   (2) AI hook:BOSS 行動改走世界戰自訂 AI(火雨/龍吼/爆發/普攻)
+  //   (3) 結算 hook:BOSS curHp=0 時走世界戰自製結算,不發冒險獎勵
+  //   (4) execSkill hook:玩家對 BOSS 造成傷害時套用炎之意志/護盾削減
+  //   (5) startTurn hook:第 10 回合強制 BOSS 爆發、第 20 回合滅絕
+  //
+  // 不入侵主程式檔案(index.html 完全不改):
+  //   - ADV_STAGES 用 ADV_STAGES.worldboss = {...} 補上
+  //   - aiAct 攔截:override window.aiAct,在 worldboss stage 時改走自製
+  //   - checkWin 攔截:override window.checkWin,在 worldboss stage 時改走自製
+  //   - execSkill 用 window._wbHookExecSkill(已存在)做傷害削減
+  // ════════════════════════════════════════════════════════════════════
+
+  // ── A. 世界戰 ADV_STAGES 關卡定義 ───────────────────────────────────
+  function _wbInstallAdvStage(){
+    const ADV = window.ADV_STAGES;
+    if(typeof ADV === 'undefined' || !ADV){
+      console.warn('[WB-Adv] window.ADV_STAGES 未就緒,延後註冊');
+      return false;
+    }
+    if(ADV.worldboss){
+      // 已註冊過(可能 hot reload),覆蓋
+    }
+    ADV.worldboss = {
+      name: '🌍 世界 BOSS 討伐戰',
+      emoji: '🐉🌋🔥💀',
+      desc: '來自地心的維蘇威火山龍王降臨!4 位英雄聯手在 20 回合內擊敗牠,'
+          + '善用元素相剋削減多層護盾,小心第 10 回合的天崩之炎爆發!',
+      stars: 5,
+      objectives: [
+        '⚔ 4 位英雄共同作戰,20 回合內擊敗龍王',
+        '🛡 用 4 種破盾元素削減 BOSS 護盾(HP 80/60/40/20/1% 啟動)',
+        '💥 撐過第 10 回合的「天崩之炎」爆發技',
+        '🏆 全員存活擊敗 BOSS 獲得最高排名',
+      ],
+      rewards: [
+        {icon:'⭐', text:'雷霆勳章 / 火霜獎章'},
+        {icon:'📖', text:'技能升級書 ×5'},
+        {icon:'💰', text:'大量知識幣'},
+        {icon:'🦸', text:'獨家世界 BOSS 戰績榜'},
+      ],
+      tags: [
+        {cls:'nature', text:'🌋 火山熔岩'},
+        {cls:'social', text:'🤝 4 人協作'},
+        {cls:'math',   text:'⚔ 元素相剋'},
+      ],
+    };
+    console.log('[WB-Adv] ✅ ADV_STAGES.worldboss 已註冊');
+    return true;
+  }
+
+  // ── B. 主程式 aiAct 攔截:worldboss stage 時改走世界戰 BOSS AI ─────
+  // ──────────────────────────────────────────────────────────────────
+  // 思路:主程式 aiAct(actor) 看到 actor 是 worldboss stage 的 BOSS 時,
+  //   不走主程式答題流程,改呼叫 _wbAdvBossTurn() 執行世界戰 BOSS AI。
+  //   行動完後設 actor.acted=true 並呼叫 endAction 進入下一回合。
+  function _wbInstallAiActHook(){
+    if(typeof window.aiAct !== 'function'){
+      // aiAct 尚未載入,延後
+      return false;
+    }
+    if(window._wbAiActPatched) return true;
+    const _origAiAct = window.aiAct;
+    window.aiAct = function(a){
+      try{
+        // 偵測:是否處於世界戰 stage + 是否為 BOSS
+        if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
+           && a && a.side === 'p2' && typeof a.name === 'string'
+           && window._wbIsBossName && window._wbIsBossName(a.name)){
+          // 走世界戰 BOSS AI
+          if(typeof window._wbAdvBossTurn === 'function'){
+            return window._wbAdvBossTurn(a);
+          }
+        }
+      }catch(e){ console.warn('[WB-Adv aiAct hook] 例外,fallback 原 aiAct', e); }
+      return _origAiAct.apply(this, arguments);
+    };
+    window._wbAiActPatched = true;
+    console.log('[WB-Adv] ✅ aiAct hook 已安裝');
+    return true;
+  }
+
+  // BOSS 名單判斷(目前只有維蘇威火山龍王,未來擴充其他世界 BOSS 時加進來)
+  window._wbIsBossName = function(name){
+    if(!name) return false;
+    return name === '維蘇威火山龍王';
+  };
+
+  // ── C. 世界戰 BOSS AI(替代 world-boss-ui.html 內的 _wbHostExecuteBossTurn)─
+  // ─────────────────────────────────────────────────────────────────
+  // 跑在主程式戰鬥引擎中,直接修改 G.p1[i].curHp + log + renderCard,然後 endAction
+  window._wbAdvBossTurn = function(boss){
+    if(!boss || boss.curHp <= 0) return;
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    if(!G || !G.p1) return;
+
+    // ★ 第 20 回合到 → 強制全員滅絕
+    if((G.round || 1) >= 20){
+      if(typeof log === 'function') log('💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!');
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      alive.forEach(t => {
+        // 直接全清,visually 用大量 doDmg 也行,簡化為直接設 0
+        const _d = t.curHp;
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, _d, { actor: boss, isSkill: true, fixedDmg: true, isAoe: true });
+          }else{
+            t.curHp = 0;
+          }
+        }catch(_){ t.curHp = 0; }
+        try{ renderCard(t); }catch(_){}
+      });
+      try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
+      if(typeof log === 'function') log('☠ 全員陣亡 — 戰場已被火山灰掩埋');
+      boss.acted = true;
+      try{ if(typeof checkWin === 'function') checkWin(); }catch(_){}
+      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+      return;
+    }
+
+    // ★ 第 10 回合固定爆發技
+    if((G.round || 1) === 10 && !G._wbBurstUsed){
+      G._wbBurstUsed = true;
+      _wbAdvBossBurst(boss);
+      return;
+    }
+
+    // BOSS AI:隨機選 S1 / S2 / 普攻(45% / 35% / 20%)
+    const r = Math.random();
+    if(r < 0.45){
+      _wbAdvBossS1(boss);
+    }else if(r < 0.80){
+      _wbAdvBossS2(boss);
+    }else{
+      _wbAdvBossNormalAtk(boss);
+    }
+  };
+
+  // BOSS S1:業火灼燒(全體 sp×1.0 + 燃燒 2 回合)
+  function _wbAdvBossS1(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 1.00);
+    alive.forEach(t => {
+      // 走主程式 doDmg(有傷害彈出/震動/屬性計算)
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true });
+        }else{
+          t.curHp = Math.max(0, t.curHp - dmg);
+        }
+      }catch(_){
+        t.curHp = Math.max(0, t.curHp - dmg);
+      }
+      t._wbBurn = 2;
+      try{ renderCard(t); }catch(_){}
+    });
+    if(typeof log === 'function') log(`🔥 維蘇威火山龍王「業火灼燒」!全體 -${dmg} HP,並附加燃燒 2 回合`);
+    setTimeout(() => {
+      boss.acted = true;
+      try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+    }, 1500);
+  }
+
+  // BOSS S2:龍吼震懾(全體 sp×0.75 + 50% 眩暈)
+  function _wbAdvBossS2(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1600, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 0.75);
+    const stunNames = [];
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true });
+        }else{
+          t.curHp = Math.max(0, t.curHp - dmg);
+        }
+      }catch(_){
+        t.curHp = Math.max(0, t.curHp - dmg);
+      }
+      if(t.curHp > 0 && Math.random() < 0.50){
+        // 套用主程式的暈眩 status
+        if(!t.status) t.status = [];
+        t.status = t.status.filter(s => s.type !== 'stun');
+        t.status.push({type:'stun', dur:1});
+        stunNames.push(t.name);
+      }
+      try{ renderCard(t); }catch(_){}
+    });
+    const stunMsg = stunNames.length ? `,${stunNames.join('/')} 眩暈 1 回合` : '';
+    if(typeof log === 'function') log(`🐉 維蘇威火山龍王「龍吼震懾」!全體 -${dmg} HP${stunMsg}`);
+    setTimeout(() => {
+      boss.acted = true;
+      try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+    }, 1500);
+  }
+
+  // BOSS 爆發:天崩之炎(全體當前 HP 90%)
+  function _wbAdvBossBurst(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
+    setTimeout(() => {
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      let logEntry = '⚡ 維蘇威火山龍王爆發「天崩之炎」!';
+      alive.forEach(t => {
+        if(t._wbInvincible){
+          logEntry += ` ${t.name} 無敵擋下!`;
+          t._wbInvincible = 0;
+          return;
+        }
+        let dmgPct = 0.90;
+        if(t._wbShield){
+          dmgPct = 0.45;
+          t._wbShield = 0;
+          logEntry += ` ${t.name} 護盾減半...`;
+        }
+        const d = Math.floor(t.curHp * dmgPct);
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, d, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, fixedDmg: true });
+          }else{
+            t.curHp = Math.max(0, t.curHp - d);
+          }
+        }catch(_){
+          t.curHp = Math.max(0, t.curHp - d);
+        }
+        t._wbBurn = 3;
+        try{ renderCard(t); }catch(_){}
+      });
+      if(typeof log === 'function') { log(logEntry); log('🔥 全體附加燃燒 3 回合'); }
+      setTimeout(() => {
+        boss.acted = true;
+        try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+        try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+      }, 1800);
+    }, 2200);
+  }
+
+  // BOSS 普攻:隨機選 1 個玩家英雄,atk × (1.0~1.3) 傷害
+  function _wbAdvBossNormalAtk(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    if(!alive.length){
+      boss.acted = true;
+      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+      return;
+    }
+    const tgt = alive[Math.floor(Math.random() * alive.length)];
+    const d = Math.floor((boss.atk || 49) * (1 + Math.random() * 0.3));
+    try{
+      if(typeof doDmg === 'function'){
+        doDmg(tgt, d, { actor: boss });
+      }else{
+        tgt.curHp = Math.max(0, tgt.curHp - d);
+      }
+    }catch(_){
+      tgt.curHp = Math.max(0, tgt.curHp - d);
+    }
+    try{ renderCard(tgt); }catch(_){}
+    if(typeof log === 'function') log(`🦷 維蘇威炎爪攻擊 ${tgt.name} -${d} HP`);
+    setTimeout(() => {
+      boss.acted = true;
+      try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+    }, 1200);
+  }
+
+  // ── D. checkWin 攔截:worldboss stage 時走自製結算 ──────────────────
+  // ─────────────────────────────────────────────────────────────────
+  function _wbInstallCheckWinHook(){
+    if(typeof window.checkWin !== 'function') return false;
+    if(window._wbCheckWinPatched) return true;
+    const _origCheckWin = window.checkWin;
+    window.checkWin = function(){
+      try{
+        const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
+        if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
+           && _G && _G.p1 && _G.p2){
+          // BOSS 死了 → 玩家勝
+          const boss = _G.p2.find(h => h && window._wbIsBossName(h.name));
+          if(boss && boss.curHp <= 0){
+            if(!window._wbAdvBattleEnded){
+              window._wbAdvBattleEnded = true;
+              setTimeout(() => { try{ _wbShowAdvBattleResult(true); }catch(e){ console.error(e); } }, 200);
+            }
+            return true;
+          }
+          // 玩家全滅 → 玩家敗
+          if(_G.p1.every(h => !h || h.curHp <= 0)){
+            if(!window._wbAdvBattleEnded){
+              window._wbAdvBattleEnded = true;
+              setTimeout(() => { try{ _wbShowAdvBattleResult(false); }catch(e){ console.error(e); } }, 200);
+            }
+            return true;
+          }
+          return false;
+        }
+      }catch(e){ console.warn('[WB-Adv checkWin hook] 例外,fallback 原 checkWin', e); }
+      return _origCheckWin.apply(this, arguments);
+    };
+    window._wbCheckWinPatched = true;
+    console.log('[WB-Adv] ✅ checkWin hook 已安裝');
+    return true;
+  }
+
+  // 世界戰結算頁(簡化版,沿用 world-boss-ui.html 的 _wbShowSoloPracticeResult 邏輯)
+  function _wbShowAdvBattleResult(win){
+    // 把世界戰戰績寫進 _wbSoloContrib(_wbSaveSoloBest 會讀)
+    const myUid = window._gUserId || 'solo_user';
+    const myDmg = (window._wbSoloContrib && window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
+    // 4 隻英雄名
+    const _Gr = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
+    const heroes = (_Gr && _Gr.p1) ? _Gr.p1.map(h => h ? h.name : '?') : [];
+    const elapsed = Date.now() - (window._wbSoloStartTs || Date.now());
+    let isNewRecord = false;
+    try{
+      if(typeof window._wbSaveSoloBest === 'function'){
+        isNewRecord = window._wbSaveSoloBest(myDmg, heroes, elapsed, win);
+      }
+    }catch(_){}
+
+    // 結束戰鬥:離開冒險模式 + 隱藏戰鬥畫面
+    try{
+      // 清掉冒險戰鬥背景
+      const _gc = document.getElementById('gc');
+      if(_gc) _gc.classList.remove('adv-battle');
+      const _bb = document.getElementById('adv-battle-bg');
+      if(_bb){ _bb.className = ''; _bb.style.backgroundImage = ''; }
+    }catch(_){}
+    try{
+      // 清掉教學按鈕等 BOSS 戰專屬 UI
+      ['adv-tut-btn','adv-bug-report-battle-btn'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+      });
+    }catch(_){}
+
+    // 呼叫 UI 層的「練習模式結算」(已存在於 world-boss-ui.html)
+    if(typeof window._wbShowSoloPracticeResult === 'function'){
+      window._wbShowSoloPracticeResult({
+        dmg: myDmg,
+        heroes: heroes,
+        elapsed: elapsed,
+        killed: win,
+        isNewRecord: isNewRecord,
+      });
+    }else{
+      // fallback alert
+      alert(win ? '🏆 維蘇威火山龍王已被擊敗!' : '💀 全員陣亡...');
+    }
+
+    // 清理 worldboss 全域狀態:走主程式對外清理函式(才能正確清掉 let _adventureStage)
+    try{
+      if(typeof window._wbCleanupAdvAfterBattle === 'function'){
+        window._wbCleanupAdvAfterBattle();
+      }
+    }catch(_){}
+    window._wbInWorldBossMode = false;
+    window._wbSoloPracticeMode = false;
+    window._wbAdvBattleEnded = false;
+  }
+  window._wbShowAdvBattleResult = _wbShowAdvBattleResult;
+
+  // ── E. 安裝所有 hooks(等主程式 ready) ──────────────────────────────
+  function _wbInstallAllAdvHooks(){
+    let tries = 0;
+    function tryInstall(){
+      tries++;
+      let allOk = true;
+      try{ if(!_wbInstallAdvStage())     allOk = false; }catch(e){ console.warn('[WB-Adv] stage', e); allOk = false; }
+      try{ if(!_wbInstallAiActHook())    allOk = false; }catch(e){ console.warn('[WB-Adv] aiAct', e); allOk = false; }
+      try{ if(!_wbInstallCheckWinHook()) allOk = false; }catch(e){ console.warn('[WB-Adv] checkWin', e); allOk = false; }
+      if(!allOk && tries < 40){
+        setTimeout(tryInstall, 500);
+      }else if(allOk){
+        console.log('[WB-Adv] ✅ v4.0 主程式整合 hooks 全部完成');
+      }else{
+        console.warn('[WB-Adv] ⚠ hooks 安裝未完全成功,放棄重試');
+      }
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', () => setTimeout(tryInstall, 200));
+    }else{
+      setTimeout(tryInstall, 200);
+    }
+  }
+  _wbInstallAllAdvHooks();
 
   _wbBootstrap();
 })();
