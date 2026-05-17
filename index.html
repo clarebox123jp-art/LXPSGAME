@@ -2321,6 +2321,8 @@
         await setDoc(doc(_fbDb, 'worldBossRooms', roomId), initial);
         WB.roomId = roomId; WB.isHost = true; WB.mySlot = 0;
         _subscribeRoom(roomId); _startHeartbeat();
+        // ★ FIX 20260517(x) — 房主啟動離線監測 watchdog
+        _startOfflineWatchdog();
         console.log('[WBNet] 開房成功:', roomId);
         return roomId;
       }catch(e){
@@ -2340,14 +2342,16 @@
           const sn = await tx.get(ref);
           if(!sn.exists()) throw new Error('ROOM_NOT_FOUND');
           const data = sn.data();
-          if(data.meta.status !== 'waiting' && data.meta.status !== 'picking') throw new Error('ROOM_IN_BATTLE');
           const players = Array.isArray(data.players) ? data.players : [];
           const existIdx = players.findIndex(p => p.uid === window._gUserId);
+          // ★ FIX 20260517(x) — 已在 players 內 → 視為重連,放行任何 status(含 fighting)
           if(existIdx >= 0){
             players[existIdx].online = true; players[existIdx].lastSeen = Date.now();
             tx.update(ref, { players: players });
             return { slotIdx: existIdx, rejoin: true };
           }
+          // 新加入者:只能在 waiting/picking 階段
+          if(data.meta.status !== 'waiting' && data.meta.status !== 'picking') throw new Error('ROOM_IN_BATTLE');
           if(players.length >= 4) throw new Error('ROOM_FULL');
           const myName = (window._fbUser && (window._fbUser.displayName || window._fbUser.email)) ||
                          localStorage.getItem('lxps_nickname_' + window._gUserId) || '玩家';
@@ -2377,20 +2381,38 @@
     async function leaveRoom(){
       if(!WB.roomId) return;
       const roomId = WB.roomId;
-      _stopHeartbeat(); _unsubscribeRoom();
+      _stopHeartbeat(); _stopOfflineWatchdog(); _unsubscribeRoom();
       try{
         if(WB.isHost){
           await updateDoc(doc(_fbDb, 'worldBossRooms', roomId), {
             'meta.status': 'ended', 'meta.endedReason': 'host_left', 'meta.endedAt': Date.now()
           });
         }else{
+          // ★ FIX 20260517(x) — Client 端離開:區分「戰鬥中」vs「戰鬥前」
+          //   戰鬥中:標 online=false 不移除,讓房主代打(視同連線斷掉)
+          //   戰鬥前:從 players 陣列移除(真的退出)
           await runTransaction(_fbDb, async (tx) => {
             const ref = doc(_fbDb, 'worldBossRooms', roomId);
             const sn = await tx.get(ref);
             if(!sn.exists()) return;
-            const players = (sn.data().players || []).filter(p => p.uid !== window._gUserId);
-            players.forEach((p, i) => { p.slotIdx = i; });
-            tx.update(ref, { players: players });
+            const data = sn.data();
+            const status = data.meta && data.meta.status;
+            const inBattle = (status === 'fighting');
+            if(inBattle){
+              // 戰鬥中:標 offline,不移除
+              const players = data.players || [];
+              const idx = players.findIndex(p => p && p.uid === window._gUserId);
+              if(idx >= 0){
+                players[idx].online = false;
+                players[idx].lastSeen = 0;  // 設 0 確保 watchdog 不會立刻把他標回 online
+                tx.update(ref, { players: players });
+              }
+            }else{
+              // 戰鬥前:從 players 移除 + 重排 slotIdx
+              const players = (data.players || []).filter(p => p.uid !== window._gUserId);
+              players.forEach((p, i) => { p.slotIdx = i; });
+              tx.update(ref, { players: players });
+            }
           });
         }
       }catch(_){}
@@ -2646,6 +2668,29 @@
           return;
         }
         _emit('onRoomUpdate', data);
+        // ★ FIX 20260517(x) — 偵測 player online 變化,emit 給 UI 處理代打接管
+        try{
+          const prevPlayers = prev?.players || [];
+          const curPlayers = data.players || [];
+          curPlayers.forEach(cp => {
+            if(!cp || !cp.uid) return;
+            // 房主自己的 online 變化不通知(自己永遠 online,通知只會打擾)
+            if(cp.uid === window._gUserId) return;
+            const pp = prevPlayers.find(p => p && p.uid === cp.uid);
+            const prevOnline = pp ? (pp.online !== false) : true;  // 沒有 prev = 視為 online(避免初次進房誤判)
+            const curOnline  = cp.online !== false;
+            if(prevOnline !== curOnline){
+              _emit('onPlayerOnlineChange', {
+                uid: cp.uid,
+                name: cp.name || '玩家',
+                slotIdx: cp.slotIdx,
+                online: curOnline,
+              });
+            }
+          });
+        }catch(e){
+          console.warn('[WBNet] onPlayerOnlineChange 偵測例外', e && e.message);
+        }
         if(data.battle){
           const battleChanged = !prev || !prev.battle || prev.battle.version !== data.battle.version;
           if(battleChanged){
@@ -2670,6 +2715,16 @@
             if(cur && cur.side === 'p1'){
               const expectedPlayer = (data.players || []).find(p => p.slotIdx === cur.pos);
               if(expectedPlayer && expectedPlayer.uid === pa.actorUid){
+                // ★ FIX 20260517(x) — 該槽位玩家若已離線(被房主接管),忽略遲到的 action
+                //   避免 double-act:房主已經按過按鈕,client 端離線前送出的 pendingAction
+                //   還在路上,到達時若被執行會導致同回合行動兩次。
+                if(expectedPlayer.online === false){
+                  console.log('[WBNet] 槽 ' + cur.pos + ' 玩家已離線,忽略遲到的 pendingAction(房主接管中)');
+                  try{
+                    updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
+                  }catch(_eClr){}
+                  return;
+                }
                 // ★ v6 Phase 5 — 連線房主用主程式 execSkill / execAtk / execBurst
                 if(window._wbConnectedHostMode && typeof window._wbExecPlayerAction === 'function'){
                   try{
@@ -2705,11 +2760,18 @@
       if(actor.side !== 'p1') return;
       const player = data.players.find(p => p.slotIdx === actor.pos);
       if(player && player.uid === window._gUserId){
+        // ★ FIX 20260517(x) — 自己被標離線時不觸發 onMyTurn(代打中,房主在操作)
+        if(player.online === false){
+          console.log('[WBNet] 自己被標離線中,跳過 onMyTurn 觸發(房主代打中)');
+          return;
+        }
         _emit('onMyTurn', { battle: data.battle, myActorPos: actor.pos, myHero: data.battle.p1[actor.pos] });
       }
     }
     function _startHeartbeat(){
       _stopHeartbeat();
+      // ★ FIX 20260517(x) — 心跳從 30 秒縮到 10 秒,讓 20 秒離線判定更準確
+      //   (玩家斷網最多 10 秒內 lastSeen 不會更新,加上 10 秒緩衝就會被房主標離線)
       WB.heartbeatTimer = setInterval(async () => {
         if(!WB.roomId || !window._gUserId) return;
         try{
@@ -2724,11 +2786,78 @@
             tx.update(ref, { players: players });
           });
         }catch(_){}
-      }, 30000);
+      }, 10000);
     }
     function _stopHeartbeat(){
       if(WB.heartbeatTimer){ clearInterval(WB.heartbeatTimer); WB.heartbeatTimer = null; }
     }
+
+    // ════════════════════════════════════════════════════════════════
+    // ★ FIX 20260517(x) — 離線監測 watchdog(房主端跑)
+    //
+    // 每 5 秒掃一次 players,把 lastSeen 超過 20 秒沒更新的玩家標 offline=false,
+    // 並寫回 firestore。其他端的 onSnapshot 會收到 online 變化,UI 同步更新。
+    //
+    // 設計重點:
+    // (a) 只有房主跑,避免多個客戶端同時寫 firestore 造成 conflict
+    // (b) 用 transaction 確保 lastSeen 比對是最新的(避免房主自己延遲收到 snap 誤判)
+    // (c) 房主自己永遠是 online(自己會更新自己,如果連線都斷了根本就不在跑這 watchdog)
+    // (d) 只在 status=fighting/picking/waiting 階段監測,結算後停掉
+    // ════════════════════════════════════════════════════════════════
+    const OFFLINE_THRESHOLD_MS = 20000;  // 20 秒沒心跳 → 離線
+    const OFFLINE_CHECK_INTERVAL_MS = 5000;  // 每 5 秒檢查一次
+
+    function _startOfflineWatchdog(){
+      _stopOfflineWatchdog();
+      WB.offlineWatchTimer = setInterval(async () => {
+        if(!WB.roomId || !WB.isHost) return;
+        try{
+          await runTransaction(_fbDb, async (tx) => {
+            const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);
+            const sn = await tx.get(ref);
+            if(!sn.exists()) return;
+            const data = sn.data();
+            const status = data.meta && data.meta.status;
+            // 結算後停止監測
+            if(status === 'ended') return;
+            const now = Date.now();
+            const players = data.players || [];
+            let changed = false;
+            players.forEach(p => {
+              if(!p || !p.uid) return;
+              // 房主自己永遠 online
+              if(p.uid === window._gUserId){
+                if(!p.online){ p.online = true; changed = true; }
+                return;
+              }
+              const last = p.lastSeen || 0;
+              const elapsed = now - last;
+              const shouldBeOffline = elapsed > OFFLINE_THRESHOLD_MS;
+              if(shouldBeOffline && p.online !== false){
+                p.online = false;
+                changed = true;
+                console.log('[WB-Watchdog] 玩家離線:' + (p.name || p.uid.slice(0,8)) + ' (超過 ' + Math.floor(elapsed/1000) + ' 秒)');
+              }else if(!shouldBeOffline && p.online === false){
+                p.online = true;
+                changed = true;
+                console.log('[WB-Watchdog] 玩家重連:' + (p.name || p.uid.slice(0,8)));
+              }
+            });
+            if(changed){
+              tx.update(ref, { players: players });
+            }
+          });
+        }catch(e){
+          console.warn('[WB-Watchdog] 例外', e && e.message);
+        }
+      }, OFFLINE_CHECK_INTERVAL_MS);
+    }
+    function _stopOfflineWatchdog(){
+      if(WB.offlineWatchTimer){ clearInterval(WB.offlineWatchTimer); WB.offlineWatchTimer = null; }
+    }
+    // 暴露給外部(讓 _wbNet 入口呼叫)
+    WB._startOfflineWatchdog = _startOfflineWatchdog;
+    WB._stopOfflineWatchdog  = _stopOfflineWatchdog;
 
     // ─── G. 公開房列表 + 邀請好友(FIX 20260517(m)) ─────────────────
     // ★ Firestore schema:

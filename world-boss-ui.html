@@ -3872,7 +3872,18 @@
       return;
     }
     // ── 連線房間流程 ─────────────────────────────────────────
-    if(!(await _wbGameConfirm('確定要離開房間嗎?'))) return;
+    // ★ FIX 20260517(x) — 戰鬥中離開要不一樣的確認文字
+    const _inBattle = !!window._wbInWorldBossMode;
+    const _amHost = !!(window._wbNet && window._wbNet.isHost && window._wbNet.isHost());
+    let _confirmMsg;
+    if(_inBattle){
+      _confirmMsg = _amHost
+        ? '⚠ 你是房主,離開會結束整場戰鬥,確定嗎?'
+        : '⚠ 戰鬥還沒結束。離開後你的角色會交給房主代打,確定離開嗎?';
+    }else{
+      _confirmMsg = '確定要離開房間嗎?';
+    }
+    if(!(await _wbGameConfirm(_confirmMsg))) return;
     // ★ FIX 20260517(m) — 停掉房主端的 outgoing invite 訂閱
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
     // ★ FIX 20260517(r) — 清掉本地指派的 NPC 槽位狀態
@@ -6018,6 +6029,52 @@
   // 暴露給外部需要時手動觸發
   window._wbInstallNpcAutoActHook = _wbInstallNpcAutoActHook;
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(x) — endAction hook:處理「等回合結束才交回」邏輯
+  // ────────────────────────────────────────────────────────────────────
+  // 當玩家在自己的回合中途重連,房主代打中:
+  //   - 標 hero._wbPendingReturnControl = true(避免立即交回造成插隊)
+  //   - 等 endAction 跑完(actor.acted=true 後),才把 _wbIsHostNpc 設回 false
+  //
+  // 守門:只在 _wbConnectedHostMode 下生效;冪等;沒有副作用
+  // ════════════════════════════════════════════════════════════════════
+  function _wbInstallEndActionReturnControlHook(){
+    if(window._wbEndActionReturnControlHookInstalled) return true;
+    if(typeof window.endAction !== 'function'){
+      console.warn('[WB-Online] endAction 尚未載入,延後 200ms 安裝');
+      setTimeout(_wbInstallEndActionReturnControlHook, 200);
+      return false;
+    }
+    const _origEndAction = window.endAction;
+    window.endAction = function(a, noFinish){
+      const ret = _origEndAction.apply(this, arguments);
+      // 只在連線房主模式下處理
+      if(!window._wbConnectedHostMode) return ret;
+      try{
+        // 若這個 actor 標了 pending return,且已完成本回合(acted=true),把控制權交回玩家
+        if(a && a._wbPendingReturnControl && a.acted){
+          a._wbIsHostNpc = false;
+          a._wbPendingReturnControl = false;
+          // 找出該槽位玩家暱稱
+          try{
+            const snap = window._wbNet && window._wbNet.getSnapshot();
+            const player = snap?.players?.[a.pos];
+            const playerName = (player && player.name) || ('槽 ' + (a.pos + 1));
+            _wbShowBattleToast('✓ ' + playerName + ' 接回操作', 'online');
+            console.log('[WB-Online] 本回合結束,控制權交回 ' + playerName);
+          }catch(_){}
+        }
+      }catch(eHook){
+        console.warn('[WB-Online] endAction hook 例外', eHook);
+      }
+      return ret;
+    };
+    window._wbEndActionReturnControlHookInstalled = true;
+    console.log('[WB-Online] ✅ endAction return-control hook 已安裝');
+    return true;
+  }
+  window._wbInstallEndActionReturnControlHook = _wbInstallEndActionReturnControlHook;
+
   // === 開戰 ===
   // ════════════════════════════════════════════════════════════════════
   // ★ v6 Phase 2 (2026-05-17) — 連線房主端 _wbUiStartBattle 改走主程式
@@ -6123,6 +6180,10 @@
     //   不需要 pendingAction(因為這槽位沒玩家對應)
     try{ _wbInstallNpcAutoActHook(); }catch(eHook){
       console.warn('[WB-Host v6] NPC auto-act hook 安裝失敗', eHook);
+    }
+    // ★ FIX 20260517(x) — 安裝 endAction hook,處理「等回合結束才交回操作」
+    try{ _wbInstallEndActionReturnControlHook(); }catch(eHook2){
+      console.warn('[WB-Host v6] endAction return-control hook 安裝失敗', eHook2);
     }
 
     // ── 廣播初始 battle 給其他玩家(舊 schema, version=1) ───────────
@@ -6735,7 +6796,159 @@
   });
 
   // ════════════════════════════════════════════════════════════════════
-  // ★ v6 Phase 4 (2026-05-17) — onBattleUpdate 重寫為 client mode + 主程式 UI
+  // ★ FIX 20260517(x) — 玩家離線/重連的代打接管邏輯
+  // ────────────────────────────────────────────────────────────────────
+  // 流程:
+  // 1. 房主端 watchdog 偵測玩家 20 秒沒心跳 → 寫 firestore players[i].online=false
+  // 2. 各端 onSnapshot 收到 → emit 'onPlayerOnlineChange' 事件
+  // 3. 房主端:把該槽位 hero._wbIsHostNpc 設 true(讓 startTurn 顯示 action-panel 給房主)
+  //    + 戰鬥場景 toast 通知 "{暱稱} 已離線,房主接手代打"
+  // 4. 該玩家端(client):若是自己 → 顯示「你已離線,動作由房主代打」遮罩
+  // 5. 玩家重連 → 玩家心跳更新 → watchdog 設 online=true
+  //    - 若不在玩家的回合 → 立刻把 _wbIsHostNpc 設回 false
+  //    - 若正在玩家的回合(房主代打中) → 標 _wbPendingReturnControl=true,
+  //      該回合結束(endAction 後)再交回(避免插隊)
+  // ════════════════════════════════════════════════════════════════════
+
+  // 戰鬥場景上方顯示提示 toast(自動 fade,3 秒消失)
+  function _wbShowBattleToast(text, kind){
+    try{
+      const _existing = document.getElementById('wb-battle-toast');
+      if(_existing) _existing.remove();
+      const toast = document.createElement('div');
+      toast.id = 'wb-battle-toast';
+      const color = kind === 'offline' ? '#ff8866' : (kind === 'online' ? '#66ddaa' : '#ffd766');
+      toast.style.cssText =
+        'position:fixed;top:90px;left:50%;transform:translateX(-50%);z-index:9800;' +
+        'padding:14px 28px;border-radius:12px;font-size:22px;font-weight:800;' +
+        'letter-spacing:1px;color:' + color + ';' +
+        'background:rgba(8,10,24,0.92);' +
+        'border:2px solid ' + color + ';' +
+        'box-shadow:0 0 28px ' + color + ',0 8px 20px rgba(0,0,0,0.7);' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+        'pointer-events:none;opacity:0;transition:opacity 0.25s;';
+      toast.textContent = text;
+      document.body.appendChild(toast);
+      // 淡入
+      requestAnimationFrame(() => { toast.style.opacity = '1'; });
+      // 3 秒後淡出 + 移除
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => { try{ toast.remove(); }catch(_){} }, 300);
+      }, 3000);
+    }catch(_){}
+  }
+  window._wbShowBattleToast = _wbShowBattleToast;
+
+  // Client 端遮罩:自己被代打時顯示
+  function _wbShowSelfOfflineMask(show){
+    try{
+      let mask = document.getElementById('wb-self-offline-mask');
+      if(show){
+        if(!mask){
+          mask = document.createElement('div');
+          mask.id = 'wb-self-offline-mask';
+          mask.style.cssText =
+            'position:fixed;inset:0;z-index:9750;pointer-events:none;' +
+            'background:linear-gradient(180deg,rgba(255,140,80,0.18),rgba(50,20,10,0.35));' +
+            'display:flex;flex-direction:column;align-items:center;justify-content:flex-start;' +
+            'padding-top:120px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+          mask.innerHTML =
+            '<div style="font-size:48px;margin-bottom:12px;animation:wbOfflinePulse 1.4s ease-in-out infinite;">⚠</div>' +
+            '<div style="font-size:32px;font-weight:900;color:#ff9966;letter-spacing:2px;text-shadow:0 0 12px rgba(255,120,60,0.8);">你已離線</div>' +
+            '<div style="font-size:18px;color:#ffccaa;margin-top:8px;letter-spacing:1px;">動作暫由房主代打</div>' +
+            '<div style="font-size:14px;color:#aa8866;margin-top:14px;">恢復連線中,請稍候...</div>';
+          // 加 keyframes(若不存在)
+          if(!document.getElementById('wb-offline-style')){
+            const st = document.createElement('style');
+            st.id = 'wb-offline-style';
+            st.textContent = '@keyframes wbOfflinePulse{0%,100%{opacity:0.6;transform:scale(1);}50%{opacity:1;transform:scale(1.1);}}';
+            document.head.appendChild(st);
+          }
+          document.body.appendChild(mask);
+        }
+      }else{
+        if(mask) mask.remove();
+      }
+    }catch(_){}
+  }
+
+  // 主要監聽:player online 變化
+  window._wbNet.on('onPlayerOnlineChange', function(info){
+    if(!info) return;
+    console.log('[WB-Online] 玩家狀態變化:', info.name, info.online ? '已連線' : '已離線');
+    const isHost = !!(window._wbNet && window._wbNet.isHost && window._wbNet.isHost());
+    const isMe = (info.uid === window._gUserId);
+    const inBattle = !!window._wbInWorldBossMode;
+
+    // ── 自己被標離線/上線 ─────────────────────────────────────────
+    //   (一般是房主把我標離線了才會收到,因為我重新上線後 onSnapshot 才會帶這變化進來;
+    //    特殊情況:我以非房主身份監測別人時,自己的變化已經在上面的 forEach 內被 skip)
+    //   實際上 _emit 邏輯有 skip 房主自己,所以這裡 isMe 通常只會是非房主玩家自己被標
+    if(isMe){
+      _wbShowSelfOfflineMask(!info.online);
+      return;
+    }
+
+    // ── 房主端:處理代打接管 / 還回 ─────────────────────────────
+    if(isHost && inBattle){
+      const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
+      if(!_G || !_G.p1){
+        console.warn('[WB-Online] 房主端找不到 G');
+        return;
+      }
+      const hero = _G.p1[info.slotIdx];
+      if(!hero){
+        console.warn('[WB-Online] 找不到對應的 hero,slotIdx=' + info.slotIdx);
+        return;
+      }
+
+      if(!info.online){
+        // ─ 玩家離線:標 _wbIsHostNpc=true,房主接手 ────────────────
+        hero._wbIsHostNpc = true;
+        _wbShowBattleToast('⚠ ' + info.name + ' 已離線,房主接手代打', 'offline');
+        // 若正輪到該玩家的回合,主程式正在等他按按鈕 → 重新跑 startTurn 的 p1 路徑
+        // (action-panel 已經顯示著,房主直接按就好,不需要額外動作)
+        //
+        // 但若該玩家在 client 端有送 pendingAction 但還沒到房主這裡,後續到達也會被
+        // _wbExecPlayerAction 內 actor.acted=true 守門擋下(因為房主已經幫忙按過了)
+        try{ playSfx('sfx-warn', 0.6); }catch(_){}
+      }else{
+        // ─ 玩家重連:看是否正輪到他的回合,決定立刻交回 or 等回合結束交回 ────
+        const activeChar = _G.activeChar;
+        const isHisTurn = activeChar && activeChar === hero && !hero.acted;
+        if(isHisTurn){
+          // 老師要求:等該回合結束才交回(避免插隊)
+          // 標 pending 讓 endAction 後再處理
+          hero._wbPendingReturnControl = true;
+          _wbShowBattleToast('✓ ' + info.name + ' 已回到戰鬥(本回合結束後交回)', 'reconnecting');
+          console.log('[WB-Online] ' + info.name + ' 重連時正輪到他的回合,等 endAction 後交回');
+        }else{
+          // 不在他的回合 → 立刻交回
+          hero._wbIsHostNpc = false;
+          hero._wbPendingReturnControl = false;
+          _wbShowBattleToast('✓ ' + info.name + ' 已回到戰鬥', 'online');
+        }
+        try{ playSfx('sfx-confirm', 0.5); }catch(_){}
+      }
+      return;
+    }
+
+    // ── 非房主端 + 戰鬥中:同步本地的 hero._wbIsHostNpc(讓本地 UI 也標示代打中) ─
+    if(inBattle && !isHost){
+      const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
+      if(_G && _G.p1 && _G.p1[info.slotIdx]){
+        const hero = _G.p1[info.slotIdx];
+        hero._wbIsHostNpc = !info.online;
+      }
+      // toast 通知其他 client 玩家
+      if(!info.online){
+        _wbShowBattleToast('⚠ ' + info.name + ' 已離線,由房主代打', 'offline');
+      }else{
+        _wbShowBattleToast('✓ ' + info.name + ' 已回到戰鬥', 'online');
+      }
+    }
+  });
   // ────────────────────────────────────────────────────────────────────
   // 改動:
   //   - 房主端(_wbNet.isHost()=true):自己 push 的 wire 不再 apply,
