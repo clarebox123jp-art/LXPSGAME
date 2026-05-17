@@ -1524,6 +1524,14 @@
     const _origAiAct = window.aiAct;
     window.aiAct = function(a){
       try{
+        // ★ v6 Phase 4 — 非房主端攔截:本機絕對不能跑 BOSS AI
+        //   原因:房主端跑 BOSS AI 算出來的傷害會 sync 回來,非房主只要等廣播。
+        //         如果本機也跑一遍,會跟房主算出不同結果(隨機數不同),G 永久分歧。
+        if(window._wbClientMode && typeof window._wbGetAdvStage === 'function'
+           && window._wbGetAdvStage() === 'worldboss'){
+          console.log('[WB-Client v6] aiAct 被攔截(BOSS 行動等房主廣播)');
+          return;
+        }
         // 偵測:是否處於世界戰 stage + 是否為 BOSS
         if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
            && a && a.side === 'p2' && typeof a.name === 'string'
@@ -1748,6 +1756,17 @@
     const _origCheckWin = window.checkWin;
     window.checkWin = function(){
       try{
+        // ★ v6 Phase 4 — 非房主端攔截:本機絕對不能自己判勝敗
+        //   勝敗由房主 sync 過來,本機 G 是經過 round-trip 的,
+        //   curHp 等可能有微小延遲,自己判可能誤觸發結算頁。
+        //   例外:如果 _wbClientForceCheckWin = true(房主廣播 ended 後設的),
+        //         讓本機跑一次原本的結算流程。
+        if(window._wbClientMode && !window._wbClientForceCheckWin
+           && typeof window._wbGetAdvStage === 'function'
+           && window._wbGetAdvStage() === 'worldboss'){
+          return false;   // 假裝戰鬥未結束,等房主廣播
+        }
+
         const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
         if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
            && _G && _G.p1 && _G.p2){
@@ -1875,10 +1894,119 @@
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = false;
+    // ★ v6 Phase 4 — 結算後清掉 client/host mode 旗標
+    //   下一場戰鬥(不論單人或連線)從乾淨狀態開始
+    window._wbConnectedHostMode = false;
+    window._wbConnectedClientMode = false;
+    window._wbClientMode = false;
+    window._wbClientForceCheckWin = false;
+    window._wbClientFirstBattleUpdate = true;
+    window._wbClientLastVersion = 0;
   }
   window._wbShowAdvBattleResult = _wbShowAdvBattleResult;
 
-  // ── E. 安裝所有 hooks(等主程式 ready) ──────────────────────────────
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v6 Phase 3 — 房主端 G 同步機制
+  // ────────────────────────────────────────────────────────────────────
+  // 目的:房主端跑主程式 advStartBattle() 後,G 在每次行動結算後改變,
+  //      需要把整個 G 序列化推到 Firestore,讓非房主端的 onBattleUpdate
+  //      收到並還原本機 G(Phase 4 做)。
+  //
+  // 安裝點:hook 進主程式 endAction(玩家/AI 行動結束)+ startTurn
+  //        (新回合開始),涵蓋所有 G 改變的「結算後最終狀態」時機。
+  //
+  // 限制:只在「連線模式 + 房主」時運作,單人練習不會影響(_wbConnectedHostMode 旗標)。
+  // ════════════════════════════════════════════════════════════════════
+
+  // 判斷目前是不是「連線模式房主」
+  function _wbIsConnectedHost(){
+    if(!window._wbConnectedHostMode) return false;
+    if(!window._wbNet || typeof window._wbNet.isHost !== 'function') return false;
+    if(!window._wbNet.isHost()) return false;
+    return true;
+  }
+
+  // 主同步函式 — 由 hook / 外部呼叫
+  let _wbSyncCounter = 0;
+  let _wbLastSyncTs = 0;
+  let _wbSyncPending = false;
+  window._wbHostSyncG = function(reason){
+    if(!_wbIsConnectedHost()) return false;
+    const G = window._wbGetG ? window._wbGetG() : window.G;
+    if(!G) return false;
+    if(!window._wbWireUtils || typeof window._wbWireUtils.GToWire !== 'function'){
+      console.warn('[WB-Sync v6] _wbWireUtils.GToWire 不存在,sync 跳過');
+      return false;
+    }
+    // 節流:同一個 tick 內多次呼叫只 sync 一次(用 microtask 延後)
+    if(_wbSyncPending) return false;
+    _wbSyncPending = true;
+    Promise.resolve().then(() => {
+      _wbSyncPending = false;
+      try{
+        const wire = window._wbWireUtils.GToWire(G);
+        if(!wire) return;
+        _wbSyncCounter++;
+        const now = Date.now();
+        const dt = now - _wbLastSyncTs;
+        _wbLastSyncTs = now;
+        console.log('[WB-Sync v6] push #' + _wbSyncCounter
+          + ' reason=' + (reason || 'unknown')
+          + ' turn=' + (wire.turn || 0)
+          + ' actorIdx=' + (wire.currentActorIdx || 0)
+          + ' (dt=' + dt + 'ms)');
+        window._wbNet.hostPushBattleState({
+          fullWireG: wire,
+          _syncReason: reason || 'unknown',
+          logEntries: [],  // log 已在 wire.battleStats 處理,這裡不重複加
+        });
+      }catch(e){ console.warn('[WB-Sync v6] sync 失敗', e); }
+    });
+    return true;
+  };
+
+  // hook 進 endAction(每次行動結算完最自然的 sync 時機)
+  function _wbInstallSyncHook(){
+    if(window._wbSyncHookPatched) return true;
+    if(typeof window.endAction !== 'function') return false;
+    const _origEndAction = window.endAction;
+    window.endAction = function(){
+      const r = _origEndAction.apply(this, arguments);
+      // 只有連線模式房主會真的 sync,單人練習這裡是 no-op
+      try{ window._wbHostSyncG('after_endAction'); }catch(e){ console.warn('[WB-Sync] hook err', e); }
+      return r;
+    };
+    window._wbSyncHookPatched = true;
+    console.log('[WB-Sync v6] ✅ endAction sync hook 已安裝');
+    return true;
+  }
+
+  // hook 進 startTurn(回合開始時也 sync 一次,確保 turnOrder/currentActorIdx 同步)
+  function _wbInstallStartTurnSyncHook(){
+    if(window._wbStartTurnSyncHookPatched) return true;
+    if(typeof window.startTurn !== 'function') return false;
+    const _origStartTurn = window.startTurn;
+    window.startTurn = function(){
+      // ★ v6 Phase 4 — 非房主端攔截:本機不能自己推進 turn
+      //   原因:turn / currentActorIdx 完全由房主控制,本機自己跑會跟房主分歧
+      //   只在 worldboss + client mode 才擋,其他關卡正常跑
+      if(window._wbClientMode && typeof window._wbGetAdvStage === 'function'
+         && window._wbGetAdvStage() === 'worldboss'){
+        // 不呼叫 _origStartTurn,也不 sync(client 不能 push)
+        return;
+      }
+      const r = _origStartTurn.apply(this, arguments);
+      try{ window._wbHostSyncG('after_startTurn'); }catch(e){ console.warn('[WB-Sync] hook err', e); }
+      return r;
+    };
+    window._wbStartTurnSyncHookPatched = true;
+    console.log('[WB-Sync v6] ✅ startTurn sync hook 已安裝');
+    return true;
+  }
+
+  // BOSS 出招 hook(_wbAdvBossTurn 內 doDmg / 加 buff 後立刻 sync,但
+  //   實際上跟 endAction 重複,所以這裡先不裝額外的 sync — 由 endAction 兜底)
+
   function _wbInstallAllAdvHooks(){
     let tries = 0;
     function tryInstall(){
@@ -1887,10 +2015,13 @@
       try{ if(!_wbInstallAdvStage())     allOk = false; }catch(e){ console.warn('[WB-Adv] stage', e); allOk = false; }
       try{ if(!_wbInstallAiActHook())    allOk = false; }catch(e){ console.warn('[WB-Adv] aiAct', e); allOk = false; }
       try{ if(!_wbInstallCheckWinHook()) allOk = false; }catch(e){ console.warn('[WB-Adv] checkWin', e); allOk = false; }
+      // ★ v6 Phase 3 — 連線同步 hook(只在 hook 成功後生效於連線模式)
+      try{ if(!_wbInstallSyncHook())           allOk = false; }catch(e){ console.warn('[WB-Sync] endAction', e); allOk = false; }
+      try{ if(!_wbInstallStartTurnSyncHook())  allOk = false; }catch(e){ console.warn('[WB-Sync] startTurn', e); allOk = false; }
       if(!allOk && tries < 40){
         setTimeout(tryInstall, 500);
       }else if(allOk){
-        console.log('[WB-Adv] ✅ v4.0 主程式整合 hooks 全部完成');
+        console.log('[WB-Adv] ✅ v4.0 + v6 主程式整合 hooks 全部完成');
       }else{
         console.warn('[WB-Adv] ⚠ hooks 安裝未完全成功,放棄重試');
       }

@@ -1961,19 +1961,221 @@
       if(!window._gUserId){ _emit('onError', { msg: '請先登入 Google 才能連線' }); return false; }
       return true;
     }
-    function _heroToWire(h){
-      if(!h) return null;
-      return {
-        name: h.name, side: h.side, pos: h.pos,
-        hp: h.hp, curHp: h.curHp, atk: h.atk, sp: h.sp, spd: h.spd,
-        element: h.element || null, _skLv: h._skLv || {s1:0,s2:0},
-        burst: h.burst || 0, burstMax: h.burstMax || 10,
-        statuses: Array.isArray(h.statuses) ? h.statuses.map(s => ({ type:s.type, dur:s.dur, val:s.val })) : [],
-        buffs:    Array.isArray(h.buffs)    ? h.buffs.map(b => ({ type:b.type, dur:b.dur, val:b.val })) : [],
-        isDead: !!h.isDead || (h.curHp <= 0),
-      };
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v6 Phase 1 — 序列化 / 反序列化擴充
+    // ────────────────────────────────────────────────────────────────────
+    // 目的: 把主程式 G + hero 完整地寫入 Firestore,讓非房主端能還原本機 G
+    //       走「深拷貝 + 黑名單」策略 — hero 上有 110+ 個自訂欄位,白名單法
+    //       不可維護。安全規則: 跳過 function / DOM / 循環引用 / Set / Map
+    //
+    // ⚠ 舊版 _heroToWire 命名 bug: 主程式 hero 物件用 h.status (單數),
+    //   舊版誤用 h.statuses (複數) → status 永遠 wire 出空陣列。新版修正。
+    // ════════════════════════════════════════════════════════════════════
+
+    // ── 深拷貝核心 — 跳過所有不可序列化的東西 ─────────────────────────
+    // 黑名單欄位(hero / G 上絕對不 wire 的)
+    const _WIRE_HERO_SKIP = new Set([
+      '_mimicInProgress',  // 開著的 modal 引用,反序列化沒意義
+      '_handledByOnCard',  // DOM 互動旗標,跨機器無意義
+    ]);
+    const _WIRE_G_SKIP = new Set([
+      'activeChar', 'selMove', 'selItem', 'pendingTarget',
+      'taunted', 'waitFor', 'interruptTarget',
+      'gunnerTarget', 'guardFor',
+      // 這些都是「目前選中的物件 ref」,跨機器要靠 {side,pos} 重指或 reset
+      // 但戰鬥節奏由房主推進,非房主用不到這些,reset 為 null 即可
+    ]);
+
+    function _wireDeepClone(v, depth){
+      depth = depth || 0;
+      if(depth > 10) return null;  // 防爆 recursion
+      if(v === null || v === undefined) return v;
+      const t = typeof v;
+      if(t === 'function') return undefined;  // 跳過 function
+      if(t === 'number' || t === 'string' || t === 'boolean') return v;
+      if(t !== 'object') return undefined;
+      // DOM Element / Node → 跳過
+      if(typeof window !== 'undefined' && window.Node && v instanceof window.Node) return undefined;
+      // Set → array
+      if(v instanceof Set) return Array.from(v).map(x => _wireDeepClone(x, depth+1)).filter(x => x !== undefined);
+      // Map → object
+      if(v instanceof Map){
+        const o = {};
+        v.forEach((val, key) => {
+          if(typeof key === 'string' || typeof key === 'number'){
+            const c = _wireDeepClone(val, depth+1);
+            if(c !== undefined) o[String(key)] = c;
+          }
+        });
+        return o;
+      }
+      // Array
+      if(Array.isArray(v)){
+        return v.map(x => _wireDeepClone(x, depth+1))
+                .map(x => x === undefined ? null : x);  // 保留 array index
+      }
+      // 一般物件 — 列舉自有 enumerable property
+      const out = {};
+      for(const k in v){
+        if(!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        if(_WIRE_HERO_SKIP.has(k)) continue;
+        const c = _wireDeepClone(v[k], depth+1);
+        if(c !== undefined) out[k] = c;
+      }
+      return out;
     }
-    function _heroesToWire(arr){ return Array.isArray(arr) ? arr.map(_heroToWire) : []; }
+
+    // ── hero → wire (v6) ──────────────────────────────────────────────
+    function _heroToWireV6(h){
+      if(!h) return null;
+      // 走深拷貝,然後修正 status/buffs 確保是 array
+      const w = _wireDeepClone(h, 0);
+      if(!w) return null;
+      // 主程式用 h.status (單數),保留並補 h.buffs
+      if(!Array.isArray(w.status)) w.status = [];
+      if(!Array.isArray(w.buffs))  w.buffs  = [];
+      // 衍生欄位:isDead 方便接收端快速判斷
+      w.isDead = !!(h.isDead) || (h.curHp <= 0);
+      return w;
+    }
+
+    // ── wire → hero (v6) ──────────────────────────────────────────────
+    // 用 newHero(name,side,pos) 起底建立完整骨架(含 av/_dualStarForm 等預設),
+    // 然後把 wire 內的所有欄位覆蓋上去。這樣即使 wire 漏某欄位,也有預設值兜底。
+    function _wireToHeroV6(w){
+      if(!w || !w.name) return null;
+      let h = null;
+      try{
+        if(typeof window.newHero === 'function'){
+          h = window.newHero(w.name, w.side || 'p1', w.pos != null ? w.pos : 0);
+        }
+      }catch(e){ console.warn('[WB-Wire] newHero 失敗 for', w.name, e); }
+      if(!h){
+        // fallback:空殼 hero(防呆,正常不會走到)
+        h = { name: w.name, side: w.side || 'p1', pos: w.pos || 0,
+              hp: w.hp || 1, curHp: w.curHp || 1, atk: 0, sp: 0, spd: 0,
+              status: [], buffs: [], s1: {}, s2: {} };
+      }
+      // 把 wire 內所有欄位覆蓋(包含 status/buffs/_wb* 等)
+      for(const k in w){
+        if(!Object.prototype.hasOwnProperty.call(w, k)) continue;
+        h[k] = w[k];
+      }
+      // 確保 array 欄位至少是空 array(防呆)
+      if(!Array.isArray(h.status)) h.status = [];
+      if(!Array.isArray(h.buffs))  h.buffs  = [];
+      return h;
+    }
+
+    // ── G → wire ──────────────────────────────────────────────────────
+    function _GToWire(G){
+      if(!G) return null;
+      const out = {
+        // 戰鬥節奏
+        turn: G.turn || 1,
+        currentActorIdx: G.currentActorIdx || 0,
+        turnOrder: Array.isArray(G.turnOrder)
+          ? G.turnOrder.map(o => ({ side: o.side, pos: o.pos, spd: o.spd }))
+          : [],
+        // 兩邊陣容
+        p1: Array.isArray(G.p1) ? G.p1.map(_heroToWireV6) : [],
+        p2: Array.isArray(G.p2) ? G.p2.map(_heroToWireV6) : [],
+        // 能量
+        energy: G.energy ? { p1: G.energy.p1 || 0, p2: G.energy.p2 || 0 } : { p1: 0, p2: 0 },
+        // 戰場物品列(deck/inv/inv2 可能含 item card 物件)
+        inv:  Array.isArray(G.inv)  ? _wireDeepClone(G.inv,  0) : [null,null,null],
+        inv2: Array.isArray(G.inv2) ? _wireDeepClone(G.inv2, 0) : [null,null,null],
+        deck: Array.isArray(G.deck) ? _wireDeepClone(G.deck, 0) : [],
+        // 戰績統計
+        battleStats: G.battleStats ? _wireDeepClone(G.battleStats, 0) : {},
+        // 連招疲勞
+        lastSkillName: G.lastSkillName || null,
+        lastSkill: G.lastSkill || null,
+        comboFatigue: G.comboFatigue || 0,
+        lastSkillByHero: G.lastSkillByHero ? _wireDeepClone(G.lastSkillByHero, 0) : {},
+        comboFatigueByHero: G.comboFatigueByHero ? _wireDeepClone(G.comboFatigueByHero, 0) : {},
+        // 雜項戰場狀態旗標
+        alchemist_s2_used: !!G.alchemist_s2_used,
+        passiveInterruptUsed: !!G.passiveInterruptUsed,
+        // Set → array
+        sellUsed: G.sellUsed instanceof Set ? Array.from(G.sellUsed) : [],
+        // dmgUp 是 array(回合內提傷標記)
+        dmgUp: Array.isArray(G.dmgUp) ? _wireDeepClone(G.dmgUp, 0) : [],
+        // 世界 BOSS 戰專屬
+        _wbBurstUsed: G._wbBurstUsed ? _wireDeepClone(G._wbBurstUsed, 0) : null,
+        _mimicActor: G._mimicActor || null,
+        _mimicCost: G._mimicCost != null ? G._mimicCost : null,
+        _mimicStype: G._mimicStype || null,
+        _gunnerUsedThisTurn: !!G._gunnerUsedThisTurn,
+        _tarotSellBonus: G._tarotSellBonus != null ? G._tarotSellBonus : null,
+        _assetGuard: G._assetGuard != null ? G._assetGuard : null,
+      };
+      return out;
+    }
+
+    // ── wire → G(在已存在的 G 上覆蓋,而非 replace) ────────────────
+    // 注意:非房主端的 window.G 一開始也是經由 _wbSetupAdvForBattle 建立,
+    // 之後每次 onBattleUpdate 都呼叫這個函式覆蓋,不要直接 window.G = newG
+    // (因為主程式可能持有 G 的 reference,直接覆蓋會脫鉤)
+    function _applyWireToG(G, wire){
+      if(!G || !wire) return false;
+      G.turn = wire.turn || 1;
+      G.currentActorIdx = wire.currentActorIdx || 0;
+      G.turnOrder = Array.isArray(wire.turnOrder) ? wire.turnOrder.slice() : [];
+      // 英雄陣容 — 用 _wireToHeroV6 還原成完整 hero 物件
+      G.p1 = Array.isArray(wire.p1) ? wire.p1.map(_wireToHeroV6) : [];
+      G.p2 = Array.isArray(wire.p2) ? wire.p2.map(_wireToHeroV6) : [];
+      G.energy = wire.energy ? { p1: wire.energy.p1 || 0, p2: wire.energy.p2 || 0 } : { p1: 0, p2: 0 };
+      G.inv  = Array.isArray(wire.inv)  ? wire.inv.slice()  : [null,null,null];
+      G.inv2 = Array.isArray(wire.inv2) ? wire.inv2.slice() : [null,null,null];
+      G.deck = Array.isArray(wire.deck) ? wire.deck.slice() : [];
+      G.battleStats = wire.battleStats || {};
+      G.lastSkillName = wire.lastSkillName || null;
+      G.lastSkill     = wire.lastSkill     || null;
+      G.comboFatigue  = wire.comboFatigue  || 0;
+      G.lastSkillByHero    = wire.lastSkillByHero    || {};
+      G.comboFatigueByHero = wire.comboFatigueByHero || {};
+      G.alchemist_s2_used    = !!wire.alchemist_s2_used;
+      G.passiveInterruptUsed = !!wire.passiveInterruptUsed;
+      G.sellUsed = new Set(Array.isArray(wire.sellUsed) ? wire.sellUsed : []);
+      G.dmgUp    = Array.isArray(wire.dmgUp) ? wire.dmgUp : [];
+      // 世界 BOSS 戰專屬
+      G._wbBurstUsed = wire._wbBurstUsed || null;
+      G._mimicActor  = wire._mimicActor  || null;
+      G._mimicCost   = wire._mimicCost;
+      G._mimicStype  = wire._mimicStype  || null;
+      G._gunnerUsedThisTurn = !!wire._gunnerUsedThisTurn;
+      G._tarotSellBonus = wire._tarotSellBonus;
+      G._assetGuard     = wire._assetGuard;
+      // 「目前選中」相關欄位 reset(由本機 UI 重建)
+      G.activeChar = null;
+      G.selMove = null;
+      G.selItem = null;
+      G.pendingTarget = null;
+      G.taunted = null;
+      G.waitFor = null;
+      G.interruptTarget = null;
+      G.gunnerTarget = null;
+      G.guardFor = null;
+      return true;
+    }
+
+    // ── 對外暴露(讓 world-boss.js / world-boss-ui.html 可用) ──────────
+    try{
+      window._wbWireUtils = {
+        heroToWire:   _heroToWireV6,
+        wireToHero:   _wireToHeroV6,
+        GToWire:      _GToWire,
+        applyWireToG: _applyWireToG,
+        deepClone:    _wireDeepClone,
+      };
+    }catch(_){}
+
+    // ── 舊版 _heroToWire / _heroesToWire 保留並 redirect 到新版 ─────────
+    // 連線層既有程式碼引用了這兩個函式(hostPushBattleState 等),
+    // 直接改實作,讓所有引用點自動拿到新版輸出。
+    function _heroToWire(h){ return _heroToWireV6(h); }
+    function _heroesToWire(arr){ return Array.isArray(arr) ? arr.map(_heroToWireV6) : []; }
 
     // ─── A. 房間生命週期 ──────────────────────────────────────────
     // ★ FIX 20260517(m) — createRoom 加 visibility 參數
@@ -2196,15 +2398,30 @@
       try{
         const existing = WB.lastSeenSnap?.battle?.log || [];
         const newLog = existing.concat(newState.logEntries || []).slice(-60);
-        const battle = {
-          turn: newState.turn,
-          currentActorIdx: newState.currentActorIdx,
-          turnOrder: newState.turnOrder || WB.lastSeenSnap?.battle?.turnOrder || [],
-          p1: _heroesToWire(newState.p1),
-          p2: _heroesToWire(newState.p2),
-          log: newLog,
-          version: ((WB.lastSeenSnap?.battle?.version) || 1) + 1
-        };
+        // ★ v6 Phase 3 — 支援完整 G wire(_GToWire 的輸出)
+        //   - 若 newState.fullWireG 存在 → 寫完整 G(turn/energy/battleStats/inv/...)
+        //   - 否則 fallback 到舊 schema(只寫 p1/p2/turn/...)
+        let battle;
+        if(newState.fullWireG){
+          // 走新版:完整 G wire
+          battle = Object.assign({}, newState.fullWireG, {
+            log: newLog,
+            version: ((WB.lastSeenSnap?.battle?.version) || 1) + 1,
+            _syncReason: newState._syncReason || 'unknown',
+            _syncTs: Date.now(),
+          });
+        }else{
+          // 舊 schema 相容(舊 _wbHostExecuteAction 等地方還沒改完前用)
+          battle = {
+            turn: newState.turn,
+            currentActorIdx: newState.currentActorIdx,
+            turnOrder: newState.turnOrder || WB.lastSeenSnap?.battle?.turnOrder || [],
+            p1: _heroesToWire(newState.p1),
+            p2: _heroesToWire(newState.p2),
+            log: newLog,
+            version: ((WB.lastSeenSnap?.battle?.version) || 1) + 1
+          };
+        }
         const payload = { battle: battle, pendingAction: null };
         if(newState.ended){
           payload['meta.status'] = 'ended';
@@ -46262,8 +46479,12 @@ function advStartBattle(){
         //                              容器內顯示的圖片範圍 = (-Y%, -Y%+50%)  ← 因為圖比容器大 1 倍
         //                              想讓圖片 40% 對應容器 10% → -Y% = 40% - 5% = 35%
         //                              即 Y% = -35%  ← 用這個值
+        //   ★ FIX 20260517(r) — 使用者反映「太下面了」要再往上,Y% 從 -35% → -55%
+        //                        往螢幕「上」 = Y% 更負(讓圖片頂部往上頂出容器更多)
+        //                        -55% 代表圖片在容器內顯示的範圍是 55%~105%,
+        //                        若臉部在圖片 ~55-65% 位置 → 落在容器頂部 0%~20% 區段
         _bb.style.backgroundSize = 'auto 100%, auto 200%';
-        _bb.style.backgroundPosition = 'center, center -35%';
+        _bb.style.backgroundPosition = 'center, center -55%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標
