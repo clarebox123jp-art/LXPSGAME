@@ -1334,6 +1334,54 @@
   .wb-start-btn{background:linear-gradient(135deg,#d4a843,#b88a30);color:#000;}
   .wb-start-btn:disabled{background:#444;color:#888;cursor:not-allowed;}
 
+  /* ════════════════════════════════════════════════════════════════════ */
+  /* ★ FIX 20260517(o-2) — lobby 字體全放大 100%                            */
+  /* 戰鬥階段(#wb-lobby-overlay.wb-in-battle)會把這些元素隱藏,所以放大     */
+  /* 只影響「選角等候階段」的 UI,不會動到戰鬥畫面                         */
+  /* ════════════════════════════════════════════════════════════════════ */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-room-header > div:first-child > div:first-child{ font-size:48px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) #wb-room-status-text{ font-size:24px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-code-lbl{ font-size:24px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-code-val{ font-size:48px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-copy-btn,
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-leave-btn{ font-size:24px !important; padding:12px 24px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-invite-friends-btn{ font-size:26px !important; padding:16px 32px !important; }
+  /* BOSS 預覽小卡 */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-boss-preview-small > div:nth-child(2) > div:first-child{ font-size:36px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-boss-preview-small > div:nth-child(2) > div:nth-child(2){ font-size:24px !important; line-height:1.6 !important; }
+  /* 4 個玩家槽 */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-slot-num{ font-size:22px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-slot-name{ font-size:30px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-host-badge,
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-me-badge{ font-size:20px !important; padding:2px 12px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-slot-hero-name{ font-size:26px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-slot-element{ font-size:22px !important; }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-ready-status{ font-size:22px !important; padding:6px 20px !important; }
+  /* 選角 panel */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-panel-title{ font-size:28px !important; letter-spacing:3px !important; }
+  /* 英雄卡 grid 整體放大:卡片本身保持小,但字稍微大 */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-hero-grid{
+    grid-template-columns:repeat(auto-fill,minmax(96px,1fr)) !important;
+    gap:10px !important;
+    max-height:480px !important;
+  }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-hero-card{
+    font-size:18px !important;
+  }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-hero-card .em{ font-size:34px !important; }
+  /* 元素按鈕 */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-element-btn{
+    font-size:20px !important;
+    padding:14px 8px !important;
+  }
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-element-btn .em-ico{ font-size:32px !important; }
+  /* 行動按鈕 */
+  #wb-lobby-overlay:not(.wb-in-battle) .wb-action-btn-big{
+    font-size:30px !important;
+    padding:22px !important;
+    letter-spacing:3px !important;
+  }
+
   /* ════════════════════════════════════════════════════════════════ */
   /* ★ FIX 20260516 v2 — 隊伍確認頁(緊湊版,1920x1080 不捲動)        */
   /* 設計:卡片仿主程式戰鬥卡樣式;每張卡上有「替換英雄」「替換至寶」 */
@@ -2758,12 +2806,25 @@
 <!--   原 left:8px, top:120px, flex-direction:column → 改為 grid 2 行(每行 6 顆) -->
 <!--   寬度 ≈ 120px(2×54px + gap),不會蓋到中央龍王 -->
 <!--   ★ FIX 20260517(n) — top 200→172,貼到 BOSS HP 紅框下沿(原本中間有 28px 空白) -->
-<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:6px;top:172px;
+<!--   ★ FIX 20260517(o-4) — 嚴重 BUG 修復:inline style 內有兩個 display 屬性
+       (display:none 與 display:grid),後者覆蓋前者,導致載入後永遠顯示。
+       改用 class .wb-eb-show 控制顯示,預設 display:none。
+       所有 'flex'/'grid' 顯示處改成切換 class. -->
+<style>
+  #wb-emoji-bar-real{ display:none !important; }
+  #wb-emoji-bar-real.wb-eb-show{
+    display:grid !important;
+    grid-template-columns:repeat(2,auto);
+    grid-auto-flow:row;
+    align-items:center;
+    justify-items:center;
+  }
+</style>
+<div id="wb-emoji-bar-real" style="position:fixed;left:6px;top:172px;
      background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:14px;
      padding:8px 6px;z-index:9050;
      gap:6px;
-     max-height:calc(100vh - 320px);overflow-y:auto;
-     display:grid;grid-template-columns:repeat(2,auto);grid-auto-flow:row;align-items:center;justify-items:center;">
+     max-height:calc(100vh - 320px);overflow-y:auto;">
   <!-- ★ FIX 20260517(h) — 戰鬥中快捷表情重新規劃:6 個實戰常用訊息,改走確認視窗(平板友善) -->
   <!--   圖示在上、文字在下,iPad 也能直接看出意思 -->
   <!--   圖示對應:⭐=用爆發(對應角色卡爆發星星) / ➕=先補血(綠十字) / 🙏=先復活 -->
@@ -2874,17 +2935,44 @@
     return;
   }
 
-  // 對應現有英雄系統:取得所有可用英雄
+  // ★ FIX 20260517(o-3) — 對應現有英雄系統:取得「玩家已解鎖」的可用英雄
+  //   原本只用 HP < 1000 過濾,導致魔物(茶葉精靈/九尾空貓...)也跑進來。
+  //   改用跟主程式 _wbTcOpenSwapHero 一樣的雙重過濾:
+  //     1. 不在 BOSS_NAMES 集合內(排除所有 BOSS + 怪物)
+  //     2. 在 _heroLevels 解鎖紀錄內(只顯示玩家擁有的英雄)
   function _wbGetAvailableHeroes(){
     if(typeof HERO_DB === 'undefined') return [];
-    // 過濾掉 BOSS / 怪物,只保留玩家可用英雄
-    return Object.keys(HERO_DB).filter(name => {
-      const h = HERO_DB[name];
-      if(!h || h.isBoss || h.isWorldBoss) return false;
-      // 簡單規則:HP < 1000 視為玩家英雄
-      if(h.hp >= 1000) return false;
-      return true;
-    });
+    try{
+      const allNames = Object.keys(HERO_DB);
+      const isBoss = function(n){
+        return (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n));
+      };
+      // 玩家解鎖英雄(從 _heroLevels 有紀錄的)
+      let unlocked = null;
+      try{
+        if(typeof _heroLevels !== 'undefined' && _heroLevels){
+          unlocked = new Set(Object.keys(_heroLevels));
+        }
+      }catch(_){}
+      return allNames.filter(function(n){
+        if(isBoss(n)) return false;
+        // 雙重保險:HP >= 1000 一定是 BOSS/怪
+        const h = HERO_DB[n];
+        if(!h || h.isBoss || h.isWorldBoss) return false;
+        if(h.hp != null && h.hp >= 1000) return false;
+        // 解鎖檢查:有 _heroLevels 才過濾,沒有的話(未登入/讀檔中)全部顯示
+        if(unlocked && !unlocked.has(n)) return false;
+        return true;
+      });
+    }catch(e){
+      console.warn('[WB-UI] _wbGetAvailableHeroes 失敗,fallback 簡易過濾', e);
+      return Object.keys(HERO_DB).filter(function(name){
+        const h = HERO_DB[name];
+        if(!h || h.isBoss || h.isWorldBoss) return false;
+        if(h.hp >= 1000) return false;
+        return true;
+      });
+    }
   }
 
   // === 入口操作 ===
@@ -3001,13 +3089,20 @@
     const cntCls = isFull ? 'wb-pr-cnt full' : 'wb-pr-cnt';
     const timeStr = _wbTimeAgo(r.createdAt);
 
+    // ★ FIX 20260517(o) — 統一 HTML escape function(防止玩家名稱含特殊字元爆 HTML)
+    function _wbPrEsc(s){
+      return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+        return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+      });
+    }
+
     // 玩家清單(角色 + 元素)
     const slots = [];
     for(let i = 0; i < 4; i++){
       const p = players[i];
       if(p){
         const elemIco = (p.element && _wbElemIconMap[p.element]) || '❔';
-        const heroName = p.heroName || '<未選角>';
+        const heroName = p.heroName || '&lt;未選角&gt;';
         const isHost = (p.uid === r.hostUid);
         const hostMark = isHost ? '👑 ' : '';
         // 等級資訊:玩家清單沒帶等級欄位,先顯示角色名 (後續若 _wbNet 補等級就會顯示)
@@ -3015,8 +3110,8 @@
         slots.push(
           '<div class="wb-pr-player">' +
           '<span class="wb-pr-elem">' + elemIco + '</span>' +
-          '<span>' + hostMark + (p.name || '玩家') + '</span>' +
-          '<span class="wb-pr-hero">/ ' + heroName + lvl + '</span>' +
+          '<span>' + hostMark + _wbPrEsc(p.name || '玩家') + '</span>' +
+          '<span class="wb-pr-hero">/ ' + _wbPrEsc(heroName) + _wbPrEsc(lvl) + '</span>' +
           '</div>'
         );
       }else{
@@ -3029,15 +3124,18 @@
     }
     const slotsHtml = slots.join('');
 
+    // roomId 是 6 碼 [A-Z2-9],安全字元;但仍走 escape 統一風格
+    const roomIdEsc = _wbPrEsc(r.roomId);
     const joinBtnHtml = isFull
       ? '<button class="wb-pr-join-btn" disabled>滿員</button>'
-      : ('<button class="wb-pr-join-btn" onclick="_wbUiJoinPublicRoom(\'' + r.roomId + '\')">加入</button>');
+      : ('<button class="wb-pr-join-btn" onclick="_wbUiJoinPublicRoom(&#39;' +
+         roomIdEsc + '&#39;)">加入</button>');
 
     return (
       '<div class="wb-pr-room">' +
         '<div class="wb-pr-room-head">' +
           '<div>' +
-            '<div class="wb-pr-room-host">👑 ' + (r.hostName || '房主') + '</div>' +
+            '<div class="wb-pr-room-host">👑 ' + _wbPrEsc(r.hostName || '房主') + '</div>' +
             '<div class="wb-pr-room-meta">' +
               '<span class="wb-pr-time">⏱ ' + timeStr + '</span>' +
               '<span class="' + cntCls + '">👥 ' + cnt + '/4</span>' +
@@ -3137,6 +3235,16 @@
       snap.players.forEach(function(p){ if(p && p.uid) inRoomUids[p.uid] = true; });
     }
 
+    // ★ FIX 20260517(o) — onclick attribute 的 HTML escape:
+    //   原本用 JSON.stringify(name) 會產生 "溫柔的小畫家"(含雙引號),貼進
+    //   onclick="..." 會立刻關掉外層雙引號 → 整個 HTML 解析爆 SyntaxError。
+    //   改用 HTML escape:雙引號變 &quot;,單引號變 &#39;,左右尖括號變 &lt;/&gt;
+    function _wbIfEsc(s){
+      return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+        return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+      });
+    }
+
     if(friends.length === 0){
       box.innerHTML =
         '<div class="wb-if-empty">' +
@@ -3151,6 +3259,10 @@
       const uid = f.uid;
       const alreadyInRoom = !!inRoomUids[uid];
       const outgoing = _wbIfOutgoingByUid[uid];
+      // ★ FIX 20260517(o) — escape 後的版本給 onclick attribute 用
+      const uidEsc = _wbIfEsc(uid);
+      const nameEsc = _wbIfEsc(name);
+      const callArgs = '&#39;' + uidEsc + '&#39;,&#39;' + nameEsc + '&#39;';
 
       let btnHtml;
       if(alreadyInRoom){
@@ -3169,21 +3281,21 @@
             const sec = Math.ceil((30000 - elapsed) / 1000);
             btnHtml = '<button class="wb-if-friend-btn busy" disabled>忙碌 (' + sec + 's)</button>';
           }else{
-            btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(\'' +
-                      uid + '\',' + JSON.stringify(name) + ')">邀請</button>';
+            btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
+                      callArgs + ')">邀請</button>';
           }
         }else{
-          btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(\'' +
-                    uid + '\',' + JSON.stringify(name) + ')">邀請</button>';
+          btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
+                    callArgs + ')">邀請</button>';
         }
       }else{
-        btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(\'' +
-                  uid + '\',' + JSON.stringify(name) + ')">邀請</button>';
+        btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
+                  callArgs + ')">邀請</button>';
       }
 
       return (
         '<div class="wb-if-friend">' +
-          '<div class="wb-if-friend-name">👤 ' + name + '</div>' +
+          '<div class="wb-if-friend-name">👤 ' + nameEsc + '</div>' +
           btnHtml +
         '</div>'
       );
@@ -3491,7 +3603,11 @@
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
-    document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline style display 衝突 bug)
+    try{
+      const _eb = document.getElementById('wb-emoji-bar-real');
+      if(_eb){ _eb.classList.remove('wb-eb-show'); }
+    }catch(_){}
     // ★ FIX 20260517(h) — 順手清戰鬥中表情列冷卻 timer
     try{
       if(window._wbBattleQmsgCdTimer){
@@ -5647,7 +5763,8 @@
     if(status === 'fighting'){
       document.getElementById('wb-picking-area').style.display = 'none';
       document.getElementById('wb-battle-area').classList.add('show');
-      document.getElementById('wb-emoji-bar-real').style.display = 'flex';
+      // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline display 衝突)
+      document.getElementById('wb-emoji-bar-real').classList.add('wb-eb-show');
       // ★ FIX 20260516 — 戰鬥階段套 BOSS 全圖背景
       document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
       // 戰鬥開始時自動關掉隊伍確認頁
@@ -5656,7 +5773,8 @@
     }else{
       document.getElementById('wb-picking-area').style.display = 'grid';
       document.getElementById('wb-battle-area').classList.remove('show');
-      document.getElementById('wb-emoji-bar-real').style.display = 'none';
+      // ★ FIX 20260517(o-4) — 同上
+      document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show');
       const _lobby2 = document.getElementById('wb-lobby-overlay');
       if(_lobby2){
         _lobby2.classList.remove('wb-in-battle');
@@ -6384,7 +6502,8 @@
   });
 
   window._wbNet.on('onRoomClosed', function(info){
-    document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    // ★ FIX 20260517(o-4) — 改用 class 控制
+    try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
     if(info.reason === 'battle_complete' || info.winner){
       _wbShowResult(info);
     }else{
@@ -6653,7 +6772,7 @@
           lobby.style.background = '';  // ★ FIX 20260517
         }
         const emojiBar = document.getElementById('wb-emoji-bar-real');
-        if(emojiBar) emojiBar.style.display = 'none';
+        if(emojiBar){ emojiBar.classList.remove('wb-eb-show'); }
         // 清練習用即時傷害條
         const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
         if(dmgBar) dmgBar.remove();
@@ -6902,7 +7021,7 @@
           const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
           if(_dmgBar) _dmgBar.remove();
           const _emojiBar = document.getElementById('wb-emoji-bar-real');
-          if(_emojiBar) _emojiBar.style.display = 'none';
+          if(_emojiBar){ _emojiBar.classList.remove('wb-eb-show'); }
           const _wbOverlay = document.getElementById('wb-adv-battle-overlay');
           if(_wbOverlay) _wbOverlay.remove();
           const _openingQuiz = document.getElementById('wb-boss-opening-quiz');
@@ -6965,7 +7084,7 @@
     // ── 維持世界戰專屬 UI(表情列、即時傷害條) ──────────────────────
     try{
       const emojiBar = document.getElementById('wb-emoji-bar-real');
-      if(emojiBar) emojiBar.style.display = 'flex';
+      if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
     }catch(_){}
     if(!document.getElementById('wb-solo-cur-dmg-bar')){
       const dmgBar = document.createElement('div');
@@ -7465,7 +7584,8 @@
     }catch(_){}
 
     document.getElementById('wb-lobby-overlay').style.display = 'none';
-    document.getElementById('wb-emoji-bar-real').style.display = 'none';
+    // ★ FIX 20260517(o-4) — 改用 class 控制
+    try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
     const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
     if(dmgBar) dmgBar.remove();
     // ★ FIX 20260517 — 清掉戰鬥背景的火焰粒子層 + worldboss body class
