@@ -70165,8 +70165,23 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
+// ★ FIX 20260517(cc) — 版本號統一為單一資料來源 (Single Source of Truth)
+//   過去 CURRENT_VERSION 跟 _GAME_LOADED_VERSION 分開兩個變數,
+//   常常改了其中一個忘了改另一個,造成「永遠跳新版本」誤判:
+//     - _checkNewVersionOnServer 每 5 分鐘 fetch 自己,把 server 的 CURRENT_VERSION
+//       (v3.2.6) 跟記憶體的 _GAME_LOADED_VERSION (v3.3.0) 比,不一致就跳更新提示
+//     - 但這兩個變數明明在同一份 HTML 內,應該永遠同步
+//   修法:把 _GAME_LOADED_VERSION 先設定好,CURRENT_VERSION 直接讀它,絕對同步。
+window._GAME_LOADED_VERSION = 'v3.3.0';
+// ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
+try{
+  const _vb = document.getElementById('version-badge');
+  if(_vb) _vb.textContent = window._GAME_LOADED_VERSION;
+}catch(_){}
+
 (function _checkGameVersion(){
-  const CURRENT_VERSION = 'v3.2.6';
+  // ★ FIX 20260517(cc) — 從 _GAME_LOADED_VERSION 讀,絕不會再失同步
+  const CURRENT_VERSION = window._GAME_LOADED_VERSION;
   const STORAGE_KEY = 'lxps_game_version';
   try{
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -70200,12 +70215,7 @@ window.addEventListener('unhandledrejection', function(ev){
 
 // ★★ 即時版本監測：每 5 分鐘偷偷 fetch HTML 檢查是否有新版
 // 有新版時：戰鬥中 → 標記 _pendingForcedUpdate；不在戰鬥 → 立即彈出強制重整視窗
-window._GAME_LOADED_VERSION = 'v3.3.0';
-// ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
-try{
-  const _vb = document.getElementById('version-badge');
-  if(_vb) _vb.textContent = window._GAME_LOADED_VERSION;
-}catch(_){}
+// ★ FIX 20260517(cc) — _GAME_LOADED_VERSION 已在上方設定,此處不再重複賦值
 window._pendingForcedUpdate = false;
 window._latestDetectedVersion = null;
 
@@ -70261,10 +70271,19 @@ async function _checkNewVersionOnServer(){
     const resp = await fetch(location.href, { cache: 'no-store' });
     if(!resp.ok) return;
     const txt = await resp.text();
-    // 擷取 CURRENT_VERSION 字串
-    const m = txt.match(/const CURRENT_VERSION\s*=\s*['"]([^'"]+)['"]/);
-    if(!m) return;
-    const latest = m[1];
+    // ★ FIX 20260517(cc) — 改抓 _GAME_LOADED_VERSION 的字串賦值(單一資料來源)
+    //   過去抓 CURRENT_VERSION,但 CURRENT_VERSION 改成讀 window._GAME_LOADED_VERSION
+    //   之後就抓不到字串字面值。直接抓 _GAME_LOADED_VERSION 的賦值最穩。
+    //   舊 HTML 仍有 CURRENT_VERSION='xxx' 字面值的話,當 fallback regex 用。
+    let latest = null;
+    const m1 = txt.match(/window\._GAME_LOADED_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    if(m1){
+      latest = m1[1];
+    }else{
+      const m2 = txt.match(/const CURRENT_VERSION\s*=\s*['"]([^'"]+)['"]/);
+      if(m2) latest = m2[1];
+    }
+    if(!latest) return;
     window._latestDetectedVersion = latest;
     // 跟記憶體中的版本比對
     if(latest !== window._GAME_LOADED_VERSION){
