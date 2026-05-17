@@ -1611,6 +1611,102 @@
     return true;
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(bb) — updateUI 守門:房主端只在「自己/自己代打的槽」
+  //                       才顯示 action-panel,輪到隊友時要藏起來,
+  //                       不然房主畫面會跑出隊友的操作選單。
+  // ────────────────────────────────────────────────────────────────────
+  // 規則:
+  //   (a) 非世界 BOSS 連線戰 → 不動(走主程式原生邏輯)
+  //   (b) 房主端 (_wbConnectedHostMode):
+  //       - G.activeChar 為「自己/自己代打的槽」  → action-panel 維持顯示
+  //       - G.activeChar 為「其他真人玩家的槽」  → 藏 action-panel + 顯示「等候 XX」
+  //   (c) 非房主端 (_wbConnectedClientMode):
+  //       - G.activeChar 為「自己的槽」          → action-panel 維持顯示
+  //       - G.activeChar 為其他槽位             → 藏 action-panel + 顯示「等候 XX」
+  //
+  // 判斷「自己的槽」:
+  //   - 房主代打槽 → hero._wbIsHostNpc === true (空槽 / 玩家離線)
+  //   - 真人槽 → 透過 _wbNet.getSnapshot().players[pos].uid === window._gUserId
+  // ════════════════════════════════════════════════════════════════════
+  function _wbInstallUpdateUIGuard(){
+    if(typeof window.updateUI !== 'function') return false;
+    if(window._wbUpdateUIGuardPatched) return true;
+    const _origUpdateUI = window.updateUI;
+    window.updateUI = function(){
+      const ret = _origUpdateUI.apply(this, arguments);
+      try{
+        // 只在世界 BOSS 連線戰啟用
+        if(!window._wbInWorldBossMode) return ret;
+        if(!window._wbConnectedHostMode && !window._wbConnectedClientMode) return ret;
+        const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+        if(!G) return ret;
+        const actor = G.activeChar;
+        if(!actor || actor.side !== 'p1') return ret;
+        if(actor.acted || actor.curHp <= 0) return ret;
+
+        // 判斷 actor 是否屬於「我」操作
+        const myUid = window._gUserId;
+        const snap = (window._wbNet && typeof window._wbNet.getSnapshot === 'function')
+          ? window._wbNet.getSnapshot() : null;
+        const players = (snap && Array.isArray(snap.players)) ? snap.players : [];
+        const pos = actor.pos;
+        const playerAtSlot = players[pos];
+
+        let isMine = false;
+        if(window._wbConnectedHostMode){
+          // 房主端:房主代打的槽(_wbIsHostNpc=true) 或 真人槽且玩家是我
+          if(actor._wbIsHostNpc){
+            isMine = true;
+          }else if(playerAtSlot && playerAtSlot.uid === myUid){
+            isMine = true;
+          }
+        }else if(window._wbConnectedClientMode){
+          // client 端:只有真人槽且玩家是我
+          if(playerAtSlot && playerAtSlot.uid === myUid){
+            isMine = true;
+          }
+          // (client 不該看到 _wbIsHostNpc=true 的槽位被當成自己,
+          //  那是房主代打的槽,只有房主能按)
+        }
+
+        if(!isMine){
+          // ── 不是我操作:藏 action-panel,顯示「等候 XX」 ──
+          try{
+            const panel = document.getElementById('action-panel');
+            if(panel) panel.style.display = 'none';
+          }catch(_){}
+          // actor-info 改成等候字樣
+          try{
+            const ai = document.getElementById('actor-info');
+            if(ai){
+              const waitName = (playerAtSlot && playerAtSlot.name)
+                || ('槽 ' + (pos + 1));
+              const heroName = actor.name || '英雄';
+              ai.innerHTML = '<div style="font-size:38px;font-weight:700;line-height:1.4;'
+                + 'animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;'
+                + 'letter-spacing:1px;">⏳ 等候 <span style="color:#ffd966;text-shadow:0 0 16px '
+                + 'rgba(255,220,0,0.9)">' + _escAi(waitName) + '</span> 的 '
+                + _escAi(heroName) + ' 操作中...</div>';
+            }
+          }catch(_){}
+        }
+      }catch(eGuard){
+        console.warn('[WB-UIGuard v6] updateUI hook 例外', eGuard);
+      }
+      return ret;
+    };
+    window._wbUpdateUIGuardPatched = true;
+    console.log('[WB-UIGuard v6] ✅ updateUI 守門 hook 已安裝');
+    return true;
+  }
+
+  // HTML escape 小工具(updateUI guard 用)
+  function _escAi(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, c =>
+      ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
   function _wbInstallAiActHook(){
     if(typeof window.aiAct !== 'function'){
       // aiAct 尚未載入,延後
@@ -2326,6 +2422,8 @@
       // ★ v6 Phase 3 — sync hooks(連線房主端 G 同步)
       try{ if(!_wbInstallEndActionSyncHook()) allOk = false; }catch(e){ console.warn('[WB-Sync v6] endAction', e); allOk = false; }
       try{ if(!_wbInstallStartTurnSyncHook()) allOk = false; }catch(e){ console.warn('[WB-Sync v6] startTurn', e); allOk = false; }
+      // ★ FIX 20260517(bb) — updateUI 守門(避免房主誤操作隊友角色)
+      try{ if(!_wbInstallUpdateUIGuard())     allOk = false; }catch(e){ console.warn('[WB-UIGuard v6] updateUI', e); allOk = false; }
       // ★ v6 Phase 5 — setPending patch(代執行其他玩家行動時用)
       try{ if(!_wbInstallSetPendingPatch()) allOk = false; }catch(e){ console.warn('[WB-Action v6] setPending', e); allOk = false; }
       // ★ v6 Phase 5.2 — client mode 攔截:玩家點按鈕改走樂觀更新 + sendAction

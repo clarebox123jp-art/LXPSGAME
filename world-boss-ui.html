@@ -3483,13 +3483,22 @@
           btnHtml = '<button class="wb-if-friend-btn sent" onclick="_wbUiSendInvite(' +
                     callArgs + ')" title="點擊可取消舊邀請並重發">📨 已邀請(可重發)</button>';
         }else if(outgoing.status === 'accepted'){
-          btnHtml = '<button class="wb-if-friend-btn accepted" disabled>✓ 已接受</button>';
+          // ★ FIX 20260517(aa) — 「accepted 但不在房內」要允許重邀。
+          //   原本永遠 disabled 會在以下情境卡死:
+          //   (a) 好友接受過 → 進房 → 離開房間
+          //   (b) 好友接受過 → 房主重整頁面(訂閱拉回歷史 accepted 紀錄)
+          //   (c) 戰鬥結束後想再邀同一個人
+          //   此處 alreadyInRoom 已優先處理「正在房內」的情況,走到這個分支
+          //   代表 outgoing.status='accepted' 但好友當下不在房內 → 允許重邀。
+          btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
+                    callArgs + ')" title="好友已不在房內,可再邀一次">🔁 再邀一次</button>';
         }else if(outgoing.status === 'declined'){
           btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
                     callArgs + ')">🔁 再邀一次</button>';
         }else if(outgoing.status === 'busy' || outgoing.status === 'expired' ||
-                 outgoing.status === 'cancelled'){
-          // busy / expired / cancelled:都允許立刻重邀
+                 outgoing.status === 'cancelled' || outgoing.status === 'stale'){
+          // busy / expired / cancelled / stale:都允許立刻重邀
+          // (stale = FIX 20260517(aa) 新增,代表「曾接受過但已不在房內」)
           btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
                     callArgs + ')">🔁 重新邀請</button>';
         }else{
@@ -4952,12 +4961,23 @@
     }
     if(startBtn){
       startBtn.style.display = meIsHost ? 'inline-block' : 'none';
-      startBtn.disabled = !allHumanReady;
+      // ★ FIX 20260517(bb) — 開戰條件加上「元素必須覆蓋齊」
+      //   原本只擋 allHumanReady(全員按準備),沒擋元素覆蓋,造成沒選元素也能開戰。
+      //   元素閘門:cov.missing.length === 0(已扣掉房主代打/未指派 NPC 補位)
+      const elemOk = (cov.missing.length === 0);
+      const canStart = allHumanReady && elemOk;
+      startBtn.disabled = !canStart;
       if(!allHumanReady){
         const _readyCnt = filledPlayers.filter(p => p.ready).length;
         startBtn.textContent = humanCount === 0
           ? '⌛ 等候有人選角'
           : ('⌛ 等候全員準備(' + _readyCnt + '/' + humanCount + ')');
+      }else if(!elemOk){
+        // ★ FIX 20260517(bb) — 全員準備但元素沒齊 → 提示玩家補
+        startBtn.textContent = '⚠ 元素未齊,請補上 ' + cov.missing.map(e => {
+          const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+          return m ? m.name : e;
+        }).join('/') + ' 屬性';
       }else{
         // ★ FIX 20260517(w) — 取消 AI 替補,所有空槽都是「房主代打」
         startBtn.textContent = npcCount > 0
@@ -5615,10 +5635,59 @@
   //         「還缺元素」,擋住開戰。
   //   設計:隊伍確認頁底部的「⚔ 開戰!」按鈕已經會在覆蓋未滿時 disabled,
   //         玩家按得下去就代表已經覆蓋齊,可以直接開戰。
+  // ★ FIX 20260517(bb) — 二次防線:即使 disabled 被繞過,也擋住沒選齊元素的開戰。
   window._wbTcHostStartBattle = function(){
     const snap = window._wbNet.getSnapshot();
     const meIsHost = (snap?.meta?.hostUid === window._gUserId);
     if(!meIsHost){ _wbGameAlert('只有房主可以開戰'); return; }
+
+    // ★ FIX 20260517(bb) — 守門:重新計算元素覆蓋,沒齊不放行
+    try{
+      _wbTcRefreshReqElems();
+      const players = snap?.players || [];
+      const _filled = players.filter(p => p && p.uid && p.heroName);
+      const _baseCov = _wbTcCalcCoverage(_filled);
+      const _hostAssign = window._wbHostAssignedSlots || {};
+      // 房主指派 NPC 元素也算進來
+      const _covSet = new Set(_baseCov.covered);
+      Object.keys(_hostAssign).forEach(k => {
+        const idx = parseInt(k, 10);
+        const stillEmpty = !players[idx] || !players[idx].uid;
+        if(stillEmpty){
+          const elem = _hostAssign[k] && _hostAssign[k].element;
+          if(elem && _WB_TC_REQ_ELEMS.includes(elem)) _covSet.add(elem);
+        }
+      });
+      // 未指派空槽會由房主代打補(視為可自動補位)
+      let _afterAssignMissing = _WB_TC_REQ_ELEMS.filter(e => !_covSet.has(e));
+      const _unassignedEmpty = [];
+      for(let _i = 0; _i < 4; _i++){
+        const _ip = players[_i];
+        if((!_ip || !_ip.uid) && !(_hostAssign[_i] && _hostAssign[_i].heroName)){
+          _unassignedEmpty.push(_i);
+        }
+      }
+      // 模擬未指派 NPC 自動補位
+      let _missAfterNpc = [..._afterAssignMissing];
+      for(let s = 0; s < _unassignedEmpty.length && _missAfterNpc.length > 0; s++){
+        _missAfterNpc.shift();
+      }
+      if(_missAfterNpc.length > 0){
+        const _missNames = _missAfterNpc.map(e => {
+          const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+          return m ? m.name : e;
+        }).join('/');
+        _wbGameAlert('⚠ 元素未齊,還缺 ' + _missNames + ' 屬性\n請有人補上才能開戰');
+        console.warn('[WB-TC] 開戰被擋:元素未齊', _missAfterNpc);
+        return;
+      }
+    }catch(eGate){
+      console.error('[WB-TC] 元素守門檢查例外', eGate);
+      // 例外時保守不放行
+      _wbGameAlert('⚠ 元素檢查失敗,請重新整理');
+      return;
+    }
+
     // 關閉確認頁,直接進戰場(不再經過 _wbUiPrepareStartBattle 元素確認 modal)
     _wbTcCloseTeamConfirm();
     if(typeof window._wbUiStartBattle === 'function'){
@@ -7005,9 +7074,13 @@
     try{
       if(battle.fullWireG){
         wireUtils.applyWireToG(G, battle.fullWireG);
+      }else if(battle._schemaV6){
+        // ★ FIX 20260517(bb) — _schemaV6 marker(host 把 fullWireG spread 到 battle 頂層)
+        //   直接用整個 battle 物件當 wire(它本身就含 turn/p1/p2/energy 等所有欄位)
+        wireUtils.applyWireToG(G, battle);
       }else{
         // 舊 schema 相容:只套 p1/p2/turn/currentActorIdx/turnOrder
-        console.warn('[WB-Client v6] 收到舊 schema battle(無 fullWireG)');
+        console.warn('[WB-Client v6] 收到舊 schema battle(無 fullWireG / _schemaV6)');
         wireUtils.applyWireToG(G, {
           p1: battle.p1 || G.p1,
           p2: battle.p2 || G.p2,
@@ -7017,6 +7090,25 @@
           turnOrder: battle.turnOrder,
         });
       }
+
+      // ★ FIX 20260517(bb) — applyWireToG 會把 G.activeChar reset 成 null,
+      //   client 端 updateUI 沒了 activeChar 就不顯示 action-panel。
+      //   依照 G.turnOrder[G.currentActorIdx] 重建 activeChar reference。
+      try{
+        const _ord = G.turnOrder || [];
+        const _idx = G.currentActorIdx || 0;
+        const _cur = _ord[_idx];
+        if(_cur){
+          if(_cur.side === 'p1' && Array.isArray(G.p1) && G.p1[_cur.pos]){
+            G.activeChar = G.p1[_cur.pos];
+          }else if(_cur.side === 'p2' && Array.isArray(G.p2) && G.p2[_cur.pos]){
+            G.activeChar = G.p2[_cur.pos];
+          }
+        }
+      }catch(eAct){
+        console.warn('[WB-Client v6] activeChar 重建失敗', eAct);
+      }
+
       // 重繪主程式 UI
       try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
       try{ if(typeof renderField === 'function') renderField(); }catch(_){}

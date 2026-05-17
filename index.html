@@ -2561,6 +2561,13 @@
             version: ((WB.lastSeenSnap?.battle?.version) || 1) + 1,
             _syncReason: newState._syncReason || 'unknown',
             _syncTs: Date.now(),
+            // ★ FIX 20260517(bb) — schema marker:讓 client 端能識別這是 v6 fullWireG
+            //   (host 把 fullWireG 內容 spread 到 battle 頂層 → 沒有 battle.fullWireG 子欄位,
+            //    client 原本檢查 battle.fullWireG 永遠 undefined → 誤判舊 schema)
+            _schemaV6: true,
+            // 也把整份 fullWireG 副本放在子欄位裡,讓 client applyWireToG(G, battle.fullWireG)
+            //  能順利取到完整資料(不依賴 spread)。
+            fullWireG: newState.fullWireG,
           });
         }else{
           // 舊 schema 相容(舊 _wbHostExecuteAction 等地方還沒改完前用)
@@ -2988,6 +2995,43 @@
         }catch(cancelErr){
           // 取消舊的失敗不算致命 — 繼續寫新的
           console.warn('[WBNet] sendInvite 取消舊邀請失敗(可忽略)', cancelErr);
+        }
+
+        // ★ FIX 20260517(aa) — 也清掉「accepted 但好友已不在房內」的舊紀錄
+        //   避免訂閱 subscribeMyOutgoingInvites 拉回時,因為 createdAt 較舊的
+        //   accepted 紀錄存在,UI 誤判好友還在房內而 disable 重邀按鈕。
+        //   策略:檢查當前房內玩家,把不在房內的 accepted 紀錄標 stale。
+        try{
+          const inRoomUids = new Set();
+          const _curPlayers = (WB.lastSeenSnap && Array.isArray(WB.lastSeenSnap.players))
+                              ? WB.lastSeenSnap.players : [];
+          _curPlayers.forEach(p => { if(p && p.uid) inRoomUids.add(p.uid); });
+          // 只在好友「不在房內」時清舊紀錄(避免取消正在進房中的 accepted)
+          if(!inRoomUids.has(toUid)){
+            const acceptedQ = query(
+              collection(_fbDb, 'worldBossInvites'),
+              where('fromUid', '==', window._gUserId),
+              where('toUid', '==', toUid),
+              where('status', '==', 'accepted')
+            );
+            const accSnap = await getDocs(acceptedQ);
+            const staleTasks = [];
+            accSnap.forEach(s => {
+              staleTasks.push(
+                updateDoc(doc(_fbDb, 'worldBossInvites', s.id), {
+                  status: 'stale',  // 新狀態:歷史已接受但好友已不在房內
+                  staledAt: now,
+                  staledBy: 'resend'
+                }).catch(_ => {})
+              );
+            });
+            if(staleTasks.length){
+              await Promise.all(staleTasks);
+              console.log('[WBNet] sendInvite 已將 ' + staleTasks.length + ' 筆歷史 accepted 邀請標為 stale');
+            }
+          }
+        }catch(staleErr){
+          console.warn('[WBNet] sendInvite 清歷史 accepted 失敗(可忽略)', staleErr);
         }
 
         // ★ 2. 寫入新邀請
@@ -39792,6 +39836,11 @@ window._wbSetupAdvForBattle = function(opts){
     if(opts.p2 && Array.isArray(opts.p2)) G.p2 = opts.p2;
     G.round = 1;
     G.turn = 0;
+    // ★ FIX 20260517(bb) — 初始化 currentActorIdx 跟 turnOrder,
+    //   否則 _wbHostSyncG 在 advStartBattle 之前的 push 會看到 undefined,
+    //   且 client 端 onBattleUpdate 拿到 turnOrder=undefined 也會出問題
+    G.currentActorIdx = 0;
+    G.turnOrder = [];
     // ★ G.energy 是主程式的物件結構 {p1:N, p2:N},不是純數字
     //   記憶傳承說「從 0 開始」 — 對應 G.energy.p1 = 0
     G.energy = { p1: 0, p2: 0 };
