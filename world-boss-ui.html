@@ -797,7 +797,12 @@
     transform:translateY(-1px); box-shadow:0 4px 14px rgba(93,202,165,0.4);
   }
   #wb-invite-friends-overlay .wb-if-friend-btn.sent{
-    background:#444; color:#888; cursor:not-allowed;
+    background:linear-gradient(135deg,#6a7a8a,#48566a); color:#cce; cursor:pointer;
+    border:1px dashed rgba(150,180,220,0.5);
+  }
+  #wb-invite-friends-overlay .wb-if-friend-btn.sent:hover{
+    background:linear-gradient(135deg,#5dcaa5,#3aa580); color:#fff;
+    border-style:solid;
   }
   #wb-invite-friends-overlay .wb-if-friend-btn.accepted{
     background:linear-gradient(135deg,#88ccff,#5588cc); color:#fff;
@@ -1483,6 +1488,15 @@
   .wb-tc-shield-icon.grass{color:#aaff77;border-color:rgba(170,255,120,0.85);}
   .wb-tc-shield-icon.miss{opacity:0.35;filter:grayscale(0.7);}
   .wb-tc-shield-icon.cover{box-shadow:0 0 10px currentColor;}
+  /* ★ FIX 20260517(q) — NPC 將補的元素:虛線邊 + 微亮 */
+  .wb-tc-shield-icon.npc{
+    border-style:dashed;opacity:0.85;
+    box-shadow:0 0 6px currentColor;
+    position:relative;
+  }
+  .wb-tc-shield-icon.npc::after{
+    content:'🤖';font-size:14px;margin-left:2px;vertical-align:middle;filter:none;
+  }
 
   /* 4 卡橫排:用 flex 讓他們等寬不會超出 */
   .wb-tc-slots{
@@ -1518,16 +1532,153 @@
     border-style:dashed;border-color:rgba(180,180,180,0.3);
     background:rgba(20,20,30,0.45);opacity:0.6;
   }
+  /* ★ FIX 20260517(q) — NPC 替補槽:跟一般空槽不同,稍微亮一點 + 機器人色 */
+  .wb-tc-slot.wb-tc-slot-npc{
+    border-style:dashed;border-color:rgba(136,204,255,0.55);
+    background:linear-gradient(180deg,rgba(20,30,50,0.85),rgba(8,12,25,0.92));
+    opacity:0.92;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;padding-top:8px;
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-slot-head{
+    width:100%;
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-hero-portrait{
+    margin-top:6px;
+    width:70px;height:70px;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle,rgba(136,204,255,0.25),rgba(40,60,90,0.1));
+    border-radius:50%;
+    border:2px dashed rgba(136,204,255,0.45);
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-hero-emoji{
+    font-size:48px;filter:drop-shadow(0 0 8px rgba(136,204,255,0.7));
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-npc-title{
+    margin-top:10px;
+    font-size:24px;font-weight:800;color:#aaccff;letter-spacing:1.5px;
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-npc-sub{
+    margin-top:4px;
+    font-size:18px;color:#88aacc;line-height:1.35;letter-spacing:1px;
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-npc-elem{
+    margin-top:auto;padding-top:8px;
+    font-size:18px;color:#cce0ff;letter-spacing:1px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .wb-tc-slot.wb-tc-slot-npc .wb-tc-elem-chip{
+    pointer-events:none;
+  }
   .wb-tc-slot.editing{
     border-color:#ffaa44;
     box-shadow:0 0 20px rgba(255,170,68,0.5);
   }
 
-  /* 卡片頂部 — 槽位 + 替換英雄按鈕 */
+  /* ★ FIX 20260517(r) — 隊伍確認頁右上角:房號 + 邀請好友 + 離開 */
+  .wb-tc-topright{
+    position:absolute;top:8px;right:12px;
+    display:flex;gap:8px;align-items:center;z-index:11;
+  }
+  .wb-tc-roomcode-badge{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 10px;
+    background:rgba(8,10,24,0.6);
+    border:2px dashed rgba(168,132,255,0.6);
+    border-radius:9px;
+  }
+  .wb-tc-roomcode-badge .wb-tc-rc-label{
+    font-size:18px;color:#aa88ff;letter-spacing:1px;
+  }
+  .wb-tc-roomcode-badge .wb-tc-rc-val{
+    font-size:26px;font-weight:900;color:#c8a8ff;
+    letter-spacing:2px;font-family:'Courier New',monospace;
+    text-shadow:0 0 10px rgba(200,168,255,0.6);
+  }
+  .wb-tc-roomcode-badge .wb-tc-rc-copy{
+    padding:3px 9px;font-size:18px;font-weight:700;
+    background:rgba(168,132,255,0.18);color:#c8a8ff;
+    border:1.5px solid rgba(168,132,255,0.55);border-radius:6px;
+    cursor:pointer;font-family:inherit;letter-spacing:0.5px;
+  }
+  .wb-tc-roomcode-badge .wb-tc-rc-copy:hover{background:rgba(168,132,255,0.35);}
+  .wb-tc-invite-btn{
+    padding:7px 14px;font-size:20px;font-weight:800;letter-spacing:1px;
+    background:linear-gradient(135deg,#5dcaa5,#3aa580);color:#fff;
+    border:none;border-radius:9px;cursor:pointer;font-family:inherit;
+    box-shadow:0 0 14px rgba(93,202,165,0.55);
+    transition:all 0.2s;
+  }
+  .wb-tc-invite-btn:hover{transform:translateY(-1px);box-shadow:0 0 22px rgba(93,202,165,0.85);}
+  .wb-tc-invite-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none;}
+  .wb-tc-leave-btn{
+    padding:6px 12px;font-size:20px;font-weight:700;
+    background:rgba(255,80,80,0.18);color:#ffaaaa;
+    border:1.5px solid rgba(255,100,100,0.55);border-radius:8px;
+    cursor:pointer;font-family:inherit;letter-spacing:0.5px;
+  }
+  .wb-tc-leave-btn:hover{background:rgba(255,80,80,0.35);}
+
+  /* ★ FIX 20260517(r) — 空槽兩個動作按鈕(邀請隊友 / 房主指派) */
+  .wb-tc-slot-actions{
+    display:flex;flex-direction:column;gap:10px;width:100%;
+    margin-top:auto;padding:0 8px 4px;
+  }
+  .wb-tc-slot-action-btn{
+    padding:10px 8px;font-size:22px;font-weight:800;letter-spacing:1px;
+    border-radius:9px;cursor:pointer;font-family:inherit;
+    transition:all 0.18s;line-height:1.2;
+    border:2px solid;
+  }
+  .wb-tc-slot-action-btn.invite{
+    background:linear-gradient(135deg,rgba(93,202,165,0.22),rgba(58,165,128,0.12));
+    border-color:#5dcaa5;color:#9fe8c8;
+  }
+  .wb-tc-slot-action-btn.invite:hover{
+    background:linear-gradient(135deg,rgba(93,202,165,0.45),rgba(58,165,128,0.3));
+    color:#fff;transform:translateY(-1px);
+  }
+  .wb-tc-slot-action-btn.assign{
+    background:linear-gradient(135deg,rgba(255,170,68,0.22),rgba(204,120,40,0.12));
+    border-color:#ffaa44;color:#ffd699;
+  }
+  .wb-tc-slot-action-btn.assign:hover{
+    background:linear-gradient(135deg,rgba(255,170,68,0.45),rgba(204,120,40,0.3));
+    color:#fff;transform:translateY(-1px);
+  }
+  .wb-tc-slot-action-btn:disabled{
+    opacity:0.4;cursor:not-allowed;
+    background:rgba(60,60,60,0.3);color:#888;border-color:#666;
+  }
+
+  /* 空槽預設狀態(未選動作前的提示) */
+  .wb-tc-slot-empty-hint{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:12px;
+    color:#888;font-size:22px;letter-spacing:1.5px;
+    padding:18px 8px;
+  }
+  .wb-tc-slot-empty-hint .wb-tc-empty-icon{
+    font-size:56px;opacity:0.5;
+  }
+
+
   .wb-tc-slot-head{
     display:flex;align-items:center;justify-content:space-between;
     font-size:22px;color:#aaa;letter-spacing:1px;
     flex-shrink:0;gap:6px;
+  }
+  /* ★ FIX 20260517(s) — 槽位編號標籤 */
+  .wb-tc-slot-num-lbl{
+    flex-shrink:0;color:#888;
+  }
+  /* ★ FIX 20260517(s) — 玩家暱稱(在房主/你/隊友標籤左邊) */
+  .wb-tc-slot-player-name{
+    flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:20px;font-weight:700;color:#ffe066;
+    text-shadow:0 1px 2px rgba(0,0,0,0.55);
+    letter-spacing:0.5px;
   }
   .wb-tc-slot-tag{
     padding:2px 7px;border-radius:5px;font-weight:800;font-size:20px;
@@ -2702,8 +2853,20 @@
            onerror="this.style.display='none';this.parentElement.innerHTML='🐉';">
       <span class="wb-tc-boss-preview-label">點看 BOSS</span>
     </button>
+    <!-- ★ FIX 20260517(r) — 右上角:房號 + 邀請好友 + 離開房間 -->
+    <div class="wb-tc-topright">
+      <div class="wb-tc-roomcode-badge" id="wb-tc-roomcode-badge" style="display:none;">
+        <span class="wb-tc-rc-label">🔑 房號</span>
+        <span class="wb-tc-rc-val" id="wb-tc-roomcode-val">------</span>
+        <button class="wb-tc-rc-copy" onclick="_wbUiCopyCode()">複製</button>
+      </div>
+      <button id="wb-tc-invite-btn" class="wb-tc-invite-btn" onclick="_wbUiOpenInviteFriends()" style="display:none;">
+        📧 邀請好友
+      </button>
+      <button class="wb-tc-leave-btn" onclick="_wbUiLeaveRoom()">離開房間</button>
+    </div>
     <div class="wb-tc-title">⚔ 出戰前隊伍確認</div>
-    <div class="wb-tc-sub">確認元素覆蓋 BOSS 護盾 + 裝備至寶 ✦ 4 人都打勾才能開戰</div>
+    <div class="wb-tc-sub">空位可邀請好友加入,或由房主指派自己的英雄補位</div>
 
     <!-- ★ FIX 20260517 — BOSS 護盾提示簡化:只留「隊伍需要破盾元素」一行,
                           原本「BOSS 護盾元素 = 火/風/土/暗」那行隱藏(資訊冗餘)
@@ -2746,8 +2909,9 @@
     </div>
 
     <!-- 底部:房主開戰 + 元素覆蓋進度 -->
+    <!-- ★ FIX 20260517(r) — 「回去選角」按鈕已移除(選角頁已被廢除);
+                              離開房間請用右上角的「離開房間」按鈕 -->
     <div class="wb-tc-start-zone">
-      <button class="wb-tc-back-btn" onclick="_wbTcCloseTeamConfirm()">← 回去選角</button>
       <div id="wb-tc-coverage" class="wb-tc-coverage">⏳ 等待全員確認...</div>
       <button id="wb-tc-start-btn" class="wb-tc-start-btn" onclick="_wbTcHostStartBattle()" disabled>
         ⚔ 開戰!
@@ -3004,7 +3168,12 @@
     });
     if(roomId){
       _wbCloseEntry();
-      _wbOpenLobby();
+      // ★ FIX 20260517(r) — 不再開選角大廳(_wbOpenLobby),直接跳隊伍確認頁
+      //   舊流程:選角頁(_wbOpenLobby) → 按準備 → 隊伍確認頁
+      //   新流程:直接開隊伍確認頁(內含選角/選元素/裝至寶/邀請好友/房主指派)
+      //   仍需開啟 lobby overlay 才能讓主程式戰鬥 overlay 顯示,但不顯示選角區
+      _wbOpenLobbyHidden();
+      _wbTcOpenTeamConfirm();
       // private_invite 變體:開房後自動展開邀請好友面板
       if(visibility === 'private_invite'){
         setTimeout(() => { try{ _wbUiOpenInviteFriends(); }catch(_){} }, 250);
@@ -3037,7 +3206,9 @@
     const ok = await window._wbNet.joinRoom(code);
     if(ok){
       _wbCloseEntry();
-      _wbOpenLobby();
+      // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
+      _wbOpenLobbyHidden();
+      _wbTcOpenTeamConfirm();
     }
   };
 
@@ -3171,7 +3342,9 @@
     if(ok){
       _wbUiClosePublicRooms();
       _wbCloseEntry();
-      _wbOpenLobby();
+      // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
+      _wbOpenLobbyHidden();
+      _wbTcOpenTeamConfirm();
     }
   };
 
@@ -3286,22 +3459,21 @@
       if(alreadyInRoom){
         btnHtml = '<button class="wb-if-friend-btn accepted" disabled>已在房內</button>';
       }else if(outgoing){
+        // ★ FIX 20260517(p) — 所有狀態都允許點擊「重新邀請」(會自動取消舊的並送新的)
+        //   原本 pending 顯示為 disabled,造成卡住無法重邀;改為 sent 樣式但可點。
         if(outgoing.status === 'pending'){
-          btnHtml = '<button class="wb-if-friend-btn sent" disabled>📨 已邀請</button>';
+          btnHtml = '<button class="wb-if-friend-btn sent" onclick="_wbUiSendInvite(' +
+                    callArgs + ')" title="點擊可取消舊邀請並重發">📨 已邀請(可重發)</button>';
         }else if(outgoing.status === 'accepted'){
           btnHtml = '<button class="wb-if-friend-btn accepted" disabled>✓ 已接受</button>';
         }else if(outgoing.status === 'declined'){
-          btnHtml = '<button class="wb-if-friend-btn declined" disabled>已拒絕</button>';
-        }else if(outgoing.status === 'busy' || outgoing.status === 'expired'){
-          // busy / expired:30 秒後可重邀
-          const elapsed = Date.now() - outgoing.createdAt;
-          if(elapsed < 30000){
-            const sec = Math.ceil((30000 - elapsed) / 1000);
-            btnHtml = '<button class="wb-if-friend-btn busy" disabled>忙碌 (' + sec + 's)</button>';
-          }else{
-            btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
-                      callArgs + ')">邀請</button>';
-          }
+          btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
+                    callArgs + ')">🔁 再邀一次</button>';
+        }else if(outgoing.status === 'busy' || outgoing.status === 'expired' ||
+                 outgoing.status === 'cancelled'){
+          // busy / expired / cancelled:都允許立刻重邀
+          btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
+                    callArgs + ')">🔁 重新邀請</button>';
         }else{
           btnHtml = '<button class="wb-if-friend-btn" onclick="_wbUiSendInvite(' +
                     callArgs + ')">邀請</button>';
@@ -3565,10 +3737,12 @@
     }catch(_){}
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
-      // 進房成功 → 關 entry(若開著)、開 lobby
+      // 進房成功 → 關 entry(若開著)、直接開隊伍確認頁
       const entryOv = document.getElementById('wb-entry-overlay');
       if(entryOv) entryOv.style.display = 'none';
-      _wbOpenLobby();
+      // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
+      _wbOpenLobbyHidden();
+      _wbTcOpenTeamConfirm();
     }else{
       _wbGameAlert('加入房間失敗,可能房間已關閉或滿員');
     }
@@ -3610,8 +3784,30 @@
     _wbRenderElementButtons();
     _wbEnsureCtrlBarOnTop();
   }
+  // ★ FIX 20260517(r) — 開大廳但隱藏選角區;選角現在已在隊伍確認頁完成
+  //   (還需要 lobby overlay 載到 DOM,因為戰鬥開始後主程式會用 wb-battle-area 等元素)
+  function _wbOpenLobbyHidden(){
+    const ov = document.getElementById('wb-lobby-overlay');
+    if(ov){
+      // 不顯示 lobby 本體;只確保元素存在於 DOM(供 onRoomUpdate 找得到)
+      ov.style.display = 'none';
+    }
+    // 選角區也藏起(用 inline style 確保)
+    const picking = document.getElementById('wb-picking-area');
+    if(picking) picking.style.display = 'none';
+    _wbEnsureCtrlBarOnTop();
+  }
   window._wbUiCopyCode = function(){
-    const code = document.getElementById('wb-room-code-val').textContent;
+    // ★ FIX 20260517(r) — 房號顯示位置已搬到隊伍確認頁;優先讀新位置,fallback 舊 lobby
+    let code = '';
+    const newEl = document.getElementById('wb-tc-roomcode-val');
+    const oldEl = document.getElementById('wb-room-code-val');
+    if(newEl && newEl.textContent && newEl.textContent !== '------'){
+      code = newEl.textContent.trim();
+    }else if(oldEl){
+      code = (oldEl.textContent || '').trim();
+    }
+    if(!code){ _wbGameAlert('房號尚未生成'); return; }
     if(navigator.clipboard) navigator.clipboard.writeText(code);
     _wbGameAlert('已複製房號:' + code);
   };
@@ -3619,8 +3815,15 @@
     if(!(await _wbGameConfirm('確定要離開房間嗎?'))) return;
     // ★ FIX 20260517(m) — 停掉房主端的 outgoing invite 訂閱
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
+    // ★ FIX 20260517(r) — 清掉本地指派的 NPC 槽位狀態
+    try{ window._wbHostAssignedSlots = {}; }catch(_){}
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
+    // ★ FIX 20260517(r) — 隊伍確認頁也關掉(新流程走這頁,沒關會卡在畫面上)
+    try{
+      const _tc = document.getElementById('wb-team-confirm-overlay');
+      if(_tc) _tc.classList.remove('show');
+    }catch(_){}
     // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline style display 衝突 bug)
     try{
       const _eb = document.getElementById('wb-emoji-bar-real');
@@ -3917,11 +4120,43 @@
   window._wbTcOpenTeamConfirm = function(){
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.find(p => p.uid === window._gUserId);
-    if(!me || !me.heroName){
-      _wbGameAlert('請先選一隻英雄');
-      return;
+    // ★ FIX 20260517(r) — 房主第一次開房時還沒選英雄,允許進來;
+    //   原本要求 me.heroName 才能進來,改成在隊伍確認頁內預設選擇第一個英雄。
+    //   主程式呼叫此函式分兩種情境:
+    //     a) 從 createRoom/joinRoom 直接進來 → me 可能還沒選英雄
+    //     b) 從選角頁(舊版,已棄用)按「準備」進來 → 確定有 heroName
+    if(me && !me.heroName){
+      // 預設選一隻可用英雄(沿用主程式 _wbGetAvailableHeroes 的第一個)
+      try{
+        const heroes = (typeof _wbGetAvailableHeroes === 'function') ? _wbGetAvailableHeroes() : [];
+        const defaultHero = heroes[0] || '劍士';
+        // 同步進房間(setMyHero,等下會被 onRoomUpdate 觸發 re-render)
+        if(window._wbNet && window._wbNet.setMyHero){
+          window._wbNet.setMyHero(defaultHero, null);
+        }
+      }catch(_){}
     }
     document.getElementById('wb-team-confirm-overlay').classList.add('show');
+    // ★ FIX 20260517(r) — 同步右上角房號與邀請好友按鈕
+    try{
+      const roomId = (window._wbNet && window._wbNet.getRoomId) ? window._wbNet.getRoomId() : null;
+      const isHost = !!(window._wbNet && window._wbNet.isHost && window._wbNet.isHost());
+      const roomcodeBadge = document.getElementById('wb-tc-roomcode-badge');
+      const roomcodeVal   = document.getElementById('wb-tc-roomcode-val');
+      const inviteBtn     = document.getElementById('wb-tc-invite-btn');
+      if(roomId && roomcodeBadge && roomcodeVal){
+        roomcodeBadge.style.display = '';
+        roomcodeVal.textContent = roomId;
+      }
+      if(inviteBtn){
+        // 只有房主才看得到邀請好友按鈕
+        inviteBtn.style.display = isHost ? '' : 'none';
+      }
+      // 房主第一次進來啟動 outgoing invite 訂閱(讓邀請好友面板能 reactive)
+      if(isHost && typeof _wbStartOutgoingInviteSub === 'function'){
+        try{ _wbStartOutgoingInviteSub(); }catch(_){}
+      }
+    }catch(_){}
     // ★ FIX 20260517 — 隊伍確認頁開啟時把 #ctrl-bar 推到 body 最後,確保最高層
     try{
       const _bar = document.getElementById('ctrl-bar');
@@ -3930,9 +4165,11 @@
       }
     }catch(_){}
     // 把當前主元素灌進 ext(若還沒設過)
-    const ext = _wbTcParsePlayerExt(me);
-    if(ext.es.length === 0 && me.element && !me.element.startsWith('{')){
-      ext.es = [me.element];
+    if(me){
+      const ext = _wbTcParsePlayerExt(me);
+      if(ext.es.length === 0 && me.element && !me.element.startsWith('{')){
+        ext.es = [me.element];
+      }
     }
     _wbTcRenderTeamConfirm();
   };
@@ -4296,19 +4533,150 @@
     // ★ FIX 20260516 v7 — 至寶各自分開裝,不再計算「隊友佔用」
     const treasureTakenByPeer = new Set();  // 維持函式簽名,內容永遠空
 
+    // ★ FIX 20260517(q) — 計算覆蓋率時要把缺的元素「預先分配給 NPC 替補槽」,
+    //   讓 UI 顯示「✅ 已覆蓋(NPC 將補上)」而不是「⚠ 還缺」。
+    //   分配邏輯:遇到空槽 → 依序把 missing 元素塞進去。
+    // ★ FIX 20260517(r) — 也要考慮房主已指派 NPC 槽位的元素
+    const _filledForCov = (players || []).filter(p => p && p.uid && p.heroName);
+    const _baseCov = _wbTcCalcCoverage(_filledForCov);
+    const _hostAssign = window._wbHostAssignedSlots || {};
+    // 把房主指派的 NPC 元素先納入 covered
+    const _assignedCovSet = new Set(_baseCov.covered);
+    Object.keys(_hostAssign).forEach(k => {
+      const idx = parseInt(k, 10);
+      // 該槽位必須真的還是空槽(沒玩家)才算指派 NPC
+      const stillEmpty = !players[idx] || !players[idx].uid;
+      if(stillEmpty){
+        const elem = _hostAssign[k] && _hostAssign[k].element;
+        if(elem && _WB_TC_REQ_ELEMS.includes(elem)) _assignedCovSet.add(elem);
+      }
+    });
+    // 算出指派後還缺什麼
+    const _afterAssignMissing = _WB_TC_REQ_ELEMS.filter(e => !_assignedCovSet.has(e));
+    // 還沒指派的空槽(NPC 自動補位用)
+    const _unassignedEmptySlots = [];
+    for(let _i = 0; _i < 4; _i++){
+      const _ip = players[_i];
+      if((!_ip || !_ip.uid) && !(_hostAssign[_i] && _hostAssign[_i].heroName)){
+        _unassignedEmptySlots.push(_i);
+      }
+    }
+    // 模擬未指派 NPC 補位:依序把 still-missing 元素塞進去
+    const _npcAssigned = [];  // 自動分配的元素
+    let _missAfterNpc = [..._afterAssignMissing];
+    for(let s = 0; s < _unassignedEmptySlots.length && _missAfterNpc.length > 0; s++){
+      _npcAssigned.push(_missAfterNpc.shift());
+    }
+    // NPC 補位後仍缺的元素 = _missAfterNpc
+    const cov = {
+      covered: [..._WB_TC_REQ_ELEMS].filter(e => !_missAfterNpc.includes(e)),
+      missing: _missAfterNpc,
+      pct: Math.round((_WB_TC_REQ_ELEMS.length - _missAfterNpc.length) / _WB_TC_REQ_ELEMS.length * 100),
+      // 額外資訊:給空槽渲染用,標 NPC 會分配什麼元素
+      _npcAssigned: _npcAssigned,
+      _humanCovered: _baseCov.covered,  // 真人玩家提供的元素(畫面 chip 上的「亮色」)
+    };
+
+    // ★ FIX 20260517(r) — 房主本地指派的 NPC 槽位資料(不寫 firestore)
+    //   { slotIdx: { heroName, element } } — 戰鬥開始時被 _wbUiStartBattle 讀取
+    //   只有房主自己看得到、用得到;非房主看到的空槽是「等待房主動作」狀態
+    if(!window._wbHostAssignedSlots) window._wbHostAssignedSlots = {};
+
+    // ★ FIX 20260517(s) — 取得房主暱稱,給「房主代打」NPC 槽位顯示用
+    const _hostPlayerObj = (players || []).find(p => p && p.uid === snap?.meta?.hostUid);
+    const _hostNameForNpc = (_hostPlayerObj && _hostPlayerObj.name) || '房主';
+    const _escTc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const _hostNameEsc = _escTc(_hostNameForNpc);
+
     // 渲染 4 個玩家槽
     const slotsEl = document.getElementById('wb-tc-slots');
     let html = '';
+    let _emptyShown = 0;
     for(let i = 0; i < 4; i++){
       const p = players[i];
       if(!p || !p.uid){
-        html += `<div class="wb-tc-slot empty">
-          <div class="wb-tc-slot-head"><span>槽位 ${i+1}</span></div>
-          <div class="wb-tc-hero-portrait">
-            <span class="wb-tc-hero-emoji">⌛</span>
-          </div>
-          <div style="text-align:center;color:#888;font-size:13px;letter-spacing:2px;">等待隊友...</div>
-        </div>`;
+        // 空槽:檢查房主有沒有本地指派
+        const assigned = (meIsHost && window._wbHostAssignedSlots && window._wbHostAssignedSlots[i]) || null;
+        if(assigned && assigned.heroName){
+          // ── 已指派狀態:顯示房主代打的 NPC 角色 ─────────────────
+          const _heroName = assigned.heroName;
+          const _heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[_heroName]) || '';
+          const _elem = assigned.element || (_npcAssigned[_emptyShown] || null);
+          _emptyShown++;
+          const _portraitHtml = _heroImg
+            ? `<img src="${_heroImg}" alt="${_heroName}"
+                   style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                   onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'wb-tc-hero-emoji\\'>⚔</span>';">`
+            : '<span class="wb-tc-hero-emoji">⚔</span>';
+          // 元素 chips(可切換)
+          const _elemChipsHtml = _WB_TC_ALL_ELEMS.map(el => {
+            const on = (el.id === _elem);
+            const cls = 'wb-tc-elem-chip ' + (on ? ('on ' + el.id) : '');
+            return `<button class="${cls}" onclick="_wbTcAssignedSlotPickElement(${i},'${el.id}')">
+              <span class="em-ic">${el.ic}</span>${el.name}
+            </button>`;
+          }).join('');
+          html += `<div class="wb-tc-slot wb-tc-slot-assigned">
+            <div class="wb-tc-slot-head">
+              <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
+              <span class="wb-tc-slot-player-name" title="${_hostNameEsc}・代打">👤 ${_hostNameEsc}・代打</span>
+              <span class="wb-tc-slot-tag host" style="background:#ffaa44;color:#000;">🎮 房主代打</span>
+              <button class="wb-tc-swap-hero-btn" onclick="_wbTcAssignedSlotOpenSwap(${i})">🔄 換</button>
+            </div>
+            <div class="wb-tc-hero-portrait" style="margin-top:6px;width:80px;height:80px;
+                 display:flex;align-items:center;justify-content:center;
+                 border-radius:50%;border:2px solid rgba(255,170,68,0.55);
+                 background:radial-gradient(circle,rgba(255,170,68,0.2),rgba(80,60,30,0.1));
+                 align-self:center;overflow:hidden;">
+              ${_portraitHtml}
+            </div>
+            <div class="wb-tc-npc-title" style="color:#ffd699;">${_heroName}</div>
+            <div class="wb-tc-npc-sub" style="color:#ccaa88;">
+              戰鬥時由房主操控<br>(替自己多打一隻)
+            </div>
+            <div class="wb-tc-section-lbl" style="margin-top:8px;">🎨 屬性</div>
+            <div class="wb-tc-elem-chips">${_elemChipsHtml}</div>
+            <button class="wb-tc-slot-action-btn" style="margin-top:6px;font-size:18px;padding:6px;
+                    background:rgba(255,80,80,0.18);color:#ffaaaa;border:1.5px solid rgba(255,100,100,0.45);"
+                    onclick="_wbTcAssignedSlotClear(${i})">✕ 取消指派</button>
+          </div>`;
+          continue;
+        }
+        // ── 初始空槽:顯示兩個動作按鈕(只有房主能用) ─────────────
+        if(meIsHost){
+          html += `<div class="wb-tc-slot empty wb-tc-slot-npc">
+            <div class="wb-tc-slot-head">
+              <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
+              <span class="wb-tc-slot-player-name" style="color:#888;">👤 待加入</span>
+              <span class="wb-tc-slot-tag" style="background:rgba(120,120,140,0.4);color:#ccc;">空位</span>
+            </div>
+            <div class="wb-tc-slot-empty-hint">
+              <span class="wb-tc-empty-icon">👤</span>
+              <div>等待隊員加入<br>或由房主指派</div>
+            </div>
+            <div class="wb-tc-slot-actions">
+              <button class="wb-tc-slot-action-btn invite" onclick="_wbUiOpenInviteFriends()">
+                📧 邀請隊友
+              </button>
+              <button class="wb-tc-slot-action-btn assign" onclick="_wbTcAssignedSlotOpenSwap(${i})">
+                🎮 房主指派
+              </button>
+            </div>
+          </div>`;
+        }else{
+          // 非房主看到的空槽:只顯示等待提示
+          html += `<div class="wb-tc-slot empty wb-tc-slot-npc">
+            <div class="wb-tc-slot-head">
+              <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
+              <span class="wb-tc-slot-player-name" style="color:#888;">👤 待加入</span>
+              <span class="wb-tc-slot-tag" style="background:rgba(120,120,140,0.4);color:#ccc;">空位</span>
+            </div>
+            <div class="wb-tc-slot-empty-hint">
+              <span class="wb-tc-empty-icon">⏳</span>
+              <div>等待房主邀請<br>或指派 NPC</div>
+            </div>
+          </div>`;
+        }
         continue;
       }
       html += _wbTcRenderOneSlot(p, i, myUid, treasureTakenByPeer, meIsHost);
@@ -4318,7 +4686,6 @@
     // ★ FIX 20260516 v8/v9 — 同時渲染兩排 chip:
     //   1. BOSS 護盾元素 chips(僅顯示,沒有覆蓋狀態)
     //   2. 玩家需要的破盾屬性 chips(會跟玩家選的元素同步亮起)
-    const cov = _wbTcCalcCoverage(players);
 
     // BOSS 護盾元素 chips
     const bossShieldText = document.getElementById('wb-tc-shield-boss-text');
@@ -4338,12 +4705,16 @@
     }
 
     // 玩家破盾屬性 chips
+    // ★ FIX 20260517(q) — chip 三態:玩家覆蓋(cover) / NPC 將補(npc) / 無(miss)
     const shieldIconsEl = document.getElementById('wb-tc-shield-icons');
     if(shieldIconsEl){
       shieldIconsEl.innerHTML = _WB_TC_REQ_ELEMS.map(e => {
         const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
         if(!m) return '';
-        const stateCls = cov.covered.includes(e) ? 'cover' : 'miss';
+        let stateCls;
+        if(cov._humanCovered.includes(e)) stateCls = 'cover';
+        else if(cov._npcAssigned.includes(e)) stateCls = 'npc';
+        else stateCls = 'miss';
         return `<span class="wb-tc-shield-icon ${e} ${stateCls}">${m.ic} ${m.name}</span>`;
       }).join('');
     }
@@ -4356,28 +4727,56 @@
       }).join(' / ');
     }
 
-    // 底部覆蓋率提示 + 開戰按鈕
+    // ★ FIX 20260517(q) — 底部覆蓋率提示 + 開戰按鈕:
+    //   舊邏輯:必須 4 個玩家槽都坐滿真人 + 全員 ready 才能開戰
+    //   新邏輯:只要「真人都 ready 且至少 1 人」就能開戰,空槽由 NPC 替補
     const covEl = document.getElementById('wb-tc-coverage');
     const startBtn = document.getElementById('wb-tc-start-btn');
     const filledPlayers = players.filter(p => p && p.uid && p.heroName);
-    const allReady = filledPlayers.length >= 1 && filledPlayers.every(p => p.ready);
-    const slotsFull = filledPlayers.length === 4;
+    const humanCount = filledPlayers.length;
+    const npcCount = 4 - humanCount;
+    const allHumanReady = humanCount >= 1 && filledPlayers.every(p => p.ready);
+
     if(cov.missing.length === 0){
       covEl.className = 'wb-tc-coverage ok';
-      covEl.innerHTML = '✅ 4 元素全部覆蓋!護盾可順利擊破';
+      if(cov._npcAssigned.length > 0){
+        const _npcCovTxt = cov._npcAssigned.map(e => {
+          const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
+          return m ? (m.ic + m.name) : e;
+        }).join(' / ');
+        covEl.innerHTML = '✅ 元素齊全!其中 ' + _npcCovTxt + ' 由 NPC 補上';
+      }else{
+        covEl.innerHTML = '✅ 4 元素全部覆蓋!護盾可順利擊破';
+      }
     }else{
       covEl.className = 'wb-tc-coverage warn';
       covEl.innerHTML = '⚠ 還缺 ' + cov.missing.map(e => {
         const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
         return m ? (m.ic + m.name) : e;
-      }).join(' / ') + ' 屬性,無法破盾';
+      }).join(' / ') + ' 屬性(可勉強開戰,破盾較困難)';
     }
     if(startBtn){
       startBtn.style.display = meIsHost ? 'inline-block' : 'none';
-      startBtn.disabled = !(allReady && slotsFull);
-      startBtn.textContent = !slotsFull ? '⌛ 等候隊員(' + filledPlayers.length + '/4)'
-                          : !allReady ? '⌛ 等候全員準備(' + filledPlayers.filter(p=>p.ready).length + '/4)'
-                          : '⚔ 開戰!';
+      startBtn.disabled = !allHumanReady;
+      if(!allHumanReady){
+        const _readyCnt = filledPlayers.filter(p => p.ready).length;
+        startBtn.textContent = humanCount === 0
+          ? '⌛ 等候有人選角'
+          : ('⌛ 等候全員準備(' + _readyCnt + '/' + humanCount + ')');
+      }else{
+        // ★ FIX 20260517(r) — 可開戰文字:區分房主代打 vs 自動 NPC
+        let _hostNpcCount = 0;
+        for(let _i = 0; _i < 4; _i++){
+          if(!players[_i] && _hostAssign[_i] && _hostAssign[_i].heroName) _hostNpcCount++;
+        }
+        const _autoNpcCount = npcCount - _hostNpcCount;
+        const parts = [humanCount + ' 真人'];
+        if(_hostNpcCount > 0) parts.push('🎮' + _hostNpcCount + ' 代打');
+        if(_autoNpcCount > 0) parts.push('🤖' + _autoNpcCount + ' NPC');
+        startBtn.textContent = npcCount > 0
+          ? ('⚔ 開戰!(' + parts.join(' + ') + ')')
+          : '⚔ 開戰!';
+      }
     }
   }
 
@@ -4468,6 +4867,12 @@
       ? '<span class="wb-tc-slot-tag host">房主</span>'
       : (isMe ? '<span class="wb-tc-slot-tag me">你</span>' : '<span class="wb-tc-slot-tag peer">隊友</span>');
 
+    // ★ FIX 20260517(s) — 槽頂顯示玩家暱稱(在房主/你/隊友標籤左邊)
+    //   讓四個槽一眼看出每格是誰、也能跟「房主代打」NPC 槽位區分
+    const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const _displayName = _esc(p.name || '玩家');
+    const playerNameHtml = `<span class="wb-tc-slot-player-name" title="${_displayName}">👤 ${_displayName}</span>`;
+
     // 替換英雄按鈕(只有我看得到,只有單人練習可用 — 多人房不允許在這頁換英雄)
     const allowSwapHero = isMe && window._wbSoloPracticeMode;
     const swapHeroBtn = allowSwapHero
@@ -4540,9 +4945,10 @@
     if(window._wbSoloPracticeMode && idx === (window._wbSoloEditingSlot ?? 0)) slotCls += ' editing';
 
     return `<div class="${slotCls}">
-      <!-- 槽位 + 替換英雄按鈕 -->
+      <!-- 槽位 + 玩家暱稱 + 標籤 + 替換英雄按鈕 -->
       <div class="wb-tc-slot-head">
-        <span>槽位 ${idx+1}</span>
+        <span class="wb-tc-slot-num-lbl">槽位 ${idx+1}</span>
+        ${playerNameHtml}
         ${tagHtml}
         ${swapHeroBtn}
       </div>
@@ -4722,20 +5128,69 @@
   };
 
   window._wbTcConfirmSwapHero = async function(targetSlotIdx, heroName){
+    // ★ FIX 20260517(r) — 指派槽位模式:寫進本地 _wbHostAssignedSlots
+    //   判定方式:該 slotIdx 在 snap.players 沒有對應玩家(空槽)
+    const snap = window._wbNet.getSnapshot();
+    const slotPlayer = snap?.players?.[targetSlotIdx];
+    const isAssignSlot = !slotPlayer || !slotPlayer.uid;
+    if(isAssignSlot){
+      if(!window._wbHostAssignedSlots) window._wbHostAssignedSlots = {};
+      const cur = window._wbHostAssignedSlots[targetSlotIdx] || {};
+      window._wbHostAssignedSlots[targetSlotIdx] = {
+        heroName: heroName,
+        element: cur.element || null  // 保留原本選的元素(若有)
+      };
+      _wbTcCloseSwapModal();
+      _wbTcRenderTeamConfirm();
+      try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.55); }catch(_){}
+      return;
+    }
     // 單人模式:切到該槽再 setMyHero
     if(window._wbSoloPracticeMode){
       window._wbSoloEditingSlot = targetSlotIdx;
       // 拿目前該槽的 ext(保留元素/至寶)
-      const snap = window._wbNet.getSnapshot();
       const me = snap?.players?.[targetSlotIdx];
       const ext = _wbTcParsePlayerExt(me);
       await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
     }else{
-      // 多人:不允許在這頁換英雄(按鈕應該不會出現)
-      _wbGameAlert('多人房請在選角頁切換英雄');
+      // 多人:不允許在這頁換真人玩家的英雄(按鈕應該不會出現)
+      _wbGameAlert('只能替自己的槽位換英雄');
     }
     _wbTcCloseSwapModal();
     _wbTcRenderTeamConfirm();
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(r) — 房主指派 NPC 槽位的三個操作
+  // ────────────────────────────────────────────────────────────────────
+  // _wbHostAssignedSlots = { slotIdx: { heroName, element } } (本地暫存)
+  // ════════════════════════════════════════════════════════════════════
+  window._wbTcAssignedSlotOpenSwap = function(slotIdx){
+    // 守門:必須是房主
+    const snap = window._wbNet.getSnapshot();
+    if(snap?.meta?.hostUid !== window._gUserId){
+      _wbGameAlert('只有房主可以指派 NPC 槽位');
+      return;
+    }
+    // 直接借用 _wbTcOpenSwapHero,confirm 那邊會偵測這槽位是空槽 → 寫進 _wbHostAssignedSlots
+    window._wbTcOpenSwapHero(slotIdx);
+  };
+
+  window._wbTcAssignedSlotPickElement = function(slotIdx, elemId){
+    if(!window._wbHostAssignedSlots) window._wbHostAssignedSlots = {};
+    const cur = window._wbHostAssignedSlots[slotIdx] || {};
+    // 切換:若已選同元素 → 清掉;否則設成這元素
+    cur.element = (cur.element === elemId) ? null : elemId;
+    window._wbHostAssignedSlots[slotIdx] = cur;
+    _wbTcRenderTeamConfirm();
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.45); }catch(_){}
+  };
+
+  window._wbTcAssignedSlotClear = function(slotIdx){
+    if(!window._wbHostAssignedSlots) return;
+    delete window._wbHostAssignedSlots[slotIdx];
+    _wbTcRenderTeamConfirm();
+    try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.5); }catch(_){}
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -5136,6 +5591,12 @@
   // 從 snap.players 產出 4 槽完整 team(含 AI 替補)
   function _wbEcBuildFullTeam(players){
     const team = [];
+    const _assign = window._wbHostAssignedSlots || {};
+    // 取房主資料給「未指派 NPC」用做預設
+    const _snap = window._wbNet.getSnapshot();
+    const _hostUid = _snap?.meta?.hostUid;
+    const _hostPlayer = (players || []).find(p => p && p.uid === _hostUid);
+    const _hostHero = (_hostPlayer && _hostPlayer.heroName) || '劍士';
     for(let i = 0; i < 4; i++){
       const p = players[i];
       if(p){
@@ -5146,13 +5607,23 @@
           name: p.name || ('玩家 ' + (i+1)),
         });
       }else{
-        // AI 替補(預設劍士,沒元素)
-        team.push({
-          slotIdx:i, isAi:true, isMe:false,
-          heroName: '劍士',
-          element: null,
-          name: 'AI 替補',
-        });
+        // ★ FIX 20260517(r) — 優先用房主指派的;沒指派則用房主英雄當預設
+        const a = _assign[i];
+        if(a && a.heroName){
+          team.push({
+            slotIdx:i, isAi:true, isMe:false, _hostAssigned:true,
+            heroName: a.heroName,
+            element: a.element || null,
+            name: '房主代打',
+          });
+        }else{
+          team.push({
+            slotIdx:i, isAi:true, isMe:false,
+            heroName: _hostHero,
+            element: null,
+            name: 'NPC 替補',
+          });
+        }
       }
     }
     return team;
@@ -5298,6 +5769,73 @@
     await window._wbUiStartBattle();
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517(q) — NPC 自動接管 hook
+  // ────────────────────────────────────────────────────────────────────
+  // 連線房主端開戰後,主程式 startTurn 結尾會把 p1 行動權交給玩家
+  // (action-panel 顯示)。但 NPC 替補槽位沒有玩家對應,沒人會按按鈕,戰鬥會卡住。
+  //
+  // 修補:wrap window.startTurn,在跑完原邏輯後檢查 G.activeChar:
+  //   - 是 p1 + 標 _wbIsNpc=true → 200ms 後自動跑 aiAct() 讓 AI 接管
+  //   - 是 p1 但沒標 _wbIsNpc → 走原本玩家行動流程(不動)
+  //   - 是 p2 → 不動(BOSS AI 已正常)
+  //
+  // 安裝時機:_wbUiStartBattle 設好 _wbConnectedHostMode 旗標後立刻呼叫。
+  // 守門:只在 _wbConnectedHostMode=true 時生效,避免污染其他模式。
+  // 冪等:_wbNpcAutoActHookInstalled flag 防重複安裝。
+  // ════════════════════════════════════════════════════════════════════
+  function _wbInstallNpcAutoActHook(){
+    if(window._wbNpcAutoActHookInstalled) return true;
+    if(typeof window.startTurn !== 'function'){
+      console.warn('[WB-NPC] startTurn 尚未載入,延後 200ms 安裝');
+      setTimeout(_wbInstallNpcAutoActHook, 200);
+      return false;
+    }
+    const _origStartTurn = window.startTurn;
+    window.startTurn = function(){
+      const ret = _origStartTurn.apply(this, arguments);
+      // 只在連線房主模式下接管
+      if(!window._wbConnectedHostMode) return ret;
+      try{
+        const _G = (typeof window._wbGetG === 'function') ? window._wbGetG()
+                   : (typeof G !== 'undefined' ? G : null);
+        if(!_G) return ret;
+        const active = _G.activeChar;
+        if(!active) return ret;
+        if(active.side !== 'p1') return ret;
+        if(!active._wbIsNpc) return ret;
+        if(active.acted) return ret;
+        if(active.curHp <= 0) return ret;
+        // ★ 是 NPC 替補的回合 → 200ms 後自動 aiAct
+        //   200ms 跟主程式 _autoBattle 的 400ms 一致量級,給動畫/UI 一點呼吸
+        setTimeout(function(){
+          try{
+            // 二次檢查:可能已被別的路徑處理(例如插隊被動)
+            if(!window._wbConnectedHostMode) return;
+            const _G2 = (typeof window._wbGetG === 'function') ? window._wbGetG() : G;
+            if(!_G2 || _G2.activeChar !== active) return;
+            if(active.acted || active.curHp <= 0) return;
+            if(typeof aiAct !== 'function'){
+              console.warn('[WB-NPC] aiAct 函式不存在,NPC 行動跳過'); return;
+            }
+            try{ if(typeof window.log === 'function') window.log('🤖 [NPC '+active.name+'] AI 自動行動'); }catch(_){}
+            aiAct(active);
+          }catch(eIn){
+            console.error('[WB-NPC] auto aiAct 失敗', eIn);
+          }
+        }, 300);
+      }catch(eOut){
+        console.warn('[WB-NPC] startTurn hook 例外', eOut);
+      }
+      return ret;
+    };
+    window._wbNpcAutoActHookInstalled = true;
+    console.log('[WB-NPC] ✅ NPC 自動接管 hook 已安裝');
+    return true;
+  }
+  // 暴露給外部需要時手動觸發
+  window._wbInstallNpcAutoActHook = _wbInstallNpcAutoActHook;
+
   // === 開戰 ===
   // ════════════════════════════════════════════════════════════════════
   // ★ v6 Phase 2 (2026-05-17) — 連線房主端 _wbUiStartBattle 改走主程式
@@ -5331,26 +5869,46 @@
       return;
     }
 
-    // 初始化 4 槽英雄陣容(沒人的槽位填 AI 預設)
+    // ★ FIX 20260517(q+r) — NPC 補位的優先順序:
+    //   1. 房主明確指派的角色(_wbHostAssignedSlots[i]) → 標 _wbIsHostNpc=true (戰鬥時房主操控)
+    //   2. 否則用房主英雄當 fallback → 標 _wbIsNpc=true (戰鬥時 AI 自動操作)
+    //   找出房主資料:players 陣列中 uid 等於 meta.hostUid 的那一個
+    const _hostUid = snap?.meta?.hostUid;
+    const _hostPlayer = players.find(p => p && p.uid === _hostUid);
+    const _hostHeroName = (_hostPlayer && _hostPlayer.heroName) || '劍士';
+    const _hostElement = _hostPlayer && _hostPlayer.element;
+    const _hostAssign = window._wbHostAssignedSlots || {};
+
+    // 初始化 4 槽英雄陣容(沒人的槽位 = NPC 用房主角色補,或讀房主指派的)
     const p1 = [];
     for(let i = 0; i < 4; i++){
       const p = players[i];
-      const heroName = p?.heroName || '劍士';
+      const assigned = (!p && _hostAssign[i] && _hostAssign[i].heroName) ? _hostAssign[i] : null;
+      // ★ 三種來源:1. 真實玩家  2. 房主指派的 NPC(代打)  3. 自動 NPC(沿用房主英雄)
+      const heroName = p?.heroName || (assigned ? assigned.heroName : _hostHeroName);
       const h = newHero(heroName, 'p1', i);
       h.burst = 0; h.burstMax = h.burstMax || 10;
-      // ★ v3.2 — 把玩家選的元素塞進英雄物件,讓戰鬥引擎 _wbInferHeroElement 透過 action.element 讀到
-      //   - 有玩家:用玩家選的 element
-      //   - AI 替補:讀 _wbEcAiOverrideElements[i] (元素確認 modal 自動分配的)
+      // ★ 標記:_wbIsHostNpc 跟 _wbIsNpc 不一樣
+      //   _wbIsHostNpc=true: 戰鬥時房主自己操控(就像房主多打一隻,要答題)
+      //   _wbIsNpc=true:     戰鬥時 AI 自動操作
+      h._wbIsNpc     = !p && !assigned;       // 沒玩家也沒指派 → AI 自動
+      h._wbIsHostNpc = !p &&  !!assigned;     // 沒玩家但有指派 → 房主操控
+      // 元素來源優先序:玩家選 > 房主指派 > _wbEcAiOverrideElements > 房主元素
       let assignedElem = null;
       if(p && p.element){
         assignedElem = p.element;
+      }else if(assigned && assigned.element){
+        assignedElem = assigned.element;
       }else{
         const ov = window._wbEcAiOverrideElements || {};
-        if(ov[i]) assignedElem = ov[i];
+        if(ov[i]){
+          assignedElem = ov[i];
+        }else if(_hostElement){
+          assignedElem = _hostElement;
+        }
       }
       if(assignedElem){
         h._wbPickedElement = assignedElem;
-        // 也填到主英雄 element 欄(若戰鬥引擎讀 h.element)
         if(!h.element) h.element = assignedElem;
       }
       p1.push(h);
@@ -5378,6 +5936,13 @@
     window._wbQuizState = {};
     window._wbCorrectCnt = {};
     window._wbAdvBattleEnded = false;
+
+    // ★ FIX 20260517(q) — 安裝 NPC 自動接管 hook
+    //   輪到 _wbIsNpc=true 的 p1 槽位時,房主端自動跑 aiAct(),
+    //   不需要 pendingAction(因為這槽位沒玩家對應)
+    try{ _wbInstallNpcAutoActHook(); }catch(eHook){
+      console.warn('[WB-Host v6] NPC auto-act hook 安裝失敗', eHook);
+    }
 
     // ── 廣播初始 battle 給其他玩家(舊 schema, version=1) ───────────
     // 用 turnOrder 計算(BOSS 永遠第一,接著 p1 按速度)
@@ -5896,13 +6461,42 @@
   // === 事件回呼 ===
   window._wbNet.on('onRoomUpdate', function(data){
     if(!data || !data.players) return;
-    document.getElementById('wb-room-code-val').textContent = window._wbNet.getRoomId() || '------';
-    _wbRenderPlayerSlots(data.players);
+    // ★ FIX 20260517(r) — 同步舊 lobby 房號(若還在 DOM) + 新隊伍確認頁右上角房號
+    try{
+      const _roomId = window._wbNet.getRoomId() || '------';
+      const _oldEl = document.getElementById('wb-room-code-val');
+      if(_oldEl) _oldEl.textContent = _roomId;
+      const _newEl = document.getElementById('wb-tc-roomcode-val');
+      if(_newEl) _newEl.textContent = _roomId;
+    }catch(_){}
+    // ★ FIX 20260517(r) — 玩家加入到原本指派 NPC 的槽位 → 自動清掉該槽位的本地指派
+    //   (真人玩家優先;指派的 NPC 讓位給真人)
+    try{
+      if(window._wbHostAssignedSlots){
+        let changed = false;
+        for(let _i = 0; _i < 4; _i++){
+          const _p = data.players[_i];
+          if(_p && _p.uid && window._wbHostAssignedSlots[_i]){
+            delete window._wbHostAssignedSlots[_i];
+            changed = true;
+          }
+        }
+        if(changed && typeof _wbTcRenderTeamConfirm === 'function'){
+          // _wbTcRenderTeamConfirm 在底下還會再跑一次,但這裡先觸發確保即時
+        }
+      }
+    }catch(_){}
+    try{ _wbRenderPlayerSlots(data.players); }catch(_){}
     const status = data.meta?.status || 'waiting';
-    document.getElementById('wb-room-status-text').textContent =
-      status === 'fighting' ? '⚔ 戰鬥中' : (status === 'waiting' || status === 'picking') ? '等候選角' : '已結束';
+    try{
+      const _statusEl = document.getElementById('wb-room-status-text');
+      if(_statusEl){
+        _statusEl.textContent =
+          status === 'fighting' ? '⚔ 戰鬥中' : (status === 'waiting' || status === 'picking') ? '等候選角' : '已結束';
+      }
+    }catch(_){}
 
-    // ★ FIX 20260517(m) — 房主+未開戰+未滿時顯示「邀請好友」按鈕
+    // ★ FIX 20260517(m) — 房主+未開戰+未滿時顯示「邀請好友」按鈕(舊 lobby 內)
     try{
       const inviteBtn = document.getElementById('wb-invite-friends-btn');
       if(inviteBtn){
@@ -5911,30 +6505,49 @@
         const inLobby = (status === 'waiting' || status === 'picking');
         inviteBtn.style.display = (isHost && notFull && inLobby) ? '' : 'none';
       }
+      // ★ FIX 20260517(r) — 隊伍確認頁右上角的邀請好友按鈕同步顯示
+      const inviteBtn2 = document.getElementById('wb-tc-invite-btn');
+      if(inviteBtn2){
+        const isHost = !!(window._wbNet.isHost && window._wbNet.isHost());
+        const notFull = (data.players.length < 4);
+        const inLobby = (status === 'waiting' || status === 'picking');
+        inviteBtn2.style.display = (isHost && notFull && inLobby) ? '' : 'none';
+      }
     }catch(_){}
 
     if(status === 'fighting'){
-      document.getElementById('wb-picking-area').style.display = 'none';
-      document.getElementById('wb-battle-area').classList.add('show');
-      // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline display 衝突)
-      document.getElementById('wb-emoji-bar-real').classList.add('wb-eb-show');
-      // ★ FIX 20260516 — 戰鬥階段套 BOSS 全圖背景
-      document.getElementById('wb-lobby-overlay').classList.add('wb-in-battle');
+      try{
+        const _pa = document.getElementById('wb-picking-area');
+        if(_pa) _pa.style.display = 'none';
+        const _ba = document.getElementById('wb-battle-area');
+        if(_ba) _ba.classList.add('show');
+        // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline display 衝突)
+        const _eb = document.getElementById('wb-emoji-bar-real');
+        if(_eb) _eb.classList.add('wb-eb-show');
+        // ★ FIX 20260516 — 戰鬥階段套 BOSS 全圖背景
+        const _lb = document.getElementById('wb-lobby-overlay');
+        if(_lb) _lb.classList.add('wb-in-battle');
+      }catch(_){}
       // 戰鬥開始時自動關掉隊伍確認頁
       const _tc = document.getElementById('wb-team-confirm-overlay');
       if(_tc) _tc.classList.remove('show');
     }else{
-      document.getElementById('wb-picking-area').style.display = 'grid';
-      document.getElementById('wb-battle-area').classList.remove('show');
-      // ★ FIX 20260517(o-4) — 同上
-      document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show');
-      const _lobby2 = document.getElementById('wb-lobby-overlay');
-      if(_lobby2){
-        _lobby2.classList.remove('wb-in-battle');
-        // ★ FIX 20260517 — 清掉 inline 背景,回到選角的紫黑預設
-        _lobby2.style.background = '';
-      }
-      _wbRefreshPickStatus(data.players);
+      try{
+        // ★ FIX 20260517(r) — 新流程下 picking-area 永遠隱藏(選角頁已廢除)
+        const _pa = document.getElementById('wb-picking-area');
+        if(_pa) _pa.style.display = 'none';
+        const _ba = document.getElementById('wb-battle-area');
+        if(_ba) _ba.classList.remove('show');
+        // ★ FIX 20260517(o-4) — 同上
+        const _eb = document.getElementById('wb-emoji-bar-real');
+        if(_eb) _eb.classList.remove('wb-eb-show');
+        const _lobby2 = document.getElementById('wb-lobby-overlay');
+        if(_lobby2){
+          _lobby2.classList.remove('wb-in-battle');
+          _lobby2.style.background = '';
+        }
+        _wbRefreshPickStatus(data.players);
+      }catch(_){}
     }
     // ★ FIX 20260516 — 房間任何變動都同步重繪隊伍確認頁(若它開著)
     try{ if(typeof _wbTcRenderTeamConfirm === 'function') _wbTcRenderTeamConfirm(); }catch(_){}

@@ -2682,7 +2682,10 @@
 
     // ─── G-2. 發出邀請(房主用) ─────────────────────────────────
     //   每次發 = 寫一筆 worldBossInvites/{id}, 30 秒過期
-    //   同一房主對同一好友若 30 秒內已發過 pending 邀請, 不重發
+    // ★ FIX 20260517(p) — 改規則:房主重發邀請時,先把舊的 pending 標 cancelled,
+    //   再寫一筆新的。這樣對方端的訂閱(where status==pending)會自動把舊通知
+    //   移掉,新通知會以新一筆出現(計時器重新 30 秒)。房主端也避免「已邀請」
+    //   按鈕卡住無法重發。
     async function sendInvite(toUid, toName){
       if(!_requireLogin()) return false;
       if(!WB.roomId || !WB.isHost){
@@ -2698,24 +2701,36 @@
       const now = Date.now();
       const TTL_MS = 30 * 1000;  // ★ 30 秒過期
       try{
-        // 檢查最近是否有未過期的 pending 邀請給同一好友
-        const dupQ = query(
-          collection(_fbDb, 'worldBossInvites'),
-          where('fromUid', '==', window._gUserId),
-          where('toUid', '==', toUid),
-          where('status', '==', 'pending')
-        );
-        const dupSnap = await getDocs(dupQ);
-        let hasPending = false;
-        dupSnap.forEach(s => {
-          const d = s.data() || {};
-          if(d.expiresAt && d.expiresAt > now) hasPending = true;
-        });
-        if(hasPending){
-          _emit('onError', { msg: '已邀請過此玩家,請等待對方回應或 30 秒後再試' });
-          return false;
+        // ★ 1. 把同一房主→同一好友的舊 pending 邀請全標成 cancelled
+        //    (用 batched updates;失敗也不阻塞,後續可用 timestamp 比對)
+        try{
+          const dupQ = query(
+            collection(_fbDb, 'worldBossInvites'),
+            where('fromUid', '==', window._gUserId),
+            where('toUid', '==', toUid),
+            where('status', '==', 'pending')
+          );
+          const dupSnap = await getDocs(dupQ);
+          const cancelTasks = [];
+          dupSnap.forEach(s => {
+            // 不論是否過期,一律標 cancelled(讓對方端訂閱即刻清除)
+            cancelTasks.push(
+              updateDoc(doc(_fbDb, 'worldBossInvites', s.id), {
+                status: 'cancelled',
+                respondedAt: now,
+                cancelledBy: 'resend'
+              }).catch(_ => {}) // 個別失敗忽略
+            );
+          });
+          if(cancelTasks.length){
+            await Promise.all(cancelTasks);
+          }
+        }catch(cancelErr){
+          // 取消舊的失敗不算致命 — 繼續寫新的
+          console.warn('[WBNet] sendInvite 取消舊邀請失敗(可忽略)', cancelErr);
         }
-        // 用客戶端產 id (timestamp + random) 寫入
+
+        // ★ 2. 寫入新邀請
         const inviteId = 'inv_' + now + '_' + Math.random().toString(36).slice(2, 8);
         const payload = {
           fromUid: window._gUserId,
