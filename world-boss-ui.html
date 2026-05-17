@@ -752,8 +752,8 @@
         🏆 隊伍排名獎勵(BOSS 倒下時依累積傷害名次發獎)
       </div>
       <div style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.6;">
-        每隊伍由「同電組合的玩家」識別。打贏越多場、傷害越高,排名越前面。
-        <br>同一隻 BOSS 期間,你跟同電隊友打過的所有場次傷害會累積計算。
+        每隊伍由「同一個 4 人房間的玩家」識別。打贏越多場、傷害越高,排名越前面。
+        <br>同一隻 BOSS 期間,你跟同房間隊友打過的所有場次傷害會累積計算。
       </div>
       <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;"></div>
     </div>
@@ -782,7 +782,7 @@
     dark:'#aa66ff', light:'#ffee44', grass:'#66cc66', omni:'#ffffff'
   };
   const elemIcon = {
-    fire:'🔥', water:'💧', wind:'🌪', earth:'🌍',
+    fire:'🔥', water:'💧', wind:'🌪', earth:'🪨',
     dark:'⚫', light:'☀', grass:'🌿', omni:'🌌'
   };
   el.innerHTML = window.WORLD_BOSS_LINEUP.map((b, i) => {
@@ -825,11 +825,23 @@
     if(!r) return '';
     const items = [];
     items.push(`💰 ${r.coins.toLocaleString()} 幣`);
-    if(r.treasureChance === 1.0) items.push(`✨ ${r.treasureRarity === 'mythical' ? '神話' : '傳說'}至寶 ×1`);
-    else if(r.treasureChance > 0) items.push(`✨ 至寶 (${Math.round(r.treasureChance*100)}%)`);
+    // ★ FIX 20260517 — 1-5 名用 treasureLabel(不分稀有度的描述);6-20 名用機率制至寶
+    if(r.treasureLabel){
+      items.push(`✨ ${r.treasureLabel}`);
+    }else if(r.treasureChance === 1.0){
+      items.push(`✨ ${r.treasureRarity === 'mythical' ? '神話' : '傳說'}至寶 ×1`);
+    }else if(r.treasureChance > 0){
+      items.push(`✨ 至寶 (${Math.round(r.treasureChance*100)}%)`);
+    }
     if(r.treasureFragments) items.push(`💠 至寶碎片 ×${r.treasureFragments}`);
     if(r.summonCrystals) items.push(`💎 召喚水晶 ×${r.summonCrystals}`);
-    if(r.expScrolls) items.push(`📜 EXP 卷軸 ×${r.expScrolls}`);
+    // ★ FIX 20260517 — EXP 卷軸拆兩種(至寶EXP卷軸 + 豪華典藏版EXP書,數量相同)
+    if(r.expScrollTreasure) items.push(`📜 至寶EXP卷軸 ×${r.expScrollTreasure}`);
+    if(r.expBookDeluxe) items.push(`📕 豪華典藏版EXP書 ×${r.expBookDeluxe}`);
+    // 舊欄位 fallback(若資料表未更新,維持舊顯示避免空白)
+    if(!r.expScrollTreasure && !r.expBookDeluxe && r.expScrolls){
+      items.push(`📜 EXP 卷軸 ×${r.expScrolls}`);
+    }
     if(r.titleTemplate) items.push(`🎖 限定稱號`);
     return `
       <div style="background:rgba(${tierColor[t].replace('#','').match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.15);
@@ -1207,9 +1219,11 @@
     font-size:28px;flex-shrink:0;
   }
   /* HP 條 */
+  /* ★ FIX 20260517 — HP 條 wrap 高度從 18px → 32px,讓 28px 字體完整顯示
+                      (BOSS 護盾簡化省下垂直空間補到這裡) */
   .wb-tc-bc-hp-wrap{
     position:relative;z-index:6;
-    margin:0 6px 2px;height:18px;background:rgba(0,0,0,0.7);
+    margin:0 6px 4px;height:32px;background:rgba(0,0,0,0.7);
     border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);
     flex-shrink:0;
   }
@@ -1749,20 +1763,21 @@
   .wb-hero-battle-card.dead{opacity:0.4;filter:grayscale(0.7);}
   @keyframes wb-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.02);}}
   /* ★ v3.0 — 角色卡頂端對話泡泡 (字體與角色卡名稱同尺寸) */
+  /* ★ FIX 20260517 — 對話泡泡字體放大 50%(12 → 18px),配套 padding/max-width 跟著加 */
   .wb-hero-battle-card{position:relative;}
   .wb-card-bubble{
     position:absolute;
-    bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
-    font-size:12px;  /* ★ 與 wb-hbc-name 同尺寸 12px */
+    bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+    font-size:18px;  /* 12 → 18 (放大 50%) */
     font-weight:700;
     color:#fff;
     background:linear-gradient(135deg,rgba(60,80,140,0.97),rgba(40,60,110,0.97));
     border:1.5px solid rgba(150,200,255,0.85);
-    border-radius:10px;
-    padding:6px 10px;
+    border-radius:12px;
+    padding:9px 14px;
     white-space:nowrap;
-    max-width:180px;
-    min-width:90px;
+    max-width:260px;
+    min-width:120px;
     text-align:center;
     box-shadow:0 4px 14px rgba(0,0,0,0.5),0 0 14px rgba(100,160,255,0.5);
     z-index:50;
@@ -1834,20 +1849,21 @@
     border-radius:12px;padding:12px 14px;
   }
   .wb-discussion-title{
-    font-size:13px;color:#d4a8ff;font-weight:700;letter-spacing:1px;
-    margin-bottom:10px;text-align:center;
+    font-size:20px;color:#d4a8ff;font-weight:700;letter-spacing:1.5px;
+    margin-bottom:14px;text-align:center;
   }
   .wb-discussion-grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:8px;
+    gap:10px;
   }
   @media (max-width:540px){
     .wb-discussion-grid{grid-template-columns:repeat(2,1fr);}
   }
+  /* ★ FIX 20260517 — 討論按鈕字體放大 50%(13 → 20px),padding 同步放大 */
   .wb-disc-btn{
-    padding:9px 6px;
-    font-size:13px;font-weight:700;cursor:pointer;
+    padding:13px 8px;
+    font-size:20px;font-weight:700;cursor:pointer;
     background:rgba(168,132,255,0.15);
     border:1.5px solid rgba(168,132,255,0.55);
     color:#e0d4ff;border-radius:8px;
@@ -2189,17 +2205,10 @@
     <div class="wb-tc-title">⚔ 出戰前隊伍確認</div>
     <div class="wb-tc-sub">確認元素覆蓋 BOSS 護盾 + 裝備至寶 ✦ 4 人都打勾才能開戰</div>
 
-    <!-- BOSS 護盾提示(動態渲染:每隻龍王不同) -->
+    <!-- ★ FIX 20260517 — BOSS 護盾提示簡化:只留「隊伍需要破盾元素」一行,
+                          原本「BOSS 護盾元素 = 火/風/土/暗」那行隱藏(資訊冗餘)
+                          省下的垂直空間用來加大英雄卡 HP 條 -->
     <div class="wb-tc-boss-shield-hint" id="wb-tc-boss-shield-hint">
-      <div style="margin-bottom:6px;">
-        <b>🐉 維蘇威火山龍王護盾(HP 80/60/40/20/1% 啟動):</b>
-        <span style="color:#ff9966;">
-          BOSS 護盾元素 = <b id="wb-tc-shield-boss-text">火 / 風 / 土 / 暗</b>
-        </span>
-        <span class="wb-tc-shield-icons" id="wb-tc-shield-boss-icons" style="opacity:0.6;">
-          <!-- BOSS 護盾元素 chips (僅顯示, 灰底) -->
-        </span>
-      </div>
       <div>
         ⚔ 隊伍需要 <b id="wb-tc-shield-elem-text">水 / 土 / 草 / 光</b> 屬性各打 3 次破盾
         <span class="wb-tc-shield-icons" id="wb-tc-shield-icons">
@@ -2280,10 +2289,11 @@
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('gg')" title="GG">😭</button>
 </div>
 <style>
+  /* ★ FIX 20260517 — 定型文按鈕字體 / 尺寸放大 50%(原 38/16 → 57/24) */
   .wb-emoji-btn{
-    width:38px;height:38px;border-radius:50%;cursor:pointer;border:none;
-    background:rgba(168,132,255,0.15);color:#fff;font-size:16px;
-    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;margin:0 2px;
+    width:57px;height:57px;border-radius:50%;cursor:pointer;border:none;
+    background:rgba(168,132,255,0.15);color:#fff;font-size:24px;
+    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;margin:0 3px;
   }
   .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.15);}
 </style>
@@ -2594,6 +2604,77 @@
     }catch(_){}
     return false;
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517 — 隊伍確認頁/替換 modal/至寶 modal 全部按鈕音效
+  // ────────────────────────────────────────────────────────────────────
+  // 用「事件委派 + capture phase」一次掛上:
+  //   - 在 document 上 capture 階段監聽 click
+  //   - 偵測 target 是否落在隊伍確認 overlay / swap modal / info popup 之內
+  //   - 若有,按 button class / data attribute 對應到合適的 sfx 並 playSfx
+  //   - 不 stopPropagation,讓原 onclick 照常觸發
+  // 為何不在每個 onclick 內塞 playSfx:按鈕分散且多為動態渲染,逐個塞容易漏 + 難維護
+  // ════════════════════════════════════════════════════════════════════
+  (function _wbTcInstallSfxDelegate(){
+    if(window._wbTcSfxInstalled) return;
+    window._wbTcSfxInstalled = true;
+
+    // 按 button class / 角色決定播什麼音效
+    function _pickSfx(btn){
+      const cl = btn.classList;
+      // 開戰 — 最隆重
+      if(cl.contains('wb-tc-start-btn'))       return ['sfx-confirm', 0.75];
+      // 我準備好了 — 強提示音
+      if(cl.contains('wb-tc-ready-btn')){
+        return cl.contains('cancel')
+          ? ['sfx-cancel', 0.55]          // 取消準備 → 取消音
+          : ['sfx-burst-ready', 0.65];    // 我準備好了 → 爆發出現音
+      }
+      // 取消類:回去選角 / 關閉 modal / ✕ 鈕
+      if(cl.contains('wb-tc-back-btn'))        return ['sfx-cancel', 0.55];
+      if(cl.contains('wb-tc-swap-close'))      return ['sfx-cancel', 0.55];
+      if(cl.contains('wb-tc-info-close'))      return ['sfx-cancel', 0.55];
+      // 替換英雄 — 角色選擇音
+      if(cl.contains('wb-tc-swap-hero-btn'))   return ['sfx-charsel', 0.55];
+      // 裝備/管理至寶 — 穿戴裝備音
+      if(cl.contains('wb-tc-swap-tr-btn'))     return ['sfx-equip', 0.55];
+      // 點看 BOSS / BOSS 預覽
+      if(cl.contains('wb-tc-boss-preview-mini')) return ['sfx-sel', 0.55];
+      // 屬性按鈕(7 顆水/火/風/土/草/光/暗) — 通用選擇音
+      if(cl.contains('wb-element-btn'))        return ['sfx-sel', 0.55];
+      // swap modal 內的英雄選項 — 角色音
+      if(cl.contains('wb-tc-swap-hero-option')) return ['sfx-charsel', 0.55];
+      // swap modal 內的至寶選項 — 穿戴音
+      if(cl.contains('wb-tc-swap-tr-option'))  return ['sfx-equip', 0.55];
+      // 兜底:onclick 屬性內呼叫 _wbTcToggleElement → 屬性切換,通用音
+      const oc = btn.getAttribute && btn.getAttribute('onclick');
+      if(oc && oc.indexOf('_wbTcToggleElement') >= 0) return ['sfx-sel', 0.55];
+      if(oc && oc.indexOf('_wbTcToggleTreasure') >= 0) return ['sfx-equip', 0.55];
+      // 預設:通用點擊音(任何 button 在這幾個 overlay 內都會有一點回饋)
+      return ['sfx-sel', 0.45];
+    }
+
+    document.addEventListener('click', function(ev){
+      try{
+        // 找到最接近的可互動元素(button 或帶 onclick 的元素 / .wb-element-btn / 可點屬性 chip)
+        const el = ev.target.closest(
+          'button, [onclick], .wb-element-btn, .wb-tc-swap-hero-option, .wb-tc-swap-tr-option'
+        );
+        if(!el) return;
+        // 只處理「在隊伍確認頁/swap modal/info popup 內」的點擊
+        const inScope = el.closest(
+          '#wb-team-confirm-overlay, #wb-tc-swap-modal, #wb-tc-info-popup'
+        );
+        if(!inScope) return;
+        // disabled 按鈕不播
+        if(el.disabled) return;
+        const [sfx, vol] = _pickSfx(el);
+        if(typeof playSfx === 'function'){
+          playSfx(sfx, vol);
+        }
+      }catch(_){}
+    }, true); // capture phase,在原 onclick 之前先收到
+  })();
 
   // 開啟隊伍確認頁(從選角頁的按鈕觸發)
   window._wbTcOpenTeamConfirm = function(){
@@ -4595,8 +4676,10 @@
   };
 
   function _wbShowBossOpeningQuiz(q, onDone){
-    const G = window._wbHostG;
-    if(!G){ if(typeof onDone==='function') onDone(); return; }
+    // ★ FIX 20260517 — 改用主程式 G(透過 _wbGetG)而非舊版 _wbHostG
+    //                  原因:新版世界 BOSS 戰走主程式 advStartBattle 接管,不再有 _wbHostG
+    const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+    if(!G || !G.p1){ if(typeof onDone==='function') onDone(); return; }
     const ov = document.createElement('div');
     ov.className = 'wb-quiz-overlay';
     ov.id = 'wb-boss-opening-quiz';
@@ -4615,11 +4698,11 @@
 
     ov.innerHTML = `
       <div class="wb-quiz-card" style="border-color:#ff8866;">
-        <div style="font-size:24px;color:#ff8866;font-weight:900;letter-spacing:2px;
-          text-align:center;margin-bottom:14px;">
+        <div style="font-size:28px;color:#ff8866;font-weight:900;letter-spacing:2px;
+          text-align:center;margin-bottom:16px;">
           🐉 BOSS 開戰挑戰題!
         </div>
-        <div style="font-size:14px;color:#ffcc99;text-align:center;margin-bottom:14px;">
+        <div style="font-size:18px;color:#ffcc99;text-align:center;margin-bottom:18px;line-height:1.55;">
           答對:全體能量 +1  /  答錯:全體受 5% maxHp 傷害(無視免傷)
         </div>
         <span class="wb-quiz-subject">${subject}</span>
@@ -4640,6 +4723,8 @@
 
     optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        // ★ 播按鈕音效
+        try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
         const idx = parseInt(btn.dataset.idx);
         const isCorrect = (idx === correctIdx);
         optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(b => {
@@ -4650,25 +4735,35 @@
 
         const resBox = document.getElementById('wb-boss-opening-result');
         if(isCorrect){
+          try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-correct', 0.6); }catch(_){}
           resBox.innerHTML = `<div class="wb-quiz-result correct">✅ 全員能量 +1!</div>`;
+          // ★ 在主程式 G.p1 內加 burst,並呼叫 renderCard 讓畫面同步
           G.p1.forEach(h => {
             if(h){
               h.burst = Math.min(h.burstMax || 10, (h.burst||0) + 1);
+              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
             }
           });
         }else{
+          try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-wrong', 0.5); }catch(_){}
           resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯!全員受 5% HP 傷害</div>`;
           G.p1.forEach(h => {
             if(h && h.curHp > 0){
               const dmg = Math.floor((h.hp || 100) * 0.05);
               h.curHp = Math.max(0, h.curHp - dmg);
+              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
             }
           });
         }
 
         setTimeout(() => {
           ov.remove();
-          _wbHostBroadcast([isCorrect ? '🎯 開戰題答對!全員能量 +1' : '💔 開戰題答錯,全員受傷']);
+          // 開戰題結束時用主程式 log 顯示結果(舊版用 _wbHostBroadcast,主程式接管後已廢)
+          try{
+            if(typeof log === 'function'){
+              log(isCorrect ? '🎯 開戰題答對!全員能量 +1' : '💔 開戰題答錯,全員受 5% HP 傷害');
+            }
+          }catch(_){}
           // ★ FIX 20260516 — 通知外部 Promise resolve,讓 BOSS 第一回合才真的開始
           if(typeof onDone === 'function') onDone();
         }, 2200);
@@ -5121,7 +5216,8 @@
   //   - 主程式的技能按鈕、目標選擇、爆發、休息、賣物品卡
   //   - main.css 5624 行台灣關樣式全部繼承,免改
   // ════════════════════════════════════════════════════════════════════
-  function _wbSoloBeginBattle(){
+  // ★ FIX 20260517 — 改為 async,讓內部能 await BOSS 開戰題流程
+  async function _wbSoloBeginBattle(){
     // 還原 _wbNet 的 _gUserId(單人模式只記第一格的真實 uid)
     if(window._wbSoloEditUidBackup){
       window._gUserId = window._wbSoloEditUidBackup;
@@ -5327,6 +5423,22 @@
     }
 
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+
+    // ★ FIX 20260517 — 接回 BOSS 開戰題流程(原本被跳過,導致 BOSS 直接攻擊沒出題)
+    //   時機:_wbSetupAdvForBattle 完成 (G.p1/G.p2 已就位、_adventureStage='worldboss')
+    //         → 呼叫 advStartBattle 之前先 await 開戰題
+    //   答對 → G.p1 全體 burst+1
+    //   答錯 → G.p1 全體扣 5% HP(直接寫 curHp,不走 doDmg,所以不會誤觸 worldboss hook)
+    //   要等玩家真的答完才推進到 advStartBattle(_wbStartBossOpening 回傳 Promise)
+    try{
+      if(typeof window._wbStartBossOpening === 'function'){
+        console.log('[WB-Solo v4] 進入開戰題流程…');
+        await window._wbStartBossOpening();
+        console.log('[WB-Solo v4] 開戰題完成,進入戰鬥');
+      }
+    }catch(eOp){
+      console.warn('[WB-Solo v4] 開戰題流程失敗,跳過直接進戰鬥', eOp);
+    }
 
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
@@ -5669,64 +5781,127 @@
     const seconds = Math.floor((info.elapsed % 60000) / 1000);
     const timeStr = `${minutes}:${String(seconds).padStart(2,'0')}`;
 
+    // ★ FIX 20260517 — 4 項表現評比(資料來自 world-boss.js _wbShowAdvBattleResult)
+    //                  單人練習場上你就是全隊,每項數值都是「全隊累積」
+    const ev = info.evalStats || {};
+    const evalCardsHtml = info.evalStats ? `
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:24px;">
+        <div style="background:linear-gradient(160deg,rgba(255,120,80,0.22),rgba(255,80,40,0.08));
+                    border:2px solid rgba(255,140,80,0.65);border-radius:12px;
+                    padding:14px 16px;text-align:left;">
+          <div style="font-size:20px;color:#ff9966;font-weight:900;letter-spacing:2px;
+                      margin-bottom:6px;text-shadow:0 0 8px rgba(255,140,80,0.6);">
+            ⚔ 最高輸出
+          </div>
+          <div style="font-size:32px;color:#ffe066;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(255,220,80,0.5);">
+            ${(ev.totalDmg||0).toLocaleString()}
+          </div>
+          <div style="font-size:16px;color:#bca;margin-top:4px;">直接 + 持續傷害總量</div>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(80,220,140,0.22),rgba(60,180,120,0.08));
+                    border:2px solid rgba(120,220,160,0.65);border-radius:12px;
+                    padding:14px 16px;text-align:left;">
+          <div style="font-size:20px;color:#a0e6c8;font-weight:900;letter-spacing:2px;
+                      margin-bottom:6px;text-shadow:0 0 8px rgba(120,220,160,0.6);">
+            ✚ 最佳治療
+          </div>
+          <div style="font-size:32px;color:#a0ffd0;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(120,255,200,0.5);">
+            ${(ev.totalHeal||0).toLocaleString()}
+          </div>
+          <div style="font-size:16px;color:#bca;margin-top:4px;">累積治療量(含復活)</div>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(120,180,255,0.22),rgba(80,140,220,0.08));
+                    border:2px solid rgba(140,200,255,0.65);border-radius:12px;
+                    padding:14px 16px;text-align:left;">
+          <div style="font-size:20px;color:#aaccff;font-weight:900;letter-spacing:2px;
+                      margin-bottom:6px;text-shadow:0 0 8px rgba(140,200,255,0.6);">
+            🛡 最高減傷
+          </div>
+          <div style="font-size:32px;color:#cce0ff;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(170,220,255,0.5);">
+            ${(ev.totalDmgTaken||0).toLocaleString()}
+          </div>
+          <div style="font-size:16px;color:#bca;margin-top:4px;">承受 / 代替承傷總量</div>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(200,160,255,0.22),rgba(160,120,255,0.08));
+                    border:2px solid rgba(200,160,255,0.65);border-radius:12px;
+                    padding:14px 16px;text-align:left;">
+          <div style="font-size:20px;color:#d4a8ff;font-weight:900;letter-spacing:2px;
+                      margin-bottom:6px;text-shadow:0 0 8px rgba(200,160,255,0.6);">
+            🌀 最佳控場
+          </div>
+          <div style="font-size:32px;color:#e8ccff;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(220,180,255,0.5);">
+            ${(ev.totalCtrl||0).toLocaleString()}
+          </div>
+          <div style="font-size:16px;color:#bca;margin-top:4px;">對敵施加不利狀態次數</div>
+        </div>
+      </div>
+    ` : '';
+
     const ov = document.createElement('div');
     ov.id = 'wb-solo-practice-result';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);overflow-y:auto;';
+    // ★ FIX 20260517 — 結算頁字體整體放大、加入 4 項表現評比卡
     ov.innerHTML = `
-      <div style="max-width:520px;width:100%;
+      <div style="max-width:760px;width:100%;
         background:linear-gradient(160deg,#162825,#0a1a18);
-        border:3px solid ${info.isNewRecord ? '#ffd966' : '#5dcaa5'};border-radius:18px;padding:28px 24px;
+        border:3px solid ${info.isNewRecord ? '#ffd966' : '#5dcaa5'};border-radius:22px;padding:36px 40px;
         box-shadow:0 0 60px ${info.isNewRecord ? 'rgba(255,217,102,0.5)' : 'rgba(93,202,165,0.4)'};
         text-align:center;color:#e8ffd8;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
         ${info.isNewRecord ?
-          `<div style="font-size:28px;margin-bottom:10px;animation:newHeroSparkle 1s ease-in-out infinite;">🏆✨🏆</div>
-           <div style="font-size:24px;color:#ffd966;font-weight:900;letter-spacing:2px;margin-bottom:6px;
-             text-shadow:0 0 12px rgba(255,217,102,0.7);">新紀錄!</div>` :
-          `<div style="font-size:28px;margin-bottom:10px;">🧪</div>
-           <div style="font-size:22px;color:#5dcaa5;font-weight:900;letter-spacing:2px;margin-bottom:6px;">練習結束</div>`}
+          `<div style="font-size:48px;margin-bottom:14px;animation:newHeroSparkle 1s ease-in-out infinite;">🏆✨🏆</div>
+           <div style="font-size:40px;color:#ffd966;font-weight:900;letter-spacing:3px;margin-bottom:10px;
+             text-shadow:0 0 18px rgba(255,217,102,0.7);">新紀錄!</div>` :
+          `<div style="font-size:48px;margin-bottom:14px;">🧪</div>
+           <div style="font-size:36px;color:#5dcaa5;font-weight:900;letter-spacing:3px;margin-bottom:10px;">練習結束</div>`}
 
-        <div style="font-size:14px;color:#aac;margin-bottom:20px;">
+        <div style="font-size:22px;color:#aac;margin-bottom:28px;letter-spacing:1px;">
           ${info.killed ? '✅ 成功擊敗維蘇威火山龍王!' : '⚔ 戰鬥結束(未擊敗 BOSS)'}
         </div>
 
-        <div style="background:rgba(255,217,102,0.12);border:2px solid rgba(255,217,102,0.5);
-          border-radius:12px;padding:18px;margin-bottom:18px;">
-          <div style="font-size:14px;color:#dda;letter-spacing:1px;margin-bottom:6px;">本場你的總傷害</div>
-          <div style="font-size:42px;color:#ffe066;font-weight:900;letter-spacing:2px;
-            text-shadow:0 0 14px rgba(255,220,80,0.7);">
+        <div style="background:rgba(255,217,102,0.12);border:2.5px solid rgba(255,217,102,0.5);
+          border-radius:14px;padding:24px;margin-bottom:24px;">
+          <div style="font-size:22px;color:#dda;letter-spacing:2px;margin-bottom:10px;">本場你的總傷害</div>
+          <div style="font-size:64px;color:#ffe066;font-weight:900;letter-spacing:3px;line-height:1.05;
+            text-shadow:0 0 18px rgba(255,220,80,0.7);">
             ${info.dmg.toLocaleString()}
           </div>
-          <div style="font-size:13px;color:#aaa;margin-top:6px;">用時 ${timeStr}</div>
+          <div style="font-size:20px;color:#aaa;margin-top:10px;">用時 ${timeStr}</div>
         </div>
 
-        <div style="background:rgba(40,60,80,0.4);border-left:3px solid rgba(120,180,255,0.6);
-          border-radius:8px;padding:12px 14px;margin-bottom:18px;text-align:left;">
-          <div style="font-size:13px;color:#aaccff;font-weight:700;margin-bottom:6px;">⚙ 本場陣容</div>
-          <div style="font-size:14px;color:#ccd;line-height:1.7;">
+        ${evalCardsHtml}
+
+        <div style="background:rgba(40,60,80,0.4);border-left:4px solid rgba(120,180,255,0.6);
+          border-radius:10px;padding:18px 22px;margin-bottom:22px;text-align:left;">
+          <div style="font-size:22px;color:#aaccff;font-weight:700;margin-bottom:10px;letter-spacing:1px;">⚙ 本場陣容</div>
+          <div style="font-size:24px;color:#ccd;line-height:1.7;">
             ${info.heroes.map(h => `<b style="color:#ffe;">${h}</b>`).join('・')}
           </div>
         </div>
 
-        <div style="background:rgba(40,30,60,0.4);border-left:3px solid rgba(200,160,255,0.6);
-          border-radius:8px;padding:12px 14px;margin-bottom:20px;text-align:left;font-size:13px;
+        <div style="background:rgba(40,30,60,0.4);border-left:4px solid rgba(200,160,255,0.6);
+          border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
           color:#ddc;line-height:1.7;">
           💡 練習模式沒有獎勵也不會發獎章,但會幫你記錄最高傷害紀錄。<br>
           換不同陣容組合再試一次,挑戰自己的紀錄!
         </div>
 
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
           <button onclick="document.getElementById('wb-solo-practice-result').remove();_wbUiSoloTest();"
             style="background:linear-gradient(135deg,#5dcaa5,#3a8a72);color:#fff;
-            border:2px solid rgba(140,230,200,0.7);border-radius:10px;padding:10px 22px;
-            font-size:16px;font-weight:800;cursor:pointer;letter-spacing:1px;
-            box-shadow:0 4px 14px rgba(93,202,165,0.4);">
+            border:2.5px solid rgba(140,230,200,0.7);border-radius:14px;padding:16px 36px;
+            font-size:24px;font-weight:800;cursor:pointer;letter-spacing:2px;
+            box-shadow:0 4px 16px rgba(93,202,165,0.4);font-family:inherit;">
             🔄 再來一場
           </button>
           <button onclick="document.getElementById('wb-solo-practice-result').remove();
             if(typeof location!=='undefined') location.reload();"
             style="background:rgba(60,60,80,0.6);color:#fff;
-            border:2px solid rgba(150,150,180,0.6);border-radius:10px;padding:10px 22px;
-            font-size:16px;font-weight:800;cursor:pointer;letter-spacing:1px;">
+            border:2.5px solid rgba(150,150,180,0.6);border-radius:14px;padding:16px 36px;
+            font-size:24px;font-weight:800;cursor:pointer;letter-spacing:2px;font-family:inherit;">
             🏠 返回首頁
           </button>
         </div>

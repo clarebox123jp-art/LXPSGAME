@@ -17873,9 +17873,12 @@ function doDmg(target, rawDmg, opts={}){
     }catch(_){}
   }
   // 統計
+  // ★ FIX 20260517 — 新增 dmgTaken(承受總傷害量),供世界 BOSS 結算「最高減傷」計算
+  //                  與原 hitsReceived(受擊次數)並存,兩者各有用途
   if(dmg>0){
     if(a && a.side !== target.side) statTrack(a,'dmg',dmg);
     statTrack(target,'hitsReceived',1);
+    statTrack(target,'dmgTaken',dmg);
   }
   // 需求3：爆擊判斷（15%機率，傷害×1.8）
   // ★ v1.0.20260428.3730 — 至寶爆擊率加成(攻擊者,深坑臭豆腐神劍):基礎 15% + critRate%
@@ -37127,12 +37130,12 @@ function _showNewHeroAnnouncement(forceShow){
             <div style="background:rgba(255,200,80,0.15);border:1.5px solid rgba(255,200,80,0.4);
               border-radius:8px;padding:8px 10px;">
               <div style="color:#ffd966;font-weight:900;margin-bottom:3px;">🏆 第 1 名</div>
-              <div style="color:#dda;line-height:1.4;">100,000 幣 + 神話至寶 + 10 召喚水晶 + 屠龍稱號</div>
+              <div style="color:#dda;line-height:1.4;">100,000 幣 + 未收錄神話至寶 + 10 召喚水晶 + 屠龍稱號</div>
             </div>
             <div style="background:rgba(180,200,255,0.12);border:1.5px solid rgba(180,200,255,0.4);
               border-radius:8px;padding:8px 10px;">
               <div style="color:#bbccff;font-weight:900;margin-bottom:3px;">🥈 第 2-5 名</div>
-              <div style="color:#dde;line-height:1.4;">60,000 幣 + 神話至寶 + 7 召喚水晶</div>
+              <div style="color:#dde;line-height:1.4;">60,000 幣 + 未收錄史詩、稀有至寶 + 7 召喚水晶</div>
             </div>
             <div style="background:rgba(255,180,140,0.12);border:1.5px solid rgba(255,180,140,0.4);
               border-radius:8px;padding:8px 10px;">
@@ -40293,6 +40296,42 @@ function exitAdventureMode(){
   if(bsOv) bsOv.classList.remove('show');
   // 停止所有 adv BGM
   try{ bgmStop(); }catch(e){}
+
+  // ★ FIX 20260517 — 清理世界 BOSS 戰鬥殘留 UI
+  //   bug 症狀:從世界 BOSS 戰鬥中按「卡死自救 → 脫離戰鬥」或其他離開路徑返回冒險選關頁時,
+  //            BOSS 大血條 (wb-adv-battle-overlay)、單人練習傷害條 (wb-solo-cur-dmg-bar)、
+  //            表情列 (wb-emoji-bar-real)、開戰題 (wb-boss-opening-quiz) 都殘留在畫面上,
+  //            因為 exitAdventureMode 是主程式函式,完全不知道世界 BOSS UI 的存在
+  //   修補:在 exitAdventureMode 結尾統一清掉這些世界 BOSS 專屬元素 +
+  //         呼叫 _wbAdvStopBattleSync() 停 250ms 血條同步 timer +
+  //         清世界 BOSS 旗標 (_wbInWorldBossMode / _wbSoloPracticeMode 等)
+  try{
+    // 1. 停止世界 BOSS 戰鬥同步 timer (避免 setInterval 還在跑)
+    if(typeof window._wbAdvStopBattleSync === 'function'){
+      window._wbAdvStopBattleSync();
+    }
+    // 2. 移除戰鬥畫面 fixed overlay (BOSS 血條 + 護盾 chip + 介紹鈕)
+    const _wbAdvOv = document.getElementById('wb-adv-battle-overlay');
+    if(_wbAdvOv) _wbAdvOv.remove();
+    // 3. 移除單人練習傷害條 (左上「本場總傷」)
+    const _wbDmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+    if(_wbDmgBar) _wbDmgBar.remove();
+    // 4. 隱藏表情/定型文列 (右下表情按鈕列)
+    const _wbEmojiBar = document.getElementById('wb-emoji-bar-real');
+    if(_wbEmojiBar) _wbEmojiBar.style.display = 'none';
+    // 5. 移除可能殘留的開戰題視窗 / BOSS 能力介紹彈窗
+    const _wbOpQuiz = document.getElementById('wb-boss-opening-quiz');
+    if(_wbOpQuiz) _wbOpQuiz.remove();
+    const _wbInfoPop = document.getElementById('wb-adv-boss-info-popup');
+    if(_wbInfoPop) _wbInfoPop.remove();
+    // 6. 清世界 BOSS 模式旗標 (避免下次進冒險誤判為世界 BOSS)
+    window._wbInWorldBossMode = false;
+    window._wbSoloPracticeMode = false;
+    window._wbAdvBattleEnded = true;
+    console.log('[exitAdventureMode] ✅ 已清理世界 BOSS 戰鬥殘留 UI');
+  }catch(_wbCleanE){
+    console.warn('[exitAdventureMode] 清理世界 BOSS UI 失敗(忽略)', _wbCleanE);
+  }
 }
 
 

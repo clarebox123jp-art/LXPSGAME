@@ -96,31 +96,41 @@
 
   // ───────────────────────────────────────────────────────────────────
   // 4. 隊伍排名獎勵分級表
+  // ★ FIX 20260517 — 1-5 名至寶不再依稀有度給,改用 treasureLabel 描述
+  //                  EXP 卷軸拆成「至寶EXP卷軸」+「豪華典藏版EXP書」兩種,
+  //                  兩種數量一致(沿用原 expScrolls 數量)
   // ───────────────────────────────────────────────────────────────────
   window._WORLD_BOSS_TEAM_REWARDS = {
     legendary: {
       rankRange: '1', tier: '🏆 傳奇',
-      coins: 100000, treasureChance: 1.0, treasureRarity: 'mythical',
-      summonCrystals: 10, titleTemplate: '屠龍者・{bossName}', expScrolls: 5,
+      coins: 100000,
+      treasureLabel: '未收錄神話至寶 ×1',
+      summonCrystals: 10, titleTemplate: '屠龍者・{bossName}',
+      expScrollTreasure: 5, expBookDeluxe: 5,
     },
     epic: {
       rankRange: '2-5', tier: '🥈 史詩',
-      coins: 60000, treasureChance: 1.0, treasureRarity: 'mythical',
-      summonCrystals: 7, expScrolls: 3,
+      coins: 60000,
+      treasureLabel: '未收錄史詩、稀有至寶 ×1',
+      summonCrystals: 7,
+      expScrollTreasure: 3, expBookDeluxe: 3,
     },
     rare: {
       rankRange: '6-10', tier: '🥉 稀有',
       coins: 30000, treasureChance: 0.60, treasureRarity: 'legendary',
-      summonCrystals: 5, expScrolls: 2,
+      summonCrystals: 5,
+      expScrollTreasure: 2, expBookDeluxe: 2,
     },
     normal: {
       rankRange: '11-20', tier: '📦 普通',
       coins: 15000, treasureChance: 0.30, treasureRarity: 'legendary',
-      summonCrystals: 3, expScrolls: 1,
+      summonCrystals: 3,
+      expScrollTreasure: 1, expBookDeluxe: 1,
     },
     memorial: {
       rankRange: '21+', tier: '🎁 參加獎',
-      coins: 7000, summonCrystals: 1, expScrolls: 1,
+      coins: 7000, summonCrystals: 1,
+      expScrollTreasure: 1, expBookDeluxe: 1,
     },
   };
 
@@ -1679,6 +1689,45 @@
     }catch(_){}
 
     // 呼叫 UI 層的「練習模式結算」(已存在於 world-boss-ui.html)
+    // ★ FIX 20260517 — 從主程式 G.battleStats 整理 4 項表現評比(我方 p1 全隊各自 + 你的)
+    //                  最高輸出 = dmg (傷害總量)
+    //                  最佳治療 = heal (治療總量)
+    //                  最高減傷 = dmgTaken (承受傷害總量,越多代表幫隊友扛得越多 / 撐越久)
+    //                  最佳控場 = statusCount (對對手施加不利狀態次數)
+    let evalStats = null;
+    try{
+      if(_Gr && _Gr.battleStats){
+        const p1Names = heroes;  // 玩家陣容(4 名)
+        const sumOfField = (field) => {
+          let total = 0;
+          p1Names.forEach(n => {
+            const s = _Gr.battleStats[n];
+            if(s && typeof s[field] === 'number') total += s[field];
+          });
+          return total;
+        };
+        evalStats = {
+          totalDmg: sumOfField('dmg'),
+          totalHeal: sumOfField('heal'),
+          totalDmgTaken: sumOfField('dmgTaken'),
+          totalCtrl: sumOfField('statusCount'),
+          // 每位英雄個別數據,結算頁可選擇性顯示
+          perHero: p1Names.map(n => {
+            const s = _Gr.battleStats[n] || {};
+            return {
+              name: n,
+              dmg: s.dmg || 0,
+              heal: s.heal || 0,
+              dmgTaken: s.dmgTaken || 0,
+              statusCount: s.statusCount || 0,
+            };
+          }),
+        };
+      }
+    }catch(e){
+      console.warn('[WB-Result] 評比統計計算失敗', e);
+    }
+
     if(typeof window._wbShowSoloPracticeResult === 'function'){
       window._wbShowSoloPracticeResult({
         dmg: myDmg,
@@ -1686,6 +1735,7 @@
         elapsed: elapsed,
         killed: win,
         isNewRecord: isNewRecord,
+        evalStats: evalStats,    // ★ 新增評比數據
       });
     }else{
       // fallback alert
