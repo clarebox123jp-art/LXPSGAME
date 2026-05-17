@@ -40331,6 +40331,9 @@ function exitAdventureMode(){
     // ★ FIX 20260517 — 6. 移除火焰粒子層(戰鬥背景特效)
     const _wbFlameLayer = document.getElementById('wb-battle-flame-layer');
     if(_wbFlameLayer) _wbFlameLayer.remove();
+    // ★ FIX 20260517(b) — 移除 BOSS 點擊 layer
+    const _wbClickLayer = document.getElementById('wb-boss-click-layer');
+    if(_wbClickLayer) _wbClickLayer.remove();
     // 7. 移除 worldboss body class(讓主程式 BOSS 卡顯示規則還原)
     document.body.classList.remove('wb-in-worldboss-battle');
     // 8. 清世界 BOSS 模式旗標 (避免下次進冒險誤判為世界 BOSS)
@@ -45825,35 +45828,93 @@ function advStartBattle(){
         else _bgCls = 'bg-fuji';  // tengu / shutendoji / tamamo 共用
       } else if(_stage === 'worldboss'){
         // ★ v1.0.20260517 — 世界 BOSS 戰用維蘇威火山龍王圖當背景
-        // ★ FIX 20260517 — 等比例 contain 縮放(高度填滿,寬度等比),左右黑漸層
-        //                  改 background-size: auto 100% 讓圖片高度 = 100%(視口高),寬度等比
-        //                  左右黑漸層用 linear-gradient(to right) 把兩側淡到全黑
+        // ★ FIX 20260517(b) — 三項改動:
+        //   1. 移除 180deg 的暗化漸層,讓龍王原色顯示(不再被遮罩)
+        //   2. 左右黑漸層收窄(5%/95% 起淡)且透明度降低,只在最邊緣淡出,中央龍王完整可見
+        //   3. 火焰粒子層改為 position 由 _wbBuildAdvBattleOverlay 控制,
+        //      此處只負責「圖片背景 + 邊緣漸層」,粒子改成在上半部冒火光
         const _wbBossName = (G && G.p2 && G.p2[0] && G.p2[0].name) || '維蘇威火山龍王';
         const _wbBgUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(_wbBossName)}.png`;
         _bb.style.backgroundImage =
+          // 左右兩側邊緣漸層透明(不再用全黑遮罩,改為窄邊柔和淡出)
           'linear-gradient(to right,'
-          + ' #000 0%, rgba(0,0,0,0.85) 12%, rgba(0,0,0,0.05) 28%,'
-          + ' rgba(0,0,0,0) 50%,'
-          + ' rgba(0,0,0,0.05) 72%, rgba(0,0,0,0.85) 88%, #000 100%),'
-          + 'linear-gradient(180deg, rgba(8,4,2,0.35) 0%, rgba(20,8,4,0.25) 50%, rgba(8,4,2,0.55) 100%),'
+          + ' #000 0%, rgba(0,0,0,0.4) 4%, rgba(0,0,0,0) 12%,'
+          + ' rgba(0,0,0,0) 88%, rgba(0,0,0,0.4) 96%, #000 100%),'
+          // 維蘇威龍王主圖(等比 contain,高度填滿視口)
           + `url("${_wbBgUrl}")`;
-        _bb.style.backgroundSize = 'auto 100%, auto 100%, auto 100%';
-        _bb.style.backgroundPosition = 'center, center, center';
-        _bb.style.backgroundRepeat = 'no-repeat, no-repeat, no-repeat';
+        _bb.style.backgroundSize = 'auto 100%, auto 100%';
+        _bb.style.backgroundPosition = 'center, center';
+        _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
+        // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標
+        //   注意:#adv-battle-bg CSS 設定為 pointer-events:none,不能直接綁 click,
+        //         故另外建立一個透明 click layer 浮在背景之上、UI overlay 之下
+        //   做法:click → 轉發到主程式 BOSS card 的 click 事件,
+        //         由主程式自己的目標選取流程處理普攻/技能
+        try{ const _oldCl = document.getElementById('wb-boss-click-layer'); if(_oldCl) _oldCl.remove(); }catch(_){}
+        const _clk = document.createElement('div');
+        _clk.id = 'wb-boss-click-layer';
+        // 範圍涵蓋畫面中央的龍王(避開左右兩側英雄卡與 UI sidebar),
+        // 用 left:15% right:25% top:5% bottom:25% 大致對應龍王圖中央區域
+        _clk.style.cssText =
+          'position:fixed;left:15%;right:25%;top:5%;bottom:30%;'
+          + 'z-index:2;cursor:crosshair;'
+          + 'background:transparent;pointer-events:auto;';
+        _clk.title = '🐉 點擊攻擊維蘇威火山龍王';
+        _clk.addEventListener('click', function(ev){
+          try{
+            const _curStage = (typeof window._wbGetAdvStage === 'function')
+              ? window._wbGetAdvStage() : _adventureStage;
+            if(_curStage !== 'worldboss') return;
+            // 找主程式 BOSS card(z2 #row2 內第一張 .card)— 被縮成 1px 但仍存在
+            const _bossCard = document.querySelector('#gc.adv-battle #z2 #row2 .card')
+                           || document.querySelector('#gc.adv-battle #z2 .card');
+            if(_bossCard){
+              _bossCard.click();
+              ev.stopPropagation();
+              // 點擊回饋:點擊處冒一個小紅點
+              const _ripple = document.createElement('div');
+              _ripple.style.cssText =
+                'position:fixed;left:' + (ev.clientX - 16) + 'px;'
+                + 'top:' + (ev.clientY - 16) + 'px;'
+                + 'width:32px;height:32px;border-radius:50%;'
+                + 'background:radial-gradient(circle,rgba(255,80,40,0.85),rgba(255,80,40,0));'
+                + 'pointer-events:none;z-index:9999;'
+                + 'animation:wbBossClickRipple 0.6s ease-out forwards;';
+              document.body.appendChild(_ripple);
+              setTimeout(()=>{ try{ _ripple.remove(); }catch(_){} }, 600);
+            }
+          }catch(eClk){
+            console.warn('[WB] BOSS 點擊轉發失敗', eClk);
+          }
+        });
+        document.body.appendChild(_clk);
+        // 注入點擊漣漪動畫(只注入一次)
+        if(!document.getElementById('wb-boss-click-ripple-style')){
+          const _rsty = document.createElement('style');
+          _rsty.id = 'wb-boss-click-ripple-style';
+          _rsty.textContent =
+            '@keyframes wbBossClickRipple{'
+            + '0%{transform:scale(0.5);opacity:1;}'
+            + '100%{transform:scale(2.5);opacity:0;}}';
+          document.head.appendChild(_rsty);
+        }
         _bgCls = '';
-        // ★ 加入紅色火焰粒子層(沿用首頁 .wb-flame-particle CSS)
-        // 移除舊的粒子層(防重複)
+        // ★ FIX 20260517(b) — 火焰粒子改為上半部(讓龍王持續冒火光),沿用首頁 .wb-flame-particle CSS
+        //   原 bottom:8px → 改 top:15% 以上(龍王頭部位置),粒子從上往上飄
+        //   粒子用 fixed 定位 + z-index:1(在背景圖之上,在 #gc 戰場之下)
         try{ const _old = document.getElementById('wb-battle-flame-layer'); if(_old) _old.remove(); }catch(_){}
         const _fl = document.createElement('div');
         _fl.id = 'wb-battle-flame-layer';
         _fl.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1;';
+        // 上半部冒火光:top:10%~30% 之間分佈
         _fl.innerHTML = ''
-          + '<span class="wb-flame-particle" style="--x:10%;--delay:0s;position:fixed;bottom:8px;left:10%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:30%;--delay:0.6s;position:fixed;bottom:8px;left:30%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:50%;--delay:1.2s;position:fixed;bottom:8px;left:50%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:72%;--delay:0.3s;position:fixed;bottom:8px;left:72%;"></span>'
-          + '<span class="wb-flame-particle" style="--x:90%;--delay:0.9s;position:fixed;bottom:8px;left:90%;"></span>';
+          + '<span class="wb-flame-particle" style="--x:18%;--delay:0s;position:fixed;top:12%;left:18%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:28%;--delay:0.6s;position:fixed;top:22%;left:28%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:42%;--delay:1.2s;position:fixed;top:8%;left:42%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:55%;--delay:0.3s;position:fixed;top:18%;left:55%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:68%;--delay:0.9s;position:fixed;top:14%;left:68%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:80%;--delay:1.5s;position:fixed;top:26%;left:80%;"></span>';
         document.body.appendChild(_fl);
       } else if(_stage === 'taiwan'){
         // ★ v1.0.20260428.2800 — 台灣關依玩家選的 BOSS 套用場景圖(inline style)

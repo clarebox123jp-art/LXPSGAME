@@ -2279,23 +2279,24 @@
 </div>
 
 <!-- 表情貼圖快捷列(戰鬥時顯示) -->
-<!-- ★ FIX 20260517 — 從右下橫排改為左側直排,並加入討論發話按鈕 -->
-<!--   位置:畫面最左邊,在練習傷害條之上(避開血條與相剋盤) -->
-<!--   結構:上半=6 顆 emoji 表情;下半=6 顆討論發話 -->
-<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:8px;top:120px;
-     background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:18px;
+<!-- ★ FIX 20260517(b) — 從單直行改為兩直行 grid,並把位置調到不會蓋住 BOSS HP 條(top 130 → 145) -->
+<!--   原 left:8px, top:120px, flex-direction:column → 改為 grid 2 行(每行 6 顆) -->
+<!--   寬度 ≈ 120px(2×54px + gap),不會蓋到中央龍王 -->
+<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:6px;top:145px;
+     background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:14px;
      padding:8px 6px;z-index:9050;
-     flex-direction:column;align-items:center;gap:6px;
-     max-height:calc(100vh - 280px);overflow-y:auto;">
-  <!-- 表情區(快速貼圖) -->
+     gap:6px;
+     max-height:calc(100vh - 320px);overflow-y:auto;
+     display:grid;grid-template-columns:repeat(2,auto);grid-auto-flow:row;align-items:center;justify-items:center;">
+  <!-- 表情區(快速貼圖) — 第一直行 + 第二直行交錯排列(grid-auto-flow:row → 從左到右、由上而下) -->
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('cheer')" title="加油">💪</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('burst')" title="用爆發">💥</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('heal')" title="補我血">🩹</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('wait')" title="等一下">⏸</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('strong')" title="太強了">🔥</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('gg')" title="GG">😭</button>
-  <!-- 分隔線 -->
-  <div style="width:80%;height:1px;background:rgba(168,132,255,0.4);margin:4px 0;"></div>
+  <!-- 分隔線(grid 內橫跨兩欄) -->
+  <div style="grid-column:1 / span 2;width:90%;height:1px;background:rgba(168,132,255,0.4);margin:2px 0;"></div>
   <!-- 討論發話區(直排小按鈕) -->
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_a')" title="我覺得答案是 A">🅰</button>
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_b')" title="我覺得答案是 B">🅱</button>
@@ -2305,26 +2306,40 @@
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('cheerup')" title="加油你可以的">💪🏼</button>
 </div>
 <style>
-  /* ★ FIX 20260517 — 定型文按鈕字體 / 尺寸放大 50%(原 38/16 → 57/24) */
+  /* ★ FIX 20260517(b) — 兩直行按鈕尺寸縮小:從 57 → 44(節省左側橫向空間,不蓋到中央龍王) */
   .wb-emoji-btn{
-    width:57px;height:57px;border-radius:50%;cursor:pointer;border:none;
-    background:rgba(168,132,255,0.15);color:#fff;font-size:24px;
+    width:44px;height:44px;border-radius:50%;cursor:pointer;border:none;
+    background:rgba(168,132,255,0.15);color:#fff;font-size:20px;
     font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;
     flex-shrink:0;
   }
   .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.15);}
-  /* ★ FIX 20260517 — 直排討論按鈕(縮小版,只顯示 icon) */
+  /* ★ FIX 20260517(b) — 直排討論按鈕也縮小:50 → 40 */
   .wb-disc-btn-vert{
-    width:50px;height:50px;border-radius:12px;cursor:pointer;
+    width:40px;height:40px;border-radius:10px;cursor:pointer;
     background:rgba(168,132,255,0.15);
     border:1.5px solid rgba(168,132,255,0.45);
-    color:#e0d4ff;font-size:22px;font-weight:700;
+    color:#e0d4ff;font-size:18px;font-weight:700;
     font-family:inherit;transition:all 0.15s;
     flex-shrink:0;display:flex;align-items:center;justify-content:center;
   }
   .wb-disc-btn-vert:hover{
     background:rgba(168,132,255,0.35);transform:translateX(2px);
     box-shadow:0 0 12px rgba(168,132,255,0.5);
+  }
+  /* ★ FIX 20260517(b) — BUG 回報 / 教學按鈕在世界 BOSS 戰時靠近 emoji bar 旁邊(第二欄),不擋住中央 */
+  /*   只在 worldboss 戰時生效:body.wb-in-worldboss-battle */
+  body.wb-in-worldboss-battle #adv-bug-report-battle-btn{
+    left: 60px !important;  /* 8 → 60,挪到 emoji bar 右側 */
+    bottom: 60px !important; /* 152 → 60,更靠下 */
+    font-size: 13px !important;
+    padding: 6px 4px !important;
+  }
+  body.wb-in-worldboss-battle #adv-tut-btn{
+    left: 60px !important;  /* 同上 */
+    bottom: 8px !important;
+    font-size: 16px !important;
+    padding: 8px 5px !important;
   }
 </style>
 
@@ -5460,6 +5475,13 @@
       document.body.appendChild(dmgBar);
     }
 
+    // ★ FIX 20260517(b) — BGM 切換從 advStartBattle 前移到後
+    //   原因:advStartBattle 內第一件事就是 bgmStop(),會把這裡剛切到的 BGM 立刻關掉
+    //         而 worldboss 分支 _bossBgmId=null 不會重啟 BGM → 結果 BGM 永久中斷
+    //   修法:advStartBattle 完成後再切到世界戰 BGM(順便用 setTimeout 50ms 兜底,
+    //         保證跑在主程式 bgmStop 之後)
+    //   保留:這個位置先啟動,讓玩家在開戰題等待期間有 BGM(沒有 BGM 的等待很尷尬),
+    //         advStartBattle 後再切一次蓋過 bgmStop 的影響
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
     // ★ FIX 20260517 — 接回 BOSS 開戰題流程(原本被跳過,導致 BOSS 直接攻擊沒出題)
@@ -5487,6 +5509,32 @@
       alert('⚠ 主程式戰鬥啟動失敗:' + (e.message || e));
       return;
     }
+
+    // ★ FIX 20260517(b) — advStartBattle 跑完後重新啟動世界戰 BGM
+    //   advStartBattle 內 bgmStop() 會把上面切的 BGM 關掉,這裡兜底重啟
+    //   delay 50ms 確保跑在 advStartBattle 內所有 BGM 操作之後
+    setTimeout(() => {
+      try{
+        const _wbBgm = document.getElementById('bgm-wb-vesuvius-battle');
+        const _cur = (typeof _curBgm !== 'undefined') ? _curBgm : null;
+        // 只有當目前 BGM 不是世界戰 BGM 時才切(避免重複觸發 fade)
+        if(_wbBgm && _cur !== 'bgm-wb-vesuvius-battle'){
+          if(typeof bgmFadeTo === 'function'){
+            bgmFadeTo('bgm-wb-vesuvius-battle', 600);
+            console.log('[WB-Solo v4] ✅ BGM 重新啟動: bgm-wb-vesuvius-battle');
+          }else{
+            // fallback: 直接 play
+            _wbBgm.currentTime = 0;
+            _wbBgm.volume = (typeof _bgmMuted !== 'undefined' && _bgmMuted) ? 0
+                          : (typeof BGM_VOLUME !== 'undefined' ? BGM_VOLUME : 0.5);
+            _wbBgm.play().catch(()=>{});
+            if(typeof window !== 'undefined') window._curBgm = 'bgm-wb-vesuvius-battle';
+          }
+        }
+      }catch(eBgm){
+        console.warn('[WB-Solo v4] BGM 重啟例外(忽略)', eBgm);
+      }
+    }, 50);
 
     console.log('[WB-Solo v4] ✅ 練習模式啟動完成,主程式接管戰鬥');
   }
@@ -5605,10 +5653,20 @@
           margin: 0 !important; padding: 0 !important;
           position: absolute !important; left: 50% !important; top: 0 !important;
         }
-        /* 把 PLAYER 區拉到佔據省下的空間 */
+        /* ★ FIX 20260517(b) — 英雄卡貼底:#z1 改 flex-end + brow align-items:flex-end + 透明背景讓龍王透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 {
           flex: 1 1 100% !important;
+          justify-content: flex-end !important;
+          padding-bottom: 16px !important;
+          background: transparent !important;
+          border-top: none !important;
         }
+        body.wb-in-worldboss-battle #gc.adv-battle #z1 .brow {
+          align-items: flex-end !important;
+          margin-top: auto !important;
+        }
+        /* z1 的 zone-label(背景大字 "你方")也隱藏,讓龍王全圖透出 */
+        body.wb-in-worldboss-battle #gc.adv-battle #z1 .zone-label { display: none !important; }
       `;
       document.head.appendChild(_hideStyle);
     }
@@ -5861,6 +5919,9 @@
     try{
       const _fl = document.getElementById('wb-battle-flame-layer');
       if(_fl) _fl.remove();
+      // ★ FIX 20260517(b) — 同步清掉 BOSS 點擊 layer
+      const _clk = document.getElementById('wb-boss-click-layer');
+      if(_clk) _clk.remove();
       document.body.classList.remove('wb-in-worldboss-battle');
     }catch(_){}
 
