@@ -28,6 +28,117 @@
 (function setupWorldBossModule(){
   'use strict';
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ★ FIX 20260517 — 遊戲內彈窗 (取代瀏覽器原生 alert/confirm)
+  // ───────────────────────────────────────────────────────────────────
+  // 為什麼要做這個?
+  //   1. 瀏覽器原生 alert/confirm 的字體在 iPad 上非常小,而且樣式無法控制
+  //   2. iOS Safari 的 alert 還會直接卡住整個畫面,觸控體驗極差
+  //   3. 字體大小要對齊主程式「技能詳細小視窗」(sdp-desc:33px)
+  //
+  // 設計:
+  //   - _wbGameAlert(msg) 回傳 Promise<void>,使用者按確定才 resolve
+  //   - _wbGameConfirm(msg) 回傳 Promise<boolean>,確定 true / 取消 false
+  //   - z-index 設 99999,確保蓋在所有遊戲視窗之上
+  //   - 點背景遮罩 = 取消(只對 confirm 有效)
+  //   - ESC 鍵 = 取消(只對 confirm 有效;alert 不能取消必須按確定)
+  // ═══════════════════════════════════════════════════════════════════
+  function _wbGamePopup(msg, isConfirm){
+    return new Promise(function(resolve){
+      try{ if(typeof playSfx === 'function') playSfx('sfx-popup', 0.5); }catch(_){}
+      try{ const _old = document.getElementById('wb-game-popup'); if(_old) _old.remove(); }catch(_){}
+
+      const ov = document.createElement('div');
+      ov.id = 'wb-game-popup';
+      ov.style.cssText =
+        'position:fixed;inset:0;z-index:99999;'
+        + 'background:rgba(0,0,0,0.72);'
+        + 'display:flex;align-items:center;justify-content:center;'
+        + 'padding:20px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+        + 'animation:wbPopupFadeIn 0.18s ease-out;';
+
+      const safeMsg = String(msg || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+        .replace(/\n/g,'<br>');
+
+      ov.innerHTML =
+        '<div class="wb-gp-box" style="'
+        + 'background:linear-gradient(160deg,#1a1d2e 0%,#0d0f1a 100%);'
+        + 'border:3px solid #d4a843;border-radius:18px;'
+        + 'padding:28px 32px 26px;max-width:min(640px,92vw);min-width:min(360px,92vw);'
+        + 'max-height:88vh;overflow-y:auto;'
+        + 'box-shadow:0 0 48px rgba(212,168,67,0.55),0 8px 40px rgba(0,0,0,0.9);'
+        + 'animation:wbPopupBoxIn 0.22s cubic-bezier(0.34,1.56,0.64,1);'
+        + 'text-align:center;">'
+        +   '<div class="wb-gp-msg" style="'
+        +     'font-size:33px;color:#f0ead8;line-height:1.6;font-weight:500;'
+        +     'letter-spacing:0.5px;margin-bottom:24px;text-align:left;'
+        +     'white-space:pre-wrap;word-break:break-word;">'
+        +     safeMsg
+        +   '</div>'
+        +   '<div class="wb-gp-btn-row" style="'
+        +     'display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">'
+        +     (isConfirm
+        ?       '<button class="wb-gp-btn wb-gp-cancel" style="'
+                + 'min-width:140px;padding:14px 28px;font-size:28px;font-weight:800;'
+                + 'cursor:pointer;font-family:inherit;letter-spacing:2px;'
+                + 'background:rgba(60,10,10,0.6);border:2px solid rgba(220,80,80,0.6);'
+                + 'color:#ff9999;border-radius:10px;transition:all 0.15s;">'
+                + '✕ 取消</button>'
+        :       '')
+        +     '<button class="wb-gp-btn wb-gp-ok" style="'
+        +       'min-width:140px;padding:14px 28px;font-size:28px;font-weight:800;'
+        +       'cursor:pointer;font-family:inherit;letter-spacing:2px;'
+        +       'background:linear-gradient(135deg,#3ec87a,#1e783c);'
+        +       'border:2px solid #6ee6a0;color:#fff;border-radius:10px;'
+        +       'box-shadow:0 4px 14px rgba(62,200,122,0.4);transition:all 0.15s;">'
+        +       (isConfirm ? '✓ 確定' : '✓ 知道了')
+        +     '</button>'
+        +   '</div>'
+        + '</div>';
+
+      if(!document.getElementById('wb-game-popup-style')){
+        const sty = document.createElement('style');
+        sty.id = 'wb-game-popup-style';
+        sty.textContent =
+          '@keyframes wbPopupFadeIn{from{opacity:0;}to{opacity:1;}}'
+          + '@keyframes wbPopupBoxIn{from{opacity:0;transform:scale(0.85) translateY(8px);}'
+          + 'to{opacity:1;transform:scale(1) translateY(0);}}'
+          + '.wb-gp-btn-row .wb-gp-ok:hover{filter:brightness(1.15);transform:translateY(-1px);}'
+          + '.wb-gp-btn-row .wb-gp-cancel:hover{background:rgba(200,50,50,0.4);}';
+        document.head.appendChild(sty);
+      }
+
+      document.body.appendChild(ov);
+
+      const cleanup = function(result){
+        try{ ov.remove(); }catch(_){}
+        try{ document.removeEventListener('keydown', onKey); }catch(_){}
+        resolve(result);
+      };
+
+      const onKey = function(ev){
+        if(ev.key === 'Enter'){ ev.preventDefault(); cleanup(true); }
+        else if(ev.key === 'Escape'){ ev.preventDefault(); cleanup(isConfirm ? false : true); }
+      };
+      document.addEventListener('keydown', onKey);
+
+      const okBtn = ov.querySelector('.wb-gp-ok');
+      if(okBtn) okBtn.addEventListener('click', function(){ cleanup(true); });
+      const cancelBtn = ov.querySelector('.wb-gp-cancel');
+      if(cancelBtn) cancelBtn.addEventListener('click', function(){ cleanup(false); });
+
+      if(isConfirm){
+        ov.addEventListener('click', function(ev){
+          if(ev.target === ov) cleanup(false);
+        });
+      }
+    });
+  }
+  window._wbGameAlert = function(msg){ return _wbGamePopup(msg, false); };
+  window._wbGameConfirm = function(msg){ return _wbGamePopup(msg, true); };
+
   // ───────────────────────────────────────────────────────────────────
   // 1. 元素龍清單 (8 隻輪替,全伺服器共享 HP)
   // ───────────────────────────────────────────────────────────────────
@@ -702,7 +813,7 @@
     const msg = '⏸ 目前為休戰期,無法開戰\n\n' +
       (txt ? ('📅 下次開戰時間:' + txt) : '管理員尚未公告下次開戰時間,請耐心等候。') +
       '\n\n你還是可以點 BOSS 預覽看看下一隻 BOSS 的資料喔!';
-    alert(msg);
+    _wbGameAlert(msg);
   };
 
   // 小工具:HTML escape
@@ -715,11 +826,11 @@
   // 管理員 toggle 開放/休戰
   window._wbAdminToggleCeasefire = async function(forceState){
     if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())){
-      alert('⚠ 你不是管理員,無法切換開放/休戰');
+      _wbGameAlert("⚠ 你不是管理員,無法切換開放/休戰");
       return;
     }
     if(!window._wbControl || !window._wbControl.set){
-      alert('⚠ 控制模組未載入,請重新整理頁面');
+      _wbGameAlert("⚠ 控制模組未載入,請重新整理頁面");
       return;
     }
     const st = window._wbCeasefireState || {};
@@ -764,13 +875,13 @@
   window._openWorldBossEntry = async function(){
     // 檢查登入
     if(!window._gUserId){
-      alert('🌍 世界 BOSS 討伐戰\n\n需要先 Google 登入才能跟好友一起連線打喔!\n請先在右上角登入。');
+      _wbGameAlert('🌍 世界 BOSS 討伐戰\n\n需要先 Google 登入才能跟好友一起連線打喔!\n請先在右上角登入。');
       return;
     }
     // 確保 UI 已注入
     const ok = await _wbEnsureUi();
     if(!ok){
-      alert('🌍 世界 BOSS 討伐戰\n\nUI 載入失敗,請檢查網路或重新整理頁面。\n(world-boss-ui.html 需要跟 index.html 放在同一個目錄)');
+      _wbGameAlert('🌍 世界 BOSS 討伐戰\n\nUI 載入失敗,請檢查網路或重新整理頁面。\n(world-boss-ui.html 需要跟 index.html 放在同一個目錄)');
       return;
     }
     // 顯示入口 overlay
@@ -801,7 +912,7 @@
         }
       }catch(_){}
     }else{
-      alert('🌍 世界 BOSS 討伐戰功能即將開放,敬請期待!\n\n首發 BOSS:維蘇威火山龍王 🐉');
+      _wbGameAlert('🌍 世界 BOSS 討伐戰功能即將開放,敬請期待!\n\n首發 BOSS:維蘇威火山龍王 🐉');
     }
   };
 
@@ -1752,7 +1863,7 @@
       });
     }else{
       // fallback alert
-      alert(win ? '🏆 維蘇威火山龍王已被擊敗!' : '💀 全員陣亡...');
+      _wbGameAlert(win ? '🏆 維蘇威火山龍王已被擊敗!' : '💀 全員陣亡...');
     }
 
     // 清理 worldboss 全域狀態:走主程式對外清理函式(才能正確清掉 let _adventureStage)

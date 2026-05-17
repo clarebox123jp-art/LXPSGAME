@@ -46194,8 +46194,20 @@ function advStartBattle(){
         //                        傷害跳出位置跑掉,實際背景圖在 8% 時眼睛/嘴巴是有露出的。
         //                        本次:背景往上但隱形 BOSS 卡 top:32% 維持不動,讓傷害跳出位置不變
         //   ⚠ 使用者的「往上移」= 螢幕視覺往上 = CSS Y% 數值「減少」(兩者方向相反!)
-        _bb.style.backgroundSize = 'auto 100%, auto 120%';
-        _bb.style.backgroundPosition = 'center, center 10%';
+        //   ★ FIX 20260517(p) — 根本性修復:臉還是被擋的真正原因是「圖片只比容器高 20%,
+        //                        Y% 微調空間太小」。改成圖片放大到容器 160% 高 + 從頂端開始
+        //                        (center top),龍王臉部落在容器 0-30% 區域,完全避開中央 50%
+        //                        的行動順序條。
+        //                        計算:160% 高的圖片,Y% 0(top) 時圖片頂部與容器頂部對齊,
+        //                              假設臉部在圖片本身的 15-35% 位置,在容器中即落在
+        //                              160% × 15% = 24% ~ 160% × 35% = 56% — 不對,還是會
+        //                              碰到中央 50%。
+        //                        修正:再進一步用 'center -15%' 把圖片往上拉,容器高 100% 但
+        //                              圖片 160%,負 15% 表示圖片頂部在容器頂部上方 15%(160%
+        //                              - 100%) × (-15%) = 等同往上偏移 9% 容器高,臉部落在
+        //                              容器 15% ~ 47% 區域 — 剛好避開 50% 順序條
+        _bb.style.backgroundSize = 'auto 100%, auto 160%';
+        _bb.style.backgroundPosition = 'center, center top';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標

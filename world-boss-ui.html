@@ -2998,7 +2998,7 @@
   window._wbUiOpenVisibilityChoice = function(){
     // 登入檢查(跟 createRoom 同套)
     if(!window._gUserId){
-      alert('請先 Google 登入才能開房');
+      _wbGameAlert('請先 Google 登入才能開房');
       return;
     }
     const ov = document.getElementById('wb-visibility-overlay');
@@ -3015,7 +3015,7 @@
 
   window._wbUiJoinRoom = async function(){
     const code = (document.getElementById('wb-code-input').value || '').toUpperCase().trim();
-    if(code.length !== 6){ alert('請輸入 6 碼房號'); return; }
+    if(code.length !== 6){ _wbGameAlert('請輸入 6 碼房號'); return; }
     const ok = await window._wbNet.joinRoom(code);
     if(ok){
       _wbCloseEntry();
@@ -3042,7 +3042,7 @@
   }
   window._wbUiOpenPublicRooms = async function(){
     if(!window._gUserId){
-      alert('請先 Google 登入才能瀏覽公開房');
+      _wbGameAlert('請先 Google 登入才能瀏覽公開房');
       return;
     }
     const ov = document.getElementById('wb-public-rooms-overlay');
@@ -3209,7 +3209,7 @@
 
   window._wbUiOpenInviteFriends = function(){
     if(!window._wbNet || !window._wbNet.isHost()){
-      alert('只有房主可以邀請好友');
+      _wbGameAlert('只有房主可以邀請好友');
       return;
     }
     _wbStartOutgoingInviteSub();
@@ -3511,7 +3511,7 @@
 
   window._wbInviteAccept = async function(inviteId, roomId){
     if(!_wbCanAcceptInvite()){
-      alert('⚔ 你正在戰鬥中,結束戰鬥後才能接受邀請');
+      _wbGameAlert('⚔ 你正在戰鬥中,結束戰鬥後才能接受邀請');
       return;
     }
     if(!inviteId || !roomId) return;
@@ -3542,7 +3542,7 @@
       // 如果 UI 沒注入過,先初始化
       if(typeof _wbEnsureUi === 'function'){
         const ok = await _wbEnsureUi();
-        if(!ok){ alert('UI 載入失敗,請重新整理頁面'); return; }
+        if(!ok){ _wbGameAlert('UI 載入失敗,請重新整理頁面'); return; }
       }
     }catch(_){}
     const ok = await window._wbNet.joinRoom(roomId);
@@ -3552,7 +3552,7 @@
       if(entryOv) entryOv.style.display = 'none';
       _wbOpenLobby();
     }else{
-      alert('加入房間失敗,可能房間已關閉或滿員');
+      _wbGameAlert('加入房間失敗,可能房間已關閉或滿員');
     }
   };
 
@@ -3595,10 +3595,10 @@
   window._wbUiCopyCode = function(){
     const code = document.getElementById('wb-room-code-val').textContent;
     if(navigator.clipboard) navigator.clipboard.writeText(code);
-    alert('已複製房號:' + code);
+    _wbGameAlert('已複製房號:' + code);
   };
   window._wbUiLeaveRoom = async function(){
-    if(!confirm('確定要離開房間嗎?')) return;
+    if(!(await _wbGameConfirm('確定要離開房間嗎?'))) return;
     // ★ FIX 20260517(m) — 停掉房主端的 outgoing invite 訂閱
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
     await window._wbNet.leaveRoom();
@@ -3665,7 +3665,7 @@
   window._wbUiPickElement = async function(elemId){
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.find(p => p.uid === window._gUserId);
-    if(!me || !me.heroName){ alert('請先選一隻英雄'); return; }
+    if(!me || !me.heroName){ _wbGameAlert('請先選一隻英雄'); return; }
     await window._wbNet.setMyHero(me.heroName, elemId);
   };
   window._wbUiToggleReady = async function(){
@@ -3900,7 +3900,7 @@
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.find(p => p.uid === window._gUserId);
     if(!me || !me.heroName){
-      alert('請先選一隻英雄');
+      _wbGameAlert('請先選一隻英雄');
       return;
     }
     document.getElementById('wb-team-confirm-overlay').classList.add('show');
@@ -4671,7 +4671,7 @@
       }
     }catch(e){ console.warn('[WB-TC] 讀取英雄列表失敗', e); }
     if(heroes.length === 0){
-      alert('沒有可選的英雄');
+      _wbGameAlert('沒有可選的英雄');
       return;
     }
     // ★ FIX 20260516 v7 — 英雄可重複選擇,移除「被隊友選走」disable
@@ -4714,7 +4714,7 @@
       await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
     }else{
       // 多人:不允許在這頁換英雄(按鈕應該不會出現)
-      alert('多人房請在選角頁切換英雄');
+      _wbGameAlert('多人房請在選角頁切換英雄');
     }
     _wbTcCloseSwapModal();
     _wbTcRenderTeamConfirm();
@@ -4735,13 +4735,13 @@
   window._wbTcOpenSwapTreasure = function(targetSlotIdx){
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.[targetSlotIdx];
-    if(!me){ alert('槽位不存在'); return; }
+    if(!me){ _wbGameAlert('槽位不存在'); return; }
     const ext = _wbTcParsePlayerExt(me);
     const heroName = me.heroName;
     const maxSlots = _wbTcIsHeroSlot2Unlocked(heroName) ? 2 : 1;
     const myTreasures = _wbTcGetMyTreasures();
     if(myTreasures.length === 0){
-      alert('尚未解鎖任何至寶');
+      _wbGameAlert('尚未解鎖任何至寶');
       return;
     }
 
@@ -4944,7 +4944,7 @@
   window._wbTcHostStartBattle = function(){
     const snap = window._wbNet.getSnapshot();
     const meIsHost = (snap?.meta?.hostUid === window._gUserId);
-    if(!meIsHost){ alert('只有房主可以開戰'); return; }
+    if(!meIsHost){ _wbGameAlert('只有房主可以開戰'); return; }
     // 關閉確認頁,呼叫原本的開戰流程
     _wbTcCloseTeamConfirm();
     if(typeof window._wbUiPrepareStartBattle === 'function'){
@@ -5144,7 +5144,7 @@
   window._wbUiPrepareStartBattle = function(){
     const snap = window._wbNet.getSnapshot();
     const players = snap?.players || [];
-    if(players.length < 1){ alert('至少要 1 人'); return; }
+    if(players.length < 1){ _wbGameAlert('至少要 1 人'); return; }
     const shields = _wbEcGetBossShields();
     // 1. 先建 4 槽完整 team(人類 + AI 替補)
     const team = _wbEcBuildFullTeam(players);
@@ -5284,10 +5284,10 @@
   window._wbUiStartBattle = async function(){
     const snap = window._wbNet.getSnapshot();
     const players = snap.players || [];
-    if(players.length < 1){ alert('至少要 1 人'); return; }
+    if(players.length < 1){ _wbGameAlert('至少要 1 人'); return; }
 
     if(typeof newHero !== 'function'){
-      alert('戰鬥引擎未就緒 — newHero 函式找不到,請確認主程式 index.html 已完整載入'); return;
+      _wbGameAlert('戰鬥引擎未就緒 — newHero 函式找不到,請確認主程式 index.html 已完整載入'); return;
     }
 
     // 初始化 4 槽英雄陣容(沒人的槽位填 AI 預設)
@@ -6025,7 +6025,7 @@
               ? window._wbPickRandomQuestion()
               : null;
     if(!q){
-      alert('⚠ 題庫尚未載入,本回合直接行動');
+      _wbGameAlert('⚠ 題庫尚未載入,本回合直接行動');
       _wbMarkQuiz(G.turn, order.pos, true);
       _wbRenderBattleScreen(window._wbNet.getSnapshot()?.battle || _wbCurrentBattleSnap());
       return;
@@ -6498,7 +6498,7 @@
   });
 
   window._wbNet.on('onError', function(err){
-    if(err && err.msg) alert('⚠ ' + err.msg);
+    if(err && err.msg) _wbGameAlert('⚠ ' + err.msg);
   });
 
   window._wbNet.on('onRoomClosed', function(info){
@@ -6510,7 +6510,7 @@
       // 房主中離等其他情況
       document.getElementById('wb-lobby-overlay').style.display = 'none';
       if(info.reason !== 'kicked_or_left' && info.reason !== 'doc_deleted'){
-        alert('房間已關閉: ' + (info.reason || '未知'));
+        _wbGameAlert('房間已關閉: ' + (info.reason || '未知'));
       }
     }
   });
@@ -6658,7 +6658,7 @@
 
   window._wbUiSoloTest = function(){
     if(typeof newHero !== 'function'){
-      alert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始練習');
+      _wbGameAlert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始練習');
       return;
     }
     // ★ v3.1.1 — 同時查 HERO_DB (typeof) 和 window.HERO_DB (world-boss.js 已暴露)
@@ -6666,7 +6666,7 @@
     try{ if(typeof HERO_DB !== 'undefined') _heroDb = HERO_DB; }catch(_){}
     if(!_heroDb && window.HERO_DB) _heroDb = window.HERO_DB;
     if(!_heroDb || !_heroDb['維蘇威火山龍王']){
-      alert('⚠ HERO_DB 中找不到維蘇威火山龍王\n\n可能原因:\n1. hero_db.js 沒載入 — 請檢查 F12 Network 看是否 404\n2. world-boss.js 啟動失敗 — 請按 F12 Console 看是否有 [WB] 開頭的錯誤訊息\n3. 順序問題 — 請重新整理頁面再試');
+      _wbGameAlert('⚠ HERO_DB 中找不到維蘇威火山龍王\n\n可能原因:\n1. hero_db.js 沒載入 — 請檢查 F12 Network 看是否 404\n2. world-boss.js 啟動失敗 — 請按 F12 Console 看是否有 [WB] 開頭的錯誤訊息\n3. 順序問題 — 請重新整理頁面再試');
       return;
     }
 
@@ -6736,11 +6736,11 @@
     const btn = document.getElementById('wb-tc-start-btn');
     if(!btn) return;
     btn.style.display = 'inline-block';
-    btn.onclick = function(){
+    btn.onclick = async function(){
       // 檢查 4 元素都覆蓋(若沒覆蓋仍允許,但提示)
       const cov = _wbTcCalcCoverage(_wbSoloFakePlayers);
       if(cov.missing.length > 0){
-        const proceed = confirm('⚠ 還缺 ' + cov.missing.length + ' 個破盾屬性(' + cov.missing.join(',') + '),確定要開戰嗎?');
+        const proceed = await _wbGameConfirm('⚠ 還缺 ' + cov.missing.length + ' 個破盾屬性(' + cov.missing.join(',') + '),確定要開戰嗎?');
         if(!proceed) return;
       }
       // 關閉隊伍確認頁,進入戰鬥
@@ -6889,12 +6889,12 @@
 
     // 檢查主程式是否準備好
     if(typeof window.advStartBattle !== 'function'){
-      alert('⚠ 主程式 advStartBattle 函式找不到,世界戰無法啟動');
+      _wbGameAlert('⚠ 主程式 advStartBattle 函式找不到,世界戰無法啟動');
       console.error('[WB-Solo] advStartBattle 不存在');
       return;
     }
     if(typeof window.G === 'undefined' || !window.G){
-      alert('⚠ 主程式 G 全域變數未初始化,世界戰無法啟動');
+      _wbGameAlert('⚠ 主程式 G 全域變數未初始化,世界戰無法啟動');
       console.error('[WB-Solo] G 不存在');
       return;
     }
@@ -6925,7 +6925,7 @@
     // ── 透過主程式對外入口設定 _adventureStage 與 G ────────────────
     // (let _adventureStage 無法從外部直接寫,必須走 window._wbSetupAdvForBattle)
     if(typeof window._wbSetupAdvForBattle !== 'function'){
-      alert('⚠ 主程式 _wbSetupAdvForBattle 入口找不到 — 主程式版本不相容');
+      _wbGameAlert('⚠ 主程式 _wbSetupAdvForBattle 入口找不到 — 主程式版本不相容');
       console.error('[WB-Solo] _wbSetupAdvForBattle 不存在');
       return;
     }
@@ -6935,7 +6935,7 @@
       p2: [boss],
     });
     if(!_setupOk){
-      alert('⚠ 主程式戰場設定失敗,請看 console');
+      _wbGameAlert('⚠ 主程式戰場設定失敗,請看 console');
       return;
     }
 
@@ -7150,7 +7150,7 @@
       window.advStartBattle();
     }catch(e){
       console.error('[WB-Solo v4] advStartBattle 失敗', e);
-      alert('⚠ 主程式戰鬥啟動失敗:' + (e.message || e));
+      _wbGameAlert('⚠ 主程式戰鬥啟動失敗:' + (e.message || e));
       return;
     }
 
@@ -7205,9 +7205,26 @@
     //   原:padding:60px 16px 0 16px + 內層 max-width:980px;margin:0 auto(置中)
     //   新:left/top:8px + 寬度上限 720px(讓右側留空間給戰鬥 log/側欄不被擋)
     //   ★ FIX 20260517(i) — 寬度 720 → 1080(放大 50%),右側留 90px 避開能量條
+    //   ★ FIX 20260517(p) — iPad(≤1180px) BOSS 血條長度縮短 40%(1080 → 648),
+    //                       避免在 iPad 上佔據過多畫面。寬度規則改由 CSS 控制,
+    //                       inline 只設位置與 z-index,真正寬度看下面的 #wb-adv-battle-overlay 規則。
     ov.style.cssText = 'position:fixed;top:8px;left:8px;z-index:600;'
-      + 'pointer-events:none;width:min(1080px, calc(100vw - 100px));'
+      + 'pointer-events:none;'
       + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+
+    // ★ FIX 20260517(p) — 注入 BOSS 血條 overlay 響應式寬度規則(只注入一次)
+    if(!document.getElementById('wb-adv-overlay-width-style')){
+      const _wsty = document.createElement('style');
+      _wsty.id = 'wb-adv-overlay-width-style';
+      _wsty.textContent =
+        // 桌機:1080px 上限,扣 100px 給右側能量條
+        '#wb-adv-battle-overlay{width:min(1080px,calc(100vw - 100px));}'
+        // iPad(≤1180px,涵蓋 iPad Mini ~ iPad Pro 11"):縮短 40% → 648px 上限
+        + '@media (max-width:1180px){'
+        +   '#wb-adv-battle-overlay{width:min(648px,calc(100vw - 80px)) !important;}'
+        + '}';
+      document.head.appendChild(_wsty);
+    }
 
     ov.innerHTML = `
       <div id="wb-adv-mega-zone" style="
@@ -7306,7 +7323,10 @@
           /* ★ FIX 20260517(i) — left:50%→38%(龍王身體偏左中央)、top:35%→30%(配合 BG 上移) */
           /* ★ FIX 20260517(j) — top:30%→22%(BG 再上移 14% 後,身體中心也跟著上移) */
           /* ★ FIX 20260517(l) — BG 拉回 25% 後,身體中心也跟著回到 32% */
-          left: 38% !important; top: 32% !important;
+          /* ★ FIX 20260517(p) — 背景圖改 160% + center top 後,龍王臉部從容器
+             ~32% 上移到 ~22%,隱形 BOSS 卡 top 也跟著從 32% 改為 22%,
+             讓傷害跳字/banner/粒子特效對齊新的龍王頭部位置 */
+          left: 38% !important; top: 22% !important;
         }
         /* ★ FIX 20260517(b) — 英雄卡貼底:#z1 改 flex-end + brow align-items:flex-end + 透明背景讓龍王透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 {
