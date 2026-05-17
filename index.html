@@ -45929,9 +45929,9 @@ function advStartBattle(){
           + `url("${_wbBgUrl}")`;
         // ★ FIX 20260517(e) — BOSS 圖往上移 15%(50% → 35%)+ 放大 20%(高 100% → 120%)
         //   兩層 backgroundSize/backgroundPosition 用逗號分隔分別套到漸層層和龍王圖層
-        //   漸層維持 100%+center,龍王圖 120% + center 35%
+        //   ★ FIX 20260517(i) — 再往上(35% → 22%),臉部不被順序條擋住
         _bb.style.backgroundSize = 'auto 100%, auto 120%';
-        _bb.style.backgroundPosition = 'center, center 35%';
+        _bb.style.backgroundPosition = 'center, center 22%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標

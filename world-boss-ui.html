@@ -1395,28 +1395,29 @@
   }
 
   /* ★ FIX 20260517(f) — 戰前定型文按鈕區 */
+  /* ★ FIX 20260517(i) — 字體 + padding 放大 100% 提升 iPad 可讀性 */
   .wb-tc-quickmsg-zone{
     flex-shrink:0;
     background:rgba(40,28,60,0.55);
     border:1.5px solid rgba(168,132,255,0.35);
     border-radius:10px;
-    padding:8px 10px 10px;
+    padding:14px 16px 16px;  /* 8/10/10 → 14/16/16 */
     margin-bottom:6px;
   }
   .wb-tc-quickmsg-header{
     display:flex;justify-content:space-between;align-items:center;
-    margin-bottom:6px;
+    margin-bottom:10px;  /* 6 → 10 */
   }
   .wb-tc-quickmsg-title{
-    font-size:15px;color:#c8a8ff;font-weight:700;letter-spacing:1.5px;
+    font-size:30px;color:#c8a8ff;font-weight:700;letter-spacing:2px;  /* 15 → 30 */
   }
   .wb-tc-quickmsg-cd{
-    font-size:13px;color:#ffaa66;font-weight:700;letter-spacing:1px;
-    background:rgba(80,40,20,0.5);padding:2px 8px;border-radius:6px;
-    border:1px solid rgba(255,140,80,0.5);
+    font-size:26px;color:#ffaa66;font-weight:700;letter-spacing:1.5px;  /* 13 → 26 */
+    background:rgba(80,40,20,0.5);padding:4px 14px;border-radius:8px;
+    border:1.5px solid rgba(255,140,80,0.5);
   }
   .wb-tc-quickmsg-grid{
-    display:grid;grid-template-columns:repeat(6, 1fr);gap:6px;
+    display:grid;grid-template-columns:repeat(6, 1fr);gap:10px;  /* gap 6 → 10 */
   }
   @media (max-width: 900px){
     .wb-tc-quickmsg-grid{ grid-template-columns:repeat(4, 1fr); }
@@ -1425,8 +1426,8 @@
     .wb-tc-quickmsg-grid{ grid-template-columns:repeat(3, 1fr); }
   }
   .wb-tc-qmsg-btn{
-    padding:7px 4px;font-size:13px;font-weight:700;letter-spacing:0.5px;
-    border:1.5px solid;border-radius:8px;cursor:pointer;
+    padding:14px 8px;font-size:26px;font-weight:700;letter-spacing:1px;  /* 13→26, padding 加大 */
+    border:2px solid;border-radius:10px;cursor:pointer;
     font-family:inherit;transition:all 0.15s;
     background:rgba(20,15,40,0.7);color:#e0d4ff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -3029,11 +3030,21 @@
       console.warn('[WB-Tc] 定型文發送失敗', eMsg);
     }
     // 自己立即看到自己 slot 上的氣泡(onChatMessage 不會回傳自己的訊息給自己)
+    // ★ FIX 20260517(i) — 改用 getMySlot() 為主、uid findIndex 為 fallback
+    //   原本只用 findIndex(p.uid === _gUserId),在練習模式 _gUserId 為 falsy 時會 -1 而不顯示
     try{
-      const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
-      const mySlot = (snap && snap.players)
-        ? snap.players.findIndex(p => p && p.uid === window._gUserId)
-        : -1;
+      let mySlot = -1;
+      if(window._wbNet && typeof window._wbNet.getMySlot === 'function'){
+        mySlot = window._wbNet.getMySlot();
+      }
+      if(mySlot < 0){
+        const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+        if(snap && snap.players){
+          mySlot = snap.players.findIndex(p => p && p.uid === window._gUserId);
+        }
+      }
+      // 練習模式最後 fallback:0
+      if(mySlot < 0 && window._wbSoloPracticeMode) mySlot = 0;
       if(mySlot >= 0 && QMSG_TEXT_MAP[key]){
         _wbTcShowSlotBubble(mySlot, QMSG_TEXT_MAP[key]);
       }
@@ -3140,11 +3151,11 @@
       bubble.style.cssText =
         'position:absolute;left:50%;top:-8px;transform:translate(-50%,-100%);'
         + 'background:rgba(20,15,40,0.96);color:#e0d4ff;'
-        + 'padding:6px 12px;border-radius:10px;'
-        + 'border:1.5px solid rgba(168,132,255,0.7);'
-        + 'box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 12px rgba(168,132,255,0.4);'
-        + 'font-size:13px;font-weight:700;letter-spacing:0.5px;white-space:nowrap;'
-        + 'z-index:9999;pointer-events:none;'  /* ★ FIX 20260517(h) — 100 → 9999,確保不被任何 UI 蓋 */
+        + 'padding:12px 22px;border-radius:14px;'  /* ★ FIX 20260517(i) — padding 6/12 → 12/22 配合字體 */
+        + 'border:2px solid rgba(168,132,255,0.75);'
+        + 'box-shadow:0 6px 22px rgba(0,0,0,0.65),0 0 18px rgba(168,132,255,0.5);'
+        + 'font-size:26px;font-weight:800;letter-spacing:1px;white-space:nowrap;'  /* ★ FIX 20260517(i) — 13 → 26 */
+        + 'z-index:9999;pointer-events:none;'
         + 'animation:wbTcBubbleIn 0.25s ease-out;';
       slot.appendChild(bubble);
       // 3.5 秒後淡出移除
@@ -5962,19 +5973,19 @@
       //         所以「元素環右邊、順序條左邊」的夾層 ≈ left:160px, top:50% translateY(-50%)
       //   做法:dmgBar 也 append 到 #gc 內,用 absolute 同樣對齊 top:50%,水平錨左邊 160px
       //         如此 #gc 縮放時 dmgBar 也跟著縮,跟順序條/元素環相對位置始終一致
+      //   ★ FIX 20260517(i) — 字體放大 100%(12→24, 20→40),改一行水平排「📜 本場總傷:836」
       dmgBar.style.cssText = 'position:absolute;left:160px;top:50%;'
         + 'transform:translateY(-50%);'
         + 'z-index:6;'  // 比順序條 z:5 稍高,避免被順序條的 chip 蓋住
-        + 'background:rgba(20,40,30,0.92);border:2px solid #5dcaa5;'
-        + 'border-radius:12px;padding:8px 12px;'
-        + 'display:flex;flex-direction:column;align-items:center;gap:4px;'
-        + 'min-width:78px;'
-        + 'box-shadow:0 0 18px rgba(93,202,165,0.45);'
+        + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
+        + 'border-radius:14px;padding:12px 20px;'
+        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'  /* column→row,gap 4→12 */
+        + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
         + 'pointer-events:auto;'
         + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
       dmgBar.innerHTML =
-        '<span style="font-size:12px;color:#5dcaa5;font-weight:700;letter-spacing:0.5px;line-height:1.2;text-align:center;">📜 本場<br>總傷</span>'
-        + '<span id="wb-solo-cur-dmg-display" style="font-size:20px;color:#ffe066;font-weight:900;letter-spacing:0.5px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
+        '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
       // ★ append 到 #gc(若存在),否則退回 body
       const _gcForDmg = document.getElementById('gc');
       if(_gcForDmg){
@@ -6069,55 +6080,56 @@
     // ★ FIX 20260517 — BOSS 血條從「上方置中」改為「左上角靠齊」
     //   原:padding:60px 16px 0 16px + 內層 max-width:980px;margin:0 auto(置中)
     //   新:left/top:8px + 寬度上限 720px(讓右側留空間給戰鬥 log/側欄不被擋)
+    //   ★ FIX 20260517(i) — 寬度 720 → 1080(放大 50%),右側留 90px 避開能量條
     ov.style.cssText = 'position:fixed;top:8px;left:8px;z-index:600;'
-      + 'pointer-events:none;width:min(720px, calc(100vw - 16px));'
+      + 'pointer-events:none;width:min(1080px, calc(100vw - 100px));'
       + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
 
     ov.innerHTML = `
       <div id="wb-adv-mega-zone" style="
         margin:0;
         background:linear-gradient(180deg,rgba(20,8,8,0.92) 0%,rgba(40,16,8,0.86) 100%);
-        border:2px solid #ff6644;border-radius:14px;padding:12px 16px;
+        border:2px solid #ff6644;border-radius:14px;padding:16px 22px;
         box-shadow:0 0 30px rgba(255,80,40,0.4);pointer-events:auto;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px;flex-wrap:wrap;">
-          <div style="font-size:18px;font-weight:900;color:#ffaa66;letter-spacing:1.5px;
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:14px;flex-wrap:wrap;">
+          <div style="font-size:27px;font-weight:900;color:#ffaa66;letter-spacing:2px;
             text-shadow:0 0 10px rgba(255,140,60,0.7);">
             <span style="font-size:1.3em;">🐉</span>
             <span id="wb-adv-mega-boss-name">${bossName}</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:center;">
+          <div style="display:flex;gap:14px;align-items:center;">
             <button id="wb-adv-boss-info-btn" style="
               background:linear-gradient(160deg,rgba(255,170,100,0.2),rgba(255,80,40,0.15));
               border:2px solid #ff8855;color:#ffd0aa;
-              padding:6px 12px;border-radius:10px;font-size:13px;font-weight:700;
-              letter-spacing:1px;cursor:pointer;font-family:inherit;
+              padding:9px 18px;border-radius:12px;font-size:20px;font-weight:700;
+              letter-spacing:1.5px;cursor:pointer;font-family:inherit;
               transition:all 0.2s ease;">
               📖 BOSS 能力介紹
             </button>
-            <div id="wb-adv-mega-turn-info" style="font-size:13px;color:#ffe066;letter-spacing:1px;">
+            <div id="wb-adv-mega-turn-info" style="font-size:20px;color:#ffe066;letter-spacing:1.5px;">
               回合 1 / 20 ✦ 第一階段
             </div>
           </div>
         </div>
-        <div style="position:relative;height:24px;background:rgba(80,30,20,0.6);
-          border:1px solid #553322;border-radius:12px;overflow:hidden;">
+        <div style="position:relative;height:36px;background:rgba(80,30,20,0.6);
+          border:1.5px solid #553322;border-radius:14px;overflow:hidden;">
           <div id="wb-adv-mega-hp-fill" style="position:absolute;left:0;top:0;bottom:0;width:100%;
             background:linear-gradient(90deg,#ff3322 0%,#ff6644 30%,#ff9966 70%,#ffcc88 100%);
             transition:width 0.5s ease;"></div>
           <div id="wb-adv-mega-hp-text" style="position:absolute;inset:0;display:flex;
-            align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;
-            text-shadow:0 0 4px #000, 0 0 8px #000;letter-spacing:1px;">
+            align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;
+            text-shadow:0 0 4px #000, 0 0 8px #000;letter-spacing:1.5px;">
             ${boss ? `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()} (100%)` : '500,000 / 500,000 (100%)'}
           </div>
         </div>
-        <div id="wb-adv-mega-shields-row" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-          <span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(HP 80% 啟動)</span>
+        <div id="wb-adv-mega-shields-row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(HP 80% 啟動)</span>
         </div>
       </div>
 
       <div id="wb-adv-burst-warn" style="
         width:100%;margin:8px 0 0 0;text-align:center;
-        font-size:14px;font-weight:800;color:#ffaa66;letter-spacing:1.5px;
+        font-size:20px;font-weight:800;color:#ffaa66;letter-spacing:2px;
         text-shadow:0 0 10px rgba(255,140,60,0.8);display:none;
         pointer-events:none;"></div>
     `;
@@ -6167,7 +6179,8 @@
              ★ FIX 20260517(e) v2 — BOSS 圖上移到 backgroundPosition center 35% 後,
              這張隱形卡也從 42% 跟著移到 35% 才會繼續對齊龍王中心 */
           position: fixed !important;
-          left: 50% !important; top: 35% !important;
+          /* ★ FIX 20260517(i) — left:50%→38%(龍王身體偏左中央)、top:35%→30%(配合 BG 上移) */
+          left: 38% !important; top: 30% !important;
         }
         /* ★ FIX 20260517(b) — 英雄卡貼底:#z1 改 flex-end + brow align-items:flex-end + 透明背景讓龍王透出 */
         body.wb-in-worldboss-battle #gc.adv-battle #z1 {
