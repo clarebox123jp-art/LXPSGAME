@@ -1445,6 +1445,8 @@
 
     // ★ 第 20 回合到 → 強制全員滅絕
     if((G.round || 1) >= 20){
+      // ★ FIX 20260517 — 滅絕也算技能,播技能音效
+      try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
       if(typeof log === 'function') log('💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!');
       const alive = G.p1.filter(h => h && h.curHp > 0);
       alive.forEach(t => {
@@ -1488,6 +1490,8 @@
   // BOSS S1:業火灼燒(全體 sp×1.0 + 燃燒 2 回合)
   function _wbAdvBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    // ★ FIX 20260517 — 技能音效(龍的呼嘯)
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     const dmg = Math.floor((boss.sp || 50) * 1.00);
@@ -1516,6 +1520,8 @@
   // BOSS S2:龍吼震懾(全體 sp×0.75 + 50% 眩暈)
   function _wbAdvBossS2(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    // ★ FIX 20260517 — 技能音效(龍的呼嘯)
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1600, shake:true}); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     const dmg = Math.floor((boss.sp || 50) * 0.75);
@@ -1551,6 +1557,8 @@
   // BOSS 爆發:天崩之炎(全體當前 HP 90%)
   function _wbAdvBossBurst(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
     setTimeout(() => {
       const alive = G.p1.filter(h => h && h.curHp > 0);
@@ -1592,6 +1600,8 @@
   // BOSS 普攻:隨機選 1 個玩家英雄,atk × (1.0~1.3) 傷害
   function _wbAdvBossNormalAtk(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    // ★ FIX 20260517 — 普攻音效(龍的普攻)
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-atk', 0.6); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     if(!alive.length){
       boss.acted = true;
@@ -1634,6 +1644,8 @@
           if(boss && boss.curHp <= 0){
             if(!window._wbAdvBattleEnded){
               window._wbAdvBattleEnded = true;
+              // ★ FIX 20260517 — BOSS 倒下音效(立即播,不等結算頁出來)
+              try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-down', 0.9); }catch(_){}
               setTimeout(() => { try{ _wbShowAdvBattleResult(true); }catch(e){ console.error(e); } }, 200);
             }
             return true;

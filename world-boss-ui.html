@@ -681,7 +681,7 @@
       <div class="wb-boss-info">
         <div class="wb-boss-name">⚔️ 維蘇威火山龍王 <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
         <div style="font-size:13px;color:#aaa;line-height:1.5;">
-          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。HP 80/60/40/20/1% 啟動四元素護盾,需要火/水/風/土屬性各攻擊 3 次才能打破!
+          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。HP 80/60/40/20/1% 啟動四元素護盾(火/風/土/暗),需要水/土/草/光屬性各攻擊 3 次才能打破!
         </div>
         <div class="wb-boss-stats">
           <span>❤️ 500,000 HP</span>
@@ -2279,23 +2279,53 @@
 </div>
 
 <!-- 表情貼圖快捷列(戰鬥時顯示) -->
-<div id="wb-emoji-bar-real" style="display:none;position:fixed;bottom:14px;right:14px;
-     background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:30px;padding:6px;z-index:9050;">
+<!-- ★ FIX 20260517 — 從右下橫排改為左側直排,並加入討論發話按鈕 -->
+<!--   位置:畫面最左邊,在練習傷害條之上(避開血條與相剋盤) -->
+<!--   結構:上半=6 顆 emoji 表情;下半=6 顆討論發話 -->
+<div id="wb-emoji-bar-real" style="display:none;position:fixed;left:8px;top:120px;
+     background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:18px;
+     padding:8px 6px;z-index:9050;
+     flex-direction:column;align-items:center;gap:6px;
+     max-height:calc(100vh - 280px);overflow-y:auto;">
+  <!-- 表情區(快速貼圖) -->
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('cheer')" title="加油">💪</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('burst')" title="用爆發">💥</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('heal')" title="補我血">🩹</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('wait')" title="等一下">⏸</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('strong')" title="太強了">🔥</button>
   <button class="wb-emoji-btn" onclick="window._wbNet.sendQuickEmoji('gg')" title="GG">😭</button>
+  <!-- 分隔線 -->
+  <div style="width:80%;height:1px;background:rgba(168,132,255,0.4);margin:4px 0;"></div>
+  <!-- 討論發話區(直排小按鈕) -->
+  <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_a')" title="我覺得答案是 A">🅰</button>
+  <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_b')" title="我覺得答案是 B">🅱</button>
+  <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_c')" title="我覺得答案是 C">🅲</button>
+  <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_d')" title="我覺得答案是 D">🅳</button>
+  <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_idk')" title="我也不確定">🤔</button>
+  <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('cheerup')" title="加油你可以的">💪🏼</button>
 </div>
 <style>
   /* ★ FIX 20260517 — 定型文按鈕字體 / 尺寸放大 50%(原 38/16 → 57/24) */
   .wb-emoji-btn{
     width:57px;height:57px;border-radius:50%;cursor:pointer;border:none;
     background:rgba(168,132,255,0.15);color:#fff;font-size:24px;
-    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;margin:0 3px;
+    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;
+    flex-shrink:0;
   }
   .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.15);}
+  /* ★ FIX 20260517 — 直排討論按鈕(縮小版,只顯示 icon) */
+  .wb-disc-btn-vert{
+    width:50px;height:50px;border-radius:12px;cursor:pointer;
+    background:rgba(168,132,255,0.15);
+    border:1.5px solid rgba(168,132,255,0.45);
+    color:#e0d4ff;font-size:22px;font-weight:700;
+    font-family:inherit;transition:all 0.15s;
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  }
+  .wb-disc-btn-vert:hover{
+    background:rgba(168,132,255,0.35);transform:translateX(2px);
+    box-shadow:0 0 12px rgba(168,132,255,0.5);
+  }
 </style>
 
 <!-- 結算 overlay -->
@@ -5413,12 +5443,20 @@
     if(!document.getElementById('wb-solo-cur-dmg-bar')){
       const dmgBar = document.createElement('div');
       dmgBar.id = 'wb-solo-cur-dmg-bar';
-      dmgBar.style.cssText = 'position:fixed;top:90px;left:50%;transform:translateX(-50%);'
+      // ★ FIX 20260517 — 從「上方置中(top:90px;left:50%)」改為「左側、相剋盤之上」
+      //   相剋盤 #elem-wheel 是 #gc 內 left:8px;top:50%,實際螢幕位置因 #gc 縮放而變
+      //   保險作法:固定 left:8px + 約 60% viewport 高(剛好在縮放後相剋盤上方一點)
+      //   寬度收斂為直排小尺寸,不再橫向 200px+ 撐開
+      dmgBar.style.cssText = 'position:fixed;left:8px;top:calc(50% - 110px);'
         + 'z-index:601;background:rgba(20,40,30,0.95);border:2px solid #5dcaa5;'
-        + 'border-radius:14px;padding:6px 14px;display:flex;align-items:center;gap:10px;'
-        + 'box-shadow:0 0 24px rgba(93,202,165,0.5);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-      dmgBar.innerHTML = '<span style="font-size:13px;color:#5dcaa5;font-weight:700;letter-spacing:1px;">🧪 練習模式・本場總傷</span>'
-        + '<span id="wb-solo-cur-dmg-display" style="font-size:20px;color:#ffe066;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
+        + 'border-radius:12px;padding:8px 10px;'
+        + 'display:flex;flex-direction:column;align-items:center;gap:4px;'
+        + 'width:78px;'  // 與直排 emoji bar 寬度相近
+        + 'box-shadow:0 0 24px rgba(93,202,165,0.5);'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      dmgBar.innerHTML =
+        '<span style="font-size:11px;color:#5dcaa5;font-weight:700;letter-spacing:0.5px;line-height:1.2;text-align:center;">🧪 本場<br>總傷</span>'
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:18px;color:#ffe066;font-weight:900;letter-spacing:0.5px;text-shadow:0 0 8px rgba(255,220,80,0.5);">0</span>';
       document.body.appendChild(dmgBar);
     }
 
@@ -5471,13 +5509,16 @@
 
     const ov = document.createElement('div');
     ov.id = 'wb-adv-battle-overlay';
-    ov.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:600;'
-      + 'pointer-events:none;padding:60px 16px 0 16px;'
+    // ★ FIX 20260517 — BOSS 血條從「上方置中」改為「左上角靠齊」
+    //   原:padding:60px 16px 0 16px + 內層 max-width:980px;margin:0 auto(置中)
+    //   新:left/top:8px + 寬度上限 720px(讓右側留空間給戰鬥 log/側欄不被擋)
+    ov.style.cssText = 'position:fixed;top:8px;left:8px;z-index:600;'
+      + 'pointer-events:none;width:min(720px, calc(100vw - 16px));'
       + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
 
     ov.innerHTML = `
       <div id="wb-adv-mega-zone" style="
-        max-width:980px;margin:0 auto;
+        margin:0;
         background:linear-gradient(180deg,rgba(20,8,8,0.92) 0%,rgba(40,16,8,0.86) 100%);
         border:2px solid #ff6644;border-radius:14px;padding:12px 16px;
         box-shadow:0 0 30px rgba(255,80,40,0.4);pointer-events:auto;">
@@ -5518,7 +5559,7 @@
       </div>
 
       <div id="wb-adv-burst-warn" style="
-        max-width:980px;margin:8px auto 0 auto;text-align:center;
+        width:100%;margin:8px 0 0 0;text-align:center;
         font-size:14px;font-weight:800;color:#ffaa66;letter-spacing:1.5px;
         text-shadow:0 0 10px rgba(255,140,60,0.8);display:none;
         pointer-events:none;"></div>
@@ -5530,6 +5571,46 @@
       infoBtn.addEventListener('mouseenter', () => { infoBtn.style.background = 'linear-gradient(160deg,rgba(255,200,140,0.35),rgba(255,120,80,0.25))'; });
       infoBtn.addEventListener('mouseleave', () => { infoBtn.style.background = 'linear-gradient(160deg,rgba(255,170,100,0.2),rgba(255,80,40,0.15))'; });
       infoBtn.addEventListener('click', _wbAdvOpenBossInfoPopup);
+    }
+
+    // ★ FIX 20260517 — 隱藏主程式 BOSS 立繪小卡(訊息都已搬到上方 overlay)
+    //   作法:在 body 加 class 'wb-in-worldboss-battle',並注入一段 CSS 守門
+    //         只在 body 帶這個 class 時生效 → 不會影響台灣關 / 日本關 / 木柵關
+    //         exitAdventureMode 與 _wbShowSoloPracticeResult 會移除這個 class
+    try{ document.body.classList.add('wb-in-worldboss-battle'); }catch(_){}
+    if(!document.getElementById('wb-hide-boss-card-style')){
+      const _hideStyle = document.createElement('style');
+      _hideStyle.id = 'wb-hide-boss-card-style';
+      _hideStyle.textContent = `
+        /* 世界 BOSS 戰隱藏主程式上方 BOSS 卡 — 用 body.wb-in-worldboss-battle 守門 */
+        body.wb-in-worldboss-battle #gc.adv-battle #z2 {
+          flex: 0 0 0 !important;
+          min-height: 0 !important;
+          max-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          overflow: visible !important;
+          background: transparent !important;
+          border-bottom: none !important;
+        }
+        body.wb-in-worldboss-battle #gc.adv-battle #z2 .zone-label { display: none !important; }
+        /* BOSS 卡縮成 1×1 點(不 display:none,讓主程式仍能 querySelector 到並 click),其他效果隱藏 */
+        body.wb-in-worldboss-battle #gc.adv-battle #z2 #row2 {
+          height: 0 !important; padding: 0 !important;
+        }
+        body.wb-in-worldboss-battle #gc.adv-battle #z2 #row2 > .card {
+          width: 1px !important; height: 1px !important;
+          opacity: 0 !important; pointer-events: auto !important;
+          transform: scale(0.001) !important;
+          margin: 0 !important; padding: 0 !important;
+          position: absolute !important; left: 50% !important; top: 0 !important;
+        }
+        /* 把 PLAYER 區拉到佔據省下的空間 */
+        body.wb-in-worldboss-battle #gc.adv-battle #z1 {
+          flex: 1 1 100% !important;
+        }
+      `;
+      document.head.appendChild(_hideStyle);
     }
 
     _wbAdvStartBattleSync();
@@ -5776,6 +5857,12 @@
     document.getElementById('wb-emoji-bar-real').style.display = 'none';
     const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
     if(dmgBar) dmgBar.remove();
+    // ★ FIX 20260517 — 清掉戰鬥背景的火焰粒子層 + worldboss body class
+    try{
+      const _fl = document.getElementById('wb-battle-flame-layer');
+      if(_fl) _fl.remove();
+      document.body.classList.remove('wb-in-worldboss-battle');
+    }catch(_){}
 
     const minutes = Math.floor(info.elapsed / 60000);
     const seconds = Math.floor((info.elapsed % 60000) / 1000);

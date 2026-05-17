@@ -2513,6 +2513,10 @@
 <audio id="sfx-qiongqi-burst" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.mp3"></audio>
 <!-- ★ v1.0.20260515.6890 — 學生設計英雄系列(水狐)專屬爆發音效 -->
 <audio id="sfx-waterfox-burst" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.mp3"></audio>
+<!-- ★ FIX 20260517 — 世界 BOSS 維蘇威火山龍王專屬音效(普攻 / 技能 / 倒下) -->
+<audio id="sfx-wb-boss-atk"  preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BE%8D%E7%9A%84%E6%99%AE%E6%94%BB.mp3"></audio>
+<audio id="sfx-wb-boss-skill" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BE%8D%E7%9A%84%E5%91%BC%E5%98%AF.mp3"></audio>
+<audio id="sfx-wb-boss-down" preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BE%8D%E7%8E%8B%E5%80%92%E4%B8%8B.mp3"></audio>
 <!-- ★ v1.0.20260424.0790 — 召喚系統 BGM/SFX -->
 <audio id="bgm-summon"        preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a" loop></audio>
 <audio id="sfx-summon-smoke"  preload="auto" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
@@ -40324,7 +40328,12 @@ function exitAdventureMode(){
     if(_wbOpQuiz) _wbOpQuiz.remove();
     const _wbInfoPop = document.getElementById('wb-adv-boss-info-popup');
     if(_wbInfoPop) _wbInfoPop.remove();
-    // 6. 清世界 BOSS 模式旗標 (避免下次進冒險誤判為世界 BOSS)
+    // ★ FIX 20260517 — 6. 移除火焰粒子層(戰鬥背景特效)
+    const _wbFlameLayer = document.getElementById('wb-battle-flame-layer');
+    if(_wbFlameLayer) _wbFlameLayer.remove();
+    // 7. 移除 worldboss body class(讓主程式 BOSS 卡顯示規則還原)
+    document.body.classList.remove('wb-in-worldboss-battle');
+    // 8. 清世界 BOSS 模式旗標 (避免下次進冒險誤判為世界 BOSS)
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = true;
@@ -45816,13 +45825,36 @@ function advStartBattle(){
         else _bgCls = 'bg-fuji';  // tengu / shutendoji / tamamo 共用
       } else if(_stage === 'worldboss'){
         // ★ v1.0.20260517 — 世界 BOSS 戰用維蘇威火山龍王圖當背景
+        // ★ FIX 20260517 — 等比例 contain 縮放(高度填滿,寬度等比),左右黑漸層
+        //                  改 background-size: auto 100% 讓圖片高度 = 100%(視口高),寬度等比
+        //                  左右黑漸層用 linear-gradient(to right) 把兩側淡到全黑
         const _wbBossName = (G && G.p2 && G.p2[0] && G.p2[0].name) || '維蘇威火山龍王';
         const _wbBgUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(_wbBossName)}.png`;
-        _bb.style.backgroundImage = `linear-gradient(180deg,rgba(8,4,2,0.55) 0%,rgba(20,8,4,0.45) 50%,rgba(8,4,2,0.85) 100%), url("${_wbBgUrl}")`;
-        _bb.style.backgroundSize = 'cover';
-        _bb.style.backgroundPosition = 'center 30%';
-        _bb.style.backgroundColor = '#1a0a08';
+        _bb.style.backgroundImage =
+          'linear-gradient(to right,'
+          + ' #000 0%, rgba(0,0,0,0.85) 12%, rgba(0,0,0,0.05) 28%,'
+          + ' rgba(0,0,0,0) 50%,'
+          + ' rgba(0,0,0,0.05) 72%, rgba(0,0,0,0.85) 88%, #000 100%),'
+          + 'linear-gradient(180deg, rgba(8,4,2,0.35) 0%, rgba(20,8,4,0.25) 50%, rgba(8,4,2,0.55) 100%),'
+          + `url("${_wbBgUrl}")`;
+        _bb.style.backgroundSize = 'auto 100%, auto 100%, auto 100%';
+        _bb.style.backgroundPosition = 'center, center, center';
+        _bb.style.backgroundRepeat = 'no-repeat, no-repeat, no-repeat';
+        _bb.style.backgroundColor = '#000';
         _bgCls = '';
+        // ★ 加入紅色火焰粒子層(沿用首頁 .wb-flame-particle CSS)
+        // 移除舊的粒子層(防重複)
+        try{ const _old = document.getElementById('wb-battle-flame-layer'); if(_old) _old.remove(); }catch(_){}
+        const _fl = document.createElement('div');
+        _fl.id = 'wb-battle-flame-layer';
+        _fl.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1;';
+        _fl.innerHTML = ''
+          + '<span class="wb-flame-particle" style="--x:10%;--delay:0s;position:fixed;bottom:8px;left:10%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:30%;--delay:0.6s;position:fixed;bottom:8px;left:30%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:50%;--delay:1.2s;position:fixed;bottom:8px;left:50%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:72%;--delay:0.3s;position:fixed;bottom:8px;left:72%;"></span>'
+          + '<span class="wb-flame-particle" style="--x:90%;--delay:0.9s;position:fixed;bottom:8px;left:90%;"></span>';
+        document.body.appendChild(_fl);
       } else if(_stage === 'taiwan'){
         // ★ v1.0.20260428.2800 — 台灣關依玩家選的 BOSS 套用場景圖(inline style)
         const _twBossId = window._advSelectedTaiwanBoss;
