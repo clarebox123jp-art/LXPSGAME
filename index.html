@@ -2474,22 +2474,44 @@
       if(!WB.roomId) return false;
       WB.battleStartTs = Date.now();
       WB.contributions = {};
+      // ★ FIX 20260517(y) — 設「開戰中」旗標,讓 heartbeat / watchdog 這次 skip,
+      //   避免它們的 transaction 跟 startBattle 的 commit 撞 → failed-precondition。
+      WB._startingBattle = true;
       try{
-        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), {
-          'meta.status': 'fighting', 'meta.battleStartedAt': Date.now(),
-          battle: {
-            turn: 1,
-            currentActorIdx: initialBattle.currentActorIdx || 0,
-            turnOrder: initialBattle.turnOrder || [],
-            p1: _heroesToWire(initialBattle.p1),
-            p2: _heroesToWire(initialBattle.p2),
-            log: [], version: 1
-          }
+        // ★ FIX 20260517(y) — 改用 runTransaction 確保跟其他寫入 (heartbeat/watchdog/setMyHero)
+        //   走同一條 serializable 鎖,避免 updateDoc 跟 transaction 互踩。
+        //   transaction 內部 Firestore SDK 會自動重試,大幅降低衝突機率。
+        await runTransaction(_fbDb, async (tx) => {
+          const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);
+          const sn = await tx.get(ref);
+          if(!sn.exists()) throw new Error('ROOM_GONE');
+          const data = sn.data();
+          // 把 meta.status 改 fighting,並寫入 battle 物件(保留現有 players 等其他欄位)
+          const newMeta = Object.assign({}, data.meta || {}, {
+            status: 'fighting',
+            battleStartedAt: Date.now()
+          });
+          tx.update(ref, {
+            meta: newMeta,
+            battle: {
+              turn: 1,
+              currentActorIdx: initialBattle.currentActorIdx || 0,
+              turnOrder: initialBattle.turnOrder || [],
+              p1: _heroesToWire(initialBattle.p1),
+              p2: _heroesToWire(initialBattle.p2),
+              log: [], version: 1
+            }
+          });
         });
+        console.log('[WBNet] ✅ startBattle commit 成功 (room=' + WB.roomId + ')');
         return true;
       }catch(e){
-        _emit('onError', { msg: '開戰失敗:' + (e.code || e.message) });
+        // ★ FIX 20260517(y) — 失敗訊息同時打 console 讓 dev 看得到
+        console.error('[WBNet] ❌ startBattle 失敗', e);
+        _emit('onError', { msg: '開戰失敗:' + (e.code || e.message || e) });
         return false;
+      }finally{
+        WB._startingBattle = false;
       }
     }
 
@@ -2774,6 +2796,9 @@
       //   (玩家斷網最多 10 秒內 lastSeen 不會更新,加上 10 秒緩衝就會被房主標離線)
       WB.heartbeatTimer = setInterval(async () => {
         if(!WB.roomId || !window._gUserId) return;
+        // ★ FIX 20260517(y) — startBattle 進行中時跳過這次心跳,
+        //   避免 transaction 撞 startBattle 的 commit 噴 failed-precondition
+        if(WB._startingBattle) return;
         try{
           await runTransaction(_fbDb, async (tx) => {
             const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);
@@ -2811,6 +2836,9 @@
       _stopOfflineWatchdog();
       WB.offlineWatchTimer = setInterval(async () => {
         if(!WB.roomId || !WB.isHost) return;
+        // ★ FIX 20260517(y) — startBattle 進行中時跳過這次 watchdog 掃描,
+        //   避免 transaction 撞 startBattle 的 commit 噴 failed-precondition
+        if(WB._startingBattle) return;
         try{
           await runTransaction(_fbDb, async (tx) => {
             const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);

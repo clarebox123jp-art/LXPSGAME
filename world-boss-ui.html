@@ -2951,7 +2951,12 @@
   </div>
 </div>
 
-<!-- ★ v3.2 — 出戰前元素確認 modal -->
+<!-- ★ v3.2 — 出戰前元素確認 modal 【FIX 20260517(z) 已廢棄,DOM 保留作 dead element】
+     原 modal 用舊邏輯(比對護盾元素 + 英雄推測)誤判玩家「未選」,擋住開戰。
+     新流程:隊伍確認頁的「⚔ 開戰!」按鈕已在覆蓋未滿時 disabled,
+            按得下去就代表選齊,直接 _wbUiStartBattle,不再經此 modal。
+     此 DOM 不會被任何路徑打開(沒人會 add .show class),
+     onclick 對應的廢棄存根會自動轉接到 _wbUiStartBattle。 -->
 <div id="wb-elem-confirm-overlay">
   <div class="wb-ec-card">
     <div class="wb-ec-title">⚔ 出戰前元素確認</div>
@@ -5604,14 +5609,23 @@
   };
 
   // 房主開戰(在隊伍確認頁的「⚔ 開戰!」按鈕)
+  // ★ FIX 20260517(z) — 移除元素確認 modal,屬性齊就直接開戰
+  //   原因:該 modal 用舊邏輯(比對護盾元素 + 英雄推測),跟隊伍確認頁的新邏輯
+  //         (比對破盾屬性 + 多選元素陣列)不一致,會在玩家明明選齊的情況下誤判
+  //         「還缺元素」,擋住開戰。
+  //   設計:隊伍確認頁底部的「⚔ 開戰!」按鈕已經會在覆蓋未滿時 disabled,
+  //         玩家按得下去就代表已經覆蓋齊,可以直接開戰。
   window._wbTcHostStartBattle = function(){
     const snap = window._wbNet.getSnapshot();
     const meIsHost = (snap?.meta?.hostUid === window._gUserId);
     if(!meIsHost){ _wbGameAlert('只有房主可以開戰'); return; }
-    // 關閉確認頁,呼叫原本的開戰流程
+    // 關閉確認頁,直接進戰場(不再經過 _wbUiPrepareStartBattle 元素確認 modal)
     _wbTcCloseTeamConfirm();
-    if(typeof window._wbUiPrepareStartBattle === 'function'){
-      window._wbUiPrepareStartBattle();
+    if(typeof window._wbUiStartBattle === 'function'){
+      window._wbUiStartBattle();
+    }else{
+      console.error('[WB-TC] ⚠ _wbUiStartBattle 函式找不到,無法開戰');
+      _wbGameAlert('⚠ 戰鬥啟動函式找不到,請重新整理頁面');
     }
   };
 
@@ -5690,39 +5704,31 @@
   }
 
   // ════════════════════════════════════════════════════════════════════
-  // ★ v3.2 — 出戰前元素確認系統
+  // ★ v3.2 — 出戰前元素確認系統 【FIX 20260517(z) 已廢棄】
   // ────────────────────────────────────────────────────────────────────
-  // 流程:房主按「⚔ 開戰!」→ 跑 _wbUiPrepareStartBattle()
-  //   1. 拿玩家槽位 (snap.players)
-  //   2. 模擬產出 4 槽:人類 + AI 替補(預設劍士)
-  //   3. 對每槽計算「英雄推測屬性 + 玩家選的元素」聯集
-  //   4. 對照 BOSS shieldElements,找出缺哪些
-  //   5. 對 AI 槽位「自動分配缺的元素」(覆寫 AI 槽位的元素)
-  //   6. 顯示確認 modal,玩家可以「回去調整」或「出發迎戰」
-  //   7. 確認後才真正呼叫 _wbUiStartBattle(把 AI 元素覆寫塞進去)
+  // 【廢棄原因】
+  //   此 modal 用舊邏輯(比對 BOSS 護盾元素 fire/wind/earth/dark + 英雄推測),
+  //   跟隊伍確認頁的新邏輯(比對破盾屬性 water/earth/grass/light + 玩家 es 多選陣列)
+  //   不一致,會在玩家明明已勾選齊全的情況下誤判「還缺元素」,擋住開戰流程。
+  //
+  // 【新設計】
+  //   隊伍確認頁底部的「⚔ 開戰!」按鈕 (#wb-tc-start-btn) 已經會在覆蓋未滿時
+  //   disabled,玩家按得下去就代表元素已覆蓋齊全 — 不需要再多一層確認。
+  //   _wbTcHostStartBattle 已改為直接呼叫 _wbUiStartBattle。
+  //
+  // 【保留】
+  //   下列函式/變數保留為廢棄存根,以保護:
+  //   (a) HTML 內的 onclick="_wbUiCloseElemConfirm()" / _wbUiConfirmAndStart()
+  //       萬一被誤觸不會炸 ReferenceError
+  //   (b) _wbUiStartBattle 內讀 window._wbEcAiOverrideElements 的 fallback
+  //       — 永遠是空物件,不影響 AI 槽元素分配
+  //   (c) 任何外部 script 仍呼叫 _wbUiPrepareStartBattle 的相容路徑
+  //       — 直接轉接到 _wbUiStartBattle
+  //   (d) _wbEcInferHeroElement 仍被 _wbTcGetMyDefaultLoadout 用做「推薦預設元素」,
+  //       純粹是英雄名 → 元素推測,不參與覆蓋判定,保留無害
   // ════════════════════════════════════════════════════════════════════
-  // 取得當前 BOSS 的 shieldElements (從 WORLD_BOSS_LINEUP)
-  function _wbEcGetBossShields(){
-    try{
-      const lineup = window.WORLD_BOSS_LINEUP || [];
-      // 目前只有維蘇威可開戰,直接抓第 1 隻
-      const boss = lineup.find(b => b.id === 'vesuvius_fire_dragon') || lineup[0];
-      return (boss && boss.shieldElements) || ['fire','wind','earth','dark'];
-    }catch(_){
-      return ['fire','wind','earth','dark'];
-    }
-  }
-  // 7 元素 meta(跟主程式 WB_ELEMENT_META 對齊,顯示用)
-  const _WB_EC_ELEM_META = {
-    fire:  { ic:'🔥', name:'火', color:'#ff7755' },
-    water: { ic:'💧', name:'水', color:'#88cfff' },
-    wind:  { ic:'🌪', name:'風', color:'#aaffdd' },
-    earth: { ic:'⛰', name:'土', color:'#ddbb88' },
-    light: { ic:'☀', name:'光', color:'#fff5aa' },
-    dark:  { ic:'🌑', name:'暗', color:'#bb88dd' },
-    grass: { ic:'🌿', name:'草', color:'#88ee88' },
-  };
-  // 從英雄名推測元素(跟 world-boss-ui.html 內 _wbInferHeroElement 一致)
+
+  // 保留工具函式:從英雄名推測元素(供 _wbTcGetMyDefaultLoadout 推薦預設用)
   function _wbEcInferHeroElement(heroName){
     if(!heroName) return null;
     const name = heroName;
@@ -5740,224 +5746,36 @@
     return null;
   }
 
-  // 給定隊伍,算每個槽的覆蓋元素集合,並回傳整體缺失
-  // 規則(老師指定):兩個都算 — 英雄推測屬性 + 玩家選的元素,union
-  function _wbEcComputeCoverage(team /* [{heroName, element, isAi}] */, shieldElements){
-    const slots = team.map((p, i) => {
-      const inferred = _wbEcInferHeroElement(p.heroName);
-      const picked   = p.element || null;
-      const covered = new Set();
-      if(inferred) covered.add(inferred);
-      if(picked) covered.add(picked);
-      return { ...p, slotIdx:i, inferred, picked, covered: [...covered] };
-    });
-    const allCovered = new Set();
-    slots.forEach(s => s.covered.forEach(e => allCovered.add(e)));
-    const missing = shieldElements.filter(e => !allCovered.has(e));
-    return { slots, allCovered:[...allCovered], missing };
-  }
-
-  // 自動把 missing 元素分配給 AI 槽位(覆寫該 AI 的 picked element)
-  function _wbEcAutoAssignToAi(slots, missing){
-    // 找出 AI 槽位(isAi=true),把缺的元素分給它們
-    const aiSlots = slots.filter(s => s.isAi);
-    const assigned = []; // 紀錄分配給哪些 AI 槽位(顯示用)
-    let aiIdx = 0;
-    for(const elem of missing){
-      if(aiIdx >= aiSlots.length) break;
-      const target = aiSlots[aiIdx];
-      target.picked = elem;
-      // 同步更新 covered
-      const cov = new Set(target.covered);
-      cov.add(elem);
-      target.covered = [...cov];
-      target._autoAssigned = elem; // 標記(UI 顯示「⚙ AI 自動分配」)
-      assigned.push({ slotIdx: target.slotIdx, elem });
-      aiIdx++;
-    }
-    return assigned;
-  }
-
-  // 從 snap.players 產出 4 槽完整 team(含 AI 替補)
-  function _wbEcBuildFullTeam(players){
-    const team = [];
-    const _assign = window._wbHostAssignedSlots || {};
-    // 取房主資料給「未指派 NPC」用做預設
-    const _snap = window._wbNet.getSnapshot();
-    const _hostUid = _snap?.meta?.hostUid;
-    const _hostPlayer = (players || []).find(p => p && p.uid === _hostUid);
-    const _hostHero = (_hostPlayer && _hostPlayer.heroName) || '劍士';
-    for(let i = 0; i < 4; i++){
-      const p = players[i];
-      if(p){
-        team.push({
-          slotIdx:i, isAi:false, isMe:(p.uid === window._gUserId),
-          heroName: p.heroName || '劍士',
-          element: p.element || null,
-          name: p.name || ('玩家 ' + (i+1)),
-        });
-      }else{
-        // ★ FIX 20260517(r) — 優先用房主指派的;沒指派則用房主英雄當預設
-        const a = _assign[i];
-        if(a && a.heroName){
-          team.push({
-            slotIdx:i, isAi:true, isMe:false, _hostAssigned:true,
-            heroName: a.heroName,
-            element: a.element || null,
-            name: '房主代打',
-          });
-        }else{
-          team.push({
-            slotIdx:i, isAi:true, isMe:false,
-            heroName: _hostHero,
-            element: null,
-            name: 'NPC 替補',
-          });
-        }
-      }
-    }
-    return team;
-  }
-
-  // 房主按「⚔ 開戰!」→ 彈出元素確認 modal
+  // 廢棄存根 1:_wbUiPrepareStartBattle — 直接轉接到 _wbUiStartBattle
   window._wbUiPrepareStartBattle = function(){
-    const snap = window._wbNet.getSnapshot();
-    const players = snap?.players || [];
-    if(players.length < 1){ _wbGameAlert('至少要 1 人'); return; }
-    const shields = _wbEcGetBossShields();
-    // 1. 先建 4 槽完整 team(人類 + AI 替補)
-    const team = _wbEcBuildFullTeam(players);
-    // 2. 第一次計算覆蓋
-    let cov = _wbEcComputeCoverage(team, shields);
-    // 3. 若缺元素 → AI 自動補齊
-    let assigned = [];
-    if(cov.missing.length > 0){
-      assigned = _wbEcAutoAssignToAi(cov.slots, cov.missing);
-      // 重算(用更新後的 picked element)
-      cov = _wbEcComputeCoverage(cov.slots, shields);
+    console.warn('[WB-EC] _wbUiPrepareStartBattle 已廢棄(FIX 20260517 z),改走 _wbUiStartBattle');
+    if(typeof window._wbUiStartBattle === 'function'){
+      return window._wbUiStartBattle();
     }
-    // 4. 把覆寫結果存起來,確認後傳給 _wbUiStartBattle
-    window._wbEcPendingTeam = cov.slots;
-    window._wbEcPendingShields = shields;
-    window._wbEcPendingAssigned = assigned;
-    // 5. 顯示 modal
-    _wbEcRenderModal(cov.slots, shields, cov.missing, assigned);
-    document.getElementById('wb-elem-confirm-overlay').classList.add('show');
-    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.55); }catch(_){}
   };
 
-  // 渲染元素確認 modal 內容
-  function _wbEcRenderModal(slots, shields, missing, assigned){
-    // 護盾元素列(每個元素顯示是否被覆蓋)
-    const allCovered = new Set();
-    slots.forEach(s => s.covered.forEach(e => allCovered.add(e)));
-    const shieldHtml = shields.map(e => {
-      const m = _WB_EC_ELEM_META[e] || { ic:'?', name:e, color:'#fff' };
-      const covered = allCovered.has(e);
-      // 找出哪些槽提供這個元素
-      const providers = slots.filter(s => s.covered.includes(e));
-      const provText = providers.length
-        ? providers.map(p => {
-            const tag = p.isAi ? '🤖' : (p.isMe ? '⭐' : '👤');
-            return tag + ' 槽' + (p.slotIdx+1);
-          }).join('、')
-        : '— 無人提供 —';
-      return '<div class="wb-ec-shield-chip ' + (covered ? 'is-covered' : 'is-missing') + '" ' +
-             'style="color:' + m.color + ';border-color:' + m.color + ';">' +
-        '<div style="font-size:22px;line-height:1;">' + m.ic + '</div>' +
-        m.name + '盾' +
-        '<span class="wb-ec-shield-counter">' + provText + '</span>' +
-        '</div>';
-    }).join('');
-    document.getElementById('wb-ec-shield-row').innerHTML = shieldHtml;
-
-    // 4 槽預覽
-    const slotsHtml = slots.map(s => {
-      const tag = s.isAi
-        ? '<span class="wb-ec-slot-tag tag-ai">🤖 AI 替補</span>'
-        : (s.isMe ? '<span class="wb-ec-slot-tag tag-me">⭐ 你</span>' : '');
-      const inferredM = s.inferred ? _WB_EC_ELEM_META[s.inferred] : null;
-      const pickedM   = s.picked   ? _WB_EC_ELEM_META[s.picked]   : null;
-      const inferredHtml = inferredM
-        ? ('<span style="color:' + inferredM.color + ';">' + inferredM.ic + inferredM.name + '</span>')
-        : '<span style="color:#888;">無</span>';
-      const pickedHtml = pickedM
-        ? ('<span style="color:' + pickedM.color + ';">' + pickedM.ic + pickedM.name + '</span>' +
-           (s._autoAssigned ? ' <span style="color:#88ccff;">(⚙自動)</span>' : ''))
-        : '<span style="color:#888;">未選</span>';
-      return '<div class="wb-ec-slot ' + (s.isAi ? 'is-ai' : '') + (s.isMe ? ' is-me' : '') + '">' +
-        '<div class="wb-ec-slot-num">槽位 ' + (s.slotIdx+1) + '</div>' +
-        tag +
-        '<div class="wb-ec-slot-hero">' + _escapeEc(s.heroName) + '</div>' +
-        '<div class="wb-ec-slot-elems">' +
-          '英雄推測:' + inferredHtml + '<br>' +
-          '玩家選:' + pickedHtml +
-        '</div>' +
-      '</div>';
-    }).join('');
-    document.getElementById('wb-ec-slots').innerHTML = slotsHtml;
-
-    // 整體狀態
-    const stEl = document.getElementById('wb-ec-status');
-    const goBtn = document.getElementById('wb-ec-go-btn');
-    if(missing.length === 0){
-      stEl.className = 'wb-ec-status-box is-ok';
-      if(assigned.length > 0){
-        // AI 自動補齊過
-        const assignedTxt = assigned.map(a => {
-          const m = _WB_EC_ELEM_META[a.elem] || { ic:'?', name:a.elem };
-          return '槽' + (a.slotIdx+1) + ' ' + m.ic + m.name;
-        }).join('、');
-        stEl.innerHTML = '✅ 元素齊全!(AI 替補自動補上:' + assignedTxt + ')';
-      }else{
-        stEl.innerHTML = '✅ 元素齊全!隊伍能完整破除 BOSS 的所有護盾';
-      }
-      goBtn.classList.remove('is-disabled');
-      goBtn.disabled = false;
-    }else{
-      stEl.className = 'wb-ec-status-box is-bad';
-      // 這種情況理論上不會發生(AI 槽位通常夠補),但若有 4 個玩家全選錯且重複,可能還是缺
-      const missTxt = missing.map(e => {
-        const m = _WB_EC_ELEM_META[e] || { ic:'?', name:e };
-        return m.ic + m.name;
-      }).join('、');
-      stEl.innerHTML = '⚠ 還缺元素:<b>' + missTxt + '</b><br>' +
-        '<span style="font-size:13px;color:#ffcc88;">' +
-        '請回去調整玩家元素,或減少玩家數讓 AI 替補來補。</span>';
-      goBtn.classList.add('is-disabled');
-      goBtn.disabled = true;
-    }
-  }
-
-  // 小工具
-  function _escapeEc(s){
-    return String(s).replace(/[&<>"']/g, c =>
-      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  // 關閉 modal
+  // 廢棄存根 2:_wbUiCloseElemConfirm — 關掉 modal(若不知為何被打開),不彈聲音
   window._wbUiCloseElemConfirm = function(){
-    document.getElementById('wb-elem-confirm-overlay').classList.remove('show');
-    try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.5); }catch(_){}
+    try{
+      const _ov = document.getElementById('wb-elem-confirm-overlay');
+      if(_ov) _ov.classList.remove('show');
+    }catch(_){}
   };
 
-  // 確認 → 真正呼叫原 _wbUiStartBattle(把 AI 元素覆寫塞給 _wbNet 之前傳給 startBattle)
+  // 廢棄存根 3:_wbUiConfirmAndStart — 關 modal 後直接走 _wbUiStartBattle
   window._wbUiConfirmAndStart = async function(){
-    const goBtn = document.getElementById('wb-ec-go-btn');
-    if(goBtn.classList.contains('is-disabled')) return;
-    // 把 AI 槽的元素覆寫應用到 window 全域,讓 _wbUiStartBattle 能讀到
-    window._wbEcAiOverrideElements = {};
-    (window._wbEcPendingTeam || []).forEach(s => {
-      if(s.isAi && s.picked){
-        window._wbEcAiOverrideElements[s.slotIdx] = s.picked;
-      }
-    });
-    // 關 modal
-    document.getElementById('wb-elem-confirm-overlay').classList.remove('show');
-    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.7); }catch(_){}
-    // 真正開戰
-    await window._wbUiStartBattle();
+    console.warn('[WB-EC] _wbUiConfirmAndStart 已廢棄(FIX 20260517 z),改走 _wbUiStartBattle');
+    try{
+      const _ov = document.getElementById('wb-elem-confirm-overlay');
+      if(_ov) _ov.classList.remove('show');
+    }catch(_){}
+    if(typeof window._wbUiStartBattle === 'function'){
+      await window._wbUiStartBattle();
+    }
   };
+
+  // 廢棄變數:_wbEcAiOverrideElements 永遠是空物件,保留以免 _wbUiStartBattle 讀到 undefined
+  window._wbEcAiOverrideElements = window._wbEcAiOverrideElements || {};
 
   // ════════════════════════════════════════════════════════════════════
   // ★ FIX 20260517(q) — NPC 自動接管 hook 【★ FIX 20260517(w) 已停用】
@@ -6196,15 +6014,39 @@
     all.push(...p1Order);
 
     try{
-      await window._wbNet.startBattle({
+      // ★ FIX 20260517(y) — startBattle 失敗會 return false(不會 throw),
+      //   必須檢查回傳值,否則繼續往下跑會在「meta.status 還是 picking」的狀態下
+      //   把 wb-lobby/team-confirm 全關掉 + advStartBattle,造成房主畫面跳到關卡選擇頁、
+      //   好友卡在隊伍確認頁(因為 firestore 沒寫成功 → onBattleUpdate 永遠不會送出)
+      const _stOk = await window._wbNet.startBattle({
         p1: p1, p2: [boss, null, null, null],
         turnOrder: all,
         currentActorIdx: 0
       });
+      if(_stOk === false){
+        console.error('[WB-Host v6] ❌ _wbNet.startBattle 回傳 false,中止開戰流程');
+        _wbGameAlert('⚠ 廣播初始戰局失敗(網路問題或房間狀態異常),請重試');
+        // ★ 還原:把 team-confirm 重新打開,讓房主回到隊伍確認頁而非卡在中間狀態
+        try{
+          const _tc = document.getElementById('wb-team-confirm-overlay');
+          if(_tc) _tc.classList.add('show');
+        }catch(_){}
+        // 清世界戰旗標,避免後續流程誤判
+        window._wbInWorldBossMode = false;
+        window._wbConnectedHostMode = false;
+        return;
+      }
       console.log('[WB-Host v6] ✅ _wbNet.startBattle() 完成,初始 battle 已廣播');
     }catch(eSt){
       console.error('[WB-Host v6] _wbNet.startBattle 失敗', eSt);
       _wbGameAlert('⚠ 廣播初始戰局失敗:' + (eSt.message || eSt));
+      // 同上,還原 team-confirm
+      try{
+        const _tc = document.getElementById('wb-team-confirm-overlay');
+        if(_tc) _tc.classList.add('show');
+      }catch(_){}
+      window._wbInWorldBossMode = false;
+      window._wbConnectedHostMode = false;
       return;
     }
 
@@ -6232,6 +6074,13 @@
       }
       const _resOv = document.getElementById('result-overlay');
       if(_resOv) _resOv.style.display = 'none';
+      // ★ FIX 20260517(y) — 防呆:確保隊伍確認頁 + 元素確認 modal 都關了
+      //   正常路徑 _wbTcHostStartBattle/_wbUiConfirmAndStart 已經關過,但
+      //   萬一有其他入口直接呼叫 _wbUiStartBattle,這裡再保險關一次
+      const _tc = document.getElementById('wb-team-confirm-overlay');
+      if(_tc) _tc.classList.remove('show');
+      const _elemConfirm = document.getElementById('wb-elem-confirm-overlay');
+      if(_elemConfirm) _elemConfirm.classList.remove('show');
       const _gcEl = document.getElementById('gc');
       if(_gcEl){
         _gcEl.style.display = 'flex';
@@ -7059,6 +6908,13 @@
             _lobby.style.display = 'none';
             _lobby.classList.remove('wb-in-battle');
           }
+          // ★ FIX 20260517(y) — 一併關掉隊伍確認頁,
+          //   否則好友會卡在準備頁,看不到戰場
+          const _tc = document.getElementById('wb-team-confirm-overlay');
+          if(_tc) _tc.classList.remove('show');
+          // 元素確認 modal(房主端才會開,client 端理論上不會開,保險還是關掉)
+          const _elemConfirm = document.getElementById('wb-elem-confirm-overlay');
+          if(_elemConfirm) _elemConfirm.classList.remove('show');
           const _gcEl = document.getElementById('gc');
           if(_gcEl){
             _gcEl.style.display = 'flex';
