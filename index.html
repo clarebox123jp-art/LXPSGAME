@@ -27230,6 +27230,85 @@ function startTurn(){
     G.activeChar=next;
     G.p1.concat(G.p2).forEach(h=>renderCard(h));
     hidePassiveBtns(); restoreActionBtns();
+
+    // ★ v3.3.1 — 世界 BOSS 戰專屬:每個玩家英雄行動前都要答題
+    //   流程:本回合 next.pos 未答 → 觸發 advShowQuiz → 答對才顯示 action panel,答錯跳過
+    //   防重入:用 next._wbQuizDoneRound 記錄「上次答題完成的回合數」,同回合不重複觸發
+    //   排除:_autoBattle(自動戰鬥不出題,免得玩家放掛機就卡題)
+    try{
+      const _isWBStage = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+      const _quizIdle  = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle');
+      const _alreadyAnswered = next._wbQuizDoneRound === G.round;
+      if(_isWBStage && !_autoBattle && !_alreadyAnswered && _quizIdle
+         && !window._bossQuizInFlight && next.curHp > 0 && !next.acted){
+        // 暈眩/凍結等狀態 → 跳過答題(本回合本來就無法行動)
+        const _skipTypes = ['stun','freeze','sleep','para','trap'];
+        const _skipSt = next.status && next.status.find(s => _skipTypes.indexOf(s.type) >= 0);
+        if(!_skipSt){
+          window._bossQuizInFlight = true;
+          next._wbQuizPending = true;
+          // ★ 清掉上次的答題結果,等本次答題後 advAnswerQuestion 會設新值
+          try{ window._advLastQuizCorrect = null; }catch(_){}
+          console.log('[WB-PlayerQuiz] 觸發 ' + next.name + ' 行動前答題,round=' + G.round);
+          // 提示玩家
+          try{
+            const _ai = document.getElementById('actor-info');
+            if(_ai){
+              _ai.innerHTML = '<div style="font-size:42px;font-weight:700;text-align:center;color:#88ccff;">'
+                + '📚 ' + next.name + ' 行動前先答題!<br>'
+                + '<span style="font-size:24px;color:#aaccff;">答對才能行動,答錯則跳過本回合</span></div>';
+            }
+            document.getElementById('action-panel').style.display='none';
+          }catch(_){}
+          _advQuizResolveCb = function(){
+            // ★ 從全域旗標讀本次答題結果(主程式 cb 不傳參數)
+            const _isCorrect = (window._advLastQuizCorrect === true);
+            try{ window._bossQuizInFlight = false; }catch(_){}
+            try{ delete next._wbQuizPending; }catch(_){}
+            next._wbQuizDoneRound = G.round; // 標記本回合已答
+            if(!_isCorrect){
+              // 答錯 → 跳過本回合 + 龍王普攻 HP 最少玩家
+              try{ if(typeof log === 'function') log('💔 ' + next.name + ' 答錯題目,本回合跳過行動'); }catch(_){}
+              try{
+                const alive = G.p1.filter(h => h && h.curHp > 0);
+                if(alive.length > 0){
+                  const tgt = alive.slice().sort((a,b) => (a.curHp/Math.max(1,a.hp)) - (b.curHp/Math.max(1,b.hp)))[0];
+                  const boss = (G.p2 && G.p2[0]) ? G.p2[0] : null;
+                  if(boss && boss.curHp > 0 && tgt){
+                    const atkv = boss.atk || 49;
+                    const dmg = Math.floor(atkv * (1 + Math.random() * 0.3));
+                    tgt.curHp = Math.max(0, tgt.curHp - dmg);
+                    try{ if(typeof renderCard === 'function') renderCard(tgt); }catch(_){}
+                    try{ if(typeof log === 'function') log('🦷 龍王趁隙撲擊 ' + tgt.name + ' -' + dmg + ' HP'); }catch(_){}
+                    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-atk', 0.6); }catch(_){}
+                  }
+                }
+              }catch(eP){ console.warn('[WB-PlayerQuiz] 答錯懲罰例外', eP); }
+              // 標記行動完並推進
+              next.acted = true;
+              _pSetTimeout(function(){ if(typeof checkWin === 'function' && checkWin()) return; startTurn(); }, 800);
+              return;
+            }
+            // 答對 → 重新觸發 startTurn 走正常玩家行動流程
+            try{ if(typeof log === 'function') log('🎯 ' + next.name + ' 答對題目,可以行動了!'); }catch(_){}
+            _pSetTimeout(function(){
+              if(typeof checkWin === 'function' && checkWin()) return;
+              startTurn();
+            }, 300);
+          };
+          try{ advShowQuiz(); }catch(eAQ){
+            console.error('[WB-PlayerQuiz] advShowQuiz 失敗', eAQ);
+            try{ window._bossQuizInFlight = false; }catch(_){}
+            try{ delete next._wbQuizPending; }catch(_){}
+            // 失敗就視為已答(直接顯示 action panel)
+            next._wbQuizDoneRound = G.round;
+            _advQuizResolveCb = null;
+          }
+          return; // 等玩家答完,cb 會推進
+        }
+      }
+    }catch(_wbPqE){ console.warn('[WB-PlayerQuiz] 守門例外,fallback 原流程', _wbPqE); }
+
     // 顯示自動戰鬥按鈕
     const _autoBtn=document.getElementById('b-auto-battle');
     if(_autoBtn) _autoBtn.style.display='block';
@@ -27779,6 +27858,8 @@ window.ADV_QUIZ_BOSS_NAMES = [
   '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
   '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者',
   '山岳禁咒・崩天巨人',
+  // ★ v3.3.1 — 世界 BOSS:維蘇威火山龍王 行動前要出題(沒加會跳過答題)
+  '維蘇威火山龍王',
 ];
 
 function aiAct(a){
@@ -29969,6 +30050,14 @@ function doSurrender(){
     try{
       const _gc = document.getElementById('gc');
       if(_gc) _gc.classList.remove('adv-battle');
+    }catch(_){}
+    // ★ v3.3.1 — 還原真實 _wbNet(雙保險;exitAdventureMode 內也有同樣處理)
+    //   防止單人練習進入後沒開戰、直接放棄回學校 → _wbNet 仍是 mock → 開新房間失敗
+    try{
+      if(window._wbSoloRealWbNet){
+        window._wbNet = window._wbSoloRealWbNet;
+        window._wbSoloRealWbNet = null;
+      }
     }catch(_){}
     // ★ 退出冒險模式(清旗標、停 BGM 等)
     try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(_){}
@@ -41550,6 +41639,20 @@ function exitAdventureMode(){
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = true;
+    // ★ v3.3.1 — 還原真實 _wbNet,避免單人練習殘留的 mock _wbNet 害下次「開新房間」失敗
+    //   bug 症狀:玩家進單人練習後沒打仗就返回首頁 → exitAdventureMode 觸發 →
+    //             window._wbNet 仍是 mock(只有 getSnapshot/setMyHero 等練習用方法,沒 createRoom)→
+    //             玩家點「開新房間」→ TypeError: window._wbNet.createRoom is not a function
+    //   修補:這裡統一還原,確保 _wbNet 永遠是真實連線層(WBNet)
+    try{
+      if(window._wbSoloRealWbNet){
+        window._wbNet = window._wbSoloRealWbNet;
+        window._wbSoloRealWbNet = null;
+        console.log('[exitAdventureMode] ✅ 已還原真實 _wbNet(從練習模式 mock)');
+      }
+    }catch(_eRestore){
+      console.warn('[exitAdventureMode] 還原 _wbNet 失敗', _eRestore);
+    }
     // 清答題相關狀態 (避免下次重進時殘留答對次數)
     try{
       window._wbQuizState = {};
@@ -48079,6 +48182,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   });
 
   if (isCorrect) {
+    // ★ v3.3.1 — 記錄本次答題結果,供世界 BOSS 戰玩家行動前答題的 cb 判斷答對/答錯
+    try{ window._advLastQuizCorrect = true; }catch(_){}
     _advStats.correctCount++;
     _advStats.totalQuestions++;
     // ★ v1.0.20260420.3100 — 連續答對連擊 + 本場最高紀錄
@@ -48178,6 +48283,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       return; // 讓玩家繼續作答，不結束
     }
     _advStats.totalQuestions++; // 答錯計入總次數
+    // ★ v3.3.1 — 記錄本次答題結果,供世界 BOSS 戰玩家行動前答題的 cb 判斷答對/答錯
+    try{ window._advLastQuizCorrect = false; }catch(_){}
     // ★ v1.0.20260420.3100 — 確認答錯(已過 _hasExtraChance 檢查)→ 連擊歸零,但 maxStreak 保留為本場最高
     _advStats.currentStreak = 0;
     // ★ 獎章系統：答錯需通知以重置連續答對連擊（_hasExtraChance 在上方已 return，不會走到這裡）
@@ -48202,6 +48309,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 function advOnQuizTimeout() {
   if (_advQuizPhase !== 'asking') return;
   _advQuizPhase = 'answered';
+  // ★ v3.3.1 — 超時視為答錯,供世界 BOSS 戰玩家行動前答題的 cb 判斷
+  try{ window._advLastQuizCorrect = false; }catch(_){}
   document.querySelectorAll('.aqo-btn').forEach(btn => { btn.disabled = true; });
   try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
   // ★ 等Boss逾時嘲諷氣泡播完再繼續
