@@ -1004,7 +1004,7 @@
           <span>❤️ 500,000 HP</span>
           <span>⚔️ 攻擊 49</span>
           <span>🛡️ 特技 50</span>
-          <span>💨 速度 25</span>
+          <span>💨 速度 15</span>
           <span>🔥 火屬性</span>
         </div>
         <!-- ★ v4.0 階段 2 — BOSS 能力介紹按鈕(點開可捲動詳細視窗) -->
@@ -1070,15 +1070,16 @@
     </div>
 
     <!-- ★ v2.0 — 隊伍排名獎勵預告 -->
+    <!-- ★ FIX 20260518 — 排行榜字體放大 200%(玩家反應字太小) -->
     <div style="margin-top:20px;padding:16px;background:rgba(0,0,0,0.4);border-radius:12px;border:1.5px solid rgba(212,168,67,0.4);">
-      <div style="font-size:18px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:8px;">
+      <div style="font-size:36px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:8px;">
         🏆 隊伍排名獎勵(BOSS 倒下時依累積傷害名次發獎)
       </div>
-      <div style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.6;">
+      <div style="font-size:24px;color:#aaa;margin-bottom:12px;line-height:1.6;">
         每隊伍由「同一個 4 人房間的玩家」識別。打贏越多場、傷害越高,排名越前面。
         <br>同一隻 BOSS 期間,你跟同房間隊友打過的所有場次傷害會累積計算。
       </div>
-      <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12px;"></div>
+      <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:8px;font-size:24px;"></div>
     </div>
 
     <!-- ★ v2.0 — 8 隻元素龍預告 -->
@@ -1167,14 +1168,16 @@
       items.push(`📜 EXP 卷軸 ×${r.expScrolls}`);
     }
     if(r.titleTemplate) items.push(`🎖 限定稱號`);
+    // ★ FIX 20260518 — 排行榜字體放大 200%(玩家反應字太小)
+    //   tier 標題 14→28、名次 11→22、獎勵項目 11→22,padding/border 同步放大
     return `
       <div style="background:rgba(${tierColor[t].replace('#','').match(/.{2}/g).map(h=>parseInt(h,16)).join(',')},0.15);
-                  border:1.5px solid ${tierColor[t]};border-radius:8px;padding:8px 10px;">
-        <div style="font-size:14px;font-weight:700;color:${tierColor[t]};letter-spacing:1px;">
+                  border:3px solid ${tierColor[t]};border-radius:16px;padding:16px 20px;">
+        <div style="font-size:28px;font-weight:700;color:${tierColor[t]};letter-spacing:1px;">
           ${r.tier}
         </div>
-        <div style="font-size:11px;color:#aaa;margin-top:2px;">名次 ${r.rankRange}</div>
-        <div style="font-size:11px;color:#ffe8a0;margin-top:4px;line-height:1.5;">
+        <div style="font-size:22px;color:#aaa;margin-top:4px;">名次 ${r.rankRange}</div>
+        <div style="font-size:22px;color:#ffe8a0;margin-top:8px;line-height:1.5;">
           ${items.join('<br>')}
         </div>
       </div>

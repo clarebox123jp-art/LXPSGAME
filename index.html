@@ -18543,6 +18543,37 @@ function doDmg(target, rawDmg, opts={}){
         rawDmg = Math.max(1, Math.floor(rawDmg * _ocMult));
       }
     }catch(_){}
+    // ★ FIX 20260518 — 維蘇威火山龍王「炎之意志」單次傷害上限 1% HP
+    //   原本 bug:炸彈客「超級大爆炸」用 fixedDmg:true 路徑,早期 return 在 18548 行,
+    //   完全跳過 19356 行的 _wbApplyBossDmgCap 呼叫,造成固定值傷害穿透 1% 上限。
+    //   修法:在 fixedDmg 早期 return 之前,先對火山龍王套上 1% 上限 + 四元素護盾削減。
+    if(target && target.name === '維蘇威火山龍王'
+       && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+      try{
+        const _origFx = rawDmg;
+        if(typeof window._wbApplyBossDmgCap === 'function'){
+          rawDmg = window._wbApplyBossDmgCap(target, rawDmg, { actor: opts.actor, action: opts });
+        }else{
+          rawDmg = Math.min(rawDmg, Math.max(1, Math.floor(target.hp * 0.01)));
+        }
+        // 護盾削減(若攻擊者有元素資訊)
+        try{
+          const _aFx2 = opts.actor || G.activeChar;
+          const _atkElemFx = _aFx2 ? (_aFx2._wbPickedElement || _aFx2.element || null) : null;
+          if(_atkElemFx && typeof window._wbConsumeShield === 'function'){
+            const consumed = window._wbConsumeShield(target, _atkElemFx);
+            if(consumed){
+              const META = window._WB_ELEMENT_META || {};
+              const meta = META[consumed] || {icon:'?', label:consumed+'盾'};
+              try{ log(`🛡 [${target.name}] ${meta.icon}${meta.label} -1`); }catch(_){}
+            }
+          }
+        }catch(_){}
+        if(_origFx !== rawDmg){
+          try{ log(`🐉 [${target.name}] 炎之意志(固定值):傷害減至 ${rawDmg}(原 ${_origFx})`); }catch(_){}
+        }
+      }catch(_wbFxErr){ console.warn('[WB] 維蘇威 fixedDmg 上限處理失敗', _wbFxErr); }
+    }
     target.curHp = Math.max(0, target.curHp - rawDmg);
     try{ showPopup(target, '-'+rawDmg, 'dmg'); }catch(_){}
     return rawDmg;
@@ -36667,6 +36698,59 @@ try{
   }
 }catch(_){}
 scaleToViewport();
+
+// ════════════════════════════════════════════════════════════════
+// ★ FIX 20260518 — PC 畫面位移 1/5 修補(通用安全網)
+// ────────────────────────────────────────────────────────────────
+// 症狀:PC 玩家偶爾遇到「畫面向上移約 1/5,上半部超出螢幕,無法恢復」。
+// 根因分析(無法復現但合理推斷):
+//   1) #_gc_wrapper / #gc 結構是用 transform:scale 縮放後靠 flex 置中,
+//      正常情況下整個遊戲在 body 內等同 100vw × 100vh,document 不應產生捲動。
+//   2) 但若某個程式碼路徑「不小心」讓 document 捲動(例如:
+//        a. <input>/<textarea>.focus() 預設會把元素捲入視野;
+//        b. <button>.scrollIntoView 被觸發;
+//        c. iOS 鍵盤彈起後 visualViewport.height 變小,瀏覽器把焦點元素往上捲;
+//        d. 某個 popup 元素的 top 算錯成負值,讓 body 高度超出視窗;
+//        e. 某個 anchor 連結的 #fragment 跳轉)
+//      ,捲動位置就會卡在非 0 的值。
+//   3) 一旦 document.scrollY > 0,因為 #_gc_wrapper 是 100vh 等高,
+//      上半 1/5 會被推出可視區域,且玩家在橫式全螢幕沒有捲軸可拉回。
+//
+// 修法:全域監聽 scroll 事件,只要 document 不該捲動的時候卻被捲了,
+//      立刻 scrollTo(0,0) 強制歸位。同時對 4 個明確 focus() 加 preventScroll
+//      作為治本。雙重保險,避免新 bug 來源繼續觸發。
+// ════════════════════════════════════════════════════════════════
+(function _installViewportGuard(){
+  // 用旗標讓「玩家主動捲動」(例如關卡選擇頁的整頁捲動)豁免。
+  // 預設遊戲頁不應該有 document 級捲動,所以一律歸位。
+  // 若未來有真的需要 document 捲動的頁面,把 window._allowDocScroll = true 即可暫停。
+  let _scheduled = false;
+  function _snapBack(){
+    if(window._allowDocScroll === true) return;
+    // 已經在 0,0,不必做事
+    const sx = window.pageXOffset || document.documentElement.scrollLeft || 0;
+    const sy = window.pageYOffset || document.documentElement.scrollTop  || 0;
+    if(sx === 0 && sy === 0) return;
+    try{ window.scrollTo(0, 0); }catch(_){}
+    try{ document.documentElement.scrollTop = 0; document.documentElement.scrollLeft = 0; }catch(_){}
+    try{ document.body.scrollTop = 0; document.body.scrollLeft = 0; }catch(_){}
+  }
+  // 監聽全域 scroll(passive 以免影響效能)
+  window.addEventListener('scroll', function(){
+    if(_scheduled) return;
+    _scheduled = true;
+    // 用 rAF 而非立即,避免和瀏覽器自動捲動 race;同時合併多次捲動成一次處理
+    requestAnimationFrame(function(){
+      _scheduled = false;
+      _snapBack();
+    });
+  }, {passive: true, capture: true});
+  // 初始化也跑一次(防止頁面載入時就被某個 anchor / hash 捲走)
+  _snapBack();
+  // 暴露手動歸位 API(玩家或除錯時可用)
+  window._snapViewportBack = _snapBack;
+})();
+
 // ══════════════════════════════════════
 // 冒險闖關模式 - 關卡選擇系統
 // ══════════════════════════════════════
@@ -56022,7 +56106,10 @@ window._showBugReportDialog = function(pageContext){
       counter.style.color = (_len >= 95) ? '#ff7799' : (_len >= 80 ? '#ffcc77' : '#ddaacc');
     });
     // 自動聚焦,玩家直接輸入
-    setTimeout(() => { try{ ta.focus(); }catch(_){} }, 100);
+    // ★ FIX 20260518 — PC 上 .focus() 會讓瀏覽器自動把元素捲入視野,
+    //   導致 #_gc_wrapper 被「捲動」(其實是頁面 scroll),整個遊戲畫面位移約 1/5。
+    //   加 preventScroll:true 阻止此行為。
+    setTimeout(() => { try{ ta.focus({preventScroll:true}); }catch(_){ try{ ta.focus(); }catch(_){} } }, 100);
   }
 
   // 取消按鈕
@@ -60056,7 +60143,8 @@ function _saveToPresetSlot(slotIdx, heroes, elems, skills){
       </div>
     </div>`;
   document.body.appendChild(nameOv);
-  setTimeout(()=>{ const f=document.getElementById('preset-name-field'); if(f){ f.focus(); f.select(); } }, 100);
+  // ★ FIX 20260518 — focus 加 preventScroll 防止 PC 上頁面被捲動
+  setTimeout(()=>{ const f=document.getElementById('preset-name-field'); if(f){ try{ f.focus({preventScroll:true}); }catch(_){ try{ f.focus(); }catch(_){} } f.select(); } }, 100);
 }
 
 // ★ 確定儲存：從 DOM 讀取資料（避免 onclick 屬性中 JSON 雙引號問題）
@@ -65021,7 +65109,8 @@ async function _addFriendByInviteCode(){
   const code = input.value.trim().toUpperCase();
   if(!code){
     bannerFX(null, '請輸入好友的 8 碼邀請碼', '#ff9944', 1500);
-    input.focus();
+    // ★ FIX 20260518 — preventScroll 防止頁面被捲動
+    try{ input.focus({preventScroll:true}); }catch(_){ try{ input.focus(); }catch(_){} }
     return;
   }
   if(code.length !== 8){
@@ -65097,7 +65186,8 @@ async function _addFriendByEmail() {
   const email = input.value.trim().toLowerCase();
   if (!email) {
     bannerFX(null, '請輸入好友的 Gmail 帳號', '#ff9944', 1500);
-    input.focus();
+    // ★ FIX 20260518 — preventScroll 防止頁面被捲動
+    try{ input.focus({preventScroll:true}); }catch(_){ try{ input.focus(); }catch(_){} }
     return;
   }
   if (!email.includes('@')) {
