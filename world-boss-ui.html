@@ -7515,14 +7515,29 @@
     const subject = q.subject || q.cat || '隨機題目';
     let options = q.options || q.opts;
     let correctIdx = -1;
+    // ★ v3.3.1 — 修復「答對也顯示答錯」bug(同開戰題修補)
+    //   主格式是 q.answer='A'/'B'/'C'/'D' 字母,不是 q.a='答案字串'
     if(Array.isArray(options) && options.length > 0){
-      // 已是陣列形式
-      correctIdx = options.indexOf(q.a || q.answer);
-      if(correctIdx < 0 && typeof q.correct === 'number') correctIdx = q.correct;
+      const _ansRaw = (q.answer != null ? q.answer : q.a);
+      const _ansStr = (_ansRaw == null ? '' : String(_ansRaw)).trim();
+      const _ansLetter = _ansStr.toUpperCase();
+      if(['A','B','C','D'].indexOf(_ansLetter) >= 0){
+        correctIdx = ['A','B','C','D'].indexOf(_ansLetter);
+      }
+      if(correctIdx < 0 && typeof q.correct === 'number'){
+        correctIdx = q.correct;
+      }
+      if(correctIdx < 0 && _ansStr){
+        correctIdx = options.indexOf(_ansStr);
+      }
+      if(correctIdx < 0 || correctIdx >= options.length){
+        console.warn('[WB-Quiz] 無法判定正解索引,題目資料:', q);
+        correctIdx = 0;
+      }
     }else{
       // 單一答案(a 字串)+ 沒選項 → 簡化成「對 / 錯」
       options = ['是', '否'];
-      correctIdx = (q.a === '是' || q.a === true || q.a === 'true') ? 0 : 1;
+      correctIdx = (q.a === '是' || q.a === true || q.a === 'true' || q.answer === '是') ? 0 : 1;
     }
 
     const G = window._wbHostG;
@@ -7717,12 +7732,39 @@
     const subject = q.subject || q.cat || '隨機題目';
     let options = q.options || q.opts;
     let correctIdx = -1;
+    // ★ v3.3.1 — 修復「答對也顯示答錯」bug
+    //   根因:題庫主要格式是 q.answer='A'/'B'/'C'/'D'(字母索引),不是 q.a='答案字串'。
+    //         舊版 `options.indexOf(q.a || q.answer)` 把字母 'A' 丟去 options 陣列裡找,
+    //         options 是 ['台北','高雄','台中','台南'] 之類,找不到 → 回傳 -1 → 永遠答錯。
+    //   修法:依序嘗試 4 種格式,確保跟主程式 advShowQuiz 一致:
+    //         (1) q.answer 是 A/B/C/D 字母 → 用 ['A','B','C','D'].indexOf(letter)
+    //         (2) q.a 是 A/B/C/D 字母 → 同上
+    //         (3) q.correct 是數字索引 → 直接用
+    //         (4) q.a 是答案字串 → 用 options.indexOf(string)
     if(Array.isArray(options) && options.length > 0){
-      correctIdx = options.indexOf(q.a || q.answer);
-      if(correctIdx < 0 && typeof q.correct === 'number') correctIdx = q.correct;
+      const _ansRaw = (q.answer != null ? q.answer : q.a);
+      const _ansStr = (_ansRaw == null ? '' : String(_ansRaw)).trim();
+      const _ansLetter = _ansStr.toUpperCase();
+      // (1)(2) 字母 A/B/C/D → 0/1/2/3
+      if(['A','B','C','D'].indexOf(_ansLetter) >= 0){
+        correctIdx = ['A','B','C','D'].indexOf(_ansLetter);
+      }
+      // (3) 數字索引(q.correct)
+      if(correctIdx < 0 && typeof q.correct === 'number'){
+        correctIdx = q.correct;
+      }
+      // (4) 答案字串 → 在 options 裡找位置
+      if(correctIdx < 0 && _ansStr){
+        correctIdx = options.indexOf(_ansStr);
+      }
+      // 防呆:還是找不到就強制設 0(理論上不會發生)
+      if(correctIdx < 0 || correctIdx >= options.length){
+        console.warn('[WB-Opening] 無法判定正解索引,題目資料:', q);
+        correctIdx = 0;
+      }
     }else{
       options = ['是', '否'];
-      correctIdx = (q.a === '是' || q.a === true || q.a === 'true') ? 0 : 1;
+      correctIdx = (q.a === '是' || q.a === true || q.a === 'true' || q.answer === '是') ? 0 : 1;
     }
 
     ov.innerHTML = `
@@ -7732,8 +7774,7 @@
           🐉 BOSS 開戰挑戰題!
         </div>
         <div style="font-size:27px;color:#ffcc99;text-align:center;margin-bottom:27px;line-height:1.55;">
-          答對:全體能量 +1  /  答錯:全體受 5% maxHp 傷害(無視免傷)
-        </div>
+          答對:全體能量 +1  /  答錯:龍王朝最虛弱者撲擊!</div>
         <span class="wb-quiz-subject">${subject}</span>
         <div class="wb-quiz-q-text">${qText}</div>
         <div class="wb-quiz-options" id="wb-boss-opening-options"></div>
@@ -7815,21 +7856,34 @@
             }
           }, 1800);  // 1.8 秒讓玩家看到 ✅ 結果再切到獎勵 UI
         }else{
+          // ★ v3.3.1 — 取消開戰答錯全體吼叫扣血,改為龍王開場普攻 HP 最少目標
+          //   (測試期玩家反映:全體扣 5% 對中後期 BOSS 戰過重,且不符合「開場介紹」氛圍)
           try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-wrong', 0.5); }catch(_){}
-          resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯!全員受 5% HP 傷害</div>`;
-          G.p1.forEach(h => {
-            if(h && h.curHp > 0){
-              const dmg = Math.floor((h.hp || 100) * 0.05);
-              h.curHp = Math.max(0, h.curHp - dmg);
-              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
+          resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯!維蘇威火山龍王朝最虛弱者撲擊!</div>`;
+          try{
+            const alive = G.p1.filter(h => h && h.curHp > 0);
+            if(alive.length > 0){
+              // 選 HP 最少的玩家(curHp / hp 比率最低者;同比率取 curHp 絕對值較低者)
+              const tgt = alive.slice().sort((a, b) => {
+                const ra = a.curHp / Math.max(1, a.hp);
+                const rb = b.curHp / Math.max(1, b.hp);
+                if(ra !== rb) return ra - rb;
+                return a.curHp - b.curHp;
+              })[0];
+              const boss = (G.p2 && G.p2[0]) ? G.p2[0] : null;
+              const atkv = boss && boss.atk ? boss.atk : 49;
+              const dmg = Math.floor(atkv * (1 + Math.random() * 0.3));
+              tgt.curHp = Math.max(0, tgt.curHp - dmg);
+              try{ if(typeof renderCard === 'function') renderCard(tgt); }catch(_){}
+              try{ if(typeof log === 'function') log(`🦷 開戰失利!維蘇威炎爪撲向 ${tgt.name} -${dmg} HP`); }catch(_){}
+              try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-atk', 0.6); }catch(_){}
             }
-          });
+          }catch(eRoar){
+            console.warn('[WB-Opening] 答錯後龍王普攻流程出錯', eRoar);
+          }
 
           setTimeout(() => {
             ov.remove();
-            try{
-              if(typeof log === 'function') log('💔 開戰題答錯,全員受 5% HP 傷害');
-            }catch(_){}
             if(typeof onDone === 'function') onDone();
           }, 2200);
         }
@@ -8204,15 +8258,36 @@
     btn.style.display = 'inline-block';
     btn.disabled = false;
     btn.onclick = async function(){
-      // ★ FIX 20260517(v) — _wbSoloFakePlayers 現在是 [me, null, null, null],
-      //   過濾掉 null 才能算覆蓋率;且要算上房主指派的 NPC 元素
+      // ★ v3.3.1 — 測試期單人練習新規:必須玩家親自選齊 4 隻角色 + 4 元素齊全才能開戰
+      //   (取消舊的「NPC 自動補位」機制,讓玩家測試最強陣容)
+      //   1. 槽 0 是房主本人,槽 1-3 必須房主用「替換英雄」按鈕指派(_wbHostAssignedSlots)
+      //   2. 4 個槽位都要有英雄、且 4 個元素(火/水/土/風)都要覆蓋齊全才能開戰
       const _hostAssign = window._wbHostAssignedSlots || {};
+
+      // 檢查 1:4 個槽位都要有英雄
+      const _filledSlots = [];
+      const _emptySlots = [];
+      for(let i = 0; i < 4; i++){
+        const _p = _wbSoloFakePlayers && _wbSoloFakePlayers[i];
+        const _a = _hostAssign[i];
+        if((_p && _p.heroName) || (_a && _a.heroName)){
+          _filledSlots.push(i);
+        }else{
+          _emptySlots.push(i);
+        }
+      }
+      if(_emptySlots.length > 0){
+        const _emptyTxt = _emptySlots.map(i => '#' + (i + 1)).join('、');
+        _wbGameAlert('⚠ 戰前準備未完成\n\n空槽位:' + _emptyTxt + '\n\n測試期單人練習必須選齊 4 隻角色才能開戰,\n請點該空槽的「替換英雄」按鈕指派角色與屬性。');
+        return;
+      }
+
+      // 檢查 2:4 元素覆蓋齊全
       const _coverPool = [];
       for(let i = 0; i < 4; i++){
         if(_wbSoloFakePlayers && _wbSoloFakePlayers[i] && _wbSoloFakePlayers[i].heroName){
           _coverPool.push(_wbSoloFakePlayers[i]);
         }else if(_hostAssign[i] && _hostAssign[i].heroName){
-          // 把指派的 NPC 也納入覆蓋計算
           const a = _hostAssign[i];
           _coverPool.push({
             heroName: a.heroName,
@@ -8226,10 +8301,11 @@
           const m = _WB_TC_ALL_ELEMS.find(x => x.id === e);
           return m ? (m.ic + m.name) : e;
         }).join(' / ');
-        const proceed = await _wbGameConfirm('⚠ 還缺 ' + _missTxt + ' 屬性,自動 NPC 會嘗試補位。確定要開戰嗎?');
-        if(!proceed) return;
+        _wbGameAlert('⚠ 元素未齊全\n\n還缺:' + _missTxt + ' 屬性\n\n世界 BOSS 戰需要 🔥火 💧水 ⛰土 🌪風 四種屬性,\n請調整角色屬性後再開戰(每隻可在「替換英雄」中改選屬性)。');
+        return;
       }
-      // 關閉隊伍確認頁,進入戰鬥
+
+      // 兩項檢查都通過 → 關閉確認頁進入戰鬥
       document.getElementById('wb-team-confirm-overlay').classList.remove('show');
       _wbSoloBeginBattle();
     };
