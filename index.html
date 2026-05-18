@@ -27230,121 +27230,6 @@ function startTurn(){
     G.activeChar=next;
     G.p1.concat(G.p2).forEach(h=>renderCard(h));
     hidePassiveBtns(); restoreActionBtns();
-
-    // ★ v3.3.1 — 世界 BOSS 戰專屬:每個玩家英雄行動前都要答題
-    //   流程:本回合 next.pos 未答 → 觸發 advShowQuiz → 答對才顯示 action panel,答錯跳過
-    //   防重入:用 next._wbQuizDoneRound 記錄「上次答題完成的回合數」,同回合不重複觸發
-    //   排除:_autoBattle(自動戰鬥不出題,免得玩家放掛機就卡題)
-    try{
-      const _isWBStage = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
-      const _quizIdle  = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle');
-      const _alreadyAnswered = next._wbQuizDoneRound === G.round;
-      if(_isWBStage && !_autoBattle && !_alreadyAnswered && _quizIdle
-         && !window._bossQuizInFlight && next.curHp > 0 && !next.acted){
-        // 暈眩/凍結等狀態 → 跳過答題(本回合本來就無法行動)
-        const _skipTypes = ['stun','freeze','sleep','para','trap'];
-        const _skipSt = next.status && next.status.find(s => _skipTypes.indexOf(s.type) >= 0);
-        // ★ v3.3.1 — 題庫空就直接跳過答題(免得 advShowQuiz 走 __needRepick 卡住玩家)
-        const _hasQuestions = (typeof _advSessionQuestions !== 'undefined'
-          && Array.isArray(_advSessionQuestions) && _advSessionQuestions.length > 0);
-        if(!_skipSt && _hasQuestions){
-          window._bossQuizInFlight = true;
-          next._wbQuizPending = true;
-          // ★ 清掉上次的答題結果,等本次答題後 advAnswerQuestion 會設新值
-          try{ window._advLastQuizCorrect = null; }catch(_){}
-          console.log('[WB-PlayerQuiz] 觸發 ' + next.name + ' 行動前答題,round=' + G.round);
-          // 提示玩家
-          try{
-            const _ai = document.getElementById('actor-info');
-            if(_ai){
-              _ai.innerHTML = '<div style="font-size:42px;font-weight:700;text-align:center;color:#88ccff;">'
-                + '📚 ' + next.name + ' 行動前先答題!<br>'
-                + '<span style="font-size:24px;color:#aaccff;">答對才能行動,答錯則跳過本回合</span></div>';
-            }
-            document.getElementById('action-panel').style.display='none';
-          }catch(_){}
-          _advQuizResolveCb = function(){
-            // ★ 從全域旗標讀本次答題結果(主程式 cb 不傳參數)
-            const _isCorrect = (window._advLastQuizCorrect === true);
-            try{ window._bossQuizInFlight = false; }catch(_){}
-            try{ delete next._wbQuizPending; }catch(_){}
-            next._wbQuizDoneRound = G.round; // 標記本回合已答
-            if(!_isCorrect){
-              // 答錯 → 跳過本回合 + 龍王普攻 HP 最少玩家
-              try{ if(typeof log === 'function') log('💔 ' + next.name + ' 答錯題目,本回合跳過行動'); }catch(_){}
-              try{
-                const alive = G.p1.filter(h => h && h.curHp > 0);
-                if(alive.length > 0){
-                  const tgt = alive.slice().sort((a,b) => (a.curHp/Math.max(1,a.hp)) - (b.curHp/Math.max(1,b.hp)))[0];
-                  const boss = (G.p2 && G.p2[0]) ? G.p2[0] : null;
-                  if(boss && boss.curHp > 0 && tgt){
-                    const atkv = boss.atk || 49;
-                    const dmg = Math.floor(atkv * (1 + Math.random() * 0.3));
-                    tgt.curHp = Math.max(0, tgt.curHp - dmg);
-                    try{ if(typeof renderCard === 'function') renderCard(tgt); }catch(_){}
-                    try{ if(typeof log === 'function') log('🦷 龍王趁隙撲擊 ' + tgt.name + ' -' + dmg + ' HP'); }catch(_){}
-                    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-atk', 0.6); }catch(_){}
-                  }
-                }
-              }catch(eP){ console.warn('[WB-PlayerQuiz] 答錯懲罰例外', eP); }
-              // 標記行動完並推進
-              next.acted = true;
-              _pSetTimeout(function(){ if(typeof checkWin === 'function' && checkWin()) return; startTurn(); }, 800);
-              return;
-            }
-            // 答對 → 重新觸發 startTurn 走正常玩家行動流程
-            try{ if(typeof log === 'function') log('🎯 ' + next.name + ' 答對題目,可以行動了!'); }catch(_){}
-            _pSetTimeout(function(){
-              if(typeof checkWin === 'function' && checkWin()) return;
-              startTurn();
-            }, 300);
-          };
-          try{ advShowQuiz(); }catch(eAQ){
-            console.error('[WB-PlayerQuiz] advShowQuiz 失敗', eAQ);
-            try{ window._bossQuizInFlight = false; }catch(_){}
-            try{ delete next._wbQuizPending; }catch(_){}
-            // 失敗就視為已答(直接顯示 action panel)
-            next._wbQuizDoneRound = G.round;
-            _advQuizResolveCb = null;
-            // 失敗 fallback:重跑 startTurn 走原流程
-            _pSetTimeout(function(){ if(typeof startTurn === 'function') startTurn(); }, 200);
-            return;
-          }
-          // ★ v3.3.1 — 3 秒 watchdog:確認 advShowQuiz 真的顯示了 overlay 且 phase=asking,
-          //   否則強制 fire cb 避免戰鬥永久卡死
-          const _wdRound = G.round;
-          const _wdActor = next;
-          setTimeout(function(){
-            try{
-              // 如果回合已推進或 actor 已換,自然恢復
-              if(!G || G.round !== _wdRound) return;
-              if(G.activeChar && G.activeChar !== _wdActor) return;
-              // 如果 quiz overlay 真的有顯示 + phase=asking → 正常等待中,不介入
-              const _qOv = document.getElementById('adv-quiz-overlay');
-              const _phaseOk = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking');
-              const _ovShown = (_qOv && _qOv.classList.contains('show'));
-              if(_phaseOk && _ovShown) return;
-              // 真的卡住 → 強制清狀態 + 跳過答題進行下一步
-              console.warn('[WB-PlayerQuiz watchdog] advShowQuiz 沒成功進入 asking phase,強制跳過答題');
-              try{ window._bossQuizInFlight = false; }catch(_){}
-              try{ delete _wdActor._wbQuizPending; }catch(_){}
-              _wdActor._wbQuizDoneRound = _wdRound;
-              _advQuizResolveCb = null;
-              try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(_){}
-              try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
-              _pSetTimeout(function(){
-                if(typeof checkWin === 'function' && checkWin()) return;
-                if(typeof startTurn === 'function') startTurn();
-              }, 200);
-            }catch(_eW){ console.warn('[WB-PlayerQuiz watchdog] 例外', _eW); }
-          }, 3000);
-          return; // 等玩家答完,cb 會推進
-        }else if(_skipSt){
-          // 暈眩等狀態 → 不答題,直接走原流程(主程式會自動跳過)
-        }
-      }
-    }catch(_wbPqE){ console.warn('[WB-PlayerQuiz] 守門例外,fallback 原流程', _wbPqE); }
-
     // 顯示自動戰鬥按鈕
     const _autoBtn=document.getElementById('b-auto-battle');
     if(_autoBtn) _autoBtn.style.display='block';
@@ -27894,8 +27779,6 @@ window.ADV_QUIZ_BOSS_NAMES = [
   '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
   '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者',
   '山岳禁咒・崩天巨人',
-  // ★ v3.3.1 — 世界 BOSS:維蘇威火山龍王 行動前要出題(沒加會跳過答題)
-  '維蘇威火山龍王',
 ];
 
 function aiAct(a){
@@ -28057,14 +27940,7 @@ function _realAiAct(a){
     window._aiWatchdog = setTimeout(function(){
       try{
         if(!a || a.curHp <= 0) return;
-        // ★ v3.3.1 — 修正判斷邏輯
-        //   舊版:`if(a.acted || G.activeChar !== a) return;`
-        //   bug:aiUseSkill 結尾會先設 a.acted=true 才 _pSetTimeout(startTurn,500),
-        //       若 startTurn 被 _gamePaused queue 住,activeChar 仍是 a 但 acted=true,
-        //       watchdog 直接 return → 完全沒救到 → 玩家看到 25~30 秒卡死(_pSetTimeout fallback 20s)
-        //   修法:只看 G.activeChar 是否仍指向 a。acted=true 不算數,
-        //         只有 startTurn 真的成功跑、把 activeChar 換到下一個角色才算行動完。
-        if(G.activeChar !== a) return;  // activeChar 已換人 → 正常推進中
+        if(a.acted || G.activeChar !== a) return;  // 已正常結束行動
         // 玩家正在 BOSS quiz 答題 → 等待中,不算卡死
         const _qov = document.getElementById('adv-quiz-overlay');
         if(_qov && _qov.classList.contains('show')) return;
@@ -29981,57 +29857,6 @@ function aiUseSkill(a,sk,cost,pref){
   }
 
   a.acted=true; updateUI(); _pSetTimeout(startTurn,500);
-  // ★ v3.3.1 — aiUseSkill watchdog:同 endAction 5 秒兜底,根治 BOSS 卡 25~30 秒問題
-  //   根因(打很多回合後才發生的卡死):
-  //   (1) BOSS 釋放技能 doDmg(玩家英雄) → 玩家英雄觸發受擊被動 prompt(金鐘罩/以牙還牙/占星師)
-  //   (2) prompt 設 _gamePaused=true 等玩家選擇
-  //   (3) BOSS 攻擊完畢呼叫 _pSetTimeout(startTurn,500),因 _gamePaused=true 被 push 到 _pendingTimers
-  //   (4) 玩家選完 prompt 後 cleanup 已跑過 _resumeTimers,新 push 的 timer 沒被消化
-  //   (5) _aiWatchdog 10 秒 fire 但開頭 `if(a.acted) return` → aiUseSkill 已設 acted=true → 直接放棄
-  //   (6) 只能等 _pSetTimeout 20 秒 fallback → 玩家觀察到 25-30 秒延遲
-  //   修補:同 endAction 加 5 秒兜底 watchdog,若 G.round/activeChar 都沒推進就強制 resume + startTurn
-  try{
-    const _wdRoundAI = G ? (G.round||0) : 0;
-    const _wdActorAI = a;
-    setTimeout(function(){
-      try{
-        if(!G) return;
-        // 回合已推進 → 自然恢復,不介入
-        if(G.round !== _wdRoundAI) return;
-        // activeChar 已換人 → startTurn 已成功跑,不介入
-        if(G.activeChar && G.activeChar !== _wdActorAI) return;
-        // 合法 modal 顯示中是合理等待,不強制
-        const _qov = document.getElementById('adv-quiz-overlay');
-        if(_qov && _qov.classList.contains('show')) return;
-        const _resOv = document.getElementById('adv-result-overlay');
-        if(_resOv && _resOv.classList.contains('show')) return;
-        const _miniRes = document.getElementById('adv-mini-result');
-        if(_miniRes && _miniRes.classList.contains('show')) return;
-        const _rwOv = document.getElementById('adv-reward-overlay');
-        if(_rwOv && (_rwOv.classList.contains('show') || (_rwOv.style.display && _rwOv.style.display !== 'none'))) return;
-        const _bpm = document.getElementById('burst-priority-modal');
-        if(_bpm) return;
-        const _dsOv = document.getElementById('discard-overlay');
-        if(_dsOv && (_dsOv.classList.contains('show') || (_dsOv.style.display && _dsOv.style.display !== 'none'))) return;
-        const _csOv = document.getElementById('adv-cutscene-overlay');
-        if(_csOv && (_csOv.style.display === 'flex' || _csOv.classList.contains('show'))) return;
-        const _pp = document.getElementById('passive-prompt');
-        if(_pp) return; // 玩家正在選被動 prompt,等他選完
-        // 真的卡死 → 強制 resume + 推進回合
-        console.warn('[aiUseSkill watchdog] startTurn 卡住超過 5 秒,強制 resume (actor:'+(_wdActorAI&&_wdActorAI.name)+')');
-        try{ window._gamePaused = false; }catch(_){}
-        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
-        setTimeout(function(){
-          try{
-            if(!G) return;
-            if(G.round !== _wdRoundAI) return;
-            if(G.activeChar && G.activeChar !== _wdActorAI) return;
-            if(typeof startTurn === 'function') startTurn();
-          }catch(_){}
-        }, 100);
-      }catch(_wdAIE){ console.warn('[aiUseSkill watchdog 異常]', _wdAIE); }
-    }, 5000);
-  }catch(_){}
 }
 
 // ====== WIN CHECK ======
@@ -30086,14 +29911,6 @@ function doSurrender(){
     try{
       const _gc = document.getElementById('gc');
       if(_gc) _gc.classList.remove('adv-battle');
-    }catch(_){}
-    // ★ v3.3.1 — 還原真實 _wbNet(雙保險;exitAdventureMode 內也有同樣處理)
-    //   防止單人練習進入後沒開戰、直接放棄回學校 → _wbNet 仍是 mock → 開新房間失敗
-    try{
-      if(window._wbSoloRealWbNet){
-        window._wbNet = window._wbSoloRealWbNet;
-        window._wbSoloRealWbNet = null;
-      }
     }catch(_){}
     // ★ 退出冒險模式(清旗標、停 BGM 等)
     try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(_){}
@@ -38036,15 +37853,12 @@ function _showNewHeroAnnouncement(forceShow){
     document.head.appendChild(st);
   }
 
-  // 主容器(95% 螢幕,讓 v3.0 世界 BOSS 介紹能完整顯示)
-  // ★ v3.3.1 — 從 80vh/900px 加大到 95vh/1200px,根治玩家看不到 v3.0 NEW 完整內容的問題
-  //   原本 80vh 只能露出 worldboss 卡片頂端紅框 + 一個 NEW 標籤,玩家以為是空框直接滑掉,
-  //   完全沒看到「維蘇威火山龍王」、4 人連線玩法、隊伍排名獎勵、16 枚獎章等吸引人的內容。
+  // 主容器(80% 螢幕)
   const box = document.createElement('div');
   box.id = '_event-popup-box';
   box.style.cssText = [
-    'width:92vw;height:95vh;',
-    'max-width:1400px;max-height:1200px;',
+    'width:80vw;height:80vh;',
+    'max-width:1280px;max-height:900px;',
     'background:linear-gradient(160deg,rgba(20,10,40,0.97),rgba(15,5,30,0.97));',
     'border:3px solid rgba(255,210,100,0.7);',
     'border-radius:18px;',
@@ -38064,17 +37878,12 @@ function _showNewHeroAnnouncement(forceShow){
     'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;'
   ].join('');
   header.innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;width:100%;">
+    <div style="display:flex;align-items:center;gap:12px;">
       <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite;">✨</span>
       <span style="font-size:clamp(30px,4.5vw,46px);font-weight:900;color:#ffe066;
         text-shadow:0 0 14px rgba(255,200,80,0.85),0 2px 6px rgba(0,0,0,0.7);
-        letter-spacing:2px;">🎉 歡慶 3.0 版正式上線！</span>
+        letter-spacing:2px;">🎉 歡慶2.0版正式上線！</span>
       <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite 0.6s;">✨</span>
-    </div>
-    <div style="width:100%;text-align:center;margin-top:6px;
-      font-size:clamp(18px,2.2vw,24px);font-weight:700;color:#ffaa66;
-      text-shadow:0 0 10px rgba(255,140,60,0.7),0 2px 4px rgba(0,0,0,0.6);letter-spacing:1.5px;">
-      🌍 全新「世界 BOSS 討伐戰」開放 ・ ⚔ 4 人連線挑戰 ・ 🐉 維蘇威火山龍王降臨
     </div>
   `;
 
@@ -38244,30 +38053,29 @@ function _showNewHeroAnnouncement(forceShow){
       <div class="new-hero-card" style="border-color:rgba(255,150,100,0.75);
         background:linear-gradient(135deg,rgba(60,20,30,0.92),rgba(30,10,15,0.95));
         box-shadow:0 8px 30px rgba(0,0,0,0.5),0 0 30px rgba(255,100,60,0.4),inset 0 1px 0 rgba(255,255,255,0.08);
-        position:relative;overflow:hidden;flex-shrink:0;">
-        <!-- 火星背景(★ v3.3.1 加 z-index:0 避免覆蓋內容) -->
-        <div style="position:absolute;inset:0;pointer-events:none;opacity:0.5;z-index:0;background:
+        position:relative;overflow:hidden;">
+        <!-- 火星背景 -->
+        <div style="position:absolute;inset:0;pointer-events:none;opacity:0.5;background:
           radial-gradient(2px 2px at 12% 18%,rgba(255,180,80,0.85),transparent),
           radial-gradient(1px 1px at 78% 32%,rgba(255,220,120,0.9),transparent),
           radial-gradient(2px 2px at 45% 65%,rgba(255,160,60,0.85),transparent),
           radial-gradient(1px 1px at 88% 78%,rgba(255,200,80,0.85),transparent),
           radial-gradient(1.5px 1.5px at 22% 88%,rgba(255,240,140,0.75),transparent);"></div>
         <!-- ★ NEW 標籤 -->
-        <div style="position:absolute;top:14px;right:14px;z-index:2;font-size:18px;font-weight:900;
+        <div style="position:absolute;top:14px;right:14px;font-size:18px;font-weight:900;
           background:linear-gradient(135deg,#ff6644,#ff3322);color:#fff;
           padding:4px 12px;border-radius:20px;letter-spacing:2px;
           box-shadow:0 4px 12px rgba(255,80,40,0.55);
           animation:newHeroSparkle 1.8s ease-in-out infinite;">🔥 v3.0 NEW</div>
-        <!-- ★ v3.3.1 — 內容 wrapper:position:relative + z-index:1,確保所有內容不被火星背景蓋住 -->
-        <div style="position:relative;z-index:1;">
         <!-- 標題 -->
         <div style="font-size:clamp(34px,3.8vw,48px);font-weight:900;color:#ffcc99;
           text-shadow:0 0 16px rgba(255,120,60,0.75),0 2px 6px rgba(0,0,0,0.8);
-          margin-bottom:8px;display:flex;align-items:center;gap:12px;letter-spacing:2px;">
+          margin-bottom:8px;display:flex;align-items:center;gap:12px;letter-spacing:2px;
+          position:relative;">
           <span style="font-size:1.3em;">🌍</span> 世界 BOSS 討伐戰
         </div>
         <div style="font-size:clamp(20px,1.9vw,26px);color:#ffaa88;margin-bottom:14px;
-          font-weight:700;letter-spacing:1px;">
+          font-weight:700;letter-spacing:1px;position:relative;">
           ⚔ 全伺服器共同對抗的終極挑戰 ⚔
         </div>
 
@@ -38390,15 +38198,6 @@ function _showNewHeroAnnouncement(forceShow){
           <div style="font-size:25px;color:#ffd966;font-weight:800;margin-bottom:10px;">
             🏆 隊伍排名獎勵(全伺服器累積傷害排名)
           </div>
-          <!-- ★ v3.3.1 — 測試期橫幅:封鎖實質獎勵 -->
-          <div style="background:linear-gradient(135deg,rgba(255,100,80,0.25),rgba(200,60,40,0.25));
-            border:2px solid rgba(255,150,100,0.7);border-radius:10px;padding:12px 16px;margin-bottom:12px;
-            font-size:18px;color:#ffddbb;line-height:1.65;letter-spacing:0.5px;">
-            🧪 <b style="color:#ffaa66;">測試期暫不發放實質獎勵</b><br>
-            系統正在進行<b>功能測試與最強陣容驗證</b>,以下獎勵內容為<b>正式開放後</b>的設計藍圖,
-            測試期間擊敗 BOSS 不會獲得知識幣 / 召喚水晶 / 未收錄至寶 / 屠龍稱號。
-            <br><span style="color:#ffe066;">獎章解鎖、排名記錄、戰鬥統計仍照常運作!</span>
-          </div>
           <div style="font-size:18px;color:#ddd;line-height:1.55;margin-bottom:10px;">
             打贏越多場、傷害越高,排名越前面。同一隻 BOSS 期間,你跟同電隊友打過的所有場次傷害會累積計算。
           </div>
@@ -38460,9 +38259,8 @@ function _showNewHeroAnnouncement(forceShow){
             <br>
             <span style="font-size:18px;color:#ffcc99;">按鈕邊緣會冒出火焰粒子,並即時顯示 BOSS 當前 HP(數值 + 百分比)</span>
           </div>
-        </div><!-- 入口提示 outer 結束 -->
-      </div><!-- ★ v3.3.1 內容 wrapper 結束 -->
-    </div><!-- new-hero-card 外層結束 -->
+        </div>
+      </div>
     `;
   };
 
@@ -38655,15 +38453,6 @@ function _showNewHeroAnnouncement(forceShow){
   box.appendChild(footer);
   ov.appendChild(box);
   document.body.appendChild(ov);
-
-  // ★ v3.3.1 — 確保開啟時滾到頂部(玩家第一眼看到 v3.0 世界 BOSS 介紹)
-  try{
-    scrollArea.scrollTop = 0;
-    // requestAnimationFrame 雙保險:某些瀏覽器在 DOM 渲染前 scrollTop 設定會被覆蓋
-    requestAnimationFrame(() => {
-      try{ scrollArea.scrollTop = 0; }catch(_){}
-    });
-  }catch(_){}
 
   // 點擊背景關閉(不觸發「今日不再顯示」)
   ov.addEventListener('click', (e) => {
@@ -40247,38 +40036,6 @@ window._wbSetupAdvForBattle = function(opts){
     G._resultShown = false;
     // ★ 同步 window.G(主程式有些路徑會重新賦值 G,確保外部能讀最新)
     try{ window.G = G; }catch(_){}
-
-    // ★ v3.3.1 — 世界 BOSS 戰預先填充題庫
-    //   根因:advShowQuiz → advPickQuestion → _advSessionQuestions 為空 → return null →
-    //         advOnQuizSkip → 但 _advQuizPhase 沒進入 asking → cb 卡死 → 玩家行動前答題卡住
-    //   修補:把所有題庫(主題庫/台灣/五下自然/狗狗/嬰幼兒)合併洗牌後填入 _advSessionQuestions,
-    //         讓 advShowQuiz 流程能正常抽題
-    try{
-      if(typeof _advSessionQuestions !== 'undefined' && Array.isArray(_advSessionQuestions)){
-        const _pools = [];
-        if(typeof ADV_QUIZ_DB !== 'undefined' && Array.isArray(ADV_QUIZ_DB))                _pools.push(ADV_QUIZ_DB);
-        if(typeof TAIWAN_QUIZ_DB !== 'undefined' && Array.isArray(TAIWAN_QUIZ_DB))          _pools.push(TAIWAN_QUIZ_DB);
-        if(typeof ADV_QUIZ_5S_MIDTERM !== 'undefined' && Array.isArray(ADV_QUIZ_5S_MIDTERM))   _pools.push(ADV_QUIZ_5S_MIDTERM);
-        if(typeof ADV_QUIZ_5S_U3_ANIMAL !== 'undefined' && Array.isArray(ADV_QUIZ_5S_U3_ANIMAL))_pools.push(ADV_QUIZ_5S_U3_ANIMAL);
-        if(typeof ADV_QUIZ_5S_U4_SOUND !== 'undefined' && Array.isArray(ADV_QUIZ_5S_U4_SOUND)) _pools.push(ADV_QUIZ_5S_U4_SOUND);
-        if(typeof ADV_QUIZ_CARE_INFANT !== 'undefined' && Array.isArray(ADV_QUIZ_CARE_INFANT)) _pools.push(ADV_QUIZ_CARE_INFANT);
-        if(typeof ADV_QUIZ_DOG_CARE !== 'undefined' && Array.isArray(ADV_QUIZ_DOG_CARE))    _pools.push(ADV_QUIZ_DOG_CARE);
-        let _allQ = [];
-        _pools.forEach(p => { _allQ = _allQ.concat(p); });
-        _allQ = _allQ.filter(q => q && (q.q || q.question) && (q.a || q.answer || typeof q.correct === 'number'));
-        // 洗牌
-        for(let _i = _allQ.length - 1; _i > 0; _i--){
-          const _j = Math.floor(Math.random() * (_i + 1));
-          [_allQ[_i], _allQ[_j]] = [_allQ[_j], _allQ[_i]];
-        }
-        _advSessionQuestions = _allQ;
-        if(typeof _advQuestionPool !== 'undefined') _advQuestionPool = _allQ;
-        if(typeof _advQuestionIndex !== 'undefined') _advQuestionIndex = 0;
-        if(typeof _advUsedQuestionIds !== 'undefined' && _advUsedQuestionIds.clear) _advUsedQuestionIds.clear();
-        console.log('[WB] _advSessionQuestions 已填充, ' + _allQ.length + ' 題綜合題庫');
-      }
-    }catch(_eQB){ console.warn('[WB] 預先填充題庫失敗', _eQB); }
-
     console.log('[WB] _wbSetupAdvForBattle 完成,stage=' + _adventureStage
       + ', p1=' + (G.p1 ? G.p1.length : 0)
       + ', p2=' + (G.p2 ? G.p2.length : 0));
@@ -41718,20 +41475,6 @@ function exitAdventureMode(){
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = true;
-    // ★ v3.3.1 — 還原真實 _wbNet,避免單人練習殘留的 mock _wbNet 害下次「開新房間」失敗
-    //   bug 症狀:玩家進單人練習後沒打仗就返回首頁 → exitAdventureMode 觸發 →
-    //             window._wbNet 仍是 mock(只有 getSnapshot/setMyHero 等練習用方法,沒 createRoom)→
-    //             玩家點「開新房間」→ TypeError: window._wbNet.createRoom is not a function
-    //   修補:這裡統一還原,確保 _wbNet 永遠是真實連線層(WBNet)
-    try{
-      if(window._wbSoloRealWbNet){
-        window._wbNet = window._wbSoloRealWbNet;
-        window._wbSoloRealWbNet = null;
-        console.log('[exitAdventureMode] ✅ 已還原真實 _wbNet(從練習模式 mock)');
-      }
-    }catch(_eRestore){
-      console.warn('[exitAdventureMode] 還原 _wbNet 失敗', _eRestore);
-    }
     // 清答題相關狀態 (避免下次重進時殘留答對次數)
     try{
       window._wbQuizState = {};
@@ -47729,25 +47472,25 @@ function advShowQuiz() {
     advOnQuizSkip();
     return;
   }
-  // ★ 題目全部出完：顯示重選視窗，確認後重新出題
+  // ★ 題目全部出完:自動繼續,不再彈出重選題庫視窗
   if (q && q.__needRepick) {
-    // ★ v1.0.20260424.1410 — 統一邏輯:不再分日本關自動循環,所有題庫都跳出「重選或繼續挑戰」彈窗
-    const _savedCb = _advQuizResolveCb;
-    _advQuizResolveCb = null;
-    advShowRePickSubject(() => {
-      // 重選後：重置題庫，再次呼叫 advShowQuiz
-      _advQuizPhase = 'idle';
-      _advQuizActive = false;
-      _advQuizResolveCb = _savedCb;
-      // ★ 修正：若在小怪戰中，直接呼叫 savedCb 恢復，不走 advShowQuiz
-      if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
-        setTimeout(() => { if(_savedCb) _savedCb(); }, 200);
-        return;
+    // ★ FIX 20260518 — 移除「重選題庫/難度」彈窗(世界 BOSS / 木柵 / 日本 / 台灣關):
+    //   原行為:題目出完彈出「所有題目都出過囉,選擇新的答題方向」modal,
+    //          玩家選完後重置題庫繼續。
+    //   問題:
+    //     1. 世界 BOSS 是隨機題庫的協力戰,讓單一玩家(尤其非房主)選題庫破壞公平性
+    //     2. 多人房狀態下其他玩家會被卡住等彈窗按鈕(只有觸發的人看得到)
+    //     3. 玩家報告選完後流程會卡死(callback 鏈在多人/小怪戰場景中斷)
+    //   新行為:同樣題庫隨機從頭開始(advPickQuestion 已清空 _advUsedQuestionIds
+    //         和 _miniQuizUsedIds,題序由 Math.random 抽取,答案順序 Fisher-Yates
+    //         在下方重洗 → 自然達成「題序+答案序重新隨機」)。
+    //   保留:_advQuizResolveCb (給 _wb 戰鬥 callback 鏈用),不需中斷。
+    setTimeout(() => {
+      try{ advShowQuiz(); }catch(e){
+        // 防呆:重抽失敗就走 skip,避免戰鬥卡死
+        try{ advOnQuizSkip(); }catch(_){}
       }
-      setTimeout(() => {
-        try{ advShowQuiz(); }catch(e){ if(_savedCb) _savedCb(); }
-      }, 200);
-    });
+    }, 150);
     return;
   }
   // ★ v1.0.20260428.3980 — 取消數學題即時更換數字
@@ -48261,8 +48004,6 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   });
 
   if (isCorrect) {
-    // ★ v3.3.1 — 記錄本次答題結果,供世界 BOSS 戰玩家行動前答題的 cb 判斷答對/答錯
-    try{ window._advLastQuizCorrect = true; }catch(_){}
     _advStats.correctCount++;
     _advStats.totalQuestions++;
     // ★ v1.0.20260420.3100 — 連續答對連擊 + 本場最高紀錄
@@ -48362,8 +48103,6 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       return; // 讓玩家繼續作答，不結束
     }
     _advStats.totalQuestions++; // 答錯計入總次數
-    // ★ v3.3.1 — 記錄本次答題結果,供世界 BOSS 戰玩家行動前答題的 cb 判斷答對/答錯
-    try{ window._advLastQuizCorrect = false; }catch(_){}
     // ★ v1.0.20260420.3100 — 確認答錯(已過 _hasExtraChance 檢查)→ 連擊歸零,但 maxStreak 保留為本場最高
     _advStats.currentStreak = 0;
     // ★ 獎章系統：答錯需通知以重置連續答對連擊（_hasExtraChance 在上方已 return，不會走到這裡）
@@ -48388,8 +48127,6 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 function advOnQuizTimeout() {
   if (_advQuizPhase !== 'asking') return;
   _advQuizPhase = 'answered';
-  // ★ v3.3.1 — 超時視為答錯,供世界 BOSS 戰玩家行動前答題的 cb 判斷
-  try{ window._advLastQuizCorrect = false; }catch(_){}
   document.querySelectorAll('.aqo-btn').forEach(btn => { btn.disabled = true; });
   try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
   // ★ 等Boss逾時嘲諷氣泡播完再繼續
@@ -64880,36 +64617,41 @@ function _advMiniQuizAsk(onDone) {
   const sceneIdx = _advSceneIdx;
   const pool = _advMiniGetQuizPool(sceneIdx);
   if(!pool || pool.length === 0){
-    // ★ v1.0.20260424.1410 — 統一所有題庫的「題目出完」邏輯:
-    //   不再分日本關 / 照顧 / 狗狗自動循環,所有題庫都跳出「重選或繼續挑戰相同題庫」彈窗
-    //   讓玩家可以選擇:1) 換題庫 2) 重複挑戰相同題庫(把「答對過」的記憶清空,重新出題)
-    // ★ v1.0.20260424.1360 — 防護:若小怪戰已結束就不彈視窗,避免疊到場景對白上
+    // ★ FIX 20260518 — 移除「重選題庫/難度」彈窗:
+    //   原行為:題庫耗盡時彈出 advShowRePickSubject modal 讓玩家換題庫/難度。
+    //   問題:
+    //     1. 玩家選完後流程會卡死(callback 鏈中斷)
+    //     2. 世界 BOSS/木柵/日本/台灣關都應該照「同題庫自動循環」處理,
+    //        不該讓玩家中途換題庫(會破壞關卡設計與多人公平性)
+    //   新行為:同樣題庫隨機從頭開始 — 清空 _miniQuizUsedIds 與
+    //         _persistentCorrectQuestions(該關卡部分),讓 _advMiniGetQuizPool
+    //         下次回傳完整題庫;題序由 _miniRecentQuestionIds 與 Math.random
+    //         隨機抽取,答案順序在出題時 Fisher-Yates 重洗。
+    // ★ v1.0.20260424.1360 — 防護:若小怪戰已結束就不重抽,直接走 onDone
     if(typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive){
-      try{ console.log('[_advMiniQuizAsk] 小怪戰已結束,跳過重選視窗,直接呼叫 onDone'); }catch(_){}
+      try{ console.log('[_advMiniQuizAsk] 小怪戰已結束,直接 onDone'); }catch(_){}
       if(onDone) onDone();
       return;
     }
-    // ★ v1.0.20260511.6130 — 防卡死:重選次數上限保護
-    //   bug 場景:玩家在重選彈窗選了一個沒題目的科目(或重選後題庫仍空)
-    //   → 又彈一次同樣的視窗 → 玩家選一樣的東西 → 無限循環 / 或 callback 鏈中斷導致
-    //   _gamePaused 永遠 true、劇情對白卡死、後台仍有戰鬥音效
-    //   修補:_miniQuizRepickAttempts 計數,2 次仍空就放棄彈視窗,直接呼叫 onDone 走流程
-    //   onDone 會把 _gamePaused 設回 false,讓場景能正常推進
+    // 防卡死:重試次數上限保護(2 次仍空 → 跳過避免無限迴圈)
     if(typeof window._miniQuizRepickAttempts !== 'number') window._miniQuizRepickAttempts = 0;
     if(window._miniQuizRepickAttempts >= 2){
-      try{ console.warn('[_advMiniQuizAsk] 重選 2 次仍題庫為空,放棄彈視窗,直接走 onDone 避免卡死'); }catch(_){}
+      try{ console.warn('[_advMiniQuizAsk] 重置 2 次仍題庫為空,跳過答題環節避免卡死'); }catch(_){}
       try{ log(`⚠ 題庫持續為空,自動跳過答題環節`); }catch(_){}
       window._miniQuizRepickAttempts = 0;
       if(onDone) onDone();
       return;
     }
     window._miniQuizRepickAttempts++;
-    advShowRePickSubject(() => {
-      // 清除已用題目，重新建題庫
+    // 自動重置題庫狀態(不彈視窗、不換題庫、不換難度)
+    try{
       if(typeof window._miniQuizUsedIds !== 'undefined') window._miniQuizUsedIds = new Set();
-      // 直接再問下一題（不走 advShowQuiz）
-      setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 200);
-    });
+      // 日本關 shuffle bag 也清掉,讓 _advMiniGetQuizPool 重新洗牌
+      if(Array.isArray(window._japanShuffleBag)) window._japanShuffleBag = [];
+      try{ log(`📚 [題庫] 已全部答過,自動洗牌重新開始一輪(題序、答案序隨機)。`); }catch(_){}
+    }catch(_){}
+    // 直接再問下一題
+    setTimeout(()=>{ try{ _advMiniQuizAsk(onDone); }catch(e){ if(onDone) onDone(); } }, 150);
     return;
   }
   // ★ v1.0.20260511.6130 — 成功抽到題目,重置重選計數
@@ -70623,36 +70365,7 @@ window._filterChangelogForDisplay = function(entries){
 //       (v3.2.6) 跟記憶體的 _GAME_LOADED_VERSION (v3.3.0) 比,不一致就跳更新提示
 //     - 但這兩個變數明明在同一份 HTML 內,應該永遠同步
 //   修法:把 _GAME_LOADED_VERSION 先設定好,CURRENT_VERSION 直接讀它,絕對同步。
-window._GAME_LOADED_VERSION = 'v3.3.1';
-// ★ v3.3.1 changelog(待同步到 game_changelog.js):
-//   🐛 根治所有 BOSS 卡死 25~30 秒問題(玉山/八岐大蛇/全部 BOSS,通常打很多回合後才發生)
-//   【症狀】BOSS 釋放技能後突然發呆 25~30 秒,然後才接著出招攻擊全體
-//   【根因】aiUseSkill 結尾 `_pSetTimeout(startTurn,500)` 沒 watchdog 保護
-//     (1) BOSS doDmg → 玩家英雄觸發受擊被動 prompt(金鐘罩/以牙還牙/占星師轉禍為福)
-//     (2) prompt 設 _gamePaused=true 等玩家選
-//     (3) startTurn 被 push 到 _pendingTimers 等候
-//     (4) 玩家選完 → cleanup 跑過 _resumeTimers → 新 push 的 timer 沒被消化
-//     (5) _aiWatchdog 10 秒 fire,但開頭 `if(a.acted) return` → aiUseSkill 已設 acted=true → 放棄
-//     (6) 只能等 _pSetTimeout 20 秒 fallback → 玩家看到 25~30 秒延遲
-//   【修補】
-//     1. aiUseSkill 結尾加 5 秒 watchdog(同 endAction),強制 resume + startTurn
-//     2. _aiWatchdog 判斷邏輯:acted=true 不算數,只看 G.activeChar 是否仍指向 a
-//        (acted=true 不代表 startTurn 推進成功,可能還卡在 _pendingTimers)
-//   🎉 3.0 上線通知頁修復:
-//     - 標題從「歡慶 2.0」改成「歡慶 3.0 版正式上線」+ 副標宣告世界 BOSS
-//     - modal 高度 80vh/900px → 95vh/1200px,確保 v3.0 世界 BOSS 卡片完整可見
-//     - modal 寬度 80vw/1280px → 92vw/1400px
-//     - 開啟時自動 scrollTop=0,確保第一眼看到 v3.0 世界 BOSS 介紹
-//   🐛 世界 BOSS 戰開戰題永遠是「龐貝城」修復:
-//     - 根因:world-boss-ui.html 呼叫的 window._wbPickRandomQuestion 函式從未被定義,
-//             每次 typeof 檢查都失敗 → 走 fallback 那條「龐貝城」題,所以玩家每場都被問同一題
-//     - 修補:在 world-boss-ui.html 加入 _wbPickRandomQuestion 函式定義,
-//             從所有題庫(ADV_QUIZ_DB / TAIWAN_QUIZ_DB / 五下自然 ×3 / 狗狗 / 嬰幼兒)隨機抽題,
-//             配合 _wbUsedQuestionIds 防重複,每場戰鬥開始時重置(房主/客戶端/單人練習三處)
-//   🐛 世界 BOSS 單人練習答完開戰題後卡死(無玩家英雄/操作按鈕):
-//     - 根因:_wbSoloBeginBattle 函式內 console.log 誤用未定義變數 heroPool,
-//             拋 ReferenceError 中斷流程 → advStartBattle 沒被呼叫 → 戰鬥沒真的啟動
-//     - 修補:console.log 改用實際變數 p1.map(h=>h&&h.name)
+window._GAME_LOADED_VERSION = 'v3.3.0';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
