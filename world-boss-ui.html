@@ -6060,6 +6060,7 @@
     window._wbSoloPracticeMode = false;
     window._wbQuizState = {};
     window._wbCorrectCnt = {};
+    window._wbUsedQuestionIds = new Set(); // ★ v3.3.1 — 新戰鬥重置已抽過題目記錄
     window._wbAdvBattleEnded = false;
 
     // ★ FIX 20260517(q) — 安裝 NPC 自動接管 hook
@@ -6958,6 +6959,7 @@
         window._wbAdvBattleEnded = false;
         window._wbQuizState = {};
         window._wbCorrectCnt = {};
+        window._wbUsedQuestionIds = new Set(); // ★ v3.3.1 — 新戰鬥重置已抽過題目記錄
 
         // ── 關閉首頁封面 / 冒險頁 / 結算頁,確保 #gc 露出 ─────────────
         try{
@@ -7389,6 +7391,68 @@
   // 累積答對第 10/25/50 次 → 答題獎勵:對 BOSS 1% maxHp 傷害(原本是 20%)
   // 倒下角色跳過答題
   // ════════════════════════════════════════════════════════════════════
+
+  // ★ v3.3.1 — 世界 BOSS 戰隨機抽題函式(此前未定義,導致每場開戰題都用 fallback「龐貝城」)
+  //   設計:從「所有題庫」隨機抽一題,符合 v3.0 NEW 卡片承諾的「綜合知識挑戰」
+  //   題庫池:
+  //     - ADV_QUIZ_DB       (主題庫,含貓空/日本/各種一般冒險題)
+  //     - TAIWAN_QUIZ_DB    (台灣環島 10 BOSS 題)
+  //     - ADV_QUIZ_5S_MIDTERM       (五下自然期中)
+  //     - ADV_QUIZ_5S_U3_ANIMAL     (五下自然第三單元 動物的生活)
+  //     - ADV_QUIZ_5S_U4_SOUND      (五下自然第四單元 聲音與樂器)
+  //     - ADV_QUIZ_CARE_INFANT      (照顧與陪伴幼兒)
+  //     - ADV_QUIZ_DOG_CARE         (領養與照顧狗狗)
+  //   防重複:_wbUsedQuestionIds 記錄本場已抽過的 id,池子用完才重置
+  //   防卡死:任何題庫載入失敗都 fallback 到「龐貝城」題,確保開戰題一定能顯示
+  window._wbUsedQuestionIds = window._wbUsedQuestionIds || new Set();
+  window._wbPickRandomQuestion = function(){
+    try{
+      // 1. 組合所有題庫成一個大池
+      const _pools = [];
+      if(typeof ADV_QUIZ_DB !== 'undefined' && Array.isArray(ADV_QUIZ_DB))                _pools.push(ADV_QUIZ_DB);
+      if(typeof TAIWAN_QUIZ_DB !== 'undefined' && Array.isArray(TAIWAN_QUIZ_DB))          _pools.push(TAIWAN_QUIZ_DB);
+      if(typeof ADV_QUIZ_5S_MIDTERM !== 'undefined' && Array.isArray(ADV_QUIZ_5S_MIDTERM))  _pools.push(ADV_QUIZ_5S_MIDTERM);
+      if(typeof ADV_QUIZ_5S_U3_ANIMAL !== 'undefined' && Array.isArray(ADV_QUIZ_5S_U3_ANIMAL)) _pools.push(ADV_QUIZ_5S_U3_ANIMAL);
+      if(typeof ADV_QUIZ_5S_U4_SOUND !== 'undefined' && Array.isArray(ADV_QUIZ_5S_U4_SOUND))  _pools.push(ADV_QUIZ_5S_U4_SOUND);
+      if(typeof ADV_QUIZ_CARE_INFANT !== 'undefined' && Array.isArray(ADV_QUIZ_CARE_INFANT))  _pools.push(ADV_QUIZ_CARE_INFANT);
+      if(typeof ADV_QUIZ_DOG_CARE !== 'undefined' && Array.isArray(ADV_QUIZ_DOG_CARE))    _pools.push(ADV_QUIZ_DOG_CARE);
+
+      if(!_pools.length){
+        console.warn('[_wbPickRandomQuestion] 所有題庫都未載入');
+        return null;
+      }
+
+      // 2. 攤平成單一陣列
+      let _allQ = [];
+      _pools.forEach(p => { _allQ = _allQ.concat(p); });
+      // 只保留有題目內容的 entry
+      _allQ = _allQ.filter(q => q && (q.q || q.question) && (q.a || q.answer || typeof q.correct === 'number'));
+
+      if(!_allQ.length){
+        console.warn('[_wbPickRandomQuestion] 題庫池過濾後為空');
+        return null;
+      }
+
+      // 3. 排除本場已抽過的題(用 id 比對;沒 id 的題每次都當新題)
+      let _pool = _allQ.filter(q => !q.id || !window._wbUsedQuestionIds.has(q.id));
+
+      // 4. 若全部題目都抽過了,重置記錄(讓玩家在長場戰鬥能繼續抽)
+      if(_pool.length === 0){
+        console.log('[_wbPickRandomQuestion] 全部 ' + _allQ.length + ' 題已抽過,重置記錄');
+        window._wbUsedQuestionIds = new Set();
+        _pool = _allQ;
+      }
+
+      // 5. 隨機抽一題
+      const _q = _pool[Math.floor(Math.random() * _pool.length)];
+      if(_q && _q.id) window._wbUsedQuestionIds.add(_q.id);
+      console.log('[_wbPickRandomQuestion] 抽題:', _q.subject || '(no subject)', '|', (_q.q || _q.question || '').slice(0, 30) + '...');
+      return _q;
+    }catch(e){
+      console.error('[_wbPickRandomQuestion] 例外', e);
+      return null;
+    }
+  };
 
   // 全域答題狀態:記錄每個玩家在每回合是否答過題
   window._wbQuizState  = window._wbQuizState  || {};
@@ -8321,6 +8385,7 @@
     window._wbSoloPracticeMode = true;
     window._wbQuizState = {};
     window._wbCorrectCnt = {};
+    window._wbUsedQuestionIds = new Set(); // ★ v3.3.1 — 新戰鬥重置已抽過題目記錄
     window._wbAdvBattleEnded = false;
     window._wbSoloStartTs = Date.now();
     window._wbSoloContrib = {};

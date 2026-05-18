@@ -70455,6 +70455,12 @@ window._GAME_LOADED_VERSION = 'v3.3.1';
 //     - modal 高度 80vh/900px → 95vh/1200px,確保 v3.0 世界 BOSS 卡片完整可見
 //     - modal 寬度 80vw/1280px → 92vw/1400px
 //     - 開啟時自動 scrollTop=0,確保第一眼看到 v3.0 世界 BOSS 介紹
+//   🐛 世界 BOSS 戰開戰題永遠是「龐貝城」修復:
+//     - 根因:world-boss-ui.html 呼叫的 window._wbPickRandomQuestion 函式從未被定義,
+//             每次 typeof 檢查都失敗 → 走 fallback 那條「龐貝城」題,所以玩家每場都被問同一題
+//     - 修補:在 world-boss-ui.html 加入 _wbPickRandomQuestion 函式定義,
+//             從所有題庫(ADV_QUIZ_DB / TAIWAN_QUIZ_DB / 五下自然 ×3 / 狗狗 / 嬰幼兒)隨機抽題,
+//             配合 _wbUsedQuestionIds 防重複,每場戰鬥開始時重置(房主/客戶端/單人練習三處)
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
