@@ -3586,141 +3586,6 @@
       try{ subscribeWbHp(); }catch(_){}
       console.log('[WB-HpSync] ✅ 世界 BOSS 殘血同步模組已掛載');
     })();
-
-    // ══════════════════════════════════════════════════════════════════
-    // ★ FIX 20260518(b) — 世界 BOSS 排行榜模組(_wbLeaderboard)
-    //
-    // 設計:
-    // - 儲存位置:worldBossLeaderboard/{bossId} 文件,
-    //              players 欄位是 map { uid: { name, totalDmg, totalHeal,
-    //                                          totalDmgTaken, totalCtrl,
-    //                                          lastUpdated } }
-    // - 每場世界 BOSS 戰結算時,把該場 4 項統計 increment 到雲端
-    // - 入口頁訂閱 → 自動更新顯示
-    // - 4 指標對應:
-    //     最高輸出 = totalDmg     (對 BOSS 造成的傷害)
-    //     治療專家 = totalHeal    (補血 + 復活 + 上有利狀態給隊友)
-    //     可靠肉盾 = totalDmgTaken (扛下的傷害)
-    //     控場高手 = totalCtrl    (對對手施加的不利狀態次數)
-    // ══════════════════════════════════════════════════════════════════
-    (function setupWorldBossLeaderboard(){
-      const LB_DOC = (bossId) => doc(_fbDb, 'worldBossLeaderboard', bossId || 'vesuvius_fire_dragon');
-      const _subs = {};    // bossId → unsubscribe fn
-      const _cache = {};   // bossId → players map
-
-      // 即時訂閱指定 BOSS 排行榜
-      function subscribe(bossId){
-        if(!bossId) bossId = 'vesuvius_fire_dragon';
-        if(_subs[bossId]) return;  // 已訂閱
-        try{
-          _subs[bossId] = onSnapshot(LB_DOC(bossId), (snap) => {
-            try{
-              const d = snap.exists() ? (snap.data() || {}) : {};
-              _cache[bossId] = d.players || {};
-              try{ document.dispatchEvent(new CustomEvent('wbLeaderboardSynced', { detail: { bossId } })); }catch(_){}
-            }catch(eIn){
-              console.warn('[WB-Leaderboard] onSnapshot 處理失敗', eIn);
-            }
-          }, (err) => {
-            console.warn('[WB-Leaderboard] 訂閱失敗', err);
-          });
-        }catch(e){
-          console.warn('[WB-Leaderboard] subscribe 例外', e);
-        }
-      }
-
-      // 取得目前快取的排行榜,回傳已排序的陣列(依 totalDmg desc),供 UI 渲染
-      // sortBy: 'dmg' (預設) | 'heal' | 'tank' | 'ctrl'
-      function getRanked(bossId, sortBy){
-        bossId = bossId || 'vesuvius_fire_dragon';
-        const players = _cache[bossId] || {};
-        const arr = Object.keys(players).map(uid => Object.assign({ uid }, players[uid]));
-        const field = (sortBy === 'heal') ? 'totalHeal'
-                    : (sortBy === 'tank') ? 'totalDmgTaken'
-                    : (sortBy === 'ctrl') ? 'totalCtrl'
-                    : 'totalDmg';
-        arr.sort((a, b) => (b[field] || 0) - (a[field] || 0));
-        return arr;
-      }
-
-      // 取得指定欄位的「第一名」玩家暱稱(若無人或該欄位皆 0,回 null)
-      function getChampion(bossId, sortBy){
-        const ranked = getRanked(bossId, sortBy);
-        if(!ranked.length) return null;
-        const top = ranked[0];
-        const field = (sortBy === 'heal') ? 'totalHeal'
-                    : (sortBy === 'tank') ? 'totalDmgTaken'
-                    : (sortBy === 'ctrl') ? 'totalCtrl'
-                    : 'totalDmg';
-        if(!top[field] || top[field] <= 0) return null;
-        return { uid: top.uid, name: top.name || '玩家', value: top[field] };
-      }
-
-      // 本場戰鬥結束時呼叫,把這場的 4 項貢獻累加到雲端
-      // contrib = { dmg, heal, dmgTaken, ctrl }
-      async function submitContribution(bossId, uid, name, contrib){
-        if(!bossId || !uid) return false;
-        if(!contrib || typeof contrib !== 'object') return false;
-        const safe = {
-          dmg:      Math.max(0, Math.floor(contrib.dmg      || 0)),
-          heal:     Math.max(0, Math.floor(contrib.heal     || 0)),
-          dmgTaken: Math.max(0, Math.floor(contrib.dmgTaken || 0)),
-          ctrl:     Math.max(0, Math.floor(contrib.ctrl     || 0)),
-        };
-        // 4 項都是 0 就不必寫(節省 firestore 寫入)
-        if(safe.dmg + safe.heal + safe.dmgTaken + safe.ctrl <= 0) return false;
-        try{
-          await runTransaction(_fbDb, async (tx) => {
-            const _ref = LB_DOC(bossId);
-            const _snap = await tx.get(_ref);
-            const _data = _snap.exists() ? (_snap.data() || {}) : {};
-            const _players = _data.players || {};
-            const _prev = _players[uid] || {};
-            const _next = {
-              name:         (name || _prev.name || '玩家'),
-              totalDmg:      (_prev.totalDmg      || 0) + safe.dmg,
-              totalHeal:     (_prev.totalHeal     || 0) + safe.heal,
-              totalDmgTaken: (_prev.totalDmgTaken || 0) + safe.dmgTaken,
-              totalCtrl:     (_prev.totalCtrl     || 0) + safe.ctrl,
-              lastUpdated:   Date.now(),
-            };
-            const _newPlayers = Object.assign({}, _players);
-            _newPlayers[uid] = _next;
-            tx.set(_ref, { players: _newPlayers }, { merge: true });
-          });
-          console.log('[WB-Leaderboard] submitContribution', bossId, uid, safe);
-          return true;
-        }catch(e){
-          console.error('[WB-Leaderboard] submitContribution 失敗', e);
-          return false;
-        }
-      }
-
-      // 重置指定 BOSS 排行榜(管理員開新一輪用)
-      async function reset(bossId){
-        bossId = bossId || 'vesuvius_fire_dragon';
-        try{
-          await setDoc(LB_DOC(bossId), { players: {}, resetAt: Date.now() }, { merge: false });
-          console.log('[WB-Leaderboard] reset', bossId);
-          return true;
-        }catch(e){
-          console.error('[WB-Leaderboard] reset 失敗', e);
-          return false;
-        }
-      }
-
-      // 暴露 API
-      window._wbLeaderboard = {
-        subscribe: subscribe,
-        getRanked: getRanked,
-        getChampion: getChampion,
-        submitContribution: submitContribution,
-        reset: reset,
-      };
-      // 啟動時自動訂閱當前 BOSS
-      try{ subscribe('vesuvius_fire_dragon'); }catch(_){}
-      console.log('[WB-Leaderboard] ✅ 世界 BOSS 排行榜模組已掛載');
-    })();
   })();
 
 </script>
@@ -27531,6 +27396,106 @@ function startTurn(){
     renderItems();
     updateUI();
     startTurnTimer(next);
+
+    // ★ FIX 20260518(c) #6 — 世界 BOSS 戰:玩家每次行動前也要答題
+    //   設計:輪到玩家自己的英雄時(p1 + 是登入者操作的槽),
+    //          若處於 worldboss stage 且該回合該槽位還沒答過題 → 觸發 advShowQuiz,
+    //          答對才解鎖行動(action-panel 從鎖定恢復),答錯依設定處罰並跳過該回合。
+    //   為何只攔截「自己槽位」:多人連線時其他玩家由房主代打,他們的答題會在自己客戶端跑,
+    //          不該在這裡重複觸發。單人練習 mySlot=0,只攔 p1[0]。
+    //          代打 NPC (_wbIsHostNpc=true) 也不該答題,跳過。
+    try{
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+         && next && next.side === 'p1' && next.curHp > 0 && !next.acted
+         && _adventureMode){
+        // 判斷是否是自己操作的槽位
+        const _mySlot = (window._wbNet && typeof window._wbNet.getMySlot === 'function')
+                       ? window._wbNet.getMySlot() : 0;
+        const _isMySlot = (next.pos === _mySlot) && !next._wbIsHostNpc;
+        // 連線模式下若代打 NPC 仍由房主控制,房主端的 mySlot=自己,代打槽不會等於 mySlot
+        // → _isMySlot 會自動 false,不會誤觸答題
+        if(_isMySlot && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
+          // 本回合該槽位是否已答過題?(用主程式 _advUsedQuestionIds 機制無法分回合,改用自己的旗標)
+          window._wbPlayerQuizDone = window._wbPlayerQuizDone || {};
+          const _qKey = '__r' + (G.round||1) + '_p' + next.pos;
+          if(!window._wbPlayerQuizDone[_qKey]){
+            console.log('[WB-PlayerQuiz] 玩家行動前出題:', next.name, _qKey);
+            // ★ 鎖住 action-panel,避免玩家在答題前直接點按鈕跳過答題
+            try{
+              const _ap = document.getElementById('action-panel');
+              if(_ap) _ap.style.display = 'none';
+              const _ipl2 = document.getElementById('item-panel');
+              if(_ipl2) _ipl2.style.display = 'none';
+              document.getElementById('actor-info').innerHTML =
+                `<div style="font-size:42px;font-weight:700;line-height:1.4;text-align:center;letter-spacing:1px;color:#88ccff;">`
+                + `📚 輪到你的 <span style="color:#ffe066;">${next.name}</span> 了!<br>`
+                + `<span style="font-size:30px;color:#aaaaaa;font-weight:500">答對題目才能行動</span></div>`;
+            }catch(_eLock){}
+            window._wbPlayerQuizDone[_qKey] = 'pending';  // 標記題中(避免重彈)
+            // 設 quiz cb:答對 → 解除鎖 + 不動 acted;答錯 → acted=true + startTurn 推進
+            const _origQuizCb = _advQuizResolveCb;
+            _advQuizResolveCb = function(){
+              try{
+                // _advStats.lastAnswerCorrect 主程式 advAnswer 會設(答對 true / 答錯 false)
+                const _isCorrect = !!(_advStats && _advStats.lastAnswerCorrect);
+                window._wbPlayerQuizDone[_qKey] = _isCorrect ? 'correct' : 'wrong';
+                if(_isCorrect){
+                  // 答對:呼叫 _wbOnQuizCorrect 給能量+1 跟累計
+                  if(typeof window._wbOnQuizCorrect === 'function'){
+                    window._wbOnQuizCorrect(next.pos, G.round || 1);
+                  }
+                  // 解鎖 action-panel:重新跑 startTurn 渲染(但 acted 仍為 false,_wbPlayerQuizDone='correct' 防重彈)
+                  G.pendingTarget = null; pendingCb = null;
+                  _pSetTimeout(() => {
+                    try{ startTurn(); }catch(_eST){
+                      // startTurn 失敗 → 直接還原 action-panel
+                      const _ap = document.getElementById('action-panel');
+                      if(_ap) _ap.style.display = 'block';
+                      updateUI();
+                    }
+                  }, 200);
+                  log(`✅ [${next.name}] 答對!可選擇行動`);
+                }else{
+                  // 答錯:呼叫 _wbOnQuizWrong 給 5% HP 懲罰,acted=true 推進
+                  if(typeof window._wbOnQuizWrong === 'function'){
+                    window._wbOnQuizWrong(next.pos, G.round || 1, true);
+                  }
+                  next.acted = true;
+                  G.pendingTarget = null; pendingCb = null;
+                  log(`❌ [${next.name}] 答錯,跳過本回合`);
+                  _pSetTimeout(startTurn, 600);
+                }
+              }catch(eCb){
+                console.error('[WB-PlayerQuiz] cb 例外,推進回合', eCb);
+                if(next) next.acted = true;
+                _pSetTimeout(startTurn, 600);
+              }
+            };
+            // 觸發答題
+            try{
+              advShowQuiz();
+            }catch(eShow){
+              console.error('[WB-PlayerQuiz] advShowQuiz 失敗', eShow);
+              // fallback:當作答對(避免卡死),還原 action-panel 讓玩家直接行動
+              window._wbPlayerQuizDone[_qKey] = 'correct';
+              _advQuizResolveCb = _origQuizCb;
+              try{
+                const _ap = document.getElementById('action-panel');
+                if(_ap) _ap.style.display = 'block';
+                const _ipl3 = document.getElementById('item-panel');
+                if(_ipl3) _ipl3.style.display = '';
+                document.getElementById('actor-info').innerHTML =
+                  `<div style="font-size:42px;font-weight:700;line-height:1.4;animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;letter-spacing:1px;">✨ 輪到你的 <span style="color:#ffe066;text-shadow:0 0 16px rgba(255,220,0,0.9)">${next.name}</span> 了!<br><span style="font-size:30px;color:#aaaaaa;font-weight:500">選擇下面一種行動</span></div>`;
+                updateUI();
+              }catch(_eRestore){}
+            }
+            return;  // 已觸發答題,等 cb 回來
+          }
+          // 已答對過 → 直接讓玩家行動(_wbPlayerQuizDone='correct' 走到這)
+          // 已答錯過 → next.acted=true 已被 cb 設,startTurn 不會再選到這個槽,不會走到這裡
+        }
+      }
+    }catch(eWbQ){ console.warn('[WB-PlayerQuiz] 觸發例外', eWbQ); }
   } else {
     document.getElementById('action-panel').style.display='none';
     // 隱藏物品欄，顯示「對手回合」提示
@@ -28024,6 +27989,10 @@ window.ADV_QUIZ_BOSS_NAMES = [
   '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
   '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者',
   '山岳禁咒・崩天巨人',
+  // ★ FIX 20260518(c) #6 — 世界 BOSS 加入「行動前出題」名單
+  //   設計:世界 BOSS 戰每次 BOSS 行動前都要出題(跟台灣/日本關 BOSS 一致),
+  //   並且 aiAct hook 順序也需調整(讓 quiz 先跑,cb 內再呼叫 _wbAdvBossTurn)
+  '維蘇威火山龍王',
 ];
 
 function aiAct(a){
@@ -28031,13 +28000,41 @@ function aiAct(a){
   //   走 world-boss.js 提供的世界戰 BOSS AI(_wbAdvBossTurn)
   //   設計目的:雙保險。一保險是 world-boss.js 內 window.aiAct = function override;
   //   二保險是這裡直接判斷。確保即使 override 失效也能正確分流。
+  //
+  // ★ FIX 20260518(c) #6 — 加入 quiz 守門:
+  //   原問題:世界 BOSS 不在 ADV_QUIZ_BOSS_NAMES 時這裡直接 return 走 _wbAdvBossTurn,
+  //          但現在已加入名單 → BOSS 行動前要先出題,出題流程結束 cb 內呼叫 _realAiAct,
+  //          不會再經過 aiAct → 所以這裡的攔截只在「quiz cb 還沒觸發/不需 quiz」時生效。
+  //   守門條件補強:
+  //     (a) _advQuizPhase === 'asking' / 'answered' → 答題中,不該執行 AI
+  //     (b) _bossQuizInFlight === true → quiz 已觸發,等 cb 跑就好,這裡不要重跑
+  //     兩者任一成立 → 跳過早期攔截,讓底下 ADV_QUIZ_BOSS_NAMES quiz 邏輯接管
   try{
     if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
        && a && a.side === 'p2' && typeof a.name === 'string'
        && typeof window._wbIsBossName === 'function' && window._wbIsBossName(a.name)
        && typeof window._wbAdvBossTurn === 'function'){
-      console.log('[aiAct→WB] 世界戰 BOSS 行動:' + a.name);
-      return window._wbAdvBossTurn(a);
+      // ★ FIX 20260518(c) #6 — 答題期間 / quiz in-flight 時不該走早期攔截,讓 quiz 流程接管
+      const _quizBusy = (typeof _advQuizPhase !== 'undefined'
+                        && (_advQuizPhase === 'asking' || _advQuizPhase === 'answered'))
+                       || !!window._bossQuizInFlight;
+      // 也檢查 quiz cb 是否已準備好(設了 _advQuizResolveCb 表示準備出題,別搶跑)
+      const _quizCbPending = (typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+      if(!_quizBusy && !_quizCbPending){
+        // BOSS 是否在 quiz 名單中?
+        const _needQuiz = window.ADV_QUIZ_BOSS_NAMES
+                       && window.ADV_QUIZ_BOSS_NAMES.indexOf(a.name) >= 0
+                       && _adventureMode && a.curHp > 0 && !a.acted
+                       && G.p1 && G.p1.some(h => h.curHp > 0);
+        // 不需 quiz(例如題庫沒就緒)或 BOSS 已從 quiz cb 內呼叫進來(_realAiAct 走的路徑會直接接到這)
+        // → 才走早期攔截
+        if(!_needQuiz){
+          console.log('[aiAct→WB] 世界戰 BOSS 行動(無 quiz 路徑):' + a.name);
+          return window._wbAdvBossTurn(a);
+        }
+        // _needQuiz=true → 不在這裡 return,讓底下 ADV_QUIZ_BOSS_NAMES quiz 觸發邏輯接管
+        // (quiz cb 內會 a.acted=true → 呼叫 _realAiAct,_realAiAct 由 hook 接到 _wbAdvBossTurn)
+      }
     }
   }catch(_wbAiActErr){
     console.warn('[aiAct→WB] 守門例外,fallback 主程式 aiAct', _wbAiActErr);
@@ -28152,6 +28149,21 @@ function aiAct(a){
 function _realAiAct(a){
   // ★ 防護：若 a 無效直接跳過回合
   if(!a || typeof a !== 'object'){ _pSetTimeout(startTurn,400); return; }
+  // ★ FIX 20260518(c) #6 — _realAiAct 接到世界 BOSS 時走 _wbAdvBossTurn
+  //   原因:aiAct 早期攔截已在 #6 修補中改成「quiz 流程接管時不 return」,所以世界 BOSS
+  //         在 quiz 名單中時會走 advShowQuiz → quiz cb → _realAiAct(a) → 來到這裡。
+  //   這裡必須再判一次,把世界 BOSS 接回 _wbAdvBossTurn 跑專屬 AI(否則會用主程式預設 AI)。
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && a.side === 'p2' && typeof a.name === 'string'
+       && typeof window._wbIsBossName === 'function' && window._wbIsBossName(a.name)
+       && typeof window._wbAdvBossTurn === 'function'){
+      console.log('[_realAiAct→WB] quiz 後接到世界戰 BOSS AI:' + a.name);
+      return window._wbAdvBossTurn(a);
+    }
+  }catch(_wbRealAiActErr){
+    console.warn('[_realAiAct→WB] 守門例外,fallback 主程式 _realAiAct', _wbRealAiActErr);
+  }
   // ★ v1.0.20260428.4010 — [診斷] _realAiAct 進入
   try{
     // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
@@ -40333,6 +40345,8 @@ window._wbSetupAdvForBattle = function(opts){
     if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
     if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
     if(typeof _bossQuizInFlight !== 'undefined') window._bossQuizInFlight = false;
+    // ★ FIX 20260518(c) #6 — 進新戰場時清玩家行動前答題的回合追蹤
+    window._wbPlayerQuizDone = {};
     // _currentBossVariantInfo 清空(避免被當成 apricot 等變體)
     window._currentBossVariantInfo = null;
     // 設定 G.p1 / G.p2
@@ -40389,6 +40403,8 @@ window._wbCleanupAdvAfterBattle = function(){
     if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
     if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null;
     if(typeof _bossQuizInFlight !== 'undefined') window._bossQuizInFlight = false;
+    // ★ FIX 20260518(c) #6 — 離開戰場時也清玩家行動前答題的回合追蹤
+    window._wbPlayerQuizDone = {};
     window._currentBossVariantInfo = null;
     if(G){ G._resultShown = false; }
     console.log('[WB] _wbCleanupAdvAfterBattle 完成');
@@ -41808,6 +41824,21 @@ function exitAdventureMode(){
     try{
       window._wbQuizState = {};
       window._wbCorrectCnt = {};
+      // ★ FIX 20260518(c) #6 — 清掉玩家行動前答題的回合追蹤
+      window._wbPlayerQuizDone = {};
+    }catch(_){}
+
+    // ★ FIX 20260518(c) #5 — 清掉舊版 v3 自製戰鬥引擎的 AI 推進 setInterval
+    //   原問題:setInterval 沒存 id → 永遠在背景跑,即使戰鬥已結束。
+    //   修補:world-boss-ui.html 已把 interval id 存到 _wbSoloAutoCheckIv,
+    //         提供 _wbStopLegacySoloAutoCheck 對外清理函式 — 這裡呼叫它。
+    try{
+      if(typeof window._wbStopLegacySoloAutoCheck === 'function'){
+        window._wbStopLegacySoloAutoCheck();
+      }
+      // 也清除 _wbHostG 引用,避免將來意外被設成非 null 時誤觸舊版邏輯
+      window._wbHostG = null;
+      window._wbSoloAutoTimer = false;
     }catch(_){}
 
     console.log('[exitAdventureMode] ✅ 已清理世界 BOSS 戰鬥殘留 UI (含 timer / overlay / style / 旗標)');
@@ -48335,6 +48366,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   if (isCorrect) {
     _advStats.correctCount++;
     _advStats.totalQuestions++;
+    // ★ FIX 20260518(c) #6 — 設 lastAnswerCorrect 給世界 BOSS 戰玩家答題 cb 用
+    _advStats.lastAnswerCorrect = true;
     // ★ v1.0.20260420.3100 — 連續答對連擊 + 本場最高紀錄
     _advStats.currentStreak = (_advStats.currentStreak || 0) + 1;
     if(_advStats.currentStreak > (_advStats.maxStreak || 0)){
@@ -48434,6 +48467,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     _advStats.totalQuestions++; // 答錯計入總次數
     // ★ v1.0.20260420.3100 — 確認答錯(已過 _hasExtraChance 檢查)→ 連擊歸零,但 maxStreak 保留為本場最高
     _advStats.currentStreak = 0;
+    // ★ FIX 20260518(c) #6 — 設 lastAnswerCorrect 給世界 BOSS 戰玩家答題 cb 用
+    _advStats.lastAnswerCorrect = false;
     // ★ 獎章系統：答錯需通知以重置連續答對連擊（_hasExtraChance 在上方已 return，不會走到這裡）
     try{ _checkMedalAnswer(false, _advPlayerDifficulty); }catch(e){}
     // ★ v1.0.20260424.1200 — 養護專題答錯重置 streak (BOSS 戰路徑)
@@ -48456,6 +48491,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 function advOnQuizTimeout() {
   if (_advQuizPhase !== 'asking') return;
   _advQuizPhase = 'answered';
+  // ★ FIX 20260518(c) #6 — 超時當答錯處理
+  try{ if(_advStats) _advStats.lastAnswerCorrect = false; }catch(_){}
   document.querySelectorAll('.aqo-btn').forEach(btn => { btn.disabled = true; });
   try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
   // ★ 等Boss逾時嘲諷氣泡播完再繼續

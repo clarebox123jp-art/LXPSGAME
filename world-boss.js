@@ -858,15 +858,6 @@
             const _bossId = (_curBoss && _curBoss.id) || 'vesuvius_fire_dragon';
             await window._wbHpSync.resetHp(_bossId, _maxHp);
             console.log('[WB-Admin] 開放新一輪 → BOSS HP 重置為滿血', _bossId, _maxHp);
-            // ★ FIX 20260518(b) — 同時把雲端排行榜清空(新一輪重新比拚)
-            try{
-              if(window._wbLeaderboard && typeof window._wbLeaderboard.reset === 'function'){
-                await window._wbLeaderboard.reset(_bossId);
-                console.log('[WB-Admin] 排行榜已重置:', _bossId);
-              }else{
-                console.warn('[WB-Admin] _wbLeaderboard.reset 不存在,排行榜需手動清除');
-              }
-            }catch(eRb){ console.warn('[WB-Admin] 重置排行榜失敗', eRb); }
           }
         }catch(eR){ console.warn('[WB-Admin] 重置 BOSS HP 失敗', eR); }
       }
@@ -1814,8 +1805,29 @@
         if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
            && a && a.side === 'p2' && typeof a.name === 'string'
            && window._wbIsBossName && window._wbIsBossName(a.name)){
-          // 走世界戰 BOSS AI
+          // ★ FIX 20260518(c) #6 — quiz 守門:世界 BOSS 已在 ADV_QUIZ_BOSS_NAMES,
+          //   需要先讓主程式 aiAct 內的 quiz 觸發邏輯跑完(advShowQuiz),
+          //   quiz cb 內呼叫 _realAiAct → _realAiAct 自己會接到 _wbAdvBossTurn(已在 #6 修補)。
+          //   所以這裡的 hook 只在「答題已完成 / 不需答題」情境直接走 _wbAdvBossTurn。
+          const _quizBusy = (typeof window._advQuizPhase !== 'undefined'
+                            && (window._advQuizPhase === 'asking' || window._advQuizPhase === 'answered'))
+                           || !!window._bossQuizInFlight;
+          const _quizCbPending = !!window._advQuizResolveCb;
+          // 答題流程進行中 → 走主程式 aiAct(讓它的 quiz 觸發邏輯接管,不要在這裡 return)
+          if(_quizBusy || _quizCbPending){
+            console.log('[WB-Adv aiAct hook] quiz 進行中,讓主程式 aiAct quiz 邏輯接管');
+            return _origAiAct.apply(this, arguments);
+          }
+          // 走世界戰 BOSS AI(沒有 quiz 流程在跑時,例如 quiz 失敗 fallback 或還沒觸發)
           if(typeof window._wbAdvBossTurn === 'function'){
+            // 但若 BOSS 在名單中且未行動 → 應該讓 quiz 先觸發,不要這裡跑 AI
+            const _needQuiz = window.ADV_QUIZ_BOSS_NAMES
+                           && window.ADV_QUIZ_BOSS_NAMES.indexOf(a.name) >= 0
+                           && a.curHp > 0 && !a.acted;
+            if(_needQuiz){
+              console.log('[WB-Adv aiAct hook] BOSS 需要先答題,讓主程式 aiAct 接管 quiz 觸發');
+              return _origAiAct.apply(this, arguments);
+            }
             return window._wbAdvBossTurn(a);
           }
         }
@@ -1841,6 +1853,11 @@
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(!G || !G.p1) return;
 
+    // ★ FIX 20260518(c) #3 — 每次 BOSS 行動進入時重置防雙重觸發狀態
+    //   (上一輪的 _wbEndedThisTurn=true 若沒清會卡死下一輪 endAction)
+    boss._wbEndedThisTurn = false;
+    try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
+
     // ★ 第 20 回合到 → 強制全員滅絕
     if((G.round || 1) >= 20){
       // ★ FIX 20260517 — 滅絕也算技能,播技能音效
@@ -1861,9 +1878,8 @@
       });
       try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
       if(typeof log === 'function') log('☠ 全員陣亡 — 戰場已被火山灰掩埋');
-      boss.acted = true;
-      try{ if(typeof checkWin === 'function') checkWin(); }catch(_){}
-      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+      // ★ FIX 20260518(c) #3 — 滅絕路徑也走防雙重觸發
+      _safeBossEndAction(boss);
       return;
     }
 
@@ -1883,6 +1899,54 @@
     }else{
       _wbAdvBossNormalAtk(boss);
     }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260518(c) #3 — BOSS 動作 endAction 防雙重觸發共用工具
+  // ────────────────────────────────────────────────────────────────────
+  // 問題:_wbAdvBossS1/S2/Burst/NormalAtk 結尾都用 setTimeout 跑 endAction(boss, 0),
+  //       期間若玩家爆發插隊把 boss.acted 設成 true 並走完 _burstFinish → startTurn,
+  //       原本 setTimeout 仍會跑 → 第二次 endAction → currentActorIdx 跳一個 actor →
+  //       導致下一位玩家永遠輪不到。
+  // 解法:
+  //   1. 把 setTimeout 句柄存到 boss._wbBossTid,新一次 BOSS 動作前先 clear
+  //   2. _safeBossEndAction(boss):endAction 前先檢查「boss 是否已被其他流程處理過」
+  //      - 若 boss.curHp <= 0 → 不再呼叫 endAction(checkWin 應已接管)
+  //      - 若 boss._wbEndedThisTurn === true → 已 endAction 過,跳過
+  //      - 否則正常設 acted=true + endAction,並標記 _wbEndedThisTurn 防 double-fire
+  //   3. startTurn 時主程式會清 acted,並由 _wbInstallStartTurnSyncHook 清 _wbEndedThisTurn
+  // ════════════════════════════════════════════════════════════════════
+  function _safeBossEndAction(boss){
+    if(!boss) return;
+    // 已被插隊處理過(玩家爆發優先 etc.)
+    if(boss._wbEndedThisTurn === true){
+      try{ console.log('[WB-BossAct] _safeBossEndAction 已跑過,跳過(防雙重 endAction)'); }catch(_){}
+      return;
+    }
+    // BOSS 已死
+    if(boss.curHp <= 0){
+      try{ console.log('[WB-BossAct] BOSS HP=0,checkWin 應接管,跳過 endAction'); }catch(_){}
+      boss._wbEndedThisTurn = true;
+      return;
+    }
+    boss._wbEndedThisTurn = true;
+    boss.acted = true;
+    try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+    try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+  }
+  function _scheduleBossEnd(boss, delay){
+    // 取消舊 timer(若 BOSS 連續被觸發,避免堆積)
+    try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
+    boss._wbBossTid = setTimeout(() => {
+      boss._wbBossTid = null;
+      _safeBossEndAction(boss);
+    }, delay);
+  }
+  // 對外暴露,讓 startTurn sync hook / _wbAdvBossTurn 等清狀態
+  window._wbClearBossEndState = function(boss){
+    if(!boss) return;
+    boss._wbEndedThisTurn = false;
+    try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
   };
 
   // BOSS S1:業火灼燒(全體 sp×1.0 + 燃燒 2 回合)
@@ -1908,11 +1972,8 @@
       try{ renderCard(t); }catch(_){}
     });
     if(typeof log === 'function') log(`🔥 維蘇威火山龍王「業火灼燒」!全體 -${dmg} HP,並附加燃燒 2 回合`);
-    setTimeout(() => {
-      boss.acted = true;
-      try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
-      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
-    }, 1500);
+    // ★ FIX 20260518(c) #3 — 用 _scheduleBossEnd 取代裸 setTimeout
+    _scheduleBossEnd(boss, 1500);
   }
 
   // BOSS S2:龍吼震懾(全體 sp×0.75 + 50% 眩暈)
@@ -1945,11 +2006,8 @@
     });
     const stunMsg = stunNames.length ? `,${stunNames.join('/')} 眩暈 1 回合` : '';
     if(typeof log === 'function') log(`🐉 維蘇威火山龍王「龍吼震懾」!全體 -${dmg} HP${stunMsg}`);
-    setTimeout(() => {
-      boss.acted = true;
-      try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
-      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
-    }, 1500);
+    // ★ FIX 20260518(c) #3 — 用 _scheduleBossEnd 取代裸 setTimeout
+    _scheduleBossEnd(boss, 1500);
   }
 
   // BOSS 爆發:天崩之炎(全體當前 HP 90%)
@@ -1958,7 +2016,20 @@
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
-    setTimeout(() => {
+    // ★ FIX 20260518(c) #3 — 外層動畫等待也存到 _wbBossTid,玩家爆發插隊時能取消整條鏈
+    try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
+    boss._wbBossTid = setTimeout(() => {
+      boss._wbBossTid = null;
+      // 二次檢查:外層 timer 跑到時 boss 可能已被插隊處理
+      if(boss._wbEndedThisTurn === true){
+        try{ console.log('[WB-BossAct] BOSS 爆發外層 timer 觸發時已被插隊,跳過'); }catch(_){}
+        return;
+      }
+      if(boss.curHp <= 0){
+        try{ console.log('[WB-BossAct] BOSS 爆發外層 timer 觸發時 BOSS 已死,跳過'); }catch(_){}
+        boss._wbEndedThisTurn = true;
+        return;
+      }
       const alive = G.p1.filter(h => h && h.curHp > 0);
       let logEntry = '⚡ 維蘇威火山龍王爆發「天崩之炎」!';
       alive.forEach(t => {
@@ -1987,11 +2058,8 @@
         try{ renderCard(t); }catch(_){}
       });
       if(typeof log === 'function') { log(logEntry); log('🔥 全體附加燃燒 3 回合'); }
-      setTimeout(() => {
-        boss.acted = true;
-        try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
-        try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
-      }, 1800);
+      // ★ FIX 20260518(c) #3 — 內層 endAction 也走防雙重觸發
+      _scheduleBossEnd(boss, 1800);
     }, 2200);
   }
 
@@ -2002,8 +2070,8 @@
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-atk', 0.6); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     if(!alive.length){
-      boss.acted = true;
-      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
+      // ★ FIX 20260518(c) #3 — early return 也走防雙重觸發
+      _safeBossEndAction(boss);
       return;
     }
     const tgt = alive[Math.floor(Math.random() * alive.length)];
@@ -2019,11 +2087,8 @@
     }
     try{ renderCard(tgt); }catch(_){}
     if(typeof log === 'function') log(`🦷 維蘇威炎爪攻擊 ${tgt.name} -${d} HP`);
-    setTimeout(() => {
-      boss.acted = true;
-      try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
-      try{ if(typeof endAction === 'function') endAction(boss, 0); }catch(_){}
-    }, 1200);
+    // ★ FIX 20260518(c) #3 — 用 _scheduleBossEnd 取代裸 setTimeout
+    _scheduleBossEnd(boss, 1200);
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -2060,30 +2125,62 @@
           const a = G && G.activeChar;
           if(!a){ return _origSetPending.apply(this, arguments); }
           const opp = a.side === 'p1' ? 'p2' : 'p1';
+          // ★ FIX 20260518(c) #4 — setPending type 白名單擴充 + default 兜底
+          //   原問題:只匹配 7 種 type(enemy/any_e/ally/self_or_ally/ally_dead/ally_or_dead/any),
+          //          其他 type 如 'dead_ally'/'foe_count'/'mimic_target'/'self'/'self_e' 等
+          //          會走到 _origSetPending → 跳出目標選擇 modal,但代執行情境下被代執行
+          //          的玩家根本看不到房主螢幕的 modal → 整場戰鬥永久卡住。
+          //   修補:
+          //     1. 補上常見 type 映射(dead_ally/self/foe_count/mimic_target)
+          //     2. 加 default 分支:任何未匹配 type 都「降級為跳過」,確保不會卡 modal
           let autoT = null;
-          if(type === 'enemy' || type === 'any_e'){
+          let matched = true;
+          if(type === 'enemy' || type === 'any_e' || type === 'foe' || type === 'foe_count'){
             const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
             // 世界戰只有 BOSS,但保險還是用 sort
             autoT = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
           }else if(type === 'ally' || type === 'self_or_ally'){
             const al = (G[a.side] || []).filter(h => h && h.curHp > 0);
             autoT = al.sort((x, y) => x.curHp - y.curHp)[0] || null;
-          }else if(type === 'ally_dead' || type === 'ally_or_dead'){
+          }else if(type === 'ally_dead' || type === 'ally_or_dead' || type === 'dead_ally' || type === 'dead'){
             const dead = (G[a.side] || []).filter(h => h && h.curHp === 0);
             autoT = dead[0] || null;
+            // 沒倒下隊友 → 退而選自己以外的活著隊友(讓技能不空轉)
+            if(!autoT){
+              const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && h !== a);
+              autoT = al.sort((x, y) => x.curHp - y.curHp)[0] || null;
+            }
+          }else if(type === 'self' || type === 'self_e'){
+            // self:自己
+            autoT = a;
+          }else if(type === 'mimic_target' || type === 'mimic'){
+            // 臨摹大師:自動選 HP 最高的活著友方(代表能力最完整的)
+            const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && h !== a);
+            autoT = al.sort((x, y) => y.curHp - x.curHp)[0] || null;
           }else if(type === 'any'){
             const all = (G.p1 || []).concat(G.p2 || []).filter(h => h && h.curHp > 0);
             autoT = all.sort((x, y) => x.curHp - y.curHp)[0] || null;
+          }else{
+            // ★ 未匹配 type → 標記 matched=false,走 default 兜底
+            matched = false;
+            console.warn('[WB-Action v6] setPending 未匹配 type=' + type + ' → 走 default 跳過');
           }
           if(autoT && cb){
             // 延 50ms 模擬玩家點擊延遲(讓主程式內部 state 收歛)
             setTimeout(() => { try{ cb(autoT); }catch(eC){ console.error('[WB-Action v6] setPending cb 例外', eC); } }, 50);
             return;
           }
-          // 找不到目標:主程式 _autoBattle 路徑會直接結束行動
+          // ★ FIX 20260518(c) #4 — default 兜底:不論是「matched 但找不到目標」還是
+          //   「type 未匹配」,都走「actor.acted=true → startTurn」推進回合,避免卡在
+          //   等不到玩家點目標的 modal。
           if(a && !a.acted){
             a.acted = true;
             try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+            // matched=false 時 log 提示,協助未來 debug
+            if(!matched){
+              console.warn('[WB-Action v6] setPending default 兜底觸發,actor=' + (a.name||'?')
+                + ' acted=true → startTurn');
+            }
             setTimeout(() => { try{ if(typeof window.startTurn === 'function') window.startTurn(); }catch(_){} }, 400);
           }
           return;
@@ -2438,60 +2535,6 @@
       }
     }catch(eHp){
       console.warn('[WB-HpSync] 結算扣血失敗', eHp);
-    }
-
-    // ★ FIX 20260518(b) — 把本場 4 項貢獻上傳到雲端排行榜
-    //   來源:G.battleStats[heroName] 內的 dmg / heal / dmgTaken / statusCount
-    //   寫入路徑:worldBossLeaderboard/{bossId}.players[uid]
-    //   注意:
-    //     - 連線多人模式下,只有「本機玩家自己的英雄」會被算進去(避免每個 client 重複寫)
-    //     - 單人練習也照寫(他打的傷害確實是該玩家貢獻),但 4 個槽都算房主
-    //     - 房主代打 NPC 算房主貢獻(NPC 其實是房主操控)
-    //     - 玩家若沒有 uid(未登入 = solo_user)就不寫
-    try{
-      const _myUidLb = window._gUserId;
-      if(_myUidLb && _myUidLb !== 'solo_user' && _Gr && _Gr.battleStats
-         && window._wbLeaderboard && typeof window._wbLeaderboard.submitContribution === 'function'){
-        // 連線模式:由 _wbNet.getMySlot 找出我的槽位,只累加我那隻英雄;
-        //          但房主代打的 NPC 也算房主 → 房主把所有 _wbIsHostNpc 的英雄也算進來
-        // 單人模式:4 個槽都是「我自己」(房主代打全部),全部累加
-        const isHost = (window._wbNet && typeof window._wbNet.isHost === 'function')
-                       ? window._wbNet.isHost() : true;
-        const mySlot = (window._wbNet && typeof window._wbNet.getMySlot === 'function')
-                       ? window._wbNet.getMySlot() : 0;
-        const isSolo = !!window._wbSoloPracticeMode;
-        let agg = { dmg: 0, heal: 0, dmgTaken: 0, ctrl: 0 };
-        for(let i = 0; i < (_Gr.p1 ? _Gr.p1.length : 0); i++){
-          const _h = _Gr.p1[i];
-          if(!_h) continue;
-          const _isMine = isSolo ? true        // 單人模式:全算我
-                       : isHost  ? (i === mySlot || _h._wbIsHostNpc)  // 房主:我的 + 代打 NPC
-                                 : (i === mySlot);  // 一般玩家:只算我
-          if(!_isMine) continue;
-          const _s = _Gr.battleStats[_h.name] || {};
-          agg.dmg      += (_s.dmg         || 0);
-          agg.heal     += (_s.heal        || 0);
-          agg.dmgTaken += (_s.dmgTaken    || 0);
-          agg.ctrl     += (_s.statusCount || 0);
-        }
-        // 取暱稱
-        const _myName = (window._playerNickname || window._userName
-                      || (window._fbUser && (window._fbUser.displayName || window._fbUser.email))
-                      || '玩家');
-        // 從 lineup 反查 bossId
-        let _lbBossId = 'vesuvius_fire_dragon';
-        try{
-          const _wbBoss2 = (_Gr && _Gr.p2 && _Gr.p2[0]) || null;
-          const _lineup2 = window.WORLD_BOSS_LINEUP || [];
-          const _m2 = _wbBoss2 && _lineup2.find(b => b && b.name === _wbBoss2.name);
-          if(_m2 && _m2.id) _lbBossId = _m2.id;
-        }catch(_){}
-        window._wbLeaderboard.submitContribution(_lbBossId, _myUidLb, _myName, agg)
-          .then(ok => { if(ok) console.log('[WB-Leaderboard] 本場貢獻已上傳:', agg); })
-          .catch(e => console.warn('[WB-Leaderboard] 上傳失敗', e));
-      }
-    }catch(eLb){
-      console.warn('[WB-Leaderboard] 結算上傳例外', eLb);
     }
 
     // 結束戰鬥:離開冒險模式 + 隱藏戰鬥畫面
