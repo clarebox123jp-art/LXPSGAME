@@ -37911,12 +37911,15 @@ function _showNewHeroAnnouncement(forceShow){
     document.head.appendChild(st);
   }
 
-  // 主容器(80% 螢幕)
+  // 主容器(95% 螢幕,讓 v3.0 世界 BOSS 介紹能完整顯示)
+  // ★ v3.3.1 — 從 80vh/900px 加大到 95vh/1200px,根治玩家看不到 v3.0 NEW 完整內容的問題
+  //   原本 80vh 只能露出 worldboss 卡片頂端紅框 + 一個 NEW 標籤,玩家以為是空框直接滑掉,
+  //   完全沒看到「維蘇威火山龍王」、4 人連線玩法、隊伍排名獎勵、16 枚獎章等吸引人的內容。
   const box = document.createElement('div');
   box.id = '_event-popup-box';
   box.style.cssText = [
-    'width:80vw;height:80vh;',
-    'max-width:1280px;max-height:900px;',
+    'width:92vw;height:95vh;',
+    'max-width:1400px;max-height:1200px;',
     'background:linear-gradient(160deg,rgba(20,10,40,0.97),rgba(15,5,30,0.97));',
     'border:3px solid rgba(255,210,100,0.7);',
     'border-radius:18px;',
@@ -37936,12 +37939,17 @@ function _showNewHeroAnnouncement(forceShow){
     'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;'
   ].join('');
   header.innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;width:100%;">
       <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite;">✨</span>
       <span style="font-size:clamp(30px,4.5vw,46px);font-weight:900;color:#ffe066;
         text-shadow:0 0 14px rgba(255,200,80,0.85),0 2px 6px rgba(0,0,0,0.7);
-        letter-spacing:2px;">🎉 歡慶2.0版正式上線！</span>
+        letter-spacing:2px;">🎉 歡慶 3.0 版正式上線！</span>
       <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite 0.6s;">✨</span>
+    </div>
+    <div style="width:100%;text-align:center;margin-top:6px;
+      font-size:clamp(18px,2.2vw,24px);font-weight:700;color:#ffaa66;
+      text-shadow:0 0 10px rgba(255,140,60,0.7),0 2px 4px rgba(0,0,0,0.6);letter-spacing:1.5px;">
+      🌍 全新「世界 BOSS 討伐戰」開放 ・ ⚔ 4 人連線挑戰 ・ 🐉 維蘇威火山龍王降臨
     </div>
   `;
 
@@ -38511,6 +38519,15 @@ function _showNewHeroAnnouncement(forceShow){
   box.appendChild(footer);
   ov.appendChild(box);
   document.body.appendChild(ov);
+
+  // ★ v3.3.1 — 確保開啟時滾到頂部(玩家第一眼看到 v3.0 世界 BOSS 介紹)
+  try{
+    scrollArea.scrollTop = 0;
+    // requestAnimationFrame 雙保險:某些瀏覽器在 DOM 渲染前 scrollTop 設定會被覆蓋
+    requestAnimationFrame(() => {
+      try{ scrollArea.scrollTop = 0; }catch(_){}
+    });
+  }catch(_){}
 
   // 點擊背景關閉(不觸發「今日不再顯示」)
   ov.addEventListener('click', (e) => {
@@ -70433,6 +70450,11 @@ window._GAME_LOADED_VERSION = 'v3.3.1';
 //     1. aiUseSkill 結尾加 5 秒 watchdog(同 endAction),強制 resume + startTurn
 //     2. _aiWatchdog 判斷邏輯:acted=true 不算數,只看 G.activeChar 是否仍指向 a
 //        (acted=true 不代表 startTurn 推進成功,可能還卡在 _pendingTimers)
+//   🎉 3.0 上線通知頁修復:
+//     - 標題從「歡慶 2.0」改成「歡慶 3.0 版正式上線」+ 副標宣告世界 BOSS
+//     - modal 高度 80vh/900px → 95vh/1200px,確保 v3.0 世界 BOSS 卡片完整可見
+//     - modal 寬度 80vw/1280px → 92vw/1400px
+//     - 開啟時自動 scrollTop=0,確保第一眼看到 v3.0 世界 BOSS 介紹
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
