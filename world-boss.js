@@ -2406,6 +2406,66 @@
     return true;
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260518(d) — 世界 BOSS 戰題庫預備:包裝 _wbSetupAdvForBattle
+  // ────────────────────────────────────────────────────────────────────
+  // 問題:
+  //   主程式 advPickQuestion() 走通用分支會讀 _advSessionQuestions(本局題庫),
+  //   而世界 BOSS 戰流程 (_wbSetupAdvForBattle 設 stage='worldboss' →
+  //   advStartBattle()) 從不呼叫 advPrepareSessionQuestions(),所以該陣列永遠空。
+  //   玩家行動前 [WB-PlayerQuiz] hook 觸發 advShowQuiz → advPickQuestion 後,
+  //   pool 一定空 → 進入「整輪 N 題庫已全部出過」分支 → 回 {__needRepick:true}
+  //   → advShowQuiz 用 setTimeout 150ms 重呼自己 → 無限迴圈,
+  //   console 每 150ms 噴一行 + 畫面卡在「答對題目才能行動」永遠不會推進。
+  //
+  // 修補:
+  //   包裝 window._wbSetupAdvForBattle,在原函式成功(回傳 true)後,
+  //   立刻呼叫主程式 advPrepareSessionQuestions()。
+  //   - 主程式 _advSessionQuestions 是 lexical scope 的 let 變數,
+  //     外部 IIFE 無法直接賦值(window._advSessionQuestions 影響不到 lexical 變數),
+  //     唯一方法是呼叫主程式自己的 advPrepareSessionQuestions(),
+  //     它會在 lexical scope 內把 _advSessionQuestions 設好。
+  //   - advPrepareSessionQuestions 內部呼叫 advGetQuizPool(grade,subject,difficulty),
+  //     世界 BOSS 戰沒設過這三者(都是 ''),會走到 advGetQuizPool 尾端
+  //     「沒選科目或選綜合 → 全題庫」分支,回傳完整 ADV_QUIZ_DB shuffle 後的池。
+  //   - 同時主程式 advPrepareSessionQuestions 內 fallback:
+  //         let finalPool = pool.length ? pool : ADV_QUIZ_DB.slice();
+  //     雙保險,保證 _advSessionQuestions 不會空。
+  // ════════════════════════════════════════════════════════════════════
+  function _wbInstallWbAdvQuizPoolPatch(){
+    if(typeof window._wbSetupAdvForBattle !== 'function') return false;
+    if(window._wbSetupAdvForBattlePatched) return true;
+    const _origSetup = window._wbSetupAdvForBattle;
+    window._wbSetupAdvForBattle = function(opts){
+      const _ok = _origSetup.apply(this, arguments);
+      try{
+        const _stage = (opts && opts.stage) || 'worldboss';
+        if(_ok && _stage === 'worldboss'){
+          // 呼叫主程式自己的 advPrepareSessionQuestions(),讓它在 lexical scope 內
+          // 把 _advSessionQuestions 設成完整題庫(advGetQuizPool 會回 ADV_QUIZ_DB shuffle)
+          if(typeof window.advPrepareSessionQuestions === 'function'){
+            try{
+              window.advPrepareSessionQuestions();
+              console.log('[WB-AdvQuiz] ✅ 世界 BOSS 戰題庫已透過 advPrepareSessionQuestions 預備');
+            }catch(ePrep){
+              console.warn('[WB-AdvQuiz] advPrepareSessionQuestions 呼叫失敗,玩家行動前出題可能卡死', ePrep);
+            }
+          }else{
+            console.warn('[WB-AdvQuiz] advPrepareSessionQuestions 不存在,題庫無法預備');
+          }
+          // 清掉「玩家行動前答題」的回合追蹤,避免上一場世界 BOSS 戰殘留
+          try{ window._wbPlayerQuizDone = {}; }catch(_){}
+        }
+      }catch(eAll){
+        console.warn('[WB-AdvQuiz] 題庫預備例外(忽略)', eAll);
+      }
+      return _ok;
+    };
+    window._wbSetupAdvForBattlePatched = true;
+    console.log('[WB-AdvQuiz] ✅ _wbSetupAdvForBattle patch 已安裝');
+    return true;
+  }
+
   function _wbInstallExecBurstPatch(){
     if(typeof window.execBurst !== 'function') return false;
     if(window._wbExecBurstPatched) return true;
@@ -2655,6 +2715,12 @@
       try{ if(!_wbInstallSelMovePatch())   allOk = false; }catch(e){ console.warn('[WB-Client v6] selMove', e); allOk = false; }
       try{ if(!_wbInstallDoRestPatch())    allOk = false; }catch(e){ console.warn('[WB-Client v6] doRest', e); allOk = false; }
       try{ if(!_wbInstallExecBurstPatch()) allOk = false; }catch(e){ console.warn('[WB-Client v6] execBurst', e); allOk = false; }
+      // ★ FIX 20260518(d) — 世界 BOSS 戰題庫預備:包裝 _wbSetupAdvForBattle,
+      //   在 stage='worldboss' 設好之後立刻幫主程式準備 _advSessionQuestions,
+      //   否則玩家行動前 hook 觸發 advShowQuiz → advPickQuestion 找不到題,
+      //   走 __needRepick 自我重呼 → 每 150ms 一次 → console 狂噴「整輪 N 題庫已全部出過」
+      //   且畫面卡死(action-panel 被鎖、actor-info 永遠停在「答對題目才能行動」)。
+      try{ if(!_wbInstallWbAdvQuizPoolPatch()) allOk = false; }catch(e){ console.warn('[WB-Adv] wbAdvQuizPool', e); allOk = false; }
       if(!allOk && tries < 40){
         setTimeout(tryInstall, 500);
       }else if(allOk){
