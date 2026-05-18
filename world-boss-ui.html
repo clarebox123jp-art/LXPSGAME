@@ -4792,48 +4792,27 @@
         // 空槽:檢查房主有沒有本地指派
         const assigned = (meIsHost && window._wbHostAssignedSlots && window._wbHostAssignedSlots[i]) || null;
         if(assigned && assigned.heroName){
-          // ── 已指派狀態:顯示房主代打的 NPC 角色 ─────────────────
-          const _heroName = assigned.heroName;
-          const _heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[_heroName]) || '';
-          const _elem = assigned.element || (_npcAssigned[_emptyShown] || null);
+          // ── 已指派狀態:走跟房主槽完全相同的卡片排版 ───────────────
+          // ★ FIX 20260518 — 改用 _wbTcRenderOneSlot(...,assignedSlotIdx=i):
+          //   結構完全跟真人玩家一致(Lv/HP條/攻特速/技能/元素/至寶),但所有互動
+          //   handler 自動導向 _wbTcAssignedSlot* 系列 → 代打槽可選英雄、屬性、至寶。
+          //   fake player 把 element 包成 JSON(es 主元素陣列 + t 至寶陣列),
+          //   讓 _wbTcParsePlayerExt 與既有渲染邏輯零修改就能使用。
+          const _autoElem = (assigned.element || (_npcAssigned[_emptyShown] || null));
           _emptyShown++;
-          const _portraitHtml = _heroImg
-            ? `<img src="${_heroImg}" alt="${_heroName}"
-                   style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
-                   onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'wb-tc-hero-emoji\\'>⚔</span>';">`
-            : '<span class="wb-tc-hero-emoji">⚔</span>';
-          // 元素 chips(可切換)
-          const _elemChipsHtml = _WB_TC_ALL_ELEMS.map(el => {
-            const on = (el.id === _elem);
-            const cls = 'wb-tc-elem-chip ' + (on ? ('on ' + el.id) : '');
-            return `<button class="${cls}" onclick="_wbTcAssignedSlotPickElement(${i},'${el.id}')">
-              <span class="em-ic">${el.ic}</span>${el.name}
-            </button>`;
-          }).join('');
-          html += `<div class="wb-tc-slot wb-tc-slot-assigned">
-            <div class="wb-tc-slot-head">
-              <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
-              <span class="wb-tc-slot-player-name" title="${_hostNameEsc}・代打">👤 ${_hostNameEsc}・代打</span>
-              <span class="wb-tc-slot-tag host" style="background:#ffaa44;color:#000;">🎮 房主代打</span>
-              <button class="wb-tc-swap-hero-btn" onclick="_wbTcAssignedSlotOpenSwap(${i})">🔄 換</button>
-            </div>
-            <div class="wb-tc-hero-portrait" style="margin-top:6px;width:80px;height:80px;
-                 display:flex;align-items:center;justify-content:center;
-                 border-radius:50%;border:2px solid rgba(255,170,68,0.55);
-                 background:radial-gradient(circle,rgba(255,170,68,0.2),rgba(80,60,30,0.1));
-                 align-self:center;overflow:hidden;">
-              ${_portraitHtml}
-            </div>
-            <div class="wb-tc-npc-title" style="color:#ffd699;">${_heroName}</div>
-            <div class="wb-tc-npc-sub" style="color:#ccaa88;">
-              戰鬥時由房主操控<br>(替自己多打一隻)
-            </div>
-            <div class="wb-tc-section-lbl" style="margin-top:8px;">🎨 屬性</div>
-            <div class="wb-tc-elem-chips">${_elemChipsHtml}</div>
-            <button class="wb-tc-slot-action-btn" style="margin-top:6px;font-size:18px;padding:6px;
-                    background:rgba(255,80,80,0.18);color:#ffaaaa;border:1.5px solid rgba(255,100,100,0.45);"
-                    onclick="_wbTcAssignedSlotClear(${i})">✕ 取消指派</button>
-          </div>`;
+          const _fakeExt = {
+            e:  _autoElem,
+            es: _autoElem ? [_autoElem] : [],
+            t:  Array.isArray(assigned.treasures) ? assigned.treasures : [],
+          };
+          const _fakeP = {
+            uid:      myUid,    // ★ 設成 myUid → _wbTcRenderOneSlot 內 isMe=true,但用 assignedSlotIdx 覆寫
+            heroName: assigned.heroName,
+            name:     _hostNameForNpc,
+            element:  _wbTcStringifyExt(_fakeExt),
+            ready:    false,
+          };
+          html += _wbTcRenderOneSlot(_fakeP, i, myUid, treasureTakenByPeer, meIsHost, i);
           continue;
         }
         // ── 初始空槽:顯示兩個動作按鈕(只有房主能用) ─────────────
@@ -5060,9 +5039,16 @@
   }
 
   // ★ FIX 20260516 v2 — 新版緊湊戰鬥卡片渲染
-  function _wbTcRenderOneSlot(p, idx, myUid, treasureTakenByPeer, meIsHost){
-    const isMe = (p.uid === myUid);
-    const isHost = (window._wbNet.getSnapshot()?.meta?.hostUid === p.uid);
+  // ★ FIX 20260518 — 加上第 6 個參數 assignedSlotIdx:
+  //   - 為 null:一般玩家槽位(原行為)
+  //   - 為 number:房主代打槽位 → 排版與真人玩家完全相同,但所有「自己」的互動
+  //     (換英雄、選元素、換至寶、技能查看用本地等級)都導向 _wbTcAssignedSlot* 系列。
+  //   讓代打槽可選英雄、屬性、至寶,UI 與房主槽結構一致。
+  function _wbTcRenderOneSlot(p, idx, myUid, treasureTakenByPeer, meIsHost, assignedSlotIdx){
+    // ★ 代打槽:把這槽當「房主本人在編輯副卡」處理 → isMe 視同 true(可選/可編輯)
+    const isAssigned = (typeof assignedSlotIdx === 'number');
+    const isMe = isAssigned ? true : (p.uid === myUid);
+    const isHost = isAssigned ? false : (window._wbNet.getSnapshot()?.meta?.hostUid === p.uid);
     const ext = _wbTcParsePlayerExt(p);
     const heroName = p.heroName || '?';
     const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
@@ -5073,29 +5059,40 @@
     const mainElem = ext.es[0] || null;
 
     // 標籤
-    const tagHtml = isHost
-      ? '<span class="wb-tc-slot-tag host">房主</span>'
-      : (isMe ? '<span class="wb-tc-slot-tag me">你</span>' : '<span class="wb-tc-slot-tag peer">隊友</span>');
+    const tagHtml = isAssigned
+      ? '<span class="wb-tc-slot-tag host" style="background:#ffaa44;color:#000;">🎮 房主代打</span>'
+      : (isHost
+          ? '<span class="wb-tc-slot-tag host">房主</span>'
+          : (isMe ? '<span class="wb-tc-slot-tag me">你</span>' : '<span class="wb-tc-slot-tag peer">隊友</span>'));
 
     // ★ FIX 20260517(s) — 槽頂顯示玩家暱稱(在房主/你/隊友標籤左邊)
     //   讓四個槽一眼看出每格是誰、也能跟「房主代打」NPC 槽位區分
     const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const _displayName = _esc(p.name || '玩家');
+    const _displayName = isAssigned ? (_esc(p.name || '房主') + '・代打') : _esc(p.name || '玩家');
     const playerNameHtml = `<span class="wb-tc-slot-player-name" title="${_displayName}">👤 ${_displayName}</span>`;
 
     // ★ FIX 20260517(u) — 替換英雄按鈕:單人練習 或 多人房自己槽位都可以
     //   原本只在 _wbSoloPracticeMode 才能換,但新流程已移除選角頁,
     //   多人房房主/玩家必須能在隊伍確認頁換自己的英雄。
+    // ★ FIX 20260518 — 代打槽改用 _wbTcAssignedSlotOpenSwap
     const allowSwapHero = isMe;
     const swapHeroBtn = allowSwapHero
-      ? `<button class="wb-tc-swap-hero-btn" onclick="_wbTcOpenSwapHero(${idx})">🔄 換英雄</button>`
+      ? (isAssigned
+          ? `<button class="wb-tc-swap-hero-btn" onclick="_wbTcAssignedSlotOpenSwap(${idx})">🔄 換英雄</button>`
+          : `<button class="wb-tc-swap-hero-btn" onclick="_wbTcOpenSwapHero(${idx})">🔄 換英雄</button>`)
       : '';
 
     // 元素 chips
+    // ★ FIX 20260518 — 代打槽元素點擊呼叫 _wbTcAssignedSlotPickElement(單選邏輯)
     const elemChipsHtml = _WB_TC_ALL_ELEMS.map(el => {
       const on = ext.es.includes(el.id);
       const cls = 'wb-tc-elem-chip ' + (on ? ('on ' + el.id) : '') + (isMe ? '' : ' readonly');
-      const click = isMe ? `onclick="_wbTcToggleElement('${el.id}')"` : '';
+      let click = '';
+      if(isMe){
+        click = isAssigned
+          ? `onclick="_wbTcAssignedSlotPickElement(${idx},'${el.id}')"`
+          : `onclick="_wbTcToggleElement('${el.id}')"`;
+      }
       return `<button class="${cls}" ${click}>
         <span class="em-ic">${el.ic}</span>${el.name}
       </button>`;
@@ -5115,7 +5112,9 @@
         const rec = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData[tid]) || {};
         if(def){
           const slotName = def.slot === 'weapon' ? '武器' : def.slot === 'armor' ? '防具' : '飾品';
-          const clickAttr = isMe ? `onclick="_wbTcOpenSwapTreasureSlot(${idx}, ${slotI})" style="cursor:pointer;"` : '';
+          // ★ FIX 20260518 — 代打槽至寶 onclick 改為 _wbTcAssignedSlotOpenSwapTreasure
+          const _trOpenFn = isAssigned ? '_wbTcAssignedSlotOpenSwapTreasure' : '_wbTcOpenSwapTreasureSlot';
+          const clickAttr = isMe ? `onclick="${_trOpenFn}(${idx}, ${slotI})" style="cursor:pointer;"` : '';
           treasureRowsHtml += `<div class="wb-tc-treasure-row" ${clickAttr}>
             <span class="wb-tc-tr-ic">${def.icon || '💎'}</span>
             <span class="wb-tc-tr-name">${def.name}</span>
@@ -5124,27 +5123,36 @@
         }
       }else{
         // 空槽
-        const clickAttr = isMe ? `onclick="_wbTcOpenSwapTreasureSlot(${idx}, ${slotI})" style="cursor:pointer;"` : '';
+        const _trOpenFn = isAssigned ? '_wbTcAssignedSlotOpenSwapTreasure' : '_wbTcOpenSwapTreasureSlot';
+        const clickAttr = isMe ? `onclick="${_trOpenFn}(${idx}, ${slotI})" style="cursor:pointer;"` : '';
         const slotLabel = heroMaxSlots === 2 ? `第 ${slotI+1} 件・點擊裝備` : '點擊裝備至寶';
         treasureRowsHtml += `<div class="wb-tc-treasure-row empty" ${clickAttr}>+ ${slotLabel}</div>`;
       }
     }
-    const swapTrBtn = (isMe && heroMaxSlots === 2 && selTreasures.length >= 2)
+    // 「管理至寶 / 裝備至寶」總按鈕:代打槽暫不顯示(以個別槽點擊代替)
+    const swapTrBtn = (!isAssigned && isMe && heroMaxSlots === 2 && selTreasures.length >= 2)
       ? `<button class="wb-tc-swap-tr-btn" onclick="_wbTcOpenSwapTreasure(${idx})">💎 管理至寶</button>`
-      : (isMe && selTreasures.length === 0
+      : (!isAssigned && isMe && selTreasures.length === 0
           ? `<button class="wb-tc-swap-tr-btn" onclick="_wbTcOpenSwapTreasure(${idx})">💎 裝備至寶</button>`
           : '');
 
     // 準備按鈕
-    const readyBtnHtml = isMe ? `
+    // ★ FIX 20260518 — 代打槽不需「準備」(房主直接代打),改顯示「✕ 取消指派」
+    const readyBtnHtml = isAssigned
+      ? `<button class="wb-tc-ready-btn cancel" style="background:rgba(255,80,80,0.18);color:#ffaaaa;border-color:rgba(255,100,100,0.45);"
+                onclick="_wbTcAssignedSlotClear(${idx})">✕ 取消指派</button>`
+      : (isMe ? `
       <button class="wb-tc-ready-btn ${p.ready ? 'cancel' : ''}" onclick="_wbTcToggleReady()">
         ${p.ready ? '↶ 取消準備' : '✓ 我準備好了'}
-      </button>` : '';
+      </button>` : '');
 
     // ★ FIX 20260517(u) — 點卡片行為:自己的卡片任何模式都觸發換英雄;
     //                       其他玩家卡片則看英雄詳情
+    // ★ FIX 20260518 — 代打槽點卡片打開代打換英雄
     let previewClick;
-    if(isMe){
+    if(isAssigned){
+      previewClick = `onclick="_wbTcAssignedSlotOpenSwap(${idx})"`;
+    }else if(isMe){
       previewClick = `onclick="_wbTcOpenSwapHero(${idx})"`;
     }else{
       previewClick = `onclick="_wbTcPreviewHero('${heroName.replace(/'/g,"\\\\'")}')"`;
@@ -5152,10 +5160,11 @@
 
     // 槽 CSS class
     let slotCls = 'wb-tc-slot';
-    if(isMe) slotCls += ' me';
-    if(p.ready) slotCls += ' ready';
+    if(isAssigned) slotCls += ' wb-tc-slot-assigned';
+    else if(isMe) slotCls += ' me';
+    if(!isAssigned && p.ready) slotCls += ' ready';
     // 單人模式:標示正在編輯的槽
-    if(window._wbSoloPracticeMode && idx === (window._wbSoloEditingSlot ?? 0)) slotCls += ' editing';
+    if(!isAssigned && window._wbSoloPracticeMode && idx === (window._wbSoloEditingSlot ?? 0)) slotCls += ' editing';
 
     return `<div class="${slotCls}">
       <!-- 槽位 + 玩家暱稱 + 標籤 + 替換英雄按鈕 -->
@@ -5349,9 +5358,13 @@
     if(isAssignSlot){
       if(!window._wbHostAssignedSlots) window._wbHostAssignedSlots = {};
       const cur = window._wbHostAssignedSlots[targetSlotIdx] || {};
+      // ★ FIX 20260518 — 換英雄保留原本選的元素與至寶
+      //   若換成不同英雄,至寶可能不適配(例如此英雄不該裝那把武器),房主可自行重選。
+      //   保留欄位:讓 UI 連貫,不會「換個英雄至寶就消失」。
       window._wbHostAssignedSlots[targetSlotIdx] = {
-        heroName: heroName,
-        element: cur.element || null  // 保留原本選的元素(若有)
+        heroName:  heroName,
+        element:   cur.element || null,
+        treasures: Array.isArray(cur.treasures) ? cur.treasures : []
       };
       _wbTcCloseSwapModal();
       _wbTcRenderTeamConfirm();
@@ -5397,11 +5410,34 @@
   window._wbTcAssignedSlotPickElement = function(slotIdx, elemId){
     if(!window._wbHostAssignedSlots) window._wbHostAssignedSlots = {};
     const cur = window._wbHostAssignedSlots[slotIdx] || {};
-    // 切換:若已選同元素 → 清掉;否則設成這元素
+    // ★ FIX 20260518 — 跟玩家槽一致的單選邏輯:
+    //   - 點到目前的元素 → 取消(清空)
+    //   - 點到不同元素 → 直接覆蓋
     cur.element = (cur.element === elemId) ? null : elemId;
     window._wbHostAssignedSlots[slotIdx] = cur;
     _wbTcRenderTeamConfirm();
     try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.45); }catch(_){}
+  };
+
+  // ★ FIX 20260518 — 代打槽至寶替換:借用既有 _wbTcOpenSwapTreasureSlot modal,
+  //   但確認時的寫入路徑導向 _wbHostAssignedSlots[slotIdx].treasures。
+  //   實作方式:設定 window._wbTcAssignedTreasureCtx,讓 confirm 流程偵測這個 ctx 就改寫代打槽。
+  window._wbTcAssignedSlotOpenSwapTreasure = function(slotIdx, treasureSlotIdx){
+    const snap = window._wbNet.getSnapshot();
+    if(snap?.meta?.hostUid !== window._gUserId){
+      _wbGameAlert('只有房主可以指派 NPC 槽位');
+      return;
+    }
+    // 記錄當前操作的代打槽 + 至寶槽,讓 _wbTcConfirmSwapTreasure 知道要寫到代打槽
+    window._wbTcAssignedTreasureCtx = { slotIdx, treasureSlotIdx };
+    // 借用既有的至寶替換 modal(已支援按 targetSlotIdx, treasureSlotIdx 開啟)
+    try{
+      if(typeof _wbTcOpenSwapTreasureSlot === 'function'){
+        _wbTcOpenSwapTreasureSlot(slotIdx, treasureSlotIdx);
+      }else if(typeof window._wbTcOpenSwapTreasureSlot === 'function'){
+        window._wbTcOpenSwapTreasureSlot(slotIdx, treasureSlotIdx);
+      }
+    }catch(e){ console.warn('[代打至寶] 打開 modal 失敗', e); }
   };
 
   window._wbTcAssignedSlotClear = function(slotIdx){
@@ -5464,6 +5500,36 @@
   };
 
   window._wbTcConfirmSwapTreasure = async function(targetSlotIdx, treasureId){
+    // ★ FIX 20260518 — 代打槽分支:若 _wbTcAssignedTreasureCtx 存在,
+    //   表示這次替換是房主在改代打槽的至寶(不寫 firestore,直接更新本地暫存)
+    const _assignedCtx = window._wbTcAssignedTreasureCtx;
+    if(_assignedCtx && typeof _assignedCtx.slotIdx === 'number'
+       && _assignedCtx.slotIdx === targetSlotIdx){
+      try{
+        const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[treasureId]) || null;
+        if(!def){ _wbTcCloseSwapModal(); window._wbTcAssignedTreasureCtx = null; return; }
+        if(!window._wbHostAssignedSlots) window._wbHostAssignedSlots = {};
+        const cur = window._wbHostAssignedSlots[targetSlotIdx] || {};
+        const maxSlots = _wbTcIsHeroSlot2Unlocked(cur.heroName) ? 2 : 1;
+        const targetTrSlot = Math.min(_assignedCtx.treasureSlotIdx || 0, maxSlots - 1);
+        let trs = Array.isArray(cur.treasures) ? cur.treasures.slice() : [];
+        while(trs.length < maxSlots) trs.push(null);
+        // 同件至寶在另一槽 → 移除
+        for(let i = 0; i < trs.length; i++){
+          if(i !== targetTrSlot && trs[i] === treasureId) trs[i] = null;
+        }
+        trs[targetTrSlot] = treasureId;
+        trs = trs.filter(x => x);
+        while(trs.length > maxSlots) trs.pop();
+        cur.treasures = trs;
+        window._wbHostAssignedSlots[targetSlotIdx] = cur;
+      }catch(e){ console.warn('[代打至寶確認] 失敗', e); }
+      window._wbTcAssignedTreasureCtx = null;
+      _wbTcCloseSwapModal();
+      _wbTcRenderTeamConfirm();
+      try{ if(typeof playSfx === 'function') playSfx('sfx-equip', 0.55); }catch(_){}
+      return;
+    }
     // ★ FIX 20260516 v8 — 精確放到 _wbTcPendingTreasureSlot 位置
     //   如果是已裝的且要放到同槽,直接關 modal(視為取消)
     //   否則:把這個 treasure 放到 _wbTcPendingTreasureSlot 位置,如果該槽原本有東西就取代
@@ -5503,6 +5569,8 @@
 
   window._wbTcCloseSwapModal = function(){
     document.getElementById('wb-tc-swap-modal').classList.remove('show');
+    // ★ FIX 20260518 — 關 modal 同時清掉代打至寶 ctx,避免污染下一次操作
+    window._wbTcAssignedTreasureCtx = null;
   };
 
   // ★ FIX 20260516 v6 — 自製 info popup(z-index 10000 完全不會被擋)
@@ -6048,6 +6116,13 @@
       if(assignedElem){
         h._wbPickedElement = assignedElem;
         if(!h.element) h.element = assignedElem;
+      }
+      // ★ FIX 20260518 — 代打槽至寶:把房主在隊伍確認頁為代打槽選的至寶套上
+      //   主程式 _applyTaiwanTreasureToHero 會優先讀 h._wbTreasureIds(若有),
+      //   而非從本地裝備資料,確保代打 NPC 用「房主在 UI 上指定的至寶」而非
+      //   房主自己英雄目前的裝備。
+      if(assigned && Array.isArray(assigned.treasures) && assigned.treasures.length){
+        h._wbTreasureIds = assigned.treasures.slice();
       }
       p1.push(h);
     }
@@ -7613,6 +7688,22 @@
   }
 
   // BOSS 開戰前先給全員出題(只在回合 1 開戰時跑一次)
+  // ★ FIX 20260518 — 新增 _wbPickRandomQuestion:從主程式 ADV_QUIZ_DB 隨機抽一題。
+  //   原本只在 _wbStartBossOpening / 7502 行被呼叫,但函式從未定義 → 永遠回傳 null,
+  //   開戰題每次都走「龐貝城」fallback,毫無題目多樣性,console 還洩漏紅字警告。
+  window._wbPickRandomQuestion = function(){
+    try{
+      if(typeof ADV_QUIZ_DB === 'undefined' || !Array.isArray(ADV_QUIZ_DB) || !ADV_QUIZ_DB.length){
+        return null;
+      }
+      // 從全部 ADV_QUIZ_DB 純隨機抽一題(開戰題只跑一次,不用考慮去重)
+      return ADV_QUIZ_DB[Math.floor(Math.random() * ADV_QUIZ_DB.length)];
+    }catch(e){
+      console.warn('[WB] _wbPickRandomQuestion 失敗', e);
+      return null;
+    }
+  };
+
   window._wbStartBossOpening = async function(){
     console.log('[WB-Opening] 進入開戰流程');
     // 1. 咆哮
@@ -8284,7 +8375,8 @@
           _ext = {
             e: _assigned.element || null,
             es: _assigned.element ? [_assigned.element] : [],
-            t: []
+            // ★ FIX 20260518 — 帶上房主為代打槽選的至寶
+            t: Array.isArray(_assigned.treasures) ? _assigned.treasures : []
           };
         }else{
           // ★ FIX 20260517(w) — 沒指派 → 用房主英雄補位,房主操控(不再 AI)
@@ -8543,7 +8635,10 @@
 
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
-      console.log('[WB-Solo v4] 呼叫主程式 advStartBattle(),陣容:', heroPool, 'BOSS:', boss.name);
+      // ★ FIX 20260518 — heroPool typo 修正(實際變數叫 p1),
+      //   原本 console.log 引用未定義變數 → 整個 try 抛 ReferenceError,
+      //   外層 catch 跳「主程式戰鬥啟動失敗」alert,實際 advStartBattle 根本沒被呼叫。
+      console.log('[WB-Solo v4] 呼叫主程式 advStartBattle(),陣容:', p1, 'BOSS:', boss.name);
       window.advStartBattle();
     }catch(e){
       console.error('[WB-Solo v4] advStartBattle 失敗', e);
