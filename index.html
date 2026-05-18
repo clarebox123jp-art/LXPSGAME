@@ -27940,7 +27940,14 @@ function _realAiAct(a){
     window._aiWatchdog = setTimeout(function(){
       try{
         if(!a || a.curHp <= 0) return;
-        if(a.acted || G.activeChar !== a) return;  // 已正常結束行動
+        // ★ v3.3.1 — 修正判斷邏輯
+        //   舊版:`if(a.acted || G.activeChar !== a) return;`
+        //   bug:aiUseSkill 結尾會先設 a.acted=true 才 _pSetTimeout(startTurn,500),
+        //       若 startTurn 被 _gamePaused queue 住,activeChar 仍是 a 但 acted=true,
+        //       watchdog 直接 return → 完全沒救到 → 玩家看到 25~30 秒卡死(_pSetTimeout fallback 20s)
+        //   修法:只看 G.activeChar 是否仍指向 a。acted=true 不算數,
+        //         只有 startTurn 真的成功跑、把 activeChar 換到下一個角色才算行動完。
+        if(G.activeChar !== a) return;  // activeChar 已換人 → 正常推進中
         // 玩家正在 BOSS quiz 答題 → 等待中,不算卡死
         const _qov = document.getElementById('adv-quiz-overlay');
         if(_qov && _qov.classList.contains('show')) return;
@@ -29857,6 +29864,57 @@ function aiUseSkill(a,sk,cost,pref){
   }
 
   a.acted=true; updateUI(); _pSetTimeout(startTurn,500);
+  // ★ v3.3.1 — aiUseSkill watchdog:同 endAction 5 秒兜底,根治 BOSS 卡 25~30 秒問題
+  //   根因(打很多回合後才發生的卡死):
+  //   (1) BOSS 釋放技能 doDmg(玩家英雄) → 玩家英雄觸發受擊被動 prompt(金鐘罩/以牙還牙/占星師)
+  //   (2) prompt 設 _gamePaused=true 等玩家選擇
+  //   (3) BOSS 攻擊完畢呼叫 _pSetTimeout(startTurn,500),因 _gamePaused=true 被 push 到 _pendingTimers
+  //   (4) 玩家選完 prompt 後 cleanup 已跑過 _resumeTimers,新 push 的 timer 沒被消化
+  //   (5) _aiWatchdog 10 秒 fire 但開頭 `if(a.acted) return` → aiUseSkill 已設 acted=true → 直接放棄
+  //   (6) 只能等 _pSetTimeout 20 秒 fallback → 玩家觀察到 25-30 秒延遲
+  //   修補:同 endAction 加 5 秒兜底 watchdog,若 G.round/activeChar 都沒推進就強制 resume + startTurn
+  try{
+    const _wdRoundAI = G ? (G.round||0) : 0;
+    const _wdActorAI = a;
+    setTimeout(function(){
+      try{
+        if(!G) return;
+        // 回合已推進 → 自然恢復,不介入
+        if(G.round !== _wdRoundAI) return;
+        // activeChar 已換人 → startTurn 已成功跑,不介入
+        if(G.activeChar && G.activeChar !== _wdActorAI) return;
+        // 合法 modal 顯示中是合理等待,不強制
+        const _qov = document.getElementById('adv-quiz-overlay');
+        if(_qov && _qov.classList.contains('show')) return;
+        const _resOv = document.getElementById('adv-result-overlay');
+        if(_resOv && _resOv.classList.contains('show')) return;
+        const _miniRes = document.getElementById('adv-mini-result');
+        if(_miniRes && _miniRes.classList.contains('show')) return;
+        const _rwOv = document.getElementById('adv-reward-overlay');
+        if(_rwOv && (_rwOv.classList.contains('show') || (_rwOv.style.display && _rwOv.style.display !== 'none'))) return;
+        const _bpm = document.getElementById('burst-priority-modal');
+        if(_bpm) return;
+        const _dsOv = document.getElementById('discard-overlay');
+        if(_dsOv && (_dsOv.classList.contains('show') || (_dsOv.style.display && _dsOv.style.display !== 'none'))) return;
+        const _csOv = document.getElementById('adv-cutscene-overlay');
+        if(_csOv && (_csOv.style.display === 'flex' || _csOv.classList.contains('show'))) return;
+        const _pp = document.getElementById('passive-prompt');
+        if(_pp) return; // 玩家正在選被動 prompt,等他選完
+        // 真的卡死 → 強制 resume + 推進回合
+        console.warn('[aiUseSkill watchdog] startTurn 卡住超過 5 秒,強制 resume (actor:'+(_wdActorAI&&_wdActorAI.name)+')');
+        try{ window._gamePaused = false; }catch(_){}
+        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        setTimeout(function(){
+          try{
+            if(!G) return;
+            if(G.round !== _wdRoundAI) return;
+            if(G.activeChar && G.activeChar !== _wdActorAI) return;
+            if(typeof startTurn === 'function') startTurn();
+          }catch(_){}
+        }, 100);
+      }catch(_wdAIE){ console.warn('[aiUseSkill watchdog 異常]', _wdAIE); }
+    }, 5000);
+  }catch(_){}
 }
 
 // ====== WIN CHECK ======
@@ -70360,7 +70418,21 @@ window._filterChangelogForDisplay = function(entries){
 //       (v3.2.6) 跟記憶體的 _GAME_LOADED_VERSION (v3.3.0) 比,不一致就跳更新提示
 //     - 但這兩個變數明明在同一份 HTML 內,應該永遠同步
 //   修法:把 _GAME_LOADED_VERSION 先設定好,CURRENT_VERSION 直接讀它,絕對同步。
-window._GAME_LOADED_VERSION = 'v3.3.0';
+window._GAME_LOADED_VERSION = 'v3.3.1';
+// ★ v3.3.1 changelog(待同步到 game_changelog.js):
+//   🐛 根治所有 BOSS 卡死 25~30 秒問題(玉山/八岐大蛇/全部 BOSS,通常打很多回合後才發生)
+//   【症狀】BOSS 釋放技能後突然發呆 25~30 秒,然後才接著出招攻擊全體
+//   【根因】aiUseSkill 結尾 `_pSetTimeout(startTurn,500)` 沒 watchdog 保護
+//     (1) BOSS doDmg → 玩家英雄觸發受擊被動 prompt(金鐘罩/以牙還牙/占星師轉禍為福)
+//     (2) prompt 設 _gamePaused=true 等玩家選
+//     (3) startTurn 被 push 到 _pendingTimers 等候
+//     (4) 玩家選完 → cleanup 跑過 _resumeTimers → 新 push 的 timer 沒被消化
+//     (5) _aiWatchdog 10 秒 fire,但開頭 `if(a.acted) return` → aiUseSkill 已設 acted=true → 放棄
+//     (6) 只能等 _pSetTimeout 20 秒 fallback → 玩家看到 25~30 秒延遲
+//   【修補】
+//     1. aiUseSkill 結尾加 5 秒 watchdog(同 endAction),強制 resume + startTurn
+//     2. _aiWatchdog 判斷邏輯:acted=true 不算數,只看 G.activeChar 是否仍指向 a
+//        (acted=true 不代表 startTurn 推進成功,可能還卡在 _pendingTimers)
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
