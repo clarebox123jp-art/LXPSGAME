@@ -8595,7 +8595,11 @@
 
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
-      console.log('[WB-Solo v4] 呼叫主程式 advStartBattle(),陣容:', heroPool, 'BOSS:', boss.name);
+      // ★ v3.3.1 — 修正 ReferenceError: heroPool is not defined
+      //   原本誤用 heroPool 變數(此函式 scope 沒這個變數),導致 ReferenceError 中斷整個流程,
+      //   症狀:單人練習答完開戰題後畫面卡住,只剩 BOSS HP 條,沒有玩家英雄/操作按鈕
+      //   修法:改用本函式內實際的陣容變數 p1
+      console.log('[WB-Solo v4] 呼叫主程式 advStartBattle(),陣容:', p1.map(h => h && h.name), 'BOSS:', boss.name);
       window.advStartBattle();
     }catch(e){
       console.error('[WB-Solo v4] advStartBattle 失敗', e);

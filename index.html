@@ -70461,6 +70461,10 @@ window._GAME_LOADED_VERSION = 'v3.3.1';
 //     - 修補:在 world-boss-ui.html 加入 _wbPickRandomQuestion 函式定義,
 //             從所有題庫(ADV_QUIZ_DB / TAIWAN_QUIZ_DB / 五下自然 ×3 / 狗狗 / 嬰幼兒)隨機抽題,
 //             配合 _wbUsedQuestionIds 防重複,每場戰鬥開始時重置(房主/客戶端/單人練習三處)
+//   🐛 世界 BOSS 單人練習答完開戰題後卡死(無玩家英雄/操作按鈕):
+//     - 根因:_wbSoloBeginBattle 函式內 console.log 誤用未定義變數 heroPool,
+//             拋 ReferenceError 中斷流程 → advStartBattle 沒被呼叫 → 戰鬥沒真的啟動
+//     - 修補:console.log 改用實際變數 p1.map(h=>h&&h.name)
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
