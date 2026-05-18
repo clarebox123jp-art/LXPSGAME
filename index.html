@@ -5505,6 +5505,34 @@ function _isBossForSlowmo(target){
   return false;
 }
 
+// ★ v1.0.20260518.6930 — 天神宙斯爆發「天降雷罰」的 BOSS 判定 helper
+//   用途:判斷一個對手是否為「真正的 BOSS」(會受 25%~36% HP 傷害),反之則直接倒下
+//   明確列表(由設計者確認):
+//   - 貓空關主 BOSS:九尾空貓怪、杏花妖
+//   - 日本關大 BOSS:大天狗、酒吞童子、玉藻前、八岐大蛇
+//   - 台灣關 10 BOSS:油膩魔王~山岳禁咒
+//   - 世界 BOSS:維蘇威火山龍王
+//   不在此列的全部視為「非 BOSS」(包含菁英小怪、稀有事件 BOSS 如寶箱怪/小惡魔/座敷童子/二宮像、
+//   日本菁英 烏天狗/木葉天狗/茨木童子/星熊童子/殺生石分身/管狐、貓空菁英 綠竹筍小妖/茶葉精靈,
+//   以及所有偷X妖、河童、雪女、二口女、獨眼小僧)
+//   ⚠ 切勿改用 HP 閾值判斷:貓空關隨等級強化的菁英小怪 HP 可能超過 500
+const _ZEUS_TRUE_BOSSES = new Set([
+  // 貓空關主 BOSS
+  '九尾空貓怪','杏花妖',
+  // 日本關大 BOSS
+  '大天狗','酒吞童子','玉藻前','八岐大蛇',
+  // 台灣關 10 BOSS
+  '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
+  '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
+  '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+  // 世界 BOSS
+  '維蘇威火山龍王',
+]);
+function _zeusIsTrueBoss(target){
+  if(!target || !target.name) return false;
+  return _ZEUS_TRUE_BOSSES.has(target.name);
+}
+
 function _resumeTimers(){
   var now=Date.now();
   var timers=_pendingTimers.splice(0);
@@ -5547,7 +5575,7 @@ function _clearPendingTimers(reason){
   }
 }
 // ====== GLOBAL CONSTANTS (must be declared before any function that references them) ======
-const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm','breakDef'];
+const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm','breakDef','_zeusSpDown'];
 const GOOD_STATUS=[];
 
 // ====== AUDIO ENGINE ======
@@ -7532,7 +7560,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','學霸(轉學生)':'🤓','天神宙斯':'⚡','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   // ★ v1.0.20260501.5010 — 28 個英雄圖一次性升級為 LXPSGAME repo 的 Q.png 新版圖檔
@@ -7646,6 +7674,12 @@ const HERO_IMGS = {
   // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
   //   米鈴:6 年 5 班董同學設計,2026 年。胸前掛鈴鐺的貓女僕,溫柔守護隊友
   '米鈴':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('女僕貓 米鈴.png'),
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學「學霸(轉學生)」)
+  //   學霸(轉學生):5 年 2 班簡同學設計,2026 年。頂尖私立小學轉來的神祕學霸
+  '學霸(轉學生)':         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('轉學生學霸.png'),
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學「天神宙斯」)
+  //   天神宙斯:5 年 4 班歐同學設計,2026 年。希臘神話的眾神之王
+  '天神宙斯':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('宙斯.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -7890,6 +7924,18 @@ const HERO_PORTRAIT_LIBRARY = {
   '米鈴': [
     { id:'maid_cat_default', name:'貓女僕米鈴',
       url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('女僕貓 米鈴.png') }
+  ],
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(學霸(轉學生))
+  //   學霸(轉學生):5 年 2 班簡同學設計,2026 年
+  '學霸(轉學生)': [
+    { id:'scholar_default', name:'學霸(轉學生)',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('轉學生學霸.png') }
+  ],
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(天神宙斯)
+  //   天神宙斯:5 年 4 班歐同學設計,2026 年
+  '天神宙斯': [
+    { id:'zeus_default', name:'天神宙斯',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('宙斯.png') }
   ],
 };
 
@@ -9266,6 +9312,27 @@ const BURST_UPGRADE_DEF = {
     [3,'特技×220% 全隊治療+茶會 2 回合(反擊倍率 130%)'],
     [4,'特技×240% 全隊治療+茶會 3 回合(反擊倍率 150%) (MAX)'],
   ] },
+  // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發升級表(反擊倍率/持續回合)
+  //   爆發「壓力轉移」:自己進入「蓄積壓力」狀態,2 回合內所有隊友受到傷害全部免疫並累積計算
+  //   持續結束時,將累計總傷害 ×反擊倍率 一次反擊 1 名指定對手(必中、無視有利狀態)
+  '學霸(轉學生)':{ rows: [
+    [0,'蓄積壓力 2 回合(全隊免傷累計)+結束時用累計×100% 反擊指定對手'],
+    [1,'蓄積壓力 2 回合+結束時反擊倍率 115%'],
+    [2,'蓄積壓力 2 回合+結束時反擊倍率 130%'],
+    [3,'蓄積壓力 2 回合+結束時反擊倍率 145%'],
+    [4,'蓄積壓力 3 回合+結束時反擊倍率 165% (MAX)'],
+  ] },
+  // ★ v1.0.20260518.6930 — 天神宙斯爆發升級表(BOSS HP% 傷害)
+  //   爆發「天降雷罰」:非 BOSS 對手直接倒下;BOSS 受當前 HP X% 必中傷害
+  //   設計單指定:Lv1~5 = 25/28/31/33/36%(burstLv 0~4)
+  //   非 BOSS 的「直接倒下」效果不升級(已是最強)
+  '天神宙斯':{ rows: [
+    [0,'非BOSS對手直接倒下;BOSS 受當前 HP 25% 必中傷害'],
+    [1,'非BOSS對手直接倒下;BOSS 受當前 HP 28%'],
+    [2,'非BOSS對手直接倒下;BOSS 受當前 HP 31%'],
+    [3,'非BOSS對手直接倒下;BOSS 受當前 HP 33%'],
+    [4,'非BOSS對手直接倒下;BOSS 受當前 HP 36% (MAX)'],
+  ] },
 };
 
 const HERO_IMG_POS = {
@@ -9331,6 +9398,10 @@ const HERO_IMG_POS = {
   '水狐':['140% auto','center 35%'],
   // ★ v1.0.20260515.6900 — 米鈴:貓女僕全身,頭部+鈴鐺需在框內可見
   '米鈴':['180% auto','center 25%'],
+  // ★ v1.0.20260518.6920 — 學霸(轉學生):制服全身,頭部+書包需在框內可見
+  '學霸(轉學生)':['150% auto','center 22%'],
+  // ★ v1.0.20260518.6930 — 天神宙斯:神王全身,白髯+雷杖需在框內可見
+  '天神宙斯':['145% auto','center 18%'],
 };
 
 // ★ v5690 — 戰鬥卡片專屬圖片位置表
@@ -9434,6 +9505,10 @@ const HERO_THUMB_POS = {
   '水狐':'center 30%',
   // ★ v1.0.20260515.6900 — 米鈴:貓女僕,縮圖上移露出頭部+鈴鐺
   '米鈴':'center 25%',
+  // ★ v1.0.20260518.6920 — 學霸(轉學生):縮圖上移露出頭部與制服上半身
+  '學霸(轉學生)':'center 22%',
+  // ★ v1.0.20260518.6930 — 天神宙斯:縮圖上移露出白髯神王頭部
+  '天神宙斯':'center 20%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -9749,6 +9824,24 @@ const HERO_BIO = {
     quote:'「喵～這點難題,米鈴一個眨眼就解決囉♪」',
     designer:{ class:'6年5班', name:'董同學', year:2026 }
   },
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學)
+  //   學霸(轉學生):頂尖私立小學轉來的神祕學霸,五科滿分壓得對手喘不過氣
+  '學霸(轉學生)':{
+    role:'頂尖私立小學轉來的神祕學霸,書包裡永遠裝著五科滿分考卷',
+    trait:'冷靜內斂、心思縝密,看似不苟言笑卻默默把全班的壓力都扛在自己身上',
+    hobby:'寫題目寫到深夜、整理筆記做成講義發給同學、把難題拆解成步驟讓人秒懂',
+    quote:'「這題?——我五分鐘前就解開了。」',
+    designer:{ class:'5年2班', name:'簡同學', year:2026 }
+  },
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學)
+  //   天神宙斯:希臘神話的眾神之王,手握神威之杖、號令雷霆
+  '天神宙斯':{
+    role:'奧林帕斯山的眾神之王,白髯飄揚、手執霹靂神杖,雙眼閃爍如雷光',
+    trait:'威嚴尊貴、雷厲風行,賞罰分明絕不容違逆;一聲怒吼能撼動天地、震懾凡塵',
+    hobby:'巡視諸天降下審判、收集自世界各地的神話傳說、與其他神祇下棋論英雄',
+    quote:'「凡夫俗子——感受天神之怒吧!」',
+    designer:{ class:'5年4班', name:'歐同學', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -9840,6 +9933,17 @@ const BURST_DB = {
   //   夢幻的茶會:特技 175% 全體治療 + 全隊獲得「茶會」buff 2 回合
   //   茶會:友方即將受不利狀態時自動解除,並由米鈴用特技 100% 反擊來源者
   '米鈴':{n:'夢幻的茶會', d:'特技175%全隊治療+全隊茶會2回合(受不利時自動解除並用特技100%反擊來源)',fd:'米鈴擺開銀色茶具、邀請夥伴們進入夢幻茶會——以特技的 175% 治療我方全體 HP(可復活)。同時我方全體獲得「茶會」狀態 2 回合,期間每當友方即將受到不利狀態時,自動立即解除該狀態,並由米鈴用特技的 100% 對來源對手反擊 1 次(必中、無視有利狀態、不會引發還手類天賦)。茶會狀態不會被消除或搶奪。'},
+  // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發(5 年 2 班簡同學設計)
+  //   壓力轉移:使自己進入「蓄積壓力」狀態,2 回合內所有隊友受到傷害全部免疫並累積計算
+  //   2 回合後,將累計的全部傷害 ×100% 一次性反擊 1 名指定對手
+  //   此狀態不會被消除、搶奪或交換
+  '學霸(轉學生)':{n:'壓力轉移', d:'蓄積壓力2回合(全隊免傷累計),結束時用累計×100%反擊指定對手',fd:'學霸冷靜地抽出一張白紙、把整支班級的壓力都記在上面——「沒關係,這些痛我幫你們扛。」自己進入「蓄積壓力」狀態 2 回合,期間所有隊友(含自己)受到任何傷害都完全免疫並累積計算,2 回合後將累計的全部傷害 ×100% 一次反擊到 1 名指定對手身上(此反擊必中、無視有利狀態、不會引發還手類天賦)。「蓄積壓力」狀態不會被消除、搶奪或交換。'},
+  // ★ v1.0.20260518.6930 — 天神宙斯爆發(5 年 4 班歐同學設計)
+  //   天降雷罰:非 BOSS 對手(普通小怪、菁英、稀有)直接倒下;BOSS 受當前 HP 25%(Lv5 36%)傷害
+  //   此傷害無視有利狀態、不會暴擊、不可閃避
+  //   BOSS 定義(明確列表):九尾空貓怪、杏花妖、大天狗、酒吞童子、玉藻前、八岐大蛇、
+  //                          台灣 10 BOSS、維蘇威火山龍王(世界 BOSS)
+  '天神宙斯':{n:'天降雷罰', d:'非BOSS對手直接倒下;BOSS受當前HP25%必中傷害(無視有利)',fd:'宙斯舉起神威之杖直指天頂——萬里晴空瞬間轉黑、雷電交織成神之鎖鍊轟然降下!對全體對手生效:非 BOSS 對手(普通小怪、菁英小怪、稀有小怪)直接倒下;BOSS 級對手則受到當前 HP 25% 的固定必中傷害。此爆發傷害無視有利狀態、不會暴擊、不可閃避或代替承受。'},
 
 };
 
@@ -10329,6 +10433,11 @@ function tickStatus(h){
     // ★ v1.0.20260424.0700 — 啼哭/夢境弱化到期還原 atk/sp
     if(s.type==='_cryDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
     if(s.type==='_dreamDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
+    // ★ v1.0.20260518.6930 — 天神宙斯 S1「驚雷」附加狀態:特技 -50% 到期還原
+    if(s.type==='_zeusSpDown' && s._origSp!==undefined){
+      h.sp = s._origSp;
+      try{ log(`⚡ [${h.name}] 雷擊後遺症結束,特技恢復為 ${h.sp}。`); }catch(_){}
+    }
     // 虛弱咒到期恢復
     if(s.type==='weakened'){
       if(h._weakenOrigAtk!==undefined){ h.atk=h._weakenOrigAtk; delete h._weakenOrigAtk; }
@@ -10353,6 +10462,81 @@ function tickStatus(h){
     // ★ v1.0.20260515.6900 — 米鈴爆發「茶會」狀態結束:純清除標記,無數值還原
     if(b.type==='_teaParty'){
       try{ log(`☕ [${h.name}] 茶會狀態結束,鈴音不再守護。`); }catch(_){}
+      try{ renderCard(h); }catch(_){}
+    }
+    // ★ v1.0.20260518.6920 — 學霸 S2「下課時光」速度 buff 到期還原速度
+    if(b.type==='_scholarBreak' && typeof b._spdBonus === 'number'){
+      try{
+        h.spd = Math.max(0, (h.spd || 0) - b._spdBonus);
+        delete h._scholarSpdBonus;
+        log(`🍱 [${h.name}] 下課時光結束,速度 -${b._spdBonus} 恢復原值 ${h.spd}。`);
+      }catch(_){}
+      try{ renderCard(h); }catch(_){}
+    }
+    // ★ v1.0.20260518.6920 — 學霸爆發「壓力轉移」buff 到期:釋放累計傷害給玩家挑選的對手
+    //   - 學霸還活著 → setPending('enemy') 讓玩家挑反擊目標
+    //   - 學霸已倒下 → 累計值直接清空(無法反擊),log 記錄
+    //   - 反擊用 fixedDmg + ignoreBuffs + ignoreEvasion + 不會引發還手
+    if(b.type==='_pressureAbsorb' && typeof b._counterMult === 'number'){
+      try{
+        const _accum = h._pressureAccum || 0;
+        const _mult = b._counterMult;
+        delete h._pressureAccum;
+        if(h.curHp <= 0 || _accum <= 0){
+          log(`📚 [${h.name}] 蓄積壓力結束,累計 ${_accum} 傷害(無法釋放${h.curHp<=0?'(已倒下)':'(無累計)'})。`);
+          try{ renderCard(h); }catch(_){}
+          return;  // forEach 內,結束本次處理(其他 buff 仍會跑)
+        }
+        const _finalDmg = Math.max(1, Math.floor(_accum * _mult));
+        const opp = h.side === 'p1' ? 'p2' : 'p1';
+        const _liveFoes = (G[opp] || []).filter(_f => _f.curHp > 0);
+        if(!_liveFoes.length){
+          log(`📚 [${h.name}] 蓄積壓力結束,但場上已無對手,累計 ${_accum} 傷害消散。`);
+          try{ renderCard(h); }catch(_){}
+          return;
+        }
+        log(`📚 [${h.name}] 蓄積壓力釋放!累計 ${_accum} × ${Math.round(_mult*100)}% = ${_finalDmg} 傷害!`);
+        bannerFX(h, '📚 壓力釋放!', '#aaccff', 1200);
+        try{ playSfx('sfx-burst', 0.95); }catch(_){}
+        // 若由玩家操控(p1 且非自動)→ setPending 讓玩家挑;否則自動挑 HP 比例最高
+        const _isPlayerSide = (h.side === 'p1' && !window._autoBattle);
+        const _hitTarget = (_target) => {
+          if(!_target || _target.curHp <= 0){
+            const _fb = (G[opp] || []).filter(_f => _f.curHp > 0);
+            if(!_fb.length) return;
+            _target = _fb[0];
+          }
+          try{ bannerFX(_target, `📚 -${_finalDmg}`, '#ff6644', 1200); }catch(_){}
+          try{ flashCard(_target, 'rgba(170,80,80,0.55)', 700); }catch(_){}
+          doDmg(_target, _finalDmg, {
+            fixedDmg:true,
+            actor:h,
+            isSkill:true,
+            ignoreBuffs:true,
+            ignoreEvasion:true,
+            _pressureAbsorbed:true,   // 避免被另一個學霸再吸收
+            isRebound:true            // 不會引發還手類天賦
+          });
+          try{ renderCard(_target); }catch(_){}
+          try{ updateUI(); }catch(_){}
+        };
+        if(_isPlayerSide && typeof setPending === 'function'){
+          // 用 setTimeout 跳出當前 forEach 迴圈,避免阻塞其他 buff tick
+          setTimeout(() => {
+            try{
+              setPending('enemy', _hitTarget);
+            }catch(_){
+              // setPending 失敗時 fallback 到自動挑 HP 比例最高
+              const _auto = _liveFoes.sort((x,y) => (y.curHp/y.hp) - (x.curHp/x.hp))[0];
+              _hitTarget(_auto);
+            }
+          }, 100);
+        } else {
+          // AI / p2 / 自動模式:挑 HP 比例最高的對手
+          const _auto = _liveFoes.sort((x,y) => (y.curHp/y.hp) - (x.curHp/x.hp))[0];
+          setTimeout(() => _hitTarget(_auto), 100);
+        }
+      }catch(_e){ console.warn('[壓力轉移釋放] 失敗', _e); }
       try{ renderCard(h); }catch(_){}
     }
     if(b.type==='doubleatk' && h._mirrorOrigAtk!==undefined){
@@ -10881,6 +11065,10 @@ const SKILL_FORCE_ELEMENT = {
   '連鎖閃電':     'wind',  // ★ v1.0.20260424.1310 — 雷法師 S1(雷=風)
   '麻痺落雷':     'wind',  // ★ v1.0.20260424.1310 — 雷法師 S2(雷=風)
   '怒雷狂襲':     'wind',  // ★ v1.0.20260424.1310 — 雷法師爆發(雷=風)
+  // ★ v1.0.20260518.6930 — 天神宙斯 三技能全部雷屬性(雷=風,跟雷法師同一系)
+  '驚雷':         'wind',  // 天神宙斯 S1(特技 120%×2 + 封印普攻 + 特技-50%)
+  '雷鳴':         'wind',  // 天神宙斯 S2(特技 80%×3 全體 + 暴擊 +30% + 當前 HP 20%)
+  '天降雷罰':     'wind',  // 天神宙斯 爆發(非 BOSS 秒殺 + BOSS 當前 HP 25%~36%)
   // ── 草 ──
   '落英繽紛':     'grass',  // 杏花妖 S2(特技全體)
   '千年絕美·傾城一笑': 'grass',  // 杏花妖爆發
@@ -12318,6 +12506,10 @@ const HERO_LORE = {
   '水狐': '上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸。一聲長嘯,水精靈如雨點落下治癒傷者;再一揮獨角,蛟龍破浪而出橫掃千軍。萬流匯於一身,溫柔與洶湧同在。',
   // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學)
   '米鈴': '私人莊園裡的貓族女僕,胸口別著鈴鐺,輕步穿梭於戰場。鈴音一響,夥伴身上的不利狀態便化為流光散去;一聲呼喚,女僕同伴們手持掃帚、抹布湧入打掃整個戰場——鈴鈴,主人的痛苦由米鈴來承擔。',
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學)
+  '學霸(轉學生)': '頂尖私立小學轉來的神祕學霸,書包裡永遠裝著五科滿分考卷。「五科滿分考卷」一張張拍下、無視一切有利狀態的固定值連擊,爆發「壓力轉移」更默默扛下兩回合全隊傷害、再一次轉嫁給對手——這題?我五分鐘前就解開了。',
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學)
+  '天神宙斯': '希臘神話的眾神之王,白髯飄揚、手執霹靂神杖。「驚雷」與「雷鳴」一次次劈下封口奪魂,爆發「天降雷罰」更直接宣告小怪的死刑——凡夫俗子,感受天神之怒吧!',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -12414,6 +12606,16 @@ const HERO_TRAIT = {
   '水狐':{ name:'水之眷顧', icon:'💧', desc:'受傷時機率召喚水精靈為HP最低友方治療',fd:'水狐溫柔的眼神俯瞰戰場,只要看到夥伴受傷就召喚水精靈守護!受到傷害時有 40% 機率召喚 1 隻小水精靈,為 HP 比例最低的友方治療特技的 60% HP(可復活)。' },
   // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
   '米鈴':{ name:'守護鈴音', icon:'🔔', desc:'友方行動前清除其1個不利狀態並用特技80%反擊來源',fd:'米鈴隨身鈴鐺輕響、守護隊友!隊伍中任一友方行動前,米鈴會清除該友方身上 1 個不利狀態(隨機 1 個,無法解除強力類)。若成功清除,立即用特技的 80% 對該不利狀態的來源對手反擊(必中,不會引發對方還手類天賦)。每升 1 級反擊倍率 +10%,Lv5 MAX 達 120%。' },
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學「學霸(轉學生)」)
+  //   考神附體:回合結束時 40% 機率對隨機 1 名對手造成 100 固定傷害
+  //   每升 1 級觸發機率 +5%,Lv5 MAX 達 60%
+  //   ⚠ 固定傷害:不會暴擊、不受元素屬性影響、無視有利狀態,但會被「無敵/不倒再生/反域」等保護類擋下
+  '學霸(轉學生)':{ name:'考神附體', icon:'🤓', desc:'回合結束時機率對隨機1名對手造成100固定傷害',fd:'學霸的書桌上飄出無形的考神威壓——回合結束時有 40% 機率對隨機 1 名對手造成 100 點固定傷害(不會暴擊、不受元素屬性影響、無視有利狀態)。每升 1 級觸發機率 +5%,Lv5 MAX 達 60%。' },
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學「天神宙斯」)
+  //   神之怒火:造成傷害時 50% 機率使目標麻痺 1 回合
+  //   每升 1 級觸發機率 +4%,Lv5 MAX 達 70%
+  //   ⚠ 麻痺(para)是標準不利狀態,可被免疫類有利狀態擋下;不會引發無限觸發(對單一目標每次傷害獨立判定)
+  '天神宙斯':{ name:'神之怒火', icon:'⚡', desc:'造成傷害時機率使目標麻痺1回合',fd:'宙斯的雷霆每一道都帶著神威的怒火——造成傷害時有 50% 機率使目標陷入「麻痺」狀態 1 回合,無法行動。每升 1 級觸發機率 +5%,Lv5 MAX 達 70%。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -13987,13 +14189,17 @@ function statusName(t){
   const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'劇毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',pursuit:'追擊',breakDef:'💣 破防',
   booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾',
   // ★ v1.0.20260514.6770 — 地府酋長 S1「審判終結」狀態中文名
-  judgmentEnd:'⚖️ 審判終結'
+  judgmentEnd:'⚖️ 審判終結',
+  // ★ v1.0.20260518.6930 — 天神宙斯 S1「驚雷」附加狀態:特技 -50%
+  _zeusSpDown:'⚡ 特技 -50%'
 };
   return m[t]||t;
 }
 function buffClass(t){
   const m={immune:'immune',shield:'shield',taunt:'taunt',evasion:'evasion',spdAvoid:'evasion',hidden:'hidden',dmgup:'dmgup',absorb:'absorb',deathimmune:'deathimmune',immovable:'immune',halfDmg:'halfDmg',warhorn:'dmgup',noRecover:'noatk',bigshield:'shield',regen:'absorb',fieldImmune:'immune',protectBuff:'immune',discount:'immune',counter:'absorb',rebirth:'dmgup',misfortune:'dmgup',misfortune2:'dmgup',alchemist:'dmgup',guard:'shield',ctrlImmune:'immune',divineBlessing:'absorb',hpRegen:'absorb',zeroCost:'dmgup',doubleatk:'dmgup',strengthened:'dmgup',shutenBoost:'dmgup',conservation:'absorb',_relay:'dmgup',_sprint:'dmgup',
-  dribble:'dmgup',elemBoost:'dmgup',trapShield:'shield',_inuGuard:'shield',_inuPity:'absorb',_slamSpd:'dmgup',_sprintBurst:'dmgup',burstVamp:'absorb',taunt:'taunt'};
+  dribble:'dmgup',elemBoost:'dmgup',trapShield:'shield',_inuGuard:'shield',_inuPity:'absorb',_slamSpd:'dmgup',_sprintBurst:'dmgup',burstVamp:'absorb',taunt:'taunt',
+  // ★ v1.0.20260518.6920 — 學霸(轉學生) buff 視覺類別
+  _scholarBreak:'dmgup',_pressureAbsorb:'absorb'};
   return m[t]||'stag';
 }
 function buffName(t){
@@ -14005,7 +14211,10 @@ function buffName(t){
   // ★ v1.0.20260515.6890 — 水狐爆發 MAX 附加 buff(我方水傷害 +20%)
   _waterFoxBless:'💧水之祝福',
   // ★ v1.0.20260515.6900 — 米鈴爆發 buff(友方受不利時自動解除並反擊)
-  _teaParty:'☕茶會'};
+  _teaParty:'☕茶會',
+  // ★ v1.0.20260518.6920 — 學霸(轉學生) S2 速度 buff + 爆發 蓄積壓力 buff
+  _scholarBreak:'🍱下課加速',
+  _pressureAbsorb:'📚蓄積壓力'};
   return m[t]||t;
 }
 
@@ -14733,6 +14942,26 @@ const BURST_GIF_DB = {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif',
     sfx:[['sfx-heal',1.0],['sfx-gentle',0.9],['sfx-fantasy',0.7]],
     tint:'rgba(255,200,230,0.22)',
+    dur:2400
+  },
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(學霸(轉學生))爆發特效
+  //   壓力轉移 — 設計者簡同學指定使用「聚氣.gif」呈現壓力凝聚與爆發反噬的氛圍
+  //   音效:充能+爆發+奇幻三層,呼應「2 回合蓄積→一次大反擊」的壓力釋放感
+  //   tint:書卷學霸色(180,200,255 偏紫藍),呼應冷靜學霸的智者氣場
+  '壓力轉移': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%9A%E6%B0%A3.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-burst',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(180,200,255,0.22)',
+    dur:2400
+  },
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(天神宙斯)爆發特效
+  //   天降雷罰 — 設計者歐同學指定使用「天雷.gif」呈現眾神之王降下雷霆審判
+  //   音效:設計單指定「用雷法師爆發技的音效」→ sfx-thunder-fury(雷法師爆發「怒雷狂襲」專屬音效)
+  //   tint:雷神黃綠(180,255,50,0.18)同調雷法師,但稍微提亮對比突顯神威
+  '天降雷罰': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A9%E9%9B%B7.gif',
+    sfx:[['sfx-thunder-fury',1.0]],
+    tint:'rgba(220,255,80,0.20)',
     dur:2400
   },
   '劍神連斬': {
@@ -17318,6 +17547,138 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發「壓力轉移」(5 年 2 班簡同學設計)
+  //   定位:終極傷害吸收+延遲反擊王
+  //   升級表(_burstLv 0~4):
+  //     反擊倍率(乘 _pressureAccum):100/115/130/145/165%
+  //     持續回合:2/2/2/2/3 (MAX 延長)
+  //   實作機制:
+  //     1) 為自己附加 _pressureAbsorb buff(僅學霸本人,代表壓力承擔者)
+  //        - 記錄反擊倍率 _counterMult
+  //        - 累計傷害用 h._pressureAccum (數字,初始 0)
+  //     2) 傷害攔截:doDmg 內偵測「target 同陣營有存活學霸且該學霸帶 _pressureAbsorb」
+  //        → 該次傷害變 0(直接 return),改累加到學霸的 _pressureAccum
+  //     3) buff 到期(tickStatus 的 dur===1 收尾):
+  //        - 用 setPending('enemy') 讓玩家挑反擊目標
+  //        - 對該目標 doDmg(_pressureAccum × _counterMult)
+  //        - 用 fixedDmg:true + ignoreBuffs:true,必中、無視有利、不會引發還手
+  //   ⚠ 注意:_pressureAbsorb 只掛在學霸本人,所以「學霸被攻擊」也會吸收
+  //   ⚠ 注意:若學霸倒下會清空 _pressureAccum,反擊不會發生(防無敵 bug)
+  //   ⚠ 注意:此狀態不可被消除、搶奪或交換(_fromBurst + 特殊類型)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='壓力轉移'){
+    const _spLvIdx = Math.min(4, _burstLv);
+    const _spCounterTable = [1.00, 1.15, 1.30, 1.45, 1.65];
+    const _spDurTable     = [2, 2, 2, 2, 3];
+    const _spCounterMult = _spCounterTable[_spLvIdx];
+    const _spDur = _spDurTable[_spLvIdx];
+
+    log(`📚 [${h.name}] 壓力轉移!冷靜地把整支班級的壓力都記下,持續 ${_spDur} 回合!反擊倍率 ${Math.round(_spCounterMult*100)}%`);
+    bannerFX(h, '📚 壓力轉移!', '#aaccff', 1400);
+
+    // 為學霸本人附加蓄積壓力 buff (不可被消除/搶奪/交換)
+    if(!h.buffs) h.buffs = [];
+    h.buffs = h.buffs.filter(b => b.type !== '_pressureAbsorb');
+    h.buffs.push({
+      type:'_pressureAbsorb',
+      dur:_spDur,
+      _counterMult:_spCounterMult,
+      _fromBurst:true,         // 防搶奪
+      _unstealable:true,       // 防交換
+      _undispellable:true      // 防消除
+    });
+    h._pressureAccum = 0;       // 累計傷害歸零
+    try{ renderCard(h); }catch(_){}
+
+    _pSetTimeout(() => {
+      updateUI();
+      _burstFinish(h, _interrupted);
+    }, 800);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260518.6930 — 天神宙斯爆發「天降雷罰」(5 年 4 班歐同學設計)
+  //   定位:終極清場王(非 BOSS 直接秒殺)+ BOSS 切血神技
+  //   升級表(_burstLv 0~4):
+  //     BOSS 當前 HP % 傷害:25/28/31/33/36%
+  //     非 BOSS 直接倒下(不升級,已是最強)
+  //   實作機制:
+  //     1) 逐一掃對手陣營存活目標
+  //     2) 用 _zeusIsTrueBoss(target) 判斷是否為真 BOSS
+  //        - 是 BOSS → 用 fixedDmg + ignoreBuffs + ignoreEvasion 造成「當前 HP × bossPct」傷害
+  //        - 不是 BOSS → 直接 target.curHp = 0(無視一切保護,類似審判終結的非 BOSS 路徑)
+  //     3) 觸發倒下慣性流程(doDmg 即可,系統會處理 KO 動畫、獎勵)
+  //   ⚠ 走 SKILL_FORCE_ELEMENT 強制 wind(雷=風)
+  //   ⚠ 此爆發傷害不會引發還手類天賦(isRebound:true)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='天降雷罰'){
+    const _zrLvIdx = Math.min(4, _burstLv);
+    const _zrBossPctTable = [0.25, 0.28, 0.31, 0.33, 0.36];
+    const _zrBossPct = _zrBossPctTable[_zrLvIdx];
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _foes = (G[_opp] || []).filter(x => x.curHp > 0);
+    if(!_foes.length){
+      _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, 600);
+      return;
+    }
+    log(`⚡ [${h.name}] 天降雷罰!神之雷霆轟然降下,全場震顫!(BOSS 受當前 HP ${Math.round(_zrBossPct*100)}%,非 BOSS 直接倒下)`);
+    bannerFX(h, '⚡ 天降雷罰!', '#ddff44', 1400);
+    beginBatchTotals();
+    _foes.forEach((_f, _i) => {
+      _pSetTimeout(() => {
+        if(_f.curHp <= 0) return;
+        const _isBoss = (typeof _zeusIsTrueBoss === 'function') ? _zeusIsTrueBoss(_f) : false;
+        if(_isBoss){
+          // BOSS:當前 HP × bossPct 必中傷害
+          const _bossDmg = Math.max(1, Math.floor(_f.curHp * _zrBossPct));
+          try{ log(`⚡ [${_f.name}] (BOSS) 受神之雷罰 ${Math.round(_zrBossPct*100)}% 當前 HP = ${_bossDmg} 傷害!`); }catch(_){}
+          try{ bannerFX(_f, `⚡ -${_bossDmg}`, '#ffaa44', 900); }catch(_){}
+          try{ flashCard(_f, 'rgba(255,255,80,0.55)', 700); }catch(_){}
+          doDmg(_f, _bossDmg, {
+            fixedDmg:true,
+            actor:h,
+            isSkill:true,
+            ignoreBuffs:true,
+            ignoreEvasion:true,
+            isRebound:true,        // 不引發還手
+            elem:'wind'
+          });
+        } else {
+          // 非 BOSS:直接倒下(無視一切保護,類似審判終結的非 BOSS 路徑)
+          try{ log(`⚡ [${_f.name}] 雷霆審判降臨——直接倒下!`); }catch(_){}
+          try{ bannerFX(_f, '⚡ 雷罰!', '#ffee00', 900); }catch(_){}
+          try{ flashCard(_f, 'rgba(255,255,80,0.75)', 800); }catch(_){}
+          try{ playSfx('sfx-ko', 0.95); }catch(_){}
+          const _zrLethal = _f.curHp;  // 一次扣到 0
+          doDmg(_f, _zrLethal, {
+            fixedDmg:true,
+            actor:h,
+            isSkill:true,
+            ignoreBuffs:true,
+            ignoreEvasion:true,
+            isRebound:true,
+            noHidden:true,         // 隱身也躲不掉
+            elem:'wind'
+          });
+          // 若還沒倒下(極端情況:有不倒再生 buff 等),強制再扣
+          if(_f.curHp > 0){
+            _f.curHp = 0;
+            try{ log(`⚡ [${_f.name}] 強制清算,雷罰無可阻擋!`); }catch(_){}
+          }
+        }
+        try{ renderCard(_f); }catch(_){}
+      }, _i * 200);
+    });
+    _pSetTimeout(() => {
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      _burstFinish(h, _interrupted);
+    }, _foes.length * 200 + 600);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
 
@@ -18136,6 +18497,38 @@ function execPending(h){
 // ====== DAMAGE / HEAL ======
 function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發「壓力轉移」傷害攔截
+  //   觸發條件:
+  //     - target 還活著(rawDmg > 0)
+  //     - target 同陣營有存活學霸 + 學霸帶 _pressureAbsorb buff
+  //     - !opts._pressureAbsorbed(避免遞迴)
+  //     - !opts.isHeal(治療不攔截)
+  //   實作:
+  //     - 該次傷害變 0(直接 return 0)
+  //     - 把原始傷害量累加到學霸的 _pressureAccum
+  //     - 顯示 popup「-X 已轉移」,讓玩家知道壓力轉到學霸身上
+  //   ⚠ 學霸本人受到傷害也會被自己的 buff 吸收(全隊免傷的設計)
+  //   ⚠ 對 rawDmg <= 0 / 治療 / 已倒下 / 已被吸收的傷害不處理
+  // ════════════════════════════════════════════════════════════════
+  if(target && target.curHp > 0 && rawDmg > 0
+     && !opts._pressureAbsorbed && !opts.isHeal){
+    try{
+      const _absorber = (G[target.side] || []).find(_h =>
+        _h && _h.curHp > 0
+        && _h.name === '學霸(轉學生)'
+        && _h.buffs && _h.buffs.some(_b => _b.type === '_pressureAbsorb')
+      );
+      if(_absorber){
+        _absorber._pressureAccum = (_absorber._pressureAccum || 0) + rawDmg;
+        try{ showPopup(target, '📚-' + rawDmg, 'heal'); }catch(_){}
+        try{ log(`📚 [${_absorber.name}] 壓力轉移!替 [${target.name}] 擋下 ${rawDmg} 傷害(累計 ${_absorber._pressureAccum})`); }catch(_){}
+        try{ bannerFX(_absorber, `📚 +${rawDmg}`, '#aaccff', 500); }catch(_){}
+        try{ flashCard(_absorber, 'rgba(170,200,255,0.45)', 400); }catch(_){}
+        return 0;  // 不對 target 造成任何傷害
+      }
+    }catch(_e){ console.warn('[壓力轉移攔截] 失敗', _e); }
+  }
   // ★ v1.0.20260424.0510 — fixedDmg:true → 跳過屬性/buff/暴擊計算,直接扣血,
   //   但仍走最後的「curHp 扣減 + 倒下檢查」流程,讓系統感知到傷害
   if(opts.fixedDmg){
@@ -19326,6 +19719,18 @@ function doDmg(target, rawDmg, opts={}){
         delete target._hellChieftainStack;
         delete target._hellChieftainStackBonus;
       }catch(_hce2){ console.warn('[地府酋長] 倒下清層失敗', _hce2); }
+    }
+    // ★ v1.0.20260518.6920 — 學霸(轉學生)倒下時清除「蓄積壓力」累計值
+    //   避免復活後還保留 _pressureAccum,且 buff 到期釋放邏輯已經處理「倒下就不釋放」
+    //   這裡做雙保險:倒下瞬間立即清空累計值
+    if(target.name === '學霸(轉學生)' && typeof target._pressureAccum === 'number'){
+      try{
+        const _lostAccum = target._pressureAccum;
+        delete target._pressureAccum;
+        if(_lostAccum > 0){
+          log(`📚 [${target.name}] 倒下,蓄積的 ${_lostAccum} 傷害隨壓力消散...`);
+        }
+      }catch(_spe){ console.warn('[學霸] 倒下清累計失敗', _spe); }
     }
   }
   renderCard(target);
@@ -24265,6 +24670,224 @@ function execSkill(a, sk, cost, stype){
     renderCard(a);
     endAction(a, cost);
   }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260518.6920 — 學霸(轉學生)(5 年 2 班簡同學設計)技能實作
+  //   S1 五科滿分考卷:固定 100 傷害(不暴擊/不受元素/無視有利)隨機對手 5 次
+  //     升級:Lv1~10 固定值 100/105/110/115/120/125/130/135/140/145
+  //     攻擊次數:Lv1~4=5 次、Lv5~9=6 次、Lv10=7 次
+  //   S2 下課時光:用特技 170%(每級 +5%)恢復全體友方,並依速度 100% 提升全體速度 2 回合
+  //     速度加成:Lv1~4=100%、Lv5~9=110%、Lv10=120%
+  //   ⚠ S1 doDmg 用 fixedDmg:true + ignoreBuffs:true 跳過屬性/暴擊/有利狀態
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='五科滿分考卷'){
+    const _scS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _scFixed = 100 + _scS1Lv * 5;
+    const _scHits = 5;  // ★ v6920 修正:不管幾級都是固定 5 次,只有固定值會升級
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
+    log(`📋 [${a.name}] 五科滿分考卷!固定 ${_scFixed} 傷害 × ${_scHits} 次(無視屬性/有利/暴擊)!`);
+    try{ bannerFX(a, '📋 滿分考卷!', '#88ccff', 1200); }catch(_){}
+    try{ playSkillFX('五科滿分考卷', a, G[opp].filter(h => h.curHp > 0)); }catch(_){}
+    beginBatchTotals();
+    let _scI = 0;
+    const _doExam = () => {
+      const _alive = G[opp].filter(h => h.curHp > 0);
+      if(_scI >= _scHits || !_alive.length){
+        setTimeout(endBatchTotals, 50);
+        endAction(a, cost);
+        return;
+      }
+      const _t = _alive[Math.floor(Math.random() * _alive.length)];
+      log(`📋 [${a.name}] 第 ${_scI+1} 張滿分考卷 → [${_t.name}] 固定 ${_scFixed}`);
+      try{ bannerFX(_t, `📋 滿分! × ${_scI+1}`, '#aaccff', 500); }catch(_){}
+      try{ playSfx('sfx-passive', 0.6); }catch(_){}
+      doDmg(_t, _scFixed, { fixedDmg:true, actor:a, isSkill:true, ignoreBuffs:true });
+      renderCard(_t);
+      _scI++;
+      _pSetTimeout(_doExam, 300);
+    };
+    _pSetTimeout(_doExam, 200);
+    return;  // 非同步,由 _doExam 結尾呼叫 endAction
+  }
+  else if(n==='下課時光'){
+    const _scS2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _scHealMult = 1.70 + _scS2Lv * 0.05;
+    const _scSpdPct = _scS2Lv >= 9 ? 1.20 : (_scS2Lv >= 4 ? 1.10 : 1.00);
+    const _scSpv = Math.floor((a.sp || 0) * (1 + (a.sp || 0) * 0.01));
+    const _scHealAmt = Math.max(1, Math.floor(_scSpv * _scHealMult));
+    const _scSpdBoost = Math.max(1, Math.floor((a.spd || 0) * _scSpdPct));
+    log(`🍱 [${a.name}] 下課時光!分享零食飲料、全隊精神為之一振!治療 ${Math.round(_scHealMult*100)}% + 速度 +${_scSpdBoost}(${Math.round(_scSpdPct*100)}%) 2 回合`);
+    try{ bannerFX(a, '🍱 下課時光!', '#ffddaa', 1200); }catch(_){}
+    try{ playSkillFX('下課時光', a, G[a.side]); }catch(_){}
+    try{ playSfx('sfx-heal', 0.85); }catch(_){}
+    beginBatchTotals();
+    const _allies = G[a.side];
+    _allies.forEach((ally, i) => {
+      _pSetTimeout(() => {
+        // 1) 治療(★ v6920 修正:不可復活,倒下的友方跳過)
+        if(ally.curHp <= 0) return;
+        try{ doHeal(ally, _scHealAmt, {actor:a, isHeal:true, noDice:true}); }catch(_){}
+        // 2) 速度 buff 2 回合(用自訂 buff,_fromBurst 防搶奪)
+        //   若已有「下課時光」buff 就刷新而不疊加(避免無限疊速)
+        if(!ally.buffs) ally.buffs = [];
+        const _hasScholarBuff = ally.buffs.some(b => b.type === '_scholarBreak');
+        if(!_hasScholarBuff){
+          ally._scholarSpdBonus = _scSpdBoost;
+          ally.spd = (ally.spd || 0) + _scSpdBoost;
+        }
+        ally.buffs = ally.buffs.filter(b => b.type !== '_scholarBreak');
+        ally.buffs.push({ type:'_scholarBreak', dur:2, _spdBonus:_scSpdBoost, _fromSkill:true });
+        try{ renderCard(ally); }catch(_){}
+      }, i * 100);
+    });
+    _pSetTimeout(() => {
+      updateUI();
+      setTimeout(endBatchTotals, 50);
+      endAction(a, cost);
+    }, _allies.length * 100 + 400);
+    return;
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260518.6930 — 天神宙斯(5 年 4 班歐同學設計)技能實作
+  //   S1 驚雷:特技 120%(每級 +5%)雷屬性對隨機 2 名對手造成 2 次傷害
+  //         命中者:封印普攻(noatk) + 特技 -50%(_zeusSpDown)各 2 回合
+  //   S2 雷鳴:特技 80%(每級 +5%)雷屬性全體 3 次傷害(此 3 次暴擊率 +30%)
+  //         3 次傷害完成後,所有命中目標再追加當前 HP 20% 固定傷害
+  //   ⚠ 屬性走 SKILL_FORCE_ELEMENT 強制 wind(雷=風)
+  //   ⚠ 命中後附加狀態:noatk(封印普攻)+ _zeusSpDown(特技 -50%,自訂)
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='驚雷'){
+    const _zsS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _zsMult = 1.20 + _zsS1Lv * 0.05;
+    const _zsDmg = Math.max(1, Math.floor(spv(a) * _zsMult));
+    const _zsHits = 2;
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
+    log(`⚡ [${a.name}] 驚雷!特技 ${Math.round(_zsMult*100)}% × ${_zsHits} 次雷屬性傷害!`);
+    try{ bannerFX(a, '⚡ 驚雷!', '#ddff66', 1200); }catch(_){}
+    try{ playSkillFX('驚雷', a, G[opp].filter(h => h.curHp > 0)); }catch(_){}
+    beginBatchTotals();
+    let _zsI = 0;
+    const _hitTargets = [];  // 記錄命中過的目標,避免重複附加狀態
+    const _doZs = () => {
+      const _alive = G[opp].filter(h => h.curHp > 0);
+      if(_zsI >= _zsHits || !_alive.length){
+        // 對命中過的目標附加封印普攻 + 特技 -50% 2 回合
+        _hitTargets.forEach(_t => {
+          if(_t.curHp <= 0) return;
+          // 1) 封印普攻 (noatk) 2 回合
+          try{
+            if(typeof checkElemImmune === 'function' && !checkElemImmune(_t, 'noatk')){
+              _t.status = _t.status.filter(s => s.type !== 'noatk');
+              if(typeof addStatus === 'function'){
+                addStatus(_t, 'noatk', 2);
+              } else {
+                _t.status.push({ type:'noatk', dur:2 });
+              }
+            }
+          }catch(_){}
+          // 2) 特技 -50% (_zeusSpDown) 2 回合
+          try{
+            if(typeof checkElemImmune === 'function' && !checkElemImmune(_t, '_zeusSpDown')){
+              const _existing = _t.status.find(s => s.type === '_zeusSpDown');
+              if(_existing){
+                // 已有就刷新時間,不重複減速(防無限疊)
+                _existing.dur = Math.max(_existing.dur, 2);
+              } else {
+                const _origSp = _t.sp || 0;
+                _t.sp = Math.max(1, Math.floor(_origSp * 0.5));
+                _t.status.push({ type:'_zeusSpDown', dur:2, _origSp:_origSp });
+              }
+            }
+          }catch(_){}
+          try{ renderCard(_t); }catch(_){}
+        });
+        setTimeout(endBatchTotals, 50);
+        endAction(a, cost);
+        return;
+      }
+      const _t = _alive[Math.floor(Math.random() * _alive.length)];
+      log(`⚡ [${a.name}] 第 ${_zsI+1} 道驚雷 → [${_t.name}] ${_zsDmg} 雷傷害`);
+      try{ bannerFX(_t, `⚡ ${_zsI+1}!`, '#ccff66', 500); }catch(_){}
+      try{ playSfx('sfx-thunder-fury', 0.5); }catch(_){}
+      doDmg(_t, _zsDmg, { actor:a, isSkill:true, elem:'wind' });
+      renderCard(_t);
+      if(!_hitTargets.includes(_t)) _hitTargets.push(_t);
+      _zsI++;
+      _pSetTimeout(_doZs, 350);
+    };
+    _pSetTimeout(_doZs, 200);
+    return;  // 非同步
+  }
+  else if(n==='雷鳴'){
+    const _zmS2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _zmMult = 0.80 + _zmS2Lv * 0.05;
+    const _zmDmg = Math.max(1, Math.floor(spv(a) * _zmMult));
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    const _foes = G[opp].filter(h => h.curHp > 0);
+    if(!_foes.length){ endAction(a, cost); return; }
+    log(`⚡ [${a.name}] 雷鳴!特技 ${Math.round(_zmMult*100)}% × 3 次全體雷傷害(暴擊 +30%)!`);
+    try{ bannerFX(a, '⚡ 雷鳴!', '#ffee66', 1400); }catch(_){}
+    try{ playSkillFX('雷鳴', a, _foes); }catch(_){}
+    beginBatchTotals();
+    let _zmRound = 0;
+    const _hitInZm = new Set();  // 記錄命中過的目標(用於最後的 HP% 追擊)
+    const _doZmRound = () => {
+      if(_zmRound >= 3 || checkWin()){
+        // 3 次傷害結束 → 對命中目標追加當前 HP 20% 固定傷害
+        const _aliveHit = Array.from(_hitInZm).filter(_t => _t && _t.curHp > 0);
+        if(_aliveHit.length){
+          log(`⚡ [${a.name}] 三道雷鳴餘威!追加當前 HP 20% 固定傷害!`);
+          _aliveHit.forEach((_t, _i) => {
+            _pSetTimeout(() => {
+              if(_t.curHp <= 0) return;
+              const _hpDmg = Math.max(1, Math.floor(_t.curHp * 0.20));
+              try{ bannerFX(_t, `⚡ -${_hpDmg}!`, '#ffaa44', 700); }catch(_){}
+              try{ playSfx('sfx-thunder-fury', 0.4); }catch(_){}
+              // 追加傷害:固定值 + 無視有利狀態 + 不會暴擊
+              doDmg(_t, _hpDmg, {
+                fixedDmg:true,
+                actor:a,
+                isSkill:true,
+                ignoreBuffs:true,
+                _zeusFollowUp:true     // 標記用,目前無實際作用,留作未來擴充
+              });
+              renderCard(_t);
+            }, _i * 150);
+          });
+          _pSetTimeout(() => {
+            setTimeout(endBatchTotals, 50);
+            endAction(a, cost);
+          }, _aliveHit.length * 150 + 400);
+        } else {
+          setTimeout(endBatchTotals, 50);
+          endAction(a, cost);
+        }
+        return;
+      }
+      const _liveFoes = G[opp].filter(h => h.curHp > 0);
+      if(!_liveFoes.length){
+        setTimeout(endBatchTotals, 50);
+        endAction(a, cost);
+        return;
+      }
+      _liveFoes.forEach(_t => {
+        // 暴擊率 +30%:走 opts.critBoost(對齊 _renderSkillFdWithLv 暴擊規範)
+        doDmg(_t, _zmDmg, {
+          actor:a,
+          isSkill:true,
+          elem:'wind',
+          critBoost:0.30
+        });
+        renderCard(_t);
+        if(_t.curHp > 0) _hitInZm.add(_t);
+      });
+      _zmRound++;
+      _pSetTimeout(_doZmRound, 450);
+    };
+    _pSetTimeout(_doZmRound, 200);
+    return;  // 非同步
+  }
   // ══════════════════════════════════════════════════════
   // ★ v1.0.20260421.0700 — 日本關三大 BOSS 技能實作
   // ══════════════════════════════════════════════════════
@@ -27648,6 +28271,48 @@ function _restoreRoundSnapshot(snap){
 }
 
 function nextRound(){
+  // ★ v1.0.20260518.6920 — 學霸(轉學生)天賦「考神附體」:回合結束時觸發
+  //   觸發條件:
+  //     - 場上有存活的學霸(p1 + p2 都掃)、未被疑惑
+  //     - 機率擲骰:基礎 40% + 每升 1 級 +5%(Lv5 達 60%)
+  //   實作:
+  //     - 對對手陣營存活對手隨機挑 1 名,造成 100 固定傷害
+  //     - 用 fixedDmg:true + ignoreBuffs:true,不暴擊、不受元素、無視有利
+  //   ⚠ 此天賦在「回合切換」瞬間觸發(即上一回合結束),所以放在 G.round++ 之前
+  //   ⚠ 同隊兩隻學霸都會各自獨立擲骰
+  try{
+    const _sides = ['p1','p2'];
+    _sides.forEach(_s => {
+      if(!G[_s]) return;
+      G[_s].forEach(_sc => {
+        if(!_sc || _sc.name !== '學霸(轉學生)' || _sc.curHp <= 0) return;
+        if(typeof hasStatus === 'function' && hasStatus(_sc, 'confused')) return;
+        const _scTl = (typeof _getTraitLv === 'function') ? _getTraitLv('學霸(轉學生)') : 0;
+        const _scProc = Math.min(1.0, 0.40 + _scTl * 0.05);
+        if(Math.random() < _scProc){
+          const _opp = _s === 'p1' ? 'p2' : 'p1';
+          const _foes = (G[_opp] || []).filter(_f => _f.curHp > 0);
+          if(!_foes.length) return;
+          const _t = _foes[Math.floor(Math.random() * _foes.length)];
+          try{ log(`🤓 [${_sc.name}] 考神附體!對 [${_t.name}] 降下 100 固定傷害!(機率 ${Math.round(_scProc*100)}%)`); }catch(_){}
+          try{ bannerFX(_t, '🤓 考神附體!', '#aaccff', 900); }catch(_){}
+          try{ playSfx('sfx-passive', 0.7); }catch(_){}
+          try{
+            doDmg(_t, 100, {
+              fixedDmg:true,
+              actor:_sc,
+              isSkill:true,
+              ignoreBuffs:true,
+              isRebound:true,             // 不引發還手類天賦
+              _pressureAbsorbed:true       // 不會被另一個學霸的壓力吸收(防雙學霸自己餵自己)
+            });
+            renderCard(_t);
+          }catch(_){}
+        }
+      });
+    });
+  }catch(_se){ console.warn('[學霸] 考神附體觸發失敗', _se); }
+
   // ★ 時間倒轉用：滑動快照鏈 — 把目前快照變「上一回合」
   G._prevRoundSnap = G._curRoundSnap || null;
   // 回合數遞增
@@ -50478,6 +51143,10 @@ const ADMIN_ALL_HEROES = [
   '水狐',
   // ★ v1.0.20260515.6900 — 6 年 5 班董同學設計(6 年 5 班首位設計師)
   '米鈴',
+  // ★ v1.0.20260518.6920 — 5 年 2 班簡同學設計
+  '學霸(轉學生)',
+  // ★ v1.0.20260518.6930 — 5 年 4 班歐同學設計
+  '天神宙斯',
 ];
 
 function advGetUnlockedHeroes() {
@@ -57161,7 +57830,9 @@ const SUMMON_FX_10X_GIF = 'https://raw.githubusercontent.com/clarebox123jp-art/L
 // ★ v1.0.20260514.6550 — 加進炸彈客(5 年 4 班劉同學設計,5 年 4 班首位設計師),共 13 隻分攤 5% 機率(每隻 ≈ 0.385%)
 // ★ v1.0.20260514.6660 — 加進紅色玩家(5 年 4 班陳同學設計,5 年 4 班第 2 位設計師),共 14 隻分攤 5% 機率(每隻 ≈ 0.357%)
 // ★ v1.0.20260514.6770 — 加進地府酋長(5 年 4 班黃同學設計,5 年 4 班第 3 位設計師),共 15 隻分攤 5% 機率(每隻 ≈ 0.333%)
-const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴'];
+// ★ v1.0.20260518.6920 — 加進學霸(轉學生)(5 年 2 班簡同學設計),共 19 隻分攤 5% 機率(每隻 ≈ 0.263%)
+// ★ v1.0.20260518.6930 — 加進天神宙斯(5 年 4 班歐同學設計),共 20 隻分攤 5% 機率(每隻 = 0.25%)
+const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯'];
 
 // BOSS 賣錢物品池(召喚也可獲得)
 // ★ v1.1.0 — 台灣 10 BOSS 賣錢物品也加入召喚池
@@ -59839,6 +60510,19 @@ const SKILL_UPGRADE_DEF = {
   '鈴音淨化':           { cat:'special_milin_s1', label:'治療%' },
   //   S2 女僕們的整潔活動:反擊倍率 75%(每級 +5%),MAX 保底打掃 1→3 次
   '女僕們的整潔活動':   { cat:'special_milin_s2', label:'反擊%+保底次數' },
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學「學霸(轉學生)」)
+  //   S1 五科滿分考卷:固定 100 傷害 × 5 次(攻擊次數固定 5 不升級),Lv1~10 升 100→145
+  //   fd 中只升「固定 100 傷害」,「5 次」維持不變
+  '五科滿分考卷':       { cat:'special_scholar_s1', label:'固定值' },
+  //   S2 下課時光:治療 170%(每級 +5%)+ 全隊速度 +速度的 100%(MAX Lv5=110%, Lv10=120%)
+  //   fd 中「特技值的 170%」(升)、「速度值的 100%」(每 4 級 +10%),回合數固定 2
+  '下課時光':           { cat:'special_scholar_s2', label:'治療%+速度%' },
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學「天神宙斯」)
+  //   S1 驚雷:特技 120% × 2(每級 +5%),封印普攻+特技-50% 2回合(狀態固定不升)
+  //   S2 雷鳴:特技 80% × 3 全體(每級 +5%)+ 暴擊率 +30%(固定),追加當前 HP 20% 傷害(固定)
+  //   兩個都用標準 dmg cat(每級主傷害 +5%),狀態效果保持不變
+  '驚雷':               { cat:'dmg', label:'技能傷害' },
+  '雷鳴':               { cat:'dmg', label:'技能傷害' },
   // ── 治療類:每級治療+10% ──
   '救贖神光': { cat:'heal',   label:'治療量' },
   // ★ v1.0.20260424.0560 — 神聖鎚擊: 固定 HP% 傷害(BOSS 5%/一般 20%) 不升級
@@ -60156,6 +60840,22 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     const fallback = skLv >= 9 ? 3 : 1;
     fd = fd.replace(/特技的\s*75\s*%/g, '特技的 ' + HL(counterPct + '%'))
            .replace(/保底打掃\s*1\s*次/g, '保底打掃 ' + HL(fallback) + ' 次');
+  }
+  // ★ v1.0.20260518.6920 — 學霸(轉學生) S1「五科滿分考卷」:固定 100 +5/級(Lv10 達 145)
+  //   攻擊次數固定 5(不隨等級增加)— 只升固定值
+  //   fd 中「固定 100 傷害」(升)
+  else if(cat === 'special_scholar_s1'){
+    const fixedDmg = 100 + skLv * 5;
+    fd = fd.replace(/固定\s*100\s*傷害/g, '固定 ' + HL(fixedDmg) + ' 傷害');
+  }
+  // ★ v1.0.20260518.6920 — 學霸(轉學生) S2「下課時光」:治療 170% +5%/級(Lv10 達 215%)
+  //   速度加成基礎 100%、Lv5+(skLv>=4)達 110%、Lv10 MAX 達 120%
+  //   fd 中「特技值的 170%」(升)、「速度值的 100%」(每 4 級 +10%)、回合數固定 2
+  else if(cat === 'special_scholar_s2'){
+    const healPct = 170 + skLv * 5;
+    const spdPct = skLv >= 9 ? 120 : (skLv >= 4 ? 110 : 100);
+    fd = fd.replace(/特技值的\s*170\s*%/g, '特技值的 ' + HL(healPct + '%'))
+           .replace(/速度值的\s*100\s*%/g, '速度值的 ' + HL(spdPct + '%'));
   }
   else if(cat === 'special_kuyou_fox'){
     // 九尾狐火: 特技% +5/級, 燃燒 2→3
@@ -60628,6 +61328,20 @@ function _renderTraitFdWithLv(heroName, originalFd, traitLv){
       fd = fd.replace(/特技的\s*80\s*%/g, '特技的 ' + HL(pct + '%'));
       break;
     }
+    // ★ v1.0.20260518.6920 — 學霸(轉學生)天賦升級規則
+    //   觸發機率類:40% + 5%/級 → Lv5 60%
+    case '學霸(轉學生)': {
+      const pct = Math.min(100, 40 + traitLv * 5);
+      fd = fd.replace(/有\s*40\s*%\s*機率/g, '有 ' + HL(pct + '%') + ' 機率');
+      break;
+    }
+    // ★ v1.0.20260518.6930 — 天神宙斯天賦升級規則
+    //   觸發機率類:50% + 5%/級 → Lv5 70%
+    case '天神宙斯': {
+      const pct = Math.min(100, 50 + traitLv * 5);
+      fd = fd.replace(/有\s*50\s*%\s*機率/g, '有 ' + HL(pct + '%') + ' 機率');
+      break;
+    }
     // 八岐大蛇、寶箱怪等 BOSS 不升級,直接返回
   }
 
@@ -60858,6 +61572,29 @@ function _renderBurstFdWithLv(burstName, originalFd, burstLv){
       fd = fd.replace(/特技的\s*175\s*%/g, '特技的 ' + HL(healPct + '%'))
              .replace(/特技的\s*100\s*%\s*對來源/g, '特技的 ' + HL(counterPct + '%') + ' 對來源')
              .replace(/「茶會」狀態\s*2\s*回合/g, '「茶會」狀態 ' + HL(dur) + ' 回合');
+      _customHandled = true; break;
+    }
+    // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發「壓力轉移」升級規則
+    //   反擊倍率:100/115/130/145/165%
+    //   持續回合:2/2/2/2/3(MAX 延長)
+    //   fd 中「累計的全部傷害 ×100%」(升)、「2 回合」(MAX 升)
+    case '壓力轉移': {
+      const counterTable = [100, 115, 130, 145, 165];
+      const durTable     = [2, 2, 2, 2, 3];
+      const counterPct = counterTable[Math.min(4, burstLv)];
+      const dur        = durTable[Math.min(4, burstLv)];
+      fd = fd.replace(/累計的全部傷害\s*×\s*100\s*%/g, '累計的全部傷害 ×' + HL(counterPct + '%'))
+             .replace(/「蓄積壓力」狀態\s*2\s*回合/g, '「蓄積壓力」狀態 ' + HL(dur) + ' 回合')
+             .replace(/2\s*回合後將累計/g, HL(dur) + ' 回合後將累計');
+      _customHandled = true; break;
+    }
+    // ★ v1.0.20260518.6930 — 天神宙斯爆發「天降雷罰」升級規則
+    //   BOSS 當前 HP 傷害百分比:25/28/31/33/36%(設計單指定)
+    //   非 BOSS 直接倒下效果不升級
+    case '天降雷罰': {
+      const bossPctTable = [25, 28, 31, 33, 36];
+      const bossPct = bossPctTable[Math.min(4, burstLv)];
+      fd = fd.replace(/當前\s*HP\s*25\s*%/g, '當前 HP ' + HL(bossPct + '%'));
       _customHandled = true; break;
     }
     // ── BOSS 解鎖英雄 ──
@@ -61179,6 +61916,18 @@ function _getSkUpgradeBadge(skillName, skLv){
     const counterPct = 75 + lv * 5;
     const fallback = lv >= 9 ? 3 : 1;
     return '解我方全體不利 + 反擊×' + counterPct + '% (保底×' + fallback + ')';
+  }
+  // ★ v1.0.20260518.6920 — 學霸(轉學生) S1/S2 升級短摘要
+  if(cat==='special_scholar_s1'){
+    const lv = skLv || 0;
+    const fixedDmg = 100 + lv * 5;
+    return '固定 ' + fixedDmg + ' × 5 次(不暴擊/不受元素/無視有利)';
+  }
+  if(cat==='special_scholar_s2'){
+    const lv = skLv || 0;
+    const healPct = 170 + lv * 5;
+    const spdPct = lv >= 9 ? 120 : (lv >= 4 ? 110 : 100);
+    return '治療×' + healPct + '% 全隊 + 速度×' + spdPct + '% buff 2 回合';
   }
   if(cat==='special_blizzard'){
     // 暴風雪:特技×(70+5*lv)% + (50+3*lv)%冰凍
@@ -61540,6 +62289,17 @@ function buildSkillLvTable(skillName, currentLv) {
       const fallback = lv >= 9 ? 3 : 1;
       effectText = '解我方全體不利 + 反擊×' + counterPct + '% (保底×' + fallback + ')' + (lv===9?'（MAX 保底×3）':(lv===0?'（基礎）':''));
     }
+    // ★ v1.0.20260518.6920 — 學霸(轉學生) S1:固定 +5/級,攻擊次數固定 5
+    else if(cat==='special_scholar_s1'){
+      const fixedDmg = 100 + lv * 5;
+      effectText = '固定 ' + fixedDmg + ' × 5 次(不暴擊/不受元素/無視有利)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+    }
+    // ★ v1.0.20260518.6920 — 學霸(轉學生) S2:治療+5%/級、Lv5 速度加成 100→110、Lv10 升 120
+    else if(cat==='special_scholar_s2'){
+      const healPct = 170 + lv * 5;
+      const spdPct = lv >= 9 ? 120 : (lv >= 4 ? 110 : 100);
+      effectText = '治療×' + healPct + '% 全隊 + 速度×' + spdPct + '% buff 2 回合' + (lv===9?'（MAX 速度+10%）':(lv===4?'（速度+10%）':(lv===0?'（基礎）':'')));
+    }
     else if(cat==='special_blizzard'){
       const dmgPct = 70 + lv*5;
       const frzPct = 50 + lv*3;
@@ -61690,6 +62450,10 @@ const HERO_CATEGORIES_OVERRIDE = {
   '水狐':        ['dmg','heal'],    // S1 召喚水精靈雙線(治療+傷害)、S2 蛟龍出海全體 2 段、爆發全體巨傷+全隊治療+解不利
   // ★ v1.0.20260515.6900 — 6 年 5 班董同學設計
   '米鈴':        ['heal'],          // 純後援:三層淨化+反擊輸出,爆發「茶會」buff 持續反制不利狀態
+  // ★ v1.0.20260518.6920 — 5 年 2 班簡同學設計
+  '學霸(轉學生)':['dmg','heal'],    // S1 固定值連擊輸出、S2 全隊治療+速度buff、爆發 全隊免傷蓄壓→反擊
+  // ★ v1.0.20260518.6930 — 5 年 4 班歐同學設計
+  '天神宙斯':    ['dmg','ctrl'],    // S1 雷屬性連擊+封印+特技降、S2 全體 3 次雷+%HP、爆發 非BOSS秒殺+BOSS%HP;天賦麻痺
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -61786,10 +62550,17 @@ const HERO_HEX_OVERRIDE = {
   //   米鈴:三層淨化(天賦/S1/S2)+反擊輸出+爆發「茶會」buff 反制不利;速度 22 全英雄頂尖
   //   雷達:滿值回復(淨化+治療)+低控制(無附加不利狀態)
   '米鈴':        { heal: 10, ctrl: 2 },
+  // ★ v1.0.20260518.6920 — 5 年 2 班簡同學設計
+  //   學霸(轉學生):S1 固定值連擊5次、S2 全隊治療+速度buff、爆發全隊免傷蓄壓反擊
+  //   雷達:中高回復(S2 全隊治療+爆發保護)+低控制(無附加不利狀態,但爆發 2 回合免傷算強保護)
+  '學霸(轉學生)':{ heal: 8, ctrl: 3 },
+  // ★ v1.0.20260518.6930 — 5 年 4 班歐同學設計
+  //   天神宙斯:S1 特技 120%×2+封印普攻+特技降50%、S2 特技 80%×3 全體+暴擊+%HP、爆發 非BOSS秒殺
+  //   雷達:無回復(零治療)+極高控制(麻痺天賦+封印普攻+特技降+爆發秒殺)
+  '天神宙斯':    { heal: 0, ctrl: 10 },
 
   // 校犬(特殊雙滿)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
-
   // 台灣 3 BOSS(維持原本的覆寫不動)
   '杏花妖':      { heal: 7, ctrl: 10 },
   '山岳禁咒・崩天巨人': { heal: 1,  ctrl: 10 },
@@ -70491,6 +71262,10 @@ const STUDENT_DESIGNER_HEROES = {
   'lsps109166@stu.lsps.tp.edu.tw': { hero:'水狐',       name:'林同學', class:'6年2班', flagId:'water_fox',        isFirstOfClass:true },
   // ★ v1.0.20260515.6900 — 6 年 5 班首位設計師(米鈴設計者)
   'lsps109101@stu.lsps.tp.edu.tw': { hero:'米鈴',       name:'董同學', class:'6年5班', flagId:'maid_cat_milin',   isFirstOfClass:true },
+  // ★ v1.0.20260518.6920 — 5 年 2 班第 3 位設計師(學霸(轉學生)設計者)
+  'lsps110022@stu.lsps.tp.edu.tw': { hero:'學霸(轉學生)', name:'簡同學', class:'5年2班', flagId:'scholar_transfer'  },
+  // ★ v1.0.20260518.6930 — 5 年 4 班第 5 位設計師(天神宙斯設計者)
+  'lsps110026@stu.lsps.tp.edu.tw': { hero:'天神宙斯',     name:'歐同學', class:'5年4班', flagId:'thunder_zeus'      },
 };
 
 window._grantStudentDesignerHero = function(email){
