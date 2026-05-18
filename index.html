@@ -39013,10 +39013,13 @@ function openAdventureOverlay(){
 function _showNewHeroAnnouncement(forceShow){
   // ★ v1.0.20260424.0770 — forceShow=true 時跳過「今日不再顯示」檢查
   //   從按鈕「近期活動與新角色」點開時 forceShow=true,可隨時重新開啟
+  // ★ FIX 20260518(i) — 改版升到 3.0,localStorage key 加版本號,
+  //   讓舊版「今日不再顯示」過的玩家會被當成「沒看過 3.0」自動再彈一次
+  const _SKIP_KEY = 'newHeroAnnounce_skipUntil_v3';
   if(!forceShow){
     // 檢查「今日不再顯示」旗標(只在自動彈出時檢查)
     try{
-      const skipUntil = localStorage.getItem('newHeroAnnounce_skipUntil');
+      const skipUntil = localStorage.getItem(_SKIP_KEY);
       if(skipUntil && Date.now() < parseInt(skipUntil, 10)){
         return; // 還在「今日不顯示」期間
       }
@@ -39136,7 +39139,7 @@ function _showNewHeroAnnouncement(forceShow){
       <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite;">✨</span>
       <span style="font-size:clamp(30px,4.5vw,46px);font-weight:900;color:#ffe066;
         text-shadow:0 0 14px rgba(255,200,80,0.85),0 2px 6px rgba(0,0,0,0.7);
-        letter-spacing:2px;">🎉 歡慶2.0版正式上線！</span>
+        letter-spacing:2px;">🎉 歡慶 3.0 版正式上線！</span>
       <span style="font-size:clamp(36px,5vw,52px);animation:newHeroSparkle 1.2s ease-in-out infinite 0.6s;">✨</span>
     </div>
   `;
@@ -39691,10 +39694,11 @@ function _showNewHeroAnnouncement(forceShow){
   skipTodayBtn.onclick = () => {
     try{ playSfx('sfx-confirm2', 0.6); }catch(_){}
     // 設定到隔天 00:00
+    // ★ FIX 20260518(i) — 用 v3 key,跟讀取端一致
     try{
       const tomorrow = new Date();
       tomorrow.setHours(24, 0, 0, 0);
-      localStorage.setItem('newHeroAnnounce_skipUntil', String(tomorrow.getTime()));
+      localStorage.setItem('newHeroAnnounce_skipUntil_v3', String(tomorrow.getTime()));
     }catch(_e){}
     ov.remove();
   };
