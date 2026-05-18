@@ -2619,9 +2619,11 @@
           const players = data.players || [];
           const me = players.find(p => p.uid === window._gUserId);
           if(!me) throw new Error('NOT_IN_ROOM');
-          // 不可重複
-          const dup = players.find(p => p.uid !== window._gUserId && p.heroName === heroName);
-          if(dup) throw new Error('HERO_TAKEN');
+          // ★ FIX 20260518(b) — 移除「英雄不可重複」限制
+          //   前端 _wbTcOpenSwapHero 已在 FIX 20260516 v7 開放英雄可重複選擇
+          //   (代打槽也可能跟玩家選同一隻),但後端 transaction 仍鎖,
+          //   造成「UI 顯示綠框可選 → 點下去噴 HERO_TAKEN alert」的不一致 bug。
+          //   設計上允許多人挑同一英雄(每人有自己的等級/至寶),所以這裡放行。
           me.heroName = heroName;
           me.element = element || null;
           me.ready = false;  // 改角要重新按準備
@@ -2629,7 +2631,7 @@
         });
         return true;
       }catch(e){
-        const msg = { HERO_TAKEN: '這隻英雄已被其他玩家選走', NOT_IN_ROOM: '你不在這個房間', ROOM_GONE: '房間已不存在' };
+        const msg = { NOT_IN_ROOM: '你不在這個房間', ROOM_GONE: '房間已不存在' };
         _emit('onError', { msg: msg[e.message] || ('選角失敗:' + (e.code || e.message)) });
         return false;
       }

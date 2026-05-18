@@ -5460,15 +5460,47 @@
   };
 
   window._wbTcOpenSwapTreasure = function(targetSlotIdx){
+    // ★ FIX 20260518(b) — 代打槽分支:_wbTcAssignedSlotOpenSwapTreasure 會先設 ctx,
+    //   這時 snap.players[targetSlotIdx] 是空槽(null/undefined),要從 _wbHostAssignedSlots
+    //   拼出「假 me」走後續渲染,否則第 5465 行 `if(!me)` 直接擋掉,代打槽永遠裝不上至寶。
+    //   並且 early return 路徑都要清掉 _wbTcAssignedTreasureCtx,避免污染下一次正常操作。
+    const _assignedCtx = window._wbTcAssignedTreasureCtx;
+    const _isAssignedFlow = _assignedCtx && typeof _assignedCtx.slotIdx === 'number'
+                            && _assignedCtx.slotIdx === targetSlotIdx;
     const snap = window._wbNet.getSnapshot();
-    const me = snap?.players?.[targetSlotIdx];
-    if(!me){ _wbGameAlert('槽位不存在'); return; }
+    let me;
+    if(_isAssignedFlow){
+      const _hostAssign = (window._wbHostAssignedSlots && window._wbHostAssignedSlots[targetSlotIdx]) || null;
+      if(!_hostAssign || !_hostAssign.heroName){
+        _wbGameAlert('代打槽尚未指派英雄,請先選英雄');
+        window._wbTcAssignedTreasureCtx = null;
+        return;
+      }
+      // 構造一個「pseudo me」讓後續邏輯(讀 ext / heroName / maxSlots)零修改通過
+      me = {
+        uid: window._gUserId,
+        heroName: _hostAssign.heroName,
+        element: _wbTcStringifyExt({
+          e:  _hostAssign.element || null,
+          es: _hostAssign.element ? [_hostAssign.element] : [],
+          t:  Array.isArray(_hostAssign.treasures) ? _hostAssign.treasures : [],
+        }),
+      };
+    }else{
+      me = snap?.players?.[targetSlotIdx];
+    }
+    if(!me){
+      _wbGameAlert('槽位不存在');
+      window._wbTcAssignedTreasureCtx = null;
+      return;
+    }
     const ext = _wbTcParsePlayerExt(me);
     const heroName = me.heroName;
     const maxSlots = _wbTcIsHeroSlot2Unlocked(heroName) ? 2 : 1;
     const myTreasures = _wbTcGetMyTreasures();
     if(myTreasures.length === 0){
       _wbGameAlert('尚未解鎖任何至寶');
+      window._wbTcAssignedTreasureCtx = null;
       return;
     }
 
@@ -6179,6 +6211,29 @@
       console.warn('[WB-Host v6] endAction return-control hook 安裝失敗', eHook2);
     }
 
+    // ── ★ FIX 20260518(b) — BOSS 開戰題搬到 startBattle 之前(連線房主) ──
+    //   原 bug:開戰題在 startBattle 之後跑(下方第 6313 行),導致其他玩家收到
+    //          onBattleUpdate 立刻進入戰場,但房主還停在開戰題/獎勵頁(可達 30 秒),
+    //          這段期間「房主端 G 已被開戰題改了(全員 burst+1 或全員 -5%HP)」
+    //          沒同步出去 → 其他玩家畫面跟房主不同步 → 看到莫名其妙的血量變化。
+    //   新行為:開戰題完全跑在房主本地 G 上(此時 G 已由 _wbSetupAdvForBattle 設好,
+    //          但 firestore battle 還沒寫,所以其他玩家還在隊伍確認頁準備中),
+    //          答完(含獎勵 UI)後才呼叫 _wbNet.startBattle 寫 firestore;
+    //          startBattle 寫入的 p1 已經包含開戰題的結果(burst/curHp),
+    //          其他玩家拿到的初始 G 就跟房主一致。
+    //   注意:連線多人模式下開戰題的「同步顯示」(讓 4 個玩家都看到題目並各自答)
+    //         需要更大規模改動(寫進 battle.openingQuiz 廣播),這版先保證「狀態一致」,
+    //         開戰題本身仍只在房主端跑,其他玩家會看到題目「秒過」(因為已答完)。
+    try{
+      if(typeof window._wbStartBossOpening === 'function'){
+        console.log('[WB-Host v6] 進入開戰題流程(startBattle 之前)…');
+        await window._wbStartBossOpening();
+        console.log('[WB-Host v6] 開戰題完成,接著呼叫 startBattle');
+      }
+    }catch(eOpEarly){
+      console.warn('[WB-Host v6] 開戰題流程失敗,跳過直接 startBattle', eOpEarly);
+    }
+
     // ── 廣播初始 battle 給其他玩家(舊 schema, version=1) ───────────
     // 用 turnOrder 計算(BOSS 永遠第一,接著 p1 按速度)
     const all = [];
@@ -6278,16 +6333,7 @@
     // ★ BGM 預先切到世界戰專屬 BGM(advStartBattle 內 bgmStop 後再兜底重啟)
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
-    // ── BOSS 開戰題流程 ──────────────────────────────────────────
-    try{
-      if(typeof window._wbStartBossOpening === 'function'){
-        console.log('[WB-Host v6] 進入開戰題流程…');
-        await window._wbStartBossOpening();
-        console.log('[WB-Host v6] 開戰題完成,進入戰鬥');
-      }
-    }catch(eOp){
-      console.warn('[WB-Host v6] 開戰題流程失敗,跳過直接進戰鬥', eOp);
-    }
+    // ── BOSS 開戰題流程已搬到 startBattle 之前(★ FIX 20260518(b)),這裡不再重複呼叫
 
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
@@ -7844,23 +7890,36 @@
               if(typeof log === 'function') log('🎯 開戰題答對!全員能量 +1,並請選擇額外獎勵');
               // 走主程式答題獎勵流程
               if(typeof advShowReward === 'function'){
+                // ★ FIX 20260518(b) — 防止 polling + watchdog 都呼叫 onDone,
+                //   或 onDone 因為失敗被連續觸發兩次。
+                let _onDoneFired = false;
+                const _fireOnDone = function(reason){
+                  if(_onDoneFired) return;
+                  _onDoneFired = true;
+                  console.log('[WB] 開戰題獎勵流程結束(' + reason + '),呼叫 onDone');
+                  if(typeof onDone === 'function') onDone();
+                };
                 // 標記 context = boss(主程式 advShowReward 內會讀)
                 window._advRewardContext = 'boss';
                 advShowReward();
                 // Polling 監聽獎勵 overlay 關閉 → 呼叫 onDone() 啟動戰鬥
                 const _checkClosed = setInterval(function(){
                   const _rw = document.getElementById('adv-reward-overlay');
-                  if(!_rw){ clearInterval(_checkClosed); if(typeof onDone==='function') onDone(); return; }
+                  if(!_rw){ clearInterval(_checkClosed); _fireOnDone('overlay-gone'); return; }
                   const _disp = getComputedStyle(_rw).display;
                   // overlay 被關閉(display 變 none)→ 獎勵已領取
                   if(_disp === 'none'){
                     clearInterval(_checkClosed);
-                    if(typeof onDone === 'function') onDone();
+                    _fireOnDone('overlay-hidden');
                   }
                 }, 200);
-                // 安全 fallback:30 秒內沒關掉就強制 onDone(避免玩家卡住)
+                // ★ FIX 20260518(b) — 安全 fallback:30 秒內沒關掉就強制 onDone(避免玩家卡住)
+                //   原 bug:這個 setTimeout 只做了 clearInterval,沒呼叫 onDone → 整場戰鬥卡在
+                //   `_wbStartBossOpening` 的 Promise 永遠不 resolve,advStartBattle() 也不會被呼叫。
+                //   修補:加上 _fireOnDone 真正讓戰鬥繼續。
                 setTimeout(function(){
                   clearInterval(_checkClosed);
+                  _fireOnDone('watchdog-30s');
                 }, 30000);
               }else{
                 // advShowReward 不存在 → fallback(burst+1 上面已給)
