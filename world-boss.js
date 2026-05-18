@@ -858,6 +858,15 @@
             const _bossId = (_curBoss && _curBoss.id) || 'vesuvius_fire_dragon';
             await window._wbHpSync.resetHp(_bossId, _maxHp);
             console.log('[WB-Admin] 開放新一輪 → BOSS HP 重置為滿血', _bossId, _maxHp);
+            // ★ FIX 20260518(b) — 同時把雲端排行榜清空(新一輪重新比拚)
+            try{
+              if(window._wbLeaderboard && typeof window._wbLeaderboard.reset === 'function'){
+                await window._wbLeaderboard.reset(_bossId);
+                console.log('[WB-Admin] 排行榜已重置:', _bossId);
+              }else{
+                console.warn('[WB-Admin] _wbLeaderboard.reset 不存在,排行榜需手動清除');
+              }
+            }catch(eRb){ console.warn('[WB-Admin] 重置排行榜失敗', eRb); }
           }
         }catch(eR){ console.warn('[WB-Admin] 重置 BOSS HP 失敗', eR); }
       }
@@ -2429,6 +2438,60 @@
       }
     }catch(eHp){
       console.warn('[WB-HpSync] 結算扣血失敗', eHp);
+    }
+
+    // ★ FIX 20260518(b) — 把本場 4 項貢獻上傳到雲端排行榜
+    //   來源:G.battleStats[heroName] 內的 dmg / heal / dmgTaken / statusCount
+    //   寫入路徑:worldBossLeaderboard/{bossId}.players[uid]
+    //   注意:
+    //     - 連線多人模式下,只有「本機玩家自己的英雄」會被算進去(避免每個 client 重複寫)
+    //     - 單人練習也照寫(他打的傷害確實是該玩家貢獻),但 4 個槽都算房主
+    //     - 房主代打 NPC 算房主貢獻(NPC 其實是房主操控)
+    //     - 玩家若沒有 uid(未登入 = solo_user)就不寫
+    try{
+      const _myUidLb = window._gUserId;
+      if(_myUidLb && _myUidLb !== 'solo_user' && _Gr && _Gr.battleStats
+         && window._wbLeaderboard && typeof window._wbLeaderboard.submitContribution === 'function'){
+        // 連線模式:由 _wbNet.getMySlot 找出我的槽位,只累加我那隻英雄;
+        //          但房主代打的 NPC 也算房主 → 房主把所有 _wbIsHostNpc 的英雄也算進來
+        // 單人模式:4 個槽都是「我自己」(房主代打全部),全部累加
+        const isHost = (window._wbNet && typeof window._wbNet.isHost === 'function')
+                       ? window._wbNet.isHost() : true;
+        const mySlot = (window._wbNet && typeof window._wbNet.getMySlot === 'function')
+                       ? window._wbNet.getMySlot() : 0;
+        const isSolo = !!window._wbSoloPracticeMode;
+        let agg = { dmg: 0, heal: 0, dmgTaken: 0, ctrl: 0 };
+        for(let i = 0; i < (_Gr.p1 ? _Gr.p1.length : 0); i++){
+          const _h = _Gr.p1[i];
+          if(!_h) continue;
+          const _isMine = isSolo ? true        // 單人模式:全算我
+                       : isHost  ? (i === mySlot || _h._wbIsHostNpc)  // 房主:我的 + 代打 NPC
+                                 : (i === mySlot);  // 一般玩家:只算我
+          if(!_isMine) continue;
+          const _s = _Gr.battleStats[_h.name] || {};
+          agg.dmg      += (_s.dmg         || 0);
+          agg.heal     += (_s.heal        || 0);
+          agg.dmgTaken += (_s.dmgTaken    || 0);
+          agg.ctrl     += (_s.statusCount || 0);
+        }
+        // 取暱稱
+        const _myName = (window._playerNickname || window._userName
+                      || (window._fbUser && (window._fbUser.displayName || window._fbUser.email))
+                      || '玩家');
+        // 從 lineup 反查 bossId
+        let _lbBossId = 'vesuvius_fire_dragon';
+        try{
+          const _wbBoss2 = (_Gr && _Gr.p2 && _Gr.p2[0]) || null;
+          const _lineup2 = window.WORLD_BOSS_LINEUP || [];
+          const _m2 = _wbBoss2 && _lineup2.find(b => b && b.name === _wbBoss2.name);
+          if(_m2 && _m2.id) _lbBossId = _m2.id;
+        }catch(_){}
+        window._wbLeaderboard.submitContribution(_lbBossId, _myUidLb, _myName, agg)
+          .then(ok => { if(ok) console.log('[WB-Leaderboard] 本場貢獻已上傳:', agg); })
+          .catch(e => console.warn('[WB-Leaderboard] 上傳失敗', e));
+      }
+    }catch(eLb){
+      console.warn('[WB-Leaderboard] 結算上傳例外', eLb);
     }
 
     // 結束戰鬥:離開冒險模式 + 隱藏戰鬥畫面

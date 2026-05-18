@@ -601,6 +601,150 @@
 </style>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- ★ FIX 20260518(b) — 世界 BOSS 排行榜 UI 樣式                              -->
+<!-- ──────────────────────────────────────────────────────────────────── -->
+<style>
+  /* 排行榜總容器 ──────────────────────────────────────────────── */
+  .wb-lb-box{
+    margin-top:20px;padding:16px;background:rgba(0,0,0,0.45);
+    border-radius:12px;border:1.5px solid rgba(255,200,80,0.45);
+  }
+  .wb-lb-title{
+    font-size:18px;color:#ffe066;letter-spacing:2px;font-weight:700;margin-bottom:6px;
+  }
+  .wb-lb-sub{
+    font-size:12px;color:#aaa;margin-bottom:10px;line-height:1.5;
+  }
+  /* 4 個冠軍卡(輸出 / 治療 / 肉盾 / 控場) ───────────────────── */
+  .wb-lb-champ-row{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;
+  }
+  .wb-lb-champ{
+    background:linear-gradient(140deg,rgba(40,30,50,0.85),rgba(20,15,30,0.95));
+    border:2px solid rgba(255,200,80,0.35);border-radius:10px;padding:8px 12px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .wb-lb-champ.dmg  { border-color:rgba(255,100,80,0.55); }
+  .wb-lb-champ.heal { border-color:rgba(120,255,180,0.55); }
+  .wb-lb-champ.tank { border-color:rgba(120,180,255,0.55); }
+  .wb-lb-champ.ctrl { border-color:rgba(200,140,255,0.55); }
+  .wb-lb-champ-ico{ font-size:24px; flex-shrink:0; }
+  .wb-lb-champ-body{ flex:1; min-width:0; }
+  .wb-lb-champ-label{ font-size:11px;color:#aaa;letter-spacing:1px; }
+  .wb-lb-champ-name{
+    font-size:14px;font-weight:800;color:#fff;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .wb-lb-champ-val{ font-size:11px;color:#ffe066;letter-spacing:0.5px; }
+  .wb-lb-champ.empty .wb-lb-champ-name{ color:#666; font-weight:400; font-size:12px; }
+  /* Tab 切換 ──────────────────────────────────────────────────── */
+  .wb-lb-tabs{
+    display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;
+  }
+  .wb-lb-tab{
+    flex:1;min-width:60px;padding:6px 10px;
+    background:rgba(40,30,55,0.6);border:1.5px solid rgba(168,132,255,0.25);
+    border-radius:8px;color:#aaa;font-size:12px;font-weight:700;cursor:pointer;
+    transition:all 0.15s;letter-spacing:1px;
+  }
+  .wb-lb-tab:hover{ background:rgba(60,45,80,0.75); color:#fff; }
+  .wb-lb-tab.active{
+    background:linear-gradient(135deg,rgba(212,168,67,0.4),rgba(168,132,255,0.35));
+    border-color:#d4a843;color:#ffe066;
+  }
+  /* 排行榜清單(可捲動) ──────────────────────────────────────── */
+  .wb-lb-list{
+    max-height:280px;overflow-y:auto;
+    border-top:1px solid rgba(168,132,255,0.2);padding-top:8px;
+    /* 滾動條樣式 */
+    scrollbar-width:thin;scrollbar-color:rgba(168,132,255,0.5) transparent;
+  }
+  .wb-lb-list::-webkit-scrollbar{ width:6px; }
+  .wb-lb-list::-webkit-scrollbar-track{ background:transparent; }
+  .wb-lb-list::-webkit-scrollbar-thumb{
+    background:rgba(168,132,255,0.5);border-radius:3px;
+  }
+  .wb-lb-list::-webkit-scrollbar-thumb:hover{ background:rgba(168,132,255,0.8); }
+  /* 排名項目(分階級色) ──────────────────────────────────────── */
+  .wb-lb-item{
+    display:flex;align-items:center;gap:10px;padding:6px 10px;margin-bottom:4px;
+    border-radius:8px;background:rgba(30,25,45,0.5);
+    border:1px solid rgba(168,132,255,0.15);
+    transition:background 0.15s;
+  }
+  .wb-lb-item:hover{ background:rgba(50,40,70,0.7); }
+  .wb-lb-item.me{ box-shadow:0 0 0 2px rgba(120,255,180,0.5); }
+  .wb-lb-rank{
+    flex-shrink:0;width:36px;text-align:center;font-weight:900;
+    font-size:14px;letter-spacing:0.5px;
+  }
+  .wb-lb-name{
+    flex:1;min-width:0;font-weight:700;font-size:13px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .wb-lb-value{
+    flex-shrink:0;font-weight:800;font-size:13px;
+    font-family:'Share Tech Mono','Consolas',monospace;
+  }
+  /* 階級 1 — 王者金(第 1 名) */
+  .wb-lb-item.tier-1{
+    background:linear-gradient(95deg,rgba(255,200,80,0.32),rgba(255,160,40,0.15));
+    border:2px solid #ffc843;
+    box-shadow:0 0 14px rgba(255,200,80,0.4);
+  }
+  .wb-lb-item.tier-1 .wb-lb-rank{ color:#ffe066; font-size:16px; text-shadow:0 0 6px rgba(255,224,102,0.6); }
+  .wb-lb-item.tier-1 .wb-lb-name{ color:#fff8c0; font-size:14px; }
+  .wb-lb-item.tier-1 .wb-lb-value{ color:#ffe066; font-size:14px; }
+  /* 階級 2 — 精英紫(第 2-5 名) */
+  .wb-lb-item.tier-2{
+    background:linear-gradient(95deg,rgba(168,132,255,0.24),rgba(120,80,200,0.1));
+    border:1.5px solid rgba(168,132,255,0.6);
+  }
+  .wb-lb-item.tier-2 .wb-lb-rank{ color:#c8a8ff; }
+  .wb-lb-item.tier-2 .wb-lb-name{ color:#e0d0ff; }
+  .wb-lb-item.tier-2 .wb-lb-value{ color:#c8a8ff; }
+  /* 階級 3 — 優秀粉(第 6-10 名) */
+  .wb-lb-item.tier-3{
+    background:linear-gradient(95deg,rgba(255,158,181,0.22),rgba(220,120,150,0.08));
+    border:1.5px solid rgba(255,158,181,0.5);
+  }
+  .wb-lb-item.tier-3 .wb-lb-rank{ color:#ff9eb5; }
+  .wb-lb-item.tier-3 .wb-lb-name{ color:#ffd0dd; }
+  .wb-lb-item.tier-3 .wb-lb-value{ color:#ff9eb5; }
+  /* 階級 4 — 挑戰綠(第 11-20 名) */
+  .wb-lb-item.tier-4{
+    background:linear-gradient(95deg,rgba(93,202,165,0.22),rgba(70,170,130,0.08));
+    border:1.5px solid rgba(93,202,165,0.45);
+  }
+  .wb-lb-item.tier-4 .wb-lb-rank{ color:#5dcaa5; }
+  .wb-lb-item.tier-4 .wb-lb-name{ color:#b0e6cf; }
+  .wb-lb-item.tier-4 .wb-lb-value{ color:#5dcaa5; }
+  /* 「你」標記 */
+  .wb-lb-me-tag{
+    background:rgba(120,255,180,0.4);color:#1a3322;
+    padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800;
+    margin-left:6px;
+  }
+  /* 空狀態 */
+  .wb-lb-empty{
+    text-align:center;padding:24px 12px;color:#888;font-size:13px;
+    background:rgba(0,0,0,0.25);border-radius:8px;
+  }
+  /* 階級分隔線 */
+  .wb-lb-divider{
+    margin:8px 0 6px;font-size:11px;color:#777;
+    text-align:center;letter-spacing:2px;
+    position:relative;
+  }
+  .wb-lb-divider::before, .wb-lb-divider::after{
+    content:'';position:absolute;top:50%;width:30%;height:1px;
+    background:linear-gradient(to right,transparent,rgba(168,132,255,0.3),transparent);
+  }
+  .wb-lb-divider::before{ left:0; }
+  .wb-lb-divider::after{ right:0; }
+</style>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- ★ FIX 20260517(m) — 公開房 + 邀請好友 UI 樣式                            -->
 <!-- ──────────────────────────────────────────────────────────────────── -->
 <style>
@@ -1023,6 +1167,25 @@
       </div>
     </div>
 
+    <!-- ★ FIX 20260518(b) — 當前 BOSS 排行榜(顯示在 BOSS 預覽下方、操作按鈕上方) -->
+    <div class="wb-lb-box" id="wb-leaderboard-box">
+      <div class="wb-lb-title">🏆 維蘇威火山龍王 — 全伺服器排行榜</div>
+      <div class="wb-lb-sub">
+        累積本期 BOSS 戰所有場次的貢獻度。即時更新,擊敗 BOSS 後重置。
+      </div>
+      <!-- 4 個冠軍卡 -->
+      <div class="wb-lb-champ-row" id="wb-lb-champ-row"></div>
+      <!-- Tab 切換 -->
+      <div class="wb-lb-tabs">
+        <button class="wb-lb-tab active" data-tab="dmg"  onclick="_wbLbSwitchTab('dmg', this)">⚔️ 最高輸出</button>
+        <button class="wb-lb-tab"        data-tab="heal" onclick="_wbLbSwitchTab('heal', this)">💚 治療專家</button>
+        <button class="wb-lb-tab"        data-tab="tank" onclick="_wbLbSwitchTab('tank', this)">🛡️ 可靠肉盾</button>
+        <button class="wb-lb-tab"        data-tab="ctrl" onclick="_wbLbSwitchTab('ctrl', this)">🌀 控場高手</button>
+      </div>
+      <!-- 可捲動清單 -->
+      <div class="wb-lb-list" id="wb-lb-list"></div>
+    </div>
+
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
     <div class="wb-entry-btn-row">
@@ -1180,6 +1343,151 @@
       </div>
     `;
   }).join('');
+})();
+
+// ★ FIX 20260518(b) — 世界 BOSS 排行榜渲染
+// ──────────────────────────────────────────────────────────────────
+// 資料源:window._wbLeaderboard(設於 index.html setupWorldBossLeaderboard)
+// 顯示分階級:第 1 名 / 2-5 / 6-10 / 11-20 用不同顏色,可捲動。
+// ──────────────────────────────────────────────────────────────────
+(function _wbLeaderboardSetup(){
+  // 當前要顯示的排序欄位(預設 dmg)
+  window._wbLbCurTab = 'dmg';
+
+  // Escape HTML(玩家暱稱來自雲端,要防 XSS)
+  function _esc(s){
+    return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+      return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  // 千分位
+  function _fmt(n){ try{ return Number(n||0).toLocaleString(); }catch(_){ return String(n||0); } }
+  // 取得階級
+  function _tierOf(rank){
+    if(rank === 1) return 1;
+    if(rank <= 5)  return 2;
+    if(rank <= 10) return 3;
+    if(rank <= 20) return 4;
+    return 0;  // 21 名以後不顯示
+  }
+
+  // 渲染 4 個冠軍卡
+  function _renderChampions(bossId){
+    const box = document.getElementById('wb-lb-champ-row');
+    if(!box) return;
+    if(!window._wbLeaderboard){
+      box.innerHTML = '<div class="wb-lb-empty" style="grid-column:1/-1;">⏳ 連線中…</div>';
+      return;
+    }
+    const types = [
+      { key:'dmg',  label:'最高輸出', ico:'⚔️', cls:'dmg',  field:'totalDmg',      unit:'傷害' },
+      { key:'heal', label:'治療專家', ico:'💚', cls:'heal', field:'totalHeal',     unit:'治療量' },
+      { key:'tank', label:'可靠肉盾', ico:'🛡️', cls:'tank', field:'totalDmgTaken', unit:'承傷' },
+      { key:'ctrl', label:'控場高手', ico:'🌀', cls:'ctrl', field:'totalCtrl',     unit:'控場次' },
+    ];
+    box.innerHTML = types.map(t => {
+      const champ = window._wbLeaderboard.getChampion(bossId, t.key);
+      if(!champ){
+        return `
+          <div class="wb-lb-champ ${t.cls} empty">
+            <div class="wb-lb-champ-ico">${t.ico}</div>
+            <div class="wb-lb-champ-body">
+              <div class="wb-lb-champ-label">${t.label}</div>
+              <div class="wb-lb-champ-name">尚無紀錄</div>
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="wb-lb-champ ${t.cls}">
+          <div class="wb-lb-champ-ico">${t.ico}</div>
+          <div class="wb-lb-champ-body">
+            <div class="wb-lb-champ-label">${t.label}</div>
+            <div class="wb-lb-champ-name">👑 ${_esc(champ.name)}</div>
+            <div class="wb-lb-champ-val">${_fmt(champ.value)} ${t.unit}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // 渲染排行榜列表
+  function _renderList(bossId, tab){
+    const box = document.getElementById('wb-lb-list');
+    if(!box) return;
+    if(!window._wbLeaderboard){
+      box.innerHTML = '<div class="wb-lb-empty">⏳ 連線中…</div>';
+      return;
+    }
+    const sortBy = tab || window._wbLbCurTab || 'dmg';
+    const field = (sortBy === 'heal') ? 'totalHeal'
+                : (sortBy === 'tank') ? 'totalDmgTaken'
+                : (sortBy === 'ctrl') ? 'totalCtrl'
+                : 'totalDmg';
+    const unit = (sortBy === 'heal') ? '治療'
+               : (sortBy === 'tank') ? '承傷'
+               : (sortBy === 'ctrl') ? '控場次'
+               : '傷害';
+    const ranked = window._wbLeaderboard.getRanked(bossId, sortBy);
+    const valid = ranked.filter(r => (r[field] || 0) > 0).slice(0, 20);  // 只取前 20
+    if(valid.length === 0){
+      box.innerHTML = '<div class="wb-lb-empty">😴 還沒有人上榜<br><span style="font-size:11px;color:#666;">擊敗 BOSS 後成為第一個</span></div>';
+      return;
+    }
+    const myUid = window._gUserId;
+    let html = '';
+    let lastTier = 0;
+    valid.forEach((r, idx) => {
+      const rank = idx + 1;
+      const tier = _tierOf(rank);
+      // 階級分隔線(第 2 名前 / 第 6 名前 / 第 11 名前)
+      if(tier !== lastTier){
+        if(tier === 2) html += '<div class="wb-lb-divider">━━ 精英 2 - 5 名 ━━</div>';
+        else if(tier === 3) html += '<div class="wb-lb-divider">━━ 優秀 6 - 10 名 ━━</div>';
+        else if(tier === 4) html += '<div class="wb-lb-divider">━━ 挑戰 11 - 20 名 ━━</div>';
+        lastTier = tier;
+      }
+      const isMe = (r.uid === myUid);
+      const meTag = isMe ? '<span class="wb-lb-me-tag">你</span>' : '';
+      const meCls = isMe ? ' me' : '';
+      const rankStr = (rank === 1) ? '🥇' : (rank === 2) ? '🥈' : (rank === 3) ? '🥉' : ('#' + rank);
+      html += `
+        <div class="wb-lb-item tier-${tier}${meCls}">
+          <div class="wb-lb-rank">${rankStr}</div>
+          <div class="wb-lb-name">${_esc(r.name || '玩家')}${meTag}</div>
+          <div class="wb-lb-value">${_fmt(r[field] || 0)} ${unit}</div>
+        </div>`;
+    });
+    box.innerHTML = html;
+  }
+
+  // 切換 Tab
+  window._wbLbSwitchTab = function(tab, btn){
+    window._wbLbCurTab = tab;
+    document.querySelectorAll('.wb-lb-tab').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    _renderList('vesuvius_fire_dragon', tab);
+  };
+
+  // 全域刷新函式(供 wbLeaderboardSynced 事件 + 外部呼叫)
+  window._wbRenderLeaderboard = function(){
+    _renderChampions('vesuvius_fire_dragon');
+    _renderList('vesuvius_fire_dragon', window._wbLbCurTab);
+  };
+
+  // 監聽資料同步事件 → 重繪
+  document.addEventListener('wbLeaderboardSynced', function(){
+    try{ window._wbRenderLeaderboard(); }catch(_){}
+  });
+
+  // 啟動時先做一次初始渲染(若 _wbLeaderboard 還沒掛載則先顯示「連線中」)
+  // _wbLeaderboard 是在 index.html 載入時掛的,通常在這之前已就緒;若沒就緒,
+  // wbLeaderboardSynced 事件會在訂閱資料回來後觸發,自動重繪
+  try{
+    window._wbRenderLeaderboard();
+    // 保險:確保 subscribe 有跑(若 lazy load 沒跑到 index.html 那段)
+    if(window._wbLeaderboard && typeof window._wbLeaderboard.subscribe === 'function'){
+      window._wbLeaderboard.subscribe('vesuvius_fire_dragon');
+    }
+  }catch(e){ console.warn('[WB-Leaderboard UI] 初始渲染失敗', e); }
 })();
 </script>
 

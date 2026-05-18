@@ -3586,6 +3586,141 @@
       try{ subscribeWbHp(); }catch(_){}
       console.log('[WB-HpSync] ✅ 世界 BOSS 殘血同步模組已掛載');
     })();
+
+    // ══════════════════════════════════════════════════════════════════
+    // ★ FIX 20260518(b) — 世界 BOSS 排行榜模組(_wbLeaderboard)
+    //
+    // 設計:
+    // - 儲存位置:worldBossLeaderboard/{bossId} 文件,
+    //              players 欄位是 map { uid: { name, totalDmg, totalHeal,
+    //                                          totalDmgTaken, totalCtrl,
+    //                                          lastUpdated } }
+    // - 每場世界 BOSS 戰結算時,把該場 4 項統計 increment 到雲端
+    // - 入口頁訂閱 → 自動更新顯示
+    // - 4 指標對應:
+    //     最高輸出 = totalDmg     (對 BOSS 造成的傷害)
+    //     治療專家 = totalHeal    (補血 + 復活 + 上有利狀態給隊友)
+    //     可靠肉盾 = totalDmgTaken (扛下的傷害)
+    //     控場高手 = totalCtrl    (對對手施加的不利狀態次數)
+    // ══════════════════════════════════════════════════════════════════
+    (function setupWorldBossLeaderboard(){
+      const LB_DOC = (bossId) => doc(_fbDb, 'worldBossLeaderboard', bossId || 'vesuvius_fire_dragon');
+      const _subs = {};    // bossId → unsubscribe fn
+      const _cache = {};   // bossId → players map
+
+      // 即時訂閱指定 BOSS 排行榜
+      function subscribe(bossId){
+        if(!bossId) bossId = 'vesuvius_fire_dragon';
+        if(_subs[bossId]) return;  // 已訂閱
+        try{
+          _subs[bossId] = onSnapshot(LB_DOC(bossId), (snap) => {
+            try{
+              const d = snap.exists() ? (snap.data() || {}) : {};
+              _cache[bossId] = d.players || {};
+              try{ document.dispatchEvent(new CustomEvent('wbLeaderboardSynced', { detail: { bossId } })); }catch(_){}
+            }catch(eIn){
+              console.warn('[WB-Leaderboard] onSnapshot 處理失敗', eIn);
+            }
+          }, (err) => {
+            console.warn('[WB-Leaderboard] 訂閱失敗', err);
+          });
+        }catch(e){
+          console.warn('[WB-Leaderboard] subscribe 例外', e);
+        }
+      }
+
+      // 取得目前快取的排行榜,回傳已排序的陣列(依 totalDmg desc),供 UI 渲染
+      // sortBy: 'dmg' (預設) | 'heal' | 'tank' | 'ctrl'
+      function getRanked(bossId, sortBy){
+        bossId = bossId || 'vesuvius_fire_dragon';
+        const players = _cache[bossId] || {};
+        const arr = Object.keys(players).map(uid => Object.assign({ uid }, players[uid]));
+        const field = (sortBy === 'heal') ? 'totalHeal'
+                    : (sortBy === 'tank') ? 'totalDmgTaken'
+                    : (sortBy === 'ctrl') ? 'totalCtrl'
+                    : 'totalDmg';
+        arr.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+        return arr;
+      }
+
+      // 取得指定欄位的「第一名」玩家暱稱(若無人或該欄位皆 0,回 null)
+      function getChampion(bossId, sortBy){
+        const ranked = getRanked(bossId, sortBy);
+        if(!ranked.length) return null;
+        const top = ranked[0];
+        const field = (sortBy === 'heal') ? 'totalHeal'
+                    : (sortBy === 'tank') ? 'totalDmgTaken'
+                    : (sortBy === 'ctrl') ? 'totalCtrl'
+                    : 'totalDmg';
+        if(!top[field] || top[field] <= 0) return null;
+        return { uid: top.uid, name: top.name || '玩家', value: top[field] };
+      }
+
+      // 本場戰鬥結束時呼叫,把這場的 4 項貢獻累加到雲端
+      // contrib = { dmg, heal, dmgTaken, ctrl }
+      async function submitContribution(bossId, uid, name, contrib){
+        if(!bossId || !uid) return false;
+        if(!contrib || typeof contrib !== 'object') return false;
+        const safe = {
+          dmg:      Math.max(0, Math.floor(contrib.dmg      || 0)),
+          heal:     Math.max(0, Math.floor(contrib.heal     || 0)),
+          dmgTaken: Math.max(0, Math.floor(contrib.dmgTaken || 0)),
+          ctrl:     Math.max(0, Math.floor(contrib.ctrl     || 0)),
+        };
+        // 4 項都是 0 就不必寫(節省 firestore 寫入)
+        if(safe.dmg + safe.heal + safe.dmgTaken + safe.ctrl <= 0) return false;
+        try{
+          await runTransaction(_fbDb, async (tx) => {
+            const _ref = LB_DOC(bossId);
+            const _snap = await tx.get(_ref);
+            const _data = _snap.exists() ? (_snap.data() || {}) : {};
+            const _players = _data.players || {};
+            const _prev = _players[uid] || {};
+            const _next = {
+              name:         (name || _prev.name || '玩家'),
+              totalDmg:      (_prev.totalDmg      || 0) + safe.dmg,
+              totalHeal:     (_prev.totalHeal     || 0) + safe.heal,
+              totalDmgTaken: (_prev.totalDmgTaken || 0) + safe.dmgTaken,
+              totalCtrl:     (_prev.totalCtrl     || 0) + safe.ctrl,
+              lastUpdated:   Date.now(),
+            };
+            const _newPlayers = Object.assign({}, _players);
+            _newPlayers[uid] = _next;
+            tx.set(_ref, { players: _newPlayers }, { merge: true });
+          });
+          console.log('[WB-Leaderboard] submitContribution', bossId, uid, safe);
+          return true;
+        }catch(e){
+          console.error('[WB-Leaderboard] submitContribution 失敗', e);
+          return false;
+        }
+      }
+
+      // 重置指定 BOSS 排行榜(管理員開新一輪用)
+      async function reset(bossId){
+        bossId = bossId || 'vesuvius_fire_dragon';
+        try{
+          await setDoc(LB_DOC(bossId), { players: {}, resetAt: Date.now() }, { merge: false });
+          console.log('[WB-Leaderboard] reset', bossId);
+          return true;
+        }catch(e){
+          console.error('[WB-Leaderboard] reset 失敗', e);
+          return false;
+        }
+      }
+
+      // 暴露 API
+      window._wbLeaderboard = {
+        subscribe: subscribe,
+        getRanked: getRanked,
+        getChampion: getChampion,
+        submitContribution: submitContribution,
+        reset: reset,
+      };
+      // 啟動時自動訂閱當前 BOSS
+      try{ subscribe('vesuvius_fire_dragon'); }catch(_){}
+      console.log('[WB-Leaderboard] ✅ 世界 BOSS 排行榜模組已掛載');
+    })();
   })();
 
 </script>
