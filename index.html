@@ -30053,6 +30053,18 @@ function checkWin(){
         return true;
       }
       if(G.p1.every(h => !h || h.curHp <= 0)){
+        // ★ FIX 20260518 — 世界 BOSS 戰也提供 2 次接關機會(同一般 BOSS 戰)
+        //   原行為:全員陣亡 → 直接 _wbShowAdvBattleResult(false) 進結算頁
+        //   新行為:先呼叫 advCheckContinue 顯示「💀 小隊全滅!是否接關?」彈窗,
+        //         接關後 advDoContinue 會把 G.p1 全員復活(curHp=hp、清狀態),
+        //         BOSS curHp 維持現狀(玩家延續血量繼續打)。
+        //         2 次接關都用完 → advCheckContinue 回傳 false → 進結算頁。
+        //   注意:_advContinueCount 已在 _wbSoloBeginBattle / 連線開戰時重置為 0,
+        //         所以每場世界 BOSS 戰開頭都有完整 2 次接關額度。
+        if(typeof advCheckContinue === 'function' && advCheckContinue()){
+          // 接關彈窗已開啟,玩家按「接關繼續!」或「放棄」前先不要結算
+          return true;
+        }
         if(!window._wbAdvBattleEnded && typeof window._wbShowAdvBattleResult === 'function'){
           window._wbAdvBattleEnded = true;
           setTimeout(() => { try{ window._wbShowAdvBattleResult(false); }catch(e){ console.error('[wbResult]', e); } }, 200);
@@ -49456,6 +49468,20 @@ function advGiveUp() {
     if(_qo) _qo.classList.remove('show');
   }catch(e){}
   document.getElementById('adv-continue-overlay').classList.remove('show');
+  // ★ FIX 20260518 — 世界 BOSS 戰放棄 → 走世界戰結算頁 _wbShowAdvBattleResult(false)
+  //   原行為:一律 advShowBattleResult(false) → 會跑冒險獎勵 / 台灣關結算等不適用流程
+  //   新行為:偵測 _adventureStage==='worldboss' → 改走 world-boss 提供的結算頁,
+  //         結算頁會顯示「💀 全員陣亡」+ 4 項表現評比 + 雲端殘血同步(_wbShowAdvBattleResult 內)
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && typeof window._wbShowAdvBattleResult === 'function'){
+      if(!window._wbAdvBattleEnded){
+        window._wbAdvBattleEnded = true;
+        setTimeout(() => { try{ window._wbShowAdvBattleResult(false); }catch(e){ console.error('[wbResult]', e); } }, 50);
+      }
+      return;
+    }
+  }catch(_){}
   advShowBattleResult(false);
 }
 

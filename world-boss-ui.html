@@ -6157,6 +6157,8 @@
       _wbGameAlert('⚠ 主程式戰場設定失敗,請看 console');
       return;
     }
+    // ★ FIX 20260518 — 重置接關次數,讓本場世界 BOSS 戰擁有完整 2 次接關機會(同一般 BOSS 戰)
+    try{ if(typeof _advContinueCount !== 'undefined') _advContinueCount = 0; }catch(_){}
 
     // ── 世界戰專屬旗標 ────────────────────────────────────────────
     window._wbInWorldBossMode = true;
@@ -8455,6 +8457,9 @@
       _wbGameAlert('⚠ 主程式戰場設定失敗,請看 console');
       return;
     }
+    // ★ FIX 20260518 — 重置接關次數,讓本場世界 BOSS 戰擁有完整 2 次接關機會(同一般 BOSS 戰)
+    try{ if(typeof _advContinueCount !== 'undefined') _advContinueCount = 0; }catch(_){}
+    window._wbAdvBattleEnded = false;
 
     // ── 世界戰專屬旗標 ────────────────────────────────────────────
     window._wbInWorldBossMode = true;
