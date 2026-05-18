@@ -39069,6 +39069,8 @@ function _showNewHeroAnnouncement(forceShow){
         border-radius:20px;
         padding:clamp(16px,3vw,28px);
         box-shadow:0 8px 30px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08);
+        /* ★ FIX 20260518(j) — 防止在 column flex 容器(scrollArea)中被擠壓變窄 */
+        flex-shrink:0;
       }
       .new-hero-portrait-wrap{
         position:relative;
