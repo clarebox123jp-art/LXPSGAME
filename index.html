@@ -3476,6 +3476,114 @@
       try{ subscribeWbControl(); }catch(_){}
       console.log('[WBNet-Control] ✅ 休戰期控制模組已掛載');
     })();
+
+    // ══════════════════════════════════════════════════════════════════
+    // ★ FIX 20260518 — 世界 BOSS 殘血同步模組(_wbHpSync)
+    //
+    // 設計:
+    // - 儲存位置:stats/global.worldBossHp.<bossId> (number, 預設 = maxHp)
+    // - 全伺服器共享:任何玩家造成的傷害都會即時扣到雲端 HP,所有人看到的進度一致
+    // - 即時訂閱:onSnapshot 把雲端 HP 同步到 window._cachedGlobalStats.worldBossHp,
+    //            world-boss.js 的 _wbSyncStageHpBar 會自動讀這份快取重繪 HP 條
+    // - 自動休戰:若有人擊敗 BOSS(HP 扣到 0),寫入端會順帶把 worldBossControl/main
+    //            的 ceasefire 設成 true(透過 _wbControl.set,需要管理員權限)
+    //   ⚠ 受 Firestore rules 限制 — 一般玩家可能寫不進 worldBossControl,
+    //     此情況下會留下 HP=0 但 ceasefire 仍 false,改由管理員手動切休戰即可
+    // ══════════════════════════════════════════════════════════════════
+    (function setupWorldBossHpSync(){
+      let _hpUnsub = null;
+      const STATS_DOC = () => doc(_fbDb, 'stats', 'global');
+
+      // 即時訂閱:把雲端 worldBossHp 同步到 window._cachedGlobalStats
+      function subscribeWbHp(){
+        if(_hpUnsub) return;
+        try{
+          _hpUnsub = onSnapshot(STATS_DOC(), (snap) => {
+            try{
+              const d = snap.exists() ? (snap.data() || {}) : {};
+              if(!window._cachedGlobalStats) window._cachedGlobalStats = {};
+              window._cachedGlobalStats.worldBossHp = d.worldBossHp || {};
+              // 連同 wbBlessing 等其他欄位也順手快取(world-boss.js 第 201/933 行有讀)
+              if(d.wbBlessing) window._cachedGlobalStats.wbBlessing = d.wbBlessing;
+              // 廣播事件給 UI 即時刷新 HP 條
+              try{ document.dispatchEvent(new CustomEvent('wbHpSynced')); }catch(_){}
+              // 主動觸發首頁 HP 條重繪(若 world-boss.js 已掛載)
+              try{ if(typeof window._wbSyncStageHpBar === 'function') window._wbSyncStageHpBar(); }catch(_){}
+            }catch(eIn){
+              console.warn('[WB-HpSync] onSnapshot 處理失敗', eIn);
+            }
+          }, (err) => {
+            console.warn('[WB-HpSync] 訂閱失敗', err);
+          });
+        }catch(e){
+          console.warn('[WB-HpSync] subscribeWbHp 例外', e);
+        }
+      }
+
+      // 讀取指定 BOSS 的當前 HP(回傳 null 表示尚未有殘血紀錄 = 滿血)
+      function getCurrentHp(bossId){
+        try{
+          const gs = window._cachedGlobalStats;
+          if(gs && gs.worldBossHp && typeof gs.worldBossHp[bossId] === 'number'){
+            return gs.worldBossHp[bossId];
+          }
+        }catch(_){}
+        return null;
+      }
+
+      // 扣血:把當前 HP 減 deltaDmg(無論之前是多少,以 max 為上限、0 為下限)
+      // bossId: 字串,deltaDmg: 正數
+      // maxHp: 用於初始化(若雲端尚無此 boss 紀錄,先以 maxHp 為基準扣)
+      async function dealDamage(bossId, deltaDmg, maxHp){
+        if(!bossId || typeof deltaDmg !== 'number' || deltaDmg <= 0) return null;
+        try{
+          // 用 transaction 確保「讀取-扣血-寫入」原子化(避免兩人同時扣血其中一人寫覆蓋)
+          const result = await runTransaction(_fbDb, async (tx) => {
+            const _ref = STATS_DOC();
+            const _snap = await tx.get(_ref);
+            const _data = _snap.exists() ? (_snap.data() || {}) : {};
+            const _hpMap = _data.worldBossHp || {};
+            const _cur = (typeof _hpMap[bossId] === 'number') ? _hpMap[bossId] : (maxHp || 0);
+            const _next = Math.max(0, _cur - deltaDmg);
+            const _newHpMap = Object.assign({}, _hpMap);
+            _newHpMap[bossId] = _next;
+            tx.set(_ref, { worldBossHp: _newHpMap }, { merge: true });
+            return { prev: _cur, next: _next, killed: (_next === 0 && _cur > 0) };
+          });
+          console.log('[WB-HpSync] dealDamage', bossId, deltaDmg, '→', result);
+          return result;
+        }catch(e){
+          console.error('[WB-HpSync] dealDamage 失敗', e);
+          return null;
+        }
+      }
+
+      // 重置 BOSS HP(管理員用,例如新一輪開始)
+      async function resetHp(bossId, newHp){
+        try{
+          const _hpMap = (window._cachedGlobalStats && window._cachedGlobalStats.worldBossHp) || {};
+          const _new = Object.assign({}, _hpMap);
+          if(typeof newHp === 'number') _new[bossId] = newHp;
+          else delete _new[bossId];  // 不指定 newHp → 直接刪除欄位,讓 UI 顯示滿血
+          await setDoc(STATS_DOC(), { worldBossHp: _new }, { merge: true });
+          console.log('[WB-HpSync] resetHp', bossId, newHp);
+          return true;
+        }catch(e){
+          console.error('[WB-HpSync] resetHp 失敗', e);
+          return false;
+        }
+      }
+
+      // 暴露 API
+      window._wbHpSync = {
+        subscribe: subscribeWbHp,
+        getCurrentHp: getCurrentHp,
+        dealDamage: dealDamage,
+        resetHp: resetHp,
+      };
+      try{ subscribeWbHp(); }catch(_){}
+      console.log('[WB-HpSync] ✅ 世界 BOSS 殘血同步模組已掛載');
+    })();
   })();
 
 </script>
@@ -36468,7 +36576,24 @@ function _applyTaiwanTreasureToHero(h){
       return;
     }
   } catch(_) {}
-  const equipped = _getHeroEquippedTreasures(h.name);
+  // ★ FIX 20260518 — 世界 BOSS 代打槽用 h._wbTreasureIds 覆寫:
+  //   房主在隊伍確認頁為代打槽選的至寶會塞進 h._wbTreasureIds,
+  //   此時不從本地裝備資料(_getHeroEquippedTreasures)讀「該英雄目前裝什麼」,
+  //   而是組出指定 id 的 equipped 列表。等級 / 投資點 仍從 _taiwanTreasureData
+  //   讀(房主本地擁有該至寶的養成資料),確保戰鬥威力跟房主自己用時一致。
+  let equipped;
+  if(Array.isArray(h._wbTreasureIds) && h._wbTreasureIds.length){
+    equipped = [];
+    h._wbTreasureIds.forEach(tid => {
+      if(!tid) return;
+      const def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[tid]) || null;
+      const record = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData[tid]) || { lv: 1 };
+      if(def) equipped.push({ id: tid, def: def, record: record });
+    });
+    try{ console.log('[至寶套用] '+h.name+' 用 _wbTreasureIds 覆寫,共 '+equipped.length+' 件'); }catch(_){}
+  }else{
+    equipped = _getHeroEquippedTreasures(h.name);
+  }
   if(!equipped || !equipped.length){
     h._treasureEff = h._treasureEff || {};
     try{ console.log('[至寶套用] '+h.name+' 無裝備至寶 (equipped='+JSON.stringify(equipped)+')'); }catch(_){}
@@ -40022,6 +40147,19 @@ window._wbSetupAdvForBattle = function(opts){
     // 設定 G.p1 / G.p2
     if(opts.p1 && Array.isArray(opts.p1)) G.p1 = opts.p1;
     if(opts.p2 && Array.isArray(opts.p2)) G.p2 = opts.p2;
+    // ★ FIX 20260518 — 世界 BOSS 戰也要套用至寶:
+    //   原本 _wbSetupAdvForBattle 沒呼叫 _applyTaiwanTreasureToHero,所以世界 BOSS 戰
+    //   的房主英雄會用基礎值打,且代打 NPC 也吃不到房主在 UI 上為其指定的至寶。
+    //   - 房主自己的英雄(h._wbIsHostNpc=false):走原邏輯 _getHeroEquippedTreasures(h.name)
+    //   - 代打 NPC(h._wbTreasureIds 有值):走我們新加的 _wbTreasureIds 分支,
+    //     吃房主在隊伍確認頁為該槽選的至寶。
+    try{
+      if(typeof _applyTaiwanTreasureToHero === 'function' && Array.isArray(G.p1)){
+        G.p1.forEach(h => {
+          try{ _applyTaiwanTreasureToHero(h); }catch(e){ console.warn('[WB 至寶套用] '+(h && h.name)+' 失敗', e); }
+        });
+      }
+    }catch(e){ console.warn('[WB 至寶套用] 整批失敗', e); }
     G.round = 1;
     G.turn = 0;
     // ★ FIX 20260517(bb) — 初始化 currentActorIdx 跟 turnOrder,

@@ -846,6 +846,21 @@
         message: message,
       });
       console.log('[WB-Admin] 已寫入新狀態', newState);
+      // ★ FIX 20260518 — 從休戰切到開放(新一輪開戰)時,順手把雲端 BOSS HP 重置為滿血
+      //   讓全伺服器看到的 BOSS HP 條回到 100%,進入新一輪挑戰
+      if(st.ceasefire === true && newCeasefire === false){
+        try{
+          if(window._wbHpSync && typeof window._wbHpSync.resetHp === 'function'){
+            // 從 WORLD_BOSS_LINEUP 拿當前 BOSS 滿血;預設維蘇威 500000
+            const _lineup = window.WORLD_BOSS_LINEUP || [];
+            const _curBoss = _lineup.find(b => b && b.id === 'vesuvius_fire_dragon') || _lineup[0];
+            const _maxHp = (_curBoss && _curBoss.maxHp) || 500000;
+            const _bossId = (_curBoss && _curBoss.id) || 'vesuvius_fire_dragon';
+            await window._wbHpSync.resetHp(_bossId, _maxHp);
+            console.log('[WB-Admin] 開放新一輪 → BOSS HP 重置為滿血', _bossId, _maxHp);
+          }
+        }catch(eR){ console.warn('[WB-Admin] 重置 BOSS HP 失敗', eR); }
+      }
       // Firestore onSnapshot 會自動觸發 UI 刷新
       try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(_){}
       const fb = document.getElementById('wb-admin-result-feedback');
@@ -2372,6 +2387,49 @@
         isNewRecord = window._wbSaveSoloBest(myDmg, heroes, elapsed, win);
       }
     }catch(_){}
+
+    // ★ FIX 20260518 — 全球 BOSS 殘血同步:本場全隊對 BOSS 造成的總傷害扣到雲端
+    //   來源:_Gr.p2[0].hp - _Gr.p2[0].curHp 就是本場 BOSS 實際被打掉的血量
+    //         (若 win=true,curHp<=0,等於把剩下的血全打光)
+    //   接 _wbHpSync.dealDamage 扣雲端 stats/global.worldBossHp.<bossId>
+    //   若擊敗(killed=true) → 順帶觸發休戰(寫 worldBossControl/main.ceasefire=true)
+    try{
+      const _wbBoss = (_Gr && _Gr.p2 && _Gr.p2[0]) || null;
+      if(_wbBoss && typeof _wbBoss.hp === 'number' && typeof _wbBoss.curHp === 'number'
+         && window._wbHpSync && typeof window._wbHpSync.dealDamage === 'function'){
+        // 對應的 bossId 從 WORLD_BOSS_LINEUP 反查(用名稱比對),保險起見 fallback 'vesuvius_fire_dragon'
+        let bossId = 'vesuvius_fire_dragon';
+        try{
+          const _lineup = window.WORLD_BOSS_LINEUP || [];
+          const _m = _lineup.find(b => b && b.name === _wbBoss.name);
+          if(_m && _m.id) bossId = _m.id;
+        }catch(_){}
+        // 本場實際造成的傷害量 = BOSS 起始 HP(_wbBoss.hp) − 戰後剩餘 HP(_wbBoss.curHp)
+        // 注意:_wbBoss.hp 在戰鬥開始時已設為「雲端殘血」(下一步會做),
+        //       所以扣血量就是「真實本場貢獻」,不會把同一段血扣兩次
+        const _dealt = Math.max(0, Math.floor(_wbBoss.hp - _wbBoss.curHp));
+        if(_dealt > 0){
+          window._wbHpSync.dealDamage(bossId, _dealt, _wbBoss.hp).then(res => {
+            if(res && res.killed){
+              console.log('[WB-HpSync] BOSS', bossId, '被擊敗 → 嘗試觸發休戰');
+              // 嘗試自動切休戰(需要管理員權限,失敗則只留 HP=0 等管理員手動切)
+              try{
+                if(window._wbControl && typeof window._wbControl.set === 'function'
+                   && typeof window._isAdminUser === 'function' && window._isAdminUser()){
+                  window._wbControl.set({
+                    ceasefire: true,
+                    nextOpenTime: '',
+                    message: '🏆 BOSS 已被全伺服器擊敗!感謝參戰勇者,下次開戰時間即將公告。',
+                  }).catch(e => console.warn('[WB] 自動休戰失敗', e));
+                }
+              }catch(_){}
+            }
+          }).catch(e => console.warn('[WB-HpSync] dealDamage 失敗', e));
+        }
+      }
+    }catch(eHp){
+      console.warn('[WB-HpSync] 結算扣血失敗', eHp);
+    }
 
     // 結束戰鬥:離開冒險模式 + 隱藏戰鬥畫面
     try{

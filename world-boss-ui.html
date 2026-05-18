@@ -6130,6 +6130,22 @@
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
+    // ★ FIX 20260518 — 全球殘血同步(連線房主模式):同單人模式
+    try{
+      const _bossId = 'vesuvius_fire_dragon';
+      if(window._wbHpSync && typeof window._wbHpSync.getCurrentHp === 'function'){
+        const _remoteHp = window._wbHpSync.getCurrentHp(_bossId);
+        if(typeof _remoteHp === 'number' && _remoteHp >= 0 && _remoteHp < boss.hp){
+          console.log('[WB-Host] BOSS 殘血同步:雲端 HP=' + _remoteHp + ' / 滿血=' + boss.hp);
+          boss.hp = _remoteHp;
+          boss.curHp = _remoteHp;
+          if(_remoteHp === 0){
+            _wbGameAlert('🏆 維蘇威火山龍王已被全伺服器擊敗,目前進入休戰期!');
+            return;
+          }
+        }
+      }
+    }catch(eRem){ console.warn('[WB-Host] 讀雲端殘血失敗,沿用滿血', eRem); }
 
     // ★ v6 Phase 2 — 透過主程式對外入口設定 _adventureStage 與 G ─────────
     const _setupOk = window._wbSetupAdvForBattle({
@@ -8403,6 +8419,25 @@
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
+    // ★ FIX 20260518 — 全球殘血同步:從 _wbHpSync 讀雲端殘血,當作 BOSS 本場起始 HP
+    //   若雲端尚未有此 BOSS 紀錄(getCurrentHp 回 null)→ 沿用 newHero 預設滿血
+    //   結算時 _wbShowAdvBattleResult 會用 (boss.hp - boss.curHp) 計算「本場貢獻」,
+    //   所以這裡同步調整 hp 與 curHp 不會把同一段血扣兩次。
+    try{
+      const _bossId = 'vesuvius_fire_dragon';
+      if(window._wbHpSync && typeof window._wbHpSync.getCurrentHp === 'function'){
+        const _remoteHp = window._wbHpSync.getCurrentHp(_bossId);
+        if(typeof _remoteHp === 'number' && _remoteHp >= 0 && _remoteHp < boss.hp){
+          console.log('[WB-Solo] BOSS 殘血同步:雲端 HP=' + _remoteHp + ' / 滿血=' + boss.hp);
+          boss.hp = _remoteHp;
+          boss.curHp = _remoteHp;
+          if(_remoteHp === 0){
+            _wbGameAlert('🏆 維蘇威火山龍王已被全伺服器擊敗,目前進入休戰期!');
+            return;
+          }
+        }
+      }
+    }catch(eRem){ console.warn('[WB-Solo] 讀雲端殘血失敗,沿用滿血', eRem); }
 
     // ── 透過主程式對外入口設定 _adventureStage 與 G ────────────────
     // (let _adventureStage 無法從外部直接寫,必須走 window._wbSetupAdvForBattle)
@@ -9234,12 +9269,11 @@
             box-shadow:0 4px 16px rgba(93,202,165,0.4);font-family:inherit;">
             🔄 再來一場
           </button>
-          <button onclick="document.getElementById('wb-solo-practice-result').remove();
-            if(typeof location!=='undefined') location.reload();"
+          <button onclick="document.getElementById('wb-solo-practice-result').remove();_wbBackToStageSelect();"
             style="background:rgba(60,60,80,0.6);color:#fff;
             border:2.5px solid rgba(150,150,180,0.6);border-radius:14px;padding:16px 36px;
             font-size:24px;font-weight:800;cursor:pointer;letter-spacing:2px;font-family:inherit;">
-            🏠 返回首頁
+            🏠 返回關卡選擇
           </button>
         </div>
       </div>
@@ -9261,6 +9295,63 @@
     }catch(_){}
   }
   window._wbShowSoloPracticeResult = _wbShowSoloPracticeResult;
+
+  // ★ FIX 20260518 — 結算頁「返回關卡選擇」按鈕用的清理 + 跳轉函式
+  //   原行為:location.reload() 整頁重整 → 跳回遊戲首頁封面(不是用戶想要的)
+  //   新行為:清掉世界戰所有 overlay / 旗標 / BGM 切換到首頁音樂,然後打開冒險選關頁
+  //          → 玩家剛打完維蘇威,直接回關卡選擇頁,可以再按一次入口繼續挑戰或選別關
+  window._wbBackToStageSelect = function(){
+    // 清世界戰 overlay 與旗標
+    try{
+      const _overlay = document.getElementById('wb-lobby-overlay');
+      if(_overlay){
+        _overlay.style.display = 'none';
+        _overlay.classList.remove('wb-in-battle');
+        _overlay.style.background = '';
+      }
+      const _battleArea = document.getElementById('wb-battle-area');
+      if(_battleArea) _battleArea.classList.remove('show');
+      const _emojiBar = document.getElementById('wb-emoji-bar-real');
+      if(_emojiBar) _emojiBar.classList.remove('wb-eb-show');
+      const _wbResultOv = document.getElementById('wb-solo-practice-result');
+      if(_wbResultOv) _wbResultOv.remove();
+      const _openingQuiz = document.getElementById('wb-boss-opening-quiz');
+      if(_openingQuiz) _openingQuiz.remove();
+      const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+      if(_dmgBar) _dmgBar.remove();
+    }catch(_){}
+    window._wbInWorldBossMode = false;
+    window._wbSoloPracticeMode = false;
+    window._wbConnectedHostMode = false;
+    window._wbConnectedClientMode = false;
+    // 走主程式對外清理入口(清 let _adventureStage 等)
+    try{
+      if(typeof window._wbCleanupAdvAfterBattle === 'function'){
+        window._wbCleanupAdvAfterBattle();
+      }
+    }catch(_){}
+    // 切回首頁/關卡音樂
+    try{
+      if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-home', 600);
+      else if(typeof bgmStop === 'function') bgmStop();
+    }catch(_){}
+    // 打開冒險關卡選擇頁
+    try{
+      if(typeof window.openAdventureOverlay === 'function'){
+        window.openAdventureOverlay();
+      }else if(typeof openAdventureOverlay === 'function'){
+        openAdventureOverlay();
+      }else{
+        // fallback:看看冒險覆蓋層在不在 DOM,直接顯示
+        const _ov = document.getElementById('adventure-overlay');
+        if(_ov) _ov.style.display = 'flex';
+        else if(typeof location !== 'undefined') location.reload();
+      }
+    }catch(e){
+      console.warn('[WB] _wbBackToStageSelect 失敗,fallback reload', e);
+      if(typeof location !== 'undefined') location.reload();
+    }
+  };
 
 
   // AI 替補自動行動 (每 1.2s 自動進行)
