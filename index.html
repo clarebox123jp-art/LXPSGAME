@@ -35297,11 +35297,38 @@ var _stuckCheckTimer = setInterval(function(){
 document.addEventListener('visibilitychange', function(){
   const bgmEl = _curBgm ? document.getElementById(_curBgm) : null;
   if(document.hidden){
-    // ★ 切到後台立即存檔（iPad 可能被 iOS 殺掉，這是最後存檔機會）
+    // ★ FIX 20260518 — iPad 跳出/被殺問題改善:hidden 時立即同步存兩份本地快照
+    //   原本只呼叫 gameCloudSave(async),iPad 切 App 時 JS event loop 可能還沒跑到
+    //   雲端寫入就被 iOS 凍結 → 雲端那份來不及寫,玩家回來就遺失進度。
+    //   新增:hidden 瞬間先「同步」存兩份 localStorage:
+    //     (1) adv_battle_snap — 完整戰鬥狀態,給 _advRestoreBattleState 用
+    //     (2) lxps_<uid>_progress — 玩家整體進度,給 gameCloudLoad fallback 用
+    //   這兩個都是 localStorage.setItem 同步呼叫,iOS 凍 timer 也來得及寫完。
+    //   雲端的 gameCloudSave 照常呼叫,有寫到雲端最好(跨裝置接續),沒寫到也有 localStorage 兜底。
+    try{
+      // (1) 本地戰鬥快照(只在戰鬥進行中存)
+      if(typeof _adventureMode !== 'undefined' && _adventureMode
+         && typeof G !== 'undefined' && G && G.p1 && G.p2
+         && !window._advBattleResultShown
+         && typeof _saveBattleRoundSnapshot === 'function'){
+        // 強制更新 _lastBattleSnapRound,讓 _saveBattleRoundSnapshot 一定寫
+        try{ if(G) G._lastBattleSnapRound = -1; }catch(_){}
+        _saveBattleRoundSnapshot();
+      }
+    }catch(eS1){ console.warn('[visibility hidden] 戰鬥快照失敗', eS1); }
+    try{
+      // (2) 玩家進度本地備份(以 _buildSafeData 生成)
+      if(typeof _buildSafeData === 'function'){
+        const _safeData = _buildSafeData();
+        const _localKey = window._gUserId ? 'lxps_' + _gUserId + '_progress' : 'lxps_guest_progress';
+        localStorage.setItem(_localKey, JSON.stringify(_safeData));
+      }
+    }catch(eS2){ console.warn('[visibility hidden] 進度備份失敗', eS2); }
+    // ★ 切到後台再嘗試雲端存檔(async,可能來不及但盡量)
     try{ gameCloudSave(); } catch(e){}
-    // 切到後台：暫停 BGM，若冒險 BOSS 戰中先暫停遊戲計時
+    // 切到後台:暫停 BGM,若冒險 BOSS 戰中先暫停遊戲計時
     if(bgmEl) try{ bgmEl.pause(); }catch(e){}
-    // ★ 暫停回合計時器，避免 iPad 後台時計時耗盡
+    // ★ 暫停回合計時器,避免 iPad 後台時計時耗盡
     if(typeof _adventureMode !== 'undefined' && _adventureMode){
       if(typeof _turnTimerHandle !== 'undefined' && _turnTimerHandle){
         clearInterval(_turnTimerHandle); _turnTimerHandle = null; _turnTimerPaused = true;
@@ -35438,6 +35465,21 @@ document.addEventListener('visibilitychange', function(){
           }
         }
       }catch(_eOuter){ console.warn('[iPad 回前台 nudge] 整體異常', _eOuter); }
+      // ★ FIX 20260518 — 回前台無論如何都重啟 deadlock watchdog
+      //   iOS Safari 把背景分頁的 setTimeout 完全凍結,_deadlockWatchdog 在背景時
+      //   被凍結,回前台後 timer 可能不會正常 fire(時序錯亂)→ 玩家若真的卡住,
+      //   等多久都不會看到「卡死自救」警報亮起。
+      //   修補:回前台後主動清掉舊 watchdog 並重啟,以「回前台時刻」為新基準計時。
+      //   不影響正常情況:若沒卡死,watchdog 會被下一個 startTurn 自然重啟覆蓋。
+      try{
+        if(typeof _clearDeadlockWatchdog === 'function') _clearDeadlockWatchdog();
+        if(typeof _startDeadlockWatchdog === 'function'
+           && typeof _adventureMode !== 'undefined' && _adventureMode
+           && typeof G !== 'undefined' && G && G.activeChar){
+          _startDeadlockWatchdog();
+          console.log('[iPad 回前台 nudge] 已重啟 deadlock watchdog');
+        }
+      }catch(_eWd){ console.warn('[iPad 回前台 nudge] 重啟 watchdog 失敗', _eWd); }
     }, 800);
   }
 });
@@ -54929,23 +54971,48 @@ function _showDeadlockRescueButton(){
 
 function _hideDeadlockRescueButton(){
   const btn = document.getElementById('adv-deadlock-rescue-btn');
-  // ★ v1.0.20260513.6490 — 從「戰鬥中保留可見的靜默模式」改成「完全隱藏」
-  //   原本 v3880/v4070:戰鬥中按鈕保留可見、灰紅色,讓玩家任何時候都能主動點擊
-  //   問題:玩家把它當成「可以隨時跳過 BOSS 行動」的按鈕,亮起來時更會誤按
-  //   現在:只有 watchdog 真的偵測到卡死才會顯示(由 _showDeadlockRescueButton 控制),
-  //         其他時候一律隱藏,讓戰鬥畫面乾淨
-  //   玩家主動求救能力 → 由 #adv-bug-report-btn(小 BUG 回報按鈕)取代,
-  //         只能開回報視窗,不再提供強制跳過
-  // ★ v1.0.20260513.6490 — 順便清掉「BOSS 恢復自動收」的 interval(若有)
+  // ★ FIX 20260518 — iPad 跳出/卡死救援改善:戰鬥中改為「靜默可見模式」
+  //   原本 v6490 改成「真卡死才出現」,但 iPad 上有個關鍵 bug:
+  //   - iOS Safari 把背景分頁的 setTimeout 完全凍結,玩家切到 LINE/字典後回來,
+  //     _deadlockWatchdog 的 setTimeout 可能不會正常 fire(時序錯亂),
+  //   - 玩家明明覺得「卡死了」,但畫面沒有按鈕可以脫困,只能重整或關 App
+  //   - 結果就是「打到一半莫名其妙進不去戰鬥、又沒按鈕可救」,體驗極差
+  //
+  //   修正:戰鬥中(_adventureMode + G.p1 存在)→ 顯示「靜默小按鈕」(低調紅色、不閃爍、
+  //         opacity 0.75),玩家自己判斷要不要按。真卡死時(_showDeadlockRescueButton)
+  //         仍會切到「警報模式」(大顆閃爍 + toast 提示)。
+  //         戰鬥外(結算/首頁/選關)→ 完全隱藏。
+  //
+  //   v6490 拿掉的理由是「玩家把它當作跳過 BOSS 按鈕誤按」,但相較於 iPad 體驗
+  //   完全卡死,給玩家明確的脫困入口更重要。誤按代價只是「換英雄重來/脫離戰鬥」,
+  //   不是無法挽回的傷害;真正的「跳過 BOSS 行動」入口仍是不存在的。
   try{
     if(window._deadlockRescueAutoHideInterval){
       clearInterval(window._deadlockRescueAutoHideInterval);
       window._deadlockRescueAutoHideInterval = null;
     }
   }catch(_){}
-  if(btn){
+  if(!btn) return;
+  // 戰鬥中 → 靜默可見;戰鬥外 → 完全隱藏
+  let _inBattle = false;
+  try{
+    _inBattle = !!(typeof _adventureMode !== 'undefined' && _adventureMode
+                && typeof G !== 'undefined' && G && Array.isArray(G.p1) && G.p1.length > 0
+                && !window._advBattleResultShown);
+  }catch(_){}
+  if(_inBattle){
+    btn.style.display = 'block';
+    btn.style.animation = 'none';
+    btn.style.background = 'rgba(60,20,20,0.55)';
+    btn.style.borderColor = 'rgba(255,100,100,0.45)';
+    btn.style.color = 'rgba(255,160,160,0.85)';
+    btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+    btn.style.opacity = '0.75';
+    btn.dataset.state = 'silent';
+  }else{
     btn.style.display = 'none';
     btn.style.animation = 'none';
+    btn.style.opacity = '';
     btn.dataset.state = 'hidden';
   }
 }
