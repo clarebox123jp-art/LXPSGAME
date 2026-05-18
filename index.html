@@ -13397,16 +13397,26 @@ function buildSrhBlock(h){
           title="取消替換，恢復原技能">↩ 取消替換</button>`
       : '';
     // ★ 建議替換分析
+    // ★ FIX 20260518(e) — 補完所有「主動施放、可救隊友、能直接恢復 HP」的治療技能
+    //   新增 14 個(記憶傳承 v17 階段一結論):日月同輝/餘音繞樑/邏輯優化/神籤/科技能量/星手保護/
+    //   冥佑/死者轉生/布奶的保護/水精靈合奏/鈴音淨化/下課時光/舔舔治療/水盤守護
+    //   另補 4 個(原本第二/三處已有但這裡漏的):蘆薈治療/黏液噴濺/花粉迷眼/催眠之歌
     const _HEAL_NS = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石','持續恢復',
       '神之賜福','慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療','復活術',
-      '天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶','雙小提琴協奏曲','BUG修復']);
+      '天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶','雙小提琴協奏曲','BUG修復',
+      '蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌',
+      '日月同輝','餘音繞樑','邏輯優化','神籤','科技能量','星手保護',
+      '冥佑','死者轉生','布奶的保護','水精靈合奏','鈴音淨化','下課時光',
+      '舔舔治療','水盤守護']);
     const _CTRL_NS = new Set(['虛弱咒','禁書封鎖','狂亂之歌','劇毒','炫目神光','強勢對決',
       '群體挑釁','增強術','能力轉換','元素增幅']);
-    // 計算英雄目前治療技能數（含爆發）
+    // ★ FIX 20260518(e) — 依用戶決定:治療技能數只算 s1/s2,不算爆發(BURST_DB)
+    //   原邏輯:單英雄治療技能數會把爆發算進去,讓「已有治療爆發的英雄」不會被建議補治療
+    //   新邏輯:統一只算 s1/s2,跟隊伍治療總數(_countTeamHealSkills)的算法一致
+    // 計算英雄目前治療技能數（只算 s1/s2,不含爆發）
     let _healCnt = 0;
     if(_HEAL_NS.has(h.s1.n)) _healCnt++;
     if(_HEAL_NS.has(h.s2.n)) _healCnt++;
-    if(typeof BURST_DB!=='undefined'&&BURST_DB[h.name]&&_HEAL_NS.has(BURST_DB[h.name].n)) _healCnt++;
     const _needsHeal = _healCnt < 2 && !isRep;
     const _isCtrl = _CTRL_NS.has(sk.n) && !isRep;
     const _isHealReplace = _needsHeal && !_HEAL_NS.has(sk.n) && !sk.p && !isRep;
@@ -13681,10 +13691,16 @@ function goBackToElemPick(){
 }
 // ★ 計算隊伍治療技能總數（含已替換的）
 function _countTeamHealSkills() {
+  // ★ FIX 20260518(e) — 補完所有「主動施放、可救隊友、能直接恢復 HP」的治療技能
+  //   新增 14 個(記憶傳承 v17 階段一結論):日月同輝/餘音繞樑/邏輯優化/神籤/科技能量/星手保護/
+  //   冥佑/死者轉生/布奶的保護/水精靈合奏/鈴音淨化/下課時光/舔舔治療/水盤守護
   const _HEAL_NS = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石',
     '持續恢復','神之賜福','慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療',
     '復活術','天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶',
-    '雙小提琴協奏曲','BUG修復','蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌']);
+    '雙小提琴協奏曲','BUG修復','蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌',
+    '日月同輝','餘音繞樑','邏輯優化','神籤','科技能量','星手保護',
+    '冥佑','死者轉生','布奶的保護','水精靈合奏','鈴音淨化','下課時光',
+    '舔舔治療','水盤守護']);
   let count = 0;
   G.p1.forEach(h => {
     const rep = _skillReplaceMap[h.pos];
@@ -13699,10 +13715,16 @@ function _countTeamHealSkills() {
 // ★ 治療技能不足警告彈窗
 function _showHealWarning(onContinue) {
   // 取得池中的治療技能
+  // ★ FIX 20260518(e) — 補完所有「主動施放、可救隊友、能直接恢復 HP」的治療技能
+  //   新增 14 個(記憶傳承 v17 階段一結論):日月同輝/餘音繞樑/邏輯優化/神籤/科技能量/星手保護/
+  //   冥佑/死者轉生/布奶的保護/水精靈合奏/鈴音淨化/下課時光/舔舔治療/水盤守護
   const _HEAL_NS = new Set(['救贖神光','治癒之風','神聖鎚擊','天堂樂章','賢者之石',
     '持續恢復','神之賜福','慈悲之雨','黃昏詩歌','迷心醫術','治療之光','全體治療',
     '復活術','天籟之音','流浪者之歌','一壺鐵觀音','一壺包種茶',
-    '雙小提琴協奏曲','BUG修復','蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌']);
+    '雙小提琴協奏曲','BUG修復','蘆薈治療','黏液噴濺','花粉迷眼','催眠之歌',
+    '日月同輝','餘音繞樑','邏輯優化','神籤','科技能量','星手保護',
+    '冥佑','死者轉生','布奶的保護','水精靈合奏','鈴音淨化','下課時光',
+    '舔舔治療','水盤守護']);
   const allUsedNames = new Set();
   G.p1.forEach(h=>{
     const rep = _skillReplaceMap[h.pos];
@@ -37520,7 +37542,97 @@ function _equipTaiwanTreasure(treasureId, heroName){
   try{ if(typeof window._checkTaiwanTreasureEquipMedals === 'function') window._checkTaiwanTreasureEquipMedals(); }catch(_){}
   return true;
 }
+
+// ════════════════════════════════════════════════════════════════════
+// ★ FIX 20260518(f) — 精確指定槽位裝備至寶(供英雄圖鑑「點槽位 → modal」用)
+// ────────────────────────────────────────────────────────────────────
+// 問題:舊版 _equipTaiwanTreasure 沒有「槽位」概念,
+//      第二件至寶如果跟第一件同 slot 會擠掉第一件;
+//      如果不同 slot 則隨機落在第一格或第二格(以 Object.keys 順序為準)。
+//      玩家「換掉第二格」實際變成「換掉第一格」,違反直覺。
+// 新行為:slotIdx=0/1 精確指定要放到「主裝備」或「副裝備」,
+//        該槽位原本的至寶會被卸下,其他槽位不動。
+//        同一件至寶在另一槽 → 換槽。
+// ════════════════════════════════════════════════════════════════════
+function _equipTaiwanTreasureToSlot(treasureId, heroName, slotIdx){
+  const def = TAIWAN_TREASURES[treasureId];
+  const rec = _taiwanTreasureData[treasureId];
+  if(!def || !rec) return false;
+  const _slot2Unlocked = (typeof _isHeroSlot2Unlocked === 'function') && _isHeroSlot2Unlocked(heroName);
+  const _maxSlots = _slot2Unlocked ? 2 : 1;
+  const _targetSlot = Math.max(0, Math.min(slotIdx|0, _maxSlots - 1));
+
+  // 1. 卸下「目標槽位上已裝的其他至寶」
+  Object.keys(_taiwanTreasureData).forEach(otherId => {
+    if(otherId === treasureId) return;
+    const otherRec = _taiwanTreasureData[otherId];
+    if(otherRec && otherRec.equippedTo === heroName
+       && (typeof otherRec.equippedSlot === 'number')
+       && otherRec.equippedSlot === _targetSlot){
+      otherRec.equippedTo = null;
+      otherRec.equippedSlot = null;
+    }
+  });
+
+  // 2. 修正:如果該英雄目前還有「沒寫 equippedSlot」的舊資料,且未佔用 _targetSlot,
+  //    把它先補上 equippedSlot(以 _getHeroEquippedTreasures 排序後的順序填),避免之後衝突
+  try{
+    const _curList = (typeof _getHeroEquippedTreasures === 'function')
+                    ? _getHeroEquippedTreasures(heroName) : [];
+    let _nextSlot = 0;
+    _curList.forEach(e => {
+      if(e.id === treasureId) return;
+      if(typeof e.record.equippedSlot !== 'number'){
+        // 找下一個沒被佔用的槽
+        while(_nextSlot < _maxSlots && _nextSlot === _targetSlot) _nextSlot++;
+        if(_nextSlot < _maxSlots){
+          e.record.equippedSlot = _nextSlot;
+          _nextSlot++;
+        }
+      }
+    });
+  }catch(_){}
+
+  // 3. 若新至寶原本在另一槽 → 換槽(不改 equippedTo,只改 equippedSlot)
+  // 4. 若新至寶裝在「其他英雄」身上 → 從那邊卸下
+  if(rec.equippedTo && rec.equippedTo !== heroName){
+    rec.equippedTo = null;
+    rec.equippedSlot = null;
+  }
+
+  // 5. 真正裝上
+  rec.equippedTo = heroName;
+  rec.equippedSlot = _targetSlot;
+
+  _saveTaiwanTreasureData();
+  try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+  try{ if(typeof window._checkTaiwanTreasureEquipMedals === 'function') window._checkTaiwanTreasureEquipMedals(); }catch(_){}
+  return true;
+}
+
+// 卸下英雄指定槽位的至寶
+function _unequipTaiwanTreasureFromSlot(heroName, slotIdx){
+  let _removed = false;
+  Object.keys(_taiwanTreasureData).forEach(id => {
+    const rec = _taiwanTreasureData[id];
+    if(!rec || rec.equippedTo !== heroName) return;
+    // 完全匹配槽位才卸(沒寫 equippedSlot 的舊資料當槽位 0 處理)
+    const _slot = (typeof rec.equippedSlot === 'number') ? rec.equippedSlot : 0;
+    if(_slot === (slotIdx|0)){
+      rec.equippedTo = null;
+      rec.equippedSlot = null;
+      _removed = true;
+    }
+  });
+  if(_removed){
+    _saveTaiwanTreasureData();
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+  }
+  return _removed;
+}
 // 取得指定英雄裝備的所有至寶
+// ★ FIX 20260518(f) — 依 equippedSlot 排序,讓「第一格 / 第二格」概念真正生效
+//   未設 equippedSlot 的舊資料當 0 處理(以裝備時序為次要排序);整理後填回 equippedSlot
 function _getHeroEquippedTreasures(heroName){
   const result = [];
   Object.keys(_taiwanTreasureData).forEach(id => {
@@ -37528,6 +37640,17 @@ function _getHeroEquippedTreasures(heroName){
     if(rec && rec.equippedTo === heroName){
       result.push({ id, def: TAIWAN_TREASURES[id], record: rec });
     }
+  });
+  // 排序:有 equippedSlot 的依數字小→大,沒有的排後面(以 _TAIWAN_TREASURE_ORDER 為穩定次序)
+  const _order = (typeof _TAIWAN_TREASURE_ORDER !== 'undefined' && Array.isArray(_TAIWAN_TREASURE_ORDER))
+    ? _TAIWAN_TREASURE_ORDER : [];
+  result.sort((a, b) => {
+    const sa = (typeof a.record.equippedSlot === 'number') ? a.record.equippedSlot : 99;
+    const sb = (typeof b.record.equippedSlot === 'number') ? b.record.equippedSlot : 99;
+    if(sa !== sb) return sa - sb;
+    // 同槽(或都沒設)時用 _TAIWAN_TREASURE_ORDER 穩定排序
+    const oa = _order.indexOf(a.id); const ob = _order.indexOf(b.id);
+    return (oa < 0 ? 999 : oa) - (ob < 0 ? 999 : ob);
   });
   return result;
 }
@@ -62934,6 +63057,178 @@ let _monsterDetailList = []; // ★ 魔物圖鑑翻頁清單
 let _monsterDetailIdx  = 0;
 let _heroDetailIdx  = 0;
 
+// ════════════════════════════════════════════════════════════════════
+// ★ FIX 20260518(f) — 英雄圖鑑「點槽位 → 至寶清單 modal → 點至寶裝備」
+// ────────────────────────────────────────────────────────────────────
+// 解決:解鎖兩個槽位的英雄,玩家無法選擇要替換哪一格(實際永遠覆蓋第一格)
+// 流程:
+//   1. 玩家在英雄詳細頁點某個至寶槽(主裝備 or 副裝備)
+//   2. 此函式跳出 modal,列出玩家擁有的所有至寶
+//   3. 玩家點某至寶 → 呼叫 _equipTaiwanTreasureToSlot 精確指定槽位裝備
+//   4. 關閉 modal,重渲英雄詳細頁
+// ════════════════════════════════════════════════════════════════════
+function _showHeroTreasureSlotPicker(heroName, slotIdx){
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  // 清掉舊的 modal
+  const _old = document.getElementById('_hero-tr-picker-modal');
+  if(_old) _old.remove();
+
+  // 取資料
+  const _slot2Unlocked = (typeof _isHeroSlot2Unlocked === 'function') && _isHeroSlot2Unlocked(heroName);
+  if(slotIdx === 1 && !_slot2Unlocked){
+    try{ if(typeof bannerFX === 'function') bannerFX(null, '第二格尚未解鎖（需用此英雄打贏玉山BOSS「我很會」難度）', '#ff9944', 3000); }catch(_){}
+    return;
+  }
+
+  // 玩家擁有的所有至寶
+  const _all = Object.keys(_taiwanTreasureData || {}).filter(id => {
+    const def = (typeof TAIWAN_TREASURES !== 'undefined') ? TAIWAN_TREASURES[id] : null;
+    const rec = _taiwanTreasureData[id];
+    return def && rec; // 必須擁有
+  });
+
+  // 按 _TAIWAN_TREASURE_ORDER 排序
+  const _orderArr = (typeof _TAIWAN_TREASURE_ORDER !== 'undefined' && Array.isArray(_TAIWAN_TREASURE_ORDER))
+    ? _TAIWAN_TREASURE_ORDER : [];
+  _all.sort((a,b) => {
+    const oa = _orderArr.indexOf(a); const ob = _orderArr.indexOf(b);
+    return (oa < 0 ? 999 : oa) - (ob < 0 ? 999 : ob);
+  });
+
+  if(_all.length === 0){
+    try{ if(typeof bannerFX === 'function') bannerFX(null, '尚未獲得任何至寶,先去台灣關打 BOSS 取得至寶吧!', '#ff9944', 3000); }catch(_){}
+    return;
+  }
+
+  // 取得此英雄目前裝備狀態(顯示「已裝在此英雄第幾格 / 已裝在其他英雄」)
+  const _curEqs = (typeof _getHeroEquippedTreasures === 'function')
+                ? _getHeroEquippedTreasures(heroName) : [];
+  const _curSlotMap = {};
+  _curEqs.forEach(e => {
+    const _s = (typeof e.record.equippedSlot === 'number') ? e.record.equippedSlot : 0;
+    _curSlotMap[e.id] = _s;
+  });
+
+  const _RC = { mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff' };
+  const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
+  const _slotLabel = slotIdx === 0 ? '主裝備（第一格）' : '副裝備（第二格）';
+
+  // 已裝在「目標槽位」的至寶 → 提供「卸下」按鈕
+  const _curOnTargetSlot = _curEqs.find(e => {
+    const _s = (typeof e.record.equippedSlot === 'number') ? e.record.equippedSlot : 0;
+    return _s === slotIdx;
+  });
+
+  const _itemsHtml = _all.map(id => {
+    const def = TAIWAN_TREASURES[id];
+    const rec = _taiwanTreasureData[id];
+    const _slotName = def.slot === 'weapon' ? '武器' : def.slot === 'armor' ? '防具' : '飾品';
+    const _rc = _RC[def.rarity] || '#66ddff';
+    const _rn = _RN[def.rarity] || '稀有';
+
+    // 狀態標籤
+    let _stateTag = '';
+    let _disabled = false;
+    if(rec.equippedTo === heroName){
+      // 已裝在此英雄
+      const _eqSlot = (typeof rec.equippedSlot === 'number') ? rec.equippedSlot : 0;
+      if(_eqSlot === slotIdx){
+        _stateTag = `<span style="font-size:14px;color:#88ff88;font-weight:800;letter-spacing:1px;">✓ 已裝在此槽</span>`;
+        _disabled = true;
+      } else {
+        _stateTag = `<span style="font-size:14px;color:#ffaa44;font-weight:800;letter-spacing:1px;">↔ 從另一格換來此槽</span>`;
+      }
+    } else if(rec.equippedTo){
+      // 已裝在其他英雄
+      _stateTag = `<span style="font-size:14px;color:#ff8888;font-weight:800;letter-spacing:1px;">⚠ 已裝在 ${rec.equippedTo}（會自動卸下）</span>`;
+    }
+
+    const _click = _disabled ? '' :
+      `onclick="event.stopPropagation();_doEquipTreasureToSlot('${id.replace(/'/g,"\\'")}','${heroName.replace(/'/g,"\\'")}',${slotIdx})"`;
+    const _cursor = _disabled ? 'default' : 'pointer';
+    const _opacity = _disabled ? '0.55' : '1';
+
+    return `<div ${_click} style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc};border-radius:10px;margin-bottom:8px;cursor:${_cursor};opacity:${_opacity};transition:0.15s;box-shadow:0 0 12px ${_rc}33;"
+        ${!_disabled ? `onmouseover="this.style.background='rgba(40,30,10,0.65)'" onmouseout="this.style.background='rgba(0,0,0,0.45)'"` : ''}>
+      <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:28px;">${(typeof _renderTaiwanTreasureIconHtml === 'function') ? _renderTaiwanTreasureIconHtml(def, 48, _rc) : (def.icon || '💎')}</div>
+      <div style="flex:1;min-width:0;line-height:1.3;overflow:hidden;">
+        <div style="font-weight:900;color:${_rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:19px;">${def.name}</div>
+        <div style="font-size:14px;color:#cccccc;margin-top:2px;">${_rn}・${_slotName}・Lv.${rec.lv || 1}</div>
+        ${_stateTag ? `<div style="margin-top:2px;">${_stateTag}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // 「卸下此槽」按鈕(若該槽位現在有裝至寶)
+  const _unequipBtn = _curOnTargetSlot
+    ? `<button onclick="event.stopPropagation();_doUnequipTreasureFromSlot('${heroName.replace(/'/g,"\\'")}',${slotIdx})"
+        style="width:100%;padding:12px;font-size:18px;font-weight:800;background:rgba(120,60,60,0.3);border:2px solid rgba(220,100,100,0.6);color:#ffaaaa;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-bottom:12px;">
+        ✕ 卸下此槽（${_curOnTargetSlot.def.name}）
+      </button>`
+    : '';
+
+  const _modal = document.createElement('div');
+  _modal.id = '_hero-tr-picker-modal';
+  _modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.86);display:flex;align-items:center;justify-content:center;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;padding:20px;';
+  _modal.onclick = function(e){
+    if(e.target === _modal){ _modal.remove(); }
+  };
+  _modal.innerHTML =
+    '<div style="background:linear-gradient(135deg,#1a1a2e,#0a0a1a);border:3px solid rgba(255,200,80,0.7);border-radius:18px;padding:24px 28px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 0 60px rgba(255,200,80,0.4);">'
+    + `<div style="font-size:28px;font-weight:900;color:#ffcc44;text-align:center;margin-bottom:8px;letter-spacing:2px;">💎 為 ${heroName} 裝備至寶</div>`
+    + `<div style="font-size:18px;color:#ffe8a0;text-align:center;margin-bottom:18px;">目標槽位：<b>${_slotLabel}</b></div>`
+    + _unequipBtn
+    + `<div style="font-size:16px;color:#aaa;margin-bottom:10px;letter-spacing:1px;">📋 你擁有的至寶（共 ${_all.length} 件）</div>`
+    + `<div>${_itemsHtml}</div>`
+    + '<button onclick="document.getElementById(\'_hero-tr-picker-modal\').remove()" '
+    + 'style="margin-top:12px;width:100%;padding:10px;font-size:18px;font-weight:700;background:rgba(80,80,100,0.4);border:1.5px solid #8888aa;color:#bbbbcc;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;">✕ 取消</button>'
+    + '</div>';
+  document.body.appendChild(_modal);
+}
+
+// 點至寶 → 真正裝備到指定槽位 → 關 modal + 重渲英雄詳細頁
+window._doEquipTreasureToSlot = function(treasureId, heroName, slotIdx){
+  try{ if(typeof playSfx === 'function') playSfx('sfx-equip', 0.6); }catch(_){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(__){}
+  }
+  let _ok = false;
+  try{
+    _ok = (typeof _equipTaiwanTreasureToSlot === 'function')
+      && _equipTaiwanTreasureToSlot(treasureId, heroName, slotIdx);
+  }catch(e){ console.warn('[英雄詳細-裝至寶] 失敗', e); }
+  // 關 modal
+  const _m = document.getElementById('_hero-tr-picker-modal');
+  if(_m) _m.remove();
+  // 重渲英雄詳細頁
+  try{
+    const _box = document.getElementById('hero-detail-content');
+    if(_box && typeof _renderHeroDetail === 'function'){
+      _renderHeroDetail(heroName, _box);
+    }
+  }catch(_){}
+  if(_ok){
+    try{ if(typeof bannerFX === 'function') bannerFX(null, '✅ 已裝備至寶', '#44ff88', 1500); }catch(_){}
+  }
+};
+
+// 卸下指定槽位 → 關 modal + 重渲
+window._doUnequipTreasureFromSlot = function(heroName, slotIdx){
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  try{
+    if(typeof _unequipTaiwanTreasureFromSlot === 'function'){
+      _unequipTaiwanTreasureFromSlot(heroName, slotIdx);
+    }
+  }catch(e){ console.warn('[英雄詳細-卸至寶] 失敗', e); }
+  const _m = document.getElementById('_hero-tr-picker-modal');
+  if(_m) _m.remove();
+  try{
+    const _box = document.getElementById('hero-detail-content');
+    if(_box && typeof _renderHeroDetail === 'function'){
+      _renderHeroDetail(heroName, _box);
+    }
+  }catch(_){}
+};
+
 function openHeroDetail(name) {
   const ov = document.getElementById('hero-detail-overlay');
   const box = document.getElementById('hero-detail-content');
@@ -63268,32 +63563,41 @@ function _renderHeroDetail(name, box) {
           const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
           // 第一格:取已裝備的第一件至寶顯示;沒有則為「(尚未裝備)」
           const _eq1 = _eqs[0] || null;
+          // ★ FIX 20260518(f) — 至寶槽位變成可點:點槽位 → modal 列至寶 → 選一件裝備
+          //   下面 name 是英雄名,定義在外層 _renderHeroDetail 的 name 變數
+          const _slot1Click = `onclick="event.stopPropagation();_showHeroTreasureSlotPicker('${name.replace(/'/g,"\\'")}',0)"`;
           let _slot1Html;
           if(_eq1){
             const _rc = _RC[_eq1.def.rarity] || '#66ddff';
             const _rn = _RN[_eq1.def.rarity] || '稀有';
-            _slot1Html = `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc};border-radius:10px;margin-bottom:8px;box-shadow:0 0 12px ${_rc}33;">
+            _slot1Html = `<div ${_slot1Click} style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc};border-radius:10px;margin-bottom:8px;box-shadow:0 0 12px ${_rc}33;cursor:pointer;transition:0.15s;"
+              onmouseover="this.style.background='rgba(40,30,10,0.6)'" onmouseout="this.style.background='rgba(0,0,0,0.45)'">
               <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);">${_renderTaiwanTreasureIconHtml(_eq1.def, 56, _rc)}</div>
               <div style="flex:1;min-width:0;line-height:1.3;overflow:hidden;">
                 <div style="font-weight:900;color:${_rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:20px;">${_eq1.def.name}</div>
                 <div style="font-size:16px;color:#cccccc;margin-top:2px;">${_rn}・Lv.${_eq1.record.lv}</div>
               </div>
-              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">主裝備</span>
+              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">主裝備 <span style="color:#ffcc66;">▾</span></span>
             </div>`;
           } else {
-            _slot1Html = `<div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:2px dashed rgba(255,255,255,0.2);border-radius:10px;margin-bottom:8px;color:#888;">
+            _slot1Html = `<div ${_slot1Click} style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:2px dashed rgba(255,255,255,0.2);border-radius:10px;margin-bottom:8px;color:#888;cursor:pointer;transition:0.15s;"
+              onmouseover="this.style.background='rgba(255,200,80,0.08)';this.style.borderColor='rgba(255,200,80,0.5)'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(255,255,255,0.2)'">
               <div style="width:56px;height:56px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;opacity:0.5;">💎</div>
-              <div style="flex:1;font-size:18px;font-weight:700;letter-spacing:1px;">尚未裝備至寶</div>
-              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">主裝備</span>
+              <div style="flex:1;font-size:18px;font-weight:700;letter-spacing:1px;">點此裝備至寶</div>
+              <span style="font-size:14px;color:#ffcc66;font-weight:700;letter-spacing:1px;flex-shrink:0;">主裝備 ▾</span>
             </div>`;
           }
           // ★ v1.0.20260501.4660 — 第二格根據「英雄是否解鎖第二件至寶欄位」顯示不同 UI
           //   解鎖條件:該英雄參加過玉山(yushan_giant) BOSS 戰我很會難度並獲勝
           const _slot2Unlocked = (typeof _isHeroSlot2Unlocked === 'function') && _isHeroSlot2Unlocked(name);
           const _eq2 = _eqs[1] || null;
+          // ★ FIX 20260518(f) — 副槽位也加上 onclick(只在已解鎖時)
+          const _slot2Click = _slot2Unlocked
+            ? `onclick="event.stopPropagation();_showHeroTreasureSlotPicker('${name.replace(/'/g,"\\'")}',1)"`
+            : '';
           let _slot2Html;
           if(!_slot2Unlocked){
-            // 尚未解鎖:顯示鎖頭 + 解鎖條件提示
+            // 尚未解鎖:顯示鎖頭 + 解鎖條件提示(不可點)
             _slot2Html = `<div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(80,80,90,0.15);border:2px dashed rgba(180,180,200,0.25);border-radius:10px;color:#888;">
               <div style="width:56px;height:56px;border-radius:8px;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;">🔒</div>
               <div style="flex:1;font-size:18px;font-weight:800;letter-spacing:1px;line-height:1.3;">
@@ -63303,23 +63607,25 @@ function _renderHeroDetail(name, box) {
               <span style="font-size:14px;color:#999;font-weight:700;letter-spacing:1px;flex-shrink:0;">副裝備</span>
             </div>`;
           } else if(_eq2){
-            // 已解鎖且裝了:顯示已裝備內容
+            // 已解鎖且裝了:顯示已裝備內容,可點換
             const _rc2 = _RC[_eq2.def.rarity] || '#66ddff';
             const _rn2 = _RN[_eq2.def.rarity] || '稀有';
-            _slot2Html = `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc2};border-radius:10px;box-shadow:0 0 12px ${_rc2}33;">
+            _slot2Html = `<div ${_slot2Click} style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc2};border-radius:10px;box-shadow:0 0 12px ${_rc2}33;cursor:pointer;transition:0.15s;"
+              onmouseover="this.style.background='rgba(40,30,10,0.6)'" onmouseout="this.style.background='rgba(0,0,0,0.45)'">
               <div style="width:56px;height:56px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);">${_renderTaiwanTreasureIconHtml(_eq2.def, 56, _rc2)}</div>
               <div style="flex:1;min-width:0;line-height:1.3;overflow:hidden;">
                 <div style="font-weight:900;color:${_rc2};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:20px;">${_eq2.def.name}</div>
                 <div style="font-size:16px;color:#cccccc;margin-top:2px;">${_rn2}・Lv.${_eq2.record.lv}</div>
               </div>
-              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">副裝備</span>
+              <span style="font-size:14px;color:#aaa;font-weight:700;letter-spacing:1px;flex-shrink:0;">副裝備 <span style="color:#ffcc66;">▾</span></span>
             </div>`;
           } else {
-            // 已解鎖但未裝:顯示「尚未裝備」可裝狀態
-            _slot2Html = `<div style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:2px dashed rgba(255,200,100,0.4);border-radius:10px;color:#aaa;">
+            // 已解鎖但未裝:顯示「點此裝備」可點
+            _slot2Html = `<div ${_slot2Click} style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:2px dashed rgba(255,200,100,0.4);border-radius:10px;color:#aaa;cursor:pointer;transition:0.15s;"
+              onmouseover="this.style.background='rgba(255,200,80,0.12)';this.style.borderColor='rgba(255,200,80,0.7)'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.borderColor='rgba(255,200,100,0.4)'">
               <div style="width:56px;height:56px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;opacity:0.6;">💎</div>
-              <div style="flex:1;font-size:18px;font-weight:700;letter-spacing:1px;color:#ddc99a;">尚未裝備至寶<span style="font-size:13px;color:#ffcc66;margin-left:8px;">✨ 已解鎖</span></div>
-              <span style="font-size:14px;color:#ffcc66;font-weight:700;letter-spacing:1px;flex-shrink:0;">副裝備</span>
+              <div style="flex:1;font-size:18px;font-weight:700;letter-spacing:1px;color:#ddc99a;">點此裝備至寶<span style="font-size:13px;color:#ffcc66;margin-left:8px;">✨ 已解鎖</span></div>
+              <span style="font-size:14px;color:#ffcc66;font-weight:700;letter-spacing:1px;flex-shrink:0;">副裝備 ▾</span>
             </div>`;
           }
           return `<div style="background:rgba(255,200,50,0.08);border-radius:14px;padding:14px 14px 12px;border:1.5px solid rgba(255,200,80,0.35);margin-top:8px;">
@@ -64854,6 +65160,128 @@ async function openFriendPanel() {
   }
 }
 
+// ════════════════════════════════════════════════════════════════════
+// ★ FIX 20260518(g) — 好友面板/邀請選角頁顯示完整能力+至寶
+// ────────────────────────────────────────────────────────────────────
+// helper:給定 representativeHero 物件,算出實際屬性(套用素質投資、等級HP加成、至寶加成)
+//        並回傳 { hp, atk, sp, spd, lv, treasures: [...] }
+// 公式跟戰鬥內 _injectFriendHeroIntoBattle 一致,確保顯示 = 實戰
+// ════════════════════════════════════════════════════════════════════
+function _calcFriendHeroStats(rep){
+  const _out = { hp:0, atk:0, sp:0, spd:0, lv:1, baseHp:0, baseAtk:0, baseSp:0, baseSpd:0,
+                 invHp:0, invAtk:0, invSp:0, invSpd:0,
+                 trHp:0, trAtk:0, trSp:0, trSpd:0,
+                 advLvHpBonus:0, treasures:[], skillLevels:{s1:0,s2:0}, burstLevel:0 };
+  if(!rep || !rep.name) return _out;
+  const name = rep.name;
+  const db = (typeof HERO_DB !== 'undefined') ? HERO_DB[name] : null;
+  if(!db) return _out;
+  _out.baseHp  = db.hp  || 0;
+  _out.baseAtk = db.atk || 0;
+  _out.baseSp  = db.sp  || 0;
+  _out.baseSpd = db.spd || 0;
+  const inv = rep.statInvested || {};
+  _out.invHp  = inv.hp  || 0;
+  _out.invAtk = inv.atk || 0;
+  _out.invSp  = inv.sp  || 0;
+  _out.invSpd = inv.spd || 0;
+  const treasures = Array.isArray(rep.treasures) ? rep.treasures : [];
+  treasures.forEach(t => {
+    if(!t) return;
+    _out.trHp  += (t.hp  || 0);
+    _out.trAtk += (t.atk || 0);
+    _out.trSp  += (t.sp  || 0);
+    _out.trSpd += (t.spd || 0);
+    _out.treasures.push(t);
+  });
+  // HP 套等級 +2%/級 加成(以投資後 HP 為基準,跟 _injectFriendHeroIntoBattle 一致)
+  const _hpAfterInv = _out.baseHp + _out.invHp + _out.trHp;
+  const _lv = rep.level || 1;
+  _out.lv = _lv;
+  if(_lv > 1){
+    _out.advLvHpBonus = Math.ceil(_hpAfterInv * 0.02 * (_lv - 1));
+  }
+  _out.hp  = _hpAfterInv + _out.advLvHpBonus;
+  _out.atk = _out.baseAtk + _out.invAtk + _out.trAtk;
+  _out.sp  = _out.baseSp  + _out.invSp  + _out.trSp;
+  _out.spd = _out.baseSpd + _out.invSpd + _out.trSpd;
+  _out.skillLevels = rep.skillLevels || {s1:0, s2:0};
+  _out.burstLevel = rep.burstLevel || 0;
+  return _out;
+}
+
+// 渲染「好友英雄詳細資訊」展開區塊 (HTML 字串)
+function _renderFriendHeroDetailHtml(rep){
+  if(!rep || !rep.name) return '<div style="color:#888;font-size:14px;">未設定代表英雄</div>';
+  const s = _calcFriendHeroStats(rep);
+  const name = rep.name;
+  // 技能名稱(從 HERO_DB)
+  const db = (typeof HERO_DB !== 'undefined') ? HERO_DB[name] : null;
+  const s1n = (db && db.s1 && db.s1.n) ? db.s1.n : '主動 1';
+  const s2n = (db && db.s2 && db.s2.n) ? db.s2.n : '主動 2';
+  // 爆發名稱
+  const bd = (typeof BURST_DB !== 'undefined') ? BURST_DB[name] : null;
+  const bn = (bd && bd.n) ? bd.n : '極限爆發';
+  // 至寶清單 HTML
+  let trHtml = '';
+  if(s.treasures.length === 0){
+    trHtml = '<div style="font-size:13px;color:#888;padding:6px 0;">尚未裝備任何至寶</div>';
+  } else {
+    trHtml = s.treasures.map(t => {
+      const def = (typeof TAIWAN_TREASURES !== 'undefined') ? TAIWAN_TREASURES[t.id] : null;
+      const nm  = def ? def.name : t.id;
+      const ic  = def ? (def.icon || '💎') : '💎';
+      const rc  = (def && def.rarity === 'mythic') ? '#ff44ff'
+                : (def && def.rarity === 'legend') ? '#ffaa44'
+                : (def && def.rarity === 'epic')   ? '#aa66ff' : '#66ddff';
+      // 屬性加總
+      const _stats = [];
+      if(t.hp)  _stats.push(`HP+${t.hp}`);
+      if(t.atk) _stats.push(`攻+${t.atk}`);
+      if(t.sp)  _stats.push(`特+${t.sp}`);
+      if(t.spd) _stats.push(`速+${t.spd}`);
+      const _statStr = _stats.length ? _stats.join(' / ') : '';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:4px;background:rgba(0,0,0,0.4);border:1.5px solid ${rc};border-radius:8px;">
+        <span style="font-size:20px;">${ic}</span>
+        <div style="flex:1;min-width:0;line-height:1.25;">
+          <div style="font-size:14px;font-weight:800;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nm} <span style="font-size:12px;color:#aaa;">Lv.${t.lv||1}</span></div>
+          ${_statStr ? `<div style="font-size:12px;color:#cccccc;margin-top:1px;">${_statStr}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  return `<div style="background:rgba(0,0,0,0.35);border:1.5px solid rgba(180,120,255,0.3);border-radius:10px;padding:10px 12px;margin-top:6px;">
+    <!-- 屬性 -->
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px 12px;margin-bottom:8px;font-size:14px;color:#e8d8ff;">
+      <div>❤️ HP <b style="color:#ff8888;">${s.hp}</b> <span style="color:#888;font-size:11px;">(${s.baseHp}+${s.invHp}+${s.trHp}+Lv${s.advLvHpBonus})</span></div>
+      <div>⚔ 攻擊 <b style="color:#ffaa66;">${s.atk}</b> <span style="color:#888;font-size:11px;">(${s.baseAtk}+${s.invAtk}+${s.trAtk})</span></div>
+      <div>✨ 特技 <b style="color:#aaccff;">${s.sp}</b> <span style="color:#888;font-size:11px;">(${s.baseSp}+${s.invSp}+${s.trSp})</span></div>
+      <div>💨 速度 <b style="color:#aaffaa;">${s.spd}</b> <span style="color:#888;font-size:11px;">(${s.baseSpd}+${s.invSpd}+${s.trSpd})</span></div>
+    </div>
+    <!-- 技能/爆發等級 -->
+    <div style="display:flex;gap:10px;font-size:13px;color:#ccc;margin-bottom:8px;flex-wrap:wrap;">
+      <span>📖 ${s1n} <b style="color:#ffe066;">Lv.${s.skillLevels.s1||0}</b></span>
+      <span>📖 ${s2n} <b style="color:#ffe066;">Lv.${s.skillLevels.s2||0}</b></span>
+      <span>💥 ${bn} <b style="color:#ff8866;">Lv.${s.burstLevel||0}</b></span>
+    </div>
+    <!-- 至寶 -->
+    <div style="font-size:13px;color:#ffcc66;font-weight:700;margin-bottom:4px;letter-spacing:1px;">💎 裝備的至寶（${s.treasures.length}件）</div>
+    ${trHtml}
+  </div>`;
+}
+
+// 切換好友列展開/收合
+window._toggleFriendDetail = function(idx){
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.4); }catch(_){}
+  const el = document.getElementById('_friend-detail-' + idx);
+  if(!el) return;
+  if(el.style.display === 'none' || !el.style.display){
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+};
+
 function _renderFriendPanel() {
   // ═══════════════════════════════════════════════════════════════
   // ★ v1.0.20260511.6090 — iPad 輸入好友碼鍵盤狂跳問題修復(守門)
@@ -64940,9 +65368,12 @@ function _renderFriendPanelImpl() {
       const heroLv   = fd && fd.representativeHero ? fd.representativeHero.level : '';
       const heroImg  = fd && fd.representativeHero ? fd.representativeHero.img   : '';
       const heroAv   = heroName !== '（未設代表英雄）' && typeof AVATARS !== 'undefined' ? (AVATARS[heroName] || '⚔') : '👤';
+      // ★ FIX 20260518(g) — 好友詳細資訊展開區(屬性/技能等級/爆發等級/至寶)
+      const _hasRep = fd && fd.representativeHero && fd.representativeHero.name;
+      const _detailHtml = _hasRep ? _renderFriendHeroDetailHtml(fd.representativeHero) : '';
       friendRows +=
-        `<div id="_friend-row-${i}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;`
-        + `background:rgba(20,15,40,0.85);border:1.5px solid rgba(180,120,255,0.3);border-radius:14px;">`
+        `<div id="_friend-row-${i}" style="margin-bottom:10px;background:rgba(20,15,40,0.85);border:1.5px solid rgba(180,120,255,0.3);border-radius:14px;overflow:hidden;">`
+        + `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;">`
         + `<div class="_friend-hero-img" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,150,200,0.6);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(10,10,20,0.9);">`
         + (heroImg ? `<img src="${heroImg}" style="width:100%;height:100%;object-fit:cover;">` : heroAv)
         + `</div>`
@@ -64950,12 +65381,19 @@ function _renderFriendPanelImpl() {
         + `<div style="font-size:16px;font-weight:800;color:#e8d8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name || f.email}</div>`
         + `<div style="font-size:13px;color:#aa88ff;">${heroName}${heroLv ? ' Lv.'+heroLv : ''}</div>`
         + `</div>`
+        + (_hasRep
+            ? `<button onclick="_toggleFriendDetail(${i})" style="padding:7px 10px;font-size:13px;font-weight:700;background:rgba(120,80,200,0.2);border:1.5px solid rgba(180,120,255,0.6);color:#cc99ff;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;">▾ 詳細</button>`
+            : '')
         + `<button onclick="_inviteFriendHero(${i})" style="padding:7px 14px;font-size:14px;font-weight:700;`
         + `background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,130,200,0.6);color:#ff88cc;`
         + `border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;">🤝 邀請協助</button>`
         + `<button onclick="_deleteFriend(${i})" style="padding:7px 12px;font-size:13px;`
         + `background:rgba(60,10,10,0.5);border:1px solid rgba(200,60,60,0.4);color:#ff8888;`
         + `border-radius:9px;cursor:pointer;font-family:inherit;">✕</button>`
+        + `</div>`
+        + (_hasRep
+            ? `<div id="_friend-detail-${i}" style="display:none;padding:0 14px 12px;">${_detailHtml}</div>`
+            : '')
         + `</div>`;
     });
   }
@@ -65044,27 +65482,17 @@ function _renderFriendPanelImpl() {
   }
 
   // 非同步讀取好友英雄資料（只更新個別列，不重建整個面板）
+  // ★ FIX 20260518(g) — 讀完後改用 _refreshFriendListInner 重渲列表(不動 input),
+  //   確保新增的「▾ 詳細」展開區也能同步顯示完整能力
   _friendList.forEach(async (f, i) => {
     if (!_friendHeroData[f.uid]) {
       const data = await window._fbLoadFriend(f.uid);
       if (data) {
         _friendHeroData[f.uid] = data;
-        // 只更新該好友的英雄顯示，不重建整個面板
-        const rowEl = document.getElementById('_friend-row-' + i);
-        if (rowEl) {
-          const heroName = data.representativeHero ? data.representativeHero.name : '（未設代表英雄）';
-          const heroLv   = data.representativeHero ? data.representativeHero.level : '';
-          const heroImg  = data.representativeHero ? data.representativeHero.img   : '';
-          const heroAv   = heroName !== '（未設代表英雄）' && typeof AVATARS !== 'undefined' ? (AVATARS[heroName] || '⚔') : '👤';
-          const imgEl  = rowEl.querySelector('._friend-hero-img');
-          const infoEl = rowEl.querySelector('._friend-hero-info');
-          if (imgEl) imgEl.innerHTML = heroImg
-            ? `<img src="${heroImg}" style="width:100%;height:100%;object-fit:cover;">`
-            : heroAv;
-          if (infoEl) infoEl.innerHTML =
-            `<div style="font-size:16px;font-weight:800;color:#e8d8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name || f.email}</div>`
-            + `<div style="font-size:13px;color:#aa88ff;">${heroName}${heroLv ? ' Lv.'+heroLv : ''}</div>`;
-        }
+        // 重渲列表(只更新內容,input 不動)
+        try{
+          if(typeof _refreshFriendListInner === 'function') _refreshFriendListInner();
+        }catch(e){ console.warn('[好友面板] 非同步更新後重渲失敗', e); }
       }
     }
   });
@@ -65092,9 +65520,13 @@ function _refreshFriendListInner(){
     const heroLv   = fd && fd.representativeHero ? fd.representativeHero.level : '';
     const heroImg  = fd && fd.representativeHero ? fd.representativeHero.img   : '';
     const heroAv   = heroName !== '(未設代表英雄)' && typeof AVATARS !== 'undefined' ? (AVATARS[heroName] || '⚔') : '👤';
+    // ★ FIX 20260518(g) — 好友詳細資訊展開區
+    const _hasRep = fd && fd.representativeHero && fd.representativeHero.name;
+    const _detailHtml = _hasRep && typeof _renderFriendHeroDetailHtml === 'function'
+      ? _renderFriendHeroDetailHtml(fd.representativeHero) : '';
     rows +=
-      `<div id="_friend-row-${i}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:10px;`
-      + `background:rgba(20,15,40,0.85);border:1.5px solid rgba(180,120,255,0.3);border-radius:14px;">`
+      `<div id="_friend-row-${i}" style="margin-bottom:10px;background:rgba(20,15,40,0.85);border:1.5px solid rgba(180,120,255,0.3);border-radius:14px;overflow:hidden;">`
+      + `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;">`
       + `<div class="_friend-hero-img" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,150,200,0.6);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(10,10,20,0.9);">`
       + (heroImg ? `<img src="${heroImg}" style="width:100%;height:100%;object-fit:cover;">` : heroAv)
       + `</div>`
@@ -65102,12 +65534,19 @@ function _refreshFriendListInner(){
       + `<div style="font-size:16px;font-weight:800;color:#e8d8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name || f.email}</div>`
       + `<div style="font-size:13px;color:#aa88ff;">${heroName}${heroLv ? ' Lv.'+heroLv : ''}</div>`
       + `</div>`
+      + (_hasRep
+          ? `<button onclick="_toggleFriendDetail(${i})" style="padding:7px 10px;font-size:13px;font-weight:700;background:rgba(120,80,200,0.2);border:1.5px solid rgba(180,120,255,0.6);color:#cc99ff;border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;">▾ 詳細</button>`
+          : '')
       + `<button onclick="_inviteFriendHero(${i})" style="padding:7px 14px;font-size:14px;font-weight:700;`
       + `background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,130,200,0.6);color:#ff88cc;`
       + `border-radius:9px;cursor:pointer;font-family:inherit;white-space:nowrap;">🤝 邀請協助</button>`
       + `<button onclick="_deleteFriend(${i})" style="padding:7px 12px;font-size:13px;`
       + `background:rgba(60,10,10,0.5);border:1px solid rgba(200,60,60,0.4);color:#ff8888;`
       + `border-radius:9px;cursor:pointer;font-family:inherit;">✕</button>`
+      + `</div>`
+      + (_hasRep
+          ? `<div id="_friend-detail-${i}" style="display:none;padding:0 14px 12px;">${_detailHtml}</div>`
+          : '')
       + `</div>`;
   });
   inner.innerHTML = rows;
@@ -65350,6 +65789,24 @@ function _injectFriendHeroCard() {
   const img  = fh.img || (typeof HERO_IMGS !== 'undefined' ? HERO_IMGS[name] : '') || '';
   const av   = (typeof AVATARS !== 'undefined' && AVATARS[name]) || '🤝';
 
+  // ★ FIX 20260518(g) — 計算真實能力 + 至寶數量,顯示在卡片上
+  let _statsLine = '';
+  let _treasureLine = '';
+  try{
+    if(typeof _calcFriendHeroStats === 'function'){
+      const s = _calcFriendHeroStats(fh);
+      _statsLine = `<div style="font-size:11px;text-align:center;padding:2px 4px;color:#ffe8a0;line-height:1.4;">`
+        + `❤️${s.hp} ⚔${s.atk} ✨${s.sp} 💨${s.spd}</div>`;
+      if(s.treasures && s.treasures.length > 0){
+        const _trIcons = s.treasures.map(t => {
+          const def = (typeof TAIWAN_TREASURES !== 'undefined') ? TAIWAN_TREASURES[t.id] : null;
+          return def ? (def.icon || '💎') : '💎';
+        }).join(' ');
+        _treasureLine = `<div style="font-size:13px;text-align:center;padding:2px 4px;color:#ffcc66;">💎${_trIcons}</div>`;
+      }
+    }
+  }catch(e){ console.warn('[好友卡] 計算能力失敗', e); }
+
   const node = document.createElement('div');
   node.className = 'hpick-adv-node friend-hero-card';
   node.style.cssText = 'position:relative;width:155px;cursor:pointer;border-radius:14px;overflow:hidden;'
@@ -65358,8 +65815,10 @@ function _injectFriendHeroCard() {
     + 'box-shadow:0 0 14px rgba(255,100,180,0.4);';
   node.innerHTML =
     (img ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;display:block;">` : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>`)
-    + `<div style="font-size:15px;text-align:center;padding:5px 3px;color:#ffcce0;font-weight:700;line-height:1.3;">${name} <span style="font-size:13px;color:#ff99cc;font-weight:600;">Lv.${lv}</span></div>`
-    + `<div style="font-size:11px;text-align:center;padding:0 4px 4px;color:#ff88cc;">🤝 ${fh._ownerName}</div>`
+    + `<div style="font-size:15px;text-align:center;padding:5px 3px 2px;color:#ffcce0;font-weight:700;line-height:1.3;">${name} <span style="font-size:13px;color:#ff99cc;font-weight:600;">Lv.${lv}</span></div>`
+    + _statsLine
+    + _treasureLine
+    + `<div style="font-size:11px;text-align:center;padding:2px 4px 5px;color:#ff88cc;">🤝 ${fh._ownerName}</div>`
     // 粉紅握手圖示（右上角）
     + `<div style="position:absolute;top:4px;right:4px;background:rgba(255,100,180,0.9);border-radius:50%;`
     + `width:22px;height:22px;line-height:22px;text-align:center;font-size:13px;">🤝</div>`;
