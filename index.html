@@ -3087,6 +3087,13 @@
         let battle;
         if(newState.fullWireG){
           // 走新版:完整 G wire
+          // ★ v3.3.3 — 取出 FX 佇列附在 battle 上,client 收到後重播
+          let _fxEvents = [];
+          try{
+            if(typeof window._wbFxQueueFlush === 'function'){
+              _fxEvents = window._wbFxQueueFlush();
+            }
+          }catch(_){}
           battle = Object.assign({}, newState.fullWireG, {
             log: newLog,
             version: ((WB.lastSeenSnap?.battle?.version) || 1) + 1,
@@ -3099,6 +3106,8 @@
             // 也把整份 fullWireG 副本放在子欄位裡,讓 client applyWireToG(G, battle.fullWireG)
             //  能順利取到完整資料(不依賴 spread)。
             fullWireG: newState.fullWireG,
+            // ★ v3.3.3 — FX 事件清單(client 收到後重播,讓全隊看到同步特效)
+            _wbFxEvents: _fxEvents,
           });
         }else{
           // 舊 schema 相容(舊 _wbHostExecuteAction 等地方還沒改完前用)
@@ -6100,6 +6109,15 @@ function noise(dur,vol){
   src.start();
 }
 function playSfx(id, vol, fadeStartMs){
+  // ★ v3.3.3 — FX 同步:把音效事件加入佇列(client 後續會重播)
+  //   ⚠ 注意:client 重播時會「再次」播放,所以這個 wrap 必須只在房主端 capture,
+  //   不能在 client 端 capture(否則 client 收到自己 capture 的事件會再播一次造成回授)
+  //   _wbFxShouldCapture 已守門「只在 _wbConnectedHostMode」收集,所以安全
+  try{
+    if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'playSfx', id:id, vol:vol, fadeStartMs:fadeStartMs });
+    }
+  }catch(_){}
   if(_sfxMuted) return;
   const el=document.getElementById(id);
   if(!el) return;
@@ -6326,6 +6344,12 @@ function showActionLabel(h, text){
   setTimeout(function(){if(_lbl.parentNode)_lbl.remove();},1000);
 }
 function flashCard(h,color,dur){
+  // ★ v3.3.3 — FX 同步
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'flashCard', side:h.side, pos:h.pos, color:color, dur:dur });
+    }
+  }catch(_){}
   dur=dur||300;
   var el=document.getElementById('card-'+h.side+'-'+h.pos);if(!el)return;
   var f=document.createElement('div');
@@ -6334,6 +6358,12 @@ function flashCard(h,color,dur){
   setTimeout(function(){f.style.opacity='0';setTimeout(function(){if(f.parentNode)f.remove()},dur)},30);
 }
 function flashScreen(color,dur){
+  // ★ v3.3.3 — FX 同步
+  try{
+    if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'flashScreen', color:color, dur:dur });
+    }
+  }catch(_){}
   ensureFxLayer();dur=dur||200;
   var f=document.createElement('div');
   f.style.cssText='position:absolute;inset:0;background:'+color+';opacity:0.18;pointer-events:none;z-index:49;transition:opacity '+dur+'ms';
@@ -6373,6 +6403,12 @@ function beamFX(from,to,color,dur){
   setTimeout(function(){b.style.opacity='0';setTimeout(function(){if(b.parentNode)b.remove()},dur)},50);
 }
 function ringFX(h,color,dur){
+  // ★ v3.3.3 — FX 同步
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'ringFX', side:h.side, pos:h.pos, color:color, dur:dur });
+    }
+  }catch(_){}
   ensureFxLayer();dur=dur||600;
   var rc=cardRect(h);if(!rc)return;
   var ring=document.createElement('div');
@@ -6385,6 +6421,17 @@ function ringFX(h,color,dur){
   anim.onfinish=function(){if(ring.parentNode)ring.remove()};
 }
 function bannerFX(h,text,color,dur){
+  // ★ v3.3.3 — FX 同步(h 可能是 null,代表全域提示)
+  try{
+    if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      if(h){
+        _wbFxCapture({ type:'bannerFX', side:h.side, pos:h.pos, text:text, color:color, dur:dur });
+      }else{
+        // 全域 banner(h=null)— side/pos 用特殊標記
+        _wbFxCapture({ type:'bannerFX', side:null, pos:null, text:text, color:color, dur:dur });
+      }
+    }
+  }catch(_){}
   ensureFxLayer();dur=dur||900;
   var rc=cardRect(h);
   // ★ h 為 null 時，顯示在畫面中央頂部（用於全域提示）
@@ -21519,7 +21566,141 @@ function doRevive(target, pct=0.5, full=false){
 // ====== POPUPS ======
 // 每張卡最近一次傷害popup出現時間，用於需求2的時間間隔
 const _lastPopupTime={};
+
+// ════════════════════════════════════════════════════════════════════
+// ★ v3.3.3 — 視覺特效完整同步系統(FX Sync)
+// ────────────────────────────────────────────────────────────────────
+// 老師需求:「要讓隊長看得見隊友造成的傷害數值和特效,反之亦然。每個玩家都要能
+//             在每個行動結算時同步看到場上的所有戰鬥時產生的各種特效、動畫、音效。」
+//
+// 設計:
+//   1) 房主端跑戰鬥邏輯時,所有「視覺特效函式」(showPopup/flashCard/...)會自動
+//      把參數推入 window._wbFxQueue
+//   2) hostPushBattleState 時,把 _wbFxQueue 附加到 battle._wbFxEvents
+//   3) Client 端 onBattleUpdate 收到後,把 _wbFxEvents 重播在自己畫面上
+//
+// 重要設計考量:
+//   - 只在 worldboss 階段 + 連線模式收集(其他關卡不影響)
+//   - hero 物件用 side+pos 索引,client 重播時用 G.p1[pos]/G.p2[pos] 還原
+//   - showPopup/flashCard/bannerFX/ringFX 等對 hero 操作的,序列化 side+pos
+//   - spawnParticles/fireParticles/flashScreen/playSfx 等不依賴 hero 的,序列化原參數
+//   - Client 端重播前先檢查特效函式存在性(防呼叫到不存在的函式)
+// ════════════════════════════════════════════════════════════════════
+window._wbFxQueue = window._wbFxQueue || [];
+
+// 是否「現在房主端,需要收集 FX」
+function _wbFxShouldCapture(){
+  try{
+    if(typeof _adventureStage === 'undefined' || _adventureStage !== 'worldboss') return false;
+    // 多人連線房主模式 才需要收集 FX 廣播給 client
+    return !!window._wbConnectedHostMode;
+  }catch(_){ return false; }
+}
+
+// 房主端發送特效時把 event 推入佇列(會在下次 hostPushBattleState 時夾帶過去)
+function _wbFxCapture(event){
+  if(!_wbFxShouldCapture()) return;
+  try{
+    window._wbFxQueue.push(event);
+    // 防呆:佇列過大裁剪(避免某段時間沒 sync 累積過多)
+    if(window._wbFxQueue.length > 200) window._wbFxQueue = window._wbFxQueue.slice(-150);
+  }catch(_){}
+}
+
+// hostPushBattleState 內呼叫:取出佇列並清空,回傳給呼叫者夾帶
+window._wbFxQueueFlush = function(){
+  const arr = window._wbFxQueue || [];
+  window._wbFxQueue = [];
+  return arr;
+};
+
+// Client 端:從 battle 物件取出 _wbFxEvents 重播
+window._wbFxReplay = function(events){
+  if(!Array.isArray(events) || events.length === 0) return;
+  try{
+    events.forEach(function(ev){
+      try{ _wbFxReplayOne(ev); }catch(eR){ console.warn('[WB-FX] replay one 失敗', eR, ev); }
+    });
+  }catch(eAll){ console.warn('[WB-FX] replay 全部失敗', eAll); }
+};
+
+// 從 side+pos 還原 hero
+function _wbFxResolveHero(side, pos){
+  try{
+    if(!G) return null;
+    const arr = (side === 'p1') ? G.p1 : G.p2;
+    if(!arr) return null;
+    return arr[pos] || null;
+  }catch(_){ return null; }
+}
+
+function _wbFxReplayOne(ev){
+  if(!ev || !ev.type) return;
+  switch(ev.type){
+    case 'popup': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof showPopup === 'function') showPopup(h, ev.val, ev.popupType);
+      break;
+    }
+    case 'flashCard': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof flashCard === 'function') flashCard(h, ev.color, ev.dur);
+      break;
+    }
+    case 'bannerFX': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof bannerFX === 'function') bannerFX(h, ev.text, ev.color, ev.dur);
+      break;
+    }
+    case 'ringFX': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof ringFX === 'function') ringFX(h, ev.color, ev.dur);
+      break;
+    }
+    case 'flashScreen': {
+      if(typeof flashScreen === 'function') flashScreen(ev.color, ev.dur);
+      break;
+    }
+    case 'spawnParticles': {
+      // 粒子用相對於卡片的座標較困難,改用「hero 卡片中心」當錨點(若有 hero side+pos)
+      if(typeof ev.side === 'string' && typeof ev.pos === 'number'){
+        const h = _wbFxResolveHero(ev.side, ev.pos);
+        if(h && typeof cardRect === 'function' && typeof spawnParticles === 'function'){
+          const rc = cardRect(h);
+          if(rc) spawnParticles(rc.x, rc.y, ev.opts || {});
+        }
+      }else if(typeof ev.cx === 'number' && typeof ev.cy === 'number'){
+        if(typeof spawnParticles === 'function') spawnParticles(ev.cx, ev.cy, ev.opts || {});
+      }
+      break;
+    }
+    case 'fireParticles': {
+      if(typeof ev.side === 'string' && typeof ev.pos === 'number'){
+        const h = _wbFxResolveHero(ev.side, ev.pos);
+        if(h && typeof cardRect === 'function' && typeof fireParticles === 'function'){
+          const rc = cardRect(h);
+          if(rc) fireParticles(rc.x, rc.y, ev.count || 16);
+        }
+      }
+      break;
+    }
+    case 'playSfx': {
+      if(typeof playSfx === 'function') playSfx(ev.id, ev.vol, ev.fadeStartMs);
+      break;
+    }
+    default:
+      // 未知 type 忽略
+      break;
+  }
+}
+
 function showPopup(h, val, type){
+  // ★ v3.3.3 — FX 同步:房主端把 popup 事件加入佇列(client 後續會重播)
+  try{
+    if(h && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'popup', side:h.side, pos:h.pos, val:val, popupType:type });
+    }
+  }catch(_){}
   const el=document.getElementById('card-'+h.side+'-'+h.pos);
   if(!el) return;
   const gc=document.getElementById('gc');
@@ -27424,13 +27605,23 @@ function endAction(a, cost, noFinish=false){
           // ★ v1.0.20260512.6150 — 小怪戰已結束(advFinishMiniBattle 已執行,_advMiniBattleActive=false),
           //   且 _advMiniResultShowing/_advMiniResultPending 都不是 true → 戰鬥真的結束了,
           //   原本要 startTurn 的 actor 已不存在於當前 G.p2(已換成 BOSS 陣容) → 不該強制 startTurn
+          // ★ v3.3.3 — 世界 BOSS 戰排除這個分支(防止 client 端誤判卡死)
+          //   背景:client 端的 a.side='p1' actor 在世界 BOSS 戰中,_advMiniBattleActive 預設 false,
+          //         G.p2 只有 BOSS(p1 角色永遠不在 p2)→ 三條件全成立 → 放棄介入 → client 永遠卡死
+          //   症狀:房主端顯示「現在是 XX 的水狐回合」永遠停在那邊,
+          //         client 端 console 印「小怪戰已結束且 actor 已不在 G.p2,放棄介入(actor:水狐)」
+          //   修補:在 _adventureStage === 'worldboss' 時跳過這條分支,讓 watchdog 正常 resume 流程
+          const _isWorldBossStage = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
           const _miniEnded = (typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive)
                             && !window._advMiniResultShowing
                             && !window._advMiniResultPending;
           const _wdActorStillInP2 = G.p2 && G.p2.some(h => h === _wdActor);
-          if(_miniEnded && !_wdActorStillInP2 && _wdActor && _wdActor.side === 'p1'){
+          if(!_isWorldBossStage && _miniEnded && !_wdActorStillInP2 && _wdActor && _wdActor.side === 'p1'){
             console.log('[endAction watchdog] 小怪戰已結束且 actor 已不在 G.p2,放棄介入(actor:'+(_wdActor&&_wdActor.name)+')');
             return;
+          }
+          if(_isWorldBossStage && _miniEnded && !_wdActorStillInP2 && _wdActor && _wdActor.side === 'p1'){
+            console.log('[endAction watchdog] ★ v3.3.3 worldboss 階段不放棄介入,強制 resume(actor:'+(_wdActor&&_wdActor.name)+')');
           }
           // 沒 modal 顯示但卡住 → 強制 resume
           console.warn('[endAction watchdog] startTurn 卡住超過 5 秒,強制解除 _gamePaused 並 _resumeTimers (actor:'+(_wdActor&&_wdActor.name)+')');
@@ -29776,6 +29967,13 @@ function aiAct(a){
       try{ window._advQuizBoss = null; }catch(_){}
       // ★ v3.3.2 — BOSS 答題 cb 完成 → 清除指派槽位旗標(讓 _wbShowCardBubble 回到正常顯示位置)
       try{ window._wbAssignedQuizSlot = null; }catch(_){}
+      // ★ v3.3.3 — 清掉房主端的 30 秒 watchdog(避免雙重 fire)
+      try{
+        if(window._wbBossQuizHostWatchdog){
+          clearTimeout(window._wbBossQuizHostWatchdog);
+          window._wbBossQuizHostWatchdog = null;
+        }
+      }catch(_){}
       if(!a || typeof a !== 'object' || a.curHp <= 0){
         console.log('[BOSS quiz cb] a 無效或已死亡,直接 startTurn');
         _pSetTimeout(startTurn, 300);
@@ -29792,17 +29990,16 @@ function aiAct(a){
     };
       // ★ v3.3.2 — 多人模式:BOSS 行動前題依槽位輪流(老師確認規則:
       //   回合 1→p1[0]、回合 2→p1[1]、回合 3→p1[2]、回合 4→p1[3]、回合 5→p1[0]...循環)
+      // ★ v3.3.3 — 新設計(取代 v3.3.2 client 等待視窗):
+      //     - 全員都彈 advShowQuiz(視覺一致,所有人都看見題目)
+      //     - 只有被指派槽位的玩家點選項有效(advSubmitAnswer 攔截器處理)
+      //     - 房主自己不是被指派槽 → 仍然要彈視窗給房主看(但會被攔截不能點)
+      //       同時把答對權交給被指派的 client,等該 client 答完 sync 過來
+      //   差異:房主不再「代答」自動推進,而是真的等被指派玩家答(更公平、更直覺)
       //   設計:
-      //     - 房主 / 單人練習(非 client):一律由本機處理,但若該回合輪到的槽不是自己,
-      //                                    走「自動答題」(假定答對,避免代答困難)— TODO 後續可優化
-      //     - 多人連線:每個 client 都跑這個 cb,但只有「該回合對應槽位的玩家」會看到 advShowQuiz 視窗,
-      //                 其他人看到「XXX 正在答題」提示,等房主 sync 過來推進
-      //     - 判斷「我是不是負責這回合答題的玩家」:
-      //         expectedSlot = (G.round - 1) % 4
-      //         mySlot = window._wbNet.getMySlot() (連線) 或 0 (單人練習)
-      //         若 mySlot === expectedSlot → 走原本 advShowQuiz
-      //         若 mySlot !== expectedSlot → 不彈視窗,顯示等待提示,等房主 sync 過來
-      //     - 在世界 BOSS 戰才套這個規則,其他冒險關卡(貓空/日本/台灣)維持原本流程
+      //     - window._wbAssignedQuizSlot = expectedSlot(advSubmitAnswer 攔截器用)
+      //     - 房主和 client 都跑 advShowQuiz,點選項時被攔截器檢查
+      //     - 房主端有 30 秒 watchdog:被指派玩家沒答 → 自動視為答對推進
       const _wbIsWorldBoss = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
       if(_wbIsWorldBoss){
         try{
@@ -29815,101 +30012,36 @@ function aiAct(a){
           }
           // 單人練習:玩家「同時操作 4 隻」,不論 round 都當作自己負責
           const _isSolo = !!window._wbSoloPracticeMode;
-          // 多人 client:被指派槽位的玩家(_mySlot === _expectedSlot)才彈視窗
           const _isMyTurn = _isSolo || (_mySlot === _expectedSlot);
           console.log('[WB-BossQuiz] round=' + _round
             + ', expectedSlot=' + _expectedSlot
             + ', mySlot=' + _mySlot
             + ', isMyTurn=' + _isMyTurn
             + ', soloPracticeMode=' + _isSolo);
-          // 把指派的槽位記下來,供 cb 與其他模組使用(累積答對計數仍用發起者的 uid)
-          window._wbAssignedQuizSlot = _expectedSlot;
-          if(!_isMyTurn){
-            // 不是自己的回合 → 顯示「XX 玩家正在答題」提示,不彈 advShowQuiz
-            // 房主仍然要跑 advShowQuiz(因為房主才能 setBattleState sync),
-            //   但若房主自己也不是被指派的槽 → 房主端就直接「自動答對」推進
-            // 簡化策略:在 client 端(非房主)直接 return,顯示等待視窗;
-            //           在房主端「自己不是被指派槽」時,自動視為答對推進。
-            const _isClientBoss = !!window._wbClientMode;
-            if(_isClientBoss){
-              // Client 端:顯示等待提示
-              try{
-                const _hint = document.createElement('div');
-                _hint.id = 'wb-boss-quiz-wait';
-                _hint.style.cssText =
-                  'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10400;' +
-                  'background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);' +
-                  'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
-                  'pointer-events:none;';
-                // 取得被指派玩家的名稱
-                let _assignedName = `第 ${_expectedSlot+1} 號玩家`;
-                try{
-                  const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
-                  if(snap && snap.players){
-                    const p = snap.players.find(p => p && p.slotIdx === _expectedSlot);
-                    if(p && p.name) _assignedName = p.name;
-                  }
-                }catch(_){}
-                _hint.innerHTML =
-                  '<div style="font-size:46px;color:#ffd966;font-weight:900;letter-spacing:4px;text-shadow:0 0 20px rgba(255,217,102,0.8);margin-bottom:20px;">' +
-                  '⏳ ' + _assignedName + ' 正在答 BOSS 題...' +
-                  '</div>' +
-                  '<div style="font-size:24px;color:#aabbdd;letter-spacing:2px;text-align:center;">' +
-                  '🎯 第 ' + _round + ' 回合 BOSS 行動前題<br>' +
-                  '答對全隊 +5% HP + 隊伍能量 +1' +
-                  '</div>';
-                document.body.appendChild(_hint);
-              }catch(_eH){}
-              // Client 不跑 advShowQuiz,直接 return(讓 BOSS quiz cb 由房主 sync 推進)
-              // 但 _bossQuizInFlight 仍維持 true,等待房主 sync 過來
-              // watchdog:30 秒後若還沒被 sync 推進,主動清掉等待提示 + fire cb
-              window._wbBossQuizClientWatchdog = setTimeout(function(){
-                try{
-                  const _h = document.getElementById('wb-boss-quiz-wait');
-                  if(_h) _h.remove();
-                  console.warn('[WB-BossQuiz client] 30 秒 watchdog 觸發,房主可能卡住,強制推進');
-                  // 視為答對(寬鬆策略)
-                  try{ if(typeof _advStats !== 'undefined' && _advStats) _advStats.lastAnswerCorrect = true; }catch(_){}
-                  const _cb = _advQuizResolveCb;
-                  _advQuizResolveCb = null;
-                  if(typeof _cb === 'function') _cb();
-                }catch(_){}
-              }, 30000);
-              // 監聽 sync 清掉等待提示(放到 sync handler 內處理 — 已支援 reason='quiz-correct-team-reward' 等)
-              return;
-            }else{
-              // 房主端 + 不是自己的槽 → 自動答對推進(避免房主代答困難)
-              // 顯示提示讓房主知道在「代答」狀態,自動推進
-              console.log('[WB-BossQuiz host] 自己不是被指派槽(round=' + _round + ' expected=' + _expectedSlot
-                + '),自動視為答對推進');
-              try{
-                // 顯示「客戶端 X 號玩家代答中」短暫提示(2 秒)
-                const _hostHint = document.createElement('div');
-                _hostHint.id = 'wb-boss-quiz-host-hint';
-                _hostHint.style.cssText =
-                  'position:fixed;top:20%;left:50%;transform:translate(-50%,0);z-index:10400;' +
-                  'background:rgba(0,0,0,0.85);padding:18px 32px;border-radius:14px;' +
-                  'border:2px solid #ffd966;color:#ffd966;font-size:24px;font-weight:900;' +
-                  'letter-spacing:2px;pointer-events:none;text-align:center;';
-                _hostHint.textContent = '🎯 第 ' + (_expectedSlot+1) + ' 號玩家答題中(房主代答)...';
-                document.body.appendChild(_hostHint);
-                setTimeout(()=>{ try{ _hostHint.remove(); }catch(_){} }, 2000);
-              }catch(_){}
-              // 自動視為答對(寬鬆),fire cb 推進
+          // ★ v3.3.3 — 設定指派槽位旗標(供 advSubmitAnswer 攔截器使用)
+          //   單人練習設 null(不攔截),其他模式設指派槽位
+          window._wbAssignedQuizSlot = _isSolo ? null : _expectedSlot;
+          // 房主 watchdog:30 秒沒答 → 自動視為答對推進
+          //   單人練習不需要(玩家自己 4 隻角色都會答)
+          const _isHost = !!window._wbConnectedHostMode;
+          if(_isHost && !_isMyTurn){
+            console.log('[WB-BossQuiz host] 房主自己不是被指派槽,設 30 秒 watchdog 等被指派玩家');
+            window._wbBossQuizHostWatchdog = setTimeout(function(){
+              console.warn('[WB-BossQuiz host] 30 秒沒收到被指派玩家答題,自動視為答對推進');
               try{ if(typeof _advStats !== 'undefined' && _advStats) _advStats.lastAnswerCorrect = true; }catch(_){}
-              setTimeout(function(){
-                const _cb = _advQuizResolveCb;
-                _advQuizResolveCb = null;
-                try{ window._bossQuizInFlight = false; }catch(_){}
-                if(typeof _cb === 'function') _cb();
-              }, 800);
-              return;
-            }
+              // 強制提交一個假的答案(走到答題完成流程)
+              try{
+                const _qOv = document.getElementById('adv-quiz-overlay');
+                if(_qOv) _qOv.classList.remove('show');
+              }catch(_){}
+              const _cb = _advQuizResolveCb;
+              _advQuizResolveCb = null;
+              try{ window._bossQuizInFlight = false; }catch(_){}
+              if(typeof _cb === 'function') _cb();
+            }, 30000);
           }
-          // _isMyTurn === true → 走原本流程(advShowQuiz 彈視窗給自己答)
-          // 房主自己也是被指派的槽位,正常走 advShowQuiz
         }catch(_eAssign){
-          console.warn('[WB-BossQuiz] 指派槽位例外,fallback 走原本 advShowQuiz', _eAssign);
+          console.warn('[WB-BossQuiz] 指派槽位例外', _eAssign);
         }
       }
       try{
@@ -50936,6 +51068,74 @@ function advRandomizeMathQuestion(q){
 
 function advSubmitAnswer(letter, isCorrectOverride) {
   if (_advQuizPhase !== 'asking') return;
+  // ★ v3.3.3 — 世界 BOSS 戰權限攔截:檢查當前玩家是否為「指派答題者」
+  //   老師需求(取代 v3.3.2 的「client 不彈視窗」設計):
+  //     「跳出開戰第一題只有隊長看見,隊友沒看到 → 讓全隊都看得到當前問題,
+  //      只是開場只有隊長可以點,其他人如果點擊答案不會有效果,並跳出
+  //      『這題只能由隊長回答』,其他題也是這個道理」
+  //   設計:
+  //     1) 開戰題 + BOSS 行動前題,全隊都看見 advShowQuiz 視窗(視覺一致)
+  //     2) 只有被指派的玩家點選項有效,其他玩家點選項顯示 toast「這題只能由 XX 回答」
+  //     3) 指派玩家的判斷:
+  //        - 開戰題:window._wbOpeningQuizAllowedSlot (預設 0 = 房主)
+  //        - BOSS 行動前題:window._wbAssignedQuizSlot (依槽位輪流)
+  //   旗標:
+  //     - window._wbAssignedQuizSlot = number  → 被指派的槽位 0~3
+  //     - window._wbIsOpeningQuizPhase = true  → 開戰題期間
+  try{
+    const _isWbStage = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+    const _hasNet = !!(window._wbNet && typeof window._wbNet.getMySlot === 'function');
+    const _isSoloPractice = !!window._wbSoloPracticeMode;
+    // 單人練習:玩家同時操作 4 隻,不做攔截
+    if(_isWbStage && _hasNet && !_isSoloPractice){
+      let _allowedSlot = null;
+      if(window._wbIsOpeningQuizPhase){
+        // 開戰題:固定房主槽位(預設 0)
+        _allowedSlot = (typeof window._wbOpeningQuizAllowedSlot === 'number')
+                     ? window._wbOpeningQuizAllowedSlot : 0;
+      }else if(typeof window._wbAssignedQuizSlot === 'number'){
+        // BOSS 行動前題:已指派的槽位
+        _allowedSlot = window._wbAssignedQuizSlot;
+      }
+      if(_allowedSlot !== null){
+        let _mySlot = -1;
+        try{ const _ms = window._wbNet.getMySlot(); if(typeof _ms === 'number') _mySlot = _ms; }catch(_){}
+        if(_mySlot >= 0 && _mySlot !== _allowedSlot){
+          // 非答題權限玩家點了選項 → 跳提示 + 阻止提交
+          let _allowedName = `第 ${_allowedSlot+1} 號玩家`;
+          try{
+            const snap = window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+            if(snap && snap.players){
+              const p = snap.players.find(p => p && p.slotIdx === _allowedSlot);
+              if(p && p.name) _allowedName = p.name;
+            }
+          }catch(_){}
+          try{
+            // 顯示中央提示 toast (z-index 高過 quiz 視窗)
+            let _toast = document.getElementById('wb-quiz-blocked-toast');
+            if(_toast) _toast.remove();
+            _toast = document.createElement('div');
+            _toast.id = 'wb-quiz-blocked-toast';
+            _toast.style.cssText =
+              'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:11500;'
+              + 'background:linear-gradient(135deg,rgba(80,30,30,0.96),rgba(40,15,15,0.96));'
+              + 'border:3px solid #ff8866;border-radius:18px;padding:24px 40px;'
+              + 'font-size:28px;font-weight:900;color:#ffd0c0;letter-spacing:2px;'
+              + 'text-shadow:0 0 12px rgba(255,140,100,0.7);text-align:center;'
+              + 'box-shadow:0 0 40px rgba(255,140,100,0.5);pointer-events:none;'
+              + 'animation:fadeInPop 0.3s ease-out;';
+            _toast.innerHTML = '🚫 這題只能由 <span style="color:#ffe066">' + _allowedName + '</span> 回答';
+            document.body.appendChild(_toast);
+            setTimeout(() => { try{ _toast.remove(); }catch(_){} }, 2400);
+          }catch(_eToast){}
+          console.log('[WB-Quiz 攔截] mySlot=' + _mySlot + ', allowedSlot=' + _allowedSlot + ',阻止提交答案');
+          // 還原 phase,讓 allowed 玩家還能點
+          _advQuizPhase = 'asking';
+          return;
+        }
+      }
+    }
+  }catch(_eIntercept){ console.warn('[WB-Quiz 攔截] 例外', _eIntercept); }
   clearInterval(_advQuizTimer);
   _advQuizPhase = 'answered';
   const elapsed = (Date.now() - _advStats.startTime) / 1000;
