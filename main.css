@@ -468,6 +468,23 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 .stag.nosell{background:#4a3a00;color:#ddcc00}
 .stag.forecast{background:#2a1a5a;color:#9988ff}
 
+/* ══════════════════════════════════════════════════════════════════════
+ * ★ v3.3.2 — 世界 BOSS 戰專屬:傷害數字 popup 圖層置頂
+ * ────────────────────────────────────────────────────────────────────
+ * 老師需求:「世界boss戰的boss受到傷害時的數字圖層置頂,
+ *           目前被定型文選單和boss血條蓋住了」
+ * 問題:.popup 基礎 z-index:200,但世界 BOSS 戰有兩個 UI 元素蓋住它:
+ *   - wb-adv-battle-overlay (BOSS 血條) z-index:600
+ *   - wb-emoji-bar-real    (定型文選單) z-index:9050
+ * 修法:用 body.wb-in-worldboss-battle 守門,只在世界 BOSS 戰提高 popup z-index
+ *      到 9100(蓋過定型文 9050,但低於答題視窗 10900)
+ * 配合 index.html 的 FX_LAYER z-index 從 50 提到 700(蓋過 BOSS 血條),
+ * 但因 showPopup 是直接 append 到 #gc(不是 FX_LAYER),所以仍要從 CSS 處理 popup
+ * ══════════════════════════════════════════════════════════════════════ */
+body.wb-in-worldboss-battle .popup {
+  z-index: 9100 !important;
+}
+
 /* POPUPS */
 .popup{position:absolute;font-size:64px;font-weight:700;pointer-events:none;z-index:200;text-shadow:2px 2px 0 #000,0 0 12px rgba(0,0,0,0.8);white-space:nowrap;transform:translateX(-50%);}
 @keyframes dmgArcJump{

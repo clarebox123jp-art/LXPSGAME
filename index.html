@@ -6258,7 +6258,16 @@ function ensureFxLayer(){
   if(FX_LAYER)return;
   FX_LAYER=document.createElement('div');
   FX_LAYER.id='fx-layer';
-  FX_LAYER.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:50';
+  // ★ v3.3.2 — z-index 從 50 提到 700,蓋過世界 BOSS 戰的 BOSS 血條(z:600)
+  //   老師需求:「世界boss戰的boss受到傷害時的數字圖層置頂,目前被定型文選單和boss血條蓋住了」
+  //   設計:
+  //     - 700 高過 BOSS 血條(wb-adv-battle-overlay z:600)
+  //     - 但低於答題視窗(adv-quiz-overlay/adv-reward-overlay z:10900)
+  //     - 也低於極限爆發 cinematic(burst-cinematic z:465 / burst-img-panel z:460)
+  //       → 爆發演出時 FX 數字仍會顯示在大字上方,這是合理的(主程式戰鬥引擎其他關卡也是這設計)
+  //     - 表情列(wb-emoji-bar-real z:9050)還是會蓋住 FX,但表情列在底部、傷害數字在卡片附近,
+  //       實際上很少有重疊問題;若有特定 popup(如「飄字」)需要更高層級,可單獨設 z-index
+  FX_LAYER.style.cssText='position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:700';
   document.getElementById('gc').appendChild(FX_LAYER);
 }
 function cardRect(h){
@@ -29728,6 +29737,36 @@ function aiAct(a){
             + ', stage=' + (typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef'));
         }
       }catch(_){}
+      // ★ v3.3.2 — 世界 BOSS 戰專屬:BOSS 行動前答對 → 觸發全隊獎勵 + 累積演出
+      //   背景:v3.3.2 取消「玩家每回合答題」後,_wbOnQuizCorrect 只剩兩條入口:
+      //         (1) 開場題 cb(直接 inline 在 _wbStartBossOpening,不走這條 cb)
+      //         (2) BOSS 行動前答題 cb ← 就是這裡
+      //   老師需求:多人連線模式行為要與單人練習一致,差別只在「不同玩家輪流操作」
+      //   設計:
+      //     - 用 _advStats.lastAnswerCorrect === true 判定答對(主程式 advAnswer 設這旗標)
+      //     - 房主端執行 _wbOnQuizCorrect → 內含 G.energy.p1+1、全隊 +5% HP、累積觸發演出
+      //     - _wbOnQuizCorrect 內部已有 _wbHostSyncG('quiz-correct-team-reward') 把狀態 push 給其他玩家
+      //     - 視覺特效(_wbShowTeamBurstCinematic)在每個客戶端各自播放(每個玩家都看得到自己畫面)
+      //     - 多人模式下,非房主玩家也會看到動畫,因為:
+      //         a. cb 在每個客戶端都會跑(主程式 advShowQuiz 在每個玩家機器上各自彈視窗答題)
+      //         b. 視覺特效 (_wbShowTeamBurstCinematic / playSfx) 與 sync 無關,本機 DOM 操作即可
+      try{
+        const _isWb = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+        if(_isWb && a && a.side === 'p2' && a.curHp > 0){
+          const _isCorrect = (typeof _advStats !== 'undefined' && _advStats
+                             && _advStats.lastAnswerCorrect === true);
+          if(_isCorrect && typeof window._wbOnQuizCorrect === 'function'){
+            // 用 0 當 actorPos 是因為「BOSS 行動前答題」是一個全隊集體答題,
+            // 沒有單一玩家綁定,用 0 槽當代表(_wbOnQuizCorrect 內部會操作 G.p1.forEach 全隊)
+            try{ window._wbOnQuizCorrect(0, (G && G.round) || 1); }catch(eOnCorr){
+              console.warn('[WB-BossQuiz] _wbOnQuizCorrect 例外', eOnCorr);
+            }
+          }else if(!_isCorrect && typeof window._wbOnQuizWrong === 'function'){
+            // 答錯不再扣 HP(v3.3.2 取消所有懲罰),但仍呼叫一下保留統計與廣播
+            try{ window._wbOnQuizWrong(0, (G && G.round) || 1, false); }catch(_){}
+          }
+        }
+      }catch(_eWbHook){ console.warn('[WB-BossQuiz hook] 例外', _eWbHook); }
       // ★ v1.0.20260511.6120 — 死角 1 修補:BOSS quiz cb 觸發時若 a 已被其他流程處理掉
       //   (例如玩家爆發插隊 _advTriggerBurstFor 把 a.acted 設成 true、或 BOSS 已死亡),
       //   不該再呼叫 _realAiAct(會跑攻擊/爆發流程造成異常),應直接推進 startTurn。
@@ -29735,6 +29774,8 @@ function aiAct(a){
       //   modal 的 skip 路徑、玩家爆發插隊路徑、或 BOSS 被秒殺等狀況設成 acted=true 或 curHp<=0。
       try{ window._bossQuizInFlight = false; }catch(_){}
       try{ window._advQuizBoss = null; }catch(_){}
+      // ★ v3.3.2 — BOSS 答題 cb 完成 → 清除指派槽位旗標(讓 _wbShowCardBubble 回到正常顯示位置)
+      try{ window._wbAssignedQuizSlot = null; }catch(_){}
       if(!a || typeof a !== 'object' || a.curHp <= 0){
         console.log('[BOSS quiz cb] a 無效或已死亡,直接 startTurn');
         _pSetTimeout(startTurn, 300);
@@ -29749,6 +29790,128 @@ function aiAct(a){
       try{ a.acted = true; }catch(_){}
       _realAiAct(a);
     };
+      // ★ v3.3.2 — 多人模式:BOSS 行動前題依槽位輪流(老師確認規則:
+      //   回合 1→p1[0]、回合 2→p1[1]、回合 3→p1[2]、回合 4→p1[3]、回合 5→p1[0]...循環)
+      //   設計:
+      //     - 房主 / 單人練習(非 client):一律由本機處理,但若該回合輪到的槽不是自己,
+      //                                    走「自動答題」(假定答對,避免代答困難)— TODO 後續可優化
+      //     - 多人連線:每個 client 都跑這個 cb,但只有「該回合對應槽位的玩家」會看到 advShowQuiz 視窗,
+      //                 其他人看到「XXX 正在答題」提示,等房主 sync 過來推進
+      //     - 判斷「我是不是負責這回合答題的玩家」:
+      //         expectedSlot = (G.round - 1) % 4
+      //         mySlot = window._wbNet.getMySlot() (連線) 或 0 (單人練習)
+      //         若 mySlot === expectedSlot → 走原本 advShowQuiz
+      //         若 mySlot !== expectedSlot → 不彈視窗,顯示等待提示,等房主 sync 過來
+      //     - 在世界 BOSS 戰才套這個規則,其他冒險關卡(貓空/日本/台灣)維持原本流程
+      const _wbIsWorldBoss = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+      if(_wbIsWorldBoss){
+        try{
+          const _round = (G && G.round) || 1;
+          const _expectedSlot = (_round - 1) % 4;
+          let _mySlot = 0;
+          if(window._wbNet && typeof window._wbNet.getMySlot === 'function'){
+            const _ms = window._wbNet.getMySlot();
+            if(typeof _ms === 'number' && _ms >= 0) _mySlot = _ms;
+          }
+          // 單人練習:玩家「同時操作 4 隻」,不論 round 都當作自己負責
+          const _isSolo = !!window._wbSoloPracticeMode;
+          // 多人 client:被指派槽位的玩家(_mySlot === _expectedSlot)才彈視窗
+          const _isMyTurn = _isSolo || (_mySlot === _expectedSlot);
+          console.log('[WB-BossQuiz] round=' + _round
+            + ', expectedSlot=' + _expectedSlot
+            + ', mySlot=' + _mySlot
+            + ', isMyTurn=' + _isMyTurn
+            + ', soloPracticeMode=' + _isSolo);
+          // 把指派的槽位記下來,供 cb 與其他模組使用(累積答對計數仍用發起者的 uid)
+          window._wbAssignedQuizSlot = _expectedSlot;
+          if(!_isMyTurn){
+            // 不是自己的回合 → 顯示「XX 玩家正在答題」提示,不彈 advShowQuiz
+            // 房主仍然要跑 advShowQuiz(因為房主才能 setBattleState sync),
+            //   但若房主自己也不是被指派的槽 → 房主端就直接「自動答對」推進
+            // 簡化策略:在 client 端(非房主)直接 return,顯示等待視窗;
+            //           在房主端「自己不是被指派槽」時,自動視為答對推進。
+            const _isClientBoss = !!window._wbClientMode;
+            if(_isClientBoss){
+              // Client 端:顯示等待提示
+              try{
+                const _hint = document.createElement('div');
+                _hint.id = 'wb-boss-quiz-wait';
+                _hint.style.cssText =
+                  'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10400;' +
+                  'background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);' +
+                  'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+                  'pointer-events:none;';
+                // 取得被指派玩家的名稱
+                let _assignedName = `第 ${_expectedSlot+1} 號玩家`;
+                try{
+                  const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+                  if(snap && snap.players){
+                    const p = snap.players.find(p => p && p.slotIdx === _expectedSlot);
+                    if(p && p.name) _assignedName = p.name;
+                  }
+                }catch(_){}
+                _hint.innerHTML =
+                  '<div style="font-size:46px;color:#ffd966;font-weight:900;letter-spacing:4px;text-shadow:0 0 20px rgba(255,217,102,0.8);margin-bottom:20px;">' +
+                  '⏳ ' + _assignedName + ' 正在答 BOSS 題...' +
+                  '</div>' +
+                  '<div style="font-size:24px;color:#aabbdd;letter-spacing:2px;text-align:center;">' +
+                  '🎯 第 ' + _round + ' 回合 BOSS 行動前題<br>' +
+                  '答對全隊 +5% HP + 隊伍能量 +1' +
+                  '</div>';
+                document.body.appendChild(_hint);
+              }catch(_eH){}
+              // Client 不跑 advShowQuiz,直接 return(讓 BOSS quiz cb 由房主 sync 推進)
+              // 但 _bossQuizInFlight 仍維持 true,等待房主 sync 過來
+              // watchdog:30 秒後若還沒被 sync 推進,主動清掉等待提示 + fire cb
+              window._wbBossQuizClientWatchdog = setTimeout(function(){
+                try{
+                  const _h = document.getElementById('wb-boss-quiz-wait');
+                  if(_h) _h.remove();
+                  console.warn('[WB-BossQuiz client] 30 秒 watchdog 觸發,房主可能卡住,強制推進');
+                  // 視為答對(寬鬆策略)
+                  try{ if(typeof _advStats !== 'undefined' && _advStats) _advStats.lastAnswerCorrect = true; }catch(_){}
+                  const _cb = _advQuizResolveCb;
+                  _advQuizResolveCb = null;
+                  if(typeof _cb === 'function') _cb();
+                }catch(_){}
+              }, 30000);
+              // 監聽 sync 清掉等待提示(放到 sync handler 內處理 — 已支援 reason='quiz-correct-team-reward' 等)
+              return;
+            }else{
+              // 房主端 + 不是自己的槽 → 自動答對推進(避免房主代答困難)
+              // 顯示提示讓房主知道在「代答」狀態,自動推進
+              console.log('[WB-BossQuiz host] 自己不是被指派槽(round=' + _round + ' expected=' + _expectedSlot
+                + '),自動視為答對推進');
+              try{
+                // 顯示「客戶端 X 號玩家代答中」短暫提示(2 秒)
+                const _hostHint = document.createElement('div');
+                _hostHint.id = 'wb-boss-quiz-host-hint';
+                _hostHint.style.cssText =
+                  'position:fixed;top:20%;left:50%;transform:translate(-50%,0);z-index:10400;' +
+                  'background:rgba(0,0,0,0.85);padding:18px 32px;border-radius:14px;' +
+                  'border:2px solid #ffd966;color:#ffd966;font-size:24px;font-weight:900;' +
+                  'letter-spacing:2px;pointer-events:none;text-align:center;';
+                _hostHint.textContent = '🎯 第 ' + (_expectedSlot+1) + ' 號玩家答題中(房主代答)...';
+                document.body.appendChild(_hostHint);
+                setTimeout(()=>{ try{ _hostHint.remove(); }catch(_){} }, 2000);
+              }catch(_){}
+              // 自動視為答對(寬鬆),fire cb 推進
+              try{ if(typeof _advStats !== 'undefined' && _advStats) _advStats.lastAnswerCorrect = true; }catch(_){}
+              setTimeout(function(){
+                const _cb = _advQuizResolveCb;
+                _advQuizResolveCb = null;
+                try{ window._bossQuizInFlight = false; }catch(_){}
+                if(typeof _cb === 'function') _cb();
+              }, 800);
+              return;
+            }
+          }
+          // _isMyTurn === true → 走原本流程(advShowQuiz 彈視窗給自己答)
+          // 房主自己也是被指派的槽位,正常走 advShowQuiz
+        }catch(_eAssign){
+          console.warn('[WB-BossQuiz] 指派槽位例外,fallback 走原本 advShowQuiz', _eAssign);
+        }
+      }
       try{ advShowQuiz(); }catch(e){
         try{ window._bossQuizInFlight = false; }catch(_){}
         console.error('[BOSS quiz] advShowQuiz 失敗', e);
@@ -45276,7 +45439,13 @@ const ADV_REWARDS = [
   {id:'invincible_team', icon:'🛡', name:'絕對防禦',   desc:'全體隊友無敵 1 回合(免疫所有傷害與不利狀態)'},
   {id:'remove_buff',     icon:'🌪', name:'破滅吹拂',   desc:'消除所有對手身上的有利狀態(buffs 全清)'},
   // ★ v1.0.20260501.4870 — 新增「驅除寵物」獎勵
-  {id:'remove_pet',      icon:'🐾', name:'驅除寵物',   desc:'驅除1名對手身上的寵物(若無對手攜帶寵物則跳過)'},
+  // ★ v3.3.2 — 世界 BOSS 戰專屬版:移除 BOSS 身上 1 層元素護盾(若無護盾則跳過)
+  //   背景:世界 BOSS 不攜帶寵物(v3.3.2 修補#6),原本「驅除寵物」獎勵在世界 BOSS 戰永遠跳過,
+  //         浪費了一個獎勵格子。改成「破除護盾」更符合世界 BOSS 戰的設計(BOSS 護盾在第二階段啟動,
+  //         玩家有破盾的需求)。
+  //   注意:這個獎勵在「非世界 BOSS 戰」維持原本「驅除寵物」邏輯,因為其他冒險關卡的對手仍會帶寵物。
+  //         由 _adventureStage === 'worldboss' 判斷分流。
+  {id:'remove_pet',      icon:'🐾', name:'驅除寵物 / 破盾',   desc:'冒險關卡:驅除1名對手身上的寵物 / 世界BOSS戰:移除BOSS 1層元素護盾(若無護盾則跳過)'},
 ];
 // 「極限爆發」獎勵每場戰鬥只出現一次
 let _advBurstRewardUsed = false;
@@ -51749,36 +51918,94 @@ function advApplyReward(id) {
       try{ playSfx('sfx-fantasy', 0.7); }catch(_){}
       log('[獎勵] 🌪 破滅吹拂!消除全體對手共 ' + _removedTotal + ' 個有利狀態!');
     } else if (id === 'remove_pet') {
-      // ★ v1.0.20260501.4870 — 驅除 1 名對手身上的寵物
-      //   邏輯:從「存活且攜帶寵物」的對手中隨機挑 1 個,移除其 equip
-      //     - 若 equip 有 onRemove,先呼叫(對應的天賦/光環/減傷等狀態才會正確清除)
-      //     - 不放回任何牌池(屬於「驅除」效果,寵物徹底消失)
-      //   若無任何對手攜帶寵物,跳出提示但不算白費(玩家事先看不到對手裝備狀況)
-      const _foesWithPet = G.p2.filter(x => x.curHp > 0 && x.equip);
-      if(_foesWithPet.length > 0){
-        const _t = _foesWithPet[Math.floor(Math.random() * _foesWithPet.length)];
-        const _petName = _t.equip.n || '寵物';
-        const _petIcon = (_t.equip.icon) || '🐾';
-        try{
-          // 先觸發 onRemove 清除天賦/狀態
-          if(typeof EQUIP_DB !== 'undefined'){
-            const _eqDef = EQUIP_DB.find(e => e.n === _t.equip.n);
-            if(_eqDef && typeof _eqDef.onRemove === 'function') _eqDef.onRemove(_t);
+      // ★ v3.3.2 — 世界 BOSS 戰分流:改為「破除 BOSS 元素護盾 1 層」
+      //   老師需求:「世界boss戰移除驅除目標身上寵物的答題獎勵(已經不會攜帶寵物)。
+      //              改成移除目標身上1層元素護盾(若無護盾則跳過)」
+      //   設計:
+      //     - 世界 BOSS 戰(_adventureStage === 'worldboss'):
+      //         遍歷 BOSS._wbShields 找第一個層數 > 0 的元素 → 該元素 -1 層 + 視覺特效
+      //         若全部 0 → 顯示提示「BOSS 目前無護盾可破」
+      //     - 其他冒險關卡:走原本驅除寵物邏輯
+      const _isWbBoss = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+      if(_isWbBoss){
+        // ── 世界 BOSS 戰:破盾 ──
+        const _boss = G.p2 && G.p2[0];
+        if(_boss && _boss._wbShields){
+          // 找第一個層數 > 0 的護盾元素(用 _wbShieldElements 維持順序)
+          const _elemList = _boss._wbShieldElements || Object.keys(_boss._wbShields);
+          let _removedEl = null;
+          for(const _el of _elemList){
+            if(_boss._wbShields[_el] > 0){
+              _boss._wbShields[_el]--;
+              _removedEl = _el;
+              break;
+            }
           }
-        }catch(_){}
-        _t.equip = null;
-        try{ if(typeof bannerFX === 'function') bannerFX(_t, '🐾 寵物被驅除!', '#aa66cc', 1100); }catch(_){}
-        try{ if(typeof flashCard === 'function') flashCard(_t, 'rgba(170,100,200,0.75)', 400); }catch(_){}
-        try{ if(typeof ringFX === 'function') ringFX(_t, '#cc88ff', 600); }catch(_){}
-        try{ if(typeof renderCard === 'function') renderCard(_t); }catch(_){}
-        try{ flashScreen('rgba(170,100,200,0.35)', 400); }catch(_){}
-        try{ playSfx('sfx-cancel', 0.7); }catch(_){}
-        try{ playSfx('sfx-shoot', 0.5); }catch(_){}
-        log('[獎勵] 🐾 ' + _t.name + ' 的寵物 [' + _petIcon + ' ' + _petName + '] 被驅除!');
-      } else {
-        // 無對手攜帶寵物 — 顯示提示
-        try{ if(typeof _showInGameToast === 'function') _showInGameToast('🐾 對手身上沒有寵物可驅除', '#aa88cc', 2000); }catch(_){}
-        log('[獎勵] 🐾 驅除寵物:對手身上沒有寵物可驅除');
+          if(_removedEl){
+            const META = (typeof window._WB_ELEMENT_META === 'object' && window._WB_ELEMENT_META)
+                       ? window._WB_ELEMENT_META : null;
+            const _meta = META ? META[_removedEl] : null;
+            const _icon = _meta ? _meta.icon : '🛡';
+            const _label = _meta ? _meta.label : (_removedEl + '盾');
+            const _color = _meta ? _meta.color : '#ffd966';
+            try{ if(typeof bannerFX === 'function') bannerFX(_boss, `${_icon} ${_label} -1`, _color, 1200); }catch(_){}
+            try{ if(typeof flashCard === 'function') flashCard(_boss, 'rgba(255,220,150,0.75)', 400); }catch(_){}
+            try{ if(typeof ringFX === 'function') ringFX(_boss, _color, 700); }catch(_){}
+            try{ if(typeof renderCard === 'function') renderCard(_boss); }catch(_){}
+            // 更新 BOSS 血條 UI(內含護盾 chip 列)
+            try{ if(typeof window._wbRefreshBossHpBar === 'function') window._wbRefreshBossHpBar(); }catch(_){}
+            try{ flashScreen('rgba(255,220,150,0.35)', 400); }catch(_){}
+            try{ playSfx('sfx-cancel', 0.7); }catch(_){}
+            try{ playSfx('sfx-shoot', 0.5); }catch(_){}
+            log(`[獎勵] 🛡 破盾!移除 BOSS 1 層 ${_icon} ${_label}`);
+            // 連線房主 sync 給其他玩家
+            try{
+              if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+                window._wbHostSyncG('reward-shield-remove');
+              }
+            }catch(_){}
+          }else{
+            // BOSS 目前沒有護盾(第一階段或全被打破)
+            try{ if(typeof _showInGameToast === 'function') _showInGameToast('🛡 BOSS 目前無護盾可破', '#ffd966', 2000); }catch(_){}
+            log('[獎勵] 🛡 破盾:BOSS 目前無護盾(可能仍在第一階段)');
+          }
+        }else{
+          try{ if(typeof _showInGameToast === 'function') _showInGameToast('🛡 BOSS 目前無護盾可破', '#ffd966', 2000); }catch(_){}
+          log('[獎勵] 🛡 破盾:BOSS 護盾未初始化');
+        }
+      }else{
+        // ── 其他冒險關卡:原本驅除寵物邏輯 ──
+        // ★ v1.0.20260501.4870 — 驅除 1 名對手身上的寵物
+        //   邏輯:從「存活且攜帶寵物」的對手中隨機挑 1 個,移除其 equip
+        //     - 若 equip 有 onRemove,先呼叫(對應的天賦/光環/減傷等狀態才會正確清除)
+        //     - 不放回任何牌池(屬於「驅除」效果,寵物徹底消失)
+        //   若無任何對手攜帶寵物,跳出提示但不算白費(玩家事先看不到對手裝備狀況)
+        const _foesWithPet = G.p2.filter(x => x.curHp > 0 && x.equip);
+        if(_foesWithPet.length > 0){
+          const _t = _foesWithPet[Math.floor(Math.random() * _foesWithPet.length)];
+          const _petName = _t.equip.n || '寵物';
+          const _petIcon = (_t.equip.icon) || '🐾';
+          try{
+            // 先觸發 onRemove 清除天賦/狀態
+            if(typeof EQUIP_DB !== 'undefined'){
+              const _eqDef = EQUIP_DB.find(e => e.n === _t.equip.n);
+              if(_eqDef && typeof _eqDef.onRemove === 'function') _eqDef.onRemove(_t);
+            }
+          }catch(_){}
+          _t.equip = null;
+          try{ if(typeof bannerFX === 'function') bannerFX(_t, '🐾 寵物被驅除!', '#aa66cc', 1100); }catch(_){}
+          try{ if(typeof flashCard === 'function') flashCard(_t, 'rgba(170,100,200,0.75)', 400); }catch(_){}
+          try{ if(typeof ringFX === 'function') ringFX(_t, '#cc88ff', 600); }catch(_){}
+          try{ if(typeof renderCard === 'function') renderCard(_t); }catch(_){}
+          try{ flashScreen('rgba(170,100,200,0.35)', 400); }catch(_){}
+          try{ playSfx('sfx-cancel', 0.7); }catch(_){}
+          try{ playSfx('sfx-shoot', 0.5); }catch(_){}
+          log('[獎勵] 🐾 ' + _t.name + ' 的寵物 [' + _petIcon + ' ' + _petName + '] 被驅除!');
+        } else {
+          // 無對手攜帶寵物 — 顯示提示
+          try{ if(typeof _showInGameToast === 'function') _showInGameToast('🐾 對手身上沒有寵物可驅除', '#aa88cc', 2000); }catch(_){}
+          log('[獎勵] 🐾 驅除寵物:對手身上沒有寵物可驅除');
+        }
       }
     }
     updateUI();
