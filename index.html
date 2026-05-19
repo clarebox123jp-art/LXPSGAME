@@ -65811,15 +65811,82 @@ function _renderHeroDetail(name, box) {
           const _dmgReduce = _isP ? Math.min(50, _hp * 0.2).toFixed(1).replace(/\.0$/,'') : 0;
           const _healUp    = _isP ? (_hp * 0.2).toFixed(1).replace(/\.0$/,'') : 0;  // ★ 改用 0.2%/點 (對齊減傷,無上限)
           // 字體尺寸對齊天賦說明文字 (~24px),四行排版
+          // ★ v3.3.4 — 修補排版:用 flex + flex-wrap + 每組 white-space:nowrap 包住「標籤+數字」整組,
+          //   避免狹窄欄位把「迴避率 +26%」拆成「迴避率」換行「+26%」
+          //   每行右側分組用 row-gap/column-gap 自然斷行,而不是被空白/頓號切碎
+          // ★ v3.3.4 — 補上「💎 至寶效果」區塊(老師需求:這區再補上至寶效果)
+          //   背景:_calcHeroTreasureBonus 只算了 hp/atk/sp/spd 基礎屬性,
+          //         每件至寶的「特殊效果文字」(abilityText)沒顯示出來
+          //   設計:用 _getHeroEquippedTreasures(name) 取目前裝備清單,
+          //         每件顯示「icon + 名稱 + abilityText」,稀有度上色
+          //         未裝備時顯示「(尚未裝備至寶)」灰字提示
+          //   動態:至寶切換 → _renderHeroDetail 重渲染整個面板 → 此區隨之更新
+          const _RARITY_COLOR = {
+            mythic: '#ff4477',  // 紅
+            legend: '#ffcc44',  // 金
+            epic:   '#cc88ff',  // 紫
+            rare:   '#66bbff',  // 藍
+            common: '#aaaaaa',
+          };
+          let _treasureHtml = '';
+          try{
+            const _eqTr = (typeof _getHeroEquippedTreasures === 'function')
+                        ? _getHeroEquippedTreasures(name) : [];
+            if(_eqTr.length === 0){
+              _treasureHtml = `
+                <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.15);">
+                  <div style="font-size:16px;color:#777;text-align:center;font-style:italic;">(尚未裝備至寶)</div>
+                </div>`;
+            }else{
+              const _items = _eqTr.map(e => {
+                const _def = e.def || {};
+                const _rec = e.record || {};
+                const _slot = (typeof _rec.equippedSlot === 'number') ? _rec.equippedSlot : null;
+                const _slotLabel = (_slot === 0) ? '主' : (_slot === 1 ? '副' : '');
+                const _color = _RARITY_COLOR[_def.rarity] || '#aaaaaa';
+                const _icon  = _def.icon || '💎';
+                const _name2 = _def.name || e.id;
+                const _ab    = _def.abilityText || '';
+                const _lvTxt = (_rec.lv && _rec.lv > 1) ? ` <span style="color:#aab;font-size:14px;">Lv.${_rec.lv}</span>` : '';
+                return `
+                  <div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;">
+                    <span style="flex-shrink:0;font-size:20px;line-height:1.4;">${_icon}</span>
+                    <div style="flex:1;min-width:0;">
+                      <div style="font-size:16px;color:${_color};font-weight:700;line-height:1.3;">
+                        ${_slotLabel ? `<span style="color:#888;font-size:13px;font-weight:600;margin-right:4px;">[${_slotLabel}]</span>` : ''}${_name2}${_lvTxt}
+                      </div>
+                      <div style="font-size:14px;color:#ddd;line-height:1.4;margin-top:2px;">${_ab}</div>
+                    </div>
+                  </div>`;
+              }).join('');
+              _treasureHtml = `
+                <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.15);">
+                  <div style="font-size:15px;color:#aab;font-weight:700;letter-spacing:1px;margin-bottom:2px;">💎 至寶效果</div>
+                  ${_items}
+                </div>`;
+            }
+          }catch(_eTr){ console.warn('[素質點數效果] 至寶區塊渲染失敗', _eTr); }
           return `
             <div style="width:100%;max-width:340px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;margin-top:6px;">
               <div style="font-size:18px;color:#aab;font-weight:700;margin-bottom:6px;text-align:center;letter-spacing:1px;">📊 素質點數效果</div>
               <div style="font-size:22px;color:#ffffff;line-height:1.7;font-family:inherit;">
-                <div>✨ 技能威力 <span style="color:#cc88ff;font-weight:800;">+${_skillPow}%</span></div>
-                <div>💨 命中率 <span style="color:#44aaff;font-weight:800;">+${_hitEva}%</span>　迴避率 <span style="color:#44aaff;font-weight:800;">+${_hitEva}%</span></div>
-                <div>⚔️ 暴擊率 <span style="color:#ff9966;font-weight:800;">+${_critRate}%</span>　暴擊傷害 <span style="color:#ff9966;font-weight:800;">+${_critDmg}%</span></div>
-                <div>❤️ 減傷量 <span style="color:#ff6666;font-weight:800;">+${_dmgReduce}%</span>、受治療 <span style="color:#ff6666;font-weight:800;">+${_healUp}%</span></div>
+                <div style="display:flex;flex-wrap:wrap;column-gap:14px;row-gap:2px;align-items:baseline;">
+                  <span style="white-space:nowrap;">✨ 技能威力 <span style="color:#cc88ff;font-weight:800;">+${_skillPow}%</span></span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;column-gap:14px;row-gap:2px;align-items:baseline;">
+                  <span style="white-space:nowrap;">💨 命中率 <span style="color:#44aaff;font-weight:800;">+${_hitEva}%</span></span>
+                  <span style="white-space:nowrap;">迴避率 <span style="color:#44aaff;font-weight:800;">+${_hitEva}%</span></span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;column-gap:14px;row-gap:2px;align-items:baseline;">
+                  <span style="white-space:nowrap;">⚔️ 暴擊率 <span style="color:#ff9966;font-weight:800;">+${_critRate}%</span></span>
+                  <span style="white-space:nowrap;">暴擊傷害 <span style="color:#ff9966;font-weight:800;">+${_critDmg}%</span></span>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;column-gap:14px;row-gap:2px;align-items:baseline;">
+                  <span style="white-space:nowrap;">❤️ 減傷量 <span style="color:#ff6666;font-weight:800;">+${_dmgReduce}%</span></span>
+                  <span style="white-space:nowrap;">受治療 <span style="color:#ff6666;font-weight:800;">+${_healUp}%</span></span>
+                </div>
               </div>
+              ${_treasureHtml}
             </div>`;
         })()}
       </div>
