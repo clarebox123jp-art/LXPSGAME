@@ -6325,6 +6325,18 @@
     // ★ BGM 預先切到世界戰專屬 BGM(advStartBattle 內 bgmStop 後再兜底重啟)
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
+    // ── ★ FIX 20260519(v2) — 暫停 startTurn 推進 ─────────────────────
+    //   advStartBattle 內 line 602 會排 `_pSetTimeout(startTurn, 800)`,
+    //   _pSetTimeout 看 _gamePaused 為 true 時會把 fn queue 起來,等 _resumeTimers 釋放。
+    //   所以必須在 advStartBattle 之前就設 _gamePaused = true!
+    //   原本放在 setTimeout 內(600ms 後才設)→ advStartBattle 內 _pSetTimeout
+    //   直接 setTimeout(startTurn, 800),不會被 queue,跑到 startTurn 時開戰題還沒彈
+    //   → 戰鬥已經開始,開戰題彈出來但被「現在是對手回合」蓋住 → 用戶看不到題目。
+    try{
+      if(typeof _gamePaused !== 'undefined') _gamePaused = true;
+      console.log('[WB-Host v6] 🔒 已設 _gamePaused=true,等開戰題答完才解除');
+    }catch(_){}
+
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
       console.log('[WB-Host v6] 呼叫主程式 advStartBattle(),陣容:', p1.map(h=>h.name), 'BOSS:', boss.name);
@@ -6332,6 +6344,8 @@
     }catch(e){
       console.error('[WB-Host v6] advStartBattle 失敗', e);
       _wbGameAlert('⚠ 主程式戰鬥啟動失敗:' + (e.message || e));
+      // 即使失敗也要釋放 paused,避免後續流程卡死
+      try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(_){}
       return;
     }
 
@@ -6371,16 +6385,10 @@
       }
     }, 200);
 
-    // ── ★ FIX 20260519 — 咆哮 + 開戰題搬到 advStartBattle 之後 ──
-    //   讓 client 先收到 onBattleUpdate 進入戰場(會在 client 那邊自己跑咆哮),
-    //   接著房主在這裡也跑咆哮 + 開戰題;畫面同步性大幅改善。
-    //   _gamePaused 在開戰題流程中設為 true → BOSS/玩家行動不會搶跑;
-    //   開戰題答完後 _fireOnDone 內會解除 paused 並 sync G。
-    //   暫停 startTurn 推進(設 _gamePaused=true,advShowQuiz 答完後會解除)
-    try{
-      if(typeof _gamePaused !== 'undefined') _gamePaused = true;
-    }catch(_){}
-    setTimeout(async () => {
+    // ── ★ FIX 20260519(v2) — advStartBattle 完成後立即啟動咆哮 + 開戰題 ──
+    //   不再用 setTimeout(600),改成立即啟動。_gamePaused=true 已經把 startTurn queue 起來,
+    //   所以不會有戰鬥推進的時序問題。
+    (async () => {
       try{
         if(typeof window._wbStartBossOpening === 'function'){
           console.log('[WB-Host v6] 進入開戰題流程(advStartBattle 之後)…');
@@ -6392,10 +6400,11 @@
               window._wbHostSyncG('opening_quiz_done');
             }
           }catch(_eSync){}
-          // 解除 paused,讓 startTurn 推進到回合 1
+          // 解除 paused,讓被 queue 的 startTurn 推進到回合 1
           try{
             if(typeof _gamePaused !== 'undefined') _gamePaused = false;
             if(typeof _resumeTimers === 'function') _resumeTimers();
+            console.log('[WB-Host v6] 🔓 已解除 _gamePaused + _resumeTimers,startTurn 即將推進');
           }catch(_){}
         }
       }catch(eOp){
@@ -6405,7 +6414,7 @@
           if(typeof _resumeTimers === 'function') _resumeTimers();
         }catch(_){}
       }
-    }, 600);  // 600ms 讓 advStartBattle 與 sync 先穩定
+    })();
 
     console.log('[WB-Host v6] ✅ 連線房主啟動完成,主程式接管戰鬥');
   };
