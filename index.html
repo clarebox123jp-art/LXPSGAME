@@ -4579,8 +4579,13 @@
             🎉 近期活動與新角色
           </button>
           <!-- ★ v1.0.20260507.5550 — 「英雄鬥技場」從首頁搬到這裡,讓關卡與練習模式統一在同一個捲動清單中 -->
-          <button class="adv-arena-btn" onclick="if(window._isMobileDevice&&window._isMobileDevice()&&window._enterMobileFullscreenLandscape){window._enterMobileFullscreenLandscape();}else if(!document.fullscreenElement&&!document.webkitFullscreenElement){var _r=document.documentElement;var _fn=_r.requestFullscreen||_r.webkitRequestFullscreen;if(_fn)_fn.call(_r,{navigationUI:'hide'}).catch(function(){});}playSfx('sfx-enter',0.9);initGame()">
-            ⚔ 英雄鬥技場
+          <!-- ★ v3.3.2 — 鬥技場暫時關閉(灰色上鎖),點擊顯示「能力還須要再重新進行平衡修正,敬請期待」
+               原因:新英雄上線後鬥技場平衡度尚未調整,先封閉避免不公平對戰
+               還原方式:把下面 onclick 改回原本的全螢幕+initGame() + 移除 .adv-arena-locked class 與 inline style 即可 -->
+          <button class="adv-arena-btn adv-arena-locked"
+            onclick="try{playSfx('sfx-cancel',0.5);}catch(_){};try{_showInGameToast('🔒 鬥技場所有英雄能力還須要再重新進行平衡修正,敬請期待 ⚖️', '#ffaa66', 4000);}catch(_){alert('🔒 鬥技場暫時關閉\n\n所有英雄能力還須要再重新進行平衡修正,\n敬請期待 ⚖️');}"
+            style="filter:grayscale(0.85) brightness(0.55);cursor:not-allowed;position:relative;opacity:0.78;">
+            🔒 英雄鬥技場(維護中)
           </button>
         </div>
         <!-- 捲動提示:固定在 wrapper 下緣,不跟著捲動 -->
