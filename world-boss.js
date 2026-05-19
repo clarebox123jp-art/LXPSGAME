@@ -215,26 +215,33 @@
     legendary: {
       rankRange: '1', tier: '🏆 傳奇',
       coins: 100000,
-      treasureLabel: '未收錄神話至寶 ×1',
+      // ★ FIX 20260519(v12) — 改成「未收錄至寶(優先神話級)」,當神話都解鎖了就降一級給傳說/史詩
+      treasureLabel: '未收錄至寶 ×1(優先神話級)',
       summonCrystals: 10, titleTemplate: '屠龍者・{bossName}',
       expScrollTreasure: 5, expBookDeluxe: 5,
     },
     epic: {
       rankRange: '2-5', tier: '🥈 史詩',
       coins: 60000,
-      treasureLabel: '未收錄史詩、稀有至寶 ×1',
+      // ★ FIX 20260519(v12) — 改成「未收錄至寶(優先傳說級)」
+      treasureLabel: '未收錄至寶 ×1(優先傳說級)',
       summonCrystals: 7,
       expScrollTreasure: 3, expBookDeluxe: 3,
     },
     rare: {
       rankRange: '6-10', tier: '🥉 稀有',
       coins: 30000, treasureChance: 0.60, treasureRarity: 'legendary',
+      // ★ FIX 20260519(v12) — 改成 treasureLabel 不再用 treasureChance,
+      //   但留 treasureChance/Rarity 給結算邏輯舊兼容(機率取至寶)
+      treasureLabel: '未收錄至寶 (60% 機率,優先史詩級)',
       summonCrystals: 5,
       expScrollTreasure: 2, expBookDeluxe: 2,
     },
     normal: {
       rankRange: '11-20', tier: '📦 普通',
       coins: 15000, treasureChance: 0.30, treasureRarity: 'legendary',
+      // ★ FIX 20260519(v12) — 改成 treasureLabel
+      treasureLabel: '未收錄至寶 (30% 機率,優先稀有級)',
       summonCrystals: 3,
       expScrollTreasure: 1, expBookDeluxe: 1,
     },
@@ -2591,6 +2598,49 @@
               }catch(_){}
             }
           }).catch(e => console.warn('[WB-HpSync] dealDamage 失敗', e));
+
+          // ★ FIX 20260519(v12) — 排行榜更新:把本場傷害累積到隊伍紀錄
+          //   隊伍識別:4 個玩家 uid 排序後 join('|') 當 teamKey,
+          //             單人練習模式只有 1 個真實玩家,其他 3 個是 host_npc_X,
+          //             這時用「同樣 uid 重複 4 次」當隊伍(會顯示「玩家暱稱×4」)
+          //   teamNames:用每個槽位的玩家暱稱(同 uid 顯示同名,符合用戶需求「同一人開 4 隻顯示 4 次相同暱稱」)
+          try{
+            if(typeof window._wbHpSync.updateLeaderboard === 'function'){
+              const _myNick = (window._playerNickname || window._userName || '玩家');
+              let _teamUids = [];
+              let _teamNames = [];
+              try{
+                // 從 _wbNet 拿房間玩家清單(連線模式有 4 個真實玩家;單人模式只有 1 個 + 3 個 NPC)
+                const _snap = (window._wbNet && window._wbNet.getSnapshot) ? window._wbNet.getSnapshot() : null;
+                const _players = (_snap && Array.isArray(_snap.players)) ? _snap.players : [];
+                for(let _i = 0; _i < 4; _i++){
+                  const _p = _players[_i];
+                  if(_p && _p.uid){
+                    _teamUids.push(_p.uid);
+                    _teamNames.push(_p.name || _myNick);
+                  }else{
+                    // 空槽 / 房主代打 → 用房主身份補位(用戶要求:單人開 4 隻顯示 4 次相同暱稱)
+                    _teamUids.push(myUid);
+                    _teamNames.push(_myNick);
+                  }
+                }
+              }catch(_){
+                // fallback:全部當房主自己
+                _teamUids = [myUid, myUid, myUid, myUid];
+                _teamNames = [_myNick, _myNick, _myNick, _myNick];
+              }
+              const _teamKey = (typeof window._wbCalcTeamId === 'function')
+                ? window._wbCalcTeamId(_teamUids)
+                : _teamUids.slice().sort().join('|');
+              if(_teamKey){
+                window._wbHpSync.updateLeaderboard(bossId, _teamKey, _teamNames, _dealt)
+                  .then(res => {
+                    if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg);
+                  })
+                  .catch(e => console.warn('[WB-Leaderboard] updateLeaderboard 失敗', e));
+              }
+            }
+          }catch(eLb){ console.warn('[WB-Leaderboard] 排行榜更新例外', eLb); }
         }
       }
     }catch(eHp){

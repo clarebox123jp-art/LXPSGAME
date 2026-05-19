@@ -1025,6 +1025,28 @@
 
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
+    <!-- ★ FIX 20260519(v12) — 在按鈕上方加「當前排行榜」面板 -->
+    <div id="wb-current-leaderboard" style="margin-bottom:20px;padding:14px 18px;
+      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
+      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
+      box-shadow:0 0 18px rgba(212,168,67,0.25);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
+          🏆 當前排行榜 — 維蘇威火山龍王
+        </div>
+        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
+          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
+          border-radius:8px;cursor:pointer;font-family:inherit;">
+          🔄 刷新
+        </button>
+      </div>
+      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
+        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
+          排行榜載入中...
+        </div>
+      </div>
+    </div>
+
     <div class="wb-entry-btn-row">
       <div class="wb-entry-big-btn" onclick="_wbUiOpenVisibilityChoice()">
         <span class="ico">🏰</span>
@@ -1065,8 +1087,7 @@
 
     <div class="wb-info-box">
       ⚠️ <b>v2.0 測試版說明</b>:這是世界 BOSS 系統的第一個可玩版本,功能完整可開戰。<br>
-      💡 <b>使用方式</b>:創房間 → 把房號分享給朋友 → 全員選角 → 按準備 → 房主開戰<br>
-      🐛 <b>已知限制</b>:單人模式時 3 個空位由 AI 替補(預設劍士),戰鬥邏輯為簡化版
+      💡 <b>使用方式</b>:創房間 → 把房號分享給朋友 → 全員選角 → 按準備 → 房主開戰
     </div>
 
     <!-- ★ v2.0 — 隊伍排名獎勵預告 -->
@@ -1183,6 +1204,77 @@
       </div>
     `;
   }).join('');
+})();
+
+// ★ FIX 20260519(v12) — 當前排行榜渲染
+(function _wbRenderCurrentLeaderboard(){
+  const _BOSS_ID = 'vesuvius_fire_dragon';
+  const _MAX_ROWS = 10;
+  const _esc = function(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  };
+  function _formatDmg(n){
+    if(typeof n !== 'number' || isNaN(n)) return '0';
+    if(n >= 1000000) return (n/1000000).toFixed(2) + 'M';
+    if(n >= 10000)   return (n/10000).toFixed(1) + '萬';
+    return n.toLocaleString();
+  }
+  function _renderLb(){
+    const list = document.getElementById('wb-leaderboard-list');
+    if(!list) return;
+    let entries = [];
+    try{
+      if(window._wbHpSync && typeof window._wbHpSync.getLeaderboard === 'function'){
+        entries = window._wbHpSync.getLeaderboard(_BOSS_ID, _MAX_ROWS) || [];
+      }
+    }catch(_){}
+    if(!entries.length){
+      list.innerHTML = '<div style="padding:14px;text-align:center;color:#888;font-style:italic;font-size:14px;">'
+        + '尚無紀錄,快來成為第一個挑戰維蘇威火山龍王的隊伍!</div>';
+      return;
+    }
+    // 識別當前玩家的隊伍(高亮)
+    const _myUid = window._gUserId || '';
+    list.innerHTML = entries.map((e, i) => {
+      const rank = i + 1;
+      const isMyTeam = e.teamKey && _myUid && e.teamKey.indexOf(_myUid) >= 0;
+      let rankIcon = '#' + rank;
+      if(rank === 1) rankIcon = '🥇';
+      else if(rank === 2) rankIcon = '🥈';
+      else if(rank === 3) rankIcon = '🥉';
+      const _names = Array.isArray(e.teamNames) ? e.teamNames.slice(0, 4) : [];
+      while(_names.length < 4) _names.push('—');
+      const _namesHtml = _names.map(n => _esc(n)).join('・');
+      const _bg = isMyTeam
+        ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
+        : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
+      const _border = isMyTeam ? '1.5px solid #ffe066' : '1px solid rgba(168,132,255,0.18)';
+      return ''
+        + '<div style="display:grid;grid-template-columns:40px 1fr 100px;align-items:center;gap:10px;'
+        + 'padding:8px 12px;background:' + _bg + ';border:' + _border + ';border-radius:8px;">'
+        + '<div style="font-size:18px;font-weight:800;text-align:center;color:' + (rank<=3?'#ffe066':'#aabbdd') + ';">'
+        +   rankIcon
+        + '</div>'
+        + '<div style="font-size:14px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
+        +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;">(你)</span>' : '') + '</div>'
+        +   '<div style="font-size:11px;color:#aaa;">' + (e.battles||0) + ' 場累積</div>'
+        + '</div>'
+        + '<div style="font-size:18px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
+        +   _formatDmg(e.totalDmg || 0)
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  // 首次渲染
+  _renderLb();
+  // 雲端同步事件觸發時也重繪
+  document.addEventListener('wbLeaderboardSynced', _renderLb);
+  // 刷新按鈕
+  const _btn = document.getElementById('wb-leaderboard-refresh-btn');
+  if(_btn) _btn.onclick = _renderLb;
+  // 暴露對外重繪入口
+  window._wbRenderCurrentLeaderboard = _renderLb;
 })();
 </script>
 

@@ -3648,12 +3648,16 @@
               const d = snap.exists() ? (snap.data() || {}) : {};
               if(!window._cachedGlobalStats) window._cachedGlobalStats = {};
               window._cachedGlobalStats.worldBossHp = d.worldBossHp || {};
+              // ★ FIX 20260519(v12) — 順手快取排行榜
+              window._cachedGlobalStats.worldBossLeaderboard = d.worldBossLeaderboard || {};
               // 連同 wbBlessing 等其他欄位也順手快取(world-boss.js 第 201/933 行有讀)
               if(d.wbBlessing) window._cachedGlobalStats.wbBlessing = d.wbBlessing;
               // 廣播事件給 UI 即時刷新 HP 條
               try{ document.dispatchEvent(new CustomEvent('wbHpSynced')); }catch(_){}
               // 主動觸發首頁 HP 條重繪(若 world-boss.js 已掛載)
               try{ if(typeof window._wbSyncStageHpBar === 'function') window._wbSyncStageHpBar(); }catch(_){}
+              // ★ FIX 20260519(v12) — 廣播排行榜更新事件(UI 可即時重繪)
+              try{ document.dispatchEvent(new CustomEvent('wbLeaderboardSynced')); }catch(_){}
             }catch(eIn){
               console.warn('[WB-HpSync] onSnapshot 處理失敗', eIn);
             }
@@ -3719,12 +3723,88 @@
         }
       }
 
+      // ════════════════════════════════════════════════════════════════
+      // ★ FIX 20260519(v12) — 世界 BOSS 排行榜(隊伍累積傷害)
+      //
+      // 設計:
+      // - 儲存位置:stats/global.worldBossLeaderboard.<bossId> = 陣列
+      //   [{teamKey, teamNames:[4 暱稱], totalDmg, battles, lastUpdated}]
+      // - 隊伍識別:teamKey = 4 個 uid 排序 + join('|')(順序不影響)
+      // - 顯示用:teamNames = 4 個玩家暱稱(可能同名 = 同一個人開 4 隻)
+      // - 即時更新:戰鬥結算時呼叫 updateLeaderboard 把本場傷害累加
+      // - UI 拉取:getLeaderboard(bossId, topN=10)
+      // ════════════════════════════════════════════════════════════════
+      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg){
+        if(!bossId || !teamKey || typeof addDmg !== 'number' || addDmg <= 0) return null;
+        try{
+          const result = await runTransaction(_fbDb, async (tx) => {
+            const _ref = STATS_DOC();
+            const _snap = await tx.get(_ref);
+            const _data = _snap.exists() ? (_snap.data() || {}) : {};
+            const _lbMap = _data.worldBossLeaderboard || {};
+            const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : [];
+            // 找到該隊伍紀錄,沒有就新增
+            const _idx = _list.findIndex(e => e && e.teamKey === teamKey);
+            if(_idx >= 0){
+              const _cur = _list[_idx];
+              _list[_idx] = {
+                teamKey,
+                teamNames: Array.isArray(teamNames) ? teamNames.slice(0, 4) : _cur.teamNames,
+                totalDmg: (_cur.totalDmg || 0) + addDmg,
+                battles: (_cur.battles || 0) + 1,
+                lastUpdated: Date.now(),
+              };
+            }else{
+              _list.push({
+                teamKey,
+                teamNames: Array.isArray(teamNames) ? teamNames.slice(0, 4) : [],
+                totalDmg: addDmg,
+                battles: 1,
+                lastUpdated: Date.now(),
+              });
+            }
+            // 由高至低排序,只保留前 100 名(避免 doc 無限膨脹)
+            _list.sort((a, b) => (b.totalDmg || 0) - (a.totalDmg || 0));
+            const _trimmed = _list.slice(0, 100);
+            const _newLbMap = Object.assign({}, _lbMap);
+            _newLbMap[bossId] = _trimmed;
+            tx.set(_ref, { worldBossLeaderboard: _newLbMap }, { merge: true });
+            // 找出自己排名
+            const _myRank = _trimmed.findIndex(e => e.teamKey === teamKey) + 1;
+            return { rank: _myRank, totalDmg: _trimmed[_myRank-1]?.totalDmg || addDmg };
+          });
+          console.log('[WB-HpSync] updateLeaderboard', bossId, teamKey, '→', result);
+          return result;
+        }catch(e){
+          console.error('[WB-HpSync] updateLeaderboard 失敗', e);
+          return null;
+        }
+      }
+
+      // 取得指定 BOSS 的排行榜(從快取讀,實時性靠 subscribeWbHp 訂閱)
+      function getLeaderboard(bossId, topN){
+        try{
+          const gs = window._cachedGlobalStats;
+          const _lbMap = (gs && gs.worldBossLeaderboard) || {};
+          const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId] : [];
+          // 確保已排序
+          const _sorted = _list.slice().sort((a, b) => (b.totalDmg || 0) - (a.totalDmg || 0));
+          if(typeof topN === 'number' && topN > 0) return _sorted.slice(0, topN);
+          return _sorted;
+        }catch(_){
+          return [];
+        }
+      }
+
       // 暴露 API
       window._wbHpSync = {
         subscribe: subscribeWbHp,
         getCurrentHp: getCurrentHp,
         dealDamage: dealDamage,
         resetHp: resetHp,
+        // ★ FIX 20260519(v12) — 排行榜 API
+        updateLeaderboard: updateLeaderboard,
+        getLeaderboard: getLeaderboard,
       };
       try{ subscribeWbHp(); }catch(_){}
       console.log('[WB-HpSync] ✅ 世界 BOSS 殘血同步模組已掛載');
