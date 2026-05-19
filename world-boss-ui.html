@@ -9477,18 +9477,31 @@
     if(!document.getElementById('wb-adv-quiz-zindex-fix')){
       const _qsty = document.createElement('style');
       _qsty.id = 'wb-adv-quiz-zindex-fix';
-      // ★ FIX 20260519(v3) — 只覆寫 z-index,不動 position/inset
+      // ★ FIX 20260519(v3) — 只覆寫 z-index,不動 position/inset(舊版註解保留)
       //   原 v2 覆寫了 position:fixed !important + inset:0 !important,但 main.css 對
       //   #adv-quiz-overlay 可能用 transform: translate(-50%,-50%) 居中,inset:0 反而
       //   把 box 拉到左上角看不到 → 用戶以為「沒出現題目」。
       //   v3 改成只動 z-index,保留 main.css 原本的居中/尺寸定義不變。
+      // ★ v3.3.2 — 根因再次:overlay 被 v13 移到 body 後,main.css 用 #gc 後代選擇器的規則失效,
+      //   overlay 變成「無位置/無尺寸/不可見」浮在 body。z-index 雖然頂到天上也沒用。
+      //   修補:用 attribute 選擇器(不依賴 parent)強制套上完整佈局:
+      //         position:fixed + inset:0 + display:flex 居中 + 視覺背景
+      //   注意:#adv-quiz-box / #adv-reward-box 等內部元素由 main.css 控制大小,
+      //         此處只負責「外層 overlay 全屏鋪滿 + 內容居中」,不動內層樣式。
       _qsty.textContent =
         '#adv-quiz-overlay.show,#adv-reward-overlay.show,#adv-result-overlay.show,'
         + '#adv-boss-intro.show,#adv-continue-overlay.show{'
         +   'z-index:10900 !important;'
+        +   'position:fixed !important;'
+        +   'top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;'
+        +   'width:100vw !important;height:100vh !important;'
+        +   'display:flex !important;'
+        +   'align-items:center !important;justify-content:center !important;'
+        +   'background:rgba(0,0,0,0.78) !important;'
+        +   'pointer-events:auto !important;'
         + '}';
       document.head.appendChild(_qsty);
-      console.log('[WB-Adv] ✅ quiz/reward UI z-index 提升規則已注入');
+      console.log('[WB-Adv] ✅ v3.3.2 quiz/reward UI 完整佈局規則已注入 (position+inset+flex 居中)');
     }
 
     // ★ FIX 20260519(v13) — 把 quiz/reward overlay 移到 document.body 脫離 #gc stacking context
@@ -9510,6 +9523,74 @@
         }
       });
     }catch(_eMv){ console.warn('[WB-Adv] overlay 移位失敗', _eMv); }
+
+    // ★ v3.3.2 — 第二層保險:用 MutationObserver 監聽 quiz/reward overlay 的 .show class,
+    //   在顯示期間把世界 BOSS 戰專屬 UI(BOSS 大血條 + 表情列 + BOSS 點擊層)暫時藏起,
+    //   避免它們蓋住題目區或讓玩家分心誤點。
+    //   為什麼用 visibility 而不是 display:none:
+    //     - visibility:hidden 不重排 DOM,結束後還原瞬間到位,不會閃爍
+    //     - display:none 會觸發重新計算 layout,某些主程式 timer 可能誤判
+    //   涵蓋 4 種 UI:
+    //     - #wb-adv-battle-overlay  (BOSS 大血條 + 介紹鈕)
+    //     - #wb-emoji-bar-real      (左側表情列)
+    //     - #wb-boss-click-layer    (BOSS 圖點擊層 + 火焰游標)
+    //     - #wb-solo-cur-dmg-bar    (單人練習傷害條)
+    //   只在世界 BOSS 戰啟動:若不是 worldboss stage,observer 不做事
+    if(!window._wbQuizUiHiderInstalled){
+      window._wbQuizUiHiderInstalled = true;
+      const _WB_HIDE_IDS = ['wb-adv-battle-overlay','wb-emoji-bar-real',
+                            'wb-boss-click-layer','wb-solo-cur-dmg-bar'];
+      const _hideWbUi = function(reason){
+        try{
+          _WB_HIDE_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if(el){
+              if(!el.dataset._wbVisBackup) el.dataset._wbVisBackup = el.style.visibility || '';
+              el.style.visibility = 'hidden';
+            }
+          });
+          console.log('[WB-Adv-UiHider] 🙈 隱藏世界 BOSS UI (' + reason + ')');
+        }catch(_e){}
+      };
+      const _showWbUi = function(reason){
+        try{
+          _WB_HIDE_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if(el){
+              el.style.visibility = el.dataset._wbVisBackup || '';
+              delete el.dataset._wbVisBackup;
+            }
+          });
+          console.log('[WB-Adv-UiHider] 👁 還原世界 BOSS UI (' + reason + ')');
+        }catch(_e){}
+      };
+      const _watchIds = ['adv-quiz-overlay','adv-reward-overlay','adv-boss-intro','adv-continue-overlay'];
+      _watchIds.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        const _obs = new MutationObserver(function(mutations){
+          // 僅在世界 BOSS 戰生效;其他關卡(貓空/日本/台灣)不影響
+          const _stage = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : null;
+          if(_stage !== 'worldboss') return;
+          mutations.forEach(function(m){
+            if(m.type !== 'attributes' || m.attributeName !== 'class') return;
+            const hasShow = el.classList.contains('show');
+            if(hasShow){
+              _hideWbUi(id + ' 顯示');
+            } else {
+              // 全部 watch 元素都沒 show 才還原(避免 quiz → reward 切換時瞬間還原又藏)
+              const anyShow = _watchIds.some(wid => {
+                const e2 = document.getElementById(wid);
+                return e2 && e2.classList.contains('show');
+              });
+              if(!anyShow) _showWbUi(id + ' 隱藏');
+            }
+          });
+        });
+        _obs.observe(el, {attributes:true, attributeFilter:['class']});
+      });
+      console.log('[WB-Adv-UiHider] ✅ v3.3.2 MutationObserver 已安裝 — 答題/獎勵期間自動藏世界 BOSS UI');
+    }
 
     ov.innerHTML = `
       <div id="wb-adv-mega-zone" style="

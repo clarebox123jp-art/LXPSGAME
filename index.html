@@ -50569,6 +50569,14 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 function advOnQuizTimeout() {
   if (_advQuizPhase !== 'asking') return;
   _advQuizPhase = 'answered';
+  // ★ v3.3.2 — 加診斷 log:超時時印明確訊息,未來若玩家回報「沒看到題目」可從 console 確認
+  //   是「玩家 60 秒沒按 = timeout」還是「題目壓根沒顯示」(advShowQuiz 走 early return)
+  try{
+    console.warn('⏰ [advOnQuizTimeout] 答題 60 秒超時觸發 — '
+      + 'stage=' + (typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef')
+      + ', advQuizActive=' + (typeof _advQuizActive !== 'undefined' ? _advQuizActive : 'undef')
+      + ', cb=' + !!_advQuizResolveCb);
+  }catch(_){}
   // ★ FIX 20260518(c) #6 — 超時當答錯處理
   try{ if(_advStats) _advStats.lastAnswerCorrect = false; }catch(_){}
   document.querySelectorAll('.aqo-btn').forEach(btn => { btn.disabled = true; });
