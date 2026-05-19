@@ -27570,6 +27570,18 @@ function endAction(a, cost, noFinish=false){
     document.getElementById('action-panel').style.display='block';
   }
   updateUI(); renderItems();
+  // ★ v3.3.5 — 世界 BOSS 戰房主端:每個動作結束時自動推送 G 給 client
+  //   解決:「隊長行動完後 client 卡死、特效不同步」
+  //   原因:Phase 3 預期的 _wbHostSyncG 從沒被安裝,host 動作後 client 永遠等不到 sync
+  //   修補:在這裡呼叫 _wbHostSyncGDebounced,200ms 內合併多次呼叫,
+  //        FX 佇列也會在 hostPushBattleState 內被自動 flush 過去
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && window._wbConnectedHostMode
+       && typeof window._wbHostSyncGDebounced === 'function'){
+      window._wbHostSyncGDebounced('action-end-' + (a && a.name));
+    }
+  }catch(_){}
   if(!noFinish){
     _pSetTimeout(startTurn,500);
     // ★ v1.0.20260424.0950 — 強力 watchdog 修復「弦樂團員→大蛇 必卡死」bug
@@ -28680,6 +28692,16 @@ function startTurn(){
   }
   G.passiveInterruptUsed=false;
   G.activeChar=next;
+  // ★ v3.3.5 — 世界 BOSS 戰房主端:新角色開始行動時推送 G 給 client
+  //   讓 client 能即時更新「下一位行動者」高亮 + 順序條
+  //   debounced(200ms),配合 endAction 的 sync,兩端會在每個行動切換時都同步
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && window._wbConnectedHostMode
+       && typeof window._wbHostSyncGDebounced === 'function'){
+      window._wbHostSyncGDebounced('turn-start-' + (next && next.name));
+    }
+  }catch(_){}
 
   // ★ 電腦繪圖師天賦：輪到自己時，HP最低的友方獲得護盾
   if(next && next.name==='電腦繪圖師' && !hasStatus(next,'confused')){
@@ -30012,17 +30034,40 @@ function aiAct(a){
           }
           // 單人練習:玩家「同時操作 4 隻」,不論 round 都當作自己負責
           const _isSolo = !!window._wbSoloPracticeMode;
-          const _isMyTurn = _isSolo || (_mySlot === _expectedSlot);
+          // ★ v3.3.5 — 「實質單人」判定:即使 _wbSoloPracticeMode=false,只要房內真實玩家 ≤ 1,
+          //   也視為單人,讓房主可以代答所有 4 隻角色的題目
+          let _isVirtualSolo = false;
+          try{
+            if(window._wbNet && typeof window._wbNet.getSnapshot === 'function'){
+              const _snap = window._wbNet.getSnapshot();
+              const _players = (_snap && Array.isArray(_snap.players)) ? _snap.players : [];
+              const _realUids = new Set();
+              _players.forEach(function(p){
+                if(!p) return;
+                const _uid = p.uid || p.userId || '';
+                if(!_uid) return;
+                if(_uid === '__bot' || /^bot[-_]/i.test(_uid)) return;
+                if(p.isBot === true || p.bot === true) return;
+                const _nm = (p.name || '').toString();
+                if(/補位|假人|練習用|bot/i.test(_nm)) return;
+                _realUids.add(_uid);
+              });
+              _isVirtualSolo = (_realUids.size <= 1);
+            }
+          }catch(_){}
+          const _effectiveSolo = _isSolo || _isVirtualSolo;
+          const _isMyTurn = _effectiveSolo || (_mySlot === _expectedSlot);
           console.log('[WB-BossQuiz] round=' + _round
             + ', expectedSlot=' + _expectedSlot
             + ', mySlot=' + _mySlot
             + ', isMyTurn=' + _isMyTurn
-            + ', soloPracticeMode=' + _isSolo);
+            + ', soloPracticeMode=' + _isSolo
+            + ', virtualSolo=' + _isVirtualSolo);
           // ★ v3.3.3 — 設定指派槽位旗標(供 advSubmitAnswer 攔截器使用)
-          //   單人練習設 null(不攔截),其他模式設指派槽位
-          window._wbAssignedQuizSlot = _isSolo ? null : _expectedSlot;
+          //   單人(實際或實質)設 null(不攔截),其他模式設指派槽位
+          window._wbAssignedQuizSlot = _effectiveSolo ? null : _expectedSlot;
           // 房主 watchdog:30 秒沒答 → 自動視為答對推進
-          //   單人練習不需要(玩家自己 4 隻角色都會答)
+          //   實質單人不需要(玩家自己 4 隻角色都會答)
           const _isHost = !!window._wbConnectedHostMode;
           if(_isHost && !_isMyTurn){
             console.log('[WB-BossQuiz host] 房主自己不是被指派槽,設 30 秒 watchdog 等被指派玩家');
@@ -43135,6 +43180,80 @@ window._wbGetAdvStage = function(){
   if(typeof bannerFX === 'function') _tryAttach('bannerFX', bannerFX);
 })();
 
+// ════════════════════════════════════════════════════════════════════
+// ★ v3.3.5 — 安裝 _wbHostSyncG (Phase 3 host sync)
+// ────────────────────────────────────────────────────────────────────
+// 老師反映:「隊長回答完問題並使用完技能造成傷害,輪到我(隊友)就卡死。
+//           而且傷害和特效還是沒同步出現。」
+//
+// 根因:v3.3.3 文檔說「_wbHostSyncG(reason) 由 Phase 3 安裝」,但整份程式碼
+//      只有「if(typeof window._wbHostSyncG === 'function')」的呼叫點,
+//      從來沒有真正的 install 程式碼 → 函式永遠 undefined →
+//      所有「if 函式存在才呼叫」全 skip → client 永遠收不到 host 動作後的 sync。
+//
+// 修補:在這裡定義 window._wbHostSyncG(reason),用 _wbWireUtils.GToWire(G)
+//      生成 fullWireG,再呼叫 _wbNet.hostPushBattleState 推送。
+//
+// 觸發點(已存在於程式碼,只是之前 if 永遠不成立):
+//   1) world-boss.html 戰鬥開始時:_wbHostSyncG('battle_started')
+//   2) world-boss.html 開戰題答完:_wbHostSyncG('opening_quiz_done')
+//   3) world-boss.html 答題獎勵觸發:_wbHostSyncG('quiz-correct-team-reward')
+//   4) world-boss.html 答題後 BOSS 受傷:_wbHostSyncG('quiz-reward-dmg')
+//   5) index.html 寶物移除護盾:_wbHostSyncG('reward-shield-remove')
+//   6) ★ NEW endAction 結束:_wbHostSyncG('action-end') —— 解決圖1卡死關鍵
+// ════════════════════════════════════════════════════════════════════
+window._wbHostSyncG = function(reason){
+  try{
+    // 只在世界 BOSS 戰 + 連線房主模式才推送
+    if(typeof _adventureStage === 'undefined' || _adventureStage !== 'worldboss') return;
+    if(!window._wbConnectedHostMode) return;
+    if(!window._wbNet || typeof window._wbNet.hostPushBattleState !== 'function') return;
+    if(!window._wbWireUtils || typeof window._wbWireUtils.GToWire !== 'function') return;
+    const _G = (typeof G !== 'undefined') ? G : window.G;
+    if(!_G) return;
+    // 序列化整個 G(p1/p2/turn/energy/inv/battleStats/_activeSidePos 等)
+    const wireG = window._wbWireUtils.GToWire(_G);
+    // ★ 多塞一個 _activeSidePos,client 端 applyWireToG 後優先用此重建 G.activeChar
+    //   (應對主程式 startTurn 動態挑下一位、不維護 currentActorIdx 的情況)
+    try{
+      if(_G.activeChar && _G.activeChar.side && typeof _G.activeChar.pos === 'number'){
+        wireG._activeSidePos = { side: _G.activeChar.side, pos: _G.activeChar.pos };
+      }
+    }catch(_){}
+    window._wbNet.hostPushBattleState({
+      fullWireG: wireG,
+      _syncReason: reason || 'host-sync',
+      // 連線層內部會自動取 _wbFxQueueFlush() 把特效佇列附加
+    });
+    console.log('[_wbHostSyncG] ✅ pushed reason=' + (reason || 'host-sync')
+      + ', round=' + (_G.round||0)
+      + ', activeChar=' + (_G.activeChar && _G.activeChar.name));
+  }catch(e){
+    console.warn('[_wbHostSyncG] 例外', e);
+  }
+};
+
+// ★ v3.3.5 — host 端通用的「動作結束自動 sync」入口
+//   設計:在 endAction / startTurn / aiAct 結束等關鍵時機呼叫,
+//        確保每個動作的 G 狀態都會被推送給 client。
+//   防抖:200ms 內重複呼叫只實際 push 一次(避免一個動作觸發 N 次 sync)
+window._wbHostSyncGDebounced = (function(){
+  let _timer = null;
+  let _lastReason = null;
+  return function(reason){
+    try{
+      if(typeof _adventureStage === 'undefined' || _adventureStage !== 'worldboss') return;
+      if(!window._wbConnectedHostMode) return;
+      _lastReason = reason || 'debounced';
+      if(_timer) return; // 已有排程,直接合併
+      _timer = setTimeout(function(){
+        _timer = null;
+        try{ window._wbHostSyncG(_lastReason); }catch(_){}
+      }, 200);
+    }catch(_){}
+  };
+})();
+
 
 // BOSS 角色名單：永遠排除在選角色池之外
 const BOSS_NAMES = [
@@ -51086,8 +51205,41 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     const _isWbStage = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
     const _hasNet = !!(window._wbNet && typeof window._wbNet.getMySlot === 'function');
     const _isSoloPractice = !!window._wbSoloPracticeMode;
-    // 單人練習:玩家同時操作 4 隻,不做攔截
-    if(_isWbStage && _hasNet && !_isSoloPractice){
+    // ★ v3.3.5 — 「實質單人」判定:即使 _wbSoloPracticeMode=false,只要房內實際真實玩家 ≤ 1,
+    //   也視為單人模式(玩家自己控 4 隻角色,所有題目都該由自己回答)。
+    //   修補老師反映:「我當隊長自己開房間,補自己角色(單人組隊),無法回答玩家2的問題。
+    //                  角色是誰的就是誰可以回答,既然四隻都是我的角色就不會有這個訊息出現,
+    //                  要讓我一次獲得四個人的回答權利。」
+    //   設計:
+    //     - 透過 _wbNet.getSnapshot().players 抓「有 uid 的真實玩家」數量
+    //     - 排除 null / 補位假玩家(沒 uid 或 uid='__bot' / 'bot-*' / 名稱含「補位」)
+    //     - 真實 uid 去重後 ≤ 1 → 單人,不攔截
+    let _isVirtualSolo = false;
+    try{
+      if(_hasNet && typeof window._wbNet.getSnapshot === 'function'){
+        const _snap = window._wbNet.getSnapshot();
+        const _players = (_snap && Array.isArray(_snap.players)) ? _snap.players : [];
+        const _realUids = new Set();
+        _players.forEach(function(p){
+          if(!p) return;
+          const _uid = p.uid || p.userId || '';
+          if(!_uid) return;
+          if(_uid === '__bot' || /^bot[-_]/i.test(_uid)) return;
+          if(p.isBot === true || p.bot === true) return;
+          // 補位 / 假人名稱排除
+          const _nm = (p.name || '').toString();
+          if(/補位|假人|練習用|bot/i.test(_nm)) return;
+          _realUids.add(_uid);
+        });
+        if(_realUids.size <= 1){
+          _isVirtualSolo = true;
+          console.log('[WB-Quiz 攔截] 偵測到實質單人(真實玩家 ' + _realUids.size
+            + '/' + _players.length + '),不攔截答題');
+        }
+      }
+    }catch(_eSolo){ console.warn('[WB-Quiz 攔截] solo 判定例外', _eSolo); }
+    // 單人練習 OR 實質單人:玩家同時操作 4 隻,不做攔截
+    if(_isWbStage && _hasNet && !_isSoloPractice && !_isVirtualSolo){
       let _allowedSlot = null;
       if(window._wbIsOpeningQuizPhase){
         // 開戰題:固定房主槽位(預設 0)
@@ -60135,7 +60287,7 @@ const SUMMON_RANDOM_TREASURES = [
 //   5% 超越極限果實 ×1(維持)
 const SUMMON_RATES = [
   { kind:'random_treasure',pct: 2, label:'🏆 隨機台灣至寶',         desc:'極稀有!10 種台灣至寶任 1 件;若已擁有自動轉換為至寶經驗卷軸 ×5' },
-  { kind:'rare_hero',      pct: 5, label:'⭐ 稀有角色',              desc:'大天狗 / 玉藻前 / 酒吞童子 / 巫女 / 窮奇 / 科技生化人 / 鋁合金暴龍 / 超鬼神王(已收錄則轉為超越極限果實 ×1)' },
+  { kind:'rare_hero',      pct: 5, label:'⭐ 稀有角色',              desc:'未收錄之稀有角色(全收錄時則轉化為超越極限果實 ×1)' },
   { kind:'burst_fruit',    pct: 5, label:'🍑 超越極限果實 ×1',       desc:'極限爆發升 1 級' },
   { kind:'exp_book_prm',   pct: 7, label:'📚 豪華典藏版英雄經驗之書 ×1', desc:'稀世珍本,單本 +5000 EXP,大幅提升英雄等級' },
   { kind:'treasure_scroll',pct:10, label:'📜 至寶經驗卷軸 ×1',       desc:'幫台灣至寶累積經驗(+10 EXP)' },

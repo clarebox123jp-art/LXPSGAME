@@ -8813,23 +8813,31 @@
     //   設計差異(對比 v3.3.2):
     //     - v3.3.2:所有人氣泡集中顯示在「答題玩家」卡下方,讓答題玩家看所有建議
     //     - v3.3.3:每個人發的氣泡顯示在「自己卡」下方(直覺對應到誰在說話)
-    //   判斷「答題期間」:
-    //     - _advQuizPhase === 'asking' (主程式答題進行中)
-    //     - 或 _bossQuizInFlight === true (BOSS 答題流程中)
-    //     - 或 _wbAssignedQuizSlot 有設定(BOSS 行動前題已指派槽位)
-    //   設計:
-    //     - 答題期間:氣泡在「發送者自己卡下方」(技能高度位置)+ 放大 300%
-    //     - 不需要加發送者前綴(氣泡在自己卡下,身分一目了然)
-    //     - 非答題期間:維持原本「卡上方」小尺寸顯示
+    //   ★ v3.3.5 — 老師最新反映:「定型文視窗蓋住傷害數字,定型文發話沒有放大也沒有正確
+    //               移到下方角色卡的底部技能位置」 → 戰鬥中(非答題期間)也要顯示在
+    //               卡下方,但尺寸縮小(150%)避免蓋住傷害飄字
+    //   設計(v3.3.5):
+    //     - 答題期間(_isQuizActive):300% + 卡下方 + 黃框金光(沿用 v3.3.3)
+    //     - 戰鬥行動中(_isInWorldBossBattle):150% + 卡下方技能位置 + 紫框
+    //     - 完全閒置:卡上方小尺寸(沿用舊行為,給隊伍頁等情境)
     const _isQuizActive = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking')
                        || !!window._bossQuizInFlight
                        || (typeof window._wbAssignedQuizSlot === 'number');
+    // 戰鬥行動中判定:body 有 wb-in-worldboss-battle class
+    //   (進到 v4 戰鬥畫面後才會加這個 class,正好對應「角色卡可見」期間)
+    const _isInWorldBossBattle = document.body.classList.contains('wb-in-worldboss-battle');
     let _targetCard = card;     // 顯示在「發送者自己卡」上(對齊 v3.3.3 新設計)
-    let _isLargeBubble = _isQuizActive;  // 答題期間放大
+    // ★ v3.3.5 — 三種顯示模式:
+    //   quiz=答題期間大字、battle=戰鬥行動中中字、normal=閒置小字
+    let _bubbleMode = _isQuizActive ? 'quiz'
+                    : _isInWorldBossBattle ? 'battle'
+                    : 'normal';
+    let _isLargeBubble = (_bubbleMode !== 'normal');  // 是否要顯示在卡下方
     const rect = _targetCard.getBoundingClientRect();
-    // 套用放大字體(只在答題期間)
-    if(_isLargeBubble){
-      // ★ v3.3.3 — 放大 300% (老師明確指定:從 200% 改為 300%)
+    // 套用樣式
+    if(_bubbleMode === 'quiz'){
+      // 答題期間:300% 黃框金光(v3.3.3 原規格,老師明確指定)
+      // ★ v3.3.5 — z-index 9999 不變,但加 pointer-events:none 確保不擋玩家點題目按鈕
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;'
         + 'transform-origin: top center;'
         + 'font-size: 300% !important;'
@@ -8841,8 +8849,30 @@
         + 'color: #ffe066 !important;'
         + 'max-width: 480px !important;'
         + 'white-space: normal !important;'
-        + 'line-height: 1.25 !important;';
+        + 'line-height: 1.25 !important;'
+        + 'pointer-events: none !important;';
+    }else if(_bubbleMode === 'battle'){
+      // ★ v3.3.5 — 戰鬥行動中:150% 紫框(較克制,不蓋住傷害飄字)
+      //   - z-index 比氣泡預設低一些(8500),讓 #gc 內的傷害 popup(z auto)能浮在上面
+      //     ⚠ 但實際上 popup 在 #gc 內部,氣泡 fixed 在 body,層級不直接比較,
+      //     主要靠位置避讓:氣泡在卡下方技能位置,傷害飄字在卡上方,自然不衝突
+      //   - 寬度 max 320px 避免太佔位
+      bubble.style.cssText = 'visibility:hidden;left:0;top:0;'
+        + 'transform-origin: top center;'
+        + 'font-size: 150% !important;'
+        + 'padding: 10px 16px !important;'
+        + 'border-width: 2px !important;'
+        + 'border-color: rgba(168,132,255,0.85) !important;'
+        + 'background: linear-gradient(135deg,rgba(40,28,70,0.96),rgba(28,18,55,0.96)) !important;'
+        + 'color: #e0d4ff !important;'
+        + 'box-shadow: 0 6px 22px rgba(0,0,0,0.6), 0 0 16px rgba(168,132,255,0.45) !important;'
+        + 'max-width: 320px !important;'
+        + 'white-space: normal !important;'
+        + 'line-height: 1.3 !important;'
+        + 'z-index: 8500 !important;'
+        + 'pointer-events: none !important;';
     }else{
+      // 完全閒置(隊伍頁、結算頁等):維持小尺寸顯示在卡上方
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;';
     }
     document.body.appendChild(bubble);
@@ -8851,10 +8881,11 @@
     const bh = bubble.offsetHeight;
     let left, top, placement;
     if(_isLargeBubble){
-      // ★ v3.3.3 — 答題期間:強制顯示在「發送者自己卡下方」(技能位置高度)
-      //   卡片底部 +12px 往下凸出,氣泡完全在卡下,正好對應戰鬥畫面卡片下方空白區
+      // ★ v3.3.3 + v3.3.5 — 答題期間/戰鬥中:強制顯示在「發送者自己卡下方」(技能位置高度)
+      //   卡片底部 +8px 往下凸出,氣泡完全在卡下,正好對應戰鬥畫面卡片下方空白區
+      //   ★ v3.3.5 — 戰鬥模式時 +8px(比答題期的 +12px 緊貼一點,看起來更像從卡片冒出來)
       left = rect.left + rect.width / 2 - bw / 2;
-      top = rect.bottom + 12;
+      top = rect.bottom + (_bubbleMode === 'battle' ? 8 : 12);
       placement = 'bottom';
     }else{
       // 一般情況:卡正上方,水平中心對齊卡中心
@@ -8870,7 +8901,7 @@
       top = rect.bottom + 12;
       placement = 'bottom';
     }
-    // 太靠底 → 改顯示在卡上方(僅放大版本)
+    // 太靠底 → 改顯示在卡上方(放大版本)
     if(_isLargeBubble && top + bh > window.innerHeight - 8){
       top = rect.top - bh - 12;
       placement = 'top';
