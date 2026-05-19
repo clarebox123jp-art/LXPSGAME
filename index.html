@@ -2,6 +2,92 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<!-- ★ v3.3.2 — Console Ring Buffer:在所有 script 之前 patch console,擷取最近 300 條訊息
+     用於 BUG 回報時自動附帶,讓老師看到玩家當下的 console 不用靠口頭描述 -->
+<script>
+(function(){
+  if(window._consoleRingBuffer) return; // 防重入
+  const MAX_LINES = 300; // 約 30~50KB,送 Firestore 8000 字限制下夠用(後端會自動截斷)
+  const buf = [];
+  window._consoleRingBuffer = buf;
+  // 安全字串化(避免循環參照、HTMLElement 等爆掉)
+  const _safe = function(v){
+    if(v === null) return 'null';
+    if(v === undefined) return 'undefined';
+    const t = typeof v;
+    if(t === 'string') return v;
+    if(t === 'number' || t === 'boolean') return String(v);
+    if(t === 'function') return '[Function]';
+    if(v instanceof Error) return v.name + ': ' + v.message + (v.stack ? '\n' + v.stack.split('\n').slice(0,3).join('\n') : '');
+    if(v instanceof HTMLElement) return '<' + v.tagName.toLowerCase() + (v.id ? '#'+v.id : '') + '>';
+    try{
+      // 限制深度,避免大物件爆掉
+      const seen = new WeakSet();
+      const _s = JSON.stringify(v, function(k, val){
+        if(typeof val === 'object' && val !== null){
+          if(seen.has(val)) return '[Circular]';
+          seen.add(val);
+        }
+        if(typeof val === 'function') return '[Function]';
+        if(val instanceof HTMLElement) return '<' + val.tagName + '>';
+        return val;
+      });
+      // 單個物件最多 500 字,避免一條 log 把整個 buffer 塞滿
+      return _s && _s.length > 500 ? _s.slice(0, 500) + '...(截)' : _s;
+    }catch(_e){ return '[無法序列化]'; }
+  };
+  const _push = function(level, args){
+    try{
+      const ts = new Date();
+      const hh = String(ts.getHours()).padStart(2,'0');
+      const mm = String(ts.getMinutes()).padStart(2,'0');
+      const ss = String(ts.getSeconds()).padStart(2,'0');
+      const parts = [];
+      for(let i = 0; i < args.length; i++){
+        parts.push(_safe(args[i]));
+      }
+      buf.push('[' + hh + ':' + mm + ':' + ss + '] [' + level + '] ' + parts.join(' '));
+      if(buf.length > MAX_LINES) buf.shift();
+    }catch(_){}
+  };
+  // 保存原始 console 方法
+  const _orig = {
+    log: console.log.bind(console),
+    info: console.info.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    debug: console.debug ? console.debug.bind(console) : console.log.bind(console),
+  };
+  // 攔截各等級
+  console.log = function(){ _push('LOG',   arguments); _orig.log.apply(null, arguments); };
+  console.info = function(){ _push('INFO',  arguments); _orig.info.apply(null, arguments); };
+  console.warn = function(){ _push('WARN',  arguments); _orig.warn.apply(null, arguments); };
+  console.error = function(){ _push('ERROR', arguments); _orig.error.apply(null, arguments); };
+  console.debug = function(){ _push('DEBUG', arguments); _orig.debug.apply(null, arguments); };
+  // 攔截 uncaught error / promise rejection,讓玩家看不見的錯誤也進 buffer
+  window.addEventListener('error', function(ev){
+    try{
+      _push('UNCAUGHT', ['Uncaught error:', (ev.message || '?'),
+        'at', (ev.filename || '?') + ':' + (ev.lineno || '?') + ':' + (ev.colno || '?')]);
+    }catch(_){}
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    try{
+      const r = ev.reason;
+      _push('UNHANDLED_REJECT', ['Promise rejected:', r && (r.message || r.toString && r.toString()) || String(r)]);
+    }catch(_){}
+  });
+  // 取出 ring buffer 完整文字(供 BUG 回報用)
+  window._consoleDumpForBugReport = function(){
+    try{
+      return buf.slice().join('\n');
+    }catch(_){ return '(console dump 失敗)'; }
+  };
+  // 早期啟動標記
+  _push('INFO', ['🎮 Console Ring Buffer 已啟用 (MAX_LINES=' + MAX_LINES + ')']);
+})();
+</script>
+
 <!-- ★ 圖片加速：DNS預連線 & 關鍵圖片預載 -->
 <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
 <link rel="preconnect" href="https://github.com" crossorigin>
@@ -1119,28 +1205,140 @@
   // ★ v1.0.20260510.5760 ── 玩家 BUG / 卡死回報系統 ──
   //   用途:玩家在遊戲中遇到卡死或 bug 時,可送出文字回報給管理員
   //   儲存位置:bugReports collection,每筆一個文件(id 自動產生)
-  //   結構: { id, email, uid, content, timestamp, version, page }
+  //   結構: { id, email, uid, content, timestamp, version, page, consoleDump, snapshot }
   //   不限筆數,管理員可在 Shift+F10 面板查看全部清單
+  //   ★ v3.3.2 — content 結構改為 markdown 形式,包含:
+  //     - 玩家文字描述
+  //     - 自動診斷快照(戰鬥狀態、旗標、modal)
+  //     - 最近 300 條 console log
+  //     讓老師收到回報直接看 console 偵錯,不用問小學生
   window._fbSubmitBugReport = async function(payload) {
     try {
       const _id = 'bug_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
       const _email = (payload && payload.email) || (window._fbUser && window._fbUser.email) || '訪客';
       const _uid   = (payload && payload.uid)   || (window._fbUser && window._fbUser.uid)   || 'guest';
-      // ★ v1.0.20260512.6310 — content 上限從 200 提高到 8000
-      //   原因:v6210 自動診斷快照(戰鬥狀態 + 旗標 + modal + console 最後 20 行)
-      //         通常 2000~5000 字,被截到 200 字後幾乎只剩 header,診斷沒用。
-      //   8000 字遠低於 Firestore 單欄位 1MB 上限,安全。
+
+      // ★ v3.3.2 — 組裝完整 content:玩家文字 + 戰鬥快照 + console dump
+      const _userText = ((payload && payload.content) || '').toString();
+      const _snapshot = (function(){
+        // 收集當下戰鬥/旗標狀態(若不在戰鬥中也回基礎環境資訊)
+        try{
+          const _G = (typeof G !== 'undefined') ? G : null;
+          const lines = [];
+          lines.push('## 🎮 環境資訊');
+          lines.push('- URL: ' + (location && location.href || '?'));
+          lines.push('- UA: ' + (navigator && navigator.userAgent || '?').slice(0, 200));
+          lines.push('- 時間: ' + new Date().toLocaleString('zh-TW'));
+          lines.push('- 版本: ' + (window._GAME_LOADED_VERSION || 'unknown'));
+          lines.push('- 頁面: ' + ((payload && payload.page) || 'unknown'));
+          if(typeof _adventureMode !== 'undefined' && _adventureMode){
+            lines.push('');
+            lines.push('## ⚔ 冒險狀態');
+            lines.push('- _adventureStage: ' + (typeof _adventureStage !== 'undefined' ? _adventureStage : '?'));
+            lines.push('- _advMiniBattleActive: ' + (typeof _advMiniBattleActive !== 'undefined' ? _advMiniBattleActive : '?'));
+            lines.push('- _advQuizPhase: ' + (typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : '?'));
+            lines.push('- _advQuizResolveCb: ' + (typeof _advQuizResolveCb !== 'undefined' ? !!_advQuizResolveCb : '?'));
+            lines.push('- _gamePaused: ' + (typeof _gamePaused !== 'undefined' ? _gamePaused : '?'));
+            lines.push('- _bossQuizInFlight: ' + !!window._bossQuizInFlight);
+            lines.push('- _advBossActionSkip: ' + (typeof _advBossActionSkip !== 'undefined' ? _advBossActionSkip : '?'));
+            lines.push('- _advMiniResultShowing: ' + !!window._advMiniResultShowing);
+            lines.push('- _wbInWorldBossMode: ' + !!window._wbInWorldBossMode);
+            lines.push('- _wbSoloPracticeMode: ' + !!window._wbSoloPracticeMode);
+          }
+          if(_G){
+            lines.push('');
+            lines.push('## 🎯 戰場 G');
+            lines.push('- round: ' + (_G.round || '?'));
+            lines.push('- turn: ' + (_G.turn || '?'));
+            lines.push('- activeChar: ' + (_G.activeChar && _G.activeChar.name || 'none')
+              + ' (side=' + (_G.activeChar && _G.activeChar.side) + ', pos=' + (_G.activeChar && _G.activeChar.pos) + ')');
+            if(_G.p1){
+              lines.push('- p1: ' + _G.p1.map(h => h ?
+                (h.name + '(HP ' + h.curHp + '/' + h.hp + ', acted=' + !!h.acted
+                + (h.status && h.status.length ? ', status=[' + h.status.map(s=>s.type).join(',') + ']' : '')
+                + ')') : 'null').join(' | '));
+            }
+            if(_G.p2){
+              lines.push('- p2: ' + _G.p2.map(h => h ?
+                (h.name + '(HP ' + h.curHp + '/' + h.hp + ', acted=' + !!h.acted
+                + (h.status && h.status.length ? ', status=[' + h.status.map(s=>s.type).join(',') + ']' : '')
+                + ')') : 'null').join(' | '));
+            }
+          }
+          // modal 顯示狀態
+          const _modalIds = ['adv-quiz-overlay','adv-reward-overlay','adv-result-overlay',
+            'adv-boss-intro','adv-continue-overlay','adv-cutscene-overlay',
+            'burst-priority-modal','action-panel','item-panel'];
+          const _visibleModals = [];
+          _modalIds.forEach(id => {
+            const el = document.getElementById(id);
+            if(!el) return;
+            const cs = window.getComputedStyle(el);
+            const hasShow = el.classList.contains('show');
+            const visible = cs.display !== 'none' && cs.visibility !== 'hidden';
+            if(hasShow || visible) _visibleModals.push(id + (hasShow ? '.show' : '') + (visible ? '(visible)' : ''));
+          });
+          if(_visibleModals.length){
+            lines.push('');
+            lines.push('## 📦 顯示中 modal/panel');
+            lines.push('- ' + _visibleModals.join('\n- '));
+          }
+          return lines.join('\n');
+        }catch(eS){ return '## ⚠ 快照失敗\n' + (eS && eS.message || eS); }
+      })();
+      const _consoleDump = (typeof window._consoleDumpForBugReport === 'function')
+        ? window._consoleDumpForBugReport() : '(無 console buffer)';
+
+      // 組裝 markdown 格式 content(管理員一鍵複製貼給 Claude 直接讀)
+      const _fullContent = [
+        '# 🐛 玩家 BUG 回報',
+        '',
+        '## 📝 玩家描述',
+        _userText || '(玩家未填寫描述)',
+        '',
+        _snapshot,
+        '',
+        '## 🔍 Console 紀錄(最近 300 條)',
+        '```',
+        _consoleDump,
+        '```',
+      ].join('\n');
+
+      // 上限 8000 字,超過從 console dump 頭部截掉(保留玩家描述 + 快照 + 最新 console)
+      let _finalContent = _fullContent;
+      if(_finalContent.length > 8000){
+        const _overflow = _finalContent.length - 8000 + 50; // +50 給「(已截掉舊 log)」標籤
+        // 找到 Console 區塊起點,從中間截
+        const _consoleStart = _finalContent.indexOf('## 🔍 Console 紀錄');
+        if(_consoleStart > 0 && _consoleStart < _finalContent.length - _overflow){
+          // 在 console dump 內截(保留新的)
+          const _codeStart = _finalContent.indexOf('```\n', _consoleStart);
+          if(_codeStart > 0){
+            _finalContent = _finalContent.slice(0, _codeStart + 4)
+              + '(已截掉舊 log,僅保留最新)\n...\n'
+              + _finalContent.slice(_codeStart + 4 + _overflow);
+          } else {
+            _finalContent = _finalContent.slice(0, 7950) + '\n...(截)';
+          }
+        } else {
+          _finalContent = _finalContent.slice(0, 7950) + '\n...(截)';
+        }
+      }
+
       const reportObj = {
         id: _id,
         email: (_email || '').toString().slice(0, 200),
         uid: (_uid || '').toString().slice(0, 200),
-        content: ((payload && payload.content) || '').toString().slice(0, 8000),
+        content: _finalContent,
         page: (payload && payload.page) || 'unknown',  // battle / stage_select / other
         version: (window._GAME_LOADED_VERSION || 'unknown'),
         timestamp: Date.now(),
+        // 額外保留拆分後欄位,管理員 UI 若要分區顯示也可用
+        _userText: _userText.slice(0, 500),
+        _hasConsoleDump: true,
       };
       await setDoc(doc(_fbDb, 'bugReports', _id), reportObj);
-      console.info('✅ [BUG 回報] 已送出', reportObj);
+      console.info('✅ [BUG 回報] 已送出', { id:_id, contentLen:_finalContent.length });
       return reportObj;
     } catch(e) {
       console.error('❌ [BUG 回報] 送出失敗', e);
@@ -33890,11 +34088,13 @@ async function _showAdminStatsPanel(){
       </div>
 
       <!-- ★ v1.0.20260510.5760 — 接收錯誤回報區塊 -->
+      <!-- ★ v3.3.2 — 回報內容現在含玩家描述 + 戰鬥快照 + 最近 300 條 console -->
       <div id="_admin-bug-section" style="background:rgba(60,20,40,0.5);border:2px solid rgba(255,140,200,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ffaadd;margin-bottom:8px;">📥 接收錯誤回報</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
           顯示玩家送出的「卡死或 BUG 回報」清單(最新 200 筆,按時間倒序)。<br>
-          每筆顯示玩家信箱、來源頁面、回報內容與時間。處理完可逐筆刪除。
+          每筆顯示玩家信箱、來源頁面、回報內容與時間。<br>
+          <span style="color:#aaffcc;font-weight:700;">💡 每筆回報已自動附帶玩家當下的 console 紀錄 + 戰鬥狀態快照,按「📋 複製給 Claude」可直接貼給 AI 偵錯。</span>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
           <button id="_admin-bug-refresh" style="flex:1;min-width:140px;padding:11px 20px;font-size:15px;font-weight:800;
@@ -34138,9 +34338,11 @@ async function _showAdminStatsPanel(){
         +     '</div>'
         +     '<div style="display:flex;gap:5px;flex:0 0 auto;">'
         +       '<button class="_bug-copy-btn" data-id="' + _id + '" '
-        +         'style="padding:3px 8px;font-size:12px;font-weight:700;cursor:pointer;'
-        +         'background:rgba(120,200,255,0.2);border:1px solid #66bbff;color:#aaddff;'
-        +         'border-radius:5px;font-family:inherit;">📋 複製</button>'
+        +         'style="padding:4px 10px;font-size:12px;font-weight:800;cursor:pointer;'
+        +         'background:linear-gradient(135deg,rgba(120,200,255,0.35),rgba(80,160,220,0.35));'
+        +         'border:1.5px solid #66bbff;color:#ddf0ff;'
+        +         'border-radius:5px;font-family:inherit;'
+        +         'box-shadow:0 0 6px rgba(120,200,255,0.3);">📋 複製給 Claude</button>'
         +       '<button class="_bug-del-btn" data-id="' + _id + '" '
         +         'style="padding:3px 8px;font-size:12px;font-weight:700;cursor:pointer;'
         +         'background:rgba(255,80,80,0.2);border:1px solid #ff6666;color:#ffaaaa;'
@@ -57382,6 +57584,7 @@ window._showBugReportDialog = function(pageContext){
   ].join('');
 
   // ★ 粉紅色系視窗,呼應第二個入口按鈕配色
+  // ★ v3.3.2 — textarea 上限從 100 → 200,加上「console 自動附帶」說明
   dlg.innerHTML = `
     <div style="background:linear-gradient(160deg,rgba(60,20,40,0.98),rgba(35,10,25,0.99));
       border:3px solid rgba(255,140,200,0.85);border-radius:18px;padding:22px 26px;
@@ -57390,11 +57593,16 @@ window._showBugReportDialog = function(pageContext){
       <div style="font-size:26px;font-weight:900;color:#ffaadd;margin-bottom:6px;text-align:center;letter-spacing:2px;">
         🐛 卡死或 BUG 回報
       </div>
-      <div style="font-size:14px;color:#ffd0e8;text-align:center;margin-bottom:14px;line-height:1.55;">
+      <div style="font-size:14px;color:#ffd0e8;text-align:center;margin-bottom:10px;line-height:1.55;">
         描述卡死或 BUG 情形,通知老師修正遊戲錯誤。<br>
         <span style="color:#ffaacc;font-size:12px;">(例如:在哪個關卡、做了什麼動作、遇到什麼狀況)</span>
       </div>
-      <textarea id="_bug-report-text" maxlength="100" placeholder="請輸入回報內容(最多 100 字)..."
+      <div style="font-size:12px;color:#aaffcc;background:rgba(40,80,60,0.45);
+        border:1px solid rgba(140,255,180,0.4);border-radius:8px;
+        padding:8px 12px;margin-bottom:12px;line-height:1.5;text-align:center;">
+        🤖 送出時會自動附帶最近的系統紀錄,<br>幫老師更快找到問題,不用問你細節!
+      </div>
+      <textarea id="_bug-report-text" maxlength="200" placeholder="請輸入回報內容(最多 200 字,卡死按不到也可以空白直接送)..."
         style="width:100%;min-height:120px;padding:12px 14px;font-size:16px;
         background:rgba(20,15,25,0.9);
         border:2px solid rgba(255,140,200,0.55);color:#fff;border-radius:10px;
@@ -57402,7 +57610,7 @@ window._showBugReportDialog = function(pageContext){
         outline:none;transition:border-color 0.15s;"
         onfocus="this.style.borderColor='rgba(255,180,220,0.95)'"
         onblur="this.style.borderColor='rgba(255,140,200,0.55)'"></textarea>
-      <div id="_bug-report-counter" style="font-size:12px;color:#ddaacc;margin:6px 2px 14px;text-align:right;">0 / 100</div>
+      <div id="_bug-report-counter" style="font-size:12px;color:#ddaacc;margin:6px 2px 14px;text-align:right;">0 / 200</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button id="_bug-report-cancel"
           style="flex:1;padding:12px 16px;font-size:16px;font-weight:700;cursor:pointer;
@@ -57496,8 +57704,8 @@ window._showBugReportDialog = function(pageContext){
   if(ta && counter){
     ta.addEventListener('input', () => {
       const _len = ta.value.length;
-      counter.textContent = _len + ' / 100';
-      counter.style.color = (_len >= 95) ? '#ff7799' : (_len >= 80 ? '#ffcc77' : '#ddaacc');
+      counter.textContent = _len + ' / 200';
+      counter.style.color = (_len >= 190) ? '#ff7799' : (_len >= 160 ? '#ffcc77' : '#ddaacc');
     });
     // 自動聚焦,玩家直接輸入
     // ★ FIX 20260518 — PC 上 .focus() 會讓瀏覽器自動把元素捲入視野,
@@ -57539,14 +57747,9 @@ window._showBugReportDialog = function(pageContext){
         }
       }catch(_){}
       const _content = (ta && ta.value || '').trim();
-      if(!_content){
-        if(statusEl){
-          statusEl.textContent = '⚠ 請先輸入回報內容';
-          statusEl.style.color = '#ffaa66';
-        }
-        try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.5); }catch(_){}
-        return;
-      }
+      // ★ v3.3.2 — 允許空白送出:卡死時玩家可能完全打不了字,但仍需要 console 紀錄
+      //   若空白,自動填入「(玩家未填寫,自動送出 console)」讓老師仍能收到診斷資料
+      const _contentToSend = _content || '(玩家未填寫描述,送出 console 與快照)';
       // 防呆:確認 Firebase API 在
       if(typeof window._fbSubmitBugReport !== 'function'){
         if(statusEl){
@@ -57566,7 +57769,7 @@ window._showBugReportDialog = function(pageContext){
       }
       try{
         await window._fbSubmitBugReport({
-          content: _content,
+          content: _contentToSend,
           page: pageContext || 'unknown',
         });
         // ★ v1.0.20260510.5810 — 送出成功後記錄時戳,啟動 1 小時冷卻
