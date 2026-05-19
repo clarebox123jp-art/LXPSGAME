@@ -29912,7 +29912,24 @@ function aiAct(a){
           console.warn('[WB-BossQuiz] 指派槽位例外,fallback 走原本 advShowQuiz', _eAssign);
         }
       }
-      try{ advShowQuiz(); }catch(e){
+      try{
+        advShowQuiz();
+        // ★ v3.3.2 — 世界 BOSS 戰專屬:BOSS 行動前題覆寫 label 文字
+        //   老師需求:「題目上方的藍色字要改成答對時能量+1、全隊 HP 恢復 5%
+        //              (答錯無懲罰了也不用顯示)」
+        //   原問題:advShowQuiz 不會主動清 adv-quiz-label,沿用上一次的文字
+        //          (例如開戰題的「🐉 BOSS 開戰挑戰題」label 殘留到 BOSS 行動前題)
+        //   修補:在世界 BOSS 戰時,advShowQuiz 後立刻覆寫 label
+        try{
+          if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+            const _qLbl = document.getElementById('adv-quiz-label');
+            if(_qLbl){
+              const _round = (G && G.round) || 1;
+              _qLbl.textContent = `⚡ 第 ${_round} 回合 BOSS 行動前題!答對時能量+1、全隊 HP 恢復 5%`;
+            }
+          }
+        }catch(_eLbl){ console.warn('[WB-BossQuiz] label 覆寫例外', _eLbl); }
+      }catch(e){
         try{ window._bossQuizInFlight = false; }catch(_){}
         console.error('[BOSS quiz] advShowQuiz 失敗', e);
         _realAiAct(a);
