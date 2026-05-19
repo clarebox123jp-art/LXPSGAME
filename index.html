@@ -27760,8 +27760,29 @@ window._initDualStarBattle = function(h){
 };
 
 function startTurn(){
+  // ★ v3.3.2 — startTurn 入口診斷 log:只在世界 BOSS 戰印,避免污染其他關卡 log
+  //   日後若再出現「沒看到行動按鈕、什麼都不能按」的卡死,
+  //   直接從 console 看 startTurn 走到哪一行就 return 了
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+      console.log('🚀 [startTurn 入口] worldboss 進入,'
+        + '_advMiniResultShowing=' + !!window._advMiniResultShowing
+        + ', cutsceneShow=' + (function(){
+            try{ const c = document.getElementById('adv-cutscene-overlay');
+                 return c && (c.style.display === 'flex' || c.classList.contains('show')); }
+            catch(_){ return false; }
+          })()
+        + ', _gamePaused=' + (typeof _gamePaused !== 'undefined' ? _gamePaused : 'undef')
+        + ', G.round=' + (G && G.round)
+        + ', p1Acted=' + (G && G.p1 ? G.p1.filter(h=>h&&h.acted).length+'/'+G.p1.filter(h=>h&&h.curHp>0).length : '?')
+        + ', p2Acted=' + (G && G.p2 ? G.p2.filter(h=>h&&h.acted).length+'/'+G.p2.filter(h=>h&&h.curHp>0).length : '?'));
+    }
+  }catch(_eDiag){}
   // ★ 小怪結算視窗顯示中：封鎖所有 startTurn 呼叫，防止 Boss 戰在背景提前推進
-  if(window._advMiniResultShowing) return;
+  if(window._advMiniResultShowing){
+    try{ if(_adventureStage === 'worldboss') console.warn('⚠ [startTurn] _advMiniResultShowing=true 導致 return!世界 BOSS 戰不該有此旗標'); }catch(_){}
+    return;
+  }
   // ★ v1.0.20260512.6150 — 根因防護:cutscene 對白頁面顯示中時 return
   //   修復「題目出完→重選題庫→打完小怪戰→cutscene 對白卡住 30 秒」的卡死路徑
   //   症狀:小怪戰最後一個玩家英雄的 endAction watchdog(5 秒)在 cutscene 進入後觸發,
@@ -28717,9 +28738,24 @@ function startTurn(){
         const _mySlot = (window._wbNet && typeof window._wbNet.getMySlot === 'function')
                        ? window._wbNet.getMySlot() : 0;
         const _isMySlot = (next.pos === _mySlot) && !next._wbIsHostNpc;
+        // ★ v3.3.2 — 加診斷 log,日後卡死可直接從 console 看出走哪條分支
+        try{
+          console.log('🎮 [WB-PlayerTurn] startTurn p1 進入,next=' + next.name
+            + ', pos=' + next.pos + ', mySlot=' + _mySlot
+            + ', isMySlot=' + _isMySlot
+            + ', _wbIsHostNpc=' + !!next._wbIsHostNpc
+            + ', _advQuizPhase=' + (typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : 'undef')
+            + ', soloPracticeMode=' + !!window._wbSoloPracticeMode);
+        }catch(_){}
         // 連線模式下若代打 NPC 仍由房主控制,房主端的 mySlot=自己,代打槽不會等於 mySlot
         // → _isMySlot 會自動 false,不會誤觸答題
-        if(_isMySlot && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
+        // ★ v3.3.2 — 單人練習模式:_wbNet 是 mock,getMySlot 不一定存在 → _mySlot=0,
+        //   但實際練習者「同時操控 4 個英雄」(沒有所謂的「我的槽位」)。
+        //   修正:練習模式下 _isMySlot 一律當 true(所有 p1 槽位都是我自己),
+        //         確保 4 個英雄行動前都觸發答題,跟單人練習的設計初衷一致。
+        const _isSoloPractice = !!window._wbSoloPracticeMode;
+        const _isMySlotEffective = _isSoloPractice ? true : _isMySlot;
+        if(_isMySlotEffective && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
           // 本回合該槽位是否已答過題?(用主程式 _advUsedQuestionIds 機制無法分回合,改用自己的旗標)
           window._wbPlayerQuizDone = window._wbPlayerQuizDone || {};
           const _qKey = '__r' + (G.round||1) + '_p' + next.pos;
@@ -42395,6 +42431,27 @@ window._wbSetupAdvForBattle = function(opts){
     if(typeof _bossQuizInFlight !== 'undefined') window._bossQuizInFlight = false;
     // ★ FIX 20260518(c) #6 — 進新戰場時清玩家行動前答題的回合追蹤
     window._wbPlayerQuizDone = {};
+    // ★ v3.3.2 — 清掉所有可能讓 startTurn 第一行就 return 的殘留旗標
+    //   症狀:救醫馬卡死,console 看不到任何 startTurn 內部 log
+    //   根因:_wbSetupAdvForBattle 從未走 startAdventureGame(line 47042-47057 清旗標的路徑),
+    //         若前一次冒險殘留 _advMiniResultShowing=true,startTurn line 27764 直接 return,
+    //         整個戰鬥流程靜默卡死(連診斷 log 都印不出來)
+    //   涵蓋旗標(從 startAdventureGame line 47042-47057 抄):
+    try{
+      window._advMiniResultShowing = false;
+      window._advMiniResultPending = null;
+      window._advPreComposedMobs = null;
+      window._advNoTreasureThisBattle = false;
+      window._advBossHpMultApplied = false;
+      window._advJapanEliteBuffApplied = false;
+      window._advJapanYamataWeakApplied = false;
+      window._advJapanDifficultyShown = false;
+      window._advMaokongLvScaleApplied = false;
+      // 戰鬥內憤怒爆發/封印旗標也清,避免上一場 BOSS 戰殘留誤觸發
+      if(typeof _advBossActionSkip !== 'undefined') _advBossActionSkip = false;
+      if(typeof _advBossRageBurstUsed !== 'undefined') _advBossRageBurstUsed = false;
+      console.log('[WB-Setup v3.3.2] ✅ 清除 _advMiniResultShowing 等殘留旗標,避免 startTurn 直接 return');
+    }catch(_eFlag){ console.warn('[WB-Setup v3.3.2] 清旗標失敗', _eFlag); }
     // _currentBossVariantInfo 清空(避免被當成 apricot 等變體)
     window._currentBossVariantInfo = null;
     // 設定 G.p1 / G.p2
