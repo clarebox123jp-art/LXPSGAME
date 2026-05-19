@@ -3866,7 +3866,10 @@
         const _lobby = document.getElementById('wb-lobby-overlay');
         if(_lobby){ _lobby.style.display = 'none'; _lobby.classList.remove('wb-in-battle'); _lobby.style.background = ''; }
         const _eb = document.getElementById('wb-emoji-bar-real');
-        if(_eb) _eb.classList.remove('wb-eb-show');
+        if(_eb){
+          _eb.classList.remove('wb-eb-show');
+          _eb.style.display = 'none';  // ★ FIX 20260519(v4) 強制清(雙保險)
+        }
         const _entry = document.getElementById('wb-entry-overlay');
         if(_entry) _entry.style.display = 'none';
         // 清練習用即時傷害條
@@ -3913,9 +3916,13 @@
       if(_tc) _tc.classList.remove('show');
     }catch(_){}
     // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline style display 衝突 bug)
+    // ★ FIX 20260519(v4) — 強制 inline display:none(雙保險)
     try{
       const _eb = document.getElementById('wb-emoji-bar-real');
-      if(_eb){ _eb.classList.remove('wb-eb-show'); }
+      if(_eb){
+        _eb.classList.remove('wb-eb-show');
+        _eb.style.display = 'none';
+      }
     }catch(_){}
     // ★ FIX 20260517(h) — 順手清戰鬥中表情列冷卻 timer
     try{
@@ -8983,10 +8990,15 @@
     if(!document.getElementById('wb-adv-quiz-zindex-fix')){
       const _qsty = document.createElement('style');
       _qsty.id = 'wb-adv-quiz-zindex-fix';
+      // ★ FIX 20260519(v3) — 只覆寫 z-index,不動 position/inset
+      //   原 v2 覆寫了 position:fixed !important + inset:0 !important,但 main.css 對
+      //   #adv-quiz-overlay 可能用 transform: translate(-50%,-50%) 居中,inset:0 反而
+      //   把 box 拉到左上角看不到 → 用戶以為「沒出現題目」。
+      //   v3 改成只動 z-index,保留 main.css 原本的居中/尺寸定義不變。
       _qsty.textContent =
         '#adv-quiz-overlay.show,#adv-reward-overlay.show,#adv-result-overlay.show,'
         + '#adv-boss-intro.show,#adv-continue-overlay.show{'
-        +   'z-index:10900 !important;position:fixed !important;inset:0 !important;'
+        +   'z-index:10900 !important;'
         + '}';
       document.head.appendChild(_qsty);
       console.log('[WB-Adv] ✅ quiz/reward UI z-index 提升規則已注入');
@@ -9375,7 +9387,14 @@
 
     document.getElementById('wb-lobby-overlay').style.display = 'none';
     // ★ FIX 20260517(o-4) — 改用 class 控制
-    try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
+    // ★ FIX 20260519(v4) — 強制 inline display:none(雙保險,防 CSS class 殘留)
+    try{
+      const _eb = document.getElementById('wb-emoji-bar-real');
+      if(_eb){
+        _eb.classList.remove('wb-eb-show');
+        _eb.style.display = 'none';
+      }
+    }catch(_){}
     const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
     if(dmgBar) dmgBar.remove();
     // ★ FIX 20260517 — 清掉戰鬥背景的火焰粒子層 + worldboss body class
@@ -9540,6 +9559,21 @@
   //   新行為:清掉世界戰所有 overlay / 旗標 / BGM 切換到首頁音樂,然後打開冒險選關頁
   //          → 玩家剛打完維蘇威,直接回關卡選擇頁,可以再按一次入口繼續挑戰或選別關
   window._wbBackToStageSelect = function(){
+    // ★ FIX 20260519(v4) — 連線房主返回關卡前先 leaveRoom 清掉 firestore 房間
+    //   防止「離開 BOSS 戰後昨天的房間還在」的幽靈房間問題
+    try{
+      const _wasHost = !!window._wbConnectedHostMode;
+      const _hasNet = !!(window._wbNet && typeof window._wbNet.leaveRoom === 'function');
+      if(_wasHost && _hasNet){
+        console.log('[WB] _wbBackToStageSelect: 房主返回前先 leaveRoom');
+        // 不 await,避免 firestore 慢回應卡住 UI
+        window._wbNet.leaveRoom().catch(e => console.warn('[WB] leaveRoom 失敗', e));
+      }else if(_hasNet && window._wbConnectedClientMode){
+        // 非房主也離開,把自己從 player list 移除
+        console.log('[WB] _wbBackToStageSelect: client 返回前先 leaveRoom');
+        window._wbNet.leaveRoom().catch(e => console.warn('[WB] client leaveRoom 失敗', e));
+      }
+    }catch(_eLv){ console.warn('[WB] _wbBackToStageSelect leaveRoom 例外', _eLv); }
     // 清世界戰 overlay 與旗標
     try{
       const _overlay = document.getElementById('wb-lobby-overlay');
@@ -9550,8 +9584,13 @@
       }
       const _battleArea = document.getElementById('wb-battle-area');
       if(_battleArea) _battleArea.classList.remove('show');
+      // ★ FIX 20260519(v4) — 表情列強制 inline display:none,不只是移 class
+      //   原本只 remove .wb-eb-show,但若 CSS 預設 display 不是 none 會殘留
       const _emojiBar = document.getElementById('wb-emoji-bar-real');
-      if(_emojiBar) _emojiBar.classList.remove('wb-eb-show');
+      if(_emojiBar){
+        _emojiBar.classList.remove('wb-eb-show');
+        _emojiBar.style.display = 'none';
+      }
       const _wbResultOv = document.getElementById('wb-solo-practice-result');
       if(_wbResultOv) _wbResultOv.remove();
       const _openingQuiz = document.getElementById('wb-boss-opening-quiz');

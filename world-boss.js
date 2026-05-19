@@ -2676,6 +2676,31 @@
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = false;
+    // ★ FIX 20260519(v4) — 戰鬥結算後強制清掉「定型文選單」(表情列)
+    //   原 v3 只在 _wbShowSoloPracticeResult / _wbBackToStageSelect 內 remove .show class,
+    //   但若用戶從別的路徑離開戰鬥(網路斷線、頁面切回等)會殘留 → 下次回到入口看到漂浮表情列
+    //   修法:在最終結算函式內強制 inline style display:none + 移 class,雙保險。
+    try{
+      const _eb = document.getElementById('wb-emoji-bar-real');
+      if(_eb){
+        _eb.classList.remove('wb-eb-show');
+        _eb.style.display = 'none';
+      }
+    }catch(_){}
+    // ★ FIX 20260519(v4) — 連線房主戰鬥結算後自動 leaveRoom 清掉 firestore 房間
+    //   原 bug:結算頁的「返回關卡選擇」按鈕 _wbBackToStageSelect 沒呼叫 _wbNet.leaveRoom(),
+    //          房主退出後 firestore 房間還掛著 → 別的玩家在大廳還能看到該房間,
+    //          隔天甚至前一晚開的房間都還在,變成幽靈房。
+    //   修法:在結算時若是連線房主(_wbConnectedHostMode=true) → 自動 leaveRoom 關房。
+    //         非房主端不主動關房(房主關了之後 firestore room 會整個消失,client 自然清掉)。
+    //         單人模式 _wbNet 是 mock,leaveRoom 是 no-op 不會有副作用。
+    try{
+      const _wasHost = !!window._wbConnectedHostMode;
+      if(_wasHost && window._wbNet && typeof window._wbNet.leaveRoom === 'function'){
+        console.log('[WB] 戰鬥結算,連線房主自動 leaveRoom 清掉房間');
+        window._wbNet.leaveRoom().catch(e => console.warn('[WB] 結算後 leaveRoom 失敗', e));
+      }
+    }catch(_eLv){ console.warn('[WB] 結算後 leaveRoom 例外', _eLv); }
     // ★ v6 Phase 4 — 清理連線模式 / client mode 旗標
     window._wbConnectedHostMode = false;
     window._wbConnectedClientMode = false;
