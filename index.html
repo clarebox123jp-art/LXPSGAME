@@ -38729,9 +38729,14 @@ function _loadTaiwanTreasureData(){
 }
 // ★ v1.0.20260501.4630 — 資料一致性修復函式
 // ★ v1.0.20260501.4660 — 已解鎖第二格的英雄可保留 2 件不同 slot 的至寶
+// ★ v3.3.4 — 重大修補:用 equippedSlot 數字判斷衝突,不再用 def.slot 種類
+//   舊邏輯錯誤前提:「同英雄不准裝兩件同種類(weapon/armor/accessory)的至寶」
+//   實際遊戲設計:至寶沒有種類限制,英雄可自由裝兩件「不同名稱」的至寶
+//   舊邏輯 bug:玩家裝兩件 weapon 至寶 → reload 時 _repairTaiwanTreasureEquipped 把第二件卸下
+//   新邏輯:同英雄只擋「重複裝同 id 至寶」 + 限制總件數為 maxSlots,不再看 def.slot
 function _repairTaiwanTreasureEquipped(){
-  // 紀錄每英雄已佔用的「slot 名稱」,以及該英雄能裝幾件
-  const heroEquipMap = {}; // { heroName: { maxSlots, used: Set<slot> } }
+  // 紀錄每英雄已使用的「slot 數字(0/1)」與「至寶 id」
+  const heroEquipMap = {}; // { heroName: { maxSlots, usedSlots: Set<number>, usedIds: Set<string> } }
   let _repaired = 0;
   // 用 _TAIWAN_TREASURE_ORDER 順序處理,讓修復結果可預測(玩家先獲得的至寶優先保留裝備關聯)
   const ids = (typeof _TAIWAN_TREASURE_ORDER !== 'undefined' && Array.isArray(_TAIWAN_TREASURE_ORDER))
@@ -38744,21 +38749,40 @@ function _repairTaiwanTreasureEquipped(){
     const heroName = rec.equippedTo;
     if(!heroEquipMap[heroName]){
       const _slot2 = (typeof _isHeroSlot2Unlocked === 'function') && _isHeroSlot2Unlocked(heroName);
-      heroEquipMap[heroName] = { maxSlots: _slot2 ? 2 : 1, used: new Set() };
+      heroEquipMap[heroName] = { maxSlots: _slot2 ? 2 : 1, usedSlots: new Set(), usedIds: new Set() };
     }
     const info = heroEquipMap[heroName];
-    // 條件:該英雄裝備數未滿 + 此 slot 未被佔用
-    if(info.used.size < info.maxSlots && !info.used.has(def.slot)){
-      info.used.add(def.slot);
+    // ★ v3.3.4 — 取得此至寶的 equippedSlot(舊資料沒寫的當 0)
+    const _slot = (typeof rec.equippedSlot === 'number') ? rec.equippedSlot : 0;
+    // ★ v3.3.4 — 條件 1:該英雄裝備數未滿
+    // ★ v3.3.4 — 條件 2:此 slot 數字(0/1)未被佔用
+    // ★ v3.3.4 — 條件 3:此至寶 id 未重複(同 id 不能裝兩次)
+    if(info.usedSlots.size < info.maxSlots
+       && !info.usedSlots.has(_slot)
+       && !info.usedIds.has(id)
+       && _slot < info.maxSlots){
+      info.usedSlots.add(_slot);
+      info.usedIds.add(id);
+      // 若舊資料 equippedSlot=undefined,順手補上(用 _slot=0)
+      if(typeof rec.equippedSlot !== 'number'){
+        rec.equippedSlot = _slot;
+        _repaired++; // 算作修復
+        console.log('[台灣至寶] 修復:[' + id + '] 補 equippedSlot=' + _slot);
+      }
     } else {
-      // 該英雄已滿(或同 slot 已被佔),這件清為 null
-      console.warn('[台灣至寶] 修復:[' + id + '] 從 [' + heroName + '] 卸下(裝備位已滿或同 slot 衝突)');
+      // 該英雄已滿、slot 衝突、id 重複、或 slot 數字超過 maxSlots → 卸下
+      console.warn('[台灣至寶] 修復:[' + id + '] 從 [' + heroName + '] 卸下 ('
+        + 'slot=' + _slot
+        + ', usedSlots=' + JSON.stringify([...info.usedSlots])
+        + ', maxSlots=' + info.maxSlots
+        + ', usedIds 已含=' + info.usedIds.has(id) + ')');
       rec.equippedTo = null;
+      rec.equippedSlot = null;
       _repaired++;
     }
   });
   if(_repaired > 0){
-    console.warn('[台灣至寶] 共修復 ' + _repaired + ' 件多餘的裝備關聯');
+    console.warn('[台灣至寶] 共修復 ' + _repaired + ' 件裝備關聯');
     _saveTaiwanTreasureData();
   }
 }
@@ -38927,6 +38951,21 @@ function _equipTaiwanTreasureToSlot(treasureId, heroName, slotIdx){
   const _maxSlots = _slot2Unlocked ? 2 : 1;
   const _targetSlot = Math.max(0, Math.min(slotIdx|0, _maxSlots - 1));
 
+  // ★ v3.3.4 — 診斷 log:印出進入時的所有相關狀態,日後若再回報「裝錯位置」可一眼追到根因
+  try{
+    const _beforeList = (typeof _getHeroEquippedTreasures === 'function')
+                       ? _getHeroEquippedTreasures(heroName) : [];
+    console.log('[至寶裝備] 進入,treasureId=' + treasureId
+      + ', heroName=' + heroName
+      + ', slotIdx 傳入=' + slotIdx
+      + ', _slot2Unlocked=' + _slot2Unlocked
+      + ', _maxSlots=' + _maxSlots
+      + ', _targetSlot 實際=' + _targetSlot
+      + ', 該英雄目前裝備=' + JSON.stringify(_beforeList.map(e => ({
+          id: e.id, slot: e.record.equippedSlot
+        }))));
+  }catch(_){}
+
   // 1. 卸下「目標槽位上已裝的其他至寶」
   Object.keys(_taiwanTreasureData).forEach(otherId => {
     if(otherId === treasureId) return;
@@ -38934,6 +38973,8 @@ function _equipTaiwanTreasureToSlot(treasureId, heroName, slotIdx){
     if(otherRec && otherRec.equippedTo === heroName
        && (typeof otherRec.equippedSlot === 'number')
        && otherRec.equippedSlot === _targetSlot){
+      // ★ v3.3.4 — 加 log:這條會把「正好在目標槽位」的舊至寶卸下,玩家若回報「主裝備消失」就是這條觸發
+      try{ console.log('[至寶裝備] step 1 卸下舊至寶: id=' + otherId + ', 原 slot=' + otherRec.equippedSlot + ' === _targetSlot=' + _targetSlot); }catch(_){}
       otherRec.equippedTo = null;
       otherRec.equippedSlot = null;
     }
@@ -64611,6 +64652,9 @@ function _formatTreasureEff(effObj){
 // ════════════════════════════════════════════════════════════════════
 function _showHeroTreasureSlotPicker(heroName, slotIdx){
   try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  // ★ v3.3.4 — 進入裝備 modal 前主動修補一次資料(把舊版髒資料的 equippedSlot 補齊)
+  //   防止「玩家舊存檔升級到 v3.3.4 後第一次裝備就觸發 step 1 卸錯」
+  try{ if(typeof _repairTaiwanTreasureEquipped === 'function') _repairTaiwanTreasureEquipped(); }catch(_){}
   // 清掉舊的 modal
   const _old = document.getElementById('_hero-tr-picker-modal');
   if(_old) _old.remove();
@@ -65135,8 +65179,17 @@ function _renderHeroDetail(name, box) {
           const _eqs = _getHeroEquippedTreasures(name) || [];
           const _RC = { mythic:'#ff44ff', legend:'#ffaa44', epic:'#aa66ff', rare:'#66ddff' };
           const _RN = { mythic:'神話', legend:'傳說', epic:'史詩', rare:'稀有' };
-          // 第一格:取已裝備的第一件至寶顯示;沒有則為「(尚未裝備)」
-          const _eq1 = _eqs[0] || null;
+          // ★ v3.3.4 — UI 渲染必須按 equippedSlot 取,不可按陣列索引取
+          //   原 bug:_eqs[0]/_eqs[1] 按陣列順序,只有「裝了 2 件」才會正確對應到主/副
+          //   若只裝 1 件在副裝備(slot=1),_eqs[0] 拿到的是「唯一那件」,UI 卻顯示在主裝備格
+          //   症狀:玩家點副裝備裝新至寶 → 資料正確進 slot=1 → 但 UI 把它畫在主裝備格,副裝備格顯示空
+          //   修法:用 .find 按 equippedSlot 精確取,沒寫 equippedSlot 的舊資料當 slot 0 處理
+          const _findBySlot = (slot) => _eqs.find(e => {
+            const _s = (typeof e.record.equippedSlot === 'number') ? e.record.equippedSlot : 0;
+            return _s === slot;
+          }) || null;
+          // 第一格:取 equippedSlot=0 的至寶
+          const _eq1 = _findBySlot(0);
           // ★ FIX 20260518(f) — 至寶槽位變成可點:點槽位 → modal 列至寶 → 選一件裝備
           //   下面 name 是英雄名,定義在外層 _renderHeroDetail 的 name 變數
           const _slot1Click = `onclick="event.stopPropagation();_showHeroTreasureSlotPicker('${name.replace(/'/g,"\\'")}',0)"`;
@@ -65164,7 +65217,8 @@ function _renderHeroDetail(name, box) {
           // ★ v1.0.20260501.4660 — 第二格根據「英雄是否解鎖第二件至寶欄位」顯示不同 UI
           //   解鎖條件:該英雄參加過玉山(yushan_giant) BOSS 戰我很會難度並獲勝
           const _slot2Unlocked = (typeof _isHeroSlot2Unlocked === 'function') && _isHeroSlot2Unlocked(name);
-          const _eq2 = _eqs[1] || null;
+          // ★ v3.3.4 — 第二格也按 equippedSlot=1 精確取(同上修補)
+          const _eq2 = _findBySlot(1);
           // ★ FIX 20260518(f) — 副槽位也加上 onclick(只在已解鎖時)
           const _slot2Click = _slot2Unlocked
             ? `onclick="event.stopPropagation();_showHeroTreasureSlotPicker('${name.replace(/'/g,"\\'")}',1)"`
