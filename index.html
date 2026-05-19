@@ -19267,6 +19267,35 @@ function doDmg(target, rawDmg, opts={}){
     }
     target.curHp = Math.max(0, target.curHp - rawDmg);
     try{ showPopup(target, '-'+rawDmg, 'dmg'); }catch(_){}
+    // ★ v3.3.2 — 世界戰貢獻記錄(fixedDmg 路徑早期 return 前也要算)
+    //   bug 症狀(老師回報):五科滿分考卷等固定值技能對 BOSS 造成的傷害「沒被加到本場總傷」
+    //   根因:fixedDmg:true 走 19268 行直接 return rawDmg,完全跳過 20210 行的
+    //         addContribution('dmgDealt') 累計,導致左上「本場總傷」顯示偏低、結算評比
+    //         的「最高輸出」也偏低 → 排行榜傷害總和不正確。
+    //   修補:在這個 return 前複製一份貢獻累計邏輯(與後段 20210 行完全相同),確保所有
+    //         打到維蘇威火山龍王的 fixedDmg 傷害都被記到 contributions 上。
+    //   注意:這段早期 return 路徑只給 fixedDmg 走,所以這裡的 contribution 累計
+    //         不會被後段重複計算(後段在 fixedDmg=true 時已不會執行)。
+    if(target && target.name === '維蘇威火山龍王' && rawDmg > 0
+       && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && window._wbNet && typeof window._wbNet.addContribution === 'function'){
+      try{
+        const myUid = window._gUserId || 'solo_user';
+        window._wbNet.addContribution(myUid, 'dmgDealt', rawDmg);
+      }catch(_eFxContrib){ console.warn('[WB-fixedDmg-contrib] 累計失敗', _eFxContrib); }
+    }
+    // ★ v3.3.2 — 同時補上 statTrack(後段 20221~20225 行的 statTrack 也被跳過)
+    try{
+      if(rawDmg > 0){
+        if(opts.actor && opts.actor.side !== target.side && typeof statTrack === 'function'){
+          statTrack(opts.actor, 'dmg', rawDmg);
+        }
+        if(typeof statTrack === 'function'){
+          statTrack(target, 'hitsReceived', 1);
+          statTrack(target, 'dmgTaken', rawDmg);
+        }
+      }
+    }catch(_eFxStat){}
     return rawDmg;
   }
   const a=G.activeChar||opts.actor;
@@ -21255,6 +21284,19 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   return dmg;
 }
 function doHeal(target, rawAmt, opts={}){
+  // ★ v3.3.2 — 世界 BOSS 戰守門:維蘇威火山龍王不能用任何手段恢復 HP
+  //   老師需求:「世界BOSS不會用任何手段恢復HP」
+  //   守門範圍:不論是誰呼叫(BOSS 自己技能、寵物 hpRegen、buff 治療、答題獎勵誤呼叫等),
+  //             只要 target 是世界 BOSS 戰中的維蘇威火山龍王,一律 return 0(不治療)。
+  //   注意:這擋的是「治療動作」本身,並不影響「免疫不利狀態」之類其他機制。
+  //   對齊修補#6:BOSS p2 抽卡全賣 + line 29593 ~ 已切斷主要入口,
+  //               這裡是最後一道防線,確保任何遺漏的路徑也擋住。
+  if(target && target.name === '維蘇威火山龍王'
+     && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+    try{ console.log('[WB-NoHeal] 維蘇威火山龍王 doHeal 被阻擋,rawAmt=' + rawAmt + ', opts=', opts); }catch(_){}
+    try{ if(typeof log === 'function') log(`🛡 [${target.name}] 火焰意志:免疫所有治療效果!`); }catch(_){}
+    return 0;
+  }
   // ── 迷心醫術（被動）: if enemy heals → redirect to our ally ──
   if(!opts.isMirrored && !opts.isChaos){
     const healer=opts.actor;
@@ -29002,120 +29044,15 @@ function startTurn(){
     updateUI();
     startTurnTimer(next);
 
-    // ★ FIX 20260518(c) #6 — 世界 BOSS 戰:玩家每次行動前也要答題
-    //   設計:輪到玩家自己的英雄時(p1 + 是登入者操作的槽),
-    //          若處於 worldboss stage 且該回合該槽位還沒答過題 → 觸發 advShowQuiz,
-    //          答對才解鎖行動(action-panel 從鎖定恢復),答錯依設定處罰並跳過該回合。
-    //   為何只攔截「自己槽位」:多人連線時其他玩家由房主代打,他們的答題會在自己客戶端跑,
-    //          不該在這裡重複觸發。單人練習 mySlot=0,只攔 p1[0]。
-    //          代打 NPC (_wbIsHostNpc=true) 也不該答題,跳過。
-    try{
-      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
-         && next && next.side === 'p1' && next.curHp > 0 && !next.acted
-         && _adventureMode){
-        // 判斷是否是自己操作的槽位
-        const _mySlot = (window._wbNet && typeof window._wbNet.getMySlot === 'function')
-                       ? window._wbNet.getMySlot() : 0;
-        const _isMySlot = (next.pos === _mySlot) && !next._wbIsHostNpc;
-        // ★ v3.3.2 — 加診斷 log,日後卡死可直接從 console 看出走哪條分支
-        try{
-          console.log('🎮 [WB-PlayerTurn] startTurn p1 進入,next=' + next.name
-            + ', pos=' + next.pos + ', mySlot=' + _mySlot
-            + ', isMySlot=' + _isMySlot
-            + ', _wbIsHostNpc=' + !!next._wbIsHostNpc
-            + ', _advQuizPhase=' + (typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : 'undef')
-            + ', soloPracticeMode=' + !!window._wbSoloPracticeMode);
-        }catch(_){}
-        // 連線模式下若代打 NPC 仍由房主控制,房主端的 mySlot=自己,代打槽不會等於 mySlot
-        // → _isMySlot 會自動 false,不會誤觸答題
-        // ★ v3.3.2 — 單人練習模式:_wbNet 是 mock,getMySlot 不一定存在 → _mySlot=0,
-        //   但實際練習者「同時操控 4 個英雄」(沒有所謂的「我的槽位」)。
-        //   修正:練習模式下 _isMySlot 一律當 true(所有 p1 槽位都是我自己),
-        //         確保 4 個英雄行動前都觸發答題,跟單人練習的設計初衷一致。
-        const _isSoloPractice = !!window._wbSoloPracticeMode;
-        const _isMySlotEffective = _isSoloPractice ? true : _isMySlot;
-        if(_isMySlotEffective && typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'idle'){
-          // 本回合該槽位是否已答過題?(用主程式 _advUsedQuestionIds 機制無法分回合,改用自己的旗標)
-          window._wbPlayerQuizDone = window._wbPlayerQuizDone || {};
-          const _qKey = '__r' + (G.round||1) + '_p' + next.pos;
-          if(!window._wbPlayerQuizDone[_qKey]){
-            console.log('[WB-PlayerQuiz] 玩家行動前出題:', next.name, _qKey);
-            // ★ 鎖住 action-panel,避免玩家在答題前直接點按鈕跳過答題
-            try{
-              const _ap = document.getElementById('action-panel');
-              if(_ap) _ap.style.display = 'none';
-              const _ipl2 = document.getElementById('item-panel');
-              if(_ipl2) _ipl2.style.display = 'none';
-              document.getElementById('actor-info').innerHTML =
-                `<div style="font-size:42px;font-weight:700;line-height:1.4;text-align:center;letter-spacing:1px;color:#88ccff;">`
-                + `📚 輪到你的 <span style="color:#ffe066;">${next.name}</span> 了!<br>`
-                + `<span style="font-size:30px;color:#aaaaaa;font-weight:500">答對題目才能行動</span></div>`;
-            }catch(_eLock){}
-            window._wbPlayerQuizDone[_qKey] = 'pending';  // 標記題中(避免重彈)
-            // 設 quiz cb:答對 → 解除鎖 + 不動 acted;答錯 → acted=true + startTurn 推進
-            const _origQuizCb = _advQuizResolveCb;
-            _advQuizResolveCb = function(){
-              try{
-                // _advStats.lastAnswerCorrect 主程式 advAnswer 會設(答對 true / 答錯 false)
-                const _isCorrect = !!(_advStats && _advStats.lastAnswerCorrect);
-                window._wbPlayerQuizDone[_qKey] = _isCorrect ? 'correct' : 'wrong';
-                if(_isCorrect){
-                  // 答對:呼叫 _wbOnQuizCorrect 給能量+1 跟累計
-                  if(typeof window._wbOnQuizCorrect === 'function'){
-                    window._wbOnQuizCorrect(next.pos, G.round || 1);
-                  }
-                  // 解鎖 action-panel:重新跑 startTurn 渲染(但 acted 仍為 false,_wbPlayerQuizDone='correct' 防重彈)
-                  G.pendingTarget = null; pendingCb = null;
-                  _pSetTimeout(() => {
-                    try{ startTurn(); }catch(_eST){
-                      // startTurn 失敗 → 直接還原 action-panel
-                      const _ap = document.getElementById('action-panel');
-                      if(_ap) _ap.style.display = 'block';
-                      updateUI();
-                    }
-                  }, 200);
-                  log(`✅ [${next.name}] 答對!可選擇行動`);
-                }else{
-                  // 答錯:呼叫 _wbOnQuizWrong 給 5% HP 懲罰,acted=true 推進
-                  if(typeof window._wbOnQuizWrong === 'function'){
-                    window._wbOnQuizWrong(next.pos, G.round || 1, true);
-                  }
-                  next.acted = true;
-                  G.pendingTarget = null; pendingCb = null;
-                  log(`❌ [${next.name}] 答錯,跳過本回合`);
-                  _pSetTimeout(startTurn, 600);
-                }
-              }catch(eCb){
-                console.error('[WB-PlayerQuiz] cb 例外,推進回合', eCb);
-                if(next) next.acted = true;
-                _pSetTimeout(startTurn, 600);
-              }
-            };
-            // 觸發答題
-            try{
-              advShowQuiz();
-            }catch(eShow){
-              console.error('[WB-PlayerQuiz] advShowQuiz 失敗', eShow);
-              // fallback:當作答對(避免卡死),還原 action-panel 讓玩家直接行動
-              window._wbPlayerQuizDone[_qKey] = 'correct';
-              _advQuizResolveCb = _origQuizCb;
-              try{
-                const _ap = document.getElementById('action-panel');
-                if(_ap) _ap.style.display = 'block';
-                const _ipl3 = document.getElementById('item-panel');
-                if(_ipl3) _ipl3.style.display = '';
-                document.getElementById('actor-info').innerHTML =
-                  `<div style="font-size:42px;font-weight:700;line-height:1.4;animation:actorInfoGlow 1.4s ease-in-out infinite;text-align:center;letter-spacing:1px;">✨ 輪到你的 <span style="color:#ffe066;text-shadow:0 0 16px rgba(255,220,0,0.9)">${next.name}</span> 了!<br><span style="font-size:30px;color:#aaaaaa;font-weight:500">選擇下面一種行動</span></div>`;
-                updateUI();
-              }catch(_eRestore){}
-            }
-            return;  // 已觸發答題,等 cb 回來
-          }
-          // 已答對過 → 直接讓玩家行動(_wbPlayerQuizDone='correct' 走到這)
-          // 已答錯過 → next.acted=true 已被 cb 設,startTurn 不會再選到這個槽,不會走到這裡
-        }
-      }
-    }catch(eWbQ){ console.warn('[WB-PlayerQuiz] 觸發例外', eWbQ); }
+    // ★ v3.3.2 — 取消「世界 BOSS 戰每回合玩家答題」機制
+    //   舊行為(已移除):每位玩家英雄行動前都會被 advShowQuiz 攔截要答題,答對才能行動。
+    //   新行為:答題只在(1) 開場 _wbStartBossOpening + (2) BOSS 行動前(由 ADV_QUIZ_BOSS_NAMES
+    //          名單在 aiAct 觸發)— 與冒險關卡完全一致。
+    //   保留原 hook 區的位置作為註解,以利日後若要回復可參考歷史。
+    //   v3.3.1 對應的 v3.3.2 變更:
+    //     - 完整移除「玩家行動前出題」整段(原 ~120 行)
+    //     - 之前對應的 window._wbPlayerQuizDone 旗標仍保留(_wbCleanupAdvAfterBattle 會清),
+    //       因為其他地方(world-boss.js 預設清理)仍會 reset,留著無害
   } else {
     document.getElementById('action-panel').style.display='none';
     // 隱藏物品欄，顯示「對手回合」提示
@@ -29592,7 +29529,21 @@ G.p1.concat(G.p2).forEach(h=>{
   // ★ v1.0.20260424.0800 — AI(p2) 抽卡:用 fieldHas('noshop','p2') 過濾
   if(!fieldHas('noshop', 'p2')){
     const _p2Card=drawItem();
-    if(_p2Card.type==='equip'){
+    // ★ v3.3.2 — 世界 BOSS 戰:BOSS(p2)不攜帶寵物、不持有任何道具,所有抽到的卡都直接賣掉換能量
+    //   老師需求:
+    //     (1)「世界BOSS戰的BOSS不攜帶寵物,直接賣掉」 — 解掉「BOSS 裝鱟每回合回 10% HP」根因
+    //     (2)「世界BOSS不會用任何手段恢復HP,有恢復HP的物品都賣掉」 — 同時解掉
+    //         鱟(hpRegenPct)、月見草(hpRegen)、藥水(回 HP)、HP 寶物(炁息丹)等
+    //   設計:不論裝備卡/物品卡/戰場卡,世界 BOSS 戰時 p2 一律直接 sell→ 能量,
+    //         不裝備到 BOSS、不放進 inv2(BOSS 本來就不應該有資源系統)
+    //   注意:其他關卡(冒險、貓空、日本等)不受影響,p2 仍會抽裝備裝給自己 → 走原邏輯
+    const _isWbBossBattle = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+    if(_isWbBossBattle){
+      // 世界 BOSS 戰:全部換能量
+      const _sellAmt = _p2Card.sell || 3;
+      G.energy.p2 = Math.min(10, G.energy.p2 + _sellAmt);
+      log(`[BOSS] 拒絕攜帶 [${_p2Card.n}](世界BOSS不收任何道具),直接賣掉 +${_sellAmt} 能量`);
+    } else if(_p2Card.type==='equip'){
       // AI auto-equips to lowest HP hero
       var _p2eq=EQUIP_DB.find(function(e){return e.n===_p2Card.n;});
       if(_p2eq){

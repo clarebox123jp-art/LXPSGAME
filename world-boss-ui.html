@@ -7996,8 +7996,45 @@
     if(!G) return;
     const myHero = G.p1 && G.p1[actorPos];
     if(!myHero) return;
-    // 能量 +1
-    myHero.burst = Math.min(myHero.burstMax || 10, (myHero.burst||0) + 1);
+    // ★ v3.3.2 — 答對獎勵:全隊 +5% HP + 隊伍能量 +1
+    //   ⚠ 老師確認:「隊伍四個人的能量是共用的」— 所以是「G.energy.p1 += 1」整個隊伍能量 +1,
+    //              不是每個英雄個別 burst+1(v6 主程式戰鬥引擎用 G.energy,不是個別 hero.burst)
+    //   舊行為(已移除):
+    //     v3.3.1 — 只有發動者 burst+1(個別屬性,v3 舊引擎用法,v6 下不會被讀)
+    //     v3.3.2 初版錯誤 — 全隊每人 burst+1(同樣是個別屬性,v6 下不會被讀)
+    //   新行為(正確):
+    //     G.energy.p1 += 1(整個 p1 隊伍能量 +1,最大 10)
+    //     全隊還活著的英雄 HP +5%(走 doHeal 讓治療加成生效)
+    try{
+      // 1) 隊伍能量 +1(共用資源,不是個別英雄的)
+      G.energy = G.energy || { p1:0, p2:0 };
+      G.energy.p1 = Math.min(10, (G.energy.p1 || 0) + 1);
+      // 2) 全隊 HP +5%
+      G.p1.forEach(h => {
+        if(!h || h.curHp <= 0) return;
+        const _healAmt = Math.max(1, Math.floor((h.hp || 100) * 0.05));
+        if(typeof doHeal === 'function'){
+          try{
+            // noDice/noWarhorn 避免觸發其他附加效果,isHeal 走治療通道
+            doHeal(h, _healAmt, { actor:null, noDice:true, noWarhorn:true, isHeal:true });
+          }catch(_eDoHeal){
+            h.curHp = Math.min(h.hp, h.curHp + _healAmt);
+          }
+        }else{
+          h.curHp = Math.min(h.hp, h.curHp + _healAmt);
+        }
+        try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
+      });
+      _wbHostBroadcast([`✅ 答對!全隊恢復 5% HP + 隊伍能量 +1(現在 ${G.energy.p1}/10)`]);
+      // 連線房主直接改了 G 要 sync
+      try{
+        if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+          window._wbHostSyncG('quiz-correct-team-reward');
+        }
+      }catch(_){}
+      // 同步更新主程式 UI(能量條等)
+      try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+    }catch(_eTeamReward){ console.warn('[WB-QuizCorrect] 全隊獎勵套用失敗', _eTeamReward); }
     _wbMarkQuiz(turnNum, actorPos, true);
 
     // 累計答對次數
@@ -8006,16 +8043,64 @@
     window._wbCorrectCnt[uid] = (window._wbCorrectCnt[uid] || 0) + 1;
     const cnt = window._wbCorrectCnt[uid];
 
-    // 答題獎勵:第 10 / 25 / 50 次 → BOSS 受 1% maxHp 傷害
-    const triggers = [10, 25, 50];
+    // 答題獎勵:第 5 / 10 / 15 / 20 次 → BOSS 受 1% maxHp 傷害 + 全隊聯手攻擊特效
+    // ★ v3.3.2 — 門檻從 10/25/50 改為 5/10/15/20
+    //   舊行為(已移除):10/25/50 配合「每回合每位玩家答題」的高頻設計(4 人 × 20 回合 = 80 題)
+    //   新行為:5/10/15/20 配合「只開場 + BOSS 行動前」的低頻設計(最多 21 題)
+    //   老師確認:讓 5/10/15/20 都能正常觸發,避免 25/50 永遠達不到的問題
+    const triggers = [5, 10, 15, 20];
     if(triggers.includes(cnt)){
       const boss = G.p2 && G.p2[0];
       if(boss){
         const rewardDmg = Math.floor((boss.hp || 500000) * 0.01);
         boss.curHp = Math.max(0, boss.curHp - rewardDmg);
+        // ★ v3.3.2 — 觸發累積答題獎勵時,追加「極限爆發」音效 + 螢幕閃光特效 + 2×2 全隊全圖 Cinematic
+        //   老師需求:「全隊聯手攻擊時,如同極限爆發時右邊出現一名角色的全圖,
+        //              這時候變成四名角色的全圖 2×2 排在右側」
+        //   設計:
+        //     1. 呼叫 _wbShowTeamBurstCinematic(cnt) — 右側 2×2 排版 4 名 p1 英雄全圖
+        //        (內含:全圖面板、集中效果線 GIF、中央「全隊聯手攻擊! × N」大字)
+        //     2. 100ms 後播放 sfx-burst 音效 + flashScreen 螢幕金光 + BOSS 火光粒子
+        //     3. 演出總時長 ~2.5 秒(對齊主程式 _showBurstCinematic)
+        try{
+          // (1) 觸發全隊聯手攻擊 Cinematic(2×2 排版 4 名英雄全圖 + 集中效果線 + 中央大字)
+          if(typeof _wbShowTeamBurstCinematic === 'function'){
+            _wbShowTeamBurstCinematic(cnt);
+          }
+          // (2) 100ms 後播放音效 + 螢幕閃光(配合視覺爆點)
+          setTimeout(function(){
+            try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
+            try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,200,80,1)', 450); }catch(_){}
+            // (3) BOSS 卡片火光粒子(視覺強化)
+            try{
+              if(typeof cardRect === 'function' && typeof spawnParticles === 'function'){
+                const _rc = cardRect(boss);
+                if(_rc){
+                  // 第一波金光
+                  spawnParticles(_rc.x, _rc.y, {count:30, color:'#ffe066', size:9, spread:75, duration:850});
+                  // 120ms 後第二波(橙色火焰)
+                  setTimeout(function(){
+                    try{ spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff8833', size:8, spread:65, duration:700, rise:true, gravity:-0.3}); }catch(_){}
+                  }, 120);
+                }
+              }
+            }catch(_eFx){ console.warn('[WB] 聯手攻擊粒子特效失敗', _eFx); }
+            // (4) BOSS 卡片閃光 + 額外火光
+            try{
+              if(typeof flashCard === 'function') flashCard(boss, 'rgba(255,180,60,0.85)', 400);
+            }catch(_){}
+            try{
+              if(typeof fireParticles === 'function' && typeof cardRect === 'function'){
+                const _rcF = cardRect(boss);
+                if(_rcF) fireParticles(_rcF.x, _rcF.y, 30);
+              }
+            }catch(_){}
+          }, 100);
+        }catch(_eAllFx){ console.warn('[WB] 全隊聯手攻擊特效組失敗', _eAllFx); }
+
         // 答題獎勵不受護盾/天賦影響(這是「外部」傷害)
-        _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!答題獎勵對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
-        // 顯示獎勵 banner
+        _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
+        // 顯示獎勵 banner(維持原本的右上角金色 banner)
         _wbShowQuizRewardBanner(cnt, rewardDmg);
         // 護盾觸發檢查
         if(typeof window._wbCheckShieldTrigger === 'function'){
@@ -8046,20 +8131,12 @@
     if(!G) return;
     const myHero = G.p1 && G.p1[actorPos];
     if(!myHero) return;
-    if(isPunish){
-      // 強制扣 5% max HP(無視免傷)
-      const dmg = Math.floor((myHero.hp || 100) * 0.05);
-      myHero.curHp = Math.max(0, myHero.curHp - dmg);
-      _wbHostBroadcast([`❌ ${myHero.name} 答錯,受 ${dmg} HP 火山反噬(無視免傷)`]);
-      // ★ FIX 20260518(c) #1 — 玩家 HP 直接扣也要 sync
-      try{
-        if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
-          window._wbHostSyncG('quiz-wrong-punish');
-        }
-      }catch(_){}
-      try{ if(typeof renderCard === 'function') renderCard(myHero); }catch(_){}
-    }
+    // ★ v3.3.2 — 答錯不再扣 HP(老師確認要取消)
+    //   舊行為(已移除):isPunish=true 時扣 5% maxHp(無視免傷)
+    //   新行為:不扣 HP,只 mark 答錯,讓後續流程(BOSS 答題者跳過行動/玩家行動推進)自己處理
+    //   標記答錯仍要做(供統計與防重彈)
     _wbMarkQuiz(turnNum, actorPos, false);
+    _wbHostBroadcast([`❌ ${myHero.name} 答錯了`]);
 
     // 檢查是否全員陣亡(只在舊版 v3 自製引擎裡 _wbHostFinishBattle 才有意義)
     const stillAlive = G.p1.filter(h => h && h.curHp > 0);
@@ -8087,6 +8164,180 @@
     document.body.appendChild(banner);
     setTimeout(() => { try{ banner.remove(); }catch(_){} }, 2500);
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.3.2 — 全隊聯手攻擊 Cinematic:2×2 排版顯示 4 名 p1 英雄全圖
+  // ────────────────────────────────────────────────────────────────────
+  // 老師需求:「全隊聯手攻擊時,如同極限爆發時右邊出現一名角色的全圖,
+  //          這時候變成四名角色的全圖 2x2 排在右側(縮放至可以放下四張)」
+  // 設計參考:主程式 _showBurstCinematic (index.html line 15232)
+  //   - 右側 600px 寬面板 (z-index:460)
+  //   - background-image + HERO_IMGS[name] + getHeroObjPos(name)
+  //   - 集中效果線 GIF(z-index:462)從中央放射
+  //   - 中央大字招式名稱(z-index:465)
+  // 本函式差異:
+  //   1. 不顯示單一角色,改顯示 4 名 p1 英雄(用 2×2 grid 排列)
+  //   2. 每個小格依然用 background-image + cover + getHeroObjPos 顯示「臉」
+  //   3. 仍復用集中效果線 GIF + 漸層遮罩 + 淡入淡出時序
+  //   4. 中央大字改成「全隊聯手攻擊! × N」(N = 累積答對題數)
+  //   5. 倒下的英雄也要顯示(降低不透明度 + 灰階濾鏡,保留「全隊出現」的儀式感)
+  // ════════════════════════════════════════════════════════════════════
+  function _wbShowTeamBurstCinematic(cnt){
+    const gc = document.getElementById('gc');
+    if(!gc) return;
+    const G = (typeof window._wbGetG === 'function') ? (window._wbGetG() || window._wbHostG)
+                                                     : (window._wbHostG || window.G);
+    if(!G || !G.p1) return;
+    // 拿 4 位 p1 英雄(包含已倒下的,空槽用 null 佔位)
+    const heroes = [];
+    for(let i = 0; i < 4; i++){
+      heroes.push(G.p1[i] || null);
+    }
+
+    // ── (1) 右側面板:600px × 100% — 內含 2×2 grid ──
+    const oldPanel = document.getElementById('burst-img-panel');
+    if(oldPanel) oldPanel.remove();
+    const oldTeamPanel = document.getElementById('wb-team-burst-panel');
+    if(oldTeamPanel) oldTeamPanel.remove();
+
+    const imgPanel = document.createElement('div');
+    imgPanel.id = 'wb-team-burst-panel';
+    imgPanel.style.cssText = [
+      'position:absolute;right:0;top:0;width:600px;height:100%;',
+      'z-index:460;pointer-events:none;',
+      'opacity:0;transition:opacity 0.35s ease-out;',
+      'overflow:hidden;',
+      // 2×2 grid:每格各佔 50% 寬高
+      'display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:0;'
+    ].join('');
+
+    heroes.forEach((h, idx) => {
+      const cell = document.createElement('div');
+      cell.style.cssText = 'position:relative;overflow:hidden;';
+      if(h){
+        const imgUrl = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[h.name]) ? HERO_IMGS[h.name] : '';
+        const objPos = (typeof getHeroObjPos === 'function') ? getHeroObjPos(h.name) : 'center 20%';
+        if(imgUrl){
+          // 用 background-image 避免 img 標籤的 CORS 問題(對齊主程式 _showBurstCinematic 做法)
+          const imgDiv = document.createElement('div');
+          imgDiv.style.cssText = [
+            'position:absolute;inset:0;',
+            'background-image:url("' + imgUrl + '");',
+            'background-size:cover;',
+            'background-position:' + objPos + ';',
+            'background-repeat:no-repeat;',
+            // 倒下的英雄灰階 + 半透明
+            (h.curHp <= 0) ? 'filter:grayscale(1) brightness(0.45);opacity:0.55;' : ''
+          ].join('');
+          cell.appendChild(imgDiv);
+        }else{
+          // 無圖時 fallback 用 emoji
+          cell.style.cssText += 'display:flex;align-items:center;justify-content:center;font-size:120px;background:rgba(20,25,45,0.6);';
+          cell.textContent = h.av || '⚔';
+        }
+        // 倒下英雄加上「KO」標記
+        if(h.curHp <= 0){
+          const ko = document.createElement('div');
+          ko.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'
+            + 'color:#ff4422;font-size:42px;font-weight:900;letter-spacing:3px;'
+            + 'text-shadow:0 0 12px rgba(255,68,34,0.8),2px 2px 0 #000;pointer-events:none;';
+          ko.textContent = 'KO';
+          cell.appendChild(ko);
+        }
+        // 名字小標籤(底部)
+        const nameLabel = document.createElement('div');
+        nameLabel.style.cssText = 'position:absolute;bottom:6px;left:0;right:0;text-align:center;'
+          + 'font-size:16px;font-weight:900;color:#ffe066;letter-spacing:1.5px;'
+          + 'text-shadow:0 0 8px rgba(0,0,0,0.95),1px 1px 0 #000;pointer-events:none;'
+          + 'padding:0 4px;';
+        nameLabel.textContent = h.name;
+        cell.appendChild(nameLabel);
+      }else{
+        // 空槽:深色背景
+        cell.style.cssText += 'background:rgba(10,15,25,0.6);';
+      }
+      imgPanel.appendChild(cell);
+    });
+
+    // 左側漸層遮罩(融入戰場畫面,右側圖片往左淡出)
+    const grad = document.createElement('div');
+    grad.style.cssText = 'position:absolute;inset:0;background:linear-gradient(to right,'
+      + 'rgba(8,9,13,1) 0%,rgba(8,9,13,0.6) 15%,rgba(8,9,13,0) 45%);'
+      + 'pointer-events:none;z-index:5;';
+    imgPanel.appendChild(grad);
+    // 底部漸層
+    const gradB = document.createElement('div');
+    gradB.style.cssText = 'position:absolute;inset:0;background:linear-gradient(to top,'
+      + 'rgba(8,9,13,0.8) 0%,transparent 30%);'
+      + 'pointer-events:none;z-index:5;';
+    imgPanel.appendChild(gradB);
+    gc.appendChild(imgPanel);
+
+    // ── (2) 集中效果線 GIF(全螢幕)— 對齊主程式 _showBurstCinematic ──
+    const speedLines = document.createElement('div');
+    speedLines.id = 'burst-speed-lines';
+    speedLines.style.cssText = [
+      'position:absolute;inset:0;z-index:462;pointer-events:none;',
+      'background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%86%E4%B8%AD%E6%95%88%E6%9E%9C%E7%B7%9A.gif");',
+      'background-size:cover;background-position:center;',
+      'background-repeat:no-repeat;',
+      'opacity:0;transition:opacity 0.15s ease-in;'
+    ].join('');
+    gc.appendChild(speedLines);
+    void speedLines.offsetWidth;
+    speedLines.style.opacity = '0.75';
+    setTimeout(() => {
+      speedLines.style.opacity = '0';
+      speedLines.style.transition = 'opacity 0.4s ease-out';
+      setTimeout(() => { if(speedLines.parentNode) speedLines.remove(); }, 500);
+    }, 700);
+
+    // 強制 reflow 再淡入
+    void imgPanel.offsetWidth;
+    imgPanel.style.opacity = '1';
+
+    // 2 秒後淡出
+    setTimeout(() => {
+      imgPanel.style.opacity = '0';
+      imgPanel.style.transition = 'opacity 0.4s ease-in';
+      setTimeout(() => { if(imgPanel.parentNode) imgPanel.remove(); }, 400);
+    }, 2000);
+
+    // ── (3) 中央大字 — 對齊主程式 burst-cinematic 的字體與動畫 ──
+    const oldCin = document.getElementById('burst-cinematic');
+    if(oldCin) oldCin.remove();
+    const cin = document.createElement('div');
+    cin.id = 'burst-cinematic';
+    cin.style.cssText = 'position:absolute;inset:0;z-index:465;display:flex;'
+      + 'flex-direction:column;align-items:center;justify-content:center;pointer-events:none;';
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-size:96px;font-weight:800;color:#ffee00;letter-spacing:6px;'
+      + 'text-align:center;animation:burstNameShake 0.12s ease-in-out infinite,'
+      + 'burstNameGlow 0.6s ease-in-out infinite alternate;'
+      + 'font-family:"Noto Serif TC","Times New Roman","明朝",serif;'
+      + 'text-shadow:0 0 40px rgba(255,220,0,1),0 0 80px rgba(255,150,0,0.9),'
+      + '0 0 120px rgba(255,100,0,0.6),4px 4px 0 rgba(0,0,0,0.9);';
+    nameEl.textContent = '⚡ 全隊聯手攻擊! × ' + cnt;
+    cin.appendChild(nameEl);
+
+    // 副標題:對 BOSS 造成的傷害
+    const subEl = document.createElement('div');
+    subEl.style.cssText = 'margin-top:18px;font-size:40px;font-weight:800;color:#ffd966;'
+      + 'letter-spacing:3px;text-align:center;'
+      + 'text-shadow:0 0 20px rgba(255,200,80,0.9),2px 2px 0 rgba(0,0,0,0.9);';
+    subEl.textContent = '🎖 累積答對 ' + cnt + ' 題';
+    cin.appendChild(subEl);
+    gc.appendChild(cin);
+
+    // 大字 1 秒後淡出
+    setTimeout(() => {
+      cin.style.opacity = '0';
+      cin.style.transition = 'opacity 0.3s ease-in';
+      setTimeout(() => { if(cin.parentNode) cin.remove(); }, 300);
+    }, 1000);
+  }
+  // 暴露給其他模組(便於老師日後 console 測試)
+  window._wbShowTeamBurstCinematic = _wbShowTeamBurstCinematic;
 
   // BOSS 開戰前先給全員出題(只在回合 1 開戰時跑一次)
   // ★ FIX 20260518 — 新增 _wbPickRandomQuestion:從主程式 ADV_QUIZ_DB 隨機抽一題。
@@ -8237,31 +8488,38 @@
       console.log('[WB-Opening] _advQuizResolveCb 觸發,lastAnswerCorrect='
         + JSON.stringify(_rawCorrect) + ' → 判定 ' + (_isCorrect ? '答對' : '答錯/未答'));
       if(_isCorrect){
-        // 答對 → 世界 BOSS 戰專屬:全員 burst+1(獎勵 UI 已由主程式跑完,玩家領完獎才來這)
+        // ★ v3.3.2 — 開戰題答對:全隊 +5% HP + 隊伍能量 +1(對齊 _wbOnQuizCorrect 新規則)
+        //   ⚠ 老師確認:能量是「隊伍共用」的(G.energy.p1),不是每英雄個別 burst
+        //   舊行為(已移除):G.p1.forEach → 每隻 burst+1(v3 舊引擎用法,v6 下無效)
+        //   新行為:G.energy.p1 += 1(隊伍能量 +1) + 走 doHeal 全隊 +5% maxHp
         try{
+          // 1) 隊伍能量 +1
+          G.energy = G.energy || { p1:0, p2:0 };
+          G.energy.p1 = Math.min(10, (G.energy.p1 || 0) + 1);
+          // 2) 全隊 HP +5%
           G.p1.forEach(h => {
-            if(h){
-              h.burst = Math.min(h.burstMax || 10, (h.burst||0) + 1);
-              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
+            if(!h || h.curHp <= 0) return;
+            const _healAmt = Math.max(1, Math.floor((h.hp || 100) * 0.05));
+            if(typeof doHeal === 'function'){
+              try{
+                doHeal(h, _healAmt, { actor:null, noDice:true, noWarhorn:true, isHeal:true });
+              }catch(_eDoHeal){ h.curHp = Math.min(h.hp, h.curHp + _healAmt); }
+            }else{
+              h.curHp = Math.min(h.hp, h.curHp + _healAmt);
             }
+            try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
           });
-          if(typeof log === 'function') log('🎯 開戰題答對!全員能量 +1');
-        }catch(eBurst){ console.warn('[WB-Opening] 全員 burst+1 失敗', eBurst); }
+          if(typeof log === 'function') log(`🎯 開戰題答對!全隊 +5% HP + 隊伍能量 +1(現在 ${G.energy.p1}/10)`);
+          // 同步主程式 UI(能量條)
+          try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+        }catch(eBurst){ console.warn('[WB-Opening] 全員獎勵失敗', eBurst); }
         _fireOnDone('correct');
       } else {
-        // 答錯 → 全員受 5% maxHp 傷害(至少留 1 HP,不直接倒下)
-        try{
-          G.p1.forEach(h => {
-            if(h && h.curHp > 0){
-              const dmg = Math.floor((h.hp || 100) * 0.05);
-              h.curHp = Math.max(1, h.curHp - dmg);
-              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
-            }
-          });
-          if(typeof log === 'function') log('💔 開戰題答錯,全員受 5% HP 傷害');
-        }catch(eDmg){ console.warn('[WB-Opening] 全員 5% HP 扣血失敗', eDmg); }
-        // 讓玩家看到扣血訊息再進入戰鬥
-        setTimeout(function(){ _fireOnDone('wrong'); }, 800);
+        // ★ v3.3.2 — 開戰題答錯:取消任何懲罰(老師再次確認:「答錯不要有懲罰了」)
+        //   舊行為(已移除):全員 -5% maxHp(至少留 1 HP)
+        //   新行為:不扣血、不扣能量、不做任何負面動作,直接進入戰鬥
+        try{ if(typeof log === 'function') log('💭 開戰題答錯了,但 BOSS 已被你的勇氣震懾,直接開戰!'); }catch(_){}
+        setTimeout(function(){ _fireOnDone('wrong'); }, 400);
       }
     };
 
@@ -9477,31 +9735,18 @@
     if(!document.getElementById('wb-adv-quiz-zindex-fix')){
       const _qsty = document.createElement('style');
       _qsty.id = 'wb-adv-quiz-zindex-fix';
-      // ★ FIX 20260519(v3) — 只覆寫 z-index,不動 position/inset(舊版註解保留)
+      // ★ FIX 20260519(v3) — 只覆寫 z-index,不動 position/inset
       //   原 v2 覆寫了 position:fixed !important + inset:0 !important,但 main.css 對
       //   #adv-quiz-overlay 可能用 transform: translate(-50%,-50%) 居中,inset:0 反而
       //   把 box 拉到左上角看不到 → 用戶以為「沒出現題目」。
       //   v3 改成只動 z-index,保留 main.css 原本的居中/尺寸定義不變。
-      // ★ v3.3.2 — 根因再次:overlay 被 v13 移到 body 後,main.css 用 #gc 後代選擇器的規則失效,
-      //   overlay 變成「無位置/無尺寸/不可見」浮在 body。z-index 雖然頂到天上也沒用。
-      //   修補:用 attribute 選擇器(不依賴 parent)強制套上完整佈局:
-      //         position:fixed + inset:0 + display:flex 居中 + 視覺背景
-      //   注意:#adv-quiz-box / #adv-reward-box 等內部元素由 main.css 控制大小,
-      //         此處只負責「外層 overlay 全屏鋪滿 + 內容居中」,不動內層樣式。
       _qsty.textContent =
         '#adv-quiz-overlay.show,#adv-reward-overlay.show,#adv-result-overlay.show,'
         + '#adv-boss-intro.show,#adv-continue-overlay.show{'
         +   'z-index:10900 !important;'
-        +   'position:fixed !important;'
-        +   'top:0 !important;left:0 !important;right:0 !important;bottom:0 !important;'
-        +   'width:100vw !important;height:100vh !important;'
-        +   'display:flex !important;'
-        +   'align-items:center !important;justify-content:center !important;'
-        +   'background:rgba(0,0,0,0.78) !important;'
-        +   'pointer-events:auto !important;'
         + '}';
       document.head.appendChild(_qsty);
-      console.log('[WB-Adv] ✅ v3.3.2 quiz/reward UI 完整佈局規則已注入 (position+inset+flex 居中)');
+      console.log('[WB-Adv] ✅ quiz/reward UI z-index 提升規則已注入');
     }
 
     // ★ FIX 20260519(v13) — 把 quiz/reward overlay 移到 document.body 脫離 #gc stacking context
@@ -9523,74 +9768,6 @@
         }
       });
     }catch(_eMv){ console.warn('[WB-Adv] overlay 移位失敗', _eMv); }
-
-    // ★ v3.3.2 — 第二層保險:用 MutationObserver 監聽 quiz/reward overlay 的 .show class,
-    //   在顯示期間把世界 BOSS 戰專屬 UI(BOSS 大血條 + 表情列 + BOSS 點擊層)暫時藏起,
-    //   避免它們蓋住題目區或讓玩家分心誤點。
-    //   為什麼用 visibility 而不是 display:none:
-    //     - visibility:hidden 不重排 DOM,結束後還原瞬間到位,不會閃爍
-    //     - display:none 會觸發重新計算 layout,某些主程式 timer 可能誤判
-    //   涵蓋 4 種 UI:
-    //     - #wb-adv-battle-overlay  (BOSS 大血條 + 介紹鈕)
-    //     - #wb-emoji-bar-real      (左側表情列)
-    //     - #wb-boss-click-layer    (BOSS 圖點擊層 + 火焰游標)
-    //     - #wb-solo-cur-dmg-bar    (單人練習傷害條)
-    //   只在世界 BOSS 戰啟動:若不是 worldboss stage,observer 不做事
-    if(!window._wbQuizUiHiderInstalled){
-      window._wbQuizUiHiderInstalled = true;
-      const _WB_HIDE_IDS = ['wb-adv-battle-overlay','wb-emoji-bar-real',
-                            'wb-boss-click-layer','wb-solo-cur-dmg-bar'];
-      const _hideWbUi = function(reason){
-        try{
-          _WB_HIDE_IDS.forEach(id => {
-            const el = document.getElementById(id);
-            if(el){
-              if(!el.dataset._wbVisBackup) el.dataset._wbVisBackup = el.style.visibility || '';
-              el.style.visibility = 'hidden';
-            }
-          });
-          console.log('[WB-Adv-UiHider] 🙈 隱藏世界 BOSS UI (' + reason + ')');
-        }catch(_e){}
-      };
-      const _showWbUi = function(reason){
-        try{
-          _WB_HIDE_IDS.forEach(id => {
-            const el = document.getElementById(id);
-            if(el){
-              el.style.visibility = el.dataset._wbVisBackup || '';
-              delete el.dataset._wbVisBackup;
-            }
-          });
-          console.log('[WB-Adv-UiHider] 👁 還原世界 BOSS UI (' + reason + ')');
-        }catch(_e){}
-      };
-      const _watchIds = ['adv-quiz-overlay','adv-reward-overlay','adv-boss-intro','adv-continue-overlay'];
-      _watchIds.forEach(id => {
-        const el = document.getElementById(id);
-        if(!el) return;
-        const _obs = new MutationObserver(function(mutations){
-          // 僅在世界 BOSS 戰生效;其他關卡(貓空/日本/台灣)不影響
-          const _stage = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : null;
-          if(_stage !== 'worldboss') return;
-          mutations.forEach(function(m){
-            if(m.type !== 'attributes' || m.attributeName !== 'class') return;
-            const hasShow = el.classList.contains('show');
-            if(hasShow){
-              _hideWbUi(id + ' 顯示');
-            } else {
-              // 全部 watch 元素都沒 show 才還原(避免 quiz → reward 切換時瞬間還原又藏)
-              const anyShow = _watchIds.some(wid => {
-                const e2 = document.getElementById(wid);
-                return e2 && e2.classList.contains('show');
-              });
-              if(!anyShow) _showWbUi(id + ' 隱藏');
-            }
-          });
-        });
-        _obs.observe(el, {attributes:true, attributeFilter:['class']});
-      });
-      console.log('[WB-Adv-UiHider] ✅ v3.3.2 MutationObserver 已安裝 — 答題/獎勵期間自動藏世界 BOSS UI');
-    }
 
     ov.innerHTML = `
       <div id="wb-adv-mega-zone" style="

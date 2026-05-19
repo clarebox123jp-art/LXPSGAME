@@ -5624,3 +5624,79 @@ body.art-premium #summon-overlay {
   #_gc_wrapper { visibility: hidden !important; }
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * ★ v3.3.2 — 世界 BOSS 戰答題獎勵視窗:強制使用冒險關卡同款位置與尺寸
+ * ────────────────────────────────────────────────────────────────────
+ * 老師需求:「世界BOSS戰的答題獎勵視窗大小和位置就跟冒險關卡一樣」
+ * 觸發條件:body.wb-in-worldboss-battle (進入世界 BOSS 戰鬥時由 world-boss-ui.html 加上)
+ * 設計:
+ *   1. 用 body.wb-in-worldboss-battle 守門,只影響世界 BOSS 戰、不影響其他冒險關
+ *   2. 全部 !important 覆寫,確保上方 media query (line 4360 手機版 60%) 不會蓋掉
+ *   3. 位置 top:80px right:0 width:44%(=冒險關卡 base CSS line 5208)
+ *   4. 手機螢幕(max-width:820px)維持 64% 寬度(與冒險關卡 media query line 4211 一致)
+ * 為何不能只靠 base CSS:
+ *   世界 BOSS 戰可能會觸發 line 4268 的 @media (max-height:500px) 區段,
+ *   把 reward overlay 寬度撐到 60%,加上 box padding 28px 32px,在手機上看起來
+ *   就會「貫穿畫面寬度」。本規則放在 main.css 結尾(最高優先級)強制覆寫。
+ * ══════════════════════════════════════════════════════════════════════ */
+body.wb-in-worldboss-battle #adv-reward-overlay {
+  /* 位置:右上角(對齊冒險關卡 base CSS) */
+  position: absolute !important;
+  top: 80px !important;
+  right: 0 !important;
+  left: auto !important;
+  /* 尺寸 */
+  width: 44% !important;
+  height: auto !important;
+  max-height: calc(100% - 100px) !important;
+  /* 顯示型態 */
+  background: none !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  flex-direction: column !important;
+  pointer-events: none !important;
+  z-index: 612 !important;
+}
+body.wb-in-worldboss-battle #adv-reward-box {
+  /* 配色與邊框(對齊冒險關卡) */
+  background: linear-gradient(160deg,rgba(8,13,32,0.97),rgba(4,8,14,0.97)) !important;
+  border: 2.5px solid rgba(62,200,122,0.6) !important;
+  border-radius: 0 0 0 14px !important;
+  /* 尺寸 */
+  width: 100% !important;
+  max-width: none !important;
+  padding: 16px 24px 16px !important;
+  padding-bottom: 16px !important;
+  max-height: calc(100vh - 40px) !important;
+  /* 行為 */
+  overflow-y: auto !important;
+  pointer-events: all !important;
+  position: static !important;
+  transform: none !important;
+  /* 排版 */
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  text-align: center !important;
+  box-shadow: -6px 6px 40px rgba(62,200,122,0.2) !important;
+}
+/* 標題與副標題尺寸(對齊冒險關卡 base CSS) */
+body.wb-in-worldboss-battle #adv-reward-title {
+  font-size: 36px !important;
+  margin-bottom: 4px !important;
+}
+body.wb-in-worldboss-battle #adv-reward-subtitle {
+  font-size: 24px !important;
+  margin-bottom: 10px !important;
+}
+/* 手機螢幕版本(對齊冒險關卡 line 4211 與 line 4187) */
+@media screen and (max-width: 820px) {
+  body.wb-in-worldboss-battle #adv-reward-overlay { width: 64% !important; }
+  body.wb-in-worldboss-battle #adv-reward-title { font-size: 22px !important; }
+  body.wb-in-worldboss-battle #adv-reward-subtitle { font-size: 18px !important; }
+}
+@media screen and (max-width: 1180px) {
+  body.wb-in-worldboss-battle #adv-reward-overlay { width: 50% !important; }
+}
+
+
