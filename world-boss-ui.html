@@ -1040,6 +1040,15 @@
           🔄 刷新
         </button>
       </div>
+      <!-- ★ FIX 20260519(v13) — 尾刀 + 結算規則說明 -->
+      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
+        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
+        font-size:13px;color:#aabbdd;line-height:1.6;">
+        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
+        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
+        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
+        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
+      </div>
       <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
         <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
           排行榜載入中...
@@ -1207,9 +1216,10 @@
 })();
 
 // ★ FIX 20260519(v12) — 當前排行榜渲染
+// ★ FIX 20260519(v13) — 改為 20 名 + 字加大(font-size 14→20)
 (function _wbRenderCurrentLeaderboard(){
   const _BOSS_ID = 'vesuvius_fire_dragon';
-  const _MAX_ROWS = 10;
+  const _MAX_ROWS = 20;
   const _esc = function(s){
     return String(s == null ? '' : s)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1230,7 +1240,7 @@
       }
     }catch(_){}
     if(!entries.length){
-      list.innerHTML = '<div style="padding:14px;text-align:center;color:#888;font-style:italic;font-size:14px;">'
+      list.innerHTML = '<div style="padding:18px;text-align:center;color:#888;font-style:italic;font-size:18px;">'
         + '尚無紀錄,快來成為第一個挑戰維蘇威火山龍王的隊伍!</div>';
       return;
     }
@@ -1249,18 +1259,19 @@
       const _bg = isMyTeam
         ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
         : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
-      const _border = isMyTeam ? '1.5px solid #ffe066' : '1px solid rgba(168,132,255,0.18)';
+      const _border = isMyTeam ? '2px solid #ffe066' : '1px solid rgba(168,132,255,0.18)';
+      // ★ v13 — 字加大:rank 24→28、暱稱 14→20、傷害 18→26、場次 11→14
       return ''
-        + '<div style="display:grid;grid-template-columns:40px 1fr 100px;align-items:center;gap:10px;'
-        + 'padding:8px 12px;background:' + _bg + ';border:' + _border + ';border-radius:8px;">'
-        + '<div style="font-size:18px;font-weight:800;text-align:center;color:' + (rank<=3?'#ffe066':'#aabbdd') + ';">'
+        + '<div style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
+        + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
+        + '<div style="font-size:28px;font-weight:800;text-align:center;color:' + (rank<=3?'#ffe066':'#aabbdd') + ';">'
         +   rankIcon
         + '</div>'
-        + '<div style="font-size:14px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
-        +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;">(你)</span>' : '') + '</div>'
-        +   '<div style="font-size:11px;color:#aaa;">' + (e.battles||0) + ' 場累積</div>'
+        + '<div style="font-size:20px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
+        +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
+        +   '<div style="font-size:14px;color:#aaa;margin-top:2px;">' + (e.battles||0) + ' 場累積</div>'
         + '</div>'
-        + '<div style="font-size:18px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
+        + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
         +   _formatDmg(e.totalDmg || 0)
         + '</div>'
         + '</div>';
@@ -9479,6 +9490,26 @@
       document.head.appendChild(_qsty);
       console.log('[WB-Adv] ✅ quiz/reward UI z-index 提升規則已注入');
     }
+
+    // ★ FIX 20260519(v13) — 把 quiz/reward overlay 移到 document.body 脫離 #gc stacking context
+    //   根因:#_gc_wrapper 有 transform:scale → 形成 stacking context →
+    //         內部任何 z-index 都被「封印」在這個 context 內,
+    //         無論 quiz z-index:10900 多大,外部 wb-emoji-bar-real(body 子元素 z:9050)
+    //         還是會擋住它(因為 stacking context 是隔離的)。
+    //   修法:把 #adv-quiz-overlay / #adv-reward-overlay 等元素直接 append 到 document.body,
+    //         脫離 #gc 內的 stacking context,z-index:10900 就能真正蓋過所有東西。
+    //   注意:advShowQuiz 內部用 document.getElementById 找 overlay,
+    //         不論在 DOM 哪裡都找得到,所以移動不影響原邏輯。
+    try{
+      ['adv-quiz-overlay','adv-reward-overlay','adv-result-overlay',
+       'adv-boss-intro','adv-continue-overlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el && el.parentElement !== document.body){
+          document.body.appendChild(el);
+          console.log('[WB-Adv] 把 #' + id + ' 移到 body 脫離 #gc stacking context');
+        }
+      });
+    }catch(_eMv){ console.warn('[WB-Adv] overlay 移位失敗', _eMv); }
 
     ov.innerHTML = `
       <div id="wb-adv-mega-zone" style="

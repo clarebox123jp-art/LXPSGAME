@@ -2604,6 +2604,8 @@
           //             單人練習模式只有 1 個真實玩家,其他 3 個是 host_npc_X,
           //             這時用「同樣 uid 重複 4 次」當隊伍(會顯示「玩家暱稱×4」)
           //   teamNames:用每個槽位的玩家暱稱(同 uid 顯示同名,符合用戶需求「同一人開 4 隻顯示 4 次相同暱稱」)
+          // ★ FIX 20260519(v13) — 帶上 tiebreaker 資料(回合數、正確答題數、最後存活人數)
+          //   用途:若多隊伍同時擊破 BOSS(尾刀平手),依「回合數→正確數→存活人數」決定真實排名
           try{
             if(typeof window._wbHpSync.updateLeaderboard === 'function'){
               const _myNick = (window._playerNickname || window._userName || '玩家');
@@ -2632,8 +2634,22 @@
               const _teamKey = (typeof window._wbCalcTeamId === 'function')
                 ? window._wbCalcTeamId(_teamUids)
                 : _teamUids.slice().sort().join('|');
+              // ★ FIX 20260519(v13) — 算 tiebreaker 資料
+              const _tieBreaker = {
+                turns: (_Gr && _Gr.turn) || 0,
+                aliveCount: (_Gr && _Gr.p1) ? _Gr.p1.filter(h => h && h.curHp > 0).length : 0,
+                quizCorrect: 0,
+              };
+              try{
+                // 算本場玩家答對問題數(從 window._wbQuizState 累計)
+                const _qs = window._wbQuizState || {};
+                Object.keys(_qs).forEach(_k => {
+                  const _v = _qs[_k];
+                  if(_v && _v.correct) _tieBreaker.quizCorrect += _v.correct;
+                });
+              }catch(_){}
               if(_teamKey){
-                window._wbHpSync.updateLeaderboard(bossId, _teamKey, _teamNames, _dealt)
+                window._wbHpSync.updateLeaderboard(bossId, _teamKey, _teamNames, _dealt, _tieBreaker)
                   .then(res => {
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg);
                   })

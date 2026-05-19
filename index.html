@@ -3728,13 +3728,17 @@
       //
       // 設計:
       // - 儲存位置:stats/global.worldBossLeaderboard.<bossId> = 陣列
-      //   [{teamKey, teamNames:[4 暱稱], totalDmg, battles, lastUpdated}]
+      //   [{teamKey, teamNames:[4 暱稱], totalDmg, battles, lastUpdated, tiebreaker:{...}}]
       // - 隊伍識別:teamKey = 4 個 uid 排序 + join('|')(順序不影響)
       // - 顯示用:teamNames = 4 個玩家暱稱(可能同名 = 同一個人開 4 隻)
       // - 即時更新:戰鬥結算時呼叫 updateLeaderboard 把本場傷害累加
-      // - UI 拉取:getLeaderboard(bossId, topN=10)
+      // - UI 拉取:getLeaderboard(bossId, topN=20)
+      // ★ FIX 20260519(v13) — 加入 tiebreaker 機制:
+      //   排序順序:totalDmg(降冪)→ 若同分 → tiebreaker.turns(回合數少優先)→
+      //             tiebreaker.quizCorrect(答對數多優先)→ tiebreaker.aliveCount(存活多優先)
+      //   每次紀錄時取「本場最佳值」(最少回合/最多正確/最多存活)合併進去
       // ════════════════════════════════════════════════════════════════
-      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg){
+      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg, tiebreaker){
         if(!bossId || !teamKey || typeof addDmg !== 'number' || addDmg <= 0) return null;
         try{
           const result = await runTransaction(_fbDb, async (tx) => {
@@ -3745,14 +3749,23 @@
             const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : [];
             // 找到該隊伍紀錄,沒有就新增
             const _idx = _list.findIndex(e => e && e.teamKey === teamKey);
+            // ★ tiebreaker 累計:取本場最佳值(留下對隊伍最有利的數字)
+            const _newTb = tiebreaker || {};
             if(_idx >= 0){
               const _cur = _list[_idx];
+              const _curTb = _cur.tiebreaker || {};
+              const _mergedTb = {
+                turns: Math.min(_curTb.turns || 999, _newTb.turns || 999),       // 回合數越少越好
+                quizCorrect: Math.max(_curTb.quizCorrect || 0, _newTb.quizCorrect || 0),  // 正確數越多越好
+                aliveCount: Math.max(_curTb.aliveCount || 0, _newTb.aliveCount || 0),     // 存活越多越好
+              };
               _list[_idx] = {
                 teamKey,
                 teamNames: Array.isArray(teamNames) ? teamNames.slice(0, 4) : _cur.teamNames,
                 totalDmg: (_cur.totalDmg || 0) + addDmg,
                 battles: (_cur.battles || 0) + 1,
                 lastUpdated: Date.now(),
+                tiebreaker: _mergedTb,
               };
             }else{
               _list.push({
@@ -3761,10 +3774,25 @@
                 totalDmg: addDmg,
                 battles: 1,
                 lastUpdated: Date.now(),
+                tiebreaker: {
+                  turns: _newTb.turns || 999,
+                  quizCorrect: _newTb.quizCorrect || 0,
+                  aliveCount: _newTb.aliveCount || 0,
+                },
               });
             }
-            // 由高至低排序,只保留前 100 名(避免 doc 無限膨脹)
-            _list.sort((a, b) => (b.totalDmg || 0) - (a.totalDmg || 0));
+            // ★ FIX 20260519(v13) — 多級排序(同總傷時依 tiebreaker 細排)
+            _list.sort((a, b) => {
+              const _da = b.totalDmg - a.totalDmg;
+              if(_da !== 0) return _da;
+              // 同總傷:tiebreaker 比較
+              const ta = a.tiebreaker || {}, tb = b.tiebreaker || {};
+              const _dt = (ta.turns || 999) - (tb.turns || 999);  // 回合數少優先
+              if(_dt !== 0) return _dt;
+              const _dq = (tb.quizCorrect || 0) - (ta.quizCorrect || 0);  // 正確多優先
+              if(_dq !== 0) return _dq;
+              return (tb.aliveCount || 0) - (ta.aliveCount || 0);  // 存活多優先
+            });
             const _trimmed = _list.slice(0, 100);
             const _newLbMap = Object.assign({}, _lbMap);
             _newLbMap[bossId] = _trimmed;
