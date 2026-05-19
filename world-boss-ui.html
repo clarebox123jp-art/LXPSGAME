@@ -6214,28 +6214,17 @@
       console.warn('[WB-Host v6] endAction return-control hook 安裝失敗', eHook2);
     }
 
-    // ── ★ FIX 20260518(b) — BOSS 開戰題搬到 startBattle 之前(連線房主) ──
-    //   原 bug:開戰題在 startBattle 之後跑(下方第 6313 行),導致其他玩家收到
-    //          onBattleUpdate 立刻進入戰場,但房主還停在開戰題/獎勵頁(可達 30 秒),
-    //          這段期間「房主端 G 已被開戰題改了(全員 burst+1 或全員 -5%HP)」
-    //          沒同步出去 → 其他玩家畫面跟房主不同步 → 看到莫名其妙的血量變化。
-    //   新行為:開戰題完全跑在房主本地 G 上(此時 G 已由 _wbSetupAdvForBattle 設好,
-    //          但 firestore battle 還沒寫,所以其他玩家還在隊伍確認頁準備中),
-    //          答完(含獎勵 UI)後才呼叫 _wbNet.startBattle 寫 firestore;
-    //          startBattle 寫入的 p1 已經包含開戰題的結果(burst/curHp),
-    //          其他玩家拿到的初始 G 就跟房主一致。
-    //   注意:連線多人模式下開戰題的「同步顯示」(讓 4 個玩家都看到題目並各自答)
-    //         需要更大規模改動(寫進 battle.openingQuiz 廣播),這版先保證「狀態一致」,
-    //         開戰題本身仍只在房主端跑,其他玩家會看到題目「秒過」(因為已答完)。
-    try{
-      if(typeof window._wbStartBossOpening === 'function'){
-        console.log('[WB-Host v6] 進入開戰題流程(startBattle 之前)…');
-        await window._wbStartBossOpening();
-        console.log('[WB-Host v6] 開戰題完成,接著呼叫 startBattle');
-      }
-    }catch(eOpEarly){
-      console.warn('[WB-Host v6] 開戰題流程失敗,跳過直接 startBattle', eOpEarly);
-    }
+    // ── ★ FIX 20260519 — 開戰咆哮要同步給所有玩家(取代舊 FIX 20260518(b)) ──
+    //   舊 FIX(b) 行為:開戰題在 startBattle 之前跑(只跑在房主本機),其他玩家收到
+    //                   onBattleUpdate 時開戰題已答完。問題:其他玩家完全錯過咆哮
+    //                   開場演出 + 完全不知道房主在答開戰題。
+    //   新 FIX 20260519 行為:
+    //     1. startBattle 先寫(讓其他玩家立刻進戰場 + 看到自己跑一次咆哮)
+    //     2. 房主同時跑咆哮 + 開戰題(其他玩家也跑咆哮 + 觀戰提示)
+    //     3. 開戰題答完後,房主呼叫 _wbHostSyncG('opening_quiz_done') 把全員 burst/HP
+    //        結果推給其他玩家 → 狀態一致性透過事後同步保證,不靠「延後寫 firestore」。
+    //   client 端如何同步咆哮:onBattleUpdate 首次收到時,本機跑 _wbBossOpeningRoar(),
+    //                          看到「房主答題中」hint(不必同步答題本身)。
 
     // ── 廣播初始 battle 給其他玩家(舊 schema, version=1) ───────────
     // 用 turnOrder 計算(BOSS 永遠第一,接著 p1 按速度)
@@ -6269,7 +6258,7 @@
         window._wbConnectedHostMode = false;
         return;
       }
-      console.log('[WB-Host v6] ✅ _wbNet.startBattle() 完成,初始 battle 已廣播');
+      console.log('[WB-Host v6] ✅ _wbNet.startBattle() 完成,初始 battle 已廣播(咆哮前)');
     }catch(eSt){
       console.error('[WB-Host v6] _wbNet.startBattle 失敗', eSt);
       _wbGameAlert('⚠ 廣播初始戰局失敗:' + (eSt.message || eSt));
@@ -6336,8 +6325,6 @@
     // ★ BGM 預先切到世界戰專屬 BGM(advStartBattle 內 bgmStop 後再兜底重啟)
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
-    // ── BOSS 開戰題流程已搬到 startBattle 之前(★ FIX 20260518(b)),這裡不再重複呼叫
-
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
       console.log('[WB-Host v6] 呼叫主程式 advStartBattle(),陣容:', p1.map(h=>h.name), 'BOSS:', boss.name);
@@ -6383,6 +6370,42 @@
         console.warn('[WB-Host v6] 初始 sync 失敗(忽略)', eSync);
       }
     }, 200);
+
+    // ── ★ FIX 20260519 — 咆哮 + 開戰題搬到 advStartBattle 之後 ──
+    //   讓 client 先收到 onBattleUpdate 進入戰場(會在 client 那邊自己跑咆哮),
+    //   接著房主在這裡也跑咆哮 + 開戰題;畫面同步性大幅改善。
+    //   _gamePaused 在開戰題流程中設為 true → BOSS/玩家行動不會搶跑;
+    //   開戰題答完後 _fireOnDone 內會解除 paused 並 sync G。
+    //   暫停 startTurn 推進(設 _gamePaused=true,advShowQuiz 答完後會解除)
+    try{
+      if(typeof _gamePaused !== 'undefined') _gamePaused = true;
+    }catch(_){}
+    setTimeout(async () => {
+      try{
+        if(typeof window._wbStartBossOpening === 'function'){
+          console.log('[WB-Host v6] 進入開戰題流程(advStartBattle 之後)…');
+          await window._wbStartBossOpening();
+          console.log('[WB-Host v6] 開戰題完成,sync G + 解除 paused');
+          // 開戰題改了 G.p1(burst+1 或 curHp -5%),推給 client
+          try{
+            if(typeof window._wbHostSyncG === 'function'){
+              window._wbHostSyncG('opening_quiz_done');
+            }
+          }catch(_eSync){}
+          // 解除 paused,讓 startTurn 推進到回合 1
+          try{
+            if(typeof _gamePaused !== 'undefined') _gamePaused = false;
+            if(typeof _resumeTimers === 'function') _resumeTimers();
+          }catch(_){}
+        }
+      }catch(eOp){
+        console.warn('[WB-Host v6] 開戰題流程例外,強制解除 paused 繼續', eOp);
+        try{
+          if(typeof _gamePaused !== 'undefined') _gamePaused = false;
+          if(typeof _resumeTimers === 'function') _resumeTimers();
+        }catch(_){}
+      }
+    }, 600);  // 600ms 讓 advStartBattle 與 sync 先穩定
 
     console.log('[WB-Host v6] ✅ 連線房主啟動完成,主程式接管戰鬥');
   };
@@ -7172,6 +7195,39 @@
         }
         // 重繪世界戰專屬 overlay
         try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Client v6] renderBattleScreen 例外', eR); }
+
+        // ★ FIX 20260519 — client 也要看到 BOSS 開戰咆哮 + 「房主答題中」提示
+        //   讓所有玩家進場時看到同步的開場演出,而非沒有任何訊息就跳到戰鬥畫面。
+        //   咆哮跑完後顯示一個「房主正在答開戰題」toast,直到房主推 opening_quiz_done sync。
+        try{
+          if(typeof window._wbBossOpeningRoar === 'function'){
+            console.log('[WB-Client v6] 跑 BOSS 開戰咆哮(本地播放)');
+            window._wbBossOpeningRoar();
+            // 咆哮結束後顯示「房主答題中」提示
+            setTimeout(() => {
+              try{
+                const _hint = document.createElement('div');
+                _hint.id = 'wb-client-opening-hint';
+                _hint.style.cssText =
+                  'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10700;'
+                  + 'background:linear-gradient(135deg,rgba(60,30,80,0.95),rgba(30,20,60,0.95));'
+                  + 'border:3px solid #aa88ff;border-radius:18px;padding:28px 44px;'
+                  + 'font-size:26px;font-weight:800;color:#ddccff;letter-spacing:2px;'
+                  + 'text-shadow:0 0 12px rgba(170,136,255,0.7);text-align:center;'
+                  + 'box-shadow:0 0 40px rgba(170,136,255,0.5);pointer-events:none;';
+                _hint.innerHTML = '⏳ 房主正在答開戰題…<br><span style="font-size:18px;color:#aabbdd;">答對全員能量 +1 / 答錯全員 -5% HP</span>';
+                document.body.appendChild(_hint);
+                // 6 秒後自動移除(若房主答完發 sync 也會清掉)
+                setTimeout(() => { try{ _hint.remove(); }catch(_){} }, 6000);
+                // 註冊清理 hook:房主 sync 時清掉
+                window._wbClientOpeningHintEl = _hint;
+              }catch(_eHint){}
+            }, 4200);  // 咆哮播放總時長約 4 秒
+          }
+        }catch(_eRoar){
+          console.warn('[WB-Client v6] 咆哮播放失敗', _eRoar);
+        }
+
         console.log('[WB-Client v6] ✅ 首次 onBattleUpdate 處理完成,等待後續 sync');
 
         // 檢查是否一次就 ended(極端情況)
@@ -7181,6 +7237,20 @@
 
       // 後續:套 fullWireG → 重繪
       console.log(`[WB-Client v6] sync v=${ver} reason=${battle._syncReason||'?'} turn=${battle.turn} actorIdx=${battle.currentActorIdx}`);
+
+      // ★ FIX 20260519 — 收到開戰題完成 sync,清掉「房主答題中」提示
+      if(battle._syncReason === 'opening_quiz_done'){
+        try{
+          if(window._wbClientOpeningHintEl){
+            window._wbClientOpeningHintEl.remove();
+            window._wbClientOpeningHintEl = null;
+          }
+          // 也清掉所有殘留的同類元素(防止多次 hint 疊加)
+          document.querySelectorAll('#wb-client-opening-hint').forEach(el => el.remove());
+          console.log('[WB-Client v6] 房主開戰題完成,清除提示');
+        }catch(_){}
+      }
+
       // ★ v6 Phase 5.3 — 動畫競態緩衝
       //   若樂觀更新動畫還沒播完(_wbClientAnimEndTs 還沒到),延後 apply
       //   多筆 sync 進來時用 _wbClientPendingApply 記最新一筆,中間的丟掉
@@ -7608,8 +7678,19 @@
     let correctIdx = -1;
     if(Array.isArray(options) && options.length > 0){
       // 已是陣列形式
-      correctIdx = options.indexOf(q.a || q.answer);
+      // ★ FIX 20260518(m) — ADV_QUIZ_DB 題目格式:q.answer 是字母 "A"/"B"/"C"/"D",
+      //   不是選項文字! 詳見開戰題 _wbShowBossOpeningQuiz 的同名修補註解。
+      const _ansRaw = q.a !== undefined ? q.a : q.answer;
+      if(typeof _ansRaw === 'string' && /^[A-D]$/i.test(_ansRaw)){
+        correctIdx = _ansRaw.toUpperCase().charCodeAt(0) - 65;
+      }
+      if(correctIdx < 0) correctIdx = options.indexOf(_ansRaw);
       if(correctIdx < 0 && typeof q.correct === 'number') correctIdx = q.correct;
+      if(correctIdx < 0 || correctIdx >= options.length){
+        console.warn('[WB-Quiz] ⚠ 答題正確答案無法解析,fallback idx=0',
+          { q:qText, options:options, rawAns:_ansRaw, qCorrect:q.correct });
+        correctIdx = 0;
+      }
     }else{
       // 單一答案(a 字串)+ 沒選項 → 簡化成「對 / 錯」
       options = ['是', '否'];
@@ -7840,176 +7921,180 @@
     });
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260518(n) — 開戰題改用主程式 advShowQuiz UI(跟貓空/日本/台灣關一致)
+  // ★ FIX 20260519     — 強化版:確保 quiz overlay 真的顯示,並加防護避免「答對被判錯」
+  // ────────────────────────────────────────────────────────────────────
+  // 原本:自製 wb-boss-opening-quiz overlay,UI 跟主程式答題不一致,且判定 bug 一堆
+  // 新作:直接走主程式 advShowQuiz,設 _advQuizResolveCb 在答完後處理:
+  //       - 答對 → 全員 burst+1 + 主程式自動跑 advShowReward(獎勵 UI)→ onDone
+  //       - 答錯 → 全員受 5% maxHp 傷害 → onDone
+  // 好處:題目判定走主程式邏輯(已知正確,字母 A/B/C/D → index 對應),
+  //       UI 樣式跟主程式統一,玩家熟悉,不再有自製 UI 的維護負擔。
+  // ────────────────────────────────────────────────────────────────────
+  // ★ FIX 20260519 強化重點:
+  //   (1) 強制清乾淨所有可能影響 advShowQuiz 顯示的旗標
+  //       (_advQuizPhase / _advQuizActive / _bossQuizInFlight 等)
+  //   (2) 把 _advStats.lastAnswerCorrect 預設為 null,讓 cb 能準確區分「沒設過」vs「答錯」
+  //       原 bug 推測:advSubmitAnswer 在某個 path 沒設 lastAnswerCorrect,
+  //       cb 讀到舊值或預設 false → 看到答對動畫但實際走答錯分支
+  //   (3) 在 advShowQuiz 呼叫前印 [WB-Opening] DBG 完整狀態 log,方便排查
+  //   (4) 開 quiz 後 800ms 檢查 overlay 是否真的顯示,沒顯示就強制 fire 答對 cb 避免卡死
+  // ════════════════════════════════════════════════════════════════════
+  // 引數 q 已不使用(advShowQuiz 自己會從 advPickQuestion 抽題),保留以兼容呼叫者
   function _wbShowBossOpeningQuiz(q, onDone){
-    // ★ FIX 20260517 — 改用主程式 G(透過 _wbGetG)而非舊版 _wbHostG
-    //                  原因:新版世界 BOSS 戰走主程式 advStartBattle 接管,不再有 _wbHostG
     const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
     if(!G || !G.p1){ if(typeof onDone==='function') onDone(); return; }
-    const ov = document.createElement('div');
-    ov.className = 'wb-quiz-overlay';
-    ov.id = 'wb-boss-opening-quiz';
 
-    const qText = q.q || q.question || '(題目缺失)';
-    const subject = q.subject || q.cat || '隨機題目';
-    let options = q.options || q.opts;
-    let correctIdx = -1;
-    if(Array.isArray(options) && options.length > 0){
-      correctIdx = options.indexOf(q.a || q.answer);
-      if(correctIdx < 0 && typeof q.correct === 'number') correctIdx = q.correct;
-    }else{
-      options = ['是', '否'];
-      correctIdx = (q.a === '是' || q.a === true || q.a === 'true') ? 0 : 1;
-    }
+    // 保證 _onDone 只觸發一次(防止 cb + watchdog 雙呼叫)
+    let _onDoneFired = false;
+    const _fireOnDone = function(reason){
+      if(_onDoneFired) return;
+      _onDoneFired = true;
+      console.log('[WB-Opening] 開戰題流程結束(' + reason + '),呼叫 onDone');
+      // 清理可能殘留的旗標
+      try{
+        window._advRewardContext = null;
+        if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+        if(typeof _advQuizActive !== 'undefined') _advQuizActive = false;
+        window._bossQuizInFlight = false;
+        if(typeof _advPendingReward !== 'undefined') _advPendingReward = null;
+        if(window._quizDeadlockWatchdog){
+          clearTimeout(window._quizDeadlockWatchdog);
+          window._quizDeadlockWatchdog = null;
+        }
+        // ★ FIX 20260519 — 清掉開戰題的 fallback watchdog
+        if(window._wbOpeningQuizWatchdog){
+          clearTimeout(window._wbOpeningQuizWatchdog);
+          window._wbOpeningQuizWatchdog = null;
+        }
+      }catch(eClean){ console.warn('[WB-Opening] 清理殘留旗標失敗', eClean); }
+      if(typeof onDone === 'function') onDone();
+    };
 
-    ov.innerHTML = `
-      <div class="wb-quiz-card" style="border-color:#ff8866;">
-        <div style="font-size:42px;color:#ff8866;font-weight:900;letter-spacing:3px;
-          text-align:center;margin-bottom:24px;">
-          🐉 BOSS 開戰挑戰題!
-        </div>
-        <div style="font-size:27px;color:#ffcc99;text-align:center;margin-bottom:27px;line-height:1.55;">
-          答對:全體能量 +1  /  答錯:全體受 5% maxHp 傷害(無視免傷)
-        </div>
-        <span class="wb-quiz-subject">${subject}</span>
-        <div class="wb-quiz-q-text">${qText}</div>
-        <div class="wb-quiz-options" id="wb-boss-opening-options"></div>
-        <div id="wb-boss-opening-result"></div>
-      </div>
-    `;
-    document.body.appendChild(ov);
+    // ★ FIX 20260519 — 預先強制清空所有可能干擾 advShowQuiz 的旗標
+    //   advShowQuiz 進入時若 _advQuizPhase !== 'idle' 會 early return,
+    //   而世界 BOSS 戰啟動路徑可能殘留前一場的狀態 → quiz 永遠開不起來。
+    try{
+      if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+      if(typeof _advQuizActive !== 'undefined') _advQuizActive = false;
+      window._bossQuizInFlight = false;
+      // 預設 lastAnswerCorrect 為 null,避免 cb 讀到上一場的舊值
+      if(typeof _advStats !== 'undefined' && _advStats){
+        _advStats.lastAnswerCorrect = null;
+      }
+      if(typeof _gamePaused !== 'undefined') _gamePaused = false;
+      // 防呆:強制隱藏可能殘留的 quiz overlay
+      const _qOvOld = document.getElementById('adv-quiz-overlay');
+      if(_qOvOld && _qOvOld.classList.contains('show')){
+        console.warn('[WB-Opening] adv-quiz-overlay 殘留 show class,強制清除');
+        _qOvOld.classList.remove('show');
+      }
+      // 防呆:強制隱藏可能殘留的 reward overlay
+      const _rwOvOld = document.getElementById('adv-reward-overlay');
+      if(_rwOvOld){
+        _rwOvOld.classList.remove('show');
+        _rwOvOld.style.display = '';
+      }
+    }catch(_ePre){ console.warn('[WB-Opening] 預清理旗標失敗', _ePre); }
 
-    const optsEl = document.getElementById('wb-boss-opening-options');
-    optsEl.innerHTML = options.map((opt, i) => {
-      const label = String.fromCharCode(65 + i);
-      return `<button class="wb-quiz-opt-btn" data-idx="${i}">
-        <b style="color:#ff8866;margin-right:8px;">${label}.</b>${opt}
-      </button>`;
-    }).join('');
-
-    optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        // ★ 播按鈕音效
-        try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
-        const idx = parseInt(btn.dataset.idx);
-        const isCorrect = (idx === correctIdx);
-        optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(b => {
-          b.disabled = true;
-          if(parseInt(b.dataset.idx) === correctIdx) b.classList.add('correct');
-        });
-        if(!isCorrect) btn.classList.add('wrong');
-
-        const resBox = document.getElementById('wb-boss-opening-result');
-        if(isCorrect){
-          try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-correct', 0.6); }catch(_){}
-          // ★ FIX 20260517(l) — 答對改走主程式答題獎勵 UI(advShowReward),取代原本的「burst+1」直接生效
-          //   原:resBox 顯示「全員能量 +1」+ 直接修改 h.burst
-          //   新:resBox 顯示「答對!請選擇獎勵」→ 關開戰題 → 呼叫 advShowReward()
-          //      → polling #adv-reward-overlay 關閉 → 呼叫 onDone() 啟動戰鬥
-          //   ★ FIX 20260517(l) v2 — 世界 BOSS 戰專屬:答對「額外」全員能量 +1
-          //      在開啟 advShowReward 前就先給 burst+1,獎勵 UI 是「再額外的好處」
-          resBox.innerHTML = `<div class="wb-quiz-result correct">✅ 答對了!全員能量 +1,並選擇額外獎勵</div>`;
-          // 世界 BOSS 戰專屬:全員 burst +1
+    // ★ 設答完後 callback:處理答對/答錯後續邏輯
+    //   重要:_advQuizResolveCb 是被 advOnQuizSkip 結尾 fire 的,
+    //         流程是:答對 → advShowReward → 玩家選獎 → advApplyReward → advOnQuizSkip → fire cb
+    //         所以 cb 被呼叫時,獎勵 UI 已經處理完(視覺上已關閉),可以直接 onDone 啟動戰鬥。
+    _advQuizResolveCb = function(){
+      // ★ FIX 20260519 — lastAnswerCorrect 為 true 才算答對(嚴格判斷 true)
+      //   原本用 !!(...) 會把 'undefined'/'null'/0/'' 都當 false,
+      //   但 advSubmitAnswer 對「答對」path 明確設 true,所以這裡用嚴格 === true。
+      //   advOnQuizSkip 是答錯/超時/封印路徑,advApplyReward → advOnQuizSkip 才是答對路徑,
+      //   兩條路徑都會經過這個 cb。
+      const _rawCorrect = (typeof _advStats !== 'undefined' && _advStats) ? _advStats.lastAnswerCorrect : null;
+      const _isCorrect = (_rawCorrect === true);
+      console.log('[WB-Opening] _advQuizResolveCb 觸發,lastAnswerCorrect='
+        + JSON.stringify(_rawCorrect) + ' → 判定 ' + (_isCorrect ? '答對' : '答錯/未答'));
+      if(_isCorrect){
+        // 答對 → 世界 BOSS 戰專屬:全員 burst+1(獎勵 UI 已由主程式跑完,玩家領完獎才來這)
+        try{
           G.p1.forEach(h => {
             if(h){
               h.burst = Math.min(h.burstMax || 10, (h.burst||0) + 1);
               try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
             }
           });
-
-          setTimeout(function(){
-            ov.remove();  // 先關掉開戰題視窗
-            try{
-              if(typeof log === 'function') log('🎯 開戰題答對!全員能量 +1,並請選擇額外獎勵');
-              // 走主程式答題獎勵流程
-              if(typeof advShowReward === 'function'){
-                // ★ FIX 20260518(b) — 防止 polling + watchdog 都呼叫 onDone,
-                //   或 onDone 因為失敗被連續觸發兩次。
-                let _onDoneFired = false;
-                const _fireOnDone = function(reason){
-                  if(_onDoneFired) return;
-                  _onDoneFired = true;
-                  console.log('[WB] 開戰題獎勵流程結束(' + reason + '),呼叫 onDone');
-                  // ★ FIX 20260518(c) #2 — watchdog 觸發後主動清理殘留狀態,
-                  //   避免 _advRewardContext='boss' / _advQuizPhase!='idle' /
-                  //   _bossQuizInFlight=true 等旗標卡到下一輪答題或 BOSS 行動。
-                  try{
-                    if(reason === 'watchdog-30s'){
-                      // 強制關獎勵 overlay,避免玩家後續點按鈕誤觸 advApplyReward 修改空 actor
-                      const _rwForce = document.getElementById('adv-reward-overlay');
-                      if(_rwForce){
-                        _rwForce.classList.remove('show');
-                        _rwForce.style.display = 'none';
-                      }
-                      console.log('[WB] watchdog-30s 強制關獎勵 overlay');
-                    }
-                    // 不論哪個 reason,都把殘留旗標清乾淨(避免下次戰鬥踩到舊狀態)
-                    window._advRewardContext = null;
-                    if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
-                    if(typeof _advQuizActive !== 'undefined') _advQuizActive = false;
-                    window._bossQuizInFlight = false;
-                    // pending reward 也清(避免下回合再彈出來)
-                    if(typeof _advPendingReward !== 'undefined') _advPendingReward = null;
-                    // 開戰題 watchdog (90s) 若還掛著也清掉
-                    if(window._quizDeadlockWatchdog){
-                      clearTimeout(window._quizDeadlockWatchdog);
-                      window._quizDeadlockWatchdog = null;
-                    }
-                  }catch(eClean){ console.warn('[WB] _fireOnDone 清理殘留旗標失敗', eClean); }
-                  if(typeof onDone === 'function') onDone();
-                };
-                // 標記 context = boss(主程式 advShowReward 內會讀)
-                window._advRewardContext = 'boss';
-                advShowReward();
-                // Polling 監聽獎勵 overlay 關閉 → 呼叫 onDone() 啟動戰鬥
-                const _checkClosed = setInterval(function(){
-                  const _rw = document.getElementById('adv-reward-overlay');
-                  if(!_rw){ clearInterval(_checkClosed); _fireOnDone('overlay-gone'); return; }
-                  const _disp = getComputedStyle(_rw).display;
-                  // overlay 被關閉(display 變 none)→ 獎勵已領取
-                  if(_disp === 'none'){
-                    clearInterval(_checkClosed);
-                    _fireOnDone('overlay-hidden');
-                  }
-                }, 200);
-                // ★ FIX 20260518(b) — 安全 fallback:30 秒內沒關掉就強制 onDone(避免玩家卡住)
-                //   原 bug:這個 setTimeout 只做了 clearInterval,沒呼叫 onDone → 整場戰鬥卡在
-                //   `_wbStartBossOpening` 的 Promise 永遠不 resolve,advStartBattle() 也不會被呼叫。
-                //   修補:加上 _fireOnDone 真正讓戰鬥繼續。
-                setTimeout(function(){
-                  clearInterval(_checkClosed);
-                  _fireOnDone('watchdog-30s');
-                }, 30000);
-              }else{
-                // advShowReward 不存在 → fallback(burst+1 上面已給)
-                console.warn('[WB] advShowReward 不存在,跳過獎勵 UI');
-                if(typeof onDone === 'function') onDone();
-              }
-            }catch(eRw){
-              console.warn('[WB] 開戰題答對流程出錯', eRw);
-              if(typeof onDone === 'function') onDone();
-            }
-          }, 1800);  // 1.8 秒讓玩家看到 ✅ 結果再切到獎勵 UI
-        }else{
-          try{ if(typeof playSfx === 'function') playSfx('sfx-quiz-wrong', 0.5); }catch(_){}
-          resBox.innerHTML = `<div class="wb-quiz-result wrong">❌ 答錯!全員受 5% HP 傷害</div>`;
+          if(typeof log === 'function') log('🎯 開戰題答對!全員能量 +1');
+        }catch(eBurst){ console.warn('[WB-Opening] 全員 burst+1 失敗', eBurst); }
+        _fireOnDone('correct');
+      } else {
+        // 答錯 → 全員受 5% maxHp 傷害(至少留 1 HP,不直接倒下)
+        try{
           G.p1.forEach(h => {
             if(h && h.curHp > 0){
               const dmg = Math.floor((h.hp || 100) * 0.05);
-              h.curHp = Math.max(0, h.curHp - dmg);
+              h.curHp = Math.max(1, h.curHp - dmg);
               try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
             }
           });
+          if(typeof log === 'function') log('💔 開戰題答錯,全員受 5% HP 傷害');
+        }catch(eDmg){ console.warn('[WB-Opening] 全員 5% HP 扣血失敗', eDmg); }
+        // 讓玩家看到扣血訊息再進入戰鬥
+        setTimeout(function(){ _fireOnDone('wrong'); }, 800);
+      }
+    };
 
-          setTimeout(() => {
-            ov.remove();
+    // ★ FIX 20260519 — 完整診斷 log
+    try{
+      console.log('[WB-Opening] DBG 呼叫 advShowQuiz 前狀態:',
+        '_adventureMode=' + (typeof _adventureMode !== 'undefined' ? _adventureMode : 'undef'),
+        '_adventureStage=' + (typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef'),
+        '_advQuizPhase=' + (typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : 'undef'),
+        '_advSessionQuestions.length=' + (typeof _advSessionQuestions !== 'undefined' && _advSessionQuestions ? _advSessionQuestions.length : 'undef'),
+        'advShowQuiz type=' + typeof advShowQuiz);
+    }catch(_eDbg){}
+
+    // ★ 呼叫主程式 advShowQuiz 出題
+    //   主程式會抽題、顯示 UI、處理答題,完成後 fire _advQuizResolveCb
+    try{
+      if(typeof advShowQuiz === 'function'){
+        advShowQuiz();
+        // 設定 quiz label 顯示「BOSS 開戰挑戰題」(覆蓋主程式預設的「九尾空貓怪出題」)
+        try{
+          const _qLbl = document.getElementById('adv-quiz-label');
+          if(_qLbl) _qLbl.textContent = '🐉 BOSS 開戰挑戰題!答對全員能量+1,答錯全員受 5% HP 傷害';
+        }catch(_){}
+
+        // ★ FIX 20260519 — 開 quiz 後 1.2 秒檢查 overlay 是否真的顯示;
+        //   若沒顯示(advShowQuiz early return 等),強制 fire 答對 cb 跳過開戰題避免卡死
+        window._wbOpeningQuizWatchdog = setTimeout(function(){
+          try{
+            const _qOv = document.getElementById('adv-quiz-overlay');
+            if(_qOv && _qOv.classList.contains('show')){
+              console.log('[WB-Opening] ✅ quiz overlay 已顯示,等待玩家作答');
+              return;
+            }
+            console.warn('[WB-Opening] ⚠ quiz overlay 1.2 秒後仍未顯示,強制跳過開戰題(視為答對)');
+            // 視為答對(寬鬆策略,不要懲罰玩家)
             try{
-              if(typeof log === 'function') log('💔 開戰題答錯,全員受 5% HP 傷害');
+              if(typeof _advStats !== 'undefined' && _advStats){
+                _advStats.lastAnswerCorrect = true;
+              }
             }catch(_){}
-            if(typeof onDone === 'function') onDone();
-          }, 2200);
-        }
-      });
-    });
+            // 直接 fire cb(會走答對分支)
+            const _cb = _advQuizResolveCb;
+            _advQuizResolveCb = null;
+            if(typeof _cb === 'function') _cb();
+          }catch(eW){
+            console.error('[WB-Opening] watchdog 例外', eW);
+            _fireOnDone('watchdog-error');
+          }
+        }, 1200);
+      }else{
+        console.error('[WB-Opening] advShowQuiz 不存在,fallback 直接 onDone');
+        _fireOnDone('no-advShowQuiz');
+      }
+    }catch(eShow){
+      console.error('[WB-Opening] advShowQuiz 失敗', eShow);
+      _fireOnDone('error');
+    }
   }
 
   // ★ v3.0 — 答題討論泡泡發送(隊友回合/BOSS回合都可用,即使玩家倒下也能用)
@@ -8873,6 +8958,29 @@
         +   '#wb-adv-battle-overlay{width:min(648px,calc(100vw - 80px)) !important;}'
         + '}';
       document.head.appendChild(_wsty);
+    }
+
+    // ★ FIX 20260519 — 世界 BOSS 戰 quiz/reward UI 提升 z-index,蓋過 BOSS 血條與表情列
+    //   根因:adv-quiz-overlay 與 adv-reward-overlay 沒有顯式 z-index(沿用主程式的自然層級),
+    //         但世界 BOSS 戰會疊上:
+    //           - wb-adv-battle-overlay(z-index:600,BOSS 大血條)
+    //           - wb-emoji-bar-real    (z-index:9050,左側表情列)
+    //         結果玩家進入 BOSS 出題流程時,advShowQuiz 確實開了 overlay,
+    //         但完全被表情列蓋住 → 看到「現在是對手的回合」字樣定住不動,
+    //         直到 quiz watchdog/timeout(60 秒)才解套 → 30+ 秒卡死體驗。
+    //   修法:注入全域 CSS,當這兩個 overlay 帶 .show class 時 z-index 提到 10900,
+    //         蓋過所有世界 BOSS 專屬 UI(最高的 wb-emoji-bar-real z:9050、wb-boss-roar z:10600)。
+    //   注意:用 !important + position:fixed 確保不被主程式 inline style 抹掉。
+    if(!document.getElementById('wb-adv-quiz-zindex-fix')){
+      const _qsty = document.createElement('style');
+      _qsty.id = 'wb-adv-quiz-zindex-fix';
+      _qsty.textContent =
+        '#adv-quiz-overlay.show,#adv-reward-overlay.show,#adv-result-overlay.show,'
+        + '#adv-boss-intro.show,#adv-continue-overlay.show{'
+        +   'z-index:10900 !important;position:fixed !important;inset:0 !important;'
+        + '}';
+      document.head.appendChild(_qsty);
+      console.log('[WB-Adv] ✅ quiz/reward UI z-index 提升規則已注入');
     }
 
     ov.innerHTML = `
