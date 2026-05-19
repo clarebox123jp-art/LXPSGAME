@@ -5836,57 +5836,63 @@ function _pSetTimeout(fn, delay, fallbackMs){
     const _fbMs = (typeof fallbackMs === 'number' && fallbackMs > 0) ? fallbackMs : 20000;
     const _record = { fn, delay, queued:Date.now(), _fired:false };
     // ★ 自帶 fallback timer:即使 _resumeTimers 永遠沒被呼叫,這個 timer 也會自己執行
-    _record._fallbackId = setTimeout(()=>{
+    // ★ v3.3.2(s) — 根因修補:把 fallback 邏輯重構,先檢查 overlay 再決定要不要動 record
+    //   舊版 bug:無論如何先標 _fired=true + splice(_record),然後才檢查 overlay
+    //            → overlay 顯示中時雖然 return 不執行 fn,但 record 已被移除
+    //            → _resumeTimers 找不到該 record,startTurn 永遠不會被呼叫 → 卡死
+    //   修法:把「檢查 overlay」提到「標 _fired + splice」之前,
+    //         若 overlay 顯示中:重新排程 5 秒後再檢查,record 完全不動
+    //         (持續到 _resumeTimers 主動釋放,或 overlay 關閉後 fallback 自己跑完)
+    const _scheduleFallback = function(){
+      _record._fallbackId = setTimeout(_fallbackHandler, _fbMs);
+    };
+    const _fallbackHandler = function(){
       if(_record._fired) return;
-      _record._fired = true;
-      try{
-        // 從 _pendingTimers 移除(避免 _resumeTimers 重複執行)
-        const _idx = _pendingTimers.indexOf(_record);
-        if(_idx >= 0) _pendingTimers.splice(_idx, 1);
-      }catch(_){}
-      // ★ v1.0.20260512.6150 — cutscene 對白顯示中代表流程已切到劇情,
-      //   此時的 fallback 多半是上一場戰鬥殘留的 timer。
-      //   不該強制釋放 _gamePaused(會把對白系統的暫停打掉),也不該執行 fn(會背景啟動戰鬥邏輯)
+      // ★ 先檢查各種 overlay,任一顯示中就重新排程,record 不動
       try{
         const _csOvFb = document.getElementById('adv-cutscene-overlay');
         if(_csOvFb && (_csOvFb.style.display === 'flex' || _csOvFb.classList.contains('show'))){
-          console.log('[_pSetTimeout fallback] cutscene 顯示中,跳過 fn 執行(殘留 timer 已清除)');
+          console.log('[_pSetTimeout fallback] cutscene 顯示中,延後 5 秒再檢查(record 保留)');
+          _record._fallbackId = setTimeout(_fallbackHandler, 5000);
           return;
         }
       }catch(_csFbE){}
-      // ★ v1.0.20260513.6510 — quiz / reward overlay 顯示中也屬於「玩家合法操作中」狀態,
-      //   不該強制釋放 _gamePaused、也不該執行 fn — 否則會出現:
-      //   (1) 玩家在獎勵視窗思考 20+ 秒,fallback 強制 _gamePaused=false 後,
-      //       queue 中殘留的 stale fn(startTurn/aiAct)被執行 → BOSS 在獎勵視窗開著時又被選中
-      //       → 觸發第二次 BOSS quiz(同 round 同 BOSS),玩家看到答完一題又彈一題,
-      //       覺得卡死按下「強制跳過」(觀察到 case 2 九尾空貓怪的回報)
-      //   (2) 同理,quiz overlay 開著的答題時間若超過 fallback ms(20s),也不該被打斷
-      //   修法:跟 cutscene 一樣 — fallback 觸發時若這兩個 overlay 仍顯示中,
-      //         _fired 已被標記、_fallbackId 已被清,record 已從 _pendingTimers 移除,
-      //         直接 return 不動 _gamePaused 也不執行 fn。
-      //         等玩家完成操作(advOnQuizSkip / advApplyReward 等)會自然走到 _resumeTimers
-      //         或下個正常的 _pSetTimeout,流程不會卡死。
       try{
         const _qOvFb = document.getElementById('adv-quiz-overlay');
         if(_qOvFb && _qOvFb.classList.contains('show')){
-          console.log('[_pSetTimeout fallback] adv-quiz-overlay 顯示中,跳過 fn 執行(玩家答題中,不該打斷)');
+          console.log('[_pSetTimeout fallback] adv-quiz-overlay 顯示中,延後 5 秒再檢查(record 保留)');
+          _record._fallbackId = setTimeout(_fallbackHandler, 5000);
           return;
         }
         const _rwOvFb = document.getElementById('adv-reward-overlay');
         if(_rwOvFb && (_rwOvFb.style.display === 'flex' || _rwOvFb.classList.contains('show'))){
-          console.log('[_pSetTimeout fallback] adv-reward-overlay 顯示中,跳過 fn 執行(玩家選獎勵中,不該打斷)');
+          console.log('[_pSetTimeout fallback] adv-reward-overlay 顯示中,延後 5 秒再檢查(record 保留)');
+          _record._fallbackId = setTimeout(_fallbackHandler, 5000);
+          return;
+        }
+        // ★ 也檢查 boss-intro 與 mini-result 等其他玩家操作中視窗
+        const _biOvFb = document.getElementById('adv-boss-intro');
+        if(_biOvFb && _biOvFb.classList.contains('show')){
+          console.log('[_pSetTimeout fallback] adv-boss-intro 顯示中,延後 5 秒再檢查(record 保留)');
+          _record._fallbackId = setTimeout(_fallbackHandler, 5000);
           return;
         }
       }catch(_rwFbE){}
-      // ★ 兜底時也要把 _gamePaused 釋放,因為這代表流程已卡死
+      // ★ 沒有任何 overlay 擋路 → 真正卡死,標 _fired + 移除 record + 強制執行 fn
+      _record._fired = true;
+      try{
+        const _idx = _pendingTimers.indexOf(_record);
+        if(_idx >= 0) _pendingTimers.splice(_idx, 1);
+      }catch(_){}
       try{
         if(_gamePaused){
-          console.warn('[_pSetTimeout fallback] 觸發 ('+_fbMs+'ms 未 resume),強制釋放 _gamePaused');
+          console.warn('[_pSetTimeout fallback] 觸發 (累計 '+_fbMs+'ms 未 resume),強制釋放 _gamePaused');
           _gamePaused = false;
         }
       }catch(_){}
       try{ fn(); }catch(_e){ console.warn('[_pSetTimeout fallback fn error]', _e); }
-    }, _fbMs);
+    };
+    _scheduleFallback();
     _pendingTimers.push(_record);
     return -1;
   }
@@ -34143,7 +34149,7 @@ async function _showAdminStatsPanel(){
           <button id="_admin-bypass-bugreport" style="padding:10px 14px;font-size:14px;font-weight:800;text-align:left;
             background:rgba(255,150,180,0.16);border:1.5px solid #ff99bb;color:#ffccdd;
             border-radius:7px;cursor:pointer;font-family:inherit;">
-            🐛 重置「錯誤回報 1 小時冷卻」
+            🐛 重置「錯誤回報 10 分鐘冷卻」
           </button>
           <button id="_admin-bypass-friendarena" style="padding:10px 14px;font-size:14px;font-weight:800;text-align:left;
             background:rgba(200,150,255,0.16);border:1.5px solid #bb99ee;color:#ddccff;
@@ -57562,10 +57568,10 @@ window._showBugReportDialog = function(pageContext){
   const old = document.getElementById('_bug-report-dialog');
   if(old){ old.remove(); }
 
-  // ★ v1.0.20260510.5810 — 1 小時冷卻檢查
-  // 使用 localStorage 儲存上次成功送出時間。同一個瀏覽器 1 小時內只能送 1 次,
+  // ★ v1.0.20260510.5810 — 10 分鐘冷卻檢查(v3.3.2 從 60 分縮為 10 分)
+  // 使用 localStorage 儲存上次成功送出時間。同一個瀏覽器 10 分鐘內只能送 1 次,
   // 防止玩家無聊狂發回報塞爆雲端。換瀏覽器或清快取會重置(可接受)。
-  const _COOLDOWN_MS = 60 * 60 * 1000; // 60 分鐘
+  const _COOLDOWN_MS = 10 * 60 * 1000; // 10 分鐘 (v3.3.2)
   let _coolingDown = false;
   let _msUntilReady = 0;
   try{
@@ -57734,12 +57740,13 @@ window._showBugReportDialog = function(pageContext){
   if(submitBtn){
     submitBtn.onclick = async () => {
       // ★ v1.0.20260510.5810 — 冷卻雙重檢查(防同時開多個分頁送出)
+      // ★ v3.3.2 — 冷卻從 60 分縮為 10 分
       try{
         const _last = parseInt(localStorage.getItem('_bugReportLastTs') || '0', 10);
         if(_last > 0){
           const _elapsed = Date.now() - _last;
-          if(_elapsed >= 0 && _elapsed < 60 * 60 * 1000){
-            const _remainSec = Math.ceil((60 * 60 * 1000 - _elapsed) / 1000);
+          if(_elapsed >= 0 && _elapsed < 10 * 60 * 1000){
+            const _remainSec = Math.ceil((10 * 60 * 1000 - _elapsed) / 1000);
             const _m = Math.floor(_remainSec / 60);
             const _sec = _remainSec % 60;
             if(statusEl){
@@ -57777,11 +57784,11 @@ window._showBugReportDialog = function(pageContext){
           content: _contentToSend,
           page: pageContext || 'unknown',
         });
-        // ★ v1.0.20260510.5810 — 送出成功後記錄時戳,啟動 1 小時冷卻
+        // ★ v1.0.20260510.5810 — 送出成功後記錄時戳,啟動 10 分鐘冷卻 (v3.3.2)
         try{ localStorage.setItem('_bugReportLastTs', String(Date.now())); }catch(_){}
         try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(_){}
         if(statusEl){
-          statusEl.innerHTML = '✅ 回報已送出!感謝你的協助 🙏<br><span style="font-size:12px;color:#ffaacc;">為避免雲端塞爆,1 小時內無法再送下一次</span>';
+          statusEl.innerHTML = '✅ 回報已送出!感謝你的協助 🙏<br><span style="font-size:12px;color:#ffaacc;">為避免雲端塞爆,10 分鐘內無法再送下一次</span>';
           statusEl.style.color = '#88ffaa';
         }
         // 2 秒後自動關閉
