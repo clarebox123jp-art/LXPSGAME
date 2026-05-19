@@ -1668,6 +1668,149 @@
   };
 
   // ════════════════════════════════════════════════════════════════
+  // ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具
+  //   用途:某些情況下玩家帳號資料被「另一個帳號污染」(共用瀏覽器、
+  //         登入錯帳號存錯資料、雲端 merge 失誤)。此時用 3 / 3.5 號的
+  //         「保留現有」策略反而會把污染資料保下來,無法救援。
+  //         此 API 提供「完全清空 + 從零重建」流程,徹底洗掉污染。
+  //   行為:
+  //     1. 讀現有資料只用來保留登入身份(email / displayName / providerData)
+  //        其他全部清除(英雄、等級、背包、勳章、補償歷史、世界 BOSS 戰記錄...)
+  //     2. 寫入 rebuild 指定的:解鎖角色、各角色等級、知識幣、背包物品
+  //     3. 用 setDoc 不帶 merge,確保整個 doc 被 atomic 取代
+  //     4. 重置歷史獨立記在 _resetHistory(跟補償歷史 _compensationHistory 分開)
+  //   危險性:不可逆!使用前必須由管理員「兩次」確認(UI 端負責)。
+  // ════════════════════════════════════════════════════════════════
+  window._fbResetAndRebuildPlayer = async function(uid, rebuild) {
+    if(!uid || !rebuild) throw new Error('uid 與 rebuild 為必要');
+    // 1) 先讀現有資料(只為了保留登入身份 + 記錄被覆寫的 snapshot)
+    let existing = {};
+    try {
+      const snap = await getDocFromServer(doc(_fbDb, 'players', uid));
+      if(snap.exists()) existing = snap.data() || {};
+    } catch(e) {
+      console.warn('[_fbResetAndRebuildPlayer] 讀取現有資料失敗,將以空白起點覆寫', e);
+    }
+
+    // 2) 保留的「登入身份」欄位(不清掉這些,否則玩家下次登入會建空帳號)
+    const _keepEmail       = existing.email || rebuild.email || '';
+    const _keepDisplayName = existing.displayName || '';
+    const _keepFirstAt     = existing._firstLoginAt || existing.createdAt || Date.now();
+
+    // 3) 處理 rebuild 指定的角色 + 等級
+    const _newUnlocked = Array.isArray(rebuild.unlockedHeroes) ? rebuild.unlockedHeroes.slice() : [];
+    const _newLevels = {};
+    if(rebuild.heroLevels && typeof rebuild.heroLevels === 'object'){
+      Object.keys(rebuild.heroLevels).forEach(name => {
+        const lv = Math.max(1, Math.min(50, parseInt(rebuild.heroLevels[name], 10) || 1));
+        _newLevels[name] = lv;
+      });
+    }
+    // 確保 unlockedHeroes 跟 heroLevels 同步:有等級的角色必定在 unlockedHeroes
+    const _unlockedSet = new Set(_newUnlocked);
+    Object.keys(_newLevels).forEach(n => _unlockedSet.add(n));
+    const _finalUnlocked = Array.from(_unlockedSet);
+
+    // 4) 各角色 statPoints(自由分配點 = 等級 - 1,因為原始狀態還沒分配)
+    const _newSP = {};
+    Object.keys(_newLevels).forEach(name => {
+      const lv = _newLevels[name];
+      _newSP[name] = Math.max(0, lv - 1);
+    });
+
+    // 5) 知識幣(set 模式,直接覆寫)
+    const _newCoins = Math.max(0, parseInt(rebuild.coins, 10) || 0);
+
+    // 6) 背包(完全重建,不疊加)
+    const _newBp = {};
+    if(rebuild.backpack && typeof rebuild.backpack === 'object'){
+      Object.keys(rebuild.backpack).forEach(itemId => {
+        const qty = Math.max(0, Math.min(99, parseInt(rebuild.backpack[itemId], 10) || 0));
+        if(qty > 0) _newBp[itemId] = qty;
+      });
+    }
+
+    // 7) 寫入重置歷史(獨立於補償歷史)
+    const _now = Date.now();
+    const _resetEntry = {
+      at: _now,
+      by: rebuild.by || 'admin',
+      reason: (rebuild.reason || '').slice(0, 500),
+      summary: (rebuild.summary || '').slice(0, 1000),
+      // 記錄被清掉前的「重要資料 snapshot」,萬一誤刪可手動參考
+      cleared: {
+        unlockedCount: (existing.unlockedHeroes || []).length,
+        heroLevelCount: Object.keys(existing.heroLevels || {}).length,
+        coins: existing.knowledgeCoins || 0,
+        bpItemCount: Object.keys(existing.playerBackpack || {}).length,
+        compensationCount: existing._compensationCount || 0,
+        medalCount: Array.isArray(existing.medalsUnlocked) ? existing.medalsUnlocked.length : 0
+      },
+      // 重建的內容
+      rebuilt: {
+        unlockedHeroes: _finalUnlocked,
+        heroLevels: _newLevels,
+        coins: _newCoins,
+        backpack: _newBp
+      }
+    };
+    const _existResetHistory = Array.isArray(existing._resetHistory) ? existing._resetHistory : [];
+    const _newResetHistory = [..._existResetHistory, _resetEntry].slice(-10);
+    const _resetCount = (existing._resetCount || 0) + 1;
+
+    // 8) 組 payload(用 setDoc 不帶 merge → 整個 doc 被覆寫,污染欄位徹底洗掉)
+    const payload = {
+      // === 登入身份(保留)===
+      email: _keepEmail,
+      displayName: _keepDisplayName,
+      _firstLoginAt: _keepFirstAt,
+      // === 重建的資料 ===
+      savedAt: _now,
+      unlockedHeroes: _finalUnlocked,
+      heroLevels: _newLevels,
+      heroLevels_s: JSON.stringify(_newLevels),
+      heroStatPoints: _newSP,
+      heroStatPoints_s: JSON.stringify(_newSP),
+      heroStatInvested: {},      // 清空已分配的素質點
+      heroSkillLevels: {},        // 清空技能等級
+      heroBurstLevels: {},        // 清空爆發等級
+      heroBurstResetCount: {},    // 清空爆發重置次數
+      knowledgeCoins: _newCoins,
+      playerBackpack: _newBp,
+      playerBackpack_s: JSON.stringify(_newBp),
+      representativeHero: null,   // 清代表英雄(玩家重設)
+      // === 清空所有進度 / 紀錄 ===
+      medalsUnlocked: [],
+      _stageProgress: {},         // 關卡進度
+      _wbBattleHistory: [],       // 世界 BOSS 戰歷史
+      _wbCumulativeContrib: 0,    // 累計貢獻
+      // === 重置歷史 ===
+      _resetCount: _resetCount,
+      _resetHistory: _newResetHistory,
+      _resetHistory_s: JSON.stringify(_newResetHistory),
+      _lastResetAt: _now,
+      _lastResetBy: rebuild.by || 'admin',
+      // === 清掉舊的補償紀錄(讓重置後是真正全新狀態)===
+      _compensationCount: 0,
+      _compensationHistory: [],
+      _compensationHistory_s: '[]',
+      _lastCompensatedAt: null,
+      _lastCompensatedBy: null
+    };
+
+    // ★ 用 setDoc 不帶 merge 確保整個 doc 被取代(merge:true 會保留 doc 中沒提到的舊欄位)
+    await setDoc(doc(_fbDb, 'players', uid), payload);
+    console.info('✅ [完全重置] 已重建 ' + uid, payload);
+    return {
+      ok: true,
+      uid,
+      resetCount: _resetCount,
+      cleared: _resetEntry.cleared,
+      rebuilt: _resetEntry.rebuilt
+    };
+  };
+
+  // ════════════════════════════════════════════════════════════════
   // ★ FIX 20260517(t) — 處理 redirect 登入回傳(iPad/iOS Safari 修復)
   //
   // 舊版用 localStorage 旗標(lxps_pending_redirect_signin)守門,
@@ -33099,6 +33242,122 @@ async function _showAdminStatsPanel(){
         <div id="_admin-comp-result" style="margin-top:8px;font-size:13px;color:#ffcc88;line-height:1.6;"></div>
       </div>
 
+      <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
+      <!--
+        放在 3.5 之後、4 號之前,因為它是「最徹底」的玩家資料修補工具。
+        用法:當學生帳號被其他學生資料污染,3 / 3.5 都救不回(保留現有策略反而保下污染)
+        時,用此工具完全清空帳號 → 指定角色 + 等級 + 資源 → 從零重建。
+        危險度:**不可逆**,清掉的資料不會自動還原。要求雙重確認。
+      -->
+      <div style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ff7777;margin-bottom:8px;">⚠ 3.9 帳號完全重置 + 重建(危險)</div>
+        <div style="font-size:13px;color:#ffcccc;margin-bottom:12px;line-height:1.6;">
+          <b style="color:#ff9999;">用於救援被其他帳號資料污染的玩家。</b><br>
+          會<b style="color:#ff7777;">徹底清空</b>該玩家所有資料(角色/等級/技能/勳章/背包/補償紀錄/世界戰歷史),
+          只保留登入身份(email + displayName),然後寫入你指定的角色、等級、資源。<br>
+          <span style="color:#ffaa66;">⚠ 此操作<b>不可逆</b>。需要雙重確認。重置歷史會記在 <code>_resetHistory</code> 欄位供事後稽核。</span>
+        </div>
+
+        <!-- 學生查詢 -->
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-reset-email" type="text" placeholder="學生 email (如 lsps110176@stu.lsps.tp.edu.tw)"
+            style="flex:2;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(255,100,100,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <span style="color:#888;font-size:12px;">或</span>
+          <input id="_admin-reset-uid" type="text" placeholder="直接輸入 uid"
+            style="flex:1.3;min-width:160px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(255,100,100,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-reset-find" style="padding:8px 18px;font-size:14px;font-weight:700;
+            background:rgba(255,100,100,0.2);border:2px solid #ff8888;color:#ffaaaa;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔍 查找學生
+          </button>
+        </div>
+
+        <!-- 查詢結果(查到後展開) -->
+        <div id="_admin-reset-info" style="font-size:13px;color:#ccc;margin-bottom:10px;padding:10px;background:rgba(0,0,0,0.4);border-radius:6px;display:none;line-height:1.7;"></div>
+
+        <!-- 重建表單(查到玩家後展開) -->
+        <div id="_admin-reset-form" style="display:none;background:rgba(80,20,20,0.3);border:1px dashed rgba(255,100,100,0.45);border-radius:8px;padding:14px;margin-bottom:10px;">
+
+          <!-- 角色重建 -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:700;color:#ffaaaa;margin-bottom:6px;">
+              🦸 重建角色(學生說有哪些就填哪些,等級依學生回憶)
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;flex-wrap:wrap;">
+              <label style="font-size:12px;color:#ccc;flex:2;min-width:160px;">選角色
+                <select id="_admin-reset-hero-select"
+                  style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);
+                  border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;font-size:13px;">
+                  <option value="">-- 選擇英雄 --</option>
+                </select>
+              </label>
+              <label style="font-size:12px;color:#ccc;width:100px;">等級 (1-50)
+                <input id="_admin-reset-hero-lv" type="number" min="1" max="50" value="10"
+                  style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+              <button id="_admin-reset-hero-add" style="padding:8px 16px;font-size:13px;font-weight:700;
+                background:rgba(100,200,150,0.25);border:2px solid #66cc99;color:#aaffcc;
+                border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+                ➕ 加入
+              </button>
+            </div>
+            <div id="_admin-reset-hero-list" style="margin-top:8px;padding:8px;background:rgba(0,0,0,0.3);border-radius:6px;min-height:40px;font-size:13px;color:#bbb;">
+              <span style="color:#666;">尚未加入任何角色...</span>
+            </div>
+          </div>
+
+          <!-- 資源重建 -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:700;color:#ffaaaa;margin-bottom:6px;">💰 重建資源</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <label style="font-size:12px;color:#ccc;">知識幣
+                <input id="_admin-reset-coins" type="number" min="0" value="0" placeholder="0=不給"
+                  style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+              <label style="font-size:12px;color:#ccc;">經驗之書
+                <input id="_admin-reset-exp-book" type="number" min="0" max="99" value="0"
+                  style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+              <label style="font-size:12px;color:#ccc;">技能升級書
+                <input id="_admin-reset-skill-book" type="number" min="0" max="99" value="0"
+                  style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+              <label style="font-size:12px;color:#ccc;">素質之書
+                <input id="_admin-reset-stat-book" type="number" min="0" max="99" value="0"
+                  style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+              <label style="font-size:12px;color:#ccc;">極限爆發果實
+                <input id="_admin-reset-burst-fruit" type="number" min="0" max="99" value="0"
+                  style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+              <label style="font-size:12px;color:#ccc;">爆發重置秘藥
+                <input id="_admin-reset-burst-reset" type="number" min="0" max="99" value="0"
+                  style="width:100%;padding:6px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,100,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+              </label>
+            </div>
+          </div>
+
+          <!-- 重置原因 -->
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px;font-weight:700;color:#ffaaaa;">📝 重置原因(必填,會記入稽核紀錄)
+              <input id="_admin-reset-reason" type="text" placeholder="例:雲端資料被同學帳號污染,經學生確認後完全重置"
+                style="width:100%;padding:8px 12px;font-size:13px;margin-top:4px;background:rgba(20,20,30,0.9);
+                border:1.5px solid rgba(255,100,100,0.4);color:#fff;border-radius:6px;font-family:inherit;box-sizing:border-box;">
+            </label>
+          </div>
+
+          <button id="_admin-reset-apply" style="width:100%;padding:14px;font-size:15px;font-weight:800;
+            background:rgba(255,80,80,0.25);border:3px solid #ff7777;color:#ffcccc;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            ⚠ 執行完全重置 + 重建(會清空所有資料,不可逆)
+          </button>
+        </div>
+
+        <div id="_admin-reset-result" style="margin-top:8px;font-size:13px;color:#ffaaaa;line-height:1.6;"></div>
+      </div>
+
       <div style="background:rgba(20,40,60,0.45);border:2px solid rgba(100,200,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#88ddff;margin-bottom:8px;">🧪 4. 測試工具：批次設定數值</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
@@ -34635,6 +34894,300 @@ async function _showAdminStatsPanel(){
       } finally {
         _applyBtn.disabled = false;
         _applyBtn.textContent = '🎁 執行補償(保留現有資料,僅加上去)';
+      }
+    };
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★★★ FIX 20260519(v7) — 3.9 帳號完全重置 + 重建工具 ★★★
+  // ════════════════════════════════════════════════════════════════
+  (function _initAdminResetTool(){
+    if(!document.getElementById('_admin-reset-find')) return;  // UI 未渲染就跳過
+
+    // 取得所有可重建的英雄(取自 HERO_DB,跟補償工具用同一份)
+    const _getResetableHeroes = function(){
+      try {
+        if(typeof HERO_DB === 'object' && HERO_DB){
+          return Object.keys(HERO_DB).filter(k => HERO_DB[k] && HERO_DB[k].name);
+        }
+      } catch(_){}
+      return [];
+    };
+
+    // 重用補償工具的 _HERO_GROUPS 結構(避免維護兩份名單)
+    // 注意:此 IIFE 跑在補償工具之後,所以 _HERO_GROUPS 已在外層 closure 失效。
+    // 簡化做法:重新依分類列(或直接全部塞 select 一個 group)。
+    // 為避免複製大量資料,此處直接全部排序後塞同一個 group
+    const _populateResetSelect = function(){
+      const sel = document.getElementById('_admin-reset-hero-select');
+      if(!sel) return;
+      sel.innerHTML = '<option value="">-- 選擇英雄 --</option>';
+      const _all = _getResetableHeroes().sort();
+      _all.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = n;
+        sel.appendChild(opt);
+      });
+    };
+    _populateResetSelect();
+
+    // 重建角色暫存({heroName: level})
+    let _resetHeroes = {};
+    // 查到的玩家資料快取
+    let _resetTarget = null;  // { uid, email, data }
+
+    // 重渲重建英雄清單
+    const _renderResetHeroList = function(){
+      const wrap = document.getElementById('_admin-reset-hero-list');
+      if(!wrap) return;
+      const names = Object.keys(_resetHeroes);
+      if(names.length === 0){
+        wrap.innerHTML = '<span style="color:#666;font-style:italic;">尚未加入任何角色...</span>';
+        return;
+      }
+      wrap.innerHTML = names.map(name => {
+        const lv = _resetHeroes[name];
+        return '<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,150,150,0.18);'
+          + 'border:1px solid rgba(255,150,150,0.45);border-radius:6px;padding:4px 8px;margin:2px;font-size:12px;">'
+          + '<span style="color:#ffaaaa;font-weight:700;">' + name + '</span>'
+          + '<span style="color:#ffee88;">Lv' + lv + '</span>'
+          + '<button data-rm="' + name + '" style="margin-left:4px;background:none;border:none;color:#ff8888;cursor:pointer;font-size:14px;padding:0 2px;line-height:1;">×</button>'
+          + '</div>';
+      }).join('');
+      wrap.querySelectorAll('button[data-rm]').forEach(b => {
+        b.onclick = function(){
+          const n = this.getAttribute('data-rm');
+          delete _resetHeroes[n];
+          _renderResetHeroList();
+        };
+      });
+    };
+
+    // 加角色
+    const _addBtn = document.getElementById('_admin-reset-hero-add');
+    if(_addBtn) _addBtn.onclick = function(){
+      const sel = document.getElementById('_admin-reset-hero-select');
+      const lvInput = document.getElementById('_admin-reset-hero-lv');
+      const name = (sel.value || '').trim();
+      const lv = Math.max(1, Math.min(50, parseInt(lvInput.value, 10) || 1));
+      if(!name){ alert('請先選擇要重建的英雄'); return; }
+      _resetHeroes[name] = lv;
+      _renderResetHeroList();
+      sel.value = '';
+    };
+
+    // 查找學生(email 或 uid)
+    const _findBtn = document.getElementById('_admin-reset-find');
+    if(_findBtn) _findBtn.onclick = async function(){
+      const emailInput = document.getElementById('_admin-reset-email');
+      const uidInput = document.getElementById('_admin-reset-uid');
+      const info = document.getElementById('_admin-reset-info');
+      const form = document.getElementById('_admin-reset-form');
+      const res = document.getElementById('_admin-reset-result');
+      res.textContent = '';
+      form.style.display = 'none';
+      info.style.display = 'block';
+      info.innerHTML = '<span style="color:#aaa;">查詢中...</span>';
+      _resetTarget = null;
+
+      const email = (emailInput.value || '').trim().toLowerCase();
+      const uid   = (uidInput.value || '').trim();
+      if(!email && !uid){
+        info.innerHTML = '<span style="color:#ff6666;">❌ 請輸入 email 或 uid 至少一個</span>';
+        return;
+      }
+
+      try {
+        let _targetUid = uid;
+        let _foundData = null;
+        if(uid){
+          if(!window._fbDiagnosePlayer){
+            info.innerHTML = '<span style="color:#ff6666;">❌ Firebase 尚未就緒</span>';
+            return;
+          }
+          const d = await window._fbDiagnosePlayer(uid);
+          if(!d.exists){
+            info.innerHTML = '<span style="color:#ffaa66;">⚠ 此 uid 在 Firestore 無紀錄。</span>';
+            return;
+          }
+          _foundData = d.rawData || {};
+          _targetUid = uid;
+        } else {
+          if(!window._fbAdminFindPlayerByEmail){
+            info.innerHTML = '<span style="color:#ff6666;">❌ Firebase API 未載入,請改用 uid 查詢</span>';
+            return;
+          }
+          let r;
+          try { r = await window._fbAdminFindPlayerByEmail(email); }
+          catch(eFind){
+            if(eFind._isPermissionDenied){
+              info.innerHTML = '<div style="color:#ff8866;">⚠ Firestore 規則拒絕 email 查詢,請改用 uid。</div>';
+              return;
+            }
+            throw eFind;
+          }
+          if(!r.found){
+            info.innerHTML = '<span style="color:#ffaa66;">⚠ 找不到 email 為 <code>' + email + '</code> 的學生。</span>';
+            return;
+          }
+          _foundData = r.data;
+          _targetUid = r.uid;
+        }
+
+        _resetTarget = { uid: _targetUid, email: _foundData.email || email, data: _foundData };
+
+        // 顯示「即將被清掉的資料」摘要
+        const _esc = function(s){
+          return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        };
+        const savedStr = _foundData.savedAt ? new Date(_foundData.savedAt).toLocaleString('zh-TW') : '(無)';
+        const _heroLvCount = Object.keys(_foundData.heroLevels || {}).length;
+        const _bpCount = Object.keys(_foundData.playerBackpack || {}).length;
+        const _unlockedCount = (_foundData.unlockedHeroes || []).length;
+        const _coins = _foundData.knowledgeCoins || 0;
+        const _medalCount = Array.isArray(_foundData.medalsUnlocked) ? _foundData.medalsUnlocked.length : 0;
+        const _compCount = _foundData._compensationCount || 0;
+        const _resetCount = _foundData._resetCount || 0;
+
+        info.innerHTML = ''
+          + '<div style="color:#ffaaaa;font-weight:700;margin-bottom:6px;">⚠ 已找到玩家(以下資料將被<u>完全清空</u>)</div>'
+          + '<div><b>uid:</b> <code style="color:#88ccff;">' + _esc(_targetUid) + '</code></div>'
+          + '<div><b>email:</b> ' + _esc(_foundData.email || '(無)') + '</div>'
+          + '<div><b>暱稱:</b> ' + _esc(_foundData.displayName || '(無)') + '</div>'
+          + '<div><b>最後存檔:</b> ' + _esc(savedStr) + '</div>'
+          + '<hr style="border:none;border-top:1px solid rgba(255,100,100,0.25);margin:6px 0;">'
+          + '<div>💰 知識幣: <b style="color:#ffee88;">' + _coins + '</b> <span style="color:#ff8888;">→ 將被清空</span></div>'
+          + '<div>🦸 已記錄等級的英雄: <b>' + _heroLvCount + '</b> 位 <span style="color:#ff8888;">→ 將被清空</span></div>'
+          + '<div>🎒 背包物品種類: <b>' + _bpCount + '</b> 種 <span style="color:#ff8888;">→ 將被清空</span></div>'
+          + '<div>⚔ 已解鎖英雄: <b>' + _unlockedCount + '</b> 位 <span style="color:#ff8888;">→ 將被清空</span></div>'
+          + '<div>🏅 已獲得勳章: <b>' + _medalCount + '</b> 個 <span style="color:#ff8888;">→ 將被清空</span></div>'
+          + (_compCount > 0 ? '<div>🎁 過往補償紀錄: <b>' + _compCount + '</b> 次 <span style="color:#ff8888;">→ 將被清空</span></div>' : '')
+          + '<hr style="border:none;border-top:1px solid rgba(255,200,100,0.25);margin:6px 0;">'
+          + '<div style="color:' + (_resetCount > 0 ? '#ff6666' : '#88ff88') + ';font-weight:700;">'
+            + '🔁 過去重置次數: <b>' + _resetCount + '</b>'
+            + (_resetCount > 0 ? ' ⚠ 此玩家曾被重置過,請審慎評估' : '')
+          + '</div>';
+
+        form.style.display = 'block';
+
+        // 清掉上次留下的設定
+        _resetHeroes = {};
+        _renderResetHeroList();
+        document.getElementById('_admin-reset-coins').value = '0';
+        document.getElementById('_admin-reset-exp-book').value = '0';
+        document.getElementById('_admin-reset-skill-book').value = '0';
+        document.getElementById('_admin-reset-stat-book').value = '0';
+        document.getElementById('_admin-reset-burst-fruit').value = '0';
+        document.getElementById('_admin-reset-burst-reset').value = '0';
+        document.getElementById('_admin-reset-reason').value = '';
+      } catch(e){
+        console.error('[admin reset find]', e);
+        info.innerHTML = '<span style="color:#ff6666;">❌ 查詢失敗:' + (e.code || e.message || e) + '</span>';
+      }
+    };
+
+    // 執行重置
+    const _applyBtn = document.getElementById('_admin-reset-apply');
+    if(_applyBtn) _applyBtn.onclick = async function(){
+      const res = document.getElementById('_admin-reset-result');
+      res.style.color = '#ffaaaa';
+      res.textContent = '';
+      if(!_resetTarget || !_resetTarget.uid){
+        res.style.color = '#ff6666';
+        res.textContent = '❌ 請先查找玩家';
+        return;
+      }
+      const reason = (document.getElementById('_admin-reset-reason').value || '').trim();
+      if(!reason || reason.length < 5){
+        res.style.color = '#ff6666';
+        res.textContent = '❌ 請填寫重置原因(至少 5 字),會記入稽核紀錄';
+        return;
+      }
+
+      const _heroes = Object.keys(_resetHeroes);
+      const _heroLevels = Object.assign({}, _resetHeroes);
+      const _coins = Math.max(0, parseInt(document.getElementById('_admin-reset-coins').value, 10) || 0);
+      const _bp = {};
+      const _expBook   = Math.max(0, parseInt(document.getElementById('_admin-reset-exp-book').value, 10) || 0);
+      const _skillBook = Math.max(0, parseInt(document.getElementById('_admin-reset-skill-book').value, 10) || 0);
+      const _statBook  = Math.max(0, parseInt(document.getElementById('_admin-reset-stat-book').value, 10) || 0);
+      const _burstFr   = Math.max(0, parseInt(document.getElementById('_admin-reset-burst-fruit').value, 10) || 0);
+      const _burstRs   = Math.max(0, parseInt(document.getElementById('_admin-reset-burst-reset').value, 10) || 0);
+      if(_expBook)   _bp['hero_exp_book']       = _expBook;
+      if(_skillBook) _bp['skill_upgrade_book']  = _skillBook;
+      if(_statBook)  _bp['stat_reset_book']     = _statBook;
+      if(_burstFr)   _bp['burst_upgrade_fruit'] = _burstFr;
+      if(_burstRs)   _bp['burst_reset_potion']  = _burstRs;
+
+      // 摘要
+      const _summary = '重置並重建:角色 ' + _heroes.length + ' 位、知識幣 ' + _coins
+        + (Object.keys(_bp).length > 0 ? '、物品 ' + Object.keys(_bp).length + ' 種' : '');
+
+      // ── 雙重確認 ──────────────────────────────────────
+      const _step1 = '⚠ 警告:即將「完全重置」以下玩家的帳號\n\n'
+        + '帳號:' + (_resetTarget.email || _resetTarget.uid) + '\n'
+        + 'uid: ' + _resetTarget.uid + '\n\n'
+        + '此操作會:\n'
+        + '  ❌ 清空所有英雄、等級、技能、勳章、背包\n'
+        + '  ❌ 清空世界 BOSS 戰歷史、補償紀錄\n'
+        + '  ❌ 清空關卡進度\n'
+        + '  ✅ 保留 email 與 displayName(讓玩家還能登入)\n'
+        + '  ✅ 寫入你指定的:' + _heroes.length + ' 位角色、' + _coins + ' 知識幣、' + Object.keys(_bp).length + ' 種物品\n\n'
+        + '此操作【不可逆】,確定繼續嗎?';
+      if(!confirm(_step1)) return;
+
+      const _step2 = '🔴 最終確認\n\n再次確認對【' + (_resetTarget.email || _resetTarget.uid) + '】執行完全重置?\n\n'
+        + '原因:' + reason + '\n\n'
+        + '按「確定」立即執行,按「取消」中止。';
+      if(!confirm(_step2)) return;
+
+      _applyBtn.disabled = true;
+      _applyBtn.textContent = '重置中,請稍候...';
+      try {
+        if(!window._fbResetAndRebuildPlayer){
+          throw new Error('_fbResetAndRebuildPlayer 未載入');
+        }
+        const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
+        const result = await window._fbResetAndRebuildPlayer(_resetTarget.uid, {
+          unlockedHeroes: _heroes,
+          heroLevels: _heroLevels,
+          coins: _coins,
+          backpack: _bp,
+          email: _resetTarget.email,
+          reason: reason,
+          summary: _summary,
+          by: _adminEmail
+        });
+        res.style.color = '#88ff88';
+        res.innerHTML = '✅ <b>重置完成!</b><br>'
+          + '・帳號:' + (_resetTarget.email || _resetTarget.uid) + '<br>'
+          + '・第 <b>' + result.resetCount + '</b> 次重置<br>'
+          + '・新解鎖角色: ' + (result.rebuilt.unlockedHeroes.length) + ' 位<br>'
+          + '・新知識幣: ' + result.rebuilt.coins + '<br>'
+          + '・新背包物品: ' + Object.keys(result.rebuilt.backpack).length + ' 種<br>'
+          + '<span style="color:#ffaa66;">注意:玩家下次登入時雲端會載入這份新資料,本地舊資料會被覆蓋。</span>';
+
+        // 清空表單
+        _resetHeroes = {};
+        _renderResetHeroList();
+        document.getElementById('_admin-reset-coins').value = '0';
+        document.getElementById('_admin-reset-exp-book').value = '0';
+        document.getElementById('_admin-reset-skill-book').value = '0';
+        document.getElementById('_admin-reset-stat-book').value = '0';
+        document.getElementById('_admin-reset-burst-fruit').value = '0';
+        document.getElementById('_admin-reset-burst-reset').value = '0';
+        document.getElementById('_admin-reset-reason').value = '';
+        // 重新查詢一次,讓資訊區顯示新狀態
+        try { document.getElementById('_admin-reset-find').click(); } catch(_){}
+      } catch(e){
+        console.error('[admin reset apply]', e);
+        res.style.color = '#ff6666';
+        res.textContent = '❌ 重置失敗:' + (e.code || e.message || e);
+      } finally {
+        _applyBtn.disabled = false;
+        _applyBtn.textContent = '⚠ 執行完全重置 + 重建(會清空所有資料,不可逆)';
       }
     };
   })();
