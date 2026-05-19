@@ -7465,6 +7465,7 @@
       // ★ FIX 20260519 — 收到開戰題完成 sync,清掉「房主答題中」提示
       // ★ v3.3.2 — 也支援 'opening-quiz-correct' / 'opening-quiz-wrong' 兩個新 reason
       //   (來自 v3.3.2 改寫的開戰題 cb,房主答對/答錯都會 sync 過來)
+      // ★ v3.3.3 — 新設計:client 也彈了 advShowQuiz 視窗,收到 sync 時要主動關掉
       const _isOpeningQuizDone = battle._syncReason === 'opening_quiz_done'
                               || battle._syncReason === 'opening-quiz-correct'
                               || battle._syncReason === 'opening-quiz-wrong';
@@ -7476,20 +7477,33 @@
           }
           // 也清掉所有殘留的同類元素(防止多次 hint 疊加)
           document.querySelectorAll('#wb-client-opening-hint').forEach(el => el.remove());
-          // ★ v3.3.2 — 清掉新版 wb-opening-quiz-wait 提示視窗 + watchdog
+          // ★ v3.3.2 — 清掉舊版 wb-opening-quiz-wait 提示視窗 + watchdog
           const _wait = document.getElementById('wb-opening-quiz-wait');
           if(_wait) _wait.remove();
+          // ★ v3.3.3 — 主動關閉 client 端的 advShowQuiz 視窗 + 清旗標
+          try{
+            const _qOv = document.getElementById('adv-quiz-overlay');
+            if(_qOv) _qOv.classList.remove('show');
+          }catch(_){}
+          try{
+            if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+            if(typeof _advQuizActive !== 'undefined') _advQuizActive = false;
+            window._bossQuizInFlight = false;
+            window._wbIsOpeningQuizPhase = false;
+            window._wbOpeningQuizAllowedSlot = null;
+          }catch(_){}
           if(typeof window._wbOpeningQuizClientCleanup === 'function'){
             window._wbOpeningQuizClientCleanup();
             window._wbOpeningQuizClientCleanup = null;
           }
-          console.log('[WB-Client v6] 房主開戰題完成 (' + battle._syncReason + '),清除等待提示 + 推進戰鬥');
+          console.log('[WB-Client v6] 房主開戰題完成 (' + battle._syncReason + '),清除等待提示 + 關 quiz 視窗 + 推進戰鬥');
         }catch(_){}
       }
 
       // ★ v3.3.2 — 收到任何 quiz 相關 sync(quiz-correct-team-reward / quiz-reward-dmg / after_endAction 等)
       //   都清掉「BOSS 答題等待」提示視窗 + 對應 watchdog
       //   因為:房主把全隊獎勵 sync 過來代表 BOSS quiz 已答完,client 端的等待視窗就該關掉
+      // ★ v3.3.3 — 新增主動關閉 client 端的 advShowQuiz 視窗
       const _isQuizRelated = battle._syncReason === 'quiz-correct-team-reward'
                           || battle._syncReason === 'quiz-reward-dmg'
                           || battle._syncReason === 'quiz-wrong-punish'
@@ -7505,6 +7519,17 @@
           // 也清掉房主的代答提示(若有殘留)
           const _hostHint = document.getElementById('wb-boss-quiz-host-hint');
           if(_hostHint) _hostHint.remove();
+          // ★ v3.3.3 — 主動關閉 client 端的 advShowQuiz 視窗 + 清旗標
+          try{
+            const _qOv = document.getElementById('adv-quiz-overlay');
+            if(_qOv) _qOv.classList.remove('show');
+          }catch(_){}
+          try{
+            if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+            if(typeof _advQuizActive !== 'undefined') _advQuizActive = false;
+            window._bossQuizInFlight = false;
+            window._wbAssignedQuizSlot = null;
+          }catch(_){}
         }catch(_){}
       }
 
@@ -7524,6 +7549,14 @@
           window._wbClientPendingApplyTimer = null;
           _wbClientApplyWire(battle);
           try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Client v6] renderBattleScreen 例外', eR); }
+          // ★ v3.3.3 — 延後 apply 路徑也要重播 FX
+          try{
+            if(Array.isArray(battle._wbFxEvents) && battle._wbFxEvents.length > 0
+               && typeof window._wbFxReplay === 'function'){
+              console.log('[WB-Client v6] (延後) 重播 FX 事件 x' + battle._wbFxEvents.length);
+              window._wbFxReplay(battle._wbFxEvents);
+            }
+          }catch(eFx){ console.warn('[WB-Client v6] (延後) FX 重播失敗', eFx); }
           _wbClientCheckEnded(battle);
         }, wait);
         return;
@@ -7532,6 +7565,17 @@
       // 立即 apply
       _wbClientApplyWire(battle);
       try{ _wbRenderBattleScreen(battle); }catch(eR){ console.warn('[WB-Client v6] renderBattleScreen 例外', eR); }
+
+      // ★ v3.3.3 — FX 同步:重播房主傳來的視覺特效事件
+      //   讓 client 看到房主端跑出的傷害數字 / 卡片閃光 / 粒子 / 音效 / banner 等
+      //   重播時序:apply G + renderField 之後,讓特效套在最新的 hero 物件上
+      try{
+        if(Array.isArray(battle._wbFxEvents) && battle._wbFxEvents.length > 0
+           && typeof window._wbFxReplay === 'function'){
+          console.log('[WB-Client v6] 重播 FX 事件 x' + battle._wbFxEvents.length);
+          window._wbFxReplay(battle._wbFxEvents);
+        }
+      }catch(eFx){ console.warn('[WB-Client v6] FX 重播失敗', eFx); }
 
       // 結束處理
       _wbClientCheckEnded(battle);
@@ -8500,6 +8544,14 @@
           clearTimeout(window._wbOpeningQuizWatchdog);
           window._wbOpeningQuizWatchdog = null;
         }
+        // ★ v3.3.3 — 清掉開戰題期間旗標(讓 advSubmitAnswer 攔截器知道開戰題已結束)
+        window._wbIsOpeningQuizPhase = false;
+        window._wbOpeningQuizAllowedSlot = null;
+        if(window._wbOpeningQuizClientWatchdog){
+          clearTimeout(window._wbOpeningQuizClientWatchdog);
+          window._wbOpeningQuizClientWatchdog = null;
+        }
+        window._wbOpeningQuizClientCleanup = null;
       }catch(eClean){ console.warn('[WB-Opening] 清理殘留旗標失敗', eClean); }
       if(typeof onDone === 'function') onDone();
     };
@@ -8605,98 +8657,85 @@
 
     // ★ 呼叫主程式 advShowQuiz 出題
     //   主程式會抽題、顯示 UI、處理答題,完成後 fire _advQuizResolveCb
-    // ★ v3.3.2 — 多人模式:開戰題「固定由房主回答」(老師確認)
-    //   設計:
-    //     - 房主 / 單人練習(非 client):彈 advShowQuiz 視窗讓玩家答
-    //     - 非房主 client:不彈視窗,顯示「房主正在答開戰題...」提示,等房主答完 sync 後
-    //       由 server-side 推狀態過來,本機 _fireOnDone 由 sync 路徑觸發。
-    //   但 client 端的 cb 不會被觸發(因為沒呼叫 advShowQuiz),所以要另外設個保險 timer:
-    //     - client 看到 _wbStartBossOpening 跑了 20 秒還沒結束,自動 _fireOnDone 推進(避免卡死)
-    //     - 真正讓 client 進入戰鬥的是「房主把開戰題答完後,_wbHostSyncG 帶過完整 G 狀態」
-    //       + advStartBattle 同步開戰的訊號(後續流程已有此 sync 路徑)
-    const _isClientOpening = !!window._wbClientMode;
-    if(_isClientOpening){
-      console.log('[WB-Opening client] 非房主端不彈開戰題,顯示等待提示');
-      // 顯示等待房主答題的提示視窗
-      try{
-        const _wait = document.createElement('div');
-        _wait.id = 'wb-opening-quiz-wait';
-        _wait.style.cssText =
-          'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10500;' +
-          'background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);' +
-          'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
-          'pointer-events:none;animation:wbBossOpeningQuizFadeIn 0.3s ease-out;';
-        _wait.innerHTML =
-          '<div style="font-size:48px;color:#ffd966;font-weight:900;letter-spacing:4px;text-shadow:0 0 20px rgba(255,217,102,0.8);margin-bottom:24px;">' +
-          '⏳ 房主正在答開戰題...' +
-          '</div>' +
-          '<div style="font-size:24px;color:#aabbdd;letter-spacing:2px;">' +
-          '答對全隊 +5% HP + 隊伍能量 +1<br>' +
-          '答錯沒有任何懲罰' +
-          '</div>';
-        document.body.appendChild(_wait);
-      }catch(_eWait){}
-      // 設保險 timer:30 秒後若還沒被 sync 推進,自動 fireOnDone(讓 client 進入戰鬥)
-      window._wbOpeningQuizClientWatchdog = setTimeout(function(){
-        try{
-          const _wait = document.getElementById('wb-opening-quiz-wait');
-          if(_wait) _wait.remove();
-          console.warn('[WB-Opening client] 30 秒 watchdog 觸發,可能 host 卡住,強制推進');
-          _fireOnDone('client-watchdog');
-        }catch(_){}
-      }, 30000);
-      // 監聽 sync(房主答完後會 push 過來,通常會帶 _syncReason='opening-quiz-correct' 或回合 1 開始)
-      // 簡化做法:client 上的 hostPushBattleState handler 收到 syncReason 包含 'opening-quiz'
-      // 或第一次戰鬥 update 時主動清掉等待視窗 + 呼叫 _fireOnDone
-      window._wbOpeningQuizClientCleanup = function(){
-        try{
-          const _wait = document.getElementById('wb-opening-quiz-wait');
-          if(_wait) _wait.remove();
-        }catch(_){}
-        if(window._wbOpeningQuizClientWatchdog){
-          clearTimeout(window._wbOpeningQuizClientWatchdog);
-          window._wbOpeningQuizClientWatchdog = null;
-        }
-        _fireOnDone('client-sync-received');
-      };
-      // 不呼叫 advShowQuiz,直接 return(等 sync 或 watchdog)
-      return;
-    }
-    // ── 以下為房主 / 單人練習模式的原本邏輯 ──
+    // ★ v3.3.3 — 多人模式新設計:開戰題「全員都看見視窗」+「只有房主能點」
+    //   老師最新需求:「跳出開戰第一題只有隊長看見,隊友沒看到 → 改成全隊都看得到當前問題,
+    //                只是開場只有隊長可以點,其他人如果點擊答案不會有效果,並跳出
+    //                『這題只能由隊長回答』」
+    //   差異(對比 v3.3.2):
+    //     - v3.3.2: client 不彈 advShowQuiz,顯示等待視窗
+    //     - v3.3.3: client 也彈 advShowQuiz(視覺一致),advSubmitAnswer 攔截非房主點擊
+    //   設定全域旗標,讓 advSubmitAnswer 知道目前是「開戰題期間,只有 0 號槽位能答」
+    try{
+      window._wbIsOpeningQuizPhase = true;
+      window._wbOpeningQuizAllowedSlot = 0;  // 開戰題固定房主答
+    }catch(_){}
+    // 不再分 client / host:全員都跑 advShowQuiz
     try{
       if(typeof advShowQuiz === 'function'){
         advShowQuiz();
         // 設定 quiz label 顯示「BOSS 開戰挑戰題」(覆蓋主程式預設的「九尾空貓怪出題」)
         try{
           const _qLbl = document.getElementById('adv-quiz-label');
-          if(_qLbl) _qLbl.textContent = '🐉 BOSS 開戰挑戰題!答對全隊+5% HP+隊伍能量+1,答錯無懲罰';
+          if(_qLbl) _qLbl.textContent = '🐉 BOSS 開戰挑戰題!答對時能量+1、全隊 HP 恢復 5%(僅房主可作答)';
         }catch(_){}
 
         // ★ FIX 20260519 — 開 quiz 後 1.2 秒檢查 overlay 是否真的顯示;
         //   若沒顯示(advShowQuiz early return 等),強制 fire 答對 cb 跳過開戰題避免卡死
-        window._wbOpeningQuizWatchdog = setTimeout(function(){
-          try{
-            const _qOv = document.getElementById('adv-quiz-overlay');
-            if(_qOv && _qOv.classList.contains('show')){
-              console.log('[WB-Opening] ✅ quiz overlay 已顯示,等待玩家作答');
-              return;
-            }
-            console.warn('[WB-Opening] ⚠ quiz overlay 1.2 秒後仍未顯示,強制跳過開戰題(視為答對)');
-            // 視為答對(寬鬆策略,不要懲罰玩家)
+        // ★ v3.3.3 — 只有「該答題者」端要跑這個 watchdog
+        //   client 端的 cb 不會被觸發(因為房主先答完 sync 過來),不需要 watchdog
+        const _isClientOpening = !!window._wbClientMode;
+        if(!_isClientOpening){
+          window._wbOpeningQuizWatchdog = setTimeout(function(){
             try{
-              if(typeof _advStats !== 'undefined' && _advStats){
-                _advStats.lastAnswerCorrect = true;
+              const _qOv = document.getElementById('adv-quiz-overlay');
+              if(_qOv && _qOv.classList.contains('show')){
+                console.log('[WB-Opening] ✅ quiz overlay 已顯示,等待玩家作答');
+                return;
               }
+              console.warn('[WB-Opening] ⚠ quiz overlay 1.2 秒後仍未顯示,強制跳過開戰題(視為答對)');
+              // 視為答對(寬鬆策略,不要懲罰玩家)
+              try{
+                if(typeof _advStats !== 'undefined' && _advStats){
+                  _advStats.lastAnswerCorrect = true;
+                }
+              }catch(_){}
+              // 直接 fire cb(會走答對分支)
+              const _cb = _advQuizResolveCb;
+              _advQuizResolveCb = null;
+              if(typeof _cb === 'function') _cb();
+            }catch(eW){
+              console.error('[WB-Opening] watchdog 例外', eW);
+              _fireOnDone('watchdog-error');
+            }
+          }, 1200);
+        }else{
+          // ★ v3.3.3 — Client 端:仍然彈 advShowQuiz 視窗(讓玩家也看到題目),
+          //   但 advSubmitAnswer 攔截器會阻止 client 點擊真正提交,
+          //   等房主答完後 sync 過來 → onBattleUpdate handler 會清掉視窗 + 推進
+          //   保險 watchdog:30 秒後沒收到 sync → fire onDone 避免永遠卡住
+          console.log('[WB-Opening client] 視窗已開,等房主答完 sync(攔截器會阻止 client 提交)');
+          window._wbOpeningQuizClientWatchdog = setTimeout(function(){
+            console.warn('[WB-Opening client] 30 秒沒收到 sync,自動推進');
+            // 主動關閉 quiz 視窗
+            try{
+              const _qOv = document.getElementById('adv-quiz-overlay');
+              if(_qOv) _qOv.classList.remove('show');
             }catch(_){}
-            // 直接 fire cb(會走答對分支)
-            const _cb = _advQuizResolveCb;
-            _advQuizResolveCb = null;
-            if(typeof _cb === 'function') _cb();
-          }catch(eW){
-            console.error('[WB-Opening] watchdog 例外', eW);
-            _fireOnDone('watchdog-error');
-          }
-        }, 1200);
+            _fireOnDone('client-watchdog');
+          }, 30000);
+          // 註冊「房主 sync 後的清理」hook
+          window._wbOpeningQuizClientCleanup = function(){
+            try{
+              const _qOv = document.getElementById('adv-quiz-overlay');
+              if(_qOv) _qOv.classList.remove('show');
+            }catch(_){}
+            if(window._wbOpeningQuizClientWatchdog){
+              clearTimeout(window._wbOpeningQuizClientWatchdog);
+              window._wbOpeningQuizClientWatchdog = null;
+            }
+            _fireOnDone('client-sync-received');
+          };
+        }
       }else{
         console.error('[WB-Opening] advShowQuiz 不存在,fallback 直接 onDone');
         _fireOnDone('no-advShowQuiz');
@@ -8767,72 +8806,42 @@
     bubble.className = 'wb-card-bubble wb-card-bubble-fixed';
     bubble.setAttribute('data-slot', String(slotIdx));
     bubble.textContent = text;
-    // ★ v3.3.2 — 答題期間定型文訊息特殊處理:放大 200% + 移到答題玩家角色卡下方
-    //   老師需求:「世界boss戰出現問題時,玩家在思考,其他隊友按定型文的訊息
-    //              放大至 200% 並移到該玩家角色卡的下方(大約是技能的高度位置),
-    //              玩家才看得見」
+    // ★ v3.3.3 — 答題期間定型文訊息特殊處理:放大 300% + 顯示在「說話玩家自己卡下方」
+    //   老師最新需求(取代 v3.3.2 集中顯示在答題玩家卡下方的設計):
+    //     「放大至 300%,且將位置移到說話玩家的角色卡下方
+    //      (例如 P2 是水狐,就在水狐卡片的下方(技能位置)冒出對話泡泡)」
+    //   設計差異(對比 v3.3.2):
+    //     - v3.3.2:所有人氣泡集中顯示在「答題玩家」卡下方,讓答題玩家看所有建議
+    //     - v3.3.3:每個人發的氣泡顯示在「自己卡」下方(直覺對應到誰在說話)
     //   判斷「答題期間」:
     //     - _advQuizPhase === 'asking' (主程式答題進行中)
     //     - 或 _bossQuizInFlight === true (BOSS 答題流程中)
     //     - 或 _wbAssignedQuizSlot 有設定(BOSS 行動前題已指派槽位)
-    //   判斷「答題玩家槽位」:
-    //     - 優先讀 window._wbAssignedQuizSlot (BOSS 行動前題指派的槽)
-    //     - 若無,則開場題期間用 0 (房主)
     //   設計:
-    //     - 把氣泡移到「答題玩家角色卡」的下方(卡片底部 +12px)
-    //     - 字體放大為 200%(計算後寬度也跟著放大)
-    //     - 文字保留邊框與背景,讓答題玩家看清楚
-    //     - 答題中時所有玩家發的氣泡都顯示在同一個位置(答題玩家卡下方),
-    //       這樣答題玩家能直接看到所有人的建議
+    //     - 答題期間:氣泡在「發送者自己卡下方」(技能高度位置)+ 放大 300%
+    //     - 不需要加發送者前綴(氣泡在自己卡下,身分一目了然)
+    //     - 非答題期間:維持原本「卡上方」小尺寸顯示
     const _isQuizActive = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking')
                        || !!window._bossQuizInFlight
                        || (typeof window._wbAssignedQuizSlot === 'number');
-    let _targetCard = card;     // 預設顯示在發送者卡片上
-    let _isLargeBubble = false; // 是否放大顯示
-    if(_isQuizActive){
-      // 取「答題玩家」槽位
-      let _quizSlot = (typeof window._wbAssignedQuizSlot === 'number') ? window._wbAssignedQuizSlot : 0;
-      // 找該槽位的卡片(同 (2) 的 query 路徑)
-      let _quizCard = null;
-      if(heroRow){
-        const cards = heroRow.querySelectorAll('.wb-hero-battle-card');
-        _quizCard = cards[_quizSlot] || null;
-      }
-      if(!_quizCard && document.body.classList.contains('wb-in-worldboss-battle')){
-        const z1Cards = document.querySelectorAll('#gc.adv-battle #z1 #row1 .card');
-        _quizCard = z1Cards[_quizSlot] || null;
-      }
-      if(_quizCard){
-        _targetCard = _quizCard;
-        _isLargeBubble = true;
-        // 在氣泡前綴上發送者標記,讓答題玩家知道誰發的(例如「[P2] 我覺得答案是 A」)
-        // 但只在「發送者 !== 答題玩家」時才加,避免答題玩家看到自己訊息也加標籤
-        if(slotIdx !== _quizSlot){
-          // 取發送者名字(從 _wbNet 的 snapshot)
-          let _senderName = `P${slotIdx + 1}`;
-          try{
-            const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
-            if(snap && snap.players){
-              const p = snap.players.find(p => p && p.slotIdx === slotIdx);
-              if(p && p.name) _senderName = p.name;
-            }
-          }catch(_){}
-          bubble.textContent = '[' + _senderName + '] ' + text;
-        }
-      }
-    }
+    let _targetCard = card;     // 顯示在「發送者自己卡」上(對齊 v3.3.3 新設計)
+    let _isLargeBubble = _isQuizActive;  // 答題期間放大
     const rect = _targetCard.getBoundingClientRect();
     // 套用放大字體(只在答題期間)
     if(_isLargeBubble){
+      // ★ v3.3.3 — 放大 300% (老師明確指定:從 200% 改為 300%)
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;'
         + 'transform-origin: top center;'
-        + 'font-size: 200% !important;'
-        + 'padding: 14px 22px !important;'
+        + 'font-size: 300% !important;'
+        + 'padding: 16px 26px !important;'
         + 'border-width: 3px !important;'
         + 'box-shadow: 0 8px 32px rgba(255,217,102,0.45), 0 0 18px rgba(0,0,0,0.65) !important;'
         + 'border-color: #ffd966 !important;'
         + 'background: rgba(30,20,5,0.96) !important;'
-        + 'color: #ffe066 !important;';
+        + 'color: #ffe066 !important;'
+        + 'max-width: 480px !important;'
+        + 'white-space: normal !important;'
+        + 'line-height: 1.25 !important;';
     }else{
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;';
     }
@@ -8842,9 +8851,8 @@
     const bh = bubble.offsetHeight;
     let left, top, placement;
     if(_isLargeBubble){
-      // 答題期間:強制顯示在答題玩家卡下方(技能位置高度)
-      // 「技能位置」大約在卡片底部上方 30%(卡片下半部分),這裡用「卡片底部 +12px」往下凸出 12px,
-      // 然後氣泡完全在卡下,正好對應戰鬥畫面卡片下方空白區
+      // ★ v3.3.3 — 答題期間:強制顯示在「發送者自己卡下方」(技能位置高度)
+      //   卡片底部 +12px 往下凸出,氣泡完全在卡下,正好對應戰鬥畫面卡片下方空白區
       left = rect.left + rect.width / 2 - bw / 2;
       top = rect.bottom + 12;
       placement = 'bottom';
