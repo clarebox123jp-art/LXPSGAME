@@ -29893,18 +29893,7 @@ function _realAiAct(a){
   const opp_side = a.side==='p1'?'p2':'p1';
   const enemies = G[opp_side].filter(h=>h.curHp>0);
   const allies  = G[a.side].filter(h=>h.curHp>0);
-  // ★ v3.3.3(c) — 診斷 log:enemies/allies 計算結果
-  try{
-    if(typeof _adventureMode !== 'undefined' && _adventureMode && a.side === 'p2'){
-      console.log('🎯 [BOSS 戰診斷] enemies/allies 計算: actor=' + a.name
-        + ', enemies=' + enemies.length + '(' + enemies.map(e=>e.name).join(',') + ')'
-        + ', allies=' + allies.length);
-    }
-  }catch(_){}
-  if(!enemies.length){
-    try{ console.log('🎯 [BOSS 戰診斷] enemies.length=0,直接 startTurn'); }catch(_){}
-    a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return;
-  }
+  if(!enemies.length){ a.acted=true; updateUI(); _pSetTimeout(startTurn,400); return; }
 
   // ── AI 極限爆發：能量滿且未使用時直接發動 ──
   // ★ v1.1.0 — 修「BOSS 爆發亮了不會釋放」的根因:
@@ -29971,28 +29960,12 @@ function _realAiAct(a){
   // ★ 主 BOSS HP≤50%：強制爆發一次（憤怒模式）
   // ★ v1.1.0 — 從「九尾空貓怪/杏花妖專屬」擴展到「所有 BOSS」(p2 側 + BURST_DB 有定義即可)
   //   這樣日本 4 BOSS 和台灣 10 BOSS 也都會在 HP≤50% 時觸發憤怒爆發
-  // ★ v3.3.3(c) — 加診斷 log,追查木柵關回報「九尾空貓怪 HP<50% 卡死」根因
-  try{
-    if(typeof _adventureMode !== 'undefined' && _adventureMode && a.side === 'p2'){
-      const _hpPct = a.hp > 0 ? Math.round(a.curHp / a.hp * 100) : 0;
-      console.log('🎯 [BOSS 戰診斷] 憤怒覺醒判定:'
-        + ' actor=' + a.name
-        + ', curHp=' + a.curHp + '/' + a.hp + ' (' + _hpPct + '%)'
-        + ', _advBossRageBurstUsed=' + (typeof _advBossRageBurstUsed !== 'undefined' ? _advBossRageBurstUsed : 'undef')
-        + ', inBurstDB=' + !!(typeof BURST_DB !== 'undefined' && BURST_DB[a.name])
-        + ', willRage=' + (a.curHp <= a.hp * 0.5 && typeof _advBossRageBurstUsed !== 'undefined' && !_advBossRageBurstUsed
-                          && typeof BURST_DB !== 'undefined' && !!BURST_DB[a.name]));
-    }
-  }catch(_){}
   if(typeof _adventureMode !== 'undefined' && _adventureMode &&
      a.side === 'p2' && a.curHp <= a.hp * 0.5 && !_advBossRageBurstUsed &&
      typeof BURST_DB !== 'undefined' && BURST_DB[a.name]){
-    // ★ v3.3.3(c) — 加診斷 log:進入憤怒爆發分支
-    try{ console.log('🎯 [BOSS 戰診斷] ✅ 進入憤怒覺醒分支:' + a.name); }catch(_){}
     // ★ v1.0.20260422.0105 — 憤怒爆發也遵守玩家爆發優先規則
     //   （注意：此處不提前 _advBossRageBurstUsed=true，以免 defer 後重入時失效）
     if(G.p1 && G.p1.some(h => _canBurst(h))){
-      try{ console.log('🎯 [BOSS 戰診斷] 憤怒覺醒 → 玩家可爆發,先彈優先選擇 modal'); }catch(_){}
       try{ _showPlayerBurstPriority(a, /*isRage=*/true); }catch(_bpRE){
         console.error('[玩家爆發優先提示 rage] 失敗,退回敵方憤怒爆發:', _bpRE);
         // 退回原路：直接執行憤怒爆發
@@ -30385,15 +30358,6 @@ function _realAiAct(a){
   // ═══════════════════════════════════════════════
   // 優先 3：普通攻擊（能量不足時用）
   // ═══════════════════════════════════════════════
-  // ★ v3.3.3(c) — 診斷 log:沒走治療/技能/物品/被動,進到普攻決策點
-  try{
-    if(typeof _adventureMode !== 'undefined' && _adventureMode && a.side === 'p2'){
-      console.log('🎯 [BOSS 戰診斷] 走到普攻決策: actor=' + a.name
-        + ', hasNoatk=' + hasStatus(a,'noatk')
-        + ', atkTarget=' + (atkTarget ? atkTarget.name : 'null')
-        + ', energy=' + (G.energy && G.energy[a.side]));
-    }
-  }catch(_){}
   if(!hasStatus(a,'noatk')){
     log('['+a.name+'] AI普攻 ['+atkTarget.name+']');
     showActionLabel(a, '⚔ 普通攻擊！');
@@ -40179,30 +40143,6 @@ function _clearBattleBg(reason){
 //   (3) 多人同時可爆發的優先選擇視窗 / 單人爆發確認面板同類情況
 //   一律視為「放棄選擇」自動關閉,避免視窗漂在戰鬥結束後的選關頁/過場畫面上
 function _closeAllBattleModals(){
-  // ★ v3.3.3(b) — 加 stack trace + 戰鬥未結束守門
-  //   bug 症狀(v3.3.2 木柵關回報):戰鬥途中(round=9, BOSS 還沒倒)出現 [戰鬥結束清理] log,
-  //                                之後 quiz overlay 的 inline style.display='none' 殘留,
-  //                                後續 round 10/11/12 玩家完全看不見題目視窗 → 60 秒超時卡死。
-  //   修補 1:抓兇手 — 把呼叫端 stack trace 印出來,下次回報能直接看誰誤觸發
-  //   修補 2:戰鬥未結束守門 — 若 G.p1 和 G.p2 兩邊都還有人活著,就不設 inline display='none',
-  //                          只 classList.remove('show'),這樣 advShowQuiz 後續 add show 才不會被卡死
-  let _battleStillOn = false;
-  try{
-    if(typeof G !== 'undefined' && G && G.p1 && G.p2){
-      const _p1Alive = G.p1.some(h => h && h.curHp > 0);
-      const _p2Alive = G.p2.some(h => h && h.curHp > 0);
-      _battleStillOn = _p1Alive && _p2Alive;
-    }
-  }catch(_){}
-  try{
-    const _stack = (new Error('[戰鬥結束清理-stack]')).stack || '(no stack)';
-    console.log('[戰鬥結束清理] 進入函式',
-      { _battleStillOn,
-        _advQuizPhase: typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : 'undef',
-        _adventureStage: typeof _adventureStage !== 'undefined' ? _adventureStage : 'undef',
-        round: (typeof G !== 'undefined' && G && G.round) || '?' });
-    console.log('[戰鬥結束清理-stack]\n' + _stack);
-  }catch(_){}
   const _ids = [
     'adv-reward-overlay',    // 答題獎勵(內部也用此 DOM 做「選擇爆發隊友」picker)
     'adv-quiz-overlay',      // 問題視窗
@@ -40218,18 +40158,7 @@ function _closeAllBattleModals(){
       // (a) 移除 .show class(class-based overlay)
       el.classList.remove('show');
       // (b) 強制 display:none(inline-style overlay)
-      // ★ v3.3.3(b) — 戰鬥未結束守門:
-      //   若戰鬥還在進行(p1 和 p2 都有活人),只清 .show class 不設 inline display='none',
-      //   避免破壞「之後 advShowQuiz/advShowReward 再開視窗」的流程。
-      //   只有戰鬥真正結束(一邊全滅)時才強制 inline display='none',確保視窗徹底消失。
-      if(!_battleStillOn){
-        el.style.display = 'none';
-      } else {
-        // 戰鬥還沒結束 → 順手清掉殘留的 inline display='none'(避免之前殘留鎖死後續流程)
-        if(el.style.display === 'none'){
-          el.style.display = '';
-        }
-      }
+      el.style.display = 'none';
       // (c) 對於動態產生後 appendChild 的 modal(burst-priority-modal / burst-panel / adv-repick-popup),直接移除
       if(id === 'burst-priority-modal' || id === 'burst-panel' || id === 'passive-prompt' || id === 'adv-repick-popup'){
         el.remove();
@@ -40237,24 +40166,18 @@ function _closeAllBattleModals(){
     }catch(_e){}
   });
   // 同步清理可能被面板留下來的全域旗標
-  // ★ v3.3.3(b) — 戰鬥未結束時不該清 _advQuizPhase / _advQuizTimer
-  //   原本任何狀況都把 _advQuizPhase='idle' 並清 timer,但若戰鬥還在進行,
-  //   這會讓「玩家正在答題中的這一題」直接失效 → 玩家答不了 → 進入卡死。
-  //   只在戰鬥真結束時才做這些清理。
   try{
     if(typeof window !== 'undefined'){
       window._advSelectedRewardId = null;
       window._advRewardContext = null;
       window._advMiniRewardOnDone = null;
     }
-    if(!_battleStillOn){
-      // 計時器
-      if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
-      if(typeof _advQuizTimerHandle !== 'undefined' && _advQuizTimerHandle){ clearInterval(_advQuizTimerHandle); _advQuizTimerHandle = null; }
-      if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
-    }
+    // 計時器
+    if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
+    if(typeof _advQuizTimerHandle !== 'undefined' && _advQuizTimerHandle){ clearInterval(_advQuizTimerHandle); _advQuizTimerHandle = null; }
+    if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
   }catch(_){}
-  console.log('[戰鬥結束清理] 互動視窗已全部關閉 (battleStillOn=' + _battleStillOn + ')');
+  console.log('[戰鬥結束清理] 互動視窗已全部關閉');
 }
 
 // ════════════════════════════════════════
@@ -50325,38 +50248,14 @@ function advShowQuiz() {
   advUpdateBattleTreasureBar();
 
   // 顯示視窗
+  // ★ v3.3.3 — 清掉前一題關閉時設的 inline 'display:none',否則新題目 add show 也不會顯示
+  try{
+    const _qOvShow = document.getElementById('adv-quiz-overlay');
+    if(_qOvShow){
+      _qOvShow.style.display = ''; // 清掉 inline display:none,讓 .show class 的 display 生效
+    }
+  }catch(_qShowClearE){ console.warn('[advShowQuiz] 清 inline display 失敗', _qShowClearE); }
   document.getElementById('adv-quiz-overlay').classList.add('show');
-  // ★ v3.3.3(a) — 核心修補:強制清掉 inline style.display='none' 殘留
-  //   bug 症狀(v3.3.2):戰鬥途中如果 _closeAllBattleModals 被誤觸發,
-  //                    它會把 adv-quiz-overlay 的 style.display = 'none'(line 40161)
-  //                    之後 advShowQuiz 只 classList.add('show') 沒清 inline style,
-  //                    inline style 優先級高於 CSS class rule → 玩家完全看不見題目視窗
-  //                    → 60 秒答題超時 → BOSS 直接行動 → 連續多回合卡死
-  //   實證 console:[19:57:02] [戰鬥結束清理] 後,round 10/11/12 的 quiz 玩家都沒答題 60 秒超時
-  //   修補:跟 advShowReward(line 51299-51304)同款防護,強制 inline display:flex
-  //         即使被任何前序流程設成 'none' 都能蓋回來
-  try{
-    const _qOvForceShow = document.getElementById('adv-quiz-overlay');
-    if(_qOvForceShow){
-      _qOvForceShow.style.display = 'flex';
-    }
-  }catch(_){}
-  // ★ v3.3.3(a) — 同步加診斷 log,跟 advShowReward 對齊,日後排查更快
-  try{
-    if(typeof _adventureMode !== 'undefined' && _adventureMode){
-      const _qOvDiag = document.getElementById('adv-quiz-overlay');
-      if(_qOvDiag){
-        const _qComp = getComputedStyle(_qOvDiag);
-        console.log('🎯 [BOSS 戰診斷] 題目 add show 後狀態:'
-          + ' display=' + _qComp.display
-          + ', visibility=' + _qComp.visibility
-          + ', opacity=' + _qComp.opacity
-          + ', zIndex=' + _qComp.zIndex
-          + ', offsetParent=' + !!_qOvDiag.offsetParent
-          + ', inlineDisplay=' + (_qOvDiag.style.display || '(empty)'));
-      }
-    }
-  }catch(_){}
   // ★ 出題期間暫停戰鬥（等答題+選獎勵完成後才解除）
   _gamePaused = true;
 
@@ -50902,8 +50801,22 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     try{ const _csfx=document.getElementById('sfx-quiz-correct'); if(_csfx){_csfx.currentTime=0;_csfx.volume=0.63;_csfx.play().catch(()=>{});} }catch(e){}
     setTimeout(()=>{ try{ advShowBossReact('correct'); }catch(e){} }, 300);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
+    // ★ v3.3.3 — 雙重保險關閉 quiz overlay
+    //   問題:玩家回報「答對 → 選項變色 → 3.2s 後視窗沒關」(PC 版,木柵九尾空貓怪戰)
+    //   推測根因:.show class 的 display 屬性被某條 CSS 規則覆蓋,
+    //            classList.remove('show') 後 overlay 仍可見(與 reward overlay v4040 同類型 bug)
+    //   修補:除了 remove('show'),也用 inline style='display:none' 強制隱藏
+    //         + 清掉 _advQuizTimer 殘留(以防倒數還在跑)
     setTimeout(() => {
-      document.getElementById('adv-quiz-overlay').classList.remove('show');
+      try{
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        if(_qOv){
+          _qOv.classList.remove('show');
+          _qOv.style.display = 'none'; // 強制隱藏,避免 CSS 規則覆蓋失效
+        }
+        // 清掉殘留的倒數 timer(防止視窗已關但 timer 仍跑)
+        if(_advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
+      }catch(_qCloseE){ console.warn('[advSubmitAnswer 答對] 關閉 quiz overlay 失敗', _qCloseE); }
       _advQuizPhase = 'idle';
       _advQuizActive = false;
       advShowReward();
@@ -50934,8 +50847,16 @@ function advSubmitAnswer(letter, isCorrectOverride) {
     try{ const _wsfx=document.getElementById('sfx-quiz-wrong'); if(_wsfx){_wsfx.currentTime=0;_wsfx.volume=0.63;_wsfx.play().catch(()=>{});} }catch(e){}
     setTimeout(()=>{ try{ advShowBossReact('wrong'); }catch(e){} }, 200);
     // ★ 等Boss反應氣泡播完（2.5s+淡出）再繼續
+    // ★ v3.3.3 — 雙重保險關閉 quiz overlay(同 v3.3.3 答對路徑修補)
     setTimeout(() => {
-      document.getElementById('adv-quiz-overlay').classList.remove('show');
+      try{
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        if(_qOv){
+          _qOv.classList.remove('show');
+          _qOv.style.display = 'none'; // 強制隱藏,避免 CSS 規則覆蓋失效
+        }
+        if(_advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
+      }catch(_qCloseE){ console.warn('[advSubmitAnswer 答錯] 關閉 quiz overlay 失敗', _qCloseE); }
       _advQuizPhase = 'idle';
       _advQuizActive = false;
       // ★ Boss行動照常（答錯後稍微等玩家準備好）
@@ -50960,8 +50881,16 @@ function advOnQuizTimeout() {
   document.querySelectorAll('.aqo-btn').forEach(btn => { btn.disabled = true; });
   try { beep(200,'sawtooth',0.1,0.15); } catch(e) {}
   // ★ 等Boss逾時嘲諷氣泡播完再繼續
+  // ★ v3.3.3 — 雙重保險關閉 quiz overlay(同 v3.3.3 答對/答錯路徑修補)
   setTimeout(() => {
-    document.getElementById('adv-quiz-overlay').classList.remove('show');
+    try{
+      const _qOv = document.getElementById('adv-quiz-overlay');
+      if(_qOv){
+        _qOv.classList.remove('show');
+        _qOv.style.display = 'none'; // 強制隱藏,避免 CSS 規則覆蓋失效
+      }
+      if(_advQuizTimer){ clearInterval(_advQuizTimer); _advQuizTimer = null; }
+    }catch(_qCloseE){ console.warn('[advOnQuizTimeout] 關閉 quiz overlay 失敗', _qCloseE); }
     _advQuizPhase = 'idle';
     _advQuizActive = false;
     advOnQuizSkip();
@@ -51034,6 +50963,19 @@ const _ADV_BOSS_SKIP_LINES = [
   '竟然被小輩封印！太可恨了！',
 ];
 function advOnQuizSkip() {
+  // ★ v3.3.3 — 防呆:強制關閉 quiz overlay
+  //   advOnQuizSkip 是答題流程的「最終出口」(答錯 / 超時 / 跳過 / 封印 / 答對選獎勵完),
+  //   無論從哪條路徑進來,quiz overlay 都應該已經關閉,但若上游遺漏,這裡再保險關一次
+  try{
+    const _qOv = document.getElementById('adv-quiz-overlay');
+    if(_qOv){
+      _qOv.classList.remove('show');
+      _qOv.style.display = 'none';
+    }
+    if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer){
+      clearInterval(_advQuizTimer); _advQuizTimer = null;
+    }
+  }catch(_quizSkipCloseE){ console.warn('[advOnQuizSkip] 防呆關閉 quiz overlay 失敗', _quizSkipCloseE); }
   // ★ v1.1.0 — 清掉 quiz 卡死 watchdog(advShowQuiz 啟動的 90 秒 timer)
   try{
     if(window._quizDeadlockWatchdog){
@@ -51299,6 +51241,19 @@ function advApplyTreasure(id) {
 //  答對獎勵
 // ════════════════════════════════
 function advShowReward() {
+  // ★ v3.3.3 — 防呆:強制關閉 quiz overlay
+  //   若上游(advSubmitAnswer)忘了關閉,或關閉因 CSS 失效,
+  //   在這裡再關一次,確保 reward overlay 不會被 quiz overlay 蓋住
+  try{
+    const _qOv = document.getElementById('adv-quiz-overlay');
+    if(_qOv){
+      _qOv.classList.remove('show');
+      _qOv.style.display = 'none';
+    }
+    if(typeof _advQuizTimer !== 'undefined' && _advQuizTimer){
+      clearInterval(_advQuizTimer); _advQuizTimer = null;
+    }
+  }catch(_advRewardQuizCloseE){ console.warn('[advShowReward] 防呆關閉 quiz overlay 失敗', _advRewardQuizCloseE); }
   // ★ v1.0.20260428.4010 — [診斷] advShowReward 進入
   // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
   try{
@@ -73770,7 +73725,7 @@ window._filterChangelogForDisplay = function(entries){
 //       (v3.2.6) 跟記憶體的 _GAME_LOADED_VERSION (v3.3.0) 比,不一致就跳更新提示
 //     - 但這兩個變數明明在同一份 HTML 內,應該永遠同步
 //   修法:把 _GAME_LOADED_VERSION 先設定好,CURRENT_VERSION 直接讀它,絕對同步。
-window._GAME_LOADED_VERSION = 'v3.3.3';
+window._GAME_LOADED_VERSION = 'v3.3.2';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
