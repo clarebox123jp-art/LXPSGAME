@@ -31146,6 +31146,28 @@ function doSurrender(){
         }
       });
     }catch(_){}
+    // ★ FIX 20260519(v10) — 放棄回關卡首頁時,強制隱藏世界 BOSS 戰鬥中殘留的浮動 UI:
+    //   - wb-emoji-bar-real:右下「定型文」表情列(用戶圖中上方那排表情)
+    //   - adv-deadlock-rescue-btn:左下「卡死自救」直書紅按鈕
+    //   - adv-bug-report-battle-btn:左下小型「BUG 回報」按鈕
+    //   - adv-tut-btn / adv-rollback-btn:戰鬥教學 / 回溯按鈕
+    //   原本 exitAdventureMode 有清表情列,但戰鬥按鈕(卡死自救/BUG/教學/回溯)在
+    //   advStartWinSequence(勝利流程)才清,doSurrender(放棄流程)沒清 → 殘留在關卡首頁。
+    try{
+      ['adv-deadlock-rescue-btn','adv-bug-report-battle-btn',
+       'adv-tut-btn','adv-rollback-btn'].forEach(id => {
+        const _b = document.getElementById(id);
+        if(_b){
+          _b.style.display = 'none';
+          _b.style.animation = 'none';
+        }
+      });
+      const _eb = document.getElementById('wb-emoji-bar-real');
+      if(_eb){
+        _eb.classList.remove('wb-eb-show');
+        _eb.style.display = 'none';
+      }
+    }catch(_){}
     // 隱藏戰鬥畫面 class
     try{
       const _gc = document.getElementById('gc');
@@ -43343,6 +43365,21 @@ function exitAdventureMode(){
         _wbEmojiBar.classList.remove('wb-eb-show');
         _wbEmojiBar.style.display = 'none';  // 雙保險
       }
+    }catch(_){}
+
+    // ★ FIX 20260519(v10) — 戰鬥中浮動按鈕(卡死自救/BUG 回報/教學/回溯)也要強制隱藏
+    //   原本只在 advStartWinSequence(勝利)清,doSurrender(放棄)沒清,
+    //   結果世界 BOSS 戰按放棄回關卡首頁時,「🚨卡死自救」直書按鈕殘留在左邊。
+    //   在 exitAdventureMode 統一清,確保所有離開冒險的路徑(放棄/勝利/結算)都不殘留。
+    try{
+      ['adv-deadlock-rescue-btn','adv-bug-report-battle-btn',
+       'adv-tut-btn','adv-rollback-btn'].forEach(id => {
+        const _b = document.getElementById(id);
+        if(_b){
+          _b.style.display = 'none';
+          _b.style.animation = 'none';
+        }
+      });
     }catch(_){}
 
     // === D. 清掉戰鬥背景圖光暈 + click layer 狀態 ===
