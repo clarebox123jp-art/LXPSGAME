@@ -5826,7 +5826,7 @@ function _clearPendingTimers(reason){
   }
 }
 // ====== GLOBAL CONSTANTS (must be declared before any function that references them) ======
-const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm','breakDef','_zeusSpDown'];
+const BAD_STATUS=['stun','freeze','sleep','para','trap','seal','noatk','nosell','forecast','spddown','hellfire','poison','noheal_curse','stubbornDebuff','berserk','exhaust','deathmark','booklock','confused','traitSlow','traitWeak','dmgVuln','healReduced','weakened','_cryDebuff','_dreamDebuff','strongTaunt','charm','breakDef','_zeusSpDown','locked'];
 const GOOD_STATUS=[];
 
 // ====== AUDIO ENGINE ======
@@ -7811,7 +7811,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','學霸(轉學生)':'🤓','天神宙斯':'⚡','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','學霸(轉學生)':'🤓','天神宙斯':'⚡','維京海盜船長':'🏴‍☠️','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   // ★ v1.0.20260501.5010 — 28 個英雄圖一次性升級為 LXPSGAME repo 的 Q.png 新版圖檔
@@ -7931,6 +7931,9 @@ const HERO_IMGS = {
   // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學「天神宙斯」)
   //   天神宙斯:5 年 4 班歐同學設計,2026 年。希臘神話的眾神之王
   '天神宙斯':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('宙斯.png'),
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
+  //   維京海盜船長:5 年 5 班吳同學設計,2026 年。北海維京艦隊「黑龍號」第三代船長
+  '維京海盜船長':         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('維京海盜船長.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -8187,6 +8190,12 @@ const HERO_PORTRAIT_LIBRARY = {
   '天神宙斯': [
     { id:'zeus_default', name:'天神宙斯',
       url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('宙斯.png') }
+  ],
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(維京海盜船長)
+  //   維京海盜船長:5 年 5 班吳同學設計,2026 年
+  '維京海盜船長': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('維京海盜船長.png') },
   ],
 };
 
@@ -9661,6 +9670,8 @@ const HERO_IMG_POS = {
   '學霸(轉學生)':['150% auto','center 22%'],
   // ★ v1.0.20260518.6930 — 天神宙斯:神王全身,白髯+雷杖需在框內可見
   '天神宙斯':['145% auto','center 18%'],
+  // ★ v1.0.20260519.7100 — 維京海盜船長:稍微放大露出戰斧與頭盔
+  '維京海盜船長':['150% auto','center 25%'],
 };
 
 // ★ v5690 — 戰鬥卡片專屬圖片位置表
@@ -9768,6 +9779,8 @@ const HERO_THUMB_POS = {
   '學霸(轉學生)':'center 22%',
   // ★ v1.0.20260518.6930 — 天神宙斯:縮圖上移露出白髯神王頭部
   '天神宙斯':'center 20%',
+  // ★ v1.0.20260519.7100 — 維京海盜船長:中央偏上,露出臉部與戰斧
+  '維京海盜船長':'center 30%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -10101,6 +10114,15 @@ const HERO_BIO = {
     quote:'「凡夫俗子——感受天神之怒吧!」',
     designer:{ class:'5年4班', name:'歐同學', year:2026 }
   },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學)
+  //   維京海盜船長:北海冰原的傳奇船長,單筒望遠鏡一舉、整艘黑龍號的火炮就齊鳴
+  '維京海盜船長':{
+    role:'北海維京艦隊「黑龍號」第三代船長',
+    trait:'豪邁霸氣、重情義、認準目標絕不放手',
+    hobby:'收藏戰利品、研究海圖、與夥伴大碗喝酒',
+    quote:'「鎖定目標——開火!誰也別想跑!」',
+    designer:{ class:'5年5班', name:'吳同學', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -10203,6 +10225,11 @@ const BURST_DB = {
   //   BOSS 定義(明確列表):九尾空貓怪、杏花妖、大天狗、酒吞童子、玉藻前、八岐大蛇、
   //                          台灣 10 BOSS、維蘇威火山龍王(世界 BOSS)
   '天神宙斯':{n:'天降雷罰', d:'非BOSS對手扣到剩1HP;BOSS受當前HP25%必中傷害(無視有利)',fd:'宙斯舉起神威之杖直指天頂——萬里晴空瞬間轉黑、雷電交織成神之鎖鍊轟然降下!對全體對手生效:非 BOSS 對手(普通小怪、菁英小怪、稀有小怪)受到傷害扣到剩 1 HP;BOSS 級對手則受到當前 HP 25% 的固定必中傷害。此爆發傷害無視有利狀態、不會暴擊、不可閃避或代替承受。'},
+  // ★ v1.0.20260519.7100 — 維京海盜船長爆發(5 年 5 班吳同學設計)
+  //   海盜威能:敵全體強力封印技能 2 回合 + 自身狂暴 2 回合(+40%/+40%/普攻×2)
+  //   狂暴狀態名:berserkViking(新狀態),不可消除/偷竊/交換
+  //   ★ 老師決策:「強力封印」保留 OP 設計感,不留反制空間
+  '維京海盜船長':{n:'海盜威能', d:'敵全體強力封印技能2回合+自身狂暴2回合(+40%傷害/+40%暴擊/普攻×2隨機)',fd:'船長拔出戰斧高呼——「全員,海盜威能!」敵方全體陷入「強力封印技能」2 回合(無法使用 S1/S2,無法被免疫或解除)。同時自己進入「狂暴」狀態 2 回合:傷害 +40%、暴擊率 +40%、普通攻擊變 2 次但隨機目標(無法指定)。狂暴狀態不會被消除、偷竊或交換。'},
 
 };
 
@@ -12771,6 +12798,8 @@ const HERO_LORE = {
   '學霸(轉學生)': '頂尖私立小學轉來的神祕學霸,書包裡永遠裝著五科滿分考卷。「五科滿分考卷」一張張拍下、無視一切有利狀態的固定值連擊,爆發「壓力轉移」更默默扛下兩回合全隊傷害、再一次轉嫁給對手——這題?我五分鐘前就解開了。',
   // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學)
   '天神宙斯': '希臘神話的眾神之王,白髯飄揚、手執霹靂神杖。「驚雷」與「雷鳴」一次次劈下封口奪魂,爆發「天降雷罰」更直接宣告小怪的死刑——凡夫俗子,感受天神之怒吧!',
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學)
+  '維京海盜船長': '北海冰原的傳奇船長,單筒望遠鏡一舉、整艘黑龍號的火炮就齊鳴。S1「龍飛鳳舞火炮轟擊」用攻擊 120% 連轟 4 發、S2「鎖定目標」讓對手受傷 +100% 且無視天賦與有利狀態,爆發「海盜威能」更是全體封技能 2 回合 + 自身狂暴雙倍普攻——船長一聲令下,地平線都會發抖!',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -12878,6 +12907,11 @@ const HERO_TRAIT = {
   //   每升 1 級觸發機率 +4%,Lv5 MAX 達 70%
   //   ⚠ 麻痺(para)是標準不利狀態,可被免疫類有利狀態擋下;不會引發無限觸發(對單一目標每次傷害獨立判定)
   '天神宙斯':{ name:'神之怒火', icon:'⚡', desc:'造成傷害時機率使目標麻痺1回合',fd:'宙斯的雷霆每一道都帶著神威的怒火——造成傷害時有 50% 機率使目標陷入「麻痺」狀態 1 回合,無法行動。每升 1 級觸發機率 +5%,Lv5 MAX 達 70%。' },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
+  //   掠奪者本能:造成傷害時 30% 機率複製目標掉落物到背包(每目標每場 1 次)
+  //   每升 1 級觸發機率 +5%,Lv5 MAX 達 50%
+  //   ⚠ 用 _vikingLootedThisBattle Set 紀錄已觸發目標,避免同目標重複觸發
+  '維京海盜船長':{ name:'掠奪者本能', icon:'💰', desc:'造成傷害時機率複製目標掉落物到背包(每目標每場 1 次)',fd:'船長一邊砍殺、一邊翻找對手身上的戰利品!每次造成傷害時有 30% 機率將目標所擁有的掉落物(賣錢物品 / 寵物 / 物品卡)複製一份直接加入我方背包,每個目標每場戰鬥僅觸發 1 次,避免無限疊加。每升 1 級觸發機率 +5%,Lv5 MAX 達 50%。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -14475,7 +14509,9 @@ function statusName(t){
   // ★ v1.0.20260514.6770 — 地府酋長 S1「審判終結」狀態中文名
   judgmentEnd:'⚖️ 審判終結',
   // ★ v1.0.20260518.6930 — 天神宙斯 S1「驚雷」附加狀態:特技 -50%
-  _zeusSpDown:'⚡ 特技 -50%'
+  _zeusSpDown:'⚡ 特技 -50%',
+  // ★ v1.0.20260519.7100 — 維京海盜船長 S2「鎖定」狀態
+  locked:'🎯 鎖定'
 };
   return m[t]||t;
 }
@@ -15247,6 +15283,16 @@ const BURST_GIF_DB = {
     sfx:[['sfx-thunder-fury',1.0]],
     tint:'rgba(220,255,80,0.20)',
     dur:2400
+  },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(維京海盜船長)爆發特效
+  //   海盜威能 — 設計者吳同學指定沿用「鬼王酒宴」GIF(豪邁鬥技/鬼神力量系)
+  //   音效:爆炸 + 火炮 + 力量上升組合,呼應「海盜威能」主題
+  //   tint:海盜紫 rgba(80,40,180,0.22),與火紅鬼王區分
+  '海盜威能': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif',
+    sfx:[['sfx-explode',1.0],['sfx-gunshot-big',0.9],['sfx-powerup',0.7]],
+    tint:'rgba(80,40,180,0.22)',
+    dur:1600
   },
   '劍神連斬': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
@@ -17993,6 +18039,56 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260519.7100 — 維京海盜船長(5 年 5 班吳同學設計)爆發實作
+  //   海盜威能:敵全體強力封印技能 2 回合 + 自身狂暴 2 回合(+40%/+40%/普攻×2)
+  //   狂暴狀態名:berserkViking(新狀態,_protected:true 防偷竊/交換/消除)
+  //   升級:基礎 +40%/+40%,每升 1 級各 +5%(Lv5 達 +60%/+60%)
+  //   ★ 老師決策:「強力封印」保留 OP 設計感,不留反制空間(無法被免疫解除)
+  // ════════════════════════════════════════════════════════════════
+  if(burstName==='海盜威能'){
+    const _vkBurstPct = 0.40 + _burstLv * 0.05;  // Lv1=40%, Lv5=60%
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _foes = (G[_opp] || []).filter(x => x.curHp > 0);
+    log(`🏴‍☠️ [${h.name}] 海盜威能!敵全體封印技能 2 回合,自己進入狂暴!(+${Math.round(_vkBurstPct*100)}% 傷害/暴擊)`);
+    bannerFX(h, '🏴‍☠️ 海盜威能!', '#5a28b4', 1400);
+
+    // 1. 對全體敵人附加「強力封印技能」2 回合(無法免疫/解除)
+    _foes.forEach(_e => {
+      try{
+        // 清除舊的 seal,確保覆蓋為強力版
+        _e.status = _e.status.filter(s => s.type !== 'seal');
+        // dur:3 → 扣完本回合剩 2 回合在 next turn 生效
+        _e.status.push({type:'seal', dur:3, _strong:true});
+        try{ bannerFX(_e, '🔒 強力封印!', '#3300aa', 700); }catch(_){}
+        try{ flashCard(_e, 'rgba(60,0,150,0.55)', 500); }catch(_){}
+        try{ renderCard(_e); }catch(_){}
+      }catch(e){ console.warn('[海盜威能-強力封印] 失敗', e); }
+    });
+
+    // 2. 自己附加「狂暴(海盜版)」buff 2 回合
+    h.buffs = (h.buffs || []).filter(b => b.type !== 'berserkViking');
+    h.buffs.push({
+      type:'berserkViking',
+      dur:3,                            // dur:3 → 本回合 +2 回合生效
+      _atkMul: 1 + _vkBurstPct,         // 傷害倍率(普攻+技能皆套用)
+      _critBonus: _vkBurstPct,          // 暴擊率加成
+      _doubleAttack: true,              // 普攻變 2 次但隨機目標
+      _protected: true                  // 不可消除/偷竊/交換
+    });
+    try{ bannerFX(h, '⚔️ 狂暴!', '#aa00aa', 900); }catch(_){}
+
+    // 3. 特效播放(沿用鬼王酒宴 GIF + 海盜紫 tint;BURST_FX_CONF 中已配置)
+    try{ playSfx('sfx-explode', 1.0); }catch(_){}
+
+    try{ renderCard(h); }catch(_){}
+    _pSetTimeout(() => {
+      updateUI();
+      _burstFinish(h, _interrupted);
+    }, 1600);
+    return;
+  }
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
 
@@ -18812,6 +18908,24 @@ function execPending(h){
 function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
   // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260519.7100 — 維京海盜船長爆發「狂暴」傷害加成
+  //   攻擊者帶 berserkViking buff 時:
+  //     - 傷害 ×_atkMul (Lv1=1.4, Lv5=1.6)
+  //     - 暴擊率 += _critBonus (Lv1=0.4, Lv5=0.6) — 用 opts.critBoost 注入
+  //   ⚠ 排除:isRebound(反彈)、isHeal(治療)、_vkBoostApplied(防重複)
+  // ════════════════════════════════════════════════════════════════
+  if(opts && opts.actor && !opts.isRebound && !opts.isHeal && !opts._vkBoostApplied){
+    try{
+      const _vkBerserk = (opts.actor.buffs || []).find(b => b.type === 'berserkViking');
+      if(_vkBerserk && rawDmg > 0){
+        const _mul = _vkBerserk._atkMul || 1.4;
+        rawDmg = Math.max(1, Math.floor(rawDmg * _mul));
+        opts.critBoost = (opts.critBoost || 0) + (_vkBerserk._critBonus || 0.4);
+        opts._vkBoostApplied = true;
+      }
+    }catch(_e){ console.warn('[海盜狂暴傷害加成] 失敗', _e); }
+  }
+  // ════════════════════════════════════════════════════════════════
   // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發「壓力轉移」傷害攔截
   //   觸發條件:
   //     - target 還活著(rawDmg > 0)
@@ -18842,6 +18956,27 @@ function doDmg(target, rawDmg, opts={}){
         return 0;  // 不對 target 造成任何傷害
       }
     }catch(_e){ console.warn('[壓力轉移攔截] 失敗', _e); }
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260519.7100 — 維京海盜船長 S2「鎖定」狀態效果
+  //   1. 受傷 ×(1 + lockBonus) — Lv1 +100% (×2), Lv5 +150% (×2.5)
+  //   2. 跳過目標所有有利狀態(等同 ignoreBuffs / 無視有利)
+  //   3. 跳過攻擊者「受傷時觸發」類天賦(opts._lockedSkipTraits 旗標,後段判斷)
+  //   ⚠ 對 fixedDmg / 治療 / 已倒下 / 已加成過不處理
+  //   ⚠ 把 _isLockedAlreadyApplied 旗標寫回 opts,避免遞迴重複加成
+  // ════════════════════════════════════════════════════════════════
+  if(target && target.curHp > 0 && rawDmg > 0 && !opts.isHeal && !opts._isLockedAlreadyApplied){
+    try{
+      if(typeof hasStatus === 'function' && hasStatus(target, 'locked')){
+        const _lockStat = target.status.find(s => s.type === 'locked');
+        const _lockMul = (_lockStat && _lockStat._lockBonus) || 2.0;
+        rawDmg = Math.max(1, Math.floor(rawDmg * _lockMul));
+        opts.ignoreBuffs = true;
+        opts._lockedSkipTraits = true;
+        opts._isLockedAlreadyApplied = true;
+        try{ log(`🎯 [${target.name}] 鎖定中,受傷 ×${_lockMul.toFixed(2)}!`); }catch(_){}
+      }
+    }catch(_e){ console.warn('[鎖定狀態加成] 失敗', _e); }
   }
   // ★ v1.0.20260424.0510 — fixedDmg:true → 跳過屬性/buff/暴擊計算,直接扣血,
   //   但仍走最後的「curHp 扣減 + 倒下檢查」流程,讓系統感知到傷害
@@ -19177,6 +19312,22 @@ function doDmg(target, rawDmg, opts={}){
     opts._necroAoeReduced = true;  // 標記避免重複觸發
   }
     // 守衛 挺身守護 intercept (if not piercing)
+  // ★ v1.0.20260519.7100 — 維京海盜船長 S2「鎖定」狀態:跳過攻擊者「受傷時觸發」類天賦
+  //   設計:鎖定狀態 = 無視目標所有「受傷時」/「被攻擊時」反擊類天賦
+  //   實作:opts._lockedSkipTraits = true 時,逐個天賦判斷處個別跳過
+  //   被跳過的天賦範例:挺身守護(守衛)、迴避反擊(武士)、凶獠(窮奇)、
+  //                     金鐘罩(武鬥家)、媚惑(杏花妖)、鋁鎧(鋁合金暴龍)、
+  //                     獻祭的餘暉(木靈使)、轉化治療(小劇團員)、減傷類等
+  //   ★ 採用「條件式覆蓋 piercing」最少侵入做法:
+  //     當 _lockedSkipTraits 為 true,自動視為 piercing+noGuard,
+  //     大多受傷時觸發的天賦本來就已用這兩個旗標當守門員,不會觸發。
+  //     仍少數天賦(如鋁合金暴龍鋁鎧)只擋 ignoreBuffs,額外加 ignoreBuffs。
+  if(opts._lockedSkipTraits){
+    opts.piercing = true;
+    opts.noGuard = true;
+    opts.ignoreBuffs = true;
+    opts.isAoe = true;  // 跳過挺身守護等單體保護類
+  }
   if(!opts.piercing && !opts.noGuard){
     // ══ 挺身守護：常駐被動，每次友方受到單體攻擊時自動機率觸發 ══
     if(!opts.noGuard && !opts.isAoe && !opts.isNioGuard && !opts.isChaos){
@@ -19301,7 +19452,7 @@ function doDmg(target, rawDmg, opts={}){
     }
   }
   // 小劇團員天賦：受傷時20%機率轉為治療
-  if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused')){
+  if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused') && !opts._lockedSkipTraits){
     // ★ 受傷轉治療：基礎20%，天賦每級+5%（每10等級+5%）
     const _traitLvConvert = _getTraitLv(target.name);
     const _convertChance = 0.20 + _traitLvConvert * 0.05;
@@ -19395,7 +19546,8 @@ function doDmg(target, rawDmg, opts={}){
   if(target.name==='窮奇' && !hasStatus(target,'confused') && rawDmg>0
      && opts && opts.actor && opts.actor.curHp>0 && opts.actor!==target
      && opts.actor.side !== target.side
-     && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && target.curHp>0){
+     && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && target.curHp>0
+     && !opts._lockedSkipTraits){
     const _atkr = opts.actor;
     const _qqTl = (typeof _getTraitLv === 'function') ? _getTraitLv('窮奇') : 0;
     const _qqCritChance = 0.15 + 0.30 + _qqTl * 0.10;  // LV0=45%, LV5(traitLv=4)=85%
@@ -20611,6 +20763,76 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     }
   }
 
+  // ★ v1.0.20260519.7100 — 維京海盜船長天賦「掠奪者本能」(5 年 5 班吳同學設計)
+  //   造成傷害時 30% 機率複製目標掉落物到背包(每目標每場 1 次)
+  //   觸發條件:
+  //     - a (attacker) 是「維京海盜船長」且還活著、沒被疑惑
+  //     - dmg > 0 且攻擊者跟目標不同陣營
+  //     - !opts.isRebound、!opts._techSplash、!opts.isTraitShare、!opts.isChaos
+  //     - 此戰鬥中該 target 未觸發過(用 a._vikingLootedThisBattle Set 紀錄)
+  //     - 鎖定狀態時跳過(opts._lockedSkipTraits 為攻擊者「受傷時」類天賦設計,
+  //       但掠奪是「造成傷害時」,不受 _lockedSkipTraits 影響,維持照常觸發)
+  //   機制(LV0~LV5):
+  //     - 基礎 30% 機率,每天賦級 +5%(LV0=30%, LV5=50%)
+  //     - 對目標生成備援獎勵:依目標 _rewardType 給予 coins 或物品卡或經驗
+  //     - 每場戰鬥每個目標僅觸發 1 次
+  if(a && a.name==='維京海盜船長' && !hasStatus(a,'confused') && dmg>0 && a.side!==target.side
+     && a.curHp>0 && !opts.isRebound && !opts._techSplash
+     && !opts.isTraitShare && !opts.isChaos
+     && target && target.name){
+    if(!a._vikingLootedThisBattle) a._vikingLootedThisBattle = new Set();
+    if(!a._vikingLootedThisBattle.has(target.name)){
+      const _vikingTl = (typeof _getTraitLv === 'function') ? _getTraitLv('維京海盜船長') : 0;
+      const _lootChance = 0.30 + _vikingTl * 0.05;  // LV0=30%, LV5(traitLv=4)=50%
+      if(Math.random() < _lootChance){
+        a._vikingLootedThisBattle.add(target.name);
+        try{
+          // 取得目標掉落物:依現有掉落系統決定
+          const _tDef = (typeof HERO_DB !== 'undefined') ? HERO_DB[target.name] : null;
+          let _grantedMsg = '無物品';
+          if(_tDef){
+            // 1. 賣錢類目標(如行走的二宮尊德像)→ 直接給知識幣
+            if(_tDef._rewardType === 'coins' && typeof _knowledgeCoins !== 'undefined'){
+              const _amt = Math.floor((_tDef._rewardMin + _tDef._rewardMax) / 2);
+              _knowledgeCoins += _amt;
+              _grantedMsg = `${_amt} 知識幣`;
+            }
+            // 2. 經驗類目標(如座敷童子)→ 給經驗值
+            else if(_tDef._rewardType === 'exp'){
+              const _amt = Math.floor((_tDef._rewardMin + _tDef._rewardMax) / 2);
+              try{ if(typeof _grantBonusExp === 'function') _grantBonusExp(_amt); }catch(_){}
+              _grantedMsg = `${_amt} 經驗`;
+            }
+            // 3. BOSS / 一般小怪 → 依 exp 值給對應的知識幣獎勵(模擬戰利品)
+            else if(_tDef.exp){
+              const _coinsAmt = Math.max(50, Math.floor(_tDef.exp * 5));
+              if(typeof _knowledgeCoins !== 'undefined'){
+                _knowledgeCoins += _coinsAmt;
+                _grantedMsg = `${_coinsAmt} 知識幣`;
+              }
+            }
+            // 4. 沒有可掠奪內容 → 給保底 100 知識幣(船長至少要拿到點東西)
+            else {
+              if(typeof _knowledgeCoins !== 'undefined'){
+                _knowledgeCoins += 100;
+                _grantedMsg = '100 知識幣(保底)';
+              }
+            }
+          } else {
+            // 目標不在 HERO_DB(玩家英雄被攻擊)→ 保底 50 知識幣
+            if(typeof _knowledgeCoins !== 'undefined'){
+              _knowledgeCoins += 50;
+              _grantedMsg = '50 知識幣(保底)';
+            }
+          }
+          log(`💰 [${a.name}] 天賦:掠奪者本能![${target.name}] 的戰利品被打包帶走!獲得:${_grantedMsg}`);
+          try{ bannerFX(a, '💰 掠奪!', '#ffaa44', 800); }catch(_){}
+          try{ if(typeof updateCoinsDisplay === 'function') updateCoinsDisplay(); }catch(_){}
+        }catch(e){ console.warn('[維京掠奪者本能] 失敗', e); }
+      }
+    }
+  }
+
   // ★ v1.0.20260512.6210 — 死靈法師天賦「亡魂庇佑」死靈型態效果:
   //   死靈法師處於死靈型態時(_necromancerSpiritSelf=true),
   //   造成傷害會將該傷害量轉化為治療,恢復 HP 比例最低的友方。
@@ -21324,10 +21546,29 @@ function selMove(type){
     G.selMove={n:'攻擊',c:0,_type:'atk'};
     document.getElementById('b-atk').classList.add('sel');
     setPending('enemy',t=>{
-      execAtk(a,t,a.atk);
-      
+      // ★ v1.0.20260519.7100 — 維京海盜船長爆發「狂暴」效果:普攻變 2 次但隨機目標
+      //   檢查攻擊者是否有 berserkViking buff,若有則:
+      //     1. 第一次攻擊用玩家選的目標(t)
+      //     2. 第二次強制隨機選敵方目標(不能指定)
+      //   傷害加成 ×_atkMul、暴擊率加成 _critBonus 由 doDmg/execAtk 內部讀 buff 處理
+      const _vkBerserk = (a.buffs || []).find(b => b.type === 'berserkViking');
+      if(_vkBerserk && _vkBerserk._doubleAttack){
+        log(`⚔️ [${a.name}] 狂暴雙打!第 1 擊鎖定 [${t.name}]`);
+        execAtk(a, t, a.atk);
+        // 第二擊隨機目標(必須是另一次選擇,延遲一點讓動畫好看)
+        _pSetTimeout(() => {
+          const _enemies = G[a.side === 'p1' ? 'p2' : 'p1'].filter(x => x.curHp > 0);
+          if(_enemies.length){
+            const _rt = _enemies[Math.floor(Math.random() * _enemies.length)];
+            log(`⚔️ [${a.name}] 狂暴第 2 擊!隨機鎖定 [${_rt.name}]`);
+            execAtk(a, _rt, a.atk, {_vkBerserkSecond:true});
+          }
+          endAction(a, 0);
+        }, 600);
+      } else {
+        execAtk(a,t,a.atk);
         endAction(a,0);
-      
+      }
     });
   } else {
     const sk=type==='s1'?a.s1:a.s2;
@@ -25257,6 +25498,70 @@ function execSkill(a, sk, cost, stype){
     _pSetTimeout(_doZmRound, 200);
     return;  // 非同步
   }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v1.0.20260519.7100 — 維京海盜船長(5 年 5 班吳同學設計)技能實作
+  //   S1 龍飛鳳舞火炮轟擊:攻擊 120%(每級 +5%)×4 次隨機目標,每次獨立暴擊
+  //   S2 鎖定目標:1 名目標附加「locked」狀態 1 回合
+  //               效果:受傷 +100%(每級 +10%)、無視天賦、無視有利狀態
+  //               無法被免疫狀態擋下
+  //   ★ 平衡度檢查(鐵律 1.30):
+  //     - S1 c=5(原 c=4 威力/能量 120%/c 為全英雄第一,c=5 後降至 96%/c 合理)
+  //     - S2 c=4 純 debuff,搭配 S1 連招使用
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='龍飛鳳舞火炮轟擊'){
+    const _vkS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+    const _vkMult = 1.20 + _vkS1Lv * 0.05;  // Lv1=120%, Lv5=140%
+    const _vkHits = 4;
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
+    log(`🏴‍☠️ [${a.name}] 龍飛鳳舞火炮轟擊!攻擊 ${Math.round(_vkMult*100)}% × ${_vkHits} 次隨機目標!`);
+    try{ bannerFX(a, '🏴‍☠️ 火炮齊射!', '#ff8844', 1200); }catch(_){}
+    try{ playSkillFX('龍飛鳳舞火炮轟擊', a, G[opp].filter(h => h.curHp > 0)); }catch(_){}
+    try{ playSfx('sfx-gunshot-big', 0.6); }catch(_){}
+    beginBatchTotals();
+    let _vkI = 0;
+    const _doVkShot = () => {
+      const _alive = G[opp].filter(h => h.curHp > 0);
+      if(_vkI >= _vkHits || !_alive.length){
+        setTimeout(endBatchTotals, 50);
+        endAction(a, cost);
+        return;
+      }
+      const _t = _alive[Math.floor(Math.random() * _alive.length)];
+      const _vkDmg = Math.max(1, Math.floor((a.atk || 1) * _vkMult));
+      log(`💥 [${a.name}] 第 ${_vkI+1} 發火炮 → [${_t.name}] ${_vkDmg} 傷害`);
+      try{ bannerFX(_t, `💥 ${_vkI+1}!`, '#ff6622', 500); }catch(_){}
+      try{ playSfx('sfx-explode', 0.4); }catch(_){}
+      doDmg(_t, _vkDmg, { actor:a, isSkill:true });
+      renderCard(_t);
+      _vkI++;
+      _pSetTimeout(_doVkShot, 300);
+    };
+    _pSetTimeout(_doVkShot, 200);
+    return;  // 非同步
+  }
+  else if(n==='鎖定目標'){
+    setPending('enemy', t => {
+      if(!t || t.curHp <= 0){ endAction(a, cost); return; }
+      const _lockSkLv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+      const _lockBonus = 1.0 + _lockSkLv * 0.10;  // Lv1=100%, Lv5=150%
+      // 強制覆蓋:無視 ctrlImmune / statusImmune(設計上「無法被免疫狀態擋下」)
+      t.status = t.status.filter(s => s.type !== 'locked');
+      // dur:2 → 扣完本回合剩 1 回合在 next turn 生效
+      t.status.push({type:'locked', dur:2, _lockBonus: _lockBonus});
+      try{ playSfx('sfx-target', 0.6); }catch(_){}
+      try{
+        const _rc = cardRect(t);
+        if(_rc) spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff4422', size:8, spread:60, duration:900});
+      }catch(_){}
+      try{ flashCard(t, 'rgba(255,30,30,0.55)', 600); }catch(_){}
+      try{ bannerFX(t, '🎯 鎖定!', '#ff4422', 1000); }catch(_){}
+      log(`🎯 [${a.name}] 鎖定目標:[${t.name}]!受傷 +${Math.round((_lockBonus-1)*100)}%,無視天賦與有利狀態 1 回合!`);
+      renderCard(t);
+      endAction(a, cost);
+    });
+    return;  // 非同步(等玩家點選目標)
+  }
   // ══════════════════════════════════════════════════════
   // ★ v1.0.20260421.0700 — 日本關三大 BOSS 技能實作
   // ══════════════════════════════════════════════════════
@@ -28066,12 +28371,20 @@ function startTurn(){
       }
       return;
     }
+    // ★ v1.0.20260519.7100 — BOSS 落單時改為普攻自己(原本是「跳過行動」浪費玉藻前吸血)
+    //   單體 BOSS(維蘇威火山龍王、酒吞童子、台灣 10 BOSS 等)被魅惑時:
+    //     舊:_charmAllies 為空 → log「無隊友可攻擊」→ 跳過行動 → 玉藻前白損 1 回合
+    //     新:_charmAllies 為空 → 改為攻擊「自己」→ 玉藻前仍可吸血,設計效果不失效
+    //   多隻怪場景(BOSS+小怪)完全不變,維持普攻隨機隊友邏輯
     const _charmAllies=G[next.side].filter(h=>h.curHp>0&&h!==next);
-    if(!_charmAllies.length){
-      log(`💕 [${next.name}] 魅惑中但無隊友可攻擊，跳過行動！`);
-      next.acted=true; updateUI(); _pSetTimeout(startTurn,400); return;
+    let _ct;
+    if(_charmAllies.length){
+      _ct=_charmAllies[Math.floor(Math.random()*_charmAllies.length)];
+    } else {
+      // 落單 BOSS:把自己當「隊友」攻擊
+      _ct = next;
+      log(`💕 [${next.name}] 魅惑中且落單,茫然攻擊了自己!`);
     }
-    const _ct=_charmAllies[Math.floor(Math.random()*_charmAllies.length)];
     // ★ v1.0.20260421.1000 — 檢查是否為玉藻前禍世邪魅的強力魅惑，若是則傷害轉為玉藻前回血
     const _charmStatus = next.status.find(s => s.type === 'charm');
     const _tamamoName = _charmStatus && _charmStatus._tamamoVampire;
@@ -34397,7 +34710,7 @@ async function _showAdminStatsPanel(){
       },
       {
         label: '🎨 學生設計英雄',
-        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐']
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長']
       },
     ];
 
@@ -35034,31 +35347,84 @@ async function _showAdminStatsPanel(){
   (function _initAdminResetTool(){
     if(!document.getElementById('_admin-reset-find')) return;  // UI 未渲染就跳過
 
-    // 取得所有可重建的英雄(取自 HERO_DB,跟補償工具用同一份)
+    // ★ v1.0.20260519.7100 — 修正:重建工具的英雄名單原本用 HERO_DB[k].name 過濾,
+    //   但 HERO_DB 的英雄物件沒有 name 欄位(key 本身就是名字),導致過濾後永遠是空陣列。
+    //   改用與補償工具相同的邏輯(排除 BOSS、放行日本 BOSS 夥伴),並依分組顯示。
     const _getResetableHeroes = function(){
       try {
-        if(typeof HERO_DB === 'object' && HERO_DB){
-          return Object.keys(HERO_DB).filter(k => HERO_DB[k] && HERO_DB[k].name);
-        }
-      } catch(_){}
-      return [];
+        if(typeof HERO_DB !== 'object' || !HERO_DB) return [];
+        const _bossSet = new Set(typeof BOSS_NAMES !== 'undefined' ? BOSS_NAMES : []);
+        const _japanBossHeroes = (typeof JAPAN_BOSS_HEROES !== 'undefined') ? JAPAN_BOSS_HEROES : new Set();
+        return Object.keys(HERO_DB).filter(name => {
+          // 日本三主 BOSS(大天狗/酒吞童子/玉藻前)是夥伴英雄,白名單優先放行
+          if(_japanBossHeroes.has(name)) return true;
+          if(_bossSet.has(name)) return false;
+          return true;
+        });
+      } catch(e) {
+        console.warn('[_getResetableHeroes] 取得名單失敗', e);
+        return [];
+      }
     };
 
-    // 重用補償工具的 _HERO_GROUPS 結構(避免維護兩份名單)
-    // 注意:此 IIFE 跑在補償工具之後,所以 _HERO_GROUPS 已在外層 closure 失效。
-    // 簡化做法:重新依分類列(或直接全部塞 select 一個 group)。
-    // 為避免複製大量資料,此處直接全部排序後塞同一個 group
+    // ★ v1.0.20260519.7100 — 重建工具同步用「補償工具」的分組結構(避免維護兩份名單)
+    //   未列入任何組的英雄會自動歸到「💼 其他」最末
+    const _RESET_HERO_GROUPS = [
+      {
+        label: '⚔️ 31 隻基本英雄',
+        heroes: ['劍士','祭司','聖騎士','火法師','冰法師','雷法師','光法師','暗法師',
+                 '神射手','神偷','刺客','守衛','吟遊詩人','舞者','警長','煉金術師',
+                 '武鬥家','軍師','占星師','大力士','凡人','木靈使','機械師','動物學家',
+                 '武士','陰陽師','吸血鬼','學者','時空法師','小力','幼兒園小孩']
+      },
+      {
+        label: '🎓 7 隻校園英雄',
+        heroes: ['籃球隊員','直笛團員','田徑隊員','電腦繪圖師','程式設計師','弦樂團員','小劇團員']
+      },
+      {
+        label: '🗾 日本主 BOSS 解鎖系',
+        heroes: ['大天狗','酒吞童子','玉藻前','巫女']
+      },
+      {
+        label: '🎨 學生設計英雄',
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長']
+      },
+    ];
+
     const _populateResetSelect = function(){
       const sel = document.getElementById('_admin-reset-hero-select');
       if(!sel) return;
       sel.innerHTML = '<option value="">-- 選擇英雄 --</option>';
-      const _all = _getResetableHeroes().sort();
-      _all.forEach(n => {
-        const opt = document.createElement('option');
-        opt.value = n;
-        opt.textContent = n;
-        sel.appendChild(opt);
+      const _avail = new Set(_getResetableHeroes());
+      const _used = new Set();
+      // 依分組逐一加 optgroup
+      _RESET_HERO_GROUPS.forEach(grp => {
+        const _members = grp.heroes.filter(n => _avail.has(n));
+        if(_members.length === 0) return;
+        const og = document.createElement('optgroup');
+        og.label = grp.label;
+        _members.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          og.appendChild(opt);
+          _used.add(n);
+        });
+        sel.appendChild(og);
       });
+      // 未列入任何組的(未來新增英雄)歸到「其他」末段
+      const _orphans = [..._avail].filter(n => !_used.has(n)).sort();
+      if(_orphans.length > 0){
+        const og = document.createElement('optgroup');
+        og.label = '💼 其他';
+        _orphans.forEach(n => {
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = n;
+          og.appendChild(opt);
+        });
+        sel.appendChild(og);
+      }
     };
     _populateResetSelect();
 
@@ -63505,6 +63871,8 @@ const HERO_CATEGORIES_OVERRIDE = {
   '學霸(轉學生)':['dmg','heal'],    // S1 固定值連擊輸出、S2 全隊治療+速度buff、爆發 全隊免傷蓄壓→反擊
   // ★ v1.0.20260518.6930 — 5 年 4 班歐同學設計
   '天神宙斯':    ['dmg','ctrl'],    // S1 雷屬性連擊+封印+特技降、S2 全體 3 次雷+%HP、爆發 非BOSS秒殺+BOSS%HP;天賦麻痺
+  // ★ v1.0.20260519.7100 — 5 年 5 班吳同學設計
+  '維京海盜船長':['dmg','ctrl'],    // S1 多段隨機傷害 + S2 鎖定剋天賦 + 爆發全體強力封印技能
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -63609,6 +63977,10 @@ const HERO_HEX_OVERRIDE = {
   //   天神宙斯:S1 特技 120%×2+封印普攻+特技降50%、S2 特技 80%×3 全體+暴擊+%HP、爆發 非BOSS秒殺
   //   雷達:無回復(零治療)+極高控制(麻痺天賦+封印普攻+特技降+爆發秒殺)
   '天神宙斯':    { heal: 0, ctrl: 10 },
+  // ★ v1.0.20260519.7100 — 5 年 5 班吳同學設計
+  //   維京海盜船長:S1 多段隨機傷害(高 ATK 20)、S2 鎖定(受傷+100%+無視天賦)、爆發全體強力封印+自身狂暴
+  //   雷達:無回復(零治療)+高控制(鎖定+爆發強力封印+狂暴 buff 不可解)
+  '維京海盜船長':{ heal: 0, ctrl: 8 },
 
   // 校犬(特殊雙滿)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
@@ -69730,6 +70102,8 @@ const _TRAIT_LV_INFO = {
   '水狐':    { base:'40% 機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'受傷時機率召喚 1 隻小水精靈為 HP 比例最低友方治療特技 60% HP(可復活)' },
   // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
   '米鈴':    { base:'反擊倍率 80%', bonus:'+10%/天賦級', max:'120%(Lv5)', effect:'友方行動前清除其 1 個不利狀態,若成功清除則用特技反擊狀態來源對手' },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
+  '維京海盜船長':{ base:'30% 機率', bonus:'+5%/天賦級', max:'50%(Lv5)', effect:'造成傷害時機率複製目標掉落物(賣錢物品/寵物/物品卡)到背包(每目標每場 1 次)' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -73008,7 +73382,7 @@ window._filterChangelogForDisplay = function(entries){
 //       (v3.2.6) 跟記憶體的 _GAME_LOADED_VERSION (v3.3.0) 比,不一致就跳更新提示
 //     - 但這兩個變數明明在同一份 HTML 內,應該永遠同步
 //   修法:把 _GAME_LOADED_VERSION 先設定好,CURRENT_VERSION 直接讀它,絕對同步。
-window._GAME_LOADED_VERSION = 'v3.3.0';
+window._GAME_LOADED_VERSION = 'v3.3.2';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
