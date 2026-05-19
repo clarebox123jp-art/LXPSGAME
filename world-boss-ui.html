@@ -9235,21 +9235,18 @@
     //         advStartBattle 後再切一次蓋過 bgmStop 的影響
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
-    // ★ FIX 20260517 — 接回 BOSS 開戰題流程(原本被跳過,導致 BOSS 直接攻擊沒出題)
-    //   時機:_wbSetupAdvForBattle 完成 (G.p1/G.p2 已就位、_adventureStage='worldboss')
-    //         → 呼叫 advStartBattle 之前先 await 開戰題
-    //   答對 → G.p1 全體 burst+1
-    //   答錯 → G.p1 全體扣 5% HP(直接寫 curHp,不走 doDmg,所以不會誤觸 worldboss hook)
-    //   要等玩家真的答完才推進到 advStartBattle(_wbStartBossOpening 回傳 Promise)
+    // ── ★ FIX 20260519(v11) — 開戰題搬到 advStartBattle 之後 ──
+    //   原 bug:_wbStartBossOpening 跑在 advStartBattle 之前,此時 #gc 戰場還沒被
+    //   advStartBattle 內的 renderField 渲染 → 玩家看到「黑色空白戰場 + 沒題目 UI」,
+    //   一片黑等到 quiz timeout(60s)後 advOnQuizSkip 才推進 → 用戶圖中症狀。
+    //   修法:跟連線房主路徑一樣,先 advStartBattle(讓 #gc 渲染戰場),
+    //         然後 _gamePaused=true 把 startTurn queue 起來,
+    //         再跑開戰題(此時玩家看到完整戰場 + 題目 UI),
+    //         答完才解除 _gamePaused 讓 startTurn 推進。
     try{
-      if(typeof window._wbStartBossOpening === 'function'){
-        console.log('[WB-Solo v4] 進入開戰題流程…');
-        await window._wbStartBossOpening();
-        console.log('[WB-Solo v4] 開戰題完成,進入戰鬥');
-      }
-    }catch(eOp){
-      console.warn('[WB-Solo v4] 開戰題流程失敗,跳過直接進戰鬥', eOp);
-    }
+      if(typeof _gamePaused !== 'undefined') _gamePaused = true;
+      console.log('[WB-Solo v4] 🔒 已設 _gamePaused=true,等開戰題答完才解除');
+    }catch(_){}
 
     // ── 呼叫主程式 advStartBattle() ────────────────────────────────
     try{
@@ -9261,8 +9258,35 @@
     }catch(e){
       console.error('[WB-Solo v4] advStartBattle 失敗', e);
       _wbGameAlert('⚠ 主程式戰鬥啟動失敗:' + (e.message || e));
+      // 失敗也要釋放 paused,避免後續流程卡死
+      try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(_){}
       return;
     }
+
+    // ★ FIX 20260519(v11) — advStartBattle 跑完後立即啟動咆哮 + 開戰題
+    //   不用 setTimeout,直接 IIFE async 觸發。
+    //   advStartBattle 內 _pSetTimeout(startTurn, 800) 已被 _gamePaused=true queue 住,
+    //   等開戰題答完才解除。
+    (async () => {
+      try{
+        if(typeof window._wbStartBossOpening === 'function'){
+          console.log('[WB-Solo v4] 進入開戰題流程(advStartBattle 之後)…');
+          await window._wbStartBossOpening();
+          console.log('[WB-Solo v4] 開戰題完成,解除 paused');
+          try{
+            if(typeof _gamePaused !== 'undefined') _gamePaused = false;
+            if(typeof _resumeTimers === 'function') _resumeTimers();
+            console.log('[WB-Solo v4] 🔓 已解除 _gamePaused + _resumeTimers,startTurn 即將推進');
+          }catch(_){}
+        }
+      }catch(eOp){
+        console.warn('[WB-Solo v4] 開戰題流程例外,強制解除 paused 繼續', eOp);
+        try{
+          if(typeof _gamePaused !== 'undefined') _gamePaused = false;
+          if(typeof _resumeTimers === 'function') _resumeTimers();
+        }catch(_){}
+      }
+    })();
 
     // ★ FIX 20260517(b) — advStartBattle 跑完後重新啟動世界戰 BGM
     //   advStartBattle 內 bgmStop() 會把上面切的 BGM 關掉,這裡兜底重啟
