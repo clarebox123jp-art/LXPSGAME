@@ -17683,15 +17683,20 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     log(`⚡ [${h.name}] 天降雷罰!神之雷霆轟然降下,全場震顫!(BOSS 受當前 HP ${Math.round(_zrBossPct*100)}%,非 BOSS 扣到剩 1 HP)`);
     bannerFX(h, '⚡ 天降雷罰!', '#ddff44', 1400);
     beginBatchTotals();
+    // ★ FIX 20260518(k) — BOSS HP% 傷害上限 = 英雄等級 × 10(跟雷鳴/神聖鎚擊一致)
+    const _zrHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[h.name]) ? _heroLevels[h.name] : 1;
+    const _zrMaxBossDmg = _zrHeroLv * 10;
     _foes.forEach((_f, _i) => {
       _pSetTimeout(() => {
         if(_f.curHp <= 0) return;
         const _isBoss = (typeof _zeusIsTrueBoss === 'function') ? _zeusIsTrueBoss(_f) : false;
         if(_isBoss){
-          // BOSS:當前 HP × bossPct 必中傷害
-          const _bossDmg = Math.max(1, Math.floor(_f.curHp * _zrBossPct));
-          try{ log(`⚡ [${_f.name}] (BOSS) 受神之雷罰 ${Math.round(_zrBossPct*100)}% 當前 HP = ${_bossDmg} 傷害!`); }catch(_){}
-          try{ bannerFX(_f, `⚡ -${_bossDmg}`, '#ffaa44', 900); }catch(_){}
+          // BOSS:當前 HP × bossPct 必中傷害(上限 = 英雄等級 × 10)
+          const _bossRawDmg = Math.max(1, Math.floor(_f.curHp * _zrBossPct));
+          const _bossDmg = Math.min(_bossRawDmg, _zrMaxBossDmg);
+          const _bossCapped = _bossRawDmg > _zrMaxBossDmg;
+          try{ log(`⚡ [${_f.name}] (BOSS) 受神之雷罰 ${Math.round(_zrBossPct*100)}% 當前 HP = ${_bossDmg} 傷害!${_bossCapped?' [上限'+_zrMaxBossDmg+']':''}`); }catch(_){}
+          try{ bannerFX(_f, `⚡ -${_bossDmg}${_bossCapped?' [上限]':''}`, '#ffaa44', 900); }catch(_){}
           try{ flashCard(_f, 'rgba(255,255,80,0.55)', 700); }catch(_){}
           doDmg(_f, _bossDmg, {
             fixedDmg:true,
@@ -24942,14 +24947,20 @@ function execSkill(a, sk, cost, stype){
     const _doZmRound = () => {
       if(_zmRound >= 3 || checkWin()){
         // 3 次傷害結束 → 對命中目標追加當前 HP 20% 固定傷害
+        // ★ FIX 20260518(k) — HP 比例傷害上限 = 英雄等級 × 10,避免在高 HP BOSS 戰中過於失衡
+        //   (跟聖騎士「神聖鎚擊」、暗法師「死亡宣告」一致的設計)
         const _aliveHit = Array.from(_hitInZm).filter(_t => _t && _t.curHp > 0);
         if(_aliveHit.length){
-          log(`⚡ [${a.name}] 三道雷鳴餘威!追加當前 HP 20% 固定傷害!`);
+          const _zmHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+          const _zmMaxDmg = _zmHeroLv * 10;
+          log(`⚡ [${a.name}] 三道雷鳴餘威!追加當前 HP 20% 固定傷害(上限 ${_zmMaxDmg})!`);
           _aliveHit.forEach((_t, _i) => {
             _pSetTimeout(() => {
               if(_t.curHp <= 0) return;
-              const _hpDmg = Math.max(1, Math.floor(_t.curHp * 0.20));
-              try{ bannerFX(_t, `⚡ -${_hpDmg}!`, '#ffaa44', 700); }catch(_){}
+              const _zmRawDmg = Math.max(1, Math.floor(_t.curHp * 0.20));
+              const _hpDmg = Math.min(_zmRawDmg, _zmMaxDmg);
+              const _zmCapped = _zmRawDmg > _zmMaxDmg;
+              try{ bannerFX(_t, `⚡ -${_hpDmg}!${_zmCapped?' [上限]':''}`, '#ffaa44', 700); }catch(_){}
               try{ playSfx('sfx-thunder-fury', 0.4); }catch(_){}
               // 追加傷害:固定值 + 無視有利狀態 + 不會暴擊
               doDmg(_t, _hpDmg, {
@@ -28964,33 +28975,89 @@ function _realAiAct(a){
   //         配合 v6480 三道防線(防止 quiz 期間誤報),縮到 10 秒讓真卡死自動救援更快。
   //   合法等待 overlay(quiz / reward / result / burst-priority / discard)仍會 return 不強制,
   //   所以這只影響「真的沒 overlay 但 BOSS 沒推進」的卡死 case。
+  // ★ FIX 20260519(v5) — 從 10 秒縮短到 3 秒 + 修正 modal 殘留誤判
+  //   症狀:用戶實測 BOSS 卡死後等 30+ 秒才推進(實際應該 10 秒)。
+  //   根因:line 28997 `if(_bpm) return;` 只檢查 burst-priority-modal 是否「存在於 DOM」,
+  //         沒檢查它是否真的可見。若該 modal 是動態建立、之前被 .remove() 失敗、或
+  //         隱藏於螢幕外但 DOM 還在(rare),watchdog 永遠看到它存在 → 永遠 return →
+  //         watchdog 從不 fire → 真卡死要靠主程式其他 fallback (例如 _pSetTimeout 的
+  //         20s fallback)才能脫困,加總時間超過 30 秒。
+  //   修法:
+  //     (1) 計時從 10000 → 3000(用戶要求所有 BOSS 卡死等 3 秒就自動跳過)
+  //     (2) burst-priority-modal/discard-overlay/adv-reward-overlay 改用「可見性」判斷
+  //         (沿用主程式其他地方的 .show class || display !== 'none' 邏輯)
+  //         確保殘留 DOM 不會誤擋
   try{
     if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; }
     window._aiWatchdog = setTimeout(function(){
       try{
         if(!a || a.curHp <= 0) return;
         if(a.acted || G.activeChar !== a) return;  // 已正常結束行動
-        // 玩家正在 BOSS quiz 答題 → 等待中,不算卡死
+        // ★ FIX 20260519(v6) — 玩家正在答題時嚴禁強制跳過(會打斷玩家思考)
+        //   用戶要求:畫面已經有問題讓玩家思考並選擇答案時,不套用 3 秒強制跳過。
+        //   多重保險,任一成立就 return(不算卡死):
+        //   (a) adv-quiz-overlay 顯示中(玩家在看題目選答案)
+        //   (b) _advQuizPhase 是 asking/answered(答題流程中)
+        //   (c) _advQuizActive=true(quiz 狀態活躍)
+        //   (d) _bossQuizInFlight=true(BOSS quiz 觸發中,quiz UI 即將彈出)
+        //   (e) _advQuizResolveCb 非空 + quiz 真的在進行中(避免孤兒 cb 殘留誤擋)
+        //   配合下面的「合法 modal 可見性檢查」一起,擋掉所有正在答題的情境。
         const _qov = document.getElementById('adv-quiz-overlay');
-        if(_qov && _qov.classList.contains('show')) return;
+        if(_qov && _qov.classList.contains('show')) return;   // (a)
+        try{
+          if(typeof _advQuizPhase !== 'undefined'
+             && (_advQuizPhase === 'asking' || _advQuizPhase === 'answered')) return;  // (b)
+        }catch(_){}
+        try{
+          if(typeof _advQuizActive !== 'undefined' && _advQuizActive) return;  // (c)
+        }catch(_){}
+        try{
+          if(window._bossQuizInFlight) return;  // (d)
+        }catch(_){}
+        try{
+          // (e) cb 非空 + 真有 quiz 在跑(沿用 _startDeadlockWatchdog 的孤兒 cb 邏輯)
+          if(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb){
+            let _quizActuallyInProgress = false;
+            if(_qov && _qov.classList && _qov.classList.contains('show')) _quizActuallyInProgress = true;
+            const _rwOv1 = document.getElementById('adv-reward-overlay');
+            if(_rwOv1 && ((_rwOv1.classList && _rwOv1.classList.contains('show'))
+              || (_rwOv1.style && _rwOv1.style.display && _rwOv1.style.display !== 'none'))){
+              _quizActuallyInProgress = true;
+            }
+            if(_quizActuallyInProgress) return;
+            // cb 非空但 quiz 沒在跑 → 孤兒殘留,放行(讓 watchdog 真的跳過 BOSS)
+          }
+        }catch(_){}
         // 結算面板已顯示 → 戰鬥已結束,不算卡死
         const _resOv = document.getElementById('adv-result-overlay');
         if(_resOv && _resOv.classList.contains('show')) return;
-        // ★ v1.0.20260508.5640 — 補上其他「合法等待中」的 overlay,避免被誤判卡死強制結束行動。
-        //   舊版只判 quiz/result,但實際 BOSS 戰會被以下三種 overlay 攔截 30 秒才放行:
-        //   (1) burst-priority-modal:玩家爆發優先選擇視窗(玩家還在猶豫要搶誰爆發)
-        //   (2) adv-reward-overlay:BOSS 階段轉換/小怪擊敗的獎勵彈窗
-        //   (3) discard-overlay:棄牌視窗(手牌爆滿時)
-        //   遇到這三種應該等玩家處理完,而不是強制 endAction(會讓玩家點到一半被打斷)。
-        const _bpm = document.getElementById('burst-priority-modal');
-        if(_bpm) return;
-        const _rwOv = document.getElementById('adv-reward-overlay');
-        if(_rwOv && (_rwOv.classList.contains('show') || _rwOv.style.display !== 'none')) return;
-        const _dsOv = document.getElementById('discard-overlay');
-        if(_dsOv && (_dsOv.classList.contains('show') || _dsOv.style.display !== 'none')) return;
-        console.warn('[AI watchdog] '+(a.name||'未知')+' 行動超時(10s),強制結束以恢復戰鬥流程');
+        // ★ FIX 20260519(v5) — 合法等待 modal 改用「可見性」判斷,不只看 DOM 存在
+        //   helper:某個 id 的元素是否真的可見(有 .show class 或 inline display 非 none 且不在隱藏父層)
+        const _isVisible = (id) => {
+          const el = document.getElementById(id);
+          if(!el) return false;
+          if(el.classList && el.classList.contains('show')) return true;
+          const _d = el.style.display;
+          if(_d && _d !== 'none' && el.offsetParent !== null) return true;
+          return false;
+        };
+        // (1) burst-priority-modal:玩家爆發優先 — 用可見性判斷,避免殘留 DOM 誤擋
+        if(_isVisible('burst-priority-modal')) return;
+        // (2) adv-reward-overlay:答題獎勵
+        if(_isVisible('adv-reward-overlay')) return;
+        // (3) discard-overlay:棄牌視窗
+        if(_isVisible('discard-overlay')) return;
+        console.warn('[AI watchdog] '+(a.name||'未知')+' 行動超時(3s),強制結束以恢復戰鬥流程');
         try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
         try{ window._gamePaused = false; }catch(_){}
+        // ★ FIX 20260519(v5) — 順手清掉殘留的 burst-priority-modal(常見根因)
+        try{
+          const _stale = document.getElementById('burst-priority-modal');
+          if(_stale){
+            console.warn('[AI watchdog] 偵測到殘留 burst-priority-modal,清除');
+            _stale.remove();
+          }
+        }catch(_){}
         a.acted = true;
         if(typeof endAction === 'function') {
           try{ endAction(a, 0); }catch(_){ setTimeout(function(){ try{ startTurn(); }catch(__){} }, 400); }
@@ -28999,7 +29066,7 @@ function _realAiAct(a){
         }
       }catch(_){}
       window._aiWatchdog = null;
-    }, 10000);
+    }, 3000);
   }catch(_){}
   try {
   // ★ 暈眩/凍結/睡眠/麻痺/陷阱：即使是BOSS也必須跳過行動
@@ -48709,6 +48776,21 @@ function advShowQuiz() {
   // ★ 確保法寶確認視窗已關閉
   const _tcEl = document.getElementById('adv-treasure-confirm');
   if(_tcEl) _tcEl.remove();
+  // ★ FIX 20260518(l) — 世界 BOSS 戰兜底:題庫為空就主動 prepare
+  //   問題:世界 BOSS 戰啟動路徑 (_wbSetupAdvForBattle → advStartBattle) 不會呼叫
+  //        advPrepareSessionQuestions,造成 _advSessionQuestions 永遠空陣列。
+  //        advPickQuestion 通用分支讀此空陣列 → 回 needRepick → 無限迴圈或卡死。
+  //   修補:advShowQuiz 進入時若已在世界 BOSS 戰且題庫空,主動 prepare 一次。
+  //        (從 world-boss.js 內 patch 也行,但寫在主程式更穩,不依賴外部 script 載入順序)
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && typeof _advSessionQuestions !== 'undefined'
+       && (!Array.isArray(_advSessionQuestions) || _advSessionQuestions.length === 0)
+       && typeof advPrepareSessionQuestions === 'function'){
+      console.log('[advShowQuiz] 世界 BOSS 戰題庫為空,主動 advPrepareSessionQuestions');
+      advPrepareSessionQuestions();
+    }
+  }catch(_ePrep){ console.warn('[advShowQuiz] 題庫兜底 prepare 失敗', _ePrep); }
   // ★ v1.0.20260501.5470 — bug 修復:early return 也要先 fire 已設的 _advQuizResolveCb,
   //   否則 charm/stun 等 path 設了 cb 但 advShowQuiz 沒實際開 overlay → cb 永遠卡住 → BOSS 卡死
   if (!_adventureMode || _advQuizPhase !== 'idle') {
