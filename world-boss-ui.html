@@ -6123,37 +6123,130 @@
     //   - 房主指派的空槽:用指派的英雄,房主操控
     //   - 未指派的空槽:用房主自己的英雄補位,房主操控
     //   全部走「玩家行動」流程,不啟用任何 AI auto-act
+    // ★ FIX 20260519(v9) — 解決「未指派空槽全變房主同英雄 + 全部沒屬性」bug
+    //   原 bug 雙重根因:
+    //   (1) player.element 是 JSON 字串({"e":"water","es":["water"],"t":[]}),
+    //       原 code line 6147 直接拿來寫 h.element,主程式戰鬥引擎不認 JSON 視為無屬性
+    //   (2) 未指派空槽全填 _hostHeroName(房主英雄)+ _hostElement(房主元素),
+    //       導致 4 槽全是同一隻 + 同一個元素 → 沒破盾覆蓋率
+    //   修法:
+    //   (a) 用 _wbTcParsePlayerExt 解析 JSON,寫入時只塞「真正的 element id」
+    //   (b) 未指派空槽用 _wbPickAutoNpcLoadout(idx, used):
+    //       - 元素優先補「房主隊伍還缺的破盾元素」
+    //       - 英雄優先補「跟已選不同 + 屬性匹配的已解鎖英雄」
     const _hostUid = snap?.meta?.hostUid;
     const _hostPlayer = players.find(p => p && p.uid === _hostUid);
     const _hostHeroName = (_hostPlayer && _hostPlayer.heroName) || '劍士';
-    const _hostElement = _hostPlayer && _hostPlayer.element;
+    // ★ FIX 20260519(v9) — 解析房主元素 JSON 字串(這就是「沒屬性」的根因)
+    let _hostElement = null;
+    try{
+      if(_hostPlayer && _hostPlayer.element && typeof _wbTcParsePlayerExt === 'function'){
+        const _ext = _wbTcParsePlayerExt(_hostPlayer.element);
+        _hostElement = (_ext.es && _ext.es[0]) || _ext.e || null;
+      }
+    }catch(_){}
     const _hostAssign = window._wbHostAssignedSlots || {};
+
+    // ★ FIX 20260519(v9) — 統計「目前已選的英雄」與「已涵蓋的元素」,
+    //   讓未指派空槽能補上「不同的英雄 + 缺的破盾元素」,而非全部複製房主。
+    const _usedHeroes = new Set();
+    const _coveredElems = new Set();
+    // 真實玩家
+    players.forEach(p => {
+      if(!p || !p.uid) return;
+      if(p.heroName) _usedHeroes.add(p.heroName);
+      try{
+        const _ext = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+        const _e = _ext && (_ext.es?.[0] || _ext.e);
+        if(_e) _coveredElems.add(_e);
+      }catch(_){}
+    });
+    // 房主指派的 NPC
+    Object.keys(_hostAssign).forEach(k => {
+      const a = _hostAssign[k];
+      if(!a) return;
+      if(a.heroName) _usedHeroes.add(a.heroName);
+      if(a.element) _coveredElems.add(a.element);
+    });
+
+    // ★ FIX 20260519(v9) — 取得當前 BOSS 破盾元素清單(用於補位優先序)
+    let _reqElems = [];
+    try{
+      _reqElems = Array.isArray(window._WB_TC_REQ_ELEMS) ? window._WB_TC_REQ_ELEMS.slice()
+                : ['water','fire','earth','elec'];  // fallback
+    }catch(_){ _reqElems = ['water','fire','earth','elec']; }
+    const _missingElems = _reqElems.filter(e => !_coveredElems.has(e));
+
+    // ★ FIX 20260519(v9) — 為空槽挑一個合適的元素 + 英雄
+    //   優先補缺的元素;若都補齊就用房主元素;英雄優先不重複
+    const _pickAutoNpcLoadout = function(slotIdx){
+      // 元素:先用 missing 池,空了再用房主的
+      let _elem = null;
+      if(_missingElems.length > 0){
+        _elem = _missingElems.shift();
+        _coveredElems.add(_elem);
+      }else{
+        _elem = _hostElement || 'water';
+      }
+      // 英雄:從已解鎖英雄選一個不重複的
+      let _heroName = null;
+      try{
+        const _avail = (typeof _wbGetAvailableHeroes === 'function')
+          ? _wbGetAvailableHeroes()
+          : null;
+        if(Array.isArray(_avail) && _avail.length > 0){
+          const _candidates = _avail.filter(n => !_usedHeroes.has(n));
+          if(_candidates.length > 0){
+            // 取陣列前面的(可能是按等級排好的)
+            _heroName = _candidates[0];
+          }else{
+            // 全部都用過了 → 退回用房主英雄(這時 4 個槽就會重複,但屬性還是齊的)
+            _heroName = _hostHeroName;
+          }
+        }
+      }catch(_){}
+      if(!_heroName) _heroName = _hostHeroName;
+      _usedHeroes.add(_heroName);
+      return { heroName: _heroName, element: _elem };
+    };
 
     // 初始化 4 槽英雄陣容
     const p1 = [];
     for(let i = 0; i < 4; i++){
       const p = players[i];
       const assigned = (!p && _hostAssign[i] && _hostAssign[i].heroName) ? _hostAssign[i] : null;
-      // 三種來源:1. 真實玩家  2. 房主指派  3. 沒指派 → 沿用房主英雄
-      const heroName = p?.heroName || (assigned ? assigned.heroName : _hostHeroName);
+      // ★ FIX 20260519(v9) — 未指派空槽走 _pickAutoNpcLoadout
+      let _autoNpc = null;
+      if(!p && !assigned){
+        _autoNpc = _pickAutoNpcLoadout(i);
+      }
+      // 三種來源:1. 真實玩家  2. 房主指派  3. 沒指派 → 自動補位(不同英雄+缺的元素)
+      const heroName = p?.heroName || (assigned ? assigned.heroName : _autoNpc.heroName);
       const h = newHero(heroName, 'p1', i);
       h.burst = 0; h.burstMax = h.burstMax || 10;
       // ★ 標記:全部空槽都是「房主代打」(房主操控),不再有 AI 自動
       h._wbIsNpc     = false;           // ★ 永不啟用 AI auto-act
       h._wbIsHostNpc = !p;              // 任何沒玩家的槽位都是房主代打
-      // 元素來源:玩家選 > 房主指派 > _wbEcAiOverrideElements > 房主元素
+      // ★ FIX 20260519(v9) — 元素來源:解析 JSON 字串取出真正的 element id
+      //   原 bug:直接拿 p.element(JSON 字串)寫進 h.element → 主程式視為無屬性
       let assignedElem = null;
       if(p && p.element){
-        assignedElem = p.element;
-      }else if(assigned && assigned.element){
-        assignedElem = assigned.element;
-      }else{
-        const ov = window._wbEcAiOverrideElements || {};
-        if(ov[i]){
-          assignedElem = ov[i];
-        }else if(_hostElement){
-          assignedElem = _hostElement;
+        // 真實玩家:解析 JSON 字串
+        try{
+          const _ext = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+          assignedElem = (_ext && (_ext.es?.[0] || _ext.e)) || null;
+        }catch(_){
+          // 解析失敗 fallback 用原字串(可能是舊資料的純元素字串)
+          assignedElem = p.element;
         }
+      }else if(assigned && assigned.element){
+        // 房主指派 NPC:element 已是純字串
+        assignedElem = assigned.element;
+      }else if(_autoNpc){
+        // 自動補位
+        assignedElem = _autoNpc.element;
+      }else if(_hostElement){
+        assignedElem = _hostElement;
       }
       if(assignedElem){
         h._wbPickedElement = assignedElem;
@@ -6166,7 +6259,19 @@
       if(assigned && Array.isArray(assigned.treasures) && assigned.treasures.length){
         h._wbTreasureIds = assigned.treasures.slice();
       }
+      // ★ FIX 20260519(v9) — 真實玩家的至寶也要從 JSON 解析後套上
+      if(p && p.element && !h._wbTreasureIds){
+        try{
+          const _ext = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+          if(_ext && Array.isArray(_ext.t) && _ext.t.length > 0){
+            h._wbTreasureIds = _ext.t.slice(0, 2);
+          }
+        }catch(_){}
+      }
       p1.push(h);
+      console.log('[WB-Host v6] 槽', i, '→', heroName, '元素=', assignedElem || '(無)',
+        '至寶=', h._wbTreasureIds ? h._wbTreasureIds.join(',') : '(無)',
+        'isHostNpc=', !p);
     }
     // BOSS:維蘇威火山龍王
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
@@ -8523,10 +8628,66 @@
 
     // ★ FIX 20260519(v8) — 嘗試載入上次儲存的隊伍配置;
     //   若無存檔則 fallback 到「推薦英雄 / 推薦元素 / 已裝至寶」預設邏輯
-    const _savedLoadout = _wbSoloLoadLoadout();
+    let _savedLoadout = _wbSoloLoadLoadout();
     const _slot0Saved = _savedLoadout && _savedLoadout[0];
 
-    // 預設用代表英雄 + 至寶 + 推薦屬性(若沒存檔)
+    // ★ FIX 20260519(v9) — 沒存檔時 fallback 到「冒險預設陣容第一組」
+    //   邏輯:玩家在木柵關/日本關/台灣關用慣的陣容,通常也適合世界 BOSS 戰。
+    //         讀 _advPresetTeams[0](冒險預設陣容第一組,玩家最常用的)。
+    //   結構:{ name, heroes:[4 個英雄], elements:[4 個元素], skills:[...] }
+    //   至寶:預設陣容沒存至寶,fallback 用「每隻英雄當前裝備的至寶」
+    //   跳過旗標:點過「換用推薦」後在 session 內就不再套用預設陣容
+    let _autoFromPreset = null;
+    let _skipPreset = false;
+    try{ _skipPreset = sessionStorage.getItem('lxps_wb_solo_skip_preset') === '1'; }catch(_){}
+    if(!_savedLoadout && !_skipPreset){
+      try{
+        const _pt = (typeof _advPresetTeams !== 'undefined' && Array.isArray(_advPresetTeams))
+          ? _advPresetTeams[0] : null;
+        if(_pt && Array.isArray(_pt.heroes) && _pt.heroes.length >= 1){
+          const _slotsFromPreset = [];
+          for(let _pi = 0; _pi < 4; _pi++){
+            const _hName = _pt.heroes[_pi];
+            if(!_hName){ _slotsFromPreset.push(null); continue; }
+            // 驗證英雄還在 HERO_DB
+            let _isValid = false;
+            try{ if(typeof HERO_DB !== 'undefined' && HERO_DB[_hName]) _isValid = true; }catch(_){}
+            if(!_isValid && window.HERO_DB && window.HERO_DB[_hName]) _isValid = true;
+            if(!_isValid){ _slotsFromPreset.push(null); continue; }
+            // 從該英雄當前裝備的至寶清單抽出 ID
+            let _heroTreasures = [];
+            try{
+              if(typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
+                Object.keys(_taiwanTreasureData).forEach(id => {
+                  const rec = _taiwanTreasureData[id];
+                  if(rec && rec.equippedTo === _hName && (rec.lv || 0) >= 1){
+                    _heroTreasures.push(id);
+                  }
+                });
+                if(_heroTreasures.length > 2) _heroTreasures = _heroTreasures.slice(0, 2);
+              }
+            }catch(_){}
+            _slotsFromPreset.push({
+              heroName: _hName,
+              element: (Array.isArray(_pt.elements) && _pt.elements[_pi]) || null,
+              treasures: _heroTreasures
+            });
+          }
+          // 至少要有 1 個有效槽,否則不採用
+          if(_slotsFromPreset.some(s => s !== null)){
+            _autoFromPreset = _slotsFromPreset;
+            console.log('[WB-Solo Loadout] 沒存檔,改用冒險預設陣容第一組 (', _pt.name || '(無名)', ')',
+              _slotsFromPreset);
+            // 把 _autoFromPreset 當作 saved loadout 後續邏輯使用
+            _savedLoadout = _autoFromPreset;
+          }
+        }
+      }catch(eP){ console.warn('[WB-Solo Loadout] 讀冒險預設陣容失敗', eP); }
+    }
+    // 重新取得 slot0 用的資料(可能來自 saved 或 preset)
+    const _slot0Effective = _savedLoadout && _savedLoadout[0];
+
+    // 預設用代表英雄 + 至寶 + 推薦屬性(若沒存檔也沒預設陣容)
     let _defaultLoadout = { heroName: '劍士', recommendedElement: null, equippedTreasureIds: [] };
     try{
       _defaultLoadout = _wbTcGetMyDefaultLoadout();
@@ -8536,11 +8697,13 @@
     let _slot0HeroName = _defaultLoadout.heroName;
     let _slot0Element  = _defaultLoadout.recommendedElement;
     let _slot0Treasures = _defaultLoadout.equippedTreasureIds || [];
-    if(_slot0Saved){
-      _slot0HeroName  = _slot0Saved.heroName;
-      _slot0Element   = _slot0Saved.element;
-      _slot0Treasures = _slot0Saved.treasures || [];
-      console.log('[WB-Solo Loadout] 槽 0 套用存檔:', _slot0HeroName, _slot0Element, _slot0Treasures);
+    if(_slot0Effective){
+      _slot0HeroName  = _slot0Effective.heroName;
+      _slot0Element   = _slot0Effective.element;
+      _slot0Treasures = _slot0Effective.treasures || [];
+      console.log('[WB-Solo Loadout] 槽 0 套用'
+        + (_autoFromPreset ? '冒險預設陣容' : '存檔') + ':',
+        _slot0HeroName, _slot0Element, _slot0Treasures);
     }
 
     const _initExt = {
@@ -8596,16 +8759,18 @@
     _wbSoloHookStartButton();
 
     // ★ FIX 20260519(v8) — 進來時就提示玩家「已套用上次隊伍」+ 提供「重置」按鈕
+    // ★ FIX 20260519(v9) — 區分來源:存檔 vs 冒險預設陣容
     if(_savedLoadout){
-      // 用較淺色提示,不打斷流程
+      const _hintSource = _autoFromPreset ? 'preset' : 'saved';
       setTimeout(() => {
-        try{ _wbSoloShowLoadoutHint(); }catch(_){}
+        try{ _wbSoloShowLoadoutHint(_hintSource); }catch(_){}
       }, 400);
     }
   }
 
   // ★ FIX 20260519(v8) — 顯示「已套用上次隊伍」提示(可點按鈕重置為預設)
-  function _wbSoloShowLoadoutHint(){
+  // ★ FIX 20260519(v9) — 多帶一個 source 參數,顯示不同訊息
+  function _wbSoloShowLoadoutHint(source){
     // 避免重複顯示
     const _old = document.getElementById('wb-solo-loadout-hint');
     if(_old) _old.remove();
@@ -8620,9 +8785,13 @@
       + 'border:2px solid #88dd99;border-radius:10px;padding:8px 16px;'
       + 'font-size:13px;color:#ccffcc;font-weight:600;letter-spacing:0.5px;'
       + 'box-shadow:0 4px 14px rgba(80,200,120,0.35);display:flex;align-items:center;gap:10px;';
-    _hint.innerHTML = '💾 已套用上次練習隊伍'
+    // ★ FIX 20260519(v9) — 訊息分兩種來源
+    const _isPreset = (source === 'preset');
+    const _msg = _isPreset ? '🎯 已套用冒險預設陣容(第一組)' : '💾 已套用上次練習隊伍';
+    const _resetLabel = _isPreset ? '🔄 換用推薦' : '🔄 重置預設';
+    _hint.innerHTML = _msg
       + '<button id="wb-solo-loadout-reset-btn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);'
-      + 'color:#fff;border-radius:5px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:600;">🔄 重置預設</button>'
+      + 'color:#fff;border-radius:5px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:600;">' + _resetLabel + '</button>'
       + '<button id="wb-solo-loadout-close-btn" style="background:none;border:none;color:#ccffcc;'
       + 'font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>';
     _container.appendChild(_hint);
@@ -8630,6 +8799,11 @@
     document.getElementById('wb-solo-loadout-reset-btn').onclick = function(){
       try{ window._wbSoloClearLoadout(); }catch(_){}
       _hint.remove();
+      // ★ FIX 20260519(v9) — 若是「冒險預設陣容」來源,點重置改成「不套用預設陣容」
+      //   做法:在 sessionStorage 設一個跳過旗標,讓下次 _wbSoloOpenTeamConfirm 不採用
+      if(_isPreset){
+        try{ sessionStorage.setItem('lxps_wb_solo_skip_preset', '1'); }catch(_){}
+      }
       // 關掉 team-confirm 重開,讓邏輯走預設
       try{
         const _tc = document.getElementById('wb-team-confirm-overlay');
@@ -8691,6 +8865,8 @@
       try{ _wbSoloSaveLoadout(); }catch(_){}
       // ★ FIX 20260519(v8) — 順手清掉隊伍頁的「已套用上次隊伍」提示
       try{ const _h = document.getElementById('wb-solo-loadout-hint'); if(_h) _h.remove(); }catch(_){}
+      // ★ FIX 20260519(v9) — 開戰後清掉 skip-preset 旗標(下次有新預設陣容時還會用)
+      try{ sessionStorage.removeItem('lxps_wb_solo_skip_preset'); }catch(_){}
       _wbSoloBeginBattle();
     };
     // ★ FIX 20260517(v) — 舊的 wb-tc-back-btn(取消練習)已在 (r) 改動移除,
