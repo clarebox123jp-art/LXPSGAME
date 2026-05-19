@@ -827,43 +827,47 @@
   }
 
   /* ─── 左側邀請通知 (全站常駐) ───────────────────────────── */
+  /* ★ v3.3.5 — 老師需求:收到好友邀請的浮動視窗尺寸(含字體大小)全部放大至 300%
+     設計:所有 padding / font-size / border / gap / box-shadow blur 等以 ×3 比例放大
+     注意:left/top 定位點維持「左側 + 垂直置中」,但 left 邊距也按比例放大
+     max-width 從 320px → 960px,字體從 11~15px → 33~45px,讓玩家在戰場上一眼就能看見邀請 */
   #wb-invite-notif-stack{
-    position:fixed; left:14px; top:50%; transform:translateY(-50%);
-    z-index:2147483640; display:flex; flex-direction:column; gap:12px;
-    pointer-events:none; max-width:320px;
+    position:fixed; left:42px; top:50%; transform:translateY(-50%);
+    z-index:2147483640; display:flex; flex-direction:column; gap:36px;
+    pointer-events:none; max-width:960px;
   }
   #wb-invite-notif-stack .wb-inv-notif{
     pointer-events:auto;
     background:linear-gradient(160deg,#2a1545 0%,#150a25 100%);
-    border:2.5px solid #ffe066; border-radius:14px;
-    padding:14px 16px;
-    box-shadow:0 0 24px rgba(255,224,102,0.5),0 6px 20px rgba(0,0,0,0.7);
+    border:7.5px solid #ffe066; border-radius:42px;
+    padding:42px 48px;
+    box-shadow:0 0 72px rgba(255,224,102,0.5),0 18px 60px rgba(0,0,0,0.7);
     color:#ffe8a0; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
     animation:wbInvSlideIn 0.4s ease-out;
-    position:relative; min-width:260px;
+    position:relative; min-width:780px;
   }
   @keyframes wbInvSlideIn{
     from { transform:translateX(-120%); opacity:0; }
     to   { transform:translateX(0);     opacity:1; }
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-hdr{
-    font-size:12px; color:#ffe066; letter-spacing:1px;
-    text-shadow:0 0 8px rgba(255,224,102,0.6);
-    margin-bottom:4px; font-weight:800;
+    font-size:36px; color:#ffe066; letter-spacing:3px;
+    text-shadow:0 0 24px rgba(255,224,102,0.6);
+    margin-bottom:12px; font-weight:800;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-from{
-    font-size:15px; color:#fff; font-weight:700; letter-spacing:0.5px;
+    font-size:45px; color:#fff; font-weight:700; letter-spacing:1.5px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-room{
-    font-size:11px; color:#aaa; margin-top:3px; letter-spacing:0.5px;
+    font-size:33px; color:#aaa; margin-top:9px; letter-spacing:1.5px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar-wrap{
-    height:5px; background:rgba(0,0,0,0.5); border-radius:3px;
-    margin:8px 0; overflow:hidden;
+    height:15px; background:rgba(0,0,0,0.5); border-radius:9px;
+    margin:24px 0; overflow:hidden;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar{
     height:100%; background:linear-gradient(90deg,#ffe066,#ff8855);
-    border-radius:3px;
+    border-radius:9px;
     transition:width 0.3s linear;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar.danger{
@@ -871,16 +875,16 @@
     animation:wbInvBarPulse 0.6s ease-in-out infinite;
   }
   @keyframes wbInvBarPulse{
-    0%,100% { box-shadow:0 0 4px rgba(255,80,40,0.5); }
-    50%     { box-shadow:0 0 14px rgba(255,80,40,1); }
+    0%,100% { box-shadow:0 0 12px rgba(255,80,40,0.5); }
+    50%     { box-shadow:0 0 42px rgba(255,80,40,1); }
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btns{
-    display:flex; gap:8px; margin-top:6px;
+    display:flex; gap:24px; margin-top:18px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn{
-    flex:1; padding:8px 6px; font-size:13px; font-weight:700;
-    border-radius:8px; cursor:pointer; font-family:inherit;
-    border:none; transition:all 0.15s; letter-spacing:1px;
+    flex:1; padding:24px 18px; font-size:39px; font-weight:700;
+    border-radius:24px; cursor:pointer; font-family:inherit;
+    border:none; transition:all 0.15s; letter-spacing:3px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept{
     background:linear-gradient(135deg,#5dcaa5,#3aa580); color:#fff;
@@ -890,16 +894,16 @@
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.decline{
     background:rgba(255,80,80,0.25); color:#ffaaaa;
-    border:1.5px solid rgba(255,100,100,0.4);
+    border:4.5px solid rgba(255,100,100,0.4);
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept:not(:disabled):hover{
-    transform:translateY(-1px); box-shadow:0 4px 14px rgba(93,202,165,0.4);
+    transform:translateY(-3px); box-shadow:0 12px 42px rgba(93,202,165,0.4);
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.decline:hover{
     background:rgba(255,80,80,0.4);
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-busy-msg{
-    font-size:11px; color:#ffaa88; margin-top:4px; letter-spacing:0.5px;
+    font-size:33px; color:#ffaa88; margin-top:12px; letter-spacing:1.5px;
     text-align:center;
   }
 
