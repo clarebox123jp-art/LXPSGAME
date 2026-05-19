@@ -5467,6 +5467,36 @@
 </div>
 
 <script>
+// ════════════════════════════════════════════════════════
+// ★ v1.0.20260519.7200 (v3.4.0) — 玩家英雄白名單(供 doDmg/doHeal 判定 atk/HP 衍生加成)
+// ════════════════════════════════════════════════════════
+//   ▶ 共 59 隻:hero_db.js line 13~209 的 56 隻 + JP_BOSS_HERO_STATS 弱化版 3 隻
+//   ▶ 只有此名單內的角色才吃:atk×0.5% 暴擊率/暴擊額外傷害、HP×0.2% 受傷減免(上限50%)、HP×0.2% 受治療
+//   ▶ BOSS 與小怪不吃這些加成,避免 BOSS 3000+ HP 直接 600% 免疫所有傷害
+//   ▶ 用 Set 加速 .has() 查找(每次 doDmg/doHeal 都會查一次)
+//   ▶ 必須在 doDmg/doHeal 定義(line ~19117/~21198)前宣告,所以放在這個 script 區塊頂部
+const _PLAYER_HERO_NAMES = new Set([
+  // 經典職業 32 隻
+  '劍士','祭司','聖騎士','火法師','冰法師','雷法師','光法師','暗法師',
+  '神射手','神偷','刺客','守衛','吟遊詩人','舞者','警長','煉金術師',
+  '武鬥家','軍師','占星師','大力士','凡人','木靈使','機械師','動物學家',
+  '武士','陰陽師','吸血鬼','學者','時空法師','小力','籃球隊員','直笛團員',
+  // 校園/特殊 6 隻
+  '田徑隊員','幼兒園小孩','電腦繪圖師','程式設計師','弦樂團員','小劇團員',
+  // 日本三大妖怪英雄版(弱化版用 JP_BOSS_HERO_STATS)+ 巫女
+  '巫女','大天狗','酒吞童子','玉藻前',
+  // 學生設計英雄 17 隻
+  '窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血',
+  '死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬',
+  '水狐','米鈴','學霸(轉學生)','維京海盜船長','天神宙斯',
+]);
+// 玩家英雄判定:支援 name 或 hero 物件
+//   ★ 不能只用 side==='p1',因為鬥技場 p1/p2 雙方都是玩家英雄,反之 BOSS 戰中 p2 是 BOSS
+function _isPlayerHero(target){
+  if(!target) return false;
+  return _PLAYER_HERO_NAMES.has(target.name);
+}
+
 // ══════════════════════════════════════════════════════
 // ★ v1.0.20260510.5750 — 啟動讀取條(Boot Loader)v2:智慧持久化快取
 // ══════════════════════════════════════════════════════
@@ -10456,10 +10486,13 @@ try{ window.G = G; }catch(_){}
 //   玉藻前 弱化版能力提升(原 91 → 100):全面強化(攻 +4、速 +3 最明顯)
 //   酒吞童子 弱化版微調(原 103 → 100):HP -2、速 -1
 //   大天狗 弱化版微調(原 98 → 100):特技 +2
+// ★ v1.0.20260519.7200 (v3.4.0) — 三大妖怪英雄弱化版 HP × 1.3
+//   原:大天狗 58 / 酒吞童子 70 / 玉藻前 57
+//   新:大天狗 75 / 酒吞童子 91 / 玉藻前 74
 const JP_BOSS_HERO_STATS = {
-  '大天狗':   { hp:58, atk:10, sp:15, spd:17, exp:55 },
-  '酒吞童子': { hp:70, atk:16, sp:9,  spd:5,  exp:60 },
-  '玉藻前':   { hp:57, atk:9,  sp:20, spd:14, exp:58 },
+  '大天狗':   { hp:75, atk:10, sp:15, spd:17, exp:55 },
+  '酒吞童子': { hp:91, atk:16, sp:9,  spd:5,  exp:60 },
+  '玉藻前':   { hp:74, atk:9,  sp:20, spd:14, exp:58 },
 };
 
 function newHero(name,side,pos){
@@ -20044,6 +20077,21 @@ function doDmg(target, rawDmg, opts={}){
   // ★ 減傷保底：所有減傷效果後最低傷害為1（無敵/護盾/閃避已在上方 return，不受影響）
   if(dmg > 0) dmg = Math.max(1, dmg);
 
+  // ★ v1.0.20260519.7200 (v3.4.0) — 玩家英雄受傷減免:每 1 點 HP(最大值) -0.2% 受傷
+  //   上限 50%(對齊老師決策 Q2,保守設計避免高 HP 角色不死之身)
+  //   只對玩家英雄生效(BOSS HP 3000+ 若也吃會直接 600% 免疫所有傷害)
+  //   排除 opts.fixedDmg(固定值傷害已在前段 return,但保險再加)、opts.ignoreBuffs?
+  //     → 不排除 ignoreBuffs!此加成是「天生軀體韌性」屬於基礎能力,不算 buff,
+  //       與山岳之軀 / 酥脆裝甲 / 至寶 dmgReduce 同層級的固定軀體屬性
+  if(dmg > 0 && target && typeof _isPlayerHero === 'function' && _isPlayerHero(target)){
+    const _hpReducePct = Math.min(0.50, (target.hp || 0) * 0.002);  // 上限 50%
+    if(_hpReducePct > 0){
+      const _origDmg = dmg;
+      dmg = Math.max(1, Math.floor(dmg * (1 - _hpReducePct)));
+      // 不 log 避免每次傷害刷屏,需要 debug 時改成 console.debug
+    }
+  }
+
   // ★ v1.1.0 — 酥脆狂魔・熱浪糕師 天賦「酥脆裝甲」: 受傷減 15%
   //   位置:在減傷保底後、扣血前;不影響其他減傷
   if(dmg > 0 && target && target.name === '酥脆狂魔・熱浪糕師' && !opts.ignoreBuffs){
@@ -20179,12 +20227,23 @@ function doDmg(target, rawDmg, opts={}){
   // ★ v1.0.20260428.3730 — 至寶爆擊率加成(攻擊者,深坑臭豆腐神劍):基礎 15% + critRate%
   // ★ v1.0.20260511.6130 — 新增 opts.critBoost 參數,讓技能可在當次攻擊提升暴擊率
   //   用法:doDmg(t, dmg, {actor:a, isSkill:true, critBoost:0.30})  // 暴擊率 +30%
+  // ★ v1.0.20260519.7200 (v3.4.0) — 玩家英雄攻擊值 atk 每 1 點 →
+  //   暴擊率 +0.5%、暴擊額外傷害基數 +0.5% (基數從 0.3 改為 0.3 + atk × 0.005)
+  //   只對玩家英雄生效(用 _isPlayerHero 判定),BOSS/小怪走原本 15% / 30% 固定值
+  //   範例:大力士 atk=17 → 暴擊率 +8.5%、暴擊傷害 +138.5%(原本 130%)
   let _isCrit=false;
-  const _critChance = 0.15 + ((a && a._treasureEff && a._treasureEff.critRate) || 0) / 100
+  // ★ v3.4.0 — 玩家英雄 atk 加成
+  const _atkCritBonus = (a && typeof _isPlayerHero === 'function' && _isPlayerHero(a))
+    ? ((a.atk || 0) * 0.005)
+    : 0;
+  const _critChance = 0.15 + _atkCritBonus
+                           + ((a && a._treasureEff && a._treasureEff.critRate) || 0) / 100
                            + (typeof opts.critBoost === 'number' ? opts.critBoost : 0)
                            + (hasStatus(target,'breakDef') ? 0.50 : 0);  // ★ 破防:該傷害暴擊率 +50%
   if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
-    const _critExtra=Math.floor(dmg*0.3);
+    // ★ v3.4.0 — 暴擊額外傷害基數:0.3 + (玩家英雄 atk × 0.005)
+    const _critMul = 0.3 + _atkCritBonus;
+    const _critExtra=Math.floor(dmg*_critMul);
     dmg+=_critExtra;
     target.curHp=Math.max(0,target.curHp-_critExtra); // 補扣額外爆擊傷害
     _isCrit=true;
@@ -21228,6 +21287,17 @@ function doHeal(target, rawAmt, opts={}){
   if(target && target._treasureEff && target._treasureEff.healReceived){
     const _bonus = target._treasureEff.healReceived / 100;
     rawAmt = Math.ceil(rawAmt * (1 + _bonus));
+  }
+  // ★ v1.0.20260519.7200 (v3.4.0) — 玩家英雄受治療加成:每 1 點 HP(最大值) +0.2% 受治療
+  //   只對玩家英雄生效(BOSS 不吃,避免高 HP BOSS 治療技能爆量)
+  //   採乘法疊加,放在至寶 healReceived 之後讓兩者獨立計算
+  //   ★ 修正:原本是 +1%/點,改成 +0.2%/點 對齊「減傷 0.2%/點」的設計直覺
+  //   範例:守衛 hp=107 → +21.4% 受治療;小力 hp=128 → +25.6% 受治療
+  if(target && typeof _isPlayerHero === 'function' && _isPlayerHero(target)){
+    const _hpHealBonus = (target.hp || 0) * 0.002;
+    if(_hpHealBonus > 0){
+      rawAmt = Math.ceil(rawAmt * (1 + _hpHealBonus));
+    }
   }
   const a=G.activeChar||opts.actor;
   let amt=rawAmt;
@@ -32819,9 +32889,10 @@ function toggleSkillPopup(btn, skName, skCost, skDesc){
 }
 
 // ====== 能力說明彈出視窗 ======
+// ★ v1.0.20260519.7200 (v3.4.0) — hp/atk 加上新加成說明
 const STAT_DESCS = {
-  hp:   { label:'生命值', color:'#ff6666', desc:'可承受的最大傷害，歸零即倒下，越高越耐打。' },
-  atk:  { label:'攻擊值', color:'#ff9966', desc:'普通攻擊和部分技能的傷害基礎。' },
+  hp:   { label:'生命值', color:'#ff6666', desc:'可承受的最大傷害，歸零即倒下，越高越耐打。每1點HP提升0.2%減輕受傷（最多減50%）和0.2%受治療量。' },
+  atk:  { label:'攻擊值', color:'#ff9966', desc:'普通攻擊和部分技能的傷害基礎。每1點攻擊提升0.5%暴擊率和0.5%暴擊額外傷害。' },
   sp:   { label:'特技值', color:'#cc88ff', desc:'使用大多數技能的強度，每1點提升1%技能威力。' },
   spd:  { label:'速度值', color:'#44aaff', desc:'數值越大行動越早，也影響命中率與迴避率。' },
   heal: { label:'治療力', color:'#44ffaa', desc:'治療與支援能力，越高越適合擔任治療角色。' },
@@ -42823,6 +42894,7 @@ const BOSS_NAMES = [
   //   之前漏加 → 跑去英雄圖鑑了,現在加進 BOSS_NAMES,正確顯示於魔物圖鑑
   '維蘇威火山龍王',
 ];
+
 // 冒險模式允許出場的英雄名單
 const ADV_HERO_POOL = {
   maokong: ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家']
@@ -65316,9 +65388,45 @@ function _renderHeroDetail(name, box) {
         </div>`;
         })() : ''}
       </div>
-      <!-- 右欄：雷達圖 -->
-      <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;">
+      <!-- 右欄：雷達圖 + 素質效果說明 -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;gap:8px;">
         ${makeRadar(dims, 320)}
+        ${(()=>{
+          // ★ v1.0.20260519.7200 (v3.4.0) — 雷達圖下方顯示素質點數的衍生加成
+          //   ▶ 公式:
+          //     - 技能威力 +sp%(每 1 點特技 +1%,line 32825 STAT_DESCS 已寫)
+          //     - 命中率/迴避率 +spd%(每 1 點速度 +1%,普攻速度差迴避,line 19401)
+          //     - 暴擊率/暴擊額外傷害 +(atk×0.5)%(v3.4.0 新公式,line ~20236)
+          //     - 減傷量 +min(50, hp×0.2)%、受治療 +(hp×0.2)%(v3.4.0,line ~20086/~21295)
+          //   ▶ 用「當前實際值」計算(基礎+投資+至寶;HP 再加等級 +2%/級加成,戰鬥時生效)
+          //   ▶ atk/HP 加成僅玩家英雄生效(BOSS 圖鑑看不到此區塊,因 _isPlayerHero 過濾)
+          const _isP = (typeof _isPlayerHero === 'function') ? _isPlayerHero({name}) : true;
+          const _tB = (typeof _calcHeroTreasureBonus === 'function') ? _calcHeroTreasureBonus(name) : {hp:0,atk:0,sp:0,spd:0};
+          const _atk = (hd.atk||0) + (inv.atk||0) + (_tB.atk||0);
+          const _sp  = (hd.sp ||0) + (inv.sp ||0) + (_tB.sp ||0);
+          const _spd = (hd.spd||0) + (inv.spd||0) + (_tB.spd||0);
+          let _hp  = (hd.hp ||0) + (inv.hp ||0) + (_tB.hp ||0);
+          // HP 等級加成 +2%/級 (戰鬥時生效,跟著 lvBonusHtml 的算法一致)
+          if(lv > 1){ _hp += Math.ceil(_hp * 0.02 * (lv - 1)); }
+          // 計算各加成值
+          const _skillPow  = _sp;                                              // 技能威力
+          const _hitEva    = _spd;                                             // 命中/迴避
+          const _critRate  = _isP ? (_atk * 0.5).toFixed(1).replace(/\.0$/,'') : 0;  // 暴擊率
+          const _critDmg   = _critRate;                                        // 暴擊額外傷害 (同公式)
+          const _dmgReduce = _isP ? Math.min(50, _hp * 0.2).toFixed(1).replace(/\.0$/,'') : 0;
+          const _healUp    = _isP ? (_hp * 0.2).toFixed(1).replace(/\.0$/,'') : 0;  // ★ 改用 0.2%/點 (對齊減傷,無上限)
+          // 字體尺寸對齊天賦說明文字 (~24px),四行排版
+          return `
+            <div style="width:100%;max-width:340px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;margin-top:6px;">
+              <div style="font-size:18px;color:#aab;font-weight:700;margin-bottom:6px;text-align:center;letter-spacing:1px;">📊 素質點數效果</div>
+              <div style="font-size:22px;color:#ffffff;line-height:1.7;font-family:inherit;">
+                <div>✨ 技能威力 <span style="color:#cc88ff;font-weight:800;">+${_skillPow}%</span></div>
+                <div>💨 命中率 <span style="color:#44aaff;font-weight:800;">+${_hitEva}%</span>　迴避率 <span style="color:#44aaff;font-weight:800;">+${_hitEva}%</span></div>
+                <div>⚔️ 暴擊率 <span style="color:#ff9966;font-weight:800;">+${_critRate}%</span>　暴擊傷害 <span style="color:#ff9966;font-weight:800;">+${_critDmg}%</span></div>
+                <div>❤️ 減傷量 <span style="color:#ff6666;font-weight:800;">+${_dmgReduce}%</span>、受治療 <span style="color:#ff6666;font-weight:800;">+${_healUp}%</span></div>
+              </div>
+            </div>`;
+        })()}
       </div>
     </div>
     <!-- 技能區 -->
