@@ -8405,6 +8405,102 @@
   };
 
   // ════════════════════════════════════════════════════════════════════
+  // ★ FIX 20260519(v8) — 單人練習隊伍 / 元素 / 至寶儲存與載入
+  // ────────────────────────────────────────────────────────────────────
+  // 用 localStorage 儲存上次單人練習用的 4 槽配置,下次自動載入,
+  // 不必每次重新編組。儲存內容包含每槽的:
+  //   - heroName(英雄名稱)
+  //   - element (元素 id;單人槽是字串 element_id,4 個槽都單選一個)
+  //   - treasures(至寶 ID 陣列,最多 2 件)
+  // 儲存時機:玩家按「開戰」按鈕時(進戰場前最終配置)
+  // 載入時機:_wbSoloOpenTeamConfirm 開始時,有資料就覆蓋預設 loadout
+  // ════════════════════════════════════════════════════════════════════
+  const _WB_SOLO_LOADOUT_KEY = 'lxps_wb_solo_loadout_v1';
+
+  function _wbSoloSaveLoadout(){
+    try{
+      const _hostAssign = window._wbHostAssignedSlots || {};
+      const slots = [];
+      for(let i = 0; i < 4; i++){
+        if(i === 0){
+          // 槽 0 是玩家自己,從 _wbSoloFakePlayers[0] 抽
+          const p = _wbSoloFakePlayers && _wbSoloFakePlayers[0];
+          if(p && p.heroName){
+            let _ext = {};
+            try{ _ext = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : {}; }catch(_){}
+            slots.push({
+              heroName: p.heroName,
+              element: (_ext.es && _ext.es[0]) || _ext.e || null,
+              treasures: Array.isArray(_ext.t) ? _ext.t.slice(0, 2) : []
+            });
+          }else{
+            slots.push(null);
+          }
+        }else{
+          // 槽 1-3 是房主指派
+          const a = _hostAssign[i];
+          if(a && a.heroName){
+            slots.push({
+              heroName: a.heroName,
+              element: a.element || null,
+              treasures: Array.isArray(a.treasures) ? a.treasures.slice(0, 2) : []
+            });
+          }else{
+            slots.push(null);
+          }
+        }
+      }
+      const payload = { slots: slots, savedAt: Date.now() };
+      localStorage.setItem(_WB_SOLO_LOADOUT_KEY, JSON.stringify(payload));
+      console.log('[WB-Solo Loadout] 已儲存隊伍配置(4 槽)', payload);
+    }catch(e){
+      console.warn('[WB-Solo Loadout] 儲存失敗', e);
+    }
+  }
+
+  function _wbSoloLoadLoadout(){
+    try{
+      const raw = localStorage.getItem(_WB_SOLO_LOADOUT_KEY);
+      if(!raw) return null;
+      const obj = JSON.parse(raw);
+      if(!obj || !Array.isArray(obj.slots) || obj.slots.length !== 4) return null;
+      // 驗證每槽:heroName 必須是當前還在 HERO_DB 中的英雄,
+      // 否則(可能版本變動 / 英雄被改名)丟棄該槽
+      const _isValidHero = (n) => {
+        if(!n) return false;
+        try{ if(typeof HERO_DB !== 'undefined' && HERO_DB[n]) return true; }catch(_){}
+        return !!(window.HERO_DB && window.HERO_DB[n]);
+      };
+      const valid = obj.slots.map((s, idx) => {
+        if(!s || !s.heroName) return null;
+        if(!_isValidHero(s.heroName)){
+          console.warn('[WB-Solo Loadout] 槽', idx, '英雄不存在,忽略:', s.heroName);
+          return null;
+        }
+        return {
+          heroName: s.heroName,
+          element: s.element || null,
+          treasures: Array.isArray(s.treasures) ? s.treasures.slice(0, 2) : []
+        };
+      });
+      console.log('[WB-Solo Loadout] 已載入隊伍配置', valid);
+      return valid;
+    }catch(e){
+      console.warn('[WB-Solo Loadout] 載入失敗', e);
+      return null;
+    }
+  }
+
+  // 提供外部清除入口(若用戶想重置)
+  window._wbSoloClearLoadout = function(){
+    try{
+      localStorage.removeItem(_WB_SOLO_LOADOUT_KEY);
+      console.log('[WB-Solo Loadout] 已清除');
+      return true;
+    }catch(e){ return false; }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
   // ★ FIX 20260516 — 單人練習:隊伍確認頁(4 隻英雄都由玩家自選)
   // ────────────────────────────────────────────────────────────────────
   // 跟多人模式共用隊伍確認頁 UI,差別是:
@@ -8425,15 +8521,32 @@
     // ★ FIX 20260516 v9 — 先 refresh 一次,確保 _WB_TC_REQ_ELEMS 是當前 BOSS 的破盾屬性
     _wbTcRefreshReqElems();
 
-    // 預設用代表英雄 + 至寶 + 推薦屬性
+    // ★ FIX 20260519(v8) — 嘗試載入上次儲存的隊伍配置;
+    //   若無存檔則 fallback 到「推薦英雄 / 推薦元素 / 已裝至寶」預設邏輯
+    const _savedLoadout = _wbSoloLoadLoadout();
+    const _slot0Saved = _savedLoadout && _savedLoadout[0];
+
+    // 預設用代表英雄 + 至寶 + 推薦屬性(若沒存檔)
     let _defaultLoadout = { heroName: '劍士', recommendedElement: null, equippedTreasureIds: [] };
     try{
       _defaultLoadout = _wbTcGetMyDefaultLoadout();
     }catch(_){}
+
+    // ★ FIX 20260519(v8) — 槽 0 用存檔的設定(若有),覆蓋預設
+    let _slot0HeroName = _defaultLoadout.heroName;
+    let _slot0Element  = _defaultLoadout.recommendedElement;
+    let _slot0Treasures = _defaultLoadout.equippedTreasureIds || [];
+    if(_slot0Saved){
+      _slot0HeroName  = _slot0Saved.heroName;
+      _slot0Element   = _slot0Saved.element;
+      _slot0Treasures = _slot0Saved.treasures || [];
+      console.log('[WB-Solo Loadout] 槽 0 套用存檔:', _slot0HeroName, _slot0Element, _slot0Treasures);
+    }
+
     const _initExt = {
-      e:  _defaultLoadout.recommendedElement,
-      es: _defaultLoadout.recommendedElement ? [_defaultLoadout.recommendedElement] : [],
-      t:  _defaultLoadout.equippedTreasureIds || []
+      e:  _slot0Element,
+      es: _slot0Element ? [_slot0Element] : [],
+      t:  _slot0Treasures
     };
     const _myName = (window._playerNickname || window._userName || '你');
     // ★ 只放房主一個玩家,其他 3 個槽留空
@@ -8442,7 +8555,7 @@
         uid: window._gUserId || 'solo_user',
         name: _myName,
         slotIdx: 0,
-        heroName: _defaultLoadout.heroName,
+        heroName: _slot0HeroName,
         element: _wbTcStringifyExt(_initExt),
         ready: false,
         online: true,
@@ -8455,6 +8568,21 @@
     // 清掉舊的本地指派(每次進來都重置)
     window._wbHostAssignedSlots = {};
 
+    // ★ FIX 20260519(v8) — 載入槽 1-3 的指派
+    if(_savedLoadout){
+      for(let i = 1; i < 4; i++){
+        const s = _savedLoadout[i];
+        if(s && s.heroName){
+          window._wbHostAssignedSlots[i] = {
+            heroName: s.heroName,
+            element: s.element || null,
+            treasures: Array.isArray(s.treasures) ? s.treasures.slice(0, 2) : []
+          };
+          console.log('[WB-Solo Loadout] 槽', i, '套用存檔:', s.heroName, s.element, s.treasures);
+        }
+      }
+    }
+
     // 建立 mock _wbNet(只有開隊伍確認頁時用,確認後會還原)
     const realWbNet = window._wbNet;
     window._wbSoloRealWbNet = realWbNet;  // 備份待還原
@@ -8466,6 +8594,58 @@
     _wbTcOpenTeamConfirm();
     // 改寫底部「開戰」按鈕為呼叫單人開戰
     _wbSoloHookStartButton();
+
+    // ★ FIX 20260519(v8) — 進來時就提示玩家「已套用上次隊伍」+ 提供「重置」按鈕
+    if(_savedLoadout){
+      // 用較淺色提示,不打斷流程
+      setTimeout(() => {
+        try{ _wbSoloShowLoadoutHint(); }catch(_){}
+      }, 400);
+    }
+  }
+
+  // ★ FIX 20260519(v8) — 顯示「已套用上次隊伍」提示(可點按鈕重置為預設)
+  function _wbSoloShowLoadoutHint(){
+    // 避免重複顯示
+    const _old = document.getElementById('wb-solo-loadout-hint');
+    if(_old) _old.remove();
+    // 找隊伍確認頁的標題下方塞提示
+    const _container = document.getElementById('wb-team-confirm-overlay');
+    if(!_container || !_container.classList.contains('show')) return;
+    const _hint = document.createElement('div');
+    _hint.id = 'wb-solo-loadout-hint';
+    _hint.style.cssText =
+      'position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:50;'
+      + 'background:linear-gradient(135deg,rgba(60,120,80,0.92),rgba(40,90,60,0.92));'
+      + 'border:2px solid #88dd99;border-radius:10px;padding:8px 16px;'
+      + 'font-size:13px;color:#ccffcc;font-weight:600;letter-spacing:0.5px;'
+      + 'box-shadow:0 4px 14px rgba(80,200,120,0.35);display:flex;align-items:center;gap:10px;';
+    _hint.innerHTML = '💾 已套用上次練習隊伍'
+      + '<button id="wb-solo-loadout-reset-btn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);'
+      + 'color:#fff;border-radius:5px;padding:3px 10px;font-size:12px;cursor:pointer;font-weight:600;">🔄 重置預設</button>'
+      + '<button id="wb-solo-loadout-close-btn" style="background:none;border:none;color:#ccffcc;'
+      + 'font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>';
+    _container.appendChild(_hint);
+    // 重置按鈕:清存檔 + 重開隊伍確認頁(會重新跑預設邏輯)
+    document.getElementById('wb-solo-loadout-reset-btn').onclick = function(){
+      try{ window._wbSoloClearLoadout(); }catch(_){}
+      _hint.remove();
+      // 關掉 team-confirm 重開,讓邏輯走預設
+      try{
+        const _tc = document.getElementById('wb-team-confirm-overlay');
+        if(_tc) _tc.classList.remove('show');
+      }catch(_){}
+      setTimeout(() => { _wbSoloOpenTeamConfirm(); }, 200);
+    };
+    document.getElementById('wb-solo-loadout-close-btn').onclick = function(){ _hint.remove(); };
+    // 8 秒後自動淡出(不擋畫面)
+    setTimeout(() => {
+      try{
+        _hint.style.transition = 'opacity 600ms';
+        _hint.style.opacity = '0';
+        setTimeout(() => { try{ _hint.remove(); }catch(_){} }, 700);
+      }catch(_){}
+    }, 8000);
   }
 
   function _heroDbHas(name){
@@ -8507,6 +8687,10 @@
       }
       // 關閉隊伍確認頁,進入戰鬥
       document.getElementById('wb-team-confirm-overlay').classList.remove('show');
+      // ★ FIX 20260519(v8) — 儲存當前隊伍配置,下次自動載入
+      try{ _wbSoloSaveLoadout(); }catch(_){}
+      // ★ FIX 20260519(v8) — 順手清掉隊伍頁的「已套用上次隊伍」提示
+      try{ const _h = document.getElementById('wb-solo-loadout-hint'); if(_h) _h.remove(); }catch(_){}
       _wbSoloBeginBattle();
     };
     // ★ FIX 20260517(v) — 舊的 wb-tc-back-btn(取消練習)已在 (r) 改動移除,
