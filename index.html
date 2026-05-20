@@ -44650,6 +44650,13 @@ function exitAdventureMode(){
   _advMiniBattleActive = false;
   _advQuizPhase = 'idle';
   window._advMiniResultPending = null;
+  // ★ v3.3.7 — 退出冒險時也清掉卡死救援 watchdog,避免戰鬥外觸發誤救
+  try{
+    if(window._advQuizDeadlockSaverTimer){
+      clearTimeout(window._advQuizDeadlockSaverTimer);
+      window._advQuizDeadlockSaverTimer = null;
+    }
+  }catch(_){}
   // ★ v1.0.20260423.0100 — 徹底清除 BOSS 戰相關殘留旗標與備份，
   //   避免重新進入冒險後第一場小怪戰就被誤判為 BOSS 戰結算(issue #5)
   try{
@@ -50767,6 +50774,14 @@ function _filterOptionsByDifficulty(options, correctLetter, difficulty){
 }
 
 function advShowQuiz() {
+  // ★ v3.3.7 — 新一輪 quiz 開始,清掉上一輪可能還沒到期的卡死救援 watchdog
+  //   避免玩家正在答這一輪題目時,上一輪排的 3 秒救援突然觸發誤救
+  try{
+    if(window._advQuizDeadlockSaverTimer){
+      clearTimeout(window._advQuizDeadlockSaverTimer);
+      window._advQuizDeadlockSaverTimer = null;
+    }
+  }catch(_){}
   // ★ 確保法寶確認視窗已關閉
   const _tcConf = document.getElementById('adv-treasure-confirm');
   if(_tcConf) _tcConf.remove();
@@ -51770,6 +51785,124 @@ function advOnQuizSkip() {
   //   症狀:八岐大蛇 BOSS 戰中 startTurn 被排兩次時,第二次 aiAct 進入佇列後,
   //   即使答完題 _gamePaused=false 也不會被釋放,造成 BOSS 永不行動
   try{ _resumeTimers(); }catch(e){}
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.3.7 — 治本卡死救援 watchdog(老師提案)
+  //   設計:答題結束 3 秒後,偵測「該行動但沒在動」的卡死狀態,
+  //         直接讓當前 actor 用普攻過這回合,讓戰鬥強制推進。
+  //   涵蓋情境:
+  //     - 冒險關卡 BOSS 答題後 actor 卡住不動(玩家或敵方都可能)
+  //     - 世界 BOSS 戰連線房間答題後 P2 卡住(深層 Firestore/timer race)
+  //   為什麼這是治本:不需要抓「為什麼卡」,只看「結果卡了」就強制推進。
+  //                  即使未來新增任何 bug 讓戰鬥卡在 quiz 後,這個 watchdog 一樣救得起來。
+  //   防誤判:burst 演出中/合法 modal 開著/已 acted/已死/還在 quiz/reward 視窗 → 延後或不救
+  //   位置:放在 _resumeTimers 之後、boss_skip 分支之前 — 確保所有 return 路徑都會排到
+  // ════════════════════════════════════════════════════════════════
+  try{
+    if(window._advQuizDeadlockSaverTimer){
+      clearTimeout(window._advQuizDeadlockSaverTimer);
+      window._advQuizDeadlockSaverTimer = null;
+    }
+    window._advQuizDeadlockSaverTimer = setTimeout(function _quizDeadlockSaverCheck(){
+      window._advQuizDeadlockSaverTimer = null;
+      try{
+        // (1) 仍在冒險模式才救
+        if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
+        // (2) 戰鬥已結束 → 不救
+        if(typeof G === 'undefined' || !G || !G.p1 || !G.p2) return;
+        const _aliveP1 = G.p1.filter(x => x && x.curHp > 0).length;
+        const _aliveP2 = G.p2.filter(x => x && x.curHp > 0).length;
+        if(_aliveP1 === 0 || _aliveP2 === 0) return;  // 一邊全滅 = 戰鬥已結束
+        // (3) 沒 activeChar = 不在戰鬥中,不救
+        const _ac = G.activeChar;
+        if(!_ac || !_ac.side || typeof _ac.pos !== 'number') return;
+        // (4) actor 已行動或已死 → 正常推進中,不救
+        if(_ac.acted || _ac.curHp <= 0) return;
+        // (5) burst-cinematic 演出中(極限爆發大字)→ 重排 3 秒
+        if(document.getElementById('burst-cinematic')){
+          window._advQuizDeadlockSaverTimer = setTimeout(_quizDeadlockSaverCheck, 3000);
+          return;
+        }
+        // (6) quiz/reward 視窗還掛著 → 重排 3 秒(下一波 quiz 流程接管)
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        const _rOv = document.getElementById('adv-reward-overlay');
+        const _qShow = _qOv && _qOv.classList && _qOv.classList.contains('show');
+        const _rShow = _rOv && _rOv.classList && _rOv.classList.contains('show');
+        if(_qShow || _rShow){
+          window._advQuizDeadlockSaverTimer = setTimeout(_quizDeadlockSaverCheck, 3000);
+          return;
+        }
+        // (7) 其他合法 modal 開著 → 重排 3 秒
+        try{
+          if(typeof _gpIsAnyLegitModalOpen === 'function' && _gpIsAnyLegitModalOpen()){
+            window._advQuizDeadlockSaverTimer = setTimeout(_quizDeadlockSaverCheck, 3000);
+            return;
+          }
+        }catch(_){}
+        // (8) _gamePaused=true 且沒有合法 modal → 看 _gp heartbeat 處理,先重排
+        if(_gamePaused){
+          window._advQuizDeadlockSaverTimer = setTimeout(_quizDeadlockSaverCheck, 3000);
+          return;
+        }
+        // ── 老師需求核心:看「右方是否出現玩家操作面板」──
+        //   - p1 該動 + action-panel 顯示 = 玩家正在思考,不算卡死
+        //   - p1 該動 + action-panel hidden = UI 層卡死,救
+        //   - p2 該動 = action-panel 本來就 hidden,直接看 actor.acted 判斷,救
+        const _isP1 = _ac.side === 'p1';
+        const _ap = document.getElementById('action-panel');
+        const _apVisible = _ap && _ap.style.display !== 'none';
+        if(_isP1 && _apVisible){
+          // p1 該動 + action-panel 顯示中 = 玩家正常操作中,不算卡死
+          return;
+        }
+        // ── 真的卡死了:讓當前 actor 用普攻過這回合 ──
+        // ★ v3.3.7 — 世界 BOSS 戰 client 端守門:
+        //   client 不能直接 execAtk(會跟 host 狀態不同步),
+        //   也不主動 sendAction(因為卡死多半是 host 端問題,client 救沒用)
+        //   client 端只能等 host 救或重連,所以這裡直接 return,讓 host 救
+        const _isWbConnectedMode = !!(typeof _adventureStage !== 'undefined'
+          && _adventureStage === 'worldboss'
+          && window._wbInWorldBossMode);
+        const _isWbHost = !!window._wbConnectedHostMode;
+        if(_isWbConnectedMode && !_isWbHost){
+          console.warn('🚨 [答題後卡死救援] 連線 client 端不主動救援,等 host 處理');
+          return;
+        }
+        console.warn('🚨 [答題後卡死救援] actor=' + _ac.name + '(' + _ac.side + '-' + _ac.pos + ')'
+          + ', curHp=' + _ac.curHp + ', acted=' + _ac.acted
+          + ', isP1=' + _isP1 + ', actionPanelVisible=' + _apVisible
+          + ' → 自動普攻過回合');
+        try{ if(typeof log === 'function') log('⚠️ 偵測到行動卡住,自動以普攻過回合'); }catch(_){}
+        // 選一個活著的對手
+        const _foeSide = _isP1 ? 'p2' : 'p1';
+        const _foes = (G[_foeSide] || []).filter(x => x && x.curHp > 0);
+        if(_foes.length === 0){
+          console.warn('🚨 [答題後卡死救援] 找不到對手 → 直接 endAction');
+          try{ if(typeof endAction === 'function') endAction(_ac, 0); }catch(_eE){}
+          return;
+        }
+        const _foe = _foes[Math.floor(Math.random() * _foes.length)];
+        try{
+          if(typeof execAtk === 'function' && typeof endAction === 'function'){
+            const _atk = (typeof _ac.atk === 'number') ? _ac.atk : 1;
+            execAtk(_ac, _foe, _atk);
+            endAction(_ac, 0);
+            console.log('✅ [答題後卡死救援] 已強制 ' + _ac.name + ' 普攻 → ' + _foe.name);
+          }else{
+            if(typeof doRest === 'function'){ doRest(); }
+          }
+        }catch(_eSave){
+          console.error('🚨 [答題後卡死救援] execAtk 失敗,退回 endAction', _eSave);
+          try{ endAction(_ac, 0); }catch(_){}
+        }
+      }catch(_eOuter){
+        console.warn('[答題後卡死救援] watchdog 內部例外', _eOuter);
+      }
+    }, 3000);
+  }catch(_eSetup){
+    console.warn('[答題後卡死救援] watchdog 啟動失敗', _eSetup);
+  }
+
   if (_advBossActionSkip) {
     // ★ v1.0.20260501.4890 — BOSS HP≤50% 強制憤怒爆發插隊(不被「封印行動」跳過)
     //   設計原因:HP≤50% 憤怒爆發是 BOSS 的核心特色機制,類似於受傷反擊,
