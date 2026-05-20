@@ -1,23 +1,27 @@
 /* ============================================================
  * 小英雄大對抗 — Service Worker (sw.js)
- * 版本: v3.4.13 (與 window._GAME_LOADED_VERSION 同步)
+ * 版本: v3.4.15 (與 window._GAME_LOADED_VERSION 同步)
  *
  * 設計重點(iPad 友善):
  *   1. 資源清單由 client 端 postMessage 傳入,SW 不寫死 URL → 老師之後加資源不用改 sw.js
  *   2. 批次下載 (iPad 限制並行 3, 桌機 8) → 避免 iOS 記憶體壓力
  *   3. 單一資源失敗不影響整體 → 跨域 GitHub raw 用 no-cors
- *   4. 快取分層: shell (核心檔案) + assets (圖片/音訊)
+ *   4. 快取分層: shell (核心檔案, 隨版本更新) + assets (圖片/音訊, 永久保留)
  *   5. 進度回報給 client → 顯示安裝讀條
- *   6. 版本更新時保留舊 asset cache 直到新版下載完, 避免戰鬥中斷線
+ *   6. ★ v3.4.15 — ASSET_CACHE 不再綁版本 (固定為 'lxps-assets-v1')
+ *      圖片/音訊以 URL 為 key, GitHub raw 上的素材不會原地改, 沒理由因版本升級
+ *      就砍光重抓。這修復了「每次更新都顯示首次安裝+0% 重新下載」的 bug。
  *
  * 更新方式:
- *   每次老師發新版,改下面 SW_VERSION (例 'v3.4.13' → 'v3.4.14') + 改 index.html 內的
- *   window._GAME_LOADED_VERSION 即可,舊版快取會自動清理,新版資源背景下載。
+ *   每次老師發新版,改下面 SW_VERSION (例 'v3.4.14' → 'v3.4.15') + 改 index.html 內的
+ *   window._GAME_LOADED_VERSION 即可。舊版的 SHELL_CACHE 會被清掉(取得新 index.html/JS/CSS),
+ *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.4.14';
+const SW_VERSION = 'v3.4.15';
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
-const ASSET_CACHE = 'lxps-assets-' + SW_VERSION;
+// ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
+const ASSET_CACHE = 'lxps-assets-v1';
 
 // 同層核心檔案 — SW 安裝時自動抓 (這些一定要快取)
 const SHELL_URLS = [
@@ -68,14 +72,16 @@ self.addEventListener('install', function(event){
 });
 
 // ─────────────────────────────────────────────
-// activate: 清除舊版快取
+// activate: 清除舊版 SHELL 快取 (ASSET 快取保留, 因為它不綁版本)
 // ─────────────────────────────────────────────
 self.addEventListener('activate', function(event){
   console.log('[SW] activate', SW_VERSION);
   event.waitUntil(
     caches.keys().then(function(keys){
       return Promise.all(keys.map(function(key){
-        // 保留當前版本的兩個 cache, 刪除其他舊版
+        // ★ v3.4.15 — 保留當前版本的 SHELL_CACHE 和固定的 ASSET_CACHE
+        // 舊版的 lxps-shell-vX.X.X 會被清掉, 但 lxps-assets-v1 永遠保留
+        // 同時清掉 v3.4.15 之前的舊 lxps-assets-vX.X.X (一次性遷移)
         if(key !== SHELL_CACHE && key !== ASSET_CACHE){
           console.log('[SW] delete old cache:', key);
           return caches.delete(key);

@@ -65877,7 +65877,9 @@ function _openInChrome() {
 // ═══════════════════════════════════════════════════════════════
 window._lxpsPWA = (function(){
   var SW_PATH = 'sw.js';
-  // 安裝完成標記(用 localStorage 記住,避免每次都跳安裝讀條)
+  // ★ v3.4.15 — 安裝完成標記(只記「是否裝過」, 不再記版本號)
+  // 舊版 (v3.4.13/14) 把版本號存進來, 導致每次升版都觸發「首次安裝」讀條 +
+  // 從 0% 全部重抓圖片音訊。現改為布林意義: 任何非空值都視為已安裝過。
   var INSTALLED_KEY = 'lxps_pwa_installed_ver';
   var deferredInstallPrompt = null;
   var swReg = null;
@@ -66108,8 +66110,14 @@ window._lxpsPWA = (function(){
             console.log('[PWA] 可用空間: ' + freeMB.toFixed(1) + ' MB');
             if(freeMB < minRequiredMB){
               console.warn('[PWA] 空間不足, 降級為 runtime cache 模式');
-              // 不開預載, 標記已安裝(避免每次都重試), 但 SW 仍會 cache-first
-              try{ localStorage.setItem(INSTALLED_KEY, window._GAME_LOADED_VERSION || 'unknown'); }catch(_){}
+              // ★ v3.4.15 — 標記已安裝(讀取端只看是否非空, 寫什麼都行;
+              // 為了除錯方便, 寫入「installed@當前版本@時間戳」)
+              try{
+                localStorage.setItem(
+                  INSTALLED_KEY,
+                  'installed@' + (window._GAME_LOADED_VERSION || 'unknown') + '@' + Date.now()
+                );
+              }catch(_){}
               return resolve({ done: 0, failed: 0, total: 0, lowStorage: true });
             }
             doPrecache();
@@ -66142,8 +66150,12 @@ window._lxpsPWA = (function(){
             _updateInstallProgress(d.total, d.total, '✓ 安裝完成!');
             setTimeout(function(){
               _hideInstallProgress();
+              // ★ v3.4.15 — 標記已安裝(讀取端只看是否非空)
               try{
-                localStorage.setItem(INSTALLED_KEY, window._GAME_LOADED_VERSION || 'unknown');
+                localStorage.setItem(
+                  INSTALLED_KEY,
+                  'installed@' + (window._GAME_LOADED_VERSION || 'unknown') + '@' + Date.now()
+                );
               }catch(_){}
               resolve(d);
             }, 800);
@@ -66206,8 +66218,11 @@ window._lxpsPWA = (function(){
 
   // ─── 入口: 等 SW 註冊+資料庫載入完, 啟動預載 ───
   function bootPWA(){
-    var currentVer = window._GAME_LOADED_VERSION || 'unknown';
-    var needInstall = (installedVer !== currentVer);
+    // ★ v3.4.15 — 「首次安裝」判斷改為: 只看是否裝過 (不再比對版本號)
+    // 原本 needInstall = (installedVer !== currentVer), 結果每次升版 currentVer
+    // 變了 → 整個觸發「首次安裝中」讀條 + 從 0% 重抓所有圖片音訊。
+    // 現在改成: 只要 installedVer 有任何非空值, 就視為已安裝過, 走背景補抓。
+    var needInstall = !installedVer;
 
     registerSW().then(function(reg){
       // 等到 SW 變成 controller(才能 postMessage 控制它)
@@ -73905,7 +73920,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.14';
+window._GAME_LOADED_VERSION = 'v3.4.15';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
