@@ -21768,12 +21768,32 @@ function showPopup(h, val, type){
   const gcR=gc.getBoundingClientRect();
   const eR=el.getBoundingClientRect();
   const scale=gcR.width/1920;
-  let x=(eR.left-gcR.left)/scale + eR.width/scale/2;
-  let y=(eR.top-gcR.top)/scale + eR.height/scale*(type==='heal'?0.72:0.22);
-  // 需求1：屬性加成數字偏移到右邊
-  if(type==='elem-adv'||type==='elem-dis'){
-    x += 120; // 偏移到基礎傷害右邊
-    y += 20;  // 稍微往下避免重疊
+
+  // ★ v3.3.6 — 老師反映:組隊房間傷害數字被表情列(z:9050)等蓋住
+  //   根因:#_gc_wrapper 用 transform:scale 形成 stacking context,
+  //         popup 即使在 #gc 內加 z-index 也蓋不過 body 層級的高 z 元素。
+  //   修法:只在世界 BOSS 戰時(_adventureStage='worldboss')把 popup 改 append 到 body
+  //         + position:fixed + viewport 座標 + z-index:10500,徹底脫離 stacking context。
+  //         其他關卡(台灣關/日本關等)沿用原邏輯(#gc 內 absolute),避免動到既有行為。
+  const _useBodyMode = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+
+  let x, y;
+  if(_useBodyMode){
+    // body + fixed:用 viewport 座標
+    x = eR.left + eR.width * 0.5;
+    y = eR.top  + eR.height * (type==='heal' ? 0.72 : 0.22);
+    if(type==='elem-adv'||type==='elem-dis'){
+      x += 120 * scale;
+      y += 20  * scale;
+    }
+  }else{
+    // #gc + absolute:原本的邏輯像素座標
+    x=(eR.left-gcR.left)/scale + eR.width/scale/2;
+    y=(eR.top-gcR.top)/scale + eR.height/scale*(type==='heal'?0.72:0.22);
+    if(type==='elem-adv'||type==='elem-dis'){
+      x += 120;
+      y += 20;
+    }
   }
   // 需求2：同一張卡連續傷害加0.5秒延遲
   const cardKey=h.side+'-'+h.pos;
@@ -21786,8 +21806,17 @@ function showPopup(h, val, type){
   const p=document.createElement('div');
   p.className='popup '+type;
   p.textContent=val;
-  p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;opacity:0;transition:opacity 0.05s;';
-  gc.appendChild(p);
+  if(_useBodyMode){
+    p.style.cssText='left:'+x+'px;top:'+y+'px;'
+      + 'position:fixed;opacity:0;transition:opacity 0.05s;'
+      + 'z-index:10500;'
+      + 'transform:scale('+scale+');transform-origin:left top;'
+      + 'pointer-events:none;';
+    document.body.appendChild(p);
+  }else{
+    p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;opacity:0;transition:opacity 0.05s;';
+    gc.appendChild(p);
+  }
   setTimeout(function(){
     p.style.opacity='1';
     p.style.transition='';
@@ -21856,15 +21885,34 @@ function _showTotalPopup(h, val, type, label){
   const gcR=gc.getBoundingClientRect();
   const eR=el.getBoundingClientRect();
   const scale=gcR.width/1920;
-  const x=(eR.left-gcR.left)/scale + eR.width/scale/2;
-  // ★ 合計固定在卡片中央（垂直方向略偏上），動畫不再位移，避免飄出畫面
-  const y=(eR.top-gcR.top)/scale + eR.height/scale*0.45;
+
+  // ★ v3.3.6 — 同 showPopup:世界 BOSS 戰時 popup 改 body + fixed,真正置頂
+  const _useBodyMode = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+
+  let x, y;
+  if(_useBodyMode){
+    x = eR.left + eR.width * 0.5;
+    y = eR.top  + eR.height * 0.45;
+  }else{
+    x = (eR.left-gcR.left)/scale + eR.width/scale/2;
+    // ★ 合計固定在卡片中央（垂直方向略偏上），動畫不再位移，避免飄出畫面
+    y = (eR.top-gcR.top)/scale + eR.height/scale*0.45;
+  }
   const p=document.createElement('div');
   p.className='popup '+type;
   p.innerHTML='<span class="total-label">'+(label||'合計')+'</span>'+
               '<span class="total-num">'+(type==='total-heal'?'+':'')+val+'</span>';
-  p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;';
-  gc.appendChild(p);
+  if(_useBodyMode){
+    p.style.cssText='left:'+x+'px;top:'+y+'px;'
+      + 'position:fixed;'
+      + 'z-index:10500;'
+      + 'transform:scale('+scale+');transform-origin:left top;'
+      + 'pointer-events:none;';
+    document.body.appendChild(p);
+  }else{
+    p.style.cssText='left:'+x+'px;top:'+y+'px;position:absolute;';
+    gc.appendChild(p);
+  }
   setTimeout(function(){if(p.parentNode)p.remove();},2100);
 }
 function _screenShake2(){
