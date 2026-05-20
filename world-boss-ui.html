@@ -827,43 +827,44 @@
   }
 
   /* ─── 左側邀請通知 (全站常駐) ───────────────────────────── */
+  /* ★ v3.4.2 — 老師 2026/5/20 回報:iPad 上邀請通知尺寸太小,放大 200% */
   #wb-invite-notif-stack{
-    position:fixed; left:14px; top:50%; transform:translateY(-50%);
-    z-index:2147483640; display:flex; flex-direction:column; gap:12px;
-    pointer-events:none; max-width:320px;
+    position:fixed; left:28px; top:50%; transform:translateY(-50%);
+    z-index:2147483640; display:flex; flex-direction:column; gap:24px;
+    pointer-events:none; max-width:640px;
   }
   #wb-invite-notif-stack .wb-inv-notif{
     pointer-events:auto;
     background:linear-gradient(160deg,#2a1545 0%,#150a25 100%);
-    border:2.5px solid #ffe066; border-radius:14px;
-    padding:14px 16px;
-    box-shadow:0 0 24px rgba(255,224,102,0.5),0 6px 20px rgba(0,0,0,0.7);
+    border:5px solid #ffe066; border-radius:28px;
+    padding:28px 32px;
+    box-shadow:0 0 48px rgba(255,224,102,0.5),0 12px 40px rgba(0,0,0,0.7);
     color:#ffe8a0; font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
     animation:wbInvSlideIn 0.4s ease-out;
-    position:relative; min-width:260px;
+    position:relative; min-width:520px;
   }
   @keyframes wbInvSlideIn{
     from { transform:translateX(-120%); opacity:0; }
     to   { transform:translateX(0);     opacity:1; }
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-hdr{
-    font-size:12px; color:#ffe066; letter-spacing:1px;
-    text-shadow:0 0 8px rgba(255,224,102,0.6);
-    margin-bottom:4px; font-weight:800;
+    font-size:24px; color:#ffe066; letter-spacing:2px;
+    text-shadow:0 0 16px rgba(255,224,102,0.6);
+    margin-bottom:8px; font-weight:800;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-from{
-    font-size:15px; color:#fff; font-weight:700; letter-spacing:0.5px;
+    font-size:30px; color:#fff; font-weight:700; letter-spacing:1px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-room{
-    font-size:11px; color:#aaa; margin-top:3px; letter-spacing:0.5px;
+    font-size:22px; color:#aaa; margin-top:6px; letter-spacing:1px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar-wrap{
-    height:5px; background:rgba(0,0,0,0.5); border-radius:3px;
-    margin:8px 0; overflow:hidden;
+    height:10px; background:rgba(0,0,0,0.5); border-radius:6px;
+    margin:16px 0; overflow:hidden;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar{
     height:100%; background:linear-gradient(90deg,#ffe066,#ff8855);
-    border-radius:3px;
+    border-radius:6px;
     transition:width 0.3s linear;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-bar.danger{
@@ -871,16 +872,16 @@
     animation:wbInvBarPulse 0.6s ease-in-out infinite;
   }
   @keyframes wbInvBarPulse{
-    0%,100% { box-shadow:0 0 4px rgba(255,80,40,0.5); }
-    50%     { box-shadow:0 0 14px rgba(255,80,40,1); }
+    0%,100% { box-shadow:0 0 8px rgba(255,80,40,0.5); }
+    50%     { box-shadow:0 0 28px rgba(255,80,40,1); }
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btns{
-    display:flex; gap:8px; margin-top:6px;
+    display:flex; gap:16px; margin-top:12px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn{
-    flex:1; padding:8px 6px; font-size:13px; font-weight:700;
-    border-radius:8px; cursor:pointer; font-family:inherit;
-    border:none; transition:all 0.15s; letter-spacing:1px;
+    flex:1; padding:16px 12px; font-size:26px; font-weight:700;
+    border-radius:16px; cursor:pointer; font-family:inherit;
+    border:none; transition:all 0.15s; letter-spacing:2px;
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept{
     background:linear-gradient(135deg,#5dcaa5,#3aa580); color:#fff;
@@ -890,16 +891,16 @@
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.decline{
     background:rgba(255,80,80,0.25); color:#ffaaaa;
-    border:1.5px solid rgba(255,100,100,0.4);
+    border:3px solid rgba(255,100,100,0.4);
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.accept:not(:disabled):hover{
-    transform:translateY(-1px); box-shadow:0 4px 14px rgba(93,202,165,0.4);
+    transform:translateY(-2px); box-shadow:0 8px 28px rgba(93,202,165,0.4);
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-btn.decline:hover{
     background:rgba(255,80,80,0.4);
   }
   #wb-invite-notif-stack .wb-inv-notif .wb-inv-busy-msg{
-    font-size:11px; color:#ffaa88; margin-top:4px; letter-spacing:0.5px;
+    font-size:22px; color:#ffaa88; margin-top:8px; letter-spacing:1px;
     text-align:center;
   }
 
@@ -3118,10 +3119,9 @@
     gap:6px !important;
   }
   /* ★ FIX 20260517(q) — iPad(≤1180px) 定型文列寬度跟 BOSS 血條一致縮短 40% */
-  /* ★ v3.3.6 — 老師需求4:iPad 版定型文 UI 寬度 +10%(648 → 713) */
   @media (max-width:1180px){
     #wb-emoji-bar-real{
-      width:min(713px,calc(100vw - 80px)) !important;
+      width:min(648px,calc(100vw - 80px)) !important;
     }
   }
 </style>
@@ -6538,71 +6538,6 @@
       if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
     }catch(_){}
 
-    // ★ v3.3.6 — 連線組隊戰也要建「本場總傷害」UI(老師需求3:把 UI 修回來)
-    //   原本只有單人練習路徑會建 #wb-solo-cur-dmg-bar,連線房主路徑直接跳過 → UI 消失。
-    //   修法:在這裡同樣建一份,並標記 _wbConnectedTotalDmgBar=true,讓更新邏輯
-    //         看到「連線模式」時改用全隊 contributions 累計而非單人。
-    if(!document.getElementById('wb-solo-cur-dmg-bar')){
-      const dmgBar = document.createElement('div');
-      dmgBar.id = 'wb-solo-cur-dmg-bar';
-      dmgBar.setAttribute('data-wb-mode', 'connected');  // 連線模式標記
-      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 95px);'
-        + 'transform:none;z-index:6;'
-        + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
-        + 'border-radius:14px;padding:12px 20px;'
-        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
-        + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
-        + 'pointer-events:auto;'
-        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-      dmgBar.innerHTML =
-        '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
-        + '<span id="wb-solo-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
-      const _gcForDmg = document.getElementById('gc');
-      if(_gcForDmg){
-        _gcForDmg.appendChild(dmgBar);
-      }else{
-        document.body.appendChild(dmgBar);
-      }
-      console.log('[WB-Host v6] ✅ 連線模式本場總傷 UI 已建立');
-    }
-
-    // ★ v3.3.6 — 啟動連線模式本場總傷更新心跳(每 600ms 抓 contributions 加總)
-    //   設計:_wbNet.getContributions() 在房主端會回傳 WB.contributions(所有玩家累計)
-    //         client 端會回傳房主廣播的 meta.contributions
-    //         不論身分,只要場上有人造成傷害,顯示同步更新
-    try{
-      if(window._wbConnectedTotalDmgTimer){
-        clearInterval(window._wbConnectedTotalDmgTimer);
-      }
-      window._wbConnectedTotalDmgTimer = setInterval(function(){
-        try{
-          const display = document.getElementById('wb-solo-cur-dmg-display');
-          if(!display) return;
-          let total = 0;
-          // 1) 房主端從 _wbNet.getContributions() 取
-          if(window._wbNet && typeof window._wbNet.getContributions === 'function'){
-            const ctrb = window._wbNet.getContributions() || {};
-            for(const uid in ctrb){
-              if(ctrb[uid] && typeof ctrb[uid].dmgDealt === 'number'){
-                total += ctrb[uid].dmgDealt;
-              }
-            }
-          }
-          // 2) Client 端也可以從 snapshot.meta.contributions 取(fallback)
-          if(total === 0 && window._wbNet && typeof window._wbNet.getSnapshot === 'function'){
-            const snap = window._wbNet.getSnapshot() || {};
-            const ctrb = (snap.meta && snap.meta.contributions) || {};
-            for(const uid in ctrb){
-              if(ctrb[uid] && typeof ctrb[uid].dmgDealt === 'number'){
-                total += ctrb[uid].dmgDealt;
-              }
-            }
-          }
-          display.textContent = total.toLocaleString();
-        }catch(_){}
-      }, 600);
-    }catch(_){}
-
     // ★ BGM 預先切到世界戰專屬 BGM(advStartBattle 內 bgmStop 後再兜底重啟)
     try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
 
@@ -7089,6 +7024,28 @@
   // === 事件回呼 ===
   window._wbNet.on('onRoomUpdate', function(data){
     if(!data || !data.players) return;
+    // ★ v3.4.3 — 本場總傷同步:client 端從 meta.contributions 讀自己的傷害更新到 dmg display
+    //   問題情境(老師 2026/5/20 回報):
+    //     兩端的「本場總傷」數字沒同步 — client 永遠是 0
+    //   根因:
+    //     - host 端會把 contributions 累加並透過 _wbNetUpdateContribs() 寫進 meta.contributions
+    //       (v3.3.6 已實作),但只有「練習模式 fake _wbNet」會更新 UI
+    //     - 真實連線模式下,onRoomUpdate 沒處理 contributions → UI 始終是 0
+    //   修法:onRoomUpdate 觸發時,從 meta.contributions[myUid] 讀 dmgDealt 更新 UI
+    try{
+      const _myUid = window._gUserId;
+      const _ctrb = data.meta && data.meta.contributions;
+      if(_myUid && _ctrb && _ctrb[_myUid]){
+        const _myDmg = _ctrb[_myUid].dmgDealt || 0;
+        const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
+        if(_dmgEl){
+          const _prev = parseInt(_dmgEl.textContent.replace(/,/g, ''), 10) || 0;
+          if(_prev !== _myDmg){
+            _dmgEl.textContent = _myDmg.toLocaleString();
+          }
+        }
+      }
+    }catch(_eDmgSync){ /* 防呆 */ }
     // ★ FIX 20260517(r) — 同步舊 lobby 房號(若還在 DOM) + 新隊伍確認頁右上角房號
     try{
       const _roomId = window._wbNet.getRoomId() || '------';
@@ -7477,55 +7434,6 @@
         try{
           const emojiBar = document.getElementById('wb-emoji-bar-real');
           if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
-        }catch(_){}
-
-        // ★ v3.3.6 — Client 端也建「本場總傷害」UI(老師需求3)
-        //   數值來源:client 端從 _wbNet.getSnapshot().meta.contributions 取
-        //   (房主在每次 _wbHostSyncG 後會 patch meta.contributions,讓 client 中途也能更新)
-        if(!document.getElementById('wb-solo-cur-dmg-bar')){
-          const dmgBar = document.createElement('div');
-          dmgBar.id = 'wb-solo-cur-dmg-bar';
-          dmgBar.setAttribute('data-wb-mode', 'connected-client');
-          dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 95px);'
-            + 'transform:none;z-index:6;'
-            + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
-            + 'border-radius:14px;padding:12px 20px;'
-            + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
-            + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
-            + 'pointer-events:auto;'
-            + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-          dmgBar.innerHTML =
-            '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
-            + '<span id="wb-solo-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
-          const _gcForDmg = document.getElementById('gc');
-          if(_gcForDmg){
-            _gcForDmg.appendChild(dmgBar);
-          }else{
-            document.body.appendChild(dmgBar);
-          }
-          console.log('[WB-Client v6] ✅ 本場總傷 UI 已建立(client)');
-        }
-        // ★ v3.3.6 — Client 端心跳:每 600ms 從 snapshot.meta.contributions 加總
-        try{
-          if(window._wbConnectedTotalDmgTimer){
-            clearInterval(window._wbConnectedTotalDmgTimer);
-          }
-          window._wbConnectedTotalDmgTimer = setInterval(function(){
-            try{
-              const display = document.getElementById('wb-solo-cur-dmg-display');
-              if(!display) return;
-              if(!window._wbNet || typeof window._wbNet.getSnapshot !== 'function') return;
-              const snap = window._wbNet.getSnapshot() || {};
-              const ctrb = (snap.meta && snap.meta.contributions) || {};
-              let total = 0;
-              for(const uid in ctrb){
-                if(ctrb[uid] && typeof ctrb[uid].dmgDealt === 'number'){
-                  total += ctrb[uid].dmgDealt;
-                }
-              }
-              display.textContent = total.toLocaleString();
-            }catch(_){}
-          }, 600);
         }catch(_){}
 
         // 第一次也要把 fullWireG 套上去(防 wire 跟 newHero 重建不一致)
@@ -8906,43 +8814,11 @@
     if(heroRow){
       const cards = heroRow.querySelectorAll('.wb-hero-battle-card');
       card = cards[slotIdx] || null;
-      // ★ v3.3.6 — 老師需求5:檢查找到的卡是否真的可見(避免找到隱藏 DOM 導致泡泡跑左上角)
-      //   根因:v6 模式下 #gc 戰場是真實畫面,但舊版 #wb-battle-heroes-row DOM 仍存在於
-      //         隱藏的 wb-arena-overlay 內。display:none 的元素 getBoundingClientRect()
-      //         全部回 0 → 泡泡計算位置 left=0 - bw/2, top=0 - bh - 12 → 跑到畫面左上角。
-      //   修法:檢查 rect.width <= 0 視為「不可見/找錯了」,清掉 card 走 fallback。
-      if(card){
-        const _r = card.getBoundingClientRect();
-        if(_r.width <= 0 || _r.height <= 0){
-          card = null;
-        }
-      }
     }
     // (2) v4 主程式 #gc:用 body.wb-in-worldboss-battle 判斷
     if(!card && document.body.classList.contains('wb-in-worldboss-battle')){
       const z1Cards = document.querySelectorAll('#gc.adv-battle #z1 #row1 .card');
       card = z1Cards[slotIdx] || null;
-      // 同樣檢查可見性
-      if(card){
-        const _r2 = card.getBoundingClientRect();
-        if(_r2.width <= 0 || _r2.height <= 0){
-          card = null;
-        }
-      }
-    }
-    // ★ v3.3.6 — 終極 fallback:在世界 BOSS 戰但找不到任一可見卡(可能 #gc 還沒渲染完)
-    //   把泡泡顯示在畫面中下方而非左上角,避免「顯示在左上角很不起眼」
-    if(!card && (document.body.classList.contains('wb-in-worldboss-battle')
-                 || window._wbInWorldBossMode)){
-      // 改用整個 #gc 當錨點,把泡泡放在 #gc 底部往上一些
-      const _gcEl = document.getElementById('gc');
-      if(_gcEl){
-        const _gr = _gcEl.getBoundingClientRect();
-        if(_gr.width > 0){
-          // 偽造一個 rect,讓下方計算邏輯走 #gc 底部位置
-          card = _gcEl;  // 暫用 #gc 當 card
-        }
-      }
     }
     if(!card) return;
     // 移除舊泡泡(同 slot 重發時)
@@ -8974,9 +8850,6 @@
     //   (進到 v4 戰鬥畫面後才會加這個 class,正好對應「角色卡可見」期間)
     const _isInWorldBossBattle = document.body.classList.contains('wb-in-worldboss-battle');
     let _targetCard = card;     // 顯示在「發送者自己卡」上(對齊 v3.3.3 新設計)
-    // ★ v3.3.6 — 標記是否走 #gc fallback(找不到真實卡時)
-    //   走 fallback 時,position 用 #gc 內水平 4 等分 + 底部上方位置 估算
-    const _isGcFallback = (card && card.id === 'gc');
     // ★ v3.3.5 — 三種顯示模式:
     //   quiz=答題期間大字、battle=戰鬥行動中中字、normal=閒置小字
     let _bubbleMode = _isQuizActive ? 'quiz'
@@ -8988,7 +8861,6 @@
     if(_bubbleMode === 'quiz'){
       // 答題期間:300% 黃框金光(v3.3.3 原規格,老師明確指定)
       // ★ v3.3.5 — z-index 9999 不變,但加 pointer-events:none 確保不擋玩家點題目按鈕
-      // ★ v3.3.6 — 老師需求5:定型文泡泡不能被遮罩蓋住,提升到 11000 蓋過所有 UI
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;'
         + 'transform-origin: top center;'
         + 'font-size: 300% !important;'
@@ -9001,15 +8873,13 @@
         + 'max-width: 480px !important;'
         + 'white-space: normal !important;'
         + 'line-height: 1.25 !important;'
-        + 'z-index: 11000 !important;'
         + 'pointer-events: none !important;';
     }else if(_bubbleMode === 'battle'){
       // ★ v3.3.5 — 戰鬥行動中:150% 紫框(較克制,不蓋住傷害飄字)
+      //   - z-index 比氣泡預設低一些(8500),讓 #gc 內的傷害 popup(z auto)能浮在上面
+      //     ⚠ 但實際上 popup 在 #gc 內部,氣泡 fixed 在 body,層級不直接比較,
+      //     主要靠位置避讓:氣泡在卡下方技能位置,傷害飄字在卡上方,自然不衝突
       //   - 寬度 max 320px 避免太佔位
-      // ★ v3.3.6 — 老師需求5:定型文泡泡不能被遮罩蓋住,要清楚顯示在所有圖層之上
-      //   原 z-index:8500 會被 wb-emoji-bar-real (z:9050) 或主程式答題遮罩蓋住
-      //   改為 11000:蓋過 quiz overlay(10900)、boss roar(10600)、emoji bar(9050)、
-      //               卡死偵測提示(理論上 10000 左右)等所有 UI
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;'
         + 'transform-origin: top center;'
         + 'font-size: 150% !important;'
@@ -9022,7 +8892,7 @@
         + 'max-width: 320px !important;'
         + 'white-space: normal !important;'
         + 'line-height: 1.3 !important;'
-        + 'z-index: 11000 !important;'
+        + 'z-index: 8500 !important;'
         + 'pointer-events: none !important;';
     }else{
       // 完全閒置(隊伍頁、結算頁等):維持小尺寸顯示在卡上方
@@ -9033,16 +8903,7 @@
     const bw = bubble.offsetWidth;
     const bh = bubble.offsetHeight;
     let left, top, placement;
-    if(_isGcFallback){
-      // ★ v3.3.6 — fallback 路徑:用 #gc 當錨點,把氣泡放在 slotIdx 對應的水平位置 + #gc 底部上方 80px
-      //   slotIdx 0~3 對應水平 1/8、3/8、5/8、7/8(把 #gc 水平 4 等分,各置中)
-      const _slotCount = 4;
-      const _slotIdxClamped = Math.max(0, Math.min(_slotCount - 1, slotIdx));
-      const _xCenter = rect.left + rect.width * (2 * _slotIdxClamped + 1) / (2 * _slotCount);
-      left = _xCenter - bw / 2;
-      top = rect.bottom - bh - 80;  // 距 #gc 底部 80px 上方
-      placement = 'bottom';
-    }else if(_isLargeBubble){
+    if(_isLargeBubble){
       // ★ v3.3.3 + v3.3.5 — 答題期間/戰鬥中:強制顯示在「發送者自己卡下方」(技能位置高度)
       //   卡片底部 +8px 往下凸出,氣泡完全在卡下,正好對應戰鬥畫面卡片下方空白區
       //   ★ v3.3.5 — 戰鬥模式時 +8px(比答題期的 +12px 緊貼一點,看起來更像從卡片冒出來)
@@ -9081,6 +8942,39 @@
   window._wbShowCardBubble = _wbShowCardBubble;
 
   window._wbNet.on('onChatMessage', function(msg){
+    // ★ v3.4.3 — 中央 toast 廣播訊息(畫面中央 3 秒大字提示)
+    //   來源:任何 client 呼叫 _wbBroadcastCenterToast() 寫進 chat
+    //   用途:答題獎勵選擇通知、隊友答題狀況通知
+    if(msg && msg._centerToast){
+      try{
+        const _ov = document.createElement('div');
+        _ov.style.cssText =
+          'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10650;'
+          + 'background:linear-gradient(135deg,rgba(20,15,40,0.95),rgba(10,8,30,0.95));'
+          + 'border:3px solid ' + (msg.color || '#ffe066') + ';border-radius:18px;'
+          + 'padding:24px 40px;color:#fff;'
+          + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+          + 'font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:2px;'
+          + 'text-shadow:0 2px 8px rgba(0,0,0,0.7);text-align:center;line-height:1.5;'
+          + 'box-shadow:0 0 40px ' + (msg.color || '#ffe066') + '88,'
+          + ' 0 12px 36px rgba(0,0,0,0.6);'
+          + 'pointer-events:none;animation:advDialogIn 0.35s cubic-bezier(0.34,1.56,0.64,1);'
+          + 'max-width:80vw;';
+        const _iconHtml = msg.icon ? ('<span style="margin-right:12px;font-size:1.2em;">' + msg.icon + '</span>') : '';
+        _ov.innerHTML = _iconHtml + msg.text;
+        document.body.appendChild(_ov);
+        const _dur = (typeof msg.dur === 'number' && msg.dur > 0) ? msg.dur : 3000;
+        setTimeout(function(){
+          try{
+            _ov.style.transition = 'opacity 0.4s, transform 0.4s';
+            _ov.style.opacity = '0';
+            _ov.style.transform = 'translate(-50%,-50%) scale(0.92)';
+            setTimeout(function(){ try{ _ov.remove(); }catch(_){} }, 450);
+          }catch(_){}
+        }, _dur);
+      }catch(_eCT){ console.warn('[centerToast] 顯示失敗', _eCT); }
+      return;
+    }
     // ★ v3.0 — 答題討論訊息:浮現在發送者的角色卡頂端
     // ★ FIX 20260517(f) — 隊伍確認頁開著時優先顯示在隊伍 slot 卡頂端
     //   (戰前定型文也走 isDiscussion=true,但發送時還沒進戰場,要找 .wb-tc-slot 而非 #z1 .card)
@@ -9977,7 +9871,9 @@
       //   ★ FIX 20260517(i) — 字體放大 100%(12→24, 20→40),改一行水平排「📜 本場總傷:836」
       //   ★ FIX 20260517(l) — 移到元素環「上方」貼左邊緣,避免蓋到順序條
       //                        元素環 top:50% height:140 → 中心線 - 90px 為 dmgBar bottom
-      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 95px);'
+      //   ★ v3.4.3 — 老師 2026/5/20 回報:仍會蓋到元素相剋環上緣,再往上移 25px
+      //                        從 calc(50% - 95px) → calc(50% - 120px)
+      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 120px);'
         + 'transform:none;'  /* 不再用 translateY,改直接 top 精確控位 */
         + 'z-index:6;'
         + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
@@ -10125,23 +10021,9 @@
       _wsty.textContent =
         // 桌機:1080px 上限,扣 100px 給右側能量條
         '#wb-adv-battle-overlay{width:min(1080px,calc(100vw - 100px));}'
-        // ★ v3.3.6 — iPad(≤1180px)BOSS 血條長度 +10%(648 → 713),老師需求4
+        // iPad(≤1180px,涵蓋 iPad Mini ~ iPad Pro 11"):縮短 40% → 648px 上限
         + '@media (max-width:1180px){'
-        +   '#wb-adv-battle-overlay{width:min(713px,calc(100vw - 80px)) !important;}'
-        // ★ v3.3.6 — iPad 版整個血條 overlay 高度縮 30%:padding 與字級全部按比例縮小
-        //   原 padding:16px 22px → 11px 16px(約 70%);
-        //   原血條高 36px → 25px;
-        //   原 BOSS 名 27px → 19px;turn-info 20px → 14px;HP 文字 20px → 14px;
-        //   shield row 上方 margin 12px → 8px;按鈕 padding/font-size 也縮
-        +   '#wb-adv-battle-overlay #wb-adv-mega-zone{padding:11px 16px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-zone > div:first-child{margin-bottom:7px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-zone > div:first-child > div:first-child{font-size:19px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-turn-info{font-size:14px !important;letter-spacing:1px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-boss-info-btn{padding:6px 13px !important;font-size:14px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-zone > div:nth-child(2){height:25px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-hp-text{font-size:14px !important;letter-spacing:1px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-shields-row{margin-top:8px !important;}'
-        +   '#wb-adv-battle-overlay #wb-adv-mega-shields-row > span{font-size:13px !important;}'
+        +   '#wb-adv-battle-overlay{width:min(648px,calc(100vw - 80px)) !important;}'
         + '}';
       document.head.appendChild(_wsty);
     }
