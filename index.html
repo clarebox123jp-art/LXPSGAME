@@ -1479,6 +1479,56 @@
     }
   };
 
+  // ★ v3.4.12 — 玩家標記某筆管理員回信為「已讀」
+  //   觸發時機:玩家打開「📬 管理員回信」分頁後,把當前清單中所有未讀的 reply 一次標記
+  //   作用:讓置頂通知 + 按鈕發亮可以消失,下次登入不再重複提示
+  window._fbMarkBugReplyRead = async function(id) {
+    if(!id) return false;
+    try {
+      await updateDoc(doc(_fbDb, 'bugReports', id), {
+        adminReplyRead: true,
+        adminReplyReadTs: Date.now(),
+      });
+      return true;
+    } catch(e) {
+      console.warn('[BUG 回報] 標記已讀失敗', e);
+      return false;
+    }
+  };
+
+  // ★ v3.4.12 — 玩家查詢「我自己的未讀回信」筆數
+  //   用於登入後判斷是否要彈出「老師已回覆」置頂通知 + 按鈕發亮
+  //   回傳: { count: number, items: [{id, adminReplyTs, content摘要}, ...] }
+  window._fbCountMyUnreadBugReplies = async function(uid) {
+    if(!uid) {
+      uid = (window._fbUser && window._fbUser.uid) || null;
+    }
+    if(!uid) return { count: 0, items: [] };
+    try {
+      const snap = await getDocs(collection(_fbDb, 'bugReports'));
+      const items = [];
+      snap.forEach(d => {
+        const v = d.data() || {};
+        if(v.uid !== uid) return;
+        // 有 adminReply 但 adminReplyRead 為 false / 未設 → 算未讀
+        const _hasReply = !!(v.adminReply && v.adminReply.toString().trim());
+        const _isRead = (v.adminReplyRead === true);
+        if(_hasReply && !_isRead){
+          items.push({
+            id: v.id || d.id,
+            adminReplyTs: v.adminReplyTs || 0,
+            adminReplyTime: v.adminReplyTs ? new Date(v.adminReplyTs).toLocaleString('zh-TW') : '',
+          });
+        }
+      });
+      items.sort((a, b) => (b.adminReplyTs || 0) - (a.adminReplyTs || 0));
+      return { count: items.length, items };
+    } catch(e) {
+      console.warn('[BUG 回報] 查詢未讀回信失敗', e);
+      return { count: 0, items: [] };
+    }
+  };
+
   // ★ v3.4.6 — 玩家端:查詢「我自己」的 BUG 回報清單(只顯示我的 uid)
   //   用於玩家端「管理員回信」分頁:顯示自己送出過的回報,以及老師的回覆
   window._fbListBugReportsByUid = async function(uid) {
@@ -2469,6 +2519,19 @@
           }
         }catch(e){ console.warn('[InviteCode] 生成異常', e); }
       }, 800);
+      // ★ v3.4.12 — 登入後 5 秒檢查「管理員回信未讀」
+      //   有未讀 → 彈出短促置頂通知 + 關卡首頁 BUG 回報按鈕發亮
+      //   並啟動每 60 秒輕量輪詢,讓老師在玩家還在線時回覆也能即時亮燈
+      setTimeout(()=>{
+        try{
+          if(typeof window._checkUnreadBugReplies === 'function'){
+            window._checkUnreadBugReplies();
+          }
+          if(typeof window._startUnreadBugReplyPolling === 'function'){
+            window._startUnreadBugReplyPolling();
+          }
+        }catch(e){ console.warn('[未讀回信] 登入後啟動失敗', e); }
+      }, 5000);
       if(window._sessionHeartbeat) clearInterval(window._sessionHeartbeat);
       const _checkHeartbeat = async () => {
         if(!window._gUserId || !window._mySessionId) return;
@@ -56393,6 +56456,223 @@ function _hideDeadlockRescueButton(){
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v3.4.12 — 管理員回信「未讀通知」系統
+//   流程:
+//     1. 玩家登入完成後 _checkUnreadBugReplies() 查詢自己的 bugReports
+//     2. 有未讀(adminReply 非空 + adminReplyRead !== true)→
+//        - 彈出短促置頂通知視窗(3 秒淡出,可點掉)
+//        - 關卡首頁的「🐛 卡死或 BUG 回報」按鈕加脈動光暈 + 紅點 badge
+//     3. 玩家打開「📬 管理員回信」分頁 → 把所有未讀的 reply 標記已讀
+//        並清掉按鈕發亮(_clearUnreadBugReplyHint)
+//
+//   設計考量:
+//     - 不打擾現有戰鬥流程:登入後 5 秒延遲,避免跟其他登入後彈窗搶版位
+//     - 不重複提示:同一筆 reply 標已讀後,下次登入不會再彈
+//     - 老師回覆很快(可能玩家還在玩):每 60 秒輕量重查一次,有新回覆會即時亮燈
+//     - 通知視窗用 z-index 2147483645(略低於 BUG 回報按鈕本身),避免擋到按鈕引導
+// ════════════════════════════════════════════════════════════════
+
+// 將未讀回信 id 暫存在 window,方便「管理員回信」分頁載入時一次標已讀
+window._pendingUnreadBugReplyIds = window._pendingUnreadBugReplyIds || [];
+
+// 主入口:登入完成後呼叫,檢查並觸發通知
+window._checkUnreadBugReplies = async function(opts){
+  opts = opts || {};
+  try{
+    const _uid = (window._fbUser && window._fbUser.uid) || null;
+    if(!_uid) return;
+    if(typeof window._fbCountMyUnreadBugReplies !== 'function') return;
+    const _res = await window._fbCountMyUnreadBugReplies(_uid);
+    const _count = (_res && _res.count) || 0;
+    const _items = (_res && _res.items) || [];
+    window._pendingUnreadBugReplyIds = _items.map(x => x.id);
+    if(_count > 0){
+      // ★ 通知顯示:置頂視窗(只在第一次發現時彈,輪詢時只更新發亮 badge)
+      if(!opts.silent){
+        try{ _showUnreadBugReplyTopBanner(_count); }catch(_e){ console.warn('[未讀回信] 通知顯示失敗', _e); }
+      }
+      try{ _applyUnreadBugReplyButtonGlow(_count); }catch(_e){ console.warn('[未讀回信] 按鈕發亮失敗', _e); }
+    } else {
+      // 沒有未讀 → 確保按鈕無發亮殘留(老師可能在後台刪除回信或玩家在別裝置看過)
+      try{ _clearUnreadBugReplyButtonGlow(); }catch(_){}
+    }
+  }catch(e){
+    console.warn('[未讀回信] 檢查失敗', e);
+  }
+};
+
+// 玩家打開「管理員回信」分頁後呼叫,把所有未讀標記已讀並清掉發亮
+window._markPendingBugRepliesAsRead = async function(){
+  try{
+    const _ids = (window._pendingUnreadBugReplyIds || []).slice();
+    if(_ids.length === 0){
+      // 即便沒有 pending 也清一下按鈕,避免畫面殘留
+      try{ _clearUnreadBugReplyButtonGlow(); }catch(_){}
+      return;
+    }
+    if(typeof window._fbMarkBugReplyRead !== 'function') return;
+    // 並行送出標記(不等回應,有錯就算了下次登入再標)
+    _ids.forEach(id => {
+      try{ window._fbMarkBugReplyRead(id); }catch(_){}
+    });
+    window._pendingUnreadBugReplyIds = [];
+    try{ _clearUnreadBugReplyButtonGlow(); }catch(_){}
+  }catch(e){
+    console.warn('[未讀回信] 標記已讀失敗', e);
+  }
+};
+
+// 置頂通知視窗(短促、3 秒淡出、可點掉)
+function _showUnreadBugReplyTopBanner(count){
+  // 避免重複彈
+  const _old = document.getElementById('_unread-bug-reply-banner');
+  if(_old){ _old.remove(); }
+
+  const _banner = document.createElement('div');
+  _banner.id = '_unread-bug-reply-banner';
+  _banner.style.cssText = [
+    'position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);',
+    'z-index:2147483645;',
+    'background:linear-gradient(135deg,rgba(40,80,140,0.97),rgba(60,110,180,0.97),rgba(35,75,130,0.97));',
+    'border:2.5px solid rgba(140,210,255,0.95);',
+    'border-radius:14px;padding:14px 22px;',
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    'color:#ffffff;font-size:17px;font-weight:700;',
+    'box-shadow:0 0 30px rgba(120,200,255,0.7),0 6px 20px rgba(0,0,0,0.5);',
+    'opacity:0;transition:opacity 0.45s ease,transform 0.45s cubic-bezier(0.34,1.56,0.64,1);',
+    'cursor:pointer;max-width:min(560px,92vw);text-align:center;line-height:1.55;',
+    'letter-spacing:0.5px;user-select:none;',
+  ].join('');
+  _banner.innerHTML =
+    '<div style="font-size:21px;font-weight:900;color:#88ddff;margin-bottom:4px;letter-spacing:1px;">' +
+    '📨 老師已回覆你的回報' +
+    '</div>' +
+    '<div style="font-size:14px;color:#cce5ff;font-weight:500;">' +
+    '請到關卡首頁下方的「🐛 卡死或 BUG 回報」按鈕查看老師回覆的內容' +
+    (count > 1 ? '(共 ' + count + ' 則新回覆)' : '') +
+    '</div>' +
+    '<div style="font-size:11px;color:#88aacc;font-weight:400;margin-top:6px;">點此關閉</div>';
+
+  document.body.appendChild(_banner);
+  // 雙 rAF 觸發進場動畫
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      _banner.style.opacity = '1';
+      _banner.style.transform = 'translateX(-50%) translateY(0)';
+    });
+  });
+  // 提示音
+  try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.4); }catch(_){}
+
+  // 8 秒後自動淡出(學生看得到也來得及反應)
+  const _autoCloseTimer = setTimeout(() => {
+    try{ _fadeOut(); }catch(_){}
+  }, 8000);
+
+  const _fadeOut = () => {
+    try{ clearTimeout(_autoCloseTimer); }catch(_){}
+    if(!_banner || !_banner.parentNode) return;
+    _banner.style.opacity = '0';
+    _banner.style.transform = 'translateX(-50%) translateY(-12px)';
+    setTimeout(() => { try{ _banner.remove(); }catch(_){} }, 500);
+  };
+  _banner.onclick = _fadeOut;
+}
+
+// 加上按鈕發亮(脈動光暈 + 紅點 badge)
+function _applyUnreadBugReplyButtonGlow(count){
+  // 兩處按鈕都加:關卡首頁的 #adv-bug-report-btn + 戰鬥中的 #adv-bug-report-battle-btn
+  ['adv-bug-report-btn', 'adv-bug-report-battle-btn'].forEach(_btnId => {
+    const _btn = document.getElementById(_btnId);
+    if(!_btn) return;
+    // 注入發亮動畫 keyframes(只注入一次)
+    if(!document.getElementById('_unread-bug-reply-keyframes')){
+      const _style = document.createElement('style');
+      _style.id = '_unread-bug-reply-keyframes';
+      _style.textContent =
+        '@keyframes _unreadBugReplyPulse {' +
+        '  0%   { box-shadow: 0 0 18px rgba(120,200,255,0.6), 0 0 0 0 rgba(140,220,255,0.7); }' +
+        '  50%  { box-shadow: 0 0 32px rgba(140,220,255,1.0), 0 0 0 8px rgba(140,220,255,0.0); }' +
+        '  100% { box-shadow: 0 0 18px rgba(120,200,255,0.6), 0 0 0 0 rgba(140,220,255,0.7); }' +
+        '}' +
+        '#_unread-bug-reply-badge {' +
+        '  position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;' +
+        '  background:linear-gradient(135deg,#ff3366,#ff5588);' +
+        '  border:2px solid #fff;border-radius:11px;' +
+        '  color:#fff;font-size:13px;font-weight:900;' +
+        '  display:flex;align-items:center;justify-content:center;padding:0 5px;' +
+        '  box-shadow:0 0 12px rgba(255,80,120,0.85);z-index:1;' +
+        '  font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+        '  pointer-events:none;animation:_unreadBugReplyPulse 1.6s ease-in-out infinite;' +
+        '}';
+      document.head.appendChild(_style);
+    }
+    // 套用動畫到按鈕(蓋過原本的 box-shadow)
+    _btn.style.animation = '_unreadBugReplyPulse 1.6s ease-in-out infinite';
+    _btn.dataset.unreadGlow = '1';
+    // 加紅點 badge(若還沒有)
+    // 注意:按鈕本身需要 position:relative 才能讓 badge 絕對定位附著上去
+    if(_btn.style.position !== 'absolute' && _btn.style.position !== 'fixed'){
+      _btn.style.position = _btn.style.position || 'relative';
+    }
+    let _badge = _btn.querySelector('._unread-bug-badge');
+    if(!_badge){
+      _badge = document.createElement('span');
+      _badge.className = '_unread-bug-badge';
+      _badge.id = (_btnId === 'adv-bug-report-btn') ? '_unread-bug-reply-badge' : '_unread-bug-reply-badge-battle';
+      // 直接套相同樣式(badge id 在 keyframes 裡有定義,fallback inline 樣式以防戰鬥按鈕)
+      _badge.style.cssText =
+        'position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;' +
+        'background:linear-gradient(135deg,#ff3366,#ff5588);' +
+        'border:2px solid #fff;border-radius:11px;' +
+        'color:#fff;font-size:13px;font-weight:900;' +
+        'display:flex;align-items:center;justify-content:center;padding:0 5px;' +
+        'box-shadow:0 0 12px rgba(255,80,120,0.85);z-index:1;' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
+        'pointer-events:none;animation:_unreadBugReplyPulse 1.6s ease-in-out infinite;';
+      _btn.appendChild(_badge);
+    }
+    _badge.textContent = String(count);
+  });
+}
+
+// 清掉按鈕發亮(玩家看過後呼叫)
+function _clearUnreadBugReplyButtonGlow(){
+  ['adv-bug-report-btn', 'adv-bug-report-battle-btn'].forEach(_btnId => {
+    const _btn = document.getElementById(_btnId);
+    if(!_btn) return;
+    if(_btn.dataset.unreadGlow === '1'){
+      _btn.style.animation = '';
+      delete _btn.dataset.unreadGlow;
+    }
+    const _badge = _btn.querySelector('._unread-bug-badge');
+    if(_badge){ try{ _badge.remove(); }catch(_){} }
+  });
+  // 通知視窗如果還在(玩家直接跳去點按鈕),也一起收掉
+  const _banner = document.getElementById('_unread-bug-reply-banner');
+  if(_banner){
+    _banner.style.opacity = '0';
+    setTimeout(() => { try{ _banner.remove(); }catch(_){} }, 500);
+  }
+}
+
+// 啟動「每 60 秒輕量輪詢」— 老師可能玩家還在線時就回覆,要即時亮燈
+//   注意:已讀標記後 _pendingUnreadBugReplyIds 會清空,但 Firestore 那邊 adminReplyRead 是 true,
+//         所以下次輪詢不會把同一筆當未讀。
+window._startUnreadBugReplyPolling = function(){
+  if(window._unreadBugReplyPollInterval) return;  // 已啟動,不重複
+  window._unreadBugReplyPollInterval = setInterval(() => {
+    try{
+      // 若玩家正在看「管理員回信」分頁,跳過(避免輪詢搶先標記)
+      const _dlg = document.getElementById('_bug-report-dialog');
+      if(_dlg && _dlg._inRepliesTab) return;
+      window._checkUnreadBugReplies({ silent: false });
+    }catch(_){}
+  }, 60000);
+};
+
+
 window._showBugReportDialog = function(pageContext){
   // 防止重複開啟
   const old = document.getElementById('_bug-report-dialog');
@@ -56598,6 +56878,16 @@ window._showBugReportDialog = function(pageContext){
     if(_repliesListEl && !_repliesListEl._loaded){
       _loadMyBugReplies();
     }
+    // ★ v3.4.12 — 玩家進到「管理員回信」分頁:
+    //   1) 標記目前所有未讀的 reply 為已讀(寫回 Firestore)
+    //   2) 清掉關卡首頁/戰鬥按鈕的發亮提示
+    //   3) 標記 dlg._inRepliesTab=true 讓背景輪詢避讓(避免重複彈通知)
+    try{ dlg._inRepliesTab = true; }catch(_){}
+    try{
+      if(typeof window._markPendingBugRepliesAsRead === 'function'){
+        window._markPendingBugRepliesAsRead();
+      }
+    }catch(_e){ console.warn('[BUG 回報] 切換到回信分頁時標記已讀失敗', _e); }
   };
 
   // 渲染玩家自己的回報列表
@@ -72397,7 +72687,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.11';
+window._GAME_LOADED_VERSION = 'v3.4.12';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
