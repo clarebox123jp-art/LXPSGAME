@@ -4284,11 +4284,19 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
 <meta name="apple-mobile-web-app-title" content="小英雄大對抗">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#1a2a6c">
+<!-- ★ v3.4.13(PWA) — Web App Manifest -->
+<link rel="manifest" href="manifest.json">
 <!-- PWA 啟動畫面（防止白屏閃爍）-->
 <meta name="apple-touch-fullscreen" content="yes">
-<!-- 加入主畫面圖示（使用遊戲封面圖）-->
-<link rel="apple-touch-icon" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<!-- 加入主畫面圖示(本地優先,離線可用;遊戲封面圖為後備) -->
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="apple-touch-startup-image" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
 <title>小英雄大對抗</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -65858,6 +65866,421 @@ function _openInChrome() {
 }
 
 
+// ═══════════════════════════════════════════════════════════════
+// ★ v3.4.13(PWA) — Service Worker 註冊 + 資源快取系統
+// ───────────────────────────────────────────────────────────────
+// 設計目標(iPad 優化):
+//   1. 玩家首次開遊戲 → SW 安裝 → 全螢幕讀條顯示「安裝中」進度
+//   2. 安裝完成後 → 之後開遊戲都離線可玩,不再重新下載
+//   3. 偵測新版本 → 背景下載 → 提示「有更新可用」(不強制重啟,避免戰鬥中斷線)
+//   4. PC 版顯示「📲 加入桌面」按鈕(beforeinstallprompt);iOS 維持引導
+// ═══════════════════════════════════════════════════════════════
+window._lxpsPWA = (function(){
+  var SW_PATH = 'sw.js';
+  // 安裝完成標記(用 localStorage 記住,避免每次都跳安裝讀條)
+  var INSTALLED_KEY = 'lxps_pwa_installed_ver';
+  var deferredInstallPrompt = null;
+  var swReg = null;
+  var installedVer = null;
+  try{ installedVer = localStorage.getItem(INSTALLED_KEY); }catch(_){}
+
+  // ─── 收集所有需要快取的資源 URL ───
+  // 從 DOM (audio/img src) + JS 資料庫 (HERO_DB, BURST_GIF_DB...) 中收集
+  function collectAllResourceUrls(){
+    var urls = new Set();
+    function add(u){
+      if(!u || typeof u !== 'string') return;
+      if(u.indexOf('http') !== 0 && u.indexOf('//') !== 0 && u.indexOf('data:') === 0) return;
+      // 把 github blob 連結轉為 raw (與遊戲內邏輯一致)
+      if(u.indexOf('//github.com/') !== -1 && u.indexOf('/raw/') === -1 && u.indexOf('/blob/') !== -1){
+        u = u.replace('/blob/', '/raw/');
+      }
+      // 排除明顯非資源的(api, fonts.googleapis 等)
+      if(u.indexOf('fonts.googleapis.com') !== -1) return;
+      if(u.indexOf('firestore') !== -1) return;
+      if(u.indexOf('firebase') !== -1) return;
+      if(u.indexOf('googletagmanager') !== -1) return;
+      urls.add(u);
+    }
+
+    // 1) HTML 中所有 <audio src>
+    document.querySelectorAll('audio[src], audio source[src]').forEach(function(el){
+      add(el.getAttribute('src'));
+    });
+    // 2) HTML 中所有 <img src>
+    document.querySelectorAll('img[src]').forEach(function(el){
+      add(el.getAttribute('src'));
+    });
+    // 3) HTML 中所有 <link href> (icon 等)
+    document.querySelectorAll('link[href]').forEach(function(el){
+      var rel = (el.getAttribute('rel') || '').toLowerCase();
+      if(rel.indexOf('icon') !== -1 || rel === 'manifest'){
+        add(el.getAttribute('href'));
+      }
+    });
+
+    // 4) HERO_DB 中所有 hero.img
+    try{
+      if(typeof HERO_DB === 'object' && HERO_DB){
+        Object.keys(HERO_DB).forEach(function(k){
+          var h = HERO_DB[k];
+          if(h && h.img) add(h.img);
+          if(h && h.imgPremium) add(h.imgPremium);
+          if(h && h.imgCute) add(h.imgCute);
+        });
+      }
+    }catch(_){}
+
+    // 5) BURST_GIF_DB (爆發特效)
+    try{
+      if(typeof BURST_GIF_DB === 'object' && BURST_GIF_DB){
+        Object.keys(BURST_GIF_DB).forEach(function(k){
+          var b = BURST_GIF_DB[k];
+          if(b && b.url) add(b.url);
+          if(b && b.url2) add(b.url2);
+        });
+      }
+    }catch(_){}
+
+    // 6) 掃描全文 (兜底): 從 head/script 取出所有 raw.githubusercontent 與 github.com/...../raw 連結
+    try{
+      var html = document.documentElement.outerHTML;
+      var re = /https?:\/\/(?:raw\.githubusercontent\.com|github\.com\/[^\/]+\/[^\/]+\/raw|cdn\.jsdelivr\.net)\/[^\s'"<>)]+\.(?:png|jpg|jpeg|gif|webp|svg|mp3|m4a|wav|ogg)/gi;
+      var m;
+      while((m = re.exec(html)) !== null){
+        add(m[0]);
+      }
+    }catch(_){}
+
+    return Array.from(urls);
+  }
+
+  // ─── 註冊 Service Worker ───
+  function registerSW(){
+    return new Promise(function(resolve, reject){
+      if(!('serviceWorker' in navigator)){
+        console.warn('[PWA] Service Worker 不支援');
+        return reject(new Error('SW unsupported'));
+      }
+      navigator.serviceWorker.register(SW_PATH, { scope: './' }).then(function(reg){
+        swReg = reg;
+        console.log('[PWA] SW 已註冊', reg);
+
+        // 偵測新 SW 可用
+        reg.addEventListener('updatefound', function(){
+          var newSW = reg.installing;
+          if(!newSW) return;
+          newSW.addEventListener('statechange', function(){
+            if(newSW.state === 'installed' && navigator.serviceWorker.controller){
+              // 有新版可用 — 提示玩家(不強制)
+              _showUpdateAvailableBanner();
+            }
+          });
+        });
+
+        resolve(reg);
+      }).catch(function(err){
+        console.error('[PWA] SW 註冊失敗', err);
+        reject(err);
+      });
+    });
+  }
+
+  // ─── 安裝中讀條 UI ───
+  function _showInstallProgress(){
+    var existing = document.getElementById('_pwa-install-overlay');
+    if(existing) return existing;
+    var div = document.createElement('div');
+    div.id = '_pwa-install-overlay';
+    div.style.cssText = 'position:fixed;inset:0;z-index:999999;'
+      + 'background:linear-gradient(135deg,#0a0e1e 0%,#060810 50%,#1a1a2e 100%);'
+      + 'display:flex;align-items:center;justify-content:center;'
+      + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;color:#e8e4d8;';
+    div.innerHTML =
+      '<div style="text-align:center;padding:32px;max-width:min(92vw,520px);">'
+      + '<div style="font-size:clamp(36px,6vw,60px);margin-bottom:12px;">🎮</div>'
+      + '<div style="font-size:clamp(22px,3vw,32px);font-weight:900;color:#d4a843;margin-bottom:8px;letter-spacing:1px;">小英雄大對抗</div>'
+      + '<div style="font-size:clamp(14px,1.6vw,18px);color:#88ccff;margin-bottom:28px;">⚡ 首次安裝中,請保持網路連線...</div>'
+      + '<div style="background:rgba(255,255,255,0.08);border-radius:20px;height:18px;overflow:hidden;border:1.5px solid rgba(212,168,67,0.4);box-shadow:inset 0 2px 6px rgba(0,0,0,0.5);">'
+      +   '<div id="_pwa-install-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#d4a843,#ffcc66,#d4a843);transition:width 0.4s ease;box-shadow:0 0 12px rgba(212,168,67,0.8);"></div>'
+      + '</div>'
+      + '<div style="margin-top:14px;display:flex;justify-content:space-between;font-size:clamp(12px,1.4vw,15px);color:#888;">'
+      +   '<span id="_pwa-install-status">準備中...</span>'
+      +   '<span id="_pwa-install-pct">0%</span>'
+      + '</div>'
+      + '<div style="margin-top:24px;font-size:clamp(11px,1.2vw,13px);color:#666;line-height:1.7;">'
+      +   '💡 安裝後遊戲資源將永久保存在裝置上<br>之後開啟不再需要下載,離線也能玩!'
+      + '</div>'
+      + '<div style="margin-top:18px;">'
+      +   '<button id="_pwa-skip-install" style="padding:6px 18px;font-size:12px;background:transparent;border:1px solid #444;color:#666;border-radius:8px;cursor:pointer;font-family:inherit;">略過安裝(下次再說)</button>'
+      + '</div>'
+      + '</div>';
+    document.body.appendChild(div);
+    var skip = document.getElementById('_pwa-skip-install');
+    if(skip) skip.onclick = function(){ _hideInstallProgress(); };
+    return div;
+  }
+  function _hideInstallProgress(){
+    var el = document.getElementById('_pwa-install-overlay');
+    if(el){
+      el.style.transition = 'opacity 0.5s';
+      el.style.opacity = '0';
+      setTimeout(function(){ if(el.parentNode) el.remove(); }, 500);
+    }
+  }
+  function _updateInstallProgress(done, total, status){
+    var bar = document.getElementById('_pwa-install-bar');
+    var pct = document.getElementById('_pwa-install-pct');
+    var st = document.getElementById('_pwa-install-status');
+    if(total > 0){
+      var p = Math.min(100, Math.round(done * 100 / total));
+      if(bar) bar.style.width = p + '%';
+      if(pct) pct.textContent = p + '%';
+    }
+    if(st && status) st.textContent = status;
+  }
+
+  // ─── 更新可用 banner ───
+  function _showUpdateAvailableBanner(){
+    if(document.getElementById('_pwa-update-banner')) return;
+    var b = document.createElement('div');
+    b.id = '_pwa-update-banner';
+    b.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99998;'
+      + 'background:linear-gradient(135deg,rgba(20,60,120,0.95),rgba(10,40,80,0.95));'
+      + 'border:2px solid rgba(100,180,255,0.7);border-radius:14px;padding:14px 22px;'
+      + 'box-shadow:0 8px 28px rgba(0,0,0,0.6),0 0 40px rgba(100,180,255,0.25);'
+      + 'font-family:"M PLUS Rounded 1c",sans-serif;color:#e8e4d8;'
+      + 'display:flex;align-items:center;gap:14px;max-width:92vw;';
+    b.innerHTML =
+      '<div style="font-size:24px;">✨</div>'
+      + '<div style="font-size:15px;line-height:1.4;">'
+      +   '<div style="color:#88ccff;font-weight:700;">遊戲已更新!</div>'
+      +   '<div style="color:#aaa;font-size:13px;">點「立即套用」載入新版本</div>'
+      + '</div>'
+      + '<button id="_pwa-apply-update" style="padding:8px 16px;font-size:14px;font-weight:700;'
+      +   'background:rgba(100,180,255,0.25);border:1.5px solid rgba(100,180,255,0.7);'
+      +   'color:#aaddff;border-radius:10px;cursor:pointer;font-family:inherit;">立即套用</button>'
+      + '<button id="_pwa-defer-update" style="padding:8px 12px;font-size:13px;'
+      +   'background:transparent;border:1px solid #555;color:#888;'
+      +   'border-radius:10px;cursor:pointer;font-family:inherit;">稍後</button>';
+    document.body.appendChild(b);
+    document.getElementById('_pwa-apply-update').onclick = function(){
+      // 通知 waiting SW 立即啟用,然後 reload
+      if(swReg && swReg.waiting){
+        swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      // 等 controllerchange 後 reload
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+      // 保險:2 秒沒換 controller 強制 reload
+      setTimeout(function(){
+        if(!reloaded){
+          reloaded = true;
+          window.location.reload();
+        }
+      }, 2000);
+    };
+    document.getElementById('_pwa-defer-update').onclick = function(){
+      b.style.transition = 'opacity 0.3s';
+      b.style.opacity = '0';
+      setTimeout(function(){ if(b.parentNode) b.remove(); }, 300);
+    };
+  }
+
+  // ─── 預載所有資源 (透過 postMessage 傳給 SW) ───
+  function precacheAllAssets(){
+    return new Promise(function(resolve){
+      if(!navigator.serviceWorker.controller){
+        console.warn('[PWA] 沒有 SW controller, 跳過預載');
+        return resolve({ done: 0, failed: 0, total: 0 });
+      }
+
+      // ★ 儲存空間檢查 (iPad 友善) — 不夠就降級為 runtime cache
+      function checkStorageThenStart(){
+        var minRequiredMB = 80; // 至少要 80MB 才開始大量預載
+        if(navigator.storage && navigator.storage.estimate){
+          navigator.storage.estimate().then(function(est){
+            var freeMB = ((est.quota || 0) - (est.usage || 0)) / (1024 * 1024);
+            console.log('[PWA] 可用空間: ' + freeMB.toFixed(1) + ' MB');
+            if(freeMB < minRequiredMB){
+              console.warn('[PWA] 空間不足, 降級為 runtime cache 模式');
+              // 不開預載, 標記已安裝(避免每次都重試), 但 SW 仍會 cache-first
+              try{ localStorage.setItem(INSTALLED_KEY, window._GAME_LOADED_VERSION || 'unknown'); }catch(_){}
+              return resolve({ done: 0, failed: 0, total: 0, lowStorage: true });
+            }
+            doPrecache();
+          }).catch(function(){ doPrecache(); });
+        } else {
+          doPrecache();
+        }
+      }
+
+      function doPrecache(){
+        var urls = collectAllResourceUrls();
+        console.log('[PWA] 準備預載 ' + urls.length + ' 個資源');
+        if(urls.length === 0){
+          return resolve({ done: 0, failed: 0, total: 0 });
+        }
+        var batchId = 'install-' + Date.now();
+        _showInstallProgress();
+        _updateInstallProgress(0, urls.length, '正在下載資源 (0 / ' + urls.length + ')');
+
+        // 監聽 SW 進度回報
+        var handler = function(ev){
+          var d = ev.data || {};
+          if(d.batchId !== batchId) return;
+          if(d.type === 'PRECACHE_PROGRESS'){
+            _updateInstallProgress(d.done, d.total,
+              '正在下載資源 (' + d.done + ' / ' + d.total + ')'
+              + (d.failed > 0 ? ' · ' + d.failed + ' 個失敗(可略過)' : ''));
+          } else if(d.type === 'PRECACHE_COMPLETE'){
+            navigator.serviceWorker.removeEventListener('message', handler);
+            _updateInstallProgress(d.total, d.total, '✓ 安裝完成!');
+            setTimeout(function(){
+              _hideInstallProgress();
+              try{
+                localStorage.setItem(INSTALLED_KEY, window._GAME_LOADED_VERSION || 'unknown');
+              }catch(_){}
+              resolve(d);
+            }, 800);
+          }
+        };
+        navigator.serviceWorker.addEventListener('message', handler);
+
+        // 開抓
+        navigator.serviceWorker.controller.postMessage({
+          type: 'PRECACHE_URLS',
+          urls: urls,
+          batchId: batchId
+        });
+
+        // 保險: 5 分鐘超時(避免極端情況卡住)
+        setTimeout(function(){
+          navigator.serviceWorker.removeEventListener('message', handler);
+          _hideInstallProgress();
+          resolve({ done: 0, failed: 0, total: urls.length, timeout: true });
+        }, 5 * 60 * 1000);
+      }
+
+      checkStorageThenStart();
+    });
+  }
+
+  // ─── beforeinstallprompt: 桌機/Android Chrome 用 ───
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    // 顯示按鈕(現有按鈕原本只 iOS 顯示, 現在也讓桌機/Android 顯示)
+    var btn = document.getElementById('pwa-hint-btn');
+    if(btn){
+      btn.style.display = 'block';
+      btn.textContent = '📲 加入桌面';
+    }
+  });
+
+  window.addEventListener('appinstalled', function(){
+    console.log('[PWA] 已安裝到主畫面');
+    deferredInstallPrompt = null;
+    var btn = document.getElementById('pwa-hint-btn');
+    if(btn) btn.style.display = 'none';
+  });
+
+  // ─── 桌機點按鈕觸發原生安裝對話框 ───
+  // (改寫 _showPwaGuide 的呼叫邏輯: 如果是桌機/Android 且有 deferredInstallPrompt → 直接 prompt;
+  //  iOS 仍走原本的引導)
+  window._tryNativeInstall = function(){
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then(function(choice){
+        console.log('[PWA] 使用者選擇:', choice.outcome);
+        deferredInstallPrompt = null;
+      });
+      return true;
+    }
+    return false;
+  };
+
+  // ─── 入口: 等 SW 註冊+資料庫載入完, 啟動預載 ───
+  function bootPWA(){
+    var currentVer = window._GAME_LOADED_VERSION || 'unknown';
+    var needInstall = (installedVer !== currentVer);
+
+    registerSW().then(function(reg){
+      // 等到 SW 變成 controller(才能 postMessage 控制它)
+      function whenControllerReady(cb){
+        if(navigator.serviceWorker.controller){ return cb(); }
+        navigator.serviceWorker.addEventListener('controllerchange', function once(){
+          navigator.serviceWorker.removeEventListener('controllerchange', once);
+          cb();
+        });
+        // 沒 controller 表示是第一次安裝, 直接 skipWaiting 加速
+        if(reg.installing){
+          reg.installing.addEventListener('statechange', function(){
+            if(reg.installing && reg.installing.state === 'installed'){
+              // 沒 controller → 第一次安裝, 主動切換
+              if(!navigator.serviceWorker.controller && reg.waiting){
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+            }
+          });
+        } else if(reg.waiting && !navigator.serviceWorker.controller){
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      }
+
+      whenControllerReady(function(){
+        // 等資料庫 (HERO_DB, BURST_GIF_DB) 都載入完才開始預載
+        function waitForDBs(retries){
+          retries = retries || 0;
+          var heroOk = (typeof HERO_DB !== 'undefined');
+          // BURST_GIF_DB 定義在 index.html 主 script 內, 可能稍晚
+          var burstOk = (typeof BURST_GIF_DB !== 'undefined');
+          if((heroOk && burstOk) || retries > 60){
+            // 開始預載
+            if(needInstall){
+              precacheAllAssets().then(function(r){
+                console.log('[PWA] 安裝完成', r);
+              });
+            } else {
+              // 已安裝過, 不顯示讀條, 但仍背景補抓(可能有新加的資源)
+              setTimeout(function(){
+                if(!navigator.serviceWorker.controller) return;
+                var urls = collectAllResourceUrls();
+                var batchId = 'bg-' + Date.now();
+                navigator.serviceWorker.controller.postMessage({
+                  type: 'PRECACHE_URLS',
+                  urls: urls,
+                  batchId: batchId
+                });
+              }, 8000); // 進遊戲 8 秒後再做, 不影響首屏
+            }
+          } else {
+            setTimeout(function(){ waitForDBs(retries + 1); }, 500);
+          }
+        }
+        waitForDBs();
+      });
+    }).catch(function(err){
+      console.warn('[PWA] SW 啟動失敗, 退回普通網頁模式', err);
+    });
+  }
+
+  // 公開介面
+  return {
+    boot: bootPWA,
+    triggerInstall: function(){ return window._tryNativeInstall(); },
+    hasDeferredPrompt: function(){ return !!deferredInstallPrompt; },
+    showProgress: _showInstallProgress,
+    hideProgress: _hideInstallProgress,
+    precacheNow: precacheAllAssets
+  };
+})();
+
+
 // ── PWA / 加入主畫面 ──
 (function _initPWA(){
   var ua = navigator.userAgent || '';
@@ -65875,15 +66298,27 @@ function _openInChrome() {
         screen.orientation.lock('landscape').catch(function(){});
       }
     }, 500);
+    // standalone 模式也要啟動 SW(離線可玩需要)
+    try{ window._lxpsPWA && window._lxpsPWA.boot(); }catch(_){}
     return;
   }
+  // ★ v3.4.13(PWA) — 顯示安裝按鈕(iOS 維持引導, 桌機/Android 用原生 prompt)
   if(isIOS){
     var btn = document.getElementById('pwa-hint-btn');
     if(btn) btn.style.display = 'block';
   }
+  // 非 standalone 也啟動 SW(背景快取資源, 之後開遊戲就快)
+  try{ window._lxpsPWA && window._lxpsPWA.boot(); }catch(_){}
 })();
 
 function _showPwaGuide(){
+  // ★ v3.4.13(PWA) — 桌機/Android 有 beforeinstallprompt 時直接觸發原生安裝
+  try{
+    if(window._lxpsPWA && window._lxpsPWA.hasDeferredPrompt && window._lxpsPWA.hasDeferredPrompt()){
+      if(window._lxpsPWA.triggerInstall()) return;
+    }
+  }catch(_){}
+  // iOS 或 PC 沒原生 prompt 時, 走原本的引導視窗
   var existing = document.getElementById('_pwa-guide-modal');
   if(existing){ existing.remove(); return; }
   var modal = document.createElement('div');
