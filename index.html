@@ -3076,6 +3076,44 @@
       }
     }
 
+    // ★ v3.3.6 — 深層清理 undefined(Firestore 不接受 undefined,只接受 null 或缺欄位)
+    //   根因(老師圖中 console 大量 400 Bad Request + FirebaseError "Unsupported field value: undefined"):
+    //     _GToWire 把 G.activeChar / hero 的 _xxx 私用欄位 / wire 內 nested array 元素
+    //     等可能是 undefined 的東西塞進 wireG → updateDoc 時 Firestore 拒絕整個寫入
+    //     → client 永遠收不到 state 更新 → 隊友卡死(看圖中 [卡死偵測] 訊息)。
+    //   修法:在 hostPushBattleState 寫入前對整個 payload 做 deep clean,
+    //         array 元素 undefined → null,object 屬性 undefined → 直接刪除。
+    function _wbDeepCleanUndefined(v, depth){
+      if(depth == null) depth = 0;
+      if(depth > 20) return null;
+      if(v === undefined) return null;
+      if(v === null) return null;
+      const t = typeof v;
+      if(t === 'string' || t === 'number' || t === 'boolean') return v;
+      if(t === 'function') return null;
+      if(t === 'symbol') return null;
+      if(Array.isArray(v)){
+        const out = [];
+        for(let i = 0; i < v.length; i++){
+          const cleaned = _wbDeepCleanUndefined(v[i], depth + 1);
+          out.push(cleaned === undefined ? null : cleaned);
+        }
+        return out;
+      }
+      if(t === 'object'){
+        // 防 DOM/HTMLElement/Window/Document 等非 plain object 鑽進來
+        if(v.nodeType !== undefined && v.nodeName !== undefined) return null;
+        const out = {};
+        for(const k in v){
+          if(!Object.prototype.hasOwnProperty.call(v, k)) continue;
+          const cleaned = _wbDeepCleanUndefined(v[k], depth + 1);
+          if(cleaned !== undefined) out[k] = cleaned;
+        }
+        return out;
+      }
+      return null;
+    }
+
     async function hostPushBattleState(newState){
       if(!WB.isHost || !WB.roomId) return false;
       try{
@@ -3130,7 +3168,10 @@
           payload['meta.elapsed'] = Date.now() - WB.battleStartTs;
           payload['meta.contributions'] = WB.contributions;
         }
-        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), payload);
+        // ★ v3.3.6 — 寫入前 deep clean,把所有 undefined 換成 null / 刪除
+        //   避免 FirebaseError: Unsupported field value: undefined → 400 Bad Request → client 卡死
+        const _cleanPayload = _wbDeepCleanUndefined(payload);
+        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), _cleanPayload);
         return true;
       }catch(e){
         console.error('[WBNet] hostPushBattleState', e); return false;
@@ -3695,6 +3736,25 @@
         return null;
       }
     }
+
+    // ★ v3.3.6 — 中途寫入 contributions(讓 client 顯示本場總傷)
+    //   舊行為:contributions 只在 battle ended 時寫 meta.contributions
+    //   新行為:每次 host sync 後額外 patch 一次,讓 client 端的本場總傷 UI 即時更新
+    async function _wbNetUpdateContribs(contribs){
+      if(!WB.isHost || !WB.roomId) return false;
+      try{
+        // deep clean → Firestore 不接受 undefined
+        const cleaned = _wbDeepCleanUndefined(contribs);
+        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), {
+          'meta.contributions': cleaned
+        });
+        return true;
+      }catch(e){
+        // 失敗不重試,等下次 sync
+        return false;
+      }
+    }
+    window._wbNetUpdateContribs = _wbNetUpdateContribs;
 
     // ─── F. 對外 API ────────────────────────────────────────────
     window._wbNet = {
@@ -43225,6 +43285,27 @@ window._wbHostSyncG = function(reason){
       _syncReason: reason || 'host-sync',
       // 連線層內部會自動取 _wbFxQueueFlush() 把特效佇列附加
     });
+    // ★ v3.3.6 — host sync 完後,順便把 contributions 寫進 room 文件(讓 client 中途也能更新總傷)
+    //   contributions 在房主本機由 addContribution 持續累加,
+    //   但 hostPushBattleState 只把資料寫進 battle.{...} 內,不會碰 meta.contributions(那個只有 ended 時寫)
+    //   修法:額外丟一個 battle._wbContribs(在 hostPushBattleState 內部會被 deep clean)
+    try{
+      if(window._wbNet && typeof window._wbNet.getContributions === 'function'){
+        const ctrb = window._wbNet.getContributions();
+        if(ctrb){
+          // 把 contributions 寫進獨立欄位(在 hostPushBattleState 後 fire and forget)
+          // 注意:不能在 hostPushBattleState 內塞 fullWireG,因為那個會被 spread 到 battle 頂層
+          // 改用 setTimeout 0 讓 hostPushBattleState 先完成,再 patch contributions 進去
+          setTimeout(function(){
+            try{
+              if(window._wbNetUpdateContribs){
+                window._wbNetUpdateContribs(ctrb);
+              }
+            }catch(_){}
+          }, 30);
+        }
+      }
+    }catch(_){}
     console.log('[_wbHostSyncG] ✅ pushed reason=' + (reason || 'host-sync')
       + ', round=' + (_G.round||0)
       + ', activeChar=' + (_G.activeChar && _G.activeChar.name));
