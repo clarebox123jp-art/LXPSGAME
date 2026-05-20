@@ -1479,7 +1479,7 @@
     }
   };
 
-  // ★ v3.4.12 — 玩家標記某筆管理員回信為「已讀」
+  // ★ v3.4.13 — 玩家標記某筆管理員回信為「已讀」
   //   觸發時機:玩家打開「📬 管理員回信」分頁後,把當前清單中所有未讀的 reply 一次標記
   //   作用:讓置頂通知 + 按鈕發亮可以消失,下次登入不再重複提示
   window._fbMarkBugReplyRead = async function(id) {
@@ -1496,7 +1496,7 @@
     }
   };
 
-  // ★ v3.4.12 — 玩家查詢「我自己的未讀回信」筆數
+  // ★ v3.4.13 — 玩家查詢「我自己的未讀回信」筆數
   //   用於登入後判斷是否要彈出「老師已回覆」置頂通知 + 按鈕發亮
   //   回傳: { count: number, items: [{id, adminReplyTs, content摘要}, ...] }
   window._fbCountMyUnreadBugReplies = async function(uid) {
@@ -2519,7 +2519,7 @@
           }
         }catch(e){ console.warn('[InviteCode] 生成異常', e); }
       }, 800);
-      // ★ v3.4.12 — 登入後 5 秒檢查「管理員回信未讀」
+      // ★ v3.4.13 — 登入後 5 秒檢查「管理員回信未讀」
       //   有未讀 → 彈出短促置頂通知 + 關卡首頁 BUG 回報按鈕發亮
       //   並啟動每 60 秒輕量輪詢,讓老師在玩家還在線時回覆也能即時亮燈
       setTimeout(()=>{
@@ -5695,6 +5695,10 @@ const _PLAYER_HERO_NAMES = new Set([
   '窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血',
   '死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬',
   '水狐','米鈴','學霸(轉學生)','維京海盜船長','天神宙斯',
+  // ★ v3.4.11 — 5 年 5 班朱同學設計
+  '武器精靈',
+  // ★ v3.4.11 — 5 年 4 班莊同學設計
+  '神槍手',
 ]);
 // 玩家英雄判定:支援 name 或 hero 物件
 //   ★ 不能只用 side==='p1',因為鬥技場 p1/p2 雙方都是玩家英雄,反之 BOSS 戰中 p2 是 BOSS
@@ -7110,6 +7114,76 @@ function playSkillFX(skillName,actor,targets){
       targets.forEach(function(h){flashCard(h,'rgba(255,255,200,0.6)',200);var rc=cardRect(h);if(rc)spawnParticles(rc.x,rc.y,{count:6,color:'#ffff88',size:4,spread:30,duration:400});});
       if(rc_a)spawnParticles(rc_a.x,rc_a.y,{count:8,color:'#ffcc00',size:4,spread:30,duration:300});
       break;
+    // ★ v3.4.11 — 武器精靈 S1「斧頭重擊」:重物砸擊+橙紅火花+暴擊感
+    case '斧頭重擊':
+      sndHolyHammer(); playSfx('sfx-explode', 0.7); playSfx('sfx-crit', 0.6);
+      if(t0){
+        flashCard(t0,'rgba(255,180,60,0.9)',280);
+        var rc_s1=cardRect(t0);
+        if(rc_s1){
+          spawnParticles(rc_s1.x,rc_s1.y,{count:20,color:'#ff9933',size:8,spread:65,duration:600,rise:false});
+          spawnParticles(rc_s1.x,rc_s1.y,{count:12,color:'#ffcc44',size:6,spread:45,duration:500});
+          ringFX(t0,'#ffaa44',500);
+        }
+        bannerFX(t0,'💥 斧頭重擊!','#ff6622',800);
+      }
+      flashScreen('rgba(255,140,40,0.2)',150);
+      break;
+    // ★ v3.4.11 — 武器精靈 S2「弓弩連射」:雙箭白光連射+必中閃光
+    case '弓弩連射':
+      sndGunShot(); playSfx('sfx-shoot', 0.8); playSfx('sfx-crit', 0.55);
+      if(t0){
+        // 第 1 射
+        setTimeout(function(){
+          if(rc_a)beamFX(actor,t0,'#ddeeff',180);
+          flashCard(t0,'rgba(220,240,255,0.7)',180);
+          var rc_s2a=cardRect(t0);
+          if(rc_s2a)spawnParticles(rc_s2a.x,rc_s2a.y,{count:10,color:'#ccddff',size:5,spread:30,duration:400});
+        }, 0);
+        // 第 2 射
+        setTimeout(function(){
+          if(rc_a)beamFX(actor,t0,'#ffffff',180);
+          flashCard(t0,'rgba(255,255,255,0.85)',200);
+          var rc_s2b=cardRect(t0);
+          if(rc_s2b){
+            spawnParticles(rc_s2b.x,rc_s2b.y,{count:14,color:'#ffffff',size:6,spread:40,duration:500});
+            ringFX(t0,'#ffffff',400);
+          }
+          bannerFX(t0,'🏹 必中!','#88ccff',700);
+        }, 220);
+      }
+      break;
+    // ★ v3.4.11 — 神槍手 S1「迴旋子彈」:子彈射擊+延遲傷害標記
+    case '迴旋子彈':
+      sndGunShot(); playSfx('sfx-gunshot-big', 0.85);
+      if(t0){
+        if(rc_a)beamFX(actor,t0,'#ffcc66',220);
+        flashCard(t0,'rgba(255,200,80,0.8)',280);
+        var rc_g1=cardRect(t0);
+        if(rc_g1){
+          spawnParticles(rc_g1.x,rc_g1.y,{count:16,color:'#ffaa44',size:6,spread:50,duration:550});
+          spawnParticles(rc_g1.x,rc_g1.y,{count:8,color:'#ff7733',size:5,spread:35,duration:450});
+          ringFX(t0,'#ffaa44',450);
+        }
+        bannerFX(t0,'🎯 標記!','#ff8833',700);
+      }
+      flashScreen('rgba(255,180,60,0.15)',150);
+      break;
+    // ★ v3.4.11 — 神槍手 S2「多重掃射」:三連發子彈隨機掃射
+    case '多重掃射':
+      sndGunShot(); playSfx('sfx-rapidfire-gun', 0.85);
+      targets.forEach(function(h,i){
+        setTimeout(function(){
+          if(h.curHp<=0) return;
+          if(rc_a)beamFX(actor,h,'#ffd44a',160);
+          flashCard(h,'rgba(255,220,80,0.7)',180);
+          var rc_g2=cardRect(h);
+          if(rc_g2)spawnParticles(rc_g2.x,rc_g2.y,{count:10,color:'#ffdd55',size:5,spread:35,duration:400});
+        }, i*120);
+      });
+      if(rc_a)spawnParticles(rc_a.x,rc_a.y,{count:12,color:'#ffcc33',size:5,spread:35,duration:400});
+      flashScreen('rgba(255,200,50,0.12)',150);
+      break;
     case '神之賜福':
       sndHolyLight(); playSfx('sfx-heal',0.75);
       if(t0){holyParticles(t0);ringFX(t0,'#ffffff',700);bannerFX(t0,'神之賜福！','#ffffff',1000);flashScreen('rgba(255,255,200,1)',300);}
@@ -8262,7 +8336,7 @@ const AVATARS = {
   '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
   '占星師':'🌟','大力士':'💪','凡人':'🙂',
   '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
-  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','學霸(轉學生)':'🤓','天神宙斯':'⚡','維京海盜船長':'🏴‍☠️','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','學霸(轉學生)':'🤓','天神宙斯':'⚡','維京海盜船長':'🏴‍☠️','武器精靈':'⚔','神槍手':'🎯','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈',
 };
 const HERO_IMGS = {
   '光法師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('光法師Q.png'),
@@ -8374,6 +8448,12 @@ const HERO_IMGS = {
   // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
   //   維京海盜船長:5 年 5 班吳同學設計,2026 年。北海維京艦隊「黑龍號」第三代船長
   '維京海盜船長':         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('維京海盜船長.png'),
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學「武器精靈」)
+  //   武器精靈:5 年 5 班朱同學設計,2026 年。戰爭精靈兄弟之一,持有可變形武器
+  '武器精靈':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武器精靈.png'),
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學「神槍手」)
+  //   神槍手:5 年 4 班莊同學設計,2026 年。為保護家人在兵營練就一手神準槍法
+  '神槍手':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神槍手.png'),
 };
 
 // ★ 英雄肖像圖庫：每位英雄可有多張可切換的肖像。
@@ -8630,6 +8710,18 @@ const HERO_PORTRAIT_LIBRARY = {
   '維京海盜船長': [
     { id:'default', name:'原始肖像',
       url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('維京海盜船長.png') },
+  ],
+  // ★ v3.4.11 — 學生設計英雄系列(武器精靈)
+  //   武器精靈:5 年 5 班朱同學設計,2026 年
+  '武器精靈': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武器精靈.png') },
+  ],
+  // ★ v3.4.11 — 學生設計英雄系列(神槍手)
+  //   神槍手:5 年 4 班莊同學設計,2026 年
+  '神槍手': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神槍手.png') },
   ],
 };
 
@@ -10009,6 +10101,10 @@ const HERO_IMG_POS = {
   '天神宙斯':['145% auto','center 18%'],
   // ★ v1.0.20260519.7100 — 維京海盜船長:稍微放大露出戰斧與頭盔
   '維京海盜船長':['150% auto','center 25%'],
+  // ★ v3.4.11 — 武器精靈:稍微放大露出武器與外表
+  '武器精靈':['150% auto','center 30%'],
+  // ★ v3.4.11 — 神槍手:稍微放大露出長槍與制服
+  '神槍手':['150% auto','center 25%'],
 };
 
 // ★ v5690 — 戰鬥卡片專屬圖片位置表
@@ -10110,6 +10206,10 @@ const HERO_THUMB_POS = {
   '天神宙斯':'center 20%',
   // ★ v1.0.20260519.7100 — 維京海盜船長:中央偏上,露出臉部與戰斧
   '維京海盜船長':'center 30%',
+  // ★ v3.4.11 — 武器精靈:中央偏上,露出臉部與武器
+  '武器精靈':'center 30%',
+  // ★ v3.4.11 — 神槍手:中央偏上,露出臉部與長槍
+  '神槍手':'center 25%',
 };
 
 // 新肖像縮圖下移 20% → Y% = 30%
@@ -10426,6 +10526,24 @@ const HERO_BIO = {
     quote:'「鎖定目標——開火!誰也別想跑!」',
     designer:{ class:'5年5班', name:'吳同學', year:2026 }
   },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學)
+  //   武器精靈:戰爭精靈兄弟之一,持有可變形的傳奇武器,外表可怕內心善良
+  '武器精靈':{
+    role:'戰爭精靈兄弟(其中一名)',
+    trait:'外表可怕、內心善良,沉默寡言但護友心切',
+    hobby:'打磨武器、變形練習、與哥哥比賽切換姿態',
+    quote:'「別怕——這把武器,只對敵人露出鋒芒。」',
+    designer:{ class:'5年5班', name:'朱同學', year:2026 }
+  },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學)
+  //   神槍手:為保護家人不受仇敵傷害,多年來在兵營練就一手神準槍法
+  '神槍手':{
+    role:'護家神槍兵——百步穿楊的槍術高手',
+    trait:'沉穩冷靜、責任感強、護家如命',
+    hobby:'保養槍械、瞄準訓練、研究彈道與風向',
+    quote:'「鎖定——呼吸——扣下扳機。家人,我會守住。」',
+    designer:{ class:'5年4班', name:'莊同學', year:2026 }
+  },
   '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
   '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
   '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
@@ -10517,6 +10635,18 @@ const BURST_DB = {
   '學霸(轉學生)':{n:'壓力轉移', d:'蓄積壓力2回合(全隊免傷累計),結束時用累計×100%反擊指定對手',fd:'學霸冷靜地抽出一張白紙、把整支班級的壓力都記在上面——「沒關係,這些痛我幫你們扛。」自己進入「蓄積壓力」狀態 2 回合,期間所有隊友(含自己)受到任何傷害都完全免疫並累積計算,2 回合後將累計的全部傷害 ×100% 一次反擊到 1 名指定對手身上(此反擊必中、無視有利狀態、不會引發還手類天賦)。「蓄積壓力」狀態不會被消除、搶奪或交換。'},
   '天神宙斯':{n:'天降雷罰', d:'非BOSS剩1HP;BOSS受特技600%+當前HP25%(上限Lv×15);全體強力麻痺1回合',fd:'宙斯舉起神威之杖直指天頂——萬里晴空瞬間轉黑、雷電交織成神之鎖鍊轟然降下!對全體對手生效:非 BOSS 對手(普通小怪、菁英、稀有)受到傷害扣到剩 1 HP;BOSS 級對手則受到「特技 × 600%」(每升 1 級 +60%,Lv5 840%)+「當前 HP × 25%」(固定不變,上限為宙斯等級 × 15)的合計必中傷害。全體目標附加「強力麻痺」1 回合,無法行動。此爆發傷害無視有利狀態、不會暴擊、不可閃避或代替承受。'},
   '維京海盜船長':{n:'海盜威能', d:'敵全體強力封印技能2回合+自身狂暴2回合(+40%傷害/+40%暴擊/普攻×2隨機)',fd:'船長拔出戰斧高呼——「全員,海盜威能!」敵方全體陷入「強力封印技能」2 回合(無法使用 S1/S2,無法被免疫或解除)。同時自己進入「狂暴」狀態 2 回合:傷害 +40%、暴擊率 +40%、普通攻擊變 2 次但隨機目標(無法指定)。狂暴狀態不會被消除、偷竊或交換。'},
+  // ★ v3.4.11 — 武器精靈爆發(5 年 5 班朱同學設計)
+  //   銀齒迴力鏢旋風:全體 (攻+特+速)×200% 必中無視有利;單體時造成2次傷害;施放後回 3 能量
+  //   ★ 平衡度檢查(鐵律 1.30):
+  //     - 全體 200% + 必中無視有利 = 強;原案 5 機制(含單體×3 + 回 5 能量)→ 老師決策削成單體×2 + 回 3 能量
+  //     - 等級 Lv1~10 倍率由 _renderBurstFdWithLv 動態替換(基礎 200%, +10%/級, Lv10=290%)
+  '武器精靈':{n:'銀齒迴力鏢旋風', d:'(攻+特+速)×200%全體傷害(必中無視有利);單體時造成2次傷害;施放後回3能量',fd:'武器精靈將手中傳奇武器旋擰、變化成銀齒迴力鏢,高速旋轉拋出——回力鏢呼嘯著掃過整片戰場!以(攻擊+特技+速度)的 200% 對敵方全體造成 1 次傷害(必中、無視有利狀態、不會引發還手類天賦);若場上敵方僅剩 1 名存活目標,則改為對該目標造成 2 次同等傷害(每次獨立結算暴擊與屬性克制)。回力鏢返回武器精靈手中時,立即為己方陣營恢復 3 點能量。'},
+  // ★ v3.4.11 — 神槍手爆發(5 年 4 班莊同學設計)
+  //   火焰神槍:攻 250% × 3 次隨機 火屬性 必中無視有利,附加 2 回合強力失明 + 燃燒
+  //   ★ 平衡度檢查(鐵律 1.30):A+ 級爆發,合計威力 750% 隨機(平均對 4 敵 ~187%/敵)+ 雙不利狀態
+  //   ★ 視覺效果:畫面三個不同位置各播 1 次 GIF(老師備註要求),GIF 用「千年發酵核爆.gif」
+  //   ★ 等級 Lv1~10 倍率由 _renderBurstFdWithLv 動態替換(基礎 250%, +10%/級, Lv10=340%)
+  '神槍手':{n:'火焰神槍', d:'攻擊250%×3次隨機火屬性傷害(必中無視有利),附加強力失明+燃燒2回合',fd:'神槍手扛起焚火神槍,瞄準、深呼吸、扣下扳機——三聲爆裂巨響,炎彈擊穿戰場!用攻擊值的 250% 對隨機存活對手造成 3 次火屬性傷害(必中、無視有利狀態,每次獨立挑目標、獨立結算暴擊與屬性克制)。每個受到傷害的目標都同時陷入「強力失明」與「燃燒」狀態 2 回合——強力失明使行動成功率降至 30%、無法被免疫;燃燒每回合行動前後各損失 5HP、無視有利狀態。'},
 
 };
 
@@ -10958,6 +11088,26 @@ function tickStatus(h){
     if(s.type==='_zeusSpDown' && s._origSp!==undefined){
       h.sp = s._origSp;
       try{ log(`⚡ [${h.name}] 雷擊後遺症結束,特技恢復為 ${h.sp}。`); }catch(_){}
+    }
+    // ★ v3.4.11 — 神槍手 S1「迴旋子彈」延遲傷害到期觸發追擊
+    //   狀態消失時對該目標再造成攻擊 100%(隨等級上升) 的追擊傷害
+    //   ⚠ 此追擊必中、不引發還手類天賦(_isDelayedShot 旗標)
+    if(s.type==='_gunDelayDmg' && s._amt && s._sourceSide && typeof s._sourcePos !== 'undefined'){
+      try{
+        const _src = (G[s._sourceSide] || []).find(x => x.pos === s._sourcePos && x.name === s._sourceName);
+        if(_src && _src.curHp > 0 && h.curHp > 0){
+          log(`🎯 [${s._sourceName}] 迴旋子彈延遲傷害觸發!→ [${h.name}] 受 ${s._amt} 追擊!`);
+          try{ bannerFX(h, `🎯 -${s._amt} 追擊!`, '#ff8833', 800); }catch(_){}
+          try{ flashCard(h, 'rgba(255,140,40,0.5)', 500); }catch(_){}
+          try{ playSfx('sfx-gunshot-big', 0.5); }catch(_){}
+          doDmg(h, s._amt, { actor:_src, isSkill:true, mustHit:true, _isDelayedShot:true });
+        } else if(h.curHp > 0){
+          // 來源已倒下,還是觸發追擊但無 actor
+          log(`🎯 迴旋子彈延遲傷害觸發!→ [${h.name}] 受 ${s._amt} 追擊!`);
+          try{ bannerFX(h, `🎯 -${s._amt} 追擊!`, '#ff8833', 800); }catch(_){}
+          doDmg(h, s._amt, { isSkill:true, mustHit:true, _isDelayedShot:true, fixedDmg:true });
+        }
+      }catch(_e){ console.warn('[迴旋子彈延遲傷害觸發] 失敗', _e); }
     }
     // 虛弱咒到期恢復
     if(s.type==='weakened'){
@@ -11530,6 +11680,7 @@ const SKILL_FORCE_ELEMENT = {
   '禍世邪魅':     'fire',  // 玉藻前爆發(特技200%全體)
   '焰尾九連擊':   'fire',  // 九尾空貓怪爆發(特技40%×9次)
   '朱雀召喚':     'fire',  // ★ v1.0.20260424.1310 — 陰陽師 S1(特技70%全體+治療減半)
+  '火焰神槍':     'fire',  // ★ v3.4.11 — 神槍手爆發(攻 250%×3 必中無視有利 + 強力失明+燃燒)
   // ── 水(含冰子屬,v1080:冰類技能歸入 water) ──
   '冰凍之矛':     'water',  // 冰法師 S1(冰=水)
   '暴風雪':       'water',  // 冰法師 S2(冰=水)
@@ -12962,6 +13113,10 @@ const HERO_LORE = {
   '天神宙斯': '希臘神話的眾神之王,白髯飄揚、手執霹靂神杖。「驚雷」與「雷鳴」一次次劈下封口奪魂,爆發「天降雷罰」更直接宣告小怪的死刑——凡夫俗子,感受天神之怒吧!',
   // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學)
   '維京海盜船長': '北海冰原的傳奇船長,單筒望遠鏡一舉、整艘黑龍號的火炮就齊鳴。S1「龍飛鳳舞火炮轟擊」用攻擊 120% 連轟 4 發、S2「鎖定目標」讓對手受傷 +100% 且無視天賦與有利狀態,爆發「海盜威能」更是全體封技能 2 回合 + 自身狂暴雙倍普攻——船長一聲令下,地平線都會發抖!',
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學)
+  '武器精靈': '戰爭精靈兄弟之一,看似可怕的外表下藏著善良的心。手中持有可隨意變形的傳奇武器——化作戰斧時 S1「斧頭重擊」一擊重砸目標暈眩 1 回合(暴擊率 +40%)、化作弓弩時 S2「弓弩連射」必中連射兩發無視一切有利狀態,爆發「銀齒迴力鏢旋風」更化作銀齒迴力鏢席捲全場、返回時還補 3 能量——一件武器,千百種戰法!',
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學)
+  '神槍手': '為了保護家人不受仇敵傷害,多年來在兵營練就一手神準槍法。天賦「武裝守護」戰開直接為全隊套上 30 護盾並永久 +3 速度、行動後再為最低 HP 友方補 30 護盾(取大值不疊加);S1「迴旋子彈」打出後還有延遲傷害再補一發、S2「多重掃射」三連發隨機掃射,爆發「火焰神槍」更是三聲炎彈雙不利連環——沉穩呼吸,扣下扳機,百步穿楊!',
   // ── BOSS ──
   '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
   '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
@@ -13064,6 +13219,18 @@ const HERO_TRAIT = {
   //   每升 1 級觸發機率 +5%,Lv5 MAX 達 50%
   //   ⚠ 用 _vikingLootedThisBattle Set 紀錄已觸發目標,避免同目標重複觸發
   '維京海盜船長':{ name:'掠奪者本能', icon:'💰', desc:'造成傷害時機率複製目標掉落物到背包(每目標每場 1 次)',fd:'船長一邊砍殺、一邊翻找對手身上的戰利品!每次造成傷害時有 30% 機率將目標所擁有的掉落物(賣錢物品 / 寵物 / 物品卡)複製一份直接加入我方背包,每個目標每場戰鬥僅觸發 1 次,避免無限疊加。每升 1 級觸發機率 +5%,Lv5 MAX 達 50%。' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學「武器精靈」)
+  //   武器靈守:武器在受到攻擊時會自動變形閃避——閃避率 +20%
+  //   每升 1 級閃避率 +2.5%,Lv5 MAX 達 +30%
+  //   實作:在 doDmg 開頭判定,若觸發則該次傷害 dmg=0 並彈「閃避!」字幕
+  //   ⚠ 不會引發無限循環(閃避無傷害結果,不會再次觸發攻擊者的還手天賦)
+  '武器精靈':{ name:'武器靈守', icon:'⚔', desc:'受到攻擊時機率自動變形閃避該次傷害',fd:'手中傳奇武器擁有自己的意識!受到任何傷害(普攻或技能)時,有 20% 機率立即變形為盾牌、迴力鏢、長棍等形態自動撥開攻擊——該次傷害完全被閃避(歸零),並彈出「閃避!」字幕。閃避不會引發攻擊者的反擊/吸血類天賦,避免無限循環。每升 1 級觸發機率 +2.5%,Lv5 MAX 達 30%。' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學「神槍手」)
+  //   武裝守護:戰開全體 30 護盾 + 全體速度 +3(直到戰鬥結束) + 自己行動後最低 HP 友方 30 護盾(取大值不堆疊)
+  //   每升 1 級護盾值 +5,Lv5 MAX 達 50 護盾
+  //   ⚠ 護盾取大值覆蓋,不會無限疊加;速度+3 為永久 buff,直到戰鬥結束
+  //   實作:戰鬥開始時掛 _gunGuardShield buff(全體) + 速度+3;每次自己行動結束時補最低 HP 友方
+  '神槍手':{ name:'武裝守護', icon:'🛡', desc:'戰開全體30護盾+速度+3(永久);行動後給最低HP友方30護盾(取大值不堆疊)',fd:'神槍手抵達戰場第一件事——「掩護位置就位、隊伍動起來!」戰鬥開始時立即為我方全體附加可抵擋 30 傷害的護盾,並使全體速度 +3 持續至戰鬥結束(永久 buff,不會被消除或搶奪)。每次自己行動結束後,自動為當前 HP 比例最低的 1 名友方(可含自己,不含倒下)補上 30 護盾——若該友方已有護盾,取兩者較大值覆蓋,不會堆疊。每升 1 級護盾值 +5,Lv5 MAX 達 50 護盾。' },
   // ── BOSS ──
   '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
   '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
@@ -14300,6 +14467,37 @@ function _doConfirmSkillReplace(){
         renderCard(h);
       }
     });
+    // ★ v3.4.11 — 神槍手天賦「武裝守護」戰開自動觸發(5 年 4 班莊同學設計)
+    //   戰開為全體友方附加 30 護盾(+5/級, Lv5=50)、速度 +3 永久(直到戰鬥結束)
+    [...G.p1,...G.p2].forEach(h=>{
+      if(h.name==='神槍手' && h.curHp>0){
+        try{
+          const _gunTraitLv = (typeof _getTraitLv === 'function') ? _getTraitLv('神槍手') : 0;
+          const _gunShield = 30 + _gunTraitLv * 5;  // Lv0=30, Lv5=55(上限 50)
+          const _gunShieldFinal = Math.min(50, _gunShield);
+          const _allies = (G[h.side] || []).filter(x => x.curHp > 0);
+          _allies.forEach(_ally => {
+            // 護盾:取大值覆蓋,不堆疊
+            const _existShield = (_ally.buffs || []).find(b => b.type === 'shield');
+            if(_existShield && (_existShield._amt || 0) >= _gunShieldFinal){
+              // 既有更大,不覆蓋
+            } else {
+              _ally.buffs = (_ally.buffs || []).filter(b => b.type !== 'shield');
+              _ally.buffs.push({ type:'shield', dur:99, _amt:_gunShieldFinal });
+            }
+            // 速度 +3 永久(直到戰鬥結束,用 dur:99)
+            _ally._gunGuardOrigSpd = _ally.spd;
+            _ally.spd = (_ally.spd || 0) + 3;
+            _ally.buffs.push({ type:'_gunGuardSpd', dur:99, _spdBoost:3, _protected:true });
+            try{ bannerFX(_ally, `🛡 護盾 +${_gunShieldFinal}!`, '#aaccff', 700); }catch(_){}
+            try{ ringFX(_ally, '#88ccff', 600); }catch(_){}
+            renderCard(_ally);
+          });
+          log(`🛡 [${h.name}] 武裝守護!全隊獲得 ${_gunShieldFinal} 護盾,全隊速度 +3(永久)`);
+          bannerFX(h, '🛡 武裝守護!', '#88ccff', 1200);
+        }catch(e){ console.warn('[神槍手戰開 hook] 失敗', e); }
+      }
+    });
     // 田徑隊員：時間倒轉後重新觸發起跑衝刺
   [...G.p1,...G.p2].forEach(h=>{
     if(h.name==='田徑隊員' && h.curHp>0 && (h.s1.n==='起跑衝刺'||h.s2.n==='起跑衝刺')){
@@ -14640,7 +14838,9 @@ function statusName(t){
   // ★ v1.0.20260518.6930 — 天神宙斯 S1「驚雷」附加狀態:特技 -50%
   _zeusSpDown:'⚡ 特技 -50%',
   // ★ v1.0.20260519.7100 — 維京海盜船長 S2「鎖定」狀態
-  locked:'🎯 鎖定'
+  locked:'🎯 鎖定',
+  // ★ v3.4.11 — 神槍手 S1「迴旋子彈」延遲傷害狀態
+  _gunDelayDmg:'🎯 延遲傷害'
 };
   return m[t]||t;
 }
@@ -15369,6 +15569,27 @@ const BURST_GIF_DB = {
     sfx:[['sfx-explode',1.0],['sfx-gunshot-big',0.9],['sfx-powerup',0.7]],
     tint:'rgba(80,40,180,0.22)',
     dur:1600
+  },
+  // ★ v3.4.11 — 武器精靈爆發(5 年 5 班朱同學設計)
+  //   URL:老師設計單指定「熱情之舞.gif」(舞者爆發 GIF 共用)
+  //   音效:刀劍砍擊+爆風+能量回收
+  //   tint:銀白色(迴力鏢冷光)
+  '銀齒迴力鏢旋風': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%86%B1%E6%83%85%E4%B9%8B%E8%88%9E.gif',
+    sfx:[['sfx-sword',1.0],['sfx-crit',0.85],['sfx-powerup',0.7]],
+    tint:'rgba(200,220,255,0.18)',
+    dur:1600
+  },
+  // ★ v3.4.11 — 神槍手爆發(5 年 4 班莊同學設計)
+  //   URL:老師設計單指定「千年發酵核爆.gif」(此 GIF 已存在於系統,line 15589 臭氣魔王共用)
+  //   音效:老師指定「子彈射擊 + 爆炸 各 3 次」,使用 sfx-gunshot-big + sfx-explode 交替
+  //   tint:火紅色(炎彈主題)
+  //   ★ 視覺特殊處理:畫面三個不同位置各播一次(由 _renderTripleBurstFX 在爆發邏輯內額外觸發)
+  '火焰神槍': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('千年發酵核爆.gif'),
+    sfx:[['sfx-gunshot-big',1.0],['sfx-explode',0.95],['sfx-gunshot-big',0.9],['sfx-explode',0.85],['sfx-gunshot-big',0.8],['sfx-explode',0.75]],
+    tint:'rgba(255,80,30,0.22)',
+    dur:2400
   },
   '劍神連斬': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
@@ -17938,6 +18159,154 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return;
   }
 
+  // ★ v3.4.11 — 武器精靈爆發「銀齒迴力鏢旋風」(5 年 5 班朱同學設計)
+  //   全體 (攻+特+速)×200% 必中無視有利;單體時造成 2 次傷害;施放後回 3 能量
+  //   ★ 等級加成:基礎 200%, +10%/級, Lv10=290%
+  if(burstName==='銀齒迴力鏢旋風'){
+    const _weBurstMult = 2.00 + _burstLv * 0.10;  // Lv1=200%, Lv5=240%(_burstLv max 4)
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _foes = (G[_opp] || []).filter(x => x.curHp > 0);
+    if(!_foes.length){
+      _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, 600);
+      return;
+    }
+    const _weDmgBase = Math.max(1, Math.floor(((h.atk||0) + (h.sp||0) + (h.spd||0)) * _weBurstMult));
+    const _weSingleTarget = (_foes.length === 1);
+    log(`⚔️ [${h.name}] 銀齒迴力鏢旋風!(攻+特+速)×${Math.round(_weBurstMult*100)}% = ${_weDmgBase} 傷害 ${_weSingleTarget?'(單體 2 段)':'(全體 1 段)'},必中無視有利!`);
+    bannerFX(h, '⚔️ 迴力鏢旋風!', '#aaccff', 1400);
+    beginBatchTotals();
+
+    if(_weSingleTarget){
+      // 單體 2 段傷害
+      const _t = _foes[0];
+      const _doWeHit = (idx) => {
+        if(idx >= 2 || _t.curHp <= 0){
+          setTimeout(endBatchTotals, 50);
+          // 施放後立即恢復 3 能量
+          try{
+            G.energy = G.energy || {p1:0, p2:0};
+            G.energy[side] = Math.min(99, (G.energy[side]||0) + 3);
+            log(`⚡ [${h.name}] 迴力鏢返回,恢復 3 能量!陣營能量:${G.energy[side]}`);
+            try{ bannerFX(h, '⚡ +3 能量!', '#88ddff', 800); }catch(_){}
+          }catch(e){ console.warn('[銀齒迴力鏢-能量回收] 失敗', e); }
+          _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, 600);
+          return;
+        }
+        log(`💥 [${h.name}] 第 ${idx+1} 段 → [${_t.name}] ${_weDmgBase} 傷害`);
+        try{ bannerFX(_t, `💥 ${idx+1}!`, '#aaccff', 500); }catch(_){}
+        doDmg(_t, _weDmgBase, { actor:h, isSkill:true, mustHit:true, ignoreBuff:true });
+        renderCard(_t);
+        _pSetTimeout(() => _doWeHit(idx+1), 350);
+      };
+      _pSetTimeout(() => _doWeHit(0), 200);
+    } else {
+      // 全體 1 段傷害
+      _foes.forEach((_f, _i) => {
+        _pSetTimeout(() => {
+          if(_f.curHp <= 0) return;
+          log(`💥 [${h.name}] → [${_f.name}] ${_weDmgBase} 傷害`);
+          try{ bannerFX(_f, `💥 ${_weDmgBase}`, '#aaccff', 600); }catch(_){}
+          doDmg(_f, _weDmgBase, { actor:h, isSkill:true, mustHit:true, ignoreBuff:true });
+          renderCard(_f);
+        }, _i * 150);
+      });
+      _pSetTimeout(() => {
+        setTimeout(endBatchTotals, 50);
+        // 施放後立即恢復 3 能量
+        try{
+          G.energy = G.energy || {p1:0, p2:0};
+          G.energy[side] = Math.min(99, (G.energy[side]||0) + 3);
+          log(`⚡ [${h.name}] 迴力鏢返回,恢復 3 能量!陣營能量:${G.energy[side]}`);
+          try{ bannerFX(h, '⚡ +3 能量!', '#88ddff', 800); }catch(_){}
+        }catch(e){ console.warn('[銀齒迴力鏢-能量回收] 失敗', e); }
+        updateUI();
+        _burstFinish(h, _interrupted);
+      }, _foes.length * 150 + 600);
+    }
+    return;
+  }
+
+  // ★ v3.4.11 — 神槍手爆發「火焰神槍」(5 年 4 班莊同學設計)
+  //   攻 250%×3 次隨機火屬性必中無視有利,附加 2 回合強力失明+燃燒
+  //   ★ 等級加成:基礎 250%, +10%/級, Lv10=340%
+  //   ★ 視覺特殊處理:畫面三個不同位置各播 1 次(在 GIF 播放上做螢幕偏移)
+  if(burstName==='火焰神槍'){
+    const _gunBurstMult = 2.50 + _burstLv * 0.10;  // Lv1=250%, Lv5=290%
+    const _opp = side==='p1' ? 'p2' : 'p1';
+    const _foes = () => (G[_opp] || []).filter(x => x.curHp > 0);
+    if(!_foes().length){
+      _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, 600);
+      return;
+    }
+    const _gunDmg = Math.max(1, Math.floor((h.atk||1) * _gunBurstMult));
+    const _gunHits = 3;
+    log(`🔥 [${h.name}] 火焰神槍!攻擊 ${Math.round(_gunBurstMult*100)}% × ${_gunHits} 次隨機火屬性必中無視有利!`);
+    bannerFX(h, '🔥 火焰神槍!', '#ff4422', 1400);
+
+    // ★ 畫面三個不同位置各播 1 次 GIF(備註要求)
+    //   主 BURST_GIF 動畫由 execBurst 自動播放(中央),這裡額外在左/右兩個位置各疊一次
+    try{
+      const _playExtraGifAt = (xPct, yPct, delay) => {
+        _pSetTimeout(() => {
+          try{
+            const _gifConf = (typeof BURST_GIF_DB !== 'undefined') ? BURST_GIF_DB['火焰神槍'] : null;
+            if(!_gifConf) return;
+            const _extraDiv = document.createElement('div');
+            _extraDiv.style.cssText =
+              'position:fixed;left:'+xPct+'%;top:'+yPct+'%;'+
+              'transform:translate(-50%,-50%) scale(1.3);'+
+              'pointer-events:none;z-index:9999;opacity:0.85;';
+            const _img = document.createElement('img');
+            _img.src = _gifConf.url;
+            _img.style.cssText = 'width:360px;height:360px;object-fit:contain;';
+            _extraDiv.appendChild(_img);
+            document.body.appendChild(_extraDiv);
+            _pSetTimeout(() => { try{ _extraDiv.remove(); }catch(_){} }, 1800);
+          }catch(e){ console.warn('[火焰神槍-額外GIF] 失敗', e); }
+        }, delay);
+      };
+      _playExtraGifAt(25, 35, 200);   // 左上
+      _playExtraGifAt(75, 35, 400);   // 右上
+      // 中央位置由主 GIF 系統自動播
+    }catch(_){}
+
+    beginBatchTotals();
+    let _gunI = 0;
+    const _doFireShot = () => {
+      const _alive = _foes();
+      if(_gunI >= _gunHits || !_alive.length){
+        setTimeout(endBatchTotals, 50);
+        _pSetTimeout(() => { updateUI(); _burstFinish(h, _interrupted); }, 600);
+        return;
+      }
+      const _t = _alive[Math.floor(Math.random() * _alive.length)];
+      log(`💥 [${h.name}] 第 ${_gunI+1} 發炎彈 → [${_t.name}] ${_gunDmg} 火傷害`);
+      try{ bannerFX(_t, `🔥 ${_gunI+1}!`, '#ff4422', 600); }catch(_){}
+      try{ playSfx('sfx-gunshot-big', 0.6); }catch(_){}
+      try{ playSfx('sfx-explode', 0.5); }catch(_){}
+      doDmg(_t, _gunDmg, { actor:h, isSkill:true, mustHit:true, ignoreBuff:true, element:'fire', elem:'fire' });
+      if(_t.curHp > 0){
+        // 強力失明 2 回合(無法免疫)
+        try{
+          _t.status = _t.status.filter(s => s.type !== 'blind');
+          _t.status.push({type:'blind', dur:3, _strong:true});  // dur:3 → 扣完本回合剩 2 回合
+          bannerFX(_t, '🌫 強力失明!', '#888888', 700);
+        }catch(_){}
+        // 燃燒 2 回合
+        try{
+          _t.status = _t.status.filter(s => s.type !== 'burn');
+          _t.status.push({type:'burn', dur:3});
+          bannerFX(_t, '🔥 燃燒!', '#ff6622', 700);
+        }catch(_){}
+      }
+      renderCard(_t);
+      _gunI++;
+      _pSetTimeout(_doFireShot, 350);
+    };
+    _pSetTimeout(_doFireShot, 250);
+    return;
+  }
+
   // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 10 BOSS 爆發技處理(原本完全沒實作,玩家看到動畫但無效果!)
   // ════════════════════════════════════════════════════════════════
@@ -18766,6 +19135,35 @@ function doDmg(target, rawDmg, opts={}){
         opts._vkBoostApplied = true;
       }
     }catch(_e){ console.warn('[海盜狂暴傷害加成] 失敗', _e); }
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.4.11 — 武器精靈天賦「武器靈守」閃避(5 年 5 班朱同學設計)
+  //   受到傷害時 20% 機率自動變形閃避該次傷害(歸零)
+  //   每升 1 級 +2.5%,Lv5 MAX 達 30%
+  //   ⚠ 排除:isRebound(反彈)、isHeal(治療)、ignoreEvasion(必中)、_weDodged(防重複)
+  //   ⚠ 必中技能(opts.mustHit)不會觸發此天賦
+  // ════════════════════════════════════════════════════════════════
+  if(target && target.curHp > 0 && rawDmg > 0
+     && target.name === '武器精靈'
+     && !opts._weDodged && !opts.isRebound && !opts.isHeal
+     && !opts.mustHit && !opts.ignoreEvasion){
+    try{
+      const _weTraitLv = (typeof _getTraitLv === 'function') ? _getTraitLv('武器精靈') : 0;
+      const _weDodgeRate = 0.20 + _weTraitLv * 0.025;  // Lv0=20%, Lv5=32.5%(上限30%)
+      const _weActualRate = Math.min(0.30, _weDodgeRate);
+      if(Math.random() < _weActualRate){
+        try{ log(`⚔ [${target.name}] 武器靈守觸發!武器自動變形撥開攻擊 — 閃避!`); }catch(_){}
+        try{ showPopup(target, '⚔ 閃避!', 'heal'); }catch(_){}
+        try{ bannerFX(target, '⚔ 武器靈守!', '#aaccff', 800); }catch(_){}
+        try{ flashCard(target, 'rgba(170,200,255,0.5)', 400); }catch(_){}
+        try{
+          const _rc = cardRect(target);
+          if(_rc) spawnParticles(_rc.x, _rc.y, {count:14, color:'#ccddff', size:6, spread:45, duration:600});
+        }catch(_){}
+        opts._weDodged = true;
+        return 0;  // 該次傷害完全被閃避;不會引發攻擊者的反擊/吸血類天賦
+      }
+    }catch(_e){ console.warn('[武器靈守閃避] 失敗', _e); }
   }
   // ════════════════════════════════════════════════════════════════
   // ★ v1.0.20260518.6920 — 學霸(轉學生)爆發「壓力轉移」傷害攔截
@@ -25335,6 +25733,128 @@ function execSkill(a, sk, cost, stype){
     _pSetTimeout(_doZmRound, 200);
     return;  // 非同步
   }
+  // ★ v3.4.11 — 武器精靈 S1「斧頭重擊」:攻 250% 單體傷害,暴擊率+40%,目標暈眩 1 回合
+  //   ★ 鐵律 1.28:升級加成 — 每升 1 級 +5%(Lv5=275% / Lv10=300%)
+  else if(n==='斧頭重擊'){
+    setPending('enemy', t => {
+      if(!t || t.curHp <= 0){ endAction(a, cost); return; }
+      const _weS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _weMult = 2.50 + _weS1Lv * 0.05;
+      const dmg = Math.max(1, Math.floor((a.atk||1) * _weMult));
+      log(`🪓 [${a.name}] 斧頭重擊!攻擊 ${Math.round(_weMult*100)}% 對 [${t.name}] 造成傷害(暴擊率 +40%)!`);
+      try{ bannerFX(a, '🪓 斧頭重擊!', '#ff6622', 900); }catch(_){}
+      try{ playSkillFX('斧頭重擊', a, [t]); }catch(_){}
+      // 暴擊率 +40%:走 opts.critBoost(標準介面,與軍師「集中火力」一致)
+      doDmg(t, dmg, { actor:a, isSkill:true, critBoost:0.40 });
+      // 暈眩 1 回合(dur:2 → 扣完本回合剩 1 回合)
+      if(t.curHp > 0){
+        try{ addStatus(t, 'stun', 2); }catch(_){}
+        try{ bannerFX(t, '💫 暈眩!', '#cc66ff', 700); }catch(_){}
+      }
+      renderCard(t);
+      endAction(a, cost);
+    });
+    return;
+  }
+  // ★ v3.4.11 — 武器精靈 S2「弓弩連射」:特技 175% × 2 次單體傷害(必中、無視有利狀態)
+  //   ★ 鐵律 1.28:升級加成 — 每升 1 級 +5%(Lv5=200% / Lv10=225%)
+  else if(n==='弓弩連射'){
+    setPending('enemy', t => {
+      if(!t || t.curHp <= 0){ endAction(a, cost); return; }
+      const _weS2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+      const _weMult2 = 1.75 + _weS2Lv * 0.05;
+      const dmg = Math.max(1, Math.floor(spv(a) * _weMult2));
+      log(`🏹 [${a.name}] 弓弩連射!特技 ${Math.round(_weMult2*100)}% × 2 次必中無視有利!`);
+      try{ bannerFX(a, '🏹 弓弩連射!', '#88ccff', 900); }catch(_){}
+      try{ playSkillFX('弓弩連射', a, [t]); }catch(_){}
+      beginBatchTotals();
+      const _doShot = (idx) => {
+        if(idx >= 2 || t.curHp <= 0){
+          setTimeout(endBatchTotals, 50);
+          endAction(a, cost);
+          return;
+        }
+        log(`💥 [${a.name}] 第 ${idx+1} 箭 → [${t.name}] ${dmg} 傷害`);
+        doDmg(t, dmg, { actor:a, isSkill:true, mustHit:true, ignoreBuff:true });
+        renderCard(t);
+        _pSetTimeout(() => _doShot(idx+1), 280);
+      };
+      _pSetTimeout(() => _doShot(0), 200);
+    });
+    return;
+  }
+  // ★ v3.4.11 — 神槍手 S1「迴旋子彈」:攻 200% 單體傷害,附加「延遲傷害」1 回合
+  //   狀態消失時(下回合自己行動前)再受到攻擊 100% 傷害
+  //   ★ 鐵律 1.28:升級加成 — 前後兩次傷害每升 1 級 +5%(Lv5 +25% / Lv10 +50%)
+  else if(n==='迴旋子彈'){
+    setPending('enemy', t => {
+      if(!t || t.curHp <= 0){ endAction(a, cost); return; }
+      const _gunS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
+      const _gunMult1 = 2.00 + _gunS1Lv * 0.05;  // 首擊倍率
+      const _gunDelay = 1.00 + _gunS1Lv * 0.05;  // 延遲傷害倍率
+      const dmg = Math.max(1, Math.floor((a.atk||1) * _gunMult1));
+      const _delayDmg = Math.max(1, Math.floor((a.atk||1) * _gunDelay));
+      log(`🎯 [${a.name}] 迴旋子彈!攻擊 ${Math.round(_gunMult1*100)}% 對 [${t.name}] 造成傷害,並附加延遲傷害!`);
+      try{ bannerFX(a, '🎯 迴旋子彈!', '#ff8833', 900); }catch(_){}
+      try{ playSkillFX('迴旋子彈', a, [t]); }catch(_){}
+      doDmg(t, dmg, { actor:a, isSkill:true });
+      // 附加延遲傷害狀態(dur:2 → 扣完本回合剩 1 回合,在下回合開始扣減後觸發追擊)
+      if(t.curHp > 0){
+        // 用 status 系統儲存「即將觸發的追擊」
+        t.status = t.status.filter(s => s.type !== '_gunDelayDmg');
+        t.status.push({
+          type:'_gunDelayDmg',
+          dur:2,
+          _amt: _delayDmg,
+          _sourceName: a.name,
+          _sourceSide: a.side,
+          _sourcePos: a.pos
+        });
+        try{ bannerFX(t, '🎯 標記!', '#ff8833', 700); }catch(_){}
+        try{ flashCard(t, 'rgba(255,140,40,0.4)', 500); }catch(_){}
+      }
+      renderCard(t);
+      endAction(a, cost);
+    });
+    return;
+  }
+  // ★ v3.4.11 — 神槍手 S2「多重掃射」:攻 125% × 3 次隨機目標
+  //   ★ 鐵律 1.28:升級加成 — 每升 1 級 +5% 傷害;Lv5/Lv10 攻擊次數 +1
+  //   Lv1~4: 3 次 / Lv5~9: 4 次 / Lv10: 5 次
+  else if(n==='多重掃射'){
+    const opp = a.side==='p1' ? 'p2' : 'p1';
+    if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
+    const _gunS2Lv = (a._skLv && typeof a._skLv.s2 === 'number') ? a._skLv.s2 : 0;
+    const _gunMult2 = 1.25 + _gunS2Lv * 0.05;
+    let _gunHits = 3;
+    if(_gunS2Lv >= 9) _gunHits = 5;       // Lv10 (內部 lv9)
+    else if(_gunS2Lv >= 4) _gunHits = 4;  // Lv5 (內部 lv4)
+    log(`🔫 [${a.name}] 多重掃射!攻擊 ${Math.round(_gunMult2*100)}% × ${_gunHits} 次隨機目標!`);
+    try{ bannerFX(a, '🔫 多重掃射!', '#ffcc33', 1000); }catch(_){}
+    try{ playSkillFX('多重掃射', a, G[opp].filter(h => h.curHp > 0)); }catch(_){}
+    try{ playSfx('sfx-rapidfire-gun', 0.7); }catch(_){}
+    beginBatchTotals();
+    let _gunI = 0;
+    const _doGunShot = () => {
+      const _alive = G[opp].filter(h => h.curHp > 0);
+      if(_gunI >= _gunHits || !_alive.length){
+        setTimeout(endBatchTotals, 50);
+        endAction(a, cost);
+        return;
+      }
+      const _t = _alive[Math.floor(Math.random() * _alive.length)];
+      const _gunDmg = Math.max(1, Math.floor((a.atk||1) * _gunMult2));
+      log(`💥 [${a.name}] 第 ${_gunI+1} 發 → [${_t.name}] ${_gunDmg} 傷害`);
+      try{ bannerFX(_t, `💥 ${_gunI+1}!`, '#ffaa44', 500); }catch(_){}
+      try{ playSfx('sfx-gunshot-big', 0.4); }catch(_){}
+      doDmg(_t, _gunDmg, { actor:a, isSkill:true });
+      renderCard(_t);
+      _gunI++;
+      _pSetTimeout(_doGunShot, 280);
+    };
+    _pSetTimeout(_doGunShot, 200);
+    return;
+  }
   else if(n==='龍飛鳳舞火炮轟擊'){
     const _vkS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
     const _vkMult = 1.20 + _vkS1Lv * 0.05;  // Lv1=120%, Lv5=140%
@@ -26857,6 +27377,31 @@ function endAction(a, cost, noFinish=false){
     // ★ 行動後遞減 dur(整個回合 = 行動前+行動後 算一次)
     a.status = a.status.map(s => s.type === 'hellfire' ? {...s, dur: s.dur - 1} : s).filter(s => s.dur > 0);
     renderCard(a);
+  }
+  // ★ v3.4.11 — 神槍手天賦「武裝守護」行動後 hook(5 年 4 班莊同學設計)
+  //   每次自己行動結束後,自動為當前 HP 比例最低的 1 名友方補上護盾(取大值不堆疊)
+  //   ⚠ 護盾值跟著天賦等級走(Lv0=30, Lv5=50);若該友方既有護盾較大,則不覆蓋
+  if(a && a.name === '神槍手' && a.curHp > 0 && !noFinish){
+    try{
+      const _gunTraitLv = (typeof _getTraitLv === 'function') ? _getTraitLv('神槍手') : 0;
+      const _gunShield = Math.min(50, 30 + _gunTraitLv * 5);
+      const _allies = (G[a.side] || []).filter(x => x.curHp > 0);
+      if(_allies.length > 0){
+        // 找 HP 比例最低的友方(可含自己)
+        _allies.sort((x, y) => (x.curHp / (x.hp||1)) - (y.curHp / (y.hp||1)));
+        const _lowest = _allies[0];
+        const _existShield = (_lowest.buffs || []).find(b => b.type === 'shield');
+        if(!_existShield || (_existShield._amt || 0) < _gunShield){
+          _lowest.buffs = (_lowest.buffs || []).filter(b => b.type !== 'shield');
+          _lowest.buffs.push({ type:'shield', dur:99, _amt:_gunShield });
+          try{ bannerFX(_lowest, `🛡 +${_gunShield} 護盾`, '#aaccff', 600); }catch(_){}
+          try{ ringFX(_lowest, '#88ccff', 500); }catch(_){}
+          log(`🛡 [${a.name}] 武裝守護:為 [${_lowest.name}] 補 ${_gunShield} 護盾`);
+          renderCard(_lowest);
+        }
+        // else:既有護盾較大,不覆蓋(取大值規則)
+      }
+    }catch(e){ console.warn('[神槍手行動後護盾] 失敗', e); }
   }
   clearSel();
   if(!noFinish){
@@ -32573,7 +33118,7 @@ function _gpIsAnyLegitModalOpen(){
     const _shown = (el.classList && el.classList.contains('show'))
                 || (el.style.display && el.style.display !== 'none' && el.offsetParent !== null);
     if(!_shown) continue;
-    // ★ v3.4.11 — 孤兒檢測:adv-quiz-overlay 顯示中,但 quiz phase 已 idle 且無 onDone callback
+    // ★ v3.4.13 — 孤兒檢測:adv-quiz-overlay 顯示中,但 quiz phase 已 idle 且無 onDone callback
     //   = 孤兒 overlay(救援後關不掉/前置流程沒設好 phase),不算合法 modal
     //   原本問題:玩家三份卡死回報都是「quiz overlay 顯示中 + phase=idle + cb=null + paused=true」
     //   而 _gp heartbeat 看到 overlay 顯示中就重置計時器,永遠救不了 → 必須在此排除孤兒情境
@@ -34513,7 +35058,7 @@ async function _showAdminStatsPanel(){
       },
       {
         label: '🎨 學生設計英雄',
-        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長']
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長','武器精靈','神槍手']
       },
     ];
 
@@ -35181,7 +35726,7 @@ async function _showAdminStatsPanel(){
       },
       {
         label: '🎨 學生設計英雄',
-        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長']
+        heroes: ['窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長','武器精靈','神槍手']
       },
     ];
 
@@ -49269,11 +49814,11 @@ function _startQuizVisibilityCheck(reason){
           const _cb = window._miniQuizOnDone;
           window._miniQuizOnDone = null;
           window._miniQuizCurrentQ = null;
-          // ★ v3.4.11 — 救援時傳 {correct:false},與寵物事件路徑相容
+          // ★ v3.4.13 — 救援時傳 {correct:false},與寵物事件路徑相容
           //   (寵物事件 onDone 簽名是 function(res){ ok = res.correct; },沒參數會走錯)
           try{ _cb({correct:false}); }catch(_eCb){ console.error('[題目可見性] _miniQuizOnDone 拋例外', _eCb); }
         } else if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
-          // ★ v3.4.11 — 小怪戰中但 _miniQuizOnDone 已被別人清掉(被 _advMiniQuizSubmit 的
+          // ★ v3.4.13 — 小怪戰中但 _miniQuizOnDone 已被別人清掉(被 _advMiniQuizSubmit 的
           //   setTimeout 搶先消費,或前次救援已 null 但 _gamePaused 還掛著)
           //   此時必須主動把流程推進去,不然就永遠停在 _gamePaused=true
           console.warn('[題目可見性] 小怪戰救援 → 無 _miniQuizOnDone,強制解 paused+推進');
@@ -50154,8 +50699,26 @@ function advOnQuizSkip() {
         const _isP1 = _ac.side === 'p1';
         const _ap = document.getElementById('action-panel');
         const _apVisible = _ap && _ap.style.display !== 'none';
-        if(_isP1 && _apVisible && !_forceRescue){
-          // p1 該動 + action-panel 顯示中 = 玩家正常操作中,不算卡死
+        // ★ v3.4.13 — 玩家回合 + action-panel 可見 = 永遠不該被強制救援
+        //   原本 bug:rescheduleCount=5 後 _forceRescue=true,系統就強制幫玩家「自動普攻過回合」,
+        //            玩家明明正在思考要打什麼,15 秒後突然發現自己的英雄自己動了。
+        //   新邏輯:玩家回合 + action-panel 可見 → 不管 rescheduleCount 多少都直接 return,
+        //           交由 quiz visibility watchdog / _gp heartbeat 處理 quiz overlay 殘留問題。
+        //           只有當 action-panel 確實看不見時(被 quiz overlay 蓋住或 hidden),
+        //           系統才能介入「強制以普攻過回合」。
+        if(_isP1 && _apVisible){
+          // 玩家正在思考(action-panel 有出來,有按鈕可點)→ 不要打擾,直接 return
+          // 但若 quiz overlay 還掛著(被誤殘留)→ 先幫玩家關掉,讓玩家看得到按鈕
+          if(_qShow && !_quizPhaseActive){
+            try{
+              _qOv.classList.remove('show');
+              _qOv.style.display = 'none';
+              console.warn('[答題後卡死救援] 玩家回合中,順手關掉殘留的孤兒 quiz overlay,不搶玩家回合');
+            }catch(_){}
+          }
+          // 重排計時,讓玩家可以慢慢思考(不要再累積 rescheduleCount)
+          window._advQuizDeadlockRescheduleCount = 0;
+          window._advQuizDeadlockSaverTimer = setTimeout(_quizDeadlockSaverCheck, 5000);
           return;
         }
         const _isWbConnectedMode = !!(typeof _adventureStage !== 'undefined'
@@ -56457,20 +57020,14 @@ function _hideDeadlockRescueButton(){
 }
 
 // ════════════════════════════════════════════════════════════════
-// ★ v3.4.12 — 管理員回信「未讀通知」系統
+// ★ v3.4.13 — 管理員回信「未讀通知」系統
 //   流程:
 //     1. 玩家登入完成後 _checkUnreadBugReplies() 查詢自己的 bugReports
 //     2. 有未讀(adminReply 非空 + adminReplyRead !== true)→
-//        - 彈出短促置頂通知視窗(3 秒淡出,可點掉)
+//        - 彈出短促置頂通知視窗(8 秒淡出,可點掉)
 //        - 關卡首頁的「🐛 卡死或 BUG 回報」按鈕加脈動光暈 + 紅點 badge
 //     3. 玩家打開「📬 管理員回信」分頁 → 把所有未讀的 reply 標記已讀
 //        並清掉按鈕發亮(_clearUnreadBugReplyHint)
-//
-//   設計考量:
-//     - 不打擾現有戰鬥流程:登入後 5 秒延遲,避免跟其他登入後彈窗搶版位
-//     - 不重複提示:同一筆 reply 標已讀後,下次登入不會再彈
-//     - 老師回覆很快(可能玩家還在玩):每 60 秒輕量重查一次,有新回覆會即時亮燈
-//     - 通知視窗用 z-index 2147483645(略低於 BUG 回報按鈕本身),避免擋到按鈕引導
 // ════════════════════════════════════════════════════════════════
 
 // 將未讀回信 id 暫存在 window,方便「管理員回信」分頁載入時一次標已讀
@@ -56488,13 +57045,11 @@ window._checkUnreadBugReplies = async function(opts){
     const _items = (_res && _res.items) || [];
     window._pendingUnreadBugReplyIds = _items.map(x => x.id);
     if(_count > 0){
-      // ★ 通知顯示:置頂視窗(只在第一次發現時彈,輪詢時只更新發亮 badge)
       if(!opts.silent){
         try{ _showUnreadBugReplyTopBanner(_count); }catch(_e){ console.warn('[未讀回信] 通知顯示失敗', _e); }
       }
       try{ _applyUnreadBugReplyButtonGlow(_count); }catch(_e){ console.warn('[未讀回信] 按鈕發亮失敗', _e); }
     } else {
-      // 沒有未讀 → 確保按鈕無發亮殘留(老師可能在後台刪除回信或玩家在別裝置看過)
       try{ _clearUnreadBugReplyButtonGlow(); }catch(_){}
     }
   }catch(e){
@@ -56507,12 +57062,10 @@ window._markPendingBugRepliesAsRead = async function(){
   try{
     const _ids = (window._pendingUnreadBugReplyIds || []).slice();
     if(_ids.length === 0){
-      // 即便沒有 pending 也清一下按鈕,避免畫面殘留
       try{ _clearUnreadBugReplyButtonGlow(); }catch(_){}
       return;
     }
     if(typeof window._fbMarkBugReplyRead !== 'function') return;
-    // 並行送出標記(不等回應,有錯就算了下次登入再標)
     _ids.forEach(id => {
       try{ window._fbMarkBugReplyRead(id); }catch(_){}
     });
@@ -56523,9 +57076,8 @@ window._markPendingBugRepliesAsRead = async function(){
   }
 };
 
-// 置頂通知視窗(短促、3 秒淡出、可點掉)
+// 置頂通知視窗(短促、8 秒淡出、可點掉)
 function _showUnreadBugReplyTopBanner(count){
-  // 避免重複彈
   const _old = document.getElementById('_unread-bug-reply-banner');
   if(_old){ _old.remove(); }
 
@@ -56555,17 +57107,14 @@ function _showUnreadBugReplyTopBanner(count){
     '<div style="font-size:11px;color:#88aacc;font-weight:400;margin-top:6px;">點此關閉</div>';
 
   document.body.appendChild(_banner);
-  // 雙 rAF 觸發進場動畫
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       _banner.style.opacity = '1';
       _banner.style.transform = 'translateX(-50%) translateY(0)';
     });
   });
-  // 提示音
   try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.4); }catch(_){}
 
-  // 8 秒後自動淡出(學生看得到也來得及反應)
   const _autoCloseTimer = setTimeout(() => {
     try{ _fadeOut(); }catch(_){}
   }, 8000);
@@ -56582,11 +57131,9 @@ function _showUnreadBugReplyTopBanner(count){
 
 // 加上按鈕發亮(脈動光暈 + 紅點 badge)
 function _applyUnreadBugReplyButtonGlow(count){
-  // 兩處按鈕都加:關卡首頁的 #adv-bug-report-btn + 戰鬥中的 #adv-bug-report-battle-btn
   ['adv-bug-report-btn', 'adv-bug-report-battle-btn'].forEach(_btnId => {
     const _btn = document.getElementById(_btnId);
     if(!_btn) return;
-    // 注入發亮動畫 keyframes(只注入一次)
     if(!document.getElementById('_unread-bug-reply-keyframes')){
       const _style = document.createElement('style');
       _style.id = '_unread-bug-reply-keyframes';
@@ -56595,24 +57142,11 @@ function _applyUnreadBugReplyButtonGlow(count){
         '  0%   { box-shadow: 0 0 18px rgba(120,200,255,0.6), 0 0 0 0 rgba(140,220,255,0.7); }' +
         '  50%  { box-shadow: 0 0 32px rgba(140,220,255,1.0), 0 0 0 8px rgba(140,220,255,0.0); }' +
         '  100% { box-shadow: 0 0 18px rgba(120,200,255,0.6), 0 0 0 0 rgba(140,220,255,0.7); }' +
-        '}' +
-        '#_unread-bug-reply-badge {' +
-        '  position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;' +
-        '  background:linear-gradient(135deg,#ff3366,#ff5588);' +
-        '  border:2px solid #fff;border-radius:11px;' +
-        '  color:#fff;font-size:13px;font-weight:900;' +
-        '  display:flex;align-items:center;justify-content:center;padding:0 5px;' +
-        '  box-shadow:0 0 12px rgba(255,80,120,0.85);z-index:1;' +
-        '  font-family:"M PLUS Rounded 1c","Nunito",sans-serif;' +
-        '  pointer-events:none;animation:_unreadBugReplyPulse 1.6s ease-in-out infinite;' +
         '}';
       document.head.appendChild(_style);
     }
-    // 套用動畫到按鈕(蓋過原本的 box-shadow)
     _btn.style.animation = '_unreadBugReplyPulse 1.6s ease-in-out infinite';
     _btn.dataset.unreadGlow = '1';
-    // 加紅點 badge(若還沒有)
-    // 注意:按鈕本身需要 position:relative 才能讓 badge 絕對定位附著上去
     if(_btn.style.position !== 'absolute' && _btn.style.position !== 'fixed'){
       _btn.style.position = _btn.style.position || 'relative';
     }
@@ -56620,8 +57154,6 @@ function _applyUnreadBugReplyButtonGlow(count){
     if(!_badge){
       _badge = document.createElement('span');
       _badge.className = '_unread-bug-badge';
-      _badge.id = (_btnId === 'adv-bug-report-btn') ? '_unread-bug-reply-badge' : '_unread-bug-reply-badge-battle';
-      // 直接套相同樣式(badge id 在 keyframes 裡有定義,fallback inline 樣式以防戰鬥按鈕)
       _badge.style.cssText =
         'position:absolute;top:-7px;right:-7px;min-width:22px;height:22px;' +
         'background:linear-gradient(135deg,#ff3366,#ff5588);' +
@@ -56649,7 +57181,6 @@ function _clearUnreadBugReplyButtonGlow(){
     const _badge = _btn.querySelector('._unread-bug-badge');
     if(_badge){ try{ _badge.remove(); }catch(_){} }
   });
-  // 通知視窗如果還在(玩家直接跳去點按鈕),也一起收掉
   const _banner = document.getElementById('_unread-bug-reply-banner');
   if(_banner){
     _banner.style.opacity = '0';
@@ -56658,13 +57189,10 @@ function _clearUnreadBugReplyButtonGlow(){
 }
 
 // 啟動「每 60 秒輕量輪詢」— 老師可能玩家還在線時就回覆,要即時亮燈
-//   注意:已讀標記後 _pendingUnreadBugReplyIds 會清空,但 Firestore 那邊 adminReplyRead 是 true,
-//         所以下次輪詢不會把同一筆當未讀。
 window._startUnreadBugReplyPolling = function(){
-  if(window._unreadBugReplyPollInterval) return;  // 已啟動,不重複
+  if(window._unreadBugReplyPollInterval) return;
   window._unreadBugReplyPollInterval = setInterval(() => {
     try{
-      // 若玩家正在看「管理員回信」分頁,跳過(避免輪詢搶先標記)
       const _dlg = document.getElementById('_bug-report-dialog');
       if(_dlg && _dlg._inRepliesTab) return;
       window._checkUnreadBugReplies({ silent: false });
@@ -56878,7 +57406,7 @@ window._showBugReportDialog = function(pageContext){
     if(_repliesListEl && !_repliesListEl._loaded){
       _loadMyBugReplies();
     }
-    // ★ v3.4.12 — 玩家進到「管理員回信」分頁:
+    // ★ v3.4.13 — 玩家進到「管理員回信」分頁:
     //   1) 標記目前所有未讀的 reply 為已讀(寫回 Firestore)
     //   2) 清掉關卡首頁/戰鬥按鈕的發亮提示
     //   3) 標記 dlg._inRepliesTab=true 讓背景輪詢避讓(避免重複彈通知)
@@ -63407,6 +63935,10 @@ const HERO_CATEGORIES_OVERRIDE = {
   '天神宙斯':    ['dmg','ctrl'],    // S1 雷屬性連擊+封印+特技降、S2 全體 3 次雷+%HP、爆發 非BOSS秒殺+BOSS%HP;天賦麻痺
   // ★ v1.0.20260519.7100 — 5 年 5 班吳同學設計
   '維京海盜船長':['dmg','ctrl'],    // S1 多段隨機傷害 + S2 鎖定剋天賦 + 爆發全體強力封印技能
+  // ★ v3.4.11 — 5 年 5 班朱同學設計
+  '武器精靈':    ['dmg'],            // 純輸出:S1 重擊+暈眩、S2 必中無視有利雙射、爆發全體必中(單體×2)
+  // ★ v3.4.11 — 5 年 4 班莊同學設計
+  '神槍手':      ['dmg','heal'],     // 高速攻擊 + 天賦提供全隊護盾(算 heal 類)
 };
 
 // ★ 六邊形雷達圖 治/控 分數覆寫（1-10）。未列則用關鍵字自動判定
@@ -63493,6 +64025,12 @@ const HERO_HEX_OVERRIDE = {
   '學霸(轉學生)':{ heal: 8, ctrl: 3 },
   '天神宙斯':    { heal: 0, ctrl: 10 },
   '維京海盜船長':{ heal: 0, ctrl: 8 },
+  // ★ v3.4.11 — 武器精靈:純輸出型,S1 暈眩 1 回合(中等控制,單一狀態)、無治療
+  '武器精靈':    { heal: 1, ctrl: 4 },
+  // ★ v3.4.11 — 神槍手:速攻型 + 天賦持續護盾全隊
+  //   heal=5:天賦戰開全體 30 護盾 + 行動後最低 HP 友方 30 護盾(持續性護盾向)
+  //   ctrl=5:爆發強力失明+燃燒 2 個強控,但 S1/S2 無控制
+  '神槍手':      { heal: 5, ctrl: 5 },
 
   // 校犬(特殊雙滿)
   '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
@@ -67607,7 +68145,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       const timerEl = document.getElementById('adv-quiz-timer');
       if(timerEl) timerEl.style.display = '';
       const _onDoneAfterReward = window._miniQuizOnDone;
-      // ★ v3.4.11 — 若救援已搶先把 _miniQuizOnDone 清成 null,
+      // ★ v3.4.13 — 若救援已搶先把 _miniQuizOnDone 清成 null,
       //   表示流程已被另一條 path 推進,這條 setTimeout 不再做任何事
       //   (繼續做的話會二次推進,讓 BOSS 連動兩次造成混亂)
       if(!_onDoneAfterReward){
@@ -67659,7 +68197,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       const timerEl = document.getElementById('adv-quiz-timer');
       if(timerEl) timerEl.style.display = '';
       const onDone = window._miniQuizOnDone;
-      // ★ v3.4.11 — 救援先觸發過就不再重複推進(同答對 path)
+      // ★ v3.4.13 — 救援先觸發過就不再重複推進(同答對 path)
       if(!onDone){
         console.warn('[mini quiz submit 答錯] _miniQuizOnDone 已被清掉(救援先觸發),本次 setTimeout 跳過');
         return;
@@ -69616,6 +70154,10 @@ const _TRAIT_LV_INFO = {
   '米鈴':    { base:'反擊倍率 80%', bonus:'+10%/天賦級', max:'120%(Lv5)', effect:'友方行動前清除其 1 個不利狀態,若成功清除則用特技反擊狀態來源對手' },
   // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
   '維京海盜船長':{ base:'30% 機率', bonus:'+5%/天賦級', max:'50%(Lv5)', effect:'造成傷害時機率複製目標掉落物(賣錢物品/寵物/物品卡)到背包(每目標每場 1 次)' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學「武器精靈」)
+  '武器精靈':{ base:'20% 機率', bonus:'+2.5%/天賦級', max:'30%(Lv5)', effect:'受到傷害時機率立即變形閃避,該次傷害歸零' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學「神槍手」)
+  '神槍手':  { base:'30 護盾值', bonus:'+5/天賦級', max:'50(Lv5)', effect:'戰開全體護盾+速度+3永久;行動後給最低HP友方護盾(取大值不堆疊)' },
 };
 
 function _showTraitLvPopup(heroName, el){
@@ -72687,7 +73229,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.12';
+window._GAME_LOADED_VERSION = 'v3.4.13';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
