@@ -1589,6 +1589,91 @@
     });
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.4.6 — 房主端「題目顯示」即時廣播給所有 client
+  // ────────────────────────────────────────────────────────────────────
+  // 老師明確需求:「無論如何讓組隊世界 boss 戰能同步看到問題,那是這遊戲的核心」
+  //
+  // 用途:房主端 advShowQuiz() 抽完題、render 完選項後,立即把題目資料 push 給所有 client,
+  //       讓 client 也彈出一模一樣的 quiz 視窗(攔截器會擋掉非指派槽位的提交)。
+  //
+  // 為什麼用獨立函式不走 _wbHostSyncG?
+  //   - _wbHostSyncG 有節流(同 tick 合併),若先呼 quiz 再呼 endAction,
+  //     quiz payload 可能被覆蓋導致 client 收不到。
+  //   - 這個函式直接 push,不參與節流,確保 quiz payload 不丟。
+  //
+  // payload 結構:
+  //   _wbQuizPayload = {
+  //     question:    '題目文字',
+  //     options:     [{text, isCorrect, letter}, ...],   // 已洗牌的 4 個選項
+  //     label:       'quiz label 文字',                   // 房主 UI 顯示「BOSS 開戰挑戰題」等
+  //     allowedSlot: 0~3 或 -1(開戰題=0, BOSS 行動前題依輪次, -1=不限),
+  //     timestamp:   Date.now(),                          // client 端去重用
+  //   }
+  // ════════════════════════════════════════════════════════════════════
+  window._wbHostBroadcastQuizShow = function(payload){
+    try{
+      if(!window._wbConnectedHostMode) return;
+      if(!window._wbNet || typeof window._wbNet.hostPushBattleState !== 'function') return;
+      if(!payload || !payload.question){
+        console.warn('[WB-QuizSync] payload 缺 question,跳過');
+        return;
+      }
+      const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+      let fullWireG = null;
+      try{
+        if(G && window._wbWireUtils && typeof window._wbWireUtils.GToWire === 'function'){
+          fullWireG = window._wbWireUtils.GToWire(G);
+        }
+      }catch(_){}
+      console.log('[WB-QuizSync] 廣播題目給 client',
+        'question="' + payload.question.slice(0, 30) + '...",',
+        'allowedSlot=' + payload.allowedSlot,
+        ', label=' + (payload.label || '(none)'));
+      window._wbNet.hostPushBattleState({
+        fullWireG: fullWireG,
+        _syncReason: 'quiz-show',
+        _wbQuizPayload: payload,
+        turn: G ? (G.round || G.turn || 1) : 1,
+        currentActorIdx: G ? (G.currentActorIdx || 0) : 0,
+        p1: G ? (G.p1 || []) : [],
+        p2: G ? (G.p2 || []) : [],
+        logEntries: [],
+      });
+    }catch(e){
+      console.error('[WB-QuizSync] 廣播失敗', e);
+    }
+  };
+
+  // ★ v3.4.6 — 房主端「題目關閉/結束」廣播(答完題或 skip 時)
+  //   client 收到後主動關掉自己的 quiz 視窗
+  window._wbHostBroadcastQuizClose = function(reason){
+    try{
+      if(!window._wbConnectedHostMode) return;
+      if(!window._wbNet || typeof window._wbNet.hostPushBattleState !== 'function') return;
+      const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+      let fullWireG = null;
+      try{
+        if(G && window._wbWireUtils && typeof window._wbWireUtils.GToWire === 'function'){
+          fullWireG = window._wbWireUtils.GToWire(G);
+        }
+      }catch(_){}
+      console.log('[WB-QuizSync] 廣播關題,reason=' + reason);
+      window._wbNet.hostPushBattleState({
+        fullWireG: fullWireG,
+        _syncReason: 'quiz-close',
+        _wbQuizCloseReason: reason || 'unknown',
+        turn: G ? (G.round || G.turn || 1) : 1,
+        currentActorIdx: G ? (G.currentActorIdx || 0) : 0,
+        p1: G ? (G.p1 || []) : [],
+        p2: G ? (G.p2 || []) : [],
+        logEntries: [],
+      });
+    }catch(e){
+      console.error('[WB-QuizSync] 廣播關題失敗', e);
+    }
+  };
+
   // ─ 安裝 endAction sync hook ───────────────────────────────────
   function _wbInstallEndActionSyncHook(){
     if(typeof window.endAction !== 'function') return false;

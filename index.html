@@ -3436,6 +3436,33 @@
     }
     window._wbBroadcastCenterToast = broadcastCenterToast;
 
+    // ★ v3.4.6 — Client 答完題後送答案給房主
+    //   payload: { letter: 'A'~'D', isCorrect: bool, slotIdx, quizTs }
+    //   房主收到後在自己機器上幫忙 advSubmitAnswer,讓全隊獎勵/懲罰正確觸發
+    async function broadcastQuizAnswer(letter, isCorrect, quizTs){
+      if(!WB.roomId) return false;
+      try{
+        const mySlot = WB.mySlot;
+        const myName = WB.lastSeenSnap?.players?.find(p => p.uid === window._gUserId)?.name || '玩家';
+        const existing = WB.lastSeenSnap?.chat || [];
+        const newChat = existing.concat([{
+          uid: window._gUserId, name: myName,
+          _wbQuizAnswer: true,
+          letter: String(letter || 'A'),
+          isCorrect: !!isCorrect,
+          slotIdx: mySlot,
+          quizTs: quizTs || 0,
+          ts: Date.now(),
+        }]).slice(-20);
+        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { chat: newChat });
+        return true;
+      }catch(e){
+        console.warn('[broadcastQuizAnswer] 失敗', e && e.message);
+        return false;
+      }
+    }
+    window._wbBroadcastQuizAnswer = broadcastQuizAnswer;
+
     // ─── E. 訂閱 / 心跳 ─────────────────────────────────────────
     function _subscribeRoom(roomId){
       _unsubscribeRoom();
@@ -16003,6 +16030,14 @@ function execBurst(side, pos, expectedName){
   renderCard(h);
   // 需求4：角色圖片全螢幕浮現 + 技能名稱震動發光
   _showBurstCinematic(h, bd);
+  // ★ v3.4.7 — 老師明確需求:「個人極限爆發要所有玩家端都同步看見」
+  //   capture cinematic 事件 → client 端 replay 時呼叫 _showBurstCinematic,
+  //   _showBurstCinematic 內部 1.3s 後會自己呼叫 _showBurstGif,所以不用額外 capture GIF
+  try{
+    if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'burstCinematic', side:h.side, pos:h.pos, heroName:h.name });
+    }
+  }catch(_eBurstCap){ console.warn('[WB] burst cinematic capture 失敗', _eBurstCap); }
   // 執行爆發技能效果（延遲1.2秒等動畫）
   _pSetTimeout(()=>_runBurst(h, bd, side, _interrupted), 1200);
 }
@@ -21495,6 +21530,35 @@ function _wbFxReplayOne(ev){
           }, 350);
         }
       }catch(_){}
+      break;
+    }
+    // ★ v3.4.7 — 個人極限爆發 cinematic 重播(右側角色全圖 + 集中效果線 + 中央大字)
+    case 'burstCinematic': {
+      try{
+        const h = _wbFxResolveHero(ev.side, ev.pos);
+        const bd = (typeof BURST_DB !== 'undefined') ? BURST_DB[ev.heroName] : null;
+        if(h && bd && typeof _showBurstCinematic === 'function'){
+          _showBurstCinematic(h, bd);
+        }
+      }catch(eBc){ console.warn('[WB-FX] burstCinematic replay 失敗', eBc); }
+      break;
+    }
+    // ★ v3.4.7 — 個人極限爆發 GIF 重播
+    case 'burstGif': {
+      try{
+        if(typeof _showBurstGif === 'function'){
+          _showBurstGif(ev.burstName);
+        }
+      }catch(eBg){ console.warn('[WB-FX] burstGif replay 失敗', eBg); }
+      break;
+    }
+    // ★ v3.4.7 — 全隊聯手攻擊 cinematic 重播(2×2 排版 4 名英雄全圖)
+    case 'teamBurstCinematic': {
+      try{
+        if(typeof window._wbShowTeamBurstCinematic === 'function'){
+          window._wbShowTeamBurstCinematic(ev.cnt || 5);
+        }
+      }catch(eTc){ console.warn('[WB-FX] teamBurstCinematic replay 失敗', eTc); }
       break;
     }
     default:
@@ -29708,6 +29772,9 @@ function aiAct(a){
           // ★ v3.3.5 — 「實質單人」判定:即使 _wbSoloPracticeMode=false,只要房內真實玩家 ≤ 1,
           //   也視為單人,讓房主可以代答所有 4 隻角色的題目
           let _isVirtualSolo = false;
+          // ★ v3.4.7 — 偵測「指派槽位是房主代打的 NPC」(老師需求:房主可以代答)
+          let _expectedIsHostNpc = false;
+          let _expectedPlayerName = '玩家';
           try{
             if(window._wbNet && typeof window._wbNet.getSnapshot === 'function'){
               const _snap = window._wbNet.getSnapshot();
@@ -29724,38 +29791,81 @@ function aiAct(a){
                 _realUids.add(_uid);
               });
               _isVirtualSolo = (_realUids.size <= 1);
+              // ★ v3.4.7 — 檢查指派槽位:沒有真人玩家對應 → 房主代打槽位
+              const _pAtSlot = _players[_expectedSlot];
+              if(!_pAtSlot || !_pAtSlot.uid){
+                _expectedIsHostNpc = true;
+                _expectedPlayerName = '房主代打';
+              }else{
+                _expectedPlayerName = _pAtSlot.name || ('玩家 ' + (_expectedSlot+1));
+              }
+              // 另檢:G.p1 對應 hero 的 _wbIsHostNpc(離線玩家也算)
+              try{
+                if(G && G.p1 && G.p1[_expectedSlot] && G.p1[_expectedSlot]._wbIsHostNpc){
+                  _expectedIsHostNpc = true;
+                  if(_pAtSlot && _pAtSlot.name){
+                    _expectedPlayerName = _pAtSlot.name + '(已離線・房主代打)';
+                  }
+                }
+              }catch(_){}
             }
           }catch(_){}
           const _effectiveSolo = _isSolo || _isVirtualSolo;
-          const _isMyTurn = _effectiveSolo || (_mySlot === _expectedSlot);
+          // ★ v3.4.7 — 房主代打槽位的題目:房主可以答(_isMyTurn=true)
+          //   原本邏輯:單人/實質單人 OR mySlot === expectedSlot 才算自己回合
+          //   新增邏輯:房主代打槽位(NPC 或離線玩家) + 我是房主 → 也算自己回合
+          const _isHostFlag = !!window._wbConnectedHostMode;
+          const _isHostTurnForNpc = _isHostFlag && _expectedIsHostNpc;
+          const _isMyTurn = _effectiveSolo || (_mySlot === _expectedSlot) || _isHostTurnForNpc;
           console.log('[WB-BossQuiz] round=' + _round
             + ', expectedSlot=' + _expectedSlot
             + ', mySlot=' + _mySlot
             + ', isMyTurn=' + _isMyTurn
             + ', soloPracticeMode=' + _isSolo
-            + ', virtualSolo=' + _isVirtualSolo);
+            + ', virtualSolo=' + _isVirtualSolo
+            + ', expectedIsHostNpc=' + _expectedIsHostNpc);
           // ★ v3.3.3 — 設定指派槽位旗標(供 advSubmitAnswer 攔截器使用)
           //   單人(實際或實質)設 null(不攔截),其他模式設指派槽位
-          window._wbAssignedQuizSlot = _effectiveSolo ? null : _expectedSlot;
-          // 房主 watchdog:30 秒沒答 → 自動視為答對推進
-          //   實質單人不需要(玩家自己 4 隻角色都會答)
-          const _isHost = !!window._wbConnectedHostMode;
-          if(_isHost && !_isMyTurn){
-            console.log('[WB-BossQuiz host] 房主自己不是被指派槽,設 30 秒 watchdog 等被指派玩家');
-            window._wbBossQuizHostWatchdog = setTimeout(function(){
-              console.warn('[WB-BossQuiz host] 30 秒沒收到被指派玩家答題,自動視為答對推進');
-              try{ if(typeof _advStats !== 'undefined' && _advStats) _advStats.lastAnswerCorrect = true; }catch(_){}
-              // 強制提交一個假的答案(走到答題完成流程)
-              try{
-                const _qOv = document.getElementById('adv-quiz-overlay');
-                if(_qOv) _qOv.classList.remove('show');
-              }catch(_){}
-              const _cb = _advQuizResolveCb;
-              _advQuizResolveCb = null;
-              try{ window._bossQuizInFlight = false; }catch(_){}
-              if(typeof _cb === 'function') _cb();
-            }, 30000);
+          // ★ v3.4.7 — 房主代打的槽位 → 設成 -1 讓房主可以點(房主 mySlot 不會等於 -1)
+          //            攔截器只擋 _mySlot !== _allowedSlot,設 null 就完全不擋
+          if(_effectiveSolo){
+            window._wbAssignedQuizSlot = null;
+          }else if(_expectedIsHostNpc){
+            // 房主代打槽位 → 設 null,房主可以答
+            // 其他 client 端的攔截器仍會擋:他們的 mySlot 不等於 expectedSlot,且不是房主
+            //   不過為了讓 client 端不誤觸答題,把 allowedSlot 設成「-2 房主獨享」標記
+            //   實際操作:client 端攔截器看到 _mySlot !== _allowedSlot(-2)依舊會擋
+            window._wbAssignedQuizSlot = -2;  // -2 = 房主代打,只有 _isHostFlag=true 才能點
+          }else{
+            window._wbAssignedQuizSlot = _expectedSlot;
           }
+          // ★ v3.4.7 — 取消房主 30 秒自動答對 watchdog
+          //   原行為:房主自己不是指派槽位時,30 秒沒收到答題自動視為答對推進
+          //   問題:「不能直接答對跳過」(老師明確需求),且現在 client 也能送答案了
+          //   新行為:只在「指派槽位是離線玩家 + 沒有人接答」極端情境下才救援,延長到 60 秒
+          //         (給隊友充裕思考時間,且最終 _quizDeadlockSaverCheck 還有 15+30 秒兜底)
+          //   若指派槽位是房主代打 NPC → 不設 watchdog(房主自己會答)
+          if(_isHostFlag && !_isMyTurn && !_expectedIsHostNpc){
+            console.log('[WB-BossQuiz host] 房主自己不是被指派槽,設 60 秒 watchdog 等被指派玩家');
+            window._wbBossQuizHostWatchdog = setTimeout(function(){
+              console.warn('[WB-BossQuiz host] 60 秒沒收到被指派玩家答題,讓題目超時(advOnQuizTimeout)');
+              // ★ v3.4.7 — 不再自動視為答對,改走 advOnQuizTimeout(算答錯/跳過)
+              try{
+                if(typeof advOnQuizTimeout === 'function'){
+                  advOnQuizTimeout();
+                }else{
+                  const _qOv = document.getElementById('adv-quiz-overlay');
+                  if(_qOv) _qOv.classList.remove('show');
+                  const _cb = _advQuizResolveCb;
+                  _advQuizResolveCb = null;
+                  try{ window._bossQuizInFlight = false; }catch(_){}
+                  if(typeof _cb === 'function') _cb();
+                }
+              }catch(_eWd){ console.warn('[WB-BossQuiz host watchdog] 例外', _eWd); }
+            }, 60000);
+          }
+          // ★ v3.4.7 — 暫存 expected 玩家名給 label 用
+          window._wbCurrentQuizAllowedName = _expectedPlayerName;
         }catch(_eAssign){
           console.warn('[WB-BossQuiz] 指派槽位例外', _eAssign);
         }
@@ -29768,7 +29878,11 @@ function aiAct(a){
             const _qLbl = document.getElementById('adv-quiz-label');
             if(_qLbl){
               const _round = (G && G.round) || 1;
-              _qLbl.textContent = `⚡ 第 ${_round} 回合 BOSS 行動前題!答對時能量+1、全隊 HP 恢復 5%`;
+              // ★ v3.4.7 — label 顯示「由誰回答」(老師明確需求)
+              //   原行為:「⚡ 第 N 回合 BOSS 行動前題!答對時能量+1、全隊 HP 恢復 5%」
+              //   新行為:「⚡ 第 N 回合 BOSS 行動前題!【由 XX 回答】答對全隊+5%HP+1能量」
+              const _byName = window._wbCurrentQuizAllowedName || '指派玩家';
+              _qLbl.textContent = `⚡ 第 ${_round} 回合 BOSS 行動前題!【由 ${_byName} 回答】答對全隊+5%HP+1能量`;
             }
           }
         }catch(_eLbl){ console.warn('[WB-BossQuiz] label 覆寫例外', _eLbl); }
@@ -49689,6 +49803,52 @@ function advShowQuiz() {
   // ★ 出題期間暫停戰鬥（等答題+選獎勵完成後才解除）
   _gamePaused = true;
 
+  // ★ v3.4.6 — 世界 BOSS 戰房主端:廣播題目給所有 client,讓他們同步看到一模一樣的視窗
+  //   老師明確需求:「無論如何讓組隊世界 boss 戰能同步看到問題,那是這遊戲的核心」
+  //   payload 把題目、洗牌後的選項、正解 idx、label、指派槽位全帶過去,client 端直接 render
+  //   不重新抽題(確保所有人看到同一題)
+  try{
+    const _isWbStage = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+    if(_isWbStage && window._wbConnectedHostMode
+       && typeof window._wbHostBroadcastQuizShow === 'function'){
+      // 把 q.options 用洗牌後的順序組成 client 可直接 render 的格式
+      const _payloadOptions = _origOpts.map((opt, i) => ({
+        text:      opt.text,
+        letter:    letters[i],
+        isCorrect: (opt.origIdx === _correctOrigIdx),
+      }));
+      // 決定 label:沿用 _qLbl 已經被覆寫的內容(BOSS quiz hook 會在這之後覆寫,
+      // 但因為這個 sync 也在「下一個 tick」才送出,所以可能讀到最新的 label)
+      const _qLblEl = document.getElementById('adv-quiz-label');
+      const _curLabel = _qLblEl ? (_qLblEl.textContent || '').trim() : '';
+      // allowedSlot:
+      //   - 開戰題期間 → window._wbOpeningQuizAllowedSlot (預設 0)
+      //   - BOSS 行動前題 → window._wbAssignedQuizSlot
+      //   - 都沒設 → -1 (代表不限,所有玩家都可點;一般用於主動觸發題目情境)
+      let _allowedSlot = -1;
+      if(window._wbIsOpeningQuizPhase){
+        _allowedSlot = (typeof window._wbOpeningQuizAllowedSlot === 'number')
+                     ? window._wbOpeningQuizAllowedSlot : 0;
+      }else if(typeof window._wbAssignedQuizSlot === 'number'){
+        _allowedSlot = window._wbAssignedQuizSlot;
+      }
+      // 延後 50ms 廣播,讓 BOSS quiz hook 有時間覆寫 _qLblEl(BOSS 行動前題的 label)
+      setTimeout(function(){
+        try{
+          const _qLblEl2 = document.getElementById('adv-quiz-label');
+          const _label2 = _qLblEl2 ? (_qLblEl2.textContent || '').trim() : _curLabel;
+          window._wbHostBroadcastQuizShow({
+            question:    q.question,
+            options:     _payloadOptions,
+            label:       _label2 || '🐉 BOSS 答題挑戰!',
+            allowedSlot: _allowedSlot,
+            timestamp:   Date.now(),
+          });
+        }catch(_eQs){ console.warn('[advShowQuiz quiz-show 廣播] 延後例外', _eQs); }
+      }, 50);
+    }
+  }catch(_eQuizSync){ console.warn('[advShowQuiz quiz-show 廣播] 例外', _eQuizSync); }
+
   // 開始計時
   // ★ v3.3.7+ — 老師需求:答題思考時間從 60 → 30 秒(讓卡死救援更快觸發)
   _advQuizSeconds = 30;
@@ -50270,7 +50430,38 @@ function advSubmitAnswer(letter, isCorrectOverride) {
         // BOSS 行動前題:已指派的槽位
         _allowedSlot = window._wbAssignedQuizSlot;
       }
-      if(_allowedSlot !== null){
+      // ★ v3.4.7 — _allowedSlot === -2 是「房主代打槽位」特殊值:
+      //   只有房主可以答(其他 client 端不行)。
+      //   判斷:_isWbHost=true → 通過(不擋);_isWbHost=false → 擋
+      if(_allowedSlot === -2){
+        const _isWbHost = !!window._wbConnectedHostMode;
+        if(_isWbHost){
+          // 房主端 → 通過攔截器
+          console.log('[WB-Quiz 攔截] 房主代打槽位(-2),房主可答,通過');
+        }else{
+          // client 端 → 擋
+          console.log('[WB-Quiz 攔截] 房主代打槽位(-2),非房主擋下');
+          try{
+            let _toast = document.getElementById('wb-quiz-blocked-toast');
+            if(_toast) _toast.remove();
+            _toast = document.createElement('div');
+            _toast.id = 'wb-quiz-blocked-toast';
+            _toast.style.cssText =
+              'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:11500;'
+              + 'background:linear-gradient(135deg,rgba(80,30,30,0.96),rgba(40,15,15,0.96));'
+              + 'border:3px solid #ff8866;border-radius:18px;padding:24px 40px;'
+              + 'font-size:28px;font-weight:900;color:#ffd0c0;letter-spacing:2px;'
+              + 'text-shadow:0 0 12px rgba(255,140,100,0.7);text-align:center;'
+              + 'box-shadow:0 0 40px rgba(255,140,100,0.5);pointer-events:none;'
+              + 'animation:fadeInPop 0.3s ease-out;';
+            _toast.innerHTML = '🚫 這題由 <span style="color:#ffe066">房主代打</span> 回答';
+            document.body.appendChild(_toast);
+            setTimeout(() => { try{ _toast.remove(); }catch(_){} }, 2400);
+          }catch(_){}
+          _advQuizPhase = 'asking';
+          return;
+        }
+      }else if(_allowedSlot !== null && _allowedSlot >= 0){
         let _mySlot = -1;
         try{ const _ms = window._wbNet.getMySlot(); if(typeof _ms === 'number') _mySlot = _ms; }catch(_){}
         if(_mySlot >= 0 && _mySlot !== _allowedSlot){
@@ -50576,6 +50767,17 @@ const _ADV_BOSS_SKIP_LINES = [
   '竟然被小輩封印！太可恨了！',
 ];
 function advOnQuizSkip() {
+  // ★ v3.4.6 — 世界 BOSS 房主端:廣播關題給所有 client,讓他們關掉自己的 quiz 視窗
+  //   (advSubmitAnswer 答完題後會走 quiz-correct-team-reward 等 sync,那邊 client 端已會關;
+  //    但 advOnQuizSkip 用於「時間到」「卡死救援」「跳過」等情境,沒有對應 sync,
+  //    所以這裡單獨補一個 quiz-close 廣播)
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && window._wbConnectedHostMode
+       && typeof window._wbHostBroadcastQuizClose === 'function'){
+      window._wbHostBroadcastQuizClose('quiz-skip');
+    }
+  }catch(_eQs){ console.warn('[advOnQuizSkip quiz-close 廣播] 例外', _eQs); }
   try{
     const _qOv = document.getElementById('adv-quiz-overlay');
     if(_qOv){
@@ -50729,6 +50931,35 @@ function advOnQuizSkip() {
           console.warn('🚨 [答題後卡死救援] 連線 client 端不主動救援,等 host 處理');
           return;
         }
+        // ★ v3.4.4 — 世界 BOSS 房主端:G.activeChar 若是「別人的真人槽位」(非自己、非代打 NPC),
+        //   不主動救援,等 client 端送 pendingAction 過來。
+        //   原 bug(老師 2026/5/20 回報):輪到 2P 電腦繪圖師時,房主這端 3 秒就把他普攻過回合,
+        //   玩家完全來不及思考。根因:50709 行的守門只擋 _isP1 && _apVisible,但 2P 在房主這端
+        //   action-panel 不會顯示(房主不是 2P),通過守門就直接強制普攻。
+        //   修法:在房主端,若 _ac 對應的槽位是「別人的真人玩家」,_forceRescue=false 時直接 return,
+        //   讓 _curCount 累積到 5 次(15+12=27 秒)才強制救,給對方玩家充裕的思考時間。
+        if(_isWbConnectedMode && _isWbHost && _isP1 && !_forceRescue){
+          try{
+            const _ap = (window._wbNet && typeof window._wbNet.getSnapshot === 'function')
+              ? window._wbNet.getSnapshot() : null;
+            const _players = (_ap && Array.isArray(_ap.players)) ? _ap.players : [];
+            const _slot = _ac.pos;
+            const _playerAtSlot = _players[_slot];
+            const _myUid = window._gUserId;
+            const _isOtherRealPlayer = !!(_playerAtSlot && _playerAtSlot.uid
+                                          && _playerAtSlot.uid !== _myUid
+                                          && !_ac._wbIsHostNpc);
+            if(_isOtherRealPlayer){
+              const _otherName = _playerAtSlot.name || ('槽 ' + (_slot+1));
+              console.warn('🚨 [答題後卡死救援] 房主端 activeChar 是別人的真人槽位 ('
+                + _otherName + '),不主動救援,重排 3 秒等對方 client 送 action,count='
+                + _curCount);
+              window._advQuizDeadlockRescheduleCount = _curCount + 1;
+              window._advQuizDeadlockSaverTimer = setTimeout(_quizDeadlockSaverCheck, 3000);
+              return;
+            }
+          }catch(_eOther){ console.warn('[答題後卡死救援] 真人槽位判定例外', _eOther); }
+        }
         console.warn('🚨 [答題後卡死救援] actor=' + _ac.name + '(' + _ac.side + '-' + _ac.pos + ')'
           + ', curHp=' + _ac.curHp + ', acted=' + _ac.acted
           + ', isP1=' + _isP1 + ', actionPanelVisible=' + _apVisible
@@ -50760,7 +50991,11 @@ function advOnQuizSkip() {
       }catch(_eOuter){
         console.warn('[答題後卡死救援] watchdog 內部例外', _eOuter);
       }
-    }, 3000);
+    // ★ v3.4.4 — 初始延時 3 秒 → 15 秒(老師回報:2P 電腦繪圖師才動 3 秒就被自動普攻
+    //   跳過,完全來不及思考。實務上玩家光看戰場狀況思考下一步就要 5~10 秒)。
+    //   15 秒 + 後續每次 reschedule 3 秒 × 5 次 = 最長 30 秒才會強制救,
+    //   給玩家足夠思考時間,真正卡死也不會卡太久。
+    }, 15000);
   }catch(_eSetup){
     console.warn('[答題後卡死救援] watchdog 啟動失敗', _eSetup);
   }
@@ -52624,6 +52859,12 @@ const ADMIN_ALL_HEROES = [
   '學霸(轉學生)',
   // ★ v1.0.20260518.6930 — 5 年 4 班歐同學設計
   '天神宙斯',
+  // ★ v1.0.20260519.7100 — 5 年 5 班吳同學設計
+  '維京海盜船長',
+  // ★ v3.4.11 — 5 年 5 班朱同學設計
+  '武器精靈',
+  // ★ v3.4.11 — 5 年 4 班莊同學設計
+  '神槍手',
 ];
 
 function advGetUnlockedHeroes() {

@@ -7741,6 +7741,209 @@
         }catch(_){}
       }
 
+      // ════════════════════════════════════════════════════════════════════
+      // ★ v3.4.6 — 收到 quiz-show:client 直接 render 一模一樣的 quiz 視窗
+      // ────────────────────────────────────────────────────────────────────
+      // 老師明確需求:「無論如何讓組隊世界 boss 戰能同步看到問題,那是這遊戲的核心」
+      // 設計:
+      //   1. payload 帶 question / options(已洗牌) / label / allowedSlot
+      //   2. client 直接寫 DOM render 視窗(不呼叫 advShowQuiz 避免重抽題)
+      //   3. 設旗標:_advQuizPhase='asking', _advQuizActive=true, _wbAssignedQuizSlot
+      //   4. 點選項時觸發 advSubmitAnswer,攔截器會擋掉非指派槽位
+      //   5. 房主答完後 → quiz-close / quiz-related → 上面的邏輯關掉視窗
+      // ════════════════════════════════════════════════════════════════════
+      if(battle._syncReason === 'quiz-show' && battle._wbQuizPayload){
+        try{
+          const _payload = battle._wbQuizPayload;
+          // 去重:同 timestamp 不重複 render
+          if(window._wbClientLastQuizTs === _payload.timestamp){
+            console.log('[WB-Client v3.4.6] quiz-show 重複 timestamp,跳過 render');
+          }else{
+            window._wbClientLastQuizTs = _payload.timestamp;
+            console.log('[WB-Client v3.4.6] 收到房主廣播題目,自行 render quiz 視窗',
+              'allowedSlot=' + _payload.allowedSlot,
+              'question="' + (_payload.question || '').slice(0, 30) + '..."');
+            // 設定旗標(攔截器會用 _wbAssignedQuizSlot 擋掉非指派槽位)
+            try{
+              if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'asking';
+              if(typeof _advQuizActive !== 'undefined') _advQuizActive = true;
+              if(typeof _advCurrentQuestion !== 'undefined'){
+                _advCurrentQuestion = {
+                  id:       'sync-' + _payload.timestamp,  // ★ v3.4.6 — 合成 id,防 _advUsedQuestionIds.add(undefined)
+                  question: _payload.question,
+                  options:  _payload.options.map(o => o.text),
+                  answer:   ['A','B','C','D'][_payload.options.findIndex(o => o.isCorrect)] || 'A',
+                };
+              }
+              if(typeof _advStats !== 'undefined' && _advStats){
+                _advStats.startTime = Date.now();
+              }
+              // 設指派槽位
+              if(_payload.allowedSlot >= 0){
+                if(_payload.allowedSlot === 0 && battle.turn === 1){
+                  // 開戰題
+                  window._wbIsOpeningQuizPhase = true;
+                  window._wbOpeningQuizAllowedSlot = _payload.allowedSlot;
+                }else{
+                  window._wbAssignedQuizSlot = _payload.allowedSlot;
+                }
+              }else if(_payload.allowedSlot === -2){
+                // ★ v3.4.7 — 房主代打槽位:設 -2 讓攔截器擋掉非房主
+                window._wbAssignedQuizSlot = -2;
+              }
+            }catch(_eFlag){ console.warn('[WB-Client v3.4.6] 設定 quiz 旗標例外', _eFlag); }
+            // 直接寫 DOM
+            try{
+              const _qOv = document.getElementById('adv-quiz-overlay');
+              if(_qOv){
+                // 填題目
+                const _qEl = document.getElementById('adv-quiz-question');
+                if(_qEl) _qEl.textContent = _payload.question;
+                // 填 label
+                const _qLbl = document.getElementById('adv-quiz-label');
+                if(_qLbl) _qLbl.textContent = _payload.label || '🐉 BOSS 答題挑戰!';
+                // 填選項
+                const _optDiv = document.getElementById('adv-quiz-options');
+                if(_optDiv){
+                  _optDiv.innerHTML = '';
+                  _payload.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'aqo-btn';
+                    btn.dataset.idx = i;
+                    btn.dataset.letter = opt.letter || ['A','B','C','D'][i];
+                    btn.dataset.isCorrect = opt.isCorrect ? '1' : '0';
+                    btn.innerHTML = '<span class="aqo-letter">' + (opt.letter || ['A','B','C','D'][i]) + '</span>' + opt.text;
+                    btn.onclick = function(){
+                      // ★ v3.4.6 — Client 點按:只做視覺反饋,不跑完整 advSubmitAnswer
+                      //   原因:client 端跑完整流程會更新 _advStats、觸發 _advQuizResolveCb 等,
+                      //         但這些狀態在 client 上沒實際意義(實際判定由房主端執行)。
+                      //         也避免 advUpdateResult 等後續流程跑出意外副作用。
+                      //   實作:先過攔截器(_mySlot !== _allowedSlot 會被擋掉),
+                      //         通過後 → 視覺標記正/錯 + disabled,等房主 sync 來關視窗。
+                      try{
+                        // 先用攔截器邏輯判斷自己能不能點
+                        const _hasNet = !!(window._wbNet && typeof window._wbNet.getMySlot === 'function');
+                        let _isSoloPractice = !!window._wbSoloPracticeMode;
+                        let _isVirtualSolo = false;
+                        try{
+                          if(_hasNet && typeof window._wbNet.getSnapshot === 'function'){
+                            const _snap = window._wbNet.getSnapshot();
+                            const _players = (_snap && Array.isArray(_snap.players)) ? _snap.players : [];
+                            const _realUids = new Set();
+                            _players.forEach(function(p){
+                              if(!p) return;
+                              const _uid = p.uid || p.userId || '';
+                              if(!_uid) return;
+                              if(_uid === '__bot' || /^bot[-_]/i.test(_uid)) return;
+                              if(p.isBot === true || p.bot === true) return;
+                              const _nm = (p.name || '').toString();
+                              if(/補位|假人|練習用|bot/i.test(_nm)) return;
+                              _realUids.add(_uid);
+                            });
+                            _isVirtualSolo = (_realUids.size <= 1);
+                          }
+                        }catch(_){}
+                        // 攔截:非指派槽位 → 顯示 toast 阻止
+                        if(!_isSoloPractice && !_isVirtualSolo){
+                          let _allowedSlot = null;
+                          if(window._wbIsOpeningQuizPhase){
+                            _allowedSlot = (typeof window._wbOpeningQuizAllowedSlot === 'number')
+                                         ? window._wbOpeningQuizAllowedSlot : 0;
+                          }else if(typeof window._wbAssignedQuizSlot === 'number'){
+                            _allowedSlot = window._wbAssignedQuizSlot;
+                          }
+                          if(_allowedSlot !== null){
+                            let _mySlot = -1;
+                            try{ const _ms = window._wbNet.getMySlot(); if(typeof _ms === 'number') _mySlot = _ms; }catch(_){}
+                            if(_mySlot >= 0 && _mySlot !== _allowedSlot){
+                              // 不是指派玩家 → 走原本攔截器(它會顯示 toast 並 return)
+                              if(typeof advSubmitAnswer === 'function'){
+                                advSubmitAnswer(opt.letter || ['A','B','C','D'][i], opt.isCorrect);
+                              }
+                              return;
+                            }
+                          }
+                        }
+                        // ── client 自己就是該答題者 → 純視覺反饋 + 送答案給房主 ──
+                        document.querySelectorAll('.aqo-btn').forEach(b => {
+                          b.disabled = true;
+                          if(b.dataset.isCorrect === '1') b.classList.add('correct');
+                          else if(b === btn && !opt.isCorrect) b.classList.add('wrong');
+                        });
+                        if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'answered';
+                        console.log('[WB-Client v3.4.6] 已答題 letter=' + (opt.letter || ['A','B','C','D'][i])
+                          + ' isCorrect=' + opt.isCorrect + ',送答案給房主');
+                        // ★ v3.4.6 — 送答案給房主(走 firestore chat),房主端收到後幫忙跑 advSubmitAnswer
+                        try{
+                          if(typeof window._wbBroadcastQuizAnswer === 'function'){
+                            window._wbBroadcastQuizAnswer(
+                              opt.letter || ['A','B','C','D'][i],
+                              opt.isCorrect,
+                              _payload.timestamp
+                            );
+                          }
+                        }catch(_eSend){ console.warn('[WB-Client v3.4.6] 送答案給房主失敗', _eSend); }
+                        // 視覺顯示「等待房主同步...」訊息
+                        try{
+                          const _existing = document.getElementById('wb-client-quiz-waiting');
+                          if(_existing) _existing.remove();
+                          const _wait = document.createElement('div');
+                          _wait.id = 'wb-client-quiz-waiting';
+                          _wait.style.cssText =
+                            'position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:2147483646;'
+                            + 'background:linear-gradient(135deg,rgba(40,60,90,0.95),rgba(20,40,70,0.95));'
+                            + 'border:2.5px solid #66bbff;border-radius:14px;padding:14px 28px;'
+                            + 'font-size:20px;font-weight:800;color:#bbeeff;letter-spacing:1.5px;'
+                            + 'text-shadow:0 0 8px rgba(100,180,255,0.7);'
+                            + 'box-shadow:0 0 24px rgba(100,180,255,0.5);pointer-events:none;';
+                          _wait.textContent = '⏳ 答案已送出,等待全隊推進...';
+                          document.body.appendChild(_wait);
+                          setTimeout(() => { try{ _wait.remove(); }catch(_){} }, 5000);
+                        }catch(_){}
+                      }catch(eS){ console.warn('[WB-Client quiz click] 例外', eS); }
+                    };
+                    _optDiv.appendChild(btn);
+                  });
+                }
+                // 計時器:純 client 視覺(實際以房主端 timer 為準,房主答完 sync 過來就關)
+                const _qTimerEl = document.getElementById('adv-quiz-timer');
+                if(_qTimerEl){
+                  _qTimerEl.textContent = '30';
+                  _qTimerEl.classList.remove('urgent');
+                }
+                // 顯示視窗
+                _qOv.style.display = '';
+                _qOv.classList.add('show');
+                console.log('[WB-Client v3.4.6] ✅ quiz 視窗已 render 顯示');
+              }else{
+                console.warn('[WB-Client v3.4.6] 找不到 adv-quiz-overlay 元素');
+              }
+            }catch(_eRender){ console.error('[WB-Client v3.4.6] render 視窗例外', _eRender); }
+          }
+        }catch(_eQuizShow){ console.error('[WB-Client v3.4.6] quiz-show 處理例外', _eQuizShow); }
+        // quiz-show 不需要套 wire / renderField,直接 return
+        return;
+      }
+
+      // ★ v3.4.6 — 收到 quiz-close:client 主動關 quiz 視窗
+      if(battle._syncReason === 'quiz-close'){
+        try{
+          console.log('[WB-Client v3.4.6] 收到房主關題廣播,reason=' + battle._wbQuizCloseReason);
+          const _qOv = document.getElementById('adv-quiz-overlay');
+          if(_qOv){
+            _qOv.classList.remove('show');
+            _qOv.style.display = 'none';
+          }
+          if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+          if(typeof _advQuizActive !== 'undefined') _advQuizActive = false;
+          window._bossQuizInFlight = false;
+          window._wbAssignedQuizSlot = null;
+          window._wbIsOpeningQuizPhase = false;
+          window._wbOpeningQuizAllowedSlot = null;
+        }catch(_eClose){ console.warn('[WB-Client v3.4.6] quiz-close 處理例外', _eClose); }
+        // quiz-close 仍要繼續套 wire(可能伴隨血量變化)
+      }
+
       // ★ v6 Phase 5.3 — 動畫競態緩衝
       //   若樂觀更新動畫還沒播完(_wbClientAnimEndTs 還沒到),延後 apply
       //   多筆 sync 進來時用 _wbClientPendingApply 記最新一筆,中間的丟掉
@@ -8371,6 +8574,13 @@
           if(typeof _wbShowTeamBurstCinematic === 'function'){
             _wbShowTeamBurstCinematic(cnt);
           }
+          // ★ v3.4.7 — 老師明確需求:「集體爆發要所有玩家端都同步看見」
+          //   capture teamBurstCinematic 事件給 client 重播(client 端會在本機自己跑同樣動畫)
+          try{
+            if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+              _wbFxCapture({ type:'teamBurstCinematic', cnt:cnt });
+            }
+          }catch(_eTbCap){ console.warn('[WB] teamBurst cinematic capture 失敗', _eTbCap); }
           // (2) 100ms 後播放音效 + 螢幕閃光(配合視覺爆點)
           setTimeout(function(){
             try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
@@ -8853,11 +9063,32 @@
         }
         _fireOnDone('correct');
       } else {
-        // ★ v3.3.2 — 開戰題答錯:取消任何懲罰(老師再次確認:「答錯不要有懲罰了」)
-        //   舊行為(已移除):全員 -5% maxHp(至少留 1 HP)
-        //   新行為:不扣血、不扣能量、不做任何負面動作,直接進入戰鬥
-        try{ if(typeof log === 'function') log('💭 開戰題答錯了,但 BOSS 已被你的勇氣震懾,直接開戰!'); }catch(_){}
-        setTimeout(function(){ _fireOnDone('wrong'); }, 400);
+        // ★ v3.4.7 — 老師明確需求:「答錯的全隊扣 5% 血」
+        //   舊行為(v3.3.2):取消任何懲罰
+        //   新行為:全隊每位活著的英雄扣 5% 最大 HP(至少留 1 HP,不會直接打死)
+        //   ★ client mode 跳過(等房主 sync,避免雙重扣血)
+        const _isClientOpening2 = !!window._wbClientMode;
+        if(!_isClientOpening2){
+          try{
+            G.p1.forEach(h => {
+              if(!h || h.curHp <= 0) return;
+              const _dmg = Math.max(1, Math.floor((h.hp || 100) * 0.05));
+              h.curHp = Math.max(1, h.curHp - _dmg);
+              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
+              try{ if(typeof showPopup === 'function') showPopup(h, '-'+_dmg, 'dmg'); }catch(_){}
+            });
+            if(typeof log === 'function') log('💢 開戰題答錯!全隊 -5% HP(BOSS 已察覺你們的弱點)');
+            try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+            try{
+              if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+                window._wbHostSyncG('opening-quiz-wrong');
+              }
+            }catch(_){}
+          }catch(_eOpWrong){ console.warn('[WB-Opening] 答錯扣血失敗', _eOpWrong); }
+        }else{
+          console.log('[WB-Opening client] 答錯,跳過 G 改動,等房主 sync');
+        }
+        setTimeout(function(){ _fireOnDone('wrong'); }, 600);
       }
     };
 
@@ -9054,19 +9285,27 @@
     if(_bubbleMode === 'quiz'){
       // 答題期間:300% 黃框金光(v3.3.3 原規格,老師明確指定)
       // ★ v3.3.5 — z-index 9999 不變,但加 pointer-events:none 確保不擋玩家點題目按鈕
+      // ★ v3.4.5 — 老師 2026/5/20 回報:答題中按定型文被深色遮罩蓋住、很不明顯
+      //   修法:
+      //     (1) z-index 拉到最大值 2147483647(int32 最大值),確保蓋過 quiz overlay 與所有元素
+      //     (2) 強化對比:深底 + 金色描邊 + 強投影,即使在深色遮罩底下也清晰可見
+      //     (3) 位置改顯示在「發話角色卡片正上方,部分蓋住卡片」(原本是卡下方,
+      //         在 quiz overlay 區域內,深色遮罩會直接吃掉)— 由下方 _isLargeBubble
+      //         位置計算邏輯處理
       bubble.style.cssText = 'visibility:hidden;left:0;top:0;'
         + 'transform-origin: top center;'
         + 'font-size: 300% !important;'
         + 'padding: 16px 26px !important;'
-        + 'border-width: 3px !important;'
-        + 'box-shadow: 0 8px 32px rgba(255,217,102,0.45), 0 0 18px rgba(0,0,0,0.65) !important;'
+        + 'border-width: 4px !important;'
+        + 'box-shadow: 0 10px 40px rgba(255,217,102,0.65), 0 0 28px rgba(255,200,50,0.55), 0 0 60px rgba(0,0,0,0.85) !important;'
         + 'border-color: #ffd966 !important;'
-        + 'background: rgba(30,20,5,0.96) !important;'
+        + 'background: rgba(20,12,2,0.98) !important;'
         + 'color: #ffe066 !important;'
         + 'max-width: 480px !important;'
         + 'white-space: normal !important;'
         + 'line-height: 1.25 !important;'
-        + 'pointer-events: none !important;';
+        + 'pointer-events: none !important;'
+        + 'z-index: 2147483647 !important;';
     }else if(_bubbleMode === 'battle'){
       // ★ v3.3.5 — 戰鬥行動中:150% 紫框(較克制,不蓋住傷害飄字)
       //   - z-index 比氣泡預設低一些(8500),讓 #gc 內的傷害 popup(z auto)能浮在上面
@@ -9096,10 +9335,16 @@
     const bw = bubble.offsetWidth;
     const bh = bubble.offsetHeight;
     let left, top, placement;
-    if(_isLargeBubble){
-      // ★ v3.3.3 + v3.3.5 — 答題期間/戰鬥中:強制顯示在「發送者自己卡下方」(技能位置高度)
-      //   卡片底部 +8px 往下凸出,氣泡完全在卡下,正好對應戰鬥畫面卡片下方空白區
-      //   ★ v3.3.5 — 戰鬥模式時 +8px(比答題期的 +12px 緊貼一點,看起來更像從卡片冒出來)
+    if(_bubbleMode === 'quiz'){
+      // ★ v3.4.5 — 答題期間:氣泡蓋在「發話者卡片正中央」(對齊卡片插畫中央位置),
+      //   讓玩家一眼看清楚是哪張卡片在說話、且不會被 quiz overlay 深色遮罩吃掉。
+      //   原 v3.3.3/v3.3.5 是顯示在卡下方,但卡片本身在 quiz overlay 深色遮罩底下,
+      //   下方更暗,氣泡幾乎看不見。改成蓋住卡上半部,搭配 z-index 2147483647 浮在最上層。
+      left = rect.left + rect.width / 2 - bw / 2;
+      top  = rect.top + rect.height * 0.30 - bh / 2;  // 卡片高度 30% 處(角色臉部上方)
+      placement = 'top';
+    }else if(_isLargeBubble){
+      // ★ v3.3.3 + v3.3.5 — battle 模式:卡下方技能位置(維持原行為)
       left = rect.left + rect.width / 2 - bw / 2;
       top = rect.bottom + (_bubbleMode === 'battle' ? 8 : 12);
       placement = 'bottom';
@@ -9117,10 +9362,15 @@
       top = rect.bottom + 12;
       placement = 'bottom';
     }
-    // 太靠底 → 改顯示在卡上方(放大版本)
-    if(_isLargeBubble && top + bh > window.innerHeight - 8){
+    // 太靠底 → 改顯示在卡上方(放大版本,但 quiz 模式已蓋在卡中央,不會觸發)
+    if(_isLargeBubble && _bubbleMode !== 'quiz' && top + bh > window.innerHeight - 8){
       top = rect.top - bh - 12;
       placement = 'top';
+    }
+    // ★ v3.4.5 — quiz 模式的邊緣防護:垂直超出視口時夾在合理範圍內
+    if(_bubbleMode === 'quiz'){
+      if(top < 8) top = 8;
+      if(top + bh > window.innerHeight - 8) top = window.innerHeight - bh - 8;
     }
     bubble.style.left = left + 'px';
     bubble.style.top = top + 'px';
@@ -9135,6 +9385,48 @@
   window._wbShowCardBubble = _wbShowCardBubble;
 
   window._wbNet.on('onChatMessage', function(msg){
+    // ★ v3.4.6 — 收到 client 端送來的答題訊息(房主才處理)
+    //   client 端被指派玩家點完答案後,把 letter/isCorrect 送過來,
+    //   房主這邊幫忙在自己機器上跑 advSubmitAnswer → 觸發全隊獎勵/懲罰流程 sync。
+    if(msg && msg._wbQuizAnswer){
+      try{
+        const _isHost = !!(window._wbNet && window._wbNet.isHost && window._wbNet.isHost());
+        if(_isHost){
+          // 房主端:幫忙跑 advSubmitAnswer
+          //   守門 1:確認自己還在 quiz asking 狀態(避免重複跑)
+          //   守門 2:確認 quiz overlay 還開著
+          const _qOv = document.getElementById('adv-quiz-overlay');
+          const _qShow = _qOv && _qOv.classList.contains('show');
+          const _phaseAsking = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking');
+          if(_qShow && _phaseAsking){
+            console.log('[WB-Host v3.4.6] 收到 ' + (msg.name||'?') + ' 的答案: '
+              + msg.letter + ' (isCorrect=' + msg.isCorrect + '),房主端代跑 advSubmitAnswer');
+            // 暫時清掉 _wbAssignedQuizSlot,讓房主跑 advSubmitAnswer 不被攔截器擋
+            //   (房主的 _mySlot=0 不等於 _allowedSlot 時會被攔截器擋下)
+            const _origAssign = window._wbAssignedQuizSlot;
+            const _origOpening = window._wbIsOpeningQuizPhase;
+            window._wbAssignedQuizSlot = null;
+            window._wbIsOpeningQuizPhase = false;
+            try{
+              if(typeof advSubmitAnswer === 'function'){
+                advSubmitAnswer(msg.letter || 'A', !!msg.isCorrect);
+              }
+            }catch(eSub){ console.warn('[WB-Host v3.4.6] 代跑 advSubmitAnswer 例外', eSub); }
+            // 還原 — 但實際上 advSubmitAnswer 已走完,後續 quiz 狀態應該變 answered
+            // 若還沒(被攔截器擋等)→ 還原讓下個玩家點再試
+            if(typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking'){
+              window._wbAssignedQuizSlot = _origAssign;
+              window._wbIsOpeningQuizPhase = _origOpening;
+            }
+          }else{
+            console.log('[WB-Host v3.4.6] 收到答題訊息但 quiz 已結束(phase='
+              + (typeof _advQuizPhase !== 'undefined' ? _advQuizPhase : 'undef') + '),忽略');
+          }
+        }
+        // client 端:也清掉自己的「等待房主推進」waiting toast 由 quiz-close sync 處理
+      }catch(_eQa){ console.warn('[WB-Host v3.4.6] _wbQuizAnswer 處理例外', _eQa); }
+      return;
+    }
     // ★ v3.4.3 — 中央 toast 廣播訊息(畫面中央 3 秒大字提示)
     //   來源:任何 client 呼叫 _wbBroadcastCenterToast() 寫進 chat
     //   用途:答題獎勵選擇通知、隊友答題狀況通知
