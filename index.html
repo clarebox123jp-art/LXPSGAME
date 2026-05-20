@@ -36870,8 +36870,29 @@ function ctrlTogglePause(){
   const btn=document.getElementById('ctrl-pause');
   _gamePaused=!_gamePaused;
   overlay.style.display=_gamePaused?'flex':'none';
-  btn.textContent=_gamePaused?'▶':'⏸';
-  btn.querySelector('.ctrl-tip').textContent=_gamePaused?'繼續遊戲':'暫停';
+  // ★ v3.3.7 — 玩家連續 UNCAUGHT TypeError 回報(maokong 戰中觸發):
+  //   原寫法 btn.textContent='▶' 會把整個 <button> 內容覆寫,連帶清掉
+  //   <span class="ctrl-tip">暫停遊戲</span> 子元素。下一行 querySelector('.ctrl-tip')
+  //   就回 null → null.textContent → TypeError → throw 中斷整個函式,
+  //   後續 _gamePaused 改了但 _resumeTimers/_pauseTimers 等動作全跳過 →
+  //   戰鬥卡死(玩家描述「小怪也卡死」)。
+  //   修法:對齊 BGM/SFX 按鈕的安全寫法,改 childNodes[0].textContent
+  //         只改第一個 text node(emoji),保留 .ctrl-tip 子元素。
+  //   保險:加 if(.ctrl-tip 存在才改 textContent),避免歷史殘留按鈕仍崩潰。
+  if(btn.childNodes && btn.childNodes[0] && btn.childNodes[0].nodeType === 3){
+    btn.childNodes[0].textContent = _gamePaused?'▶':'⏸';
+  }else{
+    // fallback:textContent + 重建 .ctrl-tip(維持向後相容)
+    btn.textContent = _gamePaused?'▶':'⏸';
+    const _tip = document.createElement('span');
+    _tip.className = 'ctrl-tip';
+    _tip.textContent = _gamePaused?'繼續遊戲':'暫停';
+    btn.appendChild(_tip);
+  }
+  const _tipEl = btn.querySelector('.ctrl-tip');
+  if(_tipEl){
+    _tipEl.textContent = _gamePaused?'繼續遊戲':'暫停';
+  }
   btn.classList.toggle('active',_gamePaused);
 
   // BGM音量：暫停降50%，恢復正常
