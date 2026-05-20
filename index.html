@@ -32507,9 +32507,28 @@ function _gpIsAnyLegitModalOpen(){
   for(const _id of _GP_LEGIT_MODALS){
     const el = document.getElementById(_id);
     if(!el) continue;
-    if(el.classList && el.classList.contains('show')) return true;
-    const _disp = el.style.display;
-    if(_disp && _disp !== 'none' && el.offsetParent !== null) return true;
+    const _shown = (el.classList && el.classList.contains('show'))
+                || (el.style.display && el.style.display !== 'none' && el.offsetParent !== null);
+    if(!_shown) continue;
+    // ★ v3.4.11 — 孤兒檢測:adv-quiz-overlay 顯示中,但 quiz phase 已 idle 且無 onDone callback
+    //   = 孤兒 overlay(救援後關不掉/前置流程沒設好 phase),不算合法 modal
+    //   原本問題:玩家三份卡死回報都是「quiz overlay 顯示中 + phase=idle + cb=null + paused=true」
+    //   而 _gp heartbeat 看到 overlay 顯示中就重置計時器,永遠救不了 → 必須在此排除孤兒情境
+    if(_id === 'adv-quiz-overlay'){
+      try{
+        const _phaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle' || !_advQuizPhase);
+        const _miniPhaseIdle = (typeof window._miniQuizPhase === 'undefined'
+                                || window._miniQuizPhase === null
+                                || window._miniQuizPhase === 'idle');
+        const _noBossCb = !(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+        const _noMiniCb = !(typeof window._miniQuizOnDone === 'function');
+        // 兩種 quiz 流程都沒在跑 → 是孤兒,忽略
+        if(_phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb){
+          continue;
+        }
+      }catch(_){}
+    }
+    return true;
   }
   return false;
 }
@@ -49187,7 +49206,31 @@ function _startQuizVisibilityCheck(reason){
           const _cb = window._miniQuizOnDone;
           window._miniQuizOnDone = null;
           window._miniQuizCurrentQ = null;
-          _cb();
+          // ★ v3.4.11 — 救援時傳 {correct:false},與寵物事件路徑相容
+          //   (寵物事件 onDone 簽名是 function(res){ ok = res.correct; },沒參數會走錯)
+          try{ _cb({correct:false}); }catch(_eCb){ console.error('[題目可見性] _miniQuizOnDone 拋例外', _eCb); }
+        } else if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
+          // ★ v3.4.11 — 小怪戰中但 _miniQuizOnDone 已被別人清掉(被 _advMiniQuizSubmit 的
+          //   setTimeout 搶先消費,或前次救援已 null 但 _gamePaused 還掛著)
+          //   此時必須主動把流程推進去,不然就永遠停在 _gamePaused=true
+          console.warn('[題目可見性] 小怪戰救援 → 無 _miniQuizOnDone,強制解 paused+推進');
+          try{ window._gamePaused = false; }catch(_){}
+          try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(_){}
+          try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+          // 找下一個沒行動的 p2 接著走
+          setTimeout(function(){
+            try{
+              if(!G || !G.p2) return;
+              const _ac = G.activeChar;
+              if(_ac && _ac.curHp > 0 && !_ac.acted){
+                console.warn('[題目可見性] 推進 activeChar:' + _ac.name);
+                if(typeof aiAct === 'function' && _ac.side === 'p2') aiAct(_ac);
+                else if(typeof startTurn === 'function') startTurn();
+              } else if(typeof startTurn === 'function'){
+                startTurn();
+              }
+            }catch(_eStart){ console.error('[題目可見性] 推進例外', _eStart); }
+          }, 400);
         }else if(typeof advOnQuizSkip === 'function'){
           // BOSS 戰救援 → advOnQuizSkip
           advOnQuizSkip();
@@ -67274,10 +67317,17 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       const timerEl = document.getElementById('adv-quiz-timer');
       if(timerEl) timerEl.style.display = '';
       const _onDoneAfterReward = window._miniQuizOnDone;
+      // ★ v3.4.11 — 若救援已搶先把 _miniQuizOnDone 清成 null,
+      //   表示流程已被另一條 path 推進,這條 setTimeout 不再做任何事
+      //   (繼續做的話會二次推進,讓 BOSS 連動兩次造成混亂)
+      if(!_onDoneAfterReward){
+        console.warn('[mini quiz submit] _miniQuizOnDone 已被清掉(救援先觸發),本次 setTimeout 跳過');
+        return;
+      }
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
-      // ★ v1.0.20260421.3000c — 寵物事件答題模式：跳過獎勵視窗，直接進寵物對白
+      // ★ v1.0.20260421.3000c — 寵物事件答題模式：跳過答對獎勵視窗，直接進寵物對白
       if(window._tgPetQuizMode){
         window._tgPetQuizMode = false;
         if(_onDoneAfterReward) _onDoneAfterReward({correct:true});
@@ -67319,6 +67369,11 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       const timerEl = document.getElementById('adv-quiz-timer');
       if(timerEl) timerEl.style.display = '';
       const onDone = window._miniQuizOnDone;
+      // ★ v3.4.11 — 救援先觸發過就不再重複推進(同答對 path)
+      if(!onDone){
+        console.warn('[mini quiz submit 答錯] _miniQuizOnDone 已被清掉(救援先觸發),本次 setTimeout 跳過');
+        return;
+      }
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
@@ -72342,7 +72397,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.10';
+window._GAME_LOADED_VERSION = 'v3.4.11';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
