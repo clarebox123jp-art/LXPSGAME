@@ -2403,8 +2403,14 @@
     if(window._wbDoRestPatched) return true;
     const _origDoRest = window.doRest;
     window.doRest = function(){
-      if(window._wbClientMode){
+      // ★ v3.5.0 — Reentry guard:同 execBurst,_wbExecPlayerAction line 2321
+      //   會 window.doRest() 內部代執行,若不擋會無限遞迴。
+      //   _wbClientOptimistic=true 表示正在樂觀更新中,直接走原版 doRest。
+      if(window._wbClientMode && !window._wbClientOptimistic){
         if(_wbClientSendOptimisticAndSync('rest')) return;
+      } else if(window._wbClientMode && window._wbClientOptimistic){
+        // ★ v3.5.0 — 樂觀更新中由 _wbExecPlayerAction 內部呼叫進來,直通原版執行
+        console.log('[WB-Client v6] doRest 樂觀更新中,patch 直通原版');
       }
       return _origDoRest.apply(this, arguments);
     };
@@ -2478,7 +2484,12 @@
     if(window._wbExecBurstPatched) return true;
     const _origExecBurst = window.execBurst;
     window.execBurst = function(side, pos, _safeName){
-      if(window._wbClientMode){
+      // ★ v3.5.0 — Reentry guard:_wbClientSendOptimisticAndSync 內部會呼叫
+      //   _wbExecPlayerAction,而 _wbExecPlayerAction line 2301 又會呼叫 window.execBurst
+      //   (此時 window.execBurst 已被 patch 蓋掉)→ 無限遞迴 → InternalError: too much recursion
+      //   修法:_wbClientOptimistic=true 表示正在樂觀更新中,直接走原版 execBurst
+      //   避免再次進入 _wbClientSendOptimisticAndSync 路徑。
+      if(window._wbClientMode && !window._wbClientOptimistic){
         // 只攔截 p1(玩家)爆發 — p2 BOSS 爆發走 BOSS AI,本機不會跑(client mode 已擋)
         if(side === 'p1'){
           // 確認是「我自己」的爆發(非房主只能控制自己的英雄)
@@ -2492,6 +2503,9 @@
             return;
           }
         }
+      } else if(window._wbClientMode && window._wbClientOptimistic){
+        // ★ v3.5.0 — 樂觀更新中由 _wbExecPlayerAction 內部呼叫進來,直通原版執行
+        console.log('[WB-Client v6] execBurst 樂觀更新中,patch 直通原版(side=' + side + ' pos=' + pos + ')');
       }
       return _origExecBurst.apply(this, arguments);
     };
