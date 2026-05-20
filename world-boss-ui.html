@@ -3242,17 +3242,185 @@
     return;
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.4.8 ── 世界 BOSS 入口連線預檢 ──
+  // ────────────────────────────────────────────────────────────────────
+  // 背景:Firestore JS SDK 10.12.0 內部 bug(INTERNAL ASSERTION FAILED)
+  //       會在切分頁/網路波動時破壞 client 的 write stream,讓後續所有
+  //       setDoc/updateDoc 永久失敗 — 但因為只有寫入會觸發,玩家在大廳
+  //       組隊時看不出來,等戰鬥開打才爆「行動送出失敗」+ 卡死。
+  //       老師回報:第二位玩家施技能卡死、按 BUG 回報也失敗。
+  // 策略:在三個世界 BOSS 入口(_wbUiCreateRoom / _wbUiJoinRoom / _wbUiSoloTest)
+  //       開頭呼叫主程式的 window._fbPreflightCheck() 做一次主動讀寫測試,
+  //       SDK 死亡的情況下直接擋下並顯示明確訊息,避免玩家組好隊伍才卡死。
+  //
+  // 重要保護:單人練習模式 (_wbUiSoloTest) 不消耗每日次數,所以對它較寬鬆
+  //          (只在 SDK 已標記死亡時擋);連線房間入口(create/join)做完整預檢。
+  // ════════════════════════════════════════════════════════════════════
+
+  // 顯示「正在檢查網路連線」的小型 modal,讓玩家知道在做事
+  function _wbShowPreflightModal(){
+    let ov = document.getElementById('_wb-preflight-modal');
+    if(ov) ov.remove();
+    ov = document.createElement('div');
+    ov.id = '_wb-preflight-modal';
+    ov.style.cssText = [
+      'position:fixed;inset:0;z-index:2147483640;',
+      'background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);',
+      'display:flex;align-items:center;justify-content:center;',
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    ].join('');
+    ov.innerHTML =
+      '<div style="background:linear-gradient(160deg,rgba(30,30,55,0.98),rgba(20,20,40,0.99));' +
+      'border:2.5px solid rgba(120,180,255,0.7);border-radius:14px;padding:24px 36px;' +
+      'box-shadow:0 8px 32px rgba(0,0,0,0.6),0 0 24px rgba(80,140,220,0.4);' +
+      'min-width:300px;text-align:center;color:#cce4ff;font-family:inherit;">' +
+      '  <div style="font-size:36px;margin-bottom:10px;">📡</div>' +
+      '  <div style="font-size:18px;font-weight:800;letter-spacing:2px;margin-bottom:8px;">檢查雲端連線中...</div>' +
+      '  <div style="font-size:13px;color:#8aa8c4;line-height:1.5;">' +
+      '    確保你不會浪費組隊時間,<br>稍等一下下喔!' +
+      '  </div>' +
+      '  <div style="margin-top:14px;display:inline-block;width:36px;height:36px;border:3px solid #4d83b8;' +
+      '    border-top-color:#fff;border-radius:50%;animation:_wbPreflightSpin 0.9s linear infinite;"></div>' +
+      '  <style>@keyframes _wbPreflightSpin{to{transform:rotate(360deg);}}</style>' +
+      '</div>';
+    document.body.appendChild(ov);
+  }
+  function _wbClosePreflightModal(){
+    const ov = document.getElementById('_wb-preflight-modal');
+    if(ov) ov.remove();
+  }
+
+  // 顯示「連線異常」錯誤對話框,引導玩家重新整理
+  function _wbShowPreflightFailedDialog(reason, errorMessage){
+    let ov = document.getElementById('_wb-preflight-failed');
+    if(ov) ov.remove();
+    ov = document.createElement('div');
+    ov.id = '_wb-preflight-failed';
+    ov.style.cssText = [
+      'position:fixed;inset:0;z-index:2147483641;',
+      'background:rgba(0,0,0,0.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);',
+      'display:flex;align-items:center;justify-content:center;',
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
+    ].join('');
+    // 兩種訊息:SDK 死亡(嚴重) vs 網路逾時(可重試)
+    const _isSdkDead = (reason === 'sdk_dead' || reason === 'sdk_internal_assertion');
+    const _title  = _isSdkDead ? '⚠ 雲端連線異常,請重整頁面' : '⚠ 雲端連線超時或失敗';
+    const _desc   = _isSdkDead
+      ? ('伺服器連線出現內部錯誤,目前無法進入世界 BOSS 戰。<br>' +
+         '為了避免你組好隊伍才卡死、白白被扣每日進場次數,<br>' +
+         '系統已先擋下這次入場。<br><br>' +
+         '請按下方按鈕<b style="color:#ffdd66;">重新整理頁面</b>,連線回復後即可正常遊玩 🙏')
+      : ('與雲端伺服器的測試連線逾時或失敗,可能是網路不穩。<br>' +
+         '請確認網路狀況後再試一次,或重新整理頁面。');
+    const _btn1Label = _isSdkDead ? '🔄 立刻重新整理頁面' : '🔄 重新整理頁面';
+    const _btn2Label = _isSdkDead ? null : '↻ 再試一次';
+    ov.innerHTML =
+      '<div style="background:linear-gradient(160deg,rgba(80,20,30,0.98),rgba(50,10,20,0.99));' +
+      '  border:3px solid rgba(255,120,120,0.85);border-radius:18px;padding:26px 32px;' +
+      '  box-shadow:0 12px 48px rgba(0,0,0,0.7),0 0 36px rgba(255,80,80,0.5);' +
+      '  max-width:min(94vw,520px);text-align:center;color:#ffdcdc;font-family:inherit;">' +
+      '  <div style="font-size:48px;margin-bottom:6px;">🚧</div>' +
+      '  <div style="font-size:22px;font-weight:900;color:#ffaaaa;margin-bottom:14px;letter-spacing:1px;">' + _title + '</div>' +
+      '  <div style="font-size:14px;color:#ffd0d0;line-height:1.65;margin-bottom:18px;">' + _desc + '</div>' +
+      (errorMessage
+        ? ('<div style="font-size:11px;color:#aaa;background:rgba(0,0,0,0.4);padding:6px 10px;' +
+           'border-radius:6px;border:1px solid rgba(200,80,80,0.3);margin-bottom:14px;' +
+           'word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;">' +
+           '錯誤詳情:' + String(errorMessage).slice(0, 200) +
+           '</div>')
+        : '') +
+      '  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">' +
+      '    <button id="_wb-pf-reload" style="' +
+      '      padding:11px 22px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;' +
+      '      background:linear-gradient(135deg,#ffdd66,#ffaa22);border:2px solid #fff;color:#5a2a00;' +
+      '      border-radius:8px;font-family:inherit;box-shadow:0 0 12px rgba(255,200,80,0.6);">' +
+      '      ' + _btn1Label +
+      '    </button>' +
+      (_btn2Label
+        ? ('    <button id="_wb-pf-retry" style="' +
+           '      padding:11px 22px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;' +
+           '      background:rgba(80,140,220,0.5);border:2px solid #88bbff;color:#fff;' +
+           '      border-radius:8px;font-family:inherit;">' +
+           '      ' + _btn2Label +
+           '    </button>')
+        : '') +
+      '    <button id="_wb-pf-close" style="' +
+      '      padding:11px 22px;font-size:15px;font-weight:700;cursor:pointer;' +
+      '      background:rgba(60,60,80,0.6);border:2px solid rgba(160,160,180,0.5);color:#ddd;' +
+      '      border-radius:8px;font-family:inherit;">' +
+      '      ✕ 關閉' +
+      '    </button>' +
+      '  </div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('_wb-pf-reload').onclick = () => {
+      try{ location.reload(); }catch(_){ window.location.href = window.location.href; }
+    };
+    if(_btn2Label){
+      const _retryBtn = document.getElementById('_wb-pf-retry');
+      if(_retryBtn) _retryBtn.onclick = () => { ov.remove(); };
+    }
+    document.getElementById('_wb-pf-close').onclick = () => { ov.remove(); };
+  }
+
+  // 共用入口預檢:回傳 true 表示「可以繼續」、false 表示「已擋下,呼叫方應 return」
+  // strict=true:連線/逾時都擋(用於連線房 create/join,因會扣每日次數)
+  // strict=false:只擋 SDK 已標記死亡(用於單人練習,不扣次數)
+  async function _wbPreflightGuard(strict){
+    // 主程式的 _fbPreflightCheck 不存在 → 跳過(舊版相容)
+    if(typeof window._fbPreflightCheck !== 'function'){
+      return true;
+    }
+    // 快速路徑:已知 SDK 死亡 → 直接擋
+    if(window._firestoreSdkIsDead){
+      _wbShowPreflightFailedDialog('sdk_dead', 'Firestore SDK 已被標記為死亡');
+      return false;
+    }
+    _wbShowPreflightModal();
+    let _result;
+    try{
+      _result = await window._fbPreflightCheck();
+    }catch(eP){
+      _result = { ok:false, reason:'preflight_threw', errorMessage: eP && eP.message || String(eP) };
+    }
+    _wbClosePreflightModal();
+    if(_result.ok) return true;
+    // strict=false 而且不是 SDK 死亡 → 放行(單人練習網路不好也可以試)
+    const _isSdkDead = (_result.reason === 'sdk_dead' || _result.reason === 'sdk_internal_assertion');
+    if(!strict && !_isSdkDead){
+      console.warn('[WB Preflight] 非嚴格模式 + 非 SDK 死亡,放行:', _result);
+      return true;
+    }
+    _wbShowPreflightFailedDialog(_result.reason, _result.errorMessage);
+    return false;
+  }
+
   // ★ FIX 20260517(o-3) — 對應現有英雄系統:取得「玩家已解鎖」的可用英雄
   //   原本只用 HP < 1000 過濾,導致魔物(茶葉精靈/九尾空貓...)也跑進來。
   //   改用跟主程式 _wbTcOpenSwapHero 一樣的雙重過濾:
   //     1. 不在 BOSS_NAMES 集合內(排除所有 BOSS + 怪物)
   //     2. 在 _heroLevels 解鎖紀錄內(只顯示玩家擁有的英雄)
+  // ★ v3.4.8 — 補日本三大妖怪英雄版(大天狗/酒吞童子/玉藻前/巫女)
+  //   原 bug:這四隻雖然是「召喚稀有英雄」(SUMMON_RARE_HEROES),但同時也在 BOSS_NAMES
+  //         (因為他們在日本關當 BOSS 出場),所以 isBoss(n) 把他們擋掉,世界 BOSS 戰
+  //         的英雄選單看不到他們。
+  //   修法:跟主程式 showHeroPickOverlay (line ~_advHeroPickPool 段)同樣做法 —
+  //         白名單 SUMMON_RARE_HEROES,即使他們在 BOSS_NAMES 也不過濾。
+  //         玩家用 _heroLevels 解鎖檢查仍生效,沒解鎖的不會看到。
   function _wbGetAvailableHeroes(){
     if(typeof HERO_DB === 'undefined') return [];
+    // ★ v3.4.8 — 召喚稀有英雄白名單(這幾隻雖然在 BOSS_NAMES,但解鎖後可作為玩家英雄)
+    const _SUMMON_RARES_WB = (typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES))
+      ? SUMMON_RARE_HEROES
+      : ['大天狗','玉藻前','酒吞童子','巫女'];
     try{
       const allNames = Object.keys(HERO_DB);
       const isBoss = function(n){
-        return (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n));
+        if(typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n)) return false;
+        // ★ v3.4.8 — SUMMON_RARES 即使在 BOSS_NAMES 也不視為 BOSS(他們是可解鎖英雄)
+        if(_SUMMON_RARES_WB.indexOf(n) >= 0) return false;
+        return true;
       };
       // 玩家解鎖英雄(從 _heroLevels 有紀錄的)
       let unlocked = null;
@@ -3263,10 +3431,12 @@
       }catch(_){}
       return allNames.filter(function(n){
         if(isBoss(n)) return false;
-        // 雙重保險:HP >= 1000 一定是 BOSS/怪
         const h = HERO_DB[n];
         if(!h || h.isBoss || h.isWorldBoss) return false;
-        if(h.hp != null && h.hp >= 1000) return false;
+        // ★ v3.4.8 — HP >= 1000 防呆對 SUMMON_RARES 不適用
+        //   (HERO_DB 中的大天狗 hp 是 BOSS 版 6000+,但主程式 newHero 會用
+        //   JP_BOSS_HERO_STATS 覆蓋成英雄版 75 hp)
+        if(h.hp != null && h.hp >= 1000 && _SUMMON_RARES_WB.indexOf(n) < 0) return false;
         // 解鎖檢查:有 _heroLevels 才過濾,沒有的話(未登入/讀檔中)全部顯示
         if(unlocked && !unlocked.has(n)) return false;
         return true;
@@ -3276,7 +3446,8 @@
       return Object.keys(HERO_DB).filter(function(name){
         const h = HERO_DB[name];
         if(!h || h.isBoss || h.isWorldBoss) return false;
-        if(h.hp >= 1000) return false;
+        // fallback 也加入 SUMMON_RARES 白名單
+        if(h.hp >= 1000 && _SUMMON_RARES_WB.indexOf(name) < 0) return false;
         return true;
       });
     }
@@ -3285,7 +3456,15 @@
   // === 入口操作 ===
   // ★ FIX 20260517(m) — _wbUiCreateRoom 現在是內部函式,外部要透過可見性選擇彈窗呼叫
   //   參數 visibility:'private' (預設) | 'public' | 'private_invite' (建後自動開邀請好友面板)
+  // ★ v3.4.8 — 創房前先呼叫 _wbPreflightGuard 檢測 Firestore SDK 連線健康
+  //   避免玩家組好隊伍進戰鬥才卡死,被白扣每日進場次數
   window._wbUiCreateRoom = async function(visibility){
+    // ★ v3.4.8 — 嚴格預檢(連線房會扣次數)
+    const _passed = await _wbPreflightGuard(true);
+    if(!_passed){
+      console.log('[WB Preflight] 創房預檢未通過,中止流程');
+      return;
+    }
     const vis = (visibility === 'public') ? 'public' : 'private';
     const roomId = await window._wbNet.createRoom({
       bossId: 'vesuvius_fire_dragon',
@@ -3328,6 +3507,12 @@
   window._wbUiJoinRoom = async function(){
     const code = (document.getElementById('wb-code-input').value || '').toUpperCase().trim();
     if(code.length !== 6){ _wbGameAlert('請輸入 6 碼房號'); return; }
+    // ★ v3.4.8 — 加入房間前先做 SDK 預檢(同樣會扣次數,需要嚴格)
+    const _passed = await _wbPreflightGuard(true);
+    if(!_passed){
+      console.log('[WB Preflight] 加入房間預檢未通過,中止流程');
+      return;
+    }
     const ok = await window._wbNet.joinRoom(code);
     if(ok){
       _wbCloseEntry();
@@ -8225,9 +8410,17 @@
         }
         _wbShowQuizRewardBanner(cnt, rewardDmg);
         // 護盾觸發檢查(只在房主端跑,client 等 sync 過來)
+        // ★ v3.4.9 — 加 FX capture 讓 client 也看到護盾觸發提示
         if(!_isClient && typeof window._wbCheckShieldTrigger === 'function'){
           const triggered = window._wbCheckShieldTrigger(boss);
-          if(triggered) window._wbShowShieldTriggerHint(triggered, boss);
+          if(triggered){
+            try{
+              if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+                _wbFxCapture({ type:'shieldHint', triggered: triggered });
+              }
+            }catch(_){}
+            window._wbShowShieldTriggerHint(triggered, boss);
+          }
         }
         // ★ FIX 20260518(c) #1 — 連線房主直接扣 BOSS HP 不走 doDmg,要主動觸發 G sync
         //   原問題:boss.curHp 直接被改,沒走 doDmg → 不會觸發 endAction hook →
@@ -9157,7 +9350,7 @@
   }
   window._wbSaveSoloBest = _wbSaveSoloBest;
 
-  window._wbUiSoloTest = function(){
+  window._wbUiSoloTest = async function(){
     if(typeof newHero !== 'function'){
       _wbGameAlert('⚠ newHero 函式找不到 — 主程式未完整載入,無法開始練習');
       return;
@@ -9168,6 +9361,13 @@
     if(!_heroDb && window.HERO_DB) _heroDb = window.HERO_DB;
     if(!_heroDb || !_heroDb['維蘇威火山龍王']){
       _wbGameAlert('⚠ HERO_DB 中找不到維蘇威火山龍王\n\n可能原因:\n1. hero_db.js 沒載入 — 請檢查 F12 Network 看是否 404\n2. world-boss.js 啟動失敗 — 請按 F12 Console 看是否有 [WB] 開頭的錯誤訊息\n3. 順序問題 — 請重新整理頁面再試');
+      return;
+    }
+    // ★ v3.4.8 — 單人練習也預檢,但用寬鬆模式(練習不扣每日次數,網路慢一點也讓玩家試)
+    //   只擋 SDK 已標記死亡(那情況下開戰也會 100% 卡死)
+    const _passed = await _wbPreflightGuard(false);
+    if(!_passed){
+      console.log('[WB Preflight] 單人練習預檢未通過(SDK 死亡),中止流程');
       return;
     }
 

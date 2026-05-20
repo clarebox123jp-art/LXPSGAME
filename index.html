@@ -567,11 +567,23 @@
       console.warn('[_fbSave] 收到無效 uid,跳過儲存:', uid);
       return false;
     }
+    // ★ v3.4.7 — SDK 已死則直接放棄
+    if(window._firestoreSdkIsDead){
+      console.warn('[_fbSave] Firestore SDK 已死亡,跳過儲存');
+      return false;
+    }
     try {
       // ★ merge:true 保留 representativeHero / friends 等欄位不被覆蓋
       await setDoc(doc(_fbDb, 'players', uid), data, { merge: true });
       return true;
-    } catch(e) { console.error('雲端儲存失敗', e); return false; }
+    } catch(e) {
+      console.error('雲端儲存失敗', e);
+      // ★ v3.4.7 — 偵測是否為 SDK assertion 死亡
+      if(typeof window._checkAndHandleFirestoreDeath === 'function'){
+        window._checkAndHandleFirestoreDeath(e, '_fbSave');
+      }
+      return false;
+    }
   };
 
   // ── 即時同步：監聽玩家 profile 變更（暱稱、代表英雄、好友名單）──
@@ -643,6 +655,158 @@
   window._summaryIsHealthierOrEqual = _summaryIsHealthierOrEqual;
   window._summaryRichnessScore = _summaryRichnessScore;
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.4.7 ── Firestore SDK 死亡偵測 + 救援 UI ──
+  // ────────────────────────────────────────────────────────────────────
+  // 根因(老師 2026/5/20 截圖):Firestore JS SDK 10.12.0 內部 bug
+  //   "FIRESTORE (10.12.0) INTERNAL ASSERTION FAILED: Unexpected state"
+  //   觸發場景:多 tab 切換 / 網路重連 / IndexedDB 髒掉 / write stream 重連時佇列損毀
+  //   災難:一旦觸發,此 tab 的 Firestore client 從此完全壞掉,所有後續
+  //         setDoc/updateDoc 都會繼續拋同樣的 assertion。
+  //   後果(在世界 BOSS 連線戰):client 玩家施技能 → updateDoc(pendingAction) 失敗
+  //         → 「行動送出失敗」彈窗 → 點 BUG 回報也失敗(同樣是 setDoc)
+  //
+  // 修法策略:
+  //   (a) 在每次寫入失敗的 catch 內呼叫 _checkAndHandleFirestoreDeath(e)
+  //   (b) 偵測連續 ≥2 次的「INTERNAL ASSERTION FAILED」→ 標記 SDK 已死
+  //   (c) SDK 已死後,在畫面右上角貼一個明顯的紅色 banner,引導玩家重新整理頁面
+  //   (d) BUG 回報失敗時改存 localStorage,等下次能連線時補送
+  window._firestoreSdkDeadCount = 0;        // 累計遇到 INTERNAL ASSERTION 的次數
+  window._firestoreSdkIsDead = false;        // 標記 SDK 已死(true 後不再嘗試任何寫入)
+  window._firestoreSdkLastErrorTs = 0;
+
+  // 判斷錯誤是否屬於「SDK 內部 assertion 死亡」類型
+  window._isFirestoreFatalError = function(e){
+    if(!e) return false;
+    const _msg = (e.message || e.toString() || '').toUpperCase();
+    return _msg.indexOf('INTERNAL ASSERTION FAILED') >= 0
+        || _msg.indexOf('UNEXPECTED STATE') >= 0;
+  };
+
+  // 寫入失敗時呼叫,若是 SDK 死亡型錯誤則累計次數;達 2 次標記為死亡並顯示救援 UI
+  window._checkAndHandleFirestoreDeath = function(e, _source){
+    if(!window._isFirestoreFatalError(e)) return false;
+    window._firestoreSdkLastErrorTs = Date.now();
+    window._firestoreSdkDeadCount = (window._firestoreSdkDeadCount || 0) + 1;
+    console.warn('[Firestore SDK 死亡偵測] 累計 ' + window._firestoreSdkDeadCount + ' 次 INTERNAL ASSERTION FAILED'
+                 + (_source ? ' (來源:' + _source + ')' : ''));
+    if(window._firestoreSdkDeadCount >= 2 && !window._firestoreSdkIsDead){
+      window._firestoreSdkIsDead = true;
+      console.error('💀 [Firestore SDK 死亡] 已連續 2 次 INTERNAL ASSERTION FAILED,標記 SDK 為死亡狀態,後續寫入全部會失敗');
+      try{ window._showFirestoreDeathBanner && window._showFirestoreDeathBanner(); }catch(_){}
+    }
+    return true;
+  };
+
+  // 顯示救援 banner(只顯示一次,點重新整理才會消失)
+  window._showFirestoreDeathBanner = function(){
+    if(document.getElementById('_firestore-death-banner')) return;
+    const _banner = document.createElement('div');
+    _banner.id = '_firestore-death-banner';
+    _banner.style.cssText = [
+      'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:2147483647;',
+      'background:linear-gradient(135deg,rgba(180,30,30,0.97),rgba(140,20,20,0.97));',
+      'border:3px solid #ff6666;border-radius:12px;',
+      'padding:14px 22px;color:#ffe0e0;font-size:15px;font-weight:700;',
+      'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;line-height:1.5;',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 24px rgba(255,80,80,0.5);',
+      'max-width:min(96vw,580px);text-align:center;letter-spacing:1px;',
+      'animation:_fsDeathPulse 1.5s ease-in-out infinite;',
+    ].join('');
+    _banner.innerHTML =
+      '<style>@keyframes _fsDeathPulse{0%,100%{box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 24px rgba(255,80,80,0.5);}50%{box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 36px rgba(255,120,120,0.85);}}</style>'
+      + '<div style="font-size:18px;margin-bottom:6px;">⚠ 雲端連線異常</div>'
+      + '<div style="font-size:13px;color:#ffcccc;margin-bottom:10px;font-weight:500;">'
+      + '伺服器連線發生內部錯誤,所有上傳功能(行動送出、雲端存檔、BUG 回報)<br>'
+      + '在這個分頁都將失效。請按下方按鈕重新整理頁面恢復連線。'
+      + '</div>'
+      + '<button id="_firestore-death-reload" style="'
+      + 'padding:10px 22px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:2px;'
+      + 'background:linear-gradient(135deg,#ffdd66,#ffaa22);border:2px solid #fff;color:#5a2a00;'
+      + 'border-radius:8px;font-family:inherit;box-shadow:0 0 12px rgba(255,200,80,0.6);">'
+      + '🔄 立刻重新整理頁面'
+      + '</button>'
+      + '<button id="_firestore-death-dismiss" style="'
+      + 'margin-left:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;'
+      + 'background:rgba(60,30,30,0.7);border:1.5px solid rgba(255,180,180,0.5);color:#ffcccc;'
+      + 'border-radius:8px;font-family:inherit;">'
+      + '✕ 我知道了'
+      + '</button>';
+    document.body.appendChild(_banner);
+    document.getElementById('_firestore-death-reload').onclick = () => {
+      try{ location.reload(); }catch(_){ window.location.href = window.location.href; }
+    };
+    document.getElementById('_firestore-death-dismiss').onclick = () => {
+      _banner.remove();
+    };
+  };
+
+  // ★ v3.4.8 — 主動的「Firestore 連線預檢」工具
+  //   背景:老師 2026/5/20 回報「組隊打世界 BOSS,第二位玩家施技能卡死」截圖中,
+  //         SDK 已被 INTERNAL ASSERTION FAILED 摧毀,但因為玩家完全沒做任何寫入
+  //         動作(只是在大廳組隊),SDK 死亡偵測一直沒被觸發,直到戰鬥開打才爆。
+  //   策略:在玩家「即將進入世界 BOSS 戰流程」前(創房/加入房間/單人練習),
+  //         主動發一個輕量的測試讀取 + 測試寫入,確認 SDK 還活著。
+  //         不活 → 直接擋下並顯示明確錯誤,避免玩家組好隊伍才卡死被白扣次數。
+  //   優點:讀寫都做(因為某些 INTERNAL ASSERTION 只在 write stream 才會跑出來),
+  //         同時消耗最少配額(讀:玩家自己的 saves/live;寫:可選的 ping doc)。
+  //
+  // 回傳: { ok: boolean, reason: string, errorMessage: string }
+  //   - ok=true   → SDK 健康,可繼續流程
+  //   - ok=false  → 已自動顯示救援 banner,呼叫方應 return 不要往下走
+  window._fbPreflightCheck = async function(){
+    // (1) SDK 已被標記死亡 → 直接拒絕
+    if(window._firestoreSdkIsDead){
+      console.warn('[Preflight] SDK 已標記為死亡,直接拒絕');
+      try{ window._showFirestoreDeathBanner(); }catch(_){}
+      return { ok:false, reason:'sdk_dead', errorMessage:'Firestore SDK 已被標記為死亡' };
+    }
+    // (2) 未登入 → 後面不會有寫入,直接放行(避免阻擋訪客單人練習)
+    if(!window._gUserId){
+      return { ok:true, reason:'guest_no_check' };
+    }
+    // (3) 做一次輕量的讀取 + 寫入測試(timeout 5 秒)
+    const _TIMEOUT_MS = 5000;
+    const _withTimeout = (p, label) => Promise.race([
+      p,
+      new Promise((_, rej) => setTimeout(() => rej(new Error('[Preflight] ' + label + ' 逾時 ' + _TIMEOUT_MS + 'ms')), _TIMEOUT_MS))
+    ]);
+    try{
+      // 讀:玩家自己的 saves/live(必定存在或不存在都可以,只在乎 SDK 能不能跑完一次 IO)
+      await _withTimeout(
+        getDoc(doc(_fbDb, 'players', window._gUserId, 'saves', 'live')),
+        'read-saves-live'
+      );
+      // 寫:玩家自己 profile 加 ping 時戳(merge:true 不會破壞既有資料)
+      //   merge:true + 只寫一個 ping 欄位,寫失敗最不影響玩家狀態
+      await _withTimeout(
+        setDoc(doc(_fbDb, 'players', window._gUserId),
+          { _wbPreflightPing: Date.now() },
+          { merge: true }),
+        'write-ping'
+      );
+      console.log('[Preflight] ✅ Firestore SDK 健康檢查通過');
+      return { ok:true, reason:'passed' };
+    } catch(e){
+      console.error('[Preflight] ❌ 健康檢查失敗', e);
+      const _isFatal = (typeof window._isFirestoreFatalError === 'function') && window._isFirestoreFatalError(e);
+      if(_isFatal){
+        // 是 SDK 致命錯誤(INTERNAL ASSERTION FAILED),直接標記死亡
+        if(typeof window._checkAndHandleFirestoreDeath === 'function'){
+          // 直接讓累計計數一次跳 2,觸發 banner
+          window._firestoreSdkDeadCount = (window._firestoreSdkDeadCount || 0) + 2;
+          window._checkAndHandleFirestoreDeath(e, 'Preflight');
+        } else {
+          window._firestoreSdkIsDead = true;
+          try{ window._showFirestoreDeathBanner(); }catch(_){}
+        }
+        return { ok:false, reason:'sdk_internal_assertion', errorMessage: e.message || String(e) };
+      }
+      // 不是 SDK 致命錯誤,可能是網路斷線/逾時 — 也擋下,但用較溫和的提示
+      return { ok:false, reason:'network_or_timeout', errorMessage: e.message || String(e) };
+    }
+  };
+
   // 寫 live 槽(高頻,無保護,純覆蓋)
   // 維持與舊 _fbSave 同樣寫法:setDoc + merge,讓 Firebase merge 規則一致
   window._fbSaveLive = async function(uid, data) {
@@ -651,10 +815,19 @@
       console.warn('[_fbSaveLive] 收到無效 uid,跳過儲存:', uid);
       return false;
     }
+    // ★ v3.4.7 — SDK 已死則直接放棄,免得連續拋同樣 assertion 把 console 塞爆
+    if(window._firestoreSdkIsDead){
+      console.warn('[_fbSaveLive] Firestore SDK 已死亡,跳過儲存');
+      return false;
+    }
     try {
       await setDoc(doc(_fbDb, 'players', uid, 'saves', 'live'), data, { merge: true });
       return true;
-    } catch(e) { console.error('[_fbSaveLive] 失敗', e); return false; }
+    } catch(e) {
+      console.error('[_fbSaveLive] 失敗', e);
+      window._checkAndHandleFirestoreDeath(e, '_fbSaveLive');
+      return false;
+    }
   };
 
   // 讀 live / safe 任一槽(強制從伺服器抓最新版,網路斷時 fallback 到快取)
@@ -1259,6 +1432,10 @@
           version: v.version || '',
           timestamp: v.timestamp || 0,
           time: v.timestamp ? new Date(v.timestamp).toLocaleString('zh-TW') : '?',
+          // ★ v3.4.6 — 管理員回覆欄位
+          adminReply: v.adminReply || '',
+          adminReplyTs: v.adminReplyTs || 0,
+          adminReplyTime: v.adminReplyTs ? new Date(v.adminReplyTs).toLocaleString('zh-TW') : '',
         });
       });
       // 按時間倒序(最新在前)
@@ -1279,6 +1456,65 @@
     } catch(e) {
       console.error('[BUG 回報] 刪除失敗', e);
       return false;
+    }
+  };
+
+  // ★ v3.4.6 — 管理員寫入/更新某筆 BUG 回報的回覆 (adminReply)
+  //   結構: { adminReply: string, adminReplyTs: number, adminReplyRead: false }
+  //   寫入後玩家在「管理員回信」分頁可看到老師的處理情形回覆
+  window._fbUpdateBugReportAdminReply = async function(id, replyText) {
+    if(!id) return false;
+    try {
+      const _reply = (replyText || '').toString().slice(0, 4000);
+      await updateDoc(doc(_fbDb, 'bugReports', id), {
+        adminReply: _reply,
+        adminReplyTs: Date.now(),
+        adminReplyRead: false,
+      });
+      console.info('✅ [BUG 回報] 管理員回覆已儲存', { id, len: _reply.length });
+      return true;
+    } catch(e) {
+      console.error('[BUG 回報] 更新管理員回覆失敗', e);
+      return false;
+    }
+  };
+
+  // ★ v3.4.6 — 玩家端:查詢「我自己」的 BUG 回報清單(只顯示我的 uid)
+  //   用於玩家端「管理員回信」分頁:顯示自己送出過的回報,以及老師的回覆
+  window._fbListBugReportsByUid = async function(uid) {
+    if(!uid) {
+      // 沒登入時改用 _fbUser
+      uid = (window._fbUser && window._fbUser.uid) || null;
+    }
+    if(!uid) return [];
+    try {
+      // Firestore 不支援沒索引的 where + orderBy,改成全撈本機過濾(玩家自己頂多幾十筆)
+      const snap = await getDocs(collection(_fbDb, 'bugReports'));
+      const list = [];
+      snap.forEach(d => {
+        const v = d.data() || {};
+        if(v.uid !== uid) return;
+        list.push({
+          id: v.id || d.id,
+          email: v.email || '',
+          uid: v.uid || '',
+          content: v.content || '',
+          _userText: v._userText || '',  // ★ v3.4.6 — 玩家原始文字(短版),沒有就拿 content
+          page: v.page || '',
+          version: v.version || '',
+          timestamp: v.timestamp || 0,
+          time: v.timestamp ? new Date(v.timestamp).toLocaleString('zh-TW') : '?',
+          adminReply: v.adminReply || '',
+          adminReplyTs: v.adminReplyTs || 0,
+          adminReplyTime: v.adminReplyTs ? new Date(v.adminReplyTs).toLocaleString('zh-TW') : '',
+        });
+      });
+      // 最新在前
+      list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      return list.slice(0, 50);  // 玩家只顯示自己最新 50 筆
+    } catch(e) {
+      console.error('[BUG 回報] 玩家查詢自己的清單失敗', e);
+      return [];
     }
   };
 
@@ -6156,6 +6392,12 @@ function spawnParticles(cx,cy,opts){
   }
 }
 function showActionLabel(h, text){
+  // ★ v3.4.9 — FX 同步:技能名顯示
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'showActionLabel', side:h.side, pos:h.pos, text:text });
+    }
+  }catch(_){}
   ensureFxLayer();
   var rc=cardRect(h);
   if(!rc) return;
@@ -6223,6 +6465,15 @@ function showShieldVFX(h, type){
 }
 
 function beamFX(from,to,color,dur){
+  // ★ v3.4.9 — FX 同步(雙端 hero-anchored)
+  try{
+    if(from && to && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'beamFX',
+        fromSide:from.side, fromPos:from.pos,
+        toSide:to.side, toPos:to.pos,
+        color:color, dur:dur });
+    }
+  }catch(_){}
   ensureFxLayer();dur=dur||400;
   var fr=cardRect(from),tr=cardRect(to);if(!fr||!tr)return;
   var dx=tr.x-fr.x,dy=tr.y-fr.y;
@@ -6293,6 +6544,12 @@ function bannerFX(h,text,color,dur){
   anim.onfinish=function(){if(b.parentNode)b.remove()};
 }
 function zoneFlash(side,color,dur){
+  // ★ v3.4.9 — FX 同步
+  try{
+    if(side && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'zoneFlash', zone:side, color:color, dur:dur });
+    }
+  }catch(_){}
   dur=dur||500;
   var zone=document.getElementById(side==='p1'?'z1':'z2');if(!zone)return;
   var f=document.createElement('div');
@@ -6301,6 +6558,15 @@ function zoneFlash(side,color,dur){
   setTimeout(function(){f.style.opacity='0';setTimeout(function(){if(f.parentNode)f.remove()},dur)},30);
 }
 function lightningFX(from,to,color,dur){
+  // ★ v3.4.9 — FX 同步(雙端 hero-anchored)
+  try{
+    if(from && to && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'lightningFX',
+        fromSide:from.side, fromPos:from.pos,
+        toSide:to.side, toPos:to.pos,
+        color:color, dur:dur });
+    }
+  }catch(_){}
   ensureFxLayer();dur=dur||400;color=color||'#aaff00';
   var fr=cardRect(from),tr=cardRect(to);if(!fr||!tr)return;
   var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -6320,6 +6586,12 @@ function lightningFX(from,to,color,dur){
   setTimeout(function(){if(svg.parentNode)svg.remove()},dur);
 }
 function iceParticles(h){
+  // ★ v3.4.9 — FX 同步
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'iceParticles', side:h.side, pos:h.pos });
+    }
+  }catch(_){}
   var rc=cardRect(h);if(!rc)return;
   for(var i=0;i<16;i++){(function(ii){setTimeout(function(){spawnParticles(rc.x,rc.y,{count:1,color:'#a8eeff',size:5,spread:40,duration:800,rise:true,gravity:-0.1})},ii*30)})(i)}
 }
@@ -6330,16 +6602,34 @@ function fireParticles(cx,cy,count){
   setTimeout(function(){spawnParticles(cx,cy,{count:Math.floor(count/2),color:'#ffcc00',size:5,spread:40,duration:500,rise:true,gravity:-0.4})},100);
 }
 function darkParticles(h){
+  // ★ v3.4.9 — FX 同步
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'darkParticles', side:h.side, pos:h.pos });
+    }
+  }catch(_){}
   var rc=cardRect(h);if(!rc)return;
   spawnParticles(rc.x,rc.y,{count:16,color:'#9b6dff',size:6,spread:55,duration:700,gravity:0.1});
   spawnParticles(rc.x,rc.y,{count:8,color:'#330055',size:10,spread:35,duration:900,gravity:0.05});
 }
 function holyParticles(h){
+  // ★ v3.4.9 — FX 同步
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'holyParticles', side:h.side, pos:h.pos });
+    }
+  }catch(_){}
   var rc=cardRect(h);if(!rc)return;
   spawnParticles(rc.x,rc.y,{count:20,color:'#ffe066',size:5,spread:60,duration:800,rise:true,gravity:-0.2});
   spawnParticles(rc.x,rc.y,{count:8,color:'#ffffff',size:3,spread:40,duration:600,rise:true,gravity:-0.3});
 }
 function healParticles(h){
+  // ★ v3.4.9 — FX 同步:同步治療粒子給 client(hero-anchored)
+  try{
+    if(h && typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+      _wbFxCapture({ type:'healParticles', side:h.side, pos:h.pos });
+    }
+  }catch(_){}
   var rc=cardRect(h);if(!rc)return;
   spawnParticles(rc.x,rc.y,{count:16,color:'#3ec87a',size:5,spread:45,duration:700,rise:true,gravity:-0.3});
   ringFX(h,'#3ec87a',500);
@@ -19313,6 +19603,12 @@ function doDmg(target, rawDmg, opts={}){
 
   if(target && target.name === '維蘇威火山龍王' && dmg > 0
      && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'){
+    // ★ v3.4.9 — FX 同步:BOSS 背景搖動廣播給 client
+    try{
+      if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+        _wbFxCapture({ type:'bossBgShake' });
+      }
+    }catch(_){}
     try{
       const _bbEl = document.getElementById('adv-battle-bg');
       if(_bbEl){
@@ -19353,6 +19649,12 @@ function doDmg(target, rawDmg, opts={}){
     try{
       const triggered = window._wbCheckShieldTrigger(target);
       if(triggered && typeof window._wbShowShieldTriggerHint === 'function'){
+        // ★ v3.4.9 — FX 同步:護盾觸發提示廣播給 client(每個 client 重播時自己彈)
+        try{
+          if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+            _wbFxCapture({ type:'shieldHint', triggered: triggered });
+          }
+        }catch(_){}
         setTimeout(() => { try{ window._wbShowShieldTriggerHint(triggered, target); }catch(_){} }, 400);
       }
     }catch(_){}
@@ -20625,6 +20927,96 @@ function _wbFxReplayOne(ev){
     }
     case 'playSfx': {
       if(typeof playSfx === 'function') playSfx(ev.id, ev.vol, ev.fadeStartMs);
+      break;
+    }
+    // ★ v3.4.9 — 新增 FX 重播類型(讓 client 看到全部視覺效果)
+    case 'healParticles': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof healParticles === 'function'){
+        // 注意:呼叫 healParticles 會再次觸發 _wbFxCapture,但 _wbFxShouldCapture
+        // 在 client 端是 false (因為 _wbConnectedHostMode 不為 true),所以不會回授
+        healParticles(h);
+      }
+      break;
+    }
+    case 'iceParticles': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof iceParticles === 'function') iceParticles(h);
+      break;
+    }
+    case 'darkParticles': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof darkParticles === 'function') darkParticles(h);
+      break;
+    }
+    case 'holyParticles': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof holyParticles === 'function') holyParticles(h);
+      break;
+    }
+    case 'beamFX': {
+      const fr = _wbFxResolveHero(ev.fromSide, ev.fromPos);
+      const to = _wbFxResolveHero(ev.toSide,   ev.toPos);
+      if(fr && to && typeof beamFX === 'function') beamFX(fr, to, ev.color, ev.dur);
+      break;
+    }
+    case 'lightningFX': {
+      const fr = _wbFxResolveHero(ev.fromSide, ev.fromPos);
+      const to = _wbFxResolveHero(ev.toSide,   ev.toPos);
+      if(fr && to && typeof lightningFX === 'function') lightningFX(fr, to, ev.color, ev.dur);
+      break;
+    }
+    case 'zoneFlash': {
+      if(typeof zoneFlash === 'function') zoneFlash(ev.zone, ev.color, ev.dur);
+      break;
+    }
+    case 'showActionLabel': {
+      const h = _wbFxResolveHero(ev.side, ev.pos);
+      if(h && typeof showActionLabel === 'function') showActionLabel(h, ev.text);
+      break;
+    }
+    case 'shieldHint': {
+      // BOSS 護盾觸發提示(全員都要看到)
+      if(typeof window._wbShowShieldTriggerHint === 'function'){
+        // 重建 boss 物件參考 — 用 G.p2[0]
+        try{
+          const _bossNow = (typeof G !== 'undefined' && G && G.p2 && G.p2[0]) ? G.p2[0] : null;
+          if(_bossNow) window._wbShowShieldTriggerHint(ev.triggered, _bossNow);
+        }catch(_){}
+      }
+      break;
+    }
+    case 'bossBgShake': {
+      // BOSS 受擊背景搖動
+      try{
+        const _bbEl = document.getElementById('adv-battle-bg');
+        if(_bbEl){
+          if(!document.getElementById('wb-boss-bg-shake-style')){
+            const _sks = document.createElement('style');
+            _sks.id = 'wb-boss-bg-shake-style';
+            _sks.textContent =
+              '@keyframes wbBossBgShake{'
+              + '0%,100%{transform:translate(0,0);}'
+              + '15%{transform:translate(-6px,3px);}'
+              + '30%{transform:translate(5px,-4px);}'
+              + '45%{transform:translate(-4px,2px);}'
+              + '60%{transform:translate(4px,-2px);}'
+              + '75%{transform:translate(-2px,1px);}'
+              + '}'
+              + '#adv-battle-bg.wb-boss-bg-shake{'
+              + 'animation:wbBossBgShake 0.32s ease-out;'
+              + 'will-change:transform;'
+              + '}';
+            document.head.appendChild(_sks);
+          }
+          _bbEl.classList.remove('wb-boss-bg-shake');
+          void _bbEl.offsetWidth;
+          _bbEl.classList.add('wb-boss-bg-shake');
+          setTimeout(function(){
+            try{ _bbEl.classList.remove('wb-boss-bg-shake'); }catch(_){}
+          }, 350);
+        }
+      }catch(_){}
       break;
     }
     default:
@@ -33071,12 +33463,14 @@ async function _showAdminStatsPanel(){
 
       <!-- ★ v1.0.20260510.5760 — 接收錯誤回報區塊 -->
       <!-- ★ v3.3.2 — 回報內容現在含玩家描述 + 戰鬥快照 + 最近 300 條 console -->
+      <!-- ★ v3.4.6 — 加入「回信給玩家」textarea,玩家可在 BUG 回報視窗的「管理員回信」分頁看到 -->
       <div id="_admin-bug-section" style="background:rgba(60,20,40,0.5);border:2px solid rgba(255,140,200,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ffaadd;margin-bottom:8px;">📥 接收錯誤回報</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
           顯示玩家送出的「卡死或 BUG 回報」清單(最新 200 筆,按時間倒序)。<br>
           每筆顯示玩家信箱、來源頁面、回報內容與時間。<br>
-          <span style="color:#aaffcc;font-weight:700;">💡 每筆回報已自動附帶玩家當下的 console 紀錄 + 戰鬥狀態快照,按「📋 複製給 Claude」可直接貼給 AI 偵錯。</span>
+          <span style="color:#aaffcc;font-weight:700;">💡 每筆回報已自動附帶玩家當下的 console 紀錄 + 戰鬥狀態快照,按「📋 複製給 Claude」可直接貼給 AI 偵錯。</span><br>
+          <span style="color:#aaccff;font-weight:700;">📨 每張卡片下方有「👨‍🏫 老師回信給玩家」欄位,輸入回覆後按「💾 儲存回覆」,玩家會在 BUG 回報視窗的「📬 管理員回信」分頁看到。</span>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
           <button id="_admin-bug-refresh" style="flex:1;min-width:140px;padding:11px 20px;font-size:15px;font-weight:800;
@@ -33307,6 +33701,11 @@ async function _showAdminStatsPanel(){
       const _time    = _escHtml(item.time || '?');
       const _ver     = _escHtml(item.version || '?');
       const _page    = _escHtml(_pageLabel(item.page));
+      // ★ v3.4.6 — 管理員既有回覆(若有)
+      const _adminReplyRaw = (item.adminReply || '').toString();
+      const _adminReplyEsc = _escHtml(_adminReplyRaw);
+      const _adminReplyTime = _escHtml(item.adminReplyTime || '');
+      const _hasReply = !!_adminReplyRaw.trim();
       _html +=
         '<div data-bug-id="' + _id + '" style="margin-bottom:8px;padding:10px 12px;border-radius:8px;text-align:left;'
         + 'background:rgba(255,140,200,0.06);border:1px solid rgba(255,140,200,0.25);position:relative;">'
@@ -33330,6 +33729,7 @@ async function _showAdminStatsPanel(){
         +   '<div style="font-size:11px;color:#888;margin-bottom:6px;">'
         +     '🕐 ' + _time + ' &nbsp;|&nbsp; ' + _page + ' &nbsp;|&nbsp; ' + _ver
         +     ' &nbsp;|&nbsp; <span style="color:#aaa;">' + _rawContent.length + ' 字</span>'
+        +     (_hasReply ? ' &nbsp;|&nbsp; <span style="color:#88ccff;font-weight:700;">✓ 已回覆</span>' : '')
         +   '</div>'
         +   '<div class="_bug-content" data-id="' + _id + '" data-expanded="0" '
         +       'style="font-size:13px;color:#ddd;line-height:1.55;padding-left:8px;'
@@ -33343,6 +33743,30 @@ async function _showAdminStatsPanel(){
               + 'background:rgba(255,200,100,0.15);border:1px solid #ffcc66;color:#ffdd99;'
               + 'border-radius:5px;font-family:inherit;">📖 展開全文(' + _rawContent.length + ' 字)</button>'
             : '')
+        // ★ v3.4.6 — 管理員回覆區塊:textarea + 儲存按鈕
+        +   '<div style="margin-top:10px;padding:10px 12px;background:rgba(80,140,200,0.10);'
+        +       'border:1px solid rgba(120,200,255,0.4);border-left:3px solid #66bbff;border-radius:6px;">'
+        +     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+        +       '<div style="font-size:12px;font-weight:800;color:#aaccff;letter-spacing:1px;">'
+        +         '👨‍🏫 老師回信給玩家'
+        +         (_hasReply ? ' <span style="font-weight:400;color:#88aabb;font-size:10px;margin-left:6px;">上次回覆:' + _adminReplyTime + '</span>' : '')
+        +       '</div>'
+        +       '<button class="_bug-reply-save-btn" data-id="' + _id + '" '
+        +           'style="padding:4px 12px;font-size:12px;font-weight:800;cursor:pointer;'
+        +           'background:linear-gradient(135deg,rgba(120,200,255,0.4),rgba(80,160,220,0.4));'
+        +           'border:1.5px solid #66bbff;color:#fff;border-radius:5px;font-family:inherit;'
+        +           'box-shadow:0 0 6px rgba(120,200,255,0.3);">'
+        +         '💾 儲存回覆'
+        +       '</button>'
+        +     '</div>'
+        +     '<textarea class="_bug-reply-textarea" data-id="' + _id + '" maxlength="4000" '
+        +         'placeholder="輸入給玩家的回覆(例:已修正,請更新後重試 / 此情況屬於設計,並非 bug...)" '
+        +         'style="width:100%;min-height:60px;padding:8px 10px;font-size:13px;'
+        +         'background:rgba(0,0,0,0.4);border:1px solid rgba(120,200,255,0.4);'
+        +         'color:#e8f4ff;border-radius:6px;font-family:inherit;line-height:1.5;'
+        +         'resize:vertical;box-sizing:border-box;outline:none;">' + _adminReplyEsc + '</textarea>'
+        +     '<div class="_bug-reply-status" data-id="' + _id + '" style="margin-top:4px;font-size:11px;color:#88aabb;min-height:14px;text-align:right;"></div>'
+        +   '</div>'
         + '</div>';
     });
     _bugListEl.innerHTML = _html;
@@ -33434,6 +33858,62 @@ async function _showAdminStatsPanel(){
           console.error('[BUG 回報] 複製失敗', e);
           btn.textContent = '❌ 失敗';
           setTimeout(() => { btn.textContent = _origText; }, 1500);
+        }
+      };
+    });
+
+    // ★ v3.4.6 — 綁定「儲存回覆」按鈕
+    _bugListEl.querySelectorAll('._bug-reply-save-btn').forEach(btn => {
+      btn.onclick = async (ev) => {
+        ev.stopPropagation();
+        const _id = btn.getAttribute('data-id');
+        if(!_id) return;
+        if(typeof window._fbUpdateBugReportAdminReply !== 'function'){
+          alert('回覆功能尚未就緒(Firebase 未載入完畢)');
+          return;
+        }
+        const _ta = _bugListEl.querySelector('._bug-reply-textarea[data-id="' + CSS.escape(_id) + '"]');
+        const _statusEl = _bugListEl.querySelector('._bug-reply-status[data-id="' + CSS.escape(_id) + '"]');
+        if(!_ta) return;
+        const _replyText = (_ta.value || '').trim();
+        if(!_replyText){
+          if(_statusEl){
+            _statusEl.textContent = '⚠ 請先輸入回覆內容';
+            _statusEl.style.color = '#ffaa66';
+          }
+          return;
+        }
+        const _origLabel = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ 儲存中...';
+        if(_statusEl){
+          _statusEl.textContent = '☁ 正在儲存到雲端...';
+          _statusEl.style.color = '#88ccff';
+        }
+        const _ok = await window._fbUpdateBugReportAdminReply(_id, _replyText);
+        btn.disabled = false;
+        if(_ok){
+          btn.textContent = '✅ 已儲存';
+          if(_statusEl){
+            _statusEl.textContent = '✅ 回覆已儲存 (' + new Date().toLocaleString('zh-TW') + ')';
+            _statusEl.style.color = '#88ffaa';
+          }
+          // 同時更新卡片 header 的「✓ 已回覆」標記
+          const _card = btn.closest('[data-bug-id]');
+          if(_card){
+            const _meta = _card.querySelector('div[style*="font-size:11px"]');
+            if(_meta && !_meta.innerHTML.includes('✓ 已回覆')){
+              _meta.innerHTML += ' &nbsp;|&nbsp; <span style="color:#88ccff;font-weight:700;">✓ 已回覆</span>';
+            }
+          }
+          setTimeout(() => { btn.textContent = _origLabel; }, 1800);
+        } else {
+          btn.textContent = '❌ 失敗';
+          if(_statusEl){
+            _statusEl.textContent = '❌ 儲存失敗,請檢查 console';
+            _statusEl.style.color = '#ff7766';
+          }
+          setTimeout(() => { btn.textContent = _origLabel; }, 1800);
         }
       };
     });
@@ -55848,6 +56328,12 @@ window._showBugReportDialog = function(pageContext){
     }
   }catch(_){}
 
+  // ★ v3.4.6 — PC 版視窗 / 內文放大 50%(>= 1024px 視為 PC)
+  //   行動版維持原本尺寸,避免擠到。所有尺寸用 _S(基準值) 函式套縮放。
+  const _isPC = (typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const _SCALE = _isPC ? 1.5 : 1;
+  const _S = (n) => Math.round(n * _SCALE);
+
   const dlg = document.createElement('div');
   dlg.id = '_bug-report-dialog';
   dlg.style.cssText = [
@@ -55859,58 +56345,299 @@ window._showBugReportDialog = function(pageContext){
 
   // ★ 粉紅色系視窗,呼應第二個入口按鈕配色
   // ★ v3.3.2 — textarea 上限從 100 → 200,加上「console 自動附帶」說明
+  // ★ v3.4.6 — (1) PC 版尺寸放大 50%  (2) 新增「管理員回信」分頁
   dlg.innerHTML = `
     <div style="background:linear-gradient(160deg,rgba(60,20,40,0.98),rgba(35,10,25,0.99));
-      border:3px solid rgba(255,140,200,0.85);border-radius:18px;padding:22px 26px;
-      width:min(94vw,520px);max-height:90vh;overflow-y:auto;
+      border:3px solid rgba(255,140,200,0.85);border-radius:18px;padding:${_S(22)}px ${_S(26)}px;
+      width:min(94vw,${_isPC ? 780 : 520}px);max-height:90vh;overflow-y:auto;
       box-shadow:0 0 50px rgba(255,140,200,0.45);box-sizing:border-box;">
-      <div style="font-size:26px;font-weight:900;color:#ffaadd;margin-bottom:6px;text-align:center;letter-spacing:2px;">
+
+      <!-- 標題列 -->
+      <div style="font-size:${_S(26)}px;font-weight:900;color:#ffaadd;margin-bottom:${_S(10)}px;text-align:center;letter-spacing:2px;">
         🐛 卡死或 BUG 回報
       </div>
-      <div style="font-size:14px;color:#ffd0e8;text-align:center;margin-bottom:10px;line-height:1.55;">
-        描述卡死或 BUG 情形,通知老師修正遊戲錯誤。<br>
-        <span style="color:#ffaacc;font-size:12px;">(例如:在哪個關卡、做了什麼動作、遇到什麼狀況)</span>
-      </div>
-      <div style="font-size:12px;color:#aaffcc;background:rgba(40,80,60,0.45);
-        border:1px solid rgba(140,255,180,0.4);border-radius:8px;
-        padding:8px 12px;margin-bottom:12px;line-height:1.5;text-align:center;">
-        🤖 送出時會自動附帶最近的系統紀錄,<br>幫老師更快找到問題,不用問你細節!
-      </div>
-      <textarea id="_bug-report-text" maxlength="200" placeholder="請輸入回報內容(最多 200 字,卡死按不到也可以空白直接送)..."
-        style="width:100%;min-height:120px;padding:12px 14px;font-size:16px;
-        background:rgba(20,15,25,0.9);
-        border:2px solid rgba(255,140,200,0.55);color:#fff;border-radius:10px;
-        font-family:inherit;line-height:1.55;resize:vertical;box-sizing:border-box;
-        outline:none;transition:border-color 0.15s;"
-        onfocus="this.style.borderColor='rgba(255,180,220,0.95)'"
-        onblur="this.style.borderColor='rgba(255,140,200,0.55)'"></textarea>
-      <div id="_bug-report-counter" style="font-size:12px;color:#ddaacc;margin:6px 2px 14px;text-align:right;">0 / 200</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button id="_bug-report-cancel"
-          style="flex:1;padding:12px 16px;font-size:16px;font-weight:700;cursor:pointer;
-          background:rgba(60,60,80,0.6);border:2px solid rgba(160,160,180,0.5);
-          color:#ddd;border-radius:10px;font-family:inherit;
-          transition:transform 0.12s,background 0.12s;"
-          onmouseover="this.style.background='rgba(80,80,100,0.7)';this.style.transform='scale(1.02)'"
-          onmouseout="this.style.background='rgba(60,60,80,0.6)';this.style.transform='scale(1)'">
-          ✕ 取消
+
+      <!-- ★ v3.4.6 — 分頁切換 Tab -->
+      <div id="_bug-report-tabs" style="display:flex;gap:${_S(6)}px;margin-bottom:${_S(14)}px;border-bottom:2px solid rgba(255,140,200,0.3);padding-bottom:${_S(2)}px;">
+        <button id="_bug-tab-submit" data-tab="submit"
+          style="flex:1;padding:${_S(10)}px ${_S(12)}px;font-size:${_S(15)}px;font-weight:800;cursor:pointer;
+          background:linear-gradient(135deg,rgba(220,80,140,0.85),rgba(180,60,120,0.85));
+          border:2px solid rgba(255,160,210,0.85);border-bottom:none;
+          color:#fff5fa;border-radius:8px 8px 0 0;font-family:inherit;letter-spacing:1px;
+          transition:all 0.15s;">
+          📝 提交回報
         </button>
-        <button id="_bug-report-submit"
-          style="flex:1.4;padding:12px 16px;font-size:16px;font-weight:800;cursor:pointer;
-          background:linear-gradient(135deg,rgba(220,80,140,0.88),rgba(180,60,120,0.88));
-          border:2px solid rgba(255,160,210,0.95);
-          color:#fff;border-radius:10px;font-family:inherit;letter-spacing:1px;
-          box-shadow:0 0 12px rgba(255,140,200,0.4);
-          transition:transform 0.12s,box-shadow 0.12s;"
-          onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 0 20px rgba(255,140,200,0.6)'"
-          onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 12px rgba(255,140,200,0.4)'">
-          📨 確認回報
+        <button id="_bug-tab-replies" data-tab="replies"
+          style="flex:1;padding:${_S(10)}px ${_S(12)}px;font-size:${_S(15)}px;font-weight:800;cursor:pointer;
+          background:rgba(60,30,50,0.55);
+          border:2px solid rgba(255,140,200,0.35);border-bottom:none;
+          color:#ddaacc;border-radius:8px 8px 0 0;font-family:inherit;letter-spacing:1px;
+          transition:all 0.15s;">
+          📬 管理員回信 <span id="_bug-tab-replies-badge" style="display:none;background:#ff5577;color:#fff;font-size:${_S(11)}px;padding:1px 6px;border-radius:9px;margin-left:4px;vertical-align:middle;">0</span>
         </button>
       </div>
-      <div id="_bug-report-status" style="margin-top:12px;font-size:14px;text-align:center;min-height:20px;color:#ffaadd;"></div>
+
+      <!-- ===== 提交回報分頁 ===== -->
+      <div id="_bug-pane-submit" data-pane="submit">
+        <div style="font-size:${_S(14)}px;color:#ffd0e8;text-align:center;margin-bottom:${_S(10)}px;line-height:1.55;">
+          描述卡死或 BUG 情形,通知老師修正遊戲錯誤。<br>
+          <span style="color:#ffaacc;font-size:${_S(12)}px;">(例如:在哪個關卡、做了什麼動作、遇到什麼狀況)</span>
+        </div>
+        <div style="font-size:${_S(12)}px;color:#aaffcc;background:rgba(40,80,60,0.45);
+          border:1px solid rgba(140,255,180,0.4);border-radius:8px;
+          padding:${_S(8)}px ${_S(12)}px;margin-bottom:${_S(12)}px;line-height:1.5;text-align:center;">
+          🤖 送出時會自動附帶最近的系統紀錄,<br>幫老師更快找到問題,不用問你細節!
+        </div>
+        <textarea id="_bug-report-text" maxlength="200" placeholder="請輸入回報內容(最多 200 字,卡死按不到也可以空白直接送)..."
+          style="width:100%;min-height:${_S(120)}px;padding:${_S(12)}px ${_S(14)}px;font-size:${_S(16)}px;
+          background:rgba(20,15,25,0.9);
+          border:2px solid rgba(255,140,200,0.55);color:#fff;border-radius:10px;
+          font-family:inherit;line-height:1.55;resize:vertical;box-sizing:border-box;
+          outline:none;transition:border-color 0.15s;"
+          onfocus="this.style.borderColor='rgba(255,180,220,0.95)'"
+          onblur="this.style.borderColor='rgba(255,140,200,0.55)'"></textarea>
+        <div id="_bug-report-counter" style="font-size:${_S(12)}px;color:#ddaacc;margin:${_S(6)}px 2px ${_S(14)}px;text-align:right;">0 / 200</div>
+        <div style="display:flex;gap:${_S(10)}px;flex-wrap:wrap;">
+          <button id="_bug-report-cancel"
+            style="flex:1;padding:${_S(12)}px ${_S(16)}px;font-size:${_S(16)}px;font-weight:700;cursor:pointer;
+            background:rgba(60,60,80,0.6);border:2px solid rgba(160,160,180,0.5);
+            color:#ddd;border-radius:10px;font-family:inherit;
+            transition:transform 0.12s,background 0.12s;"
+            onmouseover="this.style.background='rgba(80,80,100,0.7)';this.style.transform='scale(1.02)'"
+            onmouseout="this.style.background='rgba(60,60,80,0.6)';this.style.transform='scale(1)'">
+            ✕ 取消
+          </button>
+          <button id="_bug-report-submit"
+            style="flex:1.4;padding:${_S(12)}px ${_S(16)}px;font-size:${_S(16)}px;font-weight:800;cursor:pointer;
+            background:linear-gradient(135deg,rgba(220,80,140,0.88),rgba(180,60,120,0.88));
+            border:2px solid rgba(255,160,210,0.95);
+            color:#fff;border-radius:10px;font-family:inherit;letter-spacing:1px;
+            box-shadow:0 0 12px rgba(255,140,200,0.4);
+            transition:transform 0.12s,box-shadow 0.12s;"
+            onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 0 20px rgba(255,140,200,0.6)'"
+            onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 12px rgba(255,140,200,0.4)'">
+            📨 確認回報
+          </button>
+        </div>
+        <div id="_bug-report-status" style="margin-top:${_S(12)}px;font-size:${_S(14)}px;text-align:center;min-height:${_S(20)}px;color:#ffaadd;"></div>
+      </div>
+
+      <!-- ===== 管理員回信分頁 ===== -->
+      <div id="_bug-pane-replies" data-pane="replies" style="display:none;">
+        <div style="font-size:${_S(13)}px;color:#ffd0e8;text-align:center;margin-bottom:${_S(10)}px;line-height:1.55;">
+          這裡是你過去送出的 BUG 回報,以及老師對每筆回報的處理回覆。<br>
+          <span style="color:#ffaacc;font-size:${_S(11)}px;">(只顯示你自己的回報,最新 50 筆)</span>
+        </div>
+        <div style="display:flex;gap:${_S(8)}px;align-items:center;margin-bottom:${_S(10)}px;">
+          <button id="_bug-replies-refresh"
+            style="flex:1;padding:${_S(10)}px ${_S(14)}px;font-size:${_S(14)}px;font-weight:800;cursor:pointer;
+            background:rgba(120,200,255,0.25);border:2px solid #66bbff;color:#cce4ff;
+            border-radius:8px;font-family:inherit;
+            transition:transform 0.12s,background 0.12s;"
+            onmouseover="this.style.background='rgba(140,210,255,0.35)';this.style.transform='scale(1.02)'"
+            onmouseout="this.style.background='rgba(120,200,255,0.25)';this.style.transform='scale(1)'">
+            🔄 重新整理
+          </button>
+          <span id="_bug-replies-count" style="font-size:${_S(12)}px;color:#ddaacc;flex:0 0 auto;">尚未載入</span>
+        </div>
+        <div id="_bug-replies-list" style="max-height:${_S(360)}px;overflow-y:auto;padding:${_S(4)}px;
+          background:rgba(0,0,0,0.3);border:1px solid rgba(255,140,200,0.2);border-radius:8px;">
+          <div style="padding:${_S(20)}px;color:#aaa;font-size:${_S(13)}px;text-align:center;">
+            ⏳ 正在載入...
+          </div>
+        </div>
+        <div style="display:flex;gap:${_S(10)}px;margin-top:${_S(12)}px;">
+          <button id="_bug-replies-close"
+            style="flex:1;padding:${_S(11)}px ${_S(16)}px;font-size:${_S(15)}px;font-weight:700;cursor:pointer;
+            background:rgba(60,60,80,0.6);border:2px solid rgba(160,160,180,0.5);
+            color:#ddd;border-radius:10px;font-family:inherit;
+            transition:transform 0.12s,background 0.12s;"
+            onmouseover="this.style.background='rgba(80,80,100,0.7)';this.style.transform='scale(1.02)'"
+            onmouseout="this.style.background='rgba(60,60,80,0.6)';this.style.transform='scale(1)'">
+            ✕ 關閉
+          </button>
+        </div>
+      </div>
+
     </div>
   `;
   document.body.appendChild(dlg);
+
+  // ★ v3.4.6 — 分頁切換邏輯 + 管理員回信清單載入
+  const _tabSubmitBtn = document.getElementById('_bug-tab-submit');
+  const _tabRepliesBtn = document.getElementById('_bug-tab-replies');
+  const _paneSubmit = document.getElementById('_bug-pane-submit');
+  const _paneReplies = document.getElementById('_bug-pane-replies');
+  const _repliesListEl = document.getElementById('_bug-replies-list');
+  const _repliesCountEl = document.getElementById('_bug-replies-count');
+  const _repliesRefreshBtn = document.getElementById('_bug-replies-refresh');
+  const _repliesCloseBtn = document.getElementById('_bug-replies-close');
+  const _repliesBadgeEl = document.getElementById('_bug-tab-replies-badge');
+
+  // 簡易 escapeHtml
+  const _escHtml4Player = (s) => {
+    if(s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
+  // 切到「提交回報」分頁
+  const _switchToSubmit = () => {
+    if(_paneSubmit) _paneSubmit.style.display = '';
+    if(_paneReplies) _paneReplies.style.display = 'none';
+    if(_tabSubmitBtn){
+      _tabSubmitBtn.style.background = 'linear-gradient(135deg,rgba(220,80,140,0.85),rgba(180,60,120,0.85))';
+      _tabSubmitBtn.style.color = '#fff5fa';
+      _tabSubmitBtn.style.borderColor = 'rgba(255,160,210,0.85)';
+    }
+    if(_tabRepliesBtn){
+      _tabRepliesBtn.style.background = 'rgba(60,30,50,0.55)';
+      _tabRepliesBtn.style.color = '#ddaacc';
+      _tabRepliesBtn.style.borderColor = 'rgba(255,140,200,0.35)';
+    }
+  };
+  // 切到「管理員回信」分頁
+  const _switchToReplies = () => {
+    if(_paneSubmit) _paneSubmit.style.display = 'none';
+    if(_paneReplies) _paneReplies.style.display = '';
+    if(_tabRepliesBtn){
+      _tabRepliesBtn.style.background = 'linear-gradient(135deg,rgba(120,200,255,0.55),rgba(80,160,220,0.55))';
+      _tabRepliesBtn.style.color = '#ffffff';
+      _tabRepliesBtn.style.borderColor = 'rgba(120,200,255,0.85)';
+    }
+    if(_tabSubmitBtn){
+      _tabSubmitBtn.style.background = 'rgba(60,30,50,0.55)';
+      _tabSubmitBtn.style.color = '#ddaacc';
+      _tabSubmitBtn.style.borderColor = 'rgba(255,140,200,0.35)';
+    }
+    // 切過去時自動載入(若尚未載入過)
+    if(_repliesListEl && !_repliesListEl._loaded){
+      _loadMyBugReplies();
+    }
+  };
+
+  // 渲染玩家自己的回報列表
+  const _renderMyBugReplies = (list) => {
+    if(!_repliesListEl) return;
+    if(!Array.isArray(list) || list.length === 0){
+      _repliesListEl.innerHTML = '<div style="padding:' + _S(20) + 'px;color:#aaa;font-size:' + _S(13) + 'px;text-align:center;">'
+        + '📭 你還沒有送出過任何回報' + '</div>';
+      if(_repliesCountEl) _repliesCountEl.textContent = '共 0 筆';
+      return;
+    }
+    if(_repliesCountEl) _repliesCountEl.textContent = '共 ' + list.length + ' 筆';
+    // 統計有幾筆有回信
+    const _replyCount = list.filter(x => x.adminReply && x.adminReply.trim()).length;
+    if(_repliesBadgeEl){
+      if(_replyCount > 0){
+        _repliesBadgeEl.style.display = 'inline-block';
+        _repliesBadgeEl.textContent = String(_replyCount);
+      } else {
+        _repliesBadgeEl.style.display = 'none';
+      }
+    }
+    const _pageLabel2 = (p) => {
+      if(p === 'battle')       return '🎮 戰鬥中';
+      if(p === 'stage_select') return '🗺 關卡選擇頁';
+      return '📍 ' + (p || '其他');
+    };
+    let _html = '';
+    list.forEach((item) => {
+      const _time = _escHtml4Player(item.time || '?');
+      const _page = _escHtml4Player(_pageLabel2(item.page));
+      // 玩家文字優先用 _userText (短版),沒有就從 content 抽取「## 📝 玩家描述」段落
+      let _userText = item._userText || '';
+      if(!_userText && item.content){
+        const _m = item.content.match(/## 📝 玩家描述\s*\n([\s\S]*?)(?=\n##|$)/);
+        if(_m) _userText = _m[1].trim();
+      }
+      _userText = _userText || '(未填寫描述)';
+      const _userTextEsc = _escHtml4Player(_userText.slice(0, 200));
+      const _hasReply = !!(item.adminReply && item.adminReply.trim());
+      const _replyEsc = _hasReply ? _escHtml4Player(item.adminReply) : '';
+      const _replyTime = item.adminReplyTime ? _escHtml4Player(item.adminReplyTime) : '';
+
+      _html +=
+        '<div style="margin-bottom:' + _S(10) + 'px;padding:' + _S(10) + 'px ' + _S(12) + 'px;border-radius:8px;'
+        + 'background:rgba(255,140,200,0.05);border:1px solid rgba(255,140,200,0.2);">'
+        // 玩家提交的訊息
+        +   '<div style="font-size:' + _S(11) + 'px;color:#aaa;margin-bottom:' + _S(4) + 'px;">'
+        +     '🕐 ' + _time + ' &nbsp;|&nbsp; ' + _page
+        +   '</div>'
+        +   '<div style="font-size:' + _S(13) + 'px;color:#ffd0e8;line-height:1.5;padding:' + _S(6) + 'px ' + _S(10) + 'px;'
+        +     'background:rgba(60,20,40,0.4);border-radius:6px;border-left:3px solid rgba(255,140,200,0.6);white-space:pre-wrap;word-break:break-word;">'
+        +     '📝 ' + _userTextEsc
+        +   '</div>'
+        // 管理員回覆(若有)
+        +   (_hasReply
+            ? ('<div style="margin-top:' + _S(8) + 'px;padding:' + _S(8) + 'px ' + _S(10) + 'px;'
+              + 'background:linear-gradient(135deg,rgba(80,140,200,0.25),rgba(60,120,180,0.2));'
+              + 'border:1px solid rgba(120,200,255,0.5);border-left:3px solid #66bbff;border-radius:6px;">'
+              + '<div style="font-size:' + _S(12) + 'px;font-weight:800;color:#aaccff;margin-bottom:' + _S(4) + 'px;">'
+              + '👨‍🏫 老師回覆 <span style="font-weight:400;color:#88aabb;font-size:' + _S(10) + 'px;">' + _replyTime + '</span>'
+              + '</div>'
+              + '<div style="font-size:' + _S(13) + 'px;color:#e8f4ff;line-height:1.6;white-space:pre-wrap;word-break:break-word;">'
+              + _replyEsc
+              + '</div>'
+              + '</div>')
+            : ('<div style="margin-top:' + _S(8) + 'px;padding:' + _S(6) + 'px ' + _S(10) + 'px;'
+              + 'background:rgba(60,60,80,0.3);border:1px dashed rgba(160,160,180,0.4);border-radius:6px;'
+              + 'font-size:' + _S(11) + 'px;color:#aaa;text-align:center;">'
+              + '⏳ 老師尚未回覆此筆回報'
+              + '</div>')
+            )
+        + '</div>';
+    });
+    _repliesListEl.innerHTML = _html;
+  };
+
+  // 從雲端載入玩家自己的回報
+  const _loadMyBugReplies = async () => {
+    if(!_repliesListEl) return;
+    _repliesListEl.innerHTML = '<div style="padding:' + _S(20) + 'px;color:#aaa;font-size:' + _S(13) + 'px;text-align:center;">⏳ 載入中...</div>';
+    if(typeof window._fbListBugReportsByUid !== 'function'){
+      _repliesListEl.innerHTML = '<div style="padding:' + _S(20) + 'px;color:#ff8866;font-size:' + _S(13) + 'px;text-align:center;">❌ 雲端服務尚未就緒</div>';
+      return;
+    }
+    try{
+      const _uid = (window._fbUser && window._fbUser.uid) || null;
+      if(!_uid){
+        _repliesListEl.innerHTML = '<div style="padding:' + _S(20) + 'px;color:#ffaa66;font-size:' + _S(13) + 'px;text-align:center;">⚠ 你尚未登入,無法查看回信歷史</div>';
+        if(_repliesCountEl) _repliesCountEl.textContent = '未登入';
+        return;
+      }
+      const _list = await window._fbListBugReportsByUid(_uid);
+      _repliesListEl._loaded = true;
+      _renderMyBugReplies(_list);
+    }catch(e){
+      console.error('[BUG 回報] 玩家端載入失敗', e);
+      _repliesListEl.innerHTML = '<div style="padding:' + _S(20) + 'px;color:#ff8866;font-size:' + _S(13) + 'px;text-align:center;">❌ 載入失敗:' + _escHtml4Player(e.message || String(e)) + '</div>';
+    }
+  };
+
+  if(_tabSubmitBtn) _tabSubmitBtn.onclick = () => {
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.4); }catch(_){}
+    _switchToSubmit();
+  };
+  if(_tabRepliesBtn) _tabRepliesBtn.onclick = () => {
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.4); }catch(_){}
+    _switchToReplies();
+  };
+  if(_repliesRefreshBtn) _repliesRefreshBtn.onclick = () => {
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.4); }catch(_){}
+    _loadMyBugReplies();
+  };
+  if(_repliesCloseBtn) _repliesCloseBtn.onclick = () => {
+    try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.4); }catch(_){}
+    dlg.remove();
+  };
+
+  // 預先在背景載入「管理員回信」清單,讓 badge 數量可顯示
+  setTimeout(() => {
+    if(_repliesListEl && !_repliesListEl._loaded){
+      _loadMyBugReplies();
+    }
+  }, 300);
 
   // ★ v1.0.20260510.5810 — 冷卻中:鎖定 textarea + 確認按鈕,顯示倒數
   if(_coolingDown){
@@ -71541,7 +72268,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.5';
+window._GAME_LOADED_VERSION = 'v3.4.9';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
