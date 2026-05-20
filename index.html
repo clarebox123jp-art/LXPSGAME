@@ -2325,7 +2325,19 @@
         catch(e){ console.warn('[獎章補發] 觸發失敗', e); }
       }, 3000);
       // ★ v1.1.0 — 登入後檢查每日代表英雄經驗獎勵(同帳號同日只能領一次)
-      setTimeout(()=>{ try{ if(window._checkDailyRepHeroBonus) window._checkDailyRepHeroBonus(); }catch(e){ console.warn('[每日代表英雄獎勵]', e); } }, 2500);
+      // ★ v3.3.7 — 函式改 async(讀雲端),加 .catch 避免 unhandled rejection
+      setTimeout(()=>{
+        try{
+          if(window._checkDailyRepHeroBonus){
+            const _p = window._checkDailyRepHeroBonus();
+            if(_p && typeof _p.catch === 'function'){
+              _p.catch(e => console.warn('[每日代表英雄獎勵] async 錯誤', e));
+            }
+          }
+        }catch(e){
+          console.warn('[每日代表英雄獎勵]', e);
+        }
+      }, 2500);
       // ★ v1.0.20260424.1150 — 登入後確保有邀請碼(沒有則生成)
       setTimeout(async ()=>{
         try{
@@ -67285,33 +67297,111 @@ function _loadRepHeroBar() {
 //   - localStorage key:lxps_repHeroDailyExp_{uid}_{YYYY-MM-DD}
 //   - 同帳號同日只能領一次,即使換英雄也不會再領
 //   - 沒登入的天數不會累積
+//
+// ★ v3.3.7 — 防作弊修補(老師回報:有學生用「登入登出」重複領 10% EXP)
+//   舊邏輯漏洞:領取記錄只存 localStorage,跨裝置/清快取/無痕模式都會丟失:
+//     1. iPad 領了 → iPhone 登入 → iPhone localStorage 沒記錄 → 再領一次 ❌
+//     2. 清瀏覽器資料 → localStorage 清空 → 再領 ❌
+//     3. 無痕模式 → localStorage 隔離 → 再領 ❌
+//   修法:領取記錄改寫進 Firestore players/{uid}.lastDailyRepHeroExp = "YYYY-MM-DD"
+//        - 雲端記錄不會因清快取/換裝置丟失,真正一帳號一天一次
+//        - localStorage 保留為「本地快取」(避免每次登入都打雲端):
+//            * 雲端有今日記錄 → 寫 localStorage,下次免讀雲端
+//            * 雲端沒今日記錄 → 領取後同時寫雲端 + localStorage
+//        - 載入順序:先讀 localStorage(快),沒有再讀雲端(慢但權威)
+//   並發保護:同帳號兩裝置同時登入仍可能各領一次(極端 race),但「登入登出」
+//            這種順序操作已被雲端記錄擋住。如有需要可進一步用 Firestore transaction。
 // ════════════════════════════════════════════════════════════════
-window._checkDailyRepHeroBonus = function(){
+window._checkDailyRepHeroBonus = async function(){
   try{
     if(!window._gUserId) return;
     if(!window._myRepHero || !window._myRepHero.name) return;
     const _heroName = window._myRepHero.name;
     if(typeof HERO_DB === 'undefined' || !HERO_DB[_heroName]) return;
 
-    const _todayKey = 'lxps_repHeroDailyExp_' + window._gUserId + '_' + new Date().toISOString().slice(0,10);
+    const _today = new Date().toISOString().slice(0,10);  // YYYY-MM-DD
+    const _todayKey = 'lxps_repHeroDailyExp_' + window._gUserId + '_' + _today;
+
+    // ── 第 1 關:localStorage 快取(快,但跨裝置不可靠)──
     if(localStorage.getItem(_todayKey)){
-      console.log('[每日代表英雄經驗] 今日已領取,跳過');
+      console.log('[每日代表英雄經驗] 本機快取顯示今日已領取,跳過');
+      // ★ v3.3.7 — 遷移路徑:舊版玩家可能 localStorage 已標記但雲端沒有,
+      //   背景補寫雲端,避免「localStorage 有 + 雲端沒有」的玩家清快取後仍能重領。
+      //   注意:這段必須非同步、不阻擋現有流程(立刻 return)
+      try{
+        if(typeof window._fbLoad === 'function' && typeof window._fbSave === 'function'){
+          window._fbLoad(window._gUserId).then(_cd => {
+            if(_cd && _cd.lastDailyRepHeroExp === _today) return;  // 雲端已有今日,無需補
+            // 雲端沒有今日記錄 → 補寫
+            window._fbSave(window._gUserId, { lastDailyRepHeroExp: _today }).then(ok => {
+              if(ok) console.log('[每日代表英雄經驗] 🔧 遷移:已補寫雲端領取記錄');
+            }).catch(_=>{});
+          }).catch(_=>{});
+        }
+      }catch(_){}
       return;
     }
 
+    // ── 第 2 關:雲端 Firestore(慢,但跨裝置權威)──
+    //   ★ v3.3.7 — 用 _fbLoad 從伺服器強制讀(避開 IndexedDB 快取),
+    //                確認雲端是否已有「今日領取」記錄。
+    let _cloudClaimedToday = false;
+    try{
+      if(typeof window._fbLoad === 'function'){
+        const _cloudData = await window._fbLoad(window._gUserId);
+        if(_cloudData && _cloudData.lastDailyRepHeroExp === _today){
+          _cloudClaimedToday = true;
+        }
+      }
+    }catch(_e){
+      // 雲端讀取失敗不阻擋(網路斷時讓玩家可領,避免誤封正常玩家)
+      // 但會 log,方便日後排查
+      console.warn('[每日代表英雄經驗] 雲端讀取失敗,退回本機判定', _e);
+    }
+
+    if(_cloudClaimedToday){
+      console.log('[每日代表英雄經驗] 雲端顯示今日已領取,寫快取後跳過');
+      // 同步更新本機快取,下次免讀雲端
+      try{ localStorage.setItem(_todayKey, 'cloud_claimed'); }catch(_){}
+      return;
+    }
+
+    // ── 確認可以領取 ──
     // 計算當前等級對應的「升下一級需要的 EXP」(取 10%)
     const _curLv = (typeof getHeroLevel === 'function') ? getHeroLevel(_heroName) : 1;
     if(_curLv >= 50){
       console.log('[每日代表英雄經驗] 已滿等,跳過');
-      // 標記今天已領,避免每次登入都嘗試
+      // 標記今天已領(雲端 + 本機),避免每次登入都嘗試
       try{ localStorage.setItem(_todayKey, 'maxlv'); }catch(_){}
+      try{
+        if(typeof window._fbSave === 'function'){
+          await window._fbSave(window._gUserId, { lastDailyRepHeroExp: _today });
+        }
+      }catch(_){}
       return;
     }
     const _needExp = (typeof _expForLevel === 'function') ? _expForLevel(_curLv) : 100;
     const _bonusExp = Math.max(1, Math.floor(_needExp * 0.10));
 
-    // 標記今日已領
+    // ── 標記今日已領(關鍵:雲端 + 本機同時寫,雲端寫優先)──
+    //   ★ v3.3.7 — 順序:先寫本機(同步,快),再寫雲端(非同步,慢)
+    //              即使玩家在動畫期間斷網,下次登入時雲端讀不到就退回本機快取,
+    //              本機快取已標記今日已領,仍能擋住重領。
     try{ localStorage.setItem(_todayKey, String(_bonusExp)); }catch(_){}
+    try{
+      if(typeof window._fbSave === 'function'){
+        // 不 await,讓動畫立刻播,寫雲端在背景進行
+        window._fbSave(window._gUserId, { lastDailyRepHeroExp: _today }).then(ok => {
+          if(ok){
+            console.log('[每日代表英雄經驗] ✅ 已寫入雲端領取記錄');
+          }else{
+            console.warn('[每日代表英雄經驗] ⚠ 雲端領取記錄寫入失敗(本機仍有記錄)');
+          }
+        }).catch(_e => {
+          console.warn('[每日代表英雄經驗] ⚠ 雲端領取記錄寫入錯誤', _e);
+        });
+      }
+    }catch(_){}
 
     // 顯示動畫視窗
     setTimeout(()=>{
