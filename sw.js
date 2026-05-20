@@ -15,7 +15,7 @@
  *   window._GAME_LOADED_VERSION 即可,舊版快取會自動清理,新版資源背景下載。
  * ============================================================ */
 
-const SW_VERSION = 'v3.4.13';
+const SW_VERSION = 'v3.4.14';
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 const ASSET_CACHE = 'lxps-assets-' + SW_VERSION;
 

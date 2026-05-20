@@ -3407,10 +3407,22 @@
   //         的英雄選單看不到他們。
   //   修法:跟主程式 showHeroPickOverlay (line ~_advHeroPickPool 段)同樣做法 —
   //         白名單 SUMMON_RARE_HEROES,即使他們在 BOSS_NAMES 也不過濾。
-  //         玩家用 _heroLevels 解鎖檢查仍生效,沒解鎖的不會看到。
+  //         玩家用解鎖檢查仍生效,沒解鎖的不會看到。
+  // ★ v3.4.14 — 解鎖名單改用 advGetUnlockedHeroes() 為主,_heroLevels 為輔
+  //   舊 bug:只用 _heroLevels.keys 當解鎖名單,但「解鎖」≠「打過仗拿 EXP」。
+  //          剛解鎖、還沒出戰的英雄(尤其大天狗/酒吞童子/玉藻前/巫女 + 新學生英雄)
+  //          會被 _heroLevels 過濾掉,世界 BOSS 戰換英雄選單看不到。
+  //   修法:優先用主程式 advGetUnlockedHeroes()(讀 localStorage 'adv_unlocked_heroes',
+  //          管理員會回傳 ADMIN_ALL_HEROES),這是「真正的解鎖名單」。
+  //          fallback 1: _heroLevels(舊邏輯,有打過仗才有紀錄)
+  //          fallback 2: null(都失敗就不過濾,全部顯示)
+  //   重點:不強制白名單任何英雄 — 嚴格按照玩家解鎖狀態決定能否選。
+  //          沒解鎖的英雄(包含日本三大妖怪)就是看不到,這才是「已解鎖」原則。
   function _wbGetAvailableHeroes(){
     if(typeof HERO_DB === 'undefined') return [];
     // ★ v3.4.8 — 召喚稀有英雄白名單(這幾隻雖然在 BOSS_NAMES,但解鎖後可作為玩家英雄)
+    //   注意:這個白名單只用於 BOSS_NAMES 過濾的豁免 + HP>=1000 過濾的豁免,
+    //         不會強制讓未解鎖玩家也看到他們。
     const _SUMMON_RARES_WB = (typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES))
       ? SUMMON_RARE_HEROES
       : ['大天狗','玉藻前','酒吞童子','巫女'];
@@ -3422,22 +3434,43 @@
         if(_SUMMON_RARES_WB.indexOf(n) >= 0) return false;
         return true;
       };
-      // 玩家解鎖英雄(從 _heroLevels 有紀錄的)
+      // ★ v3.4.14 — 解鎖名單的三層 fallback:
+      //   1. advGetUnlockedHeroes() 主程式統一管道(管理員 = ADMIN_ALL_HEROES;玩家 = localStorage)
+      //   2. _heroLevels(舊邏輯,有打過仗才有紀錄)
+      //   3. null(都失敗就不過濾,全部顯示)
       let unlocked = null;
       try{
-        if(typeof _heroLevels !== 'undefined' && _heroLevels){
-          unlocked = new Set(Object.keys(_heroLevels));
+        if(typeof advGetUnlockedHeroes === 'function'){
+          const _arr = advGetUnlockedHeroes();
+          if(Array.isArray(_arr) && _arr.length > 0){
+            unlocked = new Set(_arr);
+          }
         }
       }catch(_){}
+      // fallback 1: _heroLevels
+      if(!unlocked){
+        try{
+          if(typeof _heroLevels !== 'undefined' && _heroLevels){
+            const _keys = Object.keys(_heroLevels);
+            if(_keys.length > 0){
+              unlocked = new Set(_keys);
+            }
+          }
+        }catch(_){}
+      }
+
       return allNames.filter(function(n){
+        // 1. BOSS / 魔物過濾(BOSS_NAMES 內,但 SUMMON_RARES 豁免)
         if(isBoss(n)) return false;
         const h = HERO_DB[n];
         if(!h || h.isBoss || h.isWorldBoss) return false;
-        // ★ v3.4.8 — HP >= 1000 防呆對 SUMMON_RARES 不適用
-        //   (HERO_DB 中的大天狗 hp 是 BOSS 版 6000+,但主程式 newHero 會用
-        //   JP_BOSS_HERO_STATS 覆蓋成英雄版 75 hp)
+        // 2. HP >= 1000 防呆(BOSS 版能力的角色)— 對 SUMMON_RARES 不適用
+        //    (HERO_DB 中的大天狗 hp 是 BOSS 版 6000+,但主程式 newHero 會用
+        //     JP_BOSS_HERO_STATS 覆蓋成英雄版 75 hp,所以白名單豁免)
         if(h.hp != null && h.hp >= 1000 && _SUMMON_RARES_WB.indexOf(n) < 0) return false;
-        // 解鎖檢查:有 _heroLevels 才過濾,沒有的話(未登入/讀檔中)全部顯示
+        // 3. ★ v3.4.14 — 嚴格按玩家解鎖狀態過濾
+        //    有 unlocked 名單時 → 不在名單裡的擋掉(含日本三大妖怪也得解鎖才能用)
+        //    沒 unlocked 名單時(極端 fallback)→ 全部顯示
         if(unlocked && !unlocked.has(n)) return false;
         return true;
       });
@@ -5599,20 +5632,26 @@
   // ★ FIX 20260516 v2 — 替換英雄 modal
   // ════════════════════════════════════════════════════════════════════
   window._wbTcOpenSwapHero = function(targetSlotIdx){
-    // 取得所有可選英雄(不在 BOSS 名單裡的、且玩家已解鎖的)
+    // ★ v3.4.14 — 統一改用 _wbGetAvailableHeroes() 取得清單
+    //   舊 bug:用 _heroLevels.keys 當解鎖名單,剛解鎖未出戰的英雄(日本三大妖怪+巫女
+    //          + 新學生英雄)會被擋掉。改用 advGetUnlockedHeroes() 為主的統一管道,
+    //          嚴格按玩家解鎖狀態決定能否選(已解鎖的全顯示,沒解鎖的都不顯示)。
+    //   參考:_wbGetAvailableHeroes() 是世界 BOSS 戰各處共用的「可用英雄清單」函式,
+    //        統一邏輯避免將來再出現「主清單漏角色」的不一致 bug。
     let heroes = [];
     try{
-      if(typeof HERO_DB !== 'undefined'){
-        const allNames = Object.keys(HERO_DB);
+      if(typeof _wbGetAvailableHeroes === 'function'){
+        heroes = _wbGetAvailableHeroes() || [];
+      }
+      // fallback:萬一 _wbGetAvailableHeroes 沒定義,走最簡單的全 HERO_DB filter
+      if(heroes.length === 0 && typeof HERO_DB !== 'undefined'){
         const isBoss = (n) => (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n));
-        // 玩家解鎖英雄(從 _heroLevels 有紀錄的)
-        let unlocked = null;
-        try{
-          if(typeof _heroLevels !== 'undefined' && _heroLevels){
-            unlocked = new Set(Object.keys(_heroLevels));
-          }
-        }catch(_){}
-        heroes = allNames.filter(n => !isBoss(n) && (!unlocked || unlocked.has(n)));
+        heroes = Object.keys(HERO_DB).filter(n => {
+          if(isBoss(n)) return false;
+          const h = HERO_DB[n];
+          if(!h || h.isBoss || h.isWorldBoss) return false;
+          return true;
+        });
       }
     }catch(e){ console.warn('[WB-TC] 讀取英雄列表失敗', e); }
     if(heroes.length === 0){
