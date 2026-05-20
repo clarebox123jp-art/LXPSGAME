@@ -14801,6 +14801,23 @@ function skillCost(s, actor, displayOnly=false){
       c = Math.max(1, c-1);
     }
   }
+  // ★ v3.4.10 — 五科滿分考卷(學霸 S1):升級時能量消耗隨次數一起遞增
+  //   基礎 c=3(1 次),Lv3=4(2 次),Lv5=5(3 次),Lv7=6(4 次),Lv9=7(5 次)
+  //   公式:cost = 2 + 次數;次數 = min(5, 1 + floor(lv/2))
+  if(actor && s && s.n==='五科滿分考卷' && actor._skLv){
+    const _slotSC = (actor.s1 && actor.s1.n==='五科滿分考卷') ? 's1'
+                  : (actor.s2 && actor.s2.n==='五科滿分考卷') ? 's2' : null;
+    if(_slotSC){
+      const _lvSC = actor._skLv[_slotSC] || 0;
+      const _hitsSC = Math.min(5, 1 + Math.floor(_lvSC / 2));
+      // 直接用「基礎 cost(3) + (次數-1)」覆蓋,而不是加減,避免被其他規則疊算
+      // 注意:此時 c 已經被 discount/exhaust 等戰場效果加減過,需要保留那些調整
+      // 解法:計算新基礎(2 + 次數),再加回戰場效果差值(c - s.c)
+      const _newBase = 2 + _hitsSC;
+      const _diff = c - s.c;  // 之前的戰場調整量
+      c = Math.max(1, _newBase + _diff);
+    }
+  }
   // ★ v1.0.20260424.0510 — 模仿(c:3→5)和亂槍射擊(c:4→5)的成本已直接改 HERO_DB.c,
   //   不在這裡再用 skillCost hack 加成本(避免雙重扣減)
   // 連招疲勞：按英雄個別追蹤，上次用過同一技能則費用+疲勞層數
@@ -25010,20 +25027,33 @@ function execSkill(a, sk, cost, stype){
   }
   // ════════════════════════════════════════════════════════════════
   // ★ v1.0.20260518.6920 — 學霸(轉學生)(5 年 2 班簡同學設計)技能實作
-  //   S1 五科滿分考卷:固定 100 傷害(不暴擊/不受元素/無視有利)隨機對手 5 次
-  //     升級:Lv1~10 固定值 100/105/110/115/120/125/130/135/140/145
-  //     攻擊次數:Lv1~4=5 次、Lv5~9=6 次、Lv10=7 次
+  // ★ v3.4.10 — S1「五科滿分考卷」重新設計(老師需求 2026/5/20):
+  //   基礎(Lv1):c=3,對 1 名目標造成固定 100 傷害(必中/無視有利/不暴擊/不受元素)
+  //   升至 Lv3/5/7/9:攻擊次數 +1(隨機目標)、能量消耗 +1,傷害 100 不變
+  //   等級對照表(內部 lv,從 0 起算):
+  //     lv=0~1 (Lv1~2): 1 次  / c=3
+  //     lv=2~3 (Lv3~4): 2 次  / c=4
+  //     lv=4~5 (Lv5~6): 3 次  / c=5
+  //     lv=6~7 (Lv7~8): 4 次  / c=6
+  //     lv=8~9 (Lv9~10): 5 次 / c=7,且第 5 下傷害 ×2(=200)
+  //   公式:次數 = Math.min(5, 1 + Math.floor(lv/2));cost = 2 + 次數
+  //   ⚠ cost 升級邏輯在 skillCost() 內統一處理(line ~14770,v3.4.10 加入)
   //   S2 下課時光:用特技 170%(每級 +5%)恢復全體友方,並依速度 100% 提升全體速度 2 回合
   //     速度加成:Lv1~4=100%、Lv5~9=110%、Lv10=120%
   //   ⚠ S1 doDmg 用 fixedDmg:true + ignoreBuffs:true 跳過屬性/暴擊/有利狀態
   // ════════════════════════════════════════════════════════════════
   else if(n==='五科滿分考卷'){
     const _scS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
-    const _scFixed = 100 + _scS1Lv * 5;
-    const _scHits = 5;  // ★ v6920 修正:不管幾級都是固定 5 次,只有固定值會升級
+    // ★ v3.4.10 — 固定值不變,升級只加次數
+    const _scFixed = 100;
+    // ★ v3.4.10 — 次數隨等級提升:Lv1~2=1 次、Lv3~4=2、Lv5~6=3、Lv7~8=4、Lv9~10=5
+    const _scHits = Math.min(5, 1 + Math.floor(_scS1Lv / 2));
+    // ★ v3.4.10 — 滿級(內部 lv=9 = Lv.10 MAX):第 5 下傷害 ×2
+    const _scMaxLv = (_scS1Lv >= 9);
     const opp = a.side==='p1' ? 'p2' : 'p1';
     if(!G[opp].filter(h => h.curHp > 0).length){ endAction(a, cost); return; }
-    log(`📋 [${a.name}] 五科滿分考卷!固定 ${_scFixed} 傷害 × ${_scHits} 次(無視屬性/有利/暴擊)!`);
+    const _scHitsTxt = _scMaxLv && _scHits >= 5 ? (_scHits + ' 次(第 5 下 ×2)') : (_scHits + ' 次');
+    log(`📋 [${a.name}] 五科滿分考卷!固定 ${_scFixed} 傷害 × ${_scHitsTxt}(無視屬性/有利/暴擊)!`);
     try{ bannerFX(a, '📋 滿分考卷!', '#88ccff', 1200); }catch(_){}
     try{ playSkillFX('五科滿分考卷', a, G[opp].filter(h => h.curHp > 0)); }catch(_){}
     beginBatchTotals();
@@ -25035,11 +25065,22 @@ function execSkill(a, sk, cost, stype){
         endAction(a, cost);
         return;
       }
+      // ★ v3.4.10 — 第 1 下:若是 Lv1(_scHits===1)就是「對 1 名目標」,
+      //   為了讓玩家有「指定」的感覺,可考慮走 G.pendingTarget,
+      //   但目前主程式 S1 都走隨機,保持一致改隨機目標即可
       const _t = _alive[Math.floor(Math.random() * _alive.length)];
-      log(`📋 [${a.name}] 第 ${_scI+1} 張滿分考卷 → [${_t.name}] 固定 ${_scFixed}`);
-      try{ bannerFX(_t, `📋 滿分! × ${_scI+1}`, '#aaccff', 500); }catch(_){}
-      try{ playSfx('sfx-passive', 0.6); }catch(_){}
-      doDmg(_t, _scFixed, { fixedDmg:true, actor:a, isSkill:true, ignoreBuffs:true });
+      // ★ v3.4.10 — 滿級時第 5 下(_scI === 4,因為 _scI 是 0-based)傷害 ×2
+      const _isLastDoubled = (_scMaxLv && _scI === 4);
+      const _thisDmg = _isLastDoubled ? (_scFixed * 2) : _scFixed;
+      const _doubleTxt = _isLastDoubled ? '【MAX 第5下×2!】' : '';
+      log(`📋 [${a.name}] 第 ${_scI+1} 張滿分考卷 → [${_t.name}] 固定 ${_thisDmg} ${_doubleTxt}`);
+      try{
+        const _bColor = _isLastDoubled ? '#ffcc44' : '#aaccff';
+        const _bText = _isLastDoubled ? `📋 MAX! × ${_scI+1}` : `📋 滿分! × ${_scI+1}`;
+        bannerFX(_t, _bText, _bColor, _isLastDoubled ? 700 : 500);
+      }catch(_){}
+      try{ playSfx(_isLastDoubled ? 'sfx-burst' : 'sfx-passive', _isLastDoubled ? 0.85 : 0.6); }catch(_){}
+      doDmg(_t, _thisDmg, { fixedDmg:true, actor:a, isSkill:true, ignoreBuffs:true });
       renderCard(_t);
       _scI++;
       _pSetTimeout(_doExam, 300);
@@ -61429,8 +61470,28 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
            .replace(/保底打掃\s*1\s*次/g, '保底打掃 ' + HL(fallback) + ' 次');
   }
   else if(cat === 'special_scholar_s1'){
-    const fixedDmg = 100 + skLv * 5;
-    fd = fd.replace(/固定\s*100\s*傷害/g, '固定 ' + HL(fixedDmg) + ' 傷害');
+    // ★ v3.4.10 — 新規格:傷害固定 100,次數 1→5(Lv3/5/7/9 各 +1),滿級第 5 下 ×2
+    //   次數 = min(5, 1 + floor(lv/2))
+    const _scHits = Math.min(5, 1 + Math.floor(skLv / 2));
+    const _scCost = 2 + _scHits;  // cost = 3/4/5/6/7
+    const _isMax = (skLv >= 9);
+    // 替換「對 1 名目標」/「1 次」表述為當前等級的次數
+    // 原 fd:「對 1 名目標造成固定 100 傷害」
+    if(_scHits === 1){
+      // Lv1~2 維持「對 1 名目標」
+      fd = fd.replace(/對 1 名目標造成固定 100 傷害/g,
+        '對 ' + HL('1') + ' 名目標造成固定 ' + HL('100') + ' 傷害(能量消耗 ' + HL(_scCost) + ')');
+    }else if(_isMax){
+      // Lv10 MAX:5 次 + 第 5 下 ×2
+      fd = fd.replace(/對 1 名目標造成固定 100 傷害/g,
+        '對隨機目標造成固定 ' + HL('100') + ' 傷害共 ' + HL(_scHits + ' 次') +
+        '(能量消耗 ' + HL(_scCost) + ',' + HL('第 5 下傷害 ×2 = 200') + ')');
+    }else{
+      // Lv3~8:N 次隨機目標
+      fd = fd.replace(/對 1 名目標造成固定 100 傷害/g,
+        '對隨機目標造成固定 ' + HL('100') + ' 傷害共 ' + HL(_scHits + ' 次') +
+        '(能量消耗 ' + HL(_scCost) + ')');
+    }
   }
   else if(cat === 'special_scholar_s2'){
     const healPct = 170 + skLv * 5;
@@ -62462,10 +62523,13 @@ function _getSkUpgradeBadge(skillName, skLv){
     return '解我方全體不利 + 反擊×' + counterPct + '% (保底×' + fallback + ')';
   }
   // ★ v1.0.20260518.6920 — 學霸(轉學生) S1/S2 升級短摘要
+  // ★ v3.4.10 — S1 新規格:傷害固定 100、次數隨等級遞增、滿級第 5 下 ×2
   if(cat==='special_scholar_s1'){
     const lv = skLv || 0;
-    const fixedDmg = 100 + lv * 5;
-    return '固定 ' + fixedDmg + ' × 5 次(不暴擊/不受元素/無視有利)';
+    const _hits = Math.min(5, 1 + Math.floor(lv / 2));
+    const _cost = 2 + _hits;
+    const _maxTxt = (lv >= 9) ? ' [第 5 下 ×2]' : '';
+    return '固定 100 × ' + _hits + ' 次 (c=' + _cost + ')' + _maxTxt + '(必中/不暴擊/不受元素/無視有利)';
   }
   if(cat==='special_scholar_s2'){
     const lv = skLv || 0;
@@ -62833,10 +62897,20 @@ function buildSkillLvTable(skillName, currentLv) {
       const fallback = lv >= 9 ? 3 : 1;
       effectText = '解我方全體不利 + 反擊×' + counterPct + '% (保底×' + fallback + ')' + (lv===9?'（MAX 保底×3）':(lv===0?'（基礎）':''));
     }
-    // ★ v1.0.20260518.6920 — 學霸(轉學生) S1:固定 +5/級,攻擊次數固定 5
+    // ★ v1.0.20260518.6920 — 學霸(轉學生) S1:固定 100、次數隨等級遞增、滿級第 5 下 ×2
+    // ★ v3.4.10 — 新規格(老師需求 2026/5/20)
     else if(cat==='special_scholar_s1'){
-      const fixedDmg = 100 + lv * 5;
-      effectText = '固定 ' + fixedDmg + ' × 5 次(不暴擊/不受元素/無視有利)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+      const _hits = Math.min(5, 1 + Math.floor(lv / 2));
+      const _cost = 2 + _hits;
+      let _stageNote = '';
+      if(lv === 0)      _stageNote = '（基礎,1 次/c=3）';
+      else if(lv === 2) _stageNote = '（升級!2 次/c=4）';
+      else if(lv === 4) _stageNote = '（升級!3 次/c=5）';
+      else if(lv === 6) _stageNote = '（升級!4 次/c=6）';
+      else if(lv === 8) _stageNote = '（升級!5 次/c=7）';
+      else if(lv === 9) _stageNote = '（MAX!第 5 下 ×2 = 200）';
+      effectText = '固定 100 × ' + _hits + ' 次 (c=' + _cost + ')'
+        + (lv === 9 ? ' [第5下×2]' : '') + _stageNote;
     }
     // ★ v1.0.20260518.6920 — 學霸(轉學生) S2:治療+5%/級、Lv5 速度加成 100→110、Lv10 升 120
     else if(cat==='special_scholar_s2'){
@@ -72268,7 +72342,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.9';
+window._GAME_LOADED_VERSION = 'v3.4.10';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
