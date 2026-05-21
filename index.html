@@ -2466,6 +2466,17 @@
       // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
+      // ★ v3.4.21 — 老師需求 1:登入完成後立刻檢查未完成戰鬥快照,
+      //   不必等玩家點冒險才彈,降低玩家錯過續戰提示的機率。
+      try{
+        if(typeof _advCheckCrashRecovery === 'function'){
+          // 延 800ms 讓 UI 先穩定 + 雲端 load 寫入 localStorage 完成
+          setTimeout(function(){
+            try{ _advCheckCrashRecovery(); }
+            catch(_eRec){ console.warn('[登入後續戰檢查] 例外', _eRec); }
+          }, 800);
+        }
+      }catch(_eRcv){ console.warn('[登入後續戰檢查] 觸發失敗', _eRcv); }
       // ★ v1.0.20260514.6530 — 啟動「5 分鐘無操作自動登出」系統(學校平板共用情境)
       try { if(typeof window._idleAutoLogoutStart === 'function') window._idleAutoLogoutStart(); }
       catch(_e) { console.warn('[閒置自動登出] 啟動失敗', _e); }
@@ -28470,11 +28481,14 @@ function startTurn(){
       }
     }catch(e){ console.error('[battleSnap]', e); }
   }
-  // ★ v3.4.20 — 修 BUG:原本每 5 回合才同步雲端,但小怪戰通常 3-4 回合就結束 →
-  //   雲端永遠沒收到 advSnapshot → 玩家中斷重登入時,_fbLoad 看雲端是 null,
-  //   即使本地快照存在也會被舊邏輯誤殺(已搭配 _fbLoad 守門修補)。
-  //   再縮短到「每 2 回合」雲端同步一次,讓 3 回合的短戰也能在第 2 回合存上雲端。
-  if(_adventureMode && G && G.round && G.round % 2 === 0){
+  // ★ v3.4.21 — 老師需求:「無論什麼原因(系統錯誤跳出、斷線、重新整理),都要能繼續未完成的戰鬥」
+  //   修法:雲端同步從「每 2 回合」改為「每 1 回合」,確保第 1 回合就有雲端快照。
+  //   原本顧慮頻寬,但 advSnapshot 物件只有 5-10KB,gameCloudSave 是 merge 寫入,
+  //   每 30 秒最多 1 個玩家 1 次寫入,Firestore 配額完全吃得消。
+  //   配合 _fbLoad 守門修補(雲端沒 advSnapshot 不再誤殺本地),雙保險:
+  //     - 雲端有:跨裝置續戰、localStorage 被 iPad 清也能救
+  //     - 本地有:雲端寫失敗時的最後防線
+  if(_adventureMode && G && G.round && G.round >= 1){
     try{ gameCloudSave(); }catch(_){}
   }
 // ══ 冒險模式 BOSS 天賦 ══
@@ -49318,6 +49332,13 @@ function advStartBattle(){
     const _advOv = document.getElementById('adventure-overlay');
     if(_advOv){ _advOv.style.display = 'none'; }
   }catch(_){}
+  // ★ v3.4.21 — 老師需求 2:為新 BOSS 戰分配唯一 ID,advShowBattleResult 用此 ID 守門
+  try{
+    window._advCurrentBattleId = 'boss-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+    window._advBattleSettledIds = window._advBattleSettledIds || new Set();
+    // 新 BOSS 戰也要 reset _advBattleResultShown(讓 _saveBattleRoundSnapshot 能正常運作)
+    window._advBattleResultShown = false;
+  }catch(_){}
   // ★ v1.1.0 — 重置「卡死自救・跳過回合」使用次數(每場戰鬥重新計算,最多 3 次)
   try{ window._rescueSkipUsedThisBattle = 0; }catch(_){}
   if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan'
@@ -52481,6 +52502,30 @@ function advRestartBattle() {
 }
 // ════════════════════════════════
 async function advShowBattleResult(win) {
+  // ★ v3.4.21 — 老師需求 2:防 BOSS 戰結算被重複觸發無限領獎
+  //   檢查此戰鬥 ID 是否已結算過,是的話直接 return。
+  //   原本完全沒有重入守衛,只要 race 條件(checkWin 重觸發、startTurn 殘留 timer 等)
+  //   再次呼叫本函式,就能重複給 EXP/coins/掉落物/解鎖獎勵。
+  try{
+    const _curId = window._advCurrentBattleId;
+    if(_curId){
+      if(!window._advBattleSettledIds) window._advBattleSettledIds = new Set();
+      if(window._advBattleSettledIds.has(_curId)){
+        console.warn('[advShowBattleResult] 此 BOSS 戰 ID 已結算過(id=' + _curId + '),拒絕重複結算');
+        return;
+      }
+      window._advBattleSettledIds.add(_curId);
+      if(window._advBattleSettledIds.size > 50){
+        const _arr = Array.from(window._advBattleSettledIds);
+        window._advBattleSettledIds = new Set(_arr.slice(-50));
+      }
+    }
+  }catch(_eId){ console.warn('[advShowBattleResult] ID 守衛例外', _eId); }
+  // ★ 額外:若 _advBattleResultShown 已 true 表示已結算過,也拒絕
+  if(window._advBattleResultShown && win){
+    console.warn('[advShowBattleResult] _advBattleResultShown=true 但又被呼叫(win path),拒絕重複結算');
+    return;
+  }
   // ★ v1.1.0 — BOSS 戰結束時強制隱藏卡死自救按鈕(避免結算/回學校時殘留)
   // ★ v1.0.20260513.6490 — 也隱藏 BUG 回報按鈕
   try{
@@ -69431,6 +69476,14 @@ function _advMiniQuizSubmit(letter, isCorrect) {
 function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
+  // ★ v3.4.21 — 老師需求 2:防無限「繼續冒險」重複領獎
+  //   為這場新戰鬥分配唯一 ID,advFinishMiniBattle 結算後記錄「此 ID 已結算」,
+  //   即使 _advFinishingMini 旗標被某條 race 路徑 reset,下次再呼叫也會被擋下。
+  try{
+    window._advCurrentBattleId = Date.now() + '-' + Math.floor(Math.random() * 100000);
+    window._advBattleSettledIds = window._advBattleSettledIds || new Set();
+    // 不在這裡清 _advBattleSettledIds:讓「已結算 ID」永久記下,防止任何重複觸發
+  }catch(_){}
   // ★ v1.0.20260424.1260 — 確保 row2(對手卡片區)可見(上次小怪戰結束可能殘留 hidden)
   try{
     const _row2 = document.getElementById('row2');
@@ -69708,6 +69761,28 @@ function advStartMiniBattle(nextSceneIdx) {
 }
 
 function advFinishMiniBattle(win) {
+  // ★ v3.4.21 — 老師需求 2:防無限「繼續冒險」重複領獎
+  //   檢查此戰鬥 ID 是否已結算過,是的話直接 return,不會重複給 EXP/coins/掉落物。
+  //   原本只有 _advFinishingMini 旗標,但該旗標在「玩家點繼續冒險」後 500ms 就被 reset,
+  //   reset 後若有任何 race 路徑(checkWin 重觸發、startTurn 殘留排程等)再呼叫本函式,
+  //   就會無限給獎。改用「永久記錄已結算 ID」避免這個漏洞。
+  try{
+    const _curId = window._advCurrentBattleId;
+    if(_curId){
+      if(!window._advBattleSettledIds) window._advBattleSettledIds = new Set();
+      if(window._advBattleSettledIds.has(_curId)){
+        console.warn('[advFinishMiniBattle] 此戰鬥 ID 已結算過(id=' + _curId + '),拒絕重複結算');
+        return;
+      }
+      // 標記已結算
+      window._advBattleSettledIds.add(_curId);
+      // 控制 Set 大小,只保留最近 50 個 ID
+      if(window._advBattleSettledIds.size > 50){
+        const _arr = Array.from(window._advBattleSettledIds);
+        window._advBattleSettledIds = new Set(_arr.slice(-50));
+      }
+    }
+  }catch(_eId){ console.warn('[advFinishMiniBattle] ID 守衛例外', _eId); }
   if(window._advFinishingMini){
     try{ console.warn('[advFinishMiniBattle] 重入守衛攔截:本函式已在執行中,跳過此次呼叫'); }catch(_){}
     return;
@@ -74447,7 +74522,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.20';
+window._GAME_LOADED_VERSION = 'v3.4.21';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
