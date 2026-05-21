@@ -3794,19 +3794,44 @@
         }
         return true;
       }
-      try{
-        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), {
-          pendingAction: {
-            actorUid: window._gUserId,
-            actorSlot: WB.mySlot,
-            action: action,
-            ts: Date.now()
+      // ★ v3.5.1 — 非房主端 updateDoc 加上 failed-precondition 重試
+      //   根因:雙方同時寫 worldBossRooms/{roomId} 文件會撞樂觀鎖 → 後到者拿 failed-precondition
+      //         原版只 try 一次 → 玩家點按鈕的 action 永久消失 → 房主以為玩家還沒操作 → 全場卡死
+      //   修法:最多 3 次重試,指數退避(200ms → 400ms → 800ms)
+      //         單次失敗的話 _emit('onError') 仍會發,但 toast 改在全部失敗才發
+      const _maxAttempts = 3;
+      let _lastErr = null;
+      for(let _attempt = 0; _attempt < _maxAttempts; _attempt++){
+        try{
+          await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), {
+            pendingAction: {
+              actorUid: window._gUserId,
+              actorSlot: WB.mySlot,
+              action: action,
+              ts: Date.now()
+            }
+          });
+          if(_attempt > 0){
+            console.info('[WBNet] sendAction 第 ' + (_attempt+1) + ' 次重試成功');
           }
-        });
-        return true;
-      }catch(e){
-        _emit('onError', { msg: '行動送出失敗' }); return false;
+          return true;
+        }catch(e){
+          _lastErr = e;
+          const _isPrecond = e && (e.code === 'failed-precondition' ||
+                                   (e.message || '').includes('failed-precondition'));
+          console.warn('[WBNet] sendAction 第 ' + (_attempt+1) + ' 次失敗' +
+            (_isPrecond ? ' (樂觀鎖衝突)' : ''), e && e.message);
+          if(_attempt < _maxAttempts - 1){
+            // 指數退避 + 加上小隨機抖動,避免多人同步重試又撞
+            const _delay = 200 * Math.pow(2, _attempt) + Math.floor(Math.random() * 100);
+            await new Promise(r => setTimeout(r, _delay));
+          }
+        }
       }
+      // 全部失敗 → 才發 onError
+      console.error('[WBNet] sendAction 重試 ' + _maxAttempts + ' 次都失敗', _lastErr);
+      _emit('onError', { msg: '行動送出失敗(重試 3 次後仍無法送到房主)' });
+      return false;
     }
 
     // ★ v3.3.6 — 深層清理 undefined(Firestore 不接受 undefined,只接受 null 或缺欄位)
@@ -4144,7 +4169,43 @@
                   // 舊版自製戰鬥引擎 fallback
                   try{ window._wbHostExecuteAction(cur.pos, pa.action); }catch(e){ console.error(e); }
                 }
+              } else {
+                // ★ v3.5.1 — actorUid 不匹配 expected player
+                //   原版這裡不做任何事 → pendingAction 永遠留在 Firestore → 永遠不會被清
+                //   → 房主每收一次 snapshot 都再判斷一次都不匹配 → 玩家永遠等不到
+                //   修法:記錄並清掉 pendingAction,並重發 sync 給所有 client(讓 client
+                //         看到真正的 currentActorIdx,重新顯示對的等待 banner)
+                console.warn('[WBNet host] pendingAction 不匹配當前 actor:',
+                  '收到 actorUid=' + (pa.actorUid || '').slice(0, 8) +
+                  ' slot=' + pa.actorSlot +
+                  ',但 currentActor pos=' + cur.pos +
+                  ' expectedUid=' + ((expectedPlayer && expectedPlayer.uid) || 'none').slice(0, 8));
+                // 清掉 stale 的 pendingAction
+                try{
+                  updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
+                }catch(_){}
+                // 重發 sync 給 client,讓他們看到正確的 currentActor
+                try{
+                  if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+                    setTimeout(() => {
+                      try{ window._wbHostSyncG('stale-action-resync'); }catch(_){}
+                    }, 200);
+                  }
+                }catch(_){}
               }
+            } else if(cur && cur.side === 'p2'){
+              // ★ v3.5.1 — 當前是 BOSS 回合卻收到玩家 action,通常是 client 端 sync 延遲
+              console.warn('[WBNet host] BOSS 回合中卻收到玩家 pendingAction(slot=' + pa.actorSlot + '),清掉並重發 sync');
+              try{
+                updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
+              }catch(_){}
+              try{
+                if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+                  setTimeout(() => {
+                    try{ window._wbHostSyncG('boss-turn-stale-action'); }catch(_){}
+                  }, 200);
+                }
+              }catch(_){}
             }
           }
         }
@@ -19363,6 +19424,26 @@ function _burstFinish(h, _interrupted){
         console.warn('[burstFinish watchdog] startTurn 卡住超過 5 秒,強制解除 (爆發者:'+(h&&h.name)+')');
         try{ window._gamePaused = false; }catch(_){}
         try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        // ★ v3.5.1 — watchdog 強解時順便清 client 樂觀更新標記,避免 sync 進來時仍被擋
+        try{
+          if(window._wbClientMode){
+            // 清樂觀標記,讓後續 sync 直接 apply
+            window._wbClientAnimEndTs = 0;
+            window._wbClientOptimistic = false;
+            // 如果樂觀更新還沒成功送到房主 → 緊急再試一次
+            const _opt = window._wbClientOptimisticActor;
+            if(_opt && !_opt.sentToHost && window._wbNet && typeof window._wbNet.sendAction === 'function'){
+              console.warn('[burstFinish watchdog] client 樂觀更新尚未送到房主,緊急重送一次');
+              try{
+                const _ret = window._wbNet.sendAction({ type: _opt.type });
+                if(_ret && typeof _ret.then === 'function'){
+                  _ret.catch(e => console.warn('[burstFinish watchdog] 緊急重送也失敗', e));
+                }
+              }catch(eS){ console.warn('[burstFinish watchdog] 緊急重送例外', eS); }
+            }
+            window._wbClientOptimisticActor = null;
+          }
+        }catch(_){}
         setTimeout(function(){
           try{
             if(!G) return;

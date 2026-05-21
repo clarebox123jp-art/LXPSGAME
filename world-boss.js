@@ -1852,12 +1852,82 @@
               + '</span> 的<br><span style="color:#9be4ff;font-size:26px;">'
               + _escAi(heroName) + '</span> 回合中...</div>';
             banner.style.display = 'block';
+
+            // ★ v3.5.1 — 等待 banner 顯示時追蹤「同一角色卡多久」
+            //   若同一個 actor 顯示等待 banner 超過 30 秒 → 自動觸發 stuck_resync
+            //   避免房主端寫入失敗(failed-precondition)+ client 收不到 sync 雙重故障時全場卡死
+            const _bannerKey = (actor.side || 'p1') + ':' + pos + ':' + heroName;
+            if(window._wbWaitBannerKey !== _bannerKey){
+              // 換 actor 了 → reset 計時
+              window._wbWaitBannerKey = _bannerKey;
+              window._wbWaitBannerStartTs = Date.now();
+              if(window._wbWaitBannerStuckTimer){
+                clearTimeout(window._wbWaitBannerStuckTimer);
+              }
+              // 30 秒後若還在卡同一個 actor → 自動送 stuck_resync
+              window._wbWaitBannerStuckTimer = setTimeout(function(){
+                try{
+                  const _curBanner = document.getElementById('_wb-wait-banner');
+                  if(!_curBanner || _curBanner.style.display === 'none') return;
+                  // 還在卡 → 觸發自動救援
+                  if(window._wbWaitBannerKey === _bannerKey){
+                    console.warn('[WB-UIGuard v6] 同一 actor 等待超過 30 秒,自動觸發 stuck_resync');
+                    // 提示玩家
+                    try{
+                      _curBanner.innerHTML += '<div style="font-size:14px;color:#ffaa66;margin-top:8px;line-height:1.5;">' +
+                        '⚠ 偵測到可能卡死,正在自動向房主請求重新同步...' +
+                        '</div>';
+                    }catch(_){}
+                    if(window._wbNet && typeof window._wbNet.sendAction === 'function'){
+                      window._wbNet.sendAction({
+                        type: '_client_stuck_resync',
+                        ts: Date.now(),
+                        reason: 'wait_banner_30s',
+                        actor: heroName
+                      });
+                    }
+                    // 如果再卡 30 秒仍沒解,再送一次(總共最多 2 次)
+                    window._wbWaitBannerStuckTimer = setTimeout(function(){
+                      try{
+                        if(window._wbWaitBannerKey === _bannerKey){
+                          console.error('[WB-UIGuard v6] 第二次 stuck_resync 後仍卡同一 actor');
+                          if(window._wbNet && typeof window._wbNet.sendAction === 'function'){
+                            window._wbNet.sendAction({
+                              type: '_client_stuck_resync',
+                              ts: Date.now(),
+                              reason: 'wait_banner_60s_second_attempt',
+                              actor: heroName
+                            });
+                          }
+                          // 提示玩家可以投降
+                          try{
+                            const _b2 = document.getElementById('_wb-wait-banner');
+                            if(_b2){
+                              _b2.innerHTML += '<div style="font-size:14px;color:#ff8888;margin-top:8px;line-height:1.5;">' +
+                                '⛔ 自動修復失敗。建議點左下「卡死自救」按鈕或投降。' +
+                                '</div>';
+                            }
+                          }catch(_){}
+                        }
+                      }catch(_){}
+                    }, 30000);
+                  }
+                }catch(_eW){ console.warn('[WB-UIGuard v6] stuck timer 例外', _eW); }
+              }, 30000);
+            }
           }catch(_){}
         }else{
           // ── 是我操作:確保 banner 移除、item-panel 還原 ──
           try{
             const banner = document.getElementById('_wb-wait-banner');
             if(banner) banner.style.display = 'none';
+            // ★ v3.5.1 — 清掉等待計時(換成我操作了)
+            if(window._wbWaitBannerStuckTimer){
+              clearTimeout(window._wbWaitBannerStuckTimer);
+              window._wbWaitBannerStuckTimer = null;
+            }
+            window._wbWaitBannerKey = null;
+            window._wbWaitBannerStartTs = 0;
           }catch(_){}
           try{
             const ip = document.getElementById('item-panel');
@@ -2459,19 +2529,81 @@
     // 設動畫結束時間戳(供 5.3 用,sync 進來時若還沒到此時間就延後 apply)
     window._wbClientAnimEndTs = Date.now() + 1500;
     window._wbClientOptimistic = true;
+
+    // ★ v3.5.1 — 記錄本次樂觀更新的 actor,給 watchdog 在強解時識別
+    window._wbClientOptimisticActor = {
+      pos: a.pos,
+      name: a.name,
+      type: type,
+      ts: Date.now(),
+      sentToHost: false,
+    };
+
     // 本機代執行(走跟房主一樣的 _wbExecPlayerAction 路徑)
     try{
       if(typeof window._wbExecPlayerAction === 'function'){
         window._wbExecPlayerAction(a.pos, { type: type });
       }
     }catch(eOp){ console.warn('[WB-Client v6] 樂觀更新失敗', eOp); }
-    // 同時送 Firestore 給房主
-    try{
-      if(window._wbNet && typeof window._wbNet.sendAction === 'function'){
-        // 注意:sendAction 在 isHost 端會直接走本地引擎,非房主端會走 pendingAction
-        window._wbNet.sendAction({ type: type });
+
+    // ★ v3.5.1 — 同時送 Firestore 給房主(加上重試機制 + 失敗 fallback)
+    //   原問題:_wbNet.sendAction 用 Firestore transaction 寫 worldBossRooms 文件,
+    //          多人同時寫會撞到 failed-precondition (樂觀鎖衝突) → action 永遠送不到房主
+    //          → 房主以為玩家還沒操作 → 全場卡死(包括房主自己畫面)
+    //   修法:① 包成 async 重試,最多 3 次,每次間隔 600ms 後增加(指數退避)
+    //         ② 全部失敗時記在 console,並設旗標讓 watchdog 知道
+    //         ③ 成功時清旗標
+    (async function _sendWithRetry(){
+      const _maxAttempts = 3;
+      let _lastErr = null;
+      for(let _i = 0; _i < _maxAttempts; _i++){
+        try{
+          if(window._wbNet && typeof window._wbNet.sendAction === 'function'){
+            const _result = window._wbNet.sendAction({ type: type });
+            // sendAction 可能回傳 Promise(transaction)或 undefined(同步)
+            if(_result && typeof _result.then === 'function'){
+              await _result;
+            }
+            // 成功 → 標記
+            if(window._wbClientOptimisticActor){
+              window._wbClientOptimisticActor.sentToHost = true;
+            }
+            if(_i > 0){
+              console.info('[WB-Client v6] sendAction 第 ' + (_i+1) + ' 次重試成功');
+            }
+            return;
+          }
+        }catch(eSd){
+          _lastErr = eSd;
+          const _isPrecond = eSd && (eSd.code === 'failed-precondition' ||
+                                     (eSd.message || '').includes('failed-precondition'));
+          console.warn('[WB-Client v6] sendAction 第 ' + (_i+1) + ' 次失敗' +
+            (_isPrecond ? ' (樂觀鎖衝突, 將重試)' : ''), eSd && eSd.message);
+          if(_i < _maxAttempts - 1){
+            // 指數退避:600ms → 1200ms → 2400ms
+            await new Promise(r => setTimeout(r, 600 * Math.pow(2, _i)));
+          }
+        }
       }
-    }catch(eSd){ console.warn('[WB-Client v6] sendAction 失敗', eSd); }
+      // 全部失敗 → 嚴重狀態,通知玩家
+      console.error('[WB-Client v6] sendAction 重試 ' + _maxAttempts + ' 次都失敗,房主端可能不知道此次操作', _lastErr);
+      try{
+        // 顯示給玩家看的 toast
+        if(typeof window._showSimpleToast === 'function'){
+          window._showSimpleToast('⚠ 操作未成功送到房主,請稍待房主端同步...如果持續卡住請投降重來', 'warn');
+        } else {
+          const _t = document.createElement('div');
+          _t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:99999;' +
+            'background:rgba(120,80,20,0.96);border:2.5px solid #ffaa44;color:#ffe0aa;' +
+            'font-size:15px;padding:12px 22px;border-radius:10px;max-width:90vw;text-align:center;line-height:1.6;';
+          _t.innerHTML = '⚠ <b>操作未成功送到房主</b><br>' +
+            '<span style="font-size:13px;color:#ffd699;">請稍待房主端同步,如果持續卡住請投降重來</span>';
+          document.body.appendChild(_t);
+          setTimeout(() => { if(_t.parentNode) _t.remove(); }, 8000);
+        }
+      }catch(_){}
+    })();
+
     window._wbClientOptimistic = false;
     return true;
   }
