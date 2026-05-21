@@ -22863,9 +22863,16 @@ function clearSel(){
 function execAtk(actor, target, dmg, opts={}){
   // ★ v3.4.3 — 世界 BOSS 連線 client 守門
   //   client 不主動執行普攻邏輯,等 host sync 過來的傷害數字
+  // ★ v3.5.4 — 樂觀更新中(_wbClientOptimistic=true)例外通過!
+  //   原問題:client 玩家按普攻 → selMove patch 走 _wbClientSendOptimisticAndSync
+  //          → _wbExecPlayerAction 內部呼叫 execAtk → 撞到這個守門 → return
+  //          → 本機完全沒視覺反饋 → 玩家以為按鈕沒反應狂按 → 卡死
+  //   修法:跟 execBurst patch / doRest patch 的設計一致 — 樂觀更新中放行,
+  //         讓 _wbExecPlayerAction 內的代執行能正常跑完
   try{
     if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
-       && window._wbConnectedClientMode === true){
+       && window._wbConnectedClientMode === true
+       && !window._wbClientOptimistic){
       console.log('[execAtk] client mode skip');
       return;
     }
@@ -24208,9 +24215,13 @@ function _showCharmPicker(dancer, victim, cost){
 }
 
 function execSkill(a, sk, cost, stype){
+  // ★ v3.5.4 — 樂觀更新中(_wbClientOptimistic=true)例外通過!
+  //   原問題見 execAtk 上方註解,execSkill 跟 execAtk 同樣有「client mode skip」
+  //   原本沒有樂觀更新例外 → client 玩家按 s1/s2 完全沒反應 → 卡死
   try{
     if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
-       && window._wbConnectedClientMode === true){
+       && window._wbConnectedClientMode === true
+       && !window._wbClientOptimistic){
       console.log('[execSkill] client mode skip, name=' + (sk && sk.n));
       return;
     }
@@ -76200,7 +76211,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.21';
+window._GAME_LOADED_VERSION = 'v3.5.4';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
