@@ -28470,8 +28470,11 @@ function startTurn(){
       }
     }catch(e){ console.error('[battleSnap]', e); }
   }
-  // ★ 每5回合同步雲端存檔
-  if(_adventureMode && G && G.round && G.round % 5 === 0){
+  // ★ v3.4.20 — 修 BUG:原本每 5 回合才同步雲端,但小怪戰通常 3-4 回合就結束 →
+  //   雲端永遠沒收到 advSnapshot → 玩家中斷重登入時,_fbLoad 看雲端是 null,
+  //   即使本地快照存在也會被舊邏輯誤殺(已搭配 _fbLoad 守門修補)。
+  //   再縮短到「每 2 回合」雲端同步一次,讓 3 回合的短戰也能在第 2 回合存上雲端。
+  if(_adventureMode && G && G.round && G.round % 2 === 0){
     try{ gameCloudSave(); }catch(_){}
   }
 // ══ 冒險模式 BOSS 天賦 ══
@@ -55344,15 +55347,80 @@ function _applySafeData(raw) {
           + ', ts=' + new Date(data.advSnapshot.ts).toLocaleString() + ')');
       } catch(e) { console.warn('[雲端載入] 戰鬥快照寫回失敗', e); }
     } else {
-      // 雲端有殘留但不完整/過期 → 主動清除本地殘留,避免疑似「未完成戰鬥」
-      try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
-      try{ localStorage.removeItem('adv_battle_snap'); }catch(_){}
-      try{ console.log('[雲端載入] advSnapshot 不含完整戰鬥資料(已通關殘留或過期 >24h),已清除本地快照'); }catch(_){}
+      // ★ v3.4.20 — 修 BUG:雲端 advSnapshot 不完整時不能無條件清本地新快照
+      //   情境:玩家上次冒險通關 → 雲端 advSnapshot 寫 null;
+      //         本次新場戰鬥到一半被中斷,本地有有效快照但還沒到第 5 回合,雲端還是 null。
+      //         舊邏輯把本地新快照也清掉 → 玩家重登入沒看到續戰提示。
+      try{
+        const _localRaw2 = localStorage.getItem('adv_battle_snap');
+        if(_localRaw2){
+          const _localSnap2 = JSON.parse(_localRaw2);
+          const _localBs2 = _localSnap2 && _localSnap2.battleState;
+          const _localHasBattleData2 =
+            ( _localBs2 && Array.isArray(_localBs2.p1) && _localBs2.p1.length > 0
+                       && Array.isArray(_localBs2.p2) && _localBs2.p2.length > 0 )
+            ||
+            ( _localSnap2 && Array.isArray(_localSnap2.p1) && _localSnap2.p1.length > 0
+                         && Array.isArray(_localSnap2.p2) && _localSnap2.p2.length > 0 );
+          const _localIsFresh2 = _localSnap2 && _localSnap2.ts && (Date.now() - _localSnap2.ts) < 24*60*60*1000;
+          // 本地比雲端新 → 信本地
+          const _cloudTs = data.advSnapshot && data.advSnapshot.ts;
+          const _localNewer = !_cloudTs || (_localSnap2.ts && _localSnap2.ts > _cloudTs);
+          if(_localHasBattleData2 && _localIsFresh2 && _localNewer){
+            console.log('[雲端載入] 雲端 advSnapshot 不完整/過期,但本地新快照有效 → 保留本地');
+            // 不清除
+          } else {
+            localStorage.removeItem('adv_crash_snapshot');
+            localStorage.removeItem('adv_battle_snap');
+            console.log('[雲端載入] 雲端不完整且本地也無有效新快照,已清除');
+          }
+        } else {
+          try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
+        }
+      }catch(_eL2){ console.warn('[雲端載入] 本地新快照比對失敗,保留', _eL2); }
+      try{ console.log('[雲端載入] advSnapshot 不含完整戰鬥資料(已通關殘留或過期 >24h)'); }catch(_){}
     }
   } else {
-    // 雲端沒有 advSnapshot → 確保本地也沒有殘留
-    try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
-    try{ localStorage.removeItem('adv_battle_snap'); }catch(_){}
+    // ★ v3.4.20 — 修 BUG:老師回報「以前戰鬥中斷重新登入會出現續戰提示,現在都不出現」
+    //   根因:戰鬥每 5 回合才雲端同步一次(_saveBattleRoundSnapshot 只寫 localStorage,
+    //         gameCloudSave 才把 localStorage 的 snap 寫雲端)。
+    //         若玩家在第 1-4 回合被中斷(iPad Safari 回收 page、app 切後台太久),
+    //         雲端 advSnapshot=undefined,但本地 localStorage 還有最新的 adv_battle_snap。
+    //         舊邏輯 else 分支看雲端沒有就無條件清本地 → 本地快照也被誤殺
+    //         → _advCheckCrashRecovery 找不到快照 → 不彈續戰提示。
+    //   修法:雲端沒 advSnapshot 時,先驗本地是否有「< 24hr 的有效快照」,有就保留;
+    //         若本地也沒有效快照才清除。
+    try{
+      const _localRaw = localStorage.getItem('adv_battle_snap');
+      if(_localRaw){
+        const _localSnap = JSON.parse(_localRaw);
+        const _localBs = _localSnap && _localSnap.battleState;
+        const _localHasBattleData =
+          ( _localBs && Array.isArray(_localBs.p1) && _localBs.p1.length > 0
+                     && Array.isArray(_localBs.p2) && _localBs.p2.length > 0 )
+          ||
+          ( _localSnap && Array.isArray(_localSnap.p1) && _localSnap.p1.length > 0
+                       && Array.isArray(_localSnap.p2) && _localSnap.p2.length > 0 );
+        const _localIsFresh = _localSnap && _localSnap.ts && (Date.now() - _localSnap.ts) < 24*60*60*1000;
+        if(_localHasBattleData && _localIsFresh){
+          console.log('[雲端載入] 雲端無 advSnapshot,但本地有有效快照(stage='
+            + _localSnap.stage + ', round=' + (_localSnap.round||'?')
+            + ', ts=' + new Date(_localSnap.ts).toLocaleString()
+            + ') → 保留本地快照供續戰');
+          // 不清除,直接 return 跳過後續清理(讓 _advCheckCrashRecovery 能讀到)
+        } else {
+          // 本地快照無效或過期 → 清掉
+          localStorage.removeItem('adv_crash_snapshot');
+          localStorage.removeItem('adv_battle_snap');
+          console.log('[雲端載入] 雲端與本地都無有效 advSnapshot,已清除殘留');
+        }
+      } else {
+        // 本地也沒快照 → 確保 crash_snapshot 也清掉
+        try{ localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
+      }
+    }catch(_eLocalChk){
+      console.warn('[雲端載入] 檢查本地快照失敗,保險起見保留本地不清除', _eLocalChk);
+    }
   }
 
   // ★ v1.0.20260422.0109 — 還原日本關進度（三神器 + 貓空解鎖旗標 + 歷史最佳評價）
