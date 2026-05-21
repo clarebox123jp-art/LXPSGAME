@@ -1587,7 +1587,12 @@
     background:rgba(8,10,24,0.62);
     backdrop-filter:blur(6px);
     border:2.5px solid rgba(255,170,80,0.65);
-    border-radius:14px;padding:6px 14px 8px;
+    border-radius:14px;
+    /* ★ v3.5.2 — 上方加 60px 空間, 避開 Chrome PWA 全螢幕指示器列
+       (放大鏡 / 全螢幕 / 音量 / 暫停 / 重整 / 關閉那一排會擋住「房號 + 離開房間」)
+       原本 padding-top:6px → 66px(60px 給指示器 + 6px 原來的呼吸間距)
+       右側不縮(右上角按鈕仍然會貼右邊, 但會在指示器下方) */
+    padding:66px 14px 8px;
     box-shadow:0 0 48px rgba(255,140,40,0.45);
     position:relative;
     display:flex;flex-direction:column;
@@ -1616,8 +1621,9 @@
     margin-bottom:1px;line-height:1.05;
   }
   /* ★ FIX 20260516 v3/v4 — BOSS 預覽小視窗(左上角,寬 4 倍,降低高度) */
+  /* ★ v3.5.2 — top:8px → top:68px, 跟 .wb-tc-topright 對齊, 避開瀏覽器全螢幕指示器 */
   .wb-tc-boss-preview-mini{
-    position:absolute;top:8px;left:10px;
+    position:absolute;top:68px;left:10px;
     width:336px;height:64px;
     border-radius:10px;
     background:linear-gradient(135deg,#ff6644,#552010);
@@ -1786,7 +1792,9 @@
 
   /* ★ FIX 20260517(r) — 隊伍確認頁右上角:房號 + 邀請好友 + 離開 */
   .wb-tc-topright{
-    position:absolute;top:8px;right:12px;
+    /* ★ v3.5.2 — 從 top:8px 改到 top:68px, 避開瀏覽器全螢幕指示器列
+       (.wb-tc-card 已經把 padding-top 加到 66px, 這裡也要對齊往下) */
+    position:absolute;top:68px;right:12px;
     display:flex;gap:8px;align-items:center;z-index:11;
   }
   .wb-tc-roomcode-badge{
@@ -2267,6 +2275,41 @@
     border-radius:7px;cursor:pointer;font-family:inherit;
   }
   .wb-tc-back-btn:hover{background:rgba(168,132,255,0.2);}
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* ★ v3.5.2 — 桌機(>1180px)戰前溝通縮小規則                       */
+  /*                                                                    */
+  /* 原問題:桌機版「我負責輸出」「我先離開」這類按鈕字體 26px、padding */
+  /*         14px,整列佔用接近 200px 高,把上方四個槽位卡片擠到要靠   */
+  /*         捲動才能看到「攻擊/特技/速度/至寶」等完整資訊。           */
+  /*                                                                    */
+  /* 解法:桌機版按鈕縮成接近 1/2 大小,釋放 ~100px 空間給 slot 區       */
+  /*       (iPad 規則 ≤1180px 已自己一套,不受影響)                   */
+  /* ════════════════════════════════════════════════════════════════ */
+  @media (min-width:1181px){
+    .wb-tc-quickmsg-zone{
+      padding:8px 12px 10px;
+      margin-bottom:4px;
+    }
+    .wb-tc-quickmsg-header{
+      margin-bottom:6px;
+    }
+    .wb-tc-quickmsg-title{
+      font-size:18px;letter-spacing:1.5px;
+    }
+    .wb-tc-quickmsg-cd{
+      font-size:15px;letter-spacing:1px;padding:3px 10px;
+    }
+    .wb-tc-quickmsg-grid{
+      gap:6px;
+      /* 12 顆按鈕排成 2×6 → 桌機更寬,放 6 欄較不擁擠 */
+      grid-template-columns:repeat(6, 1fr);
+    }
+    .wb-tc-qmsg-btn{
+      padding:7px 6px;font-size:15px;letter-spacing:0.8px;
+      border-radius:8px;border-width:1.5px;
+    }
+  }
 
   /* ════════════════════════════════════════════════════════════════ */
   /* ★ FIX 20260521(a) — iPad (≤1180px) 隊伍確認頁專屬縮小規則         */
