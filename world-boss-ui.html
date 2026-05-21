@@ -1929,6 +1929,68 @@
       padding:14px 8px;font-size:18px;min-height:54px;letter-spacing:0.8px;
       border-radius:9px;
     }
+
+    /* ════════════════════════════════════════════════════════════════ */
+    /* ★ v3.5.3 — 中型螢幕(iPad / 平板, 720~1180px) 頂部版面重排        */
+    /* 問題: 原本「點看BOSS」左上 336px + 「房號/邀請/離開」右上絕對定位 */
+    /*       和標題/副標題/破盾條(靜態流式排版) 全部擠在 padding-top:66px */
+    /*       的同一條水平線上, 中央文字被左右按鈕橫切覆蓋.                 */
+    /* 修法: ① 加大卡片 padding-top, 把中央文字整段往下推到絕對按鈕之下     */
+    /*       ② 縮小「點看BOSS」與右上按鈕群尺寸, 騰出視覺空間              */
+    /*       ③ 標題/副標題/破盾條字體微縮, 避免換行更亂                    */
+    /* ════════════════════════════════════════════════════════════════ */
+    .wb-tc-card{
+      /* 原 66px → 144px: 60px 保留給全螢幕指示器, 84px 容納上方按鈕列 */
+      padding:144px 14px 8px;
+    }
+    /* 「點看 BOSS」小視窗縮窄, 字體縮小 */
+    .wb-tc-boss-preview-mini{
+      top:68px;left:10px;
+      width:168px;height:54px;
+    }
+    .wb-tc-boss-preview-mini img{
+      width:46px;height:46px;margin:0 4px;
+    }
+    .wb-tc-boss-preview-label{
+      font-size:15px;letter-spacing:0.5px;padding:0 4px 0 0;
+    }
+    /* 右上按鈕群:縮小尺寸 + 允許換行(萬一太擠) */
+    .wb-tc-topright{
+      top:68px;right:10px;gap:6px;
+      flex-wrap:wrap;justify-content:flex-end;
+      max-width:calc(100% - 200px); /* 不會撞到左邊 BOSS 預覽 */
+    }
+    .wb-tc-roomcode-badge{
+      padding:4px 8px;gap:4px;
+    }
+    .wb-tc-roomcode-badge .wb-tc-rc-label{font-size:14px;}
+    .wb-tc-roomcode-badge .wb-tc-rc-val{font-size:20px;letter-spacing:1.2px;}
+    .wb-tc-roomcode-badge .wb-tc-rc-copy{font-size:14px;padding:2px 7px;}
+    .wb-tc-invite-btn{font-size:16px;padding:5px 11px;}
+    .wb-tc-leave-btn{font-size:16px;padding:4px 10px;}
+    /* 中央文字: 字體微縮, 避免和兩側殘留視覺擠迫 */
+    .wb-tc-title{font-size:32px;letter-spacing:2px;margin-bottom:2px;}
+    .wb-tc-sub{font-size:18px;letter-spacing:1px;margin-bottom:6px;}
+    .wb-tc-boss-shield-hint{font-size:18px;padding:5px 10px;line-height:1.4;}
+    .wb-tc-shield-icon{font-size:18px;padding:2px 6px;}
+  }
+
+  /* ★ v3.5.3 — 小型螢幕(<=720px) 進一步緊縮 */
+  @media (max-width:720px){
+    .wb-tc-card{
+      padding:138px 10px 8px;
+    }
+    .wb-tc-boss-preview-mini{
+      width:128px;height:46px;
+    }
+    .wb-tc-boss-preview-mini img{width:38px;height:38px;margin:0 3px;}
+    .wb-tc-boss-preview-label{font-size:13px;}
+    .wb-tc-topright{
+      max-width:calc(100% - 150px);
+    }
+    .wb-tc-title{font-size:24px;letter-spacing:1px;}
+    .wb-tc-sub{font-size:15px;}
+    .wb-tc-boss-shield-hint{font-size:15px;}
   }
 
 
