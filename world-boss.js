@@ -278,7 +278,8 @@
       if(typeof HERO_DB === 'object' && HERO_DB){
         Object.assign(HERO_DB, {
           '維蘇威火山龍王':{hp:500000,atk:49,sp:50,spd:15,exp:1500,star:5,isWorldBoss:true,
-            s1:{n:'業火灼燒',c:4,d:'特技100%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 100% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
+            // ★ v3.5.9 — 老師調整 s1「業火灼燒」:能量 4→5、傷害 100%→150%(更具威脅性)
+            s1:{n:'業火灼燒',c:5,d:'特技150%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 150% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
             s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
           },
         });
@@ -289,7 +290,8 @@
     try{
       if(typeof BURST_DB === 'object' && BURST_DB){
         Object.assign(BURST_DB, {
-          '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 90%火傷(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 90% 的火屬性傷害,完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
+          // ★ v3.5.9 — 老師調整:當前 HP 90% → 95% 火傷(更具毀滅性)
+          '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 95%火傷(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 95% 的火屬性傷害,完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
         });
         window.BURST_DB = BURST_DB;
       }
@@ -298,7 +300,9 @@
     try{
       if(typeof HERO_TRAIT === 'object' && HERO_TRAIT){
         Object.assign(HERO_TRAIT, {
-          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限為最大 HP 的 1%;HP 過半啟動四元素護盾(減傷 80%,無視有利狀態的攻擊也無法打穿)', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。HP 降至 50% 時進入第二階段,身上浮現四元素護盾:所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 水 / 土 / 風)的攻擊各打 3 次裂痕,才能完整破除護盾恢復正常傷害。' },
+          // ★ v3.5.9 — 護盾觸發從 HP% 改成回合數(第 5/9/13/17 回合),
+          //   並補充「全隊聯手爆發 5000 傷害可無視護盾」的攻略提示。
+          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限 1% maxHp;第 5/9/13/17 回合啟動四元素護盾(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。每場戰鬥的第 5、9、13、17 回合會自動啟動「四元素護盾」:所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的攻擊各打 3 次裂痕,才能完整破除護盾恢復正常傷害。註:當隊伍累積答對 5 / 10 / 15 / 20 題時觸發的「全隊聯手爆發」5000 傷害可以無視護盾直接命中。' },
         });
         window.HERO_TRAIT = HERO_TRAIT;
       }
@@ -359,10 +363,10 @@
     // 只處理維蘇威火山龍王的 3 招
     if(n === '業火灼燒'){
       try{
-        // 特技 100% 全體火傷害 + 全體燃燒 2 回合
+        // ★ v3.5.9 — 老師調整:特技 100% → 150% 全體火傷害 + 全體燃燒 2 回合
         enemies.forEach(e => {
           if(e.curHp > 0){
-            doDmg(e, Math.floor(spv(a) * 1.00), {actor:a, isSkill:true, isAoe:true, element:'fire'});
+            doDmg(e, Math.floor(spv(a) * 1.50), {actor:a, isSkill:true, isAoe:true, element:'fire'});
             if(e.curHp > 0) addStatus(e, 'burn', 2);
           }
         });
@@ -386,13 +390,14 @@
     if(n === '天崩之炎'){
       try{
         // ★ FIX 20260516 — 規則更新:
-        //   1. 全體當前 HP 90% 火傷(無視有利狀態 → 無敵/免疫/護盾/反射全部打穿)
+        //   1. 全體當前 HP 95% 火傷(無視有利狀態 → 無敵/免疫/護盾/反射全部打穿)
         //   2. 全體強力燃燒 3 回合(主程式 type='hellfire' + _strong:true,行動前後各 -10HP)
         //      註:原版用 'burn' 是無效 type,實際從未生效;這次改為正確的 'hellfire'+_strong
         //   3. 隨機 1 名存活敵人:強力暈眩 + 強力易傷 各 1 回合
+        // ★ v3.5.9 — 老師調整:當前 HP 90% → 95%(更具毀滅性)
         enemies.forEach(e => {
           if(e.curHp <= 0) return;
-          const _dmg = Math.floor(e.curHp * 0.90);
+          const _dmg = Math.floor(e.curHp * 0.95);
           doDmg(e, _dmg, {
             actor: a,
             isSkill: true,
@@ -476,17 +481,19 @@
     const cap1pct = Math.floor(maxHp * 0.01);
     let dmg = Math.min(rawDmg, cap1pct);
 
-    // 2) HP < 50% 時 四元素護盾減傷 80%
-    const hpRatio = boss.curHp / maxHp;
-    const shieldActive = hpRatio < 0.50;
-    if(shieldActive){
-      // 護盾首次啟動提示
+    // 2) ★ v3.5.9 — 護盾減傷判定改成「依 BOSS 身上是否還有 _wbShields」
+    //   舊版(v3.1):依 HP < 50% 自動套減傷
+    //   新版(v3.5.9):護盾改成依回合數啟動(第 5/9/13/17),
+    //                  啟動後 boss._wbShields 物件有元素層數;全打掉前都套減傷 80%。
+    //   旗標 opts.bypassShield = true:全隊聯手爆發等特殊機制可無視護盾打穿。
+    const _hasActiveShield = boss._wbShields && Object.values(boss._wbShields).some(v => v > 0);
+    if(_hasActiveShield && !opts.bypassShield){
+      // 護盾首次啟動提示(沿用既有 _wbShieldNotified 旗標)
       if(!boss._wbShieldNotified){
         boss._wbShieldNotified = true;
-        // 用 setTimeout 確保畫面已渲染
         setTimeout(_wbShowShieldHint, 200);
       }
-      // 受傷減 80%
+      // 受傷減 80%(只剩 20%)
       dmg = Math.floor(dmg * 0.20);
     }
     return Math.max(1, dmg);
@@ -1279,22 +1286,40 @@
     dark:  ['light'],    // 暗克光
   };
   window._WB_ELEMENT_COUNTER = WB_ELEMENT_COUNTER;
+  // ★ v3.5.9 — 護盾觸發機制改版:
+  //   舊版(v3.1.2):依 BOSS HP% 觸發(80% / 60% / 40% / 20% / 1%),
+  //                  輸出強的隊伍會跳階段、輸出弱的根本看不到後期護盾。
+  //   新版(v3.5.9):依回合數觸發(第 5 / 9 / 13 / 17 回合),
+  //                  每場戰鬥固定 4 次護盾,所有隊伍體驗一致,規劃容易。
+  //   注意:_wbCheckShieldTrigger 仍由「BOSS 受傷時」的 3 個 callsite 呼叫(無侵入),
+  //         但內部判定改成「回合數命中 + 還沒觸發過該回合」才啟動。
   const WB_SHIELD_TRIGGERS = [
-    { pct: 0.80, label:'80%' },
-    { pct: 0.60, label:'60%' },
-    { pct: 0.40, label:'40%' },
-    { pct: 0.20, label:'20%' },
-    { pct: 0.01, label:'1%'  },
+    { round: 5,  label:'R5'  },
+    { round: 9,  label:'R9'  },
+    { round: 13, label:'R13' },
+    { round: 17, label:'R17' },
   ];
 
-  // 檢查並啟動護盾(每次 BOSS 受傷後呼叫)
+  // 取當前回合數(從主程式 G 讀)
+  function _wbGetCurrentRound(){
+    try{
+      const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+      if(!G) return 1;
+      return G.round || G.turn || 1;
+    }catch(_){
+      return 1;
+    }
+  }
+
+  // 檢查並啟動護盾(每次 BOSS 受傷後 / 回合開始時呼叫)
   window._wbCheckShieldTrigger = function(boss){
     if(!boss) return null;
     boss._wbShieldHistory = boss._wbShieldHistory || {};
-    const hpRatio = boss.curHp / (boss.hp || 500000);
+    const curRound = _wbGetCurrentRound();
     let triggered = null;
     for(const t of WB_SHIELD_TRIGGERS){
-      if(hpRatio <= t.pct && !boss._wbShieldHistory[t.label]){
+      // 命中該回合(curRound >= t.round)且還沒觸發過該階段
+      if(curRound >= t.round && !boss._wbShieldHistory[t.label]){
         boss._wbShieldHistory[t.label] = true;
         triggered = t.label;
         // ★ v3.1.2 — 用 BOSS 自己的 shieldElements 初始化護盾
@@ -1312,6 +1337,7 @@
         myElements.forEach(el => { boss._wbShields[el] = 3; });
         // 同時記錄這次護盾的元素清單(給 UI 渲染用)
         boss._wbShieldElements = myElements.slice();
+        // 只觸發最早未觸發的那個階段,避免一口氣補多階段
         break;
       }
     }
@@ -1720,6 +1746,29 @@
           window._wbHostSyncG('after_startTurn');
         }
       }catch(e){ console.warn('[WB-Sync v6] startTurn hook 例外', e); }
+      // ★ v3.5.9 — 護盾改成依回合數觸發(第 5/9/13/17 回合),
+      //   在每次 startTurn 後檢查一次,讓即使該回合沒人打 BOSS 也會啟動護盾。
+      //   只在房主端 / 練習模式跑(client 不該本機改 BOSS 狀態,等 host sync)。
+      try{
+        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+           && !window._wbClientMode){
+          const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+          const _boss = _G && _G.p2 && _G.p2[0];
+          if(_boss && _boss.name === '維蘇威火山龍王' && _boss.curHp > 0
+             && typeof window._wbCheckShieldTrigger === 'function'){
+            const _trig = window._wbCheckShieldTrigger(_boss);
+            if(_trig && typeof window._wbShowShieldTriggerHint === 'function'){
+              setTimeout(() => { try{ window._wbShowShieldTriggerHint(_trig, _boss); }catch(_){} }, 300);
+              // 房主端要 sync 一次,讓 client 看到新護盾
+              try{
+                if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+                  setTimeout(() => { try{ window._wbHostSyncG('shield-trigger-by-round'); }catch(_){} }, 350);
+                }
+              }catch(_){}
+            }
+          }
+        }
+      }catch(_eRoundShield){ console.warn('[WB-Sync v6] 回合護盾檢查例外', _eRoundShield); }
       return ret;
     };
     window._wbStartTurnSyncPatched = true;

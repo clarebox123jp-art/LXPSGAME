@@ -13994,7 +13994,7 @@ const HERO_TRAIT = {
   '警長':    { name:'制裁', icon:'🔫',  desc:'普攻後有機率延後目標行動',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
   '武鬥家':  { name:'死鬥', icon:'👊',  desc:'受致命傷害時有機率存活',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
   '軍師':    { name:'惑敵', icon:'📜',  desc:'普攻後有機率封鎖目標天賦',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
-  '占星師':  { name:'星語', icon:'🌟',  desc:'自己行動時有機率補充能量',fd:'輪到自己的行動時有60%機率補充1能量' },
+  '占星師':  { name:'星語', icon:'🌟',  desc:'自己行動時有機率補充3能量',fd:'輪到自己的行動時有 70% 機率補充 3 能量(每升 1 級 +5%,Lv4 起達上限 90%)' },
   '大力士':  { name:'怒炎', icon:'💪',  desc:'受不利狀態時有機率轉化怒火',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
   '凡人':    { name:'節省', icon:'🙂',  desc:'技能有機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
   '木靈使':  { name:'淨化', icon:'🌿',  desc:'友方受不利狀態時60%機率解除並依特技50%恢復HP',fd:'友方受到不利狀態時有60%機率立即解除該不利狀態,並依木靈使特技值的50%恢復該友方HP。' },
@@ -14015,7 +14015,7 @@ const HERO_TRAIT = {
   '弦樂團員':  { name:'弦音反彈', icon:'🎻', desc:'友方受可解除的不利狀態時30%機率反彈給對手',fd:'友方角色受到「可解除」的不利狀態時,有 30% 機率立即將該狀態反彈到隨機 1 名對手身上(被淨化抗性 / 強力類等不可解除狀態無法反彈)。' },
   '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時20%機率轉為治療；成為攻擊目標機率+40%',fd:'受到傷害時有20%機率將該次傷害轉為治療自身HP。另外天生比其他角色更容易成為敵人攻擊目標（機率+40%）。' },
   // ★ v1.0.20260421.3000o — 日本關限定角色天賦
-  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方各附加1個有利狀態，能量恢復50%機率',fd:'每次自己的回合開始時，選擇有利狀態最少的友方各附加1個隨機有利狀態（持續2回合）。另有50%機率為陣營恢復1能量。' },
+  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的1名友方附加1個有利狀態,能量恢復50%機率',fd:'每次自己的回合開始時,選擇有利狀態最少的 1 名友方附加 1 個隨機有利狀態(持續 2 回合;天賦 Lv5 MAX 升級為附加 2 個狀態)。另有 50% 機率為陣營恢復 1 能量(每升 1 級 +10%,Lv5 MAX 達 100%)。' },
   // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
   '窮奇':      { name:'凶獠', icon:'🐅',  desc:'受傷時用攻擊反擊,反擊暴擊率比平常高',fd:'受到敵方主動攻擊(普攻、技能、爆發)造成傷害時,立即用攻擊值對攻擊者反擊,反擊有 45% 機率暴擊(高於一般攻擊)。流血、中毒等持續傷害不會觸發此天賦,反擊也不會引發對方的還手類天賦。' },
   // ★ v1.0.20260501.5430 — 學生設計英雄系列
@@ -29450,22 +29450,28 @@ function startTurn(){
     }
   }catch(_){}
 
-  // 占星師天賦：輪到自己回合時60%機率補充1能量
-  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<Math.min(1,0.60+_getTraitLv(next.name)*0.04)){
-    G.energy[next.side]=Math.min(10,G.energy[next.side]+1);
-    showPopup(next,'+1E','energy');
-    log(`🌟 [占星師] 天賦：星命眷顧！補充1能量！`);
+  // 占星師天賦:輪到自己回合時機率補充能量
+  // ★ v3.5.9 — 老師調整(2026/5/21):
+  //   舊規格:60% + 4%/級,補 1 能量 (Lv5 = 80%)
+  //   新規格:70% + 5%/級,補 3 能量 (Lv0=70%, Lv1=75%, Lv2=80%, Lv3=85%, Lv4+=90%)
+  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused')
+     && Math.random() < Math.min(0.90, 0.70 + _getTraitLv(next.name)*0.05)){
+    G.energy[next.side]=Math.min(10,G.energy[next.side]+3);
+    showPopup(next,'+3E','energy');
+    log(`🌟 [占星師] 天賦:星命眷顧!補充 3 能量!`);
   }
   // ★ v1.0.20260421.3000o — 巫女天賦「祝禱」
   //   v1.0.20260421.3003 — Lv1=1人1狀態 / Lv2=2人1狀態 / Lv3=3人1狀態 / Lv4=4人1狀態 / Lv5+=4人各2狀態
+  //   ★ v3.5.9 — 老師調整(2026/5/21):每回合只附加 1 名友方(不再隨 Lv 增加人數)
+  //              每名附加的狀態數量保留原規則:Lv0~4 = 1 個,Lv5(MAX) = 2 個
   if(next.name==='巫女' && next.curHp>0 && !hasStatus(next,'confused')){
     const _miTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('巫女') || 0) : 0;
     const _miAllies = G[next.side].filter(h=>h.curHp>0);
     if(_miAllies.length){
-      // 決定選幾位友方 & 每人幾個狀態
-      const _miTargetCount = Math.min(4, Math.max(1, _miTraitLv || 1)); // Lv0=1, Lv1=1..Lv4+=4
+      // ★ v3.5.9 — 固定選 1 名友方(不再依 Lv 變化)
+      const _miTargetCount = 1;
       const _miBuffsPer = _miTraitLv >= 5 ? 2 : 1;
-      // 依「有利狀態最少」排序，並列時隨機
+      // 依「有利狀態最少」排序,並列時隨機
       const _miSorted = [..._miAllies].sort((a,b) => {
         const da = (a.buffs||[]).length - (b.buffs||[]).length;
         if(da !== 0) return da;
@@ -29888,11 +29894,13 @@ function startTurn(){
     return;
   }
 
-  // 占星師天賦：回合開始60%補1能量
-  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused') && Math.random()<0.6){
-    G.energy[next.side]=Math.min(10,G.energy[next.side]+1);
-    showPopup(next,'+1E','energy'); sndEnergy();
-    log(`🌟 [占星師] 天賦：星命指引！補充1能量！`);
+  // 占星師天賦:回合開始機率補能量
+  // ★ v3.5.9 — 跟 callsite 1 同步調整:70%+5%/級,補 3 能量
+  if(next.name==='占星師' && next.curHp>0 && !hasStatus(next,'confused')
+     && Math.random() < Math.min(0.90, 0.70 + _getTraitLv(next.name)*0.05)){
+    G.energy[next.side]=Math.min(10,G.energy[next.side]+3);
+    showPopup(next,'+3E','energy'); sndEnergy();
+    log(`🌟 [占星師] 天賦:星命指引!補充 3 能量!`);
   }
 
   // ★ v1.0.20260515.6900 — 木靈使天賦改為「友方受不利狀態時觸發」(在 addStatus 函式中實作),
@@ -42185,7 +42193,7 @@ function _showNewHeroAnnouncement(forceShow){
             </div>
             <div style="text-align:center;">
               <div style="font-size:15px;color:#ffaa99;letter-spacing:1px;">速度</div>
-              <div style="font-size:25px;color:#aaff88;font-weight:900;">25</div>
+              <div style="font-size:25px;color:#aaff88;font-weight:900;">15</div>
             </div>
           </div>
           <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;
@@ -73210,7 +73218,7 @@ const _TRAIT_LV_INFO = {
   '警長':    { base:'60%制裁', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標行動退到最後的機率' },
   '武鬥家':  { base:'30%死鬥', bonus:'+4%/天賦級', max:'50%（Lv5）', effect:'受致命傷害時HP恢復20%並存活的機率' },
   '軍師':    { base:'60%惑敵', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標疑惑1回合的機率' },
-  '占星師':  { base:'60%星語', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'自己行動時補充1能量的機率' },
+  '占星師':  { base:'70%補3能量', bonus:'+5%/天賦級', max:'90%（Lv4）', effect:'自己行動時補充3能量的機率' },
   '大力士':  { base:'40%怒炎', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'受不利狀態時轉化怒火提升攻擊25%的機率' },
   '凡人':    { base:'40%節省', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'使用技能時不消耗能量的機率' },
   '木靈使':  { base:'60%解除+50%治療', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'友方受到不利狀態時解除並用特技50%治療的機率' },
@@ -73232,7 +73240,7 @@ const _TRAIT_LV_INFO = {
   // ★ v1.0.20260423.8100 — 補上原本顯示「固定」的 6 個英雄天賦升級資訊
   '電腦繪圖師':{ base:'20 護盾', bonus:'+5/天賦級', max:'45 護盾（Lv5）', effect:'回合開始為HP百分比最低的友方附加可抵擋20傷害的護盾' },
   '程式設計師':{ base:'+3 攻擊和特技', bonus:'+1/天賦級', max:'+8（Lv5）', effect:'存活時友方全體攻擊和特技+3' },
-  '巫女':    { base:'1 人 1 狀態 / 50% 能量', bonus:'每級+1人；Lv5 雙狀態 / 能量+10%/級', max:'4人各2狀態 / 100% 能量', effect:'回合開始為有利狀態最少的友方附加狀態，並有機率恢復1能量' },
+  '巫女':    { base:'1人1狀態 / 50%能量', bonus:'Lv5 雙狀態 / 能量+10%/級', max:'1人2狀態 / 100% 能量(Lv5)', effect:'回合開始為有利狀態最少的1名友方附加狀態,並有機率恢復1能量' },
   '大天狗':  { base:'60% 速度+2', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'每次行動前有機率使自身速度+2（可累積）' },
   '酒吞童子':{ base:'60% 受傷回1能量', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受到傷害時有機率立即恢復1能量' },
   '玉藻前':  { base:'60% 無視有利', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'造成傷害時有機率無視目標身上的有利狀態' },
@@ -76345,7 +76353,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.8';
+window._GAME_LOADED_VERSION = 'v3.5.9';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');

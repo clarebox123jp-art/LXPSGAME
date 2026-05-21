@@ -3390,6 +3390,10 @@
     justify-content:flex-start !important;
     gap:6px !important;
   }
+  /* ★ v3.5.9 — 使用者主動收起時強制隱藏(蓋過 .wb-eb-show) */
+  #wb-emoji-bar-real.wb-eb-user-collapsed{
+    display:none !important;
+  }
   /* ★ FIX 20260517(q) — iPad(≤1180px) 定型文列寬度跟 BOSS 血條一致縮短 40% */
   @media (max-width:1180px){
     #wb-emoji-bar-real{
@@ -3404,6 +3408,13 @@
      /* 寬度跟 BOSS 血條 overlay 對齊(桌機 1080px / iPad 648px),由 CSS 媒體查詢控制 */
      width:min(1080px,calc(100vw - 100px));
      max-height:none;overflow:visible;">
+  <!-- ★ v3.5.9 — 收起按鈕(最左邊),點下後整個 bar 收起並切換到 #wb-emoji-bar-collapsed 圓鈕 -->
+  <button id="wb-emoji-collapse-btn" class="wb-emoji-collapse-btn" onclick="_wbEmojiBarToggleCollapse(true)" title="收起定型文列">
+    <span class="wb-emoji-collapse-icon">⏷</span>
+    <span class="wb-emoji-collapse-label">收起</span>
+  </button>
+  <!-- 分隔線(收起鈕跟發言鈕之間) -->
+  <div style="width:1px;height:36px;background:rgba(168,132,255,0.4);margin:0 2px;flex-shrink:0;"></div>
   <!-- ★ FIX 20260517(h) — 戰鬥中快捷表情重新規劃:6 個實戰常用訊息,改走確認視窗(平板友善) -->
   <!--   圖示在上、文字在下,iPad 也能直接看出意思 -->
   <!--   圖示對應:⭐=用爆發(對應角色卡爆發星星) / ➕=先補血(綠十字) / 🙏=先復活 -->
@@ -3411,6 +3422,8 @@
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('heal_first')"><span class="wb-emoji-icon wb-icon-heal">➕</span><span class="wb-emoji-label">先補血</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('revive_first')"><span class="wb-emoji-icon">🙏</span><span class="wb-emoji-label">先復活</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('ctrl_boss')"><span class="wb-emoji-icon">🌀</span><span class="wb-emoji-label">控住王</span></button>
+  <!-- ★ v3.5.9 — 新增「先破盾」按鈕(放在「控住王」後面,語意接近的攻略類提示) -->
+  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('break_shield')"><span class="wb-emoji-icon wb-icon-shield">🛡</span><span class="wb-emoji-label">先破盾</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('awesome')"><span class="wb-emoji-icon">🔥</span><span class="wb-emoji-label">太棒啦</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('sorry_wait')"><span class="wb-emoji-icon">😅</span><span class="wb-emoji-label">等我一下</span></button>
   <!-- 分隔線(flex 內豎直分隔,改為 1px 寬、高度跟按鈕齊) -->
@@ -3423,6 +3436,13 @@
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_idk')" title="我也不確定">🤔</button>
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('cheerup')" title="加油你可以的">💪🏼</button>
 </div>
+<!-- ★ v3.5.9 — 收起狀態的圓鈕(預設隱藏,由 _wbEmojiBarToggleCollapse 切換顯隱)
+     位置:跟 wb-emoji-bar-real 的左上對齊,點它展開整列。 -->
+<button id="wb-emoji-bar-collapsed" onclick="_wbEmojiBarToggleCollapse(false)"
+        title="展開定型文列" style="display:none;">
+  <span class="wb-emoji-collapsed-icon">💬</span>
+  <span class="wb-emoji-collapsed-label">發言</span>
+</button>
 <style>
   /* ★ FIX 20260517(h) — 改為直立 icon + label 雙行,iPad 友善(寬 60px,高自適) */
   .wb-emoji-btn{
@@ -3451,6 +3471,73 @@
     color:#5dd87a;
     text-shadow:0 0 6px rgba(80,220,120,0.7);
     font-weight:900;
+  }
+  /* ★ v3.5.9 — 先破盾 🛡 → 藍色金屬光 */
+  .wb-emoji-btn .wb-icon-shield{
+    color:#6cb6ff;
+    text-shadow:0 0 6px rgba(100,180,255,0.75);
+  }
+  /* ★ v3.5.9 — 收起按鈕(在 emoji-bar 最左邊) */
+  .wb-emoji-collapse-btn{
+    width:42px;min-height:50px;
+    border-radius:10px;cursor:pointer;border:none;
+    background:rgba(80,60,140,0.35);color:#ddd0ff;
+    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;
+    flex-shrink:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:4px 2px;gap:1px;
+  }
+  .wb-emoji-collapse-btn .wb-emoji-collapse-icon{
+    font-size:20px;line-height:1;color:#c0a8ff;
+  }
+  .wb-emoji-collapse-btn .wb-emoji-collapse-label{
+    font-size:10px;font-weight:700;letter-spacing:0;color:#d4c4ff;
+    white-space:nowrap;line-height:1.2;
+  }
+  .wb-emoji-collapse-btn:hover{
+    background:rgba(140,100,220,0.5);transform:scale(1.05);
+  }
+  /* ★ v3.5.9 — 收起狀態的圓鈕(取代整個 emoji-bar,可點擊展開) */
+  #wb-emoji-bar-collapsed{
+    position:fixed;left:8px;top:160px;
+    width:72px;height:72px;
+    border-radius:50%;
+    background:rgba(40,30,80,0.92);
+    border:2px solid #a884ff;
+    cursor:pointer;
+    z-index:9050;
+    box-shadow:0 4px 16px rgba(0,0,0,0.5),0 0 14px rgba(168,132,255,0.45);
+    transition:all 0.18s;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;padding:0;
+    font-family:'M PLUS Rounded 1c',sans-serif;
+  }
+  #wb-emoji-bar-collapsed .wb-emoji-collapsed-icon{
+    font-size:28px;line-height:1;
+  }
+  #wb-emoji-bar-collapsed .wb-emoji-collapsed-label{
+    font-size:12px;font-weight:800;letter-spacing:1px;color:#d4c4ff;
+    line-height:1.1;
+  }
+  #wb-emoji-bar-collapsed:hover{
+    transform:scale(1.08);
+    box-shadow:0 6px 22px rgba(0,0,0,0.6),0 0 22px rgba(168,132,255,0.7);
+    background:rgba(60,45,110,0.95);
+  }
+  /* iPad/手機(≤1180px)圓鈕縮小一點 */
+  @media (max-width:1180px){
+    #wb-emoji-bar-collapsed{
+      width:56px;height:56px;top:140px;
+    }
+    #wb-emoji-bar-collapsed .wb-emoji-collapsed-icon{font-size:22px;}
+    #wb-emoji-bar-collapsed .wb-emoji-collapsed-label{font-size:10px;}
+  }
+  /* ★ v3.5.9 — 答題期間非答題玩家:emoji-bar / 圓鈕 拉到 quiz overlay 之上(z-index:10950)
+     讓非答題玩家在隊友思考時還能按定型文討論。
+     class 由 _wbUpdateQuizZIndexPriority() 動態加減。 */
+  #wb-emoji-bar-real.wb-eb-quiz-priority,
+  #wb-emoji-bar-collapsed.wb-eb-quiz-priority{
+    z-index:10950 !important;
   }
   .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.08);}
   .wb-emoji-btn:disabled{
@@ -5146,6 +5233,10 @@
     burst_now:'⭐ 用爆發!', heal_first:'➕ 先補血!',
     revive_first:'🙏 先復活!', ctrl_boss:'🌀 先控住王!',
     awesome:'🔥 太棒啦!', sorry_wait:'😅 抱歉先等我一下',
+    // ★ v3.5.9 — 世界 BOSS 戰專用定型文「先破盾」
+    //   情境:維蘇威火山龍王第 5/9/13/17 回合會啟動四元素護盾(減傷 80%),
+    //         隊伍需協調先用對應屬性英雄優先削減護盾再輸出。
+    break_shield:'🛡 先破盾!',
   };
   window._wbTcQmsgCdTimer = null;
 
@@ -5172,6 +5263,175 @@
     if(!text) return;
     _wbTcOpenQmsgConfirm(key, text, 'battle');
   };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.5.9 — 戰鬥定型文「收起/展開」+ 答題時 z-index 提升
+  // ────────────────────────────────────────────────────────────────────
+  // 老師需求:
+  //   1. 戰鬥中定型文列(wb-emoji-bar-real)最左邊加「收起」鈕,點下後整列收起,
+  //      改成一個「💬 發言」圓鈕(wb-emoji-bar-collapsed),點它再展開。
+  //   2. 收起/展開狀態跨場記憶(localStorage)。
+  //   3. 答題時非答題玩家:emoji-bar 提升 z-index 蓋過 quiz overlay,
+  //      讓玩家可以在答題玩家思考時繼續發定型文討論。
+  // 設計:
+  //   - localStorage key: 'lxps_wb_emoji_bar_collapsed' = '1' 表示收起
+  //   - 切換:_wbEmojiBarToggleCollapse(collapse:bool) — true=收起 / false=展開
+  //   - 答題期間判定:_wbAssignedQuizSlot 或 _wbIsOpeningQuizPhase 任一存在 +
+  //                 自己 mySlot !== allowedSlot(自己不是答題者)
+  //   - z-index 控制:加 class 'wb-eb-quiz-priority',CSS 規則拉到 10950(蓋過 quiz 10900)
+  // ════════════════════════════════════════════════════════════════════
+  const _WB_EMOJI_BAR_COLLAPSE_KEY = 'lxps_wb_emoji_bar_collapsed';
+
+  function _wbEmojiBarReadCollapsedPref(){
+    try{
+      return localStorage.getItem(_WB_EMOJI_BAR_COLLAPSE_KEY) === '1';
+    }catch(_){
+      return false;
+    }
+  }
+  function _wbEmojiBarWriteCollapsedPref(collapsed){
+    try{
+      if(collapsed){
+        localStorage.setItem(_WB_EMOJI_BAR_COLLAPSE_KEY, '1');
+      }else{
+        localStorage.removeItem(_WB_EMOJI_BAR_COLLAPSE_KEY);
+      }
+    }catch(_){}
+  }
+
+  // 切換收起/展開狀態(被 wb-emoji-collapse-btn / wb-emoji-bar-collapsed 的 onclick 呼叫)
+  //   collapse = true  → 整列隱藏 + 圓鈕顯示
+  //   collapse = false → 整列顯示 + 圓鈕隱藏
+  window._wbEmojiBarToggleCollapse = function(collapse){
+    const bar = document.getElementById('wb-emoji-bar-real');
+    const dot = document.getElementById('wb-emoji-bar-collapsed');
+    const isCollapse = !!collapse;
+    // 1. 寫入記憶
+    _wbEmojiBarWriteCollapsedPref(isCollapse);
+    // 2. 套用顯隱
+    if(bar){
+      if(isCollapse){
+        // 收起:即使整列原本顯示,也藏起來
+        bar.classList.remove('wb-eb-show');
+        bar.classList.add('wb-eb-user-collapsed');  // 標記為「使用者主動收起」
+      }else{
+        // 展開:標記移掉,讓正常 show/hide 邏輯重新接管
+        bar.classList.remove('wb-eb-user-collapsed');
+        // 戰鬥中:重新顯示
+        if(document.body.classList.contains('wb-in-worldboss-battle')){
+          bar.classList.add('wb-eb-show');
+        }
+      }
+    }
+    if(dot){
+      if(isCollapse && document.body.classList.contains('wb-in-worldboss-battle')){
+        dot.style.display = 'flex';
+      }else{
+        dot.style.display = 'none';
+      }
+    }
+    // 3. 同步 z-index 狀態(展開時若在答題期間,要立即套用提升)
+    try{ _wbUpdateQuizZIndexPriority(); }catch(_){}
+  };
+
+  // 判斷自己是否是「當前答題玩家」(若是,就不需要提升 z-index,
+  // 因為自己要看 quiz overlay 並點選項)
+  function _wbAmITheAnsweringPlayer(){
+    try{
+      let allowedSlot = null;
+      if(window._wbIsOpeningQuizPhase){
+        allowedSlot = (typeof window._wbOpeningQuizAllowedSlot === 'number')
+                    ? window._wbOpeningQuizAllowedSlot : 0;
+      }else if(typeof window._wbAssignedQuizSlot === 'number'){
+        allowedSlot = window._wbAssignedQuizSlot;
+      }
+      if(allowedSlot === null) return false;  // 沒在答題期 → 不算
+      let mySlot = -1;
+      try{
+        if(window._wbNet && typeof window._wbNet.getMySlot === 'function'){
+          const _ms = window._wbNet.getMySlot();
+          if(typeof _ms === 'number') mySlot = _ms;
+        }
+      }catch(_){}
+      // mySlot < 0 表示找不到自己(練習模式 / 未在房內)→ 也算「非答題玩家」
+      if(mySlot < 0) return false;
+      return mySlot === allowedSlot;
+    }catch(_){
+      return false;
+    }
+  }
+
+  // 判斷現在是否處於答題期間(asking 階段)
+  function _wbIsInQuizAskingPhase(){
+    try{
+      const _qOv = document.getElementById('adv-quiz-overlay');
+      const _qShow = !!(_qOv && _qOv.classList.contains('show'));
+      if(!_qShow) return false;
+      // _advQuizPhase 通常會是 'asking' 期間
+      if(typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking') return true;
+      // fallback:有 _wbAssignedQuizSlot 也算
+      if(typeof window._wbAssignedQuizSlot === 'number') return true;
+      if(window._wbIsOpeningQuizPhase) return true;
+      return false;
+    }catch(_){
+      return false;
+    }
+  }
+
+  // 動態更新 emoji-bar / collapsed 圓鈕 的 z-index 優先級
+  //   - 在答題期 + 非答題玩家 → 加 .wb-eb-quiz-priority(z-index 拉到 10950)
+  //   - 其他情況 → 移掉 class(回到預設 9050)
+  function _wbUpdateQuizZIndexPriority(){
+    const bar = document.getElementById('wb-emoji-bar-real');
+    const dot = document.getElementById('wb-emoji-bar-collapsed');
+    const inQuiz = _wbIsInQuizAskingPhase();
+    const amAnswering = _wbAmITheAnsweringPlayer();
+    const shouldPriority = inQuiz && !amAnswering;
+    if(bar){
+      if(shouldPriority) bar.classList.add('wb-eb-quiz-priority');
+      else bar.classList.remove('wb-eb-quiz-priority');
+    }
+    if(dot){
+      if(shouldPriority) dot.classList.add('wb-eb-quiz-priority');
+      else dot.classList.remove('wb-eb-quiz-priority');
+    }
+  }
+  window._wbUpdateQuizZIndexPriority = _wbUpdateQuizZIndexPriority;
+
+  // 每 500ms 自動掃描一次(輕量,只動 classList,沒副作用)
+  //   設計理由:quiz overlay 顯示/隱藏的時機很分散(advShowQuiz / advOnQuizClose /
+  //            host 廣播 / client 接收 etc),要在每個地方都呼叫 update 很容易遺漏。
+  //            輪詢是最穩的方案,且 500ms 對人眼幾乎察覺不到延遲。
+  setInterval(function(){
+    try{ _wbUpdateQuizZIndexPriority(); }catch(_){}
+  }, 500);
+
+  // 進入戰鬥時:套用使用者上次收起/展開的偏好(若有設過收起)
+  //   時機:body 加上 wb-in-worldboss-battle 之後;但因為這個 class 加在多個入口
+  //         (子設定),最穩的是用 MutationObserver 監聽 body class 改變。
+  (function _wbInstallEmojiBarCollapsedRestoreOnBattleStart(){
+    if(!('MutationObserver' in window) || !document.body) return;
+    let _appliedThisBattle = false;
+    const _mo = new MutationObserver(function(){
+      const _inBattle = document.body.classList.contains('wb-in-worldboss-battle');
+      if(_inBattle && !_appliedThisBattle){
+        _appliedThisBattle = true;
+        // 套用上次的偏好
+        if(_wbEmojiBarReadCollapsedPref()){
+          // 用 setTimeout 給 DOM 一點時間 render(emoji-bar 顯示 class 通常在 wb-in-worldboss-battle 後再加)
+          setTimeout(function(){
+            try{ window._wbEmojiBarToggleCollapse(true); }catch(_){}
+          }, 100);
+        }
+      }else if(!_inBattle){
+        _appliedThisBattle = false;  // 重置,給下一場用
+        // 順便確保圓鈕隱藏(離開戰鬥不該還顯示)
+        const dot = document.getElementById('wb-emoji-bar-collapsed');
+        if(dot) dot.style.display = 'none';
+      }
+    });
+    _mo.observe(document.body, { attributes:true, attributeFilter:['class'] });
+  })();
 
   // 確認視窗:顯示完整文字 + 確認/取消按鈕
   // ★ FIX 20260517(g) / (h) — 確認視窗:接受 context 參數('tc' 隊伍頁 / 'battle' 戰鬥中)
@@ -9288,13 +9548,24 @@
 
         // ★ v3.3.2 — client mode 跳過廣播 / sync(房主會跑這些)
         if(!_isClient){
-          // 答題獎勵不受護盾/天賦影響(這是「外部」傷害)
-          _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
+          // ★ v3.5.9 — 全隊聯手爆發傷害(每場最多 4 次:第 5/10/15/20 題)
+          //   設計上「無視 BOSS 護盾」打穿:
+          //     - 不走 doDmg / _wbApplyBossDmgCap → 不被「炎之意志單次 1% 上限」與「護盾減傷 80%」削減
+          //     - 不走 _wbConsumeShield → 不消耗護盾元素層數(全打到 BOSS 本體 HP)
+          //   結果:不管 BOSS 有沒有開護盾,這個 5000 都是穩穩打進去。
+          //   log 改為更清楚地告訴玩家「這次打穿了護盾」,並在 console 留紀錄。
+          const _hasShield = boss._wbShields && Object.values(boss._wbShields).some(v => v > 0);
+          const _shieldMsg = _hasShield ? '(穿透元素護盾!)' : '';
+          _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手爆發!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害${_shieldMsg}`]);
+          try{ console.log('[WB v3.5.9] 全隊聯手爆發:cnt=' + cnt + ' dmg=' + rewardDmg + ' bypassShield=true hasActiveShield=' + _hasShield); }catch(_){}
           // 顯示獎勵 banner(維持原本的右上角金色 banner)— client 也顯示
         }
         _wbShowQuizRewardBanner(cnt, rewardDmg);
         // 護盾觸發檢查(只在房主端跑,client 等 sync 過來)
         // ★ v3.4.9 — 加 FX capture 讓 client 也看到護盾觸發提示
+        // ★ v3.5.9 — 護盾觸發改成回合數(第 5/9/13/17 回合,由 startTurn hook 處理),
+        //   這條 callsite 現在實質上是 no-op(回合條件未到時不會啟動),
+        //   保留是因為 _wbCheckShieldTrigger 內部已防呆,不會重複觸發。
         if(!_isClient && typeof window._wbCheckShieldTrigger === 'function'){
           const triggered = window._wbCheckShieldTrigger(boss);
           if(triggered){
