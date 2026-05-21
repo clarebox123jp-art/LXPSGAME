@@ -1297,6 +1297,394 @@
     } catch(_){ return null; }
   };
 
+  // ══════════════════════════════════════════════════════════════════
+  // ★ v3.5.0 — 下載安裝授權管理(管理員批准制)
+  // ──────────────────────────────────────────────────────────────────
+  // 設計:
+  //   1. 玩家「下載安裝完整遊戲」按鈕預設不顯示
+  //   2. 玩家可透過「向管理員申請下載權限」按鈕送出申請(寫入 downloadPermissions/{uid})
+  //   3. 管理員在後台批准 → status='approved' + grantedAt + expiresAt(24小時後)
+  //   4. 玩家畫面 onSnapshot 監聽自己的權限文件,獲批後按鈕自動顯示
+  //   5. 24小時後到期 → 自動失效(讀取時驗證 expiresAt)
+  //
+  // 資料結構: downloadPermissions/{uid}
+  //   { uid, email, displayName, status, requestedAt, grantedAt, grantedBy,
+  //     expiresAt, revokedAt, revokedBy, note }
+  //
+  // status 列舉:
+  //   - 'pending'  : 玩家已申請,等待管理員批准
+  //   - 'approved' : 管理員已批准,在 expiresAt 之前可下載
+  //   - 'expired'  : 過期(此狀態由 client 端 lazy 判斷,不主動寫入)
+  //   - 'revoked'  : 管理員手動撤銷
+  // ══════════════════════════════════════════════════════════════════
+
+  // 玩家送出下載權限申請
+  window._fbRequestDownloadPermission = async function(uid, email, displayName){
+    if(!uid){ console.warn('[下載授權] uid 為空,跳過'); return false; }
+    try {
+      const _now = Date.now();
+      // 用 setDoc(merge) — 若已存在 pending/approved 也不破壞既有資料
+      // 若先前是 revoked/expired,這次重新申請會把 status 改回 pending
+      await setDoc(doc(_fbDb, 'downloadPermissions', uid), {
+        uid: uid,
+        email: (email || '').toLowerCase(),
+        displayName: displayName || '',
+        status: 'pending',
+        requestedAt: _now,
+        // 不動既有 grantedAt/expiresAt — 留給管理員批准時覆寫
+      }, { merge: true });
+      console.log('[下載授權] 已送出申請,uid=' + uid);
+      return true;
+    } catch(e){
+      console.error('[下載授權] 申請寫入失敗', e);
+      return false;
+    }
+  };
+
+  // 取得單一玩家的下載權限狀態(含過期自動判定)
+  // 回傳: { status, grantedAt, expiresAt, remainingMs, ... } 或 null(無申請紀錄)
+  window._fbGetDownloadPermission = async function(uid){
+    if(!uid) return null;
+    try {
+      const snap = await getDoc(doc(_fbDb, 'downloadPermissions', uid));
+      if(!snap.exists()) return null;
+      const d = snap.data();
+      // 判斷是否過期(approved 但 expiresAt 已過)
+      if(d.status === 'approved' && d.expiresAt && d.expiresAt < Date.now()){
+        d.status = 'expired';
+        d.remainingMs = 0;
+      } else if(d.status === 'approved' && d.expiresAt){
+        d.remainingMs = Math.max(0, d.expiresAt - Date.now());
+      }
+      return d;
+    } catch(e){
+      console.warn('[下載授權] 讀取失敗', e);
+      return null;
+    }
+  };
+
+  // 即時監聽單一玩家的下載權限變化(玩家自己用)
+  // 回傳一個 unsubscribe 函式
+  window._fbWatchDownloadPermission = function(uid, onChange){
+    if(!uid) return () => {};
+    return onSnapshot(
+      doc(_fbDb, 'downloadPermissions', uid),
+      (snap) => {
+        if(!snap.exists()){ onChange(null); return; }
+        const d = snap.data();
+        if(d.status === 'approved' && d.expiresAt && d.expiresAt < Date.now()){
+          d.status = 'expired';
+          d.remainingMs = 0;
+        } else if(d.status === 'approved' && d.expiresAt){
+          d.remainingMs = Math.max(0, d.expiresAt - Date.now());
+        }
+        onChange(d);
+      },
+      (err) => { console.warn('[下載授權] 監聽失敗', err); }
+    );
+  };
+
+  // 管理員批准下載權限(預設 24 小時有效)
+  window._fbGrantDownloadPermission = async function(targetUid, adminEmail, hours, note){
+    if(!targetUid){ throw new Error('targetUid 必填'); }
+    const _hours = (typeof hours === 'number' && hours > 0) ? hours : 24;
+    const _now = Date.now();
+    const _expires = _now + _hours * 3600 * 1000;
+    await setDoc(doc(_fbDb, 'downloadPermissions', targetUid), {
+      status: 'approved',
+      grantedAt: _now,
+      grantedBy: adminEmail || 'unknown',
+      expiresAt: _expires,
+      note: note || '',
+    }, { merge: true });
+    console.log('[下載授權] 已批准,uid=' + targetUid + ',到期=' + new Date(_expires).toLocaleString());
+    return _expires;
+  };
+
+  // 管理員撤銷下載權限
+  window._fbRevokeDownloadPermission = async function(targetUid, adminEmail, reason){
+    if(!targetUid){ throw new Error('targetUid 必填'); }
+    await setDoc(doc(_fbDb, 'downloadPermissions', targetUid), {
+      status: 'revoked',
+      revokedAt: Date.now(),
+      revokedBy: adminEmail || 'unknown',
+      note: reason || '',
+    }, { merge: true });
+    console.log('[下載授權] 已撤銷,uid=' + targetUid);
+    return true;
+  };
+
+  // 取得全部下載權限紀錄(管理員面板用)
+  window._fbListDownloadPermissions = async function(){
+    try {
+      const snap = await getDocs(collection(_fbDb, 'downloadPermissions'));
+      const _now = Date.now();
+      const _list = [];
+      snap.forEach(d => {
+        const _data = d.data();
+        // 自動標記過期(不寫回 Firestore,只在回傳時加註)
+        if(_data.status === 'approved' && _data.expiresAt && _data.expiresAt < _now){
+          _data._displayStatus = 'expired';
+        } else {
+          _data._displayStatus = _data.status;
+        }
+        _list.push(_data);
+      });
+      // 排序:pending 在最前,然後 approved,再然後其他;同類別按 requestedAt 倒序
+      const _rank = { pending: 0, approved: 1, expired: 2, revoked: 3 };
+      _list.sort((a, b) => {
+        const _ra = _rank[a._displayStatus] ?? 9;
+        const _rb = _rank[b._displayStatus] ?? 9;
+        if(_ra !== _rb) return _ra - _rb;
+        return (b.requestedAt || 0) - (a.requestedAt || 0);
+      });
+      return _list;
+    } catch(e){
+      console.error('[下載授權] 列表讀取失敗', e);
+      throw e;
+    }
+  };
+
+  // 即時監聽所有下載權限紀錄(管理員面板用)
+  window._fbWatchAllDownloadPermissions = function(onChange){
+    return onSnapshot(
+      collection(_fbDb, 'downloadPermissions'),
+      (snap) => {
+        const _now = Date.now();
+        const _list = [];
+        snap.forEach(d => {
+          const _data = d.data();
+          if(_data.status === 'approved' && _data.expiresAt && _data.expiresAt < _now){
+            _data._displayStatus = 'expired';
+          } else {
+            _data._displayStatus = _data.status;
+          }
+          _list.push(_data);
+        });
+        const _rank = { pending: 0, approved: 1, expired: 2, revoked: 3 };
+        _list.sort((a, b) => {
+          const _ra = _rank[a._displayStatus] ?? 9;
+          const _rb = _rank[b._displayStatus] ?? 9;
+          if(_ra !== _rb) return _ra - _rb;
+          return (b.requestedAt || 0) - (a.requestedAt || 0);
+        });
+        onChange(_list);
+      },
+      (err) => console.warn('[下載授權] 列表監聽失敗', err)
+    );
+  };
+
+  // ══════════════════════════════════════════════════════════════════
+  // ★ v3.5.0 — 可疑帳號偵測(全玩家掃描 + 即時監聽)
+  // ──────────────────────────────────────────────────────────────────
+  // 偵測策略(老師選的):
+  //   A. _dataSummary 在短時間內爆衝
+  //      - 等級突然 +50 / 知識幣突然 +10萬 / 解鎖英雄 +20 等
+  //      - 對比歷史 _dataSummary 序列(放在 stats/suspiciousHistory/{uid})
+  //   B. 能力值/技能威力超過該英雄定義上限
+  //      - 比對 HERO_DB 中各英雄的能力總和(必須=100)
+  //      - 比對 heroStatInvested 是否超過該等級允許上限(等級-1 = 可分配點數)
+  //   C. 擁有不該擁有的英雄(可選擴充)
+  //
+  // 觸發時機(老師選的):「獨立的可疑帳號面板,即時 onSnapshot 監聽」
+  // 因此這裡只提供「掃描+評估」邏輯,UI 的 onSnapshot 在管理員面板開啟時才啟動
+  // ══════════════════════════════════════════════════════════════════
+
+  // 規則參數(可調)
+  window._SUS_RULES = {
+    burstCoinsDelta: 50000,     // 知識幣短時間 +5萬視為可疑(老師要求 +10萬,這裡先抓 5萬作為「警告」分級)
+    burstCoinsAlert: 100000,    // +10萬視為「嚴重」
+    burstLvDelta: 30,           // 等級短時間 +30 視為可疑
+    burstLvAlert: 50,           // +50 視為嚴重
+    burstUnlockDelta: 10,       // 解鎖英雄短時間 +10 視為可疑
+    burstUnlockAlert: 20,       // +20 視為嚴重
+    summaryWindowMs: 6 * 60 * 60 * 1000, // 比對「6小時內的變化量」(避免合理長期遊玩被誤判)
+  };
+
+  // 評估單一玩家資料是否可疑(輸入是 player document 完整內容)
+  // 回傳: { suspicious: bool, severity: 'none'|'warn'|'alert', reasons: [string], details: {} }
+  window._fbEvaluatePlayerSuspicious = function(playerData){
+    const _result = { suspicious: false, severity: 'none', reasons: [], details: {} };
+    if(!playerData || typeof playerData !== 'object') return _result;
+
+    const _rules = window._SUS_RULES;
+    const _summary = playerData._dataSummary;
+    const _prevSummary = playerData._prevDataSummary;
+
+    // ── 策略 A: 短時間爆衝偵測 ──
+    if(_summary && _prevSummary && typeof _summary === 'object' && typeof _prevSummary === 'object'){
+      const _dt = (_summary.ts || 0) - (_prevSummary.ts || 0);
+      // 只在窗口時間內比對(超過 6 小時就不能算「爆衝」了)
+      if(_dt > 0 && _dt < _rules.summaryWindowMs){
+        const _dCoins = (_summary.coins || 0) - (_prevSummary.coins || 0);
+        const _dMaxLv = (_summary.maxHeroLv || 0) - (_prevSummary.maxHeroLv || 0);
+        const _dTotalLv = (_summary.totalHeroLv || 0) - (_prevSummary.totalHeroLv || 0);
+        const _dUnlock = (_summary.unlockedCount || 0) - (_prevSummary.unlockedCount || 0);
+
+        if(_dCoins >= _rules.burstCoinsAlert){
+          _result.reasons.push('知識幣短時間爆增 +' + _dCoins.toLocaleString());
+          _result.severity = 'alert';
+        } else if(_dCoins >= _rules.burstCoinsDelta){
+          _result.reasons.push('知識幣短時間明顯增加 +' + _dCoins.toLocaleString());
+          if(_result.severity !== 'alert') _result.severity = 'warn';
+        }
+        if(_dMaxLv >= _rules.burstLvAlert){
+          _result.reasons.push('最高英雄等級短時間爆增 +' + _dMaxLv);
+          _result.severity = 'alert';
+        } else if(_dMaxLv >= _rules.burstLvDelta){
+          _result.reasons.push('最高英雄等級短時間增加 +' + _dMaxLv);
+          if(_result.severity !== 'alert') _result.severity = 'warn';
+        }
+        if(_dTotalLv >= _rules.burstLvAlert * 4){
+          _result.reasons.push('總英雄等級短時間爆增 +' + _dTotalLv);
+          _result.severity = 'alert';
+        }
+        if(_dUnlock >= _rules.burstUnlockAlert){
+          _result.reasons.push('解鎖英雄數短時間爆增 +' + _dUnlock);
+          _result.severity = 'alert';
+        } else if(_dUnlock >= _rules.burstUnlockDelta){
+          _result.reasons.push('解鎖英雄數短時間明顯增加 +' + _dUnlock);
+          if(_result.severity !== 'alert') _result.severity = 'warn';
+        }
+
+        _result.details.deltas = { coins: _dCoins, maxLv: _dMaxLv, totalLv: _dTotalLv, unlock: _dUnlock, windowMs: _dt };
+      }
+    }
+
+    // ── 策略 B: 能力值/技能投資超過上限 ──
+    // 規則:升 1 級得 1 點素質點,因此 lv-1 = 該英雄可分配總點數
+    //       若 heroStatInvested[name] 的總和超過 (lv-1) + 寬容量(20),視為異常
+    try {
+      if(playerData.heroStatInvested && playerData.heroLevels){
+        const _invested = playerData.heroStatInvested;
+        const _levels = playerData.heroLevels;
+        const _overflowList = [];
+        Object.keys(_invested).forEach(name => {
+          const _inv = _invested[name] || {};
+          const _sum = (_inv.hp || 0) + (_inv.atk || 0) + (_inv.sp || 0) + (_inv.spd || 0);
+          const _lv = _levels[name] || 1;
+          const _allowed = Math.max(0, _lv - 1);
+          // 寬容 20 點(避免規則更動造成誤判 — 老師若曾調整過點數規則的英雄)
+          if(_sum > _allowed + 20){
+            _overflowList.push(name + '(投資' + _sum + '點,等級' + _lv + '僅允許' + _allowed + '點)');
+          }
+        });
+        if(_overflowList.length > 0){
+          _result.reasons.push('英雄能力值投資超過上限:' + _overflowList.slice(0, 3).join('、') +
+            (_overflowList.length > 3 ? ' 等 ' + _overflowList.length + ' 隻' : ''));
+          _result.severity = 'alert';
+          _result.details.overInvested = _overflowList;
+        }
+      }
+    } catch(e){ console.warn('[可疑帳號] 能力值檢查例外', e); }
+
+    // 整合結論
+    _result.suspicious = (_result.severity !== 'none');
+    return _result;
+  };
+
+  // 全玩家掃描(管理員按鈕用 — 一次性批次)
+  // 注意:這會讀取所有 players 文件,配額消耗大,只在管理員主動點選時呼叫
+  window._fbScanSuspiciousPlayers = async function(){
+    try {
+      const _snap = await getDocs(collection(_fbDb, 'players'));
+      const _suspicious = [];
+      _snap.forEach(d => {
+        const _data = d.data();
+        const _eval = window._fbEvaluatePlayerSuspicious(_data);
+        if(_eval.suspicious){
+          _suspicious.push({
+            uid: d.id,
+            email: _data.email || '',
+            displayName: _data.displayName || '',
+            severity: _eval.severity,
+            reasons: _eval.reasons,
+            details: _eval.details,
+            _dataSummary: _data._dataSummary,
+            _suspended: !!_data._suspended,
+          });
+        }
+      });
+      // 嚴重 → 警告 → 已停權順序
+      const _rank = { alert: 0, warn: 1 };
+      _suspicious.sort((a, b) => {
+        if(a._suspended !== b._suspended) return a._suspended ? 1 : -1;
+        const _ra = _rank[a.severity] ?? 9;
+        const _rb = _rank[b.severity] ?? 9;
+        return _ra - _rb;
+      });
+      return _suspicious;
+    } catch(e){
+      console.error('[可疑帳號] 全玩家掃描失敗', e);
+      throw e;
+    }
+  };
+
+  // 即時監聽所有玩家(管理員面板開啟時用)
+  // ⚠ 配額警告:這會觸發 onSnapshot 監聽整個 players 集合,只在面板打開時啟用,關閉時務必 unsubscribe
+  window._fbWatchAllPlayersForSuspicious = function(onChange){
+    return onSnapshot(
+      collection(_fbDb, 'players'),
+      (snap) => {
+        const _suspicious = [];
+        snap.forEach(d => {
+          const _data = d.data();
+          const _eval = window._fbEvaluatePlayerSuspicious(_data);
+          if(_eval.suspicious){
+            _suspicious.push({
+              uid: d.id,
+              email: _data.email || '',
+              displayName: _data.displayName || '',
+              severity: _eval.severity,
+              reasons: _eval.reasons,
+              details: _eval.details,
+              _dataSummary: _data._dataSummary,
+              _suspended: !!_data._suspended,
+            });
+          }
+        });
+        const _rank = { alert: 0, warn: 1 };
+        _suspicious.sort((a, b) => {
+          if(a._suspended !== b._suspended) return a._suspended ? 1 : -1;
+          const _ra = _rank[a.severity] ?? 9;
+          const _rb = _rank[b.severity] ?? 9;
+          return _ra - _rb;
+        });
+        onChange(_suspicious);
+      },
+      (err) => {
+        console.warn('[可疑帳號] 即時監聽失敗', err);
+        onChange([], err);
+      }
+    );
+  };
+
+  // 管理員停權某帳號(寫入 players/{uid}._suspended = true)
+  // 玩家下次登入會在 onAuthStateChanged 流程中被擋下(用既有維修模式類似流程)
+  window._fbSuspendPlayer = async function(targetUid, adminEmail, reason){
+    if(!targetUid) throw new Error('targetUid 必填');
+    await setDoc(doc(_fbDb, 'players', targetUid), {
+      _suspended: true,
+      _suspendedAt: Date.now(),
+      _suspendedBy: adminEmail || 'unknown',
+      _suspendReason: reason || '',
+    }, { merge: true });
+    console.log('[可疑帳號] 已停權,uid=' + targetUid);
+    return true;
+  };
+
+  // 管理員解除停權
+  window._fbUnsuspendPlayer = async function(targetUid, adminEmail){
+    if(!targetUid) throw new Error('targetUid 必填');
+    await setDoc(doc(_fbDb, 'players', targetUid), {
+      _suspended: false,
+      _unsuspendedAt: Date.now(),
+      _unsuspendedBy: adminEmail || 'unknown',
+    }, { merge: true });
+    console.log('[可疑帳號] 已解除停權,uid=' + targetUid);
+    return true;
+  };
+
   // 即時監聽維修狀態變更(若管理員中途開啟,要立刻踢出非管理員玩家)
   window._fbWatchMaintenance = function(callback) {
     try {
@@ -2375,6 +2763,57 @@
         } catch(_e) { console.warn('[維修模式] 檢查失敗,放行以避免全體鎖死', _e); }
       }
 
+      // ★★★ v3.5.0 — 停權檢查 ★★★
+      //   若 players/{uid}._suspended === true,非管理員一律踢出,顯示停權說明
+      if(!_isDev){
+        try {
+          const _snap = await getDoc(doc(_fbDb, 'players', user.uid));
+          if(_snap.exists() && _snap.data()._suspended === true){
+            const _data = _snap.data();
+            const _reason = _data._suspendReason || '帳號資料異常,已暫停存取';
+            const _at = _data._suspendedAt ? new Date(_data._suspendedAt).toLocaleString() : '';
+            console.warn('[停權] 帳號已被管理員停權,uid=' + user.uid);
+            try { await _fbAuth.signOut(); } catch(_e2) {}
+            window._fbUser = null;
+            window._gUserId = null;
+            // 顯示停權說明畫面
+            try {
+              const _ov = document.createElement('div');
+              _ov.id = '_suspended-overlay';
+              _ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.9);' +
+                'display:flex;align-items:center;justify-content:center;padding:20px;' +
+                'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+              _ov.innerHTML =
+                '<div style="background:linear-gradient(135deg,rgba(50,20,20,0.98),rgba(30,10,10,0.99));' +
+                   'border:3px solid rgba(255,100,100,0.8);border-radius:18px;padding:32px 36px;' +
+                   'max-width:520px;width:100%;color:#ffdddd;box-shadow:0 8px 36px rgba(255,80,80,0.3);">' +
+                  '<div style="font-size:24px;font-weight:900;color:#ff8888;margin-bottom:14px;text-align:center;letter-spacing:1.5px;">' +
+                    '🚫 帳號暫停存取' +
+                  '</div>' +
+                  '<div style="font-size:15px;line-height:1.7;margin-bottom:14px;background:rgba(0,0,0,0.4);padding:14px 16px;border-radius:10px;">' +
+                    '<div style="margin-bottom:8px;"><b style="color:#ffaaaa;">原因:</b>' +
+                      String(_reason).replace(/[<>]/g, '') +
+                    '</div>' +
+                    (_at ? ('<div style="font-size:13px;color:#ccaaaa;">停權時間:' + _at + '</div>') : '') +
+                  '</div>' +
+                  '<div style="font-size:14px;color:#ddaaaa;line-height:1.6;margin-bottom:18px;">' +
+                    '若您認為這是誤判,請聯絡管理員老師處理。' +
+                  '</div>' +
+                  '<button onclick="location.reload()" style="width:100%;padding:11px;font-size:15px;font-weight:800;' +
+                    'background:rgba(120,30,30,0.6);border:2px solid #ff6666;color:#ffcccc;border-radius:8px;cursor:pointer;font-family:inherit;">' +
+                    '重新整理' +
+                  '</button>' +
+                '</div>';
+              // 移除舊的
+              const _old = document.getElementById('_suspended-overlay');
+              if(_old) _old.remove();
+              document.body.appendChild(_ov);
+            } catch(_e3) { console.error(_e3); }
+            return; // 停止後續登入流程
+          }
+        } catch(_e) { console.warn('[停權檢查] 讀取失敗,放行', _e); }
+      }
+
       try {
         const _lastUid = localStorage.getItem('lxps_last_active_uid') || '';
         if(_lastUid && _lastUid !== user.uid){
@@ -2540,6 +2979,11 @@
           if(window._grantStudentDesignerHero) window._grantStudentDesignerHero(user.email);
         }catch(e){ console.warn('[設計者英雄補發] 觸發失敗', e); }
       }, 1800);
+      // ★ v3.5.0 — 登入後啟動下載授權監聽
+      setTimeout(()=>{
+        try{ if(window._initDownloadAuth) window._initDownloadAuth(); }
+        catch(e){ console.warn('[下載授權監聽] 啟動失敗', e); }
+      }, 800);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(_){} }, 1500);
       setTimeout(()=>{
@@ -2739,6 +3183,28 @@
         window._fbClearSession(window._gUserId, window._mySessionId);
       window._mySessionId = null;
       if(window._profileUnsubscribe){ window._profileUnsubscribe(); window._profileUnsubscribe = null; }
+      // ★ v3.5.0 — 登出時取消下載授權監聽 + 隱藏按鈕
+      try {
+        if(window._downloadAuth){
+          if(window._downloadAuth.unsubscribe){
+            try { window._downloadAuth.unsubscribe(); } catch(_){}
+            window._downloadAuth.unsubscribe = null;
+          }
+          if(window._downloadAuth.expireWarnTimer){
+            clearTimeout(window._downloadAuth.expireWarnTimer);
+            window._downloadAuth.expireWarnTimer = null;
+          }
+          if(window._downloadAuth.expireRemoveTimer){
+            clearTimeout(window._downloadAuth.expireRemoveTimer);
+            window._downloadAuth.expireRemoveTimer = null;
+          }
+          window._downloadAuth.currentPermission = null;
+        }
+        const _dlw = document.getElementById('download-install-wrap');
+        if(_dlw) _dlw.style.display = 'none';
+        const _drb = document.getElementById('download-request-btn');
+        if(_drb) _drb.style.display = 'none';
+      } catch(_){}
       // ★ v1.0.20260514.6530 — 登出時清掉本機殘留 + 停閒置自動登出計時器
       try {
         if(typeof window._clearAccountLocalData === 'function'){
@@ -4690,7 +5156,7 @@
       使用 Google 登入
     </button>
   </div>
-  <div id="google-user-info" style="display:none;align-items:center;gap:10px;">
+  <div id="google-user-info" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
     <img id="google-avatar" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(212,168,67,0.6);" />
     <span id="google-name" style="color:#1a2a6c;font-size:20px;font-weight:700;padding:3px 12px;background:rgba(255,255,255,0.92);border:2px solid #fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></span>
     <button onclick="playSfx('sfx-confirm',0.5);_showSwitchAccountPin()" style="padding:4px 14px;font-size:16px;background:rgba(30,60,120,0.85);border:1px solid rgba(100,160,255,0.5);color:#88ccff;border-radius:8px;cursor:pointer;">🔄 切換帳號</button>
@@ -4703,6 +5169,29 @@
         color:rgba(180,220,255,0.95);border-radius:8px;cursor:pointer;
         white-space:nowrap;font-family:inherit;">
       📲 加入主畫面
+    </button>
+    <!-- ★ v3.5.0 — 下載安裝完整遊戲按鈕(僅授權玩家可見) -->
+    <div id="download-install-wrap" style="display:none;flex-basis:100%;margin-top:6px;">
+      <button id="download-install-btn"
+        onclick="playSfx('sfx-confirm',0.5);_tryStartFullDownload()"
+        style="padding:6px 16px;font-size:15px;font-weight:800;
+          background:linear-gradient(135deg,rgba(40,150,80,0.85),rgba(20,100,60,0.95));
+          border:2px solid rgba(120,255,180,0.7);
+          color:#eaffea;border-radius:10px;cursor:pointer;
+          box-shadow:0 2px 12px rgba(40,200,120,0.35);
+          white-space:nowrap;font-family:inherit;letter-spacing:1px;">
+        ⬇️ 下載安裝完整遊戲
+      </button>
+      <span id="download-install-status" style="font-size:13px;color:#aaffcc;margin-left:8px;"></span>
+    </div>
+    <!-- ★ v3.5.0 — 申請下載權限按鈕(未授權玩家可見) -->
+    <button id="download-request-btn"
+      onclick="playSfx('sfx-gentle',0.3);_showDownloadRequestModal()"
+      style="display:none;padding:4px 14px;font-size:14px;
+        background:rgba(80,40,120,0.7);border:1px solid rgba(180,140,255,0.6);
+        color:rgba(220,200,255,0.95);border-radius:8px;cursor:pointer;
+        white-space:nowrap;font-family:inherit;">
+      📩 申請下載權限
     </button>
   </div>
 </div>
@@ -34682,6 +35171,56 @@ async function _showAdminStatsPanel(){
         <div id="_admin-bypass-result" style="margin-top:10px;font-size:13px;color:#88ddff;min-height:18px;line-height:1.55;"></div>
       </div>
 
+      <!-- ★ v3.5.0 — 下載權限管理區塊 -->
+      <div id="_admin-dlperm-section" style="background:rgba(20,40,30,0.5);border:2px solid rgba(120,255,180,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#aaffcc;margin-bottom:8px;">⬇️ 4. 下載安裝權限管理</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          玩家可申請下載完整遊戲到裝置(PWA),需管理員批准。批准後 <b style="color:#ffd066;">24 小時</b>內可下載,逾時自動失效。
+          <br>下方列表即時同步,點「✅ 批准」核發 24 小時權限,點「🚫 撤銷」立即取消。
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+          <button id="_admin-dlperm-refresh" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(40,100,80,0.5);border:1.5px solid rgba(120,200,160,0.6);color:#aaffcc;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔄 立即重新整理
+          </button>
+          <label style="font-size:12px;color:#aaa;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="_admin-dlperm-onlypending" style="accent-color:#88ffbb;">
+            僅顯示「待審核」
+          </label>
+          <span id="_admin-dlperm-count" style="font-size:12px;color:#88ccff;margin-left:auto;"></span>
+        </div>
+        <div id="_admin-dlperm-list" style="max-height:240px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:6px;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">載入中…</div>
+        </div>
+      </div>
+
+      <!-- ★ v3.5.0 — 可疑帳號偵測區塊 -->
+      <div id="_admin-sus-section" style="background:rgba(50,20,30,0.5);border:2px solid rgba(255,120,140,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#ff99bb;margin-bottom:8px;">🕵️ 5. 可疑帳號偵測</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          自動偵測:① <b>知識幣/等級/解鎖英雄短時間爆衝</b>(對比 _dataSummary 前後快照)、
+          ② <b>能力值投資超過該英雄等級允許上限</b>(疑似改本機 JS 變數後寫雲端)。
+          <br>下方列表即時同步,可點「🚫 停權」阻止該帳號登入,或「✅ 解除」恢復正常。
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+          <button id="_admin-sus-scan" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(120,40,60,0.5);border:1.5px solid rgba(255,120,140,0.7);color:#ffbbcc;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔍 全玩家批次掃描
+          </button>
+          <button id="_admin-sus-toggle-watch" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(80,40,120,0.5);border:1.5px solid rgba(180,140,255,0.7);color:#ddccff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            📡 啟用即時監聽
+          </button>
+          <span id="_admin-sus-status" style="font-size:12px;color:#aaa;margin-left:auto;"></span>
+        </div>
+        <div id="_admin-sus-list" style="max-height:280px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:6px;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚未掃描。點上方「全玩家批次掃描」或「啟用即時監聽」開始檢測。</div>
+        </div>
+      </div>
+
       <button id="_admin-close" style="width:100%;padding:12px;font-size:16px;font-weight:700;
         background:rgba(60,60,80,0.6);border:1px solid #555;color:#aaa;
         border-radius:8px;cursor:pointer;font-family:inherit;">
@@ -34691,8 +35230,29 @@ async function _showAdminStatsPanel(){
   `;
   document.body.appendChild(pop);
 
-  document.getElementById('_admin-close').onclick = () => pop.remove();
-  pop.onclick = (ev) => { if(ev.target === pop) pop.remove(); };
+  // ★ v3.5.0 — 面板區域性 state(關閉時要清掉)
+  const _adminPanelState = {
+    dlpermUnsub: null,
+    susUnsub: null,
+    dlpermList: [],
+    susList: [],
+  };
+  function _closeAdminPanel(){
+    try {
+      if(_adminPanelState.dlpermUnsub){
+        try { _adminPanelState.dlpermUnsub(); } catch(_){}
+        _adminPanelState.dlpermUnsub = null;
+      }
+      if(_adminPanelState.susUnsub){
+        try { _adminPanelState.susUnsub(); } catch(_){}
+        _adminPanelState.susUnsub = null;
+      }
+    } catch(_){}
+    pop.remove();
+  }
+
+  document.getElementById('_admin-close').onclick = _closeAdminPanel;
+  pop.onclick = (ev) => { if(ev.target === pop) _closeAdminPanel(); };
 
   // ★ v1.0.20260510.5820 — 解除冷卻 / 每日次數限制按鈕
   //   每個按鈕對應一種限制,按下後執行重置並顯示結果訊息(累積在 _admin-bypass-result)
@@ -36670,6 +37230,323 @@ async function _showAdminStatsPanel(){
       }
     };
   }
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.5.0 — 下載權限管理區塊綁定
+  // ════════════════════════════════════════════════════════════════
+  (function _bindDlPermSection(){
+    const _listEl = document.getElementById('_admin-dlperm-list');
+    const _refreshBtn = document.getElementById('_admin-dlperm-refresh');
+    const _onlyPendingCb = document.getElementById('_admin-dlperm-onlypending');
+    const _countEl = document.getElementById('_admin-dlperm-count');
+    if(!_listEl) return;
+
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _fmtTime = (ms) => {
+      if(!ms) return '—';
+      try { return new Date(ms).toLocaleString(); } catch(_){ return '—'; }
+    };
+    const _statusBadge = (status) => {
+      const _map = {
+        pending:  ['rgba(120,90,30,0.5)', '#ffd066', '⏳ 待審核'],
+        approved: ['rgba(30,100,60,0.5)', '#88ffbb', '✅ 已批准'],
+        expired:  ['rgba(80,80,80,0.5)',  '#aaaaaa', '⏰ 已過期'],
+        revoked:  ['rgba(120,40,40,0.5)', '#ff8888', '🚫 已撤銷'],
+      };
+      const _m = _map[status] || _map.expired;
+      return '<span style="display:inline-block;padding:2px 8px;background:' + _m[0] +
+        ';color:' + _m[1] + ';border-radius:6px;font-size:11px;font-weight:700;">' + _m[2] + '</span>';
+    };
+
+    const _renderList = (list) => {
+      const _onlyPending = _onlyPendingCb && _onlyPendingCb.checked;
+      const _filtered = _onlyPending
+        ? list.filter(p => p._displayStatus === 'pending')
+        : list;
+      if(_countEl){
+        const _pCount = list.filter(p => p._displayStatus === 'pending').length;
+        const _aCount = list.filter(p => p._displayStatus === 'approved').length;
+        _countEl.textContent = '待審核 ' + _pCount + ' / 已批准 ' + _aCount + ' / 共 ' + list.length;
+      }
+      if(_filtered.length === 0){
+        _listEl.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:13px;">' +
+          (_onlyPending ? '🎉 沒有待審核的申請' : '暫無申請紀錄') + '</div>';
+        return;
+      }
+      const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
+      let _html = '';
+      _filtered.forEach(p => {
+        const _remainingTxt = (p._displayStatus === 'approved' && p.expiresAt)
+          ? '剩餘 ' + Math.floor((p.expiresAt - Date.now()) / 60000) + ' 分鐘'
+          : '';
+        _html += '<div style="background:rgba(20,30,40,0.7);border:1px solid rgba(120,180,160,0.3);border-radius:8px;padding:10px 12px;margin-bottom:6px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">' +
+            _statusBadge(p._displayStatus) +
+            '<span style="font-size:14px;color:#fff;font-weight:700;">' + _esc(p.displayName || '(無暱稱)') + '</span>' +
+            '<span style="font-size:12px;color:#aaa;">' + _esc(p.email || '') + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#888;margin-bottom:6px;">' +
+            'uid: <code style="color:#88ccff;">' + _esc((p.uid || '').slice(0,12)) + '...</code> ' +
+            '・申請時間 ' + _fmtTime(p.requestedAt) +
+            (p.grantedAt ? '・批准 ' + _fmtTime(p.grantedAt) : '') +
+            (p.expiresAt ? '・到期 ' + _fmtTime(p.expiresAt) + (_remainingTxt ? '(' + _remainingTxt + ')' : '') : '') +
+          '</div>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            (p._displayStatus !== 'approved' || (p.expiresAt && p.expiresAt < Date.now())
+              ? '<button class="_dlperm-approve" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+                'background:rgba(40,120,80,0.5);border:1.5px solid #66cc99;color:#aaffcc;border-radius:6px;cursor:pointer;font-family:inherit;">' +
+                '✅ 批准 24 小時</button>'
+              : '') +
+            (p._displayStatus === 'approved'
+              ? '<button class="_dlperm-extend" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+                'background:rgba(60,80,160,0.5);border:1.5px solid #88aaff;color:#ccddff;border-radius:6px;cursor:pointer;font-family:inherit;">' +
+                '⏱ 重新核發 24 小時</button>'
+              : '') +
+            (p._displayStatus === 'approved' || p._displayStatus === 'pending'
+              ? '<button class="_dlperm-revoke" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+                'background:rgba(120,40,40,0.5);border:1.5px solid #ff8888;color:#ffcccc;border-radius:6px;cursor:pointer;font-family:inherit;">' +
+                '🚫 撤銷</button>'
+              : '') +
+          '</div>' +
+          (p.note ? '<div style="font-size:11px;color:#888;margin-top:4px;font-style:italic;">備註:' + _esc(p.note) + '</div>' : '') +
+        '</div>';
+      });
+      _listEl.innerHTML = _html;
+
+      // 綁定按鈕
+      _listEl.querySelectorAll('._dlperm-approve, ._dlperm-extend').forEach(btn => {
+        btn.onclick = async function(){
+          const _uid = this.dataset.uid;
+          this.disabled = true;
+          this.textContent = '處理中…';
+          try {
+            await window._fbGrantDownloadPermission(_uid, _adminEmail, 24, '管理員批准');
+            // onSnapshot 會自動刷新
+          } catch(e){
+            alert('批准失敗:' + (e && e.message || e));
+            this.disabled = false;
+          }
+        };
+      });
+      _listEl.querySelectorAll('._dlperm-revoke').forEach(btn => {
+        btn.onclick = async function(){
+          if(!confirm('確定撤銷此玩家的下載權限嗎?')) return;
+          const _uid = this.dataset.uid;
+          this.disabled = true;
+          this.textContent = '處理中…';
+          try {
+            await window._fbRevokeDownloadPermission(_uid, _adminEmail, '管理員撤銷');
+          } catch(e){
+            alert('撤銷失敗:' + (e && e.message || e));
+            this.disabled = false;
+          }
+        };
+      });
+    };
+
+    // 啟動即時監聽
+    if(typeof window._fbWatchAllDownloadPermissions === 'function'){
+      _adminPanelState.dlpermUnsub = window._fbWatchAllDownloadPermissions((list) => {
+        _adminPanelState.dlpermList = list;
+        _renderList(list);
+      });
+    } else {
+      // fallback:用一次性讀取
+      window._fbListDownloadPermissions().then(list => {
+        _adminPanelState.dlpermList = list;
+        _renderList(list);
+      }).catch(e => {
+        _listEl.innerHTML = '<div style="color:#ff8888;padding:14px;">讀取失敗:' + _esc(e.message || e) + '</div>';
+      });
+    }
+
+    if(_refreshBtn){
+      _refreshBtn.onclick = async function(){
+        this.disabled = true;
+        this.textContent = '讀取中…';
+        try {
+          const _list = await window._fbListDownloadPermissions();
+          _adminPanelState.dlpermList = _list;
+          _renderList(_list);
+        } catch(e){
+          alert('讀取失敗:' + (e && e.message || e));
+        } finally {
+          this.disabled = false;
+          this.textContent = '🔄 立即重新整理';
+        }
+      };
+    }
+    if(_onlyPendingCb){
+      _onlyPendingCb.onchange = () => _renderList(_adminPanelState.dlpermList);
+    }
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.5.0 — 可疑帳號偵測區塊綁定
+  // ════════════════════════════════════════════════════════════════
+  (function _bindSusSection(){
+    const _listEl = document.getElementById('_admin-sus-list');
+    const _scanBtn = document.getElementById('_admin-sus-scan');
+    const _watchBtn = document.getElementById('_admin-sus-toggle-watch');
+    const _statusEl = document.getElementById('_admin-sus-status');
+    if(!_listEl) return;
+
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
+
+    const _severityBadge = (sev) => {
+      if(sev === 'alert'){
+        return '<span style="display:inline-block;padding:2px 8px;background:rgba(150,30,30,0.6);' +
+          'color:#ffaaaa;border-radius:6px;font-size:11px;font-weight:800;">🚨 嚴重</span>';
+      }
+      return '<span style="display:inline-block;padding:2px 8px;background:rgba(120,90,30,0.6);' +
+        'color:#ffd066;border-radius:6px;font-size:11px;font-weight:700;">⚠️ 警告</span>';
+    };
+
+    const _renderList = (list) => {
+      if(_statusEl){
+        const _alertN = list.filter(x => x.severity === 'alert' && !x._suspended).length;
+        const _warnN = list.filter(x => x.severity === 'warn' && !x._suspended).length;
+        const _susN = list.filter(x => x._suspended).length;
+        _statusEl.textContent = '嚴重 ' + _alertN + ' / 警告 ' + _warnN + ' / 已停權 ' + _susN;
+      }
+      if(list.length === 0){
+        _listEl.innerHTML = '<div style="text-align:center;color:#88ffbb;padding:20px;font-size:14px;">🎉 目前沒有可疑帳號</div>';
+        return;
+      }
+      let _html = '';
+      list.forEach(p => {
+        const _ds = p._dataSummary || {};
+        _html += '<div style="background:' + (p._suspended ? 'rgba(40,20,20,0.7)' : 'rgba(40,30,30,0.7)') +
+          ';border:1.5px solid ' + (p.severity === 'alert' ? 'rgba(255,120,120,0.5)' : 'rgba(255,200,100,0.4)') +
+          ';border-radius:8px;padding:10px 12px;margin-bottom:6px;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">' +
+            _severityBadge(p.severity) +
+            (p._suspended ? '<span style="font-size:11px;padding:2px 8px;background:rgba(80,40,80,0.6);color:#ffaaff;border-radius:6px;font-weight:700;">已停權</span>' : '') +
+            '<span style="font-size:14px;color:#fff;font-weight:700;">' + _esc(p.displayName || '(無暱稱)') + '</span>' +
+            '<span style="font-size:12px;color:#aaa;">' + _esc(p.email || '') + '</span>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#ddcc99;line-height:1.6;margin-bottom:6px;background:rgba(0,0,0,0.3);padding:6px 8px;border-radius:5px;">' +
+            p.reasons.map(r => '• ' + _esc(r)).join('<br>') +
+          '</div>' +
+          '<div style="font-size:11px;color:#888;margin-bottom:6px;">' +
+            'uid: <code style="color:#88ccff;">' + _esc((p.uid || '').slice(0,12)) + '...</code>' +
+            (_ds.coins != null ? ' ・知識幣 ' + _ds.coins.toLocaleString() : '') +
+            (_ds.maxHeroLv != null ? ' ・最高等級 Lv' + _ds.maxHeroLv : '') +
+            (_ds.unlockedCount != null ? ' ・解鎖 ' + _ds.unlockedCount + ' 隻' : '') +
+          '</div>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            (p._suspended
+              ? '<button class="_sus-unsuspend" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+                'background:rgba(40,120,80,0.5);border:1.5px solid #66cc99;color:#aaffcc;border-radius:6px;cursor:pointer;font-family:inherit;">' +
+                '✅ 解除停權</button>'
+              : '<button class="_sus-suspend" data-uid="' + _esc(p.uid) + '" data-name="' + _esc(p.displayName || '') + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+                'background:rgba(120,40,40,0.5);border:1.5px solid #ff8888;color:#ffcccc;border-radius:6px;cursor:pointer;font-family:inherit;">' +
+                '🚫 停權此帳號</button>') +
+            '<button class="_sus-inspect" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+              'background:rgba(60,60,100,0.5);border:1.5px solid #8899cc;color:#ccddff;border-radius:6px;cursor:pointer;font-family:inherit;">' +
+              '🔍 詳細資料</button>' +
+          '</div>' +
+        '</div>';
+      });
+      _listEl.innerHTML = _html;
+
+      _listEl.querySelectorAll('._sus-suspend').forEach(btn => {
+        btn.onclick = async function(){
+          const _uid = this.dataset.uid;
+          const _name = this.dataset.name || _uid;
+          const _reason = prompt('確定停權「' + _name + '」嗎?\n停權後此帳號無法登入遊戲。\n\n請輸入停權原因(將顯示給玩家):',
+            '帳號資料偵測異常,已暫停存取。請聯絡管理員老師。');
+          if(_reason === null) return; // 取消
+          this.disabled = true;
+          this.textContent = '處理中…';
+          try {
+            await window._fbSuspendPlayer(_uid, _adminEmail, _reason || '');
+          } catch(e){
+            alert('停權失敗:' + (e && e.message || e));
+            this.disabled = false;
+          }
+        };
+      });
+      _listEl.querySelectorAll('._sus-unsuspend').forEach(btn => {
+        btn.onclick = async function(){
+          const _uid = this.dataset.uid;
+          if(!confirm('確定解除此帳號的停權?')) return;
+          this.disabled = true;
+          this.textContent = '處理中…';
+          try {
+            await window._fbUnsuspendPlayer(_uid, _adminEmail);
+          } catch(e){
+            alert('解除失敗:' + (e && e.message || e));
+            this.disabled = false;
+          }
+        };
+      });
+      _listEl.querySelectorAll('._sus-inspect').forEach(btn => {
+        btn.onclick = function(){
+          const _uid = this.dataset.uid;
+          const _p = list.find(x => x.uid === _uid);
+          if(!_p) return;
+          alert(
+            '【可疑帳號詳細】\n' +
+            'uid: ' + _p.uid + '\n' +
+            '暱稱: ' + (_p.displayName || '(無)') + '\n' +
+            '信箱: ' + (_p.email || '(無)') + '\n' +
+            '嚴重度: ' + (_p.severity === 'alert' ? '嚴重' : '警告') + '\n' +
+            '\n偵測原因:\n' + _p.reasons.map(r => '・' + r).join('\n') +
+            '\n\n資料摘要:\n' + JSON.stringify(_p._dataSummary, null, 2) +
+            (_p.details && _p.details.deltas ? '\n\n短時間變化量:\n' + JSON.stringify(_p.details.deltas, null, 2) : '') +
+            (_p.details && _p.details.overInvested ? '\n\n超量投資英雄:\n' + _p.details.overInvested.join('\n') : '')
+          );
+        };
+      });
+    };
+
+    if(_scanBtn){
+      _scanBtn.onclick = async function(){
+        this.disabled = true;
+        this.textContent = '掃描中…';
+        _listEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:13px;">⏳ 正在掃描全部玩家…</div>';
+        try {
+          const _list = await window._fbScanSuspiciousPlayers();
+          _adminPanelState.susList = _list;
+          _renderList(_list);
+        } catch(e){
+          _listEl.innerHTML = '<div style="color:#ff8888;padding:14px;">掃描失敗:' + _esc(e.message || e) + '</div>';
+        } finally {
+          this.disabled = false;
+          this.textContent = '🔍 全玩家批次掃描';
+        }
+      };
+    }
+
+    if(_watchBtn){
+      _watchBtn.onclick = function(){
+        if(_adminPanelState.susUnsub){
+          // 已啟用 → 關閉
+          try { _adminPanelState.susUnsub(); } catch(_){}
+          _adminPanelState.susUnsub = null;
+          this.textContent = '📡 啟用即時監聽';
+          this.style.background = 'rgba(80,40,120,0.5)';
+          if(_statusEl) _statusEl.textContent += ' ・ 監聽已停';
+          return;
+        }
+        // 啟用
+        this.textContent = '⏸ 停止即時監聽';
+        this.style.background = 'rgba(120,80,160,0.7)';
+        if(typeof window._fbWatchAllPlayersForSuspicious === 'function'){
+          _adminPanelState.susUnsub = window._fbWatchAllPlayersForSuspicious((list, err) => {
+            if(err){
+              _listEl.innerHTML = '<div style="color:#ff8888;padding:14px;">即時監聽錯誤:' + _esc(err.message || err) + '<br>(可能是 Firestore 規則未允許 list/players)</div>';
+              return;
+            }
+            _adminPanelState.susList = list;
+            _renderList(list);
+          });
+        }
+      };
+    }
+  })();
 }
 
 // 每回合開始時儲存快照（F8密技用）
@@ -55145,6 +56022,20 @@ function _buildSafeData() {
           ts:            Date.now()
         };
       }catch(_e){ return null; }
+    })(),
+    // ★ v3.5.0 — 保留上一次摘要(從本地讀,讓雲端比對能偵測短時間爆衝)
+    //   策略:每次 save 把「目前 localStorage 裡的 _dataSummary」當作 _prevDataSummary,
+    //         讓雲端的 _prevDataSummary 永遠是「上一次 save 時的快照」,可以做差值計算。
+    //         可疑帳號偵測會比對 _dataSummary - _prevDataSummary 是否在短時間內爆衝。
+    _prevDataSummary: (function(){
+      try{
+        const _key = window._gUserId ? ('lxps_' + window._gUserId + '_progress') : null;
+        if(!_key) return null;
+        const _raw = localStorage.getItem(_key);
+        if(!_raw) return null;
+        const _local = JSON.parse(_raw);
+        return _local && _local._dataSummary ? _local._dataSummary : null;
+      }catch(_e){ return null; }
     })()
     // ★ 不儲存：英雄數值/技能效果/物品內容（這些從程式碼讀最新版）
   };
@@ -66816,15 +67707,21 @@ window._lxpsPWA = (function(){
   }
 
   // ─── beforeinstallprompt: 桌機/Android Chrome 用 ───
+  // ★ v3.5.0 — 不再自動顯示「📲 加入桌面」按鈕。
+  //   只保留事件供 _tryNativeInstall 使用,實際入口由「⬇️ 下載安裝完整遊戲」(授權後可見)觸發。
+  //   原本的 pwa-hint-btn 改為只給管理員(或 iOS Safari 後備)的調試入口。
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     deferredInstallPrompt = e;
-    // 顯示按鈕(現有按鈕原本只 iOS 顯示, 現在也讓桌機/Android 顯示)
-    var btn = document.getElementById('pwa-hint-btn');
-    if(btn){
-      btn.style.display = 'block';
-      btn.textContent = '📲 加入桌面';
-    }
+    // ★ v3.5.0 — 只在管理員身分時才顯示舊的「📲 加入桌面」按鈕
+    try {
+      const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+      var btn = document.getElementById('pwa-hint-btn');
+      if(btn && _isAdmin){
+        btn.style.display = 'block';
+        btn.textContent = '📲 加入桌面(管理員)';
+      }
+    } catch(_){}
   });
 
   window.addEventListener('appinstalled', function(){
@@ -66832,6 +67729,9 @@ window._lxpsPWA = (function(){
     deferredInstallPrompt = null;
     var btn = document.getElementById('pwa-hint-btn');
     if(btn) btn.style.display = 'none';
+    // ★ v3.5.0 — 已安裝後,也把「下載安裝完整遊戲」按鈕暫時隱藏(避免重複觸發)
+    var dlw = document.getElementById('download-install-wrap');
+    if(dlw) dlw.style.display = 'none';
   });
 
   // ─── 桌機點按鈕觸發原生安裝對話框 ───
@@ -66969,6 +67869,341 @@ window._lxpsPWA = (function(){
 })();
 
 // ═══════════════════════════════════════════════════════════════
+// ★ v3.5.0 — 下載安裝授權系統(玩家端)
+// ───────────────────────────────────────────────────────────────
+// 流程:
+//   1. 玩家登入後,_initDownloadAuth() 啟動 onSnapshot 監聽自己的權限
+//   2. 權限是 approved 且未過期 → 顯示「下載安裝完整遊戲」按鈕
+//   3. 玩家點申請 → _showDownloadRequestModal() 送出申請
+//   4. 玩家點「下載安裝」→ _tryStartFullDownload() 二次驗證 + 觸發 PWA install
+//   5. 24 小時到期前 30 分鐘 → 提醒玩家
+//   6. 到期 → 按鈕自動消失
+// ═══════════════════════════════════════════════════════════════
+window._downloadAuth = {
+  unsubscribe: null,
+  currentPermission: null,
+  expireWarnTimer: null,
+  expireRemoveTimer: null,
+};
+
+// 登入後啟動:監聽自己的下載權限
+window._initDownloadAuth = function(){
+  // 停掉先前的監聽(切換帳號時)
+  if(window._downloadAuth.unsubscribe){
+    try { window._downloadAuth.unsubscribe(); } catch(_){}
+    window._downloadAuth.unsubscribe = null;
+  }
+  if(window._downloadAuth.expireWarnTimer){
+    clearTimeout(window._downloadAuth.expireWarnTimer);
+    window._downloadAuth.expireWarnTimer = null;
+  }
+  if(window._downloadAuth.expireRemoveTimer){
+    clearTimeout(window._downloadAuth.expireRemoveTimer);
+    window._downloadAuth.expireRemoveTimer = null;
+  }
+
+  // 沒登入 → 全部隱藏
+  if(!window._gUserId){
+    _updateDownloadAuthUI(null);
+    return;
+  }
+
+  // 管理員 → 不用申請,直接顯示按鈕(管理員自己也可下載)
+  if(typeof window._isAdminUser === 'function' && window._isAdminUser()){
+    _updateDownloadAuthUI({ _isAdmin: true, status: 'approved' });
+    return;
+  }
+
+  // 一般玩家:啟動 onSnapshot
+  if(typeof window._fbWatchDownloadPermission !== 'function'){
+    console.warn('[下載授權] Firebase API 未就緒,跳過');
+    return;
+  }
+
+  window._downloadAuth.unsubscribe = window._fbWatchDownloadPermission(
+    window._gUserId,
+    function(perm){
+      window._downloadAuth.currentPermission = perm;
+      _updateDownloadAuthUI(perm);
+      // 設定到期提醒
+      if(perm && perm.status === 'approved' && perm.expiresAt){
+        _scheduleExpireReminders(perm.expiresAt);
+      }
+    }
+  );
+};
+
+// 根據權限狀態,更新「下載安裝」/「申請下載權限」兩個按鈕的可見性
+function _updateDownloadAuthUI(perm){
+  const _installWrap = document.getElementById('download-install-wrap');
+  const _installBtn  = document.getElementById('download-install-btn');
+  const _statusEl    = document.getElementById('download-install-status');
+  const _reqBtn      = document.getElementById('download-request-btn');
+
+  if(!_installWrap || !_installBtn || !_reqBtn) return;
+
+  // 未登入 → 兩個都隱藏
+  if(!window._gUserId){
+    _installWrap.style.display = 'none';
+    _reqBtn.style.display = 'none';
+    return;
+  }
+
+  // 管理員 → 直接顯示下載按鈕
+  if(perm && perm._isAdmin){
+    _installWrap.style.display = '';
+    _reqBtn.style.display = 'none';
+    if(_statusEl) _statusEl.textContent = '(管理員)';
+    return;
+  }
+
+  // 一般玩家
+  const _status = perm ? perm.status : null;
+  if(_status === 'approved' && perm.expiresAt && perm.expiresAt > Date.now()){
+    // 已授權且未過期 → 顯示下載按鈕
+    _installWrap.style.display = '';
+    _reqBtn.style.display = 'none';
+    if(_statusEl){
+      const _ms = perm.expiresAt - Date.now();
+      const _hours = Math.floor(_ms / 3600000);
+      const _mins = Math.floor((_ms % 3600000) / 60000);
+      _statusEl.textContent = '(剩餘 ' + _hours + '小時' + _mins + '分)';
+    }
+  } else if(_status === 'pending'){
+    // 已申請等待批准
+    _installWrap.style.display = 'none';
+    _reqBtn.style.display = '';
+    _reqBtn.textContent = '⏳ 申請審核中…';
+    _reqBtn.style.background = 'rgba(120,90,30,0.7)';
+    _reqBtn.style.borderColor = 'rgba(255,200,100,0.6)';
+    _reqBtn.style.color = 'rgba(255,230,170,0.95)';
+  } else {
+    // 未申請 / 已過期 / 已撤銷 → 顯示申請按鈕
+    _installWrap.style.display = 'none';
+    _reqBtn.style.display = '';
+    if(_status === 'expired'){
+      _reqBtn.textContent = '🔁 權限已到期 - 重新申請';
+    } else if(_status === 'revoked'){
+      _reqBtn.textContent = '📩 申請下載權限(曾被撤銷)';
+    } else {
+      _reqBtn.textContent = '📩 申請下載權限';
+    }
+    _reqBtn.style.background = 'rgba(80,40,120,0.7)';
+    _reqBtn.style.borderColor = 'rgba(180,140,255,0.6)';
+    _reqBtn.style.color = 'rgba(220,200,255,0.95)';
+  }
+}
+
+// 設定到期前提醒
+function _scheduleExpireReminders(expiresAt){
+  if(window._downloadAuth.expireWarnTimer){
+    clearTimeout(window._downloadAuth.expireWarnTimer);
+    window._downloadAuth.expireWarnTimer = null;
+  }
+  if(window._downloadAuth.expireRemoveTimer){
+    clearTimeout(window._downloadAuth.expireRemoveTimer);
+    window._downloadAuth.expireRemoveTimer = null;
+  }
+  const _now = Date.now();
+  const _msToExpire = expiresAt - _now;
+  if(_msToExpire <= 0) return;
+  // 到期前 30 分鐘提醒
+  const _warnMs = _msToExpire - 30 * 60 * 1000;
+  if(_warnMs > 0){
+    window._downloadAuth.expireWarnTimer = setTimeout(function(){
+      _showExpireWarningToast(30);
+    }, _warnMs);
+  }
+  // 到期當下強制更新 UI
+  window._downloadAuth.expireRemoveTimer = setTimeout(function(){
+    _showExpireWarningToast(0);
+    _updateDownloadAuthUI(window._downloadAuth.currentPermission);
+  }, _msToExpire);
+}
+
+function _showExpireWarningToast(minsLeft){
+  try{
+    const _t = document.createElement('div');
+    _t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:99999;' +
+      'background:rgba(120,80,20,0.96);border:2.5px solid #ffaa44;color:#ffe0aa;' +
+      'font-size:16px;padding:14px 24px;border-radius:12px;max-width:90vw;' +
+      'box-shadow:0 8px 32px rgba(0,0,0,0.6);text-align:center;line-height:1.6;';
+    if(minsLeft > 0){
+      _t.innerHTML = '⏰ <b>下載權限即將到期</b><br>' +
+        '<span style="font-size:14px;color:#ffd699;">剩餘約 ' + minsLeft + ' 分鐘,如需安裝請盡快點「下載安裝完整遊戲」</span>';
+    } else {
+      _t.innerHTML = '⏰ <b>下載權限已到期</b><br>' +
+        '<span style="font-size:14px;color:#ffd699;">已安裝的遊戲資料仍可使用,但無法重新下載。如需再次下載請重新申請。</span>';
+    }
+    document.body.appendChild(_t);
+    setTimeout(function(){ if(_t.parentNode) _t.remove(); }, 10000);
+  }catch(_){}
+}
+
+// 申請下載權限的彈窗
+window._showDownloadRequestModal = function(){
+  // 未登入 → 提示先登入
+  if(!window._gUserId){
+    _showSimpleToast('⚠️ 請先以 Google 帳號登入才能申請下載權限', 'warn');
+    return;
+  }
+  // 已有未過期的批准 → 不用再申請
+  const _perm = window._downloadAuth.currentPermission;
+  if(_perm && _perm.status === 'approved' && _perm.expiresAt && _perm.expiresAt > Date.now()){
+    _showSimpleToast('✅ 您已擁有下載權限,可直接點「下載安裝完整遊戲」', 'ok');
+    return;
+  }
+  // 已 pending → 提示不要重複
+  if(_perm && _perm.status === 'pending'){
+    _showSimpleToast('⏳ 您已送出申請,請等待管理員審核', 'info');
+    return;
+  }
+
+  // 移除既有
+  const _old = document.getElementById('_dl-req-modal');
+  if(_old) _old.remove();
+
+  const _modal = document.createElement('div');
+  _modal.id = '_dl-req-modal';
+  _modal.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.85);' +
+    'display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;' +
+    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+
+  const _u = window._fbUser || {};
+  const _emailDisplay = _u.email || '(尚未取得)';
+  const _nameDisplay = window._playerNickname || _u.displayName || '(尚未取得)';
+
+  _modal.innerHTML =
+    '<div style="background:linear-gradient(135deg,rgba(30,20,60,0.98),rgba(15,10,30,0.99));' +
+       'border:3px solid rgba(180,140,255,0.7);border-radius:18px;padding:28px 32px;' +
+       'width:min(520px,100%);box-sizing:border-box;color:#fff;' +
+       'box-shadow:0 8px 36px rgba(180,140,255,0.35);">' +
+      '<div style="font-size:22px;font-weight:900;color:#ddccff;margin-bottom:12px;text-align:center;letter-spacing:1.5px;">' +
+        '📩 申請下載安裝權限' +
+      '</div>' +
+      '<div style="font-size:14px;color:#ccc;line-height:1.65;margin-bottom:14px;">' +
+        '為了避免同時下載人數過多導致流量爆掉,下載安裝完整遊戲需要管理員批准。' +
+        '<br>批准後 <b style="color:#ffd066;">24 小時</b>內可安裝,逾時下載權限會自動回收(已安裝的資料不受影響)。' +
+      '</div>' +
+      '<div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:14px;line-height:1.7;">' +
+        '<div>👤 申請人:<b style="color:#88ccff;">' + _esc(_nameDisplay) + '</b></div>' +
+        '<div>📧 信箱:<b style="color:#88ccff;">' + _esc(_emailDisplay) + '</b></div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:#aaaaaa;margin-bottom:14px;line-height:1.55;">' +
+        '⚠️ 申請送出後,請告知管理員老師你的姓名,等待批准。' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;">' +
+        '<button id="_dl-req-cancel" style="flex:1;padding:11px 16px;font-size:15px;font-weight:700;' +
+          'background:rgba(60,60,80,0.6);border:1px solid #555;color:#aaa;border-radius:8px;cursor:pointer;font-family:inherit;">' +
+          '取消' +
+        '</button>' +
+        '<button id="_dl-req-submit" style="flex:1.6;padding:11px 16px;font-size:15px;font-weight:800;' +
+          'background:linear-gradient(135deg,rgba(140,90,200,0.6),rgba(80,40,140,0.8));' +
+          'border:2px solid #bb99ee;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">' +
+          '✉️ 送出申請' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(_modal);
+
+  function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  document.getElementById('_dl-req-cancel').onclick = () => { _modal.remove(); };
+  _modal.onclick = (ev) => { if(ev.target === _modal) _modal.remove(); };
+
+  document.getElementById('_dl-req-submit').onclick = async function(){
+    const _btn = this;
+    _btn.disabled = true;
+    _btn.textContent = '送出中…';
+    try {
+      const _ok = await window._fbRequestDownloadPermission(
+        window._gUserId,
+        _u.email || '',
+        _nameDisplay
+      );
+      if(_ok){
+        _showSimpleToast('✅ 申請已送出,請等待管理員批准', 'ok');
+        _modal.remove();
+        // onSnapshot 會自動更新 UI 為 pending 狀態
+      } else {
+        _btn.disabled = false;
+        _btn.textContent = '✉️ 送出申請';
+        _showSimpleToast('❌ 送出失敗,請檢查網路後再試', 'err');
+      }
+    } catch(e){
+      _btn.disabled = false;
+      _btn.textContent = '✉️ 送出申請';
+      _showSimpleToast('❌ 送出失敗:' + (e && e.message || e), 'err');
+    }
+  };
+};
+
+// 玩家點「下載安裝完整遊戲」→ 二次驗證 + 觸發 PWA install
+window._tryStartFullDownload = async function(){
+  // 二次驗證:再讀一次雲端,確認權限仍有效(防止 onSnapshot 還沒更新到 expired)
+  if(!window._gUserId){
+    _showSimpleToast('⚠️ 請先以 Google 帳號登入', 'warn');
+    return;
+  }
+  // 管理員直接放行
+  const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+
+  if(!_isAdmin){
+    let _perm = null;
+    try {
+      _perm = await window._fbGetDownloadPermission(window._gUserId);
+    } catch(e){
+      _showSimpleToast('❌ 無法驗證下載權限,請檢查網路', 'err');
+      return;
+    }
+    if(!_perm || _perm.status !== 'approved' || !_perm.expiresAt || _perm.expiresAt < Date.now()){
+      _showSimpleToast('⚠️ 您目前沒有有效的下載權限,請先向管理員申請', 'warn');
+      _updateDownloadAuthUI(_perm);
+      return;
+    }
+  }
+
+  // 通過驗證 → 嘗試觸發原生安裝
+  // 設置 bypass flag,讓 _showPwaGuide 不再重新驗證(因為我們已經驗證過了)
+  window._pwaGuideAuthBypass = true;
+  // 若 PWA SW 被停用(目前止血中)→ 走 _showPwaGuide 顯示說明
+  if(typeof window._tryNativeInstall === 'function' && window._tryNativeInstall()){
+    // 已觸發原生安裝對話框
+    window._pwaGuideAuthBypass = false; // 用完即丟
+    return;
+  }
+  // iOS 或沒有 deferred prompt → 走原本的引導(會偵測平台給對應說明)
+  if(typeof window._showPwaGuide === 'function'){
+    window._showPwaGuide();
+    // _showPwaGuide 內會自動清掉 bypass flag
+  } else {
+    window._pwaGuideAuthBypass = false;
+    _showSimpleToast('ℹ️ 請依照瀏覽器選單中的「加入主畫面 / 安裝應用程式」選項操作', 'info');
+  }
+};
+
+// 簡易 toast
+function _showSimpleToast(msg, kind){
+  try{
+    const _t = document.createElement('div');
+    const _palettes = {
+      ok:   ['rgba(20,80,40,0.95)', '#66dd99', '#d8ffd8'],
+      warn: ['rgba(100,70,20,0.95)', '#ffbb66', '#ffe6c2'],
+      err:  ['rgba(110,30,30,0.95)', '#ff6666', '#ffcccc'],
+      info: ['rgba(30,60,100,0.95)', '#88bbff', '#cce0ff'],
+    };
+    const _p = _palettes[kind] || _palettes.info;
+    _t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:99999;' +
+      'background:' + _p[0] + ';border:2px solid ' + _p[1] + ';color:' + _p[2] + ';' +
+      'font-size:15px;padding:12px 22px;border-radius:10px;max-width:90vw;text-align:center;line-height:1.6;';
+    _t.textContent = msg;
+    document.body.appendChild(_t);
+    setTimeout(function(){ if(_t.parentNode) _t.remove(); }, 5000);
+  }catch(_){}
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ★ v3.4.15 — CDN 切換工具 (老師驗證 jsDelivr 是否可用)
 // ───────────────────────────────────────────────────────────────
 // 在 console 跑:
@@ -67056,15 +68291,58 @@ window._lxpsToggleCdn = function(enabled){
     return;
   }
   // ★ v3.4.13(PWA) — 顯示安裝按鈕(iOS 維持引導, 桌機/Android 用原生 prompt)
+  // ★ v3.5.0 — 改為:只有管理員才會自動顯示舊「📲 加入主畫面」按鈕(iOS Safari 後備用)
+  //   一般 iOS 玩家走「⬇️ 下載安裝完整遊戲」這個新按鈕(授權後可見)
   if(isIOS){
     var btn = document.getElementById('pwa-hint-btn');
-    if(btn) btn.style.display = 'block';
+    if(btn){
+      const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+      if(_isAdmin){
+        btn.style.display = 'block';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
   }
   // 非 standalone 也啟動 SW(背景快取資源, 之後開遊戲就快)
   try{ window._lxpsPWA && window._lxpsPWA.boot(); }catch(_){}
 })();
 
 function _showPwaGuide(){
+  // ★ v3.5.0 — 授權檢查:未登入/未授權的玩家無法觸發安裝
+  //   例外:① 管理員 ② 已經由 _tryStartFullDownload 通過驗證的呼叫(會帶 window._pwaGuideAuthBypass=true)
+  try {
+    const _bypass = window._pwaGuideAuthBypass === true;
+    window._pwaGuideAuthBypass = false; // 用完即丟,避免後續其他入口被誤通過
+    if(!_bypass){
+      const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+      if(!_isAdmin){
+        // 沒登入 → 提示先登入
+        if(!window._gUserId){
+          if(typeof _showSimpleToast === 'function'){
+            _showSimpleToast('⚠️ 下載安裝需要先以 Google 帳號登入,並向管理員申請下載權限', 'warn');
+          } else {
+            alert('下載安裝需要先以 Google 帳號登入,並向管理員申請下載權限');
+          }
+          return;
+        }
+        // 已登入但沒授權 → 引導去申請
+        const _perm = window._downloadAuth && window._downloadAuth.currentPermission;
+        const _hasValid = _perm && _perm.status === 'approved' && _perm.expiresAt && _perm.expiresAt > Date.now();
+        if(!_hasValid){
+          if(typeof window._showDownloadRequestModal === 'function'){
+            window._showDownloadRequestModal();
+          } else if(typeof _showSimpleToast === 'function'){
+            _showSimpleToast('⚠️ 請先向管理員申請下載權限,獲准後才能安裝', 'warn');
+          } else {
+            alert('請先向管理員申請下載權限,獲准後才能安裝');
+          }
+          return;
+        }
+      }
+    }
+  } catch(_e){ console.warn('[PWA Guide] 授權檢查例外,放行', _e); }
+
   // ★ v3.4.13(PWA) — 桌機/Android 有 beforeinstallprompt 時直接觸發原生安裝
   try{
     if(window._lxpsPWA && window._lxpsPWA.hasDeferredPrompt && window._lxpsPWA.hasDeferredPrompt()){
