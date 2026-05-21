@@ -45,6 +45,93 @@ const SHELL_URLS = [
 const IS_IOS_LIKE = /iPad|iPhone|iPod|Macintosh/i.test(self.navigator.userAgent || '');
 const CONCURRENT = IS_IOS_LIKE ? 3 : 8;
 
+// ═══════════════════════════════════════════════════════════════════════
+// ★ v3.4.15 — CDN 鏡像改寫 (繞過 GitHub raw 對未認證 IP 的 429 限流)
+// ───────────────────────────────────────────────────────────────────────
+// 背景: GitHub 在 2025/5/8 對 raw.githubusercontent.com 加上未認證限流。
+//       學校所有師生共用同 NAT IP, 一節課 30+ 人同步首裝 PWA 會大量 429 失敗。
+//       解法: 把 GitHub raw URL 改抓 jsDelivr CDN, 但快取 key 仍用原 URL,
+//       這樣 source code 完全不用改, 切換 / 回退都很簡單。
+//
+// 使用方式:
+//   USE_CDN_REWRITE = false (預設)  → 仍直接抓 GitHub, 跟舊版行為一樣
+//   USE_CDN_REWRITE = true          → 自動改抓 jsDelivr
+//
+// 切換步驟 (老師務必先驗證 jsDelivr 對「-」repo 解析正常後再開啟):
+//
+//   【方法 1: 從瀏覽器 console 測試 (不必改 sw.js, 立刻生效, 適合先驗證)】
+//     a) 開遊戲, F12 console 跑:
+//        navigator.serviceWorker.controller.postMessage({
+//          type:'TEST_CDN',
+//          testPath:'manifest.json'
+//        });
+//     b) 等 console 出現 [SW] TEST_CDN 結果。若 ok=true → CDN 可用
+//     c) 跑下行讓本次 session 切換到 CDN:
+//        navigator.serviceWorker.controller.postMessage({type:'SET_CDN_REWRITE', enabled:true});
+//     d) 觀察一陣子, 確認穩定後再走方法 2 永久開啟
+//
+//   【方法 2: 永久開啟 (改 sw.js, 推 GitHub)】
+//     a) 把下面 USE_CDN_REWRITE 改為 true
+//     b) 升 SW_VERSION 一個小版號 (例 v3.4.15 → v3.4.16) + 對應升 index.html 的版號
+//     c) push GitHub → 玩家下次開遊戲自動切換
+//
+//   萬一 jsDelivr 出狀況: 改回 false → 再升版號 → push → 玩家拿到舊邏輯
+// ═══════════════════════════════════════════════════════════════════════
+// 用 let 而非 const, 是為了允許從 client 動態切換 (見上方方法 1)
+let USE_CDN_REWRITE = false; // ★ 老師驗證後改 true
+const GITHUB_USER = 'clarebox123jp-art';
+const GITHUB_REPO = '-';
+const GITHUB_BRANCH = 'main';
+
+// 把 GitHub raw URL 改寫成 jsDelivr URL (若失敗回傳 null, caller 抓原 URL)
+//   支援的格式:
+//     https://github.com/{user}/{repo}/raw/{branch}/{path}
+//     https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}
+//     https://raw.githubusercontent.com/{user}/{repo}/refs/heads/{branch}/{path}
+function rewriteToJsDelivr(originalUrl){
+  if(!USE_CDN_REWRITE) return null;
+  try {
+    var u = new URL(originalUrl);
+    var path = null;
+    if(u.hostname === 'github.com'){
+      // /{user}/{repo}/raw/{branch}/{...path}
+      var m = u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/raw\/([^\/]+)\/(.+)$/);
+      if(m && m[1] === GITHUB_USER && m[2] === GITHUB_REPO) path = m[4];
+    } else if(u.hostname === 'raw.githubusercontent.com'){
+      // /{user}/{repo}/{branch}/{...path}  或  /{user}/{repo}/refs/heads/{branch}/{...path}
+      var m1 = u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/refs\/heads\/([^\/]+)\/(.+)$/);
+      var m2 = m1 ? null : u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/);
+      var m = m1 || m2;
+      if(m && m[1] === GITHUB_USER && m[2] === GITHUB_REPO) path = m[4];
+    }
+    if(!path) return null;
+    // 注意: path 內可能含 URL-encoded 中文檔名, 不要再 encode/decode 一次
+    return 'https://cdn.jsdelivr.net/gh/' + GITHUB_USER + '/' + GITHUB_REPO
+         + '@' + GITHUB_BRANCH + '/' + path;
+  } catch(_) {
+    return null;
+  }
+}
+
+// 抓 URL (有 CDN 鏡像時優先抓鏡像, 失敗 fallback 回原 URL)
+// 注意: 給 caller 的 Response 不會帶 url, caller 仍用原 URL 當 cache key
+function fetchWithCdnFallback(originalUrl, fetchOpts){
+  var cdnUrl = rewriteToJsDelivr(originalUrl);
+  if(!cdnUrl){
+    return fetch(originalUrl, fetchOpts);
+  }
+  return fetch(cdnUrl, fetchOpts).then(function(res){
+    // 200 OK 或 opaque (no-cors 的跨域 response) 都當成功
+    if(res && (res.ok || res.type === 'opaque')) return res;
+    // CDN 回了 4xx/5xx — fallback 回原 URL (jsDelivr 對單字符 repo 不支援的情況)
+    console.warn('[SW] CDN miss, fallback to GitHub:', originalUrl, 'CDN status:', res && res.status);
+    return fetch(originalUrl, fetchOpts);
+  }).catch(function(err){
+    console.warn('[SW] CDN fetch error, fallback to GitHub:', originalUrl, err && err.message);
+    return fetch(originalUrl, fetchOpts);
+  });
+}
+
 // ─────────────────────────────────────────────
 // install: 抓核心 shell
 // ─────────────────────────────────────────────
@@ -133,13 +220,21 @@ function cacheFirstAsset(req){
 
     // 同網域 vs 跨網域處理不同
     var sameOrigin = (new URL(req.url)).origin === self.location.origin;
-    var fetchReq = sameOrigin ? req : new Request(req.url, { mode: 'no-cors', credentials: 'omit' });
+    // ★ v3.4.15 — 跨域請求 (GitHub raw 等) 走 CDN 改寫; 同源照舊
+    var fetchPromise;
+    if(sameOrigin){
+      fetchPromise = fetch(req);
+    } else {
+      var noCorsOpts = { mode: 'no-cors', credentials: 'omit' };
+      fetchPromise = fetchWithCdnFallback(req.url, noCorsOpts);
+    }
 
-    return fetch(fetchReq).then(function(res){
+    return fetchPromise.then(function(res){
       // 即使 opaque 也存(讀不到 status 但能用)
       if(res && (res.ok || res.type === 'opaque')){
         var resClone = res.clone();
         caches.open(ASSET_CACHE).then(function(cache){
+          // 用原始 req 當 cache key, 這樣下次 <img src="github..."> 能 hit
           cache.put(req, resClone).catch(function(){});
         });
       }
@@ -206,6 +301,34 @@ self.addEventListener('message', function(event){
     precacheUrlsInBatches(urls, client, batchId);
     return;
   }
+
+  // ★ v3.4.15 — 動態切換 CDN 改寫 (僅本次 SW lifetime 有效, SW 重啟後恢復 USE_CDN_REWRITE 的初始值)
+  if(data.type === 'SET_CDN_REWRITE'){
+    USE_CDN_REWRITE = !!data.enabled;
+    console.log('[SW] USE_CDN_REWRITE set to', USE_CDN_REWRITE);
+    if(event.source){
+      event.source.postMessage({ type: 'CDN_REWRITE_STATE', enabled: USE_CDN_REWRITE });
+    }
+    return;
+  }
+
+  // ★ v3.4.15 — 測試 jsDelivr CDN 是否可達 (不影響 USE_CDN_REWRITE 狀態)
+  // 傳入 {type:'TEST_CDN', testPath:'manifest.json'} 即可
+  if(data.type === 'TEST_CDN'){
+    var testPath = data.testPath || 'manifest.json';
+    var testUrl = 'https://cdn.jsdelivr.net/gh/' + GITHUB_USER + '/' + GITHUB_REPO
+                + '@' + GITHUB_BRANCH + '/' + testPath;
+    fetch(testUrl, { mode: 'cors', credentials: 'omit' }).then(function(res){
+      var result = { type: 'TEST_CDN_RESULT', url: testUrl, ok: res.ok, status: res.status };
+      console.log('[SW] TEST_CDN', result);
+      if(event.source) event.source.postMessage(result);
+    }).catch(function(err){
+      var result = { type: 'TEST_CDN_RESULT', url: testUrl, ok: false, error: err.message };
+      console.warn('[SW] TEST_CDN error', result);
+      if(event.source) event.source.postMessage(result);
+    });
+    return;
+  }
 });
 
 // 批次下載 — 每批 CONCURRENT 個並行, 跑完一批回報進度
@@ -264,12 +387,17 @@ function precacheUrlsInBatches(urls, client, batchId){
         var batch = toFetch.splice(0, CONCURRENT);
         return Promise.all(batch.map(function(url){
           var sameOrigin = (new URL(url)).origin === self.location.origin;
-          var fetchReq = sameOrigin
-            ? new Request(url, { credentials: 'omit' })
-            : new Request(url, { mode: 'no-cors', credentials: 'omit' });
+          // ★ v3.4.15 — 跨域走 CDN 改寫 (繞 GitHub 429), 同源照舊
+          var fetchPromise;
+          if(sameOrigin){
+            fetchPromise = fetch(new Request(url, { credentials: 'omit' }));
+          } else {
+            fetchPromise = fetchWithCdnFallback(url, { mode: 'no-cors', credentials: 'omit' });
+          }
 
-          return fetch(fetchReq).then(function(res){
+          return fetchPromise.then(function(res){
             if(res && (res.ok || res.type === 'opaque')){
+              // 用原始 url 當 cache key (不論實際是從 GitHub 還是 CDN 抓的)
               return cache.put(url, res).then(function(){
                 done++;
               }).catch(function(err){

@@ -66295,6 +66295,71 @@ window._lxpsPWA = (function(){
   };
 })();
 
+// ═══════════════════════════════════════════════════════════════
+// ★ v3.4.15 — CDN 切換工具 (老師驗證 jsDelivr 是否可用)
+// ───────────────────────────────────────────────────────────────
+// 在 console 跑:
+//   _lxpsTestCdn()           → 測試 jsDelivr 是否能讀到 repo (測 manifest.json)
+//   _lxpsTestCdn('icon-192.png')  → 測試指定檔案
+//   _lxpsToggleCdn(true)     → 本 session 開啟 CDN 改寫 (SW 重啟後恢復)
+//   _lxpsToggleCdn(false)    → 本 session 關閉
+// 確認穩定後再到 sw.js 改 USE_CDN_REWRITE = true 永久開啟。
+// ═══════════════════════════════════════════════════════════════
+window._lxpsTestCdn = function(testPath){
+  if(!('serviceWorker' in navigator) || !navigator.serviceWorker.controller){
+    console.warn('[CDN test] SW 還沒準備好, 請等 PWA 啟動完再試');
+    return;
+  }
+  return new Promise(function(resolve){
+    var handler = function(ev){
+      if(ev.data && ev.data.type === 'TEST_CDN_RESULT'){
+        navigator.serviceWorker.removeEventListener('message', handler);
+        console.log('═══ jsDelivr CDN 測試結果 ═══');
+        console.log('  URL:    ' + ev.data.url);
+        console.log('  ok:     ' + ev.data.ok);
+        console.log('  status: ' + (ev.data.status || ev.data.error || 'n/a'));
+        console.log(ev.data.ok
+          ? '✅ CDN 可用! 接著跑 _lxpsToggleCdn(true) 啟用本 session 改寫。'
+          : '❌ CDN 失敗 — 不建議切換, 繼續用 GitHub raw。');
+        resolve(ev.data);
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', handler);
+    navigator.serviceWorker.controller.postMessage({
+      type: 'TEST_CDN',
+      testPath: testPath || 'manifest.json'
+    });
+    // 10 秒沒回應就放棄
+    setTimeout(function(){
+      navigator.serviceWorker.removeEventListener('message', handler);
+      resolve({ ok: false, timeout: true });
+    }, 10000);
+  });
+};
+
+window._lxpsToggleCdn = function(enabled){
+  if(!('serviceWorker' in navigator) || !navigator.serviceWorker.controller){
+    console.warn('[CDN toggle] SW 還沒準備好');
+    return;
+  }
+  return new Promise(function(resolve){
+    var handler = function(ev){
+      if(ev.data && ev.data.type === 'CDN_REWRITE_STATE'){
+        navigator.serviceWorker.removeEventListener('message', handler);
+        console.log('[CDN] USE_CDN_REWRITE 已切換為 ' + ev.data.enabled);
+        console.log('  注意: 這是「本 session 暫時切換」, SW 重啟或更新後會恢復 sw.js 內預設值');
+        console.log('  穩定後請到 sw.js 改 USE_CDN_REWRITE = true 永久開啟 (再升版號 push)');
+        resolve(ev.data);
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', handler);
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SET_CDN_REWRITE',
+      enabled: !!enabled
+    });
+  });
+};
+
 
 // ── PWA / 加入主畫面 ──
 (function _initPWA(){
@@ -73642,7 +73707,10 @@ window._advSystemReady = true;
   window.scaleGame = scaleGame;
 })();
 
-window._IS_ADMIN_TEST_BUILD = true;
+// ★ v3.4.15 — 正式版必須為 false(true 會讓「未登入訪客」被當成管理員,
+// 曝光所有管理員 UI 給學生,造成混亂)。本機開發測試時可暫時改回 true,
+// 但 commit/push 前一定要改回 false。
+window._IS_ADMIN_TEST_BUILD = false;
 
 window._isAdminUser = function(){
   try {
