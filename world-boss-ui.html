@@ -4472,8 +4472,11 @@
         const _entry = document.getElementById('wb-entry-overlay');
         if(_entry) _entry.style.display = 'none';
         // 清練習用即時傷害條
-        const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
-        if(dmgBar) dmgBar.remove();
+        // ★ v3.5.3 — 同時清新舊兩個 ID
+        const dmgBarOld = document.getElementById('wb-solo-cur-dmg-bar');
+        if(dmgBarOld) dmgBarOld.remove();
+        const dmgBarNew = document.getElementById('wb-cur-dmg-bar');
+        if(dmgBarNew) dmgBarNew.remove();
         // 清 flag
         window._wbInWorldBossMode = false;
         window._wbSoloPracticeMode = false;
@@ -7790,7 +7793,9 @@
       const _ctrb = data.meta && data.meta.contributions;
       if(_myUid && _ctrb && _ctrb[_myUid]){
         const _myDmg = _ctrb[_myUid].dmgDealt || 0;
-        const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
+        // ★ v3.5.3 — 找新 ID (wb-cur-dmg-display) 或舊 ID (wb-solo-cur-dmg-display) 兩種都更新
+        const _dmgEl = document.getElementById('wb-cur-dmg-display')
+                    || document.getElementById('wb-solo-cur-dmg-display');
         if(_dmgEl){
           const _prev = parseInt(_dmgEl.textContent.replace(/,/g, ''), 10) || 0;
           if(_prev !== _myDmg){
@@ -10817,7 +10822,9 @@
         window._wbSoloContrib[uid] = window._wbSoloContrib[uid] || {};
         window._wbSoloContrib[uid][key] = (window._wbSoloContrib[uid][key] || 0) + val;
         if(window._wbSoloPracticeMode && uid === fakePlayers[0].uid && key === 'dmgDealt'){
-          const dmgDisplay = document.getElementById('wb-solo-cur-dmg-display');
+          // ★ v3.5.3 — 找新 ID 或舊 ID 兩種
+          const dmgDisplay = document.getElementById('wb-cur-dmg-display')
+                          || document.getElementById('wb-solo-cur-dmg-display');
           if(dmgDisplay){
             dmgDisplay.textContent = window._wbSoloContrib[uid][key].toLocaleString();
           }
@@ -10862,8 +10869,11 @@
         try{ if(typeof _wbAdvStopBattleSync === 'function') _wbAdvStopBattleSync(); }catch(_){}
         document.getElementById('wb-lobby-overlay').style.display = 'none';
         try{
+          // ★ v3.5.3 — 同時清新舊兩個 dmgBar ID
           const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
           if(_dmgBar) _dmgBar.remove();
+          const _dmgBar2 = document.getElementById('wb-cur-dmg-bar');
+          if(_dmgBar2) _dmgBar2.remove();
           const _emojiBar = document.getElementById('wb-emoji-bar-real');
           if(_emojiBar){ _emojiBar.classList.remove('wb-eb-show'); }
           const _wbOverlay = document.getElementById('wb-adv-battle-overlay');
@@ -10930,40 +10940,9 @@
       const emojiBar = document.getElementById('wb-emoji-bar-real');
       if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
     }catch(_){}
-    if(!document.getElementById('wb-solo-cur-dmg-bar')){
-      const dmgBar = document.createElement('div');
-      dmgBar.id = 'wb-solo-cur-dmg-bar';
-      // ★ FIX 20260517(d) — 移到 #gc 內,貼在順序條左邊(元素環右邊夾層)
-      //   原因:#turn-order-bar 是 #gc 內 absolute,left:50%/top:50%/translate(-50%,-50%) → 畫面正中
-      //         #elem-wheel    是 #gc 內 absolute,left:8px/top:50% width:140px → 左中
-      //         所以「元素環右邊、順序條左邊」的夾層 ≈ left:160px, top:50% translateY(-50%)
-      //   做法:dmgBar 也 append 到 #gc 內,用 absolute 同樣對齊 top:50%,水平錨左邊 160px
-      //         如此 #gc 縮放時 dmgBar 也跟著縮,跟順序條/元素環相對位置始終一致
-      //   ★ FIX 20260517(i) — 字體放大 100%(12→24, 20→40),改一行水平排「📜 本場總傷:836」
-      //   ★ FIX 20260517(l) — 移到元素環「上方」貼左邊緣,避免蓋到順序條
-      //                        元素環 top:50% height:140 → 中心線 - 90px 為 dmgBar bottom
-      //   ★ v3.4.3 — 老師 2026/5/20 回報:仍會蓋到元素相剋環上緣,再往上移 25px
-      //                        從 calc(50% - 95px) → calc(50% - 120px)
-      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 120px);'
-        + 'transform:none;'  /* 不再用 translateY,改直接 top 精確控位 */
-        + 'z-index:6;'
-        + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
-        + 'border-radius:14px;padding:12px 20px;'
-        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
-        + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
-        + 'pointer-events:auto;'
-        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-      dmgBar.innerHTML =
-        '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
-        + '<span id="wb-solo-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
-      // ★ append 到 #gc(若存在),否則退回 body
-      const _gcForDmg = document.getElementById('gc');
-      if(_gcForDmg){
-        _gcForDmg.appendChild(dmgBar);
-      }else{
-        document.body.appendChild(dmgBar);
-      }
-    }
+    // ★ v3.5.3 — 即時傷害條(本場總傷)已改由 _wbBuildAdvBattleOverlay() 內部統一建立,
+    //   原本這裡單獨建一份 wb-solo-cur-dmg-bar 的邏輯移除,避免重複建立。
+    //   連線模式房主/client 跟單人練習現在都走同一個入口建立同一個元件。
 
     // ★ FIX 20260517(b) — BGM 切換從 advStartBattle 前移到後
     //   原因:advStartBattle 內第一件事就是 bgmStop(),會把這裡剛切到的 BGM 立刻關掉
@@ -11095,6 +11074,31 @@
         // iPad(≤1180px,涵蓋 iPad Mini ~ iPad Pro 11"):縮短 40% → 648px 上限
         + '@media (max-width:1180px){'
         +   '#wb-adv-battle-overlay{width:min(648px,calc(100vw - 80px)) !important;}'
+        // ★ v3.5.3 — iPad 版 BOSS 血條精簡(高度從 ~196px 壓到 ~130px)
+        //   原問題:iPad 上「📖 BOSS 能力介紹」按鈕字 20px,加上 BOSS 名字 27px,
+        //           總寬度超過 648px 上限會 flex-wrap 換行,變 3 行標題 + 血條 + 狀態列,
+        //           總高度 ~196px > 定型文起點 top:160px → 狀態列被定型文蓋住。
+        //   修法:① 縮小 padding(16px → 8px)
+        //         ② 縮小 BOSS 名字體(27px → 22px)
+        //         ③ 縮小「BOSS 能力介紹」按鈕字體(20px → 14px)+ padding 9px → 5px
+        //         ④ 縮小回合資訊字體(20px → 14px)
+        //         ⑤ 第一行 flex-wrap:nowrap,逼一行
+        //         ⑥ 縮 margin(10px → 6px、12px → 6px)
+        //         ⑦ HP 條高度(36px → 28px)
+        //         ⑧ 護盾 chip 字小(18px → 13px)
+        +   '#wb-adv-mega-zone{padding:8px 12px !important;}'
+        +   '#wb-adv-mega-zone > div:first-child{margin-bottom:6px !important;gap:8px !important;flex-wrap:nowrap !important;}'
+        +   '#wb-adv-mega-zone > div:first-child > div:first-child{font-size:22px !important;letter-spacing:1px !important;}'
+        +   '#wb-adv-boss-info-btn{padding:5px 10px !important;font-size:14px !important;letter-spacing:0.8px !important;border-radius:8px !important;}'
+        +   '#wb-adv-mega-turn-info{font-size:14px !important;letter-spacing:0.8px !important;white-space:nowrap;}'
+        +   '#wb-adv-mega-zone > div:nth-child(2){height:28px !important;}'
+        +   '#wb-adv-mega-hp-text{font-size:15px !important;letter-spacing:1px !important;}'
+        +   '#wb-adv-mega-shields-row{margin-top:6px !important;gap:5px !important;}'
+        +   '#wb-adv-mega-shields-row > span{font-size:13px !important;letter-spacing:0.8px !important;}'
+        +   '#wb-adv-mega-shields-row .wb-shield-chip{font-size:13px !important;padding:2px 6px !important;}'
+        +   '#wb-adv-mega-shields-row .wb-boss-status-chip{font-size:11px !important;padding:2px 6px !important;}'
+        // ★ v3.5.3 — 定型文起點從 top:160px 改到 top:140px,留更多空間給狀態列 + 縮緊間距
+        +   '#wb-emoji-bar-real.wb-eb-show{top:140px !important;padding:5px 8px !important;gap:4px !important;}'
         + '}';
       document.head.appendChild(_wsty);
     }
@@ -11284,6 +11288,38 @@
       `;
       document.head.appendChild(_hideStyle);
     }
+
+    // ★ v3.5.3 — 本場總傷害小框框(三種模式都要建立)
+    //   原問題:單人練習有顯示「📜 本場總傷:N」,但組隊連線模式進戰場時
+    //           完全沒建立這個元件 → 老師回報「組隊模式又消失了」。
+    //   修法:把建立邏輯抽到 _wbBuildAdvBattleOverlay 結尾(三種入口
+    //         _wbStartSoloPractice / 連線房主 / 連線 client 都會呼叫此函式),
+    //         並改用 wb-cur-dmg-bar 命名(去掉 -solo- 暗示練習專屬)。
+    //         舊 ID 'wb-solo-cur-dmg-bar' 為相容保留,實際用 'wb-cur-dmg-bar'。
+    try{
+      if(!document.getElementById('wb-cur-dmg-bar') && !document.getElementById('wb-solo-cur-dmg-bar')){
+        const _dmgBar = document.createElement('div');
+        _dmgBar.id = 'wb-cur-dmg-bar';
+        _dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 120px);'
+          + 'transform:none;z-index:6;'
+          + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
+          + 'border-radius:14px;padding:12px 20px;'
+          + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
+          + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
+          + 'pointer-events:auto;'
+          + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+        _dmgBar.innerHTML =
+          '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
+          + '<span id="wb-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
+        const _gcForDmg = document.getElementById('gc');
+        if(_gcForDmg){
+          _gcForDmg.appendChild(_dmgBar);
+        } else {
+          document.body.appendChild(_dmgBar);
+        }
+        console.log('[WB-DmgBar v3.5.3] ✅ 本場總傷小框框已建立');
+      }
+    }catch(_eDmgBar){ console.warn('[WB-DmgBar] 建立失敗', _eDmgBar); }
 
     _wbAdvStartBattleSync();
   }
@@ -11593,8 +11629,11 @@
         _eb.style.display = 'none';
       }
     }catch(_){}
-    const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
-    if(dmgBar) dmgBar.remove();
+    // ★ v3.5.3 — 同時清新舊兩個 dmgBar ID
+    const dmgBarOld = document.getElementById('wb-solo-cur-dmg-bar');
+    if(dmgBarOld) dmgBarOld.remove();
+    const dmgBarNew = document.getElementById('wb-cur-dmg-bar');
+    if(dmgBarNew) dmgBarNew.remove();
     // ★ FIX 20260517 — 清掉戰鬥背景的火焰粒子層 + worldboss body class
     try{
       const _fl = document.getElementById('wb-battle-flame-layer');
@@ -11793,8 +11832,11 @@
       if(_wbResultOv) _wbResultOv.remove();
       const _openingQuiz = document.getElementById('wb-boss-opening-quiz');
       if(_openingQuiz) _openingQuiz.remove();
+      // ★ v3.5.3 — 同時清新舊兩個 dmgBar ID
       const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
       if(_dmgBar) _dmgBar.remove();
+      const _dmgBar2 = document.getElementById('wb-cur-dmg-bar');
+      if(_dmgBar2) _dmgBar2.remove();
     }catch(_){}
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
