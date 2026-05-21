@@ -1499,17 +1499,22 @@
   // ★ v3.4.13 — 玩家查詢「我自己的未讀回信」筆數
   //   用於登入後判斷是否要彈出「老師已回覆」置頂通知 + 按鈕發亮
   //   回傳: { count: number, items: [{id, adminReplyTs, content摘要}, ...] }
+  // ★ v3.4.16 — 改用 query+where 在 server 端過濾, 避免 rules 拒讀整個 collection
+  //   原 bug: getDocs(collection) 撈全部 → rules 規定「玩家只能讀自己的回報」→
+  //          其他人的文件 read 被拒 → 整個 query 拋 permission-denied →
+  //          玩家完全看不到任何回信
   window._fbCountMyUnreadBugReplies = async function(uid) {
     if(!uid) {
       uid = (window._fbUser && window._fbUser.uid) || null;
     }
     if(!uid) return { count: 0, items: [] };
     try {
-      const snap = await getDocs(collection(_fbDb, 'bugReports'));
+      // ★ v3.4.16 — 加 where('uid','==',uid) 讓 server 只回符合 rules 的文件
+      const _q = query(collection(_fbDb, 'bugReports'), where('uid', '==', uid));
+      const snap = await getDocs(_q);
       const items = [];
       snap.forEach(d => {
         const v = d.data() || {};
-        if(v.uid !== uid) return;
         // 有 adminReply 但 adminReplyRead 為 false / 未設 → 算未讀
         const _hasReply = !!(v.adminReply && v.adminReply.toString().trim());
         const _isRead = (v.adminReplyRead === true);
@@ -1531,6 +1536,8 @@
 
   // ★ v3.4.6 — 玩家端:查詢「我自己」的 BUG 回報清單(只顯示我的 uid)
   //   用於玩家端「管理員回信」分頁:顯示自己送出過的回報,以及老師的回覆
+  // ★ v3.4.16 — 改用 query+where 在 server 端過濾, 避免 rules 拒讀整個 collection
+  //   (同 _fbCountMyUnreadBugReplies, 原本撈全部會被 rules 擋下)
   window._fbListBugReportsByUid = async function(uid) {
     if(!uid) {
       // 沒登入時改用 _fbUser
@@ -1538,12 +1545,12 @@
     }
     if(!uid) return [];
     try {
-      // Firestore 不支援沒索引的 where + orderBy,改成全撈本機過濾(玩家自己頂多幾十筆)
-      const snap = await getDocs(collection(_fbDb, 'bugReports'));
+      // ★ v3.4.16 — server 端過濾 uid, 避開 rules 拒讀
+      const _q = query(collection(_fbDb, 'bugReports'), where('uid', '==', uid));
+      const snap = await getDocs(_q);
       const list = [];
       snap.forEach(d => {
         const v = d.data() || {};
-        if(v.uid !== uid) return;
         list.push({
           id: v.id || d.id,
           email: v.email || '',
@@ -3125,9 +3132,53 @@
     }
 
     // ─── B. 選角 ────────────────────────────────────────────────
+    // ★ v3.4.16 — 取得「我自己英雄的養成資料」(供 setMyHero 自動帶上)
+    //   修復:房主開戰時建構真人玩家 hero 物件原本沒套技能等級/屬性點/爆發等級
+    //   → 戰鬥中所有玩家技能威力都是 Lv.0
+    //   解法:把這些資料塞進 element JSON 的 'g' 欄位(g = growth),
+    //         房主開戰時讀出來套到 hero._skLv / _burstLvAdv 等
+    function _wbBuildMyGrowth(heroName){
+      if(!heroName) return null;
+      try{
+        const lv = (typeof _heroLevels    !== 'undefined' && _heroLevels    && _heroLevels[heroName])    || 1;
+        const sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[heroName]) || {};
+        const bu = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[heroName]) || 0;
+        const iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]) || {};
+        return {
+          lv: lv,
+          skLv: { s1: (sk.s1 || 0), s2: (sk.s2 || 0) },
+          burst: bu,
+          inv: { hp: (iv.hp || 0), atk: (iv.atk || 0), sp: (iv.sp || 0), spd: (iv.spd || 0) }
+        };
+      }catch(e){
+        console.warn('[WB-Growth] _wbBuildMyGrowth 失敗', e);
+        return null;
+      }
+    }
+
+    // 把 g (養成資料) 注入 element JSON 字串 (若 element 不是 JSON 字串,自動包裝)
+    function _wbInjectGrowthIntoElement(elementStr, growth){
+      if(!growth) return elementStr;
+      let obj = null;
+      if(typeof elementStr === 'string' && elementStr.startsWith('{')){
+        try{ obj = JSON.parse(elementStr); }catch(_){ obj = null; }
+      }
+      if(!obj){
+        // element 是純字串 (舊格式) 或 null → 包裝成 JSON
+        const e = (typeof elementStr === 'string' && elementStr) ? elementStr : null;
+        obj = { e: e, es: e ? [e] : [], t: [] };
+      }
+      obj.g = growth;
+      return JSON.stringify(obj);
+    }
+
     async function setMyHero(heroName, element){
       if(!WB.roomId) return false;
       try{
+        // ★ v3.4.16 — 自動把自己的養成資料 (技能等級/屬性點/爆發等級/英雄等級) 塞進 element JSON
+        //   讓房主開戰時建構此玩家的 hero 物件能套上正確的技能威力
+        const _growth = _wbBuildMyGrowth(heroName);
+        const _elementWithGrowth = _wbInjectGrowthIntoElement(element, _growth);
         await runTransaction(_fbDb, async (tx) => {
           const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);
           const sn = await tx.get(ref);
@@ -3137,7 +3188,7 @@
           const me = players.find(p => p.uid === window._gUserId);
           if(!me) throw new Error('NOT_IN_ROOM');
           me.heroName = heroName;
-          me.element = element || null;
+          me.element = _elementWithGrowth || null;
           me.ready = false;  // 改角要重新按準備
           tx.update(ref, { players: players });
         });
@@ -33256,6 +33307,23 @@ function _gpIsAnyLegitModalOpen(){
         if(_phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb){
           continue;
         }
+        // ★ v3.4.18 — 殭屍 _miniQuizOnDone 檢測:
+        //   即使 _miniQuizOnDone 非空,若已掛超過 12 秒且 phase 已非 asking,
+        //   = 救援過程中 onDone 被重設但題目從未真正出現 → 殭屍 callback,清掉算孤兒。
+        //   12 秒留出題目正常作答時間,真正在答題的玩家不會被誤殺。
+        if(!_noMiniCb && _miniPhaseIdle){
+          const _setAt = window._miniQuizOnDoneSetAt || 0;
+          if(_setAt > 0 && (Date.now() - _setAt) > 12000){
+            console.warn('[_gpIsAnyLegitModalOpen] 偵測殭屍 _miniQuizOnDone(掛超 '
+              + Math.round((Date.now()-_setAt)/1000) + ' 秒且 mini phase=idle),清掉並視為孤兒');
+            try{
+              window._miniQuizOnDone = null;
+              window._miniQuizCurrentQ = null;
+              window._miniQuizOnDoneSetAt = 0;
+            }catch(_){}
+            continue;
+          }
+        }
       }catch(_){}
     }
     return true;
@@ -37843,10 +37911,49 @@ document.addEventListener('visibilitychange', function(){
           if(!_el) continue;
           const _shown = (_el.classList && _el.classList.contains('show'))
                         || (_el.style && _el.style.display && _el.style.display !== 'none' && _el.offsetParent !== null);
-          if(_shown){
-            console.log('[iPad 回前台 nudge] 偵測到合法 overlay 顯示中(' + _id + '),不介入');
-            return;
+          if(!_shown) continue;
+          // ★ v3.4.18 — 修 BUG 1:玩家 11:46 卡死報告
+          //   症狀:救援後 quiz overlay 仍 .show 但 _advQuizPhase=idle、_advQuizResolveCb=null、_gamePaused=true,
+          //         iPad nudge 看到 overlay .show 直接 return,根本不介入 → 玩家卡死無解。
+          //   修法:與 _gpIsAnyLegitModalOpen (line 33287) 的孤兒檢測對齊 —
+          //         adv-quiz-overlay 若 phase=idle 且兩種 cb 都沒在跑 = 孤兒 overlay,
+          //         不算合法 modal,nudge 應該介入救援。
+          if(_id === 'adv-quiz-overlay'){
+            try{
+              const _phaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle' || !_advQuizPhase);
+              const _miniPhaseIdle = (typeof window._miniQuizPhase === 'undefined'
+                                      || window._miniQuizPhase === null
+                                      || window._miniQuizPhase === 'idle');
+              const _noBossCb = !(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+              const _noMiniCb = !(typeof window._miniQuizOnDone === 'function');
+              if(_phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb){
+                console.warn('[iPad 回前台 nudge] adv-quiz-overlay 顯示中但 phase=idle 兩 cb 都空 = 孤兒 overlay,強制關閉並繼續救援');
+                try{
+                  _el.classList.remove('show');
+                  _el.style.display = 'none';
+                }catch(_){}
+                continue;  // 視為孤兒,不算 legit,跳過此 id 繼續檢查其他 modal
+              }
+              // ★ v3.4.18 — 殭屍 _miniQuizOnDone 檢測(與 _gpIsAnyLegitModalOpen 對齊)
+              if(!_noMiniCb && _miniPhaseIdle){
+                const _setAt = window._miniQuizOnDoneSetAt || 0;
+                if(_setAt > 0 && (Date.now() - _setAt) > 12000){
+                  console.warn('[iPad 回前台 nudge] 偵測殭屍 _miniQuizOnDone(掛超 '
+                    + Math.round((Date.now()-_setAt)/1000) + ' 秒且 mini phase=idle),清掉並繼續救援');
+                  try{
+                    window._miniQuizOnDone = null;
+                    window._miniQuizCurrentQ = null;
+                    window._miniQuizOnDoneSetAt = 0;
+                    _el.classList.remove('show');
+                    _el.style.display = 'none';
+                  }catch(_){}
+                  continue;
+                }
+              }
+            }catch(_){}
           }
+          console.log('[iPad 回前台 nudge] 偵測到合法 overlay 顯示中(' + _id + '),不介入');
+          return;
         }
 
         const _actor = G.activeChar;
@@ -42587,6 +42694,35 @@ window._wbSetupAdvForBattle = function(opts){
     // 設定 G.p1 / G.p2
     if(opts.p1 && Array.isArray(opts.p1)) G.p1 = opts.p1;
     if(opts.p2 && Array.isArray(opts.p2)) G.p2 = opts.p2;
+    // ═══════════════════════════════════════════════════════════════
+    // ★ v3.4.17 — 二重保險:日本三大妖怪 (大天狗/酒吞童子/玉藻前) 在 p1
+    //   若被誤設成 BOSS 版能力 (hp>=100), 強制套回 JP_BOSS_HERO_STATS 英雄版
+    // ───────────────────────────────────────────────────────────────
+    // 修復:世界 BOSS 戰建構這 3 隻時, 雖然 newHero('p1') 理論上會套英雄版,
+    //       但因獨立入口 (_wbSetupAdvForBattle) 跳過主程式的二重保險區段,
+    //       一旦某個路徑漏套 (例如 wireToHero 反序列化用 wire 值覆蓋),
+    //       這 3 隻就會帶著 BOSS 級數值進戰場。
+    //   行為與主程式 13727 行的二重保險完全一致。
+    // ═══════════════════════════════════════════════════════════════
+    try{
+      if(typeof JP_BOSS_HERO_STATS !== 'undefined' && Array.isArray(G.p1)){
+        G.p1.forEach(h => {
+          if(!h) return;
+          const _ovr = JP_BOSS_HERO_STATS[h.name];
+          if(_ovr && h.hp >= 100){
+            console.warn('[WB G.p1 二重保險] '+h.name+' 偵測到 BOSS 版 hp='+h.hp+', atk='+h.atk+', sp='+h.sp+', spd='+h.spd+' → 強制套英雄版 hp='+_ovr.hp+', atk='+_ovr.atk+', sp='+_ovr.sp+', spd='+_ovr.spd);
+            h.hp  = _ovr.hp;
+            h.atk = _ovr.atk;
+            h.sp  = _ovr.sp;
+            h.spd = _ovr.spd;
+            // curHp 若已是滿血則一起改, 否則保留 (例如雲端殘血同步)
+            if(typeof h.curHp !== 'number' || h.curHp <= 0 || h.curHp > _ovr.hp){
+              h.curHp = _ovr.hp;
+            }
+          }
+        });
+      }
+    }catch(e){ console.error('[WB G.p1 二重保險] 失敗', e); }
     try{
       if(typeof _applyTaiwanTreasureToHero === 'function' && Array.isArray(G.p1)){
         G.p1.forEach(h => {
@@ -44098,6 +44234,31 @@ function exitAdventureMode(){
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = true;
+    // ★ v3.4.18 — 修 BUG:從世界 BOSS 戰中途退出後,_wbClientMode/_wbConnectedClientMode/_wbConnectedHostMode
+    //   殘留 true,導致玩家後續進入「日本關小怪戰」時,selMove/doRest/execBurst 仍被 client patch 攔截,
+    //   一直印 [WB-Client v6] 樂觀:actor 不存在或已行動,跳過 — 玩家點按鈕完全沒反應。
+    //   原 reset 只在 _wbHandleBattleEnd 結算路徑(world-boss.js line ~2872),
+    //   中途透過 _wbBackToStageSelect/_wbExit/exitAdventureMode 退出時走不到,故在此補清。
+    //   也清掉 _wbClientForceCheckWin / _wbClientOptimistic / _wbClientAnimEndTs 等附屬旗標。
+    try{
+      const _wasClientMode = !!window._wbClientMode;
+      const _wasHostMode = !!window._wbConnectedHostMode;
+      window._wbClientMode = false;
+      window._wbConnectedClientMode = false;
+      window._wbConnectedHostMode = false;
+      window._wbClientForceCheckWin = false;
+      window._wbClientOptimistic = false;
+      window._wbClientAnimEndTs = 0;
+      window._wbClientFirstBattleUpdate = true;
+      window._wbClientLastVersion = 0;
+      if(window._wbClientPendingApplyTimer){
+        try{ clearTimeout(window._wbClientPendingApplyTimer); }catch(_){}
+        window._wbClientPendingApplyTimer = null;
+      }
+      if(_wasClientMode || _wasHostMode){
+        console.log('[exitAdventureMode] ✅ 清掉殘留的世界 BOSS 連線旗標 (clientMode=' + _wasClientMode + ', hostMode=' + _wasHostMode + ')');
+      }
+    }catch(_eWbFlags){ console.warn('[exitAdventureMode] 清世界 BOSS 連線旗標失敗', _eWbFlags); }
     // 清答題相關狀態 (避免下次重進時殘留答對次數)
     try{
       window._wbQuizState = {};
@@ -49982,6 +50143,7 @@ function _startQuizVisibilityCheck(reason){
           const _cb = window._miniQuizOnDone;
           window._miniQuizOnDone = null;
           window._miniQuizCurrentQ = null;
+          window._miniQuizOnDoneSetAt = 0;  // ★ v3.4.18 — 同步清時間戳
           // ★ v3.4.13 — 救援時傳 {correct:false},與寵物事件路徑相容
           //   (寵物事件 onDone 簽名是 function(res){ ok = res.correct; },沒參數會走錯)
           try{ _cb({correct:false}); }catch(_eCb){ console.error('[題目可見性] _miniQuizOnDone 拋例外', _eCb); }
@@ -68631,6 +68793,9 @@ function _advMiniQuizAsk(onDone) {
   window._miniQuizOnDone = onDone;
   window._miniQuizCurrentQ = q;
   window._miniQuizPhase = 'asking';
+  // ★ v3.4.18 — 記錄 onDone 設定時間戳,讓 _gpIsAnyLegitModalOpen 與 iPad nudge 能判斷
+  //   「onDone 已掛超過 X 秒但 overlay 沒 .show」= 殭屍 callback,該救援
+  window._miniQuizOnDoneSetAt = Date.now();
 
   const qOv = document.getElementById('adv-quiz-overlay');
   if(!qOv){ if(onDone) onDone(); return; }
@@ -68951,6 +69116,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
+      window._miniQuizOnDoneSetAt = 0;  // ★ v3.4.18 — 同步清時間戳
       // ★ v1.0.20260421.3000c — 寵物事件答題模式：跳過答對獎勵視窗，直接進寵物對白
       if(window._tgPetQuizMode){
         window._tgPetQuizMode = false;
@@ -69001,6 +69167,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       window._miniQuizOnDone = null;
       window._miniQuizCurrentQ = null;
       window._miniQuizPhase = null;
+      window._miniQuizOnDoneSetAt = 0;  // ★ v3.4.18 — 同步清時間戳
       // ★ v1.0.20260421.3000c — 答錯時也要清寵物事件旗標
       if(window._tgPetQuizMode) window._tgPetQuizMode = false;
       if(onDone) onDone({correct:false});
@@ -74028,7 +74195,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.15';
+window._GAME_LOADED_VERSION = 'v3.4.18';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');

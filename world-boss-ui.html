@@ -1528,6 +1528,10 @@
     box-shadow:0 0 48px rgba(255,140,40,0.45);
     position:relative;
     display:flex;flex-direction:column;
+    /* ★ FIX 20260521(a) — 內容超出時可以捲, 配合 .wb-tc-start-zone 的 sticky 釘底,
+       即使內容很長也保證開戰按鈕看得到、按得到 */
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .wb-tc-title{
     font-size:44px;font-weight:900;letter-spacing:3px;
@@ -1609,7 +1613,9 @@
   /* 4 卡橫排:用 flex 讓他們等寬不會超出 */
   .wb-tc-slots{
     display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
-    flex:1;min-height:0;overflow:hidden;
+    flex:1;min-height:0;
+    /* ★ FIX 20260521(d) — 不再 hidden, 讓內層 .wb-tc-slot 各自捲動 */
+    overflow:visible;
     margin-bottom:5px;
   }
   .wb-tc-slot{
@@ -1619,6 +1625,21 @@
     display:flex;flex-direction:column;gap:3px;
     transition:all 0.25s;position:relative;
     min-height:0;
+    /* ★ FIX 20260521(d) — 每個槽位獨立可捲動, 不管裡面內容多長都能滑到底部按鈕 */
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    /* 隱藏 scrollbar 視覺但保留功能(iPad Safari) */
+    scrollbar-width:thin;
+  }
+  .wb-tc-slot::-webkit-scrollbar{
+    width:4px;
+  }
+  .wb-tc-slot::-webkit-scrollbar-thumb{
+    background:rgba(168,132,255,0.4);
+    border-radius:2px;
+  }
+  .wb-tc-slot::-webkit-scrollbar-track{
+    background:transparent;
   }
   .wb-tc-slot.me{border-color:#ffe066;box-shadow:0 0 16px rgba(255,224,102,0.4);}
   .wb-tc-slot.ready{
@@ -1682,6 +1703,10 @@
     border-color:#ffaa44;
     box-shadow:0 0 20px rgba(255,170,68,0.5);
   }
+  /* ★ FIX 20260521(c) — 空槽未指派狀態:讓內容垂直置中, 按鈕在卡片視覺中央 */
+  .wb-tc-slot.wb-tc-slot-empty-initial{
+    justify-content:center;
+  }
 
   /* ★ FIX 20260517(r) — 隊伍確認頁右上角:房號 + 邀請好友 + 離開 */
   .wb-tc-topright{
@@ -1740,46 +1765,86 @@
   .wb-tc-leave-btn:hover{background:rgba(255,80,80,0.35);}
 
   /* ★ FIX 20260517(r) — 空槽兩個動作按鈕(邀請隊友 / 房主指派) */
+  /* ★ FIX 20260521(c) — 按鈕從底部移到槽位中央, 避免 iPad 按到下方被擋的問題.
+     原本 margin-top:auto 推到卡片底部, 學生反應 iPad 按不到. 改成在 flex 中央,
+     並加大 padding/字, 觸控更友善. */
   .wb-tc-slot-actions{
-    display:flex;flex-direction:column;gap:10px;width:100%;
-    margin-top:auto;padding:0 8px 4px;
+    display:flex;flex-direction:column;gap:14px;width:100%;
+    padding:14px 10px 8px;
+    /* 不再用 margin-top:auto 推底 — 直接在中央區塊 */
   }
   .wb-tc-slot-action-btn{
-    padding:10px 8px;font-size:22px;font-weight:800;letter-spacing:1px;
-    border-radius:9px;cursor:pointer;font-family:inherit;
-    transition:all 0.18s;line-height:1.2;
-    border:2px solid;
+    padding:18px 10px;font-size:24px;font-weight:800;letter-spacing:1.2px;
+    border-radius:11px;cursor:pointer;font-family:inherit;
+    transition:all 0.18s;line-height:1.25;
+    border:2.5px solid;
+    /* iPad 觸控最低高度 */
+    min-height:64px;
+    /* 點按反饋 */
+    user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
   }
   .wb-tc-slot-action-btn.invite{
-    background:linear-gradient(135deg,rgba(93,202,165,0.22),rgba(58,165,128,0.12));
-    border-color:#5dcaa5;color:#9fe8c8;
+    background:linear-gradient(135deg,rgba(93,202,165,0.28),rgba(58,165,128,0.16));
+    border-color:#5dcaa5;color:#cfeedd;
+    box-shadow:0 0 10px rgba(93,202,165,0.25);
   }
   .wb-tc-slot-action-btn.invite:hover{
     background:linear-gradient(135deg,rgba(93,202,165,0.45),rgba(58,165,128,0.3));
     color:#fff;transform:translateY(-1px);
+    box-shadow:0 4px 16px rgba(93,202,165,0.5);
+  }
+  .wb-tc-slot-action-btn.invite:active{
+    transform:translateY(1px);
   }
   .wb-tc-slot-action-btn.assign{
-    background:linear-gradient(135deg,rgba(255,170,68,0.22),rgba(204,120,40,0.12));
-    border-color:#ffaa44;color:#ffd699;
+    background:linear-gradient(135deg,rgba(255,170,68,0.28),rgba(204,120,40,0.16));
+    border-color:#ffaa44;color:#ffe2b2;
+    box-shadow:0 0 10px rgba(255,170,68,0.25);
   }
   .wb-tc-slot-action-btn.assign:hover{
     background:linear-gradient(135deg,rgba(255,170,68,0.45),rgba(204,120,40,0.3));
     color:#fff;transform:translateY(-1px);
+    box-shadow:0 4px 16px rgba(255,170,68,0.5);
+  }
+  .wb-tc-slot-action-btn.assign:active{
+    transform:translateY(1px);
   }
   .wb-tc-slot-action-btn:disabled{
     opacity:0.4;cursor:not-allowed;
     background:rgba(60,60,60,0.3);color:#888;border-color:#666;
+    box-shadow:none;
+  }
+  .wb-tc-slot-action-btn:disabled:hover{
+    transform:none;box-shadow:none;
   }
 
   /* 空槽預設狀態(未選動作前的提示) */
+  /* ★ FIX 20260521(c) — 提示文字縮一點, 把垂直空間讓給按鈕 */
   .wb-tc-slot-empty-hint{
-    flex:1;display:flex;flex-direction:column;align-items:center;
-    justify-content:center;gap:12px;
-    color:#888;font-size:22px;letter-spacing:1.5px;
-    padding:18px 8px;
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:6px;
+    color:#888;font-size:17px;letter-spacing:1px;line-height:1.4;
+    padding:6px 8px 0;
+    flex-shrink:0;  /* 不要佔太多空間, 把空間留給按鈕 */
   }
   .wb-tc-slot-empty-hint .wb-tc-empty-icon{
-    font-size:56px;opacity:0.5;
+    font-size:38px;opacity:0.5;
+  }
+  /* iPad (≤1180px) 空槽元素再壓縮一些 */
+  @media (max-width:1180px){
+    .wb-tc-slot-empty-hint{
+      font-size:14px;gap:4px;padding:4px 6px 0;
+    }
+    .wb-tc-slot-empty-hint .wb-tc-empty-icon{
+      font-size:28px;
+    }
+    .wb-tc-slot-actions{
+      gap:10px;padding:10px 8px 6px;
+    }
+    .wb-tc-slot-action-btn{
+      padding:14px 8px;font-size:18px;min-height:54px;letter-spacing:0.8px;
+      border-radius:9px;
+    }
   }
 
 
@@ -2088,6 +2153,13 @@
   /* 底部:返回 + 覆蓋率 + 開戰 */
   .wb-tc-start-zone{
     display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;
+    /* ★ FIX 20260521(a) — 開戰按鈕區永遠釘在卡片底部,避免被定型文擠出視窗外 */
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(180deg,rgba(8,10,24,0) 0%,rgba(8,10,24,0.88) 30%,rgba(8,10,24,0.95) 100%);
+    padding:8px 0 4px;
+    margin-top:4px;
+    z-index:5;
   }
   .wb-tc-coverage{
     flex:1;min-width:200px;padding:5px 10px;
@@ -2119,6 +2191,55 @@
     border-radius:7px;cursor:pointer;font-family:inherit;
   }
   .wb-tc-back-btn:hover{background:rgba(168,132,255,0.2);}
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* ★ FIX 20260521(a) — iPad (≤1180px) 隊伍確認頁專屬縮小規則         */
+  /* 原問題: 定型文佔太大蓋住「房主代理」按鈕、開戰按鈕被擠到視窗外    */
+  /* 解法: 定型文字/padding 縮小一半, 開戰區仍 sticky 釘底兜底       */
+  /* ════════════════════════════════════════════════════════════════ */
+  @media (max-width:1180px){
+    .wb-tc-quickmsg-zone{
+      padding:6px 10px 8px;
+      margin-bottom:4px;
+    }
+    .wb-tc-quickmsg-header{
+      margin-bottom:4px;
+    }
+    .wb-tc-quickmsg-title{
+      font-size:18px;letter-spacing:1px;
+    }
+    .wb-tc-quickmsg-cd{
+      font-size:14px;letter-spacing:0.5px;padding:2px 8px;
+    }
+    .wb-tc-quickmsg-grid{
+      gap:5px;
+      grid-template-columns:repeat(6, 1fr);  /* iPad 横放夠寬, 維持 6 欄 */
+    }
+    .wb-tc-qmsg-btn{
+      padding:6px 4px;font-size:15px;letter-spacing:0.5px;
+      border-radius:7px;border-width:1.5px;
+    }
+    /* 開戰區的覆蓋率訊息也縮小 */
+    .wb-tc-coverage{
+      font-size:17px;padding:4px 8px;min-width:160px;
+    }
+    .wb-tc-start-btn{
+      padding:6px 16px;font-size:22px;letter-spacing:2px;
+    }
+    .wb-tc-back-btn{
+      padding:5px 10px;font-size:16px;
+    }
+    /* 卡片整體 padding 縮小, 多擠一點空間 */
+    .wb-tc-card{
+      padding:4px 10px 6px;
+    }
+  }
+  /* 更窄(< 900px)— 定型文壓更小 */
+  @media (max-width:900px){
+    .wb-tc-quickmsg-title{ font-size:16px; }
+    .wb-tc-qmsg-btn{ font-size:13px;padding:5px 3px; }
+    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(4, 1fr); }
+  }
 
   /* ════════════════════════════════════════════════════════════════ */
   /* 共用:替換英雄/至寶 modal */
@@ -4385,12 +4506,16 @@
   ];
 
   // 解析 player.element 欄位:
-  //   - 純字串 'fire' → 舊資料,當作 { e:'fire', es:['fire'], t:[] }
+  //   - 純字串 'fire' → 舊資料,當作 { e:'fire', es:['fire'], t:[], g:null }
   //   - JSON       → 解析後回傳
+  // ★ v3.4.16 — 新增 g 欄位 (growth): 玩家的英雄養成資料
+  //   g = { lv: 英雄等級, skLv: {s1,s2}, burst: 爆發等級, inv: {hp,atk,sp,spd} }
+  //   修復:房主開戰時建構真人玩家的 hero 物件原本沒套用該玩家的技能等級 / 屬性點 / 爆發等級
+  //   → 戰鬥中所有玩家技能威力都是 Lv.0,房主代理的角色也同樣是 0
   function _wbTcParsePlayerExt(playerOrElemStr){
     const raw = (typeof playerOrElemStr === 'string') ? playerOrElemStr
               : (playerOrElemStr && playerOrElemStr.element) || '';
-    if(!raw) return { e:null, es:[], t:[] };
+    if(!raw) return { e:null, es:[], t:[], g:null };
     if(raw.startsWith('{')){
       try{
         const obj = JSON.parse(raw);
@@ -4398,11 +4523,12 @@
           e:  obj.e  || null,
           es: Array.isArray(obj.es) ? obj.es : (obj.e ? [obj.e] : []),
           t:  Array.isArray(obj.t)  ? obj.t  : [],
+          g:  (obj.g && typeof obj.g === 'object') ? obj.g : null,
         };
       }catch(_){}
     }
     // 舊資料:單純元素字串
-    return { e: raw, es: [raw], t: [] };
+    return { e: raw, es: [raw], t: [], g: null };
   }
 
   // 包裝成 JSON 字串(供 setMyHero 用)
@@ -4411,6 +4537,7 @@
       e:  ext.es && ext.es[0] || ext.e || null,  // 第一個元素當主元素(舊邏輯相容)
       es: ext.es || [],
       t:  ext.t  || [],
+      g:  ext.g  || null,  // ★ v3.4.16 — 個人養成資料
     });
   }
 
@@ -5158,7 +5285,9 @@
             : `<button class="wb-tc-slot-action-btn invite" onclick="_wbUiOpenInviteFriends()">
                 📧 邀請隊友
               </button>`;
-          html += `<div class="wb-tc-slot empty wb-tc-slot-npc">
+          // ★ FIX 20260521(c) — 加 wb-tc-slot-empty-initial class, 讓 CSS 把
+          //   提示文字 + 按鈕整組垂直置中, 按鈕位於卡片視覺中央
+          html += `<div class="wb-tc-slot empty wb-tc-slot-npc wb-tc-slot-empty-initial">
             <div class="wb-tc-slot-head">
               <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
               <span class="wb-tc-slot-player-name" style="color:#888;">👤 待加入</span>
@@ -5179,7 +5308,7 @@
           </div>`;
         }else{
           // 非房主看到的空槽:只顯示等待提示
-          html += `<div class="wb-tc-slot empty wb-tc-slot-npc">
+          html += `<div class="wb-tc-slot empty wb-tc-slot-npc wb-tc-slot-empty-initial">
             <div class="wb-tc-slot-head">
               <span class="wb-tc-slot-num-lbl">槽位 ${i+1}</span>
               <span class="wb-tc-slot-player-name" style="color:#888;">👤 待加入</span>
@@ -6507,6 +6636,9 @@
 
     // ★ FIX 20260519(v9) — 為空槽挑一個合適的元素 + 英雄
     //   優先補缺的元素;若都補齊就用房主元素;英雄優先不重複
+    // ★ FIX 20260521(b) — 解鎖英雄不夠時 (例如剛開始遊戲的玩家只解 1 隻),
+    //   不要 fallback 到房主英雄 → 4 槽重複很醜。改成從 HERO_DB 撈備用
+    //   非 BOSS / 非高 HP 英雄補上,讓自動補位陣容看起來像 4 隻不同角色。
     const _pickAutoNpcLoadout = function(slotIdx){
       // 元素:先用 missing 池,空了再用房主的
       let _elem = null;
@@ -6527,12 +6659,41 @@
           if(_candidates.length > 0){
             // 取陣列前面的(可能是按等級排好的)
             _heroName = _candidates[0];
-          }else{
-            // 全部都用過了 → 退回用房主英雄(這時 4 個槽就會重複,但屬性還是齊的)
-            _heroName = _hostHeroName;
+          }
+        }
+        // ★ FIX 20260521(b) — 已解鎖英雄不夠 → 從 HERO_DB 全表撈備用,避免重複
+        //   (這個 fallback 確保新玩家、解鎖少時仍能組出 4 隻不同英雄)
+        // ★ v3.4.17 — 自動補位時不抽 SUMMON_RARES (三大妖怪+巫女),
+        //   原因:(1) 大部分玩家還沒解鎖, 自動填上反而怪
+        //         (2) 三大妖怪在 HERO_DB 是 BOSS 版高 HP, 雖然 newHero('p1') 會套
+        //             JP_BOSS_HERO_STATS 改成英雄版, 但若任何路徑漏套就會出現 BOSS 級 HP
+        //   要選三大妖怪請走「房主指派」明確選擇, 不要自動.
+        if(!_heroName && typeof HERO_DB !== 'undefined'){
+          const _SUMMON_RARES = (typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES))
+            ? SUMMON_RARE_HEROES : ['大天狗','玉藻前','酒吞童子','巫女'];
+          const _isBoss = function(n){
+            if(typeof BOSS_NAMES === 'undefined' || !BOSS_NAMES.includes(n)) return false;
+            return true;  // 自動補位:BOSS_NAMES 內全擋,不豁免 SUMMON_RARES
+          };
+          const _backupList = Object.keys(HERO_DB).filter(n => {
+            if(_isBoss(n)) return false;
+            const _h = HERO_DB[n];
+            if(!_h || _h.isBoss || _h.isWorldBoss) return false;
+            // 自動補位:HP>=1000 全擋 (不豁免 SUMMON_RARES, 避免抓到 BOSS 級數值)
+            if(_h.hp != null && _h.hp >= 1000) return false;
+            // 三大妖怪+巫女也排除 (自動補位不抽)
+            if(_SUMMON_RARES.indexOf(n) >= 0) return false;
+            // 不能跟已用過的重複
+            if(_usedHeroes.has(n)) return false;
+            return true;
+          });
+          if(_backupList.length > 0){
+            _heroName = _backupList[0];
+            console.log('[WB-AutoNpc] 解鎖英雄不夠, 從 HERO_DB 備用清單抽:', _heroName);
           }
         }
       }catch(_){}
+      // 最終 fallback:真的撈不到 (HERO_DB 都沒了極端情境) 才用房主英雄
       if(!_heroName) _heroName = _hostHeroName;
       _usedHeroes.add(_heroName);
       return { heroName: _heroName, element: _elem };
@@ -6595,6 +6756,79 @@
             h._wbTreasureIds = _ext.t.slice(0, 2);
           }
         }catch(_){}
+      }
+      // ═══════════════════════════════════════════════════════════════
+      // ★ v3.4.16 — 套用該槽位「該英雄主人」的養成資料
+      // ───────────────────────────────────────────────────────────────
+      // 修復 bug: 戰鬥中所有玩家的技能等級 / 屬性投資 / 爆發等級 / 英雄等級
+      //          原本都是 0 (因為 newHero 只給基本值, 沒套個人養成)
+      // 來源:
+      //   - 真人玩家槽位: 從 p.element JSON 的 'g' 欄位 (該玩家自己 setMyHero 時帶上)
+      //   - 房主代理槽位 (_wbIsHostNpc=true): 用房主本機的 _heroSkillLevels 等
+      //     (因為實際操控者是房主, 用房主的數據才合理)
+      //
+      // 套到 hero 物件的這些欄位:
+      //   - h.hp / h.atk / h.sp / h.spd: 加上 inv (屬性投資) 並重新給 curHp
+      //   - h._skLv = { s1, s2 }: 主程式 execSkill 讀這個算技能威力
+      //   - h._burstLvAdv = N: _runBurst 讀這個算爆發強度
+      //   - 等級 HP 加成: 每級 +2% (跟主程式冒險模式 _applyAdvLevelHpBonus 一致)
+      // ═══════════════════════════════════════════════════════════════
+      try{
+        let _growth = null;
+        if(p && p.element){
+          // 真人玩家:從 firestore 取
+          const _ext = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+          if(_ext && _ext.g) _growth = _ext.g;
+        }
+        if(!_growth && h._wbIsHostNpc){
+          // 房主代理槽位 (空槽 / 已離線玩家) → 用房主本機的養成資料
+          // (因為 _wbBuildMyGrowth 在 index.html 主程式 scope, 這裡用全域變數兜底)
+          try{
+            const _lv = (typeof _heroLevels    !== 'undefined' && _heroLevels    && _heroLevels[heroName])    || 1;
+            const _sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[heroName]) || {};
+            const _bu = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[heroName]) || 0;
+            const _iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]) || {};
+            _growth = {
+              lv: _lv,
+              skLv: { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
+              burst: _bu,
+              inv: { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
+            };
+          }catch(_eFallback){}
+        }
+        if(_growth){
+          // 1. 屬性投資 → 加到基礎屬性
+          const _inv = _growth.inv || {};
+          if(_inv.hp)  { h.hp  += _inv.hp;  h.curHp = h.hp; }
+          if(_inv.atk) { h.atk += _inv.atk; }
+          if(_inv.sp)  { h.sp  += _inv.sp;  }
+          if(_inv.spd) { h.spd += _inv.spd; }
+          // 2. 等級 HP 加成 (每級 +2%, 跟冒險模式一致)
+          const _lv = _growth.lv || 1;
+          if(_lv > 1){
+            const _bonusHp = Math.round(h.hp * (_lv - 1) * 0.02);
+            if(_bonusHp > 0){
+              h.hp += _bonusHp;
+              h.curHp = h.hp;
+            }
+          }
+          // 3. 技能等級 (execSkill 讀 h._skLv)
+          h._skLv = {
+            s1: (_growth.skLv && _growth.skLv.s1) || 0,
+            s2: (_growth.skLv && _growth.skLv.s2) || 0
+          };
+          // 4. 爆發等級 (_runBurst 讀 h._burstLvAdv)
+          h._burstLvAdv = _growth.burst || 0;
+          // 5. 標記英雄等級 (給其他系統參考)
+          h._advLv = _lv;
+          console.log('[WB-Growth] 槽', i, heroName, 'Lv.' + _lv,
+            's1+' + h._skLv.s1, 's2+' + h._skLv.s2, '爆發+' + h._burstLvAdv,
+            'inv=', _inv, '來源=' + (p ? 'player' : 'host代理'));
+        } else {
+          console.log('[WB-Growth] 槽', i, heroName, '無養成資料 (新玩家或舊版客戶端)');
+        }
+      }catch(eGrowth){
+        console.warn('[WB-Growth] 套用養成資料失敗 (槽 ' + i + ')', eGrowth);
       }
       p1.push(h);
       console.log('[WB-Host v6] 槽', i, '→', heroName, '元素=', assignedElem || '(無)',
