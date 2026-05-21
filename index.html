@@ -29997,7 +29997,33 @@ function _realAiAct(a){
         if(!a || a.curHp <= 0) return;
         if(a.acted || G.activeChar !== a) return;  // 已正常結束行動
         const _qov = document.getElementById('adv-quiz-overlay');
-        if(_qov && _qov.classList.contains('show')) return;   // (a)
+        // ★ v3.4.19 — 修 BUG:AI watchdog (3 秒) 看到 quiz overlay .show 就 return 不救,
+        //   但若 overlay 是孤兒(phase=idle 且兩種 cb 都空),則應視為「沒在出題」繼續救。
+        //   原本只有 _gpIsAnyLegitModalOpen 與 iPad nudge 做孤兒檢測,AI watchdog 漏掉,
+        //   導致小怪戰救援後 overlay 殘留 .show → AI watchdog 一直 return → 玩家等 20 秒
+        //   才被 _gp heartbeat 救,體感「小怪不會動」。
+        if(_qov && _qov.classList.contains('show')){
+          let _isOrphanOverlay = false;
+          try{
+            const _phaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle' || !_advQuizPhase);
+            const _miniPhaseIdle = (typeof window._miniQuizPhase === 'undefined'
+                                    || window._miniQuizPhase === null
+                                    || window._miniQuizPhase === 'idle');
+            const _noBossCb = !(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+            const _noMiniCb = !(typeof window._miniQuizOnDone === 'function');
+            _isOrphanOverlay = _phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb;
+          }catch(_){}
+          if(_isOrphanOverlay){
+            // 孤兒 overlay → 順手關掉並繼續走救援流程(不 return)
+            try{
+              console.warn('[AI watchdog] 偵測孤兒 quiz overlay,順手關閉並繼續救援');
+              _qov.classList.remove('show');
+              _qov.style.display = 'none';
+            }catch(_){}
+          } else {
+            return;  // 真的在出題,放行
+          }
+        }
         try{
           if(typeof _advQuizPhase !== 'undefined'
              && (_advQuizPhase === 'asking' || _advQuizPhase === 'answered')) return;  // (b)
@@ -33151,8 +33177,11 @@ let _gamePaused = false;
 
 let _gpPauseStartedAt = 0;
 let _gpHeartbeatInterval = null;
-const _GP_HB_INTERVAL = 10000;   // 10 秒檢查一次
-const _GP_TIMEOUT = 20000;       // 持續 20 秒視為卡死
+// ★ v3.4.19 — interval 從 10 秒 → 3 秒,讓快速通道(5 秒卡死訊號)能真正在 5-8 秒內觸發
+//   原本 10 秒 interval × 20 秒 timeout = 最差 30 秒才救,玩家體感「整場卡死」。
+//   3 秒 interval + 5 秒快速通道 = 最差 8 秒救援,接近 AI watchdog 等級。
+const _GP_HB_INTERVAL = 3000;    // 3 秒檢查一次
+const _GP_TIMEOUT = 20000;       // 持續 20 秒視為卡死(原邏輯保留)
 
 function _gpStartHeartbeat(){
   if(_gpHeartbeatInterval) return;
@@ -33170,6 +33199,57 @@ function _gpHeartbeatCheck(){
       return;
     }
     const _elapsed = Date.now() - _gpPauseStartedAt;
+    // ★ v3.4.19 — 快速通道:若 paused 超過 5 秒,且偵測到「孤兒 quiz overlay」或
+    //   「mini quiz 殭屍 (phase=asking 但 overlay.show=false)」這兩種明確卡死訊號,
+    //   就立刻救,不必等 20 秒。
+    //   原本要 20 秒等小怪戰救援體感太久,玩家以為「卡死了」。
+    if(_elapsed >= 5000 && _elapsed < _GP_TIMEOUT){
+      try{
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        const _qShown = _qOv && _qOv.classList && _qOv.classList.contains('show');
+        const _phaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle' || !_advQuizPhase);
+        const _miniPhaseAsking = (typeof window._miniQuizPhase !== 'undefined' && window._miniQuizPhase === 'asking');
+        const _miniPhaseIdle = !window._miniQuizPhase || window._miniQuizPhase === 'idle';
+        const _noBossCb = !(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+        const _noMiniCb = !(typeof window._miniQuizOnDone === 'function');
+        // 訊號 A:孤兒 overlay (顯示但 phase=idle 且兩種 cb 都空)
+        const _signalA = _qShown && _phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb;
+        // 訊號 B:mini quiz 殭屍 (phase=asking 但 overlay 沒顯示 — 題目從未渲染)
+        const _signalB = _miniPhaseAsking && !_qShown;
+        if(_signalA || _signalB){
+          console.warn('🚨 [_gp heartbeat 快速通道] 偵測明確卡死訊號 ('
+            + (_signalA ? '孤兒overlay' : 'mini quiz殭屍')
+            + '),已等 ' + _elapsed + 'ms,立刻救援');
+          // 強制清孤兒狀態
+          try{
+            if(_qShown && _signalA){
+              _qOv.classList.remove('show');
+              _qOv.style.display = 'none';
+            }
+            if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'idle';
+            window._miniQuizPhase = 'idle';
+            window._miniQuizOnDone = null;
+            window._miniQuizCurrentQ = null;
+            window._miniQuizOnDoneSetAt = 0;
+            window._bossQuizInFlight = false;
+          }catch(_){}
+          _gamePaused = false;
+          _gpPauseStartedAt = 0;
+          try{ _resumeTimers(); }catch(_){}
+          // 立刻救卡住的 actor
+          try{
+            setTimeout(function(){
+              try{
+                if(typeof window._advForceRescueActor === 'function'){
+                  window._advForceRescueActor('_gp heartbeat 快速通道');
+                }
+              }catch(_e){ console.warn('[_gp heartbeat 快速通道後續救援] 例外', _e); }
+            }, 800);
+          }catch(_){}
+          return;
+        }
+      }catch(_eFast){ console.warn('[_gp heartbeat 快速通道] 例外', _eFast); }
+    }
     if(_elapsed < _GP_TIMEOUT) return;  // 還沒超時
     // 檢查是否有合法 modal 顯示中(玩家正在操作 modal 是正常的長時間 paused)
     if(_gpIsAnyLegitModalOpen()){
@@ -50103,16 +50183,20 @@ function _startQuizVisibilityCheck(reason){
       const _overlayOk = _qOv && _qOv.classList && _qOv.classList.contains('show');
       const _questionTxt = _qQ ? (_qQ.textContent || '').trim() : '';
       const _questionOk = _questionTxt.length > 0;
-      // 兩項全滿足 = 題目正常出現,不介入
-      if(_overlayOk && _questionOk){
-        return;
+      // ★ v3.4.19 — 加強條件:不只 .show + question 都要,還要 phase=asking 才算正常
+      //   原本:overlay 顯示中 + question 有殘留文字 → 視為正常 → 但若 phase=idle 是孤兒,
+      //          watchdog return 後孤兒永遠不被救 → 玩家卡死體驗。
+      //   新:phase 必須是 asking(BOSS 或 mini 任一即可)才算「真的在出題」
+      const _phaseAsking = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking');
+      const _miniAsking = (typeof window._miniQuizPhase !== 'undefined' && window._miniQuizPhase === 'asking');
+      const _anyAsking = _phaseAsking || _miniAsking;
+      if(_overlayOk && _questionOk && _anyAsking){
+        return;  // 真的在出題,放行
       }
       // ★ 例外:獎勵視窗顯示中(玩家答對了還在選獎勵)= 正常,不算卡
       const _rOv = document.getElementById('adv-reward-overlay');
       if(_rOv && _rOv.classList.contains('show')) return;
       // ★ 例外:overlay 已關 + 不在 quiz phase = quiz 已正常結束,不算卡
-      const _phaseAsking = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking');
-      const _miniAsking = (typeof window._miniQuizPhase !== 'undefined' && window._miniQuizPhase === 'asking');
       if(!_overlayOk && !_phaseAsking && !_miniAsking) return;
       // ── 題目沒正常出現,卡死前兆 ──
       console.warn('🚨 [題目可見性] 3 秒後題目沒正常出現 ('+reason+'): '
@@ -68860,6 +68944,30 @@ function _advMiniQuizAsk(onDone) {
   });
 
   qOv.classList.add('show');
+  // ★ v3.4.19 — 修 BUG:13:45:53/13:46:30 玩家連續回報「題目沒正常出現」,
+  //   症狀:_advMiniQuizAsk 跑完 qOv.classList.add('show') 後,3 秒 visibility watchdog
+  //         檢查 overlay.show=false,代表 .show 被別處立刻 remove 掉 / CSS race / display 殘留 none。
+  //   修法 1:同步加 inline style.display='' 清掉殘留 display:none(救援關閉時設的);
+  //   修法 2:用 requestAnimationFrame 確保 DOM 應用 .show 後再驗證一次,若 .show 真的沒生效則 console.warn。
+  try{
+    if(qOv.style.display === 'none' || qOv.style.display === ''){
+      // 清掉 inline display(可能被前一次救援設成 'none'),讓 CSS .show 生效
+      qOv.style.display = '';
+    }
+    // 強制 reflow + RAF 驗證
+    void qOv.offsetWidth;
+    if(typeof requestAnimationFrame === 'function'){
+      requestAnimationFrame(function(){
+        try{
+          if(!qOv.classList.contains('show')){
+            console.warn('[_advMiniQuizAsk] .show 被立刻 remove,強制補回');
+            qOv.classList.add('show');
+            qOv.style.display = '';
+          }
+        }catch(_){}
+      });
+    }
+  }catch(_eShowFix){ console.warn('[_advMiniQuizAsk] 確保 .show 失敗', _eShowFix); }
 
   // ★ 問答教學引導已移除
 }
@@ -74203,7 +74311,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.18';
+window._GAME_LOADED_VERSION = 'v3.4.19';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
