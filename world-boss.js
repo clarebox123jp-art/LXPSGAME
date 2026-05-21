@@ -2846,30 +2846,85 @@
           //   teamNames:用每個槽位的玩家暱稱(同 uid 顯示同名,符合用戶需求「同一人開 4 隻顯示 4 次相同暱稱」)
           // ★ FIX 20260519(v13) — 帶上 tiebreaker 資料(回合數、正確答題數、最後存活人數)
           //   用途:若多隊伍同時擊破 BOSS(尾刀平手),依「回合數→正確數→存活人數」決定真實排名
+          // ★ v3.5.6 — 排行榜顯示「玩家暱稱 + 使用英雄(LV)」(用戶需求)
+          //   teamHeroes:每槽 { name, lv } — 英雄等級從 _Gr.p1[i] 對應 hero 物件 / player.element JSON 的 g.lv 取
           try{
             if(typeof window._wbHpSync.updateLeaderboard === 'function'){
               const _myNick = (window._playerNickname || window._userName || '玩家');
               let _teamUids = [];
               let _teamNames = [];
+              let _teamHeroes = [];  // ★ v3.5.6 — [{name, lv}, ...]
               try{
                 // 從 _wbNet 拿房間玩家清單(連線模式有 4 個真實玩家;單人模式只有 1 個 + 3 個 NPC)
                 const _snap = (window._wbNet && window._wbNet.getSnapshot) ? window._wbNet.getSnapshot() : null;
                 const _players = (_snap && Array.isArray(_snap.players)) ? _snap.players : [];
+                // ★ v3.5.6 — 解析 element JSON 拿 g.lv 的 helper
+                const _parseG = function(elementStr){
+                  if(!elementStr || typeof elementStr !== 'string') return null;
+                  if(!elementStr.startsWith('{')) return null;
+                  try{
+                    const obj = JSON.parse(elementStr);
+                    return (obj && obj.g && typeof obj.g === 'object') ? obj.g : null;
+                  }catch(_){ return null; }
+                };
+                // ★ v3.5.6 — 取英雄等級的 helper(優先順序:該位 hero 物件 → player.element 的 g.lv → _heroLevels(僅房主自己) → 1)
+                const _getHeroLv = function(slotIdx, heroName, isMyHero){
+                  // 1. 從場上 hero 物件(_Gr.p1)取 _wbLv(房主端建構時若有套上)
+                  try{
+                    const _h = _Gr && _Gr.p1 && _Gr.p1[slotIdx];
+                    if(_h && typeof _h._wbLv === 'number' && _h._wbLv > 0) return _h._wbLv;
+                  }catch(_){}
+                  // 2. 從 player.element JSON 的 g.lv 取(連線真實玩家)
+                  try{
+                    const _g = _parseG(_players[slotIdx] && _players[slotIdx].element);
+                    if(_g && typeof _g.lv === 'number' && _g.lv > 0) return _g.lv;
+                  }catch(_){}
+                  // 3. 房主自己槽位 → 從 _heroLevels 取(主程式變數)
+                  if(isMyHero && heroName){
+                    try{
+                      if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
+                        return _heroLevels[heroName];
+                      }
+                    }catch(_){}
+                    try{
+                      if(typeof window._heroLevels !== 'undefined' && window._heroLevels && window._heroLevels[heroName]){
+                        return window._heroLevels[heroName];
+                      }
+                    }catch(_){}
+                  }
+                  return 1;  // fallback
+                };
                 for(let _i = 0; _i < 4; _i++){
                   const _p = _players[_i];
+                  // 拿這個槽位的英雄名:player.heroName 優先,fallback 用 _Gr.p1[i].name
+                  let _heroName = '';
+                  try{
+                    if(_p && _p.heroName) _heroName = _p.heroName;
+                    else if(_Gr && _Gr.p1 && _Gr.p1[_i] && _Gr.p1[_i].name) _heroName = _Gr.p1[_i].name;
+                  }catch(_){}
                   if(_p && _p.uid){
                     _teamUids.push(_p.uid);
                     _teamNames.push(_p.name || _myNick);
+                    _teamHeroes.push({
+                      name: _heroName || '?',
+                      lv: _getHeroLv(_i, _heroName, _p.uid === myUid),
+                    });
                   }else{
                     // 空槽 / 房主代打 → 用房主身份補位(用戶要求:單人開 4 隻顯示 4 次相同暱稱)
                     _teamUids.push(myUid);
                     _teamNames.push(_myNick);
+                    _teamHeroes.push({
+                      name: _heroName || '?',
+                      lv: _getHeroLv(_i, _heroName, true),  // 房主代打,當作自己的英雄
+                    });
                   }
                 }
               }catch(_){
                 // fallback:全部當房主自己
                 _teamUids = [myUid, myUid, myUid, myUid];
                 _teamNames = [_myNick, _myNick, _myNick, _myNick];
+                // _teamHeroes 留空,讓 updateLeaderboard 容錯處理
+                _teamHeroes = [];
               }
               const _teamKey = (typeof window._wbCalcTeamId === 'function')
                 ? window._wbCalcTeamId(_teamUids)
@@ -2889,7 +2944,8 @@
                 });
               }catch(_){}
               if(_teamKey){
-                window._wbHpSync.updateLeaderboard(bossId, _teamKey, _teamNames, _dealt, _tieBreaker)
+                // ★ v3.5.6 — 把 _teamHeroes 也傳進去
+                window._wbHpSync.updateLeaderboard(bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes)
                   .then(res => {
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg);
                   })

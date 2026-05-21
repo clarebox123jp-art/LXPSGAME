@@ -3632,7 +3632,20 @@
               // 戰鬥前:從 players 移除 + 重排 slotIdx
               const players = (data.players || []).filter(p => p.uid !== window._gUserId);
               players.forEach((p, i) => { p.slotIdx = i; });
-              tx.update(ref, { players: players });
+              // ★ v3.5.6 — 修「公開房間沒人卻一直留在瀏覽列表」的 BUG
+              //   觸發情境:房主直接關瀏覽器/斷網(沒走 leaveRoom),其他玩家依序退出後,
+              //            房間只剩空 players 陣列,但 meta.status 還是 waiting/picking,
+              //            導致 listPublicRooms 還是把它列出來,變成幽靈房。
+              //   修法:非房主離開後若 players 變空 → 把 meta.status 標 'ended',
+              //         listPublicRooms 的 where('meta.status', 'in', ['waiting','picking']) 就會自動濾掉。
+              const _updatePayload = { players: players };
+              if(players.length === 0){
+                _updatePayload['meta.status'] = 'ended';
+                _updatePayload['meta.endedReason'] = 'all_players_left';
+                _updatePayload['meta.endedAt'] = Date.now();
+                console.log('[WBNet v3.5.6] 最後一位非房主玩家離開,房間自動關閉');
+              }
+              tx.update(ref, _updatePayload);
             }
           });
         }
@@ -4336,8 +4349,35 @@
         );
         const snap = await getDocs(q);
         const rooms = [];
+        // ★ v3.5.6 — 幽靈房防呆:對舊資料(沒走過 v3.5.6 修法的房間)做客戶端過濾
+        //   觸發情境:房主直接關瀏覽器/斷網,leaveRoom 沒跑 → 房間 status 還是 waiting,
+        //            但 players 已空 / 全部玩家斷線很久 → 顯示出來會誤導其他玩家加入空房。
+        //   過濾規則:
+        //     (a) players 為空 → 直接濾掉(任何狀況都不該顯示空房)
+        //     (b) 所有玩家都 online=false 且最新 lastSeen 距今 > 10 分鐘 → 視為幽靈房
+        const _GHOST_THRESHOLD_MS = 10 * 60 * 1000;  // 10 分鐘
+        const _now = Date.now();
         snap.forEach(s => {
           const d = s.data() || {};
+          const _players = Array.isArray(d.players) ? d.players : [];
+          // (a) 空房直接濾
+          if(_players.length === 0){
+            console.log('[WBNet v3.5.6] 過濾掉空房:', s.id);
+            return;
+          }
+          // (b) 全部離線且 lastSeen 過久 → 幽靈房濾掉
+          //     未帶 online 欄位的舊資料當 true(向下相容,不誤殺)
+          const _anyOnline = _players.some(p => p && (p.online !== false));
+          if(!_anyOnline){
+            const _maxLastSeen = _players.reduce((m, p) => {
+              const _ls = (p && typeof p.lastSeen === 'number') ? p.lastSeen : 0;
+              return _ls > m ? _ls : m;
+            }, 0);
+            if(_maxLastSeen > 0 && (_now - _maxLastSeen) > _GHOST_THRESHOLD_MS){
+              console.log('[WBNet v3.5.6] 過濾掉幽靈房(全部離線>10分):', s.id);
+              return;
+            }
+          }
           rooms.push({
             roomId: s.id,
             hostUid: d.meta?.hostUid,
@@ -4345,11 +4385,11 @@
             bossId: d.meta?.bossId,
             status: d.meta?.status,
             createdAt: d.meta?.createdAt || 0,
-            players: Array.isArray(d.players) ? d.players.map(p => ({
+            players: _players.map(p => ({
               uid: p.uid, name: p.name, slotIdx: p.slotIdx,
               heroName: p.heroName, element: p.element,
               ready: !!p.ready, online: !!p.online,
-            })) : []
+            }))
           });
         });
         return rooms;
@@ -4814,7 +4854,7 @@
         }
       }
 
-      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg, tiebreaker){
+      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg, tiebreaker, teamHeroes){
         if(!bossId || !teamKey || typeof addDmg !== 'number' || addDmg <= 0) return null;
         try{
           const result = await runTransaction(_fbDb, async (tx) => {
@@ -4827,6 +4867,19 @@
             const _idx = _list.findIndex(e => e && e.teamKey === teamKey);
             // ★ tiebreaker 累計:取本場最佳值(留下對隊伍最有利的數字)
             const _newTb = tiebreaker || {};
+            // ★ v3.5.6 — teamHeroes 容錯:過濾掉空槽,每筆只留 {name, lv}
+            const _sanitizeHeroes = function(arr){
+              if(!Array.isArray(arr)) return null;
+              const _out = arr.slice(0, 4).map(h => {
+                if(!h || typeof h !== 'object') return { name: '?', lv: 1 };
+                return {
+                  name: (typeof h.name === 'string' && h.name) ? h.name : '?',
+                  lv:   (typeof h.lv   === 'number' && h.lv > 0)  ? h.lv   : 1,
+                };
+              });
+              return _out;
+            };
+            const _newHeroes = _sanitizeHeroes(teamHeroes);
             if(_idx >= 0){
               const _cur = _list[_idx];
               const _curTb = _cur.tiebreaker || {};
@@ -4838,6 +4891,8 @@
               _list[_idx] = {
                 teamKey,
                 teamNames: Array.isArray(teamNames) ? teamNames.slice(0, 4) : _cur.teamNames,
+                // ★ v3.5.6 — 排行榜每場更新都覆蓋 teamHeroes(顯示最新一場用的英雄)
+                teamHeroes: _newHeroes || _cur.teamHeroes || null,
                 totalDmg: (_cur.totalDmg || 0) + addDmg,
                 battles: (_cur.battles || 0) + 1,
                 lastUpdated: Date.now(),
@@ -4847,6 +4902,8 @@
               _list.push({
                 teamKey,
                 teamNames: Array.isArray(teamNames) ? teamNames.slice(0, 4) : [],
+                // ★ v3.5.6 — 新隊伍也帶上 teamHeroes
+                teamHeroes: _newHeroes || null,
                 totalDmg: addDmg,
                 battles: 1,
                 lastUpdated: Date.now(),
@@ -49085,9 +49142,10 @@ function advSkipCurrentDialog() {
         }
         // 7) 根據場景類型決定如何跳:
         //    - 主 BOSS 場景(有 boss 字段)→ 開戰
+        //    - 有 choiceType 且需玩家選擇的場景 → ★ v3.5.5 改:打開選擇面板,選完再進戰鬥
         //    - 其他場景 → 用 advStartMiniBattle 進下一場戰鬥
         log('⏭ [跳過劇情] 強制跳過當前場景對白');
-        try{ console.log('[advSkipCurrentDialog] 跳過 stage='+stage+' sceneIdx='+sceneIdx, 'scene type:', scene.type||'unknown'); }catch(_){}
+        try{ console.log('[advSkipCurrentDialog] 跳過 stage='+stage+' sceneIdx='+sceneIdx, 'scene type:', scene.type||'unknown', 'choiceType:', scene.choiceType||'(none)'); }catch(_){}
         // 場景有 boss 字段 → 進 BOSS 戰
         if(scene.boss){
           if(typeof advStartBattle === 'function'){
@@ -49095,7 +49153,42 @@ function advSkipCurrentDialog() {
             return;
           }
         }
-        // 一般場景:呼叫 advStartMiniBattle 進入下一場戰鬥
+        // ★ v3.5.5 — 修「跳過劇情會跳過題庫選擇」的 BUG
+        // ──────────────────────────────────────────────────────
+        // 觸發場景:
+        //   1. 玩家進河堤場景,出對白「清晨的陽光灑在景美溪河堤上...」
+        //   2. 對白後本應彈出「📚 這次想挑戰的問答主題是?」題庫選擇面板
+        //   3. 但玩家按了「⏭ 跳過劇情」 → 舊邏輯直接呼叫 advStartMiniBattle(下一場)
+        //      → 完全跳過 advShowChoicePanel → _advPlayerSubject 沒被設定
+        //      → 戰鬥題目隨機亂出(fallback 邏輯)
+        // 修法:若當前場景有需玩家選擇的 choiceType
+        //       (subject / difficulty / grade / grade_subject 等),
+        //       改打開題庫選擇面板 → 玩家選完後 advConfirmChoice 會接續跑戰鬥流程。
+        //       random_event / japan_auto 由 advShowChoicePanel 內部自動推進,
+        //       直接呼叫它就好(它會自己跳到下一場戰鬥)。
+        if(scene.choiceType){
+          try{
+            // 重置 _advSceneChoiceDone,避免舊 flag 殘留導致 advShowChoicePanel 拒絕執行
+            _advSceneChoiceDone = false;
+            // 清空既有 multi-step 狀態(以防殘留 grade_subject 流程中段)
+            try{ _advMultiStepState = null; }catch(_){}
+            // 把 dialog idx 推到尾端,避免後續 advNextDialog 又跑出舊對白
+            try{
+              if(Array.isArray(scene.dialogs)){
+                _advDialogIdx = scene.dialogs.length;
+              }
+            }catch(_){}
+            console.log('[advSkipCurrentDialog v3.5.5] 場景有 choiceType=' + scene.choiceType + ',改開選擇面板');
+            if(typeof advShowChoicePanel === 'function'){
+              advShowChoicePanel(stage, sceneIdx);
+              return;
+            }
+          }catch(eChoice){
+            console.error('[advSkipCurrentDialog v3.5.5] 開選擇面板失敗,fallback 跳下一場:', eChoice);
+            // 走 fallback(原邏輯):直接跳下一場戰鬥
+          }
+        }
+        // 一般場景(無 choiceType 或開選擇面板失敗):呼叫 advStartMiniBattle 進入下一場戰鬥
         if(typeof advStartMiniBattle === 'function'){
           try{ advStartMiniBattle(sceneIdx + 1); }catch(e){
             console.error('[advSkipCurrentDialog] advStartMiniBattle 失敗:', e);
@@ -49114,8 +49207,9 @@ function advSkipCurrentDialog() {
       }
     };
     // 確認對話框
+    // ★ v3.5.5 — 文案改成讓玩家知道:有題庫選擇的場景會彈出選擇面板,不會直接進戰鬥
     if(typeof _customConfirm === 'function'){
-      _customConfirm('確定要跳過當前劇情嗎？\n\n將直接進入下一場戰鬥。', _doSkip, () => {});
+      _customConfirm('確定要跳過當前劇情嗎？\n\n（若這一幕需要選題庫，會直接跳到選擇面板）', _doSkip, () => {});
     } else {
       if(window.confirm('確定要跳過當前劇情？')) _doSkip();
     }
@@ -76211,7 +76305,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.4';
+window._GAME_LOADED_VERSION = 'v3.5.6';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
