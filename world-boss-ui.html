@@ -1026,37 +1026,8 @@
 
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
-    <!-- ★ FIX 20260519(v12) — 在按鈕上方加「當前排行榜」面板 -->
-    <div id="wb-current-leaderboard" style="margin-bottom:20px;padding:14px 18px;
-      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
-      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
-      box-shadow:0 0 18px rgba(212,168,67,0.25);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
-        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
-          🏆 當前排行榜 — 維蘇威火山龍王
-        </div>
-        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
-          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
-          border-radius:8px;cursor:pointer;font-family:inherit;">
-          🔄 刷新
-        </button>
-      </div>
-      <!-- ★ FIX 20260519(v13) — 尾刀 + 結算規則說明 -->
-      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
-        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
-        font-size:13px;color:#aabbdd;line-height:1.6;">
-        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
-        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
-        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
-        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
-      </div>
-      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
-        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
-          排行榜載入中...
-        </div>
-      </div>
-    </div>
-
+    <!-- ★ FIX 20260521(h) — 「當前排行榜」面板已搬到下方「隊伍排名獎勵」之後、
+                              「元素龍系列」之前(老師 2026/5/21 調整版面順序需求) -->
     <div class="wb-entry-btn-row">
       <div class="wb-entry-big-btn" onclick="_wbUiOpenVisibilityChoice()">
         <span class="ico">🏰</span>
@@ -1111,6 +1082,40 @@
         <br>同一隻 BOSS 期間,你跟同房間隊友打過的所有場次傷害會累積計算。
       </div>
       <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:8px;font-size:24px;"></div>
+    </div>
+
+    <!-- ★ FIX 20260521(h) — 「當前排行榜」面板已從操作按鈕上方搬到這裡
+                              (隊伍排名獎勵下面、元素龍系列上面),
+                              讓玩家先看完獎勵分級規則,再看到當下實際排名,版面順序更直覺。 -->
+    <!-- ★ FIX 20260519(v12) — 「當前排行榜」面板 -->
+    <div id="wb-current-leaderboard" style="margin-top:20px;padding:14px 18px;
+      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
+      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
+      box-shadow:0 0 18px rgba(212,168,67,0.25);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
+          🏆 當前排行榜 — 維蘇威火山龍王
+        </div>
+        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
+          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
+          border-radius:8px;cursor:pointer;font-family:inherit;">
+          🔄 刷新
+        </button>
+      </div>
+      <!-- ★ FIX 20260519(v13) — 尾刀 + 結算規則說明 -->
+      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
+        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
+        font-size:13px;color:#aabbdd;line-height:1.6;">
+        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
+        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
+        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
+        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
+      </div>
+      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
+        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
+          排行榜載入中...
+        </div>
+      </div>
     </div>
 
     <!-- ★ v2.0 — 8 隻元素龍預告 -->
@@ -1502,25 +1507,43 @@
   #wb-team-confirm-overlay{
     display:none;position:fixed;inset:0;z-index:9500;
     background:transparent;
-    overflow:hidden;
+    /* ★ FIX 20260521(e) — overlay 本身改成可上下捲動.
+       原因: iPad Safari 上, 雖然 .wb-tc-card 已經有 overflow-y:auto, 但因為 overlay
+       用 align-items:center 垂直置中, 卡片頂端會跑到可視區外,
+       即便卡片內捲也碰不到「點看BOSS」「離開房間」那一排按鈕.
+       改成 overlay 整層可捲後, 不管裝置高度怎麼變, 整個卡片都能滑進可視區. */
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
     /* ★ FIX 20260516 v8 — 不再用 clip-path 挖洞;瀏覽器全螢幕指示器是 native UI,
        本來就在所有網頁元素之上,不需要特別處理。如果還是被擋,改用 position:fixed
        搭配 z-index 控制 */
   }
-  /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖 */
+  /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖
+     ★ FIX 20260521(e) — overlay 改成可捲動後, ::before 從 position:absolute(會跟著捲)
+     改成 position:fixed (永遠覆蓋整個視窗, 不會被捲走) */
   #wb-team-confirm-overlay::before{
-    content:'';position:absolute;inset:0;z-index:-1;
+    content:'';position:fixed;inset:0;z-index:-1;
     background:
       linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
       url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
       #1a0a08;
     pointer-events:none;
   }
-  #wb-team-confirm-overlay.show{display:flex;align-items:center;justify-content:center;padding:10px 16px;}
+  /* ★ FIX 20260521(e) — .show 從 align-items:center 改成 flex-start
+     原因: iPad/手機可視區比卡片小時, center 會把卡片頂端切掉. flex-start 從頂端對齊,
+     超出部分由 overlay 自己捲動處理. min-height:100% 確保視窗有「填滿」感. */
+  #wb-team-confirm-overlay.show{
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:10px 16px;
+    min-height:100%;
+  }
   .wb-tc-card{
     width:100%;max-width:1880px;
-    max-height:calc(100vh - 20px);
+    /* ★ FIX 20260521(e) — 移除 max-height 與卡片自身 overflow-y;
+       讓卡片自然撐開, 捲動責任交給 overlay 外層,
+       否則 iPad 上會出現「卡片內捲 + overlay 不捲」造成上下被切的死局. */
     background:rgba(8,10,24,0.62);
     backdrop-filter:blur(6px);
     border:2.5px solid rgba(255,170,80,0.65);
@@ -1528,10 +1551,23 @@
     box-shadow:0 0 48px rgba(255,140,40,0.45);
     position:relative;
     display:flex;flex-direction:column;
-    /* ★ FIX 20260521(a) — 內容超出時可以捲, 配合 .wb-tc-start-zone 的 sticky 釘底,
-       即使內容很長也保證開戰按鈕看得到、按得到 */
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
+    /* 桌機大螢幕(>1180px)仍走「卡片內捲、按鈕 sticky 釘底」的緊湊路線,
+       避免桌機要拉外層卷軸. 由下方 @media 規則開關. */
+  }
+  /* 桌機(>1180px): 維持原本的「卡片內捲 + sticky 釘底」設計, 不出現外層卷軸 */
+  @media (min-width:1181px){
+    #wb-team-confirm-overlay{
+      overflow:hidden;  /* 桌機不捲外層 */
+    }
+    #wb-team-confirm-overlay.show{
+      align-items:center;  /* 桌機卡片置中 */
+      min-height:0;
+    }
+    .wb-tc-card{
+      max-height:calc(100vh - 20px);
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+    }
   }
   .wb-tc-title{
     font-size:44px;font-weight:900;letter-spacing:3px;
@@ -2232,6 +2268,21 @@
     /* 卡片整體 padding 縮小, 多擠一點空間 */
     .wb-tc-card{
       padding:4px 10px 6px;
+    }
+    /* ★ FIX 20260521(e) — iPad 模式下, overlay 已是 scroll container, 整個卡片
+       由外層捲動. 開戰區 sticky 在這種情境下意義不大(卡片末端本來就在底部),
+       改為 relative 讓開戰區就是文件流最後一個元素, 玩家滑到底就能直接按,
+       避免 sticky 在某些 Safari 版本下因 overflow 互動產生「卡片內又出現一根
+       sticky 卷軸頭」的渲染問題. */
+    .wb-tc-start-zone{
+      position:relative;
+      bottom:auto;
+    }
+    /* ★ FIX 20260521(e) — iPad 上, 每個 slot 不再自己捲動;
+       slot 內容自然撐開, 由 overlay 外層一起捲, 避免雙重捲動把英雄資訊截斷.
+       這樣玩家看每個英雄的攻/特/速/技能/至寶都看得到完整資訊. */
+    .wb-tc-slot{
+      overflow-y:visible;
     }
   }
   /* 更窄(< 900px)— 定型文壓更小 */
@@ -4241,15 +4292,37 @@
   }
   // ★ FIX 20260517 — #ctrl-bar 永遠最高層的保險:每次 overlay 開啟都把 ctrl-bar reparent 到 body 最後
   //   (z-index 雖然已是 2147483647,但 reparent 確保即使有怪異 stacking context 也不會被蓋)
+  // ★ FIX 20260521(i) — 加強:無條件 reparent (移除 parentNode === body 的限制),
+  //   並用 inline style 強制 position:fixed + z-index:2147483647 + pointer-events:auto,
+  //   即使原 CSS 在某個 stacking context 中也不會輸給 overlay.
+  //   觸發點: 世界 BOSS 主頁 (#wb-entry-overlay) 開啟時, 右上角全螢幕/音量按鈕列被
+  //          某個 inset:0 的 overlay 視覺覆蓋, 即使 z-index 數字較大也被擋住.
   function _wbEnsureCtrlBarOnTop(){
     try{
       const _bar = document.getElementById('ctrl-bar');
-      if(_bar && _bar.parentNode === document.body){
-        document.body.appendChild(_bar);  // appendChild 同元素 = 移到最後
-      }
+      if(!_bar) return;
+      // 1. 無條件 reparent 到 body 最後 (即使本來就在 body, appendChild 自身也會移到最後)
+      try{
+        if(_bar.parentNode !== document.body){
+          document.body.appendChild(_bar);
+        }else{
+          // 已在 body 內, 但要確保是最後一個子元素 (才不會被後注入的 overlay 蓋)
+          if(_bar !== document.body.lastElementChild){
+            document.body.appendChild(_bar);
+          }
+        }
+      }catch(_){}
+      // 2. inline style 強制最高層 + fixed 定位 (蓋過任何 CSS 規則)
+      try{
+        _bar.style.setProperty('position', 'fixed', 'important');
+        _bar.style.setProperty('z-index', '2147483647', 'important');
+        _bar.style.setProperty('pointer-events', 'auto', 'important');
+      }catch(_){}
       // 隊伍確認頁的 BOSS 預覽 mini 視窗 + 結算 overlay z-index 也要低於 ctrl-bar
     }catch(_){}
   }
+  // ★ FIX 20260521(i) — 暴露到 window, 讓 world-boss.js 的 _openWorldBossEntry 也能呼叫到強化版
+  window._wbEnsureCtrlBarOnTop = _wbEnsureCtrlBarOnTop;
   function _wbOpenLobby(){
     const ov = document.getElementById('wb-lobby-overlay');
     if(ov) ov.style.display = 'block';
@@ -4532,18 +4605,62 @@
   }
 
   // 包裝成 JSON 字串(供 setMyHero 用)
-  function _wbTcStringifyExt(ext){
+  // ★ FIX 20260521(g) — stringify 時若 ext.g 為空, 自動帶入本機 _wbTcBuildMyGrowth(heroName).
+  //   這樣不論 caller 從哪裡呼叫(換英雄/選元素/按準備), 養成資料都會被同步給隊友,
+  //   隊友的隊伍確認頁就能看到正確的等級、HP、攻擊、技能威力.
+  function _wbTcStringifyExt(ext, heroName){
+    let _g = ext.g || null;
+    // ★ 若沒帶 g 且能取得 heroName, 自動構建一份本機養成資料塞進去
+    if(!_g && heroName){
+      try{
+        _g = _wbTcBuildMyGrowth(heroName);
+      }catch(_){}
+    }
     return JSON.stringify({
       e:  ext.es && ext.es[0] || ext.e || null,  // 第一個元素當主元素(舊邏輯相容)
       es: ext.es || [],
       t:  ext.t  || [],
-      g:  ext.g  || null,  // ★ v3.4.16 — 個人養成資料
+      g:  _g,  // ★ v3.4.16 — 個人養成資料
     });
   }
 
-  // 取得玩家英雄的 LV(從主程式 _heroLevels,只有 me 才有,peer/AI 取得不到回傳 null)
-  function _wbTcGetHeroLv(heroName, isMe){
-    if(!isMe) return null;  // 隊友的等級不知道
+  // ★ FIX 20260521(g) — 從本機讀「自己對這隻英雄的養成資料」,
+  //   格式跟 _wbSetupAdvForBattle 讀的 g 欄位完全一致.
+  //   隊友收到後就能在隊伍確認頁正確顯示我的等級/HP/攻擊/技能威力,
+  //   不再出現「房主看隊友是 Lv.?、HP ?」的同步斷層.
+  function _wbTcBuildMyGrowth(heroName){
+    if(!heroName) return null;
+    try{
+      const _lv = (typeof _heroLevels       !== 'undefined' && _heroLevels       && _heroLevels[heroName])       || 1;
+      const _sk = (typeof _heroSkillLevels  !== 'undefined' && _heroSkillLevels  && _heroSkillLevels[heroName])  || {};
+      const _bu = (typeof _heroBurstLevels  !== 'undefined' && _heroBurstLevels  && _heroBurstLevels[heroName])  || 0;
+      const _iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]) || {};
+      return {
+        lv:    _lv,
+        skLv:  { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
+        burst: _bu,
+        inv:   { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
+      };
+    }catch(_){ return null; }
+  }
+
+  // 取得玩家英雄的 LV
+  //   - isMe=true:從本機 _heroLevels 讀
+  //   - isMe=false 但有 playerObj.element 的 g 欄位:從同步資料讀 (★ FIX 20260521(g))
+  //   - 否則回 null (顯示 Lv.?)
+  function _wbTcGetHeroLv(heroName, isMe, playerObj){
+    // ★ FIX 20260521(g) — 隊友也能讀:從 player.element JSON 的 g 欄位取等級
+    if(!isMe){
+      try{
+        if(playerObj && playerObj.element){
+          const _ext = _wbTcParsePlayerExt(playerObj);
+          if(_ext && _ext.g && typeof _ext.g.lv === 'number'){
+            return _ext.g.lv;
+          }
+        }
+      }catch(_){}
+      return null;  // 沒同步資料 → Lv.?
+    }
     try{
       if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
         return _heroLevels[heroName];
@@ -4731,7 +4848,7 @@
         };
         // 同步進房間(setMyHero,等下會被 onRoomUpdate 觸發 re-render)
         if(window._wbNet && window._wbNet.setMyHero){
-          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExt(ext));
+          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExt(ext, loadout.heroName));
         }
         console.log('[WB-TC] 預設英雄/屬性/至寶:', loadout);
       }catch(eDef){
@@ -4790,12 +4907,8 @@
       }
     }catch(_){}
     // ★ FIX 20260517 — 隊伍確認頁開啟時把 #ctrl-bar 推到 body 最後,確保最高層
-    try{
-      const _bar = document.getElementById('ctrl-bar');
-      if(_bar && _bar.parentNode === document.body){
-        document.body.appendChild(_bar);
-      }
-    }catch(_){}
+    // ★ FIX 20260521(i) — 改呼叫統一 helper, 含 inline z-index 強化
+    try{ _wbEnsureCtrlBarOnTop(); }catch(_){}
     // 把當前主元素灌進 ext(若還沒設過)
     if(me){
       const ext = _wbTcParsePlayerExt(me);
@@ -5181,7 +5294,7 @@
           es: _loadout.recommendedElement ? [_loadout.recommendedElement] : [],
           t:  _loadout.equippedTreasureIds || []
         };
-        _me.element = _wbTcStringifyExt(_ext);
+        _me.element = _wbTcStringifyExt(_ext, _loadout.heroName);
         console.log('[WB-TC] me 暫無 heroName,本地注入預設 loadout:', _loadout);
       }
     }catch(_){}
@@ -5268,7 +5381,7 @@
             uid:      myUid,    // ★ 設成 myUid → _wbTcRenderOneSlot 內 isMe=true,但用 assignedSlotIdx 覆寫
             heroName: assigned.heroName,
             name:     _hostNameForNpc,
-            element:  _wbTcStringifyExt(_fakeExt),
+            element:  _wbTcStringifyExt(_fakeExt, assigned.heroName),
             ready:    false,
           };
           html += _wbTcRenderOneSlot(_fakeP, i, myUid, treasureTakenByPeer, meIsHost, i);
@@ -5432,6 +5545,8 @@
 
   // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含至寶加成)
   // ★ FIX 20260516 v3 — 改:接受 player 物件,從 ext.t 讀已選至寶並加上 baseStats + invested
+  // ★ FIX 20260521(g) — 隊友(isMe=false)也能從 playerObj.element 的 g 欄位讀養成資料,
+  //                    讓房主/隊友看到的彼此能力一致, 跟戰鬥中 _wbSetupAdvForBattle 套用的數據對齊.
   function _wbTcGetHeroStats(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
@@ -5441,7 +5556,58 @@
       let atk = base.atk || 0;
       let sp  = base.sp  || 0;
       let spd = base.spd || 0;
-      // 加至寶 baseStats + invested(只有我能算,因為至寶資料只有我這端有)
+      // ★ FIX 20260521(f) — 三大妖怪 (大天狗/酒吞童子/玉藻前) 作為「玩家英雄」時
+      //   要套 JP_BOSS_HERO_STATS 弱化版 (hp 57~70/atk 9~16 等),否則 HERO_DB
+      //   裡的數字是 BOSS 強版 (hp 900/atk 30+ 等),會在隊伍確認頁顯示成 BOSS 數值.
+      try{
+        if(typeof JP_BOSS_HERO_STATS !== 'undefined' && JP_BOSS_HERO_STATS[heroName]){
+          const _jp = JP_BOSS_HERO_STATS[heroName];
+          hp  = _jp.hp;
+          atk = _jp.atk;
+          sp  = _jp.sp;
+          spd = _jp.spd;
+        }
+      }catch(_){}
+
+      // ★ FIX 20260521(g) — 先從同步資料 (g 欄位) 拿養成,自己或隊友通用
+      let _growthInv = null;     // 屬性投資 { hp, atk, sp, spd }
+      let _growthLv  = 1;        // 英雄等級
+      if(playerObj && playerObj.element){
+        try{
+          const _ext = _wbTcParsePlayerExt(playerObj);
+          if(_ext && _ext.g){
+            if(_ext.g.inv) _growthInv = _ext.g.inv;
+            if(typeof _ext.g.lv === 'number') _growthLv = _ext.g.lv;
+          }
+        }catch(_){}
+      }
+      // 若是自己且沒從同步資料拿到 → fallback 用本機資料(剛開房 g 還沒寫進去時的兜底)
+      if(isMe){
+        if(!_growthInv){
+          try{
+            if(typeof _heroStatInvested !== 'undefined' && _heroStatInvested[heroName]){
+              _growthInv = _heroStatInvested[heroName];
+            }
+          }catch(_){}
+        }
+        if(_growthLv === 1){
+          try{
+            if(typeof _heroLevels !== 'undefined' && _heroLevels[heroName]){
+              _growthLv = _heroLevels[heroName] || 1;
+            }
+          }catch(_){}
+        }
+      }
+
+      // 套用屬性投資點數
+      if(_growthInv){
+        hp  += _growthInv.hp  || 0;
+        atk += _growthInv.atk || 0;
+        sp  += _growthInv.sp  || 0;
+        spd += _growthInv.spd || 0;
+      }
+
+      // 加至寶 baseStats + invested(只有我能算,因為至寶詳細投資資料只有我這端有)
       if(isMe && playerObj){
         try{
           const ext = _wbTcParsePlayerExt(playerObj);
@@ -5468,17 +5634,40 @@
           });
         }catch(e){ console.warn('[WB-TC] 計算至寶 stats 失敗', e); }
       }
+
+      // ★ FIX 20260521(f)+(g) — 等級 HP 加成: 每超過 Lv.1 一級 +2% HP.
+      //   主程式 _applyAdvLevelHpBonus / _injectFriendHeroIntoBattle 都用同一公式,
+      //   這裡也對齊, 隊友看自己/我看隊友的 HP 都一致.
+      if(_growthLv > 1){
+        const _bonus = Math.ceil(hp * 0.02 * (_growthLv - 1));
+        if(_bonus > 0) hp += _bonus;
+      }
+
       return { hp, atk, sp, spd };
     }catch(_){ return null; }
   }
 
   // 取得英雄技能 + 技能等級(自己看得到)+ 描述(供 popup 用)
-  function _wbTcGetHeroSkills(heroName, isMe){
+  // ★ FIX 20260521(g) — 第 3 參數 playerObj: 隊友也能從 element.g.skLv 讀技能等級
+  function _wbTcGetHeroSkills(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return { s1: null, s2: null };
       const h = HERO_DB[heroName];
       let s1Lv = 1, s2Lv = 1;
-      if(isMe){
+      // ★ FIX 20260521(g) — 先嘗試從同步資料拿 (隊友 + 自己同走這條, 自己若 g 已寫入也優先)
+      let _gotFromSync = false;
+      if(playerObj && playerObj.element){
+        try{
+          const _ext = _wbTcParsePlayerExt(playerObj);
+          if(_ext && _ext.g && _ext.g.skLv){
+            s1Lv = (_ext.g.skLv.s1 || 0) + 1;
+            s2Lv = (_ext.g.skLv.s2 || 0) + 1;
+            _gotFromSync = true;
+          }
+        }catch(_){}
+      }
+      // 自己 fallback 用本機(剛開房 g 還沒寫入時)
+      if(!_gotFromSync && isMe){
         try{
           if(typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[heroName]){
             s1Lv = (_heroSkillLevels[heroName].s1 || 0) + 1;
@@ -5513,9 +5702,9 @@
     const ext = _wbTcParsePlayerExt(p);
     const heroName = p.heroName || '?';
     const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
-    const lv = _wbTcGetHeroLv(heroName, isMe);
+    const lv = _wbTcGetHeroLv(heroName, isMe, p);
     const stats = _wbTcGetHeroStats(heroName, isMe, p) || { hp:0, atk:0, sp:0, spd:0 };
-    const skills = _wbTcGetHeroSkills(heroName, isMe);
+    const skills = _wbTcGetHeroSkills(heroName, isMe, p);
     // 主元素(取 ext.es 第一個);用於 header 右上角顯示元素 icon
     const mainElem = ext.es[0] || null;
 
@@ -5844,11 +6033,15 @@
       // 單人練習模式:切編輯槽
       window._wbSoloEditingSlot = targetSlotIdx;
       const ext = _wbTcParsePlayerExt(slotPlayer);
-      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
+      // ★ FIX 20260521(g) — 換新英雄, 清掉舊 g, 讓 stringify 自動依新 heroName 重抓
+      ext.g = null;
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext, heroName));
     }else if(isMyOwnSlot){
       // 多人房:換自己的英雄(保留原本的元素/至寶 ext)
       const ext = _wbTcParsePlayerExt(slotPlayer);
-      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
+      // ★ FIX 20260521(g) — 換新英雄, 清掉舊 g, 讓 stringify 自動依新 heroName 重抓
+      ext.g = null;
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext, heroName));
     }else{
       // 多人房試圖換別人的英雄 → 拒絕
       _wbGameAlert('只能替自己的槽位換英雄');
@@ -5951,7 +6144,7 @@
           e:  _hostAssign.element || null,
           es: _hostAssign.element ? [_hostAssign.element] : [],
           t:  Array.isArray(_hostAssign.treasures) ? _hostAssign.treasures : [],
-        }),
+        }, _hostAssign.heroName),
       };
     }else{
       me = snap?.players?.[targetSlotIdx];
@@ -6061,7 +6254,7 @@
     if(window._wbSoloPracticeMode){
       window._wbSoloEditingSlot = targetSlotIdx;
     }
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext, me.heroName));
     _wbTcCloseSwapModal();
     _wbTcRenderTeamConfirm();
   };
@@ -6182,7 +6375,7 @@
     }
     // 透過 setMyHero 同步(把 JSON 字串塞進 element)
     // ★ 改動 element 會把 ready 重設為 false(主程式邏輯),避免「沒選完元素就準備」
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext, me.heroName));
     // 立即 re-render(等 onRoomUpdate 也會 re-render,但先給玩家視覺回饋)
     _wbTcRenderTeamConfirm();
   };
@@ -6199,7 +6392,7 @@
     }else{
       ext.t.push(treasureId);
     }
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext, me.heroName));
     _wbTcRenderTeamConfirm();
   };
 
@@ -10169,7 +10362,7 @@
         name: _myName,
         slotIdx: 0,
         heroName: _slot0HeroName,
-        element: _wbTcStringifyExt(_initExt),
+        element: _wbTcStringifyExt(_initExt, _slot0HeroName),
         ready: false,
         online: true,
         lastSeen: Date.now(),

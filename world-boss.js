@@ -911,10 +911,19 @@
     if(ov){
       ov.style.display = 'flex';
       // ★ FIX 20260517 — entry 開啟時把 #ctrl-bar 推到 body 最後,確保最高層
+      // ★ FIX 20260521(i) — 改呼叫統一 helper window._wbEnsureCtrlBarOnTop, 它會:
+      //   1. 無條件 reparent (不再只限 parentNode === body)
+      //   2. inline style 強制 z-index:2147483647 + position:fixed
+      //   修原本「ctrl-bar 仍被世界 BOSS 主頁視覺覆蓋」的 iPad bug.
       try{
-        const _bar = document.getElementById('ctrl-bar');
-        if(_bar && _bar.parentNode === document.body){
-          document.body.appendChild(_bar);
+        if(typeof window._wbEnsureCtrlBarOnTop === 'function'){
+          window._wbEnsureCtrlBarOnTop();
+        }else{
+          // fallback (一般不會走到, helper 在 world-boss-ui.html 載入後就暴露)
+          const _bar = document.getElementById('ctrl-bar');
+          if(_bar && _bar.parentNode === document.body){
+            document.body.appendChild(_bar);
+          }
         }
       }catch(_){}
       try{ _wbRefreshBlessingBanner(); }catch(_){}
