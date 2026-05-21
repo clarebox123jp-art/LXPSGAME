@@ -6775,26 +6775,45 @@
       // ═══════════════════════════════════════════════════════════════
       try{
         let _growth = null;
+        let _growthSource = 'none';
         if(p && p.element){
           // 真人玩家:從 firestore 取
           const _ext = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
-          if(_ext && _ext.g) _growth = _ext.g;
+          if(_ext && _ext.g){
+            _growth = _ext.g;
+            _growthSource = 'player';
+          }
         }
-        if(!_growth && h._wbIsHostNpc){
-          // 房主代理槽位 (空槽 / 已離線玩家) → 用房主本機的養成資料
-          // (因為 _wbBuildMyGrowth 在 index.html 主程式 scope, 這裡用全域變數兜底)
-          try{
-            const _lv = (typeof _heroLevels    !== 'undefined' && _heroLevels    && _heroLevels[heroName])    || 1;
-            const _sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[heroName]) || {};
-            const _bu = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[heroName]) || 0;
-            const _iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]) || {};
-            _growth = {
-              lv: _lv,
-              skLv: { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
-              burst: _bu,
-              inv: { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
-            };
-          }catch(_eFallback){}
+        // ★ v3.4.18 — 修 BUG:單人練習 mock setMyHero 與舊版客戶端沒寫 g 進 element JSON,
+        //   導致房主自己槽位拿不到養成 → 進戰鬥所有技能/爆發等級都是 Lv.0。
+        //   原邏輯只 fallback「沒玩家」的代理槽,沒涵蓋「有玩家但 g=null」的情境。
+        //   新邏輯:只要這個槽位的英雄是「我自己擁有的」(這場是房主開的 → 用房主本機 _heroLevels),
+        //         就改用房主本機資料。判定:
+        //           (a) _wbIsHostNpc=true(空槽指派或離線代理),原本就要走 fallback
+        //           (b) p.uid === myUid(房主自己槽位)— 新增涵蓋單人練習房主與多人房房主自己
+        //           (c) 本機 _heroLevels[heroName] 有值(代表房主練過這隻英雄)
+        //         三選一即可走 fallback。
+        if(!_growth){
+          const _myUid = (typeof window._gUserId !== 'undefined') ? window._gUserId : null;
+          const _isMyOwnSlot = !!(p && p.uid && _myUid && p.uid === _myUid);
+          const _heroLvLocal = (typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]) || 0;
+          const _shouldFallback = h._wbIsHostNpc || _isMyOwnSlot || (_heroLvLocal > 0);
+          if(_shouldFallback){
+            try{
+              const _lv = (typeof _heroLevels    !== 'undefined' && _heroLevels    && _heroLevels[heroName])    || 1;
+              const _sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[heroName]) || {};
+              const _bu = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[heroName]) || 0;
+              const _iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]) || {};
+              _growth = {
+                lv: _lv,
+                skLv: { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
+                burst: _bu,
+                inv: { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
+              };
+              _growthSource = h._wbIsHostNpc ? 'host代理(_wbIsHostNpc)'
+                : (_isMyOwnSlot ? 'host代理(自己槽位 fallback)' : 'host代理(本機等級非零 fallback)');
+            }catch(_eFallback){}
+          }
         }
         if(_growth){
           // 1. 屬性投資 → 加到基礎屬性
@@ -6823,7 +6842,7 @@
           h._advLv = _lv;
           console.log('[WB-Growth] 槽', i, heroName, 'Lv.' + _lv,
             's1+' + h._skLv.s1, 's2+' + h._skLv.s2, '爆發+' + h._burstLvAdv,
-            'inv=', _inv, '來源=' + (p ? 'player' : 'host代理'));
+            'inv=', _inv, '來源=' + _growthSource);
         } else {
           console.log('[WB-Growth] 槽', i, heroName, '無養成資料 (新玩家或舊版客戶端)');
         }
@@ -10315,10 +10334,21 @@
       isHost: () => true,
       getMySlot: () => 0,  // ★ 單人模式:玩家永遠在槽 0
       // ★ FIX 20260517(v) — 單人模式只改槽 0(房主),其他槽用「房主指派」操作(走 _wbHostAssignedSlots)
+      // ★ v3.4.18 — 修 BUG:原 mock 直接拿 elementStr 寫入,沒呼叫 _wbBuildMyGrowth/_wbInjectGrowthIntoElement,
+      //   導致單人練習房主自己槽位的 element JSON 永遠沒有 g 欄位 →
+      //   進戰鬥 _wbUiStartBattle 對房主自己槽位 (_wbIsHostNpc=false) 拿不到 growth → 技能等級全 Lv.0。
+      //   修法:用 window._wbBuildMyGrowth / window._wbInjectGrowthIntoElement 補注入(若這兩個函式有 export 到 window)。
       setMyHero: async function(heroName, elementStr){
+        let _finalElementStr = elementStr;
+        try{
+          if(typeof window._wbBuildMyGrowth === 'function' && typeof window._wbInjectGrowthIntoElement === 'function'){
+            const _g = window._wbBuildMyGrowth(heroName);
+            _finalElementStr = window._wbInjectGrowthIntoElement(elementStr, _g);
+          }
+        }catch(_eMockGrow){ console.warn('[WB-Solo mock setMyHero] 注入 growth 失敗,fallback 原 elementStr', _eMockGrow); }
         if(_wbSoloFakePlayers[0]){
           _wbSoloFakePlayers[0].heroName = heroName;
-          _wbSoloFakePlayers[0].element = elementStr || null;
+          _wbSoloFakePlayers[0].element = _finalElementStr || null;
           _wbSoloFakePlayers[0].ready = false;
         }
         _wbTcRenderTeamConfirm();
@@ -11044,6 +11074,61 @@
       }
       if(boss._wbBurn > 0) chips.push(`<span class="wb-boss-status-chip burn">🔥 燃燒 ${boss._wbBurn}</span>`);
       if(boss._wbStun > 0) chips.push(`<span class="wb-boss-status-chip stun">⚡ 眩暈 ${boss._wbStun}</span>`);
+
+      // ★ v3.4.18 — 新增:顯示 BOSS 的有利(buffs) 與 不利(status) 狀態
+      //   原本只顯示護盾、燃燒、眩暈三種 BOSS 專屬狀態,
+      //   主程式賦予的 status (中毒/麻痺/封印/詛咒/失明...) 和 buffs (無敵/護盾/吸收...)
+      //   完全沒在 BOSS 血條下顯示,玩家完全看不出自己控了什麼,也看不出 BOSS 開了什麼 buff。
+      //   修法:仿主程式 renderCard(line 14711) 的 status/buffs map 邏輯,
+      //         呼叫 statusName/buffName 取中文名 + buffClass 取顏色 class,
+      //         加在護盾後面、燃燒眩暈之前。
+      try{
+        // 不利狀態(BAD)— 紅/紫色系
+        if(Array.isArray(boss.status) && boss.status.length > 0){
+          const _seenTypes = new Set();
+          for(const s of boss.status){
+            if(!s || !s.type) continue;
+            if(_seenTypes.has(s.type)) continue;  // 同類型只顯示一次
+            _seenTypes.add(s.type);
+            const _name = (typeof statusName === 'function') ? statusName(s.type) : s.type;
+            const _dur = (typeof s.dur === 'number' && s.dur > 0) ? ` ${s.dur}` : '';
+            // 不利狀態用紅紫色:邊框 rgba(255,80,120,0.7),底 rgba(80,20,40,0.55),字 #ffaacc
+            chips.push(
+              `<span class="wb-boss-debuff-chip" style="`+
+              `display:inline-flex;align-items:center;gap:4px;`+
+              `padding:3px 10px;font-size:15px;font-weight:700;letter-spacing:1px;`+
+              `border:1.5px solid rgba(255,80,120,0.7);border-radius:9px;`+
+              `background:rgba(80,20,40,0.55);color:#ffaacc;`+
+              `text-shadow:0 0 4px rgba(255,80,120,0.5);">`+
+              `🔻 ${_name}${_dur}`+
+              `</span>`
+            );
+          }
+        }
+        // 有利狀態(BUFF)— 金/綠色系
+        if(Array.isArray(boss.buffs) && boss.buffs.length > 0){
+          const _seenBuffs = new Set();
+          for(const b of boss.buffs){
+            if(!b || !b.type) continue;
+            if(_seenBuffs.has(b.type)) continue;
+            _seenBuffs.add(b.type);
+            const _name = (typeof buffName === 'function') ? buffName(b.type) : b.type;
+            const _dur = (typeof b.dur === 'number' && b.dur > 0) ? ` ${b.dur}` : '';
+            // 有利狀態用金綠色:邊框 rgba(120,255,170,0.7),底 rgba(20,60,40,0.55),字 #aaffcc
+            chips.push(
+              `<span class="wb-boss-buff-chip" style="`+
+              `display:inline-flex;align-items:center;gap:4px;`+
+              `padding:3px 10px;font-size:15px;font-weight:700;letter-spacing:1px;`+
+              `border:1.5px solid rgba(120,255,170,0.7);border-radius:9px;`+
+              `background:rgba(20,60,40,0.55);color:#aaffcc;`+
+              `text-shadow:0 0 4px rgba(120,255,170,0.5);">`+
+              `🔺 ${_name}${_dur}`+
+              `</span>`
+            );
+          }
+        }
+      }catch(_eStatusChips){ console.warn('[WB-Adv] BOSS 狀態 chip 渲染失敗', _eStatusChips); }
+
       shieldsRow.innerHTML = chips.length ? chips.join('') :
         '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(HP 80% 啟動)</span>';
     }

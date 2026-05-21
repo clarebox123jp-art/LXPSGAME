@@ -3172,6 +3172,14 @@
       return JSON.stringify(obj);
     }
 
+    // ★ v3.4.18 — export 到 window 供 world-boss-ui.html 單人練習 mock setMyHero 使用
+    //   原本這兩個函式是 IIFE scope 內,只在連線模式 setMyHero 用得到,單人練習 mock 拿不到。
+    //   修 BUG:單人練習房主自己槽位的 element JSON 永遠沒有 g 欄位 → 進戰鬥技能全 Lv.0。
+    try{
+      window._wbBuildMyGrowth = _wbBuildMyGrowth;
+      window._wbInjectGrowthIntoElement = _wbInjectGrowthIntoElement;
+    }catch(_){}
+
     async function setMyHero(heroName, element){
       if(!WB.roomId) return false;
       try{
