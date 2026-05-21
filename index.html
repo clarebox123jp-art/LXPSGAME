@@ -65,10 +65,42 @@
   console.error = function(){ _push('ERROR', arguments); _orig.error.apply(null, arguments); };
   console.debug = function(){ _push('DEBUG', arguments); _orig.debug.apply(null, arguments); };
   // 攔截 uncaught error / promise rejection,讓玩家看不見的錯誤也進 buffer
+  // ★ v3.4.22 — 老師 2026/5/21 50 人測試:iPad 戰鬥中無預警跳出根因強化.
+  //   iOS Safari 對「短時間內 uncaught error 連續發生」會判定頁面異常並殺分頁.
+  //   音效函式雖已包 try-catch,但仍有其他路徑可能拋例外(如 setValueAtTime/setTargetAtTime
+  //   遇到 NaN 時的 native code).
+  //   修補:對音效相關錯誤主動 preventDefault,讓 iPad Safari 不要把這當「未處理」.
+  //         同時計數短時間內錯誤,若 5 秒內 > 10 條,強制停掉 _masterGain 避免持續錯誤.
+  window._uncaughtErrTimes = [];
   window.addEventListener('error', function(ev){
     try{
-      _push('UNCAUGHT', ['Uncaught error:', (ev.message || '?'),
-        'at', (ev.filename || '?') + ':' + (ev.lineno || '?') + ':' + (ev.colno || '?')]);
+      const _msg = ev.message || '';
+      const _fn = ev.filename || '';
+      const _isAudioErr = /setValueAtTime|setTargetAtTime|AudioContext|non-finite|finite|AudioBuffer/i.test(_msg)
+                         || /beep|noise|playMusic|sndBattleCry/i.test(_msg);
+      _push('UNCAUGHT', ['Uncaught error:', _msg,
+        'at', _fn + ':' + (ev.lineno || '?') + ':' + (ev.colno || '?')]);
+      // 累積錯誤計數
+      const _now = Date.now();
+      window._uncaughtErrTimes.push(_now);
+      // 只保留 5 秒內的
+      window._uncaughtErrTimes = window._uncaughtErrTimes.filter(t => _now - t < 5000);
+      // 5 秒內超過 10 條錯誤 → 危險,強制停掉音效系統避免 iPad 殺分頁
+      if(window._uncaughtErrTimes.length > 10 && !window._audioEmergencyStop){
+        window._audioEmergencyStop = true;
+        try{
+          if(typeof AC !== 'undefined' && AC && window._masterGain){
+            // 把主音量降到 0,後續所有音效都不發聲但函式仍能跑(不拋例外)
+            const _t = (typeof _safeAcTime === 'function') ? _safeAcTime() : 0;
+            window._masterGain.gain.setValueAtTime(0, _t);
+          }
+        }catch(_){}
+        console.warn('[緊急] 短時間音效錯誤過多,已靜音以防 iPad 殺分頁');
+      }
+      // 音效錯誤主動 preventDefault,告訴瀏覽器這是已處理的
+      if(_isAudioErr && ev.preventDefault){
+        try{ ev.preventDefault(); }catch(_){}
+      }
     }catch(_){}
   });
   window.addEventListener('unhandledrejection', function(ev){
@@ -14982,9 +15014,66 @@ function renderCard(h){
     const _clickHero = (G && G[_clickSide] && G[_clickSide][_clickPos]) || el._previewHero;
     // 若此卡片可爆發且是p1側，顯示爆發面板
     if(_clickHero && _clickHero.side==='p1' && _canBurst(_clickHero)){
-      // ★ 出題中（_gamePaused=true）時不允許開啟爆發面板，
-      //   因為 _pSetTimeout 在暫停中會延遲，玩家會感覺按了沒反應
-      if(typeof _gamePaused !== 'undefined' && _gamePaused) return;
+      // ★ 出題中(_gamePaused=true)時不允許開啟爆發面板,
+      //   因為 _pSetTimeout 在暫停中會延遲,玩家會感覺按了沒反應
+      // ★ v3.4.22 — 老師 2026/5/21 50 人測試:「點爆發角色卡技能按確定沒反應」
+      //   根因:_gamePaused 殘留為 true 但畫面上其實沒任何合法 overlay (孤兒 pause),
+      //         silent return 讓學生完全摸不著頭緒.
+      //   修補:先做孤兒偵測 — 若 _gamePaused=true 但沒任何合法 overlay 顯示中,
+      //         強制 reset _gamePaused = false 並 resume timers,繼續走流程.
+      //         真的有 overlay 才提示玩家「請先處理當前視窗」.
+      if(typeof _gamePaused !== 'undefined' && _gamePaused){
+        // 偵測是否為孤兒 _gamePaused (盲擋已造成多次學生回報)
+        let _hasLegitOverlay = false;
+        try{
+          const _checks = [
+            { id:'adv-quiz-overlay',          needShowClass:true  },  // 答題視窗
+            { id:'adv-reward-overlay',        needShowClass:false },  // 答對獎勵視窗
+            { id:'adv-continue-overlay',      needShowClass:true  },  // 失敗接關視窗
+            { id:'adv-result-overlay',        needShowClass:true  },  // BOSS 結算視窗
+            { id:'adv-mini-result',           needShowClass:true  },  // 小怪結算視窗
+            { id:'burst-priority-modal',      needShowClass:false },  // 爆發優先選擇
+            { id:'discard-overlay',           needShowClass:false },  // 棄牌視窗
+            { id:'adv-cutscene-overlay',      needShowClass:false },  // 過場
+            { id:'adv-boss-intro',            needShowClass:true  },  // BOSS 登場介紹
+            { id:'adv-treasure-popup',        needShowClass:true  },  // 法寶介紹
+            { id:'adv-choice-panel',          needShowClass:false },  // 場景選擇 panel
+            { id:'_tut-prompt',               needShowClass:false },  // 教學提示
+          ];
+          for(let i = 0; i < _checks.length; i++){
+            const _c = _checks[i];
+            const _el = document.getElementById(_c.id);
+            if(!_el) continue;
+            const _visible = _c.needShowClass
+              ? _el.classList.contains('show')
+              : (_el.style.display !== 'none' && _el.style.display !== '' || _el.classList.contains('show'));
+            // adv-choice-panel 特殊判斷:有子元素才算「正在選擇」
+            if(_c.id === 'adv-choice-panel'){
+              if(_el.children && _el.children.length > 0){ _hasLegitOverlay = true; break; }
+              continue;
+            }
+            if(_visible){ _hasLegitOverlay = true; break; }
+          }
+        }catch(_eOvCheck){}
+        if(!_hasLegitOverlay){
+          // 孤兒 _gamePaused — 強制 reset 並繼續走
+          console.warn('[burst panel] _gamePaused=true 但無合法 overlay 顯示,判定為孤兒,強制 reset');
+          try{ _gamePaused = false; }catch(_){}
+          try{ window._gamePaused = false; }catch(_){}
+          try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+          // 不 return,繼續往下開啟爆發面板
+        } else {
+          // 真的有合法 overlay → 提示玩家先處理
+          try{
+            if(typeof _showInGameToast === 'function'){
+              _showInGameToast('⏸ 請先完成上方視窗的操作', '#ffaa66', 1500);
+            } else if(typeof log === 'function'){
+              log('⏸ 請先完成上方視窗的操作');
+            }
+          }catch(_){}
+          return;
+        }
+      }
       const existing=document.getElementById('burst-panel');
       if(existing && existing._forHero===_clickHero){ hideBurstPanel(); return; }
       hideBurstPanel();
@@ -22095,6 +22184,38 @@ function requestAction(type, btnEl){
 function confirmAction(){
   const type=_pendingActionType;
   if(!type) return;
+  // ★ v3.4.22 — 老師 2026/5/21 50 人測試:「點技能確定按了沒反應」根因修補
+  //   症狀:普攻、賣卡可以(都是同步操作),技能不行(內部用 _pSetTimeout)
+  //   根因:_gamePaused 殘留為 true 但畫面上沒任何合法 overlay,_pSetTimeout
+  //         把 fn 進 queue 等 fallback (預設 20 秒) → 學生覺得「按了沒反應」
+  //   修補:確認動作的入口先做孤兒偵測,有殘留就 reset,讓技能特效能正常播
+  if(typeof _gamePaused !== 'undefined' && _gamePaused){
+    let _hasLegitOverlay = false;
+    try{
+      const _checks = [
+        ['adv-quiz-overlay', true], ['adv-reward-overlay', false],
+        ['adv-continue-overlay', true], ['adv-result-overlay', true],
+        ['adv-mini-result', true], ['burst-priority-modal', false],
+        ['discard-overlay', false], ['adv-cutscene-overlay', false],
+        ['adv-boss-intro', true], ['adv-treasure-popup', true],
+        ['_tut-prompt', false]
+      ];
+      for(let i = 0; i < _checks.length; i++){
+        const _el = document.getElementById(_checks[i][0]);
+        if(!_el) continue;
+        const _visible = _checks[i][1]
+          ? _el.classList.contains('show')
+          : (_el.style.display !== 'none' && _el.style.display !== '' || _el.classList.contains('show'));
+        if(_visible){ _hasLegitOverlay = true; break; }
+      }
+    }catch(_){}
+    if(!_hasLegitOverlay){
+      console.warn('[confirmAction] _gamePaused=true 但無合法 overlay,孤兒 paused 強制 reset');
+      try{ _gamePaused = false; }catch(_){}
+      try{ window._gamePaused = false; }catch(_){}
+      try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+    }
+  }
   const existing=document.getElementById('action-confirm-bar'); if(existing) existing.remove();
   _pendingActionType=null;
   playSfx('sfx-action-confirm', 0.85);
@@ -36857,7 +36978,11 @@ function ctrlTogglePause(){
         window._masterGain.connect(AC.destination);
         // 重新把beep/noise的輸出接到masterGain（透過攔截）
       }
-      window._masterGain.gain.setTargetAtTime(_gamePaused?0.5:1.0, AC.currentTime, 0.05);
+      // ★ v3.4.22 — 用 _safeAcTime 取代 AC.currentTime,
+      //   iPad Safari 偶爾回 NaN/Infinity,setTargetAtTime 拋 TypeError 雖被外層 try 吞,
+      //   但持續錯誤會讓 iPad Safari 判定頁面異常並可能殺分頁(BUG 4 候選根因)
+      const _safeT = (typeof _safeAcTime === 'function') ? _safeAcTime() : (AC.currentTime || 0);
+      window._masterGain.gain.setTargetAtTime(_gamePaused?0.5:1.0, _safeT, 0.05);
     }catch(_){}
   }
 
@@ -57549,6 +57674,79 @@ function _startDeadlockWatchdog(){
       console.warn('🚨 [卡死偵測] ' + (_isPlayerTurn ? '玩家回合' : 'AI 回合')
         + ' 行動超過 ' + (_isPlayerTurn ? '30' : '5') + ' 秒無進展!actor=' + _snapActorName
         + ', round=' + _snapRound + ', acted=' + _snapActorActed);
+      // ★ v3.4.22 — 老師 2026/5/21 50 人測試:80% 學生卡死,Watchdog 雖然偵測到但
+      //   只顯示按鈕讓學生「自己點」太被動,小學生看不懂按鈕意義或不知道要按.
+      //   改為「先嘗試自動推進」:強制 reset 多種旗標 + endAction + startTurn,
+      //   多數情況下能自動恢復.失敗再顯示按鈕讓學生點.
+      let _autoRescueOk = false;
+      try{
+        console.warn('[卡死偵測] 啟動自動救援(不必玩家點按鈕)...');
+        // (1) 強制清 _gamePaused、resume timers (若是孤兒 paused 殘留就解)
+        try{ _gamePaused = false; }catch(_){}
+        try{ window._gamePaused = false; }catch(_){}
+        try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+        // (2) 清孤兒 AI watchdog (AI 行動 timer 殘留)
+        try{ if(window._aiWatchdog){ clearTimeout(window._aiWatchdog); window._aiWatchdog = null; } }catch(_){}
+        // (3) 關掉任何孤兒 overlay (sync 確認 .show 但 phase=idle 的 quiz/reward)
+        try{
+          const _qOvR = document.getElementById('adv-quiz-overlay');
+          if(_qOvR && _qOvR.classList.contains('show')){
+            const _phaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle' || !_advQuizPhase);
+            const _miniPhaseIdle = (typeof window._miniQuizPhase === 'undefined' || !window._miniQuizPhase || window._miniQuizPhase === 'idle');
+            const _noBossCb = !(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+            const _noMiniCb = !(typeof window._miniQuizOnDone === 'function');
+            if(_phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb){
+              console.warn('[卡死自動救援] 偵測孤兒 adv-quiz-overlay,順手關掉');
+              _qOvR.classList.remove('show');
+              _qOvR.style.display = 'none';
+            }
+          }
+        }catch(_){}
+        // (4) 若 actor 是 p2 (AI) 且未行動,主動 nudge aiAct
+        if(_snapActor && _snapActor.side === 'p2' && _snapActor.curHp > 0 && !_snapActor.acted){
+          console.warn('[卡死自動救援] 主動 nudge AI act:' + _snapActorName);
+          try{
+            if(typeof aiAct === 'function'){
+              setTimeout(function(){ try{ aiAct(_snapActor); }catch(_eA){ console.warn('[卡死自動救援] aiAct 例外', _eA); } }, 100);
+              _autoRescueOk = true;
+            }
+          }catch(_eN){}
+        }
+        // (5) 若 actor 是 p2 且已標 acted,推進到下一個
+        if(!_autoRescueOk && _snapActor && _snapActor.side === 'p2' && (_snapActor.acted || _snapActor.curHp <= 0)){
+          console.warn('[卡死自動救援] AI 已 acted/陣亡,主動 startTurn 推進');
+          try{
+            if(typeof startTurn === 'function'){
+              setTimeout(function(){ try{ startTurn(); }catch(_eS){ console.warn('[卡死自動救援] startTurn 例外', _eS); } }, 100);
+              _autoRescueOk = true;
+            }
+          }catch(_){}
+        }
+        // (6) 若是玩家回合卡死,action-panel 不見了 → 還原
+        if(!_autoRescueOk && _isPlayerTurn){
+          try{
+            const _ap = document.getElementById('action-panel');
+            if(_ap && (_ap.style.display === 'none' || !_ap.offsetParent)){
+              console.warn('[卡死自動救援] 玩家回合 action-panel 隱藏,嘗試還原');
+              _ap.style.display = '';
+              if(typeof updateUI === 'function') updateUI();
+              _autoRescueOk = true;
+            }
+          }catch(_){}
+        }
+      }catch(_eAR){ console.warn('[卡死自動救援] 整體例外', _eAR); }
+      // (7) 若自動救援成功,2 秒後再檢查一次,若仍卡才顯示按鈕
+      //     失敗則立刻顯示按鈕
+      if(_autoRescueOk){
+        console.warn('[卡死自動救援] 已主動推進,2 秒後再 check 是否真的卡死');
+        window._deadlockWatchdog = setTimeout(function(){
+          try{
+            // 重啟 watchdog,讓正常邏輯再走一輪
+            _startDeadlockWatchdog();
+          }catch(_){}
+        }, 2000);
+        return;  // 不立刻顯示按鈕,等下次 watchdog 判定
+      }
       _showDeadlockRescueButton();
     }catch(e){ console.warn('[卡死偵測] watchdog 異常', e); }
   };
@@ -69476,6 +69674,34 @@ function _advMiniQuizSubmit(letter, isCorrect) {
 function advStartMiniBattle(nextSceneIdx) {
   _advMiniBattleActive = true;
   _advMiniBattleNextScene = nextSceneIdx;
+  // ★ v3.4.22 — 老師 2026/5/21 50 人測試:iPad 戰鬥中無預警跳出根因強化
+  //   iPad Safari 記憶體只有 ~200MB,連續戰鬥會累積:
+  //     (1) burst-gif-overlay 殘留 (上一場爆發特效 DOM)
+  //     (2) FX_LAYER 內的粒子動畫 div 累積
+  //     (3) 戰場卡片動畫類別累積
+  //   每開新一場戰鬥都先清一次,維持記憶體用量穩定.
+  try{
+    // 清舊的爆發 GIF overlay (記憶 v32: cache-buster 已移除,但 overlay DOM 可能殘留)
+    const _oldBurstOv = document.getElementById('burst-gif-overlay');
+    if(_oldBurstOv){
+      try{ const _img = _oldBurstOv.querySelector('img'); if(_img) _img.src = ''; }catch(_){}
+      _oldBurstOv.remove();
+    }
+    // 清 FX_LAYER 內所有粒子 div (它們是動畫殘留)
+    const _fxLayer = document.getElementById('fx-layer');
+    if(_fxLayer && _fxLayer.children && _fxLayer.children.length > 50){
+      // 只在累積超過 50 個粒子時才清,避免影響當前正在播的動畫
+      console.warn('[advStartMiniBattle] FX_LAYER 累積 ' + _fxLayer.children.length + ' 個粒子,清空避免記憶體洩漏');
+      _fxLayer.innerHTML = '';
+    }
+    // 清 _epGlowTimers 殘留 (元素加護光暈,場景切換後不再需要)
+    if(typeof _epGlowTimers !== 'undefined' && _epGlowTimers){
+      Object.keys(_epGlowTimers).forEach(k => {
+        try{ if(_epGlowTimers[k]) clearInterval(_epGlowTimers[k]); }catch(_){}
+        delete _epGlowTimers[k];
+      });
+    }
+  }catch(_eMemClean){ console.warn('[advStartMiniBattle] 記憶體預防清理例外', _eMemClean); }
   // ★ v3.4.21 — 老師需求 2:防無限「繼續冒險」重複領獎
   //   為這場新戰鬥分配唯一 ID,advFinishMiniBattle 結算後記錄「此 ID 已結算」,
   //   即使 _advFinishingMini 旗標被某條 race 路徑 reset,下次再呼叫也會被擋下。
@@ -69749,11 +69975,16 @@ function advStartMiniBattle(nextSceneIdx) {
         }
       }catch(e){ console.error('[mini-startTurn]',e); }
     }, 500);
-    // ★ 防呆：每1秒自動檢查小怪是否全滅
-    const _miniCheckInterval = setInterval(()=>{
-      if(!_advMiniBattleActive){ clearInterval(_miniCheckInterval); return; }
+    // ★ 防呆:每1秒自動檢查小怪是否全滅
+    // ★ v3.4.22 — 改為 window 全域 + 進入新戰鬥時強制清舊,避免孤兒 interval 累積耗資源
+    try{ if(window._miniCheckInterval){ clearInterval(window._miniCheckInterval); window._miniCheckInterval = null; } }catch(_){}
+    window._miniCheckInterval = setInterval(()=>{
+      if(!_advMiniBattleActive){
+        try{ clearInterval(window._miniCheckInterval); window._miniCheckInterval = null; }catch(_){}
+        return;
+      }
       if(G.p2 && G.p2.every(h=>h.curHp<=0)){
-        clearInterval(_miniCheckInterval);
+        try{ clearInterval(window._miniCheckInterval); window._miniCheckInterval = null; }catch(_){}
         _showResultWithDrama(true);
       }
     }, 1000);
@@ -69789,6 +70020,9 @@ function advFinishMiniBattle(win) {
   }
   window._advFinishingMini = true;
   _advMiniBattleActive = false;
+  // ★ v3.4.22 — 強制清 _miniCheckInterval (本來依賴下次 tick 看到 _advMiniBattleActive=false 自清,
+  //   但 race 條件下這個 interval 可能成孤兒持續耗資源,直接強制清乾淨)
+  try{ if(window._miniCheckInterval){ clearInterval(window._miniCheckInterval); window._miniCheckInterval = null; } }catch(_){}
   // ★ v1.0.20260424.1170 — 戰鬥結束時隱藏回溯/教學/卡死自救按鈕(回到劇情對白頁時不該顯示)
   // ★ v1.0.20260513.6490 — 也隱藏 BUG 回報按鈕
   try{
@@ -70177,16 +70411,44 @@ function advFinishMiniBattle(win) {
 
   // 顯示結算視窗的核心邏輯(抽成內部函式供升級演出完後呼叫)
   const _showMiniResultInternal = () => {
+    // ★ v3.4.22 — 防止同一場戰鬥的結算視窗被打開兩次
+    //   ID 守衛已擋給獎邏輯,但「視窗 .show」這條 UI 路徑沒擋,
+    //   race 條件下會看到結算視窗瞬閃,學生連點就會走 advMiniResultConfirm 多次。
+    //   加上 _miniResultShownForBattleId 標記:同一個 _advCurrentBattleId 只允許顯示一次。
+    try{
+      const _curBattleId = window._advCurrentBattleId;
+      if(_curBattleId){
+        if(window._miniResultShownForBattleId === _curBattleId){
+          console.warn('[_showMiniResultInternal] 此戰鬥 ID 已顯示過結算視窗(id=' + _curBattleId + '),拒絕重複顯示');
+          return;
+        }
+        window._miniResultShownForBattleId = _curBattleId;
+      }
+    }catch(_eShown){}
     if(_miniResultEl2){
       _miniResultEl2.style.display = 'flex';
       _miniResultEl2.classList.add('show');
       const _btn = document.getElementById('adv-mini-result-btn');
       if(_btn){
+        // ★ v3.4.22 — reset 按鈕狀態(上一場戰鬥可能被 disable,新一場要可點)
+        _btn.disabled = false;
+        _btn.style.pointerEvents = '';
+        _btn.style.opacity = '1';
+        _btn.style.cursor = '';
         _btn.onmouseover = ()=>{ _btn.style.opacity='0.8'; _btn.style.transform='scale(1.06)'; };
         _btn.onmouseout  = ()=>{ _btn.style.opacity='1';   _btn.style.transform=''; };
       }
+      // ★ v3.4.22 — 「先回學校」按鈕也 reset
+      try{
+        const _btnHome = document.getElementById('adv-mini-result-home-btn');
+        if(_btnHome){
+          _btnHome.disabled = false;
+          _btnHome.style.pointerEvents = '';
+          _btnHome.style.opacity = '1';
+        }
+      }catch(_){}
     } else {
-      // 保險備用：元素不存在時自動繼續
+      // 保險備用:元素不存在時自動繼續
       setTimeout(advMiniResultConfirm, 2000);
     }
   };
@@ -70322,6 +70584,26 @@ function _advMiniApplyReward(id, onDone) {
 
 
 async function advMiniResultGoHome() {
+  // ★ v3.4.22 — 同 advMiniResultConfirm 修補:重入檢查 + 立即禁用按鈕
+  if(window._advMiniResultGoingHome){
+    try{ console.warn('[advMiniResultGoHome] 重入守衛攔截,本次點擊忽略'); }catch(_){}
+    return;
+  }
+  window._advMiniResultGoingHome = true;
+  try{
+    const _btnConfirm = document.getElementById('adv-mini-result-btn');
+    if(_btnConfirm){
+      _btnConfirm.disabled = true;
+      _btnConfirm.style.pointerEvents = 'none';
+      _btnConfirm.style.opacity = '0.5';
+    }
+    const _btnHome = document.getElementById('adv-mini-result-home-btn');
+    if(_btnHome){
+      _btnHome.disabled = true;
+      _btnHome.style.pointerEvents = 'none';
+      _btnHome.style.opacity = '0.5';
+    }
+  }catch(_eBtnDis){}
   // ★ 好友英雄狀態重置
   window._friendHeroInParty = false;
   const el = document.getElementById('adv-mini-result');
@@ -70331,6 +70613,8 @@ async function advMiniResultGoHome() {
   // ★ v1.0.20260512.6190 — 清重入守衛(同 advMiniResultConfirm,免下次冒險被擋)
   window._advFinishingMini = false;
   window._advMiniResultConfirming = false;
+  // ★ v3.4.22 — 清自己的旗標(避免重整後再進冒險被擋)
+  setTimeout(function(){ try{ window._advMiniResultGoingHome = false; }catch(_){} }, 2000);
   // 清除快照（此場冒險結束）
   try{ _advClearCrashSnapshot(); }catch(_){}
   // 儲存已獲得的進度（EXP/幣已在 advFinishMiniBattle 中 addHeroExp/addKnowledgeCoins 執行過）
@@ -70368,10 +70652,45 @@ async function advMiniResultGoHome() {
 
 
 function advMiniResultConfirm(){
+  // ★ v3.4.22 — 老師需求 2 強化(2026/5/21 50 人測試):防無限「繼續冒險」重複領獎
+  //   原本的執行順序:
+  //     (1) 關閉結算視窗(關 .show)
+  //     (2) 檢查 _advMiniResultConfirming → return
+  //     (3) 設 _advMiniResultConfirming=true
+  //   問題:iPad 觸控延遲時學生會以為沒點到、連點 3-5 下,
+  //         第 1 點: 通過檢查設旗標、走流程 500ms 後旗標被清
+  //         第 2-N 點: 因為視窗被第 1 點關了 → 看起來沒反應 → 學生再用力點
+  //         但其實某條 race (如 _showResultWithDrama / startTurn 殘留 / checkWin)
+  //         可能在 500ms 內就重新打開視窗 → 第 2 次點擊就被當成新的確認 → 又走一次流程
+  //   修補:
+  //     1. 重入檢查移到最前面 — 旗標還沒設就先 return
+  //     2. 立刻禁用按鈕 (disabled + pointerEvents=none),讓物理上點不到
+  //     3. 把按鈕 disable 也加在 _showMiniResultInternal 結尾,避免每次彈出視窗都要重設
+  //     4. 旗標清除時序拉到「過場 cutscene 真的進入下一場景時」,而非固定 500ms
+  // ★★ 第 1 步:重入檢查在最前面 (任何後續操作前)
+  if(window._advMiniResultConfirming){
+    try{ console.warn('[advMiniResultConfirm] 重入守衛攔截,本次點擊忽略'); }catch(_){}
+    return;
+  }
+  window._advMiniResultConfirming = true;
+  // ★★ 第 2 步:立刻禁用按鈕,讓觸控連點物理上無效
+  try{
+    const _btnConfirm = document.getElementById('adv-mini-result-btn');
+    if(_btnConfirm){
+      _btnConfirm.disabled = true;
+      _btnConfirm.style.pointerEvents = 'none';
+      _btnConfirm.style.opacity = '0.5';
+      _btnConfirm.style.cursor = 'not-allowed';
+    }
+    const _btnHome = document.getElementById('adv-mini-result-home-btn');
+    if(_btnHome){
+      _btnHome.disabled = true;
+      _btnHome.style.pointerEvents = 'none';
+      _btnHome.style.opacity = '0.5';
+    }
+  }catch(_eBtnDis){}
   const _miniResultEl = document.getElementById('adv-mini-result');
   if(_miniResultEl){ _miniResultEl.classList.remove('show'); _miniResultEl.style.display = 'none'; }
-  if(window._advMiniResultConfirming){ return; }
-  window._advMiniResultConfirming = true;
   // ★ v1.0.20260424.1260 — 恢復 row2 可見性(advFinishMiniBattle 為了防視覺殘留設 hidden)
   try{
     const _row2 = document.getElementById('row2');
