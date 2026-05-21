@@ -66218,6 +66218,46 @@ window._lxpsPWA = (function(){
 
   // ─── 入口: 等 SW 註冊+資料庫載入完, 啟動預載 ───
   function bootPWA(){
+    // ═══════════════════════════════════════════════════════════════════
+    // ★ v3.4.15 緊急止血(2026/5/21) — PWA 自動下載暫時完全停用
+    // ───────────────────────────────────────────────────────────────────
+    // 原因:
+    //   1. 26 台 iPad 同步首裝會大量湧出 GitHub raw 請求 → 學校 NAT IP
+    //      被 GitHub 限流 → 大量 429 → 永久破圖
+    //   2. CDN 改寫機制尚未在 iPad 驗證
+    //   3. Firebase 配額尚未升 Blaze, 26 台同時上線會在第 2 節爆讀寫
+    //
+    // 修補完成的標誌(全部達成後才能把下面這段拿掉):
+    //   ☐ jsDelivr CDN 驗證可用 (_lxpsTestCdn() ok)
+    //   ☐ sw.js 內 USE_CDN_REWRITE 改為 true
+    //   ☐ Firebase 升 Blaze + 設 Budget Alert
+    //   ☐ 加上「錯時開機 + 失敗重試 + 老師可見進度」
+    //   ☐ 3-5 台 iPad 小規模實測通過
+    //
+    // 停用後的行為:
+    //   - 完全不註冊 Service Worker
+    //   - 沒有自動下載讀條
+    //   - 玩家圖片仍從 GitHub 直接抓 (跟 PWA 上線前的舊版完全一樣)
+    //   - 之前已安裝過 PWA 的玩家? 詳見下方說明
+    // ═══════════════════════════════════════════════════════════════════
+    var _PWA_DISABLED = true; // ★ 修補完成前都保持 true
+    if(_PWA_DISABLED){
+      console.warn('[PWA] 自動下載已停用 (緊急止血中)。玩家將跟舊版一樣直接從 GitHub 抓資源。');
+      // 主動取消註冊既有的 SW (對之前已裝過 PWA 的玩家做清理)
+      try{
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.getRegistrations().then(function(regs){
+            regs.forEach(function(r){
+              r.unregister().then(function(ok){
+                if(ok) console.log('[PWA] 已停用舊 SW');
+              });
+            });
+          });
+        }
+      }catch(_){}
+      return;
+    }
+
     // ★ v3.4.15 — 「首次安裝」判斷改為: 只看是否裝過 (不再比對版本號)
     // 原本 needInstall = (installedVer !== currentVer), 結果每次升版 currentVer
     // 變了 → 整個觸發「首次安裝中」讀條 + 從 0% 重抓所有圖片音訊。
