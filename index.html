@@ -3944,8 +3944,38 @@
         // ★ v3.3.6 — 寫入前 deep clean,把所有 undefined 換成 null / 刪除
         //   避免 FirebaseError: Unsupported field value: undefined → 400 Bad Request → client 卡死
         const _cleanPayload = _wbDeepCleanUndefined(payload);
-        await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), _cleanPayload);
-        return true;
+        // ★ v3.5.8 — hostPushBattleState 加重試機制(老師 2026/5/21 回報 P2 client 回合無限循環)
+        //   BUG 症狀:client (P2 玩家) 回合永遠卡住,endAction watchdog 不斷送 _client_stuck_resync,
+        //             host 重發 sync 也卡住,console 看到 failed-precondition 400 Bad Request。
+        //   根因:Firestore 多人同時寫 worldBossRooms/{roomId} 文件撞到樂觀鎖衝突
+        //         (玩家送 pendingAction 寫 + host 自己寫 battle.version 同步 → 樂觀鎖),
+        //         hostPushBattleState 沒有重試 → 一次失敗就丟下,client 永遠收不到新 sync。
+        //   v3.5.1 修了 client 端 sendAction 重試,但 host 端的 hostPushBattleState 漏修。
+        //   修法:跟 v3.5.1 sendAction 一樣 — 最多 3 次重試,指數退避 + 隨機抖動。
+        const _maxAttempts = 3;
+        let _lastErr = null;
+        for(let _i = 0; _i < _maxAttempts; _i++){
+          try{
+            await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), _cleanPayload);
+            if(_i > 0){
+              console.info('[WBNet] hostPushBattleState 第 ' + (_i+1) + ' 次重試成功 reason=' + (newState._syncReason || 'unknown'));
+            }
+            return true;
+          }catch(e){
+            _lastErr = e;
+            const _isPrecond = e && (e.code === 'failed-precondition' ||
+                                     (e.message || '').includes('failed-precondition'));
+            console.warn('[WBNet] hostPushBattleState 第 ' + (_i+1) + ' 次失敗' +
+              (_isPrecond ? ' (樂觀鎖衝突, 將重試)' : ''), e && e.message);
+            if(_i < _maxAttempts - 1){
+              // 指數退避 + 隨機抖動:300/600/1200ms + 0~200ms 隨機
+              const _delay = 300 * Math.pow(2, _i) + Math.floor(Math.random() * 200);
+              await new Promise(r => setTimeout(r, _delay));
+            }
+          }
+        }
+        console.error('[WBNet] hostPushBattleState 重試 ' + _maxAttempts + ' 次都失敗,client 端可能卡住', _lastErr);
+        return false;
       }catch(e){
         console.error('[WBNet] hostPushBattleState', e); return false;
       }
@@ -3959,7 +3989,15 @@
       WB.contributions[uid][key] = (WB.contributions[uid][key] || 0) + val;
       try{
         if(uid === window._gUserId && key === 'dmgDealt'){
-          const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
+          // ★ v3.5.8 — 房主端「本場總傷一直 0」修補(老師 2026/5/21 回報)
+          //   BUG 症狀:房主造成傷害,但左上「本場總傷」一直顯示 0。
+          //   根因:v3.5.3 把組隊模式新版 UI 元素 ID 改成 'wb-cur-dmg-display'
+          //         (world-boss-ui.html line 11414),client 端 onRoomUpdate 已改成兩 ID 兜底
+          //         (world-boss-ui.html line 7898-7899),但 host 端的 addContribution
+          //         還停留在舊 ID 'wb-solo-cur-dmg-display' → 找不到該元素 → 永遠不更新。
+          //   修法:找新 ID 或舊 ID 兩種都更新,跟 client 端與 fake _wbNet 的處理一致。
+          const _dmgEl = document.getElementById('wb-cur-dmg-display')
+                      || document.getElementById('wb-solo-cur-dmg-display');
           if(_dmgEl){
             _dmgEl.textContent = WB.contributions[uid][key].toLocaleString();
           }
@@ -76307,7 +76345,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.7';
+window._GAME_LOADED_VERSION = 'v3.5.8';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
