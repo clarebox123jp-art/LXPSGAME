@@ -3364,6 +3364,14 @@
             fullWireG: newState.fullWireG,
             // ★ v3.3.3 — FX 事件清單(client 收到後重播,讓全隊看到同步特效)
             _wbFxEvents: _fxEvents,
+            // ★ v3.4.20 — 修 BUG:龍王戰玩家「輪到我回答但看不到題目」,
+            //   根因:_wbHostBroadcastQuizShow 傳 _wbQuizPayload 進來,但這裡的 Object.assign
+            //         沒把它複製進 battle 物件 → client 收到 _syncReason='quiz-show' 但
+            //         battle._wbQuizPayload=undefined → world-boss-ui.html line 8047 條件 fail
+            //         → 完全不 render quiz 視窗 → 玩家看不到題目。
+            //   修法:明確帶上 _wbQuizPayload(若 newState 有的話),保持向下相容。
+            //   同步帶上未來可能擴充的 _wb* 廣播欄位,避免相同 bug 再來一次。
+            _wbQuizPayload: newState._wbQuizPayload || null,
           });
         }else{
           // 舊 schema 相容(舊 _wbHostExecuteAction 等地方還沒改完前用)
@@ -6149,9 +6157,36 @@ function _pSetTimeout(fn, delay, fallbackMs){
       try{
         const _qOvFb = document.getElementById('adv-quiz-overlay');
         if(_qOvFb && _qOvFb.classList.contains('show')){
-          console.log('[_pSetTimeout fallback] adv-quiz-overlay 顯示中,延後 5 秒再檢查(record 保留)');
-          _record._fallbackId = setTimeout(_fallbackHandler, 5000);
-          return;
+          // ★ v3.4.20 — 修 BUG:玩家 13:56:26~13:57:29 連續 12 行
+          //   「_pSetTimeout fallback] adv-quiz-overlay 顯示中,延後 5 秒」
+          //   = quiz overlay 是孤兒(phase=idle、cb 都空、但 .show 殘留),
+          //     _pSetTimeout fallback 一直延後 record,startTurn / aiAct 永遠不執行,
+          //     即使 _gp heartbeat 快速通道救援後關了 overlay,_pendingTimers 內的
+          //     record 也已被無限延後到下個 5 秒 cycle → 還沒回到 fallback 玩家就回報。
+          //   修法:跟 _gpIsAnyLegitModalOpen 對齊孤兒檢測。
+          //         若是孤兒 overlay → 順手關掉,讓 fallback 繼續往下跑(不要延後 record)。
+          let _isOrphanQuizOv = false;
+          try{
+            const _phaseIdle = (typeof _advQuizPhase === 'undefined' || _advQuizPhase === 'idle' || !_advQuizPhase);
+            const _miniPhaseIdle = (typeof window._miniQuizPhase === 'undefined'
+                                    || window._miniQuizPhase === null
+                                    || window._miniQuizPhase === 'idle');
+            const _noBossCb = !(typeof _advQuizResolveCb !== 'undefined' && _advQuizResolveCb);
+            const _noMiniCb = !(typeof window._miniQuizOnDone === 'function');
+            _isOrphanQuizOv = _phaseIdle && _miniPhaseIdle && _noBossCb && _noMiniCb;
+          }catch(_){}
+          if(_isOrphanQuizOv){
+            console.warn('[_pSetTimeout fallback] 偵測孤兒 adv-quiz-overlay (phase=idle 且 cb 都空),順手關掉並繼續');
+            try{
+              _qOvFb.classList.remove('show');
+              _qOvFb.style.display = 'none';
+            }catch(_){}
+            // 不 return,讓 fallback 繼續走後續邏輯(強制釋放 _gamePaused + 執行 fn)
+          } else {
+            console.log('[_pSetTimeout fallback] adv-quiz-overlay 顯示中,延後 5 秒再檢查(record 保留)');
+            _record._fallbackId = setTimeout(_fallbackHandler, 5000);
+            return;
+          }
         }
         const _rwOvFb = document.getElementById('adv-reward-overlay');
         if(_rwOvFb && (_rwOvFb.style.display === 'flex' || _rwOvFb.classList.contains('show'))){
@@ -74311,7 +74346,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.4.19';
+window._GAME_LOADED_VERSION = 'v3.4.20';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
