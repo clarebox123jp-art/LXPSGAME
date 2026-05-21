@@ -1093,7 +1093,7 @@
       border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
       box-shadow:0 0 18px rgba(212,168,67,0.25);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
-        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
+        <div style="font-size:44px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
           🏆 當前排行榜 — 維蘇威火山龍王
         </div>
         <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
@@ -1262,22 +1262,62 @@
       const _names = Array.isArray(e.teamNames) ? e.teamNames.slice(0, 4) : [];
       while(_names.length < 4) _names.push('—');
       const _namesHtml = _names.map(n => _esc(n)).join('・');
-      const _bg = isMyTeam
-        ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
-        : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
-      const _border = isMyTeam ? '2px solid #ffe066' : '1px solid rgba(168,132,255,0.18)';
-      // ★ v13 — 字加大:rank 24→28、暱稱 14→20、傷害 18→26、場次 11→14
+      // ★ FIX 20260521(j) — 名次配色:第 1/2/3 名金/銀/銅, 4 名後原紫色
+      //                     若玩家在前 20 名內(等於 isMyTeam,因列表只取前 20),
+      //                     用白色發光邊框覆蓋名次原色,更醒目易尋
+      let _bgRank, _borderRank, _rankColor, _glow;
+      if(rank === 1){
+        // 金黃
+        _bgRank = 'linear-gradient(90deg,rgba(255,215,80,0.32),rgba(255,180,40,0.14))';
+        _borderRank = '2.5px solid #ffd84a';
+        _rankColor = '#fff2a8';
+        _glow = '0 0 16px rgba(255,210,80,0.45)';
+      }else if(rank === 2){
+        // 銀
+        _bgRank = 'linear-gradient(90deg,rgba(220,220,230,0.28),rgba(170,170,190,0.12))';
+        _borderRank = '2.5px solid #d8d8e0';
+        _rankColor = '#f0f0f5';
+        _glow = '0 0 14px rgba(210,210,225,0.4)';
+      }else if(rank === 3){
+        // 古銅
+        _bgRank = 'linear-gradient(90deg,rgba(205,127,50,0.30),rgba(150,90,30,0.12))';
+        _borderRank = '2.5px solid #cd7f32';
+        _rankColor = '#ffc28a';
+        _glow = '0 0 14px rgba(205,127,50,0.42)';
+      }else{
+        // 4 名後 — 維持原紫色系
+        _bgRank = (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
+        _borderRank = '1px solid rgba(168,132,255,0.30)';
+        _rankColor = '#c8a8ff';
+        _glow = 'none';
+      }
+      // 玩家自己的隊伍 → 白色發光邊框覆蓋原配色 (傷害字白、邊框白、強光暈)
+      let _border = _borderRank;
+      let _extraBoxShadow = _glow;
+      let _myMark = '';
+      if(isMyTeam){
+        _border = '3px solid #ffffff';
+        _extraBoxShadow = '0 0 24px rgba(255,255,255,0.85), 0 0 8px rgba(255,255,255,0.95) inset';
+        _myMark = ' <span style="color:#ffffff;font-weight:900;text-shadow:0 0 8px #fff;">(你)</span>';
+      }
+      // ★ FIX 20260521(j) — 字級調整:標題與徽章 +100%, 暱稱 -25%, 傷害 +50%
+      //   - 名次徽章 28 → 56  (+100%)
+      //   - 暱稱       20 → 15  (-25%)
+      //   - 傷害       26 → 39  (+50%)
+      //   - 場次       14 → 13  (微縮配合暱稱)
       return ''
-        + '<div style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
-        + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
-        + '<div style="font-size:28px;font-weight:800;text-align:center;color:' + (rank<=3?'#ffe066':'#aabbdd') + ';">'
+        + '<div style="display:grid;grid-template-columns:75px 1fr 160px;align-items:center;gap:12px;'
+        + 'padding:14px 18px;background:' + _bgRank + ';border:' + _border + ';border-radius:12px;'
+        + 'box-shadow:' + _extraBoxShadow + ';">'
+        + '<div style="font-size:56px;font-weight:900;text-align:center;color:' + _rankColor + ';line-height:1;">'
         +   rankIcon
         + '</div>'
-        + '<div style="font-size:20px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
-        +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
-        +   '<div style="font-size:14px;color:#aaa;margin-top:2px;">' + (e.battles||0) + ' 場累積</div>'
+        + '<div style="line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
+        +   '<div style="font-size:15px;font-weight:700;">' + _namesHtml + _myMark + '</div>'
+        +   '<div style="font-size:13px;color:#aaa;margin-top:2px;">' + (e.battles||0) + ' 場累積</div>'
         + '</div>'
-        + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
+        + '<div style="font-size:39px;font-weight:800;color:' + (isMyTeam ? '#ffffff' : '#ff8866') + ';text-align:right;'
+        + 'text-shadow:' + (isMyTeam ? '0 0 10px rgba(255,255,255,0.85)' : '0 0 6px rgba(255,120,80,0.4)') + ';line-height:1;">'
         +   _formatDmg(e.totalDmg || 0)
         + '</div>'
         + '</div>';
