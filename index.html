@@ -6360,25 +6360,52 @@ function _getMasterGain(){
   }
   return window._masterGain;
 }
+// ★ v3.4.20 — 修 BUG:iPad Safari 上 AC.currentTime 偶爾回 NaN/Infinity(AudioContext suspended
+//   或 background→foreground 邊界),導致 setValueAtTime(NaN/Infinity) 拋 TypeError,
+//   整個音效呼叫 stack 崩潰,把上游邏輯(showHeroPickOverlay、startTurn 後續、行動結束音效等)一起拖死,
+//   結果是「小怪都 acted=true 但回合進不去下一輪 = 偽卡死」。
+//   修法:統一一個 _safeAcTime() 守住,所有音效函式呼叫 setValueAtTime 用它而非直接 AC.currentTime。
+//   _beepGuard 也包外層 try-catch,確保即使內部任何 API 拋例外也吃掉,不影響遊戲流程。
+function _safeAcTime(){
+  try{
+    const _t = AC && AC.currentTime;
+    if(typeof _t === 'number' && isFinite(_t)) return _t;
+  }catch(_){}
+  return 0;
+}
 function beep(freq,type,dur,vol,startFreq){
-  type=type||'sine';dur=dur||0.3;vol=vol||0.15;
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(_getMasterGain());
-  const now=AC.currentTime;
-  o.type=type;
-  if(startFreq){o.frequency.setValueAtTime(startFreq,now);o.frequency.linearRampToValueAtTime(freq,now+dur*0.5);}
-  else o.frequency.setValueAtTime(freq,now);
-  g.gain.setValueAtTime(vol,now);g.gain.linearRampToValueAtTime(0,now+dur);
-  o.start(now);o.stop(now+dur);
+  try{
+    type=type||'sine';dur=dur||0.3;vol=vol||0.15;
+    // ★ 入口 validate:任一參數非有限數就靜默 return,不嘗試發聲
+    if(!isFinite(freq) || !isFinite(dur) || !isFinite(vol)) return;
+    if(typeof startFreq === 'number' && !isFinite(startFreq)) startFreq = null;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(_getMasterGain());
+    const now=_safeAcTime();
+    o.type=type;
+    if(startFreq){o.frequency.setValueAtTime(startFreq,now);o.frequency.linearRampToValueAtTime(freq,now+dur*0.5);}
+    else o.frequency.setValueAtTime(freq,now);
+    g.gain.setValueAtTime(vol,now);g.gain.linearRampToValueAtTime(0,now+dur);
+    o.start(now);o.stop(now+dur);
+  }catch(_eBeep){
+    // ★ 音效失敗絕不阻斷遊戲邏輯
+    try{ console.warn('[beep] 音效播放例外(已吞):', _eBeep && _eBeep.message); }catch(_){}
+  }
 }
 function noise(dur,vol){
-  dur=dur||0.1;vol=vol||0.15;
-  const buf=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate);
-  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-  const src=AC.createBufferSource(),g=AC.createGain();
-  src.buffer=buf;src.connect(g);g.connect(_getMasterGain());
-  g.gain.setValueAtTime(vol,AC.currentTime);g.gain.linearRampToValueAtTime(0,AC.currentTime+dur);
-  src.start();
+  try{
+    dur=dur||0.1;vol=vol||0.15;
+    if(!isFinite(dur) || !isFinite(vol)) return;
+    const buf=AC.createBuffer(1,Math.max(1,Math.floor(AC.sampleRate*dur)),AC.sampleRate);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const src=AC.createBufferSource(),g=AC.createGain();
+    src.buffer=buf;src.connect(g);g.connect(_getMasterGain());
+    const now=_safeAcTime();
+    g.gain.setValueAtTime(vol,now);g.gain.linearRampToValueAtTime(0,now+dur);
+    src.start();
+  }catch(_eNoise){
+    try{ console.warn('[noise] 音效播放例外(已吞):', _eNoise && _eNoise.message); }catch(_){}
+  }
 }
 function playSfx(id, vol, fadeStartMs){
   // ★ v3.3.3 — FX 同步:把音效事件加入佇列(client 後續會重播)
@@ -6470,8 +6497,9 @@ function sndMimic(){sndAlchemy();setTimeout(function(){sndStrategist()},150)}
 
 // 士兵吶喊音效：多層次噪音+低頻衝擊+漸強群呼
 function sndBattleCry(){
+ try{
   if(typeof AC==='undefined'||_sfxMuted) return;
-  const now=AC.currentTime;
+  const now=_safeAcTime();
 
   // === 人群吶喊主體：12 層不同頻段的帶通噪音，形成群眾齊聲 ===
   const roarFreqs=[180,220,260,310,370,440,520,610,720,850,1000,1200];
@@ -6540,6 +6568,7 @@ function sndBattleCry(){
     src.connect(hp); hp.connect(g); g.connect(AC.destination);
     src.start(now+t); src.stop(now+t+0.2);
   });
+ }catch(_eBc){ try{ console.warn('[sndBattleCry] 例外(已吞):', _eBc && _eBc.message); }catch(_){} }
 }
 
 // ====== VFX ENGINE ======
@@ -11454,8 +11483,9 @@ function fieldHas(eff, side){
 
 // ====== MUSIC SKILL TUNES ======
 function playMusicSkill(type){
+ try{
   if(_sfxMuted) return;
-  var now=AC.currentTime;
+  var now=_safeAcTime();
   if(type==='lullaby'){
     var melody=[523,494,440,392,440,494,523,523];
     var times=[0,0.25,0.5,0.75,1.0,1.25,1.5,1.75];
@@ -11509,6 +11539,7 @@ function playMusicSkill(type){
       o.start(t);o.stop(t+0.25);
     });
   }
+ }catch(_eMus){ try{ console.warn('[playMusicSkill] 例外(已吞):', _eMus && _eMus.message); }catch(_){} }
 }
 function addField(item,side){
   if(item.effect==='clear'){
@@ -11536,9 +11567,10 @@ function addField(item,side){
         },100);
         // Explosion sound: mix of noise + pitched tone
         if(typeof AC!=='undefined'){
-          var now=AC.currentTime;
+         try{
+          var now=_safeAcTime();
           // Crunch burst
-          var buf=AC.createBuffer(1,AC.sampleRate*0.3,AC.sampleRate);
+          var buf=AC.createBuffer(1,Math.max(1,Math.floor(AC.sampleRate*0.3)),AC.sampleRate);
           var d=buf.getChannelData(0);
           for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(AC.sampleRate*0.04));
           var src=AC.createBufferSource(),g=AC.createGain();
@@ -11554,6 +11586,7 @@ function addField(item,side){
           o.start(now); o.stop(now+0.4);
           // Deep boom
           setTimeout(function(){ beep(80,'square',0.15,0.3); },120);
+         }catch(_eEx){ try{ console.warn('[addField 爆炸音效] 例外(已吞):', _eEx && _eEx.message); }catch(_){} }
         }
       }
     }
