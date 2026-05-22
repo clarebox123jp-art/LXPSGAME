@@ -1,6 +1,6 @@
 /* ============================================================
  * 小英雄大對抗 — Service Worker (sw.js)
- * 版本: v3.5.19 (與 window._GAME_LOADED_VERSION 同步)
+ * 版本: v3.4.15 (與 window._GAME_LOADED_VERSION 同步)
  *
  * 設計重點(iPad 友善):
  *   1. 資源清單由 client 端 postMessage 傳入,SW 不寫死 URL → 老師之後加資源不用改 sw.js
@@ -16,19 +16,9 @@
  *   每次老師發新版,改下面 SW_VERSION (例 'v3.4.14' → 'v3.4.15') + 改 index.html 內的
  *   window._GAME_LOADED_VERSION 即可。舊版的 SHELL_CACHE 會被清掉(取得新 index.html/JS/CSS),
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
- *
- * v3.5.18 更新內容(2026/5/22):
- *   - 配合 index.html 三大修補:換帳號保護(A1) + 玩家動作後存快照(B1) + 30 秒輪詢(B2)
- *   - 配合 v3.5.17 學生授權後可 PWA(原本只允許管理員)
- *
- * v3.5.19 更新內容(2026/5/22):
- *   - 修補關鍵 BUG:precacheUrlsInBatches 收到相對路徑(如 './main.css')會丟
- *     TypeError: Failed to construct 'URL': Invalid URL → 整個批次掛掉,沒讀條
- *   - 修法:PRECACHE_URLS 入口先把所有 URL 用 self.registration.scope 正規化為絕對路徑,
- *          processBatch 內 new URL() 也加 try/catch + base 雙保險
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.19';
+const SW_VERSION = 'v3.5.23';
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
@@ -308,35 +298,7 @@ self.addEventListener('message', function(event){
     var batchId = data.batchId || 'default';
     var client = event.source;
 
-    // ★ v3.5.19 — URL 正規化 + 過濾
-    //   原 bug:client 端 collectAllResourceUrls 可能傳來相對路徑(如 "./main.css"、"index.html")
-    //         或空字串、null,sw.js line 394 直接 new URL(url) 就會丟
-    //         TypeError: Failed to construct 'URL': Invalid URL → 整個批次 fatal
-    //   修法:這裡先做一次正規化:
-    //     - null / 空字串 / undefined → 過濾掉
-    //     - 已是絕對 URL (http://, https://, blob:, data:) → 保留
-    //     - 相對路徑 → 用 self.registration.scope 解析成絕對 URL
-    //   後續 processBatch 內就能安心 new URL(url) 而不會炸
-    var _scope = (self.registration && self.registration.scope) || self.location.origin + '/';
-    var _normalized = [];
-    var _skipped = 0;
-    urls.forEach(function(u){
-      if(!u || typeof u !== 'string'){ _skipped++; return; }
-      var _trimmed = u.trim();
-      if(!_trimmed){ _skipped++; return; }
-      try{
-        // 用 new URL(input, base) 一次性解析,絕對 URL 會忽略 base,相對路徑用 _scope 補
-        var _abs = new URL(_trimmed, _scope).href;
-        _normalized.push(_abs);
-      }catch(_eU){
-        console.warn('[SW] PRECACHE_URLS 跳過無效 URL:', u, _eU && _eU.message);
-        _skipped++;
-      }
-    });
-    if(_skipped > 0){
-      console.log('[SW] PRECACHE_URLS 正規化:' + _normalized.length + ' 個有效,' + _skipped + ' 個無效已跳過');
-    }
-    precacheUrlsInBatches(_normalized, client, batchId);
+    precacheUrlsInBatches(urls, client, batchId);
     return;
   }
 
@@ -424,17 +386,7 @@ function precacheUrlsInBatches(urls, client, batchId){
         }
         var batch = toFetch.splice(0, CONCURRENT);
         return Promise.all(batch.map(function(url){
-          // ★ v3.5.19 — URL 解析雙保險(已在 PRECACHE_URLS 入口正規化,這裡再防一次)
-          //   原 bug:相對路徑直接 new URL(url) 沒帶 base → TypeError 整個批次掛掉
-          //   修法:給 base = self.location;且 try/catch 失敗就跳過該 URL 不影響其他
-          var sameOrigin;
-          try{
-            sameOrigin = (new URL(url, self.location.href)).origin === self.location.origin;
-          }catch(_eU2){
-            console.warn('[SW] processBatch 跳過無效 URL:', url, _eU2 && _eU2.message);
-            failed++;
-            return Promise.resolve();
-          }
+          var sameOrigin = (new URL(url)).origin === self.location.origin;
           // ★ v3.4.15 — 跨域走 CDN 改寫 (繞 GitHub 429), 同源照舊
           var fetchPromise;
           if(sameOrigin){
