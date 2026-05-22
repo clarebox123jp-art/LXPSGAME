@@ -2974,11 +2974,22 @@
           })();
         }
       }catch(_){}
+      // ★ v3.5.16 — 設計者英雄補發改成「等雲端就緒後立刻觸發 + 內建 retry」
+      //   舊版固定 1.8 秒延遲,雲端載入慢時會在 _progressLoaded=false 狀態下執行 gameCloudSave
+      //   → 雲端守門擋掉,設計者英雄只進到本機,雲端沒同步,下次清本機就遺失。
+      //   新版 _grantStudentDesignerHero 已改 async,自己會 await _waitForCloudReady(15s)
+      //   並做 5 次 retry(5/15/30/60/120 秒),不必固定延遲 1.8 秒。
+      //   保留 setTimeout 800ms 是讓 onAuthStateChanged 內其他同步流程先跑完
       setTimeout(()=>{
         try{
-          if(window._grantStudentDesignerHero) window._grantStudentDesignerHero(user.email);
+          if(window._grantStudentDesignerHero){
+            const _p = window._grantStudentDesignerHero(user.email);
+            if(_p && typeof _p.catch === 'function'){
+              _p.catch(e => console.warn('[設計者英雄補發] async 錯誤', e));
+            }
+          }
         }catch(e){ console.warn('[設計者英雄補發] 觸發失敗', e); }
-      }, 1800);
+      }, 800);
       // ★ v3.5.0 — 登入後啟動下載授權監聽
       setTimeout(()=>{
         try{ if(window._initDownloadAuth) window._initDownloadAuth(); }
@@ -3032,6 +3043,16 @@
         if(window._kickedFromSession) return;  // 已被踢就不再檢查
         const status = await window._fbHeartbeat(window._gUserId, window._mySessionId);
         if(status === 'kicked'){
+          // ★ v3.5.16 — 被踢前的最後一道防線:若正在戰鬥中,強制把快照寫到雲端
+          //   原問題(老師 2026/5/22 回報):打到一半被切換帳號跳回首頁,遺失遊戲進度
+          //   修法:被踢偵測到 → 立刻 forceSaveBattleSnapshotAndSync('about_to_be_kicked'),
+          //         比 _trySaveSafeIfHealthier 更直接,且只寫戰鬥快照不會被 _progressLoaded 守門
+          //   之後即使被踢,下次登入仍能看到續戰提示
+          try{
+            if(typeof window._forceSaveBattleSnapshotAndSync === 'function'){
+              window._forceSaveBattleSnapshotAndSync('about_to_be_kicked');
+            }
+          }catch(_){}
           try{ await window._trySaveSafeIfHealthier('about_to_be_kicked'); }catch(_){}
           // ★ v1.0.20260424.1100 — 立即設旗標阻止後續 gameCloudSave 覆蓋雲端
           window._kickedFromSession = true;
@@ -37948,6 +37969,75 @@ function _saveBattleRoundSnapshot(){
   }catch(e){ console.error('[battleSnap]',e); }
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v3.5.16 — 戰鬥中斷快照強化(老師 2026/5/22 回報:打 BOSS 戰到一半突然跳出遊戲,
+//             也沒辦法回到上次的戰鬥,白白浪費了時間)
+//
+// 【問題】舊版快照系統雖然每回合存,但仍有 3 個漏洞:
+//   1. _saveBattleRoundSnapshot 只在 startTurn 開頭觸發 — 若玩家還沒到下一回合
+//      就跳出(分頁切換、iPad 切後台、瀏覽器當機),最新一回合的進度沒被存
+//   2. 沒有 beforeunload / pagehide 強制存快照 → iOS Safari 殺 page 時雲端可能來不及同步
+//   3. 世界 BOSS 戰快照雖然存了,但連線層 _wbNet 重建很複雜,單純走 _advRestoreBattleState
+//      不夠 → 玩家「續戰」進去看到空白戰場
+//
+// 【修法】
+//   (1) 暴露 window._forceSaveBattleSnapshotAndSync(reason) 對外 API,
+//       手動觸發「存本地 + 寫雲端」,跨各種離開路徑統一使用
+//   (2) 註冊 beforeunload + pagehide + visibilitychange(hidden) 三個事件,
+//       戰鬥中且回合 >= 1 就強制呼叫上面的 API
+//   (3) 把 worldboss 排除在自動續戰之外(在 _advCheckCrashRecovery 內擋掉),
+//       改顯示「上次的世界 BOSS 戰中斷了,請從關卡選擇重新加入」的溫和提示
+// ════════════════════════════════════════════════════════════════
+window._forceSaveBattleSnapshotAndSync = function(reason){
+  try{
+    // 必須在冒險戰鬥中且至少跑過 1 回合(避免空快照覆蓋)
+    if(typeof _adventureMode === 'undefined' || !_adventureMode) return false;
+    if(typeof _adventureStage === 'undefined' || !_adventureStage) return false;
+    if(typeof G === 'undefined' || !G || !Array.isArray(G.p1) || !Array.isArray(G.p2)) return false;
+    if(!(G.round >= 1)) return false;
+    if(window._advBattleResultShown) return false;
+    // 強制存 localStorage(會記下最新一回合進度,不論 _lastBattleSnapRound)
+    try{
+      _saveBattleRoundSnapshot();
+    }catch(_eS){ console.warn('[forceSaveBattleSnapshot] 存 localStorage 失敗', _eS); }
+    // 同步雲端(若守門通過會把 advSnapshot 寫上去)
+    try{
+      if(typeof gameCloudSave === 'function' && window._gUserId){
+        gameCloudSave();  // 不 await,讓事件能盡快結束;後續事件會再存
+      }
+    }catch(_eC){ console.warn('[forceSaveBattleSnapshot] gameCloudSave 失敗', _eC); }
+    try{ console.log('💾 [forceSaveBattleSnapshot] 已強制存快照(原因:' + (reason || 'unknown') + ', round=' + G.round + ', stage=' + _adventureStage + ')'); }catch(_){}
+    return true;
+  }catch(e){
+    console.warn('[forceSaveBattleSnapshot] 例外', e);
+    return false;
+  }
+};
+
+// 註冊頁面離開事件:強制存快照
+// 三層事件都要綁,因為各瀏覽器情境不同:
+//   - beforeunload:正常關閉/重新整理(桌面瀏覽器主要靠這個)
+//   - pagehide:iOS Safari 唯一可靠的 unload 事件
+//   - visibilitychange→hidden:分頁切換、app 切後台(iPad 上 page 可能被回收)
+(function _setupBattleSnapAutoSaveOnExit(){
+  if(window._battleSnapAutoSaveInstalled) return;
+  window._battleSnapAutoSaveInstalled = true;
+  const _handler = function(ev){
+    try{
+      const _reason = (ev && ev.type) || 'unknown';
+      window._forceSaveBattleSnapshotAndSync('exit_' + _reason);
+    }catch(_){}
+  };
+  window.addEventListener('beforeunload', _handler);
+  window.addEventListener('pagehide', _handler);
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden'){
+      _handler({ type: 'visibility_hidden' });
+    }
+  });
+  console.log('💾 [v3.5.16] 戰鬥快照離場自動保存已安裝(beforeunload / pagehide / visibilitychange)');
+})();
+
 // ====== 自訂確認視窗（iOS/iPad 安全，取代原生 confirm()）======
 // 避免 iPad WKWebView 在 App 切換時自動 dismiss confirm() 造成誤確認
 let _customConfirmCb = null;
@@ -42684,6 +42774,42 @@ function _advCheckCrashRecovery(){
     }
     // 若玩家現在就在這關且已在戰鬥中，不提示
     if(_adventureStage === snap.stage && _advPlayerGrade && _advPlayerSubject && _adventureMode) return;
+
+    // ★ v3.5.16 — 世界 BOSS 戰排除:單純還原戰場無法重建連線層 _wbNet,
+    //   進去也會看到空白/錯亂戰場。改成顯示溫和提示,引導玩家重新進入世界 BOSS。
+    if(snap.stage === 'worldboss'){
+      console.log('[crash recovery] 偵測到上次世界 BOSS 戰中斷(round=' + snap.round
+        + '),改顯示重新加入提示(不嘗試還原戰場)');
+      // 清掉快照,避免下次又彈
+      localStorage.removeItem('adv_battle_snap');
+      localStorage.removeItem('adv_crash_snapshot');
+      // 顯示溫和提示
+      const _wbBox = document.createElement('div');
+      _wbBox.id = 'adv-wb-crash-notice';
+      _wbBox.style.cssText = 'position:fixed;inset:0;z-index:9900;background:rgba(0,0,8,0.92);'
+        + 'display:flex;align-items:center;justify-content:center;padding:24px;'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      _wbBox.innerHTML =
+        '<div style="background:linear-gradient(160deg,rgba(20,12,40,0.99),rgba(8,5,20,0.99));'
+        + 'border:2.5px solid #ff8844;border-radius:20px;padding:32px 40px;'
+        + 'width:min(96vw,560px);text-align:center;box-shadow:0 0 60px rgba(255,140,60,0.3);">'
+        + '<div style="font-size:54px;margin-bottom:10px;">🌋</div>'
+        + '<div style="font-size:26px;font-weight:900;color:#ffaa66;margin-bottom:14px;">'
+        + '上次的世界 BOSS 戰中斷了</div>'
+        + '<div style="font-size:18px;color:#ddd;line-height:1.7;margin-bottom:22px;text-align:left;">'
+        + '系統偵測到你上次的世界 BOSS 戰被意外中斷(可能是分頁切換、瀏覽器當機或網路中斷)。<br><br>'
+        + '🌋 世界 BOSS 戰需要連線同步,<b style="color:#ffcc44;">無法直接續戰</b>。<br>'
+        + '請從關卡選擇進入世界 BOSS 重新加入,你對 BOSS 造成的傷害<b style="color:#88ffcc;">已經保留在雲端</b>。'
+        + '</div>'
+        + '<button id="_wb_crash_ok_btn" style="padding:14px 40px;font-size:22px;font-weight:900;'
+        + 'background:linear-gradient(135deg,rgba(255,140,60,0.3),rgba(200,80,40,0.3));'
+        + 'border:2px solid #ff8844;color:#ffcc88;border-radius:14px;cursor:pointer;font-family:inherit;">'
+        + '我知道了</button>'
+        + '</div>';
+      document.body.appendChild(_wbBox);
+      document.getElementById('_wb_crash_ok_btn').onclick = function(){ _wbBox.remove(); };
+      return;
+    }
 
     // 計算距離崩潰多久
     const _minsAgo = Math.round((Date.now() - snap.ts) / 60000);
@@ -56372,6 +56498,10 @@ window._clearAccountLocalData = function(reason){
     _closeWarning('auto_logout');
     window._idleAutoLogoutStop();
     try {
+      // ★ v3.5.16 — 先強制存戰鬥快照(若有的話),確保下次登入能續戰
+      if(typeof window._forceSaveBattleSnapshotAndSync === 'function'){
+        try { window._forceSaveBattleSnapshotAndSync('idle_auto_logout'); } catch(_) {}
+      }
       // 1) 先把進度寫到雲端(safe 槽 + 完整雲端存檔)
       if(window._trySaveSafeIfHealthier && window._gUserId){
         await window._trySaveSafeIfHealthier('idle_auto_logout');
@@ -56415,6 +56545,20 @@ window._clearAccountLocalData = function(reason){
   function _tick(){
     if(_isStopped) return;
     if(!window._gUserId) return;  // 訪客模式不啟用(沒帳號可登出)
+    // ★ v3.5.16 — 戰鬥中暫停閒置倒數(老師 2026/5/22 回報:打到一半被切換帳號跳回首頁)
+    //   情境:玩家在 BOSS 戰中分心(看課本/想題目),30 分鐘剛好到 → 被強制登出 reload → 進度遺失
+    //   修法:_adventureMode=true 且 G.round>=1 時,持續更新 _lastActivityTs,等於把倒數停在
+    //         「剛剛有操作」狀態,直到玩家離開戰鬥才開始真正倒數
+    //   另外加分:被踢/閒置兩種情境下,先用 forceSaveBattleSnapshotAndSync 保住進度
+    try{
+      if(typeof _adventureMode !== 'undefined' && _adventureMode
+         && typeof G !== 'undefined' && G && (G.round || 0) >= 1
+         && !window._advBattleResultShown){
+        _lastActivityTs = _now();
+        if(_warningShown) _closeWarning('in_battle');
+        return;
+      }
+    }catch(_){}
     const elapsed = _now() - _lastActivityTs;
     if(elapsed >= IDLE_TIMEOUT_MS){
       // 5 分鐘到 → 自動登出
@@ -75579,10 +75723,29 @@ function _showRetroMedalRewardNotice(opts){
 
 // ══ 多裝置保護：被踢出通知 ══
 function _showKickedNotice(){
+  // ★ v3.5.16 — 在被踢通知前再寫一次快照(雙保險,即使 _checkHeartbeat 那邊漏掉)
+  try{
+    if(typeof window._forceSaveBattleSnapshotAndSync === 'function'){
+      window._forceSaveBattleSnapshotAndSync('show_kicked_notice');
+    }
+  }catch(_){}
   // 先快照儲存當前進度
   try{ gameCloudSave(); }catch(_){}
   // 若在戰鬥中，先中止戰鬥
   try{ if(typeof _gamePaused !== 'undefined') _gamePaused = true; }catch(_){}
+
+  // ★ v3.5.16 — 判斷是否在戰鬥中(用來在被踢視窗加上「進度已保留」說明)
+  let _wasInBattle = false;
+  let _battleStageLabel = '';
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode
+       && typeof _adventureStage !== 'undefined' && _adventureStage
+       && typeof G !== 'undefined' && G && (G.round || 0) >= 1){
+      _wasInBattle = true;
+      const _stageLabels = { maokong:'貓空冒險', japan:'日本關', taiwan:'台灣關', worldboss:'世界 BOSS 戰' };
+      _battleStageLabel = _stageLabels[_adventureStage] || _adventureStage;
+    }
+  }catch(_){}
 
   const old = document.getElementById('_kicked-notice');
   if(old) old.remove();
@@ -75590,13 +75753,22 @@ function _showKickedNotice(){
   pop.id = '_kicked-notice';
   pop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);'
     + 'display:flex;align-items:center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  // ★ v3.5.16 — 戰鬥中被踢時,在視窗加上明確提示「進度已存,可從原裝置重新取得控制續戰」
+  const _battleHint = _wasInBattle
+    ? ('<div style="background:rgba(80,200,120,0.15);border:1.5px solid rgba(140,255,180,0.45);'
+       + 'border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:17px;color:#aaffcc;line-height:1.6;">'
+       + '🛡️ <b>本場「' + _battleStageLabel + '」進度已自動保存!</b><br>'
+       + '若這台裝置不是你登入的:請從原裝置重新整理或重新登入,即可看到續戰提示。'
+       + '</div>')
+    : '';
   pop.innerHTML = '<div style="background:linear-gradient(135deg,#1a0820,#0d0515);border:3px solid #ff4488;'
     + 'border-radius:24px;padding:48px 56px;max-width:min(90vw,600px);text-align:center;'
     + 'box-shadow:0 0 60px rgba(255,50,120,0.5);">'
     + '<div style="font-size:60px;margin-bottom:16px;">📱</div>'
     + '<div style="font-size:30px;font-weight:900;color:#ff4488;margin-bottom:12px;">帳號已在其他裝置登入</div>'
     + '<div style="font-size:20px;color:#ccc;margin-bottom:8px;line-height:1.6;">你的遊戲進度已自動儲存。<br>如需繼續遊戲，請點下方按鈕重新取得控制權。</div>'
-    + '<div style="font-size:16px;color:#888;margin-bottom:32px;">（若你沒有在其他裝置登入，請確認帳號安全）</div>'
+    + '<div style="font-size:16px;color:#888;margin-bottom:18px;">（若你沒有在其他裝置登入，請確認帳號安全）</div>'
+    + _battleHint
     + '<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">'
     + '<button onclick="_sessionReclaim()" style="padding:14px 40px;font-size:22px;font-weight:900;'
     + 'background:linear-gradient(135deg,rgba(255,50,120,0.3),rgba(180,20,80,0.3));'
@@ -76585,44 +76757,149 @@ const STUDENT_DESIGNER_HEROES = {
   'lsps110026@stu.lsps.tp.edu.tw': { hero:'天神宙斯',     name:'歐同學', class:'5年4班', flagId:'thunder_zeus'      },
 };
 
-window._grantStudentDesignerHero = function(email){
+// ════════════════════════════════════════════════════════════════
+// ★ v3.5.16 — 設計者英雄補發強化(老師 2026/5/22 回報:無法成功發送設計者獎勵)
+//
+// 【原 bug 根因】
+//   舊版只在登入後 1.8 秒「試一次」,沒等雲端載入完成就呼叫 gameCloudSave。
+//   但 gameCloudSave 內部會檢查 window._progressLoaded:
+//     - 若雲端載入慢/超時/失敗 → _progressLoaded=false
+//     - → gameCloudSave 直接拒絕寫入(避免空資料覆蓋雲端)
+//   結果:advSaveUnlockedHero 只寫進 localStorage,雲端從沒收到設計者英雄。
+//        下次登入若清掉本機(換帳號清理/閒置登出後 reload),設計者英雄就遺失。
+//
+// 【新版修法】
+//   1) 改成 async 函式,先 await _waitForCloudReady(15000) 等雲端就緒,
+//      確保 _progressLoaded=true 才會寫入雲端
+//   2) 加 retry 機制:5/15/30/60/120 秒分 5 次嘗試,每次都會用
+//      advGetUnlockedHeroes 確認「真的有寫入本地」,且 gameCloudSave
+//      回報成功才視為完成
+//   3) 用 window._designerHeroGrantState 追蹤狀態,避免同一登入循環重複觸發
+//   4) gameCloudSave 加 await,等雲端真的回應
+// ════════════════════════════════════════════════════════════════
+window._grantStudentDesignerHero = async function(email){
   if(!email) return;
-  try{
-    const _e = (email || '').toLowerCase();
-    const _info = STUDENT_DESIGNER_HEROES[_e];
-    if(!_info) return;  // 不是設計者,跳過
-    const _heroName = _info.hero;
-    const _displayName = _info.name; // 假名「X同學」(原始碼可見,個資保護)
-    // 檢查是否已解鎖(用 advGetUnlockedHeroes,不會錯誤觸發 cloudSave)
-    let _alreadyUnlocked = false;
-    try{
-      const _list = (typeof advGetUnlockedHeroes === 'function') ? (advGetUnlockedHeroes() || []) : [];
-      _alreadyUnlocked = _list.includes(_heroName);
-    }catch(_){}
-    // 解鎖(advSaveUnlockedHero 內部有去重保護,重複呼叫也 OK)
-    if(typeof advSaveUnlockedHero === 'function'){
-      advSaveUnlockedHero(_heroName);
-    }
-    // 觸發雲端存檔(讓跨裝置都同步)
-    if(typeof gameCloudSave === 'function'){
-      try{ gameCloudSave(); }catch(_){}
-    }
-    console.log('🎁 [設計者英雄補發] ' + _displayName + ' 已獲得「' + _heroName + '」(原已解鎖:' + _alreadyUnlocked + ')');
-    // 第一次登入顯示歡迎訊息(用 localStorage flag,後續登入不再顯示)
-    const _flagKey = 'lxps_designer_welcome_' + _info.flagId;
-    let _hasShown = false;
-    try{ _hasShown = !!localStorage.getItem(_flagKey); }catch(_){}
-    if(!_hasShown){
-      try{ localStorage.setItem(_flagKey, '1'); }catch(_){}
-      // 延遲 800ms 顯示彈窗(避免跟其他登入歡迎訊息衝突)
-      // ★ v1.0.20260511.6130 — 多傳 _info.class 給歡迎彈窗,觸發「首班設計師」禮讚邏輯
-      setTimeout(()=>{
-        try{ _showStudentDesignerWelcome(_displayName, _heroName, _info.class); }catch(_){}
-      }, 800);
-    }
-  }catch(e){
-    console.warn('[設計者英雄補發] 失敗', e);
+  const _e = (email || '').toLowerCase();
+  const _info = STUDENT_DESIGNER_HEROES[_e];
+  if(!_info) return;  // 不是設計者,跳過
+  const _heroName = _info.hero;
+  const _displayName = _info.name;
+  // 用全域旗標防止重複觸發(同次登入內只啟動一次 retry 流程)
+  if(window._designerHeroGrantState && window._designerHeroGrantState.uid === window._gUserId
+     && window._designerHeroGrantState.email === _e){
+    console.log('🎁 [設計者英雄補發] 同一登入循環已觸發過,跳過(state='
+      + window._designerHeroGrantState.status + ')');
+    return;
   }
+  window._designerHeroGrantState = {
+    uid: window._gUserId,
+    email: _e,
+    heroName: _heroName,
+    status: 'pending',
+    attempts: 0,
+    startedAt: Date.now(),
+  };
+
+  // retry 排程:5/15/30/60/120 秒(共 5 次)
+  const _retryDelays = [5000, 15000, 30000, 60000, 120000];
+
+  // 內部:嘗試一次「等雲端 → 寫本地 → 寫雲端 → 驗證」流程
+  async function _tryGrantOnce(attemptIdx){
+    try{
+      const _state = window._designerHeroGrantState;
+      if(!_state || _state.status === 'done' || _state.status === 'aborted') return true;
+      _state.attempts++;
+      const _attemptLabel = '#' + (attemptIdx + 1) + '/' + (_retryDelays.length + 1);
+
+      // 1) 確保雲端載入完成(避免 gameCloudSave 被 _progressLoaded=false 擋下)
+      if(typeof window._waitForCloudReady === 'function'){
+        const _ok = await window._waitForCloudReady(15000);
+        if(!_ok){
+          console.warn('🎁 [設計者英雄補發] ' + _attemptLabel + ' 雲端載入超時,改用較寬容路徑重試');
+          // 不立刻 return,繼續嘗試 — 即使 _progressLoaded 是 false 也先寫本地
+        }
+      }
+      // 2) 解鎖到本地(advSaveUnlockedHero 內部去重 OK)
+      let _alreadyUnlockedLocal = false;
+      try{
+        const _list = (typeof advGetUnlockedHeroes === 'function') ? (advGetUnlockedHeroes() || []) : [];
+        _alreadyUnlockedLocal = _list.includes(_heroName);
+      }catch(_){}
+      if(typeof advSaveUnlockedHero === 'function'){
+        advSaveUnlockedHero(_heroName);
+      }
+      // 驗證本地真的有寫入
+      let _localOk = false;
+      try{
+        const _list2 = (typeof advGetUnlockedHeroes === 'function') ? (advGetUnlockedHeroes() || []) : [];
+        _localOk = _list2.includes(_heroName);
+      }catch(_){}
+      if(!_localOk){
+        console.warn('🎁 [設計者英雄補發] ' + _attemptLabel + ' 本地寫入失敗,將重試');
+        return false;
+      }
+      // 3) 寫雲端(await,確認真的有送出)
+      let _cloudOk = false;
+      if(typeof gameCloudSave === 'function'){
+        try{
+          // gameCloudSave 內部有 _progressLoaded 守門,
+          // 失敗時會 return 不寫,但不會 throw,所以再用 await 驗證
+          await gameCloudSave();
+          // 雲端寫入完成(或被守門略過)→ 用 advSnapshot/unlockedHeroes 來驗證
+          _cloudOk = window._progressLoaded === true; // 守門通過就視為雲端有寫
+        }catch(_eCs){
+          console.warn('🎁 [設計者英雄補發] ' + _attemptLabel + ' gameCloudSave 例外', _eCs);
+        }
+      }
+      console.log('🎁 [設計者英雄補發] ' + _attemptLabel + ' ' + _displayName
+        + ' 「' + _heroName + '」 本地=' + _localOk + ', 雲端=' + _cloudOk
+        + ', 原已解鎖=' + _alreadyUnlockedLocal);
+      // 4) 若本地有 + 雲端守門通過,視為成功
+      if(_localOk && _cloudOk){
+        _state.status = 'done';
+        _state.doneAt = Date.now();
+        // 第一次登入顯示歡迎訊息(用 localStorage flag,後續登入不再顯示)
+        const _flagKey = 'lxps_designer_welcome_' + _info.flagId;
+        let _hasShown = false;
+        try{ _hasShown = !!localStorage.getItem(_flagKey); }catch(_){}
+        if(!_hasShown){
+          try{ localStorage.setItem(_flagKey, '1'); }catch(_){}
+          setTimeout(()=>{
+            try{ _showStudentDesignerWelcome(_displayName, _heroName, _info.class); }catch(_){}
+          }, 800);
+        }
+        return true;
+      }
+      return false;
+    }catch(e){
+      console.warn('🎁 [設計者英雄補發] 嘗試 #' + (attemptIdx + 1) + ' 例外', e);
+      return false;
+    }
+  }
+
+  // 第 1 次立即嘗試
+  const _firstOk = await _tryGrantOnce(0);
+  if(_firstOk) return;
+  // 排 retry
+  _retryDelays.forEach((_delay, _i) => {
+    setTimeout(async () => {
+      // 若期間用戶已登出/換帳號 → 中止
+      const _state = window._designerHeroGrantState;
+      if(!_state || _state.uid !== window._gUserId){
+        if(_state) _state.status = 'aborted';
+        return;
+      }
+      if(_state.status === 'done') return;
+      const _ok = await _tryGrantOnce(_i + 1);
+      if(_ok){
+        console.log('🎁 [設計者英雄補發] retry #' + (_i + 2) + ' 終於成功 ✅');
+      }else if(_i === _retryDelays.length - 1){
+        console.warn('🎁 [設計者英雄補發] ' + _displayName + ' 「' + _heroName
+          + '」全部 retry 嘗試完仍未成功,下次登入再試');
+        _state.status = 'failed_giveup';
+      }
+    }, _delay);
+  });
 };
 
 /**
@@ -76816,7 +77093,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.15';
+window._GAME_LOADED_VERSION = 'v3.5.16';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
