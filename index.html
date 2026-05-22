@@ -2995,6 +2995,21 @@
         try{ if(window._initDownloadAuth) window._initDownloadAuth(); }
         catch(e){ console.warn('[下載授權監聽] 啟動失敗', e); }
       }, 800);
+      // ★ v3.5.16 — 管理員專屬 PWA:登入完成後重新觸發 bootPWA
+      //   原因:_initPWA 是 IIFE 在頁面載入時立即執行,當時 window._fbUser 尚未就緒,
+      //   bootPWA 內 _isAdminUser() 永遠回 false → 被 _PWA_DISABLED_FOR_STUDENTS 擋下
+      //   修法:onAuth 確認登入後,等 1.5 秒讓 _fbUser/_gUserId 都就緒,
+      //   且 _lxpsAdminPwaActive 還沒啟動過,才呼叫 boot() 重跑流程
+      //   此時 _isAdminUser() 會回 true,bootPWA 內守門通過,真正進入 SW 註冊 + 預載
+      setTimeout(()=>{
+        try{
+          const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+          if(_isAdmin && !window._lxpsAdminPwaActive && window._lxpsPWA && typeof window._lxpsPWA.boot === 'function'){
+            console.log('🛠️ [v3.5.16] 管理員登入確認,重新啟動 PWA bootPWA() 以走完整預載流程');
+            window._lxpsPWA.boot();
+          }
+        }catch(e){ console.warn('[管理員 PWA 重啟] 失敗', e); }
+      }, 1500);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(_){} }, 1500);
       setTimeout(()=>{
@@ -68506,29 +68521,45 @@ window._lxpsPWA = (function(){
   function bootPWA(){
     // ═══════════════════════════════════════════════════════════════════
     // ★ v3.4.15 緊急止血(2026/5/21) — PWA 自動下載暫時完全停用
+    // ★ v3.5.16 改良(2026/5/22) — 加上「管理員專屬 PWA」開關
     // ───────────────────────────────────────────────────────────────────
-    // 原因:
+    // 原因(v3.4.15 緊急止血):
     //   1. 26 台 iPad 同步首裝會大量湧出 GitHub raw 請求 → 學校 NAT IP
     //      被 GitHub 限流 → 大量 429 → 永久破圖
     //   2. CDN 改寫機制尚未在 iPad 驗證
     //   3. Firebase 配額尚未升 Blaze, 26 台同時上線會在第 2 節爆讀寫
     //
-    // 修補完成的標誌(全部達成後才能把下面這段拿掉):
+    // 修補完成的標誌(全部達成後才能把 _PWA_DISABLED_FOR_STUDENTS 改成 false):
     //   ☐ jsDelivr CDN 驗證可用 (_lxpsTestCdn() ok)
     //   ☐ sw.js 內 USE_CDN_REWRITE 改為 true
     //   ☐ Firebase 升 Blaze + 設 Budget Alert
     //   ☐ 加上「錯時開機 + 失敗重試 + 老師可見進度」
     //   ☐ 3-5 台 iPad 小規模實測通過
     //
-    // 停用後的行為:
+    // ★ v3.5.16 新增:管理員專屬 PWA(老師 2026/5/22 想自己先體驗預載效果)
+    //   現在判定改成「對非管理員停用,對管理員放行」,讓老師自己可以驗證:
+    //     - 預載讀條 UI 是否正常
+    //     - 離線可玩功能是否真的有效
+    //     - 版本更新流程是否順暢
+    //   為正式對學生開放前做先期驗證,且只有 1-3 個管理員帳號,流量風險可控
+    //
+    // 停用後(_PWA_DISABLED 為 true)的行為:
     //   - 完全不註冊 Service Worker
     //   - 沒有自動下載讀條
     //   - 玩家圖片仍從 GitHub 直接抓 (跟 PWA 上線前的舊版完全一樣)
-    //   - 之前已安裝過 PWA 的玩家? 詳見下方說明
     // ═══════════════════════════════════════════════════════════════════
-    var _PWA_DISABLED = true; // ★ 修補完成前都保持 true
+    var _PWA_DISABLED_FOR_STUDENTS = true; // ★ 學生端維持停用,修補完成前不要改
+    // 判定當前是否為管理員(_isAdminUser 在 line ~76715 定義,依賴 window._fbUser)
+    var _isAdmin = false;
+    try{
+      _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+    }catch(_){}
+    // 真正的停用旗標:學生且非管理員身分時停用;管理員放行
+    var _PWA_DISABLED = _PWA_DISABLED_FOR_STUDENTS && !_isAdmin;
+
     if(_PWA_DISABLED){
-      console.warn('[PWA] 自動下載已停用 (緊急止血中)。玩家將跟舊版一樣直接從 GitHub 抓資源。');
+      console.warn('[PWA] 自動下載已停用 (緊急止血中)。玩家將跟舊版一樣直接從 GitHub 抓資源。'
+        + ' 提示:管理員身分登入後會自動啟用 PWA');
       // 主動取消註冊既有的 SW (對之前已裝過 PWA 的玩家做清理)
       try{
         if('serviceWorker' in navigator){
@@ -68542,6 +68573,12 @@ window._lxpsPWA = (function(){
         }
       }catch(_){}
       return;
+    }
+    // ★ v3.5.16 — 走到這代表是管理員(或學生 PWA 已正式開放)
+    if(_isAdmin){
+      console.log('🛠️ [PWA] 管理員身分偵測到,啟用完整 PWA 預載流程(學生端仍停用)');
+      // 標記管理員已啟動,避免重複 boot
+      window._lxpsAdminPwaActive = true;
     }
 
     // ★ v3.4.15 — 「首次安裝」判斷改為: 只看是否裝過 (不再比對版本號)
