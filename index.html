@@ -2995,12 +2995,14 @@
         try{ if(window._initDownloadAuth) window._initDownloadAuth(); }
         catch(e){ console.warn('[下載授權監聽] 啟動失敗', e); }
       }, 800);
-      // ★ v3.5.16 — 管理員專屬 PWA:登入完成後重新觸發 bootPWA
+      // ★ v3.5.16 + v3.5.17 — 登入完成後重新觸發 bootPWA
       //   原因:_initPWA 是 IIFE 在頁面載入時立即執行,當時 window._fbUser 尚未就緒,
-      //   bootPWA 內 _isAdminUser() 永遠回 false → 被 _PWA_DISABLED_FOR_STUDENTS 擋下
-      //   修法:onAuth 確認登入後,等 1.5 秒讓 _fbUser/_gUserId 都就緒,
-      //   且 _lxpsAdminPwaActive 還沒啟動過,才呼叫 boot() 重跑流程
-      //   此時 _isAdminUser() 會回 true,bootPWA 內守門通過,真正進入 SW 註冊 + 預載
+      //   bootPWA 內守門(管理員 / 有效下載授權)永遠不通過 → SW 永遠不註冊
+      //   修法:
+      //     (a) 1.5 秒後:確認管理員身分 → 直接 boot(管理員不需要授權流程)
+      //     (b) 3.5 秒後:確認一般學生的下載權限已從雲端載入 → 若有有效授權則 boot
+      //   兩段時序分開:_initDownloadAuth 在 800ms 啟動 onSnapshot,通常 1-2 秒能收到雲端權限,
+      //   3.5 秒留充裕緩衝(避免在 onSnapshot 還沒回來就誤判沒授權)
       setTimeout(()=>{
         try{
           const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
@@ -3010,6 +3012,27 @@
           }
         }catch(e){ console.warn('[管理員 PWA 重啟] 失敗', e); }
       }, 1500);
+      // ★ v3.5.17 — 學生端:等下載權限載入後,若有有效授權則啟動 PWA
+      //   學生用平板:登入 → 等 _initDownloadAuth 啟動 onSnapshot → 雲端權限載入 →
+      //   若是 approved 狀態 → 自動 boot 開始預載(不需要學生手動點任何按鈕)
+      //   另一條路徑:首登入時還沒授權 → 學生申請 → 老師核准 → onSnapshot 回呼內主動 boot
+      //   (見 _initDownloadAuth 的 onSnapshot callback 內 v3.5.17 區段)
+      setTimeout(()=>{
+        try{
+          const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+          if(_isAdmin) return; // 管理員已在 1.5 秒那段處理過
+          const _perm = window._downloadAuth && window._downloadAuth.currentPermission;
+          const _hasValid = _perm && _perm.status === 'approved'
+            && _perm.expiresAt && _perm.expiresAt > Date.now();
+          if(_hasValid && !window._lxpsStudentPwaActive
+             && window._lxpsPWA && typeof window._lxpsPWA.boot === 'function'){
+            const _expireIn = Math.round((_perm.expiresAt - Date.now()) / 60000);
+            console.log('✅ [v3.5.17] 學生有效下載授權確認(剩餘 ' + _expireIn + ' 分鐘),'
+              + '重新啟動 PWA bootPWA() 開始預載');
+            window._lxpsPWA.boot();
+          }
+        }catch(e){ console.warn('[學生 PWA 啟動] 失敗', e); }
+      }, 3500);
       // ★ 登入後延遲補發已達成但未記錄的成就
       setTimeout(()=>{ try{ _checkMedalsOnLogin(); }catch(_){} }, 1500);
       setTimeout(()=>{
@@ -68522,63 +68545,85 @@ window._lxpsPWA = (function(){
     // ═══════════════════════════════════════════════════════════════════
     // ★ v3.4.15 緊急止血(2026/5/21) — PWA 自動下載暫時完全停用
     // ★ v3.5.16 改良(2026/5/22) — 加上「管理員專屬 PWA」開關
+    // ★ v3.5.17 改良(2026/5/22) — 加上「有效授權學生 PWA」開關(老師策略 B)
     // ───────────────────────────────────────────────────────────────────
     // 原因(v3.4.15 緊急止血):
     //   1. 26 台 iPad 同步首裝會大量湧出 GitHub raw 請求 → 學校 NAT IP
     //      被 GitHub 限流 → 大量 429 → 永久破圖
-    //   2. CDN 改寫機制尚未在 iPad 驗證
-    //   3. Firebase 配額尚未升 Blaze, 26 台同時上線會在第 2 節爆讀寫
     //
-    // 修補完成的標誌(全部達成後才能把 _PWA_DISABLED_FOR_STUDENTS 改成 false):
-    //   ☐ jsDelivr CDN 驗證可用 (_lxpsTestCdn() ok)
+    // ★ v3.5.17 策略(老師 2026/5/22 決議):
+    //   走原本 v3.5.0 設計的「下載授權系統」做流量管制:
+    //     - 預設仍對「未授權學生」停用(不點申請的人 = 跟舊版一樣直接抓 GitHub)
+    //     - 管理員核准的學生 → 24 小時內可預載(老師可一台一台核准 = 一台一台裝)
+    //     - 管理員 → 直接放行(便於老師驗證)
+    //   流量風險:任何時刻,只有「老師剛剛核准」的學生會抓 GitHub,
+    //   老師可掌握速度(現場確認 A 台裝完才核准 B 台),不會 26 台同時撞 NAT。
+    //   也順便用上原本 v3.5.0 寫好的下載授權 + 24 小時期限機制(沒浪費)。
+    //
+    // ★ 仍建議完成的事(不阻擋上線,但完成後更穩):
+    //   ☐ jsDelivr CDN 驗證可用 (_lxpsTestCdn() ok)— 提升大量首裝穩定度
     //   ☐ sw.js 內 USE_CDN_REWRITE 改為 true
-    //   ☐ Firebase 升 Blaze + 設 Budget Alert
-    //   ☐ 加上「錯時開機 + 失敗重試 + 老師可見進度」
-    //   ☐ 3-5 台 iPad 小規模實測通過
-    //
-    // ★ v3.5.16 新增:管理員專屬 PWA(老師 2026/5/22 想自己先體驗預載效果)
-    //   現在判定改成「對非管理員停用,對管理員放行」,讓老師自己可以驗證:
-    //     - 預載讀條 UI 是否正常
-    //     - 離線可玩功能是否真的有效
-    //     - 版本更新流程是否順暢
-    //   為正式對學生開放前做先期驗證,且只有 1-3 個管理員帳號,流量風險可控
+    //   ☐ Firebase 升 Blaze + 設 Budget Alert — 預防上課讀寫量爆
     //
     // 停用後(_PWA_DISABLED 為 true)的行為:
     //   - 完全不註冊 Service Worker
     //   - 沒有自動下載讀條
     //   - 玩家圖片仍從 GitHub 直接抓 (跟 PWA 上線前的舊版完全一樣)
     // ═══════════════════════════════════════════════════════════════════
-    var _PWA_DISABLED_FOR_STUDENTS = true; // ★ 學生端維持停用,修補完成前不要改
-    // 判定當前是否為管理員(_isAdminUser 在 line ~76715 定義,依賴 window._fbUser)
+    // ★ v3.5.17 — 三個放行條件(任一成立即放行):
+    //   1. _isAdmin:管理員身分
+    //   2. _hasValidPermission:有效下載授權(status=approved 且未過期)
+    //   3. _alreadyInstalled:已經完整裝過(別清掉舊 SW + cache)
     var _isAdmin = false;
     try{
       _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
     }catch(_){}
-    // 真正的停用旗標:學生且非管理員身分時停用;管理員放行
-    var _PWA_DISABLED = _PWA_DISABLED_FOR_STUDENTS && !_isAdmin;
+    var _hasValidPermission = false;
+    try{
+      var _perm = window._downloadAuth && window._downloadAuth.currentPermission;
+      _hasValidPermission = !!(_perm && _perm.status === 'approved'
+                              && _perm.expiresAt && _perm.expiresAt > Date.now());
+    }catch(_){}
+    var _alreadyInstalled = false;
+    try{
+      _alreadyInstalled = !!localStorage.getItem(INSTALLED_KEY);
+    }catch(_){}
 
-    if(_PWA_DISABLED){
-      console.warn('[PWA] 自動下載已停用 (緊急止血中)。玩家將跟舊版一樣直接從 GitHub 抓資源。'
-        + ' 提示:管理員身分登入後會自動啟用 PWA');
-      // 主動取消註冊既有的 SW (對之前已裝過 PWA 的玩家做清理)
-      try{
-        if('serviceWorker' in navigator){
-          navigator.serviceWorker.getRegistrations().then(function(regs){
-            regs.forEach(function(r){
-              r.unregister().then(function(ok){
-                if(ok) console.log('[PWA] 已停用舊 SW');
+    var _allowPwa = _isAdmin || _hasValidPermission || _alreadyInstalled;
+
+    if(!_allowPwa){
+      console.warn('[PWA] 未授權,不啟動 Service Worker。資源仍從 GitHub 直接抓 (跟舊版一樣)。'
+        + ' 提示:向管理員老師申請下載權限,獲准後即可預載完整資源以離線可玩');
+      // ★ v3.5.17 — 只對「從來沒安裝過」的玩家清舊 SW,避免誤殺已安裝好的學生
+      //   (如果學生先前裝過,授權到期後不想要把他們的 cache 清掉,本機資源還能用)
+      if(!_alreadyInstalled){
+        try{
+          if('serviceWorker' in navigator){
+            navigator.serviceWorker.getRegistrations().then(function(regs){
+              regs.forEach(function(r){
+                r.unregister().then(function(ok){
+                  if(ok) console.log('[PWA] 已停用舊 SW(未授權且未安裝過)');
+                });
               });
             });
-          });
-        }
-      }catch(_){}
+          }
+        }catch(_){}
+      } else {
+        console.log('[PWA] 偵測到已完整安裝過,保留 cache 與 SW(授權到期後仍可離線使用既有資源)');
+      }
       return;
     }
-    // ★ v3.5.16 — 走到這代表是管理員(或學生 PWA 已正式開放)
+    // ★ v3.5.17 — 走到這代表放行,印出原因方便老師除錯
     if(_isAdmin){
-      console.log('🛠️ [PWA] 管理員身分偵測到,啟用完整 PWA 預載流程(學生端仍停用)');
-      // 標記管理員已啟動,避免重複 boot
+      console.log('🛠️ [PWA] 管理員身分,啟用完整 PWA 預載流程');
       window._lxpsAdminPwaActive = true;
+    } else if(_hasValidPermission){
+      var _perm2 = window._downloadAuth.currentPermission;
+      var _expireIn = Math.round((_perm2.expiresAt - Date.now()) / 60000);
+      console.log('✅ [PWA] 已獲下載授權,啟用完整 PWA 預載流程(授權剩餘 ' + _expireIn + ' 分鐘)');
+      window._lxpsStudentPwaActive = true;
+    } else if(_alreadyInstalled){
+      console.log('🔄 [PWA] 已安裝過,繼續維護既有 cache(背景補抓新資源)');
     }
 
     // ★ v3.4.15 — 「首次安裝」判斷改為: 只看是否裝過 (不再比對版本號)
@@ -68713,12 +68758,38 @@ window._initDownloadAuth = function(){
   window._downloadAuth.unsubscribe = window._fbWatchDownloadPermission(
     window._gUserId,
     function(perm){
+      // ★ v3.5.17 — 紀錄前一個狀態,用於偵測「剛核准」事件
+      const _prevPerm = window._downloadAuth.currentPermission;
       window._downloadAuth.currentPermission = perm;
       _updateDownloadAuthUI(perm);
       // 設定到期提醒
       if(perm && perm.status === 'approved' && perm.expiresAt){
         _scheduleExpireReminders(perm.expiresAt);
       }
+      // ★ v3.5.17 — 偵測「權限剛核准」事件,主動觸發 PWA boot 開始預載
+      //   觸發條件:
+      //     - 當前狀態是 approved + 未過期
+      //     - 前一個狀態不是 approved(剛剛被老師核准)
+      //     - 還沒啟動過 PWA(_lxpsStudentPwaActive 未設)
+      //   觸發效果:
+      //     - 學生不必重整頁面,老師按下「核准」幾秒後,學生畫面就會自動跑讀條
+      //     - 老師可以在學生 iPad 旁邊現場看到預載進度
+      try{
+        const _isNowApproved = perm && perm.status === 'approved'
+          && perm.expiresAt && perm.expiresAt > Date.now();
+        const _wasApproved = _prevPerm && _prevPerm.status === 'approved'
+          && _prevPerm.expiresAt && _prevPerm.expiresAt > Date.now();
+        const _alreadyActive = !!window._lxpsStudentPwaActive;
+        if(_isNowApproved && !_wasApproved && !_alreadyActive){
+          console.log('🎉 [v3.5.17] 偵測到下載授權剛被核准,主動觸發 PWA boot 開始預載');
+          if(window._lxpsPWA && typeof window._lxpsPWA.boot === 'function'){
+            // 給 currentPermission 寫入時間 + UI 一拍,再 boot
+            setTimeout(function(){
+              try{ window._lxpsPWA.boot(); }catch(e){ console.warn('[權限核准後 PWA boot] 失敗', e); }
+            }, 500);
+          }
+        }
+      }catch(e){ console.warn('[v3.5.17 權限變化偵測] 例外', e); }
     }
   );
 };
@@ -77130,7 +77201,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.16';
+window._GAME_LOADED_VERSION = 'v3.5.17';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
