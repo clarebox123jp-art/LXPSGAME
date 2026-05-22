@@ -1,9 +1,44 @@
 // ═══════════════════════════════════════════════════════════════════
-// game_changelog.js 補丁 v3.5.8 + v3.5.9
-// 把以下「兩個」物件依時間從新到舊加到 GAME_CHANGELOG 陣列最前面
-//   → v3.5.9 物件放最前面(最新)
-//   → v3.5.8 物件放第二個(原本漏寫,這次一起補)
+// game_changelog.js 補丁 v3.5.8 + v3.5.9 + v3.5.10
+// 把以下「三個」物件依時間從新到舊加到 GAME_CHANGELOG 陣列最前面
+//   → v3.5.10 物件放最前面(最新)
+//   → v3.5.9 物件放第二個
+//   → v3.5.8 物件放第三個(原本漏寫,這次一起補)
 // ═══════════════════════════════════════════════════════════════════
+
+{ ver:'v3.5.10', brief:[
+  '📱 iPad 與手機版「冒險關卡介紹」右側視窗下方加高,貼近底部按鈕(PC 不變)',
+  '🦸 貓空關「獲得隨機新英雄」獎勵旁加「(已全收錄 / 尚有 N 位未相遇)」標示',
+  '❓ 旁邊加 ? 鈕,點開可看所有貓空可加入英雄清單(已收錄/未相遇分組)',
+], items:[
+  '【改動 1:iPad/手機版冒險關卡介紹右側視窗加高】',
+  '・舊版:_mobile-nav-active 狀態下 #adv-info-window 高度 760px;iPad 因被排除而完全沒設高,看起來短',
+  '・新版:_mobile-nav-active(手機)→ 920px(+21%);iPad 透過 @media (pointer:coarse) 補一份規則',
+  '・@media 用 (pointer:coarse) and (max-width:1366px) and (min-width:601px) 鎖定平板尺寸',
+  '・PC 是 (hover:hover)(pointer:fine),不會吃到這條規則,維持原貌',
+  '・配套:#adv-right-panel min-height 880 → 1040,padding-bottom 維持 60px',
+  '',
+  '【改動 2:貓空關介紹「獲得隨機新英雄」加收錄狀態】',
+  '・在獎勵清單渲染時偵測 icon === \'🦸\',自動拼接收錄狀態文字',
+  '・已全收錄:綠色「(已全收錄)」',
+  '・尚有缺漏:橘色「(尚有 N 位未相遇的英雄)」',
+  '・名單範圍:ADV_UNLOCKABLE_HEROES 31 個 - 商店肖像 8 個 - 事件限定 3 個 = 20 個',
+  '',
+  '【改動 3:點 ? 鈕開英雄清單視窗】',
+  '・新函式:_showMaokongHeroListModal()',
+  '・顯示元素:標題列 + 收錄進度條(綠色漸層) + 已收錄分組 + 未收錄分組 + 說明腳註',
+  '・已收錄英雄:綠色邊框 + 「✓ 已收錄」徽章 + 彩色頭像',
+  '・未收錄英雄:灰色邊框 + 「? 未相遇」徽章 + 灰階頭像 + 半透明',
+  '・響應式網格:grid-template-columns:repeat(auto-fill,minmax(110px,1fr)) 自動排列',
+  '・腳註說明清楚標示:不含商店肖像 8 位、不含事件限定 3 位(小力/幼兒園小孩/巫女)',
+  '',
+  '【實作位置】',
+  '・index.html (line ~42985) — adv-rewards-list 渲染加收錄狀態 + ? 鈕',
+  '・index.html (line ~54510) — 新增 _showMaokongHeroListModal 函式',
+  '・index.html (line ~76735) — _mobile-nav-active 高度規則 760→920 / 880→1040',
+  '・index.html (line ~76753) — 新增 @media (pointer:coarse) 規則供 iPad 套用',
+  '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v3.5.10',
+] },
 
 { ver:'v3.5.9', brief:[
   '🐲 維蘇威火山龍王平衡調整:S1 業火灼燒 c:4→5、傷害 100%→150%;爆發 90%→95%',
