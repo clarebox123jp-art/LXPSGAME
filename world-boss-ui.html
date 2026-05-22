@@ -457,6 +457,22 @@
   #wb-entry-overlay .wb-ceasefire-banner .wb-cf-sub{
     font-size: 28px !important;      /* 14 → 28 */
   }
+  /* ★ v3.5.27(2026-05-22) — 補上 .wb-cf-msg 放大 200%
+     原本 .wb-cf-msg(公告訊息那塊:「目前是搶先測試階段...」)
+     沒被入口頁覆寫,維持 13px,跟旁邊放大過的 title(40px)/sub(28px)
+     比例不一致,玩家反映看不清楚。
+     順便把 icon(✕劍)與整體 row 間距同步放大,讓比例協調。 */
+  #wb-entry-overlay .wb-ceasefire-banner .wb-cf-row{
+    gap: 24px !important;
+  }
+  #wb-entry-overlay .wb-ceasefire-banner .wb-cf-msg{
+    font-size: 26px !important;      /* 13 → 26 */
+    line-height: 1.6;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border-left-width: 5px;
+    margin-top: 12px;
+  }
   /* 管理員控制面板 ─────────────────────── */
   #wb-entry-overlay .wb-admin-ctrl-panel{
     padding: 28px 32px;
@@ -8480,7 +8496,12 @@
   }
 
   // ★ v6 Phase 4 — onRoomClosed:清旗標 + 重設 first update 旗標(供下一場)
-  window._wbNet.on('onRoomClosed', function(){
+  // ★ v3.5.24(2026-05-22) — 合併原本 line ~9876 的顯示邏輯。
+  //   原本檔案註冊了兩個 onRoomClosed listener,但 _wbNet.on 是覆蓋式
+  //   (WB.listeners[e] = cb),後註冊的會吃掉前一個 → 這份清理邏輯永遠不會跑。
+  //   修法:把兩段合併成一個 listener,先清旗標+timer,再依 info 顯示結算頁或 alert。
+  window._wbNet.on('onRoomClosed', function(info){
+    // ─ A. 清連線旗標 + 動畫競態緩衝 + pending timer ──────────────────
     try{
       window._wbConnectedHostMode = false;
       window._wbConnectedClientMode = false;
@@ -8496,6 +8517,23 @@
         window._wbClientPendingApplyTimer = null;
       }
     }catch(_){}
+
+    // ─ B. UI 顯示處理(原 line ~9876 的邏輯) ────────────────────────
+    info = info || {};
+    // 表情列強制收起(改用 class 控制)
+    try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
+    try{
+      if(info.reason === 'battle_complete' || info.winner){
+        if(typeof _wbShowResult === 'function') _wbShowResult(info);
+      }else{
+        // 房主中離等其他情況
+        const _lobby = document.getElementById('wb-lobby-overlay');
+        if(_lobby) _lobby.style.display = 'none';
+        if(info.reason !== 'kicked_or_left' && info.reason !== 'doc_deleted'){
+          _wbGameAlert('房間已關閉: ' + (info.reason || '未知'));
+        }
+      }
+    }catch(_eShow){ console.warn('[WB onRoomClosed] 顯示處理例外', _eShow); }
   });
 
   function _wbRenderBattleScreen(battle){
@@ -9785,8 +9823,18 @@
           const _qShow = _qOv && _qOv.classList.contains('show');
           const _phaseAsking = (typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking');
           if(_qShow && _phaseAsking){
-            console.log('[WB-Host v3.4.6] 收到 ' + (msg.name||'?') + ' 的答案: '
-              + msg.letter + ' (isCorrect=' + msg.isCorrect + '),房主端代跑 advSubmitAnswer');
+            // ★ v3.5.24(2026-05-22) — 不信任 client 送來的 isCorrect。
+            //   原本傳 msg.isCorrect 作為 isCorrectOverride → 主程式 advSubmitAnswer
+            //   會直接信任這個值。學生若開 DevTools 把 isCorrect 從 false 改成 true,
+            //   全隊就會被當作答對拿能量 + 排行榜傷害貢獻 → 影響全伺服器戰績公平性。
+            //   修法:只傳 letter,不傳 isCorrectOverride。主程式內部會用
+            //         `letter === q.answer` 重判(line 53379),以房主本機題目為準。
+            //   注意:這要求房主端與 client 端「同題、同選項順序」。
+            //         目前流程是房主用 _wbHostBroadcastQuizShow 把題目廣播給 client,
+            //         client 端 _advCurrentQuestion 在 onBattleUpdate quiz-show 分支重組
+            //         (line ~8158),選項順序、letter 對應與房主一致 → 重判結果正確。
+            console.log('[WB-Host v3.5.24] 收到 ' + (msg.name||'?') + ' 的答案: '
+              + msg.letter + ' (client 自稱 isCorrect=' + msg.isCorrect + ',房主端將以本機題目重判)');
             // 暫時清掉 _wbAssignedQuizSlot,讓房主跑 advSubmitAnswer 不被攔截器擋
             //   (房主的 _mySlot=0 不等於 _allowedSlot 時會被攔截器擋下)
             const _origAssign = window._wbAssignedQuizSlot;
@@ -9795,9 +9843,10 @@
             window._wbIsOpeningQuizPhase = false;
             try{
               if(typeof advSubmitAnswer === 'function'){
-                advSubmitAnswer(msg.letter || 'A', !!msg.isCorrect);
+                // ★ v3.5.24 — 第二參數 isCorrectOverride 故意不傳,讓主程式以 letter===q.answer 重判
+                advSubmitAnswer(msg.letter || 'A');
               }
-            }catch(eSub){ console.warn('[WB-Host v3.4.6] 代跑 advSubmitAnswer 例外', eSub); }
+            }catch(eSub){ console.warn('[WB-Host v3.5.24] 代跑 advSubmitAnswer 例外', eSub); }
             // 還原 — 但實際上 advSubmitAnswer 已走完,後續 quiz 狀態應該變 answered
             // 若還沒(被攔截器擋等)→ 還原讓下個玩家點再試
             if(typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking'){
@@ -9873,6 +9922,11 @@
     if(err && err.msg) _wbGameAlert('⚠ ' + err.msg);
   });
 
+  // ★ v3.5.24(2026-05-22) — 已合併到上方第一個 onRoomClosed handler(line ~8483)。
+  //   原本這裡會 .on('onRoomClosed', ...) 覆蓋前一個註冊的清理 handler
+  //   (_wbNet.on 是覆蓋式,WB.listeners[e]=cb),導致旗標永遠清不乾淨。
+  //   保留註解便於未來檢索;若要新增清理 / 顯示邏輯,請改 line ~8483 那一個。
+  /* DISABLED — see merged handler above
   window._wbNet.on('onRoomClosed', function(info){
     // ★ FIX 20260517(o-4) — 改用 class 控制
     try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
@@ -9886,6 +9940,7 @@
       }
     }
   });
+  */
 
   function _wbShowResult(info){
     document.getElementById('wb-lobby-overlay').style.display = 'none';
