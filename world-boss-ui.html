@@ -1026,8 +1026,37 @@
 
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
-    <!-- ★ FIX 20260521(h) — 「當前排行榜」面板已搬到下方「隊伍排名獎勵」之後、
-                              「元素龍系列」之前(老師 2026/5/21 調整版面順序需求) -->
+    <!-- ★ FIX 20260519(v12) — 在按鈕上方加「當前排行榜」面板 -->
+    <div id="wb-current-leaderboard" style="margin-bottom:20px;padding:14px 18px;
+      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
+      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
+      box-shadow:0 0 18px rgba(212,168,67,0.25);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
+          🏆 當前排行榜 — 維蘇威火山龍王
+        </div>
+        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
+          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
+          border-radius:8px;cursor:pointer;font-family:inherit;">
+          🔄 刷新
+        </button>
+      </div>
+      <!-- ★ FIX 20260519(v13) — 尾刀 + 結算規則說明 -->
+      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
+        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
+        font-size:13px;color:#aabbdd;line-height:1.6;">
+        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
+        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
+        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
+        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
+      </div>
+      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
+        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
+          排行榜載入中...
+        </div>
+      </div>
+    </div>
+
     <div class="wb-entry-btn-row">
       <div class="wb-entry-big-btn" onclick="_wbUiOpenVisibilityChoice()">
         <span class="ico">🏰</span>
@@ -1082,40 +1111,6 @@
         <br>同一隻 BOSS 期間,你跟同房間隊友打過的所有場次傷害會累積計算。
       </div>
       <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:8px;font-size:24px;"></div>
-    </div>
-
-    <!-- ★ FIX 20260521(h) — 「當前排行榜」面板已從操作按鈕上方搬到這裡
-                              (隊伍排名獎勵下面、元素龍系列上面),
-                              讓玩家先看完獎勵分級規則,再看到當下實際排名,版面順序更直覺。 -->
-    <!-- ★ FIX 20260519(v12) — 「當前排行榜」面板 -->
-    <div id="wb-current-leaderboard" style="margin-top:20px;padding:14px 18px;
-      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
-      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
-      box-shadow:0 0 18px rgba(212,168,67,0.25);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
-        <div style="font-size:44px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
-          🏆 當前排行榜 — 維蘇威火山龍王
-        </div>
-        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
-          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
-          border-radius:8px;cursor:pointer;font-family:inherit;">
-          🔄 刷新
-        </button>
-      </div>
-      <!-- ★ FIX 20260519(v13) — 尾刀 + 結算規則說明 -->
-      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
-        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
-        font-size:13px;color:#aabbdd;line-height:1.6;">
-        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
-        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
-        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
-        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
-      </div>
-      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
-        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
-          排行榜載入中...
-        </div>
-      </div>
     </div>
 
     <!-- ★ v2.0 — 8 隻元素龍預告 -->
@@ -1261,80 +1256,23 @@
       else if(rank === 3) rankIcon = '🥉';
       const _names = Array.isArray(e.teamNames) ? e.teamNames.slice(0, 4) : [];
       while(_names.length < 4) _names.push('—');
-      // ★ v3.5.6 — 用戶需求:同時顯示「暱稱 + 使用英雄(LV)」
-      //   teamHeroes 是 [{name, lv}, ...](v3.5.6 起紀錄),舊資料沒有此欄位 → fallback 只顯示暱稱
-      const _heroes = Array.isArray(e.teamHeroes) ? e.teamHeroes.slice(0, 4) : [];
-      const _hasHeroData = _heroes.length > 0;
-      const _formatSlot = function(idx){
-        const _nm = _esc(_names[idx] || '—');
-        if(!_hasHeroData) return _nm;
-        const _h = _heroes[idx];
-        if(!_h || !_h.name || _h.name === '?') return _nm;
-        const _hn = _esc(_h.name);
-        const _lv = (typeof _h.lv === 'number' && _h.lv > 0) ? _h.lv : 1;
-        // 「暱稱・英雄(LV.X)」格式,英雄名與等級用較淡色,讓暱稱仍是主要識別
-        return _nm + '<span style="color:#a8d4ff;font-weight:600;">・' + _hn
-             + '<span style="color:#88bbe6;font-size:0.92em;font-weight:500;">(LV.' + _lv + ')</span></span>';
-      };
-      // 每個玩家一行,排版較舊版緊湊但資訊更完整
-      const _namesHtml = [0,1,2,3].map(_formatSlot).join('<br>');
-      // ★ FIX 20260521(j) — 名次配色:第 1/2/3 名金/銀/銅, 4 名後原紫色
-      //                     若玩家在前 20 名內(等於 isMyTeam,因列表只取前 20),
-      //                     用白色發光邊框覆蓋名次原色,更醒目易尋
-      let _bgRank, _borderRank, _rankColor, _glow;
-      if(rank === 1){
-        // 金黃
-        _bgRank = 'linear-gradient(90deg,rgba(255,215,80,0.32),rgba(255,180,40,0.14))';
-        _borderRank = '2.5px solid #ffd84a';
-        _rankColor = '#fff2a8';
-        _glow = '0 0 16px rgba(255,210,80,0.45)';
-      }else if(rank === 2){
-        // 銀
-        _bgRank = 'linear-gradient(90deg,rgba(220,220,230,0.28),rgba(170,170,190,0.12))';
-        _borderRank = '2.5px solid #d8d8e0';
-        _rankColor = '#f0f0f5';
-        _glow = '0 0 14px rgba(210,210,225,0.4)';
-      }else if(rank === 3){
-        // 古銅
-        _bgRank = 'linear-gradient(90deg,rgba(205,127,50,0.30),rgba(150,90,30,0.12))';
-        _borderRank = '2.5px solid #cd7f32';
-        _rankColor = '#ffc28a';
-        _glow = '0 0 14px rgba(205,127,50,0.42)';
-      }else{
-        // 4 名後 — 維持原紫色系
-        _bgRank = (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
-        _borderRank = '1px solid rgba(168,132,255,0.30)';
-        _rankColor = '#c8a8ff';
-        _glow = 'none';
-      }
-      // 玩家自己的隊伍 → 白色發光邊框覆蓋原配色 (傷害字白、邊框白、強光暈)
-      let _border = _borderRank;
-      let _extraBoxShadow = _glow;
-      let _myMark = '';
-      if(isMyTeam){
-        _border = '3px solid #ffffff';
-        _extraBoxShadow = '0 0 24px rgba(255,255,255,0.85), 0 0 8px rgba(255,255,255,0.95) inset';
-        _myMark = ' <span style="color:#ffffff;font-weight:900;text-shadow:0 0 8px #fff;">(你)</span>';
-      }
-      // ★ FIX 20260521(j) — 字級調整:標題與徽章 +100%, 暱稱 -25%, 傷害 +50%
-      //   - 名次徽章 28 → 56  (+100%)
-      //   - 暱稱       20 → 15  (-25%)
-      //   - 傷害       26 → 39  (+50%)
-      //   - 場次       14 → 13  (微縮配合暱稱)
-      // ★ v3.5.6 — 玩家暱稱+英雄 改 4 行顯示, align-items 改 start, line-height 微調
+      const _namesHtml = _names.map(n => _esc(n)).join('・');
+      const _bg = isMyTeam
+        ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
+        : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
+      const _border = isMyTeam ? '2px solid #ffe066' : '1px solid rgba(168,132,255,0.18)';
+      // ★ v13 — 字加大:rank 24→28、暱稱 14→20、傷害 18→26、場次 11→14
       return ''
-        + '<div style="display:grid;grid-template-columns:75px 1fr 160px;align-items:center;gap:12px;'
-        + 'padding:14px 18px;background:' + _bgRank + ';border:' + _border + ';border-radius:12px;'
-        + 'box-shadow:' + _extraBoxShadow + ';">'
-        + '<div style="font-size:56px;font-weight:900;text-align:center;color:' + _rankColor + ';line-height:1;">'
+        + '<div style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
+        + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
+        + '<div style="font-size:28px;font-weight:800;text-align:center;color:' + (rank<=3?'#ffe066':'#aabbdd') + ';">'
         +   rankIcon
         + '</div>'
-        + '<div style="line-height:1.45;color:#ffe8a0;overflow:hidden;">'
-        +   '<div style="font-size:14px;font-weight:700;">' + _namesHtml + _myMark + '</div>'
-        +   '<div style="font-size:13px;color:#aaa;margin-top:6px;">' + (e.battles||0) + ' 場累積</div>'
+        + '<div style="font-size:20px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
+        +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
+        +   '<div style="font-size:14px;color:#aaa;margin-top:2px;">' + (e.battles||0) + ' 場累積</div>'
         + '</div>'
-        + '<div style="font-size:39px;font-weight:800;color:' + (isMyTeam ? '#ffffff' : '#ff8866') + ';text-align:right;'
-        + 'text-shadow:' + (isMyTeam ? '0 0 10px rgba(255,255,255,0.85)' : '0 0 6px rgba(255,120,80,0.4)') + ';line-height:1;">'
+        + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
         +   _formatDmg(e.totalDmg || 0)
         + '</div>'
         + '</div>';
@@ -1564,72 +1502,36 @@
   #wb-team-confirm-overlay{
     display:none;position:fixed;inset:0;z-index:9500;
     background:transparent;
-    /* ★ FIX 20260521(e) — overlay 本身改成可上下捲動.
-       原因: iPad Safari 上, 雖然 .wb-tc-card 已經有 overflow-y:auto, 但因為 overlay
-       用 align-items:center 垂直置中, 卡片頂端會跑到可視區外,
-       即便卡片內捲也碰不到「點看BOSS」「離開房間」那一排按鈕.
-       改成 overlay 整層可捲後, 不管裝置高度怎麼變, 整個卡片都能滑進可視區. */
-    overflow-y:auto;
-    overflow-x:hidden;
-    -webkit-overflow-scrolling:touch;
+    overflow:hidden;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#ffe8a0;
     /* ★ FIX 20260516 v8 — 不再用 clip-path 挖洞;瀏覽器全螢幕指示器是 native UI,
        本來就在所有網頁元素之上,不需要特別處理。如果還是被擋,改用 position:fixed
        搭配 z-index 控制 */
   }
-  /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖
-     ★ FIX 20260521(e) — overlay 改成可捲動後, ::before 從 position:absolute(會跟著捲)
-     改成 position:fixed (永遠覆蓋整個視窗, 不會被捲走) */
+  /* 用獨立的全螢幕背景層,跟 overlay 同 z-index 但帶背景圖 */
   #wb-team-confirm-overlay::before{
-    content:'';position:fixed;inset:0;z-index:-1;
+    content:'';position:absolute;inset:0;z-index:-1;
     background:
       linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
       url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
       #1a0a08;
     pointer-events:none;
   }
-  /* ★ FIX 20260521(e) — .show 從 align-items:center 改成 flex-start
-     原因: iPad/手機可視區比卡片小時, center 會把卡片頂端切掉. flex-start 從頂端對齊,
-     超出部分由 overlay 自己捲動處理. min-height:100% 確保視窗有「填滿」感. */
-  #wb-team-confirm-overlay.show{
-    display:flex;align-items:flex-start;justify-content:center;
-    padding:10px 16px;
-    min-height:100%;
-  }
+  #wb-team-confirm-overlay.show{display:flex;align-items:center;justify-content:center;padding:10px 16px;}
   .wb-tc-card{
     width:100%;max-width:1880px;
-    /* ★ FIX 20260521(e) — 移除 max-height 與卡片自身 overflow-y;
-       讓卡片自然撐開, 捲動責任交給 overlay 外層,
-       否則 iPad 上會出現「卡片內捲 + overlay 不捲」造成上下被切的死局. */
+    max-height:calc(100vh - 20px);
     background:rgba(8,10,24,0.62);
     backdrop-filter:blur(6px);
     border:2.5px solid rgba(255,170,80,0.65);
-    border-radius:14px;
-    /* ★ v3.5.2 — 上方加 60px 空間, 避開 Chrome PWA 全螢幕指示器列
-       (放大鏡 / 全螢幕 / 音量 / 暫停 / 重整 / 關閉那一排會擋住「房號 + 離開房間」)
-       原本 padding-top:6px → 66px(60px 給指示器 + 6px 原來的呼吸間距)
-       右側不縮(右上角按鈕仍然會貼右邊, 但會在指示器下方) */
-    padding:66px 14px 8px;
+    border-radius:14px;padding:6px 14px 8px;
     box-shadow:0 0 48px rgba(255,140,40,0.45);
     position:relative;
     display:flex;flex-direction:column;
-    /* 桌機大螢幕(>1180px)仍走「卡片內捲、按鈕 sticky 釘底」的緊湊路線,
-       避免桌機要拉外層卷軸. 由下方 @media 規則開關. */
-  }
-  /* 桌機(>1180px): 維持原本的「卡片內捲 + sticky 釘底」設計, 不出現外層卷軸 */
-  @media (min-width:1181px){
-    #wb-team-confirm-overlay{
-      overflow:hidden;  /* 桌機不捲外層 */
-    }
-    #wb-team-confirm-overlay.show{
-      align-items:center;  /* 桌機卡片置中 */
-      min-height:0;
-    }
-    .wb-tc-card{
-      max-height:calc(100vh - 20px);
-      overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
-    }
+    /* ★ FIX 20260521(a) — 內容超出時可以捲, 配合 .wb-tc-start-zone 的 sticky 釘底,
+       即使內容很長也保證開戰按鈕看得到、按得到 */
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .wb-tc-title{
     font-size:44px;font-weight:900;letter-spacing:3px;
@@ -1638,9 +1540,8 @@
     margin-bottom:1px;line-height:1.05;
   }
   /* ★ FIX 20260516 v3/v4 — BOSS 預覽小視窗(左上角,寬 4 倍,降低高度) */
-  /* ★ v3.5.2 — top:8px → top:68px, 跟 .wb-tc-topright 對齊, 避開瀏覽器全螢幕指示器 */
   .wb-tc-boss-preview-mini{
-    position:absolute;top:68px;left:10px;
+    position:absolute;top:8px;left:10px;
     width:336px;height:64px;
     border-radius:10px;
     background:linear-gradient(135deg,#ff6644,#552010);
@@ -1809,9 +1710,7 @@
 
   /* ★ FIX 20260517(r) — 隊伍確認頁右上角:房號 + 邀請好友 + 離開 */
   .wb-tc-topright{
-    /* ★ v3.5.2 — 從 top:8px 改到 top:68px, 避開瀏覽器全螢幕指示器列
-       (.wb-tc-card 已經把 padding-top 加到 66px, 這裡也要對齊往下) */
-    position:absolute;top:68px;right:12px;
+    position:absolute;top:8px;right:12px;
     display:flex;gap:8px;align-items:center;z-index:11;
   }
   .wb-tc-roomcode-badge{
@@ -2294,41 +2193,6 @@
   .wb-tc-back-btn:hover{background:rgba(168,132,255,0.2);}
 
   /* ════════════════════════════════════════════════════════════════ */
-  /* ★ v3.5.2 — 桌機(>1180px)戰前溝通縮小規則                       */
-  /*                                                                    */
-  /* 原問題:桌機版「我負責輸出」「我先離開」這類按鈕字體 26px、padding */
-  /*         14px,整列佔用接近 200px 高,把上方四個槽位卡片擠到要靠   */
-  /*         捲動才能看到「攻擊/特技/速度/至寶」等完整資訊。           */
-  /*                                                                    */
-  /* 解法:桌機版按鈕縮成接近 1/2 大小,釋放 ~100px 空間給 slot 區       */
-  /*       (iPad 規則 ≤1180px 已自己一套,不受影響)                   */
-  /* ════════════════════════════════════════════════════════════════ */
-  @media (min-width:1181px){
-    .wb-tc-quickmsg-zone{
-      padding:8px 12px 10px;
-      margin-bottom:4px;
-    }
-    .wb-tc-quickmsg-header{
-      margin-bottom:6px;
-    }
-    .wb-tc-quickmsg-title{
-      font-size:18px;letter-spacing:1.5px;
-    }
-    .wb-tc-quickmsg-cd{
-      font-size:15px;letter-spacing:1px;padding:3px 10px;
-    }
-    .wb-tc-quickmsg-grid{
-      gap:6px;
-      /* 12 顆按鈕排成 2×6 → 桌機更寬,放 6 欄較不擁擠 */
-      grid-template-columns:repeat(6, 1fr);
-    }
-    .wb-tc-qmsg-btn{
-      padding:7px 6px;font-size:15px;letter-spacing:0.8px;
-      border-radius:8px;border-width:1.5px;
-    }
-  }
-
-  /* ════════════════════════════════════════════════════════════════ */
   /* ★ FIX 20260521(a) — iPad (≤1180px) 隊伍確認頁專屬縮小規則         */
   /* 原問題: 定型文佔太大蓋住「房主代理」按鈕、開戰按鈕被擠到視窗外    */
   /* 解法: 定型文字/padding 縮小一半, 開戰區仍 sticky 釘底兜底       */
@@ -2368,21 +2232,6 @@
     /* 卡片整體 padding 縮小, 多擠一點空間 */
     .wb-tc-card{
       padding:4px 10px 6px;
-    }
-    /* ★ FIX 20260521(e) — iPad 模式下, overlay 已是 scroll container, 整個卡片
-       由外層捲動. 開戰區 sticky 在這種情境下意義不大(卡片末端本來就在底部),
-       改為 relative 讓開戰區就是文件流最後一個元素, 玩家滑到底就能直接按,
-       避免 sticky 在某些 Safari 版本下因 overflow 互動產生「卡片內又出現一根
-       sticky 卷軸頭」的渲染問題. */
-    .wb-tc-start-zone{
-      position:relative;
-      bottom:auto;
-    }
-    /* ★ FIX 20260521(e) — iPad 上, 每個 slot 不再自己捲動;
-       slot 內容自然撐開, 由 overlay 外層一起捲, 避免雙重捲動把英雄資訊截斷.
-       這樣玩家看每個英雄的攻/特/速/技能/至寶都看得到完整資訊. */
-    .wb-tc-slot{
-      overflow-y:visible;
     }
   }
   /* 更窄(< 900px)— 定型文壓更小 */
@@ -3390,10 +3239,6 @@
     justify-content:flex-start !important;
     gap:6px !important;
   }
-  /* ★ v3.5.9 — 使用者主動收起時強制隱藏(蓋過 .wb-eb-show) */
-  #wb-emoji-bar-real.wb-eb-user-collapsed{
-    display:none !important;
-  }
   /* ★ FIX 20260517(q) — iPad(≤1180px) 定型文列寬度跟 BOSS 血條一致縮短 40% */
   @media (max-width:1180px){
     #wb-emoji-bar-real{
@@ -3408,13 +3253,6 @@
      /* 寬度跟 BOSS 血條 overlay 對齊(桌機 1080px / iPad 648px),由 CSS 媒體查詢控制 */
      width:min(1080px,calc(100vw - 100px));
      max-height:none;overflow:visible;">
-  <!-- ★ v3.5.9 — 收起按鈕(最左邊),點下後整個 bar 收起並切換到 #wb-emoji-bar-collapsed 圓鈕 -->
-  <button id="wb-emoji-collapse-btn" class="wb-emoji-collapse-btn" onclick="_wbEmojiBarToggleCollapse(true)" title="收起定型文列">
-    <span class="wb-emoji-collapse-icon">⏷</span>
-    <span class="wb-emoji-collapse-label">收起</span>
-  </button>
-  <!-- 分隔線(收起鈕跟發言鈕之間) -->
-  <div style="width:1px;height:36px;background:rgba(168,132,255,0.4);margin:0 2px;flex-shrink:0;"></div>
   <!-- ★ FIX 20260517(h) — 戰鬥中快捷表情重新規劃:6 個實戰常用訊息,改走確認視窗(平板友善) -->
   <!--   圖示在上、文字在下,iPad 也能直接看出意思 -->
   <!--   圖示對應:⭐=用爆發(對應角色卡爆發星星) / ➕=先補血(綠十字) / 🙏=先復活 -->
@@ -3422,8 +3260,6 @@
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('heal_first')"><span class="wb-emoji-icon wb-icon-heal">➕</span><span class="wb-emoji-label">先補血</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('revive_first')"><span class="wb-emoji-icon">🙏</span><span class="wb-emoji-label">先復活</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('ctrl_boss')"><span class="wb-emoji-icon">🌀</span><span class="wb-emoji-label">控住王</span></button>
-  <!-- ★ v3.5.9 — 新增「先破盾」按鈕(放在「控住王」後面,語意接近的攻略類提示) -->
-  <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('break_shield')"><span class="wb-emoji-icon wb-icon-shield">🛡</span><span class="wb-emoji-label">先破盾</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('awesome')"><span class="wb-emoji-icon">🔥</span><span class="wb-emoji-label">太棒啦</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('sorry_wait')"><span class="wb-emoji-icon">😅</span><span class="wb-emoji-label">等我一下</span></button>
   <!-- 分隔線(flex 內豎直分隔,改為 1px 寬、高度跟按鈕齊) -->
@@ -3436,13 +3272,6 @@
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_idk')" title="我也不確定">🤔</button>
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('cheerup')" title="加油你可以的">💪🏼</button>
 </div>
-<!-- ★ v3.5.9 — 收起狀態的圓鈕(預設隱藏,由 _wbEmojiBarToggleCollapse 切換顯隱)
-     位置:跟 wb-emoji-bar-real 的左上對齊,點它展開整列。 -->
-<button id="wb-emoji-bar-collapsed" onclick="_wbEmojiBarToggleCollapse(false)"
-        title="展開定型文列" style="display:none;">
-  <span class="wb-emoji-collapsed-icon">💬</span>
-  <span class="wb-emoji-collapsed-label">發言</span>
-</button>
 <style>
   /* ★ FIX 20260517(h) — 改為直立 icon + label 雙行,iPad 友善(寬 60px,高自適) */
   .wb-emoji-btn{
@@ -3471,73 +3300,6 @@
     color:#5dd87a;
     text-shadow:0 0 6px rgba(80,220,120,0.7);
     font-weight:900;
-  }
-  /* ★ v3.5.9 — 先破盾 🛡 → 藍色金屬光 */
-  .wb-emoji-btn .wb-icon-shield{
-    color:#6cb6ff;
-    text-shadow:0 0 6px rgba(100,180,255,0.75);
-  }
-  /* ★ v3.5.9 — 收起按鈕(在 emoji-bar 最左邊) */
-  .wb-emoji-collapse-btn{
-    width:42px;min-height:50px;
-    border-radius:10px;cursor:pointer;border:none;
-    background:rgba(80,60,140,0.35);color:#ddd0ff;
-    font-family:'M PLUS Rounded 1c',sans-serif;transition:all 0.15s;
-    flex-shrink:0;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:4px 2px;gap:1px;
-  }
-  .wb-emoji-collapse-btn .wb-emoji-collapse-icon{
-    font-size:20px;line-height:1;color:#c0a8ff;
-  }
-  .wb-emoji-collapse-btn .wb-emoji-collapse-label{
-    font-size:10px;font-weight:700;letter-spacing:0;color:#d4c4ff;
-    white-space:nowrap;line-height:1.2;
-  }
-  .wb-emoji-collapse-btn:hover{
-    background:rgba(140,100,220,0.5);transform:scale(1.05);
-  }
-  /* ★ v3.5.9 — 收起狀態的圓鈕(取代整個 emoji-bar,可點擊展開) */
-  #wb-emoji-bar-collapsed{
-    position:fixed;left:8px;top:160px;
-    width:72px;height:72px;
-    border-radius:50%;
-    background:rgba(40,30,80,0.92);
-    border:2px solid #a884ff;
-    cursor:pointer;
-    z-index:9050;
-    box-shadow:0 4px 16px rgba(0,0,0,0.5),0 0 14px rgba(168,132,255,0.45);
-    transition:all 0.18s;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:2px;padding:0;
-    font-family:'M PLUS Rounded 1c',sans-serif;
-  }
-  #wb-emoji-bar-collapsed .wb-emoji-collapsed-icon{
-    font-size:28px;line-height:1;
-  }
-  #wb-emoji-bar-collapsed .wb-emoji-collapsed-label{
-    font-size:12px;font-weight:800;letter-spacing:1px;color:#d4c4ff;
-    line-height:1.1;
-  }
-  #wb-emoji-bar-collapsed:hover{
-    transform:scale(1.08);
-    box-shadow:0 6px 22px rgba(0,0,0,0.6),0 0 22px rgba(168,132,255,0.7);
-    background:rgba(60,45,110,0.95);
-  }
-  /* iPad/手機(≤1180px)圓鈕縮小一點 */
-  @media (max-width:1180px){
-    #wb-emoji-bar-collapsed{
-      width:56px;height:56px;top:140px;
-    }
-    #wb-emoji-bar-collapsed .wb-emoji-collapsed-icon{font-size:22px;}
-    #wb-emoji-bar-collapsed .wb-emoji-collapsed-label{font-size:10px;}
-  }
-  /* ★ v3.5.9 — 答題期間非答題玩家:emoji-bar / 圓鈕 拉到 quiz overlay 之上(z-index:10950)
-     讓非答題玩家在隊友思考時還能按定型文討論。
-     class 由 _wbUpdateQuizZIndexPriority() 動態加減。 */
-  #wb-emoji-bar-real.wb-eb-quiz-priority,
-  #wb-emoji-bar-collapsed.wb-eb-quiz-priority{
-    z-index:10950 !important;
   }
   .wb-emoji-btn:hover{background:rgba(168,132,255,0.4);transform:scale(1.08);}
   .wb-emoji-btn:disabled{
@@ -3755,6 +3517,62 @@
     return false;
   }
 
+  // ════════════════════════════════════════════════════════════
+  // ★ v3.5.23(2026-05-22) — 世界 BOSS 每日場次限制檢查 helper
+  //   呼叫時機:在 4 個進場入口的「預檢通過後 / createRoom 或 joinRoom 前」
+  //     1) _wbUiCreateRoom(開房)
+  //     2) _wbUiJoinRoom(輸入房號)
+  //     3) _wbUiJoinPublicRoom(瀏覽公開房)
+  //     4) _wbInviteAccept(接受邀請)
+  //   回傳 true:可繼續;false:已擋下並彈警告,呼叫方應 return
+  // ════════════════════════════════════════════════════════════
+  async function _wbCheckDailyLimit(){
+    if(!window._wbDailyLimit || typeof window._wbDailyLimit.canEnter !== 'function'){
+      // 模組未掛載 → 放行(向後相容)
+      console.warn('[WB-DailyLimit] _wbDailyLimit 模組未掛載,放行');
+      return true;
+    }
+    let _res;
+    try{
+      _res = await window._wbDailyLimit.canEnter();
+    }catch(e){
+      console.warn('[WB-DailyLimit] canEnter 失敗,保守放行', e);
+      return true;
+    }
+    if(_res.allowed){
+      // 管理員 → 順帶提示但放行
+      if(_res.isAdmin){
+        console.log('[WB-DailyLimit] 管理員不受限,已用 ' + _res.used + '/' + _res.limit);
+      }
+      return true;
+    }
+    // 已達上限 → 彈窗擋下
+    const _msg =
+      '⛔ 你今日的世界 BOSS 場次已用完<br><br>' +
+      '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
+        '今日已使用:<b>' + _res.used + ' / ' + _res.limit + '</b> 場' +
+      '</div>' +
+      '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
+        '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
+        '・明日 0:00 自動重置<br>' +
+        '・「單人練習模式」不算次數,可無限練習' +
+      '</div>';
+    _wbGameAlert(_msg);
+    return false;
+  }
+
+  // 計數 helper:成功進場後呼叫(管理員也會記錄,只是不擋進場)
+  async function _wbBumpDailyEntry(reason){
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit.increment === 'function'){
+        const _n = await window._wbDailyLimit.increment();
+        console.log('[WB-DailyLimit] 進場計數 +1 (' + reason + ') → ' + _n);
+      }
+    }catch(e){
+      console.warn('[WB-DailyLimit] increment 失敗', e);
+    }
+  }
+
   // ★ FIX 20260517(o-3) — 對應現有英雄系統:取得「玩家已解鎖」的可用英雄
   //   原本只用 HP < 1000 過濾,導致魔物(茶葉精靈/九尾空貓...)也跑進來。
   //   改用跟主程式 _wbTcOpenSwapHero 一樣的雙重過濾:
@@ -3857,12 +3675,20 @@
       console.log('[WB Preflight] 創房預檢未通過,中止流程');
       return;
     }
+    // ★ v3.5.23(2026-05-22) — 每日場次限制檢查(管理員不受限)
+    const _dailyOk = await _wbCheckDailyLimit();
+    if(!_dailyOk){
+      console.log('[WB-DailyLimit] 創房:已達每日上限,中止流程');
+      return;
+    }
     const vis = (visibility === 'public') ? 'public' : 'private';
     const roomId = await window._wbNet.createRoom({
       bossId: 'vesuvius_fire_dragon',
       visibility: vis
     });
     if(roomId){
+      // ★ v3.5.23 — 開房成功後計數 +1
+      await _wbBumpDailyEntry('createRoom');
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳(_wbOpenLobby),直接跳隊伍確認頁
       //   舊流程:選角頁(_wbOpenLobby) → 按準備 → 隊伍確認頁
@@ -3905,8 +3731,16 @@
       console.log('[WB Preflight] 加入房間預檢未通過,中止流程');
       return;
     }
+    // ★ v3.5.23(2026-05-22) — 每日場次限制檢查
+    const _dailyOk = await _wbCheckDailyLimit();
+    if(!_dailyOk){
+      console.log('[WB-DailyLimit] 輸入房號加入:已達每日上限,中止流程');
+      return;
+    }
     const ok = await window._wbNet.joinRoom(code);
     if(ok){
+      // ★ v3.5.23 — 加房成功後計數 +1
+      await _wbBumpDailyEntry('joinRoom(code)');
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
       _wbOpenLobbyHidden();
@@ -4040,8 +3874,16 @@
   }
   window._wbUiJoinPublicRoom = async function(roomId){
     if(!roomId) return;
+    // ★ v3.5.23(2026-05-22) — 每日場次限制檢查
+    const _dailyOk = await _wbCheckDailyLimit();
+    if(!_dailyOk){
+      console.log('[WB-DailyLimit] 公開房加入:已達每日上限,中止流程');
+      return;
+    }
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
+      // ★ v3.5.23 — 加房成功後計數 +1
+      await _wbBumpDailyEntry('joinRoom(public)');
       _wbUiClosePublicRooms();
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
@@ -4416,6 +4258,18 @@
       return;
     }
     if(!inviteId || !roomId) return;
+    // ★ v3.5.23(2026-05-22) — 每日場次限制檢查
+    //   ⚠ 必須在 respondInvite 之前檢查;否則被擋下時對方會收到「accepted」
+    //   但自己沒進房,對方會空等
+    const _dailyOk = await _wbCheckDailyLimit();
+    if(!_dailyOk){
+      console.log('[WB-DailyLimit] 接受邀請:已達每日上限,中止流程');
+      // 順便回 busy 給邀請者(這樣對方知道你沒辦法來,不是無回應)
+      if(window._wbNet && window._wbNet.respondInvite){
+        try{ await window._wbNet.respondInvite(inviteId, 'busy'); }catch(_){}
+      }
+      return;
+    }
     // 先標記 accepted 給邀請者看
     if(window._wbNet && window._wbNet.respondInvite){
       try{ await window._wbNet.respondInvite(inviteId, 'accepted'); }catch(_){}
@@ -4448,6 +4302,8 @@
     }catch(_){}
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
+      // ★ v3.5.23 — 接受邀請進房成功後計數 +1
+      await _wbBumpDailyEntry('joinRoom(invite)');
       // 進房成功 → 關 entry(若開著)、直接開隊伍確認頁
       const entryOv = document.getElementById('wb-entry-overlay');
       if(entryOv) entryOv.style.display = 'none';
@@ -4479,37 +4335,15 @@
   }
   // ★ FIX 20260517 — #ctrl-bar 永遠最高層的保險:每次 overlay 開啟都把 ctrl-bar reparent 到 body 最後
   //   (z-index 雖然已是 2147483647,但 reparent 確保即使有怪異 stacking context 也不會被蓋)
-  // ★ FIX 20260521(i) — 加強:無條件 reparent (移除 parentNode === body 的限制),
-  //   並用 inline style 強制 position:fixed + z-index:2147483647 + pointer-events:auto,
-  //   即使原 CSS 在某個 stacking context 中也不會輸給 overlay.
-  //   觸發點: 世界 BOSS 主頁 (#wb-entry-overlay) 開啟時, 右上角全螢幕/音量按鈕列被
-  //          某個 inset:0 的 overlay 視覺覆蓋, 即使 z-index 數字較大也被擋住.
   function _wbEnsureCtrlBarOnTop(){
     try{
       const _bar = document.getElementById('ctrl-bar');
-      if(!_bar) return;
-      // 1. 無條件 reparent 到 body 最後 (即使本來就在 body, appendChild 自身也會移到最後)
-      try{
-        if(_bar.parentNode !== document.body){
-          document.body.appendChild(_bar);
-        }else{
-          // 已在 body 內, 但要確保是最後一個子元素 (才不會被後注入的 overlay 蓋)
-          if(_bar !== document.body.lastElementChild){
-            document.body.appendChild(_bar);
-          }
-        }
-      }catch(_){}
-      // 2. inline style 強制最高層 + fixed 定位 (蓋過任何 CSS 規則)
-      try{
-        _bar.style.setProperty('position', 'fixed', 'important');
-        _bar.style.setProperty('z-index', '2147483647', 'important');
-        _bar.style.setProperty('pointer-events', 'auto', 'important');
-      }catch(_){}
+      if(_bar && _bar.parentNode === document.body){
+        document.body.appendChild(_bar);  // appendChild 同元素 = 移到最後
+      }
       // 隊伍確認頁的 BOSS 預覽 mini 視窗 + 結算 overlay z-index 也要低於 ctrl-bar
     }catch(_){}
   }
-  // ★ FIX 20260521(i) — 暴露到 window, 讓 world-boss.js 的 _openWorldBossEntry 也能呼叫到強化版
-  window._wbEnsureCtrlBarOnTop = _wbEnsureCtrlBarOnTop;
   function _wbOpenLobby(){
     const ov = document.getElementById('wb-lobby-overlay');
     if(ov) ov.style.display = 'block';
@@ -4576,11 +4410,8 @@
         const _entry = document.getElementById('wb-entry-overlay');
         if(_entry) _entry.style.display = 'none';
         // 清練習用即時傷害條
-        // ★ v3.5.3 — 同時清新舊兩個 ID
-        const dmgBarOld = document.getElementById('wb-solo-cur-dmg-bar');
-        if(dmgBarOld) dmgBarOld.remove();
-        const dmgBarNew = document.getElementById('wb-cur-dmg-bar');
-        if(dmgBarNew) dmgBarNew.remove();
+        const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+        if(dmgBar) dmgBar.remove();
         // 清 flag
         window._wbInWorldBossMode = false;
         window._wbSoloPracticeMode = false;
@@ -4621,37 +4452,6 @@
       const _tc = document.getElementById('wb-team-confirm-overlay');
       if(_tc) _tc.classList.remove('show');
     }catch(_){}
-    // ★ v3.5.5 — 修「從隊伍確認頁離開房間後,無法再開新房間」的 BUG
-    // ───────────────────────────────────────────────────────────────
-    // 觸發場景:
-    //   1. 玩家從入口頁按「開新房間」→ _wbUiCreateRoom 內呼叫 _wbCloseEntry()
-    //      把 wb-entry-overlay 設成 display:none
-    //   2. 進入隊伍確認頁,玩家想取消 → 按「離開房間」
-    //   3. _wbUiLeaveRoom 連線分支只關 lobby 與 team-confirm,
-    //      **沒把 wb-entry-overlay 重新顯示** → 玩家看不到任何 BOSS 戰相關 UI,
-    //      也按不到「開新房間」按鈕,只能整頁重整。
-    // 修法:離開連線房間後,把入口頁顯示回來(display:flex,與 _openWorldBossEntry 一致)
-    //       這樣玩家可以直接再按「開新房間」/「加入房間」/「瀏覽公開房」。
-    //       (單人練習分支 4472-4473 故意把 entry 關掉,因為單人練習是冒險選關進來的,
-    //        要跳回冒險選關頁,不在這次修法影響範圍內)
-    try{
-      const _entry = document.getElementById('wb-entry-overlay');
-      if(_entry){
-        _entry.style.display = 'flex';
-        // 順手把 ctrl-bar 推到最高層(跟 _openWorldBossEntry 同步)
-        try{
-          if(typeof window._wbEnsureCtrlBarOnTop === 'function'){
-            window._wbEnsureCtrlBarOnTop();
-          }
-        }catch(_){}
-        // 同步休戰看板 / 開戰按鈕鎖,避免狀態過期
-        try{ if(typeof _wbSyncCeasefireBanner === 'function') _wbSyncCeasefireBanner(); }catch(_){}
-        try{ if(typeof _wbSyncStartButtonGate === 'function') _wbSyncStartButtonGate(); }catch(_){}
-        console.log('[WB v3.5.5] 離開房間後,重新顯示入口頁');
-      }
-    }catch(eEntry){
-      console.warn('[WB v3.5.5] 重新顯示入口頁失敗', eEntry);
-    }
     // ★ FIX 20260517(o-4) — 改用 class 控制(避免 inline style display 衝突 bug)
     // ★ FIX 20260519(v4) — 強制 inline display:none(雙保險)
     try{
@@ -4668,26 +4468,10 @@
         window._wbBattleQmsgCdTimer = null;
       }
     }catch(_){}
-    // ★ v3.5.5 — 離開房間後留在入口頁,維持世界 BOSS 主頁 BGM(不切回原 BGM)
-    //   原 v3.1.2 邏輯:離開房間 → 直接退回冒險選關 → 切回 _wbPrevBgm
-    //   新流程:離開房間 → 留在入口頁 → 應該繼續播 bgm-wb-menu(跟 _openWorldBossEntry 一致)
-    //   只有玩家按「✕ 關閉入口」時才會走 _closeWorldBossEntry 切回 _wbPrevBgm
+    // ★ v3.1.2 — 離開房間恢復原 BGM
     try{
-      if(typeof bgmFadeTo === 'function'){
-        bgmFadeTo('bgm-wb-menu', 600);
-      }
-    }catch(_){}
-    // ★ v3.5.4 — 雙保險:離開連線房間後清掉連線模式旗標 + 還原開戰按鈕 onclick
-    //   主修復在 _wbTcOpenTeamConfirm,這裡再清一次避免極端時序競態
-    try{
-      window._wbConnectedHostMode = false;
-      window._wbConnectedClientMode = false;
-      window._wbClientMode = false;
-      const _startBtn = document.getElementById('wb-tc-start-btn');
-      if(_startBtn){
-        _startBtn.onclick = function(){
-          try{ window._wbTcHostStartBattle(); }catch(eSt){}
-        };
+      if(window._wbPrevBgm && typeof bgmFadeTo === 'function'){
+        bgmFadeTo(window._wbPrevBgm, 600);
       }
     }catch(_){}
   };
@@ -4842,62 +4626,18 @@
   }
 
   // 包裝成 JSON 字串(供 setMyHero 用)
-  // ★ FIX 20260521(g) — stringify 時若 ext.g 為空, 自動帶入本機 _wbTcBuildMyGrowth(heroName).
-  //   這樣不論 caller 從哪裡呼叫(換英雄/選元素/按準備), 養成資料都會被同步給隊友,
-  //   隊友的隊伍確認頁就能看到正確的等級、HP、攻擊、技能威力.
-  function _wbTcStringifyExt(ext, heroName){
-    let _g = ext.g || null;
-    // ★ 若沒帶 g 且能取得 heroName, 自動構建一份本機養成資料塞進去
-    if(!_g && heroName){
-      try{
-        _g = _wbTcBuildMyGrowth(heroName);
-      }catch(_){}
-    }
+  function _wbTcStringifyExt(ext){
     return JSON.stringify({
       e:  ext.es && ext.es[0] || ext.e || null,  // 第一個元素當主元素(舊邏輯相容)
       es: ext.es || [],
       t:  ext.t  || [],
-      g:  _g,  // ★ v3.4.16 — 個人養成資料
+      g:  ext.g  || null,  // ★ v3.4.16 — 個人養成資料
     });
   }
 
-  // ★ FIX 20260521(g) — 從本機讀「自己對這隻英雄的養成資料」,
-  //   格式跟 _wbSetupAdvForBattle 讀的 g 欄位完全一致.
-  //   隊友收到後就能在隊伍確認頁正確顯示我的等級/HP/攻擊/技能威力,
-  //   不再出現「房主看隊友是 Lv.?、HP ?」的同步斷層.
-  function _wbTcBuildMyGrowth(heroName){
-    if(!heroName) return null;
-    try{
-      const _lv = (typeof _heroLevels       !== 'undefined' && _heroLevels       && _heroLevels[heroName])       || 1;
-      const _sk = (typeof _heroSkillLevels  !== 'undefined' && _heroSkillLevels  && _heroSkillLevels[heroName])  || {};
-      const _bu = (typeof _heroBurstLevels  !== 'undefined' && _heroBurstLevels  && _heroBurstLevels[heroName])  || 0;
-      const _iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]) || {};
-      return {
-        lv:    _lv,
-        skLv:  { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
-        burst: _bu,
-        inv:   { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
-      };
-    }catch(_){ return null; }
-  }
-
-  // 取得玩家英雄的 LV
-  //   - isMe=true:從本機 _heroLevels 讀
-  //   - isMe=false 但有 playerObj.element 的 g 欄位:從同步資料讀 (★ FIX 20260521(g))
-  //   - 否則回 null (顯示 Lv.?)
-  function _wbTcGetHeroLv(heroName, isMe, playerObj){
-    // ★ FIX 20260521(g) — 隊友也能讀:從 player.element JSON 的 g 欄位取等級
-    if(!isMe){
-      try{
-        if(playerObj && playerObj.element){
-          const _ext = _wbTcParsePlayerExt(playerObj);
-          if(_ext && _ext.g && typeof _ext.g.lv === 'number'){
-            return _ext.g.lv;
-          }
-        }
-      }catch(_){}
-      return null;  // 沒同步資料 → Lv.?
-    }
+  // 取得玩家英雄的 LV(從主程式 _heroLevels,只有 me 才有,peer/AI 取得不到回傳 null)
+  function _wbTcGetHeroLv(heroName, isMe){
+    if(!isMe) return null;  // 隊友的等級不知道
     try{
       if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
         return _heroLevels[heroName];
@@ -5066,43 +4806,6 @@
 
   // 開啟隊伍確認頁(從選角頁的按鈕觸發)
   window._wbTcOpenTeamConfirm = function(){
-    // ★ v3.5.4 — 修「從單人練習隊伍頁離開後,再開新房間會卡死」的 BUG
-    // ───────────────────────────────────────────────────────────────
-    // 觸發場景:
-    //   1. 玩家先按「單人練習」→ 進隊伍確認頁(_wbSoloHookStartButton 把
-    //      #wb-tc-start-btn 的 onclick 覆寫成 _wbSoloBeginBattle)
-    //   2. 玩家從隊伍確認頁按「離開房間」→ _wbUiLeaveRoom 單人分支執行,
-    //      清掉 _wbSoloFakePlayers / _wbSoloPracticeMode 等狀態
-    //   3. 玩家回入口頁,按「開新房間」→ createRoom 成功,_wbTcOpenTeamConfirm
-    //      再開隊伍確認頁。但 #wb-tc-start-btn 的 onclick 仍是
-    //      _wbSoloBeginBattle(沒被還原!),這時 _wbSoloFakePlayers === null,
-    //      按下「開戰」就炸出:
-    //         Uncaught TypeError: Cannot read properties of null (reading '0')
-    //         at _wbSoloBeginBattle
-    //
-    // 修法:每次開隊伍確認頁時,**只要不是單人練習模式**,就強制把開戰按鈕
-    //       的 onclick 還原成連線版 _wbTcHostStartBattle,並順手清掉可能殘留
-    //       的 solo 狀態(雙保險)。
-    // ───────────────────────────────────────────────────────────────
-    try{
-      const _isSoloNow = !!window._wbSoloPracticeMode;
-      const _startBtn = document.getElementById('wb-tc-start-btn');
-      if(_startBtn && !_isSoloNow){
-        // 還原連線版開戰按鈕 onclick
-        _startBtn.onclick = function(){
-          try{ window._wbTcHostStartBattle(); }catch(eSt){
-            console.error('[WB-TC] _wbTcHostStartBattle 例外', eSt);
-          }
-        };
-        // 清掉 solo 殘留(若有),避免 _wbSoloBeginBattle 還被誤觸時也不會炸
-        if(window._wbSoloFakePlayers){ window._wbSoloFakePlayers = null; }
-        if(window._wbSoloRealWbNet){ window._wbSoloRealWbNet = null; }
-        console.log('[WB-TC v3.5.4] 連線模式開隊伍確認頁,已還原開戰按鈕 onclick');
-      }
-    }catch(eHook){
-      console.warn('[WB-TC v3.5.4] 還原開戰按鈕 onclick 失敗', eHook);
-    }
-
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.find(p => p.uid === window._gUserId);
     // ★ FIX 20260517(v) — 第一次進來時,用「代表英雄 + 至寶 + 推薦屬性」當預設值
@@ -5122,7 +4825,7 @@
         };
         // 同步進房間(setMyHero,等下會被 onRoomUpdate 觸發 re-render)
         if(window._wbNet && window._wbNet.setMyHero){
-          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExt(ext, loadout.heroName));
+          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExt(ext));
         }
         console.log('[WB-TC] 預設英雄/屬性/至寶:', loadout);
       }catch(eDef){
@@ -5181,8 +4884,12 @@
       }
     }catch(_){}
     // ★ FIX 20260517 — 隊伍確認頁開啟時把 #ctrl-bar 推到 body 最後,確保最高層
-    // ★ FIX 20260521(i) — 改呼叫統一 helper, 含 inline z-index 強化
-    try{ _wbEnsureCtrlBarOnTop(); }catch(_){}
+    try{
+      const _bar = document.getElementById('ctrl-bar');
+      if(_bar && _bar.parentNode === document.body){
+        document.body.appendChild(_bar);
+      }
+    }catch(_){}
     // 把當前主元素灌進 ext(若還沒設過)
     if(me){
       const ext = _wbTcParsePlayerExt(me);
@@ -5233,10 +4940,6 @@
     burst_now:'⭐ 用爆發!', heal_first:'➕ 先補血!',
     revive_first:'🙏 先復活!', ctrl_boss:'🌀 先控住王!',
     awesome:'🔥 太棒啦!', sorry_wait:'😅 抱歉先等我一下',
-    // ★ v3.5.9 — 世界 BOSS 戰專用定型文「先破盾」
-    //   情境:維蘇威火山龍王第 5/9/13/17 回合會啟動四元素護盾(減傷 80%),
-    //         隊伍需協調先用對應屬性英雄優先削減護盾再輸出。
-    break_shield:'🛡 先破盾!',
   };
   window._wbTcQmsgCdTimer = null;
 
@@ -5263,175 +4966,6 @@
     if(!text) return;
     _wbTcOpenQmsgConfirm(key, text, 'battle');
   };
-
-  // ════════════════════════════════════════════════════════════════════
-  // ★ v3.5.9 — 戰鬥定型文「收起/展開」+ 答題時 z-index 提升
-  // ────────────────────────────────────────────────────────────────────
-  // 老師需求:
-  //   1. 戰鬥中定型文列(wb-emoji-bar-real)最左邊加「收起」鈕,點下後整列收起,
-  //      改成一個「💬 發言」圓鈕(wb-emoji-bar-collapsed),點它再展開。
-  //   2. 收起/展開狀態跨場記憶(localStorage)。
-  //   3. 答題時非答題玩家:emoji-bar 提升 z-index 蓋過 quiz overlay,
-  //      讓玩家可以在答題玩家思考時繼續發定型文討論。
-  // 設計:
-  //   - localStorage key: 'lxps_wb_emoji_bar_collapsed' = '1' 表示收起
-  //   - 切換:_wbEmojiBarToggleCollapse(collapse:bool) — true=收起 / false=展開
-  //   - 答題期間判定:_wbAssignedQuizSlot 或 _wbIsOpeningQuizPhase 任一存在 +
-  //                 自己 mySlot !== allowedSlot(自己不是答題者)
-  //   - z-index 控制:加 class 'wb-eb-quiz-priority',CSS 規則拉到 10950(蓋過 quiz 10900)
-  // ════════════════════════════════════════════════════════════════════
-  const _WB_EMOJI_BAR_COLLAPSE_KEY = 'lxps_wb_emoji_bar_collapsed';
-
-  function _wbEmojiBarReadCollapsedPref(){
-    try{
-      return localStorage.getItem(_WB_EMOJI_BAR_COLLAPSE_KEY) === '1';
-    }catch(_){
-      return false;
-    }
-  }
-  function _wbEmojiBarWriteCollapsedPref(collapsed){
-    try{
-      if(collapsed){
-        localStorage.setItem(_WB_EMOJI_BAR_COLLAPSE_KEY, '1');
-      }else{
-        localStorage.removeItem(_WB_EMOJI_BAR_COLLAPSE_KEY);
-      }
-    }catch(_){}
-  }
-
-  // 切換收起/展開狀態(被 wb-emoji-collapse-btn / wb-emoji-bar-collapsed 的 onclick 呼叫)
-  //   collapse = true  → 整列隱藏 + 圓鈕顯示
-  //   collapse = false → 整列顯示 + 圓鈕隱藏
-  window._wbEmojiBarToggleCollapse = function(collapse){
-    const bar = document.getElementById('wb-emoji-bar-real');
-    const dot = document.getElementById('wb-emoji-bar-collapsed');
-    const isCollapse = !!collapse;
-    // 1. 寫入記憶
-    _wbEmojiBarWriteCollapsedPref(isCollapse);
-    // 2. 套用顯隱
-    if(bar){
-      if(isCollapse){
-        // 收起:即使整列原本顯示,也藏起來
-        bar.classList.remove('wb-eb-show');
-        bar.classList.add('wb-eb-user-collapsed');  // 標記為「使用者主動收起」
-      }else{
-        // 展開:標記移掉,讓正常 show/hide 邏輯重新接管
-        bar.classList.remove('wb-eb-user-collapsed');
-        // 戰鬥中:重新顯示
-        if(document.body.classList.contains('wb-in-worldboss-battle')){
-          bar.classList.add('wb-eb-show');
-        }
-      }
-    }
-    if(dot){
-      if(isCollapse && document.body.classList.contains('wb-in-worldboss-battle')){
-        dot.style.display = 'flex';
-      }else{
-        dot.style.display = 'none';
-      }
-    }
-    // 3. 同步 z-index 狀態(展開時若在答題期間,要立即套用提升)
-    try{ _wbUpdateQuizZIndexPriority(); }catch(_){}
-  };
-
-  // 判斷自己是否是「當前答題玩家」(若是,就不需要提升 z-index,
-  // 因為自己要看 quiz overlay 並點選項)
-  function _wbAmITheAnsweringPlayer(){
-    try{
-      let allowedSlot = null;
-      if(window._wbIsOpeningQuizPhase){
-        allowedSlot = (typeof window._wbOpeningQuizAllowedSlot === 'number')
-                    ? window._wbOpeningQuizAllowedSlot : 0;
-      }else if(typeof window._wbAssignedQuizSlot === 'number'){
-        allowedSlot = window._wbAssignedQuizSlot;
-      }
-      if(allowedSlot === null) return false;  // 沒在答題期 → 不算
-      let mySlot = -1;
-      try{
-        if(window._wbNet && typeof window._wbNet.getMySlot === 'function'){
-          const _ms = window._wbNet.getMySlot();
-          if(typeof _ms === 'number') mySlot = _ms;
-        }
-      }catch(_){}
-      // mySlot < 0 表示找不到自己(練習模式 / 未在房內)→ 也算「非答題玩家」
-      if(mySlot < 0) return false;
-      return mySlot === allowedSlot;
-    }catch(_){
-      return false;
-    }
-  }
-
-  // 判斷現在是否處於答題期間(asking 階段)
-  function _wbIsInQuizAskingPhase(){
-    try{
-      const _qOv = document.getElementById('adv-quiz-overlay');
-      const _qShow = !!(_qOv && _qOv.classList.contains('show'));
-      if(!_qShow) return false;
-      // _advQuizPhase 通常會是 'asking' 期間
-      if(typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking') return true;
-      // fallback:有 _wbAssignedQuizSlot 也算
-      if(typeof window._wbAssignedQuizSlot === 'number') return true;
-      if(window._wbIsOpeningQuizPhase) return true;
-      return false;
-    }catch(_){
-      return false;
-    }
-  }
-
-  // 動態更新 emoji-bar / collapsed 圓鈕 的 z-index 優先級
-  //   - 在答題期 + 非答題玩家 → 加 .wb-eb-quiz-priority(z-index 拉到 10950)
-  //   - 其他情況 → 移掉 class(回到預設 9050)
-  function _wbUpdateQuizZIndexPriority(){
-    const bar = document.getElementById('wb-emoji-bar-real');
-    const dot = document.getElementById('wb-emoji-bar-collapsed');
-    const inQuiz = _wbIsInQuizAskingPhase();
-    const amAnswering = _wbAmITheAnsweringPlayer();
-    const shouldPriority = inQuiz && !amAnswering;
-    if(bar){
-      if(shouldPriority) bar.classList.add('wb-eb-quiz-priority');
-      else bar.classList.remove('wb-eb-quiz-priority');
-    }
-    if(dot){
-      if(shouldPriority) dot.classList.add('wb-eb-quiz-priority');
-      else dot.classList.remove('wb-eb-quiz-priority');
-    }
-  }
-  window._wbUpdateQuizZIndexPriority = _wbUpdateQuizZIndexPriority;
-
-  // 每 500ms 自動掃描一次(輕量,只動 classList,沒副作用)
-  //   設計理由:quiz overlay 顯示/隱藏的時機很分散(advShowQuiz / advOnQuizClose /
-  //            host 廣播 / client 接收 etc),要在每個地方都呼叫 update 很容易遺漏。
-  //            輪詢是最穩的方案,且 500ms 對人眼幾乎察覺不到延遲。
-  setInterval(function(){
-    try{ _wbUpdateQuizZIndexPriority(); }catch(_){}
-  }, 500);
-
-  // 進入戰鬥時:套用使用者上次收起/展開的偏好(若有設過收起)
-  //   時機:body 加上 wb-in-worldboss-battle 之後;但因為這個 class 加在多個入口
-  //         (子設定),最穩的是用 MutationObserver 監聽 body class 改變。
-  (function _wbInstallEmojiBarCollapsedRestoreOnBattleStart(){
-    if(!('MutationObserver' in window) || !document.body) return;
-    let _appliedThisBattle = false;
-    const _mo = new MutationObserver(function(){
-      const _inBattle = document.body.classList.contains('wb-in-worldboss-battle');
-      if(_inBattle && !_appliedThisBattle){
-        _appliedThisBattle = true;
-        // 套用上次的偏好
-        if(_wbEmojiBarReadCollapsedPref()){
-          // 用 setTimeout 給 DOM 一點時間 render(emoji-bar 顯示 class 通常在 wb-in-worldboss-battle 後再加)
-          setTimeout(function(){
-            try{ window._wbEmojiBarToggleCollapse(true); }catch(_){}
-          }, 100);
-        }
-      }else if(!_inBattle){
-        _appliedThisBattle = false;  // 重置,給下一場用
-        // 順便確保圓鈕隱藏(離開戰鬥不該還顯示)
-        const dot = document.getElementById('wb-emoji-bar-collapsed');
-        if(dot) dot.style.display = 'none';
-      }
-    });
-    _mo.observe(document.body, { attributes:true, attributeFilter:['class'] });
-  })();
 
   // 確認視窗:顯示完整文字 + 確認/取消按鈕
   // ★ FIX 20260517(g) / (h) — 確認視窗:接受 context 參數('tc' 隊伍頁 / 'battle' 戰鬥中)
@@ -5741,7 +5275,7 @@
           es: _loadout.recommendedElement ? [_loadout.recommendedElement] : [],
           t:  _loadout.equippedTreasureIds || []
         };
-        _me.element = _wbTcStringifyExt(_ext, _loadout.heroName);
+        _me.element = _wbTcStringifyExt(_ext);
         console.log('[WB-TC] me 暫無 heroName,本地注入預設 loadout:', _loadout);
       }
     }catch(_){}
@@ -5828,7 +5362,7 @@
             uid:      myUid,    // ★ 設成 myUid → _wbTcRenderOneSlot 內 isMe=true,但用 assignedSlotIdx 覆寫
             heroName: assigned.heroName,
             name:     _hostNameForNpc,
-            element:  _wbTcStringifyExt(_fakeExt, assigned.heroName),
+            element:  _wbTcStringifyExt(_fakeExt),
             ready:    false,
           };
           html += _wbTcRenderOneSlot(_fakeP, i, myUid, treasureTakenByPeer, meIsHost, i);
@@ -5992,8 +5526,6 @@
 
   // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含至寶加成)
   // ★ FIX 20260516 v3 — 改:接受 player 物件,從 ext.t 讀已選至寶並加上 baseStats + invested
-  // ★ FIX 20260521(g) — 隊友(isMe=false)也能從 playerObj.element 的 g 欄位讀養成資料,
-  //                    讓房主/隊友看到的彼此能力一致, 跟戰鬥中 _wbSetupAdvForBattle 套用的數據對齊.
   function _wbTcGetHeroStats(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
@@ -6003,58 +5535,7 @@
       let atk = base.atk || 0;
       let sp  = base.sp  || 0;
       let spd = base.spd || 0;
-      // ★ FIX 20260521(f) — 三大妖怪 (大天狗/酒吞童子/玉藻前) 作為「玩家英雄」時
-      //   要套 JP_BOSS_HERO_STATS 弱化版 (hp 57~70/atk 9~16 等),否則 HERO_DB
-      //   裡的數字是 BOSS 強版 (hp 900/atk 30+ 等),會在隊伍確認頁顯示成 BOSS 數值.
-      try{
-        if(typeof JP_BOSS_HERO_STATS !== 'undefined' && JP_BOSS_HERO_STATS[heroName]){
-          const _jp = JP_BOSS_HERO_STATS[heroName];
-          hp  = _jp.hp;
-          atk = _jp.atk;
-          sp  = _jp.sp;
-          spd = _jp.spd;
-        }
-      }catch(_){}
-
-      // ★ FIX 20260521(g) — 先從同步資料 (g 欄位) 拿養成,自己或隊友通用
-      let _growthInv = null;     // 屬性投資 { hp, atk, sp, spd }
-      let _growthLv  = 1;        // 英雄等級
-      if(playerObj && playerObj.element){
-        try{
-          const _ext = _wbTcParsePlayerExt(playerObj);
-          if(_ext && _ext.g){
-            if(_ext.g.inv) _growthInv = _ext.g.inv;
-            if(typeof _ext.g.lv === 'number') _growthLv = _ext.g.lv;
-          }
-        }catch(_){}
-      }
-      // 若是自己且沒從同步資料拿到 → fallback 用本機資料(剛開房 g 還沒寫進去時的兜底)
-      if(isMe){
-        if(!_growthInv){
-          try{
-            if(typeof _heroStatInvested !== 'undefined' && _heroStatInvested[heroName]){
-              _growthInv = _heroStatInvested[heroName];
-            }
-          }catch(_){}
-        }
-        if(_growthLv === 1){
-          try{
-            if(typeof _heroLevels !== 'undefined' && _heroLevels[heroName]){
-              _growthLv = _heroLevels[heroName] || 1;
-            }
-          }catch(_){}
-        }
-      }
-
-      // 套用屬性投資點數
-      if(_growthInv){
-        hp  += _growthInv.hp  || 0;
-        atk += _growthInv.atk || 0;
-        sp  += _growthInv.sp  || 0;
-        spd += _growthInv.spd || 0;
-      }
-
-      // 加至寶 baseStats + invested(只有我能算,因為至寶詳細投資資料只有我這端有)
+      // 加至寶 baseStats + invested(只有我能算,因為至寶資料只有我這端有)
       if(isMe && playerObj){
         try{
           const ext = _wbTcParsePlayerExt(playerObj);
@@ -6081,40 +5562,17 @@
           });
         }catch(e){ console.warn('[WB-TC] 計算至寶 stats 失敗', e); }
       }
-
-      // ★ FIX 20260521(f)+(g) — 等級 HP 加成: 每超過 Lv.1 一級 +2% HP.
-      //   主程式 _applyAdvLevelHpBonus / _injectFriendHeroIntoBattle 都用同一公式,
-      //   這裡也對齊, 隊友看自己/我看隊友的 HP 都一致.
-      if(_growthLv > 1){
-        const _bonus = Math.ceil(hp * 0.02 * (_growthLv - 1));
-        if(_bonus > 0) hp += _bonus;
-      }
-
       return { hp, atk, sp, spd };
     }catch(_){ return null; }
   }
 
   // 取得英雄技能 + 技能等級(自己看得到)+ 描述(供 popup 用)
-  // ★ FIX 20260521(g) — 第 3 參數 playerObj: 隊友也能從 element.g.skLv 讀技能等級
-  function _wbTcGetHeroSkills(heroName, isMe, playerObj){
+  function _wbTcGetHeroSkills(heroName, isMe){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return { s1: null, s2: null };
       const h = HERO_DB[heroName];
       let s1Lv = 1, s2Lv = 1;
-      // ★ FIX 20260521(g) — 先嘗試從同步資料拿 (隊友 + 自己同走這條, 自己若 g 已寫入也優先)
-      let _gotFromSync = false;
-      if(playerObj && playerObj.element){
-        try{
-          const _ext = _wbTcParsePlayerExt(playerObj);
-          if(_ext && _ext.g && _ext.g.skLv){
-            s1Lv = (_ext.g.skLv.s1 || 0) + 1;
-            s2Lv = (_ext.g.skLv.s2 || 0) + 1;
-            _gotFromSync = true;
-          }
-        }catch(_){}
-      }
-      // 自己 fallback 用本機(剛開房 g 還沒寫入時)
-      if(!_gotFromSync && isMe){
+      if(isMe){
         try{
           if(typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[heroName]){
             s1Lv = (_heroSkillLevels[heroName].s1 || 0) + 1;
@@ -6149,9 +5607,9 @@
     const ext = _wbTcParsePlayerExt(p);
     const heroName = p.heroName || '?';
     const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
-    const lv = _wbTcGetHeroLv(heroName, isMe, p);
+    const lv = _wbTcGetHeroLv(heroName, isMe);
     const stats = _wbTcGetHeroStats(heroName, isMe, p) || { hp:0, atk:0, sp:0, spd:0 };
-    const skills = _wbTcGetHeroSkills(heroName, isMe, p);
+    const skills = _wbTcGetHeroSkills(heroName, isMe);
     // 主元素(取 ext.es 第一個);用於 header 右上角顯示元素 icon
     const mainElem = ext.es[0] || null;
 
@@ -6480,15 +5938,11 @@
       // 單人練習模式:切編輯槽
       window._wbSoloEditingSlot = targetSlotIdx;
       const ext = _wbTcParsePlayerExt(slotPlayer);
-      // ★ FIX 20260521(g) — 換新英雄, 清掉舊 g, 讓 stringify 自動依新 heroName 重抓
-      ext.g = null;
-      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext, heroName));
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
     }else if(isMyOwnSlot){
       // 多人房:換自己的英雄(保留原本的元素/至寶 ext)
       const ext = _wbTcParsePlayerExt(slotPlayer);
-      // ★ FIX 20260521(g) — 換新英雄, 清掉舊 g, 讓 stringify 自動依新 heroName 重抓
-      ext.g = null;
-      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext, heroName));
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
     }else{
       // 多人房試圖換別人的英雄 → 拒絕
       _wbGameAlert('只能替自己的槽位換英雄');
@@ -6591,7 +6045,7 @@
           e:  _hostAssign.element || null,
           es: _hostAssign.element ? [_hostAssign.element] : [],
           t:  Array.isArray(_hostAssign.treasures) ? _hostAssign.treasures : [],
-        }, _hostAssign.heroName),
+        }),
       };
     }else{
       me = snap?.players?.[targetSlotIdx];
@@ -6701,7 +6155,7 @@
     if(window._wbSoloPracticeMode){
       window._wbSoloEditingSlot = targetSlotIdx;
     }
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext, me.heroName));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
     _wbTcCloseSwapModal();
     _wbTcRenderTeamConfirm();
   };
@@ -6822,7 +6276,7 @@
     }
     // 透過 setMyHero 同步(把 JSON 字串塞進 element)
     // ★ 改動 element 會把 ready 重設為 false(主程式邏輯),避免「沒選完元素就準備」
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext, me.heroName));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
     // 立即 re-render(等 onRoomUpdate 也會 re-render,但先給玩家視覺回饋)
     _wbTcRenderTeamConfirm();
   };
@@ -6839,7 +6293,7 @@
     }else{
       ext.t.push(treasureId);
     }
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext, me.heroName));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
     _wbTcRenderTeamConfirm();
   };
 
@@ -8154,9 +7608,7 @@
       const _ctrb = data.meta && data.meta.contributions;
       if(_myUid && _ctrb && _ctrb[_myUid]){
         const _myDmg = _ctrb[_myUid].dmgDealt || 0;
-        // ★ v3.5.3 — 找新 ID (wb-cur-dmg-display) 或舊 ID (wb-solo-cur-dmg-display) 兩種都更新
-        const _dmgEl = document.getElementById('wb-cur-dmg-display')
-                    || document.getElementById('wb-solo-cur-dmg-display');
+        const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
         if(_dmgEl){
           const _prev = parseInt(_dmgEl.textContent.replace(/,/g, ''), 10) || 0;
           if(_prev !== _myDmg){
@@ -9548,24 +9000,13 @@
 
         // ★ v3.3.2 — client mode 跳過廣播 / sync(房主會跑這些)
         if(!_isClient){
-          // ★ v3.5.9 — 全隊聯手爆發傷害(每場最多 4 次:第 5/10/15/20 題)
-          //   設計上「無視 BOSS 護盾」打穿:
-          //     - 不走 doDmg / _wbApplyBossDmgCap → 不被「炎之意志單次 1% 上限」與「護盾減傷 80%」削減
-          //     - 不走 _wbConsumeShield → 不消耗護盾元素層數(全打到 BOSS 本體 HP)
-          //   結果:不管 BOSS 有沒有開護盾,這個 5000 都是穩穩打進去。
-          //   log 改為更清楚地告訴玩家「這次打穿了護盾」,並在 console 留紀錄。
-          const _hasShield = boss._wbShields && Object.values(boss._wbShields).some(v => v > 0);
-          const _shieldMsg = _hasShield ? '(穿透元素護盾!)' : '';
-          _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手爆發!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害${_shieldMsg}`]);
-          try{ console.log('[WB v3.5.9] 全隊聯手爆發:cnt=' + cnt + ' dmg=' + rewardDmg + ' bypassShield=true hasActiveShield=' + _hasShield); }catch(_){}
+          // 答題獎勵不受護盾/天賦影響(這是「外部」傷害)
+          _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
           // 顯示獎勵 banner(維持原本的右上角金色 banner)— client 也顯示
         }
         _wbShowQuizRewardBanner(cnt, rewardDmg);
         // 護盾觸發檢查(只在房主端跑,client 等 sync 過來)
         // ★ v3.4.9 — 加 FX capture 讓 client 也看到護盾觸發提示
-        // ★ v3.5.9 — 護盾觸發改成回合數(第 5/9/13/17 回合,由 startTurn hook 處理),
-        //   這條 callsite 現在實質上是 no-op(回合條件未到時不會啟動),
-        //   保留是因為 _wbCheckShieldTrigger 內部已防呆,不會重複觸發。
         if(!_isClient && typeof window._wbCheckShieldTrigger === 'function'){
           const triggered = window._wbCheckShieldTrigger(boss);
           if(triggered){
@@ -10822,7 +10263,7 @@
         name: _myName,
         slotIdx: 0,
         heroName: _slot0HeroName,
-        element: _wbTcStringifyExt(_initExt, _slot0HeroName),
+        element: _wbTcStringifyExt(_initExt),
         ready: false,
         online: true,
         lastSeen: Date.now(),
@@ -11194,9 +10635,7 @@
         window._wbSoloContrib[uid] = window._wbSoloContrib[uid] || {};
         window._wbSoloContrib[uid][key] = (window._wbSoloContrib[uid][key] || 0) + val;
         if(window._wbSoloPracticeMode && uid === fakePlayers[0].uid && key === 'dmgDealt'){
-          // ★ v3.5.3 — 找新 ID 或舊 ID 兩種
-          const dmgDisplay = document.getElementById('wb-cur-dmg-display')
-                          || document.getElementById('wb-solo-cur-dmg-display');
+          const dmgDisplay = document.getElementById('wb-solo-cur-dmg-display');
           if(dmgDisplay){
             dmgDisplay.textContent = window._wbSoloContrib[uid][key].toLocaleString();
           }
@@ -11241,11 +10680,8 @@
         try{ if(typeof _wbAdvStopBattleSync === 'function') _wbAdvStopBattleSync(); }catch(_){}
         document.getElementById('wb-lobby-overlay').style.display = 'none';
         try{
-          // ★ v3.5.3 — 同時清新舊兩個 dmgBar ID
           const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
           if(_dmgBar) _dmgBar.remove();
-          const _dmgBar2 = document.getElementById('wb-cur-dmg-bar');
-          if(_dmgBar2) _dmgBar2.remove();
           const _emojiBar = document.getElementById('wb-emoji-bar-real');
           if(_emojiBar){ _emojiBar.classList.remove('wb-eb-show'); }
           const _wbOverlay = document.getElementById('wb-adv-battle-overlay');
@@ -11312,9 +10748,40 @@
       const emojiBar = document.getElementById('wb-emoji-bar-real');
       if(emojiBar){ emojiBar.classList.add('wb-eb-show'); }
     }catch(_){}
-    // ★ v3.5.3 — 即時傷害條(本場總傷)已改由 _wbBuildAdvBattleOverlay() 內部統一建立,
-    //   原本這裡單獨建一份 wb-solo-cur-dmg-bar 的邏輯移除,避免重複建立。
-    //   連線模式房主/client 跟單人練習現在都走同一個入口建立同一個元件。
+    if(!document.getElementById('wb-solo-cur-dmg-bar')){
+      const dmgBar = document.createElement('div');
+      dmgBar.id = 'wb-solo-cur-dmg-bar';
+      // ★ FIX 20260517(d) — 移到 #gc 內,貼在順序條左邊(元素環右邊夾層)
+      //   原因:#turn-order-bar 是 #gc 內 absolute,left:50%/top:50%/translate(-50%,-50%) → 畫面正中
+      //         #elem-wheel    是 #gc 內 absolute,left:8px/top:50% width:140px → 左中
+      //         所以「元素環右邊、順序條左邊」的夾層 ≈ left:160px, top:50% translateY(-50%)
+      //   做法:dmgBar 也 append 到 #gc 內,用 absolute 同樣對齊 top:50%,水平錨左邊 160px
+      //         如此 #gc 縮放時 dmgBar 也跟著縮,跟順序條/元素環相對位置始終一致
+      //   ★ FIX 20260517(i) — 字體放大 100%(12→24, 20→40),改一行水平排「📜 本場總傷:836」
+      //   ★ FIX 20260517(l) — 移到元素環「上方」貼左邊緣,避免蓋到順序條
+      //                        元素環 top:50% height:140 → 中心線 - 90px 為 dmgBar bottom
+      //   ★ v3.4.3 — 老師 2026/5/20 回報:仍會蓋到元素相剋環上緣,再往上移 25px
+      //                        從 calc(50% - 95px) → calc(50% - 120px)
+      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 120px);'
+        + 'transform:none;'  /* 不再用 translateY,改直接 top 精確控位 */
+        + 'z-index:6;'
+        + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
+        + 'border-radius:14px;padding:12px 20px;'
+        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
+        + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
+        + 'pointer-events:auto;'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      dmgBar.innerHTML =
+        '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
+      // ★ append 到 #gc(若存在),否則退回 body
+      const _gcForDmg = document.getElementById('gc');
+      if(_gcForDmg){
+        _gcForDmg.appendChild(dmgBar);
+      }else{
+        document.body.appendChild(dmgBar);
+      }
+    }
 
     // ★ FIX 20260517(b) — BGM 切換從 advStartBattle 前移到後
     //   原因:advStartBattle 內第一件事就是 bgmStop(),會把這裡剛切到的 BGM 立刻關掉
@@ -11446,31 +10913,6 @@
         // iPad(≤1180px,涵蓋 iPad Mini ~ iPad Pro 11"):縮短 40% → 648px 上限
         + '@media (max-width:1180px){'
         +   '#wb-adv-battle-overlay{width:min(648px,calc(100vw - 80px)) !important;}'
-        // ★ v3.5.3 — iPad 版 BOSS 血條精簡(高度從 ~196px 壓到 ~130px)
-        //   原問題:iPad 上「📖 BOSS 能力介紹」按鈕字 20px,加上 BOSS 名字 27px,
-        //           總寬度超過 648px 上限會 flex-wrap 換行,變 3 行標題 + 血條 + 狀態列,
-        //           總高度 ~196px > 定型文起點 top:160px → 狀態列被定型文蓋住。
-        //   修法:① 縮小 padding(16px → 8px)
-        //         ② 縮小 BOSS 名字體(27px → 22px)
-        //         ③ 縮小「BOSS 能力介紹」按鈕字體(20px → 14px)+ padding 9px → 5px
-        //         ④ 縮小回合資訊字體(20px → 14px)
-        //         ⑤ 第一行 flex-wrap:nowrap,逼一行
-        //         ⑥ 縮 margin(10px → 6px、12px → 6px)
-        //         ⑦ HP 條高度(36px → 28px)
-        //         ⑧ 護盾 chip 字小(18px → 13px)
-        +   '#wb-adv-mega-zone{padding:8px 12px !important;}'
-        +   '#wb-adv-mega-zone > div:first-child{margin-bottom:6px !important;gap:8px !important;flex-wrap:nowrap !important;}'
-        +   '#wb-adv-mega-zone > div:first-child > div:first-child{font-size:22px !important;letter-spacing:1px !important;}'
-        +   '#wb-adv-boss-info-btn{padding:5px 10px !important;font-size:14px !important;letter-spacing:0.8px !important;border-radius:8px !important;}'
-        +   '#wb-adv-mega-turn-info{font-size:14px !important;letter-spacing:0.8px !important;white-space:nowrap;}'
-        +   '#wb-adv-mega-zone > div:nth-child(2){height:28px !important;}'
-        +   '#wb-adv-mega-hp-text{font-size:15px !important;letter-spacing:1px !important;}'
-        +   '#wb-adv-mega-shields-row{margin-top:6px !important;gap:5px !important;}'
-        +   '#wb-adv-mega-shields-row > span{font-size:13px !important;letter-spacing:0.8px !important;}'
-        +   '#wb-adv-mega-shields-row .wb-shield-chip{font-size:13px !important;padding:2px 6px !important;}'
-        +   '#wb-adv-mega-shields-row .wb-boss-status-chip{font-size:11px !important;padding:2px 6px !important;}'
-        // ★ v3.5.3 — 定型文起點從 top:160px 改到 top:140px,留更多空間給狀態列 + 縮緊間距
-        +   '#wb-emoji-bar-real.wb-eb-show{top:140px !important;padding:5px 8px !important;gap:4px !important;}'
         + '}';
       document.head.appendChild(_wsty);
     }
@@ -11660,38 +11102,6 @@
       `;
       document.head.appendChild(_hideStyle);
     }
-
-    // ★ v3.5.3 — 本場總傷害小框框(三種模式都要建立)
-    //   原問題:單人練習有顯示「📜 本場總傷:N」,但組隊連線模式進戰場時
-    //           完全沒建立這個元件 → 老師回報「組隊模式又消失了」。
-    //   修法:把建立邏輯抽到 _wbBuildAdvBattleOverlay 結尾(三種入口
-    //         _wbStartSoloPractice / 連線房主 / 連線 client 都會呼叫此函式),
-    //         並改用 wb-cur-dmg-bar 命名(去掉 -solo- 暗示練習專屬)。
-    //         舊 ID 'wb-solo-cur-dmg-bar' 為相容保留,實際用 'wb-cur-dmg-bar'。
-    try{
-      if(!document.getElementById('wb-cur-dmg-bar') && !document.getElementById('wb-solo-cur-dmg-bar')){
-        const _dmgBar = document.createElement('div');
-        _dmgBar.id = 'wb-cur-dmg-bar';
-        _dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 120px);'
-          + 'transform:none;z-index:6;'
-          + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
-          + 'border-radius:14px;padding:12px 20px;'
-          + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
-          + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
-          + 'pointer-events:auto;'
-          + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-        _dmgBar.innerHTML =
-          '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
-          + '<span id="wb-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
-        const _gcForDmg = document.getElementById('gc');
-        if(_gcForDmg){
-          _gcForDmg.appendChild(_dmgBar);
-        } else {
-          document.body.appendChild(_dmgBar);
-        }
-        console.log('[WB-DmgBar v3.5.3] ✅ 本場總傷小框框已建立');
-      }
-    }catch(_eDmgBar){ console.warn('[WB-DmgBar] 建立失敗', _eDmgBar); }
 
     _wbAdvStartBattleSync();
   }
@@ -12001,11 +11411,8 @@
         _eb.style.display = 'none';
       }
     }catch(_){}
-    // ★ v3.5.3 — 同時清新舊兩個 dmgBar ID
-    const dmgBarOld = document.getElementById('wb-solo-cur-dmg-bar');
-    if(dmgBarOld) dmgBarOld.remove();
-    const dmgBarNew = document.getElementById('wb-cur-dmg-bar');
-    if(dmgBarNew) dmgBarNew.remove();
+    const dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
+    if(dmgBar) dmgBar.remove();
     // ★ FIX 20260517 — 清掉戰鬥背景的火焰粒子層 + worldboss body class
     try{
       const _fl = document.getElementById('wb-battle-flame-layer');
@@ -12204,11 +11611,8 @@
       if(_wbResultOv) _wbResultOv.remove();
       const _openingQuiz = document.getElementById('wb-boss-opening-quiz');
       if(_openingQuiz) _openingQuiz.remove();
-      // ★ v3.5.3 — 同時清新舊兩個 dmgBar ID
       const _dmgBar = document.getElementById('wb-solo-cur-dmg-bar');
       if(_dmgBar) _dmgBar.remove();
-      const _dmgBar2 = document.getElementById('wb-cur-dmg-bar');
-      if(_dmgBar2) _dmgBar2.remove();
     }catch(_){}
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
