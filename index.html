@@ -12130,7 +12130,7 @@ function tickStatus(h){
   try{
     const _jEnd = h.status && h.status.find(s => s.type === 'judgmentEnd' && s.dur === 1);
     if(_jEnd && h.curHp > 0){
-      const _isBoss = (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.has(h.name));
+      const _isBoss = (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes && BOSS_NAMES.includes(h.name));
       if(_isBoss){
         // BOSS:當前 HP 20% 必中傷害
         const _bossDmg = Math.max(1, Math.floor(h.curHp * 0.20));
@@ -18242,12 +18242,33 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
           // 取被收割角色的 atk + sp 作為加成基礎
           const _stolenAtk = Math.max(1, Math.floor((_reaped.atk || 1) * 0.5));
           const _stolenSp = Math.max(1, Math.floor((_reaped.sp || 1) * 0.5));
-          log(`💀 [${h.name}] 收割!吸取 [${_reaped.name}] 的能力!(攻擊+${_stolenAtk}, 特技+${_stolenSp})`);
-          bannerFX(_reaped, '💀 被收割!', '#cc0033', 1000);
-          // Step 3:強制秒殺(類靈魂收割)
-          _reaped.curHp = 0;
-          _reaped.status = [];
-          _reaped.buffs = [];
+          // ★ v3.5.13 — 防止對 BOSS 秒殺(老師回報秒殺世界 BOSS 問題的同源修補)
+          //   原本 _reaped.curHp = 0 是「類靈魂收割」,但若 BOSS HP 跌到 < 30%,
+          //   此爆發會直接把 BOSS HP 設 0 → 世界 BOSS 一招秒。
+          //   修法:對 BOSS / 菁英 改為「不秒殺,只造成主傷害 50% 追加傷害」+ 同樣偷取 atk/sp 加成。
+          const _miniMobsK = (typeof MINI_MONSTERS !== 'undefined') ? MINI_MONSTERS : [];
+          const _eliteNamesK = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+          const _isPathMobK = _miniMobsK.includes(_reaped.name);
+          const _isBossOrEliteK = _eliteNamesK.includes(_reaped.name)
+            || (!_isPathMobK && typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes && BOSS_NAMES.includes(_reaped.name))
+            || (typeof _adventureMode !== 'undefined' && _adventureMode
+                && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive
+                && !_isPathMobK);
+          if(_isBossOrEliteK){
+            // BOSS / 菁英:不秒殺,改主傷害 50% 追加傷害,加成照給
+            log(`💀 [${h.name}] 強敵模式!【${_reaped.name}】(BOSS/菁英) 無法收割,改造成主傷害 50% 追加傷害!`);
+            bannerFX(_reaped, '💀 追加傷害!', '#cc0033', 1000);
+            const _kExtraDmg = Math.max(1, Math.floor(_mainDmg * 0.5));
+            doDmg(_reaped, _kExtraDmg, {actor:h, isSkill:true});
+            log(`💀 仍偷取能力!(攻擊+${_stolenAtk}, 特技+${_stolenSp})`);
+          } else {
+            log(`💀 [${h.name}] 收割!吸取 [${_reaped.name}] 的能力!(攻擊+${_stolenAtk}, 特技+${_stolenSp})`);
+            bannerFX(_reaped, '💀 被收割!', '#cc0033', 1000);
+            // Step 3:強制秒殺(類靈魂收割)— 非 BOSS 才能秒
+            _reaped.curHp = 0;
+            _reaped.status = [];
+            _reaped.buffs = [];
+          }
           renderCard(_reaped);
           try{ playSfx('sfx-ko', 0.85); }catch(_){}
           // Step 4:友方全體獲得「死神祝福(strengthened)」buff
@@ -21117,7 +21138,24 @@ function doDmg(target, rawDmg, opts={}){
   if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
     // ★ v3.4.0 — 暴擊額外傷害基數:0.3 + (玩家英雄 atk × 0.005)
     const _critMul = 0.3 + _atkCritBonus;
-    const _critExtra=Math.floor(dmg*_critMul);
+    let _critExtra=Math.floor(dmg*_critMul);
+    // ★ v3.5.14 — 維蘇威單次受傷上限保護:爆擊額外傷害也要走 cap,
+    //   不然「主傷害 5000 cap + 爆擊額外 1500」會造成單次受 6500 傷害,違反炎之意志設計。
+    //   修法:_critExtra 對維蘇威重新跑一次 _wbApplyBossDmgCap,確保補扣值也被限制。
+    //   注意:cap 函式內部會檢查護盾,所以「無視有利狀態」的爆擊額外也會被護盾擋 80%(設計如此)。
+    if(target && target.name === '維蘇威火山龍王'
+       && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && typeof window._wbApplyBossDmgCap === 'function'){
+      try{
+        const _critOrig = _critExtra;
+        // 注意:既有 dmg 已扣過一次 cap,這次 _critExtra 是「在已 cap 主傷之上的額外傷害」,
+        // 設計上應該完全被擋掉(0)或只留很少。我們仍跑 cap 確保不超過 1% maxHp。
+        _critExtra = window._wbApplyBossDmgCap(target, _critExtra, { actor: a, action: opts });
+        if(_critOrig !== _critExtra){
+          try{ log(`🐉 [${target.name}] 炎之意志(爆擊):額外傷害減至 ${_critExtra}(原 ${_critOrig})`); }catch(_){}
+        }
+      }catch(_eCritCap){ console.warn('[WB] 爆擊 cap 失敗', _eCritCap); }
+    }
     dmg+=_critExtra;
     target.curHp=Math.max(0,target.curHp-_critExtra); // 補扣額外爆擊傷害
     _isCrit=true;
@@ -27749,22 +27787,52 @@ function execSkill(a, sk, cost, stype){
   // ── 吸血鬼：靈魂收割 ──
   else if(n==='靈魂收割'){
     // ★ v1.0.20260421.3004 — HP 未滿 10% + 每升1級 +1%（最高 Lv9 = 19%）
+    // ★ v3.5.13 — 老師修補(2026/5/22):此技能會 t.curHp=0 強制秒殺,
+    //   原本沒擋 BOSS,學生用吸血鬼把世界 BOSS 90% HP 一招秒。
+    //   修法:對「BOSS / 菁英」改為「不秒殺,改造成當前 HP 20% 必中傷害(上限英雄等級×10)」,
+    //         保留對小怪/鬥技場對手的秒殺機制。
     const _reapPct = 0.10 + (_activeSkLv||0)*0.01;
     const _reapCheck = h => h.curHp>0 && (h.curHp/(h.hp||1)) < _reapPct;
     const _reapTargets=G[a.side==='p1'?'p2':'p1'].concat(G[a.side]).filter(_reapCheck);
     if(!_reapTargets.length){ log(`[${a.name}] 靈魂收割：無符合目標（HP%<${Math.round(_reapPct*100)}%）！`); clearSel(); return; }
     setPending('any',t=>{
       if(!_reapCheck(t)){ log(`目標不符合（需HP未滿${Math.round(_reapPct*100)}%）！`); clearSel(); return; }
-      log(`[${a.name}] 靈魂收割！[${t.name}] 強制倒下！`);
-      playSkillFX('死亡宣告',a,[t]);
-      const stolen=t.curHp;
-      t.curHp=0;
-      t.status=[]; t.buffs=[];
-      renderCard(t); playSfx('sfx-ko',0.85);
-      log(`💀 [${t.name}] 被靈魂收割！`);
-      doHeal(a,stolen,{actor:a,noDice:true,isHeal:true});
-      bannerFX(a,'靈魂收割！','#cc44ff',1000);
-      endAction(a,cost);
+      // ★ v3.5.13 — BOSS / 菁英 判定(複製 line 24566 標準)
+      const _miniMobsR = (typeof MINI_MONSTERS !== 'undefined') ? MINI_MONSTERS : [];
+      const _eliteNamesR = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+      const _isPathMobR = _miniMobsR.includes(t.name);
+      const _isBossOrEliteR = _eliteNamesR.includes(t.name)
+        || (!_isPathMobR && typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes && BOSS_NAMES.includes(t.name))
+        || (typeof _adventureMode !== 'undefined' && _adventureMode
+            && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive
+            && !_isPathMobR);
+      if(_isBossOrEliteR){
+        // BOSS / 菁英:不秒殺,改為「當前 HP 20% 必中傷害(上限英雄等級×10)」+ 吸血同量
+        const _rHeroLv = (typeof _heroLevels !== 'undefined' && _heroLevels[a.name]) ? _heroLevels[a.name] : 1;
+        const _rMaxDmg = _rHeroLv * 10;
+        const _rRaw = Math.max(1, Math.floor(t.curHp * 0.20));
+        const _rFinal = Math.min(_rRaw, _rMaxDmg);
+        const _rCapped = _rRaw > _rMaxDmg;
+        log(`[${a.name}] 靈魂收割 → 強敵模式!【${t.name}】(BOSS/菁英) 受當前 HP 20% 必中傷害 = ${_rFinal}${_rCapped?'(上限 '+_rMaxDmg+')':''}!`);
+        playSkillFX('死亡宣告',a,[t]);
+        doDmg(t, _rFinal, { fixedDmg:true, isSkill:true, ignoreBuffs:true, actor:a });
+        // 吸血:回復等於造成傷害的 HP
+        doHeal(a, _rFinal, {actor:a, noDice:true, isHeal:true});
+        bannerFX(a, '靈魂收割!', '#cc44ff', 1000);
+        endAction(a, cost);
+      } else {
+        // 小怪 / 鬥技場:維持原本秒殺機制
+        log(`[${a.name}] 靈魂收割！[${t.name}] 強制倒下！`);
+        playSkillFX('死亡宣告',a,[t]);
+        const stolen=t.curHp;
+        t.curHp=0;
+        t.status=[]; t.buffs=[];
+        renderCard(t); playSfx('sfx-ko',0.85);
+        log(`💀 [${t.name}] 被靈魂收割！`);
+        doHeal(a,stolen,{actor:a,noDice:true,isHeal:true});
+        bannerFX(a,'靈魂收割！','#cc44ff',1000);
+        endAction(a,cost);
+      }
     });
   }
 
@@ -30315,7 +30383,46 @@ function nextRound(){
         });
         clearStatus(h,['deathmark']);
       } else {
-        h.curHp=1; clearStatus(h,['deathmark']); log(`💀 死亡宣告觸發！[${h.name}] 只剩1HP！`); renderCard(h);
+        // ★ v3.5.13 — 老師回報(2026/5/22):學生用「暗法師 + 吸血鬼」把世界 BOSS HP 90% 一招秒
+        //   根因:此處 deathmark 觸發時直接 h.curHp=1,完全沒檢查是不是 BOSS,
+        //         不論誰被附加 deathmark(無論是死亡宣告誤走 _isArena=true 分支,還是
+        //         其他英雄技能 / 隨機機制透過 addStatus(t,'deathmark',N) 偷塞進來),
+        //         只要進到這個 tick 就直接被秒殺。
+        //   修法:對「世界 BOSS / BOSS / 菁英」改為「當前 HP 20% 必中傷害(上限英雄等級×10)」,
+        //         非 BOSS 維持原本剩 1HP 行為。判定邏輯複製 line 24566 的標準 BOSS 判定。
+        //   注意:即使原本死亡宣告 line 24570 已對 BOSS 走 doDmg 分支不該附加 deathmark,
+        //         但這裡是「最後防線」— 任何路徑只要 deathmark 進到 BOSS 身上都必須擋住。
+        const _miniMobs = (typeof MINI_MONSTERS !== 'undefined') ? MINI_MONSTERS : [];
+        const _eliteNames = ['九尾空貓怪','綠竹筍小妖','茶葉精靈'];
+        const _isPathMobDM = _miniMobs.includes(h.name);
+        const _isBossOrEliteDM = _eliteNames.includes(h.name)
+          || (!_isPathMobDM && typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes && BOSS_NAMES.includes(h.name))
+          || (typeof _adventureMode !== 'undefined' && _adventureMode
+              && typeof _advMiniBattleActive !== 'undefined' && !_advMiniBattleActive
+              && !_isPathMobDM);
+        if(_isBossOrEliteDM){
+          // BOSS / 菁英:當前 HP 20% 必中傷害,上限英雄等級×10
+          //   取附加者的等級當作上限基準;沒有附加者(_actor 沒記)就用受害者等級×10 兜底
+          const _dmActor = h.status.find(s => s.type==='deathmark' && s._source) || null;
+          const _dmActorName = (_dmActor && _dmActor._source && _dmActor._source.name) || null;
+          let _dmLv = 1;
+          if(_dmActorName && typeof _heroLevels !== 'undefined' && _heroLevels[_dmActorName]){
+            _dmLv = _heroLevels[_dmActorName];
+          } else if(typeof _heroLevels !== 'undefined' && _heroLevels[h.name]){
+            _dmLv = _heroLevels[h.name];
+          }
+          const _dmMaxDmg = _dmLv * 10;
+          const _dmRaw = Math.max(1, Math.floor(h.curHp * 0.20));
+          const _dmFinal = Math.min(_dmRaw, _dmMaxDmg);
+          const _dmCapped = _dmRaw > _dmMaxDmg;
+          log(`💀 死亡宣告觸發!【${h.name}】(BOSS/菁英) 受當前 HP 20% 必中傷害 = ${_dmFinal}${_dmCapped?'(上限 '+_dmMaxDmg+')':''}!`);
+          bannerFX(h, '💀 死亡宣告!', '#cc44ff', 1100);
+          doDmg(h, _dmFinal, { fixedDmg:true, isSkill:true, ignoreBuffs:true, noHidden:true, actor: (_dmActor && _dmActor._source) || null });
+          clearStatus(h,['deathmark']);
+        } else {
+          // 小怪 / 鬥技場:維持原本「剩 1 HP」行為
+          h.curHp=1; clearStatus(h,['deathmark']); log(`💀 死亡宣告觸發！[${h.name}] 只剩1HP！`); renderCard(h);
+        }
       }
     }
   });
@@ -76635,7 +76742,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.12';
+window._GAME_LOADED_VERSION = 'v3.5.14';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
