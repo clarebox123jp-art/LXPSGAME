@@ -42986,33 +42986,34 @@ function selectAdvStage(key, btnEl){
   if(rwEl && data.rewards){
     // ★ v3.5.10 — 老師需求(2026/5/21):貓空關「獲得隨機新英雄」項目,
     //   後面標示「(已全收錄)」或「(尚有 N 位未相遇的英雄)」,並加 ? 鈕點開英雄清單視窗
+    // ★ v3.5.11 — 老師補充(2026/5/22):日本關「獲得隨機新英雄」也要同樣處理,
+    //   但池子不同 — 日本關只有「大天狗、酒吞童子、玉藻前、巫女」四位。
+    //   改成依 key 決定英雄池,modal 函式接 stageKey 參數。
     rwEl.innerHTML = data.rewards.map(r => {
-      // 標準渲染
       let _extraTail = '';
       if(r.icon === '🦸'){
         try{
-          // 計算未收錄英雄數(用同 advShowUnlockHero line 54534 的邏輯)
-          const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
-          const _shopExcl = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
-          const _eventExcl = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
-          const _pool = (typeof ADV_UNLOCKABLE_HEROES !== 'undefined') ? ADV_UNLOCKABLE_HEROES : [];
-          const _missing = _pool.filter(n => !_unlocked.includes(n) && !_shopExcl.includes(n) && !_eventExcl.includes(n));
-          const _allCollected = _missing.length === 0;
-          const _statusText = _allCollected
-            ? '<span style="color:#88ffaa;font-weight:700;">(已全收錄)</span>'
-            : '<span style="color:#ffcc66;font-weight:700;">(尚有 ' + _missing.length + ' 位未相遇的英雄)</span>';
-          // ? 鈕點開英雄清單視窗
-          const _qBtn = '<button onclick="event.stopPropagation();playSfx(\'sfx-sel\',0.5);_showMaokongHeroListModal();" '
-                      + 'title="點我看可加入英雄清單" '
-                      + 'style="margin-left:8px;width:32px;height:32px;border-radius:50%;'
-                      + 'background:linear-gradient(135deg,#4a90e2,#3470c2);border:2px solid #6ab0ff;'
-                      + 'color:#fff;font-size:18px;font-weight:900;cursor:pointer;'
-                      + 'box-shadow:0 0 10px rgba(80,160,255,0.5);transition:transform 0.15s;'
-                      + 'font-family:inherit;line-height:1;padding:0;'
-                      + 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;" '
-                      + 'onmouseover="this.style.transform=\'scale(1.15)\'" '
-                      + 'onmouseout="this.style.transform=\'scale(1)\'">?</button>';
-          _extraTail = ' ' + _statusText + _qBtn;
+          const _poolInfo = _advGetHeroPoolForStage(key);
+          if(_poolInfo && _poolInfo.totalCount > 0){
+            const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+            const _missing = _poolInfo.pool.filter(n => !_unlocked.includes(n));
+            const _allCollected = _missing.length === 0;
+            const _statusText = _allCollected
+              ? '<span style="color:#88ffaa;font-weight:700;">(已全收錄)</span>'
+              : '<span style="color:#ffcc66;font-weight:700;">(尚有 ' + _missing.length + ' 位未相遇的英雄)</span>';
+            // ? 鈕點開英雄清單視窗(傳 stageKey 給 modal,讓它知道要顯示哪個池)
+            const _qBtn = '<button onclick="event.stopPropagation();playSfx(\'sfx-sel\',0.5);_showStageHeroListModal(\'' + key + '\');" '
+                        + 'title="點我看可加入英雄清單" '
+                        + 'style="margin-left:8px;width:32px;height:32px;border-radius:50%;'
+                        + 'background:linear-gradient(135deg,#4a90e2,#3470c2);border:2px solid #6ab0ff;'
+                        + 'color:#fff;font-size:18px;font-weight:900;cursor:pointer;'
+                        + 'box-shadow:0 0 10px rgba(80,160,255,0.5);transition:transform 0.15s;'
+                        + 'font-family:inherit;line-height:1;padding:0;'
+                        + 'display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;" '
+                        + 'onmouseover="this.style.transform=\'scale(1.15)\'" '
+                        + 'onmouseout="this.style.transform=\'scale(1)\'">?</button>';
+            _extraTail = ' ' + _statusText + _qBtn;
+          }
         }catch(eExtras){ console.warn('[adv-rewards] 收錄狀態渲染失敗', eExtras); }
       }
       return '<div style="display:flex;align-items:center;gap:8px;font-size:28px;color:#ffe066;padding:8px 16px;background:rgba(255,200,50,0.08);border:1.5px solid rgba(255,200,50,0.25);border-radius:10px;flex-wrap:wrap;">'
@@ -54542,31 +54543,83 @@ function advSaveUnlockedHero(name) {
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.5.10 — 貓空關「可加入英雄清單」彈窗(老師 2026/5/21 需求)
+// ★ v3.5.11 — 老師補充(2026/5/22):擴充支援「日本關」,池子不同。
+//             重構成依 stageKey 切換英雄池,共用同一個 modal 函式。
 // ────────────────────────────────────────────────────────────────────
 // 觸發位置:右側關卡介紹 → 「🦸 獲得隨機新英雄」項目右邊的 ? 鈕
-// 顯示內容:ADV_UNLOCKABLE_HEROES 全部 31 個,標示「已收錄 / 未收錄」
-//          排除商店肖像 8 個(因為這 8 個是商店買的,不會從貓空隨機解鎖)
-//          排除事件限定 3 個(小力/幼兒園小孩/巫女,有專屬解鎖管道)
-// 設計理由:讓玩家清楚還有幾位英雄沒收錄,激勵繼續打貓空關 BOSS
+//          (rewards 渲染時偵測到 icon='🦸' 自動加上)
+//
+// 英雄池規格:
+//   - maokong:ADV_UNLOCKABLE_HEROES 31 個 - 商店 8 - 事件 3 = 20 位
+//   - japan:固定 4 位「大天狗、酒吞童子、玉藻前、巫女」(老師 v3.5.11 指定)
+//   - 其他關卡(taiwan/worldboss…):回傳 null,不顯示 ? 鈕
+//
+// 設計理由:讓玩家清楚每個關卡能解鎖哪些英雄,激勵繼續打 BOSS
 // ════════════════════════════════════════════════════════════════════
-function _showMaokongHeroListModal(){
+
+// 共用:取得指定關卡的英雄池資訊
+//   回傳:{ pool:string[], totalCount:number, stageName:string, footer:string[] } 或 null
+function _advGetHeroPoolForStage(stageKey){
+  try{
+    if(stageKey === 'maokong'){
+      // 貓空關:ADV_UNLOCKABLE_HEROES 扣掉商店肖像和事件限定
+      const _shopExcl = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+      const _eventExcl = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
+      const _pool = (typeof ADV_UNLOCKABLE_HEROES !== 'undefined') ? ADV_UNLOCKABLE_HEROES : [];
+      const _maokongPool = _pool.filter(n => !_shopExcl.includes(n) && !_eventExcl.includes(n));
+      return {
+        pool: _maokongPool,
+        totalCount: _maokongPool.length,
+        stageName: '貓空',
+        stageEmoji: '🍵',
+        footer: [
+          '📌 名單範圍:貓空 BOSS 戰勝利可隨機解鎖的英雄(共 ' + _maokongPool.length + ' 位)',
+          '📌 此清單不含商店肖像英雄(電腦繪圖師、程式設計師…等 8 位,需到不可思議超商購買)',
+          '📌 此清單不含事件限定英雄(小力、幼兒園小孩、巫女,有專屬解鎖條件)'
+        ]
+      };
+    }
+    if(stageKey === 'japan'){
+      // ★ v3.5.11 — 日本關固定 4 位(老師指定)
+      const _japanPool = ['大天狗','酒吞童子','玉藻前','巫女'];
+      return {
+        pool: _japanPool,
+        totalCount: _japanPool.length,
+        stageName: '日本',
+        stageEmoji: '🗾',
+        footer: [
+          '📌 名單範圍:日本關 BOSS 戰勝利可獲得的 4 位日系英雄',
+          '📌 「大天狗 / 酒吞童子 / 玉藻前」分別對應三條 BOSS 路線通關獎勵',
+          '📌 「巫女」為集齊三神器、擊敗八岐大蛇後的特殊解鎖獎勵'
+        ]
+      };
+    }
+    // 其他關卡:沒設池子,不顯示 ? 鈕
+    return null;
+  }catch(_){ return null; }
+}
+window._advGetHeroPoolForStage = _advGetHeroPoolForStage;
+
+// 共用 modal 渲染函式
+function _showStageHeroListModal(stageKey){
   try{
     // 防止重複開啟
-    const _existing = document.getElementById('maokong-hero-list-modal');
+    const _existing = document.getElementById('stage-hero-list-modal');
     if(_existing){ _existing.remove(); }
 
+    const _info = _advGetHeroPoolForStage(stageKey);
+    if(!_info){
+      console.warn('[_showStageHeroListModal] 未知關卡 key:', stageKey);
+      return;
+    }
+
     const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
-    const _shopExcl = ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
-    const _eventExcl = (typeof EVENT_ONLY_HEROES !== 'undefined') ? Array.from(EVENT_ONLY_HEROES) : [];
-    const _pool = (typeof ADV_UNLOCKABLE_HEROES !== 'undefined') ? ADV_UNLOCKABLE_HEROES : [];
-    // 貓空關「實際可能掉的」名單 = ADV_UNLOCKABLE_HEROES - 商店 - 事件
-    const _maokongPool = _pool.filter(n => !_shopExcl.includes(n) && !_eventExcl.includes(n));
-    const _collected = _maokongPool.filter(n => _unlocked.includes(n));
-    const _missing   = _maokongPool.filter(n => !_unlocked.includes(n));
+    const _collected = _info.pool.filter(n => _unlocked.includes(n));
+    const _missing   = _info.pool.filter(n => !_unlocked.includes(n));
 
     // 建 modal
     const ov = document.createElement('div');
-    ov.id = 'maokong-hero-list-modal';
+    ov.id = 'stage-hero-list-modal';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:99999;'
                     + 'display:flex;align-items:center;justify-content:center;padding:20px;'
                     + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
@@ -54591,7 +54644,8 @@ function _showMaokongHeroListModal(){
     };
 
     const _allCollected = _missing.length === 0;
-    const _progressPct = Math.round(_collected.length / Math.max(_maokongPool.length, 1) * 100);
+    const _progressPct = Math.round(_collected.length / Math.max(_info.totalCount, 1) * 100);
+    const _footerHtml = _info.footer.map(line => '<div>' + line + '</div>').join('');
 
     ov.innerHTML =
       '<div style="background:linear-gradient(180deg,#1a1530,#0d0a1f);border:3px solid #5b8cff;border-radius:20px;'
@@ -54601,14 +54655,14 @@ function _showMaokongHeroListModal(){
     + '  <div style="padding:18px 24px;background:linear-gradient(135deg,rgba(80,120,255,0.35),rgba(40,80,180,0.4));'
     +     'border-bottom:2px solid rgba(120,160,255,0.5);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">'
     + '    <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">'
-    + '      <span style="font-size:30px;line-height:1;">🦸</span>'
+    + '      <span style="font-size:30px;line-height:1;">' + _info.stageEmoji + '</span>'
     + '      <div style="display:flex;flex-direction:column;min-width:0;">'
-    + '        <span style="font-size:22px;color:#ffe066;font-weight:900;letter-spacing:2px;line-height:1.2;">貓空關卡可加入英雄清單</span>'
+    + '        <span style="font-size:22px;color:#ffe066;font-weight:900;letter-spacing:2px;line-height:1.2;">' + _info.stageName + '關卡可加入英雄清單</span>'
     + '        <span style="font-size:14px;color:#aab;letter-spacing:0.5px;line-height:1.3;margin-top:2px;">'
     +            '擊敗 BOSS 時有機率隨機解鎖名單中尚未收錄的英雄</span>'
     +      '</div>'
     + '    </div>'
-    + '    <button onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){};document.getElementById(\'maokong-hero-list-modal\').remove();"'
+    + '    <button onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){};document.getElementById(\'stage-hero-list-modal\').remove();"'
     +       'style="background:rgba(80,80,100,0.6);border:2px solid rgba(180,180,210,0.5);color:#eee;'
     +       'font-size:20px;font-weight:900;padding:6px 16px;border-radius:8px;cursor:pointer;font-family:inherit;'
     +       'letter-spacing:1px;flex-shrink:0;">× 關閉</button>'
@@ -54618,7 +54672,7 @@ function _showMaokongHeroListModal(){
     + '    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
     + '      <span style="font-size:16px;color:#cfe0ff;font-weight:700;">'
     +          '收錄進度:<span style="color:#66dd88;font-weight:900;">' + _collected.length + '</span>'
-    +          ' / <span style="color:#ffe066;font-weight:900;">' + _maokongPool.length + '</span></span>'
+    +          ' / <span style="color:#ffe066;font-weight:900;">' + _info.totalCount + '</span></span>'
     + '      <span style="font-size:18px;color:' + (_allCollected ? '#88ffaa' : '#ffcc66') + ';font-weight:900;">'
     +          _progressPct + '%</span>'
     + '    </div>'
@@ -54628,16 +54682,16 @@ function _showMaokongHeroListModal(){
     + '    </div>'
     +    (_allCollected
       ? '    <div style="margin-top:10px;text-align:center;font-size:18px;color:#88ffaa;font-weight:900;letter-spacing:2px;">'
-        + '🎉 恭喜!您已收錄所有貓空關可加入的英雄!</div>'
+        + '🎉 恭喜!您已收錄所有' + _info.stageName + '關可加入的英雄!</div>'
       : '    <div style="margin-top:10px;text-align:center;font-size:14px;color:#aab;">'
-        + '尚有 <span style="color:#ffcc66;font-weight:900;">' + _missing.length + '</span> 位英雄尚未相遇,繼續挑戰貓空 BOSS 來解鎖吧!</div>')
+        + '尚有 <span style="color:#ffcc66;font-weight:900;">' + _missing.length + '</span> 位英雄尚未相遇,繼續挑戰' + _info.stageName + 'BOSS 來解鎖吧!</div>')
     + '  </div>'
     + '  <!-- 英雄網格(可捲動) -->'
     + '  <div style="flex:1;overflow-y:auto;padding:18px 24px;-webkit-overflow-scrolling:touch;">'
     + '    <!-- 已收錄 -->'
     +    (_collected.length > 0
       ? '    <div style="font-size:18px;color:#88ffaa;font-weight:900;letter-spacing:1px;margin-bottom:10px;">'
-        + '  ✅ 已收錄(' + _collected.length + '/' + _maokongPool.length + ')'
+        + '  ✅ 已收錄(' + _collected.length + '/' + _info.totalCount + ')'
         + '</div>'
         + '    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:18px;">'
         +        _collected.map(n => _heroCardHtml(n, true)).join('')
@@ -54646,7 +54700,7 @@ function _showMaokongHeroListModal(){
     + '    <!-- 未收錄 -->'
     +    (_missing.length > 0
       ? '    <div style="font-size:18px;color:#ffcc66;font-weight:900;letter-spacing:1px;margin-bottom:10px;">'
-        + '  ❓ 尚未相遇(' + _missing.length + '/' + _maokongPool.length + ')'
+        + '  ❓ 尚未相遇(' + _missing.length + '/' + _info.totalCount + ')'
         + '</div>'
         + '    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;">'
         +        _missing.map(n => _heroCardHtml(n, false)).join('')
@@ -54656,15 +54710,15 @@ function _showMaokongHeroListModal(){
     + '  <!-- 說明腳註 -->'
     + '  <div style="padding:12px 24px;background:rgba(40,30,60,0.45);border-top:1px solid rgba(120,160,255,0.25);'
     +     'font-size:13px;color:#aab;line-height:1.5;">'
-    +    '<div>📌 名單範圍:貓空 BOSS 戰勝利可隨機解鎖的英雄(共 ' + _maokongPool.length + ' 位)</div>'
-    +    '<div>📌 此清單不含商店肖像英雄(電腦繪圖師、程式設計師…等 8 位,需到不可思議超商購買)</div>'
-    +    '<div>📌 此清單不含事件限定英雄(小力、幼兒園小孩、巫女,有專屬解鎖條件)</div>'
+    +    _footerHtml
     + '  </div>'
     + '</div>';
     document.body.appendChild(ov);
-  }catch(e){ console.error('[_showMaokongHeroListModal]', e); }
+  }catch(e){ console.error('[_showStageHeroListModal]', e); }
 }
-window._showMaokongHeroListModal = _showMaokongHeroListModal;
+window._showStageHeroListModal = _showStageHeroListModal;
+// 向後相容:保留舊名 _showMaokongHeroListModal,內部轉呼新函式
+window._showMaokongHeroListModal = function(){ _showStageHeroListModal('maokong'); };
 
 function advShowUnlockHero() {
   // ★ v1.0.20260424.1340 — 若有「答題解鎖的小力/幼兒園小孩」優先顯示這個
@@ -76512,7 +76566,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.10';
+window._GAME_LOADED_VERSION = 'v3.5.11';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');

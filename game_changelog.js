@@ -1,10 +1,35 @@
 // ═══════════════════════════════════════════════════════════════════
-// game_changelog.js 補丁 v3.5.8 + v3.5.9 + v3.5.10
-// 把以下「三個」物件依時間從新到舊加到 GAME_CHANGELOG 陣列最前面
-//   → v3.5.10 物件放最前面(最新)
-//   → v3.5.9 物件放第二個
-//   → v3.5.8 物件放第三個(原本漏寫,這次一起補)
+// game_changelog.js 補丁 v3.5.8 + v3.5.9 + v3.5.10 + v3.5.11
+// 把以下「四個」物件依時間從新到舊加到 GAME_CHANGELOG 陣列最前面
+//   → v3.5.11 物件放最前面(最新)
+//   → v3.5.10 物件放第二個
+//   → v3.5.9 物件放第三個
+//   → v3.5.8 物件放第四個(原本漏寫,跟這幾個版本一起補)
 // ═══════════════════════════════════════════════════════════════════
+
+{ ver:'v3.5.11', brief:[
+  '🗾 日本關卡介紹的「獲得隨機新英雄(?)」名單修正:只有大天狗、酒吞童子、玉藻前、巫女 4 位',
+], items:[
+  '【改動:日本關英雄清單獨立池】',
+  '・舊版(v3.5.10):? 鈕只支援貓空關,日本關沒有 ? 鈕,或誤用貓空池',
+  '・新版(v3.5.11):重構成依關卡 key(maokong/japan)分別查英雄池',
+  '・日本關固定 4 位:大天狗、酒吞童子、玉藻前、巫女(老師指定)',
+  '・腳註說明:「大天狗 / 酒吞童子 / 玉藻前」分別對應三條 BOSS 路線通關獎勵;「巫女」為集齊三神器、擊敗八岐大蛇後的特殊解鎖獎勵',
+  '',
+  '【實作架構】',
+  '・新函式 _advGetHeroPoolForStage(stageKey) — 中央化查池邏輯,maokong/japan 各回各的池',
+  '・原 _showMaokongHeroListModal 改名 _showStageHeroListModal(stageKey),共用同一個 modal 函式',
+  '・rewards 渲染時 ? 鈕的 onclick 改傳 stageKey 參數',
+  '・舊名 _showMaokongHeroListModal 保留為相容 shim,內部轉呼新函式',
+  '・台灣關 / 世界 BOSS 等其他關卡:_advGetHeroPoolForStage 回 null,不渲染 ? 鈕(維持原樣)',
+  '',
+  '【實作位置】',
+  '・index.html (line ~42985) — rewards 渲染改用 _advGetHeroPoolForStage + 傳 stageKey 給 modal',
+  '・index.html (line ~54512) — 新增 _advGetHeroPoolForStage 函式',
+  '・index.html (line ~54560) — 新增 _showStageHeroListModal 函式(從 _showMaokongHeroListModal 重構)',
+  '・index.html (line ~54725) — 保留 _showMaokongHeroListModal 相容 shim',
+  '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v3.5.11',
+] },
 
 { ver:'v3.5.10', brief:[
   '📱 iPad 與手機版「冒險關卡介紹」右側視窗下方加高,貼近底部按鈕(PC 不變)',
@@ -25,7 +50,7 @@
   '・名單範圍:ADV_UNLOCKABLE_HEROES 31 個 - 商店肖像 8 個 - 事件限定 3 個 = 20 個',
   '',
   '【改動 3:點 ? 鈕開英雄清單視窗】',
-  '・新函式:_showMaokongHeroListModal()',
+  '・新函式:_showMaokongHeroListModal()(v3.5.11 重構為 _showStageHeroListModal)',
   '・顯示元素:標題列 + 收錄進度條(綠色漸層) + 已收錄分組 + 未收錄分組 + 說明腳註',
   '・已收錄英雄:綠色邊框 + 「✓ 已收錄」徽章 + 彩色頭像',
   '・未收錄英雄:灰色邊框 + 「? 未相遇」徽章 + 灰階頭像 + 半透明',
