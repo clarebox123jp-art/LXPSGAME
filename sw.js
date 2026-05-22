@@ -1,6 +1,6 @@
 /* ============================================================
  * 小英雄大對抗 — Service Worker (sw.js)
- * 版本: v3.4.15 (與 window._GAME_LOADED_VERSION 同步)
+ * 版本: v3.5.18 (與 window._GAME_LOADED_VERSION 同步)
  *
  * 設計重點(iPad 友善):
  *   1. 資源清單由 client 端 postMessage 傳入,SW 不寫死 URL → 老師之後加資源不用改 sw.js
@@ -16,9 +16,14 @@
  *   每次老師發新版,改下面 SW_VERSION (例 'v3.4.14' → 'v3.4.15') + 改 index.html 內的
  *   window._GAME_LOADED_VERSION 即可。舊版的 SHELL_CACHE 會被清掉(取得新 index.html/JS/CSS),
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
+ *
+ * v3.5.18 更新內容(2026/5/22):
+ *   - 配合 index.html 三大修補:換帳號保護(A1) + 玩家動作後存快照(B1) + 30 秒輪詢(B2)
+ *   - 配合 v3.5.17 學生授權後可 PWA(原本只允許管理員)
+ *   - 本檔內容沒有結構性變動,僅 SW_VERSION 升版讓 SHELL_CACHE 重建拿新 index.html
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.4';
+const SW_VERSION = 'v3.5.18';
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
