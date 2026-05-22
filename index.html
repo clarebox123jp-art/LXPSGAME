@@ -56675,9 +56675,37 @@ function _applySafeData(raw) {
       if(_added > 0) console.log('[存檔保護][heroLevels merge] 從雲端新增: ' + _added + ' 位');
       if(_bumped > 0) console.log('[存檔保護][heroLevels merge] 雲端較高等級已套用: ' + _bumped + ' 位');
       _heroLevels = _merged;
+      // ★ v3.5.15 — 雲端 merge 完成後立刻觸發英雄等級獎章補檢查
+      //   修補 BUG:學生英雄 11 級沒解鎖「初顯鋒芒」
+      //   時序根因:_checkMedalsOnLogin 在 App 啟動就跑,此時 _heroLevels 還是空的;
+      //             之後雲端載入完成 _heroLevels,但獎章邏輯沒被重新觸發。
+      //   修法:雲端 merge 完 _heroLevels 後,主動掃描所有英雄等級補解鎖。
+      try{
+        let _maxHeroLv = 0;
+        let _maxLvHeroName = null;
+        Object.keys(_heroLevels).forEach(name => {
+          const lv = _heroLevels[name] || 0;
+          if(lv > _maxHeroLv){ _maxHeroLv = lv; _maxLvHeroName = name; }
+        });
+        if(_maxHeroLv > 0 && typeof _checkMedalHeroLevel === 'function'){
+          _checkMedalHeroLevel(_maxLvHeroName, _maxHeroLv);
+          console.log('[獎章補檢查] 雲端載入後掃描英雄等級,最高 Lv' + _maxHeroLv + ' (' + _maxLvHeroName + ')');
+        }
+      }catch(_eMedalBackfill){ console.warn('[獎章補檢查] 雲端 _heroLevels merge 後檢查失敗', _eMedalBackfill); }
     } catch(_lvErr){
       console.warn('[存檔保護][heroLevels merge] 合併失敗,回退到直接覆蓋', _lvErr);
       _heroLevels = data.heroLevels;
+      // ★ v3.5.15 — fallback 路徑也補檢查
+      try{
+        let _maxHeroLv = 0, _maxLvHeroName = null;
+        Object.keys(_heroLevels).forEach(name => {
+          const lv = _heroLevels[name] || 0;
+          if(lv > _maxHeroLv){ _maxHeroLv = lv; _maxLvHeroName = name; }
+        });
+        if(_maxHeroLv > 0 && typeof _checkMedalHeroLevel === 'function'){
+          _checkMedalHeroLevel(_maxLvHeroName, _maxHeroLv);
+        }
+      }catch(_){}
     }
   }
   // ★★★ v1.0.20260512.6160 — heroExp 同樣改用「逐英雄取 max」★★★
@@ -61395,6 +61423,17 @@ function addHeroExp(name, exp) {
       if(!_heroStatPoints[name]) _heroStatPoints[name] = 0;
       _heroStatPoints[name]++;
       log(`🌟 [${name}] 升級！LV${_heroLevels[name]}！獲得1點素質點數！`);
+      // ★ v3.5.15 — 老師回報(2026/5/22):有同學英雄 11 級卻沒解鎖「初顯鋒芒」獎章
+      //   根因:_checkMedalHeroLevel 函式定義在 line 74642,但「沒有任何地方呼叫它」,
+      //         所以英雄升到 10/30/50 級的獎章(hero_lv10/hero_lv30/hero_lv50)永遠不會解鎖。
+      //   修補:在升級成功後立即呼叫,以「升級後的等級」 _heroLevels[name] 為依據。
+      //   注意:此處的「補檢查」機制 — 即使學生已過 Lv10 沒解鎖,只要再升一級會把所有
+      //         達標的獎章一次補解鎖(因為 _checkMedalHeroLevel 用 >= 比較)。
+      try{
+        if(typeof _checkMedalHeroLevel === 'function'){
+          _checkMedalHeroLevel(name, _heroLevels[name]);
+        }
+      }catch(_eMedal){ console.warn('[英雄升級獎章檢查] 例外', _eMedal); }
       // ★ v1.0.20260423.6800 — 等級解鎖肖像(統一處理 Lv10 / Lv20):
       //   到達該角色定義的解鎖等級時觸發,可解鎖 1 張或多張(boy + girl)
       try{
@@ -74034,6 +74073,41 @@ function _loadMedals(){
     const s = localStorage.getItem('adv_medal_stats');
     if(s) Object.assign(_medalStats, JSON.parse(s));
   }catch(_){}
+  // ★ v3.5.15 — 老師回報(2026/5/22):有同學英雄 11 級卻沒解鎖「初顯鋒芒」獎章
+  //   修補補強:_loadMedals 完成後,主動掃描當前已有的英雄等級 / 收錄狀態 / 知識幣等
+  //             里程碑類數據,把「達標但漏解鎖」的獎章補解鎖。
+  //   設計理由:獎章類函式有些只在「事件發生時」呼叫一次,如果當時 hook 沒寫好(如本次
+  //             _checkMedalHeroLevel 從未被呼叫),歷史等級就永遠不會補解鎖。這個「啟動時
+  //             掃描」是穩定的兜底,確保未來新增新獎章類型時舊資料也能正確補解。
+  //   注意:用 setTimeout 延遲 100ms,確保 _heroLevels / _knowledgeCoins 等變數已載入完成。
+  setTimeout(function _wbBackfillMedals(){
+    try{
+      // 1) 英雄等級獎章補檢查:遍歷 _heroLevels 找最大等級
+      if(typeof _heroLevels === 'object' && _heroLevels){
+        let _maxHeroLv = 0;
+        let _maxLvHeroName = null;
+        Object.keys(_heroLevels).forEach(name => {
+          const lv = _heroLevels[name] || 0;
+          if(lv > _maxHeroLv){ _maxHeroLv = lv; _maxLvHeroName = name; }
+        });
+        if(_maxHeroLv > 0 && typeof _checkMedalHeroLevel === 'function'){
+          _checkMedalHeroLevel(_maxLvHeroName, _maxHeroLv);
+        }
+      }
+      // 2) 已解鎖英雄數獎章補檢查:呼叫 _checkMedalHeroUnlock 重跑判定(內部用 advGetUnlockedHeroes)
+      if(typeof advGetUnlockedHeroes === 'function' && typeof _checkMedalHeroUnlock === 'function'){
+        const _u = advGetUnlockedHeroes();
+        if(_u && _u.length > 0){
+          // 用最後一個英雄名觸發(_checkMedalHeroUnlock 內部會走 length 判定 5/10/20/30,不依 heroName)
+          _checkMedalHeroUnlock(_u[_u.length - 1]);
+        }
+      }
+      // 3) 知識幣獎章補檢查
+      if(typeof _checkMedalCoins === 'function'){
+        _checkMedalCoins();
+      }
+    }catch(_eBackfill){ console.warn('[獎章補檢查] 例外', _eBackfill); }
+  }, 100);
 }
 
 function _saveMedals(){
@@ -76742,7 +76816,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.14';
+window._GAME_LOADED_VERSION = 'v3.5.15';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
