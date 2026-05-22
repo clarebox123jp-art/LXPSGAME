@@ -5022,13 +5022,29 @@
 <!-- PWA 啟動畫面（防止白屏閃爍）-->
 <meta name="apple-touch-fullscreen" content="yes">
 <!-- 加入主畫面圖示(本地優先,離線可用;遊戲封面圖為後備) -->
+<!-- ★ v3.5.12 — 老師回報(2026/5/22):iPad 按「加入主畫面」後桌面沒出現圖示。
+     根因:apple-touch-icon 指本地 icon-180.png 等檔案,但 PWA SW 已被緊急止血停用
+           (_PWA_DISABLED=true),這些本地 icon 檔可能未上傳到 GitHub Pages → iPad
+           抓不到圖示 → 部分 iOS 版本直接不建立桌面圖示。
+     修法:apple-touch-icon 改用「絕對 URL 指向 GitHub 上 100% 確認存在的遊戲封面圖」,
+           原本相對路徑的本地 icon 改為 disabled-id(保留註解供 SW 重啟後恢復用)。
+     注意:iPad「加入主畫面」是 iOS 原生功能,JS 無法直接觸發,只能透過 meta 標籤
+           讓 iOS 知道這是 PWA,並提供有效的 icon 才能成功建立桌面圖示。 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<!-- ★ v3.5.12 — apple-touch-icon 主要 icon 改用 GitHub 上的遊戲封面圖(必定能抓到) -->
+<link rel="apple-touch-icon" sizes="180x180" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<link rel="apple-touch-icon" sizes="167x167" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<link rel="apple-touch-icon" sizes="152x152" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<link rel="apple-touch-icon" sizes="120x120" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<link rel="apple-touch-icon" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
+<!-- 舊版相對路徑 icon(SW 重啟後恢復使用,暫時註解):
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
 <link rel="apple-touch-icon" href="icon-180.png">
+-->
 <link rel="apple-touch-startup-image" href="https://github.com/clarebox123jp-art/-/raw/main/%E9%81%8A%E6%88%B2%E5%B0%81%E9%9D%A2.png">
 <title>小英雄大對抗</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -68796,6 +68812,15 @@ function _showPwaGuide(){
       if(window._lxpsPWA.triggerInstall()) return;
     }
   }catch(_){}
+  // ★ v3.5.12 — 已經是 standalone 模式(已加入主畫面開啟)→ 提示已安裝
+  try{
+    const _isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+                       || window.navigator.standalone === true;
+    if(_isStandalone){
+      _showSimpleToast('✅ 您已經是從主畫面圖示開啟,無須再次安裝!', 'ok');
+      return;
+    }
+  }catch(_){}
   // iOS 或 PC 沒原生 prompt 時, 走原本的引導視窗
   var existing = document.getElementById('_pwa-guide-modal');
   if(existing){ existing.remove(); return; }
@@ -68807,14 +68832,57 @@ function _showPwaGuide(){
     + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
   modal.onclick = function(e){ if(e.target === modal){ _pwaGuideClose(); } };
   var ua = navigator.userAgent || '';
-  var isChrome = ua.indexOf('CriOS') > -1;
-  var steps = isChrome
-    ? ['<b>① 點右上角 ⋮ 選單</b>',
-       '<b>② 選擇「加入主畫面」</b>',
-       '<b>③ 輸入名稱後點「加入」</b>']
-    : ['<b>① 點畫面下方分享按鈕（↑）</b>',
-       '<b>② 向下滾動找到「加入主畫面」</b>',
-       '<b>③ 輸入名稱後點右上角「加入」</b>'];
+  // ★ v3.5.12 — 更精準判斷裝置 / 瀏覽器組合
+  var isChromeIos = ua.indexOf('CriOS') > -1;
+  var isFirefoxIos = ua.indexOf('FxiOS') > -1;
+  var isEdgeIos = ua.indexOf('EdgiOS') > -1;
+  // iPad 偽 Mac UA(iPadOS 13+):靠觸控點數判斷
+  var isIPad = /iPad/i.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
+  // iPhone
+  var isIPhone = /iPhone|iPod/i.test(ua);
+  var isIOSLike = isIPad || isIPhone;
+  // iOS 上只有 Safari 真正支援「加入主畫面 PWA」;
+  //   Chrome/Firefox/Edge for iOS 都會建捷徑(無法走 PWA), 必須提示玩家改用 Safari
+  var isNonSafariOnIOS = isIOSLike && (isChromeIos || isFirefoxIos || isEdgeIos);
+  var steps;
+  var extraWarning = '';
+  if(isNonSafariOnIOS){
+    // ★ v3.5.12 — iPad/iPhone 上的 Chrome / Firefox / Edge:強烈建議改用 Safari
+    //   原因:iOS 政策只有 Safari 能真正建立 PWA(全螢幕 / 獨立圖示 / 離線快取)
+    //         其他瀏覽器只能建立捷徑網頁,iPad 桌面圖示會出現問題甚至完全不出現
+    extraWarning =
+      '<div style="background:rgba(180,80,40,0.35);border:2px solid #ff9966;border-radius:14px;'
+      + 'padding:14px 18px;margin-bottom:18px;text-align:left;line-height:1.6;">'
+      + '<div style="font-size:18px;color:#ffcc88;font-weight:900;margin-bottom:8px;">'
+      + '⚠ 請改用 <span style="color:#fff;text-decoration:underline;">Safari</span> 開啟此頁面!</div>'
+      + '<div style="font-size:14px;color:#ffe0c0;">'
+      + 'iOS 規定只有 <b>Safari</b> 可以正確加入主畫面成為 App 圖示。<br>'
+      + '在 ' + (isChromeIos ? 'Chrome' : (isFirefoxIos ? 'Firefox' : 'Edge')) + ' 中加入主畫面只能建立網頁捷徑,圖示可能完全不出現!<br>'
+      + '<b>請複製網址</b> → <b>關閉本瀏覽器</b> → <b>用 Safari 開啟</b>後再來。'
+      + '</div>'
+      + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="try{navigator.clipboard.writeText(location.href);_showSimpleToast(\'✅ 網址已複製!請貼到 Safari\',\'ok\');}catch(_){alert(\'網址:\'+location.href);}" '
+      + 'style="padding:8px 16px;font-size:14px;font-weight:800;background:rgba(80,140,220,0.6);'
+      + 'border:1.5px solid #88bbff;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">'
+      + '📋 複製網址</button>'
+      + '</div>'
+      + '</div>';
+    steps = ['<b>① 點右上角 ⋯ 選單</b>',
+             '<b>② 選擇「加入主畫面」</b>',
+             '<b>③ 輸入名稱後點「加入」</b>',
+             '<span style="color:#ffaa66;">(' + (isChromeIos ? 'Chrome' : (isFirefoxIos ? 'Firefox' : 'Edge')) + ' iOS 只會建立捷徑,不是完整 PWA。建議改用 Safari。)</span>'];
+  } else if(isIOSLike){
+    // iPad/iPhone Safari:標準引導
+    steps = ['<b>① 點畫面下方分享按鈕(↑ 方框向上箭頭)</b>',
+             '<b>② 向下滾動找到「加入主畫面」</b>',
+             '<b>③ 輸入名稱後點右上角「加入」</b>',
+             '<span style="color:#aaffaa;">(完成後請從主畫面圖示開啟,才能享有全螢幕 App 體驗)</span>'];
+  } else {
+    // Android Chrome / 桌機:應該已經有 deferredInstallPrompt,不會進到這
+    steps = ['<b>① 點右上角 ⋮ 選單</b>',
+             '<b>② 選擇「安裝應用程式」或「加入主畫面」</b>',
+             '<b>③ 確認安裝</b>'];
+  }
   modal.innerHTML =
     '<div style="background:linear-gradient(160deg,#0a0e1e,#060810);'
     + 'border:2.5px solid rgba(100,180,255,0.7);border-radius:24px;'
@@ -68822,12 +68890,13 @@ function _showPwaGuide(){
     + '<div style="font-size:52px;margin-bottom:12px;">📲</div>'
     + '<div style="font-size:28px;font-weight:900;color:#88ccff;margin-bottom:8px;">加入主畫面</div>'
     + '<div style="font-size:18px;color:#aaa;margin-bottom:24px;line-height:1.6;">'
-    + '像 App 一樣從桌面圖示啟動，<br>自動全螢幕、沒有網址列！'
+    + '像 App 一樣從桌面圖示啟動,<br>自動全螢幕、沒有網址列!'
     + '</div>'
+    + extraWarning
     + '<div style="background:rgba(0,0,0,0.4);border-radius:16px;padding:20px 24px;text-align:left;margin-bottom:20px;">'
     + steps.map(function(s){ return '<div style="font-size:20px;color:#e8e4d8;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.08);">' + s + '</div>'; }).join('')
     + '</div>'
-    + '<div style="font-size:16px;color:#888;margin-bottom:20px;">安裝後從主畫面點圖示即可直接遊玩！</div>'
+    + '<div style="font-size:16px;color:#888;margin-bottom:20px;">安裝後從主畫面點圖示即可直接遊玩!</div>'
     + '<button onclick="_pwaGuideClose()" style="padding:12px 40px;font-size:20px;font-weight:700;'
     + 'background:rgba(100,180,255,0.2);border:1.5px solid rgba(100,180,255,0.6);'
     + 'color:#88ccff;border-radius:12px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
@@ -76566,7 +76635,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.11';
+window._GAME_LOADED_VERSION = 'v3.5.12';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
