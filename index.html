@@ -631,6 +631,78 @@
     return unsubscribe; // 呼叫可取消監聽
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.5.18 — 換帳號保護:Pending Handoff API(共用平板情境)
+  //
+  // 情境:小明在 iPad-01 打 BOSS 沒登出,小華第 2 節用同台登入自己帳號 →
+  //       小華這台會偵測到「上次是別人」,在清本機前先把小明的戰鬥快照
+  //       「暫存到雲端」,等小明下次登入時自動讀出來補回他的雲端 advSnapshot
+  //
+  // 路徑設計:
+  //   寫:小華的 auth.uid 寫到 pendingHandoffs/{小明 uid} 文件
+  //   讀:小明登入後,自己讀 pendingHandoffs/{小明 uid}(他自己有讀權限)
+  //   清:小明讀完並寫回自己的 advSnapshot 後,主動刪掉 handoff 文件
+  //
+  // Firestore Rules 建議(老師上 Firebase Console 設定一次):
+  //   match /pendingHandoffs/{victimUid} {
+  //     allow write: if request.auth != null && request.auth.uid != victimUid;
+  //     allow read, delete: if request.auth != null && request.auth.uid == victimUid;
+  //   }
+  //
+  // ⚠ 若 rules 還沒設,寫入會 permission-denied,但有 fallback:
+  //   localStorage 'lxps_pending_handoff_{小明 uid}' 也會被寫入,小明回到同台就能讀
+  // ════════════════════════════════════════════════════════════════
+  window._fbSaveHandoff = async function(victimUid, payload){
+    if(!victimUid || typeof victimUid !== 'string'){
+      console.warn('[_fbSaveHandoff] 無效 victimUid,跳過');
+      return false;
+    }
+    if(window._firestoreSdkIsDead){
+      console.warn('[_fbSaveHandoff] Firestore SDK 已死亡,跳過');
+      return false;
+    }
+    try{
+      await setDoc(doc(_fbDb, 'pendingHandoffs', victimUid), payload, { merge: false });
+      console.log('🤝 [_fbSaveHandoff] 已寫入 handoff for ' + victimUid.slice(0,8) + '...');
+      return true;
+    }catch(e){
+      // permission-denied 是預期內(rules 未設定),不嚇人,只 warn
+      const _code = e && e.code;
+      if(_code === 'permission-denied'){
+        console.warn('🤝 [_fbSaveHandoff] Firestore rules 未開放 pendingHandoffs 寫入,'
+          + '改靠 localStorage fallback(小明只要回到原台就能救回)');
+      } else {
+        console.warn('🤝 [_fbSaveHandoff] 寫入失敗', e);
+      }
+      return false;
+    }
+  };
+
+  window._fbConsumeHandoff = async function(uid){
+    // 讀「等候我接收」的 handoff,讀到就回傳並刪掉
+    if(!uid || typeof uid !== 'string') return null;
+    if(window._firestoreSdkIsDead) return null;
+    try{
+      const _snap = await getDoc(doc(_fbDb, 'pendingHandoffs', uid));
+      if(!_snap.exists()) return null;
+      const _data = _snap.data();
+      // 讀到就刪,避免重複讀
+      try{
+        await deleteDoc(doc(_fbDb, 'pendingHandoffs', uid));
+      }catch(_eD){ console.warn('🤝 [_fbConsumeHandoff] 讀到 handoff 但刪除失敗(不影響資料還原)', _eD); }
+      return _data;
+    }catch(e){
+      const _code = e && e.code;
+      if(_code === 'permission-denied'){
+        // rules 未設定 → 雲端路徑沒戲,只能靠 localStorage fallback
+        console.log('🤝 [_fbConsumeHandoff] 雲端 handoff 路徑未開放,稍後用本機 fallback');
+        return null;
+      }
+      console.warn('🤝 [_fbConsumeHandoff] 例外', e);
+      return null;
+    }
+  };
+
   window._fbLoad = async function(uid) {
     // ★ v1.0.20260514.6550 — 入口加 uid 守衛
     //   原問題:登入流程剛啟動時若 user.uid 還沒就緒就被呼叫,Firestore 的 doc() 會在
@@ -2819,6 +2891,53 @@
         if(_lastUid && _lastUid !== user.uid){
           console.log('🔄 [換帳號清理] 偵測到不同帳號(前次=' + _lastUid.slice(0,8)
             + '..., 本次=' + user.uid.slice(0,8) + '...),清除本機殘留');
+          // ★ v3.5.18 — 換帳號前先「保護前一位學生」的戰鬥快照(老師 2026/5/22 回報)
+          //   情境:小明在 iPad-01 打 BOSS 沒登出 → 小華第 2 節拿到同台 iPad-01 登入自己帳號
+          //   舊版:_clearAccountLocalData 直接清掉 adv_battle_snap → 小明回家進度全失
+          //   新版:在清理前,把本機 adv_battle_snap 用「小明的 uid」搬到 pendingHandoff
+          //         小明下次登入會被偵測到並補寫回他的雲端 advSnapshot
+          //   雙路徑(任一成功即可救回):
+          //     A. 雲端 pendingHandoffs/{小明 uid}:由小華這台寫入,小明下次讀
+          //     B. 本機 lxps_pending_handoff_{小明 uid}:留在本機,小明下次回到同台時讀
+          try{
+            const _battleSnapRaw = localStorage.getItem('adv_battle_snap');
+            if(_battleSnapRaw){
+              const _snap = JSON.parse(_battleSnapRaw);
+              // 只搶救「有效快照」:有 stage 且 < 24 小時
+              const _isValid = _snap && _snap.stage
+                && (_snap.ts && (Date.now() - _snap.ts) < 24*60*60*1000)
+                && _snap.battleState && _snap.battleState.p1 && _snap.battleState.p1.length;
+              if(_isValid){
+                const _handoffPayload = {
+                  fromUid: _lastUid,
+                  rescuedByUid: user.uid,    // 救援者(用來除錯)
+                  rescuedByEmail: (user.email || '').toLowerCase(),
+                  snap: _snap,
+                  savedAt: Date.now(),
+                  reason: 'switch_account_on_shared_device',
+                };
+                // 路徑 A:寫雲端 pendingHandoffs/{小明 uid}
+                try{
+                  if(typeof window._fbSaveHandoff === 'function'){
+                    // 不 await,避免阻塞 onAuth(若失敗下面 fallback 會接手)
+                    window._fbSaveHandoff(_lastUid, _handoffPayload)
+                      .then(function(ok){
+                        if(ok) console.log('🤝 [換帳號保護] 已用雲端 handoff 為前位 (' + _lastUid.slice(0,8) + '...) 保存快照');
+                      })
+                      .catch(function(e){ console.warn('🤝 [換帳號保護] 雲端 handoff 寫入失敗', e); });
+                  }
+                }catch(_eH){ console.warn('🤝 [換帳號保護] _fbSaveHandoff 例外', _eH); }
+                // 路徑 B:寫本機 lxps_pending_handoff_{小明 uid}
+                //   雲端寫不寫得進去都先存本機(若小明下次回來這台就能直接讀)
+                try{
+                  localStorage.setItem('lxps_pending_handoff_' + _lastUid, JSON.stringify(_handoffPayload));
+                  console.log('🤝 [換帳號保護] 已用本機 handoff 為前位 (' + _lastUid.slice(0,8) + '...) 保存快照(round=' + (_snap.round || '?') + ', stage=' + _snap.stage + ')');
+                }catch(_eL){ console.warn('🤝 [換帳號保護] 本機 handoff 寫入失敗', _eL); }
+              } else {
+                console.log('🤝 [換帳號保護] 偵測到 adv_battle_snap 但內容無效或過期,跳過搶救');
+              }
+            }
+          }catch(_eR){ console.warn('🤝 [換帳號保護] 搶救流程例外', _eR); }
           // 不需 await,本地清理是同步的
           if(typeof window._clearAccountLocalData === 'function'){
             window._clearAccountLocalData('switch_account');
@@ -2937,6 +3056,51 @@
       // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       console.log('✅ 已登入:', user.displayName);
+      // ★ v3.5.18 — 換帳號保護:接收 handoff(若上次有別台/別人幫我保存戰鬥快照)
+      //   情境(配對 onAuth 內換帳號保護那一段):
+      //     - 小明上次在 iPad-01 沒登出,小華在 iPad-01 登入時把小明的戰鬥快照搬到 handoff
+      //     - 現在小明從家裡(或別台)登入 → 這段會檢查兩條 handoff 路徑(雲端 / 本機)
+      //     - 找到就寫回 adv_battle_snap,讓下面的 _advCheckCrashRecovery 能彈續戰提示
+      try{
+        let _handoff = null;
+        // 路徑 A:從雲端 pendingHandoffs 讀(要 Firestore Rules 設定才會成功)
+        try{
+          if(typeof window._fbConsumeHandoff === 'function'){
+            _handoff = await window._fbConsumeHandoff(user.uid);
+          }
+        }catch(_eC){ console.warn('🤝 [接收 handoff] 雲端讀取例外', _eC); }
+        // 路徑 B:從本機 fallback 讀(若小明回到原台,雲端 rules 沒設也救得回)
+        if(!_handoff){
+          try{
+            const _localKey = 'lxps_pending_handoff_' + user.uid;
+            const _localRaw = localStorage.getItem(_localKey);
+            if(_localRaw){
+              _handoff = JSON.parse(_localRaw);
+              localStorage.removeItem(_localKey);
+              console.log('🤝 [接收 handoff] 從本機 fallback 找到 handoff,已讀並清除');
+            }
+          }catch(_eL){ console.warn('🤝 [接收 handoff] 本機 fallback 讀取失敗', _eL); }
+        }
+        // 驗證 handoff 內容並寫回 adv_battle_snap
+        if(_handoff && _handoff.snap){
+          const _hSnap = _handoff.snap;
+          const _isValid = _hSnap.stage
+            && (_hSnap.ts && (Date.now() - _hSnap.ts) < 24*60*60*1000)
+            && _hSnap.battleState && _hSnap.battleState.p1 && _hSnap.battleState.p1.length;
+          if(_isValid){
+            try{
+              localStorage.setItem('adv_battle_snap', JSON.stringify(_hSnap));
+              console.log('🤝 [接收 handoff] ✅ 已還原戰鬥快照(round=' + (_hSnap.round || '?')
+                + ', stage=' + _hSnap.stage + ', 救援者=' + (_handoff.rescuedByEmail || '?') + ')');
+              // 也順手寫入 advSnapshot 給 gameCloudSave 下次帶上雲端
+              // (不立即呼叫 gameCloudSave,因為 _progressLoaded 可能還在路上;
+              //  下面 _advCheckCrashRecovery 彈出續戰提示讓玩家選,玩家選續戰時自然會寫雲端)
+            }catch(_eW){ console.warn('🤝 [接收 handoff] 寫入 adv_battle_snap 失敗', _eW); }
+          } else {
+            console.log('🤝 [接收 handoff] 取得 handoff 但內容無效或過期,丟棄');
+          }
+        }
+      }catch(_eHo){ console.warn('🤝 [接收 handoff] 整體流程例外', _eHo); }
       // ★ v3.4.21 — 老師需求 1:登入完成後立刻檢查未完成戰鬥快照,
       //   不必等玩家點冒險才彈,降低玩家錯過續戰提示的機率。
       try{
@@ -28678,6 +28842,24 @@ function endAction(a, cost, noFinish=false){
   }
   // p1 手動模式的 noFinish：action-panel 已在上方顯示，等待玩家操作，不需額外處理
   } catch(_eaErr){ console.error("[endAction防護]",_eaErr); _pSetTimeout(startTurn,500); }
+  // ★ v3.5.18 — 玩家動作完成後也存快照(B1:細粒度快照)
+  //   老師 2026/5/22 需求:有學生「BOSS 打到快死掉就跳出遊戲」遺失進度
+  //   根因:_saveBattleRoundSnapshot 只在 startTurn 開頭存,
+  //         若玩家在「同回合內」用爆發/關鍵技能後就跳出 → 進度退回上回合開頭
+  //   修法:在 endAction 結尾(玩家/AI 動作真正完成後)也存一次,
+  //         確保最壞情況下,玩家最近的一個動作也能被保留
+  //   只在「冒險模式 + 玩家方(p1) + 有花費(cost>0) + 真的結束行動(!noFinish)」時存,
+  //   避免 AI 行動或 noFinish 中間態存了不完整資料
+  try{
+    if(typeof _adventureMode !== 'undefined' && _adventureMode
+       && a && a.side === 'p1' && (cost > 0) && !noFinish
+       && typeof G !== 'undefined' && G && (G.round || 0) >= 1
+       && !window._advBattleResultShown){
+      // ★ 強制更新 _lastBattleSnapRound,讓 _saveBattleRoundSnapshot 不被「同回合跳過」擋下
+      try{ G._lastBattleSnapRound = null; }catch(_){}
+      if(typeof _saveBattleRoundSnapshot === 'function') _saveBattleRoundSnapshot();
+    }
+  }catch(_eEa){ /* 不要因快照失敗影響戰鬥流程 */ }
 }
 function clickItem(it){
   const a=G.activeChar;
@@ -38074,6 +38256,41 @@ window._forceSaveBattleSnapshotAndSync = function(reason){
     }
   });
   console.log('💾 [v3.5.16] 戰鬥快照離場自動保存已安裝(beforeunload / pagehide / visibilitychange)');
+})();
+
+// ════════════════════════════════════════════════════════════════
+// ★ v3.5.18 — B2:戰鬥中每 30 秒自動存快照
+//
+// 老師 2026/5/22 需求:「BOSS 打到快死掉就跳出遊戲」有多種觸發路徑
+//   - iPad 沒電強制關機(無任何離場事件)
+//   - iOS 系統殺 app(無 pagehide)
+//   - 瀏覽器當機/網路中斷
+//
+// 上述極端情境下,連 pagehide / beforeunload 都不會觸發。
+// 唯一可靠方案:在戰鬥進行中,每 30 秒主動寫快照(localStorage + 雲端)。
+// 30 秒間距是平衡:夠短能救到大多數動作,夠長不會造成寫入過頻。
+// 注意:_forceSaveBattleSnapshotAndSync 內已守門「戰鬥中且 round>=1」才會寫,
+//       所以即便玩家在大廳/選關頁掛 30 分鐘,也不會無故寫入。
+// ════════════════════════════════════════════════════════════════
+(function _setupBattleSnapPeriodicSave(){
+  if(window._battleSnapPeriodicSaveInstalled) return;
+  window._battleSnapPeriodicSaveInstalled = true;
+  const INTERVAL_MS = 30 * 1000;  // 30 秒
+  let _lastSaveTs = 0;
+  setInterval(function(){
+    try{
+      // 只在戰鬥中才存(_forceSaveBattleSnapshotAndSync 內也有守門,雙保險)
+      if(typeof _adventureMode === 'undefined' || !_adventureMode) return;
+      if(typeof G === 'undefined' || !G || !(G.round >= 1)) return;
+      if(window._advBattleResultShown) return;
+      // 防止 30 秒內被其他路徑(B1 / startTurn)剛存過就立刻重存
+      const _now = Date.now();
+      if(_now - _lastSaveTs < 25 * 1000) return;  // 最近 25 秒內已有人存過,跳過
+      const _ok = window._forceSaveBattleSnapshotAndSync('periodic_30s');
+      if(_ok) _lastSaveTs = _now;
+    }catch(_){}
+  }, INTERVAL_MS);
+  console.log('⏱️ [v3.5.18] 戰鬥快照每 30 秒自動保存已啟動');
 })();
 
 // ====== 自訂確認視窗（iOS/iPad 安全，取代原生 confirm()）======
@@ -69025,7 +69242,37 @@ window._tryStartFullDownload = async function(){
     }
   }
 
-  // 通過驗證 → 嘗試觸發原生安裝
+  // ★ v3.5.19 — 通過驗證 → 直接觸發完整預載(不只是加桌面圖示引導)
+  //   原問題:老師 2026/5/22 回報「按下載沒出現安裝,只叫我加入主畫面」
+  //   根因:舊邏輯只走「_tryNativeInstall() → 沒有 deferredPrompt → fallback 到 _showPwaGuide」
+  //         完全沒呼叫 precacheNow(),所以即使桌機已裝過,也不會主動預載資源
+  //   修法:無論桌機/iPad 都先呼叫 precacheNow() 啟動讀條 + 預載,
+  //         然後再附帶顯示「加入主畫面」引導(讓玩家裝完後可以從桌面圖示開啟)
+  //   時序:precacheNow() 是 async,讓它在背景跑;同時開引導視窗
+  let _precacheStarted = false;
+  try{
+    if(window._lxpsPWA && typeof window._lxpsPWA.precacheNow === 'function'){
+      console.log('🚀 [v3.5.19] 主動觸發 precacheNow() 開始下載完整資源');
+      // 不 await,讓背景跑;讀條 UI 由 _showInstallProgress 自己顯示
+      const _p = window._lxpsPWA.precacheNow();
+      if(_p && typeof _p.then === 'function'){
+        _p.then(function(r){
+          console.log('✅ [v3.5.19] precacheNow 完成', r);
+          // 標記已安裝(如果 precacheAllAssets 內沒標記到)
+          try{
+            if(r && r.done > 0){
+              localStorage.setItem('lxps_pwa_installed_ver',
+                'installed@' + (window._GAME_LOADED_VERSION || 'unknown') + '@' + Date.now());
+            }
+          }catch(_){}
+        }).catch(function(e){
+          console.warn('[v3.5.19] precacheNow 失敗', e);
+        });
+        _precacheStarted = true;
+      }
+    }
+  }catch(_eP){ console.warn('[v3.5.19] precacheNow 觸發例外', _eP); }
+  // 通過驗證 → 嘗試觸發原生安裝(桌機 Chrome 第一次裝會有用)
   // 設置 bypass flag,讓 _showPwaGuide 不再重新驗證(因為我們已經驗證過了)
   window._pwaGuideAuthBypass = true;
   // 若 PWA SW 被停用(目前止血中)→ 走 _showPwaGuide 顯示說明
@@ -69035,6 +69282,12 @@ window._tryStartFullDownload = async function(){
     return;
   }
   // iOS 或沒有 deferred prompt → 走原本的引導(會偵測平台給對應說明)
+  //   ★ v3.5.19 — 若 precacheNow 已啟動,精簡提示給管理員/已安裝過的桌機(不重複顯示加桌面引導)
+  if(_precacheStarted){
+    window._pwaGuideAuthBypass = false;
+    _showSimpleToast('🚀 已開始下載完整遊戲資源!請保持網路連線到讀條跑完', 'ok');
+    return;
+  }
   if(typeof window._showPwaGuide === 'function'){
     window._showPwaGuide();
     // _showPwaGuide 內會自動清掉 bypass flag
@@ -77201,7 +77454,7 @@ window._filterChangelogForDisplay = function(entries){
 
 
 
-window._GAME_LOADED_VERSION = 'v3.5.17';
+window._GAME_LOADED_VERSION = 'v3.5.19';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
