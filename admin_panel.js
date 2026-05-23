@@ -36,13 +36,18 @@
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.5.58 — 管理員後台統一玩家標籤 helper(本檔內部用)
 //   薄包裝 window._getAdminPlayerLabel,加上容錯 fallback
-//   用法: _adminLabel(email, displayName) → '5324蔣同學(快樂的小狐狸)' 或原 displayName
+//   用法: _adminLabel(email, displayName) → '5324蔣同學(王小明)' 或原 displayName
 //   若 index.html 還沒部署 v3.5.58 → 自動退回原 displayName,不會掛掉
+//
+// ★ v3.5.68(2026-05-24) — 老師明確指示「管理員控制台一律顯示學生全名」
+//   一律帶 adminShowReal:true,讓底層函式不做真名保護替換
+//   呼叫範圍:下載權限、可疑帳號、Lv1 救援、補償、世界 BOSS 榜、小博士榜 等所有後台功能
+//   學生看的世界 BOSS 排行榜不走這條(直接呼叫 _getAdminPlayerLabel 帶 protectIfNoEmail:true)
 // ════════════════════════════════════════════════════════════════════
 function _adminLabel(email, displayName){
   try{
     if(typeof window._getAdminPlayerLabel === 'function'){
-      return window._getAdminPlayerLabel(email, displayName);
+      return window._getAdminPlayerLabel(email, displayName, { adminShowReal: true });
     }
   }catch(_){}
   // fallback:index.html 未部署 v3.5.58
@@ -170,11 +175,13 @@ async function _showAdminStatsPanelImpl(){
       #_admin-dlperm-section { order: 7; }              /* 下載權限 */
       #_admin-sus-section { order: 8; }                 /* 可疑帳號 */
       #_admin-wblb-section { order: 9; }                /* 世界 BOSS 榜 */
-      #_admin-bypass-section { order: 10; }             /* 解除冷卻 */
-      #_admin-test-batch-section { order: 11; }         /* 測試批次 */
-      #_admin-backfill-players-section { order: 12; }   /* 回填總玩家 */
-      #_admin-set-players-section { order: 13; }        /* 設定總玩家 */
-      #_admin-set-adv-section { order: 14; }            /* 設定累計冒險 */
+      /* ★ v3.5.67(2026-05-23) — 新增小博士補發區塊,以下原本 10-14 往後挪 */
+      #_admin-wq-section { order: 10; }                 /* 小博士獎勵補發(新) */
+      #_admin-bypass-section { order: 11; }             /* 解除冷卻 */
+      #_admin-test-batch-section { order: 12; }         /* 測試批次 */
+      #_admin-backfill-players-section { order: 13; }   /* 回填總玩家 */
+      #_admin-set-players-section { order: 14; }        /* 設定總玩家 */
+      #_admin-set-adv-section { order: 15; }            /* 設定累計冒險 */
       #_admin-close { order: 999; }                     /* 關閉永遠在最下 */
     </style>
     <!-- ★ v3.5.47 — PC 版面板放大 200%、置中,標題改為「遊戲管理員(GM)專用功能選單」 -->
@@ -896,6 +903,68 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.5.67(2026-05-23) — 小博士獎勵補發區塊(老師需求:手動結算 + 補發) -->
+      <div id="_admin-wq-section" style="background:rgba(20,40,50,0.5);border:2px solid rgba(140,220,255,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#88ccff;margin-bottom:8px;">📊 7. 本週小博士排行榜管理</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          自動結算「每週一 08:00」由第一個登入玩家觸發,寫入每位上榜玩家的 weeklyQuizPendingAward。
+          <br>⚠️ 若 Firestore Rules 未開放跨玩家寫入,自動結算會失敗 → 用此處<b style="color:#ffcc66;">手動補發</b>。
+        </div>
+        <div id="_admin-wq-info" style="font-size:13px;color:#bbb;background:rgba(0,0,0,0.35);border-radius:8px;padding:10px 12px;margin-bottom:10px;line-height:1.65;min-height:22px;">
+          載入中…
+        </div>
+        <!-- 主功能:查看本週 + 上週排名 -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <button id="_admin-wq-refresh" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(40,70,90,0.5);border:1.5px solid rgba(140,200,255,0.6);color:#88ccff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔄 重新整理
+          </button>
+          <button id="_admin-wq-view-this" style="flex:1;padding:8px 14px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,rgba(40,140,200,0.5),rgba(30,90,160,0.7));
+            border:2px solid #88ccff;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">
+            👀 查看本週前 10 名
+          </button>
+          <button id="_admin-wq-view-last" style="flex:1;padding:8px 14px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,rgba(200,140,40,0.5),rgba(160,90,30,0.7));
+            border:2px solid #ffcc66;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">
+            📜 查看上週前 10 名 + 結算狀態
+          </button>
+        </div>
+        <!-- 手動結算 -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <button id="_admin-wq-manual-settle" style="flex:1;padding:10px 14px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,rgba(140,180,80,0.55),rgba(80,140,40,0.8));
+            border:2px solid #aaff66;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">
+            🎁 手動結算上週並補發前 10 名獎勵
+          </button>
+        </div>
+        <!-- 補發單一玩家 -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:13px;color:#aaa;">補發給單一玩家:</span>
+          <input id="_admin-wq-uid" type="text" placeholder="貼上玩家 uid" 
+            style="flex:1;min-width:200px;padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
+            border:1px solid rgba(140,200,255,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          <select id="_admin-wq-rank" style="padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
+            border:1px solid rgba(140,200,255,0.4);color:#fff;border-radius:6px;font-family:inherit;">
+            <option value="1">🥇 第 1 名(50000幣+10水晶+10書)</option>
+            <option value="3">🥈 第 2-5 名(35000幣+6水晶+6書)</option>
+            <option value="8">🥉 第 6-10 名(20000幣+3水晶+3書)</option>
+          </select>
+          <button id="_admin-wq-give" style="padding:8px 14px;font-size:13px;font-weight:800;
+            background:linear-gradient(135deg,rgba(220,140,80,0.6),rgba(180,90,30,0.85));
+            border:2px solid #ffaa66;color:#fff;border-radius:7px;cursor:pointer;font-family:inherit;">
+            💰 補發
+          </button>
+        </div>
+        <div style="font-size:12px;color:#999;line-height:1.55;">
+          💡 操作 API(F12 console):
+          <br>&nbsp;&nbsp;<code style="color:#aaccff;">_weeklyQuiz.getTopN(50)</code> — 本週排名
+          <br>&nbsp;&nbsp;<code style="color:#aaccff;">_weeklyQuiz.trySettleLastWeek()</code> — 嘗試結算上週
+          <br>&nbsp;&nbsp;<code style="color:#aaccff;">_weeklyQuizSettlementFailed</code> — 自動結算失敗清單(若有的話)
+        </div>
+      </div>
+
       <button id="_admin-close" style="width:100%;padding:12px;font-size:16px;font-weight:700;
         background:rgba(60,60,80,0.6);border:1px solid #555;color:#aaa;
         border-radius:8px;cursor:pointer;font-family:inherit;">
@@ -915,6 +984,10 @@ async function _showAdminStatsPanelImpl(){
     wblbAbort: null,
     // ★ v3.5.22 — 排行榜明細 modal 的關閉函式(關後台時順手關掉)
     wblbDetailClose: null,
+    // ★ v3.5.67 — 小博士補發區段事件監聽 abort controller
+    wqAbort: null,
+    // ★ v3.5.67 — 上週排名顯示彈窗的關閉函式
+    wqDetailClose: null,
   };
   function _closeAdminPanel(){
     try {
@@ -935,6 +1008,16 @@ async function _showAdminStatsPanelImpl(){
       if(typeof _adminPanelState.wblbDetailClose === 'function'){
         try { _adminPanelState.wblbDetailClose(); } catch(_){}
         _adminPanelState.wblbDetailClose = null;
+      }
+      // ★ v3.5.67 — 清掉小博士補發區段事件監聽
+      if(_adminPanelState.wqAbort){
+        try { _adminPanelState.wqAbort.abort(); } catch(_){}
+        _adminPanelState.wqAbort = null;
+      }
+      // ★ v3.5.67 — 關掉上週排名顯示彈窗(如果還開著)
+      if(typeof _adminPanelState.wqDetailClose === 'function'){
+        try { _adminPanelState.wqDetailClose(); } catch(_){}
+        _adminPanelState.wqDetailClose = null;
       }
     } catch(_){}
     pop.remove();
@@ -4024,16 +4107,12 @@ async function _showAdminStatsPanelImpl(){
       }
       if(Array.isArray(teamNames) && teamNames.length > 0){
         return teamNames.filter(Boolean).map(function(n){
-          // ★ v3.5.58 — 真名保護(無 email 時走規則法,真名替換為「***同學」)
-          let _safe = n;
-          try{
-            if(typeof window._getAdminPlayerLabel === 'function'){
-              _safe = window._getAdminPlayerLabel('', n, { protectIfNoEmail: true });
-            }
-          }catch(_){}
+          // ★ v3.5.68(2026-05-24) — 老師需求:管理員後台一律顯示完整真實姓名
+          //   拿掉 protectIfNoEmail,直接原樣顯示玩家輸入的 name(可能是真名)
+          //   老師會自行判斷截圖前要不要馬賽克
           return '<span style="display:inline-block;padding:2px 7px;margin:1px 3px 1px 0;' +
                  'background:rgba(80,60,120,0.5);border:1px solid rgba(160,140,220,0.4);' +
-                 'border-radius:10px;font-size:11px;color:#ddd;">' + _safe + '</span>';
+                 'border-radius:10px;font-size:11px;color:#ddd;">' + n + '</span>';
         }).join('');
       }
       return '<span style="color:#888;">（無英雄資料）</span>';
@@ -4057,16 +4136,10 @@ async function _showAdminStatsPanelImpl(){
       });
       const _grandTotal = _totalReal + _totalFixed;
 
-      // 玩家暱稱顯示 — ★ v3.5.58 真名保護:無 email 時走規則法把疑似真名替換為「***同學」
+      // 玩家暱稱顯示 — ★ v3.5.68(2026-05-24) — 老師需求:管理員後台一律顯示完整真實姓名
+      //   拿掉 protectIfNoEmail,直接原樣顯示
       const _nameStr = Array.isArray(entry.teamNames)
-        ? entry.teamNames.filter(Boolean).map(function(n){
-            try{
-              if(typeof window._getAdminPlayerLabel === 'function'){
-                return window._getAdminPlayerLabel('', n, { protectIfNoEmail: true });
-              }
-            }catch(_){}
-            return n;
-          }).join(' / ') : '?';
+        ? entry.teamNames.filter(Boolean).join(' / ') : '?';
       // 最近一場戰鬥時間 + 傷害
       const _lastBattleTime = entry.lastBattleAt
         ? new Date(entry.lastBattleAt).toLocaleString('zh-TW')
@@ -4511,6 +4584,364 @@ async function _showAdminStatsPanelImpl(){
     _adminPanelState.wblbDetailClose = _closeDetailModal;
 
     if(_detailBtn) _detailBtn.onclick = _openDetailModal;
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.5.67(2026-05-23) — 小博士獎勵補發區段綁定
+  //
+  //   提供功能:
+  //     1. 顯示本週/上週排名概況
+  //     2. 查看本週 / 上週前 10 名(modal)
+  //     3. 手動觸發 trySettleLastWeek(繞過自動結算 / Rules 失敗 fallback)
+  //     4. 手動補發單一玩家獎勵(指定 uid + 排名)
+  //
+  //   注意:寫入別人的 players/{uid}.weeklyQuizPendingAward 需要 Firestore Rules 允許
+  //         若 rules 沒設,console 會 permission-denied,
+  //         此時只能用「直接 setDoc + merge」方式 — 但仍會被擋。
+  //         真正解法:老師到 Firebase Console 加 rules(已在 v3.5.67 註解詳述)
+  // ════════════════════════════════════════════════════════════════
+  (function _bindWqSection(){
+    const _infoEl = document.getElementById('_admin-wq-info');
+    const _refreshBtn = document.getElementById('_admin-wq-refresh');
+    const _viewThisBtn = document.getElementById('_admin-wq-view-this');
+    const _viewLastBtn = document.getElementById('_admin-wq-view-last');
+    const _manualSettleBtn = document.getElementById('_admin-wq-manual-settle');
+    const _giveBtn = document.getElementById('_admin-wq-give');
+    const _uidInput = document.getElementById('_admin-wq-uid');
+    const _rankSelect = document.getElementById('_admin-wq-rank');
+    if(!_infoEl || !_manualSettleBtn) return;
+
+    // 安全 HTML escape
+    const _esc = function(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    };
+
+    // ★ v3.5.68(2026-05-24) — 老師需求:管理員後台一律顯示完整學生資訊
+    //   走 _adminLabel(自動帶 adminShowReal:true),底層 _getAdminPlayerLabel 不做真名替換
+    //     ① email 在名冊 + 有暱稱(真名或合法) → 「5324蔣同學(王小明)」(底層全顯示)
+    //     ② email 在名冊 + 無暱稱 → 「5324蔣同學」
+    //     ③ 沒名冊 + 有暱稱 → 「暱稱」原樣
+    //     ④ 都沒 → 「玩家+uid 前 4 碼」
+    //   老師會自行判斷截圖前要不要馬賽克
+    const _formatName = function(entry){
+      try{
+        const _email = (entry.email || '').toLowerCase().trim();
+        const _disp = (entry.name || '').trim();
+        // 優先用 _adminLabel(走 _getAdminPlayerLabel + adminShowReal:true)
+        if(_email || _disp){
+          const _label = _adminLabel(_email, _disp);
+          if(_label && _label !== '(無)') return _label;
+        }
+        if(entry.uid) return '玩家' + String(entry.uid).slice(0, 4);
+        return '玩家';
+      }catch(e){
+        return entry.name || '玩家';
+      }
+    };
+
+    // ── 渲染概況 ──
+    function _renderInfo(){
+      try{
+        if(!window._weeklyQuiz){
+          _infoEl.innerHTML = '<span style="color:#ff8888;">⚠️ _weeklyQuiz 模組未掛載</span>';
+          return;
+        }
+        const _thisKey = window._weeklyQuiz.getWeekKey();
+        const _lastKey = window._weeklyQuiz.getLastWeekKey();
+        const _range = window._weeklyQuiz.getWeekRange();
+        const _thisTop = window._weeklyQuiz.getTopN(50) || [];
+        const _failedInfo = window._weeklyQuizSettlementFailed;
+
+        // 從 _cachedGlobalStats 看上週是否已結算
+        const _gs = window._cachedGlobalStats || {};
+        const _settlement = (_gs.weeklyQuizSettlement && _gs.weeklyQuizSettlement[_lastKey]) || null;
+
+        let _settleStatus = '';
+        if(_settlement){
+          if(_settlement.empty){
+            _settleStatus = '<span style="color:#888;">上週無人上榜(已標記)</span>';
+          } else {
+            const _awardCount = _settlement.awards ? Object.keys(_settlement.awards).length : 0;
+            const _settledAt = _settlement.settledAt
+              ? new Date(_settlement.settledAt).toLocaleString('zh-TW')
+              : '?';
+            _settleStatus = '<span style="color:#88ff99;">✅ 已結算('
+              + _awardCount + ' 人 / ' + _settledAt + ')</span>';
+          }
+        } else {
+          _settleStatus = '<span style="color:#ffcc66;">⚠ 上週尚未結算</span>';
+        }
+
+        let _failedBanner = '';
+        if(_failedInfo && _failedInfo.failedUids && _failedInfo.failedUids.length > 0){
+          _failedBanner = '<div style="margin-top:6px;padding:6px 10px;background:rgba(160,40,40,0.3);'
+            + 'border:1px solid #ff8866;border-radius:6px;color:#ffaa88;">'
+            + '⚠ 自動結算有 ' + _failedInfo.failedUids.length + ' 位玩家發獎失敗('
+            + _failedInfo.weekKey + '),請手動補發或設定 Firestore Rules</div>';
+        }
+
+        const _fmtDate = function(d){
+          if(!d) return '?';
+          const m = d.getMonth()+1, day = d.getDate(), h = d.getHours(), mm = d.getMinutes();
+          return m + '/' + day + ' ' + (h<10?'0':'') + h + ':' + (mm<10?'0':'') + mm;
+        };
+
+        _infoEl.innerHTML =
+          '🗓 <b style="color:#88ddff;">本週 ' + _thisKey + '</b>('
+          + _fmtDate(_range.start) + ' ~ ' + _fmtDate(_range.end) + ')<br>'
+          + '📊 目前上榜玩家:<b style="color:#aaffcc;">' + _thisTop.length + ' 人</b>'
+          + (_thisTop.length > 0
+              ? '   🥇 領先:<b style="color:#ffe066;">' + _esc(_formatName(_thisTop[0])) + '</b>('
+                + _thisTop[0].correct + ' 題)' : '') + '<br>'
+          + '📜 上週(' + _lastKey + ') 結算狀態:' + _settleStatus
+          + _failedBanner;
+      }catch(e){
+        _infoEl.innerHTML = '<span style="color:#ff8888;">⚠️ 讀取失敗:' + (e && e.message || e) + '</span>';
+      }
+    }
+
+    _renderInfo();
+    // 訂閱即時同步(weeklyQuizSynced 在 _setupWeeklyQuizV2 內廣播)
+    const _wqAbortCtrl = new AbortController();
+    _adminPanelState.wqAbort = _wqAbortCtrl;
+    document.addEventListener('weeklyQuizSynced', function(){ _renderInfo(); },
+                              { signal: _wqAbortCtrl.signal });
+
+    if(_refreshBtn) _refreshBtn.onclick = _renderInfo;
+
+    // ── 查看本週/上週前 10 名 modal ──
+    function _showWeekDetail(weekKey, title){
+      // 清除舊 modal
+      if(_adminPanelState.wqDetailClose){
+        try{ _adminPanelState.wqDetailClose(); }catch(_){}
+      }
+
+      // 從 _cachedGlobalStats 讀指定週 key 的資料
+      const _gs = window._cachedGlobalStats || {};
+      const _wq = _gs.weeklyQuiz || {};
+      const _weekMap = _wq[weekKey] || {};
+      const _list = [];
+      for(const _uid in _weekMap){
+        const _e = _weekMap[_uid];
+        if(_e && (_e.correct || 0) > 0){
+          _list.push({ uid: _uid, name: _e.name||'', email: _e.email||'', correct: _e.correct||0, lastAt: _e.lastAt||0 });
+        }
+      }
+      _list.sort(function(a,b){
+        if(a.correct !== b.correct) return b.correct - a.correct;
+        return (a.lastAt||0) - (b.lastAt||0);
+      });
+
+      // 看是否已結算(僅上週需要)
+      const _settlement = (_gs.weeklyQuizSettlement && _gs.weeklyQuizSettlement[weekKey]) || null;
+
+      let _rows = '';
+      if(_list.length === 0){
+        _rows = '<div style="padding:30px;text-align:center;color:#888;font-style:italic;">本週還沒有人答對題目</div>';
+      } else {
+        _list.slice(0, 30).forEach(function(e, i){
+          const rank = i + 1;
+          const isTop10 = rank <= 10;
+          const settled = _settlement && _settlement.awards && _settlement.awards[e.uid];
+          let icon = '#' + rank;
+          if(rank === 1) icon = '🥇';
+          else if(rank === 2) icon = '🥈';
+          else if(rank === 3) icon = '🥉';
+
+          let award = '';
+          if(rank === 1) award = '50000幣+10水晶+10書';
+          else if(rank <= 5) award = '35000幣+6水晶+6書';
+          else if(rank <= 10) award = '20000幣+3水晶+3書';
+
+          _rows += '<div style="display:grid;grid-template-columns:50px 1fr 80px 180px;align-items:center;gap:10px;padding:6px 10px;background:rgba(0,0,0,' + (i%2===0?'0.25':'0.4') + ');border-radius:6px;font-size:13px;">'
+            + '<div style="font-weight:900;color:' + (rank<=3?'#ffe066':'#aaa') + ';">' + icon + '</div>'
+            + '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-weight:700;">'
+            +   _esc(_formatName(e))
+            +   '<br><span style="font-size:11px;color:#888;font-weight:400;font-family:monospace;">'
+            +   _esc(e.uid.slice(0,16)) + '...</span></div>'
+            + '<div style="text-align:right;font-weight:800;color:#88ff99;">' + e.correct + ' 題</div>'
+            + '<div style="font-size:11px;color:' + (settled ? '#88ff99' : (isTop10 ? '#ffcc66' : '#666')) + ';text-align:right;">'
+            +   (isTop10
+                  ? (settled
+                      ? '✅ 已結算 ' + (settled.claimedAt ? '(已領)' : '(未領)')
+                      : '⚠ ' + award + ' 待發')
+                  : '(未進前 10)')
+            + '</div>'
+            + '</div>';
+        });
+      }
+
+      const _modal = document.createElement('div');
+      _modal.style.cssText = 'position:fixed;inset:0;z-index:25000;background:rgba(0,0,16,0.82);'
+        + 'display:flex;align-items:center;justify-content:center;padding:20px;';
+      _modal.innerHTML =
+        '<div style="background:linear-gradient(160deg,#1a1232,#0a0815);border:2.5px solid rgba(180,120,255,0.65);'
+        + 'border-radius:14px;padding:20px 24px;max-width:min(96vw,700px);width:100%;max-height:90vh;'
+        + 'display:flex;flex-direction:column;">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+        + '<div style="font-size:22px;font-weight:900;color:#ffe066;">' + _esc(title) + '</div>'
+        + '<button id="_wq-modal-close" style="padding:6px 14px;font-size:14px;background:rgba(60,10,10,0.4);'
+        +   'border:1.5px solid #e84040;color:#e84040;border-radius:6px;cursor:pointer;">✕ 關閉</button>'
+        + '</div>'
+        + '<div style="font-size:13px;color:#aaa;margin-bottom:10px;">'
+        +   '週 key:<code style="color:#88ccff;">' + _esc(weekKey) + '</code> · 共 ' + _list.length + ' 人上榜'
+        + '</div>'
+        + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:4px;">'
+        + _rows + '</div>'
+        + '</div>';
+      _modal.addEventListener('click', function(e){
+        if(e.target === _modal) _closeModal();
+      });
+      document.body.appendChild(_modal);
+
+      function _closeModal(){
+        try{ _modal.remove(); }catch(_){}
+        _adminPanelState.wqDetailClose = null;
+      }
+      document.getElementById('_wq-modal-close').onclick = _closeModal;
+      _adminPanelState.wqDetailClose = _closeModal;
+    }
+
+    if(_viewThisBtn) _viewThisBtn.onclick = function(){
+      const _thisKey = window._weeklyQuiz.getWeekKey();
+      _showWeekDetail(_thisKey, '👀 本週前 30 名');
+    };
+    if(_viewLastBtn) _viewLastBtn.onclick = function(){
+      const _lastKey = window._weeklyQuiz.getLastWeekKey();
+      _showWeekDetail(_lastKey, '📜 上週前 30 名 + 結算狀態');
+    };
+
+    // ── 手動結算上週 ──
+    if(_manualSettleBtn) _manualSettleBtn.onclick = async function(){
+      if(!window._weeklyQuiz || typeof window._weeklyQuiz.trySettleLastWeek !== 'function'){
+        try{ _showSimpleToast('❌ _weeklyQuiz.trySettleLastWeek 不可用', 3000); }catch(_){ alert('❌ _weeklyQuiz.trySettleLastWeek 不可用'); }
+        return;
+      }
+      const _confirmMsg = '🎁 確定要手動結算上週小博士排行榜嗎?<br><br>'
+        + '系統會:<br>'
+        + '① 用 transaction 搶結算鎖(若已結算過會跳過)<br>'
+        + '② 把獎勵 pendingAward 寫入前 10 名玩家的雲端存檔<br>'
+        + '③ 玩家下次登入會自動領取<br><br>'
+        + '⚠ 若 Firestore Rules 未開放跨玩家寫入,部分寫入會失敗,失敗清單會顯示在控制台。';
+
+      const _doSettle = async function(){
+        _manualSettleBtn.disabled = true;
+        _manualSettleBtn.textContent = '🔄 結算中...';
+        try{
+          const _result = await window._weeklyQuiz.trySettleLastWeek();
+          if(_result === true){
+            const _failedInfo = window._weeklyQuizSettlementFailed;
+            if(_failedInfo && _failedInfo.failedUids && _failedInfo.failedUids.length > 0){
+              try{ _showSimpleToast('⚠ 部分發放失敗(' + _failedInfo.failedUids.length + ' 人),請用「補發給單一玩家」補上', 5000); }
+              catch(_){ alert('⚠ 部分發放失敗('+_failedInfo.failedUids.length+' 人),請用「補發給單一玩家」補上'); }
+            } else {
+              try{ _showSimpleToast('✅ 結算完成', 3000); }catch(_){ alert('✅ 結算完成'); }
+            }
+          } else {
+            try{ _showSimpleToast('上週已結算過,跳過(或無人上榜)', 3000); }catch(_){ alert('上週已結算過,跳過(或無人上榜)'); }
+          }
+          _renderInfo();
+        }catch(e){
+          console.error('[手動結算] 失敗', e);
+          try{ _showSimpleToast('❌ 結算失敗:' + (e && e.message || e), 5000); }catch(_){ alert('❌ 結算失敗:'+(e && e.message || e)); }
+        }
+        _manualSettleBtn.disabled = false;
+        _manualSettleBtn.innerHTML = '🎁 手動結算上週並補發前 10 名獎勵';
+      };
+
+      if(typeof _customConfirm === 'function'){
+        _customConfirm(_confirmMsg, _doSettle);
+      } else {
+        if(confirm(_confirmMsg.replace(/<br>/g, '\n'))) await _doSettle();
+      }
+    };
+
+    // ── 補發給單一玩家 ──
+    if(_giveBtn) _giveBtn.onclick = async function(){
+      const _uid = (_uidInput.value || '').trim();
+      if(!_uid){
+        try{ _showSimpleToast('請輸入 uid', 2000); }catch(_){ alert('請輸入 uid'); }
+        return;
+      }
+      const _rank = parseInt(_rankSelect.value, 10);
+      let _coins, _crystals, _books;
+      if(_rank === 1){ _coins = 50000; _crystals = 10; _books = 10; }
+      else if(_rank === 3){ _coins = 35000; _crystals = 6; _books = 6; } // 用 3 代表 2-5 名
+      else if(_rank === 8){ _coins = 20000; _crystals = 3; _books = 3; } // 用 8 代表 6-10 名
+      else {
+        try{ _showSimpleToast('排名選項異常', 2000); }catch(_){ alert('排名選項異常'); }
+        return;
+      }
+
+      const _confirmMsg = '💰 確定要補發給以下玩家?<br><br>'
+        + 'uid: <code style="font-size:12px;">' + _esc(_uid) + '</code><br>'
+        + '排名:' + (_rank === 1 ? '🥇 第 1 名' : _rank === 3 ? '🥈 第 2-5 名' : '🥉 第 6-10 名') + '<br>'
+        + '獎勵:' + _coins + ' 幣 + ' + _crystals + ' 水晶 + ' + _books + ' 本豪華典藏經驗書';
+
+      const _doGive = async function(){
+        _giveBtn.disabled = true;
+        _giveBtn.textContent = '🔄 補發中...';
+        try{
+          // 取 Firestore SDK 需要的 setDoc / doc 函式
+          //   注意:這些是 ES Module import 進來的,放在 window._fbDb 物件相關 API 內
+          const _fbDb = window._fbDb;
+          if(!_fbDb){
+            throw new Error('window._fbDb 不可用');
+          }
+          // 動態載入 Firestore SDK
+          const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          const _doc = _firestoreMod.doc;
+          const _setDoc = _firestoreMod.setDoc;
+
+          const _lastKey = window._weeklyQuiz.getLastWeekKey();
+          await _setDoc(_doc(_fbDb, 'players', _uid), {
+            weeklyQuizPendingAward: {
+              weekKey: _lastKey,
+              rank: _rank,
+              coins: _coins,
+              crystals: _crystals,
+              books: _books,
+              correct: 0,
+              createdAt: Date.now(),
+              claimedAt: null,
+              manual: true,  // ★ 標記為手動補發
+              manualBy: window._gUserId || '',
+            }
+          }, { merge: true });
+          console.log('[手動補發] ✅ uid=' + _uid + ' rank=' + _rank);
+          try{ _showSimpleToast('✅ 補發成功,玩家下次登入會自動領取', 3000); }catch(_){ alert('✅ 補發成功,玩家下次登入會自動領取'); }
+          _uidInput.value = '';
+        }catch(e){
+          console.error('[手動補發] 失敗', e);
+          const _code = e && e.code;
+          let _msg = '❌ 補發失敗:';
+          if(_code === 'permission-denied'){
+            _msg += '\nFirestore Rules 沒開放跨玩家寫入。\n\n請到 Firebase Console 設定 Rules:\n'
+              + 'match /players/{playerUid} {\n'
+              + '  allow read: if request.auth != null && request.auth.uid == playerUid;\n'
+              + '  allow write: if request.auth != null && (\n'
+              + '    request.auth.uid == playerUid\n'
+              + '    || request.resource.data.diff(resource.data).affectedKeys()\n'
+              + '       .hasOnly([\'weeklyQuizPendingAward\'])\n'
+              + '  );\n'
+              + '}';
+          } else {
+            _msg += (e && e.message || e);
+          }
+          try{ _showSimpleToast(_msg.replace(/\n/g, ' '), 6000); }catch(_){ alert(_msg); }
+        }
+        _giveBtn.disabled = false;
+        _giveBtn.innerHTML = '💰 補發';
+      };
+
+      if(typeof _customConfirm === 'function'){
+        _customConfirm(_confirmMsg, _doGive);
+      } else {
+        if(confirm(_confirmMsg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''))) await _doGive();
+      }
+    };
   })();
 }
 
