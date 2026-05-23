@@ -1,10 +1,50 @@
 // ════════════════════════════════════════════════════════════════════
-// game_changelog.js — v3.5.32 ~ v3.5.47 新增條目
+// game_changelog.js — v3.5.32 ~ v3.5.48 新增條目
 // 把以下條目加到 GAME_CHANGELOG 陣列的最前面
-// 順序由新到舊:v3.5.47 → v3.5.46 → v3.5.45 → v3.5.38 → ...
+// 順序由新到舊:v3.5.48 → v3.5.47 → v3.5.46 → v3.5.45 → v3.5.38 → ...
 // (v3.5.33 跳號:中途整合測試用過,未發布)
-// (v3.5.39~v3.5.44 條目應已在老師線上版的 game_changelog.js,本檔補新加的 v3.5.45/46/47)
+// (v3.5.39~v3.5.44 條目應已在老師線上版的 game_changelog.js,本檔補新加的 v3.5.45/46/47/48)
 // ════════════════════════════════════════════════════════════════════
+
+  { ver:'v3.5.48', brief:[
+    '🔧 修「資料還在路上!請確認復原」視窗每次開遊戲都跳的 BUG(其實多數是誤觸發)',
+    '💎 修救援對比視窗「右邊雲端至寶永遠顯示 0 件」的 BUG(看錯欄位)',
+    '🛡 加合理性檢查:本地英雄總等級 ≥50 一律當資料正常,不再誤判空殼',
+    '🛠 管理員 console 指令區塊改用紫色框 + 醒目標籤,明確標示「學生看不到這段」',
+  ], items:[
+    '【BUG 1:救援彈窗每次開遊戲都跳】',
+    '・老師截圖證據:本地「等級總和 3001、最高巫女 Lv.40」明明資料正常,卻說「解鎖角色 0 位是空殼」',
+    '・根因:_getLocalSummary() 用 typeof _unlockedHeroes !== \'undefined\' 判斷,但',
+    '       _unlockedHeroes 這個全域變數根本沒有被宣告(整個程式碼裡 grep 不到 let/var/const)',
+    '・→ typeof 永遠是 undefined → unlocked 永遠回 0 → 觸發「英雄解鎖數異常」誤判',
+    '・修法:解鎖數三源取最大值 — advGetUnlockedHeroes() / _heroLevels 推導 / _unlockedHeroes fallback',
+    '・加合理性檢查:本地 totalLv >= 50 或 maxLv >= 5 → 一律視為「資料正常」,跳過異常偵測',
+    '       (有等級代表資料一定有載入,不可能是空殼)',
+    '・冷卻策略改用 sessionStorage:同 session 內彈過就不再彈,要重新整理才會重新檢查',
+    '・對話框「稍後再說」按鈕文案改成「同 session 內不再跳」更貼近實際行為',
+    '【BUG 2:右邊雲端版本「解鎖至寶 0 件」(根本不對)】',
+    '・根因:_extractDataSummaryForCompare 函式看錯欄位',
+    '       舊版:Array.isArray(data.treasures) 看陣列(這是戰鬥中至寶槽快照)',
+    '       正確:data.taiwanTreasureData 物件(玩家擁有的至寶清單,格式 {id:{lv,exp,equippedTo}})',
+    '・修法:重寫至寶計算,三層來源合併:',
+    '       ① data.taiwanTreasureData 物件(主要來源)→ 從 TAIWAN_TREASURES 抓 name/icon',
+    '       ② data.japanProgress.treasures(日本三神器 boolean)→ 大天狗/酒吞童子/玉藻前',
+    '       ③ data.treasures(舊欄位 fallback,避免破壞既有相容性)',
+    '・本地 _extractLocalLiveSummaryForCompare 同步修(舊版只看 _advTreasures 戰鬥槽,改用 _taiwanTreasureData)',
+    '【BUG 3:管理員 console 指令文字看起來像給所有玩家看的】',
+    '・老師懷疑:全玩家都看得到 _adminPeekCloud / _adminForceReloadFromCloud 文字嗎?',
+    '・確認:程式碼邏輯 (_isAdmin ? "..." : "") 是對的,只有管理員(email 白名單)看得到',
+    '・改善:把這段獨立成紫色框 + 標籤「🛠 管理員專用區塊(學生看不到這段)」,',
+    '       讓老師一眼就知道「啊我是管理員測試所以看到這段,學生不會看到」',
+    '【實作位置】',
+    '・_getLocalSummary 修正:index.html line ~74941',
+    '・_checkMismatch 合理性檢查:index.html line ~74980',
+    '・session 冷卻:index.html line ~74937(SESSION_KEY)',
+    '・_extractDataSummaryForCompare 至寶大修:index.html line ~75444',
+    '・_extractLocalLiveSummaryForCompare 同步修:index.html line ~75554',
+    '・管理員區塊醒目化:index.html line ~75052',
+    '・CURRENT_VERSION 與 window._GAME_LOADED_VERSION 同步升級為 v3.5.48',
+  ] },
 
   { ver:'v3.5.47', brief:[
     '🎯 大整合版本:把過去幾次零散的改動全部到位 — GM 後台改版 + 對比表 + 版本通知 + iPad 捲動',
