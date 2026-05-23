@@ -1,7 +1,11 @@
 // ════════════════════════════════════════════════════════════════════════════
 // admin_panel.js — LXPSGAME 管理員後台功能(獨立模組,lazy load)
 // ────────────────────────────────────────────────────────────────────────────
-// 抽出版本: v3.5.45(2026-05-23)
+// 抽出版本: v3.5.45(2026-05-23)首次抽出
+// 改動歷史: v3.5.47(2026-05-23) — 套用 v3.5.44 GM 後台改版
+//             • 標題改為「🛠️ 遊戲管理員(GM)專用功能選單」
+//             • PC 版(寬≥1024 高≥900)放大 200% + 置中
+//             • 14 個區段依重要性 flex order 重排,7 個無 id 區段補上 id
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -87,16 +91,84 @@ async function _showAdminStatsPanelImpl(){
         #_admin-stats-panel [style*="line-height:1.6"],
         #_admin-stats-panel [style*="line-height:1.7"] { line-height: 1.35 !important; }
       }
+      /* ★ v3.5.47 — PC 版面板放大 200%(寬高 + 字級 + 內距全部 1.6~2 倍)
+         觸發:寬 ≥ 1024 且 高 ≥ 900(避免縮小視窗下還是被放大) */
+      @media (min-width: 1024px) and (min-height: 900px) {
+        #_admin-stats-panel { padding: 24px !important; }
+        #_admin-stats-panel > ._admin-stats-card {
+          width: min(1120px, 96vw) !important;
+          max-height: calc(100vh - 48px) !important;
+          padding: 56px 64px !important;
+          border-width: 5px !important;
+          border-radius: 28px !important;
+        }
+        #_admin-stats-panel ._admin-stats-title { font-size: 48px !important; margin-bottom: 28px !important; letter-spacing: 3px !important; }
+        #_admin-stats-panel [style*="font-size:18px"] { font-size: 32px !important; margin-bottom: 14px !important; }
+        #_admin-stats-panel [style*="font-size:15px"] { font-size: 24px !important; line-height: 1.7 !important; }
+        #_admin-stats-panel [style*="font-size:14px"] { font-size: 22px !important; line-height: 1.7 !important; }
+        #_admin-stats-panel [style*="font-size:13px"] { font-size: 20px !important; line-height: 1.7 !important; }
+        #_admin-stats-panel [style*="font-size:12px"] { font-size: 18px !important; line-height: 1.65 !important; }
+        #_admin-stats-panel [style*="font-size:26px"] { font-size: 48px !important; }
+        #_admin-stats-panel [style*="font-size:22px"] { font-size: 40px !important; }
+        #_admin-stats-panel [style*="font-size:16px"] { font-size: 26px !important; }
+        #_admin-stats-panel button {
+          font-size: 22px !important;
+          padding: 18px 32px !important;
+          border-radius: 12px !important;
+        }
+        #_admin-stats-panel button[style*="padding:8px"] { padding: 14px 24px !important; font-size: 20px !important; }
+        #_admin-stats-panel button[style*="padding:7px"] { padding: 12px 20px !important; font-size: 18px !important; }
+        #_admin-stats-panel button[style*="padding:6px"] { padding: 12px 20px !important; font-size: 18px !important; }
+        #_admin-stats-panel input,
+        #_admin-stats-panel textarea,
+        #_admin-stats-panel select {
+          font-size: 22px !important;
+          padding: 16px 22px !important;
+          border-radius: 12px !important;
+        }
+        #_admin-stats-panel [style*="padding:16px"] { padding: 28px !important; border-radius: 16px !important; }
+        #_admin-stats-panel [style*="padding:12px"] { padding: 20px !important; }
+        #_admin-stats-panel [style*="padding:10px"] { padding: 18px !important; }
+        #_admin-stats-panel [style*="margin-bottom:22px"] { margin-bottom: 36px !important; }
+        #_admin-stats-panel [style*="margin-bottom:14px"] { margin-bottom: 24px !important; }
+        #_admin-stats-panel [style*="margin-bottom:12px"] { margin-bottom: 20px !important; }
+        #_admin-stats-panel [style*="margin-bottom:10px"] { margin-bottom: 18px !important; }
+        #_admin-stats-panel [style*="margin-bottom:8px"] { margin-bottom: 14px !important; }
+        #_admin-stats-panel [style*="border:2px solid"] { border-width: 3px !important; }
+        #_admin-stats-panel [style*="border:1.5px solid"] { border-width: 2.5px !important; }
+        #_admin-stats-panel code,
+        #_admin-stats-panel kbd { font-size: 20px !important; padding: 4px 8px !important; }
+      }
+      /* ★ v3.5.47 — 區段順序依重要性重排(用 flex order 控制,不動 DOM 順序) */
+      #_admin-stats-panel ._admin-stats-card { display: flex; flex-direction: column; }
+      #_admin-stats-panel ._admin-stats-card > ._admin-stats-title { order: -100; }
+      #_admin-stats-panel ._admin-stats-card > ._admin-stats-subtitle { order: -99; }
+      #_admin-maint-section { order: 1; }              /* 維修模式 */
+      #_admin-gm-section { order: 2; }                  /* GM 公告 */
+      #_admin-bug-section { order: 3; }                 /* 接收錯誤回報 */
+      #_admin-lv1-section { order: 4; }                 /* Lv1 救援 */
+      #_admin-rescue-section { order: 5; }              /* 玩家急救 */
+      #_admin-comp-section { order: 6; }                /* 學生補償 */
+      #_admin-dlperm-section { order: 7; }              /* 下載權限 */
+      #_admin-sus-section { order: 8; }                 /* 可疑帳號 */
+      #_admin-wblb-section { order: 9; }                /* 世界 BOSS 榜 */
+      #_admin-bypass-section { order: 10; }             /* 解除冷卻 */
+      #_admin-test-batch-section { order: 11; }         /* 測試批次 */
+      #_admin-backfill-players-section { order: 12; }   /* 回填總玩家 */
+      #_admin-set-players-section { order: 13; }        /* 設定總玩家 */
+      #_admin-set-adv-section { order: 14; }            /* 設定累計冒險 */
+      #_admin-close { order: 999; }                     /* 關閉永遠在最下 */
     </style>
-    <div style="background:linear-gradient(135deg,rgba(20,30,50,0.98),rgba(10,15,30,0.99));
+    <!-- ★ v3.5.47 — PC 版面板放大 200%、置中,標題改為「遊戲管理員(GM)專用功能選單」 -->
+    <div class="_admin-stats-card" style="background:linear-gradient(135deg,rgba(20,30,50,0.98),rgba(10,15,30,0.99));
       border:3px solid rgba(212,168,67,0.7);border-radius:20px;padding:32px 40px;
       width:min(560px, 100%);max-height:calc(100vh - 40px);overflow-y:auto;
-      box-sizing:border-box;color:#eee;">
-      <div style="font-size:26px;font-weight:900;color:#ffcc44;margin-bottom:18px;text-align:center;letter-spacing:2px;">
-        🛠️ 人數統計管理工具
+      box-sizing:border-box;color:#eee;margin:0 auto;">
+      <div class="_admin-stats-title" style="font-size:26px;font-weight:900;color:#ffcc44;margin-bottom:18px;text-align:center;letter-spacing:2px;">
+        🛠️ 遊戲管理員(GM)專用功能選單
       </div>
-      <div style="font-size:15px;color:#aaa;margin-bottom:22px;line-height:1.6;">
-        僅限管理員使用。以下操作會直接覆寫 Firestore 中的統計數值，請謹慎使用。
+      <div class="_admin-stats-subtitle" style="font-size:15px;color:#aaa;margin-bottom:22px;line-height:1.6;">
+        僅限管理員使用。以下操作會直接覆寫 Firestore 中的資料，請謹慎使用。功能依重要性由上至下排列。
       </div>
 
       <div id="_admin-maint-section" style="background:rgba(60,20,20,0.4);border:2px solid rgba(255,100,100,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
@@ -185,7 +257,7 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-gm-result" style="margin-top:10px;font-size:14px;"></div>
       </div>
 
-      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,200,50,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
+      <div id="_admin-backfill-players-section" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,200,50,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ffd966;margin-bottom:8px;">📊 1. 回填總玩家數</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           掃描 Firestore 的 <code style="color:#88ccff;">/players</code> 集合中所有文件，把總數設定為 <code style="color:#88ccff;">totalPlayers</code>。
@@ -199,7 +271,7 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-backfill-result" style="margin-top:10px;font-size:14px;color:#88ff88;"></div>
       </div>
 
-      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(100,220,255,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
+      <div id="_admin-set-players-section" style="background:rgba(0,0,0,0.4);border:1px solid rgba(100,220,255,0.3);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#88ddff;margin-bottom:8px;">👥 1b. 手動設定總玩家數</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           直接設定 <code style="color:#88ccff;">totalPlayers</code> 的絕對值（非累加）。
@@ -218,7 +290,7 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-players-result" style="margin-top:10px;font-size:14px;color:#88ccff;"></div>
       </div>
 
-      <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,150,200,0.3);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-set-adv-section" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,150,200,0.3);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#ff99cc;margin-bottom:8px;">⚔️ 2. 手動設定累計冒險次數</div>
         <div style="font-size:14px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           直接設定 <code style="color:#88ccff;">totalAdventures</code> 的絕對值（非累加）。
@@ -237,7 +309,7 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-adv-result" style="margin-top:10px;font-size:14px;color:#ff99cc;"></div>
       </div>
 
-      <div style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-rescue-section" style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#cc99ff;margin-bottom:8px;">🚑 3. 玩家資料急救工具</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           用於救援被 1.0.20260419.1930 之前 bug 誤清空的玩家資料。輸入受害玩家 uid,診斷殘存資料後可自訂補償。<br>
@@ -305,7 +377,7 @@ async function _showAdminStatsPanelImpl(){
           - 採「保留現有資料再覇上去」策略 (3 號是還原式,清空後重建)
           - 自動記錄補償次數 + 歷史 (寫 _compensationHistory 欄位)
       -->
-      <div style="background:rgba(50,30,20,0.45);border:2px solid rgba(255,180,100,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-comp-section" style="background:rgba(50,30,20,0.45);border:2px solid rgba(255,180,100,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#ffbb66;margin-bottom:8px;">🎁 3.5 學生補償工具(指定信箱)</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           憑學生回憶補發角色與資源。<b style="color:#ffcc88;">保留現有資料再加上去</b>(取最大值合併),不會弄丟任何已有的角色或進度。<br>
@@ -542,7 +614,7 @@ async function _showAdminStatsPanelImpl(){
           - 3.7 號讀三個地方(main / live / safe)並推薦最豐富的當還原來源
           - 用「整槽複製」方式還原,不需要憑學生回憶手動填資源數量
       -->
-      <div style="background:rgba(60,20,30,0.55);border:2px solid rgba(255,120,150,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-lv1-section" style="background:rgba(60,20,30,0.55);border:2px solid rgba(255,120,150,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#ff99bb;margin-bottom:8px;">🆘 3.7 救援工具(雲端三槽救援 + 反污染保護)</div>
         <div style="font-size:13px;color:#ddd;margin-bottom:12px;line-height:1.55;">
           專為「<b style="color:#ffcc88;">學生帳號變回 Lv1 / 進度被本地汙染版覆蓋</b>」的場景。<br>
@@ -600,7 +672,7 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-lv1-result" style="margin-top:8px;font-size:13px;color:#ffbbcc;line-height:1.6;"></div>
       </div>
 
-      <div style="background:rgba(20,40,60,0.45);border:2px solid rgba(100,200,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-test-batch-section" style="background:rgba(20,40,60,0.45);border:2px solid rgba(100,200,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#88ddff;margin-bottom:8px;">🧪 4. 測試工具：批次設定數值</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           只修改你<b>自己</b>的存檔(本地+雲端)，方便快速測試遊戲內容。<br>
