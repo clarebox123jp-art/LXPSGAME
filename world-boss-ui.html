@@ -1272,7 +1272,32 @@
       else if(rank === 3) rankIcon = '🥉';
       const _names = Array.isArray(e.teamNames) ? e.teamNames.slice(0, 4) : [];
       while(_names.length < 4) _names.push('—');
-      const _namesHtml = _names.map(n => _esc(n)).join('・');
+      // ★ v3.5.58 — 世界 BOSS 排行榜玩家名稱真名保護(個資保護優先)
+      //   排行榜是「全玩家看得到」的公開資訊,若有學生把暱稱設成自己的真名,
+      //   會在排行榜上被全班看到 → 個資外洩。
+      //   策略:不論誰在看(管理員或玩家),只要 name 不是合法詞庫組合(_NICK_ADJ+_NICK_NOUN)
+      //         → 視為真名,顯示為「***同學」泛稱保護
+      //   排行榜資料只有 name 沒有 email,無法反查名冊得到班級座號;若未來加入 teamEmails
+      //   寫入,可改用 _getAdminPlayerLabel(email, name) 補上短碼「5324蔣同學」。
+      const _protectName = function(n){
+        if(!n || typeof n !== 'string') return '—';
+        const _t = n.trim();
+        if(!_t || _t === '—') return '—';
+        // 常見泛稱直接放行
+        if(_t === '玩家' || _t === '房主' || _t === 'AI' || _t === 'NPC') return _t;
+        // 全部走真名保護(用 _getAdminPlayerLabel 統一邏輯)
+        try{
+          if(typeof window._getAdminPlayerLabel === 'function'){
+            return window._getAdminPlayerLabel('', _t, { protectIfNoEmail: true });
+          }
+          // fallback:直接走 _isLikelyRealName
+          if(typeof window._isLikelyRealName === 'function' && window._isLikelyRealName(_t)){
+            return '***同學';
+          }
+        }catch(_){}
+        return _t;
+      };
+      const _namesHtml = _names.map(n => _esc(_protectName(n))).join('・');
       const _bg = isMyTeam
         ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
         : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
@@ -4012,11 +4037,58 @@
     const ov = document.getElementById('wb-invite-friends-overlay');
     if(ov) ov.style.display = 'block';
     _wbRenderInviteFriendsList();
+    // ★ v3.5.59 — 啟動好友線上狀態訂閱
+    try{ _wbStartInvitePresenceWatch(); }catch(e){ console.warn('[v3.5.59 啟動邀請彈窗線上訂閱失敗]', e); }
   };
   window._wbUiCloseInviteFriends = function(){
     const ov = document.getElementById('wb-invite-friends-overlay');
     if(ov) ov.style.display = 'none';
+    // ★ v3.5.59 — 關彈窗時 unsub(節省 Firestore 配額)
+    try{ _wbStopInvitePresenceWatch(); }catch(_){}
   };
+
+  // ════════════════════════════════════════════════════════════
+  // ★ v3.5.59 — 世界 BOSS 邀請彈窗 線上狀態訂閱管理
+  //   彈窗開時訂閱、關時 unsub
+  // ════════════════════════════════════════════════════════════
+  var _wbInvitePresenceUnsub = null;
+  var _wbInvitePresenceStatusMap = {};
+
+  function _wbStartInvitePresenceWatch(){
+    _wbStopInvitePresenceWatch();
+    if(typeof window._fbWatchFriendsPresence !== 'function') return;
+    const friends = (typeof window._friendList !== 'undefined' && Array.isArray(window._friendList))
+                    ? window._friendList : [];
+    const uids = friends.map(function(f){ return f && f.uid; }).filter(Boolean);
+    if(uids.length === 0) return;
+    _wbInvitePresenceUnsub = window._fbWatchFriendsPresence(uids, function(statusMap){
+      _wbInvitePresenceStatusMap = statusMap || {};
+      _wbApplyInvitePresenceDots();
+    });
+  }
+  function _wbStopInvitePresenceWatch(){
+    try{ if(typeof _wbInvitePresenceUnsub === 'function') _wbInvitePresenceUnsub(); }catch(_){}
+    _wbInvitePresenceUnsub = null;
+  }
+  function _wbApplyInvitePresenceDots(){
+    const map = _wbInvitePresenceStatusMap || {};
+    const dots = document.querySelectorAll('._wbif-presence-dot');
+    if(!dots || dots.length === 0) return;
+    dots.forEach(function(el){
+      const uid = el.getAttribute('data-friend-uid');
+      const status = map[uid] || 'offline';
+      const info = (typeof window._formatPresenceStatus === 'function')
+        ? window._formatPresenceStatus(status)
+        : { color: '#777', label: '離線' };
+      el.style.background = info.color;
+      el.title = info.label;
+      if(status === 'online'){
+        el.style.boxShadow = '0 0 6px 1px ' + info.color;
+      } else {
+        el.style.boxShadow = 'none';
+      }
+    });
+  }
 
   function _wbRenderInviteFriendsList(){
     const box = document.getElementById('wb-if-list');
@@ -4060,6 +4132,17 @@
       const nameEsc = _wbIfEsc(name);
       const callArgs = '&#39;' + uidEsc + '&#39;,&#39;' + nameEsc + '&#39;';
 
+      // ★ v3.5.59 — 邀請好友顯示走管理員後台保護版(個資保護,加班級短碼)
+      //   原因:邀請彈窗實際上會把好友名字寫進 Firestore invites 集合,可能流到對方 device
+      //         走個資保護版(顯示「5324蔣同學」而非真名),跟世界 BOSS 排行榜方向一致
+      var displayLabel = name;
+      try{
+        if(typeof window._getAdminPlayerLabel === 'function'){
+          displayLabel = window._getAdminPlayerLabel(f.email || '', name, { protectIfNoEmail: true });
+        }
+      }catch(_){}
+      const displayLabelEsc = _wbIfEsc(displayLabel);
+
       let btnHtml;
       if(alreadyInRoom){
         btnHtml = '<button class="wb-if-friend-btn accepted" disabled>已在房內</button>';
@@ -4097,14 +4180,21 @@
                   callArgs + ')">邀請</button>';
       }
 
+      // ★ v3.5.59 — 名字前加線上燈號 span(訂閱 callback 觸發時更新)
       return (
         '<div class="wb-if-friend">' +
-          '<div class="wb-if-friend-name">👤 ' + nameEsc + '</div>' +
+          '<div class="wb-if-friend-name">' +
+            '<span class="_wbif-presence-dot" data-friend-uid="' + uidEsc + '" title="離線" ' +
+            'style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#777;margin-right:6px;vertical-align:middle;"></span>' +
+            '👤 ' + displayLabelEsc +
+          '</div>' +
           btnHtml +
         '</div>'
       );
     }).join('');
     box.innerHTML = html;
+    // ★ v3.5.59 — 渲染完成,立刻套用目前的線上狀態(若訂閱已啟動)
+    try{ if(typeof _wbApplyInvitePresenceDots === 'function') _wbApplyInvitePresenceDots(); }catch(_){}
   }
 
   window._wbUiSendInvite = async function(toUid, toName){

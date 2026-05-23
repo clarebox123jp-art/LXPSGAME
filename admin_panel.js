@@ -33,6 +33,24 @@
 // 這樣自動掛到 window 上,index.html 的 stub 可直接呼叫
 // (用 IIFE 的話 function declaration 會被困在 IIFE 內,反而要再多一行 expose)
 
+// ════════════════════════════════════════════════════════════════════
+// ★ v3.5.58 — 管理員後台統一玩家標籤 helper(本檔內部用)
+//   薄包裝 window._getAdminPlayerLabel,加上容錯 fallback
+//   用法: _adminLabel(email, displayName) → '5324蔣同學(快樂的小狐狸)' 或原 displayName
+//   若 index.html 還沒部署 v3.5.58 → 自動退回原 displayName,不會掛掉
+// ════════════════════════════════════════════════════════════════════
+function _adminLabel(email, displayName){
+  try{
+    if(typeof window._getAdminPlayerLabel === 'function'){
+      return window._getAdminPlayerLabel(email, displayName);
+    }
+  }catch(_){}
+  // fallback:index.html 未部署 v3.5.58
+  return displayName || email || '(無)';
+}
+// 也掛到 window 給外部 console 用
+try{ window._adminLabel = _adminLabel; }catch(_){}
+
 async function _showAdminStatsPanelImpl(){
   // 若已開啟則不重開
   if(document.getElementById('_admin-stats-panel')) return;
@@ -1667,7 +1685,7 @@ async function _showAdminStatsPanelImpl(){
         + '<div style="color:' + statusColor + ';font-weight:700;margin-bottom:6px;">' + statusText + '</div>'
         + '<div><b>uid:</b> <code style="color:#88ccff;">' + uid + '</code></div>'
         + '<div><b>email:</b> ' + (d.email || '(無)') + '</div>'
-        + '<div><b>暱稱:</b> ' + (d.displayName || '(無)') + '</div>'
+        + '<div><b>學生:</b> ' + _adminLabel(d.email, d.displayName) + '</div>'
         + '<div><b>最後存檔:</b> ' + savedStr + '</div>'
         + '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:6px 0;">'
         + '<div>💰 知識幣: <b style="color:' + (d.knowledgeCoins === 0 && d.looksDamaged ? '#ff8888' : '#ffee88') + ';">' + d.knowledgeCoins + '</b></div>'
@@ -2026,7 +2044,7 @@ async function _showAdminStatsPanelImpl(){
           + '<div style="color:#88ff88;font-weight:700;margin-bottom:6px;">✅ 已找到玩家</div>'
           + '<div><b>uid:</b> <code style="color:#88ccff;">' + _targetUid + '</code></div>'
           + '<div><b>email:</b> ' + (_foundData.email || '(無)') + '</div>'
-          + '<div><b>暱稱:</b> ' + (_foundData.displayName || '(無)') + '</div>'
+          + '<div><b>學生:</b> ' + _adminLabel(_foundData.email, _foundData.displayName) + '</div>'
           + '<div><b>最後存檔:</b> ' + savedStr + '</div>'
           + '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:6px 0;">'
           + '<div>💰 現有知識幣: <b style="color:#ffee88;">' + _coins + '</b></div>'
@@ -2934,7 +2952,7 @@ async function _showAdminStatsPanelImpl(){
           + '<div style="color:#ffaaaa;font-weight:700;margin-bottom:6px;">⚠ 已找到玩家(以下資料將被<u>完全清空</u>)</div>'
           + '<div><b>uid:</b> <code style="color:#88ccff;">' + _esc(_targetUid) + '</code></div>'
           + '<div><b>email:</b> ' + _esc(_foundData.email || '(無)') + '</div>'
-          + '<div><b>暱稱:</b> ' + _esc(_foundData.displayName || '(無)') + '</div>'
+          + '<div><b>學生:</b> ' + _esc(_adminLabel(_foundData.email, _foundData.displayName)) + '</div>'
           + '<div><b>最後存檔:</b> ' + _esc(savedStr) + '</div>'
           + '<hr style="border:none;border-top:1px solid rgba(255,100,100,0.25);margin:6px 0;">'
           + '<div>💰 知識幣: <b style="color:#ffee88;">' + _coins + '</b> <span style="color:#ff8888;">→ 將被清空</span></div>'
@@ -3119,7 +3137,7 @@ async function _showAdminStatsPanelImpl(){
       let html = '<div style="margin-bottom:8px;"><b>uid:</b> <code style="color:#88ccff;">' + uid + '</code></div>';
       if(d.mainDoc && d.mainDoc.exists){
         html += '<div style="font-size:12px;color:#aaa;margin-bottom:8px;">'
-          + 'email: ' + (d.mainDoc.email || '(無)') + ' | 暱稱: ' + (d.mainDoc.displayName || '(無)')
+          + '學生: ' + _adminLabel(d.mainDoc.email, d.mainDoc.displayName)
           + '</div>';
       }
       html += _renderSlot('① 主文件 (players/' + uid.slice(0,8) + '...)', 'main', d.mainDoc, d.scores, _bestKey);
@@ -3599,7 +3617,7 @@ async function _showAdminStatsPanelImpl(){
         _html += '<div style="background:rgba(20,30,40,0.7);border:1px solid rgba(120,180,160,0.3);border-radius:8px;padding:10px 12px;margin-bottom:6px;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">' +
             _statusBadge(p._displayStatus) +
-            '<span style="font-size:14px;color:#fff;font-weight:700;">' + _esc(p.displayName || '(無暱稱)') + '</span>' +
+            '<span style="font-size:14px;color:#fff;font-weight:700;">' + _esc(_adminLabel(p.email, p.displayName)) + '</span>' +
             '<span style="font-size:12px;color:#aaa;">' + _esc(p.email || '') + '</span>' +
           '</div>' +
           '<div style="font-size:11px;color:#888;margin-bottom:6px;">' +
@@ -3740,7 +3758,7 @@ async function _showAdminStatsPanelImpl(){
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">' +
             _severityBadge(p.severity) +
             (p._suspended ? '<span style="font-size:11px;padding:2px 8px;background:rgba(80,40,80,0.6);color:#ffaaff;border-radius:6px;font-weight:700;">已停權</span>' : '') +
-            '<span style="font-size:14px;color:#fff;font-weight:700;">' + _esc(p.displayName || '(無暱稱)') + '</span>' +
+            '<span style="font-size:14px;color:#fff;font-weight:700;">' + _esc(_adminLabel(p.email, p.displayName)) + '</span>' +
             '<span style="font-size:12px;color:#aaa;">' + _esc(p.email || '') + '</span>' +
           '</div>' +
           '<div style="font-size:12px;color:#ddcc99;line-height:1.6;margin-bottom:6px;background:rgba(0,0,0,0.3);padding:6px 8px;border-radius:5px;">' +
@@ -3757,7 +3775,7 @@ async function _showAdminStatsPanelImpl(){
               ? '<button class="_sus-unsuspend" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
                 'background:rgba(40,120,80,0.5);border:1.5px solid #66cc99;color:#aaffcc;border-radius:6px;cursor:pointer;font-family:inherit;">' +
                 '✅ 解除停權</button>'
-              : '<button class="_sus-suspend" data-uid="' + _esc(p.uid) + '" data-name="' + _esc(p.displayName || '') + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
+              : '<button class="_sus-suspend" data-uid="' + _esc(p.uid) + '" data-name="' + _esc(_adminLabel(p.email, p.displayName)) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
                 'background:rgba(120,40,40,0.5);border:1.5px solid #ff8888;color:#ffcccc;border-radius:6px;cursor:pointer;font-family:inherit;">' +
                 '🚫 停權此帳號</button>') +
             '<button class="_sus-inspect" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:12px;font-weight:700;' +
@@ -3807,7 +3825,7 @@ async function _showAdminStatsPanelImpl(){
           alert(
             '【可疑帳號詳細】\n' +
             'uid: ' + _p.uid + '\n' +
-            '暱稱: ' + (_p.displayName || '(無)') + '\n' +
+            '學生: ' + _adminLabel(_p.email, _p.displayName) + '\n' +
             '信箱: ' + (_p.email || '(無)') + '\n' +
             '嚴重度: ' + (_p.severity === 'alert' ? '嚴重' : '警告') + '\n' +
             '\n偵測原因:\n' + _p.reasons.map(r => '・' + r).join('\n') +
@@ -4006,9 +4024,16 @@ async function _showAdminStatsPanelImpl(){
       }
       if(Array.isArray(teamNames) && teamNames.length > 0){
         return teamNames.filter(Boolean).map(function(n){
+          // ★ v3.5.58 — 真名保護(無 email 時走規則法,真名替換為「***同學」)
+          let _safe = n;
+          try{
+            if(typeof window._getAdminPlayerLabel === 'function'){
+              _safe = window._getAdminPlayerLabel('', n, { protectIfNoEmail: true });
+            }
+          }catch(_){}
           return '<span style="display:inline-block;padding:2px 7px;margin:1px 3px 1px 0;' +
                  'background:rgba(80,60,120,0.5);border:1px solid rgba(160,140,220,0.4);' +
-                 'border-radius:10px;font-size:11px;color:#ddd;">' + n + '</span>';
+                 'border-radius:10px;font-size:11px;color:#ddd;">' + _safe + '</span>';
         }).join('');
       }
       return '<span style="color:#888;">（無英雄資料）</span>';
@@ -4032,9 +4057,16 @@ async function _showAdminStatsPanelImpl(){
       });
       const _grandTotal = _totalReal + _totalFixed;
 
-      // 玩家暱稱顯示
+      // 玩家暱稱顯示 — ★ v3.5.58 真名保護:無 email 時走規則法把疑似真名替換為「***同學」
       const _nameStr = Array.isArray(entry.teamNames)
-        ? entry.teamNames.filter(Boolean).join(' / ') : '?';
+        ? entry.teamNames.filter(Boolean).map(function(n){
+            try{
+              if(typeof window._getAdminPlayerLabel === 'function'){
+                return window._getAdminPlayerLabel('', n, { protectIfNoEmail: true });
+              }
+            }catch(_){}
+            return n;
+          }).join(' / ') : '?';
       // 最近一場戰鬥時間 + 傷害
       const _lastBattleTime = entry.lastBattleAt
         ? new Date(entry.lastBattleAt).toLocaleString('zh-TW')
