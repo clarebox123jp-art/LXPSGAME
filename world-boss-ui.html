@@ -1042,37 +1042,7 @@
 
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
-    <!-- ★ FIX 20260519(v12) — 在按鈕上方加「當前排行榜」面板 -->
-    <div id="wb-current-leaderboard" style="margin-bottom:20px;padding:14px 18px;
-      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
-      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
-      box-shadow:0 0 18px rgba(212,168,67,0.25);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
-        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
-          🏆 當前排行榜 — 維蘇威火山龍王
-        </div>
-        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
-          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
-          border-radius:8px;cursor:pointer;font-family:inherit;">
-          🔄 刷新
-        </button>
-      </div>
-      <!-- ★ FIX 20260519(v13) — 尾刀 + 結算規則說明 -->
-      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
-        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
-        font-size:13px;color:#aabbdd;line-height:1.6;">
-        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
-        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
-        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
-        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
-      </div>
-      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
-        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
-          排行榜載入中...
-        </div>
-      </div>
-    </div>
-
+    <!-- ★ v3.5.61 — 排行榜從這裡移到「排名獎勵」下方(老師需求:排名獎勵 → 當前排行榜 才是合理閱讀順序) -->
     <div class="wb-entry-btn-row">
       <div class="wb-entry-big-btn" onclick="_wbUiOpenVisibilityChoice()">
         <span class="ico">🏰</span>
@@ -1127,6 +1097,37 @@
         <br>同一隻 BOSS 期間,你跟同房間隊友打過的所有場次傷害會累積計算。
       </div>
       <div id="wb-reward-tier-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:8px;font-size:24px;"></div>
+    </div>
+
+    <!-- ★ v3.5.61 — 當前排行榜:從入口按鈕上方搬到「排名獎勵」下方(老師需求:閱讀順序更合理) -->
+    <!-- ★ FIX 20260519(v12)(原)— 排行榜面板;FIX 20260519(v13)— 尾刀 + 結算規則 -->
+    <div id="wb-current-leaderboard" style="margin-top:20px;margin-bottom:20px;padding:14px 18px;
+      background:linear-gradient(135deg,rgba(60,30,80,0.55),rgba(40,20,60,0.55));
+      border:2.5px solid rgba(212,168,67,0.65);border-radius:14px;
+      box-shadow:0 0 18px rgba(212,168,67,0.25);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
+          🏆 當前排行榜 — 維蘇威火山龍王
+        </div>
+        <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
+          background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
+          border-radius:8px;cursor:pointer;font-family:inherit;">
+          🔄 刷新
+        </button>
+      </div>
+      <div id="wb-leaderboard-rules" style="margin-bottom:10px;padding:8px 12px;
+        background:rgba(40,20,60,0.5);border:1px solid rgba(168,132,255,0.3);border-radius:8px;
+        font-size:13px;color:#aabbdd;line-height:1.6;">
+        💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
+        若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
+        🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
+        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
+      </div>
+      <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
+        <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
+          排行榜載入中...
+        </div>
+      </div>
     </div>
 
     <!-- ★ v2.0 — 8 隻元素龍預告 -->
@@ -2283,6 +2284,24 @@
   /* 原問題: 定型文佔太大蓋住「房主代理」按鈕、開戰按鈕被擠到視窗外    */
   /* 解法: 定型文字/padding 縮小一半, 開戰區仍 sticky 釘底兜底       */
   /* ════════════════════════════════════════════════════════════════ */
+  /* ════════════════════════════════════════════════════════════════ */
+  /* ★ v3.5.61(2026-05-23) — PC 全螢幕預設縮放(老師需求:圖 1 太大、圖 2 才是想要的比例) */
+  /* ─────────────────────────────────────────────────────────────── */
+  /* 觸發條件:寬螢幕(≥1400px 橫向)— iPad/手機完全不影響(都走下方 ≤1180 規則) */
+  /* 解法:用 zoom:0.85 對 .wb-tc-card 等比縮小(Chrome/Safari/Edge 支援) */
+  /*       zoom 跟 transform:scale 的差別:                              */
+  /*         - zoom 會「真的」縮小 layout 寬高,不會留視覺空白             */
+  /*         - 滾動、點擊、座標映射全部自動正確                          */
+  /*         - 子元素的 vh/vw 計算依然正確                              */
+  /*       Firefox 從 ~2024 起也支援 zoom,目標瀏覽器都 OK。              */
+  /* 視覺效果:整張卡片內容像老師圖 2 那樣縮成 85%,周圍會有適當留白    */
+  /*           讓畫面看起來「比較鬆」、不再撐滿到貼邊。                  */
+  /* ─────────────────────────────────────────────────────────────── */
+  @media (min-width:1400px) and (orientation:landscape){
+    .wb-tc-card{
+      zoom:0.85;
+    }
+  }
   @media (max-width:1180px){
     .wb-tc-quickmsg-zone{
       padding:6px 10px 8px;
