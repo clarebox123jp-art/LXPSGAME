@@ -2993,10 +2993,93 @@
                 });
               }catch(_){}
               if(_teamKey){
+                // ★★★ v3.5.43 — 計算四個冠軍 + 收集 dmgSources(老師需求) ★★★
+                //   只統計 *Real 欄位(已排除答題獎勵 / 聯手爆發 / 固定傷害)
+                //   teamHeroes 對應 _Gr.p1[0..3](玩家四隻英雄)
+                let _championStats = null;
+                try {
+                  const _bs = (_Gr && _Gr.battleStats) || {};
+                  const _heroEntries = _teamHeroes.map((th, idx) => {
+                    const _name = th && th.name;
+                    const _lv = th && th.lv || 1;
+                    const _s = (_name && _bs[_name]) || {};
+                    return {
+                      slot: idx,
+                      name: _name || '?',
+                      lv: _lv,
+                      dmgReal: _s.dmgReal || 0,
+                      healReal: _s.healReal || 0,
+                      dmgTakenReal: _s.dmgTakenReal || 0,
+                      statusCount: _s.statusCount || 0,
+                      statusTurnSum: _s.statusTurnSum || 0,
+                      // 控場分數 = 次數×10 + 持續回合 (給「最強控場」評比)
+                      ctrlScore: ((_s.statusCount||0) * 10) + (_s.statusTurnSum||0),
+                    };
+                  });
+                  // 找各項冠軍(若全部都 0,該欄位留 null)
+                  const _findTop = (field) => {
+                    const _max = Math.max(0, ...(_heroEntries.map(e => e[field] || 0)));
+                    if(_max === 0) return null;
+                    const _winner = _heroEntries.find(e => (e[field] || 0) === _max);
+                    if(!_winner) return null;
+                    return { name: _winner.name, lv: _winner.lv, value: _max };
+                  };
+                  _championStats = {
+                    topDmg:  _findTop('dmgReal'),       // 最高累積傷害(扣除固定)
+                    topHeal: _findTop('healReal'),      // 最高累積治療
+                    topTank: _findTop('dmgTakenReal'),  // 最強肉盾(承傷越多越強)
+                    topCtrl: _findTop('ctrlScore'),     // 最強控場(次數+回合)
+                    // 詳細控場資料:給後台顯示「次數 x 回合」
+                    topCtrl_detail: (function(){
+                      const _max = Math.max(0, ...(_heroEntries.map(e => e.ctrlScore || 0)));
+                      if(_max === 0) return null;
+                      const _w = _heroEntries.find(e => (e.ctrlScore || 0) === _max);
+                      return _w ? { count: _w.statusCount, turnSum: _w.statusTurnSum } : null;
+                    })(),
+                  };
+                } catch(_eCh){
+                  console.warn('[WB-Leaderboard v3.5.43] 計算冠軍統計失敗', _eCh);
+                }
+
+                // 收集 dmgSources 明細(已含 isFixed 標記 + skill 名稱)
+                let _dmgSources = [];
+                try {
+                  if(_Gr && Array.isArray(_Gr._wbDmgSources)){
+                    // 為了 Firestore 大小限制,合併同英雄+同技能的多筆 → 累計 amount
+                    const _grouped = {};
+                    _Gr._wbDmgSources.forEach(s => {
+                      const _key = s.heroName + '||' + s.skill + '||' + (s.isFixed ? 'F' : 'R');
+                      if(!_grouped[_key]){
+                        _grouped[_key] = {
+                          heroName: s.heroName,
+                          heroLv: s.heroLv,
+                          skill: s.skill,
+                          skillLv: s.skillLv || 0,
+                          totalDmg: 0,
+                          hits: 0,
+                          isFixed: s.isFixed,
+                        };
+                      }
+                      _grouped[_key].totalDmg += (s.amount || 0);
+                      _grouped[_key].hits += 1;
+                    });
+                    _dmgSources = Object.values(_grouped)
+                      .sort((a,b) => b.totalDmg - a.totalDmg)
+                      .slice(0, 40);  // 上限 40 筆,避免單筆 Firestore doc 過大
+                  }
+                } catch(_eDs){
+                  console.warn('[WB-Leaderboard v3.5.43] 收集 dmgSources 失敗', _eDs);
+                }
+
                 // ★ v3.5.6 — 把 _teamHeroes 也傳進去
-                window._wbHpSync.updateLeaderboard(bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes)
+                // ★ v3.5.43 — 把 championStats + dmgSources 也傳進去
+                window._wbHpSync.updateLeaderboard(
+                  bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes,
+                  _championStats, _dmgSources
+                )
                   .then(res => {
-                    if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg);
+                    if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg
+                      + ', champions=', _championStats);
                   })
                   .catch(e => console.warn('[WB-Leaderboard] updateLeaderboard 失敗', e));
               }

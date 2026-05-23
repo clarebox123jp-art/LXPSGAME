@@ -1277,7 +1277,50 @@
         ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
         : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
       const _border = isMyTeam ? '2px solid #ffe066' : '1px solid rgba(168,132,255,0.18)';
-      // ★ v13 — 字加大:rank 24→28、暱稱 14→20、傷害 18→26、場次 11→14
+
+      // ★ v3.5.43 — 第二行:四隻參戰英雄 + 等級
+      let _heroesRow = '';
+      if(Array.isArray(e.teamHeroes) && e.teamHeroes.length > 0){
+        _heroesRow = '<div style="font-size:14px;color:#bbb;margin-top:4px;display:flex;gap:5px;flex-wrap:wrap;">'
+          + e.teamHeroes.slice(0, 4).map(function(h){
+              const _n = (h && h.name) || '?';
+              const _lv = (h && h.lv) || 1;
+              return '<span style="display:inline-block;padding:2px 8px;'
+                + 'background:rgba(80,60,120,0.45);border:1px solid rgba(168,132,255,0.4);'
+                + 'border-radius:10px;font-size:13px;color:#ddd;">'
+                + _esc(_n) + ' <span style="color:#ffd066;font-weight:700;">Lv' + _lv + '</span></span>';
+            }).join('')
+          + '</div>';
+      }
+
+      // ★ v3.5.43 — 第三行:四個英雄冠軍 chip(個人評比,已排除答題獎勵+聯手爆發)
+      let _championsRow = '';
+      const _cs = e.championStats || null;
+      if(_cs && (_cs.topDmg || _cs.topHeal || _cs.topTank || _cs.topCtrl)){
+        const _chip = function(icon, color, ttl, top){
+          if(!top || !top.name){
+            return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;'
+              + 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);'
+              + 'border-radius:10px;font-size:12px;color:#666;">'
+              + icon + ' ' + ttl + ' -</span>';
+          }
+          return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;'
+            + 'background:rgba(255,255,255,0.05);border:1.5px solid ' + color + '55;'
+            + 'border-radius:10px;font-size:12px;color:#ddd;">'
+            + icon + ' <span style="color:#aaa;">' + ttl + '</span> '
+            + '<b style="color:' + color + ';">' + _esc(top.name) + '</b>'
+            + ' <span style="color:#888;font-size:11px;">Lv' + (top.lv||1) + '</span></span>';
+        };
+        _championsRow = '<div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap;'
+          + 'padding:4px 6px;background:rgba(0,0,0,0.2);border-radius:6px;'
+          + 'border-left:3px solid rgba(168,132,255,0.5);">'
+          + _chip('🗡', '#ff8866', '最高傷害', _cs.topDmg)
+          + _chip('💚', '#66dd99', '最高治療', _cs.topHeal)
+          + _chip('🛡', '#88aaff', '最強肉盾', _cs.topTank)
+          + _chip('🎯', '#ffcc66', '最強控場', _cs.topCtrl)
+          + '</div>';
+      }
+
       return ''
         + '<div style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
         + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
@@ -1286,7 +1329,9 @@
         + '</div>'
         + '<div style="font-size:20px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
         +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
-        +   '<div style="font-size:14px;color:#aaa;margin-top:2px;">' + (e.battles||0) + ' 場累積</div>'
+        +   _heroesRow            // ★ v3.5.43 — 四隻參戰英雄 + 等級
+        +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
+        +   '<div style="font-size:14px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積</div>'
         + '</div>'
         + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
         +   _formatDmg(e.totalDmg || 0)
