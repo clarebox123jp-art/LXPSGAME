@@ -1017,6 +1017,28 @@ async function _showAdminStatsPanelImpl(){
             💰 補發
           </button>
         </div>
+        <!-- ★ v3.6.10(2026-05-24) — 老師需求:刪除自己或異常的小博士排名 -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;
+          padding-top:10px;border-top:1.5px dashed rgba(255,100,100,0.35);">
+          <span style="font-size:13px;color:#ff9999;font-weight:700;">🗑️ 刪除排名:</span>
+          <select id="_admin-wq-del-week" style="padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
+            border:1px solid rgba(255,140,140,0.4);color:#fff;border-radius:6px;font-family:inherit;">
+            <option value="this">📅 本週</option>
+            <option value="last">📜 上週</option>
+          </select>
+          <input id="_admin-wq-del-uid" type="text" placeholder="貼上要刪除的玩家 uid" 
+            style="flex:1;min-width:200px;padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
+            border:1px solid rgba(255,140,140,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-wq-del-btn" style="padding:8px 14px;font-size:13px;font-weight:800;
+            background:linear-gradient(135deg,rgba(220,80,80,0.6),rgba(180,40,40,0.85));
+            border:2px solid #ff6666;color:#fff;border-radius:7px;cursor:pointer;font-family:inherit;">
+            🗑️ 刪除
+          </button>
+        </div>
+        <div style="font-size:12px;color:#cc8888;line-height:1.55;margin-bottom:10px;
+          padding:6px 10px;background:rgba(80,30,30,0.3);border-left:3px solid rgba(255,100,100,0.5);border-radius:4px;">
+          ⚠️ 刪除後該玩家本週累計題數歸零(不影響歷史獎勵)。也可在「查看前 30 名」清單中點 🗑️ 直接刪除某玩家。
+        </div>
         <div style="font-size:12px;color:#999;line-height:1.55;">
           💡 操作 API(F12 console):
           <br>&nbsp;&nbsp;<code style="color:#aaccff;">_weeklyQuiz.getTopN(50)</code> — 本週排名
@@ -4988,7 +5010,7 @@ async function _showAdminStatsPanelImpl(){
           else if(rank <= 5) award = '35000幣+6水晶+6書';
           else if(rank <= 10) award = '20000幣+3水晶+3書';
 
-          _rows += '<div style="display:grid;grid-template-columns:50px 1fr 80px 180px;align-items:center;gap:10px;padding:6px 10px;background:rgba(0,0,0,' + (i%2===0?'0.25':'0.4') + ');border-radius:6px;font-size:13px;">'
+          _rows += '<div style="display:grid;grid-template-columns:50px 1fr 80px 180px 38px;align-items:center;gap:10px;padding:6px 10px;background:rgba(0,0,0,' + (i%2===0?'0.25':'0.4') + ');border-radius:6px;font-size:13px;">'
             + '<div style="font-weight:900;color:' + (rank<=3?'#ffe066':'#aaa') + ';">' + icon + '</div>'
             + '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-weight:700;">'
             +   _esc(_formatName(e))
@@ -5002,6 +5024,14 @@ async function _showAdminStatsPanelImpl(){
                       : '⚠ ' + award + ' 待發')
                   : '(未進前 10)')
             + '</div>'
+            // ★ v3.6.10 — 每列加垃圾桶按鈕(用 data-* 帶 uid,讓後續 bind onclick)
+            + '<button class="_admin-wq-row-del" data-uid="' + _esc(e.uid)
+            +   '" data-name="' + _esc(_formatName(e))
+            +   '" data-week="' + _esc(weekKey)
+            +   '" title="刪除此玩家排名" '
+            +   'style="padding:4px 0;font-size:15px;background:rgba(80,20,20,0.4);'
+            +   'border:1.5px solid rgba(255,100,100,0.5);color:#ff8888;border-radius:5px;'
+            +   'cursor:pointer;font-family:inherit;line-height:1;width:32px;">🗑️</button>'
             + '</div>';
         });
       }
@@ -5035,6 +5065,23 @@ async function _showAdminStatsPanelImpl(){
       }
       document.getElementById('_wq-modal-close').onclick = _closeModal;
       _adminPanelState.wqDetailClose = _closeModal;
+
+      // ★ v3.6.10(2026-05-24) — 綁定每列垃圾桶按鈕
+      try{
+        _modal.querySelectorAll('._admin-wq-row-del').forEach(function(btn){
+          btn.onclick = function(){
+            const _uid = btn.getAttribute('data-uid') || '';
+            const _name = btn.getAttribute('data-name') || _uid.slice(0, 8);
+            const _wk = btn.getAttribute('data-week') || weekKey;
+            if(!_uid) return;
+            _doDeleteWqEntry(_wk, _uid, _name, function _afterDel(){
+              // 刪除成功後關掉本 modal,讓 _renderInfo 看到最新數字
+              try{ _closeModal(); }catch(_){}
+              try{ _renderInfo(); }catch(_){}
+            });
+          };
+        });
+      }catch(_){}
     }
 
     if(_viewThisBtn) _viewThisBtn.onclick = function(){
@@ -5174,6 +5221,168 @@ async function _showAdminStatsPanelImpl(){
       } else {
         if(confirm(_confirmMsg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''))) await _doGive();
       }
+    };
+
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.6.10(2026-05-24) — 刪除小博士排名(老師需求:刪自己 / 異常帳號)
+    // ────────────────────────────────────────────────────────────────
+    // 用 runTransaction 讀 → 移除 → 寫回,跟 _weeklyQuiz.flushNow 完全一致
+    // 路徑:stats/global.weeklyQuiz[週key] map 內移除指定 uid
+    // 同時記下審計痕跡:stats/global.weeklyQuizDeletionLog[週key]_<uid> = {by, at, correct}
+    //
+    // 觸發點:
+    //   ① 第 7 區「🗑️ 刪除」按鈕(可指定本週/上週 + uid)
+    //   ② 「查看本週/上週前 30 名」modal 內每列的垃圾桶
+    // ════════════════════════════════════════════════════════════════
+    async function _doDeleteWqEntry(weekKey, uid, displayName, afterDelete){
+      uid = String(uid || '').trim();
+      if(!weekKey || !uid){
+        try{ _showSimpleToast('❌ 缺週 key 或 uid', 2500); }catch(_){ alert('❌ 缺週 key 或 uid'); }
+        return;
+      }
+      const _shortUid = uid.slice(0, 12) + (uid.length > 12 ? '…' : '');
+      const _confirmMsg = '⚠️ 確定要刪除以下小博士排名嗎?<br><br>'
+        + '玩家:<b style="color:#ffe066;">' + _esc(displayName || '玩家') + '</b><br>'
+        + 'uid:<code style="font-size:12px;color:#88ccff;">' + _esc(_shortUid) + '</code><br>'
+        + '週 key:<code style="color:#88ccff;">' + _esc(weekKey) + '</code><br><br>'
+        + '<span style="color:#ff8888;">刪除後該玩家本週累計題數歸零</span>(不影響歷史獎勵)。<br>'
+        + '操作會留下審計痕跡(weeklyQuizDeletionLog)。';
+
+      const _doDelete = async function(){
+        try{
+          const _fbDb = window._fbDb;
+          if(!_fbDb){
+            throw new Error('window._fbDb 不可用');
+          }
+          // 動態載入 Firestore SDK
+          const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          const _doc = _firestoreMod.doc;
+          const _runTransaction = _firestoreMod.runTransaction;
+
+          const _statsRef = _doc(_fbDb, 'stats', 'global');
+          let _deletedEntry = null;
+
+          await _runTransaction(_fbDb, async function(tx){
+            const _snap = await tx.get(_statsRef);
+            const _data = _snap.exists() ? (_snap.data() || {}) : {};
+            const _wq = _data.weeklyQuiz || {};
+            const _weekMap = _wq[weekKey] || {};
+            if(!_weekMap[uid]){
+              throw new Error('該玩家在「' + weekKey + '」沒有上榜記錄(可能已被刪除或從未答題)');
+            }
+            _deletedEntry = _weekMap[uid];  // 留個快照,寫進審計 log
+            // 用 spread 重建 map,排除目標 uid
+            const _newWeekMap = {};
+            for(const _u in _weekMap){
+              if(_u !== uid) _newWeekMap[_u] = _weekMap[_u];
+            }
+            const _newWq = Object.assign({}, _wq);
+            _newWq[weekKey] = _newWeekMap;
+            // 審計 log:用「週key__uid」當 key,內含被刪當下的快照 + 操作者
+            const _logKey = weekKey + '__' + uid;
+            const _delLog = _data.weeklyQuizDeletionLog || {};
+            const _newLog = Object.assign({}, _delLog);
+            _newLog[_logKey] = {
+              weekKey: weekKey,
+              uid: uid,
+              correct: _deletedEntry.correct || 0,
+              name: _deletedEntry.name || '',
+              email: _deletedEntry.email || '',
+              deletedBy: window._gUserId || '',
+              deletedAt: Date.now(),
+            };
+            tx.set(_statsRef, {
+              weeklyQuiz: _newWq,
+              weeklyQuizDeletionLog: _newLog,
+            }, { merge: true });
+          });
+
+          console.log('[刪除小博士排名] ✅ 週=' + weekKey + ' uid=' + uid + ' 原題數=' + (_deletedEntry && _deletedEntry.correct || 0));
+
+          // 如果是刪除「自己」且為本週 → 同步把本機 lxps_wq_local_<uid> 也清掉,
+          // 不然玩家下次答題會把本機累計推回雲端
+          try{
+            const _selfUid = window._gUserId || '';
+            const _isSelf = (uid === _selfUid);
+            const _isThisWeek = window._weeklyQuiz && (weekKey === window._weeklyQuiz.getWeekKey());
+            if(_isSelf && _isThisWeek){
+              try{ localStorage.removeItem('lxps_wq_local_' + _selfUid); }catch(_){}
+              // 同時重置 _weeklyQuiz 內部累計(若 API 提供)
+              if(window._weeklyQuiz && typeof window._weeklyQuiz.resetLocalCount === 'function'){
+                try{ window._weeklyQuiz.resetLocalCount(); }catch(_){}
+              }
+              console.log('[刪除小博士排名] 🧹 已清本機 lxps_wq_local_' + _selfUid);
+            }
+          }catch(_){}
+
+          try{ _showSimpleToast('✅ 已刪除「' + (displayName || _shortUid) + '」的小博士排名', 3500); }
+          catch(_){ alert('✅ 已刪除小博士排名'); }
+          if(typeof afterDelete === 'function'){
+            try{ afterDelete(); }catch(_){}
+          } else {
+            try{ _renderInfo(); }catch(_){}
+          }
+        }catch(e){
+          console.error('[刪除小博士排名] 失敗', e);
+          const _code = e && e.code;
+          let _msg = '❌ 刪除失敗:';
+          if(_code === 'permission-denied'){
+            _msg += '\nFirestore Rules 沒開放管理員寫 stats/global.weeklyQuiz。\n\n'
+              + '請到 Firebase Console 確認管理員 email('
+              + (window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.email || '')
+              + ')可寫 stats/global。';
+          } else {
+            _msg += (e && e.message || e);
+          }
+          try{ _showSimpleToast(_msg.replace(/\n/g, ' '), 6000); }catch(_){ alert(_msg); }
+        }
+      };
+
+      if(typeof _customConfirm === 'function'){
+        _customConfirm(_confirmMsg, _doDelete);
+      } else {
+        if(confirm(_confirmMsg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''))) await _doDelete();
+      }
+    }
+
+    // 第 7 區「🗑️ 刪除」按鈕綁定
+    const _delBtn = document.getElementById('_admin-wq-del-btn');
+    const _delUidInput = document.getElementById('_admin-wq-del-uid');
+    const _delWeekSelect = document.getElementById('_admin-wq-del-week');
+    if(_delBtn) _delBtn.onclick = async function(){
+      const _uid = (_delUidInput && _delUidInput.value || '').trim();
+      if(!_uid){
+        try{ _showSimpleToast('請輸入要刪除的玩家 uid', 2500); }catch(_){ alert('請輸入要刪除的玩家 uid'); }
+        return;
+      }
+      const _which = (_delWeekSelect && _delWeekSelect.value) || 'this';
+      const _weekKey = (_which === 'last')
+        ? window._weeklyQuiz.getLastWeekKey()
+        : window._weeklyQuiz.getWeekKey();
+
+      // 從快取查名字(若查不到就用 uid 短碼)
+      let _displayName = _uid.slice(0, 8) + '…';
+      try{
+        const _gs = window._cachedGlobalStats || {};
+        const _wq = _gs.weeklyQuiz || {};
+        const _wm = _wq[_weekKey] || {};
+        const _ent = _wm[_uid];
+        if(_ent){
+          _displayName = _formatName({ uid: _uid, name: _ent.name, email: _ent.email });
+        }
+      }catch(_){}
+
+      _delBtn.disabled = true;
+      _delBtn.textContent = '🔄 刪除中...';
+      await _doDeleteWqEntry(_weekKey, _uid, _displayName, function(){
+        _delBtn.disabled = false;
+        _delBtn.innerHTML = '🗑️ 刪除';
+        if(_delUidInput) _delUidInput.value = '';
+        _renderInfo();
+      });
+      // 防呆:若 transaction 是 throw error 提早跑掉,按鈕也要還原
+      _delBtn.disabled = false;
+      _delBtn.innerHTML = '🗑️ 刪除';
     };
   })();
 }
