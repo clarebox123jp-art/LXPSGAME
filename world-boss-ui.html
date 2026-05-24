@@ -11695,14 +11695,18 @@
         //                    內容滿時可垂直捲動,卡片不會被擠壓重疊。
         //   觸發條件:(pointer:coarse) 觸控 + (min-width:1024) 大平板 + (orientation:landscape) 橫向
         //            → 只命中橫向 iPad,直立 iPad 與桌機完全不受影響
-        //   ★ v3.7.1/v3.7.2 反覆教訓 — 不要強塞 #sb height:100vh
-        //     原因:#gc 是 1920×1080 固定尺寸 + transform:scale 縮放,
-        //          100vh 對 #gc 內子元素被 scale 後實際遠大於 1080 → 底部留黑色空白。
-        //   ★ v3.7.2 最終修法:不動 #sb 的 height,只用 max-height + overflow-y:auto,
-        //                       內容不滿時 #sb 自然撐高度(跟 PC 桌機一致、底部不留空)、
-        //                       內容滿時內部捲動。max-height 用「能塞下卡片但避免被視窗截掉」的數值。
+        //   ★ v3.7.0 → v3.7.4 反覆教訓(完整脈絡留作鐵律參考):
+        //     v3.7.0: height:100vh → 100vh 對 #gc 內元素被 scale 後遠大於 1080,底部留黑色空白
+        //     v3.7.1: 加 padding-top:80px + box-sizing → 底部 80px 變成黑色空白
+        //     v3.7.2: 改用 max-height:1000 不強塞 height → 標題仍被 #ctrl-bar 蓋住、右下底部裁切
+        //     v3.7.3: 跳過(版號用於卡死自救改動)
+        //   ★ v3.7.4 最終正解(老師指引「底部延伸到跟龍王圖一樣位置」):
+        //     #sb 是 #gc(1920×1080)的 flex row 兄弟,跟 #field 並排,高度應該 = 1080
+        //     但頂部要讓 80px 給 #ctrl-bar → margin-top:80 推開頂部
+        //     底部仍要對齊 #field → height:1000(=1080-80),物理上底部 = 80+1000 = 1080 ✓
+        //     用 px 不用 vh(#gc 內部座標 1920×1080)
         + '@media (pointer:coarse) and (min-width:1024px) and (orientation:landscape){'
-        +   '#sb{max-height:1000px !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
+        +   '#sb{margin-top:80px !important;height:1000px !important;max-height:1000px !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
         + '}'
         // ── Bug 2:橫向 iPad Pro 12.9(1366)reward/quiz overlay 字級過大修補(★ v3.7.0 新增) ──
         //   根因:main.css line 4276 既有規則「@media (max-width:1180px)」把 reward overlay 寬度/字級縮小,
