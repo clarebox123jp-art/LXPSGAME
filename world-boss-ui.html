@@ -3609,29 +3609,78 @@
        - HP 條 overlay top:8px,內部 padding 16+10+36+12+30 ≈ 100px → 整體高約 140-160px
        - 定型文列 top:160px 開始,加 8px 間距,離 HP 條剛好一點點
   */
+  /* ★ v3.6.9 — 老師需求(2026/5/24):學生反映「定型文擋住題目」
+     解法:改為「toggle 收合式」— 預設只顯示一個 💬 按鈕,點開才展開 12 顆按鈕
+           按完任一定型文 → 自動收合;quiz overlay 顯示 → 強制收合
+           展開時整條長 bar 出現,完全不擋題目時段 */
   #wb-emoji-bar-real{ display:none !important; }
+  /* 顯示時:預設「收合」(.wb-eb-collapsed) → 只看到 💬 toggle 按鈕 */
   #wb-emoji-bar-real.wb-eb-show{
     display:flex !important;
     flex-direction:row !important;
-    flex-wrap:wrap !important;
     align-items:center !important;
-    justify-content:flex-start !important;
     gap:6px !important;
   }
+  /* 收合狀態:寬度由 toggle 決定,內部 12 顆按鈕全隱藏 */
+  #wb-emoji-bar-real.wb-eb-collapsed{
+    width:auto !important;
+    flex-wrap:nowrap !important;
+    justify-content:flex-start !important;
+    padding:6px 8px !important;
+  }
+  #wb-emoji-bar-real.wb-eb-collapsed .wb-emoji-btn,
+  #wb-emoji-bar-real.wb-eb-collapsed .wb-disc-btn-vert,
+  #wb-emoji-bar-real.wb-eb-collapsed .wb-eb-divider{
+    display:none !important;
+  }
+  /* 展開狀態:原本的 12 顆橫排 */
+  #wb-emoji-bar-real.wb-eb-expanded{
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+  }
+  /* toggle 按鈕本體 */
+  .wb-eb-toggle-btn{
+    flex-shrink:0;
+    width:48px;height:48px;
+    border-radius:12px;cursor:pointer;
+    background:linear-gradient(135deg,rgba(168,132,255,0.35),rgba(100,80,200,0.45));
+    border:2px solid #a884ff;
+    color:#fff;font-size:24px;line-height:1;
+    font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.18s;
+    box-shadow:0 0 12px rgba(168,132,255,0.4);
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  }
+  .wb-eb-toggle-btn:hover{
+    background:linear-gradient(135deg,rgba(168,132,255,0.55),rgba(120,90,220,0.6));
+    transform:scale(1.06);
+    box-shadow:0 0 18px rgba(168,132,255,0.7);
+  }
+  .wb-eb-toggle-btn:active{ transform:scale(0.96); }
+  /* 展開時 toggle 顯示「⨯」叉叉提示可收合 */
+  #wb-emoji-bar-real.wb-eb-expanded .wb-eb-toggle-btn{
+    background:linear-gradient(135deg,rgba(255,120,120,0.3),rgba(200,80,80,0.4));
+    border-color:#ff8888;
+  }
   /* ★ FIX 20260517(q) — iPad(≤1180px) 定型文列寬度跟 BOSS 血條一致縮短 40% */
+  /* 展開狀態才套寬度上限;收合狀態 width:auto 不被影響 */
   @media (max-width:1180px){
-    #wb-emoji-bar-real{
+    #wb-emoji-bar-real.wb-eb-expanded{
       width:min(648px,calc(100vw - 80px)) !important;
     }
   }
 </style>
-<div id="wb-emoji-bar-real" style="position:fixed;left:8px;top:160px;
+<!-- ★ v3.6.9 — 加 .wb-eb-collapsed 預設 class,顯示時(.wb-eb-show)只看到 toggle 按鈕 -->
+<div id="wb-emoji-bar-real" class="wb-eb-collapsed" style="position:fixed;left:8px;top:160px;
      background:rgba(8,10,24,0.92);border:1.5px solid #a884ff;border-radius:14px;
      padding:8px 10px;z-index:9050;
      gap:6px;
      /* 寬度跟 BOSS 血條 overlay 對齊(桌機 1080px / iPad 648px),由 CSS 媒體查詢控制 */
      width:min(1080px,calc(100vw - 100px));
      max-height:none;overflow:visible;">
+  <!-- ★ v3.6.9 — toggle 按鈕:點一下展開/收合所有定型文 -->
+  <button class="wb-eb-toggle-btn" onclick="_wbBattleToggleEmojiBar()" title="展開/收合 定型文">💬</button>
   <!-- ★ FIX 20260517(h) — 戰鬥中快捷表情重新規劃:6 個實戰常用訊息,改走確認視窗(平板友善) -->
   <!--   圖示在上、文字在下,iPad 也能直接看出意思 -->
   <!--   圖示對應:⭐=用爆發(對應角色卡爆發星星) / ➕=先補血(綠十字) / 🙏=先復活 -->
@@ -3642,7 +3691,7 @@
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('awesome')"><span class="wb-emoji-icon">🔥</span><span class="wb-emoji-label">太棒啦</span></button>
   <button class="wb-emoji-btn" onclick="_wbBattleSendQuickMsg('sorry_wait')"><span class="wb-emoji-icon">😅</span><span class="wb-emoji-label">等我一下</span></button>
   <!-- 分隔線(flex 內豎直分隔,改為 1px 寬、高度跟按鈕齊) -->
-  <div style="width:1px;height:36px;background:rgba(168,132,255,0.4);margin:0 4px;flex-shrink:0;"></div>
+  <div class="wb-eb-divider" style="width:1px;height:36px;background:rgba(168,132,255,0.4);margin:0 4px;flex-shrink:0;"></div>
   <!-- 討論發話區(直排小按鈕) -->
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_a')" title="我覺得答案是 A">🅰</button>
   <button class="wb-disc-btn-vert" onclick="_wbUiSendDiscussion('ans_b')" title="我覺得答案是 B">🅱</button>
@@ -5404,6 +5453,40 @@
 
   // ★ FIX 20260517(h) — 戰鬥中快捷表情:跟隊伍頁同樣彈確認視窗,但 context='battle'
   //   冷卻獨立(window._wbBattleQmsgCdUntil),避免跟隊伍頁互相干擾
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.6.9(2026-05-24) — 戰鬥中定型文「toggle 收合式」展開/收合控制
+  // ────────────────────────────────────────────────────────────────────
+  // 老師需求:學生反映戰鬥中的定型文 bar 擋住題目 → 改為預設收合,
+  //          點 💬 才展開,送出訊息後 / 進入答題時自動收合
+  // 函式:
+  //   _wbBattleToggleEmojiBar()        — toggle 按鈕點擊
+  //   _wbBattleCollapseEmojiBar()      — 強制收合(送訊息完 / quiz 開啟時)
+  //   _wbBattleExpandEmojiBar()        — 強制展開(目前未用,留 API)
+  // ════════════════════════════════════════════════════════════════════
+  window._wbBattleToggleEmojiBar = function(){
+    const bar = document.getElementById('wb-emoji-bar-real');
+    if(!bar) return;
+    if(bar.classList.contains('wb-eb-expanded')){
+      bar.classList.remove('wb-eb-expanded');
+      bar.classList.add('wb-eb-collapsed');
+    }else{
+      bar.classList.remove('wb-eb-collapsed');
+      bar.classList.add('wb-eb-expanded');
+    }
+  };
+  window._wbBattleCollapseEmojiBar = function(){
+    const bar = document.getElementById('wb-emoji-bar-real');
+    if(!bar) return;
+    bar.classList.remove('wb-eb-expanded');
+    bar.classList.add('wb-eb-collapsed');
+  };
+  window._wbBattleExpandEmojiBar = function(){
+    const bar = document.getElementById('wb-emoji-bar-real');
+    if(!bar) return;
+    bar.classList.remove('wb-eb-collapsed');
+    bar.classList.add('wb-eb-expanded');
+  };
+
   window._wbBattleSendQuickMsg = function(key){
     const now = Date.now();
     const cooldownUntil = window._wbBattleQmsgCdUntil || 0;
@@ -5563,6 +5646,8 @@
         _wbShowCardBubble(realSlot, QMSG_TEXT_MAP[key]);
       }
     }catch(_){}
+    // ★ v3.6.9 — 送完訊息自動收合定型文 bar(不擋題目/不擋畫面)
+    try{ window._wbBattleCollapseEmojiBar && window._wbBattleCollapseEmojiBar(); }catch(_){}
   }
 
   // 戰鬥中 emoji bar 冷卻 UI(獨立 timer)
@@ -10209,6 +10294,8 @@
     if(window._wbSoloPracticeMode){
       _wbShowCardBubble(0, _wbDiscussionTextLocal(key));
     }
+    // ★ v3.6.9 — 送完訊息自動收合定型文 bar(不擋題目/不擋畫面)
+    try{ window._wbBattleCollapseEmojiBar && window._wbBattleCollapseEmojiBar(); }catch(_){}
   };
 
   // 練習模式用 — 自己看到自己的氣泡
@@ -11649,6 +11736,34 @@
     //         脫離 #gc 內的 stacking context,z-index:10900 就能真正蓋過所有東西。
     //   注意:advShowQuiz 內部用 document.getElementById 找 overlay,
     //         不論在 DOM 哪裡都找得到,所以移動不影響原邏輯。
+
+    // ★ v3.6.9(2026-05-24) — quiz/reward overlay 出現時自動收合定型文 bar
+    //   原問題:學生反映定型文 bar 擋住題目,即使已改為 toggle 收合式,
+    //          仍可能在「玩家先展開了 bar,接著進入答題」時擋到題目
+    //   修法:用 MutationObserver 監聽 overlay 的 class 變化,
+    //        偵測到帶 .show 時呼叫 _wbBattleCollapseEmojiBar 強制收合
+    try{
+      if(!window._wbEmojiBarAutoCollapseObserverInstalled){
+        const _observeIds = ['adv-quiz-overlay','adv-reward-overlay','adv-boss-intro'];
+        _observeIds.forEach(_id => {
+          const _el = document.getElementById(_id);
+          if(!_el) return;
+          const _obs = new MutationObserver(function(muts){
+            try{
+              if(_el.classList && _el.classList.contains('show')){
+                if(typeof window._wbBattleCollapseEmojiBar === 'function'){
+                  window._wbBattleCollapseEmojiBar();
+                }
+              }
+            }catch(_){}
+          });
+          _obs.observe(_el, { attributes:true, attributeFilter:['class'] });
+        });
+        window._wbEmojiBarAutoCollapseObserverInstalled = true;
+        console.log('[WB-Adv] ✅ quiz overlay 自動收合 emoji bar 觀察者已安裝');
+      }
+    }catch(_eObs){ console.warn('[WB-Adv] 安裝 emoji bar 自動收合觀察者失敗', _eObs); }
+
     try{
       ['adv-quiz-overlay','adv-reward-overlay','adv-result-overlay',
        'adv-boss-intro','adv-continue-overlay'].forEach(id => {
