@@ -1276,27 +1276,59 @@
       // ★ v3.5.70 — 老師需求 2026/5/24:「現在全都是***同學沒有意義」— 加上班級座號
       //   策略:用 teamEmails 反查名冊得「5324蔣同學」短碼;沒 email 時 fallback 保留 v3.5.58 真名保護
       //   teamEmails 是 v3.5.70 新增欄位,舊紀錄(2026/5/24 之前的場次)沒這欄,fallback 走純 name 保護
+      // ★ v3.6.9 — 老師需求 2026/5/24 第二輪:「還是***同學看不出是誰」— 進一步改善識別性
+      //   改進:
+      //     (1) 老師(管理員)觀看時直接顯示真實姓名(用 _isAdminUser 判斷)
+      //     (2) 學生觀看時,若 fallback 進真名保護路徑,改用「姓 + 同學」(例如「江同學」、「陳同學」)
+      //         取第一字若是中文漢字才用;否則仍保留 ***同學(避免「(同學」這種怪結果)
       const _emails = Array.isArray(e.teamEmails) ? e.teamEmails.slice(0, 4) : [];
       while(_emails.length < 4) _emails.push('');
+      // ★ v3.6.9 — 偵測當前觀看者是否為管理員(老師)
+      let _viewerIsAdmin = false;
+      try{ _viewerIsAdmin = (typeof window._isAdminUser === 'function') && window._isAdminUser(); }catch(_){}
+      // ★ v3.6.9 — 「姓 + 同學」fallback 函式:取真名第一字若是漢字 → 「X同學」;否則 ***同學
+      const _surnameLabel = function(realName){
+        try{
+          if(!realName || typeof realName !== 'string') return '***同學';
+          const _first = realName.trim().charAt(0);
+          // Unicode 漢字範圍(基本+擴充 A,涵蓋絕大多數姓氏)
+          if(_first && /[\u4e00-\u9fff]/.test(_first)){
+            return _first + '同學';
+          }
+        }catch(_){}
+        return '***同學';
+      };
       const _protectName = function(n, em){
         if(!n || typeof n !== 'string') return '—';
         const _t = n.trim();
         if(!_t || _t === '—') return '—';
         // 常見泛稱直接放行
         if(_t === '玩家' || _t === '房主' || _t === 'AI' || _t === 'NPC') return _t;
-        // ★ v3.5.70 — 有 email 時走 _getAdminPlayerLabel 反查名冊得短碼「5324蔣同學」
         try{
+          // ★ v3.6.9 — 管理員觀看 → 直接顯示真名 + 名冊標籤(老師看得出是誰)
+          if(_viewerIsAdmin && typeof window._getAdminPlayerLabel === 'function'){
+            const _label = window._getAdminPlayerLabel(em || '', _t, { adminShowReal: true });
+            if(_label && _label !== '未知玩家') return _label;
+          }
+          // ★ v3.5.70 — 學生觀看 + 有 email 時走名冊查詢得「5324蔣同學」
           if(em && typeof window._getAdminPlayerLabel === 'function'){
-            // 不開 adminShowReal(這是公開排行榜,要保護);真名仍會被替換為「5324蔣同學」
             const _label = window._getAdminPlayerLabel(em, _t, { protectIfNoEmail: false });
             if(_label && _label !== '未知玩家') return _label;
           }
-          // 無 email fallback:保留 v3.5.58 真名保護(***同學)
+          // ★ v3.6.9 — 學生觀看 + 無 email/查不到名冊:走「姓 + 同學」改善識別性
+          //   先呼叫 _getAdminPlayerLabel(protectIfNoEmail:true) 過濾掉合法暱稱(直接顯示),
+          //   若回傳 ***同學 表示真名 → 改用「姓 + 同學」
           if(typeof window._getAdminPlayerLabel === 'function'){
-            return window._getAdminPlayerLabel('', _t, { protectIfNoEmail: true });
+            const _raw = window._getAdminPlayerLabel('', _t, { protectIfNoEmail: true });
+            if(_raw === '***同學'){
+              // 是真名 → 改用姓氏 + 同學
+              return _surnameLabel(_t);
+            }
+            return _raw;  // 合法暱稱(原樣)/ 名冊有資料(短碼)
           }
+          // _getAdminPlayerLabel 不在的最後保險
           if(typeof window._isLikelyRealName === 'function' && window._isLikelyRealName(_t)){
-            return '***同學';
+            return _surnameLabel(_t);
           }
         }catch(_){}
         return _t;
@@ -2310,20 +2342,31 @@
     border:1.5px solid rgba(255,140,80,0.5);
   }
   .wb-tc-quickmsg-grid{
-    display:grid;grid-template-columns:repeat(6, 1fr);gap:10px;  /* gap 6 → 10 */
+    display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;  /* ★ v3.6.9 — 桌機 6 → 4 欄,每顆寬度 +50% 讓字不被截 */
   }
   @media (max-width: 900px){
-    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(4, 1fr); }
-  }
-  @media (max-width: 600px){
     .wb-tc-quickmsg-grid{ grid-template-columns:repeat(3, 1fr); }
   }
+  @media (max-width: 600px){
+    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
+  /* ★ v3.6.9 — 老師反映 iPad 上按鈕太窄字被截斷成「我...」                */
+  /* 解法:                                                                  */
+  /*   (1) 拿掉 nowrap/ellipsis,允許 2 行自動換行                          */
+  /*   (2) 設 min-height 確保 1 行 / 2 行視覺一致                           */
+  /*   (3) line-height 1.2 讓兩行緊湊                                       */
   .wb-tc-qmsg-btn{
-    padding:14px 8px;font-size:26px;font-weight:700;letter-spacing:1px;  /* 13→26, padding 加大 */
+    padding:14px 10px;font-size:26px;font-weight:700;letter-spacing:1px;
     border:2px solid;border-radius:10px;cursor:pointer;
     font-family:inherit;transition:all 0.15s;
     background:rgba(20,15,40,0.7);color:#e0d4ff;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    white-space:normal;             /* ★ v3.6.9 — 允許換行 */
+    overflow:visible;               /* ★ v3.6.9 — 不裁切 */
+    text-overflow:clip;             /* ★ v3.6.9 — 不顯示 ... */
+    line-height:1.2;                /* ★ v3.6.9 — 兩行也緊湊 */
+    min-height:64px;                /* ★ v3.6.9 — 1/2 行視覺一致 */
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;
   }
   .wb-tc-qmsg-btn.role{ border-color:rgba(120,200,255,0.55);color:#a8d8ff; }
   .wb-tc-qmsg-btn.status{ border-color:rgba(255,200,100,0.55);color:#ffd699; }
@@ -2496,12 +2539,13 @@
     .wb-tc-qmm-title{ font-size:20px; }
     .wb-tc-qmm-cd{ font-size:15px; }
     .wb-tc-quickmsg-grid{
-      gap:5px;
-      grid-template-columns:repeat(6, 1fr);
+      gap:8px;
+      grid-template-columns:repeat(4, 1fr);  /* ★ v3.6.9 — iPad 6 → 4 欄,字級放大 */
     }
     .wb-tc-qmsg-btn{
-      padding:8px 4px;font-size:15px;letter-spacing:0.5px;
-      border-radius:7px;border-width:1.5px;
+      padding:12px 8px;font-size:22px;letter-spacing:0.5px;  /* ★ v3.6.9 — 字級 15 → 22 */
+      border-radius:8px;border-width:1.5px;
+      min-height:56px;line-height:1.2;
     }
 
     /* ════════════════════════════════════════════════════════════════ */
@@ -2531,8 +2575,8 @@
     .wb-tc-qml-label{ font-size:16px; }
     .wb-tc-qml-hint{ display:none; }
     .wb-tc-qmm-title{ font-size:18px; }
-    .wb-tc-qmsg-btn{ font-size:13px;padding:6px 3px; }
-    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(4, 1fr); }
+    .wb-tc-qmsg-btn{ font-size:18px;padding:10px 6px;min-height:52px;line-height:1.2; }  /* ★ v3.6.9 — 字級 13 → 18 */
+    .wb-tc-quickmsg-grid{ grid-template-columns:repeat(3, 1fr); }  /* ★ v3.6.9 — 4 → 3 欄 */
     .wb-tc-title{
       font-size:24px;letter-spacing:1.5px;margin-top:64px;
     }
@@ -8091,16 +8135,22 @@
     //       (v3.3.6 已實作),但只有「練習模式 fake _wbNet」會更新 UI
     //     - 真實連線模式下,onRoomUpdate 沒處理 contributions → UI 始終是 0
     //   修法:onRoomUpdate 觸發時,從 meta.contributions[myUid] 讀 dmgDealt 更新 UI
+    // ★ v3.6.9 — 老師決策(2026/5/24):「本場總傷」改顯示「全隊累積總傷」(不是自己的)
+    //   原本只讀 _ctrb[myUid].dmgDealt → 兩玩家數字各自獨立 → 不同步
+    //   現在:把 _ctrb 內所有玩家的 dmgDealt 加總,所有玩家看到相同數字
+    //   防閃跳:若雲端總和 < 本機現顯示(代表自己剛打完還沒 ack)→ 維持本機,不倒退
     try{
-      const _myUid = window._gUserId;
       const _ctrb = data.meta && data.meta.contributions;
-      if(_myUid && _ctrb && _ctrb[_myUid]){
-        const _myDmg = _ctrb[_myUid].dmgDealt || 0;
+      if(_ctrb){
+        let _teamDmg = 0;
+        Object.keys(_ctrb).forEach(_uid => {
+          _teamDmg += (_ctrb[_uid] && _ctrb[_uid].dmgDealt) || 0;
+        });
         const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
         if(_dmgEl){
-          const _prev = parseInt(_dmgEl.textContent.replace(/,/g, ''), 10) || 0;
-          if(_prev !== _myDmg){
-            _dmgEl.textContent = _myDmg.toLocaleString();
+          const _prev = parseInt((_dmgEl.textContent || '0').replace(/,/g, ''), 10) || 0;
+          if(_teamDmg >= _prev){
+            _dmgEl.textContent = _teamDmg.toLocaleString();
           }
         }
       }
@@ -11531,9 +11581,33 @@
       _wsty.textContent =
         // 桌機:1080px 上限,扣 100px 給右側能量條
         '#wb-adv-battle-overlay{width:min(1080px,calc(100vw - 100px));}'
-        // iPad(≤1180px,涵蓋 iPad Mini ~ iPad Pro 11"):縮短 40% → 648px 上限
-        + '@media (max-width:1180px){'
+        // ★ v3.6.9 — 觸發條件改為「觸控 + 寬度 ≤1366」,涵蓋所有 iPad(含橫向 1180/1194/1366)
+        //            原本 max-width:1180 只命中部分 iPad,橫向 iPad Pro 12.9(1366)會漏掉
+        + '@media (pointer:coarse) and (max-width:1366px) and (min-width:601px){'
         +   '#wb-adv-battle-overlay{width:min(648px,calc(100vw - 80px)) !important;}'
+        // ── Bug 3:BOSS 血條 overlay 字級縮小,避免視覺壓迫 ──
+        +   '#wb-adv-mega-zone{padding:10px 16px !important;border-width:1.5px !important;}'
+        +   '#wb-adv-mega-boss-name{font-size:20px !important;letter-spacing:1.5px !important;}'
+        +   '#wb-adv-mega-turn-info{font-size:15px !important;letter-spacing:1px !important;}'
+        +   '#wb-adv-boss-info-btn{padding:6px 12px !important;font-size:14px !important;letter-spacing:1px !important;border-width:1.5px !important;}'
+        +   '#wb-adv-mega-hp-text{font-size:15px !important;letter-spacing:1px !important;}'
+        +   '#wb-adv-mega-zone > div:first-child{margin-bottom:6px !important;}'
+        // ── Bug 3:本場總傷 dmgBar 字級從 24/40 縮到 15/24,跟 PC 視覺密度一致 ──
+        +   '#wb-solo-cur-dmg-bar{padding:6px 12px !important;border-width:2px !important;gap:8px !important;}'
+        +   '#wb-solo-cur-dmg-bar > span:first-child{font-size:15px !important;letter-spacing:1px !important;}'
+        +   '#wb-solo-cur-dmg-display{font-size:24px !important;}'
+        + '}'
+        // ── Bug 1:橫向 iPad 右側指令表「下方黑色空白」修補 ──
+        //   根因:main.css 桌機 #sb 是固定 width:560px、內部 #log/#action-panel/#item-panel
+        //         由上往下垂直排;橫向 iPad 高度 820px,內容只佔上半 → 下方 170~220px 黑色空白
+        //   解法:讓 #item-panel(物品列)flex:1 吃光剩餘空間,內部 .igrid 可捲動,
+        //         達成「上方指令表保持原樣,下方物品區自動填滿到底,物品多時可捲」
+        //   觸發條件:(pointer:coarse) 觸控 + (min-width:1024) 大平板 + (orientation:landscape) 橫向
+        //            → 只命中橫向 iPad,直立 iPad 與桌機完全不受影響
+        + '@media (pointer:coarse) and (min-width:1024px) and (orientation:landscape){'
+        +   '#sb{height:100vh !important;max-height:100vh !important;}'
+        +   '#item-panel{flex:1 1 auto !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;}'
+        +   '#item-panel .igrid{flex:1 1 auto !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
         + '}';
       document.head.appendChild(_wsty);
     }
