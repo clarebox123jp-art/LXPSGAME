@@ -1332,9 +1332,16 @@
             myElements = config.shieldElements;
           }
         }catch(_){}
-        // 初始化護盾物件,每個元素 3 層
-        boss._wbShields = {};
-        myElements.forEach(el => { boss._wbShields[el] = 3; });
+        // ★ v3.5.69 — 不再完全清空舊盾,改為「把不足 3 層的元素補到 3 層」
+        //   根因:舊版每次階段觸發都 boss._wbShields = {} 然後重填,
+        //         即使玩家剛把 R5 fire 盾打到剩 1 層,R9 觸發後又被填回 3 層 → 體感「消不完」
+        //   新版:已有的元素若 >= 3 維持原樣,< 3 才補回 3;新階段新元素正常設 3 層
+        //   ⚠ 護盾元素清單仍依新階段更新(boss._wbShieldElements),確保 UI 顯示正確
+        boss._wbShields = boss._wbShields || {};
+        myElements.forEach(el => {
+          const _cur = boss._wbShields[el] || 0;
+          boss._wbShields[el] = Math.max(_cur, 3);
+        });
         // 同時記錄這次護盾的元素清單(給 UI 渲染用)
         boss._wbShieldElements = myElements.slice();
         // 只觸發最早未觸發的那個階段,避免一口氣補多階段
@@ -1669,7 +1676,9 @@
         fullWireG: fullWireG,
         _syncReason: 'quiz-show',
         _wbQuizPayload: payload,
+        // ★ v3.5.69 — payload 同時帶 round 與 turn,確保 client 收到後能還原回合數
         turn: G ? (G.round || G.turn || 1) : 1,
+        round: G ? (G.round || 1) : 1,
         currentActorIdx: G ? (G.currentActorIdx || 0) : 0,
         p1: G ? (G.p1 || []) : [],
         p2: G ? (G.p2 || []) : [],
@@ -1698,7 +1707,9 @@
         fullWireG: fullWireG,
         _syncReason: 'quiz-close',
         _wbQuizCloseReason: reason || 'unknown',
+        // ★ v3.5.69 — 同步補 round
         turn: G ? (G.round || G.turn || 1) : 1,
+        round: G ? (G.round || 1) : 1,
         currentActorIdx: G ? (G.currentActorIdx || 0) : 0,
         p1: G ? (G.p1 || []) : [],
         p2: G ? (G.p2 || []) : [],
@@ -1715,6 +1726,18 @@
     if(window._wbEndActionSyncPatched) return true;
     const _origEndAction = window.endAction;
     window.endAction = function(a, cost, noFinish){
+      // ★ v3.5.69 — client mode 攔截:client 不該本機跑 endAction
+      //   根因:iPad 切 app 回前台時觸發的 nudge / watchdog 自動救援會呼叫 endAction,
+      //         client 端跑 endAction 會把 hero.acted=true 設下去,但 host 還在等 client 送 action,
+      //         結果雙端狀態錯位:host 認為玩家還沒動、client 認為自己動完了 → 看門狗跳過回合
+      //   守門:
+      //     - _wbClientOptimistic=true 時放行(這是 _wbExecPlayerAction 內部樂觀更新流程)
+      //     - 否則直接 return,等房主 sync 過來
+      if(window._wbClientMode && !window._wbClientOptimistic){
+        console.warn('[WB-Client v6] endAction 被擋(client mode 非樂觀更新),actor=',
+                     a && a.name, 'cost=', cost, 'noFinish=', noFinish);
+        return;
+      }
       const ret = _origEndAction.apply(this, arguments);
       try{
         if(window._wbConnectedHostMode){
@@ -2510,6 +2533,27 @@
         // 爆發
         try{
           if(typeof window._canBurst === 'function' && typeof window.execBurst === 'function'){
+            // ★ v3.5.69 — 預檢爆發次數上限(每人最多 2 次/場)
+            //   根因:client 樂觀更新 + host sync 雙端狀態錯位時,_burstUsed 可能沒同步,
+            //         造成玩家觀察到「爆發無限次」(老師 BUG #6 回報)
+            //   保險:在跑 _canBurst 之前先看 _burstUsed,>= 2 直接拒絕並改普攻
+            const _curBurstUsed = (typeof actor._burstUsed === 'number') ? actor._burstUsed
+                                 : (actor._burstUsed === true ? 1 : 0);
+            const _isBossHero = (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes
+                                 && BOSS_NAMES.includes(actor.name));
+            if(!_isBossHero && _curBurstUsed >= 2){
+              console.warn('[WB-Action v6] ' + actor.name + ' 爆發已用 ' + _curBurstUsed
+                + ' 次(達上限 2),拒絕並改普攻');
+              const opp = actor.side === 'p1' ? 'p2' : 'p1';
+              const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
+              const tgt = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
+              if(tgt && typeof window.execAtk === 'function'){
+                window.execAtk(actor, tgt, actor.atk);
+                if(typeof window.endAction === 'function') window.endAction(actor, 0);
+                ok = true;
+              }
+              return ok;
+            }
             if(window._canBurst(actor)){
               window.execBurst(actor.side, actor.pos);
               ok = true;
@@ -2900,8 +2944,11 @@
           try{
             if(typeof window._wbHpSync.updateLeaderboard === 'function'){
               const _myNick = (window._playerNickname || window._userName || '玩家');
+              // ★ v3.5.70 — 抓自己的 email,給「房主代打槽位」用(代打時用房主 email)
+              const _myEmail = ((window._fbUser && window._fbUser.email) || '').toLowerCase();
               let _teamUids = [];
               let _teamNames = [];
+              let _teamEmails = [];  // ★ v3.5.70 — 收集 email 給排行榜班級座號顯示用
               let _teamHeroes = [];  // ★ v3.5.6 — [{name, lv}, ...]
               try{
                 // 從 _wbNet 拿房間玩家清單(連線模式有 4 個真實玩家;單人模式只有 1 個 + 3 個 NPC)
@@ -2954,6 +3001,8 @@
                   if(_p && _p.uid){
                     _teamUids.push(_p.uid);
                     _teamNames.push(_p.name || _myNick);
+                    // ★ v3.5.70 — 從 player 物件取 email(createRoom/joinRoom 已存),lower-case 正規化
+                    _teamEmails.push(((_p.email || '') + '').toLowerCase());
                     _teamHeroes.push({
                       name: _heroName || '?',
                       lv: _getHeroLv(_i, _heroName, _p.uid === myUid),
@@ -2962,6 +3011,8 @@
                     // 空槽 / 房主代打 → 用房主身份補位(用戶要求:單人開 4 隻顯示 4 次相同暱稱)
                     _teamUids.push(myUid);
                     _teamNames.push(_myNick);
+                    // ★ v3.5.70 — 房主代打槽位,email 用房主自己的
+                    _teamEmails.push(_myEmail);
                     _teamHeroes.push({
                       name: _heroName || '?',
                       lv: _getHeroLv(_i, _heroName, true),  // 房主代打,當作自己的英雄
@@ -2972,6 +3023,8 @@
                 // fallback:全部當房主自己
                 _teamUids = [myUid, myUid, myUid, myUid];
                 _teamNames = [_myNick, _myNick, _myNick, _myNick];
+                // ★ v3.5.70 — fallback 也填房主自己的 email
+                _teamEmails = [_myEmail, _myEmail, _myEmail, _myEmail];
                 // _teamHeroes 留空,讓 updateLeaderboard 容錯處理
                 _teamHeroes = [];
               }
@@ -3073,9 +3126,10 @@
 
                 // ★ v3.5.6 — 把 _teamHeroes 也傳進去
                 // ★ v3.5.43 — 把 championStats + dmgSources 也傳進去
+                // ★ v3.5.70 — 把 _teamEmails 也傳進去(排行榜班級座號顯示用)
                 window._wbHpSync.updateLeaderboard(
                   bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes,
-                  _championStats, _dmgSources
+                  _championStats, _dmgSources, _teamEmails
                 )
                   .then(res => {
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg

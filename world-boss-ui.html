@@ -1273,32 +1273,35 @@
       else if(rank === 3) rankIcon = '🥉';
       const _names = Array.isArray(e.teamNames) ? e.teamNames.slice(0, 4) : [];
       while(_names.length < 4) _names.push('—');
-      // ★ v3.5.58 — 世界 BOSS 排行榜玩家名稱真名保護(個資保護優先)
-      //   排行榜是「全玩家看得到」的公開資訊,若有學生把暱稱設成自己的真名,
-      //   會在排行榜上被全班看到 → 個資外洩。
-      //   策略:不論誰在看(管理員或玩家),只要 name 不是合法詞庫組合(_NICK_ADJ+_NICK_NOUN)
-      //         → 視為真名,顯示為「***同學」泛稱保護
-      //   排行榜資料只有 name 沒有 email,無法反查名冊得到班級座號;若未來加入 teamEmails
-      //   寫入,可改用 _getAdminPlayerLabel(email, name) 補上短碼「5324蔣同學」。
-      const _protectName = function(n){
+      // ★ v3.5.70 — 老師需求 2026/5/24:「現在全都是***同學沒有意義」— 加上班級座號
+      //   策略:用 teamEmails 反查名冊得「5324蔣同學」短碼;沒 email 時 fallback 保留 v3.5.58 真名保護
+      //   teamEmails 是 v3.5.70 新增欄位,舊紀錄(2026/5/24 之前的場次)沒這欄,fallback 走純 name 保護
+      const _emails = Array.isArray(e.teamEmails) ? e.teamEmails.slice(0, 4) : [];
+      while(_emails.length < 4) _emails.push('');
+      const _protectName = function(n, em){
         if(!n || typeof n !== 'string') return '—';
         const _t = n.trim();
         if(!_t || _t === '—') return '—';
         // 常見泛稱直接放行
         if(_t === '玩家' || _t === '房主' || _t === 'AI' || _t === 'NPC') return _t;
-        // 全部走真名保護(用 _getAdminPlayerLabel 統一邏輯)
+        // ★ v3.5.70 — 有 email 時走 _getAdminPlayerLabel 反查名冊得短碼「5324蔣同學」
         try{
+          if(em && typeof window._getAdminPlayerLabel === 'function'){
+            // 不開 adminShowReal(這是公開排行榜,要保護);真名仍會被替換為「5324蔣同學」
+            const _label = window._getAdminPlayerLabel(em, _t, { protectIfNoEmail: false });
+            if(_label && _label !== '未知玩家') return _label;
+          }
+          // 無 email fallback:保留 v3.5.58 真名保護(***同學)
           if(typeof window._getAdminPlayerLabel === 'function'){
             return window._getAdminPlayerLabel('', _t, { protectIfNoEmail: true });
           }
-          // fallback:直接走 _isLikelyRealName
           if(typeof window._isLikelyRealName === 'function' && window._isLikelyRealName(_t)){
             return '***同學';
           }
         }catch(_){}
         return _t;
       };
-      const _namesHtml = _names.map(n => _esc(_protectName(n))).join('・');
+      const _namesHtml = _names.map((n, _idx) => _esc(_protectName(n, _emails[_idx]))).join('・');
       const _bg = isMyTeam
         ? 'linear-gradient(90deg,rgba(212,168,67,0.32),rgba(212,168,67,0.12))'
         : (rank % 2 === 0 ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.32)');
@@ -6806,6 +6809,44 @@
   }
   window._wbInstallEndActionReturnControlHook = _wbInstallEndActionReturnControlHook;
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.5.69 — 共用「即時傷害條 UI」安裝函式
+  // ────────────────────────────────────────────────────────────────────
+  // 老師 2026/5/24 回報 BUG #4:「沒有出現本場傷害統計」
+  // 根因:wb-solo-cur-dmg-bar UI 元素「只在 solo 模式創建」(原 line ~10960),
+  //       host 與 client 連線模式都沒掛這個 UI,但 line 7780 又有更新此元素的邏輯
+  //       → 連線模式下「本場總傷」永遠不顯示
+  // 修法:抽成共用函式 _wbInstallRealtimeDmgBar,在 solo / host / client 三種 setup
+  //       完成後都呼叫,確保畫面上一定有這個元素
+  // ════════════════════════════════════════════════════════════════════
+  function _wbInstallRealtimeDmgBar(){
+    try{
+      if(document.getElementById('wb-solo-cur-dmg-bar')) return;
+      const dmgBar = document.createElement('div');
+      dmgBar.id = 'wb-solo-cur-dmg-bar';
+      dmgBar.style.cssText = 'position:absolute;left:8px;top:calc(50% - 120px);'
+        + 'transform:none;'
+        + 'z-index:6;'
+        + 'background:rgba(20,40,30,0.92);border:2.5px solid #5dcaa5;'
+        + 'border-radius:14px;padding:12px 20px;'
+        + 'display:flex;flex-direction:row;align-items:center;gap:12px;'
+        + 'box-shadow:0 0 24px rgba(93,202,165,0.55);'
+        + 'pointer-events:auto;'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      dmgBar.innerHTML =
+        '<span style="font-size:24px;color:#5dcaa5;font-weight:700;letter-spacing:1.5px;line-height:1;white-space:nowrap;">📜 本場總傷</span>'
+        + '<span id="wb-solo-cur-dmg-display" style="font-size:40px;color:#ffe066;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 0 10px rgba(255,220,80,0.6);">0</span>';
+      const _gcForDmg = document.getElementById('gc');
+      if(_gcForDmg){
+        _gcForDmg.appendChild(dmgBar);
+      }else{
+        document.body.appendChild(dmgBar);
+      }
+      console.log('[WB v3.5.69] ✅ 即時傷害條 UI 已安裝(共用入口)');
+    }catch(e){ console.warn('[WB v3.5.69] 安裝即時傷害條失敗', e); }
+  }
+  window._wbInstallRealtimeDmgBar = _wbInstallRealtimeDmgBar;
+
   // === 開戰 ===
   // ════════════════════════════════════════════════════════════════════
   // ★ v6 Phase 2 (2026-05-17) — 連線房主端 _wbUiStartBattle 改走主程式
@@ -7305,6 +7346,9 @@
       try{ if(typeof _gamePaused !== 'undefined') _gamePaused = false; }catch(_){}
       return;
     }
+
+    // ★ v3.5.69 — host 端安裝即時傷害條 UI(BUG #4 修補)
+    try{ if(typeof _wbInstallRealtimeDmgBar === 'function') _wbInstallRealtimeDmgBar(); }catch(_){}
 
     // ── advStartBattle 後重新啟動世界戰 BGM(兜底) ────────────────
     setTimeout(() => {
@@ -8169,6 +8213,10 @@
         }catch(eAdv){
           console.error('[WB-Client v6] advStartBattle 失敗', eAdv);
         }
+
+        // ★ v3.5.69 — client 端安裝即時傷害條 UI(BUG #4 修補)
+        //   line 7780 onRoomUpdate 內已有 dmgEl 更新邏輯,只是元素沒被創建 → 永遠 0
+        try{ if(typeof _wbInstallRealtimeDmgBar === 'function') _wbInstallRealtimeDmgBar(); }catch(_){}
 
         // 建世界戰專屬 overlay(BOSS 大血條等)
         try{ if(typeof _wbBuildAdvBattleOverlay === 'function') _wbBuildAdvBattleOverlay(); }catch(_){}
@@ -9072,11 +9120,18 @@
     //         所以 _advQuizResolveCb 在每個玩家機器都會 fire 一次,_wbOnQuizCorrect 也都會被呼叫。
     //         若不守門,client 端會「自己改 G 一次」+「房主 sync 後又收到一次」→ 雙倍生效。
     const _isClient = !!window._wbClientMode;
-    // 累計答對次數(每位玩家自己的累計,獨立記錄,供 5/10/15/20 觸發判定)
+    // ★ v3.5.70 — 累計答對次數改為「全隊共用」(老師明確指示 2026/5/24)
+    //   舊行為(v3.3.2):每位玩家獨立累計 _wbCorrectCnt[uid],4 人各自打到 5 才觸發
+    //                   問題:單人練習模式 OK,但多人連線下「全隊很努力答對 5 題」卻不觸發
+    //                        (因為平均分到 4 人,每人只有 1-2 題)→ 老師回報「5000 獎勵沒出現」
+    //   新行為(v3.5.70):全隊共用一個計數器 _wbCorrectCnt['__team'],
+    //                    任何玩家答對都 +1,累計到 5/10/15/20 就觸發全隊聯手攻擊
+    //   ⚠ 同時保留 _wbCorrectCnt[uid] 個人累計(獎章 / 個人統計用),只是不用於觸發判定
     const uid = window._gUserId || ('slot_' + actorPos);
     window._wbCorrectCnt = window._wbCorrectCnt || {};
     window._wbCorrectCnt[uid] = (window._wbCorrectCnt[uid] || 0) + 1;
-    const cnt = window._wbCorrectCnt[uid];
+    window._wbCorrectCnt['__team'] = (window._wbCorrectCnt['__team'] || 0) + 1;
+    const cnt = window._wbCorrectCnt['__team'];
     // ★ v3.3.2 — 答對獎勵:全隊 +5% HP + 隊伍能量 +1
     //   ⚠ 老師確認:「隊伍四個人的能量是共用的」— 所以是「G.energy.p1 += 1」整個隊伍能量 +1,
     //              不是每個英雄個別 burst+1(v6 主程式戰鬥引擎用 G.energy,不是個別 hero.burst)
@@ -9195,6 +9250,13 @@
           // 答題獎勵不受護盾/天賦影響(這是「外部」傷害)
           _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
           // 顯示獎勵 banner(維持原本的右上角金色 banner)— client 也顯示
+          // ★ v3.5.69 — capture 給 client 重播金色 banner
+          //   舊版只 capture teamBurstCinematic,沒 capture banner → client 看不到「🎖 答題獎勵 × N」金條
+          try{
+            if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+              _wbFxCapture({ type:'quizRewardBanner', cnt:cnt, dmg:rewardDmg });
+            }
+          }catch(_eBcap){ console.warn('[WB v3.5.69] banner capture 失敗', _eBcap); }
         }
         _wbShowQuizRewardBanner(cnt, rewardDmg);
         // 護盾觸發檢查(只在房主端跑,client 等 sync 過來)
@@ -9269,6 +9331,8 @@
     document.body.appendChild(banner);
     setTimeout(() => { try{ banner.remove(); }catch(_){} }, 2500);
   }
+  // ★ v3.5.69 — 暴露給主檔 _wbFxReplayOne 用(BUG #7 修補)
+  window._wbShowQuizRewardBanner = _wbShowQuizRewardBanner;
 
   // ════════════════════════════════════════════════════════════════════
   // ★ v3.3.2 — 全隊聯手攻擊 Cinematic:2×2 排版顯示 4 名 p1 英雄全圖
@@ -9608,7 +9672,44 @@
         //              有對 client 早期 return,直接 _fireOnDone('client-skip-opening'))
         //   保險起見仍加 _isClient 守門:萬一未來 advShowQuiz 在 client 也被誤觸,不要重複改 G
         const _isClientOpening = !!window._wbClientMode;
+        // ★ v3.5.70 — 開戰題答對也算入「全隊累計答對」(team cnt)
+        //   老師需求:「連續答對 5 題就放一次」— 開戰題是第 1 題,理應計入
+        //   實作:host 端在開戰題答對時 team cnt +1,若剛好到 5/10/15/20 也要觸發 5000 獎勵
         if(!_isClientOpening){
+          try{
+            window._wbCorrectCnt = window._wbCorrectCnt || {};
+            window._wbCorrectCnt['__team'] = (window._wbCorrectCnt['__team'] || 0) + 1;
+            const _teamCnt = window._wbCorrectCnt['__team'];
+            console.log('[WB-Opening v3.5.70] 開戰題答對,team cnt → ' + _teamCnt);
+            // 若剛好觸發 5/10/15/20 → 跑全隊聯手攻擊(直接 inline 不重抽函式)
+            const _triggers = [5, 10, 15, 20];
+            if(_triggers.includes(_teamCnt)){
+              const _boss = G && G.p2 && G.p2[0];
+              if(_boss){
+                const _rewardDmg = Math.floor((_boss.hp || 500000) * 0.01);
+                _boss.curHp = Math.max(0, _boss.curHp - _rewardDmg);
+                try{ if(typeof _wbShowTeamBurstCinematic === 'function') _wbShowTeamBurstCinematic(_teamCnt); }catch(_){}
+                try{
+                  if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+                    _wbFxCapture({ type:'teamBurstCinematic', cnt:_teamCnt });
+                    _wbFxCapture({ type:'quizRewardBanner', cnt:_teamCnt, dmg:_rewardDmg });
+                  }
+                }catch(_){}
+                setTimeout(function(){
+                  try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
+                  try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,200,80,1)', 450); }catch(_){}
+                }, 100);
+                try{ if(typeof _wbShowQuizRewardBanner === 'function') _wbShowQuizRewardBanner(_teamCnt, _rewardDmg); }catch(_){}
+                try{ if(typeof log === 'function') log(`🎖 全隊累積答對 ${_teamCnt} 題!全隊聯手攻擊!對 BOSS 造成 ${_rewardDmg.toLocaleString()} 傷害`); }catch(_){}
+                // sync 給 client 看到 BOSS HP 變化
+                try{
+                  if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+                    window._wbHostSyncG('opening-quiz-team-reward');
+                  }
+                }catch(_){}
+              }
+            }
+          }catch(_eTeamCnt){ console.warn('[WB-Opening v3.5.70] team cnt 累計失敗', _eTeamCnt); }
           try{
             // 1) 隊伍能量 +1
             G.energy = G.energy || { p1:0, p2:0 };
