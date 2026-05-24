@@ -11695,8 +11695,14 @@
         //                    內容滿時可垂直捲動,卡片不會被擠壓重疊。
         //   觸發條件:(pointer:coarse) 觸控 + (min-width:1024) 大平板 + (orientation:landscape) 橫向
         //            → 只命中橫向 iPad,直立 iPad 與桌機完全不受影響
+        //   ★ v3.7.1/v3.7.2 反覆教訓 — 不要強塞 #sb height:100vh
+        //     原因:#gc 是 1920×1080 固定尺寸 + transform:scale 縮放,
+        //          100vh 對 #gc 內子元素被 scale 後實際遠大於 1080 → 底部留黑色空白。
+        //   ★ v3.7.2 最終修法:不動 #sb 的 height,只用 max-height + overflow-y:auto,
+        //                       內容不滿時 #sb 自然撐高度(跟 PC 桌機一致、底部不留空)、
+        //                       內容滿時內部捲動。max-height 用「能塞下卡片但避免被視窗截掉」的數值。
         + '@media (pointer:coarse) and (min-width:1024px) and (orientation:landscape){'
-        +   '#sb{height:100vh !important;max-height:100vh !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
+        +   '#sb{max-height:1000px !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
         + '}'
         // ── Bug 2:橫向 iPad Pro 12.9(1366)reward/quiz overlay 字級過大修補(★ v3.7.0 新增) ──
         //   根因:main.css line 4276 既有規則「@media (max-width:1180px)」把 reward overlay 寬度/字級縮小,
