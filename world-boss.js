@@ -1156,6 +1156,8 @@
   const _WB_FX_URLS = {
     s1:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火雨.gif'),
     s2:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('集中效果線.gif'),
+    // ★ v3.6.9 — BOSS 護盾啟動特效(老師指定:最後之盾.gif)
+    shield: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('最後之盾.gif'),
   };
 
   // 播放全畫面 GIF 特效 (持續 1.6 秒後淡出)
@@ -1376,6 +1378,26 @@
     const old = document.getElementById('wb-shield-hint-modal');
     if(old) old.remove();
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.6.9 — BOSS 護盾啟動時播放特效 + 音效(老師指定:最後之盾.gif)
+    // ────────────────────────────────────────────────────────────────
+    // 特效:全螢幕「最後之盾」GIF,1.8 秒淡出 + 螢幕震動
+    // 音效:守護音(sfx-guard,主音)+ 龍吼(sfx-wb-boss-skill,疊一層氣勢)
+    // 走 _wbPlayFullscreenFx + playSfx 既有機制,跟 S1/S2 完全一致
+    // ════════════════════════════════════════════════════════════════
+    try{
+      if(typeof window._wbPlayFullscreenFx === 'function'){
+        window._wbPlayFullscreenFx('shield', { duration:1800, shake:true });
+      }
+    }catch(_){}
+    try{ if(typeof playSfx === 'function') playSfx('sfx-guard', 0.9); }catch(_){}
+    // 100ms 後疊一層龍吼,讓「龍王施放護盾」的氣勢更足
+    try{
+      setTimeout(function(){
+        try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.65); }catch(_){}
+      }, 120);
+    }catch(_){}
+
     const ov = document.createElement('div');
     ov.id = 'wb-shield-hint-modal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
@@ -1429,13 +1451,13 @@
         <div style="font-size:15px;color:#ffe;line-height:1.85;text-align:left;
           background:rgba(255,80,40,0.12);padding:13px 16px;border-radius:10px;
           border-left:4px solid rgba(255,120,80,0.7);margin-bottom:12px;">
-          ${bossName}身上浮現 <b style="color:#ff8866;">${elements.length} 種護盾各 3 層</b>:
+          ${bossName}身上浮現 <b style="color:#ff8866;">${elements.length} 種護盾各 1 層</b>:
           <br>
           ${ruleRows}
           <br><br>
           <b style="color:#ffcc66;">護盾期間所有傷害再減 80%</b>,
           即使「無視有利狀態」的攻擊也無法穿透。<br>
-          打破對應屬性 3 層才能解除該盾。<br>
+          打破對應屬性 1 層才能解除該盾。<br>
           <br>
           💡 戰術:準備 ${elementListForTactic} 屬性英雄輪流破盾!
         </div>

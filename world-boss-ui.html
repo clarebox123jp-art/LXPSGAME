@@ -1628,6 +1628,8 @@
     color:#ffcc66;text-align:center;
     text-shadow:0 0 14px rgba(255,170,80,0.7),0 2px 4px rgba(0,0,0,0.85);
     margin-bottom:1px;line-height:1.05;
+    /* ★ v3.6.8 — 標題下移,避免跟右上角房號/邀請好友/離開房間重疊 */
+    margin-top:78px;
   }
   /* ★ FIX 20260516 v3/v4 — BOSS 預覽小視窗(左上角,寬 4 倍,降低高度) */
   .wb-tc-boss-preview-mini{
@@ -1666,20 +1668,21 @@
     text-align:center;font-size:24px;color:#cfb89e;
     letter-spacing:1.5px;margin-bottom:4px;
   }
-  /* 護盾提示橫條(精簡) */
+  /* 護盾提示橫條 ★ v3.6.8 — 字體加大 30%,讓玩家更清楚需要哪些屬性破盾 */
   .wb-tc-boss-shield-hint{
-    text-align:center;margin-bottom:5px;
-    padding:4px 10px;background:rgba(255,80,40,0.12);
-    border:1.5px solid rgba(255,120,80,0.55);border-radius:8px;
-    font-size:26px;color:#ffd699;letter-spacing:0.5px;line-height:1.35;
+    text-align:center;margin-bottom:8px;
+    padding:8px 14px;background:rgba(255,80,40,0.15);
+    border:2px solid rgba(255,120,80,0.6);border-radius:10px;
+    font-size:34px;color:#ffd699;letter-spacing:1px;line-height:1.35;
+    font-weight:700;
   }
-  .wb-tc-boss-shield-hint b{color:#ffaa66;}
-  .wb-tc-shield-icons{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle;}
+  .wb-tc-boss-shield-hint b{ color:#ffaa66;font-size:38px; }
+  .wb-tc-shield-icons{display:inline-flex;gap:8px;margin-left:10px;vertical-align:middle;}
   .wb-tc-shield-icon{
-    display:inline-flex;align-items:center;gap:3px;
-    padding:2px 8px;border-radius:7px;
-    font-size:24px;font-weight:800;
-    background:rgba(0,0,0,0.55);border:1.5px solid;
+    display:inline-flex;align-items:center;gap:4px;
+    padding:4px 12px;border-radius:9px;
+    font-size:30px;font-weight:800;
+    background:rgba(0,0,0,0.55);border:2px solid;
   }
   .wb-tc-shield-icon.fire {color:#ff7755;border-color:rgba(255,110,80,0.85);}
   .wb-tc-shield-icon.water{color:#88cfff;border-color:rgba(120,180,255,0.85);}
@@ -2184,15 +2187,115 @@
     background:#444;cursor:not-allowed;box-shadow:none;opacity:0.5;
   }
 
-  /* ★ FIX 20260517(f) — 戰前定型文按鈕區 */
+  /* ════════════════════════════════════════════════════════════════ */
+  /* ★ v3.6.8 — 戰前溝通「啟動按鈕」(取代原本 12 顆直排佔大量垂直空間)  */
+  /* ════════════════════════════════════════════════════════════════ */
+  .wb-tc-quickmsg-launcher{
+    flex-shrink:0;
+    margin-bottom:8px;
+  }
+  .wb-tc-quickmsg-launcher-btn{
+    width:100%;
+    display:flex;align-items:center;justify-content:flex-start;gap:14px;
+    padding:12px 20px;
+    background:linear-gradient(135deg,rgba(80,50,140,0.55),rgba(60,35,110,0.35));
+    border:2px solid rgba(168,132,255,0.55);
+    border-radius:12px;
+    color:#e0d4ff;font-family:inherit;cursor:pointer;
+    transition:all 0.2s;
+    box-shadow:0 0 14px rgba(168,132,255,0.18);
+    position:relative;
+  }
+  .wb-tc-quickmsg-launcher-btn:hover:not(:disabled){
+    background:linear-gradient(135deg,rgba(110,75,180,0.7),rgba(80,50,140,0.5));
+    border-color:rgba(200,168,255,0.85);
+    box-shadow:0 0 22px rgba(168,132,255,0.4);
+    transform:translateY(-1px);
+  }
+  .wb-tc-quickmsg-launcher-btn:active:not(:disabled){
+    transform:translateY(1px);
+  }
+  .wb-tc-quickmsg-launcher-btn:disabled{
+    opacity:0.5;cursor:not-allowed;transform:none;
+    box-shadow:none;
+  }
+  .wb-tc-qml-icon{ font-size:32px;flex-shrink:0; }
+  .wb-tc-qml-label{
+    font-size:26px;font-weight:800;color:#c8a8ff;letter-spacing:2px;
+    flex-shrink:0;
+  }
+  .wb-tc-qml-hint{
+    flex:1;
+    font-size:18px;color:#9988bb;letter-spacing:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    text-align:right;
+  }
+  .wb-tc-qml-cd{
+    flex-shrink:0;
+    font-size:22px;font-weight:800;color:#ffaa66;letter-spacing:1px;
+    background:rgba(80,40,20,0.55);padding:4px 12px;border-radius:8px;
+    border:1.5px solid rgba(255,140,80,0.6);
+  }
+
+  /* ════════════════════════════════════════════════════════════════ */
+  /* ★ v3.6.8 — 戰前溝通 modal(點 launcher 後展開的浮動視窗)         */
+  /* ════════════════════════════════════════════════════════════════ */
+  #wb-tc-quickmsg-modal{
+    display:none;position:fixed;inset:0;z-index:10500;
+    background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;padding:20px;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
+  }
+  #wb-tc-quickmsg-modal.show{ display:flex; }
+  .wb-tc-qmm-card{
+    width:100%;max-width:900px;max-height:90vh;
+    background:linear-gradient(160deg,#1e1530 0%,#0d0820 100%);
+    border:2.5px solid rgba(168,132,255,0.7);border-radius:16px;
+    box-shadow:0 0 48px rgba(168,132,255,0.45),0 10px 32px rgba(0,0,0,0.6);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .wb-tc-qmm-head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 18px;
+    border-bottom:1.5px solid rgba(168,132,255,0.3);
+    background:rgba(40,28,70,0.35);
+    flex-shrink:0;
+  }
+  .wb-tc-qmm-title{
+    font-size:26px;font-weight:800;color:#c8a8ff;letter-spacing:2px;
+  }
+  .wb-tc-qmm-cd{
+    font-size:20px;color:#ffaa66;font-weight:700;letter-spacing:1px;
+    background:rgba(80,40,20,0.5);padding:4px 12px;border-radius:8px;
+    border:1.5px solid rgba(255,140,80,0.55);
+  }
+  .wb-tc-qmm-close{
+    flex-shrink:0;
+    width:40px;height:40px;border-radius:8px;
+    background:rgba(255,80,80,0.18);color:#ffaaaa;
+    border:1.5px solid rgba(255,100,100,0.55);
+    font-size:22px;font-weight:900;font-family:inherit;
+    cursor:pointer;line-height:1;
+    transition:all 0.15s;
+  }
+  .wb-tc-qmm-close:hover{ background:rgba(255,80,80,0.4); transform:scale(1.06); }
+  .wb-tc-qmm-body{
+    padding:18px 18px 20px;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* ★ FIX 20260517(f) — 戰前定型文按鈕區(舊類別保留 → 現在用在 modal 內) */
   /* ★ FIX 20260517(i) — 字體 + padding 放大 100% 提升 iPad 可讀性 */
+  /* ★ v3.6.8 — 已搬進 modal 內,主面板那個 .wb-tc-quickmsg-zone 已廢除 */
   .wb-tc-quickmsg-zone{
     flex-shrink:0;
-    background:rgba(40,28,60,0.55);
-    border:1.5px solid rgba(168,132,255,0.35);
-    border-radius:10px;
-    padding:14px 16px 16px;  /* 8/10/10 → 14/16/16 */
-    margin-bottom:6px;
+    background:transparent;
+    border:none;
+    border-radius:0;
+    padding:0;
+    margin-bottom:0;
   }
   .wb-tc-quickmsg-header{
     display:flex;justify-content:space-between;align-items:center;
@@ -2241,39 +2344,49 @@
   }
 
   /* 底部:返回 + 覆蓋率 + 開戰 */
+  /* ★ v3.6.8 — 整區下padding & 左右padding 加大,避免 iPad 邊緣防誤觸區擋住開戰按鈕 */
   .wb-tc-start-zone{
-    display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;flex-shrink:0;
     /* ★ FIX 20260521(a) — 開戰按鈕區永遠釘在卡片底部,避免被定型文擠出視窗外 */
     position:sticky;
     bottom:0;
     background:linear-gradient(180deg,rgba(8,10,24,0) 0%,rgba(8,10,24,0.88) 30%,rgba(8,10,24,0.95) 100%);
-    padding:8px 0 4px;
-    margin-top:4px;
+    /* ★ v3.6.8 — bottom padding 8 → 24,左右 16 確保 iPad 不會貼邊被擋 */
+    padding:12px 16px 24px;
+    margin:8px -14px 0;  /* 抵銷卡片本身的 padding:6px 14px,讓 sticky 區延伸到卡片邊緣 */
     z-index:5;
   }
   .wb-tc-coverage{
-    flex:1;min-width:200px;padding:5px 10px;
-    background:rgba(0,0,0,0.45);border-radius:8px;
-    font-size:26px;color:#cfb89e;letter-spacing:0.5px;line-height:1.3;
+    /* ★ v3.6.8 — 覆蓋率訊息字體放大,跟 4 元素需求列字體相近 */
+    flex:1;min-width:240px;padding:10px 16px;
+    background:rgba(0,0,0,0.45);border-radius:10px;
+    font-size:30px;color:#cfb89e;letter-spacing:0.5px;line-height:1.3;
+    font-weight:700;
   }
   .wb-tc-coverage.ok{
     background:rgba(62,200,122,0.18);color:#a8f0ce;
-    border:1.5px solid rgba(62,200,122,0.55);
+    border:2px solid rgba(62,200,122,0.6);
   }
   .wb-tc-coverage.warn{
     background:rgba(255,200,80,0.15);color:#ffd699;
-    border:1.5px solid rgba(255,200,100,0.55);
+    border:2px solid rgba(255,200,100,0.6);
   }
   .wb-tc-start-btn{
-    padding:7px 20px;font-size:32px;font-weight:900;letter-spacing:3px;
-    border:none;color:#000;border-radius:8px;cursor:pointer;
+    /* ★ v3.6.8 — 加大加高:padding 7/20 → 22/48, min-height 確保 iPad 必觸面積 */
+    padding:22px 48px;font-size:40px;font-weight:900;letter-spacing:4px;
+    min-height:84px;min-width:280px;
+    border:3px solid #ffd966;color:#000;border-radius:14px;cursor:pointer;
     font-family:inherit;transition:all 0.2s;
     background:linear-gradient(135deg,#ffcc44,#cc8822);
-    box-shadow:0 0 20px rgba(255,200,80,0.55);
+    box-shadow:0 0 28px rgba(255,200,80,0.7),0 4px 14px rgba(0,0,0,0.5);
+    /* 點按反饋:防 iPad tap highlight */
+    user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
   }
-  .wb-tc-start-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 32px rgba(255,200,80,0.85);}
+  .wb-tc-start-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 40px rgba(255,200,80,0.95),0 6px 18px rgba(0,0,0,0.6);}
+  .wb-tc-start-btn:active:not(:disabled){ transform:translateY(1px); }
   .wb-tc-start-btn:disabled{
     background:#444;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.55;
+    border-color:#666;
   }
   .wb-tc-back-btn{
     padding:6px 12px;font-size:24px;font-weight:700;letter-spacing:1px;
@@ -2306,47 +2419,142 @@
     }
   }
   @media (max-width:1180px){
+    /* ════════════════════════════════════════════════════════════════ */
+    /* ★ v3.6.8 — iPad 隊友槽英雄卡縮字, 讓英雄圖能露出來                */
+    /* 原問題: Lv/名稱/HP/攻特速/技能桌面字體在 iPad 上整張卡塞滿,圖看不見 */
+    /* ════════════════════════════════════════════════════════════════ */
+    /* 槽位 head 文字 */
+    .wb-tc-slot-head{ font-size:16px;gap:4px; }
+    .wb-tc-slot-num-lbl{ font-size:15px; }
+    .wb-tc-slot-player-name{ font-size:15px; }
+    .wb-tc-slot-tag{ font-size:14px;padding:1px 5px; }
+    .wb-tc-swap-hero-btn{ font-size:15px;padding:2px 6px; }
+    /* 英雄卡 header — Lv / 名稱 / 元素 icon */
+    .wb-tc-bc-lv{ font-size:18px;padding:1px 4px;border-width:1.5px; }
+    .wb-tc-bc-name{ font-size:22px;letter-spacing:0; }
+    .wb-tc-bc-elem{ font-size:22px; }
+    /* HP 條:整體變矮 */
+    .wb-tc-bc-hp-wrap{ height:22px;margin:0 5px 3px;border-radius:5px; }
+    .wb-tc-bc-hp-txt{ font-size:18px; }
+    /* 攻 / 特 / 速 */
+    .wb-tc-bc-stats > div{ font-size:15px; }
+    .wb-tc-bc-stats .s-atk b,
+    .wb-tc-bc-stats .s-sp b,
+    .wb-tc-bc-stats .s-spd b{ font-size:20px; }
+    /* 技能列 */
+    .wb-tc-bc-skill-row{ font-size:16px;padding:2px 4px; }
+    .wb-tc-bc-skill-name{ font-size:16px; }
+    .wb-tc-bc-skill-lv{ font-size:15px;padding:0 4px; }
+    .wb-tc-bc-skill-cost{ font-size:15px; }
+    .wb-tc-bc-skill-row .csk-detail-btn{
+      width:18px;height:18px;line-height:18px;font-size:14px;
+    }
+    /* 元素 chips + 至寶 — 也適度縮 */
+    .wb-tc-section-lbl{ font-size:15px; }
+    .wb-tc-section-lbl .wb-tc-req{ font-size:13px; }
+    .wb-tc-elem-chip{ font-size:13px; }
+    .wb-tc-elem-chip .em-ic{ font-size:20px; }
+    .wb-tc-treasure-row{ font-size:15px;min-height:20px; }
+    .wb-tc-treasure-row .wb-tc-tr-ic{ font-size:20px; }
+    .wb-tc-treasure-row .wb-tc-tr-name{ font-size:15px; }
+    .wb-tc-treasure-row .wb-tc-tr-lv{ font-size:13px; }
+    .wb-tc-treasure-row.empty{ font-size:14px; }
+    .wb-tc-swap-tr-btn{ font-size:15px;padding:3px 4px; }
+    .wb-tc-ready-btn{ font-size:20px;padding:5px 5px;letter-spacing:1.5px; }
+
+    /* ════════════════════════════════════════════════════════════════ */
+    /* ★ v3.6.8 — 標題下移空間在 iPad 上維持(右上角按鈕更密集)         */
+    /* ════════════════════════════════════════════════════════════════ */
+    .wb-tc-title{
+      font-size:30px;letter-spacing:2px;
+      margin-top:72px;
+    }
+    .wb-tc-sub{ font-size:17px;margin-bottom:3px; }
+
+    /* ════════════════════════════════════════════════════════════════ */
+    /* ★ v3.6.8 — 元素需求列在 iPad 縮回適中(桌面 34px 過大)            */
+    /* ════════════════════════════════════════════════════════════════ */
+    .wb-tc-boss-shield-hint{
+      font-size:22px;padding:5px 10px;
+    }
+    .wb-tc-boss-shield-hint b{ font-size:24px; }
+    .wb-tc-shield-icon{ font-size:20px;padding:2px 8px; }
+
+    /* ════════════════════════════════════════════════════════════════ */
+    /* ★ v3.6.8 — 戰前溝通 launcher 在 iPad 縮小但仍清晰可按            */
+    /* ════════════════════════════════════════════════════════════════ */
+    .wb-tc-quickmsg-launcher-btn{ padding:9px 14px;gap:10px; }
+    .wb-tc-qml-icon{ font-size:22px; }
+    .wb-tc-qml-label{ font-size:18px;letter-spacing:1px; }
+    .wb-tc-qml-hint{ font-size:13px; }
+    .wb-tc-qml-cd{ font-size:15px;padding:2px 9px; }
+    /* modal 內部按鈕 — 維持原本 iPad 字體 */
     .wb-tc-quickmsg-zone{
-      padding:6px 10px 8px;
-      margin-bottom:4px;
+      padding:0;
+      margin-bottom:0;
     }
-    .wb-tc-quickmsg-header{
-      margin-bottom:4px;
-    }
-    .wb-tc-quickmsg-title{
-      font-size:18px;letter-spacing:1px;
-    }
-    .wb-tc-quickmsg-cd{
-      font-size:14px;letter-spacing:0.5px;padding:2px 8px;
-    }
+    .wb-tc-qmm-title{ font-size:20px; }
+    .wb-tc-qmm-cd{ font-size:15px; }
     .wb-tc-quickmsg-grid{
       gap:5px;
-      grid-template-columns:repeat(6, 1fr);  /* iPad 横放夠寬, 維持 6 欄 */
+      grid-template-columns:repeat(6, 1fr);
     }
     .wb-tc-qmsg-btn{
-      padding:6px 4px;font-size:15px;letter-spacing:0.5px;
+      padding:8px 4px;font-size:15px;letter-spacing:0.5px;
       border-radius:7px;border-width:1.5px;
     }
-    /* 開戰區的覆蓋率訊息也縮小 */
+
+    /* ════════════════════════════════════════════════════════════════ */
+    /* ★ v3.6.8 — 開戰區在 iPad 上保持夠大但縮一點(原桌面 40px 仍太大) */
+    /* 重點:左右 padding 不能太小,確保不被 iPad 邊緣防誤觸區擋住          */
+    /* ════════════════════════════════════════════════════════════════ */
+    .wb-tc-start-zone{
+      gap:10px;padding:10px 12px 22px;
+    }
     .wb-tc-coverage{
-      font-size:17px;padding:4px 8px;min-width:160px;
+      font-size:18px;padding:6px 10px;min-width:160px;
     }
     .wb-tc-start-btn{
-      padding:6px 16px;font-size:22px;letter-spacing:2px;
+      padding:16px 30px;font-size:28px;letter-spacing:2.5px;
+      min-height:68px;min-width:200px;
     }
     .wb-tc-back-btn{
-      padding:5px 10px;font-size:16px;
+      padding:6px 12px;font-size:16px;
     }
     /* 卡片整體 padding 縮小, 多擠一點空間 */
     .wb-tc-card{
       padding:4px 10px 6px;
     }
   }
-  /* 更窄(< 900px)— 定型文壓更小 */
+  /* 更窄(< 900px)— 手機/小視窗 */
   @media (max-width:900px){
-    .wb-tc-quickmsg-title{ font-size:16px; }
-    .wb-tc-qmsg-btn{ font-size:13px;padding:5px 3px; }
+    .wb-tc-qml-label{ font-size:16px; }
+    .wb-tc-qml-hint{ display:none; }
+    .wb-tc-qmm-title{ font-size:18px; }
+    .wb-tc-qmsg-btn{ font-size:13px;padding:6px 3px; }
     .wb-tc-quickmsg-grid{ grid-template-columns:repeat(4, 1fr); }
+    .wb-tc-title{
+      font-size:24px;letter-spacing:1.5px;margin-top:64px;
+    }
+    .wb-tc-boss-shield-hint{ font-size:18px; }
+    .wb-tc-boss-shield-hint b{ font-size:20px; }
+    .wb-tc-shield-icon{ font-size:17px;padding:2px 6px; }
+    .wb-tc-start-btn{
+      padding:14px 22px;font-size:22px;min-height:60px;min-width:160px;letter-spacing:2px;
+    }
+    .wb-tc-coverage{ font-size:15px; }
+    /* 手機右上角壓更小 */
+    .wb-tc-topright{ top:6px;right:8px;gap:5px; }
+    .wb-tc-roomcode-badge{ padding:4px 7px; }
+    .wb-tc-roomcode-badge .wb-tc-rc-label{ font-size:13px; }
+    .wb-tc-roomcode-badge .wb-tc-rc-val{ font-size:18px;letter-spacing:1px; }
+    .wb-tc-roomcode-badge .wb-tc-rc-copy{ font-size:13px;padding:2px 6px; }
+    .wb-tc-invite-btn{ padding:5px 9px;font-size:14px; }
+    .wb-tc-leave-btn{ padding:4px 8px;font-size:14px; }
+    /* BOSS preview 也壓 */
+    .wb-tc-boss-preview-mini{ width:240px;height:54px; }
+    .wb-tc-boss-preview-mini img{ width:50px;height:50px; }
+    .wb-tc-boss-preview-label{ font-size:18px; }
   }
 
   /* ════════════════════════════════════════════════════════════════ */
@@ -3222,7 +3430,7 @@
                           省下的垂直空間用來加大英雄卡 HP 條 -->
     <div class="wb-tc-boss-shield-hint" id="wb-tc-boss-shield-hint">
       <div>
-        ⚔ 隊伍需要 <b id="wb-tc-shield-elem-text">水 / 土 / 草 / 光</b> 屬性各打 3 次破盾
+        ⚔ 隊伍需要 <b id="wb-tc-shield-elem-text">水 / 土 / 草 / 光</b> 屬性各打 1 次破盾
         <span class="wb-tc-shield-icons" id="wb-tc-shield-icons">
           <!-- 破盾屬性 chips (可同步覆蓋狀態) -->
         </span>
@@ -3234,27 +3442,14 @@
       <!-- 由 JS 動態渲染 -->
     </div>
 
-    <!-- ★ FIX 20260517(f) — 戰前定型文按鈕區(12 顆,共同 5 秒冷卻) -->
-    <!--   訊息會冒泡到對應 slot 卡的頂端,讓隊友看見 -->
-    <div class="wb-tc-quickmsg-zone" id="wb-tc-quickmsg-zone">
-      <div class="wb-tc-quickmsg-header">
-        <span class="wb-tc-quickmsg-title">💬 戰前溝通</span>
-        <span class="wb-tc-quickmsg-cd" id="wb-tc-quickmsg-cd" style="display:none;">⏱ 冷卻 <span id="wb-tc-quickmsg-cd-sec">5</span> 秒</span>
-      </div>
-      <div class="wb-tc-quickmsg-grid">
-        <button class="wb-tc-qmsg-btn role" data-qmsg="role_dps"   onclick="_wbTcSendQuickMsg('role_dps')">⚔ 我負責輸出</button>
-        <button class="wb-tc-qmsg-btn role" data-qmsg="role_heal"  onclick="_wbTcSendQuickMsg('role_heal')">✨ 我負責治療</button>
-        <button class="wb-tc-qmsg-btn role" data-qmsg="role_tank"  onclick="_wbTcSendQuickMsg('role_tank')">🛡 我負責當坦克</button>
-        <button class="wb-tc-qmsg-btn role" data-qmsg="role_ctrl"  onclick="_wbTcSendQuickMsg('role_ctrl')">🌀 我負責控場</button>
-        <button class="wb-tc-qmsg-btn role" data-qmsg="role_quiz"  onclick="_wbTcSendQuickMsg('role_quiz')">📖 我負責答題</button>
-        <button class="wb-tc-qmsg-btn status" data-qmsg="brb"      onclick="_wbTcSendQuickMsg('brb')">⏸ 等我一下</button>
-        <button class="wb-tc-qmsg-btn status" data-qmsg="back"     onclick="_wbTcSendQuickMsg('back')">🙋 我回來了</button>
-        <button class="wb-tc-qmsg-btn need" data-qmsg="need_dps"   onclick="_wbTcSendQuickMsg('need_dps')">⚠ 缺輸出</button>
-        <button class="wb-tc-qmsg-btn need" data-qmsg="need_heal"  onclick="_wbTcSendQuickMsg('need_heal')">⚠ 缺治療</button>
-        <button class="wb-tc-qmsg-btn need" data-qmsg="need_tank"  onclick="_wbTcSendQuickMsg('need_tank')">⚠ 缺坦克</button>
-        <button class="wb-tc-qmsg-btn need" data-qmsg="need_ctrl"  onclick="_wbTcSendQuickMsg('need_ctrl')">⚠ 缺控場</button>
-        <button class="wb-tc-qmsg-btn leave" data-qmsg="leaving"   onclick="_wbTcSendQuickMsg('leaving')">🙏 我先離開</button>
-      </div>
+    <!-- ★ v3.6.8 — 戰前溝通改為「1 顆按鈕 + 展開 modal」(原 12 顆直排省下垂直空間給開戰按鈕) -->
+    <div class="wb-tc-quickmsg-launcher" id="wb-tc-quickmsg-launcher">
+      <button class="wb-tc-quickmsg-launcher-btn" id="wb-tc-quickmsg-launcher-btn" onclick="_wbTcOpenQuickmsgPanel()">
+        <span class="wb-tc-qml-icon">💬</span>
+        <span class="wb-tc-qml-label">戰前溝通</span>
+        <span class="wb-tc-qml-hint">點擊展開 12 個定型訊息</span>
+        <span class="wb-tc-qml-cd" id="wb-tc-qml-cd" style="display:none;">⏱ <span id="wb-tc-qml-cd-sec">5</span>s</span>
+      </button>
     </div>
 
     <!-- 底部:房主開戰 + 元素覆蓋進度 -->
@@ -3265,6 +3460,38 @@
       <button id="wb-tc-start-btn" class="wb-tc-start-btn" onclick="_wbTcHostStartBattle()" disabled>
         ⚔ 開戰!
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ★ v3.6.8 — 戰前溝通 modal(點 launcher 後展開,放 12 顆定型文按鈕) -->
+<!--   發完訊息 / 按 ✕ / 點背景 = 自動關閉 -->
+<!--   訊息會冒泡到對應 slot 卡的頂端,讓隊友看見 -->
+<div id="wb-tc-quickmsg-modal">
+  <div class="wb-tc-qmm-card">
+    <div class="wb-tc-qmm-head">
+      <div class="wb-tc-qmm-title">💬 戰前溝通 — 選一個訊息發送</div>
+      <span class="wb-tc-qmm-cd" id="wb-tc-quickmsg-cd" style="display:none;">⏱ 冷卻 <span id="wb-tc-quickmsg-cd-sec">5</span> 秒</span>
+      <button class="wb-tc-qmm-close" onclick="_wbTcCloseQuickmsgPanel()" title="關閉">✕</button>
+    </div>
+    <div class="wb-tc-qmm-body">
+      <!-- 保留 .wb-tc-quickmsg-zone 包裝(舊邏輯找這個 selector 套冷卻) -->
+      <div class="wb-tc-quickmsg-zone" id="wb-tc-quickmsg-zone">
+        <div class="wb-tc-quickmsg-grid">
+          <button class="wb-tc-qmsg-btn role" data-qmsg="role_dps"   onclick="_wbTcSendQuickMsg('role_dps')">⚔ 我負責輸出</button>
+          <button class="wb-tc-qmsg-btn role" data-qmsg="role_heal"  onclick="_wbTcSendQuickMsg('role_heal')">✨ 我負責治療</button>
+          <button class="wb-tc-qmsg-btn role" data-qmsg="role_tank"  onclick="_wbTcSendQuickMsg('role_tank')">🛡 我負責當坦克</button>
+          <button class="wb-tc-qmsg-btn role" data-qmsg="role_ctrl"  onclick="_wbTcSendQuickMsg('role_ctrl')">🌀 我負責控場</button>
+          <button class="wb-tc-qmsg-btn role" data-qmsg="role_quiz"  onclick="_wbTcSendQuickMsg('role_quiz')">📖 我負責答題</button>
+          <button class="wb-tc-qmsg-btn status" data-qmsg="brb"      onclick="_wbTcSendQuickMsg('brb')">⏸ 等我一下</button>
+          <button class="wb-tc-qmsg-btn status" data-qmsg="back"     onclick="_wbTcSendQuickMsg('back')">🙋 我回來了</button>
+          <button class="wb-tc-qmsg-btn need" data-qmsg="need_dps"   onclick="_wbTcSendQuickMsg('need_dps')">⚠ 缺輸出</button>
+          <button class="wb-tc-qmsg-btn need" data-qmsg="need_heal"  onclick="_wbTcSendQuickMsg('need_heal')">⚠ 缺治療</button>
+          <button class="wb-tc-qmsg-btn need" data-qmsg="need_tank"  onclick="_wbTcSendQuickMsg('need_tank')">⚠ 缺坦克</button>
+          <button class="wb-tc-qmsg-btn need" data-qmsg="need_ctrl"  onclick="_wbTcSendQuickMsg('need_ctrl')">⚠ 缺控場</button>
+          <button class="wb-tc-qmsg-btn leave" data-qmsg="leaving"   onclick="_wbTcSendQuickMsg('leaving')">🙏 我先離開</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -5087,6 +5314,8 @@
       const _qc = document.getElementById('wb-tc-qmsg-confirm');
       if(_qc) _qc.remove();
     }catch(_){}
+    // ★ v3.6.8 — 一併關閉戰前溝通 modal(如果還開著)
+    try{ if(typeof _wbTcCloseQuickmsgPanel === 'function') _wbTcCloseQuickmsgPanel(); }catch(_){}
   };
 
   // ★ FIX 20260517(f) — 戰前定型文發送 + 共同 5 秒冷卻
@@ -5228,6 +5457,8 @@
     // 啟動冷卻
     window._wbTcQmsgCdUntil = now + QMSG_CD_MS;
     _wbTcApplyQmsgCdUi();
+    // ★ v3.6.8 — 發送後自動關閉 quickmsg modal(老師指示:發完話自動關)
+    try{ _wbTcCloseQuickmsgPanel(); }catch(_){}
     // 發送
     try{
       if(window._wbNet && window._wbNet.sendQuickEmoji){
@@ -5311,14 +5542,22 @@
   }
 
   // 套用冷卻 UI:disable 所有按鈕 + 倒數顯示
+  // ★ v3.6.8 — 同步控制主面板 launcher 按鈕(也要 disable + 顯示倒數)
   function _wbTcApplyQmsgCdUi(){
     const grid = document.querySelector('.wb-tc-quickmsg-grid');
     if(grid){
       grid.querySelectorAll('.wb-tc-qmsg-btn').forEach(b => { b.disabled = true; });
     }
+    // modal 內的冷卻 label
     const cdLabel = document.getElementById('wb-tc-quickmsg-cd');
     const cdSec = document.getElementById('wb-tc-quickmsg-cd-sec');
     if(cdLabel) cdLabel.style.display = 'inline-block';
+    // ★ v3.6.8 — launcher 也要 disable + 顯示冷卻
+    const launcherBtn = document.getElementById('wb-tc-quickmsg-launcher-btn');
+    const launcherCd = document.getElementById('wb-tc-qml-cd');
+    const launcherCdSec = document.getElementById('wb-tc-qml-cd-sec');
+    if(launcherBtn) launcherBtn.disabled = true;
+    if(launcherCd) launcherCd.style.display = 'inline-flex';
     // 啟動 250ms 倒數 timer
     if(window._wbTcQmsgCdTimer) clearInterval(window._wbTcQmsgCdTimer);
     window._wbTcQmsgCdTimer = setInterval(function(){
@@ -5332,11 +5571,43 @@
           grid2.querySelectorAll('.wb-tc-qmsg-btn').forEach(b => { b.disabled = false; });
         }
         if(cdLabel) cdLabel.style.display = 'none';
+        // ★ v3.6.8 — launcher 同步解鎖
+        if(launcherBtn) launcherBtn.disabled = false;
+        if(launcherCd) launcherCd.style.display = 'none';
         return;
       }
-      if(cdSec) cdSec.textContent = Math.ceil(remain / 1000);
+      const sec = Math.ceil(remain / 1000);
+      if(cdSec) cdSec.textContent = sec;
+      if(launcherCdSec) launcherCdSec.textContent = sec;
     }, 250);
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.6.8 — 戰前溝通 modal 開關函式
+  // ────────────────────────────────────────────────────────────────────
+  // 觸發:主面板 launcher 按鈕 onclick="_wbTcOpenQuickmsgPanel()"
+  // 關閉:右上 ✕、點 modal 背景空白處、發送成功後 _wbTcDoSendQuickMsg、
+  //        關閉整個隊伍確認頁 _wbTcCloseTeamConfirm
+  // ════════════════════════════════════════════════════════════════════
+  window._wbTcOpenQuickmsgPanel = function(){
+    // 冷卻中不開(launcher 應該已經 disabled,這層是雙重防呆)
+    const now = Date.now();
+    if(now < (window._wbTcQmsgCdUntil || 0)) return;
+    const ov = document.getElementById('wb-tc-quickmsg-modal');
+    if(!ov) return;
+    ov.classList.add('show');
+    // 點背景關閉
+    if(!ov.dataset.bound){
+      ov.addEventListener('click', function(ev){
+        if(ev.target === ov) _wbTcCloseQuickmsgPanel();
+      });
+      ov.dataset.bound = '1';
+    }
+  };
+  window._wbTcCloseQuickmsgPanel = function(){
+    const ov = document.getElementById('wb-tc-quickmsg-modal');
+    if(ov) ov.classList.remove('show');
+  };
 
   // 在指定 slot(隊伍確認頁的 .wb-tc-slot)頂端浮現對話泡泡(3.5 秒淡出)
   // 跟戰鬥畫面的 _wbShowCardBubble 邏輯類似,但找的是 .wb-tc-slot
