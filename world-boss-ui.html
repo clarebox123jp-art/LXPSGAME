@@ -11133,6 +11133,43 @@
       // ★ FIX 20260517(w) — 取消 AI 替補:所有非玩家槽位都是「房主代打」,房主操控
       h._wbIsNpc     = false;            // ★ 永不啟用 AI auto-act
       h._wbIsHostNpc = (i !== 0);        // 槽 0 是房主本人,其他全是房主代打
+      // ★ v3.6.11(2026-05-24)— 單人練習模式養成資料套用
+      //   BUG:單人練習打維蘇威時全員技能等級都只有 1 級
+      //   根因:單人練習 _wbUiStartBattle 在 newHero 後直接 push p1,
+      //         沒走連線房主模式那段養成資料邏輯(line ~7345),
+      //         所以 _skLv / _burstLvAdv / inv 全是預設值
+      //   修法:單人模式 4 個槽全部用房主本機 _heroLevels / _heroSkillLevels /
+      //         _heroBurstLevels / _heroStatInvested 套(因為 4 隻都是房主操控)
+      try{
+        const _lv = (typeof _heroLevels    !== 'undefined' && _heroLevels    && _heroLevels[_heroName])    || 1;
+        const _sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[_heroName]) || {};
+        const _bu = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[_heroName]) || 0;
+        const _iv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[_heroName]) || {};
+        // 1. 屬性投資 → 加到基礎屬性
+        if(_iv.hp)  { h.hp  += _iv.hp;  h.curHp = h.hp; }
+        if(_iv.atk) { h.atk += _iv.atk; }
+        if(_iv.sp)  { h.sp  += _iv.sp;  }
+        if(_iv.spd) { h.spd += _iv.spd; }
+        // 2. 等級 HP 加成 (每級 +2%,跟冒險模式一致)
+        if(_lv > 1){
+          const _bonusHp = Math.round(h.hp * (_lv - 1) * 0.02);
+          if(_bonusHp > 0){
+            h.hp += _bonusHp;
+            h.curHp = h.hp;
+          }
+        }
+        // 3. 技能等級 (execSkill 讀 h._skLv)
+        h._skLv = { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) };
+        // 4. 爆發等級 (_runBurst 讀 h._burstLvAdv)
+        h._burstLvAdv = _bu;
+        // 5. 標記英雄等級
+        h._advLv = _lv;
+        console.log('[WB-Solo Growth v3.6.11] 槽', i, _heroName, 'Lv.' + _lv,
+          's1+' + h._skLv.s1, 's2+' + h._skLv.s2, '爆發+' + h._burstLvAdv,
+          'inv=', _iv);
+      }catch(eSoloGrow){
+        console.warn('[WB-Solo Growth v3.6.11] 套用養成資料失敗 (槽 ' + i + ')', eSoloGrow);
+      }
       p1.push(h);
     }
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
