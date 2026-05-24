@@ -11684,17 +11684,45 @@
         +   '#wb-solo-cur-dmg-bar > span:first-child{font-size:15px !important;letter-spacing:1px !important;}'
         +   '#wb-solo-cur-dmg-display{font-size:24px !important;}'
         + '}'
-        // ── Bug 1:橫向 iPad 右側指令表「下方黑色空白」修補 ──
-        //   根因:main.css 桌機 #sb 是固定 width:560px、內部 #log/#action-panel/#item-panel
-        //         由上往下垂直排;橫向 iPad 高度 820px,內容只佔上半 → 下方 170~220px 黑色空白
-        //   解法:讓 #item-panel(物品列)flex:1 吃光剩餘空間,內部 .igrid 可捲動,
-        //         達成「上方指令表保持原樣,下方物品區自動填滿到底,物品多時可捲」
+        // ── Bug 1:橫向 iPad 右側指令表「下方黑色空白」修補(★ v3.7.0 重做) ──
+        //   v3.6.9 舊版錯誤:嘗試讓 #item-panel flex:1 吃光剩餘空間 + 內部 .igrid overflow-y:auto,
+        //                    但 .igrid 桌機本來就是 flex column(物品垂直疊),被 flex:1 拉滿後
+        //                    導致內部所有子元素(#item-ops、卡片)被壓縮重疊、文字裁切。
+        //   v3.7.0 修法:不動 #item-panel / .igrid 任何 layout,改讓「整個 #sb 內部可垂直捲動」,
+        //                  沿用 main.css line 4516 給橫拿手機(@media max-height:500)的相同策略,
+        //                  只是觸發條件換成橫向 iPad。
+        //                  → 內容不滿時下方仍有黑色空白(但這是可接受的、跟 max-height:500 一致),
+        //                    內容滿時可垂直捲動,卡片不會被擠壓重疊。
         //   觸發條件:(pointer:coarse) 觸控 + (min-width:1024) 大平板 + (orientation:landscape) 橫向
         //            → 只命中橫向 iPad,直立 iPad 與桌機完全不受影響
         + '@media (pointer:coarse) and (min-width:1024px) and (orientation:landscape){'
-        +   '#sb{height:100vh !important;max-height:100vh !important;}'
-        +   '#item-panel{flex:1 1 auto !important;display:flex !important;flex-direction:column !important;overflow:hidden !important;}'
-        +   '#item-panel .igrid{flex:1 1 auto !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
+        +   '#sb{height:100vh !important;max-height:100vh !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;}'
+        + '}'
+        // ── Bug 2:橫向 iPad Pro 12.9(1366)reward/quiz overlay 字級過大修補(★ v3.7.0 新增) ──
+        //   根因:main.css line 4276 既有規則「@media (max-width:1180px)」把 reward overlay 寬度/字級縮小,
+        //         但橫向 iPad Pro 12.9 寬 1366 沒命中 → 走桌機 36px 標題、24px 副標、44% 寬,
+        //         在 1366×1024 viewport 上看起來「答對了!選擇獎勵」字超大、選項要捲動才看完。
+        //   修法:在世界 BOSS 戰 overlay style block 內補一條「pointer:coarse + max-width:1366 + min-width:601」
+        //         的觸發條件,把 reward overlay 字級/寬度/padding 縮到跟既有 1180 規則一致,
+        //         讓橫向 iPad Pro 12.9 也吃到正確的尺寸。同時對應的 quiz overlay 字級也縮。
+        + '@media (pointer:coarse) and (max-width:1366px) and (min-width:601px){'
+        // 答題視窗字級
+        +   '#adv-quiz-box{padding:14px 16px !important;}'
+        +   '#adv-quiz-question{font-size:30px !important;}'
+        +   '.aqo-btn{font-size:26px !important;padding:12px 12px !important;}'
+        +   '#adv-quiz-timer{font-size:28px !important;}'
+        +   '#adv-quiz-label{font-size:20px !important;}'
+        // 答題獎勵視窗
+        +   '#adv-reward-overlay{width:50% !important;}'
+        +   '#adv-reward-title{font-size:26px !important;}'
+        +   '#adv-reward-subtitle{font-size:18px !important;margin-bottom:8px !important;}'
+        +   '.adv-reward-btn{font-size:22px !important;padding:10px 12px !important;}'
+        +   '#adv-reward-keep-btn{font-size:24px !important;padding:10px 0 !important;}'
+        +   '#adv-reward-box{padding:12px 16px !important;}'
+        // 世界 BOSS 戰 body class 守門版本(覆蓋 line 5749 的 !important)
+        +   'body.wb-in-worldboss-battle #adv-reward-overlay{width:50% !important;}'
+        +   'body.wb-in-worldboss-battle #adv-reward-title{font-size:26px !important;}'
+        +   'body.wb-in-worldboss-battle #adv-reward-subtitle{font-size:18px !important;}'
         + '}';
       document.head.appendChild(_wsty);
     }
