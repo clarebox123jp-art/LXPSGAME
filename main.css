@@ -2320,6 +2320,12 @@ body.wb-in-worldboss-battle .popup {
 }
 .king-box-question{ max-width:680px; }
 .king-box-result{ max-width:560px; text-align:center; }
+/* ★ v3.5.65 — 雙欄入口彈窗加寬,避免右側內容溢出觸發捲軸 */
+.king-box-2col{
+  max-width:980px;
+  max-height:none;     /* 取消 90vh 限制,讓內容自然撐開 */
+  overflow:visible;    /* 不需要捲軸 */
+}
 
 .king-title{
   font-size:clamp(28px,3vw,40px); font-weight:900;
