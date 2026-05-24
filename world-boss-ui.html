@@ -5099,6 +5099,48 @@
   //   g = { lv: 英雄等級, skLv: {s1,s2}, burst: 爆發等級, inv: {hp,atk,sp,spd} }
   //   修復:房主開戰時建構真人玩家的 hero 物件原本沒套用該玩家的技能等級 / 屬性點 / 爆發等級
   //   → 戰鬥中所有玩家技能威力都是 Lv.0,房主代理的角色也同樣是 0
+  // ★ v3.5.72 (2026-05-24) — 建立「我自己的養成資料 snapshot」用於塞進 ext.g
+  // ────────────────────────────────────────────────────────────────────
+  // 背景:
+  //   v3.4.16 設計了 ext.g 欄位讓玩家把自己的養成資料(等級/技能/爆發/屬性投資)
+  //   透過房間 player.element JSON 廣播給其他玩家,但所有 setMyHero 呼叫處
+  //   都漏掉填 g,導致隊友端永遠拿不到對方的養成 → 戰前 UI 顯示裸值 Lv.?
+  //   + 戰鬥中真人隊友的英雄被當「無養成」用裸值打 BOSS。
+  // 修補:
+  //   提供統一 builder,所有 setMyHero 呼叫處改用 _wbTcBuildExtWithGrowth(...)
+  //   自動把 g 補上。資料來源是主程式 _heroLevels / _heroSkillLevels /
+  //   _heroBurstLevels / _heroStatInvested(每位玩家自己本機才有,所以這個
+  //   函式只能由 me 端呼叫)。
+  function _wbTcBuildMyGrowthSnap(heroName){
+    try{
+      if(!heroName) return null;
+      const _lv  = (typeof _heroLevels      !== 'undefined' && _heroLevels      && _heroLevels[heroName])      || 1;
+      const _sk  = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[heroName]) || {};
+      const _bu  = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[heroName]) || 0;
+      const _iv  = (typeof _heroStatInvested!== 'undefined' && _heroStatInvested&& _heroStatInvested[heroName]) || {};
+      return {
+        lv: _lv,
+        skLv: { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
+        burst: _bu,
+        inv: { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
+      };
+    }catch(e){ console.warn('[WB-TC v3.5.72] _wbTcBuildMyGrowthSnap 失敗', e); return null; }
+  }
+  // 包裝:基於現有 ext + 我自己對該英雄的養成,組出含 g 的新 ext
+  function _wbTcBuildExtWithGrowth(baseExt, heroName){
+    const ext = baseExt || { e:null, es:[], t:[] };
+    return {
+      e:  ext.e  || null,
+      es: ext.es || [],
+      t:  ext.t  || [],
+      g:  _wbTcBuildMyGrowthSnap(heroName) || ext.g || null
+    };
+  }
+  // 包裝:單一函式回傳 JSON 字串(setMyHero 直接吃)
+  function _wbTcStringifyExtWithGrowth(baseExt, heroName){
+    return _wbTcStringifyExt(_wbTcBuildExtWithGrowth(baseExt, heroName));
+  }
+
   function _wbTcParsePlayerExt(playerOrElemStr){
     const raw = (typeof playerOrElemStr === 'string') ? playerOrElemStr
               : (playerOrElemStr && playerOrElemStr.element) || '';
@@ -5129,11 +5171,24 @@
   }
 
   // 取得玩家英雄的 LV(從主程式 _heroLevels,只有 me 才有,peer/AI 取得不到回傳 null)
-  function _wbTcGetHeroLv(heroName, isMe){
-    if(!isMe) return null;  // 隊友的等級不知道
+  function _wbTcGetHeroLv(heroName, isMe, playerObj){
+    // 我自己:讀本機 _heroLevels
+    if(isMe){
+      try{
+        if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
+          return _heroLevels[heroName];
+        }
+      }catch(_){}
+      return null;
+    }
+    // ★ v3.5.72 — 隊友:從 player.element 的 ext.g.lv 讀
+    //   原本一律 return null → 顯示 Lv.?,現在優先讀對方廣播過來的養成資料
     try{
-      if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
-        return _heroLevels[heroName];
+      if(playerObj){
+        const _ext = _wbTcParsePlayerExt(playerObj);
+        if(_ext && _ext.g && _ext.g.lv){
+          return _ext.g.lv;
+        }
       }
     }catch(_){}
     return null;
@@ -5317,8 +5372,9 @@
           t: loadout.equippedTreasureIds || []
         };
         // 同步進房間(setMyHero,等下會被 onRoomUpdate 觸發 re-render)
+        // ★ v3.5.72 — 補上 ext.g(自己對該英雄的養成),讓隊友看得到等級/技能/屬性投資
         if(window._wbNet && window._wbNet.setMyHero){
-          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExt(ext));
+          window._wbNet.setMyHero(loadout.heroName, _wbTcStringifyExtWithGrowth(ext, loadout.heroName));
         }
         console.log('[WB-TC] 預設英雄/屬性/至寶:', loadout);
       }catch(eDef){
@@ -6135,12 +6191,58 @@
           });
         }catch(e){ console.warn('[WB-TC] 計算至寶 stats 失敗', e); }
       }
+      // ★ v3.5.72 — 加上「個人英雄屬性投資」(無論 me / peer 都套)
+      //   - me:從本機 _heroStatInvested 讀(原本沒加,所以 me 看自己也只有至寶+基礎)
+      //   - peer:從 ext.g.inv 讀(對方廣播過來的養成資料)
+      //   原本 isMe=false 路徑完全沒有加任何投資點數,所以隊友看到的水狐顯示 11/14/10
+      //   都是 HERO_DB 裸值。修補後會把該玩家「全屬性投資點數」加上來。
+      try{
+        let _inv = null;
+        if(isMe){
+          // me 端:優先從本機讀(最新),fallback 從 ext.g.inv(防止資料漏更新)
+          if(typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[heroName]){
+            _inv = _heroStatInvested[heroName];
+          }else if(playerObj){
+            const _ext = _wbTcParsePlayerExt(playerObj);
+            _inv = (_ext && _ext.g && _ext.g.inv) || null;
+          }
+        }else if(playerObj){
+          // peer:只能從 ext.g.inv 讀
+          const _ext = _wbTcParsePlayerExt(playerObj);
+          _inv = (_ext && _ext.g && _ext.g.inv) || null;
+        }
+        if(_inv){
+          hp  += _inv.hp  || 0;
+          atk += _inv.atk || 0;
+          sp  += _inv.sp  || 0;
+          spd += _inv.spd || 0;
+        }
+      }catch(eInv){ console.warn('[WB-TC v3.5.72] 套用屬性投資失敗', eInv); }
+      // ★ v3.5.72 — 等級 HP 加成(每級 +2%,跟主程式冒險模式 _applyAdvLevelHpBonus 一致)
+      //   原本只有 base + 至寶/投資的 hp,沒套等級加成 → 戰前顯示的 HP 跟戰鬥中不一致
+      //   修補後 me 從 _heroLevels 讀、peer 從 ext.g.lv 讀,做出一致的等級 HP
+      try{
+        let _lv = 1;
+        if(isMe){
+          if(typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[heroName]){
+            _lv = _heroLevels[heroName];
+          }
+        }else if(playerObj){
+          const _ext = _wbTcParsePlayerExt(playerObj);
+          if(_ext && _ext.g && _ext.g.lv) _lv = _ext.g.lv;
+        }
+        if(_lv > 1){
+          // 等級每級 +2% HP(對齊冒險模式 + 戰鬥端 line 7530 套用邏輯)
+          const _bonus = Math.floor(hp * (_lv - 1) * 0.02);
+          hp += _bonus;
+        }
+      }catch(eLv){ console.warn('[WB-TC v3.5.72] 套用等級 HP 加成失敗', eLv); }
       return { hp, atk, sp, spd };
     }catch(_){ return null; }
   }
 
   // 取得英雄技能 + 技能等級(自己看得到)+ 描述(供 popup 用)
-  function _wbTcGetHeroSkills(heroName, isMe){
+  function _wbTcGetHeroSkills(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return { s1: null, s2: null };
       const h = HERO_DB[heroName];
@@ -6150,6 +6252,15 @@
           if(typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[heroName]){
             s1Lv = (_heroSkillLevels[heroName].s1 || 0) + 1;
             s2Lv = (_heroSkillLevels[heroName].s2 || 0) + 1;
+          }
+        }catch(_){}
+      }else if(playerObj){
+        // ★ v3.5.72 — 隊友:從 player.element 的 ext.g.skLv 讀
+        try{
+          const _ext = _wbTcParsePlayerExt(playerObj);
+          if(_ext && _ext.g && _ext.g.skLv){
+            s1Lv = (_ext.g.skLv.s1 || 0) + 1;
+            s2Lv = (_ext.g.skLv.s2 || 0) + 1;
           }
         }catch(_){}
       }
@@ -6180,9 +6291,10 @@
     const ext = _wbTcParsePlayerExt(p);
     const heroName = p.heroName || '?';
     const heroImg = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[heroName]) || '';
-    const lv = _wbTcGetHeroLv(heroName, isMe);
+    // ★ v3.5.72 — 三個 getter 都加上 p,讓 peer 端可以從 ext.g 讀對方的養成
+    const lv = _wbTcGetHeroLv(heroName, isMe, p);
     const stats = _wbTcGetHeroStats(heroName, isMe, p) || { hp:0, atk:0, sp:0, spd:0 };
-    const skills = _wbTcGetHeroSkills(heroName, isMe);
+    const skills = _wbTcGetHeroSkills(heroName, isMe, p);
     // 主元素(取 ext.es 第一個);用於 header 右上角顯示元素 icon
     const mainElem = ext.es[0] || null;
 
@@ -6357,7 +6469,7 @@
       onclick="_wbTcStopAndShowSkill(event, this);"
       style="cursor:pointer;">
       <span class="wb-tc-bc-skill-name">${_esc(sk.name)}</span>
-      ${isMe ? `<span class="wb-tc-bc-skill-lv">Lv.${sk.lv}</span>` : ''}
+      ${(sk.lv && sk.lv >= 1) ? `<span class="wb-tc-bc-skill-lv">Lv.${sk.lv}</span>` : ''}
       <span class="wb-tc-bc-skill-cost">⬥${sk.cost}</span>
       <span class="csk-detail-btn" data-skname="${_esc(sk.name)}" data-skmeta="${_esc(meta)}" data-skdesc="${_esc(sk.desc)}"
             onclick="_wbTcStopAndShowSkill(event, this);">?</span>
@@ -6511,11 +6623,13 @@
       // 單人練習模式:切編輯槽
       window._wbSoloEditingSlot = targetSlotIdx;
       const ext = _wbTcParsePlayerExt(slotPlayer);
-      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
+      // ★ v3.5.72 — 補上 ext.g(換英雄後養成資料用「新英雄」的)
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExtWithGrowth(ext, heroName));
     }else if(isMyOwnSlot){
       // 多人房:換自己的英雄(保留原本的元素/至寶 ext)
       const ext = _wbTcParsePlayerExt(slotPlayer);
-      await window._wbNet.setMyHero(heroName, _wbTcStringifyExt(ext));
+      // ★ v3.5.72 — 補上 ext.g(換英雄後養成資料用「新英雄」的)
+      await window._wbNet.setMyHero(heroName, _wbTcStringifyExtWithGrowth(ext, heroName));
     }else{
       // 多人房試圖換別人的英雄 → 拒絕
       _wbGameAlert('只能替自己的槽位換英雄');
@@ -6728,7 +6842,7 @@
     if(window._wbSoloPracticeMode){
       window._wbSoloEditingSlot = targetSlotIdx;
     }
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExtWithGrowth(ext, me.heroName));
     _wbTcCloseSwapModal();
     _wbTcRenderTeamConfirm();
   };
@@ -6849,7 +6963,8 @@
     }
     // 透過 setMyHero 同步(把 JSON 字串塞進 element)
     // ★ 改動 element 會把 ready 重設為 false(主程式邏輯),避免「沒選完元素就準備」
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    // ★ v3.5.72 — 補上 ext.g(切元素時順便把養成資料同步給隊友)
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExtWithGrowth(ext, me.heroName));
     // 立即 re-render(等 onRoomUpdate 也會 re-render,但先給玩家視覺回饋)
     _wbTcRenderTeamConfirm();
   };
@@ -6866,7 +6981,8 @@
     }else{
       ext.t.push(treasureId);
     }
-    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExt(ext));
+    // ★ v3.5.72 — 補上 ext.g(切至寶時順便把養成資料同步給隊友)
+    await window._wbNet.setMyHero(me.heroName, _wbTcStringifyExtWithGrowth(ext, me.heroName));
     _wbTcRenderTeamConfirm();
   };
 
