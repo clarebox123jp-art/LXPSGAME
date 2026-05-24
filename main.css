@@ -485,6 +485,28 @@ body.wb-in-worldboss-battle .popup {
   z-index: 9100 !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * ★ v3.6.0 — 定型文圖層提升:答題期間蓋過答題 overlay
+ * ────────────────────────────────────────────────────────────────────
+ * 老師需求:世界 BOSS 戰房主答題期間,其他玩家可以用定型文討論並給提示。
+ * 但原本定型文 z-index 9050,被答題 overlay(z-index 也是高層)蓋住按不到。
+ * 修法:定型文一律拉高到 11000,且確保 pointer-events:auto。
+ *      答題 overlay 仍然蓋住戰鬥畫面,但定型文露在最上面,可以正常點選。
+ * 影響範圍:只動 wb-emoji-bar-real,不影響其他 UI。
+ * ══════════════════════════════════════════════════════════════════════ */
+#wb-emoji-bar-real {
+  z-index: 11000 !important;
+}
+#wb-emoji-bar-real * {
+  pointer-events: auto !important;
+}
+#wb-emoji-popup {
+  z-index: 11001 !important;
+}
+#wb-tc-qmsg-confirm-ov {
+  z-index: 11050 !important;
+}
+
 /* POPUPS */
 .popup{position:absolute;font-size:64px;font-weight:700;pointer-events:none;z-index:200;text-shadow:2px 2px 0 #000,0 0 12px rgba(0,0,0,0.8);white-space:nowrap;transform:translateX(-50%);}
 @keyframes dmgArcJump{
