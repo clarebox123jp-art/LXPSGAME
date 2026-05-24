@@ -2203,20 +2203,23 @@ body.wb-in-worldboss-battle .popup {
    避開代表英雄卡片(absolute,top:28~38px),不再被 Lv.30 訊息蓋住。
    尺寸縮小 10%(font 30→27 / padding 18→16 等)避免擋到任何文字。
    ★ v5740 — 改為「靠右」(對齊捲動 bar 位置)並放大 50%(font 18→27/padding 14→21);
-   並新增上方「🔔 今天還可以參加」浮動小泡,挑戰過後會消失。 */
+   並新增上方「🔔 今天還可以參加」浮動小泡,挑戰過後會消失。
+   ★ v3.5.72 — 老師 2026/5/24 回報:PC 版按鈕再縮 15%(font 27→23/padding 21→18/gap 8→7)
+                並把「今天還可以參加」標籤往右移 20%(left 50% → 70%) */
 #king-challenge-float-btn{
   position:absolute; top:-19px; right:clamp(20px,2.5vw,40px); z-index:5;
-  padding:3px 21px;
-  font-size:clamp(20px,1.95vw,27px); font-weight:800;
+  padding:2.5px 18px;
+  font-size:clamp(17px,1.66vw,23px); font-weight:800;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif; letter-spacing:1.5px;
   border-radius:22px; cursor:pointer; transition:all 0.25s;
-  display:flex; align-items:center; gap:8px;
+  display:flex; align-items:center; gap:7px;
   border:2.5px solid; line-height:1.2;
   white-space:nowrap;
 }
-/* 上方「今天還可以參加」浮動提示泡(只在 ready 狀態顯示) */
+/* 上方「今天還可以參加」浮動提示泡(只在 ready 狀態顯示)
+   ★ v3.5.72 — left:50% → 70%,標籤往按鈕右側 20% 處挪 */
 #king-challenge-tip-bubble{
-  position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  position:absolute; bottom:calc(100% + 8px); left:70%; transform:translateX(-50%);
   background:linear-gradient(135deg,rgba(50,30,90,0.95),rgba(30,20,60,0.95));
   border:1.5px solid rgba(255,220,80,0.8); border-radius:14px;
   padding:4px 12px; font-size:clamp(14px,1.3vw,18px); font-weight:700;

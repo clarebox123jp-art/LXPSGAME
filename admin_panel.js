@@ -170,6 +170,8 @@ async function _showAdminStatsPanelImpl(){
       #_admin-gm-section { order: 2; }                  /* GM 公告 */
       #_admin-bug-section { order: 3; }                 /* 接收錯誤回報 */
       #_admin-lv1-section { order: 4; }                 /* Lv1 救援 */
+      /* ★ v3.5.72 — 寄送污染檢查提醒(放在 Lv1 救援後、玩家急救前,因為性質相近) */
+      #_admin-pollution-check-section { order: 4; }     /* 污染檢查提醒(同 4,差在 DOM 順序在 Lv1 後) */
       #_admin-rescue-section { order: 5; }              /* 玩家急救 */
       #_admin-comp-section { order: 6; }                /* 學生補償 */
       #_admin-dlperm-section { order: 7; }              /* 下載權限 */
@@ -649,8 +651,19 @@ async function _showAdminStatsPanelImpl(){
           <span style="color:#ff8899;">⚠ 救援完成後請告知學生:重新整理頁面或重新登入即可生效。</span>
         </div>
 
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+          <input id="_admin-lv1-email" type="text" placeholder="玩家 email(較常見,輸入後按右邊「📧 查 uid」自動填入下方)"
+            style="flex:1;min-width:220px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(255,200,150,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-lv1-find-uid" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(255,200,100,0.25);border:2px solid #ffcc66;color:#ffddaa;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            📧 查 uid
+          </button>
+        </div>
+
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-          <input id="_admin-lv1-uid" type="text" placeholder="玩家 uid(留空=自己 / 從 3.5 工具帶過來也可)"
+          <input id="_admin-lv1-uid" type="text" placeholder="玩家 uid(留空=自己 / 從 3.5 工具帶過來也可 / email 反查自動填入)"
             style="flex:1;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
             border:1.5px solid rgba(255,120,150,0.5);color:#fff;border-radius:6px;font-family:monospace;">
           <button id="_admin-lv1-scan" style="padding:8px 18px;font-size:14px;font-weight:700;
@@ -695,6 +708,53 @@ async function _showAdminStatsPanelImpl(){
         </div>
 
         <div id="_admin-lv1-result" style="margin-top:8px;font-size:13px;color:#ffbbcc;line-height:1.6;"></div>
+      </div>
+
+      <!-- ★ v3.5.72 — 3.8 寄送「污染檢查提醒」(學生自己決定要不要用雲端覆蓋本地) -->
+      <div id="_admin-pollution-check-section" style="background:rgba(40,30,60,0.45);border:2px solid rgba(180,150,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#cc99ff;margin-bottom:8px;">📢 3.8 寄送「進度污染提醒」(學生自己決定)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          跟 <b>3.7 救援工具</b>不同 —
+          <span style="color:#ffcc66;">這個工具不會強制覆蓋學生的存檔</span>,只會在學生下次開遊戲時
+          <b style="color:#ddccff;">彈出對比視窗</b>(左邊本地、右邊雲端),讓學生<b style="color:#aaffcc;">自己決定</b>。<br>
+          <span style="color:#aaa;font-size:12px;">適合「不確定學生本地是不是真的被污染」的曖昧情境 — 讓學生看資料自己判斷比較安全。</span><br>
+          <span style="color:#ff9999;font-size:12px;">⚠ 不論學生選哪邊,接下來 24 小時內這個帳號發出的「解鎖英雄倒退」自動 BUG 回報會自動 mute,避免你的後台被洗版。</span>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+          <input id="_admin-pc-email" type="text" placeholder="玩家 email(優先,留空才用下方 uid)"
+            style="flex:1;min-width:220px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(200,150,255,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <input id="_admin-pc-uid" type="text" placeholder="或 uid"
+            style="flex:1;min-width:160px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(200,150,255,0.3);color:#fff;border-radius:6px;font-family:monospace;">
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label style="font-size:13px;color:#ccc;">提醒原因(顯示給學生看,可選):</label>
+          <input id="_admin-pc-reason" type="text"
+            placeholder="例如:「老師發現你的英雄突然少了 8 隻,可能是共用平板殘留」"
+            style="width:100%;box-sizing:border-box;margin-top:4px;padding:8px 12px;font-size:13px;
+            background:rgba(20,20,30,0.9);border:1.5px solid rgba(200,150,255,0.3);color:#fff;
+            border-radius:6px;font-family:inherit;">
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button id="_admin-pc-send" style="flex:1;min-width:200px;padding:11px 18px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,rgba(180,120,255,0.4),rgba(120,80,200,0.4));
+            border:2px solid #cc99ff;color:#e6ccff;border-radius:8px;cursor:pointer;font-family:inherit;
+            box-shadow:0 0 14px rgba(180,120,255,0.3);">
+            📤 寄送污染檢查提醒給學生
+          </button>
+          <button id="_admin-pc-preview" style="padding:11px 16px;font-size:13px;font-weight:700;
+            background:rgba(100,100,140,0.3);border:1.5px solid rgba(200,180,255,0.5);
+            color:#ccccff;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            👀 先預覽學生會看到的視窗
+          </button>
+        </div>
+
+        <div id="_admin-pc-result" style="margin-top:10px;font-size:13px;color:#ddccff;line-height:1.7;padding:8px 12px;
+          background:rgba(0,0,0,0.4);border-radius:6px;display:none;"></div>
       </div>
 
       <div id="_admin-test-batch-section" style="background:rgba(20,40,60,0.45);border:2px solid rgba(100,200,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
@@ -3267,6 +3327,47 @@ async function _showAdminStatsPanelImpl(){
       return v || window._gUserId;
     }
 
+    // ─── ★ v3.5.72 — 按鈕 0:📧 從 email 反查 uid 並自動填入下方 ───
+    const _btnFindUid = document.getElementById('_admin-lv1-find-uid');
+    if(_btnFindUid){
+      _btnFindUid.onclick = async () => {
+        const _emailInput = document.getElementById('_admin-lv1-email');
+        const _uidInput = document.getElementById('_admin-lv1-uid');
+        const diag = document.getElementById('_admin-lv1-diag');
+        const email = (_emailInput.value || '').trim().toLowerCase();
+        if(!email){
+          diag.style.display = 'block';
+          diag.innerHTML = '<span style="color:#ff6666;">❌ 請先輸入 email</span>';
+          return;
+        }
+        if(!window._fbAdminFindPlayerByEmail){
+          diag.style.display = 'block';
+          diag.innerHTML = '<span style="color:#ff6666;">❌ _fbAdminFindPlayerByEmail API 尚未就緒</span>';
+          return;
+        }
+        diag.style.display = 'block';
+        diag.innerHTML = '<span style="color:#aaa;">⏳ 查詢 ' + email + ' 中...</span>';
+        try{
+          const _r = await window._fbAdminFindPlayerByEmail(email);
+          if(!_r.found){
+            diag.innerHTML = '<span style="color:#ff6666;">❌ 找不到這個 email 的玩家:</span> <code style="color:#ffcc66;">' + email + '</code>'
+              + '<br><span style="color:#aaa;font-size:12px;">學生可能還沒登入過遊戲、或 email 拼錯</span>';
+            return;
+          }
+          // 自動填入 uid 欄位
+          _uidInput.value = _r.uid;
+          const _name = _r.data.displayName || '(未設暱稱)';
+          const _lastSavedRaw = _r.data.savedAt || _r.data._lastUpdateTs || 0;
+          const _lastSaved = _lastSavedRaw ? new Date(_lastSavedRaw).toLocaleString('zh-TW') : '(無)';
+          diag.innerHTML = '<span style="color:#aaffcc;">✅ 找到玩家!已自動填入 uid:</span> <code style="color:#88ccff;">' + _r.uid + '</code>'
+            + '<br><span style="color:#aaa;font-size:12px;">暱稱:<b style="color:#ffcc66;">' + _name + '</b> | 主文件最後更新:' + _lastSaved + '</span>'
+            + '<br><span style="color:#aaffcc;font-size:13px;margin-top:6px;display:inline-block;">👉 按右邊「🔍 三槽深度掃描」或「✨ 一鍵自動還原」</span>';
+        }catch(e){
+          diag.innerHTML = '<span style="color:#ff6666;">❌ 查詢失敗:</span> ' + (e.code || e.message || e);
+        }
+      };
+    }
+
     // ─── 按鈕 1:三槽深度掃描 ───
     const _btnScan = document.getElementById('_admin-lv1-scan');
     if(_btnScan){
@@ -3487,6 +3588,138 @@ async function _showAdminStatsPanelImpl(){
     if(_btnMain) _btnMain.onclick = () => _doManualRestore('main', _btnMain, '📄 從主文件還原');
 
     console.log('[3.7 Lv1 救援工具 v3.5.37] JS 邏輯已掛載');
+  })();
+
+  // ★★★ v3.5.72 — 3.8 寄送「污染檢查提醒」工具 JS 邏輯 ★★★
+  (function _initPollutionCheckTool(){
+    function _resolveUid(){
+      // 先 email 反查,再退回 uid 欄位
+      return new Promise(async (resolve, reject) => {
+        const _emailInput = document.getElementById('_admin-pc-email');
+        const _uidInput = document.getElementById('_admin-pc-uid');
+        const email = (_emailInput.value || '').trim().toLowerCase();
+        const uidIn = (_uidInput.value || '').trim();
+        if(email){
+          if(!window._fbAdminFindPlayerByEmail){
+            reject(new Error('_fbAdminFindPlayerByEmail API 尚未就緒'));
+            return;
+          }
+          try{
+            const _r = await window._fbAdminFindPlayerByEmail(email);
+            if(!_r.found){
+              reject(new Error('找不到 email = ' + email + ' 的玩家'));
+              return;
+            }
+            resolve({ uid: _r.uid, email: email, displayName: _r.data.displayName || '(未設暱稱)' });
+          }catch(e){ reject(e); }
+        } else if(uidIn){
+          resolve({ uid: uidIn, email: '(直接輸入 uid)', displayName: '?' });
+        } else {
+          reject(new Error('請輸入 email 或 uid'));
+        }
+      });
+    }
+
+    // ─── 按鈕:📤 寄送污染檢查提醒 ───
+    const _btnSend = document.getElementById('_admin-pc-send');
+    if(_btnSend){
+      _btnSend.onclick = async () => {
+        const _res = document.getElementById('_admin-pc-result');
+        const _reasonInput = document.getElementById('_admin-pc-reason');
+        _res.style.display = 'block';
+        _res.innerHTML = '<span style="color:#aaa;">⏳ 處理中...</span>';
+        let _target = null;
+        try{
+          _target = await _resolveUid();
+        }catch(e){
+          _res.innerHTML = '<span style="color:#ff6666;">❌ ' + (e.message || e) + '</span>';
+          return;
+        }
+        if(!window._fbSendPollutionCheckSignal){
+          _res.innerHTML = '<span style="color:#ff6666;">❌ _fbSendPollutionCheckSignal API 尚未就緒</span>';
+          return;
+        }
+        const _reason = (_reasonInput.value || '').trim();
+        // 二次確認
+        const _confirmMsg = '確認要寄送污染檢查提醒給:\n\n'
+          + 'email: ' + _target.email + '\n'
+          + 'uid: ' + _target.uid + '\n'
+          + 'displayName: ' + _target.displayName + '\n\n'
+          + (_reason ? ('原因:' + _reason + '\n\n') : '')
+          + '學生下次開遊戲時會看到對比視窗自己決定。\n'
+          + '不論選哪邊,接下來 24 小時內這個帳號「解鎖英雄倒退」類自動 BUG 回報會被 mute。';
+        // 用 confirm 或 _customConfirm
+        const _ok = await new Promise((resolve) => {
+          if(typeof window._customConfirm === 'function'){
+            window._customConfirm(_confirmMsg, () => resolve(true), () => resolve(false));
+          } else {
+            resolve(window.confirm(_confirmMsg));
+          }
+        });
+        if(!_ok){
+          _res.innerHTML = '<span style="color:#aaa;">已取消</span>';
+          return;
+        }
+        _res.innerHTML = '<span style="color:#aaa;">⏳ 寄送中...</span>';
+        try{
+          const _r = await window._fbSendPollutionCheckSignal(_target.uid,
+            _reason ? { reason: _reason } : {});
+          _res.innerHTML =
+            '<div style="color:#aaffcc;font-weight:700;">✅ 已成功寄送污染檢查提醒</div>'
+            + '<div style="font-size:12px;color:#ccc;margin-top:4px;">'
+            + 'email: <code style="color:#ffcc66;">' + _target.email + '</code><br>'
+            + 'uid: <code style="color:#88ccff;">' + _target.uid + '</code><br>'
+            + '信號 ts: <code style="color:#bbb;">' + new Date(_r.signal.ts).toLocaleString('zh-TW') + '</code><br>'
+            + '<br>📣 <b>請告知學生:</b>下次開遊戲(或重新整理頁面)就會看到對比視窗,讓他自己選。<br>'
+            + '<span style="color:#ffcc99;">💡 學生選擇後,接下來 24 小時內「解鎖英雄倒退」自動 BUG 回報會 mute。</span>'
+            + '</div>';
+        }catch(e){
+          _res.innerHTML = '<span style="color:#ff6666;">❌ 寄送失敗:' + (e.code || e.message || e) + '</span>';
+        }
+      };
+    }
+
+    // ─── 按鈕:👀 預覽學生會看到的視窗 ───
+    const _btnPreview = document.getElementById('_admin-pc-preview');
+    if(_btnPreview){
+      _btnPreview.onclick = async () => {
+        if(typeof window._showDataCompareDialog !== 'function'){
+          alert('_showDataCompareDialog 未載入');
+          return;
+        }
+        const _reasonInput = document.getElementById('_admin-pc-reason');
+        const _reason = (_reasonInput.value || '').trim() || '老師偵測到帳號可能被共用平板殘留污染';
+        // 假資料示範
+        const _fakeLeft = {
+          sourceLabel: '🟡 你現在看到的(本地)',
+          unlockedCount: 11, maxHeroLv: 18, totalHeroLv: 141,
+          knowledgeCoins: 118259, treasures: [],
+        };
+        const _fakeRight = {
+          sourceLabel: '☁️ 雲端最後資料',
+          unlockedCount: 19, maxHeroLv: 20, totalHeroLv: 122,
+          knowledgeCoins: 132245, treasures: [],
+        };
+        await window._showDataCompareDialog({
+          title: '📢 [預覽] 老師提醒你檢查進度',
+          subtitle: _reason,
+          leftLabel: '🟡 你現在看到的(本地)',
+          leftData: _fakeLeft,
+          rightLabel: '☁️ 雲端最後資料',
+          rightData: _fakeRight,
+          confirmText: '✅ 用雲端資料覆蓋我目前的進度',
+          cancelText: '📵 保留我目前的進度不動',
+          extraNote:
+            '<b style="color:#ffd699;">👀 請仔細看左右兩邊的差異!</b><br>' +
+            '<span style="color:#ccc;">老師寄這個提醒是因為偵測到你的帳號可能不小心混到別人在共用平板上的資料。<br>' +
+            '<b style="color:#aaffcc;">如果右邊「雲端最後資料」看起來才像你真正的進度</b>(英雄比較多、等級比較高)→ 按「✅ 用雲端覆蓋」<br>' +
+            '<b style="color:#ffcc99;">如果左邊「本地」才是你真正的進度</b>(雲端可能是別人的)→ 按「📵 保留本地」<br>' +
+            '<span style="color:#ff9999;">⚠ [預覽模式] 這是給老師看的範例,實際傳給學生的視窗一樣長這個樣子,但兩邊會是學生真實的資料</span></span>'
+        });
+      };
+    }
+
+    console.log('[3.8 污染檢查提醒工具 v3.5.72] JS 邏輯已掛載');
   })();
 
   // ★★★ 4. 測試工具:批次設定數值 ★★★

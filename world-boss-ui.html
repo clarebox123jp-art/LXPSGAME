@@ -1015,7 +1015,7 @@
       <div class="wb-boss-info">
         <div class="wb-boss-name">⚔️ 維蘇威火山龍王 <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
         <div style="font-size:13px;color:#aaa;line-height:1.5;">
-          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。HP 80/60/40/20/1% 啟動四元素護盾(火/風/土/暗),需要水/土/草/光屬性各攻擊 3 次才能打破!
+          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 4/8/12/16 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。20 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
         <div class="wb-boss-stats">
           <span>❤️ 500,000 HP</span>
@@ -2640,7 +2640,7 @@
   .wb-boss-status-chip.burn{background:rgba(255,80,40,0.25);border-color:rgba(255,140,80,0.75);color:#ffcc99;}
   .wb-boss-status-chip.stun{background:rgba(220,180,80,0.25);border-color:rgba(255,220,100,0.75);color:#ffe080;}
 
-  /* 第 9 / 18 回合警告橫幅 */
+  /* 第 9 / 20 回合警告橫幅 */
   .wb-turn-warning{
     position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
     z-index:10500;pointer-events:none;
@@ -7548,7 +7548,7 @@
 
       boss.curHp = Math.max(0, boss.curHp - finalDmg);
 
-      // ★ v3.1 — 護盾觸發檢查(HP 80/60/40/20/1% 自動啟動護盾)
+      // ★ v3.5.70 — 護盾觸發檢查(第 4/8/12/16 回合自動啟動護盾,每元素 1 層)
       if(typeof window._wbCheckShieldTrigger === 'function'){
         const triggered = window._wbCheckShieldTrigger(boss);
         if(triggered){
@@ -7587,8 +7587,11 @@
     const boss = G.p2[bossPos];
     if(!boss || boss.curHp <= 0){ _wbHostAdvanceTurn(); return; }
 
-    // ★ v3.1 — 第 20 回合到 = 強制全員滅絕
-    if(G.turn >= 20){
+    // ★ v3.5.70 — 第 21 回合到 = 強制全員滅絕(原 20)
+    //   老師決策:讓玩家完整跑完 1~20 回合(每回合 1 題),最後一次(第 21 次)答題
+    //             行動結束後,輪到 BOSS 時才觸發崩毀。
+    //   舊版(<= v3.5.69):G.turn >= 20 即觸發 → 玩家還沒能跑完第 20 回合就被滅
+    if(G.turn >= 21){
       _wbHostBroadcast(['💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!']);
       setTimeout(() => {
         const alive = G.p1.filter(h => h && h.curHp > 0);
@@ -7752,9 +7755,9 @@
         G._wbBurstWarned = true;
         _wbShowTurnWarning('⚠ 下一回合 BOSS 將施展爆發技!');
       }
-      if(G.turn === 18 && !G._wbCollapseWarned){
+      if(G.turn === 20 && !G._wbCollapseWarned){
         G._wbCollapseWarned = true;
-        _wbShowTurnWarning('⚠ 戰場即將崩毀!剩 2 回合 BOSS 將強制滅絕!');
+        _wbShowTurnWarning('⚠ 戰場即將崩毀!最後 1 回合 BOSS 將強制滅絕!');
       }
     }
     G.currentActorIdx = next;
@@ -8810,7 +8813,7 @@
           chips.push(`<span class="wb-boss-status-chip stun">⚡ 眩暈 ${boss._wbStun}</span>`);
         }
         shieldsRow.innerHTML = chips.length ? chips.join('') :
-          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(HP 80% 啟動)</span>';
+          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 4 回合啟動)</span>';
       }
 
       // 第 9 回合提示爆發即將釋放(只在還沒提示過時)
@@ -11190,7 +11193,7 @@
   // 戰鬥本體走主程式 #gc,世界戰專屬元素用 position:fixed 疊在 #gc 上面:
   //   - 頂部 BOSS 大血條 + 護盾 chip 列 + 回合資訊
   //   - 「📖 BOSS 能力介紹」按鈕(階段 2)
-  //   - 動態警告橫幅(第 9 / 17 / 18 / 19 回合)
+  //   - 動態警告橫幅(第 9 / 20 回合)
   // ════════════════════════════════════════════════════════════════════
   function _wbBuildAdvBattleOverlay(){
     const old = document.getElementById('wb-adv-battle-overlay');
@@ -11313,7 +11316,7 @@
           </div>
         </div>
         <div id="wb-adv-mega-shields-row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(HP 80% 啟動)</span>
+          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(第 4 回合啟動)</span>
         </div>
       </div>
 
@@ -11534,7 +11537,7 @@
       }catch(_eStatusChips){ console.warn('[WB-Adv] BOSS 狀態 chip 渲染失敗', _eStatusChips); }
 
       shieldsRow.innerHTML = chips.length ? chips.join('') :
-        '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(HP 80% 啟動)</span>';
+        '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 4 回合啟動)</span>';
     }
 
     const burstWarn = document.getElementById('wb-adv-burst-warn');
@@ -11561,7 +11564,7 @@
   // ★ v4.0 — 階段 2:BOSS 能力介紹彈窗
   // ────────────────────────────────────────────────────────────────────
   // 點戰鬥畫面頂部「📖 BOSS 能力介紹」按鈕觸發
-  // 內容:HP / 階段 / 護盾元素 / 3 大招細節 / 第 10 回合爆發 / 第 20 回合滅絕
+  // 內容:HP / 階段 / 護盾元素 / 3 大招細節 / 第 10 回合爆發 / 第 21 回合滅絕
   // 點任意位置關閉
   // ════════════════════════════════════════════════════════════════════
   function _wbAdvOpenBossInfoPopup(){
@@ -11617,18 +11620,17 @@
         </div>
 
         <h3 style="font-size:34px;color:#ffd966;margin:18px 0 12px;letter-spacing:2px;">
-          🛡 HP 階段護盾(每階啟動 4 元素護盾)
+          🛡 護盾啟動回合(每階 4 元素護盾各 1 層)
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
-          <li>HP 80%:第 1 層護盾啟動(火 / 風 / 土 / 暗)</li>
-          <li>HP 60%:第 2 層護盾啟動</li>
-          <li>HP 40%:第 3 層護盾啟動</li>
-          <li>HP 20%:第 4 層護盾啟動</li>
-          <li>HP 1%:最終護盾啟動(最後一道防線)</li>
+          <li>第 4 回合:第 1 階段護盾啟動(火 / 風 / 土 / 暗,各 1 層)</li>
+          <li>第 8 回合:第 2 階段護盾啟動(各 1 層)</li>
+          <li>第 12 回合:第 3 階段護盾啟動(各 1 層)</li>
+          <li>第 16 回合:第 4 階段護盾啟動(各 1 層,最後一道防線)</li>
         </ul>
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
-          用<b style="color:#5dcaa5;">破盾元素(水 / 草 / 土 / 光)</b>攻擊可削減對應護盾,
-          炎之意志減傷至單次最多 1% HP。
+          用<b style="color:#5dcaa5;">破盾元素(水 / 土 / 草 / 光)</b>各攻擊 1 次即可削減對應護盾(對 火/風/土/暗 護盾),
+          炎之意志減傷至單次最多 1% HP。整場共 16 層護盾需破除。
         </p>
 
         <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
@@ -11659,9 +11661,10 @@
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #aa3322;">
-            <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 第 20 回合戰場崩毀</div>
+            <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(玩家最後一次答題行動結束後)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              戰場被火山灰掩埋,全員強制陣亡。<b>必須在 19 回合內擊敗 BOSS!</b>
+              戰場被火山灰掩埋,全員強制陣亡。<b>必須在 20 回合內擊敗 BOSS!</b>
+              開場 1 題 + 每回合各 1 題,共 21 題答題機會,第 21 次答題行動結束後 BOSS 即發動最終滅絕。
             </div>
           </div>
         </div>
@@ -11670,9 +11673,10 @@
           ⚔ 攻略提示
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
-          <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 草 / 土 / 光</b>全部 4 種破盾屬性</li>
-          <li>BOSS 單次受傷最多 1% HP,要靠累積打掉</li>
+          <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 土 / 草 / 光</b>全部 4 種破盾屬性</li>
+          <li>BOSS 單次受傷最多 1% HP(5,000 傷害),要靠累積打掉</li>
           <li>第 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
+          <li>4/8/12/16 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
           <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息</li>
         </ul>
 
