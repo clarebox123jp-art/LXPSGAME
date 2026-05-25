@@ -13,6 +13,19 @@
 //             • 移除 flex order(改用 data-active 屬性 + CSS 屬性選擇器切換)
 //             • 關閉按鈕從卡片底部搬到左側目錄底部(margin-top:auto)
 //             • 手機版(<768px)目錄收成上方橫向 chip
+//           v3.5.74(2026-05-25) — 左側目錄修正捲動 + 字級放大
+//             • 結構改為「header 固定 + _gm-nav-list 捲動 + close 固定」三段式
+//             • 修掉 margin-top:auto 在內容溢出時搶位置造成捲動失靈的問題
+//             • 左欄寬 280→320(PC 360→400),騰出空間給放大字級
+//             • 按鈕字級 14→16px(PC 18→21px),icon 18→22px(PC 24→28px)
+//             • header 18→20px(PC 24→28px),sub 11→13px(PC 14→16px)
+//             • 關閉按鈕字級 15→17px(PC 18→20px)
+//           v3.5.75(2026-05-25) — 修掉「點目錄右側不顯示」的核心 bug
+//             • 舊版用 [data-active="xxx"] #_admin-xxx-section 屬性選擇器組合
+//               在某些情境下整條 CSS 規則被瀏覽器丟掉,導致 section 永遠隱藏
+//             • 改用 JS 直接 toggle class(._gm-active / ._gm-hide),100% 穩定
+//             • 切換邏輯改為:預先抓所有 section reference + 直接操作 classList
+//             • 增加 console.log 方便老師確認綁定成功
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -136,17 +149,18 @@ async function _showAdminStatsPanelImpl(){
         overflow: hidden;
       }
       #_admin-stats-panel ._gm-nav {
-        flex: 0 0 280px;
+        flex: 0 0 320px;                  /* v3.5.74:從 280→320 騰出空間給放大字級 */
         display: flex;
         flex-direction: column;
         background: rgba(0,0,0,0.45);
         border-right: 2px solid rgba(212,168,67,0.4);
-        padding: 18px 14px;
-        overflow-y: auto;
+        padding: 18px 14px 14px;
         box-sizing: border-box;
+        min-height: 0;                    /* v3.5.74:flex child 必加,否則 overflow 失效 */
+        overflow: hidden;                 /* v3.5.74:外層不捲,改由 _gm-nav-list 捲 */
       }
       #_admin-stats-panel ._gm-nav-header {
-        font-size: 18px;
+        font-size: 20px;                  /* v3.5.74:18→20 */
         font-weight: 900;
         color: #ffcc44;
         text-align: center;
@@ -154,28 +168,45 @@ async function _showAdminStatsPanelImpl(){
         margin-bottom: 6px;
         padding-bottom: 10px;
         border-bottom: 1.5px solid rgba(212,168,67,0.35);
+        flex-shrink: 0;                   /* v3.5.74:header 不被擠壓 */
       }
       #_admin-stats-panel ._gm-nav-sub {
-        font-size: 11px;
+        font-size: 13px;                  /* v3.5.74:11→13 */
         color: #aaa;
         text-align: center;
         line-height: 1.5;
         margin-bottom: 14px;
+        flex-shrink: 0;                   /* v3.5.74:sub 也不被擠壓 */
       }
+      /* ★ v3.5.74 — 新增 _gm-nav-list 包住所有目錄按鈕,獨立負責捲動
+         (這樣關閉按鈕固定在底部,而中間的目錄不論多長都能捲) */
+      #_admin-stats-panel ._gm-nav-list {
+        flex: 1 1 auto;
+        min-height: 0;                    /* flex child 要捲動的必加 */
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px;               /* 預留捲軸空間,避免內容被遮 */
+        margin-right: -4px;
+      }
+      /* 左側目錄專屬捲軸樣式 */
+      #_admin-stats-panel ._gm-nav-list::-webkit-scrollbar { width: 8px; }
+      #_admin-stats-panel ._gm-nav-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
+      #_admin-stats-panel ._gm-nav-list::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.5); border-radius: 4px; }
+      #_admin-stats-panel ._gm-nav-list::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.8); }
       #_admin-stats-panel ._gm-nav-btn {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;                        /* v3.5.74:10→12 */
         width: 100%;
-        padding: 10px 12px;
-        margin-bottom: 6px;
+        padding: 12px 14px;               /* v3.5.74:10→12 / 12→14 */
+        margin-bottom: 7px;               /* v3.5.74:6→7 */
         background: rgba(40,40,60,0.5);
         border: 1.5px solid rgba(212,168,67,0.18);
         color: #ddd;
         border-radius: 8px;
         cursor: pointer;
         font-family: inherit;
-        font-size: 14px;
+        font-size: 16px;                  /* v3.5.74:14→16 */
         font-weight: 600;
         text-align: left;
         letter-spacing: 0.5px;
@@ -195,9 +226,9 @@ async function _showAdminStatsPanelImpl(){
         box-shadow: 0 0 12px rgba(212,168,67,0.3) inset;
       }
       #_admin-stats-panel ._gm-nav-btn ._gm-nav-ico {
-        font-size: 18px;
+        font-size: 22px;                  /* v3.5.74:18→22 */
         flex-shrink: 0;
-        width: 22px;
+        width: 26px;                      /* v3.5.74:22→26 */
         text-align: center;
       }
       #_admin-stats-panel ._gm-nav-btn ._gm-nav-label {
@@ -210,7 +241,7 @@ async function _showAdminStatsPanelImpl(){
       #_admin-stats-panel ._gm-nav-divider {
         height: 1px;
         background: rgba(212,168,67,0.2);
-        margin: 8px 4px;
+        margin: 10px 4px;                 /* v3.5.74:8→10 */
       }
       #_admin-stats-panel ._gm-content {
         flex: 1;
@@ -229,34 +260,22 @@ async function _showAdminStatsPanelImpl(){
         display: none;
         margin-bottom: 0 !important;
       }
-      #_admin-stats-panel ._gm-content[data-active="maint"] #_admin-maint-section,
-      #_admin-stats-panel ._gm-content[data-active="gm"] #_admin-gm-section,
-      #_admin-stats-panel ._gm-content[data-active="bug"] #_admin-bug-section,
-      #_admin-stats-panel ._gm-content[data-active="lv1"] #_admin-lv1-section,
-      #_admin-stats-panel ._gm-content[data-active="pollution-check"] #_admin-pollution-check-section,
-      #_admin-stats-panel ._gm-content[data-active="rescue"] #_admin-rescue-section,
-      #_admin-stats-panel ._gm-content[data-active="comp"] #_admin-comp-section,
-      #_admin-stats-panel ._gm-content[data-active="dlperm"] #_admin-dlperm-section,
-      #_admin-stats-panel ._gm-content[data-active="sus"] #_admin-sus-section,
-      #_admin-stats-panel ._gm-content[data-active="wblb"] #_admin-wblb-section,
-      #_admin-stats-panel ._gm-content[data-active="wq"] #_admin-wq-section,
-      #_admin-stats-panel ._gm-content[data-active="bypass"] #_admin-bypass-section,
-      #_admin-stats-panel ._gm-content[data-active="test-batch"] #_admin-test-batch-section,
-      #_admin-stats-panel ._gm-content[data-active="backfill-players"] #_admin-backfill-players-section,
-      #_admin-stats-panel ._gm-content[data-active="set-players"] #_admin-set-players-section,
-      #_admin-stats-panel ._gm-content[data-active="set-adv"] #_admin-set-adv-section {
+      /* ★ v3.5.75(2026-05-25) — 顯示規則改用「.gm-active」class
+         原本用 [data-active="xxx"] #_admin-xxx-section 組合屬性選擇器,
+         在某些瀏覽器 / 特異度情境下無效。改用單純的 class 標記,
+         JS 在切換時直接加/移除 ._gm-active class,最穩定。 */
+      #_admin-stats-panel ._gm-content > div[id^="_admin-"][id$="-section"]._gm-active {
         display: block !important;
       }
-      /* 歡迎頁(沒選任何功能時) */
+      /* 歡迎頁(沒選任何功能時) — 預設顯示,JS 點目錄時加 ._gm-hide 隱藏 */
       #_admin-stats-panel ._gm-welcome {
-        display: none;
+        display: block;
         text-align: center;
         padding: 80px 30px;
         color: #888;
       }
-      #_admin-stats-panel ._gm-content:not([data-active]) ._gm-welcome,
-      #_admin-stats-panel ._gm-content[data-active=""] ._gm-welcome {
-        display: block;
+      #_admin-stats-panel ._gm-welcome._gm-hide {
+        display: none;
       }
       #_admin-stats-panel ._gm-welcome ._gm-welcome-icon {
         font-size: 72px;
@@ -277,15 +296,16 @@ async function _showAdminStatsPanelImpl(){
         max-width: 480px;
         margin: 0 auto;
       }
-      /* 關閉按鈕固定在左下 */
+      /* 關閉按鈕固定在左下(不參與目錄捲動) */
       #_admin-stats-panel ._gm-nav #_admin-close {
-        margin-top: auto;
+        flex-shrink: 0;                   /* v3.5.74:不被擠壓 */
+        margin-top: 10px;                 /* v3.5.74:跟 list 之間留間距 */
         margin-bottom: 0 !important;
         background: rgba(80,60,60,0.6) !important;
         border: 1.5px solid rgba(255,120,120,0.4) !important;
         color: #ffaaaa !important;
-        padding: 12px !important;
-        font-size: 15px !important;
+        padding: 14px !important;         /* v3.5.74:12→14 */
+        font-size: 17px !important;       /* v3.5.74:15→17 */
         font-weight: 700 !important;
         border-radius: 8px !important;
         cursor: pointer;
@@ -307,20 +327,20 @@ async function _showAdminStatsPanelImpl(){
           border-radius: 20px !important;
         }
         #_admin-stats-panel ._gm-nav {
-          flex: 0 0 360px !important;
+          flex: 0 0 400px !important;     /* v3.5.74:360→400 */
           padding: 24px 18px !important;
         }
-        #_admin-stats-panel ._gm-nav-header { font-size: 24px !important; margin-bottom: 10px !important; padding-bottom: 14px !important; }
-        #_admin-stats-panel ._gm-nav-sub { font-size: 14px !important; margin-bottom: 18px !important; }
+        #_admin-stats-panel ._gm-nav-header { font-size: 28px !important; margin-bottom: 10px !important; padding-bottom: 14px !important; letter-spacing: 2px !important; }
+        #_admin-stats-panel ._gm-nav-sub { font-size: 16px !important; margin-bottom: 18px !important; }
         #_admin-stats-panel ._gm-nav-btn {
-          font-size: 18px !important;
-          padding: 14px 16px !important;
+          font-size: 21px !important;     /* v3.5.74:18→21 */
+          padding: 16px 18px !important;  /* v3.5.74:14→16 / 16→18 */
           border-radius: 10px !important;
-          gap: 14px !important;
-          margin-bottom: 8px !important;
+          gap: 16px !important;
+          margin-bottom: 9px !important;
         }
-        #_admin-stats-panel ._gm-nav-btn ._gm-nav-ico { font-size: 24px !important; width: 28px !important; }
-        #_admin-stats-panel ._gm-nav #_admin-close { font-size: 18px !important; padding: 16px !important; }
+        #_admin-stats-panel ._gm-nav-btn ._gm-nav-ico { font-size: 28px !important; width: 32px !important; }
+        #_admin-stats-panel ._gm-nav #_admin-close { font-size: 20px !important; padding: 18px !important; margin-top: 14px !important; }
         #_admin-stats-panel ._gm-content { padding: 40px 50px !important; }
         #_admin-stats-panel ._gm-welcome ._gm-welcome-icon { font-size: 96px !important; }
         #_admin-stats-panel ._gm-welcome ._gm-welcome-title { font-size: 32px !important; }
@@ -364,13 +384,21 @@ async function _showAdminStatsPanelImpl(){
         }
         #_admin-stats-panel ._gm-nav {
           flex: 0 0 auto !important;
-          flex-direction: row !important;
-          flex-wrap: wrap !important;
-          gap: 6px;
+          display: block !important;          /* v3.5.74:手機版改 block */
           padding: 12px !important;
           border-right: none !important;
           border-bottom: 2px solid rgba(212,168,67,0.4) !important;
           max-height: 38vh;
+          overflow: visible !important;       /* v3.5.74:讓 _gm-nav-list 接手捲動 */
+        }
+        #_admin-stats-panel ._gm-nav-list {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 6px;
+          max-height: 24vh;
+          overflow-y: auto;
+          padding-right: 0 !important;
+          margin-right: 0 !important;
         }
         #_admin-stats-panel ._gm-nav-header { width: 100%; font-size: 16px !important; margin-bottom: 8px !important; padding-bottom: 8px !important; }
         #_admin-stats-panel ._gm-nav-sub { display: none; }
@@ -380,15 +408,15 @@ async function _showAdminStatsPanelImpl(){
           flex: 0 0 auto;
           margin-bottom: 0 !important;
           padding: 7px 10px !important;
-          font-size: 12px !important;
+          font-size: 13px !important;          /* v3.5.74:12→13 */
         }
         #_admin-stats-panel ._gm-nav-btn:hover { transform: none !important; }
-        #_admin-stats-panel ._gm-nav-btn ._gm-nav-ico { font-size: 14px !important; }
+        #_admin-stats-panel ._gm-nav-btn ._gm-nav-ico { font-size: 15px !important; }
         #_admin-stats-panel ._gm-nav #_admin-close {
-          flex: 1 0 100%;
-          margin-top: 6px !important;
-          padding: 8px !important;
-          font-size: 13px !important;
+          width: 100%;
+          margin-top: 8px !important;          /* v3.5.74:6→8 */
+          padding: 10px !important;
+          font-size: 14px !important;          /* v3.5.74:13→14 */
         }
         #_admin-stats-panel ._gm-content { padding: 16px !important; }
         #_admin-stats-panel ._gm-welcome { padding: 30px 16px !important; }
@@ -403,6 +431,10 @@ async function _showAdminStatsPanelImpl(){
       <div class="_gm-nav">
         <div class="_gm-nav-header">🛠️ GM 功能選單</div>
         <div class="_gm-nav-sub">點選下方功能開啟對應面板</div>
+
+        <!-- ★ v3.5.74 — 中間目錄用獨立 _gm-nav-list 包住,負責捲動
+             (header/sub 固定上方,close 按鈕固定下方) -->
+        <div class="_gm-nav-list">
 
         <button class="_gm-nav-btn" data-gm-target="maint">
           <span class="_gm-nav-ico">🔧</span><span class="_gm-nav-label">維修模式</span>
@@ -467,6 +499,8 @@ async function _showAdminStatsPanelImpl(){
         <button class="_gm-nav-btn" data-gm-target="set-adv">
           <span class="_gm-nav-ico">⚔️</span><span class="_gm-nav-label">設定累計冒險</span>
         </button>
+
+        </div><!-- /._gm-nav-list -->
 
         <button id="_admin-close">關閉面板</button>
       </div>
@@ -1389,21 +1423,45 @@ async function _showAdminStatsPanelImpl(){
   document.getElementById('_admin-close').onclick = _closeAdminPanel;
   pop.onclick = (ev) => { if(ev.target === pop) _closeAdminPanel(); };
 
-  // ★ v3.5.73 — 左側目錄按鈕點擊切換邏輯
-  //   點選後:① 加 _active class ② 更新 _gm-content 的 data-active 屬性
-  //   CSS 屬性選擇器會自動顯示對應的 section,其他維持 display:none
+  // ★ v3.5.75 — 左側目錄按鈕點擊切換邏輯(改用 class 操作,不再用 CSS 屬性選擇器)
+  //   點選後:① nav 按鈕 _active class ② 所有 section 移除 _gm-active
+  //          ③ 目標 section 加 _gm-active ④ 歡迎頁加 _gm-hide
+  //   為何改:CSS 用 [data-active="xxx"] #_admin-xxx-section 的選擇器組合
+  //          在某些情境下不生效,改用直接 toggle class 100% 穩定。
   (function _bindGmNavButtons(){
     const _content = pop.querySelector('._gm-content');
+    const _welcome = pop.querySelector('._gm-welcome');
     const _navBtns = pop.querySelectorAll('._gm-nav-btn');
     if(!_content || !_navBtns.length) return;
+    // 先抓出所有 section 引用(避免每次切換都重新 query)
+    const _sectionMap = {};
+    _navBtns.forEach((btn) => {
+      const _target = btn.getAttribute('data-gm-target');
+      if(_target){
+        const _section = _content.querySelector('#_admin-' + _target + '-section');
+        if(_section) _sectionMap[_target] = _section;
+      }
+    });
+    console.log('[admin_panel v3.5.75] 目錄按鈕已綁定,可切換 sections:', Object.keys(_sectionMap).length, '個');
+
     _navBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         const _target = btn.getAttribute('data-gm-target');
         if(!_target) return;
+        const _section = _sectionMap[_target];
+        if(!_section){
+          console.warn('[admin_panel] 找不到 section:', '_admin-' + _target + '-section');
+          return;
+        }
         // 清除其他按鈕的 active 狀態
         _navBtns.forEach(b => b.classList.remove('_active'));
         btn.classList.add('_active');
-        // 切換內容區
+        // 隱藏歡迎頁
+        if(_welcome) _welcome.classList.add('_gm-hide');
+        // 隱藏所有 section、只顯示目標
+        Object.values(_sectionMap).forEach(s => s.classList.remove('_gm-active'));
+        _section.classList.add('_gm-active');
+        // 同步更新 data-active(備援用,給 debug)
         _content.setAttribute('data-active', _target);
         // 切換時把內容區捲回頂部
         _content.scrollTop = 0;
