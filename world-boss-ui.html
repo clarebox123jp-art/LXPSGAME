@@ -1015,7 +1015,7 @@
       <div class="wb-boss-info">
         <div class="wb-boss-name">⚔️ 維蘇威火山龍王 <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
         <div style="font-size:13px;color:#aaa;line-height:1.5;">
-          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 4/8/12/16 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。20 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
+          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 3/5/7/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
         <div class="wb-boss-stats">
           <span>❤️ 500,000 HP</span>
@@ -3396,7 +3396,7 @@
                 <span style="font-size:1.3em;">🐉</span>
                 <span id="wb-mega-boss-name">維蘇威火山龍王</span>
               </div>
-              <div class="wb-mega-hp-turn" id="wb-mega-turn-info">回合 1 / 20 ✦ 第一階段</div>
+              <div class="wb-mega-hp-turn" id="wb-mega-turn-info">回合 1 / 10 ✦ 第一階段</div>
             </div>
             <div class="wb-mega-hp-bar">
               <div class="wb-mega-hp-fill" id="wb-mega-hp-fill" style="width:100%;"></div>
@@ -8065,6 +8065,8 @@
       boss.curHp = Math.max(0, boss.curHp - finalDmg);
 
       // ★ v3.5.70 — 護盾觸發檢查(第 4/8/12/16 回合自動啟動護盾,每元素 1 層)
+      // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,實際觸發回合是 3/5/7/9
+      //   (此 dead 路徑保留註解一致性;真正生效的是 world-boss.js WB_SHIELD_TRIGGERS)
       if(typeof window._wbCheckShieldTrigger === 'function'){
         const triggered = window._wbCheckShieldTrigger(boss);
         if(triggered){
@@ -8107,7 +8109,11 @@
     //   老師決策:讓玩家完整跑完 1~20 回合(每回合 1 題),最後一次(第 21 次)答題
     //             行動結束後,輪到 BOSS 時才觸發崩毀。
     //   舊版(<= v3.5.69):G.turn >= 20 即觸發 → 玩家還沒能跑完第 20 回合就被滅
-    if(G.turn >= 21){
+    // ★ v3.7.9(2026-05-25):配合 10 回合節奏壓縮,崩毀提前至第 11 回合 BOSS turn
+    //   ⚠ 此 if 屬於 v3 自製戰鬥引擎 dead 路徑(被 !window._wbHostG 守門擋住),
+    //     真正生效的是 world-boss.js _wbAdvBossTurn 內的 G.round >= 11
+    //     此處同步註解 + 數值是為了「未來重啟 v3 路徑時行為一致」
+    if(G.turn >= 11){
       _wbHostBroadcast(['💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!']);
       setTimeout(() => {
         const alive = G.p1.filter(h => h && h.curHp > 0);
@@ -8122,13 +8128,17 @@
     }
 
     // ★ v3.1 — 第 10 回合固定爆發技
-    if(G.turn === 10 && !G._wbBurstUsed){
-      G._wbBurstUsed = true;
+    // ★ v3.7.9(2026-05-25):配合 10 回合節奏,改為第 5 + 第 10 回合各一次爆發
+    //   ⚠ 此 if 屬於 v3 自製戰鬥引擎 dead 路徑,真正生效的是 world-boss.js _wbAdvBossTurn
+    //     的新三條件邏輯(R5 / R10 / 能量滿)
+    if((G.turn === 5 && !G._wbBurst5Used) || (G.turn === 10 && !G._wbBurst10Used)){
+      if(G.turn === 5) G._wbBurst5Used = true;
+      if(G.turn === 10) G._wbBurst10Used = true;
       _wbExecBossBurst(boss);
       return;
     }
 
-    // BOSS AI:隨機選 S1 / S2 / 普攻 (沒有爆發,爆發固定第 10 回合)
+    // BOSS AI:隨機選 S1 / S2 / 普攻 (爆發固定第 5 / 10 回合)
     const alive = G.p1.filter(h => h && h.curHp > 0);
     if(alive.length === 0){ _wbHostFinishBattle('p2'); return; }
 
@@ -8267,11 +8277,13 @@
     if(next <= G.currentActorIdx){
       G.turn += 1;
       // ★ v3.1 — 回合警告
-      if(G.turn === 9 && !G._wbBurstWarned){
+      // ★ v3.7.9(2026-05-25):配合 10 回合節奏 + 第 5/10 雙爆發點壓縮
+      //   ⚠ dead 路徑(被 !window._wbHostG 守門),真正生效的是 _wbBuildAdvBattleOverlay 內提示
+      if((G.turn === 4 || G.turn === 9) && !G._wbBurstWarned){
         G._wbBurstWarned = true;
         _wbShowTurnWarning('⚠ 下一回合 BOSS 將施展爆發技!');
       }
-      if(G.turn === 20 && !G._wbCollapseWarned){
+      if(G.turn === 10 && !G._wbCollapseWarned){
         G._wbCollapseWarned = true;
         _wbShowTurnWarning('⚠ 戰場即將崩毀!最後 1 回合 BOSS 將強制滅絕!');
       }
@@ -8776,7 +8788,7 @@
                   + 'font-size:26px;font-weight:800;color:#ddccff;letter-spacing:2px;'
                   + 'text-shadow:0 0 12px rgba(170,136,255,0.7);text-align:center;'
                   + 'box-shadow:0 0 40px rgba(170,136,255,0.5);pointer-events:none;';
-                _hint.innerHTML = '⏳ 房主正在答開戰題…<br><span style="font-size:18px;color:#aabbdd;">答對全員能量 +1 / 答錯全員 -5% HP</span>';
+                _hint.innerHTML = '⏳ 房主正在答開戰題…<br><span style="font-size:18px;color:#aabbdd;">答對全隊能量 +3 / 答錯全隊 -5% HP</span>';
                 document.body.appendChild(_hint);
                 // 6 秒後自動移除(若房主答完發 sync 也會清掉)
                 setTimeout(() => { try{ _hint.remove(); }catch(_){} }, 6000);
@@ -9306,7 +9318,7 @@
       const megaTurn = document.getElementById('wb-mega-turn-info');
       if(megaTurn){
         const phase = pct < 50 ? '⚠ 第二階段' : '第一階段';
-        megaTurn.textContent = `回合 ${battle.turn} / 20 ✦ ${phase}`;
+        megaTurn.textContent = `回合 ${battle.turn} / 10 ✦ ${phase}`;
       }
 
       // ★ v3.1.2 — 護盾 + 不利狀態 chip(完全動態,讀 BOSS._wbShieldElements + WB_ELEMENT_META)
@@ -9338,26 +9350,30 @@
           '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 4 回合啟動)</span>';
       }
 
-      // 第 9 回合提示爆發即將釋放(只在還沒提示過時)
+      // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,警告回合改成:
+      //   - 第 4 回合 → 下回合(第 5)BOSS 釋放爆發
+      //   - 第 8 回合 → 戰場剩 2 回合崩毀
+      //   - 第 9 / 10 回合 → 戰場崩毀倒數 (11-N) 回合
+      //   舊版(v3.5.70):9 / 17 / 18 / 19,配合 20 回合節奏
       const burstWarn = document.getElementById('wb-boss-burst-warn');
       if(burstWarn){
-        if(battle.turn === 9){
+        if(battle.turn === 4){
           burstWarn.style.display = 'block';
           burstWarn.textContent = '⚠ 下回合 BOSS 將釋放爆發技!';
-        }else if(battle.turn === 17){
+        }else if(battle.turn === 8){
           burstWarn.style.display = 'block';
-          burstWarn.textContent = '⚠ 剩 3 回合戰場將崩毀!';
-        }else if(battle.turn === 18 || battle.turn === 19){
+          burstWarn.textContent = '⚠ 剩 2 回合戰場將崩毀!';
+        }else if(battle.turn === 9 || battle.turn === 10){
           burstWarn.style.display = 'block';
           burstWarn.style.color = '#ff4422';
-          burstWarn.textContent = `⚠ 戰場崩毀倒數 ${20-battle.turn} 回合!`;
+          burstWarn.textContent = `⚠ 戰場崩毀倒數 ${11-battle.turn} 回合!`;
         }else{
           burstWarn.style.display = 'none';
         }
       }
     }
     const oldTurnEl = document.getElementById('wb-battle-turn-info');
-    if(oldTurnEl) oldTurnEl.textContent = `回合 ${battle.turn} / 20`;
+    if(oldTurnEl) oldTurnEl.textContent = `回合 ${battle.turn} / 10`;
 
     // 4 個英雄
     const players = window._wbNet.getSnapshot()?.players || [];
@@ -9703,117 +9719,158 @@
       console.log('[WB-QuizCorrect client] 跳過 G 改動,等房主 sync(cnt=' + cnt + ')');
     }
     _wbMarkQuiz(turnNum, actorPos, true);
-    // 答題獎勵:第 5 / 10 / 15 / 20 次 → BOSS 受 1% maxHp 傷害 + 全隊聯手攻擊特效
+    // 答題獎勵:第 5 / 10 次 → BOSS 受 1% maxHp 傷害 + 全隊聯手攻擊特效
     // ★ v3.3.2 — 門檻從 10/25/50 改為 5/10/15/20
     //   舊行為(已移除):10/25/50 配合「每回合每位玩家答題」的高頻設計(4 人 × 20 回合 = 80 題)
-    //   新行為:5/10/15/20 配合「只開場 + BOSS 行動前」的低頻設計(最多 21 題)
-    //   老師確認:讓 5/10/15/20 都能正常觸發,避免 25/50 永遠達不到的問題
-    const triggers = [5, 10, 15, 20];
+    //   v3.3.2:5/10/15/20 配合「只開場 + BOSS 行動前」的低頻設計(最多 21 題)
+    // ★ v3.7.9(2026-05-25) — 兩個關鍵改動:
+    //   (1) 門檻砍半:5/10/15/20 → 5/10
+    //       原因:總題數從 21 砍成 11(開場 1 + 每回合 1×10 回合),15/20 永遠達不到
+    //       老師需求 3 也明確說「答對 5 題、10 題」
+    //   (2) 觸發時機:從「答對當下」延後到「選完答題獎勵(使用/保留)後立即發動」
+    //       原因:老師需求 3 明確要求「在選擇完答題獎勵(使用或保留)後立即發動」
+    //       實作:
+    //         - 答對當下不再直接跑 5000 + cinematic,改為設旗標 _wbPendingTeamBurst = cnt
+    //         - 主程式 advApplyReward 結尾 / advOnQuizSkip(獎勵路徑收尾)觸發
+    //           window._wbFireTeamBurstReward() — 它會讀旗標,有值就跑全套特效
+    //         - 為兼容「沒有獎勵 UI 的情境」(例如未來改成沒獎勵的題),保留
+    //           setTimeout 2.5 秒 watchdog:若旗標還沒被消費,主動觸發
+    const triggers = [5, 10];
     if(triggers.includes(cnt)){
       const boss = G.p2 && G.p2[0];
       if(boss){
-        const rewardDmg = Math.floor((boss.hp || 500000) * 0.01);
-        // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
-        //   設計:client 只跑視覺特效(讓玩家看到動畫),不改 G(避免雙重扣血)
-        if(!_isClient){
-          boss.curHp = Math.max(0, boss.curHp - rewardDmg);
-        }
-        // ★ v3.3.2 — 觸發累積答題獎勵時,追加「極限爆發」音效 + 螢幕閃光特效 + 2×2 全隊全圖 Cinematic
-        //   老師需求:「全隊聯手攻擊時,如同極限爆發時右邊出現一名角色的全圖,
-        //              這時候變成四名角色的全圖 2×2 排在右側」
-        //   設計:
-        //     1. 呼叫 _wbShowTeamBurstCinematic(cnt) — 右側 2×2 排版 4 名 p1 英雄全圖
-        //        (內含:全圖面板、集中效果線 GIF、中央「全隊聯手攻擊! × N」大字)
-        //     2. 100ms 後播放 sfx-burst 音效 + flashScreen 螢幕金光 + BOSS 火光粒子
-        //     3. 演出總時長 ~2.5 秒(對齊主程式 _showBurstCinematic)
-        //   ⚠ 視覺特效在每個客戶端各自播放(對齊單人練習,多人玩家也看得到動畫)
         try{
-          // (1) 觸發全隊聯手攻擊 Cinematic(2×2 排版 4 名英雄全圖 + 集中效果線 + 中央大字)
-          if(typeof _wbShowTeamBurstCinematic === 'function'){
-            _wbShowTeamBurstCinematic(cnt);
-          }
-          // ★ v3.4.7 — 老師明確需求:「集體爆發要所有玩家端都同步看見」
-          //   capture teamBurstCinematic 事件給 client 重播(client 端會在本機自己跑同樣動畫)
-          try{
-            if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
-              _wbFxCapture({ type:'teamBurstCinematic', cnt:cnt });
-            }
-          }catch(_eTbCap){ console.warn('[WB] teamBurst cinematic capture 失敗', _eTbCap); }
-          // (2) 100ms 後播放音效 + 螢幕閃光(配合視覺爆點)
-          setTimeout(function(){
-            try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
-            try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,200,80,1)', 450); }catch(_){}
-            // (3) BOSS 卡片火光粒子(視覺強化)
+          // 標記延後觸發(包含 cnt,讓選完獎勵後函式知道是第幾次)
+          window._wbPendingTeamBurst = { cnt: cnt, isClient: _isClient, ts: Date.now() };
+          try{ console.log('[WB-QuizCorrect v3.7.9] 5000 傷害延後標記設定 cnt=' + cnt + ', isClient=' + _isClient); }catch(_){}
+          // Watchdog:若 2.5 秒內 advApplyReward 沒清掉旗標,主動觸發
+          //   (保護「未來無獎勵題型」「advShowReward 異常 early return」等情境)
+          try{ if(window._wbPendingTeamBurstTid) clearTimeout(window._wbPendingTeamBurstTid); }catch(_){}
+          window._wbPendingTeamBurstTid = setTimeout(function(){
             try{
-              if(typeof cardRect === 'function' && typeof spawnParticles === 'function'){
-                const _rc = cardRect(boss);
-                if(_rc){
-                  // 第一波金光
-                  spawnParticles(_rc.x, _rc.y, {count:30, color:'#ffe066', size:9, spread:75, duration:850});
-                  // 120ms 後第二波(橙色火焰)
-                  setTimeout(function(){
-                    try{ spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff8833', size:8, spread:65, duration:700, rise:true, gravity:-0.3}); }catch(_){}
-                  }, 120);
+              if(window._wbPendingTeamBurst && window._wbPendingTeamBurst.cnt === cnt){
+                console.warn('[WB-QuizCorrect v3.7.9] 5000 傷害延後 2.5 秒未觸發,watchdog 主動跑');
+                if(typeof window._wbFireTeamBurstReward === 'function'){
+                  window._wbFireTeamBurstReward('watchdog');
                 }
               }
-            }catch(_eFx){ console.warn('[WB] 聯手攻擊粒子特效失敗', _eFx); }
-            // (4) BOSS 卡片閃光 + 額外火光
-            try{
-              if(typeof flashCard === 'function') flashCard(boss, 'rgba(255,180,60,0.85)', 400);
-            }catch(_){}
-            try{
-              if(typeof fireParticles === 'function' && typeof cardRect === 'function'){
-                const _rcF = cardRect(boss);
-                if(_rcF) fireParticles(_rcF.x, _rcF.y, 30);
-              }
-            }catch(_){}
-          }, 100);
-        }catch(_eAllFx){ console.warn('[WB] 全隊聯手攻擊特效組失敗', _eAllFx); }
-
-        // ★ v3.3.2 — client mode 跳過廣播 / sync(房主會跑這些)
-        if(!_isClient){
-          // 答題獎勵不受護盾/天賦影響(這是「外部」傷害)
-          _wbHostBroadcast([`🎖 累積答對 ${cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
-          // 顯示獎勵 banner(維持原本的右上角金色 banner)— client 也顯示
-          // ★ v3.5.69 — capture 給 client 重播金色 banner
-          //   舊版只 capture teamBurstCinematic,沒 capture banner → client 看不到「🎖 答題獎勵 × N」金條
-          try{
-            if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
-              _wbFxCapture({ type:'quizRewardBanner', cnt:cnt, dmg:rewardDmg });
-            }
-          }catch(_eBcap){ console.warn('[WB v3.5.69] banner capture 失敗', _eBcap); }
-        }
-        _wbShowQuizRewardBanner(cnt, rewardDmg);
-        // 護盾觸發檢查(只在房主端跑,client 等 sync 過來)
-        // ★ v3.4.9 — 加 FX capture 讓 client 也看到護盾觸發提示
-        if(!_isClient && typeof window._wbCheckShieldTrigger === 'function'){
-          const triggered = window._wbCheckShieldTrigger(boss);
-          if(triggered){
-            try{
-              if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
-                _wbFxCapture({ type:'shieldHint', triggered: triggered });
-              }
-            }catch(_){}
-            window._wbShowShieldTriggerHint(triggered, boss);
-          }
-        }
-        // ★ FIX 20260518(c) #1 — 連線房主直接扣 BOSS HP 不走 doDmg,要主動觸發 G sync
-        //   原問題:boss.curHp 直接被改,沒走 doDmg → 不會觸發 endAction hook →
-        //          _wbHostSyncG 永遠不會 push 這個變化 → 其他玩家看到的 BOSS HP 跟房主不一致
-        //   修補:直接呼叫 _wbHostSyncG('quiz-reward-dmg') 立即廣播
-        try{
-          if(!_isClient && window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
-            window._wbHostSyncG('quiz-reward-dmg');
-          }
-        }catch(eSync){ console.warn('[WB] 答題獎勵 sync 失敗', eSync); }
-        // 同步更新 BOSS 血條 UI(client 等 sync 後再更新)
-        if(!_isClient){
-          try{ if(typeof renderCard === 'function') renderCard(boss); }catch(_){}
-          try{ if(typeof window._wbRefreshBossHpBar === 'function') window._wbRefreshBossHpBar(); }catch(_){}
-        }
+            }catch(_eWd){}
+          }, 2500);
+        }catch(_ePend){ console.warn('[WB-QuizCorrect v3.7.9] 標記延後旗標失敗', _ePend); }
       }
     }
   }
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.7.9(2026-05-25) — 全隊聯手 5000 傷害 + cinematic 觸發函式(獨立)
+  // ────────────────────────────────────────────────────────────────────
+  // 用途:
+  //   - 答題答對流程結尾(_wbOnQuizCorrect)會設 window._wbPendingTeamBurst = {cnt, isClient}
+  //   - 玩家選完「使用/保留」獎勵後,主程式 advApplyReward 結尾呼叫本函式
+  //   - 本函式讀旗標 → 跑 5000 傷害 + cinematic + 音效 + 螢幕閃光 + banner + 護盾觸發檢查
+  //   - 跑完清旗標,避免重複觸發
+  //
+  // 為什麼要拆出來:
+  //   - 原本「答對 → 立刻跑 5000」會卡在獎勵 UI 上面,演出被獎勵卡擋住、視覺零碎
+  //   - 老師需求 3 明確要求「選完獎勵後立即發動」 → 必須延後到 advApplyReward 結尾
+  //   - 拆成函式後,advApplyReward / advOnQuizSkip / watchdog 三條路徑都可主動呼叫
+  //
+  // 對外暴露 window._wbFireTeamBurstReward(reason),reason 用於診斷 log
+  // ════════════════════════════════════════════════════════════════════
+  window._wbFireTeamBurstReward = function(reason){
+    const _pending = window._wbPendingTeamBurst;
+    if(!_pending || !_pending.cnt){
+      try{ console.log('[WB-FireTeamBurst] 無 pending,略過 (reason=' + (reason||'?') + ')'); }catch(_){}
+      return;
+    }
+    // 立刻清旗標 + watchdog,避免併發雙重觸發
+    try{
+      window._wbPendingTeamBurst = null;
+      if(window._wbPendingTeamBurstTid){ clearTimeout(window._wbPendingTeamBurstTid); window._wbPendingTeamBurstTid = null; }
+    }catch(_){}
+
+    const _cnt = _pending.cnt;
+    const _isClient = !!_pending.isClient;
+    const G = (typeof window._wbGetG === 'function') ? (window._wbGetG() || window._wbHostG)
+                                                     : (window._wbHostG || window.G);
+    if(!G){ try{ console.warn('[WB-FireTeamBurst] G 不存在,放棄'); }catch(_){} return; }
+    const boss = G.p2 && G.p2[0];
+    if(!boss){ try{ console.warn('[WB-FireTeamBurst] BOSS 不存在,放棄'); }catch(_){} return; }
+
+    const rewardDmg = Math.floor((boss.hp || 500000) * 0.01);
+    try{ console.log('[WB-FireTeamBurst v3.7.9] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ', reason=' + (reason||'?')); }catch(_){}
+
+    // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
+    if(!_isClient){
+      boss.curHp = Math.max(0, boss.curHp - rewardDmg);
+    }
+    // 全隊聯手攻擊 Cinematic + 音效 + 螢幕閃光 + BOSS 粒子(對齊舊行為)
+    try{
+      if(typeof _wbShowTeamBurstCinematic === 'function'){
+        _wbShowTeamBurstCinematic(_cnt);
+      }
+      try{
+        if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+          _wbFxCapture({ type:'teamBurstCinematic', cnt:_cnt });
+        }
+      }catch(_eTbCap){ console.warn('[WB-FireTeamBurst] teamBurst cinematic capture 失敗', _eTbCap); }
+      setTimeout(function(){
+        try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
+        try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,200,80,1)', 450); }catch(_){}
+        try{
+          if(typeof cardRect === 'function' && typeof spawnParticles === 'function'){
+            const _rc = cardRect(boss);
+            if(_rc){
+              spawnParticles(_rc.x, _rc.y, {count:30, color:'#ffe066', size:9, spread:75, duration:850});
+              setTimeout(function(){
+                try{ spawnParticles(_rc.x, _rc.y, {count:24, color:'#ff8833', size:8, spread:65, duration:700, rise:true, gravity:-0.3}); }catch(_){}
+              }, 120);
+            }
+          }
+        }catch(_eFx){ console.warn('[WB-FireTeamBurst] 粒子特效失敗', _eFx); }
+        try{
+          if(typeof flashCard === 'function') flashCard(boss, 'rgba(255,180,60,0.85)', 400);
+        }catch(_){}
+        try{
+          if(typeof fireParticles === 'function' && typeof cardRect === 'function'){
+            const _rcF = cardRect(boss);
+            if(_rcF) fireParticles(_rcF.x, _rcF.y, 30);
+          }
+        }catch(_){}
+      }, 100);
+    }catch(_eAllFx){ console.warn('[WB-FireTeamBurst] 特效組失敗', _eAllFx); }
+
+    // 廣播 log + banner + sync + 護盾觸發檢查(複製自舊邏輯)
+    if(!_isClient){
+      _wbHostBroadcast([`🎖 累積答對 ${_cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
+      try{
+        if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+          _wbFxCapture({ type:'quizRewardBanner', cnt:_cnt, dmg:rewardDmg });
+        }
+      }catch(_eBcap){ console.warn('[WB-FireTeamBurst] banner capture 失敗', _eBcap); }
+    }
+    try{ _wbShowQuizRewardBanner(_cnt, rewardDmg); }catch(_){}
+    if(!_isClient && typeof window._wbCheckShieldTrigger === 'function'){
+      const triggered = window._wbCheckShieldTrigger(boss);
+      if(triggered){
+        try{
+          if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
+            _wbFxCapture({ type:'shieldHint', triggered: triggered });
+          }
+        }catch(_){}
+        try{ window._wbShowShieldTriggerHint(triggered, boss); }catch(_){}
+      }
+    }
+    try{
+      if(!_isClient && window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+        window._wbHostSyncG('quiz-reward-dmg');
+      }
+    }catch(eSync){ console.warn('[WB-FireTeamBurst] sync 失敗', eSync); }
+    if(!_isClient){
+      try{ if(typeof renderCard === 'function') renderCard(boss); }catch(_){}
+      try{ if(typeof window._wbRefreshBossHpBar === 'function') window._wbRefreshBossHpBar(); }catch(_){}
+    }
+  };
 
   // 答錯處理
   function _wbOnQuizWrong(actorPos, turnNum, isPunish){
@@ -10204,69 +10261,26 @@
       console.log('[WB-Opening] _advQuizResolveCb 觸發,lastAnswerCorrect='
         + JSON.stringify(_rawCorrect) + ' → 判定 ' + (_isCorrect ? '答對' : '答錯/未答'));
       if(_isCorrect){
-        // ★ v3.3.2 — 開戰題答對:全隊 +5% HP + 隊伍能量 +1(對齊 _wbOnQuizCorrect 新規則)
-        //   ⚠ 老師確認:能量是「隊伍共用」的(G.energy.p1),不是每英雄個別 burst
-        //   ⚠ 老師確認:多人模式下「開場題固定由房主回答」,所以這個 cb 只在房主端會 fire,
-        //              client 端不會觸發 advShowQuiz → 不會走到這條 cb(下方 _wbAskOpeningQuiz
-        //              有對 client 早期 return,直接 _fireOnDone('client-skip-opening'))
+        // ★ v3.7.9(2026-05-25) — 開戰題改規則(老師需求 1):
+        //   - 答對 → 全隊能量 +3(原本 +1 + 5% HP)
+        //   - 答對「不算入累計答對」(原本算第 1 題)
+        //   - 不給答題獎勵(原本會跑 advShowReward,但開戰題本來就走 _wbAskOpeningQuiz
+        //     的特殊 cb 路徑,不會進到 advSubmitAnswer 的 advShowReward 分支,所以這裡
+        //     不需要特別擋,只要不算 team cnt 即可)
+        //   - 不觸發 5/10 累計獎勵特效(因為開戰題本身不算)
+        //   舊行為(v3.3.2-v3.5.70):全隊 +5% HP + 能量 +1 + 算入 team cnt
+        //   ⚠ 老師確認:能量是「隊伍共用」的(G.energy.p1)
+        //   ⚠ 老師確認:多人模式下「開場題固定由房主回答」,client 不會走到這條 cb
         //   保險起見仍加 _isClient 守門:萬一未來 advShowQuiz 在 client 也被誤觸,不要重複改 G
         const _isClientOpening = !!window._wbClientMode;
-        // ★ v3.5.70 — 開戰題答對也算入「全隊累計答對」(team cnt)
-        //   老師需求:「連續答對 5 題就放一次」— 開戰題是第 1 題,理應計入
-        //   實作:host 端在開戰題答對時 team cnt +1,若剛好到 5/10/15/20 也要觸發 5000 獎勵
         if(!_isClientOpening){
           try{
-            window._wbCorrectCnt = window._wbCorrectCnt || {};
-            window._wbCorrectCnt['__team'] = (window._wbCorrectCnt['__team'] || 0) + 1;
-            const _teamCnt = window._wbCorrectCnt['__team'];
-            console.log('[WB-Opening v3.5.70] 開戰題答對,team cnt → ' + _teamCnt);
-            // 若剛好觸發 5/10/15/20 → 跑全隊聯手攻擊(直接 inline 不重抽函式)
-            const _triggers = [5, 10, 15, 20];
-            if(_triggers.includes(_teamCnt)){
-              const _boss = G && G.p2 && G.p2[0];
-              if(_boss){
-                const _rewardDmg = Math.floor((_boss.hp || 500000) * 0.01);
-                _boss.curHp = Math.max(0, _boss.curHp - _rewardDmg);
-                try{ if(typeof _wbShowTeamBurstCinematic === 'function') _wbShowTeamBurstCinematic(_teamCnt); }catch(_){}
-                try{
-                  if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
-                    _wbFxCapture({ type:'teamBurstCinematic', cnt:_teamCnt });
-                    _wbFxCapture({ type:'quizRewardBanner', cnt:_teamCnt, dmg:_rewardDmg });
-                  }
-                }catch(_){}
-                setTimeout(function(){
-                  try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
-                  try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,200,80,1)', 450); }catch(_){}
-                }, 100);
-                try{ if(typeof _wbShowQuizRewardBanner === 'function') _wbShowQuizRewardBanner(_teamCnt, _rewardDmg); }catch(_){}
-                try{ if(typeof log === 'function') log(`🎖 全隊累積答對 ${_teamCnt} 題!全隊聯手攻擊!對 BOSS 造成 ${_rewardDmg.toLocaleString()} 傷害`); }catch(_){}
-                // sync 給 client 看到 BOSS HP 變化
-                try{
-                  if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
-                    window._wbHostSyncG('opening-quiz-team-reward');
-                  }
-                }catch(_){}
-              }
-            }
-          }catch(_eTeamCnt){ console.warn('[WB-Opening v3.5.70] team cnt 累計失敗', _eTeamCnt); }
-          try{
-            // 1) 隊伍能量 +1
+            // 全隊能量 +3(上限 10)— 開戰題唯一獎勵
             G.energy = G.energy || { p1:0, p2:0 };
-            G.energy.p1 = Math.min(10, (G.energy.p1 || 0) + 1);
-            // 2) 全隊 HP +5%
-            G.p1.forEach(h => {
-              if(!h || h.curHp <= 0) return;
-              const _healAmt = Math.max(1, Math.floor((h.hp || 100) * 0.05));
-              if(typeof doHeal === 'function'){
-                try{
-                  doHeal(h, _healAmt, { actor:null, noDice:true, noWarhorn:true, isHeal:true });
-                }catch(_eDoHeal){ h.curHp = Math.min(h.hp, h.curHp + _healAmt); }
-              }else{
-                h.curHp = Math.min(h.hp, h.curHp + _healAmt);
-              }
-              try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
-            });
-            if(typeof log === 'function') log(`🎯 開戰題答對!全隊 +5% HP + 隊伍能量 +1(現在 ${G.energy.p1}/10)`);
+            const _oldEng = G.energy.p1 || 0;
+            G.energy.p1 = Math.min(10, _oldEng + 3);
+            const _gained = G.energy.p1 - _oldEng;
+            if(typeof log === 'function') log(`🎯 開戰題答對!全隊能量 +${_gained}(現在 ${G.energy.p1}/10)`);
             // 同步主程式 UI(能量條)
             try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
             // 連線房主把開戰題獎勵 sync 給 client
@@ -10275,9 +10289,9 @@
                 window._wbHostSyncG('opening-quiz-correct');
               }
             }catch(_){}
-          }catch(eBurst){ console.warn('[WB-Opening] 全員獎勵失敗', eBurst); }
+          }catch(eBurst){ console.warn('[WB-Opening v3.7.9] 開戰題能量 +3 失敗', eBurst); }
         }else{
-          console.log('[WB-Opening client] 跳過 G 改動,等房主 sync');
+          console.log('[WB-Opening client v3.7.9] 跳過 G 改動,等房主 sync');
         }
         _fireOnDone('correct');
       } else {
@@ -10339,9 +10353,10 @@
       if(typeof advShowQuiz === 'function'){
         advShowQuiz();
         // 設定 quiz label 顯示「BOSS 開戰挑戰題」(覆蓋主程式預設的「九尾空貓怪出題」)
+        // ★ v3.7.9(2026-05-25) — 開戰題新規則:答對 +3 能量、答錯 -5% HP、此題不算累積
         try{
           const _qLbl = document.getElementById('adv-quiz-label');
-          if(_qLbl) _qLbl.textContent = '🐉 BOSS 開戰挑戰題!答對時能量+1、全隊 HP 恢復 5%(僅房主可作答)';
+          if(_qLbl) _qLbl.textContent = '🐉 BOSS 開戰挑戰題!答對全隊能量 +3、答錯全隊 -5% HP(僅房主可作答)';
         }catch(_){}
 
         // ★ FIX 20260519 — 開 quiz 後 1.2 秒檢查 overlay 是否真的顯示;
@@ -11965,7 +11980,7 @@
               📖 BOSS 能力介紹
             </button>
             <div id="wb-adv-mega-turn-info" style="font-size:20px;color:#ffe066;letter-spacing:1.5px;">
-              回合 1 / 20 ✦ 第一階段
+              回合 1 / 10 ✦ 第一階段
             </div>
           </div>
         </div>
@@ -12123,7 +12138,7 @@
     const turnInfo = document.getElementById('wb-adv-mega-turn-info');
     if(turnInfo){
       const phase = pct < 50 ? '⚠ 第二階段' : '第一階段';
-      turnInfo.textContent = `回合 ${round} / 20 ✦ ${phase}`;
+      turnInfo.textContent = `回合 ${round} / 10 ✦ ${phase}`;
     }
 
     const shieldsRow = document.getElementById('wb-adv-mega-shields-row');
@@ -12318,18 +12333,18 @@
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #ff4422;">
-            <div style="font-weight:800;color:#ff4422;font-size:30px;">⚡ 爆發 天崩之炎(第 10 回合固定釋放)</div>
+            <div style="font-weight:800;color:#ff4422;font-size:30px;">⚡ 爆發 天崩之炎(第 5 / 10 回合釋放,能量滿時也會主動釋放)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               對全體玩家造成<b style="color:#ff5544;">當前 HP 90%</b>的傷害,並附加燃燒 3 回合。
-              有護盾者傷害減半,無敵者擋下。<b>務必在第 9 回合補滿血!</b>
+              有護盾者傷害減半,無敵者擋下。<b>務必在第 4 / 9 回合補滿血!</b>
             </div>
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #aa3322;">
             <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(玩家最後一次答題行動結束後)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              戰場被火山灰掩埋,全員強制陣亡。<b>必須在 20 回合內擊敗 BOSS!</b>
-              開場 1 題 + 每回合各 1 題,共 21 題答題機會,第 21 次答題行動結束後 BOSS 即發動最終滅絕。
+              戰場被火山灰掩埋,全員強制陣亡。<b>必須在 10 回合內擊敗 BOSS!</b>
+              開場 1 題 + 每回合各 1 題,共 11 題答題機會,第 11 次答題行動結束後 BOSS 即發動最終滅絕。
             </div>
           </div>
         </div>
@@ -12340,9 +12355,10 @@
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 土 / 草 / 光</b>全部 4 種破盾屬性</li>
           <li>BOSS 單次受傷最多 1% HP(5,000 傷害),要靠累積打掉</li>
-          <li>第 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
-          <li>4/8/12/16 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
+          <li>第 4 / 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
+          <li>3/5/7/9 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
           <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息</li>
+          <li>累積答對 <b style="color:#ffe066;">5 / 10 題</b>會在選完獎勵後發動全隊聯手攻擊(5000 傷害無視護盾)</li>
         </ul>
 
         <div style="text-align:center;margin-top:28px;font-size:24px;color:#888;letter-spacing:2px;">
@@ -12362,6 +12378,40 @@
 
   // 練習模式結算彈窗
   function _wbShowSoloPracticeResult(info){
+    // ★ v3.7.9(2026-05-25) — 練習模式累積獎章(老師需求 4:「練習模式雖然沒有任何獎勵,
+    //                          但仍然可以累積獎章的需求」)
+    //   做法:跟連線戰結算 (_wbUiResultShow ~ line 10803) 一樣寫 _medalStats,
+    //         並嘗試解鎖獎章。差別:不發實體獎勵(知識幣/水晶/至寶)— 維持「沒有任何獎勵」原則。
+    //   info 結構:{ killed, dmg, heroes, isNewRecord, totalCtrl, ... }
+    //   時間估算:_wbSoloStartTs → 結束時間差 < 180000ms (3 分鐘)算速通
+    try{
+      if(typeof _medalStats !== 'undefined' && _medalStats){
+        _medalStats.wbClears = (_medalStats.wbClears || 0) + 1;
+        if(info && info.killed){
+          _medalStats.wbWins = (_medalStats.wbWins || 0) + 1;
+          _medalStats.wbBossKills = _medalStats.wbBossKills || {};
+          _medalStats.wbBossKills['vesuvius_fire_dragon'] = (_medalStats.wbBossKills['vesuvius_fire_dragon'] || 0) + 1;
+        }
+        // 嘗試解鎖獎章(失敗不影響其他流程)
+        try{
+          if(typeof _unlockMedal === 'function'){
+            if(info && info.killed){
+              _unlockMedal('wb_first_clear');
+              _unlockMedal('wb_yushan_kill');
+              // 速通獎章(< 3 分鐘)— 用 info.elapsed 或現算
+              const _elapsed = (info && info.elapsed) ? info.elapsed
+                              : (window._wbSoloStartTs ? (Date.now() - window._wbSoloStartTs) : 999999);
+              if(_elapsed < 180000) _unlockMedal('wb_yushan_speedrun');
+            }
+          }
+        }catch(_eMedalUnlock){ console.warn('[WB-Solo v3.7.9] 獎章解鎖失敗', _eMedalUnlock); }
+        // 觸發雲端存檔(獎章變更要存)
+        try{ if(typeof saveGameState === 'function') saveGameState(); }catch(_){}
+        try{ if(typeof renderTopBar === 'function') renderTopBar(); }catch(_){}
+        try{ console.log('[WB-Solo v3.7.9] ✅ 練習模式獎章已累積 wbClears=' + _medalStats.wbClears + ', wbWins=' + (_medalStats.wbWins||0)); }catch(_){}
+      }
+    }catch(_eMedalStats){ console.warn('[WB-Solo v3.7.9] _medalStats 累積失敗', _eMedalStats); }
+
     // ★ v4.0 — 清理世界戰專屬 overlay + 同步 timer
     try{ if(typeof _wbAdvStopBattleSync === 'function') _wbAdvStopBattleSync(); }catch(_){}
     try{
@@ -12510,7 +12560,7 @@
         <div style="background:rgba(40,30,60,0.4);border-left:4px solid rgba(200,160,255,0.6);
           border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
           color:#ddc;line-height:1.7;">
-          💡 練習模式沒有獎勵也不會發獎章,但會幫你記錄最高傷害紀錄。<br>
+          💡 練習模式不發獎勵(知識幣/水晶/至寶),但<b style="color:#ffe066;">仍會累積獎章進度</b>並記錄最高傷害紀錄。<br>
           換不同陣容組合再試一次,挑戰自己的紀錄!
         </div>
 
@@ -12742,5 +12792,49 @@
       try{ window._wbSyncStartButtonGate && window._wbSyncStartButtonGate(); }catch(_){}
     });
   }catch(_){}
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.7.9(2026-05-25) — Hook advOnQuizSkip 在「選完獎勵後」觸發全隊聯手 5000 傷害
+  // ────────────────────────────────────────────────────────────────────
+  // 老師需求 3:「答對 5 題、10 題的全隊聯手爆發 5000 傷害,要在選擇完答題獎勵
+  //              (使用或保留)後立即發動」
+  //
+  // 為什麼 hook advOnQuizSkip 而非 advApplyReward / advKeepReward?
+  //   - advApplyReward(使用獎勵)和 advKeepReward(保留至下次)最後都呼叫 advOnQuizSkip
+  //   - 答錯路徑也呼叫 advOnQuizSkip,但答錯時 window._wbPendingTeamBurst === null,
+  //     所以 hook 內判斷「有 pending 才觸發」,答錯不會誤觸
+  //   - 一次 hook 三條路徑(使用 / 保留 / 答錯-不觸發)
+  //
+  // 退避設計:
+  //   - 若 advOnQuizSkip 不存在(主程式版本不相容),hook 安裝失敗,fallback 走原本
+  //     _wbOnQuizCorrect 內的 setTimeout watchdog(2.5 秒後 force fire)
+  //   - hook 用 setTimeout 50ms 觸發,避免跟獎勵 UI 關閉動畫疊在同一個 microtask
+  // ════════════════════════════════════════════════════════════════════
+  try{
+    if(typeof window.advOnQuizSkip === 'function' && !window._wbAdvOnQuizSkipHooked){
+      const _origAdvOnQuizSkip = window.advOnQuizSkip;
+      window.advOnQuizSkip = function(){
+        const _ret = _origAdvOnQuizSkip.apply(this, arguments);
+        // 只在世界 BOSS 戰且有 pending 時觸發
+        try{
+          if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+             && window._wbPendingTeamBurst
+             && typeof window._wbFireTeamBurstReward === 'function'){
+            setTimeout(function(){
+              try{ window._wbFireTeamBurstReward('advOnQuizSkip'); }catch(_eFire){
+                console.warn('[WB v3.7.9 advOnQuizSkip hook] _wbFireTeamBurstReward 例外', _eFire);
+              }
+            }, 50);
+          }
+        }catch(_eHook){ console.warn('[WB v3.7.9 advOnQuizSkip hook] 例外', _eHook); }
+        return _ret;
+      };
+      window._wbAdvOnQuizSkipHooked = true;
+      console.log('[WB v3.7.9] ✅ advOnQuizSkip hook 已安裝(觸發延後的全隊聯手 5000 傷害)');
+    }else if(!window.advOnQuizSkip){
+      console.warn('[WB v3.7.9] ⚠ advOnQuizSkip 不存在,5000 傷害會 fallback 用 watchdog 觸發');
+    }
+  }catch(_eHookInst){ console.warn('[WB v3.7.9] advOnQuizSkip hook 安裝失敗', _eHookInst); }
+
 })();
 </script>
