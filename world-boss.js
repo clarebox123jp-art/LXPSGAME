@@ -2130,7 +2130,10 @@
     //             最後一次(第 21 次)答題行動結束後,輪到 BOSS 時觸發崩毀。
     //   舊版(<= v3.5.69):G.round >= 20 即觸發 → 玩家還沒能跑完第 20 回合就被滅
     //   新版(v3.5.70):  G.round >= 21 才觸發 → 給玩家完整 20 回合 + 第 21 次答題
-    if((G.round || 1) >= 21){
+    // ★ v3.7.7(2026-05-25):用 _wbCollapseTriggered 旗標跟主程式 aiAct hook 共用守衛,
+    //   避免:(a) 雙重觸發(兩處都跑滅絕)、(b) 房主端 sync 給 client 後本機又跑一次
+    if((G.round || 1) >= 21 && !window._wbCollapseTriggered){
+      window._wbCollapseTriggered = true;
       // ★ FIX 20260517 — 滅絕也算技能,播技能音效
       try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
       if(typeof log === 'function') log('💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!');
