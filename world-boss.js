@@ -300,10 +300,9 @@
     try{
       if(typeof HERO_TRAIT === 'object' && HERO_TRAIT){
         Object.assign(HERO_TRAIT, {
-          // ★ v3.5.70 — 護盾觸發從 HP% 改成回合數(第 4/8/12/16 回合,每元素各 1 層),
-          //   並補充「全隊聯手爆發 5000 傷害可無視護盾」的攻略提示。
-          // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,護盾改成第 3/5/7/9,聯手爆發改 5/10
-          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限 1% maxHp;第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每個元素各 1 層、共 4 層:所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場戰鬥共 4 次護盾、16 層,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5000 傷害可以無視護盾直接命中。' },
+          // ★ v3.7.10(2026-05-25) — 護盾觸發回合:第 3/5/7/9,每元素各 1 層
+          //   同時補充「全隊聯手爆發 5000 傷害可無視護盾」的攻略提示。
+          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限 1% maxHp;第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每次補滿每個元素各 1 層(同時最多 4 層):所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場 4 階段護盾、最多 16 次破盾機會,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5000 傷害可以無視護盾直接命中。' },
         });
         window.HERO_TRAIT = HERO_TRAIT;
       }
@@ -468,7 +467,7 @@
   // 6b. 天賦「炎之意志」傷害計算 hook
   //     戰鬥引擎在「BOSS 受傷時」呼叫,回傳調整後的傷害值
   //     1) 單次受傷上限 = 最大 HP 的 1% (即 500000 * 1% = 5000)
-  //     2) HP < 50% 啟動四元素護盾:傷害再減 80%
+  //     2) 第 3/5/7/9 回合啟動四元素護盾:傷害再減 80%
   //        (即使是無視有利狀態的攻擊也擋,因為這不是 buff,是天賦)
   //     3) 護盾首次出現時跳訊息提醒玩家
   // ───────────────────────────────────────────────────────────────────
@@ -477,17 +476,15 @@
     if(rawDmg <= 0) return rawDmg;
     opts = opts || {};
 
-    const maxHp = boss.hp || 500000;
+    // ★ v3.7.10 — 用原始滿血(50 萬)計算上限,避免被殘血同步污染
+    //   殘血同步把 boss.hp 改成「本場起始 HP」(可能 < 50 萬),會讓 1% cap 變小
+    //   ex: boss.hp 變成 39.8 萬 → cap 變 3981(BUG)
+    const maxHp = boss._wbOriginalMaxHp || boss.hp || 500000;
     // 1) 單次受傷上限 1%
     const cap1pct = Math.floor(maxHp * 0.01);
     let dmg = Math.min(rawDmg, cap1pct);
 
-    // 2) ★ v3.5.70 — 護盾減傷判定改成「依 BOSS 身上是否還有 _wbShields」
-    //   舊版(v3.1):依 HP < 50% 自動套減傷
-    //   v3.5.9:護盾改成依回合數啟動(第 5/9/13/17),每元素 3 層
-    //   v3.5.70:護盾改成依回合數啟動(第 4/8/12/16),每元素 1 層
-    //   ★ v3.7.9:護盾改成依回合數啟動(第 3/5/7/9),每元素 1 層(配合 10 回合節奏)
-    //                  啟動後 boss._wbShields 物件有元素層數;全打掉前都套減傷 80%。
+    // 2) ★ v3.7.10 — 護盾減傷判定:依 BOSS 身上是否還有 _wbShields(由 _wbCheckShieldTrigger 在第 3/5/7/9 回合啟動)
     //   旗標 opts.bypassShield = true:全隊聯手爆發等特殊機制可無視護盾打穿。
     const _hasActiveShield = boss._wbShields && Object.values(boss._wbShields).some(v => v > 0);
     if(_hasActiveShield && !opts.bypassShield){
@@ -515,27 +512,29 @@
         <div style="font-size:38px;margin-bottom:12px;">🛡⚡🔥</div>
         <div style="font-size:26px;color:#ff8866;font-weight:900;letter-spacing:2px;margin-bottom:14px;
           text-shadow:0 0 14px rgba(255,100,60,0.6);">
-          ⚠ 第二階段啟動!四元素護盾
+          ⚠ 四元素護盾啟動!
         </div>
         <div style="font-size:16px;color:#ffe;line-height:1.85;text-align:left;
           background:rgba(255,80,40,0.12);padding:14px 18px;border-radius:10px;
           border-left:4px solid rgba(255,120,80,0.7);margin-bottom:14px;">
-          維蘇威火山龍王 HP 降至 50% 以下,身上浮現由<b>火 / 風 / 土 / 暗</b>四種元素構成的護盾!
+          維蘇威火山龍王身上浮現由<b>火 / 風 / 土 / 暗</b>四種元素構成的護盾!
           <br><br>
-          <b style="color:#ff8866;">護盾效果:</b><br>
+          <b style="color:#ff8866;">護盾規則:</b><br>
+          ・第 <b style="color:#ffaa66;">3 / 5 / 7 / 9</b> 回合各啟動一次,每元素各 <b>1 層</b>(同時最多 4 層)<br>
           ・所有傷害額外 <b style="color:#ffaa66;">減 80%</b><br>
           ・即使是無視有利狀態的攻擊也<b style="color:#ff6644;">無法打穿</b><br>
-          ・單次受傷上限 1% 仍然有效(<b style="color:#ffcc66;">每擊最多 5000 傷害</b>)
+          ・單次受傷上限 1% 仍然有效(<b style="color:#ffcc66;">每擊最多 5000 傷害</b>)<br>
+          ・全隊聯手爆發 5000 傷害<b style="color:#aaffaa;">可無視護盾</b>直接命中
         </div>
         <div style="font-size:15px;color:#ffd;line-height:1.85;text-align:left;
           background:rgba(60,180,255,0.12);padding:14px 18px;border-radius:10px;
           border-left:4px solid rgba(80,180,255,0.7);margin-bottom:18px;">
           <b style="color:#88ddff;">💡 破解方法:</b><br>
-          使用對應屬性的攻擊各打 <b>3 次裂痕</b>,即可破除護盾:<br>
-          🔥 火 / 🌪 風 / ⛰ 土 / 🌑 暗 各 3 次,共 12 次屬性裂痕
+          使用對應屬性的攻擊各打 <b>1 次</b>,即可破除對應護盾:<br>
+          🔥 火 ← 水 / 🌪 風 ← 土 / ⛰ 土 ← 草 / 🌑 暗 ← 光
           <br><br>
           <b style="color:#aaffaa;">🎯 戰術建議:</b><br>
-          換上含 4 種屬性的英雄陣容(火法師/風行者/山岳禁咒/暗法師⋯),
+          換上含 4 種剋制屬性(水/土/草/光)的英雄陣容,
           專心普攻 + S1/S2 配合 BOSS 弱點屬性破盾!
         </div>
         <button onclick="document.getElementById('wb-shield-hint-modal').remove()"
@@ -548,7 +547,7 @@
       </div>
     `;
     document.body.appendChild(ov);
-    // 8 秒後自動關閉(讓沒注意的玩家也能繼續)
+    // 12 秒後自動關閉(讓沒注意的玩家也能繼續)
     setTimeout(() => { try{ ov.remove(); }catch(_){} }, 12000);
   }
   // 暴露給外部呼叫
@@ -1236,10 +1235,9 @@
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // v3.1 — 維蘇威護盾系統
+  // 維蘇威護盾系統
   // ───────────────────────────────────────────────────────────────────
-  // ★ v3.5.70(2026-05-24)— 改成回合制觸發 + 每元素 1 層
-  // 在第 4 / 8 / 12 / 16 回合自動啟動護盾(已啟動過該階段就跳過)
+  // 在第 3 / 5 / 7 / 9 回合自動啟動護盾(已啟動過該階段就跳過)
   // 啟動時 4 個元素護盾各 1 層(已 ≥ 1 層的元素維持),被剋的屬性 -1 層
   //   剋制關係(用 ELEMENT_DB vs_adv 反查):
   //     火盾 → 被 water 屬性攻擊 -1
@@ -1247,14 +1245,13 @@
   //     土盾 → 被 grass 屬性攻擊 -1
   //     暗盾 → 被 light 屬性攻擊 -1
   // ───────────────────────────────────────────────────────────────────
-  // ═══════════════════════════════════════════════════════════════════
-  // v3.1.2 — 護盾元素系統(7 元素池 + 個別 BOSS 指定)
+  // 護盾元素系統(7 元素池 + 個別 BOSS 指定)
   // ───────────────────────────────────────────────────────────────────
   // 設計理念:
   //   1. 全部 7 種候選元素:火/水/風/土/光/暗/草 (WB_SHIELD_ALL_ELEMENTS)
   //   2. 每隻 BOSS 在 WORLD_BOSS_LINEUP 內透過 shieldElements 指定自己的 4 個
   //      (維蘇威火山龍王:火/風/土/暗;未來深海冰龍王:水/草/風/光 等)
-  //   3. 屬性剋制用標準雙向(火↔水、土↔風、光↔暗、草克水土等)
+  //   3. 屬性剋制用標準單向循環剋 + 光暗互剋
   // ───────────────────────────────────────────────────────────────────
 
   const WB_SHIELD_ALL_ELEMENTS = ['fire','water','wind','earth','light','dark','grass'];
@@ -1286,19 +1283,11 @@
     dark:  ['light'],    // 暗克光
   };
   window._WB_ELEMENT_COUNTER = WB_ELEMENT_COUNTER;
-  // ★ v3.5.9 — 護盾觸發機制改版:
-  //   舊版(v3.1.2):依 BOSS HP% 觸發(80% / 60% / 40% / 20% / 1%),
-  //                  輸出強的隊伍會跳階段、輸出弱的根本看不到後期護盾。
-  //   v3.5.9:依回合數觸發(第 5 / 9 / 13 / 17 回合),每屬性 3 層。
-  //   ★ v3.5.70(2026-05-24):依回合數觸發(第 4 / 8 / 12 / 16 回合),每屬性各 1 層。
-  //                  老師決策:護盾改成「節奏一致 + 4 次薄盾」,每階段 4 個元素各 1 層,
-  //                  整場共需打掉 16 層才完全破盾,符合 20 回合內擊敗的節奏。
-  //   ★ v3.7.9(2026-05-25):依回合數觸發(第 3 / 5 / 7 / 9 回合),每屬性各 1 層。
-  //                  老師決策:總回合數縮成 10,護盾節奏也壓縮一半 → 每 2 回合 1 次,
-  //                          總共 4 次護盾、16 層,在第 9 回合最後一次設盾、第 10 回合
-  //                          要打掉才不會被崩毀掩埋。
-  //   注意:_wbCheckShieldTrigger 仍由「BOSS 受傷時」的 3 個 callsite 呼叫(無侵入),
-  //         但內部判定改成「回合數命中 + 還沒觸發過該回合」才啟動。
+  // ★ 護盾觸發機制:依回合數觸發(第 3 / 5 / 7 / 9 回合,每元素各 1 層)
+  //   每階段 4 個元素各 1 層 → 同時最多 4 層,整場累計最多 16 次破盾機會。
+  //   在第 9 回合最後一次設盾、第 10 回合要打掉才不會被崩毀掩埋。
+  //   _wbCheckShieldTrigger 由「BOSS 受傷時」與「startTurn 後」呼叫,
+  //   內部判定「回合數命中 + 還沒觸發過該回合」才啟動。
   const WB_SHIELD_TRIGGERS = [
     { round: 3, label:'R3' },
     { round: 5, label:'R5' },
@@ -1338,10 +1327,9 @@
             myElements = config.shieldElements;
           }
         }catch(_){}
-        // ★ v3.5.70(2026-05-24) — 每個元素 1 層(老師決策:節奏一致 + 4 次薄盾)
-        //   舊版(v3.5.69):已有元素 >= 3 維持、< 3 補回 3 → 整場最多 12 層
-        //   新版(v3.5.70):已有元素 >= 1 維持、< 1 補回 1 → 整場最多 4 層
-        //   配合 4 次階段(R4/R8/R12/R16) → 整場累計 16 次破盾機會
+        // ★ v3.7.10 — 每個元素 1 層(節奏一致 + 4 次薄盾)
+        //   邏輯:已有元素 >= 1 維持、< 1 補回 1 → 同時最多 4 層
+        //   配合 4 次階段(R3/R5/R7/R9) → 整場累計最多 16 次破盾機會
         //   ⚠ 護盾元素清單仍依新階段更新(boss._wbShieldElements),確保 UI 顯示正確
         boss._wbShields = boss._wbShields || {};
         myElements.forEach(el => {
@@ -1379,8 +1367,9 @@
   };
 
   // 護盾啟動時的提示 modal
-  window._wbShowShieldTriggerHint = function(pctLabel, boss){
-    // 換掉舊版「第二階段啟動」單次提示,改成每次都提示
+  //   參數 roundLabel:回合 label,例如 'R3'/'R5'/'R7'/'R9'(由 WB_SHIELD_TRIGGERS.label 傳入)
+  window._wbShowShieldTriggerHint = function(roundLabel, boss){
+    // 換掉舊版單次提示,改成每次都提示
     const old = document.getElementById('wb-shield-hint-modal');
     if(old) old.remove();
 
@@ -1445,6 +1434,13 @@
       return `<b style="color:${cmeta.color};">${cmeta.label.replace('盾','')}</b>`;
     }).filter(x => x !== null).join(' / ');
 
+    // 把 'R3' / 'R5' / 'R7' / 'R9' 轉成「第 3 回合」等友善文案
+    let _roundLabelText = roundLabel || '護盾階段';
+    if(typeof roundLabel === 'string'){
+      const _m = roundLabel.match(/^R(\d+)$/);
+      if(_m) _roundLabelText = `第 ${_m[1]} 回合`;
+    }
+
     ov.innerHTML = `
       <div style="max-width:560px;background:linear-gradient(160deg,#2a1818,#1a0a0a);
         border:3px solid rgba(255,120,80,0.85);border-radius:18px;padding:24px 22px;
@@ -1452,7 +1448,7 @@
         <div style="font-size:32px;margin-bottom:8px;letter-spacing:6px;">${iconRow}</div>
         <div style="font-size:24px;color:#ff8866;font-weight:900;letter-spacing:2px;margin-bottom:10px;
           text-shadow:0 0 14px rgba(255,100,60,0.6);">
-          ⚠ HP ${pctLabel} — 元素護盾啟動!
+          ⚠ ${_roundLabelText} — 元素護盾啟動!
         </div>
         <div style="font-size:15px;color:#ffe;line-height:1.85;text-align:left;
           background:rgba(255,80,40,0.12);padding:13px 16px;border-radius:10px;
@@ -1801,8 +1797,7 @@
           window._wbHostSyncG('after_startTurn');
         }
       }catch(e){ console.warn('[WB-Sync v6] startTurn hook 例外', e); }
-      // ★ v3.5.70 — 護盾改成依回合數觸發(第 4/8/12/16 回合,每元素 1 層),
-      // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,護盾改為第 3/5/7/9
+      // ★ v3.7.10 — 護盾依回合數觸發(第 3/5/7/9 回合,每元素 1 層)
       //   在每次 startTurn 後檢查一次,讓即使該回合沒人打 BOSS 也會啟動護盾。
       //   只在房主端 / 練習模式跑(client 不該本機改 BOSS 狀態,等 host sync)。
       try{

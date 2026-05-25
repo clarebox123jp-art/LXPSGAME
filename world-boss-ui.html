@@ -3351,7 +3351,7 @@
       <div>
         <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 維蘇威火山龍王</div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
-          HP 500,000 ✦ 火屬性 ✦ 5 段護盾<br>
+          HP 500,000 ✦ 火屬性 ✦ 4 階段護盾<br>
           🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
         </div>
       </div>
@@ -7731,6 +7731,9 @@
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
+    // ★ v3.7.10 — 先記下「真正的」滿血上限(50 萬),所有「× 1% / 護盾 HP 比例」運算用這個
+    //   避免下面殘血同步把 boss.hp 改成殘血後,百分比計算用錯分母
+    boss._wbOriginalMaxHp = boss.hp;
     // ★ FIX 20260518 — 全球殘血同步(連線房主模式):同單人模式
     try{
       const _bossId = 'vesuvius_fire_dragon';
@@ -8103,7 +8106,6 @@
       }
 
       if(finalDmg < dmg){
-        const hpRatio = boss.curHp / boss.hp;
         const totalShield = (typeof window._wbGetTotalShield === 'function') ? window._wbGetTotalShield(boss) : 0;
         if(totalShield > 0){
           logEntry += `(🛡 護盾減傷,實際 ${finalDmg}${shieldNote})`;
@@ -8116,8 +8118,7 @@
 
       boss.curHp = Math.max(0, boss.curHp - finalDmg);
 
-      // ★ v3.5.70 — 護盾觸發檢查(第 4/8/12/16 回合自動啟動護盾,每元素 1 層)
-      // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,實際觸發回合是 3/5/7/9
+      // ★ v3.7.10 — 護盾觸發檢查(第 3/5/7/9 回合自動啟動護盾,每元素 1 層)
       //   (此 dead 路徑保留註解一致性;真正生效的是 world-boss.js WB_SHIELD_TRIGGERS)
       if(typeof window._wbCheckShieldTrigger === 'function'){
         const triggered = window._wbCheckShieldTrigger(boss);
@@ -9369,7 +9370,8 @@
       }
       const megaTurn = document.getElementById('wb-mega-turn-info');
       if(megaTurn){
-        const phase = pct < 50 ? '⚠ 第二階段' : '第一階段';
+        // 階段判定依回合數:R1-R2 第一階段;R3+ 第二階段(R3/R5/R7/R9 護盾陸續啟動)
+        const phase = (battle.turn >= 3) ? '⚠ 第二階段' : '第一階段';
         megaTurn.textContent = `回合 ${battle.turn} / 10 ✦ ${phase}`;
       }
 
@@ -9849,12 +9851,49 @@
     const boss = G.p2 && G.p2[0];
     if(!boss){ try{ console.warn('[WB-FireTeamBurst] BOSS 不存在,放棄'); }catch(_){} return; }
 
-    const rewardDmg = Math.floor((boss.hp || 500000) * 0.01);
-    try{ console.log('[WB-FireTeamBurst v3.7.9] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ', reason=' + (reason||'?')); }catch(_){}
+    // ★ v3.7.10 — 用「原始滿血」計算 1%,避免被殘血同步污染
+    //   雲端殘血同步會把 boss.hp 改成本場起始 HP(可能 < 50 萬),
+    //   但「答題獎勵 = BOSS 滿血 × 1% = 5000」是設計鐵則,要鎖死。
+    const _wbMaxHp = boss._wbOriginalMaxHp || boss.hp || 500000;
+    const rewardDmg = Math.floor(_wbMaxHp * 0.01);
+    try{ console.log('[WB-FireTeamBurst v3.7.10] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ' (maxHp=' + _wbMaxHp + '), reason=' + (reason||'?')); }catch(_){}
 
     // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
     if(!_isClient){
       boss.curHp = Math.max(0, boss.curHp - rewardDmg);
+      // ★ v3.7.10 — BUG 修補:答題獎勵 5000 傷害沒被加進本場總傷
+      //   根因:這裡直接改 boss.curHp,沒走主程式 doDmg → 完全跳過 addContribution('dmgDealt')
+      //         → 左上「📜 本場總傷」與結算貢獻、排行榜全部漏算這 5000(× 多次累加更明顯)
+      //   修補:扣完血後手動呼叫 _wbNet.addContribution + 同步更新「📜 本場總傷」UI
+      //         對齊 index.html line 23415-23446 fixedDmg 路徑的處理方式
+      try{
+        if(window._wbNet && typeof window._wbNet.addContribution === 'function'){
+          const _myUid = window._gUserId || 'solo_user';
+          window._wbNet.addContribution(_myUid, 'dmgDealt', rewardDmg);
+          // 更新「📜 本場總傷」UI(全隊累積總傷)
+          try{
+            const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
+            if(_dmgEl){
+              let _teamDmg = 0;
+              if(typeof window._wbNet.getContributions === 'function'){
+                const _ctrb = window._wbNet.getContributions() || {};
+                Object.keys(_ctrb).forEach(function(_uid){
+                  _teamDmg += (_ctrb[_uid] && _ctrb[_uid].dmgDealt) || 0;
+                });
+              }
+              if(_teamDmg <= 0){
+                const _prev = parseInt((_dmgEl.textContent || '0').replace(/,/g, ''), 10) || 0;
+                _teamDmg = _prev + rewardDmg;
+              }
+              const _curShown = parseInt((_dmgEl.textContent || '0').replace(/,/g, ''), 10) || 0;
+              if(_teamDmg >= _curShown){
+                _dmgEl.textContent = _teamDmg.toLocaleString();
+              }
+            }
+          }catch(_eUiDmg){}
+          try{ console.log('[WB-FireTeamBurst v3.7.10] ✅ 已累計 ' + rewardDmg + ' 進本場總傷'); }catch(_){}
+        }
+      }catch(_eContrib){ console.warn('[WB-FireTeamBurst v3.7.10] addContribution 失敗', _eContrib); }
     }
     // 全隊聯手攻擊 Cinematic + 音效 + 螢幕閃光 + BOSS 粒子(對齊舊行為)
     try{
@@ -11509,6 +11548,8 @@
     const boss = newHero('維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
+    // ★ v3.7.10 — 先記下「真正的」滿血上限,避免下面殘血同步污染百分比運算
+    boss._wbOriginalMaxHp = boss.hp;
     // ★ FIX 20260518 — 全球殘血同步:從 _wbHpSync 讀雲端殘血,當作 BOSS 本場起始 HP
     //   若雲端尚未有此 BOSS 紀錄(getCurrentHp 回 null)→ 沿用 newHero 預設滿血
     //   結算時 _wbShowAdvBattleResult 會用 (boss.hp - boss.curHp) 計算「本場貢獻」,
@@ -12189,7 +12230,8 @@
 
     const turnInfo = document.getElementById('wb-adv-mega-turn-info');
     if(turnInfo){
-      const phase = pct < 50 ? '⚠ 第二階段' : '第一階段';
+      // 階段判定依回合數:R1-R2 第一階段;R3+ 第二階段(R3/R5/R7/R9 護盾、R11 崩毀)
+      const phase = (round >= 3) ? '⚠ 第二階段' : '第一階段';
       turnInfo.textContent = `回合 ${round} / 10 ✦ ${phase}`;
     }
 
