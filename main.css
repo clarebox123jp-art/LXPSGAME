@@ -4297,6 +4297,34 @@ body {
   .adv-reward-btn { font-size:22px; padding:10px 12px; }
   #adv-reward-keep-btn { font-size:24px; padding:10px 0; }
   #adv-reward-box { padding:12px 16px; }
+  /* ★ v3.7.9 — iPad 答題獎勵底部三按鈕縮小 + 防截斷
+     ─────────────────────────────────────────────────────────────
+     老師回報:iPad 上「✨ 立即使用」「💡 存到知識化為力量」「↶ 取消」三顆按鈕
+     被截在框外,玩家要捲動才看得到,以為卡死了。
+     ─────────────────────────────────────────────────────────────
+     對策:
+       (1) 縮小三顆按鈕字級 / padding,讓它們在 box 內就能完整呈現
+       (2) confirm-row 加 flex-wrap:wrap,即使空間不夠也會換行不被切
+       (3) box 留更多底部空間 (padding-bottom:18px),避免最後一顆按鈕貼邊
+       (4) box max-height 拉高(從 calc(100vh-40px) 改 calc(100vh-20px))讓內容更高 */
+  .adv-reward-confirm-btn {
+    padding:12px 14px !important;
+    font-size:20px !important;
+    letter-spacing:1px !important;
+  }
+  #adv-reward-cancel-btn {
+    padding:10px 14px !important;
+    font-size:17px !important;
+  }
+  #adv-reward-confirm-row {
+    flex-wrap:wrap !important;
+    gap:8px !important;
+    margin-top:8px !important;
+  }
+  #adv-reward-box {
+    padding:12px 16px 18px !important;
+    max-height:calc(100vh - 20px) !important;
+  }
 
   /* Boss反應對話 */
   #adv-boss-react-text { font-size:30px; }
@@ -4319,6 +4347,26 @@ body {
   #adv-reward-title { font-size:22px; }
   .adv-reward-btn { font-size:18px; }
   #adv-reward-keep-btn { font-size:20px; }
+  /* ★ v3.7.9 — 手機 / 小 iPad 答題獎勵底部三按鈕再縮小一輪 */
+  .adv-reward-confirm-btn {
+    padding:10px 12px !important;
+    font-size:18px !important;
+    letter-spacing:0.5px !important;
+  }
+  #adv-reward-cancel-btn {
+    padding:8px 12px !important;
+    font-size:15px !important;
+  }
+  #adv-reward-confirm-row {
+    flex-wrap:wrap !important;
+    gap:6px !important;
+    margin-top:6px !important;
+  }
+  #adv-reward-box {
+    padding:10px 12px 16px !important;
+    max-height:calc(100vh - 16px) !important;
+  }
+  #adv-reward-subtitle { font-size:15px !important; margin-bottom:6px !important; }
   #adv-boss-react-text { font-size:26px; }
   .adv-treasure-slot { width:80px; height:96px; font-size:36px; }
   .ts-label { font-size:14px; }
@@ -4484,6 +4532,32 @@ body {
   }
   #adv-reward-title { font-size: 64px !important; margin-bottom: 12px !important; }
   #adv-reward-subtitle { font-size: 40px !important; margin-bottom: 16px !important; }
+  /* ★ v3.7.9 — 橫向手機 #gc 內部 px 比例 — 底部三按鈕也補上規則
+     原本繼承 base CSS .adv-reward-confirm-btn (font-size:30px,padding:18px 24px),
+     在 0.35 scale 下視覺很小且 padding 浪費空間,改成更比例化的版本。 */
+  .adv-reward-confirm-btn {
+    font-size: 52px !important;            /* 視覺 = 52 × 0.35 ≈ 18px */
+    padding: 22px 24px !important;
+    letter-spacing: 1px !important;
+    min-height: 110px !important;          /* 觸碰熱區 = 110 × 0.35 ≈ 39px,夠大 */
+  }
+  #adv-reward-cancel-btn {
+    font-size: 42px !important;
+    padding: 18px 20px !important;
+    min-height: 95px !important;
+  }
+  #adv-reward-confirm-row {
+    flex-wrap: wrap !important;
+    gap: 14px !important;
+    margin-top: 18px !important;
+  }
+  /* base CSS .adv-reward-btn 是 padding:14px 18px / font-size:28px,
+     橫向時也補大,讓玩家點得到 */
+  .adv-reward-btn {
+    font-size: 52px !important;
+    padding: 22px 26px !important;
+    min-height: 100px !important;
+  }
 
   /* ═══ Phase 4. 戰鬥教學視窗 — 縮小 + 移到右上角 ═══
      不用 transform:scale(會跑出邊界),改用直接縮 max-width + 字體
