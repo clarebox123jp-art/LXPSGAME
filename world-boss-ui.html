@@ -9840,6 +9840,20 @@
     }
   }
 
+  // ★ v3.7.8(2026-05-25) — 暴露 _wbOnQuizCorrect / _wbOnQuizWrong 給主檔(index.html)跨檔案呼叫
+  // ─────────────────────────────────────────────────────────────
+  // 老師回報(2026/5/25):「組隊與單人模式打世界 BOSS,答對 5/10/15/20 題的 5000 傷害獎勵都沒出現」
+  // 根因:v3.7.6 在 index.html line 54591 加了 `window._wbOnQuizCorrect(...)` 呼叫,
+  //       但 _wbOnQuizCorrect 是 _wbUiInit IIFE 內的 inner function,從未 expose 到 window,
+  //       所以 `typeof window._wbOnQuizCorrect === 'function'` 永遠是 false → 整個 hook 永遠不跑。
+  //       原本只在同 IIFE 內呼叫(line 9605、12637),跨檔案就完全失效。
+  //       同理:index.html line 34890 的 _wbOnQuizCorrect / line 34896 的 _wbOnQuizWrong 也都失效。
+  // 修法:在兩個函式定義後立刻把它們 expose 到 window,讓主程式可以跨檔案呼叫
+  // 影響範圍:單人練習 + 多人連線(房主)都需要,因為兩種模式答題都走主程式 advSubmitAnswer
+  window._wbOnQuizCorrect = _wbOnQuizCorrect;
+  window._wbOnQuizWrong   = _wbOnQuizWrong;
+  console.log('[WB v3.7.8] ✅ _wbOnQuizCorrect / _wbOnQuizWrong 已暴露給主程式(修 5/10/15/20 獎勵不觸發 BUG)');
+
   // 答題獎勵橫幅
   function _wbShowQuizRewardBanner(cnt, dmg){
     const banner = document.createElement('div');
