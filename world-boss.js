@@ -3024,6 +3024,14 @@
           // ★ v3.5.6 — 排行榜顯示「玩家暱稱 + 使用英雄(LV)」(用戶需求)
           //   teamHeroes:每槽 { name, lv } — 英雄等級從 _Gr.p1[i] 對應 hero 物件 / player.element JSON 的 g.lv 取
           try{
+            // ★ v3.5.73 — 單人練習模式不寫排行榜(老師指示:solo 不計入)
+            //   原 v3.5.65 邏輯仍會寫入並用「房主 ×4」顯示,造成排行榜出現
+            //   「5214高誠遠・5214高誠遠・代打・5214高誠遠・代打・5214高誠遠・代打」這種拼接,
+            //   且 solo 容易刷高分污染真排行榜。
+            //   守門條件:_wbSoloPracticeMode === true → 直接 return,不呼叫 updateLeaderboard
+            if(window._wbSoloPracticeMode){
+              console.log('[WB-Leaderboard v3.5.73] 單人練習模式,跳過排行榜更新');
+            }else
             if(typeof window._wbHpSync.updateLeaderboard === 'function'){
               const _myNick = (window._playerNickname || window._userName || '玩家');
               // ★ v3.5.70 — 抓自己的 email,給「房主代打槽位」用(代打時用房主 email)

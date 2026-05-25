@@ -6566,11 +6566,34 @@
       _wbGameAlert('沒有可選的英雄');
       return;
     }
-    // ★ FIX 20260516 v7 — 英雄可重複選擇,移除「被隊友選走」disable
+    // ★ v3.5.73 — 還原「不重複英雄」限制(老師指示:組隊/練習/單人/多人都不可重複)
+    //   原 FIX 20260516 v7 移除了 disable,造成 solo 與房主指派可以選 4 隻一樣的角色
+    //   (排行榜上會出現 4 隻同英雄的隊伍 — 例如 4 隻暗法師)。
+    //   蒐集已用英雄的兩個來源:
+    //     (A) snap.players[i].heroName — 真實玩家(連線)或 fakePlayers(solo)選的
+    //     (B) _wbHostAssignedSlots[i].heroName — 房主指派給代打槽的
+    //   但要排除「自己這個 targetSlotIdx 目前選的英雄」(否則綠框「當前」的也會被擋)。
     const snap = window._wbNet.getSnapshot();
+    const _usedHeroNames = new Set();
+    try{
+      const _players = (snap && Array.isArray(snap.players)) ? snap.players : [];
+      for(let _i = 0; _i < _players.length; _i++){
+        if(_i === targetSlotIdx) continue;  // 跳過自己槽位
+        const _hn = _players[_i] && _players[_i].heroName;
+        if(_hn) _usedHeroNames.add(_hn);
+      }
+      // 房主指派代打槽
+      const _assigned = window._wbHostAssignedSlots || {};
+      Object.keys(_assigned).forEach(function(_k){
+        const _idx = parseInt(_k, 10);
+        if(_idx === targetSlotIdx) return;  // 跳過自己槽位
+        const _hn = _assigned[_k] && _assigned[_k].heroName;
+        if(_hn) _usedHeroNames.add(_hn);
+      });
+    }catch(_eUsed){ console.warn('[WB-Picker v3.5.73] 蒐集已用英雄失敗', _eUsed); }
 
     document.getElementById('wb-tc-swap-title').textContent = '🔄 替換英雄(槽位 ' + (targetSlotIdx+1) + ')';
-    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;綠框=當前';
+    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;綠框=當前、灰色=已被隊友選走';
     const grid = document.getElementById('wb-tc-swap-grid');
     const curHero = snap?.players?.[targetSlotIdx]?.heroName;
     grid.innerHTML = heroes.map(name => {
@@ -6578,9 +6601,15 @@
       const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[name]) || '⚔';
       const lv = (typeof _heroLevels !== 'undefined' && _heroLevels[name]) || 1;
       const cur = (name === curHero);
-      const cls = 'wb-tc-swap-item' + (cur ? ' current' : '');
+      // ★ v3.5.73 — 已被隊友選走 → disable(不含自己當前選的)
+      const _isUsed = _usedHeroNames.has(name);
+      let cls = 'wb-tc-swap-item';
+      if(cur) cls += ' current';
+      if(_isUsed) cls += ' disabled';
       const safeName = name.replace(/'/g,"\\'");
-      const click = `onclick="_wbTcConfirmSwapHero(${targetSlotIdx}, '${safeName}')"`;
+      const click = _isUsed
+        ? `onclick="event.preventDefault();event.stopPropagation();" style="opacity:0.35;cursor:not-allowed;filter:grayscale(80%);" disabled`
+        : `onclick="_wbTcConfirmSwapHero(${targetSlotIdx}, '${safeName}')"`;
       return `<button class="${cls}" ${click}>
         <div class="wb-tc-si-img">
           ${img
@@ -6589,7 +6618,7 @@
         </div>
         <div class="wb-tc-si-name">${name}</div>
         <div class="wb-tc-si-meta">Lv.${lv}</div>
-        ${cur ? '<div class="wb-tc-si-note">當前</div>' : ''}
+        ${cur ? '<div class="wb-tc-si-note">當前</div>' : (_isUsed ? '<div class="wb-tc-si-note" style="color:#888;">已選</div>' : '')}
       </button>`;
     }).join('');
     document.getElementById('wb-tc-swap-modal').classList.add('show');
@@ -6599,6 +6628,29 @@
     // ★ FIX 20260517(r) — 指派槽位模式:寫進本地 _wbHostAssignedSlots
     //   判定方式:該 slotIdx 在 snap.players 沒有對應玩家(空槽)
     const snap = window._wbNet.getSnapshot();
+    // ★ v3.5.73 — 第二層保險:再檢查一次有無撞角(picker disable 是 UI 保險,
+    //   這裡是邏輯保險,擋掉繞過 picker 的呼叫路徑)
+    try{
+      const _usedHeroNames2 = new Set();
+      const _players2 = (snap && Array.isArray(snap.players)) ? snap.players : [];
+      for(let _i = 0; _i < _players2.length; _i++){
+        if(_i === targetSlotIdx) continue;
+        const _hn = _players2[_i] && _players2[_i].heroName;
+        if(_hn) _usedHeroNames2.add(_hn);
+      }
+      const _assigned2 = window._wbHostAssignedSlots || {};
+      Object.keys(_assigned2).forEach(function(_k){
+        const _idx = parseInt(_k, 10);
+        if(_idx === targetSlotIdx) return;
+        const _hn = _assigned2[_k] && _assigned2[_k].heroName;
+        if(_hn) _usedHeroNames2.add(_hn);
+      });
+      if(_usedHeroNames2.has(heroName)){
+        _wbGameAlert('⚠ 「' + heroName + '」已被其他槽位選走,同隊不能使用兩隻一樣的英雄。');
+        return;
+      }
+    }catch(_eDup){ console.warn('[WB-Picker v3.5.73] 撞角檢查失敗', _eDup); }
+
     const slotPlayer = snap?.players?.[targetSlotIdx];
     const isAssignSlot = !slotPlayer || !slotPlayer.uid;
     if(isAssignSlot){
