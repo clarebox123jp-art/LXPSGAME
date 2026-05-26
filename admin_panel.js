@@ -978,6 +978,38 @@ async function _showAdminStatsPanelImpl(){
         <div style="font-size:12px;color:#999;line-height:1.55;">
           💡 想清空所有 BOSS 排行(目前只有維蘇威):console 跑 <code style="color:#aaccff;">_wbHpSync.clearLeaderboard()</code>
         </div>
+
+        <!-- ★ v3.10.13(2026-05-26) — 世界 BOSS 今日次數查詢/重置(老師需求) -->
+        <div style="margin-top:14px;padding-top:14px;border-top:1px dashed rgba(200,140,255,0.4);">
+          <div style="font-size:15px;font-weight:700;color:#ffd066;margin-bottom:6px;">
+            🎯 個別玩家今日場次處理
+          </div>
+          <div style="font-size:12px;color:#bbb;margin-bottom:8px;line-height:1.55;">
+            查詢學生今日已上榜場次;或重置(連同 teamKey 整筆排行榜紀錄一起清掉,
+            讓他可重新挑戰)。<b style="color:#ffaa66;">⚠ 重置會清掉該 teamKey 整筆排行榜紀錄,連帶其他隊友的歷史也會清。</b>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+            <input id="_admin-wbreset-email" type="text" placeholder="輸入學生 email"
+              style="flex:1;min-width:200px;padding:7px 10px;font-size:13px;
+              background:rgba(0,0,0,0.4);border:1.5px solid rgba(255,200,100,0.5);
+              border-radius:7px;color:#fff;font-family:inherit;" />
+            <button id="_admin-wbreset-peek" style="padding:7px 12px;font-size:13px;font-weight:700;
+              background:rgba(40,60,90,0.5);border:1.5px solid rgba(140,200,255,0.6);color:#88ccff;
+              border-radius:7px;cursor:pointer;font-family:inherit;">
+              🔍 查詢
+            </button>
+            <button id="_admin-wbreset-do" style="padding:7px 12px;font-size:13px;font-weight:800;
+              background:linear-gradient(135deg,rgba(200,100,60,0.6),rgba(160,60,30,0.85));
+              border:2px solid #ffaa66;color:#fff;border-radius:7px;cursor:pointer;font-family:inherit;">
+              🗑️ 重置今日次數
+            </button>
+          </div>
+          <div id="_admin-wbreset-result" style="font-size:13px;color:#bbb;background:rgba(0,0,0,0.35);
+            border-radius:8px;padding:8px 12px;line-height:1.6;min-height:20px;display:none;"></div>
+          <div style="font-size:12px;color:#888;margin-top:6px;line-height:1.55;">
+            💡 想對自己操作(老師也受限),可在 console 跑 <code style="color:#aaccff;">_myResetWbDailyToday()</code>
+          </div>
+        </div>
       </div>
 
       <!-- ★ v3.5.67(2026-05-23) — 小博士獎勵補發區塊(老師需求:手動結算 + 補發) -->
@@ -4424,6 +4456,141 @@ async function _showAdminStatsPanelImpl(){
         _clearVesuviusBtn.disabled = false;
         _clearVesuviusBtn.textContent = _origText;
       }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.10.13(2026-05-26) — 個別玩家今日場次查詢/重置
+    // ────────────────────────────────────────────────────────────────
+    // 兩顆按鈕共用 input 與 result 區
+    //   🔍 查詢 → _adminPeekWbDailyByEmail(email)
+    //   🗑️ 重置 → _adminResetWbDailyByEmail(email)(整筆 teamKey 砍掉)
+    // ════════════════════════════════════════════════════════════════
+    const _wbResetEmailInput = document.getElementById('_admin-wbreset-email');
+    const _wbResetPeekBtn = document.getElementById('_admin-wbreset-peek');
+    const _wbResetDoBtn = document.getElementById('_admin-wbreset-do');
+    const _wbResetResultEl = document.getElementById('_admin-wbreset-result');
+
+    function _wbResetShowResult(html, type){
+      if(!_wbResetResultEl) return;
+      _wbResetResultEl.style.display = 'block';
+      const _color = (type === 'err') ? '#ff8888' : (type === 'ok') ? '#aaffcc' : '#ddd';
+      _wbResetResultEl.innerHTML = '<span style="color:' + _color + ';">' + html + '</span>';
+    }
+
+    function _wbResetGetEmail(){
+      if(!_wbResetEmailInput) return '';
+      const _v = (_wbResetEmailInput.value || '').trim().toLowerCase();
+      return _v;
+    }
+
+    if(_wbResetPeekBtn) _wbResetPeekBtn.onclick = async function(){
+      const _email = _wbResetGetEmail();
+      if(!_email){
+        _wbResetShowResult('⚠️ 請輸入 email', 'err');
+        return;
+      }
+      if(typeof window._adminPeekWbDailyByEmail !== 'function'){
+        _wbResetShowResult('⚠️ API 未掛載(_adminPeekWbDailyByEmail)', 'err');
+        return;
+      }
+      _wbResetPeekBtn.disabled = true;
+      const _orig = _wbResetPeekBtn.textContent;
+      _wbResetPeekBtn.textContent = '查詢中…';
+      _wbResetShowResult('查詢中…', 'info');
+      try{
+        const _r = await window._adminPeekWbDailyByEmail(_email);
+        if(!_r){
+          _wbResetShowResult('❌ 找不到此 email 的玩家', 'err');
+          return;
+        }
+        const _todayBattles = Array.isArray(_r.todayBattles) ? _r.todayBattles : [];
+        const _battlesHtml = _todayBattles.length === 0
+          ? '<div style="color:#888;margin-top:4px;">  · (今天還沒上榜任何場次)</div>'
+          : _todayBattles.map(function(b, i){
+              const _t = new Date(b.at);
+              const _hh = _t.getHours();
+              const _mm = _t.getMinutes();
+              const _pad = function(n){ return n < 10 ? '0' + n : '' + n; };
+              const _mvp = b.mvp ? (b.mvp.name + ' Lv' + b.mvp.lv) : '—';
+              return '<div style="margin-top:3px;color:#ddd;">  · 第 ' + (i+1) + ' 場 ' +
+                     _pad(_hh) + ':' + _pad(_mm) + ' · 傷害 ' + (b.dmg || 0).toLocaleString() +
+                     ' · MVP ' + _mvp + '</div>';
+            }).join('');
+        _wbResetShowResult(
+          '✅ <b>' + _email + '</b><br>' +
+          'uid: <code style="color:#aaccff;">' + _r.uid + '</code><br>' +
+          '今天日期:' + _r.todayStr + '<br>' +
+          '今日已上榜場次:<b style="color:#ffd066;">' + (_r.countToday || 0) + ' 場</b>' +
+          ' / 上限 2 場<br>' +
+          '今日累計傷害:<b style="color:#ffaa66;">' + (_r.todayDmgSum || 0).toLocaleString() + '</b><br>' +
+          '含此玩家的隊伍 (teamKey) 數:<b>' + (_r.myTeamKeys ? _r.myTeamKeys.length : 0) + '</b>' +
+          _battlesHtml,
+          'ok'
+        );
+      }catch(e){
+        _wbResetShowResult('❌ 查詢失敗:' + (e && e.message || e), 'err');
+      }finally{
+        _wbResetPeekBtn.disabled = false;
+        _wbResetPeekBtn.textContent = _orig;
+      }
+    };
+
+    if(_wbResetDoBtn) _wbResetDoBtn.onclick = async function(){
+      const _email = _wbResetGetEmail();
+      if(!_email){
+        _wbResetShowResult('⚠️ 請輸入 email', 'err');
+        return;
+      }
+      if(typeof window._adminResetWbDailyByEmail !== 'function'){
+        _wbResetShowResult('⚠️ API 未掛載(_adminResetWbDailyByEmail)', 'err');
+        return;
+      }
+      // 二次確認
+      const _confirmMsg = '⚠️ 確定要重置 <b>' + _email + '</b> 的世界 BOSS 今日次數嗎?<br><br>' +
+                         '這會把「所有含此玩家的 teamKey」整筆排行榜紀錄砍掉,<br>' +
+                         '<b style="color:#ffaa66;">連帶其他隊友的累積戰績一起清掉</b>,<br>' +
+                         '操作不可逆。確認嗎?';
+      const _doReset = async function(){
+        _wbResetDoBtn.disabled = true;
+        const _orig = _wbResetDoBtn.textContent;
+        _wbResetDoBtn.textContent = '重置中…';
+        _wbResetShowResult('重置中…', 'info');
+        try{
+          const _ok = await window._adminResetWbDailyByEmail(_email);
+          if(_ok){
+            _wbResetShowResult(
+              '✅ 已重置 <b>' + _email + '</b> 的世界 BOSS 今日次數<br>' +
+              '<span style="color:#aaa;">(已砍掉所有含此玩家的 teamKey 排行榜紀錄)</span><br>' +
+              '<span style="color:#88ddff;">學生請「重新整理」或「重新登入」,即可再開始打世界 BOSS</span>',
+              'ok'
+            );
+            // 順手更新排行榜資訊
+            _refresh();
+          } else {
+            _wbResetShowResult('❌ 重置失敗(可能找不到 email,看 console)', 'err');
+          }
+        }catch(e){
+          _wbResetShowResult('❌ 重置失敗:' + (e && e.message || e), 'err');
+        }finally{
+          _wbResetDoBtn.disabled = false;
+          _wbResetDoBtn.textContent = _orig;
+        }
+      };
+      if(typeof _customConfirm === 'function'){
+        _customConfirm(_confirmMsg, _doReset);
+      } else {
+        if(!confirm(_confirmMsg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''))) return;
+        await _doReset();
+      }
+    };
+
+    // Enter 鍵在 input 內等於按「查詢」(快速體驗)
+    if(_wbResetEmailInput){
+      _wbResetEmailInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' && _wbResetPeekBtn && !_wbResetPeekBtn.disabled){
+          _wbResetPeekBtn.click();
+        }
+      });
     }
 
     // ════════════════════════════════════════════════════════════════

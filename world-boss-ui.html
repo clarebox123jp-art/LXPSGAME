@@ -1121,11 +1121,7 @@
         💡 <b style="color:#ffe066;">尾刀規則</b>:最後一刀擊倒 BOSS 的隊伍會結束本輪挑戰。
         若多隊同時擊破 → 依「<b style="color:#ffaa66;">回合數少 → 答題正確多 → 存活人數多</b>」排序。<br>
         🕗 <b style="color:#88ddff;">結算時間</b>:BOSS 倒下後,真實排名於<b style="color:#ffe066;">隔天早上 8:00</b>更新公告,
-        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。<br>
-        <!-- ★ v3.10.0(2026-05-26) — 補上老師澄清的兩條規則 -->
-        🏠 <b style="color:#aaffcc;">統計範圍</b>:僅統計<b style="color:#ffe066;">開房間打的場次</b>,單人練習不計入排行榜。<br>
-        📜 <b style="color:#ffcc88;">每場戰績</b>:點開各隊伍下方「📜 每場戰績」可看每一場完成時間、傷害,
-        以及該場最高傷害的角色與等級;最終排名依<b style="color:#ffe066;">累積總傷害</b>決定。
+        前 20 名獎勵將自動發送至各玩家帳號(<span style="color:#ff8866;">⚠ 測試版暫不發獎</span>)。
       </div>
       <div id="wb-leaderboard-list" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:14px;color:#ffe8a0;">
         <div style="padding:10px;text-align:center;color:#888;font-style:italic;">
@@ -1386,79 +1382,6 @@
           + '</div>';
       }
 
-      // ★★ v3.10.0(2026-05-26) — 第四行:每場戰績(時間 / 傷害 / MVP) ★★
-      //   老師需求:排行榜要顯示「每一場攻略完成的時間及該場傷害」,「每場最高傷害的角色和等級」
-      //   battleHistory 是 v3.10.0 新增欄位,舊紀錄沒有 → 用 lastBattleAt + lastBattleDmg 補位
-      let _historyRow = '';
-      const _hist = Array.isArray(e.battleHistory) ? e.battleHistory : null;
-      // 格式化時間:YYYY/MM/DD HH:MM(本地時區)
-      const _fmtTime = function(ms){
-        if(!ms || typeof ms !== 'number') return '—';
-        try{
-          const d = new Date(ms);
-          const _Y = d.getFullYear();
-          const _M = String(d.getMonth() + 1).padStart(2, '0');
-          const _D = String(d.getDate()).padStart(2, '0');
-          const _h = String(d.getHours()).padStart(2, '0');
-          const _m = String(d.getMinutes()).padStart(2, '0');
-          return _M + '/' + _D + ' ' + _h + ':' + _m;
-        }catch(_){ return '—'; }
-      };
-      if(_hist && _hist.length > 0){
-        // 展開 / 收合:同隊伍 id 唯一,用 teamKey 簡短 hash 做 toggle id
-        const _toggleId = 'wb-lb-hist-' + (e.teamKey || ('row' + rank)).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 20);
-        const _battleCount = _hist.length;
-        const _moreCount = (e.battles || _battleCount) - _battleCount;
-        // 每場一條 row,最新在最上面
-        const _rows = _hist.map(function(h, hi){
-          const _t = _fmtTime(h.at);
-          const _d = _formatDmg(h.dmg || 0);
-          const _mvp = h.mvp || null;
-          const _mvpTxt = _mvp && _mvp.name
-            ? '<span style="color:#ff8866;font-weight:700;">' + _esc(_mvp.name) + '</span>'
-              + ' <span style="color:#888;font-size:12px;">Lv' + (_mvp.lv || 1) + '</span>'
-              + ' <span style="color:#ffaa66;font-size:12px;">(' + _formatDmg(_mvp.dmg || 0) + ')</span>'
-            : '<span style="color:#666;">—</span>';
-          const _bgC = (hi % 2 === 0) ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.30)';
-          return '<div style="display:grid;grid-template-columns:90px 1fr 80px;align-items:center;gap:8px;'
-            + 'padding:5px 10px;background:' + _bgC + ';border-radius:5px;font-size:13px;color:#ccc;">'
-            + '<span style="color:#aabbdd;font-family:monospace;font-size:13px;">' + _t + '</span>'
-            + '<span style="font-size:13px;">' + _mvpTxt + '</span>'
-            + '<span style="color:#ffaa88;font-weight:700;text-align:right;font-size:14px;">' + _d + '</span>'
-            + '</div>';
-        }).join('');
-        _historyRow = '<details style="margin-top:6px;background:rgba(20,15,30,0.5);'
-          + 'border:1px solid rgba(168,132,255,0.3);border-radius:6px;padding:0;">'
-          + '<summary style="padding:6px 10px;cursor:pointer;font-size:13px;color:#bbccff;'
-          + 'list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;'
-          + 'user-select:none;">'
-          + '<span>📜 <b style="color:#ffd066;">每場戰績</b>'
-          + ' <span style="color:#888;">(顯示最近 ' + _battleCount + ' 場'
-          + (_moreCount > 0 ? '・另有 ' + _moreCount + ' 場較早紀錄' : '')
-          + ')</span></span>'
-          + '<span style="color:#aaa;font-size:11px;">▼ 點擊展開</span>'
-          + '</summary>'
-          + '<div style="padding:6px 8px 8px;display:flex;flex-direction:column;gap:3px;">'
-          + '<div style="display:grid;grid-template-columns:90px 1fr 80px;gap:8px;'
-          + 'padding:3px 10px;font-size:11px;color:#aaa;font-weight:700;letter-spacing:0.5px;">'
-          + '<span>時間</span><span>本場 MVP(最高傷害)</span><span style="text-align:right;">該場傷害</span>'
-          + '</div>'
-          + _rows
-          + '</div>'
-          + '</details>';
-      }else if(e.lastBattleAt && e.lastBattleDmg){
-        // 舊紀錄 fallback:沒有 battleHistory 欄位,只顯示最近一場
-        const _t = _fmtTime(e.lastBattleAt);
-        const _d = _formatDmg(e.lastBattleDmg);
-        _historyRow = '<div style="margin-top:6px;padding:5px 10px;'
-          + 'background:rgba(20,15,30,0.4);border:1px dashed rgba(168,132,255,0.25);'
-          + 'border-radius:6px;font-size:12px;color:#888;">'
-          + '📜 最近一場:<span style="color:#aabbdd;">' + _t + '</span>'
-          + ' ・傷害 <span style="color:#ffaa88;font-weight:700;">' + _d + '</span>'
-          + ' <span style="color:#666;">(此前場次明細在 v3.10.0 前未保留)</span>'
-          + '</div>';
-      }
-
       return ''
         + '<div style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
         + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
@@ -1469,7 +1392,6 @@
         +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
         +   _heroesRow            // ★ v3.5.43 — 四隻參戰英雄 + 等級
         +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
-        +   _historyRow           // ★ v3.10.0 — 每場戰績(時間 / 傷害 / MVP)摺疊區
         +   '<div style="font-size:14px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積</div>'
         + '</div>'
         + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
@@ -2534,54 +2456,9 @@
   /* 視覺效果:整張卡片內容像老師圖 2 那樣縮成 85%,周圍會有適當留白    */
   /*           讓畫面看起來「比較鬆」、不再撐滿到貼邊。                  */
   /* ─────────────────────────────────────────────────────────────── */
-  /* ════════════════════════════════════════════════════════════════ */
-  /* ★ v3.10.0(2026-05-26) — 隊伍確認頁尺寸一致性修補(老師回報)      */
-  /* ─────────────────────────────────────────────────────────────── */
-  /* 原問題:                                                            */
-  /*   - 寬螢幕 ≥1400px 套用 zoom:0.85 後,槽位內容反而被擠壓 →           */
-  /*     立繪沒顯示、攻特速數值被裁切(圖 2 的壞狀態)                    */
-  /*   - 不同尺寸渲染不一致:1180~1400px 沒套 zoom 反而是好的(圖 1)      */
-  /* 修法:                                                              */
-  /*   (1) 移除 zoom:0.85 → 不再因縮放造成 flex 重新分配 height 異常       */
-  /*   (2) 整張 wb-tc-card 仍保留 overflow-y:auto 讓內容能整體捲動         */
-  /*   (3) 把單一 slot 的 overflow-y:auto 移除,改讓「立繪有最低高度保證」  */
-  /*       → 內容過多時整張 card 捲動,而非每個槽位內部捲                  */
-  /*   (4) wb-tc-bc-illus 加 min-height:160px,確保圖一定看得到(圖 1 比例) */
-  /* ─────────────────────────────────────────────────────────────── */
   @media (min-width:1400px) and (orientation:landscape){
-    /* ★ v3.10.0 — 不再用 zoom:0.85,改讓 .wb-tc-card 自然伸展 + 整體捲動 */
     .wb-tc-card{
-      max-width:1880px;  /* 維持原寬上限 */
-    }
-    /* ★ v3.10.0 — 大螢幕專用:wb-tc-slots 改用自然高度(不再 flex:1 強制平分),
-       避免 4 個 slot 高度被壓縮造成立繪 flex:1 區塊被擠扁(圖 2 的壞狀態) */
-    .wb-tc-slots{
-      flex:0 0 auto;
-      min-height:0;
-      align-items:start;  /* slot 高度依各自內容,而不是被拉成等高 */
-    }
-    /* ★ v3.10.0 — 每個槽位內容完整顯示,不再被擠壓 */
-    .wb-tc-slot{
-      overflow:visible;  /* 不再 slot 內部捲動 → 由整張 card 統一捲動 */
-      min-height:auto;
-    }
-    .wb-tc-bc-illus{
-      min-height:200px;  /* 大螢幕保證立繪有足夠空間 */
-    }
-  }
-  /* ★ v3.10.0 — 中等螢幕(iPad 橫拿 1180~1400px)也保證立繪顯示 */
-  @media (min-width:900px) and (max-width:1399px){
-    .wb-tc-slots{
-      flex:0 0 auto;
-      min-height:0;
-      align-items:start;
-    }
-    .wb-tc-slot{
-      overflow:visible;
-      min-height:auto;
-    }
-    .wb-tc-bc-illus{
-      min-height:160px;
+      zoom:0.85;
     }
   }
   @media (max-width:1180px){
@@ -4069,31 +3946,35 @@
   }
 
   // ════════════════════════════════════════════════════════════
-  // ★ v3.5.23(2026-05-22) — 世界 BOSS 每日場次限制檢查 helper
+  // ★ v3.10.13(2026-05-26) — 世界 BOSS 每日場次限制檢查 helper【改版】
   //   呼叫時機:在 4 個進場入口的「預檢通過後 / createRoom 或 joinRoom 前」
   //     1) _wbUiCreateRoom(開房)
   //     2) _wbUiJoinRoom(輸入房號)
   //     3) _wbUiJoinPublicRoom(瀏覽公開房)
   //     4) _wbInviteAccept(接受邀請)
   //   回傳 true:可繼續;false:已擋下並彈警告,呼叫方應 return
+  //
+  // ★ v3.10.13 改版:新 _wbDailyLimit 模組直接讀排行榜 battleHistory 判定
+  //   今日場次,不再需要 increment 計數。但 _wbBumpDailyEntry 保留空殼以
+  //   維持向後相容(4 個進場點不用拔呼叫)。
   // ════════════════════════════════════════════════════════════
   async function _wbCheckDailyLimit(){
     if(!window._wbDailyLimit || typeof window._wbDailyLimit.canEnter !== 'function'){
       // 模組未掛載 → 放行(向後相容)
-      console.warn('[WB-DailyLimit] _wbDailyLimit 模組未掛載,放行');
+      console.warn('[WB-DailyLimit v2] _wbDailyLimit 模組未掛載,放行');
       return true;
     }
     let _res;
     try{
       _res = await window._wbDailyLimit.canEnter();
     }catch(e){
-      console.warn('[WB-DailyLimit] canEnter 失敗,保守放行', e);
+      console.warn('[WB-DailyLimit v2] canEnter 失敗,保守放行', e);
       return true;
     }
     if(_res.allowed){
-      // 管理員 → 順帶提示但放行
+      // 管理員一視同仁,但 log 標示
       if(_res.isAdmin){
-        console.log('[WB-DailyLimit] 管理員不受限,已用 ' + _res.used + '/' + _res.limit);
+        console.log('[WB-DailyLimit v2] 管理員進場,已上榜 ' + _res.used + '/' + _res.limit);
       }
       return true;
     }
@@ -4101,87 +3982,24 @@
     const _msg =
       '⛔ 你今日的世界 BOSS 場次已用完<br><br>' +
       '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
-        '今日已使用:<b>' + _res.used + ' / ' + _res.limit + '</b> 場' +
+        '今日已完成:<b>' + _res.used + ' / ' + _res.limit + '</b> 場' +
       '</div>' +
       '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
         '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
-        '・明日 0:00 自動重置<br>' +
-        '・「單人練習模式」不算次數,可無限練習' +
+        '・<b style="color:#88ddff;">跨過台灣午夜 00:00 自動重置</b><br>' +
+        '・「單人練習模式」不算次數,可無限練習<br>' +
+        '・<b style="color:#a0ffa0;">小提示:中途斷線、被秒殺等沒造成傷害的場次不會計入</b>' +
       '</div>';
     _wbGameAlert(_msg);
     return false;
   }
 
-  // 計數 helper:成功進場後呼叫(管理員也會記錄,只是不擋進場)
-  // ★ v3.7.6 + v3.7.11(2026-05-26) — 老師需求:扣每日次數時機改為「真的拿到排行成績」才扣
-  //   情境對照:
-  //     - 玩家進房沒打 → 0/2 ✅
-  //     - 進房開戰打到一半斷線/退出 → 0/2 ✅
-  //     - 玩家滅團或拖到第 11 回合崩毀(獲得排行成績) → +1
-  //     - 玩家擊敗 BOSS(獲得排行成績) → +1
-  //     - 玩家投降(已進結算頁、有排行成績) → +1
-  //   實作:
-  //     1) 4 個進房入口都不再 +1(改成只清舊鎖)
-  //     2) onRoomUpdate 看到 fighting 也不 +1(只設 _wbBattleEverStarted 旗標)
-  //     3) index.html 內 checkWin 的勝利/滅團/崩毀 + advGiveUp 投降都呼叫 _wbBumpDailyEntryForResult
-  //     4) 多重防呆:單人練習不算、沒真的開戰過不算、同一房間只算一次
-  let _wbDailyEntryBumpedForRoom = null;  // 已 +1 過的 roomId 鎖(防同房間重複)
-
+  // ★ v3.10.13 — 進場計數 helper 改為空殼(計次完全靠排行榜實際上榜)
+  //   保留函式名以維持 4 個進場入口的向後相容,實際不做任何事
   async function _wbBumpDailyEntry(reason){
-    try{
-      // 單人練習不算次數(明文規則)
-      if(window._wbSoloPracticeMode){
-        console.log('[WB-DailyLimit] 單人練習模式不算次數 (' + reason + ')');
-        return;
-      }
-      // roomId 鎖(若拿得到的話)
-      const _curRoomId = (window._wbNet && typeof window._wbNet.getRoomId === 'function')
-        ? window._wbNet.getRoomId() : null;
-      if(_curRoomId && _wbDailyEntryBumpedForRoom === _curRoomId){
-        console.log('[WB-DailyLimit] 同一間房(' + _curRoomId + ')已 +1 過,不重複(' + reason + ')');
-        return;
-      }
-      if(window._wbDailyLimit && typeof window._wbDailyLimit.increment === 'function'){
-        const _n = await window._wbDailyLimit.increment();
-        console.log('[WB-DailyLimit] 進場計數 +1 (' + reason + ', roomId=' + _curRoomId + ') → ' + _n);
-        if(_curRoomId) _wbDailyEntryBumpedForRoom = _curRoomId;
-      }
-    }catch(e){
-      console.warn('[WB-DailyLimit] increment 失敗', e);
-    }
+    // 新版不再需要 increment,計次靠 leaderboard.battleHistory
+    console.log('[WB-DailyLimit v2] 進場 (' + reason + ') — 計次將在實際造成傷害上榜後自動算入');
   }
-
-  // ★ v3.7.6 — 暴露給 index.html checkWin / advGiveUp 結算路徑呼叫的對外 API
-  //   用途:勝利 / 滅團 / 崩毀 / 投降 都呼叫此函式(reason 不同方便事後 log 追蹤)
-  //   防呆:① 單人練習跳過 ② 沒真的開戰過跳過(_wbBattleEverStarted) ③ 同房間只 +1 一次
-  window._wbBumpDailyEntryForResult = async function(resultType){
-    try{
-      if(window._wbSoloPracticeMode){
-        console.log('[WB-DailyLimit] [結算 ' + resultType + '] 單人練習不算次數');
-        return;
-      }
-      if(!window._wbBattleEverStarted){
-        console.log('[WB-DailyLimit] [結算 ' + resultType + '] 從未進到 fighting,不算次數');
-        return;
-      }
-      await _wbBumpDailyEntry('result_' + (resultType || 'unknown'));
-    }catch(e){
-      console.warn('[WB-DailyLimit] _wbBumpDailyEntryForResult 失敗', e);
-    }
-  };
-
-  // ★ v3.7.6 — 退房 / 切換房間 / 返回關卡時清掉本機鎖
-  function _wbResetDailyEntryLock(reason){
-    if(_wbDailyEntryBumpedForRoom){
-      console.log('[WB-DailyLimit] 清掉 roomId 鎖 (' + reason + ', 原 roomId=' + _wbDailyEntryBumpedForRoom + ')');
-      _wbDailyEntryBumpedForRoom = null;
-    }
-    // 同時清「這場有開戰過」旗標 + 崩毀標記,新房間從頭算
-    try{ window._wbBattleEverStarted = false; }catch(_){}
-    try{ window._wbCollapseTriggered = false; }catch(_){}
-    try{ window._wbCollapseReason = null; }catch(_){}
-  }
-  window._wbResetDailyEntryLock = _wbResetDailyEntryLock;
 
   // ★ FIX 20260517(o-3) — 對應現有英雄系統:取得「玩家已解鎖」的可用英雄
   //   原本只用 HP < 1000 過濾,導致魔物(茶葉精靈/九尾空貓...)也跑進來。
@@ -4297,11 +4115,8 @@
       visibility: vis
     });
     if(roomId){
-      // ★ v3.7.6/v3.7.11(2026-05-26) — 進房不再立刻 +1,改在結算頁(checkWin)才 +1
-      //   舊版 v3.5.23:`await _wbBumpDailyEntry('createRoom')` — 開房成功就扣次數
-      //   問題:玩家「開房 → 沒人來退出」、「邀請被拒」、「自己反悔離開」都被白扣
-      //   新版:先清掉上一場可能殘留的 roomId 鎖,新房間從零開始,真的打完(勝利/滅團/崩毀/投降)才 +1
-      _wbResetDailyEntryLock('createRoom_new_session');
+      // ★ v3.5.23 — 開房成功後計數 +1
+      await _wbBumpDailyEntry('createRoom');
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳(_wbOpenLobby),直接跳隊伍確認頁
       //   舊流程:選角頁(_wbOpenLobby) → 按準備 → 隊伍確認頁
@@ -4352,8 +4167,8 @@
     }
     const ok = await window._wbNet.joinRoom(code);
     if(ok){
-      // ★ v3.7.6/v3.7.11 — 進房不再立即 +1,改在結算頁才 +1
-      _wbResetDailyEntryLock('joinRoom_code_new_session');
+      // ★ v3.5.23 — 加房成功後計數 +1
+      await _wbBumpDailyEntry('joinRoom(code)');
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
       _wbOpenLobbyHidden();
@@ -4495,8 +4310,8 @@
     }
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
-      // ★ v3.7.6/v3.7.11 — 進房不再立即 +1,改在結算頁才 +1
-      _wbResetDailyEntryLock('joinRoom_public_new_session');
+      // ★ v3.5.23 — 加房成功後計數 +1
+      await _wbBumpDailyEntry('joinRoom(public)');
       _wbUiClosePublicRooms();
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
@@ -4980,8 +4795,8 @@
     }catch(_){}
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
-      // ★ v3.7.6/v3.7.11 — 進房不再立即 +1,改在結算頁才 +1
-      _wbResetDailyEntryLock('joinRoom_invite_new_session');
+      // ★ v3.5.23 — 接受邀請進房成功後計數 +1
+      await _wbBumpDailyEntry('joinRoom(invite)');
       // 進房成功 → 關 entry(若開著)、直接開隊伍確認頁
       const entryOv = document.getElementById('wb-entry-overlay');
       if(entryOv) entryOv.style.display = 'none';
@@ -5123,8 +4938,6 @@
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
     // ★ FIX 20260517(r) — 清掉本地指派的 NPC 槽位狀態
     try{ window._wbHostAssignedSlots = {}; }catch(_){}
-    // ★ v3.7.6/v3.7.11(2026-05-26) — 退房清掉每日計次鎖
-    try{ _wbResetDailyEntryLock('leaveRoom'); }catch(_){}
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
     // ★ FIX 20260517(r) — 隊伍確認頁也關掉(新流程走這頁,沒關會卡在畫面上)
@@ -8663,9 +8476,6 @@
     }catch(_){}
 
     if(status === 'fighting'){
-      // ★ v3.7.6/v3.7.11(2026-05-26) — 標記「這場有真的開戰過」,給結算時判斷
-      //   結算時 _wbBumpDailyEntryForResult 會檢查此旗標 — 若 false 表示沒打成,不算次數
-      try{ window._wbBattleEverStarted = true; }catch(_){}
       try{
         const _pa = document.getElementById('wb-picking-area');
         if(_pa) _pa.style.display = 'none';
@@ -12903,8 +12713,6 @@
         window._wbNet.leaveRoom().catch(e => console.warn('[WB] client leaveRoom 失敗', e));
       }
     }catch(_eLv){ console.warn('[WB] _wbBackToStageSelect leaveRoom 例外', _eLv); }
-    // ★ v3.7.11(2026-05-26) — 返回關卡選擇也清計次鎖(進入新世界 BOSS 戰前完全重置)
-    try{ if(typeof _wbResetDailyEntryLock === 'function') _wbResetDailyEntryLock('backToStageSelect'); }catch(_){}
     // 清世界戰 overlay 與旗標
     try{
       const _overlay = document.getElementById('wb-lobby-overlay');
