@@ -12948,11 +12948,36 @@
     try{ clearInterval(window._wbSoloAutoCheckIv); }catch(_){}
     window._wbSoloAutoCheckIv = null;
   }
+  // ★ v3.11.1(2026-05-27) — 加入空跑自動清理機制
+  //   原問題:_wbStopLegacySoloAutoCheck 雖然有定義但從來沒被任何路徑呼叫,
+  //          導致玩家進過 BOSS 入口一次後,500ms timer 跑到關閉遊戲為止
+  //   修法:守門 fail 累積 60 次(= 30 秒沒進戰鬥)就自動 clearInterval,
+  //         有玩家真的進入 v3 戰鬥才重置計數;v6 模式完全不依賴此 timer,清掉零影響
+  let _wbSoloAutoCheckFailCount = 0;
   window._wbSoloAutoCheckIv = setInterval(() => {
     // ★ v6 守門:連線房主模式或單人 v6 模式都不該跑舊版 AI
-    if(window._wbConnectedHostMode) return;
+    if(window._wbConnectedHostMode){
+      if(++_wbSoloAutoCheckFailCount > 60){
+        try{
+          clearInterval(window._wbSoloAutoCheckIv);
+          window._wbSoloAutoCheckIv = null;
+          console.log('[WB-UI v3.11.1] 舊版 solo auto-check 連續 30 秒空跑 → 自動清除');
+        }catch(_){}
+      }
+      return;
+    }
     // 舊版自製引擎才會有 _wbHostG,v6 沒有 → 自動跳過
-    if(!window._wbInWorldBossMode || !window._wbHostG) return;
+    if(!window._wbInWorldBossMode || !window._wbHostG){
+      if(++_wbSoloAutoCheckFailCount > 60){
+        try{
+          clearInterval(window._wbSoloAutoCheckIv);
+          window._wbSoloAutoCheckIv = null;
+          console.log('[WB-UI v3.11.1] 舊版 solo auto-check 連續 30 秒空跑 → 自動清除');
+        }catch(_){}
+      }
+      return;
+    }
+    _wbSoloAutoCheckFailCount = 0;  // ★ v3.11.1 — 進入舊版戰鬥就重置計數
     const G = window._wbHostG;
     const cur = G.turnOrder && G.turnOrder[G.currentActorIdx];
     if(cur && cur.side === 'p1' && cur.pos !== 0){
