@@ -3990,16 +3990,75 @@
   }
 
   // 計數 helper:成功進場後呼叫(管理員也會記錄,只是不擋進場)
+  // ★ v3.7.6 + v3.7.11(2026-05-26) — 老師需求:扣每日次數時機改為「真的拿到排行成績」才扣
+  //   情境對照:
+  //     - 玩家進房沒打 → 0/2 ✅
+  //     - 進房開戰打到一半斷線/退出 → 0/2 ✅
+  //     - 玩家滅團或拖到第 11 回合崩毀(獲得排行成績) → +1
+  //     - 玩家擊敗 BOSS(獲得排行成績) → +1
+  //     - 玩家投降(已進結算頁、有排行成績) → +1
+  //   實作:
+  //     1) 4 個進房入口都不再 +1(改成只清舊鎖)
+  //     2) onRoomUpdate 看到 fighting 也不 +1(只設 _wbBattleEverStarted 旗標)
+  //     3) index.html 內 checkWin 的勝利/滅團/崩毀 + advGiveUp 投降都呼叫 _wbBumpDailyEntryForResult
+  //     4) 多重防呆:單人練習不算、沒真的開戰過不算、同一房間只算一次
+  let _wbDailyEntryBumpedForRoom = null;  // 已 +1 過的 roomId 鎖(防同房間重複)
+
   async function _wbBumpDailyEntry(reason){
     try{
+      // 單人練習不算次數(明文規則)
+      if(window._wbSoloPracticeMode){
+        console.log('[WB-DailyLimit] 單人練習模式不算次數 (' + reason + ')');
+        return;
+      }
+      // roomId 鎖(若拿得到的話)
+      const _curRoomId = (window._wbNet && typeof window._wbNet.getRoomId === 'function')
+        ? window._wbNet.getRoomId() : null;
+      if(_curRoomId && _wbDailyEntryBumpedForRoom === _curRoomId){
+        console.log('[WB-DailyLimit] 同一間房(' + _curRoomId + ')已 +1 過,不重複(' + reason + ')');
+        return;
+      }
       if(window._wbDailyLimit && typeof window._wbDailyLimit.increment === 'function'){
         const _n = await window._wbDailyLimit.increment();
-        console.log('[WB-DailyLimit] 進場計數 +1 (' + reason + ') → ' + _n);
+        console.log('[WB-DailyLimit] 進場計數 +1 (' + reason + ', roomId=' + _curRoomId + ') → ' + _n);
+        if(_curRoomId) _wbDailyEntryBumpedForRoom = _curRoomId;
       }
     }catch(e){
       console.warn('[WB-DailyLimit] increment 失敗', e);
     }
   }
+
+  // ★ v3.7.6 — 暴露給 index.html checkWin / advGiveUp 結算路徑呼叫的對外 API
+  //   用途:勝利 / 滅團 / 崩毀 / 投降 都呼叫此函式(reason 不同方便事後 log 追蹤)
+  //   防呆:① 單人練習跳過 ② 沒真的開戰過跳過(_wbBattleEverStarted) ③ 同房間只 +1 一次
+  window._wbBumpDailyEntryForResult = async function(resultType){
+    try{
+      if(window._wbSoloPracticeMode){
+        console.log('[WB-DailyLimit] [結算 ' + resultType + '] 單人練習不算次數');
+        return;
+      }
+      if(!window._wbBattleEverStarted){
+        console.log('[WB-DailyLimit] [結算 ' + resultType + '] 從未進到 fighting,不算次數');
+        return;
+      }
+      await _wbBumpDailyEntry('result_' + (resultType || 'unknown'));
+    }catch(e){
+      console.warn('[WB-DailyLimit] _wbBumpDailyEntryForResult 失敗', e);
+    }
+  };
+
+  // ★ v3.7.6 — 退房 / 切換房間 / 返回關卡時清掉本機鎖
+  function _wbResetDailyEntryLock(reason){
+    if(_wbDailyEntryBumpedForRoom){
+      console.log('[WB-DailyLimit] 清掉 roomId 鎖 (' + reason + ', 原 roomId=' + _wbDailyEntryBumpedForRoom + ')');
+      _wbDailyEntryBumpedForRoom = null;
+    }
+    // 同時清「這場有開戰過」旗標 + 崩毀標記,新房間從頭算
+    try{ window._wbBattleEverStarted = false; }catch(_){}
+    try{ window._wbCollapseTriggered = false; }catch(_){}
+    try{ window._wbCollapseReason = null; }catch(_){}
+  }
+  window._wbResetDailyEntryLock = _wbResetDailyEntryLock;
 
   // ★ FIX 20260517(o-3) — 對應現有英雄系統:取得「玩家已解鎖」的可用英雄
   //   原本只用 HP < 1000 過濾,導致魔物(茶葉精靈/九尾空貓...)也跑進來。
@@ -4115,8 +4174,11 @@
       visibility: vis
     });
     if(roomId){
-      // ★ v3.5.23 — 開房成功後計數 +1
-      await _wbBumpDailyEntry('createRoom');
+      // ★ v3.7.6/v3.7.11(2026-05-26) — 進房不再立刻 +1,改在結算頁(checkWin)才 +1
+      //   舊版 v3.5.23:`await _wbBumpDailyEntry('createRoom')` — 開房成功就扣次數
+      //   問題:玩家「開房 → 沒人來退出」、「邀請被拒」、「自己反悔離開」都被白扣
+      //   新版:先清掉上一場可能殘留的 roomId 鎖,新房間從零開始,真的打完(勝利/滅團/崩毀/投降)才 +1
+      _wbResetDailyEntryLock('createRoom_new_session');
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳(_wbOpenLobby),直接跳隊伍確認頁
       //   舊流程:選角頁(_wbOpenLobby) → 按準備 → 隊伍確認頁
@@ -4167,8 +4229,8 @@
     }
     const ok = await window._wbNet.joinRoom(code);
     if(ok){
-      // ★ v3.5.23 — 加房成功後計數 +1
-      await _wbBumpDailyEntry('joinRoom(code)');
+      // ★ v3.7.6/v3.7.11 — 進房不再立即 +1,改在結算頁才 +1
+      _wbResetDailyEntryLock('joinRoom_code_new_session');
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
       _wbOpenLobbyHidden();
@@ -4310,8 +4372,8 @@
     }
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
-      // ★ v3.5.23 — 加房成功後計數 +1
-      await _wbBumpDailyEntry('joinRoom(public)');
+      // ★ v3.7.6/v3.7.11 — 進房不再立即 +1,改在結算頁才 +1
+      _wbResetDailyEntryLock('joinRoom_public_new_session');
       _wbUiClosePublicRooms();
       _wbCloseEntry();
       // ★ FIX 20260517(r) — 不再開選角大廳,直接跳隊伍確認頁
@@ -4795,8 +4857,8 @@
     }catch(_){}
     const ok = await window._wbNet.joinRoom(roomId);
     if(ok){
-      // ★ v3.5.23 — 接受邀請進房成功後計數 +1
-      await _wbBumpDailyEntry('joinRoom(invite)');
+      // ★ v3.7.6/v3.7.11 — 進房不再立即 +1,改在結算頁才 +1
+      _wbResetDailyEntryLock('joinRoom_invite_new_session');
       // 進房成功 → 關 entry(若開著)、直接開隊伍確認頁
       const entryOv = document.getElementById('wb-entry-overlay');
       if(entryOv) entryOv.style.display = 'none';
@@ -4938,6 +5000,8 @@
     try{ if(typeof _wbStopOutgoingInviteSub === 'function') _wbStopOutgoingInviteSub(); }catch(_){}
     // ★ FIX 20260517(r) — 清掉本地指派的 NPC 槽位狀態
     try{ window._wbHostAssignedSlots = {}; }catch(_){}
+    // ★ v3.7.6/v3.7.11(2026-05-26) — 退房清掉每日計次鎖
+    try{ _wbResetDailyEntryLock('leaveRoom'); }catch(_){}
     await window._wbNet.leaveRoom();
     document.getElementById('wb-lobby-overlay').style.display = 'none';
     // ★ FIX 20260517(r) — 隊伍確認頁也關掉(新流程走這頁,沒關會卡在畫面上)
@@ -8476,6 +8540,9 @@
     }catch(_){}
 
     if(status === 'fighting'){
+      // ★ v3.7.6/v3.7.11(2026-05-26) — 標記「這場有真的開戰過」,給結算時判斷
+      //   結算時 _wbBumpDailyEntryForResult 會檢查此旗標 — 若 false 表示沒打成,不算次數
+      try{ window._wbBattleEverStarted = true; }catch(_){}
       try{
         const _pa = document.getElementById('wb-picking-area');
         if(_pa) _pa.style.display = 'none';
@@ -12713,6 +12780,8 @@
         window._wbNet.leaveRoom().catch(e => console.warn('[WB] client leaveRoom 失敗', e));
       }
     }catch(_eLv){ console.warn('[WB] _wbBackToStageSelect leaveRoom 例外', _eLv); }
+    // ★ v3.7.11(2026-05-26) — 返回關卡選擇也清計次鎖(進入新世界 BOSS 戰前完全重置)
+    try{ if(typeof _wbResetDailyEntryLock === 'function') _wbResetDailyEntryLock('backToStageSelect'); }catch(_){}
     // 清世界戰 overlay 與旗標
     try{
       const _overlay = document.getElementById('wb-lobby-overlay');
