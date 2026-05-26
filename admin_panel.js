@@ -174,6 +174,7 @@ async function _showAdminStatsPanelImpl(){
       #_admin-pollution-check-section { order: 4; }     /* 污染檢查提醒(同 4,差在 DOM 順序在 Lv1 後) */
       #_admin-rescue-section { order: 5; }              /* 玩家急救 */
       #_admin-comp-section { order: 6; }                /* 學生補償 */
+      #_admin-designer-grant-section { order: 6.5; }     /* ★ v3.10.2 — 設計師英雄一鍵補發 */
       #_admin-dlperm-section { order: 7; }              /* 下載權限 */
       #_admin-sus-section { order: 8; }                 /* 可疑帳號 */
       #_admin-wblb-section { order: 9; }                /* 世界 BOSS 榜 */
@@ -515,6 +516,42 @@ async function _showAdminStatsPanelImpl(){
         </div>
 
         <div id="_admin-comp-result" style="margin-top:8px;font-size:13px;color:#ffcc88;line-height:1.6;"></div>
+      </div>
+
+      <!-- ★ v3.10.2(2026-05-26) — 設計師英雄一鍵補發 -->
+      <!--
+        老師需求(2026-05-26):管理員可一鍵補發所有「應該拿到但實際沒有」設計師英雄
+        略過判定(同時滿足才略過):
+          ① unlockedHeroes 已含設計者英雄
+          ② 任一槽位的 heroLevels[hero] >= 2,或 lv=1 且 heroExp > 0(已開始培養)
+        補發判定:沒英雄,或有英雄但 lv=1 且 exp=0(代表沒在用)
+        從未登入:無法補(沒 player 文件),學生首次登入後 _grantStudentDesignerHero 會接手
+      -->
+      <div id="_admin-designer-grant-section" style="background:rgba(40,30,60,0.5);border:2px solid rgba(180,140,255,0.65);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#c8a8ff;margin-bottom:8px;">🎨 3.6 設計師英雄一鍵補發</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          掃描所有 <b style="color:#ffcc88;">STUDENT_DESIGNER_HEROES</b> 名冊中的設計師,
+          自動補發「沒有英雄」或「有英雄但從沒培養過」的學生。<br>
+          <b style="color:#aaffcc;">已收到且開始培養(任一槽 Lv≥2 或 Lv1 + exp&gt;0)的學生會自動略過</b>,
+          不會重複發、也不會降低已有等級。<br>
+          <span style="color:#ffaa88;">⚠ 建議先點「📝 預覽會補誰」確認,再點「🎁 實際補發」執行。</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <button id="_admin-designer-grant-preview" style="flex:1;min-width:160px;padding:11px;font-size:14px;font-weight:700;
+            background:rgba(180,140,255,0.18);border:2px solid #c8a8ff;color:#dcc8ff;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            📝 預覽會補誰(不寫入)
+          </button>
+          <button id="_admin-designer-grant-apply" style="flex:1;min-width:160px;padding:11px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,rgba(180,140,255,0.35),rgba(140,100,220,0.35));
+            border:2px solid #c8a8ff;color:#e8d8ff;
+            border-radius:6px;cursor:pointer;font-family:inherit;
+            box-shadow:0 0 14px rgba(180,140,255,0.3);">
+            🎁 實際補發(寫入雲端)
+          </button>
+        </div>
+        <div id="_admin-designer-grant-result" style="font-size:13px;color:#ddd;line-height:1.65;padding:10px;
+          background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:300px;overflow-y:auto;"></div>
       </div>
 
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
@@ -3252,6 +3289,154 @@ async function _showAdminStatsPanelImpl(){
         _applyBtn.textContent = '⚠ 執行完全重置 + 重建(會清空所有資料,不可逆)';
       }
     };
+  })();
+
+  // ★★★ v3.10.2(2026-05-26) — 3.6 設計師英雄一鍵補發 JS 邏輯 ★★★
+  //
+  // 後端 API:window._adminGrantAllMissingDesignerHeroes({ dryRun, reason })
+  //   - 已寫在 index.html(v3.10.2)
+  //   - 內部會走 STUDENT_DESIGNER_HEROES 名冊,對每位:
+  //       email → uid → 讀 safe/live/main 三槽
+  //       判定「已收到且已培養」(任一槽 lv≥2 / lv=1 且 exp>0)→ 略過
+  //       其他 → 用 _fbCompensatePlayer 補發(union 邏輯,不降已有等級)
+  (function _initDesignerGrantTool(){
+    const _resultBox = document.getElementById('_admin-designer-grant-result');
+    const _previewBtn = document.getElementById('_admin-designer-grant-preview');
+    const _applyBtn   = document.getElementById('_admin-designer-grant-apply');
+    if(!_resultBox || !_previewBtn || !_applyBtn) return;
+
+    const _esc = function(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+
+    // 渲染結果(預覽或實際補發共用)
+    function _renderResults(res, isDryRun){
+      if(!res || typeof res !== 'object'){
+        _resultBox.style.display = 'block';
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 無回傳資料或執行失敗</span>';
+        return;
+      }
+      if(res.ok === false){
+        _resultBox.style.display = 'block';
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 失敗:' + _esc(res.reason || '未知原因') + '</span>';
+        return;
+      }
+      const _granted     = res.granted || [];
+      const _grantedDry  = res.granted_dry || [];
+      const _skipped     = res.skipped_already_trained || [];
+      const _neverLogged = res.never_logged_in || [];
+      const _failed      = res.failed || [];
+
+      const _renderRow = function(r, color){
+        return '<div style="padding:6px 10px;background:rgba(0,0,0,0.25);border-radius:5px;margin-bottom:3px;'
+          + 'border-left:3px solid ' + color + ';">'
+          + '<b style="color:' + color + ';">' + _esc(r.class) + _esc(r.name) + '</b>'
+          + ' <span style="color:#aaa;">(' + _esc(r.email) + ')</span>'
+          + '<br><span style="color:#ddd;">設計英雄:<b style="color:#ffcc88;">' + _esc(r.hero) + '</b></span>'
+          + ' <span style="color:#888;font-size:11px;">— ' + _esc(r.reason) + '</span>'
+          + '</div>';
+      };
+
+      let html = '';
+      // 標題列
+      html += '<div style="font-size:14px;font-weight:700;color:' + (isDryRun ? '#c8a8ff' : '#aaffcc') + ';margin-bottom:8px;">'
+            + (isDryRun ? '📝 預覽結果(不寫入)' : '🎁 補發完成')
+            + '</div>';
+      // 統計
+      html += '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(40,30,60,0.55);border-radius:6px;font-size:13px;line-height:1.7;">';
+      html += '<div>⏩ 已收到且培養中(略過):<b style="color:#aaffcc;">' + _skipped.length + '</b> 位</div>';
+      if(isDryRun){
+        html += '<div>📝 預覽將補發:<b style="color:#c8a8ff;">' + _grantedDry.length + '</b> 位</div>';
+      } else {
+        html += '<div>🎁 已補發:<b style="color:#ffcc88;">' + _granted.length + '</b> 位</div>';
+      }
+      html += '<div>❓ 從未登入(無法補):<b style="color:#888;">' + _neverLogged.length + '</b> 位</div>';
+      if(_failed.length > 0){
+        html += '<div>🚨 失敗:<b style="color:#ff8888;">' + _failed.length + '</b> 位</div>';
+      }
+      html += '</div>';
+
+      // 需要補發/已補發清單
+      const _grantList = isDryRun ? _grantedDry : _granted;
+      if(_grantList.length > 0){
+        html += '<div style="font-size:13px;color:#c8a8ff;margin-bottom:4px;font-weight:700;">'
+              + (isDryRun ? '🎯 將補發以下學生:' : '✅ 已補發以下學生:') + '</div>';
+        _grantList.forEach(r => { html += _renderRow(r, isDryRun ? '#c8a8ff' : '#aaffcc'); });
+      }
+      // 從未登入清單
+      if(_neverLogged.length > 0){
+        html += '<div style="font-size:13px;color:#888;margin:8px 0 4px;font-weight:700;">'
+              + '❓ 從未登入(待學生首次登入後系統自動補):</div>';
+        _neverLogged.forEach(r => { html += _renderRow(r, '#888'); });
+      }
+      // 失敗清單
+      if(_failed.length > 0){
+        html += '<div style="font-size:13px;color:#ff8888;margin:8px 0 4px;font-weight:700;">'
+              + '🚨 失敗清單(請查 console 詳情):</div>';
+        _failed.forEach(r => { html += _renderRow(r, '#ff8888'); });
+      }
+      // 略過清單(摺疊,避免太長)
+      if(_skipped.length > 0){
+        html += '<details style="margin-top:8px;">'
+              + '<summary style="cursor:pointer;font-size:13px;color:#88aabb;padding:4px 0;">'
+              + '⏩ 已收到且培養中的 ' + _skipped.length + ' 位(點擊展開)</summary>'
+              + '<div style="margin-top:4px;">';
+        _skipped.forEach(r => { html += _renderRow(r, '#88aabb'); });
+        html += '</div></details>';
+      }
+
+      _resultBox.style.display = 'block';
+      _resultBox.innerHTML = html;
+    }
+
+    async function _runGrant(isDryRun){
+      const _btn = isDryRun ? _previewBtn : _applyBtn;
+      const _origText = _btn.textContent;
+      _btn.disabled = true;
+      _btn.textContent = isDryRun ? '掃描中...' : '補發中...';
+      _resultBox.style.display = 'block';
+      _resultBox.innerHTML = '<span style="color:#aaa;">⏳ 處理中,請稍候(視設計師人數可能 5~30 秒)...</span>';
+
+      if(typeof window._adminGrantAllMissingDesignerHeroes !== 'function'){
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 後端 API _adminGrantAllMissingDesignerHeroes 未載入</span>';
+        _btn.disabled = false;
+        _btn.textContent = _origText;
+        return;
+      }
+
+      if(!isDryRun){
+        // 實際補發前確認
+        const _ok = confirm('確定要對所有需要補發的學生執行實際補發嗎?\n\n'
+          + '已收到且開始培養的學生會自動略過,不會降低任何已有等級。\n'
+          + '建議:先點「預覽」確認名單後再執行此動作。');
+        if(!_ok){
+          _btn.disabled = false;
+          _btn.textContent = _origText;
+          _resultBox.style.display = 'none';
+          return;
+        }
+      }
+
+      try{
+        const _res = await window._adminGrantAllMissingDesignerHeroes({
+          dryRun: isDryRun,
+          reason: isDryRun
+            ? '管理員後台預覽(不寫入)'
+            : '管理員後台一鍵補發(設計師英雄)',
+        });
+        _renderResults(_res, isDryRun);
+      }catch(e){
+        console.error('[3.6 設計師英雄補發] 例外', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 例外:' + _esc(e && e.message || String(e)) + '</span>';
+      }finally{
+        _btn.disabled = false;
+        _btn.textContent = _origText;
+      }
+    }
+
+    _previewBtn.onclick = function(){ _runGrant(true); };
+    _applyBtn.onclick   = function(){ _runGrant(false); };
   })();
 
   // ★★★ v3.5.37 — 3.7 Lv1 救援工具 JS 邏輯 ★★★
