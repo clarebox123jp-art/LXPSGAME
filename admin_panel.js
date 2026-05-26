@@ -4764,6 +4764,60 @@ async function _showAdminStatsPanelImpl(){
       _overlay.onclick = function(ev){ if(ev.target === _overlay) _close(); };
     }
 
+    // ★ v3.10.18 — 渲染某隊伍 battleHistory(老師需求:展開每場 + 刪單筆)
+    //   entry.battleHistory:[{at, dmg, mvp:{name,lv,dmg}, turns, qc}, ...]
+    //   最新一場在 [0]
+    function _renderHistoryBox(box, entry){
+      const _hist = Array.isArray(entry.battleHistory) ? entry.battleHistory : [];
+      if(_hist.length === 0){
+        box.innerHTML = '<div style="padding:10px 14px;color:#888;font-size:12px;' +
+                        'background:rgba(0,0,0,0.3);border-radius:6px;border-left:3px solid #555;">' +
+                        '本隊伍無 battleHistory(可能是 v3.10.0 之前的舊紀錄)</div>';
+        return;
+      }
+      const _pad = function(n){ return n<10?'0'+n:''+n; };
+      const _esc = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+      const _tkEsc = (entry.teamKey||'').replace(/"/g,'&quot;');
+      const _rowsHtml = _hist.map(function(b, i){
+        const _t = new Date(b.at);
+        const _timeStr = (_t.getMonth()+1)+'/'+_t.getDate()+' '+_pad(_t.getHours())+':'+_pad(_t.getMinutes());
+        const _isAbnormal = (b.dmg || 0) > 5000;  // 單場 > 5000 視為可能異常(因為單次傷害上限 5000)
+        const _bg = _isAbnormal
+          ? 'background:rgba(180,60,40,0.18);border-left:3px solid #ff6644;'
+          : 'background:rgba(60,80,120,0.18);border-left:3px solid #6699cc;';
+        const _mvpHtml = b.mvp && b.mvp.name
+          ? '<span style="color:#ff8866;">🗡 ' + _esc(b.mvp.name) +
+            ' <span style="color:#ffd066;font-size:10px;">Lv' + (b.mvp.lv||1) + '</span>' +
+            ' <span style="color:#ddd;">傷害 ' + (b.mvp.dmg||0).toLocaleString() + '</span></span>'
+          : '<span style="color:#666;">無 MVP 資料</span>';
+        return '<div style="' + _bg + 'padding:7px 10px;margin-bottom:4px;border-radius:6px;' +
+               'display:flex;align-items:center;gap:8px;font-size:12px;">' +
+                 '<span style="color:#888;font-size:11px;width:28px;flex:0 0 auto;">第' + (i+1) + '場</span>' +
+                 '<span style="color:#aaa;flex:0 0 auto;">🕒 ' + _timeStr + '</span>' +
+                 '<span style="color:' + (_isAbnormal?'#ff8866':'#ffd066') + ';font-weight:700;flex:0 0 auto;">' +
+                    (b.dmg||0).toLocaleString() + ' 傷' + (_isAbnormal?' ⚠':'') + '</span>' +
+                 '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+                    _mvpHtml + '</span>' +
+                 '<span style="color:#888;font-size:10px;flex:0 0 auto;">' +
+                    '回合 ' + (b.turns||'—') + ' · 答對 ' + (b.qc||0) + '</span>' +
+                 '<button class="_wblb-del-battle-btn" data-teamkey="' + _tkEsc + '" data-battle-index="' + i + '" ' +
+                 'style="padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;' +
+                 'background:linear-gradient(135deg,rgba(180,60,60,0.6),rgba(120,30,30,0.85));' +
+                 'border:1.5px solid #ff7777;color:#fff;border-radius:5px;font-family:inherit;flex:0 0 auto;">' +
+                 '🗑 刪此場</button>' +
+               '</div>';
+      }).join('');
+      box.innerHTML =
+        '<div style="padding:8px 12px;background:rgba(0,0,0,0.35);border-radius:8px;' +
+              'border:1px solid rgba(100,150,200,0.3);">' +
+          '<div style="font-size:11px;color:#aaccff;margin-bottom:6px;line-height:1.4;">' +
+            '💡 點 <b>🗑 刪此場</b> 只刪該場(扣總傷+減場次),被刷的玩家「今日場次自動 -1」可重打。' +
+            '<br>單場 > 5000 傷標紅(因單次傷害上限應為 5000)。' +
+          '</div>' +
+          _rowsHtml +
+        '</div>';
+    }
+
     function _openDetailModal(){
       // 已開就先關掉(避免疊加)
       if(_detailModal){ _closeDetailModal(); }
@@ -4839,6 +4893,16 @@ async function _showAdminStatsPanelImpl(){
               'margin-left:6px;flex:0 0 auto;">📜 傷害明細(' + e.lastDmgSources.length + ')</button>'
             : '<span style="font-size:10px;color:#666;margin-left:6px;">(本場無明細)</span>';
 
+          // ★ v3.10.18 — 「📜 展開每場」按鈕(老師需求:刪單筆異常傷害)
+          const _hist = Array.isArray(e.battleHistory) ? e.battleHistory : [];
+          const _historyBtn = _hist.length > 0
+            ? '<button class="_wblb-history-btn" data-teamkey="' + (e.teamKey||'').replace(/"/g,'&quot;') + '" ' +
+              'style="padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;' +
+              'background:linear-gradient(135deg,rgba(80,150,200,0.4),rgba(40,100,160,0.5));' +
+              'border:1.5px solid #66bbdd;color:#cce8ff;border-radius:6px;font-family:inherit;' +
+              'margin-left:6px;flex:0 0 auto;">📜 展開每場(' + _hist.length + ')</button>'
+            : '';
+
           return '<label class="_wblb-row" data-teamkey="' + (e.teamKey||'').replace(/"/g,'&quot;') + '" style="' +
                  'display:block;padding:10px 12px;margin-bottom:6px;' +
                  'background:rgba(30,25,40,0.6);border:1.5px solid rgba(140,100,180,0.35);' +
@@ -4854,6 +4918,7 @@ async function _showAdminStatsPanelImpl(){
                        '<span style="color:' + _avgColor + ';font-size:12px;font-weight:700;">' +
                           '· 平均 ' + _avg.toLocaleString() + '/場' + _avgWarn + '</span>' +
                        _sourcesBtn +
+                       _historyBtn +
                        '<span style="color:#888;font-size:11px;margin-left:auto;">' +
                           '🕒 ' + _formatTime(e.lastUpdated) + '</span>' +
                      '</div>' +
@@ -4864,6 +4929,9 @@ async function _showAdminStatsPanelImpl(){
                        ' · 存活 ' + (_tb.aliveCount||0) +
                        ' · key:<code style="color:#777;">' + (e.teamKey||'—').substring(0,40) + '</code>' +
                      '</div>' +
+                     // ★ v3.10.18 — 展開每場的容器(預設隱藏,點按鈕時填入)
+                     '<div class="_wblb-history-box" data-teamkey="' + (e.teamKey||'').replace(/"/g,'&quot;') + '" ' +
+                     'style="display:none;margin-top:8px;"></div>' +
                    '</div>' +
                  '</div>' +
                  '</label>';
@@ -4971,6 +5039,94 @@ async function _showAdminStatsPanelImpl(){
           return;
         }
         _showDmgSourcesDialog(_entry);
+      });
+
+      // ★ v3.10.18 — 「📜 展開每場」按鈕處理(老師需求:刪單筆異常傷害)
+      _listBox.addEventListener('click', function(ev){
+        const _btn = ev.target.closest && ev.target.closest('._wblb-history-btn');
+        if(!_btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const _tk = _btn.getAttribute('data-teamkey');
+        const _entry = _list.find(function(x){ return x.teamKey === _tk; });
+        if(!_entry){ alert('找不到對應的紀錄'); return; }
+        // 找該 row 下的 history-box
+        const _box = _listBox.querySelector('._wblb-history-box[data-teamkey="' + _tk.replace(/"/g,'\\"') + '"]');
+        if(!_box) return;
+        // 切換展開/收起
+        if(_box.style.display !== 'none' && _box.innerHTML){
+          _box.style.display = 'none';
+          _btn.style.background = 'linear-gradient(135deg,rgba(80,150,200,0.4),rgba(40,100,160,0.5))';
+          return;
+        }
+        // 渲染 battleHistory
+        _renderHistoryBox(_box, _entry);
+        _box.style.display = 'block';
+        _btn.style.background = 'linear-gradient(135deg,rgba(200,150,80,0.5),rgba(160,100,40,0.6))';
+      });
+
+      // ★ v3.10.18 — 「🗑 刪單筆」按鈕處理(嵌在 history-box 內)
+      _listBox.addEventListener('click', async function(ev){
+        const _btn = ev.target.closest && ev.target.closest('._wblb-del-battle-btn');
+        if(!_btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const _tk = _btn.getAttribute('data-teamkey');
+        const _bIdx = parseInt(_btn.getAttribute('data-battle-index'), 10);
+        if(isNaN(_bIdx) || _bIdx < 0){ alert('索引錯誤'); return; }
+        const _entry = _list.find(function(x){ return x.teamKey === _tk; });
+        if(!_entry){ alert('找不到對應的紀錄'); return; }
+        const _bh = (_entry.battleHistory || [])[_bIdx];
+        if(!_bh){ alert('找不到該場戰績'); return; }
+        const _t = new Date(_bh.at);
+        const _pad = function(n){ return n<10?'0'+n:''+n; };
+        const _timeStr = (_t.getMonth()+1)+'/'+_t.getDate()+' '+_pad(_t.getHours())+':'+_pad(_t.getMinutes());
+        const _mvpStr = _bh.mvp ? (_bh.mvp.name + ' Lv' + (_bh.mvp.lv||1) + ' 傷害 ' + (_bh.mvp.dmg||0).toLocaleString()) : '—';
+        const _confirmMsg = '⚠️ 確定要刪除這一場戰績?<br><br>' +
+          '隊伍:<b>' + (_entry.teamNames||[]).filter(Boolean).join(' / ') + '</b><br>' +
+          '時間:<b>' + _timeStr + '</b><br>' +
+          '傷害:<b style="color:#ffd066;">' + (_bh.dmg||0).toLocaleString() + '</b><br>' +
+          'MVP:' + _mvpStr + '<br><br>' +
+          '<span style="color:#ffaa66;">📉 該隊總傷會 -' + (_bh.dmg||0).toLocaleString() + ',battles -1</span><br>' +
+          '<span style="color:#aaccff;">🎟️ 該場全隊員「今日場次」會自動 -1 場</span>';
+        const _doDel = async function(){
+          _btn.disabled = true;
+          const _orig = _btn.textContent;
+          _btn.textContent = '刪除中…';
+          try{
+            if(!window._wbHpSync || typeof window._wbHpSync.removeBattleFromHistory !== 'function'){
+              throw new Error('_wbHpSync.removeBattleFromHistory API 不存在');
+            }
+            const _r = await window._wbHpSync.removeBattleFromHistory(BOSS_ID, _tk, _bIdx);
+            if(!_r || !_r.ok){
+              throw new Error('API 失敗:' + ((_r && _r.reason) || 'unknown'));
+            }
+            if(typeof _showSimpleToast === 'function'){
+              _showSimpleToast(
+                '✅ 已刪除該場 -' + (_r.removedDmg||0).toLocaleString() + ' 傷' +
+                (_r.entryRemoved ? '(該隊已歸 0,整筆移除)' : ''),
+                'ok'
+              );
+            }
+            // 關掉 modal 重開,確保資料完全 refresh
+            _closeDetailModal();
+            setTimeout(function(){ _openDetailModal(); }, 300);
+          }catch(e){
+            if(typeof _showSimpleToast === 'function'){
+              _showSimpleToast('❌ 刪除失敗:' + (e&&e.message||e), 'err');
+            } else {
+              alert('刪除失敗:' + (e&&e.message||e));
+            }
+            _btn.disabled = false;
+            _btn.textContent = _orig;
+          }
+        };
+        if(typeof _customConfirm === 'function'){
+          _customConfirm(_confirmMsg, _doDel);
+        } else {
+          if(!confirm(_confirmMsg.replace(/<br>/g,'\n').replace(/<[^>]+>/g,''))) return;
+          await _doDel();
+        }
       });
 
       // 全選/全不選/只勾異常

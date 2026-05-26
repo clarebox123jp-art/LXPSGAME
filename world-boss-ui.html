@@ -1382,6 +1382,35 @@
           + '</div>';
       }
 
+      // ★ v3.10.18 — 最近一場資訊(老師需求:顯示完成時間 + MVP 英雄/傷害值)
+      let _lastBattleRow = '';
+      const _lastBh = (Array.isArray(e.battleHistory) && e.battleHistory[0]) ? e.battleHistory[0] : null;
+      if(_lastBh && _lastBh.at){
+        const _t = new Date(_lastBh.at);
+        const _pad = function(n){ return n<10?'0'+n:''+n; };
+        const _timeStr = (_t.getMonth()+1)+'/'+_t.getDate()+' '+_pad(_t.getHours())+':'+_pad(_t.getMinutes());
+        const _mvpHtml = _lastBh.mvp && _lastBh.mvp.name
+          ? '🗡 <b style="color:#ff8866;">' + _esc(_lastBh.mvp.name) + '</b>' +
+            ' <span style="color:#ffd066;font-size:11px;">Lv' + (_lastBh.mvp.lv||1) + '</span>' +
+            ' <span style="color:#bbb;">傷害 ' + (_lastBh.mvp.dmg||0).toLocaleString() + '</span>'
+          : '';
+        _lastBattleRow = '<div style="font-size:12px;color:#aabbdd;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+                        '<span style="color:#888;">🕒 ' + _timeStr + '</span>' +
+                        (_mvpHtml ? '<span>' + _mvpHtml + '</span>' : '') +
+                        '</div>';
+      }
+
+      // ★ v3.10.18 — 「📜 查看每場」按鈕(只在「我自己的隊伍」顯示;含隱私考量)
+      let _myHistoryBtn = '';
+      if(isMyTeam && Array.isArray(e.battleHistory) && e.battleHistory.length > 0){
+        const _tkEsc = (e.teamKey||'').replace(/"/g,'&quot;');
+        _myHistoryBtn = '<button class="_wb-player-history-btn" data-teamkey="' + _tkEsc + '" ' +
+          'style="margin-top:5px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;' +
+          'background:linear-gradient(135deg,rgba(80,150,200,0.4),rgba(40,100,160,0.6));' +
+          'border:1.5px solid #66bbdd;color:#cce8ff;border-radius:6px;font-family:inherit;">' +
+          '📜 查看我每一場(' + e.battleHistory.length + ')</button>';
+      }
+
       return ''
         + '<div style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
         + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
@@ -1392,7 +1421,9 @@
         +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
         +   _heroesRow            // ★ v3.5.43 — 四隻參戰英雄 + 等級
         +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
+        +   _lastBattleRow        // ★ v3.10.18 — 最近一場時間 + MVP
         +   '<div style="font-size:14px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積</div>'
+        +   _myHistoryBtn         // ★ v3.10.18 — 只有自己的隊伍才能展開每場
         + '</div>'
         + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
         +   _formatDmg(e.totalDmg || 0)
@@ -1409,6 +1440,88 @@
   if(_btn) _btn.onclick = _renderLb;
   // 暴露對外重繪入口
   window._wbRenderCurrentLeaderboard = _renderLb;
+
+  // ★ v3.10.18 — 「📜 查看我每一場」按鈕(老師需求:學生看自己的歷史)
+  //   找排行榜容器,委派 click 監聽(每次 _renderLb 都會重新渲染按鈕,委派最穩)
+  const _lbHost = document.getElementById('wb-leaderboard-list');
+  if(_lbHost){
+    _lbHost.addEventListener('click', function(ev){
+      const _b = ev.target.closest && ev.target.closest('._wb-player-history-btn');
+      if(!_b) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      const _tk = _b.getAttribute('data-teamkey');
+      // 從快取重新撈該隊伍
+      const _gs = window._cachedGlobalStats;
+      const _lbMap = (_gs && _gs.worldBossLeaderboard) || {};
+      const _list = Array.isArray(_lbMap['vesuvius_fire_dragon']) ? _lbMap['vesuvius_fire_dragon'] : [];
+      const _entry = _list.find(function(x){ return x && x.teamKey === _tk; });
+      if(!_entry){ alert('找不到隊伍資料'); return; }
+      _showPlayerHistoryModal(_entry);
+    });
+  }
+
+  // ★ v3.10.18 — 學生自看每一場 modal(類似後台的展開每場,但純展示無刪除權)
+  function _showPlayerHistoryModal(entry){
+    const _old = document.getElementById('_wb-player-history-overlay');
+    if(_old) _old.remove();
+    const _pad = function(n){ return n<10?'0'+n:''+n; };
+    const _escH = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    const _hist = Array.isArray(entry.battleHistory) ? entry.battleHistory : [];
+    const _names = (entry.teamNames||[]).filter(Boolean).join(' / ') || '?';
+    const _bodyHtml = _hist.length === 0
+      ? '<div style="padding:30px 20px;text-align:center;color:#888;font-size:14px;">本隊伍尚無戰績歷史</div>'
+      : _hist.map(function(b, i){
+          const _t = new Date(b.at);
+          const _timeStr = (_t.getMonth()+1)+'/'+_t.getDate()+' '+_pad(_t.getHours())+':'+_pad(_t.getMinutes());
+          const _mvpHtml = b.mvp && b.mvp.name
+            ? '<span style="color:#ff8866;">🗡 <b>' + _escH(b.mvp.name) + '</b>' +
+              ' <span style="color:#ffd066;font-size:12px;">Lv' + (b.mvp.lv||1) + '</span></span>' +
+              ' <span style="color:#ddd;">傷害 <b style="color:#ffe066;">' + (b.mvp.dmg||0).toLocaleString() + '</b></span>'
+            : '<span style="color:#888;">無 MVP 資料</span>';
+          return '<div style="background:rgba(60,80,120,0.18);border-left:4px solid #6699cc;' +
+                 'padding:10px 14px;margin-bottom:6px;border-radius:6px;">' +
+                   '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:4px;">' +
+                     '<span style="color:#888;font-size:12px;">第 ' + (i+1) + ' 場</span>' +
+                     '<span style="color:#aabbdd;font-size:13px;">🕒 ' + _timeStr + '</span>' +
+                     '<span style="color:#ffd066;font-size:15px;font-weight:800;margin-left:auto;">' +
+                        (b.dmg||0).toLocaleString() + ' 傷</span>' +
+                   '</div>' +
+                   '<div style="font-size:13px;line-height:1.7;">' + _mvpHtml + '</div>' +
+                   '<div style="font-size:11px;color:#888;margin-top:2px;">' +
+                     '回合 ' + (b.turns||'—') + ' · 答對 ' + (b.qc||0) +
+                   '</div>' +
+                 '</div>';
+        }).join('');
+    const _overlay = document.createElement('div');
+    _overlay.id = '_wb-player-history-overlay';
+    _overlay.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
+      'background:rgba(0,0,0,0.85);z-index:100002;display:flex;align-items:center;' +
+      'justify-content:center;padding:20px;box-sizing:border-box;';
+    _overlay.innerHTML =
+      '<div style="background:linear-gradient(135deg,rgba(35,30,60,0.98),rgba(20,20,40,0.98));' +
+        'border:2px solid rgba(140,180,230,0.7);border-radius:12px;width:100%;max-width:600px;' +
+        'max-height:85vh;display:flex;flex-direction:column;box-shadow:0 10px 50px rgba(0,0,0,0.8);">' +
+        '<div style="padding:14px 18px;border-bottom:1px solid rgba(140,180,230,0.35);' +
+              'display:flex;align-items:center;gap:10px;">' +
+          '<div style="font-size:17px;font-weight:800;color:#aaccff;flex:1;">' +
+            '📜 戰績歷史 · <span style="color:#fff;">' + _escH(_names) + '</span>' +
+            ' <span style="color:#888;font-size:13px;">(' + _hist.length + ' 場)</span></div>' +
+          '<button id="_wb-player-history-close" style="padding:6px 14px;font-size:13px;' +
+                'background:rgba(80,80,120,0.5);border:1px solid #779;color:#ccc;' +
+                'border-radius:6px;cursor:pointer;font-family:inherit;">關閉 ✕</button>' +
+        '</div>' +
+        '<div style="padding:8px 18px;font-size:12px;color:#bbb;background:rgba(60,80,120,0.2);' +
+              'border-bottom:1px solid rgba(100,140,200,0.25);line-height:1.5;">' +
+          '💡 只保留最近 10 場(避免雲端配額爆掉)。MVP 是該場「最高傷害」的英雄。' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:12px 18px;">' + _bodyHtml + '</div>' +
+      '</div>';
+    document.body.appendChild(_overlay);
+    const _close = function(){ try{ _overlay.remove(); }catch(_){} };
+    _overlay.querySelector('#_wb-player-history-close').onclick = _close;
+    _overlay.onclick = function(ev){ if(ev.target === _overlay) _close(); };
+  }
 })();
 </script>
 

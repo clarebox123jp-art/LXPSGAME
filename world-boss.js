@@ -302,7 +302,7 @@
         Object.assign(HERO_TRAIT, {
           // ★ v3.7.10(2026-05-25) — 護盾觸發回合:第 3/5/7/9,每元素各 1 層
           //   同時補充「全隊聯手爆發 5000 傷害可無視護盾」的攻略提示。
-          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限 1% maxHp;第 3 回合火盾、第 5 回合風盾、第 7 回合土盾、第 9 回合補齊四元素護盾(減傷 80%,沒清會堆疊);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。護盾分四階段啟動,**沒被清掉的盾會持續存在堆疊**:\n・第 3 回合:🔥 火盾 1 層\n・第 5 回合:🌪 風盾 1 層(若火盾未清,共 2 層)\n・第 7 回合:⛰ 土盾 1 層(累積最多 3 層)\n・第 9 回合:火 / 風 / 土 / 🌑 暗 四元素同時補齊到 1 層(若前面累積未清,可能超過 4 層)\n所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應剋制元素(水剋火 / 土剋風 / 草剋土 / 光剋暗)各攻擊 1 次,才能破除對應護盾。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5000 傷害可以無視護盾直接命中。' },
+          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限 1% maxHp;第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每次補滿每個元素各 1 層(同時最多 4 層):所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場 4 階段護盾、最多 16 次破盾機會,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5000 傷害可以無視護盾直接命中。' },
         });
         window.HERO_TRAIT = HERO_TRAIT;
       }
@@ -520,10 +520,7 @@
           維蘇威火山龍王身上浮現由<b>火 / 風 / 土 / 暗</b>四種元素構成的護盾!
           <br><br>
           <b style="color:#ff8866;">護盾規則:</b><br>
-          ・第 <b style="color:#ffaa66;">3</b> 回合 → 🔥 火盾 1 層<br>
-          ・第 <b style="color:#ffaa66;">5</b> 回合 → 🌪 風盾 1 層(沒清會堆疊)<br>
-          ・第 <b style="color:#ffaa66;">7</b> 回合 → ⛰ 土盾 1 層(沒清會堆疊)<br>
-          ・第 <b style="color:#ffaa66;">9</b> 回合 → 火/風/土/🌑 暗 四元素同時補齊<br>
+          ・第 <b style="color:#ffaa66;">3 / 5 / 7 / 9</b> 回合各啟動一次,每元素各 <b>1 層</b>(同時最多 4 層)<br>
           ・所有傷害額外 <b style="color:#ffaa66;">減 80%</b><br>
           ・即使是無視有利狀態的攻擊也<b style="color:#ff6644;">無法打穿</b><br>
           ・單次受傷上限 1% 仍然有效(<b style="color:#ffcc66;">每擊最多 5000 傷害</b>)<br>
@@ -867,6 +864,9 @@
       console.log('[WB-Admin] 已寫入新狀態', newState);
       // ★ FIX 20260518 — 從休戰切到開放(新一輪開戰)時,順手把雲端 BOSS HP 重置為滿血
       //   讓全伺服器看到的 BOSS HP 條回到 100%,進入新一輪挑戰
+      // ★ v3.10.17(2026-05-26)— 新一輪開戰時同步清空排行榜
+      //   原本只重置 HP,但排行榜仍留著上一輪的傷害紀錄/隊伍排名,造成新一輪「開戰瞬間就有人在榜上」的怪現象
+      //   現在 HP + 排行榜同步重置,真正進入「乾淨的新一輪」
       if(st.ceasefire === true && newCeasefire === false){
         try{
           if(window._wbHpSync && typeof window._wbHpSync.resetHp === 'function'){
@@ -877,6 +877,15 @@
             const _bossId = (_curBoss && _curBoss.id) || 'vesuvius_fire_dragon';
             await window._wbHpSync.resetHp(_bossId, _maxHp);
             console.log('[WB-Admin] 開放新一輪 → BOSS HP 重置為滿血', _bossId, _maxHp);
+            // ★ v3.10.17 — 同步清空該 BOSS 的排行榜(含 battleHistory / championStats / dmgSources)
+            if(typeof window._wbHpSync.clearLeaderboard === 'function'){
+              try{
+                const _clearRes = await window._wbHpSync.clearLeaderboard(_bossId);
+                console.log('[WB-Admin] 開放新一輪 → 排行榜已清空', _clearRes);
+              }catch(eCl){
+                console.warn('[WB-Admin] 清空排行榜失敗(仍繼續開放,管理員可後台手動清)', eCl);
+              }
+            }
           }
         }catch(eR){ console.warn('[WB-Admin] 重置 BOSS HP 失敗', eR); }
       }
@@ -1286,28 +1295,16 @@
     dark:  ['light'],    // 暗克光
   };
   window._WB_ELEMENT_COUNTER = WB_ELEMENT_COUNTER;
-  // ★ 護盾觸發機制:依回合數觸發(第 3 / 5 / 7 / 9 回合,每階段補不同元素)
-  //   ★ v3.7.11(2026-05-26) — 老師決策變動:
-  //     舊版(v3.7.10):每階段(R3/R5/R7/R9)一次補滿 4 元素 → 整場最多 4 層同時存在
-  //     新版(v3.7.11):
-  //       R3 → 只加「第 1 個元素」(維蘇威=火)→ 同時 1 層
-  //       R5 → 只加「第 2 個元素」(維蘇威=風)→ 若 R3 未清還在 = 2 層
-  //       R7 → 只加「第 3 個元素」(維蘇威=土)→ 若前面未清 = 最多 3 層
-  //       R9 → 把「全 4 個元素」都補到 1 層(維蘇威=火/風/土/暗)→ 玩家若一直拖,可能 4 層
-  //     堆疊規則:每階段都用 Math.max(_cur, 1),已破除的元素會重新補回 1 層;
-  //              已有層數不會被覆蓋。沒被清掉的盾就持續存在。
+  // ★ 護盾觸發機制:依回合數觸發(第 3 / 5 / 7 / 9 回合,每元素各 1 層)
+  //   每階段 4 個元素各 1 層 → 同時最多 4 層,整場累計最多 16 次破盾機會。
   //   在第 9 回合最後一次設盾、第 10 回合要打掉才不會被崩毀掩埋。
   //   _wbCheckShieldTrigger 由「BOSS 受傷時」與「startTurn 後」呼叫,
   //   內部判定「回合數命中 + 還沒觸發過該回合」才啟動。
-  //
-  // 結構說明:
-  //   - elementIndex:取 myElements[elementIndex] 該個元素,只補這一個
-  //   - addAll:true 表示「全部元素都補」(R9 終局四元素同時出)
   const WB_SHIELD_TRIGGERS = [
-    { round: 3, label:'R3', elementIndex: 0 },              // ★ v3.7.11 — 只加第 1 個元素(維蘇威=火)
-    { round: 5, label:'R5', elementIndex: 1 },              // ★ v3.7.11 — 只加第 2 個元素(維蘇威=風)
-    { round: 7, label:'R7', elementIndex: 2 },              // ★ v3.7.11 — 只加第 3 個元素(維蘇威=土)
-    { round: 9, label:'R9', addAll: true },                 // ★ v3.7.11 — 補齊 4 元素(維蘇威=火/風/土/暗)
+    { round: 3, label:'R3' },
+    { round: 5, label:'R5' },
+    { round: 7, label:'R7' },
+    { round: 9, label:'R9' },
   ];
 
   // 取當前回合數(從主程式 G 讀)
@@ -1342,27 +1339,16 @@
             myElements = config.shieldElements;
           }
         }catch(_){}
-        // ★ v3.7.11(2026-05-26) — 護盾改成「逐階段加 1 元素 / R9 補齊 4 元素」
-        //   邏輯:
-        //     - 非 R9(t.elementIndex 有值):只把 myElements[elementIndex] 補到 1 層
-        //     - R9(t.addAll === true):4 元素全部用 max(_cur, 1)
-        //   未被清除的盾持續存在(Math.max 不會覆蓋舊值)
+        // ★ v3.7.10 — 每個元素 1 層(節奏一致 + 4 次薄盾)
+        //   邏輯:已有元素 >= 1 維持、< 1 補回 1 → 同時最多 4 層
+        //   配合 4 次階段(R3/R5/R7/R9) → 整場累計最多 16 次破盾機會
+        //   ⚠ 護盾元素清單仍依新階段更新(boss._wbShieldElements),確保 UI 顯示正確
         boss._wbShields = boss._wbShields || {};
-        if(t.addAll){
-          // R9:全部元素都補(若已有層數則維持,否則補 1)
-          myElements.forEach(function(el){
-            const _cur = boss._wbShields[el] || 0;
-            boss._wbShields[el] = Math.max(_cur, 1);
-          });
-        }else if(typeof t.elementIndex === 'number'){
-          // R3/R5/R7:只加單一指定元素
-          const _onlyEl = myElements[t.elementIndex];
-          if(_onlyEl){
-            const _cur = boss._wbShields[_onlyEl] || 0;
-            boss._wbShields[_onlyEl] = Math.max(_cur, 1);
-          }
-        }
-        // 護盾元素清單 — UI 顯示用,維持當前 BOSS 的完整 4 元素設定(讓 UI 能正確著色全部 slot)
+        myElements.forEach(el => {
+          const _cur = boss._wbShields[el] || 0;
+          boss._wbShields[el] = Math.max(_cur, 1);
+        });
+        // 同時記錄這次護盾的元素清單(給 UI 渲染用)
         boss._wbShieldElements = myElements.slice();
         // 只觸發最早未觸發的那個階段,避免一口氣補多階段
         break;
@@ -2168,9 +2154,6 @@
     //   避免:(a) 雙重觸發(兩處都跑滅絕)、(b) 房主端 sync 給 client 後本機又跑一次
     if((G.round || 1) >= 11 && !window._wbCollapseTriggered){
       window._wbCollapseTriggered = true;
-      // ★ v3.7.11(2026-05-26) — 標記崩毀,讓 checkWin 結算時用 'defeat_timeout' reason
-      //   (跟一般 2 次接關用完的滅團區分 — 都算 +1,但 log 可區分)
-      window._wbCollapseReason = 'timeout_11r';
       // ★ FIX 20260517 — 滅絕也算技能,播技能音效
       try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
       if(typeof log === 'function') log('💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!');
