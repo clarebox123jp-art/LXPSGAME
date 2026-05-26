@@ -175,6 +175,7 @@ async function _showAdminStatsPanelImpl(){
       #_admin-rescue-section { order: 5; }              /* 玩家急救 */
       #_admin-comp-section { order: 6; }                /* 學生補償 */
       #_admin-designer-grant-section { order: 6.5; }     /* ★ v3.10.2 — 設計師英雄一鍵補發 */
+      #_admin-trust-revoke-section { order: 6.7; }       /* ★ v3.10.3 — 撤銷學生信任裝置 */
       #_admin-dlperm-section { order: 7; }              /* 下載權限 */
       #_admin-sus-section { order: 8; }                 /* 可疑帳號 */
       #_admin-wblb-section { order: 9; }                /* 世界 BOSS 榜 */
@@ -552,6 +553,37 @@ async function _showAdminStatsPanelImpl(){
         </div>
         <div id="_admin-designer-grant-result" style="font-size:13px;color:#ddd;line-height:1.65;padding:10px;
           background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:300px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- ★ v3.10.3(2026-05-26) — 撤銷學生「裝置信任」 -->
+      <!--
+        用途:某學生反映「公用平板被勾了信任,要清掉」、或學生裝置遺失/借走時用。
+        撤銷後該學生所有信任裝置失效,下次任何裝置都要重新登入。
+      -->
+      <div id="_admin-trust-revoke-section" style="background:rgba(30,40,60,0.5);border:2px solid rgba(120,180,255,0.65);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#88bbff;margin-bottom:8px;">🔐 3.7 撤銷學生「裝置信任」</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          當學生反映「公用平板自動進到我的帳號」或「裝置遺失/借走」時,用此工具清空該學生<b style="color:#ffcc88;">所有已信任的裝置</b>。<br>
+          撤銷後該學生在任何裝置都要重新登入。<span style="color:#aaffcc;">不影響玩家本人或帳號資料,只清「信任名單」。</span><br>
+          <span style="color:#888;font-size:12px;">學生本人也可在 PWA 首頁右下角點「已信任此裝置」自行取消(只清那一台)。</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-trust-email" type="text" placeholder="學生 email (如 lsps110176@stu.lsps.tp.edu.tw)"
+            style="flex:1;min-width:240px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(120,180,255,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-trust-check" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(120,180,255,0.2);border:2px solid #88bbff;color:#aaccff;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔍 查信任裝置
+          </button>
+          <button id="_admin-trust-revoke" style="padding:8px 16px;font-size:13px;font-weight:800;
+            background:rgba(255,150,150,0.2);border:2px solid #ff8888;color:#ffaaaa;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            ❌ 撤銷全部
+          </button>
+        </div>
+        <div id="_admin-trust-result" style="font-size:13px;color:#ddd;line-height:1.65;padding:10px;
+          background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:200px;overflow-y:auto;"></div>
       </div>
 
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
@@ -3437,6 +3469,119 @@ async function _showAdminStatsPanelImpl(){
 
     _previewBtn.onclick = function(){ _runGrant(true); };
     _applyBtn.onclick   = function(){ _runGrant(false); };
+  })();
+
+  // ★★★ v3.10.3(2026-05-26) — 3.7 撤銷學生「裝置信任」JS 邏輯 ★★★
+  (function _initTrustRevokeTool(){
+    const _emailInput = document.getElementById('_admin-trust-email');
+    const _checkBtn   = document.getElementById('_admin-trust-check');
+    const _revokeBtn  = document.getElementById('_admin-trust-revoke');
+    const _resultBox  = document.getElementById('_admin-trust-result');
+    if(!_emailInput || !_checkBtn || !_revokeBtn || !_resultBox) return;
+
+    const _esc = function(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+
+    let _curUid = null;
+    let _curTrustedDevices = null;
+
+    // 查信任裝置清單
+    _checkBtn.onclick = async function(){
+      const _e = (_emailInput.value || '').trim().toLowerCase();
+      if(!_e){
+        alert('請輸入學生 email');
+        return;
+      }
+      _checkBtn.disabled = true;
+      _checkBtn.textContent = '查詢中...';
+      _resultBox.style.display = 'block';
+      _resultBox.innerHTML = '<span style="color:#aaa;">⏳ 查詢中...</span>';
+
+      try{
+        if(typeof window._fbFindByEmail !== 'function'){
+          throw new Error('_fbFindByEmail 未就緒');
+        }
+        const _player = await window._fbFindByEmail(_e);
+        if(!_player || !_player.uid){
+          _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 找不到此 email 對應的玩家</span>';
+          _curUid = null;
+          _curTrustedDevices = null;
+          return;
+        }
+        _curUid = _player.uid;
+        const _td = _player.trustedDevices || {};
+        _curTrustedDevices = _td;
+        const _activeDevices = Object.keys(_td).filter(k => _td[k] && _td[k].trusted === true);
+        const _allCount = Object.keys(_td).length;
+        if(_activeDevices.length === 0){
+          _resultBox.innerHTML =
+            '<div style="color:#aabbcc;">'
+            + '✅ 此學生<b style="color:#aaffcc;">目前沒有任何信任裝置</b>(無需撤銷)<br>'
+            + '<span style="font-size:12px;color:#888;">'
+            + (_allCount > 0 ? '(歷史紀錄:' + _allCount + ' 筆,皆已撤銷)' : '(從未啟用過信任)')
+            + '</span>'
+            + '</div>';
+          return;
+        }
+        // 列出每台信任裝置
+        let html = '<div style="color:#aaccff;font-weight:700;margin-bottom:6px;">'
+                 + '🔐 目前有 <b style="color:#ffcc88;">' + _activeDevices.length + '</b> 台信任裝置:'
+                 + '</div>';
+        _activeDevices.forEach(function(devId, idx){
+          const _info = _td[devId] || {};
+          const _ts = _info.trustedAt ? new Date(_info.trustedAt).toLocaleString('zh-TW') : '(未知)';
+          html += '<div style="padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:6px;margin-bottom:4px;border-left:3px solid #66aaff;">'
+                + '<div><b style="color:#aaccff;">' + (idx+1) + '. ' + _esc(_info.label || '裝置(未命名)') + '</b></div>'
+                + '<div style="font-size:11px;color:#888;font-family:monospace;">deviceId: ' + _esc(devId) + '</div>'
+                + '<div style="font-size:11px;color:#aabbcc;">信任時間:' + _esc(_ts) + '</div>'
+                + '</div>';
+        });
+        _resultBox.innerHTML = html;
+      }catch(e){
+        console.error('[3.7 查信任裝置]', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 查詢失敗:' + _esc(e && e.message || String(e)) + '</span>';
+        _curUid = null;
+      }finally{
+        _checkBtn.disabled = false;
+        _checkBtn.textContent = '🔍 查信任裝置';
+      }
+    };
+
+    // 撤銷全部信任
+    _revokeBtn.onclick = async function(){
+      if(!_curUid){
+        alert('請先點「查信任裝置」找到玩家');
+        return;
+      }
+      if(!confirm('確定要撤銷此學生「所有」信任裝置嗎?\n\n'
+        + '撤銷後該學生下次在任何裝置都要重新登入。\n'
+        + '不會影響玩家本人或帳號資料,只清「信任名單」。')){
+        return;
+      }
+      _revokeBtn.disabled = true;
+      _revokeBtn.textContent = '撤銷中...';
+      try{
+        if(!window._lxpsDeviceTrust || !window._lxpsDeviceTrust.revokeAllTrustedDevices){
+          throw new Error('_lxpsDeviceTrust 模組未就緒');
+        }
+        const _ok = await window._lxpsDeviceTrust.revokeAllTrustedDevices(_curUid);
+        if(_ok){
+          _resultBox.innerHTML = '<span style="color:#aaffcc;">✅ 已撤銷該學生所有信任裝置,'
+                              + '下次任何裝置都要重新登入</span>';
+          _curTrustedDevices = null;
+        } else {
+          _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 撤銷失敗,請查 console 詳情</span>';
+        }
+      }catch(e){
+        console.error('[3.7 撤銷信任]', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 撤銷例外:' + _esc(e && e.message || String(e)) + '</span>';
+      }finally{
+        _revokeBtn.disabled = false;
+        _revokeBtn.textContent = '❌ 撤銷全部';
+      }
+    };
   })();
 
   // ★★★ v3.5.37 — 3.7 Lv1 救援工具 JS 邏輯 ★★★
