@@ -10020,6 +10020,25 @@
       }catch(_eTbCap){ console.warn('[WB-FireTeamBurst] teamBurst cinematic capture 失敗', _eTbCap); }
       setTimeout(function(){
         try{ if(typeof playSfx === 'function') playSfx('sfx-burst', 0.95); }catch(_){}
+        // ★ v3.11.1(2026-05-27) — 追加「四人聯手攻擊.mp3」外部音效(老師指定)
+        //   為什麼用 new Audio() 而非 playSfx?
+        //   - playSfx 是吃預先註冊的 sfx-xxx ID,而老師給的是 GitHub raw URL 的 mp3
+        //   - 用 new Audio + crossOrigin='anonymous' 直接串流播放外部 mp3
+        //   - 失敗時靜默(catch 內 console.warn),不阻擋其他特效
+        //   音量 0.85(略低於 sfx-burst 的 0.95,避免兩個音疊在一起爆音)
+        try{
+          const _teamSfx = new Audio('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9B%9B%E4%BA%BA%E8%81%AF%E6%89%8B%E6%94%BB%E6%93%8A.mp3');
+          _teamSfx.volume = 0.85;
+          _teamSfx.crossOrigin = 'anonymous';
+          // 播放失敗(自動播放被擋、檔案 404、CORS 等)只 warn 不丟錯
+          _teamSfx.play().catch(function(_eAud){
+            try{ console.warn('[WB-FireTeamBurst v3.11.1] 聯手攻擊 mp3 播放失敗', _eAud); }catch(_){}
+          });
+          // 播完自動釋放(避免累積 Audio 物件)
+          _teamSfx.addEventListener('ended', function(){
+            try{ _teamSfx.src = ''; }catch(_){}
+          });
+        }catch(_eTeamSfx){ try{ console.warn('[WB-FireTeamBurst v3.11.1] 聯手攻擊 mp3 建立失敗', _eTeamSfx); }catch(_){} }
         try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,200,80,1)', 450); }catch(_){}
         try{
           if(typeof cardRect === 'function' && typeof spawnParticles === 'function'){
@@ -10260,6 +10279,29 @@
       speedLines.style.transition = 'opacity 0.4s ease-out';
       setTimeout(() => { if(speedLines.parentNode) speedLines.remove(); }, 500);
     }, 700);
+
+    // ── (2b) ★ v3.11.1 — 「四人聯手爆發.gif」全螢幕特效 ──
+    //   老師需求(2026/05/27):追加聯手爆發專屬視覺特效,跟集中效果線疊播強化氣勢
+    //   z-index:461(集中效果線下方一層,讓集中線疊在上面;比 4 人圖 460 高一點)
+    //   持續 1.2 秒(比集中效果線 700ms 久,讓主視覺持續到大字消失後)
+    const teamBurstFx = document.createElement('div');
+    teamBurstFx.id = 'wb-team-burst-fx-gif';
+    teamBurstFx.style.cssText = [
+      'position:absolute;inset:0;z-index:461;pointer-events:none;',
+      'background-image:url("https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9B%9B%E4%BA%BA%E8%81%AF%E6%89%8B%E7%88%86%E7%99%BC.gif");',
+      'background-size:cover;background-position:center;',
+      'background-repeat:no-repeat;',
+      'opacity:0;transition:opacity 0.2s ease-in;'
+    ].join('');
+    gc.appendChild(teamBurstFx);
+    void teamBurstFx.offsetWidth;
+    teamBurstFx.style.opacity = '1';
+    setTimeout(() => {
+      teamBurstFx.style.opacity = '0';
+      teamBurstFx.style.transition = 'opacity 0.4s ease-out';
+      setTimeout(() => { if(teamBurstFx.parentNode) teamBurstFx.remove(); }, 500);
+    }, 1200);
+
 
     // 強制 reflow 再淡入
     void imgPanel.offsetWidth;
