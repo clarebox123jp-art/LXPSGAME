@@ -3143,17 +3143,91 @@
 
   // 世界戰結算頁(簡化版,沿用 world-boss-ui.html 的 _wbShowSoloPracticeResult 邏輯)
   function _wbShowAdvBattleResult(win){
-    // 把世界戰戰績寫進 _wbSoloContrib(_wbSaveSoloBest 會讀)
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.8(2026-05-27) — 結算傷害來源修正 + 模式區分
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報:打完世界 BOSS,結算顯示「練習模式、累積傷害 0」,但實際是房主開房 + 有上排行榜。
+    // 根因:
+    //   (a) myDmg 只讀 window._wbSoloContrib(練習模式才寫),連線房主的貢獻寫在
+    //       window._wbNet.getSnapshot().meta.contributions[uid].dmgDealt → 永遠取不到
+    //   (b) _wbSaveSoloBest 不分情境都寫進「練習模式個人最佳」,結算頁顯示「練習模式」
+    // 修補:
+    //   - myDmg 改成多源取:連線房主 → meta.contributions(全隊累積);
+    //                       單人練習 → _wbSoloContrib(本機紀錄);
+    //                       fallback 0
+    //   - 用 isSolo 判斷模式,傳給結算 UI;_wbSaveSoloBest 只有真 solo 才寫
+    // ════════════════════════════════════════════════════════════════
     const myUid = window._gUserId || 'solo_user';
-    const myDmg = (window._wbSoloContrib && window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
+    const isSolo = !!window._wbSoloPracticeMode;
+    const isHost = !!window._wbConnectedHostMode;
+
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.8(2026-05-27) — 結算傷害來源修正 + 模式區分 + 個人最佳紀錄共用
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報 1:打完世界 BOSS,結算顯示「練習模式、累積傷害 0」,但實際是房主開房 + 有上排行榜
+    // 老師回報 2:結算頁要顯示「練習 + 連線房主共用的個人最佳紀錄」+ 破紀錄比較
+    // 根因:
+    //   (a) myDmg 只讀 window._wbSoloContrib(練習模式才寫),連線房主應從
+    //       window._wbNet.getSnapshot().meta.contributions[uid].dmgDealt 讀
+    //   (b) _wbSaveSoloBest 只在 isSolo 才寫 → 連線房主玩再多場也不更新個人最佳
+    // 修補:
+    //   - 算兩個傷害值:
+    //       myDmg     = 「你個人」傷害(房主就是房主自己;練習就是你本機)→ 用於破紀錄比較
+    //       teamDmg   = 「全隊累積」傷害(只在連線模式有意義;練習等同 myDmg)→ 用於結算顯示
+    //   - 練習 + 連線房主**都**呼叫 _wbSaveSoloBest(共用同一份 localStorage)
+    //   - 結算頁顯示:本場傷害 + 個人最佳 + 破紀錄/差距
+    // ════════════════════════════════════════════════════════════════
+    let myDmg = 0;     // 你個人的傷害(破紀錄比較用)
+    let teamDmg = 0;   // 全隊累積傷害(連線模式顯示用,練習等同 myDmg)
+    try{
+      if(!isSolo && window._wbNet && typeof window._wbNet.getSnapshot === 'function'){
+        // ── 連線模式 ──
+        const _snap = window._wbNet.getSnapshot();
+        const _contrib = (_snap && _snap.meta && _snap.meta.contributions) || {};
+        Object.keys(_contrib).forEach(_u => {
+          const _d = (_contrib[_u] && typeof _contrib[_u].dmgDealt === 'number') ? _contrib[_u].dmgDealt : 0;
+          teamDmg += _d;
+          if(_u === myUid) myDmg = _d;
+        });
+        // 房主代打槽:如果有 host_npc_X 也屬於我的貢獻 → 一併加進 myDmg
+        if(isHost){
+          Object.keys(_contrib).forEach(_u => {
+            if(/^host_npc_/i.test(_u)){
+              const _d = (_contrib[_u] && typeof _contrib[_u].dmgDealt === 'number') ? _contrib[_u].dmgDealt : 0;
+              myDmg += _d;
+            }
+          });
+        }
+      }
+      // ── 單人練習(或連線取不到資料時的 fallback)──
+      if(myDmg === 0 && window._wbSoloContrib && window._wbSoloContrib[myUid]){
+        myDmg = window._wbSoloContrib[myUid].dmgDealt || 0;
+      }
+      if(teamDmg === 0) teamDmg = myDmg;  // 練習模式 teamDmg 等同 myDmg
+    }catch(_eMyDmg){ console.warn('[WB-Result v3.11.8] myDmg/teamDmg 計算例外', _eMyDmg); }
+    try{ console.log('[WB-Result v3.11.8] isSolo=' + isSolo + ', isHost=' + isHost + ', myDmg=' + myDmg + ', teamDmg=' + teamDmg); }catch(_){}
+
     // 4 隻英雄名
     const _Gr = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
     const heroes = (_Gr && _Gr.p1) ? _Gr.p1.map(h => h ? h.name : '?') : [];
     const elapsed = Date.now() - (window._wbSoloStartTs || Date.now());
+
+    // ★ v3.11.8 — 取既有個人最佳紀錄(供結算頁顯示破紀錄/差距)
+    let _prevBest = null;
+    try{
+      if(typeof window._wbGetSoloBest === 'function'){
+        _prevBest = window._wbGetSoloBest('vesuvius_fire_dragon');
+      }
+    }catch(_){}
+
+    // ★ v3.11.8 — 練習 + 連線房主**都**寫個人最佳紀錄(共用同一份 localStorage)
+    //   比較基準:你個人的傷害(myDmg),不是全隊
+    //   mode 標記:'solo'(練習)/ 'host'(連線房主)/ 'client'(連線非房主,目前不會走到這流程)
     let isNewRecord = false;
     try{
       if(typeof window._wbSaveSoloBest === 'function'){
-        isNewRecord = window._wbSaveSoloBest(myDmg, heroes, elapsed, win);
+        const _mode = isSolo ? 'solo' : (isHost ? 'host' : 'client');
+        isNewRecord = window._wbSaveSoloBest(myDmg, heroes, elapsed, win, _mode);
       }
     }catch(_){}
 
@@ -3303,19 +3377,36 @@
                 ? window._wbCalcTeamId(_teamUids)
                 : _teamUids.slice().sort().join('|');
               // ★ FIX 20260519(v13) — 算 tiebreaker 資料
+              // ★ v3.11.8(2026-05-27) — 新增 teamBurstCount(本場聯手爆發觸發次數)
+              //                          + turns 改抓 G.round(主程式戰鬥引擎用 round 不是 turn)
+              //   bug 修補:G.turn 在 _wbSetupAdvForBattle 設成 0 之後就沒人 incr,永遠 0;
+              //             真實回合數要從 G.round 抓(主程式 nextRound 會 incr)。
+              //   fallback:若 G.round 也沒有(不該發生)就用 G.turn,再 fallback 0。
               const _tieBreaker = {
-                turns: (_Gr && _Gr.turn) || 0,
+                turns: (_Gr && _Gr.round) || (_Gr && _Gr.turn) || 0,
                 aliveCount: (_Gr && _Gr.p1) ? _Gr.p1.filter(h => h && h.curHp > 0).length : 0,
                 quizCorrect: 0,
+                teamBurstCount: (typeof window._wbTeamBurstFiredCount === 'number')
+                                ? window._wbTeamBurstFiredCount : 0,
               };
               try{
-                // 算本場玩家答對問題數(從 window._wbQuizState 累計)
+                // ════════════════════════════════════════════════════════════════
+                // ★ v3.11.8(2026-05-27) — 修補 quizCorrect 永遠 0 的 bug
+                // ────────────────────────────────────────────────────────────────
+                // 老師回報:歷史紀錄顯示「回合 — · 答對 0」
+                // 根因:_wbMarkQuiz(line ~9703) 寫入結構是 { ok: bool, ts: Date.now() },
+                //       但這裡讀 _v.correct(完全沒這個欄位)→ 永遠 undefined → 永遠 0。
+                //       turns 顯示「—」是因為 G.turn 未定義/為 0 時被 UI 當成空。
+                // 修補:讀 _v.ok === true 累計,每題答對 +1。
+                //       (key 是 __q_t<turn>_p<pos>,代表「第 turn 回合第 pos 玩家的答題」)
+                // ════════════════════════════════════════════════════════════════
                 const _qs = window._wbQuizState || {};
                 Object.keys(_qs).forEach(_k => {
                   const _v = _qs[_k];
-                  if(_v && _v.correct) _tieBreaker.quizCorrect += _v.correct;
+                  if(_v && _v.ok === true) _tieBreaker.quizCorrect += 1;
                 });
-              }catch(_){}
+              }catch(_eQc){ console.warn('[WB-Leaderboard v3.11.8] quizCorrect 累計例外', _eQc); }
+              try{ console.log('[WB-Leaderboard v3.11.8] tieBreaker:', _tieBreaker); }catch(_){}
               if(_teamKey){
                 // ★★★ v3.5.43 — 計算四個冠軍 + 收集 dmgSources(老師需求) ★★★
                 //   只統計 *Real 欄位(已排除答題獎勵 / 聯手爆發 / 固定傷害)
@@ -3473,13 +3564,37 @@
     }
 
     if(typeof window._wbShowSoloPracticeResult === 'function'){
+      // ★ v3.11.8(2026-05-27) — 抓本場 3 個關鍵數據傳給結算頁顯示
+      //   turns = G.round(總回合,主程式戰鬥引擎用 round 不是 turn;G.turn 永遠是 0)
+      //   quizCorrect = window._wbQuizState 累計答對數(_v.ok === true 才算)
+      //   teamBurstCount = window._wbTeamBurstFiredCount(本場聯手爆發觸發次數)
+      let _battleTurns = 0, _battleQuizCorrect = 0, _battleTeamBurst = 0;
+      try{
+        _battleTurns = (_Gr && _Gr.round) || (_Gr && _Gr.turn) || 0;
+        const _qs = window._wbQuizState || {};
+        Object.keys(_qs).forEach(_k => {
+          if(_qs[_k] && _qs[_k].ok === true) _battleQuizCorrect += 1;
+        });
+        _battleTeamBurst = (typeof window._wbTeamBurstFiredCount === 'number')
+                         ? window._wbTeamBurstFiredCount : 0;
+      }catch(_eStat){ console.warn('[WB-Result v3.11.8] 統計抓取例外', _eStat); }
+      try{ console.log('[WB-Result v3.11.8] battleTurns=' + _battleTurns + ', quizCorrect=' + _battleQuizCorrect + ', teamBurst=' + _battleTeamBurst); }catch(_){}
+
       window._wbShowSoloPracticeResult({
-        dmg: myDmg,
+        dmg: myDmg,                  // ★ v3.11.8 — 改為傳「你個人」傷害(破紀錄比較基準)
+        teamDmg: teamDmg,            // ★ v3.11.8 — 連線模式才有意義,練習等同 myDmg
         heroes: heroes,
         elapsed: elapsed,
         killed: win,
         isNewRecord: isNewRecord,
         evalStats: evalStats,    // ★ 新增評比數據
+        // ★ v3.11.8 — 新增:模式標記 + 本場 3 大數據 + 個人最佳對照
+        isSolo: isSolo,
+        isHost: isHost,
+        battleTurns: _battleTurns,
+        battleQuizCorrect: _battleQuizCorrect,
+        battleTeamBurst: _battleTeamBurst,
+        prevBest: _prevBest,         // 結算前的個人最佳(供顯示「破紀錄/未破紀錄」對照)
       });
     }else{
       // fallback alert
@@ -3541,6 +3656,8 @@
     window._wbCollapseTriggered = false;
     // ★ v3.11.6(2026-05-27) — 同時清新版「DONE」旗標
     window._wbCollapseDone = false;
+    // ★ v3.11.8(2026-05-27) — 清聯手爆發觸發次數(供下場戰鬥重新累計)
+    window._wbTeamBurstFiredCount = 0;
   }
   window._wbShowAdvBattleResult = _wbShowAdvBattleResult;
 

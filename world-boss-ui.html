@@ -1383,6 +1383,7 @@
       }
 
       // ★ v3.10.18 — 最近一場資訊(老師需求:顯示完成時間 + MVP 英雄/傷害值)
+      // ★ v3.11.8 — 加上 3 個本場數據:回合 / 答對 / 聯手爆發次數
       let _lastBattleRow = '';
       const _lastBh = (Array.isArray(e.battleHistory) && e.battleHistory[0]) ? e.battleHistory[0] : null;
       if(_lastBh && _lastBh.at){
@@ -1394,9 +1395,16 @@
             ' <span style="color:#ffd066;font-size:11px;">Lv' + (_lastBh.mvp.lv||1) + '</span>' +
             ' <span style="color:#bbb;">傷害 ' + (_lastBh.mvp.dmg||0).toLocaleString() + '</span>'
           : '';
+        // ★ v3.11.8 — 3 個本場數據(回合/答對/聯手爆發次數)
+        const _statsHtml = '<span style="color:#aaccee;">⏱ ' + (_lastBh.turns || '—') + ' 回合</span>' +
+                           ' · <span style="color:#ffd066;">📚 ' + (_lastBh.qc || 0) + ' 題</span>' +
+                           ' · <span style="color:#ff9966;">💥 ' + (_lastBh.tb || 0) + ' 次爆發</span>';
         _lastBattleRow = '<div style="font-size:12px;color:#aabbdd;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
                         '<span style="color:#888;">🕒 ' + _timeStr + '</span>' +
                         (_mvpHtml ? '<span>' + _mvpHtml + '</span>' : '') +
+                        '</div>' +
+                        '<div style="font-size:12px;margin-top:2px;letter-spacing:0.5px;">' +
+                        _statsHtml +
                         '</div>';
       }
 
@@ -1489,7 +1497,8 @@
                    '</div>' +
                    '<div style="font-size:13px;line-height:1.7;">' + _mvpHtml + '</div>' +
                    '<div style="font-size:11px;color:#888;margin-top:2px;">' +
-                     '回合 ' + (b.turns||'—') + ' · 答對 ' + (b.qc||0) +
+                     '回合 ' + (b.turns||'—') + ' · 答對 ' + (b.qc||0) + ' 題' +
+                     ' · 💥 聯手爆發 ' + (b.tb||0) + ' 次' +
                    '</div>' +
                  '</div>';
         }).join('');
@@ -9980,6 +9989,10 @@
       if(window._wbPendingTeamBurstTid){ clearTimeout(window._wbPendingTeamBurstTid); window._wbPendingTeamBurstTid = null; }
     }catch(_){}
 
+    // ★ v3.11.8(2026-05-27) — 累計本場聯手爆發觸發次數(供排行榜顯示)
+    //   每次成功觸發 +1,進新場時 cleanup 會 reset 為 0
+    try{ window._wbTeamBurstFiredCount = (window._wbTeamBurstFiredCount || 0) + 1; }catch(_){}
+
     const _cnt = _pending.cnt;
     const _isClient = !!_pending.isClient;
     const G = (typeof window._wbGetG === 'function') ? (window._wbGetG() || window._wbHostG)
@@ -11162,21 +11175,31 @@
   // 暴露給其他地方手動觸發更新
   window._wbUpdateSoloBestDisplay = _wbUpdateSoloBestDisplay;
 
+  // ★ v3.11.8(2026-05-27) — 個人最佳紀錄改為「練習+連線房主共用」
+  //   老師需求:結算畫面顯示「練習模式 + 開房模式共用的最高傷害紀錄」
+  //             (只比同一隻龍王,新場可比較有沒有破紀錄)
+  //   設計:
+  //     - 同一 localStorage key('wbSoloBest_<bossId>'),練習/連線都寫
+  //     - 紀錄結構新增 mode 欄位('solo' / 'host')標示是哪種模式創下的紀錄
+  //     - dmg 為「該玩家自己的總傷」(練習=自己 + 三個 host npc;連線=房主自己一個人)
+  //       不是「全隊累積總傷」,避免連線模式佔便宜
+  //     - 結算頁會同時顯示「本場傷害 vs 個人最佳」+ 破紀錄標記
   // 儲存紀錄(只儲存比原本高的)
-  function _wbSaveSoloBest(dmg, heroes, elapsed, killed){
+  function _wbSaveSoloBest(dmg, heroes, elapsed, killed, mode){
     try{
       const bossId = 'vesuvius_fire_dragon';
       const key = 'wbSoloBest_' + bossId;
       const oldRaw = localStorage.getItem(key);
       const old = oldRaw ? JSON.parse(oldRaw) : null;
       // 只有比原本高才寫入
-      if(old && old.dmg >= dmg) return false;
+      if(old && (old.dmg || 0) >= dmg) return false;
       const rec = {
         dmg: dmg,
         heroes: heroes,
         elapsed: elapsed,
         killed: killed,
         ts: Date.now(),
+        mode: mode || 'solo',  // ★ v3.11.8 — 標記是哪種模式的紀錄
       };
       localStorage.setItem(key, JSON.stringify(rec));
       _wbUpdateSoloBestDisplay();
@@ -11184,6 +11207,17 @@
     }catch(e){ console.warn('[WB-Solo] 儲存紀錄失敗', e); return false; }
   }
   window._wbSaveSoloBest = _wbSaveSoloBest;
+
+  // ★ v3.11.8(2026-05-27) — 對外暴露讀取最佳紀錄(供結算頁顯示「破紀錄/未破紀錄」用)
+  window._wbGetSoloBest = function(bossId){
+    try{
+      const _bid = bossId || 'vesuvius_fire_dragon';
+      const raw = localStorage.getItem('wbSoloBest_' + _bid);
+      if(!raw) return null;
+      const rec = JSON.parse(raw);
+      return (rec && typeof rec.dmg === 'number') ? rec : null;
+    }catch(_){ return null; }
+  };
 
   window._wbUiSoloTest = async function(){
     if(typeof newHero !== 'function'){
@@ -12824,22 +12858,214 @@
       </div>
     ` : '';
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.8(2026-05-27) — 結算頁區分「練習模式」vs「連線房主」
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報:打完世界 BOSS,結算誤顯示「練習模式、累積傷害 0」,但實際是房主開房 + 上排行榜。
+    // 修補:根據 info.isSolo 切換:
+    //   - 練習模式:沿用「🧪 練習結束」+「本場你的總傷害」+「練習模式不發獎勵」
+    //   - 連線房主:改顯示「⚔ 戰鬥結算」+「本場全隊累積傷害」+「已上傳排行榜」
+    // 同時新增 3 個本場數據卡(老師需求):總回合數、答對題數、聯手爆發次數
+    // ════════════════════════════════════════════════════════════════
+    const _isSolo = !!info.isSolo;
+    const _modeTitleHtml = _isSolo
+      ? `<div style="font-size:48px;margin-bottom:14px;">🧪</div>
+         <div style="font-size:36px;color:#5dcaa5;font-weight:900;letter-spacing:3px;margin-bottom:10px;">練習結束</div>`
+      : `<div style="font-size:48px;margin-bottom:14px;">⚔</div>
+         <div style="font-size:36px;color:#ffaa66;font-weight:900;letter-spacing:3px;margin-bottom:10px;
+           text-shadow:0 0 12px rgba(255,170,100,0.55);">戰鬥結算</div>`;
+    const _dmgLabel = _isSolo ? '本場你的總傷害' : '本場全隊累積總傷害';
+    const _bottomNoteHtml = _isSolo
+      ? `<div style="background:rgba(40,30,60,0.4);border-left:4px solid rgba(200,160,255,0.6);
+           border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
+           color:#ddc;line-height:1.7;">
+           💡 練習模式不發獎勵(知識幣/水晶/至寶),但<b style="color:#ffe066;">仍會累積獎章進度</b>並記錄最高傷害紀錄。<br>
+           換不同陣容組合再試一次,挑戰自己的紀錄!
+         </div>`
+      : `<div style="background:rgba(40,60,40,0.4);border-left:4px solid rgba(140,220,140,0.6);
+           border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
+           color:#ddc;line-height:1.7;">
+           🏆 本場戰績<b style="color:#ffe066;">已上傳排行榜</b> — 可在「當前排行榜」查看隊伍排名。<br>
+           BOSS 全伺服器 HP 也已扣除本場全隊累積傷害,協力把龍王打倒!
+         </div>`;
+
+    // ★ v3.11.8 — 3 個本場數據卡(總回合 / 答對題數 / 聯手爆發次數)
+    const _battleTurns = Math.max(0, Math.floor(info.battleTurns || 0));
+    const _battleQuizCorrect = Math.max(0, Math.floor(info.battleQuizCorrect || 0));
+    const _battleTeamBurst = Math.max(0, Math.floor(info.battleTeamBurst || 0));
+    const _battleStatsCardsHtml = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+        <div style="background:linear-gradient(160deg,rgba(120,180,255,0.22),rgba(60,120,200,0.08));
+                    border:2px solid rgba(140,200,255,0.65);border-radius:12px;
+                    padding:14px 10px;text-align:center;">
+          <div style="font-size:18px;color:#aaccff;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+                      text-shadow:0 0 8px rgba(140,200,255,0.5);">⏱ 戰鬥回合</div>
+          <div style="font-size:36px;color:#e0f0ff;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(180,220,255,0.5);">${_battleTurns}</div>
+          <div style="font-size:14px;color:#9ab;margin-top:4px;">回合</div>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(255,200,100,0.22),rgba(220,160,40,0.08));
+                    border:2px solid rgba(255,210,120,0.65);border-radius:12px;
+                    padding:14px 10px;text-align:center;">
+          <div style="font-size:18px;color:#ffd066;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+                      text-shadow:0 0 8px rgba(255,210,120,0.5);">📚 答對題數</div>
+          <div style="font-size:36px;color:#fff5cc;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(255,220,140,0.5);">${_battleQuizCorrect}</div>
+          <div style="font-size:14px;color:#cb8;margin-top:4px;">題</div>
+        </div>
+        <div style="background:linear-gradient(160deg,rgba(255,120,80,0.22),rgba(255,80,40,0.08));
+                    border:2px solid rgba(255,140,80,0.65);border-radius:12px;
+                    padding:14px 10px;text-align:center;">
+          <div style="font-size:18px;color:#ff9966;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+                      text-shadow:0 0 8px rgba(255,140,80,0.5);">💥 聯手爆發</div>
+          <div style="font-size:36px;color:#ffe0d0;font-weight:900;letter-spacing:1px;
+                      text-shadow:0 0 12px rgba(255,180,120,0.5);">${_battleTeamBurst}</div>
+          <div style="font-size:14px;color:#caa;margin-top:4px;">次</div>
+        </div>
+      </div>
+    `;
+
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.8(2026-05-27) — 傷害區改造 + 個人最佳對照卡
+    // ────────────────────────────────────────────────────────────────
+    // 老師需求:結算頁顯示「練習 + 開房模式共用的個人最佳紀錄」+ 破紀錄比較。
+    // 設計:
+    //   - 傷害區
+    //       練習模式:只顯示「本場你的總傷害」(大字 64px)
+    //       連線房主:顯示「本場全隊累積總傷害」(大字 64px) + 「你自己的貢獻」(小字)
+    //   - 個人最佳對照卡(獨立卡片,放傷害區下方):
+    //       本場 myDmg > prevBest.dmg → 🏆 破紀錄!(舊紀錄 vs 新紀錄)
+    //       本場 myDmg <= prevBest.dmg → 💪 未破紀錄(顯示差距 -X)
+    //       prevBest 不存在 → ✨ 首次挑戰紀錄(只顯示本場 myDmg)
+    //   - 比較基準:都用「你個人」傷害(myDmg),練習 vs 連線公平比較
+    // ════════════════════════════════════════════════════════════════
+    const _myDmg = Math.max(0, Math.floor(info.dmg || 0));
+    const _teamDmg = Math.max(0, Math.floor(info.teamDmg || _myDmg));
+    const _prevBest = info.prevBest || null;
+    const _prevBestDmg = (_prevBest && typeof _prevBest.dmg === 'number') ? _prevBest.dmg : 0;
+    // 破紀錄判定:本場 > 既有最佳(注意:isNewRecord 在 v3.11.8 寫入時就會判定)
+    //   但 prevBest 抓的是「寫入新紀錄之前」的舊紀錄,所以 _myDmg > _prevBestDmg 即破紀錄
+    const _hasBest = !!_prevBest && _prevBestDmg > 0;
+    const _isBeating = _hasBest && (_myDmg > _prevBestDmg);
+    const _diff = _hasBest ? (_myDmg - _prevBestDmg) : 0;
+
+    // 主傷害區 HTML(練習 vs 連線顯示不同)
+    const _mainDmgValueHtml = _isSolo
+      ? `<div style="font-size:64px;color:#ffe066;font-weight:900;letter-spacing:3px;line-height:1.05;
+            text-shadow:0 0 18px rgba(255,220,80,0.7);">
+            ${_myDmg.toLocaleString()}
+          </div>`
+      : `<div style="font-size:64px;color:#ffe066;font-weight:900;letter-spacing:3px;line-height:1.05;
+            text-shadow:0 0 18px rgba(255,220,80,0.7);">
+            ${_teamDmg.toLocaleString()}
+          </div>
+          <div style="font-size:18px;color:#ffd066;margin-top:8px;letter-spacing:1px;">
+            其中你的個人貢獻:<b style="color:#ffe8a0;">${_myDmg.toLocaleString()}</b>
+          </div>`;
+
+    // 個人最佳對照卡 HTML
+    let _personalBestCardHtml = '';
+    const _prevBestMode = (_prevBest && _prevBest.mode) ? _prevBest.mode : '';
+    const _prevBestModeLabel = _prevBestMode === 'host' ? '連線房主' : (_prevBestMode === 'solo' ? '練習模式' : '');
+    const _prevBestTimeStr = (_prevBest && _prevBest.ts) ?
+      (function(){
+        const _d = new Date(_prevBest.ts);
+        const _pad = function(n){ return n<10?'0'+n:''+n; };
+        return (_d.getMonth()+1)+'/'+_d.getDate()+' '+_pad(_d.getHours())+':'+_pad(_d.getMinutes());
+      })() : '';
+    if(!_hasBest){
+      // 首次挑戰
+      _personalBestCardHtml = `
+        <div style="background:linear-gradient(160deg,rgba(140,200,255,0.18),rgba(60,120,200,0.08));
+                    border:2px solid rgba(140,200,255,0.6);border-radius:14px;padding:18px 22px;
+                    margin-bottom:24px;text-align:center;">
+          <div style="font-size:20px;color:#aaccff;font-weight:800;letter-spacing:2px;margin-bottom:8px;">
+            ✨ 首次挑戰維蘇威火山龍王
+          </div>
+          <div style="font-size:18px;color:#ccddff;line-height:1.6;">
+            這次的傷害 <b style="color:#ffe066;">${_myDmg.toLocaleString()}</b> 已記為你的個人最佳。<br>
+            繼續挑戰,試試能不能突破自己!
+          </div>
+        </div>
+      `;
+    }else if(_isBeating){
+      // 破紀錄
+      _personalBestCardHtml = `
+        <div style="background:linear-gradient(160deg,rgba(255,200,80,0.32),rgba(255,140,40,0.15));
+                    border:3px solid rgba(255,220,80,0.85);border-radius:14px;padding:20px 22px;
+                    margin-bottom:24px;text-align:center;
+                    box-shadow:0 0 24px rgba(255,200,60,0.45);">
+          <div style="font-size:30px;font-weight:900;color:#fff8a0;letter-spacing:3px;margin-bottom:10px;
+                      text-shadow:0 0 14px rgba(255,220,80,0.85);
+                      animation:newHeroSparkle 1.2s ease-in-out infinite;">
+            🏆 破紀錄!個人最佳更新 🏆
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-top:12px;">
+            <div style="text-align:right;">
+              <div style="font-size:14px;color:#bba;letter-spacing:1px;">舊紀錄</div>
+              <div style="font-size:26px;color:#bbb;font-weight:800;text-decoration:line-through;">
+                ${_prevBestDmg.toLocaleString()}
+              </div>
+              ${_prevBestModeLabel ? `<div style="font-size:12px;color:#999;margin-top:2px;">${_prevBestModeLabel}・${_prevBestTimeStr}</div>` : ''}
+            </div>
+            <div style="font-size:32px;color:#ffd066;">→</div>
+            <div style="text-align:left;">
+              <div style="font-size:14px;color:#ffd066;letter-spacing:1px;">新紀錄</div>
+              <div style="font-size:32px;color:#ffe066;font-weight:900;
+                          text-shadow:0 0 12px rgba(255,220,80,0.7);">
+                ${_myDmg.toLocaleString()}
+              </div>
+              <div style="font-size:14px;color:#ffc066;margin-top:2px;font-weight:700;">
+                +${_diff.toLocaleString()} 提升
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }else{
+      // 未破紀錄
+      _personalBestCardHtml = `
+        <div style="background:linear-gradient(160deg,rgba(140,200,160,0.18),rgba(80,140,120,0.08));
+                    border:2px solid rgba(140,200,160,0.5);border-radius:14px;padding:18px 22px;
+                    margin-bottom:24px;text-align:center;">
+          <div style="font-size:22px;color:#aaddbb;font-weight:800;letter-spacing:2px;margin-bottom:10px;">
+            💪 個人最佳對照
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center;">
+            <div style="text-align:center;padding:8px;background:rgba(0,0,0,0.2);border-radius:8px;">
+              <div style="font-size:14px;color:#aac;letter-spacing:1px;">本場</div>
+              <div style="font-size:26px;color:#ffe066;font-weight:900;">${_myDmg.toLocaleString()}</div>
+            </div>
+            <div style="text-align:center;padding:8px;background:rgba(255,200,80,0.12);border-radius:8px;
+                        border:1.5px solid rgba(255,200,80,0.4);">
+              <div style="font-size:14px;color:#ffd066;letter-spacing:1px;">🏆 你的最佳</div>
+              <div style="font-size:26px;color:#ffd066;font-weight:900;">${_prevBestDmg.toLocaleString()}</div>
+              ${_prevBestModeLabel ? `<div style="font-size:11px;color:#bba;margin-top:2px;">${_prevBestModeLabel}・${_prevBestTimeStr}</div>` : ''}
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:16px;color:#ddd;">
+            還差 <b style="color:#ffaa66;">${Math.abs(_diff).toLocaleString()}</b> 就能破紀錄,再來一場!
+          </div>
+        </div>
+      `;
+    }
+
     const ov = document.createElement('div');
     ov.id = 'wb-solo-practice-result';
     ov.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);overflow-y:auto;';
     // ★ FIX 20260517 — 結算頁字體整體放大、加入 4 項表現評比卡
+    // ★ v3.11.8 — 區分練習/連線、加 3 個本場數據卡 + 個人最佳對照卡
     ov.innerHTML = `
       <div style="max-width:760px;width:100%;
         background:linear-gradient(160deg,#162825,#0a1a18);
-        border:3px solid ${info.isNewRecord ? '#ffd966' : '#5dcaa5'};border-radius:22px;padding:36px 40px;
-        box-shadow:0 0 60px ${info.isNewRecord ? 'rgba(255,217,102,0.5)' : 'rgba(93,202,165,0.4)'};
+        border:3px solid ${info.isNewRecord ? '#ffd966' : (_isSolo ? '#5dcaa5' : '#ffaa66')};border-radius:22px;padding:36px 40px;
+        box-shadow:0 0 60px ${info.isNewRecord ? 'rgba(255,217,102,0.5)' : (_isSolo ? 'rgba(93,202,165,0.4)' : 'rgba(255,170,100,0.4)')};
         text-align:center;color:#e8ffd8;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
         ${info.isNewRecord ?
           `<div style="font-size:48px;margin-bottom:14px;animation:newHeroSparkle 1s ease-in-out infinite;">🏆✨🏆</div>
            <div style="font-size:40px;color:#ffd966;font-weight:900;letter-spacing:3px;margin-bottom:10px;
              text-shadow:0 0 18px rgba(255,217,102,0.7);">新紀錄!</div>` :
-          `<div style="font-size:48px;margin-bottom:14px;">🧪</div>
-           <div style="font-size:36px;color:#5dcaa5;font-weight:900;letter-spacing:3px;margin-bottom:10px;">練習結束</div>`}
+          _modeTitleHtml}
 
         <div style="font-size:22px;color:#aac;margin-bottom:28px;letter-spacing:1px;">
           ${info.killed ? '✅ 成功擊敗維蘇威火山龍王!' : '⚔ 戰鬥結束(未擊敗 BOSS)'}
@@ -12847,13 +13073,14 @@
 
         <div style="background:rgba(255,217,102,0.12);border:2.5px solid rgba(255,217,102,0.5);
           border-radius:14px;padding:24px;margin-bottom:24px;">
-          <div style="font-size:22px;color:#dda;letter-spacing:2px;margin-bottom:10px;">本場你的總傷害</div>
-          <div style="font-size:64px;color:#ffe066;font-weight:900;letter-spacing:3px;line-height:1.05;
-            text-shadow:0 0 18px rgba(255,220,80,0.7);">
-            ${info.dmg.toLocaleString()}
-          </div>
+          <div style="font-size:22px;color:#dda;letter-spacing:2px;margin-bottom:10px;">${_dmgLabel}</div>
+          ${_mainDmgValueHtml}
           <div style="font-size:20px;color:#aaa;margin-top:10px;">用時 ${timeStr}</div>
         </div>
+
+        ${_personalBestCardHtml}
+
+        ${_battleStatsCardsHtml}
 
         ${evalCardsHtml}
 
@@ -12865,12 +13092,7 @@
           </div>
         </div>
 
-        <div style="background:rgba(40,30,60,0.4);border-left:4px solid rgba(200,160,255,0.6);
-          border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
-          color:#ddc;line-height:1.7;">
-          💡 練習模式不發獎勵(知識幣/水晶/至寶),但<b style="color:#ffe066;">仍會累積獎章進度</b>並記錄最高傷害紀錄。<br>
-          換不同陣容組合再試一次,挑戰自己的紀錄!
-        </div>
+        ${_bottomNoteHtml}
 
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
           <button onclick="document.getElementById('wb-solo-practice-result').remove();_wbUiSoloTest();"
