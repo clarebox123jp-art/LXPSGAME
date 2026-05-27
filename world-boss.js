@@ -466,10 +466,23 @@
   // ───────────────────────────────────────────────────────────────────
   // 6b. 天賦「炎之意志」傷害計算 hook
   //     戰鬥引擎在「BOSS 受傷時」呼叫,回傳調整後的傷害值
-  //     1) 單次受傷上限 = 最大 HP 的 1% (即 500000 * 1% = 5000)
-  //     2) 第 3/5/7/9 回合啟動四元素護盾:傷害再減 80%
-  //        (即使是無視有利狀態的攻擊也擋,因為這不是 buff,是天賦)
-  //     3) 護盾首次出現時跳訊息提醒玩家
+  //     ★ v3.11.5(2026-05-27) — 老師鐵則:
+  //       「世界 BOSS 的護盾凌駕於一切無視有利狀態之上,對世界 BOSS 造成的傷害永遠鎖在 5000」
+  //
+  //     具體行為:
+  //       1) 單次受傷上限 = 最大 HP 的 1% (即 500000 * 1% = 5000)— 永遠生效,沒有例外
+  //       2) 第 3/5/7/9 回合啟動四元素護盾:傷害再減 80%(實際扣血 = 1000)
+  //          ★ 凌駕於所有「無視有利狀態」「必中」「固定值」「聯手爆發」等旗標之上
+  //          ★ 不存在 bypassShield 旗標,任何技能都無法繞過
+  //       3) 護盾首次出現時跳訊息提醒玩家
+  //
+  //     已驗證涵蓋的所有打 BOSS 路徑:
+  //       - 主 doDmg 路徑(index.html line 26414)
+  //       - fixedDmg 早期 return 路徑(index.html line 25515)
+  //       - 暴擊額外傷害(index.html line 26594)
+  //       - host 戰鬥模擬(world-boss-ui.html line 8228)
+  //       - 答題獎勵聯手爆發 5000(world-boss-ui.html line 10005,v3.11.5 補上)
+  //       - 吸血鬼蝙蝠群(index.html line 34108 + 39655,v3.11.5 補上)
   // ───────────────────────────────────────────────────────────────────
   window._wbApplyBossDmgCap = function(boss, rawDmg, opts){
     if(!boss || !boss.name || boss.name !== '維蘇威火山龍王') return rawDmg;
@@ -484,10 +497,12 @@
     const cap1pct = Math.floor(maxHp * 0.01);
     let dmg = Math.min(rawDmg, cap1pct);
 
-    // 2) ★ v3.7.10 — 護盾減傷判定:依 BOSS 身上是否還有 _wbShields(由 _wbCheckShieldTrigger 在第 3/5/7/9 回合啟動)
-    //   旗標 opts.bypassShield = true:全隊聯手爆發等特殊機制可無視護盾打穿。
+    // 2) ★ v3.11.5(2026-05-27) — 老師鐵則:護盾凌駕於一切「無視有利狀態」之上
+    //   - 任何傷害(含無視有利、必中、固定值、聯手爆發 5000)只要有護盾在,都吃 80% 減傷
+    //   - 移除舊版 opts.bypassShield 例外(原本給聯手爆發用,現在統一被擋)
+    //   - 設計理念:單次傷害「永遠」鎖在 5000(無護盾) / 1000(有護盾),沒有任何例外
     const _hasActiveShield = boss._wbShields && Object.values(boss._wbShields).some(v => v > 0);
-    if(_hasActiveShield && !opts.bypassShield){
+    if(_hasActiveShield){
       // 護盾首次啟動提示(沿用既有 _wbShieldNotified 旗標)
       if(!boss._wbShieldNotified){
         boss._wbShieldNotified = true;
@@ -521,10 +536,9 @@
           <br><br>
           <b style="color:#ff8866;">護盾規則:</b><br>
           ・第 <b style="color:#ffaa66;">3 / 5 / 7 / 9</b> 回合各啟動一次,每元素各 <b>1 層</b>(同時最多 4 層)<br>
-          ・所有傷害額外 <b style="color:#ffaa66;">減 80%</b><br>
-          ・即使是無視有利狀態的攻擊也<b style="color:#ff6644;">無法打穿</b><br>
-          ・單次受傷上限 1% 仍然有效(<b style="color:#ffcc66;">每擊最多 5000 傷害</b>)<br>
-          ・全隊聯手爆發 5000 傷害<b style="color:#aaffaa;">可無視護盾</b>直接命中
+          ・<b style="color:#ff6644;">所有傷害一律減 80%</b>(必中、無視有利、固定值、DoT、聯手爆發都擋)<br>
+          ・<b style="color:#ffcc66;">單次傷害永遠鎖在 5000 上限</b>(有護盾時實際扣血 ≤ 1000)<br>
+          ・<b style="color:#aaffaa;">沒有任何技能能繞過護盾</b>(連聯手爆發 5000 也會被減為 1000)
         </div>
         <div style="font-size:15px;color:#ffd;line-height:1.85;text-align:left;
           background:rgba(60,180,255,0.12);padding:14px 18px;border-radius:10px;

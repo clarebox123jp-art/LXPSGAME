@@ -9996,17 +9996,36 @@
     try{ console.log('[WB-FireTeamBurst v3.7.10] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ' (maxHp=' + _wbMaxHp + '), reason=' + (reason||'?')); }catch(_){}
 
     // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
+    // ★ v3.11.5(2026-05-27) — 老師鐵則:護盾凌駕一切,聯手爆發也要走 cap + 護盾減傷
+    //   舊版直接 boss.curHp -= rewardDmg(5000),會繞過護盾;
+    //   新版改為呼叫 _wbApplyBossDmgCap(boss, 5000)讓護盾邏輯介入:
+    //     - 沒護盾時:5000 → 5000(無變化)
+    //     - 有護盾時:5000 → 1000(80% 減傷)+ 觸發護盾首次提示
+    //   也順便讓「炎之意志吸收」log 統一,跟其他傷害一致
+    let actualDmg = rewardDmg;
+    if(typeof window._wbApplyBossDmgCap === 'function'){
+      try{
+        actualDmg = window._wbApplyBossDmgCap(boss, rewardDmg, { actor: null, action: { _teamBurst: true } });
+      }catch(_eCapTb){
+        console.warn('[WB-FireTeamBurst v3.11.5] cap 套用失敗,fallback 原始 5000', _eCapTb);
+        actualDmg = rewardDmg;
+      }
+    }
+    try{ console.log('[WB-FireTeamBurst v3.7.10] 觸發 cnt=' + _cnt + ', rawDmg=' + rewardDmg + ', actualDmg=' + actualDmg + ' (maxHp=' + _wbMaxHp + '), reason=' + (reason||'?')); }catch(_){}
+
+    // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
     if(!_isClient){
-      boss.curHp = Math.max(0, boss.curHp - rewardDmg);
+      boss.curHp = Math.max(0, boss.curHp - actualDmg);
       // ★ v3.7.10 — BUG 修補:答題獎勵 5000 傷害沒被加進本場總傷
       //   根因:這裡直接改 boss.curHp,沒走主程式 doDmg → 完全跳過 addContribution('dmgDealt')
       //         → 左上「📜 本場總傷」與結算貢獻、排行榜全部漏算這 5000(× 多次累加更明顯)
       //   修補:扣完血後手動呼叫 _wbNet.addContribution + 同步更新「📜 本場總傷」UI
       //         對齊 index.html line 23415-23446 fixedDmg 路徑的處理方式
+      //   ★ v3.11.5 — 改用 actualDmg(經 cap 後的實際扣血量)累計
       try{
         if(window._wbNet && typeof window._wbNet.addContribution === 'function'){
           const _myUid = window._gUserId || 'solo_user';
-          window._wbNet.addContribution(_myUid, 'dmgDealt', rewardDmg);
+          window._wbNet.addContribution(_myUid, 'dmgDealt', actualDmg);
           // 更新「📜 本場總傷」UI(全隊累積總傷)
           try{
             const _dmgEl = document.getElementById('wb-solo-cur-dmg-display');
@@ -10020,7 +10039,7 @@
               }
               if(_teamDmg <= 0){
                 const _prev = parseInt((_dmgEl.textContent || '0').replace(/,/g, ''), 10) || 0;
-                _teamDmg = _prev + rewardDmg;
+                _teamDmg = _prev + actualDmg;
               }
               const _curShown = parseInt((_dmgEl.textContent || '0').replace(/,/g, ''), 10) || 0;
               if(_teamDmg >= _curShown){
@@ -10028,7 +10047,7 @@
               }
             }
           }catch(_eUiDmg){}
-          try{ console.log('[WB-FireTeamBurst v3.7.10] ✅ 已累計 ' + rewardDmg + ' 進本場總傷'); }catch(_){}
+          try{ console.log('[WB-FireTeamBurst v3.11.5] ✅ 已累計 ' + actualDmg + ' 進本場總傷(經 cap)'); }catch(_){}
         }
       }catch(_eContrib){ console.warn('[WB-FireTeamBurst v3.7.10] addContribution 失敗', _eContrib); }
     }
@@ -10088,15 +10107,17 @@
     }catch(_eAllFx){ console.warn('[WB-FireTeamBurst] 特效組失敗', _eAllFx); }
 
     // 廣播 log + banner + sync + 護盾觸發檢查(複製自舊邏輯)
+    // ★ v3.11.5(2026-05-27) — log/banner/capture 改用 actualDmg(經 cap+護盾後的真實扣血量)
+    //   護盾啟動時:rewardDmg=5000、actualDmg=1000,玩家應該看到「造成 1000 傷害」才合邏輯
     if(!_isClient){
-      _wbHostBroadcast([`🎖 累積答對 ${_cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${rewardDmg.toLocaleString()} 傷害`]);
+      _wbHostBroadcast([`🎖 累積答對 ${_cnt} 題!全隊聯手攻擊!對 BOSS 造成 ${actualDmg.toLocaleString()} 傷害${actualDmg < rewardDmg ? '(🛡 護盾減傷:原 '+rewardDmg.toLocaleString()+')' : ''}`]);
       try{
         if(typeof _wbFxCapture === 'function' && typeof _wbFxShouldCapture === 'function' && _wbFxShouldCapture()){
-          _wbFxCapture({ type:'quizRewardBanner', cnt:_cnt, dmg:rewardDmg });
+          _wbFxCapture({ type:'quizRewardBanner', cnt:_cnt, dmg:actualDmg });
         }
       }catch(_eBcap){ console.warn('[WB-FireTeamBurst] banner capture 失敗', _eBcap); }
     }
-    try{ _wbShowQuizRewardBanner(_cnt, rewardDmg); }catch(_){}
+    try{ _wbShowQuizRewardBanner(_cnt, actualDmg); }catch(_){}
     if(!_isClient && typeof window._wbCheckShieldTrigger === 'function'){
       const triggered = window._wbCheckShieldTrigger(boss);
       if(triggered){
