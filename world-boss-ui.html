@@ -8355,14 +8355,15 @@
     }
   }
 
-  // BOSS S1:業火灼燒 (特技 100% 全體火傷 + 全體燃燒 2 回合)
+  // BOSS S1:業火灼燒 (特技 150% 全體火傷 + 全體燃燒 2 回合)
+  // ★ v3.11.7(2026-05-28) — 對齊 _wbAdvBossS1:傷害 1.0→1.5、命中 +30%(雖然此 fallback 路徑直接改 t.curHp,但保留 dmg 一致)
   function _wbExecBossS1(boss){
     const G = window._wbHostG;
     if(typeof window._wbPlayFullscreenFx === 'function'){
       window._wbPlayFullscreenFx('s1', {duration:1600, shake:true});
     }
     const alive = G.p1.filter(h => h && h.curHp > 0);
-    const dmg = Math.floor((boss.sp || 50) * 1.00);
+    const dmg = Math.floor((boss.sp || 50) * 1.50);
     alive.forEach(t => {
       t.curHp = Math.max(0, t.curHp - dmg);
       // 標記燃燒 2 回合(用簡化方式存在 t._wbBurn)
@@ -8401,7 +8402,8 @@
     }, 1500);
   }
 
-  // BOSS 爆發:天崩之炎(全體當前 HP 90%)
+  // BOSS 爆發:天崩之炎(將 HP 減至最大 HP 20% + 強力燃燒 3 回合,無視所有有利狀態)
+  // ★ v3.11.7(2026-05-28) — 對齊 _wbAdvBossBurst:傷害改為「減至 20% HP」HP 考核機制
   function _wbExecBossBurst(boss){
     const G = window._wbHostG;
     if(typeof window._wbPlayBurstAnimation === 'function'){
@@ -8409,25 +8411,25 @@
     }
     setTimeout(() => {
       const alive = G.p1.filter(h => h && h.curHp > 0);
-      let logEntry = `⚡ 維蘇威火山龍王爆發「天崩之炎」!`;
+      let logEntry = `⚡ 維蘇威火山龍王爆發「天崩之炎」!將全體 HP 減至最大 HP 的 20%`;
       alive.forEach(t => {
-        // 無敵/免疫狀態檢查(簡化)
-        if(t._wbInvincible){
-          logEntry += ` ${t.name} 無敵擋下!`;
-          t._wbInvincible = 0;
-          return;
-        }
-        let dmgPct = 0.90;
-        if(t._wbShield){
-          dmgPct = 0.45;
-          t._wbShield = 0;
-          logEntry += ` ${t.name} 護盾減半...`;
-        }
-        const d = Math.floor(t.curHp * dmgPct);
+        // ★ v3.11.7 — 無視所有有利狀態:不再判定 _wbInvincible / _wbShield
+        // ★ v3.11.7 — 傷害公式:減至 20% 最大 HP(若當前已低於 20% 則不受傷)
+        const _floorHp = Math.floor((t.hp || 0) * 0.20);
+        const d = Math.max(0, t.curHp - _floorHp);
         t.curHp = Math.max(0, t.curHp - d);
-        t._wbBurn = 3;
+        // ★ v3.11.7 — 強力燃燒 3 回合(主程式 hellfire + _strong,有 chip 有 banner)
+        if(t.curHp > 0){
+          try{
+            if(typeof addStatus === 'function'){
+              addStatus(t, 'hellfire', 3);
+              const _hs = (t.status || []).find(s => s.type === 'hellfire');
+              if(_hs){ _hs._actor = boss; _hs._strong = true; }
+            }
+          }catch(_){}
+        }
       });
-      _wbHostBroadcast([logEntry, '🔥 全體附加燃燒 3 回合']);
+      _wbHostBroadcast([logEntry, '🔥 存活全體附加強力燃燒 3 回合(行動前後各 -10 HP)']);
       setTimeout(() => {
         const stillAlive = G.p1.filter(h => h && h.curHp > 0);
         if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
@@ -9547,7 +9549,7 @@
           chips.push(`<span class="wb-boss-status-chip stun">⚡ 眩暈 ${boss._wbStun}</span>`);
         }
         shieldsRow.innerHTML = chips.length ? chips.join('') :
-          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 4 回合啟動)</span>';
+          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 3 回合啟動)</span>';
       }
 
       // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,警告回合改成:
@@ -12323,7 +12325,7 @@
           </div>
         </div>
         <div id="wb-adv-mega-shields-row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(第 4 回合啟動)</span>
+          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(第 3 回合啟動)</span>
         </div>
       </div>
 
@@ -12545,7 +12547,7 @@
       }catch(_eStatusChips){ console.warn('[WB-Adv] BOSS 狀態 chip 渲染失敗', _eStatusChips); }
 
       shieldsRow.innerHTML = chips.length ? chips.join('') :
-        '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 4 回合啟動)</span>';
+        '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 3 回合啟動)</span>';
     }
 
     const burstWarn = document.getElementById('wb-adv-burst-warn');
@@ -12599,7 +12601,8 @@
     const bossHp = boss ? boss.hp : 500000;
     const bossAtk = boss ? boss.atk : 49;
     const bossSp = boss ? boss.sp : 50;
-    const bossSpd = boss ? boss.spd : 80;
+    // ★ v3.11.7(2026-05-28) — fallback SPD 從 80 → 15(對齊 HERO_DB 維蘇威火山龍王實際數值)
+    const bossSpd = boss ? boss.spd : 15;
     const bossUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(bossName)}.png`;
 
     const ov = document.createElement('div');
@@ -12641,52 +12644,63 @@
           </div>
         </div>
 
+        <!-- ★ v3.11.7(2026-05-28) — 護盾啟動回合對齊實際邏輯 3/5/7/9,共 16 層 → 第 11 回合戰場崩毀 -->
         <h3 style="font-size:34px;color:#ffd966;margin:18px 0 12px;letter-spacing:2px;">
           🛡 護盾啟動回合(每階 4 元素護盾各 1 層)
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
-          <li>第 4 回合:第 1 階段護盾啟動(火 / 風 / 土 / 暗,各 1 層)</li>
-          <li>第 8 回合:第 2 階段護盾啟動(各 1 層)</li>
-          <li>第 12 回合:第 3 階段護盾啟動(各 1 層)</li>
-          <li>第 16 回合:第 4 階段護盾啟動(各 1 層,最後一道防線)</li>
+          <li>第 3 回合:第 1 階段護盾啟動(火 / 風 / 土 / 暗,各 1 層)</li>
+          <li>第 5 回合:第 2 階段護盾啟動(各 1 層)</li>
+          <li>第 7 回合:第 3 階段護盾啟動(各 1 層)</li>
+          <li>第 9 回合:第 4 階段護盾啟動(各 1 層,最後一道防線)</li>
         </ul>
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
           用<b style="color:#5dcaa5;">破盾元素(水 / 土 / 草 / 光)</b>各攻擊 1 次即可削減對應護盾(對 火/風/土/暗 護盾),
-          炎之意志減傷至單次最多 1% HP。整場共 16 層護盾需破除。
+          炎之意志減傷至單次最多 1% HP。整場共 16 層護盾需破除,
+          <b style="color:#ff5544;">第 11 回合戰場將崩壞,強制結束戰鬥</b>。
         </p>
 
+        <!-- ★ v3.11.7(2026-05-28) — BOSS 技能描述全面對齊實際數值 + 連動 2 次行動 + 命中 +30% -->
         <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
-          🔥 BOSS 技能
+          🔥 BOSS 技能(每回合連續行動 <span style="color:#ff5544;">2 次</span>)
         </h3>
         <div style="display:grid;grid-template-columns:1fr;gap:14px;">
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒</div>
+            <div style="font-weight:800;color:#ff9966;font-size:30px;">🦷 普通攻擊</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對全體玩家造成 SP × 100% 火焰傷害,並附加燃燒 2 回合(每回合受 6 點固定傷害)
+              對單體隨機目標造成 ATK × 1.0~1.3 倍火焰傷害,<b style="color:#ffe066;">基礎命中率 +30%</b>
             </div>
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:30px;">🐉 S2 龍吼震懾</div>
+            <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒(能量 5)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對全體玩家造成 SP × 75% 無屬性傷害,50% 機率眩暈 1 回合
+              對全體玩家造成 SP × 150% 火焰傷害,全體附加燃燒 2 回合,<b style="color:#ffe066;">基礎命中率 +30%</b>
+            </div>
+          </div>
+          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
+            border-left:6px solid #ff8855;">
+            <div style="font-weight:800;color:#ff9966;font-size:30px;">🐉 S2 龍吼震懾(能量 4)</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
+              對全體玩家造成 SP × 75% 無屬性傷害,50% 機率眩暈 1 回合,<b style="color:#ffe066;">基礎命中率 +30%</b>
             </div>
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #ff4422;">
             <div style="font-weight:800;color:#ff4422;font-size:30px;">⚡ 爆發 天崩之炎(第 5 / 10 回合釋放,能量滿時也會主動釋放)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對全體玩家造成<b style="color:#ff5544;">當前 HP 90%</b>的傷害,並附加燃燒 3 回合。
-              有護盾者傷害減半,無敵者擋下。<b>務必在第 4 / 9 回合補滿血!</b>
+              <b style="color:#ff5544;">將全體玩家 HP 減至最大 HP 的 20%</b>(HP 考核機制 — 玩家最大 HP 至少要 <b style="color:#ffe066;">110</b> 才能撐過後續燃燒),
+              全體附加<b style="color:#ff5544;">強力燃燒 3 回合</b>(行動前後各 -10 HP),
+              <b style="color:#ff5544;">完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效)</b>。
+              再從存活對手隨機選 1 名,額外施加強力暈眩 + 強力易傷各 1 回合。<b>務必在第 4 / 9 回合補滿血!</b>
             </div>
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #aa3322;">
-            <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(玩家最後一次答題行動結束後)</div>
+            <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(第 11 回合)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               戰場被火山灰掩埋,全員強制陣亡。<b>必須在 10 回合內擊敗 BOSS!</b>
-              開場 1 題 + 每回合各 1 題,共 11 題答題機會,第 11 次答題行動結束後 BOSS 即發動最終滅絕。
             </div>
           </div>
         </div>

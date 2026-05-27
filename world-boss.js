@@ -291,7 +291,8 @@
       if(typeof BURST_DB === 'object' && BURST_DB){
         Object.assign(BURST_DB, {
           // ★ v3.5.9 — 老師調整:當前 HP 90% → 95% 火傷(更具毀滅性)
-          '維蘇威火山龍王': {n:'天崩之炎', d:'全體當前HP 95%火傷(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!對全體對手造成當前 HP 95% 的火屬性傷害,完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
+          // ★ v3.11.7(2026-05-28) — 老師再調整:改為「將 HP 減至 20%」HP 考核機制,玩家至少需 110 HP 才能撐過爆發+後續燃燒
+          '維蘇威火山龍王': {n:'天崩之炎', d:'將全體HP減至最大HP 20%(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!將全體存活對手的 HP 減至「最大 HP 的 20%」(若當前 HP 已低於 20% 則不受傷),完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
         });
         window.BURST_DB = BURST_DB;
       }
@@ -364,9 +365,10 @@
     if(n === '業火灼燒'){
       try{
         // ★ v3.5.9 — 老師調整:特技 100% → 150% 全體火傷害 + 全體燃燒 2 回合
+        // ★ v3.11.7(2026-05-28) — 加 hitBonus 0.30(基礎命中率 +30%)
         enemies.forEach(e => {
           if(e.curHp > 0){
-            doDmg(e, Math.floor(spv(a) * 1.50), {actor:a, isSkill:true, isAoe:true, element:'fire'});
+            doDmg(e, Math.floor(spv(a) * 1.50), {actor:a, isSkill:true, isAoe:true, element:'fire', hitBonus:0.30});
             if(e.curHp > 0) addStatus(e, 'burn', 2);
           }
         });
@@ -377,9 +379,10 @@
     if(n === '龍吼震懾'){
       try{
         // 特技 75% 全體無屬性傷害(element:'none' 不吃屬性抗性) + 50% 眩暈 1 回合
+        // ★ v3.11.7(2026-05-28) — 加 hitBonus 0.30(基礎命中率 +30%)
         enemies.forEach(e => {
           if(e.curHp > 0){
-            doDmg(e, Math.floor(spv(a) * 0.75), {actor:a, isSkill:true, isAoe:true, element:'none'});
+            doDmg(e, Math.floor(spv(a) * 0.75), {actor:a, isSkill:true, isAoe:true, element:'none', hitBonus:0.30});
             if(e.curHp > 0 && Math.random() < 0.50) addStatus(e, 'stun', 1);
           }
         });
@@ -390,25 +393,33 @@
     if(n === '天崩之炎'){
       try{
         // ★ FIX 20260516 — 規則更新:
-        //   1. 全體當前 HP 95% 火傷(無視有利狀態 → 無敵/免疫/護盾/反射全部打穿)
+        //   1. 將全體 HP 減至最大 HP 的 20%(無視有利狀態 → 無敵/免疫/護盾/反射全部打穿)
         //   2. 全體強力燃燒 3 回合(主程式 type='hellfire' + _strong:true,行動前後各 -10HP)
         //      註:原版用 'burn' 是無效 type,實際從未生效;這次改為正確的 'hellfire'+_strong
         //   3. 隨機 1 名存活敵人:強力暈眩 + 強力易傷 各 1 回合
-        // ★ v3.5.9 — 老師調整:當前 HP 90% → 95%(更具毀滅性)
+        // ★ v3.5.9 — 老師調整:當前 HP 90% → 95%
+        // ★ v3.11.7(2026-05-28) — 老師再調整:改為「將 HP 減至最大 HP 的 20%」HP 考核機制
+        //   傷害公式:dmg = max(0, curHp - floor(maxHp * 0.20))
+        //   若玩家當前 HP 已低於 20% 最大 HP → 傷害 = 0(不會打到負數)
+        //   設計意圖:強迫玩家把全隊養到至少 110 HP,確保「減至 22 + 強力燃燒 6 次 -10」仍能存活
         enemies.forEach(e => {
           if(e.curHp <= 0) return;
-          const _dmg = Math.floor(e.curHp * 0.95);
-          doDmg(e, _dmg, {
-            actor: a,
-            isSkill: true,
-            isAoe: true,
-            ignoreBuffs: true,    // 無視有利狀態(無敵/免疫/護盾/保護/閃避全失效)
-            ignoreEvasion: true,  // 必中
-            noReflect: true,      // 不被反射
-            noHalfDmg: true,      // 不受減傷
-            piercing: true,       // 無視防禦
-            element: 'fire'
-          });
+          const _floorHp = Math.floor((e.hp || 0) * 0.20);
+          const _dmg = Math.max(0, e.curHp - _floorHp);
+          if(_dmg > 0){
+            doDmg(e, _dmg, {
+              actor: a,
+              isSkill: true,
+              isAoe: true,
+              ignoreBuffs: true,    // 無視有利狀態(無敵/免疫/護盾/保護/閃避全失效)
+              ignoreEvasion: true,  // 必中
+              noReflect: true,      // 不被反射
+              noHalfDmg: true,      // 不受減傷
+              piercing: true,       // 無視防禦
+              fixedDmg: true,
+              element: 'fire'
+            });
+          }
           // 強力燃燒 3 回合(行動前後各 -10HP,死了就不附加)
           if(e.curHp > 0){
             if(typeof addStatus === 'function') addStatus(e, 'hellfire', 3);
@@ -2341,6 +2352,25 @@
     boss._wbEndedThisTurn = false;
     try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.7(2026-05-28) — BOSS 每回合連續行動 2 次
+    // ────────────────────────────────────────────────────────────────
+    // 設計:每回合 BOSS 最多行動 2 次。
+    //   - 進入 _wbAdvBossTurn 時:若 _wbActionRound !== G.round → 新回合,reset count=0
+    //   - 計數 += 1
+    //   - 在 _safeBossEndAction 判定:若 count < 2 且未爆發 且 BOSS 活著 且 G.round < 11
+    //     → 延 800ms 再呼叫 _wbAdvBossTurn,不走 endAction;= 2 才走 endAction
+    //   - 爆發強制把 count 跳到 2(因為爆發已經太強,不允許接第二次)
+    //   - R11+ 不應該觸發,因為 [E1] 已搶先走崩毀
+    // ════════════════════════════════════════════════════════════════
+    const _curRoundForCount = G.round || 1;
+    if(boss._wbActionRound !== _curRoundForCount){
+      boss._wbActionRound = _curRoundForCount;
+      boss._wbActionCount = 0;
+    }
+    boss._wbActionCount = (boss._wbActionCount || 0) + 1;
+    try{ console.log('[WB-BossAct v3.11.7] R' + _curRoundForCount + ' 第 ' + boss._wbActionCount + ' 次行動'); }catch(_){}
+
     // ★ v3.11.6(2026-05-27) — [E1] BOSS turn 入口:R11+ 直接走 _wbForceCollapseAt11
     //   舊版用 inline 邏輯 + 單一旗標 _wbCollapseTriggered;v3.11.6 改用獨立函式 +
     //   多重保險,任何漏洞都會被別的入口接住(詳見 _wbForceCollapseAt11 的設計說明)
@@ -2435,6 +2465,47 @@
       boss._wbEndedThisTurn = true;
       return;
     }
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.7(2026-05-28) — BOSS 連續行動 2 次:第 1 次行動完不走 endAction,
+    //   延 800ms 再呼叫 _wbAdvBossTurn 跑第 2 次。
+    //   守門條件:
+    //     - 計數 < 2(還沒打到第 2 次)
+    //     - 沒爆發(爆發 _wbAdvBossBurst 內會把計數設為 2,直接結束)
+    //     - G.round < 11(R11+ 應該已被 [E1] 崩毀守門攔下,保險還是擋一下)
+    //     - BOSS 沒被插隊(_wbEndedThisTurn 已在上面擋)
+    //   進入第 2 次的執行同樣會經過 _wbAdvBossTurn 入口,計數會 +1 變成 2,
+    //   然後 S1/S2/普攻/爆發跑完 → 再次進入 _safeBossEndAction 時 count === 2 → 正常 endAction。
+    // ════════════════════════════════════════════════════════════════
+    try{
+      const _G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+      const _round = (_G && _G.round) || 1;
+      const _count = boss._wbActionCount || 0;
+      // 只在世界 BOSS stage 跑(避免影響其他關卡)
+      const _isWB = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss')
+                    || (typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss');
+      if(_isWB && _count < 2 && _round < 11 && boss.curHp > 0){
+        try{ console.log('[WB-BossAct v3.11.7] 第 ' + _count + ' 次行動結束,延 800ms 跑第 2 次'); }catch(_){}
+        try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
+        boss._wbBossTid = setTimeout(() => {
+          boss._wbBossTid = null;
+          // 二次檢查:在 800ms 期間 BOSS 可能被打死或被插隊
+          if(boss.curHp <= 0 || boss._wbEndedThisTurn === true){
+            try{ console.log('[WB-BossAct v3.11.7] 第 2 次延遲到期但 BOSS 已死/被插隊,跳過'); }catch(_){}
+            return;
+          }
+          // 再次檢查崩毀(R11+ 防穿透)
+          if(((_G && _G.round) || 1) >= 11 && !window._wbCollapseDone){
+            if(typeof window._wbForceCollapseAt11 === 'function'){
+              window._wbForceCollapseAt11('boss-2nd-action-R11-guard');
+            }
+            return;
+          }
+          try{ window._wbAdvBossTurn(boss); }catch(eA2){ console.error('[WB-BossAct v3.11.7] 第 2 次行動例外', eA2); }
+        }, 800);
+        return;  // 不走 endAction
+      }
+    }catch(_eContAction){ console.warn('[WB-BossAct v3.11.7] 連續行動判定例外,走 fallback endAction', _eContAction); }
+
     boss._wbEndedThisTurn = true;
     boss.acted = true;
     try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
@@ -2455,19 +2526,21 @@
     try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
   };
 
-  // BOSS S1:業火灼燒(全體 sp×1.0 + 燃燒 2 回合)
+  // BOSS S1:業火灼燒(全體 sp×1.5 + 燃燒 2 回合 + 命中 +30%)
+  // ★ v3.11.7(2026-05-28) — 傷害 1.0 → 1.5(對齊 v3.5.9 + 介紹彈窗描述)+ 命中率 +30%
   function _wbAdvBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
-    const dmg = Math.floor((boss.sp || 50) * 1.00);
+    const dmg = Math.floor((boss.sp || 50) * 1.50);
     alive.forEach(t => {
       // 走主程式 doDmg(有傷害彈出/震動/屬性計算)
       try{
         if(typeof doDmg === 'function'){
-          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true });
+          // ★ v3.11.7 — hitBonus 0.30(抵消速度差迴避 30%,對齊「命中率 +30%」)
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, hitBonus: 0.30, element: 'fire' });
         }else{
           t.curHp = Math.max(0, t.curHp - dmg);
         }
@@ -2482,7 +2555,8 @@
     _scheduleBossEnd(boss, 1500);
   }
 
-  // BOSS S2:龍吼震懾(全體 sp×0.75 + 50% 眩暈)
+  // BOSS S2:龍吼震懾(全體 sp×0.75 + 50% 眩暈 + 命中 +30%)
+  // ★ v3.11.7(2026-05-28) — 命中率 +30%
   function _wbAdvBossS2(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
@@ -2494,7 +2568,8 @@
     alive.forEach(t => {
       try{
         if(typeof doDmg === 'function'){
-          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true });
+          // ★ v3.11.7 — hitBonus 0.30(抵消速度差迴避 30%)
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, hitBonus: 0.30, element: 'none' });
         }else{
           t.curHp = Math.max(0, t.curHp - dmg);
         }
@@ -2516,12 +2591,24 @@
     _scheduleBossEnd(boss, 1500);
   }
 
-  // BOSS 爆發:天崩之炎(全體當前 HP 90%)
+  // BOSS 爆發:天崩之炎(將全體 HP 減至最大 HP 的 20% + 強力燃燒 3 回合,無視所有有利狀態)
+  // ★ v3.11.7(2026-05-28) — 完整重寫:
+  //   1. 傷害改成「將 HP 減至最大 HP 的 20%」HP 考核機制(舊版 95% 當前 HP 太狠,玩家死太快)
+  //      傷害公式:dmg = max(0, curHp - floor(maxHp * 0.20))
+  //      若玩家當前 HP 已低於 20% 最大 HP → 傷害 = 0(不會打到負數)
+  //      設計意圖:強迫玩家把全隊養到至少 110 HP,確保「減至 22 + 強力燃燒 6 次 -10」仍能存活
+  //   2. 移除「無敵擋下」「護盾減半」(老師明確指示:護盾和減傷都無效)
+  //   3. doDmg opts 補上 ignoreEvasion/noReflect/noHalfDmg/piercing(對齊 _wbExecSkillFallback)
+  //   4. 燃燒改用 addStatus(t, 'hellfire', 3) + _strong:true(有 chip、有 popup、行動前後 -10 HP)
+  //      舊版用 t._wbBurn = 3 玩家側完全無 UI 顯示,所以老師回報「沒附加燃燒」
+  //   5. 強制把 _wbActionCount = 2,讓爆發後不再接第 2 次行動(爆發已太強)
   function _wbAdvBossBurst(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
+    // ★ v3.11.7 — 爆發強制讓行動計數 = 2,結束行動不再接第 2 次
+    try{ boss._wbActionCount = 2; }catch(_){}
     // ★ FIX 20260518(c) #3 — 外層動畫等待也存到 _wbBossTid,玩家爆發插隊時能取消整條鏈
     try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
     boss._wbBossTid = setTimeout(() => {
@@ -2537,33 +2624,54 @@
         return;
       }
       const alive = G.p1.filter(h => h && h.curHp > 0);
-      let logEntry = '⚡ 維蘇威火山龍王爆發「天崩之炎」!';
+      let logEntry = '⚡ 維蘇威火山龍王爆發「天崩之炎」!將全體 HP 減至最大 HP 的 20%';
       alive.forEach(t => {
-        if(t._wbInvincible){
-          logEntry += ` ${t.name} 無敵擋下!`;
-          t._wbInvincible = 0;
-          return;
-        }
-        let dmgPct = 0.90;
-        if(t._wbShield){
-          dmgPct = 0.45;
-          t._wbShield = 0;
-          logEntry += ` ${t.name} 護盾減半...`;
-        }
-        const d = Math.floor(t.curHp * dmgPct);
-        try{
-          if(typeof doDmg === 'function'){
-            doDmg(t, d, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, fixedDmg: true });
-          }else{
+        // ★ v3.11.7 — 無視所有有利狀態:不再判定 _wbInvincible / _wbShield
+        const _floorHp = Math.floor((t.hp || 0) * 0.20);
+        const d = Math.max(0, t.curHp - _floorHp);
+        if(d > 0){
+          try{
+            if(typeof doDmg === 'function'){
+              doDmg(t, d, {
+                actor: boss,
+                isSkill: true,
+                isAoe: true,
+                ignoreBuffs: true,    // 無視有利狀態(無敵/免疫/護盾/保護/閃避全失效)
+                ignoreEvasion: true,  // 必中
+                noReflect: true,      // 不被反射
+                noHalfDmg: true,      // 不受減傷
+                piercing: true,       // 無視防禦
+                fixedDmg: true,
+                element: 'fire'
+              });
+            }else{
+              t.curHp = Math.max(0, t.curHp - d);
+            }
+          }catch(_){
             t.curHp = Math.max(0, t.curHp - d);
           }
-        }catch(_){
-          t.curHp = Math.max(0, t.curHp - d);
         }
-        t._wbBurn = 3;
+        // ★ v3.11.7 — 強力燃燒 3 回合(主程式 hellfire + _strong,行動前後各 -10 HP)
+        //   舊版 t._wbBurn = 3 玩家側完全無 UI 顯示,改走主程式 status 機制
+        if(t.curHp > 0){
+          try{
+            if(typeof addStatus === 'function'){
+              addStatus(t, 'hellfire', 3);
+              const _hs = (t.status || []).find(s => s.type === 'hellfire');
+              if(_hs){
+                _hs._actor = boss;
+                _hs._strong = true;
+              }
+              if(typeof bannerFX === 'function'){
+                bannerFX(t, '🔥 強力燃燒', '#ff2200', 900);
+              }
+            }
+          }catch(_eHF){ console.warn('[WB-Burst v3.11.7] 強力燃燒附加失敗', _eHF); }
+        }
         try{ renderCard(t); }catch(_){}
       });
-      if(typeof log === 'function') { log(logEntry); log('🔥 全體附加燃燒 3 回合'); }
+      if(typeof log === 'function'){ log(logEntry); log('🔥 存活全體附加強力燃燒 3 回合(行動前後各 -10 HP)'); }
+      try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,80,40,0.8)', 700); }catch(_){}
       // ★ FIX 20260518(c) #3 — 內層 endAction 也走防雙重觸發
       _scheduleBossEnd(boss, 1800);
     }, 2200);
@@ -2584,7 +2692,8 @@
     const d = Math.floor((boss.atk || 49) * (1 + Math.random() * 0.3));
     try{
       if(typeof doDmg === 'function'){
-        doDmg(tgt, d, { actor: boss });
+        // ★ v3.11.7 — hitBonus 0.30(普攻基礎命中率 +30%)
+        doDmg(tgt, d, { actor: boss, hitBonus: 0.30 });
       }else{
         tgt.curHp = Math.max(0, tgt.curHp - d);
       }
