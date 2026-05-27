@@ -3362,6 +3362,9 @@
     }
     // ★ v6 Phase 5 — 清理 auto-target 旗標
     window._wbAutoTargetForOtherPlayer = false;
+    // ★ v3.11.3(2026-05-27) — 清理崩毀觸發旗標(對齊主程式 _wbSetupAdvForBattle 的 reset)
+    //   詳見 index.html line ~49937 的修法註解。雙保險避免下場世界 BOSS 戰打不結束。
+    window._wbCollapseTriggered = false;
   }
   window._wbShowAdvBattleResult = _wbShowAdvBattleResult;
 
