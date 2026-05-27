@@ -4176,6 +4176,30 @@
           }
         }catch(_){}
       }
+      // ════════════════════════════════════════════════════════════════
+      // ★ v3.11.4(2026-05-27) — 修補「龍王戰無法使用初始 8 隻英雄」
+      //   老師回報:玩家進世界 BOSS 戰選角時,只看得到解鎖過的英雄,
+      //             看不到電腦繪圖師/程式設計師/弦樂團員/小劇團員/
+      //             田徑隊員/直笛團員/籃球隊員/動物學家 這 8 隻初始英雄。
+      //   根因:advGetUnlockedHeroes() 預設不包含初始 8 隻(他們是「未解鎖時也能用」),
+      //         但 _wbGetAvailableHeroes 的 line 4192 嚴格用 unlocked Set 過濾,
+      //         初始 8 隻全被擋下 → 只剩玩家從 BOSS 戰解鎖過的英雄。
+      //   修法:把 ADV_HERO_POOL.maokong(初始 8 隻)union 進 unlocked Set。
+      //         若玩家還沒有 unlocked(極端 fallback)就讓他至少能用初始 8 隻。
+      // ════════════════════════════════════════════════════════════════
+      try{
+        const _INITIAL_8 = (typeof ADV_HERO_POOL !== 'undefined' && Array.isArray(ADV_HERO_POOL.maokong))
+          ? ADV_HERO_POOL.maokong
+          : ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家'];
+        if(!unlocked){
+          // 沒任何解鎖名單 → 至少給初始 8 隻
+          unlocked = new Set(_INITIAL_8);
+          console.log('[v3.11.4 _wbGetAvailableHeroes] 玩家無解鎖名單,fallback 給初始 8 隻');
+        } else {
+          // 有解鎖名單 → union 初始 8 隻進來
+          _INITIAL_8.forEach(n => unlocked.add(n));
+        }
+      }catch(_eInit){ console.warn('[v3.11.4 _wbGetAvailableHeroes] 補初始 8 隻失敗', _eInit); }
 
       return allNames.filter(function(n){
         // 1. BOSS / 魔物過濾(BOSS_NAMES 內,但 SUMMON_RARES 豁免)
