@@ -1798,6 +1798,24 @@
           window._wbHostSyncG('after_endAction');
         }
       }catch(e){ console.warn('[WB-Sync v6] endAction hook 例外', e); }
+      // ════════════════════════════════════════════════════════════════
+      // ★ v3.11.6(2026-05-27) — [E3] endAction 後檢查 11 回合崩毀
+      // ────────────────────────────────────────────────────────────────
+      // R12+ fallback(R11 BOSS turn 漏崩):startTurn hook 也許還沒跑,
+      // endAction 結尾再檢查一次 → 雙保險。同樣 R12+ 才觸發,避免擋 R11 玩家行動。
+      // ════════════════════════════════════════════════════════════════
+      try{
+        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+           && !window._wbClientMode && !window._wbAdvBattleEnded){
+          const _Ge = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+          const _re = (_Ge && _Ge.round) || 1;
+          if(_re >= 12 && !window._wbCollapseDone
+             && typeof window._wbForceCollapseAt11 === 'function'){
+            console.log('[WB-Sync v6] R' + _re + ' 啟動 [E3] endAction 後崩毀守門');
+            window._wbForceCollapseAt11('endAction-E3-round-' + _re);
+          }
+        }
+      }catch(_eEndCollapse){ console.warn('[WB-Sync v6] endAction 崩毀守門例外', _eEndCollapse); }
       return ret;
     };
     window._wbEndActionSyncPatched = true;
@@ -1823,6 +1841,38 @@
           window._wbHostSyncG('after_startTurn');
         }
       }catch(e){ console.warn('[WB-Sync v6] startTurn hook 例外', e); }
+      // ════════════════════════════════════════════════════════════════
+      // ★ v3.11.6(2026-05-27) — [E2] [E5] startTurn 後檢查 11 回合崩毀
+      // ────────────────────────────────────────────────────────────────
+      // [E2] G.round >= 12 + 未崩毀 → 立即強制崩毀(fallback,理應 R11 BOSS turn 崩了)
+      // [E5] G.round >= 13 → 終極 fallback(R12 還沒崩 = 完全漏接,絕對強制)
+      //   設計理由:R11 「BOSS turn 才崩毀」是老師原始設計,留給玩家完整 R1~R10 行動。
+      //             所以 [E2] 不應該搶在 R11 startTurn(玩家還沒行動)就觸發。
+      //             改為 R12+ 才在 startTurn 觸發 = 「R11 BOSS turn 漏崩了 → R12 補崩」。
+      //             [E5] R13 是最後底線:R12 startTurn 也漏,絕對強制。
+      // ════════════════════════════════════════════════════════════════
+      try{
+        if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+           && !window._wbClientMode){
+          const _G2 = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+          const _round = (_G2 && _G2.round) || 1;
+          // [E5] 終極 fallback:13+ 回合無條件強制崩毀,即使旗標已 true 也再跑一次
+          if(_round >= 13 && !window._wbAdvBattleEnded){
+            console.warn('[WB-Sync v6] ⚠ R' + _round + ' 仍未結束 — 啟動 [E5] 終極崩毀 fallback');
+            window._wbCollapseDone = false;  // 強制 reset,讓 _wbForceCollapseAt11 能跑
+            if(typeof window._wbForceCollapseAt11 === 'function'){
+              window._wbForceCollapseAt11('startTurn-E5-round-' + _round);
+            }
+          }
+          // [E2] 12+ 回合且尚未崩毀 → 立即強制(R11 BOSS turn 漏接的補救)
+          else if(_round >= 12 && !window._wbCollapseDone && !window._wbAdvBattleEnded){
+            console.log('[WB-Sync v6] R' + _round + ' 啟動 [E2] startTurn 後崩毀守門');
+            if(typeof window._wbForceCollapseAt11 === 'function'){
+              window._wbForceCollapseAt11('startTurn-E2-round-' + _round);
+            }
+          }
+        }
+      }catch(_eCollapseGuard){ console.warn('[WB-Sync v6] 崩毀守門例外', _eCollapseGuard); }
       // ★ v3.7.10 — 護盾依回合數觸發(第 3/5/7/9 回合,每元素 1 層)
       //   在每次 startTurn 後檢查一次,讓即使該回合沒人打 BOSS 也會啟動護盾。
       //   只在房主端 / 練習模式跑(client 不該本機改 BOSS 狀態,等 host sync)。
@@ -2102,6 +2152,22 @@
         if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss'
            && a && a.side === 'p2' && typeof a.name === 'string'
            && window._wbIsBossName && window._wbIsBossName(a.name)){
+          // ════════════════════════════════════════════════════════════════
+          // ★ v3.11.6(2026-05-27) — [E4] aiAct hook 入口崩毀守門
+          // ────────────────────────────────────────────────────────────────
+          // BOSS 行動觸發前(可能在 quiz 之前)就先檢查 R11,讓 quiz 流程不會
+          // 把崩毀拖過去。優先級高於 quiz 攔截,直接 return(不再跑後續邏輯)
+          // ════════════════════════════════════════════════════════════════
+          try{
+            const _Ga = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+            const _ra = (_Ga && _Ga.round) || 1;
+            if(_ra >= 11 && !window._wbCollapseDone && !window._wbAdvBattleEnded
+               && typeof window._wbForceCollapseAt11 === 'function'){
+              console.log('[WB-Adv aiAct hook] R' + _ra + ' 啟動 [E4] aiAct 入口崩毀守門');
+              window._wbForceCollapseAt11('aiAct-E4-round-' + _ra);
+              return;
+            }
+          }catch(_eE4){ console.warn('[WB-Adv aiAct hook] [E4] 守門例外', _eE4); }
           // ★ FIX 20260518(c) #6 — quiz 守門:世界 BOSS 已在 ADV_QUIZ_BOSS_NAMES,
           //   需要先讓主程式 aiAct 內的 quiz 觸發邏輯跑完(advShowQuiz),
           //   quiz cb 內呼叫 _realAiAct → _realAiAct 自己會接到 _wbAdvBossTurn(已在 #6 修補)。
@@ -2142,6 +2208,126 @@
     return name === '維蘇威火山龍王';
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.11.6(2026-05-27) — 11 回合崩毀「強制執行」整套重構
+  // ────────────────────────────────────────────────────────────────────
+  // 玩家回報:打到第 14 回合龍王戰還沒結束。log 顯示 R13/R14 BOSS turn 跑了
+  // _wbAdvBossTurn 並進到 BOSS 爆發,但「💥 戰場崩毀」log 從未出現。
+  //
+  // 根因分析(舊版 v3.7.9 設計缺陷):
+  //   (1) 僅在 _wbAdvBossTurn 入口檢查 G.round >= 11 + 旗標。BOSS turn 期間
+  //       任何 race condition(玩家爆發插隊、quiz cb 把 boss.acted 先設 true、
+  //       _realAiAct 因 a.curHp<=0 提前 return startTurn)都會「跳過崩毀」。
+  //   (2) _wbCollapseTriggered 是「set then leave」型旗標 — 一旦跑了 alive.forEach
+  //       但 alive=[](全員已死)或 doDmg 例外,旗標仍會被 set 成 true,後續永遠
+  //       擋下崩毀重試。
+  //   (3) 結算僅靠 _safeBossEndAction → endAction → checkWin 鏈,中間任何一環
+  //       斷掉(例如 BOSS 因 host sync race 被另一處 endAction 過了)就完全失效。
+  //
+  // 新設計(v3.11.6):
+  //   (A) 抽出獨立函式 _wbForceCollapseAt11(reason),任何路徑都能呼叫
+  //   (B) 用「DONE 才算 done」的旗標 _wbCollapseDone(原 _wbCollapseTriggered 保留向後相容)
+  //   (C) 在 5 個入口都加守門,任一觸發都會強制崩毀:
+  //       [E1] _wbAdvBossTurn 入口(原本就有,沿用)
+  //       [E2] startTurn hook 結尾 (G.round >= 11)
+  //       [E3] endAction hook 結尾 (G.round >= 11 且某些情況下 startTurn 還沒被呼叫)
+  //       [E4] aiAct hook(BOSS 行動前)
+  //       [E5] 12+ 回合 fallback — 任何 startTurn 看到 round >= 12 都強制全滅,不容例外
+  //   (D) 崩毀執行完 600ms 後強制呼叫 checkWin + 強制結算 fallback(若還沒結算)
+  // ════════════════════════════════════════════════════════════════════
+  window._wbForceCollapseAt11 = function(reason){
+    try{
+      // client mode 不主動觸發崩毀(等房主 sync)
+      if(window._wbClientMode) return false;
+      const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+      if(!G || !G.p1 || !G.p2) return false;
+      // 已經跑過且確實完成 → 不重跑
+      if(window._wbCollapseDone === true) return false;
+      // stage 守門
+      if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() !== 'worldboss') return false;
+      // 戰鬥已結算 → 不再跑
+      if(window._wbAdvBattleEnded === true) return false;
+
+      // 找 BOSS
+      const boss = G.p2.find(h => h && window._wbIsBossName && window._wbIsBossName(h.name));
+      if(!boss){
+        console.warn('[WB-Collapse v3.11.6] 找不到 BOSS,跳過崩毀');
+        return false;
+      }
+      // BOSS 已死 → checkWin 已接管,不需崩毀
+      if(boss.curHp <= 0){
+        window._wbCollapseDone = true;
+        window._wbCollapseTriggered = true;
+        return false;
+      }
+
+      console.log('[WB-Collapse v3.11.6] 🔥 強制崩毀觸發,reason=' + (reason || 'unknown') + ', round=' + (G.round || 1));
+
+      // 雙旗標標記
+      window._wbCollapseTriggered = true;
+      window._wbCollapseDone = true;
+
+      // 音效
+      try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+      // log
+      try{ if(typeof log === 'function') log('💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!'); }catch(_){}
+
+      // 把全隊強制歸 0(包括「已 acted=true 還活著的」也要全滅)
+      const allOnField = G.p1.filter(h => h);
+      allOnField.forEach(t => {
+        if(t.curHp <= 0) return;  // 已死的不重跑特效
+        const _d = t.curHp;
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, _d, { actor: boss, isSkill: true, fixedDmg: true, isAoe: true, ignoreBuffs: true, mustHit: true });
+          }
+        }catch(_){}
+        // 雙保險:doDmg 跑完仍可能因為某些 buff 沒打死 → 強制清 0
+        try{ t.curHp = 0; }catch(_){}
+        try{ if(typeof renderCard === 'function') renderCard(t); }catch(_){}
+      });
+
+      // 動畫
+      try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
+      try{ if(typeof log === 'function') log('☠ 全員陣亡 — 戰場已被火山灰掩埋'); }catch(_){}
+
+      // 房主端 sync 給 client(連線模式)
+      try{
+        if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
+          window._wbHostSyncG('force-collapse-at-11');
+        }
+      }catch(_){}
+
+      // 強制 BOSS endAction(避免 BOSS 卡在「未行動」狀態繼續走主程式 turn 推進)
+      try{ _safeBossEndAction(boss); }catch(_){}
+
+      // ★ 強制呼叫 checkWin 觸發結算
+      try{
+        if(typeof window.checkWin === 'function'){
+          window.checkWin();
+        }
+      }catch(_){}
+
+      // ★ 600ms 後 fallback:若 checkWin 沒成功觸發結算 → 直接呼叫 _wbShowAdvBattleResult(false)
+      setTimeout(() => {
+        try{
+          if(!window._wbAdvBattleEnded){
+            console.warn('[WB-Collapse v3.11.6] checkWin 沒觸發結算,fallback 直接呼叫 _wbShowAdvBattleResult(false)');
+            window._wbAdvBattleEnded = true;
+            if(typeof window._wbShowAdvBattleResult === 'function'){
+              window._wbShowAdvBattleResult(false);
+            }
+          }
+        }catch(eFb){ console.error('[WB-Collapse v3.11.6] fallback 結算例外', eFb); }
+      }, 600);
+
+      return true;
+    }catch(eFc){
+      console.error('[WB-Collapse v3.11.6] _wbForceCollapseAt11 例外', eFc);
+      return false;
+    }
+  };
+
   // ── C. 世界戰 BOSS AI(替代 world-boss-ui.html 內的 _wbHostExecuteBossTurn)─
   // ─────────────────────────────────────────────────────────────────
   // 跑在主程式戰鬥引擎中,直接修改 G.p1[i].curHp + log + renderCard,然後 endAction
@@ -2155,39 +2341,13 @@
     boss._wbEndedThisTurn = false;
     try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
 
-    // ★ v3.7.9(2026-05-25) — 戰場崩毀提前至第 11 回合 BOSS turn 觸發(原第 21)
-    //   老師決策(2026-05-25):戰鬥節奏整體壓縮一半,讓玩家完整跑完 10 個回合的答題與行動,
-    //                          然後在第 11 回合 BOSS turn 才觸發崩毀全滅。新節奏:
-    //                            開場 1 題(無獎勵) + 第 1~10 回合各 1 題 = 共 11 題答題機會
-    //                          最後一次(第 11 次)答題行動結束後,輪到 BOSS 時觸發崩毀。
-    //   歷史:
-    //     v3.5.69-:G.round >= 20 即觸發
-    //     v3.5.70 :G.round >= 21 給玩家完整 20 回合
-    //     v3.7.9  :G.round >= 11 配合「10 回合限制」新節奏
-    // ★ v3.7.7(2026-05-25):用 _wbCollapseTriggered 旗標跟主程式 aiAct hook 共用守衛,
-    //   避免:(a) 雙重觸發(兩處都跑滅絕)、(b) 房主端 sync 給 client 後本機又跑一次
-    if((G.round || 1) >= 11 && !window._wbCollapseTriggered){
-      window._wbCollapseTriggered = true;
-      // ★ FIX 20260517 — 滅絕也算技能,播技能音效
-      try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
-      if(typeof log === 'function') log('💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!');
-      const alive = G.p1.filter(h => h && h.curHp > 0);
-      alive.forEach(t => {
-        // 直接全清,visually 用大量 doDmg 也行,簡化為直接設 0
-        const _d = t.curHp;
-        try{
-          if(typeof doDmg === 'function'){
-            doDmg(t, _d, { actor: boss, isSkill: true, fixedDmg: true, isAoe: true });
-          }else{
-            t.curHp = 0;
-          }
-        }catch(_){ t.curHp = 0; }
-        try{ renderCard(t); }catch(_){}
-      });
-      try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
-      if(typeof log === 'function') log('☠ 全員陣亡 — 戰場已被火山灰掩埋');
-      // ★ FIX 20260518(c) #3 — 滅絕路徑也走防雙重觸發
-      _safeBossEndAction(boss);
+    // ★ v3.11.6(2026-05-27) — [E1] BOSS turn 入口:R11+ 直接走 _wbForceCollapseAt11
+    //   舊版用 inline 邏輯 + 單一旗標 _wbCollapseTriggered;v3.11.6 改用獨立函式 +
+    //   多重保險,任何漏洞都會被別的入口接住(詳見 _wbForceCollapseAt11 的設計說明)
+    if((G.round || 1) >= 11 && !window._wbCollapseDone){
+      if(typeof window._wbForceCollapseAt11 === 'function'){
+        window._wbForceCollapseAt11('_wbAdvBossTurn-entry');
+      }
       return;
     }
 
@@ -3379,6 +3539,8 @@
     // ★ v3.11.3(2026-05-27) — 清理崩毀觸發旗標(對齊主程式 _wbSetupAdvForBattle 的 reset)
     //   詳見 index.html line ~49937 的修法註解。雙保險避免下場世界 BOSS 戰打不結束。
     window._wbCollapseTriggered = false;
+    // ★ v3.11.6(2026-05-27) — 同時清新版「DONE」旗標
+    window._wbCollapseDone = false;
   }
   window._wbShowAdvBattleResult = _wbShowAdvBattleResult;
 

@@ -12516,18 +12516,32 @@
 
     const burstWarn = document.getElementById('wb-adv-burst-warn');
     if(burstWarn){
-      if(round === 9){
+      // ════════════════════════════════════════════════════════════════
+      // ★ v3.11.6(2026-05-27) — 崩毀倒數 UI 對齊 11 回合節奏
+      // ────────────────────────────────────────────────────────────────
+      // 玩家回報:「我看到崩毀倒數了,原來是沒有改成 11 回合啊」
+      // 根因:此處(_wbAdvSyncOnce 主程式戰鬥引擎用的同步函式)還寫死 20 回合
+      //       節奏的舊文案(17/18/19, 20-round),但實際邏輯 v3.7.9 改成 11 觸發。
+      //       玩家戰到 R18 看著「崩毀倒數 2 回合」以為要 20 才崩,結果根本沒崩。
+      // 修補:對齊 11 回合節奏,跟 line 9544 (dead path)、world-boss.js R11 觸發同步
+      //   - round === 4 → 下回合 BOSS 釋放爆發(預警 R5 強制爆發)
+      //   - round === 8 → 剩 2 回合戰場將崩毀
+      //   - round === 9 → 倒數 2 回合
+      //   - round === 10 → 倒數 1 回合(本回合 BOSS 行動完就崩)
+      //   舊版:9 / 17 / 18 / 19,搭配 20 回合節奏
+      // ════════════════════════════════════════════════════════════════
+      if(round === 4){
         burstWarn.style.display = 'block';
         burstWarn.style.color = '#ffaa66';
         burstWarn.textContent = '⚠ 下回合 BOSS 將釋放天崩之炎爆發技!';
-      }else if(round === 17){
+      }else if(round === 8){
         burstWarn.style.display = 'block';
         burstWarn.style.color = '#ffaa66';
-        burstWarn.textContent = '⚠ 剩 3 回合戰場將崩毀!';
-      }else if(round === 18 || round === 19){
+        burstWarn.textContent = '⚠ 剩 2 回合戰場將崩毀!';
+      }else if(round === 9 || round === 10){
         burstWarn.style.display = 'block';
         burstWarn.style.color = '#ff4422';
-        burstWarn.textContent = `⚠ 戰場崩毀倒數 ${20-round} 回合!`;
+        burstWarn.textContent = `⚠ 戰場崩毀倒數 ${11-round} 回合!`;
       }else{
         burstWarn.style.display = 'none';
       }
