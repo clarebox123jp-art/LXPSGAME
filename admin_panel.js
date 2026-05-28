@@ -67,138 +67,153 @@ async function _showAdminStatsPanelImpl(){
     + 'padding:20px;box-sizing:border-box;';
   pop.innerHTML = `
     <style>
-      /* v1.0.20260420.0900 — GM 面板響應式縮放
-         策略:卡片內部捲動(max-height + overflow) + 視窗過小時用屬性選擇器縮小文字 */
-      #_admin-stats-panel > div::-webkit-scrollbar { width: 8px; }
-      #_admin-stats-panel > div::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
-      #_admin-stats-panel > div::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.5); border-radius: 4px; }
-      #_admin-stats-panel > div::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.8); }
-      /* 小螢幕 / 矮視窗:整體縮小(clamp 確保不會過小)
-         觸發條件:高度 ≤ 900 或 寬度 ≤ 700 */
-      @media (max-height: 900px), (max-width: 700px) {
-        #_admin-stats-panel > div {
-          padding: clamp(14px, 2.4vw, 32px) clamp(18px, 3vw, 40px) !important;
-        }
-        #_admin-stats-panel [style*="font-size:26px"] { font-size: clamp(17px, 2.3vw, 22px) !important; }
-        #_admin-stats-panel [style*="font-size:22px"] { font-size: clamp(14px, 1.9vw, 18px) !important; }
-        #_admin-stats-panel [style*="font-size:18px"] { font-size: clamp(13px, 1.6vw, 16px) !important; }
-        #_admin-stats-panel [style*="font-size:16px"] { font-size: clamp(12px, 1.45vw, 14px) !important; }
-        #_admin-stats-panel [style*="font-size:15px"] { font-size: clamp(11px, 1.35vw, 13px) !important; }
-        #_admin-stats-panel [style*="font-size:14px"] { font-size: clamp(11px, 1.3vw, 13px) !important; }
-        #_admin-stats-panel [style*="font-size:13px"] { font-size: clamp(10px, 1.2vw, 12px) !important; }
-        #_admin-stats-panel [style*="font-size:12px"] { font-size: clamp(10px, 1.1vw, 11px) !important; }
-        #_admin-stats-panel [style*="padding:16px"] { padding: clamp(9px, 1.5vw, 14px) !important; }
-        #_admin-stats-panel [style*="min-height:60px"] { min-height: clamp(40px, 5vh, 55px) !important; }
-        #_admin-stats-panel [style*="margin-bottom:22px"] { margin-bottom: clamp(8px, 1.3vw, 16px) !important; }
-        #_admin-stats-panel [style*="margin-bottom:18px"] { margin-bottom: clamp(7px, 1.15vw, 14px) !important; }
-        #_admin-stats-panel [style*="margin-bottom:14px"] { margin-bottom: clamp(6px, 1vw, 12px) !important; }
-        #_admin-stats-panel [style*="margin-bottom:12px"] { margin-bottom: clamp(5px, 0.9vw, 10px) !important; }
-        #_admin-stats-panel [style*="margin-bottom:10px"] { margin-bottom: clamp(4px, 0.8vw, 9px) !important; }
-        #_admin-stats-panel [style*="padding:12px"] { padding: clamp(7px, 1.1vw, 11px) !important; }
-        #_admin-stats-panel button[style*="padding:11px 20px"],
-        #_admin-stats-panel button[style*="padding:10px 20px"],
-        #_admin-stats-panel button[style*="padding:10px 24px"] {
-          padding: clamp(7px, 1vw, 10px) clamp(12px, 1.7vw, 22px) !important;
-        }
-        #_admin-stats-panel input[style*="padding:10px 14px"],
-        #_admin-stats-panel textarea {
-          padding: clamp(6px, 0.9vw, 10px) clamp(8px, 1.1vw, 13px) !important;
-        }
+      /* ★ v3.10.11 — 兩欄式 GM 後台:左 sidebar 30% / 右 content 70%
+         捲軸統一樣式;所有 section 預設隱藏,點 sidebar 才顯示對應 section */
+
+      /* === 捲軸 === */
+      #_admin-stats-panel ::-webkit-scrollbar { width: 8px; }
+      #_admin-stats-panel ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 4px; }
+      #_admin-stats-panel ::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.5); border-radius: 4px; }
+      #_admin-stats-panel ::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.8); }
+
+      /* === 所有功能 section 預設隱藏 (重點! 點 sidebar 才會切顯隱) === */
+      #_admin-stats-panel [id^="_admin-"][id$="-section"] { display: none; }
+
+      /* sidebar 項目按鈕 */
+      #_admin-stats-panel .admin-sidebar-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 12px 14px;
+        margin-bottom: 4px;
+        background: rgba(40,50,80,0.35);
+        border: 1.5px solid rgba(212,168,67,0.25);
+        color: #d8d8d8;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        line-height: 1.4;
+        transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
       }
-      /* 非常矮的螢幕(<700px)再縮一點 */
-      @media (max-height: 700px) {
-        #_admin-stats-panel > div { padding: 12px 18px !important; }
-        #_admin-stats-panel [style*="font-size:26px"] { font-size: 17px !important; }
-        #_admin-stats-panel [style*="font-size:18px"] { font-size: 13px !important; }
-        #_admin-stats-panel [style*="line-height:1.55"],
-        #_admin-stats-panel [style*="line-height:1.6"],
-        #_admin-stats-panel [style*="line-height:1.7"] { line-height: 1.35 !important; }
+      #_admin-stats-panel .admin-sidebar-item:hover {
+        background: rgba(80,100,160,0.45);
+        border-color: rgba(212,168,67,0.55);
+        color: #fff;
       }
-      /* ★ v3.5.47 — PC 版面板放大 200%(寬高 + 字級 + 內距全部 1.6~2 倍)
-         觸發:寬 ≥ 1024 且 高 ≥ 900(避免縮小視窗下還是被放大) */
+      #_admin-stats-panel .admin-sidebar-item:active { transform: scale(0.98); }
+      #_admin-stats-panel .admin-sidebar-item.active {
+        background: linear-gradient(135deg, rgba(212,168,67,0.45), rgba(180,140,50,0.55));
+        border-color: #ffcc44;
+        color: #fff;
+        box-shadow: 0 2px 12px rgba(212,168,67,0.35), inset 0 0 0 1px rgba(255,220,140,0.5);
+      }
+      #_admin-stats-panel .admin-sidebar-item ._si-num {
+        display: inline-block;
+        min-width: 22px;
+        color: #888;
+        font-size: 12px;
+        font-weight: 700;
+        margin-right: 6px;
+      }
+      #_admin-stats-panel .admin-sidebar-item.active ._si-num { color: #ffe9a0; }
+
+      /* === 關閉按鈕 hover === */
+      #_admin-stats-panel #_admin-close:hover {
+        background: rgba(100,50,50,0.7) !important;
+        border-color: #aa6666 !important;
+        color: #fff !important;
+      }
+
+      /* === 響應式:窄視窗(< 760px)疊成上下兩段 === */
+      @media (max-width: 760px) {
+        #_admin-stats-panel ._admin-stats-card {
+          flex-direction: column !important;
+          height: calc(100vh - 16px) !important;
+        }
+        #_admin-stats-panel #_admin-sidebar {
+          flex: 0 0 auto !important;
+          max-width: none !important;
+          min-width: 0 !important;
+          width: 100% !important;
+          max-height: 38vh;
+          border-right: none !important;
+          border-bottom: 2px solid rgba(212,168,67,0.4);
+        }
+        #_admin-stats-panel #_admin-content { padding: 18px 18px !important; }
+        #_admin-stats-panel #_admin-current-title { font-size: 19px !important; }
+      }
+
+      /* === 大螢幕(≥ 1024px 且 ≥ 900px 高):字體放大 === */
       @media (min-width: 1024px) and (min-height: 900px) {
-        #_admin-stats-panel { padding: 24px !important; }
-        #_admin-stats-panel > ._admin-stats-card {
-          width: min(1120px, 96vw) !important;
-          max-height: calc(100vh - 48px) !important;
-          padding: 56px 64px !important;
-          border-width: 5px !important;
-          border-radius: 28px !important;
+        #_admin-stats-panel ._admin-stats-card {
+          width: min(1400px, 96vw) !important;
+          height: min(960px, calc(100vh - 32px)) !important;
         }
-        #_admin-stats-panel ._admin-stats-title { font-size: 48px !important; margin-bottom: 28px !important; letter-spacing: 3px !important; }
-        #_admin-stats-panel [style*="font-size:18px"] { font-size: 32px !important; margin-bottom: 14px !important; }
-        #_admin-stats-panel [style*="font-size:15px"] { font-size: 24px !important; line-height: 1.7 !important; }
-        #_admin-stats-panel [style*="font-size:14px"] { font-size: 22px !important; line-height: 1.7 !important; }
-        #_admin-stats-panel [style*="font-size:13px"] { font-size: 20px !important; line-height: 1.7 !important; }
-        #_admin-stats-panel [style*="font-size:12px"] { font-size: 18px !important; line-height: 1.65 !important; }
-        #_admin-stats-panel [style*="font-size:26px"] { font-size: 48px !important; }
-        #_admin-stats-panel [style*="font-size:22px"] { font-size: 40px !important; }
-        #_admin-stats-panel [style*="font-size:16px"] { font-size: 26px !important; }
-        #_admin-stats-panel button {
-          font-size: 22px !important;
-          padding: 18px 32px !important;
-          border-radius: 12px !important;
-        }
-        #_admin-stats-panel button[style*="padding:8px"] { padding: 14px 24px !important; font-size: 20px !important; }
-        #_admin-stats-panel button[style*="padding:7px"] { padding: 12px 20px !important; font-size: 18px !important; }
-        #_admin-stats-panel button[style*="padding:6px"] { padding: 12px 20px !important; font-size: 18px !important; }
-        #_admin-stats-panel input,
-        #_admin-stats-panel textarea,
-        #_admin-stats-panel select {
-          font-size: 22px !important;
-          padding: 16px 22px !important;
-          border-radius: 12px !important;
-        }
-        #_admin-stats-panel [style*="padding:16px"] { padding: 28px !important; border-radius: 16px !important; }
-        #_admin-stats-panel [style*="padding:12px"] { padding: 20px !important; }
-        #_admin-stats-panel [style*="padding:10px"] { padding: 18px !important; }
-        #_admin-stats-panel [style*="margin-bottom:22px"] { margin-bottom: 36px !important; }
-        #_admin-stats-panel [style*="margin-bottom:14px"] { margin-bottom: 24px !important; }
-        #_admin-stats-panel [style*="margin-bottom:12px"] { margin-bottom: 20px !important; }
-        #_admin-stats-panel [style*="margin-bottom:10px"] { margin-bottom: 18px !important; }
-        #_admin-stats-panel [style*="margin-bottom:8px"] { margin-bottom: 14px !important; }
-        #_admin-stats-panel [style*="border:2px solid"] { border-width: 3px !important; }
-        #_admin-stats-panel [style*="border:1.5px solid"] { border-width: 2.5px !important; }
-        #_admin-stats-panel code,
-        #_admin-stats-panel kbd { font-size: 20px !important; padding: 4px 8px !important; }
+        #_admin-stats-panel #_admin-sidebar { max-width: 380px; min-width: 300px; }
+        #_admin-stats-panel #_admin-sidebar > div:first-child { padding: 24px 20px 18px !important; }
+        #_admin-stats-panel .admin-sidebar-item { font-size: 16px !important; padding: 15px 16px !important; }
+        #_admin-stats-panel #_admin-content { padding: 32px 40px !important; }
+        #_admin-stats-panel #_admin-current-title { font-size: 28px !important; }
       }
-      /* ★ v3.5.47 — 區段順序依重要性重排(用 flex order 控制,不動 DOM 順序) */
-      #_admin-stats-panel ._admin-stats-card { display: flex; flex-direction: column; }
-      #_admin-stats-panel ._admin-stats-card > ._admin-stats-title { order: -100; }
-      #_admin-stats-panel ._admin-stats-card > ._admin-stats-subtitle { order: -99; }
-      #_admin-maint-section { order: 1; }              /* 維修模式 */
-      #_admin-gm-section { order: 2; }                  /* GM 公告 */
-      #_admin-bug-section { order: 3; }                 /* 接收錯誤回報 */
-      #_admin-lv1-section { order: 4; }                 /* Lv1 救援 */
-      /* ★ v3.5.72 — 寄送污染檢查提醒(放在 Lv1 救援後、玩家急救前,因為性質相近) */
-      #_admin-pollution-check-section { order: 4; }     /* 污染檢查提醒(同 4,差在 DOM 順序在 Lv1 後) */
-      #_admin-rescue-section { order: 5; }              /* 玩家急救 */
-      #_admin-comp-section { order: 6; }                /* 學生補償 */
-      #_admin-designer-grant-section { order: 6.5; }     /* ★ v3.10.2 — 設計師英雄一鍵補發 */
-      #_admin-trust-revoke-section { order: 6.7; }       /* ★ v3.10.3 — 撤銷學生信任裝置 */
-      #_admin-dlperm-section { order: 7; }              /* 下載權限 */
-      #_admin-sus-section { order: 8; }                 /* 可疑帳號 */
-      #_admin-wblb-section { order: 9; }                /* 世界 BOSS 榜 */
-      /* ★ v3.5.67(2026-05-23) — 新增小博士補發區塊,以下原本 10-14 往後挪 */
-      #_admin-wq-section { order: 10; }                 /* 小博士獎勵補發(新) */
-      #_admin-bypass-section { order: 11; }             /* 解除冷卻 */
-      #_admin-test-batch-section { order: 12; }         /* 測試批次 */
-      #_admin-backfill-players-section { order: 13; }   /* 回填總玩家 */
-      #_admin-set-players-section { order: 14; }        /* 設定總玩家 */
-      #_admin-set-adv-section { order: 15; }            /* 設定累計冒險 */
-      #_admin-close { order: 999; }                     /* 關閉永遠在最下 */
     </style>
-    <!-- ★ v3.5.47 — PC 版面板放大 200%、置中,標題改為「遊戲管理員(GM)專用功能選單」 -->
+    <!-- ★ v3.10.11 — 改為左 sidebar(30%)+ 右 content(70%)兩欄式;保留所有 section DOM,只切顯隱 -->
     <div class="_admin-stats-card" style="background:linear-gradient(135deg,rgba(20,30,50,0.98),rgba(10,15,30,0.99));
-      border:3px solid rgba(212,168,67,0.7);border-radius:20px;padding:32px 40px;
-      width:min(560px, 100%);max-height:calc(100vh - 40px);overflow-y:auto;
-      box-sizing:border-box;color:#eee;margin:0 auto;">
-      <div class="_admin-stats-title" style="font-size:26px;font-weight:900;color:#ffcc44;margin-bottom:18px;text-align:center;letter-spacing:2px;">
-        🛠️ 遊戲管理員(GM)專用功能選單
+      border:3px solid rgba(212,168,67,0.7);border-radius:20px;
+      width:min(1200px, 98vw);height:min(860px, calc(100vh - 32px));
+      box-sizing:border-box;color:#eee;margin:0 auto;
+      display:flex;flex-direction:row;overflow:hidden;">
+
+      <!-- ============ 左側 SIDEBAR (30%) ============ -->
+      <div id="_admin-sidebar" style="flex:0 0 30%;max-width:340px;min-width:240px;
+        background:linear-gradient(180deg,rgba(15,20,40,0.95),rgba(8,12,24,0.98));
+        border-right:2px solid rgba(212,168,67,0.4);
+        display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- sidebar 標題 -->
+        <div style="padding:20px 18px 14px;border-bottom:1.5px solid rgba(212,168,67,0.25);">
+          <div style="font-size:19px;font-weight:900;color:#ffcc44;text-align:center;letter-spacing:1.5px;line-height:1.35;">
+            🛠️ GM 功能選單
+          </div>
+          <div style="font-size:11px;color:#888;text-align:center;margin-top:6px;">
+            點選左側項目 →
+          </div>
+        </div>
+
+        <!-- 項目清單(可捲動) -->
+        <div id="_admin-sidebar-list" style="flex:1;overflow-y:auto;padding:10px 8px;">
+          <!-- 由 JS 動態填入 -->
+        </div>
+
+        <!-- 底部關閉按鈕 -->
+        <div style="padding:12px 14px;border-top:1.5px solid rgba(212,168,67,0.25);">
+          <button id="_admin-close" style="width:100%;padding:11px;font-size:15px;font-weight:700;
+            background:rgba(60,60,80,0.7);border:1.5px solid #666;color:#ddd;
+            border-radius:8px;cursor:pointer;font-family:inherit;transition:all 0.15s;">
+            ✕ 關閉
+          </button>
+        </div>
       </div>
-      <div class="_admin-stats-subtitle" style="font-size:15px;color:#aaa;margin-bottom:22px;line-height:1.6;">
-        僅限管理員使用。以下操作會直接覆寫 Firestore 中的資料，請謹慎使用。功能依重要性由上至下排列。
-      </div>
+
+      <!-- ============ 右側 CONTENT (70%) ============ -->
+      <div id="_admin-content" style="flex:1;overflow-y:auto;padding:28px 32px;
+        background:linear-gradient(180deg,rgba(20,30,50,0.4),rgba(10,15,30,0.3));">
+
+        <div class="_admin-stats-title" id="_admin-current-title" style="font-size:24px;font-weight:900;color:#ffcc44;margin-bottom:8px;letter-spacing:1.5px;">
+          🛠️ 遊戲管理員(GM)專用功能選單
+        </div>
+        <div class="_admin-stats-subtitle" style="font-size:14px;color:#aaa;margin-bottom:22px;line-height:1.6;">
+          點選左側項目開始使用。所有操作會直接覆寫 Firestore 中的資料,請謹慎使用。
+        </div>
+
+        <!-- 預設提示(沒選任何項目時顯示) -->
+        <div id="_admin-welcome" style="background:rgba(40,50,80,0.3);border:1.5px dashed rgba(212,168,67,0.4);border-radius:12px;padding:28px;text-align:center;color:#bbb;font-size:15px;line-height:1.8;">
+          <div style="font-size:48px;margin-bottom:14px;">👈</div>
+          請從左側選擇要使用的管理功能<br>
+          <span style="font-size:13px;color:#888;">所有功能與舊版完全相同,只是改成側邊選單樣式。</span>
+        </div>
+
 
       <div id="_admin-maint-section" style="background:rgba(60,20,20,0.4);border:2px solid rgba(255,100,100,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ff8888;margin-bottom:8px;">🔧 0. 維修模式（非管理員登入封鎖）</div>
@@ -1116,12 +1131,8 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
-      <button id="_admin-close" style="width:100%;padding:12px;font-size:16px;font-weight:700;
-        background:rgba(60,60,80,0.6);border:1px solid #555;color:#aaa;
-        border-radius:8px;cursor:pointer;font-family:inherit;">
-        關閉
-      </button>
-    </div>
+            </div><!-- /#_admin-content -->
+    </div><!-- /._admin-stats-card -->
   `;
   document.body.appendChild(pop);
 
@@ -1176,6 +1187,96 @@ async function _showAdminStatsPanelImpl(){
 
   document.getElementById('_admin-close').onclick = _closeAdminPanel;
   pop.onclick = (ev) => { if(ev.target === pop) _closeAdminPanel(); };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.10.11 — Sidebar 渲染 + section 切換邏輯
+  // ════════════════════════════════════════════════════════════════════
+  (function _renderAdminSidebar(){
+    // sidebar 項目定義(依目前重要性排序;對應到 DOM 內已存在的 section id)
+    const SIDEBAR_ITEMS = [
+      { sec: '_admin-maint-section',            label: '🔧 維修模式',              hint: '非管理員登入封鎖' },
+      { sec: '_admin-gm-section',               label: '📢 GM 公告',                hint: '對所有在線玩家廣播' },
+      { sec: '_admin-bug-section',              label: '📥 接收錯誤回報',          hint: '查看玩家提交的 bug' },
+      { sec: '_admin-lv1-section',              label: '🆘 Lv1 救援',              hint: '雲端三槽 + 反污染保護' },
+      { sec: '_admin-pollution-check-section',  label: '📢 污染檢查提醒',          hint: '寄送進度污染提醒' },
+      { sec: '_admin-rescue-section',           label: '🚑 玩家資料急救工具',      hint: '修復異常資料' },
+      { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
+      { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
+      { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
+      { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
+      { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
+      { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
+      { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
+      { sec: '_admin-bypass-section',           label: '🔓 解除冷卻 / 每日上限',   hint: '測試用' },
+      { sec: '_admin-test-batch-section',       label: '🧪 批次設定數值',          hint: '測試工具' },
+      { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
+      { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
+      { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
+    ];
+
+    const sidebarList = document.getElementById('_admin-sidebar-list');
+    const welcome = document.getElementById('_admin-welcome');
+    const titleEl = document.getElementById('_admin-current-title');
+
+    if(!sidebarList){
+      console.error('[v3.10.11] 找不到 #_admin-sidebar-list,sidebar 無法渲染');
+      return;
+    }
+
+    // 渲染 sidebar 按鈕
+    sidebarList.innerHTML = SIDEBAR_ITEMS.map((it, i) =>
+      `<button class="admin-sidebar-item" data-sec="${it.sec}" data-idx="${i}" title="${it.hint || ''}">
+         <span class="_si-num">${String(i + 1).padStart(2, '0')}</span>${it.label}
+       </button>`
+    ).join('');
+
+    // 切換函式(全部走顯隱,DOM 不動)
+    function _switchAdminSection(secId){
+      // 1. 隱藏歡迎頁
+      if(welcome) welcome.style.display = 'none';
+      // 2. 隱藏所有 section
+      const allSections = pop.querySelectorAll('[id^="_admin-"][id$="-section"]');
+      allSections.forEach(el => { el.style.display = 'none'; });
+      // 3. 顯示目標 section(inline style 強制覆蓋 CSS 的 display:none)
+      const target = document.getElementById(secId);
+      if(target){
+        target.style.display = 'block';
+      } else {
+        console.warn('[v3.10.11] 切換 section 失敗,找不到:', secId);
+      }
+      // 4. 高亮按鈕
+      sidebarList.querySelectorAll('.admin-sidebar-item').forEach(b => {
+        b.classList.toggle('active', b.dataset.sec === secId);
+      });
+      // 5. 更新右側標題
+      const item = SIDEBAR_ITEMS.find(x => x.sec === secId);
+      if(item && titleEl){
+        titleEl.textContent = item.label + (item.hint ? '  —  ' + item.hint : '');
+      }
+      // 6. 右側內容滑回頂部
+      const contentEl = document.getElementById('_admin-content');
+      if(contentEl) contentEl.scrollTop = 0;
+    }
+
+    // 綁定點擊
+    sidebarList.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.admin-sidebar-item');
+      if(!btn) return;
+      const secId = btn.dataset.sec;
+      if(!secId) return;
+      _switchAdminSection(secId);
+    });
+
+    // 預設選第一個(維修模式)
+    setTimeout(() => {
+      _switchAdminSection(SIDEBAR_ITEMS[0].sec);
+    }, 0);
+
+    // 暴露切換 API(方便外部或 debug 用)
+    window._switchAdminSection = _switchAdminSection;
+
+    console.log('[v3.10.11] ✅ GM 後台 sidebar 已渲染 (' + SIDEBAR_ITEMS.length + ' 個項目)');
+  })();
 
   // ★ v1.0.20260510.5820 — 解除冷卻 / 每日次數限制按鈕
   //   每個按鈕對應一種限制,按下後執行重置並顯示結果訊息(累積在 _admin-bypass-result)
