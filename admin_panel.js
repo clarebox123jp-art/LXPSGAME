@@ -608,7 +608,7 @@ async function _showAdminStatsPanelImpl(){
         時,用此工具完全清空帳號 → 指定角色 + 等級 + 資源 → 從零重建。
         危險度:**不可逆**,清掉的資料不會自動還原。要求雙重確認。
       -->
-      <div style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-reset-section" style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#ff7777;margin-bottom:8px;">⚠ 3.9 帳號完全重置 + 重建(危險)</div>
         <div style="font-size:13px;color:#ffcccc;margin-bottom:12px;line-height:1.6;">
           <b style="color:#ff9999;">用於救援被其他帳號資料污染的玩家。</b><br>
@@ -1212,6 +1212,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
       { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
+      { sec: '_admin-reset-section',            label: '⚠️ 帳號完全重置+重建',     hint: '危險!不可逆,最後手段' },
     ];
 
     const sidebarList = document.getElementById('_admin-sidebar-list');
@@ -5472,7 +5473,9 @@ async function _showAdminStatsPanelImpl(){
       }
 
       const _modal = document.createElement('div');
-      _modal.style.cssText = 'position:fixed;inset:0;z-index:25000;background:rgba(0,0,16,0.82);'
+      // ★ v3.11.27 — z-index 從 25000 → 100000。修「點查看本週前10名沒反應」:
+      //   GM 後台面板 _admin-stats-panel 是 z-index:99999,modal 25000 會開在後台底下被蓋住看不到。
+      _modal.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,16,0.82);'
         + 'display:flex;align-items:center;justify-content:center;padding:20px;';
       _modal.innerHTML =
         '<div style="background:linear-gradient(160deg,#1a1232,#0a0815);border:2.5px solid rgba(180,120,255,0.65);'
