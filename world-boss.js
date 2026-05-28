@@ -3393,6 +3393,13 @@
             //   「5214高誠遠・5214高誠遠・代打・5214高誠遠・代打・5214高誠遠・代打」這種拼接,
             //   且 solo 容易刷高分污染真排行榜。
             //   守門條件:_wbSoloPracticeMode === true → 直接 return,不呼叫 updateLeaderboard
+            // ★ v3.11.10(2026-05-28) — 管理員不寫排行榜(老師指示:GM 練習測試不能列入學生排名)
+            //   守門條件:當前登入帳號是管理員 → 直接 return
+            //   設計考量:管理員會用來測試新功能、調平衡、debug,成績不該污染真實學生競賽
+            const _isAdminUser = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+            if(_isAdminUser){
+              console.log('[WB-Leaderboard v3.11.10] 管理員身分,跳過排行榜更新');
+            }else
             if(window._wbSoloPracticeMode){
               console.log('[WB-Leaderboard v3.5.73] 單人練習模式,跳過排行榜更新');
             }else

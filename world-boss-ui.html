@@ -1257,6 +1257,22 @@
         entries = window._wbHpSync.getLeaderboard(_BOSS_ID, _MAX_ROWS) || [];
       }
     }catch(_){}
+    // ★ v3.11.10(2026-05-28) — 過濾管理員的舊紀錄(雙保險:寫入端已守門,顯示端再濾一次)
+    //   隊伍若有任一 email 屬於管理員 → 整隊不顯示
+    try{
+      const _adminEmails = new Set(['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com']);
+      entries = entries.filter(function(e){
+        if(!e || !Array.isArray(e.teamEmails)) return true;
+        const _hasAdmin = e.teamEmails.some(function(em){
+          return em && _adminEmails.has(String(em).toLowerCase());
+        });
+        if(_hasAdmin){
+          try{ console.log('[WB-Leaderboard v3.11.10] 過濾管理員隊伍,teamKey=' + (e.teamKey||'?')); }catch(_){}
+          return false;
+        }
+        return true;
+      });
+    }catch(_eFilter){ console.warn('[WB-Leaderboard v3.11.10] 管理員過濾例外', _eFilter); }
     if(!entries.length){
       list.innerHTML = '<div style="padding:18px;text-align:center;color:#888;font-style:italic;font-size:18px;">'
         + '尚無紀錄,快來成為第一個挑戰維蘇威火山龍王的隊伍!</div>';
