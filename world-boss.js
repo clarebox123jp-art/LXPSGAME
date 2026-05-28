@@ -655,7 +655,13 @@
 
     _wbUiLoadingPromise = (async () => {
       try{
-        const resp = await fetch('world-boss-ui.html', { cache: 'no-cache' });
+        // ★ v3.11.17(2026-05-28) — fetch UI 檔時帶上中央版本清單破快取參數,
+        //   確保改版後玩家(尤其已裝 PWA)一定拿到新的 world-boss-ui.html。
+        //   _lxpsFileSrc 不在時 fallback 為純檔名(向下相容)。
+        const _wbUiSrc = (typeof window._lxpsFileSrc === 'function')
+          ? window._lxpsFileSrc('world-boss-ui.html')
+          : 'world-boss-ui.html';
+        const resp = await fetch(_wbUiSrc, { cache: 'no-cache' });
         if(!resp.ok) throw new Error('HTTP ' + resp.status);
         const html = await resp.text();
 

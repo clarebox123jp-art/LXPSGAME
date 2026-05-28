@@ -1326,7 +1326,12 @@
             const _label = window._getAdminPlayerLabel(em || '', _t, { adminShowReal: true });
             if(_label && _label !== '未知玩家') return _label;
           }
-          // ★ v3.5.70 — 學生觀看 + 有 email 時走名冊查詢得「5324蔣同學」
+          // ★ v3.11.16 — 學生觀看 + 有 email:統一玩家可見格式「快樂的小狐狸 (5324蔣同學)」
+          if(em && typeof window._formatPlayerDisplayName === 'function'){
+            const _label = window._formatPlayerDisplayName(_t, em);
+            if(_label && _label !== '玩家') return _label;
+          }
+          // ★ v3.5.70 — fallback:_formatPlayerDisplayName 不在時走舊的名冊查詢
           if(em && typeof window._getAdminPlayerLabel === 'function'){
             const _label = window._getAdminPlayerLabel(em, _t, { protectIfNoEmail: false });
             if(_label && _label !== '未知玩家') return _label;
