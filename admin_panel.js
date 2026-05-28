@@ -5608,10 +5608,16 @@ async function _showAdminStatsPanelImpl(){
           if(!_fbDb){
             throw new Error('window._fbDb 不可用');
           }
-          // 動態載入 Firestore SDK
-          const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-          const _doc = _firestoreMod.doc;
-          const _setDoc = _firestoreMod.setDoc;
+          // ★ v3.11.29 — 優先用 index.html 暴露的同版 Firestore 函式(window._fbFns)
+          let _doc, _setDoc;
+          if(window._fbFns && window._fbFns.doc && window._fbFns.setDoc){
+            _doc = window._fbFns.doc;
+            _setDoc = window._fbFns.setDoc;
+          } else {
+            const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+            _doc = _firestoreMod.doc;
+            _setDoc = _firestoreMod.setDoc;
+          }
 
           const _lastKey = window._weeklyQuiz.getLastWeekKey();
           await _setDoc(_doc(_fbDb, 'players', _uid), {
@@ -5692,10 +5698,17 @@ async function _showAdminStatsPanelImpl(){
           if(!_fbDb){
             throw new Error('window._fbDb 不可用');
           }
-          // 動態載入 Firestore SDK
-          const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-          const _doc = _firestoreMod.doc;
-          const _runTransaction = _firestoreMod.runTransaction;
+          // ★ v3.11.29 — 優先用 index.html 暴露的同版 Firestore 函式(window._fbFns),
+          //   避免動態 import 不同版本 SDK 操作同一 db 實例可能出錯;失敗才 fallback 動態載入。
+          let _doc, _runTransaction;
+          if(window._fbFns && window._fbFns.doc && window._fbFns.runTransaction){
+            _doc = window._fbFns.doc;
+            _runTransaction = window._fbFns.runTransaction;
+          } else {
+            const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+            _doc = _firestoreMod.doc;
+            _runTransaction = _firestoreMod.runTransaction;
+          }
 
           const _statsRef = _doc(_fbDb, 'stats', 'global');
           let _deletedEntry = null;
