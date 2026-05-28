@@ -2,6 +2,10 @@
 // admin_panel.js — LXPSGAME 管理員後台功能(獨立模組,lazy load)
 // ────────────────────────────────────────────────────────────────────────────
 // 抽出版本: v3.5.45(2026-05-23)首次抽出
+// 最新版本: v3.11.19(2026-05-28) — 新增「🔑 玩家密碼安全管理」區段(第 19 個 sidebar
+//             項目):查第二段密碼狀態 / 錯誤輸入紀錄(含節次推算)/ 強制重設(清除)/
+//             立即解鎖。依賴 index.html v3.11.19 暴露的 _fbAdminPeekPwByEmail /
+//             _fbAdminClearPwByEmail / _fbAdminUnlockPwByEmail。
 // 改動歷史: v3.5.47(2026-05-23) — 套用 v3.5.44 GM 後台改版
 //             • 標題改為「🛠️ 遊戲管理員(GM)專用功能選單」
 //             • PC 版(寬≥1024 高≥900)放大 200% + 置中
@@ -611,14 +615,50 @@ async function _showAdminStatsPanelImpl(){
           background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:200px;overflow-y:auto;"></div>
       </div>
 
+      <!-- ★ v3.11.19(2026-05-28) — 玩家第二段密碼安全管理 -->
+      <div id="_admin-pwsec-section" style="background:rgba(28,22,48,0.5);border:2px solid rgba(180,150,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#c4a8ff;margin-bottom:8px;">🔑 玩家密碼安全管理</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          查詢學生第二段密碼狀態、<b style="color:#ffcc88;">錯誤輸入紀錄</b>(可推算是哪一節課發生,揪出惡意盜登)、<b style="color:#ff9999;">強制重設(清除)密碼</b>,以及<b style="color:#aaffcc;">立即解鎖</b>。<br>
+          <span style="color:#888;font-size:12px;">密碼以雜湊儲存,管理員看不到原碼。重設 = 清除,學生下次登入會重新自行設定。</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-pwsec-email" type="text" placeholder="學生 email (如 lsps110176@stu.lsps.tp.edu.tw)"
+            style="flex:1;min-width:240px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(180,150,255,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-pwsec-check" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(180,150,255,0.2);border:2px solid #b496ff;color:#cbb4ff;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔍 查詢狀態
+          </button>
+        </div>
+        <div id="_admin-pwsec-result" style="font-size:13px;color:#ddd;line-height:1.65;padding:10px;
+          background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:340px;overflow-y:auto;"></div>
+        <div id="_admin-pwsec-actions" style="display:none;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button id="_admin-pwsec-unlock" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(120,220,150,0.18);border:2px solid #66cc88;color:#aaffcc;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔓 立即解鎖(保留密碼)
+          </button>
+          <button id="_admin-pwsec-clear" style="padding:8px 16px;font-size:13px;font-weight:800;
+            background:rgba(255,150,150,0.2);border:2px solid #ff8888;color:#ffaaaa;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            ♻️ 強制重設(清除密碼)
+          </button>
+        </div>
+      </div>
+
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
       <!--
-        放在 3.5 之後、4 號之前,因為它是「最徹底」的玩家資料修補工具。
+        ★ v3.11.20(2026-05-28) — 補上 id="_admin-fullreset-section",成為正式 sidebar 區段。
+          原問題:此 div 沒有 -section id,不受 sidebar 切換的 [id$="-section"]{display:none}
+          控制 → 切到任何分頁它都不會被隱藏,造成「每個分頁都出現帳號完全重置」。
+          修法:加 id 受控 + 排進 sidebar 最後一項,平時隱藏,只在點選「帳號完全重置」才顯示。
         用法:當學生帳號被其他學生資料污染,3 / 3.5 都救不回(保留現有策略反而保下污染)
         時,用此工具完全清空帳號 → 指定角色 + 等級 + 資源 → 從零重建。
         危險度:**不可逆**,清掉的資料不會自動還原。要求雙重確認。
       -->
-      <div style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div id="_admin-fullreset-section" style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#ff7777;margin-bottom:8px;">⚠ 3.9 帳號完全重置 + 重建(危險)</div>
         <div style="font-size:13px;color:#ffcccc;margin-bottom:12px;line-height:1.6;">
           <b style="color:#ff9999;">用於救援被其他帳號資料污染的玩家。</b><br>
@@ -1144,6 +1184,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
       { sec: '_admin-trust-revoke-section',     label: '🔐 撤銷信任裝置',          hint: '撤銷學生自動登入授權' },
+      { sec: '_admin-pwsec-section',            label: '🔑 玩家密碼安全管理',      hint: '查狀態/錯誤紀錄/重設密碼' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
@@ -1153,6 +1194,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
       { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
+      { sec: '_admin-fullreset-section',        label: '⚠️ 帳號完全重置 + 重建',    hint: '危險!不可逆,救援污染帳號' },
     ];
 
     const sidebarList = document.getElementById('_admin-sidebar-list');
@@ -3712,6 +3754,149 @@ async function _showAdminStatsPanelImpl(){
         _revokeBtn.textContent = '❌ 撤銷全部';
       }
     };
+  })();
+
+  // ★★★ v3.11.19(2026-05-28) — 🔑 玩家密碼安全管理 JS 邏輯 ★★★
+  (function _initPwSecTool(){
+    const _emailInput = document.getElementById('_admin-pwsec-email');
+    const _checkBtn   = document.getElementById('_admin-pwsec-check');
+    const _resultBox  = document.getElementById('_admin-pwsec-result');
+    const _actions    = document.getElementById('_admin-pwsec-actions');
+    const _unlockBtn  = document.getElementById('_admin-pwsec-unlock');
+    const _clearBtn   = document.getElementById('_admin-pwsec-clear');
+    if(!_emailInput || !_checkBtn || !_resultBox) return;
+
+    const _esc = function(s){
+      return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+    const _fmt = function(ts){
+      if(!ts) return '(無)';
+      try{ return new Date(ts).toLocaleString('zh-TW'); }catch(_){ return String(ts); }
+    };
+    // 依時間推算「大約第幾節課」(台灣國小常見節次,可依貴校作息調整)
+    function _guessPeriod(ts){
+      try{
+        const d = new Date(ts);
+        const hm = d.getHours()*60 + d.getMinutes();
+        const P = [
+          ['第1節', 8*60+40, 9*60+20],
+          ['第2節', 9*60+30, 10*60+10],
+          ['第3節', 10*60+30, 11*60+10],
+          ['第4節', 11*60+20, 12*60],
+          ['午休/午餐', 12*60, 13*60+20],
+          ['第5節', 13*60+20, 14*60],
+          ['第6節', 14*60+10, 14*60+50],
+          ['第7節', 15*60+10, 15*60+50],
+        ];
+        for(const p of P){ if(hm >= p[1] && hm <= p[2]) return p[0]; }
+        if(hm < 8*60+40) return '上課前';
+        return '放學後';
+      }catch(_){ return ''; }
+    }
+
+    let _curEmail = null;
+    let _curState = null;
+
+    async function _doCheck(){
+      const _e = (_emailInput.value || '').trim().toLowerCase();
+      if(!_e){ alert('請輸入學生 email'); return; }
+      _checkBtn.disabled = true; _checkBtn.textContent = '查詢中...';
+      _resultBox.style.display = 'block';
+      _resultBox.innerHTML = '<span style="color:#aaa;">⏳ 查詢中...</span>';
+      _actions.style.display = 'none';
+      try{
+        if(typeof window._fbAdminPeekPwByEmail !== 'function') throw new Error('_fbAdminPeekPwByEmail 未就緒(請確認 index.html 已更新到 v3.11.19)');
+        const st = await window._fbAdminPeekPwByEmail(_e);
+        if(!st){
+          _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 找不到此 email 對應的玩家</span>';
+          _curEmail = null; _curState = null;
+          return;
+        }
+        _curEmail = _e; _curState = st;
+        const now = Date.now();
+        const locked = st.lockedUntil && now < st.lockedUntil;
+
+        let html = '';
+        html += '<div style="margin-bottom:8px;"><b style="color:#c4a8ff;">玩家:</b> '
+              + _esc(st.displayName || '(無暱稱)') + ' <span style="font-size:11px;color:#888;font-family:monospace;">' + _esc(st.email) + '</span></div>';
+
+        if(!st.hasPassword){
+          html += '<div style="padding:8px 12px;background:rgba(120,220,150,0.12);border-radius:6px;color:#aaffcc;">'
+                + '🔓 此玩家<b>尚未設定</b>第二段密碼(可正常進入遊戲)。</div>';
+          _resultBox.innerHTML = html;
+          _actions.style.display = 'none';
+          return;
+        }
+
+        html += '<div style="margin-bottom:6px;"><b style="color:#ffcc88;">密碼狀態:</b> 已設定 '
+              + '<span style="font-size:12px;color:#888;">(設定於 ' + _esc(_fmt(st.setAt)) + ')</span></div>';
+        html += '<div style="margin-bottom:6px;"><b style="color:#ffcc88;">目前連續錯誤:</b> '
+              + '<b style="color:' + (st.failCount>0?'#ff9999':'#aaffcc') + ';">' + (st.failCount||0) + '</b> 次</div>';
+
+        if(locked){
+          const mins = Math.ceil((st.lockedUntil - now)/60000);
+          html += '<div style="padding:8px 12px;background:rgba(255,150,80,0.15);border-radius:6px;color:#ffb74d;margin-bottom:6px;">'
+                + '🔒 <b>目前鎖定中</b>,約剩 ' + mins + ' 分鐘解鎖。<br>'
+                + '<span style="font-size:12px;color:#cdd6ee;">(學生只要輸入正確密碼即可立即解鎖;或你按下方「立即解鎖」)</span></div>';
+        } else {
+          html += '<div style="padding:6px 12px;background:rgba(120,220,150,0.1);border-radius:6px;color:#aaffcc;margin-bottom:6px;">✅ 目前未鎖定</div>';
+        }
+
+        // 錯誤紀錄(含節次推算)
+        const hist = Array.isArray(st.failHistory) ? st.failHistory.slice().reverse() : [];
+        if(hist.length){
+          html += '<div style="margin-top:10px;font-weight:700;color:#ff9999;">⚠ 最近錯誤輸入紀錄(新→舊,共 ' + hist.length + ' 筆):</div>';
+          html += '<div style="font-size:12px;color:#888;margin-bottom:6px;">用來判斷惡意盜登發生在哪一節課。同一節課短時間多筆 = 可能有人在亂試別人帳號。</div>';
+          hist.forEach(function(h, i){
+            const ts = h && h.ts;
+            html += '<div style="padding:6px 10px;background:rgba(0,0,0,0.3);border-radius:5px;margin-bottom:3px;border-left:3px solid #ff8888;">'
+                  + '<span style="color:#ffd479;font-weight:700;">' + _guessPeriod(ts) + '</span> '
+                  + '<span style="color:#ddd;">' + _esc(_fmt(ts)) + '</span></div>';
+          });
+        } else {
+          html += '<div style="margin-top:8px;color:#888;font-size:12px;">(無錯誤紀錄)</div>';
+        }
+
+        _resultBox.innerHTML = html;
+        _actions.style.display = 'flex';
+      }catch(e){
+        console.error('[🔑 密碼安全管理]', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 查詢失敗:' + _esc(e && e.message || String(e)) + '</span>';
+        _curEmail = null; _curState = null;
+        _actions.style.display = 'none';
+      }finally{
+        _checkBtn.disabled = false; _checkBtn.textContent = '🔍 查詢狀態';
+      }
+    }
+
+    _checkBtn.onclick = _doCheck;
+    _emailInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') _doCheck(); });
+
+    _unlockBtn.onclick = async function(){
+      if(!_curEmail){ alert('請先查詢玩家'); return; }
+      if(!confirm('確定要「立即解鎖」' + _curEmail + ' 嗎?\n(只清除鎖定與錯誤次數,保留原密碼)')) return;
+      _unlockBtn.disabled = true; _unlockBtn.textContent = '解鎖中...';
+      try{
+        const r = await window._fbAdminUnlockPwByEmail(_curEmail);
+        if(r && r.ok){ alert('✅ 已立即解鎖。學生可重新輸入密碼進入。'); _doCheck(); }
+        else { alert('❌ 解鎖失敗:' + ((r && r.reason) || '未知錯誤')); }
+      }catch(e){ alert('❌ 解鎖失敗:' + (e && e.message || e)); }
+      finally{ _unlockBtn.disabled = false; _unlockBtn.textContent = '🔓 立即解鎖(保留密碼)'; }
+    };
+
+    _clearBtn.onclick = async function(){
+      if(!_curEmail){ alert('請先查詢玩家'); return; }
+      if(!confirm('⚠ 確定要「強制重設(清除)」' + _curEmail + ' 的第二段密碼嗎?\n\n清除後該學生下次登入會被詢問是否重新設定。\n此動作無法復原原密碼(本來也看不到原碼)。')) return;
+      _clearBtn.disabled = true; _clearBtn.textContent = '清除中...';
+      try{
+        const r = await window._fbAdminClearPwByEmail(_curEmail);
+        if(r && r.ok){ alert('✅ 已清除密碼。請通知學生「下次登入時可重新設定密碼」。'); _doCheck(); }
+        else { alert('❌ 清除失敗:' + ((r && r.reason) || '未知錯誤')); }
+      }catch(e){ alert('❌ 清除失敗:' + (e && e.message || e)); }
+      finally{ _clearBtn.disabled = false; _clearBtn.textContent = '♻️ 強制重設(清除密碼)'; }
+    };
+
+    console.log('[🔑 密碼安全管理 v3.11.19] JS 已綁定');
   })();
 
   // ★★★ v3.5.37 — 3.7 Lv1 救援工具 JS 邏輯 ★★★
