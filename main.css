@@ -156,6 +156,12 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
   font-size:18px;font-weight:500;color:rgba(255,255,255,0.75);
   z-index:3;letter-spacing:1px;pointer-events:none;line-height:1}
 .card-hp-fill2{height:100%;background:var(--hp-green);transition:width 0.5s;border-radius:9px}
+/* ★ v3.11.20 — 護盾值 HP 條呈現:靠左藍色覆蓋層,疊在綠色 HP 之上 */
+.card-hp-shield2{position:absolute;left:0;top:0;height:100%;
+  background:linear-gradient(90deg,#3aa0ff,#7cc8ff);
+  border-radius:9px 0 0 9px;transition:width 0.5s;z-index:2;
+  box-shadow:inset 0 0 6px rgba(255,255,255,0.4),0 0 6px rgba(90,200,255,0.5);
+  pointer-events:none}
 .hp-txt2{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:24px;font-weight:700;color:#fff;text-shadow:1px 1px 2px #000;pointer-events:none}
 /* Illustration spacer */
