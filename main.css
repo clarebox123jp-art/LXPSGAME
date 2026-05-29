@@ -2326,11 +2326,19 @@ body.wb-in-worldboss-battle .popup {
 }
 .king-box-question{ max-width:680px; }
 .king-box-result{ max-width:560px; text-align:center; }
-/* ★ v3.5.66 — 雙欄入口彈窗加寬至接近 2 倍,獎勵清單每行可單行顯示,不需要捲軸 */
+/* ★ v3.5.66 — 雙欄入口彈窗加寬至接近 2 倍,獎勵清單每行可單行顯示
+ * ★ v3.12.1(2026-05-30)— iPad/小螢幕修補:取消 max-height:none + overflow:visible
+ *   原本設計是「桌面螢幕夠高所以不需要捲軸」,但 iPad 直立(寬 820~1024 / 高 1180)
+ *   時雙欄入口高度容易超出螢幕,造成「開始挑戰」按鈕在螢幕下緣外按不到、整個卡死。
+ *   改回「可以撐開但是若超過 92vh 就 overflow:auto 可內捲」,並保留桌面寬螢幕
+ *   下獎勵單行顯示效果(透過 max-width:1500px 撐寬而不靠取消高度限制)。
+ *   ★ -webkit-overflow-scrolling:touch 讓 iOS Safari 可慣性捲動。
+ */
 .king-box-2col{
   max-width:1500px;
-  max-height:none;     /* 取消 90vh 限制,讓內容自然撐開 */
-  overflow:visible;    /* 不需要捲軸 */
+  max-height:92vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 /* 雙欄模式下,左欄獎勵組距:字級放大、不強制換行,讓每條獎勵單行顯示 */
 .king-box-2col .king-rule-detail{
@@ -2688,9 +2696,38 @@ body.wb-in-worldboss-battle .popup {
   text-shadow:0 0 6px rgba(255,200,60,0.5);
 }
 
+/* ★ v3.12.1(2026-05-30) — iPad 專用斷點:601px~1024px 寬 (iPad 直立 / 小筆電)
+ * 雙欄入口彈窗在 iPad 螢幕高度容易爆版,讓 padding 縮小、雙欄細節字級略降
+ * 避免「開始挑戰」按鈕被擠出螢幕。配合上方 king-box-2col 的 max-height:92vh 與
+ * overflow-y:auto 雙保險,讓內容必要時可捲動。
+ */
+@media (min-width: 601px) and (max-width: 1024px){
+  .king-box{ padding:16px 16px; }
+  .king-box-2col{ max-height:92vh; }
+  .king-box-2col .king-rule-detail{
+    font-size:clamp(13px,1.4vw,16px);
+    line-height:1.55;
+    white-space:normal;     /* iPad 上允許獎勵清單換行,避免水平爆版 */
+  }
+  .king-rule-row{ font-size:14px; line-height:1.55; }
+  .king-title{ font-size:clamp(22px,2.6vw,30px); }
+  .king-subtitle{ font-size:13px; }
+}
+
 /* 手機適配 */
 @media (max-width: 600px){
   .king-box{ padding:18px 16px; }
+  /* ★ v3.12.1 — 手機也補上 max-height + overflow,確保可捲 */
+  .king-box-2col{
+    max-height:92vh;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .king-box-2col .king-rule-detail{
+    white-space:normal;
+    font-size:13px;
+    line-height:1.5;
+  }
   .king-options{ grid-template-columns:1fr; }
   .king-tools-row{ grid-template-columns:1fr; }
   .king-rewards-row{ gap:8px; }
