@@ -601,34 +601,6 @@ async function _showAdminStatsPanelImpl(){
           background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:200px;overflow-y:auto;"></div>
       </div>
 
-      <!-- ════════════════════════════════════════════════════════════════════ -->
-      <!-- ★ v3.11.25(2026-05-29 根治)— 版本戳健康檢查工具                          -->
-      <!--                                                                         -->
-      <!-- 用途:診斷「玩家拿到舊快取」的長期災情。改了任何 .js/.css/.html 模組,      -->
-      <!--      若沒同步把 _LXPS_FILE_VERSIONS 內對應版本戳改掉,瀏覽器/SW 就會繼續吃 -->
-      <!--      舊版檔案(因為 ?v= 串字沒變)。一鍵診斷可立刻找出哪個檔還停在舊戳。   -->
-      <!-- ════════════════════════════════════════════════════════════════════ -->
-      <div id="_admin-version-health-section" style="background:rgba(20,30,50,0.55);border:2px solid rgba(120,180,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
-        <div style="font-size:18px;font-weight:800;color:#aaccff;margin-bottom:8px;">📋 版本戳健康檢查(防玩家吃舊快取)</div>
-        <div style="font-size:13px;color:#cfdfee;margin-bottom:12px;line-height:1.65;">
-          檢查 <code style="background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:4px;color:#ffd699;">_LXPS_FILE_VERSIONS</code> 內每個檔案的版本戳是否跟主程式
-          <code style="background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:4px;color:#ffd699;">_GAME_LOADED_VERSION</code> 對齊,以及檔案內容註解中發現的最新版本標記。<br>
-          <span style="color:#ffaa66;">⚠ 紅字「嚴重」項目 = 玩家正在吃舊快取,看不到最新內容(常見災情:新英雄圖不見、CSS 字體沒更新、後台分頁回到舊版)</span>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-          <button id="_admin-version-health-run" style="padding:10px 22px;font-size:14px;font-weight:800;
-                  background:linear-gradient(135deg,#3366aa,#1a3366);color:#fff;border:none;border-radius:8px;cursor:pointer;
-                  box-shadow:0 3px 10px rgba(60,130,255,0.4);">
-            🔍 立即診斷
-          </button>
-          <button id="_admin-version-health-copy" style="padding:10px 22px;font-size:14px;font-weight:700;
-                  background:rgba(100,140,200,0.3);color:#cfdfee;border:1px solid rgba(120,180,255,0.5);border-radius:8px;cursor:pointer;display:none;">
-            📋 複製報告到剪貼簿
-          </button>
-        </div>
-        <div id="_admin-version-health-result" style="font-size:13px;line-height:1.75;padding:12px;background:rgba(0,0,0,0.4);border-radius:6px;color:#ccc;display:none;"></div>
-      </div>
-
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
       <!--
         放在 3.5 之後、4 號之前,因為它是「最徹底」的玩家資料修補工具。
@@ -1040,6 +1012,90 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <!-- ★ v3.11.34(2026-05-29) — 異常解鎖偵測完整 flow                -->
+      <!--                                                                -->
+      <!-- 用途:掃描短時間大量解鎖英雄/至寶的玩家,可逐項清除 + 補償 + 告知 -->
+      <!--   ⚠ 階段 4 會升級「同 battleId 多解鎖」精準偵測規則              -->
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <div id="_admin-abnormal-unlock-section" style="background:rgba(40,15,45,0.5);border:2px solid rgba(255,160,200,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#ffaadd;margin-bottom:8px;">🔍 異常解鎖偵測(英雄 / 至寶)</div>
+        <div style="font-size:13px;color:#e8c8d8;margin-bottom:12px;line-height:1.65;">
+          掃描短時間內大量解鎖英雄/至寶的玩家。可單獨對選定的玩家:<br>
+          ① 勾選異常英雄/至寶 → 清除 ② 自動發送通知 + 補償 ③ 嚴重時停權帳號<br>
+          <span style="color:#ffaa66;">⚠ 紅框「同場戰鬥多解鎖」= 1 場 BOSS 戰超過 1 隻新英雄,鐵證異常(階段 4 升級為主規則)</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+          <label style="font-size:13px;color:#e8c8d8;">時間窗:
+            <select id="_admin-abnormal-window" style="margin-left:6px;padding:5px 10px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:6px;font-family:inherit;">
+              <option value="3600000">最近 1 小時</option>
+              <option value="21600000">最近 6 小時</option>
+              <option value="86400000" selected>最近 24 小時</option>
+              <option value="259200000">最近 3 天</option>
+              <option value="604800000">最近 7 天</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:#e8c8d8;">英雄門檻:
+            <select id="_admin-abnormal-threshold" style="margin-left:6px;padding:5px 10px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:6px;font-family:inherit;">
+              <option value="3">≥ 3 隻</option>
+              <option value="5" selected>≥ 5 隻</option>
+              <option value="10">≥ 10 隻</option>
+            </select>
+          </label>
+          <button id="_admin-abnormal-scan" style="padding:9px 20px;font-size:14px;font-weight:800;
+                  background:linear-gradient(135deg,#bb3377,#661a4a);color:#fff;border:none;border-radius:8px;cursor:pointer;
+                  box-shadow:0 3px 10px rgba(200,80,150,0.5);">
+            🔍 立即掃描
+          </button>
+        </div>
+        <div id="_admin-abnormal-status" style="font-size:12px;color:#aaa;margin-bottom:8px;"></div>
+        <div id="_admin-abnormal-list" style="max-height:520px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:8px;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚未掃描。點上方「立即掃描」開始。</div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <!-- ★ v3.11.35 階段 4c(2026-05-29) — 玩家活動記錄查詢               -->
+      <!--                                                                -->
+      <!-- 用途:輸入 email / uid,完整查看玩家所有英雄解鎖、至寶解鎖、    -->
+      <!-- 戰鬥紀錄、知識幣帳目。以 battleId 為單位偵測異常(同一場戰鬥    -->
+      <!-- 多次解鎖 = 異常)。逐項可刪除、強制覆寫。                       -->
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <div id="_admin-activity-section" style="background:rgba(20,30,50,0.5);border:2px solid rgba(140,180,255,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#aaccff;margin-bottom:8px;">📜 玩家活動記錄查詢</div>
+        <div style="font-size:13px;color:#cce0ff;margin-bottom:12px;line-height:1.65;">
+          輸入玩家 <b>email</b> 或 <b>uid</b> 查看完整活動紀錄。<br>
+          <span style="color:#ffcc66;">⚠ 新規則(取代舊「短時間爆增」):一場戰鬥(同 battleId)最多 1 隻新解鎖英雄 + 1 個至寶,超過視為異常,可逐筆刪除。</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+          <input id="_admin-activity-query" type="text" placeholder="email 或 uid"
+                 style="flex:1;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #668;border-radius:6px;font-family:inherit;">
+          <button id="_admin-activity-search" style="padding:9px 20px;font-size:14px;font-weight:800;
+                  background:linear-gradient(135deg,#3366bb,#1a4a88);color:#fff;border:none;border-radius:8px;cursor:pointer;
+                  box-shadow:0 3px 10px rgba(80,140,220,0.5);">
+            🔍 查詢
+          </button>
+          <button id="_admin-activity-scan-anomaly" style="padding:9px 20px;font-size:13px;font-weight:800;
+                  background:linear-gradient(135deg,#cc5544,#882211);color:#fff;border:none;border-radius:8px;cursor:pointer;
+                  box-shadow:0 3px 10px rgba(220,120,80,0.5);" title="同 battleId 多解鎖鐵證掃描(全 200 位玩家)">
+            ⚡ 掃描異常
+          </button>
+        </div>
+        <div id="_admin-activity-status" style="font-size:12px;color:#aaa;margin-bottom:8px;min-height:18px;"></div>
+        <div id="_admin-activity-player-card" style="display:none;background:rgba(0,0,0,0.5);border-radius:8px;padding:14px;margin-bottom:10px;border-left:4px solid #88aaff;">
+          <!-- 玩家基本卡 - 動態生成 -->
+        </div>
+        <div id="_admin-activity-tabs" style="display:none;margin-bottom:10px;border-bottom:2px solid rgba(140,180,255,0.3);">
+          <button class="_aa-tab" data-tab="hero" style="padding:8px 16px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:4px;">🦸 英雄解鎖</button>
+          <button class="_aa-tab" data-tab="treasure" style="padding:8px 16px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:4px;">💎 至寶解鎖</button>
+          <button class="_aa-tab" data-tab="battle" style="padding:8px 16px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:4px;">⚔ 戰鬥紀錄</button>
+          <button class="_aa-tab" data-tab="coin" style="padding:8px 16px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;">💰 知識幣帳目</button>
+        </div>
+        <div id="_admin-activity-content" style="background:rgba(0,0,0,0.35);border-radius:8px;padding:8px;max-height:560px;overflow-y:auto;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">輸入 email 或 uid 後點「查詢」開始</div>
+        </div>
+      </div>
+
       <!-- ★ v3.5.20 — 世界 BOSS 排行榜管理區塊(老師 2026-05-22 需求) -->
       <div id="_admin-wblb-section" style="background:rgba(40,30,50,0.5);border:2px solid rgba(200,140,255,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ddaaff;margin-bottom:8px;">🏆 6. 世界 BOSS 排行榜管理</div>
@@ -1221,9 +1277,11 @@ async function _showAdminStatsPanelImpl(){
   // ════════════════════════════════════════════════════════════════════
   (function _renderAdminSidebar(){
     // sidebar 項目定義(依目前重要性排序;對應到 DOM 內已存在的 section id)
+    // ★ v3.11.35 階段 4d(2026-05-29) — 玩家活動記錄查詢插入第 3 位(老師指示)
     const SIDEBAR_ITEMS = [
       { sec: '_admin-maint-section',            label: '🔧 維修模式',              hint: '非管理員登入封鎖' },
       { sec: '_admin-gm-section',               label: '📢 GM 公告',                hint: '對所有在線玩家廣播' },
+      { sec: '_admin-activity-section',         label: '📜 玩家活動記錄查詢',      hint: 'email/uid 查英雄/至寶/戰鬥/幣帳' },
       { sec: '_admin-bug-section',              label: '📥 接收錯誤回報',          hint: '查看玩家提交的 bug' },
       { sec: '_admin-lv1-section',              label: '🆘 Lv1 救援',              hint: '雲端三槽 + 反污染保護' },
       { sec: '_admin-pollution-check-section',  label: '📢 污染檢查提醒',          hint: '寄送進度污染提醒' },
@@ -1233,6 +1291,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
+      { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
       { sec: '_admin-bypass-section',           label: '🔓 解除冷卻 / 每日上限',   hint: '測試用' },
@@ -1240,7 +1299,6 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
       { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
-      { sec: '_admin-version-health-section',   label: '📋 版本戳健康檢查',         hint: '防玩家吃舊快取 / 找出忘了升戳的檔' },
       { sec: '_admin-reset-section',            label: '⚠️ 帳號完全重置+重建',     hint: '危險!不可逆,最後手段' },
     ];
 
@@ -2013,228 +2071,6 @@ async function _showAdminStatsPanelImpl(){
       btn.textContent = '▶ 設定';
     }
   };
-
-  // ════════════════════════════════════════════════════════════════════
-  // ★ v3.11.25(2026-05-29 根治)— 版本戳健康檢查按鈕綁定
-  // ════════════════════════════════════════════════════════════════════
-  (function _bindVersionHealthCheck(){
-    const _runBtn   = document.getElementById('_admin-version-health-run');
-    const _copyBtn  = document.getElementById('_admin-version-health-copy');
-    const _resultEl = document.getElementById('_admin-version-health-result');
-    if(!_runBtn || !_resultEl){
-      console.warn('[版本戳健康檢查 v3.11.25] DOM 缺,綁定跳過');
-      return;
-    }
-
-    // 內建「模組檔內最新版本標記」掃描:從 hero_db.js / admin_panel.js 等
-    // 公開到 window 的內容讀取最新 ★ vX.Y.Z 註解,跟 _LXPS_FILE_VERSIONS 比對
-    async function _scanModuleInternalVersion(filename){
-      // 此函式 fetch 該模組檔案內容,解析最新 ★ vX.Y.Z 註解
-      const _src = (typeof window._lxpsFileSrc === 'function')
-        ? window._lxpsFileSrc(filename)
-        : filename;
-      try{
-        const _resp = await fetch(_src, { cache: 'no-store' });
-        if(!_resp.ok) return null;
-        const _txt = await _resp.text();
-        // 找所有形如 v3.11.25 / v3.11.6 的版本標記,取最大版號
-        const _matches = _txt.match(/v3\.\d+\.\d+/g);
-        if(!_matches || !_matches.length) return null;
-        // 轉成可比較的數字 tuple,取最大
-        const _toTuple = function(v){
-          const _m = v.match(/v(\d+)\.(\d+)\.(\d+)/);
-          return _m ? [parseInt(_m[1]), parseInt(_m[2]), parseInt(_m[3])] : [0,0,0];
-        };
-        const _cmp = function(a, b){
-          for(let i=0;i<3;i++){ if(a[i]!==b[i]) return a[i]-b[i]; }
-          return 0;
-        };
-        let _max = _matches[0];
-        let _maxT = _toTuple(_max);
-        _matches.forEach(function(v){
-          const _t = _toTuple(v);
-          if(_cmp(_t, _maxT) > 0){ _max = v; _maxT = _t; }
-        });
-        return _max;
-      }catch(e){
-        console.warn('[版本戳健康檢查] 掃描 ' + filename + ' 失敗', e);
-        return null;
-      }
-    }
-
-    _runBtn.onclick = async function(){
-      _runBtn.disabled = true;
-      _runBtn.textContent = '⏳ 診斷中...';
-      _resultEl.style.display = 'block';
-      _resultEl.innerHTML = '<span style="color:#aaccff;">📡 掃描中,請稍候...</span>';
-
-      try{
-        const _gv = window._GAME_LOADED_VERSION || '(undefined)';
-        const _fv = window._LXPS_FILE_VERSIONS || {};
-        const _rows = [];
-        // 對每個檔案做兩件事:
-        //   ① 比對 _LXPS_FILE_VERSIONS 與 _GAME_LOADED_VERSION(僅限該對齊的檔)
-        //   ② fetch 檔案內容掃最新 ★ vX.Y.Z 標記,跟版本戳比對
-        const _filesToCheck = [
-          { name: 'index.html',         shouldMatchGv: true,  desc: '主程式' },
-          { name: 'game_changelog.js',  shouldMatchGv: true,  desc: '更新日誌' },
-          { name: 'main.css',           shouldMatchGv: false, desc: '主樣式表(SSR/SR/R 字體在此)' },
-          { name: 'hero_db.js',         shouldMatchGv: false, desc: '英雄資料庫(幽幽/網路駭客在此)' },
-          { name: 'admin_panel.js',     shouldMatchGv: false, desc: 'GM 後台(獨立分頁在此)' },
-          { name: 'world-boss.js',      shouldMatchGv: false, desc: '世界 BOSS 邏輯' },
-          { name: 'world-boss-ui.html', shouldMatchGv: false, desc: '世界 BOSS UI' },
-          { name: 'student_roster.js',  shouldMatchGv: false, desc: '學生名冊' },
-          { name: 'adv_quiz_db.js',     shouldMatchGv: false, desc: '冒險題庫' },
-        ];
-
-        for(const _f of _filesToCheck){
-          const _stamp = _fv[_f.name] || '(缺欄位)';
-          // 嚴重等級判定
-          const _problems = [];
-          if(_f.shouldMatchGv && _stamp !== _gv){
-            _problems.push({ level: 'critical', msg: '版本戳 ' + _stamp + ' 應與 _GAME_LOADED_VERSION (' + _gv + ') 一致' });
-          }
-
-          // 掃模組內容
-          let _internalVer = null;
-          try{ _internalVer = await _scanModuleInternalVersion(_f.name); }catch(_){}
-
-          // 若版本戳是 vX.Y.Z 格式且內部最新註解 > 版本戳,警示「檔案實際比版本戳新」
-          if(_internalVer && /^v\d/.test(_stamp)){
-            const _toTuple = function(v){
-              const _m = (v||'').match(/v(\d+)\.(\d+)\.(\d+)/);
-              return _m ? [parseInt(_m[1]),parseInt(_m[2]),parseInt(_m[3])] : null;
-            };
-            const _ts = _toTuple(_stamp);
-            const _ti = _toTuple(_internalVer);
-            if(_ts && _ti){
-              const _cmp = function(a,b){ for(let i=0;i<3;i++){ if(a[i]!==b[i]) return a[i]-b[i]; } return 0; };
-              if(_cmp(_ti, _ts) > 0){
-                _problems.push({
-                  level: 'warning',
-                  msg: '檔案內容含 ' + _internalVer + ' 註解,但版本戳停在 ' + _stamp + ' → 玩家可能拿不到新內容'
-                });
-              }
-            }
-          }
-
-          _rows.push({ file: _f.name, desc: _f.desc, stamp: _stamp, internal: _internalVer, problems: _problems });
-        }
-
-        // 渲染結果
-        const _totalCritical = _rows.reduce((n, r) => n + r.problems.filter(p => p.level === 'critical').length, 0);
-        const _totalWarning  = _rows.reduce((n, r) => n + r.problems.filter(p => p.level === 'warning').length, 0);
-
-        let _html = '';
-        _html += '<div style="margin-bottom:10px;font-size:14px;">';
-        _html += '<b style="color:#ffd699;">主程式版本:</b> <code style="background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:4px;color:#fff;">' + _gv + '</code>';
-        _html += '</div>';
-        if(_totalCritical === 0 && _totalWarning === 0){
-          _html += '<div style="padding:12px;background:rgba(80,200,120,0.18);border-left:4px solid #66dd88;border-radius:4px;color:#aaffcc;font-size:14px;">';
-          _html += '✅ 所有版本戳健康,玩家不會吃到舊快取。';
-          _html += '</div>';
-        }else{
-          _html += '<div style="padding:10px 12px;background:rgba(255,100,80,0.15);border-left:4px solid #ff8866;border-radius:4px;color:#ffcccc;margin-bottom:12px;font-size:14px;">';
-          _html += '🚨 發現 <b>' + _totalCritical + '</b> 個嚴重問題、<b>' + _totalWarning + '</b> 個警告。<br>';
-          _html += '<span style="font-size:12px;color:#ffaaaa;">玩家瀏覽器/SW 可能繼續吃舊快取,看不到最新內容(新角色圖、CSS 字體、後台修補等)。</span>';
-          _html += '</div>';
-        }
-
-        _html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
-        _html += '<tr style="background:rgba(60,80,120,0.4);">';
-        _html += '<th style="padding:8px 6px;text-align:left;border-bottom:1px solid #446;">檔案</th>';
-        _html += '<th style="padding:8px 6px;text-align:left;border-bottom:1px solid #446;">當前版本戳</th>';
-        _html += '<th style="padding:8px 6px;text-align:left;border-bottom:1px solid #446;">檔內最新標記</th>';
-        _html += '<th style="padding:8px 6px;text-align:left;border-bottom:1px solid #446;">狀態</th>';
-        _html += '</tr>';
-
-        _rows.forEach(function(r){
-          const _hasCritical = r.problems.some(p => p.level === 'critical');
-          const _hasWarning  = r.problems.some(p => p.level === 'warning');
-          const _rowColor = _hasCritical ? 'rgba(255,80,80,0.10)' : (_hasWarning ? 'rgba(255,180,80,0.10)' : 'transparent');
-          _html += '<tr style="background:' + _rowColor + ';">';
-          _html += '<td style="padding:8px 6px;border-bottom:1px solid #333;">';
-          _html += '<b style="color:#cfdfee;">' + r.file + '</b><br>';
-          _html += '<span style="font-size:11px;color:#88aacc;">' + r.desc + '</span>';
-          _html += '</td>';
-          _html += '<td style="padding:8px 6px;border-bottom:1px solid #333;"><code style="background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:4px;color:#fff;">' + r.stamp + '</code></td>';
-          _html += '<td style="padding:8px 6px;border-bottom:1px solid #333;">' + (r.internal ? '<code style="background:rgba(0,0,0,0.4);padding:1px 6px;border-radius:4px;color:#ffd699;">' + r.internal + '</code>' : '<span style="color:#666;">—</span>') + '</td>';
-          _html += '<td style="padding:8px 6px;border-bottom:1px solid #333;">';
-          if(r.problems.length === 0){
-            _html += '<span style="color:#66dd88;">✅ OK</span>';
-          }else{
-            r.problems.forEach(function(p){
-              const _icon = p.level === 'critical' ? '❌' : '⚠️';
-              const _color = p.level === 'critical' ? '#ff8888' : '#ffcc66';
-              _html += '<div style="color:' + _color + ';margin-bottom:3px;">' + _icon + ' ' + p.msg + '</div>';
-            });
-          }
-          _html += '</td>';
-          _html += '</tr>';
-        });
-        _html += '</table>';
-
-        if(_totalCritical > 0 || _totalWarning > 0){
-          _html += '<div style="margin-top:14px;padding:10px 12px;background:rgba(80,100,140,0.2);border-radius:6px;font-size:12px;line-height:1.7;color:#cfdfee;">';
-          _html += '<b style="color:#aaccff;">📝 修法:</b>';
-          _html += '<br>① 編輯 <code style="background:rgba(0,0,0,0.4);padding:1px 4px;border-radius:3px;">index.html</code> 約 line 8602 的 <code style="background:rgba(0,0,0,0.4);padding:1px 4px;border-radius:3px;">_LXPS_FILE_VERSIONS</code> 物件';
-          _html += '<br>② 把上表「狀態欄」紅/黃字提到的檔案,版本戳改成今天日期或 <code style="background:rgba(0,0,0,0.4);padding:1px 4px;border-radius:3px;">' + _gv + '</code>';
-          _html += '<br>③ 上傳 GitHub,玩家下次開遊戲就會自動拿到新版(<code style="background:rgba(0,0,0,0.4);padding:1px 4px;border-radius:3px;">?v=</code> 字串變了 → SW cache 自動失效)';
-          _html += '</div>';
-        }
-
-        _resultEl.innerHTML = _html;
-        // 顯示複製按鈕
-        if(_copyBtn) _copyBtn.style.display = 'inline-block';
-        // 儲存純文字報告供複製
-        _bindVersionHealthCheck._lastReport = (function(){
-          let _t = '版本戳健康檢查報告(' + new Date().toLocaleString('zh-TW') + ')\n';
-          _t += '主程式版本:' + _gv + '\n';
-          _t += '─────────────────────────────\n';
-          _rows.forEach(function(r){
-            _t += r.file + '(' + r.desc + ')\n';
-            _t += '  版本戳: ' + r.stamp + '\n';
-            _t += '  檔內最新: ' + (r.internal || '—') + '\n';
-            if(r.problems.length === 0){
-              _t += '  狀態: ✅ OK\n';
-            }else{
-              r.problems.forEach(function(p){
-                _t += '  ' + (p.level === 'critical' ? '❌ [嚴重] ' : '⚠️ [警告] ') + p.msg + '\n';
-              });
-            }
-            _t += '\n';
-          });
-          _t += '─────────────────────────────\n';
-          _t += '總計:' + _totalCritical + ' 嚴重 / ' + _totalWarning + ' 警告\n';
-          return _t;
-        })();
-      }catch(e){
-        console.error('[版本戳健康檢查] 執行失敗', e);
-        _resultEl.innerHTML = '<span style="color:#ff6666;">❌ 診斷失敗:' + (e && e.message ? e.message : e) + '</span>';
-      }finally{
-        _runBtn.disabled = false;
-        _runBtn.textContent = '🔍 立即診斷';
-      }
-    };
-
-    if(_copyBtn){
-      _copyBtn.onclick = function(){
-        const _r = _bindVersionHealthCheck._lastReport;
-        if(!_r){ alert('還沒有診斷報告,請先按「立即診斷」'); return; }
-        try{
-          navigator.clipboard.writeText(_r).then(function(){
-            _copyBtn.textContent = '✅ 已複製';
-            setTimeout(function(){ _copyBtn.textContent = '📋 複製報告到剪貼簿'; }, 2000);
-          }).catch(function(){
-            // fallback:用 prompt 讓老師手動複製
-            window.prompt('請手動複製以下內容:', _r);
-          });
-        }catch(_){
-          window.prompt('請手動複製以下內容:', _r);
-        }
-      };
-    }
-  })();
 
   // ★★★ 玩家資料急救工具(v1.0.20260419.1930) ★★★
   let _rescueDiagData = null;  // 暫存最近一次診斷結果
@@ -4901,6 +4737,805 @@ async function _showAdminStatsPanelImpl(){
           });
         }
       };
+    }
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.11.34(2026-05-29) — 異常解鎖偵測區塊綁定
+  //   完整 flow:掃描 → 列表 → 勾選清除 → 補償+通知 → 停權
+  //   ⚠ 階段 4 會升級「同 battleId 多解鎖」精準偵測(目前已先把資料抓出來標紅)
+  // ════════════════════════════════════════════════════════════════
+  (function _bindAbnormalUnlockSection(){
+    const _listEl = document.getElementById('_admin-abnormal-list');
+    const _statusEl = document.getElementById('_admin-abnormal-status');
+    const _scanBtn = document.getElementById('_admin-abnormal-scan');
+    const _windowSel = document.getElementById('_admin-abnormal-window');
+    const _thresholdSel = document.getElementById('_admin-abnormal-threshold');
+    if(!_listEl || !_scanBtn) return;
+
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _fmtTime = (ts) => {
+      if(!ts) return '?';
+      try{
+        const d = new Date(ts);
+        const pad = n => String(n).padStart(2,'0');
+        return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }catch(_){ return '?'; }
+    };
+    const _adminLabel = (window._adminLabel || function(em,nm){ return (nm||em||'?'); });
+
+    let _lastResult = null;  // 暫存最近一次掃描結果
+
+    // 渲染玩家卡片
+    function _renderPlayerCard(player){
+      const heroRows = (player.heroes || []).map((h, idx) => {
+        const _isMulti = player.multiBattleHeroSet && player.multiBattleHeroSet.has(h.name);
+        return `<label style="display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:12px;color:#e8c8d8;background:${_isMulti ? 'rgba(180,40,80,0.18)' : 'rgba(0,0,0,0.2)'};border-radius:4px;margin-bottom:2px;cursor:pointer;">
+          <input type="checkbox" class="_abn-hero-cb" data-name="${_esc(h.name)}" ${_isMulti ? 'checked' : ''}>
+          <span style="min-width:90px;color:${_isMulti ? '#ff99bb' : '#fff'};font-weight:${_isMulti ? '700' : '500'};">${_esc(h.name)}</span>
+          <span style="color:#aaa;font-size:11px;">${_fmtTime(h.at)}</span>
+          <span style="color:#888;font-size:11px;">${_esc(h.source)}</span>
+          ${h.battleId ? `<span style="color:#777;font-size:10px;" title="battleId">${_esc(String(h.battleId).slice(-12))}</span>` : ''}
+        </label>`;
+      }).join('');
+
+      const treasureRows = (player.treasures || []).map(t => {
+        const _isMulti = player.multiBattleTreasureSet && player.multiBattleTreasureSet.has(t.id);
+        return `<label style="display:flex;align-items:center;gap:8px;padding:4px 6px;font-size:12px;color:#e8c8d8;background:${_isMulti ? 'rgba(180,40,80,0.18)' : 'rgba(0,0,0,0.2)'};border-radius:4px;margin-bottom:2px;cursor:pointer;">
+          <input type="checkbox" class="_abn-tr-cb" data-id="${_esc(t.id)}" ${_isMulti ? 'checked' : ''}>
+          <span style="min-width:90px;color:${_isMulti ? '#ff99bb' : '#fff'};">${_esc(t.id)}</span>
+          <span style="color:#aaa;font-size:11px;">${_fmtTime(t.at)}</span>
+          <span style="color:#888;font-size:11px;">${_esc(t.source)}</span>
+          ${t.battleId ? `<span style="color:#777;font-size:10px;">${_esc(String(t.battleId).slice(-12))}</span>` : ''}
+        </label>`;
+      }).join('');
+
+      const multiBattleNote = (player.multiBattleEntries && player.multiBattleEntries.length > 0)
+        ? `<div style="margin-top:6px;padding:8px 10px;background:rgba(180,40,80,0.25);border-left:3px solid #ff5577;border-radius:4px;font-size:11px;color:#ffcccc;">
+            🚨 同場戰鬥多解鎖(鐵證異常):${player.multiBattleEntries.map(b =>
+              `battleId=${_esc(String(b.battleId).slice(-12))} 同場 ${b.count} 個`).join(' / ')}
+          </div>` : '';
+
+      return `<div class="_abn-player-card" data-uid="${_esc(player.uid)}" style="background:rgba(40,15,40,0.6);border:1.5px solid rgba(255,140,180,0.4);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <span style="font-size:13px;font-weight:800;color:#fff;">${_esc(_adminLabel(player.email, player.displayName))}</span>
+          <span style="font-size:11px;color:#aaa;">${_esc(player.email || '?')}</span>
+          <span style="font-size:11px;color:#888;">uid: <code style="color:#88ccff;">${_esc((player.uid||'').slice(0,12))}...</code></span>
+          <span style="margin-left:auto;font-size:12px;padding:2px 8px;background:rgba(180,40,80,0.55);border-radius:5px;color:#ffe;font-weight:700;">
+            英雄 ${player.heroes ? player.heroes.length : 0} / 至寶 ${player.treasures ? player.treasures.length : 0}
+          </span>
+        </div>
+        ${multiBattleNote}
+        ${player.heroes && player.heroes.length ? `<div style="margin-top:6px;font-size:11px;color:#ccaadd;font-weight:700;">▼ 異常英雄(預設勾選同場多解鎖):</div>${heroRows}` : ''}
+        ${player.treasures && player.treasures.length ? `<div style="margin-top:6px;font-size:11px;color:#ccaadd;font-weight:700;">▼ 異常至寶(預設勾選同場多解鎖):</div>${treasureRows}` : ''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <button class="_abn-clear-btn" data-uid="${_esc(player.uid)}" style="padding:5px 12px;font-size:12px;font-weight:700;background:rgba(120,40,40,0.5);border:1.5px solid #ff8888;color:#ffcccc;border-radius:6px;cursor:pointer;font-family:inherit;">🗑 清除勾選</button>
+          <button class="_abn-notify-btn" data-uid="${_esc(player.uid)}" data-email="${_esc(player.email || '')}" style="padding:5px 12px;font-size:12px;font-weight:700;background:rgba(40,80,120,0.5);border:1.5px solid #88aaff;color:#aaccff;border-radius:6px;cursor:pointer;font-family:inherit;">💌 告知+補償</button>
+          <button class="_abn-suspend-btn" data-uid="${_esc(player.uid)}" data-name="${_esc(_adminLabel(player.email, player.displayName))}" style="padding:5px 12px;font-size:12px;font-weight:700;background:rgba(80,40,80,0.5);border:1.5px solid #ff66ff;color:#ffaaff;border-radius:6px;cursor:pointer;font-family:inherit;">🚫 停權帳號</button>
+          <button class="_abn-detail-btn" data-uid="${_esc(player.uid)}" style="padding:5px 12px;font-size:12px;font-weight:700;background:rgba(60,60,100,0.5);border:1.5px solid #8899cc;color:#ccddff;border-radius:6px;cursor:pointer;font-family:inherit;">🔍 完整活動記錄</button>
+        </div>
+      </div>`;
+    }
+
+    // 套合併:同玩家英雄+至寶異常合併成一張卡
+    function _mergePlayerResults(heroResult, treasureResult){
+      const _map = {};
+      (heroResult.abnormal || []).forEach(p => {
+        _map[p.uid] = {
+          uid: p.uid, email: p.email, displayName: p.displayName,
+          heroes: p.heroes || [], treasures: [],
+          multiBattleEntries: (p.multiPerBattle || []).map(b => ({ battleId: b.battleId, count: b.count })),
+        };
+        // 同場多解鎖的英雄名 → Set
+        const _multiSet = new Set();
+        (p.multiPerBattle || []).forEach(b => (b.heroes || []).forEach(n => _multiSet.add(n)));
+        _map[p.uid].multiBattleHeroSet = _multiSet;
+      });
+      (treasureResult.abnormal || []).forEach(p => {
+        if(!_map[p.uid]){
+          _map[p.uid] = {
+            uid: p.uid, email: p.email, displayName: p.displayName,
+            heroes: [], treasures: p.treasures || [],
+            multiBattleEntries: (p.multiPerBattle || []).map(b => ({ battleId: b.battleId, count: b.count })),
+            multiBattleHeroSet: new Set(),
+          };
+        } else {
+          _map[p.uid].treasures = p.treasures || [];
+          (p.multiPerBattle || []).forEach(b =>
+            _map[p.uid].multiBattleEntries.push({ battleId: b.battleId, count: b.count }));
+        }
+        const _multiTSet = new Set();
+        (p.multiPerBattle || []).forEach(b => (b.treasures || []).forEach(n => _multiTSet.add(n)));
+        _map[p.uid].multiBattleTreasureSet = _multiTSet;
+      });
+      // 依異常數排序
+      return Object.values(_map).sort((a, b) =>
+        (b.heroes.length + b.treasures.length) - (a.heroes.length + a.treasures.length));
+    }
+
+    // 掃描按鈕
+    _scanBtn.onclick = async function(){
+      _scanBtn.disabled = true;
+      _scanBtn.textContent = '⏳ 掃描中...';
+      _statusEl.textContent = '正在掃描全玩家解鎖紀錄...';
+      _listEl.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">📡 掃描中,請稍候...</div>';
+      try{
+        const windowMs = parseInt(_windowSel.value, 10);
+        const threshold = parseInt(_thresholdSel.value, 10);
+        if(!window._fbAdminScanAbnormalUnlocks || !window._fbAdminScanAbnormalTreasures){
+          _listEl.innerHTML = '<div style="text-align:center;color:#ff8888;padding:20px;">❌ API 未載入,請重新整理</div>';
+          _statusEl.textContent = '';
+          return;
+        }
+        const [heroResult, treasureResult] = await Promise.all([
+          window._fbAdminScanAbnormalUnlocks(windowMs, threshold),
+          window._fbAdminScanAbnormalTreasures(windowMs, Math.max(2, Math.floor(threshold * 0.6))),  // 至寶門檻較低
+        ]);
+        const merged = _mergePlayerResults(heroResult, treasureResult);
+        _lastResult = { merged, heroResult, treasureResult };
+
+        if(merged.length === 0){
+          _listEl.innerHTML = '<div style="text-align:center;color:#88ffbb;padding:20px;">🎉 沒有偵測到異常解鎖玩家</div>';
+          _statusEl.textContent = '掃描完成:全部正常';
+        } else {
+          _listEl.innerHTML = merged.map(_renderPlayerCard).join('');
+          const _multiCount = merged.filter(p => p.multiBattleEntries.length > 0).length;
+          _statusEl.textContent = `掃描完成:${merged.length} 位異常玩家(其中 ${_multiCount} 位有「同場戰鬥多解鎖」鐵證)`;
+        }
+        _attachCardEvents();
+      }catch(e){
+        console.error('[異常解鎖偵測] 掃描失敗', e);
+        _listEl.innerHTML = '<div style="text-align:center;color:#ff8888;padding:20px;">❌ 掃描失敗:' + _esc(e && e.message) + '</div>';
+        _statusEl.textContent = '';
+      }finally{
+        _scanBtn.disabled = false;
+        _scanBtn.textContent = '🔍 立即掃描';
+      }
+    };
+
+    // 卡片事件
+    function _attachCardEvents(){
+      // 清除勾選
+      _listEl.querySelectorAll('._abn-clear-btn').forEach(btn => {
+        btn.onclick = async function(){
+          const uid = btn.dataset.uid;
+          const card = btn.closest('._abn-player-card');
+          if(!card) return;
+          const heroes = Array.from(card.querySelectorAll('._abn-hero-cb:checked')).map(cb => cb.dataset.name);
+          const treasures = Array.from(card.querySelectorAll('._abn-tr-cb:checked')).map(cb => cb.dataset.id);
+          if(heroes.length === 0 && treasures.length === 0){ alert('請先勾選要清除的項目'); return; }
+          const _summary = (heroes.length ? '英雄 ' + heroes.length + ' 隻(' + heroes.slice(0,3).join('、') + (heroes.length > 3 ? '...' : '') + ')' : '')
+            + (heroes.length && treasures.length ? '、' : '')
+            + (treasures.length ? '至寶 ' + treasures.length + ' 件' : '');
+          if(!confirm('確定要清除以下異常項目?\n\n' + _summary + '\n\n此操作會寫入 audit log,玩家本地下次登入會被雲端覆蓋。')) return;
+
+          btn.disabled = true;
+          btn.textContent = '⏳ 清除中...';
+          let _okHero = 0, _okTreasure = 0, _failed = [];
+          for(const h of heroes){
+            try{ await window._fbAdminDeleteUnlockedHero(uid, h, { reason: '異常解鎖清除' }); _okHero++; }
+            catch(e){ _failed.push('英雄 ' + h + ':' + (e.message || e)); }
+          }
+          for(const t of treasures){
+            try{ await window._fbAdminDeleteTreasure(uid, t, { reason: '異常獲取清除' }); _okTreasure++; }
+            catch(e){ _failed.push('至寶 ' + t + ':' + (e.message || e)); }
+          }
+          btn.disabled = false;
+          btn.textContent = '🗑 清除勾選';
+          alert('清除完成:\n英雄 ' + _okHero + '/' + heroes.length + '\n至寶 ' + _okTreasure + '/' + treasures.length
+            + (_failed.length ? '\n\n失敗:\n' + _failed.join('\n') : ''));
+        };
+      });
+
+      // 告知+補償(打開補償工具自動填好對象)
+      _listEl.querySelectorAll('._abn-notify-btn').forEach(btn => {
+        btn.onclick = function(){
+          const uid = btn.dataset.uid;
+          const email = btn.dataset.email;
+          // 開補償 modal:直接跳到「玩家補償工具」並自動填好 uid
+          const _compEmail = document.getElementById('_admin-comp-email');
+          const _compUid = document.getElementById('_admin-comp-uid');
+          if(_compEmail) _compEmail.value = email || '';
+          if(_compUid) _compUid.value = uid || '';
+          // 滾動到補償區段,展開 sidebar
+          const _compSec = document.getElementById('_admin-comp-section');
+          if(_compSec){
+            _compSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // 提示:還要記得發通知!
+            setTimeout(() => alert('已自動填好補償對象 ' + (email || uid) + '。\n\n填好補償內容後送出,然後請手動執行:\n\nwindow._fbAdminSendNotificationToPlayer("' + uid + '", {\n  title: "管理員通知",\n  body: "你的帳號因發現異常解鎖被清除部分項目,已補償...",\n  type: "compensation"\n})\n\n(階段 4 會自動串接此通知)'), 500);
+          } else {
+            alert('找不到補償工具區段。請手動發送通知:\nwindow._fbAdminSendNotificationToPlayer("' + uid + '", {...})');
+          }
+        };
+      });
+
+      // 停權
+      _listEl.querySelectorAll('._abn-suspend-btn').forEach(btn => {
+        btn.onclick = async function(){
+          const uid = btn.dataset.uid;
+          const name = btn.dataset.name;
+          const reason = prompt('停權「' + name + '」(' + uid.slice(0,12) + '...) 的原因?', '異常解鎖大量稀有英雄/至寶');
+          if(!reason) return;
+          if(!confirm('確定停權「' + name + '」?\n原因:' + reason)) return;
+          if(!window._fbSuspendPlayer){ alert('停權 API 未載入'); return; }
+          btn.disabled = true;
+          btn.textContent = '⏳ 停權中...';
+          try{
+            const _adminEm = (window._fbUser && window._fbUser.email) || 'admin';
+            await window._fbSuspendPlayer(uid, _adminEm, reason);
+            btn.textContent = '✅ 已停權';
+            btn.style.opacity = '0.6';
+          }catch(e){
+            alert('停權失敗:' + (e.message || e));
+            btn.disabled = false;
+            btn.textContent = '🚫 停權帳號';
+          }
+        };
+      });
+
+      // 完整活動記錄(階段 4 才完整實作,目前提示)
+      _listEl.querySelectorAll('._abn-detail-btn').forEach(btn => {
+        btn.onclick = function(){
+          const uid = btn.dataset.uid;
+          alert('🚧 完整活動記錄查詢功能將於下一階段(v3.11.35)上線。\n\n目前可用 console 查:\n' +
+            '\nconst snap = await window._fbAdminFindPlayerByEmail("玩家 email");\n' +
+            'console.log(snap.data);  // 完整玩家資料\n' +
+            'console.log(snap.data._heroUnlockHistory);  // 英雄解鎖歷史\n' +
+            'console.log(snap.data._treasureUnlockHistory);  // 至寶解鎖歷史\n\n' +
+            '此玩家 uid: ' + uid);
+        };
+      });
+    }
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.11.35 階段 4c(2026-05-29) — 玩家活動記錄查詢
+  //   輸入 email / uid 查看完整活動(英雄/至寶/戰鬥/幣帳),逐筆可刪。
+  //   ⚠ 新規則:同 battleId 多解鎖 = 異常,卡片頂部紅框警示。
+  // ════════════════════════════════════════════════════════════════
+  (function _bindActivitySection(){
+    const _queryInput = document.getElementById('_admin-activity-query');
+    const _searchBtn  = document.getElementById('_admin-activity-search');
+    const _scanBtn    = document.getElementById('_admin-activity-scan-anomaly');
+    const _statusEl   = document.getElementById('_admin-activity-status');
+    const _playerCard = document.getElementById('_admin-activity-player-card');
+    const _tabsEl     = document.getElementById('_admin-activity-tabs');
+    const _contentEl  = document.getElementById('_admin-activity-content');
+    if(!_queryInput || !_searchBtn || !_contentEl) return;
+
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _fmtTime = (ts) => {
+      if(!ts) return '—';
+      try{
+        const d = new Date(ts);
+        const pad = n => String(n).padStart(2,'0');
+        return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }catch(_){ return '?'; }
+    };
+    const _shortBid = (b) => {
+      if(!b) return '—';
+      const s = String(b);
+      return s.length > 16 ? s.slice(-16) : s;
+    };
+
+    // 當前查詢結果(供 tab 切換 / 刪除後重新渲染)
+    let _curData = null;
+    let _curUid = null;
+    let _curTab = 'hero';
+
+    function _setStatus(msg, color){
+      if(_statusEl){
+        _statusEl.textContent = msg || '';
+        _statusEl.style.color = color || '#aaa';
+      }
+    }
+
+    // ── 解析 email → uid ──
+    async function _resolveUid(input){
+      const s = String(input || '').trim();
+      if(!s) throw new Error('請輸入 email 或 uid');
+      if(s.includes('@')){
+        // email
+        if(typeof window._fbAdminFindPlayerByEmail !== 'function'){
+          throw new Error('_fbAdminFindPlayerByEmail 未載入');
+        }
+        const _find = await window._fbAdminFindPlayerByEmail(s);
+        if(!_find || !_find.uid) throw new Error('找不到此 email 對應的玩家');
+        return _find.uid;
+      }
+      return s;  // 視為 uid
+    }
+
+    // ── 主查詢 ──
+    async function _doQuery(){
+      const _input = (_queryInput.value || '').trim();
+      if(!_input){ _setStatus('請先輸入 email 或 uid', '#ffaa66'); return; }
+      _setStatus('查詢中...', '#aaccff');
+      _searchBtn.disabled = true;
+      try{
+        const uid = await _resolveUid(_input);
+        _curUid = uid;
+        if(typeof window._fbAdminQueryPlayerActivity !== 'function'){
+          throw new Error('_fbAdminQueryPlayerActivity 未載入,請重新整理');
+        }
+        const _r = await window._fbAdminQueryPlayerActivity(uid);
+        _curData = _r;
+        _renderPlayerCard(_r);
+        _showTabs();
+        _switchTab(_curTab);
+        _setStatus(`✅ 查詢完成 — uid=${uid}`, '#88ddaa');
+      }catch(e){
+        _setStatus('❌ ' + (e.message || e), '#ff8866');
+        if(_playerCard) _playerCard.style.display = 'none';
+        if(_tabsEl) _tabsEl.style.display = 'none';
+        _contentEl.innerHTML = `<div style="text-align:center;color:#888;padding:20px;font-size:13px;">${_esc(e.message || e)}</div>`;
+      }finally{
+        _searchBtn.disabled = false;
+      }
+    }
+
+    function _renderPlayerCard(r){
+      if(!_playerCard || !r) return;
+      const p = r.player || {};
+      _playerCard.style.display = 'block';
+      // 算 battleId 衝突數
+      const heroByBid = {}; const treByBid = {};
+      (r.heroUnlockHistory || []).forEach(e => {
+        if(!e || !e.battleId || e.source === 'admin_delete' || e.source === 'admin_grant') return;
+        (heroByBid[e.battleId] = heroByBid[e.battleId] || []).push(e);
+      });
+      (r.treasureUnlockHistory || []).forEach(e => {
+        if(!e || !e.battleId || e.source === 'admin_delete' || e.source === 'admin_grant') return;
+        (treByBid[e.battleId] = treByBid[e.battleId] || []).push(e);
+      });
+      const heroConflicts = Object.values(heroByBid).filter(l => l.length > 1).length;
+      const treConflicts = Object.values(treByBid).filter(l => l.length > 1).length;
+      const totalConflicts = heroConflicts + treConflicts;
+      const anomalyHtml = totalConflicts > 0
+        ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(200,40,40,0.25);border-left:4px solid #ff6644;border-radius:6px;color:#ffcccc;font-size:13px;">
+             ⚠ <b>偵測到 ${totalConflicts} 筆 battleId 異常</b>:英雄 ${heroConflicts} 場、至寶 ${treConflicts} 場(同一場戰鬥多筆解鎖)
+           </div>`
+        : `<div style="margin-top:8px;padding:6px 12px;background:rgba(40,120,80,0.2);border-left:4px solid #66cc88;border-radius:6px;color:#aaddbb;font-size:12px;">
+             ✅ 無 battleId 異常
+           </div>`;
+      _playerCard.innerHTML = `
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div style="flex:1;min-width:220px;">
+            <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;">${_esc(p.name || '(無名稱)')}</div>
+            <div style="font-size:12px;color:#aac;">${_esc(p.email || '(無 email)')}</div>
+            <div style="font-size:11px;color:#778;margin-top:2px;font-family:monospace;">uid: ${_esc(p.uid)}</div>
+          </div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px;">
+            <div><span style="color:#aac;">💰 知識幣</span> <b style="color:#ffdd66;">${p.knowledgeCoins || 0}</b></div>
+            <div><span style="color:#aac;">🦸 已解鎖</span> <b style="color:#ffdd66;">${p.unlockedCount || 0}</b> 隻</div>
+            <div><span style="color:#aac;">⬆ 總等級</span> <b style="color:#ffdd66;">${p.totalHeroLv || 0}</b></div>
+            <div><span style="color:#aac;">⭐ 最高 Lv</span> <b style="color:#ffdd66;">${p.maxHeroLv || 0}</b></div>
+            <div><span style="color:#aac;">💎 至寶</span> <b style="color:#ffdd66;">${p.treasureCount || 0}</b></div>
+          </div>
+        </div>
+        ${anomalyHtml}
+      `;
+    }
+
+    function _showTabs(){
+      if(_tabsEl) _tabsEl.style.display = 'block';
+    }
+
+    function _switchTab(tab){
+      _curTab = tab;
+      // 高亮按鈕
+      const btns = _tabsEl ? _tabsEl.querySelectorAll('._aa-tab') : [];
+      btns.forEach(b => {
+        const active = b.dataset.tab === tab;
+        b.style.color = active ? '#ffe' : '#aaccff';
+        b.style.borderBottomColor = active ? '#88aaff' : 'transparent';
+        b.style.background = active ? 'rgba(140,180,255,0.1)' : 'transparent';
+      });
+      // 渲染內容
+      if(!_curData){
+        _contentEl.innerHTML = `<div style="text-align:center;color:#888;padding:20px;">尚無資料</div>`;
+        return;
+      }
+      if(tab === 'hero') _renderHeroTab(_curData.heroUnlockHistory || []);
+      else if(tab === 'treasure') _renderTreasureTab(_curData.treasureUnlockHistory || []);
+      else if(tab === 'battle') _renderBattleTab(_curData.battleHistory || []);
+      else if(tab === 'coin') _renderCoinTab(_curData.coinTransactions || []);
+    }
+
+    // 找出同 battleId 多解鎖的 entry(用 Set 標紅)
+    function _buildMultiBattleSet(list, idField){
+      const byBid = {};
+      list.forEach(e => {
+        if(!e || !e.battleId) return;
+        if(e.source === 'admin_delete' || e.source === 'admin_grant') return;
+        (byBid[e.battleId] = byBid[e.battleId] || []).push(e);
+      });
+      const conflictKeys = new Set();
+      Object.keys(byBid).forEach(bid => {
+        const list2 = byBid[bid];
+        if(list2.length > 1){
+          list2.forEach(e => { conflictKeys.add(e.at + '|' + e[idField]); });
+        }
+      });
+      return conflictKeys;
+    }
+
+    function _renderHeroTab(list){
+      if(!list.length){
+        _contentEl.innerHTML = `<div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚無英雄解鎖紀錄</div>`;
+        return;
+      }
+      const conflictKeys = _buildMultiBattleSet(list, 'name');
+      const rows = list.map(e => {
+        const k = (e.at || 0) + '|' + (e.name || '');
+        const isConflict = conflictKeys.has(k);
+        const isAdminAction = (e.source === 'admin_delete' || e.source === 'admin_grant');
+        const rowBg = isConflict ? 'background:rgba(200,40,40,0.18);' : (isAdminAction ? 'background:rgba(140,100,200,0.15);' : '');
+        const srcTag = e.source === 'admin_delete' ? '<span style="color:#ff8888">🗑 admin_delete</span>'
+                     : e.source === 'admin_grant' ? '<span style="color:#cc88ff">➕ admin_grant</span>'
+                     : `<span style="color:#aac;">${_esc(e.source || 'other')}</span>`;
+        return `<tr style="${rowBg}border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:6px 8px;font-size:12px;color:#ffe;">${_esc(e.name || '?')}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
+          <td style="padding:6px 8px;font-size:11px;">${srcTag}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${isConflict ? '#ffaaaa' : '#778'};font-family:monospace;" title="${_esc(e.battleId || '')}">${_shortBid(e.battleId)}${isConflict ? ' ⚠' : ''}</td>
+          <td style="padding:6px 8px;text-align:right;">
+            <button class="_aa-del-hero" data-at="${e.at}" data-name="${_esc(e.name || '')}"
+              style="padding:4px 10px;font-size:11px;background:#882233;color:#fff;border:none;border-radius:4px;cursor:pointer;">🗑 刪</button>
+            <button class="_aa-del-hero-full" data-name="${_esc(e.name || '')}"
+              style="padding:4px 10px;font-size:11px;background:#cc3344;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:4px;" title="清除英雄實體(等級/技能/天賦/紀錄全清)">🚫 整隻刪</button>
+          </td>
+        </tr>`;
+      }).join('');
+      _contentEl.innerHTML = `
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆 battleId 衝突</span>)` : ''}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:rgba(140,180,255,0.15);">
+            <th style="padding:6px 8px;text-align:left;color:#cce;">英雄</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">來源</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">battleId</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;">動作</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+      _bindHeroRowButtons();
+    }
+
+    function _bindHeroRowButtons(){
+      _contentEl.querySelectorAll('._aa-del-hero').forEach(btn => {
+        btn.onclick = async function(){
+          const at = parseInt(btn.dataset.at, 10);
+          const name = btn.dataset.name;
+          if(!confirm(`刪除這筆英雄解鎖紀錄?\n\n英雄: ${name}\n時間: ${_fmtTime(at)}\n\n⚠ 只刪「紀錄」,不會把已擁有的英雄拿掉。\n  若要連英雄一起刪,請按「🚫 整隻刪」。`)) return;
+          btn.disabled = true; btn.textContent = '⏳';
+          try{
+            await window._fbAdminDeletePlayerActivityEntry(_curUid, 'hero_history', { at, name }, { reason: 'GM 後台 → 玩家活動記錄查詢' });
+            _setStatus('✅ 已刪除英雄解鎖紀錄,重新查詢中...', '#88ddaa');
+            await _doQuery();
+          }catch(e){
+            _setStatus('❌ 刪除失敗: ' + (e.message || e), '#ff8866');
+            btn.disabled = false; btn.textContent = '🗑 刪';
+          }
+        };
+      });
+      _contentEl.querySelectorAll('._aa-del-hero-full').forEach(btn => {
+        btn.onclick = async function(){
+          const name = btn.dataset.name;
+          if(!confirm(`🚫 整隻刪除「${name}」?\n\n會清掉:\n  - unlockedHeroes 移除\n  - heroLevels 刪除\n  - heroStatInvested / Points 刪除\n  - heroSkillLevels / heroBurstLevels 刪除\n  - 寫 admin_delete audit 紀錄\n\n⚠ 不可逆!`)) return;
+          btn.disabled = true; btn.textContent = '⏳';
+          try{
+            await window._fbAdminDeleteUnlockedHero(_curUid, name, { reason: 'GM 後台 → 玩家活動記錄查詢 整隻刪' });
+            _setStatus(`✅ 已整隻刪除 ${name},重新查詢中...`, '#88ddaa');
+            await _doQuery();
+          }catch(e){
+            _setStatus('❌ 刪除失敗: ' + (e.message || e), '#ff8866');
+            btn.disabled = false; btn.textContent = '🚫 整隻刪';
+          }
+        };
+      });
+    }
+
+    function _renderTreasureTab(list){
+      if(!list.length){
+        _contentEl.innerHTML = `<div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚無至寶解鎖紀錄</div>`;
+        return;
+      }
+      const conflictKeys = _buildMultiBattleSet(list, 'id');
+      const rows = list.map(e => {
+        const k = (e.at || 0) + '|' + (e.id || '');
+        const isConflict = conflictKeys.has(k);
+        const isAdminAction = (e.source === 'admin_delete' || e.source === 'admin_grant');
+        const rowBg = isConflict ? 'background:rgba(200,40,40,0.18);' : (isAdminAction ? 'background:rgba(140,100,200,0.15);' : '');
+        const srcTag = e.source === 'admin_delete' ? '<span style="color:#ff8888">🗑 admin_delete</span>'
+                     : e.source === 'admin_grant' ? '<span style="color:#cc88ff">➕ admin_grant</span>'
+                     : `<span style="color:#aac;">${_esc(e.source || 'other')}</span>`;
+        return `<tr style="${rowBg}border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:6px 8px;font-size:12px;color:#ffe;font-family:monospace;">${_esc(e.id || '?')}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
+          <td style="padding:6px 8px;font-size:11px;">${srcTag}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${isConflict ? '#ffaaaa' : '#778'};font-family:monospace;" title="${_esc(e.battleId || '')}">${_shortBid(e.battleId)}${isConflict ? ' ⚠' : ''}</td>
+          <td style="padding:6px 8px;text-align:right;">
+            <button class="_aa-del-tre" data-at="${e.at}" data-id="${_esc(e.id || '')}"
+              style="padding:4px 10px;font-size:11px;background:#882233;color:#fff;border:none;border-radius:4px;cursor:pointer;">🗑 刪</button>
+            <button class="_aa-del-tre-full" data-id="${_esc(e.id || '')}"
+              style="padding:4px 10px;font-size:11px;background:#cc3344;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:4px;" title="清除至寶實體 + 紀錄">🚫 整個刪</button>
+          </td>
+        </tr>`;
+      }).join('');
+      _contentEl.innerHTML = `
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆 battleId 衝突</span>)` : ''}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:rgba(140,180,255,0.15);">
+            <th style="padding:6px 8px;text-align:left;color:#cce;">至寶 ID</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">來源</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">battleId</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;">動作</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+      _bindTreasureRowButtons();
+    }
+
+    function _bindTreasureRowButtons(){
+      _contentEl.querySelectorAll('._aa-del-tre').forEach(btn => {
+        btn.onclick = async function(){
+          const at = parseInt(btn.dataset.at, 10);
+          const id = btn.dataset.id;
+          if(!confirm(`刪除這筆至寶解鎖紀錄?\n\n至寶: ${id}\n時間: ${_fmtTime(at)}\n\n⚠ 只刪「紀錄」,不會把已擁有的至寶拿掉。`)) return;
+          btn.disabled = true; btn.textContent = '⏳';
+          try{
+            await window._fbAdminDeletePlayerActivityEntry(_curUid, 'treasure_history', { at, id }, { reason: 'GM 後台 → 玩家活動記錄查詢' });
+            _setStatus('✅ 已刪除至寶解鎖紀錄,重新查詢中...', '#88ddaa');
+            await _doQuery();
+          }catch(e){
+            _setStatus('❌ 刪除失敗: ' + (e.message || e), '#ff8866');
+            btn.disabled = false; btn.textContent = '🗑 刪';
+          }
+        };
+      });
+      _contentEl.querySelectorAll('._aa-del-tre-full').forEach(btn => {
+        btn.onclick = async function(){
+          const id = btn.dataset.id;
+          if(!confirm(`🚫 整個刪除至寶「${id}」?\n\n會清掉 taiwanTreasureData[${id}] + 寫 admin_delete audit。\n\n⚠ 不可逆!`)) return;
+          btn.disabled = true; btn.textContent = '⏳';
+          try{
+            await window._fbAdminDeleteTreasure(_curUid, id, { reason: 'GM 後台 → 玩家活動記錄查詢 整個刪' });
+            _setStatus(`✅ 已整個刪除至寶 ${id},重新查詢中...`, '#88ddaa');
+            await _doQuery();
+          }catch(e){
+            _setStatus('❌ 刪除失敗: ' + (e.message || e), '#ff8866');
+            btn.disabled = false; btn.textContent = '🚫 整個刪';
+          }
+        };
+      });
+    }
+
+    function _renderBattleTab(list){
+      if(!list.length){
+        _contentEl.innerHTML = `<div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚無戰鬥紀錄</div>`;
+        return;
+      }
+      const rows = list.map(e => {
+        const t = e.type || 'boss_battle';
+        const typeLabel = t === 'world_boss' ? '🌍 世界 BOSS' : t === 'boss_loss' ? '💀 失敗' : '⚔ BOSS 戰';
+        const winColor = e.win === false ? '#ff8866' : '#88ddaa';
+        const winText = e.win === false ? '✗ 失敗' : '✓ 勝利';
+        const r = e.rewards || {};
+        const heroes = (r.heroes || []).join(', ') || '—';
+        const tres = (r.treasures || []).join(', ') || '—';
+        const heroBadge = (r.heroes || []).length > 1 ? `<span style="color:#ff8866;">⚠ ${r.heroes.length}</span>` : `<span style="color:#aac;">${(r.heroes || []).length}</span>`;
+        const treBadge = (r.treasures || []).length > 1 ? `<span style="color:#ff8866;">⚠ ${r.treasures.length}</span>` : `<span style="color:#aac;">${(r.treasures || []).length}</span>`;
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#cce;">${typeLabel}</td>
+          <td style="padding:6px 8px;font-size:12px;color:#ffe;">${_esc(e.bossName || '—')}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${winColor};">${winText}${e.grade ? ' (' + _esc(e.grade) + ')' : ''}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;">🦸${heroBadge}</td>
+          <td style="padding:6px 8px;font-size:11px;text-align:center;">💎${treBadge}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#778;font-family:monospace;" title="${_esc(e.battleId)}">${_shortBid(e.battleId)}</td>
+          <td style="padding:6px 8px;text-align:right;">
+            <button class="_aa-del-battle" data-bid="${_esc(e.battleId)}" data-type="${_esc(t)}"
+              style="padding:4px 10px;font-size:11px;background:#882233;color:#fff;border:none;border-radius:4px;cursor:pointer;">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+      _contentEl.innerHTML = `
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 場(最近 50)</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:rgba(140,180,255,0.15);">
+            <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">類型</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">BOSS</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">結果</th>
+            <th style="padding:6px 8px;text-align:center;color:#cce;">新英雄</th>
+            <th style="padding:6px 8px;text-align:center;color:#cce;">新至寶</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">battleId</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;"></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+      _contentEl.querySelectorAll('._aa-del-battle').forEach(btn => {
+        btn.onclick = async function(){
+          const bid = btn.dataset.bid; const type = btn.dataset.type;
+          if(!confirm(`刪除這筆戰鬥紀錄?\n\nbattleId: ${bid}\ntype: ${type}\n\n⚠ 只刪紀錄,不會回滾獎勵。`)) return;
+          btn.disabled = true; btn.textContent = '⏳';
+          try{
+            await window._fbAdminDeletePlayerActivityEntry(_curUid, 'battle_history', { battleId: bid, type }, { reason: 'GM 後台 → 戰鬥紀錄' });
+            _setStatus('✅ 已刪除,重新查詢中...', '#88ddaa');
+            await _doQuery();
+          }catch(e){
+            _setStatus('❌ 刪除失敗: ' + (e.message || e), '#ff8866');
+            btn.disabled = false; btn.textContent = '🗑';
+          }
+        };
+      });
+    }
+
+    function _renderCoinTab(list){
+      if(!list.length){
+        _contentEl.innerHTML = `
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">
+            尚無知識幣帳目紀錄<br>
+            <span style="font-size:11px;color:#665;">(此功能需要主程式端寫入 _coinTransactions 欄位,目前未啟用)</span>
+          </div>
+          <div style="background:rgba(40,30,60,0.4);border-left:4px solid #cc88ff;padding:12px;border-radius:8px;margin-top:14px;">
+            <div style="font-size:13px;color:#ddccff;margin-bottom:8px;font-weight:700;">💰 手動調整知識幣餘額</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input id="_aa-coin-new" type="number" placeholder="新餘額" style="padding:6px 10px;width:140px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:4px;font-family:inherit;">
+              <input id="_aa-coin-reason" type="text" placeholder="原因(必填)" style="padding:6px 10px;flex:1;min-width:160px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:4px;font-family:inherit;">
+              <button id="_aa-coin-set" style="padding:7px 16px;font-size:13px;font-weight:700;background:#aa44cc;color:#fff;border:none;border-radius:6px;cursor:pointer;">強制覆寫</button>
+            </div>
+          </div>
+        `;
+        _bindCoinSetBtn();
+        return;
+      }
+      const rows = list.map(e => {
+        const inout = (e.amount || 0) >= 0 ? `<span style="color:#88ddaa">+${e.amount}</span>` : `<span style="color:#ff8866">${e.amount}</span>`;
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
+          <td style="padding:6px 8px;font-size:12px;text-align:right;font-weight:700;">${inout}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#cce;">${_esc(e.reason || '—')}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#ffdd66;text-align:right;">${e.balance != null ? e.balance : '—'}</td>
+          <td style="padding:6px 8px;text-align:right;">
+            <button class="_aa-del-coin" data-at="${e.at}" data-id="${_esc(e.id || '')}"
+              style="padding:4px 10px;font-size:11px;background:#882233;color:#fff;border:none;border-radius:4px;cursor:pointer;">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+      _contentEl.innerHTML = `
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:rgba(140,180,255,0.15);">
+            <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;">變動</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">原因</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;">餘額</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;"></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="background:rgba(40,30,60,0.4);border-left:4px solid #cc88ff;padding:12px;border-radius:8px;margin-top:14px;">
+          <div style="font-size:13px;color:#ddccff;margin-bottom:8px;font-weight:700;">💰 手動調整知識幣餘額</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="_aa-coin-new" type="number" placeholder="新餘額" style="padding:6px 10px;width:140px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:4px;font-family:inherit;">
+            <input id="_aa-coin-reason" type="text" placeholder="原因(必填)" style="padding:6px 10px;flex:1;min-width:160px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:4px;font-family:inherit;">
+            <button id="_aa-coin-set" style="padding:7px 16px;font-size:13px;font-weight:700;background:#aa44cc;color:#fff;border:none;border-radius:6px;cursor:pointer;">強制覆寫</button>
+          </div>
+        </div>
+      `;
+      _contentEl.querySelectorAll('._aa-del-coin').forEach(btn => {
+        btn.onclick = async function(){
+          const at = parseInt(btn.dataset.at, 10);
+          const id = btn.dataset.id;
+          if(!confirm(`刪除這筆幣帳紀錄?\n\n時間: ${_fmtTime(at)}\n\n⚠ 只刪紀錄,實際幣值不會變。若要改餘額請用下方「強制覆寫」。`)) return;
+          btn.disabled = true; btn.textContent = '⏳';
+          try{
+            await window._fbAdminDeletePlayerActivityEntry(_curUid, 'coin_tx', { at, id }, { reason: 'GM 後台 → 幣帳' });
+            _setStatus('✅ 已刪除,重新查詢中...', '#88ddaa');
+            await _doQuery();
+          }catch(e){
+            _setStatus('❌ 刪除失敗: ' + (e.message || e), '#ff8866');
+            btn.disabled = false; btn.textContent = '🗑';
+          }
+        };
+      });
+      _bindCoinSetBtn();
+    }
+
+    function _bindCoinSetBtn(){
+      const setBtn = document.getElementById('_aa-coin-set');
+      if(!setBtn) return;
+      setBtn.onclick = async function(){
+        const v = parseInt((document.getElementById('_aa-coin-new')||{}).value, 10);
+        const reason = ((document.getElementById('_aa-coin-reason')||{}).value || '').trim();
+        if(isNaN(v) || v < 0) { alert('請輸入有效新餘額(>= 0)'); return; }
+        if(!reason) { alert('請填寫原因'); return; }
+        if(!confirm(`強制覆寫知識幣餘額為 ${v}?\n\n原因: ${reason}\n\n⚠ 不可逆!`)) return;
+        setBtn.disabled = true;
+        try{
+          await window._fbAdminOverwritePlayerData(_curUid, { knowledgeCoins: v }, { reason });
+          _setStatus(`✅ 已覆寫知識幣為 ${v}`, '#88ddaa');
+          await _doQuery();
+        }catch(e){
+          _setStatus('❌ 覆寫失敗: ' + (e.message || e), '#ff8866');
+        }finally{
+          setBtn.disabled = false;
+        }
+      };
+    }
+
+    // ── 全掃 battleId 異常 ──
+    async function _doScanAnomaly(){
+      if(!confirm('掃描全部玩家(最多 200 位)的 battleId 異常?\n\n會列出「一場戰鬥多次解鎖」的玩家。可能需要 5-15 秒。')) return;
+      _setStatus('掃描中...這可能要幾秒', '#aaccff');
+      _scanBtn.disabled = true;
+      try{
+        if(typeof window._fbAdminScanBattleAnomaly !== 'function'){
+          throw new Error('_fbAdminScanBattleAnomaly 未載入');
+        }
+        const r = await window._fbAdminScanBattleAnomaly({ limit: 200 });
+        const ab = r.abnormal || [];
+        if(_playerCard) _playerCard.style.display = 'none';
+        if(_tabsEl) _tabsEl.style.display = 'none';
+        if(!ab.length){
+          _contentEl.innerHTML = `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現 battleId 異常</div>`;
+          _setStatus(`✅ 掃描完成 — ${r.scanned} 位玩家正常`, '#88ddaa');
+          return;
+        }
+        const cards = ab.map(p => {
+          const heroBlocks = p.conflictsHero.map(c => `
+            <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+              <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 隻英雄:
+              <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
+            </div>`).join('');
+          const treBlocks = p.conflictsTreasure.map(c => `
+            <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+              <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 個至寶:
+              <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
+            </div>`).join('');
+          return `<div style="background:rgba(40,15,30,0.5);border:1px solid rgba(255,120,140,0.4);border-radius:8px;padding:10px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div>
+                <b style="color:#ffe;">${_esc(p.name || '(無名稱)')}</b>
+                <span style="color:#aac;margin-left:8px;font-size:11px;">${_esc(p.email || p.uid)}</span>
+              </div>
+              <button class="_aa-jump" data-uid="${_esc(p.uid)}" style="padding:5px 12px;font-size:11px;background:#3366bb;color:#fff;border:none;border-radius:4px;cursor:pointer;">→ 查看詳情</button>
+            </div>
+            ${heroBlocks}${treBlocks}
+          </div>`;
+        }).join('');
+        _contentEl.innerHTML = `
+          <div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有 battleId 異常(掃 ${r.scanned} 位)</div>
+          ${cards}
+        `;
+        _contentEl.querySelectorAll('._aa-jump').forEach(btn => {
+          btn.onclick = async function(){
+            _queryInput.value = btn.dataset.uid;
+            await _doQuery();
+          };
+        });
+        _setStatus(`⚠ 找到 ${ab.length} 位異常玩家`, '#ffaa66');
+      }catch(e){
+        _setStatus('❌ 掃描失敗: ' + (e.message || e), '#ff8866');
+      }finally{
+        _scanBtn.disabled = false;
+      }
+    }
+
+    // ── 事件綁定 ──
+    _searchBtn.onclick = _doQuery;
+    _queryInput.onkeydown = (ev) => { if(ev.key === 'Enter') _doQuery(); };
+    if(_scanBtn) _scanBtn.onclick = _doScanAnomaly;
+    if(_tabsEl){
+      _tabsEl.querySelectorAll('._aa-tab').forEach(b => {
+        b.onclick = () => _switchTab(b.dataset.tab);
+      });
     }
   })();
 
