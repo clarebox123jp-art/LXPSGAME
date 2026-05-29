@@ -5698,57 +5698,65 @@ async function _showAdminStatsPanelImpl(){
           if(!_fbDb){
             throw new Error('window._fbDb 不可用');
           }
-          // ★ v3.11.29 — 優先用 index.html 暴露的同版 Firestore 函式(window._fbFns),
-          //   避免動態 import 不同版本 SDK 操作同一 db 實例可能出錯;失敗才 fallback 動態載入。
-          let _doc, _runTransaction;
-          if(window._fbFns && window._fbFns.doc && window._fbFns.runTransaction){
+          // ★ v3.11.33(2026-05-29) — 真正修法:改用 updateDoc + dot path + deleteField()。
+          //   原 BUG:tx.set({...}, {merge:true}) 對 nested map 是「深層合併」不是「替換」,
+          //          所以「移除 uid 後重建的 weekMap」寫回時,Firestore 會把舊 uid 合併回來,
+          //          造成「顯示成功但排行榜還在」(老師 2026-05-29 回報)。
+          //   新法:用 updateDoc 配 dot notation key + deleteField() 精準刪除 nested key,
+          //         完全不動其他欄位(同 line ~7554 worldBossLeaderboard 刪除模式)。
+          let _doc, _updateDoc, _deleteField, _getDoc;
+          if(window._fbFns && window._fbFns.doc && window._fbFns.updateDoc && window._fbFns.deleteField && window._fbFns.getDoc){
             _doc = window._fbFns.doc;
-            _runTransaction = window._fbFns.runTransaction;
+            _updateDoc = window._fbFns.updateDoc;
+            _deleteField = window._fbFns.deleteField;
+            _getDoc = window._fbFns.getDoc;
           } else {
             const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
             _doc = _firestoreMod.doc;
-            _runTransaction = _firestoreMod.runTransaction;
+            _updateDoc = _firestoreMod.updateDoc;
+            _deleteField = _firestoreMod.deleteField;
+            _getDoc = _firestoreMod.getDoc;
           }
 
           const _statsRef = _doc(_fbDb, 'stats', 'global');
-          let _deletedEntry = null;
 
-          await _runTransaction(_fbDb, async function(tx){
-            const _snap = await tx.get(_statsRef);
-            const _data = _snap.exists() ? (_snap.data() || {}) : {};
-            const _wq = _data.weeklyQuiz || {};
-            const _weekMap = _wq[weekKey] || {};
-            if(!_weekMap[uid]){
-              throw new Error('該玩家在「' + weekKey + '」沒有上榜記錄(可能已被刪除或從未答題)');
-            }
-            _deletedEntry = _weekMap[uid];  // 留個快照,寫進審計 log
-            // 用 spread 重建 map,排除目標 uid
-            const _newWeekMap = {};
-            for(const _u in _weekMap){
-              if(_u !== uid) _newWeekMap[_u] = _weekMap[_u];
-            }
-            const _newWq = Object.assign({}, _wq);
-            _newWq[weekKey] = _newWeekMap;
-            // 審計 log:用「週key__uid」當 key,內含被刪當下的快照 + 操作者
-            const _logKey = weekKey + '__' + uid;
-            const _delLog = _data.weeklyQuizDeletionLog || {};
-            const _newLog = Object.assign({}, _delLog);
-            _newLog[_logKey] = {
-              weekKey: weekKey,
-              uid: uid,
-              correct: _deletedEntry.correct || 0,
-              name: _deletedEntry.name || '',
-              email: _deletedEntry.email || '',
-              deletedBy: window._gUserId || '',
-              deletedAt: Date.now(),
-            };
-            tx.set(_statsRef, {
-              weeklyQuiz: _newWq,
-              weeklyQuizDeletionLog: _newLog,
-            }, { merge: true });
-          });
+          // 先讀一次當前 entry(留快照給審計 log,並驗證真有這筆)
+          const _snap = await _getDoc(_statsRef);
+          const _data = _snap.exists() ? (_snap.data() || {}) : {};
+          const _weekMap = (_data.weeklyQuiz && _data.weeklyQuiz[weekKey]) || {};
+          if(!_weekMap[uid]){
+            throw new Error('該玩家在「' + weekKey + '」沒有上榜記錄(可能已被刪除或從未答題)');
+          }
+          const _deletedEntry = _weekMap[uid];
+          const _logKey = weekKey + '__' + uid;
 
-          console.log('[刪除小博士排名] ✅ 週=' + weekKey + ' uid=' + uid + ' 原題數=' + (_deletedEntry && _deletedEntry.correct || 0));
+          // 用 dot notation + deleteField() 精準刪除單一 nested key
+          const _updates = {};
+          _updates['weeklyQuiz.' + weekKey + '.' + uid] = _deleteField();
+          _updates['weeklyQuizDeletionLog.' + _logKey] = {
+            weekKey: weekKey,
+            uid: uid,
+            correct: _deletedEntry.correct || 0,
+            name: _deletedEntry.name || '',
+            email: _deletedEntry.email || '',
+            deletedBy: window._gUserId || '',
+            deletedAt: Date.now(),
+          };
+          await _updateDoc(_statsRef, _updates);
+
+          console.log('[刪除小博士排名 v3.11.33] ✅ 週=' + weekKey + ' uid=' + uid + ' 原題數=' + (_deletedEntry.correct || 0));
+
+          // ★ v3.11.33(2026-05-29) — 手動同步本機 cache,避免 onSnapshot round-trip 期間 UI 仍顯示舊資料
+          //   onSnapshot 通常 100~500ms 內會自動更新 _cachedGlobalStats,但用戶感受上可能太慢。
+          //   主動先在本機 mirror 掉,UI 立刻看到正確結果;之後 onSnapshot 回來會再 overwrite(冪等)。
+          try{
+            if(window._cachedGlobalStats && window._cachedGlobalStats.weeklyQuiz
+               && window._cachedGlobalStats.weeklyQuiz[weekKey]){
+              delete window._cachedGlobalStats.weeklyQuiz[weekKey][uid];
+              // 廣播,讓訂閱 weeklyQuizSynced 的 UI 重渲(玩家端排行榜頁 + admin 後台)
+              try{ document.dispatchEvent(new CustomEvent('weeklyQuizSynced')); }catch(_){}
+            }
+          }catch(_eCache){ console.warn('[刪除小博士排名] 本機 cache 同步失敗(已寫雲端,onSnapshot 會補)', _eCache); }
 
           // 如果是刪除「自己」且為本週 → 同步把本機 lxps_wq_local_<uid> 也清掉,
           // 不然玩家下次答題會把本機累計推回雲端
