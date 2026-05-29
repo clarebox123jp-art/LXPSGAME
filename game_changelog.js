@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-05-29  / 目前主程式版本:v3.11.35j(線上實際版本)
+//  最後更新:2026-05-29  / 目前主程式版本:v3.11.36(線上實際版本)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,57 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+
+  // ════════════════════════════════════════════════════════════════════
+  // v3.11.36(2026-05-29)— 三大戰鬥流程災情緊急修補
+  //   緊急修補 v3.11.35 後玩家回報的三個獨立災情:
+  //   #1 續戰恢復後 BOSS 重複行動卡死(5108 李宥禾)
+  //   #2 擊敗 BOSS 但結算 modal 沒出來(杏花妖案例)
+  //   #3 放棄快照後被擋在 stage_select 無法進關卡
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.11.36',
+    date: '2026-05-29',
+    brief: [
+      '🐛 修續戰恢復後 BOSS 重複行動 + 死隊友卡住 startTurn(BUG #1)',
+      '   ・災情:5108 李宥禾,貓空 round=15,黑暗球 4 隻續戰回來又跑一輪',
+      '   ・根因:_advRestoreBattleState 把所有 acted 都清成 false,',
+      '     包含快照中已行動完的 BOSS 群 → 還原後又被當作未行動 → 重新跑一遍',
+      '   ・修法:HP<=0 角色強制 acted=true(死人視同已行動,不參與輪轉),',
+      '     活著的才清 acted=false',
+      '',
+      '🛡 修「擊敗 BOSS 但結算 modal 沒顯示」三層救援(BUG #2)',
+      '   ・災情:玩家「擊敗杏花妖但不讓我結束戰鬥」,後續所有觸發都被 60 秒守門擋下',
+      '   ・根因:_showResultWithDrama 跑了 _closeAllBattleModals 把 adv-reward-overlay',
+      '     設成 display:none,但下游 advStartWinSequence 中途 await 卡住 → modal 沒重開',
+      '   ・三層修法:',
+      '     ① 拒絕重入時,檢查結算 overlay 是否真有顯示,沒顯示 → 1.2 秒後強制重開',
+      '     ② 入口設 5 秒 watchdog,沒看到結算 modal 就主動觸發 advShowBattleResult',
+      '     ③ advShowBattleResult / advFinishMiniBattle 入口清掉 watchdog,避免重複觸發',
+      '',
+      '🛡 修「放棄快照後被擋在 stage_select 無法進關卡」(BUG #3)',
+      '   ・災情:玩家放棄當前戰鬥 → 13 秒後 _fbLoad 又拉雲端 → 點任何關卡都被',
+      '     「請先處理未完成戰鬥」彈窗擋住,無法繼續玩',
+      '   ・根因:Firestore eventual consistency,放棄當下寫的 null 還沒生效,',
+      '     _fbLoad 拉到舊資料(advSnapshot 還在)→ _applySafeData 寫回本地',
+      '   ・三層修法:',
+      '     ① _advDiscardSnapshotAndExit 設 _advRecentlyDiscarded = Date.now() 旗標',
+      '     ② _applySafeData 套用 advSnapshot 前檢查:30 秒內剛放棄 → 跳過 + 清本地',
+      '     ③ 放棄流程 3 秒 + 10 秒後再清本地 + 寫雲端各一次(retry 模式)',
+      '',
+      '📝 鐵律新增:',
+      '   ・鐵律 1.65:_advRestoreBattleState 還原 acted 必須依 curHp 區分死活,',
+      '     不可一律清零(造成 BOSS 重複行動 + 死人卡 startTurn)',
+      '   ・鐵律 1.66:涉及雲端「清空關鍵欄位」的流程必須有 retry 保護 + 旗標阻擋',
+      '     後續 _applySafeData 寫回,避免 Firestore eventual consistency 把剛清的',
+      '     資料拉回來(放棄快照、登出清檔、補償清除等都適用)',
+      '   ・鐵律 1.67:任何「結算 modal 顯示」流程必須有 watchdog,5-10 秒沒見到 modal',
+      '     就要主動補救,因為 await 路徑卡住會永遠沒人重開 overlay',
+      '',
+      '🔧 版本戳:_GAME_LOADED_VERSION → v3.11.36;_LXPS_FILE_VERSIONS:',
+      '   index.html → v3.11.36、game_changelog.js → v3.11.36',
+    ]
+  },
 
   // ════════════════════════════════════════════════════════════════════
   // v3.11.35(2026-05-29)— 完整玩家活動管理系統 + 異常清理 + 補償 + 公告
