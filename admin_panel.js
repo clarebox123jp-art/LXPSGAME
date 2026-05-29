@@ -262,6 +262,23 @@ async function _showAdminStatsPanelImpl(){
           style="width:100%;min-height:60px;padding:10px;font-size:14px;background:rgba(20,20,30,0.9);
           border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:8px;font-family:inherit;
           box-sizing:border-box;margin-bottom:10px;resize:vertical;"></textarea>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12px;color:#888;margin-right:4px;">📋 範本:</span>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="maint10" type="button" title="維修前 10 分鐘預告" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,200,80,0.18);border:1.5px solid #ffcc44;color:#ffe8a0;border-radius:5px;cursor:pointer;font-family:inherit;">⏰ 維修預告 10 分</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="maint5" type="button" title="維修前 5 分鐘預告" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,160,60,0.2);border:1.5px solid #ff9933;color:#ffd0a0;border-radius:5px;cursor:pointer;font-family:inherit;">⏰ 維修預告 5 分</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="maintNow" type="button" title="維修開始" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,100,80,0.2);border:1.5px solid #ff6644;color:#ffccbb;border-radius:5px;cursor:pointer;font-family:inherit;">🔧 維修中</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="maintDone" type="button" title="維修完成" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(120,220,120,0.2);border:1.5px solid #66cc44;color:#aaeeaa;border-radius:5px;cursor:pointer;font-family:inherit;">✅ 維修完成</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="bug" type="button" title="BUG 異常解鎖回收(老師親自擬的長文)" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,100,80,0.2);border:1.5px solid #ff8866;color:#ffccbb;border-radius:5px;cursor:pointer;font-family:inherit;">📜 BUG 異常回收</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="bugFixed" type="button" title="緊急 BUG 修補完成" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(120,200,255,0.2);border:1.5px solid #66aaff;color:#aaccff;border-radius:5px;cursor:pointer;font-family:inherit;">🛠 緊急修補完成</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="newFeat" type="button" title="新功能上線" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(150,200,255,0.2);border:1.5px solid #88aaff;color:#bbccff;border-radius:5px;cursor:pointer;font-family:inherit;">🎉 新功能上線</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="eventStart" type="button" title="活動開始(雙倍經驗等)" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,180,80,0.2);border:1.5px solid #ffaa33;color:#ffddaa;border-radius:5px;cursor:pointer;font-family:inherit;">🎊 活動開始</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="eventEnd" type="button" title="活動最後一天提醒" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,140,80,0.2);border:1.5px solid #ff9966;color:#ffccaa;border-radius:5px;cursor:pointer;font-family:inherit;">⏳ 活動快結束</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="reward" type="button" title="全體玩家發補償/獎勵" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(150,220,120,0.2);border:1.5px solid #88cc66;color:#bbeeaa;border-radius:5px;cursor:pointer;font-family:inherit;">🎁 全體發獎勵</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="tip" type="button" title="重要提醒(卡關自救/小撇步)" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(200,170,255,0.2);border:1.5px solid #bb99ff;color:#ddccff;border-radius:5px;cursor:pointer;font-family:inherit;">💡 玩法小提醒</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="report" type="button" title="鼓勵玩家回報 BUG" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(180,200,255,0.2);border:1.5px solid #99bbff;color:#ccddff;border-radius:5px;cursor:pointer;font-family:inherit;">📣 回報 BUG 鼓勵</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="holiday" type="button" title="節慶/長假問候" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,150,200,0.2);border:1.5px solid #ff88bb;color:#ffaacc;border-radius:5px;cursor:pointer;font-family:inherit;">🎄 節慶問候</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="exam" type="button" title="期中/期末考前" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(200,180,140,0.2);border:1.5px solid #ccaa66;color:#eeddaa;border-radius:5px;cursor:pointer;font-family:inherit;">📚 考試加油</button>
+        </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
           <label style="font-size:13px;color:#ddd;display:flex;align-items:center;gap:4px;">
             <span>樣式:</span>
@@ -1982,6 +1999,122 @@ async function _showAdminStatsPanelImpl(){
       }
     };
   }
+
+  // ★ v3.11.35f(2026-05-29) — GM 公告範本庫(主要玩家是小學生,稱呼「小英雄」)
+  //   每個範本回傳 { text, type, color },按下對應按鈕一鍵填入公告區
+  const _GM_TEMPLATES = {
+    // ── 維修系列 ──
+    maint10: {
+      text: '⏰ 維修預告\n\n各位小英雄注意!遊戲將在 10 分鐘後進入維修。\n請趕快回到關卡選擇頁讓進度存檔,維修期間將無法登入。\n預計維修時間:約 10~20 分鐘,請耐心等候喔!',
+      type: 'banner',
+      color: '#ffcc44',
+    },
+    maint5: {
+      text: '⏰ 最後提醒!遊戲將在 5 分鐘後進入維修\n\n各位小英雄,正在打 BOSS 的請趕快結束戰鬥,正在抽英雄的請趕快用完。\n5 分鐘後進度可能會丟失喔!請小英雄們先存檔再離開。',
+      type: 'modal',
+      color: '#ff9933',
+    },
+    maintNow: {
+      text: '🔧 遊戲維修中\n\n各位小英雄抱歉,遊戲目前正在進行維修中。\n請先離開遊戲休息一下,等管理員修好就會通知大家回來繼續冒險!\n造成不便深感抱歉。',
+      type: 'modal',
+      color: '#ff6644',
+    },
+    maintDone: {
+      text: '✅ 維修完成!歡迎小英雄回來!\n\n遊戲已經修好可以正常遊玩了!\n請小英雄們重新整理頁面(按 F5 或下拉重新整理)讓新版本載入。\n感謝各位的耐心等候,繼續冒險吧!',
+      type: 'banner',
+      color: '#66cc44',
+    },
+    // ── BUG 異常與修補系列 ──
+    bug: {
+      text: '🌟 重要的話想告訴所有小英雄\n\n'
+        + '最近系統有個小錯誤,讓部分小英雄在打 BOSS 後一次解鎖了太多 SSR 英雄。\n'
+        + 'SSR 英雄是遊戲世界裡最珍貴的存在,每一隻都該靠勇氣、運氣與緣分才能相遇。\n'
+        + '如果可以靠 BUG 大量得到,那 SSR 英雄就不再是 SSR 了。\n\n'
+        + '為了守護這份珍貴,管理員會幫每場戰鬥裡多出來的英雄找回他們原本的世界\n'
+        + '(每場戰鬥只保留你第一隻遇到的那一位 — 因為「第一次相遇」最有意義)。\n'
+        + '被回收英雄裡你投入過的等級、技能、爆發,管理員都會原數補回給你。\n\n'
+        + '📣 致沒有受影響的小英雄:\n'
+        + '這是好事!代表你一直在用正常方式累積實力 ✨\n'
+        + '也想拜託大家:未來如果在遊戲裡看到怪怪的事(突然得到很多東西、戰鬥當掉),\n'
+        + '請用「🐛 回報錯誤」告訴管理員。每一次回報都是讓遊戲變更好的關鍵。\n\n'
+        + '讓我們一起守護這座知識的冒險世界 🗺\n'
+        + '— LXPSGAME 管理員',
+      type: 'modal',
+      color: '#ff6644',
+    },
+    bugFixed: {
+      text: '🛠 緊急 BUG 已修復!\n\n各位小英雄好,剛剛影響大家的問題已經修補完成。\n請小英雄重新整理頁面(按 F5 或下拉重新整理)讓修補生效。\n感謝小英雄的回報和耐心,如果還有遇到任何問題請繼續告訴管理員!',
+      type: 'banner',
+      color: '#66aaff',
+    },
+    // ── 新功能/活動系列 ──
+    newFeat: {
+      text: '🎉 新功能上線啦!\n\n各位小英雄久等了,新功能已經上線可以使用!\n請重新整理頁面(按 F5)讓新版本載入。\n快進去探索看看,有任何問題或建議都可以告訴管理員喔!',
+      type: 'modal',
+      color: '#88aaff',
+    },
+    eventStart: {
+      text: '🎊 限時活動開始!\n\n各位小英雄注意!活動已經開始囉!\n活動期間,打 BOSS 取得的經驗值與知識幣會 ×2!\n小英雄們快把握機會升級你的英雄,把握 SSR 英雄解鎖機會!\n活動時間:即日起至本週日晚上 23:59',
+      type: 'modal',
+      color: '#ffaa33',
+    },
+    eventEnd: {
+      text: '⏳ 活動最後 24 小時!\n\n各位小英雄注意!限時活動將在今晚 23:59 結束。\n還沒衝完進度的小英雄,把握最後機會喔!\n錯過要等下次活動才能享受加倍獎勵!',
+      type: 'banner',
+      color: '#ff9966',
+    },
+    // ── 獎勵系列 ──
+    reward: {
+      text: '🎁 全體小英雄獎勵發放!\n\n為了感謝各位小英雄一直以來的支持,管理員發送大家補償!\n請至背包查看,登入後會自動收到。\n如果沒收到,請告訴管理員(透過遊戲內的 🐛 回報錯誤)。',
+      type: 'modal',
+      color: '#88cc66',
+    },
+    // ── 玩法/提醒系列 ──
+    tip: {
+      text: '💡 玩法小提醒\n\n各位小英雄,如果遇到戰鬥卡住,可以試試:\n  1. 按右上角「🔄 重新開始」回首頁\n  2. 重新整理頁面(F5 或下拉)\n  3. 還是不行就用「🐛 回報錯誤」告訴管理員\n\n不要害怕嘗試,保持冒險的心!',
+      type: 'banner',
+      color: '#bb99ff',
+    },
+    report: {
+      text: '📣 鼓勵小英雄回報 BUG!\n\n各位小英雄,如果在遊戲中發現怪怪的事情(英雄突然不見、獎勵領太多、戰鬥當掉...),請第一時間告訴管理員!\n  ・遊戲內按「🐛 回報錯誤」即可\n  ・每位主動回報的小英雄都會收到管理員的補償!\n讓我們一起把遊戲變得更好玩!',
+      type: 'modal',
+      color: '#99bbff',
+    },
+    // ── 節慶/季節性問候 ──
+    holiday: {
+      text: '🎄 節慶問候\n\n各位小英雄,節日快樂!\n趁著假日好好放鬆,也別忘了回來陪英雄們冒險喔!\n管理員特別發送節日禮包,請小英雄到背包查看!',
+      type: 'modal',
+      color: '#ff88bb',
+    },
+    exam: {
+      text: '📚 考試加油!\n\n各位小英雄,考試期間請以課業為重!\n回來玩遊戲時要記得先寫完作業、複習完功課喔!\n知識本身就是最強的爆發技!\n考完試大家再回來繼續冒險,管理員為小英雄加油!💪',
+      type: 'banner',
+      color: '#ccaa66',
+    },
+  };
+
+  // 統一綁定所有範本按鈕
+  document.querySelectorAll('._admin-gm-tmpl-btn').forEach(function(btn){
+    btn.onclick = function(){
+      const _key = btn.dataset.tmpl;
+      const _tmpl = _GM_TEMPLATES[_key];
+      if(!_tmpl){ console.warn('[GM 範本] 找不到 key=' + _key); return; }
+      const _textEl = document.getElementById('_admin-gm-text');
+      const _typeEl = document.getElementById('_admin-gm-type');
+      const _colorEl = document.getElementById('_admin-gm-color');
+      if(!_textEl) return;
+      if(_textEl.value.trim() && !confirm('公告內容欄目前有文字,要覆蓋成此範本嗎?')) return;
+      _textEl.value = _tmpl.text;
+      if(_typeEl && _tmpl.type) _typeEl.value = _tmpl.type;
+      if(_colorEl && _tmpl.color) _colorEl.value = _tmpl.color;
+      const _res = document.getElementById('_admin-gm-result');
+      if(_res){
+        _res.style.color = '#aaccff';
+        _res.textContent = '✅ 已填入範本「' + btn.textContent.trim() + '」— 確認後可微調內容,然後按「📢 發送給所有玩家」';
+      }
+      _textEl.focus();
+    };
+  });
 
   // 回填總玩家數
   document.getElementById('_admin-backfill-players').onclick = async () => {
@@ -5013,8 +5146,13 @@ async function _showAdminStatsPanelImpl(){
         return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
       }catch(_){ return '?'; }
     };
+    // ★ v3.11.35h — 用 _formatBattleId 解析回人類可讀,新格式自動顯示「BOSS 名 #序號 (月/日 時:分)」
+    //   老格式 fallback 顯示後 12 字
     const _shortBid = (b) => {
       if(!b) return '—';
+      if(typeof window._formatBattleId === 'function'){
+        try{ return window._formatBattleId(b); }catch(_){}
+      }
       const s = String(b);
       return s.length > 16 ? s.slice(-16) : s;
     };
@@ -5184,7 +5322,7 @@ async function _showAdminStatsPanelImpl(){
       'taiwan_clear', 'japan_clear', 'boss_drop',
     ]);
     const _isBossSource = (s) => !s || BOSS_SOURCES.has(s);
-    const TIME_WINDOW_MS = 60 * 1000;  // 1 分鐘
+    const TIME_WINDOW_MS = 3 * 60 * 1000;  // 3 分鐘(v3.11.35g 從 1 分鐘擴大,老師指示)
     const TIME_HERO_THRESHOLD = 2;      // > 2 隻 = 異常(3 隻起)
     const TIME_TRE_THRESHOLD = 2;
 
@@ -5257,18 +5395,18 @@ async function _showAdminStatsPanelImpl(){
       let _detailLines = [];
       if(heroTimeClusters.length){
         const _totalHeroes = heroTimeClusters.reduce((s,c) => s + c.count, 0);
-        _detailLines.push(`<b>⏱ 1 分鐘窗:英雄 ${heroTimeClusters.length} 群(共 ${_totalHeroes} 隻)</b>`);
+        _detailLines.push(`<b>⏱ 3 分鐘窗:英雄 ${heroTimeClusters.length} 群(共 ${_totalHeroes} 隻)</b>`);
       }
       if(treTimeClusters.length){
         const _totalTres = treTimeClusters.reduce((s,c) => s + c.count, 0);
-        _detailLines.push(`<b>⏱ 1 分鐘窗:至寶 ${treTimeClusters.length} 群(共 ${_totalTres} 個)</b>`);
+        _detailLines.push(`<b>⏱ 3 分鐘窗:至寶 ${treTimeClusters.length} 群(共 ${_totalTres} 個)</b>`);
       }
       if(heroBidConflicts) _detailLines.push(`battleId:英雄 ${heroBidConflicts} 場`);
       if(treBidConflicts)  _detailLines.push(`battleId:至寶 ${treBidConflicts} 場`);
 
       const anomalyHtml = totalConflicts > 0
         ? `<div style="margin-top:8px;padding:10px 14px;background:rgba(200,40,40,0.25);border-left:4px solid #ff6644;border-radius:6px;color:#ffcccc;font-size:13px;">
-             ⚠ <b>偵測到 ${totalConflicts} 筆異常</b>(規則:1 分鐘內打 BOSS 解鎖 > 2 隻 OR 同 battleId 多解鎖):<br>
+             ⚠ <b>偵測到 ${totalConflicts} 筆異常</b>(規則:3 分鐘內打 BOSS 解鎖 > 2 隻 OR 同 battleId 多解鎖):<br>
              <span style="font-size:12px;color:#ffe;">${_detailLines.join('・')}</span>
            </div>`
         : `<div style="margin-top:8px;padding:6px 12px;background:rgba(40,120,80,0.2);border-left:4px solid #66cc88;border-radius:6px;color:#aaddbb;font-size:12px;">
@@ -5320,7 +5458,7 @@ async function _showAdminStatsPanelImpl(){
 
     // 找出異常 entry 的 key Set(用於表格標紅)— v3.11.35c 升級雙規則
     //   規則 1:同 battleId 多解鎖(精確,需要新資料才有 battleId)
-    //   規則 2:1 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)
+    //   規則 2:3 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)
     function _buildMultiBattleSet(list, idField){
       const conflictKeys = new Set();
       // 規則 1:battleId
@@ -5362,7 +5500,7 @@ async function _showAdminStatsPanelImpl(){
           <td style="padding:6px 8px;font-size:12px;color:#ffe;">${_esc(e.name || '?')}</td>
           <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
           <td style="padding:6px 8px;font-size:11px;">${srcTag}</td>
-          <td style="padding:6px 8px;font-size:11px;color:${isConflict ? '#ffaaaa' : '#778'};font-family:monospace;" title="${_esc(e.battleId || '')}">${_shortBid(e.battleId)}${isConflict ? ' ⚠' : ''}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${isConflict ? '#ffaaaa' : '#778'};" title="${_esc(e.battleId || '')}">${_shortBid(e.battleId)}${isConflict ? ' ⚠' : ''}</td>
           <td style="padding:6px 8px;text-align:right;">
             <button class="_aa-del-hero" data-at="${e.at}" data-name="${_esc(e.name || '')}"
               style="padding:4px 10px;font-size:11px;background:#882233;color:#fff;border:none;border-radius:4px;cursor:pointer;">🗑 刪</button>
@@ -5371,20 +5509,50 @@ async function _showAdminStatsPanelImpl(){
           </td>
         </tr>`;
       }).join('');
+      // ★ v3.11.35e — 一鍵清除異常按鈕(英雄/果實任一異常都顯示)
+      // 預先偵測果實異常數量,讓 banner 顯示更完整
+      let _fruitAnomalyCount = 0;
+      try{
+        const _fruitH = (_curData && _curData.fruitHistory) || [];
+        const _fAb = _detectFruitAnomalies(_fruitH);
+        _fruitAnomalyCount = _fAb.totalCount;
+      }catch(_){}
+      const _hasAnyAnomaly = (conflictKeys.size > 0 || _fruitAnomalyCount > 0);
+      const _batchBanner = _hasAnyAnomaly ? `
+        <div style="background:linear-gradient(135deg,rgba(200,60,40,0.35),rgba(140,40,80,0.25));border:2px solid #ff6644;border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:14px;font-weight:800;color:#ffe;">🎁 異常批次處理</div>
+            <div style="font-size:11px;color:#ffcccc;margin-top:3px;">
+              偵測到 ${conflictKeys.size > 0 ? `<b>${conflictKeys.size} 筆英雄異常</b>` : ''}${conflictKeys.size > 0 && _fruitAnomalyCount > 0 ? ' + ' : ''}${_fruitAnomalyCount > 0 ? `<b>${_fruitAnomalyCount} 顆異常果實</b>` : ''} → 點按鈕可勾選要刪除的項目並計算補償
+            </div>
+          </div>
+          <button id="_aa-cleanup-compensate" style="padding:9px 22px;font-size:13px;font-weight:800;
+                  background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;border:none;border-radius:8px;cursor:pointer;
+                  box-shadow:0 3px 10px rgba(255,80,60,0.5);">
+            📦 開啟勾選清除介面
+          </button>
+        </div>
+      ` : '';
       _contentEl.innerHTML = `
-        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆異常 — 同 battleId 或 1 分鐘內打 BOSS 多解鎖</span>)` : ''}</div>
+        ${_batchBanner}
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆異常 — 同 battleId 或 3 分鐘內打 BOSS 多解鎖</span>)` : ''}</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
             <th style="padding:6px 8px;text-align:left;color:#cce;">英雄</th>
             <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
             <th style="padding:6px 8px;text-align:left;color:#cce;">來源</th>
-            <th style="padding:6px 8px;text-align:left;color:#cce;">battleId</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;min-width:200px;">場次 (BOSS / 時間)</th>
             <th style="padding:6px 8px;text-align:right;color:#cce;">動作</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       `;
       _bindHeroRowButtons();
+      // 綁定一鍵按鈕
+      const _cleanupBtn = document.getElementById('_aa-cleanup-compensate');
+      if(_cleanupBtn){
+        _cleanupBtn.onclick = function(){ _openCleanupPreview(list, conflictKeys); };
+      }
     }
 
     function _bindHeroRowButtons(){
@@ -5439,7 +5607,7 @@ async function _showAdminStatsPanelImpl(){
           <td style="padding:6px 8px;font-size:12px;color:#ffe;font-family:monospace;">${_esc(e.id || '?')}</td>
           <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
           <td style="padding:6px 8px;font-size:11px;">${srcTag}</td>
-          <td style="padding:6px 8px;font-size:11px;color:${isConflict ? '#ffaaaa' : '#778'};font-family:monospace;" title="${_esc(e.battleId || '')}">${_shortBid(e.battleId)}${isConflict ? ' ⚠' : ''}</td>
+          <td style="padding:6px 8px;font-size:11px;color:${isConflict ? '#ffaaaa' : '#778'};" title="${_esc(e.battleId || '')}">${_shortBid(e.battleId)}${isConflict ? ' ⚠' : ''}</td>
           <td style="padding:6px 8px;text-align:right;">
             <button class="_aa-del-tre" data-at="${e.at}" data-id="${_esc(e.id || '')}"
               style="padding:4px 10px;font-size:11px;background:#882233;color:#fff;border:none;border-radius:4px;cursor:pointer;">🗑 刪</button>
@@ -5449,13 +5617,13 @@ async function _showAdminStatsPanelImpl(){
         </tr>`;
       }).join('');
       _contentEl.innerHTML = `
-        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆異常 — 同 battleId 或 1 分鐘內打 BOSS 多解鎖</span>)` : ''}</div>
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆異常 — 同 battleId 或 3 分鐘內打 BOSS 多解鎖</span>)` : ''}</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
             <th style="padding:6px 8px;text-align:left;color:#cce;">至寶 ID</th>
             <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
             <th style="padding:6px 8px;text-align:left;color:#cce;">來源</th>
-            <th style="padding:6px 8px;text-align:left;color:#cce;">battleId</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;min-width:200px;">場次 (BOSS / 時間)</th>
             <th style="padding:6px 8px;text-align:right;color:#cce;">動作</th>
           </tr></thead>
           <tbody>${rows}</tbody>
@@ -5537,7 +5705,7 @@ async function _showAdminStatsPanelImpl(){
             <th style="padding:6px 8px;text-align:left;color:#cce;">結果</th>
             <th style="padding:6px 8px;text-align:center;color:#cce;">新英雄</th>
             <th style="padding:6px 8px;text-align:center;color:#cce;">新至寶</th>
-            <th style="padding:6px 8px;text-align:left;color:#cce;">battleId</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;min-width:200px;">場次 (BOSS / 時間)</th>
             <th style="padding:6px 8px;text-align:right;color:#cce;"></th>
           </tr></thead>
           <tbody>${rows}</tbody>
@@ -5654,22 +5822,683 @@ async function _showAdminStatsPanelImpl(){
       };
     }
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.35d(2026-05-29) — 一鍵清除異常 + 自動補償 + 個人通知
+    //
+    //   邏輯:
+    //     1. 找出所有衝突 cluster(battleId + 時間窗)
+    //     2. 每個 cluster 按 at 排序,保留第 1 隻,第 2 隻起列入刪除
+    //     3. 計算每隻被刪英雄的補償(查 _curData.heroDetails)
+    //     4. 顯示預覽 modal → 老師確認 → 呼叫 _fbAdminCleanupAndCompensate
+    //
+    //   ⚠ 個人通知**只說自己被清了什麼、補償了什麼**(不夾大公告)
+    //   ⚠ 大公告請走 GM 公告區的「📜 BUG 修補公告範本」按鈕,給所有玩家看
+    // ════════════════════════════════════════════════════════════════
+
+    // 補償公式:每隻被刪英雄回饋多少
+    function _computeCompensationForHero(heroName, heroDetails){
+      heroDetails = heroDetails || {};
+      const _lv = parseInt((heroDetails.heroLevels || {})[heroName], 10) || 1;
+      const _skill = (heroDetails.heroSkillLevels || {})[heroName] || {};
+      const _s1 = parseInt(_skill.s1, 10) || 0;
+      const _s2 = parseInt(_skill.s2, 10) || 0;
+      const _burst = parseInt((heroDetails.heroBurstLevels || {})[heroName], 10) || 0;
+      const _invObj = (heroDetails.heroStatInvested || {})[heroName] || {};
+      const _invTotal = (_invObj.hp || 0) + (_invObj.atk || 0) + (_invObj.sp || 0) + (_invObj.spd || 0);
+      const _freePoints = parseInt((heroDetails.heroStatPoints || {})[heroName], 10) || 0;
+      const _isSSR = (typeof window._getHeroRarity === 'function')
+        ? (window._getHeroRarity(heroName) === 'SSR')
+        : true;
+      // 公式(只賠回玩家自己投入的資源,不額外給 SSR 召喚卷):
+      //   - 知識幣 = 等級 × 1000(賠回升級成本)
+      //   - skill_upgrade_book = s1Lv + s2Lv(賠回升級書)
+      //   - burst_upgrade_fruit = burst level(每顆貴重)
+      //   - hero_exp_book_premium = 1(基本心意)
+      //   ⚠ 不補 SSR 召喚卷 — 老師明確指示:他們本來就不該多那隻 SSR,
+      //     補卷等於變相鼓勵刷 BUG,回收要乾淨。
+      const _comp = {
+        coins: _lv * 1000,
+        items: {},
+        meta: { hero: heroName, lv: _lv, s1: _s1, s2: _s2, burst: _burst,
+                investedPts: _invTotal, freePts: _freePoints, isSSR: _isSSR },
+      };
+      if(_s1 + _s2 > 0) _comp.items.skill_upgrade_book = _s1 + _s2;
+      if(_burst > 0) _comp.items.burst_upgrade_fruit = _burst;
+      _comp.items.hero_exp_book_premium = 1;
+      return _comp;
+    }
+
+    // 計算「保留第 1 隻 / 刪除其餘」清單
+    function _computeDeleteList(heroList){
+      const _toDelete = [];        // [{name, at, clusterKey, clusterReason}]
+      const _kept = [];            // [{name, at, clusterKey}]
+      // 規則 1:battleId 衝突 — 同 battleId 多筆,保留 at 最小
+      const _byBid = {};
+      const _hUsable = (heroList || []).filter(e =>
+        e && e.source !== 'admin_delete' && e.source !== 'admin_grant');
+      _hUsable.forEach(e => {
+        if(!e.battleId) return;
+        (_byBid[e.battleId] = _byBid[e.battleId] || []).push(e);
+      });
+      const _consumed = new Set();
+      Object.keys(_byBid).forEach(bid => {
+        const _group = _byBid[bid].sort((a,b) => (a.at||0) - (b.at||0));
+        if(_group.length <= 1) return;
+        _group.forEach((e, i) => {
+          _consumed.add((e.at||0) + '|' + (e.name||''));
+          if(i === 0){
+            _kept.push({ name: e.name, at: e.at, clusterReason: 'battleId ' + bid.slice(-12), keptAsFirst: true });
+          } else {
+            _toDelete.push({ name: e.name, at: e.at, clusterReason: 'battleId ' + bid.slice(-12) });
+          }
+        });
+      });
+      // 規則 2:時間窗 — _findTimeClustersLocal 已實作
+      const _timeClusters = _findTimeClustersLocal(_hUsable, TIME_HERO_THRESHOLD, 'name');
+      _timeClusters.forEach(c => {
+        // 過濾掉已被 battleId 規則處理過的 entry
+        const _fresh = c.entries.filter(e => !_consumed.has((e.at||0) + '|' + (e.name||'')));
+        if(_fresh.length <= 1) return;
+        _fresh.sort((a,b) => (a.at||0) - (b.at||0));
+        _fresh.forEach((e, i) => {
+          _consumed.add((e.at||0) + '|' + (e.name||''));
+          const _t = new Date(e.at || 0);
+          const _label = '時間窗 ' + (_t.getMonth()+1) + '/' + _t.getDate() + ' '
+            + String(_t.getHours()).padStart(2,'0') + ':' + String(_t.getMinutes()).padStart(2,'0');
+          if(i === 0){
+            _kept.push({ name: e.name, at: e.at, clusterReason: _label, keptAsFirst: true });
+          } else {
+            _toDelete.push({ name: e.name, at: e.at, clusterReason: _label });
+          }
+        });
+      });
+      // 去重(同隻英雄可能被多個 cluster 各列一次 — 取 at 最小那筆當代表)
+      const _dedupMap = new Map();
+      _toDelete.forEach(d => {
+        const _ex = _dedupMap.get(d.name);
+        if(!_ex || (d.at||0) < (_ex.at||0)) _dedupMap.set(d.name, d);
+      });
+      return {
+        toDelete: Array.from(_dedupMap.values()),
+        kept: _kept,
+      };
+    }
+
+    // ── 偵測果實異常 cluster(專屬果實的時間窗 / battleId 規則) ──
+    // 規則:同 battleId > 1 顆 / 3 分鐘內 BOSS 來源 > 1 顆 = 異常
+    // 排除 admin_delete / admin_grant
+    function _detectFruitAnomalies(fruitHistory){
+      const _list = (fruitHistory || []).filter(e =>
+        e && e.source !== 'admin_delete' && e.source !== 'admin_grant'
+        && _isBossSource(e.source) && typeof e.at === 'number');
+      // 按時間排序
+      _list.sort((a,b) => (a.at||0) - (b.at||0));
+      const _abnormalEntries = [];  // 被標為異常的 entries(扣除「每場保留 1 顆」)
+      const _consumed = new Set();
+      // 規則 1:同 battleId > 1 顆 → 第 1 顆保留、其餘標
+      const _byBid = {};
+      _list.forEach(e => {
+        if(!e.battleId) return;
+        (_byBid[e.battleId] = _byBid[e.battleId] || []).push(e);
+      });
+      Object.keys(_byBid).forEach(bid => {
+        const _g = _byBid[bid].sort((a,b) => (a.at||0) - (b.at||0));
+        if(_g.length <= 1) return;
+        _g.forEach((e, i) => {
+          _consumed.add(e.at + '|' + (e.source||''));
+          if(i > 0) _abnormalEntries.push({ entry: e, reason: 'battleId ' + bid.slice(-12) });
+        });
+      });
+      // 規則 2:3 分鐘窗 > 1 顆 → 第 1 顆保留、其餘標
+      for(let i = 0; i < _list.length; i++){
+        const _seed = _list[i];
+        const _k0 = _seed.at + '|' + (_seed.source||'');
+        if(_consumed.has(_k0)) continue;
+        const _w = [];
+        for(let j = i; j < _list.length; j++){
+          const _e = _list[j];
+          if((_e.at||0) - (_seed.at||0) > TIME_WINDOW_MS) break;
+          _w.push(_e);
+        }
+        if(_w.length > 1){
+          _w.forEach((e, idx) => {
+            _consumed.add(e.at + '|' + (e.source||''));
+            if(idx > 0){
+              const _t = new Date(e.at);
+              const _label = '時間窗 ' + (_t.getMonth()+1) + '/' + _t.getDate() + ' '
+                + String(_t.getHours()).padStart(2,'0') + ':' + String(_t.getMinutes()).padStart(2,'0');
+              _abnormalEntries.push({ entry: e, reason: _label });
+            }
+          });
+        }
+      }
+      // 加總要扣的果實數(每筆 entry.count,通常都是 1)
+      let _totalAbnormalCount = 0;
+      _abnormalEntries.forEach(a => { _totalAbnormalCount += (parseInt(a.entry.count, 10) || 1); });
+      return { entries: _abnormalEntries, totalCount: _totalAbnormalCount };
+    }
+
+    // ★ v3.11.35i — 擬真渲染玩家端通知 modal(完全照 index.html 的 _showNotificationModal 樣式)
+    //   讓老師按下「👁 預覽玩家會看到什麼」時,看到跟玩家一樣的 UI(綠色 compensation 樣式)
+    function _renderPlayerNotificationPreview(noteData){
+      const _ITEM_LABELS = {
+        skill_upgrade_book: '技能升級書',
+        burst_upgrade_fruit: '超越極限果實',
+        hero_exp_book_premium: '豪華典藏版經驗之書',
+        hero_exp_book_deluxe: '豪華版經驗之書',
+        hero_exp_book: '經驗之書',
+        summon_crystal: '召喚水晶',
+        summon_ticket_ssr: 'SSR 召喚卷',
+        treasure_exp_scroll: '至寶經驗之書',
+      };
+      const _escP = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+      // 把舊預覽蓋掉(避免重複疊)
+      const _exist = document.getElementById('_aa-player-preview-ov');
+      if(_exist) _exist.remove();
+
+      const _type = noteData.type || 'info';
+      const _typeStyle = _type === 'warning'
+        ? { color: '#ff8866', bg: 'linear-gradient(160deg,#2a1812,#180a08)', border: '#ff6644', icon: '⚠' }
+        : _type === 'compensation'
+          ? { color: '#88dd66', bg: 'linear-gradient(160deg,#1a2818,#0e180c)', border: '#66cc44', icon: '🎁' }
+          : { color: '#88aaff', bg: 'linear-gradient(160deg,#181a28,#0c0e18)', border: '#5588dd', icon: '📢' };
+
+      // 補償摘要
+      let _compHtml = '';
+      if(noteData.compensation && typeof noteData.compensation === 'object'){
+        const c = noteData.compensation;
+        const parts = [];
+        if(c.knowledgeCoins) parts.push(`💰 知識幣 +${Number(c.knowledgeCoins).toLocaleString()}`);
+        if(c.crystals) parts.push(`💎 水晶 +${c.crystals}`);
+        if(Array.isArray(c.items) && c.items.length){
+          c.items.forEach(it => {
+            const _label = _ITEM_LABELS[it.id] || it.id;
+            parts.push(`📦 ${_label} ×${it.count}`);
+          });
+        }
+        if(parts.length){
+          _compHtml = `<div style="background:rgba(120,220,120,0.12);border-left:4px solid #66cc44;padding:12px 14px;border-radius:8px;margin:14px 0;">
+            <div style="font-size:14px;font-weight:700;color:#aaddaa;margin-bottom:6px;">🎁 補償內容</div>
+            <div style="font-size:14px;color:#e0ffe0;line-height:1.8;">${parts.map(_escP).join('<br>')}</div>
+          </div>`;
+        }
+      }
+
+      // removedItems 摘要
+      let _removedHtml = '';
+      if(noteData.removedItems && typeof noteData.removedItems === 'object'){
+        const r = noteData.removedItems;
+        const parts = [];
+        if(Array.isArray(r.heroes) && r.heroes.length) parts.push(`🦸 英雄(${r.heroes.length} 隻):${r.heroes.map(_escP).join('、')}`);
+        if(Array.isArray(r.treasures) && r.treasures.length) parts.push(`💎 至寶(${r.treasures.length} 個):${r.treasures.map(_escP).join('、')}`);
+        if(r.fruits && r.fruits > 0) parts.push(`🍑 超越極限果實 ×${r.fruits} 顆`);
+        if(parts.length){
+          _removedHtml = `<div style="background:rgba(200,80,80,0.12);border-left:4px solid #cc6644;padding:12px 14px;border-radius:8px;margin:14px 0;">
+            <div style="font-size:14px;font-weight:700;color:#ffaa88;margin-bottom:6px;">🗑 已清除項目</div>
+            <div style="font-size:13px;color:#ffe0d0;line-height:1.7;">${parts.join('<br>')}</div>
+          </div>`;
+        }
+      }
+
+      const _ov = document.createElement('div');
+      _ov.id = '_aa-player-preview-ov';
+      // z-index 比 _aa-cleanup-modal 高一點,蓋在預覽 modal 上
+      _ov.style.cssText = 'position:fixed;inset:0;z-index:200005;background:rgba(0,0,0,0.92);'
+        + 'display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow-y:auto;';
+      _ov.innerHTML = `
+        <div style="max-width:660px;width:100%;">
+          <div style="background:rgba(255,200,80,0.15);border:1.5px dashed #ffcc44;border-radius:10px;padding:10px 14px;margin-bottom:14px;color:#ffe8a0;font-size:13px;text-align:center;">
+            👁 預覽模式 — 這是玩家下次登入會看到的通知 modal,不會真的發送。
+            <br><span style="font-size:11px;color:#ddccaa;">關掉這個預覽不會影響上一層的清除/補償勾選</span>
+          </div>
+          <div style="background:${_typeStyle.bg};border:2px solid ${_typeStyle.border};border-radius:14px;padding:28px 32px;box-shadow:0 0 40px ${_typeStyle.border}66;color:#fff;max-height:75vh;overflow-y:auto;">
+            <div style="font-size:24px;font-weight:800;color:${_typeStyle.color};margin-bottom:12px;letter-spacing:1px;">
+              ${_typeStyle.icon} ${_escP(noteData.title || '管理員通知')}
+            </div>
+            <div style="font-size:15px;color:#ddd;line-height:1.75;white-space:pre-wrap;">${_escP(noteData.body || '')}</div>
+            ${_compHtml}
+            ${_removedHtml}
+            <div style="font-size:11px;color:#778;margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;">
+              來自: ${_escP(noteData.createdBy || '管理員')}
+              ${noteData.createdAt ? '・' + new Date(noteData.createdAt).toLocaleString('zh-TW') : ''}
+            </div>
+            <div style="text-align:center;margin-top:18px;">
+              <button id="_aa-player-preview-close" style="padding:10px 36px;font-size:15px;font-weight:800;background:${_typeStyle.color};color:#000;border:none;border-radius:8px;cursor:pointer;letter-spacing:2px;">
+                我知道了(預覽,不會送出)
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(_ov);
+      document.getElementById('_aa-player-preview-close').onclick = function(){ _ov.remove(); };
+      // 點背景關閉
+      _ov.addEventListener('click', function(ev){
+        if(ev.target === _ov) _ov.remove();
+      });
+    }
+
+    function _openCleanupPreview(heroList, conflictKeys){
+      if(!_curData || !_curUid){ alert('請先成功查詢玩家'); return; }
+      const { toDelete, kept } = _computeDeleteList(heroList);
+      // 果實異常偵測
+      const _fruitH = _curData.fruitHistory || [];
+      const _curFruitCount = parseInt(_curData.currentFruitCount, 10) || 0;
+      const _fruitAb = _detectFruitAnomalies(_fruitH);
+      // 若都沒異常 → 沒事可做
+      if(toDelete.length === 0 && _fruitAb.totalCount === 0){
+        alert('沒有需要處理的異常');
+        return;
+      }
+      const _heroDetails = _curData.heroDetails || {};
+
+      // 物品中文標籤
+      const _ITEM_LABELS = {
+        skill_upgrade_book: '技能升級書',
+        burst_upgrade_fruit: '超越極限果實',
+        hero_exp_book_premium: '豪華典藏版經驗之書',
+        summon_ticket_ssr: 'SSR 英雄召喚卷',
+        hero_exp_book: '英雄經驗之書',
+      };
+
+      // 每隻英雄預先計算補償
+      const _detailRows = toDelete.map(d => {
+        const _c = _computeCompensationForHero(d.name, _heroDetails);
+        return {
+          name: d.name,
+          at: d.at,
+          clusterReason: d.clusterReason,
+          meta: _c.meta,
+          coins: _c.coins,
+          items: _c.items,
+        };
+      });
+
+      // ── 渲染 modal(含 checkbox) ──
+      const _ov = document.createElement('div');
+      _ov.id = '_aa-cleanup-modal';
+      _ov.style.cssText = 'position:fixed;inset:0;z-index:200001;background:rgba(0,0,0,0.85);'
+        + 'display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow-y:auto;';
+      // 果實扣除預覽:實扣 = min(勾選數, _curFruitCount)
+      const _fruitActualRemove = Math.min(_fruitAb.totalCount, _curFruitCount);
+      const _fruitNote = (_fruitAb.totalCount > _curFruitCount)
+        ? `<span style="color:#ffaa66;">(玩家手上只剩 ${_curFruitCount} 顆,實扣到 0 為止)</span>`
+        : '';
+      _ov.innerHTML = `
+        <div style="max-width:820px;width:100%;background:linear-gradient(160deg,#241818,#180c0c);
+          border:2.5px solid #ff6644;border-radius:14px;padding:24px 28px;color:#fff;
+          box-shadow:0 0 40px rgba(255,80,60,0.5);max-height:90vh;overflow-y:auto;">
+          <div style="font-size:22px;font-weight:800;color:#ff8866;margin-bottom:8px;">
+            📦 一鍵清除異常 + 自動補償 + 通知玩家
+          </div>
+          <div style="font-size:13px;color:#ffcccc;margin-bottom:14px;line-height:1.6;">
+            預設勾選所有偵測到的異常項目 — 你可以取消勾選想保留的英雄/果實,補償總計會即時更新。<br>
+            <span style="color:#ffaa66;">⚠ 大公告請另外走「GM 公告」分頁的「📜 BUG 修補公告範本」</span>
+          </div>
+
+          ${toDelete.length > 0 ? `
+          <div style="background:rgba(40,30,30,0.6);border:1px solid rgba(255,140,120,0.3);border-radius:8px;padding:12px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <div style="font-size:13px;color:#ffcc88;font-weight:700;">
+                🗑 異常英雄(共 ${toDelete.length} 隻,預設全勾)
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button id="_aa-hero-all" style="padding:4px 10px;font-size:11px;background:rgba(120,180,120,0.3);border:1px solid #66cc66;color:#aaddaa;border-radius:4px;cursor:pointer;">全選</button>
+                <button id="_aa-hero-none" style="padding:4px 10px;font-size:11px;background:rgba(120,120,120,0.3);border:1px solid #888;color:#ccc;border-radius:4px;cursor:pointer;">全不選</button>
+              </div>
+            </div>
+            <div style="max-height:300px;overflow-y:auto;background:rgba(0,0,0,0.4);border-radius:6px;padding:6px;">
+              <table style="width:100%;font-size:11px;">
+                <thead><tr style="color:#bbb;background:rgba(255,255,255,0.05);">
+                  <th style="padding:4px 6px;width:32px;text-align:center;">✓</th>
+                  <th style="padding:4px 6px;text-align:left;">英雄</th>
+                  <th style="padding:4px 6px;text-align:left;">Lv</th>
+                  <th style="padding:4px 6px;text-align:left;">技能</th>
+                  <th style="padding:4px 6px;text-align:left;">爆發</th>
+                  <th style="padding:4px 6px;text-align:left;">能力點</th>
+                  <th style="padding:4px 6px;text-align:left;">補償</th>
+                  <th style="padding:4px 6px;text-align:left;">原因</th>
+                </tr></thead>
+                <tbody>
+                  ${_detailRows.map((r, i) => `
+                    <tr class="_aa-hero-row" data-idx="${i}" style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                      <td style="padding:4px 6px;text-align:center;">
+                        <input type="checkbox" class="_aa-hero-cb" data-idx="${i}" checked
+                          style="width:16px;height:16px;cursor:pointer;accent-color:#ff6644;">
+                      </td>
+                      <td style="padding:4px 6px;color:#ffe;">${_esc(r.name)}${r.meta.isSSR ? ' <span style="color:#ff88cc;font-size:9px;">SSR</span>' : ''}</td>
+                      <td style="padding:4px 6px;color:#ffdd66;">Lv${r.meta.lv}</td>
+                      <td style="padding:4px 6px;color:#aaccff;">s1+${r.meta.s1}/s2+${r.meta.s2}</td>
+                      <td style="padding:4px 6px;color:#ff88aa;">${r.meta.burst}</td>
+                      <td style="padding:4px 6px;color:#88ddaa;">${r.meta.investedPts}+${r.meta.freePts}</td>
+                      <td style="padding:4px 6px;color:#ffcc66;">${r.coins} 幣${Object.keys(r.items).map(k => '・'+(_ITEM_LABELS[k]||k)+'×'+r.items[k]).join('')}</td>
+                      <td style="padding:4px 6px;color:#aac;font-size:10px;">${_esc(r.clusterReason)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          ` : '<div style="background:rgba(40,60,40,0.3);border-left:4px solid #66cc88;padding:8px 12px;border-radius:6px;margin-bottom:14px;font-size:12px;color:#aaddbb;">✅ 沒有偵測到異常英雄</div>'}
+
+          ${_fruitAb.totalCount > 0 ? `
+          <div style="background:rgba(50,30,40,0.6);border:1px solid rgba(255,180,140,0.4);border-radius:8px;padding:12px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="font-size:13px;color:#ffaa66;font-weight:700;">
+                🍑 異常果實(共 ${_fruitAb.totalCount} 顆,玩家手上 ${_curFruitCount} 顆)
+              </div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#ffcc88;cursor:pointer;">
+                <input type="checkbox" id="_aa-fruit-cb" checked style="width:16px;height:16px;cursor:pointer;accent-color:#ff8866;">
+                <span>清除果實 ${_fruitActualRemove} 顆 ${_fruitNote}</span>
+              </label>
+            </div>
+            <div style="max-height:140px;overflow-y:auto;background:rgba(0,0,0,0.4);border-radius:6px;padding:6px;font-size:11px;color:#eed;">
+              ${_fruitAb.entries.slice(0, 30).map(a => `
+                <div style="padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.04);">
+                  <span style="color:#ffe;">🍑 ×${a.entry.count || 1}</span>
+                  <span style="color:#aac;margin-left:8px;">${_fmtTime(a.entry.at)}</span>
+                  <span style="color:#ffaa88;margin-left:8px;">${_esc(a.entry.source || '?')}</span>
+                  <span style="color:#aac;margin-left:8px;font-size:10px;">${_esc(a.reason)}</span>
+                </div>
+              `).join('')}
+              ${_fruitAb.entries.length > 30 ? `<div style="color:#888;padding:3px 4px;">... 還有 ${_fruitAb.entries.length - 30} 筆</div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <div style="background:rgba(40,60,40,0.4);border-left:4px solid #66cc44;border-radius:6px;padding:12px 14px;margin-bottom:14px;">
+            <div style="font-size:14px;color:#aaddaa;font-weight:700;margin-bottom:6px;">
+              🎁 補償總計(依勾選即時更新)
+            </div>
+            <div id="_aa-comp-summary" style="font-size:14px;color:#e0ffe0;line-height:1.7;">
+              <!-- 動態填入 -->
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:13px;color:#ddccaa;font-weight:700;display:block;margin-bottom:6px;">
+              📩 個人通知文字(依勾選即時更新,可手動修改)
+            </label>
+            <textarea id="_aa-cleanup-note" style="width:100%;min-height:160px;padding:10px;
+              font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,200,80,0.4);
+              color:#fff;border-radius:6px;font-family:inherit;box-sizing:border-box;
+              line-height:1.6;resize:vertical;"></textarea>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+            <button id="_aa-cleanup-preview" style="padding:10px 18px;font-size:13px;font-weight:700;
+              background:rgba(120,180,220,0.25);border:1.5px solid #66aacc;color:#aaddff;
+              border-radius:6px;cursor:pointer;" title="模擬玩家下次登入會看到的通知 modal(完全擬真)">
+              👁 預覽玩家會看到什麼
+            </button>
+            <button id="_aa-cleanup-cancel" style="padding:10px 20px;font-size:13px;font-weight:700;
+              background:rgba(120,120,120,0.3);border:1.5px solid #888;color:#ccc;
+              border-radius:6px;cursor:pointer;">取消</button>
+            <button id="_aa-cleanup-confirm" style="padding:11px 24px;font-size:14px;font-weight:800;
+              background:linear-gradient(135deg,#cc3322,#882211);border:none;color:#fff;
+              border-radius:6px;cursor:pointer;box-shadow:0 3px 10px rgba(200,60,40,0.5);">
+              ✅ 確認執行
+            </button>
+          </div>
+
+          <div id="_aa-cleanup-status" style="margin-top:10px;font-size:12px;color:#aac;min-height:16px;"></div>
+        </div>
+      `;
+      document.body.appendChild(_ov);
+
+      // ── 依勾選即時重算 ──
+      let _userEditedNote = false;  // 老師手動編輯過通知文字後就不再覆蓋
+      function _getSelected(){
+        const _selHeroIdx = Array.from(_ov.querySelectorAll('._aa-hero-cb:checked'))
+          .map(cb => parseInt(cb.dataset.idx, 10));
+        const _selHeroRows = _selHeroIdx.map(i => _detailRows[i]);
+        const _fruitCb = _ov.querySelector('#_aa-fruit-cb');
+        const _fruitChecked = _fruitCb ? _fruitCb.checked : false;
+        const _fruitsToRemove = _fruitChecked ? _fruitActualRemove : 0;
+        // 累加補償(果實清除不補)
+        let _coins = 0;
+        const _items = {};
+        _selHeroRows.forEach(r => {
+          _coins += r.coins;
+          Object.keys(r.items).forEach(k => { _items[k] = (_items[k] || 0) + r.items[k]; });
+        });
+        return { selHeroRows: _selHeroRows, fruitsToRemove: _fruitsToRemove, coins: _coins, items: _items };
+      }
+      function _refreshSummary(){
+        const sel = _getSelected();
+        // 補償摘要
+        const _itemSummary = Object.keys(sel.items).map(k =>
+          `${_ITEM_LABELS[k] || k} ×${sel.items[k]}`).join('・');
+        const _summaryEl = document.getElementById('_aa-comp-summary');
+        if(_summaryEl){
+          _summaryEl.innerHTML = `
+            🗑 將刪除 <b style="color:#ffe;">${sel.selHeroRows.length}</b> 隻英雄
+            ${sel.fruitsToRemove > 0 ? `・🍑 扣除 <b style="color:#ffaa66;">${sel.fruitsToRemove}</b> 顆果實` : ''}
+            <br>
+            💰 補償知識幣 <b style="color:#ffdd66;">+${sel.coins.toLocaleString()}</b>
+            ${Object.keys(sel.items).length ? '<br>📦 ' + _itemSummary : ''}
+          `;
+        }
+        // 通知文字(老師沒動過就自動更新)
+        if(!_userEditedNote){
+          const _noteEl = document.getElementById('_aa-cleanup-note');
+          if(_noteEl){
+            const _ssrCount = sel.selHeroRows.filter(r => r.meta.isSSR).length;
+            // ★ v3.11.35j(2026-05-29) — 重寫安撫版通知文字,強調 SSR 緣分與稀有性
+            //   設計重點:不用「BUG/異常/回收」冰冷詞,改用故事感語氣
+            let _body = '小英雄,有件事想跟你說 💗\n\n'
+              + '最近系統有個小錯誤,讓 BOSS 戰偶爾會一次送出太多 SSR 英雄。\n'
+              + 'SSR 英雄是傳說中的存在,本來每一隻都要靠你勇敢挑戰、運氣與緣分才能相遇。\n'
+              + '如果可以這麼簡單就大量擁有,那他們就不再特別了 — 對你、對其他小英雄都不公平。\n\n';
+
+            if(sel.selHeroRows.length > 0){
+              _body += `於是,管理員小心地把你帳號內 ${sel.selHeroRows.length} 隻意外多得的英雄,送回他們的世界。\n`;
+              if(_ssrCount > 0){
+                _body += `其中有 ${_ssrCount} 隻是 SSR — 我知道,捨不得是正常的。但請相信我:\n`
+                  + `真正屬於你的 SSR 英雄,還會在未來的冒險中,與你重逢。\n\n`;
+              } else {
+                _body += `\n`;
+              }
+              _body += `至於那段時間裡,你花在他們身上的努力 — 升級、訓練、強化技能,\n`
+                + `管理員一份都不會虧待你,全部用資源原樣補回給你 👇\n`;
+            }
+
+            if(sel.coins > 0 || Object.keys(sel.items).length > 0){
+              _body += `\n💰 知識幣 +${sel.coins.toLocaleString()}\n`;
+              if(Object.keys(sel.items).length){
+                _body += Object.keys(sel.items).map(k =>
+                  `📦 ${_ITEM_LABELS[k] || k} ×${sel.items[k]}`).join('\n') + '\n';
+              }
+            }
+
+            if(sel.fruitsToRemove > 0){
+              _body += `\n另外管理員也清掉了 ${sel.fruitsToRemove} 顆多得的「超越極限果實」(同樣是 BUG 多出來的)。\n`
+                + `別擔心,你已經用過、升級過的部分,管理員不會動。\n`;
+            }
+
+            _body += `\n📌 重新出發小提醒:\n`
+              + `每打贏一次 BOSS,SSR 英雄出現的機率才會啟動。\n`
+              + `慢慢打、慢慢相遇,那一刻的感動才會是最真實的。\n`
+              + `你跟每一位 SSR 英雄結識,都是一段可歌可泣的戰鬥 ⚔\n\n`
+              + `— LXPSGAME 管理員 敬上`;
+
+            _noteEl.value = _body;
+          }
+        }
+      }
+      // 初次填入
+      _refreshSummary();
+
+      // ── 綁定事件 ──
+      // checkbox 變化重算
+      _ov.querySelectorAll('._aa-hero-cb').forEach(cb => {
+        cb.onchange = _refreshSummary;
+      });
+      const _fruitCbEl = _ov.querySelector('#_aa-fruit-cb');
+      if(_fruitCbEl) _fruitCbEl.onchange = _refreshSummary;
+      // 全選/全不選
+      const _heroAll = _ov.querySelector('#_aa-hero-all');
+      const _heroNone = _ov.querySelector('#_aa-hero-none');
+      if(_heroAll) _heroAll.onclick = function(){
+        _ov.querySelectorAll('._aa-hero-cb').forEach(cb => { cb.checked = true; });
+        _refreshSummary();
+      };
+      if(_heroNone) _heroNone.onclick = function(){
+        _ov.querySelectorAll('._aa-hero-cb').forEach(cb => { cb.checked = false; });
+        _refreshSummary();
+      };
+      // 老師手動編輯通知文字 → 不再自動覆寫
+      const _noteEl0 = document.getElementById('_aa-cleanup-note');
+      if(_noteEl0) _noteEl0.oninput = function(){ _userEditedNote = true; };
+
+      // ★ v3.11.35i — 預覽玩家會看到什麼(完全擬真玩家端 modal)
+      document.getElementById('_aa-cleanup-preview').onclick = function(){
+        const _noteText = (document.getElementById('_aa-cleanup-note').value || '').trim();
+        const sel = _getSelected();
+        if(sel.selHeroRows.length === 0 && sel.fruitsToRemove === 0){
+          alert('沒勾選任何項目,無法預覽');
+          return;
+        }
+        // 構造跟實際發送一模一樣的 noteData 結構
+        const _items = Object.keys(sel.items).map(k => ({ id: k, count: sel.items[k] }));
+        const _removed = {};
+        if(sel.selHeroRows.length > 0) _removed.heroes = sel.selHeroRows.map(r => r.name);
+        if(sel.fruitsToRemove > 0) _removed.fruits = sel.fruitsToRemove;
+        const _noteData = {
+          title: '⚠ BUG 異常資源回收 + 補償通知',
+          body: _noteText || '(通知文字為空)',
+          type: 'compensation',
+          compensation: {
+            knowledgeCoins: sel.coins,
+            items: _items,
+          },
+          removedItems: _removed,
+          createdBy: (window._fbUser && window._fbUser.email) || '管理員',
+          createdAt: Date.now(),
+        };
+        _renderPlayerNotificationPreview(_noteData);
+      };
+
+      document.getElementById('_aa-cleanup-cancel').onclick = function(){ _ov.remove(); };
+      document.getElementById('_aa-cleanup-confirm').onclick = async function(){
+        const _statusEl2 = document.getElementById('_aa-cleanup-status');
+        const _confirmBtn = document.getElementById('_aa-cleanup-confirm');
+        const _noteText = (document.getElementById('_aa-cleanup-note').value || '').trim();
+        const sel = _getSelected();
+        if(sel.selHeroRows.length === 0 && sel.fruitsToRemove === 0){
+          _statusEl2.style.color = '#ff8866';
+          _statusEl2.textContent = '⚠ 沒勾選任何項目要處理';
+          return;
+        }
+        if(!_noteText){
+          _statusEl2.style.color = '#ff8866';
+          _statusEl2.textContent = '⚠ 通知文字不可為空';
+          return;
+        }
+        if(!confirm(`確認執行?\n\n刪除 ${sel.selHeroRows.length} 隻英雄`
+          + (sel.fruitsToRemove > 0 ? ` + 扣除 ${sel.fruitsToRemove} 顆果實` : '')
+          + `\n補償知識幣 +${sel.coins.toLocaleString()}\n\n⚠ 不可逆!`)) return;
+        _confirmBtn.disabled = true;
+        _confirmBtn.textContent = '⏳ 執行中...';
+        _statusEl2.style.color = '#aaccff';
+        _statusEl2.textContent = '執行中,請稍候...';
+        try{
+          const _compPayload = {
+            coins: sel.coins,
+            backpack: Object.assign({}, sel.items),
+            summary: `處理 ${sel.selHeroRows.length} 隻英雄`
+              + (sel.fruitsToRemove > 0 ? ` + ${sel.fruitsToRemove} 顆果實` : ''),
+          };
+          const _r = await window._fbAdminCleanupAndCompensate(
+            _curUid,
+            sel.selHeroRows.map(d => ({ name: d.name, at: d.at })),
+            _compPayload,
+            {
+              title: '⚠ BUG 異常資源回收 + 補償通知',
+              body: _noteText,
+            },
+            {
+              reason: 'GM 後台一鍵清除異常 + 自動補償',
+              fruitsToRemove: sel.fruitsToRemove,
+            }
+          );
+          const _successDel = (_r.deleted || []).filter(d => d.ok).length;
+          const _failedDel = (_r.deleted || []).filter(d => !d.ok);
+          const _fruitMsg = _r.fruitsRemoved
+            ? ` 果實:${_r.fruitsRemoved.beforeCount} → ${_r.fruitsRemoved.afterCount}(扣 ${_r.fruitsRemoved.actualRemove})`
+            : '';
+          _statusEl2.style.color = '#88ddaa';
+          _statusEl2.innerHTML = `✅ 完成 — 刪除 ${_successDel}/${sel.selHeroRows.length} 隻、`
+            + _fruitMsg
+            + (_r.compensationApplied ? '、補償已套用' : '')
+            + (_r.notificationTs ? '、通知已寄出' : '、通知未寄出')
+            + (_failedDel.length ? `<br>⚠ ${_failedDel.length} 筆失敗:${_failedDel.map(d => d.name + '(' + d.error + ')').join('、')}` : '');
+          setTimeout(async () => {
+            _ov.remove();
+            _setStatus('✅ 批次清除+補償完成,重新查詢中...', '#88ddaa');
+            await _doQuery();
+          }, 2500);
+        }catch(e){
+          console.error('[_fbAdminCleanupAndCompensate] 失敗', e);
+          _statusEl2.style.color = '#ff8866';
+          _statusEl2.textContent = '❌ 失敗: ' + (e.message || e);
+          _confirmBtn.disabled = false;
+          _confirmBtn.textContent = '✅ 確認執行';
+        }
+      };
+    }
+
     // ── 全掃異常(battleId + 時間窗雙規則) ──
     async function _doScanAnomaly(){
-      if(!confirm('掃描全部玩家(最多 200 位)的異常?\n\n規則:\n  ① 同 battleId 多解鎖(精確)\n  ② 1 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)\n\n可能需要 5-15 秒。')) return;
-      _setStatus('掃描中...這可能要幾秒', '#aaccff');
+      if(!confirm('掃描全部玩家的異常?\n\n規則:\n  ① 同 battleId 多解鎖(精確)\n  ② 3 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)\n\n300 位玩家約 15-30 秒,請耐心等候。')) return;
+      _setStatus('掃描中...這可能要 15-30 秒', '#aaccff');
       _scanBtn.disabled = true;
       try{
         if(typeof window._fbAdminScanBattleAnomaly !== 'function'){
           throw new Error('_fbAdminScanBattleAnomaly 未載入');
         }
-        const r = await window._fbAdminScanBattleAnomaly({ limit: 200 });
+        // ★ v3.11.35g — 不傳 limit = 掃全部
+        const r = await window._fbAdminScanBattleAnomaly({});
         const ab = r.abnormal || [];
         if(_playerCard) _playerCard.style.display = 'none';
         if(_tabsEl) _tabsEl.style.display = 'none';
+
+        // ★ v3.11.35g — totalPlayers 對比提示
+        let _statsBlock = '';
+        if(r.totalPlayersMismatch){
+          _statsBlock = `
+            <div style="background:rgba(200,140,60,0.25);border:2px solid #ffaa44;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+              <div style="font-size:13px;font-weight:800;color:#ffdd88;margin-bottom:6px;">
+                ⚠ 玩家數不一致 — 首頁顯示與 Firebase 實際不同
+              </div>
+              <div style="font-size:12px;color:#ffe;line-height:1.7;">
+                Firebase <b>/players</b> 集合實際:<b style="color:#ffdd66;">${r.actualPlayerCount}</b> 位<br>
+                首頁顯示(<b>stats/global.totalPlayers</b>):<b style="color:#ff8866;">${r.statsTotalPlayers}</b> 位<br>
+                <span style="color:#aac;font-size:11px;">→ 差距 ${Math.abs(r.actualPlayerCount - r.statsTotalPlayers)} 位</span>
+              </div>
+              <button id="_aa-sync-totalplayers" style="margin-top:8px;padding:7px 16px;font-size:12px;font-weight:700;
+                background:linear-gradient(135deg,#ff9933,#cc6611);border:none;color:#fff;border-radius:6px;cursor:pointer;
+                box-shadow:0 2px 6px rgba(255,120,40,0.4);">
+                🔄 同步首頁總玩家數為 ${r.actualPlayerCount}
+              </button>
+            </div>
+          `;
+        } else if(r.statsTotalPlayers !== null){
+          _statsBlock = `
+            <div style="background:rgba(60,120,80,0.2);border-left:4px solid #66cc88;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#aaddbb;">
+              ✓ 玩家數同步正常(Firebase 實際 = 首頁顯示 = ${r.actualPlayerCount} 位)
+            </div>
+          `;
+        }
+
         if(!ab.length){
-          _contentEl.innerHTML = `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現異常</div>`;
+          _contentEl.innerHTML = _statsBlock
+            + `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現異常</div>`;
           _setStatus(`✅ 掃描完成 — ${r.scanned} 位玩家正常`, '#88ddaa');
+          _bindSyncTotalPlayersBtn(r);
           return;
         }
         // 時間格式化 helper(短)
@@ -5690,7 +6519,7 @@ async function _showAdminStatsPanelImpl(){
               <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 個至寶:
               <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
             </div>`).join('');
-          // 規則 2:時間窗 cluster(★ 新增,鐵證較強)
+          // 規則 2:時間窗 cluster
           const heroTimeBlocks = (p.timeClustersHero || []).map(c => `
             <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
               <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
@@ -5715,22 +6544,46 @@ async function _showAdminStatsPanelImpl(){
             ${heroTimeBlocks}${treTimeBlocks}${heroBidBlocks}${treBidBlocks}
           </div>`;
         }).join('');
-        _contentEl.innerHTML = `
-          <div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— 規則 ⏱ 紅框 = 1 分鐘內連刷;battleId 標籤 = 同場戰鬥多解鎖</div>
-          ${cards}
-        `;
+        _contentEl.innerHTML = _statsBlock
+          + `<div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— 規則 ⏱ 紅框 = 3 分鐘內連刷;battleId 標籤 = 同場戰鬥多解鎖</div>`
+          + cards;
         _contentEl.querySelectorAll('._aa-jump').forEach(btn => {
           btn.onclick = async function(){
             _queryInput.value = btn.dataset.uid;
             await _doQuery();
           };
         });
+        _bindSyncTotalPlayersBtn(r);
         _setStatus(`⚠ 找到 ${ab.length} 位異常玩家`, '#ffaa66');
       }catch(e){
         _setStatus('❌ 掃描失敗: ' + (e.message || e), '#ff8866');
       }finally{
         _scanBtn.disabled = false;
       }
+    }
+
+    // ★ v3.11.35g — 同步首頁總玩家數按鈕綁定
+    function _bindSyncTotalPlayersBtn(scanResult){
+      const _btn = document.getElementById('_aa-sync-totalplayers');
+      if(!_btn) return;
+      _btn.onclick = async function(){
+        if(!confirm(`確認把首頁顯示的總玩家數從 ${scanResult.statsTotalPlayers} 改成 ${scanResult.actualPlayerCount}?\n\n這會覆寫 stats/global.totalPlayers,所有玩家首頁的數字會立即更新。`)) return;
+        _btn.disabled = true;
+        _btn.textContent = '⏳ 同步中...';
+        try{
+          if(typeof window._fbBackfillTotalPlayers !== 'function'){
+            throw new Error('_fbBackfillTotalPlayers 未載入');
+          }
+          const _newCount = await window._fbBackfillTotalPlayers();
+          _btn.textContent = `✅ 已同步為 ${_newCount} — 請按上方掃描異常重新確認`;
+          _btn.style.background = 'linear-gradient(135deg,#66cc44,#338822)';
+          _setStatus(`✅ 總玩家數已同步為 ${_newCount}`, '#88ddaa');
+        }catch(e){
+          _btn.disabled = false;
+          _btn.textContent = '❌ 同步失敗,點此重試';
+          _setStatus('❌ 同步失敗: ' + (e.message || e), '#ff8866');
+        }
+      };
     }
 
     // ── 事件綁定 ──

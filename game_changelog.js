@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-05-29  / 目前主程式版本:v3.11.35(線上實際版本)
+//  最後更新:2026-05-29  / 目前主程式版本:v3.11.35j(線上實際版本)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -14,43 +14,107 @@
 window.GAME_CHANGELOG = [
 
   // ════════════════════════════════════════════════════════════════════
-  // v3.11.35(2026-05-29)— 階段 4-6 玩家活動記錄 + 訪客守門 + 版本健檢
+  // v3.11.35(2026-05-29)— 完整玩家活動管理系統 + 異常清理 + 補償 + 公告
+  //   累積 patch:35a-j 共 10 個 micro-patch 合併為一個正式版
   // ════════════════════════════════════════════════════════════════════
   {
     ver: 'v3.11.35',
     date: '2026-05-29',
     brief: [
       '📜 GM 後台新增「玩家活動記錄查詢」(側欄第 3 位)',
-      '   ・輸入 email/uid 完整查詢英雄/至寶/戰鬥/幣帳四分頁',
-      '   ・battleId 自動標紅:同一場戰鬥多次解鎖 = 鐵證異常',
-      '   ・每筆紀錄可單獨刪除,或整個英雄/至寶整隻清除',
+      '   ・輸入 email / uid / 學生姓名查詢(姓名查詢支援精確 + 模糊比對)',
+      '   ・四分頁(英雄/至寶/戰鬥/幣帳)+ 玩家基本卡 + 異常紅框警示',
+      '   ・每筆紀錄可單獨刪除,或整隻英雄/至寶清除',
       '   ・知識幣分頁附「強制覆寫餘額」+ audit log',
-      '   ・「⚡ 掃描異常」一鍵掃全 200 位玩家的 battleId 衝突',
       '',
-      '📩 玩家端管理員通知系統上線',
-      '   ・GM 後台清除異常或補償後,玩家下次登入會跳通知 modal',
-      '   ・三種類型配色:info(藍)/ warning(紅)/ compensation(綠)',
-      '   ・多則通知逐一彈出,點「我知道了」mark read',
+      '⚡ 「掃描異常」掃描全部玩家(不再限 200 位)',
+      '   ・偵測規則:① 同 battleId 多解鎖 ② 3 分鐘內打 BOSS > 2 隻',
+      '   ・果實異常也納入偵測(同規則,門檻 > 1 顆)',
+      '   ・掃描結果同時對比 Firebase /players 實際數 vs 首頁顯示',
+      '   ・不一致時提供「🔄 一鍵同步首頁總玩家數」按鈕',
       '',
-      '⛔ 訪客守門 watchdog(從守門分支移植)',
-      '   ・每 5 秒掃描 adventure-overlay 是否在「未登入身分」顯示中',
-      '   ・連續 2 次命中(10 秒)才踢,避免短暫 race 誤判',
-      '   ・解決極端情況下訪客繞過強制登入閘門進入遊戲',
+      '📦 一鍵清除 + 自動補償 + 個人通知',
+      '   ・偵測到異常的玩家紅橫條按鈕「📦 開啟勾選清除介面」',
+      '   ・checkbox 勾選模式 — 預設全勾,可取消想保留的英雄/果實',
+      '   ・補償公式:Lv×1000 幣 + 技能書(s1+s2)+ 果實 + 經驗書',
+      '     ⚠ SSR 召喚卷不補(他們本不該多那隻 SSR)',
+      '   ・果實清除若玩家手上不足 → 扣到 0 為止(不溯及已升級)',
+      '   ・「👁 預覽玩家會看到什麼」按鈕擬真渲染玩家端通知 modal',
+      '   ・通知文字採安撫風,強調「SSR 緣分」+「未來重逢」+ 補償條列',
       '',
-      '📋 版本戳健康檢查 _lxpsVersionHealthCheck()',
-      '   ・boot 時自動跑兩輪,確認所有檔案版本戳對齊',
-      '   ・不對齊時 console.warn + 寫 window._lxpsVersionMismatch',
-      '   ・GM 可手動呼叫 window._lxpsVersionHealthCheck() 取結果',
+      '📢 GM 公告增加 13 個範本(小學生友善,稱「小英雄」)',
+      '   ・維修預告 10/5 分・維修中・維修完成',
+      '   ・BUG 異常回收(老師親自擬,安撫風)・緊急修補完成',
+      '   ・新功能上線・活動開始・活動快結束・全體發獎勵',
+      '   ・玩法小提醒・回報 BUG 鼓勵・節慶問候・考試加油',
+      '   ・點按鈕一鍵填入文字 + 自動切換樣式/顏色',
+      '',
+      '🆔 battleId 新格式 — 一眼分辨不同場次的 BOSS',
+      '   ・舊:boss-1730000000-12345(看不出意義)',
+      '   ・新:b-維蘇威火山龍王-260529-2135-003-A7F2',
+      '   ・GM 後台顯示:「維蘇威火山龍王 #003 (5/29 21:35)」',
+      '   ・BOSS 名一律全名不截短(老師指示)',
+      '   ・序號為玩家當天第幾場(每日 00:00 重置)',
+      '',
+      '📩 玩家端管理員通知系統升級',
+      '   ・補償物品改為展開詳列(技能升級書 ×N、果實 ×N...)',
+      '   ・removedItems 加上果實顯示',
+      '   ・知識幣加千分位逗號(+360,000)',
+      '',
+      '⛔ 訪客守門 watchdog + 版本戳健檢',
     ],
     items: [
-      '【階段 4a 戰鬥結果紀錄】新增 window._advRecordBattleResult(battleId,type,payload) 寫 adv_battle_history localStorage(merge 同 battleId);hook 點 advStartWinSequence(守門通過後寫入勝利入口)、advShowBattleResult(含失敗 type="boss_loss");monkey-patch _wbShowResult 自動掛入,世界 BOSS 結束寫 type="world_boss";_buildSafeData/_applySafeData 加 _battleHistory + _battleHistory_s 雙寫雲端同步 + 合併邏輯。',
-      '【階段 4b 4 個新 API】(6) _fbAdminQueryPlayerActivity(uid) 統一回傳 player 基本卡 + heroUnlockHistory + treasureUnlockHistory + battleHistory + coinTransactions;(7) _fbAdminDeletePlayerActivityEntry(uid,type,entryKey) 逐筆刪 4 種 history 配合 audit log;(8) _fbAdminOverwritePlayerData(uid,patch) 白名單強制覆寫(15 個允許欄位)+ _adminLastAction 寫 audit;(9) _fbAdminScanBattleAnomaly(opts) battleId 精準異常偵測,支援單一 uid 或全掃 200 位玩家。全部走鐵律 2.04(updateDoc + audit log,不走 _fbSaveLive 健康度守門)。',
-      '【階段 4c GM 後台 UI】admin_panel.js 新增 _admin-activity-section 整個區段:查詢框(email/uid,Enter 觸發)+「⚡ 掃描異常」全掃按鈕;玩家基本卡(知識幣/解鎖數/總等級/最高 Lv/至寶數)+ battleId 異常紅框警示;4 分頁 tabs(英雄/至寶/戰鬥/幣帳)。各分頁表格:時間、來源、battleId(衝突項自動標紅 + ⚠);動作欄「🗑 刪紀錄」/「🚫 整隻刪」(英雄/至寶);掃描異常結果用獨立卡片列出,可「→ 查看詳情」跳轉到對應玩家。',
-      '【階段 4d sidebar 重排】SIDEBAR_ITEMS 順序老師指示調整:1.🔧維修模式 / 2.📢GM公告 / 3.📜玩家活動記錄查詢(新) / 4.📥接收錯誤回報 / 5.🆘Lv1救援 / ... 其餘維持。',
-      '【階段 4e 玩家端通知 modal】獨立 IIFE _setupAdminNotificationModal:setInterval 等 _fbAuth.currentUser + _fbFns + _fbDb 就緒,登入 3 秒後讀 pendingAdminNotifications/{uid}/items(只取 unread,orderBy createdAt asc);逐則彈出(等使用者點完才彈下一則);三種 type 配色 + 補償摘要(知識幣/水晶/物品)+ removedItems(GM 已清除項目);點「我知道了」updateDoc({read:true, readAt})。',
-      '【階段 5 訪客守門 watchdog】_lxpsGuestLeakWatchdog IIFE 啟動延遲 8 秒,之後每 5 秒掃 adventure-overlay 顯示狀態。命中條件:(1) 可見 (2) !_lxpsLoggedInThisSession (3) !_gUserId (4) !_lxpsActiveSignInThisPageload。連續 2 次才踢(10 秒視窗,防 race 誤判)。踢人時:關 adventure-overlay + wb-ui-overlay + adv-result-overlay,呼叫 showLoginGate,失敗 fallback location.reload。',
-      '【階段 6 版本戳健康檢查】新增 window._lxpsVersionHealthCheck() 檢查 4 項:(1) _LXPS_FILE_VERSIONS["index.html"] === _GAME_LOADED_VERSION;(2) _LXPS_FILE_VERSIONS["game_changelog.js"] 同上;(3) _LXPS_FILE_VERSIONS["admin_panel.js"] 字串含主版號 v3-XX-XX;(4) window.ADMIN_PANEL_VERSION 與 _LXPS_FILE_VERSIONS["admin_panel.js"] 一致。boot 自動跑兩輪(100ms / 5000ms),不對齊 → console.warn + window._lxpsVersionMismatch=true。',
-      '【版本戳】_GAME_LOADED_VERSION → v3.11.35;_LXPS_FILE_VERSIONS:index.html → v3.11.35、admin_panel.js → 20260529-v3-11-35-player-activity-section、game_changelog.js → v3.11.35;ADMIN_PANEL_VERSION 同步。',
+      // ── 階段 4(玩家活動記錄 + 訪客守門 + 版本健檢)──
+      '【階段 4a 戰鬥結果紀錄】新增 window._advRecordBattleResult(battleId,type,payload) 寫 adv_battle_history localStorage(merge 同 battleId);hook 點 advStartWinSequence、advShowBattleResult(含失敗 type="boss_loss");monkey-patch _wbShowResult 世界 BOSS 結束寫 type="world_boss";_buildSafeData/_applySafeData 加 _battleHistory + _battleHistory_s 雙寫雲端 + 合併邏輯。',
+      '【階段 4b 5 個 admin API】(6) _fbAdminQueryPlayerActivity(uid) 回傳 player + heroH + treasureH + battleH + coinTx + fruitHistory + currentFruitCount + heroDetails(後加,v3.11.35d/e);(7) _fbAdminDeletePlayerActivityEntry(uid,type,entryKey);(8) _fbAdminOverwritePlayerData(uid,patch) 白名單 15 欄位;(9) _fbAdminScanBattleAnomaly(opts) v3.11.35g 起預設掃全部(限制可選 opts.limit);(10) _fbAdminFindPlayersByName(name) v3.11.35b 新增,姓名查詢兩階段(精確比對快路徑 → fallback 全掃 500 模糊 4 種 contains/reverse/no_prefix);(11) _fbAdminCleanupAndCompensate(uid,deleteList,compensation,notification,opts) v3.11.35d 一鍵清除 + 補償 + 通知;(12) _fbAdminClearAbnormalFruits(uid,requestedCount) v3.11.35e 扣果實 min 0。',
+      '【階段 4c GM 後台 UI】admin_panel.js 新增 _admin-activity-section + IIFE _bindActivitySection ~350 行;查詢框(email/uid/姓名)+「⚡ 掃描異常」全掃按鈕;玩家基本卡 + 異常紅框;4 分頁 tabs(英雄/至寶/戰鬥/幣帳)+ 衝突 row 自動標紅 ⚠;動作欄「🗑 刪紀錄」/「🚫 整隻刪」;掃描結果獨立卡片 + 「→ 查看詳情」跳轉。',
+      '【階段 4d sidebar 重排】1.🔧維修 / 2.📢GM公告 / 3.📜玩家活動記錄查詢(新) / 4.📥錯誤回報 / 5.🆘Lv1救援 / ... 其餘維持。',
+      '【階段 4e 玩家端通知 modal】獨立 IIFE _setupAdminNotificationModal:setInterval 等就緒,登入 3 秒後讀 pendingAdminNotifications/{uid}/items(unread,orderBy asc);逐則彈出 + 三種 type 配色(info藍/warning紅/compensation綠);點「我知道了」updateDoc({read:true,readAt})。v3.11.35i 升級:compensation.items 展開詳列、removedItems.fruits 顯示、知識幣千分位。',
+      '【階段 5 訪客守門 watchdog】_lxpsGuestLeakWatchdog IIFE 啟動延遲 8 秒,每 5 秒掃 adventure-overlay。命中條件:可見 + !_lxpsLoggedInThisSession + !_gUserId + !_lxpsActiveSignInThisPageload。連續 2 次才踢(10 秒視窗,防 race 誤判)。踢人:關 overlay + showLoginGate / reload。',
+      '【階段 6 版本戳健康檢查】window._lxpsVersionHealthCheck() 檢查 4 項對齊;boot 100ms + 5000ms 兩輪,不對齊 → console.warn + window._lxpsVersionMismatch=true。',
+
+      // ── v3.11.35b(姓名查詢)──
+      '【v3.11.35b 姓名查詢】_resolveUid 升級為三路判斷:含 @ → email / 純英數 20+ 字 → uid / 其他 → 姓名走 _fbAdminFindPlayersByName;多筆候選 throw {_multi:true, candidates},_doQuery 渲染清單讓老師點選。',
+
+      // ── v3.11.35c(時間窗異常偵測)──
+      '【v3.11.35c 時間窗主規則】因 lsps112171@stu.lsps.tp.edu.tw 1 分鐘刷 12 隻 darkorb_5pct 但 battleId 都是「—」(老資料無 battleId),純 battleId 規則抓不到。新增「時間窗」主規則:1 分鐘內打 BOSS 來源 > 2 隻 = 異常。BOSS 來源白名單(darkorb_5pct/japan_boss_5pct/maokong_50pct/yamata_miko_5pct/taiwan_clear/japan_clear/boss_drop),排除 admin_*/summon_*/event_quest。演算法:滑動窗 consume-once,cluster 內 entry 標記 consumed 不重疊。',
+      '【v3.11.35c UI 變化】玩家基本卡異常紅框顯示「⏱ 時間窗:英雄 N 群(共 M 隻)」+「battleId:英雄 K 場」雙計數;英雄/至寶分頁衝突 row 標紅;全掃描頁卡片紅框 ⏱ 顯示「N 分鐘內連刷 X 隻」+ 連刷英雄列表(較強鐵證)。',
+
+      // ── v3.11.35d(一鍵清除 + 補償 + 通知 + GM 公告範本)──
+      '【v3.11.35d 補償公式】_computeCompensationForHero(name, heroDetails) 算每隻英雄補償:知識幣=Lv×1000、skill_upgrade_book=s1Lv+s2Lv、burst_upgrade_fruit=burstLevel、hero_exp_book_premium=1。⚠ 不補 SSR 召喚卷(老師明確:他們本不該多那隻 SSR,補卷等於變相鼓勵)。',
+      '【v3.11.35d cleanup+compensate flow】_fbAdminCleanupAndCompensate(uid, deleteList, compensation, notification, opts):(1) 逐個刪英雄(_fbAdminDeleteUnlockedHero,清 7 欄位);(2) 套補償(coinsMode="add" 累加);(3) 發 pendingAdminNotifications(type="compensation" 綠色);(4) 寫 _adminLastAction audit。暴露 window._getHeroRarity 給 admin_panel 判定 SSR(line 80367+)。',
+      '【v3.11.35d 預覽 modal】admin_panel.js _openCleanupPreview:列出每隻英雄(Lv/技能/爆發/能力點/補償明細/原因)+「保留每場第 1 隻」邏輯 + 補償總計綠框 + 個人通知 textarea。',
+      '【v3.11.35d GM 公告 BUG 範本】GM 公告區文字框下新增單按鈕「📜 BUG 修補公告範本」一鍵填老師擬好的長文 + 自動切換「強制彈窗 + 紅色」。',
+
+      // ── v3.11.35e(果實異常偵測 + checkbox 勾選)──
+      '【v3.11.35e 果實資料管線】_advSaveFruitHistory(source,count) helper 寫 adv_fruit_history localStorage 結構 {source,count,at,battleId,uid};hook 4 個果實掉落點:標準 BOSS(line 49382 boss_drop)、八岐大蛇(66464 yamata_drop)、黑暗球(66522 darkorb_drop)、mainboss(66600 mainboss_drop)。商店每日購買不寫入(合法路徑)。_buildSafeData 加 _fruitHistory + _fruitHistory_s 雙寫,_applySafeData 加合併(key=at|source)。',
+      '【v3.11.35e 果實清除 API】_fbAdminClearAbnormalFruits(uid, requestedCount, opts):實扣 = min(requestedCount, _curCount) — 老師指示「若不足扣到 0 為止」;不動 heroBurstLevels(已升的視同合法消耗);寫 _fruitHistory 一筆 admin_delete audit(beforeCount/afterCount)。_fbAdminCleanupAndCompensate 升級加 opts.fruitsToRemove 整合進來,deleteList 可為空(只清果實的情境)。',
+      '【v3.11.35e checkbox 勾選介面】預覽 modal 改為每英雄一個 checkbox 預設全勾 + 「全選/全不選」+ 果實清除獨立 checkbox(整批 toggle);補償總計 + 通知文字依勾選即時更新;老師手動編輯通知文字後不再自動覆寫(_userEditedNote flag);_detectFruitAnomalies 函式(同 battleId > 1 顆 OR 時間窗 > 1 顆);紅橫條 banner 條件升級為「英雄或果實任一異常都顯示」。',
+
+      // ── v3.11.35f(GM 公告 13 範本)──
+      '【v3.11.35f GM 公告 13 範本】_GM_TEMPLATES 物件:⏰ 維修預告 10 分(banner 金)/ ⏰ 維修預告 5 分(modal 橘)/ 🔧 維修中(modal 紅)/ ✅ 維修完成(banner 綠)/ 📜 BUG 異常回收(modal 紅,老師原文)/ 🛠 緊急修補完成(banner 藍)/ 🎉 新功能上線(modal 藍紫)/ 🎊 活動開始(modal 橘)/ ⏳ 活動快結束(banner 橘紅)/ 🎁 全體發獎勵(modal 綠)/ 💡 玩法小提醒(banner 紫)/ 📣 回報 BUG 鼓勵(modal 藍)/ 🎄 節慶問候(modal 粉)/ 📚 考試加油(banner 棕)。全部稱「小英雄」,小學生友善。統一 class _admin-gm-tmpl-btn 綁定,點按鈕一鍵填文字 + 自動切換樣式/顏色。',
+
+      // ── v3.11.35g(掃全帳號 + 3 分鐘窗 + totalPlayers 同步)──
+      '【v3.11.35g 掃全帳號】_fbAdminScanBattleAnomaly opts.limit 預設 0(無限制),不傳就掃全部 /players 集合;同時讀 stats/global.totalPlayers 對比實際文件數;回傳 actualPlayerCount + statsTotalPlayers + totalPlayersMismatch。',
+      '【v3.11.35g 時間窗 1→3 分鐘】TIME_WINDOW_MS 兩檔同步 60×1000 → 3×60×1000(老師指示);全檔 UI 文字「1 分鐘」→「3 分鐘」批次更新(只保留 5308 行歷史備註)。',
+      '【v3.11.35g totalPlayers UI】admin_panel.js _doScanAnomaly 升級:確認對話框文字改「掃描全部玩家」;結果頂部顯示對比框(不一致 → 黃色 + 「🔄 同步首頁總玩家數為 N」按鈕,一致 → 綠色「✓ 同步正常」);按鈕呼叫既有 _fbBackfillTotalPlayers() 掃 /players 寫回 stats/global.totalPlayers。_bindSyncTotalPlayersBtn helper 函式。',
+
+      // ── v3.11.35h(battleId 可讀格式)──
+      '【v3.11.35h battleId 新格式】window._advNewBattleId(bossName) 生成 b-{BOSS全名}-{YYMMDD}-{HHMM}-{seq}-{rand4}(例 b-維蘇威火山龍王-260529-2135-003-A7F2)。BOSS 名一律全名,不截短(老師明確指示)。序號從 localStorage adv_battle_seq 存 {date, seq},跨日自動重置。應用點:advStartBattle(line 60772-60776,推導 BOSS 名)、advStartMiniBattle(line 87482-87487,標 "小怪_{stage}")。',
+      '【v3.11.35h 解析 helper】window._parseBattleId(battleId) → {bossName, dateStr, timeStr, seq, isLegacy};window._formatBattleId(battleId) 顯示用:新格式 → "維蘇威火山龍王 #003 (5/29 21:35)"、世界 BOSS → "世界 BOSS"、老格式 → "(舊) M/D HH:MM"、不可解 → 後 12 字。',
+      '【v3.11.35h admin_panel.js 顯示】_shortBid 升級為呼叫 window._formatBattleId,所有用 _shortBid(e.battleId) 的地方自動變人類可讀;表頭文字「battleId」→「場次 (BOSS / 時間)」+ min-width:200px(英雄/至寶/掃描三表)。',
+      '【v3.11.35h 修補】移除中途殘留的 _advMakeBattleId / _advParseBattleId(舊版會截短前 4 字違反老師指示),保留只用全名的 _advNewBattleId / _parseBattleId / _formatBattleId。',
+
+      // ── v3.11.35i(玩家通知預覽 + 玩家端 modal 改進)──
+      '【v3.11.35i 玩家通知預覽】_openCleanupPreview 按鈕區新增「👁 預覽玩家會看到什麼」藍色按鈕;_renderPlayerNotificationPreview(noteData) 完全擬真渲染玩家端 modal(同 _showNotificationModal 配色 + 結構)+ 預覽 modal 頂部黃色提示「不會真的發送」;關閉方式:下方按鈕 / 點背景;z-index 200005 蓋在預覽 modal 上。',
+      '【v3.11.35i 玩家端 modal 改進】index.html _showNotificationModal 升級:compensation.items 原本只顯示「物品 N 種」 → 改為展開列出每樣物品中文名 + 數量(用 _ITEM_LABELS 對齊 admin_panel);removedItems.fruits 加上顯示「🍑 超越極限果實 ×N 顆」;知識幣加千分位(toLocaleString())。',
+
+      // ── v3.11.35j(安撫版通知文字)──
+      '【v3.11.35j 安撫版個人通知】重寫 _refreshSummary 內的預設通知文字。設計重點:不用「BUG/異常/回收」冰冷詞;開頭 💗 + 「有件事想跟你說」軟著陸;「捨不得是正常的」承認情緒;「會在未來的冒險中與你重逢」改寫「失去」為「等待重逢」;補償清單前 👇 視覺引導;結尾保留老師原句「你跟每一位 SSR 英雄結識,都是一段可歌可泣的戰鬥 ⚔」+「LXPSGAME 管理員 敬上」。情境分流:有英雄+有 SSR/無 SSR/只清果實/兩者都有,四種情境動態組合段落。',
+      '【v3.11.35j 安撫版大公告】重寫 GM 公告 BUG 範本(bug),保留老師原意但語氣軟化;特別保留對未受影響玩家的肯定段(「這是好事!代表你一直在用正常方式累積實力」)+ 鼓勵回報 BUG 段(承接老師擔心的「未來不回報」)+ 結尾「守護這座知識的冒險世界 🗺」。',
+
+      // ── 版本戳 ──
+      '【版本戳】_GAME_LOADED_VERSION → v3.11.35;_LXPS_FILE_VERSIONS:index.html → v3.11.35、admin_panel.js → 20260529-v3-11-35j-comforting-text、game_changelog.js → v3.11.35;ADMIN_PANEL_VERSION 同步。',
     ]
   },
 
