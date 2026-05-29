@@ -158,7 +158,6 @@ async function _showAdminStatsPanelImpl(){
         #_admin-stats-panel #_admin-current-title { font-size: 28px !important; }
       }
     </style>
-    <!-- ★ v3.10.11 — 改為左 sidebar(30%)+ 右 content(70%)兩欄式;保留所有 section DOM,只切顯隱 -->
     <div class="_admin-stats-card" style="background:linear-gradient(135deg,rgba(20,30,50,0.98),rgba(10,15,30,0.99));
       border:3px solid rgba(212,168,67,0.7);border-radius:20px;
       width:min(1200px, 98vw);height:min(860px, calc(100vh - 32px));
@@ -213,7 +212,6 @@ async function _showAdminStatsPanelImpl(){
           請從左側選擇要使用的管理功能<br>
           <span style="font-size:13px;color:#888;">所有功能與舊版完全相同,只是改成側邊選單樣式。</span>
         </div>
-
 
       <div id="_admin-maint-section" style="background:rgba(60,20,20,0.4);border:2px solid rgba(255,100,100,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ff8888;margin-bottom:8px;">🔧 0. 維修模式（非管理員登入封鎖）</div>
@@ -356,12 +354,24 @@ async function _showAdminStatsPanelImpl(){
       <div id="_admin-rescue-section" style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#cc99ff;margin-bottom:8px;">🚑 3. 玩家資料急救工具</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
-          用於救援被 1.0.20260419.1930 之前 bug 誤清空的玩家資料。輸入受害玩家 uid,診斷殘存資料後可自訂補償。<br>
-          <span style="color:#cc99ff;">留空 uid 欄位會預設套用<b>目前登入帳號</b>(也就是你自己)。</span>
+          用於救援被 1.0.20260419.1930 之前 bug 誤清空的玩家資料。<b style="color:#ffcc88;">輸入受害玩家 email</b>(會自動反查 uid),診斷殘存資料後可自訂補償。<br>
+          <span style="color:#cc99ff;">留空 email 欄位會預設套用<b>目前登入帳號</b>(也就是你自己)。</span>
         </div>
 
+        <!-- ★ v3.11.11(2026-05-28) — uid 輸入改為 email 輸入 + 自動反查 uid -->
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+          <input id="_admin-rescue-email" type="text" placeholder="玩家 email(留空=自己)"
+            style="flex:1;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(200,120,255,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-rescue-find-uid" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(180,120,255,0.15);border:2px solid #aa88ff;color:#ddaaff;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            📧 查 uid
+          </button>
+        </div>
+        <!-- uid 反查結果(自動填入,管理員可看) -->
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
-          <input id="_admin-rescue-uid" type="text" placeholder="玩家 uid (留空=自己)"
+          <input id="_admin-rescue-uid" type="text" placeholder="玩家 uid(由 email 自動填入 / 也可手動貼)"
             style="flex:1;min-width:160px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
             border:1.5px solid rgba(200,120,255,0.4);color:#fff;border-radius:6px;font-family:monospace;">
           <button id="_admin-rescue-diagnose" style="padding:8px 18px;font-size:14px;font-weight:700;
@@ -608,7 +618,7 @@ async function _showAdminStatsPanelImpl(){
         時,用此工具完全清空帳號 → 指定角色 + 等級 + 資源 → 從零重建。
         危險度:**不可逆**,清掉的資料不會自動還原。要求雙重確認。
       -->
-      <div id="_admin-reset-section" style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
+      <div style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#ff7777;margin-bottom:8px;">⚠ 3.9 帳號完全重置 + 重建(危險)</div>
         <div style="font-size:13px;color:#ffcccc;margin-bottom:12px;line-height:1.6;">
           <b style="color:#ff9999;">用於救援被其他帳號資料污染的玩家。</b><br>
@@ -1012,6 +1022,45 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.11.23(2026-05-29) — 異常解鎖偵測:短時間大量解鎖角色的玩家 -->
+      <div id="_admin-abnormal-unlock-section" style="background:rgba(50,30,20,0.5);border:2px solid rgba(255,180,100,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#ffcc88;margin-bottom:8px;">⚠️ 異常解鎖偵測</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          掃描全班 <b style="color:#ffaa66;">指定時間視窗</b>內解鎖角色超過<b style="color:#ffaa66;">閾值</b>的玩家。
+          列出爆出的英雄,管理員勾選後一鍵刪除(雲端 unlockedHeroes / heroLevels 一起刪,
+          並在 _heroUnlockHistory 留下 <code style="background:rgba(0,0,0,0.4);padding:1px 4px;border-radius:3px;color:#ffaa66;">admin_delete</code> 稽核紀錄)。
+          <br>📌 資料來自雲端 <code style="background:rgba(0,0,0,0.4);padding:1px 4px;border-radius:3px;color:#ffcc88;">_heroUnlockHistory</code>(v3.11.10 起每次解鎖都會寫)
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+          <label style="font-size:12px;color:#ccc;flex:1;min-width:120px;">時間視窗
+            <select id="_admin-au-window" style="width:100%;padding:7px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+              <option value="900000">15 分鐘內</option>
+              <option value="3600000" selected>1 小時內</option>
+              <option value="21600000">6 小時內</option>
+              <option value="86400000">24 小時內</option>
+              <option value="259200000">3 天內</option>
+              <option value="604800000">7 天內</option>
+            </select>
+          </label>
+          <label style="font-size:12px;color:#ccc;flex:1;min-width:120px;">解鎖數閾值
+            <select id="_admin-au-threshold" style="width:100%;padding:7px 10px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;">
+              <option value="3">≥ 3 隻</option>
+              <option value="5" selected>≥ 5 隻</option>
+              <option value="10">≥ 10 隻</option>
+              <option value="15">≥ 15 隻</option>
+              <option value="20">≥ 20 隻</option>
+            </select>
+          </label>
+          <button id="_admin-au-scan-btn" style="padding:9px 18px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#ff9944,#cc6622);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">🔍 開始掃描</button>
+        </div>
+
+        <div id="_admin-au-summary" style="font-size:13px;color:#ffcc88;margin-bottom:10px;min-height:18px;"></div>
+        <div id="_admin-au-results" style="max-height:480px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:6px;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚未掃描。設定條件後點「🔍 開始掃描」。</div>
+        </div>
+      </div>
+
       <!-- ★ v3.5.20 — 世界 BOSS 排行榜管理區塊(老師 2026-05-22 需求) -->
       <div id="_admin-wblb-section" style="background:rgba(40,30,50,0.5);border:2px solid rgba(200,140,255,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ddaaff;margin-bottom:8px;">🏆 6. 世界 BOSS 排行榜管理</div>
@@ -1083,11 +1132,12 @@ async function _showAdminStatsPanelImpl(){
             🎁 手動結算上週並補發前 10 名獎勵
           </button>
         </div>
+        <!-- ★ v3.11.11(2026-05-28) — 老師需求:輸入 uid 改成輸入 email 統一介面 -->
         <!-- 補發單一玩家 -->
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
           <span style="font-size:13px;color:#aaa;">補發給單一玩家:</span>
-          <input id="_admin-wq-uid" type="text" placeholder="貼上玩家 uid" 
-            style="flex:1;min-width:200px;padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
+          <input id="_admin-wq-email" type="text" placeholder="學生 email (如 lsps110xxx@stu.lsps.tp.edu.tw)"
+            style="flex:1;min-width:240px;padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
             border:1px solid rgba(140,200,255,0.4);color:#fff;border-radius:6px;font-family:monospace;">
           <select id="_admin-wq-rank" style="padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
             border:1px solid rgba(140,200,255,0.4);color:#fff;border-radius:6px;font-family:inherit;">
@@ -1101,27 +1151,9 @@ async function _showAdminStatsPanelImpl(){
             💰 補發
           </button>
         </div>
-        <!-- ★ v3.6.10(2026-05-24) — 老師需求:刪除自己或異常的小博士排名 -->
-        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;
-          padding-top:10px;border-top:1.5px dashed rgba(255,100,100,0.35);">
-          <span style="font-size:13px;color:#ff9999;font-weight:700;">🗑️ 刪除排名:</span>
-          <select id="_admin-wq-del-week" style="padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
-            border:1px solid rgba(255,140,140,0.4);color:#fff;border-radius:6px;font-family:inherit;">
-            <option value="this">📅 本週</option>
-            <option value="last">📜 上週</option>
-          </select>
-          <input id="_admin-wq-del-uid" type="text" placeholder="貼上要刪除的玩家 uid" 
-            style="flex:1;min-width:200px;padding:6px 10px;font-size:13px;background:rgba(0,0,0,0.5);
-            border:1px solid rgba(255,140,140,0.4);color:#fff;border-radius:6px;font-family:monospace;">
-          <button id="_admin-wq-del-btn" style="padding:8px 14px;font-size:13px;font-weight:800;
-            background:linear-gradient(135deg,rgba(220,80,80,0.6),rgba(180,40,40,0.85));
-            border:2px solid #ff6666;color:#fff;border-radius:7px;cursor:pointer;font-family:inherit;">
-            🗑️ 刪除
-          </button>
-        </div>
         <div style="font-size:12px;color:#cc8888;line-height:1.55;margin-bottom:10px;
           padding:6px 10px;background:rgba(80,30,30,0.3);border-left:3px solid rgba(255,100,100,0.5);border-radius:4px;">
-          ⚠️ 刪除後該玩家本週累計題數歸零(不影響歷史獎勵)。也可在「查看前 30 名」清單中點 🗑️ 直接刪除某玩家。
+          💡 點上方「👀 查看本週/上週前 30 名」按鈕,可勾選玩家批次刪除排名(對齊世界 BOSS 榜操作體驗)。
         </div>
         <div style="font-size:12px;color:#999;line-height:1.55;">
           💡 操作 API(F12 console):
@@ -1131,62 +1163,10 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
-            </div><!-- /#_admin-content -->
+      </div><!-- /#_admin-content -->
     </div><!-- /._admin-stats-card -->
   `;
   document.body.appendChild(pop);
-
-  // ★ v3.5.0 — 面板區域性 state(關閉時要清掉)
-  const _adminPanelState = {
-    dlpermUnsub: null,
-    susUnsub: null,
-    dlpermList: [],
-    susList: [],
-    // ★ v3.5.20 — 排行榜事件監聽 abort controller
-    wblbAbort: null,
-    // ★ v3.5.22 — 排行榜明細 modal 的關閉函式(關後台時順手關掉)
-    wblbDetailClose: null,
-    // ★ v3.5.67 — 小博士補發區段事件監聽 abort controller
-    wqAbort: null,
-    // ★ v3.5.67 — 上週排名顯示彈窗的關閉函式
-    wqDetailClose: null,
-  };
-  function _closeAdminPanel(){
-    try {
-      if(_adminPanelState.dlpermUnsub){
-        try { _adminPanelState.dlpermUnsub(); } catch(_){}
-        _adminPanelState.dlpermUnsub = null;
-      }
-      if(_adminPanelState.susUnsub){
-        try { _adminPanelState.susUnsub(); } catch(_){}
-        _adminPanelState.susUnsub = null;
-      }
-      // ★ v3.5.20 — 清掉排行榜事件監聽
-      if(_adminPanelState.wblbAbort){
-        try { _adminPanelState.wblbAbort.abort(); } catch(_){}
-        _adminPanelState.wblbAbort = null;
-      }
-      // ★ v3.5.22 — 清掉明細 modal(如果還開著)
-      if(typeof _adminPanelState.wblbDetailClose === 'function'){
-        try { _adminPanelState.wblbDetailClose(); } catch(_){}
-        _adminPanelState.wblbDetailClose = null;
-      }
-      // ★ v3.5.67 — 清掉小博士補發區段事件監聽
-      if(_adminPanelState.wqAbort){
-        try { _adminPanelState.wqAbort.abort(); } catch(_){}
-        _adminPanelState.wqAbort = null;
-      }
-      // ★ v3.5.67 — 關掉上週排名顯示彈窗(如果還開著)
-      if(typeof _adminPanelState.wqDetailClose === 'function'){
-        try { _adminPanelState.wqDetailClose(); } catch(_){}
-        _adminPanelState.wqDetailClose = null;
-      }
-    } catch(_){}
-    pop.remove();
-  }
-
-  document.getElementById('_admin-close').onclick = _closeAdminPanel;
-  pop.onclick = (ev) => { if(ev.target === pop) _closeAdminPanel(); };
 
   // ════════════════════════════════════════════════════════════════════
   // ★ v3.10.11 — Sidebar 渲染 + section 切換邏輯
@@ -1202,9 +1182,10 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-rescue-section',           label: '🚑 玩家資料急救工具',      hint: '修復異常資料' },
       { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
-      { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
+      { sec: '_admin-trust-revoke-section',     label: '🔐 撤銷信任裝置',          hint: '撤銷學生自動登入授權' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
+      { sec: '_admin-abnormal-unlock-section',  label: '⚠️ 異常解鎖偵測',          hint: '短時間大量解鎖角色的玩家' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
       { sec: '_admin-bypass-section',           label: '🔓 解除冷卻 / 每日上限',   hint: '測試用' },
@@ -1212,7 +1193,6 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
       { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
-      { sec: '_admin-reset-section',            label: '⚠️ 帳號完全重置+重建',     hint: '危險!不可逆,最後手段' },
     ];
 
     const sidebarList = document.getElementById('_admin-sidebar-list');
@@ -1278,6 +1258,59 @@ async function _showAdminStatsPanelImpl(){
 
     console.log('[v3.10.11] ✅ GM 後台 sidebar 已渲染 (' + SIDEBAR_ITEMS.length + ' 個項目)');
   })();
+
+
+  // ★ v3.5.0 — 面板區域性 state(關閉時要清掉)
+  const _adminPanelState = {
+    dlpermUnsub: null,
+    susUnsub: null,
+    dlpermList: [],
+    susList: [],
+    // ★ v3.5.20 — 排行榜事件監聽 abort controller
+    wblbAbort: null,
+    // ★ v3.5.22 — 排行榜明細 modal 的關閉函式(關後台時順手關掉)
+    wblbDetailClose: null,
+    // ★ v3.5.67 — 小博士補發區段事件監聽 abort controller
+    wqAbort: null,
+    // ★ v3.5.67 — 上週排名顯示彈窗的關閉函式
+    wqDetailClose: null,
+  };
+  function _closeAdminPanel(){
+    try {
+      if(_adminPanelState.dlpermUnsub){
+        try { _adminPanelState.dlpermUnsub(); } catch(_){}
+        _adminPanelState.dlpermUnsub = null;
+      }
+      if(_adminPanelState.susUnsub){
+        try { _adminPanelState.susUnsub(); } catch(_){}
+        _adminPanelState.susUnsub = null;
+      }
+      // ★ v3.5.20 — 清掉排行榜事件監聽
+      if(_adminPanelState.wblbAbort){
+        try { _adminPanelState.wblbAbort.abort(); } catch(_){}
+        _adminPanelState.wblbAbort = null;
+      }
+      // ★ v3.5.22 — 清掉明細 modal(如果還開著)
+      if(typeof _adminPanelState.wblbDetailClose === 'function'){
+        try { _adminPanelState.wblbDetailClose(); } catch(_){}
+        _adminPanelState.wblbDetailClose = null;
+      }
+      // ★ v3.5.67 — 清掉小博士補發區段事件監聽
+      if(_adminPanelState.wqAbort){
+        try { _adminPanelState.wqAbort.abort(); } catch(_){}
+        _adminPanelState.wqAbort = null;
+      }
+      // ★ v3.5.67 — 關掉上週排名顯示彈窗(如果還開著)
+      if(typeof _adminPanelState.wqDetailClose === 'function'){
+        try { _adminPanelState.wqDetailClose(); } catch(_){}
+        _adminPanelState.wqDetailClose = null;
+      }
+    } catch(_){}
+    pop.remove();
+  }
+
+  document.getElementById('_admin-close').onclick = _closeAdminPanel;
+  pop.onclick = (ev) => { if(ev.target === pop) _closeAdminPanel(); };
 
   // ★ v1.0.20260510.5820 — 解除冷卻 / 每日次數限制按鈕
   //   每個按鈕對應一種限制,按下後執行重置並顯示結果訊息(累積在 _admin-bypass-result)
@@ -1987,6 +2020,41 @@ async function _showAdminStatsPanelImpl(){
 
   // ★★★ 玩家資料急救工具(v1.0.20260419.1930) ★★★
   let _rescueDiagData = null;  // 暫存最近一次診斷結果
+
+  // ★ v3.11.11(2026-05-28) — 📧 email 反查 uid 並自動填入
+  const _rescueFindUidBtn = document.getElementById('_admin-rescue-find-uid');
+  if(_rescueFindUidBtn) _rescueFindUidBtn.onclick = async () => {
+    const emailInput = document.getElementById('_admin-rescue-email');
+    const uidInput = document.getElementById('_admin-rescue-uid');
+    const diag = document.getElementById('_admin-rescue-diag');
+    const email = (emailInput.value || '').trim().toLowerCase();
+    if(!email){
+      diag.style.display = 'block';
+      diag.innerHTML = '<span style="color:#ff6666;">❌ 請先輸入 email</span>';
+      return;
+    }
+    if(!window._fbAdminFindPlayerByEmail){
+      diag.style.display = 'block';
+      diag.innerHTML = '<span style="color:#ff6666;">❌ _fbAdminFindPlayerByEmail API 尚未就緒</span>';
+      return;
+    }
+    diag.style.display = 'block';
+    diag.innerHTML = '<span style="color:#aaa;">⏳ 查詢 ' + email + ' 中...</span>';
+    try{
+      const _r = await window._fbAdminFindPlayerByEmail(email);
+      if(!_r.found){
+        diag.innerHTML = '<span style="color:#ff6666;">❌ 找不到這個 email 的玩家:</span> <code style="color:#ffcc66;">' + email + '</code>';
+        return;
+      }
+      uidInput.value = _r.uid;
+      const _name = (_r.data && _r.data.displayName) || '(未設暱稱)';
+      diag.innerHTML = '<span style="color:#aaffcc;">✅ 找到玩家,已自動填入 uid:</span> <code style="color:#88ccff;">' + _r.uid + '</code>'
+        + '<br><span style="color:#aaa;font-size:12px;">暱稱:<b style="color:#ffcc66;">' + _name + '</b></span>'
+        + '<br><span style="color:#aaffcc;font-size:13px;margin-top:6px;display:inline-block;">👉 按右邊「🔍 診斷」</span>';
+    }catch(e){
+      diag.innerHTML = '<span style="color:#ff6666;">❌ 查詢失敗:</span> ' + (e.code || e.message || e);
+    }
+  };
 
   // 診斷
   document.getElementById('_admin-rescue-diagnose').onclick = async () => {
@@ -4654,6 +4722,170 @@ async function _showAdminStatsPanelImpl(){
   })();
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v3.11.23(2026-05-29) — 異常解鎖偵測工具
+  //   掃描全班 _heroUnlockHistory,找出短時間大量解鎖的玩家,
+  //   勾選後一鍵刪除指定英雄(雲端 unlockedHeroes / heroLevels 一起刪)。
+  // ════════════════════════════════════════════════════════════════
+  (function _bindAbnormalUnlockSection(){
+    const _winSel    = document.getElementById('_admin-au-window');
+    const _thrSel    = document.getElementById('_admin-au-threshold');
+    const _scanBtn   = document.getElementById('_admin-au-scan-btn');
+    const _summaryEl = document.getElementById('_admin-au-summary');
+    const _resultsEl = document.getElementById('_admin-au-results');
+    if(!_scanBtn || !_resultsEl) return;
+
+    let _lastScan = null;    // 最近一次掃描結果,給「刪除」按鈕用
+
+    // 工具:safe html escape
+    function _esc(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function _humanAt(at){
+      try{ return new Date(at).toLocaleString('zh-TW', { hour12:false }); }catch(_){ return String(at); }
+    }
+    function _humanWindow(ms){
+      const _min = Math.round(ms / 60000);
+      if(_min < 60) return _min + ' 分鐘';
+      const _hr = Math.round(_min / 60);
+      if(_hr < 24) return _hr + ' 小時';
+      return Math.round(_hr / 24) + ' 天';
+    }
+    function _safeLabel(email, displayName, uid){
+      // 老師後台 → 完整真名;沒名冊就 displayName / uid 後綴
+      if(typeof window._getAdminPlayerLabel === 'function'){
+        const _l = window._getAdminPlayerLabel(email || '', displayName || '', { adminShowReal: true });
+        if(_l && _l !== '未知玩家') return _l;
+      }
+      return displayName || (email || ('uid:' + (uid || '').slice(0, 8)));
+    }
+
+    function _renderResults(){
+      if(!_lastScan){ _resultsEl.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:13px;">尚未掃描。</div>'; return; }
+      const _abn = _lastScan.abnormal || [];
+      if(!_abn.length){
+        _resultsEl.innerHTML = '<div style="text-align:center;color:#a0e0a0;padding:20px;font-size:13px;">✅ 沒有玩家在 '
+          + _humanWindow(_lastScan.windowMs) + '內解鎖 ≥ ' + _lastScan.threshold + ' 隻角色。</div>';
+        return;
+      }
+      let _html = '';
+      _abn.forEach((p, _idx) => {
+        const _label = _safeLabel(p.email, p.displayName, p.uid);
+        const _bySource = {};
+        p.heroes.forEach(h => { _bySource[h.source] = (_bySource[h.source]||0) + 1; });
+        const _srcTags = Object.keys(_bySource).map(s =>
+          '<span style="display:inline-block;background:rgba(255,170,100,0.18);border:1px solid rgba(255,170,100,0.5);color:#ffcc88;padding:1px 7px;border-radius:10px;font-size:11px;margin-right:4px;">'
+          + _esc(s) + ' ×' + _bySource[s] + '</span>'
+        ).join('');
+        _html += '<div style="background:rgba(40,30,20,0.7);border:1.5px solid rgba(255,180,100,0.4);border-radius:8px;padding:10px 12px;margin:8px 4px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+            + '<div style="font-size:14px;font-weight:700;color:#ffe0a0;">' + _esc(_label) + '</div>'
+            + '<div style="font-size:12px;color:#ff9944;font-weight:700;">' + p.count + ' 隻 / ' + _humanWindow(_lastScan.windowMs) + '</div>'
+          + '</div>'
+          + '<div style="font-size:11px;color:#aaa;margin-bottom:8px;word-break:break-all;">'
+            + 'uid: <code style="color:#bbb;">' + _esc((p.uid || '').slice(0, 16)) + '...</code>'
+            + ' &nbsp;|&nbsp; email: <code style="color:#bbb;">' + _esc(p.email || '(未綁定)') + '</code>'
+          + '</div>'
+          + '<div style="margin-bottom:8px;">' + _srcTags + '</div>'
+          + '<div style="background:rgba(0,0,0,0.4);border-radius:6px;padding:6px 8px;max-height:180px;overflow-y:auto;">';
+        p.heroes.forEach((h, _hi) => {
+          const _idStr = 'au-pick-' + _idx + '-' + _hi;
+          _html += '<label style="display:flex;align-items:center;gap:8px;padding:3px 4px;font-size:12px;color:#ddd;cursor:pointer;border-radius:4px;" '
+                + 'onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'\'">'
+              + '<input type="checkbox" data-au-pick="1" data-au-uid="' + _esc(p.uid) + '" data-au-hero="' + _esc(h.name) + '" id="' + _idStr + '">'
+              + '<span style="flex:1;color:#fff;font-weight:600;">' + _esc(h.name) + '</span>'
+              + '<span style="color:#ffaa66;font-size:10px;">' + _esc(h.source) + '</span>'
+              + '<span style="color:#888;font-size:10px;">' + _esc(_humanAt(h.at)) + '</span>'
+          + '</label>';
+        });
+        _html += '</div>'
+          + '<div style="display:flex;gap:8px;margin-top:8px;">'
+            + '<button data-au-action="select-all" data-au-idx="' + _idx + '" style="padding:5px 10px;font-size:11px;font-weight:600;background:rgba(255,170,100,0.2);color:#ffcc88;border:1px solid rgba(255,170,100,0.45);border-radius:5px;cursor:pointer;font-family:inherit;">全選</button>'
+            + '<button data-au-action="select-none" data-au-idx="' + _idx + '" style="padding:5px 10px;font-size:11px;font-weight:600;background:rgba(150,150,150,0.2);color:#ccc;border:1px solid rgba(150,150,150,0.45);border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>'
+            + '<div style="flex:1"></div>'
+            + '<button data-au-action="delete" data-au-idx="' + _idx + '" style="padding:6px 14px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#cc4444,#882222);color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">🗑 刪除已勾選</button>'
+          + '</div>'
+        + '</div>';
+      });
+      _resultsEl.innerHTML = _html;
+      // 綁定操作按鈕
+      _resultsEl.querySelectorAll('button[data-au-action]').forEach(btn => {
+        btn.onclick = function(){
+          const _act = btn.getAttribute('data-au-action');
+          const _idx = parseInt(btn.getAttribute('data-au-idx'), 10);
+          if(_act === 'select-all' || _act === 'select-none'){
+            const _card = btn.closest('div').parentElement; // div containing both action buttons + checklist
+            _card.querySelectorAll('input[data-au-pick="1"]').forEach(cb => {
+              cb.checked = (_act === 'select-all');
+            });
+            return;
+          }
+          if(_act === 'delete'){
+            _doDeletePicked(_idx);
+          }
+        };
+      });
+    }
+
+    async function _doDeletePicked(idx){
+      if(!_lastScan || !_lastScan.abnormal[idx]) return;
+      const p = _lastScan.abnormal[idx];
+      const _card = _resultsEl.children[idx];
+      const _picks = Array.from(_card.querySelectorAll('input[data-au-pick="1"]:checked'));
+      if(!_picks.length){ alert('請先勾選要刪除的英雄'); return; }
+      const _label = _safeLabel(p.email, p.displayName, p.uid);
+      const _heroNames = _picks.map(cb => cb.getAttribute('data-au-hero'));
+      if(!confirm('確定要從「' + _label + '」刪除以下 ' + _heroNames.length + ' 隻已解鎖英雄?\n\n'
+        + _heroNames.join('、') + '\n\n刪除後玩家下次登入會以雲端為準(本地英雄也會消失)。'
+        + '\n會在 _heroUnlockHistory 留下 admin_delete 稽核紀錄。')){ return; }
+      let _ok = 0, _fail = 0;
+      for(const _hn of _heroNames){
+        try{
+          await window._fbAdminDeleteUnlockedHero(p.uid, _hn);
+          _ok++;
+        }catch(e){
+          console.error('[異常解鎖偵測] 刪除失敗', p.uid, _hn, e);
+          _fail++;
+        }
+      }
+      alert('✅ 刪除完成\n  成功:' + _ok + ' 隻\n  失敗:' + _fail + ' 隻\n\n建議:重新掃描以查看最新狀態。');
+      // 重新掃描更新畫面
+      _scanBtn.click();
+    }
+
+    async function _doScan(){
+      const _winMs = parseInt(_winSel.value, 10) || 3600000;
+      const _thr = parseInt(_thrSel.value, 10) || 5;
+      _scanBtn.disabled = true;
+      _scanBtn.style.opacity = '0.5';
+      _scanBtn.textContent = '⏳ 掃描中…';
+      _summaryEl.innerHTML = '⏳ 正在掃描全班雲端紀錄,請稍候(約 5-15 秒)…';
+      _resultsEl.innerHTML = '';
+      try{
+        if(typeof window._fbAdminScanAbnormalUnlocks !== 'function'){
+          throw new Error('_fbAdminScanAbnormalUnlocks 未載入');
+        }
+        _lastScan = await window._fbAdminScanAbnormalUnlocks(_winMs, _thr);
+        const _n = (_lastScan.abnormal || []).length;
+        _summaryEl.innerHTML = '掃描完成:' + _humanWindow(_winMs) + '內解鎖 ≥ ' + _thr + ' 隻角色的玩家共 '
+          + '<b style="color:' + (_n ? '#ff8866' : '#88dd88') + ';">' + _n + '</b> 位';
+        _renderResults();
+      }catch(e){
+        _summaryEl.innerHTML = '<span style="color:#ff6666;">❌ 掃描失敗:' + _esc(e && e.message) + '</span>';
+        console.error('[異常解鎖偵測] 掃描失敗', e);
+      }finally{
+        _scanBtn.disabled = false;
+        _scanBtn.style.opacity = '';
+        _scanBtn.textContent = '🔍 開始掃描';
+      }
+    }
+
+    _scanBtn.onclick = _doScan;
+    console.log('[admin_panel v3.11.23] ✅ 異常解鎖偵測工具已綁定');
+  })();
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v3.5.20 — 世界 BOSS 排行榜管理區塊綁定(老師 2026-05-22 需求)
   // ════════════════════════════════════════════════════════════════
   (function _bindWblbSection(){
@@ -4874,10 +5106,9 @@ async function _showAdminStatsPanelImpl(){
 
       const _overlay = document.createElement('div');
       _overlay.id = '_wblb-sources-overlay';
-      // ★ v3.11.19 — 此子 modal 由排行榜明細(現 100050)再開,z-index 從 100001 提到 100060 才不會被蓋。
       _overlay.style.cssText =
         'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
-        'background:rgba(0,0,0,0.82);z-index:100060;display:flex;' +
+        'background:rgba(0,0,0,0.82);z-index:100001;display:flex;' +
         'align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
 
       _overlay.innerHTML =
@@ -4942,12 +5173,9 @@ async function _showAdminStatsPanelImpl(){
 
       const _overlay = document.createElement('div');
       _overlay.id = '_admin-wblb-detail-overlay';
-      // ★ v3.11.19 — z-index 從 99999 提到 100050:GM 面板 pop 本身就是 99999,
-      //   同值時 DOM 順序/stacking context 會讓側欄蓋住此 modal(老師回報「圖層階級太低被 GM 選單蓋住」)。
-      //   提到 100050(> 99999 面板、> 100001/100002 既有子 modal)確保排行榜明細永遠在最上層。
       _overlay.style.cssText =
         'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
-        'background:rgba(0,0,0,0.78);z-index:100050;display:flex;' +
+        'background:rgba(0,0,0,0.78);z-index:99999;display:flex;' +
         'align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
 
       let _rowsHtml = '';
@@ -5298,7 +5526,8 @@ async function _showAdminStatsPanelImpl(){
     const _viewLastBtn = document.getElementById('_admin-wq-view-last');
     const _manualSettleBtn = document.getElementById('_admin-wq-manual-settle');
     const _giveBtn = document.getElementById('_admin-wq-give');
-    const _uidInput = document.getElementById('_admin-wq-uid');
+    // ★ v3.11.11(2026-05-28) — uid 輸入 → email 輸入
+    const _emailInput = document.getElementById('_admin-wq-email');
     const _rankSelect = document.getElementById('_admin-wq-rank');
     if(!_infoEl || !_manualSettleBtn) return;
 
@@ -5402,7 +5631,7 @@ async function _showAdminStatsPanelImpl(){
 
     if(_refreshBtn) _refreshBtn.onclick = _renderInfo;
 
-    // ── 查看本週/上週前 10 名 modal ──
+    // ── 查看本週/上週前 30 名 modal(★ v3.11.11 改造:checkbox 批次刪除) ──
     function _showWeekDetail(weekKey, title){
       // 清除舊 modal
       if(_adminPanelState.wqDetailClose){
@@ -5446,7 +5675,16 @@ async function _showAdminStatsPanelImpl(){
           else if(rank <= 5) award = '35000幣+6水晶+6書';
           else if(rank <= 10) award = '20000幣+3水晶+3書';
 
-          _rows += '<div style="display:grid;grid-template-columns:50px 1fr 80px 180px 38px;align-items:center;gap:10px;padding:6px 10px;background:rgba(0,0,0,' + (i%2===0?'0.25':'0.4') + ');border-radius:6px;font-size:13px;">'
+          // ★ v3.11.11 — 每列改成 label(可點整列勾選)+ checkbox + 名字 + 題數
+          //   data-* 屬性帶 uid/name/week 給後續批次刪除用
+          _rows += '<label class="_admin-wq-row" '
+            +   'data-uid="' + _esc(e.uid) + '" '
+            +   'data-name="' + _esc(_formatName(e)) + '" '
+            +   'data-week="' + _esc(weekKey) + '" '
+            +   'style="display:grid;grid-template-columns:28px 50px 1fr 80px 180px;align-items:center;gap:10px;'
+            +   'padding:8px 10px;margin-bottom:4px;background:rgba(0,0,0,' + (i%2===0?'0.25':'0.4') + ');'
+            +   'border-radius:6px;font-size:13px;cursor:pointer;border:1.5px solid transparent;transition:background 0.15s;">'
+            + '<input type="checkbox" class="_admin-wq-chk" style="transform:scale(1.3);cursor:pointer;">'
             + '<div style="font-weight:900;color:' + (rank<=3?'#ffe066':'#aaa') + ';">' + icon + '</div>'
             + '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-weight:700;">'
             +   _esc(_formatName(e))
@@ -5460,37 +5698,55 @@ async function _showAdminStatsPanelImpl(){
                       : '⚠ ' + award + ' 待發')
                   : '(未進前 10)')
             + '</div>'
-            // ★ v3.6.10 — 每列加垃圾桶按鈕(用 data-* 帶 uid,讓後續 bind onclick)
-            + '<button class="_admin-wq-row-del" data-uid="' + _esc(e.uid)
-            +   '" data-name="' + _esc(_formatName(e))
-            +   '" data-week="' + _esc(weekKey)
-            +   '" title="刪除此玩家排名" '
-            +   'style="padding:4px 0;font-size:15px;background:rgba(80,20,20,0.4);'
-            +   'border:1.5px solid rgba(255,100,100,0.5);color:#ff8888;border-radius:5px;'
-            +   'cursor:pointer;font-family:inherit;line-height:1;width:32px;">🗑️</button>'
-            + '</div>';
+            + '</label>';
         });
       }
 
       const _modal = document.createElement('div');
-      // ★ v3.11.27 — z-index 從 25000 → 100000。修「點查看本週前10名沒反應」:
-      //   GM 後台面板 _admin-stats-panel 是 z-index:99999,modal 25000 會開在後台底下被蓋住看不到。
-      _modal.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,16,0.82);'
+      _modal.style.cssText = 'position:fixed;inset:0;z-index:25000;background:rgba(0,0,16,0.82);'
         + 'display:flex;align-items:center;justify-content:center;padding:20px;';
       _modal.innerHTML =
         '<div style="background:linear-gradient(160deg,#1a1232,#0a0815);border:2.5px solid rgba(180,120,255,0.65);'
-        + 'border-radius:14px;padding:20px 24px;max-width:min(96vw,700px);width:100%;max-height:90vh;'
+        + 'border-radius:14px;padding:20px 24px;max-width:min(96vw,720px);width:100%;max-height:90vh;'
         + 'display:flex;flex-direction:column;">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
         + '<div style="font-size:22px;font-weight:900;color:#ffe066;">' + _esc(title) + '</div>'
         + '<button id="_wq-modal-close" style="padding:6px 14px;font-size:14px;background:rgba(60,10,10,0.4);'
         +   'border:1.5px solid #e84040;color:#e84040;border-radius:6px;cursor:pointer;">✕ 關閉</button>'
         + '</div>'
-        + '<div style="font-size:13px;color:#aaa;margin-bottom:10px;">'
+        + '<div style="font-size:13px;color:#aaa;margin-bottom:8px;">'
         +   '週 key:<code style="color:#88ccff;">' + _esc(weekKey) + '</code> · 共 ' + _list.length + ' 人上榜'
         + '</div>'
-        + '<div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:4px;">'
+        // ★ v3.11.11 — 提示 + 工具列
+        + (_list.length > 0
+          ? '<div style="font-size:12px;color:#bbb;background:rgba(60,40,80,0.3);'
+            + 'padding:7px 10px;border-radius:5px;margin-bottom:8px;line-height:1.5;">'
+            + '💡 勾選玩家(或點整列)→ 按下方紅色按鈕<b style="color:#ff9988;">批次刪除</b>本週累計題數。' +
+              '<br>⚠️ 刪除不可逆,會留下審計痕跡(weeklyQuizDeletionLog)。'
+            + '</div>'
+            + '<div id="_admin-wq-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">'
+            +   '<button id="_admin-wq-selall" style="padding:5px 12px;font-size:12px;'
+            +     'background:rgba(60,80,120,0.5);border:1px solid #779;color:#cde;'
+            +     'border-radius:5px;cursor:pointer;font-family:inherit;">全選</button>'
+            +   '<button id="_admin-wq-selnone" style="padding:5px 12px;font-size:12px;'
+            +     'background:rgba(60,80,120,0.5);border:1px solid #779;color:#cde;'
+            +     'border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>'
+            +   '<span id="_admin-wq-selcount" style="margin-left:auto;font-size:12px;color:#ccc;">已選 0 筆</span>'
+            + '</div>'
+          : '')
+        + '<div id="_admin-wq-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:0;">'
         + _rows + '</div>'
+        // ★ v3.11.11 — 底部批次刪除 footer
+        + (_list.length > 0
+          ? '<div id="_admin-wq-footer" style="margin-top:10px;padding-top:10px;border-top:1.5px solid rgba(180,120,255,0.35);'
+            + 'display:flex;gap:10px;align-items:center;">'
+            + '<span style="font-size:12px;color:#888;flex:1;">⚠️ 批次刪除不可逆。</span>'
+            + '<button id="_admin-wq-batch-del" disabled style="padding:9px 18px;font-size:14px;font-weight:800;'
+            + 'background:linear-gradient(135deg,rgba(180,60,60,0.7),rgba(120,30,30,0.9));'
+            + 'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;'
+            + 'font-family:inherit;opacity:0.5;">🗑️ 刪除已勾選 0 筆</button>'
+            + '</div>'
+          : '')
         + '</div>';
       _modal.addEventListener('click', function(e){
         if(e.target === _modal) _closeModal();
@@ -5504,21 +5760,184 @@ async function _showAdminStatsPanelImpl(){
       document.getElementById('_wq-modal-close').onclick = _closeModal;
       _adminPanelState.wqDetailClose = _closeModal;
 
-      // ★ v3.6.10(2026-05-24) — 綁定每列垃圾桶按鈕
-      try{
-        _modal.querySelectorAll('._admin-wq-row-del').forEach(function(btn){
-          btn.onclick = function(){
-            const _uid = btn.getAttribute('data-uid') || '';
-            const _name = btn.getAttribute('data-name') || _uid.slice(0, 8);
-            const _wk = btn.getAttribute('data-week') || weekKey;
-            if(!_uid) return;
-            _doDeleteWqEntry(_wk, _uid, _name, function _afterDel(){
-              // 刪除成功後關掉本 modal,讓 _renderInfo 看到最新數字
-              try{ _closeModal(); }catch(_){}
-              try{ _renderInfo(); }catch(_){}
-            });
-          };
+      // ★ v3.11.11(2026-05-28) — checkbox 勾選邏輯 + 批次刪除
+      const _listBox = _modal.querySelector('#_admin-wq-list');
+      const _countEl = _modal.querySelector('#_admin-wq-selcount');
+      const _footer = _modal.querySelector('#_admin-wq-footer');
+
+      function _updateSelCount(){
+        if(!_listBox) return;
+        const _checked = _listBox.querySelectorAll('._admin-wq-chk:checked');
+        const _n = _checked.length;
+        if(_countEl) _countEl.textContent = '已選 ' + _n + ' 筆';
+        // 高亮已勾選列
+        _listBox.querySelectorAll('._admin-wq-row').forEach(function(row){
+          const chk = row.querySelector('._admin-wq-chk');
+          if(chk && chk.checked){
+            row.style.background = 'rgba(120,40,40,0.45)';
+            row.style.borderColor = 'rgba(255,120,120,0.55)';
+          } else {
+            row.style.background = '';
+            row.style.borderColor = 'transparent';
+          }
         });
+        // 切換刪除按鈕狀態(動態查 — footer 可能被改成確認態)
+        const _curBtn = _footer && _footer.querySelector('#_admin-wq-batch-del');
+        if(_curBtn){
+          _curBtn.textContent = '🗑️ 刪除已勾選 ' + _n + ' 筆';
+          _curBtn.disabled = (_n === 0);
+          _curBtn.style.opacity = (_n === 0) ? '0.5' : '1';
+        }
+      }
+
+      if(_listBox){
+        _listBox.addEventListener('change', function(ev){
+          if(ev.target && ev.target.classList && ev.target.classList.contains('_admin-wq-chk')){
+            _updateSelCount();
+          }
+        });
+      }
+
+      // 全選 / 全不選
+      const _selAllBtn = _modal.querySelector('#_admin-wq-selall');
+      if(_selAllBtn) _selAllBtn.onclick = function(){
+        _listBox.querySelectorAll('._admin-wq-chk').forEach(function(c){ c.checked = true; });
+        _updateSelCount();
+      };
+      const _selNoneBtn = _modal.querySelector('#_admin-wq-selnone');
+      if(_selNoneBtn) _selNoneBtn.onclick = function(){
+        _listBox.querySelectorAll('._admin-wq-chk').forEach(function(c){ c.checked = false; });
+        _updateSelCount();
+      };
+
+      // 批次刪除 — 二段確認 inline footer(對齊世界 BOSS 體驗)
+      function _renderFooterNormal(){
+        if(!_footer) return;
+        _footer.innerHTML =
+          '<span style="font-size:12px;color:#888;flex:1;">⚠️ 批次刪除不可逆。</span>'
+          + '<button id="_admin-wq-batch-del" style="padding:9px 18px;font-size:14px;font-weight:800;'
+          + 'background:linear-gradient(135deg,rgba(180,60,60,0.7),rgba(120,30,30,0.9));'
+          + 'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;'
+          + 'font-family:inherit;opacity:0.5;" disabled>🗑️ 刪除已勾選 0 筆</button>';
+        _footer.querySelector('#_admin-wq-batch-del').onclick = _onBatchDelClick;
+        _updateSelCount();
+      }
+      function _renderFooterConfirm(targets){
+        if(!_footer) return;
+        _footer.innerHTML =
+          '<span style="font-size:13px;color:#ff9988;flex:1;font-weight:700;">' +
+            '⚠️ 真的要刪除這 ' + targets.length + ' 筆嗎?(不可復原)' +
+          '</span>' +
+          '<button id="_admin-wq-batch-cancel" style="padding:8px 14px;font-size:13px;' +
+                  'background:rgba(80,80,100,0.5);border:1.5px solid #889;color:#ccc;' +
+                  'border-radius:6px;cursor:pointer;font-family:inherit;">取消</button>' +
+          '<button id="_admin-wq-batch-confirm" style="padding:9px 18px;font-size:14px;font-weight:800;' +
+                  'background:linear-gradient(135deg,rgba(220,60,60,0.95),rgba(160,20,20,1));' +
+                  'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
+                  'font-family:inherit;box-shadow:0 0 12px rgba(255,80,80,0.5);">' +
+            '✓ 確認刪除 ' + targets.length + ' 筆</button>';
+        _footer.querySelector('#_admin-wq-batch-cancel').onclick = _renderFooterNormal;
+        _footer.querySelector('#_admin-wq-batch-confirm').onclick = function(){
+          _doBatchDelete(targets);
+        };
+      }
+      function _onBatchDelClick(){
+        const _checked = Array.from(_listBox.querySelectorAll('._admin-wq-chk:checked'));
+        const _targets = _checked.map(function(c){
+          const row = c.closest('._admin-wq-row');
+          return row ? {
+            uid: row.getAttribute('data-uid') || '',
+            name: row.getAttribute('data-name') || '',
+            week: row.getAttribute('data-week') || weekKey,
+          } : null;
+        }).filter(function(t){ return t && t.uid; });
+        if(_targets.length === 0) return;
+        _renderFooterConfirm(_targets);
+      }
+      async function _doBatchDelete(targets){
+        if(!_footer) return;
+        _footer.innerHTML =
+          '<span style="font-size:13px;color:#ffcc88;flex:1;">刪除中… 0/' + targets.length + '</span>';
+        const _progEl = _footer.querySelector('span');
+        let _ok = 0, _fail = 0;
+        for(let i = 0; i < targets.length; i++){
+          const t = targets[i];
+          if(_progEl) _progEl.textContent = '刪除中… ' + i + '/' + targets.length + '(' + t.name + ')';
+          try{
+            await _doDeleteWqEntrySilent(t.week, t.uid);
+            _ok++;
+          }catch(e){
+            console.error('[批次刪小博士排名] 失敗 uid=' + t.uid, e);
+            _fail++;
+          }
+        }
+        try{ _showSimpleToast('✅ 批次刪除完成:成功 ' + _ok + ' 筆,失敗 ' + _fail + ' 筆', 4000); }
+        catch(_){ alert('✅ 批次刪除完成:成功 ' + _ok + ' 筆,失敗 ' + _fail + ' 筆'); }
+        _closeModal();
+        try{ _renderInfo(); }catch(_){}
+      }
+      // 首次掛上點擊
+      const _batchBtn = _modal.querySelector('#_admin-wq-batch-del');
+      if(_batchBtn) _batchBtn.onclick = _onBatchDelClick;
+    }
+
+    // ★ v3.11.11(2026-05-28) — 靜默版批次刪除(不彈 confirm,直接執行,失敗 throw)
+    //   給上面的 _doBatchDelete 用。錯誤往上拋讓 caller 統計成功/失敗數。
+    async function _doDeleteWqEntrySilent(weekKey, uid){
+      uid = String(uid || '').trim();
+      if(!weekKey || !uid) throw new Error('缺週 key 或 uid');
+      const _fbDb = window._fbDb;
+      if(!_fbDb) throw new Error('window._fbDb 不可用');
+      const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      const _doc = _firestoreMod.doc;
+      const _runTransaction = _firestoreMod.runTransaction;
+      const _statsRef = _doc(_fbDb, 'stats', 'global');
+      await _runTransaction(_fbDb, async function(tx){
+        const _snap = await tx.get(_statsRef);
+        const _data = _snap.exists() ? (_snap.data() || {}) : {};
+        const _wq = _data.weeklyQuiz || {};
+        const _weekMap = _wq[weekKey] || {};
+        if(!_weekMap[uid]){
+          // 已不存在,當作成功(冪等)
+          return;
+        }
+        const _deletedEntry = _weekMap[uid];
+        const _newWeekMap = {};
+        for(const _u in _weekMap){
+          if(_u !== uid) _newWeekMap[_u] = _weekMap[_u];
+        }
+        const _newWq = Object.assign({}, _wq);
+        _newWq[weekKey] = _newWeekMap;
+        const _logKey = weekKey + '__' + uid;
+        const _delLog = _data.weeklyQuizDeletionLog || {};
+        const _newLog = Object.assign({}, _delLog);
+        _newLog[_logKey] = {
+          weekKey: weekKey,
+          uid: uid,
+          correct: _deletedEntry.correct || 0,
+          name: _deletedEntry.name || '',
+          email: _deletedEntry.email || '',
+          deletedBy: window._gUserId || '',
+          deletedAt: Date.now(),
+          batchDelete: true,  // ★ v3.11.11 標記為批次刪除
+        };
+        tx.set(_statsRef, {
+          weeklyQuiz: _newWq,
+          weeklyQuizDeletionLog: _newLog,
+        }, { merge: true });
+      });
+      console.log('[批次刪小博士排名 v3.11.11] ✅ 週=' + weekKey + ' uid=' + uid);
+      // 如果是自己且本週 → 順手清本機累計
+      try{
+        const _selfUid = window._gUserId || '';
+        const _isSelf = (uid === _selfUid);
+        const _isThisWeek = window._weeklyQuiz && (weekKey === window._weeklyQuiz.getWeekKey());
+        if(_isSelf && _isThisWeek){
+          try{ localStorage.removeItem('lxps_wq_local_' + _selfUid); }catch(_){}
+          if(window._weeklyQuiz && typeof window._weeklyQuiz.resetLocalCount === 'function'){
+            try{ window._weeklyQuiz.resetLocalCount(); }catch(_){}
+          }
+        }
       }catch(_){}
     }
 
@@ -5577,12 +5996,39 @@ async function _showAdminStatsPanelImpl(){
     };
 
     // ── 補發給單一玩家 ──
+    // ★ v3.11.11(2026-05-28) — 老師需求:輸入 uid 改為輸入 email
     if(_giveBtn) _giveBtn.onclick = async function(){
-      const _uid = (_uidInput.value || '').trim();
-      if(!_uid){
-        try{ _showSimpleToast('請輸入 uid', 2000); }catch(_){ alert('請輸入 uid'); }
+      const _email = (_emailInput.value || '').trim().toLowerCase();
+      if(!_email){
+        try{ _showSimpleToast('請輸入學生 email', 2000); }catch(_){ alert('請輸入學生 email'); }
         return;
       }
+      // email → uid 反查
+      if(!window._fbAdminFindPlayerByEmail){
+        try{ _showSimpleToast('❌ _fbAdminFindPlayerByEmail API 尚未就緒', 3000); }catch(_){ alert('❌ _fbAdminFindPlayerByEmail API 尚未就緒'); }
+        return;
+      }
+      _giveBtn.disabled = true;
+      _giveBtn.textContent = '🔍 查 uid...';
+      let _r;
+      try{
+        _r = await window._fbAdminFindPlayerByEmail(_email);
+      }catch(eFind){
+        console.error('[手動補發] email 查 uid 失敗', eFind);
+        try{ _showSimpleToast('❌ 查不到該 email:' + (eFind && eFind.message || eFind), 4000); }catch(_){ alert('❌ 查不到該 email'); }
+        _giveBtn.disabled = false;
+        _giveBtn.innerHTML = '💰 補發';
+        return;
+      }
+      if(!_r || !_r.found){
+        try{ _showSimpleToast('❌ 找不到 email 為 ' + _email + ' 的學生', 4000); }catch(_){ alert('❌ 找不到該 email 的學生'); }
+        _giveBtn.disabled = false;
+        _giveBtn.innerHTML = '💰 補發';
+        return;
+      }
+      const _uid = _r.uid;
+      const _displayName = (_r.data && _r.data.displayName) || '(無暱稱)';
+
       const _rank = parseInt(_rankSelect.value, 10);
       let _coins, _crystals, _books;
       if(_rank === 1){ _coins = 50000; _crystals = 10; _books = 10; }
@@ -5590,11 +6036,15 @@ async function _showAdminStatsPanelImpl(){
       else if(_rank === 8){ _coins = 20000; _crystals = 3; _books = 3; } // 用 8 代表 6-10 名
       else {
         try{ _showSimpleToast('排名選項異常', 2000); }catch(_){ alert('排名選項異常'); }
+        _giveBtn.disabled = false;
+        _giveBtn.innerHTML = '💰 補發';
         return;
       }
 
       const _confirmMsg = '💰 確定要補發給以下玩家?<br><br>'
-        + 'uid: <code style="font-size:12px;">' + _esc(_uid) + '</code><br>'
+        + 'email: <code style="font-size:12px;color:#88ccff;">' + _esc(_email) + '</code><br>'
+        + '暱稱:<b style="color:#ffcc88;">' + _esc(_displayName) + '</b><br>'
+        + 'uid: <code style="font-size:11px;color:#888;">' + _esc(_uid.slice(0,16)) + '…</code><br>'
         + '排名:' + (_rank === 1 ? '🥇 第 1 名' : _rank === 3 ? '🥈 第 2-5 名' : '🥉 第 6-10 名') + '<br>'
         + '獎勵:' + _coins + ' 幣 + ' + _crystals + ' 水晶 + ' + _books + ' 本豪華典藏經驗書';
 
@@ -5608,16 +6058,10 @@ async function _showAdminStatsPanelImpl(){
           if(!_fbDb){
             throw new Error('window._fbDb 不可用');
           }
-          // ★ v3.11.29 — 優先用 index.html 暴露的同版 Firestore 函式(window._fbFns)
-          let _doc, _setDoc;
-          if(window._fbFns && window._fbFns.doc && window._fbFns.setDoc){
-            _doc = window._fbFns.doc;
-            _setDoc = window._fbFns.setDoc;
-          } else {
-            const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-            _doc = _firestoreMod.doc;
-            _setDoc = _firestoreMod.setDoc;
-          }
+          // 動態載入 Firestore SDK
+          const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          const _doc = _firestoreMod.doc;
+          const _setDoc = _firestoreMod.setDoc;
 
           const _lastKey = window._weeklyQuiz.getLastWeekKey();
           await _setDoc(_doc(_fbDb, 'players', _uid), {
@@ -5634,9 +6078,9 @@ async function _showAdminStatsPanelImpl(){
               manualBy: window._gUserId || '',
             }
           }, { merge: true });
-          console.log('[手動補發] ✅ uid=' + _uid + ' rank=' + _rank);
+          console.log('[手動補發 v3.11.11] ✅ email=' + _email + ' uid=' + _uid + ' rank=' + _rank);
           try{ _showSimpleToast('✅ 補發成功,玩家下次登入會自動領取', 3000); }catch(_){ alert('✅ 補發成功,玩家下次登入會自動領取'); }
-          _uidInput.value = '';
+          _emailInput.value = '';
         }catch(e){
           console.error('[手動補發] 失敗', e);
           const _code = e && e.code;
@@ -5664,6 +6108,11 @@ async function _showAdminStatsPanelImpl(){
         _customConfirm(_confirmMsg, _doGive);
       } else {
         if(confirm(_confirmMsg.replace(/<br>/g, '\n').replace(/<[^>]+>/g, ''))) await _doGive();
+      }
+      // 用戶取消 confirm 也要還原按鈕
+      if(_giveBtn.disabled){
+        _giveBtn.disabled = false;
+        _giveBtn.innerHTML = '💰 補發';
       }
     };
 
@@ -5698,65 +6147,50 @@ async function _showAdminStatsPanelImpl(){
           if(!_fbDb){
             throw new Error('window._fbDb 不可用');
           }
-          // ★ v3.11.33(2026-05-29) — 真正修法:改用 updateDoc + dot path + deleteField()。
-          //   原 BUG:tx.set({...}, {merge:true}) 對 nested map 是「深層合併」不是「替換」,
-          //          所以「移除 uid 後重建的 weekMap」寫回時,Firestore 會把舊 uid 合併回來,
-          //          造成「顯示成功但排行榜還在」(老師 2026-05-29 回報)。
-          //   新法:用 updateDoc 配 dot notation key + deleteField() 精準刪除 nested key,
-          //         完全不動其他欄位(同 line ~7554 worldBossLeaderboard 刪除模式)。
-          let _doc, _updateDoc, _deleteField, _getDoc;
-          if(window._fbFns && window._fbFns.doc && window._fbFns.updateDoc && window._fbFns.deleteField && window._fbFns.getDoc){
-            _doc = window._fbFns.doc;
-            _updateDoc = window._fbFns.updateDoc;
-            _deleteField = window._fbFns.deleteField;
-            _getDoc = window._fbFns.getDoc;
-          } else {
-            const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-            _doc = _firestoreMod.doc;
-            _updateDoc = _firestoreMod.updateDoc;
-            _deleteField = _firestoreMod.deleteField;
-            _getDoc = _firestoreMod.getDoc;
-          }
+          // 動態載入 Firestore SDK
+          const _firestoreMod = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          const _doc = _firestoreMod.doc;
+          const _runTransaction = _firestoreMod.runTransaction;
 
           const _statsRef = _doc(_fbDb, 'stats', 'global');
+          let _deletedEntry = null;
 
-          // 先讀一次當前 entry(留快照給審計 log,並驗證真有這筆)
-          const _snap = await _getDoc(_statsRef);
-          const _data = _snap.exists() ? (_snap.data() || {}) : {};
-          const _weekMap = (_data.weeklyQuiz && _data.weeklyQuiz[weekKey]) || {};
-          if(!_weekMap[uid]){
-            throw new Error('該玩家在「' + weekKey + '」沒有上榜記錄(可能已被刪除或從未答題)');
-          }
-          const _deletedEntry = _weekMap[uid];
-          const _logKey = weekKey + '__' + uid;
-
-          // 用 dot notation + deleteField() 精準刪除單一 nested key
-          const _updates = {};
-          _updates['weeklyQuiz.' + weekKey + '.' + uid] = _deleteField();
-          _updates['weeklyQuizDeletionLog.' + _logKey] = {
-            weekKey: weekKey,
-            uid: uid,
-            correct: _deletedEntry.correct || 0,
-            name: _deletedEntry.name || '',
-            email: _deletedEntry.email || '',
-            deletedBy: window._gUserId || '',
-            deletedAt: Date.now(),
-          };
-          await _updateDoc(_statsRef, _updates);
-
-          console.log('[刪除小博士排名 v3.11.33] ✅ 週=' + weekKey + ' uid=' + uid + ' 原題數=' + (_deletedEntry.correct || 0));
-
-          // ★ v3.11.33(2026-05-29) — 手動同步本機 cache,避免 onSnapshot round-trip 期間 UI 仍顯示舊資料
-          //   onSnapshot 通常 100~500ms 內會自動更新 _cachedGlobalStats,但用戶感受上可能太慢。
-          //   主動先在本機 mirror 掉,UI 立刻看到正確結果;之後 onSnapshot 回來會再 overwrite(冪等)。
-          try{
-            if(window._cachedGlobalStats && window._cachedGlobalStats.weeklyQuiz
-               && window._cachedGlobalStats.weeklyQuiz[weekKey]){
-              delete window._cachedGlobalStats.weeklyQuiz[weekKey][uid];
-              // 廣播,讓訂閱 weeklyQuizSynced 的 UI 重渲(玩家端排行榜頁 + admin 後台)
-              try{ document.dispatchEvent(new CustomEvent('weeklyQuizSynced')); }catch(_){}
+          await _runTransaction(_fbDb, async function(tx){
+            const _snap = await tx.get(_statsRef);
+            const _data = _snap.exists() ? (_snap.data() || {}) : {};
+            const _wq = _data.weeklyQuiz || {};
+            const _weekMap = _wq[weekKey] || {};
+            if(!_weekMap[uid]){
+              throw new Error('該玩家在「' + weekKey + '」沒有上榜記錄(可能已被刪除或從未答題)');
             }
-          }catch(_eCache){ console.warn('[刪除小博士排名] 本機 cache 同步失敗(已寫雲端,onSnapshot 會補)', _eCache); }
+            _deletedEntry = _weekMap[uid];  // 留個快照,寫進審計 log
+            // 用 spread 重建 map,排除目標 uid
+            const _newWeekMap = {};
+            for(const _u in _weekMap){
+              if(_u !== uid) _newWeekMap[_u] = _weekMap[_u];
+            }
+            const _newWq = Object.assign({}, _wq);
+            _newWq[weekKey] = _newWeekMap;
+            // 審計 log:用「週key__uid」當 key,內含被刪當下的快照 + 操作者
+            const _logKey = weekKey + '__' + uid;
+            const _delLog = _data.weeklyQuizDeletionLog || {};
+            const _newLog = Object.assign({}, _delLog);
+            _newLog[_logKey] = {
+              weekKey: weekKey,
+              uid: uid,
+              correct: _deletedEntry.correct || 0,
+              name: _deletedEntry.name || '',
+              email: _deletedEntry.email || '',
+              deletedBy: window._gUserId || '',
+              deletedAt: Date.now(),
+            };
+            tx.set(_statsRef, {
+              weeklyQuiz: _newWq,
+              weeklyQuizDeletionLog: _newLog,
+            }, { merge: true });
+          });
+
+          console.log('[刪除小博士排名] ✅ 週=' + weekKey + ' uid=' + uid + ' 原題數=' + (_deletedEntry && _deletedEntry.correct || 0));
 
           // 如果是刪除「自己」且為本週 → 同步把本機 lxps_wq_local_<uid> 也清掉,
           // 不然玩家下次答題會把本機累計推回雲端
@@ -5804,45 +6238,9 @@ async function _showAdminStatsPanelImpl(){
       }
     }
 
-    // 第 7 區「🗑️ 刪除」按鈕綁定
-    const _delBtn = document.getElementById('_admin-wq-del-btn');
-    const _delUidInput = document.getElementById('_admin-wq-del-uid');
-    const _delWeekSelect = document.getElementById('_admin-wq-del-week');
-    if(_delBtn) _delBtn.onclick = async function(){
-      const _uid = (_delUidInput && _delUidInput.value || '').trim();
-      if(!_uid){
-        try{ _showSimpleToast('請輸入要刪除的玩家 uid', 2500); }catch(_){ alert('請輸入要刪除的玩家 uid'); }
-        return;
-      }
-      const _which = (_delWeekSelect && _delWeekSelect.value) || 'this';
-      const _weekKey = (_which === 'last')
-        ? window._weeklyQuiz.getLastWeekKey()
-        : window._weeklyQuiz.getWeekKey();
-
-      // 從快取查名字(若查不到就用 uid 短碼)
-      let _displayName = _uid.slice(0, 8) + '…';
-      try{
-        const _gs = window._cachedGlobalStats || {};
-        const _wq = _gs.weeklyQuiz || {};
-        const _wm = _wq[_weekKey] || {};
-        const _ent = _wm[_uid];
-        if(_ent){
-          _displayName = _formatName({ uid: _uid, name: _ent.name, email: _ent.email });
-        }
-      }catch(_){}
-
-      _delBtn.disabled = true;
-      _delBtn.textContent = '🔄 刪除中...';
-      await _doDeleteWqEntry(_weekKey, _uid, _displayName, function(){
-        _delBtn.disabled = false;
-        _delBtn.innerHTML = '🗑️ 刪除';
-        if(_delUidInput) _delUidInput.value = '';
-        _renderInfo();
-      });
-      // 防呆:若 transaction 是 throw error 提早跑掉,按鈕也要還原
-      _delBtn.disabled = false;
-      _delBtn.innerHTML = '🗑️ 刪除';
-    };
+    // ★ v3.11.11(2026-05-28) — 原「🗑️ 刪除排名」按 uid 區塊已移除
+    //   老師需求:統一改用「查看本週/上週前 30 名」modal 內的 checkbox 勾選批次刪除
+    //   體驗對齊世界 BOSS 榜:點榜上玩家勾選 → 批次刪除,不再需要輸入 uid
   })();
 }
 
