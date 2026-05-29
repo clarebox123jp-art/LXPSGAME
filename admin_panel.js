@@ -1056,20 +1056,21 @@ async function _showAdminStatsPanelImpl(){
 
       <!-- ════════════════════════════════════════════════════════════ -->
       <!-- ★ v3.11.35 階段 4c(2026-05-29) — 玩家活動記錄查詢               -->
-      <!--                                                                -->
-      <!-- 用途:輸入 email / uid,完整查看玩家所有英雄解鎖、至寶解鎖、    -->
-      <!-- 戰鬥紀錄、知識幣帳目。以 battleId 為單位偵測異常(同一場戰鬥    -->
-      <!-- 多次解鎖 = 異常)。逐項可刪除、強制覆寫。                       -->
+      <!--   ★ v3.11.35+(2026-05-29 晚場) — 新增「姓名」查詢                -->
+      <!-- 用途:輸入 email / uid / 姓名,完整查看玩家所有英雄解鎖、至寶   -->
+      <!-- 解鎖、戰鬥紀錄、知識幣帳目。以 battleId 為單位偵測異常(同一場 -->
+      <!-- 戰鬥多次解鎖 = 異常)。逐項可刪除、強制覆寫。                   -->
       <!-- ════════════════════════════════════════════════════════════ -->
       <div id="_admin-activity-section" style="background:rgba(20,30,50,0.5);border:2px solid rgba(140,180,255,0.6);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:800;color:#aaccff;margin-bottom:8px;">📜 玩家活動記錄查詢</div>
         <div style="font-size:13px;color:#cce0ff;margin-bottom:12px;line-height:1.65;">
-          輸入玩家 <b>email</b> 或 <b>uid</b> 查看完整活動紀錄。<br>
+          輸入玩家 <b>email</b>、<b>uid</b> 或 <b>姓名</b>查看完整活動紀錄。<br>
+          <span style="color:#aaccff;font-size:12px;">姓名可只輸入部分(如「王同學」),系統會列出候選讓你點選。</span><br>
           <span style="color:#ffcc66;">⚠ 新規則(取代舊「短時間爆增」):一場戰鬥(同 battleId)最多 1 隻新解鎖英雄 + 1 個至寶,超過視為異常,可逐筆刪除。</span>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
-          <input id="_admin-activity-query" type="text" placeholder="email 或 uid"
-                 style="flex:1;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #668;border-radius:6px;font-family:inherit;">
+          <input id="_admin-activity-query" type="text" placeholder="email / uid / 姓名(例:王同學、5324王同學)"
+                 style="flex:1;min-width:240px;padding:8px 12px;font-size:13px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #668;border-radius:6px;font-family:inherit;">
           <button id="_admin-activity-search" style="padding:9px 20px;font-size:14px;font-weight:800;
                   background:linear-gradient(135deg,#3366bb,#1a4a88);color:#fff;border:none;border-radius:8px;cursor:pointer;
                   box-shadow:0 3px 10px rgba(80,140,220,0.5);">
@@ -1092,7 +1093,7 @@ async function _showAdminStatsPanelImpl(){
           <button class="_aa-tab" data-tab="coin" style="padding:8px 16px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;">💰 知識幣帳目</button>
         </div>
         <div id="_admin-activity-content" style="background:rgba(0,0,0,0.35);border-radius:8px;padding:8px;max-height:560px;overflow-y:auto;">
-          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">輸入 email 或 uid 後點「查詢」開始</div>
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">輸入 email / uid / 姓名 後點「查詢」開始</div>
         </div>
       </div>
 
@@ -1281,7 +1282,7 @@ async function _showAdminStatsPanelImpl(){
     const SIDEBAR_ITEMS = [
       { sec: '_admin-maint-section',            label: '🔧 維修模式',              hint: '非管理員登入封鎖' },
       { sec: '_admin-gm-section',               label: '📢 GM 公告',                hint: '對所有在線玩家廣播' },
-      { sec: '_admin-activity-section',         label: '📜 玩家活動記錄查詢',      hint: 'email/uid 查英雄/至寶/戰鬥/幣帳' },
+      { sec: '_admin-activity-section',         label: '📜 玩家活動記錄查詢',      hint: 'email/uid/姓名 查英雄/至寶/戰鬥/幣帳' },
       { sec: '_admin-bug-section',              label: '📥 接收錯誤回報',          hint: '查看玩家提交的 bug' },
       { sec: '_admin-lv1-section',              label: '🆘 Lv1 救援',              hint: '雲端三槽 + 反污染保護' },
       { sec: '_admin-pollution-check-section',  label: '📢 污染檢查提醒',          hint: '寄送進度污染提醒' },
@@ -5030,12 +5031,26 @@ async function _showAdminStatsPanelImpl(){
       }
     }
 
-    // ── 解析 email → uid ──
+    // ── 判斷輸入類型:email / uid / 姓名 ──
+    //   email:含 @
+    //   uid:不含 @ 且 長度 >= 20 全 ASCII 英數(Firebase Auth uid 通常 28 字元)
+    //   其他:視為姓名
+    function _detectInputType(s){
+      const _s = String(s || '').trim();
+      if(!_s) return null;
+      if(_s.includes('@')) return 'email';
+      // uid 啟發式:純英數 + dash,長度 >= 20
+      if(/^[A-Za-z0-9-]{20,}$/.test(_s)) return 'uid';
+      return 'name';
+    }
+
+    // ── 解析輸入 → uid ──
+    //   姓名命中多筆時,throw 特殊 error 物件 { _multi: true, candidates: [] }
     async function _resolveUid(input){
       const s = String(input || '').trim();
-      if(!s) throw new Error('請輸入 email 或 uid');
-      if(s.includes('@')){
-        // email
+      if(!s) throw new Error('請輸入 email / uid / 姓名');
+      const _type = _detectInputType(s);
+      if(_type === 'email'){
         if(typeof window._fbAdminFindPlayerByEmail !== 'function'){
           throw new Error('_fbAdminFindPlayerByEmail 未載入');
         }
@@ -5043,7 +5058,28 @@ async function _showAdminStatsPanelImpl(){
         if(!_find || !_find.uid) throw new Error('找不到此 email 對應的玩家');
         return _find.uid;
       }
-      return s;  // 視為 uid
+      if(_type === 'uid'){
+        return s;
+      }
+      // ── 姓名路徑 ──
+      if(typeof window._fbAdminFindPlayersByName !== 'function'){
+        throw new Error('_fbAdminFindPlayersByName 未載入,請重新整理');
+      }
+      const _r = await window._fbAdminFindPlayersByName(s);
+      const _players = (_r && _r.players) || [];
+      if(!_players.length) throw new Error('找不到姓名包含「' + s + '」的玩家');
+      if(_players.length === 1){
+        // 唯一命中,直接用
+        return _players[0].uid;
+      }
+      // 多筆候選 — 用特殊 error 傳出來,讓 _doQuery 渲染選單
+      const _err = new Error('多筆候選');
+      _err._multi = true;
+      _err.candidates = _players;
+      _err.truncated = !!_r.truncated;
+      _err.totalCount = _r.count;
+      _err.scanned = _r.scanned || 0;
+      throw _err;
     }
 
     // ── 主查詢 ──
@@ -5065,6 +5101,16 @@ async function _showAdminStatsPanelImpl(){
         _switchTab(_curTab);
         _setStatus(`✅ 查詢完成 — uid=${uid}`, '#88ddaa');
       }catch(e){
+        // ── 姓名多筆候選 → 列出候選讓老師點選 ──
+        if(e && e._multi && Array.isArray(e.candidates)){
+          if(_playerCard) _playerCard.style.display = 'none';
+          if(_tabsEl) _tabsEl.style.display = 'none';
+          _renderCandidateList(e.candidates, e);
+          _setStatus(`找到 ${e.totalCount} 位同/類似姓名玩家,請點選`
+            + (e.truncated ? `(僅顯示前 ${e.candidates.length} 位)` : ''),
+            '#ffcc66');
+          return;
+        }
         _setStatus('❌ ' + (e.message || e), '#ff8866');
         if(_playerCard) _playerCard.style.display = 'none';
         if(_tabsEl) _tabsEl.style.display = 'none';
@@ -5074,11 +5120,122 @@ async function _showAdminStatsPanelImpl(){
       }
     }
 
+    // ── 候選清單(姓名命中多筆時) ──
+    function _renderCandidateList(candidates, info){
+      const _typeLabel = {
+        exact: '完全相符',
+        contains: '名稱包含',
+        no_prefix_contains: '去座號後包含',
+        reverse_contains: '輸入較長',
+        no_prefix_reverse: '去座號反向',
+      };
+      const _rows = candidates.map((p, i) => {
+        const _tl = _typeLabel[p.matchType] || p.matchType || '';
+        return `<div class="_aa-candidate" data-uid="${_esc(p.uid)}" style="
+          display:flex;justify-content:space-between;align-items:center;
+          padding:10px 14px;margin:4px 0;
+          background:rgba(60,80,140,0.25);border:1px solid rgba(140,180,255,0.3);
+          border-radius:6px;cursor:pointer;transition:background 0.15s;"
+          onmouseover="this.style.background='rgba(80,120,200,0.4)';"
+          onmouseout="this.style.background='rgba(60,80,140,0.25)';">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;color:#ffe;">
+              <span style="color:#aac;font-size:11px;margin-right:6px;">${i + 1}.</span>
+              ${_esc(p.name || '(無姓名)')}
+            </div>
+            <div style="font-size:11px;color:#aac;margin-top:2px;">
+              ${_esc(p.email || '(無 email)')}
+              <span style="color:#778;margin-left:8px;font-family:monospace;">uid: ${_esc(String(p.uid).slice(0, 16))}…</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;font-size:11px;">
+            <span style="color:#aac;">🦸 ${p.unlockedCount || 0}</span>
+            <span style="color:#ffdd66;">💰 ${p.knowledgeCoins || 0}</span>
+            <span style="color:#88aaff;font-size:10px;background:rgba(80,120,200,0.3);padding:2px 8px;border-radius:10px;">${_esc(_tl)}</span>
+            <span style="color:#ffe;font-size:14px;">→</span>
+          </div>
+        </div>`;
+      }).join('');
+      const _hint = (info && info.scanned)
+        ? `<div style="font-size:11px;color:#778;padding:6px 4px;">(從 ${info.scanned} 位玩家中找到)</div>`
+        : '';
+      _contentEl.innerHTML = `
+        <div style="margin-bottom:8px;font-size:13px;color:#ffcc88;font-weight:700;">
+          👇 點選要查詢的玩家
+        </div>
+        ${_hint}
+        ${_rows}
+      `;
+      // 綁定點擊
+      _contentEl.querySelectorAll('._aa-candidate').forEach(el => {
+        el.onclick = async function(){
+          const _uid = el.dataset.uid;
+          if(!_uid) return;
+          // 把 uid 填回 input,然後重跑 _doQuery
+          _queryInput.value = _uid;
+          await _doQuery();
+        };
+      });
+    }
+
+    // ── BOSS 來源白名單(與 index.html _analyzeBattleAnomalySingle 同步) ──
+    const BOSS_SOURCES = new Set([
+      'darkorb_5pct', 'japan_boss_5pct', 'maokong_50pct', 'yamata_miko_5pct',
+      'taiwan_clear', 'japan_clear', 'boss_drop',
+    ]);
+    const _isBossSource = (s) => !s || BOSS_SOURCES.has(s);
+    const TIME_WINDOW_MS = 60 * 1000;  // 1 分鐘
+    const TIME_HERO_THRESHOLD = 2;      // > 2 隻 = 異常(3 隻起)
+    const TIME_TRE_THRESHOLD = 2;
+
+    // ── 共用 helper:算時間窗異常 cluster ──
+    function _findTimeClustersLocal(entries, threshold, idField){
+      const _boss = (entries || [])
+        .filter(e => e && e.source !== 'admin_delete' && e.source !== 'admin_grant'
+                  && _isBossSource(e.source) && e.at)
+        .sort((a,b) => (a.at || 0) - (b.at || 0));
+      const _clusters = [];
+      const _consumed = new Set();
+      for(let i = 0; i < _boss.length; i++){
+        const _seed = _boss[i];
+        const _key0 = _seed.at + '|' + (_seed[idField] || '');
+        if(_consumed.has(_key0)) continue;
+        const _window = [];
+        for(let j = i; j < _boss.length; j++){
+          const _e = _boss[j];
+          if((_e.at || 0) - (_seed.at || 0) > TIME_WINDOW_MS) break;
+          _window.push(_e);
+        }
+        if(_window.length > threshold){
+          _clusters.push({
+            startAt: _seed.at,
+            endAt: _window[_window.length - 1].at,
+            durationMs: _window[_window.length - 1].at - _seed.at,
+            entries: _window,
+            count: _window.length,
+          });
+          _window.forEach(_e => _consumed.add(_e.at + '|' + (_e[idField] || '')));
+        }
+      }
+      return _clusters;
+    }
+
+    // ── 共用:把時間窗 cluster 內的 entry key 都收進 Set,用來在表格標紅 ──
+    function _buildTimeClusterKeySet(clusters, idField){
+      const _set = new Set();
+      (clusters || []).forEach(c => {
+        (c.entries || []).forEach(e => {
+          _set.add((e.at || 0) + '|' + (e[idField] || ''));
+        });
+      });
+      return _set;
+    }
+
     function _renderPlayerCard(r){
       if(!_playerCard || !r) return;
       const p = r.player || {};
       _playerCard.style.display = 'block';
-      // 算 battleId 衝突數
+      // ── 算規則 1:battleId 衝突 ──
       const heroByBid = {}; const treByBid = {};
       (r.heroUnlockHistory || []).forEach(e => {
         if(!e || !e.battleId || e.source === 'admin_delete' || e.source === 'admin_grant') return;
@@ -5088,15 +5245,34 @@ async function _showAdminStatsPanelImpl(){
         if(!e || !e.battleId || e.source === 'admin_delete' || e.source === 'admin_grant') return;
         (treByBid[e.battleId] = treByBid[e.battleId] || []).push(e);
       });
-      const heroConflicts = Object.values(heroByBid).filter(l => l.length > 1).length;
-      const treConflicts = Object.values(treByBid).filter(l => l.length > 1).length;
-      const totalConflicts = heroConflicts + treConflicts;
+      const heroBidConflicts = Object.values(heroByBid).filter(l => l.length > 1).length;
+      const treBidConflicts = Object.values(treByBid).filter(l => l.length > 1).length;
+      // ── 算規則 2:時間窗異常(★ 新主規則) ──
+      const heroTimeClusters = _findTimeClustersLocal(r.heroUnlockHistory, TIME_HERO_THRESHOLD, 'name');
+      const treTimeClusters  = _findTimeClustersLocal(r.treasureUnlockHistory, TIME_TRE_THRESHOLD, 'id');
+      const totalConflicts = heroBidConflicts + treBidConflicts
+        + heroTimeClusters.length + treTimeClusters.length;
+
+      // 詳細描述
+      let _detailLines = [];
+      if(heroTimeClusters.length){
+        const _totalHeroes = heroTimeClusters.reduce((s,c) => s + c.count, 0);
+        _detailLines.push(`<b>⏱ 1 分鐘窗:英雄 ${heroTimeClusters.length} 群(共 ${_totalHeroes} 隻)</b>`);
+      }
+      if(treTimeClusters.length){
+        const _totalTres = treTimeClusters.reduce((s,c) => s + c.count, 0);
+        _detailLines.push(`<b>⏱ 1 分鐘窗:至寶 ${treTimeClusters.length} 群(共 ${_totalTres} 個)</b>`);
+      }
+      if(heroBidConflicts) _detailLines.push(`battleId:英雄 ${heroBidConflicts} 場`);
+      if(treBidConflicts)  _detailLines.push(`battleId:至寶 ${treBidConflicts} 場`);
+
       const anomalyHtml = totalConflicts > 0
-        ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(200,40,40,0.25);border-left:4px solid #ff6644;border-radius:6px;color:#ffcccc;font-size:13px;">
-             ⚠ <b>偵測到 ${totalConflicts} 筆 battleId 異常</b>:英雄 ${heroConflicts} 場、至寶 ${treConflicts} 場(同一場戰鬥多筆解鎖)
+        ? `<div style="margin-top:8px;padding:10px 14px;background:rgba(200,40,40,0.25);border-left:4px solid #ff6644;border-radius:6px;color:#ffcccc;font-size:13px;">
+             ⚠ <b>偵測到 ${totalConflicts} 筆異常</b>(規則:1 分鐘內打 BOSS 解鎖 > 2 隻 OR 同 battleId 多解鎖):<br>
+             <span style="font-size:12px;color:#ffe;">${_detailLines.join('・')}</span>
            </div>`
         : `<div style="margin-top:8px;padding:6px 12px;background:rgba(40,120,80,0.2);border-left:4px solid #66cc88;border-radius:6px;color:#aaddbb;font-size:12px;">
-             ✅ 無 battleId 異常
+             ✅ 無異常
            </div>`;
       _playerCard.innerHTML = `
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
@@ -5142,21 +5318,29 @@ async function _showAdminStatsPanelImpl(){
       else if(tab === 'coin') _renderCoinTab(_curData.coinTransactions || []);
     }
 
-    // 找出同 battleId 多解鎖的 entry(用 Set 標紅)
+    // 找出異常 entry 的 key Set(用於表格標紅)— v3.11.35c 升級雙規則
+    //   規則 1:同 battleId 多解鎖(精確,需要新資料才有 battleId)
+    //   規則 2:1 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)
     function _buildMultiBattleSet(list, idField){
+      const conflictKeys = new Set();
+      // 規則 1:battleId
       const byBid = {};
       list.forEach(e => {
         if(!e || !e.battleId) return;
         if(e.source === 'admin_delete' || e.source === 'admin_grant') return;
         (byBid[e.battleId] = byBid[e.battleId] || []).push(e);
       });
-      const conflictKeys = new Set();
       Object.keys(byBid).forEach(bid => {
         const list2 = byBid[bid];
         if(list2.length > 1){
-          list2.forEach(e => { conflictKeys.add(e.at + '|' + e[idField]); });
+          list2.forEach(e => { conflictKeys.add((e.at||0) + '|' + (e[idField]||'')); });
         }
       });
+      // 規則 2:時間窗(★ 新增)
+      const _threshold = (idField === 'name') ? TIME_HERO_THRESHOLD : TIME_TRE_THRESHOLD;
+      const _clusters = _findTimeClustersLocal(list, _threshold, idField);
+      const _timeKeys = _buildTimeClusterKeySet(_clusters, idField);
+      _timeKeys.forEach(k => conflictKeys.add(k));
       return conflictKeys;
     }
 
@@ -5188,7 +5372,7 @@ async function _showAdminStatsPanelImpl(){
         </tr>`;
       }).join('');
       _contentEl.innerHTML = `
-        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆 battleId 衝突</span>)` : ''}</div>
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆異常 — 同 battleId 或 1 分鐘內打 BOSS 多解鎖</span>)` : ''}</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
             <th style="padding:6px 8px;text-align:left;color:#cce;">英雄</th>
@@ -5265,7 +5449,7 @@ async function _showAdminStatsPanelImpl(){
         </tr>`;
       }).join('');
       _contentEl.innerHTML = `
-        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆 battleId 衝突</span>)` : ''}</div>
+        <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆 ${conflictKeys.size > 0 ? `(<span style="color:#ff8888">${conflictKeys.size} 筆異常 — 同 battleId 或 1 分鐘內打 BOSS 多解鎖</span>)` : ''}</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
             <th style="padding:6px 8px;text-align:left;color:#cce;">至寶 ID</th>
@@ -5470,9 +5654,9 @@ async function _showAdminStatsPanelImpl(){
       };
     }
 
-    // ── 全掃 battleId 異常 ──
+    // ── 全掃異常(battleId + 時間窗雙規則) ──
     async function _doScanAnomaly(){
-      if(!confirm('掃描全部玩家(最多 200 位)的 battleId 異常?\n\n會列出「一場戰鬥多次解鎖」的玩家。可能需要 5-15 秒。')) return;
+      if(!confirm('掃描全部玩家(最多 200 位)的異常?\n\n規則:\n  ① 同 battleId 多解鎖(精確)\n  ② 1 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)\n\n可能需要 5-15 秒。')) return;
       _setStatus('掃描中...這可能要幾秒', '#aaccff');
       _scanBtn.disabled = true;
       try{
@@ -5484,19 +5668,39 @@ async function _showAdminStatsPanelImpl(){
         if(_playerCard) _playerCard.style.display = 'none';
         if(_tabsEl) _tabsEl.style.display = 'none';
         if(!ab.length){
-          _contentEl.innerHTML = `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現 battleId 異常</div>`;
+          _contentEl.innerHTML = `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現異常</div>`;
           _setStatus(`✅ 掃描完成 — ${r.scanned} 位玩家正常`, '#88ddaa');
           return;
         }
+        // 時間格式化 helper(短)
+        const _fmtSec = (ms) => {
+          if(!ms || ms < 1000) return '<1s';
+          if(ms < 60000) return Math.round(ms/1000) + 's';
+          return Math.round(ms/60000) + 'm' + Math.round((ms%60000)/1000) + 's';
+        };
         const cards = ab.map(p => {
-          const heroBlocks = p.conflictsHero.map(c => `
+          // 規則 1:battleId 衝突
+          const heroBidBlocks = (p.conflictsHero || []).map(c => `
             <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
               <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 隻英雄:
               <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
             </div>`).join('');
-          const treBlocks = p.conflictsTreasure.map(c => `
+          const treBidBlocks = (p.conflictsTreasure || []).map(c => `
             <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
               <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 個至寶:
+              <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
+            </div>`).join('');
+          // 規則 2:時間窗 cluster(★ 新增,鐵證較強)
+          const heroTimeBlocks = (p.timeClustersHero || []).map(c => `
+            <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+              <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
+              連刷 <b style="color:#ffaa66;">${c.count} 隻英雄</b>:
+              <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
+            </div>`).join('');
+          const treTimeBlocks = (p.timeClustersTreasure || []).map(c => `
+            <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+              <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
+              連刷 <b style="color:#ffaa66;">${c.count} 個至寶</b>:
               <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
             </div>`).join('');
           return `<div style="background:rgba(40,15,30,0.5);border:1px solid rgba(255,120,140,0.4);border-radius:8px;padding:10px;margin-bottom:8px;">
@@ -5504,14 +5708,15 @@ async function _showAdminStatsPanelImpl(){
               <div>
                 <b style="color:#ffe;">${_esc(p.name || '(無名稱)')}</b>
                 <span style="color:#aac;margin-left:8px;font-size:11px;">${_esc(p.email || p.uid)}</span>
+                <span style="color:#ff8866;margin-left:8px;font-size:11px;">共 ${p.totalConflicts} 筆異常</span>
               </div>
               <button class="_aa-jump" data-uid="${_esc(p.uid)}" style="padding:5px 12px;font-size:11px;background:#3366bb;color:#fff;border:none;border-radius:4px;cursor:pointer;">→ 查看詳情</button>
             </div>
-            ${heroBlocks}${treBlocks}
+            ${heroTimeBlocks}${treTimeBlocks}${heroBidBlocks}${treBidBlocks}
           </div>`;
         }).join('');
         _contentEl.innerHTML = `
-          <div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有 battleId 異常(掃 ${r.scanned} 位)</div>
+          <div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— 規則 ⏱ 紅框 = 1 分鐘內連刷;battleId 標籤 = 同場戰鬥多解鎖</div>
           ${cards}
         `;
         _contentEl.querySelectorAll('._aa-jump').forEach(btn => {
