@@ -1216,6 +1216,14 @@
       items.push(`📜 EXP 卷軸 ×${r.expScrolls}`);
     }
     if(r.titleTemplate) items.push(`🎖 限定稱號`);
+    // ★ v3.12.0(2026-05-29)— 火龍王之牙(維蘇威火山龍王 排名獎勵專屬,不可召喚)
+    if(r.dragonTreasureId && r.dragonTreasureChance > 0){
+      const _chPct = Math.round(r.dragonTreasureChance * 100);
+      const _label = (_chPct >= 100)
+        ? `🐉 <b style="color:#ff8866;">火龍王之牙 ×1 必得</b>`
+        : `🐉 火龍王之牙 (${_chPct}% 機率)`;
+      items.push(_label);
+    }
     // ★ FIX 20260518 — 排行榜字體放大 200%(玩家反應字太小)
     //   tier 標題 14→28、名次 11→22、獎勵項目 11→22,padding/border 同步放大
     return `
@@ -4119,27 +4127,20 @@
       if(_res.isAdmin){
         console.log('[WB-DailyLimit v2] 管理員進場,已上榜 ' + _res.used + '/' + _res.limit);
       }
-      console.log('[WB-DailyLimit v3.11.19] 進場放行,今日已完成 ' + _res.used + '/' + _res.limit + ' 場');
       return true;
     }
-    // ════════════════════════════════════════════════════════════════
-    // ★ v3.11.19(2026-05-28) — 已達上限訊息改用純文字
-    //   舊版用 '⛔ ...<br><br><div style=...>1/2 場</div>...' 內嵌 HTML,
-    //   但 _wbGamePopup 對訊息做 HTML escape(.replace(/</g,'&lt;')),
-    //   結果玩家螢幕上看到的是「<br><br><div style="font-size:15px...">」
-    //   這種一坨原始碼,正是老師回報的「訊息有多餘的程式碼」根因。
-    //   _wbGamePopup 會把 \n 轉成 <br>,所以改用 \n 換行就會正常顯示。
-    // ════════════════════════════════════════════════════════════════
+    // 已達上限 → 彈窗擋下
     const _msg =
-      '⛔ 今日的世界 BOSS 場次已用完\n' +
-      '\n' +
-      '今日已完成 ' + _res.used + ' / ' + _res.limit + ' 場\n' +
-      '\n' +
-      '・每位玩家每天最多 ' + _res.limit + ' 場連線戰\n' +
-      '・台灣每日上午 08:00 自動重置\n' +
-      '・「單人練習模式」不計次數,可無限練習\n' +
-      '・中斷、斷線或跳出戰鬥不會計入,只有「有結算」的場次才算';
-    console.log('[WB-DailyLimit v3.11.19] 阻擋進場,今日已 ' + _res.used + '/' + _res.limit + ' 場');
+      '⛔ 你今日的世界 BOSS 場次已用完<br><br>' +
+      '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
+        '今日已完成:<b>' + _res.used + ' / ' + _res.limit + '</b> 場' +
+      '</div>' +
+      '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
+        '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
+        '・<b style="color:#88ddff;">跨過台灣午夜 00:00 自動重置</b><br>' +
+        '・「單人練習模式」不算次數,可無限練習<br>' +
+        '・<b style="color:#a0ffa0;">小提示:中途斷線、被秒殺等沒造成傷害的場次不會計入</b>' +
+      '</div>';
     _wbGameAlert(_msg);
     return false;
   }

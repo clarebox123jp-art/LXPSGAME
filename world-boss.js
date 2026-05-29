@@ -219,6 +219,9 @@
       treasureLabel: '未收錄至寶 ×1(優先神話級)',
       summonCrystals: 10, titleTemplate: '屠龍者・{bossName}',
       expScrollTreasure: 5, expBookDeluxe: 5,
+      // ★ v3.12.0 — 火龍王之牙(維蘇威火山龍王 排名獎勵)100% 必得
+      dragonTreasureId: 'dragon_fang_fire',
+      dragonTreasureChance: 1.00,
     },
     epic: {
       rankRange: '2-5', tier: '🥈 史詩',
@@ -227,6 +230,9 @@
       treasureLabel: '未收錄至寶 ×1(優先傳說級)',
       summonCrystals: 7,
       expScrollTreasure: 3, expBookDeluxe: 3,
+      // ★ v3.12.0 — 火龍王之牙 75% 機率
+      dragonTreasureId: 'dragon_fang_fire',
+      dragonTreasureChance: 0.75,
     },
     rare: {
       rankRange: '6-10', tier: '🥉 稀有',
@@ -236,6 +242,9 @@
       treasureLabel: '未收錄至寶 (60% 機率,優先史詩級)',
       summonCrystals: 5,
       expScrollTreasure: 2, expBookDeluxe: 2,
+      // ★ v3.12.0 — 火龍王之牙 50% 機率
+      dragonTreasureId: 'dragon_fang_fire',
+      dragonTreasureChance: 0.50,
     },
     normal: {
       rankRange: '11-20', tier: '📦 普通',
@@ -244,11 +253,17 @@
       treasureLabel: '未收錄至寶 (30% 機率,優先稀有級)',
       summonCrystals: 3,
       expScrollTreasure: 1, expBookDeluxe: 1,
+      // ★ v3.12.0 — 火龍王之牙 25% 機率
+      dragonTreasureId: 'dragon_fang_fire',
+      dragonTreasureChance: 0.25,
     },
     memorial: {
       rankRange: '21+', tier: '🎁 參加獎',
       coins: 7000, summonCrystals: 1,
       expScrollTreasure: 1, expBookDeluxe: 1,
+      // ★ v3.12.0 — 火龍王之牙 5% 機率(參加獎也有機會)
+      dragonTreasureId: 'dragon_fang_fire',
+      dragonTreasureChance: 0.05,
     },
   };
 
@@ -263,6 +278,74 @@
   window._wbCalcTeamId = function(playerUids){
     if(!Array.isArray(playerUids) || playerUids.length === 0) return null;
     return playerUids.filter(u => u).sort().join('|');
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ★ v3.12.0(2026-05-29)— 火龍王之牙獎勵抽取 + 發放 API
+  //   排名獎勵專屬,1名 100% / 2-5名 75% / 6-10名 50% / 11-20名 25% / 21+ 5%
+  //   重複獲得 → 自動轉 treasure_exp_scroll ×3
+  //
+  // _wbRollDragonTreasure(rank) → { won:bool, tier, chance }
+  // _wbGrantDragonTreasure(rank) → { granted:bool, fallbackScrolls:0|3, alreadyOwned:bool }
+  // ═══════════════════════════════════════════════════════════════════
+  window._wbRollDragonTreasure = function(rank){
+    try{
+      const tier = window._wbGetRewardTier(rank);
+      const rcfg = (window._WORLD_BOSS_TEAM_REWARDS || {})[tier];
+      if(!rcfg || !rcfg.dragonTreasureId || !(rcfg.dragonTreasureChance > 0)){
+        return { won:false, tier, chance:0 };
+      }
+      const won = Math.random() < rcfg.dragonTreasureChance;
+      return { won, tier, chance: rcfg.dragonTreasureChance, treasureId: rcfg.dragonTreasureId };
+    }catch(e){ console.warn('[v3.12.0 _wbRollDragonTreasure]', e); return { won:false }; }
+  };
+
+  window._wbGrantDragonTreasure = function(rank){
+    // 結算流程呼叫此函式發放火龍王之牙;若機率未中 → granted:false 不發
+    // 若中了但已擁有 → 自動轉 treasure_exp_scroll ×3
+    try{
+      const roll = window._wbRollDragonTreasure(rank);
+      if(!roll.won) return { granted:false, rolled:true, chance: roll.chance };
+      const tid = roll.treasureId || 'dragon_fang_fire';
+      // 檢查是否已擁有(讀 window 端的 _taiwanTreasureData,index.html 內已掛 window)
+      const _td = (typeof window._taiwanTreasureData !== 'undefined') ? window._taiwanTreasureData : null;
+      const _owned = _td && _td[tid] && (_td[tid].lv >= 1);
+      if(_owned){
+        // 重複獲得 → 補 3 張至寶經驗卷軸
+        try{
+          if(typeof window.backpackAdd === 'function'){
+            window.backpackAdd('treasure_exp_scroll', 3);
+          }
+        }catch(_){}
+        try{ if(typeof window.gameCloudSave === 'function') window.gameCloudSave(); }catch(_){}
+        console.log('[v3.12.0 _wbGrantDragonTreasure] 重複獲得 → +3 treasure_exp_scroll');
+        return { granted:false, alreadyOwned:true, fallbackScrolls:3 };
+      }
+      // 首次獲得 → 寫入 _taiwanTreasureData
+      try{
+        if(typeof window._taiwanTreasureData === 'undefined' || !window._taiwanTreasureData){
+          window._taiwanTreasureData = {};
+        }
+        window._taiwanTreasureData[tid] = { lv:1, exp:0, equippedTo:null, invested:{hp:0,atk:0,sp:0,spd:0} };
+        // 持久化到 localStorage + 雲端
+        try{
+          if(typeof window._saveTaiwanTreasureData === 'function'){
+            window._saveTaiwanTreasureData();
+          } else {
+            localStorage.setItem('lxps_taiwan_treasures', JSON.stringify(window._taiwanTreasureData));
+          }
+        }catch(_){}
+        try{ if(typeof window.gameCloudSave === 'function') window.gameCloudSave(); }catch(_){}
+        console.log('[v3.12.0 _wbGrantDragonTreasure] ✅ 首次獲得火龍王之牙!');
+        return { granted:true, alreadyOwned:false };
+      }catch(eW){
+        console.error('[v3.12.0 _wbGrantDragonTreasure] 寫入失敗', eW);
+        return { granted:false, error:eW.message };
+      }
+    }catch(e){
+      console.warn('[v3.12.0 _wbGrantDragonTreasure]', e);
+      return { granted:false, error:e.message };
+    }
   };
 
   // ───────────────────────────────────────────────────────────────────
