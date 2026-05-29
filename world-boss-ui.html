@@ -4119,20 +4119,27 @@
       if(_res.isAdmin){
         console.log('[WB-DailyLimit v2] 管理員進場,已上榜 ' + _res.used + '/' + _res.limit);
       }
+      console.log('[WB-DailyLimit v3.11.19] 進場放行,今日已完成 ' + _res.used + '/' + _res.limit + ' 場');
       return true;
     }
-    // 已達上限 → 彈窗擋下
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.11.19(2026-05-28) — 已達上限訊息改用純文字
+    //   舊版用 '⛔ ...<br><br><div style=...>1/2 場</div>...' 內嵌 HTML,
+    //   但 _wbGamePopup 對訊息做 HTML escape(.replace(/</g,'&lt;')),
+    //   結果玩家螢幕上看到的是「<br><br><div style="font-size:15px...">」
+    //   這種一坨原始碼,正是老師回報的「訊息有多餘的程式碼」根因。
+    //   _wbGamePopup 會把 \n 轉成 <br>,所以改用 \n 換行就會正常顯示。
+    // ════════════════════════════════════════════════════════════════
     const _msg =
-      '⛔ 你今日的世界 BOSS 場次已用完<br><br>' +
-      '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
-        '今日已完成:<b>' + _res.used + ' / ' + _res.limit + '</b> 場' +
-      '</div>' +
-      '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
-        '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
-        '・<b style="color:#88ddff;">跨過台灣午夜 00:00 自動重置</b><br>' +
-        '・「單人練習模式」不算次數,可無限練習<br>' +
-        '・<b style="color:#a0ffa0;">小提示:中途斷線、被秒殺等沒造成傷害的場次不會計入</b>' +
-      '</div>';
+      '⛔ 今日的世界 BOSS 場次已用完\n' +
+      '\n' +
+      '今日已完成 ' + _res.used + ' / ' + _res.limit + ' 場\n' +
+      '\n' +
+      '・每位玩家每天最多 ' + _res.limit + ' 場連線戰\n' +
+      '・台灣每日上午 08:00 自動重置\n' +
+      '・「單人練習模式」不計次數,可無限練習\n' +
+      '・中斷、斷線或跳出戰鬥不會計入,只有「有結算」的場次才算';
+    console.log('[WB-DailyLimit v3.11.19] 阻擋進場,今日已 ' + _res.used + '/' + _res.limit + ' 場');
     _wbGameAlert(_msg);
     return false;
   }
