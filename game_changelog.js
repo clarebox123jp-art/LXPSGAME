@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-05-31  / 目前主程式版本:v3.12.13(線上實際版本)
+//  最後更新:2026-05-31  / 目前主程式版本:v3.12.14(線上實際版本)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,72 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+
+  // ════════════════════════════════════════════════════════════════════
+  // v3.12.14(2026-05-31)— 🚨 世界 BOSS 戰雙重緊急修補:第二場卡死 + 錯誤續戰彈窗
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.12.14',
+    date: '2026-05-31',
+    brief: [
+      '🚨【BUG 1】世界 BOSS 戰第二場全滅卡死(無法結束戰鬥)',
+      '   ・症狀:第一場 BOSS 戰正常結束,第二場 BOSS 全屏爆發後全員陣亡,結算頁無法顯示',
+      '   ・console 證據:[WB-Result v3.12.12] ⚠ 本場已結算過或正在結算,跳過重複呼叫 (win=false)',
+      '',
+      '   ・根因:_wbResultExecuting 旗標重置斷層',
+      '     ① v3.12.12 引入 _wbResultExecuting 防重入(原子操作,確保結算只跑 1 次)',
+      '     ② v3.12.15 發現「本場結束時重置」會讓 600ms fallback 重複跑 → 移除重置',
+      '     ③ 註解承諾「重置點移到戰鬥開始流程,已在其他地方有對齊處理」',
+      '     ④ 但實作根本沒做!grep 全專案找不到任何 _wbResultExecuting = false 賦值',
+      '     ⑤ 結果:_wbResultExecuting=true 永久卡住 → 第二場結算永遠被擋',
+      '',
+      '   ・修補(雙保險):',
+      '     ▸ _wbSetupAdvForBattle 入口(每場世界 BOSS 戰開始建構函式)',
+      '       對齊既有 _wbAdvBattleEnded=false 模式,加 _wbResultExecuting=false 重置',
+      '     ▸ _wbCleanupAdvAfterBattle(戰鬥結算後清理函式)',
+      '       同步加 _wbResultExecuting=false,雙保險避免任何路徑漏網',
+      '',
+      '🚨【BUG 2】世界 BOSS 戰正常結束後,下次進主畫面跳「上次的世界 BOSS 戰中斷了」',
+      '   ・症狀:第一次戰鬥正常結束,但下次開遊戲跳出錯誤的續戰提示(玩家明明已結算完)',
+      '',
+      '   ・根因:_wbCleanupAdvAfterBattle 沒清 adv_battle_snap',
+      '     ▸ _saveBattleRoundSnapshot 每回合都寫 adv_battle_snap(鐵律 1.33 戰鬥中斷恢復機制)',
+      '     ▸ 但世界 BOSS 戰結算後從未清掉這個快照',
+      '     ▸ _advCheckCrashRecovery 下次進主畫面看到 snap.stage="worldboss" → 跳「中斷了」彈窗',
+      '     ▸ 對比:冒險關卡(line ~47328 / ~47453 / ~47464)結算路徑早已有此清理,',
+      '              世界 BOSS 戰路徑漏寫',
+      '',
+      '   ・修補:_wbCleanupAdvAfterBattle 加 localStorage.removeItem("adv_battle_snap")',
+      '          + removeItem("adv_crash_snapshot"),對齊冒險關卡正常結算行為',
+      '',
+      '📌 鐵律 1.136(新增)— 「永久旗標」必須有對應「重置點」實作驗證',
+      '',
+      '   血淚教訓:v3.12.15 註解寫「重置點移到戰鬥開始流程」,但實作根本沒做',
+      '            → _wbResultExecuting 永久卡住 → 下場戰鬥結算永遠被擋',
+      '',
+      '   未來新增「旗標型守門」(只在本場 set 不會自動清零)時必檢:',
+      '   ① grep 全專案確認旗標真的有「重置」賦值,不能只看註解承諾',
+      '   ② 對齊既有重置模式(如 _wbAdvBattleEnded=false 寫在哪些地方,新旗標就跟著加)',
+      '   ③ 寫雙保險:戰鬥開始 + 戰鬥結算清理 兩處都重置',
+      '',
+      '📌 鐵律 1.137(新增)— 世界 BOSS 戰結算清理必須對齊冒險關卡清理',
+      '',
+      '   冒險關卡結算路徑(_showResultWithDrama / advFinishMiniBattle / advGiveUp)早已',
+      '   有完整 cleanup(清快照、清旗標、清 modal 等),但世界 BOSS 戰用獨立的',
+      '   _wbCleanupAdvAfterBattle,長期以來各種清理項目漏寫。',
+      '',
+      '   未來新增「戰鬥相關全域旗標 / localStorage / cache」時,',
+      '   兩條結算路徑都必須加對應 cleanup 行,避免「冒險關卡會清,世界 BOSS 不會清」',
+      '',
+      '🔧 改動檔案',
+      '   ・index.html line ~54099:_wbSetupAdvForBattle 入口加 _wbResultExecuting=false 重置',
+      '   ・index.html line ~54204:_wbCleanupAdvAfterBattle 加 adv_battle_snap 清理 + _wbResultExecuting=false 雙保險',
+      '   ・index.html line ~98048:_GAME_LOADED_VERSION → v3.12.14',
+      '   ・index.html line ~10024:_LXPS_FILE_VERSIONS index.html / game_changelog.js → v3.12.14',
+      '',
+      '感謝老師深夜回報 ❤️ 兩個 BUG 都有實際 console + 截圖佐證',
+    ],
+  },
 
   // ════════════════════════════════════════════════════════════════════
   // v3.12.13(2026-05-31)— 🚨 世界 BOSS 結算誤走台灣關緊急修補 + 污染清理工具
