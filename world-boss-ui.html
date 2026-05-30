@@ -11139,28 +11139,10 @@
     }).join('');
     document.getElementById('wb-result-contributions').innerHTML = contribHtml;
 
-    // 獎勵(簡單版:給知識幣)
-    const myContribution = contributions[window._gUserId] || {};
-    let coinsEarned = 0;
-    let rewards = [];
-    if(isWin){
-      coinsEarned = 3000;
-      rewards.push(`✅ 擊敗維蘇威火山龍王: +3000 知識幣`);
-      const dmgBonus = Math.min(2000, Math.floor((myContribution.dmgDealt||0) / 10));
-      if(dmgBonus > 0){
-        coinsEarned += dmgBonus;
-        rewards.push(`⚔ 傷害貢獻: +${dmgBonus} 知識幣`);
-      }
-    }else{
-      coinsEarned = 500;
-      rewards.push(`💔 雖敗猶榮: +500 知識幣`);
-    }
-    // 實際發給玩家
-    if(typeof _knowledgeCoins !== 'undefined'){
-      _knowledgeCoins += coinsEarned;
-      if(typeof saveGameState === 'function') try{ saveGameState(); }catch(_){}
-      if(typeof renderTopBar === 'function') try{ renderTopBar(); }catch(_){}
-    }
+    // ★ v3.12.7(2026-05-30)— 鐵律 1.112:世界 BOSS 結算完全不發 EXP/知識幣
+    //   舊版這裡寫死 +3000~+5000 知識幣(擊敗)/ +500(失敗),已移除避免與「世界 BOSS 純名譽戰」設計衝突
+    //   獎章累積保留(維持原 _medalStats 寫入邏輯);實體獎勵(排名、火龍王之牙)由新流程 _wbShowAdvBattleResult 處理
+    let rewards = ['🏆 世界 BOSS 戰純名譽戰:不發英雄經驗、不發知識幣', '⭐ 你的本場貢獻已記錄到排行榜', '🎖 對應獎章已嘗試解鎖'];
     document.getElementById('wb-result-reward-list').innerHTML = rewards.join('<br>');
 
     // 寫獎章統計
