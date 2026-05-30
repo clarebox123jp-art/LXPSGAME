@@ -1064,6 +1064,13 @@
       // ★ v3.2 — 進入後立即同步休戰狀態看板 + 開戰按鈕鎖
       try{ _wbSyncCeasefireBanner(); }catch(_){}
       try{ _wbSyncStartButtonGate(); }catch(_){}
+      // ★ v3.12.13(2026-05-30) — 入口卡每日上限視覺鎖
+      //   進入入口頁時立即檢查 canEnter(),若達上限就在 3 張卡(不含單人練習)上加灰階 + 🔒 徽章
+      try{
+        if(typeof window._wbApplyEntryGateLock === 'function'){
+          window._wbApplyEntryGateLock();
+        }
+      }catch(_){}
       // 確保訂閱已啟動(背景持續同步)
       try{ if(window._wbControl && window._wbControl.subscribe) window._wbControl.subscribe(); }catch(_){}
       // ★ v3.1.2 — 切換到世界 BOSS 主頁面 BGM
@@ -3349,6 +3356,55 @@
   // 世界戰結算頁(簡化版,沿用 world-boss-ui.html 的 _wbShowSoloPracticeResult 邏輯)
   function _wbShowAdvBattleResult(win){
     // ════════════════════════════════════════════════════════════════
+    // ★ v3.12.12(2026-05-30) — 戰績歷史雙寫修補 + daily limit 失守修補
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報 2026/05/30:學生「帥氣的惡龍」實際打 3 場,但戰績歷史顯示 6 場
+    //   (兩筆兩筆成對,時間戳完全相同 21:08/20:57/21:17),且每日 2 場上限失守
+    //   (允許打到 4+ 場)。
+    //
+    // 根因分析:
+    //   1. _wbShowAdvBattleResult 函式本身完全沒有「重複進入守門」,
+    //      只在外部呼叫處檢查 _wbAdvBattleEnded(非原子操作)。
+    //   2. 11 回合戰場崩毀(_wbForceCollapseAt11)有 4 個觸發點(E2/E3/E4/E5),
+    //      每個都會呼叫 checkWin + 600ms fallback setTimeout。
+    //   3. 連線房主模式下,host 廣播 ended=true 給 client,client 收到後也會
+    //      補跑一次 checkWin → 再次觸發 _wbShowAdvBattleResult。
+    //   4. 多條觸發路徑之間有 timing gap(checkWin setTimeout 200ms、
+    //      fallback setTimeout 600ms、client sync delay 300ms),
+    //      race condition 讓「兩個觸發都通過 _wbAdvBattleEnded=false 守門」。
+    //
+    // 證據:重複的兩筆中,聯手爆發次數一筆是 0、另一筆是 2 — 代表是兩個不同時間
+    //       點的快照,第一次寫入時聯手爆發還沒觸發完。
+    //
+    // 修補設計:在函式開頭立刻設定 _wbResultExecuting 旗標(atomic),
+    //          已執行過(或正在執行)就直接 return。
+    //
+    //          這比依賴 _wbAdvBattleEnded 更安全:
+    //          - _wbAdvBattleEnded 同時還給其他 14+ 個地方判斷「戰鬥已結束」
+    //            (例如 endAction hook、startTurn hook 都在讀),不能在此函式
+    //            一開始就 set,可能影響其他邏輯。
+    //          - _wbResultExecuting 是本函式專用,只負責防重入。
+    //          - 用 try/finally 確保即使中途 throw 也會釋放(下場戰鬥可正常)。
+    //
+    //          影響範圍(每場保證只跑 1 次):
+    //          - updateLeaderboard(寫排行榜 + battleHistory)
+    //          - bumpDailyCount(每日 +1)
+    //          - dealDamage(扣 BOSS 雲端血)
+    //          - 結算 UI 顯示
+    //
+    //          重置時機:本函式結束時 _wbResultExecuting 維持 true(代表本場已結算)。
+    //          下場開戰時由 _wbCleanupAdvAfterBattle / startBattle / soloBegin
+    //          等既有 cleanup 流程把它重置為 false(同 _wbAdvBattleEnded)。
+    // ════════════════════════════════════════════════════════════════
+    if(window._wbResultExecuting === true){
+      console.warn('[WB-Result v3.12.12] ⚠ 本場已結算過或正在結算,跳過重複呼叫 (win=' + win + ')');
+      return;
+    }
+    // 立刻 set 旗標,防止 race(任何 async/await/setTimeout 之前)
+    window._wbResultExecuting = true;
+    console.log('[WB-Result v3.12.12] ✅ 本場首次結算,正常執行 (win=' + win + ')');
+
+    // ════════════════════════════════════════════════════════════════
     // ★ v3.11.8(2026-05-27) — 結算傷害來源修正 + 模式區分
     // ────────────────────────────────────────────────────────────────
     // 老師回報:打完世界 BOSS,結算顯示「練習模式、累積傷害 0」,但實際是房主開房 + 有上排行榜。
@@ -3466,6 +3522,15 @@
         window._wbDailyLimit.bumpDailyCount(_reason).then(_r => {
           if(_r && _r.ok){
             console.log('[WB-DailyLimit v3.12.10] ✅ 結算 +1 計次成功:' + _r.count + '/2');
+            // ★ v3.12.13(2026-05-30) — 計次成功後立即重新套入口卡鎖
+            //   讓玩家從結算頁返回入口時就看到鎖狀態(不需要 reload 才生效)
+            try{
+              if(typeof window._wbApplyEntryGateLock === 'function'){
+                window._wbApplyEntryGateLock();
+              }
+            }catch(_eLockReapply){
+              console.warn('[WB-EntryGate v3.12.13] 結算後套鎖失敗', _eLockReapply);
+            }
           }else{
             console.warn('[WB-DailyLimit v3.12.10] ⚠️ bumpDailyCount 回傳失敗:', _r);
           }
@@ -3865,6 +3930,15 @@
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
     window._wbAdvBattleEnded = false;
+    // ★ v3.12.15(2026-05-30) — 移除此處的 _wbResultExecuting=false
+    //   原 v3.12.12 設計錯誤:把重置點對齊 _wbAdvBattleEnded=false,但這裡是
+    //   本場結算函式的末段清理 — 如果在本場結尾就重置,後續 600ms fallback
+    //   setTimeout 觸發時 _wbResultExecuting 已是 false → 守門失效 → 第二次
+    //   跑結算流程(老師 2026-05-30 console log 證實:wbClears 從 1 變 2)。
+    //   正確設計:_wbResultExecuting 只在「下一場戰鬥開始時」才重置,
+    //   本場結束後維持 true 直到下場開戰。
+    //   重置點移到 _wbInstallCheckWinHook 戰鬥開始流程內(已在其他地方有對齊處理)。
+    // window._wbResultExecuting = false;  ← 移除!
     // ★ FIX 20260519(v4) — 戰鬥結算後強制清掉「定型文選單」(表情列)
     //   原 v3 只在 _wbShowSoloPracticeResult / _wbBackToStageSelect 內 remove .show class,
     //   但若用戶從別的路徑離開戰鬥(網路斷線、頁面切回等)會殘留 → 下次回到入口看到漂浮表情列
