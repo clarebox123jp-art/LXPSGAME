@@ -7136,23 +7136,83 @@ async function _showAdminStatsPanelImpl(){
 
       // 刪除按鈕(改成 inline 二段確認,避免 z-index 衝突 — v3.5.22 修補)
       //   第 1 階段:顯示底部正常工具列(已勾選 N 筆 / 紅色刪除按鈕)
-      //   第 2 階段:按下刪除 → 底部變成「⚠️ 真的要刪除? [確認刪除] [取消]」
+      //   第 2 階段:按下刪除 → 底部變成「⚠️ 輸入刪除原因 + [確認] [取消]」
+      //   ★ v3.12.10(2026-05-30) — 補償機制:刪除排行榜紀錄時,自動對隊伍中每位玩家:
+      //     1. 重置今日 wbDailyCount(可重新挑戰 2 場)
+      //     2. 寫 players/{uid}.wbAbnormalRemoval(下次登入彈視窗告知原因)
       //   不用 _customConfirm,因為它 z-index 99990 < 明細 modal 99999 → 看起來像沒反應
       const _footerBox = _overlay.querySelector('#_admin-wblb-detail-footer');
-      const _doDelete = async function(_teamKeys){
+
+      // ★ v3.12.10 — 從 teamKeys 收集所有受影響 uid(去重,因為同一人可開 4 隻 = 1 個 uid 出現 4 次)
+      const _collectAffectedUids = function(_teamKeys){
+        const _set = new Set();
+        for(const _tk of _teamKeys){
+          if(!_tk) continue;
+          const _parts = String(_tk).split('|');
+          for(const _u of _parts){
+            if(_u && _u.length > 0) _set.add(_u);
+          }
+        }
+        return Array.from(_set);
+      };
+
+      const _doDelete = async function(_teamKeys, _reason){
+        // 先算出受影響 uid(刪除前;刪除後 teamKey 就沒了)
+        const _affectedUids = _collectAffectedUids(_teamKeys);
+
         // 切到「刪除中…」狀態
         _footerBox.innerHTML =
-          '<span style="font-size:13px;color:#ffcc88;flex:1;">刪除中… 請稍候</span>';
+          '<span style="font-size:13px;color:#ffcc88;flex:1;">刪除中… 請稍候(共補償 ' + _affectedUids.length + ' 位玩家)</span>';
         try{
           if(!window._wbHpSync || typeof window._wbHpSync.clearLeaderboardEntries !== 'function'){
             throw new Error('_wbHpSync.clearLeaderboardEntries API 不存在(模組未掛載?)');
           }
+          // 步驟 1:刪除排行榜紀錄
           const result = await window._wbHpSync.clearLeaderboardEntries(BOSS_ID, _teamKeys);
           if(!result){
             throw new Error('刪除失敗(API 回 null)');
           }
-          const _okMsg = '✅ 已刪除 ' + (result.removed || 0) + ' 筆排行榜紀錄(剩餘 ' + (result.kept || 0) + ' 筆)';
-          if(typeof _showSimpleToast === 'function') _showSimpleToast(_okMsg, 'ok');
+
+          // 步驟 2:補償受影響玩家(逐個處理,個別失敗不影響整體流程)
+          //   ① 寫 wbAbnormalRemoval 通知記錄(玩家登入時會彈視窗)
+          //   ② 重置 wbDailyCount(今天可以再打 2 場)
+          let _compensatedCount = 0;
+          const _failedUids = [];
+          if(_affectedUids.length > 0){
+            // 動態 import Firestore 寫入 API(走主程式既有路徑,跟其他 GM 工具一致)
+            const _hasFb = window._fbDb && window._adminWriteWbCompensation;
+            if(!_hasFb){
+              console.warn('[排行榜刪除補償] window._adminWriteWbCompensation 未就緒,跳過補償');
+            } else {
+              for(const _uid of _affectedUids){
+                try{
+                  await window._adminWriteWbCompensation(_uid, {
+                    reason: String(_reason || '').slice(0, 200) || '(GM 未填寫原因)',
+                    boss: '維蘇威火山龍王',
+                    removedAt: Date.now(),
+                  });
+                  // 重置 wbDailyCount(已存在的 API)
+                  if(typeof window._fbResetWbDailyByUid === 'function'){
+                    await window._fbResetWbDailyByUid(_uid);
+                  }
+                  _compensatedCount++;
+                }catch(_eUid){
+                  console.warn('[排行榜刪除補償] uid=' + _uid + ' 失敗', _eUid);
+                  _failedUids.push(_uid);
+                }
+              }
+            }
+          }
+
+          let _okMsg = '✅ 已刪除 ' + (result.removed || 0) + ' 筆排行榜紀錄(剩餘 ' + (result.kept || 0) + ' 筆)';
+          if(_compensatedCount > 0){
+            _okMsg += '\n💰 已補償 ' + _compensatedCount + ' 位玩家(進場次數已重置 + 登入時會收到通知)';
+          }
+          if(_failedUids.length > 0){
+            _okMsg += '\n⚠️ ' + _failedUids.length + ' 位玩家補償失敗,uid:\n' + _failedUids.join(', ');
+            console.warn('[排行榜刪除補償] 失敗的 uid:', _failedUids);
+          }
+          if(typeof _showSimpleToast === 'function') _showSimpleToast(_okMsg, _failedUids.length > 0 ? 'warn' : 'ok');
           else alert(_okMsg);
           _closeDetailModal();
           _refresh();
@@ -7169,8 +7229,11 @@ async function _showAdminStatsPanelImpl(){
       };
 
       function _renderFooterNormal(){
+        // ★ v3.12.10 — 從 confirm 切回 normal 時把 footer flex 排版還原(避免殘留)
+        _footerBox.style.flexDirection = '';
+        _footerBox.style.alignItems = '';
         _footerBox.innerHTML =
-          '<span style="font-size:12px;color:#888;flex:1;">⚠️ 刪除不可逆。</span>' +
+          '<span style="font-size:12px;color:#888;flex:1;">⚠️ 刪除不可逆,但會自動補償受影響玩家進場次數。</span>' +
           '<button id="_admin-wblb-detail-delete" style="padding:9px 18px;font-size:14px;font-weight:800;' +
                   'background:linear-gradient(135deg,rgba(180,60,60,0.7),rgba(120,30,30,0.9));' +
                   'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
@@ -7183,22 +7246,59 @@ async function _showAdminStatsPanelImpl(){
       }
 
       function _renderFooterConfirm(_teamKeys){
+        // ★ v3.12.10 — 從 teamKeys 算出受影響玩家數(去重)
+        const _affectedUids = _collectAffectedUids(_teamKeys);
+        // 改為兩列佈局:第一列輸入原因,第二列按鈕
+        _footerBox.style.flexDirection = 'column';
+        _footerBox.style.alignItems = 'stretch';
         _footerBox.innerHTML =
-          '<span style="font-size:13px;color:#ff9988;flex:1;font-weight:700;">' +
-            '⚠️ 真的要刪除這 ' + _teamKeys.length + ' 筆嗎?(不可復原)' +
-          '</span>' +
-          '<button id="_admin-wblb-detail-cancel" style="padding:8px 14px;font-size:13px;' +
-                  'background:rgba(80,80,100,0.5);border:1.5px solid #889;color:#ccc;' +
-                  'border-radius:6px;cursor:pointer;font-family:inherit;">取消</button>' +
-          '<button id="_admin-wblb-detail-confirm" style="padding:9px 18px;font-size:14px;font-weight:800;' +
-                  'background:linear-gradient(135deg,rgba(220,60,60,0.95),rgba(160,20,20,1));' +
-                  'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
-                  'font-family:inherit;box-shadow:0 0 12px rgba(255,80,80,0.5);">' +
-            '✓ 確認刪除 ' + _teamKeys.length + ' 筆</button>';
-        _footerBox.querySelector('#_admin-wblb-detail-cancel').onclick = _renderFooterNormal;
-        _footerBox.querySelector('#_admin-wblb-detail-confirm').onclick = function(){
-          _doDelete(_teamKeys);
+          // 第一列:警示文 + 補償人數
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+            '<span style="font-size:13px;color:#ff9988;flex:1;font-weight:700;">' +
+              '⚠️ 將刪除 ' + _teamKeys.length + ' 筆紀錄(不可復原),補償 <b style="color:#ffd066;">' +
+              _affectedUids.length + '</b> 位玩家進場次數' +
+            '</span>' +
+          '</div>' +
+          // 第二列:輸入原因 textarea
+          '<div style="margin-bottom:8px;">' +
+            '<label style="font-size:12px;color:#bbb;display:block;margin-bottom:4px;">' +
+              '📝 刪除原因(玩家會在登入時看到):' +
+            '</label>' +
+            '<textarea id="_admin-wblb-detail-reason" rows="2" maxlength="200" ' +
+                      'placeholder="例如:傷害異常(平均 > 5000)、利用 BUG 刷分、誤觸發等" ' +
+                      'style="width:100%;padding:7px 10px;font-size:13px;background:rgba(20,15,30,0.8);' +
+                      'border:1.5px solid rgba(180,140,220,0.5);border-radius:6px;color:#eee;' +
+                      'font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>' +
+            '<div style="font-size:11px;color:#888;margin-top:3px;">不填則會顯示「(GM 未填寫原因)」給玩家</div>' +
+          '</div>' +
+          // 第三列:取消 + 確認
+          '<div style="display:flex;gap:10px;align-items:center;">' +
+            '<span style="flex:1;"></span>' +
+            '<button id="_admin-wblb-detail-cancel" style="padding:8px 14px;font-size:13px;' +
+                    'background:rgba(80,80,100,0.5);border:1.5px solid #889;color:#ccc;' +
+                    'border-radius:6px;cursor:pointer;font-family:inherit;">取消</button>' +
+            '<button id="_admin-wblb-detail-confirm" style="padding:9px 18px;font-size:14px;font-weight:800;' +
+                    'background:linear-gradient(135deg,rgba(220,60,60,0.95),rgba(160,20,20,1));' +
+                    'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
+                    'font-family:inherit;box-shadow:0 0 12px rgba(255,80,80,0.5);">' +
+              '✓ 確認刪除並補償</button>' +
+          '</div>';
+        _footerBox.querySelector('#_admin-wblb-detail-cancel').onclick = function(){
+          // ★ v3.12.10 — 還原 footer 排版
+          _footerBox.style.flexDirection = '';
+          _footerBox.style.alignItems = '';
+          _renderFooterNormal();
         };
+        _footerBox.querySelector('#_admin-wblb-detail-confirm').onclick = function(){
+          const _reasonEl = _footerBox.querySelector('#_admin-wblb-detail-reason');
+          const _reason = _reasonEl ? _reasonEl.value.trim() : '';
+          // 還原 footer 排版(進入「刪除中」狀態前)
+          _footerBox.style.flexDirection = '';
+          _footerBox.style.alignItems = '';
+          _doDelete(_teamKeys, _reason);
+        };
+        // 讓 textarea 自動 focus
+        try{ _footerBox.querySelector('#_admin-wblb-detail-reason').focus(); }catch(_){}
       }
 
       function _onDeleteClick(){

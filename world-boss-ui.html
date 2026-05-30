@@ -2854,8 +2854,14 @@
   /* ════════════════════════════════════════════════════════════════ */
   /* 共用:替換英雄/至寶 modal */
   /* ════════════════════════════════════════════════════════════════ */
+  /* ★ v3.12.10(2026-05-30) — z-index 從 10000 拉到 10700,確保編組邀請視窗的
+     「圖鑑整備」開圖鑑(hero-detail-overlay z-index:10500)後,點至寶槽位
+     彈出此 modal 時能蓋過圖鑑(原本被圖鑑蓋住看不到)。
+     ★ 同樣方式:跟 wb-tc-info-popup 一起拉,順手 .show 時用 JS 雙保險強制設 zIndex,
+                 避免極端情況下若 #wb-ui-container 有 transform/filter 等屬性
+                 建立 stacking context 還會被擋。 */
   .wb-tc-swap-modal{
-    display:none;position:fixed;inset:0;z-index:10000;
+    display:none;position:fixed;inset:0;z-index:10700;
     background:rgba(0,0,8,0.9);
     align-items:center;justify-content:center;padding:20px;
     backdrop-filter:blur(8px);
@@ -2924,8 +2930,10 @@
   .wb-tc-swap-close:hover{background:rgba(168,132,255,0.35);}
 
   /* ★ FIX 20260516 v6 — 自製 info popup(BOSS / 英雄詳情通用) */
+  /* ★ v3.12.10(2026-05-30) — z-index 跟 wb-tc-swap-modal 一起從 10000 拉到 10700,
+     避免從圖鑑(10500)開啟此 popup 也被蓋住 */
   .wb-tc-info-popup{
-    display:none;position:fixed;inset:0;z-index:10000;
+    display:none;position:fixed;inset:0;z-index:10700;
     background:rgba(0,0,8,0.88);
     backdrop-filter:blur(8px);
     align-items:center;justify-content:center;padding:20px;
@@ -6900,7 +6908,10 @@
         ${cur ? '<div class="wb-tc-si-note">當前</div>' : (_isUsed ? '<div class="wb-tc-si-note" style="color:#888;">已選</div>' : '')}
       </button>`;
     }).join('');
-    document.getElementById('wb-tc-swap-modal').classList.add('show');
+    // ★ v3.12.10 — 雙保險:用 inline zIndex 強制設,確保即使 #wb-ui-container 建立
+    //   stacking context 也能蓋過圖鑑詳細頁(z-index:10500)
+    const _swapM1 = document.getElementById('wb-tc-swap-modal');
+    if(_swapM1){ _swapM1.style.zIndex = '10700'; _swapM1.classList.add('show'); }
   };
 
   window._wbTcConfirmSwapHero = async function(targetSlotIdx, heroName){
@@ -7107,7 +7118,11 @@
         ${note ? '<div class="wb-tc-si-note">'+note+'</div>' : ''}
       </button>`;
     }).join('');
-    document.getElementById('wb-tc-swap-modal').classList.add('show');
+    // ★ v3.12.10 — 雙保險:用 inline zIndex 強制設,確保即使 #wb-ui-container 建立
+    //   stacking context 也能蓋過圖鑑詳細頁(z-index:10500)
+    //   老師回報:編組邀請視窗中按「圖鑑整備」後,點至寶槽位 modal 被圖鑑蓋住看不到。
+    const _swapM2 = document.getElementById('wb-tc-swap-modal');
+    if(_swapM2){ _swapM2.style.zIndex = '10700'; _swapM2.classList.add('show'); }
   };
 
   window._wbTcConfirmSwapTreasure = async function(targetSlotIdx, treasureId){

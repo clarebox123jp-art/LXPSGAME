@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-05-30  / 目前主程式版本:v3.12.7(線上實際版本)
+//  最後更新:2026-05-30  / 目前主程式版本:v3.12.10(線上實際版本)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,77 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+
+  // ════════════════════════════════════════════════════════════════════
+  // v3.12.10(2026-05-30)— GM 補償系統 + 至寶切換視窗層級修補
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.12.10',
+    date: '2026-05-30',
+    brief: [
+      '🛡 GM 後台「世界 BOSS 排行榜明細」加入「異常記錄刪除 + 自動補償」',
+      '   ・舊版只能刪除排行榜紀錄,玩家當天進場次數已耗盡無法重打',
+      '   ・新版二段確認頁加入:',
+      '     ① 警示文「將刪除 N 筆,補償 M 位玩家進場次數」',
+      '     ② textarea 輸入刪除原因(玩家會在登入時看到)',
+      '   ・確認後自動執行:',
+      '     ① clearLeaderboardEntries 刪 leaderboard',
+      '     ② 對隊伍中每位 uid(去重)寫 wbAbnormalRemoval 通知',
+      '     ③ 對每位 uid 呼叫 _fbResetWbDailyByUid(今天可再打 2 場)',
+      '   ・teamKey 解析:String(teamKey).split(\'|\') + Set 去重',
+      '     (同一人開 4 隻會出現 4 個相同 uid,Set 去重後只算 1 人)',
+      '',
+      '📢 玩家登入時自動彈出「補償通知視窗」',
+      '   ・onAuth setTimeout delay 3000ms 讀 players/{me}.wbAbnormalRemoval',
+      '   ・若有未讀(無 acknowledgedAt)→ 彈紅色暗紅龍王主題視窗',
+      '   ・顯示內容:',
+      '     - 📋 GM 填寫的刪除原因',
+      '     - 🕒 GM 刪除時間',
+      '     - ✨ 已自動補償:今日進場次數已重置',
+      '   ・按「我知道了」→ 寫 acknowledgedAt 標記已讀,下次不再彈',
+      '   ・z-index 100100 蓋過任何 modal,Esc 也可關閉(等同已讀)',
+      '',
+      '💎 編組邀請視窗中「圖鑑整備」開啟後,點至寶槽位 modal 被圖鑑蓋住',
+      '   ・舊版:wb-tc-swap-modal z-index 10000 < hero-detail-overlay 10500',
+      '     → 從圖鑑點至寶槽位後,選擇視窗開了但被圖鑑詳細頁蓋住看不到',
+      '   ・新版:CSS z-index 拉到 10700(蓋過圖鑑、低於 quiz overlay 10800)',
+      '   ・雙保險:JS 開啟 modal 時也用 inline _swapM.style.zIndex = \'10700\'',
+      '     防止 #wb-ui-container 若建立 stacking context 仍被擋',
+      '   ・順手把 wb-tc-info-popup(BOSS/英雄詳情)也拉到 10700 保持一致',
+      '',
+      '🔌 新增 3 個 API(供管理員後台與玩家端使用)',
+      '   ・window._adminWriteWbCompensation(uid, payload)',
+      '     - 跨玩家寫 players/{uid}.wbAbnormalRemoval(GM 用)',
+      '     - 只寫 reason / boss / removedAt(不寫 acknowledgedAt)',
+      '   ・window._wbConsumeAbnormalRemoval()',
+      '     - 玩家自己寫 acknowledgedAt 標記已讀',
+      '     - 用 merge:true 只動 wbAbnormalRemoval.acknowledgedAt 一個欄位',
+      '   ・window._showWbAbnormalRemovalDialog({bossName, reason, timeStr})',
+      '     - 補償通知 UI 元件,可獨立 testing 呼叫',
+      '',
+      '⚠️ Firestore Rules 需確認(跨玩家寫入)',
+      '   ・GM 寫別人的 wbAbnormalRemoval:需 isAdmin() 守門',
+      '   ・玩家自己只能寫 wbAbnormalRemoval.acknowledgedAt',
+      '   ・模式對齊鐵律 1.55(weeklyQuizPendingAward 跨玩家寫入)',
+      '   ・若 Rules 沒設好:GM 後台會看到「⚠️ N 位玩家補償失敗」warn toast',
+      '     不會 silent failure,老師可以手動補做或修 Rules 後重試',
+      '',
+      '📝 鐵律 1.123(v3.12.10)— GM 後台「刪除世界 BOSS 異常排名」設計三件套',
+      '   ① teamKey 解析:split(\'|\') + Set 去重(同一人開 4 隻只算 1 人)',
+      '   ② 跨玩家寫入用 _adminWriteWbCompensation,玩家用 _wbConsumeAbnormalRemoval 寫 ack',
+      '   ③ onAuth setTimeout delay 3000ms 避開小博士領獎彈窗(那條 2500ms)',
+      '     用 doc/getDoc 讀 players/{me}.wbAbnormalRemoval,有未讀就彈',
+      '',
+      '🔧 改動檔案',
+      '   ・admin_panel.js:line 7138~7331 改造 _doDelete + _renderFooterConfirm + 新增 _collectAffectedUids',
+      '   ・index.html line 1700~1751:新增 _adminWriteWbCompensation + _wbConsumeAbnormalRemoval',
+      '   ・index.html line 6238~6296:onAuth setTimeout 補償通知 hook',
+      '   ・index.html line 79782~79884:新增 _showWbAbnormalRemovalDialog',
+      '   ・world-boss-ui.html line 2857~2870:wb-tc-swap-modal z-index 10000→10700',
+      '   ・world-boss-ui.html line 2927~2935:wb-tc-info-popup z-index 10000→10700',
+      '   ・world-boss-ui.html line 6911、7118:雙保險 inline zIndex',
+    ],
+  },
 
   // ════════════════════════════════════════════════════════════════════
   // v3.12.7(2026-05-30)— 世界 BOSS HP 大改 + 龍王天賦調整 + 圖鑑修正
