@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-05-30  / 目前主程式版本:v3.12.12(線上實際版本)
+//  最後更新:2026-05-31  / 目前主程式版本:v3.12.13(線上實際版本)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,90 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+
+  // ════════════════════════════════════════════════════════════════════
+  // v3.12.13(2026-05-31)— 🚨 世界 BOSS 結算誤走台灣關緊急修補 + 污染清理工具
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.12.13',
+    date: '2026-05-31',
+    brief: [
+      '🚨【BUG 復發】世界 BOSS 戰 11 回合戰場崩毀後 → 跑台灣關結算 → 發 +306 萬 EXP +91 萬幣',
+      '   ・違反鐵律 1.112「世界 BOSS 戰完全不發 EXP/幣」',
+      '   ・上次只是運氣好沒發到真獎勵,這次發了',
+      '   ・連帶污染 _heroLevels 雲端資料(被寫入 BOSS/敵人名字,共 101 個 key 其中 28 個是污染)',
+      '',
+      '🔍 三層根因',
+      '',
+      '   ① advCheckContinue() 沒對 worldboss stage 守門',
+      '      FIX 20260518 加的「世界 BOSS 戰也提供 2 次接關機會」設計缺陷:',
+      '      該函式直接顯示 #adv-continue-overlay(台灣關接關 UI),沒判斷 stage',
+      '      → worldboss 全滅 → 進台灣接關彈窗 → 玩家「先放過他」→ 走 advGiveUp',
+      '      → 觸發 _showResultWithDrama 跑台灣結算流程 → 發 EXP/幣',
+      '',
+      '   ② _showResultWithDrama() 沒對 worldboss 守門',
+      '      該函式有 48+ 個呼叫點(checkWin、慢動作 timeout、interval、watchdog 救援...)',
+      '      任一條 race 跑進來且 stage===worldboss → 走 advShowBattleResult / advStartWinSequence',
+      '      下游 grantBattleExp 就會寫雲端發 EXP/幣',
+      '',
+      '   ③ grantBattleExp 也沒守 worldboss',
+      '      這是「實際寫雲端發 EXP/幣」的最後執行點,任何路徑跑進來都會發',
+      '      上次走漏到這裡 → 直接發 +306 萬 EXP + 91 萬幣 + 污染 _heroLevels',
+      '',
+      '🔧 三道守門修補',
+      '',
+      '   ・advCheckContinue 入口加守門:worldboss stage 直接 return false',
+      '     交由 checkWin 上游的 _wbCheckWin 走純名譽戰結算 _wbShowAdvBattleResult',
+      '',
+      '   ・_showResultWithDrama 入口加全域守門:worldboss stage 一律改派 _wbShowAdvBattleResult',
+      '     不管哪條路徑跑進來,只要 stage===worldboss 都會被攔下',
+      '',
+      '   ・grantBattleExp 入口加最後一道防線:worldboss stage 直接 return',
+      '     即使上游守門全失靈,這裡也絕對不會寫雲端發任何 EXP/幣',
+      '',
+      '🧹 新增 _heroLevels 污染清理工具(GM 用)',
+      '',
+      '   ・window._diagnoseHeroLevelsPollution()',
+      '     ─ 列出 _heroLevels 裡所有「不在玩家英雄白名單」的 entry,只看不改',
+      '     ─ console.table 印出污染清單,提供 dryRun 模式',
+      '',
+      '   ・await window._cleanseHeroLevelsPollution({ dryRun:false })',
+      '     ─ 清除自己帳號的污染 entry(刪 _heroLevels 不該存在的 key)',
+      '     ─ 並 await gameCloudSave 同步回雲端(_adminForceRestore=true 繞過健康度守門)',
+      '',
+      '   ・await window._cleanseHeroLevelsByEmail(email, { dryRun:false })',
+      '     ─ 老師對別人(學生)的帳號做污染清理',
+      '     ─ 從雲端 live 槽讀,過濾白名單,setDoc merge 寫回主文件 + live 槽',
+      '',
+      '📌 鐵律 1.135(新增)— 結算入口必須先擋 worldboss stage',
+      '',
+      '   未來新增任何「結算入口」函式(會跑到 advShowBattleResult / grantBattleExp /',
+      '   advStartWinSequence / advFinishMiniBattle 等下游)時,第一道守門永遠是',
+      '   「stage === worldboss → 改派純名譽戰結算」',
+      '',
+      '   現有受守門保護的入口:',
+      '   ① checkWin(line ~43777)— 函式開頭就走 _wbCheckWin 路徑',
+      '   ② advCheckContinue(line ~65363)— 新增 worldboss 守門',
+      '   ③ _showResultWithDrama(line ~43949)— 新增 worldboss 全域守門',
+      '   ④ grantBattleExp(line ~75701)— 新增 worldboss 最後防線',
+      '',
+      '   未來如果新增類似的結算入口(例如「BOSS 大招擊敗瞬殺結算」),',
+      '   必須優先加 stage 守門,並把該入口加進這份清單',
+      '',
+      '🔧 改動檔案',
+      '   ・index.html line ~65363:advCheckContinue 入口加 worldboss return false',
+      '   ・index.html line ~43949:_showResultWithDrama 入口加 worldboss 改派 _wbShowAdvBattleResult',
+      '   ・index.html line ~75701:grantBattleExp 入口加 worldboss 直接 return',
+      '   ・index.html line ~3520 後:新增 _diagnoseHeroLevelsPollution / _cleanseHeroLevelsPollution / _cleanseHeroLevelsByEmail',
+      '   ・index.html line ~98048:_GAME_LOADED_VERSION → v3.12.13',
+      '   ・index.html line ~10024:_LXPS_FILE_VERSIONS index.html / game_changelog.js → v3.12.13',
+      '',
+      '感謝老師快速回報 + 釐清「上次只是沒發到真獎勵」這個關鍵脈絡 ❤️',
+      '老師現況救援指令(主程式更新後在 console 跑):',
+      '   _diagnoseHeroLevelsPollution()  ← 先看有哪些污染',
+      '   await _cleanseHeroLevelsPollution()  ← 清理(會同步回雲端)',
+    ],
+  },
 
   // ════════════════════════════════════════════════════════════════════
   // v3.12.12(2026-05-30)— 三 BUG 緊急修補:卡死 + 英雄解鎖數錯亂 + 獎勵點選沒反應
