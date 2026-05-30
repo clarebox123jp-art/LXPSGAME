@@ -143,11 +143,7 @@
   // 1. 元素龍清單 (8 隻輪替,全伺服器共享 HP)
   // ───────────────────────────────────────────────────────────────────
   window.WORLD_BOSS_LINEUP = [
-    // ★ FIX 20260516 — 測試版階段:8 隻龍王 HP 全部統一設為 50 萬作為基準,
-    //   等真實平衡測試後再個別調整。
-    // ★ v3.12.6(2026-05-30)— HP 50 萬 → 500 萬(×10),讓更多玩家可以參與全伺服器累積擊倒。
-    //   單次傷害上限與答題獎勵聯手爆發改為「寫死 5000」(見 _wbApplyBossDmgCap),
-    //   不再隨 HP 浮動,維持原戰鬥節奏。
+    // ★ FIX 20260530 — 8 隻龍王 HP 全部統一設為 500 萬(v3.12.5 強化版基準)
     { id:'vesuvius_fire_dragon',     name:'維蘇威火山龍王',    element:'fire',  maxHp:5000000,  scene:'維蘇威火山口',
       shieldElements:['fire','wind','earth','dark'],
       desc:'沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」,西元 79 年龐貝大爆發即是牠的甦醒' },
@@ -364,8 +360,9 @@
       if(typeof HERO_DB === 'object' && HERO_DB){
         Object.assign(HERO_DB, {
           '維蘇威火山龍王':{hp:5000000,atk:49,sp:50,spd:15,exp:1500,star:5,isWorldBoss:true,
-            // ★ v3.5.9 — 老師調整 s1「業火灼燒」:能量 4→5、傷害 100%→150%(更具威脅性)
-            s1:{n:'業火灼燒',c:5,d:'特技150%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 150% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
+            // ★ v3.5.9 — s1「業火灼燒」:能量 4→5、傷害 100%→150%(更具威脅性)
+            // ★ v3.12.7(2026-05-30) — 配合追擊普攻設計,s1 能量 5→6 拉長放招間隔
+            s1:{n:'業火灼燒',c:6,d:'特技150%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 150% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
             s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
           },
         });
@@ -389,9 +386,7 @@
         Object.assign(HERO_TRAIT, {
           // ★ v3.7.10(2026-05-25) — 護盾觸發回合:第 3/5/7/9,每元素各 1 層
           //   同時補充「全隊聯手爆發 5000 傷害可無視護盾」的攻略提示。
-          // ★ v3.12.6(2026-05-30) — HP 改 500 萬後,單次傷害上限改寫死「固定 5000」(不再隨 HP 浮動),
-          //   設計理念:讓更多玩家參與全伺服器累積擊倒,維持原戰鬥節奏(集氣 1000 次破關)。
-          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限固定 5000;第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發也受護盾影響', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為固定 5000(無論 HP 多少,任何一擊最高僅造成 5000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每次補滿每個元素各 1 層(同時最多 4 層):所有傷害再減 80%(實際扣血 1000),即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場 4 階段護盾、最多 16 次破盾機會,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5000 傷害也會被護盾減傷至 1000。' },
+          '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限 1% maxHp;第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限為最大 HP 的 1%(即任何一擊最高僅造成 5000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每次補滿每個元素各 1 層(同時最多 4 層):所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場 4 階段護盾、最多 16 次破盾機會,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5000 傷害可以無視護盾直接命中。' },
         });
         window.HERO_TRAIT = HERO_TRAIT;
       }
@@ -438,7 +433,7 @@
       }
     }catch(_){}
 
-    console.log('[WB] ✅ 維蘇威火山龍王資料已掛載(HP 5000000 / 攻 49 / 特 50 / 速 15)★ v3.12.6');
+    console.log('[WB] ✅ 維蘇威火山龍王資料已掛載(HP 5000000 / 攻 49 / 特 50 / 速 15)');
   }
 
   // ───────────────────────────────────────────────────────────────────
@@ -565,14 +560,13 @@
   // ───────────────────────────────────────────────────────────────────
   // 6b. 天賦「炎之意志」傷害計算 hook
   //     戰鬥引擎在「BOSS 受傷時」呼叫,回傳調整後的傷害值
-  //     ★ v3.11.5(2026-05-27) — 老師鐵則:
-  //       「世界 BOSS 的護盾凌駕於一切無視有利狀態之上,對世界 BOSS 造成的傷害永遠鎖在 5000」
-  //     ★ v3.12.6(2026-05-30) — HP 50 萬 → 500 萬,改寫死「固定 5000」(不再用 1% maxHp 公式),
-  //       避免 HP 放大 10 倍後傷害上限自動 ×10 破壞平衡。設計理念:讓更多玩家累積參與,
-  //       單次傷害恆等於 5000(無護盾) / 1000(有護盾),全伺服器集氣 1000 次破關。
+  //     ★ v3.12.6(2026-05-30) — 老師鐵則(HP 改 500 萬後仍維持):
+  //       「世界 BOSS 的護盾凌駕於一切無視有利狀態之上,對世界 BOSS 造成的單次傷害永遠鎖在 5000」
+  //       ※ 重點:HP 從 50 萬 → 500 萬「只放大血量上限」,「傷害上限不放大」。
+  //         目的是延長龍王壽命,讓更多玩家可以陸續加入戰鬥造成傷害(滿血 500 萬 = 1000 刀)。
   //
   //     具體行為:
-  //       1) 單次受傷上限 = 固定 5000(寫死,不隨 HP 浮動)— 永遠生效,沒有例外
+  //       1) 單次受傷上限 = 固定 5000(不隨滿血變動)— 永遠生效,沒有例外
   //       2) 第 3/5/7/9 回合啟動四元素護盾:傷害再減 80%(實際扣血 = 1000)
   //          ★ 凌駕於所有「無視有利狀態」「必中」「固定值」「聯手爆發」等旗標之上
   //          ★ 不存在 bypassShield 旗標,任何技能都無法繞過
@@ -586,18 +580,15 @@
   //       - 答題獎勵聯手爆發 5000(world-boss-ui.html line 10005,v3.11.5 補上)
   //       - 吸血鬼蝙蝠群(index.html line 34108 + 39655,v3.11.5 補上)
   // ───────────────────────────────────────────────────────────────────
-  // ★ v3.12.6 — 單次傷害硬上限常數(老師鐵則:寫死,不隨 HP 浮動)
-  window._WB_HARD_CAP_PER_HIT = 5000;
-
   window._wbApplyBossDmgCap = function(boss, rawDmg, opts){
     if(!boss || !boss.name || boss.name !== '維蘇威火山龍王') return rawDmg;
     if(rawDmg <= 0) return rawDmg;
     opts = opts || {};
 
-    // ★ v3.12.6(2026-05-30) — 改寫死 5000(原 1% maxHp 公式廢棄)
-    //   舊邏輯:cap = Math.floor(maxHp * 0.01)→ HP 改 500 萬會自動變 50000,破壞平衡
-    //   新邏輯:cap = 固定 5000,不受 HP 影響
-    let dmg = Math.min(rawDmg, window._WB_HARD_CAP_PER_HIT);
+    // ★ v3.12.6 — 單次傷害上限「固定 5000」,不隨滿血變動
+    //   設計目的:HP 放大 10 倍但 cap 不放大,讓戰鬥時間拉長,容納更多玩家上陣
+    const cap1pct = 5000;
+    let dmg = Math.min(rawDmg, cap1pct);
 
     // 2) ★ v3.11.5(2026-05-27) — 老師鐵則:護盾凌駕於一切「無視有利狀態」之上
     //   - 任何傷害(含無視有利、必中、固定值、聯手爆發 5000)只要有護盾在,都吃 80% 減傷
@@ -992,7 +983,7 @@
       if(st.ceasefire === true && newCeasefire === false){
         try{
           if(window._wbHpSync && typeof window._wbHpSync.resetHp === 'function'){
-            // 從 WORLD_BOSS_LINEUP 拿當前 BOSS 滿血;預設維蘇威 5000000(★ v3.12.6)
+            // 從 WORLD_BOSS_LINEUP 拿當前 BOSS 滿血;預設維蘇威 5000000
             const _lineup = window.WORLD_BOSS_LINEUP || [];
             const _curBoss = _lineup.find(b => b && b.id === 'vesuvius_fire_dragon') || _lineup[0];
             const _maxHp = (_curBoss && _curBoss.maxHp) || 5000000;
@@ -1197,7 +1188,7 @@
     // 取得當前 BOSS 的 maxHp
     const lineup = window.WORLD_BOSS_LINEUP || [];
     const curBoss = lineup.find(b => b.id === 'vesuvius_fire_dragon') || lineup[0];
-    const maxHp = (curBoss && curBoss.maxHp) || 5000000;  // ★ v3.12.6 — fallback 跟著 HP 改 500 萬
+    const maxHp = (curBoss && curBoss.maxHp) || 5000000;
 
     // 取得當前 HP — 從 _cachedGlobalStats.worldBossHp 讀
     let curHp = maxHp;  // 預設 100%
@@ -2450,14 +2441,16 @@
     try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
 
     // ════════════════════════════════════════════════════════════════
-    // ★ v3.11.7(2026-05-28) — BOSS 每回合連續行動 2 次
+    // ★ v3.12.7(2026-05-30) — BOSS 天賦:每回合 1 次主行動 + 1 次追擊普攻
+    //   (舊版 v3.11.7 是「1 回合內跑 2 次完整 turn」,改設計後更可預期)
     // ────────────────────────────────────────────────────────────────
-    // 設計:每回合 BOSS 最多行動 2 次。
+    // 設計:每回合 BOSS = 主行動(S1/S2/普攻/爆發,擇一) + 追擊普攻(固定)
     //   - 進入 _wbAdvBossTurn 時:若 _wbActionRound !== G.round → 新回合,reset count=0
-    //   - 計數 += 1
-    //   - 在 _safeBossEndAction 判定:若 count < 2 且未爆發 且 BOSS 活著 且 G.round < 11
-    //     → 延 800ms 再呼叫 _wbAdvBossTurn,不走 endAction;= 2 才走 endAction
-    //   - 爆發強制把 count 跳到 2(因為爆發已經太強,不允許接第二次)
+    //   - count += 1
+    //   - 主行動跑完 → _safeBossEndAction 判定:count===1 + 非爆發 → 排追擊普攻
+    //     (走專用排程 _scheduleBossFollowup,跑 _wbAdvBossNormalAtk 不再進完整 turn)
+    //   - 追擊普攻跑完 → 再進 _safeBossEndAction → count===2 → 真正 endAction
+    //   - 爆發強制把 count 跳到 2(爆發已經夠強,不允許再追擊)
     //   - R11+ 不應該觸發,因為 [E1] 已搶先走崩毀
     // ════════════════════════════════════════════════════════════════
     const _curRoundForCount = G.round || 1;
@@ -2466,7 +2459,7 @@
       boss._wbActionCount = 0;
     }
     boss._wbActionCount = (boss._wbActionCount || 0) + 1;
-    try{ console.log('[WB-BossAct v3.11.7] R' + _curRoundForCount + ' 第 ' + boss._wbActionCount + ' 次行動'); }catch(_){}
+    try{ console.log('[WB-BossAct v3.12.7] R' + _curRoundForCount + ' 第 ' + boss._wbActionCount + ' 次行動(1=主行動 / 2=追擊普攻)'); }catch(_){}
 
     // ★ v3.11.6(2026-05-27) — [E1] BOSS turn 入口:R11+ 直接走 _wbForceCollapseAt11
     //   舊版用 inline 邏輯 + 單一旗標 _wbCollapseTriggered;v3.11.6 改用獨立函式 +
@@ -2563,15 +2556,18 @@
       return;
     }
     // ════════════════════════════════════════════════════════════════
-    // ★ v3.11.7(2026-05-28) — BOSS 連續行動 2 次:第 1 次行動完不走 endAction,
-    //   延 800ms 再呼叫 _wbAdvBossTurn 跑第 2 次。
+    // ★ v3.12.7(2026-05-30) — 主行動結束後追加 1 次普通攻擊
+    //   舊版 v3.11.7:第 1 次行動完不走 endAction,延 800ms 再呼叫 _wbAdvBossTurn(跑完整 turn,可能再放技能或爆發)
+    //   新版 v3.12.7:第 1 次行動完不走 endAction,延 800ms 直接呼叫 _wbAdvBossNormalAtk(只追擊一個普攻)
     //   守門條件:
-    //     - 計數 < 2(還沒打到第 2 次)
-    //     - 沒爆發(爆發 _wbAdvBossBurst 內會把計數設為 2,直接結束)
+    //     - 計數 === 1(主行動剛跑完,還沒追擊)
+    //     - 沒爆發(爆發 _wbAdvBossBurst 內會把計數設為 2,直接結束本回合)
     //     - G.round < 11(R11+ 應該已被 [E1] 崩毀守門攔下,保險還是擋一下)
     //     - BOSS 沒被插隊(_wbEndedThisTurn 已在上面擋)
-    //   進入第 2 次的執行同樣會經過 _wbAdvBossTurn 入口,計數會 +1 變成 2,
-    //   然後 S1/S2/普攻/爆發跑完 → 再次進入 _safeBossEndAction 時 count === 2 → 正常 endAction。
+    //   進入追擊普攻時 count 已經是 1,_wbAdvBossNormalAtk 跑完會再進 _safeBossEndAction,
+    //   那時不會再排第二次追擊(只有 count===1 才會排),直接走 endAction 結束本回合。
+    //   ※ 注意:這裡不再 +1,因為計數要在「進入 _wbAdvBossTurn 時 +1」才算完整 turn 的單位;
+    //     追擊普攻只是「附加動作」,不算新一輪 turn,所以直接把 count 跳到 2 標記「已追擊」。
     // ════════════════════════════════════════════════════════════════
     try{
       const _G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
@@ -2580,28 +2576,31 @@
       // 只在世界 BOSS stage 跑(避免影響其他關卡)
       const _isWB = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss')
                     || (typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss');
-      if(_isWB && _count < 2 && _round < 11 && boss.curHp > 0){
-        try{ console.log('[WB-BossAct v3.11.7] 第 ' + _count + ' 次行動結束,延 800ms 跑第 2 次'); }catch(_){}
+      if(_isWB && _count === 1 && _round < 11 && boss.curHp > 0){
+        try{ console.log('[WB-BossAct v3.12.7] 主行動結束,延 800ms 追擊普攻一次'); }catch(_){}
         try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
+        // 把 count 直接跳到 2 標記「本回合已排追擊」,避免追擊普攻跑完又被排第二次
+        boss._wbActionCount = 2;
         boss._wbBossTid = setTimeout(() => {
           boss._wbBossTid = null;
           // 二次檢查:在 800ms 期間 BOSS 可能被打死或被插隊
           if(boss.curHp <= 0 || boss._wbEndedThisTurn === true){
-            try{ console.log('[WB-BossAct v3.11.7] 第 2 次延遲到期但 BOSS 已死/被插隊,跳過'); }catch(_){}
+            try{ console.log('[WB-BossAct v3.12.7] 追擊延遲到期但 BOSS 已死/被插隊,跳過'); }catch(_){}
             return;
           }
           // 再次檢查崩毀(R11+ 防穿透)
           if(((_G && _G.round) || 1) >= 11 && !window._wbCollapseDone){
             if(typeof window._wbForceCollapseAt11 === 'function'){
-              window._wbForceCollapseAt11('boss-2nd-action-R11-guard');
+              window._wbForceCollapseAt11('boss-followup-R11-guard');
             }
             return;
           }
-          try{ window._wbAdvBossTurn(boss); }catch(eA2){ console.error('[WB-BossAct v3.11.7] 第 2 次行動例外', eA2); }
+          // ★ 關鍵:直接呼叫普攻(不走完整 turn,不會放技能/爆發)
+          try{ _wbAdvBossNormalAtk(boss); }catch(eA2){ console.error('[WB-BossAct v3.12.7] 追擊普攻例外', eA2); }
         }, 800);
-        return;  // 不走 endAction
+        return;  // 不走 endAction(等追擊普攻跑完再 end)
       }
-    }catch(_eContAction){ console.warn('[WB-BossAct v3.11.7] 連續行動判定例外,走 fallback endAction', _eContAction); }
+    }catch(_eContAction){ console.warn('[WB-BossAct v3.12.7] 追擊判定例外,走 fallback endAction', _eContAction); }
 
     boss._wbEndedThisTurn = true;
     boss.acted = true;
@@ -2698,13 +2697,13 @@
   //   3. doDmg opts 補上 ignoreEvasion/noReflect/noHalfDmg/piercing(對齊 _wbExecSkillFallback)
   //   4. 燃燒改用 addStatus(t, 'hellfire', 3) + _strong:true(有 chip、有 popup、行動前後 -10 HP)
   //      舊版用 t._wbBurn = 3 玩家側完全無 UI 顯示,所以老師回報「沒附加燃燒」
-  //   5. 強制把 _wbActionCount = 2,讓爆發後不再接第 2 次行動(爆發已太強)
+  //   5. 強制把 _wbActionCount = 2,讓爆發後不再追擊普攻(爆發已太強)
   function _wbAdvBossBurst(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
-    // ★ v3.11.7 — 爆發強制讓行動計數 = 2,結束行動不再接第 2 次
+    // ★ v3.12.7 — 爆發強制讓行動計數 = 2,結束行動不再追擊普攻
     try{ boss._wbActionCount = 2; }catch(_){}
     // ★ FIX 20260518(c) #3 — 外層動畫等待也存到 _wbBossTid,玩家爆發插隊時能取消整條鏈
     try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}

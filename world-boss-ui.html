@@ -1018,7 +1018,7 @@
           沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 3/5/7/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
         <div class="wb-boss-stats">
-          <span>❤️ 500,000 HP</span>
+          <span>❤️ 5,000,000 HP</span>
           <span>⚔️ 攻擊 49</span>
           <span>🛡️ 特技 50</span>
           <span>💨 速度 15</span>
@@ -3502,7 +3502,7 @@
       <div>
         <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 維蘇威火山龍王</div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
-          HP 500,000 ✦ 火屬性 ✦ 4 階段護盾<br>
+          HP 5,000,000 ✦ 火屬性 ✦ 4 階段護盾<br>
           🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
         </div>
       </div>
@@ -3551,7 +3551,7 @@
             </div>
             <div class="wb-mega-hp-bar">
               <div class="wb-mega-hp-fill" id="wb-mega-hp-fill" style="width:100%;"></div>
-              <div class="wb-mega-hp-text" id="wb-mega-hp-text">500,000 / 500,000 (100%)</div>
+              <div class="wb-mega-hp-text" id="wb-mega-hp-text">5,000,000 / 5,000,000 (100%)</div>
             </div>
             <div class="wb-mega-shields-row" id="wb-mega-shields-row">
               <!-- 護盾 chip 動態填入 -->
@@ -8261,13 +8261,13 @@
       // ★ v3.1 — 推測攻擊屬性(從英雄名 + 技能名)
       const heroElement = _wbInferHeroElement(actor, action);
 
-      // BOSS 天賦「炎之意志」:單次受傷上限 5000(★ v3.12.6 寫死)+ 護盾減傷 80%
+      // BOSS 天賦「炎之意志」:單次受傷上限固定 5000 + 護盾減傷 80%
+      // ★ v3.12.6 — fallback cap 鎖死 5000(不再用 boss.hp×1%,避免 HP 放大後跟著放大)
       let finalDmg = dmg;
       if(typeof window._wbApplyBossDmgCap === 'function'){
         finalDmg = window._wbApplyBossDmgCap(boss, dmg, { actor: actor, action: action });
       }else{
-        // ★ v3.12.6 — fallback 也改寫死 5000(原 boss.hp * 0.01 會隨 HP ×10 變 50000)
-        finalDmg = Math.min(dmg, (window._WB_HARD_CAP_PER_HIT || 5000));
+        finalDmg = Math.min(dmg, 5000);
       }
 
       // 護盾削減處理 — 屬性剋制(火攻擊削水盾、水攻擊削火盾、土攻擊削風盾、風攻擊削土盾)
@@ -10044,13 +10044,13 @@
     const boss = G.p2 && G.p2[0];
     if(!boss){ try{ console.warn('[WB-FireTeamBurst] BOSS 不存在,放棄'); }catch(_){} return; }
 
-    // ★ v3.7.10 — 用「原始滿血」計算 1%,避免被殘血同步污染
-    //   雲端殘血同步會把 boss.hp 改成本場起始 HP(可能 < 50 萬),
-    //   但「答題獎勵 = BOSS 滿血 × 1% = 5000」是設計鐵則,要鎖死。
-    // ★ v3.12.6(2026-05-30) — HP 改 500 萬後,改寫死 5000(不再用 1% 公式),
-    //   避免 HP ×10 後聯手爆發自動 ×10 變 50000 破壞平衡。
-    const rewardDmg = (window._WB_HARD_CAP_PER_HIT || 5000);
-    try{ console.log('[WB-FireTeamBurst v3.12.6] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ' (寫死), reason=' + (reason||'?')); }catch(_){}
+    // ★ v3.12.6(2026-05-30) — 答題獎勵聯手爆發「固定 5000」,不隨滿血變動
+    //   設計鐵則:HP 從 50 萬放大到 500 萬「只放大血量」,「傷害上限不放大」,
+    //   讓戰鬥延長、更多玩家可加入。聯手爆發跟單次傷害 cap 同步維持 5000。
+    //   _wbMaxHp 留下來只給 console.log 用(觀察),不再決定傷害值。
+    const _wbMaxHp = boss._wbOriginalMaxHp || boss.hp || 5000000;
+    const rewardDmg = 5000;
+    try{ console.log('[WB-FireTeamBurst v3.12.6] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ' (固定 5000, maxHp=' + _wbMaxHp + '), reason=' + (reason||'?')); }catch(_){}
 
     // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
     // ★ v3.11.5(2026-05-27) — 老師鐵則:護盾凌駕一切,聯手爆發也要走 cap + 護盾減傷
@@ -10068,7 +10068,7 @@
         actualDmg = rewardDmg;
       }
     }
-    try{ console.log('[WB-FireTeamBurst v3.12.6] 觸發 cnt=' + _cnt + ', rawDmg=' + rewardDmg + ', actualDmg=' + actualDmg + ' (cap 寫死 5000), reason=' + (reason||'?')); }catch(_){}
+    try{ console.log('[WB-FireTeamBurst v3.7.10] 觸發 cnt=' + _cnt + ', rawDmg=' + rewardDmg + ', actualDmg=' + actualDmg + ' (maxHp=' + _wbMaxHp + '), reason=' + (reason||'?')); }catch(_){}
 
     // ★ v3.3.2 — 多人連線守門:client 端不扣 BOSS HP(等房主 sync 過來)
     if(!_isClient){
@@ -12363,7 +12363,7 @@
           <div id="wb-adv-mega-hp-text" style="position:absolute;inset:0;display:flex;
             align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;
             text-shadow:0 0 4px #000, 0 0 8px #000;letter-spacing:1.5px;">
-            ${boss ? `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()} (100%)` : '500,000 / 500,000 (100%)'}
+            ${boss ? `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()} (100%)` : '5,000,000 / 5,000,000 (100%)'}
           </div>
         </div>
         <div id="wb-adv-mega-shields-row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
@@ -12640,7 +12640,7 @@
     const _Gb = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
     const boss = (_Gb && _Gb.p2 && _Gb.p2[0]) || null;
     const bossName = boss ? boss.name : '維蘇威火山龍王';
-    const bossHp = boss ? boss.hp : 5000000;  // ★ v3.12.6 — fallback 跟著改 500 萬
+    const bossHp = boss ? boss.hp : 5000000;
     const bossAtk = boss ? boss.atk : 49;
     const bossSp = boss ? boss.sp : 50;
     // ★ v3.11.7(2026-05-28) — fallback SPD 從 80 → 15(對齊 HERO_DB 維蘇威火山龍王實際數值)
@@ -12716,7 +12716,7 @@
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒(能量 5)</div>
+            <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒(能量 6)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               對全體玩家造成 SP × 150% 火焰傷害,全體附加燃燒 2 回合,<b style="color:#ffe066;">基礎命中率 +30%</b>
             </div>
@@ -12752,7 +12752,7 @@
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 土 / 草 / 光</b>全部 4 種破盾屬性</li>
-          <li>BOSS 單次受傷最多 <b style="color:#ffcc66;">5,000(固定值)</b>,要靠累積打掉</li>
+          <li>BOSS 單次受傷最多 1% HP(5,000 傷害),要靠累積打掉</li>
           <li>第 4 / 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
           <li>3/5/7/9 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
           <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息</li>
