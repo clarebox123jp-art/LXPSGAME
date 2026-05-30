@@ -9469,7 +9469,18 @@
   //   原本檔案註冊了兩個 onRoomClosed listener,但 _wbNet.on 是覆蓋式
   //   (WB.listeners[e] = cb),後註冊的會吃掉前一個 → 這份清理邏輯永遠不會跑。
   //   修法:把兩段合併成一個 listener,先清旗標+timer,再依 info 顯示結算頁或 alert。
+  // ★ v3.12.1(2026-05-30) — 學生回報修補:房間已關閉彈窗無限跳出
+  //   雖然主修補是 index.html 的 _emit 前 _unsubscribeRoom(),但加這層雙保險,
+  //   萬一 firestore 訂閱層有別的路徑漏掉,UI 端也不會重複處理同一場關房事件。
   window._wbNet.on('onRoomClosed', function(info){
+    // ─ 0. 重複觸發守門(雙保險防無限彈窗) ──────────────────────────
+    //   每場房間結束只處理一次。進新房間時 createRoom/joinRoom 會重置此旗標。
+    if(window._wbRoomClosedHandled){
+      try{ console.log('[WB onRoomClosed v3.12.1] 已處理過,忽略重複事件:', info && info.reason); }catch(_){}
+      return;
+    }
+    window._wbRoomClosedHandled = true;
+
     // ─ A. 清連線旗標 + 動畫競態緩衝 + pending timer ──────────────────
     try{
       window._wbConnectedHostMode = false;
