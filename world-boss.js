@@ -3436,6 +3436,49 @@
       }
     }catch(_){}
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.12.10(2026-05-30)— 每日場次計次補丁(修 3/3 bug)
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報 2026/05/30:傳說的學長一天打了 3 場(實際 18:09 / 18:35 / 18:48)
+    //
+    // 根因:
+    //   v3.12.9 設計「每日 2 場上限」,模組 window._wbDailyLimit 已完整實作,
+    //   但 bumpDailyCount() 整個程式碼裡沒有任何地方真的呼叫,
+    //   導致 wbDailyCount.count 永遠是 0,canEnter() 永遠 allowed=true。
+    //
+    // 修補:
+    //   在結算函式呼叫 bumpDailyCount,符合 world-boss-ui.html line 4258 註解
+    //   「真正 +1 的時機改為戰鬥結算 _wbShowAdvBattleResult」。
+    //
+    // 排除規則:
+    //   ✅ isSolo === true (練習模式) → 不算次數
+    //   ✅ myDmg <= 0 (沒造成傷害,例如進場立刻斷線) → 不算次數
+    //
+    // 失敗保護:
+    //   try/catch 包住,bump 失敗也不影響結算 UI/排行榜寫入
+    // ════════════════════════════════════════════════════════════════
+    try{
+      if(!isSolo
+         && myDmg > 0
+         && window._wbDailyLimit
+         && typeof window._wbDailyLimit.bumpDailyCount === 'function'){
+        const _reason = isHost ? 'battle_settled_host' : 'battle_settled_client';
+        window._wbDailyLimit.bumpDailyCount(_reason).then(_r => {
+          if(_r && _r.ok){
+            console.log('[WB-DailyLimit v3.12.10] ✅ 結算 +1 計次成功:' + _r.count + '/2');
+          }else{
+            console.warn('[WB-DailyLimit v3.12.10] ⚠️ bumpDailyCount 回傳失敗:', _r);
+          }
+        }).catch(_e => {
+          console.error('[WB-DailyLimit v3.12.10] bumpDailyCount 例外:', _e);
+        });
+      }else{
+        console.log('[WB-DailyLimit v3.12.10] 略過計次(isSolo=' + isSolo + ', myDmg=' + myDmg + ')');
+      }
+    }catch(_eBump){
+      console.error('[WB-DailyLimit v3.12.10] bump 區塊例外:', _eBump);
+    }
+
     // ★ FIX 20260518 — 全球 BOSS 殘血同步:本場全隊對 BOSS 造成的總傷害扣到雲端
     //   來源:_Gr.p2[0].hp - _Gr.p2[0].curHp 就是本場 BOSS 實際被打掉的血量
     //         (若 win=true,curHp<=0,等於把剩下的血全打光)
