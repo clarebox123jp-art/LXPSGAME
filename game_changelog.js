@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-05-30  / 目前主程式版本:v3.12.10(線上實際版本)
+//  最後更新:2026-05-30  / 目前主程式版本:v3.12.12(線上實際版本)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,84 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+
+  // ════════════════════════════════════════════════════════════════════
+  // v3.12.12(2026-05-30)— 三 BUG 緊急修補:卡死 + 英雄解鎖數錯亂 + 獎勵點選沒反應
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.12.12',
+    date: '2026-05-30',
+    brief: [
+      '🚨【BUG 1】對手不動卡死(神槍手爆發後)',
+      '   ・症狀:神槍手用爆發後,下一回合 BOSS 永遠不行動,卡死偵測 5 秒一次重複觸發',
+      '   ・案例:日本關 round 12 → round 13 卡死,管狐 acted=false 無限循環',
+      '   ・根因:_burstFinish watchdog 觸發後,5 秒主救援(強解 _gamePaused + startTurn)',
+      '         之外,還有「1.5 秒後再呼叫 _advForceRescueActor」的二次救援。',
+      '         在「新回合答題」剛啟動的 1.5 秒窗口,這條二次救援會強制把當下 activeChar',
+      '         普攻過回合,造成 actor / acted 旗標跟新回合答題狀態錯亂,後續回合卡死。',
+      '   ・修補:拿掉 _burstFinish watchdog 的 1.5 秒二次救援(只保留 5 秒主救援 + 100ms 後 startTurn)',
+      '   ・若 startTurn 真的還推不動,主程式「卡死偵測」watchdog 會自己接管',
+      '',
+      '🚨【BUG 2】檢查進度顯示解鎖 47 但選角畫面只有 1 隻',
+      '   ・症狀:玩家看到「英雄憑空消失」,進度頁顯示 47 但實際只能選 1 隻',
+      '   ・案例:5 年級 Chi Hao Chang(drummerelvis@gmail.com),雲端 unlockedHeroes 陣列只有 1',
+      '         但 _heroLevels 有 47 個 entry — 過去某次存檔被某 bug 把 unlockedHeroes 清空,',
+      '         但 heroLevels 完整保留。檢查進度頁走 _heroLevels(顯示 47),選角走 adv_unlocked_heroes(只 1)。',
+      '   ・根因:reconcile v3.11.21 只比對「本地 adv_unlocked_heroes vs 雲端 unlockedHeroes」,',
+      '         沒檢查「_heroLevels 是否還有更多英雄被遺漏」。雙端都 1 隻 → 判定一致,跳過補救。',
+      '   ・修補:reconcile 開頭加「_heroLevels 反推回 unlockedHeroes」邏輯,',
+      '         凡是 _heroLevels[name]>0 且在玩家英雄白名單內,自動補進本地 adv_unlocked_heroes,',
+      '         然後一起走 reconcile 補回雲端。下次登入後,被遺失的英雄會自動補齊。',
+      '',
+      '🚨【BUG 3】貓空關獎勵選擇點了沒反應',
+      '   ・症狀:答對顯示獎勵 3 選 1,玩家狂點按鈕完全沒反應,30 秒後 watchdog 強制答錯',
+      '   ・案例:5 年級張書語,貓空 round 12,console 看到「[startTurn] 偵測到孤兒',
+      '         _advQuizResolveCb 殘留」+「adv-reward-overlay.show / action-panel(visible)',
+      '         / item-panel(visible)」三層 modal 同時可見',
+      '   ・根因:某個殘留 timer 在「reward overlay 顯示中」呼叫 startTurn,',
+      '         startTurn 開頭「孤兒 _advQuizResolveCb 清理」邏輯只檢查 quiz overlay 是否隱藏,',
+      '         沒檢查 reward overlay → 把仍有用的 cb 清掉。',
+      '         然後 startTurn 繼續往下跑、renderActionPanel 把 action-panel 顯示出來,蓋住獎勵 box。',
+      '         獎勵按鈕雖然 z-index 612 在上,但玩家「視覺被干擾以為當機」,實際點仍是中招',
+      '         (按鈕綁的 _advQuizResolveCb 已 null,後續 advOnQuizSkip fire 沒事發生)。',
+      '   ・修補 1:startTurn 開頭孤兒清理加 reward overlay 守門 + 新回合答題 pending 守門',
+      '           三個條件全部 OK 才能當孤兒清,否則保留 cb。',
+      '   ・修補 2:startTurn 開頭加 reward overlay 顯示中 → 直接 return 守門。',
+      '           等玩家選完獎勵走 _advFinishRoundQuiz → 200ms 後才繼續推進。',
+      '',
+      '📌 鐵律新增(1.132)— 孤兒 cb 清理判定必須包含所有「顯示型」overlay',
+      '   ・任何「cb 還掛著但 phase=idle」的清理邏輯,必須掃完所有可能顯示的 overlay',
+      '     (quiz / reward / cutscene / dialog / mini-result 等),只要任一顯示就保留 cb',
+      '   ・遺漏一個就是這次 BUG 3 的下場 — reward overlay 沒檢查 → cb 被誤清 → 玩家點不到',
+      '   ・另外 startTurn 進入後若有「玩家選獎勵中」的 overlay,應該直接 return',
+      '     不該繼續往下跑 renderActionPanel 把其他 UI 顯示出來蓋住獎勵',
+      '',
+      '📌 鐵律新增(1.133)— watchdog 二次救援會跟新流程打架,加新流程時要全面盤點 watchdog',
+      '   ・v3.5.x 加的二次救援在沒「新回合答題」(v3.6.0)的版本下無害,',
+      '     但 v3.6.0 之後會跟新回合答題打架,沒同步調整就會卡死。',
+      '   ・新增重大流程(如新回合答題)時,必須 grep 所有 watchdog / setTimeout 兜底救援',
+      '     確認跟新流程不會時序衝突。',
+      '',
+      '📌 鐵律新增(1.134)— _heroLevels 是「英雄解鎖」資料的最後一道真相',
+      '   ・玩家解鎖英雄時 advSaveUnlockedHero 會寫 adv_unlocked_heroes 並 addHeroExp 拉 _heroLevels',
+      '   ・若 unlockedHeroes 陣列因任何原因被截斷,_heroLevels 通常會保留完整紀錄',
+      '   ・所以 reconcile 比對時,_heroLevels 永遠是「應該解鎖了哪些英雄」的最後一道真相',
+      '     必須優先用它反推 unlockedHeroes,而非單純比對兩個陣列',
+      '',
+      '🔧 改動檔案',
+      '   ・index.html line ~38185:孤兒 _advQuizResolveCb 清理加 reward overlay / 新回合答題守門',
+      '   ・index.html line ~38234 後:startTurn 加 reward overlay 顯示中直接 return 守門',
+      '   ・index.html line ~25425:_burstFinish watchdog 移除 1.5 秒 _advForceRescueActor 二次救援',
+      '   ・index.html line ~66987 後:reconcile v3.11.21 加 _heroLevels 反推 unlockedHeroes 邏輯',
+      '   ・index.html line ~98048:_GAME_LOADED_VERSION → v3.12.12',
+      '   ・index.html line ~10024:_LXPS_FILE_VERSIONS index.html / game_changelog.js → v3.12.12',
+      '',
+      '感謝 5 年級回報的學生 ❤️ 三位:',
+      '   ・神槍手卡死(日本關):drummerelvis@gmail.com (Chi Hao Chang)',
+      '   ・英雄解鎖數錯亂:drummerelvis@gmail.com (Chi Hao Chang)— 同一人撞了兩個 BUG',
+      '   ・貓空獎勵點選沒反應:lsps110041@stu.lsps.tp.edu.tw (5321 張書語)',
+    ],
+  },
 
   // ════════════════════════════════════════════════════════════════════
   // v3.12.10(2026-05-30)— GM 補償系統 + 至寶切換視窗層級修補
