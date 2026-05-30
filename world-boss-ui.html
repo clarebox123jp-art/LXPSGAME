@@ -1437,15 +1437,43 @@
                         '</div>';
       }
 
-      // ★ v3.10.18 — 「📜 查看每場」按鈕(只在「我自己的隊伍」顯示;含隱私考量)
+      // ★ v3.12.9(2026-05-30) — 老師需求:排行榜列顯示「今日總傷 + 場次」
+      //   舊版只顯示「N 場累積」(累積=這支隊伍歷史所有場次)
+      //   新版增加顯示「今日已打 K 場」(由 battleHistory 過濾今日場次計算)
+      //   ⚠ 跨日 08:00 重置「今日」定義,但 BOSS 倒下前 battleHistory 不清,排名持續累積
+      let _todayCountTxt = '';
+      try{
+        if(window._wbDailyLimit && typeof window._wbDailyLimit._todayStr === 'function'
+           && typeof window._wbDailyLimit._dateStrOf === 'function'){
+          const _todayStr = window._wbDailyLimit._todayStr();
+          const _bhArr = Array.isArray(e.battleHistory) ? e.battleHistory : [];
+          let _todayN = 0;
+          let _todayDmg = 0;
+          for(const _b of _bhArr){
+            if(!_b || !_b.at) continue;
+            if(window._wbDailyLimit._dateStrOf(_b.at) === _todayStr){
+              _todayN++;
+              _todayDmg += (_b.dmg || 0);
+            }
+          }
+          if(_todayN > 0){
+            _todayCountTxt = '<span style="color:#ffd066;font-weight:700;">今日 ' + _todayN + ' 場共 '
+              + _formatDmg(_todayDmg) + '</span>';
+          }
+        }
+      }catch(_eTd){ /* 容錯:今日統計失敗就不顯示 */ }
+
+      // ★ v3.12.9 — 「📜 查看每一場」按鈕:老師需求改為「所有玩家都能展開」(原本只限 isMyTeam)
+      //   理由:排行榜畫面對所有玩家透明 — 想看其他隊歷史也行
+      //   ⚠ 仍保留 _hasBattleHistory 守門避免空陣列彈空 modal
       let _myHistoryBtn = '';
-      if(isMyTeam && Array.isArray(e.battleHistory) && e.battleHistory.length > 0){
+      if(Array.isArray(e.battleHistory) && e.battleHistory.length > 0){
         const _tkEsc = (e.teamKey||'').replace(/"/g,'&quot;');
         _myHistoryBtn = '<button class="_wb-player-history-btn" data-teamkey="' + _tkEsc + '" ' +
           'style="margin-top:5px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;' +
           'background:linear-gradient(135deg,rgba(80,150,200,0.4),rgba(40,100,160,0.6));' +
           'border:1.5px solid #66bbdd;color:#cce8ff;border-radius:6px;font-family:inherit;">' +
-          '📜 查看我每一場(' + e.battleHistory.length + ')</button>';
+          '📜 展開每場戰績(' + e.battleHistory.length + ')</button>';
       }
 
       return ''
@@ -1459,8 +1487,10 @@
         +   _heroesRow            // ★ v3.5.43 — 四隻參戰英雄 + 等級
         +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
         +   _lastBattleRow        // ★ v3.10.18 — 最近一場時間 + MVP
-        +   '<div style="font-size:14px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積</div>'
-        +   _myHistoryBtn         // ★ v3.10.18 — 只有自己的隊伍才能展開每場
+        +   '<div style="font-size:13px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積'
+        +       (_todayCountTxt ? ' · ' + _todayCountTxt : '')
+        +   '</div>'
+        +   _myHistoryBtn         // ★ v3.12.9 — 所有人都能展開每場
         + '</div>'
         + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
         +   _formatDmg(e.totalDmg || 0)
@@ -1498,39 +1528,107 @@
     });
   }
 
-  // ★ v3.10.18 — 學生自看每一場 modal(類似後台的展開每場,但純展示無刪除權)
+  // ★ v3.12.9(2026-05-30) — 學生展開每一場 modal — 重寫顯示格式
+  //   舊版:「第 N 場(累積流水號)」純列表
+  //   新版:按日分組,每場顯示「5/30 第 N/2 場 HH:MM 結算 總傷害 X 萬」+ 「今日 X 場共 Y 萬」總計
+  //   ⚠ 老師需求(2026-05-30):
+  //     「5/30 第1/2場 15:58 結算總傷害 2.5萬。5/30 第2/2場 16:30 結算總傷害 2.8萬。今日 2 場共 5.3 萬」
+  //   ⚠ 隱私:所有玩家都可展開查看(rendering 已不限 isMyTeam)
   function _showPlayerHistoryModal(entry){
     const _old = document.getElementById('_wb-player-history-overlay');
     if(_old) _old.remove();
     const _pad = function(n){ return n<10?'0'+n:''+n; };
     const _escH = function(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-    const _hist = Array.isArray(entry.battleHistory) ? entry.battleHistory : [];
+    const _fmtDmg = function(n){
+      if(typeof n !== 'number' || isNaN(n) || n <= 0) return '0';
+      if(n >= 10000) return (n/10000).toFixed(1) + ' 萬';
+      return n.toLocaleString();
+    };
+    const _hist = Array.isArray(entry.battleHistory) ? entry.battleHistory.slice() : [];
     const _names = (entry.teamNames||[]).filter(Boolean).join(' / ') || '?';
-    const _bodyHtml = _hist.length === 0
-      ? '<div style="padding:30px 20px;text-align:center;color:#888;font-size:14px;">本隊伍尚無戰績歷史</div>'
-      : _hist.map(function(b, i){
+
+    // ── 按日分組(用 _wbDailyLimit._dateStrOf,跟「跨日 08:00 重置」邏輯一致)──
+    const _dateStrOf = (window._wbDailyLimit && typeof window._wbDailyLimit._dateStrOf === 'function')
+      ? window._wbDailyLimit._dateStrOf
+      : function(ts){
+          const _d = new Date(ts);
+          if(_d.getHours() < 8){ _d.setDate(_d.getDate() - 1); }
+          return (_d.getFullYear()) + '-' + _pad(_d.getMonth()+1) + '-' + _pad(_d.getDate());
+        };
+    // 排序:時間新到舊(讓今天的場次顯示在最上面)
+    _hist.sort(function(a,b){ return (b.at||0) - (a.at||0); });
+    // 分組 by dateStr
+    const _groups = {};       // dateStr → 該日所有場次(時間新到舊)
+    const _orderedDates = []; // 出現順序
+    _hist.forEach(function(b){
+      if(!b || !b.at) return;
+      const _ds = _dateStrOf(b.at);
+      if(!_groups[_ds]){ _groups[_ds] = []; _orderedDates.push(_ds); }
+      _groups[_ds].push(b);
+    });
+
+    const _today = (window._wbDailyLimit && typeof window._wbDailyLimit._todayStr === 'function')
+      ? window._wbDailyLimit._todayStr() : '';
+
+    let _bodyHtml = '';
+    if(_hist.length === 0){
+      _bodyHtml = '<div style="padding:30px 20px;text-align:center;color:#888;font-size:14px;">本隊伍尚無戰績歷史</div>';
+    } else {
+      _bodyHtml = _orderedDates.map(function(_ds){
+        const _items = _groups[_ds];
+        const _isToday = (_ds === _today);
+        // 同一日內的場次:由「最舊」到「最新」算第 N 場(_items 已經是新到舊,反過來編號)
+        // 然後渲染時還是用「新到舊」順序顯示
+        const _dayTotal = _items.reduce(function(sum, b){ return sum + (b.dmg || 0); }, 0);
+        // 該日總場次(從 _items.length 直接取)
+        const _dayCount = _items.length;
+        // 計算每場「第 N/總 場」編號(1-based,由舊到新累計)
+        const _sortedAsc = _items.slice().sort(function(a,b){ return (a.at||0) - (b.at||0); });
+        const _idxMap = new Map();
+        _sortedAsc.forEach(function(b, i){ _idxMap.set(b, i + 1); });
+
+        const _rowsHtml = _items.map(function(b){
           const _t = new Date(b.at);
-          const _timeStr = (_t.getMonth()+1)+'/'+_t.getDate()+' '+_pad(_t.getHours())+':'+_pad(_t.getMinutes());
+          const _timeStr = _pad(_t.getHours()) + ':' + _pad(_t.getMinutes());
+          const _battleNo = _idxMap.get(b);
           const _mvpHtml = b.mvp && b.mvp.name
-            ? '<span style="color:#ff8866;">🗡 <b>' + _escH(b.mvp.name) + '</b>' +
-              ' <span style="color:#ffd066;font-size:12px;">Lv' + (b.mvp.lv||1) + '</span></span>' +
-              ' <span style="color:#ddd;">傷害 <b style="color:#ffe066;">' + (b.mvp.dmg||0).toLocaleString() + '</b></span>'
-            : '<span style="color:#888;">無 MVP 資料</span>';
-          return '<div style="background:rgba(60,80,120,0.18);border-left:4px solid #6699cc;' +
+            ? '<span style="color:#888;font-size:11px;">MVP <b style="color:#ff8866;">' + _escH(b.mvp.name) +
+              '</b> Lv' + (b.mvp.lv||1) + ' 傷 ' + _fmtDmg(b.mvp.dmg || 0) + '</span>'
+            : '';
+          return '<div style="background:rgba(60,80,120,0.18);border-left:4px solid ' +
+                  (_isToday ? '#ffd066' : '#6699cc') + ';' +
                  'padding:10px 14px;margin-bottom:6px;border-radius:6px;">' +
-                   '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:4px;">' +
-                     '<span style="color:#888;font-size:12px;">第 ' + (i+1) + ' 場</span>' +
-                     '<span style="color:#aabbdd;font-size:13px;">🕒 ' + _timeStr + '</span>' +
-                     '<span style="color:#ffd066;font-size:15px;font-weight:800;margin-left:auto;">' +
-                        (b.dmg||0).toLocaleString() + ' 傷</span>' +
+                   '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px;">' +
+                     '<span style="color:#ffd066;font-weight:700;">' +
+                        // 「5/30 第 N/總 場」
+                        (_t.getMonth()+1) + '/' + _t.getDate() + ' 第 ' + _battleNo + '/' + _dayCount + ' 場' +
+                     '</span>' +
+                     '<span style="color:#aabbdd;">🕒 ' + _timeStr + ' 結算</span>' +
+                     '<span style="margin-left:auto;color:#ff8866;font-weight:800;font-size:16px;">' +
+                        '總傷害 ' + _fmtDmg(b.dmg || 0) + '</span>' +
                    '</div>' +
-                   '<div style="font-size:13px;line-height:1.7;">' + _mvpHtml + '</div>' +
-                   '<div style="font-size:11px;color:#888;margin-top:2px;">' +
-                     '回合 ' + (b.turns||'—') + ' · 答對 ' + (b.qc||0) + ' 題' +
-                     ' · 💥 聯手爆發 ' + (b.tb||0) + ' 次' +
+                   '<div style="margin-top:3px;font-size:11px;color:#888;line-height:1.5;">' +
+                     '⏱ ' + (b.turns||'—') + ' 回合 · 📚 ' + (b.qc||0) + ' 題 · 💥 聯手爆發 ' + (b.tb||0) + ' 次' +
+                     (_mvpHtml ? '<br>' + _mvpHtml : '') +
                    '</div>' +
                  '</div>';
         }).join('');
+
+        // 日分組標題 + 該日總計
+        const _headerHtml = '<div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px;' +
+              'padding:6px 12px;background:' + (_isToday ? 'rgba(255,210,100,0.15)' : 'rgba(100,140,200,0.12)') + ';' +
+              'border-radius:6px;border-left:3px solid ' + (_isToday ? '#ffd066' : '#6699cc') + ';">' +
+              '<span style="font-size:15px;font-weight:800;color:' + (_isToday ? '#ffe066' : '#aaccff') + ';">' +
+                 (_isToday ? '🌟 今日 ' : '📅 ') + _ds +
+              '</span>' +
+              '<span style="margin-left:auto;font-size:14px;color:#ddd;">' +
+                 _dayCount + ' 場共 <b style="color:#ff8866;">' + _fmtDmg(_dayTotal) + '</b>' +
+              '</span></div>';
+
+        return _headerHtml + _rowsHtml;
+      }).join('');
+    }
+
     const _overlay = document.createElement('div');
     _overlay.id = '_wb-player-history-overlay';
     _overlay.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
@@ -1551,7 +1649,8 @@
         '</div>' +
         '<div style="padding:8px 18px;font-size:12px;color:#bbb;background:rgba(60,80,120,0.2);' +
               'border-bottom:1px solid rgba(100,140,200,0.25);line-height:1.5;">' +
-          '💡 只保留最近 10 場(避免雲端配額爆掉)。MVP 是該場「最高傷害」的英雄。' +
+          '💡 按日期分組,每日「第 N/總 場」+ 結算時間 + 該場總傷害。' +
+          '雲端只保留最近 10 場(避免配額爆掉)。' +
         '</div>' +
         '<div style="flex:1;overflow-y:auto;padding:12px 18px;">' + _bodyHtml + '</div>' +
       '</div>';
@@ -4112,20 +4211,20 @@
   async function _wbCheckDailyLimit(){
     if(!window._wbDailyLimit || typeof window._wbDailyLimit.canEnter !== 'function'){
       // 模組未掛載 → 放行(向後相容)
-      console.warn('[WB-DailyLimit v2] _wbDailyLimit 模組未掛載,放行');
+      console.warn('[WB-DailyLimit v3.12.9] _wbDailyLimit 模組未掛載,放行');
       return true;
     }
     let _res;
     try{
       _res = await window._wbDailyLimit.canEnter();
     }catch(e){
-      console.warn('[WB-DailyLimit v2] canEnter 失敗,保守放行', e);
+      console.warn('[WB-DailyLimit v3.12.9] canEnter 失敗,保守放行', e);
       return true;
     }
     if(_res.allowed){
       // 管理員一視同仁,但 log 標示
       if(_res.isAdmin){
-        console.log('[WB-DailyLimit v2] 管理員進場,已上榜 ' + _res.used + '/' + _res.limit);
+        console.log('[WB-DailyLimit v3.12.9] 管理員進場,目前計次 ' + _res.used + '/' + _res.limit);
       }
       return true;
     }
@@ -4137,19 +4236,24 @@
       '</div>' +
       '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
         '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
-        '・<b style="color:#88ddff;">跨過台灣午夜 00:00 自動重置</b><br>' +
+        '・<b style="color:#88ddff;">隔天早上 08:00 自動重置</b><br>' +
         '・「單人練習模式」不算次數,可無限練習<br>' +
-        '・<b style="color:#a0ffa0;">小提示:中途斷線、被秒殺等沒造成傷害的場次不會計入</b>' +
+        '・<b style="color:#a0ffa0;">小提示:戰鬥結算進排行榜才扣場次,中途離開不算</b>' +
       '</div>';
     _wbGameAlert(_msg);
     return false;
   }
 
-  // ★ v3.10.13 — 進場計數 helper 改為空殼(計次完全靠排行榜實際上榜)
-  //   保留函式名以維持 4 個進場入口的向後相容,實際不做任何事
+  // ★ v3.12.9(2026-05-30) — 進場計數 helper 維持空殼(不在進場 +1)
+  //   設計變更(老師指示):
+  //     - 進場時不扣場次,只用 canEnter() 守門檢查
+  //     - 真正 +1 的時機改為「戰鬥結算 _wbShowAdvBattleResult」
+  //       (對應 world-boss.js line ~3350 開頭的 bumpDailyCount 呼叫)
+  //     - 這樣中途離開 / 斷線 / 沒造成傷害不會扣場次
+  //
+  //   保留此函式名以維持 4 個進場入口的向後相容,實際不做任何事
   async function _wbBumpDailyEntry(reason){
-    // 新版不再需要 increment,計次靠 leaderboard.battleHistory
-    console.log('[WB-DailyLimit v2] 進場 (' + reason + ') — 計次將在實際造成傷害上榜後自動算入');
+    console.log('[WB-DailyLimit v3.12.9] 進場 (' + reason + ') — 場次將在「戰鬥結算進排行榜」時自動 +1');
   }
 
   // ★ FIX 20260517(o-3) — 對應現有英雄系統:取得「玩家已解鎖」的可用英雄
