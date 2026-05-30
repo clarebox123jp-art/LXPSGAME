@@ -279,6 +279,28 @@
     backdrop-filter:blur(1px);
   }
 
+  /* ★ v3.12.15(2026-05-31) — 入口三大消耗場次按鈕「場次已滿」鎖樣式
+     用法:_wbApplyEntryGateLock() 偵測到玩家今日場次已用完,
+           給 #wb-entry-btn-create / -public / -join 加 .wb-daily-locked class
+     視覺:跟休戰期類似的灰階,但浮水印換成「⛔ 今日場次已用完」紅字提示
+     差異:單人練習(#wb-entry-btn-solo)永不上鎖,玩家還能練習 */
+  .wb-entry-big-btn.wb-daily-locked{
+    filter:grayscale(0.75) brightness(0.55);
+    cursor:not-allowed !important;
+    position:relative;
+    pointer-events:none;
+  }
+  .wb-entry-big-btn.wb-daily-locked::after{
+    content:'⛔ 今日場次已用完';
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.62);border-radius:12px;
+    font-size:17px;font-weight:900;color:#ff8866;
+    letter-spacing:2px;
+    text-shadow:0 1px 6px rgba(0,0,0,0.9);
+    backdrop-filter:blur(1px);
+  }
+
   /* ★ v3.2 — 出戰前元素確認 modal */
   #wb-elem-confirm-overlay{
     display:none;position:fixed;inset:0;z-index:10500;
@@ -1043,23 +1065,24 @@
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
     <!-- ★ v3.5.61 — 排行榜從這裡移到「排名獎勵」下方(老師需求:排名獎勵 → 當前排行榜 才是合理閱讀順序) -->
+    <!-- ★ v3.12.15(2026-05-31) — 三大消耗場次按鈕加 id,讓 _wbApplyEntryGateLock 偵測到場次已滿時加灰階+🔒 提示 -->
     <div class="wb-entry-btn-row">
-      <div class="wb-entry-big-btn" onclick="_wbUiOpenVisibilityChoice()">
+      <div class="wb-entry-big-btn" id="wb-entry-btn-create" onclick="_wbUiOpenVisibilityChoice()">
         <span class="ico">🏰</span>
         <div class="ttl">開新房間</div>
         <div class="desc">自己當房主<br>可選私人 / 公開 / 邀好友<br>產生 6 碼房號</div>
       </div>
-      <div class="wb-entry-big-btn" onclick="_wbUiOpenPublicRooms()" style="border-color:#ffaa66;background:linear-gradient(160deg,rgba(255,170,100,0.18) 0%,rgba(255,170,100,0.05) 100%);">
+      <div class="wb-entry-big-btn" id="wb-entry-btn-public" onclick="_wbUiOpenPublicRooms()" style="border-color:#ffaa66;background:linear-gradient(160deg,rgba(255,170,100,0.18) 0%,rgba(255,170,100,0.05) 100%);">
         <span class="ico">🌐</span>
         <div class="ttl" style="color:#ffaa66;">瀏覽公開房</div>
         <div class="desc">看其他玩家開的公開房<br>沒朋友也能組隊<br>隨時加入</div>
       </div>
-      <div class="wb-entry-big-btn" onclick="document.getElementById('wb-join-area').scrollIntoView({behavior:'smooth'})">
+      <div class="wb-entry-big-btn" id="wb-entry-btn-join" onclick="document.getElementById('wb-join-area').scrollIntoView({behavior:'smooth'})">
         <span class="ico">🔑</span>
         <div class="ttl">輸入房號加入</div>
         <div class="desc">朋友開好房後<br>告訴你 6 碼房號<br>輸入就能進去</div>
       </div>
-      <div class="wb-entry-big-btn" onclick="_wbUiSoloTest()" style="border-color:#5dcaa5;background:linear-gradient(160deg,rgba(93,202,165,0.18) 0%,rgba(93,202,165,0.05) 100%);">
+      <div class="wb-entry-big-btn" id="wb-entry-btn-solo" onclick="_wbUiSoloTest()" style="border-color:#5dcaa5;background:linear-gradient(160deg,rgba(93,202,165,0.18) 0%,rgba(93,202,165,0.05) 100%);">
         <span class="ico">🧪</span>
         <div class="ttl" style="color:#5dcaa5;">單人練習模式</div>
         <div class="desc">沒有獎勵,純粹練習陣容<br>記錄最高總傷害紀錄<br>協助調整正式陣容</div>
@@ -4237,15 +4260,16 @@
       return true;
     }
     // 已達上限 → 彈窗擋下
+    // ★ v3.12.15(2026-05-31) — 訊息文字對齊老師措辭「今日已經打完所有場次」
     const _msg =
-      '⛔ 你今日的世界 BOSS 場次已用完<br><br>' +
+      '⛔ 你今日已經打完所有場次<br><br>' +
       '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
-        '今日已完成:<b>' + _res.used + ' / ' + _res.limit + '</b> 場' +
+        '今日已完成:<b>' + _res.used + ' / ' + _res.limit + '</b> 場連線戰' +
       '</div>' +
       '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
         '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
         '・<b style="color:#88ddff;">隔天早上 08:00 自動重置</b><br>' +
-        '・「單人練習模式」不算次數,可無限練習<br>' +
+        '・<b style="color:#5dcaa5;">「單人練習模式」不算次數,隨時可挑戰</b><br>' +
         '・<b style="color:#a0ffa0;">小提示:戰鬥結算進排行榜才扣場次,中途離開不算</b>' +
       '</div>';
     _wbGameAlert(_msg);
@@ -4829,6 +4853,57 @@
   window._wbUiSendInvite = async function(toUid, toName){
     if(!toUid) return;
     if(!window._wbNet || !window._wbNet.sendInvite) return;
+    // ★ v3.12.15(2026-05-31) — 發邀請前先查對方今日場次,已滿就提示房主不要邀
+    //   避免房主邀請後才發現對方進不來、白等 30 秒讀條
+    //   設計:fetch 雲端對方 wbDailyCount,>= 2 → 擋住發送並 alert 提示
+    //   失敗保護:fetch 例外時放行(網路問題不應阻擋正常邀請流程)
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit.getCountByUid === 'function'){
+        const _peerRes = await window._wbDailyLimit.getCountByUid(toUid);
+        if(_peerRes && !_peerRes.error){
+          let _limit = 2;
+          try{
+            if(typeof window._wbDailyLimit.getLimit === 'function'){
+              _limit = window._wbDailyLimit.getLimit() || 2;
+            }
+          }catch(_){}
+          // 跨日處理:dateStr 不是今天 → 視為 0,不擋
+          let _peerCount = Number(_peerRes.count) || 0;
+          let _peerDateStr = _peerRes.dateStr || '';
+          try{
+            const _today = window._wbDailyLimit._todayStr ? window._wbDailyLimit._todayStr() : '';
+            if(_peerRes.dateStr && _today && _peerRes.dateStr !== _today){
+              _peerCount = 0;  // 跨日,雲端紀錄是昨天的 → 視為 0
+              _peerDateStr = _today;  // 同步更新 dateStr 為今天,避免下次讀快取又跑跨日邏輯
+            }
+          }catch(_){}
+          // 順手更新本機快取(讓隊伍頁的場次徽章也能同步顯示)
+          try{
+            window._wbDailyCountCache = window._wbDailyCountCache || {};
+            window._wbDailyCountCache[toUid] = {
+              count: _peerCount, dateStr: _peerDateStr, fetchedAt: Date.now(),
+            };
+          }catch(_){}
+          if(_peerCount >= _limit){
+            _wbGameAlert(
+              '⛔ 該玩家今日已經打完所有場次<br><br>' +
+              '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
+                '<b>' + (toName || '對方') + '</b> 今日已完成:<b>' + _peerCount + ' / ' + _limit + '</b> 場' +
+              '</div>' +
+              '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
+                '・對方已達每日 ' + _limit + ' 場上限,無法再接受連線邀請<br>' +
+                '・<b style="color:#88ddff;">隔天早上 08:00 自動重置</b><br>' +
+                '・建議邀請其他還有場次的好友' +
+              '</div>'
+            );
+            console.warn('[WB-Invite] 邀請被擋:', toName, '今日已用', _peerCount, '/', _limit);
+            return;
+          }
+        }
+      }
+    }catch(_eDcInv){
+      console.warn('[WB-Invite] 對方場次檢查例外,放行繼續發送', _eDcInv);
+    }
     const ret = await window._wbNet.sendInvite(toUid, toName);
     if(ret){
       // sendInvite 寫入後,subscribeMyOutgoingInvites 會自動觸發,UI 自動刷新
@@ -5640,6 +5715,189 @@
   window._wbTcGetMyDefaultLoadout = _wbTcGetMyDefaultLoadout;
 
   // 開啟隊伍確認頁(從選角頁的按鈕觸發)
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.12.15(2026-05-31) — 玩家場次快取 + 顯示 helper
+  // ────────────────────────────────────────────────────────────────────
+  // 老師需求:隊伍頁每位玩家名稱旁加「(已用/上限場)」場次顯示,
+  //   2/2 的玩家(沒場次)不能進房間 → 房主端守門擋住開戰
+  //
+  // 設計:
+  //   - 本機 map:_wbDailyCountCache = { uid: { count, dateStr, fetchedAt } }
+  //   - fetch 觸發:隊伍頁開啟 + 玩家加入(onRoomUpdate)
+  //   - 跨日處理:dateStr !== _todayStr() → 視為 0
+  //   - 快取時效:5 分鐘內不重複 fetch(避免 reactive 渲染狂打雲端)
+  // ════════════════════════════════════════════════════════════════════
+  window._wbDailyCountCache = window._wbDailyCountCache || {};
+  const _WB_DAILY_CACHE_TTL_MS = 5 * 60 * 1000;  // 5 分鐘
+
+  // 取得某 uid 的「今日已用場次」(從快取讀,沒快取則回 null;非同步 fetch 走 _wbFetchPlayerDailyCount)
+  function _wbGetCachedDailyCount(uid){
+    if(!uid) return null;
+    const _rec = window._wbDailyCountCache[uid];
+    if(!_rec) return null;
+    // 檢查跨日:rec.dateStr !== 今天 → 視為 0
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit._todayStr === 'function'){
+        const _today = window._wbDailyLimit._todayStr();
+        if(_rec.dateStr && _rec.dateStr !== _today){
+          return 0;  // 跨日,已用場次重置
+        }
+      }
+    }catch(_){}
+    return Math.max(0, _rec.count || 0);
+  }
+
+  // 非同步 fetch 某 uid 的場次,寫入快取,完成後呼叫 onDone(若提供)
+  // 已在快取內(且未過 TTL)→ 直接 onDone 回現值
+  async function _wbFetchPlayerDailyCount(uid, opts){
+    if(!uid) return;
+    const _onDone = (opts && opts.onDone) || null;
+    const _force = !!(opts && opts.force);
+    const _rec = window._wbDailyCountCache[uid];
+    if(!_force && _rec && (Date.now() - (_rec.fetchedAt || 0) < _WB_DAILY_CACHE_TTL_MS)){
+      if(_onDone) _onDone(_wbGetCachedDailyCount(uid));
+      return;
+    }
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit.getCountByUid === 'function'){
+        const _res = await window._wbDailyLimit.getCountByUid(uid);
+        if(_res && !_res.error){
+          window._wbDailyCountCache[uid] = {
+            count: Number(_res.count) || 0,
+            dateStr: _res.dateStr || '',
+            fetchedAt: Date.now(),
+          };
+          if(_onDone) _onDone(_wbGetCachedDailyCount(uid));
+        }
+      }
+    }catch(eFetch){
+      console.warn('[WB-DailyCount] fetch 失敗(uid=' + uid + ')', eFetch);
+    }
+  }
+
+  // 對房內所有玩家 fetch 場次,完成後 callback 觸發 re-render
+  async function _wbFetchAllPlayersDailyCount(players, opts){
+    if(!Array.isArray(players)) return;
+    const _onAllDone = (opts && opts.onAllDone) || null;
+    const _force = !!(opts && opts.force);
+    let _changed = false;
+    await Promise.all(players.map(async function(p){
+      if(!p || !p.uid) return;
+      const _prevCnt = _wbGetCachedDailyCount(p.uid);
+      await _wbFetchPlayerDailyCount(p.uid, { force: _force });
+      const _newCnt = _wbGetCachedDailyCount(p.uid);
+      if(_prevCnt !== _newCnt) _changed = true;
+    }));
+    if(_changed && _onAllDone) _onAllDone();
+  }
+
+  // 場次顯示 helper:回傳「(used/limit場)」字串(無資料時回空字串)
+  // 並帶顏色提示:已滿(used>=limit)→ 紅色 + ⛔
+  function _wbFormatPlayerDailyCountBadge(uid){
+    if(!uid) return '';
+    const _used = _wbGetCachedDailyCount(uid);
+    if(_used === null) return '';  // 快取沒資料,先不顯示(避免閃)
+    let _limit = 2;
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit.getLimit === 'function'){
+        _limit = window._wbDailyLimit.getLimit() || 2;
+      }
+    }catch(_){}
+    const _isFull = _used >= _limit;
+    const _color = _isFull ? '#ff6644' : (_used >= _limit - 1 ? '#ffcc66' : '#9fdba8');
+    const _icon = _isFull ? '⛔ ' : '';
+    return ` <span class="wb-tc-daily-badge" style="font-size:0.78em;color:${_color};font-weight:700;letter-spacing:0.5px;margin-left:4px;">${_icon}(${_used}/${_limit}場)</span>`;
+  }
+
+  // 房內是否有玩家場次已滿(用於開戰守門)
+  // 回 { hasFull: bool, fullPlayers: [{uid,name,count}] }
+  function _wbCheckRoomDailyLimit(players){
+    const _result = { hasFull: false, fullPlayers: [] };
+    if(!Array.isArray(players)) return _result;
+    let _limit = 2;
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit.getLimit === 'function'){
+        _limit = window._wbDailyLimit.getLimit() || 2;
+      }
+    }catch(_){}
+    players.forEach(function(p){
+      if(!p || !p.uid) return;
+      const _used = _wbGetCachedDailyCount(p.uid);
+      if(typeof _used === 'number' && _used >= _limit){
+        _result.hasFull = true;
+        _result.fullPlayers.push({ uid: p.uid, name: p.name || '玩家', count: _used });
+      }
+    });
+    return _result;
+  }
+  // 暴露給 console / 其他模組偵錯用
+  window._wbGetCachedDailyCount = _wbGetCachedDailyCount;
+  window._wbFetchPlayerDailyCount = _wbFetchPlayerDailyCount;
+  window._wbCheckRoomDailyLimit = _wbCheckRoomDailyLimit;
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.12.15(2026-05-31) — 入口頁三大消耗場次按鈕視覺鎖
+  // ────────────────────────────────────────────────────────────────────
+  // 老師需求:玩家今日場次用完時,入口頁的開房/瀏覽公開房/輸入房號加入
+  //   三個按鈕全部加灰階 + ⛔ 浮水印,讓玩家看到就知道,不用點下去才被擋。
+  //   單人練習(wb-entry-btn-solo)永不上鎖,玩家還能繼續練習。
+  //
+  // 觸發時機:
+  //   ① _openWorldBossEntry 進入時(world-boss.js line ~1070 既有呼叫點)
+  //   ② _wbShowAdvBattleResult 結算 +1 後立即重套(world-boss.js line ~3604)
+  //   ③ 入口頁開啟後每 60 秒輪詢一次(避免昨天的舊 tab 跨日後沒重置)
+  //
+  // 設計:讀自己場次(canEnter 走雲端,確保新鮮),不用本機快取避免閃跳
+  // ════════════════════════════════════════════════════════════════════
+  window._wbApplyEntryGateLock = async function(){
+    try{
+      const _ids = ['wb-entry-btn-create', 'wb-entry-btn-public', 'wb-entry-btn-join'];
+      if(!window._wbDailyLimit || typeof window._wbDailyLimit.canEnter !== 'function'){
+        // 模組未掛載 → 不鎖,放行
+        _ids.forEach(function(id){
+          const el = document.getElementById(id);
+          if(el) el.classList.remove('wb-daily-locked');
+        });
+        return;
+      }
+      const _res = await window._wbDailyLimit.canEnter();
+      const _locked = !!(_res && _res.allowed === false);
+      _ids.forEach(function(id){
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(_locked){
+          el.classList.add('wb-daily-locked');
+          el.setAttribute('title', '今日場次已用完(' + _res.used + '/' + _res.limit + '),明天 08:00 重置');
+        }else{
+          el.classList.remove('wb-daily-locked');
+          el.removeAttribute('title');
+        }
+      });
+      console.log('[WB-EntryGate v3.12.15] _wbApplyEntryGateLock: locked=' + _locked
+        + (_res ? ', used=' + _res.used + '/' + _res.limit : ''));
+    }catch(eLock){
+      console.warn('[WB-EntryGate v3.12.15] _wbApplyEntryGateLock 例外', eLock);
+    }
+  };
+
+  // 入口頁開啟時每 60 秒輪詢一次(防跨日 / 防其他分頁打完場後本分頁沒同步)
+  // 用 setInterval 但每次 entry 開啟時都重置,避免多重 interval 累積
+  let _wbEntryGatePollTimer = null;
+  function _wbStartEntryGatePolling(){
+    if(_wbEntryGatePollTimer){ clearInterval(_wbEntryGatePollTimer); }
+    _wbEntryGatePollTimer = setInterval(function(){
+      const ov = document.getElementById('wb-entry-overlay');
+      // 入口頁已關 → 停輪詢
+      if(!ov || ov.style.display === 'none' || !ov.offsetParent){
+        clearInterval(_wbEntryGatePollTimer);
+        _wbEntryGatePollTimer = null;
+        return;
+      }
+      try{ window._wbApplyEntryGateLock(); }catch(_){}
+    }, 60000);  // 60 秒一次
+  }
+  window._wbStartEntryGatePolling = _wbStartEntryGatePolling;
+
   window._wbTcOpenTeamConfirm = function(){
     const snap = window._wbNet.getSnapshot();
     const me = snap?.players?.find(p => p.uid === window._gUserId);
@@ -5734,6 +5992,15 @@
       }
     }
     _wbTcRenderTeamConfirm();
+    // ★ v3.12.15(2026-05-31) — 開啟隊伍頁時 fetch 房內所有玩家的今日場次
+    //   完成後重 render 讓 (used/limit場) 顯示出來
+    try{
+      const _snapPC = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+      const _playersPC = (_snapPC && _snapPC.players) || [];
+      _wbFetchAllPlayersDailyCount(_playersPC, { force: true, onAllDone: function(){
+        try{ _wbTcRenderTeamConfirm(); }catch(_){}
+      }});
+    }catch(_eDcInit){ console.warn('[WB-DailyCount] 初始 fetch 失敗', _eDcInit); }
   };
 
   window._wbTcCloseTeamConfirm = function(){
@@ -6596,7 +6863,13 @@
     //   讓四個槽一眼看出每格是誰、也能跟「房主代打」NPC 槽位區分
     const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const _displayName = isAssigned ? (_esc(p.name || '房主') + '・代打') : _esc(p.name || '玩家');
-    const playerNameHtml = `<span class="wb-tc-slot-player-name" title="${_displayName}">👤 ${_displayName}</span>`;
+    // ★ v3.12.15(2026-05-31) — 玩家名稱旁顯示「(已用/上限場)」場次徽章
+    //   代打 NPC 不顯示(因為跟房主同 uid,場次跟房主一樣);只對真實 uid 顯示。
+    //   isAssigned 槽位 p.uid 是 'host_npc_X',_wbGetCachedDailyCount 會回 null → badge 為空字串。
+    const _dailyBadge = (!isAssigned && p && p.uid && !/^host_npc_/i.test(p.uid))
+      ? _wbFormatPlayerDailyCountBadge(p.uid)
+      : '';
+    const playerNameHtml = `<span class="wb-tc-slot-player-name" title="${_displayName}">👤 ${_displayName}${_dailyBadge}</span>`;
 
     // ★ FIX 20260517(u) — 替換英雄按鈕:單人練習 或 多人房自己槽位都可以
     //   原本只在 _wbSoloPracticeMode 才能換,但新流程已移除選角頁,
@@ -7110,11 +7383,20 @@
       const note = on ? '裝備中' : '';
       const safeId = t.id.replace(/'/g,"\\'");
       const click = `onclick="_wbTcConfirmSwapTreasure(${targetSlotIdx}, '${safeId}')"`;
-      const slotName = t.slot === 'weapon' ? '武器' : t.slot === 'armor' ? '防具' : '飾品';
+      // ★ v3.12.15(2026-05-31) — 老師指示:slot 分類(武器/飾品/防具)在本遊戲沒意義,
+      //   改顯示真正的效果文字 abilityText(例如「基礎攻擊+10、爆擊率+30%」),
+      //   讓玩家一眼就看到至寶的作用。
+      //   abilityText 來自 TAIWAN_TREASURES[id].abilityText,所有至寶都有寫。
+      //   萬一某個至寶沒寫 → fallback 顯示 desc 或留空。
+      //   Lv 改用小字 badge 放在名稱右上角,保留升級資訊但不佔主要視覺空間。
+      const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const _def = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES[t.id]) || t || {};
+      const abilityText = _def.abilityText || _def.desc || '';
+      const lvBadge = t.lv ? `<span style="font-size:11px;color:#ffd066;font-weight:600;margin-left:4px;">Lv.${t.lv}</span>` : '';
       return `<button class="${cls}" ${click}>
         <div class="wb-tc-si-img">${t.icon || '💎'}</div>
-        <div class="wb-tc-si-name">${t.name}</div>
-        <div class="wb-tc-si-meta">Lv.${t.lv} ${slotName}</div>
+        <div class="wb-tc-si-name">${t.name}${lvBadge}</div>
+        <div class="wb-tc-si-meta" style="font-size:12px;line-height:1.4;color:#9fdba8;white-space:normal;text-align:center;padding:2px 4px;">${_esc(abilityText)}</div>
         ${note ? '<div class="wb-tc-si-note">'+note+'</div>' : ''}
       </button>`;
     }).join('');
@@ -7349,6 +7631,38 @@
     const snap = window._wbNet.getSnapshot();
     const meIsHost = (snap?.meta?.hostUid === window._gUserId);
     if(!meIsHost){ _wbGameAlert('只有房主可以開戰'); return; }
+
+    // ★ v3.12.15(2026-05-31) — 場次守門:房內任一玩家今日場次已滿 → 擋住開戰
+    //   避免房主開戰後,有玩家的場次扣不下去(已達 2/2 上限),
+    //   或更糟:扣得下去但變成 3/2(突破上限)。
+    //   設計:用 _wbCheckRoomDailyLimit 快取查所有玩家場次,任一已滿就擋。
+    //   若快取裡資料還沒回來,額外做一次 force fetch 再判斷。
+    try{
+      const _playersGate = (snap && snap.players) || [];
+      let _limitCheck = _wbCheckRoomDailyLimit(_playersGate);
+      // 若有玩家沒在快取裡,先 force fetch 一次確保資料最新
+      const _missingUids = _playersGate.filter(function(p){
+        return p && p.uid && !/^host_npc_/i.test(p.uid)
+            && _wbGetCachedDailyCount(p.uid) === null;
+      });
+      if(_missingUids.length > 0){
+        // 同步顯示「檢查中」提示,避免 UI 凍住沒反應
+        _wbGameAlert('⏳ 正在檢查隊員場次,請稍候再按一次「開戰」...');
+        _wbFetchAllPlayersDailyCount(_playersGate, { force: true, onAllDone: function(){
+          try{ if(typeof _wbTcRenderTeamConfirm === 'function') _wbTcRenderTeamConfirm(); }catch(_){}
+        }});
+        return;  // 等玩家再按一次
+      }
+      if(_limitCheck.hasFull){
+        const _names = _limitCheck.fullPlayers.map(function(fp){ return fp.name + '(已用 ' + fp.count + '/2)'; }).join('、');
+        _wbGameAlert('⛔ 以下隊員今日場次已滿,無法開戰:\n\n' + _names + '\n\n請該隊員離開房間,或等明天 08:00 重置後再戰。');
+        console.warn('[WB-TC] 開戰被擋:有玩家場次已滿', _limitCheck.fullPlayers);
+        return;
+      }
+    }catch(eDcGate){
+      console.warn('[WB-TC] 場次守門檢查例外', eDcGate);
+      // 例外時保守放行(不阻擋,讓後續 client 端預檢 / 結算 bumpDailyCount 兜底)
+    }
 
     // ★ FIX 20260517(bb) — 守門:重新計算元素覆蓋,沒齊不放行
     try{
@@ -8779,6 +9093,18 @@
       }
     }catch(_){}
     try{ _wbRenderPlayerSlots(data.players); }catch(_){}
+    // ★ v3.12.15(2026-05-31) — 房間有玩家加入/離開時,fetch 新玩家場次
+    //   只 fetch 還沒在快取的 uid,避免每次 onRoomUpdate 都打雲端
+    try{
+      const _newcomers = (data.players || []).filter(function(p){
+        return p && p.uid && !(window._wbDailyCountCache && window._wbDailyCountCache[p.uid]);
+      });
+      if(_newcomers.length > 0){
+        _wbFetchAllPlayersDailyCount(_newcomers, { onAllDone: function(){
+          try{ if(typeof _wbTcRenderTeamConfirm === 'function') _wbTcRenderTeamConfirm(); }catch(_){}
+        }});
+      }
+    }catch(_eDcRoom){ console.warn('[WB-DailyCount] onRoomUpdate fetch 失敗', _eDcRoom); }
     const status = data.meta?.status || 'waiting';
     try{
       const _statusEl = document.getElementById('wb-room-status-text');
@@ -13061,22 +13387,22 @@
     // ════════════════════════════════════════════════════════════════
     const _isSolo = !!info.isSolo;
     const _modeTitleHtml = _isSolo
-      ? `<div style="font-size:48px;margin-bottom:14px;">🧪</div>
-         <div style="font-size:36px;color:#5dcaa5;font-weight:900;letter-spacing:3px;margin-bottom:10px;">練習結束</div>`
-      : `<div style="font-size:48px;margin-bottom:14px;">⚔</div>
-         <div style="font-size:36px;color:#ffaa66;font-weight:900;letter-spacing:3px;margin-bottom:10px;
+      ? `<div style="font-size:40px;margin-bottom:6px;">🧪</div>
+         <div style="font-size:32px;color:#5dcaa5;font-weight:900;letter-spacing:3px;margin-bottom:4px;">練習結束</div>`
+      : `<div style="font-size:40px;margin-bottom:6px;">⚔</div>
+         <div style="font-size:32px;color:#ffaa66;font-weight:900;letter-spacing:3px;margin-bottom:4px;
            text-shadow:0 0 12px rgba(255,170,100,0.55);">戰鬥結算</div>`;
     const _dmgLabel = _isSolo ? '本場你的總傷害' : '本場全隊累積總傷害';
     const _bottomNoteHtml = _isSolo
       ? `<div style="background:rgba(40,30,60,0.4);border-left:4px solid rgba(200,160,255,0.6);
-           border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
-           color:#ddc;line-height:1.7;">
+           border-radius:10px;padding:14px 20px;margin-bottom:18px;text-align:left;font-size:18px;
+           color:#ddc;line-height:1.6;">
            💡 練習模式不發獎勵(知識幣/水晶/至寶),但<b style="color:#ffe066;">仍會累積獎章進度</b>並記錄最高傷害紀錄。<br>
            換不同陣容組合再試一次,挑戰自己的紀錄!
          </div>`
       : `<div style="background:rgba(40,60,40,0.4);border-left:4px solid rgba(140,220,140,0.6);
-           border-radius:10px;padding:18px 22px;margin-bottom:28px;text-align:left;font-size:20px;
-           color:#ddc;line-height:1.7;">
+           border-radius:10px;padding:14px 20px;margin-bottom:18px;text-align:left;font-size:18px;
+           color:#ddc;line-height:1.6;">
            🏆 本場戰績<b style="color:#ffe066;">已上傳排行榜</b> — 可在「當前排行榜」查看隊伍排名。<br>
            BOSS 全伺服器 HP 也已扣除本場全隊累積傷害,協力把龍王打倒!
          </div>`;
@@ -13086,33 +13412,33 @@
     const _battleQuizCorrect = Math.max(0, Math.floor(info.battleQuizCorrect || 0));
     const _battleTeamBurst = Math.max(0, Math.floor(info.battleTeamBurst || 0));
     const _battleStatsCardsHtml = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
         <div style="background:linear-gradient(160deg,rgba(120,180,255,0.22),rgba(60,120,200,0.08));
                     border:2px solid rgba(140,200,255,0.65);border-radius:12px;
-                    padding:14px 10px;text-align:center;">
-          <div style="font-size:18px;color:#aaccff;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+                    padding:10px 8px;text-align:center;">
+          <div style="font-size:17px;color:#aaccff;font-weight:900;letter-spacing:2px;margin-bottom:4px;
                       text-shadow:0 0 8px rgba(140,200,255,0.5);">⏱ 戰鬥回合</div>
-          <div style="font-size:36px;color:#e0f0ff;font-weight:900;letter-spacing:1px;
+          <div style="font-size:32px;color:#e0f0ff;font-weight:900;letter-spacing:1px;
                       text-shadow:0 0 12px rgba(180,220,255,0.5);">${_battleTurns}</div>
-          <div style="font-size:14px;color:#9ab;margin-top:4px;">回合</div>
+          <div style="font-size:13px;color:#9ab;margin-top:2px;">回合</div>
         </div>
         <div style="background:linear-gradient(160deg,rgba(255,200,100,0.22),rgba(220,160,40,0.08));
                     border:2px solid rgba(255,210,120,0.65);border-radius:12px;
-                    padding:14px 10px;text-align:center;">
-          <div style="font-size:18px;color:#ffd066;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+                    padding:10px 8px;text-align:center;">
+          <div style="font-size:17px;color:#ffd066;font-weight:900;letter-spacing:2px;margin-bottom:4px;
                       text-shadow:0 0 8px rgba(255,210,120,0.5);">📚 答對題數</div>
-          <div style="font-size:36px;color:#fff5cc;font-weight:900;letter-spacing:1px;
+          <div style="font-size:32px;color:#fff5cc;font-weight:900;letter-spacing:1px;
                       text-shadow:0 0 12px rgba(255,220,140,0.5);">${_battleQuizCorrect}</div>
-          <div style="font-size:14px;color:#cb8;margin-top:4px;">題</div>
+          <div style="font-size:13px;color:#cb8;margin-top:2px;">題</div>
         </div>
         <div style="background:linear-gradient(160deg,rgba(255,120,80,0.22),rgba(255,80,40,0.08));
                     border:2px solid rgba(255,140,80,0.65);border-radius:12px;
-                    padding:14px 10px;text-align:center;">
-          <div style="font-size:18px;color:#ff9966;font-weight:900;letter-spacing:2px;margin-bottom:6px;
+                    padding:10px 8px;text-align:center;">
+          <div style="font-size:17px;color:#ff9966;font-weight:900;letter-spacing:2px;margin-bottom:4px;
                       text-shadow:0 0 8px rgba(255,140,80,0.5);">💥 聯手爆發</div>
-          <div style="font-size:36px;color:#ffe0d0;font-weight:900;letter-spacing:1px;
+          <div style="font-size:32px;color:#ffe0d0;font-weight:900;letter-spacing:1px;
                       text-shadow:0 0 12px rgba(255,180,120,0.5);">${_battleTeamBurst}</div>
-          <div style="font-size:14px;color:#caa;margin-top:4px;">次</div>
+          <div style="font-size:13px;color:#caa;margin-top:2px;">次</div>
         </div>
       </div>
     `;
@@ -13170,7 +13496,7 @@
       _personalBestCardHtml = `
         <div style="background:linear-gradient(160deg,rgba(140,200,255,0.18),rgba(60,120,200,0.08));
                     border:2px solid rgba(140,200,255,0.6);border-radius:14px;padding:18px 22px;
-                    margin-bottom:24px;text-align:center;">
+                    flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;">
           <div style="font-size:20px;color:#aaccff;font-weight:800;letter-spacing:2px;margin-bottom:8px;">
             ✨ 首次挑戰維蘇威火山龍王
           </div>
@@ -13185,7 +13511,7 @@
       _personalBestCardHtml = `
         <div style="background:linear-gradient(160deg,rgba(255,200,80,0.32),rgba(255,140,40,0.15));
                     border:3px solid rgba(255,220,80,0.85);border-radius:14px;padding:20px 22px;
-                    margin-bottom:24px;text-align:center;
+                    flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;
                     box-shadow:0 0 24px rgba(255,200,60,0.45);">
           <div style="font-size:30px;font-weight:900;color:#fff8a0;letter-spacing:3px;margin-bottom:10px;
                       text-shadow:0 0 14px rgba(255,220,80,0.85);
@@ -13219,7 +13545,7 @@
       _personalBestCardHtml = `
         <div style="background:linear-gradient(160deg,rgba(140,200,160,0.18),rgba(80,140,120,0.08));
                     border:2px solid rgba(140,200,160,0.5);border-radius:14px;padding:18px 22px;
-                    margin-bottom:24px;text-align:center;">
+                    flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;">
           <div style="font-size:22px;color:#aaddbb;font-weight:800;letter-spacing:2px;margin-bottom:10px;">
             💪 個人最佳對照
           </div>
@@ -13244,42 +13570,53 @@
 
     const ov = document.createElement('div');
     ov.id = 'wb-solo-practice-result';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);overflow-y:auto;';
+    // ★ v3.12.15(2026-05-31) — modal 加寬 + 改 flex-start + padding 縮小,
+    //   避免縱向超出畫面導致上方標題被頂出視窗。改用 align-items:flex-start + padding-top
+    //   讓 modal 從畫面上方開始,長內容可以下滑看(原 center 對齊在內容超過視窗高時會切頭)。
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10800;background:rgba(0,0,0,0.92);'
+      + 'display:flex;align-items:flex-start;justify-content:center;padding:20px;'
+      + 'backdrop-filter:blur(8px);overflow-y:auto;';
     // ★ FIX 20260517 — 結算頁字體整體放大、加入 4 項表現評比卡
     // ★ v3.11.8 — 區分練習/連線、加 3 個本場數據卡 + 個人最佳對照卡
+    // ★ v3.12.15 — 加寬至 1100,傷害區 + 個人最佳對照卡左右並排,縮短縱向長度
     ov.innerHTML = `
-      <div style="max-width:760px;width:100%;
+      <div style="max-width:1100px;width:100%;margin-top:0;
         background:linear-gradient(160deg,#162825,#0a1a18);
-        border:3px solid ${info.isNewRecord ? '#ffd966' : (_isSolo ? '#5dcaa5' : '#ffaa66')};border-radius:22px;padding:36px 40px;
+        border:3px solid ${info.isNewRecord ? '#ffd966' : (_isSolo ? '#5dcaa5' : '#ffaa66')};border-radius:22px;padding:24px 36px 28px;
         box-shadow:0 0 60px ${info.isNewRecord ? 'rgba(255,217,102,0.5)' : (_isSolo ? 'rgba(93,202,165,0.4)' : 'rgba(255,170,100,0.4)')};
         text-align:center;color:#e8ffd8;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;">
         ${info.isNewRecord ?
-          `<div style="font-size:48px;margin-bottom:14px;animation:newHeroSparkle 1s ease-in-out infinite;">🏆✨🏆</div>
-           <div style="font-size:40px;color:#ffd966;font-weight:900;letter-spacing:3px;margin-bottom:10px;
+          `<div style="font-size:40px;margin-bottom:8px;animation:newHeroSparkle 1s ease-in-out infinite;">🏆✨🏆</div>
+           <div style="font-size:36px;color:#ffd966;font-weight:900;letter-spacing:3px;margin-bottom:6px;
              text-shadow:0 0 18px rgba(255,217,102,0.7);">新紀錄!</div>` :
           _modeTitleHtml}
 
-        <div style="font-size:22px;color:#aac;margin-bottom:28px;letter-spacing:1px;">
+        <div style="font-size:20px;color:#aac;margin-bottom:18px;letter-spacing:1px;">
           ${info.killed ? '✅ 成功擊敗維蘇威火山龍王!' : '⚔ 戰鬥結束(未擊敗 BOSS)'}
         </div>
 
-        <div style="background:rgba(255,217,102,0.12);border:2.5px solid rgba(255,217,102,0.5);
-          border-radius:14px;padding:24px;margin-bottom:24px;">
-          <div style="font-size:22px;color:#dda;letter-spacing:2px;margin-bottom:10px;">${_dmgLabel}</div>
-          ${_mainDmgValueHtml}
-          <div style="font-size:20px;color:#aaa;margin-top:10px;">用時 ${timeStr}</div>
-        </div>
+        <!-- ★ v3.12.15 — 傷害區 + 個人最佳對照卡左右並排,縮短縱向 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;align-items:stretch;">
+          <div style="background:rgba(255,217,102,0.12);border:2.5px solid rgba(255,217,102,0.5);
+            border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;justify-content:center;">
+            <div style="font-size:20px;color:#dda;letter-spacing:2px;margin-bottom:8px;">${_dmgLabel}</div>
+            ${_mainDmgValueHtml}
+            <div style="font-size:18px;color:#aaa;margin-top:8px;">用時 ${timeStr}</div>
+          </div>
 
-        ${_personalBestCardHtml}
+          <div style="display:flex;flex-direction:column;justify-content:center;">
+            ${_personalBestCardHtml}
+          </div>
+        </div>
 
         ${_battleStatsCardsHtml}
 
         ${evalCardsHtml}
 
         <div style="background:rgba(40,60,80,0.4);border-left:4px solid rgba(120,180,255,0.6);
-          border-radius:10px;padding:18px 22px;margin-bottom:22px;text-align:left;">
-          <div style="font-size:22px;color:#aaccff;font-weight:700;margin-bottom:10px;letter-spacing:1px;">⚙ 本場陣容</div>
-          <div style="font-size:24px;color:#ccd;line-height:1.7;">
+          border-radius:10px;padding:14px 20px;margin-bottom:16px;text-align:left;">
+          <div style="font-size:20px;color:#aaccff;font-weight:700;margin-bottom:6px;letter-spacing:1px;">⚙ 本場陣容</div>
+          <div style="font-size:22px;color:#ccd;line-height:1.6;">
             ${info.heroes.map(h => `<b style="color:#ffe;">${h}</b>`).join('・')}
           </div>
         </div>

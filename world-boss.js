@@ -1066,9 +1066,13 @@
       try{ _wbSyncStartButtonGate(); }catch(_){}
       // ★ v3.12.13(2026-05-30) — 入口卡每日上限視覺鎖
       //   進入入口頁時立即檢查 canEnter(),若達上限就在 3 張卡(不含單人練習)上加灰階 + 🔒 徽章
+      // ★ v3.12.15(2026-05-31) — 啟動 60 秒輪詢,防跨日 / 多分頁同步問題
       try{
         if(typeof window._wbApplyEntryGateLock === 'function'){
           window._wbApplyEntryGateLock();
+        }
+        if(typeof window._wbStartEntryGatePolling === 'function'){
+          window._wbStartEntryGatePolling();
         }
       }catch(_){}
       // 確保訂閱已啟動(背景持續同步)
@@ -3472,16 +3476,44 @@
     let myDmg = 0;     // 你個人的傷害(破紀錄比較用)
     let teamDmg = 0;   // 全隊累積傷害(連線模式顯示用,練習等同 myDmg)
     try{
-      if(!isSolo && window._wbNet && typeof window._wbNet.getSnapshot === 'function'){
+      // ════════════════════════════════════════════════════════════════
+      // ★ v3.12.15(2026-05-31)— 傷害來源改用 getContributions(本機 live 值)
+      // ────────────────────────────────────────────────────────────────
+      // 老師回報 2026-05-31:連線私人房結算,結算頁顯示「本場全隊累積總傷害 0」,
+      //   實際打了 8 回合 + 答對 3 題 + 聯手爆發 1 次,絕對不是 0。
+      // 根因:舊版讀 _wbNet.getSnapshot().meta.contributions,
+      //   但 getSnapshot() 回的是 WB.lastSeenSnap(雲端冷資料,host 沒 broadcast 就空)。
+      //   本機 doDmg 內的 addContribution 寫到 WB.contributions(本機 live)。
+      //   兩者完全分離 → 結算讀錯來源 → 永遠 0。
+      // 修補:改用 _wbNet.getContributions()(直接讀 WB.contributions 本機 live),
+      //   原 _snap.meta.contributions 路徑保留作 fallback(若雲端有寫入也能讀到)。
+      // ════════════════════════════════════════════════════════════════
+      let _contrib = null;
+      // 優先源:本機 live contributions(主程式 doDmg 累計寫入的真實傷害)
+      try{
+        if(window._wbNet && typeof window._wbNet.getContributions === 'function'){
+          _contrib = window._wbNet.getContributions() || {};
+        }
+      }catch(_eGc){ console.warn('[WB-Result v3.12.15] getContributions 失敗', _eGc); }
+      // fallback:雲端 snapshot 的 contributions(原本 v3.11.8 邏輯,留以兼容)
+      if(!_contrib || Object.keys(_contrib).length === 0){
+        try{
+          if(window._wbNet && typeof window._wbNet.getSnapshot === 'function'){
+            const _snap = window._wbNet.getSnapshot();
+            _contrib = (_snap && _snap.meta && _snap.meta.contributions) || {};
+          }
+        }catch(_eGs){}
+      }
+      _contrib = _contrib || {};
+
+      if(!isSolo){
         // ── 連線模式 ──
-        const _snap = window._wbNet.getSnapshot();
-        const _contrib = (_snap && _snap.meta && _snap.meta.contributions) || {};
         Object.keys(_contrib).forEach(_u => {
           const _d = (_contrib[_u] && typeof _contrib[_u].dmgDealt === 'number') ? _contrib[_u].dmgDealt : 0;
           teamDmg += _d;
           if(_u === myUid) myDmg = _d;
         });
-        // 房主代打槽:如果有 host_npc_X 也屬於我的貢獻 → 一併加進 myDmg
+        // 房主代打槽:host_npc_X 也屬於我的貢獻 → 一併加進 myDmg
         if(isHost){
           Object.keys(_contrib).forEach(_u => {
             if(/^host_npc_/i.test(_u)){
@@ -3490,14 +3522,30 @@
             }
           });
         }
+        // ★ v3.12.15 兜底:連線模式若 teamDmg 仍 0(極端情況例如沒人寫過 contribution),
+        //   改從場上 BOSS 實際失血量取(boss.hp 為本場起始血,boss.curHp 為當前)
+        if(teamDmg === 0){
+          try{
+            const _Gr2 = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+            const _bossLive = (_Gr2 && _Gr2.p2 && _Gr2.p2[0]) || null;
+            if(_bossLive && typeof _bossLive.hp === 'number' && typeof _bossLive.curHp === 'number'){
+              const _dealtFromBoss = Math.max(0, _bossLive.hp - _bossLive.curHp);
+              if(_dealtFromBoss > 0){
+                console.log('[WB-Result v3.12.15] contributions 都 0,從 BOSS 失血量推算 teamDmg=' + _dealtFromBoss);
+                teamDmg = _dealtFromBoss;
+                if(myDmg === 0) myDmg = _dealtFromBoss;  // 私人房自己打就全算自己的
+              }
+            }
+          }catch(_eBossDmg){ console.warn('[WB-Result v3.12.15] BOSS 失血量兜底失敗', _eBossDmg); }
+        }
       }
       // ── 單人練習(或連線取不到資料時的 fallback)──
       if(myDmg === 0 && window._wbSoloContrib && window._wbSoloContrib[myUid]){
         myDmg = window._wbSoloContrib[myUid].dmgDealt || 0;
       }
       if(teamDmg === 0) teamDmg = myDmg;  // 練習模式 teamDmg 等同 myDmg
-    }catch(_eMyDmg){ console.warn('[WB-Result v3.11.8] myDmg/teamDmg 計算例外', _eMyDmg); }
-    try{ console.log('[WB-Result v3.11.8] isSolo=' + isSolo + ', isHost=' + isHost + ', myDmg=' + myDmg + ', teamDmg=' + teamDmg); }catch(_){}
+    }catch(_eMyDmg){ console.warn('[WB-Result v3.12.15] myDmg/teamDmg 計算例外', _eMyDmg); }
+    try{ console.log('[WB-Result v3.12.15] isSolo=' + isSolo + ', isHost=' + isHost + ', myDmg=' + myDmg + ', teamDmg=' + teamDmg); }catch(_){}
 
     // 4 隻英雄名
     const _Gr = (typeof window._wbGetG === 'function') ? window._wbGetG() : null;
