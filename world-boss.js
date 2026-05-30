@@ -3419,8 +3419,39 @@
     //   - 用 isSolo 判斷模式,傳給結算 UI;_wbSaveSoloBest 只有真 solo 才寫
     // ════════════════════════════════════════════════════════════════
     const myUid = window._gUserId || 'solo_user';
-    const isSolo = !!window._wbSoloPracticeMode;
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.12.15(2026-05-31)— isSolo 雙重判定(防止旗標殘留誤判)
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報 2026-05-31:「直接開房間自己打,結算卻顯示練習模式」+「可無限再戰」。
+    // 根因:_wbSoloPracticeMode 旗標在某些路徑會殘留為 true(例如前次 solo 隊伍頁
+    //       未退出乾淨 / leaveRoom 沒走 / 跨 tab 殘留),導致連線房主進戰鬥時雖然
+    //       _wbUiStartBattle line 8064 有設 false,但結算當下又被其他流程改回 true。
+    // 修補:不只信任旗標,加上「真連線房號」的客觀判定。
+    //   - solo mock _wbNet 的 getRoomId() 永遠回字串 '練習'
+    //   - 真連線房間 getRoomId() 回 6 碼大寫房號(例如 'ABC123')
+    //   只要 roomId 是真房號 → 強制 isSolo=false,確保:
+    //     1. 結算頁顯示「⚔ 戰鬥結算」而非「🧪 練習結束」
+    //     2. bumpDailyCount 正常呼叫(每日 2 場上限生效)
+    //     3. 排行榜正常更新
+    //     4. _wbSaveSoloBest 以 'host' mode 寫入個人最佳
+    // ════════════════════════════════════════════════════════════════
+    let isSolo = !!window._wbSoloPracticeMode;
+    try{
+      if(window._wbNet && typeof window._wbNet.getRoomId === 'function'){
+        const _rid = window._wbNet.getRoomId();
+        // 真連線房號:6 碼大寫英數字。'練習' 或 falsy 都不算
+        if(typeof _rid === 'string' && /^[A-Z0-9]{6}$/.test(_rid)){
+          if(isSolo){
+            console.warn('[WB-Result v3.12.15] ⚠ _wbSoloPracticeMode=true 但 roomId 是真房號(' + _rid + '),強制視為連線戰');
+          }
+          isSolo = false;
+        }
+      }
+    }catch(_eRid){ console.warn('[WB-Result v3.12.15] roomId 判定例外,沿用旗標', _eRid); }
     const isHost = !!window._wbConnectedHostMode;
+    try{ console.log('[WB-Result v3.12.15] 最終判定 isSolo=' + isSolo + ', isHost=' + isHost
+      + ', _wbSoloPracticeMode=' + !!window._wbSoloPracticeMode
+      + ', roomId=' + (window._wbNet && window._wbNet.getRoomId ? window._wbNet.getRoomId() : '(無 _wbNet)')); }catch(_){}
 
     // ════════════════════════════════════════════════════════════════
     // ★ v3.11.8(2026-05-27) — 結算傷害來源修正 + 模式區分 + 個人最佳紀錄共用
@@ -3596,16 +3627,20 @@
             //   原 v3.5.65 邏輯仍會寫入並用「房主 ×4」顯示,造成排行榜出現
             //   「5214高誠遠・5214高誠遠・代打・5214高誠遠・代打・5214高誠遠・代打」這種拼接,
             //   且 solo 容易刷高分污染真排行榜。
-            //   守門條件:_wbSoloPracticeMode === true → 直接 return,不呼叫 updateLeaderboard
+            //   守門條件:isSolo === true → 直接 return,不呼叫 updateLeaderboard
             // ★ v3.11.10(2026-05-28) — 管理員不寫排行榜(老師指示:GM 練習測試不能列入學生排名)
             //   守門條件:當前登入帳號是管理員 → 直接 return
             //   設計考量:管理員會用來測試新功能、調平衡、debug,成績不該污染真實學生競賽
+            // ★ v3.12.15(2026-05-31) — 改用上面修正過的 isSolo(roomId 判定優先)
+            //   原本讀 window._wbSoloPracticeMode 容易因旗標殘留誤判,
+            //   現在用「真連線房號 → 強制 isSolo=false」確保開房就一定上榜,
+            //   符合老師「不管幾個人打,只要是開房間都列入排名」需求。
             const _isAdminUser = (typeof window._isAdminUser === 'function' && window._isAdminUser());
             if(_isAdminUser){
               console.log('[WB-Leaderboard v3.11.10] 管理員身分,跳過排行榜更新');
             }else
-            if(window._wbSoloPracticeMode){
-              console.log('[WB-Leaderboard v3.5.73] 單人練習模式,跳過排行榜更新');
+            if(isSolo){
+              console.log('[WB-Leaderboard v3.12.15] isSolo=true(練習模式),跳過排行榜更新');
             }else
             if(typeof window._wbHpSync.updateLeaderboard === 'function'){
               const _myNick = (window._playerNickname || window._userName || '玩家');

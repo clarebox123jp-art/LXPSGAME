@@ -3508,10 +3508,10 @@
     <div class="wb-vis-title">🏰 開新房間</div>
     <div class="wb-vis-sub">選擇房間類型</div>
 
-    <div class="wb-vis-opt" onclick="_wbUiConfirmCreate('private')">
-      <span class="wb-vis-opt-ico">🔒</span><span class="wb-vis-opt-ttl">私人房</span>
-      <div class="wb-vis-opt-desc">只能用 6 碼房號加入,分享給誰才有人知道。適合跟認識的朋友打。</div>
-    </div>
+    <!-- ★ v3.12.15(2026-05-31) — 老師指示:移除單純「私人房」按鈕。
+         原因:跟「私人房 + 邀請好友」實質功能重複(都是私人房),
+         且玩家容易誤以為「私人房 = 練習模式」,影響直覺。
+         保留「公開房」(任何人可加入) + 「私人房 + 邀請好友」(主動發邀請)兩種即可。 -->
 
     <div class="wb-vis-opt" onclick="_wbUiConfirmCreate('public')" style="border-color:#ffaa66;background:linear-gradient(160deg,rgba(255,170,100,0.18),rgba(255,170,100,0.04));">
       <span class="wb-vis-opt-ico">🌐</span><span class="wb-vis-opt-ttl" style="color:#ffaa66;">公開房</span>
@@ -7724,6 +7724,41 @@
   //     保留作 fallback,等 Phase E 收尾時一次清掉
   // ════════════════════════════════════════════════════════════════════
   window._wbUiStartBattle = async function(){
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.12.15(2026-05-31)— 連線房主開戰入口強制清 solo 旗標殘留
+    // ────────────────────────────────────────────────────────────────
+    // 老師回報「直接開房間打卻顯示練習模式結算」根因之一:
+    //   _wbSoloPracticeMode 旗標可能因前次 solo 隊伍頁殘留 / 跨 session 殘留 / 其他
+    //   未預期路徑而為 true。此時 _wbUiStartBattle 雖然 line ~後 8064 有設 false,
+    //   但中間流程(如 _wbSetupAdvForBattle 觸發的 hooks)若讀到 true,可能透過
+    //   各種旁路再寫回去。
+    // 修補:在 _wbUiStartBattle 最開頭就強制清乾淨,連 mock 殘留也一併清掉:
+    //   - _wbSoloPracticeMode = false
+    //   - _wbSoloRealWbNet 還原並清空(若 solo 隊伍頁沒退出乾淨,_wbNet 可能還是 mock)
+    //   - _wbSoloFakePlayers 清空
+    //   這樣後續所有判定 isSolo 的點(包括結算 isSolo / advStartBattle 內的 hooks /
+    //   答題權判定)都會看到一致的「非 solo」狀態。
+    // ════════════════════════════════════════════════════════════════
+    try{
+      if(window._wbSoloPracticeMode){
+        console.warn('[WB-Host v3.12.15] ⚠ _wbUiStartBattle 入口偵測到 _wbSoloPracticeMode=true(殘留),強制清乾淨');
+      }
+      window._wbSoloPracticeMode = false;
+      // 若 _wbNet 還是 solo mock(getRoomId === '練習'),強制還原成 real wbNet
+      if(window._wbSoloRealWbNet){
+        try{
+          const _curRid = (window._wbNet && typeof window._wbNet.getRoomId === 'function') ? window._wbNet.getRoomId() : null;
+          if(_curRid === '練習' || !_curRid){
+            console.warn('[WB-Host v3.12.15] _wbNet 仍是 solo mock,還原 realWbNet');
+            window._wbNet = window._wbSoloRealWbNet;
+          }
+        }catch(_eMockChk){}
+        window._wbSoloRealWbNet = null;
+      }
+      // 清 solo fake players 殘留(避免 _wbHostAssignedSlots 等被污染)
+      if(typeof _wbSoloFakePlayers !== 'undefined') _wbSoloFakePlayers = null;
+    }catch(_ePurge){ console.warn('[WB-Host v3.12.15] solo 旗標清理例外', _ePurge); }
+
     const snap = window._wbNet.getSnapshot();
     const players = snap.players || [];
     if(players.length < 1){ _wbGameAlert('至少要 1 人'); return; }
@@ -9852,7 +9887,7 @@
   // ★ v3.1 — 答題系統
   // ────────────────────────────────────────────────────────────────────
   // 答對才能行動;答錯自己受 5% max HP 傷害(無視免傷,強制扣血)+ 跳過此回合
-  // 累積答對第 10/25/50 次 → 答題獎勵:對 BOSS 固定 5,000 傷害(原本是 20%,後改 1% maxHp,現對齊 cap)
+  // 累積答對第 10/25/50 次 → 答題獎勵:對 BOSS 1% maxHp 傷害(原本是 20%)
   // 倒下角色跳過答題
   // ════════════════════════════════════════════════════════════════════
 
@@ -10081,7 +10116,7 @@
       console.log('[WB-QuizCorrect client] 跳過 G 改動,等房主 sync(cnt=' + cnt + ')');
     }
     _wbMarkQuiz(turnNum, actorPos, true);
-    // 答題獎勵:第 5 / 10 次 → BOSS 受固定 5,000 傷害(對齊 cap) + 全隊聯手攻擊特效
+    // 答題獎勵:第 5 / 10 次 → BOSS 受 1% maxHp 傷害 + 全隊聯手攻擊特效
     // ★ v3.3.2 — 門檻從 10/25/50 改為 5/10/15/20
     //   舊行為(已移除):10/25/50 配合「每回合每位玩家答題」的高頻設計(4 人 × 20 回合 = 80 題)
     //   v3.3.2:5/10/15/20 配合「只開場 + BOSS 行動前」的低頻設計(最多 21 題)
@@ -12799,7 +12834,7 @@
         </ul>
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
           用<b style="color:#5dcaa5;">破盾元素(水 / 土 / 草 / 光)</b>各攻擊 1 次即可削減對應護盾(對 火/風/土/暗 護盾),
-          炎之意志減傷至單次最多 5,000(固定值,不隨 HP 變動)。整場共 16 層護盾需破除,
+          炎之意志減傷至單次最多 1% HP。整場共 16 層護盾需破除,
           <b style="color:#ff5544;">第 11 回合戰場將崩壞,強制結束戰鬥</b>。
         </p>
 
@@ -12853,7 +12888,7 @@
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 土 / 草 / 光</b>全部 4 種破盾屬性</li>
-          <li>BOSS 單次受傷上限固定 5,000 傷害(不隨 HP 變動),要靠累積打掉</li>
+          <li>BOSS 單次受傷最多 1% HP(5,000 傷害),要靠累積打掉</li>
           <li>第 4 / 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
           <li>3/5/7/9 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
           <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息</li>
@@ -13201,7 +13236,7 @@
             </div>
           </div>
           <div style="margin-top:10px;font-size:16px;color:#ddd;">
-            還差 <b style="color:#ffaa66;">${Math.abs(_diff).toLocaleString()}</b> 就能破紀錄,再來一場!
+            還差 <b style="color:#ffaa66;">${Math.abs(_diff).toLocaleString()}</b> 就能破紀錄,下次再挑戰!
           </div>
         </div>
       `;
@@ -13251,18 +13286,18 @@
 
         ${_bottomNoteHtml}
 
+        <!-- ★ v3.12.15(2026-05-31) — 老師指示:移除「再來一場」按鈕。
+             原因:1. 旗標重置不乾淨容易把連線房誤判成練習模式(結算錯誤)
+                   2. 跳過正常退出流程 → 每日 2 場上限失守(玩家可無限再戰)
+                   3. 跳過 leaveRoom → 留下幽靈房間
+             解法:強制每場戰鬥都走完整退出流程(leaveRoom + 清旗標 + 回關卡頁),
+                   要再打就從關卡頁重新進入 → 預檢正常觸發、計次正常累加、排名正常結算。 -->
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
-          <button onclick="document.getElementById('wb-solo-practice-result').remove();_wbUiSoloTest();"
-            style="background:linear-gradient(135deg,#5dcaa5,#3a8a72);color:#fff;
-            border:2.5px solid rgba(140,230,200,0.7);border-radius:14px;padding:16px 36px;
-            font-size:24px;font-weight:800;cursor:pointer;letter-spacing:2px;
-            box-shadow:0 4px 16px rgba(93,202,165,0.4);font-family:inherit;">
-            🔄 再來一場
-          </button>
           <button onclick="document.getElementById('wb-solo-practice-result').remove();_wbBackToStageSelect();"
-            style="background:rgba(60,60,80,0.6);color:#fff;
-            border:2.5px solid rgba(150,150,180,0.6);border-radius:14px;padding:16px 36px;
-            font-size:24px;font-weight:800;cursor:pointer;letter-spacing:2px;font-family:inherit;">
+            style="background:linear-gradient(135deg,#5dcaa5,#3a8a72);color:#fff;
+            border:2.5px solid rgba(140,230,200,0.7);border-radius:14px;padding:16px 56px;
+            font-size:26px;font-weight:800;cursor:pointer;letter-spacing:2px;
+            box-shadow:0 4px 16px rgba(93,202,165,0.45);font-family:inherit;">
             🏠 返回關卡選擇
           </button>
         </div>
