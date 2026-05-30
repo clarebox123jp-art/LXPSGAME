@@ -760,3 +760,3023 @@ Object.assign(HERO_DB, {
     s2:{n:'山崩地裂',c:7,d:'特技180%對全體土屬性傷害,30%機率「眩暈」1回合,自身獲得「岩石護甲」(減傷40%)2回合',fd:'踏地而呼,整座山搖晃!用特技值的 180% 對全體對手造成土屬性傷害,每人 30% 機率「眩暈」1 回合,自己獲得「岩石護甲」減傷 40% 持續 2 回合。'}
   },
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// ★ v3.13.0 (2026-05-30) — 主程式大瘦身:角色/BOSS/外觀資料全面遷入
+// ────────────────────────────────────────────────────────────────────────────
+// 從 index.html 搬入以下資料區塊(全部維持原 const 名稱,所有 typeof 檢查照舊運作):
+//   • AVATARS  (原 index.html L14456~L14463)
+//   • HERO_IMGS  (原 index.html L14464~L14614)
+//   • HERO_PORTRAIT_LIBRARY  (原 index.html L14620~L14947)
+//   • HERO_DB_PATCHES  (原 index.html L15542~L15661)
+//   • HERO_IMG_POS  (原 index.html L16380~L16478)
+//   • HERO_BATTLE_CARD_POS  (原 index.html L16484~L16486)
+//   • HERO_THUMB_POS  (原 index.html L16545~L16605)
+//   • HERO_THUMB_POS_BY_PORTRAIT  (原 index.html L16608~L16633)
+//   • HERO_BIO  (原 index.html L16732~L17050)
+//   • BURST_DB  (原 index.html L17052~L17242)
+//   • JP_BOSS_HERO_STATS  (原 index.html L17249~L17253)
+//   • HERO_LORE  (原 index.html L19946~L20059)
+//   • HERO_TRAIT  (原 index.html L20062~L20276)
+//   • BURST_GIF_DB  (原 index.html L22963~L23453)
+//   • ADV_HERO_POOL  (原 index.html L55185~L55187)
+//   • ADV_BOSS_TEAMS  (原 index.html L55190~L55196)
+//   • ADV_BOSS_VARIANTS  (原 index.html L55202~L55208)
+//   • TAIWAN_BOSS_DIALOGS  (原 index.html L55652~L55693)
+//   • BOSS_REACT_BLOCK  (原 index.html L69142~L69539)
+//   • HERO_CATEGORIES_OVERRIDE  (原 index.html L82810~L82890)
+//   • HERO_HEX_OVERRIDE  (原 index.html L82898~L83029)
+//   • _TRAIT_LV_INFO  (原 index.html L92748~L92847)
+// 註:邏輯函式(getHeroObjPos / newHero / _showTaiwanCutscene 等)留在 index.html。
+//     本檔只搬「純資料常數 + HERO_DB 修補 IIFE」。
+// ════════════════════════════════════════════════════════════════════════════
+
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:AVATARS  (搬自 index.html L14456~L14463)
+// ════════════════════════════════════════════════════════════════
+const AVATARS = {
+  '劍士':'⚔️','祭司':'✨','聖騎士':'🛡','火法師':'🔥','冰法師':'❄️','雷法師':'⚡',
+  '光法師':'☀️','暗法師':'🌑','神射手':'🏹','神偷':'💰','刺客':'👁️','守衛':'🛡️',
+  '吟遊詩人':'🪕','舞者':'💃','警長':'🔫','煉金術師':'⚗️','武鬥家':'👊','軍師':'📜',
+  '占星師':'🌟','大力士':'💪','凡人':'🙂',
+  '木靈使':'🌿','機械師':'⚙️','動物學家':'🦁','武士':'🗾','陰陽師':'☯️','吸血鬼':'🦇','學者':'📚','時空法師':'⏳','小力':'🐕','籃球隊員':'🏀','直笛團員':'🎵','田徑隊員':'🏃',
+  '幼兒園小孩':'👶','電腦繪圖師':'🎨','程式設計師':'💻','弦樂團員':'🎻','小劇團員':'🎭','巫女':'⛩','雙星姊妹':'🌟','暗魔將·血':'🩸','死靈法師':'👻','布奶鳥獸':'🦜','炸彈客':'💣','紅色玩家':'🟥','地府酋長':'⚖️','救醫馬':'🐎','水狐':'🐉','米鈴':'🐱','學霸(轉學生)':'🤓','天神宙斯':'⚡','維京海盜船長':'🏴‍☠️','武器精靈':'⚔','神槍手':'🎯','火柴人':'🔥','青炎龍王':'🐲','鳳凰':'🐦‍🔥','操偶師':'🎭','九尾空貓怪':'🐱','綠竹筍小妖':'🎋','茶葉精靈':'🍃','杏花妖':'🌸','偷摘花的頑皮妖精':'🌸','偷鳥蛋的鳥人哈維':'🦅','偷竹筍的哥布林':'🪓','偷喝茶的史萊姆':'🫧','寶箱怪':'📦','小惡魔':'😈','黑暗球‧希望型態':'🌑','菇女':'🍄','小丑':'🤡','美人魚‧角角':'🧜‍♀️','火爆女':'🤖','幽幽':'👻','網路駭客':'🤖','死神':'💀',
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_IMGS  (搬自 index.html L14464~L14614)
+// ════════════════════════════════════════════════════════════════
+const HERO_IMGS = {
+  '光法師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('光法師Q.png'),
+  '冰法師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('冰法師Q.png'),
+  '凡人':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('凡人Q.png'),
+  '刺客':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('刺客Q.png'),
+  '劍士':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('劍士Q.png'),
+  '占星師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('占星師Q.png'),
+  '大力士':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('大力士Q.png'),
+  '守衛':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('守衛Q.png'),
+  '暗法師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('暗法師Q.png'),
+  '武鬥家':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武鬥家Q.png'),
+  '火法師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火法師Q.png'),
+  '煉金術師': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鍊金術師Q.png'),
+  '神偷':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神偷Q.png'),
+  '神射手':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神射手Q.png'),
+  '祭司':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('祭司Q.png'),
+  '聖騎士':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('聖騎士Q.png'),
+  '舞者':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('舞者Q.png'),
+  '警長':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('警長Q.png'),
+  '軍師':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%ABQ%E7%89%88.png',
+  '雷法師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雷法師Q.png'),
+  '吟遊詩人': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('吟遊詩人Q.png'),
+  '吸血鬼':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('吸血鬼Q.png'),
+  '學者':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('學者Q.png'),
+  '動物學家': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
+  '時空法師': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('時空法師Q.png'),
+  '木靈使':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('木靈使Q.png'),
+  '機械師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('機械師Q.png'),
+  '武士':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武士Q.png'),
+  '陰陽師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('陰陽師Q.png'),
+  '小力':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%9BQ%E7%89%88.png',
+  '籃球隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('籃球隊員Q.png'),
+  '直笛團員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
+  '田徑隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
+  '幼兒園小孩': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png',
+  '巫女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png',
+  '電腦繪圖師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '程式設計師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '弦樂團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '九尾空貓怪': 'https://github.com/clarebox123jp-art/-/raw/main/BOSS%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AA.png',
+  '杏花妖':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/BOSS%E6%9D%8F%E8%8A%B1%E5%A6%96.png',
+  // ★ v3.8.0(2026-05-25) — 木柵第三隻 BOSS:黑暗球‧希望型態
+  '黑暗球‧希望型態': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BB%91%E6%9A%97%E7%90%83_%E5%B8%8C%E6%9C%9B%E5%9E%8B%E6%85%8B.png',
+  '綠竹筍小妖': 'https://github.com/clarebox123jp-art/-/raw/main/%E7%B6%A0%E7%AB%B9%E7%AD%8D%E5%B0%8F%E5%A6%96.png',
+  '茶葉精靈':   'https://github.com/clarebox123jp-art/-/raw/main/%E8%8C%B6%E8%91%89%E7%B2%BE%E9%9D%88.png',
+  '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png',
+  '偷鳥蛋的鳥人哈維': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E9%B3%A5%E8%9B%8B%E7%9A%84%E9%B3%A5%E4%BA%BA%E5%93%88%E7%B6%AD.png',
+  '偷竹筍的哥布林': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%81%B7%E7%AB%B9%E7%AD%8D%E7%9A%84%E5%93%A5%E5%B8%83%E6%9E%97.png',
+  '偷喝茶的史萊姆': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%84%9B%E5%96%9D%E8%8C%B6%E7%9A%84%E5%8F%B2%E8%90%8A%E5%A7%86.png',
+  '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png',
+  '寶箱怪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B6%E7%AE%B1%E6%80%AA.png',
+  '小惡魔': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E6%83%A1%E9%AD%94.png',
+  '油膩魔王・滷汁大鍋':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('滷肉飯BOSS.png'),
+  '酥脆狂魔・熱浪糕師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鳳梨酥BOSS.png'),
+  '臭氣魔王・發酵公':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('臭豆腐BOSS.png'),
+  '山靈古魔・千年怒木':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('阿里山神木BOSS.png'),
+  '深海惡靈・觸手大蛟':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('蘭嶼BOSS.png'),
+  '染靈幻魔・藍色憂鬱':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('藍染BOSS.png'),
+  '珍奶吸魂魔・大波霸':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('珍奶BOSS.png'),
+  '水靈反魔・倒映女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('日月潭BOSS.png'),
+  '摩天魔將・夜空爆裂者': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('101大樓BOSS.png'),
+  '山岳禁咒・崩天巨人':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉山BOSS.png'),
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  //   窮奇:5 年 5 班閻同學同學設計,2026 年
+  '窮奇':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('窮奇.png'),
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  //   科技生化人:5 年 5 班翁同學同學設計,2026 年
+  '科技生化人':           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('生化人.png'),
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  //   鋁合金暴龍:5 年 5 班陳同學同學設計,2026 年
+  '鋁合金暴龍':           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鋁合金暴龍.png'),
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  //   超鬼神王:5 年 5 班陳同學同學設計,2026 年
+  '超鬼神王':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('超鬼神王.png'),
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田同學同學設計,2026 年。光星妹妹(治療型)與暗星姊姊(輸出型)雙型態切換
+  '雙星姊妹':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙星姊妹.png'),
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班首位設計師)
+  //   暗魔將·血:5 年 2 班鐘同學設計,2026 年。被黑化的貓神化身,攻防一體型暗屬性英雄
+  '暗魔將·血':           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('暗魔將_血.png'),
+  // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
+  //   死靈法師:5 年 2 班許同學設計,2026 年。天生陰陽眼,能與死靈溝通並操控他們的少年
+  '死靈法師':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('5年2班許同學設計 死靈法師.png'),
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布奶鳥獸:5 年 5 班高同學設計,2026 年。兩隻可愛小鳥布丁&奶茶,被人類飼養
+  '布奶鳥獸':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('布丁奶茶獸.png'),
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師)
+  //   炸彈客:5 年 4 班劉同學設計,2026 年。製造炸彈的天才,認為爆炸就是藝術
+  '炸彈客':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('炸彈客.png'),
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班第 2 位設計師)
+  //   紅色玩家:5 年 4 班陳同學設計,2026 年。身處虛擬世界的神祕高手玩家,代表色是紅色
+  '紅色玩家':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('紅色玩家.png'),
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
+  //   地府酋長:5 年 4 班黃同學設計,2026 年。來自地府的獄卒首領,負責看管受刑的亡靈
+  '地府酋長':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地府酋長.png'),
+  '救醫馬':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('救醫馬.png'),
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學「水狐」)
+  //   水狐:6 年 2 班林同學設計,2026 年。上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸
+  '水狐':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水狐.png'),
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  //   米鈴:6 年 5 班董同學設計,2026 年。胸前掛鈴鐺的貓女僕,溫柔守護隊友
+  '米鈴':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('女僕貓 米鈴.png'),
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學「學霸(轉學生)」)
+  //   學霸(轉學生):5 年 2 班簡同學設計,2026 年。頂尖私立小學轉來的神祕學霸
+  '學霸(轉學生)':         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('轉學生學霸.png'),
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學「天神宙斯」)
+  //   天神宙斯:5 年 4 班歐同學設計,2026 年。希臘神話的眾神之王
+  '天神宙斯':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('宙斯.png'),
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
+  //   維京海盜船長:5 年 5 班吳同學設計,2026 年。北海維京艦隊「黑龍號」第三代船長
+  '維京海盜船長':         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('維京海盜船長.png'),
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學「武器精靈」)
+  //   武器精靈:5 年 5 班朱同學設計,2026 年。戰爭精靈兄弟之一,持有可變形武器
+  '武器精靈':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武器精靈.png'),
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學「神槍手」)
+  //   神槍手:5 年 4 班莊同學設計,2026 年。為保護家人在兵營練就一手神準槍法
+  '神槍手':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神槍手.png'),
+  // ★ v1.0.20260522.7300 — 學生設計英雄系列(5 年 3 班張同學「火柴人」)
+  //   火柴人:5 年 3 班張同學設計,2026 年。原本只是考卷上的塗鴉,陰錯陽差受到祝福獲得生命
+  '火柴人':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火柴人.png'),
+  // ★ v3.5.49 — 學生設計英雄系列(5 年 3 班蔣同學「青炎龍王」)
+  //   青炎龍王:5 年 3 班蔣同學設計,2026 年。善良的龍王,人類有難時施展藍色火焰之舞保護眾人
+  '青炎龍王':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('青炎龍王.png'),
+  // ★ v3.11.19 — 學生設計英雄系列(5 年 4 班高同學「幽幽」)
+  //   幽幽:5 年 4 班高同學設計,2026 年。神秘又可愛的幽靈
+  '幽幽':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('幽幽.png'),
+  // ★ v3.11.20 — 網路駭客(5 年 1 班 高同學設計,71 號英雄)
+  '網路駭客':             'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('網路駭客.png'),
+  // ★ v3.12.8 — 學生設計英雄系列(5 年 2 班 13 號羅同學「死神」,72 號英雄)
+  //   死神:5 年 2 班 13 號羅同學設計,2026 年。住在冥界的引魂使者,負責引領死者的魂魄
+  '死神':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('死神.png'),
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 4 班 04 號李同學「鳳凰」)
+  //   鳳凰:5 年 4 班 04 號李同學設計,2026 年。神話中浴火重生的不死靈鳥
+  '鳳凰':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鳳凰.png'),
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 2 班 11 號江同學「操偶師」)
+  //   操偶師:5 年 2 班 11 號江同學設計,2026 年。精通魁儡製作的操偶天才
+  '操偶師':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('操偶師.png'),
+  // ★ v3.5.68 — 學生設計英雄系列(5 年 3 班 14 號張同學「菇女」)
+  //   菇女:5 年 3 班 14 號張同學設計,2026 年。出生在魔菇世界的可愛菇族支援者
+  '菇女':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('菇女.png'),
+  // ★ v3.10.12 — 學生設計英雄系列(5 年 1 班 林同學「小丑」)
+  //   小丑:5 年 1 班 林同學設計,2026 年。天才表演者,被恐怖博士抓去改造,成為犯罪天才
+  '小丑':                 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('小丑.png'),
+  // ★ v3.10.14 — 學生設計英雄系列(3 年 1 班 采漩「美人魚‧角角」)
+  //   美人魚‧角角:3 年 1 班 采漩設計,2026 年。喜歡唱歌、擅長使用水魔法弓箭的人魚少女
+  '美人魚‧角角':         'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('美人魚_角角.png'),
+  // ★ v3.11.6 — 學生設計英雄系列(5 年 4 班 彭同學「火爆女」)
+  //   火爆女:5 年 4 班彭同學設計,2026 年。容易爆怒的可愛機械系少女,暴擊堆疊型物理輸出
+  '火爆女':               'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火爆女孩.png'),
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_PORTRAIT_LIBRARY  (搬自 index.html L14620~L14947)
+// ════════════════════════════════════════════════════════════════
+const HERO_PORTRAIT_LIBRARY = {
+  '祭司': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('祭司Q.png') },
+    { id:'dawn_breeze', name:'曙光微風', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%AD%E5%8F%B83.png', requiresUnlock:true, objPos:'center 20%' },
+  ],
+  // ★ v1.0.20260421.3002 — 13 位英雄新肖像
+  '冰法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('冰法師Q.png') },
+    { id:'ice_frost', name:'冰封霜華', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%86%B0%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
+  ],
+  '刺客': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('刺客Q.png') },
+    { id:'shadow_rose', name:'幻影玫瑰', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%88%BA%E5%AE%A23.png', requiresUnlock:true },
+  ],
+  '吸血鬼': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('吸血鬼Q.png') },
+    { id:'dark_rose', name:'暗夜薔薇', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%90%B8%E8%A1%80%E9%AC%BC3.png', requiresUnlock:true, objPos:'center 20%' },
+  ],
+  '大力士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('大力士Q.png') },
+    { id:'invincible', name:'所向無敵', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A7%E5%8A%9B%E5%A3%AB3.png', requiresUnlock:true },
+  ],
+  '學者': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('學者Q.png') },
+    { id:'wisdom_light', name:'知識燈塔', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AD%B8%E8%80%853.png', requiresUnlock:true, objPos:'center 15%' },
+  ],
+  '機械師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('機械師Q.png') },
+    { id:'steel_innov', name:'鋼鐵革新', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A9%9F%E6%A2%B0%E5%B8%AB3.png', requiresUnlock:true },
+  ],
+  '武鬥家': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武鬥家Q.png') },
+    { id:'iron_fist', name:'鐵拳無雙', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E9%AC%A5%E5%AE%B63.png', requiresUnlock:true },
+  ],
+  '火法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火法師Q.png') },
+    { id:'blaze_sky', name:'烈焰焚天', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%81%AB%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
+  ],
+  '神射手': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神射手Q.png') },
+    { id:'cloud_shot', name:'百步穿雲', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%B0%84%E6%89%8B3.png', requiresUnlock:true },
+  ],
+  '程式設計師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'quantum_code', name:'量子編碼', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
+  ],
+  '聖騎士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('聖騎士Q.png') },
+    { id:'temple_pillar', name:'聖殿支柱', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%96%E9%A8%8E%E5%A3%AB3.png', requiresUnlock:true },
+  ],
+  '軍師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%ABQ%E7%89%88.png' },
+    { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 5%' },
+  ],
+  '陰陽師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('陰陽師Q.png') },
+    { id:'four_saints', name:'天地四聖', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%99%B0%E9%99%BD%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 20%' },
+  ],
+  '雷法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雷法師Q.png') },
+    { id:'thunder_sky', name:'雷動九霄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9B%B7%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 15%' },
+  ],
+  '武士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武士Q.png') },
+    { id:'shadow_slash', name:'瞬影絕斬', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A6%E5%A3%AB3.png', requiresUnlock:true, objPos:'center 18%' },
+  ],
+  '占星師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('占星師Q.png') },
+    { id:'star_oracle', name:'星辰天啟', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%A0%E6%98%9F%E5%B8%AB3.png', requiresUnlock:true },
+  ],
+  '守衛': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('守衛Q.png') },
+    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B3.png', requiresUnlock:true, objPos:'center 23%' },
+  ],
+  '時空法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('時空法師Q.png') },
+    { id:'time_corridor', name:'時光迴廊', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true },
+  ],
+  '電腦繪圖師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    // ★ v1.0.20260423.8600 — 移除舊版 graphic_boy/graphic_girl(已從商店下架,改為 LV10 自動解鎖)
+  ],
+  '直笛團員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png' },
+    // ★ v1.0.20260423.8600 — 移除舊版 recorder_boy/recorder_girl
+  ],
+  '弦樂團員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    // ★ v1.0.20260423.8600 — 移除舊版 strings_boy/strings_girl
+  ],
+  '籃球隊員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('籃球隊員Q.png') },
+    // ★ v1.0.20260423.8800 — 新增商店付費版「絕殺灌籃」(籃球隊員3.png)
+    { id:'basket_clutch', name:'絕殺灌籃', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B1%83%E7%90%83%E9%9A%8A%E5%93%A13.png', requiresUnlock:true, objPos:'center 20%' },
+    // ★ v1.0.20260423.8600 — 移除舊版 basket_boy/basket_girl
+  ],
+  '田徑隊員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png' },
+    // ★ v1.0.20260423.8600 — 移除舊版 track_boy/track_girl
+  ],
+  '小劇團員': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    // ★ v1.0.20260423.8600 — 移除舊版 drama_boy/drama_girl
+  ],
+  // ★ v1.0.20260421.3000p — 巫女替代肖像
+  '巫女': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png' },
+    { id:'miko_shrine', name:'神社祭禮', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B7%AB%E5%A5%B33.png', requiresUnlock:true },
+  ],
+  // ★ v1.0.20260423.6400 — 木靈使肖像「千年神木」
+  '木靈使': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('木靈使Q.png') },
+    { id:'ancient_tree', name:'千年神木', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BF3.png', requiresUnlock:true, objPos:'center 15%' },
+    { id:'dryad_lv20', name:'木靈使 Lv20', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BFLV20.png', requiresUnlock:true },
+  ],
+  '動物學家': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png' },
+    { id:'beast_guardian', name:'萬獸守護', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('動物學家3.png'), objPos:'center 5%', requiresUnlock:true },
+  ],
+  '酒吞童子': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('酒吞童子.png') },
+    { id:'oni_drunken', name:'鬼王醉酒', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('酒吞童子3.png'), requiresUnlock:true },
+  ],
+  '大天狗': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('大天狗.png') },
+    { id:'mountain_lord', name:'山嶽霸主', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('大天狗3.png'), requiresUnlock:true },
+  ],
+  '光法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('光法師Q.png') },
+    { id:'holy_descend', name:'聖光降臨', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('光法師3.png'), objPos:'center 10%', requiresUnlock:true },
+  ],
+  '煉金術師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鍊金術師Q.png') },
+    { id:'philo_stone', name:'賢者之石', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('煉金術師3.png'), objPos:'center 13%', requiresUnlock:true },
+  ],
+  '警長': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('警長Q.png') },
+    { id:'iron_law', name:'鐵血執法', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('警長3.png'), objPos:'center 10%', requiresUnlock:true },
+  ],
+  '舞者': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('舞者Q.png') },
+    { id:'graceful_dance', name:'翩翩起舞', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('舞者3.png'), objPos:'center 5%', requiresUnlock:true },
+  ],
+  '神偷': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神偷Q.png') },
+    { id:'phantom_thief', name:'神出鬼沒', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神偷3.png'), objPos:'center 20%', requiresUnlock:true },
+  ],
+  '凡人': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('凡人Q.png') },
+    { id:'ordinary_might', name:'平凡之力', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('凡人3.png'), requiresUnlock:true },
+  ],
+  '暗法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('暗法師Q.png') },
+    { id:'dark_curse', name:'暗夜詛咒', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('暗法師3.png'), requiresUnlock:true },
+  ],
+  '玉藻前': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉藻前.png') },
+    { id:'nine_tail_charm', name:'九尾魅狐', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('玉藻前3.png'), requiresUnlock:true },
+  ],
+  // ★ v1.0.20260501.5110 — 新增劍士「絕世劍意」3 號肖像
+  '劍士': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('劍士Q.png') },
+    { id:'sword_master', name:'絕世劍意', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('劍士3.png'), requiresUnlock:true },
+  ],
+  '窮奇': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('窮奇.png') },
+  ],
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  //   科技生化人:5 年 5 班翁同學同學設計,2026 年
+  '科技生化人': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('生化人.png') },
+  ],
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  //   鋁合金暴龍:5 年 5 班陳同學同學設計,2026 年
+  '鋁合金暴龍': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鋁合金暴龍.png') },
+  ],
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  //   超鬼神王:5 年 5 班陳同學同學設計,2026 年
+  '超鬼神王': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('超鬼神王.png') },
+  ],
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田同學同學設計,2026 年
+  '雙星姊妹': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙星姊妹.png') },
+  ],
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班鐘同學)
+  //   暗魔將·血:5 年 2 班鐘同學設計,2026 年
+  '暗魔將·血': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('暗魔將_血.png') },
+  ],
+  // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
+  //   死靈法師:5 年 2 班許同學設計,2026 年
+  '死靈法師': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('5年2班許同學設計 死靈法師.png') },
+  ],
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布奶鳥獸:5 年 5 班高同學設計,2026 年
+  '布奶鳥獸': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('布丁奶茶獸.png') },
+  ],
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師)
+  //   炸彈客:5 年 4 班劉同學設計,2026 年
+  '炸彈客': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('炸彈客.png') },
+  ],
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班第 2 位設計師)
+  //   紅色玩家:5 年 4 班陳同學設計,2026 年
+  '紅色玩家': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('紅色玩家.png') },
+  ],
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
+  //   地府酋長:5 年 4 班黃同學設計,2026 年
+  '地府酋長': [
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地府酋長.png') },
+  ],
+  '救醫馬': [
+    { id:'pony_nurse_default', name:'救醫馬',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('救醫馬.png') }
+  ],
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(水狐)
+  //   水狐:6 年 2 班林同學設計,2026 年
+  '水狐': [
+    { id:'water_fox_default', name:'水狐',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水狐.png') }
+  ],
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(米鈴)
+  //   米鈴:6 年 5 班董同學設計,2026 年
+  '米鈴': [
+    { id:'maid_cat_default', name:'貓女僕米鈴',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('女僕貓 米鈴.png') }
+  ],
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(學霸(轉學生))
+  //   學霸(轉學生):5 年 2 班簡同學設計,2026 年
+  '學霸(轉學生)': [
+    { id:'scholar_default', name:'學霸(轉學生)',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('轉學生學霸.png') }
+  ],
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(天神宙斯)
+  //   天神宙斯:5 年 4 班歐同學設計,2026 年
+  '天神宙斯': [
+    { id:'zeus_default', name:'天神宙斯',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('宙斯.png') }
+  ],
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(維京海盜船長)
+  //   維京海盜船長:5 年 5 班吳同學設計,2026 年
+  '維京海盜船長': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('維京海盜船長.png') },
+  ],
+  // ★ v3.4.11 — 學生設計英雄系列(武器精靈)
+  //   武器精靈:5 年 5 班朱同學設計,2026 年
+  '武器精靈': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('武器精靈.png') },
+  ],
+  // ★ v3.4.11 — 學生設計英雄系列(神槍手)
+  //   神槍手:5 年 4 班莊同學設計,2026 年
+  '神槍手': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神槍手.png') },
+  ],
+  // ★ v1.0.20260522.7300 — 學生設計英雄系列(火柴人)
+  //   火柴人:5 年 3 班張同學設計,2026 年
+  '火柴人': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火柴人.png') },
+  ],
+  // ★ v3.5.49 — 學生設計英雄系列(青炎龍王)
+  //   青炎龍王:5 年 3 班蔣同學設計,2026 年
+  '青炎龍王': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('青炎龍王.png') },
+  ],
+  // ★ v3.5.60 — 學生設計英雄系列(鳳凰)
+  //   鳳凰:5 年 4 班 04 號李同學設計,2026 年
+  '鳳凰': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鳳凰.png') },
+  ],
+  // ★ v3.5.60 — 學生設計英雄系列(操偶師)
+  //   操偶師:5 年 2 班 11 號江同學設計,2026 年
+  '操偶師': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('操偶師.png') },
+  ],
+  // ★ v3.5.68 — 學生設計英雄系列(菇女)
+  //   菇女:5 年 3 班 14 號張同學設計,2026 年。第 66 號英雄,5 年 3 班第 3 位設計師
+  '菇女': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('菇女.png') },
+  ],
+  // ★ v3.10.12 — 學生設計英雄系列(小丑)
+  //   小丑:5 年 1 班 林同學設計,2026 年。第 67 號英雄,5 年 1 班第 1 位設計師
+  '小丑': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('小丑.png') },
+  ],
+  // ★ v3.10.14 — 學生設計英雄系列(美人魚‧角角)
+  //   美人魚‧角角:3 年 1 班 采漩設計,2026 年。第 68 號英雄,3 年 1 班第 1 位設計師
+  '美人魚‧角角': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('美人魚_角角.png') },
+  ],
+  // ★ v3.11.6 — 學生設計英雄系列(火爆女)
+  //   火爆女:5 年 4 班 彭同學設計,2026 年。第 69 號英雄,5 年 4 班第 7 位設計師
+  '火爆女': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('火爆女孩.png') },
+  ],
+  // ★ v3.11.19 — 學生設計英雄系列(幽幽)
+  //   幽幽:5 年 4 班高同學設計,2026 年。第 70 號英雄,5 年 4 班第 8 位設計師
+  '幽幽': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('幽幽.png') },
+  ],
+  // ★ v3.11.20 — 網路駭客(5 年 1 班 高同學設計,71 號英雄)
+  '網路駭客': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('網路駭客.png') },
+  ],
+  // ★ v3.12.8 — 死神(5 年 2 班 13 號羅同學設計,72 號英雄)
+  '死神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('死神.png') },
+  ],
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_DB_PATCHES  (搬自 index.html L15542~L15661)
+// ════════════════════════════════════════════════════════════════
+// ====== HERO_DB(英雄與BOSS資料) ======
+// ★ v1.0.20260513.6410 — 主程式減肥第二招:HERO_DB 抽離成獨立檔 hero_db.js
+//   原 130 行(line 11660~11789)的 const HERO_DB = {...} 已搬到 hero_db.js
+//   載入方式:<head> 中的 <script src="hero_db.js?v=YYYYMMDD"><\/script>(在 adv_quiz_db.js 之後)
+//   注意:hero_db.js 仍以 const HERO_DB = {...} 全域變數形式宣告,所有 typeof HERO_DB !== 'undefined' 檢查照舊運作
+//   未來新增英雄/魔物/BOSS 只動 hero_db.js,記得改 ?v=YYYYMMDD 破快取
+
+// ★ v3.8.0(2026-05-25) — 木柵第三隻 BOSS「黑暗球‧希望型態」HERO_DB 補丁
+//   說明:本次新增的 BOSS 規格透過 Object.assign 在主程式注入,
+//         避免單一 BOSS 改動需要重新發布 hero_db.js + 破快取。
+//   下次 hero_db.js 更新時可把這段移過去,移過去後刪除本區塊即可。
+//
+// 規格(基礎強度):
+//   HP 1500 / 攻 25 / 特 30 / 速 30 (強度隨玩家平均等級提升 → 走 _advMaokongLvScale 自動加成)
+//   EXP 130(對齊杏花妖 75、九尾空貓怪 55,木柵 BOSS 線性遞增,符合新 BOSS 是「第三隻」更強)
+// 技能:
+//   S1 黑暗牢籠(c:2): 使特技最高的對手「禁動」2 回合
+//   S2 黑暗光束(c:4): 特技 70% 對隨機目標 3 次暗屬性傷害(v3.9.1 由 130% 下調為 70%)
+// 爆發 / 天賦 已在 BURST_DB / HERO_TRAIT 各自定義
+try{
+  if(typeof HERO_DB !== 'undefined'){
+    Object.assign(HERO_DB, {
+      '黑暗球‧希望型態': {
+        hp:1500, atk:25, sp:30, spd:30, exp:130,
+        s1:{ n:'黑暗牢籠', c:2, d:'使特技最高的1名對手「禁動」2回合', fd:'伸出漆黑能量觸手鎖定戰場上特技最高的對手,將其囚禁於黑暗牢籠中——使該對手陷入「禁動」狀態 2 回合,完全無法行動。' },
+        s2:{ n:'黑暗光束', c:4, d:'特技70%對隨機目標造成3次暗屬性傷害', fd:'凝聚黑暗能量射出三道漆黑光柱,以特技值的 70% 對隨機存活對手造成 3 次暗屬性傷害(每次重新挑目標,各自結算暴擊與屬性克制)。' }
+      }
+    });
+    console.log('[黑暗球 HERO_DB 補丁] 已注入,hp=1500/atk=25/sp=30/spd=30');
+  }
+}catch(eDarkOrbDB){ console.error('[黑暗球 HERO_DB 補丁] 注入失敗:', eDarkOrbDB); }
+
+// ════════════════════════════════════════════════════════════════
+// ★ v3.8.2(2026-05-26) — v3.4.0 之後新增英雄 HP 補上 ×1.3 加成
+// ────────────────────────────────────────────────────────────────
+// 背景:v3.4.0 (v1.0.20260519.7200) 大改動把 hero_db.js 當時 56 隻 +
+//      JP_BOSS_HERO_STATS 3 隻共 59 隻玩家英雄的基礎 HP × 1.3
+//      (平均 HP 65 → 84,+19,+30%)。
+//      但 v3.4.0 之後新增的學生設計英雄 HP 都是用「原始平衡度檢查」
+//      (能力總和=100)直接寫入 hero_db.js,沒有再套 ×1.3。
+//      這導致 v3.4.0 後的英雄 HP 偏低,跟先發英雄不公平。
+//
+// 補上的 7 隻(老師 2026/05/26 回報):
+//   武器精靈   58 → 75  (v3.4.11)
+//   神槍手     60 → 78  (v3.4.11)
+//   火柴人     51 → 66  (v3.5.x, 5/22)
+//   青炎龍王   60 → 78  (v3.5.49)
+//   鳳凰       56 → 73  (v3.5.60)
+//   操偶師     65 → 85  (v3.5.60)
+//   菇女       60 → 78  (v3.5.68)
+//
+// 保留不動:天神宙斯 91、維京海盜船長 94(v3.4.0 同期上線,本來就已套用)
+//
+// 守門原則:只在「現有 hp < 目標 hp」時才覆寫,避免老師日後微調
+//          hero_db.js 把 HP 改大時被本補丁誤蓋回去。
+// ════════════════════════════════════════════════════════════════
+try{
+  if(typeof HERO_DB !== 'undefined'){
+    const _v384HpFix = {
+      '武器精靈': 75,
+      '神槍手':   78,
+      '火柴人':   66,
+      '青炎龍王': 78,
+      '鳳凰':     73,
+      '操偶師':   85,
+      '菇女':     78,
+      '小丑':     77,  // ★ v3.10.12 — 5 年 1 班 林同學設計,原始 59 × 1.3 = 77
+      '美人魚‧角角': 70,  // ★ v3.10.14 — 3 年 1 班 采漩設計,原始 54 × 1.3 = 70
+      '幽幽':     72,  // ★ v3.11.19 — 5 年 4 班 高同學設計,原始 55 × 1.3 = 72
+      '網路駭客':  75,  // ★ v3.11.20 — 5 年 1 班 高同學設計,原始 58 × 1.3 ≈ 75
+      '死神':     77,  // ★ v3.12.8 — 5 年 2 班 13 號羅同學設計,原始 59 × 1.3 ≈ 77
+      '火爆女':   71,  // ★ v3.11.6 — 5 年 4 班 彭同學設計,原始 55 × 1.3 = 71.5 → 71
+    };
+    let _v384Applied = 0;
+    const _v384Log = [];
+    Object.keys(_v384HpFix).forEach(_n => {
+      const _h = HERO_DB[_n];
+      if(!_h){ console.warn('[v3.8.2 HP 補丁] HERO_DB 內找不到', _n); return; }
+      const _target = _v384HpFix[_n];
+      if(typeof _h.hp === 'number' && _h.hp < _target){
+        _v384Log.push(_n + ' ' + _h.hp + '→' + _target);
+        _h.hp = _target;
+        _v384Applied++;
+      }
+    });
+    if(_v384Applied > 0){
+      console.log('[v3.8.2 HP 補丁] 已對 ' + _v384Applied + ' 隻英雄補 HP ×1.3 加成:', _v384Log.join(', '));
+    } else {
+      console.log('[v3.8.2 HP 補丁] 所有目標英雄 HP 已達標,跳過');
+    }
+  }
+}catch(eHpFix){ console.error('[v3.8.2 HP 補丁] 注入失敗:', eHpFix); }
+
+// ════════════════════════════════════════════════════════════════
+// ★ v3.12.8(2026-05-30) — 死神 HERO_DB fallback 安全網(72 號英雄)
+// ────────────────────────────────────────────────────────────────
+// 【為什麼留這個 fallback】
+//   正本已寫入 hero_db.js(網路駭客之後、冒險 BOSS 之前)。本區段為「保險」,
+//   只在 hero_db.js 因為破快取/版本錯位/載入失敗等情況沒有「死神」鍵時才補上,
+//   確保 index.html 內依賴 HERO_DB['死神'] 的所有流程都不會炸 undefined。
+//   ⚠ 注意:這裡寫 hp:77(已含 v3.8.2 ×1.3 補丁),因為 fallback 跑時補丁已過。
+// ════════════════════════════════════════════════════════════════
+try{
+  if(typeof HERO_DB !== 'undefined' && !HERO_DB['死神']){
+    console.warn('[v3.12.8 fallback] hero_db.js 未提供「死神」,啟用 index.html 內建 fallback 注入');
+    HERO_DB['死神'] = {
+      hp: 77, atk: 9, sp: 19, spd: 13,
+      s1: {
+        n:'死亡連擊', c:4,
+        d:'用特技的120%對2名HP最低的對手造成暗屬性傷害,有30%機率讓小怪/召喚物/分身直接倒下',
+        fd:'死神揮舞鐮刀斬向 HP 最低的 2 名對手,各造成特技 120% 的暗屬性傷害;每次命中有 30% 機率對小怪、召喚物、分身宣判死亡使其直接倒下(對 BOSS / 菁英 / 玩家英雄則改為造成主傷害 50% 的追加傷害,不會秒殺)。升級每級 +5% 傷害、+1% 倒下率。'
+      },
+      s2: {
+        n:'死亡劈砍', c:5,
+        d:'用特技的240%對1名對手造成暗屬性傷害,有50%機率讓小怪/召喚物/分身直接倒下',
+        fd:'死神舉鐮全力劈砍 1 名對手,造成特技 240% 的暗屬性傷害;有 50% 機率對小怪、召喚物、分身宣判死亡使其直接倒下(對 BOSS / 菁英 / 玩家英雄則改為造成主傷害 50% 的追加傷害,不會秒殺)。升級每級 +5% 傷害、+1% 倒下率。'
+      }
+    };
+  }
+}catch(eGr){ console.error('[v3.12.8 死神 fallback 注入] 失敗:', eGr); }
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_IMG_POS  (搬自 index.html L16380~L16478)
+// ════════════════════════════════════════════════════════════════
+const HERO_IMG_POS = {
+  '舞者':    ['235% auto','center 20%'],
+  '刺客':    ['176% auto','center 25%'],
+  '吟遊詩人':  ['176% auto','center 32%'],
+  '大力士':  ['176% auto','center 23%'],
+  '軍師':    ['176% auto','center 30%'],
+  '煉金術師':['95% auto','center 28%'],
+  '占星師':  ['168% auto','center 28%'],
+  '武鬥家':  ['202% auto','center 20%'],
+  '祭司':    ['152% auto','center 50%'],
+  '劍士':    ['276% auto','center 22%'],
+  '光法師':  ['255% auto','center 30%'],
+  '警長':    ['211% auto','center 30%'],
+  '聖騎士':  ['202% auto','center 25%'],
+  '暗法師':  ['211% auto','center 23%'],
+  '雷法師':  ['139% auto','center 30%'],
+  '冰法師':  ['131% auto','center 30%'],
+  '守衛':    ['192% auto','center 33%'],
+  '偷摘花的頑皮妖精': ['144% auto','center 20%'],
+  '偷鳥蛋的鳥人哈維': ['144% auto','center 20%'],
+  '火法師':  ['160% auto','center 30%'],
+  '神射手':  ['251% auto','center 25%'],
+  '神偷':    ['92% auto','center 35%'],
+  // ── 新角色 ──
+  '學者':    ['144% auto','center 40%'],    // 上移40%（20+40）
+  '時空法師':['105% auto','center 20%'],    // 上移5%（20+5）
+  '陰陽師':  ['122% auto','center 30%'],   // 放大10%（160→176）+上移10%（20+10）
+  '動物學家':['160% auto','center 20%'],   // 放大5%（160→168）+上移5%（20+5）
+  '吸血鬼':  ['136% auto','center 30%'],   // 放大10%（160→176）+上移10%（20+10）
+  '機械師':  ['160% auto','center 33%'],   // 上移5%（20+5）
+  '木靈使':  ['117% auto','center 25%'],   // 上移5%（20+5）
+  '武士':    ['160% auto','center 33%'],   // 上移5%（20+5）
+  '杏花妖':  ['150% auto','center 22%'],   // BOSS：臉部置上
+  // ★ v3.8.0 — 黑暗球‧希望型態:球形 BOSS,置中、稍微放大
+  '黑暗球‧希望型態': ['140% auto','center 30%'],
+  '凡人':    ['160% auto','center 14%'],   // 往上移5%（預設12+5）
+  '小力':    ['140% auto','center 25%'],
+  '籃球隊員':['140% auto','center 20%'],
+  '直笛團員':['160% auto','center 30%'],
+  '田徑隊員':['160% auto','center 25%'],
+  '幼兒園小孩':['90% auto','center 30%'],
+  '電腦繪圖師':['90% auto','center 30%'],
+  '程式設計師':['90% auto','center 30%'],
+  '弦樂團員':  ['90% auto','center 30%'],
+  '小劇團員':  ['90% auto','center 20%'],  // v1.0.20260420.1100 整張往下移 10%(30→20),同步影響原始/銀冕王子/琉璃公主三張肖像
+  // ★ v1.0.20260507.5610 — 雙星姊妹:邀請視窗右側預覽圖,設計者要求 y +20%
+  //   原預設 'center 30%' 往下移 20% → 'center 50%'
+  '雙星姊妹':['100% auto','center 50%'],
+  // ★ v5690 — 窮奇邀請預覽圖:設計者要求 Y +30%(從預設 12% 改為 42%)
+  '窮奇':['160% auto','center 42%'],
+  // ★ v1.0.20260512.6210 — 死靈法師:設計者圖頭部偏上,Y 略上拉
+  '死靈法師':['160% auto','center 25%'],
+  // ★ v1.0.20260513.6460 — 布奶鳥獸:兩隻小鳥的圖,通用置中
+  '布奶鳥獸':['120% auto','center 30%'],
+  // ★ v1.0.20260514.6550 — 炸彈客:通用置中,稍微放大露出炸彈客全身
+  '炸彈客':['130% auto','center 25%'],
+  // ★ v1.0.20260514.6660 — 紅色玩家:稍微放大顯示紅衣玩家全身
+  '紅色玩家':['150% auto','center 18%'],
+  // ★ v1.0.20260514.6770 — 地府酋長:稍微放大露出酋長威嚴上半身
+  '地府酋長':['140% auto','center 22%'],
+  '救醫馬':['140% auto','center 20%'],
+  // ★ v1.0.20260515.6890 — 水狐:神獸全身圖(狐頭+獨角+魚尾),頭頂獨角偏上,Y 略往下偏顯示頭部與身軀
+  '水狐':['140% auto','center 35%'],
+  // ★ v1.0.20260515.6900 — 米鈴:貓女僕全身,頭部+鈴鐺需在框內可見
+  '米鈴':['180% auto','center 25%'],
+  // ★ v1.0.20260518.6920 — 學霸(轉學生):制服全身,頭部+書包需在框內可見
+  '學霸(轉學生)':['150% auto','center 22%'],
+  // ★ v1.0.20260518.6930 — 天神宙斯:神王全身,白髯+雷杖需在框內可見
+  '天神宙斯':['145% auto','center 18%'],
+  // ★ v1.0.20260519.7100 — 維京海盜船長:稍微放大露出戰斧與頭盔
+  // ★ v3.11.11(2026-05-28) — Y 軸 25% → 15%(老師回報預覽圖看不到臉,Y 減少讓圖整體往下挪 10%)
+  '維京海盜船長':['150% auto','center 15%'],
+  // ★ v3.4.11 — 武器精靈:稍微放大露出武器與外表
+  '武器精靈':['150% auto','center 30%'],
+  // ★ v3.4.11 — 神槍手:稍微放大露出長槍與制服
+  '神槍手':['150% auto','center 25%'],
+  // ★ v1.0.20260522.7300 — 火柴人:長條人形,稍微放大露出火柴頭與整體
+  '火柴人':['140% auto','center 25%'],
+  // ★ v3.5.49 — 青炎龍王:龍王全身,稍微放大露出龍頭與胸前藍焰
+  '青炎龍王':['130% auto','center 25%'],
+  // ★ v3.11.19 — 幽幽:幽靈全身,稍微放大露出臉部與飄逸下擺
+  '幽幽':['130% auto','center 25%'],
+  // ★ v3.11.20 — 網路駭客:全身,露出臉部與螢幕光
+  '網路駭客':['130% auto','center 25%'],
+  // ★ v3.12.8 — 死神:暗紅死神,稍微放大露出兜帽臉部與鐮刀
+  '死神':['135% auto','center 25%'],
+  // ★ v3.5.60 — 鳳凰:展翼鳳凰,稍微放大露出頭冠與火焰之翼
+  '鳳凰':['135% auto','center 25%'],
+  // ★ v3.5.60 — 操偶師:操偶師與傀儡同框,稍微放大露出臉部與絲線
+  '操偶師':['130% auto','center 25%'],
+  // ★ v3.5.68 — 菇女:菇族支援者,稍微放大露出頭部與蘑菇帽
+  '菇女':['135% auto','center 25%'],
+  // ★ v3.10.12 — 小丑:稍微放大露出頭部與彩色服裝
+  '小丑':['140% auto','center 25%'],
+  // ★ v3.10.14 — 美人魚‧角角:人魚少女,稍微放大露出頭部與弓箭
+  '美人魚‧角角':['135% auto','center 25%'],
+  // ★ v3.11.6 — 火爆女:機械系少女,稍微放大露出頭部與機械裝備
+  '火爆女':['135% auto','center 30%'],
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_BATTLE_CARD_POS  (搬自 index.html L16484~L16486)
+// ════════════════════════════════════════════════════════════════
+const HERO_BATTLE_CARD_POS = {
+  '窮奇':'center 32%',  // 戰鬥卡片只要 +20%(比邀請預覽 +30% 少一些)
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_THUMB_POS  (搬自 index.html L16545~L16605)
+// ════════════════════════════════════════════════════════════════
+const HERO_THUMB_POS = {
+  // 下移 10%（預設 50% - 10% = 40%）
+  '動物學家':'center 40%', '神射手':'center 40%', '木靈使':'center 40%',
+  '軍師':'center 40%',     '劍士':'center 40%',   '暗法師':'center 40%',
+  '刺客':'center 40%',     '舞者':'center 40%',   '武鬥家':'center 40%',
+  '火法師':'center 40%',   '時空法師':'center 40%','警長':'center 40%',
+  // ★ v5740 — 光法師左選單縮圖也下移 10%(50% → 40%,看到更多頭部)
+  '光法師':'center 40%',
+  // 下移 20%（預設 50% - 20% = 30%）
+  '武士':'center 30%', '凡人':'center 30%', '雷法師':'center 30%',
+  // ★ v5690 — 5 年 5 班學生設計英雄縮圖位置(下移 20%,看到角色頭部)
+  // ★ v5740 — 科技生化人/鋁合金暴龍再下移 10%(30% → 20%,看到更多頭部)
+  '科技生化人':'center 20%', '鋁合金暴龍':'center 20%', '超鬼神王':'center 30%',
+  // ★ v1.0.20260507.5600 — 雙星姊妹:設計者指定 70%(下移 20%,展現姊妹臉部)
+  '雙星姊妹':'center 70%',
+  // ★ v1.0.20260513.6460 — 布奶鳥獸:稍微下移看到兩隻小鳥
+  '布奶鳥獸':'center 40%',
+  // ★ v1.0.20260514.6550 — 炸彈客:中央偏上,露出臉部與手中炸彈
+  '炸彈客':'center 35%',
+  // ★ v1.0.20260514.6660 — 紅色玩家:標準位置,露出頭部與紅衣
+  '紅色玩家':'center 30%',
+  // ★ v1.0.20260514.6770 — 地府酋長:中央偏上,展現酋長威嚴頭部
+  '地府酋長':'center 32%',
+  '救醫馬':'center 25%',
+  // ★ v1.0.20260515.6890 — 水狐:夢幻神獸全身(下半身魚尾),縮圖上移露出狐頭與獨角
+  '水狐':'center 30%',
+  // ★ v1.0.20260515.6900 — 米鈴:貓女僕,縮圖上移露出頭部+鈴鐺
+  '米鈴':'center 25%',
+  // ★ v1.0.20260518.6920 — 學霸(轉學生):縮圖上移露出頭部與制服上半身
+  '學霸(轉學生)':'center 22%',
+  // ★ v1.0.20260518.6930 — 天神宙斯:縮圖上移露出白髯神王頭部
+  '天神宙斯':'center 20%',
+  // ★ v1.0.20260519.7100 — 維京海盜船長:中央偏上,露出臉部與戰斧
+  '維京海盜船長':'center 30%',
+  // ★ v3.4.11 — 武器精靈:中央偏上,露出臉部與武器
+  '武器精靈':'center 30%',
+  // ★ v3.4.11 — 神槍手:中央偏上,露出臉部與長槍
+  '神槍手':'center 25%',
+  // ★ v1.0.20260522.7300 — 火柴人:中央偏上,露出火柴頭與整體
+  '火柴人':'center 25%',
+  // ★ v3.5.49 — 青炎龍王:中央偏上,露出龍頭與藍焰
+  '青炎龍王':'center 25%',
+  // ★ v3.11.19 — 幽幽:中央偏上,露出臉部
+  '幽幽':'center 25%',
+  // ★ v3.11.20 — 網路駭客:中央偏上,露出臉部
+  '網路駭客':'center 25%',
+  // ★ v3.12.8 — 死神:中央偏上,露出兜帽臉部與鐮刀
+  '死神':'center 25%',
+  // ★ v3.5.60 — 鳳凰:中央偏上,露出頭冠與火焰
+  '鳳凰':'center 25%',
+  // ★ v3.5.60 — 操偶師:中央偏上,露出臉部與傀儡
+  '操偶師':'center 25%',
+  // ★ v3.5.68 — 菇女:中央偏上,露出頭部與蘑菇帽
+  '菇女':'center 25%',
+  // ★ v3.10.12 — 小丑:中央偏上,露出臉部與彩色服裝
+  '小丑':'center 25%',
+  // ★ v3.10.14 — 美人魚‧角角:中央偏上,露出頭部與弓箭
+  '美人魚‧角角':'center 25%',
+  // ★ v3.11.6 — 火爆女:中央偏上,露出頭部與機械裝備
+  '火爆女':'center 30%',
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_THUMB_POS_BY_PORTRAIT  (搬自 index.html L16608~L16633)
+// ════════════════════════════════════════════════════════════════
+const HERO_THUMB_POS_BY_PORTRAIT = {
+  '守衛':       { 'iron_oath':'center 20%' },
+  // ★ v1.0.20260421.3013 — 4 位角色的新肖像下移 20%
+  '程式設計師': { 'quantum_code':'center 20%' },
+  '軍師':       { 'tactic_web':'center 20%' },           // 30% → 20%(往下移 10%,看到更多頭部)
+  '陰陽師':     { 'four_saints':'center 30%' },
+  '吸血鬼':     { 'dark_rose':'center 30%' },
+  '木靈使':     { 'ancient_tree':'center 30%' },
+  '學者':       { 'wisdom_light':'center 30%' },         // 40% → 30%(往下移 10%)
+  '冰法師':     { 'ice_frost':'center 30%' },
+  '火法師':     { 'blaze_sky':'center 20%' },
+  '祭司':       { 'dawn_breeze':'center 30%' },
+  '巫女':       { 'miko_shrine':'center 0%' },           // 預設 20% → 0%(往下移 20%,完整看到頭頂)
+  '武鬥家':     { 'iron_fist':'center 10%' },            // 預設 20% → 10%(往下移 10%)
+  '聖騎士':     { 'temple_pillar':'center 10%' },        // 預設 20% → 10%(往下移 10%)
+  // ★ v1.0.20260501.5100 — 6 位英雄「3 號版」整張圖往下移(玩家要看到更多頭頂)
+  //   煉金術師/動物學家/神偷/舞者:下移 15%(縮圖原位 50/40/50/40 → 35/25/35/25)
+  //   光法師/警長:下移 20%(縮圖原位 50/40 → 30/20)
+  //   注意:動物學家有 'animal_lv10'(由 _initLvPortraitThumbPos 自動設 center 20%),不要覆蓋,只新增 'beast_guardian'
+  '動物學家':   { 'beast_guardian':'center 25%' },
+  '煉金術師':   { 'philo_stone':'center 35%' },
+  '神偷':       { 'phantom_thief':'center 35%' },
+  '舞者':       { 'graceful_dance':'center 25%' },
+  '光法師':     { 'holy_descend':'center 30%' },
+  '警長':       { 'iron_law':'center 20%' },
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_BIO  (搬自 index.html L16732~L17050)
+// ════════════════════════════════════════════════════════════════
+const HERO_BIO = {
+  '劍士':      { role:'異世界劍聖學徒', trait:'沉默寡言，行動派', hobby:'每日練劍，收集廢棄鎧甲', quote:'「劍法只有一條路──往前砍。」' },
+  '祭司':      { role:'聖光神殿見習祭司', trait:'溫柔細心，重視生命', hobby:'製作草藥，照顧傷者', quote:'「每一條生命都值得被守護。」' },
+  '聖騎士':    { role:'王國聖騎士團副隊長', trait:'正直不阿，責任感強', hobby:'研讀騎士法典，護送旅人', quote:'「守護弱小，這是騎士的天職。」' },
+  '火法師':    { role:'紅塔魔法學院火焰系助教', trait:'熱情衝動，競爭心強', hobby:'開發新魔法，挑戰強敵', quote:'「燃燒吧！比我更強的傢伙快出來！」' },
+  '冰法師':    { role:'冰河神殿術士', trait:'冷靜理性，觀察敏銳', hobby:'研究氣象魔法，獨自遠足', quote:'「情緒是多餘的。計算才是一切。」' },
+  '雷法師':    { role:'雷暴峽谷守護者', trait:'活潑好動，反應快速', hobby:'追逐暴風雨，調整魔法迴路', quote:'「嘿嘿！來不及反應了吧？」' },
+  '光法師':    { role:'日輪聖域的光明使者', trait:'開朗樂觀，鼓舞人心', hobby:'傳播光明，教導初學者', quote:'「只要有光，就沒有走不出的黑暗！」' },
+  '暗法師':    { role:'暗影議會特使', trait:'謀略深遠，城府頗深', hobby:'研究禁忌魔法，收集秘密情報', quote:'「一切盡在掌握之中⋯⋯呵呵。」' },
+  '神射手':    { role:'荒野獵人公會精英', trait:'獨立自主，精準果斷', hobby:'追蹤野獸足跡，改良弓箭', quote:'「瞄準，屏息，放——沒有第二次機會。」' },
+  '吟遊詩人':  { role:'異世界知名旅行歌手', trait:'浪漫多情，富有感染力', hobby:'創作新曲，遊歷各地記錄故事', quote:'「這首歌，就獻給你了。」' },
+  '煉金術師':  { role:'皇家煉金研究所所長', hobby:'調配藥劑，改造機械零件', trait:'好奇心旺盛，鑽研不懈', quote:'「失敗了？那再試五百次就好了！」' },
+  '武鬥家':    { role:'拳聖流派傳人', trait:'豪爽直接，敢作敢為', hobby:'鍛鍊體能，尋訪武術高手', quote:'「拳頭說話，廢話少說！」' },
+  '占星師':    { role:'星象觀測台台長', trait:'深思熟慮，洞悉未來', hobby:'觀測星象，解讀命運密碼', quote:'「星象早已預示——你的勝利或失敗。」' },
+  '大力士':    { role:'競技場常勝冠軍', trait:'樂天知命，力大無比', hobby:'舉重比賽，保護弱小', quote:'「嗯哼？我輸過嗎？想不起來耶！」' },
+  '木靈使':    { role:'古森林精靈守護者', trait:'溫和寧靜，親近自然', hobby:'與植物對話，培育稀有藥草', quote:'「每一棵樹都有它的故事⋯⋯」' },
+  '機械師':    { role:'蒸汽城邦首席工程師', trait:'邏輯清晰，創意無限', hobby:'拆解機械，設計新型裝置', quote:'「這個設計理論上行得通，試了再說！」' },
+  '動物學家':  { role:'力行小學自然老師', trait:'熱愛動物，充滿好奇心', hobby:'野外觀察，拍攝動物生態', quote:'「哇！這隻蟲好稀有！快來看！」' },
+  '陰陽師':    { role:'東方靈術師', trait:'謹慎沉穩，敬天畏地', hobby:'抄寫符咒，研究陰陽五行', quote:'「天地有靈，萬物有序，勿輕舉妄動。」' },
+  '吸血鬼':    { role:'古老血族末裔', trait:'優雅神秘，略顯孤傲', hobby:'收集古典藝術品，夜間散步', quote:'「永恆⋯⋯聽起來挺無聊的。」' },
+  '時空法師':  { role:'時空裂隙研究者', trait:'哲學思辨，超然物外', hobby:'記錄時間線異常，下棋', quote:'「這個結果⋯⋯我早就見過了。」' },
+  '籃球隊員':  { role:'力行小學籃球隊隊長', trait:'積極主動，重視團隊', hobby:'練習三分球，研究戰術', quote:'「Team work makes the dream work！」' },
+  '直笛團員':  { role:'力行小學直笛合奏團首席', trait:'認真細膩，追求完美', hobby:'練習新曲目，整理樂譜', quote:'「再來一次，這小節不夠準！」' },
+  '田徑隊員':  { role:'力行小學田徑隊短跑選手', trait:'不服輸，自律嚴格', hobby:'晨跑訓練，記錄個人紀錄', quote:'「每一秒都要比昨天快！」' },
+  '幼兒園小孩':{ role:'力行小學附設幼兒園小朋友', trait:'天真無邪，充滿想像力', hobby:'畫畫，玩積木', quote:'「我要蓋一個超高的積木塔！」' },
+  '電腦繪圖師':{ role:'力行小學美術社社長', trait:'富有創意，觀察力強', hobby:'數位繪圖，設計遊戲角色', quote:'「顏色不夠，再加一層！」' },
+  '程式設計師':{ role:'力行小學資訊社創辦人', trait:'邏輯思維強，解決問題快', hobby:'寫程式，玩Minecraft', quote:'「Bug只是還沒被找到的Feature。」' },
+  '弦樂團員':  { role:'力行小學弦樂團小提琴手', trait:'敏感細膩，富有藝術氣息', hobby:'練習協奏曲，欣賞音樂會', quote:'「音樂，是靈魂的語言。」' },
+  '小劇團員':  { role:'力行小學戲劇社主角', trait:'表現力強，樂於分享', hobby:'排練話劇，模仿各種角色', quote:'「人生如戲，戲如人生！」' },
+  '小力':      { role:'力行國小校犬', trait:'非常內向,喜歡靜靜的在角落陪伴小朋友們上課學習', hobby:'趁假日沒人的時候巡視校園、到河堤散步', quote:'「汪……(微微搖尾巴)」' },
+  '神偷':      { role:'影城盜賊公會頂尖成員', trait:'靈活狡猾，見機行事', hobby:'收集各種奇怪的小玩意兒', quote:'「你的，也是我的。但放心，我只拿有趣的。」' },
+  '刺客':      { role:'黑夜傭兵組織精英殺手', trait:'冷酷沉著，目標導向', hobby:'磨刀，研究毒草學', quote:'「我的工作沒有失敗這兩個字。」' },
+  '守衛':      { role:'王城銅牆鐵壁第一守衛', trait:'沉穩厚實，以身作盾', hobby:'重量訓練，修繕盾甲', quote:'「想從我這裡過去？先過了我這關再說。」' },
+  '舞者':      { role:'花都劇場頭牌表演藝術家', trait:'熱情奔放，充滿感染力', hobby:'創作舞蹈，教小孩跳舞', quote:'「來！跟著音樂一起動起來！」' },
+  '警長':      { role:'荒野西境治安官', trait:'正義凜然，鐵面無私', hobby:'收集徽章，騎馬巡邏', quote:'「這裡的規矩，由我說了算。」' },
+  '軍師':      { role:'從中國古代穿越來的神祕智者', trait:'博學多聞，深謀遠慮', hobby:'研讀古籍，下棋', quote:'「對手的每一步，我早已料到。」' },
+  '凡人':      { role:'被召喚到異世界的普通人', trait:'沒有特殊天賦,卻意外有著驚人的學習力與韌性', hobby:'觀察周遭,模仿學習其他英雄的技能', quote:'「雖然只是凡人,但既然來了,就活出自己的傳說吧!」' },
+  '武士':      { role:'東方武道流浪者', trait:'守靜沉默，劍心純淨', hobby:'冥想，研究劍道哲學', quote:'「動如山嶽，靜如止水。」' },
+  '學者':      { role:'古代智慧傳承學院院長', trait:'博古通今，謙遜好學', hobby:'著書立說，蒐集珍本古書', quote:'「過去的失敗，是未來最好的老師。」' },
+  // ★ v1.0.20260424.0490 — 補上日本關 4 隻可解鎖英雄的圖鑑介紹
+  '巫女':      { role:'古老神社的見習巫女', trait:'敬天畏神,純淨堅毅', hobby:'抄寫祝詞,獻上神樂舞', quote:'「神靈雖無形,卻護佑著每一個善良之心。」' },
+  '大天狗':    { role:'深山天狗一族的尊長', trait:'威嚴沉著,武藝超群', hobby:'修行劍術,駕馭山風', quote:'「山中千年修行,只為一刻除魔。」' },
+  '酒吞童子':  { role:'昔日大江山鬼王', trait:'豪邁不羈,重情重義', hobby:'豪飲妖酒,結交豪傑', quote:'「這世間的酒,跟好對手,我都不會放過!」' },
+  '玉藻前':    { role:'金毛九尾的絕世美狐', trait:'妖豔狡黠,智慧深沉', hobby:'迷惑人心,觀察世間百態', quote:'「人心比妖術更難捉摸,卻也更有趣。」' },
+  '窮奇':      {
+    role:'中國神話「四大凶獸」之一,長著翅膀的猛獸,專愛欺善助惡',
+    trait:'兇猛狡詐,卻意外講究反擊禮節 — 你不打他,他不出手',
+    hobby:'潛伏山林暗中觀察人類,等待對方先動手那一刻揮出最華麗的反擊',
+    quote:'「你先動的手,可別怪我反咬一口。」',
+    designer:{ class:'5年5班', name:'閻同學', year:2026 }
+  },
+  '科技生化人':{
+    role:'來自未來世界的高科技戰士,結合機械結構與生物科技',
+    trait:'冷靜分析,擅長計算每一發攻擊的鏈鎖路線',
+    hobby:'拆解機械、研究輻射武器原理,改良自己的科技核心',
+    quote:'「目標鎖定。鏈鎖反應 — 啟動。」',
+    designer:{ class:'5年5班', name:'翁同學', year:2026 }
+  },
+  '鋁合金暴龍':{
+    role:'古代暴龍靈魂寄宿的鋁合金機械生命體,堅固耐打、火力強大',
+    trait:'沉穩冷靜,自帶坦克氣勢,輕傷不下火線',
+    hobby:'用鋁鎧抵擋一切攻擊後,扔出四重炸彈把對手震飛',
+    quote:'「鋁鎧無懈可擊。痛?那是給弱者的概念。」',
+    designer:{ class:'5年5班', name:'陳同學', year:2026 }
+  },
+  '超鬼神王':{
+    role:'來自冥界的鬼神之王,擁有吞噬萬物的恐怖大嘴,專門掌管詛咒與毒霧',
+    trait:'神秘霸氣,但會偷偷把對手的好東西吞下肚',
+    hobby:'收集並吞噬各式有利狀態,把它們塞進自己的大嘴變成自己的力量',
+    quote:'「你那個 buff 不錯,給我吧。」',
+    designer:{ class:'5年5班', name:'陳同學', year:2026 }
+  },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  //   雙星姊妹:5 年 5 班田同學同學設計,2026 年。光暗雙生雙型態切換
+  '雙星姊妹':{
+    role:'光與暗的雙生星宿,棲身於同一具身軀的形影不離姊妹',
+    trait:'光星妹妹開朗陽光、樂於照顧友方;暗星姊姊冷酷沉著、精準狙擊敵人',
+    hobby:'光星愛守護隊友、暗星愛收集流星;姊妹倆會在不同處境下無聲輪換',
+    quote:'光星:「姊姊我來保護大家!」暗星:「該收手了。」',
+    designer:{ class:'5年5班', name:'田同學', year:2026 }
+  },
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班首位設計師)
+  //   暗魔將·血:5 年 2 班鐘同學設計,2026 年。被黑化的貓神化身,攻防一體型暗屬性英雄
+  '暗魔將·血':{
+    role:'被黑化的貓神化身,源自古代日本的血劍將軍,身披幽冥之鎧、手執赤紅長劍',
+    trait:'冷峻寡言、行事決絕,以「先護同伴,再斬敵首」為信條',
+    hobby:'在月夜獨自磨劍、研究敵將弱點,並在劍刃上烙刻每位斬下對手的紋章',
+    quote:'「先護住身後的人。然後,讓你流盡最後一滴血。」',
+    designer:{ class:'5年2班', name:'鐘同學', year:2026 }
+  },
+  // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
+  //   死靈法師:5 年 2 班許同學設計,2026 年。天生陰陽眼,能與死靈溝通並操控他們的少年
+  '死靈法師':{
+    role:'天生具有陰陽眼,從小就能與死靈溝通並操控他們的靈能力少年',
+    trait:'沉靜內斂、不畏死亡,對「離開」抱持平常心,願意傾聽每位死靈的故事',
+    hobby:'在夜半月光下散步、與徘徊的死靈對話、用筆記本記錄他們生前的回憶',
+    quote:'「別怕,我會聽你的話。」',
+    designer:{ class:'5年2班', name:'許同學', year:2026 }
+  },
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  //   布奶鳥獸:5 年 5 班高同學設計,2026 年。兩隻可愛小鳥布丁&奶茶
+  '布奶鳥獸':{
+    role:'兩隻可愛的小鳥「布丁」與「奶茶」,被人類飼養長大,感情形影不離',
+    trait:'平時溫順乖巧、撒嬌討食;但只要看到家被弄亂或主人被欺負就會聯手暴走',
+    hobby:'啄食小米、整理彼此的羽毛、把家裡的衛生紙拆得到處都是',
+    quote:'「啾啾!(別惹我們生氣!)」',
+    designer:{ class:'5年5班', name:'高同學', year:2026 }
+  },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師)
+  //   炸彈客:5 年 4 班劉同學設計,2026 年。製造炸彈的天才,認為爆炸就是藝術
+  '炸彈客':{
+    role:'地下爆破工坊的瘋狂工程師,腰間掛滿自製炸彈、雙眼總映著火光',
+    trait:'熱情奔放、爽快直接,堅信「爆炸即藝術」,出手前總要先笑一聲',
+    hobby:'研發新型炸藥配方、欣賞火光與煙塵的瞬間美學、收集各式引信',
+    quote:'「BOOM!看吧——這才是真正的藝術!」',
+    designer:{ class:'5年4班', name:'劉同學', year:2026 }
+  },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班第 2 位設計師)
+  //   紅色玩家:5 年 4 班陳同學設計,2026 年。身處虛擬世界的神祕高手玩家
+  '紅色玩家':{
+    role:'身處虛擬世界深處的神祕高手玩家,代表色是耀眼的赤紅',
+    trait:'沉著冷靜、操作精準到像開外掛;鍵盤一響就是要收人頭',
+    hobby:'通宵打副本、研究高難度速通路線、把訓練場木樁拆到冒煙',
+    quote:'「P1 已就位——準備被我瞬殺吧。」',
+    designer:{ class:'5年4班', name:'陳同學', year:2026 }
+  },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班第 3 位設計師)
+  //   地府酋長:5 年 4 班黃同學設計,2026 年。來自地府的獄卒首領,負責看管受刑的亡靈
+  '地府酋長':{
+    role:'來自地府的獄卒首領,負責看管刀山火海中受刑的亡靈',
+    trait:'冷峻威嚴、鐵面無私,執法絕不講情面,看一眼便能審判功過',
+    hobby:'巡視十八層地獄、磨利鎖鍊與審判杖、記錄受刑亡靈的怨念',
+    quote:'「亡魂啊——你的審判,由我宣告。」',
+    designer:{ class:'5年4班', name:'黃同學', year:2026 }
+  },
+  // ★ v1.0.20260515.6880 — 學生設計英雄系列(5 年 4 班吳同學)
+  //   救醫馬:純後援王,馬醫生帶醫藥箱穿梭戰場救夥伴
+  '救醫馬':{
+    role:'力行小學保健室助理護士,騎著醫療馬車穿梭戰場救人',
+    trait:'活潑開朗、溫暖體貼,戰場上永遠優先衝向傷得最重的夥伴',
+    hobby:'打電動、整理醫藥箱,把急救小知識編成口訣背給同學聽',
+    quote:'「馬醫生,救夥伴一生!」',
+    designer:{ class:'5年4班', name:'吳同學', year:2026 }
+  },
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班首位設計師 林同學)
+  //   水狐:夢幻水神獸,召喚水精靈與水龍接力作戰
+  '水狐':{
+    role:'上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸,海與淡水皆奉其為主',
+    trait:'高冷神秘,卻對受傷的小生命特別溫柔;不愛動手,只在水鏡中觀察,出手前已備好千軍',
+    hobby:'在月光下吹奏海螺呼喚水精靈,養著一窩剛孵化的小水龍,陪牠們練習吐水泡',
+    quote:'「來吧,我的孩子們——讓他們嚐嚐汪洋的滋味。」',
+    designer:{ class:'6年2班', name:'林同學', year:2026 }
+  },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班首位設計師 董同學)
+  //   米鈴:私人莊園的貓族女僕,以鈴鐺淨化隊友、召喚女僕同伴打掃戰場
+  '米鈴':{
+    role:'私人莊園裡的貓族女僕,胸口別著鈴鐺,輕步穿梭於戰場守護每一位夥伴',
+    trait:'溫柔細膩、心思體貼,看見夥伴受苦會立刻撲上去守護,把每件不愉快都化成微笑',
+    hobby:'照顧每一位夥伴、為大家煮熱湯、和女僕同伴們一起把戰場打掃得乾乾淨淨',
+    quote:'「喵～這點難題,米鈴一個眨眼就解決囉♪」',
+    designer:{ class:'6年5班', name:'董同學', year:2026 }
+  },
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學)
+  //   學霸(轉學生):頂尖私立小學轉來的神祕學霸,五科滿分壓得對手喘不過氣
+  '學霸(轉學生)':{
+    role:'頂尖私立小學轉來的神祕學霸,書包裡永遠裝著五科滿分考卷',
+    trait:'冷靜內斂、心思縝密,看似不苟言笑卻默默把全班的壓力都扛在自己身上',
+    hobby:'寫題目寫到深夜、整理筆記做成講義發給同學、把難題拆解成步驟讓人秒懂',
+    quote:'「這題?——我五分鐘前就解開了。」',
+    designer:{ class:'5年2班', name:'簡同學', year:2026 }
+  },
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學)
+  //   天神宙斯:希臘神話的眾神之王,手握神威之杖、號令雷霆
+  '天神宙斯':{
+    role:'奧林帕斯山的眾神之王,白髯飄揚、手執霹靂神杖,雙眼閃爍如雷光',
+    trait:'威嚴尊貴、雷厲風行,賞罰分明絕不容違逆;一聲怒吼能撼動天地、震懾凡塵',
+    hobby:'巡視諸天降下審判、收集自世界各地的神話傳說、與其他神祇下棋論英雄',
+    quote:'「凡夫俗子——感受天神之怒吧!」',
+    designer:{ class:'5年4班', name:'歐同學', year:2026 }
+  },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學)
+  //   維京海盜船長:北海冰原的傳奇船長,單筒望遠鏡一舉、整艘黑龍號的火炮就齊鳴
+  '維京海盜船長':{
+    role:'北海維京艦隊「黑龍號」第三代船長',
+    trait:'豪邁霸氣、重情義、認準目標絕不放手',
+    hobby:'收藏戰利品、研究海圖、與夥伴大碗喝酒',
+    quote:'「鎖定目標——開火!誰也別想跑!」',
+    designer:{ class:'5年5班', name:'吳同學', year:2026 }
+  },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學)
+  //   武器精靈:戰爭精靈兄弟之一,持有可變形的傳奇武器,外表可怕內心善良
+  '武器精靈':{
+    role:'戰爭精靈兄弟(其中一名)',
+    trait:'外表可怕、內心善良,沉默寡言但護友心切',
+    hobby:'打磨武器、變形練習、與哥哥比賽切換姿態',
+    quote:'「別怕——這把武器,只對敵人露出鋒芒。」',
+    designer:{ class:'5年5班', name:'朱同學', year:2026 }
+  },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學)
+  //   神槍手:為保護家人不受仇敵傷害,多年來在兵營練就一手神準槍法
+  '神槍手':{
+    role:'護家神槍兵——百步穿楊的槍術高手',
+    trait:'沉穩冷靜、責任感強、護家如命',
+    hobby:'保養槍械、瞄準訓練、研究彈道與風向',
+    quote:'「鎖定——呼吸——扣下扳機。家人,我會守住。」',
+    designer:{ class:'5年4班', name:'莊同學', year:2026 }
+  },
+  // ★ v1.0.20260522.7300 — 學生設計英雄系列(5 年 3 班張同學)
+  //   火柴人:原本只是學生隨手在考卷上的塗鴉,陰錯陽差受到祝福而獲得生命
+  '火柴人':{
+    role:'被祝福而活的考卷塗鴉精靈',
+    trait:'樂觀向上、自我犧牲、永遠保持正能量',
+    hobby:'幫朋友打氣、收集打火機、觀察各種火焰',
+    quote:'「燃燒自己沒關係——只要能照亮你們就好!」',
+    designer:{ class:'5年3班', name:'張同學', year:2026 }
+  },
+  // ★ v3.5.49 — 學生設計英雄系列(5 年 3 班蔣同學)
+  //   青炎龍王:善良的龍王,大多數時間都在沉睡,人類有難時會現身施展美麗藍色火焰之舞來保護眾人
+  '青炎龍王':{
+    role:'長眠於深山的善良龍王,藍色火焰之舞的施咒者',
+    trait:'溫和沉穩、深藏慈悲、不戰則睡、出則必護',
+    hobby:'在山巔靜坐沉睡、聆聽人類祈願、用龍鱗折射晨光',
+    quote:'「孩子,別怕——青藍之火,只焚邪佞,只暖善良。」',
+    designer:{ class:'5年3班', name:'蔣同學', year:2026 }
+  },
+  // ★ v3.11.19 — 學生設計英雄系列(5 年 4 班高同學)
+  //   幽幽:神秘又可愛的幽靈,雖是惡鬼之身卻有顆柔軟的心,守護珍視的同伴
+  '幽幽':{
+    role:'遊走生死之間的神秘幽靈,惡鬼之軀、柔軟之心',
+    trait:'神秘飄忽、外冷內熱、護短、偶爾調皮嚇人',
+    hobby:'夜遊、躲在暗處嚇朋友、收集會發光的小東西',
+    quote:'「別怕我啦……我只是想陪在你身邊而已。」',
+    designer:{ class:'5年4班', name:'高同學', year:2026 }
+  },
+  // ★ v3.11.20 — 學生設計英雄系列(5 年 1 班 高同學)
+  //   網路駭客:程式語言天才,玩遊戲玩到無聊轉而在網路上搞高端惡作劇
+  '網路駭客':{
+    role:'遊走網路的程式語言天才,以惡作劇為樂的高端駭客',
+    trait:'聰明調皮、不按牌理出牌、嘴上嫌無聊心裡其實在意',
+    hobby:'寫程式、破解防火牆、在系統裡埋彩蛋與惡作劇',
+    quote:'「這個漏洞?我五分鐘前就找到了。」',
+    designer:{ class:'5年1班', name:'高同學', year:2026 }
+  },
+  // ★ v3.12.8 — 學生設計英雄系列(5 年 2 班 13 號羅同學「死神」)
+  //   死神:住在冥界的引魂使者,公正無私、信守規則,為每個靈魂指引最後的歸途
+  '死神':{
+    role:'遊走冥界與人間的引魂使者,生死簿的執掌人',
+    trait:'沉默寡言、公正無私、外冷內熱、信守規則',
+    hobby:'整理生死簿、收集迷途靈魂、彈奏古琴超渡亡魂',
+    quote:'「時辰已到——隨我來吧。」',
+    designer:{ class:'5年2班', name:'羅同學', year:2026 }
+  },
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 4 班 04 號李同學)
+  //   鳳凰:神話中浴火重生的不死靈鳥,自焚清淨、落淚療傷,以痛苦灼燒邪佞
+  '鳳凰':{
+    role:'浴火不死的傳說靈鳥,燃盡自身為光明',
+    trait:'高傲堅韌、不畏死亡、視重生為日常、護善如本能',
+    hobby:'啄食火焰、舞動朱紅羽翼、在熔岩中沐浴',
+    quote:'「死亡只是另一次新生——讓我用火焰擁抱你的疼痛。」',
+    designer:{ class:'5年4班', name:'李同學', year:2026 }
+  },
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 2 班 11 號江同學)
+  //   操偶師:精通魁儡製作的操偶天才,藏在傀儡背後操控全場
+  '操偶師':{
+    role:'精通魁儡製作的操偶天才,絲線指間舞戰場',
+    trait:'冷靜縝密、深藏不露、笑容神秘、操縱大局',
+    hobby:'雕刻新傀儡、編織絲線、研究操偶咒語',
+    quote:'「真正的高手,不必親自上場——讓傀儡替我說話。」',
+    designer:{ class:'5年2班', name:'江同學', year:2026 }
+  },
+  // ★ v3.5.68 — 學生設計英雄系列(5 年 3 班 14 號張同學)
+  //   菇女:出生在魔菇世界的菇族支援者,擅長使用各種魔菇的力量
+  '菇女':{
+    role:'魔菇世界來的菇族支援者,腰間竹籃裡裝滿各式各樣的魔菇',
+    trait:'溫柔可愛、調皮樂觀、把照顧夥伴當成最快樂的事',
+    hobby:'採集新品種魔菇、研究魔菇的功效、烹煮魔菇料理請夥伴吃',
+    quote:'「來~吃一朵滿血菇,馬上就活力滿滿了喔!」',
+    designer:{ class:'5年3班', name:'張同學', year:2026 }
+  },
+  // ★ v3.10.12 — 學生設計英雄系列(5 年 1 班 林同學)
+  //   小丑:天才表演者,被恐怖博士抓去改造,成為犯罪天才
+  '小丑':{
+    role:'被改造的天才表演者——曾經是最受歡迎的舞台魔術師',
+    trait:'瘋狂帶笑、亦正亦邪、用扭曲的笑容掩飾內心的痛苦',
+    hobby:'發明致命整人道具、研究心理操控、舞台煙霧效果',
+    quote:'「為什麼那麼嚴肅?——來,給我一個微笑嘛!嘿嘿嘿……」',
+    designer:{ class:'5年1班', name:'林同學', year:2026 }
+  },
+  // ★ v3.10.14 — 學生設計英雄系列(3 年 1 班 采漩)
+  //   美人魚‧角角:喜歡唱歌、擅長使用水魔法弓箭的人魚少女
+  '美人魚‧角角':{
+    role:'深海王國的人魚公主,擅長以歌聲與水魔法弓箭守護同伴',
+    trait:'溫柔善良、愛唱歌、見不得同伴受傷,擁有人魚一族的療癒天賦',
+    hobby:'在月光下唱歌、收集珊瑚與貝殼、練習水魔法弓箭、為夥伴調製海水療傷藥',
+    quote:'「噓——讓我為大家唱一首歌吧!海浪會記住每一個受傷的靈魂♪」',
+    designer:{ class:'3年1班', name:'采漩', year:2026 }
+  },
+  // ★ v3.11.6 — 學生設計英雄系列(5 年 4 班 彭同學)
+  //   火爆女:容易因小事生氣大爆發,平常不生氣時也有可愛的一面
+  '火爆女':{
+    role:'5 年 4 班的機械系少女,愛改裝小機器人、研究火藥的雙面少女',
+    trait:'平常溫柔可愛,但一被惹到就秒爆,情緒落差極大;愈被打愈兇猛',
+    hobby:'改裝小機器人、拆解爆竹研究火藥、看噴射特效影片、收集舊式雷管',
+    quote:'「再講我就要爆炸了喔!」',
+    designer:{ class:'5年4班', name:'彭同學', year:2026 }
+  },
+  '九尾空貓怪':{ role:'貓空神社守護靈獸', trait:'神秘多變，驕傲自恃', hobby:'梳理九條尾巴，觀察往來的茶農', quote:'「膽敢踏入我的領域——有趣，讓我好好考考你。」' },
+  '杏花妖':    { role:'貓空千年杏花樹化身', trait:'嬌氣有潔癖，自戀成性', hobby:'照鏡子、吟詩、欣賞自己的花瓣', quote:'「唉呀～小心別讓那些髒兮兮的鞋子碰到我的花瓣喲～」' },
+  // ★ v3.8.0(2026-05-25) — 木柵第三隻 BOSS:黑暗球‧希望型態
+  '黑暗球‧希望型態':{ role:'次元裂縫失控爆炸的神秘產物', trait:'吞噬光明,釋放無盡黑暗', hobby:'分裂、扭曲現實、剝奪希望', quote:'「希望……是最先被吞噬的東西。」' },
+  '綠竹筍小妖':{ role:'竹林深處的守護妖靈', trait:'倔強固執，護竹如命', hobby:'數竹筍，對月搖曳', quote:'「我的竹筍，一根都不許碰！」' },
+  '茶葉精靈':  { role:'貓空百年老茶樹孕育的茶精', trait:'溫潤優雅，帶著淡淡茶香', hobby:'泡茶，與茶農對話', quote:'「好茶需要慢慢品味，你，夠格嗎？」' },
+  '偷摘花的頑皮妖精':{ role:'河堤花叢間的搗蛋精靈', trait:'頑皮好動，喜歡惡作劇', hobby:'摘花插頭，戲弄路人', quote:'「哈！這朵最漂亮，我先拿了！」' },
+  '偷鳥蛋的鳥人哈維':{ role:'指南路旁的羽翼盜蛋怪客', hobby:'收集各種奇怪的蛋，模仿鳥叫', trait:'莽撞粗線條，行事不計後果', quote:'「嘎！這顆蛋看起來最特別，帶走！」' },
+  '偷竹筍的哥布林':{ role:'樟湖步道竹林的貪吃搗亂鬼', trait:'貪吃好動，難以滿足', hobby:'挖竹筍，囤積食物', quote:'「竹筍！竹筍！給我多來幾根！」' },
+  '偷喝茶的史萊姆':{ role:'茶園水溝邊的茶色黏液怪', trait:'無聲無息，嗜茶如命', hobby:'滲入茶壺，品茶悠哉', quote:'（咕嚕咕嚕……又偷喝了一壺好茶……）' },
+  '寶箱怪':          { role:'神出鬼沒的稀有寶箱', trait:'超級膽小，見人就跑', hobby:'收集金幣，躲在暗處', quote:'「才、才不要給你！—— 咻！（逃）」' },
+  '小惡魔':          { role:'從異界竄入的淘氣惡魔', trait:'促狹搗蛋，破壞欲強', hobby:'惡作劇，把玩具弄壞', quote:'「嘿嘿嘿！讓你們亂成一團才好玩！」' },
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:BURST_DB  (搬自 index.html L17052~L17242)
+// ════════════════════════════════════════════════════════════════
+const BURST_DB = {
+  '劍士':     {n:'劍神連斬',    d:'連斬7次，目標倒下轉移，末擊附加暈眩',fd:'攻擊120%×7次,目標倒下轉移,末擊附加暈眩1回合。'},
+  '祭司':     {n:'璀璨聖光',    d:'治癒全隊（可復活），附加免疫不利狀態',fd:'特技180%全隊治療(可復活)+解除不利狀態,免疫不利2回合。'},
+  '聖騎士':   {n:'最終殿堂',    d:'全隊無敵1回合並恢復40%HP',fd:'全隊無敵1回合,並恢復40%HP。'},
+  '火法師':   {n:'烈焰爆發',    d:'特技200%火屬性傷害全體追加10%傷害+強力燃燒2回合(行動前後各-10HP)',fd:'特技200%全體火屬性傷害,追加無視有利10%傷害,目標強力燃燒2回合(行動前後各-10HP)。'},
+  '冰法師':   {n:'冰封末日',    d:'水屬性傷害全體並強力冰凍（無法免疫）',fd:'特技200%全體水屬性傷害,85%機率強力冰凍1回合(無法免疫)。'},
+  '雷法師':   {n:'怒雷狂襲',    d:'彈跳風屬性傷害4次並強力麻痺（無法免疫）',fd:'特技200%風屬性彈跳4次,75%機率強力麻痺1回合(無法免疫)。'},
+  '光法師':   {n:'審判光束',    d:'光屬性傷害全體並治癒全隊，附加強力失明',fd:'特技150%全體光屬性傷害,75%強力失明1回合,同時治療全隊。'},
+  '暗法師':   {n:'毀滅禁咒',    d:'傷害全體＋280%集中傷害，75%封印',fd:'特技180%全體+對1名特技280%,各75%機率強力封印1回合。'},
+  '神射手':   {n:'流星箭雨',    d:'特技170%必中傷害全體無視有利，附加強力禁動',fd:'特技170%全體必中傷害(無視有利狀態),75%機率強力陷阱1回合(無法免疫)。'},
+  '神偷':     {n:'俠盜飛梭',    d:'自己速度+10，傷害1名對手並奪取能量/寵物/有利狀態(全部)/物品，追加該場掉落率+20%(乘算，最多2層)',fd:'速度+10(2回合),特技490%單體+奪3能量/寵物/有利狀態/1物品,掉落+20%可疊2層。'},
+  '刺客':     {n:'死神之鐮',    d:'(攻擊+特技)×400%傷害並隱形，強力出血（無法免疫）',fd:'(攻+特)×400%單體+自身隱形1回合+特技120%自療,目標強力出血2回合(每回合-15%HP)。'},
+  '守衛':     {n:'最後之盾',    d:'強制全體敵方攻擊自己，以特技減傷',fd:'敵全體強力挑釁2回合(只能普攻自己),期間以特技100%減傷。'},
+  '吟遊詩人':   {n:'無盡長眠',    d:'全體敵方強力睡眠，每回合全隊回血',fd:'敵全體強力睡眠(25%機率解除),每睡眠回合全隊回10%HP。'},
+  '舞者':     {n:'激戰之舞',    d:'全隊強力增攻+省能、敵方增益失效',fd:'全隊強力增攻+技能耗能減半2回合,敵方有利狀態失效2回合。'},
+  '警長':     {n:'正義制裁',    d:'封鎖對手物品，對手傷害全數反彈',fd:'敵全體強力查封2回合,期間對手傷害100%反彈。'},
+  '煉金術師': {n:'真理之門',    d:'立即抽3張物品卡，友方獲得「守恆」狀態2回合，使用物品後保留卡片',
+  fd:'抽3張物品卡,全隊「守恆」2回合(用物品100%保留卡片)。'},
+  '武鬥家':   {n:'明鏡止水',    d:'完全無敵2回合，攻擊翻倍，解除不利狀態',fd:'自身明鏡止水2回合:免疫所有傷害/控制,攻擊×2,並解除自身不利。'},
+  '軍師':     {n:'逆轉神計',    d:'交換雙方狀態+補能量+我方再行動+抽 6 戰場卡',fd:'奪敵有利+轉嫁我方不利+全隊再行動1次+補4能量+抽6戰場卡選1(3回合)。'},
+  '占星師':   {n:'星空祝福',    d:'全隊技能不消耗能量（2回合）',fd:'全隊「星空祝福」2回合,技能不消耗能量。'},
+  '大力士':   {n:'地球上投',    d:'700%必中，強力昏迷2回合',fd:'攻擊700%必中無視有利,強力昏迷2回合(無法免疫)。'},
+  '凡人':     {n:'臨摹大師',    d:'模仿任意角色的極限爆發',fd:'模仿敵我任一角色的極限爆發並施展。'},
+  '動物學家': {n:'動物大軍', d:'呼喚4隻隨機寵物供全隊攜帶，並保護友方全體2回合',fd:'隨機呼喚4隻寵物供全隊攜帶,全隊卡片/寵物/能量受保護2回合。'},
+  '機械師':   {n:'負荷超載',    d:'2回合我方傷害全累積並回血50%，結束後平均分給敵方',fd:'負荷超載2回合:全隊免傷累積+每次回50%HP,結束時敵全體平均承傷。'},
+  '吸血鬼':   {n:'鮮血契約',    d:'全隊獲得「嗜血」2回合，傷害100%吸血，血量越低增傷越高',fd:'全隊嗜血2回合:傷害100%回血,自身HP越少增傷越高(最高+100%)。'},
+  '武士':     {n:'神鬼盡滅',    d:'950%必中,溢出傷害轉移',fd:'攻擊950%必中無視有利,溢出傷害轉移至敵方HP最少者。'},
+  '木靈使':   {n:'神樹恩澤',    d:'全隊「不倒再生」2回合（特技HP/回合）',fd:'全隊「不倒再生」2回合:HP最低為1,每回合回特技值HP。'},
+  '時空法師': {n:'時間壓縮',    d:'800%必中，倒下後3回合無法復活',fd:'特技800%單體必中無視有利,倒下時3回合無法被復活(不可解除)。'},
+  '學者':     {n:'元素智慧',    d:'元素倍率必中傷害，50%轉為治療+奪一半能量',fd:'依特技×雙方屬性種類數對1名必中傷害,50%轉為治療單人,並奪取對手一半能量(四捨五入)。'},
+ '陰陽師':   {n:'四聖降臨',    d:'召喚玄武&白虎(陰陽師HP×150%,5回合)，若朱雀/青龍不存在則補召喚，所有式神HP回滿，特技40%全體攻擊4次，附加2回合減療/緩速/受傷+50%',fd:'召喚玄武&白虎(陰陽師HP×150%/5回合),若朱雀/青龍不存在則補召喚,所有式神HP回滿,特技40%全體×4次,敵全體減療/緩速/受傷+50% 2回合。'},
+  '小力':     {n:'夾尾皺眉',    d:'全體對手無法使用造成傷害的技能或物品（2回合）',fd:'敵全體「憐惜校犬」2回合,無法使用造成傷害的技能或物品(不可免疫/解除)。'},
+  '籃球隊員': {n:'絕殺灌籃',    d:'特技750%必中無視有利1名對手，全隊速度提升2回合',fd:'特技750%單體必中無視有利,全隊速度+50% 2回合。'},
+  '直笛團員': {n:'天籟之音', d:'特技150%傷害全體+狂亂1回合，我方治療+持續恢復5回合',fd:'特技150%全體+狂亂1回合,解我方不利+治療(可復活)+持續恢復5回合。'},
+  '田徑隊員': {n:'極速閃燃', d:'200%速度傷害全體、獲得7能量、附加閃燃、再行動',fd:'速度200%全體傷害+獲7能量+附加閃燃(下次傷害×2)+立即再行動。'},
+  '幼兒園小孩':{n:'夢境時光', d:'睡眠中發動：HP10%傷害全體，攻擊和特技-25%持續1回合',fd:'睡眠中發動:對敵全體10%最大HP必中傷害,敵全體攻擊/特技-25% 1回合。'},
+  '電腦繪圖師':{n:'萬物創生', d:'特技600%傷害全體平均分攤（必中），再抽3張物品卡',fd:'特技600%全體平均分攤必中無視有利,再抽3張物品卡。'},
+  '程式設計師':{n:'BUG修復',  d:'不利轉有利+全體恢復50%HP(可復活)+2名對手無法行動',fd:'我方不利轉有利+全體回50%HP(可復活)+2名對手無法行動1次。'},
+  '弦樂團員':  {n:'流浪者之歌',d:'特技40%傷害全體3~5次（必中），並恢復我方全體HP（可復活）',fd:'特技40%全體×3~5次必中無視有利,並恢復我方全體HP(可復活)。'},
+  '小劇團員':  {n:'謝幕掌聲', d:'依場上倒下(敵我雙方)人數×3恢復能量，再以當前能量提升全體攻擊和特技',fd:'依場上倒下人數×3恢復能量,以當前能量值提升全隊攻擊/特技到戰鬥結束。'},
+  // ★ v1.0.20260421.3000o — 日本關限定角色爆發
+  '巫女':      {n:'神樂舞', d:'全體友方解除所有不利狀態(含強力)，附加隨機3個強力有利狀態(不可解除)，再依特技150%恢復HP',fd:'解除全隊不利(含強力),附加3個強力有利狀態(不可解),特技150%治療全隊(可復活)。'},
+  // ── BOSS 爆發技能 ──
+  '九尾空貓怪':{n:'焰尾九連擊', d:'SP40%×9次火屬性連擊，擊倒轉移剩餘次數，全體附加燃燒',fd:'特技40%×9次火屬性,擊倒轉移剩餘次數,結束後全體燃燒2回合。'},
+  '杏花妖':    {n:'千年絕美・傾城一笑', d:'特技150%傷害全體敵人，75%魅惑1回合',fd:'特技150%全體草屬性傷害,75%機率每人魅惑1回合(自動普攻隊友)。'},
+  // ★ v3.8.0(2026-05-25) — 木柵第三隻 BOSS:黑暗球‧希望型態 爆發
+  '黑暗球‧希望型態':{n:'黑暗爆破', d:'特技100%全體暗屬性傷害+強力失明2回合',fd:'特技100%全體暗屬性傷害,全體強力失明2回合(無法免疫,行動成功率30%)。'},
+  '八岐大蛇':  {n:'八頭龍滅世', d:'依特技對隨機目標造成8次必中暗屬性傷害，隨機附加3種強力不利狀態(無法免疫)',fd:'特技值對隨機目標8次必中暗屬性,每次隨機附加3種強力不利狀態(不可免疫)。'},
+  '大天狗':    {n:'神威風獵', d:'特技150%×5次風屬性隨機連擊，30%強力暈眩；最後全體颶風傷害並減速',fd:'特技150%×5次風隨機連擊,30%強力暈眩1回合;末段全體攻擊100%風傷+速度-50% 2回合。'},
+  '酒吞童子':  {n:'鬼王酒宴', d:'恢復自身40%HP，600%必中重擊(無視有利狀態)+擊倒轉移(最多3連鎖)，2回合吸血+攻擊提升',fd:'自身回40%HP,攻擊600%單體必中無視有利+擊倒轉移最多3次,自身嗜血2回合(回血+攻+50%)。'},
+  '玉藻前':    {n:'禍世邪魅', d:'特技200%幻陣全體火傷害，65%強力魅惑1回合(無法免疫)，被魅惑者傷害轉為回血給玉藻前',fd:'特技200%全體火傷害,65%強力魅惑1回合(不可免疫),被魅惑傷害轉為玉藻前回血。'},
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列
+  '窮奇':      {n:'召喚上古四凶獸', d:'全體大傷害+隨機強力不利狀態2回合',fd:'攻擊200%全體傷害,隨機附加1個強力不利狀態2回合(不可免疫/解除)。'},
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人':{n:'輻射核砲', d:'(攻+特)×130%全體傷害+全體虛弱2回合',fd:'(攻+特)×130%全體傷害,敵全體虛弱2回合(攻/特/速各-50%)。'},
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍':{n:'死神龍王登場', d:'攻擊170%全體傷害+收割HP<30%對手,將其能力50%附加給友方全體2回合',fd:'攻擊170%全體+秒殺HP<30%對手1名,將其能力50%附加給全隊2回合。'},
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':{n:'大嘴吸入', d:'特技140%全體傷害+不治詛咒2回合+20%秒殺1名小怪(BOSS改傷害+50%)',fd:'特技140%全體+不治詛咒2回合,隨機選1名:小怪20%秒殺/BOSS追加50%傷害。'},
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  '雙星姊妹':{n:'同生共死', d:'光星:HP變1,失去HP×10倍對單體;暗星:特技900%全體分攤傷害',fd:'光星:自身HP變1,失去HP×10倍打單體;暗星:特技900%全體分攤(均必中無視有利)。'},
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班鐘同學)
+  '暗魔將·血':{n:'血劍·爆破', d:'特技150%全體+隨機1名額外300%(暴擊+60%);同時友方全體免疫傷害2回合',fd:'特技150%全體暗傷+隨機1名追加特技300%(暴擊+60%),全隊免疫傷害2回合。'},
+  // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
+  '死靈法師':{n:'亡靈怨念一擊', d:'用特技120%×倒下總次數(保底3)對全體傷害,再將傷害總和轉化為治療平均分給友方',fd:'特技120%×倒下總數(保底3)全體傷害,傷害總和轉化平均治療全隊(可復活)。'},
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  '布奶鳥獸':{n:'生氣的布丁&奶茶', d:'特技100%×9次 隨機目標連擊,倒下轉移,必中且無視有利狀態',fd:'特技100%×9次隨機連擊,倒下自動轉移,必中無視有利(不可迴避/代承)。'},
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班劉同學)
+  '炸彈客':{n:'超級大爆炸', d:'全體固定值傷害(基礎200+目標30%HP,上限=Lv×15),自損至10%HP',fd:'固定值(200+目標30%HP,上限Lv×15)全體傷害,無視屬性/不暴擊,自身HP剩10%。'},
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  '紅色玩家':{n:'超頻爆發', d:'自身造成傷害提升至220%持續2回合,期間受到傷害減少60%並免疫不利狀態',fd:'自身造成傷害提升至220% 2回合,期間受傷-60%,免疫所有不利狀態。'},
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  '地府酋長':{n:'刀山火海', d:'特技200%全體傷害,指定1名追加100%且強制禁動1回合',fd:'特技200%全體傷害,指定1名追加特技100%且強制禁動1回合。'},
+  // ★ v1.0.20260515.6880 — 救醫馬爆發
+  '救醫馬':{n:'救救昏倒夥', d:'全隊治療(可復活)+最大HP+10+免疫不利(2回合)',fd:'特技200%全隊治療(可復活)+最大HP+10 2回合+全隊免疫不利2回合。'},
+  // ★ v1.0.20260515.6890 — 水狐爆發(6 年 2 班林同學設計)
+  '水狐':{n:'萬流歸宗·神龍降臨', d:'特技230%全體水傷害(必中無視有利)+特技100%全隊治療(可復活,解不利)',fd:'特技230%全體水屬性必中無視有利,特技100%全隊治療(可復活,解不利)。'},
+  '米鈴':{n:'夢幻的茶會', d:'特技175%全隊治療+全隊茶會2回合(受不利時自動解除並用特技100%反擊來源)',fd:'特技175%全隊治療(可復活)+全隊茶會2回合(受不利時解除並用特技100%反擊來源)。'},
+  '學霸(轉學生)':{n:'壓力轉移', d:'蓄積壓力2回合(全隊免傷累計),結束時用累計×100%反擊指定對手',fd:'蓄積壓力2回合:全隊免傷累計,結束時用累計傷害×100%反擊1名指定對手(必中無視有利)。'},
+  '天神宙斯':{n:'天降雷罰', d:'非BOSS剩1HP;BOSS受特技600%+當前HP25%(上限Lv×15);全體強力麻痺1回合',fd:'非BOSS扣到剩1HP;BOSS受特技600%+當前HP25%(上限Lv×15)必中傷害,全體強力麻痺1回合。'},
+  '維京海盜船長':{n:'海盜威能', d:'敵全體強力封印技能2回合+自身狂暴2回合(+40%傷害/+40%暴擊/普攻×2隨機)',fd:'敵全體強力封印技能2回合(不可免疫),自身狂暴2回合:傷害+40%/暴擊+40%/普攻×2隨機。'},
+  // ★ v3.4.11 — 武器精靈爆發(5 年 5 班朱同學設計)
+  //   銀齒迴力鏢旋風:全體 (攻+特+速)×200% 必中無視有利;單體時造成2次傷害;施放後回 3 能量
+  //   ★ 平衡度檢查(鐵律 1.30):
+  //     - 全體 200% + 必中無視有利 = 強;原案 5 機制(含單體×3 + 回 5 能量)→ 老師決策削成單體×2 + 回 3 能量
+  //     - 等級 Lv1~10 倍率由 _renderBurstFdWithLv 動態替換(基礎 200%, +10%/級, Lv10=290%)
+  '武器精靈':{n:'銀齒迴力鏢旋風', d:'(攻+特+速)×200%全體傷害(必中無視有利);單體時造成2次傷害;施放後回3能量',fd:'(攻+特+速)×200%全體必中無視有利;單體時改打2次;施放後回3能量。'},
+  // ★ v3.4.11 — 神槍手爆發(5 年 4 班莊同學設計)
+  //   火焰神槍:攻 250% × 3 次隨機 火屬性 必中無視有利,附加 2 回合強力失明 + 燃燒
+  //   ★ 平衡度檢查(鐵律 1.30):A+ 級爆發,合計威力 750% 隨機(平均對 4 敵 ~187%/敵)+ 雙不利狀態
+  //   ★ 視覺效果:畫面三個不同位置各播 1 次 GIF(老師備註要求),GIF 用「千年發酵核爆.gif」
+  //   ★ 等級 Lv1~10 倍率由 _renderBurstFdWithLv 動態替換(基礎 250%, +10%/級, Lv10=340%)
+  '神槍手':{n:'火焰神槍', d:'攻擊250%×3次隨機火屬性傷害(必中無視有利),附加強力失明+燃燒2回合',fd:'攻擊250%×3次隨機火屬性必中無視有利,每名受傷者強力失明+燃燒2回合(不可免疫)。'},
+  // ★ v1.0.20260522.7300 — 火柴人爆發(5 年 3 班張同學設計)
+  //   燃燒自己,照亮別人:(HP+特技)×5 火屬性單體 + 全體強力魅惑 1 回合,自身 HP=1
+  //   ★ 平衡度檢查(鐵律 1.30):B+~A 級爆發
+  //     - 固定 360 傷害(Lv1) / 504 傷害(Lv4 滿級),單體中等
+  //     - 全體強力魅惑 1 回合(不可免疫)是強力控場
+  //     - 自損機制:自己 HP 剩 1(高風險高回報設計感極強)
+  //   ★ 視覺:用「太陽火球.gif」展現燃燒太陽降臨;音效「大爆炸燃燒音效」
+  //   ★ 等級 Lv1~5 倍率由 _renderBurstFdWithLv 動態替換(基礎 5x, +0.5/級, Lv5=7x)
+  '火柴人':{n:'燃燒自己,照亮別人', d:'(HP+特技)×5單體火屬性傷害(無視有利狀態),全體敵方強力魅惑1回合,自身HP剩1',fd:'(HP+特技)×500%單體火屬性無視有利,敵全體強力魅惑1回合(不可免疫),自身HP剩1。'},
+  // ★ v3.5.49 — 青炎龍王爆發(5 年 3 班蔣同學設計)
+  //   青炎之舞:全敵特技 200% 火屬性傷害,以 30% HP 復活全體倒下隊友,全友迴避 2 回合
+  //   ★ 平衡度檢查(鐵律 1.30):S 級爆發(三效合一)
+  //     - 全敵 200% 火屬性必中(由 _wbApplyBossDmgCap 等保護不會破壞 BOSS 5000 上限)
+  //     - 復活範圍:僅復活已倒下友方(不會誤改活著隊友 HP),滿血友方完全不受影響
+  //     - 全友迴避 2 回合是強力增益(類似火柴人 S2 的迴避效果)
+  //     - 老師決策(2026/05/23):爆發維持原強度
+  //   ★ 視覺:用設計者指定「時間壓縮.gif」展現龍王舞動藍色火焰;音效「爆炸+治療」
+  //   ★ 等級 Lv1~5 倍率與復活% 由 _renderBurstFdWithLv 動態替換
+  //     - 傷害:200/220/240/260/280%
+  //     - 復活:30/40/50/60/70%
+  //   ★ 鐵律 1.31:全體 sp200% 不秒殺、不破 BOSS 保護(由 _wbApplyBossDmgCap 處理),安全
+  '青炎龍王':{n:'青炎之舞', d:'全敵特技200%火屬性傷害,以30%HP復活全體倒下隊友,全友迴避2回合',fd:'特技200%全體火屬性傷害,30%HP復活倒下友方,存活友方迴避30% 2回合。'},
+
+  // ★ v3.5.60 — 鳳凰爆發「神炎之翼」(5 年 4 班 04 號李同學設計)
+  //   5 次 sp130% 隨機目標火屬性 + 每次給目標 1 層「熾羽」(行動後 -15HP × 2T,可疊 5 層)
+  //   ★ 等級加成:傷害 Lv1~5 = 130/140/150/160/170/180%
+  //   ★ 平衡:單目標被打到極端情況 = 5 hits × sp130% + 5 層熾羽,DoT 走 _wbApplyBossDmgCap 受 5000 cap 保護
+  '鳳凰':{n:'神炎之翼', d:'5次特技130%隨機火屬性傷害,目標各得1層「熾羽」(行動後-15HP×2T,可疊5層)',fd:'特技130%×5次隨機火屬性,每次給目標1層「熾羽」(行動後-15HP×2回合,可疊5層)。'},
+
+  // ★ v3.5.60 — 操偶師爆發「魁儡城牆」(5 年 2 班 11 號江同學設計)
+  //   將「操偶」進化為「傀儡城牆」HP×10,接管全隊受到的傷害(不可回血/復活)
+  //   城牆破碎後 → 操偶恢復為 操偶師最大HP×150%×50%
+  //   ★ 等級加成:城牆 HP 倍率 Lv1~5 = 10x/11x/12x/13x/14x/15x
+  //   ★ 鐵律 1.31:不會干擾 BOSS 5000 cap(扣的是傀儡 HP 不是 BOSS HP)
+  '操偶師':{n:'魁儡城牆', d:'操偶進化為「傀儡城牆」HP×10,接管全隊傷害(不可回血/復活)。破碎後操偶恢復為原 HP 50%',fd:'「操偶」進化為傀儡城牆(HP×10)接管全隊傷害(不可回血/復活),破碎後變回操偶(HP 50%)。'},
+
+  // ★ v3.5.68 — 菇女爆發「天女散花菇」(5 年 3 班 14 號張同學設計)
+  //   sp50% × 10 次草屬性傷害(HP%最低優先,補滿後轉移至下一名)+ sp50% × 10 次治療(同邏輯)
+  //   ★ 視覺:設計者指定「彩色星星.gif」,粉紅 tint;音效「魔法+治療」
+  //   ★ 等級加成 Lv1~5:傷害/治療倍率各 +5%
+  //     - Lv1: 50%/50%  Lv2: 55%/55%  Lv3: 60%/60%  Lv4: 65%/65%  Lv5: 70%/70%
+  //   ★ 鐵律 1.31:每次傷害 sp50%(Lv1 約特技 17 × 50% = 8.5),不會秒殺、走 _wbApplyBossDmgCap 受 5000 cap 保護
+  //   ★ 機制設計:傷害目標選最低 HP% 對手(避免浪費在已 1 HP 對手),治療目標選最低 HP% 友方(補滿後轉移)
+  //   ★ 卡死防護(老師 2026/05/25 要求):noCounter:true + 序列化(先傷害再治療) + watchdog 5 秒兜底
+  //   ★ 屬性(老師 2026/05/25 決策):傷害為「草屬性」(elem:'grass'),菇族設定貼合
+  '菇女':{n:'天女散花菇', d:'特技50%×10次草屬性傷害(HP%最低優先),特技50%×10次治療(同邏輯,補滿後轉移)',fd:'特技50%×10次草屬性打HP%最低敵方+特技50%×10次補HP%最低友方(可復活30%起復)。'},
+
+  // ★ v3.10.12 — 小丑爆發「致命笑氣罐」(5 年 1 班 林同學設計)
+  //   特技 550% × 1 名目標(對 BOSS ×150% = 825%),必中無視有利
+  //   引爆場上所有「悲傷小丑面具」每層 40 固定傷害,使受傷者強力暈眩 1 回合
+  //   ★ 等級加成 Lv1~5:傷害基礎 550% +10%/級 = 550/560/570/580/590%(乘算到等級顯示用)
+  //     - 對 BOSS 增傷 ×150% 固定不變(老師指定)
+  //     - 爆炸每層 40 固定傷害不變(老師指定)
+  //   ★ 平衡度檢查(鐵律 1.30):
+  //     - 單體 550% 必中無視有利(屬於 A 級爆發),對 BOSS 加成讓他成為破關打 BOSS 的好手
+  //     - 引爆面具 = 與天賦「小丑面具」聯動,場上 debuff 面具越多打出傷害越爆
+  //     - 強力暈眩 1 回合(僅受傷者,不是全體)= 中等控場
+  //   ★ 鐵律 1.31:不秒殺、走 _wbApplyBossDmgCap 受 5000 cap 保護(BOSS 戰)
+  //   ★ 視覺:設計者指定「煙霧爆開.gif」,音效「大爆炸+笑聲」
+  '小丑':{n:'致命笑氣罐', d:'特技550%單體傷害(對BOSS×150%,必中無視有利),引爆場上所有悲傷小丑面具每層40固定傷害+受傷者強力暈眩1回合',fd:'特技550%單體必中無視有利(對BOSS再×150%=825%)+引爆場上所有悲傷小丑面具(每層40固定傷害+受傷者強力暈眩1回合)。'},
+
+  // ★ v3.10.14 — 美人魚‧角角爆發「百萬水箭共鳴曲」(3 年 1 班 采漩設計)
+  //   特技 80% × 10 次水屬性傷害(完全隨機分配,可能集中於同一目標)
+  //   同步消除友方所有「燃燒」與「強力燃燒」狀態 + 全體免疫「火屬性傷害」與「燃燒附加」2 回合
+  //   ★ 視覺:設計者指定「萬鏡映虛獄.gif」,水藍 tint;音效「魔法+水流+治療」
+  //   ★ 等級加成 Lv1~5:傷害倍率 +10%/級(乘算)= 80/88/96.8/106.5/117.1%
+  //                  Lv5 MAX 額外:免疫火焰回合數 +1(2 回合 → 3 回合)
+  //   ★ 鐵律 1.31:每次 sp80%(Lv1 約特技 22 × 80% = 17.6),不秒殺、走 _wbApplyBossDmgCap 受 5000 cap 保護
+  //   ★ 機制設計:跟人魚定位呼應 — 主動清除友方燃燒(火焰純剋星)、戰術級反火焰隊伍 buff
+  '美人魚‧角角':{n:'百萬水箭共鳴曲', d:'特技80%×10次水屬性傷害(完全隨機),消除友方所有燃燒/強力燃燒,並使友方免疫火屬性傷害與燃燒附加2回合',fd:'特技80%×10次水屬性隨機傷害,清除友方所有燃燒,全隊免疫火屬性與燃燒附加2回合。'},
+
+  // ★ v3.11.6 — 火爆女爆發「三刀射擊」(5 年 4 班 彭同學設計)
+  //   設計概念:雙模式爆發 — 先強化自身(攻擊/特技/速度 +50% 2T),再以三神合一倍率連擊
+  //   主公式:自身 atk/sp/spd +50% buff 2 回合 → (atk+sp+spd)×200% 隨機連打 3 次
+  //   特性:每次必中、必爆、附加「出血」2 回合(每回合 -10% HP)
+  //   ★ 等級加成 Lv1~5:傷害倍率 +10%/級(乘算)= 200/220/242/266.2/292.8%
+  //   ★ 鐵律 1.96:打 BOSS 走 doDmg(fixedDmg:true),受 _wbApplyBossDmgCap 5000 cap 保護
+  //   ★ 鐵律 1.97:fd 71 字 ≤ 80
+  '火爆女':{n:'三刀射擊', d:'自身攻擊/特技/速度+50%(2回合),再以(攻擊+特技+速度)×200%隨機3連擊(必中必爆),每次附加出血2回合',fd:'自身攻擊/特技/速度+50%(2回合),再以(攻擊+特技+速度)×200%隨機攻擊3次(必中必爆),每次附加出血2回合。'},
+  // ★ v3.11.19 — 幽幽爆發「惡夢遊魂」(5 年 4 班 高同學設計)
+  //   全敵「惡夢」2回合(受傷×200%),全友「遊魂」2回合(受傷-70%);兩狀態不可消除/奪取/交換
+  //   ★ 平衡度檢查(鐵律 1.30):S 級爆發(無直接傷害,但全場攻防大幅傾斜)
+  //     - 惡夢受傷 ×200% 為「乘算」修正,世界 BOSS 5000 cap 仍生效(放大後 cap 前才放大,故不破上限)
+  //     - 遊魂全友 -70% 受傷 = 強力團隊保命
+  //   ★ 等級加成 Lv1~5:惡夢受傷 +20%/級(200→300%)、遊魂減傷 +5%/級(70→90%)、max 時兩狀態各延長 1 回合
+  //   ★ 視覺:設計者指定「死亡宣告.gif」;音效:設計者指定自訂 mp3「惡夢遊魂.mp3」(sfx-youyou-burst)
+  '幽幽':{n:'惡夢遊魂', d:'全體對手「惡夢」2回合(受傷×200%);全體友方「遊魂」2回合(受傷-70%)。兩狀態不可消除/奪取/交換',fd:'全體對手陷入「惡夢」2回合(受到傷害×200%);全體友方進入「遊魂」2回合(受到傷害-70%)。惡夢與遊魂皆不可被消除、奪取或交換。'},
+  // ★ v3.11.20 — 網路駭客爆發「超極密檔案GET!」(5 年 1 班 高同學設計)
+  //   奪取對手有利狀態(強力優先,無視強力不可奪規則)→ 特技150%傷害3次(HP低→高)→ 傷害轉治療友方3次(HP低優先補滿跳下一位)
+  //   ★ 等級加成:每升 1 級傷害 +10%(乘算)、奪取有利狀態數 +1(上限 5 個)
+  '網路駭客':{n:'超極密檔案GET!', d:'奪取對手1個有利狀態(強力優先,無視強力不可奪取規則),特技150%傷害對手3次(HP最低→最高),傷害轉化治療友方3次(HP最低優先補滿)', fd:'駭入對手最深層的機密檔案!先奪取對手 1 個有利狀態(強力狀態優先,無視「強力狀態不可奪取」的規則),再以特技 150% 對對手造成 3 次傷害(依序從 HP 最低打到最高),並將造成的傷害轉化為治療,恢復我方 3 次(HP 最低者優先,補滿後跳下一位)。'},
+  // ★ v3.12.8 — 死神爆發「死亡審判」(5 年 2 班 13 號羅同學設計,72 號英雄)
+  //   特技 1000% 全體平分暗屬性傷害 + 60% 機率「小怪/召喚/分身」直接倒下
+  //   ★ 鐵律 1.31:BOSS / 菁英 / 玩家英雄絕對不秒殺,觸發倒下時改為「平分傷害再 +50% 追加」
+  //   ★ 等級加成:每升 1 級主傷害 +10%(乘算)、倒下機率 +3%(Lv0:60% / Lv9:87% / Lv10:90%)
+  //   ★ 視覺:重用「死神之鐮」GIF(設計單指定「死神之鐮(暗紅死神)」風格);音效:sfx-ko + sfx-sword + sfx-darkness 三層死亡感
+  '死神':{n:'死亡審判', d:'特技1000%全體平分暗屬性傷害,60%機率小怪/召喚物/分身直接倒下', fd:'死神揮舞鐮刀宣判全場死亡!對對手全體造成特技 1000% 平分的暗屬性傷害;之後對每名對手有 60% 機率判定為「死亡審判」,小怪、召喚物、分身會直接倒下(對 BOSS / 菁英 / 玩家英雄則改為造成平分傷害的 50% 追加傷害,不會秒殺)。'},
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:JP_BOSS_HERO_STATS  (搬自 index.html L17249~L17253)
+// ════════════════════════════════════════════════════════════════
+const JP_BOSS_HERO_STATS = {
+  '大天狗':   { hp:75, atk:10, sp:15, spd:17, exp:55 },
+  '酒吞童子': { hp:91, atk:16, sp:9,  spd:5,  exp:60 },
+  '玉藻前':   { hp:74, atk:9,  sp:20, spd:14, exp:58 },
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_LORE  (搬自 index.html L19946~L20059)
+// ════════════════════════════════════════════════════════════════
+const HERO_LORE = {
+  '劍士':    '異世界劍聖學徒,沉默寡言的行動派俠客。一劍出鞘只往前砍,爆發「劍神連斬」七連如雷、目標倒下劍光便轉——純粹而凜冽。',
+  '祭司':    '聖光神殿的見習治療師,溫柔細心、敬重每一條生命。一道「救贖神光」喚回垂死同伴,爆發「璀璨聖光」普照戰場——只要她還在,隊伍就不會散。',
+  '聖騎士':  '王國聖騎士團副隊長,以聖光行公義。「神聖鎚擊」一擊兩用——傷敵的痛苦化為同伴的生機,爆發「最終殿堂」更讓全隊在神域中無敵——守護弱小,是騎士的天職。',
+  '火法師':  '紅塔魔法學院火焰系助教,熱情衝動如焰。掌心一團「火焰球」便能轟碎強敵的防禦,爆發「烈焰爆發」更讓全場陷入無法熄滅的強力燃燒——燃燒吧!比我更強的傢伙快出來!',
+  '冰法師':  '冰河神殿術士,冷靜理性、毫無多餘情緒。一矛「冰凍之矛」凝結瞬間時光,爆發「冰封末日」覆下無法解凍的強力寒霜——情緒是多餘的,計算才是一切。',
+  '雷法師':  '雷暴峽谷守護者,活潑好動、反應快如電。「連鎖閃電」在敵陣間跳躍嬉鬧,爆發「怒雷狂襲」更帶來無法掙脫的強力麻痺——嘿嘿!來不及反應了吧?',
+  '光法師':  '日輪聖域的光明使者,開朗鼓舞人心。「日月同輝」一道光既懲敵也慰友,爆發「審判光束」全體沐光、同伴重生而仇敵失明——只要有光,就沒有走不出的黑暗。',
+  '暗法師':  '暗影議會特使,謀略深遠、城府頗深。一句「死亡宣告」便為敵人寫下倒數計時,爆發「毀滅禁咒」更讓魔法之口集體噤聲——一切盡在掌握之中,呵呵。',
+  '神射手':  '荒野獵人公會精英,獨立自主、精準果斷。「瞄準射擊」屏息一發必中、無人能擋,爆發「流星箭雨」更如天網落下、敵陣陷入強力禁動——瞄準,屏息,放。',
+  '神偷':    '影城盜賊公會頂尖成員,靈活狡猾、見機行事。「盜取」一伸手,物品、寵物、增益隨他挑,爆發「俠盜飛梭」更一次奪走對手身上全部寶物——你的,也是我的。',
+  '刺客':    '黑夜傭兵組織的精英殺手,冷酷沉著、目標導向。爆發「死神之鐮」是訃聞般的一擊——500% 重傷收割、隱身退場、強力出血揮之不去——我的工作沒有失敗這兩個字。',
+  '守衛':    '王城銅牆鐵壁第一守衛,以身作盾。被動「挺身守護」隨時擋在隊友身前承擔傷害,爆發「最後之盾」全體敵方被強力挑釁——想從我這裡過去?先過了我這關再說。',
+  '吟遊詩人':  '異世界知名旅行歌手,浪漫多情。一曲「搖籃曲」讓敵陣同時沉睡,爆發「無盡長眠」更讓敵人睡得越久、我方回血越多——這首歌,就獻給你了。',
+  '舞者':    '花都劇場頭牌表演藝術家,熱情奔放、富感染力。「熱情之舞」點燃全隊鬥志,爆發「激戰之舞」讓全隊強力增攻、敵方增益盡失——來!跟著音樂一起動起來!',
+  '警長':    '荒野西境治安官,正義凜然、鐵面無私。「物品查封」一聲令下封住敵人所有道具,爆發「正義制裁」更讓對手的傷害全數反彈回去——這裡的規矩,由我說了算。',
+  '煉金術師':'皇家煉金研究所所長,好奇心旺盛、鑽研不懈。被動「道具複製」用過的物品居然還在,爆發「真理之門」更讓全隊使用物品 100% 保留——失敗了?那再試五百次就好了!',
+  '武鬥家':  '拳聖流派傳人,豪爽直接、敢作敢為。被動「金鐘罩」氣勁護體、傷害原封奉還,爆發「明鏡止水」2 回合刀槍不入、攻擊翻倍——拳頭說話,廢話少說!',
+  '軍師':    '從中國古代穿越而來的神祕智者,博學多聞、深謀遠慮。羽扇一揮便能左右戰局,爆發「逆轉神計」更直接交換雙方氣勢、我方再動一次——對手的每一步,我早已料到。',
+  '占星師':  '星象觀測台台長,深思熟慮、洞悉未來。「命運塔羅牌」一張便能扭轉局勢,爆發「星空祝福」更讓全隊技能 2 回合無需能量——星象早已預示,你的勝利或失敗。',
+  '大力士':  '競技場常勝冠軍,樂天知命、力大無比。一招「泰山壓頂」便能將敵人壓得暈眩,爆發「地球上投」更是 700% 必中、強力昏迷 2 回合——嗯哼?我輸過嗎?想不起來耶!',
+  '凡人':    '被召喚到異世界的普通人,沒有天賦卻學習力驚人。「模仿」場上任意角色的技能皆能上手,爆發「臨摹大師」更能臨摹任何角色的爆發——既然來了,就活出自己的傳說吧!',
+  '木靈使':  '古森林精靈守護者,溫和寧靜、親近自然。「神之賜福」讓同伴 HP 上限暴漲,爆發「神樹恩澤」更賜下不倒再生 2 回合——每一棵樹都有它的故事。',
+  '機械師':  '蒸汽城邦首席工程師,邏輯清晰、創意無限。一枚「定時炸彈」滴答倒數、波及鄰近,爆發「負荷超載」更把全隊兩回合的痛苦平均回敬敵方——理論上行得通,試了再說!',
+  '動物學家':'力行小學自然老師,熱愛動物、滿懷好奇心。一聲口哨便有森林朋友趕來助陣,爆發「動物大軍」更一次召喚 4 隻寵物加入隊伍——哇!這隻好稀有!快來看!',
+  '武士':    '東方武道流浪者,守靜沉默、劍心純淨。被動「迴避反擊」被攻擊時必閃且反擊,爆發「神鬼盡滅」一刀 700% 必中、溢出傷害自動轉移——動如山嶽,靜如止水。',
+  '陰陽師':  '東方靈術師,謹慎沉穩、敬天畏地。一張符咒便能召喚朱雀青龍降臨戰場,爆發「四聖降臨」更引天地四聖獸齊出、附加強力不利狀態——天地有靈,萬物有序。',
+  '吸血鬼':  '古老血族末裔,優雅神秘、略顯孤傲。「靈魂收割」鎖定垂死者一口飲盡,爆發「鮮血契約」更讓全隊共飲嗜血、血越少越凶猛——永恆?聽起來挺無聊的。',
+  '學者':    '古代智慧傳承學院院長,博古通今、謙遜好學。被動「鑑往知來」隊友被傷時雙倍反擊並再行動,爆發「元素智慧」更依雙方元素種類數疊乘必中傷害——過去的失敗,是未來最好的老師。',
+  '時空法師':'時空裂隙研究者,哲學思辨、超然物外。「時間暫停」凝固敵方時間 1 回合,「時間倒轉」更可直接回到上一回合(整場僅一次)——這個結果,我早就見過了。',
+  '小力':    '力行國小校犬,非常內向、喜歡靜靜陪伴小朋友。開場便躲到校園角落「強力隱身」十回合,卻在隊友受傷時悄悄擋下一半傷害——汪……(微微搖尾巴)。',
+  '籃球隊員':'力行小學籃球隊隊長,積極主動、重視團隊。「三分投射」刷網入框換來陣營能量,爆發「絕殺灌籃」750% 必中無視有利重擊後全隊加速兩回合——Team work makes the dream work!',
+  '直笛團員':'力行小學直笛合奏團首席,認真細膩、追求完美。一曲「不熟練習曲」便能擾亂敵心,爆發「天籟之音」更同時讓敵陣狂亂、我方治療復活又持續恢復——再來一次,這小節不夠準!',
+  '田徑隊員':'力行小學田徑隊短跑選手,不服輸、自律嚴格。被動「起跑衝刺」開場便領先全場,爆發「極速閃燃」更依速度傷敵、附加閃燃並立即再行動——每一秒都要比昨天快!',
+  '幼兒園小孩':'力行小學附設幼兒園小朋友,天真無邪、想像力無限。一聲「大聲啼哭」便讓全敵束手無策,爆發「夢境時光」必須睡眠中才能發動、卻是最甜美的反擊——我要蓋一個超高的積木塔!',
+  '電腦繪圖師':'力行小學美術社社長,富有創意、觀察力強。「圖層隱藏」一鍵隱去敵方所有增益,爆發「萬物創生」更以 600% 必中分攤、外加抽 3 張物品卡——顏色不夠,再加一層!',
+  '程式設計師':'力行小學資訊社創辦人,邏輯思維強、解決問題快。一行「修改代碼」就能讓物品爆出十倍威力,爆發「BUG 修復」更把全隊不利狀態直接 commit 成增益——Bug 只是還沒被找到的 Feature。',
+  '弦樂團員':  '力行小學弦樂團小提琴手,敏感細膩、富藝術氣息。「小星星變奏曲」音符化作銳箭無視防禦,爆發「流浪者之歌」更是必中連擊與全隊復活的雙重旋律——音樂,是靈魂的語言。',
+  '小劇團員':  '力行小學戲劇社主角,表現力強、樂於分享。「變臉戲法」每張臉譜換一個增益,爆發「謝幕掌聲」更讓全場倒下者的能量化為己方永久強化——人生如戲,戲如人生!',
+  // ★ v1.0.20260421.3000o — 日本關限定
+  '巫女':      '古老神社的見習巫女,敬天畏神、純淨堅毅。一搖「神籤」便為脆弱同伴抽出隨機庇佑,爆發「神樂舞」更獻納神聖樂曲、為全隊解除一切並附加強力庇佑——神靈雖無形,卻護佑著善良之心。',
+  // ★ v1.0.20260424.0490 — 補上 3 隻日本可解鎖 BOSS 英雄的簡介
+  '大天狗':    '深山天狗一族尊長,威嚴沉著、武藝超群。一搧巨大羽扇便能掀起山嵐狂風,爆發「神威風獵」更是 5 段風屬性連擊+全體颶風+強力暈眩——山中千年修行,只為一刻除魔。',
+  '酒吞童子':  '昔日大江山鬼王,豪邁不羈、重情重義。一招「乾杯」便能讓全隊回血又提升攻特,爆發「鬼王酒宴」更是 600% 必中重擊、目標倒下還能連鎖轉移三次——好酒跟好對手,我都不會放過!',
+  '玉藻前':    '金毛九尾化身的傾世美狐,妖豔狡黠、智慧深沉。「九尾狐火」連連附加燃燒於敵陣,爆發「禍世邪魅」更撒下強力魅惑、被惑者的攻擊全轉為她的回血——人心比妖術更難捉摸,卻也更有趣。',
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  // ★ v1.0.20260507.5580 — 簡介擴充更完整,設計者資訊改在 HERO_BIO.designer 欄位呈現
+  '窮奇':      '中國神話「四大凶獸」之一,長著翅膀的猛獸。誰先攻擊就被牠用「凶獠」華麗反擊,專愛以惡制惡的兇猛存在。',
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人': '來自未來世界的高科技戰士,結合機械與生物科技。鏈鎖反應能讓一發攻擊波及兩側相鄰目標,輻射核砲一發定全場。',
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍': '古代暴龍靈魂寄宿的鋁合金機械生命體。被動「鋁鎧」無條件減傷,加上爆發「死神龍王登場」可收割瀕死敵人能力,堅固又恐怖。',
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':   '來自冥界的鬼神之王,擁有吞噬萬物的大嘴。天賦「吞噬」可奪走目標的有利狀態,爆發「大嘴吸入」附加無法解除的不治詛咒。',
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  '雙星姊妹':   '形影不離的姊妹,光與暗的雙生星宿。光星妹妹治療隊友、暗星姊姊精準狙擊,HP 比例低於切換閾值時切換暗星型態,爆發「同生共死」捨命給敵人致命一擊。',
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班鐘同學)
+  '暗魔將·血': '被黑化的貓神化身,源自古代日本的血劍將軍。一手「血劍·防」護同伴於不敗、一手「血劍·攻」單點狙殺敵方核心,爆發「血劍·爆破」攻防合一。',
+  // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
+  '死靈法師': '天生陰陽眼的少年,沉靜內斂、不畏死亡。「冥佑」隱形護身、隊友每受一次傷他便施一次治療,爆發「亡靈怨念一擊」更以倒下次數疊乘大傷害、再轉為全隊治療——別怕,我會聽你的話。',
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  '布奶鳥獸': '兩隻可愛的小鳥「布丁」與「奶茶」,平時溫順、惹怒便聯手暴走。「拆家」全體傷害換來自己 HP+護盾,爆發「生氣的布丁&奶茶」更是必中 9 連擊、目標倒下就轉移到底——啾啾!(別惹我們生氣!)',
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班首位設計師劉同學)
+  '炸彈客': '地下爆破工坊的瘋狂工程師,堅信「爆炸即藝術」的爽朗派。一發接一發固定值炸彈無視所有護盾與屬性,爆發「超級大爆炸」更把自己也炸到只剩 10% HP——BOOM!這才是真正的藝術!',
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  '紅色玩家': '虛擬世界深處的紅衣神級玩家,沉默操作如外掛般精準。「瞬殺」一發必中收人頭、爆發「超頻爆發」更開外掛兩回合三倍輸出兼免疫一切——P1 已就位,等你出招。',
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  '地府酋長': '看管刀山火海受刑亡靈的地府獄卒首領,鐵面冷峻、執法不講情面。「支配鎖鍊」拋出黑鐵鎖鍊宣告終結審判、爆發「刀山火海」喚出地獄烈焰席捲全場——亡魂啊,你的審判,由我宣告。',
+  '救醫馬': '蹄聲噠噠如鼓點,白衣在硝煙中翻飛——「馬上救你一命」幫夥伴穿上守護光,爆發「救救昏倒夥」傾倒急救包讓全隊滿血再戰。倒下的夥伴啊,馬醫生來了!',
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學)
+  '水狐': '上半身為狐、頭頂獨角、生蝙蝠翼、下半身魚尾的夢幻神獸。一聲長嘯,水精靈如雨點落下治癒傷者;再一揮獨角,蛟龍破浪而出橫掃千軍。萬流匯於一身,溫柔與洶湧同在。',
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學)
+  '米鈴': '私人莊園裡的貓族女僕,胸口別著鈴鐺,輕步穿梭於戰場。鈴音一響,夥伴身上的不利狀態便化為流光散去;一聲呼喚,女僕同伴們手持掃帚、抹布湧入打掃整個戰場——鈴鈴,主人的痛苦由米鈴來承擔。',
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學)
+  '學霸(轉學生)': '頂尖私立小學轉來的神祕學霸,書包裡永遠裝著五科滿分考卷。「五科滿分考卷」一張張拍下、無視一切有利狀態的固定值連擊,爆發「壓力轉移」更默默扛下兩回合全隊傷害、再一次轉嫁給對手——這題?我五分鐘前就解開了。',
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學)
+  '天神宙斯': '希臘神話的眾神之王,白髯飄揚、手執霹靂神杖。「驚雷」與「雷鳴」一次次劈下封口奪魂,爆發「天降雷罰」更直接宣告小怪的死刑——凡夫俗子,感受天神之怒吧!',
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學)
+  // ★ v3.10.15 — 英雄誌精簡(50 字內,保留角色魅力)
+  '維京海盜船長': '北海冰原的傳奇船長,單筒望遠鏡一舉,黑龍號火炮齊鳴——船長一聲令下,地平線都會發抖!',
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學)
+  '武器精靈': '戰爭精靈兄弟之一,手中傳奇武器可隨意變形,化斧、化弓、化迴力鏢——一件武器,千百種戰法!',
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學)
+  '神槍手': '為了保護家人苦練槍法的兵營神射手,沉穩呼吸、扣下扳機、百步穿楊——目標,絕不逃出我的準心。',
+  // ★ v1.0.20260522.7300 — 學生設計英雄系列(5 年 3 班張同學)
+  '火柴人': '學生塗鴉受到祝福而獲得生命的小英雄,擁有一顆永遠燃燒的赤誠之心——燃燒自己,只為照亮你們!',
+  // ★ v3.5.49 — 學生設計英雄系列(5 年 3 班蔣同學)
+  '青炎龍王': '長眠深山之巔的善良龍王,只在人類有難時甦醒,以美麗的藍色火焰之舞守護眾生——青藍之火只焚邪佞。',
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 4 班 04 號李同學)
+  '鳳凰': '神話中浴火重生的不死靈鳥,以痛苦灼燒邪佞、以淚水療傷自身。天賦「浴火重生」整場可滿血復活 1 次,爆發「神炎之翼」更是 5 次隨機火焰連擊+疊層熾羽 DoT——死亡,只是另一次新生的開始。',
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 2 班 11 號江同學)
+  '操偶師': '精通魁儡製作的操偶天才,藏身傀儡之後操控整個戰場。天賦「操偶」開場附加獨立 HP 條的傀儡優先擋傷,爆發「魁儡城牆」更化作 HP×10 巨型城牆替全隊接管傷害——真正的高手,從不親自上場。',
+  // ★ v3.5.68 — 學生設計英雄系列(5 年 3 班 14 號張同學)
+  '菇女': '魔菇世界來的可愛菇族支援者,腰間竹籃裝滿各種魔菇。S1「滿血菇」一朵紅白魔菇將單體治療至滿血,S2「極限菇」一朵金光菇讓友方立即施展爆發——來吃一朵滿血菇,馬上活力滿滿喔!',
+  // ★ v3.10.12 — 學生設計英雄系列(5 年 1 班 林同學「小丑」)
+  '小丑': '原本是台上最受歡迎的天才表演者,被恐怖博士改造後化身犯罪天才。天賦「小丑面具」每回合堆疊增傷與受傷層數,爆發「致命笑氣罐」引爆所有面具強力暈眩敵方——化著淒美的笑顏面對戰場!',
+  // ★ v3.10.14 — 學生設計英雄系列(3 年 1 班 采漩「美人魚‧角角」)
+  '美人魚‧角角': '深海王國的人魚公主,溫柔善良、見不得同伴受傷。天賦「療癒之聲」每回合自動全體治療並解燃燒,爆發「百萬水箭共鳴曲」更讓全友 2 回合免疫火屬性傷害——海浪會記住每一個受傷的靈魂,讓我為大家唱一首歌吧!',
+  // ★ v3.11.6 — 學生設計英雄系列(5 年 4 班 彭同學「火爆女」)
+  '火爆女': '5 年 4 班的機械系少女,容易因小事生氣大爆發但平常也有可愛一面。天賦「怒火滿格」每被打一次就累積暴擊率與能量,S1「一擊必殺」暴擊時非 BOSS 直接秒殺,S2「超級射線」特技 400% 全體必中無視有利,爆發「三刀射擊」自我強化後三連必中必爆——再講我就要爆炸了喔!',
+  // ★ v3.11.20 — 幽幽圖鑑精簡至 30~80 字規準(原 180 字超標 3.6 倍)
+  '幽幽': '5 年 4 班高同學設計的神秘幽靈,以特技代替攻擊、免疫普攻,受暗傷減半、光屬性是剋星——別怕我,我只是想靜靜陪著你而已。',
+  // ★ v3.11.20 — 網路駭客(5 年 1 班 高同學設計,71 號英雄)
+  '網路駭客': '5 年 1 班高同學設計的程式語言天才,玩遊戲玩膩了便在網路上搞起高端惡作劇。天賦「BUG 疊加」開場竊取敵方最高攻特、每回合散播亂碼——這漏洞我早就找到了。',
+  // ★ v3.12.8 — 死神(5 年 2 班 13 號羅同學設計,72 號英雄)
+  '死神': '5 年 2 班羅同學設計的冥界引魂使者,絕對免疫死亡宣告與即死,受擊反彈傷害。S1/S2/爆發都能讓小怪、召喚物、分身直接倒下——時辰已到,隨我來吧。',
+  // ── BOSS ──
+  '九尾空貓怪': '來自異世界的貓妖，被貓空的茶香料理吸引而來，喜歡搶別人的東西來吃。',
+  '杏花妖':     '千年杏花樹化身，吸收日月精華與異世界能量後化妖，有著讓人著迷的絕世美貌。',
+  '綠竹筍小妖': '守護貓空竹林的土地小精靈，用竹根編織護盾保衛家園。',
+  '茶葉精靈':   '凝聚百年茶氣而生，能以茶香癒合傷口，受神秘的邪惡聲音指使。',
+  // ★ v3.8.0(2026-05-25) — 木柵第三隻 BOSS:黑暗球‧希望型態
+  '黑暗球‧希望型態': '次元裂縫失控爆炸後的神秘產物，無限的黑暗力量不斷釋放出來，讓周遭的環境失去生機與色彩。受到傷害會立刻以攻擊反擊。✨ 無論受到多大傷害,本場首次跌破 50% HP 時,會強制保留在 50% 並立即撕裂出 3 個能力相同的分身(最大 HP 為原本的 50%),整場戰鬥只發動 1 次。',
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_TRAIT  (搬自 index.html L20062~L20276)
+// ════════════════════════════════════════════════════════════════
+const HERO_TRAIT = {
+  '劍士':    { name:'連斬', icon:'⚔️',  desc:'造成傷害後有機率再行動 1 次(整回合最多 2 個動作)',fd:'造成任何傷害(普攻或技能)後有 30% 機率立即再行動 1 次。首次行動造成傷害 → 觸發再行動 → 再行動造成傷害 → 行動結束。整回合最多 2 個動作。' },
+  '祭司':    { name:'聖癒', icon:'✨',  desc:'普通攻擊後機率為 HP 最低隊友恢復 25% HP',fd:'普通攻擊時有60%機率為HP最低的隊友恢復25%HP' },
+  '聖騎士':  { name:'聖盾', icon:'🛡️',  desc:'受傷時機率啟動格擋,減少 50% 該次傷害',fd:'受到傷害時有60%機率發動格擋，減少50%受傷' },
+  '火法師':  { name:'焚滅', icon:'🔥',  desc:'普通攻擊後機率消除目標身上的有利狀態',fd:'普通攻擊時有60%機率消除目標身上的有利狀態' },
+  '冰法師':  { name:'冰縛', icon:'❄️',  desc:'普通攻擊後機率使目標緩速,速度減半',fd:'普通攻擊時有60%機率使目標緩速1回合，速度下降50%' },
+  '雷法師':  { name:'雷鏈', icon:'⚡',  desc:'普通攻擊後機率對全體敵人造成等量雷鏈傷害',fd:'普通攻擊時有60%機率對全體敵人造成等量傷害' },
+  '光法師':  { name:'目眩', icon:'☀️',  desc:'普通攻擊後機率使目標失明,行動成功率減半',fd:'普通攻擊時有60%機率使目標失明1回合，行動成功率-50%' },
+  '暗法師':  { name:'封魔', icon:'🌑',  desc:'普通攻擊後機率封印目標,1 回合無法使用技能',fd:'普通攻擊時有60%機率使目標封印1回合，無法使用技能' },
+  '神射手':  { name:'伏擊', icon:'🏹',  desc:'普通攻擊後機率設下陷阱,使自己免疫下次普攻',fd:'普通攻擊時有60%機率放置陷阱1回合，使自己無法受到普通攻擊' },
+  '神偷':    { name:'順手', icon:'🗡️',  desc:'普通攻擊後機率奪取目標的有利狀態或寵物',fd:'普通攻擊時有50%機率奪取目標身上的寵物或有利狀態' },
+  '刺客':    { name:'劇毒', icon:'👁️',  desc:'普通攻擊後機率使目標中毒 2 回合,每回合損失 HP',fd:'普通攻擊時有60%機率使目標中毒2回合，每回合HP-10%' },
+  '守衛':    { name:'庇護', icon:'🗡️',  desc:'隊友受到單體攻擊時挺身代擋,並減輕該次傷害',fd:'代替隊友分攤30%的受傷' },
+  '吟遊詩人':  { name:'頌歌', icon:'🪕',  desc:'普通攻擊後機率恢復友方全體 10% HP；自己造成的傷害不會提早解除目標睡眠',fd:'普通攻擊時有60%機率恢復友方全體10%的HP。<br>★ 強化:自己造成的傷害<b style="color:#bb99ff">不會提早解除目標睡眠</b>(讓搖籃曲/無盡長眠更穩定)' },
+  '舞者':    { name:'迷戀', icon:'💞',  desc:'普通攻擊機率使目標迷戀,攻擊和特技下降 25% 1 回合',fd:'普通攻擊時有 60% 機率使目標陷入「迷戀」,攻擊和特技下降 25%,持續 1 回合。' },
+  '煉金術師':{ name:'煉化', icon:'⚗️',  desc:'使用物品卡時所有效果(傷害/治療/能量)大幅提升',fd:'使用物品卡時，所有效果（傷害、治療、能量消耗等）提升50%。' },
+  '警長':    { name:'制裁', icon:'🔫',  desc:'普通攻擊後機率將目標的行動順序延後到最後',fd:'普通攻擊時有60%機率使下一個敵方目標的行動順序退到最後' },
+  '武鬥家':  { name:'死鬥', icon:'👊',  desc:'受到致命傷害時機率不倒下並恢復 20% HP',fd:'受到致命傷害時有30%機率不會倒下，HP恢復20%' },
+  '軍師':    { name:'惑敵', icon:'📜',  desc:'普通攻擊後機率使目標疑惑 1 回合,天賦失效',fd:'普通攻擊時有60%機率使目標疑惑1回合，天賦失效' },
+  '占星師':  { name:'星語', icon:'🌟',  desc:'輪到自己行動時機率補充 3 點能量',fd:'輪到自己的行動時有 70% 機率補充 3 能量。' },
+  '大力士':  { name:'怒炎', icon:'💪',  desc:'受到不利狀態時機率轉化為怒火,提升攻擊 25% 1 回合',fd:'受到不利狀態時有40%機率轉化成怒火1回合，攻擊提升25%' },
+  '凡人':    { name:'節省', icon:'🙂',  desc:'使用技能時機率不消耗能量',fd:'使用技能時有40%機率不消耗能量' },
+  '木靈使':  { name:'淨化', icon:'🌿',  desc:'友方受到不利狀態時機率立即解除,並用特技值治療該友方',fd:'友方受到不利狀態時有60%機率立即解除該不利狀態,並依木靈使特技值的50%恢復該友方HP。' },
+  '機械師':  { name:'觸電', icon:'⚙️',  desc:'受到傷害時機率觸電反擊,使攻擊者麻痺 1 回合',fd:'受到傷害時有20%機率觸電反擊，使對手麻痺不能行動1回合' },
+  '動物學家':{ name:'獸盟', icon:'🦁',  desc:'自己存活時,友方所有寵物的效果大幅提升',fd:'自己存活中，友方所有寵物（寵物）的效果提升100%。' },
+  '武士':    { name:'追擊', icon:'🗾',  desc:'隊友普通攻擊時機率協同追擊,以攻擊力對同目標再砍 1 次',fd:'隊友進行普通攻擊時,有 50% 機率觸發武士協同攻擊,以相同比例的攻擊力對同一目標進行追擊。' },
+  '陰陽師':  { name:'替身', icon:'☯️',  desc:'受到技能傷害時機率由式神代替承擔該次傷害',fd:'受到技能傷害時有60%機率由式神代替承受傷害' },
+  '吸血鬼':  { name:'噬血', icon:'🦇',  desc:'造成傷害時,將傷害量轉化為自己 HP 的恢復',fd:'造成傷害時，用傷害量的50%來恢復自己HP' },
+  '學者':    { name:'奪能', icon:'📚',  desc:'造成傷害後機率奪取對手 1 能量',fd:'造成任何傷害(普攻或技能)後有 60% 機率奪取對手 1 點能量,給自己。' },
+  '時空法師':{ name:'時封', icon:'⏳',  desc:'普通攻擊後機率使目標 1 回合無法獲得治療或有利狀態',fd:'普通攻擊時有60%使目標1回合內無法獲得任何治療和有利狀態' },
+  '小力':    { name:'關心', icon:'🐕',  desc:'隊友受到傷害時機率立即用特技為其恢復 HP',fd:'隊友受到傷害時有35%立即用特技幫他恢復HP。' },
+  '籃球隊員':{ name:'接力', icon:'🏀',  desc:'友方進行普通攻擊時機率觸發暴擊,傷害提升 50%',fd:'友方進行普通攻擊時有50%機率觸發暴擊，傷害提升50%。' },
+  '直笛團員':{ name:'妙音', icon:'🎵',  desc:'普通攻擊機率使目標狂亂 1 回合,只能攻擊自己隊友',fd:'普通攻擊時有50%機率使目標陷入狂亂1回合，只能攻擊自己的隊友且傷害+3。' },
+  '田徑隊員':{ name:'疾走', icon:'🏃',  desc:'行動時機率把一名未行動的友方提前到自己的下一個;倒下被復活時重啟起跑衝刺',fd:'行動時有60%機率把一名未行動的友方行動順序提前到自己的下一個。倒下被復活時自動重啟起跑衝刺(速度+50%、免疫停止)。' },
+  '幼兒園小孩':{ name:'賣萌', icon:'👶', desc:'自己存活時,所有對手攻擊和特技持續降低(最多 5 回合)',fd:'自己存活中，所有對手的攻擊和特技強制降低20%，最多持續5回合。5回合後天賦效果消失。' },
+  '電腦繪圖師':{ name:'上色', icon:'🎨', desc:'回合開始時為 HP 比例最低的友方附加一道吸收傷害的護盾',fd:'自己的回合開始時，HP百分比最低的友方獲得可抵擋20傷害的護盾。' },
+  '程式設計師':{ name:'加成', icon:'💻', desc:'自己存活時,所有友方(含自己)的攻擊和特技永久提升',fd:'自己存活中，所有友方（含自己）的攻擊和特技各提升3。' },
+  '弦樂團員':  { name:'弦音反彈', icon:'🎻', desc:'友方受可解除的不利狀態時,30% 機率反彈給隨機 1 名對手',fd:'友方角色受到「可解除」的不利狀態時,有 30% 機率立即將該狀態反彈到隨機 1 名對手身上(被淨化抗性 / 強力類等不可解除狀態無法反彈)。' },
+  '小劇團員':  { name:'吃苦', icon:'🎭', desc:'受傷時機率轉為治療;天生較容易成為敵人攻擊目標',fd:'受到傷害時有 25% 機率將該次傷害轉為治療自身 HP。另外天生比其他角色更容易成為敵人攻擊目標(機率 +60%)。' },
+  // ★ v1.0.20260421.3000o — 日本關限定角色天賦
+  '巫女':      { name:'祝禱', icon:'⛩',  desc:'回合開始為有利狀態最少的友方附加 1 個隨機狀態,並有機率為陣營恢復 1 能量',fd:'回合開始為有利狀態最少的1名友方附加1個隨機有利狀態2回合,50%機率為陣營+1能量。' },
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列(只能在召喚池獲得)
+  '窮奇':      { name:'凶獠', icon:'🐅',  desc:'受傷時用攻擊值反擊來源,反擊有較高暴擊率',fd:'受到敵方主動攻擊(普攻/技能/爆發)時立即用攻擊值反擊攻擊者,反擊45%暴擊。DoT不觸發,反擊不引還手天賦。' },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人':{ name:'鏈鎖反應', icon:'☢️', desc:'造成傷害時必定引發鏈鎖反應,目標兩側友方受到濺射傷害',fd:'造成傷害時必定引發鏈鎖反應,使目標兩側相鄰(左邊 1 格 + 右邊 1 格)的同陣營角色各受到 40% 濺射傷害。濺射傷害不會再次觸發本天賦。' },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍':{ name:'鋁鎧', icon:'🛡️', desc:'被動減少所有受到的傷害(無條件、不可消除)',fd:'受到任何傷害時自動減少 20% 傷害量,被動觸發、不需機率判定。和其他減傷效果分開計算,可疊加,不會被消除或搶奪。' },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':{ name:'吞噬', icon:'👹', desc:'造成傷害時機率吞噬目標有利狀態轉移到自己身上(升級可多吞)',fd:'造成傷害時有 40% 機率吞噬目標身上隨機 1 個有利狀態,轉移到自己身上(保持原回合數)。保護類有利狀態(死亡免疫、爆發保護等)無法被吞噬。' },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列
+  '雙星姊妹':{ name:'雙星轉換', icon:'🌟', desc:'光星型態治療強化、暗星型態輸出強化(HP 過低時自動切換)',fd:'戰開為「光星」型態(治療+30%)。HP<25%切換為「暗星」(傷害+30%),回升自動切回。可逆。' },
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班鐘同學)
+  '暗魔將·血':{ name:'血焰雙噬', icon:'🩸', desc:'造成傷害時機率使目標同時陷入「燃燒+出血」2 回合',fd:'造成傷害時50%機率使目標同時陷入「燃燒」(每回合-5HP×2)與「出血」(每回合-最大HP 10%)各2回合。不疊加同名DoT。' },
+  '死靈法師':{ name:'亡魂庇佑', icon:'👻', desc:'致命傷時化身死靈型態:無敵 + 200% 能力 + 傷害轉治療(整場限 1 次)',fd:'致命傷時化身「死靈」2回合(整場限1次):HP固定1+無敵+免疫不利+攻特速×200%,造成傷害量轉為治療最低HP友方。' },
+  '布奶鳥獸':{ name:'布丁奶茶連擊', icon:'🤝', desc:'普通攻擊保證 2 次,並機率追加第 3 次攻擊',fd:'布丁和奶茶兩隻小鳥輪流啄擊!普通攻擊保證攻擊 2 次,並有 30% 機率追加第 3 次攻擊。' },
+  // ★ v1.0.20260515.6890 — 炸彈客天賦改造:無視防禦 → 破防(學生設計者要求改版)
+  //   破防:使用技能造成傷害時 30% 機率使目標陷入「破防」1 回合
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 70%
+  //   破防效果:受到的傷害 +25%,且該傷害的暴擊率 +50%
+  //   ⚠ 「破防」是新狀態 (breakDef),需在 BAD_STATUS、傷害計算、爆擊計算三處同步處理
+  '炸彈客':{ name:'破防', icon:'💣', desc:'使用技能造成傷害時機率使目標「破防」:受傷+25%、暴擊率+50%',fd:'使用技能造成傷害時30%機率使目標「破防」1回合 — 破防中受傷+25%,該傷害暴擊率+50%。' },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  //   閃避:受到普通攻擊時 30% 機率完全迴避傷害。
+  //   每升 1 級觸發機率 +10%,Lv5 MAX 達 70%。
+  //   ⚠ 只對「普通攻擊」生效,技能/爆發/AoE/狀態DOT/反彈傷害不會觸發
+  //   差異化:武士「迴避反擊」要消能量並反擊、染靈幻魔「藍色幻影」對所有攻擊生效
+  //   紅色玩家走「無能量消耗 + 只擋普攻」的中庸路線
+  '紅色玩家':{ name:'閃避', icon:'💨', desc:'受到普通攻擊時機率完全迴避(技能/爆發/AoE 不會觸發)',fd:'操作精準如同開外掛般敏捷!受到敵方普通攻擊時有 30% 機率完全迴避,本次不受傷害。技能、爆發、AoE、狀態 DOT、固定值傷害、反彈傷害不會觸發此天賦。' },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  //   亡魂積怨:場上任意一方有目標倒下時,地府酋長特技 +2(最多疊 5 層,Lv1 滿層 = +10)
+  //   每升 1 級每層加成 +0.75(Lv5 達每層 +5,滿層 = +25)
+  //   ★ v1.0.20260518.7000 — 平衡削弱:每層 +4 → +2(每級+1→+0.75),滿層 +40→+25
+  //   ⚠ 加成只在地府酋長還活著時生效;自身倒下會清空已疊加成,進入新戰鬥時也會重置
+  '地府酋長':{ name:'亡魂積怨', icon:'⚖️', desc:'場上任何目標倒下時自身特技 +2,最多疊 5 層(自身倒下會清空)',fd:'場上任意目標倒下時自身特技+2,最多疊5層(滿層+10)。自身倒下清空,新戰鬥重置。' },
+  // ★ v1.0.20260515.6880 — 救醫馬天賦(機率類,鐵律 1.28:fd 只寫 Lv1 基礎,升級替換由 _renderTraitFdWithLv)
+  '救醫馬':{ name:'救馬本能', icon:'🐎', desc:'回合開始若有友方 HP < 50%,機率自動用特技 80% 治療該友方',fd:'戰場上看到任何夥伴受傷,馬醫生立刻衝過去救援!回合開始時若有友方 HP 比例低於 50%,有 40% 機率自動用特技的 80% 治療該友方(可復活)。' },
+  '水狐':{ name:'水之眷顧', icon:'💧', desc:'受傷時機率召喚水精靈為 HP 最低友方治療(可復活)',fd:'受到傷害時40%機率召喚1隻水精靈,為HP比例最低的友方治療特技60% HP(可復活)。' },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  '米鈴':{ name:'守護鈴音', icon:'🔔', desc:'友方行動前清除其 1 個不利狀態,若清除成功則反擊狀態來源',fd:'友方行動前清除其1個不利狀態(隨機/無法解強力)。若成功清除,立即用特技80%對狀態來源反擊(必中,不引還手天賦)。' },
+  // ★ v1.0.20260518.6920 — 學生設計英雄系列(5 年 2 班簡同學「學霸(轉學生)」)
+  //   考神附體:回合結束時 40% 機率對隨機 1 名對手造成 100 固定傷害
+  //   每升 1 級觸發機率 +5%,Lv5 MAX 達 60%
+  //   ⚠ 固定傷害:不會暴擊、不受元素屬性影響、無視有利狀態,但會被「無敵/不倒再生/反域」等保護類擋下
+  '學霸(轉學生)':{ name:'考神附體', icon:'🤓', desc:'回合結束時機率對隨機 1 名對手造成固定 100 傷害',fd:'回合結束時40%機率對隨機1對手造成100固定傷害(不暴擊/不受屬性/無視有利)。' },
+  // ★ v1.0.20260518.6930 — 學生設計英雄系列(5 年 4 班歐同學「天神宙斯」)
+  //   神之怒火:造成傷害時 50% 機率使目標麻痺 1 回合
+  //   每升 1 級觸發機率 +5%,Lv5 MAX 達 70%
+  //   ⚠ 麻痺(para)是標準不利狀態,可被免疫類有利狀態擋下;不會引發無限觸發(對單一目標每次傷害獨立判定)
+  //   ★ v3.7.11 — 老師回報:原 desc「機率使目標麻痺」太籠統,容易誤以為「機率不隨等級提升」,
+  //     改寫清楚「50%(每升 1 級 +5%)」讓玩家在圖鑑就能看到升級資訊
+  '天神宙斯':{ name:'神之怒火', icon:'⚡', desc:'造成傷害時 50% 機率使目標麻痺 1 回合',fd:'造成傷害時50%機率使目標「麻痺」1回合(無法行動)。' },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
+  //   掠奪者本能:造成傷害時 30% 機率複製目標掉落物到背包(每目標每場 1 次)
+  //   每升 1 級觸發機率 +5%,Lv5 MAX 達 50%
+  //   ⚠ 用 _vikingLootedThisBattle Set 紀錄已觸發目標,避免同目標重複觸發
+  '維京海盜船長':{ name:'掠奪者本能', icon:'💰', desc:'造成傷害時機率複製目標掉落物到背包(每場每目標僅 1 次)',fd:'造成傷害時30%機率複製目標掉落物(賣錢物品/寵物/物品卡)到背包,每目標每場僅1次。' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學「武器精靈」)
+  //   武器靈守:武器在受到攻擊時會自動變形閃避——閃避率 20%
+  //   ★ v3.5.7 — 老師調整:每升 1 級 +2.5% → +5%,上限 30% → 40%(Lv4 MAX 達 40%)
+  //   實作:在 doDmg 開頭判定,若觸發則該次傷害 dmg=0 並彈「閃避!」字幕
+  //   ⚠ 不會引發無限循環(閃避無傷害結果,不會再次觸發攻擊者的還手天賦)
+  '武器精靈':{ name:'武器靈守', icon:'⚔', desc:'受到攻擊時機率自動變形閃避,該次傷害完全歸零',fd:'受到任何傷害(普攻或技能)時20%機率變形閃避,該次傷害歸零。閃避不引反擊/吸血類天賦。' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學「神槍手」)
+  //   武裝守護:戰開全體 30 護盾 + 全體速度 +3(直到戰鬥結束) + 自己行動後最低 HP 友方 30 護盾(取大值不堆疊)
+  //   每升 1 級護盾值 +5,Lv5 MAX 達 50 護盾
+  //   ⚠ 護盾取大值覆蓋,不會無限疊加;速度+3 為永久 buff,直到戰鬥結束
+  //   實作:戰鬥開始時掛 _gunGuardShield buff(全體) + 速度+3;每次自己行動結束時補最低 HP 友方
+  '神槍手':{ name:'武裝守護', icon:'🛡', desc:'戰鬥開始為全體附加護盾並使全體速度永久 +3;行動後再補最低 HP 友方護盾',fd:'戰開為全體+30護盾+速度+3(永久,不被消除/奪取)。每次自己行動結束後為最低HP友方補30護盾(取大值覆蓋)。' },
+  // ★ v1.0.20260522.7300 — 學生設計英雄系列(5 年 3 班張同學「火柴人」)
+  //   以火還火:被攻擊時 60% 機率使來源受到特技 100% 火屬性反擊
+  //   ★ 火屬性攻擊時反擊傷害加倍(×2)
+  //   ★ 反擊無視有利狀態,但不會引發無限循環(反擊本身不再觸發 target 的還手類天賦)
+  //   每升 1 級觸發機率 +10%、傷害 +10%,Lv5 MAX 機率 100% / 傷害 150%(火屬性反擊 300%)
+  //   實作:在 doDmg 結算後判定(target.name === '火柴人' && target.curHp > 0),擲反擊
+  '火柴人':{ name:'以火還火', icon:'🔥', desc:'被攻擊時機率對來源造成特技火屬性反擊(火攻來源時傷害加倍)',fd:'受到攻擊時60%機率用特技100%對來源火屬性反擊(無視有利,火攻時×2)。不引天賦。' },
+  // ★ v3.5.49 — 學生設計英雄系列(5 年 3 班蔣同學「青炎龍王」)
+  //   藍焰守護:存活時友方 HP < 20% 時,立即用特技 100% 為其附加護盾值 2 回合(不可堆疊)
+  //   每升 1 級 HP 門檻 +10%、護盾值 +10%(Lv0=20%/100%, Lv1=30%/110%, ..., Lv4=60%/140%)
+  //   ★ 觸發類型:被動觸發類(回合開始/友方受傷後檢查)
+  //   ★ 不可堆疊:同一友方身上「青炎護盾」狀態同時只能存在 1 份,新護盾覆蓋舊護盾(取大值)
+  //   ★ 鐵律 1.31:純護盾類,無秒殺或傷害,安全
+  //   實作:在 startTurn 開頭 + doDmg 結算後判定(青炎龍王 alive、目標 side === '青炎龍王'.side、目標.curHp/maxHp < 門檻)
+  '青炎龍王':{ name:'藍焰守護', icon:'🛡', desc:'存活時友方 HP < 20% 自動附加特技值的青炎護盾 2 回合(不可堆疊)',fd:'存活時友方HP<20%立即用特技100%附加「青炎護盾」2回合(不堆疊/不可消除奪取)。' },
+  // ★ v3.5.60 — 鳳凰天賦「浴火重生」(5 年 4 班 04 號李同學設計)
+  //   倒下時以滿血自動復活(整場限 1 次),每次被復活皆使 atk/sp/spd 各 +2(上限各 +10)
+  //   ★ 老師決策(2026/05/23):「自動復活」整場僅 1 次,「被同伴復活」次數無上限
+  //   每升 1 級 +2 上限再 +2,Lv5 MAX 達 +20/+20/+20
+  //   旗標:h._phoenixSelfRevived(自動復活旗標)、h._phoenixBuff{atk,sp,spd}(已加值,需於每次復活時 +2 並 clamp 上限)
+  //   ★ 觸發類型:被動觸發類(倒下瞬間 + 復活後)
+  //   ★ 鐵律 1.31:無秒殺,但「自動復活」需在受傷致死時優先觸發,避免被當成已死
+  //   實作:doDmg 中 target.curHp 降至 0 時 → 若 !target._phoenixSelfRevived → 立即滿血復活並設旗標
+  //         doRevive 中 → 加 +2/+2/+2 並 clamp 上限
+  '鳳凰':{ name:'浴火重生', icon:'🔥', desc:'倒下時自動滿血復活(整場限 1 次);每次被復活 atk/sp/spd 各 +2',fd:'倒下時自動滿血復活(整場限1次)。每次被復活攻特速各永久+2(上限各+10),維持到戰鬥結束。' },
+  // ★ v3.5.60 — 操偶師天賦「操偶」(5 年 2 班 11 號江同學設計)
+  //   開場附加「操偶」狀態(整場戰鬥不可消除),擁有獨立 HP 條(操偶師HP×150%),優先代替主人承受傷害
+  //   操偶 HP=0 時 → 天賦/S1/S2 全失效(灰色不可按,顯示「人偶損壞中」)
+  //   被治療或復活時恢復操偶 HP,使用爆發「魁儡城牆」時將操偶進化為城牆(操偶 HP×10)
+  //   每升 1 級操偶 HP +20%,Lv5 MAX 達 +100%(等於操偶師 HP×3)
+  //   ★ 操偶 HP 用獨立欄位 h._puppetHp/h._puppetHpMax,不走 buffs(因為「絕對不可消除」)
+  //   ★ 觸發類型:戰鬥開始觸發(_battleStartTriggers)
+  //   ★ 鐵律 1.31:無秒殺;操偶/城牆扣的是 _puppetHp 不是 BOSS HP,不會繞過 5000 cap
+  //   ★ 鐵律 1.33:操偶 HP 在 endAction/離場流程要存入快照
+  //   實作:
+  //     - newHero 或 battleStart 時:設 h._puppetHpMax = h.hp × (1.5 + traitLv*0.2), h._puppetHp = h._puppetHpMax
+  //     - doDmg 開頭攔截:若 target 有操偶師且 target._puppetHp > 0 且非自殘傷害 → 扣 _puppetHp,扣不完才扣 curHp
+  //     - 渲染卡片:在 HP 條下方加一條白色 _puppetHp / _puppetHpMax 條
+  //     - useSkill/canUseSkill:_puppetHp = 0 時禁用 S1/S2/天賦
+  //     - doHeal/doRevive:優先補 _puppetHp(操偶損壞時),其餘溢出補本體
+  //     - 爆發「魁儡城牆」:_puppetHpMax × 10, _puppetHp = _puppetHpMax(進化態旗標 _puppetWall=true)
+  //                         城牆破時:_puppetHp = h.hp × 1.5 × 0.5,清除 _puppetWall
+  '操偶師':{ name:'操偶', icon:'🎭', desc:'開場附加「操偶」獨立 HP 條代承傷害(HP=0 時所有技能暫時失效)',fd:'戰開附「操偶」獨立HP條(本HP×150%),優先擋傷害。操偶HP=0時失去天賦/S1/S2,爆發或被治療時恢復。' },
+  // ★ v3.5.68 — 學生設計英雄系列(5 年 3 班 14 號張同學「菇女」)
+  //   覺醒菇:行動時派 1 隻魔菇對 HP% 最低 1 名對手造成 40 固定傷害;
+  //          倒下時可以 50% HP 復活(限用 1 次)
+  //   實作位置:
+  //     - 行動時派魔菇:在 startTurn 開頭判定(target.name === '菇女' && alive)
+  //       擲 100% 觸發,選對手 HP% 最低,固定 40 傷害(每升 1 級 +10,上限 = Lv×10)
+  //     - 倒下復活:在 doDmg / dieCheck 結算後判定(target.name === '菇女' && curHp === 0 && !_guniuRevived)
+  //       設定 curHp = maxHp × 0.5,_guniuRevived = true(整場僅 1 次)
+  //       每升 1 級復活 HP +5%,Lv5 MAX 達 75%
+  '菇女':{ name:'覺醒菇', icon:'🍄', desc:'行動時派魔菇對 HP% 最低 1 名對手造成 40 固定傷害,倒下時 50%HP 復活(限 1 次)',fd:'行動時派魔菇對HP%最低敵40固定傷害(必中/無視有利/不暴擊/不引天賦)。倒下時自動50%HP復活1次。' },
+  // ★ v3.10.12 — 學生設計英雄系列(5 年 1 班 林同學「小丑」)
+  //   小丑面具:行動前堆面具 / 受傷時掉面具 / 觸發機制
+  //   實作:在 _doActionBegin hook(自己行動回合開始時)派發 1 層快樂小丑面具 + 對方隨機 1 人 1 層悲傷小丑面具
+  //          受到傷害時依機率掉 1 層(每升 1 級 -5%,Lv5 起完全不掉)
+  '小丑':{ name:'小丑面具', icon:'🤡', desc:'自己行動前堆 1 層「快樂小丑面具」(自身增傷5%/層) + 對方隨機1人 1 層「悲傷小丑面具」(受傷+5%/層),各最多5層。受傷時30%機率掉1層',fd:'行動前堆1層「快樂面具」(增傷+5%/層)+敵隨機1人1層「悲傷面具」(受傷+5%/層),各最多5層。受傷30%掉1層。' },
+  // ★ v3.10.14 — 學生設計英雄系列(3 年 1 班 采漩「美人魚‧角角」)
+  //   療癒之聲:每回合開始為友方全體治療 sp 40% + 解除友方身上 1 個燃燒狀態
+  //   實作:在 startTurn hook(美人魚自己行動回合開始時)觸發
+  //          升級:每升 1 級治療量 +10%(Lv1=40% / Lv2=50% / Lv3=60% / Lv4=70% / Lv5=80%)
+  '美人魚‧角角':{ name:'療癒之聲', icon:'🎵', desc:'存活時,每個新回合開始用特技 40% 治療友方全體 HP,並解除友方身上 1 個燃燒狀態',fd:'自己行動回合開始時用特技40%治療全體存活友方,並解除每位友方身上的1個燃燒狀態(含強力燃燒)。' },
+  // ★ v3.11.6 — 學生設計英雄系列(5 年 4 班 彭同學「火爆女」)
+  //   怒火滿格:被動觸發型 — 基礎暴擊率+20%(常駐),每次受傷:能量+1+暴擊率本場+3%(最高 100%)
+  //   實作:在 doDmg 結算後判定(target.name === '火爆女' && target.curHp > 0)
+  //          升級:每升 1 級基礎暴擊率 +5%(Lv1=+20% / Lv9=+60%)
+  //   ★ 鐵律 1.93:暴擊率上限 100%,_firebrandBonusCrit 累積值固定上限 80%(+20% 基礎 = 100%)
+  '火爆女':{ name:'怒火滿格', icon:'💥', desc:'基礎暴擊率+20%。每次受傷時:能量+1,且本場戰鬥暴擊率永久+3%(上限 100%)',fd:'(被動)基礎暴擊率+20%。受到傷害時:能量+1+暴擊率本場永久+3%(最高100%)。' },
+  // ★ v3.11.19 — 幽幽天賦「幽魂體質」(5 年 4 班 高同學設計)
+  //   被動:① 普通攻擊改用「特技值」作為攻擊力 ② 免疫普通攻擊的傷害(僅普攻,技能/DoT 正常)
+  //         ③ 受到暗屬性傷害 -30% ④ 受到光屬性傷害 +30%
+  //   每升 1 級:受暗屬性傷害再 -5%、受光屬性增傷幅度 -5%
+  //   ★ 實作:doDmg 目標 hook 區(普攻免疫 + 屬性修正)+ 普攻路徑改用 sp
+  '幽幽':{ name:'幽魂體質', icon:'👻', desc:'用特技值造成普攻傷害、免疫普攻傷害;受暗屬性-30%、受光屬性+30%',fd:'(被動)普通攻擊改用「特技值」計算,且免疫所有普通攻擊的傷害。受到暗屬性傷害 -30%、受到光屬性傷害 +30%。' },
+  // ★ v3.11.20 — 網路駭客天賦「BUG 疊加」(5 年 1 班 高同學設計)
+  //   開場竊取「對手陣容中最高攻擊值 + 最高特技值」加到自己身上 4 回合(不可消除/奪取/交換)
+  //   ★ 鐵律 1.30 平衡:竊取量上限 = 5 + 英雄等級×1(防止世界 BOSS 超高攻特造成失衡)
+  //   每回合開始時對隨機 1 名對手附加 1 個隨機不利狀態(升級增加目標數,最大 4 名)
+  '網路駭客':{ name:'BUG疊加', icon:'🐛', desc:'開場竊取對手最高攻擊+最高特技值(上限 5+等級)加到自己 4 回合,不可消除/奪取/交換;每回合對隨機 1 名對手附加隨機不利狀態',fd:'(被動)戰鬥開始時,將對手陣容中最高的攻擊值與最高的特技值加到自己身上,持續 4 回合(此加成不可被消除、奪取或交換)。為維持平衡,單項竊取量上限為「5 + 自身英雄等級×1」。每個新回合開始時,對隨機 1 名對手附加 1 個隨機不利狀態。' },
+  // ★ v3.12.8 — 死神天賦「死神至尊」(5 年 2 班 13 號羅同學設計)
+  //   ① 絕對免疫死亡宣告(deathmark)— 連同暗法師死亡宣告、定時炸彈(死靈法師)都擋
+  //   ② 絕對免疫即死(吸血鬼靈魂收割、鋁合金暴龍死神龍王登場收割、暴龍王處決等所有 curHp=0 強設路徑)
+  //   ③ 受到傷害時 40% 機率反彈傷害的 50% 給對手(基礎)— 每升 1 級機率 +10%,Lv5=90%、Lv6 起 100%(對齊鐵律 1.30 上限)
+  //   ★ 實作位置:① addStatus deathmark 攔截(line ~17271 區段)
+  //                ② doDmg 開頭新增「死神免疫即死」hook(_deathReaperImmuneInsta:true 標記)
+  //                ③ doDmg 結算後判定(target.name === '死神' && target.curHp > 0,擲反彈)
+  '死神':{ name:'死神至尊', icon:'💀', desc:'絕對免疫死亡宣告/即死;受傷時40%機率反彈傷害的50%給對手',fd:'(被動)絕對免疫「死亡宣告」與所有「即死類技能」(包含暗法師死亡宣告、吸血鬼靈魂收割、鋁合金暴龍死神龍王登場、定時炸彈等任何會直接把 HP 設為 0 的效果——對死神都被攔截為造成等量傷害而非秒殺)。受到傷害時有 40% 機率將該次傷害的 50% 反彈給來源(來源已倒下則跳過)。反擊不會再觸發對方的還手類天賦,避免無限循環。' },
+  // ── BOSS ──
+  '九尾空貓怪': { name:'奪財',  icon:'🐱', desc:'回合開始25%奪取對手物品並賣出',fd:'每回合開始時有25%機率奪取對手一張物品卡並立即賣出，以能量形式充能自身。' },
+  '杏花妖':     { name:'媚惑', icon:'🌸', desc:'受傷時40%機率魅惑對手1回合',fd:'受到傷害時有40%機率使攻擊者陷入「魅惑」狀態1回合，使其下一回合自動普通攻擊自己的隊友。' },
+  // ★ v3.8.0(2026-05-25) — 黑暗球‧希望型態:反擊+HP<50% 召喚 3 分身(共通機制 BOSS_CLONE_DEF)
+  '黑暗球‧希望型態': { name:'黑暗失控', icon:'🌑', desc:'受傷時立即反擊;✨ 無論受到多大傷害,首次跌破 50% HP 時會強制保留在 50% 並立即召喚 3 個分身(整場僅 1 次,分身 HP 為 50%)',fd:'黑暗球體內部的能量極不穩定。受到任何傷害時,會立即對攻擊者造成等同於攻擊值的暗屬性反擊傷害(不會引發無限循環)。✨ 無論受到多大傷害(包括秒殺型技能),本場首次跌破 50% HP 時會強制把 HP 鎖在 50%,黑暗能量徹底失控撕裂出 3 個與自己能力完全相同的分身,分身最大 HP 為本體的 50%(整場戰鬥只發動 1 次,分身自身不會再分裂)。分身被消滅後本體可正常被擊倒。' },
+  '綠竹筍小妖': { name:'竹甲',  icon:'🎋', desc:'受傷時50%機率減傷40%',fd:'受到傷害時有50%的機率啟動「韌竹護甲」，使該次傷害減少40%。' },
+  '茶葉精靈':   { name:'茶癒', icon:'🍃', desc:'回合開始50%治療HP最低的隊友',fd:'每回合開始時有50%機率用特技值治療己方HP最少的隊友。' },
+  '小惡魔':     { name:'還手', icon:'😈', desc:'受到傷害時立即以特技反擊攻擊者',fd:'受到任何傷害時，立即對攻擊者造成等同於特技值的反擊傷害。反擊不會再觸發對方的還手類天賦，避免無限循環。' },
+  '寶箱怪':     { name:'儲存', icon:'📦', desc:'回合開始時恢復自己10%HP',fd:'每回合開始時，寶箱怪會自動恢復自己最大 HP 的 10%。' },
+  // ── 日本關 BOSS / 英雄 ──
+  // ★ v1.0.20260421.3000f
+  '大天狗':     { name:'疾風之翼', icon:'🌪️', desc:'每次行動前機率使自身速度永久 +2(可累積至戰鬥結束)',fd:'每次行動前有60%機率使自身速度+2（可累積，持續到戰鬥結束）。' },
+  '酒吞童子':   { name:'酒入鬼力', icon:'🍶', desc:'受到傷害時機率立即恢復 1 點能量',fd:'受到傷害時有60%機率立即恢復1能量。' },
+  '玉藻前':     { name:'媚惑窺破', icon:'👁️‍🗨️', desc:'造成傷害時機率無視目標所有有利狀態(護盾/免疫/減傷)',fd:'造成傷害時有60%機率無視目標身上的有利狀態（護盾、免疫、減傷等）。' },
+  '八岐大蛇':   { name:'八首吞天', icon:'🐉', desc:'傷害25%吸血，普攻2下，免疫所有不利狀態',fd:'造成傷害的25%轉化為自身HP恢復；普通攻擊變為連續2下；免疫所有不利狀態（冰凍、燃燒、麻痺、中毒、失明、封印等皆無效）。' },
+  // ── 日本關稀有小怪 ──
+  '行走的二宮尊德像': { name:'勤學不輟', icon:'📚', desc:'免疫不利狀態，行動前回15%HP',fd:'免疫所有不利狀態，每次自己行動前恢復最大HP的15%。' },
+  '座敷童子':   { name:'家之守護', icon:'🎎', desc:'受傷時以特技50%反擊隨機3次',fd:'受到傷害時立即以特技值的50%反擊隨機3個敵方目標（若敵方不足3人則重複挑選）。' },
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:BURST_GIF_DB  (搬自 index.html L22963~L23453)
+// ════════════════════════════════════════════════════════════════
+const BURST_GIF_DB = {
+  // ★ v1.0.20260424.1160 — 小力爆發技「夾尾皺眉」動畫:彩色星星圍繞,可愛賣萌風格
+  '夾尾皺眉': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif',
+    sfx:[['sfx-gentle',1.0],['sfx-fantasy',0.85],['sfx-passive',0.7]],
+    tint:'rgba(255,200,255,0.18)'
+  },
+  // ★ v1.0.20260424.0930 — 小劇團員爆發技「謝幕掌聲」動畫
+  // ★ v1.0.20260424.0940 — 加入專屬「掌聲」音效
+  '謝幕掌聲': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%AC%9D%E5%B9%95%E6%8E%8C%E8%81%B2.gif',
+    sfx:[['sfx-applause',1.0],['sfx-burst',0.7],['sfx-powerup',0.7]],
+    tint:'rgba(255,200,60,0.18)'
+  },
+  // ★ v1.0.20260421.1500 — 日本關 4 大 BOSS 爆發技動畫
+  '神威風獵': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%A8%81%E9%A2%A8%E7%8D%B5.gif',
+    sfx:[['sfx-tengu-strike',1.0]], // ★ v1.0.20260501.4690 — 改用龍捲風專屬音效
+    tint:'rgba(170,220,255,0.18)'
+  },
+  '鬼王酒宴': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif',
+    sfx:[['sfx-explode',1.0],['sfx-punch',0.9],['sfx-heal',0.7]],
+    tint:'rgba(255,100,60,0.18)'
+  },
+  '禍世邪魅': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A6%8D%E4%B8%96%E9%82%AA%E9%AD%85.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-fantasy',0.9],['sfx-explode',0.6]],
+    tint:'rgba(255,150,80,0.18)',
+    scale:2.0  // ★ v1.0.20260424.1370 — 放大 100% (玩家反應特效太小)
+  },
+  // 八頭龍滅世：兩段接力（先火雨 → 再八龍頭滅世）
+  '八頭龍滅世': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%81%AB%E9%9B%A8.gif',
+    url2:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%85%AB%E9%BE%8D%E9%A0%AD%E6%BB%85%E4%B8%96.gif',
+    sfx:[['sfx-explode',1.0],['sfx-fantasy',0.85],['sfx-burst',0.9]],
+    tint:'rgba(255,80,40,0.22)',
+    tint2:'rgba(150,60,220,0.22)',
+    dur:1800, dur2:2200
+  },
+  // ★ v1.0.20260501.5420 — 學生設計英雄系列(窮奇)爆發特效
+  //   GIF 檔名:召喚上古四凶獸.gif / 音效檔名:召喚上古四凶獸.mp3
+  '召喚上古四凶獸': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.gif',
+    sfx:[['sfx-qiongqi-burst',1.0]],
+    tint:'rgba(180,40,40,0.22)',  // 凶獸主題:暗紅色調
+    dur:2400  // 給足時間播完 GIF + 音效
+  },
+  // ★ v3.5.60 — 學生設計英雄系列(鳳凰)爆發特效「神炎之翼」
+  //   GIF:焰尾九連擊.gif(老師指定 5 年 4 班 04 號李同學設計單)
+  //   只播 1 次(老師備註:爆發技 GIF 播 1 次)
+  '神炎之翼': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('焰尾九連擊.gif'),
+    sfx:[['sfx-burn',1.0],['sfx-explode',0.85],['sfx-burst',0.7]],  // 火焰燃燒組合
+    tint:'rgba(255,80,20,0.22)',  // 烈焰主題:橙紅色調
+    dur:2200,
+    once:true  // 老師指定:GIF 播 1 次
+  },
+  // ★ v3.5.60 — 學生設計英雄系列(操偶師)爆發特效「魁儡城牆」
+  //   GIF:鑽石.gif(老師確認 5 年 2 班 11 號江同學設計單真實檔名)
+  '魁儡城牆': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鑽石.gif'),
+    sfx:[['sfx-shield',1.0],['sfx-powerup',0.85],['sfx-magic',0.6]],
+    tint:'rgba(180,200,255,0.25)',  // 城牆主題:銀藍色調(傀儡冷峻感)
+    dur:2400
+  },
+  // ★ v3.5.68 — 學生設計英雄系列(菇女)爆發特效「天女散花菇」
+  //   GIF:彩色星星.gif(老師確認 5 年 3 班 14 號張同學設計單真實檔名)
+  //   音效組合「魔法+治療」(老師 2026/05/25 決策),tint 粉紅
+  '天女散花菇': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('彩色星星.gif'),
+    sfx:[['sfx-magic',1.0],['sfx-heal',0.85],['sfx-bell',0.6]],
+    tint:'rgba(255,153,204,0.22)',  // 菇女粉紅 tint
+    dur:2400
+  },
+  // ★ v3.10.12 — 學生設計英雄系列(小丑)爆發特效「致命笑氣罐」
+  //   GIF:煙霧爆開.gif(老師確認 5 年 1 班 林同學設計單真實檔名)
+  //   音效組合「大爆炸 + 笑聲」(笑聲用 sfx-magic fallback),tint 紫紅
+  '致命笑氣罐': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('煙霧爆開.gif'),
+    sfx:[['sfx-explode',1.0],['sfx-magic',0.85],['sfx-burst',0.7]],
+    tint:'rgba(170,68,255,0.22)',  // 小丑紫紅 tint
+    dur:2400
+  },
+  // ★ v3.10.14 — 學生設計英雄系列(美人魚‧角角)爆發特效「百萬水箭共鳴曲」
+  //   GIF:萬鏡映虛獄.gif(設計者 3 年 1 班 采漩設計單指定)
+  //   音效組合「魔法+水流+治療」,tint 水藍
+  '百萬水箭共鳴曲': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('萬鏡映虛獄.gif'),
+    sfx:[['sfx-magic',1.0],['sfx-water',0.9],['sfx-heal',0.7]],
+    tint:'rgba(60,170,255,0.22)',  // 水藍 tint
+    dur:2600
+  },
+  // ★ v3.11.6 — 學生設計英雄系列(火爆女)爆發特效「三刀射擊」(5 年 4 班 彭同學設計)
+  //   GIF:斬擊.gif(設計者設計單指定)
+  //   音效組合「刀劍」,tint 紅橘(怒火爆發感)
+  // ★ v3.11.19 — 幽幽爆發「惡夢遊魂」(5 年 4 班 高同學設計)
+  //   GIF:死亡宣告.gif(設計者設計單指定);音效:自訂 mp3 sfx-youyou-burst(惡夢遊魂.mp3)
+  //   tint:暗紫(幽魂/惡夢主題)
+  '惡夢遊魂': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('死亡宣告.gif'),
+    sfx:[['sfx-youyou-burst',1.0]],
+    tint:'rgba(120,60,180,0.24)'
+  },
+  // ★ v3.11.20 — 網路駭客爆發「超極密檔案GET!」(5 年 1 班 高同學設計)
+  //   GIF:駭客程式碼.gif(設計者設計單指定);tint:駭客綠(終端機/代碼主題)
+  '超極密檔案GET!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('駭客程式碼.gif'),
+    sfx:[['sfx-burst',1.0],['sfx-crit',0.8],['sfx-heal',0.6]],
+    tint:'rgba(60,220,120,0.20)'
+  },
+  // ★ v3.12.8 — 死神爆發「死亡審判」(5 年 2 班 13 號羅同學設計,72 號英雄)
+  //   GIF:設計單指定「死神之鐮(暗紅死神)— 死亡 / 黑暗系」,直接重用刺客現有的「死神之鐮」GIF
+  //   tint:暗紅(死亡審判主題,比刺客 0.18 略深);音效:sfx-ko + sfx-sword + sfx-darkness 三層死亡感
+  '死亡審判': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    sfx:[['sfx-ko',1.0],['sfx-sword',0.85],['sfx-darkness',0.7]],
+    tint:'rgba(180,0,40,0.22)'
+  },
+  '三刀射擊': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('斬擊.gif'),
+    sfx:[['sfx-sword',1.0],['sfx-attack',0.85],['sfx-crit',0.7]],
+    tint:'rgba(255,80,40,0.22)',  // 怒火紅橘 tint
+    dur:2400
+  },
+  '輻射核砲': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('輻射核砲.gif'),
+    sfx:[['sfx-gunshot-big',1.0],['sfx-explode',0.95],['sfx-burst',0.7]],
+    tint:'rgba(180,220,40,0.22)',  // 輻射主題:暗綠/輻射黃
+    dur:2400
+  },
+  '死神龍王登場': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    sfx:[['sfx-ko',1.0],['sfx-sword',0.85]],
+    tint:'rgba(200,0,50,0.18)'
+  },
+  // ★ v1.0.20260507 — 學生設計英雄系列(超鬼神王)爆發特效
+  //   大嘴吸入 — 改用專屬 GIF「吸入漩渦門」(音效 + tint 暫沿用真理之門配置)
+  '大嘴吸入': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%90%B8%E5%85%A5%E6%BC%A9%E6%B8%A6%E9%96%80.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-powerup',0.8]],
+    tint:'rgba(50,255,200,0.12)'
+  },
+  // ★ v1.0.20260507.5600 — 學生設計英雄系列(雙星姊妹)爆發特效
+  //   同生共死 — 金色閃光炸開 GIF(田同學同學提供,2026)
+  '同生共死': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E9%87%91%E8%89%B2%E9%96%83%E5%85%89%E7%82%B8%E9%96%8B.gif',
+    sfx:[['sfx-explode',1.0],['sfx-powerup',0.8]],
+    tint:'rgba(255,220,80,0.22)'
+  },
+  '超級大爆炸': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%85%AB%E9%BE%8D%E9%A0%AD%E6%BB%85%E4%B8%96.gif',
+    sfx:[['sfx-explode',1.0],['sfx-burst',0.9],['sfx-powerup',0.7]],
+    tint:'rgba(255,100,40,0.22)',
+    dur:2400
+  },
+  '超頻爆發': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%95%B8%E4%BD%8D%E6%95%B8%E5%AD%97%E9%A3%9B%E8%88%9E.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-fantasy',0.85],['sfx-burst',0.9]],
+    tint:'rgba(255,40,40,0.22)',
+    dur:2400
+  },
+  '刀山火海': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
+    sfx:[['sfx-burst',1.0],['sfx-explode',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(120,0,40,0.25)',
+    dur:2400
+  },
+  '救救昏倒夥': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%95%91%E6%95%91%E6%98%8F%E5%80%92%E5%A4%A5.gif',
+    sfx:[['sfx-heal',1.0],['sfx-powerup',0.85]],
+    tint:'rgba(255,220,180,0.22)',
+    dur:2400
+  },
+  '萬流歸宗·神龍降臨': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.gif',
+    sfx:[['sfx-waterfox-burst',1.0],['sfx-fantasy',0.85],['sfx-heal',0.7]],
+    tint:'rgba(80,180,255,0.22)',
+    scale:1.5,
+    dur:2400
+  },
+  // 全形分隔符 fallback(避免「·」與「・」混用造成 key 對不到)
+  '萬流歸宗・神龍降臨': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.gif',
+    sfx:[['sfx-waterfox-burst',1.0],['sfx-fantasy',0.85],['sfx-heal',0.7]],
+    tint:'rgba(80,180,255,0.22)',
+    scale:1.5,
+    dur:2400
+  },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(米鈴)爆發特效
+  //   夢幻的茶會 — 設計者董同學指定使用「彩色星星.gif」呈現夢幻茶會的浪漫氛圍
+  //   音效:治療為主+柔和為輔+奇幻餘韻,呼應「貓女僕的溫柔茶會」感
+  //   tint:粉嫩茶會色(255,200,230),呼應貓女僕+鈴鐺+茶會主題
+  //   ⚠ 注意 GIF 與小力「夾尾皺眉」共用,但 key 不同(米鈴專屬「夢幻的茶會」)
+  '夢幻的茶會': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif',
+    sfx:[['sfx-heal',1.0],['sfx-gentle',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(255,200,230,0.22)',
+    dur:2400
+  },
+  '壓力轉移': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%9A%E6%B0%A3.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-burst',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(180,200,255,0.22)',
+    dur:2400
+  },
+  '天降雷罰': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A9%E9%9B%B7.gif',
+    sfx:[['sfx-thunder-fury',1.0]],
+    tint:'rgba(220,255,80,0.20)',
+    dur:2400
+  },
+  '海盜威能': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif',
+    sfx:[['sfx-explode',1.0],['sfx-gunshot-big',0.9],['sfx-powerup',0.7]],
+    tint:'rgba(80,40,180,0.22)',
+    dur:1600
+  },
+  // ★ v3.4.11 — 武器精靈爆發(5 年 5 班朱同學設計)
+  //   URL:v3.6.2 改為「俠盜飛梭.gif」(老師指定,2026-05-24)
+  //   舊版:熱情之舞.gif(舞者爆發共用,視覺風格偏「舞蹈」不貼合迴力鏢)
+  //   新版:俠盜飛梭.gif 視覺風格「快速穿梭、金屬反光」更貼合銀齒迴力鏢旋風主題
+  //   音效:刀劍砍擊+爆風+能量回收
+  //   tint:銀白色(迴力鏢冷光)
+  '銀齒迴力鏢旋風': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('俠盜飛梭.gif'),
+    sfx:[['sfx-sword',1.0],['sfx-crit',0.85],['sfx-powerup',0.7]],
+    tint:'rgba(200,220,255,0.18)',
+    dur:1600
+  },
+  // ★ v3.4.11 — 神槍手爆發(5 年 4 班莊同學設計)
+  //   URL:老師設計單指定「千年發酵核爆.gif」(此 GIF 已存在於系統,line 15589 臭氣魔王共用)
+  //   音效:老師指定「子彈射擊 + 爆炸 各 3 次」,使用 sfx-gunshot-big + sfx-explode 交替
+  //   tint:火紅色(炎彈主題)
+  //   ★ 視覺特殊處理:畫面三個不同位置各播一次(由 _renderTripleBurstFX 在爆發邏輯內額外觸發)
+  '火焰神槍': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('千年發酵核爆.gif'),
+    sfx:[['sfx-gunshot-big',1.0],['sfx-explode',0.95],['sfx-gunshot-big',0.9],['sfx-explode',0.85],['sfx-gunshot-big',0.8],['sfx-explode',0.75]],
+    tint:'rgba(255,80,30,0.22)',
+    dur:2400
+  },
+  '劍神連斬': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
+    sfx:[['sfx-sword',1.0],['sfx-crit',0.9]],
+    tint:'rgba(255,220,50,0.12)'
+  },
+  '璀璨聖光': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%92%80%E7%92%A8%E8%81%96%E5%85%89.gif',
+    sfx:[['sfx-heal',1.0],['sfx-powerup',0.8]],
+    tint:'rgba(255,255,180,0.15)'
+  },
+  '烈焰爆發': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%83%88%E7%84%B0%E7%88%86%E7%99%BC.gif',
+    sfx:[['sfx-explode',1.0],['sfx-burst',0.85]],
+    tint:'rgba(255,80,0,0.15)'
+  },
+  '冰封末日': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%86%B0%E5%B0%81%E6%9C%AB%E6%97%A5.gif',
+    sfx:[['sfx-ice2',1.0],['sfx-ice1',0.75]],
+    tint:'rgba(120,220,255,0.15)'
+  },
+  '怒雷狂襲': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2.gif',
+    sfx:[['sfx-thunder-fury',1.0]], // ★ v1.0.20260501.4690 — 改用怒雷狂襲專屬音效
+    tint:'rgba(180,255,50,0.12)'
+  },
+  '審判光束': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%AF%A9%E5%88%A4%E5%85%89%E6%9D%9F.gif',
+    sfx:[['sfx-shoot',1.0],['sfx-heal',0.7]],
+    tint:'rgba(255,255,150,0.15)'
+  },
+  '毀滅禁咒': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AF%80%E6%BB%85%E7%A6%81%E5%92%92.gif',
+    sfx:[['sfx-explode',1.0],['sfx-fantasy',0.8]],
+    tint:'rgba(140,50,255,0.15)'
+  },
+  '流星箭雨': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%B5%81%E6%98%9F%E7%AE%AD%E9%9B%A8.gif',
+    sfx:[['sfx-shoot',1.0],['sfx-rapidfire-gun',0.9]],
+    tint:'rgba(200,230,255,0.12)'
+  },
+  '最終殿堂': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%9C%80%E7%B5%82%E6%AE%BF%E5%A0%82.gif',
+    sfx:[['sfx-heal',1.0],['sfx-powerup',0.85]],
+    tint:'rgba(255,240,180,0.18)'
+  },
+  '焰尾九連擊': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E7%84%B0%E5%B0%BE%E4%B9%9D%E9%80%A3%E6%93%8A.gif',
+    sfx:[['sfx-sword',1.0],['sfx-explode',0.85]],
+    tint:'rgba(255,100,30,0.18)'
+  },
+  '千年絕美・傾城一笑': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%82%BE%E5%9F%8E%E4%B8%80%E7%AC%91.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-fantasy',0.85]],
+    tint:'rgba(255,130,200,0.15)'
+  },
+  'BUG修復': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/BUG%E4%BF%AE%E5%BE%A9.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-heal',0.85]],
+    tint:'rgba(85,255,200,0.15)'
+  },
+  '流浪者之歌': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%B5%81%E6%B5%AA%E8%80%85%E4%B9%8B%E6%AD%8C.gif',
+    sfx:[['sfx-fantasy',0.9],['sfx-heal',0.8]],
+    tint:'rgba(200,150,255,0.15)'
+  },
+  '天籟之音': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%A4%A9%E7%B1%9F%E4%B9%8B%E9%9F%B3.gif',
+    sfx:[['sfx-heal',1.0],['sfx-fantasy',0.8]],
+    tint:'rgba(180,80,255,0.15)'
+  },
+  '俠盜飛梭': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E4%BF%A0%E7%9B%9C%E9%A3%9B%E6%A2%AD.gif',
+    sfx:[['sfx-sword',0.9],['sfx-coin',0.8]],
+    tint:'rgba(255,200,50,0.12)'
+  },
+  '死神之鐮': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    sfx:[['sfx-ko',1.0],['sfx-sword',0.85]],
+    tint:'rgba(200,0,50,0.18)'
+  },
+  '真理之門': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%9C%9F%E7%90%86%E4%B9%8B%E9%96%80.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-powerup',0.8]],
+    tint:'rgba(50,255,200,0.12)'
+  },
+  '明鏡止水': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%98%8E%E9%8F%A1%E6%AD%A2%E6%B0%B4.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-statup',0.85]],
+    tint:'rgba(180,180,255,0.15)'
+  },
+  '逆轉神計': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E9%80%86%E8%BD%89%E7%A5%9E%E6%8A%80.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-confirm',0.8]],
+    tint:'rgba(80,200,255,0.14)'
+  },
+  '地球上投': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%9C%B0%E7%90%83%E4%B8%8A%E6%8A%95.gif',
+    sfx:[['sfx-explode',1.0],['sfx-punch',0.95]],
+    tint:'rgba(180,120,30,0.15)'
+  },
+  '鮮血契約': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E9%AE%AE%E8%A1%80%E5%A5%91%E7%B4%84.gif',
+    sfx:[['sfx-sword',0.9],['sfx-powerup',0.8]],
+    tint:'rgba(255,30,80,0.18)'
+  },
+  '神鬼盡滅': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
+    sfx:[['sfx-burst',1.0],['sfx-explode',0.9]],
+    tint:'rgba(255,220,50,0.18)'
+  },
+  '神樹恩澤': {
+    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E7%A5%9E%E6%A8%B9%E6%81%A9%E6%BE%A4.gif',
+    sfx:[['sfx-revive',1.0],['sfx-heal',0.8]],
+    tint:'rgba(50,220,80,0.15)'
+  },
+  '時間壓縮': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%99%82%E9%96%93%E5%A3%93%E7%B8%AE.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-ko',0.85]],
+    tint:'rgba(150,200,255,0.15)'
+  },
+  '元素智慧': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%85%83%E7%B4%A0%E6%99%BA%E6%85%A71.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-shoot',0.8]],
+    tint:'rgba(100,200,255,0.14)'
+  },
+  '夢境時光': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%A4%A2%E5%A2%83%E6%99%82%E5%85%89.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-heal',0.8]],
+    tint:'rgba(150,120,255,0.15)'
+  },
+  '萬物創生': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%90%AC%E7%89%A9%E5%89%B5%E7%94%9F.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-fantasy',0.85]],
+    tint:'rgba(80,220,150,0.15)'
+  },
+  '極速閃燃': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%A5%B5%E9%80%9F%E9%96%83%E7%87%83.gif',
+    sfx:[['sfx-sword',1.0],['sfx-explode',0.85]],
+    tint:'rgba(255,160,0,0.15)'
+  },
+  '最後之盾': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%9C%80%E5%BE%8C%E4%B9%8B%E7%9B%BE.gif',
+    sfx:[['sfx-powerup',1.0],['sfx-heal',0.8]],
+    tint:'rgba(180,200,255,0.15)'
+  },
+  '無盡長眠': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%84%A1%E7%9B%A1%E9%95%B7%E7%9C%A0.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-ko',0.85]],
+    tint:'rgba(100,80,200,0.18)'
+  },
+  '激戰之舞': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%BF%80%E6%88%B0%E4%B9%8B%E8%88%9E.gif',
+    sfx:[['sfx-sword',1.0],['sfx-crit',0.9]],
+    tint:'rgba(255,80,80,0.15)'
+  },
+  '正義制裁': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%A3%E7%BE%A9%E5%88%B6%E8%A3%81.gif',
+    sfx:[['sfx-shoot',1.0],['sfx-burst',0.85]],
+    tint:'rgba(255,230,100,0.15)'
+  },
+  '星空祝福': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%98%9F%E7%A9%BA%E7%A5%9D%E7%A6%8F.gif',
+    sfx:[['sfx-heal',1.0],['sfx-revive',0.8]],
+    tint:'rgba(120,160,255,0.15)'
+  },
+  '動物大軍': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8B%95%E7%89%A9%E5%A4%A7%E8%BB%8D.gif',
+    sfx:[['sfx-burst',1.0],['sfx-explode',0.85]],
+    tint:'rgba(100,200,80,0.15)'
+  },
+  '負荷超載': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%A0%E8%8D%B7%E8%B6%85%E8%BC%89.gif',
+    sfx:[['sfx-explode',1.0],['sfx-crit',0.9]],
+    tint:'rgba(255,200,50,0.15)'
+  },
+  '四聖降臨': {
+    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%9B%9B%E8%81%96%E9%99%8D%E8%87%A8.gif',
+    sfx:[['sfx-burst',1.0],['sfx-fantasy',0.9]],
+    tint:'rgba(220,180,255,0.18)'
+  },
+  // ★ v1.1.0 — 台灣 10 BOSS 爆發技視覺特效 + 音效
+  // key 對齊 BURST_DB 的 burst.n(含驚嘆號),url 指向 GitHub repo 中對應的 GIF 檔
+  '真神滷肉飯!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9C%9F%E7%A5%9E%E6%BB%B7%E8%82%89%E9%A3%AF.gif',
+    sfx:[['sfx-explode',1.0],['sfx-burst',0.9],['sfx-fantasy',0.7]],
+    tint:'rgba(255,140,60,0.18)'
+  },
+  '金黃糕點轟炸!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%87%91%E9%BB%83%E7%B3%95%E9%BB%9E%E8%BD%9F%E7%82%B8.gif',
+    sfx:[['sfx-bomb-explode',1.0],['sfx-explode',0.85],['sfx-burst',0.7]],
+    tint:'rgba(255,210,80,0.18)'
+  },
+  '千年發酵核爆!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8D%83%E5%B9%B4%E7%99%BC%E9%85%B5%E6%A0%B8%E7%88%86.gif',
+    sfx:[['sfx-explode',1.0],['sfx-fantasy',0.85],['sfx-bomb-explode',0.75]],
+    tint:'rgba(120,180,80,0.20)'
+  },
+  '神木復仇之火!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E6%9C%A8%E5%BE%A9%E4%BB%87%E4%B9%8B%E7%81%AB.gif',
+    sfx:[['sfx-explode',1.0],['sfx-burst',0.85],['sfx-fantasy',0.7]],
+    tint:'rgba(140,200,70,0.18)'
+  },
+  '深海大漩渦!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-ice2',0.85],['sfx-burst',0.7]],
+    tint:'rgba(60,150,220,0.20)'
+  },
+  '永恆藍染詛咒!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B8%E6%81%86%E8%97%8D%E6%9F%93%E8%A9%9B%E5%92%92.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-fantasy',0.85],['sfx-burst',0.65]],
+    tint:'rgba(80,120,220,0.20)'
+  },
+  '波霸珍珠龍捲風!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B3%A2%E9%9C%B8%E7%8F%8D%E7%8F%A0%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif',
+    sfx:[['sfx-rapidfire',1.0],['sfx-explode',0.85],['sfx-burst',0.7]],
+    tint:'rgba(180,100,220,0.18)'
+  },
+  '萬鏡映虛獄!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%90%AC%E9%8F%A1%E6%98%A0%E8%99%9B%E7%8D%84.gif',
+    sfx:[['sfx-fantasy',1.0],['sfx-reflect',0.85],['sfx-burst',0.7]],
+    tint:'rgba(140,200,255,0.18)'
+  },
+  '摩天爆破煙火祭!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%91%A9%E5%A4%A9%E7%88%86%E7%A0%B4%E7%85%99%E7%81%AB%E7%A5%AD.gif',
+    sfx:[['sfx-paralysis-thunder',1.0]], // ★ v1.0.20260501.4690 — 暫用麻痺落雷音效(專屬音效尚未錄製)
+    tint:'rgba(255,230,80,0.20)'
+  },
+  '玉山崩!天裂!': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8E%89%E5%B1%B1%E5%B4%A9%E5%A4%A9%E8%A3%82.gif',
+    sfx:[['sfx-gong',1.0],['sfx-explode',0.95],['sfx-crit',0.85]],
+    tint:'rgba(200,140,80,0.22)'
+  },
+  '血劍·爆破': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%A3%9B%E5%8A%8D.gif',
+    sfx:[['sfx-sword-slash',1.0],['sfx-explode',0.9],['sfx-crit',0.85]],
+    tint:'rgba(180,30,30,0.20)'
+  },
+  '亡靈怨念一擊': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%9D%88%E9%AD%82%E6%94%B6%E5%89%B2.gif',
+    sfx:[['sfx-summon-smoke',1.0],['sfx-explode',0.85],['sfx-heal',0.8]],
+    tint:'rgba(180,180,220,0.22)'
+  },
+  // ★ v3.8.0(2026-05-25) — 黑暗球‧希望型態爆發「黑暗爆破」
+  //   用「召喚上古四凶獸.gif」(黑色暗能量擴散效果)+ 老師提供的擎天爆閃音效
+  '黑暗爆破': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.gif',
+    sfx:[['sfx-darkorb-burst',1.0],['sfx-explode',0.5],['sfx-burst',0.3]],
+    tint:'rgba(80,0,160,0.28)'
+  },
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:ADV_HERO_POOL  (搬自 index.html L55185~L55187)
+// ════════════════════════════════════════════════════════════════
+const ADV_HERO_POOL = {
+  maokong: ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家']
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:ADV_BOSS_TEAMS  (搬自 index.html L55190~L55196)
+// ════════════════════════════════════════════════════════════════
+const ADV_BOSS_TEAMS = {
+  maokong: [
+    {name:'綠竹筍小妖', element:'earth'},
+    {name:'九尾空貓怪', element:'fire'},
+    {name:'茶葉精靈',   element:'grass'}
+  ]
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:ADV_BOSS_VARIANTS  (搬自 index.html L55202~L55208)
+// ════════════════════════════════════════════════════════════════
+const ADV_BOSS_VARIANTS = {
+  maokong: [
+    { id:'cat9tail',  main:'九尾空貓怪', fixedTeam:true },
+    { id:'apricot',   main:'杏花妖',     fixedTeam:false },
+    { id:'darkorb',   main:'黑暗球‧希望型態', fixedTeam:true, soloTeam:true }
+  ]
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:TAIWAN_BOSS_DIALOGS  (搬自 index.html L55652~L55693)
+// ════════════════════════════════════════════════════════════════
+const TAIWAN_BOSS_DIALOGS = {
+  changhua_braised: [
+    {speaker:'BOSS', text:'咕嚕嚕嚕——!香啊!整鍋滷汁滾了三十年從沒涼過!'},
+    {speaker:'BOSS', text:'你也想嚐我的真神滷肉飯嗎?哈哈哈先過我這關再說!'},
+  ],
+  taichung_pineapple: [
+    {speaker:'BOSS', text:'嘩啦——金黃糕點熱浪襲來!太陽餅、鳳梨酥都在冒煙!'},
+    {speaker:'BOSS', text:'敢挑戰本糕師?熱浪烤箱已經 250 度了喔!'},
+  ],
+  shenkeng_tofu: [
+    {speaker:'BOSS', text:'呼——這味道...這就是千年發酵的精華!'},
+    {speaker:'BOSS', text:'你受不了我的臭氣?那就被我封印在豆腐裡吧!'},
+  ],
+  alishan_tree: [
+    {speaker:'BOSS', text:'磔磔磔——三千年的神木,守護阿里山的森林!'},
+    {speaker:'BOSS', text:'凡人膽敢闖入我的領域?根鬚絞殺!神木怒火!'},
+  ],
+  lanyu_octopus: [
+    {speaker:'BOSS', text:'呼嚕嚕嚕——太平洋深處,我在此等候多時!'},
+    {speaker:'BOSS', text:'八條觸手亂舞,你的小船怎麼可能渡得過去!'},
+  ],
+  sanxia_indigo: [
+    {speaker:'BOSS', text:'(緩緩的優雅藍霧)...悲傷...如同藍染般深沉...'},
+    {speaker:'BOSS', text:'看著我的染霧,你也會被憂鬱征服...'},
+  ],
+  ximen_pearl: [
+    {speaker:'BOSS', text:'啵啵啵啵——金屬吸管已就位,黑珍珠機關槍!'},
+    {speaker:'BOSS', text:'你準備被我吸成乾糖份了嗎?咕嚕嚕嚕嚕!'},
+  ],
+  sun_moon_mirror_boss: [
+    {speaker:'BOSS', text:'(湖水波光蕩漾)...你看,鏡中的自己...是真的還是假的?'},
+    {speaker:'BOSS', text:'走進日月潭的水鏡,你將永遠分不清真假!'},
+  ],
+  taipei_101_warlord: [
+    {speaker:'BOSS', text:'轟轟——!擎天神槍蓄勢待發!508 公尺的怒火!'},
+    {speaker:'BOSS', text:'今晚跨年,煙火秀的主角是把你炸飛!'},
+  ],
+  yushan_giant: [
+    {speaker:'BOSS', text:'(地動山搖)...玉山之靈被你驚動了...'},
+    {speaker:'BOSS', text:'你想登上 3952 公尺的巔峰?先過我這座山岳!'},
+  ],
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:BOSS_REACT_BLOCK  (搬自 index.html L69142~L69539)
+// ════════════════════════════════════════════════════════════════
+const BOSS_REACT_CORRECT = [
+  '喵喵？！你居然答對了！本貓不信！',
+  '哼！只是僥倖！下一題你就完了！',
+  '不可能！本貓出的題目怎麼可能這麼容易過！',
+  '嗚嗚嗚……這道題本貓也不太記得了啦！',
+  '切！答對又怎樣！本貓還有一堆題！',
+  '你……你只是猜到的吧？一定是的！',
+  '奇怪！難道你真的很聰明？不行不行，本貓不承認！',
+  '喵!本貓要提高難度了!（才不會）',
+  '呼嚕嚕……好煩，又答對了……',
+  '哎呀！本貓的尾巴氣得都豎起來了！',
+  '居然！這可是本貓親自出的題啊！',
+  '（假裝沒聽到）喵？什麼？你說答對了？沒有的事！',
+];
+// ══ 杏花妖答題反應台詞 ══
+const BOSS_REACT_CORRECT_APRICOT = [
+  '唉呀？居然答對了……哼，一定是運氣啦～',
+  '你、你居然敢答對本仙的題目？真是不懂禮貌的傢伙！',
+  '嗚～本仙的花瓣氣得都蜷起來了啦！',
+  '哼！不過是瞎貓碰上死耗子，本仙的題目才沒這麼簡單呢～',
+  '討、討厭！你怎麼知道答案？該不會在偷看本仙的書本吧！',
+  '不行不行～本仙的妝容都亂了～',
+  '好啦好啦，這題算你運氣好～',
+  '（優雅地搧扇子）算你厲害，本仙賞你一片花瓣～',
+  '唉～答對就算了，反正本仙還有一堆更難的～',
+  '哎呀！居然！本仙要把這題從題庫裡刪掉！',
+];
+const BOSS_REACT_WRONG = [
+  '哈哈哈！答錯了！本貓就知道！',
+  '喵喵哈哈！人類的大腦果然不如貓的鬍鬚！',
+  '哈！太好了！本貓最喜歡看你抓頭的樣子！',
+  '呼嚕呼嚕～這種感覺真是太棒了喵～',
+  '哈哈哈！連這個都不知道？本貓肚子笑痛了！',
+  '啊哈哈！答錯了！本貓的九條尾巴都在搖了！',
+  '嘻嘻嘻，本貓早就猜到你會錯！（得意地轉圈）',
+  '錯了錯了～多答幾次看看，反正本貓不急～',
+  '喵哈哈！這題你竟然不知道？本貓表示非常滿意！',
+  '太棒了！答錯一題本貓心情好一整天！',
+  '（興奮地拍爪子）再錯一次！再錯一次！',
+  '哦？沒想到吧，本貓才是這一帶最博學的貓！',
+];
+const BOSS_REACT_WRONG_APRICOT = [
+  '唉呀呀～果然是凡人的腦子，不堪一擊～',
+  '哼～就說你們配不上本仙的氣質嘛！',
+  '（掩嘴笑）答錯啦～本仙的題目可是千年絕學呢～',
+  '小傻瓜～本仙看你答得這麼認真，還以為會猜對呢～',
+  '唉～真是浪費本仙的花粉，答錯了還這麼得意？',
+  '（搧扇子優雅轉身）答錯了，那就退下吧～',
+  '討厭啦，連這個都不會？本仙懷疑你是不是沒念書呀～',
+  '哼哼！本仙千年養成的智慧，豈是你能碰的～',
+  '錯了錯了～再答錯本仙就要把你變成肥料囉～',
+  '哎呀！你、你這個呆瓜～真是糟蹋了本仙的題目～',
+];
+const BOSS_REACT_TIMEOUT = [
+  '喵哈哈！時間到！連答都不敢答嗎？',
+  '嘿嘿，在倒數時就開始發抖了吧？',
+  '哎唷，時間到了還沒答，是腦袋打結了嗎？',
+  '超時了！本貓的題目太難了吧？嘻嘻！',
+];
+const BOSS_REACT_TIMEOUT_APRICOT = [
+  '唉呀～本仙等得都快睡著了呢～',
+  '時間到囉～連想都想不出來？可憐的小東西～',
+  '（優雅打哈欠）真是浪費本仙寶貴的時間～',
+  '超時啦～本仙可不會等凡人這麼久～',
+];
+
+// ══ v1.0.20260423.0200 — 日本關四大 BOSS 答題反應台詞 ══
+const BOSS_REACT_CORRECT_TENGU = [
+  '哼！凡人偶爾也有點小聰明嘛。',
+  '（羽扇輕搧）此題答對,本座姑且記你一功。',
+  '不錯……能答出本座的題,算你有慧根。',
+  '看來此山的靈氣,也餵養出了些許聰明人。',
+  '算你走運!本座的考題可不是每題都這麼淺的。',
+];
+const BOSS_REACT_WRONG_TENGU = [
+  '哈哈哈！凡人的智慧果然有限！',
+  '（羽扇一揮）連這都答不出,真是辱沒了本座的題目！',
+  '可笑!這種題目本座幼雛時期就會了。',
+  '看來山風把你的腦子也吹糊塗了。',
+  '（冷笑）如此愚昧,也敢登臨本座的山頭？',
+];
+const BOSS_REACT_TIMEOUT_TENGU = [
+  '時間已至,爾竟連一字都答不出？',
+  '（羽扇停滯）本座一陣山風的功夫,都比你思考來得快。',
+  '愚鈍!如此遲鈍之輩也敢來挑戰?',
+];
+
+const BOSS_REACT_CORRECT_SHUTEN = [
+  '哦——?這題竟被你答對了,有點意思！',
+  '（舉起酒杯）敬你這一題！答對的獎勵就是讓你多活一回合！',
+  '哈哈哈!小子挺聰明嘛,來來來,跟咱喝一杯!',
+  '嗯?答對了?那咱可要認真點出題了!',
+  '（大笑）好!有膽識又有腦子,咱欣賞!',
+];
+const BOSS_REACT_WRONG_SHUTEN = [
+  '哈哈哈!答錯啦!來,陪咱喝一杯解解愁!',
+  '（仰頭大笑）人類的腦袋就跟咱的酒一樣——醉了!',
+  '嗝——!連這都不會,難怪只能當咱的點心!',
+  '哎呀呀!這題有那麼難嗎?咱看你是怕了!',
+  '（拍桌大笑）錯啦錯啦!再來一題,咱倒要看看你會幾題!',
+];
+const BOSS_REACT_TIMEOUT_SHUTEN = [
+  '嗝——時間到囉!你連答都不敢答?',
+  '（晃著酒壺）咱一杯酒的功夫,你連題目都還沒讀完?',
+  '哈哈,想太久了吧?咱的酒都要冷了!',
+];
+
+const BOSS_REACT_CORRECT_TAMAMO = [
+  '唉唷～小傢伙答對了呢～妾身有點意外喔～',
+  '（尾巴輕擺）呵呵～這題算你僥倖～',
+  '哼哼～不愧是妾身看上的對手,有點小聰明～',
+  '（嬌笑）答對了也別高興太早～妾身的題還多著呢～',
+  '真是個有趣的孩子～妾身開始捨不得吞掉你了~',
+];
+const BOSS_REACT_WRONG_TAMAMO = [
+  '呵呵～答錯了呢～妾身的狐火要燒到你囉～',
+  '（媚笑）小傻瓜～妾身千年修為的題,豈是你能答?',
+  '唉呀~連這都錯了,妾身可要生氣囉～',
+  '（玩著尾巴）錯啦錯啦~妾身早就看出你不行了~',
+  '呵呵~真是可愛的錯誤呢~妾身笑得尾巴都翹起來了~',
+];
+const BOSS_REACT_TIMEOUT_TAMAMO = [
+  '時間到囉～妾身都快無聊死了呢～',
+  '（優雅撥髮）連想都想不出來？真是無趣的凡人～',
+  '呵呵～妾身等得連狐火都快熄滅了~',
+];
+
+const BOSS_REACT_CORRECT_YAMATA = [
+  '……哼。凡人竟也能答出古之問題,倒也難得。',
+  '（八首齊動）此題答對,吾暫且饒爾一命。',
+  '意外……爾之智慧,遠超吾之預期。',
+  '古老的問題被解開了……爾或許有些本事。',
+  '（低沉龍吟）不錯,吾之題意被爾洞悉了。',
+];
+const BOSS_REACT_WRONG_YAMATA = [
+  '愚昧!此等淺題,爾竟也答錯!',
+  '（八道龍息噴發）爾之智慧,不足以仰望古神!',
+  '哼,凡人終究是凡人,千萬年來一無長進。',
+  '錯——!爾之魂魄,今日便為吾所吞!',
+  '（八首齊笑）如此無知,竟敢踏上富士神山?',
+];
+const BOSS_REACT_TIMEOUT_YAMATA = [
+  '時既已至,爾竟無言以對……吾甚為失望。',
+  '（八首緩緩垂下）凡人的思緒,何其遲鈍。',
+  '沉默……是爾承認失敗之意嗎?',
+];
+
+
+// 1. 油膩魔王・滷汁大鍋(彰化滷肉飯神)— 滷汁大廚口吻
+const BOSS_REACT_CORRECT_LURO = [
+  '哼!算你有兩下子,但這題沒滷汁香!',
+  '什麼!?你居然答對了!不可能!我的滷肉飯之題誰能答!',
+  '可惡!連這道題都被你猜中,本魔王的醬汁要打翻了!',
+  '哎呀,這題我以為很難......你怎麼答對的啊?咕嚕嚕!',
+  '不錯啦小朋友,這題給你過,但下一題我可不會放水!',
+];
+const BOSS_REACT_WRONG_LURO = [
+  '哈哈!答錯啦!你連我的滷汁都不熟,還想當英雄?',
+  '錯啦錯啦!我的滷肉飯之神威可不是隨便答得出來的!',
+  '咕嚕嚕,你的腦袋是不是被滷糊塗了?',
+  '答錯啦!來吃一口我的祕製滷汁清醒一下!',
+  '哼!連這題都答錯,還想阻止我消滅小吃店嗎?',
+];
+const BOSS_REACT_TIMEOUT_LURO = [
+  '滷汁都涼了,你還在想啊?',
+  '時間到!我的鍋子都快滾乾了!',
+  '吼!想這麼久,你的頭髮要被我的蒸氣弄油囉!',
+];
+
+// 2. 酥脆狂魔・熱浪糕師(台中鳳梨酥)— 甜膩糖糖糖
+const BOSS_REACT_CORRECT_PINEAPPLE = [
+  '什麼?!糖糖糖糖......你居然答對了?!',
+  '哎呀!我的糖漿都驚訝得溢出來了!',
+  '這題......這題我以為連大人都答不出來的啊!',
+  '你的腦袋是不是泡過糖蜜?太聰明了!',
+  '可惡!我的糕點王國剛失去一塊酥皮!',
+];
+const BOSS_REACT_WRONG_PINEAPPLE = [
+  '答錯啦!你的腦袋還不夠甜!',
+  '哈哈!糖糖糖糖!連這題都不會!',
+  '好香的答錯味道~我最喜歡了!',
+  '錯啦!還是讓糖漿淋在你頭上,變得更聰明吧!',
+  '酥脆!你答錯的聲音就像我打蛋一樣酥脆!',
+];
+const BOSS_REACT_TIMEOUT_PINEAPPLE = [
+  '糖漿都凝固了,你還在想啊?',
+  '時間到!糕點烤過頭會焦的!',
+  '太慢啦!我的鳳梨酥都變硬了!',
+];
+
+// 3. 臭氣魔王・發酵公(深坑臭豆腐)— 發酵專家
+const BOSS_REACT_CORRECT_TOFU = [
+  '咳咳......沒想到你聞著我的臭氣還能思考?',
+  '可惡!連發酵千年的題目你都答對了!',
+  '你的鼻子是不是壞掉了?居然不被我的臭氣干擾!',
+  '這道題我以為臭得無人能答......你竟然!?',
+  '哼!算你聰明,但下一題你就要被我的臭氣熏暈了!',
+];
+const BOSS_REACT_WRONG_TOFU = [
+  '哈哈!答錯啦!臭氣果然會讓人變笨!',
+  '錯啦!來聞一口我的千年發酵香氣!',
+  '哎呀,你的腦袋是不是被臭氣腐蝕啦?',
+  '答錯了!發酵越久越美味,腦袋發酵會變什麼呢?',
+  '咳咳!連這題都不會,真是讓我這發酵公失望啊!',
+];
+const BOSS_REACT_TIMEOUT_TOFU = [
+  '咳咳,時間到!臭氣已經滲進你腦子了吧?',
+  '太慢啦!我的豆腐都長出新菌種了!',
+  '想這麼久,你的衣服都沾上臭味囉!',
+];
+
+// 4. 山靈古魔・千年怒木(阿里山神木)— 古老森林精
+const BOSS_REACT_CORRECT_TREE = [
+  '沙......沙......你居然......聽懂了我的問題......?',
+  '千年的智慧......不該被你這小娃娃猜到的......',
+  '可惡的人類......連我神木的考題都能解!',
+  '哼,算你還有點慧根,讓我的根鬚多放你一回合!',
+  '不可能......此題乃我千年沉睡時所悟的啊!',
+];
+const BOSS_REACT_WRONG_TREE = [
+  '沙......你的根還不夠深......',
+  '答錯啦!你的智慧還沒長到我的樹冠那麼高!',
+  '可笑的小生命......連這題都不會!',
+  '錯啦!讓我的根鬚再纏緊你一些,看你會不會醒過來!',
+  '哼,你的腦袋大概只有種子那麼小吧?',
+];
+const BOSS_REACT_TIMEOUT_TREE = [
+  '沙......時間如年輪,永不停轉......你卻在原地......',
+  '太慢了......我的葉子都掉光了......',
+  '哼,連回答都不敢,讓我的根鬚送你入土!',
+];
+
+// 5. 深海惡靈・觸手大蛟(蘭嶼章魚)— 深海觸手妖
+const BOSS_REACT_CORRECT_OCTOPUS = [
+  '什麼?!你居然從我的觸手陷阱中找到答案?!',
+  '可惡的小東西!八條觸手都按不住你的聰明!',
+  '咕嚕嚕!海底的奧秘怎麼會被你看穿?',
+  '哼!算你運氣好,我的吸盤這次沒吸住你的腦袋!',
+  '答對啦!可惡,我要重新派觸手包圍你!',
+];
+const BOSS_REACT_WRONG_OCTOPUS = [
+  '哈哈!掉進我的觸手裡了吧!',
+  '錯啦!你的腦袋已經被我的吸盤吸住了!',
+  '咕嚕嚕,連這題都答錯,你還是回去學游泳吧!',
+  '可笑!你連海面下的波浪都看不透!',
+  '哎呀,你的智商和小魚一樣淺!',
+];
+const BOSS_REACT_TIMEOUT_OCTOPUS = [
+  '咕嚕嚕,時間到!你已經沉到海底了!',
+  '太慢啦!八條觸手已經把你綁緊了!',
+  '哎呀,連思考的時間都拖,你被海水嚇到了嗎?',
+];
+
+// 6. 染靈幻魔・藍色憂鬱(三峽藍染)— 憂鬱詩意
+const BOSS_REACT_CORRECT_INDIGO = [
+  '唉......你居然答對了,本仙的憂鬱要更深了......',
+  '為何......為何你能看穿我的藍色幻象......?',
+  '哼,別得意,本仙的憂鬱可不會因此消失~',
+  '本仙......被你的聰明染上了一層淡淡的悲傷......',
+  '可惡的人類,連藍染詩意都被你解開了!',
+];
+const BOSS_REACT_WRONG_INDIGO = [
+  '唉~果然,凡人答不出本仙的詩意題目......',
+  '錯啦~讓本仙再用藍染霧霾染你一次吧~',
+  '哎呀,你的腦袋是不是被藍色染料弄糊塗了?',
+  '答錯了~讓憂鬱之歌將你的智慧帶走......',
+  '凡人啊,你連藍的奧秘都不懂呢~',
+];
+const BOSS_REACT_TIMEOUT_INDIGO = [
+  '時間如染料,慢慢滴落......你卻在發呆......',
+  '唉~等得本仙的憂鬱又加深了一層......',
+  '太慢啦~憂鬱之歌都唱完一遍了!',
+];
+
+// 7. 珍奶吸魂魔・大波霸(西門町珍奶)— QQ 飲料
+const BOSS_REACT_CORRECT_PEARL = [
+  '什麼?!你居然吸出了答案的珍珠?!',
+  '可惡!我的吸管都吸不住你的聰明!',
+  'QQ!連這題都被你嚼出味道!',
+  '哼!算你有兩下,但下次我要派出更大的波霸!',
+  '不可能!這題的答案我吸了一晚上才想出來的!',
+];
+const BOSS_REACT_WRONG_PEARL = [
+  '哈哈!QQ!答錯了還想嚼?',
+  '吸管失敗!你的腦袋連珍珠都吸不出來!',
+  '錯啦錯啦!讓我用吸管把你的靈魂吸個乾淨!',
+  '哎呀,你連這題都不會,還喝什麼珍奶?',
+  '答錯啦!你的智慧像奶茶一樣稀薄!',
+];
+const BOSS_REACT_TIMEOUT_PEARL = [
+  'QQ......時間到!連嚼都不嚼就過了!',
+  '太慢啦!我的珍珠都沉到杯底了!',
+  '哎呀,想這麼久,珍奶都涼了!',
+];
+
+// 8. 水靈反魔・倒映女(日月潭)— 鏡像虛實
+const BOSS_REACT_CORRECT_MIRROR = [
+  '什麼?!你居然看穿了鏡子的虛實?!',
+  '不可能!連我的鏡像分身都騙不過你?!',
+  '哼!水中的倒影居然被你打破了!',
+  '可惡的人類......你的眼睛比鏡子還清澈?',
+  '算你運氣好,但下一題的鏡像會更撲朔迷離!',
+];
+const BOSS_REACT_WRONG_MIRROR = [
+  '哈哈!掉進鏡像迷宮了吧!',
+  '錯啦!你的眼睛被假象迷惑了!',
+  '可笑!連鏡子的真假都分不清!',
+  '答錯了~讓鏡像再分裂出更多影子讓你混亂!',
+  '哎呀,你看的是我的倒影,還是自己的笨樣?',
+];
+const BOSS_REACT_TIMEOUT_MIRROR = [
+  '時間如水波,過了就不再回來......',
+  '太慢啦!我的鏡子都映出你的呆樣了!',
+  '哎呀,連時間都困住了你?',
+];
+
+// 9. 摩天魔將・夜空爆裂者(101)— 高塔爆裂
+const BOSS_REACT_CORRECT_SKYBREAKER = [
+  '什麼?!連我擎天的考題都被你答對?!',
+  '不可能!101 層的智慧豈是你能登上的?!',
+  '可惡!我的煙火都被你的聰明壓熄了!',
+  '哼!算你有種,但下一題我要點燃整片夜空!',
+  '答對啦?可惡!我的爆裂能量還沒蓄滿呢!',
+];
+const BOSS_REACT_WRONG_SKYBREAKER = [
+  '哈哈!答錯了吧!連 1 樓的智慧都不到!',
+  '錯啦!讓我的煙火炸醒你的腦袋!',
+  '可笑!你的智慧連夜空都照不亮!',
+  '答錯了!來看看我的擎天爆閃吧!',
+  '哎呀,你連這簡單的題目都不會,還想登 101?',
+];
+const BOSS_REACT_TIMEOUT_SKYBREAKER = [
+  '時間到!我的煙火都快蓄滿了!',
+  '太慢啦!夜空都要亮了!',
+  '哎呀,連思考都不會,等我的爆閃迎接你吧!',
+];
+
+// 10. 山岳禁咒・崩天巨人(玉山)— 山岳沉重
+const BOSS_REACT_CORRECT_YUSHAN = [
+  '隆隆隆!不可能!玉山的禁咒怎會被你解開?!',
+  '什麼?!連山岳之心的奧秘都被你看穿?!',
+  '可惡的小生命!連台灣最高峰的智慧都不放過!',
+  '哼!算你有眼力,但下一題我會用整座山壓垮你!',
+  '不可能!這題的答案我藏在玉山之巔啊!',
+];
+const BOSS_REACT_WRONG_YUSHAN = [
+  '隆隆!答錯了吧!你的智慧連山腳都到不了!',
+  '錯啦!讓落石鐵拳教教你怎麼想答案!',
+  '可笑的人類!連這道題都不懂!',
+  '哎呀,你的腦袋比石頭還硬,卻沒石頭聰明!',
+  '答錯啦!整座山都在嘲笑你!',
+];
+const BOSS_REACT_TIMEOUT_YUSHAN = [
+  '隆隆隆,時間如山岩風化......你卻動也不動!',
+  '太慢啦!我的岩石護甲都生鏽了!',
+  '哎呀,等你想出來,山都崩了!',
+];
+
+// ★ v3.8.1(2026-05-26) — 木柵第三隻 BOSS:黑暗球‧希望型態 — 暗黑、絕望
+const BOSS_REACT_CORRECT_DARKORB = [
+  '……竟然答對了?光明還沒被吞噬殆盡嗎……',
+  '可惡……連這小小的希望也撕不掉嗎……',
+  '哼……不過是僥倖,下一題就讓你回歸黑暗。',
+  '我的黑暗能量被你的光輝刺痛了……',
+  '……再答對下去,我的分身就要失控了……',
+];
+const BOSS_REACT_WRONG_DARKORB = [
+  '哈……你看,希望正在慢慢崩塌……',
+  '錯啦……就讓我把這份愚蠢吞進次元裂縫吧……',
+  '哼,連這種題目都答不出,難怪會被我盯上……',
+  '答錯了……你的光,即將被我吞噬殆盡……',
+  '......就是這樣,把你最後的希望也丟進來吧。',
+];
+const BOSS_REACT_TIMEOUT_DARKORB = [
+  '時間,就跟希望一樣……都是可以吞噬的……',
+  '猶豫了嗎?那正好……黑暗最愛猶豫的靈魂……',
+  '太慢了……次元裂縫已經張開了口……',
+];
+
+const BOSS_REACT_CORRECT_TAIWAN = [
+  '哼!算你有點本事,這題的答案被你猜到了!',
+  '可惡!沒想到台灣的小英雄這麼厲害!',
+  '什麼?這題我以為很難欸~你怎麼答對的!',
+  '不錯不錯,看來你對台灣這片土地真的有研究!',
+  '哼,別得意!下一題我會出更難的!',
+];
+const BOSS_REACT_WRONG_TAIWAN = [
+  '哈哈哈!答錯了吧!台灣的奧秘豈是你能猜透的?',
+  '太簡單的題目你都答錯,真是讓我失望!',
+  '錯啦錯啦!這就是你對台灣的了解嗎?',
+  '哼哼~就這點實力也想挑戰我?還早得很呢!',
+  '答錯啦!看我接下來怎麼修理你!',
+];
+const BOSS_REACT_TIMEOUT_TAIWAN = [
+  '時間到啦!連想都想不出來嗎?',
+  '哎呀,這麼簡單也要想這麼久?',
+  '哈哈,小英雄被我的氣場震懾住了嗎?',
+];
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_CATEGORIES_OVERRIDE  (搬自 index.html L82810~L82890)
+// ════════════════════════════════════════════════════════════════
+const HERO_CATEGORIES_OVERRIDE = {
+  '占星師':      ['heal'],
+  '武鬥家':      ['dmg'],
+  '陰陽師':      ['dmg','ctrl'],
+  '學者':        ['dmg','ctrl'],
+  '光法師':      ['dmg','heal','ctrl'],
+  '吸血鬼':      ['dmg','heal'],
+  '弦樂團員':    ['dmg','heal'],
+  '動物學家':    ['ctrl'],
+  '神射手':      ['dmg','ctrl'],
+  '大力士':      ['dmg','ctrl'],
+  '軍師':        ['ctrl'],
+  '直笛團員':    ['heal','ctrl'],
+  '程式設計師':  ['dmg','heal','ctrl'],
+  '時空法師':    ['ctrl'],
+  '電腦繪圖師':  ['dmg','ctrl'],
+  // ★ v1.0.20260424.0710 — 小力(回復), 幼兒園小孩(控場)
+  // ★ v1.0.20260428.1500 — 小力職能正式調整為「回復+坦克」(忠犬守護=分擔傷害=坦克)
+  '小力':        ['heal', 'ctrl'],
+  '幼兒園小孩':  ['ctrl'],
+  // ★ v1.0.20260512.6200 — 補齊新角色篩選分類(依 s1/s2/爆發/天賦 整體特色判定)
+  // 校園/特殊
+  '田徑隊員':    ['dmg','heal'],   // s2傳遞下一位友方+50%傷害/治療、爆發全體傷害
+  // 日本關角色
+  '巫女':        ['heal','ctrl'],   // 神籤回血+buff、神樂舞解控+回血、破魔矢易傷
+  '大天狗':      ['dmg','ctrl'],    // 5連擊+暈眩+全體減速
+  '酒吞童子':    ['dmg','heal'],    // 鬼王酒宴大傷害+回血+轉移、乾杯天賦全隊回血
+  '玉藻前':      ['dmg','ctrl'],    // 全體傷害+強力魅惑+魅惑傷害轉回血
+  // 學生設計系列
+  '窮奇':        ['dmg','ctrl'],    // 巨爪+流血、死亡之吼瀕死、爆發強力不利狀態
+  '科技生化人':  ['dmg','heal','ctrl'], // 機械爪+科技能量(治療+buff)+輻射核砲(傷害+虛弱)
+  '鋁合金暴龍':  ['dmg','heal'],    // 鋁鎧減傷、炸彈四重奏附帶治療、死神龍王秒殺+buff
+  '超鬼神王':    ['dmg','ctrl'],    // 全體暈眩+中毒+不治詛咒+秒殺+吞噬buff
+  '雙星姊妹':    ['dmg','heal'],    // 雙形態:治療型/輸出型;追擊傷害
+  '暗魔將·血':  ['dmg','heal'],    // 血劍·防全免疫、血劍·攻全體+集火爆擊
+  // ★ v1.0.20260512.6210 — 5 年 2 班許同學設計
+  '死靈法師':    ['dmg','heal'],    // S1隱形+持續療癒、S2復活、爆發倒下次數疊乘傷害+轉治療
+  // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
+  '布奶鳥獸':    ['dmg','heal'],    // S1全體傷害+吸血+護盾、S2 200%治療復活、爆發 9 連擊;天賦普攻雙倍
+  // ★ v1.0.20260514.6550 — 5 年 4 班劉同學設計
+  '炸彈客':      ['dmg'],           // S1/S2/爆發全是固定值傷害+目標HP%,純輸出型(無治療、無控制)
+  // ★ v1.0.20260514.6660 — 5 年 4 班陳同學設計
+  '紅色玩家':    ['dmg','ctrl'],    // S1必中爆殺、S2反域(全隊保護+反彈控場)、爆發無敵+3倍輸出
+  // ★ v1.0.20260514.6770 — 5 年 4 班黃同學設計
+  '地府酋長':    ['dmg','ctrl'],    // S1審判終結秒殺(非BOSS)+BOSS%HP傷害、S2全體+流血、爆發全體+指定追擊+禁動;天賦疊層特技
+  '救醫馬':      ['heal','ctrl'],   // ★ v6880 — 純後援王:S1 三回合不倒+免疫不利、S2 不治詛咒、爆發三效合一全隊治療
+  // ★ v1.0.20260515.6890 — 6 年 2 班林同學設計
+  '水狐':        ['dmg','heal'],    // S1 召喚水精靈雙線(治療+傷害)、S2 蛟龍出海全體 2 段、爆發全體巨傷+全隊治療+解不利
+  // ★ v1.0.20260515.6900 — 6 年 5 班董同學設計
+  '米鈴':        ['heal'],          // 純後援:三層淨化+反擊輸出,爆發「茶會」buff 持續反制不利狀態
+  // ★ v1.0.20260518.6920 — 5 年 2 班簡同學設計
+  '學霸(轉學生)':['dmg','heal'],    // S1 固定值連擊輸出、S2 全隊治療+速度buff、爆發 全隊免傷蓄壓→反擊
+  // ★ v1.0.20260518.6930 — 5 年 4 班歐同學設計
+  '天神宙斯':    ['dmg','ctrl'],    // S1 雷屬性連擊+封印+特技降、S2 全體 3 次雷+%HP、爆發 非BOSS秒殺+BOSS%HP;天賦麻痺
+  // ★ v1.0.20260519.7100 — 5 年 5 班吳同學設計
+  '維京海盜船長':['dmg','ctrl'],    // S1 多段隨機傷害 + S2 鎖定剋天賦 + 爆發全體強力封印技能
+  // ★ v3.4.11 — 5 年 5 班朱同學設計
+  '武器精靈':    ['dmg'],            // 純輸出:S1 重擊+暈眩、S2 必中無視有利雙射、爆發全體必中(單體×2)
+  // ★ v3.4.11 — 5 年 4 班莊同學設計
+  '神槍手':      ['dmg','heal'],     // 高速攻擊 + 天賦提供全隊護盾(算 heal 類)
+  // ★ v1.0.20260522.7300 — 5 年 3 班張同學設計
+  '火柴人':      ['dmg','heal','ctrl'], // 天賦火屬性反擊(dmg) + S2 全體治療+迴避(heal) + 爆發全體強力魅惑(ctrl)
+  // ★ v3.5.49 — 5 年 3 班蔣同學設計(設計單指定 dmg, heal,加上 S2 燃燒/S1 扣能量算 ctrl)
+  '青炎龍王':    ['dmg','heal','ctrl'], // 天賦藍焰護盾(heal) + S1 自損 AOE 扣能量(dmg+ctrl) + S2 反擊燃燒(dmg+ctrl) + 爆發 AOE+復活+迴避(dmg+heal)
+  // ★ v3.5.60 — 5 年 4 班 04 號李同學設計(設計單指定:傷害、回復、控場)
+  '鳳凰':        ['dmg','heal','ctrl'], // 天賦自動復活+成長(heal 類自救) + S1/S2 火屬性 DoT(dmg+ctrl) + 爆發 5次AOE+熾羽DoT(dmg+ctrl)
+  // ★ v3.5.60 — 5 年 2 班 11 號江同學設計(設計單指定:傷害、控場)
+  '操偶師':      ['dmg','ctrl'], // S1 全隊強護盾(算 ctrl 防護向) + S2 高速消有利狀態(dmg+ctrl) + 爆發大盾接管(ctrl 守護向)
+  // ★ v3.5.68 — 5 年 3 班 14 號張同學設計(設計單指定:傷害、回復)
+  '菇女':        ['dmg','heal'], // 天賦魔菇 40 固定傷害(dmg) + S1 100% 治療+強化術(heal) + S2 強迫友方爆發(heal-推進) + 爆發 雙效散花 10次傷害+10次治療(dmg+heal)
+  // ★ v3.10.12 — 5 年 1 班 林同學設計(設計單指定:傷害、控場)
+  '小丑':        ['dmg','ctrl'], // 天賦小丑面具自身增傷+敵方易傷(dmg+ctrl) + S1 燃燒+恐懼(dmg+ctrl) + S2 高倍率單體+1回合無敵(dmg) + 爆發 BOSS殺+引爆面具+強力暈眩(dmg+ctrl)
+  // ★ v3.10.14 — 3 年 1 班 采漩設計(設計單指定:傷害、回復)
+  '美人魚‧角角': ['dmg','heal'], // 天賦每回合全體治療+解除燃燒(heal) + S1 240% 彈射+濕潤(dmg+ctrl) + S2 40%×3 全體連射(dmg) + 爆發 80%×10 隨機+解燃燒+全體火免疫(dmg+heal)
+  // ★ v3.11.6 — 火爆女:暴擊堆疊型物理輸出 + AoE 必中無視 + 三連必爆爆發
+  '火爆女':       ['dmg','ctrl'], // 天賦暴擊率堆疊+能量充電(dmg) + S1 (atk+sp)×150% 暴擊即死/2x(dmg) + S2 sp400% 全體必中無視有利(dmg) + 爆發 (atk+sp+spd)×200% 三連必中必爆+出血(dmg+ctrl)
+  '幽幽':         ['dmg','heal'], // 天賦特技代普攻(dmg) + S1 剩半血/吞食擊殺回血轉護盾(dmg+heal) + S2 暗行無敵+傷害翻倍(dmg) + 爆發 全敵惡夢受傷x2+全友遊魂減傷(dmg+heal)
+  '網路駭客':     ['dmg','ctrl','heal'], // ★ v3.11.20 天賦竊取攻特+每回合debuff(dmg+ctrl) + S1消除增益+護盾(ctrl) + S2全體debuff升級(ctrl) + 爆發奪取+三連傷害轉治療(dmg+heal)
+  // ★ v3.12.8 — 5 年 2 班 13 號羅同學設計(死神,72 號英雄)
+  '死神':         ['dmg','ctrl'], // 天賦免疫即死+反彈(dmg) + S1/S2 雙倒下小怪/召喚/分身(dmg+ctrl) + 爆發 1000%平分+60%倒下(dmg+ctrl)
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:HERO_HEX_OVERRIDE  (搬自 index.html L82898~L83029)
+// ════════════════════════════════════════════════════════════════
+const HERO_HEX_OVERRIDE = {
+  // 純輸出型(回復低、控制低)
+  '劍士':        { heal: 1, ctrl: 2 },   // 純輸出,僅暈眩1回合
+  '武鬥家':      { heal: 2, ctrl: 2 },   // 反擊為主,死鬥自救但不算治療給隊友
+  '武士':        { heal: 1, ctrl: 2 },   // 反擊+追擊,純輸出
+  '凡人':        { heal: 4, ctrl: 4 },   // 模仿型,不固定
+  '籃球隊員':    { heal: 4, ctrl: 2 },   // 暴擊+多次+全隊速度50%
+
+  // 高回復型(治療+護盾+buff+復活)
+  '祭司':        { heal: 10, ctrl: 1 },   // 治癒+淨化+復活+免疫
+  '聖騎士':      { heal: 9, ctrl: 2 },    // S1治癒+S2全隊減傷+爆發無敵+40%HP
+  '木靈使':      { heal: 10, ctrl: 2 },   // HP+20%+全治癒+不倒再生
+  '煉金術師':    { heal: 9, ctrl: 1 },    // 賢者之石完全治癒+免疫倒下+物品強化
+  '吸血鬼':      { heal: 9, ctrl: 2 },    // 嗜血+轉化+鮮血契約
+  '占星師':      { heal: 9, ctrl: 1 },    // 補能量+星空祝福不消耗+轉禍為福
+  '酒吞童子':    { heal: 9, ctrl: 1 },    // 乾杯40%全隊回血+鬼王酒宴吸血+回血
+  '弦樂團員':    { heal: 10, ctrl: 4 },   // 雙小提琴回血+流浪者必中+弦護消不利
+  '吟遊詩人':    { heal: 9, ctrl: 8 },    // 治癒+復活+護盾+全體睡眠
+  '光法師':      { heal: 8, ctrl: 7 },    // 日月同輝雙效+失明+審判
+  '電腦繪圖師':  { heal: 9, ctrl: 7 },    // 護盾+隨機buff+消有利狀態+萬物創生
+  '程式設計師':  { heal: 9, ctrl: 4 },    // 邏輯優化清debuff+回血+免疫+全體+3
+  '雙星姊妹':    { heal: 10, ctrl: 1 },   // 雙形態治療(可復活)+護盾,追擊狀態算傷害向不算控制 → 控制重新評為 1
+  '巫女':        { heal: 9, ctrl: 6 },    // 神籤回血+神樂舞解控+破魔矢易傷
+
+  // 高控制型(不利狀態給滿)
+  '冰法師':      { heal: 1, ctrl: 10 },   // 冰凍/緩速/強力冰凍
+  '雷法師':      { heal: 1, ctrl: 9 },    // 麻痺/強力麻痺/雷鏈
+  '暗法師':      { heal: 1, ctrl: 10 },   // 封印/死亡宣告/禁療
+  '火法師':      { heal: 1, ctrl: 8 },    // 燃燒+消buff+強力燃燒
+  '神射手':      { heal: 1, ctrl: 8 },    // 必中+禁動陷阱+強力陷阱
+  '警長':        { heal: 1, ctrl: 10 },   // 物品查封+延後+反彈+強力查封
+  '時空法師':    { heal: 1, ctrl: 10 },   // 全體禁動+時間倒轉+禁療+禁復活
+  '陰陽師':      { heal: 1, ctrl: 9 },    // 治療減半+受傷+50%+四聖獸
+  '大力士':      { heal: 2, ctrl: 8 },    // 暈眩+強力昏迷+怒火
+  '軍師':        { heal: 3, ctrl: 8 },    // 補能量+疑惑+不利戰場卡+逆轉
+  '學者':        { heal: 2, ctrl: 8 },    // 消buff+雙倍特技反擊+奪能量
+  '舞者':        { heal: 7, ctrl: 8 },    // 增傷buff+省能buff+魅惑+操控
+  '神偷':        { heal: 1, ctrl: 6 },    // 偷狀態+命中降低(非強控制)
+  '大天狗':      { heal: 1, ctrl: 7 },    // 強力暈眩+減速
+  '玉藻前':      { heal: 6, ctrl: 10 },   // 強力失明+魅惑+被魅惑傷害轉回血
+  '超鬼神王':    { heal: 1, ctrl: 10 },   // 暈眩+中毒+不治詛咒+吞噬buff+秒殺
+  '窮奇':        { heal: 1, ctrl: 9 },    // 流血+隨機強力不利+四凶獸+反擊
+  '科技生化人':  { heal: 7, ctrl: 1 },    // 70%治療+全隊+3,鏈鎖反應與虛弱算傷害向不算控制 → 控制重新評為 1
+
+  // 中等型 / 特殊型
+  '刺客':        { heal: 6, ctrl: 6 },    // 隱身療傷+出血+中毒+劇毒
+  '守衛':        { heal: 7, ctrl: 7 },    // 代替承傷+減傷=回復向 + 強力挑釁
+  '機械師':      { heal: 7, ctrl: 4 },    // 負荷超載50%回血+觸電麻痺+爆炸範圍
+  '動物學家':    { heal: 7, ctrl: 3 },    // 寵物保護+減傷+召喚(無不利狀態)
+  '小劇團員':    { heal: 4, ctrl: 7 },    // 隨機buff+挑釁+失明+被攻擊機率高
+  '直笛團員':    { heal: 7, ctrl: 9 },    // 持續恢復5回+魔音(減能量)+中毒+狂亂
+  '幼兒園小孩':  { heal: 7, ctrl: 9 },    // 護盾+睡眠每回25%回血+攻特降-25%+持續恢復
+  '田徑隊員':    { heal: 5, ctrl: 5 },    // 速度+50%buff+免疫減速+傷害提升50%
+  '鋁合金暴龍':  { heal: 8, ctrl: 5 },    // 鋁鎧減傷+炸彈四重奏附帶治療+死神祝福buff
+
+  // ★ v1.0.20260511.6130 — 5 年 2 班鐘同學設計
+  '暗魔將·血':  { heal: 5, ctrl: 4 },    // S1+爆發雙重免疫(中強回復向);天賦雙DoT+S2集火爆擊(中度控制)
+
+  // ★ v1.0.20260512.6210 — 5 年 2 班許同學設計
+  '死靈法師':    { heal: 9, ctrl: 1 },    // S1+S2+爆發+天賦皆強治療/復活向(隱形+持續療癒+復活死靈型態+傷害轉治療);控制極低
+
+  // ★ v1.0.20260513.6460 — 5 年 5 班高同學設計
+  //   傷害向中高(S1全體+爆發9連擊+天賦雙倍普攻),回復中(S2 200%治療+S1吸血溢護盾),控制極低
+  '布奶鳥獸':    { heal: 7, ctrl: 1 },
+
+  // ★ v1.0.20260514.6550 — 5 年 4 班劉同學設計
+  //   純爆破手:S1/S2/爆發全是固定值+目標HP%傷害(無視有利、不受屬性、不暴擊);無治療無控制
+  '炸彈客':      { heal: 1, ctrl: 1 },
+
+  '紅色玩家':    { heal: 0, ctrl: 5 },
+
+  '地府酋長':    { heal: 0, ctrl: 8 },
+  '救醫馬':      { heal: 10, ctrl: 6 },  // ★ v6880 — 三大效果合一爆發+S1強保護=回復滿值;S1免疫+S2禁療=中度控場
+  '水狐':        { heal: 9, ctrl: 5 },
+  '米鈴':        { heal: 10, ctrl: 2 },
+  '學霸(轉學生)':{ heal: 8, ctrl: 3 },
+  '天神宙斯':    { heal: 0, ctrl: 10 },
+  '維京海盜船長':{ heal: 0, ctrl: 8 },
+  // ★ v3.4.11 — 武器精靈:純輸出型,S1 暈眩 1 回合(中等控制,單一狀態)、無治療
+  '武器精靈':    { heal: 1, ctrl: 4 },
+  // ★ v3.4.11 — 神槍手:速攻型 + 天賦持續護盾全隊
+  //   heal=5:天賦戰開全體 30 護盾 + 行動後最低 HP 友方 30 護盾(持續性護盾向)
+  //   ctrl=5:爆發強力失明+燃燒 2 個強控,但 S1/S2 無控制
+  '神槍手':      { heal: 5, ctrl: 5 },
+  // ★ v1.0.20260522.7300 — 火柴人:火屬性反擊型 + 自損照亮全場
+  //   heal=7:S2 全體治療 125%(可復活 1 名)+ 全體 30% 迴避 2 回合,治療+buff 雙重
+  //   ctrl=5:爆發全體強力魅惑 1 回合(無法免疫)+ 天賦反擊算次要控
+  '火柴人':      { heal: 7, ctrl: 5 },
+  // ★ v3.5.49 — 青炎龍王:守護型火屬性龍王 + 自損 AOE
+  //   heal=8:天賦自動護盾(HP<20% 友方)+爆發倒下友方 30% 復活+全友迴避 2T
+  //   ctrl=4:S1 扣對手 4 能量(算強控)+ S2 燃燒 2T、無暈眩/封印/麻痺等硬控
+  '青炎龍王':    { heal: 8, ctrl: 4 },
+  // ★ v3.5.60 — 鳳凰:火屬性 DoT 控場 + 自我復活成長型
+  //   heal=6:天賦自動滿血復活 1 次(自救向)+ 被復活時永久 +2/+2/+2 加值,無對隊友的治療
+  //   ctrl=7:S1 燃燒+減療 4T 雙 debuff、S2 全敵灼燒 2T+對 debuff 目標傷害 +50%、爆發熾羽 DoT 可疊 5 層
+  '鳳凰':        { heal: 6, ctrl: 7 },
+  // ★ v3.5.60 — 操偶師:坦克輸出二刀流 + 永久傀儡代承傷害
+  //   heal=8:天賦永久操偶代承傷害(HP×150% 第二條)+ 爆發進化大盾接管全隊
+  //   ctrl=4:S1 全隊 100 護盾(防護向)+ S2 消除有利狀態(算次要控制),無暈眩/封印/麻痺等硬控
+  '操偶師':      { heal: 8, ctrl: 4 },
+  // ★ v3.5.68 — 菇女:純後援治療強化型 + 終極推進型支援
+  //   heal=10:天賦倒下時自復活 + S1 100%治癒+強化術 + S2 強迫友方爆發(等於額外輸出) + 爆發 10次治療散花,雙效全滿
+  //   ctrl=2:S2 強力暈眩 2 回合 是「對自己友方」的代價設計,非攻擊性控制 → 算 1;不會給敵方任何不利狀態
+  '菇女':        { heal: 10, ctrl: 1 },
+  // ★ v3.10.12 — 小丑:面具堆疊輸出型 + BOSS殺手 + 控場
+  //   heal=1:無治療,S2 自身免疫傷害+不利狀態是自保不算 heal
+  //   ctrl=9:天賦堆悲傷面具增傷敵方(持續性控)+ S1 燃燒+恐懼(雙 debuff)+ 爆發引爆面具+強力暈眩
+  '小丑':        { heal: 1, ctrl: 9 },
+  // ★ v3.10.14 — 美人魚‧角角:全體治療型 + 火焰純剋星 + 控場輔助
+  //   heal=10:天賦每回合 sp40% 全體治療+解燃燒 + 爆發解全體燃燒+全體火免疫 2T,治療向全滿
+  //   ctrl=6:S1 濕潤(冰凍/麻痺機率+50%,屬輔助控)+ S2 全體 ×3 連射輻射壓制 + 爆發強力火免疫(防護向控場)
+  '美人魚‧角角': { heal: 10, ctrl: 6 },
+
+  // ★ v3.11.6 — 火爆女:暴擊堆疊型物理輸出 + AoE 必中無視 + 三連必爆爆發
+  //   heal=1:完全沒回復(純輸出)
+  //   ctrl=4:S1 暴擊即死(非 BOSS,屬重控)+ 爆發出血 DoT(輕控)
+  '火爆女':      { heal: 1,  ctrl: 4 },
+  // ★ v3.11.19 — 幽幽:S1 吞食擊殺回血轉護盾(heal 中)+ 爆發全友減傷70%(防護→heal);ctrl:爆發惡夢/S2無敵(中控)
+  '幽幽':        { heal: 6,  ctrl: 5 },
+  '網路駭客':    { heal: 6,  ctrl: 9 },   // ★ v3.11.20 控場主軸(消增益/全體debuff升級/每回合附debuff)+爆發傷害轉治療
+  // ★ v3.12.8 — 死神:純暗系輸出 + 多重「直接倒下」重控(對 BOSS 改傷害不秒殺)
+  //   heal=1:無回復(純輸出)/ ctrl=8:S1/S2/爆發三路徑都帶「倒下」效果,屬重控(僅次於小丑 ctrl=9)
+  '死神':        { heal: 1,  ctrl: 8 },
+
+  // 校犬(特殊雙滿)
+  '小力':        { heal: 10, ctrl: 9 },   // 忠犬守護(分擔傷害=坦克) + 愛護校犬(每回合回血) + 夾尾皺眉(全體禁傷害技)
+  // 台灣 3 BOSS(維持原本的覆寫不動)
+  '杏花妖':      { heal: 7, ctrl: 10 },
+  '山岳禁咒・崩天巨人': { heal: 1,  ctrl: 10 },
+  '臭氣魔王・發酵公':   { heal: 1,  ctrl: 9 },
+  '油膩魔王・滷汁大鍋': { heal: 9,  ctrl: 5 },
+};
+
+// ════════════════════════════════════════════════════════════════
+// 區塊:_TRAIT_LV_INFO  (搬自 index.html L92748~L92847)
+// ════════════════════════════════════════════════════════════════
+const _TRAIT_LV_INFO = {
+  '劍士':    { base:'30%再行動', bonus:'+4%/天賦級', max:'50%（Lv5）', effect:'普攻後再行動1次的機率' },
+  '祭司':    { base:'60%治療', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後治癒HP最低隊友的機率' },
+  '聖騎士':  { base:'60%格擋', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受傷時格擋減傷50%的機率' },
+  '火法師':  { base:'60%焚燒', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後消除目標有利狀態的機率' },
+  '冰法師':  { base:'60%緩速', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標速度-50%的機率' },
+  '雷法師':  { base:'60%雷鏈', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後對全體敵人造成等量傷害的機率' },
+  '光法師':  { base:'60%目眩', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標失明1回合的機率' },
+  '暗法師':  { base:'60%封魔', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後封印目標技能1回合的機率' },
+  '神射手':  { base:'60%佈陷', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後佈置陷阱免疫下一次普攻的機率' },
+  '神偷':    { base:'50%掠奪', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'普攻後奪取目標有利狀態或寵物的機率' },
+  '刺客':    { base:'60%劇毒', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標中毒2回合的機率' },
+  '守衛':    { base:'30%分攤傷害', bonus:'+5%/天賦級', max:'55%（Lv5）', effect:'挺身守護觸發後，代為分攤的傷害比例' },
+  '吟遊詩人':{ base:'60%頌歌', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後恢復友方全體10%HP的機率' },
+  '舞者':    { base:'60% 迷戀', bonus:'+4%/天賦級', max:'76%(Lv5)', effect:'普攻使目標攻擊和特技 -25%、持續 1 回合的機率' },
+  '警長':    { base:'60%制裁', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標行動退到最後的機率' },
+  '武鬥家':  { base:'30%死鬥', bonus:'+4%/天賦級', max:'50%（Lv5）', effect:'受致命傷害時HP恢復20%並存活的機率' },
+  '軍師':    { base:'60%惑敵', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標疑惑1回合的機率' },
+  '占星師':  { base:'70%補3能量', bonus:'+5%/天賦級', max:'90%（Lv4）', effect:'自己行動時補充3能量的機率' },
+  '大力士':  { base:'40%怒炎', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'受不利狀態時轉化怒火提升攻擊25%的機率' },
+  '凡人':    { base:'40%節省', bonus:'+5%/天賦級', max:'65%（Lv5）', effect:'使用技能時不消耗能量的機率' },
+  '木靈使':  { base:'60%解除+50%治療', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'友方受到不利狀態時解除並用特技50%治療的機率' },
+  '機械師':  { base:'20%觸電', bonus:'+5%/天賦級', max:'45%（Lv5）', effect:'受傷時麻痺攻擊者1回合的機率' },
+  '武士':    { base:'50% 追擊', bonus:'+5%/天賦級(機率與傷害同步)', max:'75%(Lv5)', effect:'隊友普攻時觸發協同攻擊機率與傷害' },
+  '陰陽師':  { base:'60%替身', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受技能傷害時由式神代替承傷的機率' },
+  '吸血鬼':  { base:'50%噬血', bonus:'+4%/天賦級', max:'70%（Lv5）', effect:'造成傷害時吸收傷害量為HP的比例' },
+  '學者':    { base:'60%奪能', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後奪取對手1能量的機率' },
+  '時空法師':{ base:'60%時封', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'普攻後使目標無法獲得治療和有利狀態的機率' },
+  '小力':    { base:'35%關心', bonus:'+5%/天賦級', max:'60%（Lv5）', effect:'隊友受傷時用特技為其回復HP的機率' },
+  '籃球隊員':{ base:'50%接力', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'友方普攻時觸發暴擊並傷害+50%的機率' },
+  '直笛團員':{ base:'50%妙音', bonus:'+5%/天賦級', max:'75%（Lv5）', effect:'普攻後使目標狂亂1回合的機率' },
+  '田徑隊員':{ base:'60%疾走', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'行動時使未行動友方提前到下一個的機率' },
+  '弦樂團員':{ base:'30%反彈', bonus:'+10%/天賦級', max:'70%（Lv5）', effect:'友方受可解除的不利狀態時反彈給隨機對手的機率' },
+  '小劇團員':{ base:'60%被選中 / 25%轉化', bonus:'+5%被選中 / +3%轉化 每天賦級', max:'85%/40%（Lv5）', effect:'成為攻擊目標機率+60%;受傷轉治療機率25%' },
+  '幼兒園小孩':{ base:'全體-20%攻特', bonus:'+2%/天賦級', max:'-30%（Lv5）', effect:'存活時全體對手攻擊和特技-20%（最多5回合）' },
+  '煉金術師':{ base:'物品+50%', bonus:'+10%/天賦級', max:'+100%（Lv5）', effect:'使用物品卡時所有效果+50%' },
+  '動物學家':{ base:'寵物效果+100%', bonus:'+10%/天賦級', max:'+150%（Lv5）', effect:'存活時友方所有寵物效果提升100%' },
+  // ★ v1.0.20260423.8100 — 補上原本顯示「固定」的 6 個英雄天賦升級資訊
+  '電腦繪圖師':{ base:'20 護盾', bonus:'+5/天賦級', max:'45 護盾（Lv5）', effect:'回合開始為HP百分比最低的友方附加可抵擋20傷害的護盾' },
+  '程式設計師':{ base:'+3 攻擊和特技', bonus:'+1/天賦級', max:'+8（Lv5）', effect:'存活時友方全體攻擊和特技+3' },
+  '巫女':    { base:'1人1狀態 / 50%能量', bonus:'Lv5 雙狀態 / 能量+10%/級', max:'1人2狀態 / 100% 能量(Lv5)', effect:'回合開始為有利狀態最少的1名友方附加狀態,並有機率恢復1能量' },
+  '大天狗':  { base:'60% 速度+2', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'每次行動前有機率使自身速度+2（可累積）' },
+  '酒吞童子':{ base:'60% 受傷回1能量', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'受到傷害時有機率立即恢復1能量' },
+  '玉藻前':  { base:'60% 無視有利', bonus:'+4%/天賦級', max:'80%（Lv5）', effect:'造成傷害時有機率無視目標身上的有利狀態' },
+  // ★ v1.0.20260501.5410 — 學生設計英雄系列
+  '窮奇':    { base:'反擊暴擊率 45%(一般 15%)', bonus:'+10% 暴擊率/天賦級', max:'85% 暴擊率(Lv5)', effect:'受傷時用攻擊反擊,反擊暴擊率比一般攻擊高' },
+  // ★ v1.0.20260501.5430 — 學生設計英雄系列
+  '科技生化人':{ base:'必定濺射 40%', bonus:'+5%/天賦級', max:'60%(Lv4)', effect:'造成傷害時必定使兩側相鄰目標受到濺射傷害,傷害比例隨等級提升' },
+  // ★ v1.0.20260501.5440 — 學生設計英雄系列
+  '鋁合金暴龍':{ base:'20% 減傷', bonus:'+10%/天賦級', max:'60% 減傷(Lv5)', effect:'受到所有傷害減少(被動,無條件)' },
+  // ★ v1.0.20260501.5450 — 學生設計英雄系列
+  '超鬼神王':{ base:'40% 吞噬機率 / 1 個', bonus:'+10% 機率 / +1 個/天賦級', max:'80% 機率 / 6 個(Lv5)', effect:'造成傷害時有機率吞噬目標有利狀態,升級可多吞' },
+  // ★ v1.0.20260509.5740 — 學生設計英雄系列(雙星姊妹)
+  '雙星姊妹':{ base:'25% 切換閾值', bonus:'+5%/天賦級', max:'45%(Lv5)', effect:'HP 比例低於閾值時切換暗星態(傷害+30%)、回升時切回光星態(治療+30%)' },
+  // ★ v1.0.20260511.6130 — 學生設計英雄系列(5 年 2 班鐘同學)
+  '暗魔將·血':{ base:'50% 雙 DoT 機率', bonus:'+10%/天賦級', max:'90%(Lv5)', effect:'造成傷害時機率使目標同時燃燒+出血 2 回合' },
+  // ★ v1.0.20260512.6210 — 學生設計英雄系列(5 年 2 班許同學)
+  '死靈法師':{ base:'整場 1 次 + 2 回合死靈型態', bonus:'+0.4 回合/天賦級', max:'4 回合(Lv5)', effect:'致命傷時化身死靈:無敵+200%能力+傷害轉治療給HP最低友方' },
+  // ★ v1.0.20260513.6460 — 學生設計英雄系列(5 年 5 班高同學)
+  '布奶鳥獸':{ base:'30% 第 3 擊機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'普通攻擊保證 2 次,並依機率追加第 3 次攻擊' },
+  // ★ v1.0.20260514.6550 — 學生設計英雄系列(5 年 4 班劉同學)
+  '炸彈客':{ base:'40% 無視有利', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'使用技能造成傷害時有機率無視目標所有有利狀態(S1/S2/爆發已內建無視,此天賦對普攻和未來新技能才疊加)' },
+  // ★ v1.0.20260514.6660 — 學生設計英雄系列(5 年 4 班陳同學)
+  '紅色玩家':{ base:'30% 普攻迴避', bonus:'+10%/天賦級', max:'70%(Lv5)', effect:'受到普通攻擊時有機率完全迴避傷害(技能/爆發/AoE/狀態DOT/反彈不會觸發)' },
+  // ★ v1.0.20260514.6770 — 學生設計英雄系列(5 年 4 班黃同學)
+  //   ★ v1.0.20260518.7000 — 平衡削弱:每層 +4+1/級 → +2+0.75/級
+  '地府酋長':{ base:'每層 +2 特技,最多 5 層', bonus:'+0.75/天賦級每層加成', max:'每層 +5 特技(Lv5),滿層 = +25', effect:'場上任意目標倒下時自身特技疊加(地府酋長倒下會清空自己的加成)' },
+  // ★ v1.0.20260515.6880 — 學生設計英雄系列
+  '救醫馬':  { base:'40% 機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'回合開始時若有友方 HP 低於 50%,機率用特技 80% 自動治療該友方(可復活)' },
+  // ★ v1.0.20260515.6890 — 學生設計英雄系列(6 年 2 班林同學「水狐」)
+  '水狐':    { base:'40% 機率', bonus:'+10%/天賦級', max:'80%(Lv5)', effect:'受傷時機率召喚 1 隻小水精靈為 HP 比例最低友方治療特技 60% HP(可復活)' },
+  // ★ v1.0.20260515.6900 — 學生設計英雄系列(6 年 5 班董同學「米鈴」)
+  '米鈴':    { base:'反擊倍率 80%', bonus:'+10%/天賦級', max:'120%(Lv5)', effect:'友方行動前清除其 1 個不利狀態,若成功清除則用特技反擊狀態來源對手' },
+  // ★ v1.0.20260519.7100 — 學生設計英雄系列(5 年 5 班吳同學「維京海盜船長」)
+  '維京海盜船長':{ base:'30% 機率', bonus:'+5%/天賦級', max:'50%(Lv5)', effect:'造成傷害時機率複製目標掉落物(賣錢物品/寵物/物品卡)到背包(每目標每場 1 次)' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 5 班朱同學「武器精靈」)
+  '武器精靈':{ base:'20% 機率', bonus:'+5%/天賦級', max:'40%(Lv5)', effect:'受到傷害時機率立即變形閃避,該次傷害歸零' },
+  // ★ v3.4.11 — 學生設計英雄系列(5 年 4 班莊同學「神槍手」)
+  '神槍手':  { base:'30 護盾值', bonus:'+5/天賦級', max:'50(Lv5)', effect:'戰開全體護盾+速度+3永久;行動後給最低HP友方護盾(取大值不堆疊)' },
+  // ★ v1.0.20260522.7300 — 學生設計英雄系列(5 年 3 班張同學「火柴人」)
+  '火柴人':  { base:'60% 機率/特技100% 反擊', bonus:'+10% 機率/+10% 傷害', max:'100%機率/特技150%(Lv5)', effect:'被攻擊時機率對來源造成火屬性反擊(火屬性攻擊時×2),無視有利狀態' },
+  // ★ v3.5.49 — 學生設計英雄系列(5 年 3 班蔣同學「青炎龍王」)
+  '青炎龍王':{ base:'HP<20% 觸發/特技100% 護盾', bonus:'+10% 門檻/+10% 護盾', max:'60%門檻/特技140%(Lv4)', effect:'存活時友方 HP 過低自動附加 2 回合青炎護盾(不可堆疊)' },
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 4 班 04 號李同學「鳳凰」)
+  '鳳凰':    { base:'復活時 atk/sp/spd 各+2(上限+10)', bonus:'每升1級上限再+2', max:'+20/+20/+20(Lv5)', effect:'倒下時自動以滿血復活(整場限1次);每次被復活皆使ATK/SP/SPD各+2,維持到戰鬥結束' },
+  // ★ v3.5.60 — 學生設計英雄系列(5 年 2 班 11 號江同學「操偶師」)
+  '操偶師':  { base:'操偶HP=本體×150%(獨立HP條)', bonus:'每升1級操偶HP+20%', max:'本體×250%(Lv5)', effect:'開場附加「操偶」狀態優先代承傷害;操偶HP=0時所有技能暫時失效。爆發進化為傀儡城牆HP×10接管全隊' },
+  // ★ v3.5.68 — 學生設計英雄系列(5 年 3 班 14 號張同學「菇女」)
+  '菇女':    { base:'魔菇 40 固定傷害 / 50% HP 復活(限1次)', bonus:'+10 傷害/+5% 復活 HP', max:'80傷害/75% HP復活(Lv5)', effect:'行動時派魔菇對 HP% 最低 1 名對手造成固定傷害(必中、無視有利);倒下時自動以 50% HP 復活(整場限 1 次)' },
+  // ★ v3.10.12 — 學生設計英雄系列(5 年 1 班 林同學「小丑」)
+  '小丑':    { base:'30% 機率掉面具', bonus:'-5% 機率/天賦級', max:'5% 機率(Lv5)', effect:'自己行動前堆 1 層「快樂小丑面具」(自身增傷5%/層,最多5層)+ 對方隨機 1 人 1 層「悲傷小丑面具」(受傷+5%/層,最多5層);受傷時機率消除 1 層面具' },
+  // ★ v3.10.14 — 學生設計英雄系列(3 年 1 班 采漩「美人魚‧角角」)
+  '美人魚‧角角':{ base:'特技 40% 全體治療', bonus:'+10%/天賦級', max:'特技 80% 全體治療(Lv5)', effect:'存活時每回合自己行動前自動以特技 40% 治療友方全體 HP + 解除友方身上 1 個燃燒狀態(含強力燃燒)' },
+  // ★ v3.11.6 — 學生設計英雄系列(5 年 4 班 彭同學「火爆女」)
+  '火爆女':  { base:'基礎暴擊率 +20%', bonus:'+5%/天賦級', max:'基礎暴擊率 +60%(Lv9)', effect:'(被動)出手時基礎暴擊率永久 +20%。受到傷害時:能量 +1 + 暴擊率本場戰鬥永久 +3%(最高 100%)' },
+  '幽幽':  { base:'暗屬性受傷 -30% / 光屬性受傷 +30%', bonus:'每級暗 -5% / 光增幅 -5%', max:'暗 -50% / 光 +10%(Lv4)', effect:'(被動)普通攻擊改用特技值計算且免疫普攻傷害。受暗屬性傷害減免、受光屬性傷害加重,隨天賦等級減輕光屬性弱點' },
+  '網路駭客':  { base:'開場竊取攻特 4 回合 + 每回合 1 名對手附加隨機 debuff', bonus:'每級加成 +1 回合 / debuff 目標 +1', max:'加成 8 回合 / debuff 4 名(Lv4)', effect:'(被動)開場竊取對手最高攻擊+特技(上限 5+等級)持續 4 回合不可消除奪取交換;每回合對隨機對手附加隨機不利狀態,升級延長回合並增加附加目標數' },
+  // ★ v3.12.8 — 學生設計英雄系列(5 年 2 班 13 號羅同學「死神」)
+  '死神':      { base:'40% 機率反彈傷害 50%', bonus:'+10% 機率/天賦級', max:'100% 機率反彈(Lv6 達上限,鐵律 1.30)', effect:'(被動)絕對免疫死亡宣告與所有即死類技能(對死神改為造成等量傷害,不被秒殺);受到傷害時擲機率反彈該次傷害 50% 給來源' },
+};
