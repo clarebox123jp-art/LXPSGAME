@@ -6,6 +6,16 @@
 //             • 標題改為「🛠️ 遊戲管理員(GM)專用功能選單」
 //             • PC 版(寬≥1024 高≥900)放大 200% + 置中
 //             • 14 個區段依重要性 flex order 重排,7 個無 id 區段補上 id
+//           v3.12.2(2026-05-30) — 同步主版本戳
+//             • 加 window.ADMIN_PANEL_VERSION,讓健康檢查能讀到實際載入的版本
+//             • _LXPS_FILE_VERSIONS['admin_panel.js'] 改為含「v3-12-2」字串
+// ════════════════════════════════════════════════════════════════════════════
+
+// ★ v3.12.2(2026-05-30) — 自我版本標記,給 index.html 健康檢查使用
+//   index.html 的 _runVersionStampHealthCheck() 會比對:
+//     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
+//   若不一致 → console.warn 警告。同步兩邊以消除告警。
+window.ADMIN_PANEL_VERSION = '20260530-v3-12-2-admin-version-stamp';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
