@@ -2131,12 +2131,26 @@ body.wb-in-worldboss-battle .popup {
   border:2px solid rgba(255,200,100,0.85);
   color:#ffe8a0;
 }
+/* ★ v3.13.4(2026-05-31)— 「免費1抽」徽章(召喚按鈕,星空紫青色) */
+.stage-enhance-badge.badge-summon{
+  background:linear-gradient(180deg,rgba(80,80,180,0.95),rgba(50,50,130,0.95));
+  border:2px solid rgba(140,180,255,0.9);
+  color:#d4e4ff;
+}
+/* ★ v3.13.4(2026-05-31)— 「送禮給好友」徽章(好友按鈕,粉紅色) */
+.stage-enhance-badge.badge-gift{
+  background:linear-gradient(180deg,rgba(220,80,140,0.95),rgba(160,40,100,0.95));
+  border:2px solid rgba(255,150,200,0.9);
+  color:#ffd4e8;
+}
 @keyframes stageBadgeBreath{
   0%   { box-shadow:0 0 4px rgba(255,220,140,0.4), 0 0 8px rgba(200,140,255,0.3); filter:brightness(1); }
   100% { box-shadow:0 0 14px rgba(255,220,140,0.85), 0 0 22px rgba(200,140,255,0.7); filter:brightness(1.18); }
 }
 .stage-enhance-badge.badge-hero{ animation-name:stageBadgeBreathHero; }
 .stage-enhance-badge.badge-treasure{ animation-name:stageBadgeBreathTreasure; }
+.stage-enhance-badge.badge-summon{ animation-name:stageBadgeBreathSummon; }
+.stage-enhance-badge.badge-gift{ animation-name:stageBadgeBreathGift; }
 @keyframes stageBadgeBreathHero{
   0%   { box-shadow:0 0 4px rgba(200,140,255,0.4), 0 0 8px rgba(180,120,255,0.3); filter:brightness(1); transform:translateX(-50%) scale(1); }
   100% { box-shadow:0 0 14px rgba(200,140,255,0.9), 0 0 22px rgba(180,120,255,0.7); filter:brightness(1.18); transform:translateX(-50%) scale(1.04); }
@@ -2144,6 +2158,16 @@ body.wb-in-worldboss-battle .popup {
 @keyframes stageBadgeBreathTreasure{
   0%   { box-shadow:0 0 4px rgba(255,200,100,0.4), 0 0 8px rgba(255,180,80,0.3); filter:brightness(1); transform:translateX(-50%) scale(1); }
   100% { box-shadow:0 0 14px rgba(255,200,100,0.9), 0 0 22px rgba(255,180,80,0.7); filter:brightness(1.18); transform:translateX(-50%) scale(1.04); }
+}
+/* ★ v3.13.4(2026-05-31)— 召喚徽章呼吸光暈 */
+@keyframes stageBadgeBreathSummon{
+  0%   { box-shadow:0 0 4px rgba(140,180,255,0.4), 0 0 8px rgba(120,160,255,0.3); filter:brightness(1); transform:translateX(-50%) scale(1); }
+  100% { box-shadow:0 0 14px rgba(140,180,255,0.9), 0 0 22px rgba(120,160,255,0.7); filter:brightness(1.18); transform:translateX(-50%) scale(1.04); }
+}
+/* ★ v3.13.4(2026-05-31)— 送禮徽章呼吸光暈 */
+@keyframes stageBadgeBreathGift{
+  0%   { box-shadow:0 0 4px rgba(255,150,200,0.4), 0 0 8px rgba(255,130,180,0.3); filter:brightness(1); transform:translateX(-50%) scale(1); }
+  100% { box-shadow:0 0 14px rgba(255,150,200,0.9), 0 0 22px rgba(255,130,180,0.7); filter:brightness(1.18); transform:translateX(-50%) scale(1.04); }
 }
 
 /* ★ v1.0.20260515.6820 — 英雄圖鑑卡片「可升級」呼吸提醒(放在 Lv 右側,inline,不蓋住下排其他標籤) */

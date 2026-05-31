@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = '20260531-v3-13-1-medal-scan';
+window.ADMIN_PANEL_VERSION = 'v3.13.4';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -7116,12 +7116,32 @@ async function _showAdminStatsPanelImpl(){
       };
       const _teamKey = entry.teamKey || '';
       const _teamNames = Array.isArray(entry.teamNames) ? entry.teamNames.filter(Boolean).join(' / ') : '?';
-      // 場次清單:0-based index 對應 battleHistory 原始順序(很重要,API 用 0-based index)
-      // 但畫面顯示走「新到舊」,所以要存原始 idx 以便 API 用
+      // ★ v3.13.4(2026-05-31)— 場次清單同時記住「該日第 N/總 場」編號(跟玩家戰績歷史一致)
+      //   原邏輯:「第 N 場」用 origIdx+1(陣列儲存索引)→ 跟玩家戰績歷史的「第 N/總 場」對不上
+      //   新邏輯:按「日期 + at 升序」算「該日第 N/該日總場數」,跟 world-boss-ui 1619 行算法一致
       const _hist = entry.battleHistory.map(function(b, idx){
         return { b: b, origIdx: idx };
       });
-      // 新到舊排序
+      // 先按日期分組,算出每場「該日第 N/總場」
+      const _dayCounts = {};        // dateStr → 該日總場數
+      const _dayNoMap = new Map();  // entry 物件 → 「該日第 N/該日總場」字串
+      {
+        const _byDay = {};
+        _hist.forEach(function(item){
+          const _t = new Date(item.b.at || 0);
+          const _dk = _t.getFullYear() + '-' + (_t.getMonth()+1) + '-' + _t.getDate();
+          if(!_byDay[_dk]) _byDay[_dk] = [];
+          _byDay[_dk].push(item);
+        });
+        Object.keys(_byDay).forEach(function(_dk){
+          const _arr = _byDay[_dk].slice().sort(function(a,b){ return (a.b.at||0) - (b.b.at||0); });
+          _dayCounts[_dk] = _arr.length;
+          _arr.forEach(function(item, i){
+            _dayNoMap.set(item, { dayNo: i+1, dayTotal: _arr.length, dateKey: _dk });
+          });
+        });
+      }
+      // 顯示走「新到舊」
       _hist.sort(function(a, b){ return (b.b.at||0) - (a.b.at||0); });
 
       let _rowsHtml = '';
@@ -7132,10 +7152,16 @@ async function _showAdminStatsPanelImpl(){
           const b = item.b;
           const _isDeleted = !!b._deletedAt;
           const _t = new Date(b.at || Date.now());
-          const _timeStr = (_t.getMonth()+1) + '/' + _t.getDate() + ' ' + _pad(_t.getHours()) + ':' + _pad(_t.getMinutes());
-          // 異常判定:單場 > 5000 標紅(世界 BOSS 單次傷害上限 5000,單場應該幾百~幾千)
-          const _isAbnormal = !_isDeleted && (b.dmg || 0) > 5000;
-          const _dmg = _isDeleted ? (b._origDmg || 0) : (b.dmg || 0);
+          // ★ v3.13.4 — 顯示完整時間到「秒」,讓兩場同分鐘的也能區分
+          const _timeStr = (_t.getMonth()+1) + '/' + _t.getDate() + ' ' +
+                           _pad(_t.getHours()) + ':' + _pad(_t.getMinutes()) + ':' + _pad(_t.getSeconds());
+          // ★ v3.13.4(2026-05-31)— 異常判定改為「該場平均/回合 > 5000」
+          //   單擊上限就是 5000,所以平均/回合 > 5000 才是異常
+          const _bDmg = (b.dmg || 0);
+          const _bTurns = (b.turns || 0);
+          const _bAvgPerTurn = _bTurns > 0 ? Math.round(_bDmg / _bTurns) : 0;
+          const _isAbnormal = !_isDeleted && _bAvgPerTurn > 5000;
+          const _dmg = _isDeleted ? (b._origDmg || 0) : _bDmg;
           const _dmgColor = _isDeleted ? '#888' : (_isAbnormal ? '#ff6666' : '#ffd066');
           const _bg = _isDeleted ? 'rgba(120,40,40,0.2)' : (_isAbnormal ? 'rgba(80,30,30,0.35)' : 'rgba(30,25,40,0.6)');
           const _border = _isDeleted ? 'rgba(180,80,80,0.4)' : (_isAbnormal ? '#ff5555' : 'rgba(140,100,180,0.35)');
@@ -7146,6 +7172,17 @@ async function _showAdminStatsPanelImpl(){
             ? '<span style="display:inline-block;width:18px;flex:0 0 auto;color:#666;">🚫</span>'
             : '<input type="checkbox" class="_wblb-tomb-chk" data-orig-idx="' + item.origIdx + '" ' +
               'style="margin-top:3px;transform:scale(1.3);cursor:pointer;flex-shrink:0;">';
+          // ★ v3.13.4 — 「該日第 N/總 場」編號(跟玩家戰績歷史完全一致)
+          const _no = _dayNoMap.get(item);
+          const _dayNoStr = _no
+            ? ((_t.getMonth()+1) + '/' + _t.getDate() + ' 第 ' + _no.dayNo + '/' + _no.dayTotal + ' 場')
+            : ('第 ' + (item.origIdx+1) + ' 場');
+          // ★ v3.13.4 — 加聯手爆發 / MVP 顯示(讓老師能對得起玩家戰績歷史)
+          const _tbCnt = (b.tb || 0);
+          const _mvpStr = (b.mvp && b.mvp.name)
+            ? '<span style="color:#ff8866;">MVP <b>' + (b.mvp.name) + '</b> Lv' + (b.mvp.lv||1) +
+              ' 傷 ' + _fmt(b.mvp.dmg||0) + '</span>'
+            : '';
           return '<label class="_wblb-tomb-row" data-orig-idx="' + item.origIdx + '" style="' +
                  'display:flex;align-items:flex-start;gap:10px;padding:8px 12px;margin-bottom:5px;' +
                  'background:' + _bg + ';border:1.5px solid ' + _border + ';border-radius:6px;' +
@@ -7153,14 +7190,20 @@ async function _showAdminStatsPanelImpl(){
                    _chk +
                    '<div style="flex:1;min-width:0;font-size:13px;">' +
                      '<div style="font-weight:700;">' +
-                       '<span style="color:#aaccff;">第 ' + (item.origIdx+1) + ' 場</span> ' +
+                       '<span style="color:#aaccff;">' + _dayNoStr + '</span> ' +
                        '<span style="color:#aabbdd;font-size:12px;">🕒 ' + _timeStr + '</span>' +
                        _label +
                      '</div>' +
                      '<div style="margin-top:3px;font-size:12px;color:#bbb;">' +
                        '傷害 <b style="color:' + _dmgColor + ';">' + _fmt(_dmg) + '</b>' +
-                       ' · ' + (b.turns||'—') + ' 回合 · ' + (b.qc||0) + ' 題' +
+                       ' · ' + (_bTurns||'—') + ' 回合 · ' + (b.qc||0) + ' 題' +
+                       ' · 💥 <b style="color:#ffaa66;">聯手爆發 ' + _tbCnt + ' 次</b>' +
+                       (_bAvgPerTurn > 0
+                         ? ' · <span style="color:' + (_bAvgPerTurn > 5000 ? '#ff6666' : '#88ccdd') + ';">' +
+                           '平均 ' + _bAvgPerTurn.toLocaleString() + '/回</span>'
+                         : '') +
                        (b._isBonus ? ' · 🎫 補償場次' : '') +
+                       (_mvpStr ? '<br>' + _mvpStr : '') +
                        (_isDeleted ? '<br><span style="color:#ff7777;font-size:11px;">原因:' + (b._deletedReason || '(無)') + '</span>' : '') +
                      '</div>' +
                    '</div>' +
@@ -7194,7 +7237,9 @@ async function _showAdminStatsPanelImpl(){
             '💡 <b style="color:#ffaa66;">墓碑模式</b>:勾選要標記為 BUG 的場次,執行後:<br>' +
             '<span style="color:#aaffaa;">✅ 留紀錄</span>(玩家展開戰績看到「🚫 BUG 數據已刪除」紅字)<br>' +
             '<span style="color:#aaffaa;">✅ 該場傷害從總傷扣回</span>(維護排行榜公平)<br>' +
-            '<span style="color:#aaffaa;">✅ 自動對該場參戰玩家發補償券 ×1</span>(隔天可用)' +
+            '<span style="color:#aaffaa;">✅ 自動對該場參戰玩家發補償券 ×1</span>(隔天可用)<br>' +
+            '<span style="color:#ffcc88;">💡 場次編號與「玩家戰績歷史」的「第 N/總 場」完全一致,' +
+            '可比對聯手爆發次數確認是同一場。</span>' +
           '</div>' +
           // 工具列
           '<div style="padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' +
@@ -7207,7 +7252,7 @@ async function _showAdminStatsPanelImpl(){
                   'border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>' +
             '<button id="_wblb-tomb-selab" style="padding:5px 12px;font-size:12px;' +
                   'background:rgba(120,60,40,0.5);border:1px solid #c87;color:#fcb;' +
-                  'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(&gt; 5000)</button>' +
+                  'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均每回合&gt;5000)</button>' +
             '<span id="_wblb-tomb-count" style="margin-left:auto;font-size:12px;color:#ccc;">已選 0 筆</span>' +
           '</div>' +
           // 列表
@@ -7259,11 +7304,16 @@ async function _showAdminStatsPanelImpl(){
         _updateCount();
       };
       _overlay.querySelector('#_wblb-tomb-selab').onclick = function(){
-        // 從 battleHistory 找出 dmg > 5000 且未被標墓碑的場次,勾起
+        // ★ v3.13.4(2026-05-31)— 改用「該場平均每回合 > 5000」判定
+        //   單擊上限 5000,平均/回合 > 5000 才是真異常
         _listBox.querySelectorAll('._wblb-tomb-chk').forEach(function(c){
           const _oi = parseInt(c.getAttribute('data-orig-idx'), 10);
           const _b = entry.battleHistory[_oi];
-          c.checked = (_b && !_b._deletedAt && (_b.dmg || 0) > 5000);
+          if(!_b || _b._deletedAt){ c.checked = false; return; }
+          const _bDmg = _b.dmg || 0;
+          const _bTurns = _b.turns || 0;
+          const _bAvgPerTurn = _bTurns > 0 ? (_bDmg / _bTurns) : 0;
+          c.checked = (_bAvgPerTurn > 5000);
         });
         _updateCount();
       };
@@ -7424,9 +7474,29 @@ async function _showAdminStatsPanelImpl(){
           const _dmg = e.totalDmg || 0;
           const _bt = e.battles || 0;
           const _avg = _bt > 0 ? Math.round(_dmg / _bt) : 0;
-          // 單場平均 > 5000 標紅(世界 BOSS 單次傷害上限 5000,平均超過就奇怪)
-          const _avgColor = _avg > 5000 ? '#ff6666' : (_avg > 3000 ? '#ffaa55' : '#aaccff');
-          const _avgWarn = _avg > 5000 ? ' ⚠️' : '';
+          // ★ v3.13.4(2026-05-31)— 異常判定改為「平均每回合」
+          //   老師:1.5 萬/場看起來大,但若用了 11 回合,平均 1364/回合 → 正常
+          //   只有「平均/回合 > 5000」才是真的開外掛(單擊上限 5000)
+          //   公式:totalDmg / Σ(每場 turns)。若沒有 battleHistory 退回單場估算
+          let _avgPerTurn = 0;
+          let _totalTurns = 0;
+          try{
+            if(Array.isArray(e.battleHistory) && e.battleHistory.length > 0){
+              e.battleHistory.forEach(function(b){
+                if(b && !b._deletedAt){
+                  _totalTurns += (b.turns || 0);
+                }
+              });
+              if(_totalTurns > 0) _avgPerTurn = Math.round(_dmg / _totalTurns);
+            } else {
+              // 退化路徑:用 tiebreaker.turns × battles 估算
+              const _approxTurns = ((e.tiebreaker && e.tiebreaker.turns) || 11) * _bt;
+              if(_approxTurns > 0) _avgPerTurn = Math.round(_dmg / _approxTurns);
+            }
+          }catch(_){}
+          const _isAbnormalRow = _avgPerTurn > 5000;
+          const _avgColor = _isAbnormalRow ? '#ff6666' : (_avgPerTurn > 3000 ? '#ffaa55' : '#aaccff');
+          const _avgWarn = _isAbnormalRow ? ' ⚠️' : '';
           const _heroes = _renderHeroChips(e.teamHeroes, e.teamNames);
           const _tb = e.tiebreaker || {};
 
@@ -7501,7 +7571,9 @@ async function _showAdminStatsPanelImpl(){
                           _dmg.toLocaleString() + ' 傷</span>' +
                        '<span style="color:#bbb;font-size:12px;">· ' + _bt + ' 場</span>' +
                        '<span style="color:' + _avgColor + ';font-size:12px;font-weight:700;">' +
-                          '· 平均 ' + _avg.toLocaleString() + '/場' + _avgWarn + '</span>' +
+                          '· 平均 ' + _avg.toLocaleString() + '/場 · ' +
+                          (_avgPerTurn > 0 ? _avgPerTurn.toLocaleString() + '/回' : '?/回') +
+                          _avgWarn + '</span>' +
                        _sourcesBtn +
                        _tombBtn +
                        '<span style="color:#888;font-size:11px;margin-left:auto;">' +
@@ -7538,7 +7610,7 @@ async function _showAdminStatsPanelImpl(){
           '<div style="padding:8px 18px;font-size:12px;color:#bbb;background:rgba(60,40,80,0.3);' +
                       'border-bottom:1px solid rgba(120,80,160,0.25);line-height:1.5;">' +
             '💡 勾選要刪除的紀錄(整筆,含累積傷害&戰鬥數)。<b style="color:#ffaa66;">' +
-            '單場平均 &gt; 5000 標紅</b>,通常代表 BUG/異常傷害。' +
+            '單場平均每回合 &gt; 5000 標紅</b>,通常代表 BUG/異常傷害。(單擊上限 5000)' +
           '</div>' +
           // 工具列
           '<div style="padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' +
@@ -7551,7 +7623,7 @@ async function _showAdminStatsPanelImpl(){
                     'border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>' +
             '<button id="_admin-wblb-detail-selabnormal" style="padding:5px 12px;font-size:12px;' +
                     'background:rgba(120,60,40,0.5);border:1px solid #c87;color:#fcb;' +
-                    'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均&gt;5000)</button>' +
+                    'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均每回合&gt;5000)</button>' +
             '<span id="_admin-wblb-detail-selcount" style="margin-left:auto;font-size:12px;color:#ccc;">已選 0 筆</span>' +
           '</div>' +
           // 列表
@@ -7648,10 +7720,20 @@ async function _showAdminStatsPanelImpl(){
         _updateSelCount();
       };
       _overlay.querySelector('#_admin-wblb-detail-selabnormal').onclick = function(){
-        // 重新算「平均 > 5000」的列並勾起
+        // ★ v3.13.4(2026-05-31)— 重新算「平均每回合 > 5000」的列並勾起(改用 turns 為分母)
         _list.forEach(function(e){
-          const _avg = (e.battles||0) > 0 ? Math.round((e.totalDmg||0) / e.battles) : 0;
-          if(_avg > 5000){
+          let _totalTurns = 0;
+          try{
+            if(Array.isArray(e.battleHistory) && e.battleHistory.length > 0){
+              e.battleHistory.forEach(function(b){
+                if(b && !b._deletedAt) _totalTurns += (b.turns || 0);
+              });
+            } else {
+              _totalTurns = ((e.tiebreaker && e.tiebreaker.turns) || 11) * (e.battles || 0);
+            }
+          }catch(_){}
+          const _avgPerTurn = _totalTurns > 0 ? Math.round((e.totalDmg||0) / _totalTurns) : 0;
+          if(_avgPerTurn > 5000){
             const _row = _listBox.querySelector('._wblb-row[data-teamkey="' + (e.teamKey||'').replace(/"/g,'\\"') + '"]');
             if(_row){
               const _chk = _row.querySelector('._wblb-chk');

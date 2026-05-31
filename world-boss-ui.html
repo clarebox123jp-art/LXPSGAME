@@ -1622,7 +1622,9 @@
 
         const _rowsHtml = _items.map(function(b){
           const _t = new Date(b.at);
-          const _timeStr = _pad(_t.getHours()) + ':' + _pad(_t.getMinutes());
+          // ★ v3.13.4(2026-05-31)— 顯示完整時間到「秒」,跟 GM 場次標 BUG modal 對齊
+          //   兩場若同分鐘(像 12:48:23 / 12:48:47),沒有秒就無法區分
+          const _timeStr = _pad(_t.getHours()) + ':' + _pad(_t.getMinutes()) + ':' + _pad(_t.getSeconds());
           const _battleNo = _idxMap.get(b);
           const _mvpHtml = b.mvp && b.mvp.name
             ? '<span style="color:#888;font-size:11px;">MVP <b style="color:#ff8866;">' + _escH(b.mvp.name) +
