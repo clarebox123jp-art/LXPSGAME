@@ -212,47 +212,39 @@
   // ───────────────────────────────────────────────────────────────────
   window._WORLD_BOSS_TEAM_REWARDS = {
     legendary: {
-      rankRange: '1', tier: '🏆 傳奇',
+      // ★ v3.12.14(2026-05-31)— tier 改成中性榮譽稱號,避免跟稀有度詞撞名混淆
+      rankRange: '1', tier: '🏆 救世主級',
       coins: 100000,
-      // ★ FIX 20260519(v12) — 改成「未收錄至寶(優先神話級)」,當神話都解鎖了就降一級給傳說/史詩
       treasureLabel: '未收錄至寶 ×1(優先神話級)',
       summonCrystals: 10, titleTemplate: '屠龍者・{bossName}',
       expScrollTreasure: 5, expBookDeluxe: 5,
-      // ★ v3.12.0 — 火龍王之牙(維蘇威火山龍王 排名獎勵)100% 必得
       dragonTreasureId: 'dragon_fang_fire',
       dragonTreasureChance: 1.00,
     },
     epic: {
-      rankRange: '2-5', tier: '🥈 史詩',
+      rankRange: '2-5', tier: '🥈 勇者級',
       coins: 60000,
-      // ★ FIX 20260519(v12) — 改成「未收錄至寶(優先傳說級)」
       treasureLabel: '未收錄至寶 ×1(優先傳說級)',
       summonCrystals: 7,
       expScrollTreasure: 3, expBookDeluxe: 3,
-      // ★ v3.12.0 — 火龍王之牙 75% 機率
       dragonTreasureId: 'dragon_fang_fire',
       dragonTreasureChance: 0.75,
     },
     rare: {
-      rankRange: '6-10', tier: '🥉 稀有',
+      rankRange: '6-10', tier: '🥉 大英雄級',
       coins: 30000, treasureChance: 0.60, treasureRarity: 'legendary',
-      // ★ FIX 20260519(v12) — 改成 treasureLabel 不再用 treasureChance,
-      //   但留 treasureChance/Rarity 給結算邏輯舊兼容(機率取至寶)
       treasureLabel: '未收錄至寶 (60% 機率,優先史詩級)',
       summonCrystals: 5,
       expScrollTreasure: 2, expBookDeluxe: 2,
-      // ★ v3.12.0 — 火龍王之牙 50% 機率
       dragonTreasureId: 'dragon_fang_fire',
       dragonTreasureChance: 0.50,
     },
     normal: {
-      rankRange: '11-20', tier: '📦 普通',
+      rankRange: '11-20', tier: '📦 小英雄級',
       coins: 15000, treasureChance: 0.30, treasureRarity: 'legendary',
-      // ★ FIX 20260519(v12) — 改成 treasureLabel
       treasureLabel: '未收錄至寶 (30% 機率,優先稀有級)',
       summonCrystals: 3,
       expScrollTreasure: 1, expBookDeluxe: 1,
-      // ★ v3.12.0 — 火龍王之牙 25% 機率
       dragonTreasureId: 'dragon_fang_fire',
       dragonTreasureChance: 0.25,
     },
@@ -260,7 +252,6 @@
       rankRange: '21+', tier: '🎁 參加獎',
       coins: 7000, summonCrystals: 1,
       expScrollTreasure: 1, expBookDeluxe: 1,
-      // ★ v3.12.0 — 火龍王之牙 5% 機率(參加獎也有機會)
       dragonTreasureId: 'dragon_fang_fire',
       dragonTreasureChance: 0.05,
     },
@@ -865,15 +856,50 @@
         '</div>';
     }else{
       banner.className = 'wb-ceasefire-banner is-open';
+      // ★ v3.12.14(2026-05-31)— 顯示「今日還有 X 場可以挑戰」
+      //   呼叫 window._wbDailyLimit.canEnter() async 拿,先顯示 fallback,異步刷新
+      let _remainingText = '';
+      try{
+        if(window._wbDailyLimit && typeof window._wbDailyLimit.canEnter === 'function'){
+          // 同步先用 cache 算(getTodayCount 是 async,先 fallback)
+          const _limit = (typeof window._wbDailyLimit.getLimit === 'function')
+            ? window._wbDailyLimit.getLimit() : 2;
+          _remainingText = ' ・ <span id="wb-remaining-today" style="color:#ffd966;font-weight:700;">' +
+                           '今日還有 ' + _limit + ' 場可以挑戰(載入中…)' +
+                           '</span>';
+        }
+      }catch(_){}
       banner.innerHTML =
         '<div class="wb-cf-row">' +
           '<span class="wb-cf-ico">⚔</span>' +
           '<div class="wb-cf-main">' +
             '<div class="wb-cf-title">挑戰開放中!</div>' +
-            '<div class="wb-cf-sub">隨時可以開房間 / 加入房間 / 練習模式</div>' +
+            '<div class="wb-cf-sub">隨時可以開房間 / 加入房間 / 練習模式' + _remainingText + '</div>' +
             (st.message ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(st.message) + '</div>' : '') +
           '</div>' +
         '</div>';
+      // 異步刷新今日剩餘場次(管理員顯示無限,玩家顯示實際剩餘)
+      try{
+        if(window._wbDailyLimit && typeof window._wbDailyLimit.canEnter === 'function'){
+          window._wbDailyLimit.canEnter().then(function(_r){
+            const _el = document.getElementById('wb-remaining-today');
+            if(!_el) return;
+            if(_r && _r.isAdmin){
+              _el.innerHTML = '今日場次:管理員不受限';
+              _el.style.color = '#aaffcc';
+            }else if(_r){
+              const _remain = Math.max(0, (_r.limit || 2) - (_r.used || 0));
+              if(_remain > 0){
+                _el.innerHTML = '今日還有 <b style="color:#ffe066;font-size:1.1em;">' + _remain + '</b> 場可以挑戰';
+                _el.style.color = '#ffd966';
+              }else{
+                _el.innerHTML = '⚠ 今日場次已用完,明天 08:00 重置';
+                _el.style.color = '#ff8866';
+              }
+            }
+          }).catch(function(e){ console.warn('[wb-remaining-today] async 讀取失敗', e); });
+        }
+      }catch(_){}
     }
     // 管理員控制面板(僅 admin 看到)
     const ctrl = document.getElementById('wb-admin-ctrl-panel');
@@ -3899,6 +3925,16 @@
                   .then(res => {
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg
                       + ', champions=', _championStats);
+                    // ★ v3.12.14(2026-05-31)— 結算上榜後立即標記房間 ended
+                    //   不論是房主或 client,都嘗試呼叫 _wbMarkRoomEnded API(冪等,寫多次無害)
+                    //   讓房間立刻從公開房列表消失,避免其他玩家加進已結束的房
+                    try{
+                      if(window._wbNet && window._wbNet.roomId
+                         && typeof window._wbMarkRoomEnded === 'function'){
+                        window._wbMarkRoomEnded(window._wbNet.roomId, 'battle_settled')
+                          .catch(_=>{});
+                      }
+                    }catch(_eEnd){}
                   })
                   .catch(e => console.warn('[WB-Leaderboard] updateLeaderboard 失敗', e));
               }

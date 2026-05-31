@@ -1240,12 +1240,19 @@
     }
     if(r.titleTemplate) items.push(`🎖 限定稱號`);
     // ★ v3.12.0(2026-05-29)— 火龍王之牙(維蘇威火山龍王 排名獎勵專屬,不可召喚)
+    // ★ v3.12.14(2026-05-31)— 加 ? 按鈕點開至寶能力簡介
     if(r.dragonTreasureId && r.dragonTreasureChance > 0){
       const _chPct = Math.round(r.dragonTreasureChance * 100);
-      const _label = (_chPct >= 100)
+      const _mainText = (_chPct >= 100)
         ? `🐉 <b style="color:#ff8866;">火龍王之牙 ×1 必得</b>`
         : `🐉 火龍王之牙 (${_chPct}% 機率)`;
-      items.push(_label);
+      // ? 按鈕呼叫 window._wbShowDragonTreasureInfo() — 在 index.html 定義
+      const _helpBtn = `<span onclick="event.stopPropagation(); window._wbShowDragonTreasureInfo && window._wbShowDragonTreasureInfo();"
+        style="display:inline-block;margin-left:8px;width:26px;height:26px;line-height:24px;border-radius:50%;
+               background:rgba(255,150,80,0.25);border:2px solid #ff8866;color:#ffd0b0;
+               text-align:center;font-weight:900;cursor:pointer;font-size:16px;vertical-align:middle;"
+        title="點看火龍王之牙能力簡介">?</span>`;
+      items.push(_mainText + _helpBtn);
     }
     // ★ FIX 20260518 — 排行榜字體放大 200%(玩家反應字太小)
     //   tier 標題 14→28、名次 11→22、獎勵項目 11→22,padding/border 同步放大
@@ -4595,11 +4602,18 @@
       : ('<button class="wb-pr-join-btn" onclick="_wbUiJoinPublicRoom(&#39;' +
          roomIdEsc + '&#39;)">加入</button>');
 
+    // ★ v3.12.14(2026-05-31)— 顯示專屬房號(6 碼 [A-Z2-9])
+    const roomNoHtml =
+      '<span style="display:inline-block;background:rgba(80,120,200,0.25);' +
+      'border:1px solid rgba(120,170,255,0.5);border-radius:4px;' +
+      'padding:2px 8px;font-family:monospace;font-size:13px;font-weight:700;' +
+      'color:#aaccff;margin-right:6px;letter-spacing:1.5px;">#' + roomIdEsc + '</span>';
+
     return (
       '<div class="wb-pr-room">' +
         '<div class="wb-pr-room-head">' +
           '<div>' +
-            '<div class="wb-pr-room-host">👑 ' + _wbPrEsc(r.hostName || '房主') + '</div>' +
+            '<div class="wb-pr-room-host">' + roomNoHtml + '👑 ' + _wbPrEsc(r.hostName || '房主') + '</div>' +
             '<div class="wb-pr-room-meta">' +
               '<span class="wb-pr-time">⏱ ' + timeStr + '</span>' +
               '<span class="' + cntCls + '">👥 ' + cnt + '/4</span>' +

@@ -1910,8 +1910,18 @@ async function _showAdminStatsPanelImpl(){
     try {
       const email = (window._fbUser && window._fbUser.email) || 'unknown';
       await window._fbSetMaintenance(true, msg, email);
+      // ★ v3.12.14(2026-05-31)— 開啟維修同時自動清掉所有公開房,避免殭屍房殘留
+      let _cleanupNote = '';
+      try{
+        if(typeof window._wbAdminCleanupAllPublicRooms === 'function'){
+          const _cr = await window._wbAdminCleanupAllPublicRooms();
+          if(_cr && _cr.ok){
+            _cleanupNote = '(同時清空 ' + _cr.count + ' 間公開房)';
+          }
+        }
+      }catch(_eCu){ console.warn('[維修+清房] 清房失敗(維修仍生效)', _eCu); }
       res.style.color = '#ff8888';
-      res.textContent = '🔒 維修模式已開啟,非管理員已被阻擋登入';
+      res.textContent = '🔒 維修模式已開啟,非管理員已被阻擋登入' + _cleanupNote;
       _updateMaintStatus();
     } catch(e) {
       res.style.color = '#ff6666';
