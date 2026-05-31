@@ -1521,6 +1521,10 @@
         +       ((e.bonusBattleCount||0) > 0
               ? ' <span style="color:#ff88bb;font-weight:700;" title="GM 因 BUG 補償的額外進場場次,傷害計入排行榜總傷">🎫 含 ' + e.bonusBattleCount + ' 場補償</span>'
               : '')
+        +       /* ★ v3.13.7 — 入場券場次累計徽章(綠色,跟 GM 補償粉色區分) */
+                ((e.bonusTicketCount||0) > 0
+              ? ' <span style="color:#66ddaa;font-weight:700;" title="使用世界 BOSS 挑戰入場券打的額外場次,傷害計入排行榜總傷">🎟️ 含 ' + e.bonusTicketCount + ' 場入場券</span>'
+              : '')
         +       (_todayCountTxt ? ' · ' + _todayCountTxt : '')
         +   '</div>'
         +   _myHistoryBtn         // ★ v3.12.9 — 所有人都能展開每場
@@ -1615,6 +1619,9 @@
         const _dayTotal = _items.reduce(function(sum, b){ return sum + (b.dmg || 0); }, 0);
         // 該日總場次(從 _items.length 直接取)
         const _dayCount = _items.length;
+        // ★ v3.13.4(2026-05-31)— 該日「有效場次」數(排除墓碑場次)
+        const _dayValidCount = _items.reduce(function(n, b){ return n + (b._deletedAt ? 0 : 1); }, 0);
+        const _dayDeletedCount = _dayCount - _dayValidCount;
         // 計算每場「第 N/總 場」編號(1-based,由舊到新累計)
         const _sortedAsc = _items.slice().sort(function(a,b){ return (a.at||0) - (b.at||0); });
         const _idxMap = new Map();
@@ -1626,32 +1633,83 @@
           //   兩場若同分鐘(像 12:48:23 / 12:48:47),沒有秒就無法區分
           const _timeStr = _pad(_t.getHours()) + ':' + _pad(_t.getMinutes()) + ':' + _pad(_t.getSeconds());
           const _battleNo = _idxMap.get(b);
+          // ★ v3.13.4(2026-05-31)— 墓碑場次紅字標記(原本在排行榜外層有「含 N 場 BUG」紅字,
+          //   但「玩家戰績歷史」個別場次沒實作,看起來像「總傷害 0」沒任何標記)
+          const _isDeleted = !!b._deletedAt;
+          const _delBadge = _isDeleted
+            ? '<span style="background:linear-gradient(135deg,#cc3344,#ff5566);'
+              + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
+              + 'box-shadow:0 0 8px rgba(255,80,90,0.6);" '
+              + 'title="GM 判定此場為異常/BUG 數據,已從總傷扣回。已自動發放補償券,可隔天用。">'
+              + '🚫 BUG 數據已刪除</span>'
+            : '';
           const _mvpHtml = b.mvp && b.mvp.name
             ? '<span style="color:#888;font-size:11px;">MVP <b style="color:#ff8866;">' + _escH(b.mvp.name) +
               '</b> Lv' + (b.mvp.lv||1) + ' 傷 ' + _fmtDmg(b.mvp.dmg || 0) + '</span>'
             : '';
           // ★ v3.12.17 — 補償場次標籤(全校排行榜可見「(含 N 場補償)」)
-          const _bonusBadge = b._isBonus
-            ? '<span style="background:linear-gradient(135deg,#cc4488,#ff66aa);'
-              + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
-              + 'box-shadow:0 0 6px rgba(255,102,170,0.5);" '
-              + 'title="補償場次:GM 因 BUG 補償的額外進場機會,傷害計入排行榜總傷">'
-              + '🎫 補償場次</span>'
+          // ★ v3.13.7 — 依 _bonusSource 分流:
+          //   - 'ticket' → 綠色「🎟️ 入場券場次」(玩家自己用世界 BOSS 挑戰入場券退場次後打的場)
+          //   - 'admin'  → 粉色「🎫 GM 補償場次」(GM 因 BUG 補償的額外進場)
+          //   - 舊資料(只有 _isBonus 沒 _bonusSource)→ 視為 admin 補償(向下相容)
+          let _bonusBadge = '';
+          if(b._isBonus){
+            const _src = b._bonusSource || 'admin';
+            if(_src === 'ticket'){
+              _bonusBadge = '<span style="background:linear-gradient(135deg,#2a8a5a,#55cc88);'
+                + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
+                + 'box-shadow:0 0 6px rgba(85,204,136,0.55);" '
+                + 'title="入場券場次:玩家使用世界 BOSS 挑戰入場券退場次後打的場,傷害計入排行榜總傷">'
+                + '🎟️ 入場券場次</span>';
+            } else {
+              _bonusBadge = '<span style="background:linear-gradient(135deg,#cc4488,#ff66aa);'
+                + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
+                + 'box-shadow:0 0 6px rgba(255,102,170,0.5);" '
+                + 'title="GM 補償場次:GM 因 BUG 補償的額外進場機會,傷害計入排行榜總傷">'
+                + '🎫 GM 補償場次</span>';
+            }
+          }
+          // ★ v3.13.4 — 墓碑場次的視覺處理:整框紅色 + 原傷劃線 + 刪除原因
+          // ★ v3.13.7 — bonus 邊框顏色也依 _bonusSource 分流(綠色 ticket / 粉色 admin)
+          const _bonusBorderColor = b._isBonus
+            ? ((b._bonusSource === 'ticket') ? '#55cc88' : '#ff66aa')
+            : null;
+          const _borderColor = _isDeleted
+            ? '#ff5566'
+            : (_bonusBorderColor || (_isToday ? '#ffd066' : '#6699cc'));
+          const _rowBg = _isDeleted
+            ? 'linear-gradient(135deg,rgba(160,30,40,0.25),rgba(120,20,30,0.18))'
+            : 'rgba(60,80,120,0.18)';
+          // 墓碑場次顯示「原 X.X 萬 → 0」+ 刪除原因
+          const _dmgHtml = _isDeleted
+            ? '<span style="margin-left:auto;font-weight:800;font-size:14px;color:#ff8888;">'
+                + '<span style="text-decoration:line-through;color:#aa6666;">原 ' + _fmtDmg(b._origDmg||0) + '</span>'
+                + ' → <span style="color:#ff5566;">總傷 0</span></span>'
+            : '<span style="margin-left:auto;color:#ff8866;font-weight:800;font-size:16px;">'
+                + '總傷害 ' + _fmtDmg(b.dmg || 0) + '</span>';
+          const _reasonHtml = _isDeleted
+            ? '<div style="margin-top:5px;font-size:11px;color:#ff9999;background:rgba(160,30,40,0.25);'
+              + 'padding:4px 8px;border-radius:4px;border-left:3px solid #ff5566;line-height:1.5;">'
+              + '🚫 GM 標記原因:' + _escH(b._deletedReason || '(無)')
+              + '</div>'
             : '';
-          return '<div style="background:rgba(60,80,120,0.18);border-left:4px solid ' +
-                  (b._isBonus ? '#ff66aa' : (_isToday ? '#ffd066' : '#6699cc')) + ';' +
-                 'padding:10px 14px;margin-bottom:6px;border-radius:6px;">' +
+          return '<div style="background:' + _rowBg + ';border-left:4px solid ' + _borderColor + ';' +
+                 'padding:10px 14px;margin-bottom:6px;border-radius:6px;' +
+                 (_isDeleted ? 'border:1.5px solid rgba(255,90,110,0.5);' : '') + '">' +
                    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px;">' +
-                     '<span style="color:#ffd066;font-weight:700;">' +
+                     '<span style="color:' + (_isDeleted ? '#ffaaaa' : '#ffd066') + ';font-weight:700;' +
+                          (_isDeleted ? 'text-decoration:line-through;' : '') + '">' +
                         // 「5/30 第 N/總 場」
                         (_t.getMonth()+1) + '/' + _t.getDate() + ' 第 ' + _battleNo + '/' + _dayCount + ' 場' +
                      '</span>' +
-                     _bonusBadge +  // ★ v3.12.17 — 補償場次標籤
+                     _delBadge +     // ★ v3.13.4 — 墓碑紅字標籤(優先擺,最醒目)
+                     _bonusBadge +   // ★ v3.12.17 — 補償場次標籤
                      '<span style="color:#aabbdd;">🕒 ' + _timeStr + ' 結算</span>' +
-                     '<span style="margin-left:auto;color:#ff8866;font-weight:800;font-size:16px;">' +
-                        '總傷害 ' + _fmtDmg(b.dmg || 0) + '</span>' +
+                     _dmgHtml +
                    '</div>' +
-                   '<div style="margin-top:3px;font-size:11px;color:#888;line-height:1.5;">' +
+                   _reasonHtml +
+                   '<div style="margin-top:3px;font-size:11px;color:#888;line-height:1.5;' +
+                       (_isDeleted ? 'opacity:0.65;' : '') + '">' +
                      '⏱ ' + (b.turns||'—') + ' 回合 · 📚 ' + (b.qc||0) + ' 題 · 💥 聯手爆發 ' + (b.tb||0) + ' 次' +
                      (_mvpHtml ? '<br>' + _mvpHtml : '') +
                    '</div>' +
@@ -1659,6 +1717,11 @@
         }).join('');
 
         // 日分組標題 + 該日總計
+        // ★ v3.13.4(2026-05-31)— 該日有墓碑場次時,顯示「有效 N / 共 X 場」+ 紅字標記
+        const _dayCountHtml = _dayDeletedCount > 0
+          ? ('<b style="color:#aaffaa;">有效 ' + _dayValidCount + '</b> / 共 ' + _dayCount + ' 場 ' +
+             '<span style="color:#ff8888;font-size:12px;">(🚫 ' + _dayDeletedCount + ' 場 BUG 已扣)</span>')
+          : (_dayCount + ' 場');
         const _headerHtml = '<div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px;' +
               'padding:6px 12px;background:' + (_isToday ? 'rgba(255,210,100,0.15)' : 'rgba(100,140,200,0.12)') + ';' +
               'border-radius:6px;border-left:3px solid ' + (_isToday ? '#ffd066' : '#6699cc') + ';">' +
@@ -1666,7 +1729,7 @@
                  (_isToday ? '🌟 今日 ' : '📅 ') + _ds +
               '</span>' +
               '<span style="margin-left:auto;font-size:14px;color:#ddd;">' +
-                 _dayCount + ' 場共 <b style="color:#ff8866;">' + _fmtDmg(_dayTotal) + '</b>' +
+                 _dayCountHtml + '共 <b style="color:#ff8866;">' + _fmtDmg(_dayTotal) + '</b>' +
               '</span></div>';
 
         return _headerHtml + _rowsHtml;
@@ -1686,7 +1749,18 @@
               'display:flex;align-items:center;gap:10px;">' +
           '<div style="font-size:17px;font-weight:800;color:#aaccff;flex:1;">' +
             '📜 戰績歷史 · <span style="color:#fff;">' + _escH(_names) + '</span>' +
-            ' <span style="color:#888;font-size:13px;">(' + _hist.length + ' 場)</span></div>' +
+            // ★ v3.13.4(2026-05-31)— modal 標題也區分有效/墓碑場次
+            ((function(){
+              const _del = _hist.reduce(function(n,b){ return n + (b && b._deletedAt ? 1 : 0); }, 0);
+              const _valid = _hist.length - _del;
+              if(_del > 0){
+                return ' <span style="color:#888;font-size:13px;">' +
+                       '(<b style="color:#aaffaa;">有效 ' + _valid + '</b> / 共 ' + _hist.length + ' 場 · ' +
+                       '<span style="color:#ff8888;">🚫 ' + _del + ' BUG</span>)</span>';
+              }
+              return ' <span style="color:#888;font-size:13px;">(' + _hist.length + ' 場)</span>';
+            })()) +
+          '</div>' +
           '<button id="_wb-player-history-close" style="padding:6px 14px;font-size:13px;' +
                 'background:rgba(80,80,120,0.5);border:1px solid #779;color:#ccc;' +
                 'border-radius:6px;cursor:pointer;font-family:inherit;">關閉 ✕</button>' +
@@ -4281,20 +4355,172 @@
       return true;
     }
     // 已達上限 → 彈窗擋下
-    // ★ v3.12.15(2026-05-31) — 訊息文字對齊老師措辭「今日已經打完所有場次」
-    const _msg =
-      '⛔ 你今日已經打完所有場次<br><br>' +
-      '<div style="font-size:15px;color:#ffd066;margin:8px 0;">' +
-        '今日已完成:<b>' + _res.used + ' / ' + _res.limit + '</b> 場連線戰' +
-      '</div>' +
-      '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
-        '・每位玩家每天最多 <b style="color:#ffaa66;">' + _res.limit + ' 場</b> 世界 BOSS 連線戰<br>' +
-        '・<b style="color:#88ddff;">隔天早上 08:00 自動重置</b><br>' +
-        '・<b style="color:#5dcaa5;">「單人練習模式」不算次數,隨時可挑戰</b><br>' +
-        '・<b style="color:#a0ffa0;">小提示:戰鬥結算進排行榜才扣場次,中途離開不算</b>' +
-      '</div>';
-    _wbGameAlert(_msg);
+    // ★ v3.13.7(2026-05-31)— 新規:彈窗加「使用入場券」按鈕
+    //   若玩家持有 ≥1 張入場券 → 顯示綠色「🎟️ 使用 1 張入場券」按鈕
+    //   按下後呼叫 _wbDailyLimit.useTicket() 退場次,成功則放行此次進場
+    //   入場券為 0 時只顯示原本「知道了」按鈕
+    let _ticketCount = 0;
+    try{
+      if(window._wbDailyLimit && typeof window._wbDailyLimit.getTicketCount === 'function'){
+        _ticketCount = await window._wbDailyLimit.getTicketCount();
+      }
+    }catch(_eTk){
+      console.warn('[WB-DailyLimit v3.13.7] 讀入場券失敗,當作 0', _eTk);
+      _ticketCount = 0;
+    }
+    const _useTicketResult = await _wbShowDailyLimitModalWithTicket(_res, _ticketCount);
+    if(_useTicketResult === true){
+      // 使用入場券成功 → 放行
+      return true;
+    }
     return false;
+  }
+
+  // ★ v3.13.7(2026-05-31) — 場次用完彈窗(含「使用入場券」按鈕)
+  //   參數:
+  //     resObj  : _wbDailyLimit.canEnter() 回的物件 { allowed, used, limit, ... }
+  //     ticketN : 玩家目前持有的入場券張數(0~5)
+  //   回傳:
+  //     true  → 使用入場券成功(useTicket ok=true),呼叫方應放行繼續進場
+  //     false → 玩家取消 / 沒券 / 用券失敗,呼叫方應 return
+  async function _wbShowDailyLimitModalWithTicket(resObj, ticketN){
+    return new Promise(function(resolve){
+      const _used = (resObj && resObj.used) || 0;
+      const _limit = (resObj && resObj.limit) || 2;
+      const _canUseTicket = ticketN >= 1;
+      const _msg =
+        '⛔ 你今日已經打完所有場次' +
+        '<div style="font-size:15px;color:#ffd066;margin:14px 0 10px;">' +
+          '今日已完成:<b>' + _used + ' / ' + _limit + '</b> 場連線戰' +
+        '</div>' +
+        '<div style="font-size:13px;color:#aaa;line-height:1.6;text-align:left;max-width:520px;margin:0 auto;">' +
+          '・每位玩家每天最多 <b style="color:#ffaa66;">' + _limit + ' 場</b> 世界 BOSS 連線戰<br>' +
+          '・<b style="color:#88ddff;">隔天早上 08:00 自動重置</b><br>' +
+          '・<b style="color:#5dcaa5;">「單人練習模式」不算次數,隨時可挑戰</b><br>' +
+          '・<b style="color:#a0ffa0;">戰鬥結算進排行榜才扣場次,中途離開不算</b>' +
+        '</div>' +
+        // 入場券資訊區
+        '<div style="margin-top:18px;padding:12px 16px;border-radius:10px;' +
+          (_canUseTicket
+            ? 'background:linear-gradient(135deg,rgba(40,130,80,0.25),rgba(85,200,140,0.18));border:1.5px solid rgba(102,221,170,0.6);'
+            : 'background:rgba(60,60,80,0.3);border:1.5px solid rgba(150,150,180,0.4);') + '">' +
+          '<div style="font-size:15px;font-weight:700;color:' + (_canUseTicket ? '#88ffcc' : '#aaaacc') + ';">' +
+            '🎟️ 世界 BOSS 挑戰入場券:<b style="font-size:18px;">' + ticketN + ' / 5</b>' +
+          '</div>' +
+          '<div style="font-size:12px;color:#bbcccc;margin-top:6px;line-height:1.55;">' +
+            (_canUseTicket
+              ? '使用 1 張券可額外打 1 場(本場會標記為「🎟️ 入場券場次」,傷害一樣計入排行榜)'
+              : '昨天若有沒用完的場次,今天 08:00 自動發券到背包(最多持有 5 張)') +
+          '</div>' +
+        '</div>';
+
+      const ov = document.createElement('div');
+      ov.style.cssText =
+        'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;' +
+        'background:rgba(0,0,0,0.75);animation:wbPopupFadeIn 0.18s ease-out;';
+      ov.innerHTML =
+        '<div style="background:linear-gradient(135deg,rgba(40,16,40,0.97),rgba(20,10,30,0.97));' +
+          'border:2px solid rgba(255,160,200,0.5);border-radius:16px;padding:32px 36px;' +
+          'max-width:640px;width:92%;text-align:center;animation:wbPopupBoxIn 0.22s ease-out;' +
+          'box-shadow:0 12px 40px rgba(0,0,0,0.6);">' +
+          '<div style="font-size:22px;font-weight:800;color:#ffd066;margin-bottom:8px;line-height:1.5;">' +
+            _msg +
+          '</div>' +
+          '<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:24px;">' +
+            (_canUseTicket
+              ? ('<button class="wb-dl-use-ticket" style="' +
+                  'min-width:200px;padding:14px 24px;font-size:22px;font-weight:800;' +
+                  'cursor:pointer;font-family:inherit;letter-spacing:1px;' +
+                  'background:linear-gradient(135deg,#2a8a5a,#55cc88);' +
+                  'border:2px solid #88ffcc;color:#fff;border-radius:10px;' +
+                  'box-shadow:0 4px 14px rgba(85,200,140,0.5);transition:all 0.15s;">' +
+                  '🎟️ 使用 1 張入場券</button>')
+              : '') +
+            '<button class="wb-dl-cancel" style="' +
+              'min-width:160px;padding:14px 24px;font-size:22px;font-weight:800;' +
+              'cursor:pointer;font-family:inherit;letter-spacing:1px;' +
+              'background:rgba(60,60,80,0.6);border:2px solid rgba(180,180,200,0.5);' +
+              'color:#ddd;border-radius:10px;transition:all 0.15s;">' +
+              '✕ 知道了</button>' +
+          '</div>' +
+        '</div>';
+
+      // 確保 _wbGamePopup 的樣式存在(背景動畫共用)
+      if(!document.getElementById('wb-game-popup-style')){
+        const sty = document.createElement('style');
+        sty.id = 'wb-game-popup-style';
+        sty.textContent =
+          '@keyframes wbPopupFadeIn{from{opacity:0;}to{opacity:1;}}'
+          + '@keyframes wbPopupBoxIn{from{opacity:0;transform:scale(0.85) translateY(8px);}'
+          + 'to{opacity:1;transform:scale(1) translateY(0);}}';
+        document.head.appendChild(sty);
+      }
+
+      document.body.appendChild(ov);
+
+      const cleanup = function(result){
+        try{ ov.remove(); }catch(_){}
+        try{ document.removeEventListener('keydown', onKey); }catch(_){}
+        resolve(result);
+      };
+      const onKey = function(ev){
+        if(ev.key === 'Escape'){ ev.preventDefault(); cleanup(false); }
+      };
+      document.addEventListener('keydown', onKey);
+
+      const cancelBtn = ov.querySelector('.wb-dl-cancel');
+      if(cancelBtn) cancelBtn.addEventListener('click', function(){ cleanup(false); });
+
+      const useBtn = ov.querySelector('.wb-dl-use-ticket');
+      if(useBtn){
+        useBtn.addEventListener('click', async function(){
+          useBtn.disabled = true;
+          useBtn.textContent = '🎟️ 處理中...';
+          useBtn.style.opacity = '0.7';
+          try{
+            if(!window._wbDailyLimit || typeof window._wbDailyLimit.useTicket !== 'function'){
+              cleanup(false);
+              try{ window._wbGameAlert && window._wbGameAlert('⚠ 入場券系統未掛載,請重新整理'); }catch(_){}
+              return;
+            }
+            const _r = await window._wbDailyLimit.useTicket();
+            if(_r && _r.ok){
+              // 用券成功 → 關彈窗放行
+              cleanup(true);
+              try{
+                window._wbGameAlert && window._wbGameAlert(
+                  '✅ 使用 1 張入場券成功!<br><br>' +
+                  '<div style="font-size:15px;color:#88ffcc;margin:8px 0;">' +
+                    '今日場次:<b>' + _r.newCount + ' / ' + _limit + '</b> 場<br>' +
+                    '剩餘入場券:<b>' + _r.ticketsLeft + ' / 5</b> 張' +
+                  '</div>' +
+                  '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
+                    '本場結算後會在排行榜標記「🎟️ 入場券場次」,傷害正常計入總傷' +
+                  '</div>'
+                );
+              }catch(_){}
+            } else {
+              const _reason = (_r && _r.reason) || 'unknown';
+              cleanup(false);
+              const _hint = _reason === 'no_tickets'
+                ? '⚠ 入場券不足,請等明日 08:00 自動發放'
+                : (_reason === 'still_have_count'
+                    ? '⚠ 你今天還有場次未用完,不需要入場券'
+                    : '⚠ 使用入場券失敗(' + _reason + '),請稍後再試');
+              try{ window._wbGameAlert && window._wbGameAlert(_hint); }catch(_){}
+            }
+          }catch(e){
+            console.error('[WB-DailyLimit v3.13.7] 用券例外', e);
+            cleanup(false);
+            try{ window._wbGameAlert && window._wbGameAlert('⚠ 使用入場券發生錯誤,請稍後再試'); }catch(_){}
+          }
+        });
+      }
+
+      ov.addEventListener('click', function(ev){
+        if(ev.target === ov) cleanup(false);
+      });
+    });
   }
 
   // ★ v3.12.9(2026-05-30) — 進場計數 helper 維持空殼(不在進場 +1)
@@ -13186,15 +13412,16 @@
           <li>第 7 回合:第 3 階段護盾啟動(各 1 層)</li>
           <li>第 9 回合:第 4 階段護盾啟動(各 1 層,最後一道防線)</li>
         </ul>
+        <!-- ★ v3.13.7(2026-05-31) — 對齊新規:固定 5000 + 結算計入排名(非全員陣亡) -->
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
           用<b style="color:#5dcaa5;">破盾元素(水 / 土 / 草 / 光)</b>各攻擊 1 次即可削減對應護盾(對 火/風/土/暗 護盾),
-          炎之意志減傷至單次最多 1% HP。整場共 16 層護盾需破除,
-          <b style="color:#ff5544;">第 11 回合戰場將崩壞,強制結束戰鬥</b>。
+          炎之意志<b style="color:#ffd966;">單次傷害固定上限 5,000</b>(不隨 HP 變動)。整場共 16 層護盾需破除,
+          <b style="color:#ffd966;">第 11 回合戰場崩毀進入結算,你累積打出的傷害會完整計入全伺服器排名</b>。
         </p>
 
-        <!-- ★ v3.11.7(2026-05-28) — BOSS 技能描述全面對齊實際數值 + 連動 2 次行動 + 命中 +30% -->
+        <!-- ★ v3.13.7(2026-05-31) — 對齊 v3.12.7 設計:每回合主行動 + 追擊普攻 -->
         <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
-          🔥 BOSS 技能(每回合連續行動 <span style="color:#ff5544;">2 次</span>)
+          🔥 BOSS 技能(每回合 <span style="color:#ff5544;">主行動 + 追擊普攻</span> 共 2 次)
         </h3>
         <div style="display:grid;grid-template-columns:1fr;gap:14px;">
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
@@ -13208,7 +13435,7 @@
             border-left:6px solid #ff8855;">
             <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒(能量 6)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對全體玩家造成 SP × 150% 火焰傷害,全體附加燃燒 2 回合,<b style="color:#ffe066;">基礎命中率 +30%</b>
+              對全體玩家造成 SP × 150% 火焰傷害,全體附加燃燒 2 回合(行動前後各 -6 HP),<b style="color:#ffe066;">基礎命中率 +30%</b>
             </div>
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
@@ -13223,16 +13450,22 @@
             <div style="font-weight:800;color:#ff4422;font-size:30px;">⚡ 爆發 天崩之炎(第 5 / 10 回合釋放,能量滿時也會主動釋放)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
               <b style="color:#ff5544;">將全體玩家 HP 減至最大 HP 的 20%</b>(HP 考核機制 — 玩家最大 HP 至少要 <b style="color:#ffe066;">110</b> 才能撐過後續燃燒),
-              全體附加<b style="color:#ff5544;">強力燃燒 3 回合</b>(行動前後各 -10 HP),
-              <b style="color:#ff5544;">完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效)</b>。
-              再從存活對手隨機選 1 名,額外施加強力暈眩 + 強力易傷各 1 回合。<b>務必在第 4 / 9 回合補滿血!</b>
+              全體附加<b style="color:#ff5544;">強力燃燒 3 回合</b>(行動前後各 -10 HP)。
+              再從存活對手隨機選 1 名,額外施加強力暈眩 + 強力易傷各 1 回合。
+              <!-- ★ v3.13.7(2026-05-31) — 新抵抗規則:護盾/減傷可擋,無敵改減傷 50%,迴避無效 -->
+              <br><br><b style="color:#ffcc66;">🛡 抵抗規則:</b>
+              可被「<b style="color:#88ddff;">護盾</b>」「<b style="color:#88ddff;">減傷</b>」抵擋,
+              但<b style="color:#ff5544;">無敵 BUFF 強制改為減傷 50%</b>,<b style="color:#ff5544;">迴避無效必中</b>。
+              <b style="color:#ffd966;">務必在第 4 / 9 回合預先放好「減傷 / 護盾 / 免死」類技能!</b>
             </div>
           </div>
           <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
             border-left:6px solid #aa3322;">
+            <!-- ★ v3.13.7(2026-05-31) — 改寫核心訴求:不是全員陣亡懲罰,而是「結算計入全伺服器排名」 -->
             <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(第 11 回合)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              戰場被火山灰掩埋,全員強制陣亡。<b>必須在 10 回合內擊敗 BOSS!</b>
+              戰場被火山灰掩埋,進入最終結算。龍王 500 萬 HP 無法單場擊敗,
+              <b style="color:#ffd966;">你累積打出的傷害會即時計入全伺服器排行榜!</b>
             </div>
           </div>
         </div>
@@ -13240,13 +13473,18 @@
         <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
           ⚔ 攻略提示
         </h3>
+        <!-- ★ v3.13.7(2026-05-31) — 提示對齊新規:
+             1. 單次傷害固定 5000(不是 1% HP)
+             2. 第 4/9 回合放減傷/護盾/免死技(不是補血)
+             3. 聯手攻擊有護盾時衰減為 1000(不是無視護盾) -->
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 土 / 草 / 光</b>全部 4 種破盾屬性</li>
-          <li>BOSS 單次受傷最多 1% HP(5,000 傷害),要靠累積打掉</li>
-          <li>第 4 / 9 回合務必補血到滿(避免被天崩之炎一波帶走)</li>
+          <li>BOSS 單次受傷上限<b style="color:#ffe066;">固定 5,000</b>(不隨 HP 變動),要靠多場累積拚排名</li>
+          <li>第 4 / 9 回合改放<b style="color:#88ddff;">「減傷 / 護盾 / 免死」</b>類技能擋下天崩之炎(不是補血)</li>
           <li>3/5/7/9 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
-          <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息</li>
-          <li>累積答對 <b style="color:#ffe066;">5 / 10 題</b>會在選完獎勵後發動全隊聯手攻擊(5000 傷害無視護盾)</li>
+          <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息抵抗</li>
+          <li>累積答對 <b style="color:#ffe066;">5 / 10 題</b>會在選完獎勵後發動全隊聯手攻擊(5,000 傷害,
+            <b style="color:#ff8866;">但有護盾時會被衰減為 1,000</b>,盡速破盾是關鍵!)</li>
         </ul>
 
         <div style="text-align:center;margin-top:28px;font-size:24px;color:#888;letter-spacing:2px;">

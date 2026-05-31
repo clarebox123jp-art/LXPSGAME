@@ -5873,4 +5873,54 @@ body.wb-in-worldboss-battle #adv-reward-subtitle {
   body.wb-in-worldboss-battle #adv-reward-overlay { width: 50% !important; }
 }
 
+/* ──────────────────────────────────────────────────────────────────────── */
+/* ★ v3.13.7(2026-05-31)— 世界 BOSS 入場券 / 補償券徽章樣式                */
+/*                                                                          */
+/* 用途:排行榜外層、戰績卡片、modal 等地方標記場次來源                     */
+/* 設計:                                                                   */
+/*   - .wb-badge-ticket:綠色,入場券場次(玩家自己換的)                  */
+/*   - .wb-badge-bonus :粉色,GM 補償場次(GM 因 BUG 補的)                 */
+/* 兩種徽章視覺上清楚區分,避免老師/玩家混淆兩種「補的」場次               */
+/* 目前 world-boss-ui.html 部分位置已直接使用 inline style;此 class 提供   */
+/* 統一抽用入口,未來移除 inline 重複碼時可一律改 class                    */
+/* ──────────────────────────────────────────────────────────────────────── */
+.wb-badge-ticket{
+  display:inline-block;
+  background:linear-gradient(135deg,#2a8a5a,#55cc88);
+  color:#fff;
+  font-weight:800;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:10px;
+  box-shadow:0 0 6px rgba(85,204,136,0.55);
+  letter-spacing:0.5px;
+  line-height:1.4;
+  white-space:nowrap;
+}
+.wb-badge-bonus{
+  display:inline-block;
+  background:linear-gradient(135deg,#cc4488,#ff66aa);
+  color:#fff;
+  font-weight:800;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:10px;
+  box-shadow:0 0 6px rgba(255,102,170,0.5);
+  letter-spacing:0.5px;
+  line-height:1.4;
+  white-space:nowrap;
+}
+/* 小尺寸變體(排行榜外層用,跟「N 場累積」並列) */
+.wb-badge-ticket.wb-badge-inline,
+.wb-badge-bonus.wb-badge-inline{
+  background:transparent;
+  box-shadow:none;
+  padding:0;
+  font-size:13px;
+  border-radius:0;
+}
+.wb-badge-ticket.wb-badge-inline{ color:#66ddaa; }
+.wb-badge-bonus.wb-badge-inline { color:#ff88bb; }
+
+
 

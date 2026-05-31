@@ -1238,6 +1238,74 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.13.7(2026-05-31)— 世界 BOSS 挑戰入場券系統(GM 後台工具) -->
+      <!--   入場券跟「補償券」是完全不同的東西: -->
+      <!--     - 補償券(_admin-bonus-section):GM 因 BUG 補償的額外進場機會(粉色標籤) -->
+      <!--     - 入場券(此 section):昨日未用完場次自動轉換(綠色標籤),GM 可手動補/清/查 -->
+      <!--   功能 A:🎟️ 手動補發 N 張(玩家因 BUG 雲端資料異常導致沒拿到券時用) -->
+      <!--   功能 B:📋 查某玩家目前持有的入場券數 -->
+      <!--   功能 C:🧹 清空某玩家的入場券(處理異常時用,謹慎使用) -->
+      <div id="_admin-ticket-section" style="background:rgba(20,50,40,0.5);border:2px solid rgba(102,221,170,0.65);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#88ffcc;margin-bottom:8px;">🎟️ 6.6 世界 BOSS 挑戰入場券管理</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          <b style="color:#88ffcc;">入場券</b>是玩家昨日「沒用完的世界 BOSS 場次」自動轉換而來(每日 08:00 發放,
+          上限持有 5 張)。當天場次用完時,可在「場次用完」彈窗使用 1 張換 1 次額外進場,本場結算會在排行榜
+          標記「🎟️ 入場券場次」(綠色,跟 GM 補償粉色區分)。<br>
+          <span style="color:#aaa;font-size:12px;">資料路徑:<code>players/{uid}.playerBackpack.wb_entry_ticket</code>。入場券場次傷害仍計入排行榜總傷。</span>
+        </div>
+
+        <!-- 區段 A:手動補發 -->
+        <div style="background:rgba(20,50,40,0.35);border:1.5px dashed rgba(102,221,170,0.45);border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:700;color:#88ffcc;margin-bottom:8px;">
+            🎟️ A. 手動補發入場券
+          </div>
+          <div style="font-size:12px;color:#bbb;margin-bottom:10px;line-height:1.6;">
+            <b style="color:#88ffcc;">使用情境</b>:玩家昨天有剩場次但因 BUG 雲端資料異常今早沒拿到券,
+            或回報雲端守門誤判導致發券失敗時,GM 用此補發。
+            <br><span style="color:#ffaaaa;">⚠ 補發後玩家持有上限仍是 5 張,超過會自動截斷。</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <input id="_admin-ticket-grant-email" type="text" placeholder="玩家 email"
+              style="flex:1.5;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+              border:1.5px solid rgba(102,221,170,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+            <span style="color:#888;font-size:12px;">或</span>
+            <input id="_admin-ticket-grant-uid" type="text" placeholder="uid"
+              style="flex:1;min-width:140px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+              border:1.5px solid rgba(102,221,170,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <label style="font-size:13px;color:#ccc;display:flex;align-items:center;gap:6px;">
+              補發張數:
+              <input id="_admin-ticket-grant-n" type="number" min="1" max="5" value="1"
+                style="width:60px;padding:6px 8px;font-size:13px;background:rgba(20,20,30,0.9);
+                border:1.5px solid rgba(102,221,170,0.4);color:#fff;border-radius:6px;font-family:monospace;text-align:center;">
+              張(1~5)
+            </label>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button id="_admin-ticket-grant-btn" style="padding:9px 18px;font-size:13px;font-weight:800;
+              background:linear-gradient(135deg,#2a8a5a,#55cc88);border:2px solid #88ffcc;color:#fff;
+              border-radius:7px;cursor:pointer;font-family:inherit;
+              box-shadow:0 0 10px rgba(85,200,140,0.4);">
+              🎟️ 補發入場券
+            </button>
+            <button id="_admin-ticket-query-btn" style="padding:9px 16px;font-size:13px;font-weight:700;
+              background:rgba(60,100,80,0.4);border:1.5px solid rgba(150,220,180,0.5);color:#aaffcc;
+              border-radius:7px;cursor:pointer;font-family:inherit;">
+              📋 查持有數
+            </button>
+            <button id="_admin-ticket-clear-btn" style="padding:9px 16px;font-size:13px;font-weight:700;
+              background:rgba(120,40,40,0.4);border:1.5px solid rgba(220,120,120,0.5);color:#ffaaaa;
+              border-radius:7px;cursor:pointer;font-family:inherit;">
+              🧹 清空(慎用)
+            </button>
+            <span id="_admin-ticket-status" style="font-size:12px;color:#aaa;"></span>
+          </div>
+          <div id="_admin-ticket-result" style="margin-top:10px;font-size:12px;color:#aaffcc;line-height:1.65;
+            padding:0 8px;display:none;"></div>
+        </div>
+      </div>
+
       <!-- ★ v3.5.20 — 世界 BOSS 排行榜管理區塊(老師 2026-05-22 需求) -->
       <div id="_admin-wblb-section" style="background:rgba(40,30,50,0.5);border:2px solid rgba(200,140,255,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ddaaff;margin-bottom:8px;">🏆 6. 世界 BOSS 排行榜管理</div>
@@ -1437,6 +1505,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
+      { sec: '_admin-ticket-section',           label: '🎟️ 世界 BOSS 入場券',      hint: '補發/查詢/清空挑戰入場券' },
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
       { sec: '_admin-bypass-section',           label: '🔓 解除冷卻 / 每日上限',   hint: '測試用' },
       { sec: '_admin-test-batch-section',       label: '🧪 批次設定數值',          hint: '測試工具' },
@@ -8281,6 +8350,163 @@ async function _showAdminStatsPanelImpl(){
     };
 
     console.log('[v3.12.17 補償券] ✅ 補償券區塊綁定完成');
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.13.7(2026-05-31) — 世界 BOSS 挑戰入場券區塊綁定
+  // ────────────────────────────────────────────────────────────────
+  // 三個功能:
+  //   A. 🎟️ 手動補發入場券(GM 用,當玩家因 BUG 沒拿到券時)
+  //   B. 📋 查某玩家目前持有的入場券數
+  //   C. 🧹 清空某玩家的入場券(處理異常時用,謹慎)
+  //
+  // 重要前置:_wbDailyLimit.grantTicketByUid / getTicketByUid / clearTicketByUid
+  //          API 在 index.html line ~11590 起定義
+  // ════════════════════════════════════════════════════════════════
+  (function _bindTicketSection(){
+    const _grantBtn  = document.getElementById('_admin-ticket-grant-btn');
+    const _queryBtn  = document.getElementById('_admin-ticket-query-btn');
+    const _clearBtn  = document.getElementById('_admin-ticket-clear-btn');
+    const _statusEl  = document.getElementById('_admin-ticket-status');
+    const _resultEl  = document.getElementById('_admin-ticket-result');
+    const _emailIn   = document.getElementById('_admin-ticket-grant-email');
+    const _uidIn     = document.getElementById('_admin-ticket-grant-uid');
+    const _nIn       = document.getElementById('_admin-ticket-grant-n');
+    if(!_grantBtn || !_queryBtn || !_clearBtn) return;
+
+    // 從 email 找 uid(沿用補償券區塊的做法:讀 stats/global.userIndex 或現有 emailToUid map)
+    async function _resolveUid(){
+      const _uid = (_uidIn.value || '').trim();
+      const _email = (_emailIn.value || '').trim().toLowerCase();
+      if(_uid) return _uid;
+      if(!_email){
+        throw new Error('請輸入玩家 email 或 uid');
+      }
+      try{
+        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const _fbDb = window._fbDb;
+        if(!_fbDb) throw new Error('Firestore 未就緒');
+        // 嘗試 1:stats/global.userIndex(email → uid 索引)
+        try{
+          const _ref = doc(_fbDb, 'stats', 'global');
+          const _snap = await getDoc(_ref);
+          if(_snap.exists()){
+            const _d = _snap.data() || {};
+            const _idx = _d.userIndex || _d.emailToUid || {};
+            if(_idx && _idx[_email]) return _idx[_email];
+          }
+        }catch(_){}
+        // 嘗試 2:if AdminPanel 有暴露 _adminResolveUidByEmail
+        if(typeof window._adminResolveUidByEmail === 'function'){
+          const _u = await window._adminResolveUidByEmail(_email);
+          if(_u) return _u;
+        }
+        throw new Error('找不到對應的 uid(請改用 uid 直填)');
+      }catch(e){
+        throw e;
+      }
+    }
+
+    function _showResult(html, color){
+      _resultEl.style.display = 'block';
+      _resultEl.style.color = color || '#aaffcc';
+      _resultEl.innerHTML = html;
+    }
+
+    // ── A. 補發 ──
+    _grantBtn.onclick = async function(){
+      _statusEl.textContent = '⏳ 處理中...';
+      _resultEl.style.display = 'none';
+      try{
+        if(!window._wbDailyLimit || typeof window._wbDailyLimit.grantTicketByUid !== 'function'){
+          throw new Error('_wbDailyLimit.grantTicketByUid API 未掛載');
+        }
+        const _uid = await _resolveUid();
+        const _n = Math.max(1, Math.min(5, parseInt(_nIn.value, 10) || 1));
+        const _r = await window._wbDailyLimit.grantTicketByUid(_uid, _n);
+        if(_r && _r.ok){
+          _statusEl.textContent = '✅ 完成';
+          _showResult(
+            '🎟️ <b>補發成功</b><br>' +
+            '・玩家 uid:<code>' + _uid + '</code><br>' +
+            '・申請補發:' + _n + ' 張<br>' +
+            '・實際入帳:<b style="color:#88ffcc;">' + _r.granted + '</b> 張(夾在 5 張上限內)<br>' +
+            '・補發後持有:<b style="color:#ffe066;">' + _r.total + ' / 5</b>',
+            '#aaffcc'
+          );
+        } else {
+          const _reason = (_r && _r.reason) || 'unknown';
+          throw new Error('補發失敗:' + _reason);
+        }
+      }catch(e){
+        _statusEl.textContent = '❌ 失敗:' + (e && e.message);
+        _showResult('❌ ' + (e && e.message), '#ffaaaa');
+        console.error('[v3.13.7 入場券] 補發失敗', e);
+      }
+    };
+
+    // ── B. 查持有數 ──
+    _queryBtn.onclick = async function(){
+      _statusEl.textContent = '⏳ 查詢中...';
+      _resultEl.style.display = 'none';
+      try{
+        if(!window._wbDailyLimit || typeof window._wbDailyLimit.getTicketByUid !== 'function'){
+          throw new Error('_wbDailyLimit.getTicketByUid API 未掛載');
+        }
+        const _uid = await _resolveUid();
+        const _n = await window._wbDailyLimit.getTicketByUid(_uid);
+        _statusEl.textContent = '✅ 完成';
+        _showResult(
+          '📋 <b>持有查詢</b><br>' +
+          '・玩家 uid:<code>' + _uid + '</code><br>' +
+          '・目前持有:<b style="font-size:18px;color:' + (_n >= 1 ? '#88ffcc' : '#aaaacc') + ';">' +
+            _n + ' / 5</b> 張' +
+          (_n === 0 ? '<br><span style="color:#aaa;font-size:11px;">(無券。換日登入若昨日有剩場次會自動補發)</span>' : ''),
+          '#aaffcc'
+        );
+      }catch(e){
+        _statusEl.textContent = '❌ 失敗:' + (e && e.message);
+        _showResult('❌ ' + (e && e.message), '#ffaaaa');
+        console.error('[v3.13.7 入場券] 查詢失敗', e);
+      }
+    };
+
+    // ── C. 清空(慎用)──
+    _clearBtn.onclick = async function(){
+      _statusEl.textContent = '⏳ 等待確認...';
+      _resultEl.style.display = 'none';
+      try{
+        if(!window._wbDailyLimit || typeof window._wbDailyLimit.clearTicketByUid !== 'function'){
+          throw new Error('_wbDailyLimit.clearTicketByUid API 未掛載');
+        }
+        const _uid = await _resolveUid();
+        const _ok = window.confirm('⚠️ 確定要清空 uid「' + _uid + '」的所有入場券?\n\n此操作不可逆,且不會自動退還對應的「昨日剩餘場次」。');
+        if(!_ok){
+          _statusEl.textContent = '⏸ 已取消';
+          return;
+        }
+        const _r = await window._wbDailyLimit.clearTicketByUid(_uid);
+        if(_r && _r.ok){
+          _statusEl.textContent = '✅ 已清空';
+          _showResult(
+            '🧹 <b>清空完成</b><br>' +
+            '・玩家 uid:<code>' + _uid + '</code><br>' +
+            '・已扣除:<b style="color:#ffaaaa;">' + (_r.removed || 0) + '</b> 張<br>' +
+            '・目前持有:<b>0 / 5</b>',
+            '#ffccaa'
+          );
+        } else {
+          const _reason = (_r && _r.reason) || 'unknown';
+          throw new Error('清空失敗:' + _reason);
+        }
+      }catch(e){
+        _statusEl.textContent = '❌ 失敗:' + (e && e.message);
+        _showResult('❌ ' + (e && e.message), '#ffaaaa');
+        console.error('[v3.13.7 入場券] 清空失敗', e);
+      }
+    };
+
+    console.log('[v3.13.7 入場券] ✅ 入場券區塊綁定完成');
   })();
 
   // ════════════════════════════════════════════════════════════════
