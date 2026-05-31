@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = '20260530-v3-12-2-admin-version-stamp';
+window.ADMIN_PANEL_VERSION = '20260531-v3-13-1-medal-scan';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1082,6 +1082,34 @@ async function _showAdminStatsPanelImpl(){
       </div>
 
       <!-- ════════════════════════════════════════════════════════════ -->
+      <!-- ★ v3.13.1(2026-05-31)— 老師需求 3:全員獎章補發掃描          -->
+      <!-- 用途:掃描登入玩家本人的 _medalStats、英雄等級、至寶、預習等   -->
+      <!-- 反推「邏輯上已達成但未解鎖」的獎章,補發 + 自動發水晶/幣。   -->
+      <!-- 注意:此工具只對「目前登入帳號」生效(不會跑遍全校),GM 用    -->
+      <!--      於自己測試 / 老師個人帳號的歷史獎章補正。學生用戶平時    -->
+      <!--      不需要按 — 登入時 _checkMedalsOnLogin 已自動跑一次。     -->
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <div id="_admin-medal-scan-section" style="background:rgba(40,30,15,0.5);border:2px solid rgba(255,210,100,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#ffd066;margin-bottom:8px;">🏅 全員獎章補發掃描</div>
+        <div style="font-size:13px;color:#e8d8a8;margin-bottom:12px;line-height:1.65;">
+          掃描目前登入帳號的所有獎章達成條件,對「邏輯上已達成但未解鎖」的獎章補發,
+          並自動發放對應的水晶+知識幣獎勵(已領過的不會重發)。<br>
+          <span style="color:#ffaa66;">⚠ 此工具只對目前登入帳號生效。若想對某學生補發,請該學生自己登入後跑掃描。</span><br>
+          <span style="color:#aaffaa;">✅ 涵蓋:日本/台灣關 BOSS 擊敗、預習進度、世界 BOSS 戰績、小博士累計、至寶收藏、英雄等級、技能熟練、答題連擊等。</span><br>
+          <span style="color:#ffaaaa;">❌ 不涵蓋(歷史資料沒記):單場 S 評、10 回合速通、單場全英雄不倒等 — 玩家需重新達成。</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+          <button id="_admin-medal-scan-btn" style="padding:9px 20px;font-size:14px;font-weight:800;
+                  background:linear-gradient(135deg,#cc9933,#8b6420);color:#fff;border:none;border-radius:8px;cursor:pointer;
+                  box-shadow:0 3px 10px rgba(220,170,40,0.5);">
+            🔍 立即掃描 + 補發
+          </button>
+        </div>
+        <div id="_admin-medal-scan-status" style="font-size:12px;color:#aaa;margin-bottom:8px;"></div>
+        <div id="_admin-medal-scan-result" style="max-height:420px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:10px;display:none;font-size:13px;color:#e8d8a8;line-height:1.65;"></div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════ -->
       <!-- ★ v3.11.35 階段 4c(2026-05-29) — 玩家活動記錄查詢               -->
       <!--   ★ v3.11.35+(2026-05-29 晚場) — 新增「姓名」查詢                -->
       <!-- 用途:輸入 email / uid / 姓名,完整查看玩家所有英雄解鎖、至寶   -->
@@ -1406,6 +1434,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
       { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
+      { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
@@ -6705,6 +6734,78 @@ async function _showAdminStatsPanelImpl(){
   })();
 
   // ════════════════════════════════════════════════════════════════
+  // ★ v3.13.1(2026-05-31)— 老師需求 3:全員獎章補發掃描 — 按鈕綁定
+  //   呼叫 window._adminScanAllMedals 跑三階段補發:
+  //     (1) _checkMedalsOnLogin → 明確規則(等級/技能/答題等)
+  //     (2) _inferMissedMedals  → 推論規則(v3.13.1 大幅擴充)
+  //     (3) _grantRetroactiveMedalRewards → 對未領獎勵的獎章發水晶+幣
+  // ════════════════════════════════════════════════════════════════
+  (function _bindMedalScanSection(){
+    const _btn = document.getElementById('_admin-medal-scan-btn');
+    const _statusEl = document.getElementById('_admin-medal-scan-status');
+    const _resultEl = document.getElementById('_admin-medal-scan-result');
+    if(!_btn || !_statusEl || !_resultEl) return;
+
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    _btn.onclick = async function(){
+      if(_btn.disabled) return;
+      if(typeof window._adminScanAllMedals !== 'function'){
+        _statusEl.style.color = '#ff6666';
+        _statusEl.textContent = '❌ _adminScanAllMedals API 未就緒(主程式版本太舊?)';
+        return;
+      }
+      _btn.disabled = true;
+      _btn.style.opacity = '0.55';
+      _btn.textContent = '⏳ 掃描中...';
+      _statusEl.style.color = '#ffcc88';
+      _statusEl.textContent = '⏳ 正在掃描所有獎章達成條件,請稍候...';
+      _resultEl.style.display = 'none';
+
+      try{
+        const _r = await window._adminScanAllMedals();
+        if(_r && _r.ok){
+          const _inferred = Array.isArray(_r.inferred) ? _r.inferred : [];
+          const _newCount = _r.newUnlockedCount || 0;
+          const _totalUnlocked = _r.totalUnlocked || 0;
+          _statusEl.style.color = '#aaffaa';
+          _statusEl.textContent = '✅ 掃描完成!此次補發 ' + _newCount + ' 枚,目前共擁有 ' + _totalUnlocked + ' 枚獎章';
+
+          // 詳細結果
+          let _html = '<div style="font-weight:800;color:#ffd066;margin-bottom:8px;">📊 掃描結果</div>';
+          _html += '<div style="color:#cce0ff;margin-bottom:6px;">• 此次新解鎖獎章數:<b style="color:#aaffaa;">' + _newCount + '</b></div>';
+          _html += '<div style="color:#cce0ff;margin-bottom:6px;">• 目前總獎章數:<b style="color:#ffd066;">' + _totalUnlocked + '</b></div>';
+          _html += '<div style="color:#cce0ff;margin-bottom:10px;">• 推論補解項目:<b style="color:#aaffaa;">' + _inferred.length + '</b> 枚</div>';
+
+          if(_inferred.length > 0){
+            _html += '<div style="margin-top:10px;padding:8px;background:rgba(180,140,40,0.18);border-radius:6px;">';
+            _html += '<div style="font-weight:700;color:#ffe066;margin-bottom:6px;">本次推論補解的獎章 ID:</div>';
+            _html += '<div style="font-family:monospace;font-size:12px;line-height:1.7;word-break:break-all;color:#aaffcc;">';
+            _html += _inferred.map(id => _esc(id)).join(', ');
+            _html += '</div></div>';
+          } else {
+            _html += '<div style="margin-top:10px;padding:8px;background:rgba(60,60,80,0.3);border-radius:6px;color:#aaa;">無新補解項目(該帳號的獎章已經完整)</div>';
+          }
+
+          _html += '<div style="margin-top:10px;color:#aaa;font-size:11px;">💡 已自動發放對應的水晶+知識幣獎勵。詳細獎勵內容請見彈出的「補發通知」。若沒看到通知代表沒有新獎章可補。</div>';
+          _resultEl.innerHTML = _html;
+          _resultEl.style.display = 'block';
+        } else {
+          _statusEl.style.color = '#ff6666';
+          _statusEl.textContent = '❌ 掃描失敗:' + ((_r && _r.reason) || '未知錯誤');
+        }
+      }catch(e){
+        console.error('[獎章掃描] 例外', e);
+        _statusEl.style.color = '#ff6666';
+        _statusEl.textContent = '❌ 例外:' + ((e && e.message) || String(e));
+      }
+      _btn.disabled = false;
+      _btn.style.opacity = '1';
+      _btn.textContent = '🔍 立即掃描 + 補發';
+    };
+  })();
+
+  // ════════════════════════════════════════════════════════════════
   // ★ v3.5.20 — 世界 BOSS 排行榜管理區塊綁定(老師 2026-05-22 需求)
   // ════════════════════════════════════════════════════════════════
   (function _bindWblbSection(){
@@ -6980,6 +7081,319 @@ async function _showAdminStatsPanelImpl(){
       _overlay.onclick = function(ev){ if(ev.target === _overlay) _close(); };
     }
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.13.3(2026-05-31)— 場次標墓碑 modal(老師需求 2)
+    // ────────────────────────────────────────────────────────────────
+    // 用途:GM 對某隊伍的具體某「場」(battleHistory[idx])標 BUG 墓碑
+    //   - 留紀錄(全員看到「BUG 數據已刪除」紅字)
+    //   - 該場 dmg 從 totalDmg 扣回
+    //   - 對該場每位玩家發 1 張補償券(隔天可用)
+    //
+    // 設計:
+    //   - 列出該隊伍所有 battleHistory 場次(新到舊)
+    //   - 已標墓碑的場次:disable + 灰色顯示「已標墓碑」
+    //   - 未標墓碑的場次:checkbox 可勾,顯示傷害/時間/單場異常標記(>5000 警告)
+    //   - 工具列:全選 / 全不選 / 只勾異常(單場 > 5000)
+    //   - 按下「標記墓碑 + 發補償券」→ 二段確認(輸入原因)→ 執行
+    //
+    // 執行流程(逐筆):
+    //   1. window._wbHpSync.markBattleAsDeleted(BOSS_ID, teamKey, idx, reason)
+    //   2. 對該場 _teamKey 的每位 uid 呼叫 window._wbDailyLimit.grantBonusByUid({uid, reason:'BUG補償:...', ...})
+    //   3. 全部跑完 → close + refresh
+    // ════════════════════════════════════════════════════════════════
+    function _showTombModal(entry){
+      const _old = document.getElementById('_wblb-tomb-overlay');
+      if(_old) _old.remove();
+      if(!entry || !Array.isArray(entry.battleHistory)){
+        alert('該隊伍無 battleHistory 可標');
+        return;
+      }
+      const _pad = function(n){ return n < 10 ? '0'+n : ''+n; };
+      const _fmt = function(n){
+        if(typeof n !== 'number' || isNaN(n) || n <= 0) return '0';
+        if(n >= 10000) return (n/10000).toFixed(1) + ' 萬';
+        return n.toLocaleString();
+      };
+      const _teamKey = entry.teamKey || '';
+      const _teamNames = Array.isArray(entry.teamNames) ? entry.teamNames.filter(Boolean).join(' / ') : '?';
+      // 場次清單:0-based index 對應 battleHistory 原始順序(很重要,API 用 0-based index)
+      // 但畫面顯示走「新到舊」,所以要存原始 idx 以便 API 用
+      const _hist = entry.battleHistory.map(function(b, idx){
+        return { b: b, origIdx: idx };
+      });
+      // 新到舊排序
+      _hist.sort(function(a, b){ return (b.b.at||0) - (a.b.at||0); });
+
+      let _rowsHtml = '';
+      if(_hist.length === 0){
+        _rowsHtml = '<div style="padding:30px;text-align:center;color:#888;">該隊伍尚無戰績</div>';
+      } else {
+        _rowsHtml = _hist.map(function(item, vi){
+          const b = item.b;
+          const _isDeleted = !!b._deletedAt;
+          const _t = new Date(b.at || Date.now());
+          const _timeStr = (_t.getMonth()+1) + '/' + _t.getDate() + ' ' + _pad(_t.getHours()) + ':' + _pad(_t.getMinutes());
+          // 異常判定:單場 > 5000 標紅(世界 BOSS 單次傷害上限 5000,單場應該幾百~幾千)
+          const _isAbnormal = !_isDeleted && (b.dmg || 0) > 5000;
+          const _dmg = _isDeleted ? (b._origDmg || 0) : (b.dmg || 0);
+          const _dmgColor = _isDeleted ? '#888' : (_isAbnormal ? '#ff6666' : '#ffd066');
+          const _bg = _isDeleted ? 'rgba(120,40,40,0.2)' : (_isAbnormal ? 'rgba(80,30,30,0.35)' : 'rgba(30,25,40,0.6)');
+          const _border = _isDeleted ? 'rgba(180,80,80,0.4)' : (_isAbnormal ? '#ff5555' : 'rgba(140,100,180,0.35)');
+          const _label = _isDeleted
+            ? '<span style="color:#ff6666;font-size:11px;font-weight:700;margin-left:6px;">🚫 已標墓碑</span>'
+            : (_isAbnormal ? '<span style="color:#ff8888;font-size:11px;font-weight:700;margin-left:6px;">⚠️ 異常</span>' : '');
+          const _chk = _isDeleted
+            ? '<span style="display:inline-block;width:18px;flex:0 0 auto;color:#666;">🚫</span>'
+            : '<input type="checkbox" class="_wblb-tomb-chk" data-orig-idx="' + item.origIdx + '" ' +
+              'style="margin-top:3px;transform:scale(1.3);cursor:pointer;flex-shrink:0;">';
+          return '<label class="_wblb-tomb-row" data-orig-idx="' + item.origIdx + '" style="' +
+                 'display:flex;align-items:flex-start;gap:10px;padding:8px 12px;margin-bottom:5px;' +
+                 'background:' + _bg + ';border:1.5px solid ' + _border + ';border-radius:6px;' +
+                 (_isDeleted ? 'opacity:0.6;cursor:not-allowed;' : 'cursor:pointer;') + '">' +
+                   _chk +
+                   '<div style="flex:1;min-width:0;font-size:13px;">' +
+                     '<div style="font-weight:700;">' +
+                       '<span style="color:#aaccff;">第 ' + (item.origIdx+1) + ' 場</span> ' +
+                       '<span style="color:#aabbdd;font-size:12px;">🕒 ' + _timeStr + '</span>' +
+                       _label +
+                     '</div>' +
+                     '<div style="margin-top:3px;font-size:12px;color:#bbb;">' +
+                       '傷害 <b style="color:' + _dmgColor + ';">' + _fmt(_dmg) + '</b>' +
+                       ' · ' + (b.turns||'—') + ' 回合 · ' + (b.qc||0) + ' 題' +
+                       (b._isBonus ? ' · 🎫 補償場次' : '') +
+                       (_isDeleted ? '<br><span style="color:#ff7777;font-size:11px;">原因:' + (b._deletedReason || '(無)') + '</span>' : '') +
+                     '</div>' +
+                   '</div>' +
+                 '</label>';
+        }).join('');
+      }
+
+      const _overlay = document.createElement('div');
+      _overlay.id = '_wblb-tomb-overlay';
+      _overlay.style.cssText =
+        'position:fixed;left:0;top:0;width:100vw;height:100vh;' +
+        'background:rgba(0,0,0,0.82);z-index:100060;display:flex;' +
+        'align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+      _overlay.innerHTML =
+        '<div style="background:linear-gradient(135deg,rgba(45,25,40,0.98),rgba(30,15,30,0.98));' +
+          'border:2px solid rgba(220,100,100,0.7);border-radius:12px;' +
+          'width:100%;max-width:720px;max-height:88vh;display:flex;flex-direction:column;' +
+          'box-shadow:0 10px 50px rgba(0,0,0,0.7);">' +
+          // header
+          '<div style="padding:14px 18px;border-bottom:1px solid rgba(220,100,100,0.35);' +
+                'display:flex;align-items:center;gap:10px;">' +
+            '<div style="font-size:16px;font-weight:800;color:#ffaaaa;flex:1;">' +
+              '🚫 場次標 BUG · <span style="color:#fff;">' + _teamNames + '</span></div>' +
+            '<button id="_wblb-tomb-close" style="padding:6px 14px;font-size:13px;' +
+                  'background:rgba(80,60,60,0.5);border:1px solid #877;color:#ccc;' +
+                  'border-radius:6px;cursor:pointer;font-family:inherit;">關閉 ✕</button>' +
+          '</div>' +
+          // 說明
+          '<div style="padding:10px 18px;font-size:12px;color:#ddd;background:rgba(80,30,30,0.3);' +
+                'border-bottom:1px solid rgba(140,60,60,0.25);line-height:1.6;">' +
+            '💡 <b style="color:#ffaa66;">墓碑模式</b>:勾選要標記為 BUG 的場次,執行後:<br>' +
+            '<span style="color:#aaffaa;">✅ 留紀錄</span>(玩家展開戰績看到「🚫 BUG 數據已刪除」紅字)<br>' +
+            '<span style="color:#aaffaa;">✅ 該場傷害從總傷扣回</span>(維護排行榜公平)<br>' +
+            '<span style="color:#aaffaa;">✅ 自動對該場參戰玩家發補償券 ×1</span>(隔天可用)' +
+          '</div>' +
+          // 工具列
+          '<div style="padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' +
+                'border-bottom:1px solid rgba(140,60,60,0.25);">' +
+            '<button id="_wblb-tomb-selall" style="padding:5px 12px;font-size:12px;' +
+                  'background:rgba(60,80,120,0.5);border:1px solid #779;color:#cde;' +
+                  'border-radius:5px;cursor:pointer;font-family:inherit;">全選(未標)</button>' +
+            '<button id="_wblb-tomb-selnone" style="padding:5px 12px;font-size:12px;' +
+                  'background:rgba(60,80,120,0.5);border:1px solid #779;color:#cde;' +
+                  'border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>' +
+            '<button id="_wblb-tomb-selab" style="padding:5px 12px;font-size:12px;' +
+                  'background:rgba(120,60,40,0.5);border:1px solid #c87;color:#fcb;' +
+                  'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(&gt; 5000)</button>' +
+            '<span id="_wblb-tomb-count" style="margin-left:auto;font-size:12px;color:#ccc;">已選 0 筆</span>' +
+          '</div>' +
+          // 列表
+          '<div id="_wblb-tomb-list" style="flex:1;overflow-y:auto;padding:12px 18px;">' +
+            _rowsHtml +
+          '</div>' +
+          // 底部
+          '<div id="_wblb-tomb-footer" style="padding:12px 18px;border-top:1px solid rgba(220,100,100,0.35);' +
+                'display:flex;gap:10px;align-items:center;">' +
+            '<span style="font-size:12px;color:#aaa;flex:1;">⚠️ 已標墓碑無法復原。</span>' +
+            '<button id="_wblb-tomb-go" style="padding:9px 18px;font-size:14px;font-weight:800;' +
+                  'background:linear-gradient(135deg,rgba(180,60,60,0.7),rgba(120,30,30,0.9));' +
+                  'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
+                  'font-family:inherit;opacity:0.5;" disabled>' +
+              '🚫 標墓碑 + 發補償券(0 筆)</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(_overlay);
+
+      const _listBox = _overlay.querySelector('#_wblb-tomb-list');
+      const _countEl = _overlay.querySelector('#_wblb-tomb-count');
+      const _footer = _overlay.querySelector('#_wblb-tomb-footer');
+      const _updateCount = function(){
+        const _chks = _listBox.querySelectorAll('._wblb-tomb-chk:checked');
+        const _n = _chks.length;
+        _countEl.textContent = '已選 ' + _n + ' 筆';
+        const _btn = _overlay.querySelector('#_wblb-tomb-go');
+        if(_btn){
+          _btn.textContent = '🚫 標墓碑 + 發補償券(' + _n + ' 筆)';
+          _btn.disabled = (_n === 0);
+          _btn.style.opacity = (_n === 0) ? '0.5' : '1';
+        }
+      };
+      _listBox.addEventListener('change', function(ev){
+        if(ev.target && ev.target.classList && ev.target.classList.contains('_wblb-tomb-chk')){
+          _updateCount();
+        }
+      });
+
+      _overlay.querySelector('#_wblb-tomb-close').onclick = function(){
+        try{ _overlay.remove(); }catch(_){}
+      };
+      _overlay.querySelector('#_wblb-tomb-selall').onclick = function(){
+        _listBox.querySelectorAll('._wblb-tomb-chk').forEach(function(c){ c.checked = true; });
+        _updateCount();
+      };
+      _overlay.querySelector('#_wblb-tomb-selnone').onclick = function(){
+        _listBox.querySelectorAll('._wblb-tomb-chk').forEach(function(c){ c.checked = false; });
+        _updateCount();
+      };
+      _overlay.querySelector('#_wblb-tomb-selab').onclick = function(){
+        // 從 battleHistory 找出 dmg > 5000 且未被標墓碑的場次,勾起
+        _listBox.querySelectorAll('._wblb-tomb-chk').forEach(function(c){
+          const _oi = parseInt(c.getAttribute('data-orig-idx'), 10);
+          const _b = entry.battleHistory[_oi];
+          c.checked = (_b && !_b._deletedAt && (_b.dmg || 0) > 5000);
+        });
+        _updateCount();
+      };
+
+      // 二段確認 → 執行
+      // ★ v3.13.3 — 把 normal footer renderer 抽出來,避免在 onclick 內用 arguments.callee(嚴格模式禁用)
+      const _renderNormalFooter = function(){
+        _footer.innerHTML =
+          '<span style="font-size:12px;color:#aaa;flex:1;">⚠️ 已標墓碑無法復原。</span>' +
+          '<button id="_wblb-tomb-go" style="padding:9px 18px;font-size:14px;font-weight:800;' +
+                'background:linear-gradient(135deg,rgba(180,60,60,0.7),rgba(120,30,30,0.9));' +
+                'border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
+                'font-family:inherit;opacity:0.5;" disabled>' +
+            '🚫 標墓碑 + 發補償券(0 筆)</button>';
+        // 重新綁 _wblb-tomb-go
+        const _newGo = _overlay.querySelector('#_wblb-tomb-go');
+        if(_newGo) _newGo.onclick = _onGoClick;
+        _updateCount();
+      };
+      const _onGoClick = function(){
+        const _chks = _listBox.querySelectorAll('._wblb-tomb-chk:checked');
+        if(_chks.length === 0) return;
+        const _origIdxs = Array.from(_chks).map(function(c){ return parseInt(c.getAttribute('data-orig-idx'), 10); });
+
+        // 切到二段確認(輸入原因)
+        _footer.innerHTML =
+          '<input id="_wblb-tomb-reason" type="text" placeholder="原因(玩家不會看到細節,但留 GM 紀錄)" ' +
+            'style="flex:1;padding:7px 10px;font-size:13px;background:rgba(20,15,30,0.8);' +
+            'border:1.5px solid #c66;color:#fff;border-radius:6px;font-family:inherit;">' +
+          '<button id="_wblb-tomb-confirm" style="padding:9px 16px;font-size:13px;font-weight:800;' +
+            'background:#cc3333;border:2px solid #ff8888;color:#fff;border-radius:8px;cursor:pointer;' +
+            'font-family:inherit;">✅ 確認執行(' + _chks.length + ')</button>' +
+          '<button id="_wblb-tomb-cancel" style="padding:9px 16px;font-size:13px;' +
+            'background:rgba(80,60,60,0.5);border:1px solid #877;color:#ccc;border-radius:6px;cursor:pointer;' +
+            'font-family:inherit;">取消</button>';
+        const _reasonInput = _overlay.querySelector('#_wblb-tomb-reason');
+        if(_reasonInput) _reasonInput.focus();
+        _overlay.querySelector('#_wblb-tomb-cancel').onclick = function(){
+          _renderNormalFooter();
+        };
+        _overlay.querySelector('#_wblb-tomb-confirm').onclick = async function(){
+          const _reason = (_reasonInput && _reasonInput.value || '').trim().slice(0, 200);
+          if(!_reason){
+            if(!confirm('未填寫原因,確定要執行嗎?')){
+              return;
+            }
+          }
+          const _confirmBtn = _overlay.querySelector('#_wblb-tomb-confirm');
+          if(_confirmBtn){
+            _confirmBtn.disabled = true;
+            _confirmBtn.textContent = '⏳ 處理中… (0/' + _origIdxs.length + ')';
+          }
+
+          // 收集該 teamKey 的所有 uid(可能有 4 個合作 uid,也可能單人 ×4 同 uid)
+          const _uidsRaw = (_teamKey || '').split('|').filter(Boolean);
+          const _uniqueUids = Array.from(new Set(_uidsRaw));
+
+          let _markedCount = 0;
+          let _grantedCount = 0;
+          const _failedMarks = [];
+          const _failedGrants = [];
+
+          // 逐筆標墓碑(必須順序執行;markBattleAsDeleted 是 transaction,並行可能衝突)
+          for(let i = 0; i < _origIdxs.length; i++){
+            const _oi = _origIdxs[i];
+            try{
+              if(!window._wbHpSync || typeof window._wbHpSync.markBattleAsDeleted !== 'function'){
+                throw new Error('_wbHpSync.markBattleAsDeleted API 不存在');
+              }
+              const _r = await window._wbHpSync.markBattleAsDeleted(BOSS_ID, _teamKey, _oi, _reason || '(未填)');
+              if(_r && _r.ok){
+                _markedCount++;
+              } else {
+                _failedMarks.push({ idx: _oi, reason: _r && _r.reason });
+              }
+              if(_confirmBtn){
+                _confirmBtn.textContent = '⏳ 處理中… (' + (i+1) + '/' + _origIdxs.length + ')';
+              }
+            }catch(eM){
+              console.warn('[墓碑模式] markBattleAsDeleted 失敗', _oi, eM);
+              _failedMarks.push({ idx: _oi, reason: eM && eM.message });
+            }
+          }
+
+          // 對該場參戰玩家發補償券:1 場標墓碑 → 每個 uid 發 1 張
+          for(const _uid of _uniqueUids){
+            for(let i = 0; i < _markedCount; i++){
+              try{
+                if(!window._wbDailyLimit || typeof window._wbDailyLimit.grantBonusByUid !== 'function'){
+                  throw new Error('_wbDailyLimit.grantBonusByUid API 不存在');
+                }
+                const _gr = await window._wbDailyLimit.grantBonusByUid({
+                  uid: _uid,
+                  reason: 'BUG 數據墓碑補償:' + (_reason || '(未填)'),
+                });
+                if(_gr && _gr.ok){
+                  _grantedCount++;
+                } else {
+                  _failedGrants.push({ uid: _uid, reason: _gr && _gr.reason });
+                }
+              }catch(eG){
+                console.warn('[墓碑模式] grantBonusByUid 失敗', _uid, eG);
+                _failedGrants.push({ uid: _uid, reason: eG && eG.message });
+              }
+            }
+          }
+
+          // 顯示結果
+          let _msg = '✅ 已標墓碑 ' + _markedCount + '/' + _origIdxs.length + ' 筆';
+          _msg += '\n💰 已發補償券 ' + _grantedCount + ' 張(' + _uniqueUids.length + ' 位玩家 × ' + _markedCount + ' 場)';
+          if(_failedMarks.length > 0){
+            _msg += '\n⚠️ ' + _failedMarks.length + ' 筆標墓碑失敗:'
+              + _failedMarks.map(function(f){ return '#' + f.idx + '(' + (f.reason||'?') + ')'; }).join(', ');
+          }
+          if(_failedGrants.length > 0){
+            _msg += '\n⚠️ ' + _failedGrants.length + ' 張補償券發放失敗(可用 GM 後台手動補)';
+          }
+          alert(_msg);
+
+          // 關閉所有 modal + refresh 排行榜明細
+          try{ _overlay.remove(); }catch(_){}
+          try{ if(typeof _closeDetailModal === 'function') _closeDetailModal(); }catch(_){}
+          try{ _refresh(); }catch(_){}
+        };
+      };
+      _overlay.querySelector('#_wblb-tomb-go').onclick = _onGoClick;
+
+      _updateCount();
+    }
+
     function _openDetailModal(){
       // 已開就先關掉(避免疊加)
       if(_detailModal){ _closeDetailModal(); }
@@ -7058,6 +7472,22 @@ async function _showAdminStatsPanelImpl(){
               'margin-left:6px;flex:0 0 auto;">📜 傷害明細(' + e.lastDmgSources.length + ')</button>'
             : '<span style="font-size:10px;color:#666;margin-left:6px;">(本場無明細)</span>';
 
+          // ★ v3.13.3(2026-05-31)— 「🚫 場次標 BUG」按鈕(墓碑模式單場)
+          //   點開後彈出該隊伍所有場次,GM 勾選具體場次標墓碑(留紀錄+扣總傷+全員可見)
+          const _hasBattleHistory = Array.isArray(e.battleHistory) && e.battleHistory.length > 0;
+          // 算「未標記」場次數(已標墓碑的不再算入可標)
+          const _undeletedCount = _hasBattleHistory
+            ? e.battleHistory.filter(function(b){ return b && !b._deletedAt; }).length
+            : 0;
+          const _tombBtn = _hasBattleHistory && _undeletedCount > 0
+            ? '<button class="_wblb-tomb-btn" data-teamkey="' + (e.teamKey||'').replace(/"/g,'&quot;') + '" ' +
+              'style="padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;' +
+              'background:linear-gradient(135deg,rgba(180,60,60,0.4),rgba(140,40,40,0.5));' +
+              'border:1.5px solid #ee7777;color:#ffdddd;border-radius:6px;font-family:inherit;' +
+              'margin-left:6px;flex:0 0 auto;" title="GM 對單場標墓碑(留紀錄+扣總傷+退補償券)">' +
+              '🚫 場次標 BUG(' + _undeletedCount + ')</button>'
+            : '';
+
           return '<label class="_wblb-row" data-teamkey="' + (e.teamKey||'').replace(/"/g,'&quot;') + '" style="' +
                  'display:block;padding:10px 12px;margin-bottom:6px;' +
                  'background:rgba(30,25,40,0.6);border:1.5px solid rgba(140,100,180,0.35);' +
@@ -7073,6 +7503,7 @@ async function _showAdminStatsPanelImpl(){
                        '<span style="color:' + _avgColor + ';font-size:12px;font-weight:700;">' +
                           '· 平均 ' + _avg.toLocaleString() + '/場' + _avgWarn + '</span>' +
                        _sourcesBtn +
+                       _tombBtn +
                        '<span style="color:#888;font-size:11px;margin-left:auto;">' +
                           '🕒 ' + _formatTime(e.lastUpdated) + '</span>' +
                      '</div>' +
@@ -7190,6 +7621,21 @@ async function _showAdminStatsPanelImpl(){
           return;
         }
         _showDmgSourcesDialog(_entry);
+      });
+
+      // ★ v3.13.3(2026-05-31)— 「🚫 場次標 BUG」按鈕處理(委派到 listBox)
+      _listBox.addEventListener('click', function(ev){
+        const _btn = ev.target.closest && ev.target.closest('._wblb-tomb-btn');
+        if(!_btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const _tk = _btn.getAttribute('data-teamkey');
+        const _entry = _list.find(function(x){ return x.teamKey === _tk; });
+        if(!_entry){
+          alert('找不到對應的隊伍紀錄');
+          return;
+        }
+        _showTombModal(_entry);
       });
 
       // 全選/全不選/只勾異常
