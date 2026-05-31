@@ -1518,6 +1518,9 @@
         +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
         +   _lastBattleRow        // ★ v3.10.18 — 最近一場時間 + MVP
         +   '<div style="font-size:13px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積'
+        +       ((e.bonusBattleCount||0) > 0
+              ? ' <span style="color:#ff88bb;font-weight:700;" title="GM 因 BUG 補償的額外進場場次,傷害計入排行榜總傷">🎫 含 ' + e.bonusBattleCount + ' 場補償</span>'
+              : '')
         +       (_todayCountTxt ? ' · ' + _todayCountTxt : '')
         +   '</div>'
         +   _myHistoryBtn         // ★ v3.12.9 — 所有人都能展開每場
@@ -1625,14 +1628,23 @@
             ? '<span style="color:#888;font-size:11px;">MVP <b style="color:#ff8866;">' + _escH(b.mvp.name) +
               '</b> Lv' + (b.mvp.lv||1) + ' 傷 ' + _fmtDmg(b.mvp.dmg || 0) + '</span>'
             : '';
+          // ★ v3.12.17 — 補償場次標籤(全校排行榜可見「(含 N 場補償)」)
+          const _bonusBadge = b._isBonus
+            ? '<span style="background:linear-gradient(135deg,#cc4488,#ff66aa);'
+              + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
+              + 'box-shadow:0 0 6px rgba(255,102,170,0.5);" '
+              + 'title="補償場次:GM 因 BUG 補償的額外進場機會,傷害計入排行榜總傷">'
+              + '🎫 補償場次</span>'
+            : '';
           return '<div style="background:rgba(60,80,120,0.18);border-left:4px solid ' +
-                  (_isToday ? '#ffd066' : '#6699cc') + ';' +
+                  (b._isBonus ? '#ff66aa' : (_isToday ? '#ffd066' : '#6699cc')) + ';' +
                  'padding:10px 14px;margin-bottom:6px;border-radius:6px;">' +
                    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px;">' +
                      '<span style="color:#ffd066;font-weight:700;">' +
                         // 「5/30 第 N/總 場」
                         (_t.getMonth()+1) + '/' + _t.getDate() + ' 第 ' + _battleNo + '/' + _dayCount + ' 場' +
                      '</span>' +
+                     _bonusBadge +  // ★ v3.12.17 — 補償場次標籤
                      '<span style="color:#aabbdd;">🕒 ' + _timeStr + ' 結算</span>' +
                      '<span style="margin-left:auto;color:#ff8866;font-weight:800;font-size:16px;">' +
                         '總傷害 ' + _fmtDmg(b.dmg || 0) + '</span>' +

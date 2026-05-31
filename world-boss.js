@@ -3384,7 +3384,7 @@
   }
 
   // 世界戰結算頁(簡化版,沿用 world-boss-ui.html 的 _wbShowSoloPracticeResult 邏輯)
-  function _wbShowAdvBattleResult(win){
+  async function _wbShowAdvBattleResult(win){
     // ════════════════════════════════════════════════════════════════
     // ★ v3.12.12(2026-05-30) — 戰績歷史雙寫修補 + daily limit 失守修補
     // ────────────────────────────────────────────────────────────────
@@ -3618,35 +3618,44 @@
     // 失敗保護:
     //   try/catch 包住,bump 失敗也不影響結算 UI/排行榜寫入
     // ════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.12.17(2026-05-31)— 補償券系統:bump 改 await,把 isBonus 旗標傳給排行榜
+    // ────────────────────────────────────────────────────────────────
+    // 老師需求:超過正常 2 場(=用了補償券)的場次:
+    //   - 戰績歷史條目標記 _isBonus:true → 玩家自己看到「🎫 補償場次」
+    //   - 排行榜該隊伍 bonusBattleCount++ → 全校看到「(含 N 場補償)」
+    //   - 傷害一樣計入排行榜總傷(維持跨天累積公平)
+    // 改法:把 bumpDailyCount 改 await 在前面跑完,拿到 isBonus 後一起傳給 updateLeaderboard
+    // ════════════════════════════════════════════════════════════════
+    let _v3_12_17_isBonusBattle = false;
     try{
       if(!isSolo
          && myDmg > 0
          && window._wbDailyLimit
          && typeof window._wbDailyLimit.bumpDailyCount === 'function'){
         const _reason = isHost ? 'battle_settled_host' : 'battle_settled_client';
-        window._wbDailyLimit.bumpDailyCount(_reason).then(_r => {
-          if(_r && _r.ok){
-            console.log('[WB-DailyLimit v3.12.10] ✅ 結算 +1 計次成功:' + _r.count + '/2');
-            // ★ v3.12.13(2026-05-30) — 計次成功後立即重新套入口卡鎖
-            //   讓玩家從結算頁返回入口時就看到鎖狀態(不需要 reload 才生效)
-            try{
-              if(typeof window._wbApplyEntryGateLock === 'function'){
-                window._wbApplyEntryGateLock();
-              }
-            }catch(_eLockReapply){
-              console.warn('[WB-EntryGate v3.12.13] 結算後套鎖失敗', _eLockReapply);
+        const _bumpResult = await window._wbDailyLimit.bumpDailyCount(_reason);
+        if(_bumpResult && _bumpResult.ok){
+          _v3_12_17_isBonusBattle = !!_bumpResult.isBonus;
+          console.log('[WB-DailyLimit v3.12.17] ✅ 結算 +1 計次成功:' + _bumpResult.count + '/2'
+            + (_v3_12_17_isBonusBattle ? ' 🎫 本場為補償場次' : ''));
+          // ★ v3.12.13(2026-05-30) — 計次成功後立即重新套入口卡鎖
+          //   讓玩家從結算頁返回入口時就看到鎖狀態(不需要 reload 才生效)
+          try{
+            if(typeof window._wbApplyEntryGateLock === 'function'){
+              window._wbApplyEntryGateLock();
             }
-          }else{
-            console.warn('[WB-DailyLimit v3.12.10] ⚠️ bumpDailyCount 回傳失敗:', _r);
+          }catch(_eLockReapply){
+            console.warn('[WB-EntryGate v3.12.13] 結算後套鎖失敗', _eLockReapply);
           }
-        }).catch(_e => {
-          console.error('[WB-DailyLimit v3.12.10] bumpDailyCount 例外:', _e);
-        });
+        }else{
+          console.warn('[WB-DailyLimit v3.12.17] ⚠️ bumpDailyCount 回傳失敗:', _bumpResult);
+        }
       }else{
-        console.log('[WB-DailyLimit v3.12.10] 略過計次(isSolo=' + isSolo + ', myDmg=' + myDmg + ')');
+        console.log('[WB-DailyLimit v3.12.17] 略過計次(isSolo=' + isSolo + ', myDmg=' + myDmg + ')');
       }
     }catch(_eBump){
-      console.error('[WB-DailyLimit v3.12.10] bump 區塊例外:', _eBump);
+      console.error('[WB-DailyLimit v3.12.17] bump 區塊例外:', _eBump);
     }
 
     // ★ FIX 20260518 — 全球 BOSS 殘血同步:本場全隊對 BOSS 造成的總傷害扣到雲端
@@ -3918,9 +3927,10 @@
                 // ★ v3.5.6 — 把 _teamHeroes 也傳進去
                 // ★ v3.5.43 — 把 championStats + dmgSources 也傳進去
                 // ★ v3.5.70 — 把 _teamEmails 也傳進去(排行榜班級座號顯示用)
+                // ★ v3.12.17 — 把 isBonus 旗標傳進去(補償場次計入排行榜總傷,但戰績/排行榜都標記出來)
                 window._wbHpSync.updateLeaderboard(
                   bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes,
-                  _championStats, _dmgSources, _teamEmails
+                  _championStats, _dmgSources, _teamEmails, _v3_12_17_isBonusBattle
                 )
                   .then(res => {
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg

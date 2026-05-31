@@ -1124,6 +1124,92 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.12.17(2026-05-31) — 世界 BOSS 補償券系統(GM 後台工具) -->
+      <!--   功能 A:🔍 掃描重複戰績 + 一鍵刪除 + 自動恢復進場 -1 -->
+      <!--   功能 B:🎫 補 1 次進場機會(隔天用,玩家錯過今天機會時) -->
+      <!--   功能 C:📋 查某玩家的補償券清單(已發 / 已用) -->
+      <div id="_admin-bonus-section" style="background:rgba(50,40,20,0.5);border:2px solid rgba(255,200,100,0.65);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#ffcc66;margin-bottom:8px;">🎫 6.5 世界 BOSS 補償券管理</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          當遊戲 BUG 害玩家被多算 1 場時,GM 可以
+          <b style="color:#ffcc66;">①刪除錯誤場次 + 恢復進場機會 -1</b>;
+          若該玩家當天沒上線錯過機會,GM 可以
+          <b style="color:#ffaa66;">②隔天補 1 次進場</b>(限額 2 變 3)。<br>
+          <span style="color:#aaa;font-size:12px;">補償場次的傷害仍計入排行榜總傷(BOSS 跨天累積打,維持均等公平);排行榜會顯示「(含 N 場補償)」,所有玩家可見。</span>
+        </div>
+
+        <!-- 區段 A:掃描重複戰績 -->
+        <div style="background:rgba(60,40,30,0.35);border:1.5px dashed rgba(255,180,80,0.45);border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:700;color:#ffbb66;margin-bottom:8px;">
+            🔍 A. 掃描全校重複戰績(BUG 害多算的場次)
+          </div>
+          <div style="font-size:12px;color:#bbb;margin-bottom:10px;line-height:1.6;">
+            掃描所有玩家的戰績歷史,找出
+            <b style="color:#ffcc66;">時間差 60 秒內 + 傷害完全相同</b>的重複組(race condition 雙寫鐵證)。<br>
+            <span style="color:#ff9999;">每組會顯示「保留 vs 刪除」按鈕,刪除時自動把該玩家當天 wbDailyCount -1(恢復 1 次進場)。</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <button id="_admin-bonus-scan-dup" style="padding:9px 18px;font-size:13px;font-weight:800;
+              background:linear-gradient(135deg,#cc8833,#996622);border:2px solid #ffaa55;color:#fff;
+              border-radius:7px;cursor:pointer;font-family:inherit;
+              box-shadow:0 0 10px rgba(255,170,80,0.3);">
+              🔍 掃描所有玩家的重複戰績
+            </button>
+            <span id="_admin-bonus-scan-status" style="font-size:12px;color:#aaa;"></span>
+          </div>
+          <div id="_admin-bonus-scan-result" style="margin-top:10px;max-height:480px;overflow-y:auto;
+            background:rgba(0,0,0,0.4);border-radius:6px;padding:0;font-size:12px;line-height:1.55;display:none;">
+            <!-- 動態:每組重複戰績一張卡片 + 「保留 X 刪除 Y」按鈕 -->
+          </div>
+        </div>
+
+        <!-- 區段 B:手動補 1 次進場機會 -->
+        <div style="background:rgba(50,30,40,0.35);border:1.5px dashed rgba(255,150,180,0.45);border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:700;color:#ffaadd;margin-bottom:8px;">
+            🎫 B. 手動發 1 張補償券(玩家錯過今天機會時用)
+          </div>
+          <div style="font-size:12px;color:#bbb;margin-bottom:10px;line-height:1.6;">
+            <b style="color:#ffcc88;">使用情境</b>:玩家因 BUG 損失 1 場(老師刪了重複那筆),但
+            <b style="color:#ffaa66;">該玩家當天沒上線</b>,過了今天就沒了 → 隔天 GM 用此工具補 1 場給他。<br>
+            <span style="color:#ffaaaa;">⚠ 補償券「生效日」預設為明天(玩家明天起可多打 1 場);也可改成「今天」立即生效。</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <input id="_admin-bonus-grant-email" type="text" placeholder="玩家 email"
+              style="flex:1.5;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+              border:1.5px solid rgba(255,150,180,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+            <span style="color:#888;font-size:12px;">或</span>
+            <input id="_admin-bonus-grant-uid" type="text" placeholder="uid"
+              style="flex:1;min-width:140px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+              border:1.5px solid rgba(255,150,180,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <input id="_admin-bonus-grant-reason" type="text" placeholder="原因(GM 看得到,如「5/31 BUG 重複計次補償」)"
+              style="flex:2;min-width:200px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+              border:1.5px solid rgba(255,150,180,0.4);color:#fff;border-radius:6px;font-family:inherit;">
+            <label style="font-size:12px;color:#ccc;display:flex;align-items:center;gap:4px;cursor:pointer;">
+              <input id="_admin-bonus-grant-today" type="checkbox" style="cursor:pointer;">
+              今天立即生效(預設明天)
+            </label>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button id="_admin-bonus-grant-btn" style="padding:9px 18px;font-size:13px;font-weight:800;
+              background:linear-gradient(135deg,#cc4488,#882266);border:2px solid #ff88bb;color:#fff;
+              border-radius:7px;cursor:pointer;font-family:inherit;
+              box-shadow:0 0 10px rgba(255,136,187,0.3);">
+              🎫 發放 1 張補償券
+            </button>
+            <button id="_admin-bonus-query-btn" style="padding:9px 16px;font-size:13px;font-weight:700;
+              background:rgba(100,80,100,0.4);border:1.5px solid rgba(200,150,200,0.5);color:#ffcce6;
+              border-radius:7px;cursor:pointer;font-family:inherit;">
+              📋 查該玩家的補償券歷史
+            </button>
+            <span id="_admin-bonus-grant-status" style="font-size:12px;color:#aaa;"></span>
+          </div>
+          <div id="_admin-bonus-grant-result" style="margin-top:10px;font-size:12px;color:#ddccaa;line-height:1.65;
+            padding:0 8px;display:none;"></div>
+        </div>
+      </div>
+
       <!-- ★ v3.5.20 — 世界 BOSS 排行榜管理區塊(老師 2026-05-22 需求) -->
       <div id="_admin-wblb-section" style="background:rgba(40,30,50,0.5);border:2px solid rgba(200,140,255,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ddaaff;margin-bottom:8px;">🏆 6. 世界 BOSS 排行榜管理</div>
@@ -1321,6 +1407,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
       { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
+      { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
       { sec: '_admin-bypass-section',           label: '🔓 解除冷卻 / 每日上限',   hint: '測試用' },
       { sec: '_admin-test-batch-section',       label: '🧪 批次設定數值',          hint: '測試工具' },
@@ -7339,6 +7426,333 @@ async function _showAdminStatsPanelImpl(){
     _adminPanelState.wblbDetailClose = _closeDetailModal;
 
     if(_detailBtn) _detailBtn.onclick = _openDetailModal;
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.12.17(2026-05-31) — 世界 BOSS 補償券區塊綁定
+  // ────────────────────────────────────────────────────────────────
+  // 三個功能:
+  //   A. 🔍 掃描全校重複戰績 → 列出每組重複,逐筆「刪除 + 恢復進場」
+  //   B. 🎫 手動發 1 張補償券給某玩家(隔天用)
+  //   C. 📋 查某玩家的補償券歷史
+  // ════════════════════════════════════════════════════════════════
+  (function _bindBonusSection(){
+    const _scanBtn = document.getElementById('_admin-bonus-scan-dup');
+    const _scanResultEl = document.getElementById('_admin-bonus-scan-result');
+    const _scanStatusEl = document.getElementById('_admin-bonus-scan-status');
+    const _grantBtn = document.getElementById('_admin-bonus-grant-btn');
+    const _queryBtn = document.getElementById('_admin-bonus-query-btn');
+    const _grantStatusEl = document.getElementById('_admin-bonus-grant-status');
+    const _grantResultEl = document.getElementById('_admin-bonus-grant-result');
+    if(!_scanBtn || !_grantBtn) return;
+
+    const BOSS_ID = 'vesuvius_fire_dragon';  // ★ 對齊 _bindWblbSection 用的 ID
+    const DEDUP_WINDOW_MS = 60 * 1000;       // 60 秒內 = 重複
+
+    // ── A. 掃描全校重複戰績 ──
+    _scanBtn.onclick = async function(){
+      _scanStatusEl.textContent = '⏳ 讀取雲端資料中...';
+      _scanResultEl.style.display = 'none';
+      _scanResultEl.innerHTML = '';
+      try{
+        const _fbDb = window._fbDb;
+        if(!_fbDb){ throw new Error('Firestore 未就緒'); }
+        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const _ref = doc(_fbDb, 'stats', 'global');
+        const _snap = await getDoc(_ref);
+        if(!_snap.exists()){ throw new Error('stats/global 不存在'); }
+        const _data = _snap.data() || {};
+        const _list = (_data.worldBossLeaderboard || {})[BOSS_ID] || [];
+        if(!Array.isArray(_list) || !_list.length){
+          _scanStatusEl.textContent = '✅ 排行榜為空,無重複可掃';
+          return;
+        }
+        _scanStatusEl.textContent = '⏳ 分析 ' + _list.length + ' 個隊伍紀錄...';
+
+        // 找出每隊的重複組:battleHistory 內「時間差<60秒 + 傷害一樣」
+        const _dupRows = [];
+        _list.forEach(function(entry, _entryIdx){
+          if(!entry || !Array.isArray(entry.battleHistory)) return;
+          const _bh = entry.battleHistory;
+          // 排序:由新到舊
+          const _sorted = _bh.slice().sort(function(a,b){ return (b.at || 0) - (a.at || 0); });
+          // 兩兩比對找重複(只比相鄰兩個就好,因為相同時間應該連續)
+          for(let i = 0; i < _sorted.length - 1; i++){
+            const _a = _sorted[i];
+            const _b = _sorted[i + 1];
+            if(!_a || !_b) continue;
+            if(_a.dmg === _b.dmg
+               && Math.abs((_a.at || 0) - (_b.at || 0)) < DEDUP_WINDOW_MS){
+              _dupRows.push({
+                entryIdx: _entryIdx,
+                teamKey: entry.teamKey,
+                teamNames: entry.teamNames || [],
+                teamEmails: entry.teamEmails || [],
+                recordA: _a,
+                recordB: _b,
+              });
+            }
+          }
+        });
+
+        if(!_dupRows.length){
+          _scanStatusEl.textContent = '✅ 掃描完成,沒有發現重複戰績';
+          return;
+        }
+
+        _scanStatusEl.textContent = '⚠ 發現 ' + _dupRows.length + ' 組重複戰績';
+        _scanResultEl.style.display = 'block';
+
+        // 渲染每組重複的卡片
+        let _html = '<div style="padding:8px;">';
+        _dupRows.forEach(function(row, _rowIdx){
+          const _displayName = (row.teamNames[0] || '?');
+          const _displayEmail = (row.teamEmails[0] || '');
+          const _atA = new Date(row.recordA.at || 0).toLocaleString('zh-TW', { hour12: false });
+          const _atB = new Date(row.recordB.at || 0).toLocaleString('zh-TW', { hour12: false });
+          const _tbA = row.recordA.tb || 0;
+          const _tbB = row.recordB.tb || 0;
+          _html += '<div style="background:rgba(60,30,30,0.45);border:1.5px solid rgba(255,120,120,0.55);'
+                + 'border-radius:8px;padding:10px;margin-bottom:10px;" data-row-idx="' + _rowIdx + '">'
+                + '<div style="font-weight:700;color:#ffaa66;margin-bottom:4px;">'
+                +   '🔁 ' + _displayName + ' (' + _displayEmail + ')'
+                + '</div>'
+                + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">'
+                +   '<div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:5px;border-left:3px solid #88cc88;">'
+                +     '<div style="color:#88cc88;font-weight:700;margin-bottom:3px;">A 筆(較新)</div>'
+                +     '<div>時間: ' + _atA + '</div>'
+                +     '<div>傷害: ' + row.recordA.dmg + '</div>'
+                +     '<div>回合: ' + row.recordA.turns + ', 答題: ' + row.recordA.qc + ', 聯手: ' + _tbA + '</div>'
+                +     '<button class="_bonus-del-btn" data-row-idx="' + _rowIdx + '" data-side="A" '
+                +       'style="margin-top:6px;width:100%;padding:6px;font-size:11px;font-weight:700;'
+                +       'background:#cc4444;color:#fff;border:none;border-radius:4px;cursor:pointer;">'
+                +       '🗑️ 刪除 A 筆 + 恢復進場 -1'
+                +     '</button>'
+                +   '</div>'
+                +   '<div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:5px;border-left:3px solid #88aacc;">'
+                +     '<div style="color:#88aacc;font-weight:700;margin-bottom:3px;">B 筆(較舊)</div>'
+                +     '<div>時間: ' + _atB + '</div>'
+                +     '<div>傷害: ' + row.recordB.dmg + '</div>'
+                +     '<div>回合: ' + row.recordB.turns + ', 答題: ' + row.recordB.qc + ', 聯手: ' + _tbB + '</div>'
+                +     '<button class="_bonus-del-btn" data-row-idx="' + _rowIdx + '" data-side="B" '
+                +       'style="margin-top:6px;width:100%;padding:6px;font-size:11px;font-weight:700;'
+                +       'background:#cc4444;color:#fff;border:none;border-radius:4px;cursor:pointer;">'
+                +       '🗑️ 刪除 B 筆 + 恢復進場 -1'
+                +     '</button>'
+                +   '</div>'
+                + '</div>'
+                + '<div style="font-size:11px;color:#ffaa88;margin-top:6px;">'
+                +   '💡 建議:保留聯手爆發次數高的那筆(資料較完整),刪掉較低那筆。'
+                + '</div>'
+                + '</div>';
+        });
+        _html += '</div>';
+        _scanResultEl.innerHTML = _html;
+
+        // 綁定每個刪除按鈕
+        _scanResultEl.querySelectorAll('._bonus-del-btn').forEach(function(_btn){
+          _btn.onclick = async function(){
+            const _rowIdx = parseInt(_btn.getAttribute('data-row-idx'), 10);
+            const _side = _btn.getAttribute('data-side');
+            const _row = _dupRows[_rowIdx];
+            if(!_row){ alert('找不到對應紀錄'); return; }
+            const _toDelete = (_side === 'A') ? _row.recordA : _row.recordB;
+            const _displayName = _row.teamNames[0] || '?';
+            const _email = _row.teamEmails[0] || '';
+            if(!confirm('確定刪除這筆嗎?\n\n玩家:' + _displayName + ' (' + _email + ')\n'
+                      + '時間:' + new Date(_toDelete.at).toLocaleString('zh-TW') + '\n'
+                      + '傷害:' + _toDelete.dmg + '\n\n同時會把該玩家當天 wbDailyCount -1(恢復 1 次進場)')){
+              return;
+            }
+
+            _btn.disabled = true;
+            _btn.textContent = '⏳ 處理中...';
+
+            try{
+              const { doc, getDoc, setDoc, runTransaction } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+              // 1. 從 stats/global 移除該筆 battleHistory
+              const _statsRef = doc(_fbDb, 'stats', 'global');
+              await runTransaction(_fbDb, async function(tx){
+                const _s = await tx.get(_statsRef);
+                if(!_s.exists()) throw new Error('stats/global 不存在');
+                const _d = _s.data() || {};
+                const _lb = _d.worldBossLeaderboard || {};
+                const _l = Array.isArray(_lb[BOSS_ID]) ? _lb[BOSS_ID].slice() : [];
+                const _ei = _l.findIndex(function(e){ return e && e.teamKey === _row.teamKey; });
+                if(_ei < 0) throw new Error('找不到隊伍紀錄');
+                const _entry = Object.assign({}, _l[_ei]);
+                _entry.battleHistory = (_entry.battleHistory || []).filter(function(b){
+                  return !(b && b.at === _toDelete.at && b.dmg === _toDelete.dmg && b.tb === _toDelete.tb);
+                });
+                // battles 也 -1
+                _entry.battles = Math.max(0, (_entry.battles || 1) - 1);
+                // 該場若是 isBonus 也要把 bonusBattleCount -1
+                if(_toDelete._isBonus){
+                  _entry.bonusBattleCount = Math.max(0, (_entry.bonusBattleCount || 1) - 1);
+                }
+                // totalDmg 也要 -1(維持資料一致)
+                _entry.totalDmg = Math.max(0, (_entry.totalDmg || 0) - (_toDelete.dmg || 0));
+                _l[_ei] = _entry;
+                _lb[BOSS_ID] = _l;
+                tx.set(_statsRef, { worldBossLeaderboard: _lb }, { merge: true });
+              });
+
+              // 2. 對「擁有這個 teamKey 的所有 uid」呼叫 _decreaseCountByUid
+              //    (teamKey = 4 個 uid 排序 join,我們從 teamKey 解析回 uid)
+              //    對單人開房,4 個都是同 uid,所以只需要呼叫一次
+              const _uids = (_row.teamKey || '').split('|').filter(Boolean);
+              const _uniqueUids = Array.from(new Set(_uids));
+              const _decreaseResults = [];
+              for(const _uid of _uniqueUids){
+                if(typeof window._wbDailyLimit._decreaseCountByUid === 'function'){
+                  const _r = await window._wbDailyLimit._decreaseCountByUid(_uid, '掃描重複戰績,刪除錯誤計次');
+                  _decreaseResults.push({ uid: _uid, ok: _r && _r.ok, old: _r && _r.oldCount, new: _r && _r.newCount });
+                }
+              }
+
+              _btn.textContent = '✅ 已刪除 + 恢復進場';
+              _btn.style.background = '#448844';
+              // 更新狀態列
+              const _decStr = _decreaseResults.map(function(r){
+                return r.uid.slice(0,8) + '(' + r.old + '→' + r.new + ')';
+              }).join(', ');
+              console.log('[v3.12.17 補償工具] 刪除完成 +' + _uniqueUids.length + ' 位玩家恢復進場:', _decStr);
+            } catch(e){
+              console.error('[v3.12.17 補償工具] 刪除失敗', e);
+              _btn.disabled = false;
+              _btn.textContent = '❌ 失敗,點此重試';
+              _btn.style.background = '#cc4444';
+              alert('❌ 刪除失敗:' + (e && e.message));
+            }
+          };
+        });
+
+      }catch(e){
+        console.error('[v3.12.17 補償工具] 掃描失敗', e);
+        _scanStatusEl.textContent = '❌ 掃描失敗:' + (e && e.message);
+      }
+    };
+
+    // ── B. 手動發補償券 ──
+    _grantBtn.onclick = async function(){
+      const _email = (document.getElementById('_admin-bonus-grant-email').value || '').trim().toLowerCase();
+      const _uidIn = (document.getElementById('_admin-bonus-grant-uid').value || '').trim();
+      const _reason = (document.getElementById('_admin-bonus-grant-reason').value || '').trim();
+      const _today = document.getElementById('_admin-bonus-grant-today').checked;
+
+      if(!_email && !_uidIn){
+        alert('請輸入 email 或 uid'); return;
+      }
+      if(!_reason){
+        if(!confirm('未填寫原因確定要發?(建議填寫,未來查紀錄會比較清楚)')) return;
+      }
+
+      _grantStatusEl.textContent = '⏳ 處理中...';
+      _grantResultEl.style.display = 'none';
+
+      try{
+        let _uid = _uidIn;
+        if(!_uid && _email){
+          // 用 email 找 uid:呼叫主程式的 _fbAdminFindPlayerByEmail
+          if(typeof window._fbAdminFindPlayerByEmail !== 'function'){
+            throw new Error('_fbAdminFindPlayerByEmail 未就緒,請改填 uid');
+          }
+          const _p = await window._fbAdminFindPlayerByEmail(_email);
+          if(!_p || !_p.uid) throw new Error('找不到該玩家 (email=' + _email + ')');
+          _uid = _p.uid;
+        }
+        if(!_uid) throw new Error('未找到 uid');
+
+        // 算生效日字串
+        let _grantedDateStr = null;
+        if(_today){
+          // 今天立即生效:用 _wbDailyLimit._todayStr
+          _grantedDateStr = window._wbDailyLimit._todayStr();
+        }
+        // 不傳就是預設「明天」
+
+        const _r = await window._wbDailyLimit.grantBonusByUid({
+          uid: _uid,
+          reason: _reason,
+          grantedDateStr: _grantedDateStr,
+        });
+
+        if(_r && _r.ok){
+          _grantStatusEl.textContent = '✅ 已發放 1 張(總共 ' + _r.grantsCount + ' 張)';
+          _grantResultEl.style.display = 'block';
+          _grantResultEl.innerHTML = '<div style="padding:6px;color:#aaffaa;">'
+            + '✅ 發放成功!<br>'
+            + 'uid: <code>' + _uid + '</code><br>'
+            + '生效日: <b>' + _r.grantedDateStr + '</b>(' + (_today ? '今天' : '明天') + '起可用)<br>'
+            + '玩家總共有 <b>' + _r.grantsCount + '</b> 張補償券<br>'
+            + '原因: ' + (_reason || '(未填寫)')
+            + '</div>';
+          console.log('[v3.12.17 補償券] 發放成功 uid=' + _uid + ', date=' + _r.grantedDateStr);
+        }else{
+          throw new Error(_r && _r.reason || '未知錯誤');
+        }
+      }catch(e){
+        console.error('[v3.12.17 補償券] 發放失敗', e);
+        _grantStatusEl.textContent = '❌ 失敗:' + (e && e.message);
+      }
+    };
+
+    // ── C. 查補償券歷史 ──
+    _queryBtn.onclick = async function(){
+      const _email = (document.getElementById('_admin-bonus-grant-email').value || '').trim().toLowerCase();
+      const _uidIn = (document.getElementById('_admin-bonus-grant-uid').value || '').trim();
+      if(!_email && !_uidIn){
+        alert('請輸入 email 或 uid'); return;
+      }
+
+      _grantStatusEl.textContent = '⏳ 讀取中...';
+      try{
+        let _uid = _uidIn;
+        if(!_uid && _email){
+          const _p = await window._fbAdminFindPlayerByEmail(_email);
+          if(!_p || !_p.uid) throw new Error('找不到該玩家');
+          _uid = _p.uid;
+        }
+        const _grants = await window._wbDailyLimit.getBonusByUid(_uid);
+        _grantStatusEl.textContent = '';
+        _grantResultEl.style.display = 'block';
+        if(!_grants || !_grants.length){
+          _grantResultEl.innerHTML = '<div style="padding:6px;color:#ccc;">該玩家無補償券紀錄(uid=' + _uid + ')</div>';
+          return;
+        }
+        let _html = '<div style="padding:6px;color:#ddccaa;">'
+          + '<b>uid:</b> <code>' + _uid + '</code><br>'
+          + '<b>總共:</b> ' + _grants.length + ' 張<br>'
+          + '<b>未用:</b> ' + _grants.filter(function(g){ return g && !g.usedAt; }).length + ' 張<br><br>'
+          + '<div style="max-height:240px;overflow-y:auto;">';
+        _grants.forEach(function(g, _i){
+          const _isUsed = !!g.usedAt;
+          _html += '<div style="background:' + (_isUsed ? 'rgba(60,40,40,0.4)' : 'rgba(40,60,40,0.4)')
+                + ';padding:6px 8px;margin-bottom:4px;border-radius:4px;border-left:3px solid '
+                + (_isUsed ? '#aa4444' : '#44aa44') + ';">'
+                + '<div style="font-weight:700;color:' + (_isUsed ? '#ffaaaa' : '#aaffaa') + ';">'
+                +   '#' + (_i+1) + ' ' + (_isUsed ? '✅ 已使用' : '🎫 未使用')
+                + '</div>'
+                + '<div style="font-size:11px;color:#bbb;">'
+                +   '發放日:' + (g.grantedDateStr || '?') + ' · '
+                +   '發放時間:' + (g.grantedAt ? new Date(g.grantedAt).toLocaleString('zh-TW',{hour12:false}) : '?')
+                + '</div>'
+                + (_isUsed
+                    ? '<div style="font-size:11px;color:#bbb;">使用日:' + (g.usedDateStr || '?')
+                       + ' · 使用時間:' + new Date(g.usedAt).toLocaleString('zh-TW',{hour12:false}) + '</div>'
+                    : '')
+                + '<div style="font-size:11px;color:#aaa;">原因:' + (g.reason || '(未填)') + '</div>'
+                + '</div>';
+        });
+        _html += '</div></div>';
+        _grantResultEl.innerHTML = _html;
+      }catch(e){
+        _grantStatusEl.textContent = '❌ 失敗:' + (e && e.message);
+        console.error('[v3.12.17 補償券] 查詢失敗', e);
+      }
+    };
+
+    console.log('[v3.12.17 補償券] ✅ 補償券區塊綁定完成');
   })();
 
   // ════════════════════════════════════════════════════════════════
