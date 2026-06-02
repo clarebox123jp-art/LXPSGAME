@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.4';
+window.ADMIN_PANEL_VERSION = 'v3.13.15';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -378,6 +378,52 @@ async function _showAdminStatsPanelImpl(){
           </button>
         </div>
         <div id="_admin-adv-result" style="margin-top:10px;font-size:14px;color:#ff99cc;"></div>
+      </div>
+
+      <!-- ★ v3.13.15(2026-06-02) — 鬥技場預設陣容管理(系統 5 套保底敵手) -->
+      <!--   功能 A:讀取/編輯/儲存到 Firestore arenaSystemTeams/main -->
+      <!--   功能 B:每套可改隊名(走鬥技場專屬詞庫下拉) + 4 個英雄 + 4 個元素 -->
+      <!--   功能 C:即時生效(arena.js _arenaApplySystemTeamsFromCloud 寫入記憶體) -->
+      <div id="_admin-arena-preset-section" style="background:rgba(40,30,55,0.5);border:2px solid rgba(180,120,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#cc99ff;margin-bottom:8px;">⚔️ 鬥技場預設陣容管理</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          管理鬥技場系統 5 套保底陣容(玩家對戰池子空時用)。玩家看到的隊名前綴是
+          <code style="color:#ffcc66;">[鬥技場預設]</code>,代表這是系統陣容。<br>
+          <span style="color:#aaa;font-size:12px;">
+            雲端儲存於 <code>arenaSystemTeams/main</code>;每次 GM 儲存後立即生效到所有玩家(下次抽取時即套用)。
+          </span>
+        </div>
+
+        <!-- 載入按鈕 -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-arena-load" style="padding:9px 18px;font-size:13px;font-weight:800;
+            background:linear-gradient(135deg,#6633aa,#4422aa);border:2px solid #cc99ff;color:#fff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            📥 從雲端載入(若無則用本機預設)
+          </button>
+          <button id="_admin-arena-reset" style="padding:9px 16px;font-size:13px;font-weight:700;
+            background:rgba(100,40,40,0.4);border:1.5px solid rgba(200,100,100,0.5);color:#ffaaaa;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔄 還原為內建預設(5 套經典)
+          </button>
+          <span id="_admin-arena-status" style="font-size:12px;color:#aaa;"></span>
+        </div>
+
+        <!-- 5 套陣容編輯區 -->
+        <div id="_admin-arena-editor" style="margin-top:6px;">
+          <!-- 動態 render:5 個卡片區塊 -->
+        </div>
+
+        <!-- 儲存按鈕 -->
+        <div style="margin-top:14px;text-align:center;">
+          <button id="_admin-arena-save" style="padding:12px 36px;font-size:16px;font-weight:900;
+            background:linear-gradient(135deg,#7755cc,#5533aa);border:2.5px solid #cc99ff;color:#fff;
+            border-radius:9px;cursor:pointer;font-family:inherit;letter-spacing:1px;
+            box-shadow:0 0 12px rgba(180,120,255,0.4);">
+            💾 儲存到雲端(對所有玩家即時生效)
+          </button>
+        </div>
+        <div id="_admin-arena-save-result" style="margin-top:10px;font-size:13px;color:#cc99ff;text-align:center;"></div>
       </div>
 
       <div id="_admin-rescue-section" style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
@@ -1512,6 +1558,8 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
       { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
+      // ★ v3.13.15(2026-06-02) — 鬥技場預設陣容管理(系統 5 套保底敵手)
+      { sec: '_admin-arena-preset-section',     label: '⚔️ 鬥技場預設陣容',       hint: '管理系統 5 套保底敵手(玩家池空時用)' },
       { sec: '_admin-reset-section',            label: '⚠️ 帳號完全重置+重建',     hint: '危險!不可逆,最後手段' },
     ];
 
@@ -2379,7 +2427,196 @@ async function _showAdminStatsPanelImpl(){
     }
   };
 
-  // 手動設定總玩家數（avoid scan permission）
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.13.15(2026-06-02) — 鬥技場預設陣容管理(系統 5 套保底敵手)
+  // ────────────────────────────────────────────────────────────────
+  // Firestore 結構:arenaSystemTeams/main {teams: [{id,name,heroes:[4],elements:[4],desc?}×5], updatedAt, updatedBy}
+  // 流程:GM 點「載入」→ 從雲端讀 + 渲染 → 編輯每套(隊名/英雄/元素)→ 點「儲存」→ 寫回 Firestore
+  // 即時生效:儲存後玩家下次抽取(arena.js _arenaFetchTeamPool 觸發時)就會套用
+  // ════════════════════════════════════════════════════════════════
+
+  // 內建 5 套陣容(後備,當雲端沒資料時用,跟 arena.js 內 ARENA_AI_TEAMS_DEFAULT 對齊)
+  const _ARENA_PRESET_DEFAULT = [
+    { id:'sys_1', name:'[鬥技場預設] 聖盾守護隊', heroes:['聖騎士','守衛','祭司','火法師'], elements:['light','earth','light','fire'] },
+    { id:'sys_2', name:'[鬥技場預設] 雷霆控場隊', heroes:['雷法師','暗法師','神射手','米鈴'], elements:['wind','dark','wind','water'] },
+    { id:'sys_3', name:'[鬥技場預設] 舞動陣勢隊', heroes:['舞者','武鬥家','吟遊詩人','學者'], elements:['light','fire','water','wind'] },
+    { id:'sys_4', name:'[鬥技場預設] 快攻刺客隊', heroes:['刺客','田徑隊員','神偷','煉金術師'], elements:['dark','wind','dark','grass'] },
+    { id:'sys_5', name:'[鬥技場預設] 元素法團隊', heroes:['火法師','冰法師','雷法師','祭司'], elements:['fire','water','wind','light'] },
+  ];
+  // 工作狀態:當前編輯中的 5 套陣容
+  let _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
+
+  // 取得可選英雄名單(從 HERO_DB 排除 BOSS)
+  function _arenaGetSelectableHeroes(){
+    try{
+      if(typeof window.HERO_DB === 'undefined') return [];
+      const _bossSet = (typeof window.BOSS_NAMES !== 'undefined' && Array.isArray(window.BOSS_NAMES))
+        ? new Set(window.BOSS_NAMES) : new Set();
+      // 排除日本 BOSS 英雄版(避免太強)
+      const _japExc = (typeof window.JAPAN_ARENA_EXCLUDE !== 'undefined' && window.JAPAN_ARENA_EXCLUDE instanceof Set)
+        ? window.JAPAN_ARENA_EXCLUDE : new Set();
+      return Object.keys(window.HERO_DB).filter(n => !_bossSet.has(n) && !_japExc.has(n)).sort();
+    }catch(e){ return []; }
+  }
+  const _ARENA_ELEMENT_KEYS = [
+    {k:'water', label:'💧 水'}, {k:'fire', label:'🔥 火'}, {k:'wind', label:'🪽 風'},
+    {k:'grass', label:'🌿 草'}, {k:'earth', label:'⛰ 土'}, {k:'light', label:'✨ 光'},
+    {k:'dark', label:'🌑 暗'},
+  ];
+
+  // 渲染 5 套陣容編輯區
+  function _arenaRenderEditor(){
+    const editor = document.getElementById('_admin-arena-editor');
+    if(!editor) return;
+    const heroes = _arenaGetSelectableHeroes();
+
+    let html = '';
+    for(let i=0; i<5; i++){
+      const team = _arenaPresetWorking[i] || _ARENA_PRESET_DEFAULT[i];
+      html += `<div style="background:rgba(20,15,40,0.5);border:1.5px solid rgba(180,120,255,0.4);
+        border-radius:8px;padding:12px;margin-bottom:10px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+          <span style="font-size:14px;font-weight:800;color:#cc99ff;flex-shrink:0;">第 ${i+1} 套</span>
+          <input id="_arena-tn-${i}" value="${(team.name||'').replace(/"/g,'&quot;')}" placeholder="[鬥技場預設] 隊名"
+            style="flex:1;padding:6px 10px;font-size:13px;background:rgba(20,20,35,0.95);
+            border:1.5px solid rgba(180,120,255,0.5);color:#ddc0ff;border-radius:6px;font-family:inherit;">
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">`;
+      for(let j=0; j<4; j++){
+        const hSel = (team.heroes && team.heroes[j]) || '';
+        const eSel = (team.elements && team.elements[j]) || '';
+        html += `<div style="display:flex;flex-direction:column;gap:4px;">
+          <select id="_arena-th-${i}-${j}" style="padding:5px;font-size:12px;background:rgba(20,20,35,0.95);
+            border:1px solid rgba(180,120,255,0.4);color:#ddc0ff;border-radius:5px;font-family:inherit;cursor:pointer;">
+            <option value="">(選英雄)</option>
+            ${heroes.map(n => `<option value="${n}" ${n===hSel?'selected':''}>${n}</option>`).join('')}
+          </select>
+          <select id="_arena-te-${i}-${j}" style="padding:5px;font-size:12px;background:rgba(20,20,35,0.95);
+            border:1px solid rgba(180,120,255,0.4);color:#ddc0ff;border-radius:5px;font-family:inherit;cursor:pointer;">
+            <option value="">(選元素)</option>
+            ${_ARENA_ELEMENT_KEYS.map(e => `<option value="${e.k}" ${e.k===eSel?'selected':''}>${e.label}</option>`).join('')}
+          </select>
+        </div>`;
+      }
+      html += `</div></div>`;
+    }
+    editor.innerHTML = html;
+  }
+
+  // 收集編輯區當前內容 → 寫入 _arenaPresetWorking
+  function _arenaCollectFromEditor(){
+    for(let i=0; i<5; i++){
+      const nm = document.getElementById('_arena-tn-' + i);
+      if(!nm) continue;
+      const team = _arenaPresetWorking[i] || (_arenaPresetWorking[i] = {});
+      team.id = team.id || ('sys_' + (i+1));
+      team.name = (nm.value || '').trim() || ('[鬥技場預設] 第 ' + (i+1) + ' 套');
+      team.heroes = [];
+      team.elements = [];
+      for(let j=0; j<4; j++){
+        const hsel = document.getElementById('_arena-th-' + i + '-' + j);
+        const esel = document.getElementById('_arena-te-' + i + '-' + j);
+        team.heroes.push(hsel ? hsel.value : '');
+        team.elements.push(esel ? esel.value : '');
+      }
+    }
+  }
+
+  // 載入按鈕:從 Firestore arenaSystemTeams/main 讀
+  const _arenaLoadBtn = document.getElementById('_admin-arena-load');
+  if(_arenaLoadBtn) _arenaLoadBtn.onclick = async () => {
+    const status = document.getElementById('_admin-arena-status');
+    status.textContent = '載入中…';
+    status.style.color = '#aaa';
+    try{
+      if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+      const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const snap = await getDoc(doc(window._fbDb, 'arenaSystemTeams', 'main'));
+      if(snap.exists()){
+        const data = snap.data();
+        if(Array.isArray(data.teams) && data.teams.length){
+          _arenaPresetWorking = JSON.parse(JSON.stringify(data.teams.slice(0,5)));
+          while(_arenaPresetWorking.length < 5){
+            _arenaPresetWorking.push(JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT[_arenaPresetWorking.length])));
+          }
+          status.textContent = '✅ 已從雲端載入 ' + data.teams.length + ' 套(更新於 '
+            + (data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '未知') + ')';
+          status.style.color = '#88ccff';
+        } else {
+          _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
+          status.textContent = '⚠️ 雲端資料格式異常,已載入內建預設';
+          status.style.color = '#ffaa66';
+        }
+      } else {
+        _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
+        status.textContent = '📭 雲端無資料,顯示內建預設;編輯後按「儲存」即會首次寫入';
+        status.style.color = '#ffaa66';
+      }
+      _arenaRenderEditor();
+    }catch(e){
+      console.error('[admin arena load]', e);
+      status.textContent = '❌ 載入失敗:' + (e && e.message || '未知錯誤') + ' — 已載入內建預設';
+      status.style.color = '#ff8866';
+      _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
+      _arenaRenderEditor();
+    }
+  };
+
+  // 還原內建預設按鈕
+  const _arenaResetBtn = document.getElementById('_admin-arena-reset');
+  if(_arenaResetBtn) _arenaResetBtn.onclick = () => {
+    if(!confirm('確定還原為內建 5 套經典陣容?目前編輯中的內容會消失(尚未儲存到雲端的話)。')) return;
+    _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
+    _arenaRenderEditor();
+    const status = document.getElementById('_admin-arena-status');
+    if(status){ status.textContent = '🔄 已還原內建預設,記得按「儲存」才會生效'; status.style.color = '#ffaa66'; }
+  };
+
+  // 儲存按鈕:寫到 Firestore + 即時套用到當前記憶體
+  const _arenaSaveBtn = document.getElementById('_admin-arena-save');
+  if(_arenaSaveBtn) _arenaSaveBtn.onclick = async () => {
+    const btn = document.getElementById('_admin-arena-save');
+    const res = document.getElementById('_admin-arena-save-result');
+    btn.disabled = true;
+    btn.textContent = '⏳ 儲存中…';
+    try{
+      // 收集當前編輯內容
+      _arenaCollectFromEditor();
+      // 驗證:每套必須有 4 英雄(不可空)
+      for(let i=0; i<5; i++){
+        const t = _arenaPresetWorking[i];
+        if(!t.name || !t.name.trim()){ throw new Error('第 ' + (i+1) + ' 套隊名為空'); }
+        const emptyHero = t.heroes.findIndex(h => !h);
+        if(emptyHero >= 0){ throw new Error('第 ' + (i+1) + ' 套第 ' + (emptyHero+1) + ' 位英雄未選'); }
+      }
+      // 寫到 Firestore
+      if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+      const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const payload = {
+        teams: _arenaPresetWorking,
+        updatedAt: Date.now(),
+        updatedBy: (window._fbUser && window._fbUser.email) || 'unknown',
+      };
+      await setDoc(doc(window._fbDb, 'arenaSystemTeams', 'main'), payload);
+      // 立即套用到記憶體(讓 GM 自己當下開鬥技場就能看到效果)
+      if(typeof window._arenaApplySystemTeamsFromCloud === 'function'){
+        window._arenaApplySystemTeamsFromCloud(_arenaPresetWorking);
+      }
+      res.style.color = '#88ccff';
+      res.textContent = '✅ 已儲存到雲端!所有玩家下次抽取鬥技場對手時會套用最新版本。';
+    }catch(e){
+      console.error('[admin arena save]', e);
+      res.style.color = '#ff6666';
+      res.textContent = '❌ 儲存失敗:' + (e && e.message || '未知錯誤');
+    }finally{
+      btn.disabled = false;
+      btn.textContent = '💾 儲存到雲端(對所有玩家即時生效)';
+    }
+  };
+
+  // 初始渲染(用內建預設填一次,GM 進來就看得到 UI)
+  _arenaRenderEditor();
+  // ── 鬥技場預設陣容管理 結束 ──
   document.getElementById('_admin-set-players').onclick = async () => {
     const input = document.getElementById('_admin-players-input');
     const btn = document.getElementById('_admin-set-players');
