@@ -1756,16 +1756,27 @@ body.wb-in-worldboss-battle .popup {
   font-size:clamp(28px,3.4vw,46px);font-weight:800;
   font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   letter-spacing:2px;cursor:pointer;border-radius:14px;
-  background:linear-gradient(135deg,rgba(40,80,180,0.95),rgba(60,120,220,0.95),rgba(20,60,140,0.95));
-  border:2px solid rgba(120,200,255,0.85);color:#e0eaff;
-  box-shadow:0 0 16px rgba(80,180,255,0.45),inset 0 0 10px rgba(120,200,255,0.2);
+  /* ★ v3.13.24(2026-06-02) — 左半紅、右半藍、中央紫色漸層過渡(老師指示) */
+  background:linear-gradient(to right,
+    rgba(180,40,40,0.95) 0%,
+    rgba(180,40,40,0.95) 30%,
+    rgba(120,40,110,0.95) 50%,
+    rgba(40,80,180,0.95) 70%,
+    rgba(40,80,180,0.95) 100%);
+  border:2px solid rgba(200,160,255,0.85);color:#fff5ff;
+  box-shadow:0 0 16px rgba(180,100,200,0.5),inset 0 0 10px rgba(220,180,255,0.2);
   transition:all 0.2s;line-height:1.3;
-  text-shadow:0 2px 6px rgba(0,0,0,0.6);
+  text-shadow:0 2px 6px rgba(0,0,0,0.7);
 }
 .adv-arena-btn:hover{
   transform:translateX(8px);
-  background:linear-gradient(135deg,rgba(60,100,200,1),rgba(80,140,240,1),rgba(40,80,160,1));
-  box-shadow:0 0 28px rgba(120,200,255,0.7),inset 0 0 14px rgba(160,220,255,0.3);
+  background:linear-gradient(to right,
+    rgba(220,60,60,1) 0%,
+    rgba(220,60,60,1) 30%,
+    rgba(150,60,140,1) 50%,
+    rgba(60,110,220,1) 70%,
+    rgba(60,110,220,1) 100%);
+  box-shadow:0 0 28px rgba(200,140,240,0.75),inset 0 0 14px rgba(240,200,255,0.3);
 }
 
 /* ★ v3.0 — 世界 BOSS 討伐戰關卡按鈕(放在木柵和台灣環島之間,進化版含 HP 條 + 火焰粒子) */

@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.20';
+window.ADMIN_PANEL_VERSION = 'v3.13.24';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -9117,7 +9117,12 @@ async function _showAdminStatsPanelImpl(){
     const _nIn       = document.getElementById('_admin-ticket-grant-n');
     if(!_grantBtn || !_queryBtn || !_clearBtn) return;
 
-    // 從 email 找 uid(沿用補償券區塊的做法:讀 stats/global.userIndex 或現有 emailToUid map)
+    // 從 email 找 uid
+    // ★ v3.13.24(2026-06-02) — 對齊補償券的成熟做法,改用 _fbAdminFindPlayerByEmail(鐵律 1.157)
+    //   原本 v3.13.7 寫了「先查 stats/global.userIndex,fallback _adminResolveUidByEmail」,
+    //   但兩個 fallback 在主程式都不存在/沒索引 → 老師在左邊 email 欄位永遠拿到「找不到對應 uid」,
+    //   被迫把 email 填到右邊 uid 欄位試;右邊直接當 uid 用,查 players/{email} 不存在回 0/5 不報錯,
+    //   形成「右邊填 email 才查得到」的錯覺(其實查的是錯的東西)。
     async function _resolveUid(){
       const _uid = (_uidIn.value || '').trim();
       const _email = (_emailIn.value || '').trim().toLowerCase();
@@ -9125,29 +9130,14 @@ async function _showAdminStatsPanelImpl(){
       if(!_email){
         throw new Error('請輸入玩家 email 或 uid');
       }
-      try{
-        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const _fbDb = window._fbDb;
-        if(!_fbDb) throw new Error('Firestore 未就緒');
-        // 嘗試 1:stats/global.userIndex(email → uid 索引)
-        try{
-          const _ref = doc(_fbDb, 'stats', 'global');
-          const _snap = await getDoc(_ref);
-          if(_snap.exists()){
-            const _d = _snap.data() || {};
-            const _idx = _d.userIndex || _d.emailToUid || {};
-            if(_idx && _idx[_email]) return _idx[_email];
-          }
-        }catch(_){}
-        // 嘗試 2:if AdminPanel 有暴露 _adminResolveUidByEmail
-        if(typeof window._adminResolveUidByEmail === 'function'){
-          const _u = await window._adminResolveUidByEmail(_email);
-          if(_u) return _u;
-        }
-        throw new Error('找不到對應的 uid(請改用 uid 直填)');
-      }catch(e){
-        throw e;
+      if(typeof window._fbAdminFindPlayerByEmail !== 'function'){
+        throw new Error('_fbAdminFindPlayerByEmail 未就緒,請改填 uid');
       }
+      const _p = await window._fbAdminFindPlayerByEmail(_email);
+      if(!_p || !_p.uid){
+        throw new Error('找不到該玩家 (email=' + _email + '),請改填 uid');
+      }
+      return _p.uid;
     }
 
     function _showResult(html, color){
