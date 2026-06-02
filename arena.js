@@ -30,7 +30,8 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.21',   // ★ v3.13.21(2026-06-02)— 主頁框架(index.html 端);每日場次 2→3
+    VERSION: 'v3.13.27',   // ★ v3.13.27(2026-06-03)— 三層黑名單嚴驗(BUG #1 修復)+ GM 場次無限
+                           //   前版 v3.13.21 — 主頁框架(index.html 端);每日場次 2→3
                            //   前版 v3.13.20 — GM 後台:鬥技場入口開關 + 戰鬥記錄上傳審核
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
@@ -257,6 +258,12 @@
   // ──────────────────────────────────────────────────────────────────
 
   // 工具:驗證一筆陣容是否合法(用於上雲前 + 抽取池子時的防呆)
+  // ★ v3.13.27(2026-06-03) — 補齊三層黑名單(原本只擋 BOSS_NAMES 一層,造成
+  //   BUG #1 木葉天狗冒出來):
+  //     1. BOSS_NAMES(冒險所有 BOSS / 菁英 / 小怪 / 稀有怪 / 世界 BOSS)
+  //     2. JAPAN_ARENA_EXCLUDE(日本菁英+小怪+稀有,但不含三妖怪英雄版)
+  //     3. EVENT_ONLY_HEROES(活動限定:小力/幼兒園小孩/巫女)
+  //   白名單:JAPAN_BOSS_HEROES(大天狗/酒吞童子/玉藻前)— 三妖怪英雄版可出現
   window._arenaIsTeamValid = function(team) {
     try {
       if (!team || !Array.isArray(team.heroes) || team.heroes.length !== 4) return false;
@@ -271,11 +278,39 @@
         const hasAnyElem = team.elements.some(e => e && typeof e === 'string');
         if (!hasAnyElem) return false;
       }
-      // 防呆 3:不可包含 BOSS 名(避免 GM 不慎或舊資料污染)
-      if (typeof BOSS_NAMES !== 'undefined' && Array.isArray(BOSS_NAMES)) {
+      // ★ v3.13.27 — 取得日本三妖怪英雄版白名單
+      const _jpBossWL = (typeof JAPAN_BOSS_HEROES !== 'undefined' && JAPAN_BOSS_HEROES instanceof Set)
+        ? JAPAN_BOSS_HEROES
+        : (typeof window !== 'undefined' && window.JAPAN_BOSS_HEROES instanceof Set
+            ? window.JAPAN_BOSS_HEROES : new Set());
+      // 防呆 3:黑名單第 1 層 — BOSS_NAMES(三妖怪英雄版例外放行)
+      const _bossArr = (typeof BOSS_NAMES !== 'undefined' && Array.isArray(BOSS_NAMES))
+        ? BOSS_NAMES
+        : (typeof window !== 'undefined' && Array.isArray(window.BOSS_NAMES)
+            ? window.BOSS_NAMES : []);
+      if (_bossArr.length) {
         for (const hname of team.heroes) {
-          if (BOSS_NAMES.indexOf(hname) >= 0) return false;
+          if (_jpBossWL.has(hname)) continue;
+          if (_bossArr.indexOf(hname) >= 0) return false;
         }
+      }
+      // ★ v3.13.27 — 防呆 4:黑名單第 2 層 — JAPAN_ARENA_EXCLUDE
+      const _jpArenaExc = (typeof JAPAN_ARENA_EXCLUDE !== 'undefined' && JAPAN_ARENA_EXCLUDE instanceof Set)
+        ? JAPAN_ARENA_EXCLUDE
+        : (typeof window !== 'undefined' && window.JAPAN_ARENA_EXCLUDE instanceof Set
+            ? window.JAPAN_ARENA_EXCLUDE : new Set());
+      for (const hname of team.heroes) {
+        if (_jpBossWL.has(hname)) continue;
+        if (_jpArenaExc.has(hname)) return false;
+      }
+      // ★ v3.13.27 — 防呆 5:黑名單第 3 層 — EVENT_ONLY_HEROES
+      const _evtOnly = (typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES instanceof Set)
+        ? EVENT_ONLY_HEROES
+        : (typeof window !== 'undefined' && window.EVENT_ONLY_HEROES instanceof Set
+            ? window.EVENT_ONLY_HEROES : new Set());
+      for (const hname of team.heroes) {
+        if (_jpBossWL.has(hname)) continue;
+        if (_evtOnly.has(hname)) return false;
       }
       return true;
     } catch (e) { console.warn('[arena] _arenaIsTeamValid 例外:', e); return false; }
@@ -473,6 +508,8 @@
   // ★ 主入口:抽一套 AI 隊伍(70% 雲端玩家 + 30% 系統 5 套)
   // 同步版回傳預設,讓選角 UI 立刻有東西顯示;同時觸發非同步 fetch 下次刷新時換上玩家
   // 回傳格式: { name, heroes, elements?, _isPlayerTeam, _ownerLabel?, _ownerUid? }
+  // ★ v3.13.27(2026-06-03) — 抽到後再過一次 _arenaIsTeamValid 嚴驗(三層黑名單),
+  //   不過就直接走系統 5 套(避免舊雲端資料污染、_arenaIsTeamValid 升級前上雲的髒陣容)
   window._arenaPickAITeam = function(opts) {
     try {
       const useCloud = !(opts && opts.systemOnly);
@@ -480,30 +517,49 @@
       if (useCloud && _cloudPoolCache && _cloudPoolCache.length) {
         const r = Math.random();
         if (r < ARENA_CONFIG.CLOUD_POOL_RATIO) {
-          const picked = _cloudPoolCache[Math.floor(Math.random() * _cloudPoolCache.length)];
-          return {
-            name: picked.name,
-            heroes: picked.heroes,
-            elements: picked.elements || [],
-            _isPlayerTeam: true,
-            _ownerUid: picked._ownerUid,
-            _ownerLabel: picked._ownerLabel,
-            _slotKey: picked._slotKey,
-          };
+          // ★ v3.13.27 — 最多挑 5 次,避開舊資料污染(BOSS/菁英)
+          let _pickedCloud = null;
+          for (let _i = 0; _i < 5; _i++) {
+            const _cand = _cloudPoolCache[Math.floor(Math.random() * _cloudPoolCache.length)];
+            if (_cand && window._arenaIsTeamValid(_cand)) {
+              _pickedCloud = _cand;
+              break;
+            }
+            try { console.warn('[arena v3.13.27] 雲端陣容污染,第 ' + (_i + 1) + ' 次重抽:', _cand && _cand.heroes); } catch (_) {}
+          }
+          if (_pickedCloud) {
+            return {
+              name: _pickedCloud.name,
+              heroes: _pickedCloud.heroes,
+              elements: _pickedCloud.elements || [],
+              _isPlayerTeam: true,
+              _ownerUid: _pickedCloud._ownerUid,
+              _ownerLabel: _pickedCloud._ownerLabel,
+              _slotKey: _pickedCloud._slotKey,
+            };
+          }
+          // 5 次都污染就 fallthrough 走系統 5 套
         }
       }
-      // 2. 走系統 5 套
-      const sys = _ARENA_AI_TEAMS[Math.floor(Math.random() * _ARENA_AI_TEAMS.length)];
+      // 2. 走系統 5 套(系統陣容理論上絕對乾淨,但 GM 可能從 admin_panel 寫了髒陣容,
+      //    所以也驗一次,污染就用 default 第 1 套兜底)
+      let _sys = _ARENA_AI_TEAMS[Math.floor(Math.random() * _ARENA_AI_TEAMS.length)];
+      if (!window._arenaIsTeamValid(_sys)) {
+        try { console.warn('[arena v3.13.27] 系統陣容也污染,改用 default 第 1 套兜底:', _sys && _sys.heroes); } catch (_) {}
+        // 從 default 找第一個乾淨的
+        const _safe = ARENA_AI_TEAMS_DEFAULT.find(t => window._arenaIsTeamValid(t)) || ARENA_AI_TEAMS_DEFAULT[0];
+        _sys = _safe;
+      }
       // 觸發雲端池抓取(背景非同步,下次刷新就有了)
       if (useCloud && !_cloudPoolFetching) {
         setTimeout(() => { window._arenaFetchTeamPool().catch(() => {}); }, 100);
       }
       return {
-        name: sys.name,
-        heroes: sys.heroes.slice(),
-        elements: (sys.elements || []).slice(),
+        name: _sys.name,
+        heroes: _sys.heroes.slice(),
+        elements: (_sys.elements || []).slice(),
         _isPlayerTeam: false,
-        _systemId: sys.id,
+        _systemId: _sys.id,
       };
     } catch (e) {
       console.warn('[arena] _arenaPickAITeam 例外:', e);
@@ -609,14 +665,27 @@
     return s;
   };
 
-  // 檢查是否還能戰鬥(每日 2 場)
+  // 檢查是否還能戰鬥(每日 N 場)
+  // ★ v3.13.27(2026-06-03) — 管理員場次無限(老師指示):
+  //   _isAdminUser() 回 true 就直接放行,不受 DAILY_BATTLE_LIMIT 限制
   window._arenaCanBattle = function() {
+    try {
+      if (typeof window._isAdminUser === 'function' && window._isAdminUser()) {
+        return true;
+      }
+    } catch (_eAdm) {}
     const s = window._arenaGetDailyState();
     return s.battlesPlayed < ARENA_CONFIG.DAILY_BATTLE_LIMIT;
   };
 
   // 檢查是否還能刷新(每日 3 次)
+  // ★ v3.13.27(2026-06-03) — 管理員刷新也無限
   window._arenaCanRefresh = function() {
+    try {
+      if (typeof window._isAdminUser === 'function' && window._isAdminUser()) {
+        return true;
+      }
+    } catch (_eAdm) {}
     const s = window._arenaGetDailyState();
     return s.refreshesUsed < ARENA_CONFIG.DAILY_REFRESH_LIMIT;
   };
@@ -858,15 +927,19 @@
   // ──────────────────────────────────────────────────────────────────
   window._arenaGetStatsForUI = function() {
     const s = window._arenaGetDailyState();
+    // ★ v3.13.27(2026-06-03) — 管理員場次無限,UI 顯示 999 / Infinity 標記
+    let _isAdmin = false;
+    try { _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser()); } catch (_) {}
     return {
       todayBattles: s.battlesPlayed || 0,
-      todayBattleLimit: ARENA_CONFIG.DAILY_BATTLE_LIMIT,
+      todayBattleLimit: _isAdmin ? 999 : ARENA_CONFIG.DAILY_BATTLE_LIMIT,
       todayRefreshes: s.refreshesUsed || 0,
-      todayRefreshLimit: ARENA_CONFIG.DAILY_REFRESH_LIMIT,
+      todayRefreshLimit: _isAdmin ? 999 : ARENA_CONFIG.DAILY_REFRESH_LIMIT,
       todayWins: s.wins || 0,
       todayDraws: s.draws || 0,
       todayLosses: s.losses || 0,
       zhengTotal: s.zhengTotal || 0,
+      isAdmin: _isAdmin,
     };
   };
 

@@ -2543,17 +2543,46 @@ async function _showAdminStatsPanelImpl(){
   // 工作狀態:當前編輯中的 5 套陣容
   let _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
 
-  // 取得可選英雄名單(從 HERO_DB 排除 BOSS)
+  // 取得可選英雄名單(從 HERO_DB 排除 BOSS / 日本菁英小怪 / 活動限定)
+  // ★ v3.13.27(2026-06-03) — 根因修補(老師反映「所有 BOSS 和菁英都在裡面」):
+  //   原本只讀 window.BOSS_NAMES / window.JAPAN_ARENA_EXCLUDE,但 const 不掛 window
+  //   → 永遠 undefined → 過濾完全失效。現補上 typeof 雙重 fallback + 加 EVENT_ONLY_HEROES 第三層。
+  //   白名單:JAPAN_BOSS_HEROES(大天狗/酒吞童子/玉藻前)— 三妖怪英雄版可作為鬥技場選項
   function _arenaGetSelectableHeroes(){
     try{
-      if(typeof window.HERO_DB === 'undefined') return [];
-      const _bossSet = (typeof window.BOSS_NAMES !== 'undefined' && Array.isArray(window.BOSS_NAMES))
-        ? new Set(window.BOSS_NAMES) : new Set();
-      // 排除日本 BOSS 英雄版(避免太強)
+      // HERO_DB 雙重 fallback
+      const _heroDb = (typeof window.HERO_DB !== 'undefined' && window.HERO_DB)
+        || (typeof HERO_DB !== 'undefined' ? HERO_DB : null);
+      if(!_heroDb) return [];
+      // BOSS_NAMES 雙重 fallback
+      const _bossArr = (typeof window.BOSS_NAMES !== 'undefined' && Array.isArray(window.BOSS_NAMES))
+        ? window.BOSS_NAMES
+        : (typeof BOSS_NAMES !== 'undefined' && Array.isArray(BOSS_NAMES) ? BOSS_NAMES : []);
+      const _bossSet = new Set(_bossArr);
+      // JAPAN_ARENA_EXCLUDE 雙重 fallback
       const _japExc = (typeof window.JAPAN_ARENA_EXCLUDE !== 'undefined' && window.JAPAN_ARENA_EXCLUDE instanceof Set)
-        ? window.JAPAN_ARENA_EXCLUDE : new Set();
-      return Object.keys(window.HERO_DB).filter(n => !_bossSet.has(n) && !_japExc.has(n)).sort();
-    }catch(e){ return []; }
+        ? window.JAPAN_ARENA_EXCLUDE
+        : (typeof JAPAN_ARENA_EXCLUDE !== 'undefined' && JAPAN_ARENA_EXCLUDE instanceof Set ? JAPAN_ARENA_EXCLUDE : new Set());
+      // EVENT_ONLY_HEROES 雙重 fallback(v3.13.27 新增:擋小力/幼兒園小孩/巫女)
+      const _evtOnly = (typeof window.EVENT_ONLY_HEROES !== 'undefined' && window.EVENT_ONLY_HEROES instanceof Set)
+        ? window.EVENT_ONLY_HEROES
+        : (typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES instanceof Set ? EVENT_ONLY_HEROES : new Set());
+      // JAPAN_BOSS_HEROES 白名單(三妖怪英雄版可選)
+      const _jpBossWL = (typeof window.JAPAN_BOSS_HEROES !== 'undefined' && window.JAPAN_BOSS_HEROES instanceof Set)
+        ? window.JAPAN_BOSS_HEROES
+        : (typeof JAPAN_BOSS_HEROES !== 'undefined' && JAPAN_BOSS_HEROES instanceof Set ? JAPAN_BOSS_HEROES : new Set());
+      const _result = Object.keys(_heroDb).filter(n => {
+        if(_jpBossWL.has(n)) return true;       // 白名單放行
+        if(_bossSet.has(n))  return false;      // 擋第 1 層 BOSS_NAMES
+        if(_japExc.has(n))   return false;      // 擋第 2 層 JAPAN_ARENA_EXCLUDE
+        if(_evtOnly.has(n))  return false;      // 擋第 3 層 EVENT_ONLY_HEROES
+        return true;
+      }).sort();
+      try{ console.log('[admin v3.13.27] 鬥技場可選英雄數: ' + _result.length
+        + '(總 ' + Object.keys(_heroDb).length + ' 隻,排除 BOSS ' + _bossSet.size
+        + ' + 日本菁英 ' + _japExc.size + ' + 活動限定 ' + _evtOnly.size + ' - 白名單 ' + _jpBossWL.size + ')'); }catch(_){}
+      return _result;
+    }catch(e){ console.warn('[admin _arenaGetSelectableHeroes 例外]', e); return []; }
   }
   const _ARENA_ELEMENT_KEYS = [
     {k:'water', label:'💧 水'}, {k:'fire', label:'🔥 火'}, {k:'wind', label:'🪽 風'},
@@ -2685,6 +2714,17 @@ async function _showAdminStatsPanelImpl(){
         if(!t.name || !t.name.trim()){ throw new Error('第 ' + (i+1) + ' 套隊名為空'); }
         const emptyHero = t.heroes.findIndex(h => !h);
         if(emptyHero >= 0){ throw new Error('第 ' + (i+1) + ' 套第 ' + (emptyHero+1) + ' 位英雄未選'); }
+      }
+      // ★ v3.13.27(2026-06-03) — 儲存前三層黑名單嚴驗(防止 GM 不慎存了 BOSS/菁英到雲端)
+      const _selectable = new Set(_arenaGetSelectableHeroes());
+      for(let i=0; i<5; i++){
+        const t = _arenaPresetWorking[i];
+        for(let j=0; j<4; j++){
+          const hname = t.heroes[j];
+          if(!_selectable.has(hname)){
+            throw new Error('第 ' + (i+1) + ' 套第 ' + (j+1) + ' 位「' + hname + '」是 BOSS / 菁英 / 活動限定,不可用於鬥技場');
+          }
+        }
       }
       // 寫到 Firestore
       if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
