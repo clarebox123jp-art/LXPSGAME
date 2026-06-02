@@ -2533,12 +2533,13 @@ async function _showAdminStatsPanelImpl(){
   // ════════════════════════════════════════════════════════════════
 
   // 內建 5 套陣容(後備,當雲端沒資料時用,跟 arena.js 內 ARENA_AI_TEAMS_DEFAULT 對齊)
+  // ★ v3.13.27(2026-06-03)— 老師指定組合更新(跟 arena.js 同步)
   const _ARENA_PRESET_DEFAULT = [
-    { id:'sys_1', name:'[鬥技場預設] 聖盾守護隊', heroes:['聖騎士','守衛','祭司','火法師'], elements:['light','earth','light','fire'] },
-    { id:'sys_2', name:'[鬥技場預設] 雷霆控場隊', heroes:['雷法師','暗法師','神射手','米鈴'], elements:['wind','dark','wind','water'] },
-    { id:'sys_3', name:'[鬥技場預設] 舞動陣勢隊', heroes:['舞者','武鬥家','吟遊詩人','學者'], elements:['light','fire','water','wind'] },
-    { id:'sys_4', name:'[鬥技場預設] 快攻刺客隊', heroes:['刺客','田徑隊員','神偷','煉金術師'], elements:['dark','wind','dark','grass'] },
-    { id:'sys_5', name:'[鬥技場預設] 元素法團隊', heroes:['火法師','冰法師','雷法師','祭司'], elements:['fire','water','wind','light'] },
+    { id:'sys_1', name:'[鬥技場預設] 神殿守護隊', heroes:['聖騎士','占星師','天神宙斯','祭司'],   elements:['light','dark','wind','grass'] },
+    { id:'sys_2', name:'[鬥技場預設] 雷霆控場隊', heroes:['雷法師','守衛','玉藻前','救醫馬'],   elements:['wind','light','fire','grass'] },
+    { id:'sys_3', name:'[鬥技場預設] 舞動陣勢隊', heroes:['舞者','直笛團員','吟遊詩人','弦樂團員'], elements:['earth','wind','grass','light'] },
+    { id:'sys_4', name:'[鬥技場預設] 快攻刺客隊', heroes:['刺客','田徑隊員','武器精靈','神槍手'],   elements:['dark','wind','light','fire'] },
+    { id:'sys_5', name:'[鬥技場預設] 元素法團隊', heroes:['火法師','冰法師','雷法師','菇女'],   elements:['fire','water','wind','grass'] },
   ];
   // 工作狀態:當前編輯中的 5 套陣容
   let _arenaPresetWorking = JSON.parse(JSON.stringify(_ARENA_PRESET_DEFAULT));
@@ -2728,12 +2729,18 @@ async function _showAdminStatsPanelImpl(){
       }
       // 寫到 Firestore
       if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+      // ★ v3.13.27 — 守門:必須是 GM 才能寫(雙保險,Firestore Rules 應該也有擋)
+      if(typeof window._isAdminUser !== 'function' || !window._isAdminUser()){
+        throw new Error('權限不足:需要 GM 身份(請確認登入 email 在 ADMIN 名單)');
+      }
       const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
       const payload = {
         teams: _arenaPresetWorking,
         updatedAt: Date.now(),
         updatedBy: (window._fbUser && window._fbUser.email) || 'unknown',
       };
+      // ★ v3.13.27 — 把 payload 印到 console,方便 debug(如果 Firestore 拒絕,可看到實際送什麼)
+      try{ console.log('[admin arena save v3.13.27] payload:', JSON.parse(JSON.stringify(payload))); }catch(_){}
       await setDoc(doc(window._fbDb, 'arenaSystemTeams', 'main'), payload);
       // 立即套用到記憶體(讓 GM 自己當下開鬥技場就能看到效果)
       if(typeof window._arenaApplySystemTeamsFromCloud === 'function'){
@@ -2742,9 +2749,22 @@ async function _showAdminStatsPanelImpl(){
       res.style.color = '#88ccff';
       res.textContent = '✅ 已儲存到雲端!所有玩家下次抽取鬥技場對手時會套用最新版本。';
     }catch(e){
+      // ★ v3.13.27 — 改善錯誤訊息:Firestore 錯誤特別處理
       console.error('[admin arena save]', e);
+      let _msg = (e && e.message) || (e && e.code) || '未知錯誤';
+      // Firestore permission-denied 特別提示
+      if(e && (e.code === 'permission-denied' || /permission/i.test(_msg))){
+        _msg = '🔒 Firestore 規則拒絕寫入(權限不足)\n'
+             + '原因:目前帳號可能不在 GM 名單(雲端規則層),或 arenaSystemTeams/main 的寫入規則沒開放\n'
+             + '解法:確認登入 email 在 ADMIN 名單,或檢查 Firestore Rules 是否含「match /arenaSystemTeams/main { allow write: if isAdmin() }」';
+      } else if(e && (e.code === 'unauthenticated' || /unauthenticated/i.test(_msg))){
+        _msg = '🔒 未登入或登入逾期,請重新登入後再試';
+      } else if(e && (e.code === 'unavailable' || /network|offline/i.test(_msg))){
+        _msg = '📡 網路問題,Firestore 連線失敗,請檢查網路再試';
+      }
       res.style.color = '#ff6666';
-      res.textContent = '❌ 儲存失敗:' + (e && e.message || '未知錯誤');
+      res.style.whiteSpace = 'pre-wrap';  // ★ v3.13.27 — 允許多行錯誤訊息
+      res.textContent = '❌ 儲存失敗:' + _msg;
     }finally{
       btn.disabled = false;
       btn.textContent = '💾 儲存到雲端(對所有玩家即時生效)';

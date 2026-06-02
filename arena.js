@@ -109,46 +109,52 @@
   //  ──── 5 套挑戰性類型隊伍,玩家看到「[GM]」前綴即知是系統陣容
   //  ──── v3.13.15:這 5 套變成「系統保底池」,真正抽取以雲端玩家池為主(70/30)
   //  ──── GM 可由 admin_panel 載入 Firestore arenaSystemTeams 文件覆蓋此預設
+  //  ──── ★ v3.13.27(2026-06-03)— 老師指定組合更新:
+  //         第 1 套:神殿守護隊(聖騎/占星/天神宙斯/祭司)
+  //         第 2 套:雷霆控場隊(雷法/守衛/玉藻前/救醫馬)
+  //         第 3 套:舞動陣勢隊(舞者/直笛/吟遊/弦樂)
+  //         第 4 套:快攻刺客隊(刺客/田徑/武器精靈/神槍手)
+  //         第 5 套:元素法團隊(火法/冰法/雷法/菇女)
   // ──────────────────────────────────────────────────────────────────
   const ARENA_AI_TEAMS_DEFAULT = [
     {
       id: 'sys_1',
-      name: '[鬥技場預設] 聖盾守護隊',
-      desc: '聖騎士護全隊、守衛抗暴、祭司治療、火法師輸出',
-      heroes: ['聖騎士', '守衛', '祭司', '火法師'],
-      elements: ['light', 'earth', 'light', 'fire'],
-      strategy: 'tank_heal_dmg',
+      name: '[鬥技場預設] 神殿守護隊',
+      desc: '聖騎士護全隊、占星師控場、天神宙斯雷壓、祭司治療',
+      heroes: ['聖騎士', '占星師', '天神宙斯', '祭司'],
+      elements: ['light', 'dark', 'wind', 'grass'],
+      strategy: 'tank_control_heal',
     },
     {
       id: 'sys_2',
       name: '[鬥技場預設] 雷霆控場隊',
-      desc: '雷法師爆控、暗法師封印、神射手必中、米鈴反擊解狀態',
-      heroes: ['雷法師', '暗法師', '神射手', '米鈴'],
-      elements: ['wind', 'dark', 'wind', 'water'],
+      desc: '雷法師爆控、守衛抗暴、玉藻前妖術、救醫馬支援',
+      heroes: ['雷法師', '守衛', '玉藻前', '救醫馬'],
+      elements: ['wind', 'light', 'fire', 'grass'],
       strategy: 'control_burst',
     },
     {
       id: 'sys_3',
       name: '[鬥技場預設] 舞動陣勢隊',
-      desc: '舞者強化全隊、武鬥家輸出、吟遊詩人催眠、學者奪能反擊',
-      heroes: ['舞者', '武鬥家', '吟遊詩人', '學者'],
-      elements: ['light', 'fire', 'water', 'wind'],
+      desc: '舞者強化全隊、直笛吟遊雙樂手、弦樂團員爆發',
+      heroes: ['舞者', '直笛團員', '吟遊詩人', '弦樂團員'],
+      elements: ['earth', 'wind', 'grass', 'light'],
       strategy: 'buff_combo',
     },
     {
       id: 'sys_4',
       name: '[鬥技場預設] 快攻刺客隊',
-      desc: '刺客出血、田徑速攻、神偷削弱、煉金治療免疫',
-      heroes: ['刺客', '田徑隊員', '神偷', '煉金術師'],
-      elements: ['dark', 'wind', 'dark', 'grass'],
+      desc: '刺客出血、田徑速攻、武器精靈強化、神槍手穿盾',
+      heroes: ['刺客', '田徑隊員', '武器精靈', '神槍手'],
+      elements: ['dark', 'wind', 'light', 'fire'],
       strategy: 'speed_dmg',
     },
     {
       id: 'sys_5',
       name: '[鬥技場預設] 元素法團隊',
-      desc: '火法師+冰法師+雷法師三系AoE壓場、祭司穩定治療',
-      heroes: ['火法師', '冰法師', '雷法師', '祭司'],
-      elements: ['fire', 'water', 'wind', 'light'],
+      desc: '火法 + 冰法 + 雷法三系 AoE 壓場、菇女穩定治療控場',
+      heroes: ['火法師', '冰法師', '雷法師', '菇女'],
+      elements: ['fire', 'water', 'wind', 'grass'],
       strategy: 'aoe_storm',
     },
   ];
