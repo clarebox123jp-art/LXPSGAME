@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.15';
+window.ADMIN_PANEL_VERSION = 'v3.13.20';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -424,6 +424,100 @@ async function _showAdminStatsPanelImpl(){
           </button>
         </div>
         <div id="_admin-arena-save-result" style="margin-top:10px;font-size:13px;color:#cc99ff;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.13.20(2026-06-02) — 鬥技場入口開關(GM 一鍵關閉/開啟全站鬥技場) -->
+      <!--   Firestore gameConfig/arenaSwitch { enabled, updatedAt, updatedBy } -->
+      <!--   關閉時:首頁按鈕變灰 + 玩家按按鈕會被 _arenaStartFromMenu 擋下提示維修中 -->
+      <div id="_admin-arena-switch-section" style="background:rgba(50,20,40,0.5);border:2px solid rgba(255,140,200,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ff99cc;margin-bottom:8px;">⚔ 鬥技場入口開關</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          一鍵關閉全站鬥技場(緊急維修、BUG 處理時用)。<br>
+          關閉後玩家首頁按鈕變灰、按下會被擋下提示;雲端啟動時拉一次,變更後其他玩家下次按按鈕即生效。<br>
+          <span style="color:#aaa;font-size:12px;">
+            雲端儲存於 <code>gameConfig/arenaSwitch</code>;預設 enabled=true(雲端查不到也預設開)。
+          </span>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-arena-switch-load" style="padding:9px 16px;font-size:13px;font-weight:700;
+            background:rgba(180,120,200,0.25);border:1.5px solid rgba(255,150,220,0.5);color:#ffaadd;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            📥 載入目前狀態
+          </button>
+          <span id="_admin-arena-switch-status" style="font-size:13px;color:#aaa;">尚未載入</span>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
+          <button id="_admin-arena-switch-on" style="padding:12px 28px;font-size:15px;font-weight:900;
+            background:linear-gradient(135deg,#22aa55,#118844);border:2.5px solid #66dd88;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">
+            ✅ 開啟鬥技場
+          </button>
+          <button id="_admin-arena-switch-off" style="padding:12px 28px;font-size:15px;font-weight:900;
+            background:linear-gradient(135deg,#aa2244,#882244);border:2.5px solid #ff6688;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">
+            ⛔ 關閉鬥技場
+          </button>
+        </div>
+        <div id="_admin-arena-switch-result" style="margin-top:10px;font-size:13px;color:#ff99cc;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.13.20(2026-06-02) — 鬥技場戰鬥記錄審核(GM 異常傷害偵測) -->
+      <!--   讀 Firestore arenaBattles collection 最近 N 筆,排序顯示「平均單回合傷害」 -->
+      <!--   功能:排序、篩玩家、刪除單筆異常記錄、清空所有/指定玩家 -->
+      <div id="_admin-arena-battles-section" style="background:rgba(40,30,55,0.5);border:2px solid rgba(255,180,80,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ffcc66;margin-bottom:8px;">⚔ 鬥技場戰鬥記錄審核</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          列出最近的鬥技場戰鬥記錄,按「平均單回合傷害」排序,異常高的(&gt; 800/回合)會被標紅。<br>
+          可以刪除個別異常記錄,或清空指定玩家的所有記錄。<br>
+          <span style="color:#aaa;font-size:12px;">
+            雲端儲存於 <code>arenaBattles/{uid_ts}</code>;每場結算後上傳 {uid, 隊伍, 4 英雄, 回合數, 總傷, 平均單回合傷, 勝負平, 時間戳}。
+          </span>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-arena-battles-load" style="padding:9px 16px;font-size:13px;font-weight:700;
+            background:rgba(255,180,80,0.25);border:1.5px solid #ffcc66;color:#ffe0a0;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            📥 載入最近 500 筆
+          </button>
+          <label style="font-size:13px;color:#ccc;">
+            排序:
+            <select id="_admin-arena-battles-sort" style="padding:5px 8px;font-size:13px;background:rgba(20,20,30,0.9);
+              border:1.5px solid rgba(255,180,80,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+              <option value="avg_desc">平均單回合傷害(高 → 低)</option>
+              <option value="avg_asc">平均單回合傷害(低 → 高)</option>
+              <option value="total_desc">總傷害(高 → 低)</option>
+              <option value="ts_desc">時間(新 → 舊)</option>
+              <option value="rounds_asc">回合數(少 → 多)</option>
+            </select>
+          </label>
+          <input id="_admin-arena-battles-filter" type="text" placeholder="篩玩家(uid/姓名/座號)"
+            style="flex:1;min-width:140px;padding:6px 10px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(255,180,80,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          <span id="_admin-arena-battles-count" style="font-size:12px;color:#aaa;"></span>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button id="_admin-arena-battles-clear-all" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(200,60,60,0.3);border:1.5px solid #cc6666;color:#ffaaaa;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🗑️ 清空全部記錄(危險)
+          </button>
+          <button id="_admin-arena-battles-clear-old" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(120,80,80,0.3);border:1.5px solid #aa7777;color:#ddbbbb;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🧹 清除 30 天前的舊記錄
+          </button>
+        </div>
+
+        <div id="_admin-arena-battles-list" style="max-height:480px;overflow-y:auto;
+          background:rgba(0,0,0,0.4);border:1px solid rgba(255,180,80,0.3);border-radius:6px;
+          padding:8px;font-size:12px;color:#ccc;line-height:1.7;">
+          <div style="color:#888;padding:14px;text-align:center;">尚未載入,請按「📥 載入最近 500 筆」</div>
+        </div>
+        <div id="_admin-arena-battles-result" style="margin-top:10px;font-size:13px;color:#ffcc66;text-align:center;"></div>
       </div>
 
       <div id="_admin-rescue-section" style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
@@ -1560,6 +1654,9 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
       // ★ v3.13.15(2026-06-02) — 鬥技場預設陣容管理(系統 5 套保底敵手)
       { sec: '_admin-arena-preset-section',     label: '⚔️ 鬥技場預設陣容',       hint: '管理系統 5 套保底敵手(玩家池空時用)' },
+      // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 + 戰鬥記錄審核
+      { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
+      { sec: '_admin-arena-battles-section',    label: '⚔ 鬥技場戰鬥記錄審核',   hint: '依平均單回合傷害排序,偵測異常 BUG 傷害' },
       { sec: '_admin-reset-section',            label: '⚠️ 帳號完全重置+重建',     hint: '危險!不可逆,最後手段' },
     ];
 
@@ -2617,6 +2714,415 @@ async function _showAdminStatsPanelImpl(){
   // 初始渲染(用內建預設填一次,GM 進來就看得到 UI)
   _arenaRenderEditor();
   // ── 鬥技場預設陣容管理 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 init
+  //   Firestore gameConfig/arenaSwitch { enabled, updatedAt, updatedBy }
+  //   讀取/儲存後立即更新 window._arenaSwitchEnabled 並套用首頁 UI
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initArenaSwitchSection(){
+    const loadBtn = document.getElementById('_admin-arena-switch-load');
+    const onBtn   = document.getElementById('_admin-arena-switch-on');
+    const offBtn  = document.getElementById('_admin-arena-switch-off');
+    const statusEl= document.getElementById('_admin-arena-switch-status');
+    const resEl   = document.getElementById('_admin-arena-switch-result');
+    if(!loadBtn || !onBtn || !offBtn){
+      console.warn('[admin arena switch] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    // 取得 Firestore SDK 函式
+    async function _getSdk(){
+      try{
+        // ★ v3.13.20 — 優先用 index.html 統一掛載的 window._fbFns
+        if(window._fbFns && window._fbFns.setDoc){
+          return {
+            getDoc: window._fbFns.getDoc,
+            setDoc: window._fbFns.setDoc,
+            doc:    window._fbFns.doc,
+          };
+        }
+        // fallback:動態 import
+        const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        return { getDoc: m.getDoc, setDoc: m.setDoc, doc: m.doc };
+      }catch(e){
+        console.warn('[admin arena switch] SDK 取得失敗', e);
+        return null;
+      }
+    }
+
+    async function _loadSwitch(){
+      statusEl.textContent = '載入中...';
+      statusEl.style.color = '#aaa';
+      try{
+        if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.getDoc || !sdk.doc){ throw new Error('Firestore SDK 未就緒'); }
+        const snap = await sdk.getDoc(sdk.doc(window._fbDb, 'gameConfig', 'arenaSwitch'));
+        if(snap && snap.exists()){
+          const data = snap.data();
+          const enabled = (data && data.enabled !== false);
+          const updatedAt = data && data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '(無記錄)';
+          const updatedBy = data && data.updatedBy ? data.updatedBy : '(無記錄)';
+          if(enabled){
+            statusEl.style.color = '#66dd88';
+            statusEl.textContent = '✅ 目前:開啟 (最後更新:' + updatedAt + ' by ' + updatedBy + ')';
+          } else {
+            statusEl.style.color = '#ff6688';
+            statusEl.textContent = '⛔ 目前:關閉 (最後更新:' + updatedAt + ' by ' + updatedBy + ')';
+          }
+          window._arenaSwitchEnabled = enabled;
+        } else {
+          statusEl.style.color = '#88ccff';
+          statusEl.textContent = '☁ 雲端無此設定 → 預設開啟';
+          window._arenaSwitchEnabled = true;
+        }
+      }catch(e){
+        statusEl.style.color = '#ff6666';
+        statusEl.textContent = '❌ 載入失敗:' + (e && e.message || e);
+      }
+    }
+
+    async function _setSwitch(enabled){
+      const btn = enabled ? onBtn : offBtn;
+      const labelOK = enabled ? '✅ 已開啟鬥技場(所有玩家下次按按鈕即生效)' : '⛔ 已關閉鬥技場(所有玩家按按鈕會被擋下)';
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = '處理中...';
+      resEl.textContent = '';
+      try{
+        if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.setDoc || !sdk.doc){ throw new Error('Firestore SDK 未就緒'); }
+        const me = (window._fbAuth && window._fbAuth.currentUser) || null;
+        const updatedBy = me ? (me.email || me.uid.slice(0,10)) : 'unknown';
+        await sdk.setDoc(sdk.doc(window._fbDb, 'gameConfig', 'arenaSwitch'), {
+          enabled: !!enabled,
+          updatedAt: Date.now(),
+          updatedBy: updatedBy,
+        });
+        window._arenaSwitchEnabled = !!enabled;
+        // 套用 UI 到首頁按鈕(若 GM 自己也看得到首頁)
+        try{ if(typeof window._arenaApplySwitchUI === 'function') window._arenaApplySwitchUI(!!enabled); }catch(_){}
+        resEl.style.color = enabled ? '#66dd88' : '#ff8888';
+        resEl.textContent = labelOK;
+        // 重載狀態顯示
+        setTimeout(_loadSwitch, 300);
+      }catch(e){
+        console.error('[admin arena switch set]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 設定失敗:' + (e && e.message || '未知錯誤');
+      }finally{
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    }
+
+    loadBtn.onclick = _loadSwitch;
+    onBtn.onclick   = () => _setSwitch(true);
+    offBtn.onclick  = () => _setSwitch(false);
+    // 進入面板時自動載一次當前狀態
+    setTimeout(_loadSwitch, 100);
+  })();
+  // ── 鬥技場入口開關 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.13.20(2026-06-02) — 鬥技場戰鬥記錄審核 init
+  //   讀 Firestore arenaBattles collection 最近 500 筆
+  //   排序、篩玩家、刪除單筆、清空全部、清舊資料
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initArenaBattlesSection(){
+    const loadBtn   = document.getElementById('_admin-arena-battles-load');
+    const sortSel   = document.getElementById('_admin-arena-battles-sort');
+    const filterIn  = document.getElementById('_admin-arena-battles-filter');
+    const countEl   = document.getElementById('_admin-arena-battles-count');
+    const listEl    = document.getElementById('_admin-arena-battles-list');
+    const resEl     = document.getElementById('_admin-arena-battles-result');
+    const clearAllBtn = document.getElementById('_admin-arena-battles-clear-all');
+    const clearOldBtn = document.getElementById('_admin-arena-battles-clear-old');
+    if(!loadBtn || !listEl){
+      console.warn('[admin arena battles] DOM 元素缺失,跳過初始化');
+      return;
+    }
+
+    let _battles = [];  // 快取的記錄陣列
+
+    async function _getSdk(){
+      try{
+        // ★ v3.13.20 — 優先用 index.html 統一掛載的 window._fbFns
+        if(window._fbFns && window._fbFns.collection){
+          return {
+            collection: window._fbFns.collection,
+            getDocs:    window._fbFns.getDocs,
+            query:      window._fbFns.query,
+            orderBy:    window._fbFns.orderBy,
+            limit:      window._fbFns.limit,
+            deleteDoc:  window._fbFns.deleteDoc,
+            doc:        window._fbFns.doc,
+            where:      window._fbFns.where,
+          };
+        }
+        // fallback:動態 import
+        const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        return {
+          collection: m.collection,
+          getDocs: m.getDocs,
+          query: m.query,
+          orderBy: m.orderBy,
+          limit: m.limit,
+          deleteDoc: m.deleteDoc,
+          doc: m.doc,
+          where: m.where,
+        };
+      }catch(e){
+        console.warn('[admin arena battles] SDK 取得失敗', e);
+        return null;
+      }
+    }
+
+    async function _loadBattles(){
+      listEl.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">載入中...</div>';
+      resEl.textContent = '';
+      try{
+        if(!window._fbDb) throw new Error('Firestore 未就緒');
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.collection || !sdk.getDocs) throw new Error('Firestore SDK 未就緒');
+        // 依時間倒序拉最近 500 筆
+        let q;
+        try{
+          q = sdk.query(sdk.collection(window._fbDb, 'arenaBattles'),
+                        sdk.orderBy('ts','desc'), sdk.limit(500));
+        }catch(_eQ){
+          // 若 query/orderBy/limit 不可用 → fallback 直接 collection
+          q = sdk.collection(window._fbDb, 'arenaBattles');
+        }
+        const snap = await sdk.getDocs(q);
+        _battles = [];
+        snap.forEach(d => {
+          const data = d.data() || {};
+          _battles.push({
+            _docId: d.id,
+            uid: data.uid || '',
+            email: data.email || '',
+            displayLabel: data.displayLabel || '',
+            teamName: data.teamName || '(無)',
+            heroes: Array.isArray(data.heroes) ? data.heroes : [],
+            elements: Array.isArray(data.elements) ? data.elements : [],
+            rounds: data.rounds || 1,
+            totalDmg: data.totalDmg || 0,
+            avgDmgPerRound: data.avgDmgPerRound || Math.floor((data.totalDmg||0) / (data.rounds||1)),
+            result: data.result || '',
+            ts: data.ts || 0,
+          });
+        });
+        _renderList();
+      }catch(e){
+        console.error('[admin arena battles load]', e);
+        listEl.innerHTML = '<div style="color:#ff6666;padding:14px;text-align:center;">❌ 載入失敗:' + (e && e.message || '未知錯誤') + '</div>';
+      }
+    }
+
+    function _renderList(){
+      const sortVal   = sortSel ? sortSel.value : 'avg_desc';
+      const filterVal = (filterIn && filterIn.value || '').trim().toLowerCase();
+
+      let view = _battles.slice();
+      // 篩選
+      if(filterVal){
+        view = view.filter(b => {
+          const blob = (b.uid + ' ' + b.email + ' ' + b.displayLabel).toLowerCase();
+          return blob.indexOf(filterVal) !== -1;
+        });
+      }
+      // 排序
+      const cmpMap = {
+        avg_desc:    (a,b) => (b.avgDmgPerRound||0) - (a.avgDmgPerRound||0),
+        avg_asc:     (a,b) => (a.avgDmgPerRound||0) - (b.avgDmgPerRound||0),
+        total_desc:  (a,b) => (b.totalDmg||0)       - (a.totalDmg||0),
+        ts_desc:     (a,b) => (b.ts||0)             - (a.ts||0),
+        rounds_asc:  (a,b) => (a.rounds||0)         - (b.rounds||0),
+      };
+      view.sort(cmpMap[sortVal] || cmpMap.avg_desc);
+
+      countEl.textContent = '共 ' + _battles.length + ' 筆,顯示 ' + view.length + ' 筆';
+
+      if(view.length === 0){
+        listEl.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">(無資料 — 等玩家打鬥技場後會自動上傳)</div>';
+        return;
+      }
+
+      const ABNORMAL_THRESHOLD = 800;  // 平均單回合 > 800 視為異常(老師可調)
+
+      const rows = view.map(b => {
+        const isAbn = (b.avgDmgPerRound || 0) > ABNORMAL_THRESHOLD;
+        const resultIcon = b.result === 'win' ? '🏆 勝' : (b.result === 'lose' ? '☠ 敗' : (b.result === 'draw' ? '🤝 平' : '❓'));
+        const tsStr = b.ts ? new Date(b.ts).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '(無)';
+        const heroesStr = (b.heroes || []).join('、') || '(無)';
+        const playerStr = b.displayLabel || b.email || (b.uid && b.uid.slice(0,10)) || '(未知)';
+        return '<div data-docid="' + _escapeAttr(b._docId) + '" style="'
+          + 'background:' + (isAbn ? 'rgba(200,40,40,0.2)' : 'rgba(40,40,60,0.4)') + ';'
+          + 'border:1px solid ' + (isAbn ? '#cc6666' : 'rgba(255,180,80,0.2)') + ';'
+          + 'border-radius:5px;padding:7px 10px;margin-bottom:6px;'
+          + 'display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;">'
+          + '<span style="font-weight:800;color:' + (isAbn ? '#ff8888' : '#ffcc99') + ';min-width:70px;">'
+          + (isAbn ? '⚠ ' : '') + '平均 ' + (b.avgDmgPerRound || 0) + '</span>'
+          + '<span style="color:#bbb;min-width:90px;">總傷 ' + (b.totalDmg || 0) + ' / ' + (b.rounds || 0) + '回</span>'
+          + '<span style="color:#ddd;min-width:60px;">' + resultIcon + '</span>'
+          + '<span style="color:#fff;font-weight:700;min-width:120px;">' + _escapeHtml(playerStr) + '</span>'
+          + '<span style="color:#aaa;flex:1;min-width:140px;">「' + _escapeHtml(b.teamName) + '」 ' + _escapeHtml(heroesStr) + '</span>'
+          + '<span style="color:#888;font-size:11px;min-width:90px;">' + tsStr + '</span>'
+          + '<button class="_admin-arena-battles-del" data-docid="' + _escapeAttr(b._docId) + '" '
+          + 'style="padding:3px 8px;font-size:11px;background:rgba(200,60,60,0.3);'
+          + 'border:1px solid #cc6666;color:#ffaaaa;border-radius:4px;cursor:pointer;'
+          + 'font-family:inherit;">🗑️ 刪除</button>'
+          + '<button class="_admin-arena-battles-clear-user" data-uid="' + _escapeAttr(b.uid) + '" '
+          + 'data-label="' + _escapeAttr(playerStr) + '" '
+          + 'style="padding:3px 8px;font-size:11px;background:rgba(120,80,80,0.3);'
+          + 'border:1px solid #aa7777;color:#ddbbbb;border-radius:4px;cursor:pointer;'
+          + 'font-family:inherit;">🧹 清此玩家</button>'
+          + '</div>';
+      });
+
+      listEl.innerHTML = rows.join('');
+
+      // 綁定刪除單筆事件
+      listEl.querySelectorAll('._admin-arena-battles-del').forEach(btn => {
+        btn.onclick = () => _deleteOne(btn.dataset.docid);
+      });
+      listEl.querySelectorAll('._admin-arena-battles-clear-user').forEach(btn => {
+        btn.onclick = () => _clearByUid(btn.dataset.uid, btn.dataset.label);
+      });
+    }
+
+    async function _deleteOne(docId){
+      if(!docId) return;
+      const ok = window._customConfirm
+        ? await window._customConfirm('確定要刪除這筆鬥技場戰鬥記錄?', '⚠️ 確認刪除')
+        : confirm('確定要刪除這筆鬥技場戰鬥記錄?');
+      if(!ok) return;
+      try{
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.deleteDoc || !sdk.doc) throw new Error('Firestore SDK 未就緒');
+        await sdk.deleteDoc(sdk.doc(window._fbDb, 'arenaBattles', docId));
+        _battles = _battles.filter(b => b._docId !== docId);
+        _renderList();
+        resEl.style.color = '#66dd88';
+        resEl.textContent = '✅ 已刪除 1 筆記錄';
+        setTimeout(()=>{ resEl.textContent=''; }, 4000);
+      }catch(e){
+        console.error('[admin arena battles delete]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 刪除失敗:' + (e && e.message || '未知錯誤');
+      }
+    }
+
+    async function _clearByUid(uid, label){
+      if(!uid) return;
+      const ok = window._customConfirm
+        ? await window._customConfirm('確定要清除「' + (label||uid) + '」的所有鬥技場戰鬥記錄?',
+            '⚠️ 確認清除整位玩家的戰鬥記錄')
+        : confirm('確定要清除「' + (label||uid) + '」的所有戰鬥記錄?');
+      if(!ok) return;
+      try{
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.deleteDoc || !sdk.doc) throw new Error('Firestore SDK 未就緒');
+        const toDelete = _battles.filter(b => b.uid === uid);
+        let success = 0;
+        for(const b of toDelete){
+          try{
+            await sdk.deleteDoc(sdk.doc(window._fbDb, 'arenaBattles', b._docId));
+            success++;
+          }catch(_eD){ console.warn('[admin arena battles clear uid] 刪除失敗', b._docId, _eD); }
+        }
+        _battles = _battles.filter(b => b.uid !== uid);
+        _renderList();
+        resEl.style.color = '#66dd88';
+        resEl.textContent = '✅ 已清除「' + (label||uid) + '」的 ' + success + ' 筆記錄';
+      }catch(e){
+        console.error('[admin arena battles clear uid]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 清除失敗:' + (e && e.message || '未知錯誤');
+      }
+    }
+
+    async function _clearAll(){
+      const ok = window._customConfirm
+        ? await window._customConfirm('⚠️ 確定要清空目前載入的 ' + _battles.length + ' 筆鬥技場記錄?\n\n此動作不可復原!',
+            '⚠️ 危險:清空全部記錄')
+        : confirm('清空目前 ' + _battles.length + ' 筆?不可復原!');
+      if(!ok) return;
+      try{
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.deleteDoc || !sdk.doc) throw new Error('Firestore SDK 未就緒');
+        let success = 0;
+        for(const b of _battles){
+          try{
+            await sdk.deleteDoc(sdk.doc(window._fbDb, 'arenaBattles', b._docId));
+            success++;
+          }catch(_eD){ console.warn('[admin arena battles clear all] 刪除失敗', b._docId, _eD); }
+        }
+        _battles = [];
+        _renderList();
+        resEl.style.color = '#66dd88';
+        resEl.textContent = '✅ 已清空 ' + success + ' 筆記錄';
+      }catch(e){
+        console.error('[admin arena battles clear all]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 清空失敗:' + (e && e.message || '未知錯誤');
+      }
+    }
+
+    async function _clearOld(){
+      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const toDelete = _battles.filter(b => (b.ts || 0) < cutoff);
+      if(toDelete.length === 0){
+        resEl.style.color = '#aaa';
+        resEl.textContent = '(目前載入的記錄中,沒有 30 天前的舊資料)';
+        return;
+      }
+      const ok = window._customConfirm
+        ? await window._customConfirm('共找到 ' + toDelete.length + ' 筆 30 天前的舊記錄,確定要刪除嗎?',
+            '清除舊記錄')
+        : confirm('清除 ' + toDelete.length + ' 筆 30 天前舊記錄?');
+      if(!ok) return;
+      try{
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.deleteDoc || !sdk.doc) throw new Error('Firestore SDK 未就緒');
+        let success = 0;
+        for(const b of toDelete){
+          try{
+            await sdk.deleteDoc(sdk.doc(window._fbDb, 'arenaBattles', b._docId));
+            success++;
+          }catch(_eD){ console.warn('[admin arena battles clear old] 刪除失敗', b._docId, _eD); }
+        }
+        _battles = _battles.filter(b => (b.ts || 0) >= cutoff);
+        _renderList();
+        resEl.style.color = '#66dd88';
+        resEl.textContent = '✅ 已清除 ' + success + ' 筆舊記錄';
+      }catch(e){
+        console.error('[admin arena battles clear old]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 清除失敗:' + (e && e.message || '未知錯誤');
+      }
+    }
+
+    // HTML 轉義工具
+    function _escapeHtml(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function _escapeAttr(s){
+      return _escapeHtml(s);
+    }
+
+    loadBtn.onclick      = _loadBattles;
+    if(sortSel)   sortSel.onchange   = _renderList;
+    if(filterIn)  filterIn.oninput   = _renderList;
+    if(clearAllBtn) clearAllBtn.onclick = _clearAll;
+    if(clearOldBtn) clearOldBtn.onclick = _clearOld;
+  })();
+  // ── 鬥技場戰鬥記錄審核 結束 ──
+
   document.getElementById('_admin-set-players').onclick = async () => {
     const input = document.getElementById('_admin-players-input');
     const btn = document.getElementById('_admin-set-players');

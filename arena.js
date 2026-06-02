@@ -30,7 +30,7 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.15',
+    VERSION: 'v3.13.20',   // ★ v3.13.20(2026-06-02)— GM 後台:鬥技場入口開關 + 戰鬥記錄上傳審核
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
     QUIZ_TIME: 30,                 // 30 秒搶答(沿用既有冒險模式設定)
@@ -366,12 +366,27 @@
   // 工具:取得 Firestore SDK 函式(主程式已掛在 window)
   async function _getFirestoreSdk() {
     try {
-      // 主程式在 line 191 import 並掛 window
-      // 若沒掛就 lazy fetch
+      // ★ v3.13.20 — 優先用 index.html 統一掛載的 window._fbFns(主程式 module script 已暴露)
+      if (window._fbFns && window._fbFns.setDoc) {
+        return {
+          setDoc:     window._fbFns.setDoc,
+          doc:        window._fbFns.doc,
+          getDoc:     window._fbFns.getDoc,
+          getDocs:    window._fbFns.getDocs,
+          collection: window._fbFns.collection,
+          query:      window._fbFns.query,
+          orderBy:    window._fbFns.orderBy,
+          limit:      window._fbFns.limit,
+          deleteDoc:  window._fbFns.deleteDoc,
+          where:      window._fbFns.where,
+        };
+      }
+      // 舊路徑(向後相容,避免 v3.13.15 之前掛的個別 key)
       if (window._fbSetDoc && window._fbDoc && window._fbGetDocs && window._fbCollection) {
         return {
           setDoc: window._fbSetDoc,
           doc: window._fbDoc,
+          getDoc: window._fbGetDoc,
           getDocs: window._fbGetDocs,
           collection: window._fbCollection,
         };
@@ -381,8 +396,14 @@
       return {
         setDoc: mod.setDoc,
         doc: mod.doc,
+        getDoc: mod.getDoc,
         getDocs: mod.getDocs,
         collection: mod.collection,
+        query: mod.query,
+        orderBy: mod.orderBy,
+        limit: mod.limit,
+        deleteDoc: mod.deleteDoc,
+        where: mod.where,
       };
     } catch (e) { console.warn('[arena] _getFirestoreSdk 例外:', e); return {}; }
   }
@@ -628,6 +649,9 @@
     try {
       localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal));
     } catch (_) {}
+    // ★ v3.13.20(2026-06-02) — 結算同時上傳戰鬥記錄(供 GM 異常傷害審核)
+    //   fire-and-forget,失敗不影響玩家獎勵發放
+    try { window._arenaSubmitBattleLog && window._arenaSubmitBattleLog(result); } catch (_) {}
     return { zheng, total: s.zhengTotal, state: s };
   };
 
@@ -640,6 +664,142 @@
       return 0;
     }
   };
+
+  // ──────────────────────────────────────────────────────────────────
+  //  ★ v3.13.20(2026-06-02) — 戰鬥記錄上傳(供 GM 異常傷害審核)
+  //  ──────────────────────────────────────────────────────────────────
+  //  老師需求:玩家可能有異常 BUG 傷害,GM 要能查每個隊伍「平均單回合總傷害」
+  //  最小可行版:每場結束上傳 {uid, displayLabel, teamName, heroes[], rounds,
+  //              totalDmg, result, ts} 到 Firestore arenaBattles collection
+  //  不存戰鬥邏輯詳細(回合招式/隨機數/quiz),保持資料量最小
+  //  傷害累計由 index.html doDmg hook 寫到 window._arenaP1DmgDealt(進場時清零)
+  //  ──────────────────────────────────────────────────────────────────
+  window._arenaSubmitBattleLog = async function(result) {
+    try {
+      const user = _getCurrentUserInfo();
+      if (!user || !user.uid) {
+        console.warn('[arena] _arenaSubmitBattleLog: 未登入,跳過上傳');
+        return false;
+      }
+      if (!window._fbDb) {
+        console.warn('[arena] _arenaSubmitBattleLog: Firestore 未就緒,跳過');
+        return false;
+      }
+      const G = window.G;
+      if (!G || !Array.isArray(G.p1) || G.p1.length === 0) {
+        console.warn('[arena] _arenaSubmitBattleLog: G.p1 不存在或為空,跳過');
+        return false;
+      }
+      // 蒐集玩家隊伍資料
+      const heroes = G.p1.map(h => h && h.name).filter(Boolean).slice(0, 4);
+      const elements = G.p1.map(h => (h && h.element) || '').slice(0, 4);
+      const totalDmg = Math.max(0, Math.floor(window._arenaP1DmgDealt || 0));
+      const rounds = Math.max(1, Math.floor(G.round || 1));
+      const avgDmgPerRound = Math.floor(totalDmg / rounds);
+      // 取得隊名(若有預設陣容名稱),否則用 P1 自己的玩家標籤
+      let teamName = '';
+      try {
+        if (G._arenaP1TeamName) teamName = String(G._arenaP1TeamName).slice(0, 30);
+      } catch (_) {}
+      if (!teamName) teamName = '(無命名)';
+
+      const { setDoc, doc } = await _getFirestoreSdk();
+      if (!setDoc || !doc) {
+        console.warn('[arena] _arenaSubmitBattleLog: Firestore SDK 函式未就緒');
+        return false;
+      }
+      // 文件 ID:uid + 時間戳(避免覆蓋,每場一筆)
+      const ts = Date.now();
+      const docId = user.uid + '_' + ts;
+      const payload = {
+        uid: user.uid,
+        email: user.email || '',
+        displayLabel: user.displayLabel || '',
+        teamName: teamName,
+        heroes: heroes,
+        elements: elements,
+        rounds: rounds,
+        totalDmg: totalDmg,
+        avgDmgPerRound: avgDmgPerRound,
+        result: String(result || 'unknown'),  // 'win' | 'draw' | 'lose'
+        ts: ts,
+        v: 'v3.13.20',
+      };
+      await setDoc(doc(window._fbDb, 'arenaBattles', docId), payload);
+      console.log('[arena] 戰鬥記錄已上傳: ' + result + ' / 總傷 ' + totalDmg
+        + ' / 回合 ' + rounds + ' / 平均 ' + avgDmgPerRound);
+      return true;
+    } catch (e) {
+      console.warn('[arena] _arenaSubmitBattleLog 失敗(不影響獎勵發放):', e);
+      return false;
+    }
+  };
+
+  // ──────────────────────────────────────────────────────────────────
+  //  ★ v3.13.20(2026-06-02) — 鬥技場全站開關(GM 後台控制)
+  //  ──────────────────────────────────────────────────────────────────
+  //  雲端:gameConfig/arenaSwitch  { enabled: bool, updatedAt, updatedBy }
+  //  預設 enabled=true(查不到或斷網時不擋,避免 GM 後台壞掉誤關全站)
+  //  本機快取:window._arenaSwitchEnabled(boolean),啟動時拉一次
+  //  ──────────────────────────────────────────────────────────────────
+  window._arenaSwitchEnabled = true;  // 預設開啟
+
+  window._arenaCheckEnabled = async function() {
+    try {
+      if (!window._fbDb) return true;  // Firestore 沒就緒 → 預設開
+      const { getDoc, doc } = await _getFirestoreSdk();
+      if (!getDoc || !doc) return true;
+      const snap = await getDoc(doc(window._fbDb, 'gameConfig', 'arenaSwitch'));
+      if (snap && snap.exists()) {
+        const data = snap.data();
+        const enabled = (data && data.enabled !== false);  // 只有明確 false 才關
+        window._arenaSwitchEnabled = enabled;
+        try {
+          if (typeof _arenaApplySwitchUI === 'function') _arenaApplySwitchUI(enabled);
+        } catch (_) {}
+        console.log('[arena] 鬥技場開關狀態: ' + (enabled ? '開啟' : '關閉'));
+        return enabled;
+      }
+      // 雲端無此文件 → 預設開
+      window._arenaSwitchEnabled = true;
+      return true;
+    } catch (e) {
+      console.warn('[arena] _arenaCheckEnabled 例外(預設開啟):', e);
+      window._arenaSwitchEnabled = true;
+      return true;
+    }
+  };
+
+  // 套用開關狀態到首頁按鈕 UI(由 index.html 或 admin_panel 呼叫)
+  function _arenaApplySwitchUI(enabled) {
+    try {
+      const btn = document.getElementById('adv-arena-btn-main');
+      if (!btn) return;
+      if (enabled) {
+        btn.style.opacity = '';
+        btn.style.filter = '';
+        btn.style.pointerEvents = '';
+        btn.title = '';
+      } else {
+        btn.style.opacity = '0.45';
+        btn.style.filter = 'grayscale(80%)';
+        btn.style.pointerEvents = 'auto';  // 仍可按,但會被 _arenaStartFromMenu 擋下提示
+        btn.title = '鬥技場暫時關閉維修中';
+      }
+    } catch (_) {}
+  }
+  window._arenaApplySwitchUI = _arenaApplySwitchUI;
+
+  // 啟動時自動拉一次開關狀態(延遲 2 秒,等 Firebase 就緒)
+  try {
+    setTimeout(function() {
+      if (typeof window._arenaCheckEnabled === 'function') {
+        window._arenaCheckEnabled().catch(function(e) {
+          console.warn('[arena] 啟動拉開關狀態失敗,預設開啟', e);
+        });
+      }
+    }, 2000);
+  } catch (_) {}
 
   // ──────────────────────────────────────────────────────────────────
   //  ⏱️  10 回合上限判定(平局/勝負結算)
