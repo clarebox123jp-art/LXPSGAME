@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.24';
+window.ADMIN_PANEL_VERSION = 'v3.13.28';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -503,6 +503,10 @@ async function _showAdminStatsPanelImpl(){
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
           當龍王被 BUG / 異常傷害秒殺,可以在這裡恢復血量。<br>
           設定後寫入雲端 <code style="color:#aaccff;">stats/global.worldBossHp</code>,所有玩家 30 秒內自動同步看到新血量。<br>
+          <span style="color:#9fe0a0;font-size:12px;">
+            ✅ v3.13.28:還血(HP&gt;0)時會自動把「倒下時間戳 + 該輪 roundKey」一併清掉 →
+            被 BUG 打死的這一輪當沒發生過,獎勵<b>不會提前用髒排行榜結算</b>,改等龍王「下次真正倒下」後隔天 08:00 才結算。
+          </span><br>
           <span style="color:#aaa;font-size:12px;">
             💡 建議先到「⚔ 鬥技場戰鬥記錄審核」找出 BUG 傷害的場次並刪除,再回來這裡還血。<br>
             🔒 滿血 = 5,000,000(5 百萬);單次扣血上限 5,000;單場上限 100,000。
@@ -3136,7 +3140,8 @@ async function _showAdminStatsPanelImpl(){
         const _ok = await window._wbHpSync.resetHp(BOSS_ID, newHp);
         if(_ok){
           resEl.style.color = '#88ff88';
-          resEl.textContent = '✅ 已寫入雲端!HP = ' + _fmt(newHp) + '(所有玩家 30 秒內會看到新血量)';
+          resEl.textContent = '✅ 已寫入雲端!HP = ' + _fmt(newHp) + '(所有玩家 30 秒內看到新血量)'
+            + (newHp > 0 ? ' ・已重置結算計時:這一輪當沒發生,改等龍王「下次真正倒下」後隔天 8:00 才結算' : '');
           // 1 秒後重讀狀態(_cachedGlobalStats 約 1 秒會更新)
           setTimeout(_refreshStatus, 1500);
         } else {
