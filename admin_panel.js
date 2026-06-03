@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.28';
+window.ADMIN_PANEL_VERSION = 'v3.13.30';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -7779,6 +7779,262 @@ async function _showAdminStatsPanelImpl(){
       };
     }
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.13.30(2026-06-03) — 異常掃描快取(Firestore 共用,GM 跨裝置同步)
+    //   解決:掃描 300+ 位玩家吃 Firestore 額度,每次點都重掃浪費。
+    //   設計(老師裁示):
+    //     ① 掃描結果與處理狀態都存 gameConfig/anomaly_scan_cache(共用,跨 GM 同步)
+    //     ② 開面板自動載入上次的快取(顯示「上次掃描:N 分鐘前 by xxx」)
+    //     ③ 每筆卡片右上「✓ 已處理 / ↩ 取消」按鈕,標記後卡片變灰留在列表
+    //     ④ 頂部 toggle「只看未處理」可隱藏已處理
+    //   Firestore schema(gameConfig/anomaly_scan_cache):
+    //     { ts, scannedBy, scanned, abnormal[], totalPlayersMismatch,
+    //       actualPlayerCount, statsTotalPlayers,
+    //       handled: { [uid]: { at: ts, by: email } } }
+    //   merge:true 寫入時不會清掉 handled(該欄位由標記時 updateDoc 單欄更新)
+    // ════════════════════════════════════════════════════════════════
+    async function _loadAnomalyScanCache(){
+      try{
+        const { getDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const snap = await getDoc(doc(window._fbDb, 'gameConfig', 'anomaly_scan_cache'));
+        if(snap.exists()) return snap.data();
+      }catch(e){ console.warn('[anomaly cache load]', e); }
+      return null;
+    }
+    async function _saveAnomalyScanCache(r){
+      try{
+        const { setDoc, doc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const me = (window._fbUser && window._fbUser.email)
+                 || (window._fbUser && window._fbUser.uid && String(window._fbUser.uid).slice(0,10))
+                 || 'unknown';
+        await setDoc(doc(window._fbDb, 'gameConfig', 'anomaly_scan_cache'), {
+          ts:                   Date.now(),
+          scannedBy:            me,
+          scanned:              r.scanned || 0,
+          abnormal:             r.abnormal || [],
+          totalPlayersMismatch: !!r.totalPlayersMismatch,
+          actualPlayerCount:    r.actualPlayerCount || 0,
+          statsTotalPlayers:    (r.statsTotalPlayers === undefined) ? null : r.statsTotalPlayers,
+        }, { merge: true });  // merge → 不會清掉既有 handled
+        return true;
+      }catch(e){ console.warn('[anomaly cache save]', e); return false; }
+    }
+    async function _toggleAnomalyHandled(uid, isHandled){
+      try{
+        const { updateDoc, doc, deleteField } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const me = (window._fbUser && window._fbUser.email)
+                 || (window._fbUser && window._fbUser.uid && String(window._fbUser.uid).slice(0,10))
+                 || 'unknown';
+        const payload = {};
+        payload['handled.' + uid] = isHandled ? { at: Date.now(), by: me } : deleteField();
+        await updateDoc(doc(window._fbDb, 'gameConfig', 'anomaly_scan_cache'), payload);
+        return true;
+      }catch(e){ console.warn('[anomaly handled toggle]', e); return false; }
+    }
+
+    // ★ v3.13.30 — 共用渲染:掃描完成與自動載入快取都用這個函式
+    function _renderAnomalyCards(r, handled, opts){
+      opts = opts || {};
+      handled = handled || {};
+      const ab = r.abnormal || [];
+
+      if(_playerCard) _playerCard.style.display = 'none';
+      if(_tabsEl) _tabsEl.style.display = 'none';
+
+      // ── 頂部快取資訊條(僅 fromCache 顯示)──
+      let _cacheBlock = '';
+      if(opts.fromCache && opts.scannedAt){
+        const _agoMin = Math.round((Date.now() - opts.scannedAt) / 60000);
+        const _agoTxt = _agoMin < 1 ? '剛才' : (_agoMin < 60 ? (_agoMin + ' 分鐘前') : (Math.round(_agoMin/60) + ' 小時前'));
+        _cacheBlock =
+          '<div style="background:rgba(60,90,140,0.25);border-left:4px solid #6699cc;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#bbddff;">'
+          + '📂 上次掃描:' + _agoTxt + '(' + _fmtTime(opts.scannedAt) + ') by <b>' + _esc(opts.scannedBy || '?') + '</b>'
+          + '|按右上「⚡ 掃描異常」可重新掃描'
+          + '</div>';
+      }
+
+      // ── totalPlayers 對比提示(沿用 v3.11.35g)──
+      let _statsBlock = '';
+      if(r.totalPlayersMismatch){
+        _statsBlock = `
+          <div style="background:rgba(200,140,60,0.25);border:2px solid #ffaa44;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:800;color:#ffdd88;margin-bottom:6px;">
+              ⚠ 玩家數不一致 — 首頁顯示與 Firebase 實際不同
+            </div>
+            <div style="font-size:12px;color:#ffe;line-height:1.7;">
+              Firebase <b>/players</b> 集合實際:<b style="color:#ffdd66;">${r.actualPlayerCount}</b> 位<br>
+              首頁顯示(<b>stats/global.totalPlayers</b>):<b style="color:#ff8866;">${r.statsTotalPlayers}</b> 位<br>
+              <span style="color:#aac;font-size:11px;">→ 差距 ${Math.abs(r.actualPlayerCount - r.statsTotalPlayers)} 位</span>
+            </div>
+            <button id="_aa-sync-totalplayers" style="margin-top:8px;padding:7px 16px;font-size:12px;font-weight:700;
+              background:linear-gradient(135deg,#ff9933,#cc6611);border:none;color:#fff;border-radius:6px;cursor:pointer;
+              box-shadow:0 2px 6px rgba(255,120,40,0.4);">
+              🔄 同步首頁總玩家數為 ${r.actualPlayerCount}
+            </button>
+          </div>
+        `;
+      } else if(r.statsTotalPlayers !== null && r.statsTotalPlayers !== undefined){
+        _statsBlock = `
+          <div style="background:rgba(60,120,80,0.2);border-left:4px solid #66cc88;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#aaddbb;">
+            ✓ 玩家數同步正常(Firebase 實際 = 首頁顯示 = ${r.actualPlayerCount} 位)
+          </div>
+        `;
+      }
+
+      // ── 沒異常 → 綠色提示 ──
+      if(!ab.length){
+        _contentEl.innerHTML = _cacheBlock + _statsBlock
+          + `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現異常</div>`;
+        _setStatus(`✅ 掃描完成 — ${r.scanned} 位玩家正常`, '#88ddaa');
+        _bindSyncTotalPlayersBtn(r);
+        return;
+      }
+
+      // 處理筆數統計
+      const _unhandledCount = ab.filter(p => !handled[p.uid]).length;
+      const _handledCount = ab.length - _unhandledCount;
+
+      // ── 處理狀態 toggle ──
+      const _toggleBlock =
+        '<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(50,60,90,0.4);border-radius:6px;padding:8px 12px;margin-bottom:8px;flex-wrap:wrap;gap:6px;">'
+        +   '<div style="font-size:12px;color:#ccddff;">'
+        +     '📊 共 <b style="color:#ff8866;">' + ab.length + '</b> 位 — '
+        +     '未處理 <b style="color:#ffaa66;">' + _unhandledCount + '</b> / '
+        +     '已處理 <b style="color:#888;">' + _handledCount + '</b>'
+        +   '</div>'
+        +   '<label style="font-size:12px;color:#bbccdd;cursor:pointer;user-select:none;' + (_handledCount===0?'opacity:0.5;':'') + '">'
+        +     '<input type="checkbox" id="_aa-toggle-unhandled-only" ' + (_handledCount===0?'disabled':'')
+        +     ' style="vertical-align:middle;margin-right:4px;cursor:' + (_handledCount===0?'not-allowed':'pointer') + ';" />'
+        +     '只看未處理'
+        +   '</label>'
+        + '</div>';
+
+      // 時間格式化 helper(短)
+      const _fmtSec = (ms) => {
+        if(!ms || ms < 1000) return '<1s';
+        if(ms < 60000) return Math.round(ms/1000) + 's';
+        return Math.round(ms/60000) + 'm' + Math.round((ms%60000)/1000) + 's';
+      };
+
+      // ── cards ──
+      const cards = ab.map(p => {
+        const _isHandled = !!handled[p.uid];
+        const _hInfo = handled[p.uid] || {};
+        // 規則 1:battleId 衝突
+        const heroBidBlocks = (p.conflictsHero || []).map(c => `
+          <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 隻英雄:
+            <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
+          </div>`).join('');
+        const treBidBlocks = (p.conflictsTreasure || []).map(c => `
+          <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 個至寶:
+            <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
+          </div>`).join('');
+        // 規則 2:時間窗 cluster
+        const heroTimeBlocks = (p.timeClustersHero || []).map(c => `
+          <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
+            連刷 <b style="color:#ffaa66;">${c.count} 隻英雄</b>:
+            <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
+          </div>`).join('');
+        const treTimeBlocks = (p.timeClustersTreasure || []).map(c => `
+          <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
+            連刷 <b style="color:#ffaa66;">${c.count} 個至寶</b>:
+            <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
+          </div>`).join('');
+
+        const _cardStyle = _isHandled
+          ? 'background:rgba(40,40,50,0.35);border:1px solid rgba(120,120,140,0.35);border-radius:8px;padding:10px;margin-bottom:8px;opacity:0.5;'
+          : 'background:rgba(40,15,30,0.5);border:1px solid rgba(255,120,140,0.4);border-radius:8px;padding:10px;margin-bottom:8px;';
+        const _handledLabel = _isHandled
+          ? '<span style="color:#aabbcc;font-size:11px;margin-left:8px;background:rgba(80,100,120,0.4);padding:2px 6px;border-radius:3px;">✓ 已處理 by ' + _esc(_hInfo.by||'?') + ' (' + _fmtTime(_hInfo.at) + ')</span>'
+          : '';
+        const _handleBtn = _isHandled
+          ? '<button class="_aa-unmark" data-uid="' + _esc(p.uid) + '" style="padding:5px 10px;font-size:11px;background:#666;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:4px;">↩ 取消已處理</button>'
+          : '<button class="_aa-mark" data-uid="' + _esc(p.uid) + '" style="padding:5px 10px;font-size:11px;background:#44aa66;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-right:4px;">✓ 已處理</button>';
+
+        return '<div class="_aa-card" data-uid="' + _esc(p.uid) + '" data-handled="' + (_isHandled?'1':'0') + '" style="' + _cardStyle + '">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">'
+          +   '<div style="flex:1;min-width:0;">'
+          +     '<b style="color:#ffe;">' + _esc(p.name || '(無名稱)') + '</b>'
+          +     '<span style="color:#aac;margin-left:8px;font-size:11px;">' + _esc(p.email || p.uid) + '</span>'
+          +     '<span style="color:#ff8866;margin-left:8px;font-size:11px;">共 ' + p.totalConflicts + ' 筆異常</span>'
+          +     _handledLabel
+          +   '</div>'
+          +   '<div style="flex-shrink:0;">'
+          +     _handleBtn
+          +     '<button class="_aa-jump" data-uid="' + _esc(p.uid) + '" style="padding:5px 12px;font-size:11px;background:#3366bb;color:#fff;border:none;border-radius:4px;cursor:pointer;">→ 查看詳情</button>'
+          +   '</div>'
+          + '</div>'
+          + heroTimeBlocks + treTimeBlocks + heroBidBlocks + treBidBlocks
+          + '</div>';
+      }).join('');
+
+      _contentEl.innerHTML = _cacheBlock + _statsBlock + _toggleBlock
+        + `<div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— 規則 ⏱ 紅框 = 3 分鐘內連刷;battleId 標籤 = 同場戰鬥多解鎖</div>`
+        + cards;
+
+      // ── 事件綁定 ──
+      _contentEl.querySelectorAll('._aa-jump').forEach(btn => {
+        btn.onclick = async function(){
+          _queryInput.value = btn.dataset.uid;
+          await _doQuery();
+        };
+      });
+      _contentEl.querySelectorAll('._aa-mark').forEach(btn => {
+        btn.onclick = async function(){
+          const _uid = btn.dataset.uid;
+          btn.disabled = true;
+          const _orig = btn.textContent;
+          btn.textContent = '⏳';
+          const ok = await _toggleAnomalyHandled(_uid, true);
+          if(ok){
+            const me = (window._fbUser && window._fbUser.email)
+                     || (window._fbUser && window._fbUser.uid && String(window._fbUser.uid).slice(0,10))
+                     || 'unknown';
+            handled[_uid] = { at: Date.now(), by: me };
+            _renderAnomalyCards(r, handled, opts);   // 重渲染套用已處理樣式
+          }else{
+            btn.disabled = false;
+            btn.textContent = _orig;
+            alert('標記失敗,請重試(可能網路問題或權限不足)');
+          }
+        };
+      });
+      _contentEl.querySelectorAll('._aa-unmark').forEach(btn => {
+        btn.onclick = async function(){
+          const _uid = btn.dataset.uid;
+          btn.disabled = true;
+          const _orig = btn.textContent;
+          btn.textContent = '⏳';
+          const ok = await _toggleAnomalyHandled(_uid, false);
+          if(ok){
+            delete handled[_uid];
+            _renderAnomalyCards(r, handled, opts);
+          }else{
+            btn.disabled = false;
+            btn.textContent = _orig;
+            alert('取消失敗,請重試');
+          }
+        };
+      });
+      // toggle「只看未處理」
+      const _toggleEl = document.getElementById('_aa-toggle-unhandled-only');
+      if(_toggleEl){
+        _toggleEl.onclick = function(){
+          const _hide = _toggleEl.checked;
+          _contentEl.querySelectorAll('._aa-card').forEach(card => {
+            card.style.display = (_hide && card.dataset.handled === '1') ? 'none' : '';
+          });
+        };
+      }
+
+      _bindSyncTotalPlayersBtn(r);
+      _setStatus(`⚠ 找到 ${ab.length} 位異常玩家(${_unhandledCount} 位待處理)`, _unhandledCount === 0 ? '#88ddaa' : '#ffaa66');
+    }
+
     // ── 全掃異常(battleId + 時間窗雙規則) ──
     async function _doScanAnomaly(){
       if(!confirm('掃描全部玩家的異常?\n\n規則:\n  ① 同 battleId 多解鎖(精確)\n  ② 3 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)\n\n300 位玩家約 15-30 秒,請耐心等候。')) return;
@@ -7790,99 +8046,11 @@ async function _showAdminStatsPanelImpl(){
         }
         // ★ v3.11.35g — 不傳 limit = 掃全部
         const r = await window._fbAdminScanBattleAnomaly({});
-        const ab = r.abnormal || [];
-        if(_playerCard) _playerCard.style.display = 'none';
-        if(_tabsEl) _tabsEl.style.display = 'none';
-
-        // ★ v3.11.35g — totalPlayers 對比提示
-        let _statsBlock = '';
-        if(r.totalPlayersMismatch){
-          _statsBlock = `
-            <div style="background:rgba(200,140,60,0.25);border:2px solid #ffaa44;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
-              <div style="font-size:13px;font-weight:800;color:#ffdd88;margin-bottom:6px;">
-                ⚠ 玩家數不一致 — 首頁顯示與 Firebase 實際不同
-              </div>
-              <div style="font-size:12px;color:#ffe;line-height:1.7;">
-                Firebase <b>/players</b> 集合實際:<b style="color:#ffdd66;">${r.actualPlayerCount}</b> 位<br>
-                首頁顯示(<b>stats/global.totalPlayers</b>):<b style="color:#ff8866;">${r.statsTotalPlayers}</b> 位<br>
-                <span style="color:#aac;font-size:11px;">→ 差距 ${Math.abs(r.actualPlayerCount - r.statsTotalPlayers)} 位</span>
-              </div>
-              <button id="_aa-sync-totalplayers" style="margin-top:8px;padding:7px 16px;font-size:12px;font-weight:700;
-                background:linear-gradient(135deg,#ff9933,#cc6611);border:none;color:#fff;border-radius:6px;cursor:pointer;
-                box-shadow:0 2px 6px rgba(255,120,40,0.4);">
-                🔄 同步首頁總玩家數為 ${r.actualPlayerCount}
-              </button>
-            </div>
-          `;
-        } else if(r.statsTotalPlayers !== null){
-          _statsBlock = `
-            <div style="background:rgba(60,120,80,0.2);border-left:4px solid #66cc88;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#aaddbb;">
-              ✓ 玩家數同步正常(Firebase 實際 = 首頁顯示 = ${r.actualPlayerCount} 位)
-            </div>
-          `;
-        }
-
-        if(!ab.length){
-          _contentEl.innerHTML = _statsBlock
-            + `<div style="text-align:center;color:#88ddaa;padding:30px;font-size:14px;">✅ 已掃描 ${r.scanned} 位玩家,沒有發現異常</div>`;
-          _setStatus(`✅ 掃描完成 — ${r.scanned} 位玩家正常`, '#88ddaa');
-          _bindSyncTotalPlayersBtn(r);
-          return;
-        }
-        // 時間格式化 helper(短)
-        const _fmtSec = (ms) => {
-          if(!ms || ms < 1000) return '<1s';
-          if(ms < 60000) return Math.round(ms/1000) + 's';
-          return Math.round(ms/60000) + 'm' + Math.round((ms%60000)/1000) + 's';
-        };
-        const cards = ab.map(p => {
-          // 規則 1:battleId 衝突
-          const heroBidBlocks = (p.conflictsHero || []).map(c => `
-            <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
-              <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 隻英雄:
-              <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
-            </div>`).join('');
-          const treBidBlocks = (p.conflictsTreasure || []).map(c => `
-            <div style="background:rgba(200,40,40,0.18);border-left:3px solid #ff6644;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
-              <b style="color:#ffaaaa;">battleId ${_shortBid(c.battleId)}</b> 同場 ${c.entries.length} 個至寶:
-              <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
-            </div>`).join('');
-          // 規則 2:時間窗 cluster
-          const heroTimeBlocks = (p.timeClustersHero || []).map(c => `
-            <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
-              <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
-              連刷 <b style="color:#ffaa66;">${c.count} 隻英雄</b>:
-              <span style="color:#ffe;">${c.entries.map(e => _esc(e.name)).join('、')}</span>
-            </div>`).join('');
-          const treTimeBlocks = (p.timeClustersTreasure || []).map(c => `
-            <div style="background:rgba(220,60,30,0.28);border-left:4px solid #ff4422;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
-              <b style="color:#ffcccc;">⏱ ${_fmtTime(c.startAt)} 起 ${_fmtSec(c.durationMs)} 內</b>
-              連刷 <b style="color:#ffaa66;">${c.count} 個至寶</b>:
-              <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
-            </div>`).join('');
-          return `<div style="background:rgba(40,15,30,0.5);border:1px solid rgba(255,120,140,0.4);border-radius:8px;padding:10px;margin-bottom:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <div>
-                <b style="color:#ffe;">${_esc(p.name || '(無名稱)')}</b>
-                <span style="color:#aac;margin-left:8px;font-size:11px;">${_esc(p.email || p.uid)}</span>
-                <span style="color:#ff8866;margin-left:8px;font-size:11px;">共 ${p.totalConflicts} 筆異常</span>
-              </div>
-              <button class="_aa-jump" data-uid="${_esc(p.uid)}" style="padding:5px 12px;font-size:11px;background:#3366bb;color:#fff;border:none;border-radius:4px;cursor:pointer;">→ 查看詳情</button>
-            </div>
-            ${heroTimeBlocks}${treTimeBlocks}${heroBidBlocks}${treBidBlocks}
-          </div>`;
-        }).join('');
-        _contentEl.innerHTML = _statsBlock
-          + `<div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— 規則 ⏱ 紅框 = 3 分鐘內連刷;battleId 標籤 = 同場戰鬥多解鎖</div>`
-          + cards;
-        _contentEl.querySelectorAll('._aa-jump').forEach(btn => {
-          btn.onclick = async function(){
-            _queryInput.value = btn.dataset.uid;
-            await _doQuery();
-          };
-        });
-        _bindSyncTotalPlayersBtn(r);
-        _setStatus(`⚠ 找到 ${ab.length} 位異常玩家`, '#ffaa66');
+        // ★ v3.13.30 — 掃完寫快取(merge:true 保留 handled),併讀回既有 handled 一起渲染
+        try{ await _saveAnomalyScanCache(r); }catch(_eSv){ console.warn('[anomaly cache save fail, continue rendering]', _eSv); }
+        let _handled = {};
+        try{ const _c = await _loadAnomalyScanCache(); _handled = (_c && _c.handled) || {}; }catch(_eL){}
+        _renderAnomalyCards(r, _handled, { fromCache: false });
       }catch(e){
         _setStatus('❌ 掃描失敗: ' + (e.message || e), '#ff8866');
       }finally{
@@ -7918,6 +8086,25 @@ async function _showAdminStatsPanelImpl(){
     _searchBtn.onclick = _doQuery;
     _queryInput.onkeydown = (ev) => { if(ev.key === 'Enter') _doQuery(); };
     if(_scanBtn) _scanBtn.onclick = _doScanAnomaly;
+
+    // ★ v3.13.30(2026-06-03) — 自動載入上次的異常掃描快取
+    //   GM 開面板就看到上次結果與處理狀態,無需重掃 Firestore(節省額度)
+    //   注意:這只在 admin_panel.js init 時跑一次(每次 GM 開面板都會 init)
+    (async function _autoLoadAnomalyCache(){
+      try{
+        const cache = await _loadAnomalyScanCache();
+        if(cache && cache.ts && Array.isArray(cache.abnormal)){
+          _renderAnomalyCards({
+            abnormal:             cache.abnormal,
+            scanned:              cache.scanned || 0,
+            totalPlayersMismatch: !!cache.totalPlayersMismatch,
+            actualPlayerCount:    cache.actualPlayerCount || 0,
+            statsTotalPlayers:    cache.statsTotalPlayers,
+          }, cache.handled || {}, { fromCache: true, scannedAt: cache.ts, scannedBy: cache.scannedBy });
+        }
+      }catch(e){ console.warn('[anomaly cache auto-load]', e); }
+    })();
+
     if(_tabsEl){
       _tabsEl.querySelectorAll('._aa-tab').forEach(b => {
         b.onclick = () => _switchTab(b.dataset.tab);
