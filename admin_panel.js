@@ -463,6 +463,104 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-arena-switch-result" style="margin-top:10px;font-size:13px;color:#ff99cc;text-align:center;"></div>
       </div>
 
+      <!-- ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查(老師指示) -->
+      <!--   啟動遊戲時自動 fetch GitHub raw 比對 4 個檔案版本(boot 8 秒後跑) -->
+      <!--   這個 section 提供 GM 手動重跑入口,以及顯示最近一次檢查結果 -->
+      <div id="_admin-github-check-section" style="background:rgba(20,40,50,0.5);border:2px solid rgba(100,200,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#88ccff;margin-bottom:8px;">🌐 GitHub 線上版本檢查</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          檢查玩家瀏覽器吃到的檔案版本 vs 老師最新上傳到 GitHub 的版本是否一致。<br>
+          啟動遊戲時會自動跑一次(boot 8 秒後),5 分鐘內不重複跑(防 GitHub rate limit)。<br>
+          <span style="color:#aaa;font-size:12px;">
+            檢查 4 個檔案:index.html / admin_panel.js / arena.js / game_changelog.js<br>
+            版本不對齊時,GM 才會看到右下角紅色 toast(學生看不到任何 UI 干擾)
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-github-check-now" style="padding:9px 18px;font-size:13px;font-weight:800;
+            background:linear-gradient(135deg,#225577,#114466);border:2px solid #88ccff;color:#fff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔄 立即重新檢查(繞過 5 分鐘冷卻)
+          </button>
+          <button id="_admin-github-check-show" style="padding:9px 14px;font-size:13px;font-weight:700;
+            background:rgba(100,180,220,0.2);border:1.5px solid rgba(150,200,255,0.5);color:#aaccff;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            👁 顯示上次檢查結果
+          </button>
+        </div>
+        <div id="_admin-github-check-result" style="margin-top:6px;padding:10px;background:rgba(0,0,0,0.35);
+          border:1px solid rgba(100,200,255,0.3);border-radius:6px;font-size:12px;color:#aaccff;
+          line-height:1.7;white-space:pre-wrap;font-family:'M PLUS Rounded 1c',sans-serif;min-height:30px;">
+          <span style="color:#888;">尚未執行;按上面按鈕重新檢查,或等待遊戲啟動 8 秒後自動執行。</span>
+        </div>
+      </div>
+
+      <!-- ★ v3.13.27(2026-06-03) — 龍王 HP 救援(老師指示) -->
+      <!--   用途:被 BUG 秒殺的龍王,GM 可以恢復他被秒殺前的血量 -->
+      <!--   寫入 stats/global.worldBossHp,所有玩家 30 秒內自動同步 -->
+      <div id="_admin-wb-rescue-section" style="background:rgba(55,25,15,0.55);border:2px solid rgba(255,140,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ffaa66;margin-bottom:8px;">🐉 龍王 HP 救援(被 BUG 秒殺後恢復血量)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          當龍王被 BUG / 異常傷害秒殺,可以在這裡恢復血量。<br>
+          設定後寫入雲端 <code style="color:#aaccff;">stats/global.worldBossHp</code>,所有玩家 30 秒內自動同步看到新血量。<br>
+          <span style="color:#aaa;font-size:12px;">
+            💡 建議先到「⚔ 鬥技場戰鬥記錄審核」找出 BUG 傷害的場次並刪除,再回來這裡還血。<br>
+            🔒 滿血 = 5,000,000(5 百萬);單次扣血上限 5,000;單場上限 100,000。
+          </span>
+        </div>
+        <div id="_admin-wb-rescue-status" style="padding:10px 14px;background:rgba(0,0,0,0.4);border-radius:8px;
+          margin-bottom:12px;font-size:13px;color:#ffe0a0;font-weight:700;">
+          📡 載入中…
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px;">
+          <label style="font-size:13px;color:#ccc;font-weight:700;">目標 HP:</label>
+          <input id="_admin-wb-rescue-input" type="number" placeholder="例:5000000(滿血)" min="0" max="5000000"
+            style="padding:8px 12px;font-size:14px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(255,180,80,0.5);color:#fff;border-radius:6px;font-family:inherit;
+            width:200px;">
+          <button id="_admin-wb-rescue-write" style="padding:9px 20px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,#cc4422,#882211);border:2px solid #ff6644;color:#fff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            💉 寫入指定 HP
+          </button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+          <span style="font-size:12px;color:#aaa;font-weight:700;">快捷:</span>
+          <button class="_admin-wb-rescue-preset" data-hp="5000000" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(255,200,80,0.2);border:1.5px solid #ffcc66;color:#ffd88a;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            ❤️ 滿血(5,000,000)
+          </button>
+          <button class="_admin-wb-rescue-preset" data-hp="3750000" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(180,220,100,0.18);border:1.5px solid #aacc66;color:#cce0a0;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🟢 75%(3,750,000)
+          </button>
+          <button class="_admin-wb-rescue-preset" data-hp="2500000" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(180,180,80,0.18);border:1.5px solid #cccc66;color:#dddd88;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🟡 50%(2,500,000)
+          </button>
+          <button class="_admin-wb-rescue-preset" data-hp="1250000" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(255,140,80,0.18);border:1.5px solid #ff9966;color:#ffbb88;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🟠 25%(1,250,000)
+          </button>
+          <button class="_admin-wb-rescue-preset" data-hp="500000" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(255,80,80,0.18);border:1.5px solid #ff6666;color:#ff9999;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🔴 10%(500,000)
+          </button>
+          <button id="_admin-wb-rescue-refresh" style="padding:7px 14px;font-size:12px;font-weight:700;
+            background:rgba(100,180,220,0.18);border:1.5px solid #66aaff;color:#aaccff;
+            border-radius:5px;cursor:pointer;font-family:inherit;">
+            🔄 重讀當前 HP
+          </button>
+        </div>
+        <div id="_admin-wb-rescue-result" style="margin-top:10px;padding:8px 12px;font-size:13px;text-align:center;
+          background:rgba(0,0,0,0.3);border-radius:6px;color:#ffcc88;min-height:18px;"></div>
+      </div>
+
       <!-- ★ v3.13.20(2026-06-02) — 鬥技場戰鬥記錄審核(GM 異常傷害偵測) -->
       <!--   讀 Firestore arenaBattles collection 最近 N 筆,排序顯示「平均單回合傷害」 -->
       <!--   功能:排序、篩玩家、刪除單筆異常記錄、清空所有/指定玩家 -->
@@ -1656,6 +1754,10 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-arena-preset-section',     label: '⚔️ 鬥技場預設陣容',       hint: '管理系統 5 套保底敵手(玩家池空時用)' },
       // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 + 戰鬥記錄審核
       { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
+      // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查
+      { sec: '_admin-github-check-section',     label: '🌐 GitHub 版本檢查',      hint: '啟動時自動比對 4 個檔案;手動重跑入口' },
+      // ★ v3.13.27(2026-06-03) — 龍王 HP 救援
+      { sec: '_admin-wb-rescue-section',        label: '🐉 龍王 HP 救援',         hint: '被 BUG 秒殺後可恢復龍王血量' },
       { sec: '_admin-arena-battles-section',    label: '⚔ 鬥技場戰鬥記錄審核',   hint: '依平均單回合傷害排序,偵測異常 BUG 傷害' },
       { sec: '_admin-reset-section',            label: '⚠️ 帳號完全重置+重建',     hint: '危險!不可逆,最後手段' },
     ];
@@ -2884,6 +2986,219 @@ async function _showAdminStatsPanelImpl(){
     setTimeout(_loadSwitch, 100);
   })();
   // ── 鬥技場入口開關 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查 init
+  //   按鈕 1:立即重新檢查(繞過 5 分鐘冷卻)
+  //   按鈕 2:顯示上次檢查結果(從 window._lxpsGitHubVersionStatus 讀)
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initGithubCheckSection(){
+    const resEl = document.getElementById('_admin-github-check-result');
+    if(!resEl) return;
+
+    function _renderResult(result){
+      if(!result){
+        resEl.innerHTML = '<span style="color:#888;">尚未執行任何檢查。</span>';
+        return;
+      }
+      const _ok = result.ok;
+      const _ts = new Date(result.timestamp || Date.now()).toLocaleString();
+      let _html = '<div style="margin-bottom:8px;color:' + (_ok ? '#88ff88' : '#ff8866') + ';font-weight:800;font-size:13px;">'
+                + (_ok ? '✅ 4 個檔案全部對齊' : '⚠️ 發現 ' + result.issues.length + ' 個版本不同步')
+                + '<span style="color:#888;font-weight:400;font-size:11px;margin-left:8px;">(' + _ts + ')</span>'
+                + '</div>';
+      (result.checks || []).forEach(c => {
+        if(c.error){
+          _html += '<div style="color:#ffaa88;margin-top:4px;">❌ ' + c.file + ': ' + c.error + '</div>';
+        } else {
+          const _mark = c.aligned ? '✅' : '⚠️';
+          const _col = c.aligned ? '#aaffaa' : '#ffaa88';
+          _html += '<div style="color:' + _col + ';margin-top:4px;">'
+                + _mark + ' <b>' + c.file + '</b>'
+                + (c.aligned
+                    ? ' &nbsp;對齊:' + (c.local || '')
+                    : '<br>　　GitHub: <b style="color:#fff;">' + (c.github || '') + '</b>'
+                      + '<br>　　本機:  <b style="color:#fff;">' + (c.local || '') + '</b>')
+                + '</div>';
+        }
+      });
+      if(!_ok){
+        _html += '<div style="margin-top:10px;padding:6px 10px;background:rgba(255,150,80,0.15);'
+              + 'border-left:3px solid #ffaa66;color:#ffd0a0;font-size:11px;line-height:1.5;">'
+              + '💡 建議:玩家請按 <b>Ctrl + F5</b>(強制重新整理破快取);<br>'
+              + '若 GitHub 顯示「(抓不到)」可能是檔案還沒推上去或路徑改了'
+              + '</div>';
+      }
+      resEl.innerHTML = _html;
+    }
+
+    // 按鈕 1:立即重新檢查
+    const _nowBtn = document.getElementById('_admin-github-check-now');
+    if(_nowBtn){
+      _nowBtn.onclick = async () => {
+        _nowBtn.disabled = true;
+        _nowBtn.textContent = '⏳ 檢查中…';
+        resEl.innerHTML = '<span style="color:#88ccff;">📡 正在 fetch 4 個檔案,請稍候…</span>';
+        try{
+          if(typeof window._lxpsCheckGithubVersions !== 'function'){
+            throw new Error('_lxpsCheckGithubVersions 未就緒(請重新整理頁面)');
+          }
+          const _r = await window._lxpsCheckGithubVersions({ force: true, showOkToast: true });
+          _renderResult(_r);
+        }catch(e){
+          resEl.innerHTML = '<span style="color:#ff8866;">❌ 檢查失敗:' + (e.message || e) + '</span>';
+        }finally{
+          _nowBtn.disabled = false;
+          _nowBtn.textContent = '🔄 立即重新檢查(繞過 5 分鐘冷卻)';
+        }
+      };
+    }
+
+    // 按鈕 2:顯示上次檢查結果
+    const _showBtn = document.getElementById('_admin-github-check-show');
+    if(_showBtn){
+      _showBtn.onclick = () => {
+        const _last = window._lxpsGitHubVersionStatus;
+        if(!_last){
+          resEl.innerHTML = '<span style="color:#aaa;">📭 還沒有任何檢查結果(請等 boot 8 秒後自動跑、或按「🔄 立即重新檢查」)</span>';
+        } else {
+          _renderResult(_last);
+        }
+      };
+    }
+
+    // 初始就顯示一次(若已有結果)
+    if(window._lxpsGitHubVersionStatus){
+      _renderResult(window._lxpsGitHubVersionStatus);
+    }
+  })();
+  // ── GitHub 版本檢查 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.13.27(2026-06-03) — 龍王 HP 救援 init
+  //   被 BUG 秒殺後恢復血量。走 _wbHpSync.resetHp(BOSS_ID, newHp) 寫雲端,
+  //   subscribeWbHp 會自動推送給所有玩家。
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initWbRescueSection(){
+    const BOSS_ID  = 'vesuvius_fire_dragon';
+    const MAX_HP   = 5000000;
+    const statusEl = document.getElementById('_admin-wb-rescue-status');
+    const inputEl  = document.getElementById('_admin-wb-rescue-input');
+    const writeBtn = document.getElementById('_admin-wb-rescue-write');
+    const resEl    = document.getElementById('_admin-wb-rescue-result');
+    const refreshBtn = document.getElementById('_admin-wb-rescue-refresh');
+    if(!statusEl) return;  // section 不存在(可能尚未注入),跳過
+
+    function _fmt(n){ return (typeof n === 'number') ? n.toLocaleString() : String(n); }
+
+    // 讀取當前 HP 並更新狀態顯示
+    function _refreshStatus(){
+      try{
+        if(!window._wbHpSync || typeof window._wbHpSync.getCurrentHp !== 'function'){
+          statusEl.innerHTML = '<span style="color:#ff8866;">⚠ _wbHpSync 模組未就緒(請等遊戲完全載入)</span>';
+          return;
+        }
+        const _cur = window._wbHpSync.getCurrentHp(BOSS_ID);
+        if(_cur == null){
+          statusEl.innerHTML = '<span style="color:#aaa;">📡 雲端尚未有此 BOSS 的 HP 紀錄(視為滿血 ' + _fmt(MAX_HP) + ')</span>';
+          return;
+        }
+        const _pct = Math.round((_cur / MAX_HP) * 100);
+        const _color = _cur === 0 ? '#ff6666' : (_cur < MAX_HP * 0.3 ? '#ffaa66' : (_cur < MAX_HP * 0.7 ? '#ffcc66' : '#aaffaa'));
+        const _label = _cur === 0 ? '💀 已倒下' : (_cur >= MAX_HP ? '❤️ 滿血' : `❤️ 剩 ${_pct}%`);
+        statusEl.innerHTML =
+          '<span style="color:' + _color + ';">' + _label + '</span>'
+          + ' &nbsp;<span style="color:#ddd;">當前 HP: <b style="font-size:15px;">' + _fmt(_cur) + '</b> / ' + _fmt(MAX_HP) + '</span>';
+        // 把當前值填入 input 方便修改
+        try{ inputEl.value = _cur; }catch(_){}
+      }catch(e){
+        statusEl.innerHTML = '<span style="color:#ff8866;">❌ 讀取失敗:' + (e.message || e) + '</span>';
+      }
+    }
+
+    // 寫入 HP
+    async function _writeHp(newHp){
+      try{
+        if(typeof newHp !== 'number' || isNaN(newHp) || newHp < 0 || newHp > MAX_HP){
+          throw new Error('HP 必須在 0 ~ ' + _fmt(MAX_HP) + ' 之間');
+        }
+        if(!window._wbHpSync || typeof window._wbHpSync.resetHp !== 'function'){
+          throw new Error('_wbHpSync.resetHp 模組未就緒');
+        }
+        // GM 守門
+        if(typeof window._isAdminUser !== 'function' || !window._isAdminUser()){
+          throw new Error('權限不足:需要 GM 身份');
+        }
+        writeBtn.disabled = true;
+        writeBtn.textContent = '⏳ 寫入中…';
+        resEl.style.color = '#ffcc88';
+        resEl.textContent = '📡 正在寫入雲端…';
+        const _ok = await window._wbHpSync.resetHp(BOSS_ID, newHp);
+        if(_ok){
+          resEl.style.color = '#88ff88';
+          resEl.textContent = '✅ 已寫入雲端!HP = ' + _fmt(newHp) + '(所有玩家 30 秒內會看到新血量)';
+          // 1 秒後重讀狀態(_cachedGlobalStats 約 1 秒會更新)
+          setTimeout(_refreshStatus, 1500);
+        } else {
+          throw new Error('resetHp 回傳 false(請看 console 詳細錯誤)');
+        }
+      }catch(e){
+        console.error('[WB 救援]', e);
+        resEl.style.color = '#ff8866';
+        resEl.textContent = '❌ ' + (e.message || e);
+      }finally{
+        writeBtn.disabled = false;
+        writeBtn.textContent = '💉 寫入指定 HP';
+      }
+    }
+
+    // 寫入按鈕
+    if(writeBtn){
+      writeBtn.onclick = async () => {
+        const _hp = parseInt(inputEl.value, 10);
+        if(isNaN(_hp)){ resEl.style.color = '#ff8866'; resEl.textContent = '❌ 請輸入有效的數字'; return; }
+        // 二次確認
+        const _cur = (window._wbHpSync && window._wbHpSync.getCurrentHp) ? window._wbHpSync.getCurrentHp(BOSS_ID) : null;
+        const _curStr = (_cur == null) ? '(雲端無紀錄,視為滿血)' : _fmt(_cur);
+        const _msg = '⚠ 確定要把龍王 HP 寫成 ' + _fmt(_hp) + ' 嗎?\n\n'
+                   + '當前 HP:' + _curStr + '\n'
+                   + '新 HP:  ' + _fmt(_hp) + '\n\n'
+                   + '此操作會立即同步給所有玩家。';
+        if(!confirm(_msg)) return;
+        await _writeHp(_hp);
+      };
+    }
+
+    // 快捷按鈕
+    document.querySelectorAll('._admin-wb-rescue-preset').forEach(btn => {
+      btn.onclick = async () => {
+        const _hp = parseInt(btn.getAttribute('data-hp'), 10);
+        if(isNaN(_hp)) return;
+        inputEl.value = _hp;
+        const _cur = (window._wbHpSync && window._wbHpSync.getCurrentHp) ? window._wbHpSync.getCurrentHp(BOSS_ID) : null;
+        const _curStr = (_cur == null) ? '(雲端無紀錄)' : _fmt(_cur);
+        const _msg = '⚠ 確定要把龍王 HP 寫成 ' + _fmt(_hp) + ' 嗎?\n\n'
+                   + '當前 HP:' + _curStr + '\n'
+                   + '新 HP:  ' + _fmt(_hp);
+        if(!confirm(_msg)) return;
+        await _writeHp(_hp);
+      };
+    });
+
+    // 重讀按鈕
+    if(refreshBtn){
+      refreshBtn.onclick = () => {
+        resEl.style.color = '#aaccff';
+        resEl.textContent = '🔄 重讀中…';
+        _refreshStatus();
+        setTimeout(() => { resEl.textContent = ''; }, 1500);
+      };
+    }
+
+    // 初始載入(延遲 500ms 等 _wbHpSync 就緒)
+    setTimeout(_refreshStatus, 500);
+  })();
+  // ── 龍王 HP 救援 結束 ──
 
   // ════════════════════════════════════════════════════════════════════════════
   // ★ v3.13.20(2026-06-02) — 鬥技場戰鬥記錄審核 init
