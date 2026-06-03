@@ -30,8 +30,8 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.32',   // ★ v3.13.32(2026-06-03)— 玩家側鬥技場入場券使用流程 + 兌換商店 placeholder
-                           //   前版 v3.13.31 — GM 戰鬥記錄審核 API:刪除 + 補償
+    VERSION: 'v3.13.34',   // ★ v3.13.34(2026-06-04)— 鬥技場物品禁用清單(強效HP藥水 / 新鮮的綠竹筍)
+                           //   前版 v3.13.32 — 玩家側鬥技場入場券使用流程 + 兌換商店 placeholder
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
     QUIZ_TIME: 30,                 // 30 秒搶答(沿用既有冒險模式設定)
@@ -86,6 +86,34 @@
     },
   };
   window.ARENA_ITEM_OVERRIDES = ARENA_ITEM_OVERRIDES;
+
+  // ──────────────────────────────────────────────────────────────────
+  //  🚫 v3.13.34(2026-06-04) — 鬥技場禁用物品(老師裁示)
+  //  ──── 設計理由:鬥技場是 4v4 公平戰,有些「補滿」類道具會破壞節奏
+  //                 (一張卡直接 reset HP / 一張卡復活滿血,變相無敵)
+  //  ──── 套用位置:
+  //        - buildDeck (index.html line ~22770):抽卡池過濾這些 item
+  //        - advApplyReward get_card 分支 (index.html line ~70771):答題獎勵抽卡也過濾
+  //  ──── 擴充方式:直接 push 物品 .n 字串到 ARENA_BANNED_ITEMS 陣列即可
+  // ──────────────────────────────────────────────────────────────────
+  window.ARENA_BANNED_ITEMS = [
+    '強效HP藥水',     // 完全恢復 HP(hp:9999)— 鬥技場下太強,變相無敵
+    '新鮮的綠竹筍',   // 復活並完全恢復 HP(type:revive, full:true)— 鬥技場下太強
+  ];
+
+  // 工具:檢查指定 item 是否為鬥技場禁用
+  //   非鬥技場(冒險模式)永遠回 false(不過濾)
+  window._arenaIsItemBanned = function(it) {
+    try {
+      if (!it || !it.n) return false;
+      if (typeof _adventureMode !== 'undefined' && _adventureMode) return false;
+      const list = window.ARENA_BANNED_ITEMS || [];
+      return list.indexOf(it.n) !== -1;
+    } catch (e) {
+      console.warn('[arena] _arenaIsItemBanned 例外', e);
+      return false;
+    }
+  };
 
   // 工具:套用鬥技場物品 override(用在 buildDeck 抽卡時)
   // 接收原始 item,鬥技場時回傳新物件;非鬥技場原物回傳
