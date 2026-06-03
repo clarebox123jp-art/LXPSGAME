@@ -30,9 +30,8 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.27',   // ★ v3.13.27(2026-06-03)— 三層黑名單嚴驗(BUG #1 修復)+ GM 場次無限
-                           //   前版 v3.13.21 — 主頁框架(index.html 端);每日場次 2→3
-                           //   前版 v3.13.20 — GM 後台:鬥技場入口開關 + 戰鬥記錄上傳審核
+    VERSION: 'v3.13.32',   // ★ v3.13.32(2026-06-03)— 玩家側鬥技場入場券使用流程 + 兌換商店 placeholder
+                           //   前版 v3.13.31 — GM 戰鬥記錄審核 API:刪除 + 補償
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
     QUIZ_TIME: 30,                 // 30 秒搶答(沿用既有冒險模式設定)
@@ -659,13 +658,29 @@
         wins: 0,
         draws: 0,
         losses: 0,
-        zhengTotal: 0,  // 鬥技之證累積(全部歷史)
+        zhengTotal: 0,           // 鬥技之證累積(全部歷史)— 即「持有量」(未來開放兌換後扣減)
+        zhengLifetimeTotal: 0,   // ★ v3.13.32(2026-06-03) — 累積獲得鬥技之證(只增不減,商店兌換不扣)
       };
       // 保留歷史鬥技之證累積
       try {
         const histRaw = localStorage.getItem('lxps_arena_zheng_total');
-        if (histRaw) s.zhengTotal = parseInt(histRaw, 10) || 0;
+        if (histRaw) {
+          const _n = parseInt(histRaw, 10) || 0;
+          s.zhengTotal = _n;
+          s.zhengLifetimeTotal = _n;  // 第一次升 schema:lifetime = current
+        }
+        // 若已有單獨的 lifetime localStorage,優先用較大值(防止意外重置)
+        const lifeRaw = localStorage.getItem('lxps_arena_zheng_lifetime');
+        if (lifeRaw) {
+          const _ln = parseInt(lifeRaw, 10) || 0;
+          if (_ln > s.zhengLifetimeTotal) s.zhengLifetimeTotal = _ln;
+        }
       } catch (_) {}
+      _writeDailyState(s);
+    }
+    // 防呆:任何時候 zhengLifetimeTotal 都應 >= zhengTotal(累積不可少於持有)
+    if (typeof s.zhengLifetimeTotal !== 'number' || s.zhengLifetimeTotal < (s.zhengTotal || 0)) {
+      s.zhengLifetimeTotal = s.zhengTotal || 0;
       _writeDailyState(s);
     }
     return s;
@@ -721,14 +736,17 @@
     else if (result === 'draw'){ zheng = ARENA_CONFIG.REWARD_DRAW; s.draws  = (s.draws||0)  + 1; }
     else                        { zheng = ARENA_CONFIG.REWARD_LOSE; s.losses = (s.losses||0) + 1; }
     s.zhengTotal = (s.zhengTotal || 0) + zheng;
+    // ★ v3.13.32(2026-06-03) — 累積獲得鬥技之證(商店扣減不影響)
+    s.zhengLifetimeTotal = (s.zhengLifetimeTotal || 0) + zheng;
     _writeDailyState(s);
     try {
       localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal));
+      localStorage.setItem('lxps_arena_zheng_lifetime', String(s.zhengLifetimeTotal));
     } catch (_) {}
     // ★ v3.13.20(2026-06-02) — 結算同時上傳戰鬥記錄(供 GM 異常傷害審核)
     //   fire-and-forget,失敗不影響玩家獎勵發放
     try { window._arenaSubmitBattleLog && window._arenaSubmitBattleLog(result); } catch (_) {}
-    return { zheng, total: s.zhengTotal, state: s };
+    return { zheng, total: s.zhengTotal, lifetime: s.zhengLifetimeTotal, state: s };
   };
 
   // 取得鬥技之證總數(顯示用)
@@ -787,6 +805,16 @@
       // 文件 ID:uid + 時間戳(避免覆蓋,每場一筆)
       const ts = Date.now();
       const docId = user.uid + '_' + ts;
+      // ★ v3.13.32(2026-06-03) — 老師需求 A:若該場是入場券場次,標記 bonusSource:'ticket'
+      //   讓 GM 戰鬥記錄審核能區分「玩家自然場次」與「使用入場券補進的場次」
+      //   旗標在 _arenaUseTicket 立起,這裡讀完即清(避免下場誤用)
+      let _bonusSource = null;
+      try {
+        if (window._arenaNextBattleFromTicket === true) {
+          _bonusSource = 'ticket';
+          window._arenaNextBattleFromTicket = false;
+        }
+      } catch (_) {}
       const payload = {
         uid: user.uid,
         email: user.email || '',
@@ -799,8 +827,10 @@
         avgDmgPerRound: avgDmgPerRound,
         result: String(result || 'unknown'),  // 'win' | 'draw' | 'lose'
         ts: ts,
-        v: 'v3.13.20',
+        v: 'v3.13.32',
       };
+      // bonusSource 只有有值才寫(向下相容:舊紀錄沒這欄,GM panel 顯示「-」)
+      if (_bonusSource) payload.bonusSource = _bonusSource;
       await setDoc(doc(window._fbDb, 'arenaBattles', docId), payload);
       console.log('[arena] 戰鬥記錄已上傳: ' + result + ' / 總傷 ' + totalDmg
         + ' / 回合 ' + rounds + ' / 平均 ' + avgDmgPerRound);
@@ -945,6 +975,12 @@
       todayDraws: s.draws || 0,
       todayLosses: s.losses || 0,
       zhengTotal: s.zhengTotal || 0,
+      // ★ v3.13.32(2026-06-03) — 累積獲得(只增不減,商店扣減不影響)
+      zhengLifetimeTotal: s.zhengLifetimeTotal || s.zhengTotal || 0,
+      // ★ v3.13.32(2026-06-03) — 老師需求 A:含本機快取的入場券持有數
+      ticketCount: (typeof window._arenaGetMyTicketCount === 'function')
+        ? window._arenaGetMyTicketCount() : 0,
+      ticketMax: 5,
       isAdmin: _isAdmin,
     };
   };
@@ -963,9 +999,346 @@
   };
 
   // ──────────────────────────────────────────────────────────────────
-  //  ✅  載入完成標記
+  //  🛠 v3.13.31(2026-06-03)— GM 戰鬥記錄審核 API(老師需求 #4)
+  //  ──────────────────────────────────────────────────────────────────
+  //  老師需求:
+  //   ・週一早上 8:00 才結算本週「獲得最多鬥技之證」的玩家
+  //   ・在這之前,GM 可以刪除 bug 異常的戰鬥記錄(arenaBattles)
+  //   ・刪除記錄 = 該紀錄的鬥技之證從排行榜聚合中扣除(因為 _fetchLeaderboard 是即時聚合)
+  //   ・補償該玩家「鬥技場入場券」x N 張(目前僅紀錄於雲端;玩家側使用流程下版本實作)
+  //
+  //  資料路徑:
+  //   ・arenaBattles/{uid_ts} — 既有 schema(_arenaSubmitBattleLog 寫入)
+  //   ・players/{uid}.playerBackpack.arena_entry_ticket — 跟 wb_entry_ticket 同模式
+  //   ・操作 log:players/{uid}.adminLog.arenaCompensation — append-only 陣列
+  //
+  //  鐵律 1.55(跨玩家寫):由 GM admin 寫入,需要 Firestore Rules 配套(isAdmin 路徑)
+  //  ──────────────────────────────────────────────────────────────────
+
+  // 內部:取得 Firestore SDK(沿用既有 helper)
+  async function _getFsAdminSdk() {
+    try {
+      const fb = (typeof window._fbModules === 'object' && window._fbModules) || null;
+      if (fb && fb.firestore) return fb.firestore;
+      // 若沒有,直接從 doc/setDoc/deleteDoc/updateDoc/getDoc 全域抓
+      return {
+        doc: window._fbDoc, setDoc: window._fbSetDoc, deleteDoc: window._fbDeleteDoc,
+        updateDoc: window._fbUpdateDoc, getDoc: window._fbGetDoc, arrayUnion: window._fbArrayUnion,
+      };
+    } catch (e) { return null; }
+  }
+
+  // 列出最近 N 筆 arenaBattles 紀錄(GM 用)
+  //   opts: { limit:200, onlyAnomaly:false, anomalyAvgDmg:200, anomalyTotalDmg:1500 }
+  window._arenaAdminListBattleLogs = async function(opts) {
+    opts = opts || {};
+    const _limit = Math.max(10, Math.min(500, opts.limit || 200));
+    const _onlyAnomaly = !!opts.onlyAnomaly;
+    const _avgTh = opts.anomalyAvgDmg || 200;
+    const _totalTh = opts.anomalyTotalDmg || 1500;
+    try {
+      if (!window._fbDb) { console.warn('[arenaAdmin] Firestore 未就緒'); return null; }
+      const fb = (typeof window._fbModules === 'object' && window._fbModules) || null;
+      let collection, getDocs, query, orderBy, limit;
+      if (fb && fb.firestore) {
+        ({ collection, getDocs, query, orderBy, limit } = fb.firestore);
+      }
+      if (!collection || !getDocs) {
+        console.warn('[arenaAdmin] Firestore SDK 函式未就緒');
+        return null;
+      }
+      const ref = collection(window._fbDb, 'arenaBattles');
+      const q = query(ref, orderBy('ts','desc'), limit(_limit));
+      const snap = await getDocs(q);
+      const logs = [];
+      snap.forEach(d => {
+        const v = d.data() || {};
+        const _avg = v.avgDmgPerRound || 0;
+        const _tot = v.totalDmg || 0;
+        const _isAnom = (_avg > _avgTh) || (_tot > _totalTh);
+        if (_onlyAnomaly && !_isAnom) return;
+        logs.push({
+          docId: d.id,
+          uid: v.uid || '',
+          email: v.email || '',
+          displayLabel: v.displayLabel || '',
+          teamName: v.teamName || '',
+          heroes: Array.isArray(v.heroes) ? v.heroes : [],
+          elements: Array.isArray(v.elements) ? v.elements : [],
+          rounds: v.rounds || 0,
+          totalDmg: _tot,
+          avgDmgPerRound: _avg,
+          result: v.result || '',
+          ts: v.ts || 0,
+          isAnomaly: _isAnom,
+        });
+      });
+      console.log('[arenaAdmin] 已載入 ' + logs.length + ' 筆'
+        + (_onlyAnomaly ? '(僅異常)' : '')
+        + ' / 異常閾值: avgDmg>' + _avgTh + ' or totalDmg>' + _totalTh);
+      return logs;
+    } catch (e) {
+      console.error('[arenaAdmin] 列表載入失敗', e);
+      return null;
+    }
+  };
+
+  // 刪除單筆 arenaBattles 紀錄
+  //   docId:文件 ID(uid_ts)
+  //   回 {ok:true} 或 {ok:false, reason}
+  window._arenaAdminDeleteBattleLog = async function(docId) {
+    if (!docId) return { ok:false, reason:'missing_docId' };
+    try {
+      if (!window._fbDb) return { ok:false, reason:'fb_not_ready' };
+      const sdk = await _getFsAdminSdk();
+      const { doc, deleteDoc } = sdk || {};
+      if (!doc || !deleteDoc) return { ok:false, reason:'sdk_not_ready' };
+      await deleteDoc(doc(window._fbDb, 'arenaBattles', docId));
+      console.log('[arenaAdmin] ✅ 已刪除 arenaBattles/' + docId);
+      return { ok:true };
+    } catch (e) {
+      console.error('[arenaAdmin] 刪除失敗', e);
+      return { ok:false, reason: (e && e.message) || 'unknown' };
+    }
+  };
+
+  // 補發鬥技場入場券給指定玩家(GM 用)
+  //   uid:玩家 uid
+  //   n:張數(1~5,夾在上限內)
+  //   reason:補償原因(寫入 adminLog,供日後追蹤)
+  //   回 {ok:true, granted:N, total:M} 或 {ok:false, reason}
+  window._arenaGrantTicketByUid = async function(uid, n, reason) {
+    if (!uid) return { ok:false, reason:'missing_uid' };
+    const _n = Math.max(1, Math.min(5, parseInt(n,10) || 1));
+    const _reason = String(reason || 'GM 補償(鬥技場戰鬥異常)').slice(0, 100);
+    try {
+      if (!window._fbDb) return { ok:false, reason:'fb_not_ready' };
+      const sdk = await _getFsAdminSdk();
+      const { doc, getDoc, setDoc, updateDoc } = sdk || {};
+      if (!doc || !getDoc || !setDoc) return { ok:false, reason:'sdk_not_ready' };
+      const _ref = doc(window._fbDb, 'players', uid);
+      const _snap = await getDoc(_ref);
+      const _data = _snap.exists() ? (_snap.data() || {}) : {};
+      const _bp = (_data.playerBackpack && typeof _data.playerBackpack === 'object') ? _data.playerBackpack : {};
+      const _MAX_TICKETS = 5;
+      const _cur = parseInt(_bp.arena_entry_ticket, 10) || 0;
+      const _newTotal = Math.min(_MAX_TICKETS, _cur + _n);
+      const _granted = _newTotal - _cur;
+      // 寫回:用 dot-path 只動單欄,避免覆蓋其他 playerBackpack 內容
+      const _payload = {
+        ['playerBackpack.arena_entry_ticket']: _newTotal,
+      };
+      // 操作 log(append 到陣列。若 firestore arrayUnion 可用就用,否則用 setDoc merge 退到 ts key map)
+      const _logEntry = {
+        ts: Date.now(),
+        action: 'grant_ticket',
+        n: _granted,
+        reason: _reason,
+        by: (window._fbUser && window._fbUser.email) || '(unknown GM)',
+      };
+      // 用 setDoc merge 寫一個有時間戳 key 的子物件(避免讀整份 array 競態)
+      const _logPath = 'adminLog.arenaCompensation.' + _logEntry.ts;
+      _payload[_logPath] = _logEntry;
+      if (updateDoc) {
+        await updateDoc(_ref, _payload);
+      } else {
+        await setDoc(_ref, {
+          playerBackpack: { arena_entry_ticket: _newTotal },
+          adminLog: { arenaCompensation: { [_logEntry.ts]: _logEntry } },
+        }, { merge: true });
+      }
+      console.log('[arenaAdmin] ✅ 已補發 arena_entry_ticket: uid=' + uid + ' +' + _granted
+        + ' → ' + _newTotal + '/' + _MAX_TICKETS);
+      return { ok:true, granted:_granted, total:_newTotal, max:_MAX_TICKETS };
+    } catch (e) {
+      console.error('[arenaAdmin] 補發失敗', e);
+      return { ok:false, reason: (e && e.message) || 'unknown' };
+    }
+  };
+
+  // 查某玩家持有的鬥技場入場券數
+  window._arenaGetTicketByUid = async function(uid) {
+    if (!uid) return 0;
+    try {
+      if (!window._fbDb) return 0;
+      const sdk = await _getFsAdminSdk();
+      const { doc, getDoc } = sdk || {};
+      if (!doc || !getDoc) return 0;
+      const _snap = await getDoc(doc(window._fbDb, 'players', uid));
+      if (!_snap.exists()) return 0;
+      const _bp = (_snap.data() && _snap.data().playerBackpack) || {};
+      return parseInt(_bp.arena_entry_ticket, 10) || 0;
+    } catch (e) {
+      console.error('[arenaAdmin] 讀取持有數失敗', e);
+      return 0;
+    }
+  };
+
+  // 組合操作:刪除 + 補償(原子性的單次 GM 動作)
+  //   docId: arenaBattles 文件 ID
+  //   compensateN: 補償張數(預設 1)
+  //   回 {ok:true, deleted:true, ticket:{granted, total, max}} 或 {ok:false, reason, partial}
+  window._arenaAdminDeleteAndCompensate = async function(docId, compensateN) {
+    compensateN = parseInt(compensateN, 10) || 1;
+    if (!docId) return { ok:false, reason:'missing_docId' };
+    try {
+      // 1. 先讀紀錄拿到 uid(刪除後就讀不到了)
+      if (!window._fbDb) return { ok:false, reason:'fb_not_ready' };
+      const sdk = await _getFsAdminSdk();
+      const { doc, getDoc } = sdk || {};
+      if (!doc || !getDoc) return { ok:false, reason:'sdk_not_ready' };
+      const _snap = await getDoc(doc(window._fbDb, 'arenaBattles', docId));
+      if (!_snap.exists()) return { ok:false, reason:'log_not_found' };
+      const _uid = (_snap.data() && _snap.data().uid) || '';
+      if (!_uid) return { ok:false, reason:'uid_missing_in_log' };
+      // 2. 補發入場券(先補後刪,刪失敗仍補了就有,玩家不虧)
+      const _grant = await window._arenaGrantTicketByUid(_uid, compensateN,
+        '戰鬥記錄 ' + docId + ' 被 GM 判定異常並刪除,補償入場券');
+      if (!_grant.ok) return { ok:false, reason:'grant_failed:' + _grant.reason, partial:'none' };
+      // 3. 刪除戰鬥紀錄
+      const _del = await window._arenaAdminDeleteBattleLog(docId);
+      if (!_del.ok) return { ok:false, reason:'delete_failed:' + _del.reason, partial:'ticket_granted', uid:_uid, ticket:_grant };
+      return { ok:true, deleted:true, uid:_uid, ticket:_grant };
+    } catch (e) {
+      console.error('[arenaAdmin] 組合操作失敗', e);
+      return { ok:false, reason: (e && e.message) || 'unknown' };
+    }
+  };
+
   // ──────────────────────────────────────────────────────────────────
-  window._arenaLoaded = true;
+  //  🎫 v3.13.32(2026-06-03)— 玩家側鬥技場入場券使用流程(老師需求 A)
+  //  ──────────────────────────────────────────────────────────────────
+  //  資料路徑:players/{uid}.playerBackpack.arena_entry_ticket(GM 補償寫入,玩家讀+扣)
+  //  本機快取:window._arenaMyTicketCount(同 session 用) + localStorage(跨 session 顯示)
+  //  使用流程:
+  //   1. 玩家登入(或進鬥技場主頁)→ _arenaLoadMyTicketCount() 從 Firestore 拉
+  //   2. 主頁 stats bar 顯示「🎫 N 張」
+  //   3. 今日 3 場用完 + 持有 ≥ 1 張 → 主頁「單人挑戰」彈窗加「🎫 使用 1 張入場券」按鈕
+  //   4. 點擊使用 → _arenaUseTicket() 扣 Firestore + 本機 → 設 _arenaNextBattleFromTicket=true
+  //                  → 走 _arenaStartSoloBattle 跳過 _arenaCanBattle 檢查
+  //   5. 戰鬥結算 → _arenaSubmitBattleLog payload 加 bonusSource:'ticket'(供 GM panel 區分)
+  //  ──────────────────────────────────────────────────────────────────
+
+  const ARENA_TICKET_LS_KEY = 'lxps_arena_ticket_count';
+  const ARENA_TICKET_MAX = 5;
+
+  // 從 Firestore 讀玩家自己的入場券持有數,寫入快取(同 session window + localStorage)
+  window._arenaLoadMyTicketCount = async function() {
+    try {
+      let uid = '';
+      try { uid = (window._fbUser && window._fbUser.uid) || window._gUserId || ''; } catch (_) {}
+      if (!uid || !window._fbDb) {
+        // 未登入或 Firestore 未就緒 → 用本機快取
+        const _localRaw = (function(){ try { return localStorage.getItem(ARENA_TICKET_LS_KEY); } catch(_) { return null; } })();
+        const _localN = _localRaw ? (parseInt(_localRaw, 10) || 0) : 0;
+        window._arenaMyTicketCount = _localN;
+        return _localN;
+      }
+      const sdk = await _getFsAdminSdk();
+      const { doc, getDoc } = sdk || {};
+      if (!doc || !getDoc) {
+        // SDK 未就緒 → 用本機快取
+        const _localRaw = (function(){ try { return localStorage.getItem(ARENA_TICKET_LS_KEY); } catch(_) { return null; } })();
+        return parseInt(_localRaw || '0', 10) || 0;
+      }
+      const _snap = await getDoc(doc(window._fbDb, 'players', uid));
+      const _bp = (_snap.exists() && _snap.data() && _snap.data().playerBackpack) || {};
+      const _n = parseInt(_bp.arena_entry_ticket, 10) || 0;
+      window._arenaMyTicketCount = _n;
+      try { localStorage.setItem(ARENA_TICKET_LS_KEY, String(_n)); } catch (_) {}
+      console.log('[arena ticket] 已載入持有數: ' + _n + '/' + ARENA_TICKET_MAX);
+      return _n;
+    } catch (e) {
+      console.warn('[arena ticket] _arenaLoadMyTicketCount 失敗', e);
+      try {
+        const _localRaw = localStorage.getItem(ARENA_TICKET_LS_KEY);
+        return parseInt(_localRaw || '0', 10) || 0;
+      } catch (_) { return 0; }
+    }
+  };
+
+  // 同步取得本機快取的入場券數(UI 用)
+  window._arenaGetMyTicketCount = function() {
+    if (typeof window._arenaMyTicketCount === 'number') return window._arenaMyTicketCount;
+    try {
+      const _raw = localStorage.getItem(ARENA_TICKET_LS_KEY);
+      const _n = _raw ? (parseInt(_raw, 10) || 0) : 0;
+      window._arenaMyTicketCount = _n;
+      return _n;
+    } catch (_) { return 0; }
+  };
+
+  // 玩家使用 1 張入場券(扣 Firestore + 本機 + 設旗標)
+  // 回 {ok:true, remain:N} 或 {ok:false, reason}
+  window._arenaUseTicket = async function() {
+    try {
+      let uid = '';
+      try { uid = (window._fbUser && window._fbUser.uid) || window._gUserId || ''; } catch (_) {}
+      if (!uid) return { ok:false, reason:'no_uid' };
+      if (!window._fbDb) return { ok:false, reason:'fb_not_ready' };
+      const sdk = await _getFsAdminSdk();
+      const { doc, getDoc, updateDoc } = sdk || {};
+      if (!doc || !getDoc || !updateDoc) return { ok:false, reason:'sdk_not_ready' };
+      // 1. 先讀最新值(避免本機快取錯)
+      const _ref = doc(window._fbDb, 'players', uid);
+      const _snap = await getDoc(_ref);
+      const _bp = (_snap.exists() && _snap.data() && _snap.data().playerBackpack) || {};
+      const _cur = parseInt(_bp.arena_entry_ticket, 10) || 0;
+      if (_cur <= 0) {
+        // 雲端已 0 → 修正本機快取
+        window._arenaMyTicketCount = 0;
+        try { localStorage.setItem(ARENA_TICKET_LS_KEY, '0'); } catch (_) {}
+        return { ok:false, reason:'no_ticket', remain:0 };
+      }
+      const _newN = _cur - 1;
+      // 2. 扣 Firestore
+      await updateDoc(_ref, {
+        ['playerBackpack.arena_entry_ticket']: _newN,
+        ['adminLog.arenaCompensation.' + Date.now()]: {
+          ts: Date.now(),
+          action: 'use_ticket',
+          n: -1,
+          reason: '玩家使用 1 張鬥技場入場券換取 1 場額外進場',
+          by: 'player',
+        },
+      });
+      // 3. 同步本機快取
+      window._arenaMyTicketCount = _newN;
+      try { localStorage.setItem(ARENA_TICKET_LS_KEY, String(_newN)); } catch (_) {}
+      // 4. 設旗標:下一場戰鬥結算時 bonusSource='ticket'
+      window._arenaNextBattleFromTicket = true;
+      console.log('[arena ticket] ✅ 使用 1 張入場券, 剩餘 ' + _newN + '/' + ARENA_TICKET_MAX);
+      return { ok:true, remain:_newN, max:ARENA_TICKET_MAX };
+    } catch (e) {
+      console.error('[arena ticket] _arenaUseTicket 失敗', e);
+      return { ok:false, reason: (e && e.message) || 'unknown' };
+    }
+  };
+
+  // 自動載入:在 Firestore + uid 就緒後 1 秒拉一次,失敗有 retry 與 localStorage 兜底
+  //   設計理由:玩家可能多裝置 → 開遊戲時要同步雲端真實持有數,本機快取只當 fallback
+  (function _autoLoadArenaTicket() {
+    let _attempts = 0;
+    const _maxAttempts = 30;  // 30 × 500ms = 15 秒
+    const _tryLoad = function() {
+      _attempts++;
+      let uid = '';
+      try { uid = (window._fbUser && window._fbUser.uid) || window._gUserId || ''; } catch (_) {}
+      if (uid && window._fbDb) {
+        try { window._arenaLoadMyTicketCount().catch(function(){}); } catch (_) {}
+        return;
+      }
+      if (_attempts < _maxAttempts) {
+        setTimeout(_tryLoad, 500);
+      } else {
+        console.log('[arena ticket] 自動載入逾時,僅用本機快取(' +
+          (window._arenaGetMyTicketCount && window._arenaGetMyTicketCount()) + ' 張)');
+      }
+    };
+    setTimeout(_tryLoad, 1000);
+  })();
+
+
   try {
     console.log('[arena.js] 載入完成 ' + ARENA_CONFIG.VERSION
       + '(系統 ' + _ARENA_AI_TEAMS.length + ' 套 + 雲端玩家池'

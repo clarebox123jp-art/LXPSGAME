@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.30';
+window.ADMIN_PANEL_VERSION = 'v3.13.31';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -568,13 +568,19 @@ async function _showAdminStatsPanelImpl(){
       <!-- ★ v3.13.20(2026-06-02) — 鬥技場戰鬥記錄審核(GM 異常傷害偵測) -->
       <!--   讀 Firestore arenaBattles collection 最近 N 筆,排序顯示「平均單回合傷害」 -->
       <!--   功能:排序、篩玩家、刪除單筆異常記錄、清空所有/指定玩家 -->
+      <!-- ★ v3.13.31(2026-06-03) — 新增「刪除+補償 1 張入場券」原子動作(老師需求 #4) -->
       <div id="_admin-arena-battles-section" style="background:rgba(40,30,55,0.5);border:2px solid rgba(255,180,80,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#ffcc66;margin-bottom:8px;">⚔ 鬥技場戰鬥記錄審核</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
           列出最近的鬥技場戰鬥記錄,按「平均單回合傷害」排序,異常高的(&gt; 800/回合)會被標紅。<br>
-          可以刪除個別異常記錄,或清空指定玩家的所有記錄。<br>
+          <b style="color:#ffaa66;">🎫 刪除+補償 1 券:</b>判定為 BUG 異常戰鬥時用 — 刪除記錄 + 補償 1 張鬥技場入場券。<br>
+          <b style="color:#ffaaaa;">🗑️ 純刪除:</b>單純刪除記錄,不補償(極端作弊行為使用)。<br>
           <span style="color:#aaa;font-size:12px;">
-            雲端儲存於 <code>arenaBattles/{uid_ts}</code>;每場結算後上傳 {uid, 隊伍, 4 英雄, 回合數, 總傷, 平均單回合傷, 勝負平, 時間戳}。
+            雲端儲存於 <code>arenaBattles/{uid_ts}</code>;每場結算後上傳。
+            排行榜由此 collection 即時聚合,刪除記錄 = 該玩家的鬥技之證從排行榜減去
+            (勝 -3 / 平 -2 / 敗 -1)。<br>
+            入場券寫到 <code>players/{uid}.playerBackpack.arena_entry_ticket</code>(上限 5 張)。
+            週一 08:00 結算前 GM 可自由處理 BUG 異常戰鬥,玩家側使用入場券下版本實作。
           </span>
         </div>
 
@@ -3353,7 +3359,14 @@ async function _showAdminStatsPanelImpl(){
           + '<button class="_admin-arena-battles-del" data-docid="' + _escapeAttr(b._docId) + '" '
           + 'style="padding:3px 8px;font-size:11px;background:rgba(200,60,60,0.3);'
           + 'border:1px solid #cc6666;color:#ffaaaa;border-radius:4px;cursor:pointer;'
-          + 'font-family:inherit;">🗑️ 刪除</button>'
+          + 'font-family:inherit;">🗑️ 純刪除</button>'
+          // ★ v3.13.31(2026-06-03)— 老師需求 #4:刪除異常戰鬥 + 補償 1 張鬥技場入場券
+          + '<button class="_admin-arena-battles-del-comp" data-docid="' + _escapeAttr(b._docId) + '" '
+          + 'data-uid="' + _escapeAttr(b.uid) + '" '
+          + 'data-label="' + _escapeAttr(playerStr) + '" '
+          + 'style="padding:3px 8px;font-size:11px;background:rgba(255,160,80,0.3);'
+          + 'border:1px solid #ffaa66;color:#ffd699;border-radius:4px;cursor:pointer;'
+          + 'font-family:inherit;font-weight:700;">🎫 刪除+補償 1 券</button>'
           + '<button class="_admin-arena-battles-clear-user" data-uid="' + _escapeAttr(b.uid) + '" '
           + 'data-label="' + _escapeAttr(playerStr) + '" '
           + 'style="padding:3px 8px;font-size:11px;background:rgba(120,80,80,0.3);'
@@ -3367,6 +3380,10 @@ async function _showAdminStatsPanelImpl(){
       // 綁定刪除單筆事件
       listEl.querySelectorAll('._admin-arena-battles-del').forEach(btn => {
         btn.onclick = () => _deleteOne(btn.dataset.docid);
+      });
+      // ★ v3.13.31(2026-06-03)— 刪除 + 補償入場券 button(老師需求 #4)
+      listEl.querySelectorAll('._admin-arena-battles-del-comp').forEach(btn => {
+        btn.onclick = () => _deleteAndCompensate(btn.dataset.docid, btn.dataset.uid, btn.dataset.label);
       });
       listEl.querySelectorAll('._admin-arena-battles-clear-user').forEach(btn => {
         btn.onclick = () => _clearByUid(btn.dataset.uid, btn.dataset.label);
@@ -3392,6 +3409,62 @@ async function _showAdminStatsPanelImpl(){
         console.error('[admin arena battles delete]', e);
         resEl.style.color = '#ff6666';
         resEl.textContent = '❌ 刪除失敗:' + (e && e.message || '未知錯誤');
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v3.13.31(2026-06-03)— 老師需求 #4:刪除 + 補償鬥技場入場券
+    //   原子單次 GM 動作:
+    //     1. 確認玩家身份與要刪除的記錄
+    //     2. 先補發 1 張入場券到 players/{uid}.playerBackpack.arena_entry_ticket
+    //     3. 再刪除 arenaBattles/{docId} 記錄
+    //     4. UI 顯示「✅ 已刪除 N 筆,並補償 X 張入場券」
+    //   背後呼叫 arena.js 的 window._arenaAdminDeleteAndCompensate(docId, n)
+    //   注意:鬥技之證的「扣除」是隱性的 — 排行榜 _fetchLeaderboard 從 arenaBattles 即時聚合,
+    //         刪掉這筆 → 該玩家的 zheng 自動減 (3/2/1)。本機 localStorage 數字不動,但排行榜會正確。
+    // ════════════════════════════════════════════════════════════════════
+    async function _deleteAndCompensate(docId, uid, label){
+      if(!docId) return;
+      const _label = label || (uid && uid.slice(0,10)) || '(未知玩家)';
+      const ok = window._customConfirm
+        ? await window._customConfirm(
+            '確定要對「' + _label + '」執行:\n\n'
+            + '  1. 刪除此筆鬥技場戰鬥記錄(排行榜的鬥技之證自動扣除)\n'
+            + '  2. 補償 1 張「鬥技場入場券」到該玩家持有上限 5 張內\n\n'
+            + '⚠ 玩家本機顯示的鬥技之證數字不會即時更新,但排行榜聚合會反映扣除。',
+            '⚠ 確認:刪除 + 補償 1 張入場券')
+        : confirm('對「' + _label + '」刪除此筆記錄並補償 1 張入場券?');
+      if(!ok) return;
+      try{
+        if(typeof window._arenaAdminDeleteAndCompensate !== 'function'){
+          throw new Error('_arenaAdminDeleteAndCompensate API 未掛載(arena.js 版本過舊?)');
+        }
+        const _r = await window._arenaAdminDeleteAndCompensate(docId, 1);
+        if(_r && _r.ok){
+          // 從本機快取移掉這筆,重渲染列表
+          _battles = _battles.filter(b => b._docId !== docId);
+          _renderList();
+          const _tk = _r.ticket || {};
+          resEl.style.color = '#66dd88';
+          resEl.innerHTML = '✅ 已刪除 1 筆記錄,並補償 ' + (_tk.granted || 0)
+            + ' 張入場券給「' + _escapeHtml(_label) + '」'
+            + '(現持有 <b>' + (_tk.total || 0) + '/' + (_tk.max || 5) + '</b> 張)';
+          setTimeout(()=>{ resEl.textContent=''; resEl.innerHTML=''; }, 8000);
+        } else {
+          const _why = (_r && _r.reason) || 'unknown';
+          // partial=ticket_granted:券補了但記錄沒刪 → 提示 GM 手動再刪
+          const _partial = (_r && _r.partial) || '';
+          let _msg = '❌ 失敗:' + _why;
+          if(_partial === 'ticket_granted'){
+            _msg += '(已補發入場券但刪除記錄失敗 — 請再按一次「🗑️ 純刪除」)';
+          }
+          resEl.style.color = '#ff6666';
+          resEl.textContent = _msg;
+        }
+      }catch(e){
+        console.error('[admin arena battles del+compensate]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 例外:' + (e && e.message || '未知錯誤');
       }
     }
 
