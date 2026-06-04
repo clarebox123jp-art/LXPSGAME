@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.33';
+const SW_VERSION = 'v3.5.34';
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
@@ -181,8 +181,20 @@ self.addEventListener('activate', function(event){
 });
 
 // ─────────────────────────────────────────────
-// fetch: cache-first 策略 (圖片/音訊優先吃快取)
-//        network-first 策略 (HTML/JS/CSS — 但離線時 fallback 到快取)
+// fetch:
+//   圖片/音訊/字型 → cache-first (URL 為 key, 不會原地改, 永久快取)
+//   HTML/JS/CSS/其餘 → ★ v3.5.34 network-first (帶 5 秒逾時 fallback 快取)
+// ─────────────────────────────────────────────
+// ★★★ v3.5.34(2026-06-05)— 根治「版本更新不完全, 玩家玩到舊版 bug」★★★
+//   舊版 bug: 此處 HTML/JS/CSS 走 staleWhileRevalidate(先回「舊」快取、背景才更新),
+//             所以玩家「這次」開啟一定拿到舊 index.html / 舊 JS → 已修好的 bug 又出現,
+//             要再開一次才會套到新版。共用 iPad「開一下就關 / 換人」→ 新版常常永遠套不上,
+//             連帶老師做的所有「防汙染 / 防訪客」修正都送不到那些玩家手上。
+//   修法: 程式碼類(HTML/JS/CSS)改 network-first — 線上一律先抓最新, 抓到就更新快取;
+//          5 秒逾時或離線才 fallback 用快取(維持可離線玩)。圖片/音訊維持 cache-first 不變
+//          (素材不會原地改, 沒理由每次重抓, 也不踩 GitHub raw 429)。
+//   安全: 不自動 skipWaiting(避免「舊頁面 + 新 lazy chunk」版本錯位); 新 SW 由 banner /
+//          下次完整重開 / client 端開機自癒 接管。network-first 一旦生效, 往後每次開啟都最新。
 // ─────────────────────────────────────────────
 self.addEventListener('fetch', function(event){
   var req = event.request;
@@ -207,9 +219,8 @@ self.addEventListener('fetch', function(event){
   if(isAsset){
     event.respondWith(cacheFirstAsset(req));
   } else {
-    // HTML/JS/CSS — stale-while-revalidate
-    // (先回快取, 同時背景更新, 下次訪問就是新的)
-    event.respondWith(staleWhileRevalidate(req));
+    // ★ v3.5.34 — HTML/JS/CSS 改 network-first(線上一律最新, 逾時/離線 fallback 快取)
+    event.respondWith(networkFirstShell(req));
   }
 });
 
@@ -246,20 +257,32 @@ function cacheFirstAsset(req){
   });
 }
 
-// stale-while-revalidate: shell 用,先回快取讓使用者秒開,背景更新
-function staleWhileRevalidate(req){
+// ★ v3.5.34 — network-first(程式碼類):線上一律先抓最新, 抓到就更新快取;
+//   5 秒逾時或網路失敗才 fallback 用快取(維持可離線玩、慢校網不卡死)。
+function networkFirstShell(req){
+  var TIMEOUT_MS = 5000; // 慢校網的安全網:逾時就先給快取(背景仍會更新快取供下次用)
   return caches.open(SHELL_CACHE).then(function(cache){
-    return cache.match(req).then(function(cached){
-      var fetchPromise = fetch(req).then(function(res){
+    return new Promise(function(resolve){
+      var settled = false;
+      function finish(res){ if(!settled){ settled = true; resolve(res); } }
+      // 逾時保險:超過 TIMEOUT_MS 還沒回 → 若有快取先給快取(網路 promise 仍會繼續更新快取)
+      var timer = setTimeout(function(){
+        cache.match(req).then(function(cached){ if(cached) finish(cached); });
+      }, TIMEOUT_MS);
+      fetch(req).then(function(res){
+        clearTimeout(timer);
+        // 成功且 200 → 更新快取(即使逾時已先給快取, 這次更新也讓「下次開啟」拿到最新)
         if(res && res.ok){
-          cache.put(req, res.clone()).catch(function(){});
+          try{ cache.put(req, res.clone()); }catch(_){}
         }
-        return res;
+        finish(res);
       }).catch(function(){
-        return cached; // 網路失敗就用快取
+        // 網路失敗(離線)→ fallback 快取; 連快取都沒有才回 504
+        clearTimeout(timer);
+        cache.match(req).then(function(cached){
+          finish(cached || new Response('', { status: 504, statusText: 'Offline' }));
+        });
       });
-
-      return cached || fetchPromise;
     });
   });
 }
