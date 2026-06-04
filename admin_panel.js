@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.31';
+window.ADMIN_PANEL_VERSION = 'v3.13.39';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -874,6 +874,30 @@ async function _showAdminStatsPanelImpl(){
         </div>
         <div id="_admin-trust-result" style="font-size:13px;color:#ddd;line-height:1.65;padding:10px;
           background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:200px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- ★ v3.13.39(2026-06-04) — 帳號汙染掃描:暴增 SSR 收回(老師指定) -->
+      <div id="_admin-inflated-section" style="background:rgba(45,20,40,0.55);border:2px solid rgba(255,120,180,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ff99cc;margin-bottom:8px;">🧹 帳號汙染掃描(暴增 SSR 收回)</div>
+        <div style="font-size:13px;color:#ffd6e8;margin-bottom:12px;line-height:1.65;">
+          掃描全校玩家,找出「<b>因共用平板被上一位學生汙染、瞬間多出一大票 SSR</b>」的帳號。<br>
+          判定:roster 內的 SSR 之中「<b>查無合法解鎖紀錄</b>」(跨帳號 union 不會留下解鎖事件)的數量 ≥ 門檻。<br>
+          <span style="color:#ffcc88;">⚠ 這是啟發式偵測:v3.11.10 之前解鎖的舊 SSR 也可能無紀錄而被列入。<b>收回前請務必看英雄名單確認</b>(你最清楚那位學生本來有沒有這些 SSR)。</span><br>
+          <span style="color:#aaffcc;">收回會清掉那些英雄並寫反污染信號,學生下次開遊戲會自動以雲端為準、清掉本地殘留。</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <label style="font-size:13px;color:#ffd6e8;">疑似 SSR ≥
+            <input id="_admin-inflated-threshold" type="number" min="1" max="40" value="5"
+              style="width:64px;padding:6px 8px;margin-left:4px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,120,180,0.5);color:#fff;border-radius:6px;font-family:inherit;">
+          </label>
+          <button id="_admin-inflated-scan" style="padding:8px 20px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,#cc4488,#992266);border:2px solid #ff77bb;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 0 12px rgba(255,120,180,0.3);">
+            🔍 掃描全校
+          </button>
+          <span id="_admin-inflated-status" style="font-size:12px;color:#ccc;"></span>
+        </div>
+        <div id="_admin-inflated-result" style="margin-top:6px;font-size:13px;color:#ffd6e8;line-height:1.6;max-height:560px;overflow-y:auto;"></div>
       </div>
 
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
@@ -1750,6 +1774,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
       { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
+      { sec: '_admin-inflated-section',         label: '🧹 帳號汙染掃描',          hint: '掃出被上一位汙染、暴增 SSR 的帳號並一鍵收回' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
@@ -1834,6 +1859,95 @@ async function _showAdminStatsPanelImpl(){
     window._switchAdminSection = _switchAdminSection;
 
     console.log('[v3.10.11] ✅ GM 後台 sidebar 已渲染 (' + SIDEBAR_ITEMS.length + ' 個項目)');
+  })();
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.13.39(2026-06-04) — 帳號汙染掃描(暴增 SSR 收回)事件綁定
+  //   後端在 index.html(window):_fbAdminScanInflatedRosters / _fbAdminBulkRemoveHeroes
+  // ════════════════════════════════════════════════════════════════════
+  (function _bindInflatedScan(){
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _confirm = (msg) => (typeof window._customConfirm === 'function') ? window._customConfirm(msg) : Promise.resolve(window.confirm(msg));
+    const _scanBtn  = document.getElementById('_admin-inflated-scan');
+    const _thresEl  = document.getElementById('_admin-inflated-threshold');
+    const _statusEl = document.getElementById('_admin-inflated-status');
+    const _resultEl = document.getElementById('_admin-inflated-result');
+    if(!_scanBtn || !_resultEl) return;
+
+    function _rowHtml(p){
+      const _names = (p.suspected || []).map(_esc).join('、');
+      return '<div class="_inflated-row" data-uid="'+_esc(p.uid)+'" style="border:1px solid rgba(255,120,180,0.3);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:rgba(0,0,0,0.35);">'
+        + '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">'
+        +   '<div style="min-width:200px;"><b style="color:#fff;font-size:14px;">'+_esc(p.name||'(無名稱)')+'</b>'
+        +     '<span style="color:#aac;font-size:11px;font-family:monospace;"> '+_esc(p.email||'')+'</span></div>'
+        +   '<div style="font-size:12px;color:#ddd;">疑似 <b style="color:#ff88bb;font-size:15px;">'+p.suspectedCount+'</b> 隻'
+        +     ' &nbsp;|&nbsp; SSR 共 '+p.ssrInRoster+'(有紀錄 '+p.ssrWithHistory+')'
+        +     ' &nbsp;|&nbsp; 全英雄 '+p.totalUnlocked+' &nbsp;|&nbsp; 💰'+p.knowledgeCoins+' &nbsp;⭐Lv'+p.maxHeroLv+'</div>'
+        + '</div>'
+        + '<div style="margin-top:6px;font-size:12px;color:#ffd6e8;line-height:1.7;"><b>疑似汙染 SSR:</b>'+_names+'</div>'
+        + '<div style="margin-top:8px;">'
+        +   '<button class="_inflated-remove" data-uid="'+_esc(p.uid)+'" style="padding:7px 16px;font-size:13px;font-weight:800;'
+        +     'background:rgba(255,80,80,0.22);border:2px solid #ff7777;color:#ffbbbb;border-radius:7px;cursor:pointer;font-family:inherit;">'
+        +     '🗑 收回這 '+p.suspectedCount+' 隻 SSR</button>'
+        +   '<span class="_inflated-rowmsg" style="margin-left:10px;font-size:12px;color:#aaffaa;"></span>'
+        + '</div></div>';
+    }
+
+    let _lastPlayers = [];
+    _scanBtn.onclick = async () => {
+      const _thr = parseInt(_thresEl && _thresEl.value, 10) || 5;
+      _statusEl.textContent = '⏳ 掃描全校玩家中(可能要幾秒)...';
+      _resultEl.innerHTML = '';
+      if(typeof window._fbAdminScanInflatedRosters !== 'function'){
+        _statusEl.textContent = '';
+        _resultEl.innerHTML = '<span style="color:#ff8888;">❌ _fbAdminScanInflatedRosters 未載入,請重新整理</span>';
+        return;
+      }
+      try{
+        const _r = await window._fbAdminScanInflatedRosters({ threshold: _thr });
+        if(!_r || !_r.ok){
+          _statusEl.textContent = '';
+          _resultEl.innerHTML = '<span style="color:#ff8888;">❌ 掃描失敗:'+_esc((_r&&_r.reason)||'未知')+'</span>';
+          return;
+        }
+        _lastPlayers = _r.players || [];
+        _statusEl.textContent = '✅ 命中 ' + _r.count + ' 個帳號(疑似 SSR ≥ ' + _thr + ')';
+        if(!_lastPlayers.length){
+          _resultEl.innerHTML = '<div style="color:#aaffaa;padding:10px;">🎉 沒有符合條件的帳號,目前看起來乾淨。</div>';
+          return;
+        }
+        _resultEl.innerHTML = _lastPlayers.map(_rowHtml).join('');
+        _resultEl.querySelectorAll('._inflated-remove').forEach(btn => {
+          btn.onclick = async () => {
+            const _uid = btn.dataset.uid;
+            const _p = _lastPlayers.find(x => x.uid === _uid);
+            if(!_p) return;
+            const _msg = btn.parentElement.querySelector('._inflated-rowmsg');
+            const _ok = await _confirm('確定要從【' + (_p.name||_uid) + '】收回以下 ' + _p.suspectedCount
+              + ' 隻疑似汙染 SSR 嗎?\n\n' + (_p.suspected||[]).join('、')
+              + '\n\n收回後學生下次開遊戲會以雲端為準。此動作會記入稽核紀錄。');
+            if(!_ok) return;
+            btn.disabled = true; if(_msg){ _msg.style.color='#ccc'; _msg.textContent='收回中...'; }
+            try{
+              const _res = await window._fbAdminBulkRemoveHeroes(_uid, _p.suspected, { reason: '帳號汙染暴增 SSR 收回(GM 掃描)' });
+              if(_res && _res.ok){
+                if(_msg){ _msg.style.color='#aaffaa'; _msg.textContent = '✅ 已收回 ' + _res.removed + ' 隻,剩 ' + _res.remaining + ' 隻英雄。請告知學生重新整理。'; }
+                btn.textContent = '✅ 已收回';
+              } else {
+                btn.disabled = false;
+                if(_msg){ _msg.style.color='#ff8888'; _msg.textContent = '❌ 失敗:' + _esc((_res&&_res.reason)||'未知'); }
+              }
+            }catch(e){
+              btn.disabled = false;
+              if(_msg){ _msg.style.color='#ff8888'; _msg.textContent = '❌ 失敗:' + _esc(e.message||e); }
+            }
+          };
+        });
+      }catch(e){
+        _statusEl.textContent = '';
+        _resultEl.innerHTML = '<span style="color:#ff8888;">❌ 掃描失敗:'+_esc(e.message||e)+'</span>';
+      }
+    };
   })();
 
   // ★ v1.0.20260510.5820 — 解除冷卻 / 每日次數限制按鈕
