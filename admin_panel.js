@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.41';
+window.ADMIN_PANEL_VERSION = 'v3.13.47';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -938,6 +938,54 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-rare-result" style="margin-top:6px;font-size:13px;color:#e6dcff;line-height:1.6;max-height:640px;overflow-y:auto;"></div>
       </div>
 
+      <!-- ★ v3.13.47 — 同台 iPad 汙染分組偵測(依重複性 + 班級座號 + 原始/被汙染) -->
+      <div id="_admin-pollution-cluster-section" style="background:rgba(30,16,40,0.62);border:2px solid rgba(255,120,160,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ffaad0;margin-bottom:8px;">🔁 同台 iPad 汙染分組(SSR/SR・依重複性・原始 vs 被汙染)</div>
+        <div style="font-size:13px;color:#ffe0ec;margin-bottom:12px;line-height:1.65;">
+          全校掃描,把「<b>SSR/SR 解鎖序列相同</b>」的玩家分到同一組,重複性高的優先列出。<br>
+          用每筆解鎖紀錄的<b>建立者 uid</b> 分辨:紀錄 uid=自己 → <span style="color:#9af0b0;">🟢 原始解鎖者</span>;uid=別人 → <span style="color:#ff9a9a;">🔴 被汙染(整份複製來的)</span>。<br>
+          <span style="color:#ffd27a;">🔴 鐵證群</span>=序列相同且(時間戳完全相同 或 紀錄 uid 指向同一人) ・ <span style="color:#cfe3ff;">🔷 疑似群</span>=只有序列相同。<br>
+          <span style="color:#ffcc88;">⚠ uid 反查只對 5/28 之後、且 history 被一起複製的汙染有效;請搭配「班級座號相鄰=同台 iPad」自行確認。預設只預勾 🔴,收回沿用稀有稽核流程(清等級/技能/爆發+反汙染信號)。</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <label style="font-size:13px;color:#ffe0ec;">序列至少
+            <input id="_admin-cluster-minseq" type="number" min="1" max="20" value="2"
+              style="width:56px;padding:6px 8px;margin-left:4px;background:rgba(26,14,30,0.9);border:1.5px solid rgba(255,120,160,0.5);color:#fff;border-radius:6px;font-family:inherit;"> 隻
+          </label>
+          <label style="font-size:13px;color:#ffe0ec;">至少
+            <input id="_admin-cluster-minmembers" type="number" min="2" max="20" value="2"
+              style="width:56px;padding:6px 8px;margin-left:4px;background:rgba(26,14,30,0.9);border:1.5px solid rgba(255,120,160,0.5);color:#fff;border-radius:6px;font-family:inherit;"> 人共用
+          </label>
+          <button id="_admin-cluster-scan" style="padding:8px 20px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,#c24e8c,#8c2c5e);border:2px solid #ff88bb;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 0 12px rgba(255,120,160,0.3);">
+            🔍 掃描全校分組
+          </button>
+          <span id="_admin-cluster-status" style="font-size:12px;color:#ccc;"></span>
+        </div>
+        <div id="_admin-cluster-result" style="margin-top:6px;font-size:13px;color:#ffe0ec;line-height:1.6;max-height:680px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- ★ v3.13.47 — 皮膚(英雄肖像)復原 / 稽核工具 -->
+      <div id="_admin-skin-recovery-section" style="background:rgba(18,30,44,0.62);border:2px solid rgba(120,200,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#9fd6ff;margin-bottom:8px;">🎨 皮膚復原 / 稽核(查玩家買過哪些皮膚・跨槽復原・手動補發)</div>
+        <div style="font-size:13px;color:#dff0ff;margin-bottom:12px;line-height:1.65;">
+          輸入 email / uid / 姓名 / 班級座號 查玩家,顯示<b>每位英雄目前擁有的皮膚</b>,並標示:
+          <span style="color:#9af0b0;">🟢 商店購買</span>(花知識幣) ・ <span style="color:#cfe3ff;">🔷 等級解鎖</span> ・ <span style="color:#ddd;">⬜ 其他</span>。<br>
+          會比對 <b>main / live / safe 三槽</b>,有人被汙染掉的皮膚常常還躺在某一槽 → 按「<b>一鍵跨槽復原</b>」聯集回三槽(只增不減,連同<b>玩家選用的皮膚</b>一起還原)。<br>
+          三槽都查無、但學生有合理憑證的,可用下方「<b>手動補發</b>」逐隻補。
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-skin-query" type="text" placeholder="email / uid / 姓名 / 班級座號(如 5324)"
+            style="flex:1;min-width:240px;padding:8px 12px;background:rgba(14,22,30,0.9);border:1.5px solid rgba(120,200,255,0.5);color:#fff;border-radius:7px;font-family:inherit;font-size:14px;">
+          <button id="_admin-skin-search" style="padding:8px 20px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,#3e87c2,#2c5e8c);border:2px solid #88bbff;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">🔍 查皮膚</button>
+          <span id="_admin-skin-status" style="font-size:12px;color:#ccc;"></span>
+        </div>
+        <div id="_admin-skin-result" style="margin-top:6px;font-size:13px;color:#dff0ff;line-height:1.6;max-height:680px;overflow-y:auto;"></div>
+      </div>
+
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
       <!--
         放在 3.5 之後、4 號之前,因為它是「最徹底」的玩家資料修補工具。
@@ -1814,6 +1862,8 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
       { sec: '_admin-inflated-section',         label: '🧹 帳號汙染掃描',          hint: '掃出被上一位汙染、暴增 SSR 的帳號並一鍵收回' },
       { sec: '_admin-rare-audit-section',       label: '🔬 稀有暴增稽核',          hint: 'SSR+SR 分四類來源(BOSS/召喚/GM/汙染)逐隻勾選收回' },
+      { sec: '_admin-pollution-cluster-section', label: '🔁 同台iPad汙染分組',       hint: 'SSR/SR 序列相同分組 + 班級座號 + 原始/被汙染辨識' },
+      { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
@@ -2151,6 +2201,286 @@ async function _showAdminStatsPanelImpl(){
         _resultEl.innerHTML = '<span style="color:#ff8888;">❌ 掃描失敗:' + _esc(e.message || e) + '</span>';
       }
     };
+  })();
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.13.47 — 同台 iPad 汙染分組(SSR/SR 序列相同 + 班級座號 + 原始/被汙染)
+  // ════════════════════════════════════════════════════════════════════
+  (function _bindPollutionClusters(){
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _confirm = (msg) => (typeof window._customConfirm === 'function') ? window._customConfirm(msg) : Promise.resolve(window.confirm(msg));
+    const _scanBtn  = document.getElementById('_admin-cluster-scan');
+    const _minSeqEl = document.getElementById('_admin-cluster-minseq');
+    const _minMemEl = document.getElementById('_admin-cluster-minmembers');
+    const _statusEl = document.getElementById('_admin-cluster-status');
+    const _resultEl = document.getElementById('_admin-cluster-result');
+    if(!_scanBtn || !_resultEl) return;
+
+    function _classSeat(email){
+      try{
+        const r = (typeof window._getRosterEntry==='function') ? window._getRosterEntry((email||'').toLowerCase()) : null;
+        if(!r) return '';
+        const m = String(r.class||'').match(/(\d+)\s*年\s*(\d+)\s*班/);
+        const code = m ? (m[1]+m[2]+String(r.seatNo||'').padStart(2,'0')) : '';
+        return code + (r.surname||'') + '同學';
+      }catch(_){ return ''; }
+    }
+    const _rar = (r) => r==='SSR' ? '🌈' : '⭐';
+    function _roleBadge(role){
+      if(role==='original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(120,220,140,0.2);border:1px solid #66cc88;color:#aaeebb;">🟢 原始解鎖者</span>';
+      if(role==='polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(255,80,80,0.2);border:1px solid #ff7777;color:#ffbbbb;">🔴 被汙染</span>';
+      return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(180,180,180,0.15);border:1px solid #999;color:#ddd;">⬜ 待確認</span>';
+    }
+    function _memberHtml(m){
+      const ssr = (m.ssrList||[]).map(s => {
+        const own = (s.creatorUid && s.creatorUid===m.ownUid);
+        const uHint = !s.creatorUid ? '<span style="color:#888;">無紀錄</span>'
+          : own ? '<span style="color:#9af0b0;">本人建立</span>'
+          : '<span style="color:#ff9a9a;">複製自 '+_esc(s.creatorUid)+'…</span>';
+        const t = s.at ? new Date(s.at).toLocaleString('zh-TW') : '—';
+        const ck = (m.role==='polluted') ? ' checked' : '';
+        return '<label style="display:flex;gap:6px;align-items:center;padding:2px 5px;font-size:11px;flex-wrap:wrap;cursor:pointer;">'
+          + '<input type="checkbox" class="_cl-cb" data-name="'+_esc(s.name)+'"'+ck+' style="width:15px;height:15px;cursor:pointer;">'
+          + _rar(s.rarity)+' <b style="color:#fff;">'+_esc(s.name)+'</b> '+uHint
+          + ' <span style="margin-left:auto;color:#9ab;">'+_esc(t)+'</span></label>';
+      }).join('');
+      return '<div class="_cl-member" data-uid="'+_esc(m.uid)+'" style="border:1px solid rgba(255,120,160,0.25);border-radius:7px;padding:8px 10px;margin-bottom:7px;background:rgba(0,0,0,0.25);">'
+        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+        + _roleBadge(m.role)
+        + ' <b style="color:#fff;font-size:13px;">'+_esc(m.name||'(無名稱)')+'</b>'
+        + ' <span style="color:#ffaad0;font-size:12px;font-weight:700;">'+_esc(_classSeat(m.email))+'</span>'
+        + ' <span style="color:#aac;font-size:11px;font-family:monospace;">'+_esc(m.email||'')+'</span>'
+        + ' <span style="color:#bbb;font-size:11px;margin-left:auto;">本人建立 '+(m.selfCreated||0)+' · 複製 '+(m.foreignCreated||0)+' · 總解鎖 '+m.totalUnlocked+' · ⭐Lv'+m.maxHeroLv+'</span>'
+        + '</div>'
+        + '<div style="margin-top:5px;max-height:200px;overflow-y:auto;">'+ssr+'</div>'
+        + '<div style="margin-top:6px;">'
+        + '<button class="_cl-remove" type="button" style="padding:5px 13px;font-size:12px;font-weight:800;background:rgba(255,80,80,0.2);border:1.5px solid #ff7777;color:#ffbbbb;border-radius:6px;cursor:pointer;font-family:inherit;">🗑 收回此人勾選的英雄</button>'
+        + '<span class="_cl-msg" style="margin-left:10px;font-size:12px;color:#aaffaa;"></span>'
+        + '</div></div>';
+    }
+    function _clusterHtml(c){
+      const tag = c.isPollution ? '🔴 鐵證群' : '🔷 疑似群';
+      const tagCss = c.isPollution ? 'background:rgba(255,80,80,0.22);border:1.5px solid #ff7777;color:#ffbbbb;' : 'background:rgba(120,170,255,0.18);border:1.5px solid #6699ff;color:#cfe3ff;';
+      const exact = c.exactTimeMatch ? ' <span style="color:#ff9a9a;font-size:11px;">⏱時間戳完全相同</span>' : '';
+      return '<div class="_cl-group" style="border:2px solid rgba(255,120,160,0.4);border-radius:9px;padding:11px 13px;margin-bottom:14px;background:rgba(0,0,0,0.32);">'
+        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px;">'
+        + '<span style="padding:2px 9px;border-radius:6px;font-size:12px;font-weight:800;'+tagCss+'">'+tag+'</span>'+exact
+        + ' <b style="color:#fff;font-size:13px;">'+c.memberCount+' 人共用</b>'
+        + ' <span style="color:#ddd;font-size:12px;">序列 '+c.seqLen+' 隻:'+_esc(c.orderSig)+'</span>'
+        + '</div>'
+        + (c.members||[]).map(_memberHtml).join('')
+        + '</div>';
+    }
+    function _wire(){
+      _resultEl.querySelectorAll('._cl-member').forEach(card => {
+        const uid = card.dataset.uid;
+        const rmBtn = card.querySelector('._cl-remove');
+        const msg = card.querySelector('._cl-msg');
+        if(rmBtn) rmBtn.onclick = async () => {
+          const names = Array.prototype.slice.call(card.querySelectorAll('._cl-cb')).filter(cb=>cb.checked).map(cb=>cb.dataset.name);
+          if(!names.length){ if(msg){ msg.style.color='#ffcc66'; msg.textContent='⚠ 未勾選'; } return; }
+          const ok = await _confirm('確定從此玩家收回 '+names.length+' 隻?\n'+names.join('、')+'\n\n⚠ 連等級/技能/爆發一併清除,記入稽核。收回後學生下次開遊戲以雲端為準。');
+          if(!ok) return;
+          rmBtn.disabled=true; if(msg){ msg.style.color='#ccc'; msg.textContent='收回中...'; }
+          try{
+            const r = await window._fbAdminBulkRemoveHeroes(uid, names, { reason:'同台iPad汙染分組收回(GM 勾選)' });
+            if(r && r.ok){
+              if(msg){ msg.style.color='#aaffaa'; msg.textContent='✅ 收回 '+r.removed+' 隻,剩 '+r.remaining+'。請告知學生重新整理。'; }
+              rmBtn.textContent='✅ 已收回';
+              Array.prototype.slice.call(card.querySelectorAll('._cl-cb')).forEach(cb=>{ if(cb.checked){ cb.checked=false; cb.disabled=true; const l=cb.closest('label'); if(l){ l.style.opacity='0.4'; l.style.textDecoration='line-through'; } } });
+            } else { rmBtn.disabled=false; if(msg){ msg.style.color='#ff8888'; msg.textContent='❌ '+_esc((r&&r.reason)||'失敗'); } }
+          }catch(e){ rmBtn.disabled=false; if(msg){ msg.style.color='#ff8888'; msg.textContent='❌ '+_esc(e.message||e); } }
+        };
+      });
+    }
+    _scanBtn.onclick = async () => {
+      const minSeq = parseInt(_minSeqEl && _minSeqEl.value,10)||2;
+      const minMem = parseInt(_minMemEl && _minMemEl.value,10)||2;
+      if(_statusEl){ _statusEl.style.color='#aaccff'; _statusEl.textContent='⏳ 掃描全校中(可能要幾秒)...'; }
+      _resultEl.innerHTML='';
+      if(typeof window._fbAdminScanPollutionClusters!=='function'){ if(_statusEl) _statusEl.textContent=''; _resultEl.innerHTML='<span style="color:#ff8888;">❌ _fbAdminScanPollutionClusters 未載入,請重新整理</span>'; return; }
+      try{
+        const r = await window._fbAdminScanPollutionClusters({ minSeq:minSeq, minMembers:minMem });
+        if(!r || !r.ok){ if(_statusEl) _statusEl.textContent=''; _resultEl.innerHTML='<span style="color:#ff8888;">❌ '+_esc((r&&r.reason)||'失敗')+'</span>'; return; }
+        const cl = r.clusters||[];
+        if(_statusEl){ _statusEl.style.color='#88ddaa'; _statusEl.textContent='✅ '+cl.length+' 組(掃 '+r.totalPlayers+' 位有 SSR/SR 的玩家)'; }
+        if(!cl.length){ _resultEl.innerHTML='<div style="color:#aaffaa;padding:10px;">🎉 沒有發現序列相同的分組,目前看起來乾淨。</div>'; return; }
+        _resultEl.innerHTML = cl.map(_clusterHtml).join('');
+        _wire();
+      }catch(e){ if(_statusEl) _statusEl.textContent=''; _resultEl.innerHTML='<span style="color:#ff8888;">❌ '+_esc(e.message||e)+'</span>'; }
+    };
+  })();
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.13.47 — 皮膚復原 / 稽核(查擁有皮膚・跨槽復原・手動補發)
+  // ════════════════════════════════════════════════════════════════════
+  (function _bindSkinRecovery(){
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _confirm = (msg) => (typeof window._customConfirm === 'function') ? window._customConfirm(msg) : Promise.resolve(window.confirm(msg));
+    const _queryEl  = document.getElementById('_admin-skin-query');
+    const _searchBtn= document.getElementById('_admin-skin-search');
+    const _statusEl = document.getElementById('_admin-skin-status');
+    const _resultEl = document.getElementById('_admin-skin-result');
+    if(!_searchBtn || !_resultEl) return;
+
+    function _classSeat(email){
+      try{
+        const r = (typeof window._getRosterEntry==='function') ? window._getRosterEntry((email||'').toLowerCase()) : null;
+        if(!r) return '';
+        const m = String(r.class||'').match(/(\d+)\s*年\s*(\d+)\s*班/);
+        const code = m ? (m[1]+m[2]+String(r.seatNo||'').padStart(2,'0')) : '';
+        return code + (r.surname||'') + '同學';
+      }catch(_){ return ''; }
+    }
+    // 皮膚目錄(商店 / 等級 / 名稱);延遲建立以確保資料常數已載入
+    let _cat = null;
+    function _C(){
+      if(_cat) return _cat;
+      const paid = {}, level = {}, nameOf = {};
+      try{ if(typeof BACKPACK_ITEM_DEF !== 'undefined') Object.keys(BACKPACK_ITEM_DEF).forEach(k => { const it=BACKPACK_ITEM_DEF[k]; if(it && it.type==='portrait' && it.heroName && it.portraitId) paid[it.portraitId]={hero:it.heroName, productName:it.name||k}; }); }catch(_){}
+      try{ if(typeof _LV_UNLOCK_PORTRAITS !== 'undefined') Object.keys(_LV_UNLOCK_PORTRAITS).forEach(h => { const d=_LV_UNLOCK_PORTRAITS[h]; ((d&&d.ids)||[]).forEach(id => { level[id]=h; }); }); }catch(_){}
+      try{ if(typeof HERO_PORTRAIT_LIBRARY !== 'undefined') Object.keys(HERO_PORTRAIT_LIBRARY).forEach(h => { (HERO_PORTRAIT_LIBRARY[h]||[]).forEach(p => { if(p&&p.id) nameOf[h+'|'+p.id]=p.name||p.id; }); }); }catch(_){}
+      _cat = { paid, level, nameOf }; return _cat;
+    }
+    const _classify = (id) => { const c=_C(); return c.paid[id] ? 'shop' : (c.level[id] ? 'level' : 'other'); };
+
+    async function _resolveUid(input){
+      const s = String(input||'').trim();
+      if(!s) throw new Error('請輸入 email / uid / 姓名 / 班級座號');
+      if(s.includes('@')){
+        if(typeof window._fbAdminFindPlayerByEmail!=='function') throw new Error('_fbAdminFindPlayerByEmail 未載入');
+        const f = await window._fbAdminFindPlayerByEmail(s);
+        if(!f || !f.uid) throw new Error('找不到此 email 對應的玩家'); return f.uid;
+      }
+      if(/^[A-Za-z0-9-]{20,}$/.test(s)) return s;
+      // 班級碼 / 學號:後端 _fbAdminFindPlayerByEmail 已擴充支援單一命中
+      if(typeof window._fbAdminFindPlayerByEmail==='function'){
+        try{ const f = await window._fbAdminFindPlayerByEmail(s); if(f && f.uid) return f.uid; }catch(_){}
+      }
+      if(typeof window._fbAdminFindPlayersByName==='function'){
+        const r = await window._fbAdminFindPlayersByName(s);
+        const ps = (r && r.players) || [];
+        if(!ps.length) throw new Error('找不到「'+s+'」對應的玩家');
+        if(ps.length===1) return ps[0].uid;
+        const e = new Error('多筆'); e._multi=true; e.candidates=ps; throw e;
+      }
+      throw new Error('查無玩家');
+    }
+
+    function _slotMark(audit, hero, id){
+      const has = (slot) => { const p=(audit.slots[slot]&&audit.slots[slot].portraits)||{}; return Array.isArray(p[hero]) && p[hero].includes(id); };
+      return (has('main')?'主':'·')+'/'+(has('live')?'live':'·')+'/'+(has('safe')?'safe':'·');
+    }
+    function _grantPickerHtml(){
+      const c=_C(); const byHero={};
+      Object.keys(c.paid).forEach(id => { const o=c.paid[id]; (byHero[o.hero]=byHero[o.hero]||[]).push({id, name:o.productName}); });
+      const opts = Object.keys(byHero).sort().map(h => byHero[h].map(s => '<option value="'+_esc(h)+'|'+_esc(s.id)+'">'+_esc(h)+' — '+_esc((c.nameOf[h+'|'+s.id])||s.name||s.id)+'</option>').join('')).join('');
+      return '<div style="border:1px dashed rgba(120,200,255,0.4);border-radius:8px;padding:10px 12px;margin-top:8px;background:rgba(0,0,0,0.25);">'
+        + '<div style="font-size:13px;font-weight:700;color:#9fd6ff;margin-bottom:6px;">➕ 手動補發皮膚(三槽都查無、但學生有憑證時)</div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">'
+        + '<select id="_skin-grant-pick" style="flex:1;min-width:240px;padding:7px 10px;background:rgba(14,22,30,0.9);border:1.5px solid rgba(120,200,255,0.5);color:#fff;border-radius:6px;font-family:inherit;font-size:13px;"><option value="">— 選一個商店皮膚 —</option>'+opts+'</select>'
+        + '<button id="_skin-grant-btn" style="padding:7px 16px;font-size:13px;font-weight:800;background:rgba(120,200,255,0.2);border:2px solid #88bbff;color:#cfe3ff;border-radius:7px;cursor:pointer;font-family:inherit;">補發</button>'
+        + '<span id="_skin-grant-msg" style="font-size:12px;color:#aaffaa;align-self:center;"></span>'
+        + '</div></div>';
+    }
+    function _render(audit){
+      const c=_C();
+      const _union = audit.unionPortraits || {};
+      const _choice = audit.choice || {};
+      const heroes = Object.keys(_union).filter(h => (_union[h]||[]).length);
+      let shopN=0, levelN=0, otherN=0;
+      heroes.forEach(h => (_union[h]||[]).forEach(id => { const k=_classify(id); if(k==='shop') shopN++; else if(k==='level') levelN++; else otherN++; }));
+      const histMap = {}; (audit.skinHistory||[]).forEach(e => { if(e&&e.hero&&e.id) histMap[e.hero+'|'+e.id]=e; });
+      let html = '<div style="border:1px solid rgba(120,200,255,0.35);border-radius:8px;padding:11px 13px;margin-bottom:10px;background:rgba(0,0,0,0.3);">'
+        + '<div style="font-size:14px;color:#fff;"><b>'+_esc(audit.name||'(無名稱)')+'</b> '
+        + '<span style="color:#9fd6ff;font-size:12px;font-weight:700;">'+_esc(_classSeat(audit.email))+'</span> '
+        + '<span style="color:#aac;font-size:11px;font-family:monospace;">'+_esc(audit.email||'')+'</span></div>'
+        + '<div style="margin-top:5px;font-size:12px;color:#ddd;">皮膚合計 <b style="color:#fff;">'+(shopN+levelN+otherN)+'</b> 個 — '
+        + '<span style="color:#9af0b0;">🟢 商店 '+shopN+'</span> · <span style="color:#cfe3ff;">🔷 等級 '+levelN+'</span> · <span style="color:#ddd;">⬜ 其他 '+otherN+'</span></div>'
+        + '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">'
+        + '<button id="_skin-recover-btn" style="padding:7px 16px;font-size:13px;font-weight:800;background:rgba(80,180,120,0.22);border:2px solid #66cc88;color:#aaeebb;border-radius:7px;cursor:pointer;font-family:inherit;">🛟 一鍵跨槽復原皮膚(含選用)</button>'
+        + '<span id="_skin-recover-msg" style="font-size:12px;color:#aaffaa;align-self:center;"></span></div></div>';
+      html += heroes.sort().map(h => {
+        const ids = _union[h]||[];
+        const rows = ids.map(id => {
+          const k=_classify(id);
+          const badge = k==='shop' ? '<span style="color:#9af0b0;">🟢商店</span>' : k==='level' ? '<span style="color:#cfe3ff;">🔷等級</span>' : '<span style="color:#ddd;">⬜其他</span>';
+          const nm = (c.nameOf[h+'|'+id]) || id;
+          const chosen = (_choice[h]===id) ? ' <span style="color:#ffe066;">★使用中</span>' : '';
+          const hist = histMap[h+'|'+id];
+          const histTxt = hist ? (' <span style="color:#888;font-size:10px;">['+_esc(hist.source||'')+(hist.at?(' '+new Date(hist.at).toLocaleDateString('zh-TW')):'')+']</span>') : '';
+          return '<div style="display:flex;gap:8px;align-items:center;padding:3px 6px;font-size:12px;flex-wrap:wrap;">'
+            + badge+' <b style="color:#fff;">'+_esc(nm)+'</b> <span style="color:#789;font-size:10px;">'+_esc(id)+'</span>'+chosen+histTxt
+            + ' <span style="margin-left:auto;color:#9ab;font-size:10px;">槽:'+_esc(_slotMark(audit,h,id))+'</span></div>';
+        }).join('');
+        return '<div style="border:1px solid rgba(120,200,255,0.2);border-radius:7px;padding:7px 10px;margin-bottom:6px;background:rgba(0,0,0,0.22);">'
+          + '<div style="font-size:13px;font-weight:700;color:#9fd6ff;margin-bottom:3px;">'+_esc(h)+' <span style="color:#789;font-size:11px;">('+ids.length+')</span></div>'+rows+'</div>';
+      }).join('');
+      html += _grantPickerHtml();
+      _resultEl.innerHTML = html;
+      _wire(audit);
+    }
+    function _wire(audit){
+      const rb = document.getElementById('_skin-recover-btn');
+      const rm = document.getElementById('_skin-recover-msg');
+      if(rb) rb.onclick = async () => {
+        const ok = await _confirm('確定把【'+(audit.name||audit.uid)+'】三槽的皮膚聯集後復原回三槽嗎?\n(只增不減,連同玩家選用的皮膚一起還原;學生下次開遊戲生效)');
+        if(!ok) return;
+        rb.disabled=true; if(rm){ rm.style.color='#ccc'; rm.textContent='復原中...'; }
+        try{
+          const r = await window._fbAdminRecoverSkins(audit.uid);
+          if(r && r.ok){ if(rm){ rm.style.color='#aaffaa'; rm.textContent='✅ 已聯集復原 '+r.portraitCount+' 個皮膚到三槽。請告知學生重新整理。'; } rb.textContent='✅ 已復原'; }
+          else { rb.disabled=false; if(rm){ rm.style.color='#ff8888'; rm.textContent='❌ '+_esc((r&&r.reason)||'失敗'); } }
+        }catch(e){ rb.disabled=false; if(rm){ rm.style.color='#ff8888'; rm.textContent='❌ '+_esc(e.message||e); } }
+      };
+      const gb = document.getElementById('_skin-grant-btn');
+      const gp = document.getElementById('_skin-grant-pick');
+      const gm = document.getElementById('_skin-grant-msg');
+      if(gb) gb.onclick = async () => {
+        const v = gp && gp.value; if(!v){ if(gm){ gm.style.color='#ffcc66'; gm.textContent='⚠ 先選一個皮膚'; } return; }
+        const parts = v.split('|'); const hero=parts[0], id=parts[1];
+        const ok = await _confirm('補發皮膚「'+hero+' — '+((_C().nameOf[hero+'|'+id])||id)+'」給【'+(audit.name||audit.uid)+'】?');
+        if(!ok) return;
+        gb.disabled=true; if(gm){ gm.style.color='#ccc'; gm.textContent='補發中...'; }
+        try{
+          const r = await window._fbAdminGrantSkins(audit.uid, [{hero:hero, id:id}]);
+          if(r && r.ok){ if(gm){ gm.style.color='#aaffaa'; gm.textContent='✅ 已補發(新增 '+r.added+' 個)。可再按「查皮膚」確認。'; } gb.disabled=false; }
+          else { gb.disabled=false; if(gm){ gm.style.color='#ff8888'; gm.textContent='❌ '+_esc((r&&r.reason)||'失敗'); } }
+        }catch(e){ gb.disabled=false; if(gm){ gm.style.color='#ff8888'; gm.textContent='❌ '+_esc(e.message||e); } }
+      };
+    }
+    async function _doQuery(){
+      const input = (_queryEl && _queryEl.value || '').trim();
+      if(!input){ if(_statusEl){ _statusEl.style.color='#ffaa66'; _statusEl.textContent='請先輸入'; } return; }
+      if(_statusEl){ _statusEl.style.color='#aaccff'; _statusEl.textContent='查詢中...'; }
+      _searchBtn.disabled=true; _resultEl.innerHTML='';
+      try{
+        if(typeof window._fbAdminAuditSkins!=='function') throw new Error('_fbAdminAuditSkins 未載入,請重新整理');
+        const uid = await _resolveUid(input);
+        const a = await window._fbAdminAuditSkins(uid);
+        if(!a || !a.ok) throw new Error((a&&a.reason)||'查詢失敗');
+        _render(a);
+        if(_statusEl){ _statusEl.style.color='#88ddaa'; _statusEl.textContent='✅ uid='+uid.slice(0,12)+'…'; }
+      }catch(e){
+        if(e && e._multi && Array.isArray(e.candidates)){
+          if(_statusEl){ _statusEl.style.color='#ffcc66'; _statusEl.textContent='多筆候選,請點選'; }
+          _resultEl.innerHTML = e.candidates.map(cnd =>
+            '<button class="_skin-cand" data-uid="'+_esc(cnd.uid)+'" style="display:block;width:100%;text-align:left;margin-bottom:5px;padding:8px 12px;background:rgba(120,200,255,0.12);border:1px solid rgba(120,200,255,0.4);color:#dff0ff;border-radius:7px;cursor:pointer;font-family:inherit;">'
+            + _esc(cnd.displayName||cnd.name||'(無名稱)')+' <span style="color:#9fd6ff;">'+_esc(_classSeat(cnd.email))+'</span> <span style="color:#789;font-size:11px;">'+_esc(cnd.email||'')+'</span></button>'
+          ).join('');
+          _resultEl.querySelectorAll('._skin-cand').forEach(b => b.onclick = async () => {
+            _searchBtn.disabled=true; if(_statusEl){ _statusEl.style.color='#aaccff'; _statusEl.textContent='查詢中...'; }
+            try{ const a = await window._fbAdminAuditSkins(b.dataset.uid); _render(a); if(_statusEl){ _statusEl.style.color='#88ddaa'; _statusEl.textContent='✅'; } }
+            catch(err){ if(_statusEl){ _statusEl.style.color='#ff8888'; _statusEl.textContent='❌ '+_esc(err.message||err); } }
+            finally{ _searchBtn.disabled=false; }
+          });
+        } else {
+          if(_statusEl){ _statusEl.style.color='#ff8888'; _statusEl.textContent='❌ '+_esc(e.message||e); }
+        }
+      } finally { _searchBtn.disabled=false; }
+    }
+    _searchBtn.onclick = _doQuery;
+    if(_queryEl) _queryEl.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); _doQuery(); } });
   })();
 
   // ★ v1.0.20260510.5820 — 解除冷卻 / 每日次數限制按鈕
