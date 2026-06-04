@@ -2229,9 +2229,15 @@ async function _showAdminStatsPanelImpl(){
     }
     const _rar = (r) => r==='SSR' ? '🌈' : '⭐';
     function _roleBadge(role){
-      if(role==='original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(120,220,140,0.2);border:1px solid #66cc88;color:#aaeebb;">🟢 原始解鎖者</span>';
-      if(role==='polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(255,80,80,0.2);border:1px solid #ff7777;color:#ffbbbb;">🔴 被汙染</span>';
+      if(role==='original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(120,220,140,0.2);border:1px solid #66cc88;color:#aaeebb;">🟢 原始解鎖者(鐵證)</span>';
+      if(role==='polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(255,80,80,0.2);border:1px solid #ff7777;color:#ffbbbb;">🔴 被汙染(鐵證)</span>';
+      if(role==='likely_original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(230,200,80,0.18);border:1px solid #ddcc55;color:#ffe89a;" title="無 creatorUid 鐵證, 依等級/進度推測">🟡 推測原主(依等級)</span>';
+      if(role==='likely_polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(240,150,70,0.18);border:1px solid #ee9944;color:#ffcc99;" title="無 creatorUid 鐵證, 依等級/進度推測">🟠 推測被汙染(依等級)</span>';
       return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(180,180,180,0.15);border:1px solid #999;color:#ddd;">⬜ 待確認</span>';
+    }
+    // ★ v3.13.49b — 最佳身分顯示:名冊真名 → 暱稱 → 班級座號 → email → uid
+    function _who(m){
+      return (m.rosterName||'').trim() || (m.name||'').trim() || _classSeat(m.email) || (m.email||'') || ((m.uid||'').slice(0,8)+'…') || '(未知)';
     }
     function _memberHtml(m){
       const ssr = (m.ssrList||[]).map(s => {
@@ -2239,20 +2245,24 @@ async function _showAdminStatsPanelImpl(){
         const uHint = !s.creatorUid ? '<span style="color:#888;">無紀錄</span>'
           : own ? '<span style="color:#9af0b0;">本人建立</span>'
           : '<span style="color:#ff9a9a;">複製自 '+_esc(s.creatorUid)+'…</span>';
-        const t = s.at ? new Date(s.at).toLocaleString('zh-TW') : '—';
-        const ck = (m.role==='polluted') ? ' checked' : '';
+        const t = s.at ? new Date(s.at).toLocaleString('zh-TW') : '';
+        const ck = (m.role==='polluted') ? ' checked' : '';   // 只有鐵證『被汙染』預勾;推測類不預勾, 強制人工判斷
+        const lvStr = '<span style="color:#ffe066;font-weight:800;">Lv.'+(s.lv||0)+'</span>';
         return '<label style="display:flex;gap:6px;align-items:center;padding:2px 5px;font-size:11px;flex-wrap:wrap;cursor:pointer;">'
           + '<input type="checkbox" class="_cl-cb" data-name="'+_esc(s.name)+'"'+ck+' style="width:15px;height:15px;cursor:pointer;">'
-          + _rar(s.rarity)+' <b style="color:#fff;">'+_esc(s.name)+'</b> '+uHint
-          + ' <span style="margin-left:auto;color:#9ab;">'+_esc(t)+'</span></label>';
+          + _rar(s.rarity)+' <b style="color:#fff;">'+_esc(s.name)+'</b> '+lvStr+' '+uHint
+          + (t ? ' <span style="margin-left:auto;color:#9ab;font-size:10px;">'+_esc(t)+'</span>' : '<span style="margin-left:auto;"></span>')
+          + '</label>';
       }).join('');
+      const _dispName = (m.name||'').trim();
+      const _nick = (_dispName && _dispName !== _who(m)) ? ' <span style="color:#9ab;font-size:11px;">暱稱:'+_esc(_dispName)+'</span>' : '';
       return '<div class="_cl-member" data-uid="'+_esc(m.uid)+'" style="border:1px solid rgba(255,120,160,0.25);border-radius:7px;padding:8px 10px;margin-bottom:7px;background:rgba(0,0,0,0.25);">'
         + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
         + _roleBadge(m.role)
-        + ' <b style="color:#fff;font-size:13px;">'+_esc(m.name||'(無名稱)')+'</b>'
-        + ' <span style="color:#ffaad0;font-size:12px;font-weight:700;">'+_esc(_classSeat(m.email))+'</span>'
-        + ' <span style="color:#aac;font-size:11px;font-family:monospace;">'+_esc(m.email||'')+'</span>'
-        + ' <span style="color:#bbb;font-size:11px;margin-left:auto;">本人建立 '+(m.selfCreated||0)+' · 複製 '+(m.foreignCreated||0)+' · 總解鎖 '+m.totalUnlocked+' · ⭐Lv'+m.maxHeroLv+'</span>'
+        + ' <b style="color:#fff;font-size:14px;">'+_esc(_who(m))+'</b>'
+        + (m.email ? ' <span style="color:#aac;font-size:11px;font-family:monospace;">'+_esc(m.email)+'</span>' : '')
+        + _nick
+        + ' <span style="color:#bbb;font-size:11px;margin-left:auto;">本人建立 '+(m.selfCreated||0)+' · 複製 '+(m.foreignCreated||0)+' · 總解鎖 '+m.totalUnlocked+' · ⭐最高Lv'+m.maxHeroLv+' · <span style="color:#ffe066;">稀有Lv總和 '+(m.clusterHeroLvSum||0)+'</span></span>'
         + '</div>'
         + '<div style="margin-top:5px;max-height:200px;overflow-y:auto;">'+ssr+'</div>'
         + '<div style="margin-top:6px;">'
@@ -2261,15 +2271,24 @@ async function _showAdminStatsPanelImpl(){
         + '</div></div>';
     }
     function _clusterHtml(c){
-      const tag = c.isPollution ? '🔴 鐵證群' : '🔷 疑似群';
-      const tagCss = c.isPollution ? 'background:rgba(255,80,80,0.22);border:1.5px solid #ff7777;color:#ffbbbb;' : 'background:rgba(120,170,255,0.18);border:1.5px solid #6699ff;color:#cfe3ff;';
+      let tag, tagCss;
+      if(c.isPollution){ tag='🔴 鐵證群'; tagCss='background:rgba(255,80,80,0.22);border:1.5px solid #ff7777;color:#ffbbbb;'; }
+      else if(c.hasCreatorEvidence){ tag='🔷 疑似群'; tagCss='background:rgba(120,170,255,0.18);border:1.5px solid #6699ff;color:#cfe3ff;'; }
+      else { tag='🟡 待人工判斷群'; tagCss='background:rgba(230,200,80,0.18);border:1.5px solid #ddcc55;color:#ffe89a;'; }
       const exact = c.exactTimeMatch ? ' <span style="color:#ff9a9a;font-size:11px;">⏱時間戳完全相同</span>' : '';
+      let evNote = '';
+      if(c.evidence==='creatorUid') evNote = '⚠ creatorUid 顯示有「跨帳號複製」(鐵證)→ 紅色「被汙染」者可直接處理。';
+      else if(c.evidence==='exactTime') evNote = '⏱ 解鎖時間戳完全相同(同一次解鎖被整份複製, 鐵證)。';
+      else if(c.evidence==='creatorUid_no_foreign') evNote = '✓ 有解鎖紀錄、creatorUid 都是本人 — 較可能是「撞序列/活動」而非汙染, 刪前務必再確認。';
+      else evNote = '⚠ 此組稀有英雄全為「無紀錄」(多為 2026/5/28 前的舊英雄)→ 沒有 creatorUid 鐵證。下方「🟡 推測原主 / 🟠 推測被汙染」是依『稀有等級總和』推測, 不是鐵證。請搭配「班級座號相鄰 = 同台 iPad」+ 實際等級人工判斷;建議改用「發刪除預告」(玩家可保留+可復原), 不要直接收回。';
+      const evCss = c.isPollution ? 'color:#ffbbbb;' : 'color:#ffe89a;';
       return '<div class="_cl-group" style="border:2px solid rgba(255,120,160,0.4);border-radius:9px;padding:11px 13px;margin-bottom:14px;background:rgba(0,0,0,0.32);">'
-        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px;">'
+        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px;">'
         + '<span style="padding:2px 9px;border-radius:6px;font-size:12px;font-weight:800;'+tagCss+'">'+tag+'</span>'+exact
         + ' <b style="color:#fff;font-size:13px;">'+c.memberCount+' 人共用</b>'
         + ' <span style="color:#ddd;font-size:12px;">序列 '+c.seqLen+' 隻:'+_esc(c.orderSig)+'</span>'
         + '</div>'
+        + '<div style="font-size:11px;line-height:1.5;margin-bottom:7px;padding:5px 8px;border-radius:6px;background:rgba(0,0,0,0.3);'+evCss+'">'+evNote+'</div>'
         + (c.members||[]).map(_memberHtml).join('')
         + '</div>';
     }
