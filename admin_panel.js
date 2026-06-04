@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.39';
+window.ADMIN_PANEL_VERSION = 'v3.13.41';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -279,6 +279,7 @@ async function _showAdminStatsPanelImpl(){
           <button class="_admin-gm-tmpl-btn" data-tmpl="maintNow" type="button" title="維修開始" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,100,80,0.2);border:1.5px solid #ff6644;color:#ffccbb;border-radius:5px;cursor:pointer;font-family:inherit;">🔧 維修中</button>
           <button class="_admin-gm-tmpl-btn" data-tmpl="maintDone" type="button" title="維修完成" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(120,220,120,0.2);border:1.5px solid #66cc44;color:#aaeeaa;border-radius:5px;cursor:pointer;font-family:inherit;">✅ 維修完成</button>
           <button class="_admin-gm-tmpl-btn" data-tmpl="bug" type="button" title="BUG 異常解鎖回收(老師親自擬的長文)" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,100,80,0.2);border:1.5px solid #ff8866;color:#ffccbb;border-radius:5px;cursor:pointer;font-family:inherit;">📜 BUG 異常回收</button>
+          <button class="_admin-gm-tmpl-btn" data-tmpl="pollutionRecycle" type="button" title="帳號汙染回收溫馨公告(不定期掃描+回收+補償,搭配 🔬 稀有暴增稽核)" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,150,200,0.2);border:1.5px solid #ff88bb;color:#ffaad0;border-radius:5px;cursor:pointer;font-family:inherit;">💖 汙染回收公告</button>
           <button class="_admin-gm-tmpl-btn" data-tmpl="bugFixed" type="button" title="緊急 BUG 修補完成" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(120,200,255,0.2);border:1.5px solid #66aaff;color:#aaccff;border-radius:5px;cursor:pointer;font-family:inherit;">🛠 緊急修補完成</button>
           <button class="_admin-gm-tmpl-btn" data-tmpl="newFeat" type="button" title="新功能上線" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(150,200,255,0.2);border:1.5px solid #88aaff;color:#bbccff;border-radius:5px;cursor:pointer;font-family:inherit;">🎉 新功能上線</button>
           <button class="_admin-gm-tmpl-btn" data-tmpl="eventStart" type="button" title="活動開始(雙倍經驗等)" style="padding:5px 11px;font-size:11px;font-weight:700;background:rgba(255,180,80,0.2);border:1.5px solid #ffaa33;color:#ffddaa;border-radius:5px;cursor:pointer;font-family:inherit;">🎊 活動開始</button>
@@ -898,6 +899,43 @@ async function _showAdminStatsPanelImpl(){
           <span id="_admin-inflated-status" style="font-size:12px;color:#ccc;"></span>
         </div>
         <div id="_admin-inflated-result" style="margin-top:6px;font-size:13px;color:#ffd6e8;line-height:1.6;max-height:560px;overflow-y:auto;"></div>
+      </div>
+
+      <!-- ★ v3.13.41(2026-06-04) — 稀有暴增稽核:SSR+SR、分四類來源、逐隻勾選收回(老師指定強化版) -->
+      <div id="_admin-rare-audit-section" style="background:rgba(30,18,48,0.6);border:2px solid rgba(180,140,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#cbb3ff;margin-bottom:8px;">🔬 稀有暴增稽核(SSR / SR・分來源・逐隻勾選收回)</div>
+        <div style="font-size:13px;color:#e6dcff;margin-bottom:12px;line-height:1.65;">
+          掃描全校玩家,找出「<b>一天內暴增 SSR / SR</b>」的帳號,並把每隻稀有英雄依<b>獲得方式</b>分四類:<br>
+          <span style="color:#ff9a9a;">🟥 不明汙染</span>(roster 內有、查無任何解鎖紀錄 → 跨帳號汙染指紋) ・
+          <span style="color:#ffd27a;">🟧 BOSS 解鎖</span> ・
+          <span style="color:#9ad0ff;">🟦 召喚</span> ・
+          <span style="color:#9af0b0;">🟩 GM 補償</span> ・
+          <span style="color:#cccccc;">⬜ 其他/未標記</span><br>
+          <span style="color:#ffcc88;">⚠ 啟發式:v3.11.10(5/28)之前解鎖的舊稀有英雄沒有紀錄,也會被列到「不明汙染」。<b>收回前請看名單確認</b>(你最清楚那位學生本來有沒有)。</span><br>
+          <span style="color:#aaffcc;">預設只勾選「🟥 不明汙染」;合法取得(BOSS / 召喚 / GM)不預勾。收回會清掉該英雄(含等級/技能/爆發)並寫反污染信號,學生下次開遊戲自動以雲端為準。</span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <label style="font-size:13px;color:#e6dcff;">暴增時間窗
+            <select id="_admin-rare-window" style="margin-left:4px;padding:6px 10px;background:rgba(20,16,30,0.9);border:1.5px solid rgba(180,140,255,0.5);color:#fff;border-radius:6px;font-family:inherit;">
+              <option value="3600000">最近 1 小時</option>
+              <option value="21600000">最近 6 小時</option>
+              <option value="86400000" selected>最近 1 天</option>
+              <option value="259200000">最近 3 天</option>
+              <option value="604800000">最近 7 天</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:#e6dcff;">門檻 ≥
+            <input id="_admin-rare-threshold" type="number" min="1" max="60" value="5"
+              style="width:64px;padding:6px 8px;margin-left:4px;background:rgba(20,16,30,0.9);border:1.5px solid rgba(180,140,255,0.5);color:#fff;border-radius:6px;font-family:inherit;">
+          </label>
+          <button id="_admin-rare-scan" style="padding:8px 20px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,#7a4ec2,#4e2c8c);border:2px solid #b388ff;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 0 12px rgba(180,140,255,0.3);">
+            🔍 掃描全校
+          </button>
+          <span id="_admin-rare-status" style="font-size:12px;color:#ccc;"></span>
+        </div>
+        <div id="_admin-rare-result" style="margin-top:6px;font-size:13px;color:#e6dcff;line-height:1.6;max-height:640px;overflow-y:auto;"></div>
       </div>
 
       <!-- ★ FIX 20260519(v7) — 帳號完全重置 + 重建工具 -->
@@ -1775,6 +1813,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
       { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
       { sec: '_admin-inflated-section',         label: '🧹 帳號汙染掃描',          hint: '掃出被上一位汙染、暴增 SSR 的帳號並一鍵收回' },
+      { sec: '_admin-rare-audit-section',       label: '🔬 稀有暴增稽核',          hint: 'SSR+SR 分四類來源(BOSS/召喚/GM/汙染)逐隻勾選收回' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
@@ -1946,6 +1985,170 @@ async function _showAdminStatsPanelImpl(){
       }catch(e){
         _statusEl.textContent = '';
         _resultEl.innerHTML = '<span style="color:#ff8888;">❌ 掃描失敗:'+_esc(e.message||e)+'</span>';
+      }
+    };
+  })();
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.13.41(2026-06-04) — 稀有暴增稽核(SSR+SR・分來源・逐隻勾選收回)事件綁定
+  //   後端在 index.html(window):_fbAdminScanRareSpikes / _fbAdminBulkRemoveHeroes
+  // ════════════════════════════════════════════════════════════════════
+  (function _bindRareAudit(){
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _confirm = (msg) => (typeof window._customConfirm === 'function') ? window._customConfirm(msg) : Promise.resolve(window.confirm(msg));
+    const _scanBtn  = document.getElementById('_admin-rare-scan');
+    const _winEl    = document.getElementById('_admin-rare-window');
+    const _thresEl  = document.getElementById('_admin-rare-threshold');
+    const _statusEl = document.getElementById('_admin-rare-status');
+    const _resultEl = document.getElementById('_admin-rare-result');
+    if(!_scanBtn || !_resultEl) return;
+
+    // 來源分類 → 徽章樣式
+    const _CAT_BADGE = {
+      pollution: { txt:'🟥 不明汙染', bg:'rgba(255,80,80,0.22)',  bd:'#ff7777', fg:'#ffbbbb' },
+      boss:      { txt:'🟧 BOSS解鎖', bg:'rgba(255,170,60,0.18)', bd:'#ffaa33', fg:'#ffd9a0' },
+      summon:    { txt:'🟦 召喚',     bg:'rgba(100,170,255,0.18)',bd:'#66aaff', fg:'#aaccff' },
+      gm:        { txt:'🟩 GM補償',   bg:'rgba(120,220,140,0.18)',bd:'#66cc88', fg:'#aaeebb' },
+      other:     { txt:'⬜ 其他/未標記',bg:'rgba(180,180,180,0.15)',bd:'#999',   fg:'#ddd' },
+    };
+    function _catBadge(cat, source){
+      const c = _CAT_BADGE[cat] || _CAT_BADGE.other;
+      const _srcHint = (cat === 'other' && source) ? ('(' + _esc(source) + ')') : '';
+      return '<span style="display:inline-block;padding:1px 7px;border-radius:5px;font-size:11px;font-weight:700;'
+        + 'background:' + c.bg + ';border:1px solid ' + c.bd + ';color:' + c.fg + ';white-space:nowrap;">'
+        + c.txt + _srcHint + '</span>';
+    }
+    function _rarBadge(rar){
+      if(rar === 'SSR'){
+        return '<span style="display:inline-block;padding:1px 6px;border-radius:5px;font-size:11px;font-weight:800;'
+          + 'background:linear-gradient(135deg,#ff66cc,#ffcc33,#66ccff);color:#3a1a2a;white-space:nowrap;">🌈SSR</span>';
+      }
+      return '<span style="display:inline-block;padding:1px 6px;border-radius:5px;font-size:11px;font-weight:800;'
+        + 'background:linear-gradient(135deg,#ffd33b,#e8a623);color:#3a2200;white-space:nowrap;">⭐SR</span>';
+    }
+    function _fmtTime(at){
+      if(!at) return '<span style="color:#888;">—(無紀錄)</span>';
+      try{ return '<span style="color:#bbb;">' + new Date(at).toLocaleString('zh-TW') + '</span>'; }
+      catch(_){ return '<span style="color:#bbb;">' + at + '</span>'; }
+    }
+
+    function _heroRow(h){
+      const _checked = (h.cat === 'pollution') ? ' checked' : '';
+      return '<label class="_rare-hero-row" style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;'
+        + 'background:rgba(0,0,0,0.25);margin-bottom:4px;cursor:pointer;flex-wrap:wrap;">'
+        + '<input type="checkbox" class="_rare-hero-cb" data-name="' + _esc(h.name) + '" data-cat="' + _esc(h.cat) + '"' + _checked
+        + ' style="width:18px;height:18px;cursor:pointer;flex:0 0 auto;">'
+        + _rarBadge(h.rarity)
+        + '<b style="color:#fff;font-size:13px;min-width:96px;">' + _esc(h.name) + '</b>'
+        + _catBadge(h.cat, h.source)
+        + '<span style="font-size:11px;margin-left:auto;">' + _fmtTime(h.at) + '</span>'
+        + '</label>';
+    }
+
+    function _cardHtml(p){
+      const _cc = p.catCounts || {};
+      const _short = _esc((p.uid || '').slice(0, 14));
+      return '<div class="_rare-card" data-uid="' + _esc(p.uid) + '" style="border:1px solid rgba(180,140,255,0.35);border-radius:8px;padding:11px 13px;margin-bottom:10px;background:rgba(0,0,0,0.32);">'
+        + '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;">'
+        +   '<div style="min-width:200px;"><b style="color:#fff;font-size:14px;">' + _esc(p.name || '(無名稱)') + '</b>'
+        +     '<span style="color:#aac;font-size:11px;font-family:monospace;"> ' + _esc(p.email || '') + ' · ' + _short + '…</span></div>'
+        +   '<div style="font-size:12px;color:#ddd;">'
+        +     '🌈SSR <b style="color:#ffccff;">' + p.ssrTotal + '</b> · ⭐SR <b style="color:#ffe066;">' + p.srTotal + '</b>'
+        +     ' &nbsp;|&nbsp; <span style="color:#ff9a9a;">🟥汙染 ' + p.pollutionCount + '</span>'
+        +     ' &nbsp; <span style="color:#ffd27a;">本窗新增 ' + p.recentCount + '</span>'
+        +     ' &nbsp;|&nbsp; 💰' + p.knowledgeCoins + ' ⭐Lv' + p.maxHeroLv + '</div>'
+        + '</div>'
+        + '<div style="margin-top:5px;font-size:11px;color:#bb9;">'
+        +   '分類:🟥' + (_cc.pollution||0) + ' · 🟧' + (_cc.boss||0) + ' · 🟦' + (_cc.summon||0) + ' · 🟩' + (_cc.gm||0) + ' · ⬜' + (_cc.other||0)
+        + '</div>'
+        + '<div style="margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+        +   '<button class="_rare-sel-pollution" type="button" style="padding:4px 11px;font-size:12px;font-weight:700;background:rgba(255,80,80,0.18);border:1.5px solid #ff7777;color:#ffbbbb;border-radius:6px;cursor:pointer;font-family:inherit;">只勾🟥不明汙染</button>'
+        +   '<button class="_rare-sel-none" type="button" style="padding:4px 11px;font-size:12px;font-weight:700;background:rgba(150,150,150,0.15);border:1.5px solid #999;color:#ddd;border-radius:6px;cursor:pointer;font-family:inherit;">全部取消</button>'
+        +   '<span style="font-size:12px;color:#cbb3ff;">已勾選 <b class="_rare-count" style="color:#fff;">0</b> 隻</span>'
+        + '</div>'
+        + '<div class="_rare-heroes" style="margin-top:7px;max-height:340px;overflow-y:auto;padding-right:4px;">'
+        +   p.heroes.map(_heroRow).join('')
+        + '</div>'
+        + '<div style="margin-top:9px;">'
+        +   '<button class="_rare-remove" type="button" style="padding:7px 16px;font-size:13px;font-weight:800;'
+        +     'background:rgba(255,80,80,0.22);border:2px solid #ff7777;color:#ffbbbb;border-radius:7px;cursor:pointer;font-family:inherit;">'
+        +     '🗑 收回勾選的英雄</button>'
+        +   '<span class="_rare-rowmsg" style="margin-left:10px;font-size:12px;color:#aaffaa;"></span>'
+        + '</div></div>';
+    }
+
+    function _wireCard(card, p){
+      const _cbs = () => Array.prototype.slice.call(card.querySelectorAll('._rare-hero-cb'));
+      const _countEl = card.querySelector('._rare-count');
+      const _updateCount = () => { if(_countEl) _countEl.textContent = _cbs().filter(cb => cb.checked).length; };
+      _cbs().forEach(cb => { cb.onchange = _updateCount; });
+      _updateCount();
+      const _selP = card.querySelector('._rare-sel-pollution');
+      const _selN = card.querySelector('._rare-sel-none');
+      if(_selP) _selP.onclick = () => { _cbs().forEach(cb => { cb.checked = (cb.dataset.cat === 'pollution'); }); _updateCount(); };
+      if(_selN) _selN.onclick = () => { _cbs().forEach(cb => { cb.checked = false; }); _updateCount(); };
+      const _rmBtn = card.querySelector('._rare-remove');
+      const _msg   = card.querySelector('._rare-rowmsg');
+      if(_rmBtn) _rmBtn.onclick = async () => {
+        const _names = _cbs().filter(cb => cb.checked).map(cb => cb.dataset.name);
+        if(!_names.length){ if(_msg){ _msg.style.color = '#ffcc66'; _msg.textContent = '⚠ 還沒勾選任何英雄'; } return; }
+        const _ok = await _confirm('確定要從【' + (p.name || p.uid) + '】收回以下 ' + _names.length + ' 隻稀有英雄嗎?\n\n'
+          + _names.join('、')
+          + '\n\n⚠ 連同這些英雄的等級/技能/爆發都會一併清除。\n收回後學生下次開遊戲會以雲端為準。此動作會記入稽核紀錄。');
+        if(!_ok) return;
+        _rmBtn.disabled = true; if(_msg){ _msg.style.color = '#ccc'; _msg.textContent = '收回中...'; }
+        try{
+          const _res = await window._fbAdminBulkRemoveHeroes(p.uid, _names, { reason: '稀有暴增稽核收回(GM 勾選)' });
+          if(_res && _res.ok){
+            if(_msg){ _msg.style.color = '#aaffaa'; _msg.textContent = '✅ 已收回 ' + _res.removed + ' 隻,剩 ' + _res.remaining + ' 隻英雄。請告知學生重新整理。'; }
+            _rmBtn.textContent = '✅ 已收回 ' + _res.removed + ' 隻';
+            // 收回成功:把已勾選的列灰掉並停用
+            _cbs().forEach(cb => { if(cb.checked){ cb.checked = false; cb.disabled = true; const row = cb.closest('._rare-hero-row'); if(row){ row.style.opacity = '0.4'; row.style.textDecoration = 'line-through'; } } });
+            _updateCount();
+          } else {
+            _rmBtn.disabled = false;
+            if(_msg){ _msg.style.color = '#ff8888'; _msg.textContent = '❌ 失敗:' + _esc((_res && _res.reason) || '未知'); }
+          }
+        }catch(e){
+          _rmBtn.disabled = false;
+          if(_msg){ _msg.style.color = '#ff8888'; _msg.textContent = '❌ 失敗:' + _esc(e.message || e); }
+        }
+      };
+    }
+
+    let _lastPlayers = [];
+    _scanBtn.onclick = async () => {
+      const _winMs = parseInt(_winEl && _winEl.value, 10) || 86400000;
+      const _thr   = parseInt(_thresEl && _thresEl.value, 10) || 5;
+      _statusEl.textContent = '⏳ 掃描全校玩家中(可能要幾秒)...';
+      _resultEl.innerHTML = '';
+      if(typeof window._fbAdminScanRareSpikes !== 'function'){
+        _statusEl.textContent = '';
+        _resultEl.innerHTML = '<span style="color:#ff8888;">❌ _fbAdminScanRareSpikes 未載入,請重新整理</span>';
+        return;
+      }
+      try{
+        const _r = await window._fbAdminScanRareSpikes({ windowMs: _winMs, threshold: _thr });
+        if(!_r || !_r.ok){
+          _statusEl.textContent = '';
+          _resultEl.innerHTML = '<span style="color:#ff8888;">❌ 掃描失敗:' + _esc((_r && _r.reason) || '未知') + '</span>';
+          return;
+        }
+        _lastPlayers = _r.players || [];
+        const _winTxt = (_winEl && _winEl.options[_winEl.selectedIndex] && _winEl.options[_winEl.selectedIndex].text) || '';
+        _statusEl.textContent = '✅ 命中 ' + _r.count + ' 個帳號(門檻 ≥ ' + _thr + ',時間窗 ' + _winTxt + ')';
+        if(!_lastPlayers.length){
+          _resultEl.innerHTML = '<div style="color:#aaffaa;padding:10px;">🎉 沒有符合條件的帳號,目前看起來乾淨。</div>';
+          return;
+        }
+        _resultEl.innerHTML = _lastPlayers.map(_cardHtml).join('');
+        _resultEl.querySelectorAll('._rare-card').forEach(card => {
+          const _p = _lastPlayers.find(x => x.uid === card.dataset.uid);
+          if(_p) _wireCard(card, _p);
+        });
+      }catch(e){
+        _statusEl.textContent = '';
+        _resultEl.innerHTML = '<span style="color:#ff8888;">❌ 掃描失敗:' + _esc(e.message || e) + '</span>';
       }
     };
   })();
@@ -2666,6 +2869,29 @@ async function _showAdminStatsPanelImpl(){
       text: '📚 考試加油!\n\n各位小英雄,考試期間請以課業為重!\n回來玩遊戲時要記得先寫完作業、複習完功課喔!\n知識本身就是最強的爆發技!\n考完試大家再回來繼續冒險,管理員為小英雄加油!💪',
       type: 'banner',
       color: '#ccaa66',
+    },
+    // ── 帳號汙染回收(立志又溫馨,老師指定 v3.13.41)──
+    pollutionRecycle: {
+      text: '🌟 給每一位小英雄的悄悄話\n\n'
+        + '在我們這座知識冒險的世界裡,每一隻英雄都是靠你自己的努力、勇氣\n'
+        + '和一點點運氣,才一個一個遇見的。正因為「得來不易」,他們才這麼珍貴 ✨\n\n'
+        + '因為很多小英雄是共用平板登入的,偶爾會有一個小狀況:\n'
+        + '上一位同學的英雄,不小心被帶進了你的帳號裡。\n'
+        + '那些英雄其實「本來不屬於你」,他們也想回到原本主人的身邊 🏠\n\n'
+        + '所以管理員會「不定期」幫大家檢查帳號,\n'
+        + '把這些跑錯家的英雄溫柔地送回去。\n'
+        + '而你在他們身上投入過的等級、技能、爆發,管理員都會原數補回給你,\n'
+        + '也會額外送上一份小禮物,當作打擾你的補償 🎁\n\n'
+        + '📣 想告訴所有小英雄:\n'
+        + '真正的強大,從來不是一次擁有很多英雄,\n'
+        + '而是靠自己一場一場戰鬥、一題一題答對,慢慢變強的過程。\n'
+        + '那份實力,才是只屬於你、誰也拿不走的 💪\n\n'
+        + '如果你發現帳號裡多了奇怪的東西,或遇到任何怪事,\n'
+        + '請用「🐛 回報錯誤」告訴管理員 — 每一次回報,都讓這個世界更好。\n\n'
+        + '讓我們一起守護這座乾乾淨淨、公平又溫暖的冒險世界 🗺\n'
+        + '— LXPSGAME 管理員 敬上',
+      type: 'modal',
+      color: '#ff99cc',
     },
   };
 
