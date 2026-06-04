@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.47';
+window.ADMIN_PANEL_VERSION = 'v3.13.48';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -7800,11 +7800,41 @@ async function _showAdminStatsPanelImpl(){
     }
 
     function _renderCoinTab(list){
+      // ★ v3.13.48 — 跨槽「歷史最高持有」查詢面板(回答「他真的持有過多少錢」)
+      const _peakHtml = `
+        <div style="background:rgba(20,40,30,0.45);border-left:4px solid #66cc88;padding:12px;border-radius:8px;margin-bottom:14px;">
+          <div style="font-size:13px;color:#aaeebb;font-weight:700;margin-bottom:6px;">🔎 查歷史最高持有(跨 main / live / safe 三槽 + 帳本)</div>
+          <button id="_aa-coin-peak-btn" style="padding:7px 16px;font-size:13px;font-weight:700;background:#2c8c5e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">查跨槽歷史最高</button>
+          <span style="font-size:11px;color:#9b9;margin-left:8px;">帳本 v3.13.48 起才記;更早高峰只能從三槽快照推估</span>
+          <div id="_aa-coin-peak-result" style="margin-top:8px;font-size:12px;color:#dfe;line-height:1.6;"></div>
+        </div>`;
+      function _wirePeak(){
+        const pkBtn = _contentEl.querySelector('#_aa-coin-peak-btn');
+        const pkRes = _contentEl.querySelector('#_aa-coin-peak-result');
+        if(!pkBtn) return;
+        pkBtn.onclick = async function(){
+          if(!_curUid){ if(pkRes){ pkRes.style.color='#ffcc66'; pkRes.textContent='請先查詢玩家'; } return; }
+          if(typeof window._fbAdminAuditCoins !== 'function'){ if(pkRes){ pkRes.style.color='#ff8866'; pkRes.textContent='❌ _fbAdminAuditCoins 未載入,請重新整理'; } return; }
+          pkBtn.disabled=true; if(pkRes){ pkRes.style.color='#ccc'; pkRes.textContent='查詢中...'; }
+          try{
+            const r = await window._fbAdminAuditCoins(_curUid);
+            if(!r || !r.ok){ if(pkRes){ pkRes.style.color='#ff8866'; pkRes.textContent='❌ '+_esc((r&&r.reason)||'失敗'); } pkBtn.disabled=false; return; }
+            const sn = (r.snapshots||[]).map(s => '・'+_esc(s.slot)+':目前 '+(s.knowledgeCoins||0).toLocaleString()
+              + (s.summaryCoins!=null?(' / 摘要 '+s.summaryCoins.toLocaleString()):'')
+              + (s.prevSummaryCoins!=null?(' / 前次 '+s.prevSummaryCoins.toLocaleString()):'')).join('<br>');
+            if(pkRes){ pkRes.style.color='#dfe'; pkRes.innerHTML =
+              '<b style="color:#ffe066;font-size:15px;">歷史可證最高:'+(r.maxObserved||0).toLocaleString()+' 知識幣</b><br>'
+              + '目前餘額(各槽最大):'+(r.currentCoins||0).toLocaleString()+'<br>'+sn
+              + '<br><span style="color:#9b9;">帳本筆數:'+(r.ledgerCount||0)+'(下方表格顯示明細)</span>'; }
+            pkBtn.disabled=false;
+          }catch(e){ if(pkRes){ pkRes.style.color='#ff8866'; pkRes.textContent='❌ '+_esc(e.message||e); } pkBtn.disabled=false; }
+        };
+      }
       if(!list.length){
-        _contentEl.innerHTML = `
+        _contentEl.innerHTML = _peakHtml + `
           <div style="text-align:center;color:#888;padding:20px;font-size:13px;">
             尚無知識幣帳目紀錄<br>
-            <span style="font-size:11px;color:#665;">(此功能需要主程式端寫入 _coinTransactions 欄位,目前未啟用)</span>
+            <span style="font-size:11px;color:#665;">(帳本已於 v3.13.48 啟用;玩家有金流變動、且該帳號重新上線同步後就會出現)</span>
           </div>
           <div style="background:rgba(40,30,60,0.4);border-left:4px solid #cc88ff;padding:12px;border-radius:8px;margin-top:14px;">
             <div style="font-size:13px;color:#ddccff;margin-bottom:8px;font-weight:700;">💰 手動調整知識幣餘額</div>
@@ -7816,6 +7846,7 @@ async function _showAdminStatsPanelImpl(){
           </div>
         `;
         _bindCoinSetBtn();
+        _wirePeak();
         return;
       }
       const rows = list.map(e => {
@@ -7831,7 +7862,7 @@ async function _showAdminStatsPanelImpl(){
           </td>
         </tr>`;
       }).join('');
-      _contentEl.innerHTML = `
+      _contentEl.innerHTML = _peakHtml + `
         <div style="margin-bottom:6px;font-size:12px;color:#aac;">共 ${list.length} 筆</div>
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
@@ -7869,6 +7900,7 @@ async function _showAdminStatsPanelImpl(){
         };
       });
       _bindCoinSetBtn();
+      _wirePeak();
     }
 
     function _bindCoinSetBtn(){
