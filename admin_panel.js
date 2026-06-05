@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.49';
+window.ADMIN_PANEL_VERSION = 'v3.13.50';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -7635,17 +7635,23 @@ async function _showAdminStatsPanelImpl(){
         return `<div style="text-align:center;color:#888;padding:14px;font-size:13px;">此玩家目前沒有擁有任何英雄資料</div>`;
       }
       const _pollution = _owned.filter(h => h && h.cat === 'pollution');
+      const _ownUid12B = (_curUid || '').slice(0, 12);
+      const _ownedTreB = Array.isArray(full.ownedTreasures) ? full.ownedTreasures : [];
+      const _polTreB = _ownedTreB.filter(t => t && ((t.cat === 'pollution') || (t.creatorUid && t.creatorUid !== _ownUid12B)));
       const _pp = full.pendingPollutionPurge;
       const _hasActivePurge = _pp && (_pp.status === 'pending' || _pp.status === 'acknowledged');
       // 預告狀態 + 刪除記錄
       const _statusHtml = _purgeStatusHtml(full);
-      // 汙染 banner(有汙染且無進行中預告才顯示「發預告」)
+      // 汙染 banner(有汙染英雄 或 汙染至寶, 且無進行中預告才顯示「發預告」)
       let _banner = '';
-      if(_pollution.length && !_hasActivePurge){
+      if((_pollution.length || _polTreB.length) && !_hasActivePurge){
+        const _bParts = [];
+        if(_pollution.length) _bParts.push(_pollution.length + ' 隻英雄');
+        if(_polTreB.length) _bParts.push(_polTreB.length + ' 件至寶');
         _banner = `<div style="background:linear-gradient(135deg,rgba(200,60,40,0.3),rgba(140,40,80,0.2));border:2px solid #ff6644;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
           <div style="flex:1;min-width:200px;">
-            <div style="font-size:14px;font-weight:800;color:#ffaaaa;">⚠ 偵測到 ${_pollution.length} 隻「來源不明」英雄(疑似跨帳號汙染)</div>
-            <div style="font-size:11px;color:#ffcccc;margin-top:3px;">不直接刪 — 改發「刪除預告」:玩家登入會看到緣由/補償並可保留 1 隻,之後你再套用刪除(刪前存快照,可復原)。</div>
+            <div style="font-size:14px;font-weight:800;color:#ffaaaa;">⚠ 偵測到 ${_bParts.join(' + ')}「來源不明」(疑似跨帳號汙染)</div>
+            <div style="font-size:11px;color:#ffcccc;margin-top:3px;">不直接刪 — 改發「刪除預告」:玩家登入會看到緣由/補償並可分別保留 1 隻英雄 + 1 件至寶,之後你再套用刪除(刪前存快照,可復原)。</div>
           </div>
           <button id="_pp-notice-btn" style="padding:9px 20px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 3px 10px rgba(255,80,60,0.45);">📢 發出刪除預告</button>
         </div>`;
@@ -7693,17 +7699,19 @@ async function _showAdminStatsPanelImpl(){
     function _purgeStatusHtml(full){
       const pp = full.pendingPollutionPurge;
       const log = Array.isArray(full.pollutionPurgeLog) ? full.pollutionPurgeLog : [];
+      const _cnt = (h,t) => { const _p=[]; if(h) _p.push(h+' 隻英雄'); if(t) _p.push(t+' 件至寶'); return _p.join(' + ') || '0'; };
       let html = '';
       if(pp && pp.status === 'pending'){
         html += `<div style="background:rgba(80,80,200,0.18);border:2px solid #6688ff;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:800;color:#aaccff;">⏳ 刪除預告已發出(${(pp.heroes||[]).length} 隻)— 等待玩家登入確認</div>
+          <div style="font-size:13px;font-weight:800;color:#aaccff;">⏳ 刪除預告已發出(${_cnt((pp.heroes||[]).length,(pp.treasures||[]).length)})— 等待玩家登入確認</div>
           <div style="font-size:11px;color:#bcd;margin-top:3px;">緣由:${_esc(pp.reason||'')}　|　發出:${_fmtTime(pp.createdAt)}</div>
           <button class="_pp-cancel-btn" style="margin-top:8px;padding:6px 14px;font-size:12px;background:#665;color:#fff;border:none;border-radius:6px;cursor:pointer;">✖ 撤銷預告</button>
         </div>`;
       } else if(pp && pp.status === 'acknowledged'){
+        const _keep = []; if(pp.playerKeptHero) _keep.push('英雄「'+_esc(pp.playerKeptHero)+'」'); if(pp.playerKeptTreasure) _keep.push('至寶「'+_esc(pp.playerKeptTreasure)+'」');
         html += `<div style="background:rgba(80,160,80,0.18);border:2px solid #66cc66;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:800;color:#88dd88;">✅ 玩家已確認預告(${(pp.heroes||[]).length} 隻)— 可套用刪除</div>
-          <div style="font-size:11px;color:#cdc;margin-top:3px;">保留:${pp.playerKeptHero?('<b style="color:#ffe066;">'+_esc(pp.playerKeptHero)+'</b>(不刪不補償)'):'(玩家未保留任何一隻)'}　|　確認:${_fmtTime(pp.playerRespondedAt)}</div>
+          <div style="font-size:13px;font-weight:800;color:#88dd88;">✅ 玩家已確認預告(${_cnt((pp.heroes||[]).length,(pp.treasures||[]).length)})— 可套用刪除</div>
+          <div style="font-size:11px;color:#cdc;margin-top:3px;">保留:${_keep.length?('<b style="color:#ffe066;">'+_keep.join('、')+'</b>(不刪不補償)'):'(玩家未保留任何一個)'}　|　確認:${_fmtTime(pp.playerRespondedAt)}</div>
           <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
             <button class="_pp-apply-btn" style="padding:7px 16px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#cc4444,#992222);color:#fff;border:none;border-radius:6px;cursor:pointer;">🗑 套用刪除(含補償+通知)</button>
             <button class="_pp-cancel-btn" style="padding:7px 14px;font-size:12px;background:#665;color:#fff;border:none;border-radius:6px;cursor:pointer;">✖ 撤銷預告</button>
@@ -7713,14 +7721,20 @@ async function _showAdminStatsPanelImpl(){
       const _appliedLogs = log.filter(e => e && !e.restored);
       const _restoredLogs = log.filter(e => e && e.restored);
       if(_appliedLogs.length){
-        html += _appliedLogs.map(e => `<div style="background:rgba(150,90,40,0.15);border:1px solid #aa7744;border-radius:8px;padding:8px 12px;margin-bottom:6px;">
-          <div style="font-size:12px;color:#ffcc99;">🗑 已刪除 ${(e.deletedHeroes||[]).length} 隻(${(e.deletedHeroes||[]).map(h=>_esc(h.name)).join('、')})${e.keptHero?(' / 保留 '+_esc(e.keptHero)):''}</div>
-          <div style="font-size:10px;color:#cba;margin-top:2px;">補償 💰${(e.compGranted&&e.compGranted.coins)||0}　|　${_fmtTime(e.appliedAt)}</div>
-          <button class="_pp-restore-btn" data-purge="${_esc(e.purgeId)}" style="margin-top:6px;padding:5px 12px;font-size:11px;background:#4466aa;color:#fff;border:none;border-radius:5px;cursor:pointer;">↩ 復原這批被刪英雄</button>
-        </div>`).join('');
+        html += _appliedLogs.map(e => {
+          const _hN=(e.deletedHeroes||[]).length, _tN=(e.deletedTreasures||[]).length;
+          const _names=[ (e.deletedHeroes||[]).map(h=>_esc(h.name)).join('、'), (e.deletedTreasures||[]).map(t=>'💎'+_esc(t.name||t.id)).join('、') ].filter(Boolean).join(' / ');
+          const _kept=[]; if(e.keptHero) _kept.push(_esc(e.keptHero)); if(e.keptTreasure) _kept.push('💎'+_esc(e.keptTreasure));
+          const _itemsStr = (e.compGranted&&e.compGranted.items) ? Object.keys(e.compGranted.items).map(k=>k+'×'+e.compGranted.items[k]).join('、') : '';
+          return `<div style="background:rgba(150,90,40,0.15);border:1px solid #aa7744;border-radius:8px;padding:8px 12px;margin-bottom:6px;">
+            <div style="font-size:12px;color:#ffcc99;">🗑 已移除 ${_cnt(_hN,_tN)}(${_names})${_kept.length?(' / 保留 '+_kept.join('、')):''}</div>
+            <div style="font-size:10px;color:#cba;margin-top:2px;">補償 💰${(e.compGranted&&e.compGranted.coins)||0}${_itemsStr?(' + '+_esc(_itemsStr)):''}　|　${_fmtTime(e.appliedAt)}</div>
+            <button class="_pp-restore-btn" data-purge="${_esc(e.purgeId)}" style="margin-top:6px;padding:5px 12px;font-size:11px;background:#4466aa;color:#fff;border:none;border-radius:5px;cursor:pointer;">↩ 復原這批(英雄+至寶)</button>
+          </div>`;
+        }).join('');
       }
       if(_restoredLogs.length){
-        html += `<div style="font-size:11px;color:#8aa;margin-bottom:6px;">↩ 已復原記錄:${_restoredLogs.length} 筆(${_restoredLogs.map(e=>(e.deletedHeroes||[]).length+'隻').join('、')})</div>`;
+        html += `<div style="font-size:11px;color:#8aa;margin-bottom:6px;">↩ 已復原記錄:${_restoredLogs.length} 筆(${_restoredLogs.map(e=>_cnt((e.deletedHeroes||[]).length,(e.deletedTreasures||[]).length)).join(' ; ')})</div>`;
       }
       return html;
     }
@@ -7744,11 +7758,13 @@ async function _showAdminStatsPanelImpl(){
       });
       _contentEl.querySelectorAll('._pp-apply-btn').forEach(btn => {
         btn.onclick = async function(){
-          if(!confirm('套用刪除?\n\n會刪除預告中(玩家未保留)的英雄,自動發補償+通知,並留下可復原的刪除記錄。\n\n⚠ 此步驟才會真的動到玩家英雄(刪前已存快照,可隨時復原)。')) return;
+          if(!confirm('套用刪除?\n\n會刪除預告中(玩家未保留)的英雄與至寶,自動發補償(知識幣+道具/至寶經驗卷軸)+通知,並留下可復原的刪除記錄。\n\n⚠ 此步驟才會真的動到玩家資料(刪前已存快照,可隨時復原)。')) return;
           btn.disabled = true; btn.textContent = '⏳ 套用中...';
           try{
             const _r = await window._fbAdminApplyPollutionPurge(_curUid, {});
-            _setStatus(`✅ 已套用:刪除 ${_r.deleted} 隻${_r.kept?(' / 保留 '+_r.kept):''},已補償+通知。重新查詢中...`, '#88ddaa');
+            const _tParts=[]; if(_r.deleted) _tParts.push('英雄 '+_r.deleted+' 隻'); if(_r.deletedTreasures) _tParts.push('至寶 '+_r.deletedTreasures+' 件');
+            const _kParts=[]; if(_r.kept) _kParts.push('英雄「'+_r.kept+'」'); if(_r.keptTreasure) _kParts.push('至寶「'+_r.keptTreasure+'」');
+            _setStatus(`✅ 已套用:移除 ${_tParts.join(' / ')||'0'}${_kParts.length?(' / 保留 '+_kParts.join('、')):''},已補償+通知。重新查詢中...`, '#88ddaa');
             await _doQuery();
           }catch(e){ _setStatus('❌ 套用失敗:' + (e.message||e), '#ff8866'); btn.disabled=false; btn.textContent='🗑 套用刪除(含補償+通知)'; }
         };
@@ -7756,13 +7772,14 @@ async function _showAdminStatsPanelImpl(){
       _contentEl.querySelectorAll('._pp-restore-btn').forEach(btn => {
         btn.onclick = async function(){
           const _pid = btn.dataset.purge;
-          if(!confirm('復原這批被刪英雄?\n\n會把當初刪掉的英雄(等級/技能/爆發/天賦/裝備至寶)原樣加回玩家帳號。')) return;
+          if(!confirm('復原這批被刪資料?\n\n會把當初刪掉的英雄(等級/技能/爆發/天賦/裝備至寶)與至寶(等級/exp/裝備/投資)原樣加回玩家帳號。')) return;
           btn.disabled = true; btn.textContent = '⏳';
           try{
             const _r = await window._fbAdminRestorePurgedHeroes(_curUid, _pid);
-            _setStatus(`✅ 已復原 ${_r.restored} 隻英雄。重新查詢中...`, '#88ddaa');
+            const _rParts=[]; if(_r.restored) _rParts.push('英雄 '+_r.restored+' 隻'); if(_r.restoredTreasures) _rParts.push('至寶 '+_r.restoredTreasures+' 件');
+            _setStatus(`✅ 已復原 ${_rParts.join(' / ')||'0'}。重新查詢中...`, '#88ddaa');
             await _doQuery();
-          }catch(e){ _setStatus('❌ 復原失敗:' + (e.message||e), '#ff8866'); btn.disabled=false; btn.textContent='↩ 復原這批被刪英雄'; }
+          }catch(e){ _setStatus('❌ 復原失敗:' + (e.message||e), '#ff8866'); btn.disabled=false; btn.textContent='↩ 復原這批被刪資料'; }
         };
       });
     }
@@ -7771,14 +7788,23 @@ async function _showAdminStatsPanelImpl(){
     function _openPollutionPurgeNoticeModal(pollutionHeroes){
       if(!_curData || !_curUid){ alert('請先成功查詢玩家'); return; }
       pollutionHeroes = Array.isArray(pollutionHeroes) ? pollutionHeroes : [];
-      if(!pollutionHeroes.length){ alert('沒有來源不明的英雄可發預告'); return; }
       const _heroDetails = _curData.heroDetails || {};
-      const _ITEM_LABELS = { skill_upgrade_book:'技能升級書', burst_upgrade_fruit:'超越極限果實', hero_exp_book_premium:'豪華典藏版經驗之書', summon_ticket_ssr:'SSR召喚卷', hero_exp_book:'英雄經驗之書' };
+      const _full = (_curData && _curData.full) || {};
+      const _ownUid12 = (_curUid || '').slice(0, 12);
+      const _ITEM_LABELS = { skill_upgrade_book:'技能升級書', burst_upgrade_fruit:'超越極限果實', hero_exp_book_premium:'豪華典藏版經驗之書', summon_ticket_ssr:'SSR召喚卷', hero_exp_book:'英雄經驗之書', treasure_exp_scroll:'至寶經驗卷軸' };
       // 各汙染英雄預計補償
       const _detail = pollutionHeroes.map(h => {
         const _c = _computeCompensationForHero(h.name, _heroDetails);
         return { name:h.name, rarity:h.rarity||'', lv:h.lv||(_c.meta&&_c.meta.lv)||1, source:h.source||null, cat:h.cat||'pollution', creatorUid:h.creatorUid||'', comp:{ coins:_c.coins||0, items:_c.items||{} } };
       });
+      // ★ v3.13.49b — 汙染至寶候選(查無紀錄 cat='pollution' 或 creatorUid 為他人)
+      const _ownedTre = Array.isArray(_full.ownedTreasures) ? _full.ownedTreasures : [];
+      const _polTre = _ownedTre.filter(t => t && ((t.cat === 'pollution') || (t.creatorUid && t.creatorUid !== _ownUid12)));
+      const _treDetail = _polTre.map(t => {
+        const _c = _computeCompensationForTreasure(t.id, _ownedTre);
+        return { id:t.id, name:t.name||t.id, lv:t.lv||1, source:t.source||null, cat:t.cat||'pollution', creatorUid:t.creatorUid||'', comp:{ coins:_c.coins||0, items:_c.items||{} } };
+      });
+      if(!_detail.length && !_treDetail.length){ alert('沒有來源不明的英雄或至寶可發預告'); return; }
       const _rows = _detail.map((d,i) => {
         const _itemsStr = Object.keys(d.comp.items).map(k=>(_ITEM_LABELS[k]||k)+'×'+d.comp.items[k]).join('、');
         return `<tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -7789,31 +7815,46 @@ async function _showAdminStatsPanelImpl(){
           <td style="padding:6px;font-size:10px;color:#a88;font-family:monospace;" title="解鎖紀錄建立者 uid 前 12 碼(若非本人 = 從別人複製來)">${d.creatorUid?_esc(d.creatorUid):'(無紀錄)'}</td>
         </tr>`;
       }).join('');
-      const _autoEvidence = '查無合法解鎖紀錄(unlockedHeroes 有此英雄, 但 _heroUnlockHistory 找不到對應的合法取得紀錄)→ 研判為共用平板上從其他帳號帶入。';
+      const _treRows = _treDetail.map((d,i) => {
+        const _itemsStr = Object.keys(d.comp.items).map(k=>(_ITEM_LABELS[k]||k)+'×'+d.comp.items[k]).join('、');
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <td style="padding:6px;text-align:center;"><input type="checkbox" class="_ppn-tre-chk" data-i="${i}" checked style="width:16px;height:16px;cursor:pointer;"></td>
+          <td style="padding:6px;font-size:12px;color:#ffe;">💎 ${_esc(d.name)}</td>
+          <td style="padding:6px;font-size:11px;color:#aac;">Lv.${d.lv}</td>
+          <td style="padding:6px;font-size:11px;color:#88dd99;">💰${d.comp.coins}${_itemsStr?(' + '+_esc(_itemsStr)):''}</td>
+          <td style="padding:6px;font-size:10px;color:#a88;font-family:monospace;" title="解鎖紀錄建立者 uid 前 12 碼(若非本人 = 從別人複製來)">${d.creatorUid?_esc(d.creatorUid):'(無紀錄)'}</td>
+        </tr>`;
+      }).join('');
+      const _heroTableHtml = _detail.length ? `
+          <div style="font-size:12px;color:#ffcc88;margin-bottom:4px;">🦸 將列入的英雄(取消勾選可排除):</div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+            <thead><tr style="background:rgba(255,100,60,0.18);">
+              <th style="padding:6px;font-size:11px;color:#ffd;">列入</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">英雄</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">等級</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">移除後補償</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">紀錄建立者</th>
+            </tr></thead><tbody>${_rows}</tbody>
+          </table>` : '';
+      const _treTableHtml = _treDetail.length ? `
+          <div style="font-size:12px;color:#9cf;margin-bottom:4px;">💎 將列入的至寶(取消勾選可排除):</div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+            <thead><tr style="background:rgba(100,150,255,0.18);">
+              <th style="padding:6px;font-size:11px;color:#ffd;">列入</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">至寶</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">等級</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">移除後補償</th><th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">紀錄建立者</th>
+            </tr></thead><tbody>${_treRows}</tbody>
+          </table>` : '';
+      const _autoEvidence = '查無合法解鎖紀錄(unlockedHeroes/taiwanTreasureData 有此項目, 但解鎖歷史找不到對應的合法取得紀錄)→ 研判為共用平板上從其他帳號帶入。';
       const _ov = document.createElement('div');
       _ov.id = '_ppn-modal';
       _ov.style.cssText = 'position:fixed;inset:0;z-index:200001;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(6px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow-y:auto;';
       _ov.innerHTML = `
         <div style="max-width:760px;width:100%;background:linear-gradient(160deg,#241818,#160c0c);border:2.5px solid #ff6644;border-radius:14px;padding:22px 26px;color:#fff;box-shadow:0 0 40px rgba(255,80,60,0.5);max-height:92vh;overflow-y:auto;">
-          <div style="font-size:21px;font-weight:800;color:#ff8866;margin-bottom:6px;">📢 發出「汙染英雄刪除預告」</div>
+          <div style="font-size:21px;font-weight:800;color:#ff8866;margin-bottom:6px;">📢 發出「汙染英雄／至寶刪除預告」</div>
           <div style="font-size:12px;color:#ffcccc;line-height:1.6;margin-bottom:14px;">
-            這一步<b style="color:#ffe066;">不會刪除任何英雄</b>,只會在玩家帳號寫一則「刪除預告」。玩家下次登入會看到:緣由、說明、被列英雄清單、各自刪除後的補償,並可<b>勾選保留 1 隻</b>。之後你再到此頁按「套用刪除」才會真的刪(刪前自動存快照,可復原)。
+            這一步<b style="color:#ffe066;">不會刪除任何東西</b>,只會在玩家帳號寫一則「刪除預告」。玩家下次登入會看到:緣由、說明、被列英雄/至寶清單、各自移除後的補償,並可<b>分別保留 1 隻英雄 + 1 件至寶</b>。之後你再到此頁按「套用刪除」才會真的刪(刪前自動存快照,可復原)。
           </div>
           <label style="display:block;font-size:12px;color:#ffd;margin-bottom:4px;font-weight:700;">緣由(玩家會看到):</label>
-          <textarea id="_ppn-reason" rows="2" style="width:100%;padding:8px;font-size:13px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #885;border-radius:6px;font-family:inherit;margin-bottom:10px;box-sizing:border-box;">清除來源不明(疑似在共用平板上從其他帳號帶入)的英雄,讓帳號乾淨公平。</textarea>
+          <textarea id="_ppn-reason" rows="2" style="width:100%;padding:8px;font-size:13px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #885;border-radius:6px;font-family:inherit;margin-bottom:10px;box-sizing:border-box;">清除來源不明(疑似在共用平板上從其他帳號帶入)的英雄與至寶,讓帳號乾淨公平。</textarea>
           <label style="display:block;font-size:12px;color:#ffd;margin-bottom:4px;font-weight:700;">汙染證據/說明(玩家會看到,可留空):</label>
           <textarea id="_ppn-evidence" rows="2" style="width:100%;padding:8px;font-size:12px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #885;border-radius:6px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;">${_esc(_autoEvidence)}</textarea>
-          <div style="font-size:12px;color:#ffcc88;margin-bottom:4px;">將列入預告的英雄(取消勾選可排除):</div>
-          <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
-            <thead><tr style="background:rgba(255,100,60,0.18);">
-              <th style="padding:6px;font-size:11px;color:#ffd;">列入</th>
-              <th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">英雄</th>
-              <th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">等級</th>
-              <th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">刪除後補償</th>
-              <th style="padding:6px;font-size:11px;color:#ffd;text-align:left;">紀錄建立者</th>
-            </tr></thead>
-            <tbody>${_rows}</tbody>
-          </table>
+          ${_heroTableHtml}
+          ${_treTableHtml}
           <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
             <button id="_ppn-cancel" style="padding:10px 20px;font-size:13px;background:#444;color:#ccc;border:none;border-radius:8px;cursor:pointer;">取消</button>
             <button id="_ppn-confirm" style="padding:10px 24px;font-size:14px;font-weight:800;background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 3px 12px rgba(255,80,60,0.5);">📢 確認發出預告</button>
@@ -7825,15 +7866,17 @@ async function _showAdminStatsPanelImpl(){
       document.getElementById('_ppn-confirm').onclick = async function(){
         const _selected = [];
         _ov.querySelectorAll('._ppn-chk').forEach(chk => { if(chk.checked){ const _i=parseInt(chk.dataset.i,10); if(_detail[_i]) _selected.push(_detail[_i]); } });
-        if(!_selected.length){ alert('請至少勾選 1 隻英雄'); return; }
+        const _selectedTre = [];
+        _ov.querySelectorAll('._ppn-tre-chk').forEach(chk => { if(chk.checked){ const _i=parseInt(chk.dataset.i,10); if(_treDetail[_i]) _selectedTre.push(_treDetail[_i]); } });
+        if(!_selected.length && !_selectedTre.length){ alert('請至少勾選 1 個英雄或至寶'); return; }
         const _reason = (document.getElementById('_ppn-reason').value||'').trim();
         const _evidence = (document.getElementById('_ppn-evidence').value||'').trim();
         const _btn = document.getElementById('_ppn-confirm');
         _btn.disabled = true; _btn.textContent = '⏳ 發出中...';
         try{
-          await window._fbAdminCreatePollutionPurgeNotice(_curUid, _selected, { reason:_reason, evidence:_evidence });
+          await window._fbAdminCreatePollutionPurgeNotice(_curUid, _selected, { reason:_reason, evidence:_evidence, treasures:_selectedTre });
           _close();
-          _setStatus(`✅ 已發出刪除預告(${_selected.length} 隻),玩家下次登入會看到。重新查詢中...`, '#88ddaa');
+          _setStatus(`✅ 已發出刪除預告(英雄 ${_selected.length} / 至寶 ${_selectedTre.length}),玩家下次登入會看到。重新查詢中...`, '#88ddaa');
           await _doQuery();
         }catch(e){
           _btn.disabled=false; _btn.textContent='📢 確認發出預告';
@@ -8014,6 +8057,14 @@ async function _showAdminStatsPanelImpl(){
       if(!_owned.length){
         return `<div style="margin-bottom:10px;padding:10px;background:rgba(30,30,50,0.4);border-radius:8px;font-size:12px;color:#9ab;">💎 目前擁有至寶:<b>0</b> 個</div>`;
       }
+      const _ownUid12 = (_curUid || '').slice(0, 12);
+      // 來源分類:🔴 他人複製(creatorUid≠本人)/ 🟡 無紀錄(cat=pollution)/ 🟢 正常
+      function _treSrc(t){
+        if(t.creatorUid && t.creatorUid !== _ownUid12) return { html:`<span style="color:#ff9a9a;font-weight:700;">🔴 複製自 ${_esc(t.creatorUid)}…</span>`, pol:true, bg:'background:rgba(200,40,40,0.16);' };
+        if(t.cat === 'pollution') return { html:`<span style="color:#ffcc66;font-weight:700;">🟡 無紀錄</span>`, pol:true, bg:'background:rgba(200,160,40,0.13);' };
+        return { html:`<span style="color:#9af0b0;">🟢 正常${t.source?(' <span style="color:#778;font-size:10px;">('+_esc(String(t.source).slice(0,14))+')</span>'):''}</span>`, pol:false, bg:'' };
+      }
+      let _polCount = 0;
       const _rows = _owned.map(t => {
         const _info = _DB[t.id] || {};
         const _nm = _info.name ? (_esc(_info.icon ? _info.icon + ' ' : '') + _esc(_info.name)) : _esc(t.id);
@@ -8023,25 +8074,44 @@ async function _showAdminStatsPanelImpl(){
           const _sum = (t.invested.hp||0)+(t.invested.atk||0)+(t.invested.sp||0)+(t.invested.spd||0);
           if(_sum>0) _inv = _sum + ' 點';
         }
-        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+        const _src = _treSrc(t);
+        if(_src.pol) _polCount++;
+        return `<tr style="${_src.bg}border-bottom:1px solid rgba(255,255,255,0.06);">
           <td style="padding:5px 8px;font-size:12px;color:#ffe;">${_nm}</td>
           <td style="padding:5px 8px;font-size:11px;color:#aac;font-family:monospace;">${_esc(t.id)}</td>
           <td style="padding:5px 8px;font-size:12px;color:#ffe066;text-align:center;">Lv.${parseInt(t.lv,10)||1}</td>
           <td style="padding:5px 8px;font-size:11px;">${_eq}</td>
           <td style="padding:5px 8px;font-size:11px;color:#cda;text-align:center;">${_inv}</td>
+          <td style="padding:5px 8px;font-size:11px;">${_src.html}</td>
         </tr>`;
       }).join('');
+      // 汙染 banner(有汙染至寶 且無進行中預告)→ 同一顆按鈕開「英雄/至寶」合併預告
+      const _pp = _full.pendingPollutionPurge;
+      const _hasActive = _pp && (_pp.status === 'pending' || _pp.status === 'acknowledged');
+      let _treBanner = '';
+      if(_polCount && !_hasActive){
+        _treBanner = `<div style="background:linear-gradient(135deg,rgba(200,60,40,0.28),rgba(140,40,80,0.18));border:2px solid #ff6644;border-radius:8px;padding:11px 13px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:13px;font-weight:800;color:#ffaaaa;">⚠ 偵測到 ${_polCount} 件「來源不明」至寶(🔴=他人複製 / 🟡=無紀錄)</div>
+            <div style="font-size:11px;color:#ffcccc;margin-top:3px;">點下方按鈕發「刪除預告」(會一併列出汙染英雄);玩家可保留 1 件至寶,套用前存快照可復原。</div>
+          </div>
+          <button id="_pp-tre-notice-btn" style="padding:9px 18px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 3px 10px rgba(255,80,60,0.45);">📢 發出刪除預告</button>
+        </div>`;
+      }
       return `
-        <div style="margin-bottom:6px;font-size:13px;font-weight:700;color:#aaccff;">💎 目前擁有至寶 共 ${_owned.length} 個</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;">
+        ${_treBanner}
+        <div style="margin-bottom:6px;font-size:13px;font-weight:700;color:#aaccff;">💎 目前擁有至寶 共 ${_owned.length} 個${_polCount?` (<span style="color:#ff8888;">${_polCount} 件來源不明</span>)`:''}</div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;min-width:640px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
             <th style="padding:5px 8px;text-align:left;color:#cce;">至寶</th>
             <th style="padding:5px 8px;text-align:left;color:#cce;">ID</th>
             <th style="padding:5px 8px;text-align:center;color:#cce;">等級</th>
             <th style="padding:5px 8px;text-align:left;color:#cce;">裝備在</th>
             <th style="padding:5px 8px;text-align:center;color:#cce;">投資</th>
+            <th style="padding:5px 8px;text-align:left;color:#cce;">來源</th>
           </tr></thead><tbody>${_rows}</tbody>
-        </table>`;
+        </table></div>`;
     }
 
     function _renderTreasureTab(list){
@@ -8050,6 +8120,7 @@ async function _showAdminStatsPanelImpl(){
       if(!list.length){
         _contentEl.innerHTML = _ownedHtml
           + `<div style="border-top:1px dashed rgba(140,180,255,0.25);padding-top:8px;text-align:center;color:#888;font-size:13px;">尚無至寶解鎖紀錄</div>`;
+        _bindTreNoticeBtn();
         return;
       }
       const conflictKeys = _buildMultiBattleSet(list, 'id');
@@ -8091,7 +8162,18 @@ async function _showAdminStatsPanelImpl(){
       _bindTreasureRowButtons();
     }
 
+    // ★ v3.13.49b — 至寶頁「發出刪除預告」按鈕(開英雄/至寶合併預告 modal)
+    function _bindTreNoticeBtn(){
+      const _b = document.getElementById('_pp-tre-notice-btn');
+      if(_b) _b.onclick = function(){
+        const _full = (_curData && _curData.full) || {};
+        const _polHeroes = (Array.isArray(_full.ownedHeroes) ? _full.ownedHeroes : []).filter(h => h && h.cat === 'pollution');
+        _openPollutionPurgeNoticeModal(_polHeroes);
+      };
+    }
+
     function _bindTreasureRowButtons(){
+      _bindTreNoticeBtn();
       _contentEl.querySelectorAll('._aa-del-tre').forEach(btn => {
         btn.onclick = async function(){
           const at = parseInt(btn.dataset.at, 10);
@@ -8500,6 +8582,23 @@ async function _showAdminStatsPanelImpl(){
       if(_s1 + _s2 > 0) _comp.items.skill_upgrade_book = _s1 + _s2;
       if(_burst > 0) _comp.items.burst_upgrade_fruit = _burst;
       _comp.items.hero_exp_book_premium = 1;
+      return _comp;
+    }
+
+    // ★ v3.13.49b — 至寶補償:知識幣(升級累積花費)+ 至寶經驗卷軸(升級累積用量)
+    //   至寶 Lv L→L+1 需 (10000+L*5000) 幣;每張卷軸 +10 EXP;累積 EXP 表 [0,10,30,...,550](Lv10)
+    function _computeCompensationForTreasure(treasureId, ownedTreasures){
+      let _lv = 1;
+      try{
+        const _t = (Array.isArray(ownedTreasures) ? ownedTreasures : []).find(x => x && x.id === treasureId);
+        if(_t) _lv = parseInt(_t.lv, 10) || 1;
+      }catch(_){}
+      const _CUM = [0,10,30,60,100,150,210,280,360,450,550];
+      const _lvC = Math.max(0, Math.min(10, _lv));
+      const _scrolls = Math.round((_CUM[_lvC] || 0) / 10);  // 升到此級用掉的卷軸數
+      let _coins = 0; for(let i=0;i<_lvC;i++){ _coins += (10000 + i*5000); }
+      const _comp = { coins:_coins, items:{}, meta:{ treasure:treasureId, lv:_lvC } };
+      if(_scrolls > 0) _comp.items.treasure_exp_scroll = Math.min(99, _scrolls);
       return _comp;
     }
 
