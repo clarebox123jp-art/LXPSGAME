@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.51';
+window.ADMIN_PANEL_VERSION = 'v3.13.55';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1860,11 +1860,11 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
-      { sec: '_admin-sus-section',              label: '🕵️ 可疑帳號偵測',          hint: '檢查資料異常的玩家' },
-      { sec: '_admin-abnormal-unlock-section',  label: '🔍 異常解鎖偵測',          hint: '掃描+清除異常英雄/至寶+補償' },
-      { sec: '_admin-inflated-section',         label: '🧹 帳號汙染掃描',          hint: '掃出被上一位汙染、暴增 SSR 的帳號並一鍵收回' },
-      { sec: '_admin-rare-audit-section',       label: '🔬 稀有暴增稽核',          hint: 'SSR+SR 分四類來源(BOSS/召喚/GM/汙染)逐隻勾選收回' },
-      { sec: '_admin-pollution-cluster-section', label: '🔁 同台iPad汙染分組',       hint: 'SSR/SR 序列相同分組 + 班級座號 + 原始/被汙染辨識' },
+      // ★ v3.13.55 — 汙染工具合併:移除重疊/不安全(可直接收回、看不到 creatorUid 證據)的 4 個面板
+      //   (🕵️可疑帳號偵測 / 🔍異常解鎖偵測 / 🧹帳號汙染掃描 / 🔬稀有暴增稽核),
+      //   統一走唯一安全流程:🧹 汙染清查(掃描)→ 🔬 查活動頁(看 creatorUid 證據)→
+      //   📢 發刪除預告(玩家可保留1、可復原、自動補償)。被移除的 section HTML/handler 變成無入口的死碼(無害)。
+      { sec: '_admin-pollution-cluster-section', label: '🧹 汙染清查（掃描可疑帳號）', hint: 'SSR/SR序列+座號分組找可疑帳號 → 一鍵查活動頁挑汙染英雄/至寶刪除（可復原+補償+玩家留1）' },
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
@@ -2058,6 +2058,7 @@ async function _showAdminStatsPanelImpl(){
     // 來源分類 → 徽章樣式
     const _CAT_BADGE = {
       pollution: { txt:'🟥 不明汙染', bg:'rgba(255,80,80,0.22)',  bd:'#ff7777', fg:'#ffbbbb' },
+      initial:   { txt:'🎒 初始角色', bg:'rgba(120,220,140,0.16)',bd:'#66cc88', fg:'#a8e8bf' },
       boss:      { txt:'🟧 BOSS解鎖', bg:'rgba(255,170,60,0.18)', bd:'#ffaa33', fg:'#ffd9a0' },
       summon:    { txt:'🟦 召喚',     bg:'rgba(100,170,255,0.18)',bd:'#66aaff', fg:'#aaccff' },
       gm:        { txt:'🟩 GM補償',   bg:'rgba(120,220,140,0.18)',bd:'#66cc88', fg:'#aaeebb' },
@@ -7655,7 +7656,7 @@ async function _showAdminStatsPanelImpl(){
       return `<span style="background:${c};color:#1a1018;font-weight:800;font-size:10px;padding:1px 6px;border-radius:4px;">${_esc(r||'?')}</span>`;
     }
     function _catBadge(cat){
-      const m = { summon:['召喚','#88bbff'], gm:['GM補發','#cc99ff'], boss:['BOSS掉落','#ffaa66'], other:['其他','#99aabb'], pollution:['⚠ 來源不明','#ff7777'] };
+      const m = { summon:['召喚','#88bbff'], gm:['GM補發','#cc99ff'], boss:['BOSS掉落','#ffaa66'], other:['其他','#99aabb'], initial:['🎒 初始角色','#88dd99'], pollution:['⚠ 來源不明','#ff7777'] };
       const e = m[cat] || ['其他','#99aabb'];
       return `<span style="color:${e[1]};font-weight:${cat==='pollution'?'800':'600'};">${e[0]}</span>`;
     }
