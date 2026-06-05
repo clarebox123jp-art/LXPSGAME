@@ -3122,6 +3122,29 @@
     const a = G && G.activeChar;
     if(!a || a.acted){
       console.warn('[WB-Client v6] 樂觀:actor 不存在或已行動,跳過');
+      // ★ v3.13.57(2026-06-05)— BUG 1 根治:client 的 activeChar 卡在「已行動角色」時,
+      //   玩家每點一次按鈕都會走到這裡被跳過(根因:房主端沒推進、client 永遠等不到下一個
+      //   turn-start 廣播)。既然玩家正在主動嘗試操作,代表確實卡住 → 立即向房主送
+      //   _client_stuck_resync 求救(房主收到會在 activeChar.acted 時強制 startTurn 推進);
+      //   不必苦等 endAction watchdog 的 5 秒。節流 3 秒一次,避免洗版 Firestore。
+      try{
+        if(a && a.acted && window._wbConnectedClientMode === true){
+          const _nowRs = Date.now();
+          if(!window._wbClientStuckResyncTs || (_nowRs - window._wbClientStuckResyncTs) > 3000){
+            window._wbClientStuckResyncTs = _nowRs;
+            if(window._wbNet && typeof window._wbNet.sendAction === 'function'){
+              console.warn('[WB-Client v6] activeChar 卡在已行動角色,玩家嘗試操作 → 主動送 _client_stuck_resync 向房主求救');
+              const _rRs = window._wbNet.sendAction({ type: '_client_stuck_resync',
+                                                      ts: _nowRs,
+                                                      reason: 'optimistic_blocked',
+                                                      actor: a.name });
+              if(_rRs && typeof _rRs.then === 'function'){
+                _rRs.catch(function(e){ console.warn('[WB-Client v6] 主動 resync 送出失敗', e); });
+              }
+            }
+          }
+        }
+      }catch(_eResync){ console.warn('[WB-Client v6] 主動 resync 例外', _eResync); }
       return false;
     }
     // 設動畫結束時間戳(供 5.3 用,sync 進來時若還沒到此時間就延後 apply)
