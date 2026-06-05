@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.50';
+window.ADMIN_PANEL_VERSION = 'v3.13.51';
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -2237,36 +2237,64 @@ async function _showAdminStatsPanelImpl(){
     }
     // ★ v3.13.49b — 最佳身分顯示:名冊真名 → 暱稱 → 班級座號 → email → uid
     function _who(m){
-      return (m.rosterName||'').trim() || (m.name||'').trim() || _classSeat(m.email) || (m.email||'') || ((m.uid||'').slice(0,8)+'…') || '(未知)';
+      return (m.rosterName||'').trim() || (m.name||'').trim() || _classSeat(m.email) || (m.email||'') || (m.uid||'') || '(未知)';
     }
-    function _memberHtml(m){
+    // ★ v3.13.51 — 同台 iPad 判斷:年級+座號(忽略班級)。例「5年1班1號」與「5年2班1號」→ 同 key "5-1" = 共用同一台
+    function _ipadKey(m){
+      try{
+        const r = (typeof window._getRosterEntry==='function') ? window._getRosterEntry((m.email||'').toLowerCase()) : null;
+        if(!r || r.seatNo==null || r.seatNo==='') return null;
+        const mm = String(r.class||'').match(/(\d+)\s*年\s*(\d+)\s*班/);
+        if(!mm) return null;
+        return mm[1] + '-' + String(r.seatNo);   // 年級-座號
+      }catch(_){ return null; }
+    }
+    function _seatCode(m){
+      try{
+        const r = (typeof window._getRosterEntry==='function') ? window._getRosterEntry((m.email||'').toLowerCase()) : null;
+        if(!r) return '';
+        const mm = String(r.class||'').match(/(\d+)\s*年\s*(\d+)\s*班/);
+        return mm ? (mm[1]+'年'+mm[2]+'班'+String(r.seatNo||'')+'號') : '';
+      }catch(_){ return ''; }
+    }
+    function _memberHtml(m, sharedKeys){
+      sharedKeys = sharedKeys || new Set();
       const ssr = (m.ssrList||[]).map(s => {
         const own = (s.creatorUid && s.creatorUid===m.ownUid);
         const uHint = !s.creatorUid ? '<span style="color:#888;">無紀錄</span>'
           : own ? '<span style="color:#9af0b0;">本人建立</span>'
           : '<span style="color:#ff9a9a;">複製自 '+_esc(s.creatorUid)+'…</span>';
-        const t = s.at ? new Date(s.at).toLocaleString('zh-TW') : '';
-        const ck = (m.role==='polluted') ? ' checked' : '';   // 只有鐵證『被汙染』預勾;推測類不預勾, 強制人工判斷
         const lvStr = '<span style="color:#ffe066;font-weight:800;">Lv.'+(s.lv||0)+'</span>';
-        return '<label style="display:flex;gap:6px;align-items:center;padding:2px 5px;font-size:11px;flex-wrap:wrap;cursor:pointer;">'
-          + '<input type="checkbox" class="_cl-cb" data-name="'+_esc(s.name)+'"'+ck+' style="width:15px;height:15px;cursor:pointer;">'
+        return '<div style="display:flex;gap:6px;align-items:center;padding:2px 5px;font-size:11px;flex-wrap:wrap;">'
           + _rar(s.rarity)+' <b style="color:#fff;">'+_esc(s.name)+'</b> '+lvStr+' '+uHint
-          + (t ? ' <span style="margin-left:auto;color:#9ab;font-size:10px;">'+_esc(t)+'</span>' : '<span style="margin-left:auto;"></span>')
-          + '</label>';
+          + '</div>';
       }).join('');
       const _dispName = (m.name||'').trim();
       const _nick = (_dispName && _dispName !== _who(m)) ? ' <span style="color:#9ab;font-size:11px;">暱稱:'+_esc(_dispName)+'</span>' : '';
+      const _isGuest = !(m.email||'').trim() && !(m.rosterName||'').trim() && !_dispName;
+      const _guestBadge = _isGuest ? ' <span style="padding:1px 6px;border-radius:5px;font-size:10px;background:rgba(150,150,160,0.2);border:1px solid #889;color:#cdd;" title="無 email/暱稱/名冊資料 — 多為未登入或訪客帳號">🔓 訪客/未註冊</span>' : '';
+      // 座號 / 同台 iPad 標籤(僅名冊內學生有)
+      const _sc = _seatCode(m);
+      const _ik = _ipadKey(m);
+      let _seatBadge = '';
+      if(_sc){
+        const _shared = _ik && sharedKeys.has(_ik);
+        _seatBadge = _shared
+          ? ' <span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(255,90,90,0.22);border:1px solid #ff7777;color:#ffbbbb;" title="與本組其他人座號相同=共用同一台 iPad">🪧 同台iPad '+_esc(_sc)+'</span>'
+          : ' <span style="padding:1px 6px;border-radius:5px;font-size:10px;background:rgba(120,160,255,0.15);border:1px solid #6699cc;color:#cfe3ff;">🪧 '+_esc(_sc)+'</span>';
+      }
+      const _idLine = '<div style="font-size:10px;color:#8a90a0;font-family:monospace;margin-top:3px;word-break:break-all;">🆔 帳號:<span style="user-select:all;background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;">'+_esc(m.uid||'(無)')+'</span>'+(m.email?(' ・ ✉ <span style="user-select:all;">'+_esc(m.email)+'</span>'):'')+'</div>';
       return '<div class="_cl-member" data-uid="'+_esc(m.uid)+'" style="border:1px solid rgba(255,120,160,0.25);border-radius:7px;padding:8px 10px;margin-bottom:7px;background:rgba(0,0,0,0.25);">'
         + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
         + _roleBadge(m.role)
         + ' <b style="color:#fff;font-size:14px;">'+_esc(_who(m))+'</b>'
-        + (m.email ? ' <span style="color:#aac;font-size:11px;font-family:monospace;">'+_esc(m.email)+'</span>' : '')
-        + _nick
+        + _guestBadge + _seatBadge + _nick
         + ' <span style="color:#bbb;font-size:11px;margin-left:auto;">本人建立 '+(m.selfCreated||0)+' · 複製 '+(m.foreignCreated||0)+' · 總解鎖 '+m.totalUnlocked+' · ⭐最高Lv'+m.maxHeroLv+' · <span style="color:#ffe066;">稀有Lv總和 '+(m.clusterHeroLvSum||0)+'</span></span>'
         + '</div>'
+        + _idLine
         + '<div style="margin-top:5px;max-height:200px;overflow-y:auto;">'+ssr+'</div>'
-        + '<div style="margin-top:6px;">'
-        + '<button class="_cl-remove" type="button" style="padding:5px 13px;font-size:12px;font-weight:800;background:rgba(255,80,80,0.2);border:1.5px solid #ff7777;color:#ffbbbb;border-radius:6px;cursor:pointer;font-family:inherit;">🗑 收回此人勾選的英雄</button>'
+        + '<div style="margin-top:8px;">'
+        + '<button class="_cl-open-activity" type="button" style="padding:8px 18px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff8a3d,#e0632a);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(255,120,50,0.4);">🔬 查此帳號活動頁 → 挑選汙染英雄/至寶刪除</button>'
         + '<span class="_cl-msg" style="margin-left:10px;font-size:12px;color:#aaffaa;"></span>'
         + '</div></div>';
     }
@@ -2280,8 +2308,18 @@ async function _showAdminStatsPanelImpl(){
       if(c.evidence==='creatorUid') evNote = '⚠ creatorUid 顯示有「跨帳號複製」(鐵證)→ 紅色「被汙染」者可直接處理。';
       else if(c.evidence==='exactTime') evNote = '⏱ 解鎖時間戳完全相同(同一次解鎖被整份複製, 鐵證)。';
       else if(c.evidence==='creatorUid_no_foreign') evNote = '✓ 有解鎖紀錄、creatorUid 都是本人 — 較可能是「撞序列/活動」而非汙染, 刪前務必再確認。';
-      else evNote = '⚠ 此組稀有英雄全為「無紀錄」(多為 2026/5/28 前的舊英雄)→ 沒有 creatorUid 鐵證。下方「🟡 推測原主 / 🟠 推測被汙染」是依『稀有等級總和』推測, 不是鐵證。請搭配「班級座號相鄰 = 同台 iPad」+ 實際等級人工判斷;建議改用「發刪除預告」(玩家可保留+可復原), 不要直接收回。';
+      else evNote = '⚠ 此組稀有英雄全為「無紀錄」(多為 2026/5/28 前的舊英雄)→ 沒有 creatorUid 鐵證。請搭配下方「🪧 同台 iPad(座號相同)」+ 實際等級人工判斷;建議用「發刪除預告」(玩家可保留+可復原), 不要直接收回。';
       const evCss = c.isPollution ? 'color:#ffbbbb;' : 'color:#ffe89a;';
+      // ★ v3.13.51 — 同台 iPad 偵測:組內「年級+座號」相同者 = 共用同一台 iPad(忽略班級)
+      const _members = c.members || [];
+      const _ipadGroups = {};
+      _members.forEach(m => { const k=_ipadKey(m); if(k){ (_ipadGroups[k]=_ipadGroups[k]||[]).push(m); } });
+      const _sharedKeys = new Set(Object.keys(_ipadGroups).filter(k => _ipadGroups[k].length >= 2));
+      let _ipadNote = '';
+      if(_sharedKeys.size){
+        const _parts = Array.from(_sharedKeys).map(k => '年級'+k.split('-')[0]+' 座號'+k.split('-')[1]+'('+_ipadGroups[k].length+'人)');
+        _ipadNote = '<div style="font-size:11px;line-height:1.5;margin-bottom:7px;padding:6px 9px;border-radius:6px;background:rgba(255,90,90,0.14);color:#ffcaca;border:1px solid rgba(255,120,120,0.5);">🪧 <b>同台 iPad(座號相同)</b>:'+_parts.join('、')+' → 這些人共用同一台平板, <b>汙染可能性高</b>。請判斷誰是真正擁有者, 對另一位按下方按鈕發刪除預告。</div>';
+      }
       return '<div class="_cl-group" style="border:2px solid rgba(255,120,160,0.4);border-radius:9px;padding:11px 13px;margin-bottom:14px;background:rgba(0,0,0,0.32);">'
         + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px;">'
         + '<span style="padding:2px 9px;border-radius:6px;font-size:12px;font-weight:800;'+tagCss+'">'+tag+'</span>'+exact
@@ -2289,28 +2327,34 @@ async function _showAdminStatsPanelImpl(){
         + ' <span style="color:#ddd;font-size:12px;">序列 '+c.seqLen+' 隻:'+_esc(c.orderSig)+'</span>'
         + '</div>'
         + '<div style="font-size:11px;line-height:1.5;margin-bottom:7px;padding:5px 8px;border-radius:6px;background:rgba(0,0,0,0.3);'+evCss+'">'+evNote+'</div>'
-        + (c.members||[]).map(_memberHtml).join('')
+        + _ipadNote
+        + _members.map(m => _memberHtml(m, _sharedKeys)).join('')
         + '</div>';
     }
     function _wire(){
       _resultEl.querySelectorAll('._cl-member').forEach(card => {
         const uid = card.dataset.uid;
-        const rmBtn = card.querySelector('._cl-remove');
+        const openBtn = card.querySelector('._cl-open-activity');
         const msg = card.querySelector('._cl-msg');
-        if(rmBtn) rmBtn.onclick = async () => {
-          const names = Array.prototype.slice.call(card.querySelectorAll('._cl-cb')).filter(cb=>cb.checked).map(cb=>cb.dataset.name);
-          if(!names.length){ if(msg){ msg.style.color='#ffcc66'; msg.textContent='⚠ 未勾選'; } return; }
-          const ok = await _confirm('確定從此玩家收回 '+names.length+' 隻?\n'+names.join('、')+'\n\n⚠ 連等級/技能/爆發一併清除,記入稽核。收回後學生下次開遊戲以雲端為準。');
-          if(!ok) return;
-          rmBtn.disabled=true; if(msg){ msg.style.color='#ccc'; msg.textContent='收回中...'; }
+        if(openBtn) openBtn.onclick = () => {
+          if(!uid){ if(msg){ msg.style.color='#ffcc66'; msg.textContent='⚠ 無帳號 ID,無法開啟'; } return; }
           try{
-            const r = await window._fbAdminBulkRemoveHeroes(uid, names, { reason:'同台iPad汙染分組收回(GM 勾選)' });
-            if(r && r.ok){
-              if(msg){ msg.style.color='#aaffaa'; msg.textContent='✅ 收回 '+r.removed+' 隻,剩 '+r.remaining+'。請告知學生重新整理。'; }
-              rmBtn.textContent='✅ 已收回';
-              Array.prototype.slice.call(card.querySelectorAll('._cl-cb')).forEach(cb=>{ if(cb.checked){ cb.checked=false; cb.disabled=true; const l=cb.closest('label'); if(l){ l.style.opacity='0.4'; l.style.textDecoration='line-through'; } } });
-            } else { rmBtn.disabled=false; if(msg){ msg.style.color='#ff8888'; msg.textContent='❌ '+_esc((r&&r.reason)||'失敗'); } }
-          }catch(e){ rmBtn.disabled=false; if(msg){ msg.style.color='#ff8888'; msg.textContent='❌ '+_esc(e.message||e); } }
+            // 1) 切到「玩家活動記錄查詢」section
+            if(typeof window._switchAdminSection === 'function') window._switchAdminSection('_admin-activity-section');
+            // 2) 帶入此帳號 uid + 送出查詢（等 section 顯示後）
+            setTimeout(()=>{
+              try{
+                const _q = document.getElementById('_admin-activity-query');
+                const _searchBtn = document.getElementById('_admin-activity-search');
+                if(_q) _q.value = uid;
+                const _sec = document.getElementById('_admin-activity-section');
+                if(_sec) _sec.scrollIntoView({ behavior:'smooth', block:'start' });
+                if(_searchBtn) _searchBtn.click();
+              }catch(_e2){ console.warn('[汙染分組→活動頁] 送出查詢失敗', _e2); }
+            }, 140);
+            openBtn.textContent = '✅ 已開啟活動頁（按「發出刪除預告」挑選刪除）';
+            openBtn.disabled = true; openBtn.style.opacity = '0.7';
+          }catch(e){ if(msg){ msg.style.color='#ff8888'; msg.textContent='❌ '+_esc(e.message||e); } }
         };
       });
     }
