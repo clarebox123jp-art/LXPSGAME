@@ -6961,12 +6961,28 @@
     }
   }
 
+  // ★ v3.13.56(2026-06-05) — 三妖怪(大天狗/酒吞童子/玉藻前)顯示弱化 helper
+  //   HERO_DB 裡三妖怪是「BOSS 版」高素質(hp 6000+),但玩家擁有時的英雄版是
+  //   JP_BOSS_HERO_STATS 弱化版(hp 75 等)。世界BOSS 隊伍確認面板/英雄詳情 popup
+  //   若直讀 HERO_DB 會誤顯示 BOSS 級數值(戰鬥本來就對:newHero('p1') 已套弱化)。
+  //   此 helper 統一回傳「四維顯示用基礎素質」:三妖怪回弱化版,其餘回 HERO_DB base。
+  //   (WB-UI <script> 在全域 lexical scope 執行,可 bare 取得 JP_BOSS_HERO_STATS / HERO_DB)
+  function _wbHeroBaseStats(name){
+    try{
+      if(typeof JP_BOSS_HERO_STATS !== 'undefined' && JP_BOSS_HERO_STATS[name]){
+        return JP_BOSS_HERO_STATS[name];
+      }
+    }catch(_){}
+    return (typeof HERO_DB !== 'undefined' && HERO_DB[name]) ? HERO_DB[name] : { hp:0, atk:0, sp:0, spd:0 };
+  }
+
   // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含至寶加成)
   // ★ FIX 20260516 v3 — 改:接受 player 物件,從 ext.t 讀已選至寶並加上 baseStats + invested
   function _wbTcGetHeroStats(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
-      const base = HERO_DB[heroName];
+      // ★ v3.13.56 — 改用 _wbHeroBaseStats:三妖怪取弱化版四維(base 僅用於 hp/atk/sp/spd)
+      const base = _wbHeroBaseStats(heroName);
       // 起始:HERO_DB 的 baseStats
       let hp  = base.hp  || 0;
       let atk = base.atk || 0;
@@ -7752,7 +7768,8 @@
   // 共用:組裝英雄/BOSS 資料 HTML(圖 2 風格)
   function _wbTcBuildInfoHtml(name){
     if(typeof HERO_DB === 'undefined' || !HERO_DB[name]) return '<div style="color:#aaa;padding:30px;text-align:center;">找不到資料</div>';
-    const h = HERO_DB[name];
+    const h = HERO_DB[name];   // 技能/天賦/爆發/lore 仍取 HERO_DB(三妖怪 BOSS 版也含完整技能)
+    const _st = _wbHeroBaseStats(name);   // ★ v3.13.56 — 四維顯示改用弱化版(三妖怪 hp 75 等;其餘=HERO_DB base)
     const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
     const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
     const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;
@@ -7767,10 +7784,10 @@
       <div class="wb-tc-info-head-info">
         <div class="wb-tc-info-name">${_esc(name)}</div>
         <div class="wb-tc-info-stats">
-          <div class="s-hp"><span class="s-label">HP </span><b>${h.hp}</b></div>
-          <div class="s-atk"><span class="s-label">ATK </span><b>${h.atk}</b></div>
-          <div class="s-sp"><span class="s-label">SP </span><b>${h.sp}</b></div>
-          <div class="s-spd"><span class="s-label">SPD </span><b>${h.spd}</b></div>
+          <div class="s-hp"><span class="s-label">HP </span><b>${_st.hp}</b></div>
+          <div class="s-atk"><span class="s-label">ATK </span><b>${_st.atk}</b></div>
+          <div class="s-sp"><span class="s-label">SP </span><b>${_st.sp}</b></div>
+          <div class="s-spd"><span class="s-label">SPD </span><b>${_st.spd}</b></div>
         </div>
       </div>
     </div>`;
