@@ -30,8 +30,8 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.34',   // ★ v3.13.34(2026-06-04)— 鬥技場物品禁用清單(強效HP藥水 / 新鮮的綠竹筍)
-                           //   前版 v3.13.32 — 玩家側鬥技場入場券使用流程 + 兌換商店 placeholder
+    VERSION: 'v3.13.61',   // ★ v3.13.61(2026-06-05)— 鬥技場每週排名發證 _arenaGrantZheng + addZheng hook(本場證計入本週排名)
+                           //   前版 v3.13.31 — GM 戰鬥記錄審核 API:刪除 + 補償
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
     QUIZ_TIME: 30,                 // 30 秒搶答(沿用既有冒險模式設定)
@@ -86,34 +86,6 @@
     },
   };
   window.ARENA_ITEM_OVERRIDES = ARENA_ITEM_OVERRIDES;
-
-  // ──────────────────────────────────────────────────────────────────
-  //  🚫 v3.13.34(2026-06-04) — 鬥技場禁用物品(老師裁示)
-  //  ──── 設計理由:鬥技場是 4v4 公平戰,有些「補滿」類道具會破壞節奏
-  //                 (一張卡直接 reset HP / 一張卡復活滿血,變相無敵)
-  //  ──── 套用位置:
-  //        - buildDeck (index.html line ~22770):抽卡池過濾這些 item
-  //        - advApplyReward get_card 分支 (index.html line ~70771):答題獎勵抽卡也過濾
-  //  ──── 擴充方式:直接 push 物品 .n 字串到 ARENA_BANNED_ITEMS 陣列即可
-  // ──────────────────────────────────────────────────────────────────
-  window.ARENA_BANNED_ITEMS = [
-    '強效HP藥水',     // 完全恢復 HP(hp:9999)— 鬥技場下太強,變相無敵
-    '新鮮的綠竹筍',   // 復活並完全恢復 HP(type:revive, full:true)— 鬥技場下太強
-  ];
-
-  // 工具:檢查指定 item 是否為鬥技場禁用
-  //   非鬥技場(冒險模式)永遠回 false(不過濾)
-  window._arenaIsItemBanned = function(it) {
-    try {
-      if (!it || !it.n) return false;
-      if (typeof _adventureMode !== 'undefined' && _adventureMode) return false;
-      const list = window.ARENA_BANNED_ITEMS || [];
-      return list.indexOf(it.n) !== -1;
-    } catch (e) {
-      console.warn('[arena] _arenaIsItemBanned 例外', e);
-      return false;
-    }
-  };
 
   // 工具:套用鬥技場物品 override(用在 buildDeck 抽卡時)
   // 接收原始 item,鬥技場時回傳新物件;非鬥技場原物回傳
@@ -774,6 +746,8 @@
     // ★ v3.13.20(2026-06-02) — 結算同時上傳戰鬥記錄(供 GM 異常傷害審核)
     //   fire-and-forget,失敗不影響玩家獎勵發放
     try { window._arenaSubmitBattleLog && window._arenaSubmitBattleLog(result); } catch (_) {}
+    // ★ v3.13.61(2026-06-05)— 把本場得到的鬥技之證累計進「本週排名」(每週一 08:00 結算發獎)
+    try { if (window._arenaRank && typeof window._arenaRank.addZheng === 'function') window._arenaRank.addZheng(zheng); } catch (_) {}
     return { zheng, total: s.zhengTotal, lifetime: s.zhengLifetimeTotal, state: s };
   };
 
@@ -786,6 +760,63 @@
       return 0;
     }
   };
+
+  // ──────────────────────────────────────────────────────────────────
+  //  ★ v3.13.60(2026-06-05)— 鬥技場商店「兌換扣證」+ GM 開關旗標讀取
+  // ──────────────────────────────────────────────────────────────────
+  //  扣鬥技之證(持有量 zhengTotal,不動 zhengLifetimeTotal=累積)。
+  //  回傳 true=扣成功 / false=不足或失敗。持久化:state + lxps_arena_zheng_total。
+  window._arenaSpendZheng = function(cost) {
+    try {
+      cost = Math.max(0, Math.round(Number(cost) || 0));
+      if (cost <= 0) return true;
+      const s = window._arenaGetDailyState();
+      const have = s.zhengTotal || 0;
+      if (have < cost) return false;
+      s.zhengTotal = have - cost;       // 只扣持有,累積(lifetime)不動
+      _writeDailyState(s);
+      try { localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal)); } catch (_) {}
+      return true;
+    } catch (e) { console.warn('[arena] _arenaSpendZheng 例外:', e); return false; }
+  };
+
+  //  GM 雲端開關:商店是否開放(預設 true=開放,老師指示「可以開放了」)
+  //  讀 stats/global.arenaShopOpen(由 onSnapshot 同步到 _cachedGlobalStats)。
+  window._arenaIsShopOpen = function() {
+    try {
+      const g = window._cachedGlobalStats;
+      if (g && typeof g.arenaShopOpen === 'boolean') return g.arenaShopOpen;
+    } catch (_) {}
+    return true;   // 預設開放
+  };
+
+  //  GM 雲端開關:是否依排名發放獎勵(預設 false,老師按開才發)。
+  //  排名「每週結算發獎」邏輯下一輪實作,屆時會 gate 在這個旗標上。
+  window._arenaIsRankRewardEnabled = function() {
+    try {
+      const g = window._cachedGlobalStats;
+      if (g && typeof g.arenaRankRewardEnabled === 'boolean') return g.arenaRankRewardEnabled;
+    } catch (_) {}
+    return false;  // 預設不發
+  };
+
+  // ★ v3.13.61(2026-06-05)— 排名獎勵「發放鬥技之證」(加持有 zhengTotal + 累積 zhengLifetimeTotal)。
+  //   注意:這是「獎勵發放」,不計入本週排名(不呼叫 _arenaRank.addZheng),避免領獎又灌下週排名。
+  window._arenaGrantZheng = function(amount) {
+    try {
+      amount = Math.max(0, Math.round(Number(amount) || 0));
+      if (amount <= 0) return;
+      const s = window._arenaGetDailyState();
+      s.zhengTotal = (s.zhengTotal || 0) + amount;
+      s.zhengLifetimeTotal = (s.zhengLifetimeTotal || 0) + amount;
+      _writeDailyState(s);
+      try {
+        localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal));
+        localStorage.setItem('lxps_arena_zheng_lifetime', String(s.zhengLifetimeTotal));
+      } catch (_) {}
+    } catch (e) { console.warn('[arena] _arenaGrantZheng 例外:', e); }
+  };
+
 
   // ──────────────────────────────────────────────────────────────────
   //  ★ v3.13.20(2026-06-02) — 戰鬥記錄上傳(供 GM 異常傷害審核)
