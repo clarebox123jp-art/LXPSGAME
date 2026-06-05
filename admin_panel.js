@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.55';
+window.ADMIN_PANEL_VERSION = 'v3.13.63';   // ★ v3.13.63 — 汙染清查強化:鐵證快速清單(A) + 豐富度(含至寶/獎章)原主預判(B/C)
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1864,7 +1864,7 @@ async function _showAdminStatsPanelImpl(){
       //   (🕵️可疑帳號偵測 / 🔍異常解鎖偵測 / 🧹帳號汙染掃描 / 🔬稀有暴增稽核),
       //   統一走唯一安全流程:🧹 汙染清查(掃描)→ 🔬 查活動頁(看 creatorUid 證據)→
       //   📢 發刪除預告(玩家可保留1、可復原、自動補償)。被移除的 section HTML/handler 變成無入口的死碼(無害)。
-      { sec: '_admin-pollution-cluster-section', label: '🧹 汙染清查（掃描可疑帳號）', hint: 'SSR/SR序列+座號分組找可疑帳號 → 一鍵查活動頁挑汙染英雄/至寶刪除（可復原+補償+玩家留1）' },
+      { sec: '_admin-pollution-cluster-section', label: '🧹 汙染清查（掃描可疑帳號）', hint: 'SSR/SR序列分組找可疑帳號 → 🔴鐵證快速清單一鍵處理 + 🟡無紀錄者依豐富度(含至寶/獎章)推測原主 → 查活動頁刪汙染英雄/至寶(可復原+補償+玩家留1)' },
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
@@ -1897,12 +1897,47 @@ async function _showAdminStatsPanelImpl(){
       return;
     }
 
-    // 渲染 sidebar 按鈕
-    sidebarList.innerHTML = SIDEBAR_ITEMS.map((it, i) =>
-      `<button class="admin-sidebar-item" data-sec="${it.sec}" data-idx="${i}" title="${it.hint || ''}">
-         <span class="_si-num">${String(i + 1).padStart(2, '0')}</span>${it.label}
-       </button>`
-    ).join('');
+    // ★ v3.13.63 — 任務2:29 個項目併成 8 個可摺疊群組(只改側欄導覽;各工具 section 區塊完全不動)
+    //   SIDEBAR_ITEMS 保持原樣(_switchAdminSection 仍靠它查標題/預設選第一個),只改渲染方式。
+    const SIDEBAR_GROUPS = [
+      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-trust-revoke-section'] },
+      { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
+      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
+      { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
+      { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
+      { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
+      { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-battles-section'] },
+      { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section'] },
+    ];
+    const _secToItem = {};
+    SIDEBAR_ITEMS.forEach(it => { _secToItem[it.sec] = it; });
+    // 安全網:任何沒被分到群組的項目 → 自動歸到「🔧 其他」,保證沒有工具消失
+    const _grouped = new Set();
+    SIDEBAR_GROUPS.forEach(g => g.secs.forEach(s => _grouped.add(s)));
+    const _ungrouped = SIDEBAR_ITEMS.filter(it => !_grouped.has(it.sec)).map(it => it.sec);
+    const _renderGroups = _ungrouped.length ? SIDEBAR_GROUPS.concat([{ label:'🔧 其他', secs:_ungrouped }]) : SIDEBAR_GROUPS;
+
+    // 渲染 sidebar(群組標題可收合;預設只展開第一組,其餘收合 → 把 29 項濃縮成 8 個標題)
+    let _runIdx = 0;
+    sidebarList.innerHTML = _renderGroups.map((g, gi) => {
+      const _itemsHtml = g.secs.map(sec => {
+        const it = _secToItem[sec];
+        if(!it) return '';
+        _runIdx++;
+        return `<button class="admin-sidebar-item" data-sec="${it.sec}" title="${(it.hint || '').replace(/"/g,'&quot;')}">
+           <span class="_si-num">${String(_runIdx).padStart(2, '0')}</span>${it.label}
+         </button>`;
+      }).join('');
+      const _open = (gi === 0);
+      return `<div class="admin-sidebar-group" data-gi="${gi}">
+        <button type="button" class="admin-sidebar-group-header" data-gi="${gi}" style="width:100%;text-align:left;padding:9px 12px;margin:6px 0 2px;font-size:13px;font-weight:900;color:#ffe;background:rgba(120,120,200,0.18);border:1px solid rgba(150,150,255,0.35);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;">
+          <span class="_grp-arrow" style="font-size:11px;width:12px;">${_open?'▾':'▸'}</span>
+          <span style="flex:1;">${g.label}</span>
+          <span style="font-size:11px;color:#bbc;font-weight:700;">${g.secs.length}</span>
+        </button>
+        <div class="admin-sidebar-group-items" data-gi="${gi}" style="display:${_open?'block':'none'};padding-left:4px;">${_itemsHtml}</div>
+      </div>`;
+    }).join('');
 
     // 切換函式(全部走顯隱,DOM 不動)
     function _switchAdminSection(secId){
@@ -1922,6 +1957,18 @@ async function _showAdminStatsPanelImpl(){
       sidebarList.querySelectorAll('.admin-sidebar-item').forEach(b => {
         b.classList.toggle('active', b.dataset.sec === secId);
       });
+      // ★ v3.13.63 — 確保被選中項目所屬群組是展開的(程式化切換時也適用,如汙染掃描→活動頁)
+      const _activeBtn = sidebarList.querySelector('.admin-sidebar-item.active');
+      if(_activeBtn){
+        const _box = _activeBtn.closest('.admin-sidebar-group-items');
+        if(_box && _box.style.display === 'none'){
+          _box.style.display = 'block';
+          const _hdr = _box.previousElementSibling;
+          const _arrow = _hdr && _hdr.querySelector('._grp-arrow');
+          if(_arrow) _arrow.textContent = '▾';
+        }
+        try{ _activeBtn.scrollIntoView({ block:'nearest' }); }catch(_){}
+      }
       // 5. 更新右側標題
       const item = SIDEBAR_ITEMS.find(x => x.sec === secId);
       if(item && titleEl){
@@ -1934,6 +1981,19 @@ async function _showAdminStatsPanelImpl(){
 
     // 綁定點擊
     sidebarList.addEventListener('click', (ev) => {
+      // ★ v3.13.63 — 群組標題:展開/收合
+      const hdr = ev.target.closest('.admin-sidebar-group-header');
+      if(hdr){
+        const gi = hdr.dataset.gi;
+        const box = sidebarList.querySelector('.admin-sidebar-group-items[data-gi="'+gi+'"]');
+        const arrow = hdr.querySelector('._grp-arrow');
+        if(box){
+          const _show = (box.style.display === 'none');
+          box.style.display = _show ? 'block' : 'none';
+          if(arrow) arrow.textContent = _show ? '▾' : '▸';
+        }
+        return;
+      }
       const btn = ev.target.closest('.admin-sidebar-item');
       if(!btn) return;
       const secId = btn.dataset.sec;
@@ -2232,8 +2292,8 @@ async function _showAdminStatsPanelImpl(){
     function _roleBadge(role){
       if(role==='original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(120,220,140,0.2);border:1px solid #66cc88;color:#aaeebb;">🟢 原始解鎖者(鐵證)</span>';
       if(role==='polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(255,80,80,0.2);border:1px solid #ff7777;color:#ffbbbb;">🔴 被汙染(鐵證)</span>';
-      if(role==='likely_original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(230,200,80,0.18);border:1px solid #ddcc55;color:#ffe89a;" title="無 creatorUid 鐵證, 依等級/進度推測">🟡 推測原主(依等級)</span>';
-      if(role==='likely_polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(240,150,70,0.18);border:1px solid #ee9944;color:#ffcc99;" title="無 creatorUid 鐵證, 依等級/進度推測">🟠 推測被汙染(依等級)</span>';
+      if(role==='likely_original') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(230,200,80,0.18);border:1px solid #ddcc55;color:#ffe89a;" title="無 creatorUid 鐵證, 依豐富度(英雄等級+解鎖數+至寶+獎章+知識幣)推測為原主">🟡 推測原主(依豐富度)</span>';
+      if(role==='likely_polluted') return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(240,150,70,0.18);border:1px solid #ee9944;color:#ffcc99;" title="無 creatorUid 鐵證, 依豐富度推測為被汙染(較不豐富)">🟠 推測被汙染(依豐富度)</span>';
       return '<span style="padding:1px 7px;border-radius:5px;font-size:11px;font-weight:800;background:rgba(180,180,180,0.15);border:1px solid #999;color:#ddd;">⬜ 待確認</span>';
     }
     // ★ v3.13.49b — 最佳身分顯示:名冊真名 → 暱稱 → 班級座號 → email → uid
@@ -2270,6 +2330,13 @@ async function _showAdminStatsPanelImpl(){
           + _rar(s.rarity)+' <b style="color:#fff;">'+_esc(s.name)+'</b> '+lvStr+' '+uHint
           + '</div>';
       }).join('');
+      // ★ v3.13.63 — 鐵證至寶(creatorUid 為他人 / cat=pollution)獨立一行,方便老師看到「至寶」也被汙染
+      const _ironTre = (m.ironTreasures||[]);
+      const _treHtml = _ironTre.length
+        ? '<div style="margin-top:4px;padding:3px 6px;font-size:11px;color:#ffb3b3;background:rgba(255,80,80,0.1);border-radius:5px;">💎 鐵證至寶:'
+          + _ironTre.map(t => '<b style="color:#fff;">'+_esc(t.name)+'</b> Lv.'+(t.lv||1)+(t.creatorUid?('（<span style="color:#ff9a9a;">複製自 '+_esc(t.creatorUid)+'…</span>）'):'（查無紀錄）')).join('、')
+          + '</div>'
+        : '';
       const _dispName = (m.name||'').trim();
       const _nick = (_dispName && _dispName !== _who(m)) ? ' <span style="color:#9ab;font-size:11px;">暱稱:'+_esc(_dispName)+'</span>' : '';
       const _isGuest = !(m.email||'').trim() && !(m.rosterName||'').trim() && !_dispName;
@@ -2290,10 +2357,11 @@ async function _showAdminStatsPanelImpl(){
         + _roleBadge(m.role)
         + ' <b style="color:#fff;font-size:14px;">'+_esc(_who(m))+'</b>'
         + _guestBadge + _seatBadge + _nick
-        + ' <span style="color:#bbb;font-size:11px;margin-left:auto;">本人建立 '+(m.selfCreated||0)+' · 複製 '+(m.foreignCreated||0)+' · 總解鎖 '+m.totalUnlocked+' · ⭐最高Lv'+m.maxHeroLv+' · <span style="color:#ffe066;">稀有Lv總和 '+(m.clusterHeroLvSum||0)+'</span></span>'
+        + ' <span style="color:#bbb;font-size:11px;margin-left:auto;">本人建立 '+(m.selfCreated||0)+' · 複製 '+(m.foreignCreated||0)+' · 總解鎖 '+m.totalUnlocked+' · ⭐最高Lv'+m.maxHeroLv+' · <span style="color:#ffe066;">稀有Lv總和 '+(m.clusterHeroLvSum||0)+'</span> · 💎至寶 '+(m.treasureCount||0)+' · 🏅獎章 '+(m.medalCount||0)+' · <span style="color:#9fe0ff;" title="豐富度分數 = 稀有Lv總和×5 + 全英雄Lv + 最高Lv×3 + 解鎖×10 + 至寶×30 + 獎章×20 + 知識幣/100。數字越高越可能是原主。">豐富度 '+(m.richnessScore||0)+'</span></span>'
         + '</div>'
         + _idLine
         + '<div style="margin-top:5px;max-height:200px;overflow-y:auto;">'+ssr+'</div>'
+        + _treHtml
         + '<div style="margin-top:8px;">'
         + '<button class="_cl-open-activity" type="button" style="padding:8px 18px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff8a3d,#e0632a);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(255,120,50,0.4);">🔬 查此帳號活動頁 → 挑選汙染英雄/至寶刪除</button>'
         + '<span class="_cl-msg" style="margin-left:10px;font-size:12px;color:#aaffaa;"></span>'
@@ -2309,7 +2377,7 @@ async function _showAdminStatsPanelImpl(){
       if(c.evidence==='creatorUid') evNote = '⚠ creatorUid 顯示有「跨帳號複製」(鐵證)→ 紅色「被汙染」者可直接處理。';
       else if(c.evidence==='exactTime') evNote = '⏱ 解鎖時間戳完全相同(同一次解鎖被整份複製, 鐵證)。';
       else if(c.evidence==='creatorUid_no_foreign') evNote = '✓ 有解鎖紀錄、creatorUid 都是本人 — 較可能是「撞序列/活動」而非汙染, 刪前務必再確認。';
-      else evNote = '⚠ 此組稀有英雄全為「無紀錄」(多為 2026/5/28 前的舊英雄)→ 沒有 creatorUid 鐵證。請搭配下方「🪧 同台 iPad(座號相同)」+ 實際等級人工判斷;建議用「發刪除預告」(玩家可保留+可復原), 不要直接收回。';
+      else evNote = '⚠ 此組稀有英雄全為「無紀錄」(多為 2026/5/28 前的舊英雄)→ 沒有 creatorUid 鐵證。系統已用「豐富度」(英雄等級+解鎖數+至寶+獎章+知識幣)推測 🟡原主 / 🟠被汙染(分數越高越可能是原主),但這是推測非鐵證 — 請搭配下方「🪧 同台 iPad(座號相同)」人工判斷;建議用「發刪除預告」(玩家可保留+可復原), 不要直接收回。';
       const evCss = c.isPollution ? 'color:#ffbbbb;' : 'color:#ffe89a;';
       // ★ v3.13.51 — 同台 iPad 偵測:組內「年級+座號」相同者 = 共用同一台 iPad(忽略班級)
       const _members = c.members || [];
@@ -2359,6 +2427,60 @@ async function _showAdminStatsPanelImpl(){
         };
       });
     }
+    // ★ v3.13.63 — (A) 鐵證快速清單:跨所有組,凡帶 creatorUid 鐵證(英雄/至寶從別帳號複製來)的帳號集中一張表
+    function _ironPanelHtml(ironList){
+      ironList = Array.isArray(ironList) ? ironList : [];
+      if(!ironList.length){
+        return '<div style="margin-bottom:14px;padding:9px 12px;border-radius:8px;background:rgba(120,220,140,0.12);border:1px solid #66cc88;color:#bfeccb;font-size:12px;line-height:1.5;">✅ <b>鐵證快速清單</b>:本次掃描沒有任何帶 creatorUid 鐵證(英雄/至寶確定從別帳號複製)的帳號。下方分組多為 5/28 前「無紀錄」舊資料 → 已用豐富度推測原主, 仍請人工判斷。</div>';
+      }
+      const _totalHero = ironList.reduce((s,a)=>s+(a.heroCount||0),0);
+      const _totalTre  = ironList.reduce((s,a)=>s+(a.treasureCount||0),0);
+      const _rows = ironList.map(a => {
+        const _heroStr = (a.heroes||[]).map(h => _rar(h.rarity)+' <b style="color:#fff;">'+_esc(h.name)+'</b> Lv.'+(h.lv||0)+'<span style="color:#ff9a9a;font-size:10px;">(複製自 '+_esc(h.creatorUid)+'…)</span>').join('、') || '<span style="color:#888;">—</span>';
+        const _treStr  = (a.treasures||[]).map(t => '💎 <b style="color:#fff;">'+_esc(t.name)+'</b> Lv.'+(t.lv||1)+(t.creatorUid?('<span style="color:#ff9a9a;font-size:10px;">(複製自 '+_esc(t.creatorUid)+'…)</span>'):'<span style="color:#caa;font-size:10px;">(查無紀錄)</span>')).join('、');
+        return '<div class="_iron-row" data-uid="'+_esc(a.uid)+'" style="border:1px solid rgba(255,90,90,0.35);border-radius:7px;padding:8px 10px;margin-bottom:7px;background:rgba(0,0,0,0.25);">'
+          + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;">'
+          + _roleBadge(a.role)
+          + ' <b style="color:#fff;font-size:13px;">'+_esc(_who(a))+'</b>'
+          + ' <span style="color:#ffbbbb;font-size:11px;">鐵證英雄 '+(a.heroCount||0)+' 隻'+(a.treasureCount?(' · 鐵證至寶 '+a.treasureCount+' 件'):'')+'</span>'
+          + '<span class="_iron-msg" style="margin-left:auto;font-size:11px;color:#aaffaa;"></span>'
+          + '</div>'
+          + '<div style="font-size:11px;line-height:1.6;color:#ffe;">'+_heroStr+(_treStr?('<br>'+_treStr):'')+'</div>'
+          + '<div style="margin-top:7px;">'
+          + '<button class="_iron-open-activity" type="button" style="padding:7px 15px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ff5a5a,#c83030);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;">🔬 處理此帳號(查活動頁 → 汙染項目已自動勾選 → 逐帳號確認後刪)</button>'
+          + '</div></div>';
+      }).join('');
+      return '<div style="margin-bottom:16px;border:2px solid #ff7777;border-radius:10px;padding:12px 13px;background:rgba(255,60,60,0.1);">'
+        + '<div style="font-size:14px;font-weight:900;color:#ffd0d0;margin-bottom:6px;">🔴 鐵證快速清單(建議優先處理)</div>'
+        + '<div style="font-size:11px;color:#ffcaca;margin-bottom:9px;line-height:1.55;">以下 <b>'+ironList.length+'</b> 個帳號帶有 creatorUid <b>鐵證</b>(英雄/至寶確定是從別帳號複製來),共 '+_totalHero+' 隻英雄 / '+_totalTre+' 件至寶。點按鈕跳到該帳號活動頁 →「發出刪除預告」時汙染項目<b>已自動勾選</b>,逐帳號確認後即可刪(自動補償+通知+可復原+玩家至少留 1 隻)。</div>'
+        + _rows
+        + '</div>';
+    }
+    function _wireIron(){
+      _resultEl.querySelectorAll('._iron-open-activity').forEach(btn => {
+        const row = btn.closest('._iron-row');
+        const uid = row && row.dataset.uid;
+        const msg = row && row.querySelector('._iron-msg');
+        btn.onclick = () => {
+          if(!uid){ if(msg){ msg.style.color='#ffcc66'; msg.textContent='⚠ 無帳號 ID'; } return; }
+          try{
+            if(typeof window._switchAdminSection === 'function') window._switchAdminSection('_admin-activity-section');
+            setTimeout(()=>{
+              try{
+                const _q = document.getElementById('_admin-activity-query');
+                const _searchBtn = document.getElementById('_admin-activity-search');
+                if(_q) _q.value = uid;
+                const _sec = document.getElementById('_admin-activity-section');
+                if(_sec) _sec.scrollIntoView({ behavior:'smooth', block:'start' });
+                if(_searchBtn) _searchBtn.click();
+              }catch(_e2){ console.warn('[鐵證清單→活動頁] 送出查詢失敗', _e2); }
+            }, 140);
+            btn.textContent = '✅ 已開啟活動頁（發出刪除預告 → 汙染已勾選 → 套用刪除）';
+            btn.disabled = true; btn.style.opacity = '0.7';
+          }catch(e){ if(msg){ msg.style.color='#ff8888'; msg.textContent='❌ '+_esc(e.message||e); } }
+        };
+      });
+    }
     _scanBtn.onclick = async () => {
       const minSeq = parseInt(_minSeqEl && _minSeqEl.value,10)||2;
       const minMem = parseInt(_minMemEl && _minMemEl.value,10)||2;
@@ -2369,10 +2491,11 @@ async function _showAdminStatsPanelImpl(){
         const r = await window._fbAdminScanPollutionClusters({ minSeq:minSeq, minMembers:minMem });
         if(!r || !r.ok){ if(_statusEl) _statusEl.textContent=''; _resultEl.innerHTML='<span style="color:#ff8888;">❌ '+_esc((r&&r.reason)||'失敗')+'</span>'; return; }
         const cl = r.clusters||[];
-        if(_statusEl){ _statusEl.style.color='#88ddaa'; _statusEl.textContent='✅ '+cl.length+' 組(掃 '+r.totalPlayers+' 位有 SSR/SR 的玩家)'; }
+        const _ironN = (r.ironList||[]).length;
+        if(_statusEl){ _statusEl.style.color='#88ddaa'; _statusEl.textContent='✅ '+cl.length+' 組(掃 '+r.totalPlayers+' 位有 SSR/SR 的玩家)'+(_ironN?(' ・ 🔴 鐵證帳號 '+_ironN+' 個'):''); }
         if(!cl.length){ _resultEl.innerHTML='<div style="color:#aaffaa;padding:10px;">🎉 沒有發現序列相同的分組,目前看起來乾淨。</div>'; return; }
-        _resultEl.innerHTML = cl.map(_clusterHtml).join('');
-        _wire();
+        _resultEl.innerHTML = _ironPanelHtml(r.ironList) + cl.map(_clusterHtml).join('');
+        _wire(); _wireIron();
       }catch(e){ if(_statusEl) _statusEl.textContent=''; _resultEl.innerHTML='<span style="color:#ff8888;">❌ '+_esc(e.message||e)+'</span>'; }
     };
   })();
