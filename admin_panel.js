@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.67';   // ★ v3.13.67 — 活動記錄查詢「掃描異常」加汙染偵查規則3(可疑 SSR/SR/至寶 + 知識幣竄改/盜刷/盜賣)
+window.ADMIN_PANEL_VERSION = 'v3.13.68';   // ★ v3.13.68 — 活動記錄查詢:異常清單導航(返回清單/上下位/只跳未處理)+ 英雄&至寶分頁批次勾選刪除+退補償+通知
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -7419,6 +7419,11 @@ async function _showAdminStatsPanelImpl(){
     let _curData = null;
     let _curUid = null;
     let _curTab = 'hero';
+    // ★ v3.13.68 — 異常清單導航狀態(讓玩家詳情頁可「返回清單/上一位/下一位」,不必重掃 Firebase)
+    let _anomalyCtx = null;    // { result, handled, opts } — 最後一次掃描/快取的完整結果(供返回清單純記憶體重繪)
+    let _anomalyOrder = [];    // 異常 uid 依清單順序 [uid0, uid1, ...]
+    let _curAnomalyIdx = -1;   // 當前查看玩家在 _anomalyOrder 的索引(-1 = 非來自清單,不顯示導航條)
+    let _navSkipHandled = false; // 「下一位/上一位」是否只跳未處理(與清單「只看未處理」連動)
 
     function _setStatus(msg, color){
       if(_statusEl){
@@ -7567,6 +7572,7 @@ async function _showAdminStatsPanelImpl(){
         el.onclick = async function(){
           const _uid = el.dataset.uid;
           if(!_uid) return;
+          _curAnomalyIdx = -1;  // ★ v3.13.68 姓名候選點選不算清單導航
           // 把 uid 填回 input,然後重跑 _doQuery
           _queryInput.value = _uid;
           await _doQuery();
@@ -7627,6 +7633,34 @@ async function _showAdminStatsPanelImpl(){
       return _set;
     }
 
+    // ★ v3.13.68 — 返回異常清單(純記憶體重繪,零 Firebase 讀取)
+    function _backToAnomalyList(){
+      if(!_anomalyCtx){ _setStatus('沒有可返回的清單,請先按「⚡ 掃描異常」', '#ffaa66'); return; }
+      _curAnomalyIdx = -1;
+      if(_playerCard) _playerCard.style.display = 'none';
+      if(_tabsEl) _tabsEl.style.display = 'none';
+      _renderAnomalyCards(_anomalyCtx.result, _anomalyCtx.handled, _anomalyCtx.opts);
+    }
+    // ★ v3.13.68 — 跳到清單上/下一位(offset=±1);skipHandled=true 時略過已處理者
+    async function _gotoAnomalyByOffset(offset, skipHandled){
+      if(!_anomalyOrder.length){ _setStatus('清單為空', '#ffaa66'); return; }
+      let idx = _curAnomalyIdx;
+      for(let step = 0; step < _anomalyOrder.length; step++){
+        idx += offset;
+        if(idx < 0 || idx >= _anomalyOrder.length){
+          _setStatus(offset > 0 ? '已經是最後一位了' : '已經是第一位了', '#ffaa66');
+          return;
+        }
+        const uid = _anomalyOrder[idx];
+        if(skipHandled && _anomalyCtx && _anomalyCtx.handled && _anomalyCtx.handled[uid]) continue; // 略過已處理
+        _curAnomalyIdx = idx;
+        _queryInput.value = uid;
+        await _doQuery();
+        return;
+      }
+      _setStatus('沒有更多未處理的玩家了', '#ffaa66');
+    }
+
     function _renderPlayerCard(r){
       if(!_playerCard || !r) return;
       const p = r.player || {};
@@ -7670,7 +7704,24 @@ async function _showAdminStatsPanelImpl(){
         : `<div style="margin-top:8px;padding:6px 12px;background:rgba(40,120,80,0.2);border-left:4px solid #66cc88;border-radius:6px;color:#aaddbb;font-size:12px;">
              ✅ 無異常
            </div>`;
-      _playerCard.innerHTML = `
+      // ★ v3.13.68 — 來自異常清單時,玩家卡頂部顯示導航條(返回/上下位/第X/N位/只跳未處理)
+      let _navBar = '';
+      if(_curAnomalyIdx >= 0 && _anomalyOrder.length){
+        const _total = _anomalyOrder.length;
+        const _pos = _curAnomalyIdx + 1;
+        const _btnS = 'padding:6px 12px;font-size:12px;font-weight:700;border:none;border-radius:6px;cursor:pointer;';
+        _navBar = `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed rgba(140,180,255,0.3);">
+            <button id="_aa-nav-back" style="${_btnS}background:linear-gradient(135deg,#5577cc,#3355aa);color:#fff;">← 返回清單</button>
+            <button id="_aa-nav-prev" style="${_btnS}background:rgba(100,120,160,0.5);color:#dde;">← 上一位</button>
+            <span style="font-size:12px;color:#aaccff;">異常清單 第 <b style="color:#ffe;">${_pos}</b> / ${_total} 位</span>
+            <button id="_aa-nav-next" style="${_btnS}background:rgba(100,120,160,0.5);color:#dde;">下一位 →</button>
+            <label style="font-size:11px;color:#bbccdd;cursor:pointer;user-select:none;margin-left:4px;">
+              <input type="checkbox" id="_aa-nav-skiphandled" ${_navSkipHandled ? 'checked' : ''} style="vertical-align:middle;margin-right:3px;cursor:pointer;">只跳未處理
+            </label>
+          </div>`;
+      }
+      _playerCard.innerHTML = _navBar + `
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div style="flex:1;min-width:220px;">
             <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;">${_esc(p.name || '(無名稱)')}</div>
@@ -7687,6 +7738,17 @@ async function _showAdminStatsPanelImpl(){
         </div>
         ${anomalyHtml}
       `;
+      // ★ v3.13.68 — 綁定導航條按鈕(返回清單純記憶體;上下位走 _doQuery)
+      if(_curAnomalyIdx >= 0){
+        const _navBack = document.getElementById('_aa-nav-back');
+        if(_navBack) _navBack.onclick = _backToAnomalyList;
+        const _navPrev = document.getElementById('_aa-nav-prev');
+        if(_navPrev) _navPrev.onclick = function(){ const _sk = document.getElementById('_aa-nav-skiphandled'); _gotoAnomalyByOffset(-1, !!(_sk && _sk.checked)); };
+        const _navNext = document.getElementById('_aa-nav-next');
+        if(_navNext) _navNext.onclick = function(){ const _sk = document.getElementById('_aa-nav-skiphandled'); _gotoAnomalyByOffset(1, !!(_sk && _sk.checked)); };
+        const _navSkip = document.getElementById('_aa-nav-skiphandled');
+        if(_navSkip) _navSkip.onchange = function(){ _navSkipHandled = this.checked; };
+      }
     }
 
     function _showTabs(){
@@ -7831,6 +7893,7 @@ async function _showAdminStatsPanelImpl(){
         const _tre = (h.equippedTreasures||[]).map(id => _esc(_treName(id))).join('、') || '<span style="color:#667;">—</span>';
         const _invT = _investedTotal(h.invested);
         return `<tr style="${_bg}border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:5px 4px;text-align:center;"><input type="checkbox" class="_aa-own-hero-cb" data-name="${_esc(h.name)}" style="width:15px;height:15px;cursor:pointer;accent-color:#ff6644;"></td>
           <td style="padding:5px 7px;font-size:12px;color:#ffe;font-weight:700;white-space:nowrap;">${_esc(h.name)} ${_rarityBadge(h.rarity)}</td>
           <td style="padding:5px 7px;font-size:11px;color:#aac;text-align:center;">Lv.${h.lv||1}</td>
           <td style="padding:5px 7px;font-size:11px;color:#9bd;text-align:center;" title="已配點 ${_invT} / 未用點 ${h.freePts||0}">${_invT}/${h.freePts||0}</td>
@@ -7843,11 +7906,20 @@ async function _showAdminStatsPanelImpl(){
         </tr>`;
       }).join('');
       const _countLine = `<div style="margin-bottom:6px;font-size:12px;color:#aac;">目前擁有 <b style="color:#ffe;">${_owned.length}</b> 隻${_pollution.length?` (<span style="color:#ff8888">${_pollution.length} 隻來源不明</span>)`:''}</div>`;
+      const _batchBar = _owned.length ? `
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;background:rgba(60,40,40,0.4);border:1px solid rgba(255,140,120,0.3);border-radius:6px;">
+          <button id="_aa-own-hero-all" style="padding:4px 10px;font-size:11px;background:rgba(120,180,120,0.3);border:1px solid #66cc66;color:#aaddaa;border-radius:4px;cursor:pointer;">全選</button>
+          <button id="_aa-own-hero-none" style="padding:4px 10px;font-size:11px;background:rgba(120,120,120,0.3);border:1px solid #888;color:#ccc;border-radius:4px;cursor:pointer;">全不選</button>
+          <span id="_aa-own-hero-selinfo" style="font-size:12px;color:#bbccdd;">已選 0 隻</span>
+          <button id="_aa-own-hero-batch-btn" style="padding:6px 14px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ff5544,#cc2211);border:none;color:#fff;border-radius:6px;cursor:pointer;margin-left:auto;box-shadow:0 2px 8px rgba(255,80,60,0.4);">🗑 刪除選取的英雄 + 退補償 + 通知</button>
+        </div>` : '';
       const _table = _owned.length ? `
         ${_countLine}
+        ${_batchBar}
         <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:720px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:760px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
+            <th style="padding:5px 4px;text-align:center;color:#cce;width:28px;">✓</th>
             <th style="padding:5px 7px;text-align:left;color:#cce;">英雄</th>
             <th style="padding:5px 7px;color:#cce;">等級</th>
             <th style="padding:5px 7px;color:#cce;" title="已配點/未用點">配點</th>
@@ -7913,6 +7985,24 @@ async function _showAdminStatsPanelImpl(){
       const _pollution = _owned.filter(h => h && h.cat === 'pollution');
       const _noticeBtn = document.getElementById('_pp-notice-btn');
       if(_noticeBtn) _noticeBtn.onclick = function(){ _openPollutionPurgeNoticeModal(_pollution); };
+      // ★ v3.13.68 — 英雄擁有區批次勾選刪除 + 退補償 + 通知
+      const _heroSelInfo = document.getElementById('_aa-own-hero-selinfo');
+      function _updHeroSelInfo(){
+        const _n = _contentEl.querySelectorAll('._aa-own-hero-cb:checked').length;
+        if(_heroSelInfo) _heroSelInfo.textContent = '已選 ' + _n + ' 隻';
+      }
+      _contentEl.querySelectorAll('._aa-own-hero-cb').forEach(cb => { cb.onchange = _updHeroSelInfo; });
+      const _heroAllB = document.getElementById('_aa-own-hero-all');
+      const _heroNoneB = document.getElementById('_aa-own-hero-none');
+      if(_heroAllB) _heroAllB.onclick = function(){ _contentEl.querySelectorAll('._aa-own-hero-cb').forEach(cb => { cb.checked = true; }); _updHeroSelInfo(); };
+      if(_heroNoneB) _heroNoneB.onclick = function(){ _contentEl.querySelectorAll('._aa-own-hero-cb').forEach(cb => { cb.checked = false; }); _updHeroSelInfo(); };
+      const _heroBatchB = document.getElementById('_aa-own-hero-batch-btn');
+      if(_heroBatchB) _heroBatchB.onclick = function(){
+        const _names = Array.from(_contentEl.querySelectorAll('._aa-own-hero-cb:checked')).map(cb => cb.dataset.name);
+        if(!_names.length){ alert('請先勾選要刪除的英雄'); return; }
+        const _sel = _names.map(n => _owned.find(h => h && h.name === n)).filter(Boolean);
+        _openBatchCleanup('hero', _sel);
+      };
       _contentEl.querySelectorAll('._pp-cancel-btn').forEach(btn => {
         btn.onclick = async function(){
           if(!confirm('撤銷這筆刪除預告?\n\n玩家就不會再看到刪除通知,英雄保持原狀。')) return;
@@ -8245,6 +8335,7 @@ async function _showAdminStatsPanelImpl(){
         const _src = _treSrc(t);
         if(_src.pol) _polCount++;
         return `<tr style="${_src.bg}border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:5px 4px;text-align:center;"><input type="checkbox" class="_aa-own-tre-cb" data-id="${_esc(t.id)}" style="width:15px;height:15px;cursor:pointer;accent-color:#ff6644;"></td>
           <td style="padding:5px 8px;font-size:12px;color:#ffe;">${_nm}</td>
           <td style="padding:5px 8px;font-size:11px;color:#aac;font-family:monospace;">${_esc(t.id)}</td>
           <td style="padding:5px 8px;font-size:12px;color:#ffe066;text-align:center;">Lv.${parseInt(t.lv,10)||1}</td>
@@ -8266,12 +8357,21 @@ async function _showAdminStatsPanelImpl(){
           <button id="_pp-tre-notice-btn" style="padding:9px 18px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff6644,#cc3322);color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 3px 10px rgba(255,80,60,0.45);">📢 發出刪除預告</button>
         </div>`;
       }
+      const _treBatchBar = `
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 10px;background:rgba(60,40,40,0.4);border:1px solid rgba(255,140,120,0.3);border-radius:6px;">
+          <button id="_aa-own-tre-all" style="padding:4px 10px;font-size:11px;background:rgba(120,180,120,0.3);border:1px solid #66cc66;color:#aaddaa;border-radius:4px;cursor:pointer;">全選</button>
+          <button id="_aa-own-tre-none" style="padding:4px 10px;font-size:11px;background:rgba(120,120,120,0.3);border:1px solid #888;color:#ccc;border-radius:4px;cursor:pointer;">全不選</button>
+          <span id="_aa-own-tre-selinfo" style="font-size:12px;color:#bbccdd;">已選 0 件</span>
+          <button id="_aa-own-tre-batch-btn" style="padding:6px 14px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ff5544,#cc2211);border:none;color:#fff;border-radius:6px;cursor:pointer;margin-left:auto;box-shadow:0 2px 8px rgba(255,80,60,0.4);">🗑 刪除選取的至寶 + 退補償 + 通知</button>
+        </div>`;
       return `
         ${_treBanner}
         <div style="margin-bottom:6px;font-size:13px;font-weight:700;color:#aaccff;">💎 目前擁有至寶 共 ${_owned.length} 個${_polCount?` (<span style="color:#ff8888;">${_polCount} 件來源不明</span>)`:''}</div>
+        ${_treBatchBar}
         <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;min-width:640px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;min-width:680px;">
           <thead><tr style="background:rgba(140,180,255,0.15);">
+            <th style="padding:5px 4px;text-align:center;color:#cce;width:28px;">✓</th>
             <th style="padding:5px 8px;text-align:left;color:#cce;">至寶</th>
             <th style="padding:5px 8px;text-align:left;color:#cce;">ID</th>
             <th style="padding:5px 8px;text-align:center;color:#cce;">等級</th>
@@ -8342,6 +8442,25 @@ async function _showAdminStatsPanelImpl(){
 
     function _bindTreasureRowButtons(){
       _bindTreNoticeBtn();
+      // ★ v3.13.68 — 至寶擁有區批次勾選刪除 + 退補償 + 通知
+      const _treOwned = ((_curData && _curData.full && _curData.full.ownedTreasures) || []);
+      const _treSelInfo = document.getElementById('_aa-own-tre-selinfo');
+      function _updTreSelInfo(){
+        const _n = _contentEl.querySelectorAll('._aa-own-tre-cb:checked').length;
+        if(_treSelInfo) _treSelInfo.textContent = '已選 ' + _n + ' 件';
+      }
+      _contentEl.querySelectorAll('._aa-own-tre-cb').forEach(cb => { cb.onchange = _updTreSelInfo; });
+      const _treAllB = document.getElementById('_aa-own-tre-all');
+      const _treNoneB = document.getElementById('_aa-own-tre-none');
+      if(_treAllB) _treAllB.onclick = function(){ _contentEl.querySelectorAll('._aa-own-tre-cb').forEach(cb => { cb.checked = true; }); _updTreSelInfo(); };
+      if(_treNoneB) _treNoneB.onclick = function(){ _contentEl.querySelectorAll('._aa-own-tre-cb').forEach(cb => { cb.checked = false; }); _updTreSelInfo(); };
+      const _treBatchB = document.getElementById('_aa-own-tre-batch-btn');
+      if(_treBatchB) _treBatchB.onclick = function(){
+        const _ids = Array.from(_contentEl.querySelectorAll('._aa-own-tre-cb:checked')).map(cb => cb.dataset.id);
+        if(!_ids.length){ alert('請先勾選要刪除的至寶'); return; }
+        const _sel = _ids.map(id => _treOwned.find(t => t && t.id === id) || { id: id, lv: 1 });
+        _openBatchCleanup('treasure', _sel);
+      };
       _contentEl.querySelectorAll('._aa-del-tre').forEach(btn => {
         btn.onclick = async function(){
           const at = parseInt(btn.dataset.at, 10);
@@ -9354,6 +9473,261 @@ async function _showAdminStatsPanelImpl(){
     }
 
     // ════════════════════════════════════════════════════════════════
+    // ★ v3.13.68 — 各分頁批次勾選清除(英雄/至寶)+ 退補償 + 發訊息告知玩家
+    //   與「📦 一鍵清除異常」(_openCleanupPreview)不同:這裡刪「GM 任意勾選」
+    //   的項目,不限系統偵測到的異常。
+    //     英雄:走原子 API _fbAdminCleanupAndCompensate(刪+補+通知一次完成)
+    //     至寶:組合 _fbAdminDeleteTreasure×N + _fbCompensatePlayer + _fbAdminSendNotificationToPlayer
+    //   modal id 一律用 _aabatch- 前綴,與 _openCleanupPreview(_aa-cleanup-)區隔不衝突。
+    // ════════════════════════════════════════════════════════════════
+    function _batchDefaultNote(kind, rows, coins, items){
+      const _isHero = (kind === 'hero');
+      const _itemLine = Object.keys(items).length
+        ? Object.keys(items).map(k => `📦 ${_BATCH_ITEM_LABELS[k] || k} ×${items[k]}`).join('\n') + '\n'
+        : '';
+      let _body = '小英雄你好 💗\n\n';
+      if(_isHero){
+        const _ssr = rows.filter(r => r.isSSR).length;
+        _body += `管理員整理了你的帳號,把下列 ${rows.length} 隻英雄送回了他們的世界:\n`
+          + rows.map(r => '・' + r.label).join('\n') + '\n';
+        if(_ssr > 0){
+          _body += `\n其中有 ${_ssr} 隻是 SSR — 我知道捨不得是正常的,但真正屬於你的 SSR,還會在未來的冒險中與你重逢。\n`;
+        }
+        _body += `\n你花在他們身上的升級、訓練、強化,管理員一份都不會虧待,全部用資源原樣補回給你 👇\n`;
+      } else {
+        _body += `管理員整理了你的帳號,移除了下列 ${rows.length} 件至寶:\n`
+          + rows.map(r => '・' + r.label).join('\n') + '\n'
+          + `\n你投入在這些至寶上的養成,管理員會用資源補回給你 👇\n`;
+      }
+      if(coins > 0 || Object.keys(items).length){
+        _body += `\n💰 知識幣 +${coins.toLocaleString()}\n` + _itemLine;
+      }
+      _body += `\n如果有任何疑問,歡迎在遊戲裡找管理員 💬\n\n— LXPSGAME 管理員 敬上`;
+      return _body;
+    }
+
+    const _BATCH_ITEM_LABELS = {
+      skill_upgrade_book: '技能升級書',
+      burst_upgrade_fruit: '超越極限果實',
+      hero_exp_book_premium: '豪華典藏版經驗之書',
+      summon_ticket_ssr: 'SSR 英雄召喚卷',
+      hero_exp_book: '英雄經驗之書',
+      treasure_exp_scroll: '至寶經驗卷軸',
+    };
+
+    function _openBatchCleanup(kind, items){
+      if(!_curData || !_curUid){ alert('請先成功查詢玩家'); return; }
+      items = Array.isArray(items) ? items : [];
+      if(!items.length){ alert('請先勾選要刪除的項目'); return; }
+      const _isHero = (kind === 'hero');
+      const _heroDetails = _curData.heroDetails || {};
+      const _ownedTre = ((_curData.full && _curData.full.ownedTreasures) || []);
+      const _treDB = (typeof window.TAIWAN_TREASURES === 'object' && window.TAIWAN_TREASURES) ? window.TAIWAN_TREASURES : {};
+
+      // 預先算每項補償
+      const _detailRows = items.map(it => {
+        if(_isHero){
+          const _c = _computeCompensationForHero(it.name, _heroDetails);
+          return { key:it.name, label:it.name, sub:'Lv'+(_c.meta.lv||it.lv||1), isSSR:!!_c.meta.isSSR, coins:_c.coins||0, items:_c.items||{}, at:it.at||0 };
+        } else {
+          const _c = _computeCompensationForTreasure(it.id, _ownedTre);
+          const _info = _treDB[it.id] || {};
+          const _nm = (_info.icon ? _info.icon + ' ' : '') + (_info.name || it.id);
+          return { key:it.id, label:_nm, sub:'Lv'+(_c.meta.lv||it.lv||1), isSSR:false, coins:_c.coins||0, items:_c.items||{}, at:it.at||0 };
+        }
+      });
+
+      const _title = _isHero ? '🦸 批次清除選取英雄' : '💎 批次清除選取至寶';
+      const _kindWord = _isHero ? '英雄' : '至寶';
+      let _userEdited = false;
+
+      const _ov = document.createElement('div');
+      _ov.id = '_aabatch-modal';
+      _ov.style.cssText = 'position:fixed;inset:0;z-index:200002;background:rgba(0,0,0,0.85);'
+        + 'display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);'
+        + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow-y:auto;';
+      _ov.innerHTML = `
+        <div style="max-width:780px;width:100%;background:linear-gradient(160deg,#241818,#180c0c);
+          border:2.5px solid #ff6644;border-radius:14px;padding:22px 26px;color:#fff;
+          box-shadow:0 0 40px rgba(255,80,60,0.5);max-height:90vh;overflow-y:auto;">
+          <div style="font-size:21px;font-weight:800;color:#ff8866;margin-bottom:8px;">
+            🗑 ${_title} + 退補償 + 通知玩家
+          </div>
+          <div style="font-size:13px;color:#ffcccc;margin-bottom:14px;line-height:1.6;">
+            預設勾選你剛才選的 ${_detailRows.length} 個${_kindWord} — 可在這裡再取消勾選想保留的,補償總計會即時更新。<br>
+            <span style="color:#ffaa66;">⚠ 這是直接刪除(不可逆),會同時退補償並寄通知給玩家。</span>
+          </div>
+          <div style="background:rgba(40,30,30,0.6);border:1px solid rgba(255,140,120,0.3);border-radius:8px;padding:12px;margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <div style="font-size:13px;color:#ffcc88;font-weight:700;">🗑 選取的${_kindWord}(共 ${_detailRows.length} 個)</div>
+              <div style="display:flex;gap:6px;">
+                <button id="_aabatch-all" style="padding:4px 10px;font-size:11px;background:rgba(120,180,120,0.3);border:1px solid #66cc66;color:#aaddaa;border-radius:4px;cursor:pointer;">全選</button>
+                <button id="_aabatch-none" style="padding:4px 10px;font-size:11px;background:rgba(120,120,120,0.3);border:1px solid #888;color:#ccc;border-radius:4px;cursor:pointer;">全不選</button>
+              </div>
+            </div>
+            <div style="max-height:280px;overflow-y:auto;background:rgba(0,0,0,0.4);border-radius:6px;padding:6px;">
+              <table style="width:100%;font-size:11px;">
+                <thead><tr style="color:#bbb;background:rgba(255,255,255,0.05);">
+                  <th style="padding:4px 6px;width:32px;text-align:center;">✓</th>
+                  <th style="padding:4px 6px;text-align:left;">${_kindWord}</th>
+                  <th style="padding:4px 6px;text-align:left;">等級</th>
+                  <th style="padding:4px 6px;text-align:left;">補償</th>
+                </tr></thead>
+                <tbody>
+                  ${_detailRows.map((r, i) => `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                      <td style="padding:4px 6px;text-align:center;">
+                        <input type="checkbox" class="_aabatch-cb" data-idx="${i}" checked
+                          style="width:16px;height:16px;cursor:pointer;accent-color:#ff6644;">
+                      </td>
+                      <td style="padding:4px 6px;color:#ffe;">${_esc(r.label)}${r.isSSR ? ' <span style="color:#ff88cc;font-size:9px;">SSR</span>' : ''}</td>
+                      <td style="padding:4px 6px;color:#ffdd66;">${_esc(r.sub)}</td>
+                      <td style="padding:4px 6px;color:#ffcc66;">${r.coins} 幣${Object.keys(r.items).map(k => '・'+(_BATCH_ITEM_LABELS[k]||k)+'×'+r.items[k]).join('')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div style="background:rgba(30,40,30,0.5);border-left:4px solid #66cc88;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#cce;">
+            <div id="_aabatch-summary"></div>
+          </div>
+          <div style="margin-bottom:6px;font-size:13px;font-weight:700;color:#aaccff;">💬 給玩家的通知(可自行編輯)</div>
+          <textarea id="_aabatch-note" rows="9" style="width:100%;padding:10px;font-size:12px;line-height:1.55;
+            background:rgba(0,0,0,0.5);color:#fff;border:1px solid #885;border-radius:8px;font-family:inherit;
+            box-sizing:border-box;margin-bottom:6px;white-space:pre-wrap;"></textarea>
+          <div id="_aabatch-status" style="font-size:12px;min-height:16px;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+            <button id="_aabatch-preview" style="padding:9px 18px;font-size:13px;font-weight:700;background:rgba(80,120,200,0.4);border:1px solid #5588cc;color:#cce;border-radius:8px;cursor:pointer;">👁 預覽玩家收到的通知</button>
+            <button id="_aabatch-cancel" style="padding:9px 18px;font-size:13px;font-weight:700;background:rgba(120,120,120,0.4);border:1px solid #888;color:#ddd;border-radius:8px;cursor:pointer;">取消</button>
+            <button id="_aabatch-confirm" style="padding:9px 22px;font-size:14px;font-weight:800;background:linear-gradient(135deg,#ff5544,#cc2211);border:none;color:#fff;border-radius:8px;cursor:pointer;box-shadow:0 3px 10px rgba(255,80,60,0.5);">✅ 確認執行</button>
+          </div>
+        </div>`;
+      document.body.appendChild(_ov);
+
+      function _getSel(){
+        const _selIdx = Array.from(_ov.querySelectorAll('._aabatch-cb:checked')).map(cb => parseInt(cb.dataset.idx, 10));
+        const _selRows = _selIdx.map(i => _detailRows[i]);
+        let _coins = 0; const _items = {};
+        _selRows.forEach(r => {
+          _coins += r.coins;
+          Object.keys(r.items).forEach(k => { _items[k] = (_items[k] || 0) + r.items[k]; });
+        });
+        return { rows:_selRows, coins:_coins, items:_items };
+      }
+      function _refresh(){
+        const sel = _getSel();
+        const _itemSummary = Object.keys(sel.items).map(k => `${_BATCH_ITEM_LABELS[k] || k} ×${sel.items[k]}`).join('・');
+        const _sumEl = document.getElementById('_aabatch-summary');
+        if(_sumEl){
+          _sumEl.innerHTML = `🗑 將刪除 <b style="color:#ffe;">${sel.rows.length}</b> 個${_kindWord}<br>`
+            + `💰 補償知識幣 <b style="color:#ffdd66;">+${sel.coins.toLocaleString()}</b>`
+            + (Object.keys(sel.items).length ? '<br>📦 ' + _itemSummary : '');
+        }
+        if(!_userEdited){
+          const _noteEl = document.getElementById('_aabatch-note');
+          if(_noteEl) _noteEl.value = _batchDefaultNote(kind, sel.rows, sel.coins, sel.items);
+        }
+      }
+      _refresh();
+
+      _ov.querySelectorAll('._aabatch-cb').forEach(cb => { cb.onchange = _refresh; });
+      const _allBtn = document.getElementById('_aabatch-all');
+      const _noneBtn = document.getElementById('_aabatch-none');
+      if(_allBtn) _allBtn.onclick = function(){ _ov.querySelectorAll('._aabatch-cb').forEach(cb => { cb.checked = true; }); _refresh(); };
+      if(_noneBtn) _noneBtn.onclick = function(){ _ov.querySelectorAll('._aabatch-cb').forEach(cb => { cb.checked = false; }); _refresh(); };
+      const _noteEl0 = document.getElementById('_aabatch-note');
+      if(_noteEl0) _noteEl0.oninput = function(){ _userEdited = true; };
+
+      document.getElementById('_aabatch-preview').onclick = function(){
+        const sel = _getSel();
+        if(sel.rows.length === 0){ alert('沒勾選任何項目,無法預覽'); return; }
+        const _noteText = (document.getElementById('_aabatch-note').value || '').trim();
+        const _removed = _isHero ? { heroes: sel.rows.map(r => r.label) } : { treasures: sel.rows.map(r => r.label) };
+        _renderPlayerNotificationPreview({
+          title: _isHero ? '🦸 英雄調整 + 補償通知' : '💎 至寶調整 + 補償通知',
+          body: _noteText || '(通知文字為空)',
+          type: 'compensation',
+          compensation: { knowledgeCoins: sel.coins, items: Object.keys(sel.items).map(k => ({ id:k, count:sel.items[k] })) },
+          removedItems: _removed,
+          createdBy: (window._fbUser && window._fbUser.email) || '管理員',
+          createdAt: Date.now(),
+        });
+      };
+
+      document.getElementById('_aabatch-cancel').onclick = function(){ _ov.remove(); };
+      document.getElementById('_aabatch-confirm').onclick = async function(){
+        const _statusEl2 = document.getElementById('_aabatch-status');
+        const _confirmBtn = document.getElementById('_aabatch-confirm');
+        const _noteText = (document.getElementById('_aabatch-note').value || '').trim();
+        const sel = _getSel();
+        if(sel.rows.length === 0){ _statusEl2.style.color = '#ff8866'; _statusEl2.textContent = '⚠ 沒勾選任何項目要刪除'; return; }
+        if(!_noteText){ _statusEl2.style.color = '#ff8866'; _statusEl2.textContent = '⚠ 通知文字不可為空'; return; }
+        if(!confirm(`確認刪除 ${sel.rows.length} 個${_kindWord} + 補償知識幣 +${sel.coins.toLocaleString()} 並通知玩家?\n\n⚠ 不可逆!`)) return;
+        _confirmBtn.disabled = true; _confirmBtn.textContent = '⏳ 執行中...';
+        _statusEl2.style.color = '#aaccff'; _statusEl2.textContent = '執行中,請稍候...';
+        try{
+          const _reason = 'GM 後台 → ' + (_isHero ? '英雄' : '至寶') + '批次清除 + 補償';
+          if(_isHero){
+            const _r = await window._fbAdminCleanupAndCompensate(
+              _curUid,
+              sel.rows.map(r => ({ name: r.key, at: r.at })),
+              { coins: sel.coins, backpack: Object.assign({}, sel.items), summary: `批次清除 ${sel.rows.length} 隻英雄` },
+              { title: '🦸 英雄調整 + 補償通知', body: _noteText },
+              { reason: _reason }
+            );
+            const _ok = (_r.deleted || []).filter(d => d.ok).length;
+            const _fail = (_r.deleted || []).filter(d => !d.ok);
+            _statusEl2.style.color = '#88ddaa';
+            _statusEl2.innerHTML = `✅ 完成 — 刪除 ${_ok}/${sel.rows.length} 隻`
+              + (_r.compensationApplied ? '、補償已套用' : '')
+              + (_r.notificationTs ? '、通知已寄出' : '、通知未寄出')
+              + (_fail.length ? `<br>⚠ ${_fail.length} 筆失敗:${_fail.map(d => d.name + '(' + d.error + ')').join('、')}` : '');
+          } else {
+            let _delOk = 0; const _delFail = [];
+            for(const r of sel.rows){
+              try{ await window._fbAdminDeleteTreasure(_curUid, r.key, { reason: _reason }); _delOk++; }
+              catch(eDel){ _delFail.push(r.label + '(' + (eDel.message || eDel) + ')'); }
+            }
+            let _compApplied = false;
+            if(sel.coins > 0 || Object.keys(sel.items).length){
+              try{
+                await window._fbCompensatePlayer(_curUid, { coins: sel.coins, coinsMode: 'add', backpack: Object.assign({}, sel.items) });
+                _compApplied = true;
+              }catch(eComp){ console.error('[batch tre comp]', eComp); }
+            }
+            let _noteTs = null;
+            try{
+              const _nr = await window._fbAdminSendNotificationToPlayer(_curUid, {
+                title: '💎 至寶調整 + 補償通知',
+                body: _noteText,
+                type: 'compensation',
+                compensation: { knowledgeCoins: sel.coins, items: Object.keys(sel.items).map(k => ({ id:k, count:sel.items[k] })) },
+                removedItems: { treasures: sel.rows.map(r => r.label) },
+              });
+              _noteTs = _nr && _nr.ts;
+            }catch(eNote){ console.warn('[batch tre note]', eNote); }
+            _statusEl2.style.color = '#88ddaa';
+            _statusEl2.innerHTML = `✅ 完成 — 刪除 ${_delOk}/${sel.rows.length} 件`
+              + (_compApplied ? '、補償已套用' : '')
+              + (_noteTs ? '、通知已寄出' : '、通知未寄出')
+              + (_delFail.length ? `<br>⚠ ${_delFail.length} 筆失敗:${_delFail.join('、')}` : '');
+          }
+          setTimeout(async () => {
+            _ov.remove();
+            _setStatus('✅ 批次清除+補償完成,重新查詢中...', '#88ddaa');
+            await _doQuery();
+          }, 2500);
+        }catch(e){
+          console.error('[_openBatchCleanup] 失敗', e);
+          _statusEl2.style.color = '#ff8866';
+          _statusEl2.textContent = '❌ 失敗: ' + (e.message || e);
+          _confirmBtn.disabled = false; _confirmBtn.textContent = '✅ 確認執行';
+        }
+      };
+    }
+
+    // ════════════════════════════════════════════════════════════════
     // ★ v3.13.30(2026-06-03) — 異常掃描快取(Firestore 共用,GM 跨裝置同步)
     //   解決:掃描 300+ 位玩家吃 Firestore 額度,每次點都重掃浪費。
     //   設計(老師裁示):
@@ -9411,6 +9785,9 @@ async function _showAdminStatsPanelImpl(){
       opts = opts || {};
       handled = handled || {};
       const ab = r.abnormal || [];
+      // ★ v3.13.68 — 記住本次清單供詳情頁導航(返回/上下位)用,純記憶體零額度
+      _anomalyCtx = { result: r, handled: handled, opts: opts };
+      _anomalyOrder = ab.map(p => p.uid);
 
       if(_playerCard) _playerCard.style.display = 'none';
       if(_tabsEl) _tabsEl.style.display = 'none';
@@ -9592,6 +9969,7 @@ async function _showAdminStatsPanelImpl(){
       // ── 事件綁定 ──
       _contentEl.querySelectorAll('._aa-jump').forEach(btn => {
         btn.onclick = async function(){
+          _curAnomalyIdx = _anomalyOrder.indexOf(btn.dataset.uid);  // ★ v3.13.68 記住在清單位置
           _queryInput.value = btn.dataset.uid;
           await _doQuery();
         };
@@ -9696,8 +10074,8 @@ async function _showAdminStatsPanelImpl(){
     }
 
     // ── 事件綁定 ──
-    _searchBtn.onclick = _doQuery;
-    _queryInput.onkeydown = (ev) => { if(ev.key === 'Enter') _doQuery(); };
+    _searchBtn.onclick = function(){ _curAnomalyIdx = -1; _doQuery(); };  // ★ v3.13.68 手動查詢清除清單位置(不顯示導航條)
+    _queryInput.onkeydown = (ev) => { if(ev.key === 'Enter'){ _curAnomalyIdx = -1; _doQuery(); } };
     if(_scanBtn) _scanBtn.onclick = _doScanAnomaly;
 
     // ★ v3.13.30(2026-06-03) — 自動載入上次的異常掃描快取
