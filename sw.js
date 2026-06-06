@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.55';   // ★ v3.5.55(對應遊戲 v3.13.70)— bump shell 快取:答題殭屍視窗自救(修「按了答案沒反應」) / 元素謎題無效屬性 key 防呆
+const SW_VERSION = 'v3.5.56';   // ★ v3.5.56(對應遊戲 v3.13.71)— bump shell 快取:新增第一隻 UR 藝天使．克雷爾(陳祈宏老師設計,只送不抽,鬥技場禁用)
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';

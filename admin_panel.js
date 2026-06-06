@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.68';   // ★ v3.13.68 — 活動記錄查詢:異常清單導航(返回清單/上下位/只跳未處理)+ 英雄&至寶分頁批次勾選刪除+退補償+通知
+window.ADMIN_PANEL_VERSION = 'v3.13.71';   // ★ v3.13.71 — 補發工具新增「🌟 GM特別獎勵(UR・限定)」分組(發 UR 藝天使．克雷爾,沿用查找+union 發放)｜前版 v3.13.68 活動記錄查詢
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -4653,9 +4653,18 @@ async function _showAdminStatsPanelImpl(){
       }
     };
 
+    // ★ v3.13.71 — GM特別獎勵英雄清單(UR/限定,只送不抽,僅由 GM 透過此工具發放)。
+    //   未來新增 UR 或限定英雄,只要加進這個陣列就會自動出現在下方「🌟 GM特別獎勵」分組。
+    //   發放走既有流程:查找學生(email/uid/班級碼/中文名)→ 選此英雄 → 套用 → window._fbCompensatePlayer(union 合併,不會降級)。
+    const _GM_SPECIAL_REWARDS = ['藝天使．克雷爾'];
     // ★ v1.0.20260512.6210 — 補償英雄分組定義(讓老師依類型快速找)
     //   未列入任何組的英雄會自動歸到「💼 其他」最末
     const _HERO_GROUPS = [
+      // ★ v3.13.71 — GM特別獎勵置頂(UR/限定)。在此組的英雄會被標記為已使用,不會再落入「💼 其他」,凸顯其特別性。
+      {
+        label: '🌟 GM特別獎勵(UR・限定)',
+        heroes: _GM_SPECIAL_REWARDS
+      },
       {
         label: '⚔️ 31 隻基本英雄',
         heroes: ['劍士','祭司','聖騎士','火法師','冰法師','雷法師','光法師','暗法師',
