@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.54';   // ★ v3.5.54(對應遊戲 v3.13.69)— bump shell 快取:疾風步狀態中文化+特寫說明 / 救醫馬天賦「救馬本能」實作觸發(新回合自動治療可復活) / 重新開戰恢復BOSS鎖血+爆發反擊
+const SW_VERSION = 'v3.5.55';   // ★ v3.5.55(對應遊戲 v3.13.70)— bump shell 快取:答題殭屍視窗自救(修「按了答案沒反應」) / 元素謎題無效屬性 key 防呆
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
