@@ -30,7 +30,7 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.61',   // ★ v3.13.61(2026-06-05)— 鬥技場每週排名發證 _arenaGrantZheng + addZheng hook(本場證計入本週排名)
+    VERSION: 'v3.13.72',   // ★ v3.13.72(2026-06-06)— 鬥技場累積勝敗 winsLifetime/lossesLifetime(只增不減,仿 zhengLifetimeTotal)｜前版 v3.13.61 每週排名發證
                            //   前版 v3.13.31 — GM 戰鬥記錄審核 API:刪除 + 補償
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
@@ -660,6 +660,9 @@
         losses: 0,
         zhengTotal: 0,           // 鬥技之證累積(全部歷史)— 即「持有量」(未來開放兌換後扣減)
         zhengLifetimeTotal: 0,   // ★ v3.13.32(2026-06-03) — 累積獲得鬥技之證(只增不減,商店兌換不扣)
+        winsLifetime: 0,         // ★ v3.13.72 — 累積勝場(只增不減,跨日保留)
+        drawsLifetime: 0,        // ★ v3.13.72 — 累積平手(只增不減)
+        lossesLifetime: 0,       // ★ v3.13.72 — 累積敗場(只增不減)
       };
       // 保留歷史鬥技之證累積
       try {
@@ -675,6 +678,10 @@
           const _ln = parseInt(lifeRaw, 10) || 0;
           if (_ln > s.zhengLifetimeTotal) s.zhengLifetimeTotal = _ln;
         }
+        // ★ v3.13.72 — 還原累積勝敗(跨日保留,仿鬥技之證 lifetime)
+        const _wl = parseInt(localStorage.getItem('lxps_arena_wins_lifetime'),  10); if (!isNaN(_wl)) s.winsLifetime   = _wl;
+        const _dl = parseInt(localStorage.getItem('lxps_arena_draws_lifetime'), 10); if (!isNaN(_dl)) s.drawsLifetime  = _dl;
+        const _ll = parseInt(localStorage.getItem('lxps_arena_losses_lifetime'),10); if (!isNaN(_ll)) s.lossesLifetime = _ll;
       } catch (_) {}
       _writeDailyState(s);
     }
@@ -732,9 +739,9 @@
   window._arenaSettleReward = function(result) {
     const s = window._arenaGetDailyState();
     let zheng = 0;
-    if (result === 'win')      { zheng = ARENA_CONFIG.REWARD_WIN;  s.wins   = (s.wins||0)   + 1; }
-    else if (result === 'draw'){ zheng = ARENA_CONFIG.REWARD_DRAW; s.draws  = (s.draws||0)  + 1; }
-    else                        { zheng = ARENA_CONFIG.REWARD_LOSE; s.losses = (s.losses||0) + 1; }
+    if (result === 'win')      { zheng = ARENA_CONFIG.REWARD_WIN;  s.wins   = (s.wins||0)   + 1; s.winsLifetime   = (s.winsLifetime||0)   + 1; }
+    else if (result === 'draw'){ zheng = ARENA_CONFIG.REWARD_DRAW; s.draws  = (s.draws||0)  + 1; s.drawsLifetime  = (s.drawsLifetime||0)  + 1; }
+    else                        { zheng = ARENA_CONFIG.REWARD_LOSE; s.losses = (s.losses||0) + 1; s.lossesLifetime = (s.lossesLifetime||0) + 1; }
     s.zhengTotal = (s.zhengTotal || 0) + zheng;
     // ★ v3.13.32(2026-06-03) — 累積獲得鬥技之證(商店扣減不影響)
     s.zhengLifetimeTotal = (s.zhengLifetimeTotal || 0) + zheng;
@@ -742,6 +749,10 @@
     try {
       localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal));
       localStorage.setItem('lxps_arena_zheng_lifetime', String(s.zhengLifetimeTotal));
+      // ★ v3.13.72 — 累積勝敗持久化(跨日保留)
+      localStorage.setItem('lxps_arena_wins_lifetime',   String(s.winsLifetime   || 0));
+      localStorage.setItem('lxps_arena_draws_lifetime',  String(s.drawsLifetime  || 0));
+      localStorage.setItem('lxps_arena_losses_lifetime', String(s.lossesLifetime || 0));
     } catch (_) {}
     // ★ v3.13.20(2026-06-02) — 結算同時上傳戰鬥記錄(供 GM 異常傷害審核)
     //   fire-and-forget,失敗不影響玩家獎勵發放
@@ -1033,6 +1044,10 @@
       todayWins: s.wins || 0,
       todayDraws: s.draws || 0,
       todayLosses: s.losses || 0,
+      // ★ v3.13.72 — 累積勝敗(只增不減,跨日保留)
+      winsLifetime: s.winsLifetime || 0,
+      drawsLifetime: s.drawsLifetime || 0,
+      lossesLifetime: s.lossesLifetime || 0,
       zhengTotal: s.zhengTotal || 0,
       // ★ v3.13.32(2026-06-03) — 累積獲得(只增不減,商店扣減不影響)
       zhengLifetimeTotal: s.zhengLifetimeTotal || s.zhengTotal || 0,
