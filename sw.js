@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.56';   // ★ v3.5.56(對應遊戲 v3.13.71)— bump shell 快取:新增第一隻 UR 藝天使．克雷爾(陳祈宏老師設計,只送不抽,鬥技場禁用)
+const SW_VERSION = 'v3.5.57';   // ★ v3.5.57(對應遊戲 v3.13.72)— bump shell 快取:果實販售/護盾蓋HP修正/失明繞過解除/UR排除魅惑/BOSS尊嚴只對真BOSS/鬥技場累積勝敗
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
