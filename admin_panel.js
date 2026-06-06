@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.71';   // ★ v3.13.71 — 補發工具新增「🌟 GM特別獎勵(UR・限定)」分組(發 UR 藝天使．克雷爾,沿用查找+union 發放)｜前版 v3.13.68 活動記錄查詢
+window.ADMIN_PANEL_VERSION = 'v3.13.72';   // ★ v3.13.72 — 新增「課堂獎勵發放」批次貼名單發整包(克雷爾+SSR卷+水晶+幣) + 鬥技場排名發獎開關 GM 按鈕｜前版 v3.13.71 GM特別獎勵
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -462,6 +462,53 @@ async function _showAdminStatsPanelImpl(){
           </button>
         </div>
         <div id="_admin-arena-switch-result" style="margin-top:10px;font-size:13px;color:#ff99cc;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.13.72 — 課堂獎勵發放:貼整批學生姓名,系統對照帳號發固定整包 -->
+      <div id="_admin-classreward-section" style="background:rgba(30,45,30,0.5);border:2px solid rgba(140,220,120,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#aaffaa;margin-bottom:8px;">🎁 課堂獎勵發放</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          貼上學生姓名(一行一個,或用空白 / 逗號分隔)。系統會對照帳號,對每位發放<b style="color:#ffe066;">固定整包獎勵</b>:<br>
+          🌟 UR 藝天使．克雷爾 ・ 🌈 SSR 召喚卷 ×1 ・ 🔮 召喚水晶 ×10 ・ 💰 知識幣 ×100000<br>
+          <span style="color:#aaa;font-size:12px;">採 union 合併(不會降級已有等級/道具);<b style="color:#ffcc66;">同名多筆者會被列出並跳過</b>,請改用學號 / uid 個別補發,避免 UR 發錯人。</span>
+        </div>
+        <textarea id="_admin-classreward-names" placeholder="王小明&#10;陳大文&#10;5324蔣同學 ..." style="width:100%;min-height:120px;padding:10px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(140,220,120,0.4);color:#fff;border-radius:8px;font-family:inherit;line-height:1.6;box-sizing:border-box;resize:vertical;"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+          <button id="_admin-classreward-preview" style="padding:10px 20px;font-size:14px;font-weight:800;
+            background:rgba(120,180,100,0.3);border:1.5px solid rgba(160,230,130,0.6);color:#cfffcf;
+            border-radius:7px;cursor:pointer;font-family:inherit;">🔍 比對名單(預覽)</button>
+          <button id="_admin-classreward-send" disabled style="padding:10px 22px;font-size:14px;font-weight:900;
+            background:linear-gradient(135deg,#2a8a3a,#1d7a2a);border:2px solid #66dd88;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;opacity:0.5;">🎁 確認發放</button>
+        </div>
+        <div id="_admin-classreward-result" style="margin-top:12px;font-size:13px;color:#cfe;"></div>
+      </div>
+
+      <!-- ★ v3.13.72 — 鬥技場「排名發獎」開關(每週排名獎勵自動結算發放的總閘門) -->
+      <!--   寫 stats/global.arenaRankRewardEnabled;開啟後玩家登入自動結算上週排名並領獎。 -->
+      <!--   排行榜「顯示」隨時可看、不受此旗標影響;此開關只控制「發不發獎」。 -->
+      <div id="_admin-arena-rankreward-section" style="background:rgba(40,32,18,0.5);border:2px solid rgba(255,200,100,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ffcc66;margin-bottom:8px;">🏆 鬥技場排名發獎開關</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          開啟後,每週一 08:00(台灣)結算上週「鬥技之證」排名,玩家登入時<b style="color:#ffe066;">自動領取</b>對應名次獎勵。<br>
+          獎勵階梯(已設定):1 名 💎15/證15/幣30000・2-5 名 💎10/證10/幣20000・6-10 名 💎5/證5/幣10000・11 名以後 💎2/證2/幣5000。<br>
+          <span style="color:#aaa;font-size:12px;">雲端儲存於 <code>stats/global.arenaRankRewardEnabled</code>;預設「關」。排行榜顯示不受此開關影響。</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-arena-rankreward-load" style="padding:9px 16px;font-size:13px;font-weight:700;
+            background:rgba(200,160,80,0.25);border:1.5px solid rgba(255,200,100,0.5);color:#ffd88a;
+            border-radius:6px;cursor:pointer;font-family:inherit;">📥 載入目前狀態</button>
+          <span id="_admin-arena-rankreward-status" style="font-size:13px;color:#aaa;">尚未載入</span>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
+          <button id="_admin-arena-rankreward-on" style="padding:12px 28px;font-size:15px;font-weight:900;
+            background:linear-gradient(135deg,#22aa55,#118844);border:2.5px solid #66dd88;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">✅ 開啟排名發獎</button>
+          <button id="_admin-arena-rankreward-off" style="padding:12px 28px;font-size:15px;font-weight:900;
+            background:linear-gradient(135deg,#aa2244,#882244);border:2.5px solid #ff6688;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">⛔ 關閉排名發獎</button>
+        </div>
+        <div id="_admin-arena-rankreward-result" style="margin-top:10px;font-size:13px;color:#ffcc66;text-align:center;"></div>
       </div>
 
       <!-- ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查(老師指示) -->
@@ -1880,6 +1927,9 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-arena-preset-section',     label: '⚔️ 鬥技場預設陣容',       hint: '管理系統 5 套保底敵手(玩家池空時用)' },
       // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 + 戰鬥記錄審核
       { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
+      // ★ v3.13.72 — 課堂獎勵發放 + 鬥技場排名發獎開關
+      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '貼整批學生姓名→對照帳號發整包(UR克雷爾+SSR卷+水晶+幣)' },
+      { sec: '_admin-arena-rankreward-section', label: '🏆 鬥技場排名發獎開關',   hint: '一鍵開啟/關閉每週排名獎勵自動發放' },
       // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查
       { sec: '_admin-github-check-section',     label: '🌐 GitHub 版本檢查',      hint: '啟動時自動比對 4 個檔案;手動重跑入口' },
       // ★ v3.13.27(2026-06-03) — 龍王 HP 救援
@@ -1904,9 +1954,9 @@ async function _showAdminStatsPanelImpl(){
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
-      { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
+      { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
-      { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-battles-section'] },
+      { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
       { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section'] },
     ];
     const _secToItem = {};
@@ -3853,6 +3903,160 @@ async function _showAdminStatsPanelImpl(){
     setTimeout(_loadSwitch, 100);
   })();
   // ── 鬥技場入口開關 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.13.72 — 課堂獎勵發放 init
+  //   貼整批學生姓名 → _fbAdminFindPlayersByName 對照帳號 → 預覽(可發/同名多筆跳過/查無)
+  //   → 確認後逐一 _fbCompensatePlayer 發固定整包(UR克雷爾 + SSR卷×1 + 水晶×10 + 幣10萬,union 合併)
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initClassRewardSection(){
+    const namesEl = document.getElementById('_admin-classreward-names');
+    const prevBtn = document.getElementById('_admin-classreward-preview');
+    const sendBtn = document.getElementById('_admin-classreward-send');
+    const resEl   = document.getElementById('_admin-classreward-result');
+    if(!namesEl || !prevBtn || !sendBtn){
+      console.warn('[admin classreward] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    const REWARD = {
+      unlockedHeroes: ['藝天使．克雷爾'],
+      coins: 100000,
+      coinsMode: 'add',
+      backpack: { summon_ticket_ssr: 1, summon_crystal: 10 },
+    };
+    let _matched = [];   // [{name, uid, label}]
+    function _esc(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function _parseNames(raw){
+      return (raw||'').split(/[\n,，、;；\s]+/).map(s => s.trim()).filter(Boolean);
+    }
+    function _setSendEnabled(on){
+      sendBtn.disabled = !on;
+      sendBtn.style.opacity = on ? '1' : '0.5';
+    }
+    async function _preview(){
+      const names = _parseNames(namesEl.value);
+      if(!names.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先貼上學生姓名</span>'; return; }
+      if(typeof window._fbAdminFindPlayersByName !== 'function'){
+        resEl.innerHTML = '<span style="color:#ff6666;">_fbAdminFindPlayersByName 未載入,請重新整理頁面</span>'; return;
+      }
+      prevBtn.disabled = true; const _old = prevBtn.textContent; prevBtn.textContent = '比對中...';
+      _setSendEnabled(false);
+      _matched = [];
+      const _ok = [], _none = [], _multi = [];
+      const _seenUid = new Set();
+      for(const nm of names){
+        try{
+          const r = await window._fbAdminFindPlayersByName(nm);
+          const players = (r && r.players) || [];
+          if(!players.length){ _none.push(nm); }
+          else if(players.length > 1){ _multi.push({ name: nm, count: players.length }); }
+          else {
+            const p = players[0];
+            if(_seenUid.has(p.uid)) continue;   // 同一人重複貼,去重
+            _seenUid.add(p.uid);
+            const label = (p.name || nm) + (p.email ? (' <' + p.email + '>') : '');
+            _matched.push({ name: nm, uid: p.uid, label });
+            _ok.push(label);
+          }
+        }catch(e){ _none.push(nm + '(查詢失敗)'); }
+      }
+      let html = '<div style="text-align:left;font-size:13px;line-height:1.7;">';
+      html += '<div style="color:#88ff88;font-weight:800;">✅ 可發放 ' + _ok.length + ' 人</div>';
+      if(_ok.length) html += '<div style="color:#cfe;margin:2px 0 6px;">' + _ok.map(x => '・' + _esc(x)).join('<br>') + '</div>';
+      if(_multi.length){
+        html += '<div style="color:#ffcc44;">⚠ 同名多筆(' + _multi.length + ')→ 已跳過,請改用學號 / uid 個別補發:</div>';
+        html += '<div style="color:#ffe;margin:2px 0 6px;">' + _multi.map(m => '・' + _esc(m.name) + '(' + m.count + ' 筆)').join('<br>') + '</div>';
+      }
+      if(_none.length){
+        html += '<div style="color:#ff8866;">❌ 查無此人(' + _none.length + '):' + _none.map(_esc).join('、') + '</div>';
+      }
+      html += '</div>';
+      resEl.innerHTML = html;
+      _setSendEnabled(_matched.length > 0);
+      prevBtn.disabled = false; prevBtn.textContent = _old;
+    }
+    async function _send(){
+      if(!_matched.length) return;
+      if(typeof window._fbCompensatePlayer !== 'function'){
+        resEl.innerHTML = '<span style="color:#ff6666;">_fbCompensatePlayer 未載入,請重新整理頁面</span>'; return;
+      }
+      if(!confirm('確認對 ' + _matched.length + ' 位學生發放「課堂獎勵整包」?\n\n🌟 UR 藝天使．克雷爾 + 🌈 SSR召喚卷×1 + 🔮 召喚水晶×10 + 💰 知識幣×100000\n\n(union 合併,不會降級已有資料)')) return;
+      sendBtn.disabled = true; const _old = sendBtn.textContent; sendBtn.textContent = '發放中...';
+      const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
+      let _done = 0; const _fail = [];
+      for(const m of _matched){
+        try{
+          await window._fbCompensatePlayer(m.uid, Object.assign({}, REWARD, {
+            reason: '課堂獎勵發放',
+            summary: '課堂獎勵整包(UR克雷爾 + SSR卷×1 + 水晶×10 + 幣10萬)',
+            by: _adminEmail
+          }));
+          _done++; sendBtn.textContent = '發放中... ' + _done + '/' + _matched.length;
+        }catch(e){ _fail.push(m.label + ':' + (e && e.message || e)); }
+      }
+      let html = '<div style="text-align:left;font-size:13px;line-height:1.7;">';
+      html += '<div style="color:#88ff88;font-weight:800;">✅ 已發放 ' + _done + '/' + _matched.length + ' 人</div>';
+      if(_fail.length) html += '<div style="color:#ff6666;">❌ 失敗 ' + _fail.length + ':<br>' + _fail.map(x => '・' + _esc(x)).join('<br>') + '</div>';
+      html += '<div style="color:#aaa;margin-top:4px;">(已清空待發名單,如要再發請重新比對)</div>';
+      html += '</div>';
+      resEl.innerHTML = html;
+      sendBtn.textContent = _old;
+      _matched = []; _setSendEnabled(false);   // 發完清空,避免重複發
+    }
+    prevBtn.onclick = _preview;
+    sendBtn.onclick = _send;
+  })();
+  // ── 課堂獎勵發放 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.13.72 — 鬥技場排名發獎開關 init
+  //   呼叫 index.html 既有 window._fbGetArenaFlags / window._fbSetArenaRankReward
+  //   (寫 stats/global.arenaRankRewardEnabled;排行榜顯示不受此旗標影響)
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initArenaRankRewardSection(){
+    const loadBtn = document.getElementById('_admin-arena-rankreward-load');
+    const onBtn   = document.getElementById('_admin-arena-rankreward-on');
+    const offBtn  = document.getElementById('_admin-arena-rankreward-off');
+    const statusEl= document.getElementById('_admin-arena-rankreward-status');
+    const resEl   = document.getElementById('_admin-arena-rankreward-result');
+    if(!loadBtn || !onBtn || !offBtn){
+      console.warn('[admin arena rankreward] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    async function _load(){
+      statusEl.textContent = '載入中...'; statusEl.style.color = '#aaa';
+      try{
+        if(typeof window._fbGetArenaFlags !== 'function') throw new Error('_fbGetArenaFlags 未載入,請重新整理');
+        const f = await window._fbGetArenaFlags();
+        const on = !!(f && f.arenaRankRewardEnabled);
+        statusEl.style.color = on ? '#66dd88' : '#ff6688';
+        statusEl.textContent = on ? '✅ 目前:排名發獎「開啟」' : '⛔ 目前:排名發獎「關閉」';
+      }catch(e){ statusEl.style.color = '#ff6666'; statusEl.textContent = '❌ 載入失敗:' + (e && e.message || e); }
+    }
+    async function _set(enabled){
+      const btn = enabled ? onBtn : offBtn; const _old = btn.textContent;
+      btn.disabled = true; btn.textContent = '處理中...';
+      try{
+        if(typeof window._fbSetArenaRankReward !== 'function') throw new Error('_fbSetArenaRankReward 未載入,請重新整理');
+        await window._fbSetArenaRankReward(enabled);
+        resEl.style.color = enabled ? '#66dd88' : '#ffcc66';
+        resEl.textContent = enabled
+          ? '✅ 已開啟排名發獎(玩家下次登入會自動結算上週排名並領獎)'
+          : '⛔ 已關閉排名發獎(暫停每週結算發放;排行榜仍可查看)';
+        await _load();
+      }catch(e){ resEl.style.color = '#ff6666'; resEl.textContent = '❌ 設定失敗:' + (e && e.message || e); }
+      finally{ btn.disabled = false; btn.textContent = _old; }
+    }
+    loadBtn.onclick = _load;
+    onBtn.onclick = () => _set(true);
+    offBtn.onclick = () => _set(false);
+    setTimeout(_load, 120);
+  })();
+  // ── 鬥技場排名發獎開關 結束 ──
 
   // ════════════════════════════════════════════════════════════════════════════
   // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查 init
