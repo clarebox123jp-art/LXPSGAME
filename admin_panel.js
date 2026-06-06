@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.63';   // ★ v3.13.63 — 汙染清查強化:鐵證快速清單(A) + 豐富度(含至寶/獎章)原主預判(B/C)
+window.ADMIN_PANEL_VERSION = 'v3.13.67';   // ★ v3.13.67 — 活動記錄查詢「掃描異常」加汙染偵查規則3(可疑 SSR/SR/至寶 + 知識幣竄改/盜刷/盜賣)
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -9519,6 +9519,44 @@ async function _showAdminStatsPanelImpl(){
             <span style="color:#ffe;">${c.entries.map(e => _esc(e.id)).join('、')}</span>
           </div>`).join('');
 
+        // 規則 3:汙染偵查(★ v3.13.67)— 可疑 SSR/SR/至寶/知識幣異常
+        const ssrBlocks3 = (p.suspiciousSSR || []).map(h => `
+          <div style="background:rgba(200,40,160,0.22);border-left:4px solid #ff55cc;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#ffbbee;">👑 可疑 SSR</b>
+            <span style="color:#ffe;">${_esc(h.name)}</span>
+            <span style="color:#ddaaff;">(來源:${_esc(h.source||'(空)')}・${_fmtTime(h.at)})</span>
+          </div>`).join('');
+        const srBlocks3 = (p.suspiciousSRClusters || []).map(c => `
+          <div style="background:rgba(170,60,200,0.2);border-left:4px solid #bb66ee;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#e0bbff;">💜 10 分鐘內 ${c.length} 隻可疑 SR</b>:
+            <span style="color:#ffe;">${c.map(e => _esc(e.name) + '(' + _esc(e.source||'空') + ')').join('、')}</span>
+          </div>`).join('');
+        const treBlocks3 = (p.suspiciousTreasureClusters || []).map(c => `
+          <div style="background:rgba(80,140,220,0.2);border-left:4px solid #5599ee;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#bbddff;">💎 10 分鐘內 ${c.length} 個可疑至寶</b>:
+            <span style="color:#ffe;">${c.map(e => _esc(e.id) + '(' + _esc(e.source||'空') + ')').join('、')}</span>
+          </div>`).join('');
+        const coinBlocks3 = (p.coinAnomalies || []).map(a => {
+          if(a.kind === 'tamper'){
+            return `<div style="background:rgba(220,80,40,0.22);border-left:4px solid #ff7733;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+              <b style="color:#ffccaa;">🪙 知識幣對帳跳變(疑似竄改)</b>:
+              <span style="color:#ffe;">${(a.amount>0?'+':'') + a.amount} 幣</span>
+              <span style="color:#ffbb99;">(餘額 ${a.balance}・${_fmtTime(a.at)})</span>
+            </div>`;
+          }
+          const _lbl = a.kind === 'spree' ? '🛒 短時間大量購買(疑似盜登亂買)' : '💱 短時間大量賣出(疑似盜登賤賣貴重物)';
+          const _det = (a.entries||[]).slice(0,6).map(e => _esc(e.reason) + ' ' + (e.amount>0?'+':'') + e.amount).join('、');
+          return `<div style="background:rgba(220,150,40,0.2);border-left:4px solid #eeaa33;border-radius:4px;padding:6px 10px;margin:4px 0;font-size:11px;">
+            <b style="color:#ffe0aa;">${_lbl}</b>
+            <span style="color:#ffcc88;">15 分鐘內 ${a.count} 筆 / 共 ${a.sum} 幣</span>:
+            <span style="color:#ffe;">${_det}${(a.entries&&a.entries.length>6)?' …':''}</span>
+          </div>`;
+        }).join('');
+        const _rule3HasAny = !!(ssrBlocks3 || srBlocks3 || treBlocks3 || coinBlocks3);
+        const _rule3Note = _rule3HasAny
+          ? '<div style="font-size:10px;color:#ccaadd;margin:6px 0 2px;border-top:1px dashed rgba(200,150,255,0.3);padding-top:5px;">🔍 汙染偵查(非召喚/非BOSS等正常管道)— ⚠ SSR 含 5/28 前無來源舊資料可能誤報,請對照同台 iPad 人工判斷</div>'
+          : '';
+
         const _cardStyle = _isHandled
           ? 'background:rgba(40,40,50,0.35);border:1px solid rgba(120,120,140,0.35);border-radius:8px;padding:10px;margin-bottom:8px;opacity:0.5;'
           : 'background:rgba(40,15,30,0.5);border:1px solid rgba(255,120,140,0.4);border-radius:8px;padding:10px;margin-bottom:8px;';
@@ -9543,11 +9581,12 @@ async function _showAdminStatsPanelImpl(){
           +   '</div>'
           + '</div>'
           + heroTimeBlocks + treTimeBlocks + heroBidBlocks + treBidBlocks
+          + _rule3Note + ssrBlocks3 + srBlocks3 + treBlocks3 + coinBlocks3
           + '</div>';
       }).join('');
 
       _contentEl.innerHTML = _cacheBlock + _statsBlock + _toggleBlock
-        + `<div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— 規則 ⏱ 紅框 = 3 分鐘內連刷;battleId 標籤 = 同場戰鬥多解鎖</div>`
+        + `<div style="margin-bottom:8px;font-size:13px;color:#ffaaaa;">⚠ 共 ${ab.length} 位玩家有異常(掃 ${r.scanned} 位)— ⏱ 紅框=3 分鐘內連刷;battleId 標籤=同場戰鬥多解鎖;👑💜💎🪙 紫/橘框=汙染偵查(非正常管道大量新增 SSR/SR/至寶 或 知識幣竄改/盜刷/盜賣)</div>`
         + cards;
 
       // ── 事件綁定 ──
@@ -9611,7 +9650,7 @@ async function _showAdminStatsPanelImpl(){
 
     // ── 全掃異常(battleId + 時間窗雙規則) ──
     async function _doScanAnomaly(){
-      if(!confirm('掃描全部玩家的異常?\n\n規則:\n  ① 同 battleId 多解鎖(精確)\n  ② 3 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)\n\n300 位玩家約 15-30 秒,請耐心等候。')) return;
+      if(!confirm('掃描全部玩家的異常?\n\n規則:\n  ① 同 battleId 多解鎖(精確)\n  ② 3 分鐘內打 BOSS 解鎖 > 2 隻(主規則,適用老資料)\n  ③ 汙染偵查(★ v3.13.67):非召喚/非擊敗BOSS等正常管道而短時間大量新增\n     ・可疑 SSR 出現即標、可疑 SR 10 分鐘內 ≥3、可疑至寶 ≥2\n     ・知識幣:對帳跳變(竄改)/ 短時間大量購買(盜登亂買)/ 短時間大量賣出貴重物(盜登賤賣)\n\n300 位玩家約 15-30 秒,請耐心等候。')) return;
       _setStatus('掃描中...這可能要 15-30 秒', '#aaccff');
       _scanBtn.disabled = true;
       try{

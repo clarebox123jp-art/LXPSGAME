@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.51';
+const SW_VERSION = 'v3.5.52';   // ★ v3.5.52(對應遊戲 v3.13.67)— bump shell 快取:卡死修復 + 汙染偵查 + 競技場預設陣容修復
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
