@@ -163,8 +163,9 @@
       shieldElements:['light','fire','wind','grass'],
       desc:'天界派遣的審判龍,僅暗系英雄能對其造成完整傷害' },
     { id:'cuiyu_grass_dragon',     name:'翠玉草龍王',    element:'grass', maxHp:5000000, scene:'太魯閣',
-      shieldElements:['grass','water','wind','light'],
-      desc:'守護太魯閣峽谷的翠玉龍,藤蔓束縛全場' },
+      shieldElements:['grass','water','light'],          // ★ v3.13.73 — 破盾:火(草盾×2)/風(水盾)/暗(光盾)
+      shieldLayers:{grass:2, water:1, light:1},          // ★ v3.13.73 — 草盾雙層(需火攻 2 次)→ 破盾組合「火火風暗」
+      desc:'守護太魯閣峽谷的翠玉龍,以藤蔓束縛、劇毒與飛葉絞殺入侵者' },
     { id:'xingchen_omni_dragon',   name:'星辰幻龍王',    element:'omni',  maxHp:5000000, scene:'銀河',
       shieldElements:['fire','water','wind','earth','light','dark','grass'],  // ★ 終極龍:7 元素全開
       desc:'集八元素之力於一身的終極龍,每階段切換屬性' },
@@ -356,6 +357,11 @@
             s1:{n:'業火灼燒',c:6,d:'特技150%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 150% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
             s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
           },
+          // ★ v3.13.73 — 翠玉草龍王(第二隻世界 BOSS:草屬性,太魯閣;數值對齊火龍王)
+          '翠玉草龍王':{hp:5000000,atk:49,sp:50,spd:15,exp:1500,star:5,isWorldBoss:true,
+            s1:{n:'劇毒藤縛',c:5,d:'拘束特技最高 1 名對手 2 回合並使其猛毒',fd:'伸出巨大藤蔓緊緊纏住對方陣中特技最高的英雄!使其「禁動」2 回合(完全無法行動),並陷入「猛毒」5 回合(每回合損失最大 HP 8%,無視護盾與減傷)。'},
+            s2:{n:'萬刃落葉',c:6,d:'特技150%全體草屬性傷害,附加出血2回合',fd:'抖落滿天如刀刃般銳利的葉片射向全場!用特技值的 150% 對全體對手造成草屬性傷害,並使全體「出血」2 回合(每回合損失最大 HP 6%,且每次受到攻擊再追加損失 6%;可被護盾與減傷抵銷)。'}
+          },
         });
         window.HERO_DB = HERO_DB;  // ★ 暴露給 UI script 用
       }
@@ -367,6 +373,8 @@
           // ★ v3.5.9 — 老師調整:當前 HP 90% → 95% 火傷(更具毀滅性)
           // ★ v3.11.7(2026-05-28) — 老師再調整:改為「將 HP 減至 20%」HP 考核機制,玩家至少需 110 HP 才能撐過爆發+後續燃燒
           '維蘇威火山龍王': {n:'天崩之炎', d:'將全體HP減至最大HP 20%(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!將全體存活對手的 HP 減至「最大 HP 的 20%」(若當前 HP 已低於 20% 則不受傷),完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
+          // ★ v3.13.73 — 翠玉草龍王爆發(綜合 S1+S2 強力版)
+          '翠玉草龍王': {n:'翠龍·萬藤絞殺', d:'特技120%全體草傷(無視有利)+全體猛毒5回(-8%/回)&強力出血2回(-9%/回)+隨機2名強力禁動1回合', fd:'太古翠藤自地底竄出絞殺全場!用特技值的 120% 對全體存活對手造成草屬性傷害(無視無敵、免疫、護盾、反射、減傷),並同時施加「猛毒」5 回合(每回合 -8% 最大HP,無視護盾/減傷)與「強力出血」2 回合(每回合 -9% 最大HP、每次受擊再追加 9%,可被護盾/減傷抵銷)。再從存活對手中隨機選 2 名,以強韌藤蔓「強力禁動」1 回合,完全無法行動。'},
         });
         window.BURST_DB = BURST_DB;
       }
@@ -378,6 +386,8 @@
           // ★ v3.7.10(2026-05-25) — 護盾觸發回合:第 3/5/7/9,每元素各 1 層
           //   同時補充「全隊聯手爆發 5000 傷害可無視護盾」的攻略提示。
           '維蘇威火山龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限固定 5,000(不隨 HP 變動);第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限固定為 5,000(不隨 HP 變動,任何一擊最高僅造成 5,000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每次補滿每個元素各 1 層(同時最多 4 層):所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場 4 階段護盾、最多 16 次破盾機會,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5,000 傷害可以無視護盾直接命中。' },
+          // ★ v3.13.73 — 翠玉草龍王天賦「翠之意志」(共同 cap/護盾 + 吸能量/免疫光/燃燒特別放大)
+          '翠玉草龍王': { name:'翠之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(草盾×2/水盾/光盾,減傷 80%);每回合吸取隊伍 2 能量;免疫光屬性傷害;受燃燒傷害固定為「普通-300/強力-600」', fd:'太魯閣翠玉龍的古老意志,單次受傷上限固定為 5,000(不隨 HP 變動)。每場戰鬥的第 3、5、7、9 回合會啟動「元素護盾」:草盾 2 層 + 水盾 1 層 + 光盾 1 層(同時最多 4 層,減傷 80%),需用「火」攻擊破草盾(要 2 次)、「風」破水盾、「暗」破光盾,才能完整破除。此外牠每回合會「吸取隊伍 2 點能量」據為己用(讓自己更快爆發)、且「完全免疫光屬性傷害」。但藤葉天生怕火——對牠施加的燃燒會被特別放大為固定值:普通燃燒每跳 -300、強力燃燒每跳 -600(不受暴擊影響,護盾期間同樣吃 80% 減傷)。火屬性是牠的絕對剋星(屬性克制 + 破 2 層草盾 + 燃燒放大)。' },
         });
         window.HERO_TRAIT = HERO_TRAIT;
       }
@@ -387,6 +397,8 @@
       if(typeof HERO_LORE === 'object' && HERO_LORE){
         Object.assign(HERO_LORE, {
           '維蘇威火山龍王': '沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」。西元 79 年 8 月 24 日,牠首次甦醒咆哮,使整座火山噴發兩天兩夜,將山下的羅馬古城「龐貝」與「赫庫蘭尼姆」完全掩埋於火山灰下,並造成兩萬餘人喪命。中世紀的 1631 年牠再度被驚醒,造成 3,000 人罹難。20 世紀最後一次是 1944 年二戰末期,美軍轟炸鄰近地區時意外驚動,牠咆哮三日後返回火山口。2026 年,因近年地殼活動頻繁,火龍王第四度甦醒,需要四位英雄遠渡重洋前往那不勒斯封印,以免人類再蒙浩劫。',
+          // ★ v3.13.73 — 翠玉草龍王背景故事
+          '翠玉草龍王': '盤踞於太魯閣峽谷千年的翠玉龍。相傳牠的鱗片由立霧溪畔的翠玉孕育而成,身軀化作滿山遍野的藤蔓與蒼鬱林木,守護著大理岩峽谷的生靈。平時牠靜臥於燕子口的岩壁深處與山林融為一體,一旦有人擅闖牠的領域、破壞山林,牠便會甦醒——萬千翠藤自地底竄出絞殺入侵者,飛葉如刀、劇毒蔓延。傳說牠唯一畏懼的是烈火,因為再堅韌的藤葉也擋不住火焰的吞噬。如今山林告急,需要四位英雄以火為刃,才能讓這頭翠玉巨龍重歸沉眠。',
         });
         window.HERO_LORE = HERO_LORE;
       }
@@ -396,6 +408,8 @@
       if(typeof HERO_BIO === 'object' && HERO_BIO){
         Object.assign(HERO_BIO, {
           '維蘇威火山龍王': '沉睡於義大利維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。需要 4 位英雄聯手才能封印的世界 BOSS。',
+          // ★ v3.13.73
+          '翠玉草龍王': '盤踞太魯閣峽谷千年的翠玉龍,以藤蔓、劇毒與飛葉守護山林。唯一畏懼烈火。需要 4 位英雄聯手才能讓牠重歸沉眠的世界 BOSS。',
         });
         window.HERO_BIO = HERO_BIO;
       }
@@ -406,6 +420,10 @@
         HERO_IMGS['維蘇威火山龍王'] =
           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
           encodeURIComponent('維蘇威火山龍王.png');
+        // ★ v3.13.73 — 翠玉草龍王立繪(老師指定檔名 草龍王.png,不由角色名推導)
+        HERO_IMGS['翠玉草龍王'] =
+          'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
+          encodeURIComponent('草龍王.png');
         window.HERO_IMGS = HERO_IMGS;
       }
     }catch(_){}
@@ -413,6 +431,7 @@
     try{
       if(typeof MONSTER_AVTR === 'object' && MONSTER_AVTR){
         MONSTER_AVTR['維蘇威火山龍王'] = '🐉';
+        MONSTER_AVTR['翠玉草龍王'] = '🐉';   // ★ v3.13.73
         window.MONSTER_AVTR = MONSTER_AVTR;
       }
     }catch(_){}
@@ -420,6 +439,7 @@
     try{
       if(typeof MONSTER_ELEMENT === 'object' && MONSTER_ELEMENT){
         MONSTER_ELEMENT['維蘇威火山龍王'] = 'fire';
+        MONSTER_ELEMENT['翠玉草龍王'] = 'grass';   // ★ v3.13.73
         window.MONSTER_ELEMENT = MONSTER_ELEMENT;
       }
     }catch(_){}
@@ -572,9 +592,22 @@
   //       - 吸血鬼蝙蝠群(index.html line 34108 + 39655,v3.11.5 補上)
   // ───────────────────────────────────────────────────────────────────
   window._wbApplyBossDmgCap = function(boss, rawDmg, opts){
-    if(!boss || !boss.name || boss.name !== '維蘇威火山龍王') return rawDmg;
-    if(rawDmg <= 0) return rawDmg;
+    // ★ v3.13.73 — 泛化:所有龍王共用「單次 cap 5000 + 護盾 80% 減傷」
+    if(!boss || !boss.name) return rawDmg;
+    const _isWbBoss = (boss.name === '維蘇威火山龍王' || boss.name === '翠玉草龍王'
+                       || (window._wbIsBossName && window._wbIsBossName(boss.name)));
+    if(!_isWbBoss) return rawDmg;
     opts = opts || {};
+    // ★ v3.13.73 — 翠玉草龍王天賦「翠之意志」:完全免疫光屬性傷害(光攻擊歸 0)
+    if(boss.name === '翠玉草龍王'){
+      const _atkElem = (opts.action && (opts.action.element || opts.action.elem)) || opts.element || null;
+      if(_atkElem === 'light'){
+        try{ if(typeof log === 'function') log(`🌿 [${boss.name}] 翠之意志:免疫光屬性傷害!`); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(boss, '🌿 免疫光屬性', '#88ee88', 600); }catch(_){}
+        return 0;
+      }
+    }
+    if(rawDmg <= 0) return rawDmg;
 
     // ★ v3.12.6 — 單次傷害上限「固定 5000」,不隨滿血變動
     //   設計目的:HP 放大 10 倍但 cap 不放大,讓戰鬥時間拉長,容納更多玩家上陣
@@ -585,8 +618,10 @@
     //   - 任何傷害(含無視有利、必中、固定值、聯手爆發 5000)只要有護盾在,都吃 80% 減傷
     //   - 移除舊版 opts.bypassShield 例外(原本給聯手爆發用,現在統一被擋)
     //   - 設計理念:單次傷害「永遠」鎖在 5000(無護盾) / 1000(有護盾),沒有任何例外
+    //   ★ v3.13.73 例外:中毒/猛毒、草龍王燃燒「無視護盾」(opts.action._dotIgnoreShield)→ 跳過 80% 減傷,但仍受 5000 cap
+    const _dotIgnoreShield = !!(opts && opts.action && opts.action._dotIgnoreShield);
     const _hasActiveShield = boss._wbShields && Object.values(boss._wbShields).some(v => v > 0);
-    if(_hasActiveShield){
+    if(_hasActiveShield && !_dotIgnoreShield){
       // 護盾首次啟動提示(沿用既有 _wbShieldNotified 旗標)
       if(!boss._wbShieldNotified){
         boss._wbShieldNotified = true;
@@ -1321,6 +1356,8 @@
     s2:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('集中效果線.gif'),
     // ★ v3.6.9 — BOSS 護盾啟動特效(老師指定:最後之盾.gif)
     shield: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('最後之盾.gif'),
+    // ★ v3.13.73 — 翠玉草龍王爆發/技能特效(老師指定:藤蔓攻擊.gif)
+    burst_grass: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('藤蔓攻擊.gif'),
   };
 
   // 播放全畫面 GIF 特效 (持續 1.6 秒後淡出)
@@ -1482,21 +1519,27 @@
         // ★ v3.1.2 — 用 BOSS 自己的 shieldElements 初始化護盾
         //   從 WORLD_BOSS_LINEUP 找該 BOSS 的設定;若找不到,fallback 用 fire/water/wind/earth
         let myElements = ['fire','water','wind','earth'];
+        let myLayers = null;   // ★ v3.13.73 — 個別 BOSS 可指定各元素起始層數(翠玉草龍王草盾×2)
         try{
           const lineup = window.WORLD_BOSS_LINEUP || [];
           const config = lineup.find(b => b.name === boss.name);
           if(config && Array.isArray(config.shieldElements) && config.shieldElements.length > 0){
             myElements = config.shieldElements;
           }
+          if(config && config.shieldLayers && typeof config.shieldLayers === 'object'){
+            myLayers = config.shieldLayers;
+          }
         }catch(_){}
         // ★ v3.7.10 — 每個元素 1 層(節奏一致 + 4 次薄盾)
-        //   邏輯:已有元素 >= 1 維持、< 1 補回 1 → 同時最多 4 層
+        //   邏輯:已有元素 >= 想要層數 則維持、不足則補到想要層數
+        //   ★ v3.13.73 — 想要層數預設 1;若 BOSS 有 shieldLayers 設定則用設定值(翠玉草龍王草盾=2)
         //   配合 4 次階段(R3/R5/R7/R9) → 整場累計最多 16 次破盾機會
         //   ⚠ 護盾元素清單仍依新階段更新(boss._wbShieldElements),確保 UI 顯示正確
         boss._wbShields = boss._wbShields || {};
         myElements.forEach(el => {
+          const _want = (myLayers && typeof myLayers[el] === 'number') ? myLayers[el] : 1;
           const _cur = boss._wbShields[el] || 0;
-          boss._wbShields[el] = Math.max(_cur, 1);
+          boss._wbShields[el] = Math.max(_cur, _want);
         });
         // 同時記錄這次護盾的元素清單(給 UI 渲染用)
         boss._wbShieldElements = myElements.slice();
@@ -2017,7 +2060,7 @@
            && !window._wbClientMode){
           const _G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
           const _boss = _G && _G.p2 && _G.p2[0];
-          if(_boss && _boss.name === '維蘇威火山龍王' && _boss.curHp > 0
+          if(_boss && window._wbIsBossName && window._wbIsBossName(_boss.name) && _boss.curHp > 0
              && typeof window._wbCheckShieldTrigger === 'function'){
             const _trig = window._wbCheckShieldTrigger(_boss);
             if(_trig && typeof window._wbShowShieldTriggerHint === 'function'){
@@ -2338,10 +2381,11 @@
     return true;
   }
 
-  // BOSS 名單判斷(目前只有維蘇威火山龍王,未來擴充其他世界 BOSS 時加進來)
+  // BOSS 名單判斷 — ★ v3.13.73 泛化:認所有 WORLD_BOSS_LINEUP 龍王名(含翠玉草龍王)
   window._wbIsBossName = function(name){
     if(!name) return false;
-    return name === '維蘇威火山龍王';
+    if(name === '維蘇威火山龍王' || name === '翠玉草龍王') return true;
+    try{ return (window.WORLD_BOSS_LINEUP || []).some(b => b && b.name === name); }catch(_){ return false; }
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -2497,6 +2541,23 @@
     }
     boss._wbActionCount = (boss._wbActionCount || 0) + 1;
     try{ console.log('[WB-BossAct v3.12.7] R' + _curRoundForCount + ' 第 ' + boss._wbActionCount + ' 次行動(1=主行動 / 2=追擊普攻)'); }catch(_){}
+
+    // ★ v3.13.73 — 翠玉草龍王天賦「翠之意志」:每回合(主行動時)吸取隊伍 2 點能量灌給自己
+    //   p1(隊伍)-2、p2(BOSS,即爆發計量)+2;放在爆發檢查之前 → 吸來的能量當回合就計入爆發門檻
+    if(boss.name === '翠玉草龍王' && boss._wbActionCount === 1){
+      try{
+        if(G.energy && typeof G.energy.p1 === 'number'){
+          const _drain = Math.min(2, Math.max(0, G.energy.p1));
+          if(_drain > 0){
+            G.energy.p1 = Math.max(0, G.energy.p1 - _drain);
+            G.energy.p2 = Math.min(10, (G.energy.p2 || 0) + _drain);
+            try{ if(typeof log === 'function') log(`🌿 [${boss.name}] 翠之意志:吸取隊伍 ${_drain} 點能量據為己用!`); }catch(_){}
+            try{ if(typeof bannerFX === 'function') bannerFX(boss, `🌿 吸能 +${_drain}`, '#88ee88', 800); }catch(_){}
+            try{ if(typeof renderEnergyBars === 'function') renderEnergyBars(); }catch(_){}
+          }
+        }
+      }catch(_eDrain){ console.warn('[WB] 翠玉草龍王 吸能量失敗', _eDrain); }
+    }
 
     // ★ v3.11.6(2026-05-27) — [E1] BOSS turn 入口:R11+ 直接走 _wbForceCollapseAt11
     //   舊版用 inline 邏輯 + 單一旗標 _wbCollapseTriggered;v3.11.6 改用獨立函式 +
@@ -2659,10 +2720,126 @@
     try{ if(boss._wbBossTid){ clearTimeout(boss._wbBossTid); boss._wbBossTid = null; } }catch(_){}
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.13.73 — 翠玉草龍王專屬 AI(劇毒藤縛 / 萬刃落葉 / 翠龍·萬藤絞殺)
+  //   ⚠ 設計註:引擎中真正會每跳扣血的 DoT 只有 poison(劇毒);bleed 狀態經查不會扣血。
+  //     故「猛毒」「出血」皆以 poison 系統實作(_poisonAmt = 最大HP × 比例),
+  //     狀態圖示都顯示「中毒」,但傷害正常、banner/log 文字分別寫「猛毒/出血/劇毒纏繞」。
+  //     爆發的「猛毒+出血合體」用一個較強的 poison(_strong,18%/回合)代表(兩個 poison 不疊加)。
+  // ════════════════════════════════════════════════════════════════════
+  // S1:劇毒藤縛 — 拘束特技最高 1 名(禁動 2 回合)+ 猛毒 2 回合(每回合 -10% 最大HP)
+  function _wbGrassBossS1(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_grass', {duration:1400, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    if(alive.length === 0){ _scheduleBossEnd(boss, 600); return; }
+    // 選特技(sp)最高的 1 名
+    let tgt = alive[0];
+    alive.forEach(h => { if((h.sp || 0) > (tgt.sp || 0)) tgt = h; });
+    try{
+      if(typeof addStatus === 'function') addStatus(tgt, 'trap', 2);          // 禁動 2 回合
+      // 猛毒(poison + _strong)→ 統一系統:每回合 -8% 最大HP、5 回合、無視護盾/減傷
+      if(typeof addStatus === 'function'){
+        addStatus(tgt, 'poison', 5);
+        const _ps = (tgt.status || []).find(s => s.type === 'poison');
+        if(_ps){ _ps._strong = true; _ps._actor = boss; }
+      }
+      try{ if(typeof bannerFX === 'function') bannerFX(tgt, '🌿 藤縛 + 猛毒', '#2a9858', 1100); }catch(_){}
+      try{ if(typeof log === 'function') log(`🌿 翠玉草龍王「劇毒藤縛」!藤蔓纏住 [${tgt.name}]:禁動 2 回合 + 猛毒 5 回合(每回合 -8% 最大HP)!`); }catch(_){}
+      try{ renderCard(tgt); }catch(_){}
+    }catch(e){ console.warn('[WB] 翠玉草龍王 劇毒藤縛失敗', e); }
+    _scheduleBossEnd(boss, 1200);
+  }
+
+  // S2:萬刃落葉 — 特技 150% 全體草屬性傷害 + 出血 2 回合(每回合 -10% 最大HP)
+  function _wbGrassBossS2(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_grass', {duration:1500, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 1.50);
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, hitBonus: 0.30, element: 'grass' });
+        }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+      }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+      if(t.curHp > 0){
+        try{
+          // 出血(bleed)→ 統一系統:每回合 -6% 最大HP、2 回合、受護盾/減傷、受擊再追加 6%
+          if(typeof addStatus === 'function') addStatus(t, 'bleed', 2);
+          try{ if(typeof bannerFX === 'function') bannerFX(t, '🩸 出血', '#cc2222', 700); }catch(_){}
+        }catch(_){}
+      }
+      try{ renderCard(t); }catch(_){}
+    });
+    try{ if(typeof log === 'function') log(`🍃 翠玉草龍王「萬刃落葉」!特技 150% 全體草屬性傷害 -${dmg} HP,並使全體出血 2 回合(每回合 -6% 最大HP,受擊再追加)!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // 爆發:翠龍·萬藤絞殺 — 特技 120% 全體草傷(無視有利)+ 全體強力劇毒纏繞 2 回合(-18%/回合)+ 隨機 2 名強力禁動 1 回合
+  function _wbGrassBossBurst(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-burst-grass', 0.95); }catch(_){}   // 草龍王爆發音效(齒輪or藤蔓.mp3)
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_grass', {duration:2200, shake:true}); }catch(_){}
+    try{ boss._wbActionCount = 2; }catch(_){}   // ★ 爆發後不再追擊普攻
+    try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
+    boss._wbBossTid = setTimeout(() => {
+      boss._wbBossTid = null;
+      if(boss._wbEndedThisTurn === true){ return; }
+      if(boss.curHp <= 0){ boss._wbEndedThisTurn = true; return; }
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      const dmg = Math.floor((boss.sp || 50) * 1.20);
+      alive.forEach(t => {
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, element: 'grass' });
+          }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+        }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+        // 全體：猛毒(poison+_strong,-8%/回×5) + 強力出血(bleed+_strong,-9%/回×2 且受擊再追加 9%)雙 DoT 疊加
+        if(t.curHp > 0){
+          try{
+            if(typeof addStatus === 'function'){
+              addStatus(t, 'poison', 5);
+              const _ps = (t.status || []).find(s => s.type === 'poison');
+              if(_ps){ _ps._strong = true; _ps._actor = boss; }
+              addStatus(t, 'bleed', 2);
+              const _bs = (t.status || []).find(s => s.type === 'bleed');
+              if(_bs){ _bs._strong = true; _bs._actor = boss; }
+            }
+            try{ if(typeof bannerFX === 'function') bannerFX(t, '🌿 猛毒+強力出血', '#1f7a45', 900); }catch(_){}
+          }catch(_eP){ console.warn('[WB-GrassBurst] 猛毒/強力出血附加失敗', _eP); }
+        }
+        try{ renderCard(t); }catch(_){}
+      });
+      // 隨機 2 名強力禁動 1 回合
+      try{
+        const _survivors = G.p1.filter(h => h && h.curHp > 0);
+        const _picked = _survivors.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+        _picked.forEach(t => {
+          try{
+            if(typeof addStatus === 'function'){
+              addStatus(t, 'trap', 1);
+              const _ts = (t.status || []).find(s => s.type === 'trap');
+              if(_ts){ _ts._strong = true; }
+            }
+            try{ if(typeof bannerFX === 'function') bannerFX(t, '🌿 強力禁動', '#1f7a45', 900); }catch(_){}
+            try{ renderCard(t); }catch(_){}
+          }catch(_){}
+        });
+      }catch(_eT){ console.warn('[WB-GrassBurst] 強力禁動失敗', _eT); }
+      try{ if(typeof log === 'function'){ log('⚡ 翠玉草龍王爆發「翠龍·萬藤絞殺」!特技 120% 全體草傷 + 全體猛毒(5回,-8%/回) + 強力出血(2回,-9%/回且受擊追加)'); log('🌿 隨機 2 名英雄被強力藤蔓「禁動」1 回合!'); } }catch(_){}
+      try{ if(typeof flashScreen === 'function') flashScreen('rgba(40,160,80,0.75)', 700); }catch(_){}
+      _scheduleBossEnd(boss, 1800);
+    }, 2200);
+  }
+
   // BOSS S1:業火灼燒(全體 sp×1.5 + 燃燒 2 回合 + 命中 +30%)
   // ★ v3.11.7(2026-05-28) — 傷害 1.0 → 1.5(對齊 v3.5.9 + 介紹彈窗描述)+ 命中率 +30%
   function _wbAdvBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    if(boss && boss.name === '翠玉草龍王'){ _wbGrassBossS1(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S1
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
@@ -2692,6 +2869,7 @@
   // ★ v3.11.7(2026-05-28) — 命中率 +30%
   function _wbAdvBossS2(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    if(boss && boss.name === '翠玉草龍王'){ _wbGrassBossS2(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S2
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1600, shake:true}); }catch(_){}
@@ -2737,6 +2915,7 @@
   //   5. 強制把 _wbActionCount = 2,讓爆發後不再追擊普攻(爆發已太強)
   function _wbAdvBossBurst(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    if(boss && boss.name === '翠玉草龍王'){ _wbGrassBossBurst(boss); return; }   // ★ v3.13.73 — 草龍王走自己的爆發
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
