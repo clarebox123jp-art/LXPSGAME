@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.75';   // ★ v3.13.75 — 版本同步(本回合無 GM 功能異動,僅隨主程式升版破快取)｜前版 v3.13.74 課堂獎勵勾選式+送禮記錄
+window.ADMIN_PANEL_VERSION = 'v3.13.76';   // ★ v3.13.76 — 課堂獎勵+GM特別獎勵加入 UR 魔劍姬‧伊莉雅(只送不抽)｜前版 v3.13.75 版本同步
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -476,6 +476,9 @@ async function _showAdminStatsPanelImpl(){
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(140,220,120,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
           <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
             <input type="checkbox" id="_cr-item-clair" checked style="width:17px;height:17px;cursor:pointer;">🌟 UR 藝天使．克雷爾
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-iliya" style="width:17px;height:17px;cursor:pointer;">🗡️ UR 魔劍姬‧伊莉雅
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
             <input type="checkbox" id="_cr-item-ssrpick" style="width:17px;height:17px;cursor:pointer;">🌟 SSR 自選召喚卷 ×
@@ -3979,6 +3982,7 @@ async function _showAdminStatsPanelImpl(){
       const unlockedHeroes = [];
       const backpack = {};
       if(_chk('_cr-item-clair')){ unlockedHeroes.push('藝天使．克雷爾'); items.push('🌟UR藝天使克雷爾'); }
+      if(_chk('_cr-item-iliya')){ unlockedHeroes.push('魔劍姬‧伊莉雅'); items.push('🗡️UR魔劍姬伊莉雅'); }
       if(_chk('_cr-item-ssrpick')){ const q=_qty('_cr-qty-ssrpick',1); backpack['summon_ticket_ssr_pick']=(backpack['summon_ticket_ssr_pick']||0)+q; items.push('🌟SSR自選券×'+q); }
       if(_chk('_cr-item-srpick')){  const q=_qty('_cr-qty-srpick',1);  backpack['summon_ticket_sr_pick'] =(backpack['summon_ticket_sr_pick']||0)+q;  items.push('✨SR自選券×'+q); }
       if(_chk('_cr-item-ssrrand')){ const q=_qty('_cr-qty-ssrrand',1); backpack['summon_ticket_ssr']=(backpack['summon_ticket_ssr']||0)+q; items.push('🌈隨機SSR券×'+q); }
@@ -4955,7 +4959,7 @@ async function _showAdminStatsPanelImpl(){
     // ★ v3.13.71 — GM特別獎勵英雄清單(UR/限定,只送不抽,僅由 GM 透過此工具發放)。
     //   未來新增 UR 或限定英雄,只要加進這個陣列就會自動出現在下方「🌟 GM特別獎勵」分組。
     //   發放走既有流程:查找學生(email/uid/班級碼/中文名)→ 選此英雄 → 套用 → window._fbCompensatePlayer(union 合併,不會降級)。
-    const _GM_SPECIAL_REWARDS = ['藝天使．克雷爾'];
+    const _GM_SPECIAL_REWARDS = ['藝天使．克雷爾', '魔劍姬‧伊莉雅'];
     // ★ v1.0.20260512.6210 — 補償英雄分組定義(讓老師依類型快速找)
     //   未列入任何組的英雄會自動歸到「💼 其他」最末
     const _HERO_GROUPS = [

@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.60';   // ★ v3.5.60(對應遊戲 v3.13.75)— bump shell 快取:天賦紫色戰鬥標籤 + 問答題庫洩底括號清理 + 隊伍預覽圖Y位置微調17角色
+const SW_VERSION = 'v3.5.61';   // ★ v3.5.61(對應遊戲 v3.13.76)— bump shell 快取:第二隻 UR 魔劍姬‧伊莉雅登場
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
