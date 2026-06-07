@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.72';   // ★ v3.13.72 — 新增「課堂獎勵發放」批次貼名單發整包(克雷爾+SSR卷+水晶+幣) + 鬥技場排名發獎開關 GM 按鈕｜前版 v3.13.71 GM特別獎勵
+window.ADMIN_PANEL_VERSION = 'v3.13.74';   // ★ v3.13.74 — 課堂獎勵發放改勾選式(8項+數量)+送禮記錄(gmGiftLog);活動查詢無名稱改顯示名冊標籤;大分類標籤放大2倍+淡藍｜前版 v3.13.72 課堂獎勵發整包
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -464,15 +464,49 @@ async function _showAdminStatsPanelImpl(){
         <div id="_admin-arena-switch-result" style="margin-top:10px;font-size:13px;color:#ff99cc;text-align:center;"></div>
       </div>
 
-      <!-- ★ v3.13.72 — 課堂獎勵發放:貼整批學生姓名,系統對照帳號發固定整包 -->
+      <!-- ★ v3.13.74 — 課堂獎勵發放:勾選要發的獎勵(8 項)+ 填數量 → 貼學生名單 → 比對發放 → 記錄到 gmGiftLog -->
       <div id="_admin-classreward-section" style="background:rgba(30,45,30,0.5);border:2px solid rgba(140,220,120,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#aaffaa;margin-bottom:8px;">🎁 課堂獎勵發放</div>
-        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
-          貼上學生姓名(一行一個,或用空白 / 逗號分隔)。系統會對照帳號,對每位發放<b style="color:#ffe066;">固定整包獎勵</b>:<br>
-          🌟 UR 藝天使．克雷爾 ・ 🌈 SSR 召喚卷 ×1 ・ 🔮 召喚水晶 ×10 ・ 💰 知識幣 ×100000<br>
-          <span style="color:#aaa;font-size:12px;">採 union 合併(不會降級已有等級/道具);<b style="color:#ffcc66;">同名多筆者會被列出並跳過</b>,請改用學號 / uid 個別補發,避免 UR 發錯人。</span>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.6;">
+          先<b style="color:#ffe066;">勾選要發的獎勵</b>並填數量,再貼上學生(一行一個;支援中文姓名 / 學號 / 班級碼 / uid)。
+          系統比對帳號後對每位發放所勾選的獎勵(<b style="color:#9fd6ff;">union 合併,不會降級已有資料</b>),並寫入<b style="color:#ffcc66;">送禮記錄</b>。
+          <span style="color:#aaa;font-size:12px;"><b style="color:#ffcc66;">同名多筆者會被列出並跳過</b>,請改用學號 / uid 個別補發,避免 UR 發錯人。</span>
         </div>
-        <textarea id="_admin-classreward-names" placeholder="王小明&#10;陳大文&#10;5324蔣同學 ..." style="width:100%;min-height:120px;padding:10px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(140,220,120,0.4);color:#fff;border-radius:8px;font-family:inherit;line-height:1.6;box-sizing:border-box;resize:vertical;"></textarea>
+        <!-- 勾選獎勵清單 -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(140,220,120,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-clair" checked style="width:17px;height:17px;cursor:pointer;">🌟 UR 藝天使．克雷爾
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-ssrpick" style="width:17px;height:17px;cursor:pointer;">🌟 SSR 自選召喚卷 ×
+            <input type="number" id="_cr-qty-ssrpick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-srpick" style="width:17px;height:17px;cursor:pointer;">✨ SR 自選召喚卷 ×
+            <input type="number" id="_cr-qty-srpick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-ssrrand" style="width:17px;height:17px;cursor:pointer;">🌈 隨機 SSR 召喚卷 ×
+            <input type="number" id="_cr-qty-ssrrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-srrand" style="width:17px;height:17px;cursor:pointer;">⭐ 隨機 SR 召喚卷 ×
+            <input type="number" id="_cr-qty-srrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-crystal" style="width:17px;height:17px;cursor:pointer;">🔮 召喚水晶 ×
+            <input type="number" id="_cr-qty-crystal" value="10" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-coins" style="width:17px;height:17px;cursor:pointer;">💰 知識幣 ×
+            <input type="number" id="_cr-qty-coins" value="100000" min="1" max="9999999" step="1000" style="width:90px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-fruit" style="width:17px;height:17px;cursor:pointer;">🍑 超越極限果實 ×
+            <input type="number" id="_cr-qty-fruit" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+        </div>
+        <textarea id="_admin-classreward-names" placeholder="王小明&#10;陳大文&#10;5324蔣同學 ..." style="width:100%;min-height:110px;padding:10px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(140,220,120,0.4);color:#fff;border-radius:8px;font-family:inherit;line-height:1.6;box-sizing:border-box;resize:vertical;"></textarea>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
           <button id="_admin-classreward-preview" style="padding:10px 20px;font-size:14px;font-weight:800;
             background:rgba(120,180,100,0.3);border:1.5px solid rgba(160,230,130,0.6);color:#cfffcf;
@@ -482,6 +516,13 @@ async function _showAdminStatsPanelImpl(){
             border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;opacity:0.5;">🎁 確認發放</button>
         </div>
         <div id="_admin-classreward-result" style="margin-top:12px;font-size:13px;color:#cfe;"></div>
+        <!-- 送禮記錄檢視器 -->
+        <div style="margin-top:16px;padding-top:12px;border-top:1px dashed rgba(140,220,120,0.35);">
+          <button id="_admin-classreward-loglist" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(90,130,90,0.3);border:1.5px solid rgba(160,230,130,0.45);color:#cfffcf;
+            border-radius:6px;cursor:pointer;font-family:inherit;">📜 查看送禮記錄(最近 80 筆)</button>
+          <div id="_admin-classreward-log" style="margin-top:10px;font-size:12px;color:#cfe;"></div>
+        </div>
       </div>
 
       <!-- ★ v3.13.72 — 鬥技場「排名發獎」開關(每週排名獎勵自動結算發放的總閘門) -->
@@ -1928,7 +1969,7 @@ async function _showAdminStatsPanelImpl(){
       // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 + 戰鬥記錄審核
       { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
       // ★ v3.13.72 — 課堂獎勵發放 + 鬥技場排名發獎開關
-      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '貼整批學生姓名→對照帳號發整包(UR克雷爾+SSR卷+水晶+幣)' },
+      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '勾選獎勵(克雷爾/自選券/隨機券/水晶/幣/果實)+貼名單→比對發放,寫送禮記錄' },
       { sec: '_admin-arena-rankreward-section', label: '🏆 鬥技場排名發獎開關',   hint: '一鍵開啟/關閉每週排名獎勵自動發放' },
       // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查
       { sec: '_admin-github-check-section',     label: '🌐 GitHub 版本檢查',      hint: '啟動時自動比對 4 個檔案;手動重跑入口' },
@@ -1980,7 +2021,7 @@ async function _showAdminStatsPanelImpl(){
       }).join('');
       const _open = (gi === 0);
       return `<div class="admin-sidebar-group" data-gi="${gi}">
-        <button type="button" class="admin-sidebar-group-header" data-gi="${gi}" style="width:100%;text-align:left;padding:9px 12px;margin:6px 0 2px;font-size:13px;font-weight:900;color:#ffe;background:rgba(120,120,200,0.18);border:1px solid rgba(150,150,255,0.35);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;">
+        <button type="button" class="admin-sidebar-group-header" data-gi="${gi}" style="width:100%;text-align:left;padding:9px 12px;margin:6px 0 2px;font-size:26px;font-weight:900;color:#aacdff;background:rgba(120,120,200,0.18);border:1px solid rgba(150,150,255,0.35);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit;">
           <span class="_grp-arrow" style="font-size:11px;width:12px;">${_open?'▾':'▸'}</span>
           <span style="flex:1;">${g.label}</span>
           <span style="font-size:11px;color:#bbc;font-weight:700;">${g.secs.length}</span>
@@ -3914,17 +3955,13 @@ async function _showAdminStatsPanelImpl(){
     const prevBtn = document.getElementById('_admin-classreward-preview');
     const sendBtn = document.getElementById('_admin-classreward-send');
     const resEl   = document.getElementById('_admin-classreward-result');
+    const logBtn  = document.getElementById('_admin-classreward-loglist');
+    const logEl   = document.getElementById('_admin-classreward-log');
     if(!namesEl || !prevBtn || !sendBtn){
       console.warn('[admin classreward] DOM 元素缺失,跳過初始化');
       return;
     }
-    const REWARD = {
-      unlockedHeroes: ['藝天使．克雷爾'],
-      coins: 100000,
-      coinsMode: 'add',
-      backpack: { summon_ticket_ssr: 1, summon_crystal: 10 },
-    };
-    let _matched = [];   // [{name, uid, label}]
+    let _matched = [];   // [{name, uid, label, email}]
     function _esc(s){
       return String(s == null ? '' : s)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -3933,13 +3970,35 @@ async function _showAdminStatsPanelImpl(){
     function _parseNames(raw){
       return (raw||'').split(/[\n,，、;；\s]+/).map(s => s.trim()).filter(Boolean);
     }
+    function _chk(id){ const e = document.getElementById(id); return !!(e && e.checked); }
+    function _qty(id, def){ const e = document.getElementById(id); const v = e ? parseInt(e.value, 10) : def; return (isNaN(v) || v < 1) ? def : v; }
+    // ★ v3.13.74 — 依勾選動態組出 compensation payload + 給 gmGiftLog 用的 items 文字陣列
+    function _buildReward(){
+      const reward = {};
+      const items = [];               // 文字標籤(送禮記錄用)
+      const unlockedHeroes = [];
+      const backpack = {};
+      if(_chk('_cr-item-clair')){ unlockedHeroes.push('藝天使．克雷爾'); items.push('🌟UR藝天使克雷爾'); }
+      if(_chk('_cr-item-ssrpick')){ const q=_qty('_cr-qty-ssrpick',1); backpack['summon_ticket_ssr_pick']=(backpack['summon_ticket_ssr_pick']||0)+q; items.push('🌟SSR自選券×'+q); }
+      if(_chk('_cr-item-srpick')){  const q=_qty('_cr-qty-srpick',1);  backpack['summon_ticket_sr_pick'] =(backpack['summon_ticket_sr_pick']||0)+q;  items.push('✨SR自選券×'+q); }
+      if(_chk('_cr-item-ssrrand')){ const q=_qty('_cr-qty-ssrrand',1); backpack['summon_ticket_ssr']=(backpack['summon_ticket_ssr']||0)+q; items.push('🌈隨機SSR券×'+q); }
+      if(_chk('_cr-item-srrand')){  const q=_qty('_cr-qty-srrand',1);  backpack['summon_ticket_sr'] =(backpack['summon_ticket_sr']||0)+q;  items.push('⭐隨機SR券×'+q); }
+      if(_chk('_cr-item-crystal')){ const q=_qty('_cr-qty-crystal',10); backpack['summon_crystal']=(backpack['summon_crystal']||0)+q; items.push('🔮召喚水晶×'+q); }
+      if(_chk('_cr-item-fruit')){   const q=_qty('_cr-qty-fruit',1);   backpack['burst_upgrade_fruit']=(backpack['burst_upgrade_fruit']||0)+q; items.push('🍑超越極限果實×'+q); }
+      if(_chk('_cr-item-coins')){   const q=_qty('_cr-qty-coins',100000); reward.coins=q; reward.coinsMode='add'; items.push('💰知識幣×'+q); }
+      if(unlockedHeroes.length) reward.unlockedHeroes = unlockedHeroes;
+      if(Object.keys(backpack).length) reward.backpack = backpack;
+      return { reward, items };
+    }
     function _setSendEnabled(on){
       sendBtn.disabled = !on;
       sendBtn.style.opacity = on ? '1' : '0.5';
     }
     async function _preview(){
+      const { items } = _buildReward();
+      if(!items.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先勾選至少一項要發的獎勵</span>'; _setSendEnabled(false); return; }
       const names = _parseNames(namesEl.value);
-      if(!names.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先貼上學生姓名</span>'; return; }
+      if(!names.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先貼上學生姓名 / 學號 / uid</span>'; _setSendEnabled(false); return; }
       if(typeof window._fbAdminFindPlayersByName !== 'function'){
         resEl.innerHTML = '<span style="color:#ff6666;">_fbAdminFindPlayersByName 未載入,請重新整理頁面</span>'; return;
       }
@@ -3958,13 +4017,14 @@ async function _showAdminStatsPanelImpl(){
             const p = players[0];
             if(_seenUid.has(p.uid)) continue;   // 同一人重複貼,去重
             _seenUid.add(p.uid);
-            const label = (p.name || nm) + (p.email ? (' <' + p.email + '>') : '');
-            _matched.push({ name: nm, uid: p.uid, label });
+            const label = (typeof window._adminLabel === 'function') ? window._adminLabel(p.email, p.name) : ((p.name || nm) + (p.email ? (' <' + p.email + '>') : ''));
+            _matched.push({ name: nm, uid: p.uid, label, email: p.email || '' });
             _ok.push(label);
           }
         }catch(e){ _none.push(nm + '(查詢失敗)'); }
       }
       let html = '<div style="text-align:left;font-size:13px;line-height:1.7;">';
+      html += '<div style="color:#ffe066;font-weight:800;margin-bottom:4px;">📦 將發放:' + items.map(_esc).join('、') + '</div>';
       html += '<div style="color:#88ff88;font-weight:800;">✅ 可發放 ' + _ok.length + ' 人</div>';
       if(_ok.length) html += '<div style="color:#cfe;margin:2px 0 6px;">' + _ok.map(x => '・' + _esc(x)).join('<br>') + '</div>';
       if(_multi.length){
@@ -3981,34 +4041,69 @@ async function _showAdminStatsPanelImpl(){
     }
     async function _send(){
       if(!_matched.length) return;
+      const { reward, items } = _buildReward();
+      if(!items.length){ resEl.innerHTML = '<span style="color:#ff8866;">沒有勾選任何獎勵</span>'; _setSendEnabled(false); return; }
       if(typeof window._fbCompensatePlayer !== 'function'){
         resEl.innerHTML = '<span style="color:#ff6666;">_fbCompensatePlayer 未載入,請重新整理頁面</span>'; return;
       }
-      if(!confirm('確認對 ' + _matched.length + ' 位學生發放「課堂獎勵整包」?\n\n🌟 UR 藝天使．克雷爾 + 🌈 SSR召喚卷×1 + 🔮 召喚水晶×10 + 💰 知識幣×100000\n\n(union 合併,不會降級已有資料)')) return;
+      if(!confirm('確認對 ' + _matched.length + ' 位學生發放?\n\n' + items.join('\n') + '\n\n(union 合併,不會降級已有資料)')) return;
       sendBtn.disabled = true; const _old = sendBtn.textContent; sendBtn.textContent = '發放中...';
       const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
+      const _summary = items.join(' + ');
       let _done = 0; const _fail = [];
       for(const m of _matched){
         try{
-          await window._fbCompensatePlayer(m.uid, Object.assign({}, REWARD, {
+          await window._fbCompensatePlayer(m.uid, Object.assign({}, reward, {
             reason: '課堂獎勵發放',
-            summary: '課堂獎勵整包(UR克雷爾 + SSR卷×1 + 水晶×10 + 幣10萬)',
+            summary: '課堂獎勵:' + _summary,
             by: _adminEmail
           }));
           _done++; sendBtn.textContent = '發放中... ' + _done + '/' + _matched.length;
+          // ★ v3.13.74 — 寫送禮記錄(失敗不影響發獎)
+          if(typeof window._fbWriteGmGiftLog === 'function'){
+            try{ await window._fbWriteGmGiftLog({ uid:m.uid, label:m.label, email:m.email, items:items, by:_adminEmail }); }
+            catch(_eLog){ console.warn('[課堂獎勵] 送禮記錄寫入失敗', _eLog); }
+          }
         }catch(e){ _fail.push(m.label + ':' + (e && e.message || e)); }
       }
       let html = '<div style="text-align:left;font-size:13px;line-height:1.7;">';
-      html += '<div style="color:#88ff88;font-weight:800;">✅ 已發放 ' + _done + '/' + _matched.length + ' 人</div>';
+      html += '<div style="color:#88ff88;font-weight:800;">✅ 已發放 ' + _done + '/' + _matched.length + ' 人(' + _esc(_summary) + ')</div>';
       if(_fail.length) html += '<div style="color:#ff6666;">❌ 失敗 ' + _fail.length + ':<br>' + _fail.map(x => '・' + _esc(x)).join('<br>') + '</div>';
-      html += '<div style="color:#aaa;margin-top:4px;">(已清空待發名單,如要再發請重新比對)</div>';
+      html += '<div style="color:#aaa;margin-top:4px;">(已清空待發名單,如要再發請重新比對;記錄可按下方「查看送禮記錄」)</div>';
       html += '</div>';
       resEl.innerHTML = html;
       sendBtn.textContent = _old;
       _matched = []; _setSendEnabled(false);   // 發完清空,避免重複發
     }
+    // ★ v3.13.74 — 送禮記錄檢視器
+    async function _showLog(){
+      if(!logEl) return;
+      if(typeof window._fbReadGmGiftLog !== 'function'){
+        logEl.innerHTML = '<span style="color:#ff6666;">_fbReadGmGiftLog 未載入,請重新整理頁面</span>'; return;
+      }
+      logEl.innerHTML = '<span style="color:#aaa;">讀取中...</span>';
+      try{
+        const _list = await window._fbReadGmGiftLog(80);
+        if(!_list.length){ logEl.innerHTML = '<span style="color:#aaa;">尚無送禮記錄(或 gmGiftLog 規則尚未部署)</span>'; return; }
+        let html = '<div style="max-height:280px;overflow-y:auto;border:1px solid rgba(140,220,120,0.25);border-radius:6px;padding:8px;background:rgba(0,0,0,0.3);">';
+        html += '<div style="color:#9fd6ff;margin-bottom:6px;">共 ' + _list.length + ' 筆(新→舊):</div>';
+        _list.forEach(r => {
+          const _t = r.at ? new Date(r.at).toLocaleString('zh-TW', { hour12:false }) : '?';
+          html += '<div style="padding:5px 0;border-bottom:1px dashed rgba(120,180,120,0.18);">'
+            + '<span style="color:#fff;font-weight:700;">' + _esc(r.label || r.email || r.uid) + '</span> '
+            + '<span style="color:#ffe066;">' + _esc((r.items||[]).join('、')) + '</span><br>'
+            + '<span style="color:#789;font-size:11px;">' + _esc(_t) + ' ・ by ' + _esc(r.by||'') + '</span>'
+            + '</div>';
+        });
+        html += '</div>';
+        logEl.innerHTML = html;
+      }catch(e){
+        logEl.innerHTML = '<span style="color:#ff6666;">讀取失敗:' + _esc(e && e.message || e) + '(可能 gmGiftLog 規則尚未部署)</span>';
+      }
+    }
     prevBtn.onclick = _preview;
     sendBtn.onclick = _send;
+    if(logBtn) logBtn.onclick = _showLog;
   })();
   // ── 課堂獎勵發放 結束 ──
 
@@ -7937,7 +8032,7 @@ async function _showAdminStatsPanelImpl(){
       _playerCard.innerHTML = _navBar + `
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div style="flex:1;min-width:220px;">
-            <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;">${_esc(p.name || '(無名稱)')}</div>
+            <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:4px;">${_esc(_adminLabel(p.email, p.name))}</div>
             <div style="font-size:12px;color:#aac;">${_esc(p.email || '(無 email)')}</div>
             <div style="font-size:11px;color:#778;margin-top:2px;font-family:monospace;">uid: ${_esc(p.uid)}</div>
           </div>

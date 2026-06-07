@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.58';   // ★ v3.5.58(對應遊戲 v3.13.73)— bump shell 快取:翠玉草龍王 + DoT三系重定義(出血/中毒/燃燒) + 草龍王之鬚至寶
+const SW_VERSION = 'v3.5.59';   // ★ v3.5.59(對應遊戲 v3.13.74)— bump shell 快取:戰鬥重平衡 + 自選召喚卷 + 翠玉草龍王BOSS_NAMES歸位 + GM中文搜尋名冊優先 + gmGiftLog
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
