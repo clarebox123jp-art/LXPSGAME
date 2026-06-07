@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.74';   // ★ v3.13.74 — 課堂獎勵發放改勾選式(8項+數量)+送禮記錄(gmGiftLog);活動查詢無名稱改顯示名冊標籤;大分類標籤放大2倍+淡藍｜前版 v3.13.72 課堂獎勵發整包
+window.ADMIN_PANEL_VERSION = 'v3.13.75';   // ★ v3.13.75 — 版本同步(本回合無 GM 功能異動,僅隨主程式升版破快取)｜前版 v3.13.74 課堂獎勵勾選式+送禮記錄
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //

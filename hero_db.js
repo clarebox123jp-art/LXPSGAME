@@ -1162,7 +1162,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '軍師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%ABQ%E7%89%88.png' },
-    { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 5%' },
+    { id:'tactic_web', name:'運籌帷幄', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BB%8D%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 20%' },
   ],
   '陰陽師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('陰陽師Q.png') },
@@ -1182,7 +1182,7 @@ const HERO_PORTRAIT_LIBRARY = {
   ],
   '守衛': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('守衛Q.png') },
-    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B3.png', requiresUnlock:true, objPos:'center 23%' },
+    { id:'iron_oath', name:'鋼鐵誓約', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%88%E8%A1%9B3.png', requiresUnlock:true, objPos:'center 3%' },
   ],
   '時空法師': [
     { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('時空法師Q.png') },
@@ -1677,20 +1677,20 @@ const HERO_IMG_POS = {
   //   原預設 'center 30%' 往下移 20% → 'center 50%'
   '雙星姊妹':['100% auto','center 50%'],
   // ★ v5690 — 窮奇邀請預覽圖:設計者要求 Y +30%(從預設 12% 改為 42%)
-  '窮奇':['160% auto','center 42%'],
+  '窮奇':['160% auto','center 57%'],
   // ★ v1.0.20260512.6210 — 死靈法師:設計者圖頭部偏上,Y 略上拉
   '死靈法師':['160% auto','center 25%'],
   // ★ v1.0.20260513.6460 — 布奶鳥獸:兩隻小鳥的圖,通用置中
-  '布奶鳥獸':['120% auto','center 30%'],
+  '布奶鳥獸':['120% auto','center 45%'],
   // ★ v1.0.20260514.6550 — 炸彈客:通用置中,稍微放大露出炸彈客全身
-  '炸彈客':['130% auto','center 25%'],
+  '炸彈客':['130% auto','center 15%'],
   // ★ v1.0.20260514.6660 — 紅色玩家:稍微放大顯示紅衣玩家全身
   '紅色玩家':['150% auto','center 18%'],
   // ★ v1.0.20260514.6770 — 地府酋長:稍微放大露出酋長威嚴上半身
-  '地府酋長':['140% auto','center 22%'],
-  '救醫馬':['140% auto','center 20%'],
+  '地府酋長':['140% auto','center 12%'],
+  '救醫馬':['140% auto','center 35%'],
   // ★ v1.0.20260515.6890 — 水狐:神獸全身圖(狐頭+獨角+魚尾),頭頂獨角偏上,Y 略往下偏顯示頭部與身軀
-  '水狐':['140% auto','center 35%'],
+  '水狐':['140% auto','center 25%'],
   // ★ v1.0.20260515.6900 — 米鈴:貓女僕全身,頭部+鈴鐺需在框內可見
   '米鈴':['180% auto','center 25%'],
   // ★ v1.0.20260518.6920 — 學霸(轉學生):制服全身,頭部+書包需在框內可見
@@ -1707,22 +1707,22 @@ const HERO_IMG_POS = {
   // ★ v1.0.20260522.7300 — 火柴人:長條人形,稍微放大露出火柴頭與整體
   '火柴人':['140% auto','center 25%'],
   // ★ v3.5.49 — 青炎龍王:龍王全身,稍微放大露出龍頭與胸前藍焰
-  '青炎龍王':['130% auto','center 25%'],
+  '青炎龍王':['130% auto','center 15%'],
   // ★ v3.11.19 — 幽幽:幽靈全身,稍微放大露出臉部與飄逸下擺
-  '幽幽':['130% auto','center 25%'],
+  '幽幽':['130% auto','center 40%'],
   // ★ v3.11.20 — 網路駭客:全身,露出臉部與螢幕光
-  '網路駭客':['130% auto','center 25%'],
+  '網路駭客':['130% auto','center 15%'],
   // ★ v3.12.8 — 死神:暗紅死神,稍微放大露出兜帽臉部與鐮刀
-  '風術士':['130% auto','center 30%'],
+  '風術士':['130% auto','center 10%'],
   // ★ v3.13.71 — UR 藝天使．克雷爾(預設框法,看實際 PNG 後可微調)
-  '藝天使．克雷爾':['125% auto','center 25%'],
+  '藝天使．克雷爾':['125% auto','center 15%'],
   '死神':['135% auto','center 25%'],
   // ★ v3.12.10 — 地獄將軍:身披戰袍的將軍,稍微放大露出甲冑與面容
   '地獄將軍':['135% auto','center 25%'],
   // ★ v3.13.0 — 魔界花使‧朱玥:神祕花使少女,稍微放大露出花環與臉部
-  '魔界花使‧朱玥':['135% auto','center 25%'],
+  '魔界花使‧朱玥':['135% auto','center 15%'],
   // ★ v3.13.9(2026-06-01)— 小鬼貓與兔:童話風雙妖,稍微放大露出貓與兔的頭部
-  '小鬼貓與兔':['135% auto','center 25%'],
+  '小鬼貓與兔':['135% auto','center 40%'],
   // ★ v3.5.60 — 鳳凰:展翼鳳凰,稍微放大露出頭冠與火焰之翼
   '鳳凰':['135% auto','center 25%'],
   // ★ v3.5.60 — 操偶師:操偶師與傀儡同框,稍微放大露出臉部與絲線
@@ -1732,9 +1732,9 @@ const HERO_IMG_POS = {
   // ★ v3.10.12 — 小丑:稍微放大露出頭部與彩色服裝
   '小丑':['140% auto','center 25%'],
   // ★ v3.10.14 — 美人魚‧角角:人魚少女,稍微放大露出頭部與弓箭
-  '美人魚‧角角':['135% auto','center 25%'],
+  '美人魚‧角角':['135% auto','center 15%'],
   // ★ v3.11.6 — 火爆女:機械系少女,稍微放大露出頭部與機械裝備
-  '火爆女':['135% auto','center 30%'],
+  '火爆女':['135% auto','center 20%'],
 };
 
 // ════════════════════════════════════════════════════════════════
