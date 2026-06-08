@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.66';   // ★ v3.5.66(對應遊戲 v3.13.81)— bump shell 快取:商店豪華典藏版經驗書+防迴圈卡死(對手不動)
+const SW_VERSION = 'v3.5.69';   // ★ v3.5.69(對應遊戲 v3.13.84)— bump shell 快取:極限還原膠囊
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';

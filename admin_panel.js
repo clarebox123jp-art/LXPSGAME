@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.81';   // ★ v3.13.81 — 版本同步(本版集中於 index.html:商店新商品/防迴圈卡死,GM 面板功能無異動)｜前版 v3.13.80
+window.ADMIN_PANEL_VERSION = 'v3.13.84';   // ★ v3.13.84 — 版本同步(本版功能在 index.html:極限還原膠囊,GM 面板無異動)｜前版 v3.13.83
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -495,6 +495,14 @@ async function _showAdminStatsPanelImpl(){
           <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
             <input type="checkbox" id="_cr-item-srrand" style="width:17px;height:17px;cursor:pointer;">⭐ 隨機 SR 召喚卷 ×
             <input type="number" id="_cr-qty-srrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-trerand" style="width:17px;height:17px;cursor:pointer;">💎 隨機至寶召喚卷 ×
+            <input type="number" id="_cr-qty-trerand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-trepick" style="width:17px;height:17px;cursor:pointer;">💠 自選至寶召喚卷 ×
+            <input type="number" id="_cr-qty-trepick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
             <input type="checkbox" id="_cr-item-crystal" style="width:17px;height:17px;cursor:pointer;">🔮 召喚水晶 ×
@@ -1972,7 +1980,7 @@ async function _showAdminStatsPanelImpl(){
       // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 + 戰鬥記錄審核
       { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
       // ★ v3.13.72 — 課堂獎勵發放 + 鬥技場排名發獎開關
-      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '勾選獎勵(克雷爾/自選券/隨機券/水晶/幣/果實)+貼名單→比對發放,寫送禮記錄' },
+      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '勾選獎勵(克雷爾/自選券/隨機券/至寶券/水晶/幣/果實)+貼名單→比對發放,寫送禮記錄' },
       { sec: '_admin-arena-rankreward-section', label: '🏆 鬥技場排名發獎開關',   hint: '一鍵開啟/關閉每週排名獎勵自動發放' },
       // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查
       { sec: '_admin-github-check-section',     label: '🌐 GitHub 版本檢查',      hint: '啟動時自動比對 4 個檔案;手動重跑入口' },
@@ -3987,6 +3995,8 @@ async function _showAdminStatsPanelImpl(){
       if(_chk('_cr-item-srpick')){  const q=_qty('_cr-qty-srpick',1);  backpack['summon_ticket_sr_pick'] =(backpack['summon_ticket_sr_pick']||0)+q;  items.push('✨SR自選券×'+q); }
       if(_chk('_cr-item-ssrrand')){ const q=_qty('_cr-qty-ssrrand',1); backpack['summon_ticket_ssr']=(backpack['summon_ticket_ssr']||0)+q; items.push('🌈隨機SSR券×'+q); }
       if(_chk('_cr-item-srrand')){  const q=_qty('_cr-qty-srrand',1);  backpack['summon_ticket_sr'] =(backpack['summon_ticket_sr']||0)+q;  items.push('⭐隨機SR券×'+q); }
+      if(_chk('_cr-item-trerand')){ const q=_qty('_cr-qty-trerand',1); backpack['summon_ticket_treasure']=(backpack['summon_ticket_treasure']||0)+q; items.push('💎隨機至寶券×'+q); }
+      if(_chk('_cr-item-trepick')){ const q=_qty('_cr-qty-trepick',1); backpack['summon_ticket_treasure_pick']=(backpack['summon_ticket_treasure_pick']||0)+q; items.push('💠自選至寶券×'+q); }
       if(_chk('_cr-item-crystal')){ const q=_qty('_cr-qty-crystal',10); backpack['summon_crystal']=(backpack['summon_crystal']||0)+q; items.push('🔮召喚水晶×'+q); }
       if(_chk('_cr-item-fruit')){   const q=_qty('_cr-qty-fruit',1);   backpack['burst_upgrade_fruit']=(backpack['burst_upgrade_fruit']||0)+q; items.push('🍑超越極限果實×'+q); }
       if(_chk('_cr-item-coins')){   const q=_qty('_cr-qty-coins',100000); reward.coins=q; reward.coinsMode='add'; items.push('💰知識幣×'+q); }
