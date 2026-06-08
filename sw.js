@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.71';   // ★ v3.5.71(對應遊戲 v3.13.86)— bump shell 快取:單人卡死自救強化
+const SW_VERSION = 'v3.5.72';   // ★ v3.5.72(對應遊戲 v3.13.87)— bump shell 快取:新英雄我的豚豚 + 貓空小怪開場卡死修復 + UR 特效升級 + 稀有度標籤
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
