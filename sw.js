@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.70';   // ★ v3.5.70(對應遊戲 v3.13.85)— bump shell 快取:翻倍不可疊加/跨戰鬥
+const SW_VERSION = 'v3.5.71';   // ★ v3.5.71(對應遊戲 v3.13.86)— bump shell 快取:單人卡死自救強化
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
