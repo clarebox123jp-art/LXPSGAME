@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.84';   // ★ v3.13.84 — 版本同步(本版功能在 index.html:極限還原膠囊,GM 面板無異動)｜前版 v3.13.83
+window.ADMIN_PANEL_VERSION = 'v3.13.85';   // ★ v3.13.85 — 版本同步(本版功能在 index.html:翻倍不可疊加/跨戰鬥,GM 面板無異動)｜前版 v3.13.84
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
