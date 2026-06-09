@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.87';   // ★ v3.13.87 — 版本同步(本版功能在 index.html/hero_db.js:新英雄我的豚豚+卡死修復+UR特效+稀有度標籤,GM 面板無異動)｜前版 v3.13.86
+window.ADMIN_PANEL_VERSION = 'v3.13.89';   // ★ v3.13.89(2026-06-09)— GM 異常解鎖偵測新增「🐉 短時間密集多解鎖(龍王戰洩漏鐵證)」規則:90 秒內 ≥2 隻 BOSS 來源解鎖即列入(不受門檻限制)、自動預勾+標紅+紅框,沿用既有清除/補償/通知回收流程｜前版 v3.13.87 版本同步
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1507,7 +1507,8 @@ async function _showAdminStatsPanelImpl(){
         <div style="font-size:13px;color:#e8c8d8;margin-bottom:12px;line-height:1.65;">
           掃描短時間內大量解鎖英雄/至寶的玩家。可單獨對選定的玩家:<br>
           ① 勾選異常英雄/至寶 → 清除 ② 自動發送通知 + 補償 ③ 嚴重時停權帳號<br>
-          <span style="color:#ffaa66;">⚠ 紅框「同場戰鬥多解鎖」= 1 場 BOSS 戰超過 1 隻新英雄,鐵證異常(階段 4 升級為主規則)</span>
+          <span style="color:#ffaa66;">⚠ 紅框「同場戰鬥多解鎖」= 1 場 BOSS 戰超過 1 隻新英雄,鐵證異常(階段 4 升級為主規則)</span><br>
+          <span style="color:#ff9966;">🐉 紅框「短時間密集多解鎖(龍王戰洩漏鐵證)」= 90 秒內解鎖 ≥2 隻 BOSS 來源英雄(合法路徑每場戰鬥需數分鐘,不可能);打完龍王誤解鎖即屬此類,不受門檻限制即列入。<b>找這類請把時間窗設「最近 7 天」</b></span>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
           <label style="font-size:13px;color:#e8c8d8;">時間窗:
@@ -7510,6 +7511,13 @@ async function _showAdminStatsPanelImpl(){
               `battleId=${_esc(String(b.battleId).slice(-12))} 同場 ${b.count} 個`).join(' / ')}
           </div>` : '';
 
+      // ★ v3.13.89 — 短時間密集多解鎖(龍王戰洩漏鐵證):90 秒內 ≥2 隻 BOSS 來源解鎖
+      const tightNote = (player.tightClusters && player.tightClusters.length > 0)
+        ? `<div style="margin-top:6px;padding:8px 10px;background:rgba(200,70,40,0.28);border-left:3px solid #ff7733;border-radius:4px;font-size:11px;color:#ffd9c5;">
+            🐉 短時間密集多解鎖(龍王戰洩漏鐵證):${player.tightClusters.map(c =>
+              `${_fmtTime(c.startAt)} 起 ${Math.max(0, Math.round((c.spanMs || 0) / 1000))} 秒內解鎖 ${c.count} 隻（${_esc((c.heroes || []).join('、'))}）`).join(' / ')}
+          </div>` : '';
+
       return `<div class="_abn-player-card" data-uid="${_esc(player.uid)}" style="background:rgba(40,15,40,0.6);border:1.5px solid rgba(255,140,180,0.4);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
           <span style="font-size:13px;font-weight:800;color:#fff;">${_esc(_adminLabel(player.email, player.displayName))}</span>
@@ -7520,7 +7528,7 @@ async function _showAdminStatsPanelImpl(){
           </span>
         </div>
         ${multiBattleNote}
-        ${player.heroes && player.heroes.length ? `<div style="margin-top:6px;font-size:11px;color:#ccaadd;font-weight:700;">▼ 異常英雄(預設勾選同場多解鎖):</div>${heroRows}` : ''}
+        ${tightNote}
         ${player.treasures && player.treasures.length ? `<div style="margin-top:6px;font-size:11px;color:#ccaadd;font-weight:700;">▼ 異常至寶(預設勾選同場多解鎖):</div>${treasureRows}` : ''}
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
           <button class="_abn-clear-btn" data-uid="${_esc(player.uid)}" style="padding:5px 12px;font-size:12px;font-weight:700;background:rgba(120,40,40,0.5);border:1.5px solid #ff8888;color:#ffcccc;border-radius:6px;cursor:pointer;font-family:inherit;">🗑 清除勾選</button>
@@ -7539,10 +7547,13 @@ async function _showAdminStatsPanelImpl(){
           uid: p.uid, email: p.email, displayName: p.displayName,
           heroes: p.heroes || [], treasures: [],
           multiBattleEntries: (p.multiPerBattle || []).map(b => ({ battleId: b.battleId, count: b.count })),
+          tightClusters: (p.tightClusters || []),   // ★ v3.13.89 龍王戰洩漏鐵證(短時間密集多解鎖)
         };
         // 同場多解鎖的英雄名 → Set
         const _multiSet = new Set();
         (p.multiPerBattle || []).forEach(b => (b.heroes || []).forEach(n => _multiSet.add(n)));
+        // ★ v3.13.89 — 短時間密集多解鎖(龍王戰洩漏)的英雄也預設勾選+標紅
+        (p.tightClusterHeroes || []).forEach(n => _multiSet.add(n));
         _map[p.uid].multiBattleHeroSet = _multiSet;
       });
       (treasureResult.abnormal || []).forEach(p => {
@@ -7594,7 +7605,8 @@ async function _showAdminStatsPanelImpl(){
         } else {
           _listEl.innerHTML = merged.map(_renderPlayerCard).join('');
           const _multiCount = merged.filter(p => p.multiBattleEntries.length > 0).length;
-          _statusEl.textContent = `掃描完成:${merged.length} 位異常玩家(其中 ${_multiCount} 位有「同場戰鬥多解鎖」鐵證)`;
+          const _tightCount = merged.filter(p => p.tightClusters && p.tightClusters.length > 0).length;
+          _statusEl.textContent = `掃描完成:${merged.length} 位異常玩家（同場戰鬥多解鎖鐵證 ${_multiCount} 位、🐉 短時間密集多解鎖／龍王戰洩漏鐵證 ${_tightCount} 位）`;
         }
         _attachCardEvents();
       }catch(e){
