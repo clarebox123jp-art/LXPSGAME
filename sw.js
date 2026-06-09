@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.81';   // ★ v3.5.81(對應遊戲 v3.13.96)— bump shell 快取:「近期活動與新角色」改主題縮圖選單+新增 SSR 取得方法主題
+const SW_VERSION = 'v3.5.82';   // ★ v3.5.82(對應遊戲 v3.13.97)— Session 監聽改 onSnapshot(取代 5 秒輪詢)；bump shell 快取讓 iPad 取得新 index.html
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
