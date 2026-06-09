@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.89';   // ★ v3.13.89(2026-06-09)— GM 異常解鎖偵測新增「🐉 短時間密集多解鎖(龍王戰洩漏鐵證)」規則:90 秒內 ≥2 隻 BOSS 來源解鎖即列入(不受門檻限制)、自動預勾+標紅+紅框,沿用既有清除/補償/通知回收流程｜前版 v3.13.87 版本同步
+window.ADMIN_PANEL_VERSION = 'v3.13.92';   // ★ v3.13.92(2026-06-09)— GM 工具:玩家活動查詢加「🔮 水晶」帳目分頁(召喚水晶得失明細)+ 玩家卡加「🎖 補償鬥技之證」鈕(_fbAdminGrantArenaZheng 寫雲端本週排名,玩家下次登入同步)｜前版 v3.13.89 龍王戰洩漏鐵證規則
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1604,6 +1604,7 @@ async function _showAdminStatsPanelImpl(){
           <button class="_aa-tab" data-tab="treasure" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">💎 至寶</button>
           <button class="_aa-tab" data-tab="battle" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">⚔ 戰鬥</button>
           <button class="_aa-tab" data-tab="coin" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">💰 知識幣</button>
+          <button class="_aa-tab" data-tab="crystal" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">🔮 水晶</button>
           <button class="_aa-tab" data-tab="fruit" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">🍑 果實</button>
           <button class="_aa-tab" data-tab="full" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#ffd966;border:none;border-bottom:3px solid transparent;cursor:pointer;">📋 完整資料</button>
         </div>
@@ -8071,7 +8072,47 @@ async function _showAdminStatsPanelImpl(){
           </div>
         </div>
         ${anomalyHtml}
+        <div style="margin-top:10px;padding:10px 14px;background:rgba(60,40,20,0.4);border-left:4px solid #ffcc66;border-radius:6px;">
+          <div style="font-size:13px;font-weight:700;color:#ffdd99;margin-bottom:6px;">🎖 補償鬥技之證(本週排名用)</div>
+          <div style="font-size:11px;color:#ccb;margin-bottom:8px;line-height:1.5;">
+            寫入該玩家<b>本週</b>排行榜的鬥技之證(立即計入排名);玩家<b>下次登入會自動同步</b>到本機顯示。可填負數扣回。
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="_aa-zheng-amt" type="number" placeholder="數量(可負)" style="padding:6px 10px;width:120px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:4px;font-family:inherit;">
+            <input id="_aa-zheng-reason" type="text" placeholder="原因(例:更新後遺失補償)" style="padding:6px 10px;flex:1;min-width:160px;background:rgba(0,0,0,0.5);color:#fff;border:1px solid #886;border-radius:4px;font-family:inherit;">
+            <button id="_aa-zheng-grant" style="padding:7px 16px;font-size:13px;font-weight:700;background:#cc9933;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">🎖 補償</button>
+          </div>
+          <div id="_aa-zheng-result" style="margin-top:6px;font-size:12px;color:#dfe;min-height:16px;"></div>
+        </div>
       `;
+      // ★ v3.13.92 — 綁定「補償鬥技之證」按鈕(用目前查到的玩家 _curUid)
+      (function(){
+        const _zBtn = _playerCard.querySelector('#_aa-zheng-grant');
+        const _zRes = _playerCard.querySelector('#_aa-zheng-result');
+        if(!_zBtn) return;
+        _zBtn.onclick = async function(){
+          const _amt = parseInt((_playerCard.querySelector('#_aa-zheng-amt') || {}).value, 10);
+          const _reason = ((_playerCard.querySelector('#_aa-zheng-reason') || {}).value || '').trim();
+          if(!_curUid){ if(_zRes){ _zRes.style.color = '#ffcc66'; _zRes.textContent = '請先查詢玩家'; } return; }
+          if(!_amt || isNaN(_amt)){ if(_zRes){ _zRes.style.color = '#ffcc66'; _zRes.textContent = '請輸入數量(可負,不可為 0)'; } return; }
+          if(!_reason){ if(_zRes){ _zRes.style.color = '#ffcc66'; _zRes.textContent = '請填原因'; } return; }
+          if(typeof window._fbAdminGrantArenaZheng !== 'function'){ if(_zRes){ _zRes.style.color = '#ff8866'; _zRes.textContent = '❌ _fbAdminGrantArenaZheng 未載入,請重新整理'; } return; }
+          const _ok = (typeof window._customConfirm === 'function')
+            ? await window._customConfirm('確定補償「' + _esc(_adminLabel(p.email, p.name)) + '」本週鬥技之證 ' + _amt + ' 個?', '🎖 確認補償')
+            : confirm('確定補償本週鬥技之證 ' + _amt + ' 個?');
+          if(!_ok) return;
+          _zBtn.disabled = true; if(_zRes){ _zRes.style.color = '#ccc'; _zRes.textContent = '寫入中...'; }
+          try{
+            const r = await window._fbAdminGrantArenaZheng(_curUid, _amt, _reason);
+            if(r && r.ok){
+              if(_zRes){ _zRes.style.color = '#88ddaa'; _zRes.innerHTML = '✅ 已補償(週 ' + _esc(r.weekKey) + '):' + r.prevZheng + ' → <b>' + r.newZheng + '</b> 鬥技之證。玩家下次登入會同步顯示。'; }
+            } else {
+              if(_zRes){ _zRes.style.color = '#ff8866'; _zRes.textContent = '❌ ' + _esc((r && r.reason) || '失敗'); }
+            }
+          }catch(e){ if(_zRes){ _zRes.style.color = '#ff8866'; _zRes.textContent = '❌ ' + _esc(e.message || e); } }
+          _zBtn.disabled = false;
+        };
+      })();
       // ★ v3.13.68 — 綁定導航條按鈕(返回清單純記憶體;上下位走 _doQuery)
       if(_curAnomalyIdx >= 0){
         const _navBack = document.getElementById('_aa-nav-back');
@@ -8108,6 +8149,7 @@ async function _showAdminStatsPanelImpl(){
       else if(tab === 'treasure') _renderTreasureTab(_curData.treasureUnlockHistory || []);
       else if(tab === 'battle') _renderBattleTab(_curData.battleHistory || []);
       else if(tab === 'coin') _renderCoinTab(_curData.coinTransactions || []);
+      else if(tab === 'crystal') _renderCrystalTab(_curData.crystalTransactions || []);
       else if(tab === 'fruit') _renderFruitTab(_curData.fruitHistory || []);
       else if(tab === 'full') _renderFullTab((_curData && _curData.full) || {});
     }
@@ -8992,6 +9034,42 @@ async function _showAdminStatsPanelImpl(){
       });
       _bindCoinSetBtn();
       _wirePeak();
+    }
+
+    // ★ v3.13.92(2026-06-09)— 🔮 水晶分頁:召喚水晶得失明細(時間/變動/原因/餘額),唯讀。
+    //   資料來自 _fbAdminQueryPlayerActivity 已回傳的 crystalTransactions(帳本 v3.13.58 起記)。
+    function _renderCrystalTab(list){
+      list = Array.isArray(list) ? list : [];
+      if(!list.length){
+        _contentEl.innerHTML = `
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">
+            尚無召喚水晶帳目紀錄<br>
+            <span style="font-size:11px;color:#665;">(水晶帳本已於 v3.13.58 啟用;玩家有水晶變動、且該帳號重新上線同步後就會出現)</span>
+          </div>`;
+        return;
+      }
+      const rows = list.map(e => {
+        const inout = (e.amount || 0) >= 0 ? `<span style="color:#88ddff">+${e.amount}</span>` : `<span style="color:#ff8866">${e.amount}</span>`;
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+          <td style="padding:6px 8px;font-size:11px;color:#aac;">${_fmtTime(e.at)}</td>
+          <td style="padding:6px 8px;font-size:12px;text-align:right;font-weight:700;">${inout}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#cce;">${_esc(e.reason || '—')}</td>
+          <td style="padding:6px 8px;font-size:11px;color:#88ccff;text-align:right;">${e.balance != null ? e.balance : '—'}</td>
+        </tr>`;
+      }).join('');
+      _contentEl.innerHTML = `
+        <div style="background:rgba(30,30,60,0.45);border-left:4px solid #8888ff;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px;color:#ccd;">
+          🔮 召喚水晶得失明細(共 ${list.length} 筆)。帳本只記變動「之後」的餘額;若有「未分類變動」表示某次直接改背包水晶被餘額對帳補抓到(不會隱形消失)。
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:rgba(140,150,255,0.15);">
+            <th style="padding:6px 8px;text-align:left;color:#cce;">時間</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;">變動</th>
+            <th style="padding:6px 8px;text-align:left;color:#cce;">原因</th>
+            <th style="padding:6px 8px;text-align:right;color:#cce;">餘額</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
     }
 
     // ★ v3.13.49(2026-06-05)— 🍑 果實分頁:目前持有 + 取得來源歷史 + 異常標紅

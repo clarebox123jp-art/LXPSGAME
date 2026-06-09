@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.76';   // ★ v3.5.76(對應遊戲 v3.13.91)— bump shell 快取:修載入後自檢誤攔風險(量記憶體改同口徑 + 取消硬擋改僅重套不鎖門)
+const SW_VERSION = 'v3.5.77';   // ★ v3.5.77(對應遊戲 v3.13.92)— bump shell 快取:知識幣延遲獲得修正 + 鬥技之證 GM 補償/登入回補 + GM 水晶帳目分頁
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
