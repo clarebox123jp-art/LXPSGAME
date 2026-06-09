@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.92';   // ★ v3.13.92(2026-06-09)— GM 工具:玩家活動查詢加「🔮 水晶」帳目分頁(召喚水晶得失明細)+ 玩家卡加「🎖 補償鬥技之證」鈕(_fbAdminGrantArenaZheng 寫雲端本週排名,玩家下次登入同步)｜前版 v3.13.89 龍王戰洩漏鐵證規則
+window.ADMIN_PANEL_VERSION = 'v3.13.95';   // ★ v3.13.95(2026-06-09)— GM 玩家活動查詢「📒 活動」分頁加「🔮 靈魂碎片 / 🎫 用券召喚」兩類型顯示+篩選(配合靈魂碎片系統)｜前版 v3.13.94 補償大擴充+活動分頁
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -889,6 +889,46 @@ async function _showAdminStatsPanelImpl(){
             </div>
           </div>
 
+          <!-- ★ v3.13.94 — 召喚券補償(+N,上限 99) -->
+          <div style="margin-bottom:14px;border-top:1px dashed rgba(255,180,100,0.3);padding-top:12px;">
+            <div style="font-size:14px;font-weight:700;color:#ffcc88;margin-bottom:8px;">🎟️ 補發召喚券 (+N, 上限 99)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <label style="font-size:13px;color:#ccc;">🌈 SSR 英雄召喚卷<input id="_cmp_t_ssr" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">⭐ SR 英雄召喚卷<input id="_cmp_t_sr" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">🌟 SSR 自選召喚卷<input id="_cmp_t_ssr_pick" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">✨ SR 自選召喚卷<input id="_cmp_t_sr_pick" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">💎 隨機至寶召喚卷<input id="_cmp_t_tre" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">💠 自選至寶召喚卷<input id="_cmp_t_tre_pick" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+            </div>
+          </div>
+
+          <!-- ★ v3.13.94 — 其他資源補償(+N) -->
+          <div style="margin-bottom:14px;border-top:1px dashed rgba(255,180,100,0.3);padding-top:12px;">
+            <div style="font-size:14px;font-weight:700;color:#ffcc88;margin-bottom:8px;">🔮 召喚水晶・進階經驗・重置・膠囊 (+N, 上限 99)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <label style="font-size:13px;color:#ccc;">🔮 召喚水晶<input id="_cmp_crystal" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">📗 精裝英雄經驗之書<input id="_cmp_exp_deluxe" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">📚 豪華典藏版經驗之書<input id="_cmp_exp_premium" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">📜 至寶經驗卷軸<input id="_cmp_tre_scroll" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">💧 至寶重置靈水<input id="_cmp_tre_reset" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">♻️ 極限還原膠囊<input id="_cmp_cap_reset" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">❤️ 極限生命膠囊<input id="_cmp_cap_hp" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">⚔️ 極限攻擊膠囊<input id="_cmp_cap_atk" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">✨ 極限技能膠囊<input id="_cmp_cap_sp" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">💨 極限速度膠囊<input id="_cmp_cap_spd" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">🐉 世界 BOSS 入場券<input id="_cmp_wb_ticket" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">💕 友情之心 (+N, 上限 99)<input id="_cmp_heart" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+            </div>
+          </div>
+
+          <!-- ★ v3.13.94 — 台灣至寶補償(勾選要補發的至寶,已擁有的不受影響) -->
+          <div style="margin-bottom:14px;border-top:1px dashed rgba(255,180,100,0.3);padding-top:12px;">
+            <div style="font-size:14px;font-weight:700;color:#ffcc88;margin-bottom:8px;">💠 補發台灣至寶 (勾選;已擁有者自動跳過)</div>
+            <div id="_admin-comp-treasure-list" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:#ccc;">
+              <span style="color:#666;font-style:italic;">載入中…</span>
+            </div>
+          </div>
+
           <!-- 補償原因(稽核用) -->
           <div style="margin-bottom:12px;border-top:1px dashed rgba(255,180,100,0.3);padding-top:12px;">
             <label style="font-size:13px;color:#ccc;">📝 補償原因(稽核紀錄,必填)
@@ -1606,6 +1646,7 @@ async function _showAdminStatsPanelImpl(){
           <button class="_aa-tab" data-tab="coin" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">💰 知識幣</button>
           <button class="_aa-tab" data-tab="crystal" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">🔮 水晶</button>
           <button class="_aa-tab" data-tab="fruit" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">🍑 果實</button>
+          <button class="_aa-tab" data-tab="activity" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#aaccff;border:none;border-bottom:3px solid transparent;cursor:pointer;margin-right:2px;">📒 活動</button>
           <button class="_aa-tab" data-tab="full" style="padding:8px 14px;font-size:13px;font-weight:700;background:transparent;color:#ffd966;border:none;border-bottom:3px solid transparent;cursor:pointer;">📋 完整資料</button>
         </div>
         <div id="_admin-activity-content" style="background:rgba(0,0,0,0.35);border-radius:8px;padding:8px;max-height:560px;overflow-y:auto;">
@@ -5039,6 +5080,24 @@ async function _showAdminStatsPanelImpl(){
     };
     _populateHeroSelect();
 
+    // ★ v3.13.94 — 填台灣至寶勾選清單(從 window.TAIWAN_TREASURES 動態產生,避免硬編 id)
+    const _populateTreasureChecks = function(){
+      const box = document.getElementById('_admin-comp-treasure-list');
+      if(!box) return;
+      const _DB = (typeof window.TAIWAN_TREASURES === 'object' && window.TAIWAN_TREASURES) ? window.TAIWAN_TREASURES : {};
+      const _ids = Object.keys(_DB);
+      if(!_ids.length){ box.innerHTML = '<span style="color:#888;font-style:italic;">（TAIWAN_TREASURES 未載入,稍後重開此面板）</span>'; return; }
+      box.innerHTML = _ids.map(function(id){
+        const t = _DB[id] || {};
+        const _nm = t.name || id;
+        const _ic = t.icon || '💎';
+        return '<label style="display:flex;align-items:center;gap:5px;font-size:13px;color:#ddd;cursor:pointer;padding:2px 0;">'
+          + '<input type="checkbox" class="_cmp-treasure-chk" value="' + id + '" style="cursor:pointer;flex:0 0 auto;">'
+          + '<span>' + _ic + ' ' + _nm + '</span></label>';
+      }).join('');
+    };
+    _populateTreasureChecks();
+
     // 補償清單(暫存,執行時才寫雲端)
     // 結構:{ [heroName]: level }
     let _compHeroes = {};
@@ -5694,10 +5753,36 @@ async function _showAdminStatsPanelImpl(){
       const statBook   = _readNum('_admin-comp-stat-book', 99);
       const burstFruit = _readNum('_admin-comp-burst-fruit', 99);
       const burstReset = _readNum('_admin-comp-burst-reset', 99);
+      // ★ v3.13.94 — 召喚券 / 水晶 / 進階經驗 / 重置 / 膠囊 / 世界BOSS券 / 友情之心
+      const _tkSsr     = _readNum('_cmp_t_ssr', 99);
+      const _tkSr      = _readNum('_cmp_t_sr', 99);
+      const _tkSsrPick = _readNum('_cmp_t_ssr_pick', 99);
+      const _tkSrPick  = _readNum('_cmp_t_sr_pick', 99);
+      const _tkTre     = _readNum('_cmp_t_tre', 99);
+      const _tkTrePick = _readNum('_cmp_t_tre_pick', 99);
+      const _crystal   = _readNum('_cmp_crystal', 99);
+      const _expDeluxe = _readNum('_cmp_exp_deluxe', 99);
+      const _expPrem   = _readNum('_cmp_exp_premium', 99);
+      const _treScroll = _readNum('_cmp_tre_scroll', 99);
+      const _treReset  = _readNum('_cmp_tre_reset', 99);
+      const _capReset  = _readNum('_cmp_cap_reset', 99);
+      const _capHp     = _readNum('_cmp_cap_hp', 99);
+      const _capAtk    = _readNum('_cmp_cap_atk', 99);
+      const _capSp     = _readNum('_cmp_cap_sp', 99);
+      const _capSpd    = _readNum('_cmp_cap_spd', 99);
+      const _wbTicket  = _readNum('_cmp_wb_ticket', 99);
+      const _heart     = _readNum('_cmp_heart', 99);
+      // 台灣至寶勾選
+      const _treasures = [];
+      try{
+        document.querySelectorAll('._cmp-treasure-chk:checked').forEach(function(c){ if(c && c.value) _treasures.push(c.value); });
+      }catch(_){}
+      const _extraBpSum = _tkSsr+_tkSr+_tkSsrPick+_tkSrPick+_tkTre+_tkTrePick+_crystal+_expDeluxe+_expPrem+_treScroll+_treReset+_capReset+_capHp+_capAtk+_capSp+_capSpd+_wbTicket;
 
       const heroNames = Object.keys(_compHeroes);
       if(heroNames.length === 0 && coins === 0 && expBook === 0 && skillBook === 0
-         && statBook === 0 && burstFruit === 0 && burstReset === 0){
+         && statBook === 0 && burstFruit === 0 && burstReset === 0
+         && _extraBpSum === 0 && _heart === 0 && _treasures.length === 0){
         res.style.color = '#ff6666';
         res.textContent = '❌ 沒有指定任何補償內容';
         return;
@@ -5714,6 +5799,47 @@ async function _showAdminStatsPanelImpl(){
       if(statBook   > 0) _bp.stat_reset_book     = statBook;
       if(burstFruit > 0) _bp.burst_upgrade_fruit = burstFruit;
       if(burstReset > 0) _bp.burst_reset_potion  = burstReset;
+      // ★ v3.13.94 — 召喚券 / 水晶 / 進階經驗 / 重置 / 膠囊 / 世界BOSS券
+      if(_tkSsr     > 0) _bp.summon_ticket_ssr          = _tkSsr;
+      if(_tkSr      > 0) _bp.summon_ticket_sr           = _tkSr;
+      if(_tkSsrPick > 0) _bp.summon_ticket_ssr_pick     = _tkSsrPick;
+      if(_tkSrPick  > 0) _bp.summon_ticket_sr_pick      = _tkSrPick;
+      if(_tkTre     > 0) _bp.summon_ticket_treasure     = _tkTre;
+      if(_tkTrePick > 0) _bp.summon_ticket_treasure_pick= _tkTrePick;
+      if(_crystal   > 0) _bp.summon_crystal             = _crystal;
+      if(_expDeluxe > 0) _bp.hero_exp_book_deluxe       = _expDeluxe;
+      if(_expPrem   > 0) _bp.hero_exp_book_premium      = _expPrem;
+      if(_treScroll > 0) _bp.treasure_exp_scroll        = _treScroll;
+      if(_treReset  > 0) _bp.treasure_reset_potion      = _treReset;
+      if(_capReset  > 0) _bp.capsule_reset_potion       = _capReset;
+      if(_capHp     > 0) _bp.capsule_hp                 = _capHp;
+      if(_capAtk    > 0) _bp.capsule_atk                = _capAtk;
+      if(_capSp     > 0) _bp.capsule_sp                 = _capSp;
+      if(_capSpd    > 0) _bp.capsule_spd                = _capSpd;
+      if(_wbTicket  > 0) _bp.wb_entry_ticket            = _wbTicket;
+
+      // ★ v3.13.94 — 新增補償項的人類可讀摘要片段
+      const _twNameOf = function(tid){ try{ if(typeof window.TAIWAN_TREASURES==='object' && window.TAIWAN_TREASURES[tid]) return window.TAIWAN_TREASURES[tid].name||tid; }catch(_){} return tid; };
+      const _extraParts = [];
+      if(_tkSsr)     _extraParts.push('SSR召喚卷 +'+_tkSsr);
+      if(_tkSr)      _extraParts.push('SR召喚卷 +'+_tkSr);
+      if(_tkSsrPick) _extraParts.push('SSR自選卷 +'+_tkSsrPick);
+      if(_tkSrPick)  _extraParts.push('SR自選卷 +'+_tkSrPick);
+      if(_tkTre)     _extraParts.push('隨機至寶卷 +'+_tkTre);
+      if(_tkTrePick) _extraParts.push('自選至寶卷 +'+_tkTrePick);
+      if(_crystal)   _extraParts.push('召喚水晶 +'+_crystal);
+      if(_expDeluxe) _extraParts.push('精裝經驗書 +'+_expDeluxe);
+      if(_expPrem)   _extraParts.push('豪華經驗書 +'+_expPrem);
+      if(_treScroll) _extraParts.push('至寶經驗卷軸 +'+_treScroll);
+      if(_treReset)  _extraParts.push('至寶重置靈水 +'+_treReset);
+      if(_capReset)  _extraParts.push('極限還原膠囊 +'+_capReset);
+      if(_capHp)     _extraParts.push('極限生命膠囊 +'+_capHp);
+      if(_capAtk)    _extraParts.push('極限攻擊膠囊 +'+_capAtk);
+      if(_capSp)     _extraParts.push('極限技能膠囊 +'+_capSp);
+      if(_capSpd)    _extraParts.push('極限速度膠囊 +'+_capSpd);
+      if(_wbTicket)  _extraParts.push('世界BOSS入場券 +'+_wbTicket);
+      if(_heart)     _extraParts.push('友情之心 +'+_heart);
+      if(_treasures.length) _extraParts.push('台灣至寶:'+_treasures.map(_twNameOf).join('、'));
 
       // 組摘要
       const _summary = '英雄 ' + heroNames.length + ' 位'
@@ -5722,7 +5848,8 @@ async function _showAdminStatsPanelImpl(){
         + (skillBook  ? ', 技能書 +' + skillBook  : '')
         + (statBook   ? ', 素質書 +' + statBook   : '')
         + (burstFruit ? ', 爆發果 +' + burstFruit : '')
-        + (burstReset ? ', 爆發秘藥 +' + burstReset : '');
+        + (burstReset ? ', 爆發秘藥 +' + burstReset : '')
+        + (_extraParts.length ? ', ' + _extraParts.join(', ') : '');
 
       // 確認
       const _confirmTxt = '即將對 ' + (_compTarget.email || _compTarget.uid) + ' 進行補償:\n\n'
@@ -5734,6 +5861,7 @@ async function _showAdminStatsPanelImpl(){
         + (statBook   ? '  ・素質重置書 +' + statBook + '\n' : '')
         + (burstFruit ? '  ・極限爆發果實 +' + burstFruit + '\n' : '')
         + (burstReset ? '  ・爆發重置秘藥 +' + burstReset + '\n' : '')
+        + (_extraParts.length ? _extraParts.map(p => '  ・' + p).join('\n') + '\n' : '')
         + '\n原因:' + reason + '\n\n'
         + '⚠ 此操作會記錄在該帳號補償歷史中,確定執行嗎?';
 
@@ -5749,6 +5877,8 @@ async function _showAdminStatsPanelImpl(){
           coins: coins,
           coinsMode: 'add',
           backpack: _bp,
+          friendshipHeart: _heart,
+          treasures: _treasures,
           reason: reason,
           summary: _summary,
           by: _adminEmail
@@ -5873,6 +6003,14 @@ async function _showAdminStatsPanelImpl(){
         document.getElementById('_admin-comp-stat-book').value  = '0';
         document.getElementById('_admin-comp-burst-fruit').value = '0';
         document.getElementById('_admin-comp-burst-reset').value = '0';
+        // ★ v3.13.94 — 清空新增補償欄位
+        try{
+          ['_cmp_t_ssr','_cmp_t_sr','_cmp_t_ssr_pick','_cmp_t_sr_pick','_cmp_t_tre','_cmp_t_tre_pick',
+           '_cmp_crystal','_cmp_exp_deluxe','_cmp_exp_premium','_cmp_tre_scroll','_cmp_tre_reset',
+           '_cmp_cap_reset','_cmp_cap_hp','_cmp_cap_atk','_cmp_cap_sp','_cmp_cap_spd','_cmp_wb_ticket','_cmp_heart']
+            .forEach(function(_id){ var _el=document.getElementById(_id); if(_el) _el.value='0'; });
+          document.querySelectorAll('._cmp-treasure-chk:checked').forEach(function(c){ c.checked=false; });
+        }catch(_){}
         document.getElementById('_admin-comp-reason').value = '';
         // 重新查詢一次,讓資訊區顯示新的補償次數
         try { document.getElementById('_admin-comp-find').click(); } catch(_){}
@@ -8151,6 +8289,7 @@ async function _showAdminStatsPanelImpl(){
       else if(tab === 'coin') _renderCoinTab(_curData.coinTransactions || []);
       else if(tab === 'crystal') _renderCrystalTab(_curData.crystalTransactions || []);
       else if(tab === 'fruit') _renderFruitTab(_curData.fruitHistory || []);
+      else if(tab === 'activity') _renderActivityTab(_curData.activityHistory || []);
       else if(tab === 'full') _renderFullTab((_curData && _curData.full) || {});
     }
 
@@ -9073,6 +9212,92 @@ async function _showAdminStatsPanelImpl(){
     }
 
     // ★ v3.13.49(2026-06-05)— 🍑 果實分頁:目前持有 + 取得來源歷史 + 異常標紅
+    // ★ v3.13.94 — 統一活動紀錄分頁(知識王成績/送禮/友情之心/鬥技場/召喚券,供補發查證)
+    let _activityTypeFilter = 'all';
+    function _renderActivityTab(list){
+      list = Array.isArray(list) ? list : [];
+      const _META = {
+        king_score: { icon:'🧠', label:'知識王', color:'#88ccff' },
+        gift_sent:  { icon:'🎁', label:'送禮',   color:'#ff99cc' },
+        heart_gain: { icon:'💕', label:'友情之心', color:'#ff88aa' },
+        arena:      { icon:'⚔', label:'鬥技場', color:'#ffcc66' },
+        ticket:     { icon:'🎟', label:'召喚券', color:'#aaffcc' },
+        shard:      { icon:'🔮', label:'靈魂碎片', color:'#cc99ff' },
+        ticket_use: { icon:'🎫', label:'用券召喚', color:'#99ddbb' }
+      };
+      const _detailOf = function(e){
+        try{
+          if(e.type === 'king_score'){
+            const _q = e.ssr ? 'SSR+SR 達標' : (e.sr ? 'SR 達標' : '未達標');
+            return (e.date ? _esc(e.date)+'｜' : '') + '分數 <b style="color:#ffe066;">' + (parseInt(e.score,10)||0) + '</b>｜' + _q;
+          }
+          if(e.type === 'gift_sent'){
+            return '送給 ' + _esc(e.toName || e.toUid || '?') + '｜禮物 ' + _esc(e.gift || '?') + (e.heart ? '｜+心 '+(parseInt(e.heart,10)||0) : '');
+          }
+          if(e.type === 'heart_gain'){
+            return '+' + (parseInt(e.amount,10)||0) + '｜目前 ' + (parseInt(e.heartAfter,10)||0) + (e.grantedSsr ? '｜<span style="color:#ffd07b;">🌈 觸發 SSR 卷</span>' : '');
+          }
+          if(e.type === 'arena'){
+            const _r = e.result === 'win' ? '<span style="color:#88ffcc;">勝</span>' : (e.result === 'draw' ? '<span style="color:#ffe066;">平</span>' : '<span style="color:#ff9999;">敗</span>');
+            return _r + '｜鬥技之證 +' + (parseInt(e.zheng,10)||0);
+          }
+          if(e.type === 'ticket'){
+            return _esc(e.ticket || '?') + (e.qty ? ' ×'+(parseInt(e.qty,10)||1) : '') + '｜來源 ' + _esc(e.source || '?') + (e.tier ? '('+_esc(e.tier)+')' : '');
+          }
+          if(e.type === 'shard'){
+            const _rr = (e.rarity === 'ssr') ? 'SSR 🔮' : (e.rarity === 'sr') ? 'SR 💧' : _esc(e.rarity || '?');
+            return _rr + ' 靈魂碎片 +' + (parseInt(e.amount,10)||1) + '｜來源 ' + _esc(e.source || '?');
+          }
+          if(e.type === 'ticket_use'){
+            return '使用召喚卷 ' + _esc(e.ticket || '?');
+          }
+        }catch(_){}
+        return _esc(JSON.stringify(e));
+      };
+      // 各類型計數
+      const _counts = { all: list.length };
+      list.forEach(function(e){ if(e && e.type){ _counts[e.type] = (_counts[e.type]||0)+1; } });
+      // 篩選按鈕
+      const _filterBtns = ['all','king_score','gift_sent','heart_gain','arena','ticket','shard','ticket_use'].map(function(t){
+        const _m = (t==='all') ? {icon:'📋',label:'全部',color:'#ccddff'} : _META[t];
+        const _on = (_activityTypeFilter === t);
+        return '<button class="_aa-act-filter" data-f="'+t+'" style="padding:5px 11px;font-size:12px;font-weight:700;border-radius:14px;cursor:pointer;'
+          + 'border:1.5px solid '+(_on?_m.color:'rgba(255,255,255,0.18)')+';background:'+(_on?'rgba(140,180,255,0.18)':'transparent')+';color:'+(_on?'#fff':_m.color)+';margin:0 4px 4px 0;">'
+          + _m.icon+' '+_m.label+' '+(_counts[t]||0)+'</button>';
+      }).join('');
+      // 套用篩選 + 排序(新→舊)
+      const _shown = (_activityTypeFilter === 'all') ? list.slice() : list.filter(function(e){ return e && e.type === _activityTypeFilter; });
+      _shown.sort(function(a,b){ return (b.at||0)-(a.at||0); });
+      const _rows = _shown.map(function(e){
+        const _m = _META[e.type] || { icon:'•', label:e.type||'?', color:'#aac' };
+        return '<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">'
+          + '<td style="padding:6px 8px;font-size:11px;color:#aac;white-space:nowrap;">'+_fmtTime(e.at)+'</td>'
+          + '<td style="padding:6px 8px;font-size:12px;white-space:nowrap;color:'+_m.color+';">'+_m.icon+' '+_m.label+'</td>'
+          + '<td style="padding:6px 8px;font-size:12px;color:#eef;">'+_detailOf(e)+'</td>'
+          + '</tr>';
+      }).join('');
+      _contentEl.innerHTML =
+        '<div style="font-size:12px;color:#9bd;margin-bottom:8px;line-height:1.5;">'
+        + '📒 統一活動紀錄(v3.13.94 起記;每筆帶 uid,跨帳號不污染)。可查:知識王每日成績、好友送禮/友情之心、鬥技場逐場勝敗、召喚券獲得來源。'
+        + '</div>'
+        + '<div style="margin-bottom:10px;">'+_filterBtns+'</div>'
+        + '<div style="margin-bottom:6px;font-size:12px;color:#aac;">顯示 '+_shown.length+' 筆 / 共 '+list.length+' 筆</div>'
+        + (_shown.length
+            ? '<div style="max-height:420px;overflow:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'
+              + '<thead><tr style="background:rgba(140,180,255,0.15);position:sticky;top:0;">'
+              + '<th style="padding:6px 8px;text-align:left;color:#bcd;">時間</th>'
+              + '<th style="padding:6px 8px;text-align:left;color:#bcd;">類型</th>'
+              + '<th style="padding:6px 8px;text-align:left;color:#bcd;">內容</th>'
+              + '</tr></thead><tbody>'+_rows+'</tbody></table></div>'
+            : '<div style="text-align:center;color:#778;padding:24px;">(此分類尚無紀錄)</div>');
+      // 篩選按鈕事件
+      try{
+        _contentEl.querySelectorAll('._aa-act-filter').forEach(function(b){
+          b.onclick = function(){ _activityTypeFilter = b.dataset.f || 'all'; _renderActivityTab(list); };
+        });
+      }catch(_){}
+    }
+
     function _renderFruitTab(list){
       list = Array.isArray(list) ? list : [];
       const _cur = parseInt((_curData && _curData.currentFruitCount), 10) || 0;
