@@ -1062,6 +1062,30 @@
       </div>
     </div>
 
+    <!-- ★ v3.14.5 — 下一隻世界 BOSS 搶先看:翠玉草龍王(沿用 wb-boss-preview 版型,綠色主題;靜態預告,不可挑戰)
+         注意:.wb-boss-preview 有 overflow:hidden,徽章必須放卡內;::before 背景圖走 var(--wb-boss-bg),此處覆寫為草龍王立繪 -->
+    <div class="wb-boss-preview" style="border-color:rgba(120,220,140,0.45);background:linear-gradient(160deg,rgba(20,45,25,0.55),rgba(8,20,10,0.65));--wb-boss-bg:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%8D%89%E9%BE%8D%E7%8E%8B.png');">
+      <div class="wb-boss-portrait" style="border-color:rgba(120,220,140,0.5);">
+        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%8D%89%E9%BE%8D%E7%8E%8B.png"
+             onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
+             alt="翠玉草龍王" style="filter:saturate(0.9) brightness(0.95);">
+      </div>
+      <div class="wb-boss-info">
+        <div style="display:inline-block;background:linear-gradient(135deg,#3f9d55,#2a6e3c);color:#eaffe8;font-size:13px;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:999px;border:1.5px solid rgba(180,255,190,0.6);box-shadow:0 0 12px rgba(90,220,120,0.45);margin-bottom:8px;">🌱 下一隻世界 BOSS・搶先看</div>
+        <div class="wb-boss-name" style="color:#9fe8ae;">🌿 翠玉草龍王 <span style="font-size:12px;color:#bfffc8;background:rgba(90,220,120,0.18);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span><span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.15);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">即將登場</span></div>
+        <div style="font-size:13px;color:#aaa;line-height:1.5;">
+          棲息於亞馬遜雨林(全世界植物最茂盛之地)的太古翠玉龍,以藤蔓束縛、劇毒與飛葉絞殺入侵者。第 3/5/7/9 回合啟動元素護盾:草盾 2 層 + 水盾 + 光盾(用「火火風暗」破除);每回合吸取隊伍 2 點能量、完全免疫光屬性傷害。唯一畏懼烈火——燃燒對牠是固定大傷(普通 -300 / 強力 -600)!火屬性英雄就是牠的剋星。打倒火龍王之後,牠就會甦醒……敬請期待!
+        </div>
+        <div class="wb-boss-stats">
+          <span>❤️ 5,000,000 HP</span>
+          <span>⚔️ 攻擊 49</span>
+          <span>🛡️ 特技 50</span>
+          <span>💨 速度 15</span>
+          <span>🌿 草屬性</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 操作按鈕 -->
     <!-- ★ FIX 20260517(m) — 「開新房間」改為先彈可見性選擇,新增「瀏覽公開房」按鈕 -->
     <!-- ★ v3.5.61 — 排行榜從這裡移到「排名獎勵」下方(老師需求:排名獎勵 → 當前排行榜 才是合理閱讀順序) -->
@@ -5107,6 +5131,28 @@
   window._wbUiSendInvite = async function(toUid, toName){
     if(!toUid) return;
     if(!window._wbNet || !window._wbNet.sendInvite) return;
+    // ★ v3.14.6 — 邀請冷卻 10 秒(老師需求):防止連點邀請對受邀方畫面造成轟炸
+    //   ① 同一位好友 10 秒內只能發一次(成功發送才起算)
+    //   ② 發送中防重入(await 期間連點不會疊發)
+    try{
+      window._wbInviteSending = window._wbInviteSending || {};
+      window._wbInviteCooldownByUid = window._wbInviteCooldownByUid || {};
+      if(window._wbInviteSending[toUid]){
+        console.log('[WB-Invite] 發送中,忽略重複點擊');
+        return;
+      }
+      const _cdLast = window._wbInviteCooldownByUid[toUid] || 0;
+      const _cdLeft = Math.ceil((10000 - (Date.now() - _cdLast)) / 1000);
+      if(_cdLeft > 0){
+        _wbGameAlert('⏳ 剛剛才邀請過 <b>' + (toName || '這位好友') + '</b><br><br>' +
+          '<div style="font-size:14px;color:#aaa;line-height:1.6;">' +
+          '為避免對方畫面被洗版,同一位好友每 <b style="color:#ffd066;">10 秒</b>只能邀請一次<br>' +
+          '請等 <b style="color:#88ddff;">' + _cdLeft + ' 秒</b>後再試</div>');
+        return;
+      }
+      window._wbInviteSending[toUid] = true;
+    }catch(_eCd){}
+    try{
     // ★ v3.12.15(2026-05-31) — 發邀請前先查對方今日場次,已滿就提示房主不要邀
     //   避免房主邀請後才發現對方進不來、白等 30 秒讀條
     //   設計:fetch 雲端對方 wbDailyCount,>= 2 → 擋住發送並 alert 提示
@@ -5160,6 +5206,8 @@
     }
     const ret = await window._wbNet.sendInvite(toUid, toName);
     if(ret){
+      // ★ v3.14.6 — 成功發送才起算 10 秒冷卻(失敗不冷卻,讓房主能立刻重試)
+      try{ window._wbInviteCooldownByUid[toUid] = Date.now(); }catch(_){}
       // sendInvite 寫入後,subscribeMyOutgoingInvites 會自動觸發,UI 自動刷新
       // 但 firestore 通常有 100~300ms 延遲,先樂觀更新 + 強制刷新
       _wbIfOutgoingByUid[toUid] = {
@@ -5169,6 +5217,10 @@
       _wbRenderInviteFriendsList();
     }else{
       // sendInvite 已透過 onError 廣播失敗訊息(用 alert 一致對待)
+    }
+    }finally{
+      // ★ v3.14.6 — 無論成功失敗都解除「發送中」防重入旗標
+      try{ delete window._wbInviteSending[toUid]; }catch(_){}
     }
   };
 
