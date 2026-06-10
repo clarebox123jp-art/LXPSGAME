@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.13.95';   // ★ v3.13.95(2026-06-09)— GM 玩家活動查詢「📒 活動」分頁加「🔮 靈魂碎片 / 🎫 用券召喚」兩類型顯示+篩選(配合靈魂碎片系統)｜前版 v3.13.94 補償大擴充+活動分頁
+window.ADMIN_PANEL_VERSION = 'v3.14.3';   // ★ v3.14.3(2026-06-10)— 世界BOSS排行榜管理區新增「🧾 逐回合×逐英雄傷害明細查詢」(讀 wbDamageDetail/{uid})｜前版 v3.13.95 活動分頁靈魂碎片/用券顯示
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1840,6 +1840,19 @@ async function _showAdminStatsPanelImpl(){
         </div>
         <div style="font-size:12px;color:#999;line-height:1.55;">
           💡 想清空所有 BOSS 排行(目前只有維蘇威):console 跑 <code style="color:#aaccff;">_wbHpSync.clearLeaderboard()</code>
+        </div>
+
+        <!-- ★ v3.14.3 — 逐回合 × 逐英雄傷害明細查詢(老師需求:看龍王戰每場每回合是哪隻英雄打多少) -->
+        <div style="margin-top:14px;border-top:1px dashed rgba(180,140,220,0.4);padding-top:12px;">
+          <div style="font-size:15px;font-weight:800;color:#cfa8ff;margin-bottom:6px;">🧾 逐回合 × 逐英雄傷害明細查詢</div>
+          <div style="font-size:12px;color:#bbb;margin-bottom:8px;line-height:1.55;">
+            輸入玩家 UID,查看該玩家這隻龍王<b style="color:#cfa8ff;">每一場、每一回合、每隻英雄</b>造成的傷害(含全部傷害)。最多保留最近 80 場。
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <input id="_admin-wbdetail-uid" type="text" placeholder="貼上玩家 UID" style="flex:1;min-width:180px;padding:8px 10px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(180,140,220,0.5);color:#fff;border-radius:7px;font-family:inherit;box-sizing:border-box;">
+            <button id="_admin-wbdetail-query" style="padding:8px 16px;font-size:14px;font-weight:800;background:linear-gradient(135deg,rgba(140,60,180,0.6),rgba(90,30,140,0.8));border:2px solid #bb88ff;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">🔍 查詢</button>
+          </div>
+          <div id="_admin-wbdetail-result" style="font-size:13px;color:#ddd;background:rgba(0,0,0,0.4);border-radius:8px;padding:10px 12px;line-height:1.6;max-height:420px;overflow:auto;display:none;"></div>
         </div>
       </div>
 
@@ -11961,6 +11974,95 @@ async function _showAdminStatsPanelImpl(){
     _adminPanelState.wblbDetailClose = _closeDetailModal;
 
     if(_detailBtn) _detailBtn.onclick = _openDetailModal;
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.14.3 — 逐回合 × 逐英雄傷害明細查詢綁定(讀 wbDamageDetail/{uid})
+  // ════════════════════════════════════════════════════════════════
+  (function _bindWbDetailQuery(){
+    const _qBtn = document.getElementById('_admin-wbdetail-query');
+    const _uidInput = document.getElementById('_admin-wbdetail-uid');
+    const _resultEl = document.getElementById('_admin-wbdetail-result');
+    if(!_qBtn || !_uidInput || !_resultEl) return;
+
+    function _fmtTime(ts){
+      if(!ts || typeof ts !== 'number') return '—';
+      try{
+        const d = new Date(ts);
+        const pad = function(n){ return n < 10 ? '0'+n : ''+n; };
+        return (d.getMonth()+1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      }catch(_){ return '—'; }
+    }
+
+    function _esc(s){
+      return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+        return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c];
+      });
+    }
+
+    function _renderBattles(data){
+      const _battles = (data && Array.isArray(data.battles)) ? data.battles : [];
+      if(!_battles.length){
+        _resultEl.innerHTML = '<span style="color:#ffaa66;">這位玩家目前沒有逐回合明細紀錄(可能尚未打過這隻龍王,或更新前的舊場次未記錄)。</span>';
+        return;
+      }
+      const _list = _battles.slice().reverse();  // 最新場在最上
+      let _html = '<div style="margin-bottom:8px;color:#cfa8ff;font-weight:700;">🐉 共 ' + _battles.length + ' 場(最新在上,最多保留 80 場)</div>';
+      _list.forEach(function(b, idx){
+        const _no = _battles.length - idx;  // 場次編號(1=最舊)
+        const _rounds = (b && Array.isArray(b.rounds)) ? b.rounds : [];
+        let _inner = '';
+        _rounds.forEach(function(rd){
+          const _hs = (rd && Array.isArray(rd.h)) ? rd.h.slice() : [];
+          _hs.sort(function(a, b){ return (b.d||0) - (a.d||0); });
+          const _heroTxt = _hs.map(function(h){
+            return '<span style="display:inline-block;padding:1px 7px;margin:1px 3px 1px 0;background:rgba(80,60,120,0.5);border:1px solid rgba(160,140,220,0.4);border-radius:10px;font-size:12px;color:#eee;">'
+              + _esc(h.n) + ' <b style="color:#ffd066;">' + (h.d||0).toLocaleString() + '</b></span>';
+          }).join('');
+          _inner += '<div style="margin:3px 0;"><span style="color:#88ccff;font-weight:700;">第 ' + _esc(rd.r) + ' 回合</span>:' + (_heroTxt || '<span style="color:#888;">—</span>') + '</div>';
+        });
+        _html += '<details style="margin-bottom:8px;background:rgba(40,30,60,0.4);border:1px solid rgba(160,140,220,0.3);border-radius:8px;padding:6px 10px;"'
+          + (idx === 0 ? ' open' : '') + '>'
+          + '<summary style="cursor:pointer;font-weight:700;color:#ddd;">第 ' + _no + ' 場 · ' + _fmtTime(b.at) + ' · 總傷 <span style="color:#aaffcc;">' + (b.total||0).toLocaleString() + '</span> · ' + _rounds.length + ' 回合</summary>'
+          + '<div style="margin-top:6px;">' + (_inner || '<span style="color:#888;">（無回合資料）</span>') + '</div>'
+          + '</details>';
+      });
+      _resultEl.innerHTML = _html;
+    }
+
+    async function _getFbFns(){
+      if(window._fbFns && window._fbFns.getDoc && window._fbFns.doc){
+        return { getDoc: window._fbFns.getDoc, doc: window._fbFns.doc };
+      }
+      const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      return { getDoc: m.getDoc, doc: m.doc };
+    }
+
+    _qBtn.onclick = async function(){
+      const _uid = (_uidInput.value || '').trim();
+      _resultEl.style.display = 'block';
+      if(!_uid){ _resultEl.innerHTML = '<span style="color:#ffaa66;">請先貼上玩家 UID。</span>'; return; }
+      if(!window._fbDb){ _resultEl.innerHTML = '<span style="color:#ff8888;">Firestore 未就緒。</span>'; return; }
+      _qBtn.disabled = true;
+      const _origTxt = _qBtn.textContent;
+      _qBtn.textContent = '查詢中…';
+      _resultEl.innerHTML = '載入中…';
+      try{
+        const { getDoc, doc } = await _getFbFns();
+        const _snap = await getDoc(doc(window._fbDb, 'wbDamageDetail', _uid));
+        if(!_snap.exists()){
+          _resultEl.innerHTML = '<span style="color:#ffaa66;">查無資料:這位玩家還沒有逐回合明細(尚未打過這隻龍王,或為舊版本場次)。</span>';
+        } else {
+          _renderBattles(_snap.data() || {});
+        }
+      }catch(e){
+        console.error('[WB逐回合明細查詢]', e);
+        _resultEl.innerHTML = '<span style="color:#ff8888;">查詢失敗:' + _esc(e && e.message || e) + '</span>';
+      }finally{
+        _qBtn.disabled = false;
+        _qBtn.textContent = _origTxt;
+      }
+    };
   })();
 
   // ════════════════════════════════════════════════════════════════

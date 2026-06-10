@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════
-//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.1)
+//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.2)
 // ════════════════════════════════════════════════════════════════════════
 //
 //  目的:給「沒申請下載授權」的學生使用,讓圖片/音效/字型「看過一次就存起來」,
@@ -36,6 +36,55 @@ const CACHEABLE_HOSTS = [
   'cdnjs.cloudflare.com'
 ];
 
+// ════════════════════════════════════════════════════════════════════════
+// ★ v3.11.2 — jsDelivr CDN 改寫(與 sw.js 同邏輯,繞 GitHub raw 429)
+//   未授權學生(走 sw-light.js)原本直連 GitHub raw,26 人同時看圖一樣會被
+//   GitHub 對學校 NAT IP 限流(429)→ 破圖。改抓 jsDelivr 全球 CDN 即可避開。
+//   重點:cache key 一律用「原始 req」,只是實際去抓 jsDelivr;jsDelivr 失敗
+//        會自動回退原 GitHub URL,絕不壞圖。
+//   未來新增素材 repo → 在 CDN_REPOS 加一筆即可。
+// ════════════════════════════════════════════════════════════════════════
+const CDN_REPOS = [
+  { user: 'clarebox123jp-art',   repo: 'LXPSGAME', branch: 'main' },
+  { user: 'clarebox123jp-art',   repo: '-',        branch: 'main' },
+  { user: 'ChrisRaelGameMaster', repo: 'Game',     branch: 'main' }
+];
+function _isCdnRepo(user, repo){
+  for(let i = 0; i < CDN_REPOS.length; i++){
+    if(CDN_REPOS[i].user === user && CDN_REPOS[i].repo === repo) return true;
+  }
+  return false;
+}
+function rewriteToJsDelivr(originalUrl){
+  try{
+    const u = new URL(originalUrl);
+    let user = null, repo = null, branch = null, path = null;
+    if(u.hostname === 'github.com'){
+      const m = u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/raw\/([^\/]+)\/(.+)$/);
+      if(m){ user = m[1]; repo = m[2]; branch = m[3]; path = m[4]; }
+    } else if(u.hostname === 'raw.githubusercontent.com'){
+      const m1 = u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/refs\/heads\/([^\/]+)\/(.+)$/);
+      const m2 = m1 ? null : u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/);
+      const m = m1 || m2;
+      if(m){ user = m[1]; repo = m[2]; branch = m[3]; path = m[4]; }
+    }
+    if(!path || !_isCdnRepo(user, repo)) return null;
+    return 'https://cdn.jsdelivr.net/gh/' + user + '/' + repo + '@' + branch + '/' + path;
+  }catch(_){ return null; }
+}
+// 抓資源:優先 jsDelivr,失敗回退原 req。opts 例:{cache:'no-cache'}
+async function cdnFetch(req, opts){
+  const cdnUrl = rewriteToJsDelivr(req.url);
+  if(!cdnUrl) return fetch(req, opts);
+  try{
+    const res = await fetch(cdnUrl, opts); // jsDelivr 有送 CORS,可讀
+    if(res && (res.ok || res.type === 'opaque')) return res;
+    return fetch(req, opts);               // CDN 4xx/5xx → 回退原 URL
+  }catch(_){
+    return fetch(req, opts);               // CDN 連線失敗 → 回退原 URL
+  }
+}
+
 // ─── 判斷此請求是否該被快取 ───
 function shouldCache(url){
   try{
@@ -67,13 +116,13 @@ async function trimCache(){
 
 // ─── install:立即進入 active,不等其他 SW ───
 self.addEventListener('install', (event) => {
-  console.log('[SW-Light v3.11.1] 安裝中(輕量圖片快取模式)');
+  console.log('[SW-Light v3.11.2] 安裝中(輕量圖片快取模式)');
   self.skipWaiting();
 });
 
 // ─── activate:接管控制權,清掉舊版 cache ───
 self.addEventListener('activate', (event) => {
-  console.log('[SW-Light v3.11.1] 啟動,接管所有頁面');
+  console.log('[SW-Light v3.11.2] 啟動,接管所有頁面');
   event.waitUntil((async () => {
     try{
       const names = await caches.keys();
@@ -110,8 +159,8 @@ self.addEventListener('fetch', (event) => {
         // ─── 有 cache → 立刻回,背景更新 ───
         event.waitUntil((async () => {
           try{
-            const fresh = await fetch(req, { cache: 'no-cache' });
-            if(fresh && fresh.ok){
+            const fresh = await cdnFetch(req, { cache: 'no-cache' }); // ★ v3.11.2 走 CDN
+            if(fresh && (fresh.ok || fresh.type === 'opaque')){
               await cache.put(req, fresh.clone());
               // 定期 trim(每 20 次更新跑一次,避免每次都跑)
               if(Math.random() < 0.05) trimCache();
@@ -123,9 +172,9 @@ self.addEventListener('fetch', (event) => {
         return cached;
       }
 
-      // ─── 沒 cache → 抓網路,成功則存 cache ───
-      const network = await fetch(req);
-      if(network && network.ok){
+      // ─── 沒 cache → 抓網路(優先 CDN),成功則存 cache ───
+      const network = await cdnFetch(req);   // ★ v3.11.2 走 CDN
+      if(network && (network.ok || network.type === 'opaque')){
         // clone 因為 Response body 只能讀一次
         cache.put(req, network.clone()).then(() => {
           if(Math.random() < 0.05) trimCache();
@@ -191,4 +240,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('[SW-Light v3.11.1] script loaded — 等待 install/activate');
+console.log('[SW-Light v3.11.2] script loaded — 等待 install/activate');

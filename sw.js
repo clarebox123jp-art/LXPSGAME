@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.85';   // ★ v3.5.85(對應遊戲 v3.14.0)— GM通知關閉/挑戰券進場/黑暗球卡死三修;bump shell 快取讓 iPad 取得新 index.html + world-boss-ui.html
+const SW_VERSION = 'v3.5.86';   // ★ v3.5.86(對應遊戲 v3.14.1)— 正式開啟 jsDelivr CDN 改寫並擴充涵蓋全部 3 個素材 repo(LXPSGAME/-/ChrisRaelGameMaster/Game),繞過 GitHub raw 429;bump shell 讓 iPad 取得新 sw.js｜前版 v3.5.85 三修
 const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
@@ -78,12 +78,32 @@ const CONCURRENT = IS_IOS_LIKE ? 3 : 8;
 //   萬一 jsDelivr 出狀況: 改回 false → 再升版號 → push → 玩家拿到舊邏輯
 // ═══════════════════════════════════════════════════════════════════════
 // 用 let 而非 const, 是為了允許從 client 動態切換 (見上方方法 1)
-let USE_CDN_REWRITE = false; // ★ 老師驗證後改 true
+let USE_CDN_REWRITE = true; // ★ v3.5.86 正式開啟(繞 GitHub raw 429);jsDelivr 抓不到會自動回退 GitHub raw,不會壞圖
+
+// ★ v3.5.86 — 改寫白名單:遊戲實際用到的「全部」素材 repo。
+//   原本只認 '-'(42檔),漏了 LXPSGAME(80檔,最大宗)和 ChrisRaelGameMaster/Game(37檔),
+//   導致 117/159 個素材仍直撞 GitHub raw 429。這裡補齊三個 repo。
+//   ★ 未來若新增素材 repo,只要在這個陣列加一筆即可(其餘程式完全不用動)。
+const CDN_REPOS = [
+  { user: 'clarebox123jp-art',   repo: 'LXPSGAME', branch: 'main' },
+  { user: 'clarebox123jp-art',   repo: '-',        branch: 'main' },
+  { user: 'ChrisRaelGameMaster', repo: 'Game',     branch: 'main' }
+];
+
+// TEST_CDN 工具的預設測試目標(僅供 console 驗證用,不影響改寫邏輯)
 const GITHUB_USER = 'clarebox123jp-art';
 const GITHUB_REPO = '-';
 const GITHUB_BRANCH = 'main';
 
-// 把 GitHub raw URL 改寫成 jsDelivr URL (若失敗回傳 null, caller 抓原 URL)
+// 判斷 {user,repo} 是否在改寫白名單內
+function _isCdnRepo(user, repo){
+  for(var i = 0; i < CDN_REPOS.length; i++){
+    if(CDN_REPOS[i].user === user && CDN_REPOS[i].repo === repo) return true;
+  }
+  return false;
+}
+
+// 把 GitHub raw URL 改寫成 jsDelivr URL (若不在白名單或解析失敗回傳 null, caller 抓原 URL)
 //   支援的格式:
 //     https://github.com/{user}/{repo}/raw/{branch}/{path}
 //     https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}
@@ -92,22 +112,22 @@ function rewriteToJsDelivr(originalUrl){
   if(!USE_CDN_REWRITE) return null;
   try {
     var u = new URL(originalUrl);
-    var path = null;
+    var user = null, repo = null, branch = null, path = null;
     if(u.hostname === 'github.com'){
       // /{user}/{repo}/raw/{branch}/{...path}
       var m = u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/raw\/([^\/]+)\/(.+)$/);
-      if(m && m[1] === GITHUB_USER && m[2] === GITHUB_REPO) path = m[4];
+      if(m){ user = m[1]; repo = m[2]; branch = m[3]; path = m[4]; }
     } else if(u.hostname === 'raw.githubusercontent.com'){
       // /{user}/{repo}/{branch}/{...path}  或  /{user}/{repo}/refs/heads/{branch}/{...path}
       var m1 = u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/refs\/heads\/([^\/]+)\/(.+)$/);
       var m2 = m1 ? null : u.pathname.match(/^\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/);
       var m = m1 || m2;
-      if(m && m[1] === GITHUB_USER && m[2] === GITHUB_REPO) path = m[4];
+      if(m){ user = m[1]; repo = m[2]; branch = m[3]; path = m[4]; }
     }
-    if(!path) return null;
+    // ★ v3.5.86 — 只改寫白名單內的 repo;其餘(cdnjs、Google Fonts、未知 repo)維持原樣
+    if(!path || !_isCdnRepo(user, repo)) return null;
     // 注意: path 內可能含 URL-encoded 中文檔名, 不要再 encode/decode 一次
-    return 'https://cdn.jsdelivr.net/gh/' + GITHUB_USER + '/' + GITHUB_REPO
-         + '@' + GITHUB_BRANCH + '/' + path;
+    return 'https://cdn.jsdelivr.net/gh/' + user + '/' + repo + '@' + branch + '/' + path;
   } catch(_) {
     return null;
   }
