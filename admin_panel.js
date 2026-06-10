@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.14.3';   // ★ v3.14.3(2026-06-10)— 世界BOSS排行榜管理區新增「🧾 逐回合×逐英雄傷害明細查詢」(讀 wbDamageDetail/{uid})｜前版 v3.13.95 活動分頁靈魂碎片/用券顯示
+window.ADMIN_PANEL_VERSION = 'v3.14.4';   // ★ v3.14.4(2026-06-10)— 世界BOSS排行榜每隊新增「🧾 回合明細」一鍵查詢按鈕(uid 取自 teamKey,modal 顯示每場每回合各英雄傷害,不含聯手爆發5000);移除多餘的 UID 輸入查詢區｜前版 v3.14.3 逐回合明細查詢
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1842,18 +1842,7 @@ async function _showAdminStatsPanelImpl(){
           💡 想清空所有 BOSS 排行(目前只有維蘇威):console 跑 <code style="color:#aaccff;">_wbHpSync.clearLeaderboard()</code>
         </div>
 
-        <!-- ★ v3.14.3 — 逐回合 × 逐英雄傷害明細查詢(老師需求:看龍王戰每場每回合是哪隻英雄打多少) -->
-        <div style="margin-top:14px;border-top:1px dashed rgba(180,140,220,0.4);padding-top:12px;">
-          <div style="font-size:15px;font-weight:800;color:#cfa8ff;margin-bottom:6px;">🧾 逐回合 × 逐英雄傷害明細查詢</div>
-          <div style="font-size:12px;color:#bbb;margin-bottom:8px;line-height:1.55;">
-            輸入玩家 UID,查看該玩家這隻龍王<b style="color:#cfa8ff;">每一場、每一回合、每隻英雄</b>造成的傷害(含全部傷害)。最多保留最近 80 場。
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-            <input id="_admin-wbdetail-uid" type="text" placeholder="貼上玩家 UID" style="flex:1;min-width:180px;padding:8px 10px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(180,140,220,0.5);color:#fff;border-radius:7px;font-family:inherit;box-sizing:border-box;">
-            <button id="_admin-wbdetail-query" style="padding:8px 16px;font-size:14px;font-weight:800;background:linear-gradient(135deg,rgba(140,60,180,0.6),rgba(90,30,140,0.8));border:2px solid #bb88ff;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;">🔍 查詢</button>
-          </div>
-          <div id="_admin-wbdetail-result" style="font-size:13px;color:#ddd;background:rgba(0,0,0,0.4);border-radius:8px;padding:10px 12px;line-height:1.6;max-height:420px;overflow:auto;display:none;"></div>
-        </div>
+        <!-- ★ v3.14.4 — 逐回合明細改為「排行榜每隊一鍵查詢」(🧾 回合明細按鈕),原 UID 輸入查詢區已移除(老師:多餘) -->
       </div>
 
       <!-- ★ v3.5.67(2026-05-23) — 小博士獎勵補發區塊(老師需求:手動結算 + 補發) -->
@@ -11578,6 +11567,25 @@ async function _showAdminStatsPanelImpl(){
               '🚫 場次標 BUG(' + _undeletedCount + ')</button>'
             : '';
 
+          // ★ v3.14.4(2026-06-10)— 老師需求 1:排行榜「一鍵查逐回合明細」按鈕
+          //   uid 取自 teamKey 第一段(teamKey = "uid|uid前綴" 或含 uid 的字串)。
+          //   點擊 → 讀 wbDamageDetail/{uid} → modal 顯示每場每回合各英雄傷害
+          //   (明細收集天然不含聯手爆發/答題獎勵 5000:那條路直接改 boss.curHp 不走 doDmg 收集)
+          const _rdUid = (function(){
+            const _tk = e.teamKey || '';
+            const _seg = _tk.split('|')[0] || '';
+            return _seg.trim();
+          })();
+          const _roundDetailBtn = _rdUid
+            ? '<button class="_wblb-rounddetail-btn" data-uid="' + _rdUid.replace(/"/g,'&quot;') + '" ' +
+              'data-teamnames="' + ((e.teamNames||[]).join('、')).replace(/"/g,'&quot;') + '" ' +
+              'style="padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;' +
+              'background:linear-gradient(135deg,rgba(140,60,180,0.45),rgba(90,30,140,0.55));' +
+              'border:1.5px solid #bb88ff;color:#e8d8ff;border-radius:6px;font-family:inherit;' +
+              'margin-left:6px;flex:0 0 auto;" title="查看每一場每回合各英雄造成的傷害(不含聯手爆發 5000)">' +
+              '🧾 回合明細</button>'
+            : '';
+
           return '<label class="_wblb-row" data-teamkey="' + (e.teamKey||'').replace(/"/g,'&quot;') + '" style="' +
                  'display:block;padding:10px 12px;margin-bottom:6px;' +
                  'background:rgba(30,25,40,0.6);border:1.5px solid rgba(140,100,180,0.35);' +
@@ -11595,6 +11603,7 @@ async function _showAdminStatsPanelImpl(){
                           (_avgPerTurn > 0 ? _avgPerTurn.toLocaleString() + '/回' : '?/回') +
                           _avgWarn + '</span>' +
                        _sourcesBtn +
+                       _roundDetailBtn +
                        _tombBtn +
                        '<span style="color:#888;font-size:11px;margin-left:auto;">' +
                           '🕒 ' + _formatTime(e.lastUpdated) + '</span>' +
@@ -11728,6 +11737,21 @@ async function _showAdminStatsPanelImpl(){
           return;
         }
         _showTombModal(_entry);
+      });
+
+      // ★ v3.14.4(2026-06-10)— 「🧾 回合明細」按鈕處理(老師需求 1:排行榜一鍵查詢)
+      //   讀 wbDamageDetail/{uid},modal 顯示每場每回合各英雄傷害(不含聯手爆發 5000)
+      _listBox.addEventListener('click', function(ev){
+        const _btn = ev.target.closest && ev.target.closest('._wblb-rounddetail-btn');
+        if(!_btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const _uid = _btn.getAttribute('data-uid') || '';
+        const _names = _btn.getAttribute('data-teamnames') || '';
+        if(!_uid){ alert('此紀錄缺少 UID,無法查詢'); return; }
+        if(typeof window._wbShowRoundDetailModal === 'function'){
+          window._wbShowRoundDetailModal(_uid, _names);
+        }
       });
 
       // 全選/全不選/只勾異常
@@ -11977,13 +12001,12 @@ async function _showAdminStatsPanelImpl(){
   })();
 
   // ════════════════════════════════════════════════════════════════
-  // ★ v3.14.3 — 逐回合 × 逐英雄傷害明細查詢綁定(讀 wbDamageDetail/{uid})
+  // ★ v3.14.4(2026-06-10)— 逐回合 × 逐英雄傷害明細(老師需求 1:排行榜一鍵查詢)
+  //   原 v3.14.3「輸入 UID 查詢」已移除(老師:多餘),改為排行榜每隊「🧾 回合明細」
+  //   按鈕直接呼叫本 modal。渲染邏輯沿用 v3.14.3(每場可展開看各回合各英雄傷害)。
+  //   明細天然不含聯手爆發/答題獎勵 5000(那條路直接改 boss.curHp 不走 doDmg 收集)。
   // ════════════════════════════════════════════════════════════════
-  (function _bindWbDetailQuery(){
-    const _qBtn = document.getElementById('_admin-wbdetail-query');
-    const _uidInput = document.getElementById('_admin-wbdetail-uid');
-    const _resultEl = document.getElementById('_admin-wbdetail-result');
-    if(!_qBtn || !_uidInput || !_resultEl) return;
+  (function _setupWbRoundDetailModal(){
 
     function _fmtTime(ts){
       if(!ts || typeof ts !== 'number') return '—';
@@ -12003,11 +12026,10 @@ async function _showAdminStatsPanelImpl(){
     function _renderBattles(data){
       const _battles = (data && Array.isArray(data.battles)) ? data.battles : [];
       if(!_battles.length){
-        _resultEl.innerHTML = '<span style="color:#ffaa66;">這位玩家目前沒有逐回合明細紀錄(可能尚未打過這隻龍王,或更新前的舊場次未記錄)。</span>';
-        return;
+        return '<span style="color:#ffaa66;">這位玩家目前沒有逐回合明細紀錄(可能尚未打過這隻龍王,或更新前的舊場次未記錄)。</span>';
       }
       const _list = _battles.slice().reverse();  // 最新場在最上
-      let _html = '<div style="margin-bottom:8px;color:#cfa8ff;font-weight:700;">🐉 共 ' + _battles.length + ' 場(最新在上,最多保留 80 場)</div>';
+      let _html = '<div style="margin-bottom:8px;color:#cfa8ff;font-weight:700;">🐉 共 ' + _battles.length + ' 場(最新在上,最多保留 80 場 · 不含聯手爆發 5000)</div>';
       _list.forEach(function(b, idx){
         const _no = _battles.length - idx;  // 場次編號(1=最舊)
         const _rounds = (b && Array.isArray(b.rounds)) ? b.rounds : [];
@@ -12027,7 +12049,7 @@ async function _showAdminStatsPanelImpl(){
           + '<div style="margin-top:6px;">' + (_inner || '<span style="color:#888;">（無回合資料）</span>') + '</div>'
           + '</details>';
       });
-      _resultEl.innerHTML = _html;
+      return _html;
     }
 
     async function _getFbFns(){
@@ -12038,29 +12060,49 @@ async function _showAdminStatsPanelImpl(){
       return { getDoc: m.getDoc, doc: m.doc };
     }
 
-    _qBtn.onclick = async function(){
-      const _uid = (_uidInput.value || '').trim();
-      _resultEl.style.display = 'block';
-      if(!_uid){ _resultEl.innerHTML = '<span style="color:#ffaa66;">請先貼上玩家 UID。</span>'; return; }
-      if(!window._fbDb){ _resultEl.innerHTML = '<span style="color:#ff8888;">Firestore 未就緒。</span>'; return; }
-      _qBtn.disabled = true;
-      const _origTxt = _qBtn.textContent;
-      _qBtn.textContent = '查詢中…';
-      _resultEl.innerHTML = '載入中…';
+    window._wbShowRoundDetailModal = async function(uid, teamNames){
+      // 建 modal(冪等:舊的先移除)
+      const _old = document.getElementById('_wb-rounddetail-modal');
+      if(_old) _old.remove();
+      const _ov = document.createElement('div');
+      _ov.id = '_wb-rounddetail-modal';
+      // ★ v3.14.4 圖層修正:本 modal 由排行榜詳細 modal(z-index:100050)內的按鈕開啟,
+      //   必須 > 100050 才不會被蓋住(對齊傷害來源/墓碑子 modal 的 100060 慣例,
+      //   參考 v3.11.19 歷史教訓:z-index 低於父 modal 會看起來「點了沒反應」)
+      _ov.style.cssText =
+        'position:fixed;inset:0;z-index:100060;background:rgba(0,0,0,0.82);' +
+        'display:flex;align-items:center;justify-content:center;padding:18px;' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      _ov.innerHTML =
+        '<div style="background:linear-gradient(135deg,#221433,#150d22);border:2.5px solid #bb88ff;' +
+          'border-radius:16px;width:min(94vw,720px);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;">' +
+          '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(180,140,220,0.35);">' +
+            '<div style="font-size:16px;font-weight:900;color:#cfa8ff;flex:1;">🧾 逐回合 × 逐英雄傷害明細' +
+              (teamNames ? '<span style="font-size:12px;color:#bbb;font-weight:400;margin-left:8px;">' + _esc(teamNames) + '</span>' : '') +
+            '</div>' +
+            '<button id="_wb-rounddetail-close" style="padding:5px 14px;font-size:13px;font-weight:800;' +
+              'background:rgba(60,60,80,0.6);border:1.5px solid #888;color:#ddd;border-radius:8px;cursor:pointer;font-family:inherit;">✕ 關閉</button>' +
+          '</div>' +
+          '<div style="padding:4px 16px 2px;font-size:11px;color:#776;word-break:break-all;">UID:' + _esc(uid) + '</div>' +
+          '<div id="_wb-rounddetail-body" style="flex:1;overflow:auto;padding:10px 16px 16px;font-size:13px;color:#ddd;line-height:1.6;">載入中…</div>' +
+        '</div>';
+      document.body.appendChild(_ov);
+      _ov.querySelector('#_wb-rounddetail-close').onclick = function(){ _ov.remove(); };
+      _ov.addEventListener('click', function(ev){ if(ev.target === _ov) _ov.remove(); });
+
+      const _body = _ov.querySelector('#_wb-rounddetail-body');
+      if(!window._fbDb){ _body.innerHTML = '<span style="color:#ff8888;">Firestore 未就緒。</span>'; return; }
       try{
         const { getDoc, doc } = await _getFbFns();
-        const _snap = await getDoc(doc(window._fbDb, 'wbDamageDetail', _uid));
+        const _snap = await getDoc(doc(window._fbDb, 'wbDamageDetail', uid));
         if(!_snap.exists()){
-          _resultEl.innerHTML = '<span style="color:#ffaa66;">查無資料:這位玩家還沒有逐回合明細(尚未打過這隻龍王,或為舊版本場次)。</span>';
+          _body.innerHTML = '<span style="color:#ffaa66;">查無資料:這位玩家還沒有逐回合明細(尚未打過這隻龍王,或為舊版本場次)。</span>';
         } else {
-          _renderBattles(_snap.data() || {});
+          _body.innerHTML = _renderBattles(_snap.data() || {});
         }
       }catch(e){
         console.error('[WB逐回合明細查詢]', e);
-        _resultEl.innerHTML = '<span style="color:#ff8888;">查詢失敗:' + _esc(e && e.message || e) + '</span>';
-      }finally{
-        _qBtn.disabled = false;
-        _qBtn.textContent = _origTxt;
+        _body.innerHTML = '<span style="color:#ff8888;">查詢失敗:' + _esc(e && e.message || e) + '</span>';
       }
     };
   })();
