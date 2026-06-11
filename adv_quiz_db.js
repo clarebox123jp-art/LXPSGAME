@@ -300,6 +300,32 @@ const ADV_QUIZ_DOG_CARE = [
   {id:9420,subject:'領養與照顧狗狗',difficulty:'普通',question:'「領養代替購買」的意思是？',options:['不花錢','給流浪狗一個溫暖家','買貴的狗','不用吃飯'],answer:'B'},
 ];
 
+// ── 世界機關王大賽（解鎖機關王雙人組成就）──
+// ★ v3.14.10(2026-06-12) — 連續答對 20 題解鎖「機關王雙人組」(同小力/幼兒園小孩機制)
+//   題目範圍:賽事起源、教育意義、機關概論(參考 worldgreenmech.com 官網資料)
+const ADV_QUIZ_GREENMECH = [
+  {id:9601,subject:'世界機關王大賽',difficulty:'普通',question:'「機關王競賽」最早是在哪一年、哪個地方創辦的？',options:['2006年在台灣','1990年在美國','2017年在日本','2015年在德國'],answer:'A'},
+  {id:9602,subject:'世界機關王大賽',difficulty:'普通',question:'機關王的設計概念來源「Crazy Machine」，原本是什麼？',options:['一部恐怖電影','漫畫家筆下有趣的機關連動漫畫','一款手機遊戲','一間玩具工廠'],answer:'B'},
+  {id:9603,subject:'世界機關王大賽',difficulty:'普通',question:'「世界機關王大賽」的英文名稱是？',options:['World Robot War','World GreenMech Contest','Crazy Block Cup','Super Machine Show'],answer:'B'},
+  {id:9604,subject:'世界機關王大賽',difficulty:'普通',question:'世界機關王大賽主要分為哪三大競賽項目？',options:['跑步賽、跳遠賽、游泳賽','機關整合賽、機器人任務賽、積木創客盃','繪畫賽、作文賽、演講賽','電玩賽、桌遊賽、猜謎賽'],answer:'B'},
+  {id:9605,subject:'世界機關王大賽',difficulty:'普通',question:'「機關整合賽」的英文簡稱是？',options:['GM','R4M','NBA','USB'],answer:'A'},
+  {id:9606,subject:'世界機關王大賽',difficulty:'普通',question:'「機器人任務賽」的英文簡稱是？',options:['GPS','GM','R4M','AI5'],answer:'C'},
+  {id:9607,subject:'世界機關王大賽',difficulty:'普通',question:'「積木創客盃(GMJr.)」主要是為哪些學生設計的入門賽事？',options:['大學生','幼兒園大班和國小中低年級的新手','職業選手','機器人本人'],answer:'B'},
+  {id:9608,subject:'世界機關王大賽',difficulty:'普通',question:'近年世界機關王大賽把聯合國的什麼目標融入競賽主題？',options:['SDGs 永續發展目標','奧運金牌目標','世界盃足球賽','登陸月球計畫'],answer:'A'},
+  {id:9609,subject:'世界機關王大賽',difficulty:'普通',question:'機關王競賽希望培養學生的「STEAM」能力，其中「A」代表什麼？',options:['動物(Animal)','藝術(Art)','蘋果(Apple)','飛機(Airplane)'],answer:'B'},
+  {id:9610,subject:'世界機關王大賽',difficulty:'普通',question:'下列哪一項「不是」STEAM 包含的領域？',options:['科學','科技','工程','魔法'],answer:'D'},
+  {id:9611,subject:'世界機關王大賽',difficulty:'普通',question:'機關王競賽中的「GreenMech」，Green 強調的是什麼概念？',options:['綠色能源與愛護環境','綠色的積木最漂亮','只能用綠色顏料','草地上比賽'],answer:'A'},
+  {id:9612,subject:'世界機關王大賽',difficulty:'普通',question:'參加機關王競賽，隊員之間最重要的精神是？',options:['互相搶功勞','團隊合作與溝通','誰大聲誰就對','各做各的不討論'],answer:'B'},
+  {id:9613,subject:'世界機關王大賽',difficulty:'普通',question:'比賽時機關卡住失敗了，最好的態度是？',options:['冷靜找出問題並動手修正','大哭放棄比賽','怪罪隊友','把作品砸掉'],answer:'A'},
+  {id:9614,subject:'世界機關王大賽',difficulty:'普通',question:'機關王競賽鼓勵學生「動手實作」，主要可以學到什麼？',options:['把課本的科學原理應用在真實作品上','學會偷懶','只會看說明書','背更多英文單字'],answer:'A'},
+  {id:9615,subject:'世界機關王大賽',difficulty:'普通',question:'「骨牌連鎖反應」機關中，前一個機關是靠什麼讓下一個機關啟動？',options:['魔法咒語','能量的傳遞(碰撞推動下一關)','遙控器','觀眾的歡呼聲'],answer:'B'},
+  {id:9616,subject:'世界機關王大賽',difficulty:'普通',question:'蹺蹺板是利用哪一種簡單機械原理？',options:['槓桿','磁鐵','彈簧','電池'],answer:'A'},
+  {id:9617,subject:'世界機關王大賽',difficulty:'普通',question:'想把重物拉到高處比較省力，可以使用下列哪種簡單機械？',options:['滑輪或斜面','鏡子','溫度計','放大鏡'],answer:'A'},
+  {id:9618,subject:'世界機關王大賽',difficulty:'普通',question:'齒輪傳動中，大齒輪帶動小齒輪，小齒輪會轉得？',options:['比較慢','一樣快','比較快','完全不動'],answer:'C'},
+  {id:9619,subject:'世界機關王大賽',difficulty:'普通',question:'彈珠從高處軌道滾下來愈滾愈快，是因為什麼能量轉換？',options:['位能轉換成動能','聲音變成光','電能變成水','動能憑空出現'],answer:'A'},
+  {id:9620,subject:'世界機關王大賽',difficulty:'普通',question:'綠色能源機關常用「太陽能板」，它是把什麼能轉換成電能？',options:['光能(太陽光)','吼叫聲','口水','夢境'],answer:'A'},
+];
+
 
 // ═══════════════════════════════════════════════════════════════════
 // ★ v1.0.20260514.6480 — 主程式減肥第四招:TAIWAN_QUIZ_DB(台灣環島 300 題)
