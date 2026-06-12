@@ -30,6 +30,7 @@ window.GAME_CHANGELOG = [
       '補償 v2(_wbCheckAndCompensateLostTreasure):移除「歷史有 wb_rank 即 return」盲點(歷史在、東西被吃 → 永不觸發);改證據導向 — grantedManifest > 歷史 wb_rank* 紀錄 id(本地+雲端聯集)> 必得推定,逐件對 _taiwanTreasureData 比對,缺了照原 id 精準補回(kind exact,冪等;history 記 wb_rank_compensate_exact)。',
       '機率項(2-5 名龍牙 75%)有發放證據者不再誤顯示「沒抽中」說明,改列入精準補發;無證據者維持說明窗。隨機推定型補發仍以歷史 wb_rank_compensate 防重抽。',
       '受害例:5408 第 2 名學生(龍牙擲中+台北101槍必得,雙雙被吃,v3.14.17 補償因歷史紀錄存在而未觸發)。老師亦可由 GM 後台補償區勾選至寶個案即時補發(_fbCompensatePlayer B8 已支援)。',
+      'GM 後台:補修「🌟 龍王的祝福」控制卡 sidebar 登錄(v3.14.16 修復檔當時漏上傳,線上仍 v3.14.15 → 卡片永遠隱藏);本版 admin_panel.js 三點同步補齊(模板 HTML+SIDEBAR_ITEMS+SIDEBAR_GROUPS「🐉 世界 BOSS」群,鐵律 1.140),戳 v3.14.19。',
     ],
   },
   // ════════════════════════════════════════════════════════════════════

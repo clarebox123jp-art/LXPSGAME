@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.14.15';   // ★ v3.14.15(2026-06-12)— 🌟 龍王的祝福手動控制卡(查詢狀態/開啟續期可調小時與加成%/立即關閉,寫 stats/global.wbBlessing)｜前版 v3.14.4 回合明細查詢
+window.ADMIN_PANEL_VERSION = 'v3.14.19';   // ★ v3.14.19(2026-06-12)— 補修 v3.14.16 漏上傳:祝福控制卡登錄 SIDEBAR_ITEMS+GROUPS(三點同步,鐵律 1.140)｜v3.14.15 龍王的祝福手動控制卡(查詢狀態/開啟續期可調小時與加成%/立即關閉,寫 stats/global.wbBlessing)
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -2138,6 +2138,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
+      { sec: '_admin-blessing-section',         label: '🌟 龍王的祝福',            hint: '查詢 / 手動開啟續期 / 關閉全服加成' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
       { sec: '_admin-ticket-section',           label: '🎟️ 世界 BOSS 入場券',      hint: '補發/查詢/清空挑戰入場券' },
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
@@ -2178,7 +2179,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
       { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
-      { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
+      { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
       { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section'] },
     ];
