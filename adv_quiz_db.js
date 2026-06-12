@@ -951,3 +951,24 @@ const TAIWAN_QUIZ_DB = [
 {"id":34693,"grade":"中年級","subject":"四下自然第四單元","difficulty":"普通","question":"地震發生後，小智發現房間的牆壁出現了裂縫，他應該怎麼做？","options":["用膠帶貼住裂縫","把海報貼在上面","請廠商來檢修","假裝沒看到就好"],"answer":"C","hint":""},
 {"id":34694,"grade":"中年級","subject":"四下自然第四單元","difficulty":"普通","question":"小惠用澆水器在土堆上澆水，請問澆水器的水量多寡對土堆有什麼影響？","options":["水量愈多，砂石流失愈多","水量愈多，土堆會變得愈高","水量愈少，砂石流失愈多","不管水量多寡，對土堆都不會造成影響"],"answer":"A","hint":""}
 ];
+
+// ═══════════════════════════════════════════════════════════════════
+// ★ v3.14.18(20260612b)— 修復 v3.14.8 歸檔錯誤(玩家回報「沒有出現四下自然問答題目」)
+//   根因:四下自然第三/四單元 94 題(id 34601~34694)當時被誤附加在 TAIWAN_QUIZ_DB 陣列內
+//   (玉山題 30800 之後),而非 ADV_QUIZ_DB。小怪戰/BOSS 戰的通用題庫分支都是
+//   ADV_QUIZ_DB.filter(q.subject===科目) → 撈到 0 題 → 「重置 2 次仍題庫為空,跳過答題」。
+//   修法:不搬動原始資料(避免大段複製出錯),改在載入時執行期搬移——
+//   從 TAIWAN_QUIZ_DB 抽出 subject 為四下自然者推入 ADV_QUIZ_DB,台灣環島題庫同時恢復純淨。
+// ═══════════════════════════════════════════════════════════════════
+try{
+  for(let _i = TAIWAN_QUIZ_DB.length - 1; _i >= 0; _i--){
+    const _q = TAIWAN_QUIZ_DB[_i];
+    if(_q && (_q.subject === '四下自然第三單元' || _q.subject === '四下自然第四單元')){
+      ADV_QUIZ_DB.push(_q);
+      TAIWAN_QUIZ_DB.splice(_i, 1);
+    }
+  }
+  try{ console.log('[adv_quiz_db v3.14.18] 四下自然題目搬移完成:ADV_QUIZ_DB 現有四下自然 '
+    + ADV_QUIZ_DB.filter(q => q && (q.subject === '四下自然第三單元' || q.subject === '四下自然第四單元')).length
+    + ' 題;TAIWAN_QUIZ_DB 剩 ' + TAIWAN_QUIZ_DB.length + ' 題'); }catch(_){}
+}catch(_e){ try{ console.warn('[adv_quiz_db v3.14.18 四下自然搬移] 失敗', _e); }catch(_){} }
