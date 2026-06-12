@@ -15,7 +15,104 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.14.4';   // ★ v3.14.4(2026-06-10)— 世界BOSS排行榜每隊新增「🧾 回合明細」一鍵查詢按鈕(uid 取自 teamKey,modal 顯示每場每回合各英雄傷害,不含聯手爆發5000);移除多餘的 UID 輸入查詢區｜前版 v3.14.3 逐回合明細查詢
+window.ADMIN_PANEL_VERSION = 'v3.14.15';   // ★ v3.14.15(2026-06-12)— 🌟 龍王的祝福手動控制卡(查詢狀態/開啟續期可調小時與加成%/立即關閉,寫 stats/global.wbBlessing)｜前版 v3.14.4 回合明細查詢
+
+// ════════════════════════════════════════════════════════════════════
+// ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
+//   寫入 stats/global.wbBlessing = { active, bossId, bossName, bonusPct, startedAt, expiresAt, byGM }
+//   讀取端:index.html _gameBlessingMult / 入口倒數標籤、world-boss.js 大廳橫幅(皆已存在)。
+//   關閉採整顆覆寫 active:false(不靠深 merge,避免殘留欄位歧義)。
+// ════════════════════════════════════════════════════════════════════
+async function _adminBlessingSdk(){
+  try{
+    if(window._fbFns && window._fbFns.setDoc){
+      return { getDoc: window._fbFns.getDoc, setDoc: window._fbFns.setDoc, doc: window._fbFns.doc };
+    }
+    const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    return { getDoc: m.getDoc, setDoc: m.setDoc, doc: m.doc };
+  }catch(e){ console.warn('[GM祝福] SDK 取得失敗', e); return null; }
+}
+function _adminBlessingRenderStatus(b){
+  const el = document.getElementById('_admin-blessing-status');
+  if(!el) return;
+  if(!b){ el.innerHTML = '⚪ 雲端尚無祝福資料(從未開啟過)。'; return; }
+  const _now = Date.now();
+  const _alive = b.active && b.expiresAt > _now;
+  const _remainMs = (b.expiresAt || 0) - _now;
+  const _h = Math.floor(_remainMs / 3600000);
+  const _m = Math.max(0, Math.ceil((_remainMs % 3600000) / 60000));
+  const _fmt = (ts) => { try{ return new Date(ts).toLocaleString('zh-TW', { hour12:false }); }catch(_){ return String(ts); } };
+  el.innerHTML = _alive
+    ? ('🟢 <b style="color:#7df0a8;">祝福生效中</b> — ' + (b.bossName || '?') + ' / +' + (b.bonusPct || 0) + '%'
+      + '<br>⏳ 剩餘 <b style="color:#ffe066;">' + _h + ' 小時 ' + _m + ' 分</b>(至 ' + _fmt(b.expiresAt) + ')'
+      + (b.byGM ? '<br><span style="color:#aaa;">(GM 手動開啟)</span>' : ''))
+    : ('🔴 <b style="color:#ff9999;">祝福未生效</b>(' + (b.active ? '已過期' : '已關閉') + ')'
+      + '<br>最後一次:' + (b.bossName || '?') + ' / +' + (b.bonusPct || 0) + '% / 至 ' + _fmt(b.expiresAt || 0));
+}
+window._adminBlessingQuery = async function(){
+  const el = document.getElementById('_admin-blessing-status');
+  if(el) el.innerHTML = '⏳ 查詢中…';
+  try{
+    const sdk = await _adminBlessingSdk();
+    if(!sdk || !window._fbDb){ if(el) el.innerHTML = '❌ Firestore 未就緒,請先在遊戲主頁登入 GM 帳號。'; return; }
+    const snap = await sdk.getDoc(sdk.doc(window._fbDb, 'stats', 'global'));
+    const d = snap.exists() ? (snap.data() || {}) : {};
+    _adminBlessingRenderStatus(d.wbBlessing || null);
+  }catch(e){
+    console.warn('[GM祝福] 查詢失敗', e);
+    if(el) el.innerHTML = '❌ 查詢失敗:' + (e && e.message || e);
+  }
+};
+window._adminBlessingOn = async function(){
+  const el = document.getElementById('_admin-blessing-status');
+  const _hEl = document.getElementById('_admin-blessing-hours');
+  const _pEl = document.getElementById('_admin-blessing-pct');
+  const _bEl = document.getElementById('_admin-blessing-bossname');
+  const _hours = Math.max(1, Math.min(720, parseInt(_hEl && _hEl.value, 10) || 72));
+  const _pct = Math.max(1, Math.min(200, parseInt(_pEl && _pEl.value, 10) || 25));
+  const _bn = ((_bEl && _bEl.value) || '').trim() || '維蘇威火山龍王';
+  if(!confirm('🌟 開啟「龍王的祝福」?\n\n龍王:' + _bn + '\n加成:全服 EXP/知識幣/掉寶 +' + _pct + '%\n持續:' + _hours + ' 小時(從現在起算)\n\n寫入後全體玩家約 1 分鐘內生效。')) return;
+  if(el) el.innerHTML = '⏳ 寫入中…';
+  try{
+    const sdk = await _adminBlessingSdk();
+    if(!sdk || !window._fbDb){ if(el) el.innerHTML = '❌ Firestore 未就緒。'; return; }
+    const _now = Date.now();
+    const _blessing = {
+      active: true, bossId: 'manual_gm', bossName: _bn, bonusPct: _pct,
+      startedAt: _now, expiresAt: _now + _hours * 3600 * 1000, byGM: true,
+    };
+    await sdk.setDoc(sdk.doc(window._fbDb, 'stats', 'global'), { wbBlessing: _blessing }, { merge: true });
+    _adminBlessingRenderStatus(_blessing);
+    alert('✅ 祝福已開啟!' + _hours + ' 小時 / +' + _pct + '%\n玩家端入口標籤與大廳橫幅約 1 分鐘內亮起。');
+  }catch(e){
+    console.warn('[GM祝福] 開啟失敗', e);
+    if(el) el.innerHTML = '❌ 寫入失敗:' + (e && e.message || e);
+  }
+};
+window._adminBlessingOff = async function(){
+  const el = document.getElementById('_admin-blessing-status');
+  if(!confirm('⛔ 立即關閉「龍王的祝福」?\n全服加成將在約 1 分鐘內停止。')) return;
+  if(el) el.innerHTML = '⏳ 關閉中…';
+  try{
+    const sdk = await _adminBlessingSdk();
+    if(!sdk || !window._fbDb){ if(el) el.innerHTML = '❌ Firestore 未就緒。'; return; }
+    const _now = Date.now();
+    // 先讀舊資料,只滅 active/expiresAt,其餘欄位保留作紀錄(整顆覆寫,避免深 merge 歧義)
+    let _old = {};
+    try{
+      const _snap = await sdk.getDoc(sdk.doc(window._fbDb, 'stats', 'global'));
+      _old = (_snap.exists() && _snap.data() && _snap.data().wbBlessing) || {};
+    }catch(_){}
+    const _blessing = Object.assign({}, _old, { active: false, expiresAt: _now, closedByGMAt: _now, byGM: true });
+    await sdk.setDoc(sdk.doc(window._fbDb, 'stats', 'global'), { wbBlessing: _blessing }, { merge: true });
+    _adminBlessingRenderStatus(_blessing);
+    alert('✅ 祝福已關閉。');
+  }catch(e){
+    console.warn('[GM祝福] 關閉失敗', e);
+    if(el) el.innerHTML = '❌ 寫入失敗:' + (e && e.message || e);
+  }
+};
+
 // 為什麼抽出: 完整面板 ~4,380 行 / 240 KB,但只有老師會用到。從 index.html
 //             抽出後,玩家初次載入省 240 KB,管理員第一次按 Shift+F10 才下載。
 //
@@ -1651,6 +1748,35 @@ async function _showAdminStatsPanelImpl(){
         </div>
         <div id="_admin-activity-content" style="background:rgba(0,0,0,0.35);border-radius:8px;padding:8px;max-height:560px;overflow-y:auto;">
           <div style="text-align:center;color:#888;padding:20px;font-size:13px;">輸入 email / uid / 姓名 後點「查詢」開始</div>
+        </div>
+      </div>
+
+      <!-- ★ v3.14.15(2026-06-12) — 🌟 龍王的祝福手動控制(老師需求:可手動開關,小時可輸入) -->
+      <div id="_admin-blessing-section" style="background:rgba(55,42,12,0.5);border:2px solid rgba(255,210,90,0.7);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#ffe066;margin-bottom:8px;">🌟 6.4 龍王的祝福控制(手動開關)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          祝福生效期間全伺服器 <b style="color:#ffe066;">EXP / 知識幣 / 物品掉寶率 +N%</b>。
+          龍王倒下時系統會自動開 72 小時(v3.14.13 起);這裡可<b style="color:#ffcc66;">手動補開</b>(例如倒下發生在自動機制上線前)、
+          <b style="color:#ffcc66;">續期 / 調整時數</b>,或<b style="color:#ff9999;">立即關閉</b>。寫入後全體玩家約 1 分鐘內生效。
+        </div>
+        <div id="_admin-blessing-status" style="background:rgba(30,25,10,0.6);border:1.5px dashed rgba(255,210,100,0.45);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#ffeebb;line-height:1.7;">
+          ⏳ 尚未查詢 — 點下方「🔄 查詢目前狀態」
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;">
+          <label style="font-size:13px;color:#ccc;flex:1;min-width:120px;">⏱ 持續小時
+            <input id="_admin-blessing-hours" type="number" min="1" max="720" value="72" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,210,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+          </label>
+          <label style="font-size:13px;color:#ccc;flex:1;min-width:100px;">📈 加成 %
+            <input id="_admin-blessing-pct" type="number" min="1" max="200" value="25" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,210,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+          </label>
+          <label style="font-size:13px;color:#ccc;flex:2;min-width:170px;">🐉 顯示用龍王名
+            <input id="_admin-blessing-bossname" type="text" value="維蘇威火山龍王" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,210,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+          </label>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <button onclick="_adminBlessingQuery()" style="flex:1;min-width:140px;padding:10px;font-size:14px;font-weight:800;background:rgba(80,90,140,0.6);color:#cdf;border:1.5px solid rgba(140,160,255,0.5);border-radius:8px;cursor:pointer;font-family:inherit;">🔄 查詢目前狀態</button>
+          <button onclick="_adminBlessingOn()" style="flex:1.4;min-width:180px;padding:10px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#cc9922,#996611);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🌟 開啟 / 續期祝福</button>
+          <button onclick="_adminBlessingOff()" style="flex:1;min-width:140px;padding:10px;font-size:14px;font-weight:800;background:rgba(140,50,50,0.7);color:#fdd;border:1.5px solid rgba(255,120,120,0.5);border-radius:8px;cursor:pointer;font-family:inherit;">⛔ 立即關閉</button>
         </div>
       </div>
 
