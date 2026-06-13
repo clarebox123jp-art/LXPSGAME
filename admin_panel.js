@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.14.20';   // ★ v3.14.20(2026-06-13)— 🐉 當前龍王切換卡(查詢/下拉切換並開戰滿血清榜/開戰/休戰,寫 stats/global.wbCurrentBossId + worldBossControl)｜v3.14.19 祝福卡 sidebar 補登錄
+window.ADMIN_PANEL_VERSION = 'v3.14.22';   // ★ v3.14.22(2026-06-13)— 🏆 排行榜卡新增「📜 歷戰記錄」分頁(每輪 BOSS 生出/倒下/結算時間+全玩家傷害排名快照,供補償/BUG 查詢;讀 stats/global.wbSettlement)｜v3.14.21 龍王切換卡描述
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -83,10 +83,10 @@ async function _adminWbBossSwitch(){
     const sdk = await _adminBlessingSdk();
     if(!sdk) throw new Error('SDK 不可用');
     const _maxHp = (_b && _b.maxHp) || 5000000;
-    // ① wbCurrentBossId(merge)+ ② 該龍王 HP 滿血(updateDoc 點記法只動該 key)
+    // ① wbCurrentBossId + spawn 時間(merge)+ ② 該龍王 HP 滿血(updateDoc 點記法只動該 key)
     await sdk.setDoc(sdk.doc(window._fbDb, 'stats', 'global'), { wbCurrentBossId: _id }, { merge: true });
     if(window._fbFns && window._fbFns.updateDoc){
-      const _upd = {}; _upd['worldBossHp.' + _id] = _maxHp;
+      const _upd = {}; _upd['worldBossHp.' + _id] = _maxHp; _upd['wbBossSpawnTimes.' + _id] = Date.now();   // ★ v3.14.22 記生出時間
       await window._fbFns.updateDoc(sdk.doc(window._fbDb, 'stats', 'global'), _upd);
     }
     // ③ 清榜(best-effort)
@@ -1851,8 +1851,8 @@ async function _showAdminStatsPanelImpl(){
       <div id="_admin-wbboss-section" style="background:rgba(40,18,18,0.55);border:2px solid rgba(255,120,90,0.7);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:800;color:#ff9977;margin-bottom:8px;">🐉 6.3b 當前龍王切換(全服)</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
-          切換全伺服器「現在可挑戰的世界 BOSS」。輪替順序:<b style="color:#ffcc88;">維蘇威 → 翠玉草 → 深海冰 → 風雷雲 → 山岳土 → 不死骨 → 神聖光 → 星辰幻</b> 循環。<br>
-          <span style="color:#aaa;font-size:12px;">祝福 72 小時結束後系統會<b style="color:#ffcc88;">自動接班下一隻</b>;這裡供手動跳隻 / 重開 / 休戰。「切換並開戰」會把該龍王 HP 重置滿血並清空其排行榜。</span>
+          切換全伺服器「現在可挑戰的世界 BOSS」。輪替順序:<b style="color:#ffcc88;">火(維蘇威)→ 草(翠玉)→ 土(山岳)→ 風(風雷雲)→ 水(深海冰)→ 暗(不死骨)→ 光(神聖)→ 幻(星辰)</b> 循環。<br>
+          <span style="color:#aaa;font-size:12px;">龍王倒下的<b style="color:#ffcc88;">隔天早上 8:00 結算排名獎勵時,系統會同時自動接班下一隻</b>(龍王的祝福仍獨立持續 72 小時)。這裡供手動跳隻 / 重開 / 休戰。「切換並開戰」會把該龍王 HP 重置滿血並清空其排行榜。</span>
         </div>
         <div id="_admin-wbboss-status" style="background:rgba(25,12,12,0.6);border:1.5px dashed rgba(255,140,100,0.45);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#ffd9cc;line-height:1.7;">
           ⏳ 尚未查詢 — 點下方「🔄 查詢當前龍王」
@@ -2081,6 +2081,27 @@ async function _showAdminStatsPanelImpl(){
             border:2px solid #88ccff;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">
             🔍 查看明細・指定刪除異常紀錄
           </button>
+        </div>
+        <!-- ★ v3.14.22 — 歷戰記錄分頁(每隻 BOSS 生出/倒下時間 + 全玩家傷害排名快照,供補償/BUG 查詢) -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <button id="_admin-wbhist-open" style="flex:1;padding:8px 14px;font-size:14px;font-weight:800;
+            background:linear-gradient(135deg,rgba(200,150,60,0.55),rgba(150,100,30,0.85));
+            border:2px solid #ffcc77;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">
+            📜 歷戰記錄(過往每輪戰績存檔)
+          </button>
+        </div>
+        <div id="_admin-wbhist-panel" style="display:none;margin-top:10px;background:rgba(25,18,8,0.6);border:1.5px solid rgba(255,200,100,0.4);border-radius:8px;padding:12px;">
+          <div style="font-size:13px;color:#ffd9aa;margin-bottom:8px;line-height:1.6;">
+            📜 <b>歷戰記錄</b>:每一隻 BOSS 每一輪的生出時間、倒下時間、結算時間,以及當輪全部上榜玩家的<b>傷害排名快照</b>。<br>
+            <span style="color:#aaa;font-size:12px;">資料來源為結算當下的雲端快照(stats/global.wbSettlement),即使之後排行榜被清空也保留。可用於補償核對與 BUG 檢查。</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+            <button id="_admin-wbhist-refresh" style="padding:7px 14px;font-size:13px;font-weight:700;background:rgba(90,70,40,0.6);border:1.5px solid rgba(220,180,120,0.6);color:#ffd9aa;border-radius:7px;cursor:pointer;font-family:inherit;">🔄 載入 / 重新整理</button>
+            <input id="_admin-wbhist-search" type="text" placeholder="🔍 篩選玩家(座號/名稱/uid 關鍵字)" style="flex:1;min-width:180px;padding:7px 10px;background:rgba(20,20,30,0.9);border:1px solid rgba(220,180,120,0.4);color:#fff;border-radius:6px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div id="_admin-wbhist-list" style="font-size:13px;color:#eee;line-height:1.6;max-height:60vh;overflow-y:auto;">
+            ⏳ 尚未載入 — 點「🔄 載入 / 重新整理」
+          </div>
         </div>
         <div style="font-size:12px;color:#999;line-height:1.55;">
           💡 想清空所有 BOSS 排行(目前只有維蘇威):console 跑 <code style="color:#aaccff;">_wbHpSync.clearLeaderboard()</code>
@@ -12351,10 +12372,128 @@ async function _showAdminStatsPanelImpl(){
         _body.innerHTML = '<span style="color:#ff8888;">查詢失敗:' + _esc(e && e.message || e) + '</span>';
       }
     };
-  })();
+    // ════════════════════════════════════════════════════════════════
+    // ★ v3.14.22 — 📜 歷戰記錄(過往每輪 BOSS 戰績存檔,供補償 / BUG 查詢)
+    //   資料來源:stats/global.wbSettlement[bossId][roundKey] = {
+    //     spawnAt, bossDownAt, settledAt, bossName,
+    //     leaderboardSnapshot:[{rank,teamKey,teamLabel,totalDmg,tier}],
+    //     awards:{uid:{rank,tier,...}}
+    //   }
+    //   即使排行榜之後被清空,結算快照仍永久保留。
+    // ════════════════════════════════════════════════════════════════
+    (function _bindWbHistSection(){
+      const _openBtn = document.getElementById('_admin-wbhist-open');
+      const _panel   = document.getElementById('_admin-wbhist-panel');
+      const _refBtn  = document.getElementById('_admin-wbhist-refresh');
+      const _listEl  = document.getElementById('_admin-wbhist-list');
+      const _searchEl= document.getElementById('_admin-wbhist-search');
+      if(!_openBtn || !_panel || !_listEl) return;
 
-  // ════════════════════════════════════════════════════════════════
-  // ★ v3.12.17(2026-05-31) — 世界 BOSS 補償券區塊綁定
+      let _histCache = null;  // [{bossId,bossName,roundKey,spawnAt,bossDownAt,settledAt,rows:[...]}], 倒序
+
+      _openBtn.onclick = function(){
+        const _show = (_panel.style.display === 'none' || !_panel.style.display);
+        _panel.style.display = _show ? 'block' : 'none';
+        _openBtn.textContent = _show ? '📜 收起歷戰記錄' : '📜 歷戰記錄(過往每輪戰績存檔)';
+        if(_show && !_histCache) _loadHist();
+      };
+
+      function _fmtFull(ts){
+        if(!ts || typeof ts !== 'number') return '—';
+        try{
+          const d = new Date(ts);
+          const pad = function(n){ return n < 10 ? '0'+n : ''+n; };
+          return (d.getMonth()+1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }catch(_){ return '—'; }
+      }
+      function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+
+      async function _loadHist(){
+        _listEl.innerHTML = '⏳ 讀取雲端結算記錄中…';
+        try{
+          const sdk = (window._fbFns && window._fbFns.getDoc) ? window._fbFns
+                      : await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          const _snap = await sdk.getDoc(sdk.doc(window._fbDb, 'stats', 'global'));
+          const _d = _snap.exists() ? (_snap.data() || {}) : {};
+          const _settle = _d.wbSettlement || {};
+          const _lu = window.WORLD_BOSS_LINEUP || [];
+          const _nameOf = function(bid){ const _b = _lu.filter(function(x){ return x && x.id === bid; })[0]; return (_b && _b.name) || bid; };
+          const _rounds = [];
+          Object.keys(_settle).forEach(function(bid){
+            const _byRound = _settle[bid] || {};
+            Object.keys(_byRound).forEach(function(rk){
+              const _r = _byRound[rk] || {};
+              if(!_r.settledAt) return;
+              _rounds.push({
+                bossId: bid,
+                bossName: _r.bossName || _nameOf(bid),
+                roundKey: rk,
+                spawnAt: _r.spawnAt || 0,
+                bossDownAt: _r.bossDownAt || 0,
+                settledAt: _r.settledAt || 0,
+                rows: Array.isArray(_r.leaderboardSnapshot) ? _r.leaderboardSnapshot : [],
+                awards: _r.awards || {},
+              });
+            });
+          });
+          _rounds.sort(function(a, b){ return (b.settledAt || 0) - (a.settledAt || 0); });   // 最新在上
+          _histCache = _rounds;
+          _renderHist();
+        }catch(e){
+          console.warn('[GM歷戰記錄] 載入失敗', e);
+          _listEl.innerHTML = '<span style="color:#ff8888;">❌ 載入失敗:' + _esc(e && e.message ? e.message : e) + '</span>';
+        }
+      }
+
+      function _renderHist(){
+        if(!_histCache || _histCache.length === 0){
+          _listEl.innerHTML = '<span style="color:#aaa;">📭 尚無歷戰記錄(還沒有任何 BOSS 完成隔天 8:00 結算)。</span>';
+          return;
+        }
+        const _kw = (_searchEl && _searchEl.value || '').trim().toLowerCase();
+        const _blocks = _histCache.map(function(rd){
+          let _rows = rd.rows;
+          if(_kw){
+            _rows = _rows.filter(function(e){
+              return String(e.teamKey || '').toLowerCase().indexOf(_kw) >= 0
+                  || String(e.teamLabel || '').toLowerCase().indexOf(_kw) >= 0;
+            });
+            if(_rows.length === 0) return '';   // 此輪無符合玩家 → 篩掉
+          }
+          const _tierColor = { mythic:'#ff66cc', legendary:'#ffcc44', epic:'#cc88ff', rare:'#66ccff', normal:'#aaccaa', memorial:'#999' };
+          const _rowsHtml = _rows.slice(0, 100).map(function(e){
+            const _c = _tierColor[e.tier] || '#ccc';
+            return '<tr>'
+              + '<td style="padding:2px 8px;text-align:right;color:#ffd966;font-weight:700;">#' + e.rank + '</td>'
+              + '<td style="padding:2px 8px;color:#cde;">' + _esc(e.teamLabel || e.teamKey || '—') + '</td>'
+              + '<td style="padding:2px 8px;text-align:right;color:#fa8;">' + Number(e.totalDmg || 0).toLocaleString() + '</td>'
+              + '<td style="padding:2px 8px;color:' + _c + ';font-size:12px;">' + _esc(e.tier || '') + '</td>'
+              + '</tr>';
+          }).join('');
+          return '<div style="margin-bottom:14px;border:1px solid rgba(255,200,100,0.3);border-radius:8px;overflow:hidden;">'
+            + '<div style="background:rgba(80,55,20,0.6);padding:8px 12px;">'
+            +   '<div style="font-size:14px;font-weight:800;color:#ffcc77;">🐉 ' + _esc(rd.bossName) + '<span style="font-size:11px;color:#aaa;font-weight:400;"> · ' + _esc(rd.roundKey) + '</span></div>'
+            +   '<div style="font-size:11.5px;color:#ddc;margin-top:3px;line-height:1.5;">'
+            +     '🌅 生出:<b>' + _fmtFull(rd.spawnAt) + '</b> ｜ 💀 倒下:<b>' + _fmtFull(rd.bossDownAt) + '</b> ｜ 🎁 結算:<b>' + _fmtFull(rd.settledAt) + '</b>'
+            +   '</div>'
+            + '</div>'
+            + (_rowsHtml
+                ? ('<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+                    + '<thead><tr style="background:rgba(0,0,0,0.3);color:#aaa;font-size:11px;">'
+                    + '<th style="padding:3px 8px;text-align:right;">名次</th><th style="padding:3px 8px;text-align:left;">隊伍 / 玩家</th><th style="padding:3px 8px;text-align:right;">總傷害</th><th style="padding:3px 8px;text-align:left;">層級</th>'
+                    + '</tr></thead><tbody>' + _rowsHtml + '</tbody></table>')
+                : '<div style="padding:8px 12px;color:#888;font-size:12px;">(此輪無排行榜快照 — 可能為舊版本結算)</div>')
+            + '</div>';
+        }).filter(Boolean).join('');
+        _listEl.innerHTML = _blocks
+          || '<span style="color:#aaa;">🔍 找不到符合「' + _esc(_kw) + '」的玩家記錄。</span>';
+      }
+
+      if(_refBtn) _refBtn.onclick = _loadHist;
+      if(_searchEl) _searchEl.addEventListener('input', function(){ if(_histCache) _renderHist(); });
+    })();
+
+  })();
   // ────────────────────────────────────────────────────────────────
   // 三個功能:
   //   A. 🔍 掃描全校重複戰績 → 列出每組重複,逐筆「刪除 + 恢復進場」

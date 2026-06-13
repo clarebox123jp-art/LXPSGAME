@@ -184,15 +184,16 @@
   //   所有「現在打哪隻」判定一律走 _wbGetCurrentBossId()/_wbGetCurrentBoss(),禁止再寫死。
   // ═══════════════════════════════════════════════════════════════════
   window._WB_DEFAULT_BOSS_ID = 'vesuvius_fire_dragon';
+  // ★ v3.14.21 老師裁示順序:火 → 草 → 土 → 風 → 水 → 暗 → 光 → 幻 → 火(循環)
   window._WB_BOSS_ROTATION = [
-    'vesuvius_fire_dragon',   // 1. 維蘇威火山龍王(首發)
-    'cuiyu_grass_dragon',     // 2. 翠玉草龍王(老師指定第二棒)
-    'shenhai_water_dragon',   // 3. 深海冰龍王
-    'taifeng_wind_dragon',    // 4. 風雷雲龍王
-    'shanyue_earth_dragon',   // 5. 山岳土龍王
-    'bushi_dark_dragon',      // 6. 不死骨龍王
-    'shensheng_light_dragon', // 7. 神聖光龍王
-    'xingchen_omni_dragon',   // 8. 星辰幻龍王(終極)→ 循環回維蘇威
+    'vesuvius_fire_dragon',   // 1. 火 — 維蘇威火山龍王(首發)
+    'cuiyu_grass_dragon',     // 2. 草 — 翠玉草龍王
+    'shanyue_earth_dragon',   // 3. 土 — 山岳土龍王
+    'taifeng_wind_dragon',    // 4. 風 — 風雷雲龍王
+    'shenhai_water_dragon',   // 5. 水 — 深海冰龍王
+    'bushi_dark_dragon',      // 6. 暗 — 不死骨龍王
+    'shensheng_light_dragon', // 7. 光 — 神聖光龍王
+    'xingchen_omni_dragon',   // 8. 幻 — 星辰幻龍王(終極)→ 循環回火
   ];
   window._wbGetCurrentBossId = function(){
     try{
