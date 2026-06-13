@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.14.19';   // ★ v3.14.19(2026-06-12)— 補修 v3.14.16 漏上傳:祝福控制卡登錄 SIDEBAR_ITEMS+GROUPS(三點同步,鐵律 1.140)｜v3.14.15 龍王的祝福手動控制卡(查詢狀態/開啟續期可調小時與加成%/立即關閉,寫 stats/global.wbBlessing)
+window.ADMIN_PANEL_VERSION = 'v3.14.20';   // ★ v3.14.20(2026-06-13)— 🐉 當前龍王切換卡(查詢/下拉切換並開戰滿血清榜/開戰/休戰,寫 stats/global.wbCurrentBossId + worldBossControl)｜v3.14.19 祝福卡 sidebar 補登錄
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -23,6 +23,101 @@ window.ADMIN_PANEL_VERSION = 'v3.14.19';   // ★ v3.14.19(2026-06-12)— 補修
 //   讀取端:index.html _gameBlessingMult / 入口倒數標籤、world-boss.js 大廳橫幅(皆已存在)。
 //   關閉採整顆覆寫 active:false(不靠深 merge,避免殘留欄位歧義)。
 // ════════════════════════════════════════════════════════════════════
+// ★ v3.14.20 — 🐉 當前龍王切換(老師裁示「甲」)
+//   stats/global.wbCurrentBossId = 全服當前可挑戰的龍王;玩家端 _wbGetCurrentBossId() 讀取。
+//   「切換並開戰」= 寫 wbCurrentBossId + 該 BOSS 滿血 + 清該 BOSS 排行榜 + worldBossControl 開戰;
+//   「休戰 / 開戰」= 只切 worldBossControl/main.ceasefire,不動當前龍王。
+//   自動接班:祝福 72h 到期由玩家端 _wbTryAutoAdvanceBoss 依 _WB_BOSS_ROTATION 自動切下一隻。
+async function _adminWbBossQuery(){
+  const el = document.getElementById('_admin-wbboss-status');
+  if(el) el.innerHTML = '⏳ 查詢中…';
+  try{
+    const sdk = await _adminBlessingSdk();
+    if(!sdk) throw new Error('SDK 不可用');
+    const _snap = await sdk.getDoc(sdk.doc(window._fbDb, 'stats', 'global'));
+    const _d = _snap.exists() ? (_snap.data() || {}) : {};
+    const _curId = _d.wbCurrentBossId || 'vesuvius_fire_dragon';
+    const _lu = window.WORLD_BOSS_LINEUP || [];
+    const _b = _lu.filter(function(x){ return x && x.id === _curId; })[0] || null;
+    const _hp = (_d.worldBossHp && typeof _d.worldBossHp[_curId] === 'number') ? _d.worldBossHp[_curId] : null;
+    const _maxHp = (_b && _b.maxHp) || 5000000;
+    let _cf = '?';
+    try{
+      const _cs = await sdk.getDoc(sdk.doc(window._fbDb, 'worldBossControl', 'main'));
+      _cf = (_cs.exists() && _cs.data() && _cs.data().ceasefire === false) ? '🔴 開戰中' : '⚪ 休戰中';
+    }catch(_){}
+    if(el) el.innerHTML = '🐉 當前龍王:<b style="color:#ffcc66;">' + ((_b && _b.name) || _curId) + '</b>'
+      + '(id: ' + _curId + ')<br>'
+      + '❤️ 雲端 HP:' + (_hp === null ? '尚無紀錄(視為滿血)' : (Number(_hp).toLocaleString() + ' / ' + Number(_maxHp).toLocaleString()))
+      + '<br>⚔ 討伐戰狀態:' + _cf
+      + ((_d.wbBlessing && _d.wbBlessing.expiresAt > Date.now() && _d.wbBlessing.active) ? '<br>🌟 祝福進行中(到期自動接班下一隻)' : '');
+    const _sel = document.getElementById('_admin-wbboss-select');
+    if(_sel && _sel.options.length === 0){
+      (window._WB_BOSS_ROTATION || _lu.map(function(x){ return x && x.id; })).forEach(function(_bid){
+        const _bb = _lu.filter(function(x){ return x && x.id === _bid; })[0];
+        if(!_bb) return;
+        const _opt = document.createElement('option');
+        _opt.value = _bb.id; _opt.textContent = _bb.name + '(' + _bb.id + ')';
+        _sel.appendChild(_opt);
+      });
+    }
+    if(_sel && _sel.value !== _curId){
+      for(let _i = 0; _i < _sel.options.length; _i++){ if(_sel.options[_i].value === _curId){ _sel.selectedIndex = _i; break; } }
+    }
+  }catch(e){
+    console.warn('[GM龍王切換] 查詢失敗', e);
+    if(el) el.innerHTML = '❌ 查詢失敗:' + (e && e.message ? e.message : e);
+  }
+}
+async function _adminWbBossSwitch(){
+  const el = document.getElementById('_admin-wbboss-status');
+  const _sel = document.getElementById('_admin-wbboss-select');
+  if(!_sel || !_sel.value){ if(el) el.innerHTML = '⚠ 請先選擇龍王'; return; }
+  const _id = _sel.value;
+  const _lu = window.WORLD_BOSS_LINEUP || [];
+  const _b = _lu.filter(function(x){ return x && x.id === _id; })[0] || null;
+  const _nm = (_b && _b.name) || _id;
+  if(!confirm('確定要把全服當前龍王切換為「' + _nm + '」並開戰嗎?\n\n會執行:\n① wbCurrentBossId = ' + _id + '\n② 該龍王 HP 重置為滿血\n③ 清空該龍王排行榜(乾淨新一輪)\n④ 討伐戰狀態 = 開戰')) return;
+  if(el) el.innerHTML = '⏳ 切換中…';
+  try{
+    const sdk = await _adminBlessingSdk();
+    if(!sdk) throw new Error('SDK 不可用');
+    const _maxHp = (_b && _b.maxHp) || 5000000;
+    // ① wbCurrentBossId(merge)+ ② 該龍王 HP 滿血(updateDoc 點記法只動該 key)
+    await sdk.setDoc(sdk.doc(window._fbDb, 'stats', 'global'), { wbCurrentBossId: _id }, { merge: true });
+    if(window._fbFns && window._fbFns.updateDoc){
+      const _upd = {}; _upd['worldBossHp.' + _id] = _maxHp;
+      await window._fbFns.updateDoc(sdk.doc(window._fbDb, 'stats', 'global'), _upd);
+    }
+    // ③ 清榜(best-effort)
+    try{
+      if(window._wbHpSync && typeof window._wbHpSync.clearLeaderboard === 'function'){
+        await window._wbHpSync.clearLeaderboard(_id);
+      }
+    }catch(_eClr){ console.warn('[GM龍王切換] 清榜失敗(不影響切換)', _eClr); }
+    // ④ 開戰
+    await sdk.setDoc(sdk.doc(window._fbDb, 'worldBossControl', 'main'),
+      { ceasefire: false, updatedAt: Date.now(), updatedBy: (window._gUserEmail || 'GM') }, { merge: true });
+    try{ if(window._cachedGlobalStats) window._cachedGlobalStats.wbCurrentBossId = _id; }catch(_){}
+    if(el) el.innerHTML = '✅ 已切換!當前龍王 = <b style="color:#ffcc66;">' + _nm + '</b>(滿血、排行榜已清、開戰中)。全體玩家約 1 分鐘內生效。';
+  }catch(e){
+    console.warn('[GM龍王切換] 失敗', e);
+    if(el) el.innerHTML = '❌ 切換失敗:' + (e && e.message ? e.message : e);
+  }
+}
+async function _adminWbBossCeasefire(_on){
+  const el = document.getElementById('_admin-wbboss-status');
+  try{
+    const sdk = await _adminBlessingSdk();
+    if(!sdk) throw new Error('SDK 不可用');
+    await sdk.setDoc(sdk.doc(window._fbDb, 'worldBossControl', 'main'),
+      { ceasefire: !!_on, updatedAt: Date.now(), updatedBy: (window._gUserEmail || 'GM') }, { merge: true });
+    if(el) el.innerHTML = _on ? '⚪ 已切換為「休戰中」(玩家無法開戰)。' : '🔴 已切換為「開戰中」!';
+  }catch(e){
+    console.warn('[GM龍王切換] 開關失敗', e);
+    if(el) el.innerHTML = '❌ 操作失敗:' + (e && e.message ? e.message : e);
+  }
+}
 async function _adminBlessingSdk(){
   try{
     if(window._fbFns && window._fbFns.setDoc){
@@ -1752,6 +1847,29 @@ async function _showAdminStatsPanelImpl(){
       </div>
 
       <!-- ★ v3.14.15(2026-06-12) — 🌟 龍王的祝福手動控制(老師需求:可手動開關,小時可輸入) -->
+      <!-- ★ v3.14.20 — 🐉 當前龍王切換(老師裁示「甲」:GM 可手動選擇開啟和關) -->
+      <div id="_admin-wbboss-section" style="background:rgba(40,18,18,0.55);border:2px solid rgba(255,120,90,0.7);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:800;color:#ff9977;margin-bottom:8px;">🐉 6.3b 當前龍王切換(全服)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          切換全伺服器「現在可挑戰的世界 BOSS」。輪替順序:<b style="color:#ffcc88;">維蘇威 → 翠玉草 → 深海冰 → 風雷雲 → 山岳土 → 不死骨 → 神聖光 → 星辰幻</b> 循環。<br>
+          <span style="color:#aaa;font-size:12px;">祝福 72 小時結束後系統會<b style="color:#ffcc88;">自動接班下一隻</b>;這裡供手動跳隻 / 重開 / 休戰。「切換並開戰」會把該龍王 HP 重置滿血並清空其排行榜。</span>
+        </div>
+        <div id="_admin-wbboss-status" style="background:rgba(25,12,12,0.6);border:1.5px dashed rgba(255,140,100,0.45);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#ffd9cc;line-height:1.7;">
+          ⏳ 尚未查詢 — 點下方「🔄 查詢當前龍王」
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:12px;">
+          <label style="font-size:13px;color:#ccc;flex:2;min-width:200px;">🐲 選擇龍王
+            <select id="_admin-wbboss-select" style="width:100%;padding:7px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,140,100,0.45);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></select>
+          </label>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <button onclick="_adminWbBossQuery()" style="flex:1;min-width:140px;padding:10px;font-size:14px;font-weight:800;background:rgba(80,90,140,0.6);color:#cdf;border:1.5px solid rgba(140,160,255,0.5);border-radius:8px;cursor:pointer;font-family:inherit;">🔄 查詢當前龍王</button>
+          <button onclick="_adminWbBossSwitch()" style="flex:1.5;min-width:190px;padding:10px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#cc4422,#882211);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">⚔ 切換並開戰(滿血+清榜)</button>
+          <button onclick="_adminWbBossCeasefire(false)" style="flex:1;min-width:110px;padding:10px;font-size:14px;font-weight:800;background:rgba(150,80,30,0.7);color:#fec;border:1.5px solid rgba(255,170,90,0.5);border-radius:8px;cursor:pointer;font-family:inherit;">🔴 開戰</button>
+          <button onclick="_adminWbBossCeasefire(true)" style="flex:1;min-width:110px;padding:10px;font-size:14px;font-weight:800;background:rgba(90,90,100,0.7);color:#ddd;border:1.5px solid rgba(170,170,190,0.5);border-radius:8px;cursor:pointer;font-family:inherit;">⚪ 休戰</button>
+        </div>
+      </div>
+
       <div id="_admin-blessing-section" style="background:rgba(55,42,12,0.5);border:2px solid rgba(255,210,90,0.7);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:800;color:#ffe066;margin-bottom:8px;">🌟 6.4 龍王的祝福控制(手動開關)</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
@@ -2138,6 +2256,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
+      { sec: '_admin-wbboss-section',           label: '🐉 當前龍王切換',          hint: '切換全服龍王 / 開戰 / 休戰' },
       { sec: '_admin-blessing-section',         label: '🌟 龍王的祝福',            hint: '查詢 / 手動開啟續期 / 關閉全服加成' },
       { sec: '_admin-bonus-section',            label: '🎫 世界 BOSS 補償券',      hint: '掃描重複戰績 + 補進場機會' },
       { sec: '_admin-ticket-section',           label: '🎟️ 世界 BOSS 入場券',      hint: '補發/查詢/清空挑戰入場券' },
@@ -2179,7 +2298,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
       { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
-      { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
+      { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
       { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section'] },
     ];

@@ -1,5 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v3.14.20(2026-06-13)— 當前龍王切換系統:_WB_BOSS_ROTATION + _wbGetCurrentBossId/_wbGetCurrentBoss/_wbGetNextBossId;
+ *   4 處寫死 vesuvius 改動態(開戰重置/入口 HP 條/單人最佳/傷害同步 fallback)
  * ────────────────────────────────────────────────────────────────────
  * 為了讓主程式 index.html 不繼續增肥,世界 BOSS 系統除「Firebase 連線層
  * _wbNet」必須留在主程式 module 內以外,其餘全部移到本檔。
@@ -170,6 +172,46 @@
       shieldElements:['fire','water','wind','earth','light','dark','grass'],  // ★ 終極龍:7 元素全開
       desc:'集八元素之力於一身的終極龍,每階段切換屬性' },
   ];
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ★ v3.14.20 — 當前龍王切換系統(老師裁示「甲」)
+  //   背景:過去當前龍王寫死 vesuvius_fire_dragon(全檔約 30 處),翠玉草只能預覽不能打。
+  //   設計:
+  //   ① 雲端欄位 stats/global.wbCurrentBossId(玩家端 _cachedGlobalStats 快取同步)
+  //   ② 輪替順序 _WB_BOSS_ROTATION:維蘇威 → 翠玉草(老師指定第二棒)→ 其餘照 LINEUP 順序循環
+  //   ③ 祝福 72h 到期 → _wbTryAutoAdvanceBoss(index.html)搶鎖 transaction 自動接班下一隻(滿血)
+  //   ④ GM 後台「當前龍王切換」卡可手動切換任一隻 / 開戰 / 休戰
+  //   所有「現在打哪隻」判定一律走 _wbGetCurrentBossId()/_wbGetCurrentBoss(),禁止再寫死。
+  // ═══════════════════════════════════════════════════════════════════
+  window._WB_DEFAULT_BOSS_ID = 'vesuvius_fire_dragon';
+  window._WB_BOSS_ROTATION = [
+    'vesuvius_fire_dragon',   // 1. 維蘇威火山龍王(首發)
+    'cuiyu_grass_dragon',     // 2. 翠玉草龍王(老師指定第二棒)
+    'shenhai_water_dragon',   // 3. 深海冰龍王
+    'taifeng_wind_dragon',    // 4. 風雷雲龍王
+    'shanyue_earth_dragon',   // 5. 山岳土龍王
+    'bushi_dark_dragon',      // 6. 不死骨龍王
+    'shensheng_light_dragon', // 7. 神聖光龍王
+    'xingchen_omni_dragon',   // 8. 星辰幻龍王(終極)→ 循環回維蘇威
+  ];
+  window._wbGetCurrentBossId = function(){
+    try{
+      const gs = window._cachedGlobalStats;
+      const id = gs && gs.wbCurrentBossId;
+      if(id && (window.WORLD_BOSS_LINEUP || []).some(function(b){ return b && b.id === id; })) return id;
+    }catch(_){}
+    return window._WB_DEFAULT_BOSS_ID;
+  };
+  window._wbGetCurrentBoss = function(){
+    const _id = window._wbGetCurrentBossId();
+    const _lu = window.WORLD_BOSS_LINEUP || [];
+    return _lu.find(function(b){ return b && b.id === _id; }) || _lu[0] || null;
+  };
+  window._wbGetNextBossId = function(afterId){
+    const _rot = window._WB_BOSS_ROTATION || [];
+    const _i = _rot.indexOf(afterId || window._wbGetCurrentBossId());
+    return _rot[(_i >= 0 ? _i + 1 : 0) % _rot.length] || window._WB_DEFAULT_BOSS_ID;
+  };
 
   // ───────────────────────────────────────────────────────────────────
   // 2. 掉落物 (依個人傷害%分級)
@@ -1045,9 +1087,9 @@
       if(st.ceasefire === true && newCeasefire === false){
         try{
           if(window._wbHpSync && typeof window._wbHpSync.resetHp === 'function'){
-            // 從 WORLD_BOSS_LINEUP 拿當前 BOSS 滿血;預設維蘇威 5000000
-            const _lineup = window.WORLD_BOSS_LINEUP || [];
-            const _curBoss = _lineup.find(b => b && b.id === 'vesuvius_fire_dragon') || _lineup[0];
+            // 從當前龍王(★ v3.14.20 動態,_wbGetCurrentBoss)拿滿血;後備維蘇威 5000000
+            const _curBoss = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss())
+                          || (window.WORLD_BOSS_LINEUP || [])[0];
             const _maxHp = (_curBoss && _curBoss.maxHp) || 5000000;
             const _bossId = (_curBoss && _curBoss.id) || 'vesuvius_fire_dragon';
             await window._wbHpSync.resetHp(_bossId, _maxHp);
@@ -1258,9 +1300,9 @@
     const pctEl = document.getElementById('adv-wb-hp-pct');
     if(!bar) return;  // 還沒到關卡選擇頁
 
-    // 取得當前 BOSS 的 maxHp
+    // 取得當前 BOSS 的 maxHp(★ v3.14.20 動態當前龍王)
     const lineup = window.WORLD_BOSS_LINEUP || [];
-    const curBoss = lineup.find(b => b.id === 'vesuvius_fire_dragon') || lineup[0];
+    const curBoss = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || lineup[0];
     const maxHp = (curBoss && curBoss.maxHp) || 5000000;
 
     // 取得當前 HP — 從 _cachedGlobalStats.worldBossHp 讀
@@ -3785,7 +3827,7 @@
     let _prevBest = null;
     try{
       if(typeof window._wbGetSoloBest === 'function'){
-        _prevBest = window._wbGetSoloBest('vesuvius_fire_dragon');
+        _prevBest = window._wbGetSoloBest((typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon');  // ★ v3.14.20 動態當前龍王
       }
     }catch(_){}
 
@@ -3870,8 +3912,8 @@
       const _wbBoss = (_Gr && _Gr.p2 && _Gr.p2[0]) || null;
       if(_wbBoss && typeof _wbBoss.hp === 'number' && typeof _wbBoss.curHp === 'number'
          && window._wbHpSync && typeof window._wbHpSync.dealDamage === 'function'){
-        // 對應的 bossId 從 WORLD_BOSS_LINEUP 反查(用名稱比對),保險起見 fallback 'vesuvius_fire_dragon'
-        let bossId = 'vesuvius_fire_dragon';
+        // 對應的 bossId 從 WORLD_BOSS_LINEUP 反查(用名稱比對);保險 fallback 改當前龍王(★ v3.14.20)
+        let bossId = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';
         try{
           const _lineup = window.WORLD_BOSS_LINEUP || [];
           const _m = _lineup.find(b => b && b.name === _wbBoss.name);

@@ -1,5 +1,7 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ★ v3.14.20(2026-06-13)— 全 UI 動態當前龍王:生成/排行/紀錄/獎章改 _wbGetCurrentBossId;-->
+<!--   名稱/立繪/背景由 _wbApplyCurrentBossSkin 統一換皮(wb-curboss-nm / wb-curboss-img / --wb-boss-bg) -->
 <!-- ────────────────────────────────────────────────────────────────────── -->
 <!-- 本檔由 world-boss.js 在玩家第一次點「🌍 世界 BOSS 討伐戰」按鈕時          -->
 <!-- 透過 fetch() 載入,然後將整段 HTML 注入到 <body> 末端。                  -->
@@ -1011,7 +1013,7 @@
           </div>
           <div id="wb-blessing-bossname" style="font-size:13px;color:#fff;margin-top:4px;">
             <!-- ★ FIX 20260517(c) — 全服祝福加成統一 +25% / 72 小時 -->
-            維蘇威火山龍王已被全伺服器擊敗!
+            <span class="wb-curboss-nm">維蘇威火山龍王</span>已被全伺服器擊敗!
             所有玩家 EXP / 知識幣 / 掉寶率 +25%
           </div>
           <div id="wb-blessing-countdown" style="font-size:13px;color:#c8a8ff;margin-top:6px;">
@@ -1030,12 +1032,12 @@
     <!-- BOSS 預覽 -->
     <div class="wb-boss-preview">
       <div class="wb-boss-portrait">
-        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
+        <img class="wb-curboss-img" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
              onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
              alt="維蘇威火山龍王">
       </div>
       <div class="wb-boss-info">
-        <div class="wb-boss-name">⚔️ 維蘇威火山龍王 <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
+        <div class="wb-boss-name">⚔️ <span class="wb-curboss-nm">維蘇威火山龍王</span> <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
         <div style="font-size:13px;color:#aaa;line-height:1.5;">
           沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 3/5/7/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
@@ -1154,7 +1156,7 @@
       box-shadow:0 0 18px rgba(212,168,67,0.25);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
         <div style="font-size:22px;font-weight:800;color:#ffe066;letter-spacing:2px;text-shadow:0 0 8px rgba(255,220,80,0.4);">
-          🏆 當前排行榜 — 維蘇威火山龍王
+          🏆 當前排行榜 — <span class="wb-curboss-nm">維蘇威火山龍王</span>
         </div>
         <button id="wb-leaderboard-refresh-btn" style="padding:6px 14px;font-size:13px;font-weight:700;
           background:rgba(212,168,67,0.2);border:1.5px solid #d4a843;color:#ffe066;
@@ -1298,7 +1300,32 @@
 // ★ FIX 20260519(v12) — 當前排行榜渲染
 // ★ FIX 20260519(v13) — 改為 20 名 + 字加大(font-size 14→20)
 (function _wbRenderCurrentLeaderboard(){
-  const _BOSS_ID = 'vesuvius_fire_dragon';
+  const _BOSS_ID = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';  // ★ v3.14.20 動態當前龍王
+// ★ v3.14.20 — 當前龍王外觀統一換皮:把入口/詳細卡/戰鬥標頭的名稱、立繪、背景換成當前龍王
+//   掛勾:HTML 中 class="wb-curboss-nm"(名稱)/ class="wb-curboss-img"(立繪)/ CSS var --wb-boss-bg(背景)
+//   立繪來源 HERO_IMGS[boss.name](翠玉草=草龍王.png 由 world-boss.js _wbInstallHeroData 掛載)
+window._wbApplyCurrentBossSkin = function(){
+  try{
+    const _b = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+    if(!_b || !_b.name) return;
+    const _nm = _b.name;
+    let _img = '';
+    try{ _img = (window.HERO_IMGS && window.HERO_IMGS[_nm]) || ''; }catch(_){}
+    document.querySelectorAll('.wb-curboss-nm').forEach(function(el){ el.textContent = _nm; });
+    const _mg = document.getElementById('wb-mega-boss-name'); if(_mg) _mg.textContent = _nm;
+    const _bn = document.getElementById('wb-battle-boss-name'); if(_bn) _bn.textContent = _nm;
+    if(_img){
+      document.querySelectorAll('img.wb-curboss-img').forEach(function(el){ el.src = _img; el.alt = _nm; el.style.display = ''; });
+      try{ document.documentElement.style.setProperty('--wb-boss-bg', "url('" + _img + "')"); }catch(_){}
+    }
+    document.querySelectorAll('.wb-tc-boss-preview-mini').forEach(function(btn){ btn.title = '查看' + _nm + '詳細資料'; });
+  }catch(_eSk){ console.warn('[WB skin v3.14.20] 套用當前龍王外觀失敗', _eSk); }
+};
+try{
+  setTimeout(window._wbApplyCurrentBossSkin, 80);     // UI 注入完成後立即套用
+  setTimeout(window._wbApplyCurrentBossSkin, 1800);   // 雲端快取晚到時再套一次
+}catch(_){}
+
   const _MAX_ROWS = 20;
   const _esc = function(s){
     return String(s == null ? '' : s)
@@ -1337,7 +1364,7 @@
     }catch(_eFilter){ console.warn('[WB-Leaderboard v3.11.10] 管理員過濾例外', _eFilter); }
     if(!entries.length){
       list.innerHTML = '<div style="padding:18px;text-align:center;color:#888;font-style:italic;font-size:18px;">'
-        + '尚無紀錄,快來成為第一個挑戰維蘇威火山龍王的隊伍!</div>';
+        + '尚無紀錄,快來成為第一個挑戰' + ((((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '龍王') + '的隊伍!</div>';
       return;
     }
     // 識別當前玩家的隊伍(高亮)
@@ -1582,7 +1609,8 @@
       // 從快取重新撈該隊伍
       const _gs = window._cachedGlobalStats;
       const _lbMap = (_gs && _gs.worldBossLeaderboard) || {};
-      const _list = Array.isArray(_lbMap['vesuvius_fire_dragon']) ? _lbMap['vesuvius_fire_dragon'] : [];
+      const _curBid = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';  // ★ v3.14.20
+      const _list = Array.isArray(_lbMap[_curBid]) ? _lbMap[_curBid] : [];
       const _entry = _list.find(function(x){ return x && x.teamKey === _tk; });
       if(!_entry){ alert('找不到隊伍資料'); return; }
       _showPlayerHistoryModal(_entry);
@@ -1821,7 +1849,7 @@
   #wb-lobby-overlay.wb-in-battle{
     background:
       linear-gradient(180deg,rgba(8,10,24,0.5) 0%,rgba(8,10,24,0.3) 40%,rgba(8,10,24,0.85) 100%),
-      url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
+      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center/cover no-repeat,
       #1a0a08;
   }
   #wb-lobby-overlay.wb-in-battle .wb-lobby-card{
@@ -2027,7 +2055,7 @@
     content:'';position:absolute;inset:0;z-index:-1;
     background:
       linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
-      url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png') center/cover no-repeat,
+      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center/cover no-repeat,
       #1a0a08;
     pointer-events:none;
   }
@@ -3744,12 +3772,12 @@
     <!-- BOSS 預覽 -->
     <div class="wb-boss-preview-small">
       <div class="wb-boss-mini-portrait">
-        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
+        <img class="wb-curboss-img" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
              onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
              alt="維蘇威火山龍王">
       </div>
       <div>
-        <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ 維蘇威火山龍王</div>
+        <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ <span class="wb-curboss-nm">維蘇威火山龍王</span></div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
           HP 5,000,000 ✦ 火屬性 ✦ 4 階段護盾<br>
           🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
@@ -3811,7 +3839,7 @@
         <!-- BOSS 立繪小區(已被 .wb-in-battle .wb-battle-boss-zone display:none 隱藏,但保留 DOM 給可能引用) -->
         <div class="wb-battle-boss-zone" style="display:none;">
           <div class="wb-battle-boss-portrait">
-            <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
+            <img class="wb-curboss-img" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
                  onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
                  alt="維蘇威火山龍王">
           </div>
@@ -3849,7 +3877,7 @@
   <div class="wb-tc-card">
     <!-- ★ FIX 20260516 v3 — 右上角 BOSS 預覽小視窗,點開叫主程式的圖鑑詳情頁 -->
     <button class="wb-tc-boss-preview-mini" onclick="_wbTcOpenBossDetail()" title="查看維蘇威火山龍王詳細資料">
-      <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
+      <img class="wb-curboss-img" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png"
            alt="維蘇威火山龍王"
            onerror="this.style.display='none';this.parentElement.innerHTML='🐉';">
       <span class="wb-tc-boss-preview-label">點看 BOSS</span>
@@ -4693,7 +4721,7 @@
     }
     const vis = (visibility === 'public') ? 'public' : 'private';
     const roomId = await window._wbNet.createRoom({
-      bossId: 'vesuvius_fire_dragon',
+      bossId: (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon',  // ★ v3.14.20 動態當前龍王
       visibility: vis
     });
     if(roomId){
@@ -5710,7 +5738,7 @@
   function _wbTcGetShieldElems(bossId){
     try{
       const lineup = window.WORLD_BOSS_LINEUP || [];
-      const targetId = bossId || 'vesuvius_fire_dragon';
+      const targetId = bossId || ((typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon');  // ★ v3.14.20
       const boss = lineup.find(b => b.id === targetId) || lineup[0];
       if(boss && Array.isArray(boss.shieldElements) && boss.shieldElements.length > 0){
         return boss.shieldElements.slice();
@@ -7876,7 +7904,7 @@
 
   // ★ FIX 20260516 v6 — 點 BOSS 預覽:顯示維蘇威詳情
   window._wbTcOpenBossDetail = function(){
-    const html = _wbTcBuildInfoHtml('維蘇威火山龍王');
+    const html = _wbTcBuildInfoHtml(((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name || '維蘇威火山龍王');  // ★ v3.14.20
     _wbTcShowInfoPopup(html);
   };
 
@@ -8684,8 +8712,9 @@
         '至寶=', h._wbTreasureIds ? h._wbTreasureIds.join(',') : '(無)',
         'isHostNpc=', !p);
     }
-    // BOSS:維蘇威火山龍王
-    const boss = newHero('維蘇威火山龍王', 'p2', 0);
+    // BOSS:當前龍王(★ v3.14.20 動態,戰鬥資料由 world-boss.js _wbInstallHeroData 掛 HERO_DB)
+    const _curWbBossH = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+    const boss = newHero((_curWbBossH && _curWbBossH.name) || '維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
     // ★ v3.7.10 — 先記下「真正的」滿血上限(50 萬),所有「× 1% / 護盾 HP 比例」運算用這個
@@ -8693,7 +8722,7 @@
     boss._wbOriginalMaxHp = boss.hp;
     // ★ FIX 20260518 — 全球殘血同步(連線房主模式):同單人模式
     try{
-      const _bossId = 'vesuvius_fire_dragon';
+      const _bossId = (_curWbBossH && _curWbBossH.id) || 'vesuvius_fire_dragon';  // ★ v3.14.20 動態
       if(window._wbHpSync && typeof window._wbHpSync.getCurrentHp === 'function'){
         const _remoteHp = window._wbHpSync.getCurrentHp(_bossId);
         if(typeof _remoteHp === 'number' && _remoteHp >= 0 && _remoteHp < boss.hp){
@@ -8701,7 +8730,7 @@
           boss.hp = _remoteHp;
           boss.curHp = _remoteHp;
           if(_remoteHp === 0){
-            _wbGameAlert('🏆 維蘇威火山龍王已被全伺服器擊敗,目前進入休戰期!');
+            _wbGameAlert('🏆 ' + boss.name + '已被全伺服器擊敗,目前進入休戰期!');
             return;
           }
         }
@@ -9125,7 +9154,7 @@
     //     真正生效的是 world-boss.js _wbAdvBossTurn 內的 G.round >= 11
     //     此處同步註解 + 數值是為了「未來重啟 v3 路徑時行為一致」
     if(G.turn >= 11){
-      _wbHostBroadcast(['💥 戰場崩毀!維蘇威火山龍王發動最終滅絕!']);
+      _wbHostBroadcast(['💥 戰場崩毀!' + ((boss && boss.name) || '龍王') + '發動最終滅絕!']);
       setTimeout(() => {
         const alive = G.p1.filter(h => h && h.curHp > 0);
         alive.forEach(t => { t.curHp = 0; });
@@ -9181,7 +9210,7 @@
       // 標記燃燒 2 回合(用簡化方式存在 t._wbBurn)
       t._wbBurn = 2;
     });
-    _wbHostBroadcast([`🔥 維蘇威火山龍王「業火灼燒」!全體 -${dmg} HP,並附加燃燒 2 回合`]);
+    _wbHostBroadcast([`🔥 ${boss.name}「業火灼燒」!全體 -${dmg} HP,並附加燃燒 2 回合`]);
     setTimeout(() => {
       const stillAlive = G.p1.filter(h => h && h.curHp > 0);
       if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
@@ -9206,7 +9235,7 @@
       }
     });
     const stunMsg = stunNames.length ? `,${stunNames.join('/')} 眩暈 1 回合` : '';
-    _wbHostBroadcast([`🐉 維蘇威火山龍王「龍吼震懾」!全體 -${dmg} HP${stunMsg}`]);
+    _wbHostBroadcast([`🐉 ${boss.name}「龍吼震懾」!全體 -${dmg} HP${stunMsg}`]);
     setTimeout(() => {
       const stillAlive = G.p1.filter(h => h && h.curHp > 0);
       if(stillAlive.length === 0){ _wbHostFinishBattle('p2'); return; }
@@ -9223,7 +9252,7 @@
     }
     setTimeout(() => {
       const alive = G.p1.filter(h => h && h.curHp > 0);
-      let logEntry = `⚡ 維蘇威火山龍王爆發「天崩之炎」!將全體 HP 減至最大 HP 的 20%`;
+      let logEntry = `⚡ ${boss.name}爆發「天崩之炎」!將全體 HP 減至最大 HP 的 20%`;
       alive.forEach(t => {
         // ★ v3.11.7 — 無視所有有利狀態:不再判定 _wbInvincible / _wbShield
         // ★ v3.11.7 — 傷害公式:減至 20% 最大 HP(若當前已低於 20% 則不受傷)
@@ -9341,7 +9370,7 @@
       turn: G.turn,
       currentActorIdx: G.currentActorIdx,
       turnOrder: G.turnOrder,
-      logEntries: [winner === 'p1' ? '🏆 維蘇威火山龍王被擊敗!' : '💀 全員陣亡...'],
+      logEntries: [winner === 'p1' ? ('🏆 ' + (((G.p2 && G.p2[0]) || {}).name || '龍王') + '被擊敗!') : '💀 全員陣亡...'],
       ended: true,
       winner: winner,
       endedReason: 'battle_complete'
@@ -10481,7 +10510,7 @@
           </div>`;
       }
     }else{
-      const actorName = isBossTurn ? '🐉 維蘇威火山龍王' :
+      const actorName = isBossTurn ? ('🐉 ' + (((battle && battle.p2 && battle.p2[0]) || {}).name || (((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '龍王')) :
         (players[curOrder?.pos]?.name || '未知玩家') + ' 的 ' + (battle.p1[curOrder?.pos]?.name || '英雄');
       // ★ v3.0 — 隊友回合 / BOSS 回合都顯示「當前是 XXX 的回合!」+ 6 個討論選項
       //    即使玩家倒下也能用(不依賴存活狀態)
@@ -11945,7 +11974,8 @@
       if(isWin){
         _medalStats.wbWins = (_medalStats.wbWins || 0) + 1;
         _medalStats.wbBossKills = _medalStats.wbBossKills || {};
-        _medalStats.wbBossKills['vesuvius_fire_dragon'] = (_medalStats.wbBossKills['vesuvius_fire_dragon'] || 0) + 1;
+        const _mkBid1 = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';  // ★ v3.14.20 各龍王擊殺數獨立
+        _medalStats.wbBossKills[_mkBid1] = (_medalStats.wbBossKills[_mkBid1] || 0) + 1;
       }
       // 嘗試解鎖獎章
       try{
@@ -11976,7 +12006,7 @@
   // 讀取最高紀錄並更新按鈕顯示
   function _wbUpdateSoloBestDisplay(){
     try{
-      const bossId = 'vesuvius_fire_dragon';
+      const bossId = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';  // ★ v3.14.20 動態(各龍王紀錄獨立)
       const raw = localStorage.getItem('wbSoloBest_' + bossId);
       if(!raw) return;
       const rec = JSON.parse(raw);
@@ -12007,7 +12037,7 @@
   // 儲存紀錄(只儲存比原本高的)
   function _wbSaveSoloBest(dmg, heroes, elapsed, killed, mode){
     try{
-      const bossId = 'vesuvius_fire_dragon';
+      const bossId = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';  // ★ v3.14.20 動態(各龍王紀錄獨立)
       const key = 'wbSoloBest_' + bossId;
       const oldRaw = localStorage.getItem(key);
       const old = oldRaw ? JSON.parse(oldRaw) : null;
@@ -12031,7 +12061,7 @@
   // ★ v3.11.8(2026-05-27) — 對外暴露讀取最佳紀錄(供結算頁顯示「破紀錄/未破紀錄」用)
   window._wbGetSoloBest = function(bossId){
     try{
-      const _bid = bossId || 'vesuvius_fire_dragon';
+      const _bid = bossId || ((typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon');  // ★ v3.14.20
       const raw = localStorage.getItem('wbSoloBest_' + _bid);
       if(!raw) return null;
       const rec = JSON.parse(raw);
@@ -12048,8 +12078,9 @@
     let _heroDb = null;
     try{ if(typeof HERO_DB !== 'undefined') _heroDb = HERO_DB; }catch(_){}
     if(!_heroDb && window.HERO_DB) _heroDb = window.HERO_DB;
-    if(!_heroDb || !_heroDb['維蘇威火山龍王']){
-      _wbGameAlert('⚠ HERO_DB 中找不到維蘇威火山龍王\n\n可能原因:\n1. hero_db.js 沒載入 — 請檢查 F12 Network 看是否 404\n2. world-boss.js 啟動失敗 — 請按 F12 Console 看是否有 [WB] 開頭的錯誤訊息\n3. 順序問題 — 請重新整理頁面再試');
+    const _chkBossName = ((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name || '維蘇威火山龍王';  // ★ v3.14.20
+    if(!_heroDb || !_heroDb[_chkBossName]){
+      _wbGameAlert('⚠ HERO_DB 中找不到' + _chkBossName + '\n\n可能原因:\n1. hero_db.js 沒載入 — 請檢查 F12 Network 看是否 404\n2. world-boss.js 啟動失敗 — 請按 F12 Console 看是否有 [WB] 開頭的錯誤訊息\n3. 順序問題 — 請重新整理頁面再試');
       return;
     }
     // ★ v3.4.8 — 單人練習也預檢,但用寬鬆模式(練習不扣每日次數,網路慢一點也讓玩家試)
@@ -12599,7 +12630,8 @@
       }
       p1.push(h);
     }
-    const boss = newHero('維蘇威火山龍王', 'p2', 0);
+    const _curWbBossS = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;  // ★ v3.14.20 動態當前龍王
+    const boss = newHero((_curWbBossS && _curWbBossS.name) || '維蘇威火山龍王', 'p2', 0);
     boss._wbShieldHistory = {};
     boss._wbShields = null;
     // ★ v3.7.10 — 先記下「真正的」滿血上限,避免下面殘血同步污染百分比運算
@@ -12609,7 +12641,7 @@
     //   結算時 _wbShowAdvBattleResult 會用 (boss.hp - boss.curHp) 計算「本場貢獻」,
     //   所以這裡同步調整 hp 與 curHp 不會把同一段血扣兩次。
     try{
-      const _bossId = 'vesuvius_fire_dragon';
+      const _bossId = (_curWbBossS && _curWbBossS.id) || 'vesuvius_fire_dragon';  // ★ v3.14.20 動態
       if(window._wbHpSync && typeof window._wbHpSync.getCurrentHp === 'function'){
         const _remoteHp = window._wbHpSync.getCurrentHp(_bossId);
         if(typeof _remoteHp === 'number' && _remoteHp >= 0 && _remoteHp < boss.hp){
@@ -12617,7 +12649,7 @@
           boss.hp = _remoteHp;
           boss.curHp = _remoteHp;
           if(_remoteHp === 0){
-            _wbGameAlert('🏆 維蘇威火山龍王已被全伺服器擊敗,目前進入休戰期!');
+            _wbGameAlert('🏆 ' + boss.name + '已被全伺服器擊敗,目前進入休戰期!');
             return;
           }
         }
@@ -12938,7 +12970,7 @@
 
     const _Go = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
     const boss = (_Go && _Go.p2 && _Go.p2[0]) || null;
-    const bossName = boss ? boss.name : '維蘇威火山龍王';
+    const bossName = boss ? boss.name : ((((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '維蘇威火山龍王');  // ★ v3.14.20
 
     const ov = document.createElement('div');
     ov.id = 'wb-adv-battle-overlay';
@@ -13415,7 +13447,7 @@
 
     const _Gb = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
     const boss = (_Gb && _Gb.p2 && _Gb.p2[0]) || null;
-    const bossName = boss ? boss.name : '維蘇威火山龍王';
+    const bossName = boss ? boss.name : ((((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '維蘇威火山龍王');  // ★ v3.14.20
     const bossHp = boss ? boss.hp : 5000000;
     const bossAtk = boss ? boss.atk : 49;
     const bossSp = boss ? boss.sp : 50;
@@ -13576,7 +13608,8 @@
         if(info && info.killed){
           _medalStats.wbWins = (_medalStats.wbWins || 0) + 1;
           _medalStats.wbBossKills = _medalStats.wbBossKills || {};
-          _medalStats.wbBossKills['vesuvius_fire_dragon'] = (_medalStats.wbBossKills['vesuvius_fire_dragon'] || 0) + 1;
+          const _mkBid2 = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';  // ★ v3.14.20 各龍王擊殺數獨立
+          _medalStats.wbBossKills[_mkBid2] = (_medalStats.wbBossKills[_mkBid2] || 0) + 1;
         }
         // 嘗試解鎖獎章(失敗不影響其他流程)
         try{
@@ -13824,7 +13857,7 @@
                     border:2px solid rgba(140,200,255,0.6);border-radius:14px;padding:18px 22px;
                     flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;">
           <div style="font-size:20px;color:#aaccff;font-weight:800;letter-spacing:2px;margin-bottom:8px;">
-            ✨ 首次挑戰維蘇威火山龍王
+            ✨ 首次挑戰${(((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '維蘇威火山龍王'}
           </div>
           <div style="font-size:18px;color:#ccddff;line-height:1.6;">
             這次的傷害 <b style="color:#ffe066;">${_myDmg.toLocaleString()}</b> 已記為你的個人最佳。<br>
@@ -13918,7 +13951,7 @@
           _modeTitleHtml}
 
         <div style="font-size:20px;color:#aac;margin-bottom:18px;letter-spacing:1px;">
-          ${info.killed ? '✅ 成功擊敗維蘇威火山龍王!' : '⚔ 戰鬥結束(未擊敗 BOSS)'}
+          ${info.killed ? ('✅ 成功擊敗' + ((((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '維蘇威火山龍王') + '!') : '⚔ 戰鬥結束(未擊敗 BOSS)'}
         </div>
 
         <!-- ★ v3.12.15 — 傷害區 + 個人最佳對照卡左右並排,縮短縱向 -->
