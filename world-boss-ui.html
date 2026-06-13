@@ -1,5 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ★ v3.14.25(2026-06-13)— BOSS 能力詳細介紹彈窗(_wbAdvOpenBossInfoPopup)+ 大廳預覽卡描述/屬性改「資料驅動」:依當前龍王讀 HERO_DB/HERO_TRAIT/BURST_DB + 護盾元素/配色動態,草龍王不再顯示火龍王能力 -->
 <!-- ★ v3.14.24(2026-06-13)— 排名獎勵清單至寶名改依當前龍王動態(維蘇威=火龍王之牙 / 翠玉草=草龍王之鬚) -->
 <!-- ★ v3.14.23(2026-06-13)— 戰鬥背景/BOSS資訊彈窗立繪改用 HERO_IMGS(修翠玉草龍王圖 404:實檔名草龍王.png 非由角色名推導)+ 戰鬥 BGM 改依當前龍王動態(_wbGetCurrentBossBattleBgmId) -->
 <!-- ★ v3.14.20(2026-06-13)— 全 UI 動態當前龍王:生成/排行/紀錄/獎章改 _wbGetCurrentBossId;-->
@@ -1040,7 +1041,7 @@
       </div>
       <div class="wb-boss-info">
         <div class="wb-boss-name">⚔️ <span class="wb-curboss-nm">維蘇威火山龍王</span> <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
-        <div style="font-size:13px;color:#aaa;line-height:1.5;">
+        <div class="wb-curboss-desc" style="font-size:13px;color:#aaa;line-height:1.5;">
           沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 3/5/7/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
         <div class="wb-boss-stats">
@@ -1048,7 +1049,7 @@
           <span>⚔️ 攻擊 49</span>
           <span>🛡️ 特技 50</span>
           <span>💨 速度 15</span>
-          <span>🔥 火屬性</span>
+          <span class="wb-curboss-elem">🔥 火屬性</span>
         </div>
         <!-- ★ v4.0 階段 2 — BOSS 能力介紹按鈕(點開可捲動詳細視窗) -->
         <button onclick="_wbAdvOpenBossInfoPopup()" style="
@@ -1323,6 +1324,29 @@ window._wbApplyCurrentBossSkin = function(){
       try{ document.documentElement.style.setProperty('--wb-boss-bg', "url('" + _img + "')"); }catch(_){}
     }
     document.querySelectorAll('.wb-tc-boss-preview-mini').forEach(function(btn){ btn.title = '查看' + _nm + '詳細資料'; });
+    // ★ v3.14.25 — 大廳預覽卡的「描述」與「屬性」也依當前龍王動態(原本寫死火龍王描述 + 🔥火屬性)
+    try{
+      const _ED2 = window.ELEMENT_DB || {};
+      const _shEls = _b.shieldElements || [];
+      const _shLy = _b.shieldLayers || null;
+      const _elemTag2 = function(e){ const d = _ED2[e]; return d ? (d.icon + d.name) : e; };
+      const _shDisp2 = _shEls.map(function(e){ const _ly = (_shLy && _shLy[e]) || 1; return _elemTag2(e) + (_ly > 1 ? ('×' + _ly) : ''); }).join('/');
+      const _brkSeen2 = {};
+      const _brkDisp2 = _shEls.map(function(e){ return (_ED2[e] && _ED2[e].vs_dis && _ED2[e].vs_dis[0]) || e; })
+        .filter(function(c){ if(_brkSeen2[c]) return false; _brkSeen2[c] = true; return true; })
+        .map(function(c){ return _elemTag2(c); }).join('/');
+      const _descEl = document.querySelector('.wb-curboss-desc');
+      if(_descEl){
+        let _d = _b.desc || '';
+        if(_shDisp2){ _d += ' 第 3/5/7/9 回合啟動元素護盾(' + _shDisp2 + '),用剋制屬性(' + _brkDisp2 + ')各攻擊 1 次即可打破。10 回合內未擊敗則戰場崩毀進入結算。'; }
+        _descEl.textContent = _d;
+      }
+      const _elemEl = document.querySelector('.wb-curboss-elem');
+      if(_elemEl){
+        const _ed2 = _ED2[_b.element];
+        _elemEl.textContent = (_ed2 ? (_ed2.icon + ' ' + _ed2.name) : '') + '屬性';
+      }
+    }catch(_eDesc){ console.warn('[WB skin v3.14.25] 套用當前龍王描述/屬性失敗', _eDesc); }
   }catch(_eSk){ console.warn('[WB skin v3.14.20] 套用當前龍王外觀失敗', _eSk); }
 };
 try{
@@ -13471,6 +13495,62 @@ try{
     const bossUrl = (window.HERO_IMGS && window.HERO_IMGS[bossName])
       || `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(bossName)}.png`;
 
+    // ★ v3.14.25 — 資料驅動:依「當前龍王」動態產生能力詳細介紹(原本整段寫死火龍王,
+    //   導致打草龍王時看到的是火龍王能力)。招式/天賦/爆發一律讀 HERO_DB / BURST_DB / HERO_TRAIT
+    //   (world-boss.js 已為每隻龍王備好完整文案),護盾元素 / 屬性 / 主題配色依當前龍王 lineup 動態決定。
+    const _curBossCfg = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+    const _bossElem  = (_curBossCfg && _curBossCfg.element) || 'fire';
+    const _shieldEls = (_curBossCfg && _curBossCfg.shieldElements) || ['fire','wind','earth','dark'];
+    const _shieldLayers = (_curBossCfg && _curBossCfg.shieldLayers) || null;  // null = 每元素各 1 層
+    const _bossDesc  = (_curBossCfg && _curBossCfg.desc) || '';
+    const _ED = window.ELEMENT_DB || {};
+    const _hd = (window.HERO_DB && window.HERO_DB[bossName]) || null;
+    const _bd = (window.BURST_DB && window.BURST_DB[bossName]) || null;
+    const _tr = (window.HERO_TRAIT && window.HERO_TRAIT[bossName]) || null;
+    // 元素 → 主題配色(火紅 / 草綠 / 水藍 …),涵蓋 8 屬性
+    const _ELEM_THEME = {
+      fire:  { main:'#ff6644', sub:'#ff8855', soft:'#ff9966', bg1:'#1a0a08', bg2:'#280f08', cardBg:'rgba(80,30,20,0.5)',  glow:'rgba(255,80,40,0.5)' },
+      grass: { main:'#5dca6a', sub:'#7ad88a', soft:'#9ee2a8', bg1:'#0a1a0c', bg2:'#0f2810', cardBg:'rgba(25,60,30,0.5)',  glow:'rgba(60,200,110,0.5)' },
+      water: { main:'#3296ff', sub:'#5dade8', soft:'#88c4ff', bg1:'#081018', bg2:'#0c1828', cardBg:'rgba(20,45,75,0.5)',  glow:'rgba(60,140,255,0.5)' },
+      wind:  { main:'#55ccbb', sub:'#7eddcc', soft:'#a6eedd', bg1:'#0a1816', bg2:'#0f2824', cardBg:'rgba(22,55,50,0.5)',  glow:'rgba(90,220,200,0.5)' },
+      earth: { main:'#bb8844', sub:'#cc9955', soft:'#ddaa77', bg1:'#1a120a', bg2:'#28200f', cardBg:'rgba(70,52,25,0.5)',  glow:'rgba(200,150,70,0.5)' },
+      light: { main:'#e8c24a', sub:'#ffd966', soft:'#ffe699', bg1:'#1a1608', bg2:'#28220f', cardBg:'rgba(70,60,18,0.5)',  glow:'rgba(255,215,70,0.5)' },
+      dark:  { main:'#aa77dd', sub:'#bb88ee', soft:'#cc99ff', bg1:'#100a1a', bg2:'#180f28', cardBg:'rgba(48,28,72,0.5)',  glow:'rgba(160,100,220,0.5)' },
+      omni:  { main:'#ff77bb', sub:'#ff99cc', soft:'#ffbbdd', bg1:'#1a0a16', bg2:'#280f22', cardBg:'rgba(70,25,58,0.5)',  glow:'rgba(255,110,190,0.5)' }
+    };
+    const _th = _ELEM_THEME[_bossElem] || _ELEM_THEME.fire;
+    // 元素 → 「圖示+名稱」字串
+    const _elemTag = function(e){ const d = _ED[e]; return d ? (d.icon + d.name) : (e || '?'); };
+    // 護盾顯示(含層數):火龍王 = 🔥火 / 🪽風 / 🪨土 / 🌙暗;草龍王 = 🌿草×2 / 💧水 / ⭐光
+    const _shieldDisp = _shieldEls.map(function(e){
+      const _ly = (_shieldLayers && _shieldLayers[e]) || 1;
+      return _elemTag(e) + (_ly > 1 ? ('×' + _ly) : '');
+    }).join(' / ');
+    // 破盾元素 = 剋制各護盾元素者(ELEMENT_DB[e].vs_dis[0]);去重保留順序
+    //   火龍王護盾 火/風/土/暗 → 破盾 水/土/草/光;草龍王護盾 草/水/光 → 破盾 火/風/暗
+    const _breakSeen = {};
+    const _breakDisp = _shieldEls.map(function(e){
+      return (_ED[e] && _ED[e].vs_dis && _ED[e].vs_dis[0]) || e;
+    }).filter(function(c){ if(_breakSeen[c]) return false; _breakSeen[c] = true; return true; })
+      .map(function(c){ return _elemTag(c); }).join(' / ');
+    // 整場總護盾層數(每階層數 × 4 階)
+    let _layersPerStage = 0;
+    _shieldEls.forEach(function(e){ _layersPerStage += (_shieldLayers && _shieldLayers[e]) || 1; });
+    const _totalShieldLayers = _layersPerStage * 4;
+    // 招式 / 爆發 / 天賦文案(讀既有資料,缺漏才用後備)
+    const _s1n = (_hd && _hd.s1 && _hd.s1.n) || 'S1';
+    const _s1d = (_hd && _hd.s1 && (_hd.s1.fd || _hd.s1.d)) || '';
+    const _s1c = (_hd && _hd.s1 && _hd.s1.c) || 6;
+    const _s2n = (_hd && _hd.s2 && _hd.s2.n) || 'S2';
+    const _s2d = (_hd && _hd.s2 && (_hd.s2.fd || _hd.s2.d)) || '';
+    const _s2c = (_hd && _hd.s2 && _hd.s2.c) || 4;
+    const _burstN = (_bd && _bd.n) || '爆發';
+    const _burstD = (_bd && (_bd.fd || _bd.d)) || '';
+    const _traitN = (_tr && _tr.name) || '天賦';
+    const _traitD = (_tr && (_tr.fd || _tr.desc)) || '';
+    const _bossElemDisp = _elemTag(_bossElem);
+    const _bossElemName = (_ED[_bossElem] && _ED[_bossElem].name) || '';
+
     const ov = document.createElement('div');
     ov.id = 'wb-adv-boss-info-popup';
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483640;'
@@ -13484,115 +13564,109 @@ try{
     ov.innerHTML = `
       <div style="
         max-width:900px;width:100%;max-height:88vh;overflow-y:auto;
-        background:linear-gradient(180deg,#1a0a08 0%,#280f08 50%,#1a0a08 100%);
-        border:3px solid #ff6644;border-radius:18px;padding:32px 36px;
-        box-shadow:0 0 60px rgba(255,80,40,0.5);color:#ffd6c2;
+        background:linear-gradient(180deg,${_th.bg1} 0%,${_th.bg2} 50%,${_th.bg1} 100%);
+        border:3px solid ${_th.main};border-radius:18px;padding:32px 36px;
+        box-shadow:0 0 60px ${_th.glow};color:#ffd6c2;
         cursor:auto;">
 
         <div style="display:flex;gap:28px;align-items:center;margin-bottom:24px;
-          padding-bottom:20px;border-bottom:2px solid rgba(255,100,60,0.3);">
+          padding-bottom:20px;border-bottom:2px solid ${_th.main}55;">
           <img src="${bossUrl}" alt="${bossName}"
             style="width:180px;height:180px;object-fit:cover;border-radius:50%;
-            border:4px solid #ff8855;box-shadow:0 0 20px rgba(255,120,60,0.6);flex-shrink:0;"
+            border:4px solid ${_th.sub};box-shadow:0 0 20px ${_th.glow};flex-shrink:0;"
             onerror="this.style.display='none';">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:52px;font-weight:900;color:#ffaa66;letter-spacing:3px;
-              text-shadow:0 0 12px rgba(255,140,60,0.7);">${bossName}</div>
-            <div style="font-size:26px;color:#aac;margin-top:10px;letter-spacing:1.5px;">
-              地心深處沉睡千年的炎之巨龍
+            <div style="font-size:52px;font-weight:900;color:${_th.soft};letter-spacing:3px;
+              text-shadow:0 0 12px ${_th.glow};">${bossName}</div>
+            <div style="font-size:24px;color:#ccbbaa;margin-top:10px;letter-spacing:1px;line-height:1.5;">
+              ${_bossDesc || '全伺服器討伐的世界 BOSS'}
             </div>
             <div style="display:flex;gap:22px;margin-top:14px;flex-wrap:wrap;">
-              <span style="font-size:26px;color:#ff8855;">❤ HP ${bossHp.toLocaleString()}</span>
-              <span style="font-size:26px;color:#ff8855;">⚔ ATK ${bossAtk}</span>
-              <span style="font-size:26px;color:#ff8855;">✨ SP ${bossSp}</span>
-              <span style="font-size:26px;color:#ff8855;">💨 SPD ${bossSpd}</span>
+              <span style="font-size:26px;color:${_th.sub};">❤ HP ${bossHp.toLocaleString()}</span>
+              <span style="font-size:26px;color:${_th.sub};">⚔ ATK ${bossAtk}</span>
+              <span style="font-size:26px;color:${_th.sub};">✨ SP ${bossSp}</span>
+              <span style="font-size:26px;color:${_th.sub};">💨 SPD ${bossSpd}</span>
+              <span style="font-size:26px;color:${_th.sub};">${_bossElemDisp}屬性</span>
             </div>
           </div>
         </div>
 
-        <!-- ★ v3.11.7(2026-05-28) — 護盾啟動回合對齊實際邏輯 3/5/7/9,共 16 層 → 第 11 回合戰場崩毀 -->
+        <!-- ★ v3.14.25 — 護盾元素 / 層數 / 破盾元素改為依當前龍王動態(火龍王 火風土暗;草龍王 草×2/水/光) -->
         <h3 style="font-size:34px;color:#ffd966;margin:18px 0 12px;letter-spacing:2px;">
-          🛡 護盾啟動回合(每階 4 元素護盾各 1 層)
+          🛡 護盾啟動回合(每階:${_shieldDisp})
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
-          <li>第 3 回合:第 1 階段護盾啟動(火 / 風 / 土 / 暗,各 1 層)</li>
-          <li>第 5 回合:第 2 階段護盾啟動(各 1 層)</li>
-          <li>第 7 回合:第 3 階段護盾啟動(各 1 層)</li>
-          <li>第 9 回合:第 4 階段護盾啟動(各 1 層,最後一道防線)</li>
+          <li>第 3 回合:第 1 階段護盾啟動(${_shieldDisp})</li>
+          <li>第 5 回合:第 2 階段護盾啟動(同上)</li>
+          <li>第 7 回合:第 3 階段護盾啟動(同上)</li>
+          <li>第 9 回合:第 4 階段護盾啟動(同上,最後一道防線)</li>
         </ul>
-        <!-- ★ v3.13.7(2026-05-31) — 對齊新規:固定 5000 + 結算計入排名(非全員陣亡) -->
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
-          用<b style="color:#5dcaa5;">破盾元素(水 / 土 / 草 / 光)</b>各攻擊 1 次即可削減對應護盾(對 火/風/土/暗 護盾),
-          炎之意志<b style="color:#ffd966;">單次傷害固定上限 5,000</b>(不隨 HP 變動)。整場共 16 層護盾需破除,
+          用<b style="color:${_th.soft};">破盾元素(${_breakDisp})</b>各攻擊 1 次即可削減對應護盾,
+          <b style="color:#ffd966;">${_traitN} 單次傷害固定上限 5,000</b>(不隨 HP 變動)。整場共 ${_totalShieldLayers} 層護盾需破除,
           <b style="color:#ffd966;">第 11 回合戰場崩毀進入結算,你累積打出的傷害會完整計入全伺服器排名</b>。
         </p>
 
-        <!-- ★ v3.13.7(2026-05-31) — 對齊 v3.12.7 設計:每回合主行動 + 追擊普攻 -->
+        <!-- ★ v3.14.25 — 招式/爆發改為讀 HERO_DB / BURST_DB[當前龍王],火草自動正確 -->
         <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
-          🔥 BOSS 技能(每回合 <span style="color:#ff5544;">主行動 + 追擊普攻</span> 共 2 次)
+          ${_bossElemDisp} BOSS 技能(每回合 <span style="color:${_th.main};">主行動 + 追擊普攻</span> 共 2 次)
         </h3>
         <div style="display:grid;grid-template-columns:1fr;gap:14px;">
-          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
-            border-left:6px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:30px;">🦷 普通攻擊</div>
+          <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;
+            border-left:6px solid ${_th.sub};">
+            <div style="font-weight:800;color:${_th.soft};font-size:30px;">🦷 普通攻擊</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對單體隨機目標造成 ATK × 1.0~1.3 倍火焰傷害,<b style="color:#ffe066;">基礎命中率 +30%</b>
+              對單體隨機目標造成 ATK × 1.0~1.3 倍${_bossElemName}屬性傷害,<b style="color:#ffe066;">基礎命中率 +30%</b>
             </div>
           </div>
-          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
-            border-left:6px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:30px;">🔥 S1 業火灼燒(能量 6)</div>
+          <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;
+            border-left:6px solid ${_th.sub};">
+            <div style="font-weight:800;color:${_th.soft};font-size:30px;">✨ S1 ${_s1n}(能量 ${_s1c})</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">${_s1d}</div>
+          </div>
+          <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;
+            border-left:6px solid ${_th.sub};">
+            <div style="font-weight:800;color:${_th.soft};font-size:30px;">🐉 S2 ${_s2n}(能量 ${_s2c})</div>
+            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">${_s2d}</div>
+          </div>
+          <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;
+            border-left:6px solid ${_th.main};">
+            <div style="font-weight:800;color:${_th.main};font-size:30px;">⚡ 爆發 ${_burstN}(第 5 / 10 回合釋放,能量滿時也會主動釋放)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對全體玩家造成 SP × 150% 火焰傷害,全體附加燃燒 2 回合(行動前後各 -6 HP),<b style="color:#ffe066;">基礎命中率 +30%</b>
+              ${_burstD}
+              <br><br><b style="color:#ffd966;">務必在第 4 / 9 回合預先放好「減傷 / 護盾 / 免死」類技能擋下爆發!</b>
             </div>
           </div>
-          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
-            border-left:6px solid #ff8855;">
-            <div style="font-weight:800;color:#ff9966;font-size:30px;">🐉 S2 龍吼震懾(能量 4)</div>
-            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對全體玩家造成 SP × 75% 無屬性傷害,50% 機率眩暈 1 回合,<b style="color:#ffe066;">基礎命中率 +30%</b>
-            </div>
-          </div>
-          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
-            border-left:6px solid #ff4422;">
-            <div style="font-weight:800;color:#ff4422;font-size:30px;">⚡ 爆發 天崩之炎(第 5 / 10 回合釋放,能量滿時也會主動釋放)</div>
-            <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              <b style="color:#ff5544;">將全體玩家 HP 減至最大 HP 的 20%</b>(HP 考核機制 — 玩家最大 HP 至少要 <b style="color:#ffe066;">110</b> 才能撐過後續燃燒),
-              全體附加<b style="color:#ff5544;">強力燃燒 3 回合</b>(行動前後各 -10 HP)。
-              再從存活對手隨機選 1 名,額外施加強力暈眩 + 強力易傷各 1 回合。
-              <!-- ★ v3.13.7(2026-05-31) — 新抵抗規則:護盾/減傷可擋,無敵改減傷 50%,迴避無效 -->
-              <br><br><b style="color:#ffcc66;">🛡 抵抗規則:</b>
-              可被「<b style="color:#88ddff;">護盾</b>」「<b style="color:#88ddff;">減傷</b>」抵擋,
-              但<b style="color:#ff5544;">無敵 BUFF 強制改為減傷 50%</b>,<b style="color:#ff5544;">迴避無效必中</b>。
-              <b style="color:#ffd966;">務必在第 4 / 9 回合預先放好「減傷 / 護盾 / 免死」類技能!</b>
-            </div>
-          </div>
-          <div style="background:rgba(80,30,20,0.5);padding:14px 20px;border-radius:12px;
+          <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;
             border-left:6px solid #aa3322;">
-            <!-- ★ v3.13.7(2026-05-31) — 改寫核心訴求:不是全員陣亡懲罰,而是「結算計入全伺服器排名」 -->
             <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(第 11 回合)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              戰場被火山灰掩埋,進入最終結算。龍王 500 萬 HP 無法單場擊敗,
+              戰場崩毀,進入最終結算。龍王 500 萬 HP 無法單場擊敗,
               <b style="color:#ffd966;">你累積打出的傷害會即時計入全伺服器排行榜!</b>
             </div>
           </div>
         </div>
 
+        <!-- ★ v3.14.25 — 天賦改為讀 HERO_TRAIT[當前龍王](火龍王 炎之意志;草龍王 翠之意志) -->
+        <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
+          🐉 ${_traitN}(天賦)
+        </h3>
+        <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;border-left:6px solid ${_th.soft};">
+          <div style="font-size:26px;color:#e8d0b8;line-height:1.7;">${_traitD}</div>
+        </div>
+
         <h3 style="font-size:34px;color:#ffd966;margin:24px 0 12px;letter-spacing:2px;">
           ⚔ 攻略提示
         </h3>
-        <!-- ★ v3.13.7(2026-05-31) — 提示對齊新規:
-             1. 單次傷害固定 5000(不是 1% HP)
-             2. 第 4/9 回合放減傷/護盾/免死技(不是補血)
-             3. 聯手攻擊有護盾時衰減為 1000(不是無視護盾) -->
+        <!-- ★ v3.14.25 — 攻略提示破盾屬性依當前龍王動態(火龍王 水土草光;草龍王 火風暗) -->
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
-          <li>隊伍最好涵蓋<b style="color:#5dcaa5;">水 / 土 / 草 / 光</b>全部 4 種破盾屬性</li>
+          <li>隊伍最好涵蓋<b style="color:${_th.soft};">${_breakDisp}</b>全部破盾屬性</li>
           <li>BOSS 單次受傷上限<b style="color:#ffe066;">固定 5,000</b>(不隨 HP 變動),要靠多場累積拚排名</li>
-          <li>第 4 / 9 回合改放<b style="color:#88ddff;">「減傷 / 護盾 / 免死」</b>類技能擋下天崩之炎(不是補血)</li>
-          <li>3/5/7/9 每階段護盾各 1 層,記得當回合就破掉避免硬扛 80% 減傷</li>
-          <li>燃燒/眩暈是世界戰的關鍵 debuff,評估用爆發或休息抵抗</li>
+          <li>第 4 / 9 回合改放<b style="color:#88ddff;">「減傷 / 護盾 / 免死」</b>類技能擋下爆發(不是補血)</li>
+          <li>3/5/7/9 每階段護盾啟動,記得當回合就破掉避免硬扛 80% 減傷</li>
+          <li>留意 BOSS 的控場與 DoT(禁動 / 暈眩 / 燃燒 / 猛毒 / 出血等),評估用爆發或休息抵抗</li>
           <li>累積答對 <b style="color:#ffe066;">5 / 10 題</b>會在選完獎勵後發動全隊聯手攻擊(5,000 傷害,
-            <b style="color:#ff8866;">但有護盾時會被衰減為 1,000</b>,盡速破盾是關鍵!)</li>
+            <b style="color:${_th.soft};">但有護盾時會被衰減為 1,000</b>,盡速破盾是關鍵!)</li>
         </ul>
 
         <div style="text-align:center;margin-top:28px;font-size:24px;color:#888;letter-spacing:2px;">
