@@ -192,7 +192,7 @@ window._adminBlessingOn = async function(){
   const _bEl = document.getElementById('_admin-blessing-bossname');
   const _hours = Math.max(1, Math.min(720, parseInt(_hEl && _hEl.value, 10) || 72));
   const _pct = Math.max(1, Math.min(200, parseInt(_pEl && _pEl.value, 10) || 25));
-  const _bn = ((_bEl && _bEl.value) || '').trim() || '維蘇威火山龍王';
+  const _bn = ((_bEl && _bEl.value) || '').trim() || '火山炎龍王';
   if(!confirm('🌟 開啟「龍王的祝福」?\n\n龍王:' + _bn + '\n加成:全服 EXP/知識幣/掉寶 +' + _pct + '%\n持續:' + _hours + ' 小時(從現在起算)\n\n寫入後全體玩家約 1 分鐘內生效。')) return;
   if(el) el.innerHTML = '⏳ 寫入中…';
   try{
@@ -1915,7 +1915,7 @@ async function _showAdminStatsPanelImpl(){
             <input id="_admin-blessing-pct" type="number" min="1" max="200" value="25" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,210,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
           </label>
           <label style="font-size:13px;color:#ccc;flex:2;min-width:170px;">🐉 顯示用龍王名
-            <input id="_admin-blessing-bossname" type="text" value="維蘇威火山龍王" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,210,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
+            <input id="_admin-blessing-bossname" type="text" value="火山炎龍王" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,210,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;">
           </label>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:10px;">
@@ -2083,7 +2083,7 @@ async function _showAdminStatsPanelImpl(){
       <div id="_admin-wblb-section" style="background:rgba(40,30,50,0.5);border:2px solid rgba(200,140,255,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ddaaff;margin-bottom:8px;">🏆 6. 世界 BOSS 排行榜管理</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.55;">
-          清除目前世界 BOSS(維蘇威火山龍王)的全班累積排行榜紀錄。
+          清除目前世界 BOSS(火山炎龍王)的全班累積排行榜紀錄。
           <br>⚠️ <b style="color:#ffaa66;">此操作不可逆!</b>建議在每學期/新一輪開始前清除一次,讓學生重新累積戰績。
         </div>
         <div id="_admin-wblb-info" style="font-size:13px;color:#bbb;background:rgba(0,0,0,0.35);border-radius:8px;padding:10px 12px;margin-bottom:10px;line-height:1.65;min-height:22px;">
@@ -2098,7 +2098,7 @@ async function _showAdminStatsPanelImpl(){
           <button id="_admin-wblb-clear-vesuvius" style="flex:1;padding:8px 14px;font-size:14px;font-weight:800;
             background:linear-gradient(135deg,rgba(140,60,180,0.6),rgba(90,30,140,0.8));
             border:2px solid #bb88ff;color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">
-            🗑️ 清除「維蘇威火山龍王」排行榜
+            🗑️ 清除「火山炎龍王」排行榜
           </button>
         </div>
         <!-- ★ v3.5.22(2026-05-22) — 指定刪除異常紀錄(處理 BUG 不均衡傷害) -->
@@ -11137,7 +11137,7 @@ async function _showAdminStatsPanelImpl(){
           ? _topTeam.teamNames.filter(Boolean).join(', ')
           : '—';
         _infoEl.innerHTML =
-          '🐉 BOSS:<b style="color:#ffd066;">維蘇威火山龍王</b>(bossId=' + BOSS_ID + ')<br>' +
+          '🐉 BOSS:<b style="color:#ffd066;">火山炎龍王</b>(bossId=' + BOSS_ID + ')<br>' +
           '📊 排行榜紀錄:<b style="color:#88ccff;">' + _list.length + ' 隊伍</b> · ' +
           '累積 <b style="color:#88ccff;">' + _totalBattles + ' 場戰鬥</b><br>' +
           '🥇 目前第 1 名:' + (_topTeam
@@ -11167,7 +11167,7 @@ async function _showAdminStatsPanelImpl(){
 
     if(_clearVesuviusBtn) _clearVesuviusBtn.onclick = async function(){
       // 二次確認(避免誤觸)
-      const _confirmMsg = '⚠️ 確定要清除「維蘇威火山龍王」全班累積排行榜紀錄嗎?\n\n'
+      const _confirmMsg = '⚠️ 確定要清除「火山炎龍王」全班累積排行榜紀錄嗎?\n\n'
                        + '此操作不可逆。已存的隊伍排名、累積傷害、戰鬥場次都會歸零。\n\n'
                        + '請再確認一次,要清除嗎?';
       if(typeof _customConfirm === 'function'){
@@ -11192,7 +11192,7 @@ async function _showAdminStatsPanelImpl(){
         if(!result){
           throw new Error('清除失敗(API 回 null)');
         }
-        const _msg = '✅ 已清除維蘇威火山龍王排行榜!\n' +
+        const _msg = '✅ 已清除火山炎龍王排行榜!\n' +
                      '・移除 ' + (result.removed || 0) + ' 筆紀錄\n' +
                      (result.kept > 0 ? '・保留其他 BOSS ' + result.kept + ' 筆紀錄' : '');
         if(typeof _showSimpleToast === 'function'){
@@ -11926,7 +11926,7 @@ async function _showAdminStatsPanelImpl(){
           '<div style="padding:14px 18px;border-bottom:1px solid rgba(180,140,220,0.35);' +
                       'display:flex;align-items:center;gap:10px;">' +
             '<div style="font-size:17px;font-weight:800;color:#ddaaff;flex:1;">' +
-              '🔍 維蘇威火山龍王・排行榜明細(' + _list.length + ' 筆)</div>' +
+              '🔍 火山炎龍王・排行榜明細(' + _list.length + ' 筆)</div>' +
             '<button id="_admin-wblb-detail-close" style="padding:6px 14px;font-size:13px;' +
                     'background:rgba(80,60,100,0.5);border:1px solid #777;color:#ccc;' +
                     'border-radius:6px;cursor:pointer;font-family:inherit;">關閉 ✕</button>' +
@@ -12153,7 +12153,7 @@ async function _showAdminStatsPanelImpl(){
                 try{
                   await window._adminWriteWbCompensation(_uid, {
                     reason: String(_reason || '').slice(0, 200) || '(GM 未填寫原因)',
-                    boss: '維蘇威火山龍王',
+                    boss: '火山炎龍王',
                     removedAt: Date.now(),
                   });
                   // 重置 wbDailyCount(已存在的 API)
