@@ -1,5 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v3.14.24(2026-06-13)— 當前龍王排名至寶 helper(_wbGetCurrentDragonTreasureName)+ 每隻龍王專屬開戰咆哮(_WB_BOSS_ROAR_LINES,草龍王綠色系)
+ * ★ v3.14.23(2026-06-13)— 草龍王戰鬥 BGM 對照表/helper(_wbGetCurrentBossBattleBgmId)+ 護盾啟動提示改依當前龍王動態產生(原寫死維蘇威盾組)
  * ★ v3.14.20(2026-06-13)— 當前龍王切換系統:_WB_BOSS_ROTATION + _wbGetCurrentBossId/_wbGetCurrentBoss/_wbGetNextBossId;
  *   4 處寫死 vesuvius 改動態(開戰重置/入口 HP 條/單人最佳/傷害同步 fallback)
  * ────────────────────────────────────────────────────────────────────
@@ -212,6 +214,38 @@
     const _rot = window._WB_BOSS_ROTATION || [];
     const _i = _rot.indexOf(afterId || window._wbGetCurrentBossId());
     return _rot[(_i >= 0 ? _i + 1 : 0) % _rot.length] || window._WB_DEFAULT_BOSS_ID;
+  };
+  // ★ v3.14.23(2026-06-13)— 當前龍王戰鬥 BGM 對照(對應 index.html 的 <audio> 元素 id)
+  //   維蘇威=bgm-wb-vesuvius-battle、翠玉草=bgm-wb-cuiyu-battle;其餘龍王尚無專屬 BGM → 後備維蘇威。
+  //   日後新增龍王 BGM:在 index.html 加 <audio>,並在此表加一筆映射即可。
+  window._WB_BATTLE_BGM_MAP = {
+    vesuvius_fire_dragon: 'bgm-wb-vesuvius-battle',
+    cuiyu_grass_dragon:   'bgm-wb-cuiyu-battle',
+  };
+  window._wbGetCurrentBossBattleBgmId = function(){
+    try{
+      const _id = window._wbGetCurrentBossId();
+      return window._WB_BATTLE_BGM_MAP[_id] || 'bgm-wb-vesuvius-battle';
+    }catch(_){ return 'bgm-wb-vesuvius-battle'; }
+  };
+  // ★ v3.14.24(2026-06-13)— 當前龍王「排名專屬至寶」對照(對應 index.html TAIWAN_TREASURES 內定義)
+  //   維蘇威=火龍王之牙(dragon_fang_fire)、翠玉草=草龍王之鬚(dragon_whisker_grass);
+  //   其餘龍王尚無專屬至寶 → 後備火龍王之牙(待日後設計補映射)。
+  //   ⚠ 與 index.html 領獎發放的 _WB_DRAGON_T_MAP 內容須一致(目前都只有 vesuvius/cuiyu 兩筆)。
+  window._WB_DRAGON_TREASURE_MAP = {
+    vesuvius_fire_dragon: 'dragon_fang_fire',
+    cuiyu_grass_dragon:   'dragon_whisker_grass',
+  };
+  window._wbGetCurrentDragonTreasureId = function(){
+    try{ return window._WB_DRAGON_TREASURE_MAP[window._wbGetCurrentBossId()] || 'dragon_fang_fire'; }
+    catch(_){ return 'dragon_fang_fire'; }
+  };
+  window._wbGetCurrentDragonTreasureName = function(){
+    try{
+      const _tid = window._wbGetCurrentDragonTreasureId();
+      const _t = window.TAIWAN_TREASURES && window.TAIWAN_TREASURES[_tid];
+      return (_t && _t.name) || '火龍王之牙';
+    }catch(_){ return '火龍王之牙'; }
   };
 
   // ───────────────────────────────────────────────────────────────────
@@ -680,6 +714,19 @@
   function _wbShowShieldHint(){
     // 跳提示 modal,告訴玩家:護盾啟動,需破解
     if(document.getElementById('wb-shield-hint-modal')) return;
+    // ★ v3.14.23 — 護盾提示改依「當前龍王」動態產生
+    //   原本整段寫死維蘇威(火/風/土/暗,破盾水/土/草/光)→ 換成翠玉草(草草水光,破盾火火風暗)
+    //   等其他龍王時會誤導玩家。改用 shieldElements/shieldLayers + 元素剋制表動態組字串。
+    const _elNm    = { fire:'🔥火', water:'💧水', wind:'🌪風', earth:'⛰土', dark:'🌑暗', light:'☀光', grass:'🌿草' };
+    const _breakOf = { fire:'water', wind:'earth', earth:'grass', grass:'fire', water:'wind', dark:'light', light:'dark' };
+    const _shCfg   = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+    const _shBossNm = (_shCfg && _shCfg.name) || '世界 BOSS';
+    const _shEls   = (_shCfg && Array.isArray(_shCfg.shieldElements) && _shCfg.shieldElements.length) ? _shCfg.shieldElements : ['fire','wind','earth','dark'];
+    const _shLy    = (_shCfg && _shCfg.shieldLayers) || {};
+    const _shieldListStr = _shEls.map(function(e){ const _n = (_shLy && _shLy[e]) || 1; return (_elNm[e]||e) + '盾' + (_n>1 ? '×'+_n : ''); }).join(' + ');
+    const _breakListStr  = _shEls.map(function(e){ const _n = (_shLy && _shLy[e]) || 1; const _b = _breakOf[e]; return (_elNm[e]||e) + ' ← ' + (_elNm[_b]||_b) + (_n>1 ? '×'+_n : ''); }).join(' / ');
+    const _breakElsStr   = _shEls.map(function(e){ return (_elNm[_breakOf[e]]||_breakOf[e]); }).filter(function(v,i,a){ return a.indexOf(v)===i; }).join(' / ');
+    const _totalLayers   = _shEls.reduce(function(s,e){ return s + ((_shLy && _shLy[e]) || 1); }, 0);
     const ov = document.createElement('div');
     ov.id = 'wb-shield-hint-modal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:10500;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);';
@@ -690,15 +737,15 @@
         <div style="font-size:38px;margin-bottom:12px;">🛡⚡🔥</div>
         <div style="font-size:26px;color:#ff8866;font-weight:900;letter-spacing:2px;margin-bottom:14px;
           text-shadow:0 0 14px rgba(255,100,60,0.6);">
-          ⚠ 四元素護盾啟動!
+          ⚠ 元素護盾啟動!
         </div>
         <div style="font-size:16px;color:#ffe;line-height:1.85;text-align:left;
           background:rgba(255,80,40,0.12);padding:14px 18px;border-radius:10px;
           border-left:4px solid rgba(255,120,80,0.7);margin-bottom:14px;">
-          維蘇威火山龍王身上浮現由<b>火 / 風 / 土 / 暗</b>四種元素構成的護盾!
+          ${_shBossNm}身上浮現由<b>${_shieldListStr}</b>構成的護盾!
           <br><br>
           <b style="color:#ff8866;">護盾規則:</b><br>
-          ・第 <b style="color:#ffaa66;">3 / 5 / 7 / 9</b> 回合各啟動一次,每元素各 <b>1 層</b>(同時最多 4 層)<br>
+          ・第 <b style="color:#ffaa66;">3 / 5 / 7 / 9</b> 回合各啟動一次(同時最多 <b>${_totalLayers} 層</b>)<br>
           ・<b style="color:#ff6644;">所有傷害一律減 80%</b>(必中、無視有利、固定值、DoT、聯手爆發都擋)<br>
           ・<b style="color:#ffcc66;">單次傷害永遠鎖在 5000 上限</b>(有護盾時實際扣血 ≤ 1000)<br>
           ・<b style="color:#aaffaa;">沒有任何技能能繞過護盾</b>(連聯手爆發 5000 也會被減為 1000)
@@ -708,10 +755,10 @@
           border-left:4px solid rgba(80,180,255,0.7);margin-bottom:18px;">
           <b style="color:#88ddff;">💡 破解方法:</b><br>
           使用對應屬性的攻擊各打 <b>1 次</b>,即可破除對應護盾:<br>
-          🔥 火 ← 水 / 🌪 風 ← 土 / ⛰ 土 ← 草 / 🌑 暗 ← 光
+          ${_breakListStr}
           <br><br>
           <b style="color:#aaffaa;">🎯 戰術建議:</b><br>
-          換上含 4 種剋制屬性(水/土/草/光)的英雄陣容,
+          換上含剋制屬性(${_breakElsStr})的英雄陣容,
           專心普攻 + S1/S2 配合 BOSS 弱點屬性破盾!
         </div>
         <button onclick="document.getElementById('wb-shield-hint-modal').remove()"
@@ -1754,13 +1801,30 @@
     QUIZ_REWARD_TRIGGERS: [5, 10],// ★ v3.7.9:第幾次答對觸發
   };
 
-  // BOSS 開戰咆哮
-  window._wbBossOpeningRoar = function(){
-    const lines = [
+  // ★ v3.14.24 — 每隻龍王專屬開戰咆哮(老師需求:每隻龍王要有自己的個性開場白)
+  //   原本寫死維蘇威三句;改成依當前龍王挑,後備維蘇威。日後新增龍王在此加一筆。
+  window._WB_BOSS_ROAR_LINES = {
+    vesuvius_fire_dragon: [
       '⚡ 兩千年的沉睡終結...',
       '🔥 渺小的凡人們,竟敢驚擾我的安眠?',
       '🐉 維蘇威之怒,將再次掩埋人類的世界!',
-    ];
+    ],
+    cuiyu_grass_dragon: [
+      '🌿 誰...驚醒了沉睡的綠林之主?',
+      '🍃 砍伐、焚燒...你們對這片雨林做了什麼?',
+      '🐉 萬千翠藤甦醒——入侵者,都化作我藤蔓的養分吧!',
+    ],
+  };
+  // 每隻龍王咆哮主色(配合元素;後備火紅)
+  window._WB_BOSS_ROAR_COLOR = {
+    vesuvius_fire_dragon: { fg:'#ff8866', glow:'#ff3322' },
+    cuiyu_grass_dragon:   { fg:'#9bf09b', glow:'#22aa44' },
+  };
+  // BOSS 開戰咆哮
+  window._wbBossOpeningRoar = function(){
+    const _roarBid = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';
+    const lines = (window._WB_BOSS_ROAR_LINES && window._WB_BOSS_ROAR_LINES[_roarBid]) || window._WB_BOSS_ROAR_LINES.vesuvius_fire_dragon;
+    const _roarClr = (window._WB_BOSS_ROAR_COLOR && window._WB_BOSS_ROAR_COLOR[_roarBid]) || window._WB_BOSS_ROAR_COLOR.vesuvius_fire_dragon;
     const ov = document.createElement('div');
     ov.id = 'wb-boss-roar';
     ov.style.cssText = `
@@ -1771,8 +1835,8 @@
     `;
     ov.innerHTML = `
       <div style="font-size:clamp(60px,9vw,120px);margin-bottom:20px;animation:wbRoarPulse 0.6s ease-out infinite;">🐉</div>
-      <div id="wb-roar-text" style="font-size:clamp(22px,3vw,36px);font-weight:900;color:#ff8866;letter-spacing:6px;
-        text-align:center;line-height:1.8;text-shadow:0 0 20px #ff3322,0 0 40px #ff3322,0 4px 8px rgba(0,0,0,0.95);
+      <div id="wb-roar-text" style="font-size:clamp(22px,3vw,36px);font-weight:900;color:${_roarClr.fg};letter-spacing:6px;
+        text-align:center;line-height:1.8;text-shadow:0 0 20px ${_roarClr.glow},0 0 40px ${_roarClr.glow},0 4px 8px rgba(0,0,0,0.95);
         padding:0 30px;"></div>
     `;
     document.body.appendChild(ov);

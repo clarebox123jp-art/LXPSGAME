@@ -1,5 +1,7 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ★ v3.14.24(2026-06-13)— 排名獎勵清單至寶名改依當前龍王動態(維蘇威=火龍王之牙 / 翠玉草=草龍王之鬚) -->
+<!-- ★ v3.14.23(2026-06-13)— 戰鬥背景/BOSS資訊彈窗立繪改用 HERO_IMGS(修翠玉草龍王圖 404:實檔名草龍王.png 非由角色名推導)+ 戰鬥 BGM 改依當前龍王動態(_wbGetCurrentBossBattleBgmId) -->
 <!-- ★ v3.14.20(2026-06-13)— 全 UI 動態當前龍王:生成/排行/紀錄/獎章改 _wbGetCurrentBossId;-->
 <!--   名稱/立繪/背景由 _wbApplyCurrentBossSkin 統一換皮(wb-curboss-nm / wb-curboss-img / --wb-boss-bg) -->
 <!-- ────────────────────────────────────────────────────────────────────── -->
@@ -1265,19 +1267,21 @@
       items.push(`📜 EXP 卷軸 ×${r.expScrolls}`);
     }
     if(r.titleTemplate) items.push(`🎖 限定稱號`);
-    // ★ v3.12.0(2026-05-29)— 火龍王之牙(維蘇威火山龍王 排名獎勵專屬,不可召喚)
+    // ★ v3.12.0(2026-05-29)— 龍王排名專屬至寶(不可召喚)
     // ★ v3.12.14(2026-05-31)— 加 ? 按鈕點開至寶能力簡介
+    // ★ v3.14.24 — 至寶名改依「當前龍王」動態(維蘇威=火龍王之牙 / 翠玉草=草龍王之鬚);原本寫死火龍王之牙
     if(r.dragonTreasureId && r.dragonTreasureChance > 0){
       const _chPct = Math.round(r.dragonTreasureChance * 100);
+      const _dtNm = (typeof window._wbGetCurrentDragonTreasureName === 'function') ? window._wbGetCurrentDragonTreasureName() : '火龍王之牙';
       const _mainText = (_chPct >= 100)
-        ? `🐉 <b style="color:#ff8866;">火龍王之牙 ×1 必得</b>`
-        : `🐉 火龍王之牙 (${_chPct}% 機率)`;
-      // ? 按鈕呼叫 window._wbShowDragonTreasureInfo() — 在 index.html 定義
+        ? `🐉 <b style="color:#ff8866;">${_dtNm} ×1 必得</b>`
+        : `🐉 ${_dtNm} (${_chPct}% 機率)`;
+      // ? 按鈕呼叫 window._wbShowDragonTreasureInfo() — 在 index.html 定義(依當前龍王動態顯示)
       const _helpBtn = `<span onclick="event.stopPropagation(); window._wbShowDragonTreasureInfo && window._wbShowDragonTreasureInfo();"
         style="display:inline-block;margin-left:8px;width:26px;height:26px;line-height:24px;border-radius:50%;
                background:rgba(255,150,80,0.25);border:2px solid #ff8866;color:#ffd0b0;
                text-align:center;font-weight:900;cursor:pointer;font-size:16px;vertical-align:middle;"
-        title="點看火龍王之牙能力簡介">?</span>`;
+        title="點看${_dtNm}能力簡介">?</span>`;
       items.push(_mainText + _helpBtn);
     }
     // ★ FIX 20260518 — 排行榜字體放大 200%(玩家反應字太小)
@@ -8878,7 +8882,8 @@ try{
     }catch(_){}
 
     // ★ BGM 預先切到世界戰專屬 BGM(advStartBattle 內 bgmStop 後再兜底重啟)
-    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+    // ★ v3.14.23 — 改動態:依當前龍王選 BGM(維蘇威/翠玉草…),不再寫死維蘇威
+    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo((typeof window._wbGetCurrentBossBattleBgmId === 'function' ? window._wbGetCurrentBossBattleBgmId() : 'bgm-wb-vesuvius-battle'), 800); }catch(_){}
 
     // ── ★ FIX 20260519(v2) — 暫停 startTurn 推進 ─────────────────────
     //   advStartBattle 內 line 602 會排 `_pSetTimeout(startTurn, 800)`,
@@ -8910,18 +8915,20 @@ try{
     // ── advStartBattle 後重新啟動世界戰 BGM(兜底) ────────────────
     setTimeout(() => {
       try{
-        const _wbBgm = document.getElementById('bgm-wb-vesuvius-battle');
+        // ★ v3.14.23 — 動態當前龍王 BGM id(維蘇威/翠玉草…)
+        const _wbBgmId = (typeof window._wbGetCurrentBossBattleBgmId === 'function') ? window._wbGetCurrentBossBattleBgmId() : 'bgm-wb-vesuvius-battle';
+        const _wbBgm = document.getElementById(_wbBgmId);
         const _cur = (typeof _curBgm !== 'undefined') ? _curBgm : null;
-        if(_wbBgm && _cur !== 'bgm-wb-vesuvius-battle'){
+        if(_wbBgm && _cur !== _wbBgmId){
           if(typeof bgmFadeTo === 'function'){
-            bgmFadeTo('bgm-wb-vesuvius-battle', 600);
-            console.log('[WB-Host v6] ✅ BGM 重新啟動: bgm-wb-vesuvius-battle');
+            bgmFadeTo(_wbBgmId, 600);
+            console.log('[WB-Host v6] ✅ BGM 重新啟動: ' + _wbBgmId);
           }else{
             _wbBgm.currentTime = 0;
             _wbBgm.volume = (typeof _bgmMuted !== 'undefined' && _bgmMuted) ? 0
                           : (typeof BGM_VOLUME !== 'undefined' ? BGM_VOLUME : 0.5);
             _wbBgm.play().catch(()=>{});
-            if(typeof window !== 'undefined') window._curBgm = 'bgm-wb-vesuvius-battle';
+            if(typeof window !== 'undefined') window._curBgm = _wbBgmId;
           }
         }
       }catch(eBgm){
@@ -9795,7 +9802,8 @@ try{
         }
 
         // 切 BGM
-        try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+        // ★ v3.14.23 — 動態當前龍王 BGM
+        try{ if(typeof bgmFadeTo === 'function') bgmFadeTo((typeof window._wbGetCurrentBossBattleBgmId === 'function' ? window._wbGetCurrentBossBattleBgmId() : 'bgm-wb-vesuvius-battle'), 800); }catch(_){}
 
         // 呼叫主程式 advStartBattle(client mode 下不會跑 AI / startTurn / checkWin)
         try{
@@ -10347,7 +10355,10 @@ try{
     try{
       if(boss && boss.name){
         const _bossName = boss.name;
-        const _bossUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(_bossName)}.png`;
+        // ★ v3.14.23 — 改用 HERO_IMGS(翠玉草龍王→草龍王.png 老師指定檔名,非由角色名推導);
+        //   後備才用「名稱.png」。原本只用名稱推導 → 翠玉草龍王.png 不存在(404)→ 戰鬥背景沒龍王圖。
+        const _bossUrl = (window.HERO_IMGS && window.HERO_IMGS[_bossName])
+          || `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(_bossName)}.png`;
         const _lobby = document.getElementById('wb-lobby-overlay');
         if(_lobby && _lobby.classList.contains('wb-in-battle')){
           _lobby.style.background =
@@ -12872,7 +12883,8 @@ try{
     //         保證跑在主程式 bgmStop 之後)
     //   保留:這個位置先啟動,讓玩家在開戰題等待期間有 BGM(沒有 BGM 的等待很尷尬),
     //         advStartBattle 後再切一次蓋過 bgmStop 的影響
-    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 800); }catch(_){}
+    // ★ v3.14.23 — 動態當前龍王 BGM
+    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo((typeof window._wbGetCurrentBossBattleBgmId === 'function' ? window._wbGetCurrentBossBattleBgmId() : 'bgm-wb-vesuvius-battle'), 800); }catch(_){}
 
     // ── ★ FIX 20260519(v11) — 開戰題搬到 advStartBattle 之後 ──
     //   原 bug:_wbStartBossOpening 跑在 advStartBattle 之前,此時 #gc 戰場還沒被
@@ -12932,20 +12944,22 @@ try{
     //   delay 50ms 確保跑在 advStartBattle 內所有 BGM 操作之後
     setTimeout(() => {
       try{
-        const _wbBgm = document.getElementById('bgm-wb-vesuvius-battle');
+        // ★ v3.14.23 — 動態當前龍王 BGM id
+        const _wbBgmId = (typeof window._wbGetCurrentBossBattleBgmId === 'function') ? window._wbGetCurrentBossBattleBgmId() : 'bgm-wb-vesuvius-battle';
+        const _wbBgm = document.getElementById(_wbBgmId);
         const _cur = (typeof _curBgm !== 'undefined') ? _curBgm : null;
         // 只有當目前 BGM 不是世界戰 BGM 時才切(避免重複觸發 fade)
-        if(_wbBgm && _cur !== 'bgm-wb-vesuvius-battle'){
+        if(_wbBgm && _cur !== _wbBgmId){
           if(typeof bgmFadeTo === 'function'){
-            bgmFadeTo('bgm-wb-vesuvius-battle', 600);
-            console.log('[WB-Solo v4] ✅ BGM 重新啟動: bgm-wb-vesuvius-battle');
+            bgmFadeTo(_wbBgmId, 600);
+            console.log('[WB-Solo v4] ✅ BGM 重新啟動: ' + _wbBgmId);
           }else{
             // fallback: 直接 play
             _wbBgm.currentTime = 0;
             _wbBgm.volume = (typeof _bgmMuted !== 'undefined' && _bgmMuted) ? 0
                           : (typeof BGM_VOLUME !== 'undefined' ? BGM_VOLUME : 0.5);
             _wbBgm.play().catch(()=>{});
-            if(typeof window !== 'undefined') window._curBgm = 'bgm-wb-vesuvius-battle';
+            if(typeof window !== 'undefined') window._curBgm = _wbBgmId;
           }
         }
       }catch(eBgm){
@@ -13453,7 +13467,9 @@ try{
     const bossSp = boss ? boss.sp : 50;
     // ★ v3.11.7(2026-05-28) — fallback SPD 從 80 → 15(對齊 HERO_DB 維蘇威火山龍王實際數值)
     const bossSpd = boss ? boss.spd : 15;
-    const bossUrl = `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(bossName)}.png`;
+    // ★ v3.14.23 — 同戰鬥背景:改用 HERO_IMGS(翠玉草龍王→草龍王.png),後備才用名稱推導
+    const bossUrl = (window.HERO_IMGS && window.HERO_IMGS[bossName])
+      || `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(bossName)}.png`;
 
     const ov = document.createElement('div');
     ov.id = 'wb-adv-boss-info-popup';
