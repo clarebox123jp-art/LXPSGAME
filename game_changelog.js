@@ -13,6 +13,100 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.11(2026-06-15)— 🐾 埃及 4 隻寵物能力重新修正
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.11',
+    date: '2026-06-15',
+    brief: [
+      '🐾✨【埃及 4 隻寵物能力大改版!】',
+      '   ・根據實際遊玩,把 4 隻埃及寵物的能力重新調整,讓牠們更實用、更有特色!',
+      '   ・🦅 <b>荷魯斯之鷹</b>:主人的<b>「行動」變成 2 次</b>(普攻、技能、休息都能做兩次)!且<b>不會再被其他「再行動」效果疊加</b>,穩定強力。',
+      '   ・🐺 <b>阿努比斯胡狼</b>:主人<b>普通攻擊命中敵人時,恢復 2 能量</b>,並讓<b>目標「減療」1 回合</b>(被打的敵人受到的治療減半)!',
+      '   ・🪲 <b>聖䗴神蟲</b>:保留<b>致命傷 50% 重生</b>(每場一次)+<b>受傷 -20%</b>,再加上<b>休息時額外恢復 1 能量</b>!',
+      '   ・🐦 <b>托特聖䴉</b>:<b>答對題目時,幫「HP 最低的隊友」恢復 20% HP</b>,而且<b>主人下一個技能能量 -2</b>!',
+    ],
+    items: [
+      '★ v3.15.11【荷魯斯之鷹 改為「行動變 2 次」index.html】移除 v3.15.10 的 execAtk 普攻雙擊+必中 hook;改在 endAction 的女神權能 hook 之前新增荷魯斯再行動 hook:!noFinish && a.curHp>0 && !a._traitReAct && (a._reActCount||0)<1 && getEquip(a).petHorusDoubleAtk → _reActCount++ + _traitReAct=true + _pSetTimeout 400ms 後 acted=false 重開行動(p1 顯示 action-panel / AI 走 aiAct)。機制沿用劍士連斬/女神權能。放女神 hook 之前 → 荷魯斯主人優先用自身再行動;_reActCount<1 守門保證整回合最多 2 動作(故「不受其他再行動效果疊加」)。涵蓋普攻/技能/休息所有行動。',
+      '★ v3.15.11【阿努比斯胡狼 改為「普攻命中回能+減療」index.html】移除 v3.15.10 的 doDmg 致死 on-kill 全隊回血 hook;改在 execAtk doDmg 之後新增:target && target.side!==actor.side && getEquip(actor).petAnubisOnAtk → G.energy[actor.side]+2(cap10,showPopup +2E)+ target.curHp>0 時 addStatus(target,healReduced,1)(減療=既有狀態,線上 doHeal hook 自動×0.5)+ banner。旗標 petAnubisOnKill → petAnubisOnAtk。',
+      '★ v3.15.11【聖䗴神蟲 加「休息額外+1能量」index.html】保留 onDmg 致命傷 50% 重生(_scarabRevived 每場一次)+ dmgReducePct:0.20。新增屬性旗標 petScarabRestEnergy:true;doRest 在「G.energy[a.side]=min(10,+1)」後新增:getEquip(a).petScarabRestEnergy → G.energy[a.side] 再 +1(cap10,showPopup +1E)。',
+      '★ v3.15.11【托特聖䴉 改為「答對救援+省能2」index.html】advShowReward hook 改寫:篩出 G.p1 中裝備 petThothQuiz 的存活主人;若有 → 取全隊存活者 HP 比例(curHp/hp)最低者 doHeal 其 maxHP 20% + banner;每位主人設 _thothDiscount=true。skillCost 確定性折扣由 c-1 改 c-2(actor._thothDiscount → c=max(1,c-2),!displayOnly 才清旗標)。(原:主人自身回 12% + 下技能 -1。)',
+      '★ v3.15.11【EQUIP_DB 4 寵物 d 文字 + 旗標 + _EQUIP_SHORT 同步 index.html】荷魯斯 d=「行動次數變為 2 次(不會受到其他再行動效果疊加)」、阿努比斯 d=「普攻命中敵人時恢復 2 能量並使目標減療 1 回合」+ 旗標 petAnubisOnAtk、聖䗴 d 末加「休息時額外恢復 1 能量」+ 旗標 petScarabRestEnergy、托特 d=「答對幫 HP 比例最低隊友回 20% + 主人下技能 -2」。_EQUIP_SHORT:行動2次 / 重生+減傷+休息能量 / 攻擊回能+減療 / 答對救援+省能。PET_KNOWLEDGE 科普(真實動物)不受能力改動影響,未改。',
+      '★ v3.15.11 註:本輪改動檔 = game_changelog.js(本檔)、index.html。hero_db.js / admin_panel.js / world-boss.js / world-boss-ui.html / sw.js 未改、版本不動。CURRENT_BOOT_VER 不變。⚠ 4 張寵物圖(荷魯斯之鷹 / 聖䗴神蟲 / 阿努比斯胡狼 / 托特聖䴉.png)仍需老師上傳。上傳順序:game_changelog.js → index.html(最後)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.10(2026-06-15)— 🐾 埃及 4 隻全新寵物 + 📚 埃及知識預習頁
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.10',
+    date: '2026-06-15',
+    brief: [
+      '🎉🏜️🐾【埃及寵物登場 ＋ 埃及知識預習】',
+      '🐾【埃及四隻全新寵物現身埃及關!】',
+      '   ・在<b>埃及冒險</b>途中答對野生動物的問題,就有機會收服 <b>4 隻全新的埃及神獸寵物</b>,每一隻都有<b>和台灣 / 日本完全不同的特殊能力</b>!',
+      '   ・🦅 <b>荷魯斯之鷹</b>:主人的<b>普通攻擊變成連續攻擊 2 次,而且必中</b>(無視敵人迴避)!',
+      '   ・🪲 <b>聖䗴神蟲</b>(聖甲蟲):主人<b>受到致命傷害時會以 50% HP 重生</b>(每場戰鬥一次);平時<b>受到的傷害也 -20%</b>。',
+      '   ・🐺 <b>阿努比斯胡狼</b>:每當主人<b>擊倒敵人,全隊回復 10% HP 並補充 1 能量</b>!',
+      '   ・🐦 <b>托特聖䴉</b>:每次<b>答對題目,主人回復 12% HP,而且下一個技能能量 -1</b>!',
+      '   ・<b>寵物圖鑑</b>新增「🏜️ 埃及寵物」專區,收服後可查看牠們的<b>神話故事與生態科普</b>。',
+      '📚【埃及關也能「知識預習」了!】',
+      '   ・<b>埃及關的關卡介紹頁新增「📚 知識預習」按鈕</b>!出發前可先讀<b>古埃及小百科</b>(尼羅河、法老、眾神、金字塔、神聖動物 5 大主題),還能<b>練習埃及題目</b>、領知識幣。',
+      '   ・先預習再冒險,打 BOSS 答題更有把握喔!',
+    ],
+    items: [
+      '★ v3.15.10【埃及寵物 — EQUIP_DB 4 隻全新能力 index.html】在日本寵物 IIFE 後、_getEquipPoolForStage 前新增埃及寵物 IIFE,push 4 entry(_stage:egypt):荷魯斯之鷹(petHorusDoubleAtk)、聖䗴神蟲(dmgReducePct:0.20 + onDmg 致命傷以 50%HP 重生、_scarabRevived 每場一次)、阿努比斯胡狼(petAnubisOnKill)、托特聖䴉(petThothQuiz);petImg 用 EG_BASE + encodeURIComponent(中文檔名)。同步 EQUIP_NAMES.add + _EQUIP_SHORT 4 短描述。能力全為全新設計,未複製台灣/日本寵物(台灣是 onEquip 屬性%/healBonus/reflect/energyRegen 那套)。',
+      '★ v3.15.10【埃及寵物池 index.html _getEquipPoolForStage / _getTaiwanEquipPool】_getEquipPoolForStage 在 japan 分支後加 egypt 分支(inAdv && stage===egypt → filter _stage===egypt);else 與動物學家專用池改為排除 japan+egypt(_stage!==japan && _stage!==egypt),確保非埃及關不會抽到埃及寵物。敵方野生寵物 advTgEvent_petEncounter 用 _getEquipPoolForStage(),自動依埃及池抽取,無需另改。',
+      '★ v3.15.10【荷魯斯之鷹 hook — execAtk index.html】普攻 doDmg(target,_finalDmg,…) 處:doDmg 前判 getEquip(actor).petHorusDoubleAtk(!opts._horus2nd 守門)→ _atkOptsH.mustHit=true(必中無視迴避);doDmg 後若 target 存活 → _pSetTimeout 260ms 後 execAtk(actor,target,actor.atk,{_horus2nd:true,mustHit:true}) 打第二擊(走完整普攻流程含特效;_horus2nd 旗標防無限遞迴)。',
+      '★ v3.15.10【阿努比斯胡狼 hook — doDmg 致死 index.html】「💀 倒下」log 後(old>0 守門防重複):若 opts.actor(擊殺者,side≠target.side)裝備 petAnubisOnKill → 該側全隊存活者各 doHeal 10% maxHP + G.energy[側]+1(cap 10)+ banner。沿用 doHeal/showPopup,通用於冒險/世界BOSS/鬥技場。',
+      '★ v3.15.10【托特聖䴉 hook — advShowReward + skillCost index.html】(1) advShowReward 開頭(答對題顯示獎勵時):遍歷 G.p1 存活者,裝備 petThothQuiz 者 doHeal 12% maxHP + 設 h._thothDiscount=true + banner。(2) skillCost 在 skillCostSave 區塊後新增確定性折扣:actor._thothDiscount → c=max(1,c-1),!displayOnly 時才清旗標(UI 顯示也套用,實際使用才消耗)。',
+      '★ v3.15.10【埃及寵物科普 + 圖鑑分區 index.html】PET_KNOWLEDGE 在日本「變化狸」後加 4 埃及 entry(神話+真實動物混合:sci/alias/region/food/enemy/habit/reproduce)。_buildPetPage 加 egPets=filter(_stage===egypt)+collectedEg,el.innerHTML 末尾加 renderSection(「🏜️ 埃及寵物」,#ffd86b,egPets,collectedEg)。',
+      '★ v3.15.10【埃及知識預習 index.html】新增 EGYPT_PREVIEW_CONTENT(TAIWAN_PREVIEW_CONTENT 後;intro + 5 sections:尼羅河與沙漠/法老與古文明/眾神與神話/金字塔與木乃伊/沙漠神聖動物,每章 3 paragraphs(含<b>)+ 6~7 facts)。_showPreviewPage 接 egypt:stage 正規化允許 egypt、題庫 ADV_QUIZ_DB.filter(subject===埃及)、stageLabel/Color/Icon(古埃及/#ffd86b/🏜️)、contentData/coins/seenSet/todayKey×2 皆加埃及分支。_previewMarkSeen + _previewCheckDailyReset + _medalStats 加 previewEgSeen / previewTodayEgCoins。關卡介紹頁預習按鈕顯示條件加 key===egypt(標籤「🏜️ 埃及關」)。',
+      '★ v3.15.10 註:本輪改動檔 = game_changelog.js(本檔)、index.html(埃及寵物資料+4 能力 hook+寵物圖鑑/科普埃及分區+埃及知識預習頁與接線)。hero_db.js / admin_panel.js / world-boss.js / world-boss-ui.html / sw.js 本輪未改、版本不動。CURRENT_BOOT_VER 不變。⚠ 老師需另上傳 4 張寵物圖:荷魯斯之鷹.png / 聖䗴神蟲.png / 阿努比斯胡狼.png / 托特聖䴉.png(否則寵物缺圖但功能正常)。上傳順序:game_changelog.js → index.html(最後)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.9(2026-06-14)— 🐉 龍王名稱即時校正 + 🏜️ 埃及小怪題庫修正 + 👑 埃及雙王開場白 + 🌙 伺服器休息/開機排程
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.9',
+    date: '2026-06-14',
+    brief: [
+      '🎉🏜️【埃及關正式開放!】',
+      '   ・<b>環遊世界冒險第二站「古埃及」正式對全體開放!</b>當你有<b>4 名英雄達到 Lv.25</b>,就能踏入金字塔,挑戰守護寶藏的法老王與埃及豔后雙王!',
+      '⚔️【埃及雙王戰修正】',
+      '   ・修正打倒雙王後<b>結算、升級完卻沒回首頁、反而又自動重開一場全新雙王戰</b>的嚴重問題;現在會正常結算並回到關卡。',
+      '   ・修正<b>豔后/法老沒有「立刻」復活對方</b>的問題:現在一王倒下,另一王會<b>立刻</b>耗自身生命把它救回(復活到 25% HP)。<b>唯有用一次攻擊同時把雙王打倒才能真正獲勝</b>——記得帶足全體爆發喔!',
+      '🌟【答題獎勵「淨化光芒 / 破滅吹拂」強化】',
+      '   ・答對題目的<b>「淨化光芒」現在能清除「強力版」不利狀態</b>(強力查封、強力失明、魅惑、暈眩等限制行動的狀態),不再被雙王的強力封鎖卡死。',
+      '   ・<b>「破滅吹拂」現在能完整清除對手的無敵、迴避、減傷、免死等有利狀態(含強力版)</b>。',
+      '🐉【龍王名稱顯示修正】',
+      '   ・修正關卡頁的世界 BOSS<b>一進去會先顯示「火山炎龍王」、切換畫面回來才變成真正龍王</b>的問題。現在<b>一進關卡頁就直接顯示目前真正開放挑戰的龍王名稱</b>,不會再誤導大家囉!',
+      '🏜️【埃及關修正】',
+      '   ・修正<b>埃及關打小怪時,題目沒有換成埃及題庫</b>(原本會出到自然科題目)的問題;現在埃及小怪戰會<b>正確出埃及主題的題目</b>。(BOSS 戰原本就正常。)',
+      '   ・埃及雙王 BOSS 戰的<b>開場白換成「法老王 + 埃及豔后」的專屬登場台詞</b>,更有古埃及氣氛!',
+      '🌙【新增:伺服器休息 / 開機時間】',
+      '   ・老師可以設定伺服器的<b>每日休息時間</b>(例如晚上)和<b>開機時間</b>(例如早上)。',
+      '   ・時間一到休息,遊戲會<b>先自動幫你存檔</b>,再顯示<b>「休息中」的夜空畫面</b>(上面會倒數距離開機還有多久);<b>開機時間一到會自動回到遊戲</b>,不用自己重整。',
+      '   ・💡 看到休息畫面別擔心,先去<b>睡覺、看書或運動一下</b>,等天亮(開機時間)再回來玩吧!休息前還會<b>提前提醒</b>你把這場打完並同步進度喔。',
+    ],
+    items: [
+      '★ v3.15.9【龍王名稱即時校正 index.html】根因:關卡頁入口 .wb-curboss-nm 寫死預設「火山炎龍王」,校正函式 _wbApplyCurrentBossSkin 定義在「點按鈕才 lazy load」的 world-boss-ui.html(L119197),初次進關卡頁時尚未注入 → stats/global 的 worldBossHp onSnapshot(L11197 區)那句 skin 呼叫被 typeof===「function」 守門擋成 no-op → 名稱停在火山,要切畫面回來(觸發後續 skin)才修正。修法:在該 onSnapshot 設好 _cachedGlobalStats.wbCurrentBossId 後,改用「啟動即定義」的 eager 函式 _wbGetCurrentBoss()(world-boss.js)直接 querySelectorAll(.wb-curboss-nm) 更新 textContent,首次 snapshot 一回來就立刻顯示真正開放龍王;原 _wbApplyCurrentBossSkin 呼叫保留(載入後仍負責立繪/背景/HP 條等完整換皮)。',
+      '★ v3.15.9【埃及小怪戰題庫修正 index.html _advMiniGetQuizPool】根因:小怪戰出題走 _advMiniQuizAsk → _advMiniGetQuizPool(與 BOSS 戰的 advGetQuizPool 不同路徑),函式開頭 subject = _advPlayerSubject || 「自然」;過場 advStartCutscene 會把 _advPlayerSubject 清空,而本函式只有日本/台灣有「|| _adventureStage===egypt」這類分支、獨缺埃及 → 埃及小怪掉到最末段 ADV_QUIZ_DB.filter(subject===「自然」) 出自然題。(v3.15.2 只修了 BOSS 戰的 _advSessionQuestions。)修法:比照日本關,在 Japan 分支後、最末 fallback 前補埃及分支:subject===「埃及」 或 _adventureStage===「egypt」 → 取 ADV_QUIZ_DB 埃及 30 題,_miniQuizUsedIds 去重 + _filterPersistentMini(…,「埃及」)。',
+      '★ v3.15.9【埃及雙王 BOSS 開場白 index.html getAdvBossIntroLines + advShowBossIntro】根因:兩函式判斷主 BOSS 名時,埃及雙王(法老王/埃及豔后)不在 japan/taiwan/木柵 的偵測清單 → getAdvBossIntroLines 落到 fallback 九尾空貓怪、advShowBossIntro 落到 🐱 預設。修法:(1) getAdvBossIntroLines 在台灣偵測後、_mainBossName fallback 前加埃及偵測(_adventureStage===「egypt」 且 G.p2 含法老王/埃及豔后 → 指定該名);並在 _TW_BOSS_INTROS 之後加 _EGYPT_BOSS_INTROS(法老王/埃及豔后兩 key 指向同一段 3 行雙王對白:法老王自石棺甦醒→豔后自王座起身接話→兩王以尼羅河+黃沙立誓)。(2) advShowBossIntro 在 _mainBoss fallback 前加埃及偵測 → _mainBoss={name:「法老王 & 埃及豔后」, _egyptDual:true},icon 解析加 _egyptDual → 👑。',
+      '★ v3.15.9【伺服器休息/開機排程 — 後端 index.html(firebase IIFE 內)】新增 window._fbGetRestSchedule()(讀 gameConfig/restSchedule,失敗保守回 {enabled:false} 避免誤鎖)+ window._fbWatchRestSchedule(callback)(onSnapshot,同維修 _fbWatchMaintenance 模式)。儲存於 gameConfig/restSchedule { enabled, startHHMM, endHHMM, warnMin, restMessage, warnMessage, updatedAt, updatedBy };gameConfig = GM-only 寫 / 登入可讀(同 arenaSwitch),不需改 firestore.rules、無安全漏洞;與維修模式(stats/global.maintenance)各自獨立。',
+      '★ v3.15.9【伺服器休息/開機排程 — 客戶端 index.html】純函式 _restEvalState(schedule, now) 用 minutes-of-day(0-1439)circular 判 open/warn/rest(跨夜 startMin>endMin 用「nowMin>=start 或 nowMin<end」;start==end 或格式無效一律視為 open 防 24h 鎖死;回傳 bootAtMs=下一個 endMin 的實際時鐘時刻)。_showRestOverlay 夜空主題獨立 #restOverlay(z-index 999998,與 #_maint-overlay 不同),含 1 秒倒數;歸零 → 鎖 _restBootingNow → 顯示「☀️ 早安!」→ 3 秒後 location.reload()(決策3)。_showRestWarnBanner 提前預告 banner(localStorage 當日 key 去重,14 秒自動關)。_startRestScheduleWatcher:_fbWatchRestSchedule onSnapshot + 本機 20 秒 ticker(抓時鐘跨點但雲端沒變)共同呼叫 _restApply。_restApply:管理員(_REST_DEV_EMAILS)永不受限(隱藏 overlay);rest 狀態首次進入先 _lxpsInstantPersist 存檔(決策2:先存後擋)再蓋 overlay;warn 跳 banner;open 收 overlay。DOM ready 後 2.6 秒自動啟動 watcher。',
+      '★ v3.15.9【伺服器休息/開機排程 — 登入閘 index.html onAuth】維修閘之後、停權檢查之前,加非管理員休息閘:await _fbGetRestSchedule → _restEvalState === rest → 先 gameCloudSave → _fbSignOut → _showRestOverlay 後 return(同維修「先存後擋」);讀失敗一律放行避免誤鎖。',
+      '★ v3.15.9【伺服器休息/開機排程 — GM 後台 admin_panel.js】系統管理群組、維修模式下方新增「🌙 伺服器休息/開機排程」卡片(鐵律 1.47 三同步:#_admin-restsched-section div HTML + SIDEBAR_ITEMS 一筆 + SIDEBAR_GROUPS「🛠 系統管理」加入)。欄位:休息開始(input time)/開機(input time)/提前預告分鐘(number,預設10)/休息畫面訊息/預告訊息 + 載入/啟用/停用鈕。handler _initRestScheduleSection 比照 arenaSwitch 用 window._fbFns + window._fbDb 讀寫 gameConfig/restSchedule;啟用前嚴驗 HH:MM 格式 + 開始≠開機(防 24h 鎖死)。ADMIN_PANEL_VERSION v3.15.6→v3.15.9。',
+      '★ v3.15.9【埃及雙王 BUG1 甲:即時互救】index.html checkWin 開頭(我方全滅判負後、主BOSS投降清單前)新增埃及雙王互救:_adventureStage===egypt 且 G.p2 含法老王+埃及豔后,偵測「一王 curHp≤0、另一王存活」→ 存活者立刻耗自身最大 HP 5%、復活倒下者至最大 HP 25%(沿用 startTurn 既有耗血/復活量)後「不 return」續跑(此時兩王皆活,下方 G.p2.every 全滅=false→回 false 戰鬥繼續)→ 玩家「打死一王」當下即見復活,不必等下一個 startTurn。雙王同時 HP≤0 則不互救 → 落到全滅判定走正規勝利。startTurn 既有互救 hook 保留兜底(冪等)。',
+      '★ v3.15.9【埃及雙王 BUG2 乙:勝利誤判重開 根因修復】index.html checkWin「G.p2.every(curHp≤0) 全滅」分支內的 BOSS 防呆,原用「各自維護、漏了雙王」的硬編碼 _BOSS_SET 判 _hasBoss → 兩王同時擊殺時 _hasBoss=false → 觸發防呆強制 _advMiniBattleActive=true + advFinishMiniBattle(true)(小怪戰結算)→ 推進 scene 重新生成滿血(11500/10500)雙王戰(老師回報「升級完又重開全新雙王」;玩家 G 快照雙王滿血、round 13、豔后 acted=true 佐證)。改用單一真相來源 _ZEUS_TRUE_BOSSES(鐵律 1.135;已含全部 BOSS + 雙王)判 _hasBoss,fallback 保守視為有 BOSS。修後兩王同時擊殺 → _hasBoss=true → 跳過防呆 → 走既有 _showResultWithDrama(true)(與日本/台灣關完全相同的 BOSS 勝利路徑:回首頁、發 BOSS 獎勵、跑雙王 S 評價收服)。',
+      '★ v3.15.9【答題獎勵 淨化光芒(cleanse)清友方含強力版】index.html advApplyReward id===cleanse:原 clearBadStatus 故意保留 strongTaunt/_youyouNightmare/s._strong(強力版)→ 對雙王的強力查封(nosell _strong)/強力失明(forecast _strong)束手無策。改用 _clairClearAllBad(只看狀態 type、不看 _strong 旗標,並 _restoreStatDebuffOnRemove 還原數值類 debuff),一併清掉 stun/charm/nosell/forecast 等限制行動的不利(含強力版)。',
+      '★ v3.15.9【答題獎勵 破滅吹拂(remove_buff)清敵方含強力版 + status 免疫類】index.html advApplyReward id===remove_buff:原僅 t.buffs=[](雖已含 immune/shield/evasion/halfDmg/deathimmune/dmgup 等強力有利 buff),但 statusImmune/ctrlImmune 等是用 addStatus 掛在 status 陣列 → 清 buffs 漏掉、敵方仍免疫不利。新增「再濾掉 status 裡的有利免疫類」(_GOOD_IMMUNE_STATUS=[statusImmune,ctrlImmune,badimmune,magicImmune,deathimmune,immune,evasion]),只移除明確有利免疫類、不動敵方其他不利狀態。',
+      '★ v3.15.9【埃及關正式對全體開放】index.html _egyptTrySelect:把 v3.15.0「僅管理員測試」閘門(非管理員一律 _egyptShowComingSoon)改為比照台灣關的「4 名英雄達 Lv.25」解鎖(管理員仍可跳過);未達標顯示既有 _egyptShowLockedModal 解鎖進度視窗。_egyptShowComingSoon 保留定義但不再被呼叫(無孤兒參照)。',
+      '★ v3.15.9 註:本輪改動檔 = game_changelog.js(本檔)、admin_panel.js(休息排程卡片,v3.15.6→v3.15.9)、index.html(龍王名稱/埃及小怪題庫/埃及雙王開場白/伺服器休息排程/埃及雙王 BUG1甲+BUG2乙/答題獎勵 cleanse+remove_buff 強化/埃及關開放)。hero_db.js / world-boss.js / world-boss-ui.html / main.css / sw.js 本輪未改、版本不動。CURRENT_BOOT_VER 不變。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.8(2026-06-14)— 🧹 首頁工具列精簡 + 📖 圖鑑天賦/爆發說明與升級視窗分離 + 👑 法老王技能強化 + 🐍 埃及豔后天賦/爆發改版
   // ════════════════════════════════════════════════════════════════════
   {
