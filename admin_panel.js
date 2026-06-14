@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.0';   // ★ v3.15.0(2026-06-14)— 龍王排行榜逐回合明細新增「各英雄傷害來源總表」(高→低+占比條,單一英雄≥60%標紅,查傷害異常)｜v3.14.24 選擇龍王下拉冪等填充
+window.ADMIN_PANEL_VERSION = 'v3.15.3';   // ★ v3.15.3(2026-06-14)— 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -698,6 +698,9 @@ async function _showAdminStatsPanelImpl(){
           </label>
           <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
             <input type="checkbox" id="_cr-item-iliya" style="width:17px;height:17px;cursor:pointer;">🗡️ UR 魔劍姬‧伊莉雅
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-odin" style="width:17px;height:17px;cursor:pointer;">⚡ UR 主神奧汀
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
             <input type="checkbox" id="_cr-item-ssrpick" style="width:17px;height:17px;cursor:pointer;">🌟 SSR 自選召喚卷 ×
@@ -1663,6 +1666,17 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.15.3(2026-06-14)— GM 解鎖全部至寶(自己帳號,測試用)老師需求 -->
+      <div id="_admin-treasure-unlockall-section" style="background:rgba(40,30,55,0.55);border:2px solid rgba(190,150,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#cfa8ff;margin-bottom:8px;">💠 解鎖全部至寶(自己帳號)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          一鍵替<b>你自己的帳號</b>解鎖<b>所有台灣至寶</b>(本地 + 雲端存檔)。僅供<b style="color:#ffee88;">測試 / 展示</b>用。<br>
+          <span style="color:#aaa;font-size:12px;">已擁有的至寶會自動跳過(冪等,不會覆蓋等級/投資/裝備關聯)。不影響其他玩家。</span>
+        </div>
+        <button id="_admin-treasure-unlockall-btn" style="padding:9px 20px;font-size:14px;font-weight:800;background:rgba(150,90,220,0.3);border:2px solid #b98fe0;color:#e8d6ff;border-radius:7px;cursor:pointer;font-family:inherit;">💠 解鎖全部至寶</button>
+        <div id="_admin-treasure-unlockall-log" style="margin-top:10px;font-size:13px;color:#cfa8ff;line-height:1.5;"></div>
+      </div>
+
       <!-- ★ v1.0.20260510.5820 — 解除冷卻 / 每日次數限制(管理員測試用) -->
       <div id="_admin-bypass-section" style="background:rgba(20,40,60,0.55);border:2px solid rgba(120,200,255,0.65);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#88ccff;margin-bottom:8px;">🔓 5. 解除冷卻 / 每日次數限制(測試用)</div>
@@ -2311,6 +2325,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-wq-section',               label: '📊 本週小博士排行榜',      hint: '結算 / 補發 / 刪除' },
       { sec: '_admin-bypass-section',           label: '🔓 解除冷卻 / 每日上限',   hint: '測試用' },
       { sec: '_admin-test-batch-section',       label: '🧪 批次設定數值',          hint: '測試工具' },
+      { sec: '_admin-treasure-unlockall-section', label: '💠 解鎖全部至寶(自己)',  hint: '一鍵替自己帳號解鎖所有台灣至寶(測試用)' },
       { sec: '_admin-backfill-players-section', label: '📊 回填總玩家數',          hint: '統計校正' },
       { sec: '_admin-set-players-section',      label: '👥 手動設定總玩家數',      hint: '統計校正' },
       { sec: '_admin-set-adv-section',          label: '⚔️ 設定累計冒險次數',      hint: '統計校正' },
@@ -2348,7 +2363,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
-      { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section'] },
+      { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section','_admin-treasure-unlockall-section'] },
     ];
     const _secToItem = {};
     SIDEBAR_ITEMS.forEach(it => { _secToItem[it.sec] = it; });
@@ -4332,6 +4347,7 @@ async function _showAdminStatsPanelImpl(){
       const backpack = {};
       if(_chk('_cr-item-clair')){ unlockedHeroes.push('藝天使．克雷爾'); items.push('🌟UR藝天使克雷爾'); }
       if(_chk('_cr-item-iliya')){ unlockedHeroes.push('魔劍姬‧伊莉雅'); items.push('🗡️UR魔劍姬伊莉雅'); }
+      if(_chk('_cr-item-odin')){  unlockedHeroes.push('主神奧汀');     items.push('⚡UR主神奧汀'); }
       if(_chk('_cr-item-ssrpick')){ const q=_qty('_cr-qty-ssrpick',1); backpack['summon_ticket_ssr_pick']=(backpack['summon_ticket_ssr_pick']||0)+q; items.push('🌟SSR自選券×'+q); }
       if(_chk('_cr-item-srpick')){  const q=_qty('_cr-qty-srpick',1);  backpack['summon_ticket_sr_pick'] =(backpack['summon_ticket_sr_pick']||0)+q;  items.push('✨SR自選券×'+q); }
       if(_chk('_cr-item-ssrrand')){ const q=_qty('_cr-qty-ssrrand',1); backpack['summon_ticket_ssr']=(backpack['summon_ticket_ssr']||0)+q; items.push('🌈隨機SSR券×'+q); }
@@ -7534,6 +7550,54 @@ async function _showAdminStatsPanelImpl(){
       btn.textContent = '🧪 套用測試數值（並雲端儲存）';
     }
   };
+
+  // ★ v3.15.3(2026-06-14)— GM 解鎖全部至寶(自己帳號,測試用)老師需求
+  //   逐一掃 window.TAIWAN_TREASURES,缺的就以 lv1 寫進 window._taiwanTreasureData(冪等,不覆蓋已有),
+  //   再走 _saveTaiwanTreasureData() + gameCloudSave()。只動 GM 自己的本地+雲端存檔,不碰其他玩家。
+  const _treUnlockBtn = document.getElementById('_admin-treasure-unlockall-btn');
+  if(_treUnlockBtn){
+    _treUnlockBtn.onclick = async () => {
+      const _logEl = document.getElementById('_admin-treasure-unlockall-log');
+      const _TRE = (typeof window.TAIWAN_TREASURES === 'object' && window.TAIWAN_TREASURES) ? window.TAIWAN_TREASURES : null;
+      if(!_TRE){
+        if(_logEl){ _logEl.style.color = '#ff8888'; _logEl.textContent = '❌ TAIWAN_TREASURES 尚未載入,請先進過遊戲主畫面再試'; }
+        return;
+      }
+      const _allIds = Object.keys(_TRE);
+      if(!_allIds.length){
+        if(_logEl){ _logEl.style.color = '#ff8888'; _logEl.textContent = '❌ 至寶定義為空'; }
+        return;
+      }
+      if(!confirm('將替「你自己的帳號」解鎖全部 ' + _allIds.length + ' 件台灣至寶(已擁有的會跳過)。\n\n確定執行嗎?')) return;
+      _treUnlockBtn.disabled = true;
+      _treUnlockBtn.textContent = '解鎖中...';
+      try{
+        if(typeof window._taiwanTreasureData !== 'object' || !window._taiwanTreasureData) window._taiwanTreasureData = {};
+        let _added = 0, _skipped = 0;
+        _allIds.forEach(function(_tid){
+          if(window._taiwanTreasureData[_tid] && window._taiwanTreasureData[_tid].lv >= 1){ _skipped++; return; }
+          window._taiwanTreasureData[_tid] = { lv:1, exp:0, equippedTo:null, equippedSlot:null, invested:{hp:0,atk:0,sp:0,spd:0} };
+          _added++;
+          // 寫至寶解鎖歷史(供 GM 異常偵測/活動記錄;GM 自己解鎖標記來源)
+          try{ if(typeof window._advSaveTreasureUnlockHistory === 'function') window._advSaveTreasureUnlockHistory(_tid, 'gm_unlock_all'); }catch(_){}
+        });
+        try{ if(typeof window._saveTaiwanTreasureData === 'function') window._saveTaiwanTreasureData(); }catch(_){}
+        if(typeof gameCloudSave === 'function'){ try{ await gameCloudSave(); }catch(e){ console.warn('[GM 解鎖全部至寶] 雲端儲存失敗', e); } }
+        try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+        if(_logEl){
+          _logEl.style.color = '#88ff88';
+          _logEl.innerHTML = '✅ 完成!新解鎖 <b>' + _added + '</b> 件至寶' + (_skipped ? '(已擁有跳過 ' + _skipped + ' 件)' : '')
+            + '<br><span style="color:#ffee88;">已即時雲端儲存</span>';
+        }
+      }catch(e){
+        if(_logEl){ _logEl.style.color = '#ff6666'; _logEl.textContent = '❌ 解鎖失敗:' + (e && e.message || e); }
+        console.error('[GM 解鎖全部至寶]', e);
+      }finally{
+        _treUnlockBtn.disabled = false;
+        _treUnlockBtn.textContent = '💠 解鎖全部至寶';
+      }
+    };
+  }
 
   // ★ v1.0.20260428 — 清除「跨關卡已答對題目」紀錄
   const _clearBtn = document.getElementById('_admin-clear-correct');
@@ -11220,7 +11284,7 @@ async function _showAdminStatsPanelImpl(){
     //   設計:
     //     - 從 _cachedGlobalStats 讀目前 BOSS_ID 的排行榜
     //     - 用 modal 列出每筆,顯示總傷/戰鬥數/單場平均/英雄+等級/最後更新時間
-    //     - 單場平均 > 5000 自動標紅(提醒老師可能是異常)
+    //     - 單場平均/回合 > 20000 自動標紅(提醒老師可能是異常;v3.15.3 由 5000 調高)
     //     - 每筆有 checkbox,勾選後按下方「刪除已勾選 N 筆」
     //     - 走 _wbHpSync.clearLeaderboardEntries(BOSS_ID, teamKeys) transaction 刪
     //   清理:modal 關閉時把節點移除 + 結束 escape/click-outside 監聽
@@ -11397,8 +11461,8 @@ async function _showAdminStatsPanelImpl(){
     // 設計:
     //   - 列出該隊伍所有 battleHistory 場次(新到舊)
     //   - 已標墓碑的場次:disable + 灰色顯示「已標墓碑」
-    //   - 未標墓碑的場次:checkbox 可勾,顯示傷害/時間/單場異常標記(>5000 警告)
-    //   - 工具列:全選 / 全不選 / 只勾異常(單場 > 5000)
+    //   - 未標墓碑的場次:checkbox 可勾,顯示傷害/時間/單場異常標記(>20000 警告)
+    //   - 工具列:全選 / 全不選 / 只勾異常(平均每回合 > 20000)
     //   - 按下「標記墓碑 + 發補償券」→ 二段確認(輸入原因)→ 執行
     //
     // 執行流程(逐筆):
@@ -11460,12 +11524,13 @@ async function _showAdminStatsPanelImpl(){
           // ★ v3.13.4 — 顯示完整時間到「秒」,讓兩場同分鐘的也能區分
           const _timeStr = (_t.getMonth()+1) + '/' + _t.getDate() + ' ' +
                            _pad(_t.getHours()) + ':' + _pad(_t.getMinutes()) + ':' + _pad(_t.getSeconds());
-          // ★ v3.13.4(2026-05-31)— 異常判定改為「該場平均/回合 > 5000」
-          //   單擊上限就是 5000,所以平均/回合 > 5000 才是異常
+          // ★ v3.15.3(2026-06-14)— 異常判定門檻由「平均/回合 > 5000」改為「平均/回合 > 20000」(老師指定)
+          //   單擊上限是 5000;聯手爆發另計 5000 但明細收集天然不含它(那條路直接改 boss.curHp),
+          //   故 > 20000/回合(等於連續多次高傷命中)才視為真正異常/外掛。
           const _bDmg = (b.dmg || 0);
           const _bTurns = (b.turns || 0);
           const _bAvgPerTurn = _bTurns > 0 ? Math.round(_bDmg / _bTurns) : 0;
-          const _isAbnormal = !_isDeleted && _bAvgPerTurn > 5000;
+          const _isAbnormal = !_isDeleted && _bAvgPerTurn > 20000;
           const _dmg = _isDeleted ? (b._origDmg || 0) : _bDmg;
           const _dmgColor = _isDeleted ? '#888' : (_isAbnormal ? '#ff6666' : '#ffd066');
           const _bg = _isDeleted ? 'rgba(120,40,40,0.2)' : (_isAbnormal ? 'rgba(80,30,30,0.35)' : 'rgba(30,25,40,0.6)');
@@ -11504,7 +11569,7 @@ async function _showAdminStatsPanelImpl(){
                        ' · ' + (_bTurns||'—') + ' 回合 · ' + (b.qc||0) + ' 題' +
                        ' · 💥 <b style="color:#ffaa66;">聯手爆發 ' + _tbCnt + ' 次</b>' +
                        (_bAvgPerTurn > 0
-                         ? ' · <span style="color:' + (_bAvgPerTurn > 5000 ? '#ff6666' : '#88ccdd') + ';">' +
+                         ? ' · <span style="color:' + (_bAvgPerTurn > 20000 ? '#ff6666' : '#88ccdd') + ';">' +
                            '平均 ' + _bAvgPerTurn.toLocaleString() + '/回</span>'
                          : '') +
                        (b._isBonus ? ' · 🎫 補償場次' : '') +
@@ -11557,7 +11622,7 @@ async function _showAdminStatsPanelImpl(){
                   'border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>' +
             '<button id="_wblb-tomb-selab" style="padding:5px 12px;font-size:12px;' +
                   'background:rgba(120,60,40,0.5);border:1px solid #c87;color:#fcb;' +
-                  'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均每回合&gt;5000)</button>' +
+                  'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均每回合&gt;20000)</button>' +
             '<span id="_wblb-tomb-count" style="margin-left:auto;font-size:12px;color:#ccc;">已選 0 筆</span>' +
           '</div>' +
           // 列表
@@ -11609,8 +11674,8 @@ async function _showAdminStatsPanelImpl(){
         _updateCount();
       };
       _overlay.querySelector('#_wblb-tomb-selab').onclick = function(){
-        // ★ v3.13.4(2026-05-31)— 改用「該場平均每回合 > 5000」判定
-        //   單擊上限 5000,平均/回合 > 5000 才是真異常
+        // ★ v3.15.3(2026-06-14)— 改用「該場平均每回合 > 20000」判定(老師指定)
+        //   單擊上限 5000;聯手爆發 5000 不計入明細;平均/回合 > 20000 才是真異常
         _listBox.querySelectorAll('._wblb-tomb-chk').forEach(function(c){
           const _oi = parseInt(c.getAttribute('data-orig-idx'), 10);
           const _b = entry.battleHistory[_oi];
@@ -11618,7 +11683,7 @@ async function _showAdminStatsPanelImpl(){
           const _bDmg = _b.dmg || 0;
           const _bTurns = _b.turns || 0;
           const _bAvgPerTurn = _bTurns > 0 ? (_bDmg / _bTurns) : 0;
-          c.checked = (_bAvgPerTurn > 5000);
+          c.checked = (_bAvgPerTurn > 20000);
         });
         _updateCount();
       };
@@ -11781,7 +11846,7 @@ async function _showAdminStatsPanelImpl(){
           const _avg = _bt > 0 ? Math.round(_dmg / _bt) : 0;
           // ★ v3.13.4(2026-05-31)— 異常判定改為「平均每回合」
           //   老師:1.5 萬/場看起來大,但若用了 11 回合,平均 1364/回合 → 正常
-          //   只有「平均/回合 > 5000」才是真的開外掛(單擊上限 5000)
+          //   只有「平均/回合 > 20000」才是真的開外掛(單擊上限 5000;v3.15.3 老師調高門檻)
           //   公式:totalDmg / Σ(每場 turns)。若沒有 battleHistory 退回單場估算
           let _avgPerTurn = 0;
           let _totalTurns = 0;
@@ -11799,7 +11864,7 @@ async function _showAdminStatsPanelImpl(){
               if(_approxTurns > 0) _avgPerTurn = Math.round(_dmg / _approxTurns);
             }
           }catch(_){}
-          const _isAbnormalRow = _avgPerTurn > 5000;
+          const _isAbnormalRow = _avgPerTurn > 20000;
           const _avgColor = _isAbnormalRow ? '#ff6666' : (_avgPerTurn > 3000 ? '#ffaa55' : '#aaccff');
           const _avgWarn = _isAbnormalRow ? ' ⚠️' : '';
           const _heroes = _renderHeroChips(e.teamHeroes, e.teamNames);
@@ -11935,7 +12000,7 @@ async function _showAdminStatsPanelImpl(){
           '<div style="padding:8px 18px;font-size:12px;color:#bbb;background:rgba(60,40,80,0.3);' +
                       'border-bottom:1px solid rgba(120,80,160,0.25);line-height:1.5;">' +
             '💡 勾選要刪除的紀錄(整筆,含累積傷害&戰鬥數)。<b style="color:#ffaa66;">' +
-            '單場平均每回合 &gt; 5000 標紅</b>,通常代表 BUG/異常傷害。(單擊上限 5000)' +
+            '單場平均每回合 &gt; 20000 標紅</b>,通常代表 BUG/異常傷害。(單擊上限 5000;聯手爆發 5000 不計入)' +
           '</div>' +
           // 工具列
           '<div style="padding:8px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;' +
@@ -11948,7 +12013,7 @@ async function _showAdminStatsPanelImpl(){
                     'border-radius:5px;cursor:pointer;font-family:inherit;">全不選</button>' +
             '<button id="_admin-wblb-detail-selabnormal" style="padding:5px 12px;font-size:12px;' +
                     'background:rgba(120,60,40,0.5);border:1px solid #c87;color:#fcb;' +
-                    'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均每回合&gt;5000)</button>' +
+                    'border-radius:5px;cursor:pointer;font-family:inherit;">⚠️ 只勾異常(平均每回合&gt;20000)</button>' +
             '<span id="_admin-wblb-detail-selcount" style="margin-left:auto;font-size:12px;color:#ccc;">已選 0 筆</span>' +
           '</div>' +
           // 列表
@@ -12060,7 +12125,7 @@ async function _showAdminStatsPanelImpl(){
         _updateSelCount();
       };
       _overlay.querySelector('#_admin-wblb-detail-selabnormal').onclick = function(){
-        // ★ v3.13.4(2026-05-31)— 重新算「平均每回合 > 5000」的列並勾起(改用 turns 為分母)
+        // ★ v3.15.3(2026-06-14)— 重新算「平均每回合 > 20000」的列並勾起(改用 turns 為分母;老師調高門檻)
         _list.forEach(function(e){
           let _totalTurns = 0;
           try{
@@ -12073,7 +12138,7 @@ async function _showAdminStatsPanelImpl(){
             }
           }catch(_){}
           const _avgPerTurn = _totalTurns > 0 ? Math.round((e.totalDmg||0) / _totalTurns) : 0;
-          if(_avgPerTurn > 5000){
+          if(_avgPerTurn > 20000){
             const _row = _listBox.querySelector('._wblb-row[data-teamkey="' + (e.teamKey||'').replace(/"/g,'\\"') + '"]');
             if(_row){
               const _chk = _row.querySelector('._wblb-chk');
@@ -12230,7 +12295,7 @@ async function _showAdminStatsPanelImpl(){
               '📝 刪除原因(玩家會在登入時看到):' +
             '</label>' +
             '<textarea id="_admin-wblb-detail-reason" rows="2" maxlength="200" ' +
-                      'placeholder="例如:傷害異常(平均 > 5000)、利用 BUG 刷分、誤觸發等" ' +
+                      'placeholder="例如:傷害異常(平均每回合 > 20000)、利用 BUG 刷分、誤觸發等" ' +
                       'style="width:100%;padding:7px 10px;font-size:13px;background:rgba(20,15,30,0.8);' +
                       'border:1.5px solid rgba(180,140,220,0.5);border-radius:6px;color:#eee;' +
                       'font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>' +
