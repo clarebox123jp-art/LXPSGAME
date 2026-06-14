@@ -13,6 +13,32 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.12(2026-06-15)— 🦁 動物學家天賦「獸盟」改版 + 埃及 4 寵物獸盟強化
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.12',
+    date: '2026-06-15',
+    brief: [
+      '🦁✨【動物學家天賦「獸盟」大改版!】',
+      '   ・🏜️ 動物學家在<b>埃及關</b>使用爆發時,<b>必定召喚埃及的 4 種寵物</b>(荷魯斯之鷹、阿努比斯胡狼、聖䗴神蟲、托特聖䴉)!',
+      '   ・⚔️ 天賦「獸盟」更新:不再隨等級提升寵物數值,改成<b>「行動前有機率驅除對手 1 隻攜帶的寵物」</b>(機率隨天賦升級提升,詳見天賦升級視窗)!',
+      '   ・💪 只要<b>隊上有動物學家(獸盟生效)</b>,埃及 4 寵物的能力會<b>大幅強化</b>:',
+      '   ・　🦅 荷魯斯之鷹:行動 2 次之外,<b>回合開始還會解除自己所有不利狀態</b>!',
+      '   ・　🐺 阿努比斯胡狼:普攻命中回 <b>4 能量</b>、目標<b>減療 2 回合</b>!',
+      '   ・　🪲 聖䗴神蟲:致命傷<b>以 100% HP 重生</b>、受傷 <b>-40%</b>、休息<b>額外 +2 能量</b>!',
+      '   ・　🐦 托特聖䴉:答對幫 HP 最低隊友回 <b>40% HP</b>、主人下個技能 <b>-4 能量</b>!',
+    ],
+    items: [
+      '★ v3.15.12【動物學家在埃及召喚埃及四寵物 index.html】確認:execBurst 動物學家召喚分支用 window._getEquipPoolForStage()(埃及關自動回傳 _stage===egypt 的 4 隻),sort 隨機後 slice(0,4) → 埃及池正好 4 隻 = 必定召喚全部四種。召喚邏輯無需修改,已自動成立。(_getTaiwanEquipPool 僅定義無使用,不影響。)',
+      '★ v3.15.12【動物學家天賦移除隨等級 + 改驅除對手寵物 index.html】(1) getCraftsmanBonus(side):移除「2 + _tl*0.1」(舊版 Lv0=2.0~Lv5=2.5 隨等級遞增),改固定 return 2(友方寵物效果固定 +100%);台灣/日本寵物效果改固定 ×2。(2) startTurn 行動者(next)hook 區(荷魯斯獸盟淨化 hook 之前)新增:next.name===動物學家 && curHp>0 && !confused → _zlChance=min(0.90, 0.50 + _getTraitLv(動物學家)*0.10)(顯示 Lv1~5=50/60/70/80/90%)→ Math.random()<_zlChance → 從對手側 filter(curHp>0 && equip) 隨機選 1 隻 → 該英雄 equip.onRemove(若有)+ equip=null + banner + renderCard。',
+      '★ v3.15.12【動物學家圖鑑天賦說明去數字 hero_db.js,鐵律1.160】HERO_TRAIT[動物學家] desc=「自己存活時友方寵物效果提升;行動前有機率驅除對手1隻寵物」、fd=「…效果提升 100%;且每次行動前有機率驅除隨機 1 名對手攜帶的寵物(驅除機率隨天賦升級提升,詳見升級視窗)」。不寫任何「每升X%/LvN/50~90」數字。',
+      '★ v3.15.12【動物學家天賦升級視窗逐級 hero_db.js】_TRAIT_LV_INFO 新增「動物學家」:{base:50%驅除, bonus:+10%/天賦級, max:90%（Lv5）, effect:行動前驅除對手1隻寵物的機率}。_showTraitLvPopup 解析 base+bonus → Lv1(i=0)=50、Lv2=60、Lv3=70、Lv4=80、Lv5(i=4)=90;isProbability(base含%+effect含「機率」)→ cap 100。與 hook 機率(traitLv 0~4 → 50~90%)對應。',
+      '★ v3.15.12【獸盟(動物學家在場)強化 4 埃及寵物 index.html】判斷一律用二元 getCraftsmanBonus(side)>1(動物學家存活且非confused)。(a)荷魯斯:startTurn 主人裝備荷魯斯 + 獸盟 → _clairClearAllBad(next) 解除所有不利(含強力版)+ banner。(b)阿努比斯 execAtk:_beastA → 4 能量/減療 2 回合,基礎 2/1。(c)聖䗴 onDmg:移除屬性式 dmgReducePct,改 onDmg 內二元減傷(_beastS?40%:20%)+ 致命傷重生(_beastS?100%:50%);doRest:_beastRest → +2,基礎 +1。(d)托特 advShowReward:_beastT(以 p1 是否有動物學家)→ 回 40%,基礎 20%;每主人記 _thothBeast,skillCost 折扣 c-(_thothBeast?4:2)、max(1,..)。',
+      '★ v3.15.12【EQUIP_DB 4 寵物 d 文字補獸盟強化說明 index.html】4 隻 d 末段加「獸盟（隊上有動物學家）強化為…」對應數值(荷魯斯加解除不利、阿努比斯 4 能量/減療2、聖䗴 100%/-40%/+2、托特 40%/-4),讓玩家於寵物詳情了解強化效果。',
+      '★ v3.15.12 註:本輪改動檔 = game_changelog.js(本檔)、hero_db.js(HERO_TRAIT+_TRAIT_LV_INFO,v3.15.8→v3.15.9)、index.html(getCraftsmanBonus+startTurn驅除/荷魯斯淨化 hook+4寵物獸盟強化+d文字,→v3.15.12)。admin_panel.js/world-boss.js/world-boss-ui.html/sw.js 未改。CURRENT_BOOT_VER 不變。⚠ 4 張寵物圖仍需上傳。上傳順序:game_changelog.js → hero_db.js → index.html(最後)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.11(2026-06-15)— 🐾 埃及 4 隻寵物能力重新修正
   // ════════════════════════════════════════════════════════════════════
   {
