@@ -13,6 +13,39 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.8(2026-06-14)— 🧹 首頁工具列精簡 + 📖 圖鑑天賦/爆發說明與升級視窗分離 + 👑 法老王技能強化 + 🐍 埃及豔后天賦/爆發改版
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.8',
+    date: '2026-06-14',
+    brief: [
+      '🧹【首頁更清爽 + 關卡視窗變高】',
+      '   ・移除了「檢查我的進度」與「檢查遊戲版本」兩顆按鈕。<b>「立即同步雲端」現在按下去會先自動幫你檢查是不是最新版本,再上傳進度</b>(偵測到新版本會在同步完成後提醒你更新;不管版本新舊,<b>進度一定會先存起來</b>,不用擔心)。',
+      '   ・「立即同步雲端 / 卡死或 BUG 回報 / 遊戲指引」三顆按鈕<b>並排成一行</b>,商店往下靠近;這樣<b>關卡選擇視窗變得更高</b>,滑動點擊更輕鬆。',
+      '👑【法老王 技能強化】',
+      '   ・S1<b>「王權法杖」</b>:原本的「擊退行動條」改為更強的<b>「暈眩、無法行動 1 回合」</b>。',
+      '   ・S2<b>「黃沙風暴」</b>:在原本的全體傷害+減速之外,<b>追加「失明 2 回合」</b>(失明會讓對手行動成功率減半)。',
+      '🐍【埃及豔后 天賦與爆發改版】',
+      '   ・天賦<b>「蛇瞳魅影」新增效果</b>:輪到豔后行動時,有機率<b>使對手減少 3 能量</b>(天賦越高機率越高)。',
+      '   ・爆發<b>「尼羅河的詛咒」改版</b>:傷害屬性改為<b>水屬性</b>,並<b>使對手減少 6 能量 + 全體強力查封物品 2 回合</b>(查封改為必中)。',
+      '📖【英雄圖鑑說明整理】',
+      '   ・法老王、埃及豔后的天賦與爆發說明<b>不再寫一堆升級數字</b>;升級後的實際數值改到<b>「天賦升級視窗 / 爆發升級欄位」逐級顯示</b>,看起來更清楚。(神槍手、風術士、朱玥、小鬼貓與兔等也一併整理。)',
+      '   ・💡 提醒:埃及雙王 BOSS 戰會因為法老王/豔后也使用上述新技能與天賦而<b>變得更有挑戰性</b>,記得帶好隊伍喔!',
+    ],
+    items: [
+      '★ v3.15.8【首頁工具列精簡 index.html #adv-bottom-tools】移除 adv-manual-check-btn(檢查我的進度;GM 後台已有同功能)與 adv-version-check-btn(檢查遊戲版本),連同三顆「?」說明鈕與同步鈕的「?」一併移除;遊戲指引由獨立整列移入與「立即同步雲端/卡死回報」並列一行(三鈕 flex:1、字級 clamp(14,1.7,21))。商店維持整列在上。被移除按鈕的 onclick 函式(_manualCheckCloudVsLocal/_manualCheckGameVersion/_showVersionCheckHelp/_showManualCheckHelp/_showManualCloudSyncHelp)保留定義(console/GM 可呼叫,無孤兒參照)。',
+      '★ v3.15.8【關卡視窗自動加高,不動 main.css】#adv-left-panel 為 flex column、#adv-stage-list-wrap/#adv-stage-list-area 為 flex:1 1 0、#adv-bottom-tools 為 flex-shrink:0(只佔內容高);底部由 4 列縮為 2 列(商店 + 三鈕)後,關卡視窗自動長高。版面 CSS 全在 main.css(未改、維持 v3.14.5)。',
+      '★ v3.15.8【版本檢查整併進同步 _manualCloudSync】同步前做「輕量」版本比對(fetch location.pathname?_syncVerChk=,_lxpsParseFileVersions 解析伺服器 _LXPS_FILE_VERSIONS + regex 抓 _GAME_LOADED_VERSION,與本地逐檔比對)。★資料安全優先:無論版本是否最新,gameCloudSave 一律照常執行(絕不因版本舊而擋存檔);fetch 失敗則靜默略過版本檢查直接同步。同步成功後若偵測到差異 → 既有 _showVersionCheckResultDialog(更新提示);否則顯示「已是最新版」。不跑原本的逐檔動畫 modal(那留給 console 的 _manualCheckGameVersion)。',
+      '★ v3.15.8【法老王 S1 王權法杖】index.html handler:移除「擊退行動條」(原 addStatus spddown 1) → 改 addStatus(t,\'stun\',1)「暈眩無法行動 1 回合」+ banner 暈眩。hero_db.js s1 d/fd 同步改寫(去擊退、寫暈眩)。',
+      '★ v3.15.8【法老王 S2 黃沙風暴】index.html handler:全體在原 spddown 2 之外追加 addStatus(e,\'forecast\',2)「失明 2 回合」(forecast=失明,行動成功率減半)+ banner 失明 + log 補述。hero_db.js s2 d/fd 同步追加失明 2 回合。',
+      '★ v3.15.8【埃及豔后 天賦 蛇瞳魅影 新增「回合開始減能量」】index.html 回合開始 hook(緊接法老威儀疊層 hook 之後,nextRound 前的 startTurn 區):next.name===\'埃及豔后\' 時擲機率(BOSS版 isEgyptBoss 固定 0.5;招募版 Math.min(0.90, 0.5 + _getTraitLv×0.10) = 50%→90%,每級 +10%),命中則 G.energy[對手 side]=Math.max(0, -3)(能量為隊伍共用池)+ showPopup -3E + sndEnergy + log/banner。★鐵律 1.160:此升級機率「不寫進天賦說明」,只登錄 _TRAIT_LV_INFO 升級視窗。',
+      '★ v3.15.8【埃及豔后 爆發 尼羅河的詛咒 改版】index.html _runBurst handler:屬性 dark→\'water\'(doDmg element:\'water\';BURST_ELEM 屬性表 尼羅河的詛咒 dark→water);新增「使對手隊伍減少 6 能量」(G.energy[_opp] -6,固定不隨等級,一次性)+ showPopup -6E + sndEnergy;強力查封物品由「50%~70% 機率」改為「必中」(移除 _sealChance 擲骰,全體必上 nosell _strong dur:2);傷害仍隨爆發等級 spv×200%×_burstMult(200%→280%)。banner/flash 改水藍色。',
+      '★ v3.15.8【圖鑑說明 vs 升級視窗分離(鐵律 1.160,老師反覆強調)】依鐵律把升級數字一律移出說明、改進升級視窗逐級顯示。本輪處理:(法老王)HERO_TRAIT 法老威儀 desc/fd 去「天賦每升1級此機率-5%(Lv5僅30%)」、BURST_DB 太陽神的審判 d/fd 去「爆發每強化1級恢復量+5%,Lv4達45%」;補 _TRAIT_LV_INFO 法老王(以「保住威儀機率 50%→70%」正向框架呈現,避開 _showTraitLvPopup 解析器不支援遞減 bonus 的限制)+ BURST_UPGRADE_DEF 法老王(逐級 900%→1260% + 復活25% + 回HP 25%→45%)。(埃及豔后)HERO_TRAIT/BURST_DB 同步去升級語言;_TRAIT_LV_INFO 埃及豔后以「減能量機率 50%→90%(+10%/級)」為主顯示、effect 同時敘述魅惑 50%→70%(+5%/級);BURST_UPGRADE_DEF 埃及豔后逐級 200%→280% 水屬性+減6能量+強力查封(必中)。',
+      '★ v3.15.8【全英雄圖鑑天賦/爆發說明稽核】爆發(主 90 隻)經掃描 0 多寫(鐵律 1.28 執行良好)。天賦多寫順修 4 隻(desc/fd 內嵌升級數字、但 _TRAIT_LV_INFO 皆已存在 → 移除重複安全):神槍手(fd 去「Lv1+3/.../Lv5+15」、_TRAIT_LV_INFO effect 修正速度「+3永久」→「+3~+15 隨天賦」)、風術士(fd 去「+6%~+14%/15%~35%(隨天賦等級)」)、魔界花使‧朱玥(desc/fd 去「每升1級+2%/名,Lv5達12%/名」)、小鬼貓與兔(desc/fd 去「每升1級+5%,Lv5達45%」)。天賦漏寫補 1 隻:學霸(轉學生)實作 _scProc=0.40+_scTl×0.05(機率 40%→60% 隨天賦)卻無 _TRAIT_LV_INFO → 補登。米鈴為誤報(「(隨機」非「隨天賦」);其餘 11 隻漏寫候選皆 BOSS/小怪固定天賦(0 次 _getTraitLv),正確無條目。',
+      '★ v3.15.8 註:本檔(game_changelog.js / index.html)已累積含 v3.15.7/v3.15.6/v3.15.5 全部變更;hero_db.js 本輪有改(法老王/豔后 技能·天賦·爆發說明 + 稽核順修),破快取字串 v3.15.5→v3.15.8。admin_panel.js 本輪未改、維持 v3.15.6,不需重新上傳。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.7(2026-06-14)— 🎵 埃及關小怪戰 BGM 兩首輪播修正(開場觸發點)+ admin_panel.js 破快取字串補跟
   // ════════════════════════════════════════════════════════════════════
   {
