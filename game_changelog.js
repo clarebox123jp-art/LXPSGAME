@@ -13,6 +13,55 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.0(2026-06-14)— 🔺 埃及探險關完整實裝(管理員測試) + 🐉 龍王雙動作確認/輪流表詳細能力 + 📊 排行榜各英雄傷害來源總表
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.0',
+    date: '2026-06-14',
+    brief: [
+      '🔺【環遊世界第二關 ── 埃及探險 即將登場！】',
+      '   ・繼貓空、台灣、日本之後,環遊世界冒險來到神祕的<b>古埃及</b>!穿越熾熱沙漠、深入金字塔,在寶庫王座挑戰守護寶藏的雙王。',
+      '   ・關卡分為<b>沙漠 → 金字塔入口 → 金字塔內部</b>三幕場景,每幕都有一場小怪戰,最後在王座迎戰<b>法老王與埃及豔后</b>雙王!',
+      '   ・在沙漠可以選擇<b>挑戰難度</b>(沒自信 / 普通 / 我很會),難度只影響雙王 BOSS 的 HP(+0% / +25% / +50%),題目一律是 30 題古埃及主題知識(地理 / 歷史 / 神話 / 神獸)。',
+      '   ・埃及小怪有 5 種(木乃伊貓、流沙眼鏡蛇、卡諾卜壇怪、神秘圖騰、聖甲蟲),每場戰鬥有 <b>12% 機率出現稀有的「🪲 聖甲蟲」</b>,打倒牠每位英雄可得<b>大量經驗值(3000~5000)</b>!埃及小怪掉落的經驗書全程都是<b>精裝版</b>。',
+      '   ・以 <b>S 評價</b>同時擊敗雙王,有機會<b>收服法老王或埃及豔后</b>(各自獨立 15% 機率)加入你的隊伍!',
+      '   ・💡 本次<b>先開放管理員(老師)進行測試</b>,一般玩家點選埃及關會看到「即將開放」,正式對全班開放後即可挑戰,敬請期待!',
+      '🌬️ 新角色登場介紹 ── 👑 法老王(光屬性 SSR)',
+      '   ・<b>天賦「法老威儀」</b>:每個回合開始累積 1 層威儀(造成傷害 +10%,最多 10 層);每次受傷有 50% 機率被削減 1 層。當埃及豔后倒下時,法老王會耗費自身 10% 生命把她復活到 25% HP(不限次數)。',
+      '   ・<b>S1「王權法杖」</b>:以攻擊+特技 150% 重擊 1 名對手,並把它的行動順序<b>擊退到最後</b>。',
+      '   ・<b>S2「黃沙風暴」</b>:以攻擊+特技 80% 對全體連續攻擊 2 次,並使全體<b>速度下降</b> 2 回合。',
+      '   ・<b>爆發「太陽神的審判」</b>:召喚拉神烈日,以特技 900%「群體分攤」的巨大光屬性傷害轟炸全場(敵人越多每人受越少),施放後<b>我方全體回復 25% HP</b>。',
+      '🌬️ 新角色登場介紹 ── 🐍 埃及豔后(暗屬性 SSR)',
+      '   ・<b>天賦「蛇瞳魅影」</b>:受到傷害時有 50% 機率使攻擊者陷入<b>強力魅惑</b> 1 回合(會攻擊自己的同伴)。當法老王倒下時,埃及豔后會耗費自身 10% 生命把他復活到 25% HP(不限次數)。',
+      '   ・<b>S1「魅惑之吻」</b>:以特技 200% 傷害 1 名對手,並使其<b>魅惑</b> 2 回合。',
+      '   ・<b>S2「蛇與蜜」</b>:回復我方全體 35% HP,並提升我方全體特技 50% 共 2 回合。',
+      '   ・<b>爆發「尼羅河的詛咒」</b>:喚醒千年詛咒淹沒戰場,以特技 200% 對全體造成暗屬性巨大傷害,並各有 50% 機率<b>查封物品</b> 2 回合。',
+      '   ・⚠ 提醒:法老王與埃及豔后會「互相復活」,唯有<b>同一時間同時擊殺雙王</b>才能真正終結戰鬥!',
+      '🐉【世界 BOSS 龍王 ── 雙動作確認 + 隨時查看任一龍王能力】',
+      '   ・確認<b>翠綠森龍王(草龍王)和火山炎龍王一樣每回合會行動兩次</b>:第一次是技能/爆發/普攻,第二次固定追擊一次普攻;追擊普攻現在會<b>鎖定當前 HP 最少的玩家</b>。',
+      '   ・「元素龍系列」輪流表的<b>每一隻龍王下方都新增「📖 詳細能力」按鈕</b>,可隨時點開查看那隻龍王的招式、天賦與護盾(尚未實裝的龍王顯示「🔒 能力即將解放」)。',
+    ],
+    items: [
+      // ── 埃及關 ──
+      '埃及關場景流程(index.html):新增 _EG_BG(沙漠/金字塔入口/金字塔內部/寶庫王座 raw 連結)+ ADV_SCENES.egypt(3 幕:egypt-desert choiceType=difficulty 沿用貓空 _advBossHpMult 0/+25/+50%、egypt-entrance/egypt-inner choiceType=japan_auto);流程=沙漠選難度→小怪戰→入口→小怪戰→內部→小怪戰→advFinishCutscene→雙王 BOSS(共 3 場小怪戰 + 雙王)。startAdventureGame egypt 區塊(subject/grade=埃及,難度由沙漠選擇覆蓋);advGetQuizPool egypt 兜底(subject===埃及||_adventureStage===egypt → 30 題,過場清空 subject 也命中)。',
+      '埃及小怪(index.html):MINI_MONSTERS_EG=[木乃伊貓/流沙眼鏡蛇/卡諾卜壇怪/神秘圖騰](正常 4 隻池);advStartMiniBattle 每場 12% 機率注入聖甲蟲(替換隨機一隻,同小惡魔/座敷童子稀有怪設計);MINI_MONSTER_ELEM(木乃伊貓暗/流沙眼鏡蛇土/卡諾卜壇怪土/神秘圖騰暗/聖甲蟲光);MONSTER_DROPS 五怪(精裝經驗書;聖甲蟲 EXP 3000~5000);advFinishMiniBattle 聖甲蟲掉落區塊(每位非好友英雄 addHeroExp 3000~5000 + 2% 果實 + 50% 技能書/精裝書);_RARE_MOB_LINES + _showRareMobIntro/_showRareMobDefeat 聖甲蟲金色(🪲 #ffd700)登場/退場對白;5 怪加入 BOSS_NAMES(魔物圖鑑/瀕死守門/鬥技場排除)。',
+      '埃及背景/BGM(index.html):新增 3 個 <audio>(bgm-egypt-menu 首頁BGM / bgm-egypt-battle 冒險BGM / bgm-egypt-boss 法老王BOSS戰BGM);場景與戰鬥背景採 inline backgroundImage(_EG_BG,不依賴 main.css 的 .bg-egypt-*);BGM 接線涵蓋 advStartCutscene/advLoadScene(過場 menu)、mini 戰鬥(battle/聖甲蟲)、advStartBattle+advFinishCutscene+_detectCurrentBgm(雙王 boss)、mini 結算→下一場景、相遇 BGM 共 9 處。',
+      '埃及雙王 BOSS(hero_db.js 批一已建,本批接線/天賦補完):_buildEgyptBossTeam 回傳法老王(光 isEgyptBoss)+埃及豔后(暗 isEgyptBoss),getBossTeam 5 處接線;雙王 s1/s2(王權法杖/黃沙風暴/魅惑之吻/蛇與蜜)execSkill 玩家路徑 + aiUseSkill AI 路徑雙路徑(鐵律 1.128);爆發(太陽神的審判 群體分攤900%+我方回25% / 尼羅河的詛咒 全體暗200%+50%查封)_runBurst 實作。',
+      '埃及雙王天賦(index.html):法老威儀傷害加成(doDmg let dmg=rawDmg 後 +10%/層,鐵律 1.110)+ 疊層(startTurn 回合開始 +1,上限 10)+ 受傷 50% 減 1 層(doDmg 受傷 hook,本批補);蛇瞳魅影(豔后受傷 50% 使攻擊者強力魅惑 1 回合,本批補);互相復活(startTurn 行動前檢查,一王倒下另一王存活→耗自身當前 HP10% 復活倒下者至最大 HP25%;雙王同時陣亡不觸發=必須同時擊殺;以 isEgyptBoss 守門僅 BOSS 版觸發)。',
+      '埃及招募 + 防呆 + 圖鑑(index.html):打雙王 S 評價時對法老王/埃及豔后各自獨立 15% 機率收服(未擁有+非借用,advSaveUnlockedHero source=egypt_boss_clear,已加入 BOSS_SOURCES/_LEGIT_SOURCES 白名單避免異常誤報);防呆 6 處(newHero/newHero_replace/focusHero/_renderHeroDetail/G.p1 二重保險×2)讀 EGYPT_BOSS_HERO_STATS 弱化版(法老王 hp48/atk30/sp14/spd8、豔后 hp38/atk12/sp34/spd16,避免招募版誤用 11500/10500 BOSS HP);_advGetHeroPoolForStage egypt 分支(法老王/埃及豔后 2 位)。',
+      '埃及雙王稀有度(index.html):加入 SUMMON_RARE_HEROES 取得 SSR 稀有度,但為「埃及 BOSS 戰限定收服」→ 從 SSR 召喚抽取(rare_ssr/legacy rare_hero)與自選券(_summonTicketUnrecorded)以 EGYPT_EXCLUSIVE_HEROES 排除(不可召喚/不可自選,只能打 BOSS 收服);加入 ADMIN_ALL_HEROES(GM 可發放);_nonStudentInRare 加雙王(學生設計計數準確)。',
+      '埃及入口閘門(index.html _egyptTrySelect):本版【僅開放管理員測試】(老師指示)——非管理員(含已達 4 名 Lv25 者)一律顯示「即將開放」彈窗不進入;唯管理員 _isAdminUser() 可進入 selectAdvStage(egypt)。日後正式開放只要把此閘門改回 4 名 Lv25 解鎖判斷即可。ADV_STAGES.egypt 介紹頁 + EGYPT 過濾 Set(EGYPT_BOSS_HEROES/EGYPT_EXCLUSIVE_HEROES/EGYPT_ALL_CHARACTERS/EGYPT_ARENA_EXCLUDE)批一已建。',
+      '埃及獎章(index.html MEDAL_DEFS):新增「埃及關」分類 5 枚(egypt_unlock 金字塔之鑰 / egypt_first_clear 雙王伏誅 / egypt_s_clear 尼羅河的榮光 / egypt_scarab 黃金聖蟲 / egypt_recruit_king 王者結盟);定義 _checkEgyptUnlockMedal / _checkEgyptClearMedal(grade) / _checkEgyptRecruitMedal;_checkMedalDefeat 加聖甲蟲→egypt_scarab;_egyptHardSClear 旗標(S 評價通關埋未來隱藏終局 gate hook,本版只埋不實作)。',
+      '埃及題庫(adv_quiz_db.js 批一已完成):末尾追加 30 題古埃及主題(id 3171-3200,grade/subject=埃及,22 普通+8 我很會),戰鬥題庫 filter subject===埃及,無撞號。',
+      // ── 世界 BOSS 龍王 ──
+      '龍王雙動作確認 + 追擊鎖血(world-boss.js):確認 _safeBossEndAction 的「主行動 + 追擊普攻」雙動作邏輯為「所有世界 BOSS 龍王」共用(以 _wbActionCount 計數,非火龍王專屬)→ 火山炎龍王與翠綠森龍王行為一致。_wbAdvBossNormalAtk 新增 targetLowest 參數:追擊普攻(第 2 次行動)傳 true → 鎖定當前 HP 最少的存活玩家;主行動的 20% AI 普攻維持隨機目標。',
+      '龍王輪流表詳細能力鈕(world-boss-ui.html):_wbAdvOpenBossInfoPopup 重構接受 bossIdArg → 可查看「任一龍王」能力(HP/atk/sp/spd 優先讀 HERO_DB,其次 lineup maxHp);_wbRenderLineup 每隻龍王下方加按鈕——已實裝(HERO_DB 有資料,火/草)顯示「📖 詳細能力」開該龍王彈窗,未實裝 6 隻顯示「🔒 能力即將解放」佔位。',
+      // ── 排行榜 ──
+      '龍王排行榜逐回合明細新增「各英雄傷害來源總表」(admin_panel.js _wbShowRoundDetailModal/_renderBattles):每一場明細頂部加總本場每回合各英雄傷害並由高到低排序,附占比長條;單一英雄占比 ≥ 60% 標紅 ⚠ 警示,讓 GM 一眼看出哪隻英雄傷害異常(疑似 BUG/作弊)。資料源沿用既有 wbDamageDetail/{uid}(不含聯手爆發 5000),不改寫入端。',
+    ],
+    adminOnly: false,
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.14.27(2026-06-13)— 🦅 第三隻 UR「主神奧汀」實裝 + 🦊 玉藻前爆發改 + 🐉 八龍王正名重排+至寶頁
   // ════════════════════════════════════════════════════════════════════
   {

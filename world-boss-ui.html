@@ -1223,6 +1223,17 @@
       if(!b) return '';
       const _isCur = (b.id === _curId);
       const sceneText = b.scene || '未知地點';
+      // ★ v3.15.0 — 每隻龍王加「詳細能力」按鈕;已實裝(HERO_DB 有資料)可看完整能力,未實裝顯示「即將解放」
+      const _hasData = !!(window.HERO_DB && window.HERO_DB[b.name]);
+      const _btnHtml = _hasData
+        ? `<button onclick="event.stopPropagation();try{_wbAdvOpenBossInfoPopup('${b.id}');}catch(e){console.warn(e);}"
+             style="width:100%;margin-top:7px;padding:6px 0;font-size:12px;font-weight:800;letter-spacing:1px;
+             background:linear-gradient(135deg,${elemColor[b.element]||'#d4a843'}33,${elemColor[b.element]||'#d4a843'}11);
+             border:1.5px solid ${elemColor[b.element]||'#d4a843'};color:${elemColor[b.element]||'#ffe066'};
+             border-radius:8px;cursor:pointer;font-family:inherit;">📖 詳細能力</button>`
+        : `<div style="width:100%;margin-top:7px;padding:6px 0;font-size:12px;font-weight:700;letter-spacing:1px;
+             background:rgba(80,80,80,0.18);border:1.5px dashed rgba(150,150,150,0.4);color:#999;
+             border-radius:8px;text-align:center;">🔒 能力即將解放</div>`;
       return `
     <div style="background:linear-gradient(160deg,rgba(${_isCur?'212,168,67':'30,30,40'},0.3) 0%,rgba(0,0,0,0.5) 100%);
                 border:1.5px solid ${_isCur ? '#d4a843' : 'rgba(168,132,255,0.3)'};
@@ -1240,6 +1251,7 @@
       <div style="font-size:10px;color:#aaa;text-align:center;margin-top:2px;">
         📍 ${sceneText} ✦ ❤️ ${(b.maxHp/10000).toFixed(0)}萬
       </div>
+      ${_btnHtml}
     </div>
   `;
     }).join('');
@@ -13490,18 +13502,28 @@ try{
   // 內容:HP / 階段 / 護盾元素 / 3 大招細節 / 第 10 回合爆發 / 第 21 回合滅絕
   // 點任意位置關閉
   // ════════════════════════════════════════════════════════════════════
-  function _wbAdvOpenBossInfoPopup(){
+  function _wbAdvOpenBossInfoPopup(bossIdArg){
     const old = document.getElementById('wb-adv-boss-info-popup');
-    if(old){ old.remove(); return; }  // toggle
+    // ★ v3.15.0 — 可傳入 bossId 查看「任一龍王」能力(輪流表每隻都可點);不傳則沿用現場戰鬥/當前龍王。
+    //   toggle:同一個彈窗再點一次關閉;但若帶 bossId(從輪流表點不同龍王)則改開新的。
+    if(old){ old.remove(); if(!bossIdArg) return; }
 
+    const _luTop = (window.WORLD_BOSS_LINEUP) || [];
+    const _argCfg = bossIdArg ? _luTop.find(function(b){ return b && b.id === bossIdArg; }) : null;
     const _Gb = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
-    const boss = (_Gb && _Gb.p2 && _Gb.p2[0]) || null;
-    const bossName = boss ? boss.name : ((((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name) || '火山炎龍王');  // ★ v3.14.20
-    const bossHp = boss ? boss.hp : 5000000;
-    const bossAtk = boss ? boss.atk : 49;
-    const bossSp = boss ? boss.sp : 50;
+    // 指定 bossId(查看非當前龍王)時不取現場 boss;否則沿用現場 boss(戰鬥中)
+    const boss = (!bossIdArg && _Gb && _Gb.p2 && _Gb.p2[0]) || null;
+    const bossName = boss ? boss.name
+      : ((_argCfg && _argCfg.name)
+         || (((typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || {}).name)
+         || '火山炎龍王');  // ★ v3.14.20
+    // 非現場時數值優先讀 HERO_DB(精準),其次 lineup maxHp / 後備值
+    const _hdTop = (window.HERO_DB && window.HERO_DB[bossName]) || null;
+    const bossHp = boss ? boss.hp : ((_hdTop && _hdTop.hp) || (_argCfg && _argCfg.maxHp) || 5000000);
+    const bossAtk = boss ? boss.atk : ((_hdTop && _hdTop.atk) || 49);
+    const bossSp = boss ? boss.sp : ((_hdTop && _hdTop.sp) || 50);
     // ★ v3.11.7(2026-05-28) — fallback SPD 從 80 → 15(對齊 HERO_DB 火山炎龍王實際數值)
-    const bossSpd = boss ? boss.spd : 15;
+    const bossSpd = boss ? boss.spd : ((_hdTop && _hdTop.spd) || 15);
     // ★ v3.14.23 — 同戰鬥背景:改用 HERO_IMGS(翠綠森龍王→草龍王.png),後備才用名稱推導
     const bossUrl = (window.HERO_IMGS && window.HERO_IMGS[bossName])
       || `https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/${encodeURIComponent(bossName)}.png`;
@@ -13509,7 +13531,7 @@ try{
     // ★ v3.14.25 — 資料驅動:依「當前龍王」動態產生能力詳細介紹(原本整段寫死火龍王,
     //   導致打草龍王時看到的是火龍王能力)。招式/天賦/爆發一律讀 HERO_DB / BURST_DB / HERO_TRAIT
     //   (world-boss.js 已為每隻龍王備好完整文案),護盾元素 / 屬性 / 主題配色依當前龍王 lineup 動態決定。
-    const _curBossCfg = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+    const _curBossCfg = _argCfg || (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
     const _bossElem  = (_curBossCfg && _curBossCfg.element) || 'fire';
     const _shieldEls = (_curBossCfg && _curBossCfg.shieldElements) || ['fire','wind','earth','dark'];
     const _shieldLayers = (_curBossCfg && _curBossCfg.shieldLayers) || null;  // null = 每元素各 1 層

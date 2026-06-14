@@ -2802,7 +2802,8 @@
             return;
           }
           // ★ 關鍵:直接呼叫普攻(不走完整 turn,不會放技能/爆發)
-          try{ _wbAdvBossNormalAtk(boss); }catch(eA2){ console.error('[WB-BossAct v3.12.7] 追擊普攻例外', eA2); }
+          //   ★ v3.15.0 — 追擊普攻(第 2 次行動)鎖定「當前 HP 最少」的玩家(老師需求,火/草龍王一致)
+          try{ _wbAdvBossNormalAtk(boss, true); }catch(eA2){ console.error('[WB-BossAct v3.12.7] 追擊普攻例外', eA2); }
         }, 800);
         return;  // 不走 endAction(等追擊普攻跑完再 end)
       }
@@ -3097,8 +3098,10 @@
     }, 2200);
   }
 
-  // BOSS 普攻:隨機選 1 個玩家英雄,atk × (1.0~1.3) 傷害
-  function _wbAdvBossNormalAtk(boss){
+  // BOSS 普攻:選 1 個玩家英雄,atk × (1.0~1.3) 傷害
+  //   ★ v3.15.0 — targetLowest=true(追擊普攻第 2 次行動)時改鎖定「當前 HP 最少」的存活玩家;
+  //      主行動的普攻(20% AI)維持隨機目標。火龍王/草龍王共用此邏輯,雙王行為一致。
+  function _wbAdvBossNormalAtk(boss, targetLowest){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     // ★ FIX 20260517 — 普攻音效(龍的普攻)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-atk', 0.6); }catch(_){}
@@ -3108,7 +3111,9 @@
       _safeBossEndAction(boss);
       return;
     }
-    const tgt = alive[Math.floor(Math.random() * alive.length)];
+    const tgt = targetLowest
+      ? alive.slice().sort((a,b) => (a.curHp||0) - (b.curHp||0))[0]
+      : alive[Math.floor(Math.random() * alive.length)];
     const d = Math.floor((boss.atk || 49) * (1 + Math.random() * 0.3));
     try{
       if(typeof doDmg === 'function'){

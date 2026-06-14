@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.14.24';   // ★ v3.14.24(2026-06-13)— 版本對齊主版(內容同 v3.14.23:🐉 選擇龍王下拉冪等填充)｜v3.14.22 排行榜卡新增「📜 歷戰記錄」分頁
+window.ADMIN_PANEL_VERSION = 'v3.15.0';   // ★ v3.15.0(2026-06-14)— 龍王排行榜逐回合明細新增「各英雄傷害來源總表」(高→低+占比條,單一英雄≥60%標紅,查傷害異常)｜v3.14.24 選擇龍王下拉冪等填充
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -12329,6 +12329,40 @@ async function _showAdminStatsPanelImpl(){
       _list.forEach(function(b, idx){
         const _no = _battles.length - idx;  // 場次編號(1=最舊)
         const _rounds = (b && Array.isArray(b.rounds)) ? b.rounds : [];
+        // ★ v3.15.0(老師需求)— 各英雄「傷害來源總表」:把本場每回合各英雄傷害加總,由高到低排序,
+        //   附占比長條;單一英雄占比 ≥ 60% 標紅 ⚠,讓 GM 一眼看出哪隻英雄傷害異常(可能 BUG/作弊)。
+        const _heroTotals = {};
+        let _sumAll = 0;
+        _rounds.forEach(function(rd){
+          const _hs = (rd && Array.isArray(rd.h)) ? rd.h : [];
+          _hs.forEach(function(h){
+            const _n = (h && h.n) || '?';
+            const _d = Math.max(0, (h && h.d) || 0);
+            _heroTotals[_n] = (_heroTotals[_n] || 0) + _d;
+            _sumAll += _d;
+          });
+        });
+        const _heroRanked = Object.keys(_heroTotals)
+          .map(function(n){ return { n:n, d:_heroTotals[n] }; })
+          .sort(function(a, b){ return b.d - a.d; });
+        let _summaryTbl = '';
+        if(_heroRanked.length){
+          _summaryTbl = '<div style="margin:4px 0 10px;padding:9px 11px;background:rgba(60,40,90,0.5);border:1px solid rgba(190,150,230,0.45);border-radius:8px;">'
+            + '<div style="color:#ffcc88;font-weight:800;margin-bottom:6px;font-size:13px;">📊 各英雄傷害來源總表（本場合計，高→低）</div>';
+          _heroRanked.forEach(function(h){
+            const _pct = _sumAll > 0 ? Math.round(h.d / _sumAll * 100) : 0;
+            const _hot = (_pct >= 60);   // 單一英雄占比過半且更高 → 可能異常
+            _summaryTbl += '<div style="display:flex;align-items:center;gap:8px;margin:3px 0;">'
+              + '<span style="flex:0 0 132px;color:' + (_hot?'#ff8866':'#eee') + ';font-weight:' + (_hot?'800':'600') + ';font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _esc(h.n) + (_hot?' ⚠':'') + '</span>'
+              + '<span style="flex:0 0 92px;text-align:right;color:#ffd066;font-weight:800;font-size:13px;">' + h.d.toLocaleString() + '</span>'
+              + '<span style="flex:1;height:10px;min-width:40px;background:rgba(0,0,0,0.4);border-radius:5px;overflow:hidden;">'
+              +   '<span style="display:block;height:100%;width:' + _pct + '%;background:' + (_hot?'linear-gradient(90deg,#ff5544,#ff8866)':'linear-gradient(90deg,#9a7adb,#c8a8ff)') + ';"></span>'
+              + '</span>'
+              + '<span style="flex:0 0 44px;text-align:right;color:#aac;font-size:12px;">' + _pct + '%</span>'
+              + '</div>';
+          });
+          _summaryTbl += '</div>';
+        }
         let _inner = '';
         _rounds.forEach(function(rd){
           const _hs = (rd && Array.isArray(rd.h)) ? rd.h.slice() : [];
@@ -12342,7 +12376,7 @@ async function _showAdminStatsPanelImpl(){
         _html += '<details style="margin-bottom:8px;background:rgba(40,30,60,0.4);border:1px solid rgba(160,140,220,0.3);border-radius:8px;padding:6px 10px;"'
           + (idx === 0 ? ' open' : '') + '>'
           + '<summary style="cursor:pointer;font-weight:700;color:#ddd;">第 ' + _no + ' 場 · ' + _fmtTime(b.at) + ' · 總傷 <span style="color:#aaffcc;">' + (b.total||0).toLocaleString() + '</span> · ' + _rounds.length + ' 回合</summary>'
-          + '<div style="margin-top:6px;">' + (_inner || '<span style="color:#888;">（無回合資料）</span>') + '</div>'
+          + '<div style="margin-top:6px;">' + _summaryTbl + (_inner || '<span style="color:#888;">（無回合資料）</span>') + '</div>'
           + '</details>';
       });
       return _html;
