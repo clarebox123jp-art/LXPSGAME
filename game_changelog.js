@@ -13,10 +13,10 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
-  // v3.15.0(2026-06-14)— 🔺 埃及探險關完整實裝(管理員測試) + 🐉 龍王雙動作確認/輪流表詳細能力 + 📊 排行榜各英雄傷害來源總表
+  // v3.15.2(2026-06-14)— 🔺 埃及探險關(管理員測試):雙王平衡坦向化 + 天賦/爆發升級效果 + 聖甲蟲/題庫/BGM/對白修正 ｜ 🐉 龍王雙動作 + 📊 排行榜傷害總表
   // ════════════════════════════════════════════════════════════════════
   {
-    ver: 'v3.15.0',
+    ver: 'v3.15.2',
     date: '2026-06-14',
     brief: [
       '🔺【環遊世界第二關 ── 埃及探險 即將登場！】',
@@ -27,27 +27,30 @@ window.GAME_CHANGELOG = [
       '   ・以 <b>S 評價</b>同時擊敗雙王,有機會<b>收服法老王或埃及豔后</b>(各自獨立 15% 機率)加入你的隊伍!',
       '   ・💡 本次<b>先開放管理員(老師)進行測試</b>,一般玩家點選埃及關會看到「即將開放」,正式對全班開放後即可挑戰,敬請期待!',
       '🌬️ 新角色登場介紹 ── 👑 法老王(光屬性 SSR)',
-      '   ・<b>天賦「法老威儀」</b>:每個回合開始累積 1 層威儀(造成傷害 +10%,最多 10 層);每次受傷有 50% 機率被削減 1 層。當埃及豔后倒下時,法老王會耗費自身 10% 生命把她復活到 25% HP(不限次數)。',
+      '   ・<b>天賦「法老威儀」</b>:每個回合開始累積 1 層威儀(造成傷害 +10%,最多 10 層);每次受傷有機率被削減 1 層,基礎 50%、<b>天賦每升 1 級此機率 -5%</b>(滿級僅 30%,威儀更穩固)。當埃及豔后倒下時,法老王會耗費自身<b>最大 HP 5%</b>把她復活到 25% HP(不限次數)。',
       '   ・<b>S1「王權法杖」</b>:以攻擊+特技 150% 重擊 1 名對手,並把它的行動順序<b>擊退到最後</b>。',
       '   ・<b>S2「黃沙風暴」</b>:以攻擊+特技 80% 對全體連續攻擊 2 次,並使全體<b>速度下降</b> 2 回合。',
-      '   ・<b>爆發「太陽神的審判」</b>:召喚拉神烈日,以特技 900%「群體分攤」的巨大光屬性傷害轟炸全場(敵人越多每人受越少),施放後<b>我方全體回復 25% HP</b>。',
+      '   ・<b>爆發「太陽神的審判」</b>:召喚拉神烈日,以特技 900%「群體分攤」的巨大光屬性傷害轟炸全場(敵人越多每人受越少),施放後<b>我方全體回復 25% HP</b>(<b>爆發每強化 1 級恢復量 +5%</b>,滿級達 45%)。',
       '🌬️ 新角色登場介紹 ── 🐍 埃及豔后(暗屬性 SSR)',
-      '   ・<b>天賦「蛇瞳魅影」</b>:受到傷害時有 50% 機率使攻擊者陷入<b>強力魅惑</b> 1 回合(會攻擊自己的同伴)。當法老王倒下時,埃及豔后會耗費自身 10% 生命把他復活到 25% HP(不限次數)。',
+      '   ・<b>天賦「蛇瞳魅影」</b>:受到傷害時有機率使攻擊者陷入<b>強力魅惑</b> 1 回合(會攻擊自己的同伴),基礎 50%、<b>天賦每升 1 級此機率 +5%</b>(滿級達 70%)。當法老王倒下時,埃及豔后會耗費自身<b>最大 HP 5%</b>把他復活到 25% HP(不限次數)。',
       '   ・<b>S1「魅惑之吻」</b>:以特技 200% 傷害 1 名對手,並使其<b>魅惑</b> 2 回合。',
       '   ・<b>S2「蛇與蜜」</b>:回復我方全體 35% HP,並提升我方全體特技 50% 共 2 回合。',
-      '   ・<b>爆發「尼羅河的詛咒」</b>:喚醒千年詛咒淹沒戰場,以特技 200% 對全體造成暗屬性巨大傷害,並各有 50% 機率<b>查封物品</b> 2 回合。',
+      '   ・<b>爆發「尼羅河的詛咒」</b>:喚醒千年詛咒淹沒戰場,以特技 200% 對全體造成暗屬性巨大傷害,並各有 50% 機率<b>查封物品</b> 2 回合(<b>爆發每強化 1 級此機率 +5%</b>,滿級達 70%)。',
       '   ・⚠ 提醒:法老王與埃及豔后會「互相復活」,唯有<b>同一時間同時擊殺雙王</b>才能真正終結戰鬥!',
+      '   ・⚖ <b>雙王定位</b>:法老王與埃及豔后是<b>高生存的坦克／輔助型</b>雙核(攻擊偏低、生存與控場極強),適合靠威儀疊層、互相復活與全體治療打持久消耗戰。',
       '🐉【世界 BOSS 龍王 ── 雙動作確認 + 隨時查看任一龍王能力】',
       '   ・確認<b>翠綠森龍王(草龍王)和火山炎龍王一樣每回合會行動兩次</b>:第一次是技能/爆發/普攻,第二次固定追擊一次普攻;追擊普攻現在會<b>鎖定當前 HP 最少的玩家</b>。',
       '   ・「元素龍系列」輪流表的<b>每一隻龍王下方都新增「📖 詳細能力」按鈕</b>,可隨時點開查看那隻龍王的招式、天賦與護盾(尚未實裝的龍王顯示「🔒 能力即將解放」)。',
     ],
     items: [
       // ── 埃及關 ──
+      '★ v3.15.2 雙王平衡(index.html + hero_db.js):①數值改坦向(法老王 58/18/18/6、豔后 54/18/18/10,和=100;招募版攻30→18/特34→18 換高生存+控場)。②天賦/爆發升級+BOSS守門:法老威儀減層機率=isEgyptBoss?50%:max(30%,50%-天賦Lv×5%)、蛇瞳魅影魅惑=isEgyptBoss?50%:min(70%,50%+天賦Lv×5%)(內部Lv0~4=顯示Lv1~5,受傷 on-hit hook 內層化、鐵律1.110);太陽神恢復=isEgyptBoss?25%:min(45%,25%+爆發Lv×5%)、尼羅河查封=isEgyptBoss?50%:min(70%,50%+爆發Lv×5%)(_runBurst,爆發Lv0~4)。③互相復活耗血「當前HP10%」→「固定最大HP5%」(復活量25%不變,isEgyptBoss BOSS-only)。④雙王加入 _ZEUS_TRUE_BOSSES → 取得尊嚴鎖血(50%/1HP)+強制爆發反擊(無視能量;鐵律1.135;招募版 side!==p2 不受影響、秒殺技對BOSS改比例鐵律1.31)。',
+      '★ v3.15.2 埃及其他修正(index.html + hero_db.js):⑤聖甲蟲聖光治癒/黃金護甲補 bannerFX/log/renderCard 視覺回饋 + 護盾30→60 + buffs守門(原本無回饋,玩家誤以為沒作用)。⑥埃及小怪戰題庫修正:advPrepareSessionQuestions 原只在 BOSS 戰前呼叫→小怪戰沿用殘留非埃及題池;新增 _advSessionSubject 追蹤,advStartMiniBattle 偵測「埃及關但題池科目≠埃及/池空」→重建(不過度重置)。①BGM 埃及小怪戰兩首輪播(EGYPT_BATTLE_BGM_LIST + _egyptMobBattleCount%2,每場交替戰中穩定)。④三場景對白重寫(沙漠/金字塔入口/內部,小怪各具性格+融入吉薩/尼羅河/拉神/卡諾卜罈史地)。②介紹頁 4→5 星 + 沙漠背景 + 選關切埃及首頁 BGM。預習頁(EGYPT_PREVIEW_CONTENT)延後下一批。',
       '埃及關場景流程(index.html):新增 _EG_BG(沙漠/金字塔入口/金字塔內部/寶庫王座 raw 連結)+ ADV_SCENES.egypt(3 幕:egypt-desert choiceType=difficulty 沿用貓空 _advBossHpMult 0/+25/+50%、egypt-entrance/egypt-inner choiceType=japan_auto);流程=沙漠選難度→小怪戰→入口→小怪戰→內部→小怪戰→advFinishCutscene→雙王 BOSS(共 3 場小怪戰 + 雙王)。startAdventureGame egypt 區塊(subject/grade=埃及,難度由沙漠選擇覆蓋);advGetQuizPool egypt 兜底(subject===埃及||_adventureStage===egypt → 30 題,過場清空 subject 也命中)。',
       '埃及小怪(index.html):MINI_MONSTERS_EG=[木乃伊貓/流沙眼鏡蛇/卡諾卜壇怪/神秘圖騰](正常 4 隻池);advStartMiniBattle 每場 12% 機率注入聖甲蟲(替換隨機一隻,同小惡魔/座敷童子稀有怪設計);MINI_MONSTER_ELEM(木乃伊貓暗/流沙眼鏡蛇土/卡諾卜壇怪土/神秘圖騰暗/聖甲蟲光);MONSTER_DROPS 五怪(精裝經驗書;聖甲蟲 EXP 3000~5000);advFinishMiniBattle 聖甲蟲掉落區塊(每位非好友英雄 addHeroExp 3000~5000 + 2% 果實 + 50% 技能書/精裝書);_RARE_MOB_LINES + _showRareMobIntro/_showRareMobDefeat 聖甲蟲金色(🪲 #ffd700)登場/退場對白;5 怪加入 BOSS_NAMES(魔物圖鑑/瀕死守門/鬥技場排除)。',
       '埃及背景/BGM(index.html):新增 3 個 <audio>(bgm-egypt-menu 首頁BGM / bgm-egypt-battle 冒險BGM / bgm-egypt-boss 法老王BOSS戰BGM);場景與戰鬥背景採 inline backgroundImage(_EG_BG,不依賴 main.css 的 .bg-egypt-*);BGM 接線涵蓋 advStartCutscene/advLoadScene(過場 menu)、mini 戰鬥(battle/聖甲蟲)、advStartBattle+advFinishCutscene+_detectCurrentBgm(雙王 boss)、mini 結算→下一場景、相遇 BGM 共 9 處。',
       '埃及雙王 BOSS(hero_db.js 批一已建,本批接線/天賦補完):_buildEgyptBossTeam 回傳法老王(光 isEgyptBoss)+埃及豔后(暗 isEgyptBoss),getBossTeam 5 處接線;雙王 s1/s2(王權法杖/黃沙風暴/魅惑之吻/蛇與蜜)execSkill 玩家路徑 + aiUseSkill AI 路徑雙路徑(鐵律 1.128);爆發(太陽神的審判 群體分攤900%+我方回25% / 尼羅河的詛咒 全體暗200%+50%查封)_runBurst 實作。',
-      '埃及雙王天賦(index.html):法老威儀傷害加成(doDmg let dmg=rawDmg 後 +10%/層,鐵律 1.110)+ 疊層(startTurn 回合開始 +1,上限 10)+ 受傷 50% 減 1 層(doDmg 受傷 hook,本批補);蛇瞳魅影(豔后受傷 50% 使攻擊者強力魅惑 1 回合,本批補);互相復活(startTurn 行動前檢查,一王倒下另一王存活→耗自身當前 HP10% 復活倒下者至最大 HP25%;雙王同時陣亡不觸發=必須同時擊殺;以 isEgyptBoss 守門僅 BOSS 版觸發)。',
+      '埃及雙王天賦(index.html):法老威儀傷害加成(doDmg let dmg=rawDmg 後 +10%/層,鐵律 1.110)+ 疊層(startTurn 回合開始 +1,上限 10)+ 受傷減 1 層(doDmg 受傷 hook;機率見 v3.15.2 升級);蛇瞳魅影(豔后受傷使攻擊者強力魅惑 1 回合;機率見 v3.15.2 升級);互相復活(startTurn 行動前檢查,一王倒下另一王存活→耗自身最大 HP5%(v3.15.2 由當前HP10%改)復活倒下者至最大 HP25%;雙王同時陣亡不觸發=必須同時擊殺;以 isEgyptBoss 守門僅 BOSS 版觸發)。',
       '埃及招募 + 防呆 + 圖鑑(index.html):打雙王 S 評價時對法老王/埃及豔后各自獨立 15% 機率收服(未擁有+非借用,advSaveUnlockedHero source=egypt_boss_clear,已加入 BOSS_SOURCES/_LEGIT_SOURCES 白名單避免異常誤報);防呆 6 處(newHero/newHero_replace/focusHero/_renderHeroDetail/G.p1 二重保險×2)讀 EGYPT_BOSS_HERO_STATS 弱化版(法老王 hp48/atk30/sp14/spd8、豔后 hp38/atk12/sp34/spd16,避免招募版誤用 11500/10500 BOSS HP);_advGetHeroPoolForStage egypt 分支(法老王/埃及豔后 2 位)。',
       '埃及雙王稀有度(index.html):加入 SUMMON_RARE_HEROES 取得 SSR 稀有度,但為「埃及 BOSS 戰限定收服」→ 從 SSR 召喚抽取(rare_ssr/legacy rare_hero)與自選券(_summonTicketUnrecorded)以 EGYPT_EXCLUSIVE_HEROES 排除(不可召喚/不可自選,只能打 BOSS 收服);加入 ADMIN_ALL_HEROES(GM 可發放);_nonStudentInRare 加雙王(學生設計計數準確)。',
       '埃及入口閘門(index.html _egyptTrySelect):本版【僅開放管理員測試】(老師指示)——非管理員(含已達 4 名 Lv25 者)一律顯示「即將開放」彈窗不進入;唯管理員 _isAdminUser() 可進入 selectAdvStage(egypt)。日後正式開放只要把此閘門改回 4 名 Lv25 解鎖判斷即可。ADV_STAGES.egypt 介紹頁 + EGYPT 過濾 Set(EGYPT_BOSS_HEROES/EGYPT_EXCLUSIVE_HEROES/EGYPT_ALL_CHARACTERS/EGYPT_ARENA_EXCLUDE)批一已建。',
